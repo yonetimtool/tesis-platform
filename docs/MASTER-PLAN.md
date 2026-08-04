@@ -7748,9 +7748,17 @@ ROLLER`), ad + telefon + **opsiyonel** görev tarihleriyle; iptal iki yoldan
 — bitişi geçmişe çekmek (*görev bitti*) ya da `is_active=false` (*hesap
 kapatıldı*). İkisi denetim izinde **farklı** görünür ve bu bilinçli.
 
-**MOBİL ÇÖKMEZ, ÖLÇÜLDÜ:** `UserRole.fromClaim` bilinmeyen değeri
-`unknown`a düşürüyor (`orElse`), yani denetçi mobil uygulamayı açsa boş bir
-kabuk görür — kırılma yok. Denetçi bir **web** rolüdür (P129).
+**MOBİL: İLK ÖLÇÜMÜM EKSİKTİ, KAPI DÜZELTTİ.** "`fromClaim` bilinmeyeni
+`unknown`a düşürür, çökme yok" demiştim ve bu doğruydu ama **yetmiyordu**:
+mobil suite'te `rol_bagi_test.dart` mobil `UserRole` enum'unu backend
+`USER_ROLE` ile **kilitliyor** ve rolü eklemeyince düştü. P128'i mobil
+kapısını koşmadan kapatmıştım — kapı beni yakaladı (ayrı commit'te
+düzeltildi: `denetci` mobil enum'a + 7 dile eklendi, **menüsü boş**).
+Boş menü bir eksiklik değil karardır: denetçinin işi masabaşıdır ve
+kullanılabilir bir mobil denetçi deneyimi **tasarlanmadı**; birkaç kart
+koymak varmış gibi göstermek olurdu. `canViewTransparency` /
+`canViewComplaints` gibi "unknown hariç herkes" diyen bayraklar da
+daraltıldı — yoksa yeni rol o ekranlara **sessizce** girerdi.
 
 **MUTASYON 6/6:** mutasyon ucuna denetçi ekle · her-istek pencere kapısını
 kaldır · denetçiyi okuma bağımlılığından çıkar · giriş kapısını kaldır ·

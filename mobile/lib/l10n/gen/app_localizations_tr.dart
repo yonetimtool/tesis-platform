@@ -4421,6 +4421,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get rolGuvenlikAmiri => 'Güvenlik Amiri';
 
   @override
+  String get rolDenetci => 'Denetçi';
+
+  @override
   String get kvkkBaslik => 'Aydınlatma Metni';
 
   @override

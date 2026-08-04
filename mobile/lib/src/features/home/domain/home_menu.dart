@@ -268,6 +268,15 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.transparency,
         HomeMenuEntry.yoneticiIletisim,
       ];
+    case UserRole.denetci:
+      // (P128/P129) DENETCININ MOBIL MENUSU BOS — ve bu bir eksiklik degil
+      // KARARDIR. Denetimin isi masabasi isidir (rapor okumak, tablo
+      // indirmek) ve urun karari `app.*` web yuzeyi yonunde verildi.
+      //
+      // Buraya "birkac kart" koymak, kullanilabilir bir denetci deneyimi
+      // TASARLAMADAN varmis gibi gostermek olurdu. Ekran, giris yapan
+      // denetciye web adresini soyler (home_gate).
+      return const [];
     case UserRole.unknown:
       // Rol cozulmeden (storage okumasi) veya bilinmeyen degerde: bos —
       // saniye alti bir durumdur, yanlis karti gostermekten iyidir.

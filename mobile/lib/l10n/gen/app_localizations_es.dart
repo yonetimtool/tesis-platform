@@ -4561,6 +4561,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get rolGuvenlikAmiri => 'Jefe de seguridad';
 
   @override
+  String get rolDenetci => 'Auditor';
+
+  @override
   String get kvkkBaslik => 'Aviso de privacidad';
 
   @override

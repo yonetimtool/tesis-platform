@@ -1367,6 +1367,7 @@
   "nfcKonumIzinYok": "Standortberechtigung verweigert — Erfassung ohne Standort gespeichert.",
   "nfcKonumServisKapali": "Ortungsdienste sind aus — Erfassung ohne Standort gespeichert.",
   "rolGuvenlikAmiri": "Sicherheitsleiter",
+  "rolDenetci": "Rechnungsprüfer",
   "kvkkBaslik": "Datenschutzerklärung",
   "kvkkSonaKaydir": "Scrollen Sie bis zum Ende des Textes, um zuzustimmen.",
   "kvkkOnayliyorum": "Gelesen und akzeptiert",

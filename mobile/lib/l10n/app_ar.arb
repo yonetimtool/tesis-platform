@@ -1367,6 +1367,7 @@
   "nfcKonumIzinYok": "لم يُمنح إذن الموقع — تم تسجيل المسح بدون موقع.",
   "nfcKonumServisKapali": "خدمة الموقع مغلقة — تم تسجيل المسح بدون موقع.",
   "rolGuvenlikAmiri": "رئيس الأمن",
+  "rolDenetci": "مدقق الحسابات",
   "kvkkBaslik": "إشعار الخصوصية",
   "kvkkSonaKaydir": "مرّر إلى نهاية النص للموافقة.",
   "kvkkOnayliyorum": "قرأت وأوافق",

@@ -23,5 +23,6 @@ String rolAdi(AppLocalizations l10n, UserRole rol) => switch (rol) {
       UserRole.tesisGorevlisi => l10n.rolTesisGorevlisi,
       UserRole.resident => l10n.rolSakin,
       UserRole.guvenlikAmiri => l10n.rolGuvenlikAmiri,
+      UserRole.denetci => l10n.rolDenetci,
       UserRole.unknown => l10n.rolBilinmeyen,
     };

@@ -4584,6 +4584,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get rolGuvenlikAmiri => 'Sicherheitsleiter';
 
   @override
+  String get rolDenetci => 'Rechnungsprüfer';
+
+  @override
   String get kvkkBaslik => 'Datenschutzerklärung';
 
   @override

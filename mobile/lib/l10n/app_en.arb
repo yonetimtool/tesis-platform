@@ -1367,6 +1367,7 @@
   "nfcKonumIzinYok": "Location permission denied — the scan was recorded without it.",
   "nfcKonumServisKapali": "Location services are off — the scan was recorded without it.",
   "rolGuvenlikAmiri": "Security Chief",
+  "rolDenetci": "Auditor",
   "kvkkBaslik": "Privacy Notice",
   "kvkkSonaKaydir": "Scroll to the end of the text to approve.",
   "kvkkOnayliyorum": "I have read and approve",

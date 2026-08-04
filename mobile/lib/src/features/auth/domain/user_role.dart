@@ -32,6 +32,20 @@ enum UserRole {
   /// KAPALIDIR (dis sirket = en az yetki).
   guvenlikAmiri('guvenlik_amiri'),
 
+  /// (P128) Denetci — tesisin SALT-OKUMA mali gozetimi.
+  ///
+  /// MOBILDE KENDI EKRAN SETI YOKTUR ve bu bilinclidir (P129): denetimin
+  /// isi masabasi isidir (rapor okumak, tablo indirmek) ve urun karari
+  /// `app.*` web yuzeyi yonunde verildi. Rol BURADA TANIMLI cunku
+  /// `rol_bagi_test` mobil enum'unu backend `USER_ROLE` ile kilitler —
+  /// eksik birakmak, gelen token'in `unknown`a dusmesi ve gorunen adin
+  /// "Bilinmeyen" olmasi demekti.
+  ///
+  /// TUM YETENEK BAYRAKLARI KAPALI: asagidaki getter'larin hicbiri bu
+  /// rolu saymaz (salt-okuma). Sunucu zaten her mutasyon ucunda 403 verir
+  /// (backend/tests/test_denetci_salt_okuma.py).
+  denetci('denetci'),
+
   /// Claim yok/bilinmeyen deger (eski token, bozuk payload).
   unknown('unknown');
 
@@ -86,12 +100,12 @@ enum UserRole {
 
   /// Seffaflik Panosu goruntuleme — tum bilinen roller (sakin dahil; ANONIM
   /// agregat ozet). unknown haric.
-  bool get canViewTransparency => this != unknown;
+  bool get canViewTransparency => this != unknown && this != denetci;
 
   /// Sikayet/oneri ekranini gorme — yasayan/calisandan yonetime kanal
   /// (kesin kural, auth.md §4): acan roller kendi taleplerini, yonetim
   /// (admin/yonetici) tumunu gorur. Bilinen 5 rolun 5'i de erisir.
-  bool get canViewComplaints => this != unknown;
+  bool get canViewComplaints => this != unknown && this != denetci;
 
   /// Talep ACMA (`POST /complaints`) — acan roller: security +
   /// tesis_gorevlisi + resident. yonetici ACAMAZ (kanalin cevaplayan

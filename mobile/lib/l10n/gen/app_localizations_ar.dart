@@ -4691,6 +4691,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get rolGuvenlikAmiri => 'رئيس الأمن';
 
   @override
+  String get rolDenetci => 'مدقق الحسابات';
+
+  @override
   String get kvkkBaslik => 'إشعار الخصوصية';
 
   @override

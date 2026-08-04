@@ -1367,6 +1367,7 @@
   "nfcKonumIzinYok": "Autorisation de localisation refusée — scan enregistré sans position.",
   "nfcKonumServisKapali": "Services de localisation désactivés — scan enregistré sans position.",
   "rolGuvenlikAmiri": "Chef de la sécurité",
+  "rolDenetci": "Auditeur",
   "kvkkBaslik": "Notice d'information",
   "kvkkSonaKaydir": "Faites défiler jusqu'à la fin du texte pour approuver.",
   "kvkkOnayliyorum": "J'ai lu et j'approuve",

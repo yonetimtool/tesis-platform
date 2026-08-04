@@ -1367,6 +1367,7 @@
   "nfcKonumIzinYok": "Permiso de ubicación denegado — el escaneo se registró sin ella.",
   "nfcKonumServisKapali": "Los servicios de ubicación están desactivados — escaneo sin ubicación.",
   "rolGuvenlikAmiri": "Jefe de seguridad",
+  "rolDenetci": "Auditor",
   "kvkkBaslik": "Aviso de privacidad",
   "kvkkSonaKaydir": "Desplácese hasta el final del texto para aprobar.",
   "kvkkOnayliyorum": "He leído y apruebo",

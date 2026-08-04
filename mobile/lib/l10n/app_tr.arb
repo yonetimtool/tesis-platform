@@ -1894,6 +1894,7 @@
   "nfcKonumIzinYok": "Konum izni verilmedi — okutma konumsuz kaydedildi.",
   "nfcKonumServisKapali": "Konum servisi kapalı — okutma konumsuz kaydedildi.",
   "rolGuvenlikAmiri": "Güvenlik Amiri",
+  "rolDenetci": "Denetçi",
   "kvkkBaslik": "Aydınlatma Metni",
   "kvkkSonaKaydir": "Onaylamak için metnin sonuna kadar okuyun.",
   "kvkkOnayliyorum": "Okudum, onaylıyorum",

@@ -7811,6 +7811,12 @@ abstract class AppLocalizations {
   /// **'Güvenlik Amiri'**
   String get rolGuvenlikAmiri;
 
+  /// No description provided for @rolDenetci.
+  ///
+  /// In tr, this message translates to:
+  /// **'Denetçi'**
+  String get rolDenetci;
+
   /// No description provided for @kvkkBaslik.
   ///
   /// In tr, this message translates to:

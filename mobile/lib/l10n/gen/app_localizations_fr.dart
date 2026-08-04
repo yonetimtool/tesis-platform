@@ -4571,6 +4571,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get rolGuvenlikAmiri => 'Chef de la sécurité';
 
   @override
+  String get rolDenetci => 'Auditeur';
+
+  @override
   String get kvkkBaslik => 'Notice d\'information';
 
   @override

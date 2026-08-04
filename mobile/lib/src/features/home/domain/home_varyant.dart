@@ -35,5 +35,10 @@ HomeVaryant homeVaryantForRole(UserRole role) => switch (role) {
       // vermek olurdu. Gorevli duzeni + amir menusu dogru esleme.
       UserRole.guvenlikAmiri => HomeVaryant.gorevli,
       UserRole.tesisGorevlisi => HomeVaryant.tesisGorevlisi,
+      // (P128/P129) Denetci mobilde EKRAN SETI TASIMAZ (menusu bostur);
+      // varyant yalniz DUZEN secer ve bos menuyle en sade duzen gorevli
+      // duzenidir. Yonetici duzenine koymak, olmayan bir finans ozeti
+      // vaat etmek olurdu.
+      UserRole.denetci => HomeVaryant.gorevli,
       UserRole.unknown => HomeVaryant.gorevli,
     };

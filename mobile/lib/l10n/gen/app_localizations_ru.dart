@@ -4678,6 +4678,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get rolGuvenlikAmiri => 'Начальник охраны';
 
   @override
+  String get rolDenetci => 'Аудитор';
+
+  @override
   String get kvkkBaslik => 'Уведомление о конфиденциальности';
 
   @override
