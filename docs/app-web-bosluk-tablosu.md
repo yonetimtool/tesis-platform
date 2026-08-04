@@ -123,7 +123,7 @@ P126 **tek oturumluk bir iş değil**. Ölçülebilir parçalara bölünüşü:
 |---|---|---|
 | P126.1 | `app.*` iskeleti: rol×yüzey kapısı, kabuk/menü, Caddy proxy | ✅ **BİTTİ** |
 | P126.2 | Yüzey kapısı (middleware) — 25 sayfa `app.*`ta erişilir, panelde kesilir | ✅ **BİTTİ** |
-| P126.3 | sakin'in eksik sayfaları — **Profil ✅**, kalan 4 + sakin görünümleri | büyük (sürüyor) |
+| P126.3 | sakin sayfaları — **Profil ✅ · Aidatım ✅ · Taleplerim ✅**, kalan: duyuru/kural/etkinlik, rezervasyon, KVKK | sürüyor |
 | P126.4 | güvenlik'in 4 eksik sayfası | orta |
 | P126.5 | yönetici'nin 3 eksik sayfası (`cameras` dâhil) | orta |
 | P126.6 | tesis görevlisi `unit_access` | küçük |

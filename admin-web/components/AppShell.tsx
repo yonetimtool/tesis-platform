@@ -67,6 +67,8 @@ const LINKS: { href: string; anahtar: SozlukAnahtari; icon: IconName }[] = [
   { href: "/settings", anahtar: "kabukAyarlar", icon: "gear" },
   // (P126.3) Profil TESIS yuzeyinde: panelde platform sahibinin
   // kendi kaydini yonetecegi bir yer YOK (o `admin` tek hesaptir).
+  { href: "/aidatim", anahtar: "kabukAidatim", icon: "money" },
+  { href: "/taleplerim", anahtar: "kabukTaleplerim", icon: "chat" },
   { href: "/profil", anahtar: "kabukProfil", icon: "users" },
 ];
 

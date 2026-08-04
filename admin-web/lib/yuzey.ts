@@ -66,8 +66,10 @@ export const TESIS_ROTALARI = [
   "/complaints",
   "/notifications",
   "/yonetisim",
-  // (P126.3) Her tesis rolunun KENDI kaydi.
+  // (P126.3) Tesis rollerinin KENDI kayitlari (sakin calisma alani).
   "/profil",
+  "/aidatim",
+  "/taleplerim",
 ] as const;
 
 /**

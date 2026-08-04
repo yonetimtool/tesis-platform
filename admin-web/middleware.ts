@@ -99,5 +99,7 @@ export const config = {
     "/transparency/:path*",
     // --- P126.3 tesis calisma alani ---
     "/profil/:path*",
+    "/aidatim/:path*",
+    "/taleplerim/:path*",
   ],
 };
