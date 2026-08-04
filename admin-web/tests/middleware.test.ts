@@ -160,20 +160,28 @@ function rolIstegi(host: string, yol: string, rol: string | null): NextRequest {
 describe("rol kapisi (P126.7)", () => {
   const APP = "app.xn--ynetiyor-n4a.com";
 
-  it("SAKIN yonetim sayfasini ACAMAZ — kendi baslangicina gider", () => {
-    for (const yol of ["/finans", "/dues", "/users", "/shifts"]) {
-      const res = middleware(rolIstegi(APP, yol, "resident"));
-      expect(res.status, yol).toBe(307);
-      expect(
-        new URL(res.headers.get("location") ?? "").pathname,
-        yol,
-      ).toBe("/aidatim");
+  it("(P129) MOBIL-YALNIZ ROL hicbir sayfayi ACAMAZ", () => {
+    // Bu roller `app.*`a giremez (giris kapisi); yine de elinde gecerli
+    // bir access cerezi kalmis biri icin ikinci savunma burasi. Hedef
+    // rolun KENDI baslangicidir — o da yoksa yuzeyin varsayilani.
+    for (const rol of ["resident", "security", "tesis_gorevlisi"]) {
+      for (const yol of ["/finans", "/aidatim", "/ziyaretciler", "/profil"]) {
+        const res = middleware(rolIstegi(APP, yol, rol));
+        expect(res.status, `${rol} ${yol}`).toBe(307);
+      }
     }
   });
 
-  it("SAKIN kendi sayfalarini ACAR", () => {
-    for (const yol of ["/aidatim", "/taleplerim", "/kvkk", "/profil"]) {
-      expect(middleware(rolIstegi(APP, yol, "resident")).status, yol).toBe(200);
+  it("(P129) DENETCI raporlari ACAR, para YAZAN sayfayi ACAMAZ", () => {
+    for (const yol of ["/raporlar", "/transparency", "/profil", "/kvkk"]) {
+      expect(middleware(rolIstegi(APP, yol, "denetci")).status, yol).toBe(200);
+    }
+    for (const yol of ["/finans", "/dues", "/users"]) {
+      const res = middleware(rolIstegi(APP, yol, "denetci"));
+      expect(res.status, yol).toBe(307);
+      expect(new URL(res.headers.get("location") ?? "").pathname, yol).toBe(
+        "/raporlar",
+      );
     }
   });
 
@@ -185,11 +193,10 @@ describe("rol kapisi (P126.7)", () => {
     );
   });
 
-  it("GUVENLIK kapi sayfalarini ACAR, finansi ACAMAZ", () => {
-    expect(middleware(rolIstegi(APP, "/ziyaretciler", "security")).status).toBe(
-      200,
-    );
-    expect(middleware(rolIstegi(APP, "/finans", "security")).status).toBe(307);
+  it("YONETICI kendi yonetim sayfalarini ACAR", () => {
+    for (const yol of ["/finans", "/dues", "/users", "/kameralar"]) {
+      expect(middleware(rolIstegi(APP, yol, "yonetici")).status, yol).toBe(200);
+    }
   });
 
   it("DERIN BAGLANTI rol kapisina TAKILMAZ", () => {
@@ -198,7 +205,7 @@ describe("rol kapisi (P126.7)", () => {
     expect(middleware(rolIstegi(APP, "/tasks/abc-123", "yonetici")).status).toBe(
       200,
     );
-    expect(middleware(rolIstegi(APP, "/tasks/abc-123", "resident")).status).toBe(
+    expect(middleware(rolIstegi(APP, "/tasks/abc-123", "denetci")).status).toBe(
       307,
     );
   });
@@ -214,10 +221,12 @@ describe("rol kapisi (P126.7)", () => {
       new URL(
         middleware(rolIstegi(APP, "/", rol)).headers.get("location") ?? "",
       ).pathname;
-    expect(hedef("resident")).toBe("/aidatim");
-    expect(hedef("security")).toBe("/ziyaretciler");
-    expect(hedef("tesis_gorevlisi")).toBe("/gorevlerim");
     expect(hedef("yonetici")).toBe("/dashboard");
+    // (P129) Denetcinin gunu raporlarda gecer; panoyu goremez.
+    expect(hedef("denetci")).toBe("/raporlar");
+    // Mobil-yalniz roller buraya normalde HIC gelmez (giriste kesilirler);
+    // gelirse de yuzeyin varsayilanina duserler — dongu yok.
+    expect(hedef("resident")).toBe("/dashboard");
   });
 
   it("BOZUK access cerezi kapiyi TETIKLEMEZ (cokme/kilitlenme yok)", () => {

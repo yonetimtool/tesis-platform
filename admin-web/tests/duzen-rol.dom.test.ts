@@ -88,10 +88,14 @@ describe("tokenRolu", () => {
 
 describe("korumali duzen", () => {
   it("cerezdeki rol ILK CIZIMDE menuye yansir", async () => {
-    cerezler.set(ACCESS_COOKIE, jwt({ role: "resident" }));
+    // (P129) Olcum rolu `resident`ten `denetci`ye cevrildi: `app.*`
+    // artik yonetici + denetci yuzeyidir ve sakinin menusu BOSTUR —
+    // bos menu ile "cerez okunmadi" ayirt edilemezdi, yani test
+    // olcmek istedigi seyi olcmez hâle gelirdi.
+    cerezler.set(ACCESS_COOKIE, jwt({ role: "denetci" }));
     await cizDuzen();
     // `/api/me` yaniti gelmeden, tek cizimde dogru menu.
-    expect(menuAdlari()).toContain("Aidatım");
+    expect(menuAdlari()).toContain("Rapor motoru");
     expect(menuAdlari()).not.toContain("Kullanıcılar");
   });
 

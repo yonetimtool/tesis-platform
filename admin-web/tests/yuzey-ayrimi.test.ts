@@ -17,6 +17,7 @@ import {
   TESIS_ROTALARI,
   konakYuzeyi,
   rolYuzeyeGirebilir,
+  mobilYalnizRol,
   rotaYuzeyi,
   tesisYuzeyiBekleyenRol,
 } from "@/lib/yuzey";
@@ -150,33 +151,30 @@ describe("rol x yuzey kapisi (P126.1)", () => {
     }
   });
 
-  it("TESIS yuzeyine dort tesis rolu + `admin` girer", () => {
-    // `resident` P126.3 sonunda eklendi: gunluk isini web'den yapabilecegi
-    // set tamamlandi (aidat, talep, duyuru, kural, etkinlik, rezervasyon,
-    // KVKK, profil). `admin`in girebilmesi bilincli: bir tesisin gordugu
-    // ekrani dogrulamak icin oraya bakabilmeli.
-    for (const r of ["yonetici", "resident", "security", "tesis_gorevlisi", "admin"]) {
+  it("(P129) TESIS yuzeyine YALNIZ yonetici + denetci (+ admin) girer", () => {
+    // Kapsam P129'da DARALDI: `app.*` bir masabasi yuzeyidir. `admin`in
+    // girebilmesi bilincli — bir tesisin gordugu ekrani dogrulamali.
+    for (const r of ["yonetici", "denetci", "admin"]) {
       expect(rolYuzeyeGirebilir(r, "tesis"), r).toBe(true);
     }
   });
 
-  it("SAYFALARI HENUZ OLMAYAN roller tesis yuzeyine ALINMAZ", () => {
-    // Girer girmez her yerde 403 goren bir ekran vermek yerine "yakinda"
-    // demek daha durust. `security`/`tesis_gorevlisi` icin ziyaretci,
-    // kargo, ihlal, arac gecisi ve gorevlerim sayfalari HENUZ YOK.
-    // Yalniz `guvenlik_amiri` kaldi: rol backend'de var (P35) ama kendi
-    // ekran seti tanimlanmadi.
-    for (const r of ["guvenlik_amiri"]) {
+  it("(P129) MOBIL-YALNIZ roller tesis yuzeyine GIREMEZ", () => {
+    // Sakin, guvenlik ve saha gorevlisi isini TELEFONDA yapar. Kapi
+    // sunucu tarafinda: oturum HIC kurulmaz (menu gizlemek degil).
+    for (const r of ["resident", "security", "tesis_gorevlisi"]) {
       expect(rolYuzeyeGirebilir(r, "tesis"), r).toBe(false);
-      expect(tesisYuzeyiBekleyenRol(r), r).toBe(true);
+      expect(mobilYalnizRol(r), r).toBe(true);
+      // "Yakinda" DEMEZ: web calisma alani planlanmiyor.
+      expect(tesisYuzeyiBekleyenRol(r), r).toBe(false);
     }
   });
 
-  it("SAKIN, GUVENLIK ve TESIS GOREVLISI artik BEKLEYEN rol DEGIL", () => {
-    // Ucunun de kendi seti tamamlandi (P126.3 / .4 / .6).
-    for (const r of ["resident", "security", "tesis_gorevlisi"]) {
-      expect(tesisYuzeyiBekleyenRol(r), r).toBe(false);
-    }
+  it("`guvenlik_amiri` HÂLÂ BEKLEYEN rol (ne web ne mobil seti var)", () => {
+    expect(rolYuzeyeGirebilir("guvenlik_amiri", "tesis")).toBe(false);
+    expect(tesisYuzeyiBekleyenRol("guvenlik_amiri")).toBe(true);
+    // Mobil-yalniz DEGIL: onu magazaya yollamak da yanlis olurdu.
+    expect(mobilYalnizRol("guvenlik_amiri")).toBe(false);
   });
 
   it("ROLSUZ/bilinmeyen token hicbir yuzeye giremez", () => {

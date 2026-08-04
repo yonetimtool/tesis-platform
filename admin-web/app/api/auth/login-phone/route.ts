@@ -3,7 +3,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { backendPhoneLogin, loginResponse } from "@/lib/backend";
 import { istekMetni } from "@/lib/i18n/istek-metni";
 import { tokenRolu } from "@/lib/rol-token";
-import { konakYuzeyi, rolYuzeyeGirebilir, tesisYuzeyiBekleyenRol } from "@/lib/yuzey";
+import {
+  konakYuzeyi,
+  girisRedKarari,
+  rolYuzeyeGirebilir,
+} from "@/lib/yuzey";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -77,12 +81,20 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const rol = tokenRolu(yanit.access_token);
   const yuzey = konakYuzeyi(req.headers.get("host"));
   if (!rolYuzeyeGirebilir(rol, yuzey)) {
-    const anahtar =
-      yuzey === "tesis" && tesisYuzeyiBekleyenRol(rol)
-        ? "girisRolYakinda"
-        : "girisPanelPlatformIcin";
+    // (P129) UC AYRI DURUM, UC AYRI CUMLE — karar TEK YERDE (lib/yuzey.ts).
+    // Iki giris rotasina kopyalanmisti; mutasyon denetimi telefon
+    // rotasindaki dal bozuldugunda hicbir testin dusmedigini gosterdi.
+    const { anahtar, kod } = girisRedKarari(rol, yuzey);
     return NextResponse.json(
-      { error: { code: "forbidden", message: istekMetni(req, anahtar) } },
+      {
+        error: {
+          // KOD, ISTEMCININ NE CIZECEGINI belirler: mobil-yalniz rolde
+          // giris ekrani magaza baglantilarini gosterir. Metne bakarak
+          // karar vermek, dil degisince sessizce bozulurdu.
+          code: kod,
+          message: istekMetni(req, anahtar),
+        },
+      },
       { status: 403 },
     );
   }

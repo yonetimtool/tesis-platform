@@ -171,3 +171,32 @@ sayfa çizilmeden kesilir ve rolün kendi başlangıcına yönlendirilir. Access
 **Ölçümün yakaladığı somut örnek:** `GET /vehicle-passes` **yöneticiye 403**
 döner (yalnız admin + security). "Araç geçişleri" yöneticiye gösterilseydi
 tıklayınca boş ekran gelirdi — menüye elle bakan biri bunu fark etmezdi.
+
+---
+
+## 6) KAPSAM DARALDI (P129, 2026-08-04) — `app.*` = YÖNETİCİ + DENETÇİ
+
+Bu belge P126'nın boşluk tablosudur ve **dört tesis rolünü** varsayarak
+yazıldı. P129 ile ürün kararı değişti:
+
+| Rol | `app.*` | Gerekçe |
+|---|---|---|
+| yönetici | ✅ girer | masabaşı işi (tahakkuk, rapor, tanım, personel) |
+| **denetçi** (P128) | ✅ girer | işi tam olarak masabaşıdır: rapor okur, tablo indirir |
+| sakin | ❌ **mobil-yalnız** | işini telefonda yapar; web ikizi iki kez bakım demekti |
+| güvenlik | ❌ **mobil-yalnız** | kapıda tarayıcı yok |
+| tesis görevlisi | ❌ **mobil-yalnız** | saha kanıtı (NFC/foto) zaten yalnız mobilde üretilir |
+| güvenlik amiri | ❌ "yakında" | ne web ne mobil ekran seti tanımlı (P35) |
+
+**Sayfalar SİLİNMEDİ, PARK EDİLDİ.** P126.3/.4/.6'da yazılan 10 sayfa kod
+tabanında duruyor ve testleri koşuyor; `ROTA_ROLLERI`de rol listeleri
+**boşaltıldı**. Boş listeyi silmek yerine tutmak bilinçli: "sayfa var ama
+hiçbir role açık değil" ile "böyle bir sayfa yok" ayrı şeylerdir —
+ikincisi sınıflandırılmamış rota olarak middleware kapısından da muaf
+tutulurdu (P126.2).
+
+**Geri açmak** = rol adını iki yere yazmak (`TESIS_ROLLERI` +
+`ROTA_ROLLERI`). Bir kararlık iş olması bilinçlidir.
+
+**Tablonun 1-5. bölümleri TARİHSEL kayıttır** — P126'nın neyi neden
+yaptığını anlatır ve silinmedi.

@@ -5,8 +5,8 @@ import { backendLogin, loginResponse } from "@/lib/backend";
 import { tokenRolu } from "@/lib/rol-token";
 import {
   konakYuzeyi,
+  girisRedKarari,
   rolYuzeyeGirebilir,
-  tesisYuzeyiBekleyenRol,
 } from "@/lib/yuzey";
 
 export const runtime = "nodejs";
@@ -55,12 +55,20 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   if (!rolYuzeyeGirebilir(rol, yuzey)) {
     // Sayfalari HENUZ olmayan tesis rolleri icin ayri bir cumle: "panel
     // yalnizca platform icindir" demek onlari yanlis yere yollardi.
-    const anahtar =
-      yuzey === "tesis" && tesisYuzeyiBekleyenRol(rol)
-        ? "girisRolYakinda"
-        : "girisPanelPlatformIcin";
+    // (P129) UC AYRI DURUM, UC AYRI CUMLE — karar TEK YERDE (lib/yuzey.ts).
+    // Iki giris rotasina kopyalanmisti; mutasyon denetimi telefon
+    // rotasindaki dal bozuldugunda hicbir testin dusmedigini gosterdi.
+    const { anahtar, kod } = girisRedKarari(rol, yuzey);
     return NextResponse.json(
-      { error: { code: "forbidden", message: istekMetni(req, anahtar) } },
+      {
+        error: {
+          // KOD, ISTEMCININ NE CIZECEGINI belirler: mobil-yalniz rolde
+          // giris ekrani magaza baglantilarini gosterir. Metne bakarak
+          // karar vermek, dil degisince sessizce bozulurdu.
+          code: kod,
+          message: istekMetni(req, anahtar),
+        },
+      },
       { status: 403 },
     );
   }

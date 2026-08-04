@@ -47,17 +47,26 @@ function menuAdlari(): string[] {
 afterEach(() => vi.restoreAllMocks());
 
 describe("app.* menusu role gore", () => {
-  it("SAKIN: kendi sayfalarini gorur, yonetim sayfalarini GORMEZ", () => {
+  it("(P129) MOBIL-YALNIZ ROLLERE MENU BOS cizilir", () => {
+    // `app.*` artik yonetici + denetci yuzeyidir; bu roller giriste
+    // kesiliyor. Elinde gecerli cerez kalmis biri girse bile menu BOS
+    // olmali — yariya kadar dolu bir kabuk "sistem bozuk" demektir.
+    for (const rol of ["resident", "security", "tesis_gorevlisi"]) {
+      const { unmount } = ciz(Kabuk(rol));
+      expect(menuAdlari(), rol).toEqual([]);
+      unmount();
+    }
+  });
+
+  it("(P129) DENETCI: raporlari gorur, para YAZAN sayfalari GORMEZ", () => {
     tesisKonagi();
-    ciz(Kabuk("resident"));
+    ciz(Kabuk("denetci"));
     const adlar = menuAdlari();
-    expect(adlar).toContain("Aidatım");
-    expect(adlar).toContain("Taleplerim");
+    expect(adlar).toContain("Rapor motoru");
     expect(adlar).toContain("Profilim");
-    expect(adlar).not.toContain("Kullanıcılar");
     expect(adlar).not.toContain("Finans");
     expect(adlar).not.toContain("Tahakkuk");
-    expect(adlar).not.toContain("Ziyaretçiler");
+    expect(adlar).not.toContain("Kullanıcılar");
   });
 
   it("YONETICI: yonetim seti var, sakinin kendi kayitlari YOK", () => {
@@ -72,31 +81,10 @@ describe("app.* menusu role gore", () => {
     expect(adlar).not.toContain("Araç geçişleri");
   });
 
-  it("GUVENLIK: kapi seti var, yonetim seti YOK", () => {
-    tesisKonagi();
-    ciz(Kabuk("security"));
-    const adlar = menuAdlari();
-    expect(adlar).toContain("Ziyaretçiler");
-    expect(adlar).toContain("Kargolar");
-    expect(adlar).toContain("Araç geçişleri");
-    expect(adlar).toContain("Görevlerim");
-    expect(adlar).not.toContain("Finans");
-    expect(adlar).not.toContain("Aidatım");
-  });
-
-  it("TESIS GOREVLISI: yalniz kendi seti", () => {
-    tesisKonagi();
-    ciz(Kabuk("tesis_gorevlisi"));
-    const adlar = menuAdlari();
-    expect(adlar).toContain("Görevlerim");
-    expect(adlar).not.toContain("Ziyaretçiler");
-    expect(adlar).not.toContain("Kullanıcılar");
-  });
-
-  it("LOGO hedefi ROLE gore — sakin panoya yollanmaz", () => {
-    ciz(Kabuk("resident"));
+  it("LOGO hedefi ROLE gore — denetci panoya yollanmaz", () => {
+    ciz(Kabuk("denetci"));
     const logo = screen.getAllByLabelText("Yönetio")[0];
-    expect(logo).toHaveAttribute("href", "/aidatim");
+    expect(logo).toHaveAttribute("href", "/raporlar");
   });
 
   it("LOGO yonetimde PANO'ya gider", () => {
@@ -117,9 +105,9 @@ describe("app.* menusu role gore", () => {
 
   it("ROL BILINMIYORSA `/api/me`den ogrenilir (cerez dustugunde toparlanir)", async () => {
     tesisKonagi();
-    fetchSahtele({ "/api/me": { role: "resident" } });
+    fetchSahtele({ "/api/me": { role: "denetci" } });
     ciz(Kabuk(null));
-    await waitFor(() => expect(menuAdlari()).toContain("Aidatım"));
+    await waitFor(() => expect(menuAdlari()).toContain("Rapor motoru"));
     expect(menuAdlari()).not.toContain("Kullanıcılar");
   });
 

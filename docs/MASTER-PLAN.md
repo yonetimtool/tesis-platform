@@ -618,6 +618,24 @@ Kerem marks them done.
 Acceptance: Kerem reports; findings become new items.
 
 Device-verify (biriken liste — agent ekler, Kerem işaretler):
+- [ ] **P128 · Denetçi rolü (WEB, `app.*`).** Yönetici hesabıyla
+  Kullanıcılar → Yeni → rol **Denetçi** seç (liste artık yalnız
+  açabildiğin rolleri gösteriyor; "Platform Admin" **görünmemeli**).
+  Görev başlangıç/bitiş alanları **yalnız denetçi seçilince** çıkmalı.
+  Kaydet → denetçi telefonuyla `app.*`a gir: menüde **4 satır** olmalı
+  (Rapor motoru, Şeffaflık, Profilim, KVKK). Bir rapor üret ve indir.
+  Sonra yöneticiyle **bitiş tarihini düne çek** → denetçinin açık
+  sekmesinde herhangi bir sayfayı yenile: **dışarı atılmalı**.
+- [ ] **P129 · Mobil-yalnız roller (WEB, `app.*`).** Sakin, güvenlik ve
+  tesis görevlisi telefon+parolasıyla `app.*`ta giriş dene → **giriş
+  yapmamalı** ve "Bu hesap türü Yönetio mobil uygulamasında çalışır"
+  mesajını görmelisin. Aynı hesaplar **mobil uygulamada** normal
+  çalışmaya devam ediyor mu (regresyon kontrolü)?
+- [ ] **[KEREM] P129 · Mağaza bağlantıları.** Uygulama Play/App Store'da
+  yayına çıkınca `NEXT_PUBLIC_PLAY_URL` ve `NEXT_PUBLIC_APPSTORE_URL`
+  ortam değişkenlerini tanımla (prod compose) — giriş ekranındaki
+  yönlendirme mesajının altında bağlantılar **o zaman** çıkar. Kod
+  değişikliği gerekmiyor.
 - [ ] **P116 · Yer tutucu taraması (MOBİL, HER ROL).** Dört rolün ana
   ekranında **her modül kartına** tek tek dokun → hepsi bir ekrana
   gitmeli; **"Bu bölüm yakında"** mesajı **hiçbirinde çıkmamalı**. FAB
@@ -7752,7 +7770,7 @@ yeniden) · `goc-uyum` 0 bulgu · `goc-tersinirlik` 0 bulgu (33 sınır) ·
 sözleşme (`openapi.yaml` + `auth.md §4b`) güncellendi.
 
 ### P129 — app.* kapsamı DARALTILDI: yalnız yönetici + denetçi
-Status: ACIK · Depends-on: P126, P128
+Status: BITTI · Depends-on: P126, P128
 Scope: Yüzey kararı **değişti**. `panel.*` → platform admin (aynı kaldı).
 `app.*` → **YALNIZ site yöneticisi ve denetçi**. `resident` (sakin) ve
 `tesis_gorevlisi` **YALNIZ MOBİL**: `app.*` girişinde **sunucu tarafında
@@ -7766,6 +7784,74 @@ gerekçesi buraya yazılır (geri açmak bir kararlık iş olmalı).
 Acceptance: sakin/saha rolüyle `app.*` girişi **403 + mağaza yönlendirmesi**
 (canlı yığında ölçülür, birim testi yetmez); yönetici + denetçi girer;
 `panel.*` etkilenmez; kapılar.
+
+Notes (2026-08-04) — **KAPSAM DARALDI; KAPI SUNUCUDA, CANLI ÖLÇÜLDÜ.**
+
+**CANLI ÖLÇÜM** (gerçek `next start` + gerçek API; birim testi değil):
+
+| Rol | `app.*` girişi | Hata kodu | Mesaj |
+|---|---|---|---|
+| yönetici | **200** | — | — |
+| sakin | **403** | `mobil_uygulama` | "…Yönetio mobil uygulamasında çalışır" |
+| güvenlik | **403** | `mobil_uygulama` | aynı |
+| tesis görevlisi | **403** | `mobil_uygulama` | aynı |
+| yönetici → `panel.*` | **403** | `forbidden` | "panel yalnızca platform yöneticisi" |
+
+**DENETÇİ UÇTAN UCA ÇALIŞTI** (aynı koşumda, yönetici hesabıyla açılan
+gerçek bir denetçi ile): giriş **200** · `/` → **`/raporlar`** · `/raporlar`
+200 · `/transparency` 200 · `/profil` 200 · `/finans` → `/raporlar` ·
+`/users` → `/raporlar` · `/dashboard` → `/raporlar`. Sunucu HTML'indeki menü
+**tam 4 bağlantı** (Rapor motoru, Şeffaflık, Profilim, KVKK). Rapor **gerçek
+API'den üretildi** (`POST /raporlar/borc_alacak` → 200) ve aynı oturumda
+**yazma denemesi 403** (`POST /finans/hareketler`).
+
+**"YAKINDA" DEMEK YANLIŞ OLURDU.** Mevcut kapı bilinmeyen rollere "web
+çalışma alanı henüz hazır değil" diyordu. Sakin/güvenlik/saha için bu bir
+**yalan** olurdu: onlar için web çalışma alanı *planlanmıyor*. Ayrı bir
+cümle eklendi (7 dil) ve `guvenlik_amiri` "yakında"da **kaldı** — onun
+mobil ekran seti de yok, mağazaya yollamak da yanlış olurdu.
+
+**MAĞAZA BAĞLANTISI UYDURULMADI.** Uygulama henüz yayında değil (P118 Mac
+derlemesinde bekliyor). `applicationId`den Play adresi türetip yazmak
+bugün **404'e giden bir söz** olurdu; App Store için sayısal kimlik ise
+hiç yok. Bağlantılar `NEXT_PUBLIC_PLAY_URL` / `NEXT_PUBLIC_APPSTORE_URL`
+ile gelir ve **yalnız tanımlıysa** çizilir. Yayına çıkınca yapılacak tek
+şey bu ikisini tanımlamaktır — **kod değişikliği yok**. *(Kerem'in işi;
+P11 listesine yazıldı.)*
+
+**İSTEMCİ METNE DEĞİL KODA BAKIYOR:** 403 gövdesinde `code:
+"mobil_uygulama"` dönüyor ve giriş ekranı mağaza bağlantılarını buna göre
+çiziyor. Metne bakmak, dil değişince sessizce bozulurdu.
+
+**MUTASYON DENETİMİ BİR TASARIM HATASI BULDU.** Karar (hangi mesaj?) iki
+giriş rotasına **kopyalanmıştı** ve testler kaynakta metin arıyordu:
+telefon rotasındaki dalı ölü bir dala çevirdiğimde **hiçbir test düşmedi**
+— metin hâlâ kaynaktaydı. Kural tek bir saf fonksiyona (`girisRedKarari`)
+taşındı, davranışla test edildi; aynı mutasyon şimdi **düşüyor**.
+
+**SAYFALAR PARK EDİLDİ, SİLİNMEDİ** — 10 sayfa (Aidatım, Taleplerim,
+Kurallar, Etkinlikler, Rezervasyonlarım, Ziyaretçiler, Kargolar,
+Görevlerim, Duyurular, Yönetim iletişim) kod tabanında duruyor; rol
+listeleri boşaldı. Boş listeyi **silmemek** bilinçli: sınıflandırılmamış
+rota middleware kapısından muaf olurdu (P126.2). Karar ve geri alma yolu
+`docs/app-web-bosluk-tablosu.md` §6'ya yazıldı.
+
+**İKİ KATMAN, İKİSİ DE ÖLÇÜLDÜ:** giriş kapısı (oturum hiç kurulmaz) +
+middleware rol kapısı (elinde geçerli çerez kalmış biri için ikinci
+savunma) + menünün boş çizilmesi (üçüncü).
+
+**`/olaylar`DAN `security` ÇIKARILDI:** olayı güvenlik **mobilde** üretir,
+yönetim burada okur. Sayfa yönetim görünümü olarak duruyor.
+
+**BULUNAN AMA BU MADDEDE DÜZELTİLMEYEN ÇIRÇIR:**
+`rezervasyon-kvkk.dom.test.ts` tam koşumda bir kez düştü, tek başına ve
+ikinci tam koşumda geçti. Kök neden okundu: test `findAllByRole` ile
+kutuların **var olmasını** bekliyor ama `checked` durumunun sunucudan
+gelen değere göre **güncellenmesini** beklemiyor (yarış). Kodla ilgisi
+yok; ayrı bir commit'te düzeltilecek.
+
+KAPILAR: `tsc` temiz · `vitest` **506 test** (+13) · `npm run build` ✓ ·
+canlı sürüş yukarıda.
 
 ### P130 — P0 yetki hataları: kim kimi açabilir + denetçiyi yönetici açar
 Status: BITTI · Depends-on: —

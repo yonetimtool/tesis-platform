@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import type { ApiError } from "@/lib/types";
 
 import { DilSecici } from "@/components/DilSecici";
+import { MAGAZA_ANDROID, MAGAZA_IOS } from "@/lib/config";
 import { useT } from "@/lib/i18n/kullan";
 import { telefonGiris, telefonHatasi, telefonNormalle } from "@/lib/telefon";
 import type { Yuzey } from "@/lib/yuzey";
@@ -54,6 +55,7 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [magazaGoster, setMagazaGoster] = useState(false);
   const [loading, setLoading] = useState(false);
 
   // Mount: saklanmış tesis+e-posta varsa ÖN-DOLDUR + kutuyu işaretle. Parola
@@ -104,6 +106,7 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setMagazaGoster(false);
     // TELEFON DOGRULAMASI ISTEMCIDE (P123): eksik/hatali numarayla istek
     // gondermek sunucudan anlasilmaz bir 401 aldirirdi ("numara mi parola
     // mi yanlis?" — sunucu adimi bilincli olarak sizdirmiyor).
@@ -131,6 +134,11 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
         // Sunucu metni ONCE (tur 14'ten beri istegin dilinde gelir); yoksa
         // panel sozlugunden genel metin.
         setError(data?.error?.message ?? t("girisBasarisiz"));
+        // (P129) MOBIL-YALNIZ ROL: sunucu 403 + `mobil_uygulama` kodu
+        // doner. Magaza baglantilari ancak TANIMLIYSA cizilir (bkz.
+        // lib/config.ts) — uygulama yayinda degilken 404'e giden bir
+        // baglanti vermektense hic vermemek dogru.
+        setMagazaGoster(data?.error?.code === "mobil_uygulama");
         return;
       }
       // Başarılı giriş: işaretliyse bilgileri sakla, değilse temizle.
@@ -321,6 +329,35 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
                 className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
               >
                 {error}
+              </motion.p>
+            )}
+
+            {magazaGoster && (MAGAZA_ANDROID || MAGAZA_IOS) && (
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex gap-3 text-sm"
+              >
+                {MAGAZA_ANDROID && (
+                  <a
+                    className="text-brand-teal underline"
+                    href={MAGAZA_ANDROID}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {t("girisMagazaAndroid")}
+                  </a>
+                )}
+                {MAGAZA_IOS && (
+                  <a
+                    className="text-brand-teal underline"
+                    href={MAGAZA_IOS}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {t("girisMagazaIos")}
+                  </a>
+                )}
               </motion.p>
             )}
 

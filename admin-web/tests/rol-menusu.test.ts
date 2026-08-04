@@ -146,12 +146,36 @@ describe("MENUDEKI HER ROTA O ROLUN ACABILDIGI ROTADIR", () => {
     // Bu satir bir ORNEK degil KANIT: kural elle degil olcumle kondu.
     expect(erisenRoller("GET /vehicle-passes")).not.toContain("yonetici");
     expect(rotaRoldeGorunur("/arac-gecisleri", "yonetici")).toBe(false);
-    expect(rotaRoldeGorunur("/arac-gecisleri", "security")).toBe(true);
+    // (P129) `security` artik `app.*`ta DEGIL; sayfa yalniz `admin`e
+    // acik kaldi (dogrulama icin). Uc kurali degismedi — YUZEY degisti.
+    expect(rotaRoldeGorunur("/arac-gecisleri", "security")).toBe(false);
+    expect(rotaRoldeGorunur("/arac-gecisleri", "admin")).toBe(true);
   });
 
-  it("`aidatim` YALNIZ sakine — `/me/dues` digerlerine kapali", () => {
-    expect(erisenRoller("GET /me/dues")).toEqual(["resident"]);
-    expect(ROTA_ROLLERI["/aidatim"]).toEqual(["resident"]);
+  it("(P129) PARK EDILEN sayfalar HICBIR role gorunmez", () => {
+    // Sayfalar duruyor ama `app.*` yalniz yonetici + denetci yuzeyi.
+    // Bos liste, "sayfa yok" ile karistirilmasin diye SILINMEDI.
+    const park = [
+      "/aidatim", "/taleplerim", "/kurallar", "/etkinlikler",
+      "/rezervasyonlarim", "/ziyaretciler", "/kargolar", "/gorevlerim",
+      "/duyurular", "/yonetim-iletisim",
+    ];
+    for (const rota of park) {
+      expect(ROTA_ROLLERI[rota], rota).toEqual([]);
+      for (const rol of ["resident", "security", "tesis_gorevlisi", "yonetici", "denetci", "admin"]) {
+        expect(rotaRoldeGorunur(rota, rol), `${rota}/${rol}`).toBe(false);
+      }
+    }
+  });
+
+  it("(P129) DENETCI: raporlari gorur, para YAZAN sayfalari GORMEZ", () => {
+    for (const r of ["/raporlar", "/transparency", "/profil", "/kvkk"]) {
+      expect(rotaRoldeGorunur(r, "denetci"), r).toBe(true);
+    }
+    // `/finans` ve `/dues` YAZMA formlari tasir; denetciye gosterilmez.
+    for (const r of ["/finans", "/dues", "/users", "/tasks", "/kameralar"]) {
+      expect(rotaRoldeGorunur(r, "denetci"), r).toBe(false);
+    }
   });
 });
 
@@ -160,14 +184,8 @@ describe("rol calisma alanlari birbirine karismaz", () => {
   const sakinSayfalari = ["/aidatim", "/taleplerim", "/rezervasyonlarim"];
   const kapiSayfalari = ["/ziyaretciler", "/kargolar", "/arac-gecisleri"];
 
-  it("SAKIN yonetim sayfalarini GORMEZ", () => {
-    for (const r of yonetimSayfalari) {
-      expect(rotaRoldeGorunur(r, "resident"), r).toBe(false);
-    }
-  });
-
-  it("SAKIN kapi (guvenlik) sayfalarini GORMEZ", () => {
-    for (const r of kapiSayfalari) {
+  it("SAKIN hicbir sayfa GORMEZ (P129: mobil-yalniz)", () => {
+    for (const r of [...yonetimSayfalari, ...kapiSayfalari, ...sakinSayfalari]) {
       expect(rotaRoldeGorunur(r, "resident"), r).toBe(false);
     }
   });
@@ -178,31 +196,25 @@ describe("rol calisma alanlari birbirine karismaz", () => {
     }
   });
 
-  it("TESIS GOREVLISI yalniz kendi setini gorur", () => {
-    const gorunen = TESIS_ROTALARI.filter((r) =>
-      rotaRoldeGorunur(r, "tesis_gorevlisi"),
-    );
-    expect([...gorunen].sort()).toEqual(
-      [
-        "/dis-hizmetler",
-        "/duyurular",
-        "/gorevlerim",
-        "/kvkk",
-        "/profil",
-        "/yonetim-iletisim",
-      ].sort(),
-    );
+  it("(P129) SAHA ROLLERI `app.*`ta HICBIR sayfa gormez", () => {
+    // Mobil-yalniz roller: giriste zaten kesiliyorlar (bkz. login
+    // rotalari). Menu tarafinda da bos kalmalari, kapinin delinmesi
+    // hâlinde ikinci bir savunmadir.
+    for (const rol of ["security", "tesis_gorevlisi", "resident"]) {
+      const gorunen = TESIS_ROTALARI.filter((r) => rotaRoldeGorunur(r, rol));
+      expect(gorunen, rol).toEqual([]);
+    }
   });
 
-  it("HER TESIS ROLU en az bir sayfa gorur (bos kabuk YOK)", () => {
-    for (const rol of ["yonetici", "admin", "resident", "security", "tesis_gorevlisi"]) {
+  it("YUZEYE GIREN HER ROL en az bir sayfa gorur (bos kabuk YOK)", () => {
+    for (const rol of ["yonetici", "admin", "denetci"]) {
       const n = TESIS_ROTALARI.filter((r) => rotaRoldeGorunur(r, rol)).length;
       expect(n, rol).toBeGreaterThan(3);
     }
   });
 
-  it("PROFIL ve KVKK her tesis rolunde var (kisisel veri her zaman erisilebilir)", () => {
-    for (const rol of ["yonetici", "admin", "resident", "security", "tesis_gorevlisi"]) {
+  it("PROFIL ve KVKK yuzeye giren her rolde var (kisisel veri her zaman erisilebilir)", () => {
+    for (const rol of ["yonetici", "admin", "denetci"]) {
       expect(rotaRoldeGorunur("/profil", rol), rol).toBe(true);
       expect(rotaRoldeGorunur("/kvkk", rol), rol).toBe(true);
     }
