@@ -261,7 +261,7 @@ panel.xn--ynetiyor-n4a.com
 |---|---|
 | `yonetio.site`, `www.` | Tanıtım sayfası (statik) + `/gizlilik`, `/kosullar` → admin-web |
 | `xn--ynetiyor-n4a.com`, `www.` | Aynısı (yeni birincil alan) |
-| `app.xn--ynetiyor-n4a.com` | Geçici "yakında" yer tutucu |
+| `app.xn--ynetiyor-n4a.com` | **Tesis çalışma alanı** (P126.1) — aynı `admin-web`, konaktan tesis yüzeyi |
 | `panel.yonetio.site`, `panel.xn--…` | admin-web (yönetim paneli) |
 | `api.yonetio.site` | FastAPI |
 | `storage.yonetio.site` | MinIO (imzalı URL konağı) |

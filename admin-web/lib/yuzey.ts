@@ -103,3 +103,46 @@ export function konakYuzeyi(host: string | null | undefined): Yuzey {
 export function kokRota(yuzey: Yuzey): string {
   return yuzey === "platform" ? "/tenants" : "/dashboard";
 }
+
+// --------------------------------------------------------------------------- #
+// ROL x YUZEY KAPISI (P126.1)
+//
+// `panel.*` platform sahibinindir; `app.*` tesis rollerinindir. Bu kapi bir
+// UX kapisidir, GUVENLIK SINIRI DEGIL: gercek yetki her istekte backend
+// RBAC'ta zorlanir (contracts/auth.md §4, 317 ucluk rol matrisi). Ama yanlis
+// yuzeye giren kullaniciya isini yapamayacagi bir kabuk gostermek, "sistem
+// bozuk" izlenimi uretir — kapi bunu onler.
+
+/** Platform yuzeyine girebilen roller. */
+const PLATFORM_ROLLERI = new Set(["admin"]);
+
+/**
+ * Tesis yuzeyine (`app.*`) girebilen roller.
+ *
+ * BUGUN YALNIZ `yonetici` ve `admin`. Gerekce: `app.*`in bugunku sayfa
+ * kumesi paneldan devralinan 25 TESIS sayfasidir ve hepsi YONETICI isidir.
+ * Sakin/guvenlik/tesis gorevlisi icin gereken sayfalar (rezervasyon, site
+ * kurallari, ziyaretci, kargo, gorevlerim...) HENUZ YOK — bkz.
+ * `docs/app-web-bosluk-tablosu.md`, 13 eksik modul.
+ *
+ * O rolleri simdi iceri almak, girer girmez her yerde 403 goren bir ekran
+ * vermek olurdu; "yakinda" demek daha durust. Her rol, KENDI sayfalari
+ * landing ettikce (P126.3-.6) bu kumeye eklenir.
+ */
+const TESIS_ROLLERI = new Set(["yonetici", "admin"]);
+
+/** [rol] bu [yuzey]e girebilir mi? */
+export function rolYuzeyeGirebilir(rol: string | null, yuzey: Yuzey): boolean {
+  if (!rol) return false;
+  return yuzey === "platform"
+    ? PLATFORM_ROLLERI.has(rol)
+    : TESIS_ROLLERI.has(rol);
+}
+
+/** Henuz `app.*`a alinmamis tesis rolleri (giriste "yakinda" mesaji icin). */
+export function tesisYuzeyiBekleyenRol(rol: string | null): boolean {
+  return (
+    !!rol &&
+    ["security", "tesis_gorevlisi", "resident", "guvenlik_amiri"].includes(rol)
+  );
+}

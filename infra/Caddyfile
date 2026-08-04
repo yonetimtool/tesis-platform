@@ -95,16 +95,19 @@
 	}
 }
 
-# --- app. — GECICI yer tutucu (P40-P42'ye kadar) -------------------------- #
-# DNS'te A kaydi vardi, site blogu YOKTU: SNI eslesmeyince TLS el sikismasi
-# duser ve ziyaretci ERR_SSL_PROTOCOL_ERROR gorur. Bir adres yayinlandiysa,
-# "henuz hazir degil" demek bile baglantinin KOPMUS gorunmesinden iyidir.
+# --- app. — TESIS CALISMA ALANI (P126.1) ---------------------------------- #
+# Artik yer tutucu DEGIL: ayni `admin-web` uygulamasi buradan da sunulur ve
+# uygulama KONAKTAN hangi yuzeyde oldugunu anlar (lib/yuzey.ts):
+#   app.*   -> TESIS yuzeyi  (tesis rolleri girer, tesis menusu cizilir)
+#   panel.* -> PLATFORM yuzeyi (yalniz platform sahibi)
+# Iki ayri dagitim YAPILMADI: ayni kod tabani, ayni oturum mantigi, tek imaj.
+# Ikinci bir Next surecini beslemek, ayni sayfalarin iki kopyasini bakimda
+# tutmak demekti.
 app.{$PORTAL_DOMAIN} {
 	import security_headers
 	header X-Frame-Options "DENY"
 	encode gzip zstd
-	root * /srv/portal/app
-	file_server
+	reverse_proxy admin-web:3000
 }
 
 # --- API ------------------------------------------------------------------ #

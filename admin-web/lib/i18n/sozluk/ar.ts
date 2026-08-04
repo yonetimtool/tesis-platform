@@ -174,6 +174,8 @@ export const ar: Sozluk = {
   girisYalnizAdmin: "لا يمكن تسجيل الدخول إلا لمشرف المنصة.",
   girisTesisSlug: "المنشأة (slug)",
   girisEposta: "البريد الإلكتروني",
+  girisPanelPlatformIcin: "لوحة الإدارة مخصّصة لمسؤول المنصّة فقط. تستخدم حسابات المجمّع app.yönetiyor.com أو تطبيق الجوال.",
+  girisRolYakinda: "مساحة العمل على الويب لهذا النوع من الحسابات ليست جاهزة بعد. يُرجى استخدام تطبيق الجوال حاليًا.",
   girisParola: "كلمة المرور",
   girisBeniHatirla: "تذكّرني",
   girisYap: "تسجيل الدخول",

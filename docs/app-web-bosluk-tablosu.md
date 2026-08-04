@@ -102,7 +102,7 @@ P126 **tek oturumluk bir iş değil**. Ölçülebilir parçalara bölünüşü:
 
 | Alt-adım | İçerik | Büyüklük |
 |---|---|---|
-| P126.1 | `app.*` iskeleti: rota grubu, rol kapısı, kabuk/menü, Caddy proxy | orta |
+| P126.1 | `app.*` iskeleti: rol×yüzey kapısı, kabuk/menü, Caddy proxy | ✅ **BİTTİ** |
 | P126.2 | Var olan 25 sayfanın rol kapılı taşınması | büyük |
 | P126.3 | sakin'in 5 eksik sayfası | büyük |
 | P126.4 | güvenlik'in 4 eksik sayfası | orta |

@@ -16,7 +16,9 @@ import {
   PLATFORM_ROTALARI,
   TESIS_ROTALARI,
   konakYuzeyi,
+  rolYuzeyeGirebilir,
   rotaYuzeyi,
+  tesisYuzeyiBekleyenRol,
 } from "@/lib/yuzey";
 
 /** `AppShell` icindeki menu listesinin href'leri (kaynaktan okunur). */
@@ -117,13 +119,74 @@ describe("AppShell menuyu YUZEYDEN turetiyor", () => {
 });
 
 describe("panel giris kapisi — TESIS ROLU PANELE GIREMEZ", () => {
-  it("login rotasi `admin` disindaki rolu 403 ile reddeder", () => {
-    // Sunucu tarafi zorlama: menuyu gizlemek yetkilendirme DEGILDIR, ama
-    // bu kapi zaten girisin kendisini kesiyor. Davranis kilitleniyor —
-    // P126 `app.*`i actiginda bu kapinin YALNIZ panel icin gecerli
-    // kalmasi gerekecek ve o zaman bu test degistirilmeli.
+  // NOT: bu blogun ilk hali kapinin ICINI (`!== "admin"` sabiti) olcuyordu
+  // ve P126.1 kapiyi yuzeye baglayinca DUSTU — hakli olarak. Uygulamayi
+  // degil DAVRANISI olcmek gerekiyordu: "tesis rolu panele giremez".
+  it("hicbir tesis rolu PLATFORM yuzeyine giremez", () => {
+    for (const r of ["yonetici", "security", "tesis_gorevlisi", "resident", "guvenlik_amiri"]) {
+      expect(rolYuzeyeGirebilir(r, "platform"), r).toBe(false);
+    }
+  });
+
+  it("giris rotasi kapiyi UYGULUYOR ve 403 donuyor", () => {
     const kaynak = readFileSync("app/api/auth/login/route.ts", "utf8");
-    expect(kaynak).toContain('tokenRole(tokens.access_token) !== "admin"');
+    expect(kaynak).toContain("rolYuzeyeGirebilir");
     expect(kaynak).toContain("403");
+  });
+});
+
+describe("rol x yuzey kapisi (P126.1)", () => {
+  it("PLATFORM yuzeyine yalniz `admin` girer", () => {
+    expect(rolYuzeyeGirebilir("admin", "platform")).toBe(true);
+    for (const r of ["yonetici", "security", "tesis_gorevlisi", "resident", "guvenlik_amiri"]) {
+      expect(rolYuzeyeGirebilir(r, "platform"), r).toBe(false);
+    }
+  });
+
+  it("TESIS yuzeyine `yonetici` girer, `admin` de girebilir", () => {
+    // `admin`in app.*a girebilmesi bilincli: bir tesisin gordugu ekrani
+    // dogrulamak icin oraya bakabilmeli.
+    expect(rolYuzeyeGirebilir("yonetici", "tesis")).toBe(true);
+    expect(rolYuzeyeGirebilir("admin", "tesis")).toBe(true);
+  });
+
+  it("SAYFALARI HENUZ OLMAYAN roller tesis yuzeyine ALINMAZ", () => {
+    // Girer girmez her yerde 403 goren bir ekran vermek yerine "yakinda"
+    // demek daha durust (bkz. docs/app-web-bosluk-tablosu.md — 13 eksik
+    // modul). Her rol KENDI sayfalari landing ettikce eklenir.
+    for (const r of ["security", "tesis_gorevlisi", "resident", "guvenlik_amiri"]) {
+      expect(rolYuzeyeGirebilir(r, "tesis"), r).toBe(false);
+      expect(tesisYuzeyiBekleyenRol(r), r).toBe(true);
+    }
+  });
+
+  it("ROLSUZ/bilinmeyen token hicbir yuzeye giremez", () => {
+    expect(rolYuzeyeGirebilir(null, "platform")).toBe(false);
+    expect(rolYuzeyeGirebilir(null, "tesis")).toBe(false);
+    expect(rolYuzeyeGirebilir("uydurma_rol", "tesis")).toBe(false);
+  });
+
+  it("`admin` BEKLEYEN rol sayilmaz (yanlis mesaj gitmesin)", () => {
+    expect(tesisYuzeyiBekleyenRol("admin")).toBe(false);
+    expect(tesisYuzeyiBekleyenRol("yonetici")).toBe(false);
+  });
+
+  it("giris rotasi kapiyi KONAKTAN turetiyor (sabit rol karsilastirmasi YOK)", () => {
+    // Eski hal `!== "admin"` diye sabit bir karsilastirmaydi; app.* acilinca
+    // tesis rollerini de reddederdi.
+    const kaynak = readFileSync("app/api/auth/login/route.ts", "utf8");
+    expect(kaynak).toContain('konakYuzeyi(req.headers.get("host"))');
+    expect(kaynak).toContain("rolYuzeyeGirebilir(rol, yuzey)");
+    expect(kaynak).not.toContain('!== "admin"');
+  });
+});
+
+describe("Caddy — app.* artik uygulamaya proxy'leniyor", () => {
+  it("app. blogu `admin-web:3000`e gider (yer tutucu DEGIL)", () => {
+    const caddy = readFileSync("../infra/Caddyfile", "utf8");
+    const blok = caddy.slice(caddy.indexOf("app.{$PORTAL_DOMAIN} {"));
+    const govde = blok.slice(0, blok.indexOf("\n}"));
+    expect(govde).toContain("reverse_proxy admin-web:3000");
+    expect(govde).not.toContain("/srv/portal/app");
   });
 });

@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { istekMetni } from "@/lib/i18n/istek-metni";
 
 import { backendLogin, loginResponse } from "@/lib/backend";
+import {
+  konakYuzeyi,
+  rolYuzeyeGirebilir,
+  tesisYuzeyiBekleyenRol,
+} from "@/lib/yuzey";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -47,17 +52,27 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const tokens = data as { access_token: string; refresh_token: string };
 
-  // Panel YALNIZ platform admini icindir (contracts/auth.md §4) — diger roller
-  // (yonetici dahil) mobil uygulamayi kullanir; cookie SET EDILMEZ.
-  if (tokenRole(tokens.access_token) !== "admin") {
+  // (P126.1) KAPI ARTIK YUZEYE GORE.
+  //
+  // `panel.*` platform sahibinindir; `app.*` tesis rollerinindir. Ayni Next
+  // uygulamasi iki alan adindan sunuldugu icin karar KONAKTAN verilir
+  // (bkz. infra/Caddyfile ve lib/yuzey.ts).
+  //
+  // BU BIR UX KAPISIDIR, GUVENLIK SINIRI DEGIL: gercek yetki her istekte
+  // backend RBAC'ta zorlanir (contracts/auth.md §4). Ama yanlis yuzeye
+  // giren kullaniciya isini yapamayacagi bir kabuk gostermek "sistem bozuk"
+  // izlenimi uretir — kapi bunu onler ve NEDENINI soyler.
+  const rol = tokenRole(tokens.access_token);
+  const yuzey = konakYuzeyi(req.headers.get("host"));
+  if (!rolYuzeyeGirebilir(rol, yuzey)) {
+    // Sayfalari HENUZ olmayan tesis rolleri icin ayri bir cumle: "panel
+    // yalnizca platform icindir" demek onlari yanlis yere yollardi.
+    const anahtar =
+      yuzey === "tesis" && tesisYuzeyiBekleyenRol(rol)
+        ? "girisRolYakinda"
+        : "girisPanelPlatformIcin";
     return NextResponse.json(
-      {
-        error: {
-          code: "forbidden",
-          message:
-            "Yonetim paneli yalnizca platform admini icindir. Yonetici ve saha hesaplari mobil uygulamayi kullanir.",
-        },
-      },
+      { error: { code: "forbidden", message: istekMetni(req, anahtar) } },
       { status: 403 },
     );
   }

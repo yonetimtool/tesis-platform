@@ -192,6 +192,8 @@ export const tr = {
   girisYalnizAdmin: "Yalnızca platform admini giriş yapabilir.",
   girisTesisSlug: "Tesis (slug)",
   girisEposta: "E-posta",
+  girisPanelPlatformIcin: "Yönetim paneli yalnızca platform yöneticisi içindir. Tesis hesapları app.yönetiyor.com adresini veya mobil uygulamayı kullanır.",
+  girisRolYakinda: "Bu hesap türü için web çalışma alanı henüz hazır değil. Şimdilik mobil uygulamayı kullanın.",
   girisParola: "Parola",
   girisBeniHatirla: "Beni hatırla",
   girisYap: "Giriş yap",

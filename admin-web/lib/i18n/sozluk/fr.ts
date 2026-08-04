@@ -174,6 +174,8 @@ export const fr: Sozluk = {
   girisYalnizAdmin: "Seul l'administrateur de la plateforme peut se connecter.",
   girisTesisSlug: "Établissement (slug)",
   girisEposta: "E-mail",
+  girisPanelPlatformIcin: "Le panneau d’administration est réservé à l’administrateur de la plateforme. Les comptes de site utilisent app.yönetiyor.com ou l’application mobile.",
+  girisRolYakinda: "L’espace de travail web pour ce type de compte n’est pas encore prêt. Utilisez l’application mobile pour l’instant.",
   girisParola: "Mot de passe",
   girisBeniHatirla: "Se souvenir de moi",
   girisYap: "Se connecter",

@@ -7298,6 +7298,37 @@ uygulanır. i18n: 7 dil.
 Acceptance: dört rol de `app.*`ta giriş yapıp günlük akışlarını
 tamamlayabiliyor; rol yalıtımı sunucu tarafında test edilmiş; kapılar.
 
+Notes (2026-08-04) — **P126.1 (iskelet) BİTTİ.** `app.*` artık yer tutucu
+değil: **aynı `admin-web`** oradan da sunuluyor ve uygulama **konaktan**
+hangi yüzeyde olduğunu anlıyor. İkinci bir dağıtım yapılmadı — ayrı bir
+Next süreci, aynı sayfaların iki kopyasını bakımda tutmak demekti.
+
+**GİRİŞ KAPISI ARTIK YÜZEYE BAĞLI.** Eskiden `!== "admin"` diye sabit bir
+karşılaştırmaydı ve `app.*` açılınca tesis rollerini de reddederdi. Şimdi:
+`panel.*` → yalnız `admin`; `app.*` → `yonetici` (+ `admin`).
+
+**SAKİN/GÜVENLİK/GÖREVLİ HENÜZ ALINMADI — bilinçli.** `app.*`ın bugünkü
+sayfa kümesi panelden devralınan 25 **yönetici** sayfasıdır; o rollerin
+ihtiyaç duyduğu 13 modül (rezervasyon, site kuralları, ziyaretçi, kargo,
+görevlerim…) **yok**. Şimdi içeri almak, girer girmez her yerde 403 gören
+bir ekran vermek olurdu; "yakında" demek daha dürüst ve ayrı bir mesajla
+söyleniyor (7 dil). Her rol **kendi sayfaları landing ettikçe** eklenecek
+(P126.3–.6).
+
+**BİR ÖNCEKİ TURUN TESTİ HAKLI OLARAK DÜŞTÜ:** P125'te yazdığım kapı testi
+uygulamanın **içini** (`!== "admin"` sabiti) ölçüyordu; kapı yüzeye
+bağlanınca düştü. Davranışı ölçecek biçimde yeniden yazıldı —
+"tesis rolü platform yüzeyine giremez".
+
+**MUTASYON 4/4:** sakini `app.*`a al → düştü · yöneticiyi platforma al →
+düştü · giriş kapısını sabit karşılaştırmaya döndür → düştü · Caddy `app.`
+bloğunu yer tutucuya döndür → düştü. *(Dördüncüsü ilk denemede yanlış
+bloğa uygulanmıştı — panel de `admin-web`e gidiyor; doğru hedefle
+tekrarlandı.)*
+
+KAPILAR: `tsc` temiz · `vitest` **362 test** (+20) · `npm run build` ✓ ·
+`caddy validate` geçerli · `depo-alan-adi` 0.
+
 ### P127 — www.yönetiyor.com: tanıtım sitesi (SEO)
 Status: ACIK · Depends-on: P126
 Scope: Geçici statik açılış sayfası (P120) gerçek tanıtım sitesiyle
