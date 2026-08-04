@@ -143,12 +143,12 @@ describe("rol x yuzey kapisi (P126.1)", () => {
     }
   });
 
-  it("TESIS yuzeyine `yonetici`, `resident` ve `admin` girer", () => {
+  it("TESIS yuzeyine `yonetici`, `resident`, `security` ve `admin` girer", () => {
     // `resident` P126.3 sonunda eklendi: gunluk isini web'den yapabilecegi
     // set tamamlandi (aidat, talep, duyuru, kural, etkinlik, rezervasyon,
     // KVKK, profil). `admin`in girebilmesi bilincli: bir tesisin gordugu
     // ekrani dogrulamak icin oraya bakabilmeli.
-    for (const r of ["yonetici", "resident", "admin"]) {
+    for (const r of ["yonetici", "resident", "security", "admin"]) {
       expect(rolYuzeyeGirebilir(r, "tesis"), r).toBe(true);
     }
   });
@@ -157,14 +157,16 @@ describe("rol x yuzey kapisi (P126.1)", () => {
     // Girer girmez her yerde 403 goren bir ekran vermek yerine "yakinda"
     // demek daha durust. `security`/`tesis_gorevlisi` icin ziyaretci,
     // kargo, ihlal, arac gecisi ve gorevlerim sayfalari HENUZ YOK.
-    for (const r of ["security", "tesis_gorevlisi", "guvenlik_amiri"]) {
+    for (const r of ["tesis_gorevlisi", "guvenlik_amiri"]) {
       expect(rolYuzeyeGirebilir(r, "tesis"), r).toBe(false);
       expect(tesisYuzeyiBekleyenRol(r), r).toBe(true);
     }
   });
 
-  it("SAKIN artik BEKLEYEN rol DEGIL", () => {
+  it("SAKIN ve GUVENLIK artik BEKLEYEN rol DEGIL", () => {
+    // Ikisinin de kendi seti tamamlandi (P126.3 / P126.4).
     expect(tesisYuzeyiBekleyenRol("resident")).toBe(false);
+    expect(tesisYuzeyiBekleyenRol("security")).toBe(false);
   });
 
   it("ROLSUZ/bilinmeyen token hicbir yuzeye giremez", () => {

@@ -7403,6 +7403,36 @@ dilimlerle birlikte P126.3 toplam **13/13**.
 KAPILAR: `tsc` temiz · `vitest` **400 test** · `npm run build` ✓ ·
 depo kapıları 0.
 
+Notes (2026-08-04, P126.4) — **GÜVENLİK ÇALIŞMA ALANI BİTTİ; `security`
+`app.*`a ALINDI.** Dört sayfa: Ziyaretçiler, Kargolar, Olaylar, Araç
+geçişleri (+ Profil).
+
+**OLAY KAYNAĞI `manuel` SABİTLENDİ, kullanıcıya seçtirilmedi.** `kamera`
+ANPR/görüntü işlemeden, `devriye` tur akışından gelir. Kaynak seçtirmek,
+otomatik üretilmiş bir kaydı **elle taklit etmeye** izin vermek olurdu —
+olay kaydının kanıt değeri tam olarak buradan gelir.
+
+**ARAÇ GEÇİŞLERİNDE YAZMA YOK** (BFF'te de yalnız `GET`): kayıtlar ANPR ile
+otomatik oluşur (P16); elle plaka yazmak, otomatik kayıtla **çelişen ikinci
+bir gerçek** üretir ve "hangisi doğru?" sorusunu operasyona bırakırdı.
+Ekranda bunun neden böyle olduğu **yazılı**.
+
+**ÇIKIŞ DÜĞMESİ YALNIZ İÇERİDEKİ ziyaretçide** — çıkmış birine tekrar çıkış
+yaptırmak kaydı ikinci kez damgalamak olurdu.
+
+**DAİRE NUMARASIYLA KAYIT** (ziyaretçi + kargo): kapıdaki görevli daire
+**numarasını** bilir, kaydın kimliğini değil.
+
+**`tesis_gorevlisi` HÂLÂ DIŞARIDA** — "görevlerim" ve daire erişim
+sayfaları yok (P126.6).
+
+**MUTASYON:** bu dilimde 5/5 (çıkmış ziyaretçide çıkış düğmesi · eksik
+alanla gönder · olay kaynağını değiştir · araç geçişlerine yazma ekle ·
+kargo durumunu ham enum çiz).
+
+KAPILAR: `tsc` temiz · `vitest` **414 test** · `npm run build` ✓ ·
+depo kapıları 0.
+
 ### P127 — www.yönetiyor.com: tanıtım sitesi (SEO)
 Status: ACIK · Depends-on: P126
 Scope: Geçici statik açılış sayfası (P120) gerçek tanıtım sitesiyle

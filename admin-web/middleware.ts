@@ -113,5 +113,8 @@ export const config = {
     "/rezervasyonlarim/:path*",
     "/kvkk/:path*",
     "/ziyaretciler/:path*",
+    "/kargolar/:path*",
+    "/olaylar/:path*",
+    "/arac-gecisleri/:path*",
   ],
 };

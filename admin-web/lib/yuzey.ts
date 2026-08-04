@@ -77,6 +77,9 @@ export const TESIS_ROTALARI = [
   "/kvkk",
   // (P126.4) Guvenligin kapi ekranlari.
   "/ziyaretciler",
+  "/kargolar",
+  "/olaylar",
+  "/arac-gecisleri",
 ] as const;
 
 /**
@@ -136,12 +139,13 @@ const PLATFORM_ROLLERI = new Set(["admin"]);
  * KENDI sayfalari hazir oldugunda iceri almak, girer girmez her yerde 403
  * goren bir ekran vermemek icindi.
  *
- * `security` ve `tesis_gorevlisi` HALA DISARIDA: ziyaretci, kargo, ihlal,
- * arac gecisi ve gorevlerim sayfalari yok (bkz.
- * `docs/app-web-bosluk-tablosu.md`). Onlar da P126.4-.6'da kendi setleri
- * bitince eklenecek.
+ * `security` (P126.4 sonunda) EKLENDI: kapi seti tamamlandi —
+ * Ziyaretciler, Kargolar, Olaylar, Arac gecisleri (+ Profil).
+ *
+ * `tesis_gorevlisi` HALA DISARIDA: "gorevlerim" ve daire erisim sayfalari
+ * yok (bkz. `docs/app-web-bosluk-tablosu.md`); P126.6'da eklenecek.
  */
-const TESIS_ROLLERI = new Set(["yonetici", "admin", "resident"]);
+const TESIS_ROLLERI = new Set(["yonetici", "admin", "resident", "security"]);
 
 /** [rol] bu [yuzey]e girebilir mi? */
 export function rolYuzeyeGirebilir(rol: string | null, yuzey: Yuzey): boolean {
@@ -154,6 +158,6 @@ export function rolYuzeyeGirebilir(rol: string | null, yuzey: Yuzey): boolean {
 /** Henuz `app.*`a alinmamis tesis rolleri (giriste "yakinda" mesaji icin). */
 export function tesisYuzeyiBekleyenRol(rol: string | null): boolean {
   return (
-    !!rol && ["security", "tesis_gorevlisi", "guvenlik_amiri"].includes(rol)
+    !!rol && ["tesis_gorevlisi", "guvenlik_amiri"].includes(rol)
   );
 }

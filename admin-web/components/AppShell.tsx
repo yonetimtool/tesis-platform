@@ -74,6 +74,9 @@ const LINKS: { href: string; anahtar: SozlukAnahtari; icon: IconName }[] = [
   { href: "/rezervasyonlarim", anahtar: "kabukRezervasyon", icon: "clock" },
   { href: "/kvkk", anahtar: "kabukKvkk", icon: "users" },
   { href: "/ziyaretciler", anahtar: "kabukZiyaretciler", icon: "users" },
+  { href: "/kargolar", anahtar: "kabukKargolar", icon: "box" },
+  { href: "/olaylar", anahtar: "kabukOlaylar", icon: "bell" },
+  { href: "/arac-gecisleri", anahtar: "kabukAracGecisleri", icon: "scan" },
   { href: "/taleplerim", anahtar: "kabukTaleplerim", icon: "chat" },
   { href: "/profil", anahtar: "kabukProfil", icon: "users" },
 ];
