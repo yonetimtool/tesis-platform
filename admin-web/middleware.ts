@@ -97,5 +97,7 @@ export const config = {
     "/support/:path*",
     "/tenants/:path*",
     "/transparency/:path*",
+    // --- P126.3 tesis calisma alani ---
+    "/profil/:path*",
   ],
 };

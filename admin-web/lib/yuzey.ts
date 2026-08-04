@@ -66,6 +66,8 @@ export const TESIS_ROTALARI = [
   "/complaints",
   "/notifications",
   "/yonetisim",
+  // (P126.3) Her tesis rolunun KENDI kaydi.
+  "/profil",
 ] as const;
 
 /**

@@ -85,6 +85,25 @@ Sakinin web'de hiçbir şeyi yok; `app.*`ın varlık sebebi büyük ölçüde bu
 |---|---|---|
 | `unit_access` | Daire erişim/anahtar kayıtları | KVKK kısıtları korunur |
 
+## 2b) SONRADAN ÇIKAN BULGU — 25 "var" sayfa YÖNETİCİ görünümüdür
+
+P126.3'e başlarken ölçüldü: sakinin kendi verisi backend'de **`/me/*`**
+altında (`/me/dues`, `/me/profile`, `/me/contact`, `/me/checkpoints`).
+Paneldeki `dues`, `complaints`, `announcements` sayfaları ise **yönetim**
+görünümleridir — tahakkuk oluşturur, başkasının talebini yönetir.
+
+Yani tablonun 1. bölümündeki "karşılığı var" ifadesi **yönetici için**
+doğru; sakin için o sayfaların **kendi görünümü** gerekiyor:
+
+| Sakinin ihtiyacı | Bugünkü panel sayfası | Gereken |
+|---|---|---|
+| Aidatım + ödeme | `dues` (tahakkuk **oluşturma**) | `/me/dues` üzerinden **kendi** borcu |
+| Talebim | `complaints` (hepsini yönetme) | kendi talepleri + yeni talep |
+| Duyurular | `announcements` (yazma) | salt-okuma listesi |
+
+**Sonuç:** sakin çalışma alanı 5 değil ~8 sayfadır. Bu, tablonun ilk
+tahminini düzeltir ve P126.3'ün neden "büyük" olduğunu açıklar.
+
 ## 3) MOBİL-ÖZEL — WEB'E GELMEZ (5)
 
 | Modül | Neden |
@@ -104,7 +123,7 @@ P126 **tek oturumluk bir iş değil**. Ölçülebilir parçalara bölünüşü:
 |---|---|---|
 | P126.1 | `app.*` iskeleti: rol×yüzey kapısı, kabuk/menü, Caddy proxy | ✅ **BİTTİ** |
 | P126.2 | Yüzey kapısı (middleware) — 25 sayfa `app.*`ta erişilir, panelde kesilir | ✅ **BİTTİ** |
-| P126.3 | sakin'in 5 eksik sayfası | büyük |
+| P126.3 | sakin'in eksik sayfaları — **Profil ✅**, kalan 4 + sakin görünümleri | büyük (sürüyor) |
 | P126.4 | güvenlik'in 4 eksik sayfası | orta |
 | P126.5 | yönetici'nin 3 eksik sayfası (`cameras` dâhil) | orta |
 | P126.6 | tesis görevlisi `unit_access` | küçük |

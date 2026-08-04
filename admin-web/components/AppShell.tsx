@@ -65,6 +65,9 @@ const LINKS: { href: string; anahtar: SozlukAnahtari; icon: IconName }[] = [
   // ne yapti" sorusunu yanitlar.
   { href: "/yetki", anahtar: "kabukYetki", icon: "users" },
   { href: "/settings", anahtar: "kabukAyarlar", icon: "gear" },
+  // (P126.3) Profil TESIS yuzeyinde: panelde platform sahibinin
+  // kendi kaydini yonetecegi bir yer YOK (o `admin` tek hesaptir).
+  { href: "/profil", anahtar: "kabukProfil", icon: "users" },
 ];
 
 function Icon({ name }: { name: IconName }) {
