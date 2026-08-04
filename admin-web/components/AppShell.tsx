@@ -221,7 +221,7 @@ function SidebarBody({
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex h-16 shrink-0 items-center border-b border-slate-200 px-5">
+      <div className="kart-kenar flex h-16 shrink-0 items-center border-b px-5">
         <Link href={kokHedef} aria-label="Yönetio" onClick={onNavigate}>
           <YonetioLogo size={26} />
         </Link>
@@ -236,20 +236,22 @@ function SidebarBody({
               href={l.href}
               onClick={onNavigate}
               aria-current={active ? "page" : undefined}
+              // (P132) Aktif oge MAVI tint — mobil alt barin aktif sekme
+              // dili. Tint %12, metin vurgu rengi: ikisi de token.
               className={`odak-ic group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
                 active
-                  ? "bg-brand-teal/10 font-medium text-brand-tealInk"
-                  : "text-slate-600 hover:bg-slate-100 hover:text-ink"
+                  ? "bg-accent-blue/12 font-medium text-accent-blue"
+                  : "text-metin-body hover:bg-yuzey-divider"
               }`}
             >
               {active && (
                 <motion.span
                   layoutId="nav-active-bar"
-                  className="absolute inset-y-1.5 start-0 w-1 rounded-e-full bg-brand-tealInk"
+                  className="absolute inset-y-1.5 start-0 w-1 rounded-e-full bg-primary"
                   transition={{ type: "spring", stiffness: 500, damping: 40 }}
                 />
               )}
-              <span className={active ? "text-brand-tealInk" : "text-slate-400 group-hover:text-slate-500"}>
+              <span className={active ? "text-accent-blue" : "text-metin-muted"}>
                 <Icon name={l.icon} />
               </span>
               <span className="truncate">{t(l.anahtar)}</span>
@@ -258,19 +260,19 @@ function SidebarBody({
         })}
       </nav>
 
-      <div className="shrink-0 space-y-2 border-t border-slate-200 px-3 py-4">
+      <div className="kart-kenar shrink-0 space-y-2 border-t px-3 py-4">
         <div className="flex flex-wrap gap-2">
           <ThemeToggle />
           <DilSecici />
         </div>
         <button
           onClick={logout}
-          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-start text-sm text-slate-700 transition hover:border-slate-400 hover:bg-slate-100"
+          className="kart-kenar w-full rounded-lg border bg-yuzey-card px-3 py-1.5 text-start text-sm text-metin-body transition hover:bg-yuzey-divider"
         >
           {t("kabukCikisYap")}
         </button>
         {cikisHatasi && (
-          <p role="alert" className="text-xs text-rose-700">
+          <p role="alert" className="text-xs text-accent-red">
             {t("kabukCikisYapilamadi")}
           </p>
         )}
@@ -299,20 +301,30 @@ export function AppShell({
 
   return (
     <MotionConfig reducedMotion="user">
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-yuzey-bg">
+        {/* (P132) ICERIGE ATLA — klavye kullanicisi 30+ menu baglantisini
+            tek tek gecmek zorunda kalmasin. Gorunmez durur, ODAKLANINCA
+            gorunur: fareyle gelen kullaniciyi rahatsiz etmez, klavyeyle
+            gelen ilk Tab'da bulur. */}
+        <a
+          href="#icerik"
+          className="sr-only focus:not-sr-only focus:absolute focus:start-4 focus:top-4 focus:z-[60] focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-white"
+        >
+          {t("kabukIcerigeAtla")}
+        </a>
         {/* Masaustu sabit kenar cubugu */}
         {/* RTL: `left/border-r` yerine MANTIKSAL kenar — Arapcada kenar
             cubugu saga gecer (tur 17). */}
-        <aside className="fixed inset-y-0 start-0 z-30 hidden w-64 border-e border-slate-200 bg-white lg:block">
+        <aside className="kart-kenar fixed inset-y-0 start-0 z-30 hidden w-64 border-e bg-yuzey-card lg:block">
           <SidebarBody rolBaslangic={rol} yuzey={yuzey} />
         </aside>
 
         {/* Mobil ust cubuk */}
-        <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-slate-200 bg-white px-4 lg:hidden">
+        <header className="kart-kenar sticky top-0 z-20 flex h-14 items-center justify-between border-b bg-yuzey-card px-4 lg:hidden">
           <button
             onClick={() => setOpen(true)}
             aria-label={t("kabukMenuyuAc")}
-            className="rounded-lg border border-slate-300 p-2 text-slate-700 transition hover:bg-slate-100"
+            className="kart-kenar rounded-lg border p-2 text-metin-body transition hover:bg-yuzey-divider"
           >
             <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
               <line x1="4" y1="7" x2="20" y2="7" /><line x1="4" y1="12" x2="20" y2="12" /><line x1="4" y1="17" x2="20" y2="17" />
@@ -333,7 +345,7 @@ export function AppShell({
         <aside
           // Cekmece RTL'de SAGDAN girer: `start-0` + `rtl:translate-x-full`
           // (Tailwind'in `-translate-x-full`u yon farkindaligi TASIMAZ).
-          className={`fixed inset-y-0 start-0 z-50 w-64 border-e border-slate-200 bg-white transition-transform duration-300 lg:hidden ${
+          className={`kart-kenar fixed inset-y-0 start-0 z-50 w-64 border-e bg-yuzey-card shadow-yuzen transition-transform duration-300 lg:hidden ${
             open
               ? "translate-x-0"
               : "-translate-x-full rtl:translate-x-full"
@@ -348,7 +360,7 @@ export function AppShell({
 
         {/* Icerik */}
         <div className="lg:ps-64">
-          <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+          <main id="icerik" className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
             {children}
           </main>
         </div>

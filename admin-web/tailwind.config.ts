@@ -44,6 +44,26 @@ const config: Config = {
           purple: "#8B5CF6",
           red: "#EF4444",
         },
+        // (P132.6) VURGUNUN "OKUNUR" HÂLI — YALNIZ METIN icin.
+        //
+        // Kontrast testi kusuru yakaladi: %12 tint zemin uzerinde HAM vurgu
+        // metin olarak AA'yi TUTMUYOR (olculdu: blue 4.37 · green 2.89 ·
+        // orange 1.96 · purple 3.64 · red 3.23). Mobilde bunun karsiligi
+        // `okunurVurgu()` fonksiyonudur (acik tema: L -0.22, 0.24-0.34
+        // bandi, S x1.05); web'de ayni donusum ONCEDEN hesaplanip token
+        // olarak durur — calisma aninda renk hesaplamak, her cizimde ayni
+        // sonucu yeniden uretmek olurdu.
+        //
+        // TON KORUNUR: yesil=olumlu / kirmizi=ihlal anlami bozulmaz.
+        // DOLGU ve IKON HAM RENKTE kalir; sorun yalniz METINDEDIR.
+        // Tint zemindeki olculen degerler: 8.96 / 5.59 / 5.32 / 10.32 / 6.91.
+        vurguInk: {
+          blue: "#0A3696",
+          green: "#0C6E30",
+          orange: "#8D5A02",
+          purple: "#3705A8",
+          red: "#A30A0A",
+        },
         // Yuzey/metin — acik tema degerleri; koyu tema globals.css'te
         // ayni degisken adlariyla yeniden tanimlanir (tek yer).
         yuzey: {
@@ -56,6 +76,12 @@ const config: Config = {
           heading: "#111827",
           body: "#374151",
           muted: "#6B7280",
+          // (P132.6) IKINCIL METIN SAYFA ZEMININDE. Kontrast testi olctu:
+          // #6B7280 beyaz KART uzerinde 4.83 (gecer) ama sayfa zemininde
+          // (#F4F6FA) 4.47 — esigin ALTINDA. Ayni token'i iki yuzeyde
+          // kullanmak, sayfa zeminindeki her ikincil satiri esigin altina
+          // dusuruyordu. Bu ton sayfa zemini icindir: 4.91.
+          mutedBg: "#636C7A",
         },
         brand: {
           navy: "#1E3A5F",

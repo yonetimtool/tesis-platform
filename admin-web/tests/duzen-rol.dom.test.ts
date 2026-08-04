@@ -52,7 +52,11 @@ async function cizDuzen() {
 function menuAdlari(): string[] {
   return screen
     .getAllByRole("link")
+    // (P132) "İçeriğe atla" MENU OGESI DEGILDIR — logo gibi kabugun
+    // sabit parcasidir ve erisilebilirlik icin vardir. Menu sayimina
+    // katmak, bos menu beklentisini yanlis yere dusururdu.
     .filter((a) => a.getAttribute("aria-label") !== "Yönetio")
+    .filter((a) => (a.getAttribute("href") ?? "") !== "#icerik")
     .map((a) => a.textContent?.trim() ?? "");
 }
 

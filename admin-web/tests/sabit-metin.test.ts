@@ -71,9 +71,14 @@ const KARISIK = [/>([^<>{}]{2,80})\{/g, /\}([^<>{}]{2,80})</g];
  * duyarsiz karsilastiriyor). */
 const UCLU = /([?:])\s*("([^"]{2,80})"|'([^']{2,80})')/g;
 
-/** Ucluda cevrilmesi GEREKMEYEN teknik degerler. */
+/** Ucluda cevrilmesi GEREKMEYEN teknik degerler.
+ *
+ * (P132) Vurgu ADLARI (`blue`/`green`/`orange`/`purple`) buraya eklendi:
+ * bunlar tasarim sisteminin KIMLIKLERIDIR (`Vurgu` tipi), ekranda gorunen
+ * metin degil. `red` zaten listedeydi; kalan dordunun disarida kalmasi
+ * tutarsizlikti. */
 const UCLU_TEKNIK =
-  /^(rtl|ltr|asc|desc|GET|POST|PATCH|PUT|DELETE|true|false|light|dark|auto|none|row|col|small|medium|large|default|platform|tenant|security|resident|yonetici|temizlik|kontrol|emerald|teal|amber|red|slate|indigo|application[/]json|page|[a-z_]+_[a-z_]+)$/;
+  /^(rtl|ltr|asc|desc|GET|POST|PATCH|PUT|DELETE|true|false|light|dark|auto|none|row|col|small|medium|large|default|platform|tenant|security|resident|yonetici|temizlik|kontrol|emerald|teal|amber|red|slate|indigo|blue|green|orange|purple|application[/]json|page|[a-z_]+_[a-z_]+)$/;
 
 /** TAILWIND sinif dizgesi mi? Uclularin cogu `className` secimidir:
  * `kosul ? "bg-ink text-white" : "text-slate-600"`. Bunlar metin DEGIL. */

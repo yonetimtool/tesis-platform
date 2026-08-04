@@ -14,6 +14,7 @@ import { SWRConfig } from "swr";
 
 import { ToastProvider } from "@/components/Toast";
 import { I18nProvider } from "@/lib/i18n/kullan";
+import { SOZLUKLER } from "@/lib/i18n/sozluk";
 
 /** Testler TR dilinde kosar: sozluk kaynak dildir ve bir anahtarin metni
  *  once orada belirir. Baska bir dil secmek, ceviri eksigini test
@@ -32,6 +33,10 @@ export function ciz(Sayfa: ComponentType): RenderResult {
       // denetimini gecmiyor (Next derlemesi bunu yakaladi).
       createElement(I18nProvider, {
         baslangicDili: "tr" as const,
+        // (P132.5) SOZLUK SENKRON VERILIR. Uretimde sunucu duzeni gecer;
+        // testte gecmezsek saglayici onu tembel yuklerdi ve ilk cizimde
+        // METIN yerine ANAHTAR gorunurdu — 40+ DOM testi metne bakiyor.
+        baslangicSozlugu: SOZLUKLER.tr,
         children: createElement(ToastProvider, {
           children: createElement(Sayfa),
         }),

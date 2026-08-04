@@ -33,3 +33,15 @@ if (typeof window !== "undefined" && !window.matchMedia) {
     dispatchEvent: () => false,
   })) as typeof window.matchMedia;
 }
+
+// (P132.5) REACT DISI METIN COZUCUSU icin AKTIF SOZLUK.
+//
+// Uretimde `I18nProvider` ilk cizimde sozlugu `lib/i18n/metin`e yayinlar
+// (yedi sozlugun istemci paketine girmemesi icin — olculen kazanc rota
+// basina ~122 KB). Testlerde saglayici HER ZAMAN olmaz: `client.ts` ve
+// `fetcher.ts` testleri React'siz kosar ve hata METNINI olcer. Kurulum,
+// uretimdeki "ilk cizim olmus" durumunu taklit eder.
+import { aktifSozluguAyarla } from "@/lib/i18n/metin";
+import { SOZLUKLER } from "@/lib/i18n/sozluk";
+
+aktifSozluguAyarla(SOZLUKLER.tr);

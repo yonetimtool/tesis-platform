@@ -55,7 +55,12 @@ export default async function RootLayout({
         />
       </head>
       <body>
-        <I18nProvider baslangicDili={dil}>{children}</I18nProvider>
+        {/* (P132.5) AKTIF SOZLUK PROP OLARAK GECER — istemci paketine
+            yedi dil girmesin diye. Deger RSC yukuyle serilestirilir; JS
+            modulu olarak ayristirilmaz. */}
+        <I18nProvider baslangicDili={dil} baslangicSozlugu={SOZLUKLER[dil]}>
+          {children}
+        </I18nProvider>
       </body>
     </html>
   );

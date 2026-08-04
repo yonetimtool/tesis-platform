@@ -9,6 +9,7 @@ import { createElement } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { I18nProvider, useT } from "@/lib/i18n/kullan";
+import { SOZLUKLER } from "@/lib/i18n/sozluk";
 
 function Ekran() {
   const t = useT();
@@ -20,6 +21,10 @@ function ciz(arama: string, baslangic: "tr" | "en" | "ar" = "tr") {
   return render(
     createElement(I18nProvider, {
       baslangicDili: baslangic,
+      // (P132.5) Uretimde sunucu duzeni AKTIF sozlugu gecer; test de
+      // oyle yapar. Dil DEGISINCE yeni sozluk tembel yuklenir — bu yuzden
+      // asagidaki beklentiler `findByText` (async) ile yazildi.
+      baslangicSozlugu: SOZLUKLER.tr,
       children: createElement(Ekran),
     }),
   );
@@ -31,9 +36,10 @@ afterEach(() => {
 });
 
 describe("?lang", () => {
-  it("gecerli dil UYGULANIR ve cereze YAZILIR (sonraki istek sunucuda dogru)", () => {
+  it("gecerli dil UYGULANIR ve cereze YAZILIR (sonraki istek sunucuda dogru)", async () => {
     ciz("?lang=de");
-    expect(screen.getByText("Anmelden")).toBeInTheDocument();
+    // Almanca sozluk AYRI BIR PARCADIR (P132.5): metin yuklenince gelir.
+    expect(await screen.findByText("Anmelden")).toBeInTheDocument();
     expect(document.cookie).toContain("ui.locale=de");
   });
 

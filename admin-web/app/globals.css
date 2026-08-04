@@ -230,6 +230,15 @@ textarea:focus-visible,
 .dark .text-accent-red { color: #fca5a5; }
 .dark .text-primary { color: #7ca9ff; }
 
+/* (P132.6) VURGU METNI — acik temada KOYULASTIRILMIS ton (tailwind
+   `vurguInk`), koyu temada ACIK ton. Ikisi de ayni kontrast sorununun iki
+   yonudur ve mobildeki `okunurVurgu()` ile ayni mantiktir. */
+.dark .text-vurguInk-blue { color: #7ca9ff; }
+.dark .text-vurguInk-green { color: #4ade80; }
+.dark .text-vurguInk-orange { color: #fbbf24; }
+.dark .text-vurguInk-purple { color: #b69cfb; }
+.dark .text-vurguInk-red { color: #fca5a5; }
+
 /* ODAK HALKASI ARTIK BIRINCIL RENKTE (mavi) — kabuk mavi vurguya gecti,
    halkanin teal kalmasi tek basina "yarim gecis" gorunumu verirdi.
    Kontrast korunur: #2563EB beyaz uzerinde 5.17:1 (WCAG 1.4.11 esigi 3). */

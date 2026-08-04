@@ -19,12 +19,23 @@ import { useT } from "@/lib/i18n/kullan";
 // Vurgu paleti — mobil `HomeTokens` ile AYNI kume. Metin degil KIMLIK.
 export type Vurgu = "blue" | "green" | "orange" | "purple" | "red";
 
-const VURGU_METIN: Record<Vurgu, string> = {
+// IKON RENGI — HAM vurgu (dolgu/ikon icin dogru; kontrast sorunu METINDE).
+const VURGU_IKON: Record<Vurgu, string> = {
   blue: "text-accent-blue",
   green: "text-accent-green",
   orange: "text-accent-orange",
   purple: "text-accent-purple",
   red: "text-accent-red",
+};
+
+// METIN RENGI — okunur ton (bkz. tailwind `vurguInk`). Koyu temada
+// globals.css `.dark .text-vurguInk-*` ile acik tona doner.
+const VURGU_METIN: Record<Vurgu, string> = {
+  blue: "text-vurguInk-blue",
+  green: "text-vurguInk-green",
+  orange: "text-vurguInk-orange",
+  purple: "text-vurguInk-purple",
+  red: "text-vurguInk-red",
 };
 
 // TINT ZEMIN %12 — mobil `HomeTokens.tint` ile ayni opaklik. Tailwind'in
@@ -78,7 +89,7 @@ export function IkonKutu({
   return (
     <span
       aria-hidden="true"
-      className={`inline-flex shrink-0 items-center justify-center ${boyut} ${yaricap} ${VURGU_TINT[vurgu]} ${VURGU_METIN[vurgu]}`}
+      className={`inline-flex shrink-0 items-center justify-center ${boyut} ${yaricap} ${VURGU_TINT[vurgu]} ${VURGU_IKON[vurgu]}`}
     >
       {children}
     </span>
@@ -292,7 +303,9 @@ export function SayfaBasligi({
         <div className="min-w-0">
           <h1 className="text-selam text-metin-heading">{baslik}</h1>
           {aciklama ? (
-            <p className="mt-1 text-sm text-metin-muted">{aciklama}</p>
+            // SAYFA ZEMININDE duran ikincil metin: `mutedBg` (kontrast
+            // testi `muted`i burada 4.47 ile dusurmustu).
+            <p className="mt-1 text-sm text-metin-mutedBg">{aciklama}</p>
           ) : null}
         </div>
         {eylem ? <div className="shrink-0">{eylem}</div> : null}

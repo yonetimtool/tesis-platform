@@ -27,7 +27,9 @@ import {
   yon,
   type Dil,
 } from "./diller";
-import { SOZLUKLER, type Sozluk, type SozlukAnahtari } from "./sozluk";
+import type { Sozluk, SozlukAnahtari } from "./sozluk";
+import { aktifSozluguAyarla } from "./metin";
+import { sozlukYukle } from "./sozluk/yukle";
 
 interface I18n {
   dil: Dil;
@@ -56,12 +58,42 @@ function metin(
 
 export function I18nProvider({
   baslangicDili,
+  baslangicSozlugu,
   children,
 }: {
   baslangicDili: Dil;
+  /** (P132.5) AKTIF sozluk — sunucu duzeninden gelir.
+   *
+   *  Verilmezse istemci onu tembel yukler ve YUKLENENE KADAR anahtar
+   *  gosterir. Uretimde duzen HER ZAMAN gecer; opsiyonel olmasi testler
+   *  ve tekil bilesen kullanimlari icindir. */
+  baslangicSozlugu?: Sozluk;
   children: ReactNode;
 }) {
   const [dil, setDil] = useState<Dil>(baslangicDili);
+  const [sozluk, setSozluk] = useState<Sozluk | null>(baslangicSozlugu ?? null);
+
+  // Sozluk yoksa (test/tekil kullanim) ya da dil degistiyse: O DILI cek.
+  // Yalniz gereken parca iner — alti dil paketi ISTEMCIYE HIC GIRMEZ.
+  useEffect(() => {
+    let iptal = false;
+    if (baslangicSozlugu && dil === baslangicDili) {
+      setSozluk(baslangicSozlugu);
+      // React DISI kod da (fetcher/client hata metinleri) ayni sozlugu
+      // gormeli — bkz. `./metin`.
+      aktifSozluguAyarla(baslangicSozlugu);
+      return;
+    }
+    sozlukYukle(dil).then((s) => {
+      if (!iptal) {
+        setSozluk(s);
+        aktifSozluguAyarla(s);
+      }
+    });
+    return () => {
+      iptal = true;
+    };
+  }, [dil, baslangicDili, baslangicSozlugu]);
 
   const dilDegistir = useCallback((yeni: Dil) => {
     setDil(yeni);
@@ -97,14 +129,18 @@ export function I18nProvider({
   }, [dilDegistir]);
 
   const deger = useMemo<I18n>(() => {
-    const sozluk = SOZLUKLER[dil] ?? SOZLUKLER[VARSAYILAN_DIL];
     return {
       dil,
       dir: yon(dil),
-      t: (anahtar, params) => metin(sozluk, anahtar, params),
+      // SOZLUK HENUZ YOKKEN ANAHTAR DONER (bos dizge DEGIL): bos birakmak
+      // ekrani sessizce bosaltirdi; anahtar en azindan neyin eksik
+      // oldugunu soyler. Uretimde bu dal calismaz — duzen sozlugu ilk
+      // cizimde verir.
+      t: (anahtar, params) =>
+        sozluk ? metin(sozluk, anahtar, params) : String(anahtar),
       dilDegistir,
     };
-  }, [dil, dilDegistir]);
+  }, [dil, sozluk, dilDegistir]);
 
   return <Ctx.Provider value={deger}>{children}</Ctx.Provider>;
 }

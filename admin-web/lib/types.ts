@@ -510,6 +510,12 @@ export interface TenantSettings {
   gurultu_esigi?: number;
   gurultu_uyari_metni?: string | null;
   gurultu_integration_id?: string | null;
+  // (P132) Tesis konumu — panodaki harita bunlari kullanir. UCU DE
+  // opsiyonel: konum girilmemis bir tesiste harita CIZILMEZ (bos bir
+  // dunya haritasi gostermek, "konum yok" demekten daha kotudur).
+  konum_ad?: string | null;
+  konum_lat?: number | null;
+  konum_lon?: number | null;
 }
 
 // ------------------------ tenant olusturma (admin) ------------------------- #
