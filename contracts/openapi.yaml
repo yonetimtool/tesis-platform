@@ -10492,7 +10492,15 @@ components:
         gps_lat: { type: number, format: double, nullable: true }
         gps_lng: { type: number, format: double, nullable: true }
         foto_key: { type: string, nullable: true }
-        foto_url: { type: string, nullable: true }
+        foto_url:
+          type: string
+          nullable: true
+          description: >
+            (P131) Kisa omurlu presigned GET — `foto_key` doluysa DOLDURULUR.
+            2026-08-04'e kadar bu alan semada VARDI ama sunucu HICBIR YERDE
+            doldurmuyordu: fotograf kaniti yukleniyor, saklaniyor ve ne
+            mobilde ne web'de gorunuyordu. Regresyon kilidi:
+            `backend/tests/test_foto_url_kapsam.py`.
         notlar: { type: string, nullable: true }
         idempotency_key: { type: string }
         created_at: { type: string, format: date-time }

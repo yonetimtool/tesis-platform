@@ -618,6 +618,16 @@ Kerem marks them done.
 Acceptance: Kerem reports; findings become new items.
 
 Device-verify (biriken liste — agent ekler, Kerem işaretler):
+- [ ] **P131 · Kamera oynatma (WEB, YÖNETİCİ).** `app.*` → Kameralar:
+  "Otopark" karosuna tıkla → yayın **açılmalı** (Chrome/Firefox'ta
+  `hls.js`, Safari'de yerel; altta hangisinin kullanıldığı yazıyor).
+  "Arka Bahçe NVR" (RTSP) karosunda **rozet** olmalı ve tıklayınca
+  oynatıcı değil **açıklama** çıkmalı. Yeni kamera ekle → adres alanına
+  bir **YouTube** bağlantısı yapıştır: kaydetmeden **uyarı** almalısın.
+- [ ] **P131 · Görev foto kanıtı (WEB + MOBİL).** Mobilde fotoğraflı bir
+  görev tamamla → web'de Görevler → o görevin **Kayıtlar**ında
+  fotoğrafın **küçük görseli** çıkmalı (tıklayınca tam boyut). Aynı kayıt
+  mobilde de görselli görünüyor mu?
 - [ ] **P128 · Denetçi rolü (WEB, `app.*`).** Yönetici hesabıyla
   Kullanıcılar → Yeni → rol **Denetçi** seç (liste artık yalnız
   açabildiğin rolleri gösteriyor; "Platform Admin" **görünmemeli**).
@@ -7944,7 +7954,7 @@ KAPILAR: `tsc` temiz · `vitest` **493 test** (+3) · `npm run build` ✓ ·
 güncellendi) · sözleşme güncellendi.
 
 ### P131 — Web'deki eşitlik boşlukları: kamera izleme + kayıp görseller
-Status: ACIK · Depends-on: P126
+Status: BITTI · Depends-on: P126
 Scope:
 (a) **`app.*`ta kamera izleme.** P126.5 ızgarayı verdi, oynatıcıyı
 **bilerek** vermedi (hls.js bağımlılık kararı Kerem'e bırakılmıştı) — karar
@@ -7964,6 +7974,86 @@ değil **ölçümle**.
 Acceptance: en az bir tarayıcıda gerçek `m3u8` oynuyor (ölçüm kaydı);
 oynatılamaz kaynak rozetle ayrılıyor; görselli tohum içerikle web'de görsel
 **görünüyor** (HTTP durum + içerik türü kaydedilir); kapılar.
+
+Notes (2026-08-04, P131.1) — **KURAL KOPYALANDI AMA AYRIŞMASI ARTIK
+ÖLÇÜLÜYOR.** P126.5 web'de kamera yönetimini *"TS'e ikinci kopya yazmak
+ayrışma demektir"* diye açmamıştı. Gerekçe doğruydu, **çözüm yanlıştı**:
+iki dil (Dart + TS) var, kopya kaçınılmaz; kaçınılmaz olmayan şey
+**sessizce** ayrışmalarıdır. `contracts/kamera-url-kurali.json` ortak
+**vaka** dosyası oldu (30 vaka); mobil testi (26) ve web testi (30) **aynı
+dosyayı** okuyor. Biri ayrışırsa kendi tarafının testi düşer.
+
+Vakalarda `sunucu_da_reddeder` bayrağı var: sunucu bir **web sayfası**
+adresini (`youtube.com/watch?v=…`) reddedemez — onun için geçerli bir
+HTTPS adresidir; oynatılamayacağını bilen taraf **oynatan** taraftır.
+
+Notes (2026-08-04, P131a) — **OYNATICI GELDİ; TARAYICI FARKI GİZLENMEDİ.**
+
+`hls.js` bağımlılık kararı verildi (P126.5'te Kerem'e bırakılmıştı). Üç
+yol var ve **hangisinin seçildiği ekranda yazıyor** — destek sorusunda
+("bende açılmıyor") ilk sorulacak şey budur:
+* Safari/iOS → tarayıcı HLS'i yerel oynatır, kütüphane **hiç yüklenmez**;
+* diğerleri → **oynat'a basınca** dinamik import (sayfayı açmayan ödemez);
+* MP4 → doğrudan `<video src>`.
+
+**OYNATILAMAZ KAYNAK GİZLENMEDİ, ROZETLENDİ:** restream'siz `rtsp` karo
+tıklanabilir kalır ama oynatıcı değil **nedenini** söyleyen bir kutu açar.
+Siyah ekran "bozuk" izlenimi üretir ve teşhisi kameraya gönderirdi. Web
+sayfası adresi **verilmez** (o kayıt zaten reddedilir).
+
+**YÖNETİM AÇILDI** (ekle/düzenle/sil): web sayfası adresi istek
+**gönderilmeden** kesiliyor. Yetki kararı BFF'te değil sunucuda.
+
+**KAPI İKİ KUSURUMU YAKALADI:** (1) `.tsx` içindeki `/** */` Türkçe yorum
+"çevrilmemiş metin" sayıldı — tarayıcı yalnız `//` yorumlarını atıyor;
+(2) `"HLS (hls.js)"` yedi dilde aynı olduğu için TR-kopyası taramasına
+takıldı, gerekçeli istisnaya eklendi (teknik kimlik, cümle değil).
+
+**TEST YAYINI CANLI DOĞRULANDI:** görevde verilen Apple adresi → HTTP 200,
+`application/x-mpegURL`, 24 varyant. Seed'de zaten bu adres kullanılıyordu.
+**Gerçek bir tarayıcıda oynatma** ölçümü bende yok (başsız ortam) — P11'e
+cihaz-doğrulama maddesi olarak yazıldı.
+
+Notes (2026-08-04, P131b) — **"WEB'DE GÖRSELLER ÇIKMIYOR" — SEBEP WEB
+DEĞİLDİ, SUNUCUYDU.**
+
+Tahmin etmeden **ölçtüm**: altı içerik ucunu tek tek sürdüm ve `foto_key`
+dolu olan kayıtlarda `foto_url` de dolu mu diye baktım:
+
+| Uç | foto_key dolu | foto_url dolu |
+|---|---|---|
+| duyurular | 1 | **1** |
+| site kuralları | 1 | **1** |
+| etkinlikler | 2 | **2** |
+| talepler | 2 | **2** |
+| **görev tamamlamaları** | 1 | **0** ← |
+
+**KÖK NEDEN:** `TaskCompletionOut` şemasında `foto_url` **vardı**, iki
+istemci de onu okuyordu (mobil `TaskCompletion.fotoUrl`, panelin görev
+detayı) — ama sunucu **hiçbir yerde doldurmuyordu**. Fotoğraf kanıtı
+yükleniyor, saklanıyor ve **hiçbir yerde görünmüyordu**. Yani bu web'e
+özgü bir kusur değildi: mobilde de görünmüyordu.
+
+**PANELİN ROZETİ EKSİĞİ GİZLİYORDU:** "foto var" etiketi çiziliyor ama
+kanıta **ulaşmanın yolu yoktu**. Artık görselin kendisi çiziliyor (yeni
+sekmede tam boyut). `foto_key` var ama `foto_url` yoksa rozet **doğru**
+kalır — "kanıt var, gösterilemiyor" başka bir şeydir.
+
+**İKİNCİ BELİRTİ (tohum verisi):** dev veritabanındaki tohum kaydı
+yüklenmemiş bir anahtara (`seed-completion-1.jpg`) işaret ediyordu; tohum
+kodu artık gerçek bir obje yüklüyor ama `ON CONFLICT DO NOTHING` eski
+satırı **asla düzeltmiyordu**. `DO UPDATE SET foto_key` yapıldı — yeniden
+tohumlama eski veriyi iyileştiriyor.
+
+**UÇTAN UCA ÖLÇÜM** (dev yığını): presign → PUT (gerçek PNG) → tamamlama →
+liste → `foto_url` → **HTTP 200, `image/png`, geçerli PNG imzası**. Tohum
+kaydı da yeniden tohumlamadan sonra **200 / image/png / 2249 bayt**.
+
+**CORS/CSP DEĞİLDİ:** `<img>` etiketi CORS gerektirmez; ölçüm de bunu
+doğruladı (aynı presigned adres tarayıcının atacağı istekle çekildi).
+
+**MUTASYON:** sunucuda `foto_url`i `None` bırak · panelde görsel dalını
+kapat — ikisi de yakalandı.
 
 ### NOT — Sign in with Apple (4.8)
 **GEÇERSİZ (N/A):** üçüncü taraf sosyal giriş **kullanmıyoruz** (Google/Facebook

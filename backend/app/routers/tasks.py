@@ -42,6 +42,7 @@ from ..schemas import (
     TaskUpdate,
     TicketSummaryOut,
 )
+from ..storage import presign_get
 from ..ticketing import add_history, notify_opener
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
@@ -290,6 +291,25 @@ async def delete_task(
 
 
 # ----------------------------- completions --------------------------------- #
+def _completion_out(obj: TaskCompletion) -> TaskCompletionOut:
+    """(P131) Foto KANITINI GORUNUR yapar.
+
+    OLCULEN KUSUR: `TaskCompletionOut` semasinda `foto_url` ALANI VARDI ve
+    iki istemci de onu okuyordu (mobil `TaskCompletion.fotoUrl`, panel
+    gorev detayi) — ama HICBIR YERDE DOLDURULMUYORDU. Sonuc: fotograf
+    kaniti YUKLENIYOR (`foto_key` dolu), sunucu onu saklıyor, ve iki
+    istemcide de GORUNMUYOR. Belirti "web'de gorseller cikmiyor"du; sebep
+    web degil, SUNUCUNUN doldurmadigi bir alandi.
+
+    Olcum (dev yigini, 2026-08-04): duyuru/site kurali/etkinlik/talep
+    uclarinin hepsi `foto_url` dolduruyordu; gorev tamamlamalari
+    doldurmayan TEK uctu.
+    """
+    out = TaskCompletionOut.model_validate(obj)
+    out.foto_url = presign_get(obj.foto_key) if obj.foto_key else None
+    return out
+
+
 @router.get("/{task_id}/completions", response_model=TaskCompletionListResponse)
 async def list_completions(
     task_id: uuid.UUID,
@@ -314,7 +334,8 @@ async def list_completions(
         )
     ).scalars().all()
     return TaskCompletionListResponse(
-        meta={"limit": limit, "offset": offset, "total": total}, items=list(rows)
+        meta={"limit": limit, "offset": offset, "total": total},
+        items=[_completion_out(r) for r in rows],
     )
 
 
@@ -425,7 +446,9 @@ async def create_completion(
                 )
         await db.refresh(obj)
         return JSONResponse(
-            status_code=201, content=TaskCompletionOut.model_validate(obj).model_dump(mode="json")
+            # (P131) `_completion_out`: yeni kaydin fotografi ANINDA
+            # gorunur olsun — istemci ikinci bir istek atmak zorunda kalmasin.
+            status_code=201, content=_completion_out(obj).model_dump(mode="json")
         )
 
     existing = (
@@ -435,6 +458,6 @@ async def create_completion(
     ).scalar_one()
     if _same_completion(existing, **fields):
         return JSONResponse(
-            status_code=200, content=TaskCompletionOut.model_validate(existing).model_dump(mode="json")
+            status_code=200, content=_completion_out(existing).model_dump(mode="json")
         )
     raise APIError(409, "conflict", "idempotency_key_govde_farkli")

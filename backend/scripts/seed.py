@@ -797,7 +797,15 @@ def main() -> int:
                 (tenant_id, task_id, tamamlayan_user_id, tamamlanma_zamani,
                  foto_key, notlar, idempotency_key)
             VALUES (%s, %s, %s, now(), %s, %s, %s)
-            ON CONFLICT ON CONSTRAINT uq_completion_tenant_idempotency DO NOTHING
+            -- (P131) DO NOTHING DEGIL DO UPDATE: `foto_key` eski tohumda
+            -- YUKLENMEYEN bir anahtara (seed-completion-1.jpg) isaret
+            -- ediyordu ve DO NOTHING yuzunden yeniden tohumlama onu ASLA
+            -- duzeltmiyordu. Sonuc: gelistirme veritabaninda kirik bir
+            -- gorsel — ve "web'de gorseller cikmiyor" teshisini zorlastiran
+            -- ikinci bir belirti. Idempotency anahtari ayni kaldigi icin
+            -- tekrar tohumlama hâlâ tek kayit uretir.
+            ON CONFLICT ON CONSTRAINT uq_completion_tenant_idempotency
+            DO UPDATE SET foto_key = EXCLUDED.foto_key
             """,
             (
                 tenant_id, demo4_task_id, cleaner_id,

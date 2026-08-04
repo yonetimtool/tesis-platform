@@ -451,7 +451,24 @@ export default function TasksPage() {
                     <td className="px-4 py-2.5 text-slate-600">{formatDateTime(c.tamamlanma_zamani)}</td>
                     <td className="px-4 py-2.5">{userName(c.tamamlayan_user_id)}</td>
                     <td className="px-4 py-2.5">
-                      {c.foto_key ? (
+                      {c.foto_url ? (
+                        // (P131) FOTOGRAFIN KENDISI GOSTERILIR.
+                        // Eskiden yalnizca "foto var" rozeti cizilirdi ve
+                        // kanita ULASMANIN YOLU YOKTU — cunku sunucu
+                        // `foto_url`i hic doldurmuyordu (olculdu: alan
+                        // semada vardi, deger null geliyordu). Rozet o
+                        // eksigi gizliyordu.
+                        <a href={c.foto_url} target="_blank" rel="noreferrer">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={c.foto_url}
+                            alt={t("gorevFotoVarRozet")}
+                            className="h-12 w-16 rounded object-cover"
+                          />
+                        </a>
+                      ) : c.foto_key ? (
+                        // Anahtar var ama adres yok: presign uretilememis.
+                        // Rozet BURADA dogru — "kanit var, gosterilemiyor".
                         <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800">
                           {t("gorevFotoVarRozet")}
                         </span>
