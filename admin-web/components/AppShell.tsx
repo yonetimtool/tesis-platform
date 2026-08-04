@@ -10,6 +10,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 import { YonetioLogo } from "@/components/YonetioLogo";
+import { konakYuzeyi, kokRota, rotaYuzeyi } from "@/lib/yuzey";
 
 type IconName =
   | "grid" | "building" | "clock" | "scan" | "route" | "check"
@@ -19,6 +20,10 @@ type IconName =
 // Menu ogeleri METIN degil ANAHTAR tasir (tur 17): etiket cizim aninda
 // aktif dilde cozulur. Eskiden Turkce sabitlerdi ve dil degisimi menuyu
 // oldugu gibi birakirdi.
+// (P125) MENU YUZEYE GORE SUZULUR. Liste OLDUGU GIBI kalir — tesis
+// sayfalari kod tabaninda duruyor ve `admin` bir yer imiyle hâlâ acabilir
+// (yetki geri alinmadi); degisen sey PANELIN MENUSUNDE gorunmemeleri.
+// Siniflandirma `lib/yuzey.ts`te, tek kaynakta.
 const LINKS: { href: string; anahtar: SozlukAnahtari; icon: IconName }[] = [
   { href: "/dashboard", anahtar: "kabukCanliPanel", icon: "grid" },
   { href: "/tenants", anahtar: "kabukTesisler", icon: "building" },
@@ -154,16 +159,28 @@ function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
     router.refresh();
   }
 
+  // (P125) BULUNULAN YUZEY: `app.*` -> tesis, digerleri -> platform.
+  // Tarayicida `location.host`, sunucu cizimlerinde bilinmiyor kabul edilip
+  // platform varsayilir (panel bugunku tek yuzeydir).
+  const yuzey = konakYuzeyi(
+    typeof window === "undefined" ? null : window.location.host,
+  );
+  // Bilinmeyen rota MENUYE ALINMAZ: "varsayilan olarak goster" demek, yeni
+  // bir tesis sayfasinin panele SESSIZCE sizmasi olurdu.
+  const gorunenLinkler = LINKS.filter((l) => rotaYuzeyi(l.href) === yuzey);
+  // Logo hedefi de yuzeye gore: panelde tesis panosu YOKTUR (bkz. kokRota).
+  const kokHedef = kokRota(yuzey);
+
   return (
     <div className="flex h-full flex-col">
       <div className="flex h-16 shrink-0 items-center border-b border-slate-200 px-5">
-        <Link href="/dashboard" aria-label="Yönetio" onClick={onNavigate}>
+        <Link href={kokHedef} aria-label="Yönetio" onClick={onNavigate}>
           <YonetioLogo size={26} />
         </Link>
       </div>
 
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-4">
-        {LINKS.map((l) => {
+        {gorunenLinkler.map((l) => {
           const active = pathname === l.href;
           return (
             <Link

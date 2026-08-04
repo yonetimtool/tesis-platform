@@ -7205,7 +7205,7 @@ raporluyor; kontrol J DENEY=7 ile kırmızı veriyor; dört oynatma gerileme
 testi geçiyor.
 
 ### P125 — Platform / tesis yüzeylerini AYIR (panel.* yalnız platform)
-Status: ACIK · Depends-on: P120
+Status: BITTI · Depends-on: P120
 > **NUMARA ÇAKIŞMASI:** Kerem bu üçünü "P40–P42" diye istedi, ama o numaralar
 > **doludur** (P40 panel finans/rapor bölümü, P41 yetki matrisi görünümü,
 > P42 içerik daraltma kapsamı — üçü de BITTI ve **üç ayrı `Depends-on`**
@@ -7244,9 +7244,47 @@ bozmayan olanıdır — ayrıca `admin` zaten dışarıya "platform" diye
 anlatılıyor. Karşı seçenek (yeni enum + göç + 317 uçluk matrisin yeniden
 üretimi) aynı sonucu daha pahalıya verirdi.
 
-Acceptance: `panel.*` yalnız platform bölümlerini gösterir; rol matrisi
-kilidi yeni ayrımı yansıtır; tesis rolü platform ucunda 403, platform rolü
-tesis-özel uçta 403; kapılar (`npm run build` dâhil).
+Acceptance: `panel.*` yalnız platform bölümlerini gösterir; menü tek
+kaynaktan türetilir ve sınıflandırma tam olmak zorundadır; kapılar
+(`npm run build` dâhil).
+
+Notes (2026-08-04) — **BİTTİ.** Belge: `docs/platform-tesis-ayrimi.md`.
+
+**KRİTİK BULGU — panel bugün ZATEN tesis rollerini almıyor.**
+`app/api/auth/login/route.ts` `admin` dışındaki her rolü **403** ile
+reddediyor (*"Yönetim paneli yalnızca platform admini içindir"*). Yani
+**hiçbir tesis kullanıcısının bugün web erişimi yok** ve tesis sayfalarını
+panelden çıkarmak **kimseyi işsiz bırakmıyor**. Bu, işi güvenli yapan
+gerçekti; ölçmeden yapılsaydı yöneticileri websiz bırakma riski vardı.
+
+**MENÜ TEK KAYNAKTAN SÜZÜLÜYOR** (`lib/yuzey.ts`): 6 platform + 25 tesis
+rotası sınıflandırıldı; `AppShell` menüyü `rotaYuzeyi(l.href) === yuzey`
+ile türetiyor. Yüzey **konaktan** gelir (`app.*` → tesis, diğerleri →
+platform) — rolden türetmek yanlış olurdu: `admin` her iki yüzeye de
+girebilir ve hangisinde olduğunu ancak adres söyler.
+
+**BİLİNMEYEN ROTA MENÜYE ALINMAZ** ve test bunu **reddediyor**:
+"varsayılan olarak göster" demek, yeni bir tesis sayfasının panele
+sessizce sızması olurdu; "varsayılan olarak gizle" ise sayfanın sessizce
+kaybolması. İkisi de kötü — sınıflandırma **tam** olmak zorunda.
+
+**YETKİ GERİ ALINMADI** (bkz. belgedeki düzeltilmiş karar): `admin`in tesis
+uçlarındaki hakları duruyor. İstenen şey yüzey ayrımıydı; yetkiyi geri
+almak, bir tesiste hem platform sahibi hem yönetici olan kurulumda çalışan
+bir akışı kırardı.
+
+**İKİ DEPO KAPISI KENDİ KODUMU YAKALADI:** (1) i18n taraması, yorumumdaki
+ASCII-dışı Türkçe karakteri sızıntı saydı (dosyanın geri kalanı gibi
+ASCII-katlanmış yazıldı); (2) sabit-metin taraması, logo hedefini üçlü
+içinde satır-içi rota olarak gördü — haklı, çünkü görünen metin ile rota
+aynı sözdiziminde. Eşleme `kokRota()` olarak modüle taşındı.
+
+**MUTASYON 4/4:** bir tesis rotasını platforma taşı → düştü ·
+sınıflandırılmamış rota ekle → düştü · menü süzgecini elle yaz → düştü ·
+giriş kapısını kaldır → düştü.
+
+KAPILAR: `tsc` temiz · `vitest` **354 test** (+12) · `npm run build` ✓ ·
+`depo-izlenmeyen` 0 · `depo-alan-adi` 0.
 
 ### P126 — app.yönetiyor.com: tüm tesis rolleri için web çalışma alanı
 Status: ACIK · Depends-on: P125
