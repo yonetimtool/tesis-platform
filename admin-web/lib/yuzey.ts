@@ -82,6 +82,10 @@ export const TESIS_ROTALARI = [
   "/arac-gecisleri",
   // (P126.6) Saha rolunun kendi gorevleri.
   "/gorevlerim",
+  // (P126.5) Yoneticinin eksik ekranlari.
+  "/kameralar",
+  "/dis-hizmetler",
+  "/yonetim-iletisim",
 ] as const;
 
 /**

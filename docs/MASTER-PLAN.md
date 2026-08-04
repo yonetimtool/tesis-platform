@@ -7468,6 +7468,46 @@ gönderme · NFC kısıtını gizle · pasif görevleri listele.
 KAPILAR: `tsc` temiz · `vitest` **419 test** · `npm run build` ✓ ·
 depo kapıları 0.
 
+Notes (2026-08-04, P126.5) — **YÖNETİCİNİN 3 EKSİK SAYFASI BİTTİ:**
+Kameralar, Dış hizmetler, Yönetim iletişim. Rol zaten `app.*`taydı; bu
+dilim onun **eksik ekranlarını** kapattı.
+
+**KAMERA IZGARASI = P121 DESENİNİN WEB İKİZİ.** Karo `snapshot_url`den
+durağan kare çeker (8 sn), oynatıcı **yok**: N oynatıcıyı aynı anda
+çalıştırmak mobilde reddedilmişti, tarayıcıda da aynı gerekçe geçerli.
+Tazeleme **sekme görünürken** olur, arka planda durur — açık unutulmuş bir
+sekme kimse bakmıyorken istek atmaz.
+
+**TAM EKRAN OYNATMA BİLEREK YAPILMADI, GİZLENMEDİ:** `stream_url` HLS'tir;
+Safari yerel oynatır, Chrome/Firefox oynatmaz. `hls.js` (~150 KB) bir
+**bağımlılık kararıdır** ve tek başıma almadım. Tarayıcıların yarısında
+siyah kalan bir oynat düğmesi, hiç olmayandan kötüdür. Gerekçe dosyanın
+başında yazılı; oynatma mobilde çalışıyor (P124).
+
+**KAMERA YÖNETİMİ WEB'E AÇILMADI:** desteklenen-kaynak kuralı mobilde
+`CameraDraft` içinde yaşıyor (P121). TS'e ikinci kopya yazmak, ayrışınca
+"kaydettim ama açılmıyor" üretirdi. Web izler, mobil yönetir.
+
+**SÖZLEŞME KODDAN OKUNDU — İKİ HATAMI YAKALADI (tsc yakalayamazdı, tipleri
+kendim yazmıştım):**
+* `yonetici-iletisim` yanıtı `ad_soyad`/`user_id` taşıyor, `ad` değil; ve
+  **`aranabilir` alanı yok**. Ekranı bir `aranabilir` rızasına göre
+  kurmuştum — o alan hiç gelmediği için numara **hiçbir zaman**
+  görünmeyecekti. Sunucu (`routers/yonetici_iletisim.py`, contracts/auth.md
+  C1a istisnası) yöneticinin numarasını **bilerek** açıyor: yönetici bir
+  hizmet rolüdür. İstemcide ikinci bir rıza süzgeci koymak, sunucunun
+  bilerek döndürdüğü numarayı sessizce gizlerdi.
+* `DisHizmetCreate.soyad` **zorunlu** (`min_length=1`); boş gönderiyordum →
+  422. Artık istek gönderilmeden kesiliyor.
+
+**MUTASYON 7/7 denendi, 6 yakalandı; kaçan 1 tanesi dürüstçe yazıldı:**
+`value={telefonGiris(telefon)}` bağını kaldırmak testi düşürmüyor çünkü
+`onChange` değeri zaten biçimlendirerek saklıyor. Bağ yine de duruyor
+(`telefon-kapsam` kapısı ve ön-doldurma yolu için).
+
+KAPILAR: `tsc` temiz · `vitest` **431 test** · `npm run build` ✓ ·
+depo kapıları 0.
+
 ### P127 — www.yönetiyor.com: tanıtım sitesi (SEO)
 Status: ACIK · Depends-on: P126
 Scope: Geçici statik açılış sayfası (P120) gerçek tanıtım sitesiyle

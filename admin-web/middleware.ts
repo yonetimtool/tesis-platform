@@ -117,5 +117,8 @@ export const config = {
     "/olaylar/:path*",
     "/arac-gecisleri/:path*",
     "/gorevlerim/:path*",
+    "/kameralar/:path*",
+    "/dis-hizmetler/:path*",
+    "/yonetim-iletisim/:path*",
   ],
 };

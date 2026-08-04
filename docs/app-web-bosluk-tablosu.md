@@ -75,9 +75,9 @@ Sakinin web'de hiçbir şeyi yok; `app.*`ın varlık sebebi büyük ölçüde bu
 
 | Modül | Sayfa | Not |
 |---|---|---|
-| `cameras` | Kameralar (izleme + yönetim) | **P121 canlı karo deseni web'de de geçerli**; oynatıcı `<video>` + HLS |
-| `dis_hizmet` | Dış hizmet/firma kayıtları | telefon alanı P123 maskesi |
-| `yonetici_iletisim` | Yönetime ulaş / iletişim kartı | |
+| `cameras` | **Kameralar ✅** | P121 canlı karo deseni; **oynatıcı YOK** — `hls.js` bağımlılık kararı alınmadı, gerekçe dosyada. Ekle/düzenle **mobilde kalır** (kaynak kuralı `CameraDraft`te) |
+| `dis_hizmet` | **Dış hizmetler ✅** | telefon alanı P123 maskesi; `soyad` sunucuda **zorunlu** |
+| `yonetici_iletisim` | **Yönetim iletişim ✅** | salt okuma; numara `aranabilir`e bakmaz — C1a istisnası sunucuda (yönetici = hizmet rolü) |
 
 ### tesis görevlisi (1)
 
@@ -133,7 +133,7 @@ P126 **tek oturumluk bir iş değil**. Ölçülebilir parçalara bölünüşü:
 | P126.2 | Yüzey kapısı (middleware) — 25 sayfa `app.*`ta erişilir, panelde kesilir | ✅ **BİTTİ** |
 | P126.3 | **sakin çalışma alanı ✅ BİTTİ** — Profil, Aidatım, Taleplerim, Duyurular, Kurallar, Etkinlikler, Rezervasyonlarım, KVKK; `resident` `app.*`a **alındı** | ✅ **BİTTİ** |
 | P126.4 | **güvenlik çalışma alanı ✅ BİTTİ** — Ziyaretçiler, Kargolar, Olaylar, Araç geçişleri; `security` `app.*`a **alındı** | ✅ **BİTTİ** |
-| P126.5 | yönetici'nin 3 eksik sayfası (`cameras` dâhil) | orta |
+| P126.5 | **yönetici'nin 3 eksik sayfası ✅ BİTTİ** — Kameralar (canlı karo, oynatıcı yok), Dış hizmetler, Yönetim iletişim | ✅ **BİTTİ** |
 | P126.6 | **tesis görevlisi ✅ BİTTİ** — Görevlerim; `tesis_gorevlisi` `app.*`a **alındı** | ✅ **BİTTİ** |
 | P126.7 | 7 dil ARB + rol yalıtımı testleri + kapılar | orta |
 
