@@ -236,6 +236,10 @@ export default function UnitsPage() {
               <tr>
                 <th className="px-4 py-2.5 font-medium">{t("daireNoKisa")}</th>
                 <th className="px-4 py-2.5 font-medium">{t("ortakBlok")}</th>
+                {/* (Duzeltme) DAIRE TIPI (P26) listede HIC gosterilmiyordu.
+                    `unit_tip_ad` API'den ZATEN geliyordu - sayfa okumuyordu.
+                    Blok'un yaninda: ikisi de dairenin "nerede/ne" bilgisi. */}
+                <th className="px-4 py-2.5 font-medium">{t("tanimAlanTip")}</th>
                 <th className="px-4 py-2.5 font-medium">{t("daireKatSira")}</th>
                 <th className="px-4 py-2.5 font-medium">m²</th>
                 <th className="px-4 py-2.5 font-medium">{t("ortakDurum")}</th>
@@ -247,6 +251,9 @@ export default function UnitsPage() {
                 <tr key={u.id} className="border-t border-slate-100 transition-colors hover:bg-slate-50">
                   <td className="px-4 py-2.5">{u.no}</td>
                   <td className="px-4 py-2.5 text-slate-600">{u.blok ?? t("daireBlokAtanmamis")}</td>
+                  {/* Tip ATANMAMISSA "-": bos hucre "veri gelmedi mi?"
+                      sorusunu uretir, tire "atanmamis" der. */}
+                  <td className="px-4 py-2.5 text-slate-600">{u.unit_tip_ad ?? "—"}</td>
                   <td className="px-4 py-2.5 text-slate-600 tabular-nums">
                     {u.kat != null || u.sira != null ? `${u.kat ?? "—"} / ${u.sira ?? "—"}` : "—"}
                   </td>

@@ -537,7 +537,9 @@ function FloorRow({
             // gurultusunde kaybolur.
             style={u.aktif ? { backgroundColor: daireTipiRengi(u.unit_tip_ad) } : undefined}
             // Gorsel kisaltma ekran okuyucuya TAM adi vermeli.
-            title={u.unit_tip_ad ? `${u.no} · ${u.unit_tip_ad}` : u.no}
+            title={[u.no, u.unit_tip_ad, u.sira != null ? `#${u.sira}` : null]
+              .filter(Boolean)
+              .join(" · ")}
             className={`group relative flex h-16 w-20 flex-col items-center justify-center rounded-lg border text-white ${
               u.aktif ? "border-black/20" : "border-slate-400 bg-slate-400"
             }`}
@@ -547,16 +549,18 @@ function FloorRow({
                 ucuncu bir satir tasar. Tip atanmissa kullanici icin degerli
                 olan odur ("12 · 2+1"); sira yalnizca yerlesim ayrintisidir
                 ve tip yokken gosterilir. */}
-            {u.aktif && u.unit_tip_ad ? (
+            {/* (Duzeltme) TIP HER ZAMAN GORUNUR: atanmamissa "-".
+                Eskiden tip yokken hucre sessizce `#sira` gosteriyordu ve
+                kullanici "tip mi yok, sira mi?" diye ayirt edemiyordu.
+                Sira bilgisi KAYBOLMADI - ipucuna (title) tasindi. */}
+            {u.aktif ? (
               <span
                 data-testid="daire-tip-etiketi"
                 className="max-w-[72px] truncate text-[10px] font-semibold opacity-95"
               >
-                {daireTipiKisa(u.unit_tip_ad)}
+                {u.unit_tip_ad ? daireTipiKisa(u.unit_tip_ad) : "—"}
               </span>
-            ) : (
-              u.sira != null && <span className="text-[10px] opacity-90">#{u.sira}</span>
-            )}
+            ) : null}
             <div className="absolute inset-x-0 bottom-0 hidden justify-center gap-2 rounded-b-lg bg-black/40 py-0.5 text-[10px] group-hover:flex">
               <button className="hover:underline" onClick={() => onEditUnit(u)}>{t("binaDuzenleKucuk")}</button>
               <button className="hover:underline" onClick={() => onRemoveUnit(u)}>{t("ortakSil")}</button>

@@ -860,32 +860,37 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "Vous ne pouvez pas créer ce rôle (agent de sécurité/technique uniquement).",
         "es": "No puede crear este rol (solo seguridad/personal de la instalación).",
     },
-    "rol_yalniz_saha_yapilabilir": {
-        "tr": "Rolü yalnız güvenlik/tesis görevlisi yapabilirsiniz.",
-        "en": "You can only set the role to security/facility staff.",
-        "ar": "يمكنك تعيين الدور إلى الأمن/موظف المنشأة فقط.",
-        "ru": "Вы можете назначить только роль охраны/сотрудника объекта.",
-        "de": "Sie können die Rolle nur auf Sicherheits-/Anlagenpersonal setzen.",
-        "fr": "Vous ne pouvez attribuer que le rôle d'agent de sécurité/technique.",
-        "es": "Solo puede asignar el rol de seguridad/personal de la instalación.",
+    # (Duzeltme turu) YONETILEN KUME MESAJLARI. Eskisi "yalnız saha
+    # personelini düzenleyebilirsiniz" diyordu ve YANLISTI: yonetici kendi
+    # tesisinin SAKININI da yonetir. Mesaj artik kumenin KENDISINI degil
+    # SINIRIN nedenini soyluyor — kume degistikce metin eskimeye devam
+    # etmesin.
+    "yalniz_yonetilen_rol_duzenlenir": {
+        "tr": "Bu hesap türünü düzenleme yetkiniz yok. Kendi tesisinizde açabildiğiniz hesapları düzenleyebilirsiniz.",
+        "en": "You cannot edit this account type. You can edit the accounts you are able to create in your own site.",
+        "ar": "لا يمكنك تعديل هذا النوع من الحسابات. يمكنك تعديل الحسابات التي يمكنك إنشاؤها في موقعك.",
+        "ru": "Вы не можете редактировать этот тип учётной записи. Доступны те, которые вы можете создавать в своём объекте.",
+        "de": "Sie dürfen diesen Kontotyp nicht bearbeiten. Bearbeitbar sind die Konten, die Sie in Ihrer Anlage anlegen können.",
+        "fr": "Vous ne pouvez pas modifier ce type de compte. Vous pouvez modifier ceux que vous pouvez créer dans votre site.",
+        "es": "No puede editar este tipo de cuenta. Puede editar las que puede crear en su finca.",
     },
-    "yalniz_saha_personeli_duzenlenir": {
-        "tr": "Yalnız saha personelini düzenleyebilirsiniz.",
-        "en": "You can only edit field staff.",
-        "ar": "يمكنك تعديل الموظفين الميدانيين فقط.",
-        "ru": "Вы можете редактировать только полевой персонал.",
-        "de": "Sie können nur Außendienstpersonal bearbeiten.",
-        "fr": "Vous ne pouvez modifier que le personnel de terrain.",
-        "es": "Solo puede editar al personal de campo.",
+    "rol_yonetilen_kumeye_cevrilir": {
+        "tr": "Rolü yalnızca açabildiğiniz hesap türlerinden birine çevirebilirsiniz.",
+        "en": "You can only change the role to an account type you are able to create.",
+        "ar": "يمكنك تغيير الدور فقط إلى نوع حساب يمكنك إنشاؤه.",
+        "ru": "Роль можно изменить только на тип учётной записи, который вы можете создавать.",
+        "de": "Die Rolle kann nur in einen Kontotyp geändert werden, den Sie anlegen dürfen.",
+        "fr": "Vous ne pouvez changer le rôle que vers un type de compte que vous pouvez créer.",
+        "es": "Solo puede cambiar el rol a un tipo de cuenta que pueda crear.",
     },
-    "yalniz_saha_personeli_parola": {
-        "tr": "Yalnız saha personelinin parolasını sıfırlayabilirsiniz.",
-        "en": "You can only reset the password of field staff.",
-        "ar": "يمكنك إعادة تعيين كلمة مرور الموظفين الميدانيين فقط.",
-        "ru": "Вы можете сбросить пароль только полевому персоналу.",
-        "de": "Sie können nur das Passwort von Außendienstpersonal zurücksetzen.",
-        "fr": "Vous ne pouvez réinitialiser que le mot de passe du personnel de terrain.",
-        "es": "Solo puede restablecer la contraseña del personal de campo.",
+    "rol_degistirilemez": {
+        "tr": "Rol değiştirme yetkiniz yok.",
+        "en": "You are not allowed to change roles.",
+        "ar": "ليس لديك صلاحية تغيير الأدوار.",
+        "ru": "У вас нет прав менять роли.",
+        "de": "Sie dürfen Rollen nicht ändern.",
+        "fr": "Vous n'êtes pas autorisé à changer les rôles.",
+        "es": "No tiene permiso para cambiar roles.",
     },
     "yalniz_saha_personeline_foto": {
         "tr": "Yalnız saha personeline fotoğraf atanabilir.",

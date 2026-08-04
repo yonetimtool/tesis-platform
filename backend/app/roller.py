@@ -1,4 +1,12 @@
-"""(P130) KIM KIMI ACABILIR — hesap olusturma yetkisinin TEK kaynagi.
+"""(P130) KIM KIMI YONETEBILIR — hesap yetkisinin TEK kaynagi.
+
+KAPSAM (duzeltme turu): tablo YALNIZ "kim kimi ACAR" degil, "kim kimin
+kaydina DOKUNABILIR"i soyler — olusturma, duzenleme, pasiflestirme ve
+parola sifirlama AYNI kumeden okur. Eskiden olusturma bu tablodan,
+duzenleme ise router icindeki AYRI bir `if` zincirinden geliyordu ve ikisi
+AYRISMISTI: yonetici bir SAKINI olusturabiliyor (POST /residents) ama
+DUZENLEYEMIYORDU ("yalniz saha personelini duzenleyebilirsiniz"). Kural
+tek yerde olmadikca bu tur ayrisma kacinilmazdir.
 
 NEDEN AYRI MODUL: kural bugune kadar `routers/users.py` icinde iki ayri
 frozenset olarak yasiyordu (`_YONETICI_CREATABLE_ROLES`,
@@ -31,17 +39,21 @@ TUM_ROLLER: tuple[str, ...] = (
     "denetci",
 )
 
-#: acan rol -> `POST /users` ile acabildigi roller.
+#: yoneten rol -> uzerinde islem yapabildigi roller (olustur/duzenle/
+#: pasiflestir/parola sifirla).
 #:
-#: `yonetici` icin `resident` bilerek YOKTUR: sakin hesabi `POST /residents`
-#: ile acilir, cunku daire baglantisini (ve gecici kodu) o uc kurar. Buradan
-#: acmak DAIRESIZ bir sakin uretirdi. Yoneticinin sakin acma yetkisi
-#: kisitlanmis degildir — sadece dogru kapidan gecer.
+#: `yonetici` icin `resident` VARDIR (duzeltme turu). Onceki tur onu
+#: bilerek disarida birakmisti: "sakin `POST /residents` ile acilir, oradan
+#: acmak DAIRESIZ sakin uretir". Gerekce olusturma icin makuldu ama tablo
+#: DUZENLEMEYI de yonettigi icin yan etkisi sakinin profiline hic
+#: dokunulamamasi oldu — yonetici kendi tesisindeki sakinin adini bile
+#: duzeltemiyordu. Kural artik "yonetici kendi tesisinin sakinini yonetir".
 #:
-#: `admin` icin `resident` VARDIR: platform operatorunun destek amaciyla
-#: (veri kurtarma, hatali kayit onarimi) daireye baglamadan hesap acmasi
-#: gerekebilir; tesis yoneticisi icin ayni gerekce yoktur.
-ACILABILIR_ROLLER: dict[str, frozenset[str]] = {
+#: DAIRE BAGLANTISI ICIN HÂLÂ `/residents` DOGRU KAPIDIR: `POST /users` ile
+#: acilan sakin DAIRESIZ olur (gecici kod + daire baglantisini o uc kurar).
+#: Panel sakin olusturmayi oraya yonlendirir; buradaki izin, kaydin
+#: SONRADAN duzenlenebilmesi icin gereklidir.
+YONETILEBILIR_ROLLER: dict[str, frozenset[str]] = {
     # Platform operatoru: her rol. Tesisin ic isleyisine karisan degil,
     # tesisi KURAN roldur (ilk yoneticiyi de o acar).
     "admin": frozenset(TUM_ROLLER),
@@ -52,7 +64,7 @@ ACILABILIR_ROLLER: dict[str, frozenset[str]] = {
     # secer; uygulamada onu tanimlayan kisi yonetici olur). Platform
     # operatorune baglamak, her denetci degisikligi icin bizi arayan bir
     # tesis demekti.
-    "yonetici": frozenset({"security", "tesis_gorevlisi", "denetci"}),
+    "yonetici": frozenset({"resident", "security", "tesis_gorevlisi", "denetci"}),
     # (P35) Dis guvenlik sirketinin amiri YALNIZ kendi ekibini acar;
     # `tesis_gorevlisi` bile degil (o site isidir, dis sirketin degil) ve
     # kendi rolunu de acamaz.
@@ -68,11 +80,11 @@ ACILABILIR_ROLLER: dict[str, frozenset[str]] = {
 }
 
 
-def acilabilir(acan_rol: str) -> frozenset[str]:
-    """`acan_rol`un acabildigi roller; taninmayan rol icin BOS kume.
+def yonetilebilir(yoneten_rol: str) -> frozenset[str]:
+    """`yoneten_rol`un dokunabildigi roller; taninmayan rol icin BOS kume.
 
     Bilinmeyen bir rolde bos kume donmek bilinclidir: yeni bir rol eklenip
     tabloya yazilmazsa hicbir sey acamaz (fail-closed). Tersi — varsayilani
     "her sey" yapmak — yeni rolu sessizce en yetkili rol yapardi.
     """
-    return ACILABILIR_ROLLER.get(acan_rol, frozenset())
+    return YONETILEBILIR_ROLLER.get(yoneten_rol, frozenset())

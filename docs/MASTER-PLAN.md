@@ -8058,6 +8058,45 @@ alanı değiştirmek isterdi.
 yine `ROLE_OPTIONS`a çevir → 2 web testi düştü · uç tüm rolleri döndürsün →
 2 hücre düştü.
 
+Notes (2026-08-04, düzeltme turu) — **TABLO YALNIZ AÇMAYI YÖNETİYORDU;
+DÜZENLEME AYRI BİR YERDE KALMIŞTI VE AYRIŞMIŞTI.**
+
+Kerem bildirdi, **canlı ölçüldü**: yönetici bir sakinin profilini
+düzenlemeye çalışınca **403 — "Yalnız saha personelini
+düzenleyebilirsiniz."** Aynı yönetici o sakini `POST /residents` ile
+**açabiliyordu**. Yani ürün, açtığı kaydı düzeltemeyen bir yönetici
+üretiyordu (adını bile).
+
+**KÖK NEDEN BENİM TASARIM HATAM:** P130'da tabloyu "kim kimi AÇAR" diye
+kurmuş, `resident`i "sakin `/residents`ten açılır, buradan açmak dairesiz
+sakin üretir" gerekçesiyle dışarıda bırakmıştım. Gerekçe **açma** için
+doğruydu. Ama `routers/users.py` düzenlemeyi **ayrı bir `if` zinciriyle**
+yazıyor ve o zincir aynı kümeyi okuyordu — sonuç: dışarıda bıraktığım rol
+düzenlemeden de düştü. **Tek tablo iki soruyu yanıtlıyordu ama yalnız biri
+için tasarlanmıştı.**
+
+**DÜZELTME — TEK KAYNAK, GERÇEKTEN:** tablo `YONETILEBILIR_ROLLER` oldu ve
+**açma + düzenleme + pasifleştirme + parola sıfırlama** dördü de tek bir
+kapıdan (`_yonetim_kapisi`) okuyor. `yonetici` kümesine `resident` eklendi.
+Rol değiştirme ayrıca kontrol edilir (yetki yükseltme yok).
+
+**BEDELİ AÇIKÇA:** `POST /users` ile açılan sakin **dairesizdir**;
+`/residents` daire bağlantısını ve geçici kodu kuran doğru kapı olmaya
+devam ediyor. Bunu kabul ettim çünkü alternatifi iki ayrı tabloydu — yani
+bu turda düzeltilen hatanın ta kendisi.
+
+**ÖLÇÜM (canlı, düzeltmeden sonra):** sakin profili düzenleme **200** ·
+sakini pasifleştirme **200** · admin profiline dokunma **403** · sakini
+admin yapma denemesi **403**.
+
+**TEST — HER ÇİFT:** 7×7 düzenleme matrisi + pasifleştirme + parola
+sıfırlama matrisi + bildirilen kusurun doğrudan gerileme kilidi + audit
+kaydında **hedefin rolü** (`meta.hedef_rol`). Toplam **132 test**.
+
+**ÜÇ HATA METNİ SİLİNDİ:** "Yalnız saha personelini düzenleyebilirsiniz"
+artık **yanlış bir cümleydi** ve katalogda bırakmak, ürünün sözlüğünde
+yanlış bir kural bırakmak olurdu.
+
 **ROL MATRİSİ KİLİDİ YENİ UCU YAKALADI** — tam istendiği gibi. Tam koşum
 **1274 geçti / 1 düştü** ve düşen tek şey kilitti; ölçülen fark **tek
 satır**: `GET /users/acilabilir-roller  IZIN IZIN RED RED RED IZIN`.
@@ -8170,6 +8209,21 @@ doğruladı (aynı presigned adres tarayıcının atacağı istekle çekildi).
 
 **MUTASYON:** sunucuda `foto_url`i `None` bırak · panelde görsel dalını
 kapat — ikisi de yakalandı.
+
+### DÜZELTME (2026-08-04) — Daire tipi ekranda görünmüyordu
+Status: BITTI · Depends-on: P26, P122
+Ölçüldü, iddia **kısmen** doğruydu:
+* **Daire listesi** (`/units`): tip **hiç** gösterilmiyordu. `unit_tip_ad`
+  API'den (P26, `UnitOut`) **zaten geliyordu** — sayfa okumuyordu. Blok'un
+  yanına "Tip" sütunu eklendi; atanmamışsa **"—"**.
+* **Bina tasarımcısı** (P122): tip **zaten vardı** (renk + kısa etiket +
+  ipucu). Eksik olan tek şey: tip **atanmamış** hücre sessizce `#sıra`
+  gösteriyordu ve kullanıcı "tip mi yok, sıra mı?" diye ayırt edemiyordu.
+  Artık tip alanı **her zaman** çizilir, atanmamışsa "—"; sıra bilgisi
+  **kaybolmadı**, ipucuna (title) taşındı.
+* Uzun tip adı listede **kırpılmaz** (yer var); kısaltma yalnız 64 px'lik
+  hücre içindir.
+Acceptance: iki yüzeyde de tip görünür, atanmamışta "—"; kapılar.
 
 ### P132 — Web arayüz yenilemesi: mobil tasarım diline geçiş
 Status: KISMEN(sistem + kabuk + pano + başarım + erişim BİTTİ · kalan

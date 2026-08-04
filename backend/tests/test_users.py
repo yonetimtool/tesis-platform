@@ -122,9 +122,24 @@ def test_yonetici_creates_field_staff(client, world):
     assert r2.status_code == 201, r2.text
 
 
-def test_yonetici_cannot_create_admin_yonetici_or_resident(client, world):
+def test_yonetici_cannot_create_admin_or_yonetici(client, world):
+    """(Duzeltme turu) `resident` BU LISTEDEN CIKTI.
+
+    Yonetici kendi tesisinin sakinini YONETIR (acar/duzenler/pasiflestirir);
+    onu disarida birakan eski kural, yoneticinin `/residents` ile actigi
+    kaydin adini bile duzeltememesine yol aciyordu. Yasak kalan kume yetki
+    YUKSELTMESI olanlardir: platform admini, kendi rolu ve dis sirket amiri.
+
+    Liste ELLE tutulmaz — kaynak `app/roller.py`. Boylece tablo degisince
+    bu test de kendiliginde dogru kalir (matrisin TAMAMI ayrica
+    `test_rol_olusturma_matrisi.py`de olculur).
+    """
+    from app.roller import yonetilebilir
+
     yon = _headers(client, world["slug_a"], world["yonetici_a"])
-    for role in ("admin", "yonetici", "resident"):
+    yasak = sorted(set(("admin", "yonetici", "guvenlik_amiri")) - yonetilebilir("yonetici"))
+    assert yasak, "yasak kume bosaldi — kural gevsemis olabilir"
+    for role in yasak:
         r = client.post(
             "/users",
             headers=yon,
@@ -245,9 +260,14 @@ def test_yonetici_updates_and_resets_field_staff(client, world):
     assert lp2.status_code == 401
 
 
-def test_yonetici_cannot_manage_non_saha(client, world):
+def test_yonetici_cannot_manage_yonetilemeyen_rolleri(client, world):
+    """(Duzeltme turu) `resident_a` BU LISTEDEN CIKTI — artik yonetilebilir.
+
+    Kalanlar gercekten disaridadir: platform admini ve baska bir yonetici.
+    Ikisine dokunmak yetki yukseltmesi olurdu.
+    """
     yon = _headers(client, world["slug_a"], world["yonetici_a"])
-    for cred in ("resident_a", "admin_a", "yonetici_a"):
+    for cred in ("admin_a", "yonetici_a"):
         h = _headers(client, world["slug_a"], world[cred])
         uid = _me_id(client, h)
         assert client.patch(

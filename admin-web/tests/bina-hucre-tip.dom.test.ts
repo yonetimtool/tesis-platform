@@ -46,12 +46,26 @@ describe("Bina tasarımcısı — hücrede daire tipi", () => {
     );
   });
 
-  it("TIP YOKSA sira gosterilir (eski davranis korunur)", async () => {
+  it("TIP YOKSA TIRE gosterilir (sira ipucuna tasindi)", async () => {
+    // (Duzeltme turu) DAVRANIS BILINCLI DEGISTI. Eskiden tip yokken hucre
+    // sessizce `#sira` gosteriyordu; kullanici "tip mi yok, sira mi?" diye
+    // ayirt edemiyordu. Yeni kural: tip alani HER ZAMAN cizilir, atanmamissa
+    // "—". Sira KAYBOLMADI — ipucuna (title) tasindi, asagidaki test olcuyor.
     kur([daire()]);
     ciz(BuildingEditorPage);
     await userEvent.click(await screen.findByText(/Blok A/));
-    await waitFor(() => expect(screen.getByText("#2")).toBeInTheDocument());
-    expect(screen.queryByTestId("daire-tip-etiketi")).toBeNull();
+    await waitFor(() =>
+      expect(screen.getByTestId("daire-tip-etiketi")).toHaveTextContent("—"),
+    );
+  });
+
+  it("TIP YOKKEN sira IPUCUNDA durur (bilgi kaybi yok)", async () => {
+    kur([daire()]);
+    ciz(BuildingEditorPage);
+    await userEvent.click(await screen.findByText(/Blok A/));
+    const etiket = await screen.findByTestId("daire-tip-etiketi");
+    const hucre = etiket.closest("div[title]") as HTMLElement;
+    expect(hucre.title).toBe("12 · #2");
   });
 
   it("UZUN tip adi KIRPILIR (hucre 80 px)", async () => {
@@ -89,6 +103,7 @@ describe("Bina tasarımcısı — hücrede daire tipi", () => {
     await userEvent.click(await screen.findByText(/Blok A/));
     const etiket = await screen.findByTestId("daire-tip-etiketi");
     const hucre = etiket.closest("div[title]") as HTMLElement;
-    expect(hucre.title).toBe("12 · Dubleks Bahçe Katı");
+    // Ipucu: no · tip · sira (sira artik burada; bkz. yukarisi).
+    expect(hucre.title).toBe("12 · Dubleks Bahçe Katı · #2");
   });
 });

@@ -19,7 +19,7 @@ from ..crud_helpers import get_or_404, is_unique_violation, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..models import AppUser
-from ..roller import acilabilir
+from ..roller import yonetilebilir
 from ..schemas import (
     AcilabilirRollerOut,
     AvatarUpdate,
@@ -45,18 +45,37 @@ _READER = require_role("admin", "yonetici", "guvenlik_amiri")
 # Kullanici OLUSTURMA: admin (her rol) + yonetici (YALNIZ saha personeli)
 # + (P35) guvenlik amiri (YALNIZ guvenlik personeli — kendi ekibi).
 _USER_CREATOR = require_role("admin", "yonetici", "guvenlik_amiri")
-# (P130) KIM KIMI ACAR artik TEK kaynaktan gelir: app/roller.py. Bu iki ad
-# geriye donuk okunabilirlik icin durur ama ARTIK KENDI GERCEGINI TASIMAZ —
-# tabloyu degistiren, uc noktalarini ve panelin acilir listesini birlikte
-# degistirmis olur.
-_YONETICI_CREATABLE_ROLES = acilabilir("yonetici")
-_AMIR_CREATABLE_ROLES = acilabilir("guvenlik_amiri")
+# (P130 + duzeltme turu) KIM KIMI YONETIR: TEK kaynak app/roller.py.
+# OLUSTURMA, DUZENLEME, PASIFLESTIRME ve PAROLA SIFIRLAMA ayni kumeden
+# okur — daha once duzenleme burada AYRI bir `if` zinciriyle yazilmisti ve
+# tablodan ayrismisti (yonetici sakini acabiliyor ama duzenleyemiyordu).
+#
 # Kural ihlali mesajlari role OZEL: "yetkiniz yok" demek, yoneticiye NEYI
-# acabildigini hic anlatmazdi.
+# yapabildigini hic anlatmazdi.
 _ACMA_HATASI = {
     "yonetici": "rol_olusturulamaz_yalniz_saha",
     "guvenlik_amiri": "rol_olusturulamaz_yalniz_guvenlik",
 }
+_DUZENLEME_HATASI = {
+    "yonetici": "yalniz_yonetilen_rol_duzenlenir",
+    "guvenlik_amiri": "yalniz_guvenlik_personeli_duzenlenir",
+}
+_ROL_DEGISTIRME_HATASI = {
+    "yonetici": "rol_yonetilen_kumeye_cevrilir",
+    "guvenlik_amiri": "rol_yalniz_guvenlik_yapilabilir",
+}
+
+
+def _yonetim_kapisi(user: AppUser, hedef_rol: str) -> None:
+    """Cagiran, `hedef_rol` rolundeki bir kaydi yonetebilir mi? Degilse 403.
+
+    TEK KAPI: create/update/reset-password hepsi buradan gecer. Ayri ayri
+    yazildiginda biri guncellenip otekiler unutuluyordu.
+    """
+    if hedef_rol not in yonetilebilir(user.role):
+        raise APIError(
+            403, "forbidden", _DUZENLEME_HATASI.get(user.role, "yetkiniz_yok")
+        )
 # Iletisim ayari (telefon + arama rizasi) admin + yonetici yonetir (rol/parola
 # gibi hassas alanlara dokunmadan — yetki yukseltme yok).
 _CONTACT_MANAGER = require_role("admin", "yonetici")
@@ -123,8 +142,12 @@ async def acilabilir_roller(
 
     ROTA SIRASI: bu tanim `/{user_id}`den ONCE gelmek ZORUNDA — sonra
     gelseydi yol degiskene eslesir ve UUID cozumlemesi 422 dondururdu.
+
+    (Duzeltme turu) AYNI KUME DUZENLEMEYI de yonetir; uc adi olusturma
+    baglaminda kaldi (panelin acilir listesi bunu okur) ama kaynak tablo
+    `YONETILEBILIR_ROLLER`dir.
     """
-    return AcilabilirRollerOut(roller=sorted(acilabilir(user.role)))
+    return AcilabilirRollerOut(roller=sorted(yonetilebilir(user.role)))
 
 
 @router.get("/{user_id}", response_model=UserAdminOut)
@@ -142,10 +165,10 @@ async def create_user(
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_USER_CREATOR),
 ) -> UserCreatedOut:
-    # (P130) TEK kural, TEK tablo: acan rolun acabildigi kume disi -> 403.
+    # (P130) TEK kural, TEK tablo: yonetilen kume disi -> 403.
     # Eskiden rol basina IF vardi; yeni bir rol eklenince (P128 `denetci`)
     # hicbir IF'e girmez ve SESSIZCE her seyi acabilir olurdu.
-    if body.role not in acilabilir(user.role):
+    if body.role not in yonetilebilir(user.role):
         raise APIError(
             403, "forbidden", _ACMA_HATASI.get(user.role, "rol_olusturulamaz")
         )
@@ -220,22 +243,17 @@ async def update_user(
     user: AppUser = Depends(_USER_CREATOR),
 ) -> UserAdminOut:
     obj = await get_or_404(db, AppUser, user_id)
-    # yonetici YALNIZ saha personelini (guvenlik/tesis gorevlisi) duzenler ve
-    # rolu saha disina cekemez (yetki yukseltme yok); admin herkesi duzenler.
-    if user.role == "yonetici":
-        if obj.role not in _YONETICI_CREATABLE_ROLES:
-            raise APIError(403, "forbidden", "yalniz_saha_personeli_duzenlenir")
-        if body.role is not None and body.role not in _YONETICI_CREATABLE_ROLES:
-            raise APIError(403, "forbidden", "rol_yalniz_saha_yapilabilir")
-    # (P35) Amir icin AYNI DARALTMA — ama daha dar kume: yalniz guvenlik
-    # personeli. Bu kontrol olmasaydi amir KENDI ROLUNU yukseltebilir veya
-    # yoneticinin parolasini degistirebilirdi (dis sirket personeli icin
-    # bunu acik birakmak site yonetimini devretmek olurdu).
-    if user.role == "guvenlik_amiri":
-        if obj.role not in _AMIR_CREATABLE_ROLES:
-            raise APIError(403, "forbidden", "yalniz_guvenlik_personeli_duzenlenir")
-        if body.role is not None and body.role not in _AMIR_CREATABLE_ROLES:
-            raise APIError(403, "forbidden", "rol_yalniz_guvenlik_yapilabilir")
+    # IKI YONLU KONTROL, ikisi de sart:
+    #   1. HEDEF kaydin rolu yonetilen kumede mi (kime dokunabilir),
+    #   2. yeni rol de o kumede mi (yetki YUKSELTME yok — kendi rolunu ya da
+    #      platform admini uretemez).
+    # `admin` icin kume tum roller oldugundan ikisi de serbesttir.
+    _yonetim_kapisi(user, obj.role)
+    if body.role is not None and body.role not in yonetilebilir(user.role):
+        raise APIError(
+            403, "forbidden",
+            _ROL_DEGISTIRME_HATASI.get(user.role, "rol_degistirilemez"),
+        )
     data = body.model_dump(exclude_unset=True)
     new_password = data.pop("password", None)
     if "email" in data and data["email"] is not None:
@@ -255,7 +273,11 @@ async def update_user(
     await db.refresh(obj)
     await audit_user(
         db, user, Action.USER_UPDATE, resource_type="app_user",
-        resource_id=obj.id, meta={"fields": list(data.keys())},
+        # HEDEFIN ROLU de yazilir: "kim, HANGI ROLDEKI kaydi, hangi
+        # alanlarda degistirdi" sorusu aylar sonra da cevaplanabilsin.
+        # (Aktoru ve rolunu `audit_user` zaten yaziyor.)
+        resource_id=obj.id,
+        meta={"fields": list(data.keys()), "hedef_rol": obj.role},
     )
     return _admin_out(obj)
 
@@ -271,11 +293,9 @@ async def reset_user_password(
     yalniz bu yanitta doner. yonetici YALNIZ saha personeli (guvenlik/tesis
     gorevlisi) icin sifirlar."""
     obj = await get_or_404(db, AppUser, user_id)
-    if user.role == "yonetici" and obj.role not in _YONETICI_CREATABLE_ROLES:
-        raise APIError(403, "forbidden", "yalniz_saha_personeli_parola")
-    # (P35) Amir yalniz KENDI ekibinin parolasini sifirlar.
-    if user.role == "guvenlik_amiri" and obj.role not in _AMIR_CREATABLE_ROLES:
-        raise APIError(403, "forbidden", "yalniz_guvenlik_personeli_parola")
+    # Parola sifirlama da AYNI kapidan: kaydina dokunamadigin kisinin
+    # parolasini da sifirlayamazsin.
+    _yonetim_kapisi(user, obj.role)
     temp_code = generate_temp_code()
     obj.password_hash = None
     obj.password_set = False

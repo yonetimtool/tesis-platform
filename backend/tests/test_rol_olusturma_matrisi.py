@@ -30,19 +30,21 @@ TUM_ROLLER = (
     "denetci",
 )
 
-#: POST /users ile kimin hangi rolu acabildigi. Anahtar = acan, deger =
-#: acabildigi roller. Listede olmayan her cift 403 BEKLER.
+#: Kimin hangi rolu YONETEBILDIGI (olustur + duzenle + pasiflestir +
+#: parola sifirla). Anahtar = yoneten, deger = yonetilen roller. Listede
+#: olmayan her cift 403 BEKLER.
 #:
-#: `resident` bilerek YOK: sakin hesabi `POST /residents` ile acilir (daire
-#: baglantisini o uc kurar). Ikinci ve daha zayif bir sakin-acma yolu
-#: eklemek, dairesiz sakin uretirdi.
-#: `admin` icin `resident` VARDIR (olculdu: 201): platform operatoru destek
-#: amaciyla dairesiz hesap acabilir. Tesis yoneticisi icin ayni gerekce yok.
-IZINLI = {
+#: (Duzeltme turu) `yonetici` icin `resident` EKLENDI. Onceki tur onu
+#: olusturma gerekcesiyle disarida birakmisti ("sakin `/residents`ten
+#: acilir"); ama ayni tablo DUZENLEMEYI de yonettigi icin yan etkisi
+#: yoneticinin kendi tesisindeki sakinin adini bile duzeltememesiydi
+#: (canli olculdu: 403 "yalniz saha personelini duzenleyebilirsiniz").
+YONETILEN = {
     "admin": {"admin", "yonetici", "security", "tesis_gorevlisi", "resident",
               "guvenlik_amiri", "denetci"},
     # (P128/P130b) Denetciyi ATAYAN denetlenen tesisin kendi yonetimidir.
-    "yonetici": {"security", "tesis_gorevlisi", "denetci"},
+    # `resident`: yonetici kendi tesisinin sakinini yonetir.
+    "yonetici": {"resident", "security", "tesis_gorevlisi", "denetci"},
     "guvenlik_amiri": {"security"},
     "security": set(),
     "tesis_gorevlisi": set(),
@@ -80,8 +82,8 @@ def _acan(client, world, rol: str) -> dict[str, str]:
 
 def test_matris_tam():
     """Matris TUM rolleri kapsiyor — yeni bir rol sessizce kacamaz."""
-    assert set(IZINLI) == set(TUM_ROLLER), "her rol ACAN olarak da olculmeli"
-    for acan, hedefler in IZINLI.items():
+    assert set(YONETILEN) == set(TUM_ROLLER), "her rol ACAN olarak da olculmeli"
+    for acan, hedefler in YONETILEN.items():
         assert hedefler <= set(TUM_ROLLER), hedefler
 
 
@@ -93,10 +95,10 @@ def test_kod_tablosu_beklenenle_AYNI():
     ikisinden en az biri duser — tabloyu tek satirla gevsetip davranis
     testlerini de birlikte guncelleyen bir degisiklik gozden kacamaz.
     """
-    from app.roller import ACILABILIR_ROLLER, TUM_ROLLER as KOD_ROLLERI
+    from app.roller import YONETILEBILIR_ROLLER, TUM_ROLLER as KOD_ROLLERI
 
     assert set(KOD_ROLLERI) == set(TUM_ROLLER)
-    assert {k: set(v) for k, v in ACILABILIR_ROLLER.items()} == IZINLI
+    assert {k: set(v) for k, v in YONETILEBILIR_ROLLER.items()} == YONETILEN
 
 
 def test_taninmayan_rol_HICBIR_SEY_acamaz():
@@ -105,12 +107,12 @@ def test_taninmayan_rol_HICBIR_SEY_acamaz():
     Varsayilan "her sey" olsaydi, tabloya yazilmayi unutulan yeni bir rol
     sistemin EN YETKILI rolu olarak dogardi.
     """
-    from app.roller import acilabilir as _acilabilir
+    from app.roller import yonetilebilir as _yonetilebilir
 
-    assert _acilabilir("olmayan_rol") == frozenset()
+    assert _yonetilebilir("olmayan_rol") == frozenset()
 
 
-@pytest.mark.parametrize("acan_rol", sorted(IZINLI))
+@pytest.mark.parametrize("acan_rol", sorted(YONETILEN))
 def test_acilabilir_roller_ucu_matrisle_AYNI(client, world, acan_rol):
     """Panelin acilir listesi sunucudan gelir — gosterilen = yapilabilen.
 
@@ -119,15 +121,15 @@ def test_acilabilir_roller_ucu_matrisle_AYNI(client, world, acan_rol):
     """
     h = _acan(client, world, acan_rol)
     r = client.get("/users/acilabilir-roller", headers=h)
-    if not IZINLI[acan_rol]:
+    if not YONETILEN[acan_rol]:
         # Hic hesap acamayan rol ucu de GORMEZ (require_role kapisi).
         assert r.status_code == 403, r.text
         return
     assert r.status_code == 200, r.text
-    assert set(r.json()["roller"]) == IZINLI[acan_rol]
+    assert set(r.json()["roller"]) == YONETILEN[acan_rol]
 
 
-@pytest.mark.parametrize("acan_rol", sorted(IZINLI))
+@pytest.mark.parametrize("acan_rol", sorted(YONETILEN))
 @pytest.mark.parametrize("hedef_rol", TUM_ROLLER)
 def test_kim_kimi_acar(client, world, acan_rol, hedef_rol):
     h = _acan(client, world, acan_rol)
@@ -141,10 +143,110 @@ def test_kim_kimi_acar(client, world, acan_rol, hedef_rol):
             "password": "GecerliParola1!",
         },
     )
-    bekleniyor = 201 if hedef_rol in IZINLI[acan_rol] else 403
+    bekleniyor = 201 if hedef_rol in YONETILEN[acan_rol] else 403
     assert r.status_code == bekleniyor, (
         f"{acan_rol} -> {hedef_rol}: {r.status_code} beklenen {bekleniyor} · {r.text}"
     )
+
+
+# --------------------------------------------------------------------------- #
+# DUZENLEME MATRISI — "kim kimin KAYDINA dokunabilir".
+#
+# Bu bolum bir DUZELTME turunda eklendi: olusturma tablodan, duzenleme ise
+# router icindeki ayri bir `if` zincirinden okunuyordu ve ikisi ayrismisti.
+# Canli olcum: yonetici bir SAKININ adini degistirmeye calisinca 403
+# ("yalniz saha personelini duzenleyebilirsiniz") — oysa ayni yonetici o
+# sakini `/residents` ile ACABILIYORDU.
+# --------------------------------------------------------------------------- #
+def _kayit_ac(client, admin, rol: str) -> str:
+    """Hedef rolde bir kayit acar (admin her rolu acabilir) ve id doner."""
+    r = client.post(
+        "/users",
+        headers=admin,
+        json={"ad": f"Hedef {rol}", "telefon": _uphone(), "role": rol,
+              "password": "GecerliParola1!"},
+    )
+    assert r.status_code == 201, r.text
+    return r.json()["id"]
+
+
+@pytest.mark.parametrize("yoneten_rol", sorted(YONETILEN))
+@pytest.mark.parametrize("hedef_rol", TUM_ROLLER)
+def test_kim_kimin_kaydini_DUZENLER(client, world, yoneten_rol, hedef_rol):
+    """HER CIFT: yonetilen kumedeyse 200, degilse 403."""
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    uid = _kayit_ac(client, admin, hedef_rol)
+
+    h = _acan(client, world, yoneten_rol)
+    r = client.patch(f"/users/{uid}", headers=h, json={"ad": "Yeni Ad"})
+    bekleniyor = 200 if hedef_rol in YONETILEN[yoneten_rol] else 403
+    assert r.status_code == bekleniyor, (
+        f"{yoneten_rol} -> {hedef_rol} duzenleme: {r.status_code} "
+        f"beklenen {bekleniyor} · {r.text}"
+    )
+
+
+@pytest.mark.parametrize("hedef_rol", TUM_ROLLER)
+def test_yonetici_PASIFLESTIRME_ayni_kurala_tabi(client, world, hedef_rol):
+    """Pasiflestirme de duzenlemedir — ayri bir kapisi YOKTUR."""
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    uid = _kayit_ac(client, admin, hedef_rol)
+    yonetici = _headers(client, world["slug_a"], world["yonetici_a"])
+    r = client.patch(f"/users/{uid}", headers=yonetici, json={"is_active": False})
+    bekleniyor = 200 if hedef_rol in YONETILEN["yonetici"] else 403
+    assert r.status_code == bekleniyor, f"{hedef_rol}: {r.status_code} · {r.text}"
+
+
+@pytest.mark.parametrize("hedef_rol", TUM_ROLLER)
+def test_PAROLA_SIFIRLAMA_ayni_kurala_tabi(client, world, hedef_rol):
+    """Kaydina dokunamadigin kisinin parolasini da sifirlayamazsin."""
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    uid = _kayit_ac(client, admin, hedef_rol)
+    yonetici = _headers(client, world["slug_a"], world["yonetici_a"])
+    r = client.post(f"/users/{uid}/reset-password", headers=yonetici)
+    bekleniyor = 200 if hedef_rol in YONETILEN["yonetici"] else 403
+    assert r.status_code == bekleniyor, f"{hedef_rol}: {r.status_code} · {r.text}"
+
+
+def test_SAKIN_DUZENLEME_bu_turun_kusuru(client, world):
+    """Bildirilen kusurun DOGRUDAN karsiligi (gerileme kilidi).
+
+    Yonetici bir sakinin adini degistirebilmeli ve pasiflestirebilmeli.
+    """
+    yonetici = _headers(client, world["slug_a"], world["yonetici_a"])
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    uid = _kayit_ac(client, admin, "resident")
+
+    ad = client.patch(f"/users/{uid}", headers=yonetici, json={"ad": "Düzeltilmiş Ad"})
+    assert ad.status_code == 200, ad.text
+    assert ad.json()["ad"] == "Düzeltilmiş Ad"
+
+    pasif = client.patch(f"/users/{uid}", headers=yonetici, json={"is_active": False})
+    assert pasif.status_code == 200, pasif.text
+    assert pasif.json()["is_active"] is False
+
+
+def test_duzenleme_AUDIT_kaydinda_hedefin_rolu_var(client, world):
+    """Denetim izi: kim, HANGI ROLDEKI kaydi, hangi alanlarda degistirdi."""
+    yonetici = _headers(client, world["slug_a"], world["yonetici_a"])
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    uid = _kayit_ac(client, admin, "resident")
+    assert client.patch(
+        f"/users/{uid}", headers=yonetici, json={"ad": "Denetimli Ad"}
+    ).status_code == 200
+
+    kayitlar = client.get(
+        "/audit", headers=admin, params={"action": "user_update", "limit": 200}
+    )
+    assert kayitlar.status_code == 200, kayitlar.text
+    satir = next(
+        (k for k in kayitlar.json()["items"] if str(k.get("resource_id")) == str(uid)),
+        None,
+    )
+    assert satir is not None, "duzenleme audit'e yazilmamis"
+    assert satir["actor_rol"] == "yonetici"
+    assert satir["meta"]["hedef_rol"] == "resident"
+    assert "ad" in satir["meta"]["fields"]
 
 
 @pytest.mark.parametrize("hedef_rol", TUM_ROLLER)
@@ -162,7 +264,7 @@ def test_rol_yukseltme_patch_ile_de_olmaz(client, world, hedef_rol):
 
     yonetici = _headers(client, world["slug_a"], world["yonetici_a"])
     p = client.patch(f"/users/{uid}", headers=yonetici, json={"role": hedef_rol})
-    bekleniyor = 200 if hedef_rol in IZINLI["yonetici"] else 403
+    bekleniyor = 200 if hedef_rol in YONETILEN["yonetici"] else 403
     assert p.status_code == bekleniyor, (
         f"yonetici PATCH role={hedef_rol}: {p.status_code} beklenen {bekleniyor} · {p.text}"
     )
