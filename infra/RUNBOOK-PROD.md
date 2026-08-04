@@ -259,9 +259,21 @@ $C up -d --force-recreate api        # sonra kod
 ### 11.2 Dağıtım sonrası ZORUNLU doğrulama
 
 ```bash
-bash infra/canli-yuzey-dogrula.sh
-# DNS yayılmasını beklemeden, sunucunun kendi üzerinden:
-SUNUCU_IP=185.248.57.150 bash infra/canli-yuzey-dogrula.sh
+bash infra/canli-yuzey-dogrula.sh          # VARSAYILAN: 127.0.0.1 (sunucuda)
+HEDEF=dns bash infra/canli-yuzey-dogrula.sh   # dışarıdan, genel DNS ile
+```
+
+**Neden varsayılan 127.0.0.1:** genel IP'ye **ağ içinden** gidildiğinde pfSense
+hairpin'i isteği alakasız bir nginx'e düşürebiliyor. O sunucu bizim yığınımız
+değildir; ondan gelen 404'leri "altyapı bozuk" diye okumak yanlış teşhis
+üretir (bir kez üretti). Betik cevabı **kimin** verdiğini başlıklardan
+söyler: `admin-web` (vekil çalışıyor) / `caddy-kendisi` (eski yapılandırma) /
+`BIZIM-DEGIL` (yanlış sunucuya bakıyorsunuz).
+
+Koşan ve bağlı yapılandırmayı yan yana koymak için:
+
+```bash
+bash infra/caddy-teshis.sh   # caddy adapt (bağlı dosya) vs :2019 (bellekteki)
 ```
 
 Betik her konağa gerçek istek atar ve **koşan** dağıtımın beklenen yüzeyi
