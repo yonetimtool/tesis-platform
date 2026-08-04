@@ -7508,6 +7508,67 @@ kendim yazmıştım):**
 KAPILAR: `tsc` temiz · `vitest` **431 test** · `npm run build` ✓ ·
 depo kapıları 0.
 
+Notes (2026-08-04, P126.7) — **ROL YALITIMI BİTTİ; P126 TAMAM.**
+
+**ASIL BULGU: menü rolden habersizdi.** P126.1–.6 boyunca `app.*` menüsü
+YALNIZ yüzeye göre süzülüyordu — `app.*`a giren bir **sakin 39 bağlantının
+hepsini** görüyordu (vardiya, tahakkuk, kullanıcılar, finans). Hiçbirini
+açamıyordu (sunucu 403) ama "görüyorum, tıklayınca çalışmıyor" tam olarak
+`yuzey.ts`in bastan beri önlemeye çalıştığı izlenimdir. Bu, önceki
+dilimlerin **kabul kriterinde vardı ve gözden kaçmıştı**; burada kapandı.
+
+**ÇÖZÜM ÖLÇÜME DAYANIYOR, TAHMİNE DEĞİL.** `ROTA_ROLLERI` (41 rota) iki
+katmanlı: **erişim** (koddan üretilen 318 satırlık rol matrisi) + **niyet**
+(ürün kararı). `rol-menusu.test.ts` her koşuda bildirilen kümenin erişim
+kümesinin **alt kümesi** olduğunu doğrular — bir uç daraltılırsa test düşer.
+
+**ÖLÇÜM BİR HATAMI YAKALADI:** `GET /vehicle-passes` **yöneticiye 403**
+döner (yalnız admin + security). "Araç geçişleri"ni yönetim setine koymak
+içimden geldiği gibiydi; matris reddetti. Menüye elle bakan biri bunu fark
+etmezdi.
+
+**MENÜYÜ SÜZMEK YETMEZ — ADRESİ YAZAN DURDURULMALI.** `app.*`ta `/finans`
+yazan bir sakin bugüne kadar sayfayı **açar** ve BFF'ten 403 alırdı: kırık
+ekran. Middleware artık access çerezindeki rolü okuyup isteği **sayfa
+çizilmeden** kesiyor ve rolün **kendi başlangıcına** yolluyor (`/` de role
+göre: sakin → Aidatım, güvenlik → Ziyaretçiler, saha → Görevlerim, yönetim →
+Pano; yoksa yönlendirme döngüsü olurdu). Access çerezi düşmüşse (15 dk) kapı
+**uygulanmaz** — oturumu açık birini yenileme şansı doğmadan dışarı atmak
+yanlış olurdu.
+
+**EDGE'DE `Buffer` YOK:** token çözücü `atob` + elle base64url çevrimi
+kullanıyor. `-`/`_` çevrilmeseydi gövde bozulur, rol `null` döner ve kapı
+**sessizce devre dışı** kalırdı; mutasyon bunu kaçırdığı için `_` içeren
+gerçek bir gövdeyle test eklendi.
+
+**ROL SUNUCUDA ÇÖZÜLÜYOR:** korumalı düzen access çerezinden rolü okuyup
+kabuğa veriyor — ilk çizimde menü **zaten doğru**. Çerez 15 dakikada
+düştüğünde `null` gelir ve kabuk `/api/me`ye sorar (BFF yenileme akışını
+tetikler), yani menü **kendini toparlar**. İki yol da ayrı ayrı test edildi.
+
+**SUNUCU TARAFI KURALI ARTIK YAZILI:** `backend/tests/test_yuzey_yalitimi.py`
+— 15 platform ucu hiçbir tesis rolüne açık değil **ve** `admin`e açık. İkinci
+yön şart: yoksa ucu herkese kapatmak da testi geçirirdi. Matris kilidi bir
+**değişiklik dedektörüydü**; bu dosya **kuralı** yazar.
+
+**7 DİL — TR HARF TARAMASININ DELİĞİ KAPANDI:** mevcut tarama yalnız
+ç/ğ/ı/ş ariyordu; o harfleri taşımayan bir Türkçe cümle İngilizce sözlüğe
+kopyalanmış olarak geçebilirdi. Yeni ölçüm: TR ile **birebir aynı** kalan
+değer ya bir kısaltma/simge/eş-sözcüktür (24 maddelik gerekçeli liste) ya da
+hatadır. Kalan açık dürüstçe yazıldı: tek kelimesi değiştirilmiş bir kopya
+ikisinden de kaçar.
+
+**MUTASYON 16/16** (4'ü ilk turda kaçtı, testler güçlendirildi): rol süzgecini
+kaldır · bilinmeyen rolde her şeyi göster · tanımsız rotayı varsayılan görünür
+yap · yöneticiye araç geçişleri ver · sakine finans ver · `/api/me` yedeğini
+kaldır · rolü kabuğa geçirme · bozuk token'da çök · yöneticiye `/tenants` aç ·
+admin'e `/audit` kapat · saha rolüne `/tasks` kapat · middleware rol kapısını
+kaldır · kapıyı tam yolla çalıştır (derin bağlantı kırılır) · çerezsizken de
+kapıyı uygula · kök rotayı rolden bağımsız yap · base64url çevrimini kaldır.
+
+KAPILAR: `tsc` temiz · `vitest` **461 test** (+30) · `npm run build` ✓ ·
+`backend-pytest` ✓ · depo kapıları 0.
+
 ### P127 — www.yönetiyor.com: tanıtım sitesi (SEO)
 Status: ACIK · Depends-on: P126
 Scope: Geçici statik açılış sayfası (P120) gerçek tanıtım sitesiyle

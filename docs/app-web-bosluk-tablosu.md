@@ -135,7 +135,39 @@ P126 **tek oturumluk bir iş değil**. Ölçülebilir parçalara bölünüşü:
 | P126.4 | **güvenlik çalışma alanı ✅ BİTTİ** — Ziyaretçiler, Kargolar, Olaylar, Araç geçişleri; `security` `app.*`a **alındı** | ✅ **BİTTİ** |
 | P126.5 | **yönetici'nin 3 eksik sayfası ✅ BİTTİ** — Kameralar (canlı karo, oynatıcı yok), Dış hizmetler, Yönetim iletişim | ✅ **BİTTİ** |
 | P126.6 | **tesis görevlisi ✅ BİTTİ** — Görevlerim; `tesis_gorevlisi` `app.*`a **alındı** | ✅ **BİTTİ** |
-| P126.7 | 7 dil ARB + rol yalıtımı testleri + kapılar | orta |
+| P126.7 | **rol yalıtımı ✅ BİTTİ** — menü artık role göre süzülüyor (rol×rota haritası backend matrisiyle kilitli); 7 dil sözlüğüne "TR kopyası" taraması eklendi | ✅ **BİTTİ** |
 
 Her alt-adım kendi commit'idir (kural 2/10). **Hiçbiri yarım bırakılmaz**:
 bir rolün sayfası eklendiğinde o rol o gün işini web'den yapabilir olmalıdır.
+
+---
+
+## 5) P126.7'DE ÇIKAN ASIL BULGU — menü YALNIZ yüzeye göre süzülüyordu
+
+P126.1–.6 boyunca `app.*` menüsü rolden habersizdi: `app.*`a giren bir
+**sakin 39 bağlantının hepsini** görüyordu — vardiya çizelgesi, tahakkuk,
+kullanıcılar, finans. Hiçbirini açamıyordu (sunucu 403 veriyor) ama
+"görüyorum, tıklayınca çalışmıyor" tam olarak `yuzey.ts`in önlemeye
+çalıştığı **"sistem bozuk"** izlenimidir.
+
+Çözüm iki katmanlı ve **ölçüme dayanır**:
+
+| Katman | Nerede | Ne garanti eder |
+|---|---|---|
+| **Erişim** (ölçülür) | `backend/tests/yetki/rol-matrisi.txt` | rol o sayfanın birincil ucundan 403 alıyorsa sayfa menüde **olamaz** |
+| **Niyet** (ürün kararı) | `admin-web/lib/yuzey.ts` → `ROTA_ROLLERI` | erişim yeter şart değil: `GET /cameras` herkese açık ama Kameralar bir yönetim ekranıdır |
+
+`admin-web/tests/rol-menusu.test.ts` bildirilen kümenin erişim kümesinin
+**alt kümesi** olduğunu her koşuda doğrular; bir uç daraltılırsa test düşer.
+`backend/tests/test_yuzey_yalitimi.py` ise ters yönü yazar: 15 platform ucu
+**hiçbir tesis rolüne** açık değildir (ve `admin`e **açıktır** — yoksa ucu
+herkese kapatmak da testi geçirirdi).
+
+Üçüncü katman **middleware**tir: menü süzgeci adresi yazanı durdurmaz.
+`app.*`ta `/finans` yazan bir sakin sayfayı açar ve 403 alırdı; artık istek
+sayfa çizilmeden kesilir ve rolün kendi başlangıcına yönlendirilir. Access
+çerezi düşmüşse kapı uygulanmaz (yenileme şansı kalsın).
+
+**Ölçümün yakaladığı somut örnek:** `GET /vehicle-passes` **yöneticiye 403**
+döner (yalnız admin + security). "Araç geçişleri" yöneticiye gösterilseydi
+tıklayınca boş ekran gelirdi — menüye elle bakan biri bunu fark etmezdi.

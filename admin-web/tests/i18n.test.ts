@@ -66,6 +66,45 @@ describe("sozluk butunlugu", () => {
     }
   });
 
+  // (P126.7) TR HARF TARAMASININ DELIGI: `TR_HARF` yalniz Turkce'ye OZGU
+  // harfleri (ç/ğ/ı/ö/ş/ü) ariyor. "Kamera ekleme mobil uygulamada yapilir"
+  // gibi bir cumle o harflerin hicbirini tasimayabilir ve İngilizce
+  // sozluge OLDUGU GIBI kopyalanmis olarak sessizce gecerdi. Bu olcum o
+  // acigi kapatir: bir deger TR ile birebir AYNI ise ya bir kisaltma/
+  // simge/es-sozcuktur (asagidaki liste) ya da CEVRILMEMISTIR.
+  const AYNI_KALABILIR = new Set([
+    // Kisaltma ve simgeler — cevrilmezler.
+    "NFC", "NFC UID", "SMS", "PDF", "HH:MM", "—", "?", "Tenant ID",
+    // Dil secici basligi bilincli olarak iki dilli.
+    "Dil / Language",
+    // Es-sozcukler: hedef dilde de AYNI yazilir (Almanca "Kamera",
+    // Fransizca "Plan", Ispanyolca "Rol"...). Cevrilmediklerinden degil,
+    // cevirileri ayni oldugundan buradalar.
+    "Admin", "Platform Admin", "Endpoint", "Endpoint URL", "Foto", "Kamera",
+    "Kanal", "Meta", "Model", "Net", "Plan", "Rol", "Telefon", "Tema", "Test",
+  ]);
+
+  // KALAN ACIK (durustce): ne bu olcum ne `TR_HARF`, ic/ig/is harfi
+  // tasimayan VE birebir ayni olmayan bir Turkce cumleyi (orn. tek kelime
+  // degistirilmis bir kopya) yakalar. Iki tarama birlikte pratikteki
+  // vakalarin cogunu kapatir; geri kalani goz denetimidir.
+  it("TR ile BIREBIR AYNI kalan deger ya kisaltmadir ya HATA", () => {
+    const supheli: string[] = [];
+    for (const dil of DILLER) {
+      if (dil === "tr") continue;
+      for (const anahtar of Object.keys(tr) as (keyof typeof tr)[]) {
+        const metin = SOZLUKLER[dil][anahtar];
+        if (metin === tr[anahtar] && !AYNI_KALABILIR.has(metin)) {
+          supheli.push(`${dil}/${String(anahtar)}: ${metin}`);
+        }
+      }
+    }
+    expect(
+      supheli,
+      `TR kopyasi olabilir:\n${supheli.join("\n")}`,
+    ).toEqual([]);
+  });
+
   it("yer tutucular tum dillerde AYNI", () => {
     const alanlar = (s: string) => (s.match(/\{(\w+)\}/g) ?? []).sort().join(",");
     for (const anahtar of Object.keys(tr) as (keyof typeof tr)[]) {

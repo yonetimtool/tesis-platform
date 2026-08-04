@@ -4,13 +4,20 @@ import { motion, MotionConfig } from "framer-motion";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
+import useSWR from "swr";
 
 import { DilSecici } from "@/components/DilSecici";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 import { YonetioLogo } from "@/components/YonetioLogo";
-import { konakYuzeyi, kokRota, rotaYuzeyi } from "@/lib/yuzey";
+import { jsonFetcher } from "@/lib/fetcher";
+import {
+  konakYuzeyi,
+  kokRota,
+  rotaRoldeGorunur,
+  rotaYuzeyi,
+} from "@/lib/yuzey";
 
 type IconName =
   | "grid" | "building" | "clock" | "scan" | "route" | "check"
@@ -151,7 +158,13 @@ function Icon({ name }: { name: IconName }) {
   }
 }
 
-function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
+function SidebarBody({
+  onNavigate,
+  rolBaslangic,
+}: {
+  onNavigate?: () => void;
+  rolBaslangic: string | null;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const t = useT();
@@ -183,9 +196,23 @@ function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
   const yuzey = konakYuzeyi(
     typeof window === "undefined" ? null : window.location.host,
   );
-  // Bilinmeyen rota MENUYE ALINMAZ: "varsayilan olarak goster" demek, yeni
-  // bir tesis sayfasinin panele SESSIZCE sizmasi olurdu.
-  const gorunenLinkler = LINKS.filter((l) => rotaYuzeyi(l.href) === yuzey);
+  // (P126.7) MENU ROLE GORE DE SUZULUR.
+  //
+  // Sunucudan gelen `rol` (duzen, cerezden cozdu) BASLANGIC degeridir;
+  // access cerezi dusmusse `null` gelir ve `/api/me` devreye girer — o
+  // istek BFF'in yenileme akisini tetikler, yani menu KENDINI TOPARLAR.
+  // SWR anahtari profil sayfasiyla AYNI: iki istek degil, tek istek.
+  const { data: ben } = useSWR<{ role?: string }>(
+    rolBaslangic ? null : "/api/me",
+    jsonFetcher,
+  );
+  const rol = rolBaslangic ?? ben?.role ?? null;
+
+  // Bilinmeyen rota ve rolde OLMAYAN rota MENUYE ALINMAZ: "varsayilan
+  // olarak goster" demek, sakine yonetim menusunu cizmek olurdu.
+  const gorunenLinkler = LINKS.filter(
+    (l) => rotaYuzeyi(l.href) === yuzey && rotaRoldeGorunur(l.href, rol),
+  );
   // Logo hedefi de yuzeye gore: panelde tesis panosu YOKTUR (bkz. kokRota).
   const kokHedef = kokRota(yuzey);
 
@@ -249,7 +276,14 @@ function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-export function AppShell({ children }: { children: ReactNode }) {
+export function AppShell({
+  children,
+  rol,
+}: {
+  children: ReactNode;
+  /** Sunucunun cerezden cozdugu rol; bilinmiyorsa `null` (bkz. duzen). */
+  rol: string | null;
+}) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const t = useT();
@@ -264,7 +298,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         {/* RTL: `left/border-r` yerine MANTIKSAL kenar — Arapcada kenar
             cubugu saga gecer (tur 17). */}
         <aside className="fixed inset-y-0 start-0 z-30 hidden w-64 border-e border-slate-200 bg-white lg:block">
-          <SidebarBody />
+          <SidebarBody rolBaslangic={rol} />
         </aside>
 
         {/* Mobil ust cubuk */}
@@ -299,7 +333,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               : "-translate-x-full rtl:translate-x-full"
           }`}
         >
-          <SidebarBody onNavigate={() => setOpen(false)} />
+          <SidebarBody onNavigate={() => setOpen(false)} rolBaslangic={rol} />
         </aside>
 
         {/* Icerik */}

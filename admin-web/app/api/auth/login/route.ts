@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { istekMetni } from "@/lib/i18n/istek-metni";
 
 import { backendLogin, loginResponse } from "@/lib/backend";
+import { tokenRolu } from "@/lib/rol-token";
 import {
   konakYuzeyi,
   rolYuzeyeGirebilir,
@@ -10,19 +11,6 @@ import {
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-// Access token claim'inden rolu okur (imza DOGRULANMAZ — token'i backend'in
-// kendisi verdi; bu kontrol yalnizca panel UX kapisidir. Gercek yetki her
-// istekte backend RBAC'ta zorlanir — bkz. contracts/auth.md §4).
-function tokenRole(access: string): string | null {
-  try {
-    const payload = access.split(".")[1] ?? "";
-    const json = Buffer.from(payload, "base64url").toString("utf8");
-    return (JSON.parse(json) as { role?: string }).role ?? null;
-  } catch {
-    return null;
-  }
-}
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const body = (await req.json().catch(() => ({}))) as {
@@ -62,7 +50,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // backend RBAC'ta zorlanir (contracts/auth.md §4). Ama yanlis yuzeye
   // giren kullaniciya isini yapamayacagi bir kabuk gostermek "sistem bozuk"
   // izlenimi uretir — kapi bunu onler ve NEDENINI soyler.
-  const rol = tokenRole(tokens.access_token);
+  const rol = tokenRolu(tokens.access_token);
   const yuzey = konakYuzeyi(req.headers.get("host"));
   if (!rolYuzeyeGirebilir(rol, yuzey)) {
     // Sayfalari HENUZ olmayan tesis rolleri icin ayri bir cumle: "panel

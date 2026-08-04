@@ -21,8 +21,10 @@ vi.mock("next/navigation", () => ({
 }));
 
 // JSX YOK (P43 gerekcesi): kabuk `children` alir, bos govdeyle cizilir.
+// (P126.7) `rol` artik ZORUNLU bir ucludur — menu ona gore suzuluyor;
+// cikis dugmesi menuden bagimsiz oldugu icin buradaki deger onemsiz.
 function Kabuk() {
-  return createElement(AppShell, { children: null });
+  return createElement(AppShell, { children: null, rol: "admin" });
 }
 
 afterEach(() => {

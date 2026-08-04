@@ -11,7 +11,7 @@ import path from "node:path";
 import { NextRequest } from "next/server";
 import { describe, expect, it } from "vitest";
 
-import { REFRESH_COOKIE } from "@/lib/cookies";
+import { ACCESS_COOKIE, REFRESH_COOKIE } from "@/lib/cookies";
 import { config, middleware } from "@/middleware";
 
 const KOK = path.resolve(__dirname, "..");
@@ -142,6 +142,91 @@ function yuzeyIstegi(host: string, yol: string): NextRequest {
     headers: { cookie: `${REFRESH_COOKIE}=rt-123` },
   });
 }
+
+/** Rol tasiyan istek: access cerezi (imzasiz sahte JWT) + refresh. */
+function rolIstegi(host: string, yol: string, rol: string | null): NextRequest {
+  const cerezler = [`${REFRESH_COOKIE}=rt-123`];
+  if (rol) {
+    const govde = Buffer.from(JSON.stringify({ role: rol })).toString(
+      "base64url",
+    );
+    cerezler.push(`${ACCESS_COOKIE}=sahte.${govde}.imza`);
+  }
+  return new NextRequest(new URL(`http://${host}${yol}`), {
+    headers: { cookie: cerezler.join("; ") },
+  });
+}
+
+describe("rol kapisi (P126.7)", () => {
+  const APP = "app.xn--ynetiyor-n4a.com";
+
+  it("SAKIN yonetim sayfasini ACAMAZ — kendi baslangicina gider", () => {
+    for (const yol of ["/finans", "/dues", "/users", "/shifts"]) {
+      const res = middleware(rolIstegi(APP, yol, "resident"));
+      expect(res.status, yol).toBe(307);
+      expect(
+        new URL(res.headers.get("location") ?? "").pathname,
+        yol,
+      ).toBe("/aidatim");
+    }
+  });
+
+  it("SAKIN kendi sayfalarini ACAR", () => {
+    for (const yol of ["/aidatim", "/taleplerim", "/kvkk", "/profil"]) {
+      expect(middleware(rolIstegi(APP, yol, "resident")).status, yol).toBe(200);
+    }
+  });
+
+  it("YONETICI arac gecislerini ACAMAZ (uc ona 403 doner)", () => {
+    const res = middleware(rolIstegi(APP, "/arac-gecisleri", "yonetici"));
+    expect(res.status).toBe(307);
+    expect(new URL(res.headers.get("location") ?? "").pathname).toBe(
+      "/dashboard",
+    );
+  });
+
+  it("GUVENLIK kapi sayfalarini ACAR, finansi ACAMAZ", () => {
+    expect(middleware(rolIstegi(APP, "/ziyaretciler", "security")).status).toBe(
+      200,
+    );
+    expect(middleware(rolIstegi(APP, "/finans", "security")).status).toBe(307);
+  });
+
+  it("DERIN BAGLANTI rol kapisina TAKILMAZ", () => {
+    // `/tasks/123` siniflandirmada YOKTUR; kok parcaya indirgenerek
+    // degerlendirilir. Yoksa her derin baglanti "rolde yok" sayilirdi.
+    expect(middleware(rolIstegi(APP, "/tasks/abc-123", "yonetici")).status).toBe(
+      200,
+    );
+    expect(middleware(rolIstegi(APP, "/tasks/abc-123", "resident")).status).toBe(
+      307,
+    );
+  });
+
+  it("ACCESS CEREZI YOKSA rol kapisi UYGULANMAZ (yenileme sansi kalsin)", () => {
+    // 15 dakikada access duser; refresh 30 gundur. Bu araliktaki kullaniciyi
+    // disari atmak, oturumu acik birine "yetkin yok" demek olurdu.
+    expect(middleware(rolIstegi(APP, "/finans", null)).status).toBe(200);
+  });
+
+  it("KOK (`/`) ROLE GORE yonlendirilir (dongu yok)", () => {
+    const hedef = (rol: string) =>
+      new URL(
+        middleware(rolIstegi(APP, "/", rol)).headers.get("location") ?? "",
+      ).pathname;
+    expect(hedef("resident")).toBe("/aidatim");
+    expect(hedef("security")).toBe("/ziyaretciler");
+    expect(hedef("tesis_gorevlisi")).toBe("/gorevlerim");
+    expect(hedef("yonetici")).toBe("/dashboard");
+  });
+
+  it("BOZUK access cerezi kapiyi TETIKLEMEZ (cokme/kilitlenme yok)", () => {
+    const res = new NextRequest(new URL(`http://${APP}/finans`), {
+      headers: { cookie: `${REFRESH_COOKIE}=rt; ${ACCESS_COOKIE}=bozuk` },
+    });
+    expect(middleware(res).status).toBe(200);
+  });
+});
 
 describe("yuzey kapisi (P126.2)", () => {
   const APP = "app.xn--ynetiyor-n4a.com";

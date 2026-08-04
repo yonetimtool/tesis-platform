@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { REFRESH_COOKIE } from "./lib/cookies";
-import { konakYuzeyi, kokRota, rotaYuzeyi } from "./lib/yuzey";
+import { ACCESS_COOKIE, REFRESH_COOKIE } from "./lib/cookies";
+import { tokenRolu } from "./lib/rol-token";
+import {
+  konakYuzeyi,
+  kokRota,
+  kokRotaRol,
+  rotaRoldeGorunur,
+  rotaYuzeyi,
+} from "./lib/yuzey";
 
 // Korumali route'lar: oturum (refresh cookie) yoksa /login'e yonlendir.
 // Token GECERLILIGI BFF route handler'larinda (401 -> refresh) dogrulanir;
@@ -31,24 +38,55 @@ export function middleware(req: NextRequest): NextResponse {
   // sayardi (testte olculdu).
   const yuzey = konakYuzeyi(req.headers.get("host") ?? req.nextUrl.host);
 
+  // (P126.7) ROL: access cerezinden okunur. YOKSA (15 dk'da duser) `null`
+  // kalir ve rol kapisi UYGULANMAZ — kullaniciyi yenileme akisi calismadan
+  // once disari atmak, oturumu acik birine "yetkin yok" demek olurdu.
+  const rol = tokenRolu(req.cookies.get(ACCESS_COOKIE)?.value);
+
   // Kok (`/`) yuzeyin kendi baslangicina gider: panelde tesis panosu YOKTUR.
+  // Hedef ROLE GORE secilir: sakini `/dashboard`a yollamak, goremedigi bir
+  // sayfaya atip hemen geri yonlendirmek (dongu) demekti.
   if (pathname === "/") {
     const url = req.nextUrl.clone();
-    url.pathname = kokRota(yuzey);
+    url.pathname = rol ? kokRotaRol(yuzey, rol) : kokRota(yuzey);
     return NextResponse.redirect(url);
   }
 
   // Rotanin yuzeyi — alt yollar dahil (`/reports/dues` -> `/reports/dues`,
   // `/tenants/abc` -> `/tenants`).
-  const rota = rotaYuzeyi(pathname) ?? rotaYuzeyi(kokParca(pathname));
+  // ALT YOL TEK BIR ROTA ADINA INDIRGENIR: `/tasks/123` -> `/tasks`.
+  // Bu ad hem yuzey hem ROL kapisinda kullanilir; iki farkli cozumleme
+  // yapmak, derin baglantilarin rol kapisina takilmasi demekti (siniflandirma
+  // `/tasks/123` icin `null` doner ve "rolde yok" sayilirdi).
+  const rotaAdi = rotaYuzeyi(pathname) !== null ? pathname : kokParca(pathname);
+  const rota = rotaYuzeyi(rotaAdi);
   // BILINMEYEN ROTA ENGELLENMEZ: siniflandirilmamis bir sayfayi kesmek,
   // yeni bir sayfayi sessizce olduren bir tuzak olurdu. Siniflandirmanin
   // TAM olmasini `tests/yuzey-ayrimi.test.ts` zorunlu tutuyor; kapinin isi
   // BILINEN yanlis yerlesimi kesmek.
   if (rota && rota !== yuzey) {
     const url = req.nextUrl.clone();
-    url.pathname = kokRota(yuzey);
+    url.pathname = rol ? kokRotaRol(yuzey, rol) : kokRota(yuzey);
     return NextResponse.redirect(url);
+  }
+
+  // (P126.7) ROL KAPISI — dogru yuzey ama YANLIS ROL.
+  //
+  // Menuyu role gore suzmek (AppShell) adresi yazan birini durdurmaz:
+  // `app.*`ta `/finans` yazan bir sakin, bugune kadar sayfayi acar ve
+  // BFF'ten 403 alirdi — yani kirik bir ekran. Kapi istegi sayfa
+  // cizilmeden kesip rolun KENDI baslangicina yollar.
+  //
+  // YINE BIR YUZEY SINIRIDIR, VERI SINIRI DEGIL: veriyi backend RBAC
+  // koruyor (`backend/tests/test_yuzey_yalitimi.py`). Rol `null` ise
+  // (access cerezi dusmus) kapi UYGULANMAZ.
+  if (rol && rota === yuzey && !rotaRoldeGorunur(rotaAdi, rol)) {
+    const kok = kokRotaRol(yuzey, rol);
+    if (pathname !== kok) {
+      const url = req.nextUrl.clone();
+      url.pathname = kok;
+      return NextResponse.redirect(url);
+    }
   }
   return NextResponse.next();
 }

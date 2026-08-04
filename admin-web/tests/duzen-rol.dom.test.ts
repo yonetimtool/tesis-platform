@@ -1,0 +1,97 @@
+// @vitest-environment jsdom
+// (P126.7) CEREZDEN MENUYE — korumali duzen rolu SUNUCUDA cozuyor mu?
+//
+// Zincirin bu halkasi kirilirsa hicbir sey "bozulmaz": kabuk `/api/me`ye
+// sorar ve menu bir kare GECIKMEYLE dogru gelir. Yani hata SESSIZDIR —
+// tam olarak bir testin yakalamasi gereken tur. Olculen sey: ilk cizimde
+// menu ZATEN dogru.
+import { screen } from "@testing-library/react";
+import { createElement } from "react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+import { ACCESS_COOKIE } from "@/lib/cookies";
+import { tokenRolu } from "@/lib/rol-token";
+
+import { ciz, fetchSahtele } from "./yardimci";
+
+/** Imzasiz sahte JWT — govde okunuyor, imza DOGRULANMIYOR (bkz. rol-token). */
+function jwt(govde: Record<string, unknown>): string {
+  const b64 = Buffer.from(JSON.stringify(govde)).toString("base64url");
+  return `sahte.${b64}.imza`;
+}
+
+const cerezler = new Map<string, string>();
+vi.mock("next/headers", () => ({
+  cookies: () => ({
+    get: (ad: string) => {
+      const value = cerezler.get(ad);
+      return value === undefined ? undefined : { name: ad, value };
+    },
+  }),
+}));
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/profil",
+  useRouter: () => ({ replace: vi.fn(), refresh: vi.fn(), push: vi.fn() }),
+}));
+
+async function cizDuzen() {
+  Object.defineProperty(window, "location", {
+    configurable: true,
+    value: { ...window.location, host: "app.xn--ynetiyor-n4a.com" },
+  });
+  fetchSahtele({});
+  const { default: Duzen } = await import("@/app/(protected)/layout");
+  ciz(() => createElement(Duzen, { children: null }));
+}
+
+function menuAdlari(): string[] {
+  return screen
+    .getAllByRole("link")
+    .filter((a) => a.getAttribute("aria-label") !== "Yönetio")
+    .map((a) => a.textContent?.trim() ?? "");
+}
+
+afterEach(() => {
+  cerezler.clear();
+  vi.restoreAllMocks();
+});
+
+describe("tokenRolu", () => {
+  it("govdedeki `role` okunur", () => {
+    expect(tokenRolu(jwt({ role: "security" }))).toBe("security");
+  });
+
+  it("base64URL govdesi (`-`/`_` iceren) DOGRU cozulur", () => {
+    // Middleware Edge'de calisiyor; orada `Buffer` yok, `atob` var ve `atob`
+    // base64url'i KENDILIGINDEN cozmez. `-`/`_` cevrilmezse govde bozulur ve
+    // rol `null` doner — yani rol kapisi SESSIZCE devre disi kalirdi.
+    // Bu ornek gercekten `_` iceriyor (govdedeki `?` karakterinden).
+    const govde = { role: "resident", ad: "Zöe?" };
+    const token = jwt(govde);
+    expect(token.split(".")[1]).toMatch(/[-_]/);
+    expect(tokenRolu(token)).toBe("resident");
+  });
+
+  it("BOZUK/eksik token `null` doner (cokmez)", () => {
+    expect(tokenRolu(undefined)).toBeNull();
+    expect(tokenRolu("")).toBeNull();
+    expect(tokenRolu("tek-parca")).toBeNull();
+    expect(tokenRolu(jwt({}))).toBeNull();
+    expect(tokenRolu(jwt({ role: 42 }))).toBeNull();
+  });
+});
+
+describe("korumali duzen", () => {
+  it("cerezdeki rol ILK CIZIMDE menuye yansir", async () => {
+    cerezler.set(ACCESS_COOKIE, jwt({ role: "resident" }));
+    await cizDuzen();
+    // `/api/me` yaniti gelmeden, tek cizimde dogru menu.
+    expect(menuAdlari()).toContain("Aidatım");
+    expect(menuAdlari()).not.toContain("Kullanıcılar");
+  });
+
+  it("CEREZ YOKSA menu bos baslar (sizinti yok)", async () => {
+    await cizDuzen();
+    expect(menuAdlari()).toEqual([]);
+  });
+});
