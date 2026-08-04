@@ -8171,6 +8171,35 @@ doğruladı (aynı presigned adres tarayıcının atacağı istekle çekildi).
 **MUTASYON:** sunucuda `foto_url`i `None` bırak · panelde görsel dalını
 kapat — ikisi de yakalandı.
 
+### P132 — Web arayüz yenilemesi: mobil tasarım diline geçiş
+Status: ACIK · Depends-on: P126, P129, P131
+Scope: **Tasarım turu, özellik turu DEĞİL** — iş mantığı ve backend
+davranışı DEĞİŞMEZ. `app.*` ve `panel.*`, mobil uygulamanın **onaylanmış**
+tasarım sistemine taşınır (kaynak: `mobile/lib/src/core/theme/
+home_tokens.dart`).
+1. **Web tasarım sistemi:** mobil token'lar (renk, boşluk, yarıçap,
+   tipografi, gölge) tek bir tema katmanına çıkarılır; sayfalar oraya
+   taşınır — sayfa başına CSS yok.
+2. **Düzen:** masaüstünde kenar çubuğu, mobil webde çekmece; tek bir sayfa
+   başlığı kalıbı (başlık + birincil eylem + süzgeç); boş/yükleniyor/hata
+   durumları **tek** bileşen setinde (çıplak spinner yok).
+3. **Pano (yönetici):** mobil ana ekranın bilgi hiyerarşisi geniş ekrana
+   uyarlanır — hızlı istatistik kartları, vardiya durumu, son hareketler.
+4. **Panoda YENİ (Kerem):** (a) tesis konumu **harita** (tenant
+   `konum_lat/lon` var; anahtar env'den, yoksa OSM'ye düşülür — anahtar
+   koda gömülmez), (b) rol-görünür kameralardan **4'lü şerit** (P43 anlık
+   kare deseni; tıklayınca P131'in hls.js oynatıcısı — çoklu otomatik
+   oynatma YOK).
+5. **İstemci başarımı** (sunucu ölçeği DEĞİL — o P39): rota bazlı kod
+   bölme, şişkin paket yok, görseller tembel + doğru boyutlu, panoda N+1
+   istemci isteği yok; **rota başına ilk yük JS öncesi/sonrası ölçülür**.
+6. **Erişilebilirlik:** odak durumları, girdi etiketleri, kontrast ≥ 4.5,
+   kabukta klavye gezinimi.
+7. i18n 7 dil; kapılar (tsc + vitest + build).
+Acceptance: ekran görüntüsü alınabilir bir pano; tüm sayfalarda tutarlı
+kabuk; harita ve kamera şeridi panoda; rota başına ilk yük JS öncesi/sonrası
+raporlanmış; kapılar yeşil.
+
 ### NOT — Sign in with Apple (4.8)
 **GEÇERSİZ (N/A):** üçüncü taraf sosyal giriş **kullanmıyoruz** (Google/Facebook
 girişi yok; kimlik doğrulama tesis tarafından verilen hesapla). 4.8 yalnız
