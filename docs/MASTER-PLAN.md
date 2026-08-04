@@ -8172,7 +8172,8 @@ doğruladı (aynı presigned adres tarayıcının atacağı istekle çekildi).
 kapat — ikisi de yakalandı.
 
 ### P132 — Web arayüz yenilemesi: mobil tasarım diline geçiş
-Status: ACIK · Depends-on: P126, P129, P131
+Status: KISMEN(sistem + kabuk + pano + başarım + erişim BİTTİ · kalan
+sayfaların kite taşınması sürüyor) · Depends-on: P126, P129, P131
 Scope: **Tasarım turu, özellik turu DEĞİL** — iş mantığı ve backend
 davranışı DEĞİŞMEZ. `app.*` ve `panel.*`, mobil uygulamanın **onaylanmış**
 tasarım sistemine taşınır (kaynak: `mobile/lib/src/core/theme/
@@ -8199,6 +8200,79 @@ home_tokens.dart`).
 Acceptance: ekran görüntüsü alınabilir bir pano; tüm sayfalarda tutarlı
 kabuk; harita ve kamera şeridi panoda; rota başına ilk yük JS öncesi/sonrası
 raporlanmış; kapılar yeşil.
+
+Notes (2026-08-04, P132.1) — **TOKEN'LAR KOPYALANDI, KOPYA KİLİTLENDİ.**
+Kaynak `mobile/lib/src/core/theme/home_tokens.dart`. Değerler elle
+uydurulmadı; `tests/tasarim-token.test.ts` Dart dosyasını **okuyup** web
+temasıyla karşılaştırıyor (renk, yüzey, ölçü, yarıçap, koyu-tema metin
+haritası, %12 tint). İki taraf ayrışırsa test düşer — P131.1'deki kamera
+kuralıyla aynı disiplin.
+
+**TOKEN TESTİ BİR KUSUR BULDU:** `muted` webde `#64748b`, mobilde
+`#6B7280` idi — aynı roldeki iki gri. Tam olarak "iki ayrı ürün" hissini
+üreten ayrıntı. Mobil değerinde birleştirildi.
+
+**ETKİLEŞİM RENGİ MAVİYE GEÇTİ** (#2563EB); navy→teal **marka** olarak
+kalır (logo, giriş gradyanı). İki farklı vurgu rengi taşımak, şikâyetin
+kendisiydi. Odak halkası da maviye geçti — kontrast korunuyor.
+
+Notes (2026-08-04, P132.2–.6) — **KABUK, PANO, BAŞARIM, ERİŞİM.**
+
+**PANO MOBİLİN SIRASINI KORUR:** hızlı özet → tur durumu → son hareketler →
+kameralar. Geniş ekran için yeniden sıralamak, iki ürün arasında geçen
+yöneticiye "web başka bir ürün" dedirtirdi; düzen değişti (iki sütun),
+**sıra değişmedi**.
+
+**HARİTA (4a):** anahtar `NEXT_PUBLIC_MAPS_KEY`ten; yoksa OSM'ye düşer ve
+**bunu ekranda yazar** (sessizce düşmek, "Google haritası mı bozuk?"
+sorusunu operasyona bırakırdı). `iframe` görünürlüğe kadar **kurulmaz**.
+Konum girilmemişse harita **çizilmez**; nereden girileceği yazılır.
+
+**KAMERA ŞERİDİ (4b):** P43'ün kararı aynen — durağan kare, oynatıcı yok;
+tıklayınca P131'in oynatıcısı. Dört yayını birden çalıştırmak reddedilmişti.
+
+**BAŞARIM — ÖLÇÜLDÜ (rota başına ilk yük JS):**
+
+| | önce | sonra | fark |
+|---|---|---|---|
+| ortalama (41 rota) | 238.0 kB | **127.4 kB** | −110.7 (−%46) |
+| en büyük rota | 272 kB | **149 kB** | −123 |
+| `/dashboard` | 259 kB | **108 kB** | −151 |
+| `/` (tanıtım) | 226 kB | **104 kB** | −122 |
+| `/login` | 261 kB | **139 kB** | −122 |
+| sözlük parçasını ilk yükte taşıyan rota | 52/57 | **0/57** | — |
+
+**KÖK NEDEN:** yedi dilin sözlüğü her rotanın istemci paketindeydi. İki yol
+vardı: `I18nProvider` (statik import) ve `lib/i18n/metin.ts` — ikincisi
+`fetcher.ts` üzerinden **her korumalı sayfaya** giriyordu.
+**İLK DENEMEM İŞE YARAMADI ve sebebi öğreticiydi:** tembel yükleyiciyi
+sözlük `index.ts`ine koymuştum; o dosyanın **statik importları** paketi
+geri getiriyordu. Ölçüm gösterdi (Almanca dizge hâlâ 400 KB'lık bir
+parçadaydı ve 52 rotanın ilk yükündeydi). Yükleyici ayrı modüle alındı;
+`metin.ts` artık sözlüğü import etmiyor, sağlayıcıdan **yayın** alıyor.
+
+**ERİŞİLEBİLİRLİK — KONTRAST TESTİ İKİ GERÇEK KUSUR BULDU:**
+1. %12 tint zeminde **ham vurgu metin olarak AA'yı tutmuyordu** (blue 4.37 ·
+   green 2.89 · orange 1.96 · purple 3.64 · red 3.23). Web portu mobilin
+   tint desenini almış, `okunurVurgu()` dönüşümünü **almamıştı**. Önceden
+   hesaplanmış `vurguInk` token'ları eklendi (5.32–10.32).
+2. `muted` beyaz kartta 4.83 ile geçerken **sayfa zemininde 4.47** ile
+   düşüyordu; sayfa zemini için ayrı ton (`mutedBg`, 4.91).
+Ayrıca **"İçeriğe atla"** bağlantısı: klavye kullanıcısı 30+ menü
+bağlantısını tek tek geçmesin.
+
+**CANLI ÖLÇÜM:** `app.*`ta yönetici oturumuyla `/dashboard` **200**; sunucu
+HTML'inde tasarım sistemi sınıfları (`rounded-kart`, `bg-yuzey-bg`, %12
+tint), atla bağlantısı, kamera ve konum bölümleri var; harita `iframe`i
+SSR'da **yok** (tembel — doğru).
+
+**KALAN İŞ (dürüstçe):** kabuk, pano ve ortak bileşen seti yeni sistemde;
+**diğer ~40 sayfa hâlâ eski sınıflarla** çiziliyor (çalışıyorlar, ama kart
+yarıçapı/gri tonu yer yer eski). Sayfa sayfa taşınacak; her sayfa kendi
+alt-commit'i olacak. Bu turda tasarım sisteminin KENDİSİ ve en çok
+bakılan ekran (pano) hedeflendi.
+
+KAPILAR: `tsc` temiz · `vitest` **594 test** (+52) · `npm run build` ✓.
 
 ### NOT — Sign in with Apple (4.8)
 **GEÇERSİZ (N/A):** üçüncü taraf sosyal giriş **kullanmıyoruz** (Google/Facebook
