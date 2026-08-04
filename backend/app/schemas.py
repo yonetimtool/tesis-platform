@@ -178,6 +178,16 @@ class UserAdminListItem(BaseModel):
     created_at: datetime
 
 
+class AcilabilirRollerOut(BaseModel):
+    """(P130) `GET /users/acilabilir-roller` — cagiranin acabilecegi roller.
+
+    Liste BOS olabilir (hicbir rolu acamayan bir cagiran); istemci bunu
+    "form kapali" diye cizmeli, "kural yok" diye degil.
+    """
+
+    roller: list[UserRoleLiteral]
+
+
 class UserCreate(BaseModel):
     # Telefon global benzersiz LOGIN anahtaridir (E.164 normalize). email
     # opsiyoneldir (girise girmez; yalniz bildirim/yedek). password verilmezse

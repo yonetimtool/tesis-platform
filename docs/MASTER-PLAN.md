@@ -7685,7 +7685,7 @@ Acceptance: sakin/saha rolüyle `app.*` girişi **403 + mağaza yönlendirmesi**
 `panel.*` etkilenmez; kapılar.
 
 ### P130 — P0 yetki hataları: kim kimi açabilir + denetçiyi yönetici açar
-Status: ACIK · Depends-on: —
+Status: KISMEN(a BİTTİ · b = P128, sıradaki) · Depends-on: —
 Scope: İki hata, ikisi de yetki sınırında; **grubun İLK işi**.
 (a) **Yetki yükseltme iddiası:** bir tesis yöneticisi **platform admin**
 hesabı açabiliyor. Ölçülecek (`POST /users`, `PATCH /users/{id}`,
@@ -7699,6 +7699,72 @@ mevcut bir platform admini tarafından ve YALNIZ `panel.*`ta açılır.
 (b) **Yönetici DENETÇİ açamıyor** — açabilmeli. P128 bu maddede uygulanır.
 Acceptance: matrisin her hücresi testli; audit kaydı doğrulanmış;
 `denetci` uçtan uca çalışıyor; kapılar.
+
+Notes (2026-08-04, P130(a)) — **YETKİ YÜKSELTME İDDİASI ÖLÇÜLDÜ: API'DE
+YOKTU. ASIL KUSUR ARAYÜZDEYDİ ve gerçekti.**
+
+Görev metni "bir tesis yöneticisi platform admin hesabı açabiliyor" diyordu.
+Kabul etmeden **ölçtüm** — canlı dev yığınında, altı rolün her biriyle altı
+rolü açmayı denedim (36 hücre + PATCH ile rol değiştirme + `/residents`):
+
+| Açan → hedef | Ölçülen |
+|---|---|
+| yönetici → **admin** | **403** (`rol_olusturulamaz_yalniz_saha`) |
+| yönetici → yönetici / güvenlik amiri | 403 |
+| yönetici → güvenlik / tesis görevlisi | 201 |
+| amir → güvenlik | 201 · amir → diğer her şey | 403 |
+| güvenlik / saha / sakin → her şey | 403 (uç zaten kapalı) |
+| admin → her rol | 201 |
+
+Yani **sunucu baştan beri doğru davranıyordu** (`routers/users.py`, POST ve
+PATCH; `guvenlik_amiri` için de ayrı daraltma). Bunu "sorun yok" diye
+kapatmak yanlış olurdu — **Kerem'in gördüğü şey vardı**: `app.*`taki
+Kullanıcılar formunun rol açılır listesi `ROLE_OPTIONS`un **tamamıydı**.
+Site yöneticisi "Platform Admin"i **seçiyor**, kaydediyor ve 403 alıyordu.
+Bu bir yetki açığı değil, **yapılamayacak bir şeyi teklif eden arayüz**tü —
+ve kullanıcı açısından ikisi aynı görünür.
+
+**ÜÇ AYRI YERDEN TEK KAYNAĞA.** Kural bugüne kadar `users.py` içinde iki
+frozenset olarak yaşıyor ve üç yerde ayrı uygulanıyordu (POST, PATCH,
+panelin listesi — sonuncusu hiçbir yerden türetilmiyordu). Artık
+`backend/app/roller.py` (`ACILABILIR_ROLLER`) **tek kaynak**; uçlar oradan
+okuyor ve yeni `GET /users/acilabilir-roller` aynı tabloyu istemciye
+veriyor. Liste artık **çağıranın gerçekten açabildiği kümedir**.
+
+**ROL BAŞINA `if` KALDIRILDI — ASIL RİSK BUYDU.** Eski kod `if user.role ==
+"yonetici"` / `== "guvenlik_amiri"` diye ilerliyordu: yeni bir rol (P128
+`denetci`) eklendiğinde **hiçbir `if`e girmez** ve sessizce **her şeyi
+açabilir** olurdu. Yeni kural tek satır: `body.role not in
+acilabilir(user.role)` → 403. Tanınmayan rol **boş küme** alır
+(fail-closed); varsayılanı "her şey" yapmak, tabloya yazılmayı unutulan
+rolü sistemin **en yetkili** rolü yapardı.
+
+**AUDIT ZATEN AÇANIN ROLÜNÜ YAZIYORDU** (`audit_user` → `actor_rol`);
+uydurma bir alan eklemek yerine bu **test edildi**: `yonetici`nin açtığı
+kayıtta `actor_rol=yonetici`, `meta.role=security`.
+
+**LİSTE SÜZGECİ BİLEREK DARALTILMADI:** sayfanın üstündeki "Rol" süzgeci
+tüm rolleri listelemeye devam ediyor — bir yönetici admin hesaplarını
+**görebilir** (düzenleyemez). Daraltılan şey "hangi rolde hesap AÇILIR"dır.
+
+**DÜZENLENEN KAYDIN ROLÜ LİSTEDE YOKSA YİNE GÖRÜNÜR:** aksi halde select
+sessizce ilk seçeneğe düşer ve kaydet, kullanıcının **dokunmadığı** bir
+alanı değiştirmek isterdi.
+
+**MUTASYON 3/3:** POST'taki kural kaldır → 9 hücre düştü · açılır listeyi
+yine `ROLE_OPTIONS`a çevir → 2 web testi düştü · uç tüm rolleri döndürsün →
+2 hücre düştü.
+
+**ROL MATRİSİ KİLİDİ YENİ UCU YAKALADI** — tam istendiği gibi. Tam koşum
+**1274 geçti / 1 düştü** ve düşen tek şey kilitti; ölçülen fark **tek
+satır**: `GET /users/acilabilir-roller  IZIN IZIN RED RED RED IZIN`.
+Kilit belgelenmiş iki adımlı yordamla yeniden üretildi (kapsayıcıda üret →
+depoya kopyala; kopyalamayı atlamak "kilit güncellendi" sanıp ESKİ kilidi
+sürdürmek demekti).
+
+KAPILAR: `tsc` temiz · `vitest` **493 test** (+3) · `npm run build` ✓ ·
+`backend-pytest` **1274 geçti** (tek düşen = yukarıdaki kilit satırı,
+güncellendi) · sözleşme güncellendi.
 
 ### P131 — Web'deki eşitlik boşlukları: kamera izleme + kayıp görseller
 Status: ACIK · Depends-on: P126

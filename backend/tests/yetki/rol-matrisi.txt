@@ -294,6 +294,7 @@ DELETE /units/{id}/residents/{user_id}                      IZIN   IZIN   RED   
 POST   /uploads/presign                                     IZIN   IZIN   IZIN   IZIN   IZIN   RED   
 GET    /users                                               IZIN   IZIN   RED    RED    RED    IZIN  
 POST   /users                                               IZIN   IZIN   RED    RED    RED    IZIN  
+GET    /users/acilabilir-roller                             IZIN   IZIN   RED    RED    RED    IZIN  
 GET    /users/{id}                                          IZIN   IZIN   RED    RED    RED    IZIN  
 PATCH  /users/{id}                                          IZIN   IZIN   RED    RED    RED    IZIN  
 PATCH  /users/{id}/contact                                  IZIN   IZIN   RED    RED    RED    RED   

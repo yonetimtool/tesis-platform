@@ -50,11 +50,35 @@ export default function UsersPage() {
     jsonFetcher,
   );
 
+  // (P130) ACILIR LISTE SUNUCUDAN. Eskiden `ROLE_OPTIONS`in tamami
+  // cizilirdi: bir site yoneticisi "Platform Admin"i SECEBILIYOR ve
+  // kaydedince 403 aliyordu — sunucu dogru davraniyordu, arayuz yanlis soz
+  // veriyordu. Liste artik cagiranin GERCEKTEN acabildigi kumedir.
+  const { data: acilabilir } = useSWR<{ roller: UserRole[] }>(
+    "/api/users/acilabilir-roller",
+    jsonFetcher,
+  );
+  // `undefined` = HENUZ BILINMIYOR (bos kumeyle ayni sey degil): liste
+  // gelene kadar secenek cizmek, gelince degisen bir form demek olurdu.
+  const acilabilirRoller = acilabilir?.roller;
+  const formRolleri = acilabilirRoller
+    ? ROLES.filter((r) => acilabilirRoller.includes(r.value))
+    : [];
+
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY);
   const [formErr, setFormErr] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  // DUZENLENEN KAYDIN ROLU LISTEDE YOKSA YINE GORUNUR. Aksi halde select
+  // sessizce ilk secenege duser ve kaydet, kullanicinin DOKUNMADIGI bir
+  // alani degistirmek isterdi (sunucu 403 verirdi ama sebep gorunmezdi).
+  const mevcutRol = ROLES.find((r) => r.value === form.role);
+  const rolSecenekleri =
+    mevcutRol && !formRolleri.some((r) => r.value === form.role)
+      ? [mevcutRol, ...formRolleri]
+      : formRolleri;
 
   function resetFilters(next: { role?: string; aktif?: string; q?: string }) {
     if (next.role !== undefined) setRole(next.role);
@@ -65,7 +89,10 @@ export default function UsersPage() {
 
   function openNew() {
     setEditingId(null);
-    setForm(EMPTY);
+    // Varsayilan rol de acilabilir kumeden secilir; sabit "security"
+    // birakmak, o rolu acamayan bir cagirana pesinen gecersiz bir form
+    // vermek olurdu.
+    setForm({ ...EMPTY, role: formRolleri[0]?.value ?? EMPTY.role });
     setFormErr(null);
     setOpen(true);
   }
@@ -250,9 +277,10 @@ export default function UsersPage() {
               <select
                 className={inputCls}
                 value={form.role}
+                disabled={acilabilirRoller === undefined}
                 onChange={(e) => setForm({ ...form, role: e.target.value as UserRole })}
               >
-                {ROLES.map((r) => (
+                {rolSecenekleri.map((r) => (
                   <option key={r.value} value={r.value}>
                     {t(r.anahtar)}
                   </option>

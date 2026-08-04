@@ -6426,6 +6426,10 @@ paths:
       tags: [users]
       summary: Kullanici olustur (admin her rol; yonetici saha personeli)
       description: |
+        KIM KIMI ACAR tablosu TEK yerdedir: backend `app/roller.py`
+        (`ACILABILIR_ROLLER`) — uc noktalari, `GET /users/acilabilir-roller`
+        ve panelin acilir listesi ayni tabloyu okur.
+
         admin HER rolu olusturur. yonetici (Ozellik 3) KENDI tenant'inda YALNIZ
         saha personeli (security/tesis_gorevlisi) acar; admin/yonetici/resident
         rolu -> 403 (resident'lar POST /residents ile). telefon GLOBAL benzersiz
@@ -6450,6 +6454,33 @@ paths:
           content:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
         "422": { $ref: "#/components/responses/ValidationError" }
+
+  /users/acilabilir-roller:
+    get:
+      tags: [users]
+      summary: Cagiranin ACABILECEGI roller (P130)
+      description: |
+        Kim kimi acar tablosunun (backend `app/roller.py`) cagiran icin
+        okunmus hâli. Panelin/`app.*`in rol acilir listesi BUNU kullanir:
+        liste istemcide sabitken alti rolu de gosteriyordu ve site
+        yoneticisi "Platform Admin"i secip 403 aliyordu.
+
+        YOL SIRASI: `/users/{id}`den ONCE tanimlidir; sonra gelseydi id
+        degiskenine eslesir ve UUID cozumlemesi 422 verirdi.
+      responses:
+        "200":
+          description: Roller (bos liste = hicbir rol acilamaz)
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [roller]
+                properties:
+                  roller:
+                    type: array
+                    items: { $ref: "#/components/schemas/UserRole" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
 
   /users/{id}:
     parameters:
@@ -8081,6 +8112,7 @@ components:
         yurutuyorsa vardiya/tur planlamasinin sahibi. Sakin, finans, kargo ve
         ziyaretci alanlari ona BILINCLI olarak KAPALIDIR (dis sirket = en az
         yetki, KVKK).
+
       enum:
         [admin, yonetici, security, tesis_gorevlisi, resident, guvenlik_amiri]
 
