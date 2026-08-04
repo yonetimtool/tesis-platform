@@ -7287,7 +7287,10 @@ KAPILAR: `tsc` temiz · `vitest` **354 test** (+12) · `npm run build` ✓ ·
 `depo-izlenmeyen` 0 · `depo-alan-adi` 0.
 
 ### P126 — app.yönetiyor.com: tüm tesis rolleri için web çalışma alanı
-Status: ACIK · Depends-on: P125
+Status: BITTI · Depends-on: P125
+> (2026-08-04) Durum satırı P126.7 biterken güncellenmemişti; iş
+> `3113fb6`+`5b60c2d` ile bitti, kabul kanıtı aşağıdaki Notes'ta.
+> **KAPSAMI P129 DARALTIYOR** (sakin + saha `app.*`tan çıkarılır).
 Scope: Mobil uygulamanın **web ikizi**, rol kapılı, onaylanmış tasarım
 dilinde. Roller ve kapsamları görev metnindeki gibi (yönetici / sakin /
 güvenlik / tesis görevlisi; P35 gelince güvenlik amiri). Giriş: telefon
@@ -7645,6 +7648,79 @@ SSR/statik Next.js public rotaları, meta/OG etiketleri, `sitemap.xml`,
 **P38'den AYRIDIR:** P38 tesis-başına sakin portalıdır; bu **şirket**
 sitesidir.
 Acceptance: Lighthouse SEO ≥ 90; iletişim formu teslim ediyor; kapılar.
+
+### P128 — DENETÇİ rolü: tesisin salt-okuma mali gözetimi
+Status: ACIK · Depends-on: P126
+Scope: Sistemde **altı** rol var (`admin`, `yonetici`, `security`,
+`tesis_gorevlisi`, `resident`, `guvenlik_amiri`); site **denetçisi** yok.
+Denetim kurulu / bağımsız denetçi bugün ya yönetici hesabıyla giriyor (yazma
+yetkisiyle — denetimin bağımsızlığı biter) ya da hiç giremiyor.
+Yeni rol `denetci`:
+* **Oluşturma/iptal SİTE YÖNETİCİSİNDE** (ad, telefon, opsiyonel görev
+  başlangıç/bitiş tarihi). Platform admini de açabilir.
+* **Yüzey KESİN SALT-OKUMA:** raporlar, gelir/gider, tahakkuk↔tahsilat,
+  kasa/banka. Mutasyon yapan HER uç `denetci` için 403.
+* Görev tarihi dolan denetçinin oturumu ve erişimi kapanır.
+Bu, App Store incelemesi için kurulan **P115 denetçi demo modundan
+AYRIDIR** (o bir demo hesabıdır, rol değil).
+Acceptance: `denetci` şema göçüyle eklenir (yeni revizyon, geri alınabilir);
+salt-okuma **iki yönde** test edilir (okuma uçları 200 **ve** mutasyon uçları
+403 — tek yön test edilse "her şeyi kapat" da geçerdi); yönetici açar/iptal
+eder; kapılar.
+
+### P129 — app.* kapsamı DARALTILDI: yalnız yönetici + denetçi
+Status: ACIK · Depends-on: P126, P128
+Scope: Yüzey kararı **değişti**. `panel.*` → platform admin (aynı kaldı).
+`app.*` → **YALNIZ site yöneticisi ve denetçi**. `resident` (sakin) ve
+`tesis_gorevlisi` **YALNIZ MOBİL**: `app.*` girişinde **sunucu tarafında
+reddedilir** (menü gizlemek değil — oturum hiç kurulmaz), net Türkçe mesaj +
+App Store / Play bağlantıları döner.
+P126.3/.6'da yazılan sakin ve saha sayfaları **SİLİNMEZ, PARK EDİLİR**:
+kod durur, rota sınıflandırması ve menü onları `app.*`ta sunmaz; kararın
+gerekçesi buraya yazılır (geri açmak bir kararlık iş olmalı).
+`security`/`guvenlik_amiri` için karar: bu maddede **ölçülüp yazılır**
+(görev metni ikisini saymıyor → mobil-yalnız kabul edilir).
+Acceptance: sakin/saha rolüyle `app.*` girişi **403 + mağaza yönlendirmesi**
+(canlı yığında ölçülür, birim testi yetmez); yönetici + denetçi girer;
+`panel.*` etkilenmez; kapılar.
+
+### P130 — P0 yetki hataları: kim kimi açabilir + denetçiyi yönetici açar
+Status: ACIK · Depends-on: —
+Scope: İki hata, ikisi de yetki sınırında; **grubun İLK işi**.
+(a) **Yetki yükseltme iddiası:** bir tesis yöneticisi **platform admin**
+hesabı açabiliyor. Ölçülecek (`POST /users`, `PATCH /users/{id}`,
+`POST /residents`, `yonetisim` kişi ekleme, panel/app arayüzleri) ve nerede
+gerçekten açık olduğu **kanıtla** yazılacak. Kural: yönetici YALNIZ
+{`resident`, `security`, `tesis_gorevlisi`, `denetci`} açar; `admin` YALNIZ
+mevcut bir platform admini tarafından ve YALNIZ `panel.*`ta açılır.
+**Zorlama API'de** (403) — süzülmüş açılır liste bir kapı değildir.
+**Kim-kimi-açar matrisinin HER ÇİFTİ** test edilir (izinliler 201, yasaklar
+403). Oluşturmalar açanın rolüyle **audit log**'a yazılır.
+(b) **Yönetici DENETÇİ açamıyor** — açabilmeli. P128 bu maddede uygulanır.
+Acceptance: matrisin her hücresi testli; audit kaydı doğrulanmış;
+`denetci` uçtan uca çalışıyor; kapılar.
+
+### P131 — Web'deki eşitlik boşlukları: kamera izleme + kayıp görseller
+Status: ACIK · Depends-on: P126
+Scope:
+(a) **`app.*`ta kamera izleme.** P126.5 ızgarayı verdi, oynatıcıyı
+**bilerek** vermedi (hls.js bağımlılık kararı Kerem'e bırakılmıştı) — karar
+geldi: **hls.js eklenir**. Rol süzgeçli ızgara + oynatıcı (HLS'i Safari
+yerel oynatır, diğerlerinde hls.js; MP4 doğrudan `<video>`), `rtsp`/
+oynatılamaz kaynak → **rozet + bilgi sayfası** (web sayfası URL'i verilmez),
+canlı karolar P43'ün anlık-kare kararına göre kalır. **Kamera yönetimi
+yöneticiye açılır** — doğrulama mobildeki `CameraDraft` kuralıyla **aynı**
+olmalı (ikinci bir kopya değil; ortak kural tek yerde ölçülür).
+Dev tohum/testte doğrulanmış yayın kullanılır:
+`https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_fmp4/master.m3u8`
+(b) **Web'de görseller çıkmıyor.** Mobilde görselli görünen içerik (duyuru,
+site kuralı, etkinlik, görev/talep foto kanıtı, kamera görselleri) `app.*`ta
+görselsiz çiziliyor. **Kök neden bulunacak** (presign üretimi / yanlış alan /
+depolama konağında CORS-CSP / göreli-mutlak URL) ve düzeltilecek; tahminle
+değil **ölçümle**.
+Acceptance: en az bir tarayıcıda gerçek `m3u8` oynuyor (ölçüm kaydı);
+oynatılamaz kaynak rozetle ayrılıyor; görselli tohum içerikle web'de görsel
+**görünüyor** (HTTP durum + içerik türü kaydedilir); kapılar.
 
 ### NOT — Sign in with Apple (4.8)
 **GEÇERSİZ (N/A):** üçüncü taraf sosyal giriş **kullanmıyoruz** (Google/Facebook
