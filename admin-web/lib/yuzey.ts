@@ -75,6 +75,8 @@ export const TESIS_ROTALARI = [
   "/etkinlikler",
   "/rezervasyonlarim",
   "/kvkk",
+  // (P126.4) Guvenligin kapi ekranlari.
+  "/ziyaretciler",
 ] as const;
 
 /**

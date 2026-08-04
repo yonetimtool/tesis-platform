@@ -112,5 +112,6 @@ export const config = {
     "/etkinlikler/:path*",
     "/rezervasyonlarim/:path*",
     "/kvkk/:path*",
+    "/ziyaretciler/:path*",
   ],
 };
