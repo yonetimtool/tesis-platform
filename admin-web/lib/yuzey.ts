@@ -70,6 +70,9 @@ export const TESIS_ROTALARI = [
   "/profil",
   "/aidatim",
   "/taleplerim",
+  "/duyurular",
+  "/kurallar",
+  "/etkinlikler",
 ] as const;
 
 /**

@@ -101,5 +101,14 @@ export const config = {
     "/profil/:path*",
     "/aidatim/:path*",
     "/taleplerim/:path*",
+    "/duyurular/:path*",
+    // `/site-kurallari` DEGIL: public tenant portali `/site/[slug]`ta
+    // yasiyor ve `portal-public` testi "matcher `/site` ile baslayan bir
+    // giris ICERMEZ" diye muhafazakar bir kontrol yapiyor. O kontrolu
+    // gevsetmek yerine rota yeniden adlandirildi: public bir rotayi
+    // koruyan kapi olabildigince kati kalmali (ve `/kurallar` tesis
+    // calisma alaninda zaten daha iyi bir adres).
+    "/kurallar/:path*",
+    "/etkinlikler/:path*",
   ],
 };
