@@ -161,3 +161,36 @@ describe("(P132) tint opakligi %12", () => {
     expect(kit).toContain("bg-accent-blue/12");
   });
 });
+
+describe("(P132) ORTAK ILKELLER tasarim sistemine bagli", () => {
+  // 47 sayfa `form.tsx`teki sinif token'larini kullaniyor. Sayfalari tek
+  // tek gecirmek yerine BURASI degistirildi; bu test o kazanimi kilitler —
+  // biri `panelCls`i eski slate/golge hâline dondururse 47 sayfa birden
+  // sessizce eski gorunume donerdi.
+  const FORM = readFileSync(resolve(KOK, "admin-web/components/form.tsx"), "utf8");
+
+  it("kart yuzeyleri token kullaniyor (slate/golge DEGIL)", () => {
+    for (const ad of ["cardCls", "panelCls", "tableCardCls"]) {
+      const m = new RegExp(`export const ${ad}[^;]*;`, "s").exec(FORM);
+      expect(m, `${ad} yok`).not.toBeNull();
+      const deger = m![0];
+      expect(deger, ad).toContain("rounded-kart");
+      expect(deger, ad).toContain("bg-yuzey-card");
+      // Mobil kartlarda GOLGE YOKTUR — ayirt edici cizgi 1px kenarliktir.
+      expect(deger, ad).not.toContain("shadow-card");
+      expect(deger, ad).not.toContain("border-slate-200");
+    }
+  });
+
+  it("birincil dugme MAVI (marka teali degil)", () => {
+    const m = /export const btnPrimary[^;]*;/s.exec(FORM);
+    expect(m![0]).toContain("bg-primary");
+    expect(m![0]).not.toContain("brand-teal");
+  });
+
+  it("girdi odagi birincil renkte", () => {
+    const m = /export const inputCls[^;]*;/s.exec(FORM);
+    expect(m![0]).toContain("focus:border-primary");
+    expect(m![0]).not.toContain("brand-teal");
+  });
+});

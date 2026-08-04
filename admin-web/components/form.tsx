@@ -5,29 +5,36 @@ import { useT } from "@/lib/i18n/kullan";
 
 // Ortak form/dugme token'lari (Faz 1). Teal odak halkasi + yumusak golge/hover
 // kaldirmasi. Ic sayfalar bu siniflari import ederek "bedava" cilalanir.
+// (P132) ORTAK ILKELLER TASARIM SISTEMINE TASINDI — 47 sayfa bunlari
+// kullaniyor. Sayfa sayfa gecmek yerine BURAYI degistirmek, ayni sonucu
+// tek yerde ve gerileme riski olmadan verir ("tek yer, sayfa basina CSS
+// degil" — P132 sart 1).
 export const inputCls =
-  "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-ink outline-none transition focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/25 disabled:opacity-60";
+  "w-full rounded-lg border border-slate-300 bg-yuzey-card px-3 py-2 text-sm text-metin-body outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/25 disabled:opacity-60";
+// Birincil dugme MAVI (mobil `HomeTokens.primary`). Beyaz metin
+// #2563EB uzerinde 5.17:1 — AA (tests/tasarim-kontrast.test.ts).
+// GOLGE KALDIRILDI: mobil kartlarda golge yoktur, dugmede de olmamali.
 export const btnPrimary =
-  "odak-ters inline-flex items-center justify-center gap-2 rounded-lg bg-brand-tealInk px-4 py-2 text-sm font-medium text-white shadow-soft transition-all hover:bg-[#0c8382] hover:shadow-lift active:translate-y-px disabled:opacity-60 disabled:shadow-none";
+  "odak-ters inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#1d4fd8] active:translate-y-px disabled:opacity-60";
 export const btnGhost =
-  "rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 transition hover:border-slate-400 hover:bg-slate-100";
+  "kart-kenar rounded-lg border bg-yuzey-card px-3 py-1.5 text-sm text-metin-body transition hover:bg-yuzey-divider";
 export const btnDanger =
-  "rounded-lg border border-red-300 bg-white px-3 py-1.5 text-sm text-red-700 transition hover:bg-red-50";
+  "rounded-lg border border-accent-red/30 bg-yuzey-card px-3 py-1.5 text-sm text-vurguInk-red transition hover:bg-accent-red/12";
 
 // Kart yuzeyi — yumusak katmanli golge + 16px radius (dashboard vb. yeniden
 // kullanir; koyu modda .dark .bg-white → slate-900).
-export const cardCls =
-  "rounded-2xl border border-slate-200 bg-white shadow-card";
+// Kart: radius 16 + 1px cok hafif kenarlik, GOLGE YOK (mobil karari).
+export const cardCls = "kart-kenar rounded-kart border bg-yuzey-card";
 
 // Satir-ici form/panel yuzeyi (kart + ic bosluk). Overlay DEGIL — mevcut akis
 // korunur; yalnizca yuzey Faz-1 sistemine gecer.
 export const panelCls =
-  "rounded-2xl border border-slate-200 bg-white p-5 shadow-card";
+  "kart-kenar rounded-kart border bg-yuzey-card p-kart";
 
 // Tablo kart cercevesi (dashboard tablo deseni). Icine `overflow-x-auto` sarmali
 // + <table> gelir.
 export const tableCardCls =
-  "overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card";
+  "kart-kenar overflow-hidden rounded-kart border bg-yuzey-card";
 
 // Panel giris hareketi — hizli fade + kucuk olcek/kayma (~250ms). motion.form /
 // motion.div ile yayilir: {...panelMotion}. reducedMotion="user" global saygi.
@@ -50,7 +57,7 @@ export function PageHeader({
   return (
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div className="min-w-0 space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight break-words">{title}</h1>
+        <h1 className="text-selam text-metin-heading break-words">{title}</h1>
         {subtitle && <p className="text-sm text-muted">{subtitle}</p>}
       </div>
       {action}

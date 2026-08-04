@@ -8385,11 +8385,34 @@ HTML'inde tasarım sistemi sınıfları (`rounded-kart`, `bg-yuzey-bg`, %12
 tint), atla bağlantısı, kamera ve konum bölümleri var; harita `iframe`i
 SSR'da **yok** (tembel — doğru).
 
-**KALAN İŞ (dürüstçe):** kabuk, pano ve ortak bileşen seti yeni sistemde;
-**diğer ~40 sayfa hâlâ eski sınıflarla** çiziliyor (çalışıyorlar, ama kart
-yarıçapı/gri tonu yer yer eski). Sayfa sayfa taşınacak; her sayfa kendi
-alt-commit'i olacak. Bu turda tasarım sisteminin KENDİSİ ve en çok
-bakılan ekran (pano) hedeflendi.
+Notes (2026-08-04, P132.7) — **KALAN SAYFALAR: 40 REWRITE DEĞİL, TEK
+KATMAN.**
+
+Önceki notta "diğer ~40 sayfa sayfa sayfa taşınacak" yazmıştım. Ölçünce
+bunun **yanlış plan** olduğu çıktı: sayfalar zaten ortak ilkelleri
+kullanıyordu — `form.tsx` içindeki `cardCls` / `panelCls` / `tableCardCls`
+/ `inputCls` / `btnPrimary` / `btnGhost` / `btnDanger` ve `PageHeader` +
+`EmptyState`. **47 sayfa** bunlara bağlı.
+
+Yani sorun "her sayfa kendi CSS'ini yazıyor" değil, **ortak katmanın eski
+token'larda kalması**ydı. O katman tasarım sistemine taşındı; 47 sayfa
+tek değişiklikle yeni dile geçti — sayfa başına gerileme riski **sıfır**
+(603 test yeşil kaldı, hiçbir sayfa dosyasına dokunulmadı).
+
+Değişenler: kart yüzeyleri `rounded-kart` + `bg-yuzey-card` + 1px hafif
+kenarlık (**gölge kaldırıldı** — mobil kartlarda gölge yok), birincil
+düğme ve girdi odağı **mavi**, boş durum ikonu **%12 tint**, sayfa
+başlığı mobil tipografi ölçeğinde.
+
+**KAZANIM KİLİTLENDİ:** `tasarim-token.test.ts` artık `form.tsx`i de
+okuyor — biri `panelCls`i eski slate/gölge hâline döndürürse **47 sayfa
+birden** sessizce eskiyecekti; test düşer.
+
+**HÂLÂ KALAN (dürüstçe):** sayfaların KENDİ içinde kalan tekil sınıflar
+(`text-slate-600`, `bg-slate-50` gibi satır içi kullanımlar) var; bunlar
+ortak katmandan gelmiyor ve sayfa sayfa temizlenecek. Görsel bütünlüğün
+büyük kısmı ortak katmandan geldiği için bu artık **cila**, yapısal iş
+değil.
 
 KAPILAR: `tsc` temiz · `vitest` **594 test** (+52) · `npm run build` ✓.
 
