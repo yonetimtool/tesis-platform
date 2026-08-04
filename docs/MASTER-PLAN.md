@@ -3432,6 +3432,7 @@ bitirildi; P130(b) P128'i gerektirdiği için P128 de tanımlanıp yapıldı.
 | **P131.1** | Kamera adres kuralı ortak vaka dosyasıyla kilitlendi (mobil↔web) | `af582d5` |
 | **P131(a)** | Oynatıcı (hls.js) + web'de kamera yönetimi + oynatılamaz rozeti | `444ae57` |
 | **P131(b)** | Foto kanıtı görünmüyordu: şema alanı vardı, **sunucu doldurmuyordu** | `168d42c` |
+| **P127.1** | Kök alan adı artık tanıtım sitesi (üçüncü yüzey) + SEO altyapısı | `84de799` |
 
 **ÜÇ ŞEY ÖLÇÜMLE DÜZELTİLDİ (iddia edildiği gibi değildi):**
 1. "Yönetici platform admin açabiliyor" — **API'de yoktu** (403 ölçüldü);
@@ -3446,9 +3447,21 @@ bitirildi; P130(b) P128'i gerektirdiği için P128 de tanımlanıp yapıldı.
 · `tsc` temiz · `npm run build` ✓ · mobil `analyze` temiz + **1751 test** +
 apk ✓ · göç uyum/tersinirlik **0 bulgu** (33 sınır).
 
+**SIRADAKİ İŞ — P127'nin KALANI (ölçülüp yazıldı, tahmin değil):**
+1. **İletişim formu (teslimatlı).** Bugün `mailto:` bağlantısı var.
+   Doğru tasarım portal formundaki kuraldır — **önce kaydet, sonra
+   bildir**: SMTP yapılandırılmamışken doğrudan e-postaya çevirmek mesajın
+   *sessizce kaybolması* demektir. Tanıtım formu **tenant'sızdır**, yani
+   platform düzeyinde bir tablo + RLS kararı gerekir (audit_log'un
+   tenant'sız satırları emsal). Yarım bir form bırakmamak için bu dilim
+   AÇILMADI.
+2. **Lighthouse SEO puanı** — bu ortamda tarayıcı yok; başlıklar tek tek
+   ölçüldü, puan Kerem'de.
+
 **KEREM'İN İŞİ (P11'e yazıldı):** denetçi rolü cihaz turu, mobil-yalnız
-rol reddi, kamera oynatma, görev foto kanıtı; ayrıca uygulama mağazaya
-çıkınca `NEXT_PUBLIC_PLAY_URL` / `NEXT_PUBLIC_APPSTORE_URL` tanımlanacak.
+rol reddi, kamera oynatma, görev foto kanıtı, Lighthouse puanı; ayrıca
+uygulama mağazaya çıkınca `NEXT_PUBLIC_PLAY_URL` /
+`NEXT_PUBLIC_APPSTORE_URL` tanımlanacak.
 
 
 ### 2026-08-02 · P114 DÜZELTME · 98160c9
