@@ -1,9 +1,10 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 
 import { AppShell } from "@/components/AppShell";
 import { ToastProvider } from "@/components/Toast";
 import { ACCESS_COOKIE } from "@/lib/cookies";
 import { tokenRolu } from "@/lib/rol-token";
+import { konakYuzeyi } from "@/lib/yuzey";
 
 // Korumali alan duzeni. Oturum kontrolu middleware'de yapilir.
 //
@@ -15,15 +16,25 @@ import { tokenRolu } from "@/lib/rol-token";
 // ACCESS CEREZI 15 DAKIKADA DUSER, refresh 30 gundur: o aralikta buradan
 // `null` doner. Kabuk bu durumda `/api/me`ye sorar (BFF refresh akisini
 // tetikler) — yani deger BAYATLASA DA menu kendini toparlar.
-export default function ProtectedLayout({
+// (P126 sonrasi) YUZEY DE SUNUCUDA COZULUR. Kabuk bunu `window.location`dan
+// okuyordu ve SUNUCU CIZIMINDE `window` YOKTUR: ilk kare `app.*`ta bile
+// PLATFORM menusuyle boyaniyordu — sakine bir an icin "Tesisler" baglantisi
+// gorunuyor, logo `/tenants`e isaret ediyordu (olculdu: sunucu HTML'inde tek
+// baglanti `href="/tenants"`). Konak zaten istegin basliginda; okumak bedava.
+export default async function ProtectedLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const rol = tokenRolu(cookies().get(ACCESS_COOKIE)?.value);
+  const cerezler = await cookies();
+  const baslikDeposu = await headers();
+  const rol = tokenRolu(cerezler.get(ACCESS_COOKIE)?.value);
+  const yuzey = konakYuzeyi(baslikDeposu.get("host"));
   return (
     <ToastProvider>
-      <AppShell rol={rol}>{children}</AppShell>
+      <AppShell rol={rol} yuzey={yuzey}>
+        {children}
+      </AppShell>
     </ToastProvider>
   );
 }

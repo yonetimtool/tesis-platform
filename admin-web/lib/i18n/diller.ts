@@ -41,9 +41,23 @@ export function dilMi(deger: string | undefined | null): deger is Dil {
 export const DIL_COOKIE = "ui.locale";
 export const DIL_COOKIE_MAX_AGE = 365 * 24 * 60 * 60;
 
+/// INGILIZCE BIR TERCIH SAYILMAZ — bilincli karar (P126 sonrasi).
+///
+/// Chrome/Edge kurulumlarinin cogu, kullanici hicbir sey secmemis olsa bile
+/// `Accept-Language: en-US,en;q=0.9` gonderir: Turkiye'deki bir sakinin
+/// tarayicisi da bunu gonderir. Yani `en` bir TERCIH degil, KURULUM
+/// VARSAYILANIDIR ve onu tercih saymak Turkce urunu Ingilizce acardi
+/// (Kerem app.*'i ilk actiginda tam olarak bu oldu).
+///
+/// Diger bes dil boyle degil: tarayicisini Arapca/Rusca/Almanca/Fransizca/
+/// Ispanyolca'ya AYARLAMIS biri bunu bilerek yapmistir — o sinyal korunur.
+/// Ingilizce isteyen kullanici dil seciciyle (kalici cerez) ya da `?lang=en`
+/// ile bir tikta alir.
+const TARAYICIDAN_KABUL_EDILMEYEN: ReadonlySet<string> = new Set(["en"]);
+
 /// `Accept-Language` basligini desteklenen tek dile indirger (RFC 9110).
-/// Sunucu tarafiyla AYNI zincir: bolge eki duser, q'ya gore ilk desteklenen
-/// dil kazanir, hicbiri yoksa Turkce.
+/// Bolge eki duser, q'ya gore ilk desteklenen dil kazanir; hicbiri yoksa
+/// (ya da yalnizca Ingilizce varsa) Turkce.
 export function acceptLanguageCoz(header: string | null | undefined): Dil {
   if (!header) return VARSAYILAN_DIL;
   const adaylar: { dil: string; q: number; sira: number }[] = [];
@@ -60,17 +74,32 @@ export function acceptLanguageCoz(header: string | null | undefined): Dil {
     adaylar.push({ dil: etiket.split("-")[0], q, sira });
   });
   adaylar.sort((a, b) => b.q - a.q || a.sira - b.sira);
-  for (const a of adaylar) if (dilMi(a.dil)) return a.dil;
+  for (const a of adaylar) {
+    if (TARAYICIDAN_KABUL_EDILMEYEN.has(a.dil)) continue;
+    if (dilMi(a.dil)) return a.dil;
+  }
   return VARSAYILAN_DIL;
 }
 
-/// Istegin dili: KULLANICI SECIMI (cookie) -> tarayici dili -> Turkce.
+/// Istegin dili: KULLANICI SECIMI (cookie) -> tarayici dili (Ingilizce
+/// HARIC, yukariya bkz.) -> Turkce.
 export function istekDili(
   cookieDegeri: string | undefined,
   acceptLanguage?: string | null,
 ): Dil {
   if (dilMi(cookieDegeri)) return cookieDegeri;
   return acceptLanguageCoz(acceptLanguage);
+}
+
+/// Tarayicida KAYITLI tercih (yoksa `null`).
+///
+/// `tarayiciDili()`den farki: o her zaman bir dil dondurur (geri dususlerle);
+/// bu ise "kullanici SECMIS mi?" sorusunu yanitlar. `?lang` isleme sirasi
+/// bunu bilmek zorunda — kayitli tercih ONCE gelir.
+export function kayitliDil(): Dil | null {
+  if (typeof document === "undefined") return null;
+  const m = new RegExp(`(?:^|; )${DIL_COOKIE}=([^;]+)`).exec(document.cookie);
+  return dilMi(m?.[1]) ? (m?.[1] as Dil) : null;
 }
 
 /// Tarayicida cookie'den aktif dil (React DISI kod icin: fetcher, api

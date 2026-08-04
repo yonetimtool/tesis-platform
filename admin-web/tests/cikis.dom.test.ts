@@ -24,7 +24,7 @@ vi.mock("next/navigation", () => ({
 // (P126.7) `rol` artik ZORUNLU bir ucludur — menu ona gore suzuluyor;
 // cikis dugmesi menuden bagimsiz oldugu icin buradaki deger onemsiz.
 function Kabuk() {
-  return createElement(AppShell, { children: null, rol: "admin" });
+  return createElement(AppShell, { children: null, rol: "admin", yuzey: "platform" });
 }
 
 afterEach(() => {

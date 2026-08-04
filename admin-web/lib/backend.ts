@@ -109,6 +109,22 @@ export async function backendLogin(body: {
   return { ok: res.ok, status: res.status, data };
 }
 
+/**
+ * TELEFONLA giris (mobil ile AYNI uc: `POST /auth/login-phone`).
+ *
+ * Tenant kodu YOKTUR ve olmamalidir: telefon GLOBAL benzersizdir, sunucu
+ * tenant'i numaradan cozer (`tenant_id_by_phone`). Web'de tesis kodu sormak,
+ * mobilde sorulmayan bir bilgiyi ayni kullaniciya web'de sormak olurdu.
+ */
+export async function backendPhoneLogin(body: {
+  phone: string;
+  password: string;
+}): Promise<{ ok: boolean; status: number; data: unknown }> {
+  const res = await callBackend("/auth/login-phone", "POST", undefined, body);
+  const data = await res.json().catch(() => null);
+  return { ok: res.ok, status: res.status, data };
+}
+
 export function loginResponse(access: string, refresh: string): NextResponse {
   const res = NextResponse.json({ ok: true });
   setAuthCookies(res, access, refresh);

@@ -7569,6 +7569,71 @@ kapıyı uygula · kök rotayı rolden bağımsız yap · base64url çevrimini k
 KAPILAR: `tsc` temiz · `vitest` **461 test** (+30) · `npm run build` ✓ ·
 `backend-pytest` ✓ · depo kapıları 0.
 
+Notes (2026-08-04, P126 takibi) — **app.* GİRİŞİ MOBİLLE AYNI OLDU +
+VARSAYILAN DİL TÜRKÇE.**
+
+**GİRİŞ YOLU ARTIK YÜZEYE GÖRE.** `app.*` mobil uygulamanın web ikizidir:
+**telefon + parola** (`POST /auth/login-phone`, mobille aynı uç), tenant kodu
+**yok** — telefon global benzersiz, tenant'ı sunucu numaradan çözüyor.
+`panel.*`ta tesis kodu + e-posta **kalır**: platform admini bir tesise ait
+değildir, telefonu bir tenant'a çözülmez. Karar **sunucuda** verilir (`Host`
+başlığı): istemcide çözseydik ilk kare yanlış formla boyanır, kullanıcı tesis
+kodu alanı görüp bir an sonra telefon alanına düşerdi.
+
+**BU BİR ERİŞİM SORUNUYDU, KOZMETİK DEĞİL:** `resident` hesaplarında e-posta
+şemada **opsiyoneldir** — e-postası olmayan sakin `app.*`a giremiyordu.
+
+**GİRİŞ SONRASI SABİT `/dashboard` KALDIRILDI:** panoyu yalnız yönetim görür.
+Artık `/`ye gidiliyor ve rol yönlendirmesini middleware yapıyor (P126.7'deki
+`kokRotaRol`). Logo hedefi de role bağlandı — sakini panoya yollayıp
+middleware'in geri çevirmesine bırakmak bir adım fazlaydı.
+
+**ÖLÇERKEN GERÇEK BİR KUSUR ÇIKTI:** kabuk yüzeyi `window.location.host`tan
+okuyordu; **sunucu çiziminde `window` yok**. Ölçüldü: `app.*`ta bir sakinin
+ilk karesinde tek bağlantı `href="/tenants"` idi — yani platform menüsü bir an
+görünüyordu. Yüzey de artık düzende (`Host` başlığı) çözülüp kabuğa uç olarak
+veriliyor; sunucu HTML'i ilk kareden itibaren doğru.
+
+**DÖRT ROL UÇTAN UCA ÖLÇÜLDÜ** (dev yığını, gerçek `next start` + gerçek API;
+birim testi değil):
+
+| Rol | Giriş | `/` hedefi | Logo | `/finans` |
+|---|---|---|---|---|
+| yönetici | 200 | `/dashboard` | `/dashboard` | 200 |
+| güvenlik | 200 | `/ziyaretciler` | `/ziyaretciler` | → `/ziyaretciler` |
+| tesis görevlisi | 200 | `/gorevlerim` | `/gorevlerim` | → `/gorevlerim` |
+| sakin | 200 | `/aidatim` | `/aidatim` | → `/aidatim` |
+
+Menü de sunucu HTML'inde rol başına doğru: yönetici 27 bağlantı, güvenlik 11,
+sakin 11, saha görevlisi 7. `panel.*`ta telefonla giriş denemesi **403**.
+
+**VARSAYILAN DİL TÜRKÇE — "İngilizce bir tercih sayılmaz".** Chrome/Edge
+kurulumlarının çoğu kullanıcı hiçbir şey seçmemişken bile
+`Accept-Language: en-US,en;q=0.9` gönderiyor; Türkiye'deki bir sakinin
+tarayıcısı da bunu gönderiyor ve `app.*` İngilizce açılıyordu. Artık `en` bir
+tercih değil **kurulum varsayılanı** sayılıyor ve Türkçe'ye düşülüyor. Diğer
+beş dil **korunuyor**: tarayıcısını Arapça'ya ayarlamış biri bunu bilerek
+yapmıştır. Ölçüldü: `en-US,en;q=0.9 → tr` · `en-GB,en;q=0.8 → tr` ·
+`ar-SA → ar` · `de-DE → de` · `ja-JP → tr` · `ui.locale=en çerezi → en`.
+
+**`?lang=xx` EKLENDİ** (paylaşılan bağlantı için). Sıra: kayıtlı tercih >
+`?lang` > tarayıcı (İngilizce hariç) > Türkçe — kullanıcının **kendi** seçimi
+bir bağlantıyla ezilmez. İstemcide uygulanır: kök düzen bir Server
+Component'tir ve App Router'da düzenler `searchParams` almaz; middleware'e
+koymak `/login` ve genel portal sayfalarını oturum kapısının matcher'ına
+sokmayı gerektirirdi (genel sayfaların açık kalması bir kuraldır).
+
+**MOBİL BU KURALA GİRMEDİ (bilerek):** `mobile/.../locale_controller.dart`
+cihaz dili İngilizce ise İngilizce açıyor. Aynı kuralı oraya taşımak ayrı bir
+karardır ve istenmedi; istenirse `localeCozumle` içinde beş satır.
+
+**MUTASYON 8/8:** app.*'ı e-posta formuna çevir · panel.*'ı telefona çevir ·
+numarayı normalleştirmeden gönder · girişten sonra sabit `/dashboard` ·
+telefon doğrulamasını kaldır · İngilizce'yi yine tercih say · `?lang`in
+kayıtlı tercihi ezmesine izin ver · yüzeyi yine pencereden oku.
+
+KAPILAR: `tsc` temiz · `vitest` **490 test** · `npm run build` ✓ · depo 0.
+
 ### P127 — www.yönetiyor.com: tanıtım sitesi (SEO)
 Status: ACIK · Depends-on: P126
 Scope: Geçici statik açılış sayfası (P120) gerçek tanıtım sitesiyle

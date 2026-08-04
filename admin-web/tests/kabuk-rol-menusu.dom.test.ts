@@ -18,17 +18,16 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: vi.fn(), refresh: vi.fn(), push: vi.fn() }),
 }));
 
-/** `app.*` konagi: kabuk yuzeyi ADRESTEN turetiyor. */
-function tesisKonagi() {
-  Object.defineProperty(window, "location", {
-    configurable: true,
-    value: { ...window.location, host: "app.xn--ynetiyor-n4a.com" },
-  });
+// (P126 sonrasi) YUZEY ARTIK UCLUDAN GELIR — duzen onu `Host` basligindan
+// cozuyor. Eskiden `window.location.host` yamalaniyordu; o yol sunucu
+// ciziminde calismiyordu ve ilk kare yanlis menuyle boyaniyordu.
+function Kabuk(rol: string | null) {
+  return () =>
+    createElement(AppShell, { children: null, rol, yuzey: "tesis" as const });
 }
 
-function Kabuk(rol: string | null) {
-  return () => createElement(AppShell, { children: null, rol });
-}
+/** Eski cagri yerlerini bozmamak icin: artik yapacak bir sey yok. */
+function tesisKonagi() {}
 
 /**
  * Menudeki baglanti etiketleri.
@@ -92,6 +91,20 @@ describe("app.* menusu role gore", () => {
     expect(adlar).toContain("Görevlerim");
     expect(adlar).not.toContain("Ziyaretçiler");
     expect(adlar).not.toContain("Kullanıcılar");
+  });
+
+  it("LOGO hedefi ROLE gore — sakin panoya yollanmaz", () => {
+    ciz(Kabuk("resident"));
+    const logo = screen.getAllByLabelText("Yönetio")[0];
+    expect(logo).toHaveAttribute("href", "/aidatim");
+  });
+
+  it("LOGO yonetimde PANO'ya gider", () => {
+    ciz(Kabuk("yonetici"));
+    expect(screen.getAllByLabelText("Yönetio")[0]).toHaveAttribute(
+      "href",
+      "/dashboard",
+    );
   });
 
   it("ROL BILINMIYORSA menu BOS cizilir (sizinti yok)", () => {

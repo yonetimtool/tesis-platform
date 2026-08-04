@@ -150,6 +150,50 @@ describe("dil cozumleme", () => {
   });
 });
 
+describe("VARSAYILAN DIL TURKCE — Ingilizce bir tercih sayilmaz", () => {
+  // URUN KARARI (P126 sonrasi): Chrome/Edge kurulumlarinin cogu kullanici
+  // hicbir sey secmemisken bile `en-US,en;q=0.9` gonderir. Turkiye'deki bir
+  // sakinin tarayicisi da bunu gonderiyor ve app.* Ingilizce aciliyordu.
+  // `en` bir TERCIH degil KURULUM VARSAYILANI sayilir; digerleri sayilmaz.
+  it("SADECE Ingilizce isteyen tarayici TURKCE gorur", () => {
+    expect(acceptLanguageCoz("en-US,en;q=0.9")).toBe("tr");
+    expect(acceptLanguageCoz("en")).toBe("tr");
+    expect(acceptLanguageCoz("en-GB,en-US;q=0.9,en;q=0.8")).toBe("tr");
+  });
+
+  it("CEREZ YOKKEN Ingilizce baslikla istek TURKCE cizilir (uctan uca)", () => {
+    // `istekDili` kok duzenin (`app/layout.tsx`) kullandigi ayni islev:
+    // `<html lang>`, yon ve sozluk bundan turuyor.
+    expect(istekDili(undefined, "en-US,en;q=0.9")).toBe("tr");
+  });
+
+  it("DIGER bes dil ACIK bir sinyaldir ve KORUNUR", () => {
+    expect(acceptLanguageCoz("ar-SA,ar;q=0.9")).toBe("ar");
+    expect(acceptLanguageCoz("ru-RU,ru;q=0.9")).toBe("ru");
+    expect(acceptLanguageCoz("de-DE,de;q=0.9")).toBe("de");
+    expect(acceptLanguageCoz("fr-FR,fr;q=0.9")).toBe("fr");
+    expect(acceptLanguageCoz("es-ES,es;q=0.9")).toBe("es");
+  });
+
+  it("Ingilizce ONDE olsa bile GERCEK tercih kazanir", () => {
+    // `en-US,ar;q=0.9`: kullanici Arapca'yi EKLEMIS. Ingilizce atlanir.
+    expect(acceptLanguageCoz("en-US,ar;q=0.9")).toBe("ar");
+    expect(acceptLanguageCoz("en,de;q=0.5")).toBe("de");
+  });
+
+  it("KULLANICI SECIMI her seyi ezer — Ingilizce dahil", () => {
+    // Ingilizce isteyen kullanici onu SECEBILIR; kural yalniz TARAYICI
+    // basligini reddeder, kullaniciyi degil.
+    expect(istekDili("en", "tr-TR,tr;q=0.9")).toBe("en");
+  });
+
+  it("desteklenmeyen dil TURKCE'ye duser", () => {
+    expect(acceptLanguageCoz("ja-JP,ja;q=0.9")).toBe("tr");
+    expect(acceptLanguageCoz("")).toBe("tr");
+    expect(acceptLanguageCoz(null)).toBe("tr");
+  });
+});
+
 describe("yon (RTL)", () => {
   it("yalniz Arapca RTL", () => {
     for (const dil of DILLER) {

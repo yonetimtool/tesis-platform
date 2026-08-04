@@ -21,12 +21,17 @@ function jwt(govde: Record<string, unknown>): string {
 }
 
 const cerezler = new Map<string, string>();
+let konak = "app.xn--ynetiyor-n4a.com";
 vi.mock("next/headers", () => ({
   cookies: () => ({
     get: (ad: string) => {
       const value = cerezler.get(ad);
       return value === undefined ? undefined : { name: ad, value };
     },
+  }),
+  // (P126 sonrasi) duzen YUZEYI de sunucuda coziyor: `Host` basligi.
+  headers: () => ({
+    get: (ad: string) => (ad.toLowerCase() === "host" ? konak : null),
   }),
 }));
 vi.mock("next/navigation", () => ({
@@ -35,13 +40,13 @@ vi.mock("next/navigation", () => ({
 }));
 
 async function cizDuzen() {
-  Object.defineProperty(window, "location", {
-    configurable: true,
-    value: { ...window.location, host: "app.xn--ynetiyor-n4a.com" },
-  });
   fetchSahtele({});
   const { default: Duzen } = await import("@/app/(protected)/layout");
-  ciz(() => createElement(Duzen, { children: null }));
+  // ASENKRON SUNUCU BILESENI: React'e uclu olarak veremeyiz (Promise
+  // cocuk olarak cizilemez); once CAGIRIP donen agaci cizeriz — sunucunun
+  // yaptigi da tam olarak budur.
+  const agac = await Duzen({ children: null });
+  ciz(() => agac);
 }
 
 function menuAdlari(): string[] {

@@ -13,10 +13,10 @@ import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 import { YonetioLogo } from "@/components/YonetioLogo";
 import { jsonFetcher } from "@/lib/fetcher";
 import {
-  konakYuzeyi,
-  kokRota,
+  kokRotaRol,
   rotaRoldeGorunur,
   rotaYuzeyi,
+  type Yuzey,
 } from "@/lib/yuzey";
 
 type IconName =
@@ -161,9 +161,11 @@ function Icon({ name }: { name: IconName }) {
 function SidebarBody({
   onNavigate,
   rolBaslangic,
+  yuzey,
 }: {
   onNavigate?: () => void;
   rolBaslangic: string | null;
+  yuzey: Yuzey;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -190,12 +192,10 @@ function SidebarBody({
     router.refresh();
   }
 
-  // (P125) BULUNULAN YUZEY: `app.*` -> tesis, digerleri -> platform.
-  // Tarayicida `location.host`, sunucu cizimlerinde bilinmiyor kabul edilip
-  // platform varsayilir (panel bugunku tek yuzeydir).
-  const yuzey = konakYuzeyi(
-    typeof window === "undefined" ? null : window.location.host,
-  );
+  // (P125/P126) BULUNULAN YUZEY UCLUDAN GELIR — duzen onu istegin `Host`
+  // basligindan cozdu. Eskiden burada tarayicinin konagi okunuyordu ve
+  // SUNUCU CIZIMINDE `window` yok: ilk kare `app.*`ta bile platform
+  // menusuyle boyaniyordu (sakine bir an "Tesisler" gorunuyordu).
   // (P126.7) MENU ROLE GORE DE SUZULUR.
   //
   // Sunucudan gelen `rol` (duzen, cerezden cozdu) BASLANGIC degeridir;
@@ -213,8 +213,11 @@ function SidebarBody({
   const gorunenLinkler = LINKS.filter(
     (l) => rotaYuzeyi(l.href) === yuzey && rotaRoldeGorunur(l.href, rol),
   );
-  // Logo hedefi de yuzeye gore: panelde tesis panosu YOKTUR (bkz. kokRota).
-  const kokHedef = kokRota(yuzey);
+  // Logo hedefi YUZEY + ROL: panelde tesis panosu yoktur; tesis yuzeyinde de
+  // pano YALNIZ yonetimindir. Sabit `/dashboard` birakmak, logoya tiklayan
+  // sakini middleware'in geri yollamasina birakirdi (calisir ama bir adim
+  // fazladan ve adres cubugunda bir an yanlis sayfa gorunur).
+  const kokHedef = kokRotaRol(yuzey, rol);
 
   return (
     <div className="flex h-full flex-col">
@@ -279,10 +282,13 @@ function SidebarBody({
 export function AppShell({
   children,
   rol,
+  yuzey,
 }: {
   children: ReactNode;
   /** Sunucunun cerezden cozdugu rol; bilinmiyorsa `null` (bkz. duzen). */
   rol: string | null;
+  /** Sunucunun `Host` basligindan cozdugu yuzey. */
+  yuzey: Yuzey;
 }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
@@ -298,7 +304,7 @@ export function AppShell({
         {/* RTL: `left/border-r` yerine MANTIKSAL kenar — Arapcada kenar
             cubugu saga gecer (tur 17). */}
         <aside className="fixed inset-y-0 start-0 z-30 hidden w-64 border-e border-slate-200 bg-white lg:block">
-          <SidebarBody rolBaslangic={rol} />
+          <SidebarBody rolBaslangic={rol} yuzey={yuzey} />
         </aside>
 
         {/* Mobil ust cubuk */}
@@ -333,7 +339,11 @@ export function AppShell({
               : "-translate-x-full rtl:translate-x-full"
           }`}
         >
-          <SidebarBody onNavigate={() => setOpen(false)} rolBaslangic={rol} />
+          <SidebarBody
+            onNavigate={() => setOpen(false)}
+            rolBaslangic={rol}
+            yuzey={yuzey}
+          />
         </aside>
 
         {/* Icerik */}

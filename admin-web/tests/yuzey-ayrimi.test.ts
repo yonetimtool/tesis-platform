@@ -95,7 +95,14 @@ describe("AppShell menuyu YUZEYDEN turetiyor", () => {
     // ayrisirdi. Kaynak, tek kaynaktan turetmeyi zorunlu tutuyor.
     const kaynak = readFileSync("components/AppShell.tsx", "utf8");
     expect(kaynak).toContain("rotaYuzeyi(l.href) === yuzey");
-    expect(kaynak).toContain("konakYuzeyi(");
+    // (P126 sonrasi) YUZEY ARTIK KABUKTA COZULMUYOR, uclu olarak geliyor:
+    // sunucu ciziminde `window` yoktu ve ilk kare `app.*`ta bile PLATFORM
+    // menusuyle boyaniyordu. Cozum konagi ISTEGIN BASLIGINDAN okumak —
+    // yani cagri korumali DUZENDE. Kilit oraya tasindi.
+    const duzen = readFileSync("app/(protected)/layout.tsx", "utf8");
+    expect(duzen).toContain("konakYuzeyi(");
+    expect(duzen).toContain('get("host")');
+    expect(kaynak).not.toContain("window.location.host");
   });
 
   it("PANELDE hicbir TESIS rotasi menuye girmez", () => {

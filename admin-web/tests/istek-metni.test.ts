@@ -31,7 +31,13 @@ describe("istekDili (P104)", () => {
   });
 
   it("TANINMAYAN cerez degeri yok sayilir (uydurma dil secilemez)", () => {
-    expect(istekDili(sahteIstek("xx", "en-US"))).toBe("en");
+    // Cerez atilir; geriye `Accept-Language` kalir. `en-US` bir TERCIH
+    // sayilmadigi icin (bkz. lib/i18n/diller.ts) sonuc TURKCE'dir — bu
+    // testin eski beklentisi `en` idi ve urun karariyla DEGISTI.
+    expect(istekDili(sahteIstek("xx", "en-US"))).toBe("tr");
+    // Kural "cerez atiliyor mu" sorusunu hâlâ olcsun: taninmayan cerez +
+    // GERCEK bir tarayici tercihi -> tercih kazanir.
+    expect(istekDili(sahteIstek("xx", "de-DE,de;q=0.9"))).toBe("de");
   });
 });
 

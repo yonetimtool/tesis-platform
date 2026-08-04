@@ -12,6 +12,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -21,6 +22,8 @@ import {
   DIL_COOKIE,
   DIL_COOKIE_MAX_AGE,
   VARSAYILAN_DIL,
+  dilMi,
+  kayitliDil,
   yon,
   type Dil,
 } from "./diller";
@@ -71,6 +74,27 @@ export function I18nProvider({
     document.documentElement.lang = yeni;
     document.documentElement.dir = yon(yeni);
   }, []);
+
+  // (P126 sonrasi) `?lang=xx` — PAYLASILAN BAGLANTI icin acik dil secimi.
+  //
+  // SIRA: kayitli tercih > `?lang` > tarayici > Turkce. Yani kullanicinin
+  // KENDI secimi bir baglantiyla EZILMEZ; birinin gonderdigi `?lang=ar`,
+  // dilini Turkce yapmis birinin arayuzunu degistiremez.
+  //
+  // NEDEN ISTEMCIDE: kok duzen bir Server Component'tir ve App Router'da
+  // duzenler `searchParams` ALMAZ. Middleware'e koymak `/login` ve genel
+  // portal sayfalarini matcher'a sokmayi gerektirirdi — o matcher oturum
+  // kapisini da tasiyor ve genel sayfalarin ACIK kalmasi bir kuraldir
+  // (tests/portal-public.test.ts). Bedeli: secim ilk boyamadan SONRA
+  // uygulanir; cerez yazildigi icin sonraki her istek sunucuda dogru dille
+  // boyanir.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const istenen = new URLSearchParams(window.location.search).get("lang");
+    if (!dilMi(istenen)) return;
+    if (kayitliDil() !== null) return; // kayitli tercih ONCE
+    dilDegistir(istenen);
+  }, [dilDegistir]);
 
   const deger = useMemo<I18n>(() => {
     const sozluk = SOZLUKLER[dil] ?? SOZLUKLER[VARSAYILAN_DIL];
