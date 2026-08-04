@@ -83,10 +83,16 @@ describe("konakYuzeyi", () => {
     expect(konakYuzeyi(null)).toBe("platform");
   });
 
-  it("`app` GECEN ama app.* OLMAYAN konak platformdur", () => {
+  it("`app` GECEN ama app.* OLMAYAN konak TESIS DEGILDIR", () => {
     // `apple.ornek` ya da `panel.app.ornek` yanlislikla tesis sayilmamali.
-    expect(konakYuzeyi("apple.ornek.com")).toBe("platform");
+    // (P127) Beklenen deger DEGISTI: `app.` ile baslamayan bilinmeyen bir
+    // konak artik "platform" degil TANITIM'dir — varsayilani platform
+    // birakmak, markanin ana adresinde bir yonetici giris ekrani acmak
+    // demekti. Olculen KURAL ayni: "icinde app gecmesi tesis yapmaz".
+    expect(konakYuzeyi("apple.ornek.com")).toBe("tanitim");
+    // `panel.` ONEKI kazanir — bilinen bir calisma yuzeyidir.
     expect(konakYuzeyi("panel.app.ornek.com")).toBe("platform");
+    expect(konakYuzeyi("apple.ornek.com")).not.toBe("tesis");
   });
 });
 

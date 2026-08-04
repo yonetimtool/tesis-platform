@@ -332,6 +332,18 @@ describe("kaynak taramasi — kabuk/giris yuzeyi", () => {
         // "sizinti" sayardi — sozlugun kendisi icin de ayni sebeple
         // istisna var.
         if (göreli.includes("lib/hukuki/")) continue;
+        // (P127) TANITIM ICERIGI — hukuki belgelerin kardesi, ARAYUZ
+        // dizgesi degil. `lib/tanitim/icerik.ts` pazarlama metninin YEDI
+        // DILDEKI tam halidir ve tipi `Record<Dil, TanitimIcerik>`tir:
+        // eksik bir dil DERLENMEZ. Yani bu taramanin korudugu sey (bir
+        // dilde kalmis metin) burada TIP SISTEMI tarafindan zaten
+        // engelleniyor; istisna olmasaydi tarama, dogru cevrilmis Turkce
+        // paragraflari "sizinti" sayardi.
+        //
+        // ICERIGIN KENDISI OLCUSUZ DEGIL: `tests/tanitim-yuzeyi.test.ts`
+        // her dilde tum alanlarin dolu oldugunu ve TR metninin baska dile
+        // KOPYALANMADIGINI olcer.
+        if (göreli.includes("lib/tanitim/")) continue;
         fs.readFileSync(tam, "utf8")
           .split("\n")
           .forEach((satir, i) => {

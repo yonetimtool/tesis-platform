@@ -26,6 +26,22 @@ export function middleware(req: NextRequest): NextResponse {
   const hasSession = Boolean(req.cookies.get(REFRESH_COOKIE)?.value);
   const { pathname } = req.nextUrl;
 
+  // (P127) TANITIM YUZEYI OTURUM KAPISININ DISINDADIR ve bu SIRA onemli:
+  // kapi once calissaydi, markanin ana adresine giren HER ZIYARETCI
+  // `/login`e duserdi — yani tanitim sitesi hic gorunmezdi.
+  //
+  // Kok alan adinda YALNIZ tanitim sayfalari vardir; korumali bir adres
+  // elle yazilirsa (orn. yönetiyor.com/dues) kullanici KOKE dondurulur,
+  // `/login`e DEGIL: giris o alan adinin isi degildir (panel.* ve app.*
+  // vardir) ve orada bir giris formu gostermek yuzey ayrimini bozardi.
+  const konakYuzey = konakYuzeyi(req.headers.get("host") ?? req.nextUrl.host);
+  if (konakYuzey === "tanitim") {
+    if (pathname === "/") return NextResponse.next();
+    const url = req.nextUrl.clone();
+    url.pathname = "/";
+    return NextResponse.redirect(url);
+  }
+
   if (!hasSession) {
     const url = req.nextUrl.clone();
     url.pathname = "/login";
@@ -36,7 +52,7 @@ export function middleware(req: NextRequest): NextResponse {
   // Ikisi de gerekli — `NextRequest` bir URL'den kuruldugunda `Host`
   // basligi OLUSMAZ ve yalniz basliga bakmak her istegi "platform"
   // sayardi (testte olculdu).
-  const yuzey = konakYuzeyi(req.headers.get("host") ?? req.nextUrl.host);
+  const yuzey = konakYuzey;
 
   // (P126.7) ROL: access cerezinden okunur. YOKSA (15 dk'da duser) `null`
   // kalir ve rol kapisi UYGULANMAZ — kullaniciyi yenileme akisi calismadan

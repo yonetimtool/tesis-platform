@@ -618,6 +618,10 @@ Kerem marks them done.
 Acceptance: Kerem reports; findings become new items.
 
 Device-verify (biriken liste — agent ekler, Kerem işaretler):
+- [ ] **[KEREM] P127 · Lighthouse SEO puanı.** `https://yönetiyor.com`
+  yayına alındıktan sonra Chrome DevTools → Lighthouse → SEO çalıştır;
+  hedef **≥ 90**. (Ajan ortamında tarayıcı yok; başlıklar tek tek
+  ölçüldü, puanın kendisi ölçülemedi.)
 - [ ] **P131 · Kamera oynatma (WEB, YÖNETİCİ).** `app.*` → Kameralar:
   "Otopark" karosuna tıkla → yayın **açılmalı** (Chrome/Firefox'ta
   `hls.js`, Safari'de yerel; altta hangisinin kullanıldığı yazıyor).
@@ -7703,7 +7707,7 @@ kayıtlı tercihi ezmesine izin ver · yüzeyi yine pencereden oku.
 KAPILAR: `tsc` temiz · `vitest` **490 test** · `npm run build` ✓ · depo 0.
 
 ### P127 — www.yönetiyor.com: tanıtım sitesi (SEO)
-Status: ACIK · Depends-on: P126
+Status: KISMEN(site + SEO BİTTİ · iletişim FORMU ve Lighthouse ölçümü kaldı) · Depends-on: P126
 Scope: Geçici statik açılış sayfası (P120) gerçek tanıtım sitesiyle
 değişir: hero/değer önerisi (site yöneticisi ve sakin için **ayrı ayrı**),
 Özellikler, Hakkımızda, İletişim (form → mail/bildirim), App Store/Play
@@ -7713,6 +7717,68 @@ SSR/statik Next.js public rotaları, meta/OG etiketleri, `sitemap.xml`,
 **P38'den AYRIDIR:** P38 tesis-başına sakin portalıdır; bu **şirket**
 sitesidir.
 Acceptance: Lighthouse SEO ≥ 90; iletişim formu teslim ediyor; kapılar.
+
+Notes (2026-08-04, P127.1) — **KÖK ALAN ADI ARTIK BİR SİTE; ÜÇÜNCÜ YÜZEY
+AÇILDI.**
+
+**P120'NİN GEREKÇESİ ARTIK GEÇERSİZ, O YÜZDEN STATİK SAYFA KALKTI.** O tur
+kökü statik bir HTML'e bağlamıştı çünkü *"admin-web'in `/` rotası
+`/dashboard`a, oradan `/login`e gider; markanın ana adresi bir yönetici
+giriş ekranı olamaz"*. Uygulama artık **konaktan** yüzey çözüyor
+(`lib/yuzey.ts`): kök/www **`tanitim`** yüzeyidir ve middleware orada
+oturum kapısını **hiç** çalıştırmaz.
+
+**VARSAYILAN DEĞİŞTİ — dikkat edilmesi gereken yer burası:** eskiden
+`app.` dışındaki **her** konak "platform" sayılıyordu. Artık yalnız
+`panel.` ve **yerel geliştirme adresleri** platformdur. `localhost`
+bilerek platform kaldı: `npm run dev` diyen geliştiriciyi tanıtım
+sayfasına düşürmek her gün bir tıklama fazlası olurdu.
+
+**KÖK ALAN ADINDA GİRİŞ YOK:** korumalı bir adres elle yazılırsa ziyaretçi
+`/login`e değil **köke** döner. Giriş o alan adının işi değildir (panel.*
+ve app.* var); orada bir giriş formu göstermek yüzey ayrımını bozardı.
+
+**İÇERİK 7 DİLDE ve `lib/hukuki/`nin kardeşi:** sözlüğe konmadı (o arayüz
+dizgeleri içindir), tipi `Record<Dil, TanitimIcerik>` — eksik dil
+**derlenmez**. Test ayrıca her dilde tüm alanların dolu ve **TR metninin
+kopyalanmamış** olduğunu ölçer.
+
+**İKİ AYRI DEĞER ÖNERİSİ** (görevin şartı): yönetici "işimi kolaylaştırır
+mı", sakin "hakkımı görebilir miyim" diye bakar; tek bir genel cümle
+ikisine de bir şey söylemezdi. Özellik maddeleri **üründe gerçekten olan**
+şeyleri anlatır — "güçlü/modern" gibi ölçüsüz sıfat yok.
+
+**CANLI ÖLÇÜM** (gerçek `next start`, `Host` başlığıyla):
+
+| Adres | Kök (tanıtım) | app./panel. |
+|---|---|---|
+| `/` | **200** (tanıtım sayfası) | 307 → `/login` |
+| `/robots.txt` | **200** `Allow: /` + sitemap | **`Disallow: /`** |
+| `/sitemap.xml` | **200** (3 URL + 7 dil alternatifi) | boş |
+| `/gizlilik` | 200 | 200 |
+| `/dues` | **307 → `/`** | 307 → `/login` |
+
+SEO temelleri sayfada **ölçüldü**: `<title>`, meta description, canonical,
+**7 hreflang**, `<html lang>`, viewport, OG etiketleri, **tek H1**.
+Dil çözümü çalışıyor: TR varsayılan · `ui.locale=en` → İngilizce başlık ·
+`ui.locale=ar` → `dir="rtl"`.
+
+**KANONİK ADRES PUNYCODE** (`xn--ynetiyor-n4a.com`) ve **tek yerde**
+(`lib/tanitim/adres.ts`): unicode yazmak aynı sayfayı iki köken gibi
+gösterebilirdi ve `infra/alan-adi-denetimi.py` zaten yapılandırmada unicode
+konak bırakmayı reddediyor — kod da aynı dili konuşsun.
+
+**KALAN İKİ İŞ (dürüstçe — bu yüzden KISMEN):**
+1. **İletişim FORMU yok**, `mailto:` bağlantısı var. Kabul kriteri "form
+   teslim ediyor" diyor; teslimat yolu (SMTP/bildirim) ayrı bir dilimdir
+   ve yarım bir form koymaktansa çalışan bir bağlantı bıraktım.
+2. **Lighthouse ≥ 90 sayısı ÜRETİLMEDİ:** bu ortamda tarayıcı yok.
+   Lighthouse'un SEO denetiminin baktığı başlıklar tek tek ölçüldü
+   (yukarıda) ama **puanın kendisi Kerem'in tarayıcısında** alınmalı —
+   P11'e yazıldı.
+
+KAPILAR: `tsc` temiz · `vitest` **559 test** (+17) · `npm run build` ✓ ·
+`caddy validate` **Valid configuration** · `depo-alan-adi` 0 bulgu.
 
 ### P128 — DENETÇİ rolü: tesisin salt-okuma mali gözetimi
 Status: BITTI · Depends-on: P126

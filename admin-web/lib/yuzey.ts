@@ -13,8 +13,13 @@
 // SINIFLANDIRMANIN GEREKCESI belgede: `docs/platform-tesis-ayrimi.md`.
 // Orada 317 uçluk rol matrisinden okunarak yapildi, tahminle degil.
 
-/** Bir rotanin ait oldugu yuzey. */
-export type Yuzey = "platform" | "tesis";
+/** Bir rotanin/konagin ait oldugu yuzey.
+ *
+ * (P127) UCUNCU YUZEY: `tanitim`. Kok alan adi (ve www)
+ * artik bir TANITIM SITESIDIR — ziyaretcinin ilk gordugu sey kendisine
+ * ait olmayan bir giris formu olmamali. Rotalari PUBLIC'tir (oturum
+ * kapisi yok) ve `PLATFORM_ROTALARI`/`TESIS_ROTALARI` ile karismaz. */
+export type Yuzey = "platform" | "tesis" | "tanitim";
 
 /**
  * PLATFORM rotalari — `panel.*`ta kalir.
@@ -100,16 +105,33 @@ export function rotaYuzeyi(href: string): Yuzey | null {
 }
 
 /**
- * Konaktan yuzey. `app.` ile baslayan her konak TESIS yuzeyidir; digerleri
- * (panel.*, yerel gelistirme) PLATFORM.
+ * Konaktan yuzey. `app.` -> TESIS, `panel.` -> PLATFORM, KOK ve `www.`
+ * -> TANITIM.
  *
- * NEDEN KONAKTAN: ayni Next.js uygulamasi iki alan adindan sunuluyor
- * (bkz. infra/Caddyfile). Rolden turetmek yanlis olurdu — `admin` her iki
- * yuzeye de girebilir ve hangisinde oldugunu ancak adres soyler.
+ * NEDEN KONAKTAN: ayni Next.js uygulamasi uc alan adindan sunuluyor
+ * (bkz. infra/Caddyfile). Rolden turetmek yanlis olurdu — `admin` iki
+ * calisma yuzeyine de girebilir ve hangisinde oldugunu ancak adres soyler;
+ * tanitim yuzeyinde ise ziyaretcinin ROLU YOKTUR.
+ *
+ * (P127) VARSAYILAN DEGISTI: eskiden `app.` disindaki HER konak "platform"
+ * sayiliyordu. Artik yalniz `panel.` (ve yerel gelistirme adresleri)
+ * platformdur; kok/www TANITIM'dir. Varsayilani platform birakmak,
+ * markanin ana adresinde bir YONETICI GIRIS EKRANI acmak demekti — P120'de
+ * gecici statik sayfa tam bu yuzden konmustu.
+ *
+ * YEREL GELISTIRME (`localhost`, `127.0.0.1`, konaksiz istek) PLATFORM
+ * kalir: gelistirici `npm run dev` deyip panele bakar; onu tanitim
+ * sayfasina dusurmek her gun bir tiklama fazlasi olurdu.
  */
+const _YEREL_KONAKLAR = ["localhost", "127.0.0.1", "0.0.0.0", "::1", ""];
+
 export function konakYuzeyi(host: string | null | undefined): Yuzey {
   const h = (host ?? "").toLowerCase().split(":")[0];
-  return h.startsWith("app.") ? "tesis" : "platform";
+  if (h.startsWith("app.")) return "tesis";
+  if (h.startsWith("panel.")) return "platform";
+  if (_YEREL_KONAKLAR.includes(h)) return "platform";
+  // Kok ve www — tanitim. (`www.` oneki ATILIR: ayni sitedir.)
+  return "tanitim";
 }
 
 /**
@@ -121,7 +143,9 @@ export function konakYuzeyi(host: string | null | undefined): Yuzey {
  * tesis panosu yoktur, o bilgi buraya aittir.
  */
 export function kokRota(yuzey: Yuzey): string {
-  return yuzey === "platform" ? "/tenants" : "/dashboard";
+  if (yuzey === "platform") return "/tenants";
+  if (yuzey === "tanitim") return "/";
+  return "/dashboard";
 }
 
 /**
