@@ -1,10 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { REFRESH_COOKIE } from "./lib/cookies";
+import { konakYuzeyi, kokRota, rotaYuzeyi } from "./lib/yuzey";
 
 // Korumali route'lar: oturum (refresh cookie) yoksa /login'e yonlendir.
 // Token GECERLILIGI BFF route handler'larinda (401 -> refresh) dogrulanir;
 // burada yalnizca oturum varligi kontrol edilir.
+//
+// (P126.2) YUZEY KAPISI DA BURADA. Menuyu suzmek (P125) bir sayfayi
+// ERISILEMEZ yapmaz: adres cubuguna `/dues` yazan biri panelde o sayfayi
+// yine acardi. Kerem'in sarti acikti — "enforcement is server-side, not
+// hidden nav". Middleware istegi SAYFA CIZILMEDEN kesiyor.
+//
+// BU BIR VERI SINIRI DEGIL, YUZEY SINIRIDIR: veriyi koruyan sey backend
+// RBAC'tir (317 ucluk rol matrisi) ve o dokunulmadan duruyor. Buradaki
+// kural "hangi is hangi adreste yapilir" sorusunun cevabidir.
 export function middleware(req: NextRequest): NextResponse {
   const hasSession = Boolean(req.cookies.get(REFRESH_COOKIE)?.value);
   const { pathname } = req.nextUrl;
@@ -14,7 +24,39 @@ export function middleware(req: NextRequest): NextResponse {
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }
+
+  // KONAK: `Host` basligi (Caddy iletir) yoksa istegin kendi URL'i.
+  // Ikisi de gerekli — `NextRequest` bir URL'den kuruldugunda `Host`
+  // basligi OLUSMAZ ve yalniz basliga bakmak her istegi "platform"
+  // sayardi (testte olculdu).
+  const yuzey = konakYuzeyi(req.headers.get("host") ?? req.nextUrl.host);
+
+  // Kok (`/`) yuzeyin kendi baslangicina gider: panelde tesis panosu YOKTUR.
+  if (pathname === "/") {
+    const url = req.nextUrl.clone();
+    url.pathname = kokRota(yuzey);
+    return NextResponse.redirect(url);
+  }
+
+  // Rotanin yuzeyi — alt yollar dahil (`/reports/dues` -> `/reports/dues`,
+  // `/tenants/abc` -> `/tenants`).
+  const rota = rotaYuzeyi(pathname) ?? rotaYuzeyi(kokParca(pathname));
+  // BILINMEYEN ROTA ENGELLENMEZ: siniflandirilmamis bir sayfayi kesmek,
+  // yeni bir sayfayi sessizce olduren bir tuzak olurdu. Siniflandirmanin
+  // TAM olmasini `tests/yuzey-ayrimi.test.ts` zorunlu tutuyor; kapinin isi
+  // BILINEN yanlis yerlesimi kesmek.
+  if (rota && rota !== yuzey) {
+    const url = req.nextUrl.clone();
+    url.pathname = kokRota(yuzey);
+    return NextResponse.redirect(url);
+  }
   return NextResponse.next();
+}
+
+/** `/reports/dues` -> `/reports/dues`; `/tenants/abc` -> `/tenants`. */
+function kokParca(pathname: string): string {
+  const p = pathname.split("/").filter(Boolean);
+  return p.length ? `/${p[0]}` : "/";
 }
 
 export const config = {

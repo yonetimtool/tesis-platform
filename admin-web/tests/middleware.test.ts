@@ -42,7 +42,12 @@ describe("oturum kapisi (davranis)", () => {
   });
 
   it("refresh cookie VAR: istek gecer (yonlendirme yok)", () => {
-    const res = middleware(istek("/dashboard", `${REFRESH_COOKIE}=rt-123`));
+    // (P126.2) ROTA KONAKLA TUTARLI SECILIR. `istek()` `panel.test`
+    // konagini kullanir, yani PLATFORM yuzeyidir; oraya bir TESIS rotasi
+    // (`/dashboard`) sormak artik yuzey kapisina takilir ve 307 doner.
+    // Bu testin olctugu sey OTURUM kapisidir — rota platform tarafindan
+    // secilir ki iki kural birbirine karismasin.
+    const res = middleware(istek("/tenants", `${REFRESH_COOKIE}=rt-123`));
     expect(res.status).toBe(200);
     expect(res.headers.get("location")).toBeNull();
   });
@@ -57,7 +62,8 @@ describe("oturum kapisi (davranis)", () => {
   it("token GECERLILIGI burada denetlenmez — varlik yeter (BFF 401'de yeniler)",
     () => {
       // Suresi dolmus/cop bir token bile kapiyi gecer; dogrulama BFF'te.
-      const res = middleware(istek("/units", `${REFRESH_COOKIE}=cop`));
+      // Platform konagi -> platform rotasi (bkz. yukaridaki not).
+      const res = middleware(istek("/audit", `${REFRESH_COOKIE}=cop`));
       expect(res.status).toBe(200);
     });
 });
@@ -118,5 +124,95 @@ describe("matcher kapsami (yapisal)", () => {
       expect(m.startsWith("/login")).toBe(false);
       expect(m.startsWith("/api")).toBe(false);
     }
+  });
+});
+
+// --------------------------------------------------------------------------- #
+// (P126.2) YUZEY KAPISI — menu gizlemek ERISILEMEZ yapmaz.
+//
+// P125 menuyu suzdu; ama adres cubuguna `/dues` yazan biri panelde o sayfayi
+// yine acabiliyordu. Kerem'in sarti acikti: "enforcement is server-side, not
+// hidden nav". Bu blok istegin SAYFA CIZILMEDEN kesildigini olcer.
+//
+// BU BIR VERI SINIRI DEGIL, YUZEY SINIRIDIR: veriyi backend RBAC korur
+// (317 ucluk rol matrisi, dokunulmadi). Buradaki kural "hangi is hangi
+// adreste yapilir".
+function yuzeyIstegi(host: string, yol: string): NextRequest {
+  return new NextRequest(new URL(`http://${host}${yol}`), {
+    headers: { cookie: `${REFRESH_COOKIE}=rt-123` },
+  });
+}
+
+describe("yuzey kapisi (P126.2)", () => {
+  const APP = "app.xn--ynetiyor-n4a.com";
+  const PANEL = "panel.xn--ynetiyor-n4a.com";
+
+  it("PANELDE tesis rotasi ACILMAZ — platform kokune yonlendirilir", () => {
+    for (const yol of ["/dues", "/finans", "/sayac-okuma", "/shifts", "/units"]) {
+      const res = middleware(yuzeyIstegi(PANEL, yol));
+      expect(res.status, yol).toBe(307);
+      expect(new URL(res.headers.get("location") ?? "").pathname, yol).toBe(
+        "/tenants",
+      );
+    }
+  });
+
+  it("APP'TE platform rotasi ACILMAZ — tesis kokune yonlendirilir", () => {
+    for (const yol of ["/tenants", "/audit", "/support", "/integrations"]) {
+      const res = middleware(yuzeyIstegi(APP, yol));
+      expect(res.status, yol).toBe(307);
+      expect(new URL(res.headers.get("location") ?? "").pathname, yol).toBe(
+        "/dashboard",
+      );
+    }
+  });
+
+  it("DOGRU yuzeydeki rota GECER", () => {
+    expect(middleware(yuzeyIstegi(PANEL, "/tenants")).status).toBe(200);
+    expect(middleware(yuzeyIstegi(APP, "/dues")).status).toBe(200);
+    expect(middleware(yuzeyIstegi(APP, "/finans")).status).toBe(200);
+  });
+
+  it("ALT YOLLAR da kapiya tabidir", () => {
+    // `/tenants/abc-123` panelde gecer, app'te gecmez.
+    expect(middleware(yuzeyIstegi(PANEL, "/tenants/abc-123")).status).toBe(200);
+    expect(middleware(yuzeyIstegi(APP, "/tenants/abc-123")).status).toBe(307);
+    // `/reports/dues` iki parcali bir TESIS rotasi.
+    expect(middleware(yuzeyIstegi(APP, "/reports/dues")).status).toBe(200);
+    expect(middleware(yuzeyIstegi(PANEL, "/reports/dues")).status).toBe(307);
+  });
+
+  it("KOK (`/`) yuzeyin kendi baslangicina gider", () => {
+    // Panelde tesis panosu YOKTUR; app'te tesisler listesi yoktur.
+    expect(
+      new URL(middleware(yuzeyIstegi(PANEL, "/")).headers.get("location") ?? "")
+        .pathname,
+    ).toBe("/tenants");
+    expect(
+      new URL(middleware(yuzeyIstegi(APP, "/")).headers.get("location") ?? "")
+        .pathname,
+    ).toBe("/dashboard");
+  });
+
+  it("OTURUM KAPISI YUZEY KAPISINDAN ONCE gelir", () => {
+    // Oturumsuz kullanici, yanlis yuzeydeki bir rotada bile `/login`e
+    // gitmeli — yoksa once koke yonlendirilir, orada tekrar `/login`e
+    // duser ve kullanici iki sicramali bir akis gorur.
+    const res = middleware(new NextRequest(new URL(`http://${PANEL}/dues`)));
+    expect(new URL(res.headers.get("location") ?? "").pathname).toBe("/login");
+  });
+
+  it("SINIFLANDIRILMAMIS rota ENGELLENMEZ", () => {
+    // Bilinmeyen bir sayfayi kesmek, yeni bir sayfayi sessizce olduren bir
+    // tuzak olurdu. Siniflandirmanin TAM olmasini yuzey-ayrimi testi
+    // zorunlu tutuyor; kapinin isi BILINEN yanlis yerlesimi kesmek.
+    expect(middleware(yuzeyIstegi(PANEL, "/henuz-yok")).status).toBe(200);
+  });
+
+  it("LEGACY panel.yonetio.site de PLATFORM yuzeyidir", () => {
+    // Eski alan adi sonsuza kadar calisir; yuzeyi degismez.
+    const res = middleware(yuzeyIstegi("panel.yonetio.site", "/dues"));
+    expect(res.status).toBe(307);
+    expect(new URL(res.headers.get("location") ?? "").pathname).toBe("/tenants");
   });
 });

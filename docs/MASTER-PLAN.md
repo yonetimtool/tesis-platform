@@ -7329,6 +7329,42 @@ tekrarlandı.)*
 KAPILAR: `tsc` temiz · `vitest` **362 test** (+20) · `npm run build` ✓ ·
 `caddy validate` geçerli · `depo-alan-adi` 0.
 
+Notes (2026-08-04, P126.2) — **YÜZEY KAPISI BİTTİ.** P125 menüyü süzmüştü;
+ama adres çubuğuna `/dues` yazan biri panelde o sayfayı **yine açıyordu**.
+Kerem'in şartı açıktı: *"enforcement is server-side, not hidden nav"*.
+Middleware isteği **sayfa çizilmeden** kesiyor: panelde tesis rotası →
+`/tenants`, `app.*`ta platform rotası → `/dashboard`, kök (`/`) → yüzeyin
+kendi başlangıcı.
+
+**BU BİR VERİ SINIRI DEĞİL, YÜZEY SINIRIDIR.** Veriyi backend RBAC korur
+(317 uçluk rol matrisi — dokunulmadı). Buradaki kural "hangi iş hangi
+adreste yapılır" sorusunun cevabı.
+
+**SINIFLANDIRILMAMIŞ ROTA ENGELLENMEZ** — bilinmeyen bir sayfayı kesmek,
+yeni bir sayfayı sessizce öldüren bir tuzak olurdu. Sınıflandırmanın **tam**
+olmasını `yuzey-ayrimi` testi zorunlu tutuyor; kapının işi **bilinen**
+yanlış yerleşimi kesmek.
+
+**OTURUM KAPISI ÖNCE GELİR:** oturumsuz kullanıcı yanlış yüzeydeki bir
+rotada bile doğrudan `/login`e gider — aksi halde önce köke, oradan
+`/login`e düşen iki sıçramalı bir akış görürdü (mutasyonla doğrulandı).
+
+**TEST BİR KUSUR BULDU:** `konakYuzeyi` yalnız `Host` başlığına bakıyordu;
+`NextRequest` bir URL'den kurulduğunda o başlık **oluşmuyor** ve her istek
+"platform" sayılıyordu. `req.nextUrl.host` geri düşüşü eklendi.
+
+**İKİ MEVCUT TEST GÜNCELLENDİ:** `panel.test` konağında `/dashboard`
+(tesis rotası) isteyen oturum testleri artık yüzey kapısına takılıyordu —
+ölçtükleri şey oturum kapısı olduğu için rota platform tarafından seçildi
+ki iki kural birbirine karışmasın.
+
+**MUTASYON 4/4:** kapıyı kaldır · alt yol çözümünü kaldır (`/tenants/abc`
+kaçar) · oturum kapısını sonraya al · bilinmeyen rotayı da engelle —
+dördü de düştü.
+
+KAPILAR: `tsc` temiz · `vitest` **370 test** (+8) · `npm run build` ✓ ·
+depo kapıları 0.
+
 ### P127 — www.yönetiyor.com: tanıtım sitesi (SEO)
 Status: ACIK · Depends-on: P126
 Scope: Geçici statik açılış sayfası (P120) gerçek tanıtım sitesiyle
