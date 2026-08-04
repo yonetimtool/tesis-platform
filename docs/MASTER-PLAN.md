@@ -3410,6 +3410,43 @@ yeşil.
      ile yazilir; gercek hash bir SONRAKI commit'te ya da FINAL REPORT'ta
      (kural 13, liste A) doldurulur. -->
 
+## STATUS REPORT — 2026-08-04 (kural 10: P128–P131 grubu bitti, devam ediliyor)
+
+**FINAL REPORT DEĞİLDİR** — uygun madde tükenmedi; sıradaki **P127**.
+
+Kerem'in paketi (P129/P130/P131) plana yazıldı ve **istenen sırada**
+bitirildi; P130(b) P128'i gerektirdiği için P128 de tanımlanıp yapıldı.
+
+| Madde | Sonuç | Commit |
+|---|---|---|
+| plan | P128–P131 açıldı (+P126 durum satırı düzeltildi) | `4606c68` |
+| **P130(a)** | Kim-kimi-açar TEK tabloda; açılır liste sunucudan; 6×6 matris testli | `0d5d991` |
+| **P128 + P130(b)** | Denetçi rolü: göç 0032, salt-okuma **yapısal** testli, görev penceresi | `db1e1f0` |
+| P128 (takip) | Rol mobil modele de eklendi — mobil kapısı eksiğimi yakaladı | `07dd335` |
+| **P129** | `app.*` = yönetici + denetçi; mobil-yalnız roller **sunucuda** kesiliyor | `75025e2` |
+| çırçır | KVKK kutusu yarışı (kod değil ölçüm kusuru) | `c439a1f` |
+| **P131.1** | Kamera adres kuralı ortak vaka dosyasıyla kilitlendi (mobil↔web) | `af582d5` |
+| **P131(a)** | Oynatıcı (hls.js) + web'de kamera yönetimi + oynatılamaz rozeti | `444ae57` |
+| **P131(b)** | Foto kanıtı görünmüyordu: şema alanı vardı, **sunucu doldurmuyordu** | `168d42c` |
+
+**ÜÇ ŞEY ÖLÇÜMLE DÜZELTİLDİ (iddia edildiği gibi değildi):**
+1. "Yönetici platform admin açabiliyor" — **API'de yoktu** (403 ölçüldü);
+   gerçek kusur, yapılamayacak bir şeyi teklif eden **açılır listeydi**.
+2. "Web'de görseller çıkmıyor" — **web'e özgü değildi**: sunucu görev
+   tamamlamalarında `foto_url` alanını hiç doldurmuyordu, yani fotoğraf
+   **mobilde de** görünmüyordu.
+3. "Denetçi mobilde çökmez" — ilk ölçümüm eksikti; mobil kapısı rol
+   bağı kilidiyle yakaladı ve rol mobil modele de eklendi.
+
+**KAPILAR (son durum):** backend `pytest` **1324 geçti** · `vitest` **545**
+· `tsc` temiz · `npm run build` ✓ · mobil `analyze` temiz + **1751 test** +
+apk ✓ · göç uyum/tersinirlik **0 bulgu** (33 sınır).
+
+**KEREM'İN İŞİ (P11'e yazıldı):** denetçi rolü cihaz turu, mobil-yalnız
+rol reddi, kamera oynatma, görev foto kanıtı; ayrıca uygulama mağazaya
+çıkınca `NEXT_PUBLIC_PLAY_URL` / `NEXT_PUBLIC_APPSTORE_URL` tanımlanacak.
+
+
 ### 2026-08-02 · P114 DÜZELTME · 98160c9
 P114'ün yarattığı dosyalar depoya **girmemişti**: kök `.gitignore`daki
 `mobile/ios/` toptan kuralı yuttu, `project.pbxproj` izlendiği için
