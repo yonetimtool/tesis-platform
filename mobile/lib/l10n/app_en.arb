@@ -1426,5 +1426,6 @@
   "izgaraSifirla": "Reset to default",
   "izgaraKaydet": "Save",
   "izgaraSecim": "{secili}/{enCok} selected",
-  "izgaraTavanUyarisi": "You've reached the limit. Remove one to add another ({enCok} tiles)."
+  "izgaraTavanUyarisi": "You've reached the limit. Remove one to add another ({enCok} tiles).",
+  "dilSeciciBaslik": "Language"
 }

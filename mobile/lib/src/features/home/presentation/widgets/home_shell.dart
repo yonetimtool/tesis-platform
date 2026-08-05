@@ -9,6 +9,7 @@ import '../../../profile/data/avatar_api.dart';
 import '../../../push/domain/push_models.dart';
 import '../../../push/presentation/push_registrar.dart';
 import '../../domain/home_tabs.dart';
+import 'dil_modali.dart';
 import 'home_drawer.dart';
 import 'home_marka.dart';
 import '../../../../core/ui/gorsel_cozme.dart';
@@ -119,6 +120,9 @@ class HomeShell extends ConsumerWidget {
             unreadCount: unreadCount,
             onTap: () => onDestinationSelected(1),
           ),
+          const SizedBox(width: 4),
+          // (P140.4) DIL SIMGESI PROFILIN YANINDA — sag ust.
+          const DilButonu(),
           const SizedBox(width: 4),
           _AvatarButonu(onTap: () => _hesapMenusu(context)),
           const SizedBox(width: 12),

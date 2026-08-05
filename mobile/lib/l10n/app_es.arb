@@ -1426,5 +1426,6 @@
   "izgaraSifirla": "Restablecer valores predeterminados",
   "izgaraKaydet": "Guardar",
   "izgaraSecim": "{secili}/{enCok} seleccionados",
-  "izgaraTavanUyarisi": "Ha alcanzado el límite. Quite uno para añadir otro ({enCok} mosaicos)."
+  "izgaraTavanUyarisi": "Ha alcanzado el límite. Quite uno para añadir otro ({enCok} mosaicos).",
+  "dilSeciciBaslik": "Idioma"
 }

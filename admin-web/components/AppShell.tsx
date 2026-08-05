@@ -401,9 +401,12 @@ function SidebarBody({
             onNavigate={onNavigate}
           />
         )}
+        {/* (P140.4) DIL SECICI BURADAN KALDIRILDI — sag uste tasindi.
+            Iki yerde birden durmasi, "hangisi gecerli?" sorusunu ureten
+            bir tekrardir. Tema anahtari burada KALIR: o bir gorunum
+            tercihi ve kenar cubugunun dibi onun icin dogru yer. */}
         <div className="flex flex-wrap gap-2">
           <ThemeToggle />
-          <DilSecici />
         </div>
         <button
           onClick={logout}
@@ -471,7 +474,9 @@ export function AppShell({
             </svg>
           </button>
           <YonetioLogo size={24} />
-          <span className="w-9" />
+          {/* (P140.4) Dil secici SAG UST — eskiden burada yalnizca hizalama
+              icin bos bir `span` duruyordu. */}
+          <DilSecici />
         </header>
 
         {/* Mobil cekmece + arka plan */}
@@ -500,7 +505,14 @@ export function AppShell({
 
         {/* Icerik */}
         <div className="lg:ps-64">
-          <main id="icerik" className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+          {/* (P140.4) MASAUSTU SAG UST — dil secicinin tek yeri.
+              Kendi basina bir baslik cubugu DEGIL: yalnizca hizalama
+              seridi, boylece sayfa basliklari (`SayfaBasligi`) ikinci bir
+              baslik seviyesiyle yarismaz. */}
+          <div className="hidden justify-end px-4 pt-4 sm:px-6 lg:flex lg:px-8">
+            <DilSecici />
+          </div>
+          <main id="icerik" className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8 lg:pt-4">
             {children}
           </main>
         </div>

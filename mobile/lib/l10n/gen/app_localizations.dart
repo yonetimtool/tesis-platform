@@ -8128,6 +8128,12 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Tavana ulaştınız. Yeni bir bölüm eklemek için önce birini çıkarın ({enCok} karo).'**
   String izgaraTavanUyarisi(int enCok);
+
+  /// Dil secici modalinin basligi + simgenin erisilebilir adi
+  ///
+  /// In tr, this message translates to:
+  /// **'Dil'**
+  String get dilSeciciBaslik;
 }
 
 class _AppLocalizationsDelegate

@@ -4786,4 +4786,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String izgaraTavanUyarisi(int enCok) {
     return 'You\'ve reached the limit. Remove one to add another ($enCok tiles).';
   }
+
+  @override
+  String get dilSeciciBaslik => 'Language';
 }

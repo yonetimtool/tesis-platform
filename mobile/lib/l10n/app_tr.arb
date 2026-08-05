@@ -2015,5 +2015,9 @@
         "type": "int"
       }
     }
+  },
+  "dilSeciciBaslik": "Dil",
+  "@dilSeciciBaslik": {
+    "description": "Dil secici modalinin basligi + simgenin erisilebilir adi"
   }
 }

@@ -4856,4 +4856,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String izgaraTavanUyarisi(int enCok) {
     return 'Достигнут предел. Уберите один, чтобы добавить другой (плиток: $enCok).';
   }
+
+  @override
+  String get dilSeciciBaslik => 'Язык';
 }

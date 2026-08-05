@@ -1426,5 +1426,6 @@
   "izgaraSifirla": "Auf Standard zurücksetzen",
   "izgaraKaydet": "Speichern",
   "izgaraSecim": "{secili}/{enCok} ausgewählt",
-  "izgaraTavanUyarisi": "Grenze erreicht. Entfernen Sie einen, um einen weiteren hinzuzufügen ({enCok} Kacheln)."
+  "izgaraTavanUyarisi": "Grenze erreicht. Entfernen Sie einen, um einen weiteren hinzuzufügen ({enCok} Kacheln).",
+  "dilSeciciBaslik": "Sprache"
 }

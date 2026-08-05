@@ -1426,5 +1426,6 @@
   "izgaraSifirla": "استعادة الإعدادات الافتراضية",
   "izgaraKaydet": "حفظ",
   "izgaraSecim": "{secili}/{enCok} محدد",
-  "izgaraTavanUyarisi": "لقد وصلت إلى الحد. أزل واحدًا لإضافة آخر ({enCok} مربعات)."
+  "izgaraTavanUyarisi": "لقد وصلت إلى الحد. أزل واحدًا لإضافة آخر ({enCok} مربعات).",
+  "dilSeciciBaslik": "اللغة"
 }

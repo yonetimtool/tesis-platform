@@ -4598,4 +4598,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String izgaraTavanUyarisi(int enCok) {
     return 'Tavana ulaştınız. Yeni bir bölüm eklemek için önce birini çıkarın ($enCok karo).';
   }
+
+  @override
+  String get dilSeciciBaslik => 'Dil';
 }

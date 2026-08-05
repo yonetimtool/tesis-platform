@@ -4867,4 +4867,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String izgaraTavanUyarisi(int enCok) {
     return 'لقد وصلت إلى الحد. أزل واحدًا لإضافة آخر ($enCok مربعات).';
   }
+
+  @override
+  String get dilSeciciBaslik => 'اللغة';
 }

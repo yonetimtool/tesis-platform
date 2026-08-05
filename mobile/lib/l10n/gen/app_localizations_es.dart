@@ -4742,4 +4742,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String izgaraTavanUyarisi(int enCok) {
     return 'Ha alcanzado el límite. Quite uno para añadir otro ($enCok mosaicos).';
   }
+
+  @override
+  String get dilSeciciBaslik => 'Idioma';
 }

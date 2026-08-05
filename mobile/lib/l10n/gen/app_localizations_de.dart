@@ -4766,4 +4766,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String izgaraTavanUyarisi(int enCok) {
     return 'Grenze erreicht. Entfernen Sie einen, um einen weiteren hinzuzufügen ($enCok Kacheln).';
   }
+
+  @override
+  String get dilSeciciBaslik => 'Sprache';
 }

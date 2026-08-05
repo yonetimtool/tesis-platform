@@ -1426,5 +1426,6 @@
   "izgaraSifirla": "Rétablir les valeurs par défaut",
   "izgaraKaydet": "Enregistrer",
   "izgaraSecim": "{secili}/{enCok} sélectionnés",
-  "izgaraTavanUyarisi": "Limite atteinte. Retirez-en un pour en ajouter un autre ({enCok} tuiles)."
+  "izgaraTavanUyarisi": "Limite atteinte. Retirez-en un pour en ajouter un autre ({enCok} tuiles).",
+  "dilSeciciBaslik": "Langue"
 }

@@ -1,8 +1,9 @@
-  17,  94  134x24  Yönetio
   20,  16  24x24  U+E3DC
-  20, 290  24x24  U+F237
+  20, 238  24x24  U+F237
+  21, 291  22x22  U+E67B
   21, 343  22x22  U+E497
-  38,  94  222x11  GÜVENLİK & DANIŞMANLIK
+  21,  94  134x24  Yönetio
+  36,  94  222x11  GÜVENLİK & DANIŞMANLIK
   72,  16  394x30  Merhaba, Çiğdem
  103,  16  342x20  Daire 12  •  Site Sakini
  165, 232  19x19  U+E041

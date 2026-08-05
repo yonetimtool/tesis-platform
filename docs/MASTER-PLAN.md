@@ -9143,7 +9143,7 @@ adlı kart **ayrı** bir ekrandır (`sikayetHaritasi` — bina şeması) ve
 kurasyonlu kümede yoktur. Ad birleştirmesi bir ürün kararıdır.
 
 ### P140 — Izgara kapasitesi 8, içerik çevirisi, geçiş animasyonu, dil seçici
-Status: PLANLANDI · Depends-on: P139
+Status: KISMEN(1, 3, 4 BİTTİ · 2 kod tarafında ZATEN VAR — prod ölçümü Kerem'de) · Depends-on: P139
 Scope: Kerem'in dört maddesi. **Not:** brief "P134.1" diyordu; P134 numarası
 dolu (backend günlük turu) — P140 açıldı. **Derleme numarası
 değişmeyecek** (yapım 3 hâlâ App Store incelemesinde).
@@ -9180,6 +9180,57 @@ kaynak=hedef bağlantı yok).
 | tesis görevlisi | 12 |
 | **güvenlik amiri** | **6** ← 8'in altında, "eksik karo" durumu gerçek |
 | denetçi | 0 (mobil yüzeyi yok — P128/P129 kararı) |
+
+
+Notes (2026-08-05, P140.4) — **DİL SEÇİCİ SAĞ ÜSTE.**
+
+Mobil: üst çubukta profil avatarının yanına **çeviri simgesi** kondu
+(48dp dokunma hedefi, erişilebilir ad, `Icons.translate`); dokununca
+ekranın ortasında **7 dilli modal** açılıyor. Diller **her zaman kendi
+dilinde** yazılı ("العربية", "Русский") — kullanıcı bilmediği bir dilde
+yazılmış kendi dilini bulamaz.
+
+**YOL ÜSTÜNDE BİR ÜRÜN HATASI:** dil seçimi **diske yazmayı bekliyordu**.
+Yavaş depoda modal takılı kalır; yazma hata verirse **hiç kapanmazdı** —
+testte tam bu oldu. Kapanış bir görünüm işidir, kalıcılık değil: artık
+önce kapanıyor, yazma arka planda sürüyor.
+
+Web: seçici kenar çubuğunun dibinden **kaldırıldı** ve sağ üste taşındı —
+masaüstünde içerik alanının üstünde sağa hizalı ince bir şerit, mobilde
+üst çubuğun sağında (orada eskiden yalnızca hizalama için boş bir `span`
+vardı). Tema anahtarı kenar çubuğunda **kaldı**: o bir görünüm tercihi.
+Kilit (`dil-secici-konum.test.ts`) "iki yerde birden durmasın" şartını
+ölçüyor.
+
+Notes (2026-08-05, P140.2) — **ÖNCÜL GEÇERSİZ: ÇEVİRİ ZATEN VAR.**
+
+Brief "duyurular ve site kuralları Türkçe kalıyor, Instagram desenini
+ekle" diyordu. **Kod tarafında hepsi mevcut** ve dev'de uçtan uca
+çalışıyor:
+
+| brief'in şartı | durum |
+|---|---|
+| LibreTranslate, yeni sağlayıcı yok | ✓ `translate_provider: libretranslate` |
+| Instagram deseni (orijinal ↔ çeviri) | ✓ `ceviriMetni` + `CeviriNotu` |
+| Otomatik çevirme yok | ✓ kullanıcı dokununca |
+| Kaynak=hedef dilde bağlantı yok | ✓ `notVar` üç hâlde de kaynak dilde `false` |
+| Önbellek (içerik id + hedef dil) | ✓ `announcement_ceviri` / `site_kurali_ceviri` (göç 0007) |
+| Hata sessiz değil | ✓ `hataliCeviri` → "çeviri yapılamadı, orijinal gösteriliyor" |
+| Satır içi gösterge | ✓ `hazirlaniyor` hâli |
+| Kapsam: duyuru + site kuralı | ✓ (ayrıca etkinlikler) |
+
+**DEV ÖLÇÜMÜ:** `libretranslate` sağlıklı; çeviri satırlarının **hepsi
+`hazir`** (duyuru 12, site kuralı 6).
+
+Yani şikâyet **prod'a** aittir ve bu makineden prod'a erişim yok
+([[prod-erisim-ve-healthcheck-fix]]). Yeni bir UI yazmak çalışan bir
+deseni ikinci kez kurmak ve asıl kopukluğu gizlemek olurdu — brief'in
+kendi "kök nedeni bul, üstünü örtme" kuralı burada da geçerli.
+
+**KEREM'DE — üç komut:** `ps libretranslate` (servis ayakta mı),
+`SELECT durum, count(*) FROM announcement_ceviri GROUP BY durum`
+(satırlar `bekliyor`da mı takılı), `logs worker | grep -i ceviri` (kuyruk
+işliyor mu).
 
 ### NOT — Sign in with Apple (4.8)
 **GEÇERSİZ (N/A):** üçüncü taraf sosyal giriş **kullanmıyoruz** (Google/Facebook
