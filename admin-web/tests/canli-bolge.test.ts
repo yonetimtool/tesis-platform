@@ -12,18 +12,11 @@
 // (`bg-red-600` + `text-red-700`, ayri alanlar) hata kutusu sanip yanlis
 // alarm uretti.
 import { describe, expect, it } from "vitest";
+
+import { taranacakDosyalar } from "./tarama";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
-function dosyalar(kok: string): string[] {
-  const out: string[] = [];
-  for (const ad of readdirSync(kok)) {
-    const yol = join(kok, ad);
-    if (statSync(yol).isDirectory()) out.push(...dosyalar(yol));
-    else if (yol.endsWith(".tsx")) out.push(yol);
-  }
-  return out;
-}
 
 /** `className="..."` / `className={`...`}` degerleri + ofsetleri. */
 function siniflar(metin: string): { deger: string; ofset: number }[] {
@@ -38,7 +31,7 @@ function siniflar(metin: string): { deger: string; ofset: number }[] {
 describe("canli bolge (tur 56)", () => {
   it("hata kutulari role=alert ya da aria-live tasir", () => {
     const bulgular: string[] = [];
-    for (const yol of [...dosyalar("app"), ...dosyalar("components")]) {
+    for (const yol of taranacakDosyalar(["app", "components"])) {
       const metin = readFileSync(yol, "utf8");
       for (const { deger, ofset } of siniflar(metin)) {
         if (!/bg-red-50\b/.test(deger)) continue;

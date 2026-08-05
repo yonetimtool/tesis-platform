@@ -12,6 +12,8 @@
 // gelmelidir. Dil bilgisinden bagimsizdir, dolayisiyla Ingilizce sabitleri
 // de yakalar.
 import { describe, expect, it } from "vitest";
+
+import { taranacakDosyalar } from "./tarama";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
@@ -87,15 +89,6 @@ function sinifMi(s: string): boolean {
   return SINIF_DIZGESI.test(s) && /[-:]/.test(s);
 }
 
-function dosyalar(kok: string): string[] {
-  const out: string[] = [];
-  for (const ad of readdirSync(kok)) {
-    const yol = join(kok, ad);
-    if (statSync(yol).isDirectory()) out.push(...dosyalar(yol));
-    else if (yol.endsWith(".tsx")) out.push(yol);
-  }
-  return out;
-}
 
 /** Yorumlari sil: yorum metni Turkce olabilir ve TARAMA DISIDIR.
  * (`https://` gibi protokol ciftini korumak icin `//` yalniz basi ya da
@@ -115,7 +108,7 @@ function harfVar(s: string): boolean {
 describe("sabit metin taramasi (tur 47)", () => {
   it("JSX metinleri ve gorunen oznitelikler t() uzerinden gelir", () => {
     const bulgular: string[] = [];
-    for (const yol of [...dosyalar("app"), ...dosyalar("components")]) {
+    for (const yol of taranacakDosyalar(["app", "components"])) {
       const kaynak = yorumsuz(readFileSync(yol, "utf8"));
       // Dosya boyunca metin dugumleri (cok satirli olanlar dahil).
       for (const m of kaynak.matchAll(METIN)) {

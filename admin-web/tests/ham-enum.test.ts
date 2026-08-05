@@ -15,20 +15,13 @@ import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
+import { taranacakDosyalar } from "./tarama";
+
 // Sunucu semasinda numaralandirma olan alan adlari.
 const ENUM_ALANLARI = [
   "durum", "tip", "kategori", "yontem", "kanal", "rol", "oncelik", "gun_tipi",
 ];
 
-function dosyalar(kok: string): string[] {
-  const cikti: string[] = [];
-  for (const ad of readdirSync(kok)) {
-    const yol = join(kok, ad);
-    if (statSync(yol).isDirectory()) cikti.push(...dosyalar(yol));
-    else if (ad.endsWith(".tsx")) cikti.push(yol);
-  }
-  return cikti;
-}
 
 describe("ham numaralandirma taramasi", () => {
   it("tel degeri JSX'e DOGRUDAN yazilmaz", () => {
@@ -48,7 +41,7 @@ describe("ham numaralandirma taramasi", () => {
     // sizinti sayardi ve kilit dogru kodu hata gibi gosterirdi.
     const sablonsuz = (satir: string) => satir.replace(/`[^`]*`/g, "``");
     const sizanlar: string[] = [];
-    for (const yol of [...dosyalar("app"), ...dosyalar("components")]) {
+    for (const yol of taranacakDosyalar(["app", "components"])) {
       readFileSync(yol, "utf8")
         .split("\n")
         .forEach((satir, i) => {

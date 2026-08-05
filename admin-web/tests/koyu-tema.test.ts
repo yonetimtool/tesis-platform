@@ -16,6 +16,8 @@ import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
+import { taranacakDosyalar } from "./tarama";
+
 /** Devrilmesi GEREKMEYEN siniflar — her biri bir gerekceyle.
  *
  * 1. DOYGUN ZEMIN + BEYAZ METIN: `bg-*-500/600/700` ustunde `text-white`
@@ -41,15 +43,6 @@ const GEREKCELI = new Set([
 const AILE =
   "slate|gray|red|rose|amber|yellow|emerald|green|blue|indigo|violet|purple|pink|orange|teal|cyan|sky|lime|fuchsia";
 
-function dosyalar(kok: string): string[] {
-  const cikti: string[] = [];
-  for (const ad of readdirSync(kok)) {
-    const yol = join(kok, ad);
-    if (statSync(yol).isDirectory()) cikti.push(...dosyalar(yol));
-    else if (ad.endsWith(".tsx")) cikti.push(yol);
-  }
-  return cikti;
-}
 
 describe("koyu tema kapsami", () => {
   it("dark: oneksiz her renk sinifi ya devrilmis ya GEREKCELI", () => {
@@ -61,7 +54,7 @@ describe("koyu tema kapsami", () => {
 
     const kalip = new RegExp(`(dark:)?\\b((?:text|bg|border)-(?:${AILE})-\\d{2,3})\\b`, "g");
     const eksik = new Map<string, string>();
-    for (const yol of [...dosyalar("app"), ...dosyalar("components")]) {
+    for (const yol of taranacakDosyalar(["app", "components"])) {
       const kaynak = readFileSync(yol, "utf8");
       for (const m of kaynak.matchAll(kalip)) {
         if (m[1]) continue; // `dark:` onekli — zaten koyu tema icin yazilmis
@@ -113,7 +106,7 @@ describe("koyu tema kapsami", () => {
       "g",
     );
     const eksik = new Map<string, string>();
-    for (const yol of [...dosyalar("app"), ...dosyalar("components")]) {
+    for (const yol of taranacakDosyalar(["app", "components"])) {
       const kaynak = readFileSync(yol, "utf8");
       for (const m of kaynak.matchAll(kalip)) {
         if (m[1]) continue;

@@ -8786,6 +8786,53 @@ kanıt ve düzeltilmiş kayıt. Bir ölçüm aracının hata yolu sürülmemişs
 araç "yeşil" derken de bir şey söylemiyor olabilir — `goc` kapısı
 dağıtılmış prod'a karşı migration'ları koruyan kapıdır.
 
+### P136 — Sekiz kilit hiçbir şey ölçmüyordu (vakum taraması)
+Status: BITTI(2026-08-05) · Depends-on: P135
+Scope: Bu oturumda "ölçmeyen ölçüm" **üç kez** çıktı: koyu tema token
+kilidinin regex'i bozuk karakter taşıyordu (hiçbir şey eşleşmiyordu),
+`goc` kapısının hata yolu hiç sürülmemişti (P135), ve aşağıdakiler. Bu bir
+**sınıf**; madde onu sınıf olarak kapatır.
+
+Notes (2026-08-05, P136) — **SEKİZ TARAYICI BOŞ TARAMAYLA GEÇTİ.**
+
+Depoda "şu yok" diyen bir dizi kaynak tarayıcısı var (sabit metin, ham
+enum, sessiz fetch, koyu tema, canlı bölge, erişilebilir etiket, güvenlik
+hijyeni, hata mesajı). Hepsi `toEqual([])` / `not.toContain` biçiminde
+**yokluk** iddia ediyor — ve yokluk iddiaları **boş küme üzerinde her
+zaman doğrudur**.
+
+Sekizinin sekizi de kendi `dosyalar()` gezinme kopyasını taşıyordu ve
+hiçbirinde "gerçekten dosya gördüm" kontrolü yoktu. **Mutasyonla ölçüldü**
+(iddia değil): gezinme `[]` dönecek şekilde değiştirildi →
+
+| | önce | sonra |
+|---|---|---|
+| boş taramayla koşum | **8/8 GEÇTİ** | 9 test düşüyor |
+
+Yani dizin adı değişse, uzantı süzgeci kaysa ya da bir istisna yutulsa
+sekiz kilit birden hiçbir şey ölçmeden yeşil kalırdı — ve bunu kimse fark
+etmezdi.
+
+**ÇÖZÜM YAPISAL, DİSİPLİN DEĞİL.** Gezinme tek yere alındı
+(`tests/tarama.ts`) ve **boş sonuç orada hata fırlatıyor**. Tarayıcı yazan
+kişi taban eklemeyi unutabilir; unutamayacağı şey aracın kendisinin
+patlamasıdır. Sekiz kopya silindi (kod **azaldı**).
+
+**GERİ ALINMASIN:** `tarayici-kilidi.test.ts` üç şeyi tutuyor — hiçbir
+testin kendi `dosyalar()` gezinmesini kopyalamaması, bilinen sekiz
+tarayıcının ortak gezinmeyi kullanması, ve ortak gezinmenin boş sonuçta
+**gerçekten** fırlatması. Üçü de mutasyonla sınandı (yerel gezinme geri
+konunca düştü).
+
+**HÂLÂ KALAN (dürüstçe) — İKİNCİ VAKUM TÜRÜ.** Bu madde "tarama hiç dosya
+görmedi" vakumunu kapatır. İkinci tür açık kalıyor: **dosyalar okunuyor
+ama desen hiçbir şey eşleştirmiyor** — bu oturumda koyu tema kilidinde tam
+bu oldu (Python kaçışı regex'e backspace karakteri koymuştu). Onu yapısal
+olarak kapatmanın yolu her tarayıcıya **pozitif kontrol** eklemektir
+(sentetik bozuk bir örnek üzerinde desenin ateşlediğini ölçmek); bu
+tarayıcı başına ayrı bir semantik iş ve bu turda yapılmadı. Bugünkü
+koruma: her kilit değişikliğinde mutasyon sürmek.
+
 ### NOT — Sign in with Apple (4.8)
 **GEÇERSİZ (N/A):** üçüncü taraf sosyal giriş **kullanmıyoruz** (Google/Facebook
 girişi yok; kimlik doğrulama tesis tarafından verilen hesapla). 4.8 yalnız

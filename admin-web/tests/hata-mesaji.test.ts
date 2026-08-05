@@ -13,22 +13,15 @@ import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-function dosyalar(kok: string): string[] {
-  const cikti: string[] = [];
-  for (const ad of readdirSync(kok)) {
-    const yol = join(kok, ad);
-    if (statSync(yol).isDirectory()) cikti.push(...dosyalar(yol));
-    else if (ad.endsWith(".tsx") || ad.endsWith(".ts")) cikti.push(yol);
-  }
-  return cikti;
-}
+import { taranacakDosyalar } from "./tarama";
+
 
 describe("hata metni hijyeni", () => {
   it("hata nesnesi String() ile EKRANA YAZILMAZ", () => {
     // `String(err)` / `String(error)` / `String(hata)` / `String(exc)`
     const kalip = /String\(\s*(err|error|hata|exc|e)\b/;
     const sizanlar: string[] = [];
-    for (const yol of [...dosyalar("app"), ...dosyalar("components")]) {
+    for (const yol of taranacakDosyalar(["app", "components"])) {
       readFileSync(yol, "utf8")
         .split("\n")
         .forEach((satir, i) => {
@@ -64,7 +57,7 @@ describe("bos-durum iddiasi", () => {
   // gibi anlatan bir kilit, yanlis guven verir.
   it("bos-durum kosulu YALNIZ isLoading'e dayanmaz", () => {
     const sizanlar: string[] = [];
-    for (const yol of [...dosyalar("app"), ...dosyalar("components")]) {
+    for (const yol of taranacakDosyalar(["app", "components"])) {
       readFileSync(yol, "utf8")
         .split("\n")
         .forEach((satir, i) => {

@@ -19,20 +19,13 @@ import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-function dosyalar(kok: string): string[] {
-  const cikti: string[] = [];
-  for (const ad of readdirSync(kok)) {
-    const yol = join(kok, ad);
-    if (statSync(yol).isDirectory()) cikti.push(...dosyalar(yol));
-    else if (ad.endsWith(".tsx")) cikti.push(yol);
-  }
-  return cikti;
-}
+import { taranacakDosyalar } from "./tarama";
+
 
 describe("erisilebilir etiket", () => {
   it("her form denetiminin bir ADI var", () => {
     const sizanlar: string[] = [];
-    for (const yol of [...dosyalar("app"), ...dosyalar("components")]) {
+    for (const yol of taranacakDosyalar(["app", "components"])) {
       const satirlar = readFileSync(yol, "utf8").split("\n");
       satirlar.forEach((satir, i) => {
         if (!/<(input|select|textarea)\b/.test(satir)) return;

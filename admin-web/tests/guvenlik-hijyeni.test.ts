@@ -16,15 +16,8 @@ import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-function dosyalar(kok: string): string[] {
-  const cikti: string[] = [];
-  for (const ad of readdirSync(kok)) {
-    const yol = join(kok, ad);
-    if (statSync(yol).isDirectory()) cikti.push(...dosyalar(yol));
-    else if (ad.endsWith(".tsx")) cikti.push(yol);
-  }
-  return cikti;
-}
+import { taranacakDosyalar } from "./tarama";
+
 
 /** Bir `<a …>` acilis etiketinin TAMAMI (cok satirli olabilir). */
 function baglantilar(kaynak: string): { metin: string; satir: number }[] {
@@ -38,7 +31,7 @@ function baglantilar(kaynak: string): { metin: string; satir: number }[] {
   return out;
 }
 
-const TUM = [...dosyalar("app"), ...dosyalar("components")];
+const TUM = taranacakDosyalar(["app", "components"]);
 
 describe("guvenlik hijyeni (P95)", () => {
   it("`target=_blank` olan her baglantida `rel` VAR", () => {
