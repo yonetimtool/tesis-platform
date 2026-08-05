@@ -88,3 +88,22 @@ def yonetilebilir(yoneten_rol: str) -> frozenset[str]:
     "her sey" yapmak — yeni rolu sessizce en yetkili rol yapardi.
     """
     return YONETILEBILIR_ROLLER.get(yoneten_rol, frozenset())
+
+
+#: (P133.6) MALI VERIYI GOREBILEN ROLLER — tek kaynak.
+#:
+#: NEDEN BURADA: "kim parayi gorur" sorusu P133'e kadar IKI yerde
+#: yasiyordu — `routers/reports.py` icinde `_YONETIM` ve (P133.2'de
+#: eklenen) `routers/dashboard.py` icinde `_MALI_ROLLER`. Ikincisini
+#: yazarken yorumuna "kume reports.py'den alinir" diye not dusmustum ama
+#: KOD ayri bir literal yaziyordu: yorum tek kaynak vaat ediyor, kod
+#: kopyaliyordu. Tam olarak bu modulun (P130) var olma sebebi budur.
+#:
+#: AYRISMANIN BEDELI SESSIZDIR: biri bir gun `denetci`yi eklerse denetci
+#: raporlarda tahsilati gorur ama panoda goremez — ya da tersi. Hicbir
+#: test dusmez, kimse fark etmez.
+#:
+#: SINIR: bu kume "mali OZET gorunur mu"yu soyler. Mali YAZMA (tahakkuk,
+#: tahsilat kaydi) ayri bir karardir ve `denetci` oradan BILEREK disaridir
+#: (P128: salt-okuma gozetim).
+MALI_GORUNURLUK: frozenset[str] = frozenset({"admin", "yonetici"})

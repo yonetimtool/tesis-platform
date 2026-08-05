@@ -374,3 +374,26 @@ def test_TAHSILAT_ORANI_guvenlik_rollerine_NULL(client, world, kim):
     assert r.json()["aidat_tahsilat_orani"] is None, (
         "guvenlik rolu MALI veriyi goruyor"
     )
+
+
+def test_MALI_GORUNURLUK_pano_ve_raporlarda_AYNI():
+    """(P133.6) "Kim parayi gorur" TEK yerde tanimli.
+
+    P133.2'de panoya mali alan eklerken kumeyi ayri bir literal olarak
+    yazmistim ve yorumuna "reports.py'den alinir" diye not dusmustum —
+    yorum tek kaynak vaat ediyor, kod kopyaliyordu.
+
+    AYRISMANIN BEDELI SESSIZDIR: biri `denetci`yi bir tarafa eklerse
+    denetci raporlarda tahsilati gorur ama panoda goremez; hicbir test
+    dusmez. Bu test o sessizligi bozar.
+    """
+    from app.roller import MALI_GORUNURLUK
+    from app.routers import dashboard, reports
+
+    assert reports._YONETIM is MALI_GORUNURLUK
+    # Pano da AYNI nesneyi okur (kendi kopyasini tutmaz).
+    kaynak = (
+        __import__("pathlib").Path(dashboard.__file__).read_text(encoding="utf8")
+    )
+    assert "MALI_GORUNURLUK" in kaynak
+    assert "_MALI_ROLLER" not in kaynak, "pano kendi kopyasini geri koymus"

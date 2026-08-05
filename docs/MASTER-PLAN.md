@@ -8478,7 +8478,7 @@ KAPILAR: `tsc` temiz · `eslint` temiz · `vitest` **609 test** (+15) ·
 sınıf adı işiydi).
 
 ### P133 — Görsel dil turu: pano + genel kenar çubuğu
-Status: BITTI(2026-08-05 · 5 madde) · Depends-on: P132
+Status: BITTI(2026-08-05 · 5 madde + P133.6 tek-kaynak düzeltmesi) · Depends-on: P132
 Scope: P132 **token katmanını** indirdi ama ürün hâlâ P132 öncesiyle **aynı
 görünüyor** — token'lar doğru, değişmeyen şey görsel **DİL**di. Bu tur dili
 değiştirir. Kerem belirli bir yön onayladı; **birebir uygulanır, yeniden
@@ -8635,6 +8635,28 @@ bıraktığı için TUR DURUMU çevirisinin DOM kilidi orada ölçülemez oldu;
 KAPILAR: `tsc` temiz · `eslint` temiz · `vitest` **645 test** (+15) ·
 `build` ✓ (`/dashboard` ilk yük 108→**109 kB**, paylaşılan 87.5 kB
 değişmedi) · backend `pytest` **1417 geçti**, 1 atlandı · göç kapıları bulgu: 0.
+
+
+Notes (2026-08-05, P133.6) — **KENDİ COMMIT'İMDEKİ ÇİFT TANIM.**
+
+P133.2'de panoya mali alan eklerken kümeyi ayrı bir literal olarak yazdım
+(`_MALI_ROLLER = {"admin", "yonetici"}`) ve **yorumuna** "küme
+`reports.py`den alınır ki mali görünürlük iki yerde tanımlanmasın" diye
+not düştüm. Yorum tek kaynak vaat ediyordu, **kod kopyalıyordu** — yani
+P130'da bu tür ayrışma için kurulan otoriteyi kurarken aynı hatayı
+yaptım.
+
+Bedeli sessiz olurdu: biri bir gün `denetci`yi bir tarafa eklerse denetçi
+raporlarda tahsilatı görür, panoda göremez (ya da tersi) ve **hiçbir test
+düşmez**. Küme `roller.py`ye (P130'un otoritesi) taşındı; `reports.py` ve
+`dashboard.py` ikisi de oradan okuyor. Kilit mutasyonla sınandı: panoya
+kendi kopyası geri konunca test düştü.
+
+Yol üstünde **mobil kapısı da koşuldu** (P133'te koşmamıştım — sözleşme
+değiştiren bir turda bu bir eksikti): `analyze` temiz, **1751 test**
+geçti, APK derlendi. Tüketici iddiası ayrıca **kaynağında** doğrulandı:
+`patrol_api.dart` yalnız `res.data?['aktif_turlar']` okuyor ve zaten
+`alarm_limit: 1` gönderiyor — `son_alarmlar`ın kalkması mobili kıramaz.
 
 ### NOT — Sign in with Apple (4.8)
 **GEÇERSİZ (N/A):** üçüncü taraf sosyal giriş **kullanmıyoruz** (Google/Facebook

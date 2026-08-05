@@ -19,6 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..deps import get_tenant_db, require_role
 from ..models import AppUser, BudgetCategory, BudgetEntry, DuesAssessment, DuesPayment
+from ..roller import MALI_GORUNURLUK
 from ..schemas import FinancialSummary, GiderKalemi, TahsilatOzet
 from .budget import date_filters
 
@@ -29,7 +30,10 @@ _READER = require_role(
     # (P128) Denetci mali ozeti OKUR — gorevinin ta kendisi.
     "denetci",
 )
-_YONETIM = {"admin", "yonetici"}
+#: (P133.6) Mali ozeti gorebilen roller — TEK KAYNAK `roller.py`de.
+#: Pano da ayni kumeyi okur; ikisi ayrisirsa denetci raporlarda gorup
+#: panoda goremez (ya da tersi) ve hicbir test dusmezdi.
+_YONETIM = MALI_GORUNURLUK
 
 #: Telefon ekranina uygun kompakt liste: en yuksek N gider kategorisi.
 TOP_GIDER_LIMIT = 5

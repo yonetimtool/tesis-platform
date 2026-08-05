@@ -31,6 +31,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..deps import get_tenant_db, require_role
 from ..hata_metinleri import istek_dili
 from ..models import AppUser
+from ..roller import MALI_GORUNURLUK
 from ..push_metinleri import push_govdesi
 from ..schemas import (
     ALARM_ONEMI,
@@ -44,10 +45,8 @@ router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
 _VIEWER = require_role("admin", "yonetici", "security", "guvenlik_amiri")
 
-#: Panodaki MALI alani gorebilen roller (bkz. `aidat_tahsilat_orani`).
-#: Kume `reports.py`deki `_YONETIM` ile AYNI olmali; oradan alinir ki
-#: mali gorunurluk iki yerde tanimlanmasin.
-_MALI_ROLLER = frozenset({"admin", "yonetici"})
+#: Panodaki MALI alani gorebilen roller — kume `roller.MALI_GORUNURLUK`,
+#: raporlarla AYNI kaynak (bkz. o modulun notu).
 
 # Bugunku pencereler + beklenen (atanmis aktif checkpoint) ve okutulan
 # (pencere araliginda okutulmus, beklenen) sayilari — tek set-tabanli sorgu.
@@ -216,7 +215,7 @@ async def dashboard_live(
     )
 
     tahsilat_orani: int | None = None
-    if kullanici.role in _MALI_ROLLER:
+    if kullanici.role in MALI_GORUNURLUK:
         from .reports import _tahsilat_ozet
 
         tahsilat_orani = (await _tahsilat_ozet(db, None)).tahsilat_orani_yuzde
