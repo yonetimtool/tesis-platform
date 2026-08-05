@@ -8658,6 +8658,70 @@ geçti, APK derlendi. Tüketici iddiası ayrıca **kaynağında** doğrulandı:
 `patrol_api.dart` yalnız `res.data?['aktif_turlar']` okuyor ve zaten
 `alarm_limit: 1` gönderiyor — `son_alarmlar`ın kalkması mobili kıramaz.
 
+### P134 — Backend günlük görünürlüğü (ertelenmiş iş) + PII maskeleme
+Status: BITTI(2026-08-05) · Depends-on: —
+Scope: Backend'de **hiçbir logging yapılandırması yoktu**; Python kök
+logger'ı WARNING olduğu için `logger.info(...)` çağrılarının hiçbiri
+çıkmıyordu. 2026-07-09'da push doğrulanırken fark edilmiş, Kerem "şimdilik
+kalsın, not et" demişti. Davranışı etkilemiyordu ama **teşhisi**
+öldürüyordu: push'un ne yaptığını söyleyen tek kayıt (`EXTERNAL_NOTIFY`)
+görünmüyordu.
+Acceptance: INFO satırları canlı konteynerde görünür · kişisel veri
+günlüğe **sızmaz** · uvicorn'un kendi erişim kaydı bozulmaz · kapılar.
+
+Notes (2026-08-05, P134) — **AÇIK ÖLÇÜLDÜ, SONRA ASIL SORUN ÇIKTI.**
+
+**ÖNCE — ölçüm, varsayım değil.** Canlı konteynerde
+`logging.getLogger("scheduler.notify").isEnabledFor(INFO)` → **False**;
+kök logger WARNING, handler listesi **boş**. `/public/tanitim-iletisim`e
+atılan istek **201** döndüğü hâlde kodun yazdığı INFO satırı docker
+günlüğünde **0** kez göründü. Backend genelinde **8** `.info()` çağrısının
+hiçbiri çıkmıyordu.
+
+**ASIL BULGU — "INFO'yu aç" işi PII'yi de açıyordu.** Düzeltmeyi yazarken
+çıktı: görünür hâle gelecek satırların üçü kişisel veri taşıyor.
+
+| yer | ne yazıyordu |
+|---|---|
+| `mesajlasma.py` | `[SMS/log] <telefon> <- <mesaj gövdesi>` |
+| `mesajlasma.py` | `[E-POSTA/log] <e-posta> <- <konu> \| <gövde>` |
+| `notify.py` | `EXTERNAL_NOTIFY: <kimlik> {'ad': …, 'daire': …}` |
+
+Yani işi düz yapmak telefon numaralarını, e-posta adreslerini, mesaj
+gövdelerini ve daire/ad alanlarını konteyner günlüğüne yazmaya başlardı.
+Bu depoda `audit_log`un **gecelik saklama ve anonimleştirme görevi var**
+(KVKK turu); konteyner günlüğünün böyle bir görevi **yok**. Teşhis
+kazanmak için denetimsiz bir kişisel veri deposu üretmek, kazanandan
+pahalı olurdu.
+
+**KARAR: görünürlük açılır, değerler maskelenir.** Alıcı kimliği maskeli
+(`+90******4567`, `o****@site.com` — e-posta **alan adı korunur**, "hangi
+kuruma gitti" teşhis için gerekli ve tek başına kişi tanımlamaz); mesaj
+gövdesi yazılmaz, yerine uzunluğu; bildirim parametreleri **anahtarlarıyla**
+yazılır, değerleriyle değil (değerler zaten `notification` tablosunda ve
+orası KVKK saklama görevine bağlı). `LOG_PII=1` hepsini açar — yerel
+geliştirme için, ve **açık olduğu her açılışta uyarı basar**.
+
+**SONRA — canlı kanıt.** Aynı istek yeniden atıldı:
+`2026-08-05T03:38:36 INFO app.routers.tanitim | tanitim iletisim …`
+görünüyor. Uvicorn'un kendi erişim kaydı **bozulmadı** (`INFO: … "POST
+/public/tanitim-iletisim HTTP/1.1" 201 Created` yan yana duruyor) —
+`uvicorn`/`uvicorn.access` logger'larına bilerek dokunulmadı.
+
+**TEST GERÇEK BİR KIRIK YAKALADI:** çağrı-yeri testlerini yazmasaydım
+`notify.py`de eksik kalan `guvenli_alanlar` import'u fark edilmeyecekti.
+O satır yalnız bir bildirim tetiklendiğinde çalışıyor — yani **üretimde,
+push gönderilirken** `NameError` ile patlardı. Yardımcının doğru olması
+çağrı yerinin onu kullandığı anlamına gelmiyor; üç çağrı yerinin üçü de
+ayrı ayrı ölçülüyor.
+
+**YAN ETKİ, kayda geçti:** `basicConfig(force=True)` üretimde doğru
+davranıştır (iki handler aynı satırı iki kez yazar) ama pytest'in `caplog`
+handler'ını da söker ve o testten sonraki testler için kayıt toplanmaz.
+Bu depoda `caplog` kullanan başka dosya yok (ölçüldü); yine de test
+dosyasına kök handler listesini geri koyan bir fixture konuldu ki ileride
+biri eklediğinde sessizce bozulmasın.
+
 ### NOT — Sign in with Apple (4.8)
 **GEÇERSİZ (N/A):** üçüncü taraf sosyal giriş **kullanmıyoruz** (Google/Facebook
 girişi yok; kimlik doğrulama tesis tarafından verilen hesapla). 4.8 yalnız

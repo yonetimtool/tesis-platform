@@ -10,6 +10,8 @@ import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
+from .gunlukleme import govde_ozeti, maskele_kimlik
+
 logger = logging.getLogger(__name__)
 
 #: Desteklenen etiketler. Bilinmeyen bir etiket METINDE OLDUGU GIBI KALIR
@@ -147,7 +149,14 @@ class LogSmsSaglayici(MesajSaglayici):
     ad = "log-sms"
 
     def gonder(self, hedef: str, konu: str | None, govde: str) -> GonderimSonucu:
-        logger.info("[SMS/log] %s <- %s", hedef, govde[:120])
+        # (P134) ALICI MASKELI, GOVDE YAZILMAZ. Bu satir INFO'dur ve
+        # P134'e kadar hic gorunmuyordu; gorunur olurken telefon
+        # numaralarini ve mesaj metnini konteyner gunluguune tasimasin
+        # (konteyner gunlugunun KVKK saklama gorevi YOK). `LOG_PII=1`
+        # yerel gelistirmede hamini acar.
+        logger.info(
+            "[SMS/log] %s <- %s", maskele_kimlik(hedef), govde_ozeti(govde)
+        )
         # "gonderildi" DENIR ama "iletildi" DENMEZ: iletim bilgisini yalnizca
         # gercek saglayici verebilir ve uydurmak, panelde YANLIS bir teslim
         # kaniti gosterirdi.
@@ -160,7 +169,15 @@ class LogEpostaSaglayici(MesajSaglayici):
     ad = "log-eposta"
 
     def gonder(self, hedef: str, konu: str | None, govde: str) -> GonderimSonucu:
-        logger.info("[E-POSTA/log] %s <- %s | %s", hedef, konu, govde[:120])
+        # (P134) Alici maskeli, govde yazilmaz — bkz. LogSmsSaglayici.
+        # KONU yazilir: kisisel veri tasimaz ve "hangi bildirim" sorusunu
+        # yanitlar.
+        logger.info(
+            "[E-POSTA/log] %s <- %s | %s",
+            maskele_kimlik(hedef),
+            konu,
+            govde_ozeti(govde),
+        )
         return GonderimSonucu("gonderildi", self.ad)
 
 

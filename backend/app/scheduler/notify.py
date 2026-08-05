@@ -22,6 +22,7 @@ import psycopg
 
 from .. import push
 from ..config import settings
+from ..gunlukleme import guvenli_alanlar
 from ..push_metinleri import dil_normalize, push_basligi, push_govdesi
 from ..ceviri import VARSAYILAN_DIL
 
@@ -65,8 +66,13 @@ def dispatch_external(
     yoksa (veya tenant_id yoksa) eski no-op davranisi (yalniz log). Push
     hatasi bildirim akisini KIRMAZ (try/except + log).
     """
-    # Log OPERATORE hitap eder: kimlik + parametreler, cumle degil.
-    logger.info("EXTERNAL_NOTIFY: %s %s", kimlik, dict(params or {}))
+    # Log OPERATORE hitap eder: kimlik + parametre ADLARI, cumle degil.
+    #
+    # (P134) DEGERLER YAZILMAZ: sablon alanlari arasinda `ad` ve `daire`
+    # var, ikisi de bir haneyi isaret eder. Operatorun ihtiyaci "hangi
+    # bildirim, hangi alanlarla kuruldu"dur; degerler `notification`
+    # tablosunda zaten duruyor ve orasi KVKK saklama gorevine BAGLI.
+    logger.info("EXTERNAL_NOTIFY: %s %s", kimlik, guvenli_alanlar(params))
     try:
         _push_to_devices(
             tenant_id=tenant_id,

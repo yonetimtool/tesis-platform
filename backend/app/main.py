@@ -11,6 +11,7 @@ from sqlalchemy import text
 
 from .config import settings
 from .db import engine
+from .gunlukleme import yapilandir as gunlukleri_yapilandir
 from .errors import install_error_handlers
 from .routers import activity as activity_router
 from .routers import announcements as announcements_router
@@ -124,6 +125,14 @@ async def lifespan(app: FastAPI):
         await app.state.redis.aclose()
         await engine.dispose()
 
+
+# (P134) GUNLUK YAPILANDIRMASI — uygulama KURULMADAN once.
+#
+# NEDEN LIFESPAN'DE DEGIL: `lifespan` sunucu ayaga kalkarken calisir; oysa
+# router modulleri ICE AKTARILIRKEN de log yazabilir ve o satirlar
+# kaybolurdu. Ayrica pytest gibi uvicorn'suz kosumlarda `lifespan` hic
+# calismayabilir; yapilandirma modul yuklenirken uygulanmali.
+gunlukleri_yapilandir()
 
 app = FastAPI(
     title="Tesis Guvenlik & Operasyon API",
