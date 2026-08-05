@@ -13,6 +13,7 @@ import useSWR from "swr";
 
 import { EmptyState } from "@/components/EmptyState";
 import { ErrorBox, PageHeader, cardCls } from "@/components/form";
+import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
 import { jsonFetcher } from "@/lib/fetcher";
 import { tarihBicimi } from "@/lib/tarih";
 import { useT } from "@/lib/i18n/kullan";
@@ -90,31 +91,29 @@ export default function AidatimPage() {
 
           {d.assessments.length > 0 ? (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <Tablo>
                 <caption className="sr-only">{t("aidatimTahakkukListe")}</caption>
-                <thead>
-                  <tr className="text-left text-xs text-metin-muted">
-                    <th className="py-1.5">{t("aidatimDonem")}</th>
-                    <th className="py-1.5">{t("aidatimTutar")}</th>
-                    <th className="py-1.5">{t("aidatimSonOdeme")}</th>
-                  </tr>
-                </thead>
+                <TabloBasligi zeminsiz className="text-xs">
+                    <Th dolgusuz className="py-1.5">{t("aidatimDonem")}</Th>
+                    <Th dolgusuz className="py-1.5">{t("aidatimTutar")}</Th>
+                    <Th dolgusuz className="py-1.5">{t("aidatimSonOdeme")}</Th>
+                  </TabloBasligi>
                 <tbody>
                   {d.assessments.map((a) => (
                     <tr key={a.id} className="border-t border-yuzey-divider">
-                      <td className="py-2">{a.donem}</td>
-                      <td className="py-2 tabular-nums">
+                      <Td dolgusuz className="py-2">{a.donem}</Td>
+                      <Td dolgusuz className="py-2 tabular-nums">
                         {kurusToTL(a.tutar_kurus)}
-                      </td>
-                      <td className="py-2">
+                      </Td>
+                      <Td dolgusuz className="py-2">
                         {a.son_odeme_tarihi
                           ? tarihBicimi(a.son_odeme_tarihi)
                           : "—"}
-                      </td>
+                      </Td>
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </Tablo>
             </div>
           ) : null}
         </section>

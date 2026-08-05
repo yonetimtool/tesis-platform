@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, btnGhost, panelCls, panelMotion,
   EksikVeriUyarisi,
 } from "@/components/form";
+import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
 import { useToast } from "@/components/Toast";
 import { kisaKimlik } from "@/lib/kimlik";
 import { DEMIRBAS_DURUM, DEMIRBAS_KATEGORI, enumAdi } from "@/lib/enum-adlari";
@@ -255,32 +256,30 @@ export default function AssetsPage() {
 
       <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
         <div className="odak-ic overflow-x-auto" tabIndex={0}>
-          <table className="w-full text-sm">
-          <thead className="bg-yuzey-bg text-left text-metin-muted">
-            <tr>
-              <th className="px-4 py-2.5 font-medium">{t("ortakAd")}</th>
-              <th className="px-4 py-2.5 font-medium">{t("gorevKategoriAlan")}</th>
-              <th className="px-4 py-2.5 font-medium">NFC</th>
-              <th className="px-4 py-2.5 font-medium">{t("ortakDurum")}</th>
-              <th className="px-4 py-2.5 font-medium">{t("ortakAktif")}</th>
-              <th className="px-4 py-2.5 font-medium" />
-            </tr>
-          </thead>
+          <Tablo>
+          <TabloBasligi>
+              <Th>{t("ortakAd")}</Th>
+              <Th>{t("gorevKategoriAlan")}</Th>
+              <Th>NFC</Th>
+              <Th>{t("ortakDurum")}</Th>
+              <Th>{t("ortakAktif")}</Th>
+              <Th />
+            </TabloBasligi>
           <tbody>
             {(data?.items ?? []).map((a) => (
               <tr key={a.id} className={`border-t border-yuzey-divider transition-colors hover:bg-yuzey-bg ${a.aktif ? "" : "bg-yuzey-bg"}`}>
-                <td className="px-4 py-2.5">{a.ad}</td>
-                <td className="px-4 py-2.5 text-metin-body">{enumAdi(t, DEMIRBAS_KATEGORI, a.kategori)}</td>
-                <td className="px-4 py-2.5 font-mono text-metin-body">{a.nfc_tag_uid ?? "—"}</td>
-                <td className="px-4 py-2.5">
+                <Td>{a.ad}</Td>
+                <Td className="text-metin-body">{enumAdi(t, DEMIRBAS_KATEGORI, a.kategori)}</Td>
+                <Td className="font-mono text-metin-body">{a.nfc_tag_uid ?? "—"}</Td>
+                <Td>
                   <span
                     className={`rounded-full px-2 py-0.5 text-xs font-medium ${DURUM_STYLE[a.durum] ?? "bg-slate-100 text-metin-body"}`}
                   >
                     {enumAdi(t, DEMIRBAS_DURUM, a.durum)}
                   </span>
-                </td>
-                <td className="px-4 py-2.5 text-metin-body">{a.aktif ? t("ortakEvet2") : t("ortakHayir2")}</td>
-                <td className="px-4 py-2.5 text-right">
+                </Td>
+                <Td className="text-metin-body">{a.aktif ? t("ortakEvet2") : t("ortakHayir2")}</Td>
+                <Td hizala="end">
                   <div className="flex justify-end gap-2">
                     <button
                       className={btnGhost}
@@ -295,18 +294,18 @@ export default function AssetsPage() {
                       {a.aktif ? t("ortakPasiflestir") : t("ortakAktiflestir")}
                     </button>
                   </div>
-                </td>
+                </Td>
               </tr>
             ))}
             {data && data.items.length === 0 && (
               <tr>
-                <td colSpan={6}>
+                <Td colSpan={6}>
                   <EmptyState title={t("demirbasYok")} description={t("demirbasYokAlt")} />
-                </td>
+                </Td>
               </tr>
             )}
           </tbody>
-          </table>
+          </Tablo>
         </div>
       </div>
 
@@ -332,33 +331,31 @@ export default function AssetsPage() {
           </p>
           <div className="overflow-hidden rounded-lg border kart-kenar">
             <div className="odak-ic overflow-x-auto" tabIndex={0}>
-              <table className="w-full text-sm">
-              <thead className="bg-yuzey-bg text-left text-metin-muted">
-                <tr>
-                  <th className="px-4 py-2.5 font-medium">{t("demirbasAlan")}</th>
-                  <th className="px-4 py-2.5 font-medium">{t("demirbasAlma")}</th>
-                  <th className="px-4 py-2.5 font-medium">{t("demirbasBirakma")}</th>
-                </tr>
-              </thead>
+              <Tablo>
+              <TabloBasligi>
+                  <Th>{t("demirbasAlan")}</Th>
+                  <Th>{t("demirbasAlma")}</Th>
+                  <Th>{t("demirbasBirakma")}</Th>
+                </TabloBasligi>
               <tbody>
                 {(history?.items ?? []).map((h) => (
-                  <tr key={h.id} className="border-t border-yuzey-divider transition-colors hover:bg-yuzey-bg">
-                    <td className="px-4 py-2.5">{userName(h.alan_user_id)}</td>
-                    <td className="px-4 py-2.5 text-metin-body">{formatDateTime(h.alma_zamani)}</td>
-                    <td className="px-4 py-2.5 text-metin-body">
+                  <Tr key={h.id}>
+                    <Td>{userName(h.alan_user_id)}</Td>
+                    <Td className="text-metin-body">{formatDateTime(h.alma_zamani)}</Td>
+                    <Td className="text-metin-body">
                       {h.birakma_zamani ? formatDateTime(h.birakma_zamani) : t("demirbasAcik")}
-                    </td>
-                  </tr>
+                    </Td>
+                  </Tr>
                 ))}
                 {history && history.items.length === 0 && (
                   <tr>
-                    <td colSpan={3}>
+                    <Td colSpan={3}>
                       <EmptyState title={t("demirbasZimmetYok")} />
-                    </td>
+                    </Td>
                   </tr>
                 )}
               </tbody>
-              </table>
+              </Tablo>
             </div>
           </div>
         </motion.div>

@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { Field, ErrorBox, PageHeader, inputCls, btnPrimary, btnGhost, panelCls, panelMotion,
   EksikVeriUyarisi,
 } from "@/components/form";
+import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
 import { ReportsTabs } from "@/components/ReportsTabs";
 import { kisaKimlik } from "@/lib/kimlik";
 import { ODEME_YONTEM, enumAdi } from "@/lib/enum-adlari";
@@ -267,35 +268,33 @@ export default function DuesReportPage() {
             </div>
             <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
               <div className="odak-ic overflow-x-auto" tabIndex={0}>
-                <table className="w-full text-sm">
-                  <thead className="bg-yuzey-bg text-left text-metin-muted">
-                    <tr>
-                      <th className="px-4 py-2.5 font-medium">{t("raporTabloDaire")}</th>
-                      <th className="px-4 py-2.5 font-medium">{t("raporTabloTahakkuk")}</th>
-                      <th className="px-4 py-2.5 font-medium">{t("raporOdenen")}</th>
-                      <th className="px-4 py-2.5 font-medium">{t("raporKalanBorc")}</th>
-                      <th className="px-4 py-2.5 font-medium">{t("aidatSonOdemeKisa")}</th>
-                    </tr>
-                  </thead>
+                <Tablo>
+                  <TabloBasligi>
+                      <Th>{t("raporTabloDaire")}</Th>
+                      <Th>{t("raporTabloTahakkuk")}</Th>
+                      <Th>{t("raporOdenen")}</Th>
+                      <Th>{t("raporKalanBorc")}</Th>
+                      <Th>{t("aidatSonOdemeKisa")}</Th>
+                    </TabloBasligi>
                   <tbody>
                     {report.borclular.map((b) => (
-                      <tr key={b.unit_id} className="border-t border-yuzey-divider transition-colors hover:bg-yuzey-bg">
-                        <td className="px-4 py-2.5">{b.no}</td>
-                        <td className="px-4 py-2.5 text-metin-body tabular-nums">{kurusToTL(b.tahakkuk)}</td>
-                        <td className="px-4 py-2.5 text-metin-body tabular-nums">{kurusToTL(b.odenen)}</td>
-                        <td className="px-4 py-2.5 font-medium text-red-700 tabular-nums">{kurusToTL(b.kalan)}</td>
-                        <td className="px-4 py-2.5 text-metin-body">{b.son_odeme ?? "—"}</td>
-                      </tr>
+                      <Tr key={b.unit_id}>
+                        <Td>{b.no}</Td>
+                        <Td sayi className="text-metin-body">{kurusToTL(b.tahakkuk)}</Td>
+                        <Td sayi className="text-metin-body">{kurusToTL(b.odenen)}</Td>
+                        <Td sayi className="font-medium text-red-700">{kurusToTL(b.kalan)}</Td>
+                        <Td className="text-metin-body">{b.son_odeme ?? "—"}</Td>
+                      </Tr>
                     ))}
                     {report.borclular.length === 0 && (
                       <tr>
-                        <td colSpan={5}>
+                        <Td colSpan={5}>
                           <EmptyState title={t("raporBorcluYok")} description={t("raporBorcluYokAlt")} />
-                        </td>
+                        </Td>
                       </tr>
                     )}
                   </tbody>
-                </table>
+                </Tablo>
               </div>
             </div>
           </section>
@@ -305,33 +304,31 @@ export default function DuesReportPage() {
             <h2 className="text-lg font-medium">{t("raporDonemTahsilatlari")}</h2>
             <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
               <div className="odak-ic overflow-x-auto" tabIndex={0}>
-                <table className="w-full text-sm">
-                  <thead className="bg-yuzey-bg text-left text-metin-muted">
-                    <tr>
-                      <th className="px-4 py-2.5 font-medium">{t("raporTabloDaire")}</th>
-                      <th className="px-4 py-2.5 font-medium">{t("raporTabloTutar")}</th>
-                      <th className="px-4 py-2.5 font-medium">{t("aidatYontem")}</th>
-                      <th className="px-4 py-2.5 font-medium">{t("raporTabloZaman")}</th>
-                    </tr>
-                  </thead>
+                <Tablo>
+                  <TabloBasligi>
+                      <Th>{t("raporTabloDaire")}</Th>
+                      <Th>{t("raporTabloTutar")}</Th>
+                      <Th>{t("aidatYontem")}</Th>
+                      <Th>{t("raporTabloZaman")}</Th>
+                    </TabloBasligi>
                   <tbody>
                     {report.odemeler.map((o) => (
-                      <tr key={o.id} className="border-t border-yuzey-divider transition-colors hover:bg-yuzey-bg">
-                        <td className="px-4 py-2.5">{o.no}</td>
-                        <td className="px-4 py-2.5 font-medium tabular-nums">{kurusToTL(o.tutar)}</td>
-                        <td className="px-4 py-2.5 text-metin-body">{enumAdi(t, ODEME_YONTEM, o.yontem)}</td>
-                        <td className="px-4 py-2.5 text-metin-body">{formatDateTime(o.zaman)}</td>
-                      </tr>
+                      <Tr key={o.id}>
+                        <Td>{o.no}</Td>
+                        <Td sayi className="font-medium">{kurusToTL(o.tutar)}</Td>
+                        <Td className="text-metin-body">{enumAdi(t, ODEME_YONTEM, o.yontem)}</Td>
+                        <Td className="text-metin-body">{formatDateTime(o.zaman)}</Td>
+                      </Tr>
                     ))}
                     {report.odemeler.length === 0 && (
                       <tr>
-                        <td colSpan={4}>
+                        <Td colSpan={4}>
                           <EmptyState title={t("aidatOdemeYok")} description={t("raporOdemeYok")} />
-                        </td>
+                        </Td>
                       </tr>
                     )}
                   </tbody>
-                </table>
+                </Tablo>
               </div>
             </div>
           </section>

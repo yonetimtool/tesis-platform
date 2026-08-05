@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, btnGhost, btnDanger, panelCls, panelMotion,
   EksikVeriUyarisi,
 } from "@/components/form";
+import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
 import { useToast } from "@/components/Toast";
 import { kisaKimlik } from "@/lib/kimlik";
 import { apiSend } from "@/lib/client";
@@ -371,37 +372,35 @@ export default function TasksPage() {
 
       <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
         <div className="odak-ic overflow-x-auto" tabIndex={0}>
-          <table className="w-full text-sm">
-          <thead className="bg-yuzey-bg text-left text-metin-muted">
-            <tr>
-              <th className="px-4 py-2.5 font-medium">{t("ortakBaslik")}</th>
-              <th className="px-4 py-2.5 font-medium">{t("raporTabloTip")}</th>
-              <th className="px-4 py-2.5 font-medium">{t("gorevKategoriAlan")}</th>
-              <th className="px-4 py-2.5 font-medium">{t("gorevAtanan")}</th>
-              <th className="px-4 py-2.5 font-medium">{t("gorevSonraki")}</th>
-              <th className="px-4 py-2.5 font-medium">{t("ortakAktif")}</th>
-              <th className="px-4 py-2.5 font-medium" />
-            </tr>
-          </thead>
+          <Tablo>
+          <TabloBasligi>
+              <Th>{t("ortakBaslik")}</Th>
+              <Th>{t("raporTabloTip")}</Th>
+              <Th>{t("gorevKategoriAlan")}</Th>
+              <Th>{t("gorevAtanan")}</Th>
+              <Th>{t("gorevSonraki")}</Th>
+              <Th>{t("ortakAktif")}</Th>
+              <Th />
+            </TabloBasligi>
           <tbody>
             {(data?.items ?? []).map((gorev) => (
               <tr key={gorev.id} className={`border-t border-yuzey-divider transition-colors hover:bg-yuzey-bg ${gorev.aktif ? "" : "bg-yuzey-bg"}`}>
-                <td className="px-4 py-2.5">
+                <Td>
                   {gorev.ad}
                   {gorev.foto_zorunlu && (
-                    <span className="ml-2 rounded-full bg-sky-100 px-2 py-0.5 text-xs text-sky-800">
+                    <span className="ms-2 rounded-full bg-sky-100 px-2 py-0.5 text-xs text-sky-800">
                       {t("gorevFotoZorunluRozet")}
                     </span>
                   )}
-                </td>
-                <td className="px-4 py-2.5 text-metin-body">{tipAdi(t, gorev.tip)}</td>
-                <td className="px-4 py-2.5 text-metin-body">{kategoriAd(gorev.kategori_id)}</td>
-                <td className="px-4 py-2.5 text-metin-body">{userName(gorev.atanan_user_id)}</td>
-                <td className="px-4 py-2.5 text-metin-body">
+                </Td>
+                <Td className="text-metin-body">{tipAdi(t, gorev.tip)}</Td>
+                <Td className="text-metin-body">{kategoriAd(gorev.kategori_id)}</Td>
+                <Td className="text-metin-body">{userName(gorev.atanan_user_id)}</Td>
+                <Td className="text-metin-body">
                   {gorev.sonraki_planlanan ? formatDateTime(gorev.sonraki_planlanan) : "—"}
-                </td>
-                <td className="px-4 py-2.5 text-metin-body">{gorev.aktif ? t("ortakEvet2") : t("ortakHayir2")}</td>
-                <td className="px-4 py-2.5 text-right">
+                </Td>
+                <Td className="text-metin-body">{gorev.aktif ? t("ortakEvet2") : t("ortakHayir2")}</Td>
+                <Td hizala="end">
                   <div className="flex justify-end gap-2">
                     <button
                       className={btnGhost}
@@ -414,18 +413,18 @@ export default function TasksPage() {
                     </button>
                     <button className={btnDanger} onClick={() => remove(gorev)}>{t("ortakSil")}</button>
                   </div>
-                </td>
+                </Td>
               </tr>
             ))}
             {data && data.items.length === 0 && (
               <tr>
-                <td colSpan={7}>
+                <Td colSpan={7}>
                   <EmptyState title={t("gorevYok")} description={t("gorevYokAlt")} />
-                </td>
+                </Td>
               </tr>
             )}
           </tbody>
-          </table>
+          </Tablo>
         </div>
       </div>
 
@@ -436,21 +435,19 @@ export default function TasksPage() {
           </h2>
           <div className="overflow-hidden rounded-lg border kart-kenar">
             <div className="odak-ic overflow-x-auto" tabIndex={0}>
-              <table className="w-full text-sm">
-              <thead className="bg-yuzey-bg text-left text-metin-muted">
-                <tr>
-                  <th className="px-4 py-2.5 font-medium">{t("raporTabloZaman")}</th>
-                  <th className="px-4 py-2.5 font-medium">{t("raporTabloTamamlayan")}</th>
-                  <th className="px-4 py-2.5 font-medium">{t("raporTabloFoto")}</th>
-                  <th className="px-4 py-2.5 font-medium">{t("raporNot")}</th>
-                </tr>
-              </thead>
+              <Tablo>
+              <TabloBasligi>
+                  <Th>{t("raporTabloZaman")}</Th>
+                  <Th>{t("raporTabloTamamlayan")}</Th>
+                  <Th>{t("raporTabloFoto")}</Th>
+                  <Th>{t("raporNot")}</Th>
+                </TabloBasligi>
               <tbody>
                 {(completions?.items ?? []).map((c) => (
-                  <tr key={c.id} className="border-t border-yuzey-divider transition-colors hover:bg-yuzey-bg">
-                    <td className="px-4 py-2.5 text-metin-body">{formatDateTime(c.tamamlanma_zamani)}</td>
-                    <td className="px-4 py-2.5">{userName(c.tamamlayan_user_id)}</td>
-                    <td className="px-4 py-2.5">
+                  <Tr key={c.id}>
+                    <Td className="text-metin-body">{formatDateTime(c.tamamlanma_zamani)}</Td>
+                    <Td>{userName(c.tamamlayan_user_id)}</Td>
+                    <Td>
                       {c.foto_url ? (
                         // (P131) FOTOGRAFIN KENDISI GOSTERILIR.
                         // Eskiden yalnizca "foto var" rozeti cizilirdi ve
@@ -475,19 +472,19 @@ export default function TasksPage() {
                       ) : (
                         <span className="text-metin-muted">{t("raporYok")}</span>
                       )}
-                    </td>
-                    <td className="px-4 py-2.5 text-metin-body">{c.notlar ?? "—"}</td>
-                  </tr>
+                    </Td>
+                    <Td className="text-metin-body">{c.notlar ?? "—"}</Td>
+                  </Tr>
                 ))}
                 {completions && completions.items.length === 0 && (
                   <tr>
-                    <td colSpan={4}>
+                    <Td colSpan={4}>
                       <EmptyState title={t("denetimKayitYok")} />
-                    </td>
+                    </Td>
                   </tr>
                 )}
               </tbody>
-              </table>
+              </Tablo>
             </div>
           </div>
         </motion.div>

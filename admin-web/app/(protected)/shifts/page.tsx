@@ -17,6 +17,7 @@ import {
   panelCls,
   panelMotion,
 } from "@/components/form";
+import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
@@ -192,24 +193,22 @@ export default function ShiftsPage() {
 
       <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
         <div className="odak-ic overflow-x-auto" tabIndex={0}>
-          <table className="w-full text-sm">
-            <thead className="bg-yuzey-bg text-left text-metin-muted">
-              <tr>
-                <th className="px-4 py-2.5 font-medium">{t("ortakAd")}</th>
-                <th className="px-4 py-2.5 font-medium">{t("ortakSaat")}</th>
-                <th className="px-4 py-2.5 font-medium">{t("vardiyaGunTipi")}</th>
-                <th className="px-4 py-2.5 font-medium" />
-              </tr>
-            </thead>
+          <Tablo>
+            <TabloBasligi>
+                <Th>{t("ortakAd")}</Th>
+                <Th>{t("ortakSaat")}</Th>
+                <Th>{t("vardiyaGunTipi")}</Th>
+                <Th />
+              </TabloBasligi>
             <tbody>
               {(data?.items ?? []).map((s) => (
-                <tr key={s.id} className="border-t border-yuzey-divider transition-colors hover:bg-yuzey-bg">
-                  <td className="px-4 py-2.5">{s.ad}</td>
-                  <td className="px-4 py-2.5 text-metin-body tabular-nums">
+                <Tr key={s.id}>
+                  <Td>{s.ad}</Td>
+                  <Td sayi className="text-metin-body">
                     {s.baslangic_saat} – {s.bitis_saat}
-                  </td>
-                  <td className="px-4 py-2.5 text-metin-body">{gunTipiAdi(t, s.gun_tipi)}</td>
-                  <td className="px-4 py-2.5 text-right">
+                  </Td>
+                  <Td className="text-metin-body">{gunTipiAdi(t, s.gun_tipi)}</Td>
+                  <Td hizala="end">
                     <div className="flex justify-end gap-2">
                       <button className={btnGhost} onClick={() => openEdit(s)}>
                         {t("ortakDuzenle")}
@@ -218,21 +217,21 @@ export default function ShiftsPage() {
                         {t("ortakSil")}
                       </button>
                     </div>
-                  </td>
-                </tr>
+                  </Td>
+                </Tr>
               ))}
               {data && data.items.length === 0 && (
                 <tr>
-                  <td colSpan={4}>
+                  <Td colSpan={4}>
                     <EmptyState
                       title={t("vardiyaYok")}
                       description={t("vardiyaYokAlt")}
                     />
-                  </td>
+                  </Td>
                 </tr>
               )}
             </tbody>
-          </table>
+          </Tablo>
         </div>
       </div>
 

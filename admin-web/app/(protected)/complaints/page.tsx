@@ -194,7 +194,7 @@ function ComplaintCard({
           {c.is_emri_id && (
             <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm">
               <span className="text-blue-700">{t("talepBagliIsEmri")}</span>
-              <span className="ml-auto font-medium text-blue-700">
+              <span className="ms-auto font-medium text-blue-700">
                 {t(isEmriAnahtari(c.is_emri_durum))}
               </span>
             </div>

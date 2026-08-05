@@ -44,15 +44,38 @@ export function TabloKart({
   );
 }
 
-// `<table>` — tek yerde tanimli olcek.
-export function Tablo({ children }: { children: ReactNode }) {
-  return <table className="w-full text-sm">{children}</table>;
+// `<table>` — tek yerde tanimli olcek. `className` yalnizca olcek
+// gecersiz kilma icindir (bir rapor tablosu `text-xs` kullaniyor).
+export function Tablo({
+  children,
+  className = "",
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return <table className={`w-full text-sm ${className}`}>{children}</table>;
 }
 
 // Baslik satiri — sayfa zemini dolgusu, KENARLIK YOK.
-export function TabloBasligi({ children }: { children: ReactNode }) {
+//
+// `zeminsiz`: 30 tablonun 10'u baslik zeminini BILEREK kullanmiyordu
+// (panel icindeki kucuk tablolar). Ortak ilkele tasirken hepsine zemin
+// vermek, yapisal birlestirmeyi gorsel bir karara cevirirdi.
+export function TabloBasligi({
+  children,
+  zeminsiz = false,
+  className = "",
+}: {
+  children: ReactNode;
+  zeminsiz?: boolean;
+  // Uc tablo kendi baslik bicimini tasiyor (kucuk olcek, ust cizgi).
+  // Yapiyi birlestirirken o farklari SILMEK gorsel bir karar olurdu.
+  className?: string;
+}) {
   return (
-    <thead className="bg-yuzey-bg text-start text-metin-muted">
+    <thead
+      className={`${zeminsiz ? "" : "bg-yuzey-bg"} text-start text-metin-muted ${className}`}
+    >
       <tr>{children}</tr>
     </thead>
   );
@@ -61,18 +84,46 @@ export function TabloBasligi({ children }: { children: ReactNode }) {
 // Baslik hucresi.
 // `sag`/`sayi` sutunlari icin `hizala` verilir; `dar` eylem sutunlari
 // icindir (govdede genisligi icerik belirlesin).
+// SIK (`px-3 py-2`) BILINCLI BIR VARYANTTIR, kaza degil: rapor ve finans
+// tablolari daha yogun yazilmisti ve 22 sayfayi ortak ilkele tasirken o
+// yogunlugu SESSIZCE degistirmek, yapisal bir birlestirmeyi gorsel bir
+// karara cevirirdi. Yapi birlesir, yogunluk farki KORUNUR.
+const _dolgu = (sik: boolean) => (sik ? "px-3 py-2" : "px-4 py-2.5");
+
+// UC TABLO KENDI DOLGUSUNU TASIYOR (`p-2`, `px-2 py-2`, `py-1.5`): panel
+// icindeki kucuk/teknik tablolar (yetki matrisi, tanim satirlari, aidat
+// ozeti). Yapiyi birlestirirken o dolgulari standarda cekmek GORSEL bir
+// karar olurdu ve bu tur yapisal bir birlestirmeydi. `dolgusuz` ile
+// hucre kendi dolgusunu `className` uzerinden verir.
+const _sinif = (dolgusuz: boolean, sik: boolean) =>
+  dolgusuz ? "" : _dolgu(sik);
+
 export function Th({
   children,
+  colSpan,
   hizala = "start",
+  sik = false,
+  dolgusuz = false,
   className = "",
 }: {
   children?: ReactNode;
+  // Ozet/gruplama satirlari birden fazla sutuna yayilir.
+  colSpan?: number;
   hizala?: "start" | "end" | "center";
+  sik?: boolean;
+  dolgusuz?: boolean;
   className?: string;
 }) {
   const h =
     hizala === "end" ? "text-end" : hizala === "center" ? "text-center" : "text-start";
-  return <th className={`px-4 py-2.5 font-medium ${h} ${className}`}>{children}</th>;
+  return (
+    <th
+      colSpan={colSpan}
+      className={`${_sinif(dolgusuz, sik)} font-medium ${h} ${className}`}
+    >
+      {children}
+    </th>
+  );
 }
 
 // Govde satiri — ayirici ve uzerine gelme dolgusu BURADA.
@@ -101,19 +152,28 @@ export function Tr({
 // Govde hucresi. `sayi` tabular rakam kullanir (sutun kaymasin).
 export function Td({
   children,
+  colSpan,
   hizala = "start",
   sayi = false,
+  sik = false,
+  dolgusuz = false,
   className = "",
 }: {
   children?: ReactNode;
+  colSpan?: number;
   hizala?: "start" | "end" | "center";
   sayi?: boolean;
+  sik?: boolean;
+  dolgusuz?: boolean;
   className?: string;
 }) {
   const h =
     hizala === "end" ? "text-end" : hizala === "center" ? "text-center" : "text-start";
   return (
-    <td className={`px-4 py-2.5 ${h} ${sayi ? "tabular-nums" : ""} ${className}`}>
+    <td
+      colSpan={colSpan}
+      className={`${_sinif(dolgusuz, sik)} ${h} ${sayi ? "tabular-nums" : ""} ${className}`}
+    >
       {children}
     </td>
   );

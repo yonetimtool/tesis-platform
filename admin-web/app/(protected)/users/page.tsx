@@ -6,6 +6,7 @@ import useSWR from "swr";
 
 import { EmptyState } from "@/components/EmptyState";
 import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, btnGhost, panelCls, panelMotion } from "@/components/form";
+import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
@@ -368,33 +369,31 @@ export default function UsersPage() {
 
       <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
         <div className="odak-ic overflow-x-auto" tabIndex={0}>
-          <table className="w-full text-sm">
-            <thead className="bg-yuzey-bg text-left text-metin-muted">
-              <tr>
-                <th className="px-4 py-2.5 font-medium">{t("ortakAd")}</th>
-                <th className="px-4 py-2.5 font-medium">{t("girisEposta")}</th>
-                <th className="px-4 py-2.5 font-medium">{t("kullaniciAranabilir")}</th>
-                <th className="px-4 py-2.5 font-medium">{t("ortakRol")}</th>
-                <th className="px-4 py-2.5 font-medium">{t("ortakDurum")}</th>
-                <th className="px-4 py-2.5 font-medium" />
-              </tr>
-            </thead>
+          <Tablo>
+            <TabloBasligi>
+                <Th>{t("ortakAd")}</Th>
+                <Th>{t("girisEposta")}</Th>
+                <Th>{t("kullaniciAranabilir")}</Th>
+                <Th>{t("ortakRol")}</Th>
+                <Th>{t("ortakDurum")}</Th>
+                <Th />
+              </TabloBasligi>
             <tbody>
               {(data?.items ?? []).map((u) => (
                 <tr key={u.id} className={`border-t border-yuzey-divider transition-colors hover:bg-yuzey-bg ${u.is_active ? "" : "bg-yuzey-bg"}`}>
-                  <td className="px-4 py-2.5">{u.ad}</td>
-                  <td className="px-4 py-2.5 text-metin-body">{u.email}</td>
-                  <td className="px-4 py-2.5 text-metin-body">
+                  <Td>{u.ad}</Td>
+                  <Td className="text-metin-body">{u.email}</Td>
+                  <Td className="text-metin-body">
                     {u.aranabilir ? t("ortakEvet") : "—"}
-                  </td>
-                  <td className="px-4 py-2.5">
+                  </Td>
+                  <Td>
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs font-medium ${ROLE_STYLE[u.role] ?? "bg-slate-100 text-metin-body"}`}
                     >
                       {rolAdi(t, u.role)}
                     </span>
-                  </td>
-                  <td className="px-4 py-2.5">
+                  </Td>
+                  <Td>
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                         u.is_active ? "bg-emerald-100 text-emerald-800" : "bg-slate-200 text-metin-body"
@@ -402,8 +401,8 @@ export default function UsersPage() {
                     >
                       {u.is_active ? t("ortakAktif") : t("ortakPasif")}
                     </span>
-                  </td>
-                  <td className="px-4 py-2.5 text-right">
+                  </Td>
+                  <Td hizala="end">
                     <div className="flex justify-end gap-2">
                       <button className={btnGhost} onClick={() => openEdit(u)}>
                         {t("ortakDuzenle")}
@@ -414,18 +413,18 @@ export default function UsersPage() {
                         <button className={btnGhost} onClick={() => setActive(u, true)}>{t("ortakAktiflestir")}</button>
                       )}
                     </div>
-                  </td>
+                  </Td>
                 </tr>
               ))}
               {data && data.items.length === 0 && (
                 <tr>
-                  <td colSpan={6}>
+                  <Td colSpan={6}>
                     <EmptyState title={t("kullaniciYok")} description={t("kullaniciYokAlt")} />
-                  </td>
+                  </Td>
                 </tr>
               )}
             </tbody>
-          </table>
+          </Tablo>
         </div>
       </div>
 

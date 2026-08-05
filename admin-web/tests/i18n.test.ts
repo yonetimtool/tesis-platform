@@ -28,6 +28,7 @@ import {
 } from "@/lib/i18n/diller";
 import { SOZLUKLER } from "@/lib/i18n/sozluk";
 import { tr } from "@/lib/i18n/sozluk/tr";
+import { taranacakDosyalar } from "./tarama";
 
 const KOK = path.resolve(__dirname, "..");
 
@@ -215,7 +216,49 @@ describe("yon (RTL)", () => {
     }
   });
 
-  it("kabuk YONE DUYARLI siniflar kullanir (sabit sol/sag YOK)", () => {
+  // (P138.2) KILIDIN KAPSAMI SAYFALARA GENISLETILDI.
+  //
+  // Bu kilit YALNIZ `AppShell.tsx`i okuyordu. 45 korumali sayfa
+  // DENETIMSIZDI ve iclerinde yon-sabit siniflar vardi — ozellikle
+  // tablolarin sayi sutunlarindaki `text-right`. Arapcada bunlarin
+  // hicbiri donmez: sayi sutunu yanlis tarafa yaslanir.
+  //
+  // Olculdu ve duzeltildi: `text-left`/`text-right` -> `text-start`/
+  // `text-end` (cogu ortak tablo ilkeline tasinirken `hizala="end"`e
+  // dondu), `ml-/mr-` -> `ms-/me-`, `left-N/right-N` -> `start-N/end-N`.
+  it("SAYFALAR ve BILESENLER de yone duyarli (sabit sol/sag YOK)", () => {
+    const yasakli =
+      /(^|\s|`|")(text-left|text-right|ml-(\d+|auto)|mr-(\d+|auto)|left-\d|right-\d|border-l\b|border-r\b|pl-\d|pr-\d)/;
+    const sizanlar: string[] = [];
+    for (const yol of taranacakDosyalar(["app", "components"])) {
+      const kaynak = fs.readFileSync(yol, "utf8");
+      kaynak.split("\n").forEach((satir, i) => {
+        // Yorum satirlari kapsam disi: kilidin GEREKCESI de bu sinif
+        // adlarini anlatmak zorunda.
+        if (/^\s*(\/\/|\*|\{\/\*)/.test(satir.trim())) return;
+        // `dark:` onekli varyant ayni yon sorununu tasimaz (renk).
+        const temiz = satir.replace(/dark:[a-z-]+\d*/g, "");
+        if (yasakli.test(temiz)) sizanlar.push(`${yol}:${i + 1} ${satir.trim().slice(0, 70)}`);
+      });
+    }
+    expect(sizanlar, `RTL'de donmeyen sinif:\n${sizanlar.join("\n")}`).toEqual([]);
+  });
+
+  // (P137 dersi) POZITIF KONTROL: desen GERCEKTEN atesliyor mu.
+  it("POZITIF KONTROL: yon-sabit sinif YAKALANIR, mantiksal olan birakilir", () => {
+    const yasakli =
+      /(^|\s|`|")(text-left|text-right|ml-(\d+|auto)|mr-(\d+|auto)|left-\d|right-\d|border-l\b|border-r\b|pl-\d|pr-\d)/;
+    expect(yasakli.test('<td className="text-right">')).toBe(true);
+    expect(yasakli.test('<div className="ml-2">')).toBe(true);
+    // Mantiksal karsiliklari RAHAT birakilir.
+    expect(yasakli.test('<td className="text-end">')).toBe(false);
+    expect(yasakli.test('<div className="ms-2">')).toBe(false);
+    // `rounded-lg` ve `border-red` yon TASIMAZ — ilk olcumumde bunlari
+    // yanlislikla saymistim (61 sanmistim, gercek sayi 9'du).
+    expect(yasakli.test('<div className="rounded-lg border-red-200">')).toBe(false);
+  });
+
+  it("KABUK yone duyarli (sabit sol/sag YOK)", () => {
     // `left-0`/`pl-`/`border-r` gibi siniflar Arapcada kenar cubugunu
     // yanlis tarafa koyar; mantiksal karsiliklari (`start-`, `ps-`,
     // `border-e`) iki yonde de dogrudur.

@@ -6,6 +6,7 @@ import useSWR from "swr";
 
 import { EmptyState } from "@/components/EmptyState";
 import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, panelCls, panelMotion } from "@/components/form";
+import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
 import { useToast } from "@/components/Toast";
 import { ODEME_DURUM, ODEME_YONTEM, enumAdi } from "@/lib/enum-adlari";
 import { apiSend } from "@/lib/client";
@@ -160,33 +161,31 @@ export default function DuesPage() {
         </div>
         <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
           <div className="odak-ic overflow-x-auto" tabIndex={0}>
-            <table className="w-full text-sm">
-              <thead className="bg-yuzey-bg text-left text-metin-muted">
-                <tr>
-                  <th className="px-4 py-2.5 font-medium">{t("raporTabloDaire")}</th>
-                  <th className="px-4 py-2.5 font-medium">{t("ortakDonem")}</th>
-                  <th className="px-4 py-2.5 font-medium">{t("raporTabloTutar")}</th>
-                  <th className="px-4 py-2.5 font-medium">{t("aidatSonOdemeKisa")}</th>
-                </tr>
-              </thead>
+            <Tablo>
+              <TabloBasligi>
+                  <Th>{t("raporTabloDaire")}</Th>
+                  <Th>{t("ortakDonem")}</Th>
+                  <Th>{t("raporTabloTutar")}</Th>
+                  <Th>{t("aidatSonOdemeKisa")}</Th>
+                </TabloBasligi>
               <tbody>
                 {(assessments?.items ?? []).map((a) => (
-                  <tr key={a.id} className="border-t border-yuzey-divider transition-colors hover:bg-yuzey-bg">
-                    <td className="px-4 py-2.5 font-mono text-metin-body">{a.unit_id.slice(0, 8)}</td>
-                    <td className="px-4 py-2.5">{a.donem}</td>
-                    <td className="px-4 py-2.5 font-medium tabular-nums">{kurusToTL(a.tutar_kurus)}</td>
-                    <td className="px-4 py-2.5 text-metin-body">{a.son_odeme_tarihi ?? "—"}</td>
-                  </tr>
+                  <Tr key={a.id}>
+                    <Td className="font-mono text-metin-body">{a.unit_id.slice(0, 8)}</Td>
+                    <Td>{a.donem}</Td>
+                    <Td sayi className="font-medium">{kurusToTL(a.tutar_kurus)}</Td>
+                    <Td className="text-metin-body">{a.son_odeme_tarihi ?? "—"}</Td>
+                  </Tr>
                 ))}
                 {assessments && assessments.items.length === 0 && (
                   <tr>
-                    <td colSpan={4}>
+                    <Td colSpan={4}>
                       <EmptyState title={t("aidatTahakkukYok")} description={t("aidatTahakkukYokAlt")} />
-                    </td>
+                    </Td>
                   </tr>
                 )}
               </tbody>
-            </table>
+            </Tablo>
           </div>
         </div>
         {assessments && (
@@ -205,22 +204,20 @@ export default function DuesPage() {
         <h2 className="text-lg font-medium">{t("aidatOdemeler")}</h2>
         <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
           <div className="odak-ic overflow-x-auto" tabIndex={0}>
-            <table className="w-full text-sm">
-              <thead className="bg-yuzey-bg text-left text-metin-muted">
-                <tr>
-                  <th className="px-4 py-2.5 font-medium">{t("raporTabloDaire")}</th>
-                  <th className="px-4 py-2.5 font-medium">{t("aidatYontem")}</th>
-                  <th className="px-4 py-2.5 font-medium">{t("ortakDurum")}</th>
-                  <th className="px-4 py-2.5 font-medium">{t("raporTabloTutar")}</th>
-                  <th className="px-4 py-2.5 font-medium">{t("raporTabloZaman")}</th>
-                </tr>
-              </thead>
+            <Tablo>
+              <TabloBasligi>
+                  <Th>{t("raporTabloDaire")}</Th>
+                  <Th>{t("aidatYontem")}</Th>
+                  <Th>{t("ortakDurum")}</Th>
+                  <Th>{t("raporTabloTutar")}</Th>
+                  <Th>{t("raporTabloZaman")}</Th>
+                </TabloBasligi>
               <tbody>
                 {(payments?.items ?? []).map((p) => (
-                  <tr key={p.id} className="border-t border-yuzey-divider transition-colors hover:bg-yuzey-bg">
-                    <td className="px-4 py-2.5 font-mono text-metin-body">{p.unit_id.slice(0, 8)}</td>
-                    <td className="px-4 py-2.5">{enumAdi(t, ODEME_YONTEM, p.yontem)}</td>
-                    <td className="px-4 py-2.5">
+                  <Tr key={p.id}>
+                    <Td className="font-mono text-metin-body">{p.unit_id.slice(0, 8)}</Td>
+                    <Td>{enumAdi(t, ODEME_YONTEM, p.yontem)}</Td>
+                    <Td>
                       <span
                         className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                           p.durum === "basarili"
@@ -232,20 +229,20 @@ export default function DuesPage() {
                       >
                         {enumAdi(t, ODEME_DURUM, p.durum)}
                       </span>
-                    </td>
-                    <td className="px-4 py-2.5 font-medium tabular-nums">{kurusToTL(p.tutar_kurus)}</td>
-                    <td className="px-4 py-2.5 text-metin-body">{formatDateTime(p.odeme_zamani)}</td>
-                  </tr>
+                    </Td>
+                    <Td sayi className="font-medium">{kurusToTL(p.tutar_kurus)}</Td>
+                    <Td className="text-metin-body">{formatDateTime(p.odeme_zamani)}</Td>
+                  </Tr>
                 ))}
                 {payments && payments.items.length === 0 && (
                   <tr>
-                    <td colSpan={5}>
+                    <Td colSpan={5}>
                       <EmptyState title={t("aidatOdemeYok")} description={t("aidatOdemeYokAlt")} />
-                    </td>
+                    </Td>
                   </tr>
                 )}
               </tbody>
-            </table>
+            </Tablo>
           </div>
         </div>
         {payments && (

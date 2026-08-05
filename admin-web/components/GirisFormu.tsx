@@ -178,9 +178,9 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
         <section className="relative flex min-h-[36vh] min-w-0 flex-col justify-between overflow-hidden bg-brand-gradient p-6 sm:p-8 lg:min-h-screen lg:p-12">
           {/* Imza: yumusak suzulen orb'ler (GPU transform; reduced-motion durur) */}
           <div aria-hidden className="pointer-events-none absolute inset-0">
-            <div className="animate-drift absolute -left-16 top-8 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
-            <div className="animate-driftAlt absolute -right-10 top-1/3 h-80 w-80 rounded-full bg-brand-teal/25 blur-3xl" />
-            <div className="animate-drift absolute bottom-0 left-1/3 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
+            <div className="animate-drift absolute -start-16 top-8 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
+            <div className="animate-driftAlt absolute -end-10 top-1/3 h-80 w-80 rounded-full bg-brand-teal/25 blur-3xl" />
+            <div className="animate-drift absolute bottom-0 start-1/3 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
           </div>
 
           <motion.div

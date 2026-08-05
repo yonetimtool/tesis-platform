@@ -76,7 +76,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
       <MotionConfig reducedMotion="user">
         <div
-          className="pointer-events-none fixed bottom-4 right-4 z-[60] flex w-[min(92vw,22rem)] flex-col gap-2"
+          className="pointer-events-none fixed bottom-4 end-4 z-[60] flex w-[min(92vw,22rem)] flex-col gap-2"
           role="status"
           aria-live="polite"
         >
@@ -98,7 +98,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                   <button
                     onClick={() => remove(t.id)}
                     aria-label={ceviri("ortakKapat")}
-                    className="-mr-1 shrink-0 rounded-md p-1 text-metin-muted transition hover:bg-slate-100 hover:text-metin-body"
+                    className="-me-1 shrink-0 rounded-md p-1 text-metin-muted transition hover:bg-slate-100 hover:text-metin-body"
                   >
                     <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                       <line x1="6" y1="6" x2="18" y2="18" /><line x1="18" y1="6" x2="6" y2="18" />

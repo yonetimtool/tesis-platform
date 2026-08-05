@@ -234,7 +234,10 @@ describe("(P132) ORTAK ILKELLER tasarim sistemine bagli", () => {
   const FORM = readFileSync(resolve(KOK, "admin-web/components/form.tsx"), "utf8");
 
   it("kart yuzeyleri token kullaniyor (slate/golge DEGIL)", () => {
-    for (const ad of ["cardCls", "panelCls", "tableCardCls"]) {
+    // (P138) `tableCardCls` KALDIRILDI (olu sinif, 0 kullanim); yerini
+    // `components/tablo.tsx` icindeki `TabloKart` aldi ve ayni kural
+    // asagida ONUN uzerinde olculuyor — kapsam kaybi yok, yer degisti.
+    for (const ad of ["cardCls", "panelCls"]) {
       const m = new RegExp(`export const ${ad}[^;]*;`, "s").exec(FORM);
       expect(m, `${ad} yok`).not.toBeNull();
       const deger = m![0];
@@ -244,6 +247,19 @@ describe("(P132) ORTAK ILKELLER tasarim sistemine bagli", () => {
       expect(deger, ad).not.toContain("shadow-card");
       expect(deger, ad).not.toContain("border-slate-200");
     }
+  });
+
+  it("TABLO KABI da token kullaniyor (slate/golge DEGIL)", () => {
+    const TABLO = readFileSync(resolve(KOK, "admin-web/components/tablo.tsx"), "utf8");
+    // Govde bir sonraki `export`a kadar: ilk `\n}` yikim parantezidir ve
+    // JSX'ten ONCE gelir (ilk yazimda tam bu yuzden bos yakaladi).
+    const m = /export function TabloKart\([\s\S]*?(?=\nexport |\n\/\/ )/.exec(TABLO);
+    expect(m, "TabloKart yok").not.toBeNull();
+    expect(m![0]).toContain("rounded-kart");
+    expect(m![0]).toContain("bg-yuzey-card");
+    // Mobil kartlarda GOLGE YOKTUR — ayirt edici cizgi 1px kenarliktir.
+    expect(m![0]).not.toContain("shadow-card");
+    expect(m![0]).not.toContain("border-slate-200");
   });
 
   it("birincil dugme MAVI (marka teali degil)", () => {
@@ -256,5 +272,63 @@ describe("(P132) ORTAK ILKELLER tasarim sistemine bagli", () => {
     const m = /export const inputCls[^;]*;/s.exec(FORM);
     expect(m![0]).toContain("focus:border-primary");
     expect(m![0]).not.toContain("brand-teal");
+  });
+});
+
+describe("(P138) TABLO ILKELI — elle iskelet geri gelmesin", () => {
+  // Kendi taramasi: `kaynaklar()` baska bir describe'in ICINDE tanimli.
+  function sayfalar(): [string, string][] {
+    const cikti: [string, string][] = [];
+    const yigin = [resolve(KOK, "admin-web/app"), resolve(KOK, "admin-web/components")];
+    while (yigin.length) {
+      const d = yigin.pop()!;
+      for (const ad of readdirSync(d)) {
+        const yol = join(d, ad);
+        if (statSync(yol).isDirectory()) yigin.push(yol);
+        else if (ad.endsWith(".tsx")) cikti.push([yol, readFileSync(yol, "utf8")]);
+      }
+    }
+    return cikti;
+  }
+
+  // 22 sayfa `<table className="w-full text-sm">` iskeletini, baslik
+  // hucrelerini ve satir ayiricilarini KENDI yaziyordu; ortak katman
+  // (`tableCardCls`) tanimliydi ve HICBIR sayfa kullanmiyordu (0/23).
+  //
+  // Bedeli gorunum degil DEGISTIRILEBILIRLIK: tablo dilinde bir karar
+  // degistirmek 23 dosyaya dokunmak demekti, o yuzden hicbiri
+  // degistirilmiyordu. Bu kilit kaldiraci korur.
+  const SAYFALAR = sayfalar();
+
+  // ILKELIN KENDISI kapsam disi: `<table>`i TEK yazan yer orasidir.
+  const ILKEL = "components/tablo.tsx";
+
+  // Yorum satirlari da disarida: bu kilidin GEREKCESI de `<table>` yazmak
+  // zorunda ve kendi aciklamasina takilan bir kilit yazilamaz.
+  const kodSatirlari = (s: string) =>
+    s
+      .split("\n")
+      .filter((l) => !/^\s*(\/\/|\*|\{\/\*|\/\*)/.test(l))
+      .join("\n");
+
+  it("hicbir sayfa <table>/<thead> iskeletini KENDI yazmiyor", () => {
+    const sizanlar = SAYFALAR.filter(
+      ([y, s]) =>
+        !y.endsWith(ILKEL) && /<table\b|<thead\b/.test(kodSatirlari(s)),
+    ).map(([y]) => y.split("admin-web/")[1]);
+    expect(sizanlar, "ortak ilkel yerine elle tablo").toEqual([]);
+  });
+
+  it("hicbir sayfa ham <th>/<td> hucresi yazmiyor", () => {
+    const sizanlar = SAYFALAR.filter(
+      ([y, s]) => !y.endsWith(ILKEL) && /<t[hd]\s+className=/.test(kodSatirlari(s)),
+    ).map(([y]) => y.split("admin-web/")[1]);
+    expect(sizanlar, "ortak ilkel yerine ham hucre").toEqual([]);
+  });
+
+  it("TARAMA gercekten dosya okuyor (vakum degil)", () => {
+    // P136 dersi: yokluk iddialari bos kume uzerinde her zaman dogrudur.
+    expect(SAYFALAR.length).toBeGreaterThan(40);
+    expect(SAYFALAR.some(([, s]) => s.includes("TabloKart"))).toBe(true);
   });
 });

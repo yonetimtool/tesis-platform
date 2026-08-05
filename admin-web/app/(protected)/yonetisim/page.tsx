@@ -16,6 +16,7 @@ import {
   panelCls,
   panelMotion,
 } from "@/components/form";
+import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
@@ -259,24 +260,22 @@ export default function YonetisimPage() {
         ) : null}
         {kararlar && kararlar.items.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="text-left text-metin-muted">
-                <tr>
-                  <th className="px-3 py-2">{t("yonKararNo")}</th>
-                  <th className="px-3 py-2">{t("yonKararTarih")}</th>
-                  <th className="px-3 py-2">{t("yonKararKonu")}</th>
-                  <th className="px-3 py-2">{t("yonKararUyeler")}</th>
-                  <th className="px-3 py-2" />
-                </tr>
-              </thead>
+            <Tablo>
+              <TabloBasligi zeminsiz>
+                  <Th sik>{t("yonKararNo")}</Th>
+                  <Th sik>{t("yonKararTarih")}</Th>
+                  <Th sik>{t("yonKararKonu")}</Th>
+                  <Th sik>{t("yonKararUyeler")}</Th>
+                  <Th sik />
+                </TabloBasligi>
               <tbody>
                 {kararlar.items.map((k) => (
                   <tr key={k.id} className="border-t border-yuzey-divider dark:border-slate-800">
-                    <td className="px-3 py-2 font-mono text-xs">{k.karar_no}</td>
-                    <td className="px-3 py-2 whitespace-nowrap">{formatDateTime(k.tarih)}</td>
-                    <td className="px-3 py-2">{k.konu}</td>
-                    <td className="px-3 py-2">{k.uyeler.map((u) => u.ad).join(", ")}</td>
-                    <td className="px-3 py-2 text-right">
+                    <Td sik className="font-mono text-xs">{k.karar_no}</Td>
+                    <Td sik className="whitespace-nowrap">{formatDateTime(k.tarih)}</Td>
+                    <Td sik>{k.konu}</Td>
+                    <Td sik>{k.uyeler.map((u) => u.ad).join(", ")}</Td>
+                    <Td sik hizala="end">
                       {/* PDF METIN sablonuyla uretilir (P33): karar bir
                           YAZIDIR, tabloya sikistirmak metni hucrelere
                           bolerdi. */}
@@ -288,11 +287,11 @@ export default function YonetisimPage() {
                       >
                         {t("yonKararPdf")}
                       </a>
-                    </td>
+                    </Td>
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </Tablo>
           </div>
         ) : null}
 
@@ -339,30 +338,28 @@ export default function YonetisimPage() {
         ) : null}
         {dokumanlar && dokumanlar.items.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="text-left text-metin-muted">
-                <tr>
-                  <th className="px-3 py-2">{t("yonDokumanAd")}</th>
-                  <th className="px-3 py-2">{t("yonDokumanYukleyen")}</th>
-                  <th className="px-3 py-2">{t("yonDokumanTarih")}</th>
-                  <th className="px-3 py-2" />
-                </tr>
-              </thead>
+            <Tablo>
+              <TabloBasligi zeminsiz>
+                  <Th sik>{t("yonDokumanAd")}</Th>
+                  <Th sik>{t("yonDokumanYukleyen")}</Th>
+                  <Th sik>{t("yonDokumanTarih")}</Th>
+                  <Th sik />
+                </TabloBasligi>
               <tbody>
                 {dokumanlar.items.map((d) => (
                   <tr key={d.id} className="border-t border-yuzey-divider dark:border-slate-800">
-                    <td className="px-3 py-2">{d.ad}</td>
-                    <td className="px-3 py-2">{d.yukleyen_ad ?? "—"}</td>
-                    <td className="px-3 py-2 whitespace-nowrap">{formatDateTime(d.created_at)}</td>
-                    <td className="px-3 py-2 text-right">
+                    <Td sik>{d.ad}</Td>
+                    <Td sik>{d.yukleyen_ad ?? "—"}</Td>
+                    <Td sik className="whitespace-nowrap">{formatDateTime(d.created_at)}</Td>
+                    <Td sik hizala="end">
                       <button className={btnDanger} onClick={() => dokumanSil(d.id)}>
                         {t("ortakSil")}
                       </button>
-                    </td>
+                    </Td>
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </Tablo>
           </div>
         ) : null}
         {/* KAYIT SILINIR, DEPO OBJESI DURUR (P33): tek istekte depoyu da
@@ -415,36 +412,34 @@ export default function YonetisimPage() {
         ) : null}
         {uyarilar && uyarilar.items.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="text-left text-metin-muted">
-                <tr>
-                  <th className="px-3 py-2">{t("yonUyariTarih")}</th>
-                  <th className="px-3 py-2">{t("yonUyariDaire")}</th>
-                  <th className="px-3 py-2">{t("yonUyariSayac")}</th>
-                  <th className="px-3 py-2">{t("yonUyariDurum")}</th>
-                  <th className="px-3 py-2" />
-                </tr>
-              </thead>
+            <Tablo>
+              <TabloBasligi zeminsiz>
+                  <Th sik>{t("yonUyariTarih")}</Th>
+                  <Th sik>{t("yonUyariDaire")}</Th>
+                  <Th sik>{t("yonUyariSayac")}</Th>
+                  <Th sik>{t("yonUyariDurum")}</Th>
+                  <Th sik />
+                </TabloBasligi>
               <tbody>
                 {uyarilar.items.map((u) => (
                   <tr key={u.id} className="border-t border-yuzey-divider dark:border-slate-800">
-                    <td className="px-3 py-2 whitespace-nowrap">{formatDateTime(u.created_at)}</td>
-                    <td className="px-3 py-2">{u.unit_no ?? "—"}</td>
-                    <td className="px-3 py-2 tabular-nums">
+                    <Td sik className="whitespace-nowrap">{formatDateTime(u.created_at)}</Td>
+                    <Td sik>{u.unit_no ?? "—"}</Td>
+                    <Td sik sayi>
                       {u.sayac}/{u.esik}
-                    </td>
-                    <td className="px-3 py-2">{t(`yonUyariDurum_${u.durum}` as never)}</td>
-                    <td className="px-3 py-2 text-right">
+                    </Td>
+                    <Td sik>{t(`yonUyariDurum_${u.durum}` as never)}</Td>
+                    <Td sik hizala="end">
                       {u.durum === "manuel_bekliyor" ? (
                         <button className={btnGhost} onClick={() => uyariYapildi(u.id)}>
                           {t("yonUyariYapildi")}
                         </button>
                       ) : null}
-                    </td>
+                    </Td>
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </Tablo>
           </div>
         ) : null}
       </motion.section>

@@ -17,6 +17,7 @@ import {
   panelCls,
   panelMotion,
 } from "@/components/form";
+import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
@@ -202,27 +203,25 @@ export default function CheckpointsPage() {
 
       <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
         <div className="odak-ic overflow-x-auto" tabIndex={0}>
-          <table className="w-full text-sm">
-            <thead className="bg-yuzey-bg text-left text-metin-muted">
-              <tr>
-                <th className="px-4 py-2.5 font-medium">{t("ortakAd")}</th>
-                <th className="px-4 py-2.5 font-medium">{t("noktaUid")}</th>
-                <th className="px-4 py-2.5 font-medium">GPS</th>
-                <th className="px-4 py-2.5 font-medium">{t("ortakDurum")}</th>
-                <th className="px-4 py-2.5 font-medium" />
-              </tr>
-            </thead>
+          <Tablo>
+            <TabloBasligi>
+                <Th>{t("ortakAd")}</Th>
+                <Th>{t("noktaUid")}</Th>
+                <Th>GPS</Th>
+                <Th>{t("ortakDurum")}</Th>
+                <Th />
+              </TabloBasligi>
             <tbody>
               {(data?.items ?? []).map((c) => (
-                <tr key={c.id} className="border-t border-yuzey-divider transition-colors hover:bg-yuzey-bg">
-                  <td className="px-4 py-2.5">{c.ad}</td>
-                  <td className="px-4 py-2.5 font-mono text-metin-body">{c.nfc_tag_uid}</td>
-                  <td className="px-4 py-2.5 text-metin-body">
+                <Tr key={c.id}>
+                  <Td>{c.ad}</Td>
+                  <Td className="font-mono text-metin-body">{c.nfc_tag_uid}</Td>
+                  <Td className="text-metin-body">
                     {c.gps_lat != null && c.gps_lng != null
                       ? `${c.gps_lat}, ${c.gps_lng}`
                       : "—"}
-                  </td>
-                  <td className="px-4 py-2.5">
+                  </Td>
+                  <Td>
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                         c.aktif ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-metin-body"
@@ -230,8 +229,8 @@ export default function CheckpointsPage() {
                     >
                       {c.aktif ? t("ortakAktif") : t("ortakPasif")}
                     </span>
-                  </td>
-                  <td className="px-4 py-2.5 text-right">
+                  </Td>
+                  <Td hizala="end">
                     <div className="flex justify-end gap-2">
                       <button className={btnGhost} onClick={() => openEdit(c)}>
                         {t("ortakDuzenle")}
@@ -240,18 +239,18 @@ export default function CheckpointsPage() {
                         {t("ortakSil")}
                       </button>
                     </div>
-                  </td>
-                </tr>
+                  </Td>
+                </Tr>
               ))}
               {data && data.items.length === 0 && (
                 <tr>
-                  <td colSpan={5}>
+                  <Td colSpan={5}>
                     <EmptyState title={t("noktaYok")} description={t("noktaYokAlt")} />
-                  </td>
+                  </Td>
                 </tr>
               )}
             </tbody>
-          </table>
+          </Tablo>
         </div>
       </div>
 

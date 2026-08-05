@@ -5,6 +5,7 @@ import { useState } from "react";
 import useSWR from "swr";
 
 import { ErrorBox, PageHeader, inputCls, panelCls, panelMotion } from "@/components/form";
+import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 
@@ -58,11 +59,10 @@ export default function YetkiPage() {
         <p className="mb-3 text-xs text-metin-muted">{t("yetkiNotu")}</p>
         {data ? (
           <div className="overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead className="text-left text-metin-muted">
-                <tr>
-                  <th className="px-2 py-2">{t("yetkiMetot")}</th>
-                  <th className="px-2 py-2">{t("yetkiYol")}</th>
+            <Tablo className="text-xs">
+              <TabloBasligi zeminsiz>
+                  <Th dolgusuz className="px-2 py-2">{t("yetkiMetot")}</Th>
+                  <Th dolgusuz className="px-2 py-2">{t("yetkiYol")}</Th>
                   {data.roller.map((r) => (
                     <th key={r} className="px-2 py-2 text-center">
                       {/* Rol adlari SOZLUKTEN: sunucu wire degerini doner,
@@ -70,23 +70,22 @@ export default function YetkiPage() {
                       {t(`rol_${r}` as never)}
                     </th>
                   ))}
-                </tr>
-              </thead>
+                </TabloBasligi>
               <tbody>
                 {satirlar.map((s) => (
                   <tr
                     key={`${s.metot} ${s.yol}`}
                     className="border-t border-yuzey-divider dark:border-slate-800"
                   >
-                    <td className="px-2 py-1.5 font-mono">{s.metot}</td>
-                    <td className="px-2 py-1.5 font-mono">
+                    <Td dolgusuz className="px-2 py-1.5 font-mono">{s.metot}</Td>
+                    <Td dolgusuz className="px-2 py-1.5 font-mono">
                       {s.yol}
                       {s.moda_bagli ? (
-                        <span className="ml-1 text-amber-600" title={t("yetkiModaBagliIpucu")}>
+                        <span className="ms-1 text-amber-600" title={t("yetkiModaBagliIpucu")}>
                           {t("yetkiModaBagli")}
                         </span>
                       ) : null}
-                    </td>
+                    </Td>
                     {data.roller.map((r) => (
                       <td key={r} className="px-2 py-1.5 text-center">
                         {s.roller === null ? (
@@ -103,7 +102,7 @@ export default function YetkiPage() {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </Tablo>
           </div>
         ) : null}
       </motion.section>

@@ -279,7 +279,7 @@ export default function KameralarPage() {
             <article key={k.id} className={`${cardCls} overflow-hidden`}>
               <button
                 type="button"
-                className="block w-full text-left"
+                className="block w-full text-start"
                 aria-label={oynar ? t("kameraOynat", { ad: k.ad }) : t("kameraNedenOynamiyor", { ad: k.ad })}
                 onClick={() => (oynar ? setOynatilan(k) : setBilgi(k))}
               >
@@ -297,7 +297,7 @@ export default function KameralarPage() {
                     </div>
                   )}
                   {!oynar && (
-                    <span className="absolute right-2 top-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+                    <span className="absolute end-2 top-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
                       {t("kameraOynatilamazRozet")}
                     </span>
                   )}

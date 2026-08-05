@@ -16,6 +16,7 @@ import {
   panelCls,
   panelMotion,
 } from "@/components/form";
+import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
@@ -162,35 +163,33 @@ export default function MesajlarPage() {
         ) : null}
         {sablonlar && sablonlar.items.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="text-left text-metin-muted">
-                <tr>
-                  <th className="px-3 py-2">{t("mesajKanal")}</th>
-                  <th className="px-3 py-2">{t("mesajAd")}</th>
-                  <th className="px-3 py-2">{t("mesajAmac")}</th>
-                  <th className="px-3 py-2" />
-                </tr>
-              </thead>
+            <Tablo>
+              <TabloBasligi zeminsiz>
+                  <Th sik>{t("mesajKanal")}</Th>
+                  <Th sik>{t("mesajAd")}</Th>
+                  <Th sik>{t("mesajAmac")}</Th>
+                  <Th sik />
+                </TabloBasligi>
               <tbody>
                 {sablonlar.items.map((s) => (
                   <tr key={s.id} className="border-t border-yuzey-divider dark:border-slate-800">
-                    <td className="px-3 py-2">{t(`mesajKanal_${s.kanal}` as never)}</td>
-                    <td className="px-3 py-2">{s.ad}</td>
-                    <td className="px-3 py-2">
+                    <Td sik>{t(`mesajKanal_${s.kanal}` as never)}</Td>
+                    <Td sik>{s.ad}</Td>
+                    <Td sik>
                       {/* AMAC SABLONDA (P32): ayni sablonun bir gun pazarlama
                           bir gun operasyonel gonderilmesi riza denetimini
                           anlamsiz kilardi — bu yuzden gonderimde secilemez. */}
                       {t(`mesajAmac_${s.amac}` as never)}
-                    </td>
-                    <td className="px-3 py-2 text-right">
+                    </Td>
+                    <Td sik hizala="end">
                       <button className={btnDanger} onClick={() => sablonSil(s.id)}>
                         {t("ortakSil")}
                       </button>
-                    </td>
+                    </Td>
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </Tablo>
           </div>
         ) : null}
       </motion.section>
@@ -296,29 +295,27 @@ export default function MesajlarPage() {
         ) : null}
         {gecmis && gecmis.items.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="text-left text-metin-muted">
-                <tr>
-                  <th className="px-3 py-2">{t("mesajTarih")}</th>
-                  <th className="px-3 py-2">{t("mesajKanal")}</th>
-                  <th className="px-3 py-2">{t("mesajHedef")}</th>
-                  <th className="px-3 py-2">{t("mesajDurum")}</th>
-                </tr>
-              </thead>
+            <Tablo>
+              <TabloBasligi zeminsiz>
+                  <Th sik>{t("mesajTarih")}</Th>
+                  <Th sik>{t("mesajKanal")}</Th>
+                  <Th sik>{t("mesajHedef")}</Th>
+                  <Th sik>{t("mesajDurum")}</Th>
+                </TabloBasligi>
               <tbody>
                 {gecmis.items.map((g) => (
                   <tr key={g.id} className="border-t border-yuzey-divider dark:border-slate-800">
-                    <td className="px-3 py-2 whitespace-nowrap">{formatDateTime(g.created_at)}</td>
-                    <td className="px-3 py-2">{t(`mesajKanal_${g.kanal}` as never)}</td>
-                    <td className="px-3 py-2">{g.hedef}</td>
-                    <td className="px-3 py-2">
+                    <Td sik className="whitespace-nowrap">{formatDateTime(g.created_at)}</Td>
+                    <Td sik>{t(`mesajKanal_${g.kanal}` as never)}</Td>
+                    <Td sik>{g.hedef}</Td>
+                    <Td sik>
                       {t(`mesajDurum_${g.durum}` as never)}
-                      {g.hata ? <span className="ml-1 text-rose-600">· {g.hata}</span> : null}
-                    </td>
+                      {g.hata ? <span className="ms-1 text-rose-600">· {g.hata}</span> : null}
+                    </Td>
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </Tablo>
           </div>
         ) : null}
         <button className={`${btnGhost} mt-3`} onClick={() => gecmisTazele()}>

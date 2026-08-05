@@ -31,10 +31,10 @@ export const cardCls = "kart-kenar rounded-kart border bg-yuzey-card";
 export const panelCls =
   "kart-kenar rounded-kart border bg-yuzey-card p-kart";
 
-// Tablo kart cercevesi (dashboard tablo deseni). Icine `overflow-x-auto` sarmali
-// + <table> gelir.
-export const tableCardCls =
-  "kart-kenar overflow-hidden rounded-kart border bg-yuzey-card";
+// (P138) `tableCardCls` KALDIRILDI. Tanimliydi ama HICBIR sayfa
+// kullanmiyordu (0/23) — yerini `components/tablo.tsx` icindeki
+// `TabloKart` aldi ve 23 sayfa oraya tasindi. Olu bir sinif birakmak,
+// bir sonraki gelistiriciye iki secenek gosterirdi.
 
 // Panel giris hareketi — hizli fade + kucuk olcek/kayma (~250ms). motion.form /
 // motion.div ile yayilir: {...panelMotion}. reducedMotion="user" global saygi.

@@ -15,6 +15,7 @@ import {
   panelCls,
   panelMotion,
 } from "@/components/form";
+import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
 import { useToast } from "@/components/Toast";
 import { agIstegi } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
@@ -161,7 +162,7 @@ export default function RaporlarPage() {
                 setSecili(r);
                 setTablo(null);
               }}
-              className={`rounded-lg border p-3 text-left text-sm transition ${
+              className={`rounded-lg border p-3 text-start text-sm transition ${
                 secili?.kod === r.kod
                   ? "border-slate-900 bg-yuzey-bg dark:border-slate-200 dark:bg-slate-800"
                   : "kart-kenar hover:border-slate-400 dark:border-slate-700"
@@ -238,34 +239,30 @@ export default function RaporlarPage() {
             <EmptyState title={t("raporSatirYok")} description={t("raporSatirYokAlt")} />
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="text-left text-metin-muted">
-                  <tr>
+              <Tablo>
+                <TabloBasligi zeminsiz>
                     {tablo.sutunlar.map((s) => (
-                      <th key={s.ad} className="px-3 py-2 whitespace-nowrap">
+                      <Th sik className="whitespace-nowrap" key={s.ad}>
                         {s.etiket}
-                      </th>
+                      </Th>
                     ))}
-                  </tr>
-                </thead>
+                  </TabloBasligi>
                 <tbody>
                   {tablo.satirlar.map((satir, i) => (
                     <tr key={i} className="border-t border-yuzey-divider dark:border-slate-800">
                       {tablo.sutunlar.map((s) => (
-                        <td
-                          key={s.ad}
-                          className={`px-3 py-2 ${s.tip === "kurus" ? "text-right tabular-nums" : ""}`}
-                        >
+                        <Td key={s.ad}
+                          className={`px-3 py-2 ${s.tip === "kurus" ? "text-end tabular-nums" : ""}`}>
                           {/* Sunucu bicimlendirilmis METIN doner (P31): panelde
                               yeniden bicimlendirmek, Excel/PDF ile panelin
                               farkli rakam gostermesi demekti. */}
                           {String(satir[s.ad] ?? "—")}
-                        </td>
+                        </Td>
                       ))}
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </Tablo>
             </div>
           )}
         </motion.section>

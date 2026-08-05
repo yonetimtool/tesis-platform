@@ -8884,8 +8884,8 @@ KAPILAR: `tsc` temiz · `eslint` temiz · `vitest` **666 test** (+18) ·
 `build` ✓.
 
 ### P138 — Liste/form sayfaları: ortak tablo ilkeli (P132 kuyruğunun kalanı)
-Status: KISMEN(ilkel + ilk sayfa BİTTİ — 372fea9 · kalan 22 sayfa + RTL
-süpürmesi sürüyor) · Depends-on: P132, P133
+Status: BITTI(2026-08-05 · 23/23 sayfa + RTL kilidi genişletildi) ·
+Depends-on: P132, P133
 Scope: P133 görsel dili panoya ve kenar çubuğuna indirdi ve liste/form
 sayfalarını **bilerek dışarıda bıraktı** ("o P132 kuyruğu — aynı dosyalarda
 çift yazma riski"). Bu madde o kuyruğu kapatır.
@@ -9030,6 +9030,52 @@ sorunu büyütürdü.
 
 **CİHAZ DOĞRULAMASI YAPILMADI** (bu ortamda iPhone yok) — avatar düzeltmesi
 ve denetçi ekranı P11'e yazıldı.
+
+
+Notes (2026-08-05, P138.2) — **23/23 SAYFA ORTAK İLKELDE.**
+
+| | önce | sonra |
+|---|---:|---:|
+| elle `<table>` iskeleti yazan sayfa | **23** | **0** |
+| ortak ilkeli kullanan sayfa | **0** | **23** |
+| ham `<th>/<td className>` hücresi | 12 | **0** |
+
+**DÖNÜŞTÜRÜCÜ İKİ KEZ YAZILDI — İLKİ BOZDU.** İlk sürüm sonda toplu
+`</td>` → `</Td>` yapıyordu ve dönüştürül**me**yen `<td>`leri de
+kapatıyordu: **62 derleme hatası**. Ders: etiket çifti regex'le değil
+**tarayarak** eşleştirilmeli (`td/th/tr` iç içe geçmez, ilk kapanış doğru
+eşleşmedir). İkinci sürüm 6 hataya indi, o üçü de elle kapandı.
+
+**YOĞUNLUK FARKLARI KORUNDU — sessizce standarda çekilmedi.** Rapor/finans
+tabloları `px-3 py-2`, üç küçük tablo (`yetki`, `tanimlar`, `aidatim`)
+kendi dolgusunu taşıyor. İlkele `sik` ve `dolgusuz` varyantları eklendi;
+üç tablo da kendi başlık biçimini `className` ile veriyor. **Yapı
+birleşti, görünüm kararı değişmedi** — birleştirmeyi görsel bir karara
+çevirmek bu turun işi değildi.
+
+**`tableCardCls` KALDIRILDI:** tanımlıydı ve **hiçbir sayfa
+kullanmıyordu** (0/23). Yerini `TabloKart` aldı; P132.7'nin kilidi de
+oraya taşındı (kapsam kaybı yok, yer değişti).
+
+**RTL — ASIL BULGU.** Kilit **yalnız `AppShell.tsx`i** okuyordu; 45
+korumalı sayfa denetimsizdi. Kapsam `app` + `components`e genişletildi ve
+pozitif kontrolü yazıldı (P137 dersi).
+
+**KENDİ ÖLÇÜMÜMÜ DÜZELTİYORUM:** önceki turda "61 yön-sabit sınıf" demiştim
+— **yanlıştı**. `rounded-lg` benim `rounded-l` önekime, `border-red/rose`
+da `border-r`'ye takılmış. Gerçek sayı **9**du (`ml-` 5, `mr-` 1, `right-`
+3) artı tablo hizalamaları. Hepsi mantıksal karşılıklarına çevrildi
+(`ms-/me-`, `start-/end-`, `text-start/text-end`); tablo hizalamalarının
+çoğu zaten ilkele taşınırken `hizala="end"`e döndü.
+
+**GERİ DÖNMESİN:** `tasarim-token.test.ts`e üç kilit — hiçbir sayfa
+`<table>/<thead>` iskeletini kendi yazmasın, ham `<th>/<td className>`
+olmasın, ve **tarama gerçekten dosya okusun** (P136 dersi). İlkelin
+kendisi ve yorum satırları kapsam dışı. Mutasyonla sınandı: bir sayfaya
+elle `<table>` konunca kilit düştü.
+
+KAPILAR: `tsc` temiz · `eslint` temiz · `vitest` **672 test** (+4) ·
+`build` ✓ (paylaşılan ilk yük 87.5 kB, değişmedi).
 
 ### NOT — Sign in with Apple (4.8)
 **GEÇERSİZ (N/A):** üçüncü taraf sosyal giriş **kullanmıyoruz** (Google/Facebook

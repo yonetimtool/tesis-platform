@@ -56,7 +56,7 @@ export function DilSecici() {
       {acik && (
         <ul
           role="listbox"
-          // `end-0`: RTL'de de dogru kenara yaslanir (`right-0` Arapcada
+          // `end-0`: RTL'de de dogru kenara yaslanir (`end-0` Arapcada
           // menuyu ekranin disina iterdi).
           className="absolute end-0 z-50 mt-1 w-40 overflow-hidden rounded-lg border kart-kenar bg-white py-1 shadow-lift"
         >

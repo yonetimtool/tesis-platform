@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, btnGhost, panelCls, panelMotion,
   EksikVeriUyarisi,
 } from "@/components/form";
+import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
 import { ReportsTabs } from "@/components/ReportsTabs";
 import { kisaKimlik } from "@/lib/kimlik";
 import { fetchAllPaged } from "@/lib/client";
@@ -203,57 +204,55 @@ export default function TaskReportPage() {
             </div>
             <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
               <div className="odak-ic overflow-x-auto" tabIndex={0}>
-                <table className="w-full text-sm">
-                  <thead className="bg-yuzey-bg text-left text-metin-muted">
-                    <tr>
-                      <th className="px-4 py-2.5 font-medium">{t("raporGorev")}</th>
-                      <th className="px-4 py-2.5 font-medium">{t("raporTabloTip")}</th>
-                      <th className="px-4 py-2.5 font-medium">{t("raporTabloTamamlayan")}</th>
-                      <th className="px-4 py-2.5 font-medium">{t("raporTabloZaman")}</th>
-                      <th className="px-4 py-2.5 font-medium">{t("raporTabloFoto")}</th>
-                      <th className="px-4 py-2.5 font-medium">{t("raporTabloNfc")}</th>
-                      <th className="px-4 py-2.5 font-medium">{t("raporNot")}</th>
-                    </tr>
-                  </thead>
+                <Tablo>
+                  <TabloBasligi>
+                      <Th>{t("raporGorev")}</Th>
+                      <Th>{t("raporTabloTip")}</Th>
+                      <Th>{t("raporTabloTamamlayan")}</Th>
+                      <Th>{t("raporTabloZaman")}</Th>
+                      <Th>{t("raporTabloFoto")}</Th>
+                      <Th>{t("raporTabloNfc")}</Th>
+                      <Th>{t("raporNot")}</Th>
+                    </TabloBasligi>
                   <tbody>
                     {data.items.map((c) => (
-                      <tr key={c.id} className="border-t border-yuzey-divider transition-colors hover:bg-yuzey-bg">
-                        <td className="px-4 py-2.5">{c.task_adi ?? "—"}</td>
-                        <td className="px-4 py-2.5">
+                      <Tr key={c.id}>
+                        <Td>{c.task_adi ?? "—"}</Td>
+                        <Td>
                           <span
                             className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-metin-body"
                           >
                             {c.kategori_ad}
                           </span>
-                        </td>
-                        <td className="px-4 py-2.5">{userName(c.tamamlayan_user_id)}</td>
-                        <td className="px-4 py-2.5 text-metin-body">{formatDateTime(c.tamamlanma_zamani)}</td>
-                        <td className="px-4 py-2.5">
+                        </Td>
+                        <Td>{userName(c.tamamlayan_user_id)}</Td>
+                        <Td className="text-metin-body">{formatDateTime(c.tamamlanma_zamani)}</Td>
+                        <Td>
                           {c.foto_var ? (
                             <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800">{t("raporVar")}</span>
                           ) : (
                             <span className="text-metin-muted">{t("raporYok")}</span>
                           )}
-                        </td>
-                        <td className="px-4 py-2.5">
+                        </Td>
+                        <Td>
                           {c.nfc_dogrulandi ? (
                             <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800">✓</span>
                           ) : (
                             <span className="text-metin-muted">—</span>
                           )}
-                        </td>
-                        <td className="px-4 py-2.5 text-metin-body">{c.notlar ?? "—"}</td>
-                      </tr>
+                        </Td>
+                        <Td className="text-metin-body">{c.notlar ?? "—"}</Td>
+                      </Tr>
                     ))}
                     {data.items.length === 0 && (
                       <tr>
-                        <td colSpan={7}>
+                        <Td colSpan={7}>
                           <EmptyState title={t("raporTamamlamaYok")} description={t("raporSonucYok")} />
-                        </td>
+                        </Td>
                       </tr>
                     )}
                   </tbody>
-                </table>
+                </Tablo>
               </div>
             </div>
             <Pager

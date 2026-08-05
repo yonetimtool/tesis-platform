@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, btnGhost, panelCls, panelMotion,
   EksikVeriUyarisi,
 } from "@/components/form";
+import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
 import { ReportsTabs } from "@/components/ReportsTabs";
 import { TUR_DURUM, enumAdi } from "@/lib/enum-adlari";
 import { fetchAllPaged } from "@/lib/client";
@@ -184,43 +185,41 @@ export default function PatrolReportPage() {
             </div>
             <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
               <div className="odak-ic overflow-x-auto" tabIndex={0}>
-                <table className="w-full text-sm">
-                  <thead className="bg-yuzey-bg text-left text-metin-muted">
-                    <tr>
-                      <th className="px-4 py-2.5 font-medium">{t("raporTabloPlan")}</th>
-                      <th className="px-4 py-2.5 font-medium">{t("ortakBaslangic")}</th>
-                      <th className="px-4 py-2.5 font-medium">{t("ortakBitis")}</th>
-                      <th className="px-4 py-2.5 font-medium">{t("ortakDurum")}</th>
-                      <th className="px-4 py-2.5 font-medium">{t("raporTabloCheckpoint")}</th>
-                    </tr>
-                  </thead>
+                <Tablo>
+                  <TabloBasligi>
+                      <Th>{t("raporTabloPlan")}</Th>
+                      <Th>{t("ortakBaslangic")}</Th>
+                      <Th>{t("ortakBitis")}</Th>
+                      <Th>{t("ortakDurum")}</Th>
+                      <Th>{t("raporTabloCheckpoint")}</Th>
+                    </TabloBasligi>
                   <tbody>
                     {data.items.map((w) => (
-                      <tr key={w.id} className="border-t border-yuzey-divider transition-colors hover:bg-yuzey-bg">
-                        <td className="px-4 py-2.5">{w.plan_adi ?? "—"}</td>
-                        <td className="px-4 py-2.5 text-metin-body">{formatDateTime(w.pencere_baslangic)}</td>
-                        <td className="px-4 py-2.5 text-metin-body">{formatDateTime(w.pencere_bitis)}</td>
-                        <td className="px-4 py-2.5">
+                      <Tr key={w.id}>
+                        <Td>{w.plan_adi ?? "—"}</Td>
+                        <Td className="text-metin-body">{formatDateTime(w.pencere_baslangic)}</Td>
+                        <Td className="text-metin-body">{formatDateTime(w.pencere_bitis)}</Td>
+                        <Td>
                           <span
                             className={`rounded-full px-2 py-0.5 text-xs font-medium ${DURUM_STYLE[w.durum] ?? "bg-slate-100 text-metin-body"}`}
                           >
                             {enumAdi(t, TUR_DURUM, w.durum)}
                           </span>
-                        </td>
-                        <td className="px-4 py-2.5 text-metin-body tabular-nums">
+                        </Td>
+                        <Td sayi className="text-metin-body">
                           {w.okutulan_checkpoint_sayisi}/{w.beklenen_checkpoint_sayisi}
-                        </td>
-                      </tr>
+                        </Td>
+                      </Tr>
                     ))}
                     {data.items.length === 0 && (
                       <tr>
-                        <td colSpan={5}>
+                        <Td colSpan={5}>
                           <EmptyState title={t("devriyePencereYok")} description={t("raporPencereYok")} />
-                        </td>
+                        </Td>
                       </tr>
                     )}
                   </tbody>
-                </table>
+                </Tablo>
               </div>
             </div>
             <Pager

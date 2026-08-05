@@ -15,6 +15,7 @@ import {
   panelCls,
   panelMotion,
 } from "@/components/form";
+import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
@@ -300,26 +301,24 @@ export default function PortalPage() {
         ) : null}
         {mesajlar && mesajlar.items.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="text-left text-metin-muted">
-                <tr>
-                  <th className="px-3 py-2">{t("portalMesajTarih")}</th>
-                  <th className="px-3 py-2">{t("portalMesajAd")}</th>
-                  <th className="px-3 py-2">{t("portalMesajIletisim")}</th>
-                  <th className="px-3 py-2">{t("portalMesajMetin")}</th>
-                </tr>
-              </thead>
+            <Tablo>
+              <TabloBasligi zeminsiz>
+                  <Th sik>{t("portalMesajTarih")}</Th>
+                  <Th sik>{t("portalMesajAd")}</Th>
+                  <Th sik>{t("portalMesajIletisim")}</Th>
+                  <Th sik>{t("portalMesajMetin")}</Th>
+                </TabloBasligi>
               <tbody>
                 {mesajlar.items.map((m) => (
                   <tr key={m.id} className="border-t border-yuzey-divider dark:border-slate-800">
-                    <td className="px-3 py-2 whitespace-nowrap">{formatDateTime(m.created_at)}</td>
-                    <td className="px-3 py-2">{m.ad}</td>
-                    <td className="px-3 py-2">{m.telefon ?? m.email}</td>
-                    <td className="px-3 py-2">{m.mesaj}</td>
+                    <Td sik className="whitespace-nowrap">{formatDateTime(m.created_at)}</Td>
+                    <Td sik>{m.ad}</Td>
+                    <Td sik>{m.telefon ?? m.email}</Td>
+                    <Td sik>{m.mesaj}</Td>
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </Tablo>
           </div>
         ) : null}
       </motion.section>

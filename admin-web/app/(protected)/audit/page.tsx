@@ -5,6 +5,7 @@ import useSWR from "swr";
 
 import { EmptyState } from "@/components/EmptyState";
 import { ErrorBox, Field, PageHeader, Pager, inputCls } from "@/components/form";
+import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
 import { rolAdi } from "@/lib/roles";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
 import type { AuditLog, AuditLogList } from "@/lib/types";
@@ -116,37 +117,35 @@ export default function AuditPage() {
 
       <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
         <div className="odak-ic overflow-x-auto" tabIndex={0}>
-          <table className="w-full text-sm">
-            <thead className="bg-yuzey-bg text-left text-metin-muted">
-              <tr>
-                <th className="px-4 py-2.5 font-medium">{t("denetimZaman")}</th>
-                <th className="px-4 py-2.5 font-medium">{t("denetimIslem")}</th>
-                <th className="px-4 py-2.5 font-medium">{t("ortakRol")}</th>
-                <th className="px-4 py-2.5 font-medium">{t("denetimKaynak")}</th>
-                <th className="px-4 py-2.5 font-medium">{t("ortakTesis")}</th>
-                <th className="px-4 py-2.5 font-medium">{t("denetimMeta")}</th>
-              </tr>
-            </thead>
+          <Tablo>
+            <TabloBasligi>
+                <Th>{t("denetimZaman")}</Th>
+                <Th>{t("denetimIslem")}</Th>
+                <Th>{t("ortakRol")}</Th>
+                <Th>{t("denetimKaynak")}</Th>
+                <Th>{t("ortakTesis")}</Th>
+                <Th>{t("denetimMeta")}</Th>
+              </TabloBasligi>
             <tbody>
               {rows.map((r) => (
                 <tr key={r.id} className="border-t border-yuzey-divider align-top">
-                  <td className="whitespace-nowrap px-4 py-2.5 text-metin-body tabular-nums">
+                  <Td sayi className="whitespace-nowrap text-metin-body">
                     {formatDateTime(r.ts)}
-                  </td>
-                  <td className="px-4 py-2.5">
+                  </Td>
+                  <Td>
                     <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-metin-body">
                       {r.action}
                     </span>
-                  </td>
+                  </Td>
                   {/* (P66) HAM TEL DEGERI DEGIL: denetim kaydinda rol
                       `admin`/`yonetici` diye ciziliyordu, oysa panelin geri
                       kalani `rolAdi` ile cevirir. Denetim kaydi "kim ne
                       yapti"nin kanitidir; orada kullanicinin taniyamadigi
                       bir jeton gostermek, kaydi okunamaz kilar. */}
-                  <td className="px-4 py-2.5 text-metin-body">
+                  <Td className="text-metin-body">
                     {r.actor_rol ? rolAdi(t, r.actor_rol) : "—"}
-                  </td>
-                  <td className="px-4 py-2.5 text-metin-body">
+                  </Td>
+                  <Td className="text-metin-body">
                     {r.resource_type ? (
                       <span className="font-mono text-xs">
                         {r.resource_type}
@@ -155,29 +154,29 @@ export default function AuditPage() {
                     ) : (
                       "—"
                     )}
-                  </td>
-                  <td className="px-4 py-2.5 font-mono text-xs text-metin-muted">
+                  </Td>
+                  <Td className="font-mono text-xs text-metin-muted">
                     {r.tenant_id ? `${r.tenant_id.slice(0, 8)}…` : "platform"}
-                  </td>
-                  <td className="max-w-xs px-4 py-2.5">
+                  </Td>
+                  <Td className="max-w-xs">
                     <code className="block truncate text-xs text-metin-muted">
                       {Object.keys(r.meta ?? {}).length ? JSON.stringify(r.meta) : "—"}
                     </code>
-                  </td>
+                  </Td>
                 </tr>
               ))}
               {data && rows.length === 0 && (
                 <tr>
-                  <td colSpan={6}>
+                  <Td colSpan={6}>
                     <EmptyState
                       title={t("denetimKayitYok")}
                       description={t("denetimKayitYokAlt")}
                     />
-                  </td>
+                  </Td>
                 </tr>
               )}
             </tbody>
-          </table>
+          </Tablo>
         </div>
       </div>
 

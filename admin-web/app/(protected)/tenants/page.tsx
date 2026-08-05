@@ -7,6 +7,7 @@ import useSWR from "swr";
 
 import { EmptyState } from "@/components/EmptyState";
 import { Field, ErrorBox, PageHeader, btnPrimary, btnGhost, btnDanger, inputCls, panelCls, panelMotion } from "@/components/form";
+import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
@@ -298,26 +299,24 @@ export default function TenantsPage() {
 
       <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
         <div className="odak-ic overflow-x-auto" tabIndex={0}>
-          <table className="w-full text-sm">
-            <thead className="bg-yuzey-bg text-left text-metin-muted">
-              <tr>
-                <th className="px-4 py-2.5 font-medium">{t("ayarTesisAdi")}</th>
-                <th className="px-4 py-2.5 font-medium">{t("tesisKimlikId")}</th>
-                <th className="px-4 py-2.5 font-medium">{t("tesisKurulum")}</th>
-                <th className="px-4 py-2.5 font-medium">{t("tesisOlusturulma")}</th>
-                <th className="px-4 py-2.5 font-medium" />
-              </tr>
-            </thead>
+          <Tablo>
+            <TabloBasligi>
+                <Th>{t("ayarTesisAdi")}</Th>
+                <Th>{t("tesisKimlikId")}</Th>
+                <Th>{t("tesisKurulum")}</Th>
+                <Th>{t("tesisOlusturulma")}</Th>
+                <Th />
+              </TabloBasligi>
             <tbody>
               {(data?.items ?? []).map((tesis) => (
-                <tr key={tesis.id} className="border-t border-yuzey-divider transition-colors hover:bg-yuzey-bg">
-                  <td className="px-4 py-2.5">
+                <Tr key={tesis.id}>
+                  <Td>
                     <Link href={`/tenants/${tesis.id}`} className="font-medium text-ink hover:underline">
                       {tesis.ad}
                     </Link>
-                  </td>
-                  <td className="px-4 py-2.5 font-mono text-xs text-metin-muted">{tesis.id}</td>
-                  <td className="px-4 py-2.5">
+                  </Td>
+                  <Td className="font-mono text-xs text-metin-muted">{tesis.id}</Td>
+                  <Td>
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                         tesis.kurulum_tamamlandi
@@ -327,9 +326,9 @@ export default function TenantsPage() {
                     >
                       {tesis.kurulum_tamamlandi ? t("tesisTamamlandi") : t("tesisBekliyor")}
                     </span>
-                  </td>
-                  <td className="px-4 py-2.5 text-metin-body">{fmtDate(tesis.created_at)}</td>
-                  <td className="px-4 py-2.5 text-right">
+                  </Td>
+                  <Td className="text-metin-body">{fmtDate(tesis.created_at)}</Td>
+                  <Td hizala="end">
                     <div className="flex justify-end gap-2">
                       <Link href={`/tenants/${tesis.id}`} className={btnGhost}>
                         {t("tesisYonet")}
@@ -341,18 +340,18 @@ export default function TenantsPage() {
                         {t("ortakSil")}
                       </button>
                     </div>
-                  </td>
-                </tr>
+                  </Td>
+                </Tr>
               ))}
               {data && data.items.length === 0 && (
                 <tr>
-                  <td colSpan={5}>
+                  <Td colSpan={5}>
                     <EmptyState title={t("tesisYok")} description={t("tesisYokAlt")} />
-                  </td>
+                  </Td>
                 </tr>
               )}
             </tbody>
-          </table>
+          </Tablo>
         </div>
       </div>
     </div>

@@ -286,7 +286,7 @@ export default function BuildingEditorPage() {
         <form onSubmit={saveUnit} className={`space-y-4 ${panelCls}`}>
           <h2 className="font-medium">
             {unitForm.editingId ? t("daireDuzenle") : t("daireYeni")}
-            <span className="ml-2 text-sm text-metin-muted">
+            <span className="ms-2 text-sm text-metin-muted">
               {unitForm.blok
                 ? t("daireBlokEki", { ad: unitForm.blok })
                 : t("daireBloksuzEki")}

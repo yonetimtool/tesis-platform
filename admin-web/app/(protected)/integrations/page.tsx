@@ -6,6 +6,7 @@ import useSWR from "swr";
 
 import { EmptyState } from "@/components/EmptyState";
 import { Field, ErrorBox, PageHeader, inputCls, btnPrimary, btnGhost, btnDanger, panelCls, panelMotion } from "@/components/form";
+import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
@@ -318,33 +319,31 @@ export default function IntegrationsPage() {
 
       <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
         <div className="odak-ic overflow-x-auto" tabIndex={0}>
-          <table className="w-full text-sm">
-            <thead className="bg-yuzey-bg text-left text-metin-muted">
-              <tr>
-                <th className="px-4 py-2.5 font-medium">{t("ortakAd")}</th>
-                <th className="px-4 py-2.5 font-medium">{t("entegKanal")}</th>
-                <th className="px-4 py-2.5 font-medium">{t("entegEndpoint")}</th>
-                <th className="px-4 py-2.5 font-medium">{t("entegKimlik")}</th>
-                <th className="px-4 py-2.5 font-medium">{t("ortakAktif")}</th>
-                <th className="px-4 py-2.5 font-medium" />
-              </tr>
-            </thead>
+          <Tablo>
+            <TabloBasligi>
+                <Th>{t("ortakAd")}</Th>
+                <Th>{t("entegKanal")}</Th>
+                <Th>{t("entegEndpoint")}</Th>
+                <Th>{t("entegKimlik")}</Th>
+                <Th>{t("ortakAktif")}</Th>
+                <Th />
+              </TabloBasligi>
             <tbody>
             {(data?.items ?? []).map((it) => {
               const tr = testResult[it.id];
               return (
                 <tr key={it.id} className={`border-t border-yuzey-divider transition-colors hover:bg-yuzey-bg ${it.aktif ? "" : "bg-yuzey-bg"}`}>
-                  <td className="px-4 py-2.5">{it.ad}</td>
-                  <td className="px-4 py-2.5 text-metin-body">{it.channel_type}</td>
-                  <td className="px-4 py-2.5 text-metin-body max-w-[280px] truncate">
+                  <Td>{it.ad}</Td>
+                  <Td className="text-metin-body">{it.channel_type}</Td>
+                  <Td className="text-metin-body max-w-[280px] truncate">
                     {it.http_method} {it.endpoint_url}
-                  </td>
-                  <td className="px-4 py-2.5 text-metin-body">
+                  </Td>
+                  <Td className="text-metin-body">
                     {it.auth_type}
                     {it.auth_secret_set ? " 🔒" : ""}
-                  </td>
-                  <td className="px-4 py-2.5">{it.aktif ? t("ortakEvet") : "—"}</td>
-                  <td className="px-4 py-2.5 text-right">
+                  </Td>
+                  <Td>{it.aktif ? t("ortakEvet") : "—"}</Td>
+                  <Td hizala="end">
                     <div className="flex flex-col items-end gap-1">
                       <div className="flex justify-end gap-2">
                         <button
@@ -371,19 +370,19 @@ export default function IntegrationsPage() {
                         </span>
                       )}
                     </div>
-                  </td>
+                  </Td>
                 </tr>
               );
             })}
             {data && data.items.length === 0 && (
               <tr>
-                <td colSpan={6}>
+                <Td colSpan={6}>
                   <EmptyState title={t("entegYok")} description={t("entegYokAlt")} />
-                </td>
+                </Td>
               </tr>
             )}
             </tbody>
-          </table>
+          </Tablo>
         </div>
       </div>
     </div>

@@ -16,6 +16,7 @@ import {
   panelCls,
   panelMotion,
 } from "@/components/form";
+import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
@@ -548,17 +549,15 @@ function DefterGorunumu({ defter }: { defter: Defter }) {
       ) : null}
       {kayitlar.length > 0 ? (
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr>
+          <Tablo>
+            <TabloBasligi zeminsiz>
                 {sutunlar.map((a) => (
                   <th key={a.ad} className="p-2 text-start">
                     {t(a.etiket)}
                   </th>
                 ))}
-                <th className="p-2" />
-              </tr>
-            </thead>
+                <Th dolgusuz className="p-2" />
+              </TabloBasligi>
             <tbody>
               {kayitlar.map((k) => (
                 <tr key={String(k.id)} className="border-t">
@@ -585,18 +584,18 @@ function DefterGorunumu({ defter }: { defter: Defter }) {
                           : String(k[a.ad] ?? "—")}
                     </td>
                   ))}
-                  <td className="p-2 text-end whitespace-nowrap">
+                  <Td dolgusuz className="p-2 text-end whitespace-nowrap">
                     <button type="button" className={btnGhost} onClick={() => ac(k)}>
                       {t("ortakDuzenle")}
                     </button>{" "}
                     <button type="button" className={btnDanger} onClick={() => void sil(k)}>
                       {t("ortakSil")}
                     </button>
-                  </td>
+                  </Td>
                 </tr>
               ))}
             </tbody>
-          </table>
+          </Tablo>
         </div>
       ) : null}
 

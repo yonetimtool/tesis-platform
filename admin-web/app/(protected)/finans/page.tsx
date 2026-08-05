@@ -15,6 +15,7 @@ import {
   panelCls,
   panelMotion,
 } from "@/components/form";
+import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
 import { useToast } from "@/components/Toast";
 import { apiSend, genIdempotencyKey } from "@/lib/client";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
@@ -161,32 +162,30 @@ export default function FinansPage() {
         ) : null}
         {kasalar && kasalar.items.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="text-left text-metin-muted">
-                <tr>
-                  <th className="px-3 py-2">{t("finansKasaKod")}</th>
-                  <th className="px-3 py-2">{t("finansKasaAd")}</th>
-                  <th className="px-3 py-2 text-right">{t("finansBakiye")}</th>
-                </tr>
-              </thead>
+            <Tablo>
+              <TabloBasligi zeminsiz>
+                  <Th sik>{t("finansKasaKod")}</Th>
+                  <Th sik>{t("finansKasaAd")}</Th>
+                  <Th sik hizala="end">{t("finansBakiye")}</Th>
+                </TabloBasligi>
               <tbody>
                 {kasalar.items.map((k) => (
                   <tr key={k.kasa_id} className="border-t border-yuzey-divider dark:border-slate-800">
-                    <td className="px-3 py-2 font-mono text-xs">{k.kod}</td>
-                    <td className="px-3 py-2">{k.ad}</td>
-                    <td className="px-3 py-2 text-right tabular-nums">{kurusToTL(k.bakiye_kurus)}</td>
+                    <Td sik className="font-mono text-xs">{k.kod}</Td>
+                    <Td sik>{k.ad}</Td>
+                    <Td sik hizala="end" sayi>{kurusToTL(k.bakiye_kurus)}</Td>
                   </tr>
                 ))}
                 <tr className="border-t-2 kart-kenar font-semibold dark:border-slate-700">
-                  <td className="px-3 py-2" colSpan={2}>
+                  <Td sik colSpan={2}>
                     {t("finansGenelToplam")}
-                  </td>
-                  <td className="px-3 py-2 text-right tabular-nums">
+                  </Td>
+                  <Td sik hizala="end" sayi>
                     {kurusToTL(kasalar.genel_toplam_kurus)}
-                  </td>
+                  </Td>
                 </tr>
               </tbody>
-            </table>
+            </Tablo>
           </div>
         ) : null}
       </motion.section>
@@ -277,39 +276,35 @@ export default function FinansPage() {
         {hareketler && hareketler.items.length > 0 ? (
           <>
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="text-left text-metin-muted">
-                  <tr>
-                    <th className="px-3 py-2">{t("finansTarih")}</th>
-                    <th className="px-3 py-2">{t("finansTip")}</th>
-                    <th className="px-3 py-2">{t("finansKasa")}</th>
-                    <th className="px-3 py-2">{t("finansKisi")}</th>
-                    <th className="px-3 py-2">{t("finansAciklama")}</th>
-                    <th className="px-3 py-2 text-right">{t("finansTutar")}</th>
-                  </tr>
-                </thead>
+              <Tablo>
+                <TabloBasligi zeminsiz>
+                    <Th sik>{t("finansTarih")}</Th>
+                    <Th sik>{t("finansTip")}</Th>
+                    <Th sik>{t("finansKasa")}</Th>
+                    <Th sik>{t("finansKisi")}</Th>
+                    <Th sik>{t("finansAciklama")}</Th>
+                    <Th sik hizala="end">{t("finansTutar")}</Th>
+                  </TabloBasligi>
                 <tbody>
                   {hareketler.items.map((h) => (
                     <tr key={h.id} className="border-t border-yuzey-divider dark:border-slate-800">
-                      <td className="px-3 py-2 whitespace-nowrap">{formatDateTime(h.tarih)}</td>
-                      <td className="px-3 py-2">{t(`finansTip_${h.tip}` as never)}</td>
-                      <td className="px-3 py-2">{h.kasa_ad ?? "—"}</td>
-                      <td className="px-3 py-2">{h.user_ad ?? "—"}</td>
-                      <td className="px-3 py-2">{h.aciklama ?? h.belge_no ?? "—"}</td>
+                      <Td sik className="whitespace-nowrap">{formatDateTime(h.tarih)}</Td>
+                      <Td sik>{t(`finansTip_${h.tip}` as never)}</Td>
+                      <Td sik>{h.kasa_ad ?? "—"}</Td>
+                      <Td sik>{h.user_ad ?? "—"}</Td>
+                      <Td sik>{h.aciklama ?? h.belge_no ?? "—"}</Td>
                       {/* YON RENGI: tutar her zaman POZITIFTIR (P29); giris/cikis
                           ayrimi isaretle degil `yon` alaniyla anlatilir. */}
-                      <td
-                        className={`px-3 py-2 text-right tabular-nums ${
+                      <Td className={`px-3 py-2 text-end tabular-nums ${
                           h.yon === "giris" ? "text-emerald-600" : "text-rose-600"
-                        }`}
-                      >
+                        }`}>
                         {h.yon === "giris" ? "+" : "−"}
                         {kurusToTL(h.tutar_kurus)}
-                      </td>
+                      </Td>
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </Tablo>
             </div>
             <Pager
               offset={offset}

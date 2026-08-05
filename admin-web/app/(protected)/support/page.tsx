@@ -6,6 +6,7 @@ import useSWR, { mutate } from "swr";
 import { EmptyState } from "@/components/EmptyState";
 import { Foto } from "@/components/Foto";
 import { ErrorBox, Field, PageHeader, Pager, inputCls } from "@/components/form";
+import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
 import { agIstegi, sunucuMesaji } from "@/lib/client";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
@@ -153,28 +154,26 @@ export default function SupportPage() {
         />
       ) : (
         <div className="overflow-x-auto rounded-xl border kart-kenar dark:border-slate-700" tabIndex={0}>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b kart-kenar text-left text-xs uppercase tracking-wide text-metin-muted dark:border-slate-700">
-                <th className="px-3 py-2">{t("ortakTarih")}</th>
-                <th className="px-3 py-2">{t("ortakTesis")}</th>
-                <th className="px-3 py-2">{t("destekKonu")}</th>
-                <th className="px-3 py-2">{t("ortakDurum")}</th>
-                <th className="px-3 py-2">{t("destekYanit")}</th>
-                <th className="px-3 py-2" />
-              </tr>
-            </thead>
+          <Tablo>
+            <TabloBasligi zeminsiz className="border-b kart-kenar text-xs uppercase tracking-wide dark:border-slate-700">
+                <Th sik>{t("ortakTarih")}</Th>
+                <Th sik>{t("ortakTesis")}</Th>
+                <Th sik>{t("destekKonu")}</Th>
+                <Th sik>{t("ortakDurum")}</Th>
+                <Th sik>{t("destekYanit")}</Th>
+                <Th sik />
+              </TabloBasligi>
             <tbody>
               {data.items.map((bilet) => (
                 <tr
                   key={bilet.id}
                   className="border-b border-yuzey-divider last:border-0 dark:border-slate-800"
                 >
-                  <td className="whitespace-nowrap px-3 py-2 text-metin-muted">
+                  <Td sik className="whitespace-nowrap text-metin-muted">
                     {formatDateTime(bilet.created_at)}
-                  </td>
-                  <td className="px-3 py-2">{bilet.tenant_ad ?? bilet.tenant_id.slice(0, 8)}</td>
-                  <td className="max-w-[28rem] px-3 py-2">
+                  </Td>
+                  <Td sik>{bilet.tenant_ad ?? bilet.tenant_id.slice(0, 8)}</Td>
+                  <Td sik className="max-w-[28rem]">
                     <div className="flex items-center gap-1 font-medium">
                       {bilet.konu}
                       {bilet.foto_url ? (
@@ -184,8 +183,8 @@ export default function SupportPage() {
                       ) : null}
                     </div>
                     <div className="truncate text-xs text-metin-muted">{bilet.aciklama}</div>
-                  </td>
-                  <td className="px-3 py-2">
+                  </Td>
+                  <Td sik>
                     <span
                       className={
                         bilet.durum === "cozuldu"
@@ -195,11 +194,11 @@ export default function SupportPage() {
                     >
                       {bilet.durum === "cozuldu" ? t("destekCozuldu") : t("ortakAcik")}
                     </span>
-                  </td>
-                  <td className="max-w-[16rem] truncate px-3 py-2 text-xs text-metin-muted">
+                  </Td>
+                  <Td sik className="max-w-[16rem] truncate text-xs text-metin-muted">
                     {bilet.admin_cevap ?? "—"}
-                  </td>
-                  <td className="px-3 py-2 text-right">
+                  </Td>
+                  <Td sik hizala="end">
                     <button
                       className="odak-ic rounded-lg border border-slate-300 px-2 py-1 text-xs font-medium hover:bg-yuzey-bg dark:border-slate-600 dark:hover:bg-slate-800"
                       onClick={() => {
@@ -210,11 +209,11 @@ export default function SupportPage() {
                     >
                       {t("destekYanitla")}
                     </button>
-                  </td>
+                  </Td>
                 </tr>
               ))}
             </tbody>
-          </table>
+          </Tablo>
         </div>
       )}
 

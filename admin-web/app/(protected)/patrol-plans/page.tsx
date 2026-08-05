@@ -18,6 +18,7 @@ import {
   panelMotion,
   EksikVeriUyarisi,
 } from "@/components/form";
+import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
 import { useToast } from "@/components/Toast";
 import { kisaKimlik } from "@/lib/kimlik";
 import { apiSend } from "@/lib/client";
@@ -318,7 +319,7 @@ export default function PatrolPlansPage() {
                 className="flex items-center justify-between rounded-lg border kart-kenar px-3 py-2 text-sm"
               >
                 <span>
-                  <span className="mr-2 text-metin-muted">{i + 1}.</span>
+                  <span className="me-2 text-metin-muted">{i + 1}.</span>
                   {cpName(cid)}
                 </span>
                 <span className="flex gap-1">
@@ -391,26 +392,24 @@ export default function PatrolPlansPage() {
 
       <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
         <div className="odak-ic overflow-x-auto" tabIndex={0}>
-          <table className="w-full text-sm">
-            <thead className="bg-yuzey-bg text-left text-metin-muted">
-              <tr>
-                <th className="px-4 py-2.5 font-medium">{t("ortakAd")}</th>
-                <th className="px-4 py-2.5 font-medium">{t("devriyeVardiya")}</th>
-                <th className="px-4 py-2.5 font-medium">{t("devriyeSaatPeriyot")}</th>
-                <th className="px-4 py-2.5 font-medium">{t("ortakDurum")}</th>
-                <th className="px-4 py-2.5 font-medium" />
-              </tr>
-            </thead>
+          <Tablo>
+            <TabloBasligi>
+                <Th>{t("ortakAd")}</Th>
+                <Th>{t("devriyeVardiya")}</Th>
+                <Th>{t("devriyeSaatPeriyot")}</Th>
+                <Th>{t("ortakDurum")}</Th>
+                <Th />
+              </TabloBasligi>
             <tbody>
               {(data?.items ?? []).map((p) => (
-                <tr key={p.id} className="border-t border-yuzey-divider transition-colors hover:bg-yuzey-bg">
-                  <td className="px-4 py-2.5">{p.ad}</td>
-                  <td className="px-4 py-2.5 text-metin-body">{shiftName(p.shift_id)}</td>
-                  <td className="px-4 py-2.5 text-metin-body">
+                <Tr key={p.id}>
+                  <Td>{p.ad}</Td>
+                  <Td className="text-metin-body">{shiftName(p.shift_id)}</Td>
+                  <Td className="text-metin-body">
                     {p.baslangic_saat}–{p.bitis_saat} ·{" "}
                     {t("devriyePeriyotN", { n: p.periyot_dakika })}
-                  </td>
-                  <td className="px-4 py-2.5">
+                  </Td>
+                  <Td>
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                         p.aktif ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-metin-body"
@@ -418,8 +417,8 @@ export default function PatrolPlansPage() {
                     >
                       {p.aktif ? t("ortakAktif") : t("ortakPasif")}
                     </span>
-                  </td>
-                  <td className="px-4 py-2.5 text-right">
+                  </Td>
+                  <Td hizala="end">
                     <div className="flex justify-end gap-2">
                       <button className={btnGhost} onClick={() => openAssign(p)}>
                         {t("planNoktalar")}
@@ -431,18 +430,18 @@ export default function PatrolPlansPage() {
                         {t("ortakSil")}
                       </button>
                     </div>
-                  </td>
-                </tr>
+                  </Td>
+                </Tr>
               ))}
               {data && data.items.length === 0 && (
                 <tr>
-                  <td colSpan={5}>
+                  <Td colSpan={5}>
                     <EmptyState title={t("devriyePlanYok")} description={t("planYokAlt")} />
-                  </td>
+                  </Td>
                 </tr>
               )}
             </tbody>
-          </table>
+          </Tablo>
         </div>
       </div>
 
