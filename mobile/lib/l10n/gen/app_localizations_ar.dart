@@ -4230,7 +4230,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get modulAracGecis => 'مرور المركبات';
 
   @override
-  String get modulOtopark => 'موقف السيارات';
+  String get modulOtopark => 'مواقف السيارات';
 
   @override
   String get modulIhlaller => 'المخالفات';
@@ -4829,4 +4829,37 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get demoSimuleOkutmaHata => 'تعذّر تسجيل المسح المحاكى.';
+
+  @override
+  String get denetciWebBaslik => 'شاشات التدقيق على الويب';
+
+  @override
+  String denetciWebGovde(String adres) {
+    return 'تقارير التدقيق والإشراف المالي مصمَّمة لسطح المكتب. افتح $adres على حاسوبك.';
+  }
+
+  @override
+  String get denetciWebKopyala => 'نسخ العنوان';
+
+  @override
+  String get modulVardiyalar => 'الورديات';
+
+  @override
+  String get izgaraDuzenleBaslik => 'تعديل الشاشة الرئيسية';
+
+  @override
+  String izgaraDuzenleAciklama(int enCok) {
+    return 'اختر حتى $enCok أقسام تستخدمها كثيرًا.';
+  }
+
+  @override
+  String get izgaraSifirla => 'استعادة الإعدادات الافتراضية';
+
+  @override
+  String get izgaraKaydet => 'حفظ';
+
+  @override
+  String izgaraSecim(int secili, int enCok) {
+    return '$secili/$enCok محدد';
+  }
 }

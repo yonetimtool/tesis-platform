@@ -4748,4 +4748,37 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get demoSimuleOkutmaHata =>
       'The simulated scan could not be recorded.';
+
+  @override
+  String get denetciWebBaslik => 'Audit screens are on the web';
+
+  @override
+  String denetciWebGovde(String adres) {
+    return 'Audit reports and financial oversight are designed for the desktop. Open $adres on your computer.';
+  }
+
+  @override
+  String get denetciWebKopyala => 'Copy address';
+
+  @override
+  String get modulVardiyalar => 'Shifts';
+
+  @override
+  String get izgaraDuzenleBaslik => 'Edit home screen';
+
+  @override
+  String izgaraDuzenleAciklama(int enCok) {
+    return 'Choose up to $enCok sections you use most.';
+  }
+
+  @override
+  String get izgaraSifirla => 'Reset to default';
+
+  @override
+  String get izgaraKaydet => 'Save';
+
+  @override
+  String izgaraSecim(int secili, int enCok) {
+    return '$secili/$enCok selected';
+  }
 }

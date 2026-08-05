@@ -4560,4 +4560,37 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get demoSimuleOkutmaHata => 'Simüle okutma yapılamadı.';
+
+  @override
+  String get denetciWebBaslik => 'Denetim ekranları web\'de';
+
+  @override
+  String denetciWebGovde(String adres) {
+    return 'Denetim raporları ve mali gözetim masaüstü için tasarlandı. Bilgisayarınızdan $adres adresine girin.';
+  }
+
+  @override
+  String get denetciWebKopyala => 'Adresi kopyala';
+
+  @override
+  String get modulVardiyalar => 'Vardiyalar';
+
+  @override
+  String get izgaraDuzenleBaslik => 'Ana ekranı düzenle';
+
+  @override
+  String izgaraDuzenleAciklama(int enCok) {
+    return 'Sık kullandığınız $enCok bölümü seçin.';
+  }
+
+  @override
+  String get izgaraSifirla => 'Varsayılana dön';
+
+  @override
+  String get izgaraKaydet => 'Kaydet';
+
+  @override
+  String izgaraSecim(int secili, int enCok) {
+    return '$secili/$enCok seçili';
+  }
 }

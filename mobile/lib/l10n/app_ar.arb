@@ -1192,7 +1192,7 @@
   "ceviriYapilamadi": "تعذّرت الترجمة — يتم عرض النص الأصلي",
   "ceviriYapilamadiKisa": "تعذّرت الترجمة",
   "modulAracGecis": "مرور المركبات",
-  "modulOtopark": "موقف السيارات",
+  "modulOtopark": "مواقف السيارات",
   "modulIhlaller": "المخالفات",
   "aracSuzgecTumu": "الكل",
   "aracSuzgecIceride": "بالداخل",
@@ -1416,5 +1416,14 @@
       }
     }
   },
-  "demoSimuleOkutmaHata": "تعذّر تسجيل المسح المحاكى."
+  "demoSimuleOkutmaHata": "تعذّر تسجيل المسح المحاكى.",
+  "denetciWebBaslik": "شاشات التدقيق على الويب",
+  "denetciWebGovde": "تقارير التدقيق والإشراف المالي مصمَّمة لسطح المكتب. افتح {adres} على حاسوبك.",
+  "denetciWebKopyala": "نسخ العنوان",
+  "modulVardiyalar": "الورديات",
+  "izgaraDuzenleBaslik": "تعديل الشاشة الرئيسية",
+  "izgaraDuzenleAciklama": "اختر حتى {enCok} أقسام تستخدمها كثيرًا.",
+  "izgaraSifirla": "استعادة الإعدادات الافتراضية",
+  "izgaraKaydet": "حفظ",
+  "izgaraSecim": "{secili}/{enCok} محدد"
 }

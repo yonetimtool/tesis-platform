@@ -1416,5 +1416,14 @@
       }
     }
   },
-  "demoSimuleOkutmaHata": "Не удалось записать имитацию отметки."
+  "demoSimuleOkutmaHata": "Не удалось записать имитацию отметки.",
+  "denetciWebBaslik": "Экраны аудита — в веб-версии",
+  "denetciWebGovde": "Отчёты аудита и финансовый надзор рассчитаны на настольную версию. Откройте {adres} на компьютере.",
+  "denetciWebKopyala": "Скопировать адрес",
+  "modulVardiyalar": "Смены",
+  "izgaraDuzenleBaslik": "Настроить главный экран",
+  "izgaraDuzenleAciklama": "Выберите до {enCok} часто используемых разделов.",
+  "izgaraSifirla": "Сбросить по умолчанию",
+  "izgaraKaydet": "Сохранить",
+  "izgaraSecim": "Выбрано: {secili}/{enCok}"
 }

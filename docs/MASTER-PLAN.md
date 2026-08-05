@@ -8925,6 +8925,90 @@ uydurulmaz. Kerem onaylarsa tek turda uygulanır.
 Acceptance: elle tablo yazan sayfa **23 → 0** · kilit mutasyonla sınanmış ·
 kapılar yeşil.
 
+### P139 — Mobil: avatar oranı, splash regresyonu, ana ekran ızgarası
+Status: KISMEN(avatar + denetçi çıkmazı + ızgara mantığı BİTTİ · dönüş-splash
+KÖK NEDEN BULUNAMADI · ızgara arayüzü sürüyor) · Depends-on: P132
+Scope: Kerem'in üç maddesi. **Not:** brief "P134" diyordu, o numara dolu
+(backend günlük turu) — P139 açıldı. **Derleme numarasına dokunulmadı**,
+App Store Connect'e hiçbir şey gönderilmedi (yapım 3 incelemede).
+
+**1. AVATAR ORANI — BİTTİ, kök neden bileşende.** `sinirliGorsel`
+`ResizeImage(kaynak, width: px, height: px)` dönüyordu; **iki boyutu
+birden** vermek varsayılan `ResizeImagePolicy.exact`i devreye sokar ve
+**en-boy oranını yok sayar** — fotoğraf kareye sıkıştırılarak *çözülür*.
+`CircleAvatar`ın `BoxFit.cover`ı kurtaramıyordu çünkü cover **zaten
+bozulmuş** bitmap üzerinde çalışır. Kusur çizim değil **çözme**
+katmanındaydı ve tek yerdeydi: altı çağrı yerinin altısı da bu işlevi
+kullanıyor (profil ×2, kabuk başlığı, vardiya kartı, personel listesi,
+personel formu). `ResizeImagePolicy.fit` ile oran korunuyor, hiçbir eksen
+`px`i aşmıyor — tur 61'in bellek koruması duruyor; ölçüldü: **50176 →
+33152 bayt** (azaldı). Mevcut `gorsel_bellek_olcumu_test` kare çözmeyi
+**tam eşitlikle** bekliyordu, yani kusuru kilitlemişti; iddia üst sınıra
+çevrildi.
+
+**2. SPLASH — BİR GERÇEK KUSUR BULUNDU, ASIL HİPOTEZ ÇÜRÜDÜ.**
+İlk teşhisim: dönüş → `home_refresh` `tenantSettingsProvider`i invalidate
+eder → `kurulumKapisiProvider` `loading`e düşer → `HomeGate` splash çizer.
+Çözüm olarak `skipLoadingOnReload: true` eklemiştim. **Ölçtüm, çöktü:** bu
+Riverpod sürümünde `when` zaten varsayılan olarak yeniden-yüklemede
+loading'i atlıyor (bayraklı/bayraksız sonuç **aynı**). Ekleyeceğim şey
+**no-op**tu; geri alındı ve ölçüm bir testle kilitlendi (varsayılan
+değişirse test düşer, teşhis yeniden yapılır). **Dönüş-splash'ının gerçek
+sebebi bulunamadı** — cihazda üretilmesi gerekiyor. Kuvvetli şüphe: iOS'un
+*native launch storyboard*'u (tam ekran native kamera görünümünden
+dönüşte) — Flutter tarafında değil.
+**BULUNAN GERÇEK KUSUR:** `home_gate` `denetci`yi hiçbir dala sokmuyor,
+`role != yonetici` dalına düşürüp **kalıcı splash** çiziyordu. Rol
+çözülmüştü, bekleyen veri yoktu — ekran hiç değişmiyordu. Üstelik
+P128/P129 notu "ekran denetçiye web adresini söyler (home_gate)" diyordu;
+**kod bunu yapmıyordu** — karar yazılmış, uygulaması eksik kalmıştı.
+`DenetciYonlendirmeScreen` eklendi (7 dil, adres kopyalanabilir, 48pt).
+Kerem onayladı: **denetçinin mobil yüzeyi olmayacak, yalnız web.**
+
+**3. IZGARA — ENVANTER + MANTIK BİTTİ, ARAYÜZ SÜRÜYOR.**
+Ana ekranda **iki ayrı karo sistemi** var ve ikisi de rota taşıyor:
+`HizliErisimKart` (32 örnek) ve `ModuleCardSpec` (31 giriş). Aynı rotaya
+giden kart+modül çifti: **17 rota** (Kerem ikisini görmüştü). Ayrıca üç
+rotada tek sistem içinde de çokluk: `complaints` **üç** karttan
+(geriBildirim, gürültü, talep/arıza), `visitors` ve `kargo` ikişerden.
+**Otopark:** modül karosu yok; kart + yönetici ekranındaki "Hızlı Özet"
+kutusu ikizi üretiyor.
+**Şikayetler/Öneriler AYNI ekran** (`complaints`, auth.md §4 tek kanal) —
+istenen yedi kalem **altıya** indi. (`sikayetHaritasi` farklı ekran.)
+**İKİ GERÇEK BOŞLUK:** Otopark ve Vardiya'nın **modül girişi yoktu**
+(rotalar vardı). Eklendi — yüzeye çıkarma, yeni ekran değil. Görünürlük
+**uydurulmadı**, kartlarının bugün çizildiği rollerden türedi: otopark →
+yönetici(+admin), vardiyalar → güvenlik + tesis görevlisi + yönetici.
+**KİŞİSELLEŞTİRME (Kerem'in eklemesi):** kullanıcı ızgarayı kendi sık
+kullandıklarıyla değiştirebilir. Bu **yeni bir özelliktir** ve brief'in
+"yeni özellik yok" kısıtını Kerem'in kararı geçersiz kılar. Seçilebilir
+küme **izin katmanından** gelir (`homeMenuForRole`) — yani izin hatasına
+götüren karo yapısal olarak imkânsız. Kayıtlı tercih her okumada rolle
+kesiştirilir; geçersiz/yinelenen düşer, küme boşalırsa varsayılana dönülür
+(**hiçbir koşulda boş ana ekran yok**). Depolama **ad** ile, indeksle
+değil.
+
+**KİŞİSELLEŞTİRME — YAPILAN:** mantık (`home_izgara.dart`, 12 test),
+kalıcılık (`izgara_tercihi.dart` — tema modu ve token'larla **aynı**
+`FlutterSecureStorage` deposu, rol başına ayrı anahtar), seçim ekranı
+(`izgara_duzenle_screen.dart`, 7 dil, sınır UI'da görünür, "varsayılana
+dön" her zaman erişilebilir) ve rotası (`/ana-ekran-duzenle`).
+
+Tercih **cihaz başınadır** ve bu dürüstçe bir bedeldir: sunucuya taşımak
+yeni uç + göç demekti, turun kısıtı "API değişikliği yok"tu. Aynı kullanıcı
+başka telefonda varsayılan ızgarayı görür; senkron istenirse ayrı madde.
+
+**KALAN TEK ADIM:** üç ana ekranın (yönetici/saha/sakin) hızlı-erişim
+ızgarasını `izgaraKarolariProvider`den çizmesi + bir "düzenle" girişi.
+Bugün o ızgara `HizliErisimKart` görünüm modellerinden besleniyor;
+`HomeMenuEntry` → `HizliErisimKart` köprüsü yazılmalı. **Bilerek
+yapılmadı:** ikizlerin kaynağı tam olarak bu iki sistemin yan yana
+durmasıdır ve köprüyü üç ekranda aceleye getirmek, kapatılmak istenen
+sorunu büyütürdü.
+
+**CİHAZ DOĞRULAMASI YAPILMADI** (bu ortamda iPhone yok) — avatar düzeltmesi
+ve denetçi ekranı P11'e yazıldı.
+
 ### NOT — Sign in with Apple (4.8)
 **GEÇERSİZ (N/A):** üçüncü taraf sosyal giriş **kullanmıyoruz** (Google/Facebook
 girişi yok; kimlik doğrulama tesis tarafından verilen hesapla). 4.8 yalnız

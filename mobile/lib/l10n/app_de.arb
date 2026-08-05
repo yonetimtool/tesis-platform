@@ -1416,5 +1416,14 @@
       }
     }
   },
-  "demoSimuleOkutmaHata": "Der simulierte Scan konnte nicht erfasst werden."
+  "demoSimuleOkutmaHata": "Der simulierte Scan konnte nicht erfasst werden.",
+  "denetciWebBaslik": "Prüfansichten sind im Web",
+  "denetciWebGovde": "Prüfberichte und Finanzaufsicht sind für den Desktop ausgelegt. Öffnen Sie {adres} auf Ihrem Computer.",
+  "denetciWebKopyala": "Adresse kopieren",
+  "modulVardiyalar": "Schichten",
+  "izgaraDuzenleBaslik": "Startbildschirm bearbeiten",
+  "izgaraDuzenleAciklama": "Wählen Sie bis zu {enCok} häufig genutzte Bereiche.",
+  "izgaraSifirla": "Auf Standard zurücksetzen",
+  "izgaraKaydet": "Speichern",
+  "izgaraSecim": "{secili}/{enCok} ausgewählt"
 }

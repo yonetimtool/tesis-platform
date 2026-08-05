@@ -4818,4 +4818,37 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get demoSimuleOkutmaHata => 'Не удалось записать имитацию отметки.';
+
+  @override
+  String get denetciWebBaslik => 'Экраны аудита — в веб-версии';
+
+  @override
+  String denetciWebGovde(String adres) {
+    return 'Отчёты аудита и финансовый надзор рассчитаны на настольную версию. Откройте $adres на компьютере.';
+  }
+
+  @override
+  String get denetciWebKopyala => 'Скопировать адрес';
+
+  @override
+  String get modulVardiyalar => 'Смены';
+
+  @override
+  String get izgaraDuzenleBaslik => 'Настроить главный экран';
+
+  @override
+  String izgaraDuzenleAciklama(int enCok) {
+    return 'Выберите до $enCok часто используемых разделов.';
+  }
+
+  @override
+  String get izgaraSifirla => 'Сбросить по умолчанию';
+
+  @override
+  String get izgaraKaydet => 'Сохранить';
+
+  @override
+  String izgaraSecim(int secili, int enCok) {
+    return 'Выбрано: $secili/$enCok';
+  }
 }

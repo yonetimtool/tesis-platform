@@ -1416,5 +1416,14 @@
       }
     }
   },
-  "demoSimuleOkutmaHata": "The simulated scan could not be recorded."
+  "demoSimuleOkutmaHata": "The simulated scan could not be recorded.",
+  "denetciWebBaslik": "Audit screens are on the web",
+  "denetciWebGovde": "Audit reports and financial oversight are designed for the desktop. Open {adres} on your computer.",
+  "denetciWebKopyala": "Copy address",
+  "modulVardiyalar": "Shifts",
+  "izgaraDuzenleBaslik": "Edit home screen",
+  "izgaraDuzenleAciklama": "Choose up to {enCok} sections you use most.",
+  "izgaraSifirla": "Reset to default",
+  "izgaraKaydet": "Save",
+  "izgaraSecim": "{secili}/{enCok} selected"
 }

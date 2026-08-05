@@ -23,11 +23,42 @@ int? cozmeSiniri(BuildContext context, double? mantiksal) {
 
 /// [ImageProvider]'i cozme siniriyla sarar (avatar gibi `backgroundImage`
 /// alanlari `cacheWidth` almadigi icin gerekir).
+///
+/// P139 — EN-BOY ORANI HATASI (regresyon). Bu islev once
+/// `ResizeImage(kaynak, width: px, height: px)` donuyordu. IKI BOYUTU BIRDEN
+/// vermek Flutter'a "tam px x px coz" der ve varsayilan
+/// [ResizeImagePolicy.exact] EN-BOY ORANINI YOK SAYAR: 4:3 bir portre
+/// fotograf kareye SIKISTIRILARAK cozulur. Kullanicinin gordugu "basik"
+/// avatar buydu.
+///
+/// `CircleAvatar` neden kurtarmadi: `backgroundImage` `BoxFit.cover`
+/// uygular ama cover ZATEN BOZULMUS bitmap uzerinde calisir — kirpar,
+/// orani geri getiremez. Yani kusur cizim katmaninda degil COZME
+/// katmanindaydi ve tek bir yerde: butun avatar cagri yerleri (profil,
+/// kabuk basligi, vardiya karti, personel listesi/formu) bu islevi
+/// kullaniyor.
+///
+/// [ResizeImagePolicy.fit] ile goruntu kutuya SIGDIRILIR, oran korunur ve
+/// hicbir eksen `px`i asmaz — yani tur 61'in bellek koruma amaci aynen
+/// durur.
+///
+/// KABUL EDILEN TAKAS (durustce): cok genis/uzun bir kaynakta kisa eksen
+/// `px`in altinda cozulur ve daire kirpiminda bir miktar yumusama olur.
+/// Alternatifi (kisa ekseni `px`e sabitlemek) kaynagin yonunu onceden
+/// bilmeyi gerektirir; bozulmayi bulanikliga tercih etmek acik bir
+/// karardir.
 ImageProvider sinirliGorsel(
   BuildContext context,
   ImageProvider kaynak,
   double mantiksal,
 ) {
   final px = cozmeSiniri(context, mantiksal);
-  return px == null ? kaynak : ResizeImage(kaynak, width: px, height: px);
+  return px == null
+      ? kaynak
+      : ResizeImage(
+          kaynak,
+          width: px,
+          height: px,
+          policy: ResizeImagePolicy.fit,
+        );
 }

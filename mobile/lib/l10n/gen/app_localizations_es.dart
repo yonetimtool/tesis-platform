@@ -4704,4 +4704,37 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get demoSimuleOkutmaHata =>
       'No se pudo registrar el escaneo simulado.';
+
+  @override
+  String get denetciWebBaslik => 'Las pantallas de auditoría están en la web';
+
+  @override
+  String denetciWebGovde(String adres) {
+    return 'Los informes de auditoría y la supervisión financiera están diseñados para el escritorio. Abra $adres en su ordenador.';
+  }
+
+  @override
+  String get denetciWebKopyala => 'Copiar dirección';
+
+  @override
+  String get modulVardiyalar => 'Turnos';
+
+  @override
+  String get izgaraDuzenleBaslik => 'Editar pantalla de inicio';
+
+  @override
+  String izgaraDuzenleAciklama(int enCok) {
+    return 'Elija hasta $enCok secciones que más use.';
+  }
+
+  @override
+  String get izgaraSifirla => 'Restablecer valores predeterminados';
+
+  @override
+  String get izgaraKaydet => 'Guardar';
+
+  @override
+  String izgaraSecim(int secili, int enCok) {
+    return '$secili/$enCok seleccionados';
+  }
 }

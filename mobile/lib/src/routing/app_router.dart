@@ -23,6 +23,7 @@ import '../features/budget/presentation/financial_summary_screen.dart';
 import '../features/budget/presentation/site_budget_screen.dart';
 import '../features/transparency/presentation/transparency_screen.dart';
 import '../features/home/presentation/home_gate.dart';
+import '../features/home/presentation/izgara_duzenle_screen.dart';
 import '../features/home/presentation/home_refresh.dart' show homeRouteObserver;
 import '../features/kargo/presentation/kargo_screen.dart';
 import '../features/nfc/presentation/nfc_screen.dart';
@@ -112,6 +113,9 @@ class AppRoutes {
   static const sakinler = '/sakinler';
   static const aracGecis = '/arac-gecisleri';
   static const otopark = '/otopark';
+  // (P139.3) Ana ekran izgarasini duzenleme — mevcut ekranlara ek bir
+  // YUZEY degil, gorunum ayari.
+  static const izgaraDuzenle = '/ana-ekran-duzenle';
   static const ihlaller = '/ihlaller';
   static const plakaOlaylari = '/plaka-okumalari';
 }
@@ -295,6 +299,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.aracGecis,
         builder: (context, state) => const VehiclePassScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.izgaraDuzenle,
+        builder: (context, state) => const IzgaraDuzenleScreen(),
       ),
       GoRoute(
         path: AppRoutes.otopark,

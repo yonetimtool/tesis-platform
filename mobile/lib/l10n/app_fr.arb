@@ -1416,5 +1416,14 @@
       }
     }
   },
-  "demoSimuleOkutmaHata": "Le scan simulé n'a pas pu être enregistré."
+  "demoSimuleOkutmaHata": "Le scan simulé n'a pas pu être enregistré.",
+  "denetciWebBaslik": "Les écrans d'audit sont sur le web",
+  "denetciWebGovde": "Les rapports d'audit et la supervision financière sont conçus pour le bureau. Ouvrez {adres} sur votre ordinateur.",
+  "denetciWebKopyala": "Copier l'adresse",
+  "modulVardiyalar": "Services",
+  "izgaraDuzenleBaslik": "Modifier l'écran d'accueil",
+  "izgaraDuzenleAciklama": "Choisissez jusqu'à {enCok} sections que vous utilisez le plus.",
+  "izgaraSifirla": "Rétablir les valeurs par défaut",
+  "izgaraKaydet": "Enregistrer",
+  "izgaraSecim": "{secili}/{enCok} sélectionnés"
 }

@@ -35,6 +35,16 @@ const _purple = Color(0xFF7C3AED);
 /// giris eklenince derleyici burayi zorlar.
 ModuleCardSpec moduleCardSpec(HomeMenuEntry entry) {
   switch (entry) {
+    case HomeMenuEntry.otopark:
+      return const ModuleCardSpec(
+          icon: Icons.local_parking_outlined,
+          accent: _purple,
+          route: AppRoutes.otopark);
+    case HomeMenuEntry.vardiyalar:
+      return const ModuleCardSpec(
+          icon: Icons.schedule_outlined,
+          accent: _navy,
+          route: AppRoutes.vardiyalar);
     case HomeMenuEntry.anketler:
       return const ModuleCardSpec(
           icon: Icons.how_to_vote_outlined,
@@ -198,6 +208,8 @@ ModuleCardSpec moduleCardSpec(HomeMenuEntry entry) {
 /// switch EKSIKSIZDIR (default yok) → yeni giris eklenince derleyici zorlar.
 String moduleBaslik(AppLocalizations l10n, HomeMenuEntry entry) =>
     switch (entry) {
+      HomeMenuEntry.otopark => l10n.modulOtopark,
+      HomeMenuEntry.vardiyalar => l10n.modulVardiyalar,
       HomeMenuEntry.anketler => l10n.modulAnketler,
       HomeMenuEntry.announcements => l10n.modulDuyurular,
       HomeMenuEntry.patrol => l10n.modulTurlarim,

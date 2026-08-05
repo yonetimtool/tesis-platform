@@ -6971,7 +6971,7 @@ abstract class AppLocalizations {
   /// **'Araç Geçişleri'**
   String get modulAracGecis;
 
-  /// No description provided for @modulOtopark.
+  /// Ana ekran karosu — agregat otopark doluluk
   ///
   /// In tr, this message translates to:
   /// **'Otopark'**
@@ -8068,6 +8068,60 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Simüle okutma yapılamadı.'**
   String get demoSimuleOkutmaHata;
+
+  /// Denetci mobil girisinde: is masaustunde
+  ///
+  /// In tr, this message translates to:
+  /// **'Denetim ekranları web\'de'**
+  String get denetciWebBaslik;
+
+  /// Denetciye web adresini soyler
+  ///
+  /// In tr, this message translates to:
+  /// **'Denetim raporları ve mali gözetim masaüstü için tasarlandı. Bilgisayarınızdan {adres} adresine girin.'**
+  String denetciWebGovde(String adres);
+
+  /// Adresi panoya kopyala dugmesi
+  ///
+  /// In tr, this message translates to:
+  /// **'Adresi kopyala'**
+  String get denetciWebKopyala;
+
+  /// Ana ekran karosu — vardiya cizelgesi
+  ///
+  /// In tr, this message translates to:
+  /// **'Vardiyalar'**
+  String get modulVardiyalar;
+
+  /// No description provided for @izgaraDuzenleBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ana ekranı düzenle'**
+  String get izgaraDuzenleBaslik;
+
+  /// No description provided for @izgaraDuzenleAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sık kullandığınız {enCok} bölümü seçin.'**
+  String izgaraDuzenleAciklama(int enCok);
+
+  /// No description provided for @izgaraSifirla.
+  ///
+  /// In tr, this message translates to:
+  /// **'Varsayılana dön'**
+  String get izgaraSifirla;
+
+  /// No description provided for @izgaraKaydet.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kaydet'**
+  String get izgaraKaydet;
+
+  /// No description provided for @izgaraSecim.
+  ///
+  /// In tr, this message translates to:
+  /// **'{secili}/{enCok} seçili'**
+  String izgaraSecim(int secili, int enCok);
 }
 
 class _AppLocalizationsDelegate

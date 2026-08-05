@@ -23,6 +23,9 @@ import 'package:flutter_test/flutter_test.dart';
 ///   gosterilmez, yalnizca "alan hala varsayilan mi" karsilastirmasi icin
 ///   kullanilir. Cevrilirse karsilastirma bozulur.
 /// * marka kilidi (README §15)
+/// * `app.yonetiyor.com`: TESIS YUZEYININ ADRESI. Cevrilecek bir cumle
+///   degil bir ADRESTIR ve her dilde AYNI yazilir; cevrilirse denetciye
+///   calismayan bir adres verilmis olur (P139.2).
 final _izinli = RegExp(
   r'^('
   r'[\d.,:/+\-#%*]+|.{0,1}|[a-z_]+|/[\w/{}.-]*|https?://.*'
@@ -30,7 +33,7 @@ final _izinli = RegExp(
   r'|[A-Z_]{2,}|(dd|MM|yyyy|HH|mm|ss)[^A-Za-z]*.*|\#[0-9A-Fa-f]{3,8}'
   r'|\[.*\]|[a-zA-Z0-9]+([-_][a-zA-Z0-9]+)+'
   r'|PICCData|\(Kurulum bekliyor\)|\{\{.*\}\}.*'
-  r'|Yönetio|GÜVENLİK & DANIŞMANLIK'
+  r'|Yönetio|GÜVENLİK & DANIŞMANLIK|app\.yonetiyor\.com'
   r')$',
 );
 

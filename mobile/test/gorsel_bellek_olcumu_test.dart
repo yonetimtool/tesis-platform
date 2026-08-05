@@ -154,8 +154,19 @@ void main() {
       ),
     );
     final bayt = await cozulenBayt(tester, sarilmis);
-    // 56 dp * dpr 2 = 112 px kare.
-    expect(bayt, 112 * 112 * 4);
+    // (P139.1) BEKLENTI DEGISTI ve bu bir GERILEME DEGIL DUZELTMEDIR.
+    //
+    // Eskiden burada `expect(bayt, 112 * 112 * 4)` yaziyordu — yani KARE
+    // cozme TAM ESITLIKLE bekleniyordu. Ama kare cozme, kaynagin en-boy
+    // oranini yok saymanin ta kendisiydi: kullanicinin gordugu "basik"
+    // avatarin sebebi buydu. Test, kusuru KILITLEMISTI.
+    //
+    // Artik `ResizeImagePolicy.fit` kullaniliyor: oran korunur, hicbir
+    // eksen 112 pikseli ASMAZ. Olculen sey de bu — tam esitlik degil UST
+    // SINIR. (Bu kaynak icin sonuc 50176 -> 33152 bayt; bellek AZALDI.)
+    expect(bayt, lessThanOrEqualTo(112 * 112 * 4),
+        reason: 'cozme siniri asilmis (tur 61 koruma amaci)');
+    expect(bayt, greaterThan(0), reason: 'gorsel hic cozulmemis');
     expect(bayt, lessThan(g * y * 4 ~/ 50),
         reason: 'avatar icin ham cozumun ellide birinden az bellek');
   });

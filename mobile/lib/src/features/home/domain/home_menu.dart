@@ -140,6 +140,19 @@ enum HomeMenuEntry {
   /// anket sakinlerin karar aracidir, personelin oyu site kararina girmez.
   anketler,
 
+  /// (P139.3) Otopark — AGREGAT doluluk ekrani (plaka listesi DEGIL, KVKK).
+  /// Bugune kadar YALNIZ sayacli kart olarak vardi; modul girisi YOKTU ve
+  /// bu yuzden ana ekran izgarasina konamiyordu. Rota (`AppRoutes.otopark`)
+  /// ZATEN vardi — bu bir yuzeye cikarma, yeni ekran degil.
+  /// Gorunurluk UYDURULMADI: kartinin bugun cizildigi rolden turedi
+  /// (`_yoneticiErisim`) — yani yonetici (+admin).
+  otopark,
+
+  /// (P139.3) Vardiyalar — vardiya cizelgesi. Otoparkla ayni durum: kart
+  /// vardi, modul girisi yoktu. Gorunurluk kartlarindan turedi:
+  /// `_gorevliErisim` + `_tesisGorevlisiErisim` + `_yoneticiErisim`.
+  vardiyalar,
+
   /// Yonetici Iletisim — tenant'in yoneticileri (ad + telefon + arama) +
   /// yonetim maili. Saha rolleri + sakin gorur; YONETICI kendisi GORMEZ.
   yoneticiIletisim,
@@ -164,6 +177,8 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.tasks,
         HomeMenuEntry.assets,
         HomeMenuEntry.daireTanimlari,
+        HomeMenuEntry.otopark,
+        HomeMenuEntry.vardiyalar,
         HomeMenuEntry.outbox,
       ];
     case UserRole.guvenlikAmiri:
@@ -198,6 +213,9 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.tasks,
         HomeMenuEntry.assets,
         HomeMenuEntry.outbox,
+        // (P139.3) Vardiyalar — `binaDuzenleme`den ONCE: onun EN ALTTA
+        // durmasi kayitli bir kuraldir (home_menu_test).
+        HomeMenuEntry.vardiyalar,
         HomeMenuEntry.binaDuzenleme,
         HomeMenuEntry.yoneticiIletisim,
       ];
@@ -216,6 +234,9 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.tasks,
         HomeMenuEntry.assets,
         HomeMenuEntry.outbox,
+        // (P139.3) Vardiyalar — `binaDuzenleme`den ONCE: onun EN ALTTA
+        // durmasi kayitli bir kuraldir (home_menu_test).
+        HomeMenuEntry.vardiyalar,
         HomeMenuEntry.binaDuzenleme,
         HomeMenuEntry.yoneticiIletisim,
       ];
@@ -243,6 +264,8 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.integrations,
         HomeMenuEntry.binaDuzenleme,
         HomeMenuEntry.daireTanimlari,
+        HomeMenuEntry.otopark,
+        HomeMenuEntry.vardiyalar,
       ];
     case UserRole.resident:
       // Sakinin kaynaklari: duyuru okuma + sikayet/oneri kanali + kendi aidat

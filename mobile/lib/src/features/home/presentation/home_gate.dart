@@ -9,6 +9,7 @@ import '../../profile/data/profile_api.dart';
 import '../../tenant/data/tenant_api.dart';
 import '../../tenant/presentation/setup_tenant_screen.dart';
 import '../../../routing/splash_screen.dart';
+import 'denetci_yonlendirme_screen.dart';
 import 'resident_home_screen.dart';
 import 'saha_home_screen.dart';
 import 'yonetici_home_screen.dart';
@@ -52,6 +53,18 @@ class HomeGate extends ConsumerWidget {
     if (role == UserRole.admin) {
       return const YoneticiHomeScreen(role: UserRole.admin);
     }
+    // (P139.2) DENETCI ACIK UCTA KALIYORDU. Bu dal `denetci`yi de yutuyor
+    // ve rol cozulmus olmasina ragmen ekran KALICI olarak splash'ta
+    // kaliyordu — cikisi olmayan bir bekleme.
+    //
+    // P128/P129 notu "ekran, giris yapan denetciye web adresini soyler
+    // (home_gate)" diyordu; KOD BUNU YAPMIYORDU. Karar dogruydu, uygulamasi
+    // eksikti: denetimin isi masabasi isidir ve mobil onun yuzeyi degil —
+    // ama bunu SOYLEMEK gerekir, sonsuz bir acilis ekrani gostermek degil.
+    if (role == UserRole.denetci) {
+      return const DenetciYonlendirmeScreen();
+    }
+    // Kalan tek durum `unknown`: rol cozulmeden gecen saniye-alti an.
     if (role != UserRole.yonetici) {
       return const SplashScreen();
     }
@@ -67,6 +80,22 @@ class HomeGate extends ConsumerWidget {
     // (bkz. kurulumKapisiProvider) — yavas/hatali uc kullaniciyi giris
     // sonrasinda bos bir ekranda TUTAMAZ; bilinmiyorsa ana ekran gosterilir.
     // Kisa bekleme markali acilis ekraniyla yapilir (bos beyaz ekran degil).
+    // (P139.2) NOT — BU DAL BIR REGRESYON SUPHELISIYDI, DEGILMIS.
+    //
+    // "Kameradan donunce splash goruunuyor" raporunda ilk hipotezim buydu:
+    // donus -> `home_refresh` `tenantSettingsProvider`i invalidate eder ->
+    // `kurulumKapisiProvider` (onu watch ediyor) yeniden `loading`e duser ->
+    // burasi SplashScreen cizer. Cozum olarak `skipLoadingOnReload: true`
+    // eklemistim.
+    //
+    // OLCTUM VE HIPOTEZ COKTU: bu Riverpod surumunde `AsyncValue.when`
+    // ZATEN varsayilan olarak yeniden-yuklemede loading dalini atliyor
+    // (onceki deger varken `data` kosuyor; olculdu: bayrakli ve bayraksiz
+    // sonuc AYNI). Yani ekleyecegim sey NO-OP olurdu ve duzeltme gibi
+    // gorunen bir kayit birakirdi. Geri alindi.
+    //
+    // Donus-splash'inin gercek sebebi HENUZ BULUNMADI; cihazda uretilmesi
+    // gerekiyor (bkz. P139 notu).
     return ref.watch(kurulumKapisiProvider).when(
           data: (kurulumGerekli) =>
               kurulumGerekli ? const SetupTenantScreen() : const YoneticiHomeScreen(),

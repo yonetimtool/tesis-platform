@@ -1957,5 +1957,51 @@
       }
     }
   },
-  "demoSimuleOkutmaHata": "Simüle okutma yapılamadı."
+  "demoSimuleOkutmaHata": "Simüle okutma yapılamadı.",
+  "denetciWebBaslik": "Denetim ekranları web'de",
+  "@denetciWebBaslik": {
+    "description": "Denetci mobil girisinde: is masaustunde"
+  },
+  "denetciWebGovde": "Denetim raporları ve mali gözetim masaüstü için tasarlandı. Bilgisayarınızdan {adres} adresine girin.",
+  "@denetciWebGovde": {
+    "description": "Denetciye web adresini soyler",
+    "placeholders": {
+      "adres": {
+        "type": "String"
+      }
+    }
+  },
+  "denetciWebKopyala": "Adresi kopyala",
+  "@denetciWebKopyala": {
+    "description": "Adresi panoya kopyala dugmesi"
+  },
+  "modulVardiyalar": "Vardiyalar",
+  "@modulOtopark": {
+    "description": "Ana ekran karosu — agregat otopark doluluk"
+  },
+  "@modulVardiyalar": {
+    "description": "Ana ekran karosu — vardiya cizelgesi"
+  },
+  "izgaraDuzenleBaslik": "Ana ekranı düzenle",
+  "izgaraDuzenleAciklama": "Sık kullandığınız {enCok} bölümü seçin.",
+  "izgaraSifirla": "Varsayılana dön",
+  "izgaraKaydet": "Kaydet",
+  "izgaraSecim": "{secili}/{enCok} seçili",
+  "@izgaraDuzenleAciklama": {
+    "placeholders": {
+      "enCok": {
+        "type": "int"
+      }
+    }
+  },
+  "@izgaraSecim": {
+    "placeholders": {
+      "secili": {
+        "type": "int"
+      },
+      "enCok": {
+        "type": "int"
+      }
+    }
+  }
 }

@@ -25,7 +25,15 @@ void main() {
         HomeMenuEntry.assets,
         // (P26) Bagimsiz Bolum Tanimlari — site KURULUM adimi; yalniz
         // yonetim gorur.
+      // (P139.3) `otopark` + `vardiyalar` — ana ekran izgarasi icin
+      // yuzeye cikarildi. Rotalari (`/otopark`, `/vardiyalar`) ZATEN
+      // vardi; eksik olan MODUL GIRISIYDI, o yuzden izgaraya konamiyordu.
+      // Gorunurluk UYDURULMADI: kartlarinin bugun cizildigi rollerden
+      // turedi (otopark -> `_yoneticiErisim`; vardiya -> `_gorevliErisim`
+      // + `_tesisGorevlisiErisim` + `_yoneticiErisim`).
         HomeMenuEntry.daireTanimlari,
+        HomeMenuEntry.otopark,
+        HomeMenuEntry.vardiyalar,
         HomeMenuEntry.outbox,
       ]);
       expect(homeMenuForRole(UserRole.security), const [
@@ -41,6 +49,12 @@ void main() {
         HomeMenuEntry.tasks,
         HomeMenuEntry.assets,
         HomeMenuEntry.outbox,
+        // (P139.3) Vardiyalar yuzeye cikarildi — rotasi ZATEN vardi, eksik
+        // olan modul girisiydi. Gorunurluk kartinin bugun cizildigi
+        // rollerden turedi (`_gorevliErisim` + `_tesisGorevlisiErisim` +
+        // `_yoneticiErisim`). `binaDuzenleme`nin EN ALTTA kalmasi kurali
+        // korundu: yeni giris ONUN ONUNE kondu.
+        HomeMenuEntry.vardiyalar,
         // Sikayet Haritasi (yogunluk) YOK; salt-okuma Bina Duzenleme EN ALTTA.
         HomeMenuEntry.binaDuzenleme,
         HomeMenuEntry.yoneticiIletisim,
@@ -123,6 +137,10 @@ void main() {
           HomeMenuEntry.binaDuzenleme,
           // (P26) Bagimsiz Bolum Tanimlari — yonetim kurulum adimi.
           HomeMenuEntry.daireTanimlari,
+          // (P139.3) Yuzeye cikarildi (rotalari zaten vardi); gorunurluk
+          // kartlarinin cizildigi rolden turedi — bkz. admin blogu.
+          HomeMenuEntry.otopark,
+          HomeMenuEntry.vardiyalar,
         ],
       );
       // ziyaretci/kargo DOGRUDAN GORMEZ (KVKK — varsayilan kapali)
