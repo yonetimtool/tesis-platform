@@ -50,8 +50,10 @@ void main() {
         .allMatches(tohum)
         .map((m) => m.group(1)!)
         .toSet();
-    expect(numaralar.length, 4,
-        reason: 'tohumlama betiginde dort demo numarasi bekleniyor');
+    // (P143) DORT -> BES: `guvenlik_amiri` hesabi eklendi. Rol enum'da
+    // vardi ama PROD'DA TEK KULLANICISI YOKTU — yani hic denenmemisti.
+    expect(numaralar.length, 5,
+        reason: 'tohumlama betiginde bes demo numarasi bekleniyor');
 
     final n = _oku(_notlar);
     for (final e164 in numaralar) {
@@ -68,7 +70,8 @@ void main() {
         .allMatches(tohum)
         .map((m) => m.group(1)!)
         .toSet();
-    expect(postalar.length, 4);
+    // (P143) Bes hesap: dort rol + guvenlik amiri.
+    expect(postalar.length, 5);
     final n = _oku(_notlar);
     for (final e in postalar) {
       expect(n, contains(e), reason: '$e denetim notlarinda yok');

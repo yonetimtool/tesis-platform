@@ -9232,6 +9232,166 @@ kendi "kök nedeni bul, üstünü örtme" kuralı burada da geçerli.
 (satırlar `bekliyor`da mı takılı), `logs worker | grep -i ceviri` (kuyruk
 işliyor mu).
 
+### P141 — [KEREM ONAYI BEKLİYOR] Denetçinin mobil yüzeyi
+Status: KARAR-BEKLIYOR(bugünkü davranış korunuyor) · Depends-on: P128, P129
+Scope: **Bu bir AJAN KARARIYDI, Kerem onaylamadı.** Kerem 2026-08-05'te
+açıkça belirtti: "mobil yüzeyin olmaması senin kararındı, ben onaylamadım."
+Madde bu yüzden açıldı — karar görünür olsun ve ileride değiştirilebilsin.
+
+**BUGÜNKÜ DAVRANIŞ:** denetçi mobilde ana ekran görmez;
+`DenetciYonlendirmeScreen` "denetim ekranları web'de" der ve
+`app.yonetiyor.com` adresini kopyalatır (7 dil, 48pt hedef).
+`homeMenuForRole(denetci)` **boş küme** döner, dolayısıyla seçilebilir
+karo sayısı **0** ve ızgara tavanı **0**.
+
+**GEREKÇE (ajanın, P128/P129'da yazdığı):** denetimin işi masabaşı işidir
+— rapor okumak, tablo indirmek, tahakkuk/tahsilat karşılaştırmak. Ürün
+kararı `app.*` web yüzeyi yönünde verilmişti. Mobilde "birkaç kart"
+göstermek, **tasarlanmamış bir deneyimi varmış gibi sunmak** olurdu.
+
+**AJANIN BULDUĞU KUSUR (düzeltildi, P139.2):** karar doğru yazılmıştı ama
+**kod onu uygulamıyordu** — `home_gate` denetçiyi hiçbir dala sokmuyor,
+`role != yonetici` dalına düşürüp **kalıcı splash** çiziyordu. Rol
+çözülmüştü, bekleyen veri yoktu; ekran hiç değişmiyordu. Yani denetçi
+mobilde "uygulama açılmıyor" görüyordu.
+
+**DEĞİŞTİRİLMEK İSTENİRSE NE GEREKİR:** (a) denetçiye hangi ekranların
+açık olacağı kararı — bugün `ROTA_ROLLERI` webde ona `/raporlar`,
+`/transparency`, `/kvkk`, `/profil` veriyor; mobil karşılıkları
+`HomeMenuEntry`de tanımlı ama role atanmamış; (b) `homeMenuForRole`da
+denetçi listesinin doldurulması; (c) `home_gate`teki yönlendirme dalının
+kaldırılması. Üçü de tek turluk iş — **ürün kararı verildiği anda**.
+
+### P143 — Demo hesaplari + guvenlik amiri rol denetimi
+Status: BITTI(2026-08-05 · seed + auth.md §4a iki yonde uygulandi) · Depends-on: P35
+
+**DEMO HESAPLARI (tek kaynak — telefonlar `+90` ONEKLI saklanir).**
+Hepsi `demo` tesisinde, ayni parolayla; parola **koda yazilmaz**,
+`DEMO_PAROLA` ortam degiskeninden gelir ve `app.security.hash_password`ten
+gecer (elle SQL hash YOK).
+
+| telefon | rol | e-posta |
+|---|---|---|
+| `+905000000101` | yonetici | yonetici@demo.yonetio.site |
+| `+905000000102` | security | guvenlik@demo.yonetio.site |
+| `+905000000103` | tesis_gorevlisi | gorevli@demo.yonetio.site |
+| `+905000000104` | resident | sakin@demo.yonetio.site |
+| **`+905000000105`** | **guvenlik_amiri** | amir@demo.yonetio.site |
+| `+905777777777` | denetci | *(depoda YOK — elle acilmis)* |
+
+**`denetci` hesabi seed betiginde DEGIL.** Kerem'in listesinde var ama
+`demo_tenant.py`de yok; elle acilmis. Not: betikteki "denetci" kelimesi
+App Store **inceleyicisini** anlatir, `denetci` ROLUNU degil — ad
+benzerligi yaniltici.
+
+**GUVENLIK AMIRI HESABI YOKTU.** Rol enum'da vardi ama prod'da tek
+kullanicisi yoktu: bugune kadar hic denenmemis, "6 karo goruyor" raporunu
+kimse EKRANDA gormemisti. Hesap olmadan bir rolun dogru calistigini
+soylemek, calistigini VARSAYMAKTIR.
+
+**PROD KOMUTU:**
+```
+docker compose -f infra/docker-compose.prod.yml run --rm \
+  -e DEMO_PAROLA='YonetioDemo2026!' \
+  worker python -m scripts.demo_tenant
+```
+Betik `ON CONFLICT ... DO UPDATE` ile calisir: mevcut dort hesap
+bozulmaz, yalnizca amir eklenir (ve parolalari tazelenir).
+
+---
+
+**IZIN FARKI — KODDAN CEVAP (Kerem'in sorusu).**
+
+Olculen fark (mobil menu):
+* amirde VAR, guvenlikte YOK: `personel` (ekip yonetimi)
+* guvenlikte VAR, amirde YOK: `etkinlik`, `anketler`, `disHizmet`,
+  `visitors`, `kargo`, `tasks`, `assets`, `ihlaller`, `vardiyalar`,
+  `binaDuzenleme`, `yoneticiIletisim` (11)
+* ortak: `announcements`, `siteKurallari`, `complaints`, `patrol`,
+  `outbox`
+
+**CEVAP: IKISI DE — daraltma KASITLI, ama menu de EKSIK.**
+
+`contracts/auth.md` §4a baglayici kurali yaziyor:
+> **Amirin erisimi — EN AZ YETKI:** tur/vardiya/kontrol noktasi, tarama
+> raporu, kamera, pano, bildirimler, **arac gecisi ve ihlal okuma**,
+> `POST /scans`. **KAPALI:** sakin listesi, aidat/finans, kargo,
+> ziyaretci, rezervasyon, tesis ayarlari. Gerekce KVKK'dir.
+
+Yani amirin astindan az yetkili olmasi **beklenen**: dis sirket
+personeline sakin kisisel verisi acilmaz. Ama kural ile kod IKI YONDE de
+ayrisiyor:
+
+| kalem | auth.md | mobil menu | kart listesi | durum |
+|---|---|---|---|---|
+| `vardiyalar` | ACIK | **YOK** | var | menu EKSIK |
+| `ihlaller` | ACIK | **YOK** | var | menu EKSIK |
+| arac gecisi | ACIK | **YOK** | var | menu EKSIK |
+| `kargo` | **KAPALI** | yok | **var** | kart KVKK'yi CIGNIYOR |
+| `visitors` | **KAPALI** | yok | **var** | kart KVKK'yi CIGNIYOR |
+
+**IKI KUSUR, IKI YON:** (a) menu, kuralin ACIK dedigi uc ekrani
+vermiyor — amir vardiya ve ihlali izgarasina koyamiyor; (b) ana ekranin
+KART listesi, kuralin KAPALI dedigi ziyaretci ve kargoyu gosteriyor —
+KVKK gerekcesiyle kapatilmis iki ekran yuzeyde.
+
+(b) bir gizlilik bulgusudur ve auth.md zaten karari vermistir; duzeltmesi
+kurali UYGULAMAKTIR, yeni bir urun karari degil. Yine de amirin ana
+ekranini degistirdigi icin Kerem'e birakildi ("simdilik kalsin").
+
+
+Notes (2026-08-05, P142+P143) — **AD BİRLEŞTİRME VE §4a UYGULANDI.**
+
+**AD BİRLEŞTİRME (Kerem onayı).** Kural: karo adı ile gittiği ekranın adı
+aynı. `/complaints`'e **dört** adla giriliyordu ("Şikayet / Öneri", "Geri
+Bildirim", "Gürültü Şikayeti", "Talep / Arıza"); ekranın kendi başlığı
+"Talep / Arıza" olduğu için hepsi ona bağlandı. En zararlısı `sikayetler`
+karosuydu: adı "Şikayetler", gittiği yer **bina şeması** — adı
+"Şikayet Haritası" oldu.
+
+**KİLİT ON ÇAKIŞMA DAHA BULDU** (`karo_adi_hedefle_uyusur_test.dart`):
+`/vardiyalar` (üç ad), `/reports`, `/transparency`, `/financial-summary`,
+`/my-dues`, `/otopark`, `/tasks?gorunum=yonetim`, `/kargo`, `/visitors`,
+`/yonetici-iletisim`. Her biri için kanonik adı **seçmek** ürün kararı;
+uydurulmadı, kilitte açık bekleyen listesi olarak duruyor — **yeni
+çakışma eklenirse test düşer**, bilinenler karar verildikçe kapanır.
+
+**AD KURALI VAR OLAN BİR YİNELEMEYİ GÖRÜNÜR KILDI:** sakinin ızgarasında
+`geriBildirim` ve `gurultuSikayeti` kartlarının ikisi de `/complaints`'e
+gidiyor. Farklı adlar taşıdıkları için yineleme görünmüyordu; artık aynı
+adla **iki karo** çıkıyor. Testte gizlenmedi, `findsNWidgets(2)` ile
+**ölçülüyor** — ayıklaması kurasyon kararı (Kerem'de).
+
+**auth.md §4a — İKİ YÖNDE UYGULANDI.**
+* **(a) menü eksikti:** kuralın **açık** dediği `vardiyalar`, `ihlaller`
+  ve **araç geçişi** amirin menüsünde yoktu. Üçü eklendi; araç geçişinin
+  modül girişi hiç yoktu (rotası vardı) — yüzeye çıkarıldı, 7 dil.
+  Sonuç: amirin seçebildiği karo **6 → 9**, tavanı 8 oldu ve
+  "amir astından az yetkili" tutarsızlığı kapandı.
+* **(b) kartlar KVKK'yı çiğniyordu:** amir kart düzenini `security` ile
+  paylaşıyor; kuralın **kapalı** dediği kargo ve ziyaretçi onun ana
+  ekranında görünüyordu. Süzüldü.
+
+**İLK SÜZGECİM FAZLA GENİŞTİ — ÖLÇÜMLE YAKALANDI.** "Rotası bir menü
+girişine karşılık gelip o rolün menüsünde olmayan kartı ele" kuralı
+admin'den **3**, güvenlikten **1**, sakinden **1** kart siliyordu. Sebep:
+bir rota **bilerek** menüsüz olabilir (`sikayetlerim`, `nfc` — enum
+notlarında yazılı) ve menüde yokluk yasak anlamına gelmez. Ayrıca
+`aracGecis` girişini eklemem güvenliğin var olan kartını eletmişti —
+düzeltmenin kendisi yeni kayıp üretiyordu. Kural `auth.md`'nin **açıkça
+kapattığı** listeye daraltıldı: çıkarımdan değil **yazılı karardan**.
+
+**BİR HATA DAHA:** süzgeç, rol çözülmemişken (`unknown`) bütün kartları
+eliyordu — boş menü "izni yok" değil **"izin bilgisi henüz yok"** demek.
+Rol çözülene kadarki saniye-altı pencerede ana ekran boşalıyordu; testler
+yakaladı (4x2 ızgara + RTL sürüşleri).
+
+**G4 TESTİ YANLIŞ ŞEYİ ÖLÇÜYORDU:** "ekranda hiç `/` olmasın" diyerek
+uydurma kapasite oranını arıyordu; yeni "Talep / Arıza" adı ona takıldı.
+Desen `sayı/sayı`ya daraltıldı.
+
+KAPILAR: `flutter analyze` temiz · `flutter test` **1806** (~3 atlandı).
+
 ### NOT — Sign in with Apple (4.8)
 **GEÇERSİZ (N/A):** üçüncü taraf sosyal giriş **kullanmıyoruz** (Google/Facebook
 girişi yok; kimlik doğrulama tesis tarafından verilen hesapla). 4.8 yalnız

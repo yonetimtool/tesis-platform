@@ -135,7 +135,8 @@ class SahaHomeScreen extends ConsumerWidget {
       // girisi rolun MEVCUT kartiyla ROTA uzerinden esler ve eslesirse o
       // karti OLDUGU GIBI kullanir — bu yuzden asagidaki sayac `switch`i
       // hicbir degisiklik olmadan calismaya devam eder.
-      for (final k in izgaraKartlari(izgaraSecimi, varyant, taban))
+      for (final k in rolunKartlari(
+          izgaraKartlari(izgaraSecimi, varyant, taban), role))
           switch (k.id) {
             HomeKartId.vardiyaDurum =>
               k.sayacla(vardiyaAsync.metin((_) => l10n.sayacAktif(aktifVardiya))),

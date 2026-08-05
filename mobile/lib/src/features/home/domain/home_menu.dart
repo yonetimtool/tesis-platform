@@ -149,6 +149,12 @@ enum HomeMenuEntry {
   /// (`_yoneticiErisim`) — yani yonetici (+admin).
   otopark,
 
+  /// (P143) Arac gecisleri — plaka okuma kayitlari. Otopark/Vardiya/Ihlal
+  /// ile AYNI DURUM: rotasi (`AppRoutes.aracGecis`) vardi, MODUL GIRISI
+  /// yoktu. `auth.md` §4a amire "arac gecisi ... okuma"yi ACIK sayiyor;
+  /// giris olmadan amir onu izgarasina koyamiyordu.
+  aracGecis,
+
   /// (P139.5) Ihlaller — arac/park ihlal kayitlari. Otopark ve Vardiya ile
   /// AYNI DURUM: kart vardi, MODUL GIRISI YOKTU. Kurasyon sonrasi bu
   /// eksiklik gorunur oldu — kart varsayilan izgaradan dusuyor ve
@@ -202,6 +208,13 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.complaints,
         HomeMenuEntry.patrol,
         HomeMenuEntry.personel,
+        // (P143) `auth.md` §4a amire ACIK diyor: "tur/vardiya/kontrol
+        // noktasi, tarama raporu, kamera, pano, bildirimler, ARAC GECISI
+        // VE IHLAL OKUMA". Ucu de menude YOKTU — amir bunlari izgarasina
+        // koyamiyordu. Daraltma kasitliydi ama BU UCU kapsamiyordu.
+        HomeMenuEntry.vardiyalar,
+        HomeMenuEntry.ihlaller,
+        HomeMenuEntry.aracGecis,
         HomeMenuEntry.outbox,
       ];
     case UserRole.security:
@@ -323,6 +336,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
 /// switch EKSIKSIZDIR (default yok) → yeni giris eklenince derleyici zorlar.
 String moduleBaslik(AppLocalizations l10n, HomeMenuEntry entry) =>
     switch (entry) {
+      HomeMenuEntry.aracGecis => l10n.kartAracPlaka,
       HomeMenuEntry.ihlaller => l10n.modulIhlaller,
       HomeMenuEntry.otopark => l10n.modulOtopark,
       HomeMenuEntry.vardiyalar => l10n.modulVardiyalar,
@@ -341,7 +355,7 @@ String moduleBaslik(AppLocalizations l10n, HomeMenuEntry entry) =>
       HomeMenuEntry.transparency => l10n.modulSeffaflik,
       HomeMenuEntry.siteBudget => l10n.modulSiteButcesi,
       HomeMenuEntry.myDues => l10n.modulAidatim,
-      HomeMenuEntry.complaints => l10n.modulSikayetOneri,
+      HomeMenuEntry.complaints => l10n.kartTalepAriza,
       HomeMenuEntry.visitors => l10n.modulZiyaretciler,
       HomeMenuEntry.kargo => l10n.modulKargo,
       HomeMenuEntry.unitAccess => l10n.modulGoruntulemeIzni,

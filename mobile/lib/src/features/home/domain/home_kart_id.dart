@@ -80,14 +80,26 @@ String kartBasligi(AppLocalizations l10n, HomeKartId id) => switch (id) {
       HomeKartId.ziyaretciler => l10n.kartZiyaretciler,
       HomeKartId.kargolarim => l10n.kartKargolarim,
       HomeKartId.aidatBilgileri => l10n.kartAidatBilgileri,
-      HomeKartId.gurultuSikayeti => l10n.kartGurultuSikayeti,
-      HomeKartId.geriBildirim => l10n.kartGeriBildirim,
+      // (P142) AD BIRLESTIRME — Kerem'in karari: "karo adi ile gittigi
+      // ekranin adi ayni olacak; kullanici bir karoya basinca adindan
+      // bekledigi yere gitmeli."
+      //
+      // OLCUM: `/complaints` ekranina DORT farkli adla giriliyordu —
+      // "Sikayet / Oneri", "Geri Bildirim", "Gurultu Sikayeti" ve
+      // "Talep / Arıza". Ekranin KENDI basligi "Talep / Arıza"ydi, yani
+      // dortten yalniz biri dogruydu. Hepsi o ada baglandi.
+      HomeKartId.gurultuSikayeti => l10n.kartTalepAriza,
+      HomeKartId.geriBildirim => l10n.kartTalepAriza,
       HomeKartId.sikayetlerim => l10n.kartSikayetlerim,
       HomeKartId.siteRaporlari => l10n.kartSiteRaporlari,
       HomeKartId.gorevler => l10n.kartGorevler,
       HomeKartId.aidatDurumu => l10n.kartAidatDurumu,
       HomeKartId.otoparkKullanimi => l10n.kartOtoparkKullanimi,
-      HomeKartId.sikayetler => l10n.kartSikayetler,
+      // (P142) EN ZARARLI CAKISMA BUYDU: karonun adi "Sikayetler"di ama
+      // gittigi ekran BINA SEMASIYDI (`/sikayetHaritasi`). Kullanici
+      // sikayet listesi beklerken kat plani buluyordu. Ad, gittigi
+      // ekranin adiyla degistirildi.
+      HomeKartId.sikayetler => l10n.modulSikayetHaritasi,
       HomeKartId.raporlar => l10n.kartRaporlar,
       HomeKartId.gonderimKuyrugu => l10n.kartGonderimKuyrugu,
     };

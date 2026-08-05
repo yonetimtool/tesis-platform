@@ -22,8 +22,8 @@
  299, 232  19x19  U+EF27
  304,  47  19x19  U+E238
  304, 324  19x19  U+E0CC
- 334, 115  69x20  Geri Bildirim
- 334, 207  69x20  Şikayetler
+ 334, 115  69x20  Talep / Arıza
+ 334, 207  69x20  Şikayet Haritası
  339,  23  66x10  İhlaller
  339, 301  66x10  Raporlar
  352,  52  8x11  —

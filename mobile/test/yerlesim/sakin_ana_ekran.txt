@@ -13,7 +13,7 @@
  199, 207  69x20  Aidat Bilgileri
  205,  22  69x20  Ziyaretçiler
  205, 115  69x20  Kargolarım
- 205, 300  69x20  Gürültü Şikayeti
+ 205, 300  69x20  Talep / Arıza
  222, 207  69x11  ₺1.250,00
  228,  27  58x11  0 Kayıt
  228, 115  69x11  0 Bekliyor
@@ -23,7 +23,7 @@
  297, 139  19x19  U+EFAE
  297, 232  19x19  U+E33C
  297, 324  19x19  U+E0CC
- 332,  22  69x20  Geri Bildirim
+ 332,  22  69x20  Talep / Arıza
  332, 115  69x20  Şikayetlerim
  332, 207  69x20  Duyurular
  332, 300  69x20  Site Raporları

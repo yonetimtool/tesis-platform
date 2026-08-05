@@ -165,18 +165,28 @@ void main() {
       expect(izgarayiCoz(UserRole.yonetici, cok).length, izgaraEnCokKaro);
     });
 
-    test('ROL KUMESI 8DEN AZSA tavan kume kadar (guvenlik amiri)', () {
-      // Olculdu: amir yalniz alti karo gorebiliyor. Ona 8 tavani
-      // gostermek, ulasamayacagi bir sayiyi soylemek olurdu.
-      final n = izgaraSecenekleri(UserRole.guvenlikAmiri).length;
-      expect(n, lessThan(izgaraEnCokKaro));
-      expect(izgaraTavani(UserRole.guvenlikAmiri), n);
-      // Ve cozulen izgara o sayiyi ASMAZ (bos yer tutucu yok).
-      expect(
-        izgarayiCoz(UserRole.guvenlikAmiri,
-            izgaraSecenekleri(UserRole.guvenlikAmiri)).length,
-        n,
-      );
+    test('ROL KUMESI 8DEN AZSA tavan kume kadar', () {
+      // (P143 NOTU) Bu test once GUVENLIK AMIRI ile yazilmisti: amir
+      // yalniz ALTI karo gorebiliyordu. `auth.md` §4a uygulandiktan sonra
+      // amire uc giris daha acildi (vardiya, ihlal, arac gecisi) ve kume
+      // 8'i ASTI — yani olculen tutarsizlik COZULDU. Kural yine de
+      // gecerli ve `denetci` ile olculuyor (mobil yuzeyi yok, kume bos).
+      for (final rol in UserRole.values) {
+        final n = izgaraSecenekleri(rol).length;
+        if (n >= izgaraEnCokKaro) continue;
+        expect(izgaraTavani(rol), n, reason: '$rol');
+        // Ve cozulen izgara o sayiyi ASMAZ (bos yer tutucu yok).
+        expect(izgarayiCoz(rol, izgaraSecenekleri(rol)).length,
+            lessThanOrEqualTo(n), reason: '$rol');
+      }
+    });
+
+    test('(P143) GUVENLIK AMIRI artik 8 tavanina ulasiyor', () {
+      // `auth.md` §4a uygulandi: vardiya, ihlal ve arac gecisi menuye
+      // eklendi. Amir bugun sekiz karoyu da doldurabiliyor.
+      expect(izgaraSecenekleri(UserRole.guvenlikAmiri).length,
+          greaterThanOrEqualTo(izgaraEnCokKaro));
+      expect(izgaraTavani(UserRole.guvenlikAmiri), izgaraEnCokKaro);
     });
 
     test('DENETCIDE tavan 0 (mobil yuzeyi yok)', () {

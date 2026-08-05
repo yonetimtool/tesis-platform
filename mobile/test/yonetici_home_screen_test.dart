@@ -1,3 +1,7 @@
+// (P142) AD BIRLESTIRME (Kerem onayi): karo adi ile gittigi ekranin adi
+// ayni olacak. `/complaints`e giden karolar ekranin kendi adini
+// ("Talep / Arıza") kullanir; "Sikayetler" adli karo BINA SEMASINA
+// gidiyordu, adi da o oldu.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -131,7 +135,7 @@ void main() {
       'Aidat Durumu',
       'Otopark Kullanımı',
       'İhlaller',
-      'Şikayetler',
+      'Şikayet Haritası',
     ]) {
       expect(find.text(baslik), findsOneWidget, reason: baslik);
     }
@@ -180,7 +184,12 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.text('7 araç'), findsOneWidget);
-    expect(find.textContaining('/'), findsNothing);
+    // (P142) DESEN DARALTILDI: eskiden "ekranda hic `/` olmasin" deniyordu
+    // ve amac UYDURMA KAPASITE ORANINI ("3 / 120") yakalamakti. Ad
+    // birlestirmesinden sonra "Talep / Arıza" karosu bu desene takildi —
+    // yani test, olcmek istediginden BASKA bir seyi yakaliyordu. Kalip
+    // artik SAYI/SAYI ariyor.
+    expect(find.textContaining(RegExp(r'\d+\s*/\s*\d+')), findsNothing);
     expect(find.text('—'), findsWidgets); // oran kutusu
   });
 

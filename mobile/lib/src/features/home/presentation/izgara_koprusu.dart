@@ -1,3 +1,4 @@
+import '../../auth/domain/user_role.dart';
 import '../data/home_repository.dart';
 import '../domain/home_kart_id.dart';
 import '../domain/home_menu.dart';
@@ -50,6 +51,41 @@ HizliErisimKart izgaraKartiUret(
     sayacsiz: true,
     rota: spec.route,
   );
+}
+
+/// (P143) `auth.md` §4a'nin AMIRE KAPATTIGI ekranlari ana ekrandan ELE.
+///
+/// SORUN: `guvenlik_amiri` ana ekran duzenini `security` ile PAYLASIYOR
+/// (`HomeVaryant.gorevli`), yani KART LISTESI ortak. Ama izinleri ayni
+/// degil: kural amire kargo ve ziyaretciyi KVKK gerekcesiyle KAPATIYOR
+/// ("dis bir sirketin personeline sakin kisisel verisi acmak
+/// savunulamaz"). Paylasilan liste yuzunden o iki ekran amirin ana
+/// ekraninda GORUNUYORDU.
+///
+/// NEDEN "MENUDE YOKSA ELE" DEGIL: once genel bir suzgec yazdim —
+/// rotasi bir menu girisine karsilik gelip O ROLUN menusunde olmayan
+/// karti eler. OLCTUM VE FAZLA GENISTI: admin 3 kart (`gorev yonetimi`,
+/// `finansal ozet`, `raporlar`), guvenlik 1 (`arac gecisi`), sakin 1
+/// (`sikayetlerim`) kaybediyordu. Sebep: bir rota BILEREK menusuz
+/// olabilir (`sikayetlerim`, `nfc` — enum notlarinda yazili) ve menude
+/// yokluk YASAK anlamina gelmiyor.
+///
+/// Bu yuzden kural, `auth.md`nin ACIKCA KAPATTIGI listeden turuyor —
+/// cikarimla degil, YAZILI karardan.
+const _amireKapali = <String>{
+  '/kargo',
+  '/visitors',
+};
+
+List<HizliErisimKart> rolunKartlari(
+  List<HizliErisimKart> kartlar,
+  UserRole rol,
+) {
+  if (rol != UserRole.guvenlikAmiri) return kartlar;
+  return [
+    for (final k in kartlar)
+      if (k.rota == null || !_amireKapali.contains(k.rota)) k,
+  ];
 }
 
 /// Kullanicinin izgarasi — sirali kart listesi.

@@ -1,3 +1,7 @@
+// (P142) AD BIRLESTIRME (Kerem onayi): karo adi ile gittigi ekranin adi
+// ayni olacak. `/complaints`e giden karolar ekranin kendi adini
+// ("Talep / Arıza") kullanir; "Sikayetler" adli karo BINA SEMASINA
+// gidiyordu, adi da o oldu.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -153,8 +157,6 @@ void main() {
       'Ziyaretçiler',
       'Kargolarım',
       'Aidat Bilgileri',
-      'Gürültü Şikayeti',
-      'Geri Bildirim',
       'Şikayetlerim',
       'Site Raporları',
     ]) {

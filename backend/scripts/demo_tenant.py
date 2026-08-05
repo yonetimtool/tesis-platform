@@ -62,6 +62,12 @@ HESAPLAR = [
     ("Demo Güvenlik", "guvenlik@demo.yonetio.site", "security", "+905000000102"),
     ("Demo Görevli", "gorevli@demo.yonetio.site", "tesis_gorevlisi", "+905000000103"),
     ("Demo Sakin", "sakin@demo.yonetio.site", "resident", "+905000000104"),
+    # (P143) GUVENLIK AMIRI — enum'da vardi ama PROD'DA TEK KULLANICISI
+    # YOKTU: rol bugune kadar hic denenmemis, "6 karo goruyor" raporunu
+    # kimse EKRANDA gormemisti. Hesap olmadan bir rolun dogru calistigini
+    # soylemek, calistigini VARSAYMAKTIR.
+    ("Demo Güvenlik Amiri", "amir@demo.yonetio.site", "guvenlik_amiri",
+     "+905000000105"),
 ]
 
 #: Tur noktalari. UID'ler SABIT: denetim notlarindaki "simule okutma"

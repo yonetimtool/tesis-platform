@@ -102,7 +102,8 @@ class ResidentHomeScreen extends ConsumerWidget {
       // girisi rolun MEVCUT kartiyla ROTA uzerinden esler ve eslesirse o
       // karti OLDUGU GIBI kullanir — bu yuzden asagidaki sayac `switch`i
       // hicbir degisiklik olmadan calismaya devam eder.
-      for (final k in izgaraKartlari(izgaraSecimi, HomeVaryant.sakin, taban))
+      for (final k in rolunKartlari(
+          izgaraKartlari(izgaraSecimi, HomeVaryant.sakin, taban), UserRole.resident))
         switch (k.id) {
           HomeKartId.ziyaretciler => k.sayacla(
               ziyaretciAsync.metin((l) => l10n.sayacKayit(l.length))),

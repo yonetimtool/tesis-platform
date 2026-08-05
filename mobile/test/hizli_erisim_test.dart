@@ -89,8 +89,12 @@ void main() {
         'Aidat Durumu',
         'Otopark Kullanımı',
         'İhlaller',
-        'Geri Bildirim',
-        'Şikayetler',
+        // (P142) AD BIRLESTIRME (Kerem onayi): "karo adi ile gittigi
+        // ekranin adi ayni olacak". `/complaints`e giden karolarin hepsi
+        // ekranin kendi adini ("Talep / Arıza") kullanir; "Sikayetler"
+        // adli karo BINA SEMASINA gidiyordu, adi da o oldu.
+        'Talep / Arıza',
+        'Şikayet Haritası',
         'Raporlar',
       ]) {
         expect(find.text(baslik), findsOneWidget, reason: baslik);

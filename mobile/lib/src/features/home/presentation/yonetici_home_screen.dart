@@ -95,7 +95,8 @@ class YoneticiHomeScreen extends ConsumerWidget {
       // girisi rolun MEVCUT kartiyla ROTA uzerinden esler ve eslesirse o
       // karti OLDUGU GIBI kullanir — bu yuzden asagidaki sayac `switch`i
       // hicbir degisiklik olmadan calismaya devam eder.
-      for (final k in izgaraKartlari(izgaraSecimi, HomeVaryant.yonetici, taban))
+      for (final k in rolunKartlari(
+          izgaraKartlari(izgaraSecimi, HomeVaryant.yonetici, taban), role))
         switch (k.id) {
           HomeKartId.vardiyaDurumu => k.sayacla(
               vardiyaAsync.metin((_) => l10n.sayacAktif(aktifVardiya))),
