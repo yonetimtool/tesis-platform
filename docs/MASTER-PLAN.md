@@ -5686,6 +5686,14 @@ kuralını çiğnemek, doğrulamanın kendisinden pahalıdır. Açık bırakıld
 **neden** açık olduğu yazıldı — "unutuldu" ile "karar verildi" ayrı
 şeylerdir.
 
+> **KAPANDI (P135, 2026-08-05) — GEREKÇE HATALIYMIŞ.** Yukarıdaki cümle
+> "kırık revizyon **üretmek**" ile "kırık revizyonu **depoya koymak**"ı
+> aynı şey sanıyor; oysa **aynı notun üstünde** `mobile` hata yolu tam da
+> geçici bir testle sürülüp silinerek kapatılmıştı. Dahası: revizyon
+> üretmeye hiç gerek yokmuş — `goc-tersinirlik.sh` **kendi deney modunu
+> taşıyor** (`DENEY=1/2/3`), arızayı veritabanı katmanında enjekte ediyor
+> ve `contracts/`e dokunmuyor. Ayrıntı P135'te.
+
 Kanıt: yukarıdaki koşum çıktısı (çıkış 1), temizlik sonrası
 `flutter test` **1559** / çıkış 0.
 
@@ -8721,6 +8729,62 @@ handler'ını da söker ve o testten sonraki testler için kayıt toplanmaz.
 Bu depoda `caplog` kullanan başka dosya yok (ölçüldü); yine de test
 dosyasına kök handler listesini geri koyan bir fixture konuldu ki ileride
 biri eklediğinde sessizce bozulmasın.
+
+### P135 — `kapilar.sh` `goc` hata yolu sürüldü (P94'ten kalan tek açık)
+Status: BITTI(2026-08-05) · Depends-on: P94
+Scope: P94 iki araç hata yolunun sürülmediğini yazmıştı; `mobile` orada
+kapandı, `goc` **"bilinçli açık"** bırakıldı. Bu madde onu kapatır — ve
+kapatırken P94'ün gerekçesinin **yanlış** olduğunu gösterir.
+
+Notes (2026-08-05, P135) — **GEREKÇE YANLIŞMIŞ; ARAÇ ZATEN SÜRÜLEBİLİRDİ.**
+
+P94 şöyle diyordu: "sürmek için kırık bir Alembic revizyonu üretmek
+gerekirdi; migration politikası bağlayıcıdır." İki hata var:
+
+1. **"Üretmek" ile "commit'lemek" karıştırılmış.** Aynı notun birkaç satır
+   üstünde `mobile` hata yolu **geçici** bir testle sürülmüş, sonra
+   silinmiş ve ağacın yeşile döndüğü ayrıca ölçülmüştü. Aynı teknik
+   `goc` için de geçerliydi.
+2. **Revizyon üretmeye zaten gerek yokmuş.** `goc-tersinirlik.sh`
+   **kendi deney modunu taşıyor** (`DENEY=1/2/3`) ve arızayı
+   veritabanı katmanında enjekte ediyor — `contracts/db/migrations/`
+   ağacına **hiç dokunmadan**. Yani politika hiçbir noktada çiğnenmiyor.
+
+**ÜÇ DENEY DE SÜRÜLDÜ** (her biri farklı bir kontrolü hedefler):
+
+| deney | ne enjekte eder | çıkış | bulgu |
+|---|---|---:|---:|
+| `DENEY=1` | `downgrade base` sonrası artık tablo | 1 | 2 |
+| `DENEY=2` | ikinci upgrade sonrası düşürülmüş kolon | 1 | 1 |
+| `DENEY=3` | `camera`ya bağımlı görünüm (salınımı kırar) | 1 | 5 |
+
+Üçünde de ilgili kontrol **kırmızı döndü** — araç kör değil.
+
+**ASIL ÖLÇÜM — SARMALAYICI.** P94'ün açık bıraktığı şey alt betik değil,
+`kapilar.sh`'ın o hatayı **doğru raporlaması**ydı (P74/P87 tuzağı: boru
+hattı çıkış kodunu yutar, kanıt kaybolur). `DENEY=1 infra/kapilar.sh goc`
+koşuldu:
+
+```
+SARMALAYICI CIKIS KODU: 1
+OK   goc-uyum — == bulgu: 0
+HATA goc-tersinir (cikis 1) — == bulgu: 2
+     gunluk: .../goc-tersinir.log
+```
+
+Yani: çıkış kodu **1**, özet satırı **HATA** diyor, geçen kapı **OK**
+kalıyor ve günlük yolu gösteriliyor. Kanıtın kaybolmadığı ayrıca ölçüldü
+(`deney_artik` günlükte **3** kez geçiyor).
+
+**YEŞİLE DÖNÜŞ VE TEMİZLİK DOĞRULANDI.** Normal koşum: `goc-uyum` bulgu
+**0**, `goc-tersinir` bulgu **0**. Dev veritabanında `deney*` tablosu
+**yok**; tek-kullanımlık `goc_a`/`goc_b` veritabanları **düşürülmüş**.
+Ölçüm dev şemasına hiç dokunmadı.
+
+**ÜRÜN KODU DEĞİŞMEDİ.** Bu tur bir doğrulama turudur: teslim edilen şey
+kanıt ve düzeltilmiş kayıt. Bir ölçüm aracının hata yolu sürülmemişse, o
+araç "yeşil" derken de bir şey söylemiyor olabilir — `goc` kapısı
+dağıtılmış prod'a karşı migration'ları koruyan kapıdır.
 
 ### NOT — Sign in with Apple (4.8)
 **GEÇERSİZ (N/A):** üçüncü taraf sosyal giriş **kullanmıyoruz** (Google/Facebook
