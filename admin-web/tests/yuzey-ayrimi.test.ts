@@ -12,6 +12,7 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
+import { _OGELER, PROFIL_OGESI } from "@/lib/menu";
 import {
   PLATFORM_ROTALARI,
   TESIS_ROTALARI,
@@ -22,14 +23,17 @@ import {
   tesisYuzeyiBekleyenRol,
 } from "@/lib/yuzey";
 
-/** `AppShell` icindeki menu listesinin href'leri (kaynaktan okunur). */
+/**
+ * Menudeki tum href'ler.
+ *
+ * (P133.1) Eskiden `AppShell.tsx` KAYNAGINDAN regex ile okunuyordu; liste
+ * `lib/menu.ts`e tasininca kirildi. Artik MODULDEN okunuyor — kaynak
+ * taramasindan daha saglam: dosya yeniden duzenlense de calisir ve
+ * "regex hicbir sey bulamadi, 0 href, test gecti" hâli imkânsizdir
+ * (asagidaki alt sinir kontrolleri de bunu ayrica olcer).
+ */
 function menuHrefleri(): string[] {
-  const kaynak = readFileSync("components/AppShell.tsx", "utf8");
-  const blok = kaynak.slice(
-    kaynak.indexOf("const LINKS"),
-    kaynak.indexOf("function Icon"),
-  );
-  return [...blok.matchAll(/href:\s*"([^"]+)"/g)].map((m) => m[1]);
+  return [..._OGELER.map((o) => o.href), PROFIL_OGESI.href];
 }
 
 describe("rota siniflandirmasi", () => {
@@ -100,8 +104,14 @@ describe("AppShell menuyu YUZEYDEN turetiyor", () => {
   it("menu listesi ELLE suzulmuyor — `rotaYuzeyi` cagriliyor", () => {
     // Elle yazilmis bir `if` listesi, `lib/yuzey.ts` guncellenince
     // ayrisirdi. Kaynak, tek kaynaktan turetmeyi zorunlu tutuyor.
+    // (P133.1) Suzgec `lib/menu.ts`e tasindi (bolumleme ile birlikte);
+    // kilit de oraya tasindi — kabuk artik hazir gruplari ciziyor.
+    const menuKaynak = readFileSync("lib/menu.ts", "utf8");
+    expect(menuKaynak).toContain("rotaYuzeyi(o.href) === yuzey");
+    expect(menuKaynak).toContain("rotaRoldeGorunur(o.href, rol)");
     const kaynak = readFileSync("components/AppShell.tsx", "utf8");
-    expect(kaynak).toContain("rotaYuzeyi(l.href) === yuzey");
+    // Kabuk KENDI suzgecini yazmaz: `menuGruplari`yi cagirir.
+    expect(kaynak).toContain("menuGruplari(yuzey, rol)");
     // (P126 sonrasi) YUZEY ARTIK KABUKTA COZULMUYOR, uclu olarak geliyor:
     // sunucu ciziminde `window` yoktu ve ilk kare `app.*`ta bile PLATFORM
     // menusuyle boyaniyordu. Cozum konagi ISTEGIN BASLIGINDAN okumak —

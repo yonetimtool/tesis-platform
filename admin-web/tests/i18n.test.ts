@@ -87,6 +87,10 @@ describe("sozluk butunlugu", () => {
     // cevrilmez. Etiketin varlik sebebi destek sorusudur ("bende
     // acilmiyor"): hangi yolun secildigini soyler.
     "HLS (hls.js)",
+    // (P133.1) Kenar cubugu bolum basligi. "Platform" Ingilizce, Almanca
+    // ve Fransizcada da ayni yazilir (Fr. "Plateforme" secildi, o farkli);
+    // ceviri eksigi degil es-sozcuktur.
+    "Platform",
   ]);
 
   // KALAN ACIK (durustce): ne bu olcum ne `TR_HARF`, ic/ig/is harfi

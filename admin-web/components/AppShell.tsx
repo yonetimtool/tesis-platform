@@ -9,88 +9,20 @@ import useSWR from "swr";
 import { DilSecici } from "@/components/DilSecici";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useT } from "@/lib/i18n/kullan";
-import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 import { YonetioLogo } from "@/components/YonetioLogo";
 import { jsonFetcher } from "@/lib/fetcher";
 import {
-  kokRotaRol,
-  rotaRoldeGorunur,
-  rotaYuzeyi,
-  type Yuzey,
-} from "@/lib/yuzey";
-
-type IconName =
-  | "grid" | "building" | "clock" | "scan" | "route" | "check"
-  | "box" | "home" | "edit" | "pin" | "money" | "chart"
-  | "users" | "megaphone" | "chat" | "bell" | "hub" | "gear";
-
-// Menu ogeleri METIN degil ANAHTAR tasir (tur 17): etiket cizim aninda
-// aktif dilde cozulur. Eskiden Turkce sabitlerdi ve dil degisimi menuyu
-// oldugu gibi birakirdi.
-// (P125) MENU YUZEYE GORE SUZULUR. Liste OLDUGU GIBI kalir — tesis
-// sayfalari kod tabaninda duruyor ve `admin` bir yer imiyle hâlâ acabilir
-// (yetki geri alinmadi); degisen sey PANELIN MENUSUNDE gorunmemeleri.
-// Siniflandirma `lib/yuzey.ts`te, tek kaynakta.
-const LINKS: { href: string; anahtar: SozlukAnahtari; icon: IconName }[] = [
-  { href: "/dashboard", anahtar: "kabukCanliPanel", icon: "grid" },
-  { href: "/tenants", anahtar: "kabukTesisler", icon: "building" },
-  { href: "/shifts", anahtar: "kabukVardiyalar", icon: "clock" },
-  { href: "/checkpoints", anahtar: "kabukNfcNoktalari", icon: "scan" },
-  { href: "/patrol-plans", anahtar: "kabukDevriyePlanlari", icon: "route" },
-  { href: "/tasks", anahtar: "kabukGorevler", icon: "check" },
-  { href: "/assets", anahtar: "kabukDemirbas", icon: "box" },
-  { href: "/units", anahtar: "kabukDaireler", icon: "home" },
-  { href: "/building-editor", anahtar: "kabukBinaDuzenleme", icon: "edit" },
-  { href: "/schematic", anahtar: "kabukSikayetHaritasi", icon: "pin" },
-  { href: "/tanimlar", anahtar: "kabukTanimlar", icon: "box" },
-  // (P111) Sayac okuma, Tanimlar ile aidatin ARASINDA: tanimlardan
-  // beslenir ve ciktisi bir tahakkuktur.
-  { href: "/sayac-okuma", anahtar: "kabukSayacOkuma", icon: "chart" },
-  { href: "/dues", anahtar: "kabukAidat", icon: "money" },
-  // (P40) Finans: aidat TAHAKKUKUNUN yanindadir — kullanici borcu burada
-  // olusturur, tahsilati ve kasayi yaninda gorur.
-  { href: "/finans", anahtar: "kabukFinans", icon: "money" },
-  { href: "/reports/dues", anahtar: "kabukRaporlar", icon: "chart" },
-  // (P40) 12 raporluk katalog — mevcut `/reports/dues` tek raporluk eski
-  // sayfadir; ikisi YAN YANA durur ki eski baglantilar kirilmasin.
-  { href: "/raporlar", anahtar: "kabukRaporMotoru", icon: "chart" },
-  { href: "/transparency", anahtar: "kabukSeffaflik", icon: "money" },
-  { href: "/users", anahtar: "kabukKullanicilar", icon: "users" },
-  { href: "/announcements", anahtar: "kabukDuyurular", icon: "megaphone" },
-  // (P40) Mesajlar duyurunun YANINDA: ikisi de "siteye seslenme"dir.
-  { href: "/mesajlar", anahtar: "kabukMesajlar", icon: "megaphone" },
-  { href: "/portal", anahtar: "kabukPortal", icon: "building" },
-  { href: "/complaints", anahtar: "kabukTalepler", icon: "chat" },
-  { href: "/notifications", anahtar: "kabukBildirimler", icon: "bell" },
-  { href: "/integrations", anahtar: "kabukEntegrasyonlar", icon: "hub" },
-  { href: "/support", anahtar: "kabukDestek", icon: "chat" },
-  // (P40) Yonetisim, denetim kaydinin YANINDA: ikisi de "ne karar
-  // alindi, kim ne yapti" sorusunu yanitlar.
-  { href: "/yonetisim", anahtar: "kabukYonetisim", icon: "building" },
-  { href: "/audit", anahtar: "kabukDenetimKaydi", icon: "scan" },
-  // (P41) Yetki matrisi denetimin YANINDA: ikisi de "kim ne yapabilir /
-  // ne yapti" sorusunu yanitlar.
-  { href: "/yetki", anahtar: "kabukYetki", icon: "users" },
-  { href: "/settings", anahtar: "kabukAyarlar", icon: "gear" },
-  // (P126.3) Profil TESIS yuzeyinde: panelde platform sahibinin
-  // kendi kaydini yonetecegi bir yer YOK (o `admin` tek hesaptir).
-  { href: "/aidatim", anahtar: "kabukAidatim", icon: "money" },
-  { href: "/duyurular", anahtar: "kabukDuyurularim", icon: "megaphone" },
-  { href: "/kurallar", anahtar: "kabukKurallar", icon: "check" },
-  { href: "/etkinlikler", anahtar: "kabukEtkinlikler", icon: "clock" },
-  { href: "/rezervasyonlarim", anahtar: "kabukRezervasyon", icon: "clock" },
-  { href: "/kvkk", anahtar: "kabukKvkk", icon: "users" },
-  { href: "/ziyaretciler", anahtar: "kabukZiyaretciler", icon: "users" },
-  { href: "/kargolar", anahtar: "kabukKargolar", icon: "box" },
-  { href: "/olaylar", anahtar: "kabukOlaylar", icon: "bell" },
-  { href: "/arac-gecisleri", anahtar: "kabukAracGecisleri", icon: "scan" },
-  { href: "/gorevlerim", anahtar: "kabukGorevlerim", icon: "check" },
-  { href: "/kameralar", anahtar: "kabukKameralar", icon: "scan" },
-  { href: "/dis-hizmetler", anahtar: "kabukDisHizmetler", icon: "hub" },
-  { href: "/yonetim-iletisim", anahtar: "kabukYonetimIletisim", icon: "chat" },
-  { href: "/taleplerim", anahtar: "kabukTaleplerim", icon: "chat" },
-  { href: "/profil", anahtar: "kabukProfil", icon: "users" },
-];
+  KATLI_GRUPLAR,
+  menuGruplari,
+  profilGorunur,
+  rotaninGrubu,
+  PROFIL_OGESI,
+  type GrupId,
+  type IconName,
+  type MenuGrubu,
+  type MenuOgesi,
+} from "@/lib/menu";
+import { kokRotaRol, type Yuzey } from "@/lib/yuzey";
 
 function Icon({ name }: { name: IconName }) {
   const p = {
@@ -158,6 +90,117 @@ function Icon({ name }: { name: IconName }) {
   }
 }
 
+/** Kullanicinin acik/kapali bolum tercihi (tarayici basina). */
+const MENU_DURUM_ANAHTARI = "yonetio.menu.durum";
+
+/** Bolum basliginin acilir oku — 90 derece doner. */
+function Ok({ acik }: { acik: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={`h-3.5 w-3.5 shrink-0 transition-transform ${acik ? "rotate-90" : ""} rtl:-scale-x-100`}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <polyline points="9 5 16 12 9 19" />
+    </svg>
+  );
+}
+
+/** Menudeki tek bir baglanti satiri. */
+function MenuSatiri({
+  oge,
+  aktif,
+  onNavigate,
+}: {
+  oge: MenuOgesi;
+  aktif: boolean;
+  onNavigate?: () => void;
+}) {
+  const t = useT();
+  return (
+    <Link
+      href={oge.href}
+      onClick={onNavigate}
+      aria-current={aktif ? "page" : undefined}
+      // (P132) Aktif oge MAVI tint — mobil alt barin aktif sekme dili.
+      // Tint %12, metin vurgu rengi: ikisi de token.
+      className={`odak-ic group relative flex items-center gap-3 rounded-lg py-2 pe-3 ps-7 text-sm transition-colors ${
+        aktif
+          ? "bg-accent-blue/12 font-medium text-accent-blue"
+          : "text-metin-body hover:bg-yuzey-divider"
+      }`}
+    >
+      {aktif && (
+        <motion.span
+          layoutId="nav-active-bar"
+          className="absolute inset-y-1.5 start-0 w-1 rounded-e-full bg-primary"
+          transition={{ type: "spring", stiffness: 500, damping: 40 }}
+        />
+      )}
+      <span className={aktif ? "text-accent-blue" : "text-metin-muted"}>
+        <Icon name={oge.icon} />
+      </span>
+      <span className="truncate">{t(oge.anahtar)}</span>
+    </Link>
+  );
+}
+
+/**
+ * Etiketli bolum: baslik (acilir dugme) + ogeler.
+ *
+ * BASLIK BIR DUGMEDIR, `div` degil: klavye kullanicisi bolumu Tab ile
+ * bulup Enter/Space ile acabilmeli. `aria-expanded` durumu ekran
+ * okuyucuya soyler; ogeler kapaliyken DOM'a HIC girmez — "gorunmez ama
+ * odaklanabilir" satir, klavyeyle gezinmenin en can sikici hatasidir.
+ */
+function Bolum({
+  grup,
+  acik,
+  pathname,
+  onCevir,
+  onNavigate,
+}: {
+  grup: MenuGrubu;
+  acik: boolean;
+  pathname: string;
+  onCevir: () => void;
+  onNavigate?: () => void;
+}) {
+  const t = useT();
+  const baslik = t(grup.anahtar);
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={onCevir}
+        aria-expanded={acik}
+        aria-label={acik ? t("kabukBolumKapat", { bolum: baslik }) : t("kabukBolumAc", { bolum: baslik })}
+        className="odak-ic flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-start text-[11px] font-semibold tracking-wide text-metin-muted transition-colors hover:bg-yuzey-divider"
+      >
+        <Ok acik={acik} />
+        <span className="truncate">{baslik}</span>
+      </button>
+      {acik && (
+        <div className="space-y-0.5">
+          {grup.ogeler.map((o) => (
+            <MenuSatiri
+              key={o.href}
+              oge={o}
+              aktif={pathname === o.href}
+              onNavigate={onNavigate}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SidebarBody({
   onNavigate,
   rolBaslangic,
@@ -210,14 +253,111 @@ function SidebarBody({
 
   // Bilinmeyen rota ve rolde OLMAYAN rota MENUYE ALINMAZ: "varsayilan
   // olarak goster" demek, sakine yonetim menusunu cizmek olurdu.
-  const gorunenLinkler = LINKS.filter(
-    (l) => rotaYuzeyi(l.href) === yuzey && rotaRoldeGorunur(l.href, rol),
-  );
+  // (P133.1) Kume AYNI kaldi; degisen sey BOLUMLENMESI.
+  const gruplar = menuGruplari(yuzey, rol);
+  const profilVar = profilGorunur(yuzey, rol);
+
+  // ACIK BOLUM: bulunulan sayfanin bolumu. Kullanici bir bolumu acip
+  // kapattiginda karari SAKLANIR (kullanici basina, localStorage).
+  const aktifGrup = rotaninGrubu(pathname);
+  // Bulunulan rota bir bolume dusmuyorsa (orn. `/profil`, bolum disidir)
+  // ILK bolum acilir: "hicbiri acik degil" hâli menuyu bos bir baslik
+  // listesine cevirirdi ve kullanici tek bir sayfa adi goremezdi.
+  const varsayilanAcik: GrupId[] = aktifGrup
+    ? [aktifGrup]
+    : gruplar.length > 0
+      ? [gruplar[0].id]
+      : [];
+  const [acikGruplar, setAcikGruplar] = useState<GrupId[] | null>(null);
+  const [dahaFazla, setDahaFazla] = useState(false);
+
+  // ILK KARE SUNUCUDA CIZILIR ve orada `localStorage` YOKTUR. Durum bu
+  // yuzden `null` baslar ve etkide doldurulur: sunucu ve ilk istemci
+  // karesi AYNI seyi cizer (hidrasyon uyusmazligi yok), kullanicinin
+  // kaydi hemen ardindan uygulanir.
+  //
+  // BULUNULAN SAYFANIN BOLUMU HER ZAMAN ACIK OLUR — kayitli tercih
+  // "kapali" dese bile. Aksi hâlde kullanici bir sayfaya gidip menude
+  // KENDI satirini goremez ve nerede oldugunu kaybeder; bolum KATLI ise
+  // kat da acilir. Bu iki karar (kayit okuma + aktif bolumu acma) TEK
+  // etkide durur: ayri etkilere bolundugunde ikincisi ilk kurulumda
+  // `acikGruplar === null` gorup erken donuyordu ve katli bir bolume
+  // dogrudan girildiginde satir HIC gorunmuyordu.
+  useEffect(() => {
+    let kayitliAcik: GrupId[] | null = null;
+    let kayitliKat: boolean | null = null;
+    try {
+      const ham = localStorage.getItem(MENU_DURUM_ANAHTARI);
+      if (ham) {
+        const c = JSON.parse(ham) as { acik?: GrupId[]; dahaFazla?: boolean };
+        if (Array.isArray(c.acik)) kayitliAcik = c.acik;
+        if (typeof c.dahaFazla === "boolean") kayitliKat = c.dahaFazla;
+      }
+    } catch {
+      // Bozuk/erisilemez depolama menuyu KIRMAZ — varsayilana dusulur.
+    }
+    const acikKume = new Set(kayitliAcik ?? varsayilanAcik);
+    if (aktifGrup) acikKume.add(aktifGrup);
+    setAcikGruplar([...acikKume]);
+    setDahaFazla(
+      (aktifGrup !== null && KATLI_GRUPLAR.includes(aktifGrup)) ||
+        (kayitliKat ?? false),
+    );
+    // `pathname` degisince yeniden calisir: gezinme aktif bolumu acar.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aktifGrup]);
+
+  function grupCevir(id: GrupId) {
+    const simdiki = acikGruplar ?? [];
+    const yeni = simdiki.includes(id)
+      ? simdiki.filter((x) => x !== id)
+      : [...simdiki, id];
+    setAcikGruplar(yeni);
+    yaz(yeni, dahaFazla);
+  }
+
+  function dahaFazlaCevir() {
+    const yeni = !dahaFazla;
+    setDahaFazla(yeni);
+    yaz(acikGruplar ?? [], yeni);
+  }
+
+  function yaz(acik: GrupId[], fazla: boolean) {
+    try {
+      localStorage.setItem(
+        MENU_DURUM_ANAHTARI,
+        JSON.stringify({ acik, dahaFazla: fazla }),
+      );
+    } catch {
+      // Gizli sekmede depolama yazilamaz; menu yine calisir, hatirlamaz.
+    }
+  }
+
+  // Sunucu karesinde (`acikGruplar === null`) aktif bolum acik cizilir:
+  // kullanici bulundugu sayfayi menude ILK karede gorur.
+  const acik = acikGruplar ?? varsayilanAcik;
+  // Ilk karede de ayni kural: aktif bolum katliysa kat acik cizilir.
+  const katAcik =
+    dahaFazla || (acikGruplar === null && !!aktifGrup && KATLI_GRUPLAR.includes(aktifGrup));
+  const ustGruplar = gruplar.filter((g) => !g.katli);
+  const katliGruplar = gruplar.filter((g) => g.katli);
+
   // Logo hedefi YUZEY + ROL: panelde tesis panosu yoktur; tesis yuzeyinde de
   // pano YALNIZ yonetimindir. Sabit `/dashboard` birakmak, logoya tiklayan
   // sakini middleware'in geri yollamasina birakirdi (calisir ama bir adim
   // fazladan ve adres cubugunda bir an yanlis sayfa gorunur).
   const kokHedef = kokRotaRol(yuzey, rol);
+
+  const bolum = (g: MenuGrubu) => (
+    <Bolum
+      key={g.id}
+      grup={g}
+      acik={acik.includes(g.id)}
+      pathname={pathname}
+      onCevir={() => grupCevir(g.id)}
+      onNavigate={onNavigate}
+    />
+  );
 
   return (
     <div className="flex h-full flex-col">
@@ -227,40 +367,40 @@ function SidebarBody({
         </Link>
       </div>
 
-      <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-4">
-        {gorunenLinkler.map((l) => {
-          const active = pathname === l.href;
-          return (
-            <Link
-              key={l.href}
-              href={l.href}
-              onClick={onNavigate}
-              aria-current={active ? "page" : undefined}
-              // (P132) Aktif oge MAVI tint — mobil alt barin aktif sekme
-              // dili. Tint %12, metin vurgu rengi: ikisi de token.
-              className={`odak-ic group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
-                active
-                  ? "bg-accent-blue/12 font-medium text-accent-blue"
-                  : "text-metin-body hover:bg-yuzey-divider"
-              }`}
+      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+        {ustGruplar.map(bolum)}
+
+        {/* KATLI BOLUMLER tek bir satirin ardinda: menuyu 28 satirdan
+            ~10'a indiren sey budur. Katlanan bolumler KAYBOLMAZ, bir
+            tiklama uzaga gider. */}
+        {katliGruplar.length > 0 && (
+          <>
+            <button
+              type="button"
+              onClick={dahaFazlaCevir}
+              aria-expanded={katAcik}
+              className="odak-ic flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-metin-muted transition-colors hover:bg-yuzey-divider"
             >
-              {active && (
-                <motion.span
-                  layoutId="nav-active-bar"
-                  className="absolute inset-y-1.5 start-0 w-1 rounded-e-full bg-primary"
-                  transition={{ type: "spring", stiffness: 500, damping: 40 }}
-                />
-              )}
-              <span className={active ? "text-accent-blue" : "text-metin-muted"}>
-                <Icon name={l.icon} />
+              <Ok acik={katAcik} />
+              <span className="truncate">
+                {katAcik ? t("kabukDahaAz") : t("kabukDahaFazla")}
               </span>
-              <span className="truncate">{t(l.anahtar)}</span>
-            </Link>
-          );
-        })}
+            </button>
+            {katAcik && katliGruplar.map(bolum)}
+          </>
+        )}
       </nav>
 
       <div className="kart-kenar shrink-0 space-y-2 border-t px-3 py-4">
+        {/* PROFIL BOLUMDE DEGIL: kullanicinin KENDI kaydidir, bir yonetim
+            isi degil — her rolde ayni yerde, cikisin yaninda durur. */}
+        {profilVar && (
+          <MenuSatiri
+            oge={PROFIL_OGESI}
+            aktif={pathname === PROFIL_OGESI.href}
+            onNavigate={onNavigate}
+          />
+        )}
         <div className="flex flex-wrap gap-2">
           <ThemeToggle />
           <DilSecici />

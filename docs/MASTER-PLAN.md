@@ -8477,6 +8477,68 @@ KAPILAR: `tsc` temiz · `eslint` temiz · `vitest` **609 test** (+15) ·
 `npm run build` ✓ (paylaşılan ilk yük **87.5 kB**, değişmedi — sweep saf
 sınıf adı işiydi).
 
+### P133 — Görsel dil turu: pano + genel kenar çubuğu
+Status: PLANLANDI · Depends-on: P132
+Scope: P132 **token katmanını** indirdi ama ürün hâlâ P132 öncesiyle **aynı
+görünüyor** — token'lar doğru, değişmeyen şey görsel **DİL**di. Bu tur dili
+değiştirir. Kerem belirli bir yön onayladı; **birebir uygulanır, yeniden
+yorumlanmaz**. Kapsam: pano (`app.*`) + genel kenar çubuğu (tüm yüzeyler).
+Liste/form sayfaları bu turda **elden geçirilmez** (P132 kuyruğu — aynı
+dosyalarda çift yazma riski).
+
+**Tasarım dili — "tint bloklar":** birincil kaplar kenarlıklı kart değil
+**tint blok**tur (rol tinti dolgusu, kenarlık YOK, kahraman blok 20px,
+ikincil bloklar 16px yarıçap). Tint üzerindeki metin o rolün metin
+token'ıdır (tint üstünde nötr gri **asla**), kontrast **iki temada da**
+doğrulanır. Blok ikon-öncüllüdür: 18–22px dış hat ikon → büyük sayı
+(17–22px, ağırlık 500) → kısa etiket (11–12px). **SERT SINIR:** ekran
+başına en çok **1 kahraman + 4 ikincil** tint blok; fazlası nötr yüzey
+kullanır — renk **sinyal** kalmalı, altı tintli ekran gürültüdür ve bu
+sınır yönün çalışmasının tek sebebidir. Panodan kılcal ızgara tabloları
+kalkar (ayrım dolgu ve boşluktan gelir, 0.5px çizgiden değil). Gövde metni
+en az 13px, ikincil satırlar 1.6 satır yüksekliği; 11px yalnız blok
+etiketlerinde. **Koyu tema varsayılandır ve gerilemez.**
+
+1. **KENAR ÇUBUĞU** (en yüksek değer — her sayfada): bugün ~20 eşit
+   ağırlıkta düz öğe, kaydırma çubuğuna taşıyor. Etiketli bölümlere
+   gruplanır (Güvenlik / Tesis / Finans / İletişim / Yönetim), bölüm
+   etiketleri 11px muted. En az kullanılan iki grup tek bir açılır satırın
+   ardına katlanır; açık/kapalı durum kullanıcı başına kalıcı
+   (localStorage yeterli). Aktif öğe `bg-accent` + `text-accent`. Hedef:
+   900px yükseklikte **kaydırmasız en çok ~10 satır**. Rol kapısı
+   **bugünküyle birebir aynı** — görünürlük değişmez.
+2. **PANO YENİDEN KURULUMU** (`app.*/dashboard`), sırayla: (a) selamlama +
+   durumu **düz cümleyle** özetleyen TEK cümle (gerçek veriden bestelenir;
+   sabit varyant yazılmaz — sayaçlar 0 olunca da doğru kalsın diye
+   birleştirilebilir yan cümlelerden kurulur), (b) kahraman tint blok:
+   aktif devriye (n/m nokta, kimin nöbeti, sonraki okutma son anı); aktif
+   yoksa sıradaki planlı; o da yoksa dostça boş durum (spinner değil,
+   "veri yok" değil), (c) en çok 4 ikincil tint blok: gecikme, sahadaki
+   personel, açık görev, aidat tahsilat oranı, (d) tesis bloğu: harita
+   **blok genişliğini doldurur** (küçük küçük resim değil) + tesis adı +
+   NFC nokta sayısı. Sağ sütun **ölü boşlukla bitmez**; sabit iki sütun
+   yerine yeniden akan responsive ızgara.
+3. **ALARM TOPLAMA** (veri katmanına dokunur — düzgün yapılır): bugün pano
+   altı neredeyse aynı satır çiziyor. Alarmlar **(tip, devriye)** ile
+   gruplanır; dönen: tip, devriye adı, olay sayısı, en son zaman, en kötü
+   önem. Grup başına tek satır, tek tek olaylara **açılabilir**. Gruplama
+   **API'de** yapılır ki gövde küçülsün; mevcut sözleşme soğuramıyorsa
+   **yeni tablo uydurulmaz**, sözleşme değişikliği önerilir. Tenant
+   yalıtımı ve N+1 güvenceleri aynen geçerli.
+4. **METİN TURU:** sayılar çıplak kesir değil **cümle** alır. Türkçe cümle
+   düzeni, BÜYÜK HARF yok, ünlem yok, tüm dizgiler i18n katmanından.
+5. **`panel.*`** bu tur yoğun düzenini korur ama **aynı token'ları** ve
+   **yeni kenar çubuğunu** kullanır — kenar çubuğu iki bileşene
+   **çatallanmaz**.
+Kısıtlar: yeni iş mantığı/özellik/rota yok · web testleri yeşil kalır +
+kenar çubuğu gruplama/rol-kapısı ve alarm toplama için test eklenir ·
+yeniden tasarım **ek gidiş-dönüş getirmez**, toplama gövdeyi **küçültür** ·
+her tint blok iki temada kontrast geçer, dekoratif ikon `aria-hidden`,
+etkileşimli blok erişilebilir ad alır, gruplar klavyeyle gezilebilir.
+Acceptance: değişen her dosya listelenir · kenar çubuğu görünür satır
+sayısı öncesi/sonrası · alarm gövde boyutu öncesi/sonrası · kapı çıktısı ·
+commit + push.
+
 ### NOT — Sign in with Apple (4.8)
 **GEÇERSİZ (N/A):** üçüncü taraf sosyal giriş **kullanmıyoruz** (Google/Facebook
 girişi yok; kimlik doğrulama tesis tarafından verilen hesapla). 4.8 yalnız

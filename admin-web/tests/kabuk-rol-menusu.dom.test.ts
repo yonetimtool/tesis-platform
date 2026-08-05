@@ -5,7 +5,7 @@
 // hata sinifi. Kume dogru olup kabugun onu okumamasi (ya da bir gun
 // suzgecin kaldirilmasi) mumkundur ve o durumda sakin yine yonetim menusunu
 // gorurdu.
-import { screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { createElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -36,9 +36,36 @@ function tesisKonagi() {}
  * beklenir). LOGO baglantisi disarida birakilir: o menu ogesi degil, kok
  * hedefidir ve rolden bagimsiz her zaman durur.
  */
+/**
+ * (P133.1) MENU ARTIK BOLUMLU ve bolumler KATLI acilir.
+ *
+ * Bu dosyanin olctugu sey ROL KAPISIDIR ("sakin yonetim menusunu gormez"),
+ * gorunurlugun kac tiklama uzakta oldugu degil. Bu yuzden sayim ONCESINDE
+ * her bolum acilir — aksi hâlde test, rol kapisi bozulsa bile "zaten
+ * katliydi" diye gecerdi.
+ *
+ * Once "Daha fazla" acilir (katli bolumlerin BASLIKLARI ancak ondan sonra
+ * DOM'a girer), sonra gorunen tum bolum basliklari.
+ */
+function tumBolumleriAc(): void {
+  const dahaFazla = screen.queryAllByRole("button", { name: /daha fazla/i });
+  for (const d of dahaFazla) fireEvent.click(d);
+  // Kapali bolumler: `aria-expanded="false"` tasiyan her baslik.
+  let guvenlik = 0;
+  for (;;) {
+    const kapali = screen
+      .queryAllByRole("button")
+      .filter((b) => b.getAttribute("aria-expanded") === "false");
+    if (kapali.length === 0 || guvenlik++ > 20) break;
+    for (const b of kapali) fireEvent.click(b);
+  }
+}
+
 function menuAdlari(): string[] {
-  return screen
-    .getAllByRole("link")
+  tumBolumleriAc();
+  const baglantilar = screen.queryAllByRole("link");
+  if (baglantilar.length === 0) return [];
+  return baglantilar
     // (P132) "İçeriğe atla" MENU OGESI DEGILDIR — logo gibi kabugun
     // sabit parcasidir ve erisilebilirlik icin vardir. Menu sayimina
     // katmak, bos menu beklentisini yanlis yere dusururdu.
