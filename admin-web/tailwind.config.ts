@@ -116,6 +116,12 @@ const config: Config = {
         kart: "16px",
         ikon: "14px",
         chip: "8px",
+        // (P133) "Tint blok" dili — Kerem'in onayladigi yon: kahraman blok
+        // 20px, ikincil bloklar 16px (`kart` ile ayni). Deger mobil
+        // kaynaktan DEGIL bu turun onayindan gelir; token testi de bunu
+        // ayirt eder (`kart/ikon/chip` mobille karsilastirilir, `blok`
+        // karsilastirilmaz).
+        blok: "20px",
       },
       spacing: {
         // (P132) Mobil olcu sabitleri — ayni adlarla.

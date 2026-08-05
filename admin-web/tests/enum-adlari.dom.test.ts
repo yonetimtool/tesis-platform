@@ -11,11 +11,12 @@
 // kanitlamaz — cevrilmemis olsa da gecerdi. Bu yuzden ayristigi
 // degerler secildi: `kacirildi`→"kaçırıldı", `musait`→"müsait",
 // `arac`→"araç".
-import { screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import AssetsPage from "@/app/(protected)/assets/page";
 import DashboardPage from "@/app/(protected)/dashboard/page";
+import PatrolsReportPage from "@/app/(protected)/reports/patrols/page";
 
 import { ciz, fetchSahtele } from "./yardimci";
 
@@ -29,9 +30,9 @@ const PANO = {
       pencere_baslangic: "2026-02-01T08:00:00Z", pencere_bitis: "2026-02-01T14:00:00Z",
       durum: "yeni_bir_durum", beklenen_checkpoint_sayisi: 4, okutulan_checkpoint_sayisi: 4 },
   ],
-  son_alarmlar: [
-    { tip: "kacirilan_tur", olusma_zamani: "2026-02-01T06:05:00Z", mesaj: "Tur kaçırıldı." },
-  ],
+  alarm_gruplari: [],
+  aidat_tahsilat_orani: null,
+  nfc_nokta_sayisi: 0,
 };
 
 const DEMIRBASLAR = {
@@ -44,15 +45,73 @@ const DEMIRBASLAR = {
 afterEach(() => vi.restoreAllMocks());
 
 describe("Pano", () => {
-  it("tur durumu ve alarm tipi CEVRILIR; taninmayan durum HAM kalir", async () => {
-    fetchSahtele({ "/api/dashboard/live": PANO });
+  // (P133.2) PANO ARTIK PENCERE LISTESI CIZMIYOR: kahraman blok + tint
+  // bloklar + gruplu alarmlar geldi, "Bugunku Turlar" tablosu kalkti
+  // (onaylanan yonun bir parcasi: panoda kilcal izgara tablo yok).
+  //
+  // Bu yuzden TUR DURUMU cevirisi burada olculemez oldu — kayboLMASIN
+  // diye `/reports/patrols`a tasindi (durum rozetini o sayfa ciziyor);
+  // asagidaki test ALARM TIPI cevirisini panoda olcmeye devam ediyor.
+  it("alarm tipi CEVRILIR (grup basliginda)", async () => {
+    // Plan adi OLMAYAN grup: baslik tipin cevirisine duser — o yolun
+    // cizildigini olcmenin tek yolu budur.
+    fetchSahtele({
+      "/api/dashboard/live": {
+        ...PANO,
+        alarm_gruplari: [
+          {
+            tip: "kacirilan_tur",
+            patrol_plan_id: null,
+            patrol_plan_ad: null,
+            mesaj: "Tur kaçırıldı.",
+            sayi: 1,
+            en_son: "2026-02-01T06:05:00Z",
+            onem: "yuksek",
+            olaylar: [{ olusma_zamani: "2026-02-01T06:05:00Z" }],
+          },
+        ],
+      },
+    });
     ciz(DashboardPage);
-    await waitFor(() => expect(screen.getByText("Gece Turu")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText("kaçırılan tur")).toBeInTheDocument(),
+    );
+    // Ham enum SIZMAZ.
+    expect(screen.queryByText("kacirilan_tur")).not.toBeInTheDocument();
+  });
+});
 
-    expect(screen.getByText("kaçırıldı")).toBeInTheDocument();
+describe("Devriye raporu", () => {
+  // (P133.2) Pano pencere listesini birakti; TUR DURUMU cevirisinin
+  // kilidi buraya TASINDI — kapsam kaybolmasin diye. Olculen kural ayni:
+  // taninan durum CEVRILIR, taninmayan HAM kalir (rozet bos kalmaz).
+  it("tur durumu CEVRILIR; taninmayan durum HAM kalir", async () => {
+    fetchSahtele({
+      "/api/patrol-plans?limit=200&offset=0": {
+        meta: { limit: 200, offset: 0, total: 1 },
+        items: [{ id: "p1", ad: "Gece Turu", baslangic_saat: "00:00",
+                  bitis_saat: "06:00", periyot_dakika: 60, aktif: true }],
+      },
+      "/api/patrol-windows": {
+        meta: { limit: 20, offset: 0, total: 2 },
+        ozet: { toplam: 2, tamamlandi: 0, kacirildi: 1, bekliyor: 1 },
+        items: [
+          { id: "w1", patrol_plan_id: "p1", patrol_plan_ad: "Gece Turu",
+            pencere_baslangic: "2026-02-01T00:00:00Z",
+            pencere_bitis: "2026-02-01T06:00:00Z", durum: "kacirildi" },
+          { id: "w2", patrol_plan_id: "p1", patrol_plan_ad: "Gece Turu",
+            pencere_baslangic: "2026-02-01T06:00:00Z",
+            pencere_bitis: "2026-02-01T12:00:00Z", durum: "yeni_bir_durum" },
+        ],
+      },
+    });
+    ciz(PatrolsReportPage);
+    // Sayfa suzgec GONDERILENE kadar liste istemez (`committed === null`).
+    fireEvent.click(screen.getByRole("button", { name: /raporu getir|getir/i }));
+    await waitFor(() =>
+      expect(screen.getByText("kaçırıldı")).toBeInTheDocument(),
+    );
     expect(screen.queryByText("kacirildi")).not.toBeInTheDocument();
-    // Alarm rozeti bildirimler sayfasiyla AYNI haritayi kullanir.
-    expect(screen.getByText("kaçırılan tur")).toBeInTheDocument();
     // Sunucu yeni bir durum eklerse rozet BOS KALMAZ.
     expect(screen.getByText("yeni_bir_durum")).toBeInTheDocument();
   });

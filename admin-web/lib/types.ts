@@ -25,10 +25,40 @@ export interface Alarm {
   checkpoint_id?: string | null;
 }
 
+/** (P133.3) Grup icindeki tek olay — `tip`/`mesaj` grubun ustunde durur. */
+export interface AlarmOlayi {
+  olusma_zamani: string;
+  patrol_window_id?: string | null;
+  checkpoint_id?: string | null;
+}
+
+/** (P133.3) (tip, devriye) ikilisiyle toplanmis alarmlar. */
+export interface AlarmGrubu {
+  tip: AlarmTip;
+  patrol_plan_id?: string | null;
+  patrol_plan_ad?: string | null;
+  /** Temsili metin: en yeni olayin cumlesi, istegin dilinde. */
+  mesaj: string;
+  sayi: number;
+  en_son: string;
+  onem: "dusuk" | "orta" | "yuksek";
+  olaylar: AlarmOlayi[];
+}
+
 export interface DashboardLive {
   generated_at: string;
   aktif_turlar: AktifTur[];
-  son_alarmlar: Alarm[];
+  // (P133.3) `son_alarmlar` (duz liste) KALDIRILDI: pano alti neredeyse
+  // ayni satiri yan yana ciziyordu.
+  alarm_gruplari: AlarmGrubu[];
+  /**
+   * (P133.2) Aidat tahsilat orani — YALNIZ mali yetkisi olan role
+   * (`admin`, `yonetici`). Uc guvenlik rollerine de acik oldugu icin
+   * sunucu digerlerine `null` doner ve pano o blogu HIC cizmez.
+   */
+  aidat_tahsilat_orani?: number | null;
+  /** (P133.2) Tesis blogundaki AKTIF NFC nokta sayisi. */
+  nfc_nokta_sayisi?: number;
 }
 
 export interface AppNotification {

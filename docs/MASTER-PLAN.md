@@ -8478,7 +8478,7 @@ KAPILAR: `tsc` temiz · `eslint` temiz · `vitest` **609 test** (+15) ·
 sınıf adı işiydi).
 
 ### P133 — Görsel dil turu: pano + genel kenar çubuğu
-Status: PLANLANDI · Depends-on: P132
+Status: BITTI(2026-08-05 · 5 madde) · Depends-on: P132
 Scope: P132 **token katmanını** indirdi ama ürün hâlâ P132 öncesiyle **aynı
 görünüyor** — token'lar doğru, değişmeyen şey görsel **DİL**di. Bu tur dili
 değiştirir. Kerem belirli bir yön onayladı; **birebir uygulanır, yeniden
@@ -8538,6 +8538,103 @@ etkileşimli blok erişilebilir ad alır, gruplar klavyeyle gezilebilir.
 Acceptance: değişen her dosya listelenir · kenar çubuğu görünür satır
 sayısı öncesi/sonrası · alarm gövde boyutu öncesi/sonrası · kapı çıktısı ·
 commit + push.
+
+
+Notes (2026-08-05, P133.1–.5) — **GÖRSEL DİL DEĞİŞTİ; İKİ ÖLÇÜM İDDİAMI
+ÇÜRÜTTÜ.**
+
+**1. KENAR ÇUBUĞU (P133.1).** ~28 eşit ağırlıkta düz öğe → Güvenlik /
+Tesis / Finans / İletişim / Yönetim (+ `panel.*` için Platform). En az
+kullanılan iki bölüm tek "Daha fazla" satırının ardına katlandı.
+
+| kim | önce | sonra (açılışta görünen) |
+|---|---:|---:|
+| yönetici · `/dashboard` | 28 | **12** |
+| yönetici · `/dues` | 28 | **10** |
+| yönetici · `/units` | 28 | **11** |
+| denetçi | 4 | **4** |
+| admin (`panel.*`) | 6 | **5** |
+
+Liste `lib/menu.ts`e taşındı — gruplama bir **veri** kararıdır ve jsdom
+kurmadan ölçülebilmeli. **Rol kapısı değişmedi ve bu ölçüldü:** yedi
+rol/yüzey çifti için gruplanmış küme `ROTA_ROLLERI`den gelen kümeye
+birebir eşit (mutasyon: süzgeçten `rotaRoldeGorunur` çıkarılınca 6 test
+düştü). Yol üstünde iki düzeltme çıktı: `text-left`→`text-start` (RTL
+kilidi yakaladı) ve CSS `uppercase` kaldırıldı (Türkçede "İletişim" →
+"İLETIŞIM" üretiyor).
+
+**2. ALARM TOPLAMA (P133.3) — İDDİAM ÖLÇÜMLE ÇÜRÜDÜ.** Alarmlar (tip,
+devriye) ile gruplandı. İlk tasarımda yalnız `tip`i grup başlığına
+taşımıştım ve "gövde küçülür" diye yazmıştım; ölçüm **tersini** söyledi:
+**1533 → 1594 bayt, yani BÜYÜDÜ** — grup başlığı, olay başına kazanılan
+`tip`ten pahalı. Tekrar eden asıl şey **metindi** ("E-Devriye turunda
+okutma yok" × 6, ~100 bayt). Temsilî metin gruba taşındı, olaydan çıktı:
+
+| | olay | grup | gövde |
+|---|---:|---:|---:|
+| önce (düz liste) | 6 | — | 1533 B |
+| ilk deneme (yalnız `tip` yukarı) | 6 | 1 | 1594 B ❌ |
+| **son (metin de yukarı)** | 6 | 1 | **1157 B (%24,5 küçülme)** |
+
+Küçülme artık **teste bağlı**: `test_GOVDE_KUCULDU...` iki biçimi aynı
+olay kümesinden kurup karşılaştırıyor (boş kümede geçmesin diye ≥6 olay
+şartı da var).
+
+**SÖZLEŞME DEĞİŞTİ** (`son_alarmlar` → `alarm_gruplari`). Tüketici
+**ölçüldü, varsayılmadı**: mobil bu uçtan yalnız `aktif_turlar` okuyor;
+`son_alarmlar`ın tek tüketicisi web panosuydu. İki biçimi birden dönmek
+küçültmesi gereken gövdeyi büyütürdü.
+
+**"En kötü önem" alanı hakkında dürüst not:** gruplama zaten (tip,
+devriye) ile yapıldığından bir grubun tüm olayları aynı tiptedir, yani
+"en kötü" bugün her zaman tipin kendi önemidir. Alan yine de dönülüyor ki
+istemci tip→önem tablosunu ikinci kez taşımasın; olay başına gerçek bir
+önem eklenirse burası `max()` olur ve sözleşme değişmez.
+
+**3. PANO (P133.2).** Selamlama + **bestelenmiş** tek cümle (sabit varyant
+yok; uymayan yan cümle listeye girmez, hepsi boşalırsa "olağan dışı bir
+şey yok" çıkar) → **kahraman tint blok** (süren devriye; yoksa sıradaki;
+o da yoksa dostça boş durum) → **≤4 ikincil tint blok** → gruplu alarmlar
++ tesis bloğu (harita blok genişliğinde) → kamera şeridi. Pencere tablosu
+kalktı (onaylanan yön: panoda kılcal ızgara yok). Sert sınır **testle**
+tutuluyor; mutasyon: 5. blok eklenince 3 test düştü.
+
+**KAPSAM KARARI — İKİ BLOK DEĞİŞTİRİLDİ (sessizce değil):** istenen dört
+ikincil blok "gecikme / sahadaki personel / açık görev / aidat tahsilat
+oranı"ydı. Gecikme ve tahsilat oranı gerçek verilerle kondu (tahsilat,
+`reports._tahsilat_ozet`ten **aynen** — ikinci bir tanım üretilmedi).
+"Sahadaki personel" ve "açık görev" için depoda **mevcut bir tanım yok**;
+birini uydurmak (kaç dakikadır okutan personel "sahada" sayılır? hangi
+görev "açık"?) turun açık kısıtı olan "yeni iş mantığı yok"u çiğnerdi.
+Yerlerine tanımı belli iki sayı kondu: **bugünkü tur** ve **tamamlanan
+tur**. Kerem tanımı verdiğinde değişiklik blok başına bir satırdır.
+
+**MALİ ALAN ROL KAPISI (yol üstünde çıktı):** `/dashboard/live` güvenlik
+rollerine de açık ve tahsilat oranı mali veridir. Alan yalnız
+`admin`/`yonetici` için doldurulur, diğerlerinde sorgu **hiç
+çalıştırılmaz** ve `null` döner; pano o bloğu **hiç çizmez** ("%0"
+göstermek, veriyi sızdırmadan yanlış bilgi vermek olurdu). İki yönde de
+test edildi.
+
+**GİDİŞ-DÖNÜŞ SAYISI DEĞİŞMEDİ:** yine üç istek. Yeni blokların verisi
+(`aidat_tahsilat_orani`, `nfc_nokta_sayisi`) ayrı uç açmak yerine **aynı
+yanıta** bindirildi.
+
+**4. METİN (P133.4).** Sayılar cümle aldı, 7 dil, sabit Türkçe yok — sabit
+metin taraması selamlamadaki `·` ayırıcısını yakaladı ve kaldırıldı
+(tesis adı zaten tesis bloğunda).
+
+**5. `panel.*` (P133.5).** Aynı token'lar, aynı kenar çubuğu; çatallanma
+testle görünür kılındı (`menuGruplari` çağıran tek dosya `AppShell.tsx`).
+
+**KAPSAM KAYBI OLMADI ama YER DEĞİŞTİ (dürüstçe):** pano pencere listesini
+bıraktığı için TUR DURUMU çevirisinin DOM kilidi orada ölçülemez oldu;
+`/reports/patrols`a **taşındı** (silinmedi). Alarm tipi çevirisi panoda
+ölçülmeye devam ediyor.
+
+KAPILAR: `tsc` temiz · `eslint` temiz · `vitest` **645 test** (+15) ·
+`build` ✓ (`/dashboard` ilk yük 108→**109 kB**, paylaşılan 87.5 kB
+değişmedi) · backend `pytest` **1417 geçti**, 1 atlandı · göç kapıları bulgu: 0.
 
 ### NOT — Sign in with Apple (4.8)
 **GEÇERSİZ (N/A):** üçüncü taraf sosyal giriş **kullanmıyoruz** (Google/Facebook

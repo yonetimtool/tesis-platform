@@ -31,21 +31,29 @@ const CANLI = {
       pencere_baslangic: "2026-08-01T02:00:00Z", pencere_bitis: "2026-08-01T03:00:00Z",
       durum: "bekliyor", beklenen_checkpoint_sayisi: 3, okutulan_checkpoint_sayisi: 0 },
   ],
-  son_alarmlar: [
-    { tip: "kacirilan_tur", olusma_zamani: "2026-08-01T02:00:00Z",
-      mesaj: "Gece Turu kaçırıldı", patrol_window_id: "w2", checkpoint_id: null },
+  // (P133.3) Alarmlar GRUPLU geliyor.
+  alarm_gruplari: [
+    { tip: "kacirilan_tur", patrol_plan_id: "p1", patrol_plan_ad: "Gece Turu",
+      mesaj: "Gece Turu kaçırıldı", sayi: 1, en_son: "2026-08-01T02:00:00Z",
+      onem: "yuksek",
+      olaylar: [{ olusma_zamani: "2026-08-01T02:00:00Z", patrol_window_id: "w2" }] },
   ],
+  aidat_tahsilat_orani: 64,
+  nfc_nokta_sayisi: 9,
 };
 
 describe("Pano", () => {
   it("SAYACLAR sunucu verisinden turetilir (istemcide yeniden sayilmaz)", async () => {
     fetchSahtele({ "/api/dashboard/live": CANLI });
     ciz(DashboardPage);
-    // Uc pencere ayri satirlar halinde cizilir (1 tamamlandi, 1 kacirildi,
-    // 1 bekliyor) — plan adi UC KEZ gecer.
-    await waitFor(() =>
-      expect(screen.getAllByText("Gece Turu")).toHaveLength(3),
-    );
+    // (P133.2) Pano artik pencere LISTESI cizmiyor; sayilar tint
+    // bloklarda ozetleniyor. Olculen kural AYNI: sayilar sunucudan gelen
+    // kumeden turer.
+    //   3 pencere -> "Bugunku tur" = 3
+    //   1 tamamlandi -> "Tamamlanan tur" = 1
+    //   tahsilat orani sunucudan -> %64
+    await waitFor(() => expect(screen.getByText("%64")).toBeInTheDocument());
+    expect(screen.getAllByText("3").length).toBeGreaterThan(0);
     // Alarm da SUNUCUDAN gelen metinle cizilir: panelde yeniden cumle
     // kurmak, sunucunun dil katalogunu atlamak olurdu.
     expect(document.body.textContent ?? "").toContain("Gece Turu kaçırıldı");

@@ -37,10 +37,20 @@ export function SiteHarita({
   lat,
   lon,
   ad,
+  chromsuz = false,
 }: {
   lat?: number | null;
   lon?: number | null;
   ad?: string | null;
+  /**
+   * (P133.2) KENDI KABINI CIZME — harita bir bloga GOMULU gelsin.
+   *
+   * Pano tesis blogunda harita BLOK GENISLIGINI doldurur ve ad/NFC sayisi
+   * onun altinda durur; burasi kendi kartini + basligini cizerse ic ice
+   * iki kap ve iki baslik olurdu. Diger cagri yerleri (tesis ayarlari)
+   * kendi baslikli hâlini kullanmaya DEVAM eder.
+   */
+  chromsuz?: boolean;
 }) {
   const t = useT();
   const ref = useRef<HTMLDivElement | null>(null);
@@ -70,12 +80,8 @@ export function SiteHarita({
 
   const konumVar = typeof lat === "number" && typeof lon === "number";
 
-  return (
-    <Kart className="overflow-hidden">
-      <div className="flex items-center justify-between gap-3 p-kart pb-3">
-        <h2 className="text-bolum text-metin-heading">{t("panoKonumBaslik")}</h2>
-        {ad ? <span className="truncate text-satiralt text-metin-muted">{ad}</span> : null}
-      </div>
+  const harita = (
+    <>
       <div ref={ref} className="aspect-[16/9] w-full bg-yuzey-placeholder">
         {!konumVar ? (
           <p className="flex h-full items-center justify-center px-6 text-center text-satiralt text-metin-muted">
@@ -98,6 +104,18 @@ export function SiteHarita({
           {t("panoKonumOsm")}
         </p>
       ) : null}
+    </>
+  );
+
+  if (chromsuz) return harita;
+
+  return (
+    <Kart className="overflow-hidden">
+      <div className="flex items-center justify-between gap-3 p-kart pb-3">
+        <h2 className="text-bolum text-metin-heading">{t("panoKonumBaslik")}</h2>
+        {ad ? <span className="truncate text-satiralt text-metin-muted">{ad}</span> : null}
+      </div>
+      {harita}
     </Kart>
   );
 }

@@ -936,10 +936,89 @@ class AlarmOut(BaseModel):
     checkpoint_id: uuid.UUID | None = None
 
 
+#: (P133.3) Alarm ONEMI — TIPTEN TURETILIR, kolonda TUTULMAZ.
+#:
+#: DURUSTCE: sozlesme grup basina "en kotu onem" istiyor; ama gruplama
+#: zaten (tip, devriye) ikilisiyle yapildigi icin bir grubun icindeki tum
+#: olaylar AYNI tiptedir ve dolayisiyla ayni onemdedir. Yani "en kotu"
+#: hesabi bugun her zaman tipin kendi onemini verir. Alan yine de
+#: donuluyor: istemcinin siralama/renk karari icin tipten onem tablosunu
+#: KENDISININ tasimasi, ayni bilgiyi iki yerde tutmak olurdu.
+#:
+#: Gercek bir OLAY-BASINA onem (orn. "12 dakika gecikme" ile "3 saat
+#: gecikme") bugun veride YOK; eklenirse burasi max() olur ve sozlesme
+#: degismez.
+ALARM_ONEMI: dict[str, str] = {
+    # Tur tamamen kacirildi: sahada kimse yok demektir.
+    "kacirilan_tur": "yuksek",
+    # Turun bir noktasi atlandi: tur yurudu, kapsama eksik.
+    "eksik_checkpoint": "orta",
+    # Okutma gecikti: sahada olabilir, gec kalmis.
+    "gecikmis_okutma": "dusuk",
+}
+AlarmOnemLiteral = Literal["dusuk", "orta", "yuksek"]
+
+
+class AlarmOlayiOut(BaseModel):
+    """Grup icindeki TEK bir olay — istemci grubu actiginda gosterir.
+
+    NE YOK ve NEDEN — bu, gruplamanin govdeyi gercekten kucultmesini
+    saglayan karardir:
+
+      * `tip` ve `patrol_plan_id`: grubun ustunde bir kez duruyor.
+      * `mesaj`: EN BUYUK alan (~100 bayt) ve grup icinde neredeyse AYNI
+        cumlenin tekrariydi ("E-Devriye turunda okutma yok" x 6). Temsili
+        metin grupta bir kez duruyor; olay satirinin tasidigi bilgi zaten
+        KENDI zamani ve noktasidir.
+
+    ILK OLCUM YANLISTI ve olcum onu dusurdu: yalniz `tip`i yukari almak
+    govdeyi 1533 -> 1594 bayta BUYUTMUSTU (grup basligi tasarruftan
+    pahali). Tekrar eden asil sey metindi.
+    """
+
+    olusma_zamani: datetime
+    patrol_window_id: uuid.UUID | None = None
+    checkpoint_id: uuid.UUID | None = None
+
+
+class AlarmGrubuOut(BaseModel):
+    """(tip, devriye) ikilisiyle toplanmis alarmlar."""
+
+    tip: AlarmTip
+    patrol_plan_id: uuid.UUID | None = None
+    patrol_plan_ad: str | None = None
+    #: Grubun TEMSILI metni — en yeni olayin cumlesi, istegin dilinde.
+    #: Olay basina degil grup basina tutulur (bkz. AlarmOlayiOut).
+    mesaj: str
+    sayi: int
+    en_son: datetime
+    onem: AlarmOnemLiteral
+    olaylar: list[AlarmOlayiOut]
+
+
 class DashboardLiveOut(BaseModel):
     generated_at: datetime
     aktif_turlar: list[AktifTurOut]
-    son_alarmlar: list[AlarmOut]
+    #: (P133.2) Aidat tahsilat orani — YALNIZ mali yetkisi olan role.
+    #:
+    #: Bu uc `security` ve `guvenlik_amiri`ne de acik; tahsilat orani MALI
+    #: veridir ve guvenlik gorevlisinin isi degildir. Rol yetmiyorsa alan
+    #: `null` doner ve pano o blogu HIC cizmez — "0%" gostermek, veriyi
+    #: sizdirmadan yanlis bilgi vermek olurdu.
+    #:
+    #: Deger AYRI BIR UCTAN GELMEZ: panonun ek gidis-donusu olmasin diye
+    #: ayni yanita bindirildi ve hesap `reports._tahsilat_ozet`ten AYNEN
+    #: kullanilir — tahsilat oraninin ikinci bir tanimi olmasin diye.
+    aidat_tahsilat_orani: int | None = None
+    #: (P133.2) Tesis blogundaki NFC nokta sayisi. Ayri bir `/checkpoints`
+    #: istegi acmamak icin bu yanita bindirildi (pano ek gidis-donus
+    #: getirmemeli); yalniz AKTIF noktalar sayilir — pasif nokta sahada
+    #: okutulmaz ve sayiya girmesi yaniltici olurdu.
+    nfc_nokta_sayisi: int = 0
+    # (P133.3) `son_alarmlar` KALDIRILDI, yerine gruplu liste geldi.
+    # Sozlesme degisikligi bilinclidir ve tuketici olculdu: mobil yalniz
+    # `aktif_turlar` okuyor, `son_alarmlar`in TEK tuketicisi web panosuydu.
+    alarm_gruplari: list[AlarmGrubuOut]
 
 
 # ---------------------------- patrol-windows ------------------------------- #

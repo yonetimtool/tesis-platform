@@ -91,6 +91,10 @@ describe("sozluk butunlugu", () => {
     // ve Fransizcada da ayni yazilir (Fr. "Plateforme" secildi, o farkli);
     // ceviri eksigi degil es-sozcuktur.
     "Platform",
+    // (P133.2) Ozet cumlesinin yan cumle AYIRICISI. Ceviri degil NOKTALAMA:
+    // Latin alfabesi kullanan dillerin hepsinde ", " — Arapca "، " ile
+    // ayrildigi icin anahtar yine de sozlukte durur.
+    ", ",
   ]);
 
   // KALAN ACIK (durustce): ne bu olcum ne `TR_HARF`, ic/ig/is harfi

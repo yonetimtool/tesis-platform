@@ -314,3 +314,142 @@ export function SayfaBasligi({
     </div>
   );
 }
+
+// ===========================================================================
+// (P133) "TINT BLOK" DILI — Kerem'in onayladigi gorsel yon.
+//
+// P132 token katmanini indirdi ama urun ayni gorunuyordu: token'lar
+// dogruydu, degismeyen sey GORSEL DILDI. Bu bloklar o dili tasir.
+//
+// KURALLAR (onaydan birebir):
+//   * Kap KENARLIKLI KART DEGIL, rol tintiyle DOLU bir bloktur. Kenarlik
+//     YOK. Kahraman blok 20px, ikincil bloklar 16px yaricap.
+//   * Tint uzerindeki metin O ROLUN metin token'idir (`vurguInk`) — tint
+//     ustunde notr gri ASLA. Kontrast iki temada da olculur
+//     (`tasarim-kontrast.test.ts`).
+//   * Blok ikon-oncullu: 20px dis hat ikon -> buyuk sayi -> kisa etiket.
+//   * SERT SINIR: ekran basina en cok 1 kahraman + 4 ikincil blok. Renk
+//     SINYAL kalmali; alti tintli ekran gurultudur ve bu sinir yonun
+//     calismasinin tek sebebidir. Sinir `pano-tint-blok.dom.test.ts`te
+//     olculur — yorumla degil testle tutulur.
+// ===========================================================================
+
+/** Ekran basina izin verilen ikincil tint blok sayisi (SERT SINIR). */
+export const IKINCIL_BLOK_SINIRI = 4;
+
+/**
+ * Ikincil tint blok: ikon -> sayi -> etiket.
+ *
+ * `href` verilmezse baglanti YAPILMAZ: tiklanabilir gorunup hicbir sey
+ * yapmayan bir blok "bozuk" izlenimi uretir (mobilde ayni karar).
+ */
+export function TintBlok({
+  vurgu = "blue",
+  ikon,
+  deger,
+  etiket,
+  href,
+}: {
+  vurgu?: Vurgu;
+  ikon: ReactNode;
+  deger: string;
+  etiket: string;
+  href?: string;
+}) {
+  const govde = (
+    <div
+      className={`flex flex-col gap-2 rounded-kart p-kart ${VURGU_TINT[vurgu]} ${VURGU_METIN[vurgu]} transition-opacity hover:opacity-90`}
+    >
+      {/* Ikon DEKORATIFTIR: anlami yanindaki etiket tasiyor. */}
+      <span aria-hidden="true" className="[&>svg]:h-5 [&>svg]:w-5">
+        {ikon}
+      </span>
+      <span className="text-[22px] font-medium leading-tight tabular-nums">{deger}</span>
+      <span className="text-[12px] leading-tight opacity-90">{etiket}</span>
+    </div>
+  );
+  return href ? (
+    <Link href={href} className="odak-ic block rounded-kart">
+      {govde}
+    </Link>
+  ) : (
+    govde
+  );
+}
+
+/**
+ * Kahraman blok — ekranin TEK buyuk tint kabi (20px yaricap).
+ *
+ * Ikincil bloklardan farki yalnizca boyut degil: burada bir SAYI degil bir
+ * DURUM anlatilir (baslik + destek satiri + istege bagli ilerleme).
+ */
+export function KahramanBlok({
+  vurgu = "blue",
+  ikon,
+  ustBaslik,
+  baslik,
+  altSatirlar,
+  ilerleme,
+  href,
+}: {
+  vurgu?: Vurgu;
+  ikon: ReactNode;
+  ustBaslik: string;
+  baslik: string;
+  /** Ikincil satirlar — 1.6 satir yuksekligiyle (okunurluk). */
+  altSatirlar?: string[];
+  /** `{ simdi, toplam }` verilirse ilerleme cubugu cizilir. */
+  ilerleme?: { simdi: number; toplam: number } | null;
+  href?: string;
+}) {
+  const yuzde =
+    ilerleme && ilerleme.toplam > 0
+      ? Math.round((100 * ilerleme.simdi) / ilerleme.toplam)
+      : null;
+  const govde = (
+    <div
+      className={`rounded-blok p-bolum ${VURGU_TINT[vurgu]} ${VURGU_METIN[vurgu]}`}
+    >
+      <div className="flex items-start gap-3">
+        <span aria-hidden="true" className="[&>svg]:h-[22px] [&>svg]:w-[22px]">
+          {ikon}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-[12px] opacity-90">{ustBaslik}</p>
+          <p className="mt-0.5 text-[22px] font-medium leading-snug">{baslik}</p>
+          {altSatirlar?.length ? (
+            <div className="mt-2 space-y-0.5">
+              {altSatirlar.map((s) => (
+                <p key={s} className="text-[13px] leading-[1.6] opacity-90">
+                  {s}
+                </p>
+              ))}
+            </div>
+          ) : null}
+          {yuzde !== null && (
+            <div className="mt-3">
+              <div
+                // Ilerleme METINLE de soyleniyor (altSatirlar); cubuk
+                // gorsel tekrardir, bu yuzden ekran okuyucuya OKUNMAZ.
+                aria-hidden="true"
+                className="h-1.5 w-full overflow-hidden rounded-full bg-current/20"
+              >
+                <div
+                  className="h-full rounded-full bg-current"
+                  style={{ width: `${yuzde}%` }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+  return href ? (
+    <Link href={href} className="odak-ic block rounded-blok">
+      {govde}
+    </Link>
+  ) : (
+    govde
+  );
+}

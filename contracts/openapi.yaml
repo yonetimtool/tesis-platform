@@ -9376,15 +9376,29 @@ components:
     # -------------------------- dashboard -------------------------- #
     DashboardLive:
       type: object
-      required: [generated_at, aktif_turlar, son_alarmlar]
+      required: [generated_at, aktif_turlar, alarm_gruplari]
       properties:
         generated_at: { type: string, format: date-time }
         aktif_turlar:
           type: array
           items: { $ref: "#/components/schemas/AktifTur" }
-        son_alarmlar:
+        # (P133.3) `son_alarmlar` (duz liste) KALDIRILDI, yerine gruplu
+        # liste geldi. Pano alti neredeyse ayni satiri yan yana
+        # ciziyordu: `notification`da (tenant, tip, pencere) tekil oldugu
+        # icin bir planin alti penceresi alti satir uretiyor. Yonetici
+        # icin bunlar TEK olgudur. Tuketici olculdu: mobil bu uctan
+        # yalniz `aktif_turlar` okuyor.
+        alarm_gruplari:
           type: array
-          items: { $ref: "#/components/schemas/Alarm" }
+          items: { $ref: "#/components/schemas/AlarmGrubu" }
+        # (P133.2) Aidat tahsilat orani — YALNIZ mali yetkisi olan role
+        # (admin, yonetici). Bu uc guvenlik rollerine de acik ve tahsilat
+        # orani mali veridir; yetki yoksa alan null doner ve pano blogu
+        # HIC cizmez. Ayri uc acilmadi: panonun ek gidis-donusu olmamali.
+        aidat_tahsilat_orani: { type: integer, nullable: true }
+        # (P133.2) Tesis blogu icin AKTIF NFC nokta sayisi. Ayri bir
+        # /checkpoints istegi acmamak adina bu yanita bindirildi.
+        nfc_nokta_sayisi: { type: integer }
     AktifTur:
       type: object
       required: [patrol_window_id, patrol_plan_id, pencere_baslangic, pencere_bitis, durum]
@@ -9492,6 +9506,45 @@ components:
         mesaj: { type: string }
         patrol_window_id: { type: string, format: uuid, nullable: true }
         checkpoint_id: { type: string, format: uuid, nullable: true }
+
+    # (P133.3) Grup ICINDEKI tek olay. `tip` ve `patrol_plan_id` BURADA
+    # YOK: ikisi de grubun ustunde bir kez duruyor. Olay basina
+    # tekrarlamak, gruplamanin kazandirdigi govdeyi geri verirdi.
+    AlarmOlayi:
+      type: object
+      required: [olusma_zamani]
+      properties:
+        olusma_zamani: { type: string, format: date-time }
+        patrol_window_id: { type: string, format: uuid, nullable: true }
+        checkpoint_id: { type: string, format: uuid, nullable: true }
+
+    AlarmGrubu:
+      type: object
+      required: [tip, mesaj, sayi, en_son, onem, olaylar]
+      properties:
+        tip:
+          type: string
+          enum: [kacirilan_tur, eksik_checkpoint, gecikmis_okutma]
+          example: gecikmis_okutma
+        patrol_plan_id: { type: string, format: uuid, nullable: true }
+        # Plan silinmisse FK SET NULL oldugu icin ad da null gelir.
+        patrol_plan_ad: { type: string, nullable: true }
+        # Temsili metin: en yeni olayin cumlesi, istegin dilinde. Olay
+        # basina degil GRUP basina — grup icinde neredeyse ayni cumlenin
+        # tekrariydi ve govdenin en buyuk kalemiydi.
+        mesaj: { type: string }
+        sayi: { type: integer, example: 6 }
+        en_son: { type: string, format: date-time }
+        # ONEM TIPTEN TURETILIR, kolonda tutulmaz. Gruplama zaten (tip,
+        # devriye) ile yapildigi icin bir grubun tum olaylari ayni
+        # tiptedir; "en kotu onem" bugun tipin kendi onemidir. Alan yine
+        # de doner ki istemci tip->onem tablosunu ikinci kez tasimasin.
+        onem:
+          type: string
+          enum: [dusuk, orta, yuksek]
+        olaylar:
+          type: array
+          items: { $ref: "#/components/schemas/AlarmOlayi" }
 
     # ------------------------- notifications ----------------------- #
     CeviriAlanlari:

@@ -7,6 +7,9 @@
 // EN PAHALI SONUC: bir sayfanin sessizce KAYBOLMASI. Gruplama bir suzgec
 // degildir — 28 satiri 5 bolume dagitir — ama bir oge hicbir gruba
 // yazilmazsa menuden duser ve kimse fark etmez. Ilk test tam olarak budur.
+import { readFileSync, readdirSync } from "node:fs";
+import { join, resolve } from "node:path";
+
 import { describe, expect, it } from "vitest";
 
 import {
@@ -153,5 +156,32 @@ describe("(P133.1) SATIR SAYISI hedefi", () => {
   it("DENETCI ve ADMIN de kaydirmasiz", () => {
     expect(gorunenSatir("tesis", "denetci", "/raporlar")).toBeLessThanOrEqual(10);
     expect(gorunenSatir("platform", "admin", "/tenants")).toBeLessThanOrEqual(10);
+  });
+});
+
+describe("(P133.5) panel.* AYNI kenar cubugunu kullanir", () => {
+  // Kerem'in acik sarti: "kenar cubugu iki bilesene CATALLANMAZ."
+  //
+  // Catallanma sessiz bir hatadir: iki dosya bir sure ayni durur, sonra
+  // biri duzeltilir otekI unutulur ve panel eski menuyle kalir. Bu test
+  // catallanmayi YAPISAL olarak imkânsiz kilmaz ama GORUNUR kilar.
+  it("kenar cubugu TEK dosyada tanimli", () => {
+    const kok = resolve(__dirname, "..");
+    const bilesenler = readdirSync(join(kok, "components")).filter((a) =>
+      a.endsWith(".tsx"),
+    );
+    const cubuklar = bilesenler.filter((ad) => {
+      const s = readFileSync(join(kok, "components", ad), "utf8");
+      // Kenar cubugunu cizen dosya `menuGruplari`yi cagirandir.
+      return s.includes("menuGruplari(");
+    });
+    expect(cubuklar, "kenar cubugu catallanmis").toEqual(["AppShell.tsx"]);
+  });
+
+  it("PLATFORM yuzeyi de bolumlenmis (duz liste DEGIL)", () => {
+    const gruplar = menuGruplari("platform", "admin");
+    expect(gruplar.length).toBeGreaterThan(1);
+    // Panel yogun duzenini korur ama AYNI bolumleme dilini kullanir.
+    for (const g of gruplar) expect(GRUP_ANAHTARI[g.id]).toBeTruthy();
   });
 });
