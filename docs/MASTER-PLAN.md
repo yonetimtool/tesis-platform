@@ -8884,7 +8884,8 @@ KAPILAR: `tsc` temiz · `eslint` temiz · `vitest` **666 test** (+18) ·
 `build` ✓.
 
 ### P138 — Liste/form sayfaları: ortak tablo ilkeli (P132 kuyruğunun kalanı)
-Status: PLANLANDI · Depends-on: P132, P133
+Status: KISMEN(ilkel + ilk sayfa BİTTİ — 372fea9 · kalan 22 sayfa + RTL
+süpürmesi sürüyor) · Depends-on: P132, P133
 Scope: P133 görsel dili panoya ve kenar çubuğuna indirdi ve liste/form
 sayfalarını **bilerek dışarıda bıraktı** ("o P132 kuyruğu — aynı dosyalarda
 çift yazma riski"). Bu madde o kuyruğu kapatır.
@@ -8998,12 +8999,33 @@ Tercih **cihaz başınadır** ve bu dürüstçe bir bedeldir: sunucuya taşımak
 yeni uç + göç demekti, turun kısıtı "API değişikliği yok"tu. Aynı kullanıcı
 başka telefonda varsayılan ızgarayı görür; senkron istenirse ayrı madde.
 
-**KALAN TEK ADIM:** üç ana ekranın (yönetici/saha/sakin) hızlı-erişim
-ızgarasını `izgaraKarolariProvider`den çizmesi + bir "düzenle" girişi.
-Bugün o ızgara `HizliErisimKart` görünüm modellerinden besleniyor;
-`HomeMenuEntry` → `HizliErisimKart` köprüsü yazılmalı. **Bilerek
-yapılmadı:** ikizlerin kaynağı tam olarak bu iki sistemin yan yana
-durmasıdır ve köprüyü üç ekranda aceleye getirmek, kapatılmak istenen
+**KALAN TEK ADIM — KÖPRÜ (Kerem: "sonraki oturumda yaz").**
+Üç ana ekranın (yönetici/saha/sakin) hızlı-erişim ızgarasını
+`izgaraKarolariProvider`den çizmesi + bir "düzenle" girişi.
+
+**NEDEN GÖRÜNDÜĞÜNDEN ZOR — bu tur ölçüldü, yeniden keşfedilmesin:**
+`HizliErisimKart` üç şeyi birbirine bağlıyor:
+1. `HomeKartId` kimliği — üç ekrandaki **sayaç `switch`'leri** buna göre
+   eşleşiyor;
+2. `altMetin` — **`null` ise kart iskelet çizer** ("veri henüz yok"
+   demek);
+3. `baslik` — kimlikten çözülüyor (`kartBasligi`).
+Kullanıcının seçtiği karonun ne sayacı ne de `HomeKartId` karşılığı var.
+Olduğu gibi bağlamak iki hatadan birini üretir: **yanlış sayaç iliştirmek**
+ya da ekranda **sonsuza kadar iskelet çizen** karolar.
+
+**YAPILACAK SIRA:**
+1. `HizliErisimKart`'a *sayaçsız* hâl: başlık dışarıdan verilebilsin ve
+   "sayaç yok" ile "veri henüz yok" **ayrı** olsun (bugün ikisi de `null`).
+2. `HomeMenuEntry` → kart dönüştürücüsü (`moduleCardSpec` + `moduleBaslik`
+   zaten hazır).
+3. Üç ekranın kaynağını `izgaraKarolariProvider`e çevirmek + "düzenle"
+   girişi.
+4. Test: kullanıcı karolarının ekranların sayaç `switch`'leriyle
+   çakışmadığı.
+
+**Bilerek yarım bırakılmadı:** ikizlerin kaynağı tam olarak bu iki sistemin
+yan yana durmasıdır; geçişi üç ekranda aceleye getirmek, kapatılmak istenen
 sorunu büyütürdü.
 
 **CİHAZ DOĞRULAMASI YAPILMADI** (bu ortamda iPhone yok) — avatar düzeltmesi
