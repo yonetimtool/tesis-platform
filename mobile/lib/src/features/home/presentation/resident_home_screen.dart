@@ -42,6 +42,8 @@ import 'widgets/home_states.dart';
 import 'widgets/odeme_karti.dart';
 import 'widgets/section_padding.dart';
 import 'widgets/son_hareketler_karti.dart';
+import '../data/izgara_tercihi.dart';
+import 'izgara_koprusu.dart';
 
 /// Sakin ana ekrani (referans: site-sakini.jpeg).
 ///
@@ -93,8 +95,14 @@ class ResidentHomeScreen extends ConsumerWidget {
 
     // Hizli erisim: her sayac GERCEK uctan; karsiligi olmayan kart yok
     // (sakin izgarasindaki 8 kartin hepsinin ucu var).
+    final izgaraSecimi = ref.watch(izgaraKarolariProvider);
     final erisim = [
-      for (final k in taban.hizliErisim(HomeVaryant.sakin))
+      // (P139.4) IZGARA ARTIK KULLANICININ: kaynak `taban.hizliErisim`
+      // degil, kullanicinin tercihinden cozulen kume. Kopru secilen
+      // girisi rolun MEVCUT kartiyla ROTA uzerinden esler ve eslesirse o
+      // karti OLDUGU GIBI kullanir — bu yuzden asagidaki sayac `switch`i
+      // hicbir degisiklik olmadan calismaya devam eder.
+      for (final k in izgaraKartlari(izgaraSecimi, HomeVaryant.sakin, taban))
         switch (k.id) {
           HomeKartId.ziyaretciler => k.sayacla(
               ziyaretciAsync.metin((l) => l10n.sayacKayit(l.length))),

@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/branding/yonetio_logo.dart';
-import '../../../core/i18n/l10n.dart';
 import '../../../routing/app_router.dart';
 import '../domain/home_menu.dart';
+
+// (P139.4) `moduleBaslik` DOMAIN'e tasindi (`home_menu.dart`): saf bir
+// giris->l10n eslemesidir ve gorunum modeli (`HizliErisimKart.baslik`)
+// onu cagirmak zorunda. Buradan re-export edilir; cagri yerleri degismedi.
+export '../domain/home_menu.dart' show moduleBaslik;
 
 /// Menu girisinin ana-ekran kart sunumu: ikon + baslik + kategori vurgu rengi
 /// + gidilecek rota. TEK KAYNAK — tum rol ekranlari (R1/R2/R3) bunu kullanir;
@@ -204,41 +208,3 @@ ModuleCardSpec moduleCardSpec(HomeMenuEntry entry) {
 }
 
 
-/// Menu girisinin BASLIGI — aktif dilden. Kimlik [HomeMenuEntry] enum'udur;
-/// switch EKSIKSIZDIR (default yok) → yeni giris eklenince derleyici zorlar.
-String moduleBaslik(AppLocalizations l10n, HomeMenuEntry entry) =>
-    switch (entry) {
-      HomeMenuEntry.otopark => l10n.modulOtopark,
-      HomeMenuEntry.vardiyalar => l10n.modulVardiyalar,
-      HomeMenuEntry.anketler => l10n.modulAnketler,
-      HomeMenuEntry.announcements => l10n.modulDuyurular,
-      HomeMenuEntry.patrol => l10n.modulTurlarim,
-      HomeMenuEntry.patrolTracking => l10n.modulDevriyeTakibi,
-      HomeMenuEntry.tasks => l10n.modulGorevlerim,
-      HomeMenuEntry.taskTracking => l10n.modulGorevYonetimi,
-      HomeMenuEntry.assets => l10n.modulDemirbas,
-      HomeMenuEntry.nfc => l10n.modulNfcOkutma,
-      HomeMenuEntry.outbox => l10n.modulGonderimKuyrugu,
-      HomeMenuEntry.reports => l10n.modulAylikRaporlar,
-      HomeMenuEntry.budget => l10n.modulButce,
-      HomeMenuEntry.financialSummary => l10n.modulFinansalOzet,
-      HomeMenuEntry.transparency => l10n.modulSeffaflik,
-      HomeMenuEntry.siteBudget => l10n.modulSiteButcesi,
-      HomeMenuEntry.myDues => l10n.modulAidatim,
-      HomeMenuEntry.complaints => l10n.modulSikayetOneri,
-      HomeMenuEntry.visitors => l10n.modulZiyaretciler,
-      HomeMenuEntry.kargo => l10n.modulKargo,
-      HomeMenuEntry.unitAccess => l10n.modulGoruntulemeIzni,
-      HomeMenuEntry.rezervasyon => l10n.modulRezervasyon,
-      HomeMenuEntry.etkinlik => l10n.modulEtkinlikler,
-      HomeMenuEntry.siteKurallari => l10n.modulSiteKurallari,
-      HomeMenuEntry.disHizmet => l10n.modulDisHizmetler,
-      HomeMenuEntry.integrations => l10n.modulEntegrasyonlar,
-      HomeMenuEntry.personel => l10n.modulPersonel,
-      HomeMenuEntry.sakinler => l10n.modulSakinler,
-      HomeMenuEntry.binaDuzenleme => l10n.modulBinaYapisi,
-      HomeMenuEntry.daireTanimlari => l10n.modulDaireTanimlari,
-      HomeMenuEntry.sikayetHaritasi => l10n.modulSikayetHaritasi,
-      HomeMenuEntry.sikayetlerim => l10n.modulSikayetlerim,
-      HomeMenuEntry.yoneticiIletisim => l10n.modulYoneticiIletisim,
-    };

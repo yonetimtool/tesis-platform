@@ -8,6 +8,7 @@ import 'package:flutter/widgets.dart';
 
 import '../../../core/i18n/l10n.dart';
 import 'home_kart_id.dart';
+import 'home_menu.dart';
 
 /// Baslik hava blogu ("☀ 24°C / İstanbul").
 class HomeHava {
@@ -35,6 +36,8 @@ class HizliErisimKart {
     this.ikinciAltMetin,
     this.ikinciAltMetinRengi,
     this.rota,
+    this.modulGirisi,
+    this.sayacsiz = false,
   });
 
   final IconData ikon;
@@ -46,8 +49,25 @@ class HizliErisimKart {
   /// Ikon konteynerinin tint zemini + varsayilan alt metin rengi.
   final Color accent;
 
-  /// Baslik — AKTIF DILDEN cozulur (kimlikten).
-  String baslik(AppLocalizations l10n) => kartBasligi(l10n, id);
+  /// (P139.4) KULLANICININ SECTIGI KARO — basligi menu girisinden gelir.
+  ///
+  /// Kisisellestirilebilir izgarada kullanici, sayacli kart karsiligi
+  /// OLMAYAN bir bolumu de secebilir (or. "Site kurallari"). O karonun
+  /// basligi bir [HomeKartId]den cozulemez; menu girisinden cozulur.
+  final HomeMenuEntry? modulGirisi;
+
+  /// (P139.4) BU KARTIN SAYACI YOK — "veri henuz gelmedi" DEGIL.
+  ///
+  /// AYRIM KRITIK: `altMetin == null` bugune kadar "uc henuz yuklenmedi"
+  /// demekti ve kart ISKELET ciziyordu. Kullanicinin sectigi bir karonun
+  /// sayaci hic olmayabilir; ayrim yapilmasaydi o karo SONSUZA KADAR
+  /// iskelet cizerdi (kopruyu yazmadan once olculen engel tam buydu).
+  final bool sayacsiz;
+
+  /// Baslik — AKTIF DILDEN cozulur (kimlikten ya da menu girisinden).
+  String baslik(AppLocalizations l10n) => modulGirisi != null
+      ? moduleBaslik(l10n, modulGirisi!)
+      : kartBasligi(l10n, id);
 
   /// Baslik altindaki SAYAC metni (or. "3 Aktif") — rol ekrani gercek veriyle
   /// doldurur.

@@ -41,11 +41,16 @@ class HomeIskeletCubugu extends StatelessWidget {
 class HomeSayacIskeleti extends StatelessWidget {
   const HomeSayacIskeleti({super.key, this.genislik = 40});
 
+  /// (P139.4) Sayac satirinin yuksekligi — `sayacsiz` kartlar ayni
+  /// bosluğu birakir ki izgarada kart yuksekligi bozulmasin. Sabit TEK
+  /// YERDE durur; ikisi ayrisirsa izgara satirlari kayardi.
+  static const double yukseklik = 16;
+
   final double genislik;
 
   @override
   Widget build(BuildContext context) => SizedBox(
-    height: 16,
+    height: yukseklik,
     child: Center(child: HomeIskeletCubugu(genislik: genislik, yukseklik: 10)),
   );
 }

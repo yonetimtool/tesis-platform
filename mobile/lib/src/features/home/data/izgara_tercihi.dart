@@ -80,12 +80,18 @@ final izgaraTercihiProvider =
     NotifierProvider<IzgaraTercihiController, List<HomeMenuEntry>?>(
         IzgaraTercihiController.new);
 
-/// Ana ekranin CIZECEGI karolar — tercih + rol kesisimi.
+/// Ana ekranin cizecegi karolar — SECIM YOKSA `null`.
 ///
-/// Ekranlar bunu okur; kesisim mantigi tek yerde (`izgarayiCoz`) durur ve
-/// hicbir ekran kendi suzgecini yazmaz.
-final izgaraKarolariProvider = Provider<List<HomeMenuEntry>>((ref) {
+/// Kesisim mantigi tek yerde (`izgarayiCoz`) durur; hicbir ekran kendi
+/// suzgecini yazmaz.
+///
+/// `null` "varsayilan" demektir ve varsayilan, rolun BUGUNKU kart
+/// listesidir (bkz. `izgaraKartlari`). Burada varsayilan izgarayi
+/// dondurmek, hicbir sey secmemis her kullanicinin ana ekranini
+/// degistirirdi — kisisellestirme turu, budama turu degil.
+final izgaraKarolariProvider = Provider<List<HomeMenuEntry>?>((ref) {
   final rol = ref.watch(currentUserRoleProvider).value ?? UserRole.unknown;
   final tercih = ref.watch(izgaraTercihiProvider);
+  if (tercih == null) return null;
   return izgarayiCoz(rol, tercih);
 });

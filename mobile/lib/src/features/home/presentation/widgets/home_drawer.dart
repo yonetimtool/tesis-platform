@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/i18n/l10n.dart';
+import '../../../../routing/app_router.dart';
 
 import '../../../../core/theme/home_tokens.dart';
 import '../../../auth/domain/user_role.dart';
@@ -89,6 +91,20 @@ class HomeDrawer extends StatelessWidget {
               ),
             ),
             Divider(height: 1, color: s.divider),
+            // (P139.4) ANA EKRANI DUZENLE — izgarayi kisisellestirme
+            // girisi. Cekmecede duruyor cunku bir AYARDIR, gunluk bir
+            // eylem degil; ana ekrani karo harcayarak kalabaliklastirmaz.
+            ListTile(
+              leading: Icon(Icons.grid_view_outlined, color: s.body),
+              title: Text(
+                context.l10n.izgaraDuzenleBaslik,
+                style: HomeText.cardTitle.copyWith(color: s.heading),
+              ),
+              onTap: () {
+                Navigator.of(context).pop();
+                context.push(AppRoutes.izgaraDuzenle);
+              },
+            ),
             ListTile(
               leading: Icon(Icons.person_outline, color: s.body),
               title: Text(

@@ -8927,8 +8927,8 @@ Acceptance: elle tablo yazan sayfa **23 → 0** · kilit mutasyonla sınanmış 
 kapılar yeşil.
 
 ### P139 — Mobil: avatar oranı, splash regresyonu, ana ekran ızgarası
-Status: KISMEN(avatar + denetçi çıkmazı + ızgara mantığı BİTTİ · dönüş-splash
-KÖK NEDEN BULUNAMADI · ızgara arayüzü sürüyor) · Depends-on: P132
+Status: KISMEN(avatar + denetçi çıkmazı + ızgara BİTTİ ve BAĞLANDI ·
+dönüş-splash KÖK NEDEN BULUNAMADI — cihaz gerekiyor) · Depends-on: P132
 Scope: Kerem'in üç maddesi. **Not:** brief "P134" diyordu, o numara dolu
 (backend günlük turu) — P139 açıldı. **Derleme numarasına dokunulmadı**,
 App Store Connect'e hiçbir şey gönderilmedi (yapım 3 incelemede).
@@ -8999,7 +8999,32 @@ Tercih **cihaz başınadır** ve bu dürüstçe bir bedeldir: sunucuya taşımak
 yeni uç + göç demekti, turun kısıtı "API değişikliği yok"tu. Aynı kullanıcı
 başka telefonda varsayılan ızgarayı görür; senkron istenirse ayrı madde.
 
-**KALAN TEK ADIM — KÖPRÜ (Kerem: "sonraki oturumda yaz").**
+**KÖPRÜ YAZILDI (P139.4).** Aşağıdaki engel ölçülmüştü ve çözümü
+"yeniden kurmak" değil **"yeniden kullanmak"** oldu: seçilen giriş, rolün
+mevcut kart listesinde **aynı rotaya** giden bir kartla eşleşiyorsa o kart
+*olduğu gibi* kullanılıyor. Böylece `HomeKartId` korunuyor ve üç ekranın
+sayaç `switch`'i **hiç değişmeden** çalışmaya devam ediyor — kişiselleştirme
+sayaçları kaybettirmiyor. Eşleşme yoksa `sayacsiz` kart üretiliyor.
+
+**"SAYACI YOK" ile "VERİ HENÜZ YOK" AYRIMI AÇILDI.** `altMetin == null`
+bugüne kadar iskelet demekti; ayrım olmasaydı kullanıcının seçtiği her
+sayaçsız karo **sonsuza kadar iskelet** çizerdi. `sayacsiz` kartlar aynı
+yükseklikte boş alan bırakıyor (yükseklik sabiti tek yere çıkarıldı ki
+ızgara satırları kaymasın).
+
+`moduleBaslik` **domain'e taşındı**: görünüm modelinin başlığı menü
+girişinden çözmesi gerekiyordu ve presentation→domain bağımlılığı yanlış
+yön olurdu.
+
+**"Düzenle" girişi çekmecede**, ana ekranda değil: bu bir **ayardır**,
+günlük bir eylem değil — ızgarada karo harcaması doğru olmazdı.
+
+**TESTİMİN İLK HÂLİ YANLIŞ VARSAYIM YAPIYORDU:** `duyurular` kartının
+yönetici listesinde olduğunu sanmıştım, yokmuş (o kart saha/sakin
+listelerinde). Test varsayım yerine **ölçen** hâle çevrildi: eşleşen girişi
+listeden buluyor. Eşleşme oranı role göre değişir ve bu doğru davranıştır.
+
+**AŞAĞIDAKİ ENGEL KAYDI DURUYOR** (nasıl çözüldüğünü anlatır):
 Üç ana ekranın (yönetici/saha/sakin) hızlı-erişim ızgarasını
 `izgaraKarolariProvider`den çizmesi + bir "düzenle" girişi.
 

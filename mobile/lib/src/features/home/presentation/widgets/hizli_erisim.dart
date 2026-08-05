@@ -85,7 +85,15 @@ class HizliErisimKarti extends StatelessWidget {
           const SizedBox(height: 3),
           // Sayac YOKKEN (gercek uc henuz yuklenmedi) uydurma sayi degil,
           // notr iskelet cizilir — kart yuksekligi degismez.
-          if (altSatir == null)
+          //
+          // (P139.4) AMA "SAYACI YOK" ILE "VERI HENUZ YOK" AYRI SEYLER.
+          // Kullanicinin sectigi bir karonun sayaci hic olmayabilir;
+          // ayrim yapilmasaydi o karo SONSUZA KADAR iskelet cizerdi.
+          // `sayacsiz` kartta iskelet YERINE ayni yukseklikte bos alan
+          // birakilir — izgarada kart yuksekligi bozulmasin.
+          if (kart.sayacsiz)
+            const SizedBox(height: HomeSayacIskeleti.yukseklik)
+          else if (altSatir == null)
             const HomeSayacIskeleti()
           else
             AutoSizeText(

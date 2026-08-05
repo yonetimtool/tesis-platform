@@ -38,6 +38,8 @@ import 'widgets/section_padding.dart';
 import 'widgets/son_hareketler_karti.dart';
 import 'widgets/stat_tile.dart';
 import 'widgets/vardiya_seridi.dart';
+import '../data/izgara_tercihi.dart';
+import 'izgara_koprusu.dart';
 
 /// Yonetim ana ekrani (referans: yonetici.jpeg) — site yoneticisi VE platform
 /// admini ayni duzeni gorur (brief: admin→yönetici varyanti).
@@ -86,8 +88,14 @@ class YoneticiHomeScreen extends ConsumerWidget {
     final kameralar = ref.watch(camerasProvider).value ?? const <Camera>[];
 
     final aktifVardiya = vardiyalar.where((v) => v.aktifMi(now)).length;
+    final izgaraSecimi = ref.watch(izgaraKarolariProvider);
     final erisim = [
-      for (final k in taban.hizliErisim(HomeVaryant.yonetici))
+      // (P139.4) IZGARA ARTIK KULLANICININ: kaynak `taban.hizliErisim`
+      // degil, kullanicinin tercihinden cozulen kume. Kopru secilen
+      // girisi rolun MEVCUT kartiyla ROTA uzerinden esler ve eslesirse o
+      // karti OLDUGU GIBI kullanir — bu yuzden asagidaki sayac `switch`i
+      // hicbir degisiklik olmadan calismaya devam eder.
+      for (final k in izgaraKartlari(izgaraSecimi, HomeVaryant.yonetici, taban))
         switch (k.id) {
           HomeKartId.vardiyaDurumu => k.sayacla(
               vardiyaAsync.metin((_) => l10n.sayacAktif(aktifVardiya))),

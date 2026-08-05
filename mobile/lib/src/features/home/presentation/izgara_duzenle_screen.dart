@@ -36,9 +36,12 @@ class _IzgaraDuzenleScreenState extends ConsumerState<IzgaraDuzenleScreen> {
     final l10n = context.l10n;
     final rol = ref.watch(currentUserRoleProvider).value ?? UserRole.unknown;
     final secenekler = izgaraSecenekleri(rol);
-    // Ilk cizimde mevcut izgarayla baslanir (bos bir listeyle degil):
-    // kullanici sifirdan secmek zorunda kalmamali.
-    final secim = _secim ??= List.of(ref.read(izgaraKarolariProvider));
+    // Secim yoksa (`null`) rolun VARSAYILAN kumesiyle baslanir — kullanici
+    // sifirdan secmek zorunda kalmasin. Not: ana ekranin varsayilani
+    // "bugunku kartlar"dir; duzenleme ekranindaki baslangic ise menu
+    // girisleri kumesidir, cunku secim MENU GIRISI duzeyinde yapilir.
+    final secim = _secim ??=
+        List.of(ref.read(izgaraKarolariProvider) ?? varsayilanIzgara(rol));
     final doluMu = secim.length >= izgaraEnCokKaro;
 
     return Scaffold(
