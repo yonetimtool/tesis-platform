@@ -2006,5 +2006,14 @@
   },
   "@modulIhlaller": {
     "description": "Ana ekran karosu — arac/park ihlalleri"
+  },
+  "izgaraTavanUyarisi": "Tavana ulaştınız. Yeni bir bölüm eklemek için önce birini çıkarın ({enCok} karo).",
+  "@izgaraTavanUyarisi": {
+    "description": "Secim ekrani: tavana ulasildi",
+    "placeholders": {
+      "enCok": {
+        "type": "int"
+      }
+    }
   }
 }

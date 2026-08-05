@@ -1425,5 +1425,6 @@
   "izgaraDuzenleAciklama": "Выберите до {enCok} часто используемых разделов.",
   "izgaraSifirla": "Сбросить по умолчанию",
   "izgaraKaydet": "Сохранить",
-  "izgaraSecim": "Выбрано: {secili}/{enCok}"
+  "izgaraSecim": "Выбрано: {secili}/{enCok}",
+  "izgaraTavanUyarisi": "Достигнут предел. Уберите один, чтобы добавить другой (плиток: {enCok})."
 }

@@ -1425,5 +1425,6 @@
   "izgaraDuzenleAciklama": "Wählen Sie bis zu {enCok} häufig genutzte Bereiche.",
   "izgaraSifirla": "Auf Standard zurücksetzen",
   "izgaraKaydet": "Speichern",
-  "izgaraSecim": "{secili}/{enCok} ausgewählt"
+  "izgaraSecim": "{secili}/{enCok} ausgewählt",
+  "izgaraTavanUyarisi": "Grenze erreicht. Entfernen Sie einen, um einen weiteren hinzuzufügen ({enCok} Kacheln)."
 }

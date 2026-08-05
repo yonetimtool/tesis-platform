@@ -1425,5 +1425,6 @@
   "izgaraDuzenleAciklama": "اختر حتى {enCok} أقسام تستخدمها كثيرًا.",
   "izgaraSifirla": "استعادة الإعدادات الافتراضية",
   "izgaraKaydet": "حفظ",
-  "izgaraSecim": "{secili}/{enCok} محدد"
+  "izgaraSecim": "{secili}/{enCok} محدد",
+  "izgaraTavanUyarisi": "لقد وصلت إلى الحد. أزل واحدًا لإضافة آخر ({enCok} مربعات)."
 }

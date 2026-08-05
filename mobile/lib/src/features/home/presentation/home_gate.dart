@@ -80,23 +80,31 @@ class HomeGate extends ConsumerWidget {
     // (bkz. kurulumKapisiProvider) — yavas/hatali uc kullaniciyi giris
     // sonrasinda bos bir ekranda TUTAMAZ; bilinmiyorsa ana ekran gosterilir.
     // Kisa bekleme markali acilis ekraniyla yapilir (bos beyaz ekran degil).
-    // (P139.2) NOT — BU DAL BIR REGRESYON SUPHELISIYDI, DEGILMIS.
+    // (P140.3) SPLASH REGRESYONUNUN KOK NEDENI — OLCULDU VE COZULDU.
     //
-    // "Kameradan donunce splash goruunuyor" raporunda ilk hipotezim buydu:
-    // donus -> `home_refresh` `tenantSettingsProvider`i invalidate eder ->
-    // `kurulumKapisiProvider` (onu watch ediyor) yeniden `loading`e duser ->
-    // burasi SplashScreen cizer. Cozum olarak `skipLoadingOnReload: true`
-    // eklemistim.
+    // ZINCIR: ana ekrana donus (`RouteAware.didPopNext` — diyalog kapanisi
+    // dahil) TAM YENILEME tetikler -> `home_refresh` `tenantSettings`i
+    // invalidate eder -> `kurulumKapisiProvider` ONU watch ettigi icin
+    // yeniden yuklenir -> `when` LOADING dalini kosar -> SplashScreen.
     //
-    // OLCTUM VE HIPOTEZ COKTU: bu Riverpod surumunde `AsyncValue.when`
-    // ZATEN varsayilan olarak yeniden-yuklemede loading dalini atliyor
-    // (onceki deger varken `data` kosuyor; olculdu: bayrakli ve bayraksiz
-    // sonuc AYNI). Yani ekleyecegim sey NO-OP olurdu ve duzeltme gibi
-    // gorunen bir kayit birakirdi. Geri alindi.
+    // OLCUM (gercek `ProviderContainer` ile, elle kurulmus AsyncValue ile
+    // DEGIL):
+    //     invalidate sonrasi: isLoading=true, hasValue=true
+    //     when(...)              -> "SPLASH"
+    //     when(skipLoadingOnReload: true) -> "ekran"
     //
-    // Donus-splash'inin gercek sebebi HENUZ BULUNMADI; cihazda uretilmesi
-    // gerekiyor (bkz. P139 notu).
+    // P139'DA BU DUZELTMEYI YAZIP SONRA GERI ALMISTIM ve geri alma
+    // YANLISTI: o turdaki "curutme" olcumu `AsyncLoading().copyWithPrevious(
+    // AsyncData(...))` ile ELLE kurulmus bir deger uzerindeydi ve gercek
+    // yeniden-yukleme durumunu temsil etmiyordu. Ders: bir hipotezi
+    // curutmek icin kullanilan olcum de en az hipotez kadar dikkatli
+    // kurulmali.
+    //
+    // Kapinin karari SOGUK ACILISA aittir ("tesis kurulmus mu?"); cevap
+    // bir kez bilindikten sonra bir YENILEME kullaniciyi splash'a atmaz.
+    // ILK yuklemede (deger henuz yok) splash yine gosterilir.
     return ref.watch(kurulumKapisiProvider).when(
+          skipLoadingOnReload: true,
           data: (kurulumGerekli) =>
               kurulumGerekli ? const SetupTenantScreen() : const YoneticiHomeScreen(),
           error: (_, _) => const YoneticiHomeScreen(),

@@ -17,46 +17,22 @@
 // degistirmemeli. ILK yuklemede splash yine gosterilir.
 import 'dart:io';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   // `AsyncValue.when(skipLoadingOnReload:)` davranisini DOGRUDAN olcer:
   // urun kodundaki kararin dayandigi semantik budur.
-  // OLCUM KAYDI — HIPOTEZ COKTU.
+  // (P140.3) BU BLOK KALDIRILDI — OLCUMU YANLISTI.
   //
-  // Ilk teshisim "kapinin `loading` dali yeniden-yuklemede de kosuyor"du ve
-  // cozum olarak `skipLoadingOnReload: true` eklemistim. Olctum: bu Riverpod
-  // surumunde `when` ZATEN varsayilan olarak yeniden-yuklemede loading'i
-  // atliyor — onceki deger varken `data` kosuyor. Bayrakli ve bayraksiz
-  // sonuc AYNI cikti, yani ekleyecegim sey NO-OP'tu.
+  // Burada "yeniden-yukleme loading dalini ATLAR" diye bir kayit vardi ve
+  // ona dayanarak P139'da DOGRU olan `skipLoadingOnReload` duzeltmesini
+  // geri almistim. Olcum ELLE KURULMUS bir `AsyncValue` uzerindeydi
+  // (`AsyncData(...)`), gercek `invalidate` sonrasi durumu temsil
+  // etmiyordu. Gercek mekanizma `splash_yenilemede_cikmaz_test.dart`ta
+  // olculuyor: bayraksiz `when` LOADING dalini kosuyor.
   //
-  // Bu blok o olcumu KILITLER: davranis bir gun degisirse (varsayilan
-  // tersine doner) bu test duser ve hipotez yeniden degerlendirilir.
-  group('(P139.2) AsyncValue yeniden-yukleme davranisi', () {
-    test('ILK yukleme loading dalini kosar (soguk acilis: splash dogru)', () {
-      expect(
-        const AsyncLoading<bool>().when(
-            data: (v) => 'ekran', error: (_, _) => 'ekran', loading: () => 'splash'),
-        'splash',
-      );
-    });
-
-    test('DEGER TASIYAN durum data dalini kosar', () {
-      // `copyWithPrevious` paket-ici bir uyedir (analyzer uyariyor), o
-      // yuzden ayni ayrimi genel yolla olcuyoruz: deger VARSA `when`
-      // `data` dalini kosar. Riverpod'un `invalidate` sonrasi urettigi
-      // durum da budur (onceki deger korunur) — ilk teshisimin
-      // dayanagiydi ve olcumle curudu.
-      const AsyncValue<bool> onceki = AsyncData<bool>(false);
-      expect(
-        onceki.when(
-            data: (v) => 'ekran', error: (_, _) => 'ekran', loading: () => 'splash'),
-        'ekran',
-        reason: 'varsayilan degistiyse teshis yeniden yapilmali',
-      );
-    });
-  });
+  // Ders: bir hipotezi CURUTMEK icin kullanilan olcum de en az hipotez
+  // kadar dikkatli kurulmali.
 
   group('(P139.2) rol cikmazi', () {
     // DUZ `test`: hicbir widget pump edilmiyor, yalniz kaynak okunuyor.

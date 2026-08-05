@@ -1425,5 +1425,6 @@
   "izgaraDuzenleAciklama": "Elija hasta {enCok} secciones que más use.",
   "izgaraSifirla": "Restablecer valores predeterminados",
   "izgaraKaydet": "Guardar",
-  "izgaraSecim": "{secili}/{enCok} seleccionados"
+  "izgaraSecim": "{secili}/{enCok} seleccionados",
+  "izgaraTavanUyarisi": "Ha alcanzado el límite. Quite uno para añadir otro ({enCok} mosaicos)."
 }

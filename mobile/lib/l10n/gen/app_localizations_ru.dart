@@ -4851,4 +4851,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String izgaraSecim(int secili, int enCok) {
     return 'Выбрано: $secili/$enCok';
   }
+
+  @override
+  String izgaraTavanUyarisi(int enCok) {
+    return 'Достигнут предел. Уберите один, чтобы добавить другой (плиток: $enCok).';
+  }
 }

@@ -20,12 +20,36 @@ library;
 import '../../auth/domain/user_role.dart';
 import 'home_menu.dart';
 
-/// Izgarada ayni anda gosterilecek EN COK karo.
+/// Izgarada ayni anda gosterilecek EN COK karo — TEK SABIT.
 ///
-/// Neden sinir: ana ekran "sik kullanilan, hizli erisim" icindir. Sinirsiz
-/// birakmak onu ikinci bir menuye cevirir ve karolarin hizli-erisim anlami
-/// kaybolur — kuyrugu zaten "Tum Moduller" tasiyor.
-const int izgaraEnCokKaro = 6;
+/// (P140.1) 6 -> 8. Sebep bir TUTARSIZLIKTI: ana ekran varsayilanda sekiz
+/// karo ciziyordu ama kisisellestirme en cok ALTI secime izin veriyordu,
+/// yani kullanici izgarayi duzenler duzenlemez iki karoluk alan BOS
+/// kaliyordu.
+///
+/// Neden yine de bir sinir var: ana ekran "sik kullanilan, hizli erisim"
+/// icindir. Sinirsiz birakmak onu ikinci bir menuye cevirir ve karolarin
+/// hizli-erisim anlami kaybolur — tam liste zaten cekmecede.
+///
+/// SAYI HICBIR EKRANDA TEKRAR YAZILMAZ: seciciler ve testler bu sabiti
+/// okur (`izgaraTavani` rol basina daraltir).
+const int izgaraEnCokKaro = 8;
+
+/// Rolun GERCEK tavani: `min(izgaraEnCokKaro, rolun secilebilir karosu)`.
+///
+/// (P140.1) Neden gerekli — OLCULDU: guvenlik amiri YALNIZ ALTI karo
+/// gorebiliyor (izin kumesi o kadar). Ona "8 karodan n secildi" demek,
+/// ulasamayacagi bir tavani soylemek olurdu; secim ekrani da hicbir zaman
+/// dolmayan bir sayac gosterirdi. Denetcide kume BOSTUR (mobil yuzeyi
+/// yok — P128/P129) ve tavan 0 olur.
+///
+/// EKSIK KARO DURUMUNDA YER TUTUCU CIZILMEZ: izgara mevcut sayiya gore
+/// kapanir (bkz. ana ekranlar). Bos kutu, "yuklenmedi mi?" sorusunu
+/// ureten bir sey soylemeden yer kaplardi.
+int izgaraTavani(UserRole rol) {
+  final n = izgaraSecenekleri(rol).length;
+  return n < izgaraEnCokKaro ? n : izgaraEnCokKaro;
+}
 
 /// VARSAYILAN IZGARA (Kerem'in listesi).
 ///
@@ -35,6 +59,12 @@ const int izgaraEnCokKaro = 6;
 /// tek kanal: "Sikayet/Oneri"), bu yuzden tek karo kaldi ve liste alti
 /// kaleme indi. (`sikayetHaritasi` FARKLI bir ekrandir — bina semasi —
 /// ve varsayilana girmez.)
+/// (P140.1) SEKIZ KALEM. Kerem'in listesi alti kalemdi; sinir 8 olunca
+/// varsayilan set de sekize cikarildi. EKLENEN IKI KALEM KEYFI SECILMEDI:
+/// `financialSummary` (Aidat Durumu) ve `ihlaller`, yoneticinin BUGUNKU
+/// sekizliginde olan ve kurasyonun dusurdugu SAYACLI kartlardi — P139.5'te
+/// "bedeli" olarak yazilmislardi. Geri gelmeleri hem sekizi tamamlar hem
+/// de bilinen bir kaybi telafi eder.
 const List<HomeMenuEntry> _varsayilanIzgara = [
   HomeMenuEntry.announcements,
   HomeMenuEntry.complaints,
@@ -42,6 +72,8 @@ const List<HomeMenuEntry> _varsayilanIzgara = [
   HomeMenuEntry.taskTracking,
   HomeMenuEntry.vardiyalar,
   HomeMenuEntry.rezervasyon,
+  HomeMenuEntry.financialSummary,
+  HomeMenuEntry.ihlaller,
 ];
 
 /// Saha rollerinin gorev karosu YONETIM gorunumu DEGILDIR.
@@ -75,9 +107,9 @@ List<HomeMenuEntry> varsayilanIzgara(UserRole rol) {
     if (karsilik != null && izinli.contains(karsilik)) sonuc.add(karsilik);
   }
   if (sonuc.isEmpty) {
-    return izgaraSecenekleri(rol).take(izgaraEnCokKaro).toList();
+    return izgaraSecenekleri(rol).take(izgaraTavani(rol)).toList();
   }
-  return sonuc.take(izgaraEnCokKaro).toList();
+  return sonuc.take(izgaraTavani(rol)).toList();
 }
 
 /// Kayitli tercihi rolle KESISTIREREK cizilecek kumeyi verir.
@@ -94,7 +126,13 @@ List<HomeMenuEntry> izgarayiCoz(UserRole rol, List<HomeMenuEntry>? kayitli) {
     if (izinli.contains(k) && !gorunur.contains(k)) gorunur.add(k);
   }
   if (gorunur.isEmpty) return varsayilanIzgara(rol);
-  return gorunur.take(izgaraEnCokKaro).toList();
+  // TAVAN ROL BASINA: `min(8, rolun karosu)`.
+  //
+  // KAYITLI TERCIH OTOMATIK TAMAMLANMAZ: alti karo secmis bir kullanici
+  // sinir 8'e cikinca sekize TAMAMLANMAZ — kendi secimi neyse odur.
+  // Tamamlamak, kullanicinin ACIKCA kaldirdigi karolari geri koymak
+  // olurdu.
+  return gorunur.take(izgaraTavani(rol)).toList();
 }
 
 /// Depolama bicimi: enum ADLARI (indeks DEGIL).

@@ -4748,4 +4748,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String izgaraSecim(int secili, int enCok) {
     return '$secili/$enCok sélectionnés';
   }
+
+  @override
+  String izgaraTavanUyarisi(int enCok) {
+    return 'Limite atteinte. Retirez-en un pour en ajouter un autre ($enCok tuiles).';
+  }
 }

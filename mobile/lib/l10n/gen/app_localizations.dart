@@ -8122,6 +8122,12 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'{secili}/{enCok} seçili'**
   String izgaraSecim(int secili, int enCok);
+
+  /// Secim ekrani: tavana ulasildi
+  ///
+  /// In tr, this message translates to:
+  /// **'Tavana ulaştınız. Yeni bir bölüm eklemek için önce birini çıkarın ({enCok} karo).'**
+  String izgaraTavanUyarisi(int enCok);
 }
 
 class _AppLocalizationsDelegate

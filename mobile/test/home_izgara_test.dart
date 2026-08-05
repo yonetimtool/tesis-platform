@@ -12,9 +12,12 @@ import 'package:mobile/src/features/home/domain/home_menu.dart';
 
 void main() {
   group('(P139.3) varsayilan izgara', () {
-    test('YONETICI: istenen alti karo', () {
-      // Istenen liste yediydi; "Sikayetler" ve "Oneriler" AYNI ekran
-      // (complaints) oldugu icin alti kaldi.
+    test('YONETICI: varsayilan set (P140.1 ile SEKIZ)', () {
+      // Kerem'in ilk listesi yediydi; "Sikayetler" ve "Oneriler" AYNI
+      // ekran (complaints) oldugu icin alti kalmisti. (P140.1) sinir 8
+      // olunca set de sekize cikti: eklenen iki kalem KEYFI DEGIL —
+      // `financialSummary` ve `ihlaller` yoneticinin BUGUNKU sekizliginde
+      // olan ve kurasyonun dusurdugu sayacli kartlardi.
       expect(varsayilanIzgara(UserRole.yonetici), [
         HomeMenuEntry.announcements,
         HomeMenuEntry.complaints,
@@ -22,6 +25,8 @@ void main() {
         HomeMenuEntry.taskTracking,
         HomeMenuEntry.vardiyalar,
         HomeMenuEntry.rezervasyon,
+        HomeMenuEntry.financialSummary,
+        HomeMenuEntry.ihlaller,
       ]);
     });
 
@@ -116,9 +121,12 @@ void main() {
     // BEDELI OLCULDU VE KABUL EDILDI: bugunku sekiz karttan `aidatDurumu`,
     // `ihlaller`, `sikayetler` sayaclari ve `raporlar` izgaradan duser.
     // Ekranlar erisilebilir kalir; kaybolan sey ana ekrandaki uc SAYACTIR.
-    test('yonetici varsayilani TAM ALTI karo', () {
+    test('yonetici varsayilani TAM SEKIZ karo (P140.1)', () {
+      // Kerem'in ilk listesi alti kalemdi; (P140.1) sinir 8 olunca set de
+      // sekize cikti. Alti kalemin HEPSI duruyor, ustune iki sayacli kart
+      // geri geldi (`financialSummary`, `ihlaller`).
       final v = varsayilanIzgara(UserRole.yonetici);
-      expect(v.length, 6);
+      expect(v.length, 8);
       expect(v, containsAll([
         HomeMenuEntry.announcements,
         HomeMenuEntry.complaints,
@@ -126,6 +134,8 @@ void main() {
         HomeMenuEntry.taskTracking,
         HomeMenuEntry.vardiyalar,
         HomeMenuEntry.rezervasyon,
+        HomeMenuEntry.financialSummary,
+        HomeMenuEntry.ihlaller,
       ]));
     });
 
@@ -137,6 +147,56 @@ void main() {
       final sakin = varsayilanIzgara(UserRole.resident);
       // Kurasyonlu kume sakinde UCE duserdi — kanit:
       expect(sakin.length, lessThan(6));
+    });
+  });
+
+  group('(P140.1) TAVAN 8 ve rol basina daralma', () {
+    test('sabit 8 ve TEK YERDE', () {
+      expect(izgaraEnCokKaro, 8);
+    });
+
+    test('varsayilan set SEKIZ karo (yonetici)', () {
+      expect(varsayilanIzgara(UserRole.yonetici).length, 8);
+    });
+
+    test('8 USTU secim ENGELLENIR', () {
+      final cok = izgaraSecenekleri(UserRole.yonetici);
+      expect(cok.length, greaterThan(izgaraEnCokKaro));
+      expect(izgarayiCoz(UserRole.yonetici, cok).length, izgaraEnCokKaro);
+    });
+
+    test('ROL KUMESI 8DEN AZSA tavan kume kadar (guvenlik amiri)', () {
+      // Olculdu: amir yalniz alti karo gorebiliyor. Ona 8 tavani
+      // gostermek, ulasamayacagi bir sayiyi soylemek olurdu.
+      final n = izgaraSecenekleri(UserRole.guvenlikAmiri).length;
+      expect(n, lessThan(izgaraEnCokKaro));
+      expect(izgaraTavani(UserRole.guvenlikAmiri), n);
+      // Ve cozulen izgara o sayiyi ASMAZ (bos yer tutucu yok).
+      expect(
+        izgarayiCoz(UserRole.guvenlikAmiri,
+            izgaraSecenekleri(UserRole.guvenlikAmiri)).length,
+        n,
+      );
+    });
+
+    test('DENETCIDE tavan 0 (mobil yuzeyi yok)', () {
+      expect(izgaraTavani(UserRole.denetci), 0);
+    });
+
+    test('KAYITLI 6LIK TERCIH KORUNUR — otomatik 8e TAMAMLANMAZ', () {
+      // Sinir 8e cikinca, alti karo secmis bir kullanicinin secimi
+      // buyutulmez: acikca kaldirdigi karolari geri koymak olurdu.
+      final alti = izgaraSecenekleri(UserRole.yonetici).take(6).toList();
+      expect(izgarayiCoz(UserRole.yonetici, alti).length, 6);
+      expect(izgarayiCoz(UserRole.yonetici, alti), alti);
+    });
+
+    test('hicbir rolde tavan kumeyi ASMAZ', () {
+      for (final rol in UserRole.values) {
+        expect(izgaraTavani(rol),
+            lessThanOrEqualTo(izgaraSecenekleri(rol).length), reason: '$rol');
+        expect(izgaraTavani(rol), lessThanOrEqualTo(izgaraEnCokKaro));
+      }
     });
   });
 }

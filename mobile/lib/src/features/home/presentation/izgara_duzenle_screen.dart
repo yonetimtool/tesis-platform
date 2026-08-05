@@ -42,7 +42,11 @@ class _IzgaraDuzenleScreenState extends ConsumerState<IzgaraDuzenleScreen> {
     // girisleri kumesidir, cunku secim MENU GIRISI duzeyinde yapilir.
     final secim = _secim ??=
         List.of(ref.read(izgaraKarolariProvider(rol)) ?? varsayilanIzgara(rol));
-    final doluMu = secim.length >= izgaraEnCokKaro;
+    // (P140.1) TAVAN ROL BASINA: `min(8, rolun secilebilir karosu)`.
+    // Guvenlik amiri yalniz alti karo gorebiliyor; ona "8 karodan n
+    // secildi" demek ulasamayacagi bir tavani soylemek olurdu.
+    final tavan = izgaraTavani(rol);
+    final doluMu = secim.length >= tavan;
 
     return Scaffold(
       appBar: AppBar(
@@ -65,16 +69,29 @@ class _IzgaraDuzenleScreenState extends ConsumerState<IzgaraDuzenleScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  l10n.izgaraDuzenleAciklama(izgaraEnCokKaro),
+                  l10n.izgaraDuzenleAciklama(tavan),
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  l10n.izgaraSecim(secim.length, izgaraEnCokKaro),
+                  l10n.izgaraSecim(secim.length, tavan),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                 ),
+                // (P140.1) TAVANDA SESSIZ YUTMA YOK: satirlar kapaninca
+                // kullanici "neden secemiyorum" diye denemek zorunda
+                // kalmamali — NEDENI yaziyoruz.
+                if (doluMu)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      l10n.izgaraTavanUyarisi(tavan),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                    ),
+                  ),
               ],
             ),
           ),

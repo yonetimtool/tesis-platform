@@ -4862,4 +4862,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String izgaraSecim(int secili, int enCok) {
     return '$secili/$enCok محدد';
   }
+
+  @override
+  String izgaraTavanUyarisi(int enCok) {
+    return 'لقد وصلت إلى الحد. أزل واحدًا لإضافة آخر ($enCok مربعات).';
+  }
 }

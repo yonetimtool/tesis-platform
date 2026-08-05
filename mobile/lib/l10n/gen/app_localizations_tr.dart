@@ -4593,4 +4593,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String izgaraSecim(int secili, int enCok) {
     return '$secili/$enCok seçili';
   }
+
+  @override
+  String izgaraTavanUyarisi(int enCok) {
+    return 'Tavana ulaştınız. Yeni bir bölüm eklemek için önce birini çıkarın ($enCok karo).';
+  }
 }

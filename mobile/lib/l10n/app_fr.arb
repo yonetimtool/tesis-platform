@@ -1425,5 +1425,6 @@
   "izgaraDuzenleAciklama": "Choisissez jusqu'à {enCok} sections que vous utilisez le plus.",
   "izgaraSifirla": "Rétablir les valeurs par défaut",
   "izgaraKaydet": "Enregistrer",
-  "izgaraSecim": "{secili}/{enCok} sélectionnés"
+  "izgaraSecim": "{secili}/{enCok} sélectionnés",
+  "izgaraTavanUyarisi": "Limite atteinte. Retirez-en un pour en ajouter un autre ({enCok} tuiles)."
 }
