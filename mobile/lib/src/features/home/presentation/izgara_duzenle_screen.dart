@@ -41,7 +41,7 @@ class _IzgaraDuzenleScreenState extends ConsumerState<IzgaraDuzenleScreen> {
     // "bugunku kartlar"dir; duzenleme ekranindaki baslangic ise menu
     // girisleri kumesidir, cunku secim MENU GIRISI duzeyinde yapilir.
     final secim = _secim ??=
-        List.of(ref.read(izgaraKarolariProvider) ?? varsayilanIzgara(rol));
+        List.of(ref.read(izgaraKarolariProvider(rol)) ?? varsayilanIzgara(rol));
     final doluMu = secim.length >= izgaraEnCokKaro;
 
     return Scaffold(

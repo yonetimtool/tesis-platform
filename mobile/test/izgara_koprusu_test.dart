@@ -15,7 +15,6 @@ import 'package:mobile/src/features/auth/domain/user_role.dart';
 import 'package:mobile/src/features/home/domain/home_kart_id.dart';
 import 'package:mobile/src/features/home/domain/home_menu.dart';
 import 'package:mobile/src/features/home/domain/home_varyant.dart';
-import 'package:mobile/src/features/home/domain/home_view_models.dart';
 import 'package:mobile/src/features/home/data/home_repository.dart';
 import 'package:mobile/src/features/home/presentation/izgara_koprusu.dart';
 import 'package:mobile/src/features/home/presentation/module_card_spec.dart';

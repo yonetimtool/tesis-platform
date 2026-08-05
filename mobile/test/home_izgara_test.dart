@@ -109,4 +109,34 @@ void main() {
           [HomeMenuEntry.otopark]);
     });
   });
+
+  group('(P139.5) KURASYONLU varsayilan — yonetim rolleri', () {
+    // Kerem'in karari: yoneticinin varsayilan izgarasi ALTI karo.
+    //
+    // BEDELI OLCULDU VE KABUL EDILDI: bugunku sekiz karttan `aidatDurumu`,
+    // `ihlaller`, `sikayetler` sayaclari ve `raporlar` izgaradan duser.
+    // Ekranlar erisilebilir kalir; kaybolan sey ana ekrandaki uc SAYACTIR.
+    test('yonetici varsayilani TAM ALTI karo', () {
+      final v = varsayilanIzgara(UserRole.yonetici);
+      expect(v.length, 6);
+      expect(v, containsAll([
+        HomeMenuEntry.announcements,
+        HomeMenuEntry.complaints,
+        HomeMenuEntry.otopark,
+        HomeMenuEntry.taskTracking,
+        HomeMenuEntry.vardiyalar,
+        HomeMenuEntry.rezervasyon,
+      ]));
+    });
+
+    test('SAKIN kurasyona TABI DEGIL — bugunku kartlarini korur', () {
+      // Ayni varsayilani sakine uygulamak kesisimi uc karoya dusuruyor ve
+      // Aidatim/Kargo/Ziyaretci sayaclarini ana ekrandan siliyordu.
+      // Sakinin varsayilani "bugunku kartlar"dir; bunu `izgaraKarolariProvider`
+      // `null` dondurerek soyler (bkz. izgara_tercihi.dart).
+      final sakin = varsayilanIzgara(UserRole.resident);
+      // Kurasyonlu kume sakinde UCE duserdi — kanit:
+      expect(sakin.length, lessThan(6));
+    });
+  });
 }

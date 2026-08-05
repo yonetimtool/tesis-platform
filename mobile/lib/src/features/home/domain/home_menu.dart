@@ -149,6 +149,14 @@ enum HomeMenuEntry {
   /// (`_yoneticiErisim`) — yani yonetici (+admin).
   otopark,
 
+  /// (P139.5) Ihlaller — arac/park ihlal kayitlari. Otopark ve Vardiya ile
+  /// AYNI DURUM: kart vardi, MODUL GIRISI YOKTU. Kurasyon sonrasi bu
+  /// eksiklik gorunur oldu — kart varsayilan izgaradan dusuyor ve
+  /// kullanici GERI EKLEYEMIYORDU (secenek listesinde yok). Gorunurluk
+  /// kartinin cizildigi rollerden turedi: `_gorevliErisim` (guvenlik) +
+  /// `_yoneticiErisim`.
+  ihlaller,
+
   /// (P139.3) Vardiyalar — vardiya cizelgesi. Otoparkla ayni durum: kart
   /// vardi, modul girisi yoktu. Gorunurluk kartlarindan turedi:
   /// `_gorevliErisim` + `_tesisGorevlisiErisim` + `_yoneticiErisim`.
@@ -179,6 +187,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.assets,
         HomeMenuEntry.daireTanimlari,
         HomeMenuEntry.otopark,
+        HomeMenuEntry.ihlaller,
         HomeMenuEntry.vardiyalar,
         HomeMenuEntry.outbox,
       ];
@@ -216,6 +225,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.outbox,
         // (P139.3) Vardiyalar — `binaDuzenleme`den ONCE: onun EN ALTTA
         // durmasi kayitli bir kuraldir (home_menu_test).
+        HomeMenuEntry.ihlaller,
         HomeMenuEntry.vardiyalar,
         HomeMenuEntry.binaDuzenleme,
         HomeMenuEntry.yoneticiIletisim,
@@ -266,6 +276,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.binaDuzenleme,
         HomeMenuEntry.daireTanimlari,
         HomeMenuEntry.otopark,
+        HomeMenuEntry.ihlaller,
         HomeMenuEntry.vardiyalar,
       ];
     case UserRole.resident:
@@ -312,6 +323,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
 /// switch EKSIKSIZDIR (default yok) → yeni giris eklenince derleyici zorlar.
 String moduleBaslik(AppLocalizations l10n, HomeMenuEntry entry) =>
     switch (entry) {
+      HomeMenuEntry.ihlaller => l10n.modulIhlaller,
       HomeMenuEntry.otopark => l10n.modulOtopark,
       HomeMenuEntry.vardiyalar => l10n.modulVardiyalar,
       HomeMenuEntry.anketler => l10n.modulAnketler,

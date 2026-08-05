@@ -39,6 +39,11 @@ const _purple = Color(0xFF7C3AED);
 /// giris eklenince derleyici burayi zorlar.
 ModuleCardSpec moduleCardSpec(HomeMenuEntry entry) {
   switch (entry) {
+    case HomeMenuEntry.ihlaller:
+      return const ModuleCardSpec(
+          icon: Icons.report_gmailerrorred_outlined,
+          accent: _amber,
+          route: AppRoutes.ihlaller);
     case HomeMenuEntry.otopark:
       return const ModuleCardSpec(
           icon: Icons.local_parking_outlined,

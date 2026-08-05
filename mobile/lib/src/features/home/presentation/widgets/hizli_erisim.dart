@@ -92,7 +92,24 @@ class HizliErisimKarti extends StatelessWidget {
           // `sayacsiz` kartta iskelet YERINE ayni yukseklikte bos alan
           // birakilir — izgarada kart yuksekligi bozulmasin.
           if (kart.sayacsiz)
-            const SizedBox(height: HomeSayacIskeleti.yukseklik)
+            // SAYACSIZ KART, SAYAC SATIRININ YERINI AYNI WIDGET'LA tutar.
+            //
+            // UC DENEME GEREKTI ve ucuncusunun sebebi olculdu: sayac
+            // satiri `AutoSizeText` ve bir GRUBA baglidir (`sayacGrubu`)
+            // — grup, kartlarin yazi boyutunu birbirine gore olcekler.
+            // Duz `Text` ya da `SizedBox` o gruba GIRMEDIGI icin geometri
+            // kayiyor ve 320dp'de 0.36 piksel tasma uretiyordu (fotografli
+            // dar-ekran surusu yakaladi). Ayni widget + ayni grup =
+            // birebir ayni yukseklik.
+            AutoSizeText(
+              ' ',
+              group: sayacGrubu,
+              maxLines: 1,
+              minFontSize: 8,
+              style: HomeText.cardCounter.copyWith(
+                color: const Color(0x00000000),
+              ),
+            )
           else if (altSatir == null)
             const HomeSayacIskeleti()
           else

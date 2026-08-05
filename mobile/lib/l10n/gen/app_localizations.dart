@@ -6977,7 +6977,7 @@ abstract class AppLocalizations {
   /// **'Otopark'**
   String get modulOtopark;
 
-  /// No description provided for @modulIhlaller.
+  /// Ana ekran karosu — arac/park ihlalleri
   ///
   /// In tr, this message translates to:
   /// **'İhlaller'**

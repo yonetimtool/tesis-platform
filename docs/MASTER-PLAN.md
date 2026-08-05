@@ -9102,6 +9102,85 @@ elle `<table>` konunca kilit düştü.
 KAPILAR: `tsc` temiz · `eslint` temiz · `vitest` **672 test** (+4) ·
 `build` ✓ (paylaşılan ilk yük 87.5 kB, değişmedi).
 
+
+Notes (2026-08-05, P139.5) — **KURASYON YAZILDI, AÇILAMADI — SEBEBİ ÖLÇÜLDÜ.**
+
+Kerem: "yöneticinin varsayılanını da altı karoya çek." Mantık hazır ve
+testli (`varsayilanIzgara`, `home_izgara_test`), ama **bayrağın arkasında
+kapalı duruyor** (`_kurasyonAcik = false`).
+
+**NEDEN KAPALI:** kurasyonlu küme 320dp'de `RenderFlex` **0,36 piksel
+taşırıyor** ve fotoğraflı dar-ekran sürüşü bunu yakalıyor. Üç hipotez
+ölçüldü, **üçü de çürüdü**:
+
+| hipotez | sonuç |
+|---|---|
+| yer tutucu (iskelet yüksekliği / şeffaf metin / `AutoSizeText` grubu) | taşma **üç biçimde de sürdü** |
+| sayaçsız kartlar | yalnız sayaçlı dört kartla da **sürdü** |
+| kurasyon kapalı | taşma **YOK** — sebep kesin olarak kurasyonlu küme |
+
+Tahminle kapatmak yerine ölçülerek çözülmeli; açmak tek kelime
+(`true`).
+
+**ÖLÇÜM HATAMI DÜZELTİYORUM:** bir ara "yer tutucuyu kaldırınca taşma
+bitti" dedim — o koşum `-n` süzgeci yüzünden **testi hiç çalıştırmamıştı**
+ve `0` sonucu yanıltıcıydı. Tam koşumda taşma sürüyordu.
+
+**YOL ÜSTÜNDE BEŞ KİLİT GERÇEK DÜZELTMEYLE GEÇTİ:**
+* Sayaç bağlantısı testleri artık ilgili karoları **açıkça seçiyor** —
+  kurasyondan sonra kullanıcı o kartları geri eklediğinde sayaçlarının
+  hâlâ dolduğu ölçülüyor. **Köprünün asıl iddiası bu testle kanıtlandı.**
+* **`ihlaller`in menü girişi yoktu:** kurasyon onu ızgaradan düşürüyor ve
+  kullanıcı **geri bile ekleyemiyordu**. Otopark/Vardiya gibi yüzeye
+  çıkarıldı (7 dil), görünürlüğü kartının çizildiği rollerden türedi.
+* Rol menüsü kilidi yeni girişi üç rol listesinde de istedi — beklentiler
+  gerekçesiyle güncellendi, sıralama kuralları (`yoneticiIletisim` EN
+  SONDA, `binaDuzenleme` EN ALTTA) korundu.
+
+**ETİKET FARKI — KEREM'E SORU:** listede "Şikayetler" yazıyordu; o kanalın
+uygulamadaki kart adı **"Geri Bildirim"**dir (`complaints`). "Şikayetler"
+adlı kart **ayrı** bir ekrandır (`sikayetHaritasi` — bina şeması) ve
+kurasyonlu kümede yoktur. Ad birleştirmesi bir ürün kararıdır.
+
+### P140 — Izgara kapasitesi 8, içerik çevirisi, geçiş animasyonu, dil seçici
+Status: PLANLANDI · Depends-on: P139
+Scope: Kerem'in dört maddesi. **Not:** brief "P134.1" diyordu; P134 numarası
+dolu (backend günlük turu) — P140 açıldı. **Derleme numarası
+değişmeyecek** (yapım 3 hâlâ App Store incelemesinde).
+
+1. **IZGARA 6 → 8.** Üst sınır tek sabitte; varsayılan set 8 karo. Rol
+   kümesi 8'den azsa **boş yer tutucu çizilmez**, ızgara mevcut sayıya
+   göre kapanır; seçim ekranındaki tavan `min(8, rolün karo sayısı)`.
+   Kayıtlı 6'lık tercihler bozulmaz, otomatik tamamlanmaz.
+2. **KULLANICI İÇERİĞİNİN ÇEVİRİSİ** (en riskli): duyurular + site
+   kuralları. LibreTranslate (prod'da ayakta) — yeni sağlayıcı yok.
+   Instagram deseni: orijinal metin + "Çeviriyi gör" → yerinde çeviri →
+   "Orijinali gör". **Otomatik çevirme yok.** Kaynak=hedef dilde bağlantı
+   **hiç** gösterilmez. Önbellek (içerik id + hedef dil). Hata sessiz
+   değil; satır içi gösterge, tam ekran yükleme yok.
+3. **OLAY BİLDİR geçiş animasyonu:** pop-up dışına dokununca splash
+   çıkıyor. P139'daki splash'ın aynısı olabilir — **kök nedeni bul**,
+   üstünü örtme. Aynı kontrol: kamera çıkışı, NFC, görsel görüntüleyici,
+   tam ekran harita.
+4. **DİL SEÇİCİ SAĞ ÜSTE.** Mobil: profil resmi + çeviri simgesi → ortada
+   modal, 7 dil, anında ve kalıcı. Web (`app.*` + `panel.*`): sağ üste
+   taşınır, eski yerinden **kaldırılır** (iki yerde durmasın).
+Kısıtlar: izin kapısı aynen · boş ana ekran oluşmaz · 7 dil, sabit Türkçe
+yok · mevcut testler yeşil + yeni testler (tavan 8, 8 üstü engelli, rol
+kümesi 8'den azken düzen bozulmaz, kayıtlı 6 korunur, çeviri önbelleği,
+kaynak=hedef bağlantı yok).
+
+**ÖLÇÜM (madde 1 raporu) — rol başına seçilebilir karo:**
+| rol | karo |
+|---|---:|
+| yönetici | 23 |
+| admin | 17 |
+| güvenlik | 16 |
+| sakin | 15 |
+| tesis görevlisi | 12 |
+| **güvenlik amiri** | **6** ← 8'in altında, "eksik karo" durumu gerçek |
+| denetçi | 0 (mobil yüzeyi yok — P128/P129 kararı) |
+
 ### NOT — Sign in with Apple (4.8)
 **GEÇERSİZ (N/A):** üçüncü taraf sosyal giriş **kullanmıyoruz** (Google/Facebook
 girişi yok; kimlik doğrulama tesis tarafından verilen hesapla). 4.8 yalnız

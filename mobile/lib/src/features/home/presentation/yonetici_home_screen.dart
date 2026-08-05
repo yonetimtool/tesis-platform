@@ -88,7 +88,7 @@ class YoneticiHomeScreen extends ConsumerWidget {
     final kameralar = ref.watch(camerasProvider).value ?? const <Camera>[];
 
     final aktifVardiya = vardiyalar.where((v) => v.aktifMi(now)).length;
-    final izgaraSecimi = ref.watch(izgaraKarolariProvider);
+    final izgaraSecimi = ref.watch(izgaraKarolariProvider(role));
     final erisim = [
       // (P139.4) IZGARA ARTIK KULLANICININ: kaynak `taban.hizliErisim`
       // degil, kullanicinin tercihinden cozulen kume. Kopru secilen

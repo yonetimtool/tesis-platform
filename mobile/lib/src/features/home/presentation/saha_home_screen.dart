@@ -128,7 +128,7 @@ class SahaHomeScreen extends ConsumerWidget {
     final pending = ref.watch(scanOutboxProvider).pendingCount;
     final varyant =
         guvenlik ? HomeVaryant.gorevli : HomeVaryant.tesisGorevlisi;
-    final izgaraSecimi = ref.watch(izgaraKarolariProvider);
+    final izgaraSecimi = ref.watch(izgaraKarolariProvider(role));
     final erisim = [
       // (P139.4) IZGARA ARTIK KULLANICININ: kaynak `taban.hizliErisim`
       // degil, kullanicinin tercihinden cozulen kume. Kopru secilen

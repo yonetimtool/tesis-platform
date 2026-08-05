@@ -33,6 +33,10 @@ void main() {
       // + `_tesisGorevlisiErisim` + `_yoneticiErisim`).
         HomeMenuEntry.daireTanimlari,
         HomeMenuEntry.otopark,
+        // (P139.5) `ihlaller` yuzeye cikarildi: rotasi ZATEN vardi, MODUL
+        // GIRISI yoktu — kart izgaradan dustugunde kullanici GERI
+        // EKLEYEMIYORDU. Gorunurluk kartinin cizildigi rollerden turedi.
+        HomeMenuEntry.ihlaller,
         HomeMenuEntry.vardiyalar,
         HomeMenuEntry.outbox,
       ]);
@@ -54,6 +58,8 @@ void main() {
         // rollerden turedi (`_gorevliErisim` + `_tesisGorevlisiErisim` +
         // `_yoneticiErisim`). `binaDuzenleme`nin EN ALTTA kalmasi kurali
         // korundu: yeni giris ONUN ONUNE kondu.
+        // (P139.5) `ihlaller` de ayni gerekceyle yuzeye cikarildi.
+        HomeMenuEntry.ihlaller,
         HomeMenuEntry.vardiyalar,
         // Sikayet Haritasi (yogunluk) YOK; salt-okuma Bina Duzenleme EN ALTTA.
         HomeMenuEntry.binaDuzenleme,
@@ -140,6 +146,7 @@ void main() {
           // (P139.3) Yuzeye cikarildi (rotalari zaten vardi); gorunurluk
           // kartlarinin cizildigi rolden turedi — bkz. admin blogu.
           HomeMenuEntry.otopark,
+          HomeMenuEntry.ihlaller,
           HomeMenuEntry.vardiyalar,
         ],
       );

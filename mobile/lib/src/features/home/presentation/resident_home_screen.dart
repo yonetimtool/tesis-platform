@@ -95,7 +95,7 @@ class ResidentHomeScreen extends ConsumerWidget {
 
     // Hizli erisim: her sayac GERCEK uctan; karsiligi olmayan kart yok
     // (sakin izgarasindaki 8 kartin hepsinin ucu var).
-    final izgaraSecimi = ref.watch(izgaraKarolariProvider);
+    final izgaraSecimi = ref.watch(izgaraKarolariProvider(UserRole.resident));
     final erisim = [
       // (P139.4) IZGARA ARTIK KULLANICININ: kaynak `taban.hizliErisim`
       // degil, kullanicinin tercihinden cozulen kume. Kopru secilen
