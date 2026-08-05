@@ -22,32 +22,59 @@ import { describe, expect, it } from "vitest";
 import { taranacakDosyalar } from "./tarama";
 
 
+/**
+ * Bir kaynaktaki ADSIZ form denetimleri.
+ *
+ * (P137) Tespit ayri isleve cikarildi — sentetik ornekle iki yonde
+ * sinanabilsin diye.
+ */
+export function adsizDenetimler(yol: string, kaynak: string): string[] {
+  const sizanlar: string[] = [];
+  const satirlar = kaynak.split("\n");
+  satirlar.forEach((satir, i) => {
+    if (!/<(input|select|textarea)\b/.test(satir)) return;
+    // Yorum icindeki ornekler denetim degildir.
+    if (/^\s*(\/\/|\*|\{\/\*)/.test(satir)) return;
+
+    const blok = satirlar.slice(i, i + 14).join("\n");
+    const kapanis = blok.indexOf("/>");
+    const parca = kapanis === -1 ? blok.slice(0, 500) : blok.slice(0, kapanis + 2);
+    if (/type="(hidden|checkbox|radio)"/.test(parca)) return;
+    if (/aria-label/.test(parca)) return;
+
+    // SARMALAYICI PENCERESI GENIS TUTULDU: bir denetim `<Field>` icinde
+    // uc dallanmanin ("bool ise ... secim ise ... degilse") en son
+    // dalinda olabilir ve acilis 16 satir yukarida kalir. Dar pencere,
+    // etiketli denetimleri hata gibi gosterirdi.
+    const onceki = satirlar.slice(Math.max(0, i - 16), i).join("\n");
+    if (/<(Field|label|motion\.label)\b/.test(onceki)) return;
+
+    sizanlar.push(`${yol}:${i + 1} ${satir.trim().slice(0, 50)}`);
+  });
+  return sizanlar;
+}
+
 describe("erisilebilir etiket", () => {
   it("her form denetiminin bir ADI var", () => {
     const sizanlar: string[] = [];
     for (const yol of taranacakDosyalar(["app", "components"])) {
-      const satirlar = readFileSync(yol, "utf8").split("\n");
-      satirlar.forEach((satir, i) => {
-        if (!/<(input|select|textarea)\b/.test(satir)) return;
-        // Yorum icindeki ornekler denetim degildir.
-        if (/^\s*(\/\/|\*|\{\/\*)/.test(satir)) return;
-
-        const blok = satirlar.slice(i, i + 14).join("\n");
-        const kapanis = blok.indexOf("/>");
-        const parca = kapanis === -1 ? blok.slice(0, 500) : blok.slice(0, kapanis + 2);
-        if (/type="(hidden|checkbox|radio)"/.test(parca)) return;
-        if (/aria-label/.test(parca)) return;
-
-        // SARMALAYICI PENCERESI GENIS TUTULDU: bir denetim `<Field>` icinde
-        // uc dallanmanin ("bool ise ... secim ise ... degilse") en son
-        // dalinda olabilir ve acilis 16 satir yukarida kalir. Dar pencere,
-        // etiketli denetimleri hata gibi gosterirdi.
-        const onceki = satirlar.slice(Math.max(0, i - 16), i).join("\n");
-        if (/<(Field|label|motion\.label)\b/.test(onceki)) return;
-
-        sizanlar.push(`${yol}:${i + 1} ${satir.trim().slice(0, 50)}`);
-      });
+      sizanlar.push(...adsizDenetimler(yol, readFileSync(yol, "utf8")));
     }
     expect(sizanlar, "adsiz form denetimi").toEqual([]);
+  });
+
+  // (P137) POZITIF KONTROL — desen atesliyor mu.
+  it("POZITIF KONTROL: adsiz girdi YAKALANIR", () => {
+    const bozuk = ['<div>', '  <input type="text" value={x} />', "</div>"].join("\n");
+    expect(adsizDenetimler("sentetik.tsx", bozuk)).toHaveLength(1);
+  });
+
+  it("POZITIF KONTROL: etiketli girdi RAHAT birakilir", () => {
+    const temiz = [
+      "<Field label={t(\"ortakAd\")}>",
+      '  <input type="text" value={x} />',
+      "</Field>",
+    ].join("\n");
+    expect(adsizDenetimler("sentetik.tsx", temiz)).toEqual([]);
   });
 });

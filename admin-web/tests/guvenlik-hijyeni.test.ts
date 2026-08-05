@@ -33,33 +33,61 @@ function baglantilar(kaynak: string): { metin: string; satir: number }[] {
 
 const TUM = taranacakDosyalar(["app", "components"]);
 
+/** (P137) Tespitler ayri islevlerde — sentetik ornekle sinanabilsin diye. */
+export function relsizBlank(yol: string, kaynak: string): string[] {
+  const sizanlar: string[] = [];
+  for (const b of baglantilar(kaynak)) {
+    if (!/target=\{?["']_blank/.test(b.metin)) continue;
+    if (/rel=\{?["'][^"']*(noreferrer|noopener)/.test(b.metin)) continue;
+    sizanlar.push(`${yol}:${b.satir}`);
+  }
+  return sizanlar;
+}
+
+export function degiskenliInnerHtml(yol: string, kaynak: string): string[] {
+  const sizanlar: string[] = [];
+  for (const m of kaynak.matchAll(
+    /dangerouslySetInnerHTML=\{\{[\s\S]{0,600}?\}\}/g,
+  )) {
+    // Sablon enterpolasyonu ya da dizge birlestirme => degisken girer.
+    if (/\$\{|\+\s*\w/.test(m[0])) {
+      sizanlar.push(`${yol}:${kaynak.slice(0, m.index).split("\n").length}`);
+    }
+  }
+  return sizanlar;
+}
+
 describe("guvenlik hijyeni (P95)", () => {
   it("`target=_blank` olan her baglantida `rel` VAR", () => {
     const sizanlar: string[] = [];
-    for (const yol of TUM) {
-      const kaynak = readFileSync(yol, "utf8");
-      for (const b of baglantilar(kaynak)) {
-        if (!/target=\{?["']_blank/.test(b.metin)) continue;
-        if (/rel=\{?["'][^"']*(noreferrer|noopener)/.test(b.metin)) continue;
-        sizanlar.push(`${yol}:${b.satir}`);
-      }
-    }
+    for (const yol of TUM) sizanlar.push(...relsizBlank(yol, readFileSync(yol, "utf8")));
     expect(sizanlar, "rel'siz _blank baglantisi").toEqual([]);
   });
 
   it("`dangerouslySetInnerHTML` DEGISKEN icermez", () => {
     const sizanlar: string[] = [];
     for (const yol of TUM) {
-      const kaynak = readFileSync(yol, "utf8");
-      for (const m of kaynak.matchAll(
-        /dangerouslySetInnerHTML=\{\{[\s\S]{0,600}?\}\}/g,
-      )) {
-        // Sablon enterpolasyonu ya da dizge birlestirme => degisken girer.
-        if (/\$\{|\+\s*\w/.test(m[0])) {
-          sizanlar.push(`${yol}:${kaynak.slice(0, m.index).split("\n").length}`);
-        }
-      }
+      sizanlar.push(...degiskenliInnerHtml(yol, readFileSync(yol, "utf8")));
     }
     expect(sizanlar, "degisken iceren dangerouslySetInnerHTML").toEqual([]);
+  });
+
+  // (P137) POZITIF KONTROLLER — desenler GERCEKTEN atesliyor mu. Ustteki
+  // iki test bos liste bekler; desen bozulursa liste yine bos kalir ve
+  // ikisi de GECER.
+  it("POZITIF KONTROL: rel'siz _blank YAKALANIR, rel'li birakilir", () => {
+    expect(relsizBlank("s.tsx", '<a href="/x" target="_blank">git</a>')).toHaveLength(1);
+    expect(
+      relsizBlank("s.tsx", '<a href="/x" target="_blank" rel="noreferrer">git</a>'),
+    ).toEqual([]);
+  });
+
+  it("POZITIF KONTROL: degiskenli innerHTML YAKALANIR, sabit birakilir", () => {
+    expect(
+      degiskenliInnerHtml("s.tsx", "<div dangerouslySetInnerHTML={{ __html: `<b>${x}</b>` }} />"),
+    ).toHaveLength(1);
+    expect(
+      degiskenliInnerHtml("s.tsx", '<div dangerouslySetInnerHTML={{ __html: "<b>sabit</b>" }} />'),
+    ).toEqual([]);
   });
 });

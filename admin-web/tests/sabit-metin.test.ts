@@ -105,11 +105,20 @@ function harfVar(s: string): boolean {
   return /[A-Za-zÇĞİÖŞÜçğıöşü]{2}/.test(s);
 }
 
-describe("sabit metin taramasi (tur 47)", () => {
-  it("JSX metinleri ve gorunen oznitelikler t() uzerinden gelir", () => {
-    const bulgular: string[] = [];
-    for (const yol of taranacakDosyalar(["app", "components"])) {
-      const kaynak = yorumsuz(readFileSync(yol, "utf8"));
+/**
+ * (P137) Bir kaynaktaki cevrilmemis sabit metinler.
+ *
+ * NEDEN AYRI ISLEV: bu dosya "su yok" diyor ve yokluk iddialari desen
+ * bozulunca da dogru cikar. P136 "tarama hic dosya gormedi" vakumunu
+ * kapatti; bu, ikinci turu — "dosyalar okundu ama desen hicbir sey
+ * eslestirmedi". Islev ayri oldugu icin SENTETIK bir orneğe kosulabiliyor
+ * ve desenin gercekten atesledigi olculebiliyor (asagidaki kontroller).
+ */
+export function sabitMetinler(yol: string, dosyaMetni: string): string[] {
+  const bulgular: string[] = [];
+  {
+    {
+      const kaynak = yorumsuz(dosyaMetni);
       // Dosya boyunca metin dugumleri (cok satirli olanlar dahil).
       for (const m of kaynak.matchAll(METIN)) {
         const t = m[1].trim();
@@ -182,9 +191,38 @@ describe("sabit metin taramasi (tur 47)", () => {
         }
       });
     }
+  }
+  return bulgular;
+}
+
+describe("sabit metin taramasi (tur 47)", () => {
+  it("JSX metinleri ve gorunen oznitelikler t() uzerinden gelir", () => {
+    const bulgular: string[] = [];
+    for (const yol of taranacakDosyalar(["app", "components"])) {
+      bulgular.push(...sabitMetinler(yol, readFileSync(yol, "utf8")));
+    }
     expect(
       bulgular,
       `Cevrilmemis sabit metin (t("...") kullanin):\n${bulgular.join("\n")}`,
     ).toEqual([]);
+  });
+
+  // (P137) POZITIF KONTROL — desen GERCEKTEN atesliyor mu.
+  //
+  // Ustteki test BOS liste bekler. Desen bozulursa (bu oturumda koyu tema
+  // kilidinde tam bu oldu: bir kacis hatasi regex'e backspace koymustu)
+  // liste yine bos kalir ve test GECER. Bu blok sentetik bir sizinti
+  // uretip yakalandigini olcer.
+  it("POZITIF KONTROL: cevrilmemis JSX metni YAKALANIR", () => {
+    expect(sabitMetinler("s.tsx", "<p>Kaydedildi</p>")).toHaveLength(1);
+    expect(sabitMetinler("s.tsx", '<input placeholder="Ad soyad" />')).toHaveLength(1);
+  });
+
+  it("POZITIF KONTROL: t() uzerinden gelen metin RAHAT birakilir", () => {
+    // Kilit IKI YONDE sinanir: yanlisi yakaliyor mu, DOGRUYU rahat
+    // birakiyor mu. Yalniz ilki olculse "her seye sizinti" diyen bir
+    // desen de gecerdi.
+    expect(sabitMetinler("s.tsx", '<p>{t("ortakKaydedildi")}</p>')).toEqual([]);
+    expect(sabitMetinler("s.tsx", '<input placeholder={t("ortakAdSoyad")} />')).toEqual([]);
   });
 });

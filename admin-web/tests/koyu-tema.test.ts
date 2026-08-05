@@ -44,6 +44,31 @@ const AILE =
   "slate|gray|red|rose|amber|yellow|emerald|green|blue|indigo|violet|purple|pink|orange|teal|cyan|sky|lime|fuchsia";
 
 
+/**
+ * (P137) Bir kaynaktaki `dark:` ONEKSIZ renk siniflari.
+ *
+ * Tespit ayri isleve cikarildi cunku bu dosya ikinci vakum turunun
+ * CANLI ORNEGIDIR: P132.8'de buraya yazilan token kilidinin regex'ine
+ * Python kacisi yuzunden BACKSPACE karakteri girmis, hicbir sey
+ * eslesmemis ve test SESSIZCE gecmisti. Mutasyon yakalamasa fark
+ * edilmeyecekti. Asagidaki pozitif kontroller o senaryoyu kalici olarak
+ * kapatir.
+ */
+export function devrilmemisSiniflar(
+  kaynak: string,
+  kalip: RegExp,
+  bilinen: (sinif: string) => boolean,
+): string[] {
+  const eksik: string[] = [];
+  for (const m of kaynak.matchAll(kalip)) {
+    if (m[1]) continue; // `dark:` onekli — zaten koyu tema icin yazilmis
+    const sinif = m[2];
+    if (bilinen(sinif)) continue;
+    if (!eksik.includes(sinif)) eksik.push(sinif);
+  }
+  return eksik;
+}
+
 describe("koyu tema kapsami", () => {
   it("dark: oneksiz her renk sinifi ya devrilmis ya GEREKCELI", () => {
     const css = readFileSync("app/globals.css", "utf8");
@@ -56,11 +81,12 @@ describe("koyu tema kapsami", () => {
     const eksik = new Map<string, string>();
     for (const yol of taranacakDosyalar(["app", "components"])) {
       const kaynak = readFileSync(yol, "utf8");
-      for (const m of kaynak.matchAll(kalip)) {
-        if (m[1]) continue; // `dark:` onekli — zaten koyu tema icin yazilmis
-        const sinif = m[2];
-        if (devrilmis.has(sinif) || GEREKCELI.has(sinif)) continue;
-        if (!eksik.has(sinif)) eksik.set(sinif, yol);
+      for (const s of devrilmemisSiniflar(
+        kaynak,
+        new RegExp(kalip.source, "g"),
+        (x) => devrilmis.has(x) || GEREKCELI.has(x),
+      )) {
+        if (!eksik.has(s)) eksik.set(s, yol);
       }
     }
     expect(
@@ -108,19 +134,67 @@ describe("koyu tema kapsami", () => {
     const eksik = new Map<string, string>();
     for (const yol of taranacakDosyalar(["app", "components"])) {
       const kaynak = readFileSync(yol, "utf8");
-      for (const m of kaynak.matchAll(kalip)) {
-        if (m[1]) continue;
-        const sinif = m[2];
+      for (const s of devrilmemisSiniflar(kaynak, new RegExp(kalip.source, "g"), (x) =>
         // Tint ZEMINLER (`bg-accent-blue/12`) anlam tasir ve iki temada da
         // AYNI kalir; uzerlerindeki METIN (`text-vurguInk-*`) devrilir.
-        if (sinif.startsWith("bg-accent-")) continue;
-        if (TOKEN_GEREKCELI.has(sinif) || devrilmisToken.has(sinif)) continue;
-        if (!eksik.has(sinif)) eksik.set(sinif, yol);
+        x.startsWith("bg-accent-") || TOKEN_GEREKCELI.has(x) || devrilmisToken.has(x),
+      )) {
+        if (!eksik.has(s)) eksik.set(s, yol);
       }
     }
     expect(
       [...eksik].map(([s, y]) => `${s} (${y})`),
       "koyu temada devrilmemis TASARIM TOKEN'i",
+    ).toEqual([]);
+  });
+});
+
+// (P137) POZITIF KONTROLLER — bu dosya ikinci vakum turunun CANLI
+// ORNEGIDIR. P132.8'de buraya yazilan token kilidinin regex'ine bir kacis
+// hatasi yuzunden BACKSPACE karakteri girmisti; hicbir sey eslesmiyordu ve
+// test SESSIZCE geciyordu. Mutasyon surmeseydim fark edilmeyecekti.
+//
+// Asagidaki kontroller o senaryoyu kalici kapatir: desen bozulursa bunlar
+// duser, cunku YAKALAMA bekliyorlar (yokluk degil).
+describe("(P137) koyu tema desenleri GERCEKTEN atesliyor", () => {
+  const PALET_KALIBI = new RegExp(
+    `(dark:)?\\b((?:text|bg|border)-(?:${AILE})-\\d{2,3})\\b`,
+    "g",
+  );
+  const TOKEN_KALIBI = new RegExp(
+    "(dark:)?\\b((?:text|bg|border)-(?:metin|yuzey|accent|vurguInk|primary)" +
+      "(?:-[A-Za-z]+)*|kart-kenar)\\b",
+    "g",
+  );
+
+  it("PALET deseni devrilmemis sinifi yakalar", () => {
+    const bulunan = devrilmemisSiniflar(
+      '<p className="text-slate-600">x</p>',
+      PALET_KALIBI,
+      () => false,
+    );
+    expect(bulunan).toEqual(["text-slate-600"]);
+  });
+
+  it("PALET deseni `dark:` onekli olani RAHAT birakir", () => {
+    expect(
+      devrilmemisSiniflar('<p className="dark:text-slate-600">x</p>', PALET_KALIBI, () => false),
+    ).toEqual([]);
+  });
+
+  it("TOKEN deseni devrilmemis token'i yakalar", () => {
+    expect(
+      devrilmemisSiniflar('<p className="text-metin-body">x</p>', TOKEN_KALIBI, () => false),
+    ).toEqual(["text-metin-body"]);
+  });
+
+  it("TOKEN deseni DEVRILMIS olani rahat birakir", () => {
+    expect(
+      devrilmemisSiniflar(
+        '<p className="text-metin-body">x</p>',
+        TOKEN_KALIBI,
+        (x) => x === "text-metin-body",
+      ),
     ).toEqual([]);
   });
 });

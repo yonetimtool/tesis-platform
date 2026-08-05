@@ -16,13 +16,13 @@ import { describe, expect, it } from "vitest";
 import { taranacakDosyalar } from "./tarama";
 
 
-describe("hata metni hijyeni", () => {
-  it("hata nesnesi String() ile EKRANA YAZILMAZ", () => {
-    // `String(err)` / `String(error)` / `String(hata)` / `String(exc)`
-    const kalip = /String\(\s*(err|error|hata|exc|e)\b/;
-    const sizanlar: string[] = [];
-    for (const yol of taranacakDosyalar(["app", "components"])) {
-      readFileSync(yol, "utf8")
+// `String(err)` / `String(error)` / `String(hata)` / `String(exc)`
+const STRING_KALIBI = /String\(\s*(err|error|hata|exc|e)\b/;
+
+/** (P137) Tespit ayri isleve cikarildi — sentetik ornekle sinanabilsin. */
+export function hamHataMetinleri(yol: string, kaynak: string): string[] {
+  const sizanlar: string[] = [];
+  kaynak
         .split("\n")
         .forEach((satir, i) => {
           // Yorum satirlari kapsam disi: kilidin GEREKCESI de bu kalibi
@@ -34,10 +34,40 @@ describe("hata metni hijyeni", () => {
           // icin kosar (bir dizge, bir nesne). Onu da yasaklamak, geriye
           // hicbir secenek birakmazdi.
           if (/instanceof Error/.test(satir)) return;
-          if (kalip.test(satir)) sizanlar.push(`${yol}:${i + 1} ${satir.trim()}`);
+          if (STRING_KALIBI.test(satir)) sizanlar.push(`${yol}:${i + 1} ${satir.trim()}`);
         });
+  return sizanlar;
+}
+
+/** (P137) Yalniz `isLoading`e dayanan bos-durum kosullari. */
+export function kirilganBosDurumlar(yol: string, kaynak: string): string[] {
+  const sizanlar: string[] = [];
+  kaynak.split("\n").forEach((satir, i) => {
+    if (!/\.length === 0/.test(satir)) return;
+    if (!/isLoading/.test(satir)) return;
+    if (/error/i.test(satir)) return;
+    sizanlar.push(`${yol}:${i + 1} ${satir.trim()}`);
+  });
+  return sizanlar;
+}
+
+describe("hata metni hijyeni", () => {
+  it("hata nesnesi String() ile EKRANA YAZILMAZ", () => {
+    const sizanlar: string[] = [];
+    for (const yol of taranacakDosyalar(["app", "components"])) {
+      sizanlar.push(...hamHataMetinleri(yol, readFileSync(yol, "utf8")));
     }
     expect(sizanlar).toEqual([]);
+  });
+
+  // (P137) POZITIF KONTROL — desen atesliyor mu.
+  it("POZITIF KONTROL: String(err) YAKALANIR, korumali bicim birakilir", () => {
+    expect(hamHataMetinleri("s.tsx", "setHata(String(err));")).toHaveLength(1);
+    // KORUMALI BICIM DOGRUDUR: `String` dali yalniz Error OLMAYAN bir
+    // firlatma icin kosar; onu da yasaklamak geriye secenek birakmazdi.
+    expect(
+      hamHataMetinleri("s.tsx", "const m = e instanceof Error ? e.message : String(e);"),
+    ).toEqual([]);
   });
 });
 
@@ -58,15 +88,22 @@ describe("bos-durum iddiasi", () => {
   it("bos-durum kosulu YALNIZ isLoading'e dayanmaz", () => {
     const sizanlar: string[] = [];
     for (const yol of taranacakDosyalar(["app", "components"])) {
-      readFileSync(yol, "utf8")
-        .split("\n")
-        .forEach((satir, i) => {
-          if (!/\.length === 0/.test(satir)) return;
-          if (!/isLoading/.test(satir)) return;
-          if (/error/i.test(satir)) return;
-          sizanlar.push(`${yol}:${i + 1} ${satir.trim()}`);
-        });
+      sizanlar.push(...kirilganBosDurumlar(yol, readFileSync(yol, "utf8")));
     }
     expect(sizanlar).toEqual([]);
+  });
+
+  // (P137) POZITIF KONTROL — desen atesliyor mu.
+  it("POZITIF KONTROL: yalniz isLoading'e dayanan kosul YAKALANIR", () => {
+    expect(
+      kirilganBosDurumlar("s.tsx", "{!isLoading && liste.length === 0 && <BosDurum />}"),
+    ).toHaveLength(1);
+    // Hatayi da hesaba katan kosul RAHAT birakilir.
+    expect(
+      kirilganBosDurumlar(
+        "s.tsx",
+        "{!isLoading && !error && liste.length === 0 && <BosDurum />}",
+      ),
+    ).toEqual([]);
   });
 });

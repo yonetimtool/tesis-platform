@@ -8833,6 +8833,56 @@ olarak kapatmanın yolu her tarayıcıya **pozitif kontrol** eklemektir
 tarayıcı başına ayrı bir semantik iş ve bu turda yapılmadı. Bugünkü
 koruma: her kilit değişikliğinde mutasyon sürmek.
 
+### P137 — İkinci vakum türü: desen ateşliyor mu? (pozitif kontroller)
+Status: BITTI(2026-08-05) · Depends-on: P136
+Scope: P136 "tarama hiç dosya görmedi" vakumunu yapısal olarak kapattı ve
+**ikinci türü açıkça açık bıraktı**: dosyalar okunuyor ama desen hiçbir
+şey eşleştirmiyor. Bu madde onu kapatır.
+
+Notes (2026-08-05, P137) — **SEKİZ TARAYICIYA POZİTİF KONTROL.**
+
+İkinci vakum türünün bu oturumda **canlı örneği** vardı: P132.8'de koyu
+tema token kilidine yazdığım regex'e bir kaçış hatası yüzünden
+**backspace karakteri** girmişti; hiçbir şey eşleşmiyordu ve test
+**sessizce geçiyordu**. Mutasyon sürmeseydim fark edilmeyecekti. Yokluk
+iddiaları (`toEqual([])`) desen bozulduğunda da doğru çıkar — kilit
+yeşil kalır, ölçtüğü şey yoktur.
+
+**YAPILAN:** sekiz tarayıcının tespit mantığı satır içi döngülerden
+**ayrı işlevlere** çıkarıldı (`denetimsizFetchler`, `cansizHataKutulari`,
+`adsizDenetimler`, `hamEnumSizintilari`, `relsizBlank`,
+`degiskenliInnerHtml`, `hamHataMetinleri`, `kirilganBosDurumlar`,
+`devrilmemisSiniflar`, `sabitMetinler`). Her biri artık **sentetik**
+örneğe koşulabiliyor ve her tarayıcı **iki yönde** ölçülüyor:
+
+* **yakalıyor mu** — sentetik bir sızıntı üretilir, bulunması beklenir;
+* **rahat bırakıyor mu** — doğru yazılmış eşdeğeri verilir, boş beklenir.
+
+İkincisi olmasa "her şeye sızıntı de" diyen bir desen de geçerdi.
+
+**MUTASYONLA DOĞRULANDI — VE İLK DENEMEM YANILTICIYDI.** Sekiz tarayıcının
+deseni tek tek körleştirildi; sekizinde de pozitif kontrol düştü. İlk
+turda ikisi "kaçırdı" göründü ama sebep testler değil **benim
+mutasyonlarımdı**: `ham-enum`da desen yerine bir *istisna işaretini*
+(`HAM-ENUM-TAMAM`) bozmuşum, `sessiz-fetch`te `sed` kaçışı tutmamış ve
+dosya hiç değişmemişti. Asıl desenle ikisi de yakalıyor. Ölçüm aracını
+ölçerken aracın kendi ölçümü de yanılabilir.
+
+| tarayıcı | desen körleştirildi → |
+|---|---|
+| sessiz-fetch · canlı-bölge · erişilebilir-etiket · ham-enum | düştü |
+| güvenlik-hijyeni · hata-mesajı · koyu-tema · sabit-metin | düştü |
+
+**KALAN AÇIK (dürüstçe):** pozitif kontroller desenin **ateşlediğini**
+gösterir, **doğru kapsadığını** değil. Bir desen sentetik örneği yakalayıp
+gerçek dünyadaki bir varyantı yine kaçırabilir — nitekim bu depoda tam
+bunlar oldu (P66'da `actor_rol`, P59'da kendi satırındaki JSX metni).
+Onun ilacı test değil, sızıntı çıktıkça kontrolü genişletmek; `ham-enum`un
+pozitif kontrolüne P66'nın önekli alan vakası bu yüzden eklendi.
+
+KAPILAR: `tsc` temiz · `eslint` temiz · `vitest` **666 test** (+18) ·
+`build` ✓.
+
 ### NOT — Sign in with Apple (4.8)
 **GEÇERSİZ (N/A):** üçüncü taraf sosyal giriş **kullanmıyoruz** (Google/Facebook
 girişi yok; kimlik doğrulama tesis tarafından verilen hesapla). 4.8 yalnız
