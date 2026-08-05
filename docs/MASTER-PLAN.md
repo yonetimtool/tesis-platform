@@ -8883,6 +8883,48 @@ pozitif kontrolüne P66'nın önekli alan vakası bu yüzden eklendi.
 KAPILAR: `tsc` temiz · `eslint` temiz · `vitest` **666 test** (+18) ·
 `build` ✓.
 
+### P138 — Liste/form sayfaları: ortak tablo ilkeli (P132 kuyruğunun kalanı)
+Status: PLANLANDI · Depends-on: P132, P133
+Scope: P133 görsel dili panoya ve kenar çubuğuna indirdi ve liste/form
+sayfalarını **bilerek dışarıda bıraktı** ("o P132 kuyruğu — aynı dosyalarda
+çift yazma riski"). Bu madde o kuyruğu kapatır.
+
+**ÖLÇÜM (bugün):**
+| | |
+|---|---:|
+| tablo çizen sayfa | **23** |
+| tablo iskeletini **elle** yazan sayfa | **23** (30 + 1 varyant) |
+| ortak tablo ilkelini kullanan sayfa | **0** (`tableCardCls` tanımlı ama ölü) |
+| satır ayırıcı `border-yuzey-divider` | 36 yer |
+
+Yani P132.7'nin kaldıraç dersi burada **yok**: `form.tsx` kart/düğme/girdi
+için ortak katman sağlıyor ama **tablo için sağlamıyor**, o yüzden 23 sayfa
+aynı iskeleti kendi başına yazıyor.
+
+**KAPSAM KARARI — TİNT BLOKLAR BURAYA GELMEZ.** Onaylanan dil kendi
+tanımında "**pano + tanıtım yüzeyleri**" diyor; ayrıca sert sınırın (1
+kahraman + 4 ikincil) varlık sebebi "renk **sinyal** kalmalı". 23 liste
+sayfasına tint dağıtmak tam olarak sınırın önlediği şeyi yapardı. Bu turda
+liste sayfaları **aynı tasarım sistemine** (yüzey, yarıçap, boşluk,
+tipografi ölçeği, çip) tam olarak oturur; kahraman/tint dili panoda kalır.
+
+1. **Ortak tablo ilkeli** (`components/tablo.tsx`): kap + başlık + satır +
+   hücre. Ayrım **dolgu ve boşluktan** gelir; dikey ızgara çizgisi yok.
+   Değerler mevcut token'lardan — yeni renk/ölçü **icat edilmez**.
+2. **23 sayfa** ilkele taşınır; elle yazılan iskeletler silinir.
+3. **Kilit:** hiçbir sayfa `<table>` iskeletini kendi yazmasın (P136/P137
+   dersi: kilit iki yönde sınanır).
+4. i18n değişmez (yalnız sunum) · kapılar.
+
+**KAREKÖK OLARAK AYRILAN, BU TURDA YAPILMAYAN — KEREM'İN KARARI:**
+`text-xs` (**12px**) korumalı sayfalarda **116 yerde** kullanılıyor ve
+`satiralt` token'ı da 12px/1.35. Onaylanan dildeki "gövde en az 13px,
+ikincil satırlar 1.6" kuralı **pano + tanıtım** için yazılmıştı; yoğun
+liste ekranlarında 12px→13px **yoğunluk kararıdır** (satır sayısı düşer) ve
+uydurulmaz. Kerem onaylarsa tek turda uygulanır.
+Acceptance: elle tablo yazan sayfa **23 → 0** · kilit mutasyonla sınanmış ·
+kapılar yeşil.
+
 ### NOT — Sign in with Apple (4.8)
 **GEÇERSİZ (N/A):** üçüncü taraf sosyal giriş **kullanmıyoruz** (Google/Facebook
 girişi yok; kimlik doğrulama tesis tarafından verilen hesapla). 4.8 yalnız

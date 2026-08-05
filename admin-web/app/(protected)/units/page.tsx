@@ -6,6 +6,7 @@ import useSWR from "swr";
 
 import { EmptyState } from "@/components/EmptyState";
 import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, btnGhost, btnDanger, panelCls, panelMotion } from "@/components/form";
+import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
 import { useToast } from "@/components/Toast";
 import { UnitDetail } from "@/components/UnitDetail";
 import { apiSend } from "@/lib/client";
@@ -229,36 +230,33 @@ export default function UnitsPage() {
         </motion.form>
       )}
 
-      <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
-        <div className="odak-ic overflow-x-auto" tabIndex={0}>
-          <table className="w-full text-sm">
-            <thead className="bg-yuzey-bg text-left text-metin-muted">
-              <tr>
-                <th className="px-4 py-2.5 font-medium">{t("daireNoKisa")}</th>
-                <th className="px-4 py-2.5 font-medium">{t("ortakBlok")}</th>
-                {/* (Duzeltme) DAIRE TIPI (P26) listede HIC gosterilmiyordu.
-                    `unit_tip_ad` API'den ZATEN geliyordu - sayfa okumuyordu.
-                    Blok'un yaninda: ikisi de dairenin "nerede/ne" bilgisi. */}
-                <th className="px-4 py-2.5 font-medium">{t("tanimAlanTip")}</th>
-                <th className="px-4 py-2.5 font-medium">{t("daireKatSira")}</th>
-                <th className="px-4 py-2.5 font-medium">m²</th>
-                <th className="px-4 py-2.5 font-medium">{t("ortakDurum")}</th>
-                <th className="px-4 py-2.5 font-medium" />
-              </tr>
-            </thead>
+      <TabloKart>
+        <Tablo>
+          <TabloBasligi>
+            <Th>{t("daireNoKisa")}</Th>
+            <Th>{t("ortakBlok")}</Th>
+            {/* (Duzeltme) DAIRE TIPI (P26) listede HIC gosterilmiyordu.
+                `unit_tip_ad` API'den ZATEN geliyordu - sayfa okumuyordu.
+                Blok'un yaninda: ikisi de dairenin "nerede/ne" bilgisi. */}
+            <Th>{t("tanimAlanTip")}</Th>
+            <Th>{t("daireKatSira")}</Th>
+            <Th>m²</Th>
+            <Th>{t("ortakDurum")}</Th>
+            <Th />
+          </TabloBasligi>
             <tbody>
               {(data?.items ?? []).map((u) => (
-                <tr key={u.id} className="border-t border-yuzey-divider transition-colors hover:bg-yuzey-bg">
-                  <td className="px-4 py-2.5">{u.no}</td>
-                  <td className="px-4 py-2.5 text-metin-body">{u.blok ?? t("daireBlokAtanmamis")}</td>
+                <Tr key={u.id}>
+                  <Td>{u.no}</Td>
+                  <Td className="text-metin-body">{u.blok ?? t("daireBlokAtanmamis")}</Td>
                   {/* Tip ATANMAMISSA "-": bos hucre "veri gelmedi mi?"
                       sorusunu uretir, tire "atanmamis" der. */}
-                  <td className="px-4 py-2.5 text-metin-body">{u.unit_tip_ad ?? "—"}</td>
-                  <td className="px-4 py-2.5 text-metin-body tabular-nums">
+                  <Td className="text-metin-body">{u.unit_tip_ad ?? "—"}</Td>
+                  <Td sayi className="text-metin-body">
                     {u.kat != null || u.sira != null ? `${u.kat ?? "—"} / ${u.sira ?? "—"}` : "—"}
-                  </td>
-                  <td className="px-4 py-2.5 text-metin-body tabular-nums">{sayiBicimi(u.metrekare)}</td>
-                  <td className="px-4 py-2.5">
+                  </Td>
+                  <Td sayi className="text-metin-body">{sayiBicimi(u.metrekare)}</Td>
+                  <Td>
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                         u.aktif ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-metin-body"
@@ -266,8 +264,8 @@ export default function UnitsPage() {
                     >
                       {u.aktif ? t("ortakAktif") : t("ortakPasif")}
                     </span>
-                  </td>
-                  <td className="px-4 py-2.5 text-right">
+                  </Td>
+                  <Td hizala="end">
                     <div className="flex justify-end gap-2">
                       <button
                         className={btnGhost}
@@ -282,20 +280,17 @@ export default function UnitsPage() {
                         {t("ortakSil")}
                       </button>
                     </div>
-                  </td>
-                </tr>
+                  </Td>
+                </Tr>
               ))}
               {data && data.items.length === 0 && (
-                <tr>
-                  <td colSpan={6}>
-                    <EmptyState title={t("daireYok")} description={t("daireYokAlt")} />
-                  </td>
-                </tr>
+                <BosSatir sutun={7}>
+                  <EmptyState title={t("daireYok")} description={t("daireYokAlt")} />
+                </BosSatir>
               )}
             </tbody>
-          </table>
-        </div>
-      </div>
+        </Tablo>
+      </TabloKart>
 
       {detail && <UnitDetail unit={detail} />}
 
