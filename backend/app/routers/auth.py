@@ -15,7 +15,7 @@ from datetime import datetime, timedelta, timezone
 import jwt
 import redis.asyncio as aioredis
 from fastapi import APIRouter, Depends
-from sqlalchemy import func, or_, select, text
+from sqlalchemy import func, or_, select, text, update
 
 from ..audit import Action, record_audit
 from ..config import settings
@@ -501,8 +501,19 @@ async def kayit_dogrula(
                 # Kaba kuvvet: 6 haneli kod sayilmadan bulunur.
                 raise _KAYIT_GECERSIZ
             if not verify_password(body.kod, kayit.kod_hash):
-                kayit.deneme += 1
-                await session.flush()
+                # SAYAC AYRI OTURUMDA KALICILASTIRILIR. Ilk yazimda ayni
+                # islemde artiriliyordu ve bu istek 422 ile bittigi icin
+                # `session.begin()` blogu artisi GERI SARIYORDU: koruma
+                # hic calismiyordu. OLCULDU — 3 yanlis denemeden sonra
+                # `deneme` hala 0'di.
+                async with SessionLocal() as s2:
+                    async with s2.begin():
+                        await set_tenant(s2, kayit.tenant_id)
+                        await s2.execute(
+                            update(KayitDogrulama)
+                            .where(KayitDogrulama.id == kayit.id)
+                            .values(deneme=KayitDogrulama.deneme + 1)
+                        )
                 raise _KAYIT_GECERSIZ
 
             await set_tenant(session, kayit.tenant_id)

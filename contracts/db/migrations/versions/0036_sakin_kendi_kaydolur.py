@@ -35,12 +35,18 @@ def upgrade() -> None:
     # kurali dort yere kopyalamak olurdu.
     op.execute(
         f"""
+        -- KRIPTOGRAFIK RASTGELELIK ZORUNLU: `random()` tohumlanmis bir
+        -- PRNG'dir ve bir tesisin kodunu goren biri digerlerini tahmin
+        -- edebilir. Kerem daire sahipligi dogrulamasini KAPATTIGI icin
+        -- (bkz. P148) bu kod, daire verisini koruyan TEK denetim —
+        -- tahmin edilebilir olmamali. pgcrypto zaten kurulu (0001).
         CREATE OR REPLACE FUNCTION public.gen_kayit_kodu() RETURNS text
         LANGUAGE sql VOLATILE AS $$
             SELECT string_agg(
                 substr('{_ALFABE}',
-                       1 + floor(random() * length('{_ALFABE}'))::int, 1), '')
-            FROM generate_series(1, 8);
+                       1 + (get_byte(b, i) % length('{_ALFABE}')), 1), '')
+            FROM (SELECT gen_random_bytes(8) AS b) s,
+                 generate_series(0, 7) AS i;
         $$;
         """
     )

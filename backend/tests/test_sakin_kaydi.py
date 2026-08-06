@@ -113,7 +113,15 @@ def test_dogru_kod_PAROLASIZ_kullanici_acar_ve_daireye_baglar(
 
 
 def test_yanlis_kod_DENEME_sayar_ve_besten_sonra_kapanir(client, world, owner_conn):
-    """Kaba kuvvet: 6 haneli kod sayilmadan dakikalar icinde bulunur."""
+    """Kaba kuvvet: 6 haneli kod sayilmadan dakikalar icinde bulunur.
+
+    BU TEST BIR KEZ BOSA GECTI ve dersi buraya yaziliyor: son cagriya
+    `ad="X"` gonderiyordum, sema ise `min_length=2` istiyor. Donen 422
+    kaba kuvvet korumasindan DEGIL Pydantic dogrulamasindan geliyordu —
+    koruma tamamen kirikken (sayac her istekte geri sariliyordu) test
+    yesildi. Artik (a) gecerli `ad` gonderiliyor, (b) sayacin GERCEKTEN
+    arttigi VERITABANINDAN okunuyor.
+    """
     tel = _tel()
     client.post("/auth/kayit/basla", json={
         "tesis_kodu": _kod(client, owner_conn, world["slug_a"]),
@@ -124,9 +132,14 @@ def test_yanlis_kod_DENEME_sayar_ve_besten_sonra_kapanir(client, world, owner_co
     with owner_conn.cursor() as cur:
         cur.execute("UPDATE kayit_dogrulama SET kod_hash = %s WHERE telefon = %s",
                     (hash_password("123456"), tel))
-    for _ in range(5):
+    for i in range(5):
         assert client.post("/auth/kayit/dogrula", json={
-            "telefon": tel, "kod": "000000", "ad": "X"}).status_code == 422
+            "telefon": tel, "kod": "000000", "ad": "Ali Veli"}).status_code == 422
+        # Sayac KALICI olmali: ayni islemde tutulsaydi 422 onu geri sarardi.
+        with owner_conn.cursor() as cur:
+            cur.execute(
+                "SELECT deneme FROM kayit_dogrulama WHERE telefon = %s", (tel,))
+            assert cur.fetchone()[0] == i + 1, "deneme sayaci KALICI DEGIL"
     # DOGRU kod bile artik kabul edilmez.
     assert client.post("/auth/kayit/dogrula", json={
-        "telefon": tel, "kod": "123456", "ad": "X"}).status_code == 422
+        "telefon": tel, "kod": "123456", "ad": "Ali Veli"}).status_code == 422
