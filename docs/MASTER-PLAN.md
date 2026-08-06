@@ -9594,6 +9594,57 @@ karosunu **yöneticinin** listesinden de sildi. Test yakaladı, geri alındı.
 Bu artık tesadüf değil bir alışkanlık — kilit dosyalarında toplu değiştirme
 **kullanılmamalı**.
 
+### P148 — Sakin KENDİ kaydolur (tesis kodu + daire + telefon)
+Status: KISMEN(backend BİTTİ ve testli · mobil onboarding + openapi + kod
+yenileme ucu YAPILMADI) · Depends-on: P147
+Scope: Kerem'in kararı: sakini artık yönetici açmayacak.
+
+**AKIŞ:** tesis kodu → blok/daire → telefon → SMS kodu → kullanıcı açılır ve
+daireye bağlanır. **Parola yok** ve yeni şema gerekmedi: `password_hash`
+zaten nullable, `password_set` zaten vardı. Kimlik = doğrulanmış telefon.
+
+**KEREM'İN İKİ KARARI (seçenekler gösterildikten sonra):**
+* kimlik = telefon + SMS/OTP; **sosyal giriş yok** → 4.8 notu geçerli kalır,
+* **daire sahipliği doğrulanmıyor** — riski açıkça kabul etti.
+
+**AÇIKÇA KAYDEDİLEN GÜVEN SINIRI:** tesis kodunu öğrenen herkes herhangi
+bir daireye kaydolup o dairenin aidat/kargo/ziyaretçi verisini görebilir.
+
+**P148.1 — KOD AKILDA KALICI OLDU (Kerem):** adın ilk 4 harfi + `-` +
+YYAAGG. `OLTU-260715`, `CANS-250402`. Türkçe harfler ASCII'ye iner
+(`SISL`), dört harften kısa ad doldurulur (`ASXX`). Göç 0037; **tetikleyici**
+kullanıldı çünkü kod iki sütundan (`ad`, `created_at`) türüyor ve sütun
+varsayılanı başka sütunu göremez.
+
+**ÇAKIŞMA ÇÖZÜLDÜ:** aynı gün kaydolan "Oltu Sitesi" ve "Oltu Konakları"
+aynı tabanı üretir ve sütun UNIQUE — ikinciden itibaren `-2`, `-3` eki
+alır. Sessizce başka bir kod uydurmak, yöneticiye söylenen kodun tutmaması
+olurdu.
+
+**[KEREM'İN KARARI BEKLİYOR] AKILDA KALICILIK TEK DENETİMİ ZAYIFLATTI.**
+Kod artık **tahmin edilebilir** (site adı ve kayıt tarihi kamuya açık).
+Daire sahipliği doğrulaması kapalı olduğu için bu kod, daire verisini
+koruyan **tek denetimdi**; rastgeleyken "sır gibi tutulur" diyordu, artık
+sır olamaz. **Öneri: yönetici onayı adımını geri açmak.** Karar Kerem'de.
+
+**GÜVENLİK TARAMASI İKİ GERÇEK KUSUR BULDU (P148 ilk turunda):**
+* **Kaba kuvvet sayacı hiç çalışmıyordu** — artış `session.begin()`
+  içindeydi ve istek 422 ile bittiği için **geri sarılıyordu**. Ölçüldü: üç
+  denemeden sonra `deneme` hâlâ 0. Ayrı oturuma alındı.
+* **TESTİM BUNA RAĞMEN YEŞİLDİ.** Son çağrıda `ad="X"` gönderiyordum, şema
+  `min_length=2` istiyor; dönen 422 korumadan değil **Pydantic
+  doğrulamasından** geliyordu. Bu, P136/P137'de avladığım "boşa ölçen
+  kilit" sınıfının ta kendisi ve bu kez üreten bendim. Test artık sayacı
+  **veritabanından** okuyor.
+* **Kod üretimi `random()` kullanıyordu** (tohumlanmış PRNG);
+  `gen_random_bytes()` ile değiştirildi — sonra P148.1 ile kural tabanlı
+  üretime geçildi.
+
+KAPILAR: pytest `test_sakin_kaydi` + `test_auth` **22 geçti**.
+
+**YAPILMADI:** `openapi.yaml` girişleri · mobil onboarding ekranları ·
+yöneticinin tesis kodunu görme/yenileme ucu · opsiyonel TOTP.
+
 ### NOT — Sign in with Apple (4.8)
 **GEÇERSİZ (N/A):** üçüncü taraf sosyal giriş **kullanmıyoruz** (Google/Facebook
 girişi yok; kimlik doğrulama tesis tarafından verilen hesapla). 4.8 yalnız

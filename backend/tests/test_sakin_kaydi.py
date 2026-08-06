@@ -143,3 +143,42 @@ def test_yanlis_kod_DENEME_sayar_ve_besten_sonra_kapanir(client, world, owner_co
     # DOGRU kod bile artik kabul edilmez.
     assert client.post("/auth/kayit/dogrula", json={
         "telefon": tel, "kod": "123456", "ad": "Ali Veli"}).status_code == 422
+
+
+# ------------------- (P148.1) AKILDA KALICI TESIS KODU ---------------------- #
+def test_kod_bicimi_KEREMIN_ORNEKLERI(owner_conn):
+    """Kural: adin ilk 4 harfi + '-' + YYAAGG."""
+    with owner_conn.cursor() as cur:
+        cur.execute(
+            "SELECT public.kayit_kodu_uret('Oltu Sitesi','2026-07-15'), "
+            "       public.kayit_kodu_uret('Can Sitesi','2025-04-02')"
+        )
+        oltu, can = cur.fetchone()
+    assert oltu == "OLTU-260715"
+    assert can == "CANS-250402"
+
+
+def test_turkce_harfler_ASCIYE_INER_ve_kisa_ad_DOLDURULUR(owner_conn):
+    """Kod telefonda ELLE yazilir: klavyede `ş`/`ğ` aratmamali."""
+    with owner_conn.cursor() as cur:
+        cur.execute(
+            "SELECT public.kayit_kodu_uret('Şişli Güneş Konakları','2026-01-09'), "
+            "       public.kayit_kodu_uret('As','2026-01-09')"
+        )
+        turkce, kisa = cur.fetchone()
+    assert turkce == "SISL-260109"
+    assert kisa == "ASXX-260109", "dort harften kisa ad bicimi bozmamali"
+
+
+def test_AYNI_taban_cakisirsa_sira_eki_alir(owner_conn):
+    """Ayni gun kaydolan iki 'Oltu...' ayni tabani uretir; sutun UNIQUE."""
+    with owner_conn.cursor() as cur:
+        cur.execute(
+            "INSERT INTO tenant (ad, slug, created_at) VALUES "
+            "('Oltu Sitesi', %s, '2026-07-15'), "
+            "('Oltu Konaklari', %s, '2026-07-15') RETURNING kayit_kodu",
+            (f"c-{uuid.uuid4().hex[:8]}", f"c-{uuid.uuid4().hex[:8]}"),
+        )
+        kodlar = [r[0] for r in cur.fetchall()]
+    assert len(set(kodlar)) == 2, "cakisma sessizce ayni kodu uretemez"
+    assert any(k.endswith("-2") for k in kodlar)
