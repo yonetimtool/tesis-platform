@@ -10,6 +10,18 @@ import 'helpers/l10n_test_app.dart';
 
 /// loginPhone cagrilarini kaydeden sahte auth deposu (HTTP/storage'a inmez).
 class _RecordingAuthRepository implements AuthRepository {
+  // (P149) Parolasiz giris ucu — bu sahtelerin olcumu parola yolundadir;
+  // kod yolu kendi testinde surulur.
+  @override
+  Future<void> girisKoduIste(String telefon) async {}
+
+  @override
+  Future<void> girisKoduDogrula({
+    required String telefon,
+    required String kod,
+    bool rememberMe = false,
+  }) async {}
+
   final logins = <({String phone, bool rememberMe})>[];
 
   /// ON-DOLDURMA testi icin ayarlanabilir saklanan giris bilgisi (yoksa null).

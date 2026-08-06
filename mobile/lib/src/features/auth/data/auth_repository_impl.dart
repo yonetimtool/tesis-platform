@@ -13,6 +13,20 @@ class AuthRepositoryImpl implements AuthRepository {
   final TokenStorage storage;
 
   @override
+  Future<void> girisKoduIste(String telefon) => api.girisKoduIste(telefon);
+
+  @override
+  Future<void> girisKoduDogrula({
+    required String telefon,
+    required String kod,
+    bool rememberMe = false,
+  }) async {
+    final tokens = await api.girisKoduDogrula(telefon: telefon, kod: kod);
+    await storage.save(tokens);
+    await storage.saveRememberMe(rememberMe);
+  }
+
+  @override
   Future<PhoneLoginResult> loginPhone({
     required String phone,
     required String password,

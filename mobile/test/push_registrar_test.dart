@@ -105,6 +105,18 @@ class _MemTokenStore extends PushTokenStore {
 
 /// Oturum durumu ayarlanabilen sahte auth deposu (secure storage'a inmez).
 class _FakeAuthRepository implements AuthRepository {
+  // (P149) Parolasiz giris ucu — bu sahtelerin olcumu parola yolundadir;
+  // kod yolu kendi testinde surulur.
+  @override
+  Future<void> girisKoduIste(String telefon) async {}
+
+  @override
+  Future<void> girisKoduDogrula({
+    required String telefon,
+    required String kod,
+    bool rememberMe = false,
+  }) async {}
+
   bool sessionExists = false;
 
   @override

@@ -49,7 +49,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   void dispose() {
     _phoneCtrl.dispose();
     _passwordCtrl.dispose();
+    _kodCtrl.dispose();
     super.dispose();
+  }
+
+  /// (P149) Parolasiz akista kod alani.
+  final _kodCtrl = TextEditingController();
+
+  /// Ekran KOD MODUNDA mi. Parolasi olan kullanici bu moda hic girmez;
+  /// gecis kullanicinin ACIK secimiyle olur — otomatik gecis, parolasini
+  /// hatirlamaya calisan kullaniciyi sasirtirdi.
+  bool _kodModu = false;
+
+  Future<void> _koduIste() async {
+    FocusScope.of(context).unfocus();
+    final tel = telefonNormalle(_phoneCtrl.text);
+    if (tel.length < 10) return;
+    await ref.read(authControllerProvider.notifier).girisKoduIste(tel);
+  }
+
+  Future<void> _koduDogrula() async {
+    FocusScope.of(context).unfocus();
+    await ref.read(authControllerProvider.notifier).girisKoduDogrula(
+          telefon: telefonNormalle(_phoneCtrl.text),
+          kod: _kodCtrl.text.trim(),
+          rememberMe: _rememberMe,
+        );
   }
 
   Future<void> _submit() async {
@@ -165,6 +190,49 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             )
                           : Text(l10n.girisYap),
                     ),
+                    // (P149) PAROLASIZ GIRIS. Kendi kaydolan sakinin
+                    // parolasi YOKTUR; bu yol olmadan hesabina hic
+                    // giremezdi.
+                    const SizedBox(height: 8),
+                    if (!_kodModu)
+                      TextButton(
+                        onPressed: submitting
+                            ? null
+                            : () => setState(() => _kodModu = true),
+                        child: Text(l10n.girisKodlaBaslik),
+                      )
+                    else ...[
+                      const Divider(height: 24),
+                      Text(l10n.girisKodlaAciklama,
+                          style: Theme.of(context).textTheme.bodySmall),
+                      const SizedBox(height: 8),
+                      if (!auth.kodBekleniyor)
+                        OutlinedButton(
+                          onPressed: submitting ? null : _koduIste,
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size.fromHeight(52),
+                          ),
+                          child: Text(l10n.girisKoduGonder),
+                        )
+                      else ...[
+                        TextFormField(
+                          controller: _kodCtrl,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: l10n.girisKodAlani,
+                          ),
+                          onFieldSubmitted: (_) => _koduDogrula(),
+                        ),
+                        const SizedBox(height: 8),
+                        FilledButton(
+                          onPressed: submitting ? null : _koduDogrula,
+                          style: FilledButton.styleFrom(
+                            minimumSize: const Size.fromHeight(52),
+                          ),
+                          child: Text(l10n.girisYap),
+                        ),
+                      ],
+                    ],
                   ],
                 ),
               ),

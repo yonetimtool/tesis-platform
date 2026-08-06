@@ -2030,5 +2030,9 @@
   "izinKonumBaslik": "Konum izni neden gerekli?",
   "izinKonumGovde": "Devriye noktasını okuttuğunuzda, turun gerçekten sahada yapıldığını doğrulamak için o anki konumunuz kaydedilir. Konumunuz YALNIZCA okutma anında alınır; uygulama sizi arka planda takip etmez.",
   "izinKameraBaslik": "Kamera izni neden gerekli?",
-  "izinKameraGovde": "Talep veya arıza bildirirken fotoğraf ekleyebilmeniz için kamera kullanılır. Fotoğraf yalnızca siz çektiğinizde alınır ve tesis yönetimine iletilir."
+  "izinKameraGovde": "Talep veya arıza bildirirken fotoğraf ekleyebilmeniz için kamera kullanılır. Fotoğraf yalnızca siz çektiğinizde alınır ve tesis yönetimine iletilir.",
+  "girisKodlaBaslik": "Parolam yok, kodla giriş yap",
+  "girisKodlaAciklama": "Telefonunuza altı haneli bir doğrulama kodu göndereceğiz.",
+  "girisKoduGonder": "Kod gönder",
+  "girisKodAlani": "Doğrulama kodu"
 }

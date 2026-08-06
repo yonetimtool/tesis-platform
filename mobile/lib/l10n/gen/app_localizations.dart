@@ -8200,6 +8200,30 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Talep veya arıza bildirirken fotoğraf ekleyebilmeniz için kamera kullanılır. Fotoğraf yalnızca siz çektiğinizde alınır ve tesis yönetimine iletilir.'**
   String get izinKameraGovde;
+
+  /// No description provided for @girisKodlaBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Parolam yok, kodla giriş yap'**
+  String get girisKodlaBaslik;
+
+  /// No description provided for @girisKodlaAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Telefonunuza altı haneli bir doğrulama kodu göndereceğiz.'**
+  String get girisKodlaAciklama;
+
+  /// No description provided for @girisKoduGonder.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kod gönder'**
+  String get girisKoduGonder;
+
+  /// No description provided for @girisKodAlani.
+  ///
+  /// In tr, this message translates to:
+  /// **'Doğrulama kodu'**
+  String get girisKodAlani;
 }
 
 class _AppLocalizationsDelegate

@@ -49,11 +49,25 @@ class ProfileApi {
   /// Doner: **tam silindi mi**. `false` BASARISIZLIK DEGILDIR — hesabin
   /// gecmisi (aidat/odeme) oldugu icin satir anonimlestirilerek korundu
   /// demektir; kullaniciya iki durumda da farkli ama OLUMLU metin gosterilir.
-  Future<bool> deleteAccount({required String currentPassword}) async {
+  /// (P149) Silme onay KODU iste — parolasiz kullanici icin.
+  Future<void> hesapSilmeKoduIste() async {
+    try {
+      await _dio.post<Map<String, dynamic>>('/me/hesap-sil/kod-iste');
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// [currentPassword] parolasi OLANLAR icin, [kod] parolasiz kullanici
+  /// icin. Hangisinin gecerli oldugunu SUNUCU secer — istemci tahmin etmez.
+  Future<bool> deleteAccount({String? currentPassword, String? kod}) async {
     try {
       final res = await _dio.post<Map<String, dynamic>>(
         '/me/hesap-sil',
-        data: {'current_password': currentPassword},
+        data: {
+          'current_password': ?currentPassword,
+          'kod': ?kod,
+        },
       );
       return res.data?['deleted'] == true;
     } on DioException catch (e) {

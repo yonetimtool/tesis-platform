@@ -18,6 +18,18 @@ const _tokens = TokenPair(
 
 /// loginPhone cagrilarini kaydeden sahte auth deposu.
 class _RecordingAuthRepository implements AuthRepository {
+  // (P149) Parolasiz giris ucu — bu sahtelerin olcumu parola yolundadir;
+  // kod yolu kendi testinde surulur.
+  @override
+  Future<void> girisKoduIste(String telefon) async {}
+
+  @override
+  Future<void> girisKoduDogrula({
+    required String telefon,
+    required String kod,
+    bool rememberMe = false,
+  }) async {}
+
   final phoneLogins =
       <({String phone, String password, bool rememberMe})>[];
 

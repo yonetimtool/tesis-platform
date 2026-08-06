@@ -31,6 +31,38 @@ class AuthApi {
     }
   }
 
+  /// (P149) `POST /auth/giris/kod-iste` — PAROLASIZ giris: numaraya kod
+  /// gonderilir. Numara KAYITLI OLMASA DA ayni yanit doner (sunucu numara
+  /// varligini sizdirmaz), bu yuzden istemci de "numara yok" DEMEZ.
+  Future<void> girisKoduIste(String telefon) async {
+    try {
+      await _dio.post<Map<String, dynamic>>(
+        '/auth/giris/kod-iste',
+        data: {'telefon': telefon},
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// (P149) `POST /auth/giris/kod-dogrula` — kod dogruysa TAM OTURUM.
+  /// Parola akisindan farkli olarak `setup_token` asamasi YOKTUR: parolasiz
+  /// kullanicinin belirleyecegi bir parola da yoktur.
+  Future<TokenPair> girisKoduDogrula({
+    required String telefon,
+    required String kod,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/auth/giris/kod-dogrula',
+        data: {'telefon': telefon, 'kod': kod},
+      );
+      return TokenPair.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
   /// `POST /auth/set-password` — ilk giristeki zorunlu parola belirleme.
   /// Basarida tam oturum (TokenPair) doner; gecici kod sunucuda silinir.
   Future<TokenPair> setPassword({

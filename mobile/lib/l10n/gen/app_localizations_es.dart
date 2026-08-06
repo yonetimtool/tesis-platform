@@ -4781,4 +4781,17 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get izinKameraGovde =>
       'La cámara se usa para que pueda adjuntar una foto al informar una solicitud o avería. La foto solo se toma cuando usted la hace y se envía a la administración.';
+
+  @override
+  String get girisKodlaBaslik => 'Sin contraseña: iniciar sesión con un código';
+
+  @override
+  String get girisKodlaAciklama =>
+      'Enviaremos un código de verificación de seis dígitos a su teléfono.';
+
+  @override
+  String get girisKoduGonder => 'Enviar código';
+
+  @override
+  String get girisKodAlani => 'Código de verificación';
 }

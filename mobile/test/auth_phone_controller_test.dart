@@ -16,6 +16,18 @@ const _tokens = TokenPair(
 
 /// Cagrilari kaydeden, davranisi ayarlanabilen sahte auth deposu.
 class _FakeAuthRepository implements AuthRepository {
+  // (P149) Parolasiz giris ucu — bu sahtelerin olcumu parola yolundadir;
+  // kod yolu kendi testinde surulur.
+  @override
+  Future<void> girisKoduIste(String telefon) async {}
+
+  @override
+  Future<void> girisKoduDogrula({
+    required String telefon,
+    required String kod,
+    bool rememberMe = false,
+  }) async {}
+
   PhoneLoginResult phoneResult =
       const PhoneLoginResult(passwordSetupRequired: false, tokens: _tokens);
   ApiException? setPasswordError;

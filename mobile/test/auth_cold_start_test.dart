@@ -8,6 +8,18 @@ import 'package:mobile/src/features/auth/presentation/auth_controller.dart';
 /// gecerli refresh token VARKEN bile sessiz auto-login YAPILMAZ (alanlar
 /// on-dolu gelir, kullanici Giris'e basar). Oturum-ici davranis degismez.
 class _RememberliRepo implements AuthRepository {
+  // (P149) Parolasiz giris ucu — bu sahtelerin olcumu parola yolundadir;
+  // kod yolu kendi testinde surulur.
+  @override
+  Future<void> girisKoduIste(String telefon) async {}
+
+  @override
+  Future<void> girisKoduDogrula({
+    required String telefon,
+    required String kod,
+    bool rememberMe = false,
+  }) async {}
+
   bool restoreCagrildi = false;
 
   @override

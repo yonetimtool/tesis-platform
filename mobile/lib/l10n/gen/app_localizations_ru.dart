@@ -4895,4 +4895,17 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get izinKameraGovde =>
       'Камера нужна, чтобы вы могли приложить фотографию при сообщении о заявке или неисправности. Фото делается только вами и отправляется управляющей компании.';
+
+  @override
+  String get girisKodlaBaslik => 'Нет пароля — вход по коду';
+
+  @override
+  String get girisKodlaAciklama =>
+      'Мы отправим шестизначный код подтверждения на ваш телефон.';
+
+  @override
+  String get girisKoduGonder => 'Отправить код';
+
+  @override
+  String get girisKodAlani => 'Код подтверждения';
 }

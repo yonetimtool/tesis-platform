@@ -44,8 +44,10 @@ class _SahteProfilApi extends ProfileApi {
   final gonderilenParolalar = <String>[];
 
   @override
-  Future<bool> deleteAccount({required String currentPassword}) async {
-    gonderilenParolalar.add(currentPassword);
+  Future<bool> deleteAccount({String? currentPassword, String? kod}) async {
+    // (P149) Parolasiz kullanicida `kod` gelir; hangisi geldiyse kaydet
+    // ki testler "ne gonderildi"yi ayirt edebilsin.
+    gonderilenParolalar.add(currentPassword ?? kod ?? '');
     if (hata != null) throw hata!;
     return tamSilindi;
   }

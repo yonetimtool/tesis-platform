@@ -54,6 +54,18 @@ class _FakeOutbox extends ScanOutbox {
 /// yazar — boylece `currentUserRoleProvider` GERCEK yoldan (token → claim)
 /// rolu cozer, testte kestirme yapilmaz.
 class _SahteAuthRepo implements AuthRepository {
+  // (P149) Parolasiz giris ucu — bu sahtelerin olcumu parola yolundadir;
+  // kod yolu kendi testinde surulur.
+  @override
+  Future<void> girisKoduIste(String telefon) async {}
+
+  @override
+  Future<void> girisKoduDogrula({
+    required String telefon,
+    required String kod,
+    bool rememberMe = false,
+  }) async {}
+
   _SahteAuthRepo(this._storage, this._role);
 
   final TokenStorage _storage;

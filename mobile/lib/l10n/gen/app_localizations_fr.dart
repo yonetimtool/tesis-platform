@@ -4794,4 +4794,18 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get izinKameraGovde =>
       'L\'appareil photo permet de joindre une photo lors du signalement d\'une demande ou d\'une panne. Une photo n\'est prise que par vous et elle est envoyée à la gestion.';
+
+  @override
+  String get girisKodlaBaslik =>
+      'Pas de mot de passe – se connecter avec un code';
+
+  @override
+  String get girisKodlaAciklama =>
+      'Nous enverrons un code de vérification à six chiffres sur votre téléphone.';
+
+  @override
+  String get girisKoduGonder => 'Envoyer le code';
+
+  @override
+  String get girisKodAlani => 'Code de vérification';
 }

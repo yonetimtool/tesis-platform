@@ -8,6 +8,16 @@ abstract interface class AuthRepository {
   /// gecici kodla ilk giriste HICBIR sey saklanmaz — donen `setupToken` ile
   /// [setPassword] cagrilmalidir. [rememberMe] true ise "beni hatirla" bayragi
   /// kalici saklanir. Hata durumunda [ApiException] firlatir.
+  /// (P149) Parolasiz giris: numaraya kod gonder.
+  Future<void> girisKoduIste(String telefon);
+
+  /// (P149) Kod dogruysa oturumu ACAR ve token'lari saklar.
+  Future<void> girisKoduDogrula({
+    required String telefon,
+    required String kod,
+    bool rememberMe,
+  });
+
   Future<PhoneLoginResult> loginPhone({
     required String phone,
     required String password,

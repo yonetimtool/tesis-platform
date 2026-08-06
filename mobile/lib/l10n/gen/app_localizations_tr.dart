@@ -4637,4 +4637,17 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get izinKameraGovde =>
       'Talep veya arıza bildirirken fotoğraf ekleyebilmeniz için kamera kullanılır. Fotoğraf yalnızca siz çektiğinizde alınır ve tesis yönetimine iletilir.';
+
+  @override
+  String get girisKodlaBaslik => 'Parolam yok, kodla giriş yap';
+
+  @override
+  String get girisKodlaAciklama =>
+      'Telefonunuza altı haneli bir doğrulama kodu göndereceğiz.';
+
+  @override
+  String get girisKoduGonder => 'Kod gönder';
+
+  @override
+  String get girisKodAlani => 'Doğrulama kodu';
 }

@@ -25,6 +25,7 @@ class AuthState {
     this.errorMessage,
     this.hataKimligi,
     this.setupToken,
+    this.kodBekleniyor = false,
   });
 
   final AuthStatus status;
@@ -38,11 +39,15 @@ class AuthState {
   final String? errorMessage;
   final GirisAkisHatasi? hataKimligi;
 
+  /// (P149) Parolasiz akista kod GONDERILDI — ekran kod alanina gecer.
+  final bool kodBekleniyor;
+
   /// Sakinin gecici kodla ILK girisinde donen kisa omurlu parola-kurulum
   /// token'i. Dolu ise router parola belirleme ekranina yonlendirir.
   final String? setupToken;
 
   AuthState copyWith({
+    bool? kodBekleniyor,
     AuthStatus? status,
     bool? submitting,
     Object? errorMessage = _sentinel,
@@ -51,6 +56,7 @@ class AuthState {
   }) {
     return AuthState(
       status: status ?? this.status,
+      kodBekleniyor: kodBekleniyor ?? this.kodBekleniyor,
       submitting: submitting ?? this.submitting,
       errorMessage: errorMessage == _sentinel
           ? this.errorMessage
@@ -86,6 +92,42 @@ class AuthController extends Notifier<AuthState> {
   /// dogrudan authenticated olur; GECICI kodla ilk giriste [AuthState.setupToken]
   /// dolar ve parola belirleme ekranina gecilir (oturum henuz yoktur).
   /// [rememberMe] tercihi kurulum akisi boyunca korunur.
+  /// (P149) PAROLASIZ GIRIS — 1. adim: numaraya kod iste.
+  ///
+  /// Basari/basarisizlik AYIRT ETTIRILMEZ: sunucu kayitli olmayan numara
+  /// icin de ayni yaniti doner ve istemci de "numara yok" DEMEZ — aksi
+  /// halde ekran bir numara sorgulama araci olurdu.
+  Future<void> girisKoduIste(String telefon) async {
+    state = state.copyWith(
+      submitting: true, errorMessage: null, hataKimligi: null);
+    try {
+      await ref.read(authRepositoryProvider).girisKoduIste(telefon);
+      state = state.copyWith(submitting: false, kodBekleniyor: true);
+    } on ApiException catch (e) {
+      state = state.copyWith(
+        submitting: false, errorMessage: e.message, hataKimligi: e.code);
+    }
+  }
+
+  /// (P149) PAROLASIZ GIRIS — 2. adim: kodu dogrula ve oturumu ac.
+  Future<void> girisKoduDogrula({
+    required String telefon,
+    required String kod,
+    bool rememberMe = false,
+  }) async {
+    state = state.copyWith(
+      submitting: true, errorMessage: null, hataKimligi: null);
+    try {
+      await ref.read(authRepositoryProvider).girisKoduDogrula(
+            telefon: telefon, kod: kod, rememberMe: rememberMe);
+      state = state.copyWith(
+        status: AuthStatus.authenticated, submitting: false);
+    } on ApiException catch (e) {
+      state = state.copyWith(
+        submitting: false, errorMessage: e.message, hataKimligi: e.code);
+    }
+  }
+
   Future<void> loginPhone({
     required String phone,
     required String password,

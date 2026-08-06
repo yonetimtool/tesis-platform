@@ -1438,5 +1438,9 @@
   "izinKonumBaslik": "Pourquoi la localisation est-elle nécessaire ?",
   "izinKonumGovde": "Lorsque vous scannez un point de contrôle, votre position à cet instant est enregistrée pour confirmer que la ronde a bien été effectuée sur place. La position est relevée UNIQUEMENT au moment du scan ; l'application ne vous suit pas en arrière-plan.",
   "izinKameraBaslik": "Pourquoi l'appareil photo est-il nécessaire ?",
-  "izinKameraGovde": "L'appareil photo permet de joindre une photo lors du signalement d'une demande ou d'une panne. Une photo n'est prise que par vous et elle est envoyée à la gestion."
+  "izinKameraGovde": "L'appareil photo permet de joindre une photo lors du signalement d'une demande ou d'une panne. Une photo n'est prise que par vous et elle est envoyée à la gestion.",
+  "girisKodlaBaslik": "Pas de mot de passe – se connecter avec un code",
+  "girisKodlaAciklama": "Nous enverrons un code de vérification à six chiffres sur votre téléphone.",
+  "girisKoduGonder": "Envoyer le code",
+  "girisKodAlani": "Code de vérification"
 }

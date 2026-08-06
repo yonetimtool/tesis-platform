@@ -4906,4 +4906,16 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get izinKameraGovde =>
       'تُستخدم الكاميرا لتتمكن من إرفاق صورة عند الإبلاغ عن طلب أو عطل. لا تُلتقط الصورة إلا عندما تلتقطها أنت، وتُرسل إلى إدارة المجمع.';
+
+  @override
+  String get girisKodlaBaslik => 'لا كلمة مرور — سجّل الدخول برمز';
+
+  @override
+  String get girisKodlaAciklama => 'سنرسل رمز تحقق من ستة أرقام إلى هاتفك.';
+
+  @override
+  String get girisKoduGonder => 'إرسال الرمز';
+
+  @override
+  String get girisKodAlani => 'رمز التحقق';
 }
