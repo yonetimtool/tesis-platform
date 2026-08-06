@@ -216,15 +216,6 @@ class MockHomeRepository implements HomeRepository {
       rota: AppRoutes.myDues,
     ),
     HizliErisimKart(
-      ikon: Icons.graphic_eq,
-      id: HomeKartId.gurultuSikayeti,
-      accent: HomeTokens.red,
-      // G6: GET /unit-complaints/mine?kategori=gurultu&durum=acik → meta.total
-      // ("N Açık"). Kart dokunulunca hala BILDIRIM akisina gider.
-      altMetin: null,
-      rota: AppRoutes.complaints,
-    ),
-    HizliErisimKart(
       ikon: Icons.campaign,
       id: HomeKartId.geriBildirim,
       accent: HomeTokens.orange,

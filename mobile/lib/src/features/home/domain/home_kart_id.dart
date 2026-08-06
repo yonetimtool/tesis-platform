@@ -41,7 +41,6 @@ enum HomeKartId {
   ziyaretciler,
   kargolarim,
   aidatBilgileri,
-  gurultuSikayeti,
   geriBildirim,
   sikayetlerim,
   siteRaporlari,
@@ -92,7 +91,6 @@ String kartBasligi(AppLocalizations l10n, HomeKartId id) => switch (id) {
       // "Sikayet / Oneri", "Geri Bildirim", "Gurultu Sikayeti" ve
       // "Talep / Arıza". Ekranin KENDI basligi "Talep / Arıza"ydi, yani
       // dortten yalniz biri dogruydu. Hepsi o ada baglandi.
-      HomeKartId.gurultuSikayeti => l10n.kartTalepAriza,
       HomeKartId.geriBildirim => l10n.kartTalepAriza,
       HomeKartId.sikayetlerim => l10n.kartSikayetlerim,
       HomeKartId.siteRaporlari => l10n.modulSeffaflik,

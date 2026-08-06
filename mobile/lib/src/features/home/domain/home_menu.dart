@@ -310,7 +310,9 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         // gorur (kendi ilettigi daireler isaretli) — ayri "Sikayetlerim"
         // sayfasina yonlendirilmez (D-viz Rev-1.1 fix).
         HomeMenuEntry.sikayetHaritasi,
-        HomeMenuEntry.complaints,
+        // (P145) `complaints` sakinin MENUSUNDEN kalkti (Kerem): bildirme
+        // yuzeyi ana ekrandaki butonda, takip yuzeyi izgaradaki karoda.
+        // Menude ucuncu bir giris ayni yere ucuncu bir kapi aciyordu.
         HomeMenuEntry.myDues,
         HomeMenuEntry.siteBudget,
         HomeMenuEntry.transparency,

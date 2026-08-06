@@ -244,8 +244,10 @@ void main() {
     expect(find.text('1 Kayıt'), findsOneWidget); // Ziyaretçiler
     expect(find.text('2 Açık'), findsOneWidget); // Geri Bildirim
     expect(find.text('1 Açık'), findsOneWidget); // Şikayetlerim
-    // G6: gurultu sayaci ?kategori=gurultu suzgecinden (istemci suzmez).
-    expect(find.text('3 Açık'), findsOneWidget); // Gürültü Şikayeti
+    // (P145) Gurultu Sikayeti karosu SILINDI (Kerem): `/complaints`e giden
+    // ikinci karoydu. Sayaci da ekrandan kalkti — bu ARTIK YOKLUKLA
+    // olculuyor ki karo sessizce geri gelmesin.
+    expect(find.text('3 Açık'), findsNothing); // eski Gürültü Şikayeti sayaci
     expect(find.text('Bildirim Yap'), findsNothing);
     expect(find.text('1 Yeni'), findsOneWidget); // Duyurular (son 3 gun)
     expect(find.text('Asansör Bakımı'), findsOneWidget); // duyuru karti

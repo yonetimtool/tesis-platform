@@ -155,7 +155,6 @@ void main() {
           HomeKartId.ziyaretciler,
           HomeKartId.kargolarim,
           HomeKartId.aidatBilgileri,
-          HomeKartId.gurultuSikayeti,
           HomeKartId.geriBildirim,
           HomeKartId.sikayetlerim,
           HomeKartId.duyurular,

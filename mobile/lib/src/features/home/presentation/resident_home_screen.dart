@@ -78,8 +78,6 @@ class ResidentHomeScreen extends ConsumerWidget {
     final duyuruAsync = ref.watch(sonDuyurularProvider);
     final talep = ref.watch(acikSikayetSayisiProvider);
     final daireSikayet = ref.watch(kendiDaireSikayetSayisiProvider);
-    // G6: gurultu sayaci — kategori suzgeci SUNUCUDA (istemci suzmez).
-    final gurultu = ref.watch(kendiGurultuSikayetSayisiProvider);
     // Son Hareketler TEK uctan (/activity); sunucu sakini KENDI olaylariyla
     // sinirlar — istemci artik kargo/ziyaretci/odeme/talep birlestirmez.
     final hareketler = ref.watch(sonHareketlerProvider);
@@ -114,8 +112,6 @@ class ResidentHomeScreen extends ConsumerWidget {
               duesAsync.metin((u) => _aidatTutari(u, dil)),
               yeniIkinciAltMetin: duesAsync.metin((u) => _borcEtiketi(u, l10n)),
             ),
-          HomeKartId.gurultuSikayeti =>
-            k.sayacla(gurultu.metin(l10n.sayacAcik)),
           HomeKartId.geriBildirim => k.sayacla(talep.metin(l10n.sayacAcik)),
           HomeKartId.sikayetlerim =>
             k.sayacla(daireSikayet.metin(l10n.sayacAcik)),

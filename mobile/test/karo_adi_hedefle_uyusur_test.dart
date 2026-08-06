@@ -65,12 +65,13 @@ void main() {
         reason: 'ayni ekrana farkli adlarla giriliyor:\n${cakisan.join("\n")}');
   });
 
+  // (P145) `gurultuSikayeti` karosu SILINDI: `/complaints`e giden ikinci
+  // karoydu ve sakinin ekraninda ayni yere iki kapi aciyordu (Kerem).
   test('SIKAYET AILESI birlestirildi (Kerem onayi)', () {
     // Onaylanan degisiklik: `/complaints`e giden HEPSI ekranin kendi adini
     // ("Talep / Arıza") kullanir; `sikayetler` karosu gittigi ekranin adi
     // olan "Sikayet Haritasi"na donusur.
     expect(kartBasligi(l10n, HomeKartId.geriBildirim), 'Talep / Arıza');
-    expect(kartBasligi(l10n, HomeKartId.gurultuSikayeti), 'Talep / Arıza');
     expect(kartBasligi(l10n, HomeKartId.talepAriza), 'Talep / Arıza');
     expect(moduleBaslik(l10n, HomeMenuEntry.complaints), 'Talep / Arıza');
     expect(kartBasligi(l10n, HomeKartId.sikayetler), 'Şikayet Haritası');

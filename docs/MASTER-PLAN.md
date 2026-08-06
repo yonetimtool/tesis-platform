@@ -9243,8 +9243,10 @@ kendi "kök nedeni bul, üstünü örtme" kuralı burada da geçerli.
 (satırlar `bekliyor`da mı takılı), `logs worker | grep -i ceviri` (kuyruk
 işliyor mu).
 
-### P141 — [KEREM ONAYI BEKLİYOR] Denetçinin mobil yüzeyi
-Status: KARAR-BEKLIYOR(bugünkü davranış korunuyor) · Depends-on: P128, P129
+### P141 — Denetçinin mobil yüzeyi: OLMAYACAK (Kerem onayladı)
+Status: KAPANDI(2026-08-06 · Kerem: "denetçi sadece web'de kalsın" ·
+bugünkü davranış KALICI: `DenetciYonlendirmeScreen` web adresini söyler)
+· Depends-on: P128, P129
 Scope: **Bu bir AJAN KARARIYDI, Kerem onaylamadı.** Kerem 2026-08-05'te
 açıkça belirtti: "mobil yüzeyin olmaması senin kararındı, ben onaylamadım."
 Madde bu yüzden açıldı — karar görünür olsun ve ileride değiştirilebilsin.
@@ -9450,6 +9452,54 @@ karo çıkıyor. `findsNWidgets(2)` ile **ölçülüyor**, gizlenmedi.
 
 KAPILAR: `flutter analyze` temiz · `flutter test` **1806** (~3 atlandı).
 Build numarası **DEĞİŞMEDİ** (build 3 hâlâ App Store incelemesinde).
+
+### P145 — Sakinin talep/şikayet yüzeyi sadeleşti (Kerem)
+Status: BITTI(2026-08-06 · analyze temiz · test 1806) · Depends-on: P144
+Scope: Kerem'in şikâyeti: "site sakini için çok karışıktı — aynı yere üç
+kapı var". Ölçüm onu doğruladı: `/complaints` ekranına sakinden **üç**
+yoldan giriliyordu — ana ekrandaki bildirme butonu, ızgaradaki **Gürültü
+Şikayeti** karosu ve **sol menüdeki** giriş. P144 adları birleştirince üç
+kapının üçü de aynı adı taşır olmuştu; karışıklık artık görünürdü.
+
+**KALDIRILAN İKİ KAPI:**
+* **Gürültü Şikayeti karosu** — `/complaints`e giden ikinci karoydu.
+  Kart, `HomeKartId` girişi, etiket eşlemesi ve ekrandaki sayacı silindi.
+* **Sol menüdeki Talep / Arıza girişi** (eski "Şikayet / Öneri") — sakinin
+  menüsünden çıktı.
+
+**KALAN İKİ YÜZEY — İKİSİ DE TAKİP:** `Şikayetlerim` (→ `/sikayetlerim`,
+kendi daire şikayetinin akıbeti) ve talep/arıza takibi (→ `/complaints`).
+Bildirme ana ekrandaki butonda kaldı.
+
+**BİR KİLİT İZİN KURALINA BAĞLIYDI — DARALTILIRKEN BOŞLUK BIRAKILMADI.**
+`home_menu_test`'te "Şikayet/Öneri **5 rolün 5inde**" diyen kilit,
+`auth.md` §4'ün UX aynasıydı. Menüden çıkarma o kilidi düşürdü — ama
+kaldırılan şey **izin değil üçüncü kapı**. Kilidi sessizce gevşetmek
+sakinin kanalını bir gün gerçekten kapatabilirdi; bu yüzden aynı teste
+**yerine geçen bir ölçüm** kondu: sakinin ana ekran kart listesi
+`AppRoutes.complaints` içermeli. Kanal kapanırsa test yine düşer, yalnızca
+ölçüm noktası menüden ana ekrana taşındı.
+
+**YANLIŞ LİSTEYİ DÜZENLEDİM, TEST YAKALADI.** `complaints` beklentisini
+çıkarırken yöneticinin listesini düzenlemişim (blokta `patrolTracking` ve
+`budget` vardı — sakinin değil). Yönetici testi düştü, geri alındı ve
+doğru liste düzenlendi.
+
+**SAYAÇ YOKLUKLA ÖLÇÜLÜYOR:** silinen karonun "3 Açık" sayacı testte
+`findsNothing`a çevrildi — karo sessizce geri gelirse test düşer.
+
+**GÜVENLİK AMİRİ HESABI ETKİN (dev).** Tohumlama `worker` üzerinden
+koşuldu (`OWNER_DSN` yalnız orada) ve kanıt olarak parola hash'i değil
+**gerçek giriş** alındı: `POST /auth/login-phone` `+905000000105` →
+`access_token`, jetonun rolü `guvenlik_amiri`. Prod komutu betiğin
+başlığında yazılı (`docker-compose.prod.yml` + `worker` + `DEMO_PAROLA`).
+
+**AÇIK KALAN — ETİKET GERİLİMİ (Kerem'de):** kalan takip karosu P144
+kuralı gereği gittiği ekranın adını taşıyor: **"Talep / Arıza"**. Kerem
+ona "geri bildirim" dedi. Karoyu "Geri Bildirim" yapmak, adı ile açtığı
+ekranın başlığını yeniden ayırır — yani P144'ün kapattığı kusur sınıfını
+geri açar. Doğru çözüm ekranın başlığını da değiştirmek olurdu; bu bir
+ürün kararı, uydurulmadı.
 
 ### NOT — Sign in with Apple (4.8)
 **GEÇERSİZ (N/A):** üçüncü taraf sosyal giriş **kullanmıyoruz** (Google/Facebook

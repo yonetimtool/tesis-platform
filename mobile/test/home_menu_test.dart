@@ -1,6 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/src/features/auth/domain/user_role.dart';
+import 'package:mobile/src/routing/app_router.dart';
+import 'package:mobile/src/features/home/data/home_repository.dart';
 import 'package:mobile/src/features/home/domain/home_menu.dart';
+import 'package:mobile/src/features/home/domain/home_varyant.dart';
 
 // (P38) `anketler` girisi BILINEN TUM ROLLERDE durur: anket OKUMASI
 // herkese aciktir (site kararlarinin seffafligi — seffaflik panosuyla ayni
@@ -252,8 +255,9 @@ void main() {
     });
 
     test('resident: Ziyaretciler + Kargo + Goruntuleme izni + '
-        'Rezervasyon + duyurular + Sikayet Haritasi + Sikayet/Oneri + Aidatim + '
-        'Site Butcesi (ayri "Sikayetlerim" sayfasi YOK — harita uzerinde)', () {
+        'Rezervasyon + duyurular + Sikayet Haritasi + Aidatim + '
+        'Site Butcesi (ayri "Sikayetlerim" sayfasi YOK — harita uzerinde · '
+        '(P145) Talep/Ariza MENUDE YOK — ana ekranda)', () {
       expect(homeMenuForRole(UserRole.resident), const [
         HomeMenuEntry.visitors,
         HomeMenuEntry.kargo,
@@ -265,7 +269,7 @@ void main() {
         HomeMenuEntry.siteKurallari,
         HomeMenuEntry.disHizmet,
         HomeMenuEntry.sikayetHaritasi,
-        HomeMenuEntry.complaints,
+        // (P145) `complaints` KALKTI — izin degil UCUNCU KAPI kalkti.
         HomeMenuEntry.myDues,
         HomeMenuEntry.siteBudget,
         HomeMenuEntry.transparency,
@@ -519,7 +523,12 @@ void main() {
         UserRole.yonetici,
         UserRole.security,
         UserRole.tesisGorevlisi,
-        UserRole.resident,
+        // (P145) `resident` bu listeden CIKTI ve bu bir IZIN DEGISIKLIGI
+        // DEGIL. auth.md §4 sakine talep/ariza kanalini aciyor; kanal
+        // duruyor — sakin ana ekrandaki "Talep/Bildir" butonundan bildirir,
+        // izgaradaki karodan takip eder. MENUDEKI giris ayni yere UCUNCU
+        // kapiydi ve Kerem "kalksin" dedi. Izni asagidaki testte ayrica
+        // olcuyoruz ki kaldirma sessizce yetki kaybina donusmesin.
       ]) {
         expect(
           homeMenuForRole(role),
@@ -527,6 +536,16 @@ void main() {
           reason: role.wire,
         );
       }
+      // (P145) Sakinin talep/ariza ERISIMI menude degil ANA EKRANDA:
+      // `geriBildirim` karosu `/complaints`e gider. Kanal kapanirsa bu
+      // duser.
+      expect(
+        MockHomeRepository()
+            .hizliErisim(HomeVaryant.sakin)
+            .map((k) => k.rota),
+        contains(AppRoutes.complaints),
+        reason: 'sakin talep/ariza kanali ana ekrandan acik kalmali',
+      );
     });
 
     test('Aidatim yalniz resident menusunde (/me/dues resident-only)', () {
