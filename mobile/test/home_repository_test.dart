@@ -155,7 +155,7 @@ void main() {
           HomeKartId.ziyaretciler,
           HomeKartId.kargolarim,
           HomeKartId.aidatBilgileri,
-          HomeKartId.geriBildirim,
+          // (P147) geriBildirim KALDIRILDI — yerini Bildirimler sayfasi aldi.
           HomeKartId.sikayetlerim,
           HomeKartId.duyurular,
           HomeKartId.siteRaporlari,

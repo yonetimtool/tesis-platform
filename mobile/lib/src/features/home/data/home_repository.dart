@@ -215,13 +215,10 @@ class MockHomeRepository implements HomeRepository {
       ikinciAltMetinRengi: HomeTokens.green,
       rota: AppRoutes.myDues,
     ),
-    HizliErisimKart(
-      ikon: Icons.campaign,
-      id: HomeKartId.geriBildirim,
-      accent: HomeTokens.orange,
-      altMetin: null, // GET /complaints?durum=acik (kendi actiklari)
-      rota: AppRoutes.complaints,
-    ),
+    // (P147) "Geri Bildirim" karosu SAKININ izgarasindan KALDIRILDI
+    // (Kerem). Yerini Bildirimler sayfasi aldi: sakinin olusturdugu her
+    // olayin geri donusu orada satir satir duruyor ve ilgili ekrana
+    // goturuyor. Karo yalnizca LISTEYE aciyordu, olay bazli degildi.
     HizliErisimKart(
       ikon: Icons.description_outlined,
       id: HomeKartId.sikayetlerim,

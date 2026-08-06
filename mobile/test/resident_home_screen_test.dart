@@ -242,7 +242,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('1 Kayıt'), findsOneWidget); // Ziyaretçiler
-    expect(find.text('2 Açık'), findsOneWidget); // Geri Bildirim
+    // (P147) "Geri Bildirim" karosu kalkti; sayaci da ekrandan gitti.
+    // YOKLUKLA olculuyor ki karo sessizce geri gelmesin.
+    expect(find.text('2 Açık'), findsNothing); // eski Geri Bildirim sayaci
     expect(find.text('1 Açık'), findsOneWidget); // Şikayetlerim
     // (P145) Gurultu Sikayeti karosu SILINDI (Kerem): `/complaints`e giden
     // ikinci karoydu. Sayaci da ekrandan kalkti — bu ARTIK YOKLUKLA

@@ -9547,6 +9547,53 @@ olurdu; audit ve timeline'ın anlamı kalmazdı.
 biri **yönetimin karar şemasıydı** ve oraya `geri_alindi` sızmamalıydı.
 Eşleşmeler tek tek sahiplerine bakılarak doğrulandı ve o satır geri alındı.
 
+### P147 — Sakinin bildirim akışı: "Geri Bildirim" karosu → Bildirimler
+Status: BITTI(2026-08-06 · backend 116 test · mobil analyze temiz + 1818)
+· Depends-on: P146
+Scope: Kerem: "geri bildirimi komple kaldır; yerine Bildirimler sayfasında
+sakinin oluşturduğu her olayın geri dönüşü yazsın ve ilgili sayfaya
+yönlendirsin."
+
+**ÖNCE ÖLÇTÜM: BU BİR ARAYÜZ EKSİĞİ DEĞİL MİMARİ BOŞLUKTU.** `notification`
+tablosu **yönetim alarmları** için tasarlanmıştı — satırda **alıcı yok**,
+tablo tenant kapsamlı ve `GET /notifications` sakine **403** veriyordu.
+Sakinin olayları (kargo geldi, talebiniz çözüldü) yalnızca **anlık push**
+olarak gidiyordu: bildirimi o an kaçıran kullanıcı için geriye **hiçbir
+kayıt kalmıyordu**. Mobilde sekme zaten vardı ama "yakında" diyordu — ve
+sebebi arayüz değil backend'di.
+
+**GÖÇ 0035:** `notification.user_id` (**NULL bırakılabilir ve bu bilinçli**:
+NULL = tesise ait yönetim alarmı — bugünkü bütün satırlar böyle; dolu = şu
+kişinin olayı) + kısmi indeks + yeni tipler.
+
+**ALICI BAŞINA AYRI SATIR:** okundu bilgisi kişiye aittir. Tek satır
+paylaştırılsaydı birinin okuması diğerininkini de "okundu" yapardı — kargo
+gibi çok alıcılı olaylarda görülür bir kusur.
+
+**METİN KAYDA DONDURULMAZ:** satır `mesaj_kimlik` + `mesaj_veri` tutar,
+okuma yolu metni **isteğin dilinde** üretir. 7 dil zaten katalogdaydı;
+`sikayet_cozuldu` bu turda eklendi. Bağlanan olaylar: kargo, ziyaretçi,
+talep (iş emri/çözüldü/reddedildi), şikayet kapanışı.
+
+**KAPSAM AYRIMI TEK YERDE (`_kapsam`):** sakin yalnızca kendi satırlarını,
+yönetim yalnızca `user_id IS NULL` olanları görür. **İkisi de ayrı ayrı
+ölçülüyor** — sakin tesisin işleyişini görmemeli, yönetim de kişisel akışı.
+
+**BİR AÇIK KAPANDI:** `PATCH /notifications` kapsamsız `get_or_404`
+kullanıyordu — sakin **başkasının** bildirimini, hatta bir yönetim alarmını
+okundu işaretleyebilirdi. Yazma kapsamı okumayla aynı süzgece bağlandı.
+
+**KANAL KİLİDİ ÜÇÜNCÜ KEZ TAŞINDI — HER SEFERİNDE SEBEBİYLE.** Sakinin
+talep/arıza erişimini ölçen kilit: menü (P145'e kadar) → ızgara karosu
+(P145) → **"Bildir" menüsü** (P147). Karo kalktı ama **kanal kapanmadı**:
+sakin "Bildir"den talep açar, sonucunu Bildirimler satırından takip eder.
+Ölçülebilir olması için `sakinBildirGirisleri` ayrı bir fonksiyona alındı.
+
+**AYNI HATAYI ÜÇÜNCÜ KEZ YAPTIM:** toplu metin değiştirme, `geriBildirim`
+karosunu **yöneticinin** listesinden de sildi. Test yakaladı, geri alındı.
+Bu artık tesadüf değil bir alışkanlık — kilit dosyalarında toplu değiştirme
+**kullanılmamalı**.
+
 ### NOT — Sign in with Apple (4.8)
 **GEÇERSİZ (N/A):** üçüncü taraf sosyal giriş **kullanmıyoruz** (Google/Facebook
 girişi yok; kimlik doğrulama tesis tarafından verilen hesapla). 4.8 yalnız

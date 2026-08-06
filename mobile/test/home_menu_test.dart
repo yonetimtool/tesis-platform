@@ -1,9 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/src/features/auth/domain/user_role.dart';
 import 'package:mobile/src/routing/app_router.dart';
-import 'package:mobile/src/features/home/data/home_repository.dart';
+import 'package:flutter/widgets.dart';
+import 'package:mobile/src/core/i18n/l10n.dart';
 import 'package:mobile/src/features/home/domain/home_menu.dart';
-import 'package:mobile/src/features/home/domain/home_varyant.dart';
+import 'package:mobile/src/features/home/presentation/resident_home_screen.dart';
 
 // (P38) `anketler` girisi BILINEN TUM ROLLERDE durur: anket OKUMASI
 // herkese aciktir (site kararlarinin seffafligi — seffaflik panosuyla ayni
@@ -517,7 +518,7 @@ void main() {
     });
 
     test('Sikayet/Oneri karti bilinen 5 rolun 5inde (acanlar acar+kendini, '
-        'yonetim tumunu gorur+yanitlar)', () {
+        'yonetim tumunu gorur+yanitlar)', () async {
       for (final role in [
         UserRole.admin,
         UserRole.yonetici,
@@ -536,15 +537,17 @@ void main() {
           reason: role.wire,
         );
       }
-      // (P145) Sakinin talep/ariza ERISIMI menude degil ANA EKRANDA:
-      // `geriBildirim` karosu `/complaints`e gider. Kanal kapanirsa bu
-      // duser.
+      // (P147) Sakinin talep/ariza KANALI: olcum noktasi UCUNCU KEZ
+      // tasindi ve her seferinde SEBEBI VAR —
+      //   menu (P145'e kadar) -> izgara karosu (P145) -> "Bildir" menusu
+      // Karo P147'de kalkti (yerini Bildirimler sayfasi aldi) ama KANAL
+      // KAPANMADI: sakin hala "Bildir"den talep acar, sonucunu Bildirimler
+      // satirindan takip eder. Kanal gercekten kapanirsa bu test duser.
+      final l10nTr = await AppLocalizations.delegate.load(const Locale('tr'));
       expect(
-        MockHomeRepository()
-            .hizliErisim(HomeVaryant.sakin)
-            .map((k) => k.rota),
-        contains(AppRoutes.complaints),
-        reason: 'sakin talep/ariza kanali ana ekrandan acik kalmali',
+        sakinBildirGirisleri(l10nTr).map((g) => g.route),
+        contains(startsWith(AppRoutes.complaints)),
+        reason: 'sakin talep/ariza kanali acik kalmali',
       );
     });
 

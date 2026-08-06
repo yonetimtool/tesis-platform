@@ -36,6 +36,13 @@ String? bildirimRotasi(AppNotification b) {
       AppRoutes.complaints,
     // Is emri atamasi (saha personeline): gorev listesi.
     'is_emri_atandi' => AppRoutes.tasks,
+    // (P147) SAKININ KENDI olaylari — her biri ILGILI ekrana gider.
+    // "Kargonuz geldi" -> kargo sayfasi, "sikayetiniz sonuclandirildi" ->
+    // sikayetlerim. Hedefi olmayan tipe uydurma bir ekran verilmez.
+    'kargo' => AppRoutes.kargo,
+    'ziyaretci' => AppRoutes.visitors,
+    'rezervasyon' => AppRoutes.rezervasyon,
+    'sikayet_cozuldu' => AppRoutes.sikayetlerim,
     _ => null,
   };
   if (tipten != null) return tipten;

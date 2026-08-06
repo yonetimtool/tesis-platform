@@ -11,7 +11,6 @@ import '../../auth/presentation/auth_controller.dart';
 import '../../cameras/data/cameras_api.dart';
 import '../../cameras/domain/camera_models.dart';
 import '../../cameras/presentation/kameralar_screen.dart' show kameraAc;
-import '../../complaints/data/complaint_api.dart';
 import '../../dues/data/dues_api.dart';
 import '../../etkinlik/data/etkinlik_api.dart';
 import '../../dues/domain/dues_models.dart';
@@ -76,7 +75,6 @@ class ResidentHomeScreen extends ConsumerWidget {
     final kargoAsync = ref.watch(kargoListProvider);
     final ziyaretciAsync = ref.watch(visitorsListProvider);
     final duyuruAsync = ref.watch(sonDuyurularProvider);
-    final talep = ref.watch(acikSikayetSayisiProvider);
     final daireSikayet = ref.watch(kendiDaireSikayetSayisiProvider);
     // Son Hareketler TEK uctan (/activity); sunucu sakini KENDI olaylariyla
     // sinirlar — istemci artik kargo/ziyaretci/odeme/talep birlestirmez.
@@ -112,7 +110,6 @@ class ResidentHomeScreen extends ConsumerWidget {
               duesAsync.metin((u) => _aidatTutari(u, dil)),
               yeniIkinciAltMetin: duesAsync.metin((u) => _borcEtiketi(u, l10n)),
             ),
-          HomeKartId.geriBildirim => k.sayacla(talep.metin(l10n.sayacAcik)),
           HomeKartId.sikayetlerim =>
             k.sayacla(daireSikayet.metin(l10n.sayacAcik)),
           HomeKartId.duyurular => k.sayacla(
@@ -136,28 +133,9 @@ class ResidentHomeScreen extends ConsumerWidget {
       currentIndex: 0,
       onDestinationSelected: (i) => _onTab(context, i),
       onModul: (rota) => context.push(rota),
-      onBildir: () => showBildirMenu(context, girisler: [
-        // TALEP/ARIZA ve SIKAYET AYRI AKISLARDIR (P22 d+e).
-        //
-        // Eskiden sakinin tek "bildir" girisi Talep/Ariza idi; komsudan
-        // sikayetci olan sakin de oraya giriyor, yani YANLIS KANALA
-        // yaziyordu (talep yonetime is emri olarak akar, sikayet ise ANONIM
-        // ve DAIRE hedeflidir). Iki giris ayrildi:
-        //   * Talep/Ariza  -> /complaints   (takip: Taleplerim)
-        //   * Komsu sikayeti -> /sikayet-haritasi (takip: Sikayetlerim)
-        BildirGiris(
-            icon: Icons.build_outlined,
-            label: l10n.fabTalepArizaBildir,
-            route: '${AppRoutes.complaints}?bildir=1'),
-        BildirGiris(
-            icon: Icons.campaign_outlined,
-            label: l10n.fabSikayetBildir,
-            route: AppRoutes.sikayetHaritasi),
-        BildirGiris(
-            icon: Icons.event_available_outlined,
-            label: l10n.fabRezervasyonYap,
-            route: AppRoutes.rezervasyon),
-      ], onSec: (r) => context.push(r)),
+      onBildir: () => showBildirMenu(context,
+          girisler: sakinBildirGirisleri(l10n),
+          onSec: (r) => context.push(r)),
       onProfile: () => context.push(AppRoutes.profile),
       onLogout: () => ref.read(authControllerProvider.notifier).logout(),
       body: HomeGovde(
@@ -300,11 +278,12 @@ class ResidentHomeScreen extends ConsumerWidget {
 
   void _onTab(BuildContext context, int index) {
     switch (index) {
-      case 1: // Bildirimler — /notifications RBAC sakine kapali (backend).
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(
-          SnackBar(content: Text(context.l10n.anaBildirimlerYakinda)));
+      case 1:
+        // (P147) ARTIK ACIK. Once burada "yakında" yaziyordu ve sebebi
+        // arayuz degil BACKEND'di: /notifications sakine 403 veriyordu.
+        // Uc kapsam ayrimiyla acildi (sakin yalnizca KENDI satirlarini
+        // gorur), sekme de gercek ekrana baglandi.
+        context.push(AppRoutes.notifications);
       case 3: // Raporlar — sakin icin seffaflik (aylik anonim ozet).
         context.push(AppRoutes.transparency);
       case 4: // Ayarlar.
@@ -312,3 +291,30 @@ class ResidentHomeScreen extends ConsumerWidget {
     }
   }
 }
+
+/// (P147) SAKININ "Bildir" GIRISLERI — ayri fonksiyon ki KILITLENEBILSIN.
+///
+/// TALEP/ARIZA ve SIKAYET AYRI AKISLARDIR (P22 d+e). Eskiden sakinin tek
+/// "bildir" girisi Talep/Ariza idi; komsudan sikayetci olan sakin de oraya
+/// giriyor, yani YANLIS KANALA yaziyordu (talep yonetime is emri olarak
+/// akar, sikayet ise ANONIM ve DAIRE hedeflidir). Iki giris ayrildi:
+///   * Talep/Ariza    -> /complaints        (takip: Bildirimler + liste)
+///   * Komsu sikayeti -> /sikayet-haritasi  (takip: Sikayetlerim)
+///
+/// NEDEN DISARI ALINDI: sakinin talep/ariza KANALI daha once izgaradaki
+/// karodan olculuyordu; karo P147'de kalkinca olcum noktasi buraya tasindi.
+/// Kanal kapanirsa `home_menu_test` duser — sessiz bir yetki kaybi olmaz.
+List<BildirGiris> sakinBildirGirisleri(AppLocalizations l10n) => [
+      BildirGiris(
+          icon: Icons.build_outlined,
+          label: l10n.fabTalepArizaBildir,
+          route: '${AppRoutes.complaints}?bildir=1'),
+      BildirGiris(
+          icon: Icons.campaign_outlined,
+          label: l10n.fabSikayetBildir,
+          route: AppRoutes.sikayetHaritasi),
+      BildirGiris(
+          icon: Icons.event_available_outlined,
+          label: l10n.fabRezervasyonYap,
+          route: AppRoutes.rezervasyon),
+    ];
