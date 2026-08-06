@@ -1147,6 +1147,33 @@ class AnnouncementListResponse(BaseModel):
 
 
 # ----------------------------- complaints ---------------------------------- #
+class KayitBaslaRequest(BaseModel):
+    """(P148) Sakinin kendi kaydinin BIRINCI adimi."""
+
+    tesis_kodu: str = Field(min_length=4, max_length=32)
+    blok: str | None = Field(default=None, max_length=32)
+    daire_no: str = Field(min_length=1, max_length=32)
+    telefon: str = Field(min_length=5, max_length=32)
+
+
+class KayitBaslaResponse(BaseModel):
+    """Kod GONDERILDI — kodun KENDISI DONMEZ.
+
+    Yanit yalnizca kullanicinin dogru tesisi/daireyi sectigini teyit
+    etmesi icin ad tasir; "kod nereye gitti"yi de maskeli gosterir.
+    """
+
+    tesis_ad: str
+    daire: str
+    telefon_maskeli: str
+
+
+class KayitDogrulaRequest(BaseModel):
+    telefon: str = Field(min_length=5, max_length=32)
+    kod: str = Field(min_length=4, max_length=12)
+    ad: str = Field(min_length=2, max_length=120)
+
+
 ComplaintDurum = Literal["acik", "is_emri", "cozuldu", "reddedildi", "geri_alindi"]
 TaskOncelik = Literal["dusuk", "orta", "yuksek"]
 

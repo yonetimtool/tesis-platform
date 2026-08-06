@@ -46,6 +46,7 @@ class Action:
     #: farklidir (kullanicinin kendisi mi, yonetim mi) ve bu ayrim
     #: KVKK acisindan anlamlidir.
     ACCOUNT_SELF_DELETE = "account_self_delete"
+    KAYIT_SELF = "kayit_self"
     USER_CREATE = "user_create"
     USER_UPDATE = "user_update"
     USER_RESET_PASSWORD = "user_reset_password"

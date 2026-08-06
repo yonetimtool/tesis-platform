@@ -256,6 +256,10 @@ class Tenant(Base):
 
     id: Mapped[uuid.UUID] = _pk()
     ad: Mapped[str] = mapped_column(Text, nullable=False)
+    #: (P148) Sakinin uygulamada ELLE yazdigi tesis kodu. `slug`tan AYRI:
+    #: slug teknik bir tanimlayici (URL/oturum), bu ise kullaniciya
+    #: verilen kisa koddur ve karistirilabilir harf icermez.
+    kayit_kodu: Mapped[str] = mapped_column(Text, nullable=False)
     # Login tenant'i bu slug ile belirler (bkz. /contracts/auth.md §1.1).
     slug: Mapped[str] = mapped_column(Text, nullable=False)
     timezone: Mapped[str] = mapped_column(
@@ -749,6 +753,33 @@ class ScanEvent(Base):
 
 
 # --------------------------------------------------------------------------- #
+class KayitDogrulama(Base):
+    """(P148) Bekleyen sakin kaydi + telefon dogrulama kodu.
+
+    Kullanici satiri BU ASAMADA ACILMAZ: dogrulanmamis bir telefon icin
+    `app_user` yazmak, tesis kodunu bilen herkesin kullanici listesini
+    sisirmesine izin verirdi. Kayit ancak kod dogrulaninca kullaniciya
+    donusur.
+    """
+
+    __tablename__ = "kayit_dogrulama"
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("tenant.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    unit_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    telefon: Mapped[str] = mapped_column(Text, nullable=False)
+    #: Kod DUZ METIN tutulmaz (giris kodlariyla ayni kural).
+    kod_hash: Mapped[str] = mapped_column(Text, nullable=False)
+    son_gecerlilik = mapped_column(TIMESTAMP(timezone=True), nullable=False)
+    #: Kaba kuvvet sayaci — 6 haneli kod sayilmadan dakikalar icinde bulunur.
+    deneme: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
+    created_at = _created_at()
+
+
 class Notification(Base):
     __tablename__ = "notification"
     __table_args__ = (

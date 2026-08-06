@@ -9,18 +9,31 @@ tum aile iptal edilir.
 """
 from __future__ import annotations
 
+import secrets
+from datetime import datetime, timedelta, timezone
+
 import jwt
 import redis.asyncio as aioredis
 from fastapi import APIRouter, Depends
-from sqlalchemy import func, select, text
+from sqlalchemy import func, or_, select, text
 
 from ..audit import Action, record_audit
 from ..config import settings
 from ..db import SessionLocal, set_tenant
 from ..deps import get_redis, gorev_penceresi_disinda
 from ..errors import APIError
-from ..models import AppUser
+from ..mesajlasma import LogSmsSaglayici
+from ..models import (
+    AppUser,
+    KayitDogrulama,
+    Tenant,
+    Unit,
+    UnitResident,
+)
 from ..schemas import (
+    KayitBaslaRequest,
+    KayitBaslaResponse,
+    KayitDogrulaRequest,
     LoginRequest,
     PhoneLoginRequest,
     PhoneLoginResponse,
@@ -348,3 +361,176 @@ async def refresh(
         token_type="Bearer",
         expires_in=access_token_ttl_seconds(),
     )
+
+# ======================= (P148) SAKIN KENDI KAYDOLUR ======================= #
+#
+# GUVEN SINIRI — ACIKCA KAYDEDILDI: bu akista daire sahipligi
+# DOGRULANMIYOR. Tesis kodunu ogrenen herkes herhangi bir daireye
+# kaydolabilir ve o dairenin verisini gorur. Kerem bu riski secenekler
+# gosterildikten SONRA acikca kabul etti (bkz. MASTER-PLAN P148). Kodun
+# kendisi bu yuzden bir SIR gibi ele alinmali; sizarsa tesis kodu
+# DEGISTIRILEBILIR olmali.
+#
+# PAROLA YOK: kullanici satiri `password_hash=NULL`, `password_set=False`
+# ile acilir. Kimlik = DOGRULANMIS TELEFON. Yeni bir sema alani
+# eklenmedi — var olanlar bu durumu zaten ifade ediyor.
+
+_KAYIT_KOD_OMRU_DK = 10
+_KAYIT_MAX_DENEME = 5
+#: Adimlari ayirt ETTIRMEYEN tek hata: "kod yanlis" ile "daire yok"
+#: arasindaki fark, tesisin daire listesini disariya sizdirirdi.
+_KAYIT_GECERSIZ = APIError(422, "invalid_registration", "kayit_bilgileri_gecersiz")
+
+
+def _telefon_maskele(t: str) -> str:
+    return t[:-6] + "***" + t[-3:] if len(t) > 8 else "***"
+
+
+@router.post("/kayit/basla", response_model=KayitBaslaResponse)
+async def kayit_basla(
+    body: KayitBaslaRequest,
+    redis: aioredis.Redis = Depends(get_redis),
+) -> KayitBaslaResponse:
+    """Tesis kodu + blok/daire + telefon -> SMS kodu gonderir."""
+    try:
+        phone = normalize_phone(body.telefon)
+    except ValueError:
+        raise _KAYIT_GECERSIZ
+
+    async with SessionLocal() as session:
+        async with session.begin():
+            tenant_id = (
+                await session.execute(
+                    text("SELECT public.tenant_id_by_kayit_kodu(:k)"),
+                    {"k": body.tesis_kodu.strip()},
+                )
+            ).scalar_one_or_none()
+            if tenant_id is None:
+                raise _KAYIT_GECERSIZ
+
+            await set_tenant(session, tenant_id)
+            tenant_ad = (
+                await session.execute(select(Tenant.ad).where(Tenant.id == tenant_id))
+            ).scalar_one()
+
+            # DAIRE ESLESMESI IKI BICIMI DE KABUL EDER ve bu KEYFI DEGIL:
+            # olcum gosterdi ki `unit.no` bazi tesislerde blok onekini
+            # ZATEN icinde tasiyor ("A-1"), bazilarinda tasimiyor ("1").
+            # Kullanicidan hangi bicimde yazdigini bilmesini beklemek
+            # yanlis olurdu; ikisi de denenir.
+            aranan = body.daire_no.strip().lower()
+            blok = (body.blok or "").strip().lower()
+            birlesik = f"{blok}-{aranan}" if blok else aranan
+            unit = (
+                await session.execute(
+                    select(Unit).where(
+                        or_(
+                            func.lower(Unit.no) == aranan,
+                            func.lower(Unit.no) == birlesik,
+                        )
+                    )
+                )
+            ).scalars().first()
+            if unit is None:
+                raise _KAYIT_GECERSIZ
+
+            # Telefon BASKA bir kullaniciya aitse kayit acilmaz: telefon
+            # global benzersiz ve kimligin ta kendisi.
+            varolan = (
+                await session.execute(
+                    text("SELECT public.tenant_id_by_phone(:p)"), {"p": phone}
+                )
+            ).scalar_one_or_none()
+            if varolan is not None:
+                raise _KAYIT_GECERSIZ
+
+            kod = f"{secrets.randbelow(1_000_000):06d}"
+            await session.execute(
+                text("DELETE FROM kayit_dogrulama WHERE telefon = :p"), {"p": phone}
+            )
+            session.add(
+                KayitDogrulama(
+                    tenant_id=tenant_id,
+                    unit_id=unit.id,
+                    telefon=phone,
+                    kod_hash=hash_password(kod),
+                    son_gecerlilik=datetime.now(timezone.utc)
+                    + timedelta(minutes=_KAYIT_KOD_OMRU_DK),
+                )
+            )
+            # SMS saglayici bugun LOG saglayicisidir: kod GONDERILMEZ,
+            # gunluge yazilir. Gercek gecit baglanmasi YAPILANDIRMA isidir
+            # (bkz. mesajlasma.MesajSaglayici) — bu uc degismez.
+            LogSmsSaglayici().gonder(
+                phone, None,
+                f"Yönetio kayıt kodunuz: {kod} "
+                f"({_KAYIT_KOD_OMRU_DK} dakika geçerli)",
+            )
+
+    return KayitBaslaResponse(
+        tesis_ad=tenant_ad,
+        # `no` blok onekini zaten tasiyorsa TEKRAR eklenmez ("A-A-1" olurdu).
+        daire=unit.no,
+        telefon_maskeli=_telefon_maskele(phone),
+    )
+
+
+@router.post("/kayit/dogrula", response_model=TokenPair)
+async def kayit_dogrula(
+    body: KayitDogrulaRequest,
+    redis: aioredis.Redis = Depends(get_redis),
+) -> TokenPair:
+    """Kod dogru ise KULLANICIYI ACAR ve daireye baglar."""
+    try:
+        phone = normalize_phone(body.telefon)
+    except ValueError:
+        raise _KAYIT_GECERSIZ
+
+    async with SessionLocal() as session:
+        async with session.begin():
+            kayit = (
+                await session.execute(
+                    select(KayitDogrulama).where(KayitDogrulama.telefon == phone)
+                )
+            ).scalar_one_or_none()
+            if kayit is None:
+                raise _KAYIT_GECERSIZ
+            if kayit.son_gecerlilik < datetime.now(timezone.utc):
+                raise _KAYIT_GECERSIZ
+            if kayit.deneme >= _KAYIT_MAX_DENEME:
+                # Kaba kuvvet: 6 haneli kod sayilmadan bulunur.
+                raise _KAYIT_GECERSIZ
+            if not verify_password(body.kod, kayit.kod_hash):
+                kayit.deneme += 1
+                await session.flush()
+                raise _KAYIT_GECERSIZ
+
+            await set_tenant(session, kayit.tenant_id)
+            user = AppUser(
+                tenant_id=kayit.tenant_id,
+                ad=body.ad.strip(),
+                telefon=phone,
+                role="resident",
+                # PAROLA YOK — kimlik dogrulanmis telefondur.
+                password_hash=None,
+                password_set=False,
+                is_active=True,
+            )
+            session.add(user)
+            await session.flush()
+            session.add(
+                UnitResident(
+                    tenant_id=kayit.tenant_id, unit_id=kayit.unit_id, user_id=user.id
+                )
+            )
+            await session.execute(
+                text("DELETE FROM kayit_dogrulama WHERE telefon = :p"), {"p": phone}
+            )
+            await record_audit(
+                session, tenant_id=kayit.tenant_id, actor_user_id=user.id,
+                actor_rol=user.role,
+                action=Action.KAYIT_SELF, resource_type="app_user",
+                resource_id=user.id, meta={"unit_id": str(kayit.unit_id)},
+            )
+            return await _issue_token_pair(redis, user)
+
