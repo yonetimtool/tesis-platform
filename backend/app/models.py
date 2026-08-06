@@ -207,6 +207,10 @@ UNIT_COMPLAINT_KATEGORI = ENUM(
     "diger",
     name="unit_complaint_kategori", create_type=False,
 )
+KAYIT_DURUM = ENUM(
+    "telefon_bekliyor", "onay_bekliyor", "onaylandi", "reddedildi",
+    name="kayit_durum", create_type=False,
+)
 UNIT_COMPLAINT_DURUM = ENUM(
     "acik", "kapali", "geri_alindi",
     name="unit_complaint_durum", create_type=False,
@@ -777,6 +781,15 @@ class KayitDogrulama(Base):
     son_gecerlilik = mapped_column(TIMESTAMP(timezone=True), nullable=False)
     #: Kaba kuvvet sayaci — 6 haneli kod sayilmadan dakikalar icinde bulunur.
     deneme: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
+    #: (P148.2) Basvuru sahibinin verdigi ad — onay ekraninda gorunur.
+    ad: Mapped[str | None] = mapped_column(Text, nullable=True)
+    durum: Mapped[str] = mapped_column(
+        KAYIT_DURUM, nullable=False, server_default=text("'telefon_bekliyor'")
+    )
+    karar_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    #: Onay hangi kullaniciyi actı — ikinci onay ayni kullaniciyi TEKRAR
+    #: acmasin (idempotens) ve iz kalsin.
+    user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     created_at = _created_at()
 
 

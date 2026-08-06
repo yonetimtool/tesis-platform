@@ -9595,8 +9595,8 @@ Bu artık tesadüf değil bir alışkanlık — kilit dosyalarında toplu deği�
 **kullanılmamalı**.
 
 ### P148 — Sakin KENDİ kaydolur (tesis kodu + daire + telefon)
-Status: KISMEN(backend BİTTİ ve testli · mobil onboarding + openapi + kod
-yenileme ucu YAPILMADI) · Depends-on: P147
+Status: KISMEN(backend + onay kapısı BİTTİ ve testli · mobil onboarding +
+openapi + parolasız GİRİŞ ucu YAPILMADI) · Depends-on: P147
 Scope: Kerem'in kararı: sakini artık yönetici açmayacak.
 
 **AKIŞ:** tesis kodu → blok/daire → telefon → SMS kodu → kullanıcı açılır ve
@@ -9621,11 +9621,21 @@ aynı tabanı üretir ve sütun UNIQUE — ikinciden itibaren `-2`, `-3` eki
 alır. Sessizce başka bir kod uydurmak, yöneticiye söylenen kodun tutmaması
 olurdu.
 
-**[KEREM'İN KARARI BEKLİYOR] AKILDA KALICILIK TEK DENETİMİ ZAYIFLATTI.**
-Kod artık **tahmin edilebilir** (site adı ve kayıt tarihi kamuya açık).
-Daire sahipliği doğrulaması kapalı olduğu için bu kod, daire verisini
-koruyan **tek denetimdi**; rastgeleyken "sır gibi tutulur" diyordu, artık
-sır olamaz. **Öneri: yönetici onayı adımını geri açmak.** Karar Kerem'de.
+**P148.2 — ONAY ADIMI AÇILDI (Kerem: "yönetici onay verdikten sonra ilgili
+hesap oluşsun").** Akılda kalıcılık kodu **tahmin edilebilir** yapmıştı
+(site adı + kayıt tarihi kamuya açık) ve daire sahipliği doğrulaması kapalı
+olduğu için o kod tek denetimdi. Onay adımı bu açığı kapattı:
+
+* `/auth/kayit/dogrula` artık **hesap AÇMIYOR ve token DÖNMÜYOR** —
+  başvuru `onay_bekliyor` durumunda bekler, hiçbir veriye erişimi yoktur.
+* Hesap `POST /kayit-basvurulari/{id}/onayla` ile **yönetici onayında**
+  açılır (parolasız, daireye bağlı). İkinci onay 404 — idempotens.
+* Başvuru **silinmez**, reddedilir: iz kalır ve aynı numara yeniden
+  başvurabilir (kısmi indeks yalnız AÇIK başvuruyu tekilleştirir).
+* Onay listesi yönetim rollerine kapalı tutuldu — satır telefon + daire
+  eşleşmesi taşır (kişisel veri); sakin 403 alır (testli).
+* Güvenlik taraması bu açığı CRITICAL olarak da işaretledi; onay adımıyla
+  kapandı.
 
 **GÜVENLİK TARAMASI İKİ GERÇEK KUSUR BULDU (P148 ilk turunda):**
 * **Kaba kuvvet sayacı hiç çalışmıyordu** — artış `session.begin()`
@@ -9642,8 +9652,11 @@ sır olamaz. **Öneri: yönetici onayı adımını geri açmak.** Karar Kerem'de
 
 KAPILAR: pytest `test_sakin_kaydi` + `test_auth` **22 geçti**.
 
-**YAPILMADI:** `openapi.yaml` girişleri · mobil onboarding ekranları ·
-yöneticinin tesis kodunu görme/yenileme ucu · opsiyonel TOTP.
+**YAPILMADI — ve biri AKIŞI TAMAMLAMAK İÇİN ZORUNLU:** onaylanan kullanıcı
+**henüz giriş yapamaz.** Parolası yok, geçici kodu yok; `login-phone` ikisini
+de arıyor. Parolasız giriş ucu (telefon + SMS/OTP) yazılmadan akış uçtan uca
+çalışmaz. Ayrıca: `openapi.yaml` girişleri · mobil onboarding + onay ekranı ·
+yöneticinin tesis kodunu görme ucu · opsiyonel TOTP.
 
 ### NOT — Sign in with Apple (4.8)
 **GEÇERSİZ (N/A):** üçüncü taraf sosyal giriş **kullanmıyoruz** (Google/Facebook

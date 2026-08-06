@@ -5,6 +5,7 @@ karari). Dolayisiyla burada "yetkisiz kisi kaydolamaz" diye bir test YOKTUR
 ve olmamasi bilinclidir — testler kararin UYGULANDIGINI olcer, kararin
 kendisini savunmaz.
 """
+import re
 import uuid
 
 
@@ -30,6 +31,13 @@ def _daire(owner_conn, slug):
             "FROM tenant WHERE slug = %s", (no, slug),
         )
         return no
+
+
+def _h(client, slug, cred):
+    r = client.post("/auth/login", json={
+        "tenant_slug": slug, "email": cred["email"], "password": cred["password"]})
+    assert r.status_code == 200, r.text
+    return {"Authorization": f"Bearer {r.json()['access_token']}"}
 
 
 def _tel():
@@ -71,9 +79,12 @@ def test_var_olan_telefon_ikinci_kez_kaydolamaz(client, world, owner_conn):
     assert r.status_code == 422, r.text
 
 
-def test_dogru_kod_PAROLASIZ_kullanici_acar_ve_daireye_baglar(
-    client, world, owner_conn
-):
+def test_dogru_kod_HESAP_ACMAZ_onaya_duser(client, world, owner_conn):
+    """(P148.2) EN KRITIK OLCUM: dogrulama tek basina hesap ACMAZ.
+
+    Tesis kodu P148.1'de tahmin edilebilir oldugu icin, dogrulamanin hesap
+    acmasi site adini bilen herkese daire verisi verirdi.
+    """
     tel = _tel()
     assert client.post("/auth/kayit/basla", json={
         "tesis_kodu": _kod(client, owner_conn, world["slug_a"]),
@@ -81,35 +92,66 @@ def test_dogru_kod_PAROLASIZ_kullanici_acar_ve_daireye_baglar(
         "telefon": tel,
     }).status_code == 200
 
-    # Kod gunluge DUZ METIN yazilmaz (P134); testte bilinen bir hash konur.
     from app.security import hash_password
     with owner_conn.cursor() as cur:
-        cur.execute(
-            "UPDATE kayit_dogrulama SET kod_hash = %s WHERE telefon = %s",
-            (hash_password("123456"), tel),
-        )
+        cur.execute("UPDATE kayit_dogrulama SET kod_hash = %s WHERE telefon = %s",
+                    (hash_password("123456"), tel))
 
     r = client.post("/auth/kayit/dogrula",
                     json={"telefon": tel, "kod": "123456", "ad": "Yeni Sakin"})
     assert r.status_code == 200, r.text
-    assert r.json()["access_token"]
+    # OTURUM DONMEZ.
+    assert "access_token" not in r.json()
+    assert r.json()["durum"] == "onay_bekliyor"
+    with owner_conn.cursor() as cur:
+        cur.execute("SELECT count(*) FROM app_user WHERE telefon = %s", (tel,))
+        assert cur.fetchone()[0] == 0, "onaydan ONCE hesap ACILMAMALI"
+
+
+def test_yonetici_onaylayinca_PAROLASIZ_hesap_acilir_ve_daireye_baglanir(
+    client, world, owner_conn
+):
+    tel = _tel()
+    client.post("/auth/kayit/basla", json={
+        "tesis_kodu": _kod(client, owner_conn, world["slug_a"]),
+        "daire_no": _daire(owner_conn, world["slug_a"]),
+        "telefon": tel,
+    })
+    from app.security import hash_password
+    with owner_conn.cursor() as cur:
+        cur.execute("UPDATE kayit_dogrulama SET kod_hash = %s WHERE telefon = %s",
+                    (hash_password("123456"), tel))
+    client.post("/auth/kayit/dogrula",
+                json={"telefon": tel, "kod": "123456", "ad": "Yeni Sakin"})
+
+    mgr = _h(client, world["slug_a"], world["admin_a"])
+    liste = client.get("/kayit-basvurulari", headers=mgr)
+    assert liste.status_code == 200, liste.text
+    basvuru = next(b for b in liste.json()["items"] if b["telefon"] == tel)
+    assert basvuru["ad"] == "Yeni Sakin"
+
+    r = client.post(f"/kayit-basvurulari/{basvuru['id']}/onayla", headers=mgr)
+    assert r.status_code == 201, r.text
 
     with owner_conn.cursor() as cur:
-        cur.execute(
-            "SELECT password_hash, password_set, role FROM app_user "
-            "WHERE telefon = %s", (tel,)
-        )
+        cur.execute("SELECT password_hash, password_set, role FROM app_user "
+                    "WHERE telefon = %s", (tel,))
         ph, pset, role = cur.fetchone()
-        # PAROLA YOK — kimlik dogrulanmis telefondur.
         assert ph is None and pset is False and role == "resident"
-        cur.execute(
-            "SELECT count(*) FROM unit_resident ur JOIN app_user u "
-            "ON u.id = ur.user_id WHERE u.telefon = %s", (tel,)
-        )
-        assert cur.fetchone()[0] == 1, "kullanici daireye BAGLANMALI"
-        # Bekleyen kayit TUKETILDI — kod tekrar kullanilamaz.
-        cur.execute("SELECT count(*) FROM kayit_dogrulama WHERE telefon = %s", (tel,))
-        assert cur.fetchone()[0] == 0
+        cur.execute("SELECT count(*) FROM unit_resident ur JOIN app_user u "
+                    "ON u.id = ur.user_id WHERE u.telefon = %s", (tel,))
+        assert cur.fetchone()[0] == 1
+
+    # IKINCI onay ayni basvuruyu TEKRAR isleyemez (idempotens).
+    assert client.post(
+        f"/kayit-basvurulari/{basvuru['id']}/onayla", headers=mgr
+    ).status_code == 404
+
+
+def test_sakin_onay_listesini_GOREMEZ(client, world):
+    """Liste telefon + daire eslesmesi tasir — kisisel veri."""
+    sakin = _h(client, world["slug_a"], world["resident_a"])
+    assert client.get("/kayit-basvurulari", headers=sakin).status_code == 403
 
 
 def test_yanlis_kod_DENEME_sayar_ve_besten_sonra_kapanir(client, world, owner_conn):
@@ -181,4 +223,9 @@ def test_AYNI_taban_cakisirsa_sira_eki_alir(owner_conn):
         )
         kodlar = [r[0] for r in cur.fetchall()]
     assert len(set(kodlar)) == 2, "cakisma sessizce ayni kodu uretemez"
-    assert any(k.endswith("-2") for k in kodlar)
+    # Sira numarasina DEGIL kurala baglaniyoruz: onceki kosumlardan kalan
+    # ayni-adli tesisler varsa ek `-3`, `-4` olabilir. Olculen sey: ikisi de
+    # AYNI tabani tasir ve en az biri sira eki almistir.
+    taban = "OLTU-260715"
+    assert all(k.startswith(taban) for k in kodlar)
+    assert any(re.fullmatch(rf"{taban}-\d+", k) for k in kodlar)

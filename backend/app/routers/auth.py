@@ -34,6 +34,7 @@ from ..schemas import (
     KayitBaslaRequest,
     KayitBaslaResponse,
     KayitDogrulaRequest,
+    KayitDurumResponse,
     LoginRequest,
     PhoneLoginRequest,
     PhoneLoginResponse,
@@ -475,12 +476,15 @@ async def kayit_basla(
     )
 
 
-@router.post("/kayit/dogrula", response_model=TokenPair)
-async def kayit_dogrula(
-    body: KayitDogrulaRequest,
-    redis: aioredis.Redis = Depends(get_redis),
-) -> TokenPair:
-    """Kod dogru ise KULLANICIYI ACAR ve daireye baglar."""
+@router.post("/kayit/dogrula", response_model=KayitDurumResponse)
+async def kayit_dogrula(body: KayitDogrulaRequest) -> KayitDurumResponse:
+    """(P148.2) Kod dogru ise basvuru ONAYA dusuer — HESAP ACILMAZ.
+
+    Onceki surumde burasi kullaniciyi acip token donuyordu. Kerem onay
+    adimini actigi icin (bkz. MASTER-PLAN P148.2) hesap ancak yonetici
+    onayindan SONRA acilir; bu uc artik oturum DONDURMEZ. Boylece tahmin
+    edilebilir tesis kodu tek basina veriye erisim saglamaz.
+    """
     try:
         phone = normalize_phone(body.telefon)
     except ValueError:
@@ -490,7 +494,10 @@ async def kayit_dogrula(
         async with session.begin():
             kayit = (
                 await session.execute(
-                    select(KayitDogrulama).where(KayitDogrulama.telefon == phone)
+                    select(KayitDogrulama).where(
+                        KayitDogrulama.telefon == phone,
+                        KayitDogrulama.durum == "telefon_bekliyor",
+                    )
                 )
             ).scalar_one_or_none()
             if kayit is None:
@@ -498,14 +505,11 @@ async def kayit_dogrula(
             if kayit.son_gecerlilik < datetime.now(timezone.utc):
                 raise _KAYIT_GECERSIZ
             if kayit.deneme >= _KAYIT_MAX_DENEME:
-                # Kaba kuvvet: 6 haneli kod sayilmadan bulunur.
                 raise _KAYIT_GECERSIZ
             if not verify_password(body.kod, kayit.kod_hash):
-                # SAYAC AYRI OTURUMDA KALICILASTIRILIR. Ilk yazimda ayni
-                # islemde artiriliyordu ve bu istek 422 ile bittigi icin
-                # `session.begin()` blogu artisi GERI SARIYORDU: koruma
-                # hic calismiyordu. OLCULDU — 3 yanlis denemeden sonra
-                # `deneme` hala 0'di.
+                # SAYAC AYRI OTURUMDA: bu istek 422 ile bitecek ve
+                # `session.begin()` blogu artisi GERI SARARDI (olculdu —
+                # ilk yazimda koruma hic calismiyordu).
                 async with SessionLocal() as s2:
                     async with s2.begin():
                         await set_tenant(s2, kayit.tenant_id)
@@ -516,32 +520,8 @@ async def kayit_dogrula(
                         )
                 raise _KAYIT_GECERSIZ
 
-            await set_tenant(session, kayit.tenant_id)
-            user = AppUser(
-                tenant_id=kayit.tenant_id,
-                ad=body.ad.strip(),
-                telefon=phone,
-                role="resident",
-                # PAROLA YOK — kimlik dogrulanmis telefondur.
-                password_hash=None,
-                password_set=False,
-                is_active=True,
-            )
-            session.add(user)
+            kayit.ad = body.ad.strip()
+            kayit.durum = "onay_bekliyor"
             await session.flush()
-            session.add(
-                UnitResident(
-                    tenant_id=kayit.tenant_id, unit_id=kayit.unit_id, user_id=user.id
-                )
-            )
-            await session.execute(
-                text("DELETE FROM kayit_dogrulama WHERE telefon = :p"), {"p": phone}
-            )
-            await record_audit(
-                session, tenant_id=kayit.tenant_id, actor_user_id=user.id,
-                actor_rol=user.role,
-                action=Action.KAYIT_SELF, resource_type="app_user",
-                resource_id=user.id, meta={"unit_id": str(kayit.unit_id)},
-            )
-            return await _issue_token_pair(redis, user)
 
+    return KayitDurumResponse(durum="onay_bekliyor")

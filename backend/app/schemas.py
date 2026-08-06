@@ -1168,6 +1168,30 @@ class KayitBaslaResponse(BaseModel):
     telefon_maskeli: str
 
 
+class KayitDurumResponse(BaseModel):
+    """(P148.2) Kayit akisinin durumu — OTURUM DEGIL.
+
+    Bilerek token DONMEZ: hesap yonetici onayindan sonra acilir.
+    """
+
+    durum: Literal["onay_bekliyor"]
+
+
+class KayitBasvuruOut(BaseModel):
+    """Yoneticinin onay ekranindaki satir."""
+
+    id: uuid.UUID
+    ad: str | None
+    telefon: str
+    daire: str
+    created_at: datetime
+
+
+class KayitBasvuruListesi(BaseModel):
+    items: list[KayitBasvuruOut]
+    meta: PageMetaOut
+
+
 class KayitDogrulaRequest(BaseModel):
     telefon: str = Field(min_length=5, max_length=32)
     kod: str = Field(min_length=4, max_length=12)

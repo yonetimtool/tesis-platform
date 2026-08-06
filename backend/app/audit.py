@@ -47,6 +47,8 @@ class Action:
     #: KVKK acisindan anlamlidir.
     ACCOUNT_SELF_DELETE = "account_self_delete"
     KAYIT_SELF = "kayit_self"
+    KAYIT_ONAY = "kayit_onay"
+    KAYIT_RED = "kayit_red"
     USER_CREATE = "user_create"
     USER_UPDATE = "user_update"
     USER_RESET_PASSWORD = "user_reset_password"
