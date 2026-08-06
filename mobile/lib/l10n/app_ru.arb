@@ -1427,5 +1427,11 @@
   "izgaraKaydet": "Сохранить",
   "izgaraSecim": "Выбрано: {secili}/{enCok}",
   "izgaraTavanUyarisi": "Достигнут предел. Уберите один, чтобы добавить другой (плиток: {enCok}).",
-  "dilSeciciBaslik": "Язык"
+  "dilSeciciBaslik": "Язык",
+  "talepGeriAl": "Отозвать",
+  "talepGeriAlOnay": "Отозвать эту заявку? Отозванная заявка не передаётся управляющей компании, и это действие необратимо.",
+  "talepGeriAlindi": "Заявка отозвана",
+  "talepDurumGeriAlindi": "Отозвана",
+  "sikayetGeriAl": "Отозвать жалобу",
+  "sikayetGeriAlindi": "Жалоба отозвана"
 }

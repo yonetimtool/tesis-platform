@@ -1,3 +1,4 @@
+import 'package:mobile/src/core/error/api_exception.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -75,14 +76,58 @@ class _Body extends StatelessWidget {
   }
 }
 
-class _ComplaintCard extends StatelessWidget {
+class _ComplaintCard extends ConsumerStatefulWidget {
   const _ComplaintCard({required this.complaint});
 
   final UnitComplaint complaint;
 
   @override
+  ConsumerState<_ComplaintCard> createState() => _ComplaintCardState();
+}
+
+class _ComplaintCardState extends ConsumerState<_ComplaintCard> {
+  bool _calisiyor = false;
+
+  /// (P146) Geri alma TERMINALDIR — once onay sorulur, sonra sunucuya
+  /// gidilir. Basarisizlik SnackBar'a yazilir; sessiz basarisizlik yok.
+  Future<void> _geriAl() async {
+    final l10n = context.l10n;
+    final onay = await showDialog<bool>(
+      context: context,
+      builder: (d) => AlertDialog(
+        title: Text(l10n.sikayetGeriAl),
+        content: Text(l10n.talepGeriAlOnay),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(d).pop(false),
+            child: Text(l10n.ortakVazgec),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(d).pop(true),
+            child: Text(l10n.sikayetGeriAl),
+          ),
+        ],
+      ),
+    );
+    if (onay != true || !mounted) return;
+    setState(() => _calisiyor = true);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await ref
+          .read(myComplaintsControllerProvider.notifier)
+          .withdraw(widget.complaint.id);
+      if (!mounted) return;
+      messenger.showSnackBar(SnackBar(content: Text(l10n.sikayetGeriAlindi)));
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+    }
+    if (mounted) setState(() => _calisiyor = false);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final c = complaint;
+    final c = widget.complaint;
     final acik = c.acik;
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
@@ -98,7 +143,21 @@ class _ComplaintCard extends StatelessWidget {
           ),
         ),
         subtitle: Text(tarihSaatBicimi(c.createdAt, context.dilKodu)),
-        trailing: _DurumChip(acik: acik),
+        // (P146) Geri alma YALNIZ acik sikayette: yonetim kapattiktan
+        // sonra karar verilmis kaydi sahibi tek tarafli degistiremez.
+        trailing: acik
+            ? Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _DurumChip(acik: acik),
+                  IconButton(
+                    onPressed: _calisiyor ? null : _geriAl,
+                    icon: const Icon(Icons.undo),
+                    tooltip: context.l10n.sikayetGeriAl,
+                  ),
+                ],
+              )
+            : _DurumChip(acik: acik),
       ),
     );
   }

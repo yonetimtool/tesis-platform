@@ -4859,4 +4859,23 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get dilSeciciBaslik => 'Язык';
+
+  @override
+  String get talepGeriAl => 'Отозвать';
+
+  @override
+  String get talepGeriAlOnay =>
+      'Отозвать эту заявку? Отозванная заявка не передаётся управляющей компании, и это действие необратимо.';
+
+  @override
+  String get talepGeriAlindi => 'Заявка отозвана';
+
+  @override
+  String get talepDurumGeriAlindi => 'Отозвана';
+
+  @override
+  String get sikayetGeriAl => 'Отозвать жалобу';
+
+  @override
+  String get sikayetGeriAlindi => 'Жалоба отозвана';
 }

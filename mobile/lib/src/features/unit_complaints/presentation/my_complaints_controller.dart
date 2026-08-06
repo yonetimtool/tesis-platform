@@ -87,6 +87,14 @@ class MyComplaintsController extends Notifier<MyComplaintsState> {
       _refreshing = false;
     }
   }
+
+  /// (P146) Sikayeti GERI AL — sahibinin eylemi. Sunucu yalniz `acik`
+  /// sikayette kabul eder; hata cagirana YUKSELIR (sessizce yutulmaz).
+  Future<void> withdraw(String id) async {
+    await ref.read(unitComplaintApiProvider).withdraw(id);
+    await refresh();
+  }
+
 }
 
 final myComplaintsControllerProvider =

@@ -1427,5 +1427,11 @@
   "izgaraKaydet": "Guardar",
   "izgaraSecim": "{secili}/{enCok} seleccionados",
   "izgaraTavanUyarisi": "Ha alcanzado el límite. Quite uno para añadir otro ({enCok} mosaicos).",
-  "dilSeciciBaslik": "Idioma"
+  "dilSeciciBaslik": "Idioma",
+  "talepGeriAl": "Retirar",
+  "talepGeriAlOnay": "¿Retirar esta solicitud? Una solicitud retirada no se envía a la administración y esta acción no se puede deshacer.",
+  "talepGeriAlindi": "Solicitud retirada",
+  "talepDurumGeriAlindi": "Retirada",
+  "sikayetGeriAl": "Retirar la queja",
+  "sikayetGeriAlindi": "Queja retirada"
 }

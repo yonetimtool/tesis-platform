@@ -39,6 +39,7 @@ class ComplaintPage {
 ///   * `POST /complaints/{id}/convert`   → is emrine donustur (admin + yonetici)
 ///   * `POST /complaints/{id}/resolve`   → dogrudan coz (admin + yonetici)
 ///   * `POST /complaints/{id}/decline`   → reddet (admin + yonetici)
+///   * `POST /complaints/{id}/withdraw`  → GERI AL (acan; P146)
 ///   * `POST /uploads/presign`           → opsiyonel talep gorseli(leri) icin PUT URL
 ///   * presigned URL'e HTTP PUT          → dosya dogrudan MinIO'ya
 class ComplaintApi {
@@ -185,6 +186,21 @@ class ComplaintApi {
       final res = await _dio.post<Map<String, dynamic>>(
         '/complaints/$id/decline',
         data: draft.toJson(),
+      );
+      return Complaint.fromJson(res.data ?? const {});
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// `POST /complaints/{id}/withdraw` — (P146) talebi ACAN geri ceker.
+  /// SILME DEGIL: kayit durur, durum `geri_alindi` olur. Gecerli gecis
+  /// YALNIZ acik -> geri_alindi; is emrine donusmus talepte sunucu 422
+  /// `invalid_transition` doner.
+  Future<Complaint> withdraw(String id) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/complaints/$id/withdraw',
       );
       return Complaint.fromJson(res.data ?? const {});
     } on DioException catch (e) {

@@ -139,6 +139,14 @@ class ComplaintsController extends Notifier<ComplaintsState> {
     await ref.read(complaintApiProvider).decline(id, draft);
     await refresh();
   }
+
+  /// (P146) Talebi GERI AL — ACANIN eylemi. Sunucu yalniz `acik` talepte
+  /// kabul eder; is emrine donusmusse 422 doner ve hata cagirana YUKSELIR
+  /// (sessizce yutulmaz — kullanici neden olmadigini gormeli).
+  Future<void> withdraw(String id) async {
+    await ref.read(complaintApiProvider).withdraw(id);
+    await refresh();
+  }
 }
 
 final complaintsControllerProvider =

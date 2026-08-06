@@ -120,8 +120,13 @@ class _ComplaintsScreenState extends ConsumerState<ComplaintsScreen> {
     final cozulen = state.items
         .where((c) => c.durum == TalepDurum.cozuldu)
         .toList(growable: false);
+    // (P146) Geri alinan talepler REDDEDILEN sekmesinde: ikisi de
+    // "cozulmeden kapandi" kaydidir. "Açık" sekmesine dusselerdi acik
+    // sayimini sisirir, sakin geri aldigi talebi hala acik sanirdi.
     final reddedilen = state.items
-        .where((c) => c.durum == TalepDurum.reddedildi)
+        .where((c) =>
+            c.durum == TalepDurum.reddedildi ||
+            c.durum == TalepDurum.geriAlindi)
         .toList(growable: false);
 
     return DefaultTabController(
@@ -285,6 +290,7 @@ Color _durumColor(TalepDurum d) => switch (d) {
   TalepDurum.isEmri => Colors.blue,
   TalepDurum.cozuldu => Colors.green,
   TalepDurum.reddedildi => Colors.red,
+  TalepDurum.geriAlindi => Colors.grey,
   TalepDurum.unknown => Colors.grey,
 };
 
@@ -295,6 +301,7 @@ String _durumLabel(AppLocalizations l10n, TalepDurum d) => switch (d) {
   TalepDurum.isEmri => l10n.talepDurumIsEmri,
   TalepDurum.cozuldu => l10n.talepDurumCozuldu,
   TalepDurum.reddedildi => l10n.talepDurumReddedildi,
+  TalepDurum.geriAlindi => l10n.talepDurumGeriAlindi,
   TalepDurum.unknown => l10n.devriyeDurumBilinmiyor,
 };
 
@@ -514,6 +521,14 @@ class _ComplaintDetail extends StatelessWidget {
             if (canRespond && c.durum == TalepDurum.acik) ...[
               const Divider(height: 24),
               _YoneticiActionBar(complaint: c),
+            ],
+            // (P146) ACANIN eylemi: geri alma. Yonetim bunu GORMEZ (onun
+            // yolu `decline`) ve yalniz `acik` talepte anlamli — sunucunun
+            // gecis kurali (acik -> geri_alindi) burada da aynen gecerli.
+            if (talepGeriAlinabilir(
+                yonetimMi: canRespond, durum: c.durum)) ...[
+              const Divider(height: 24),
+              _GeriAlButton(complaint: c),
             ],
           ],
         ),
@@ -1220,6 +1235,68 @@ class _AddPhotoTile extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// (P146) "Geri Al" — talebi ACANIN kendi kaydini geri cekmesi. Onay
+/// diyalogu SORAR: geri alma terminal bir gecistir, geri donusu yoktur.
+/// Basarisizlikta hata SnackBar'a yazilir — sessiz basarisizlik yok.
+class _GeriAlButton extends ConsumerStatefulWidget {
+  const _GeriAlButton({required this.complaint});
+
+  final Complaint complaint;
+
+  @override
+  ConsumerState<_GeriAlButton> createState() => _GeriAlButtonState();
+}
+
+class _GeriAlButtonState extends ConsumerState<_GeriAlButton> {
+  bool _calisiyor = false;
+
+  Future<void> _bas() async {
+    final l10n = context.l10n;
+    final onay = await showDialog<bool>(
+      context: context,
+      builder: (d) => AlertDialog(
+        title: Text(l10n.talepGeriAl),
+        content: Text(l10n.talepGeriAlOnay),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(d).pop(false),
+            child: Text(l10n.ortakVazgec),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(d).pop(true),
+            child: Text(l10n.talepGeriAl),
+          ),
+        ],
+      ),
+    );
+    if (onay != true || !mounted) return;
+    setState(() => _calisiyor = true);
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    try {
+      await ref
+          .read(complaintsControllerProvider.notifier)
+          .withdraw(widget.complaint.id);
+      if (!mounted) return;
+      navigator.pop(); // elimizdeki kopya bayatladi — detay kapanir
+      messenger.showSnackBar(SnackBar(content: Text(l10n.talepGeriAlindi)));
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _calisiyor = false);
+      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton.icon(
+      onPressed: _calisiyor ? null : _bas,
+      icon: const Icon(Icons.undo),
+      label: Text(context.l10n.talepGeriAl),
     );
   }
 }

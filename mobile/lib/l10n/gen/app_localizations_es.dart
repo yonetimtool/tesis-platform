@@ -4745,4 +4745,23 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get dilSeciciBaslik => 'Idioma';
+
+  @override
+  String get talepGeriAl => 'Retirar';
+
+  @override
+  String get talepGeriAlOnay =>
+      '¿Retirar esta solicitud? Una solicitud retirada no se envía a la administración y esta acción no se puede deshacer.';
+
+  @override
+  String get talepGeriAlindi => 'Solicitud retirada';
+
+  @override
+  String get talepDurumGeriAlindi => 'Retirada';
+
+  @override
+  String get sikayetGeriAl => 'Retirar la queja';
+
+  @override
+  String get sikayetGeriAlindi => 'Queja retirada';
 }

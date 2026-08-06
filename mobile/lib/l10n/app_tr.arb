@@ -2019,5 +2019,11 @@
   "dilSeciciBaslik": "Dil",
   "@dilSeciciBaslik": {
     "description": "Dil secici modalinin basligi + simgenin erisilebilir adi"
-  }
+  },
+  "talepGeriAl": "Geri Al",
+  "talepGeriAlOnay": "Bu talebi geri almak istiyor musunuz? Geri alınan talep yönetime iletilmez ve bu işlem geri alınamaz.",
+  "talepGeriAlindi": "Talep geri alındı",
+  "talepDurumGeriAlindi": "Geri Alındı",
+  "sikayetGeriAl": "Şikayeti geri al",
+  "sikayetGeriAlindi": "Şikayet geri alındı"
 }

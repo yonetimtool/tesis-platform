@@ -1427,5 +1427,11 @@
   "izgaraKaydet": "Speichern",
   "izgaraSecim": "{secili}/{enCok} ausgewählt",
   "izgaraTavanUyarisi": "Grenze erreicht. Entfernen Sie einen, um einen weiteren hinzuzufügen ({enCok} Kacheln).",
-  "dilSeciciBaslik": "Sprache"
+  "dilSeciciBaslik": "Sprache",
+  "talepGeriAl": "Zurückziehen",
+  "talepGeriAlOnay": "Diese Anfrage zurückziehen? Eine zurückgezogene Anfrage wird nicht an die Verwaltung weitergeleitet und dies kann nicht rückgängig gemacht werden.",
+  "talepGeriAlindi": "Anfrage zurückgezogen",
+  "talepDurumGeriAlindi": "Zurückgezogen",
+  "sikayetGeriAl": "Beschwerde zurückziehen",
+  "sikayetGeriAlindi": "Beschwerde zurückgezogen"
 }

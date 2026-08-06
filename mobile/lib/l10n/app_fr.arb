@@ -1427,5 +1427,11 @@
   "izgaraKaydet": "Enregistrer",
   "izgaraSecim": "{secili}/{enCok} sélectionnés",
   "izgaraTavanUyarisi": "Limite atteinte. Retirez-en un pour en ajouter un autre ({enCok} tuiles).",
-  "dilSeciciBaslik": "Langue"
+  "dilSeciciBaslik": "Langue",
+  "talepGeriAl": "Retirer",
+  "talepGeriAlOnay": "Retirer cette demande ? Une demande retirée n'est pas transmise à la gestion et cette action est irréversible.",
+  "talepGeriAlindi": "Demande retirée",
+  "talepDurumGeriAlindi": "Retirée",
+  "sikayetGeriAl": "Retirer la plainte",
+  "sikayetGeriAlindi": "Plainte retirée"
 }

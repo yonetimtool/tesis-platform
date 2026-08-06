@@ -79,6 +79,10 @@ class UnitComplaint {
 
   bool get acik => durum == 'acik';
 
+  /// (P146) Sahibi geri cekti — yonetime iletilmez. `acik` DEGILDIR, ama
+  /// "cozuldu" da degildir; ekranda ayri gosterilir.
+  bool get geriAlindi => durum == 'geri_alindi';
+
   /// Okundu isaretlendikten sonraki kopya (kuyrugu YERINDE gunceller).
   UnitComplaint okunduKopya() => UnitComplaint(
         id: id,

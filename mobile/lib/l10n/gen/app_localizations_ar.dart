@@ -4870,4 +4870,23 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get dilSeciciBaslik => 'اللغة';
+
+  @override
+  String get talepGeriAl => 'سحب';
+
+  @override
+  String get talepGeriAlOnay =>
+      'هل تريد سحب هذا الطلب؟ الطلب المسحوب لا يُرسل إلى الإدارة ولا يمكن التراجع عن هذا الإجراء.';
+
+  @override
+  String get talepGeriAlindi => 'تم سحب الطلب';
+
+  @override
+  String get talepDurumGeriAlindi => 'مسحوب';
+
+  @override
+  String get sikayetGeriAl => 'سحب الشكوى';
+
+  @override
+  String get sikayetGeriAlindi => 'تم سحب الشكوى';
 }

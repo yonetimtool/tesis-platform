@@ -4789,4 +4789,23 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dilSeciciBaslik => 'Language';
+
+  @override
+  String get talepGeriAl => 'Withdraw';
+
+  @override
+  String get talepGeriAlOnay =>
+      'Withdraw this request? A withdrawn request is not passed to management, and this cannot be undone.';
+
+  @override
+  String get talepGeriAlindi => 'Request withdrawn';
+
+  @override
+  String get talepDurumGeriAlindi => 'Withdrawn';
+
+  @override
+  String get sikayetGeriAl => 'Withdraw complaint';
+
+  @override
+  String get sikayetGeriAlindi => 'Complaint withdrawn';
 }

@@ -110,6 +110,20 @@ class UnitComplaintApi {
 
   /// Daire sikayeti ac (YALNIZ resident). Ayni daireye ayni KATEGORIDE 7 gunde
   /// 2. kez -> 409; kendi blogun disi -> 403.
+  /// (P146) `POST /unit-complaints/{id}/withdraw` — SIKAYET EDEN kendi
+  /// kaydini geri ceker. Silme degil: durum `geri_alindi` olur. Yonetim
+  /// kapattiktan sonra sunucu 422 doner.
+  Future<UnitComplaint> withdraw(String id) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/unit-complaints/$id/withdraw',
+      );
+      return UnitComplaint.fromJson(res.data ?? const {});
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
   Future<UnitComplaint> file(UnitComplaintDraft draft) async {
     try {
       final res = await _dio.post<Map<String, dynamic>>(

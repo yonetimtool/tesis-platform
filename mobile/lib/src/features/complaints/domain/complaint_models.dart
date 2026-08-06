@@ -14,7 +14,7 @@ library;
 
 /// `complaint_durum` enum'unun istemci aynasi. Bilinmeyen/gelecekteki bir
 /// deger `unknown`'a duser — asla parse hatasi vermez (ileriye-uyumlu).
-enum TalepDurum { acik, isEmri, cozuldu, reddedildi, unknown }
+enum TalepDurum { acik, isEmri, cozuldu, reddedildi, geriAlindi, unknown }
 
 /// Sunucudan gelen `durum` teline gore [TalepDurum] cozer.
 TalepDurum talepDurumFromWire(String? s) => switch (s) {
@@ -22,6 +22,7 @@ TalepDurum talepDurumFromWire(String? s) => switch (s) {
   'is_emri' => TalepDurum.isEmri,
   'cozuldu' => TalepDurum.cozuldu,
   'reddedildi' => TalepDurum.reddedildi,
+  'geri_alindi' => TalepDurum.geriAlindi,
   _ => TalepDurum.unknown,
 };
 
@@ -33,9 +34,19 @@ extension TalepDurumWire on TalepDurum {
     TalepDurum.isEmri => 'is_emri',
     TalepDurum.cozuldu => 'cozuldu',
     TalepDurum.reddedildi => 'reddedildi',
+    TalepDurum.geriAlindi => 'geri_alindi',
     TalepDurum.unknown => '',
   };
 }
+
+/// (P146) GERI ALMA KURALI — tek yerde, ekran bunu CAGIRIR.
+///
+/// Iki sart birden: (a) eylem ACANIN — yonetimin yolu `decline`, (b) talep
+/// hala `acik` — is emrine donusmusse sahada is baslamis olabilir. Sunucu
+/// da ayni kurali uygular (422 `invalid_transition`); buradaki kontrol
+/// KULLANICIYA once gosterir, sunucunun yerini ALMAZ.
+bool talepGeriAlinabilir({required bool yonetimMi, required TalepDurum durum}) =>
+    !yonetimMi && durum == TalepDurum.acik;
 
 /// `TalepOncelik` — `ComplaintConvertRequest.oncelik` teli.
 enum TalepOncelik { dusuk, orta, yuksek }

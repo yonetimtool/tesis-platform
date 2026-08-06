@@ -8134,6 +8134,42 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Dil'**
   String get dilSeciciBaslik;
+
+  /// No description provided for @talepGeriAl.
+  ///
+  /// In tr, this message translates to:
+  /// **'Geri Al'**
+  String get talepGeriAl;
+
+  /// No description provided for @talepGeriAlOnay.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu talebi geri almak istiyor musunuz? Geri alınan talep yönetime iletilmez ve bu işlem geri alınamaz.'**
+  String get talepGeriAlOnay;
+
+  /// No description provided for @talepGeriAlindi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Talep geri alındı'**
+  String get talepGeriAlindi;
+
+  /// No description provided for @talepDurumGeriAlindi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Geri Alındı'**
+  String get talepDurumGeriAlindi;
+
+  /// No description provided for @sikayetGeriAl.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şikayeti geri al'**
+  String get sikayetGeriAl;
+
+  /// No description provided for @sikayetGeriAlindi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şikayet geri alındı'**
+  String get sikayetGeriAlindi;
 }
 
 class _AppLocalizationsDelegate

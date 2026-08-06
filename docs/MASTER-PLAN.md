@@ -9501,6 +9501,52 @@ ekranın başlığını yeniden ayırır — yani P144'ün kapattığı kusur s�
 geri açar. Doğru çözüm ekranın başlığını da değiştirmek olurdu; bu bir
 ürün kararı, uydurulmadı.
 
+### P146 — Geri alma + talep yüzeyinin ölçülmesi (Kerem)
+Status: BITTI(2026-08-06 · backend 45 test · mobil analyze temiz + 1814 test)
+· Depends-on: P145
+Scope: Kerem'in üç maddesi.
+
+**1. "TALEP/ARIZA'YA BASINCA FORM AÇILIYOR" — KODDA DOĞRULANMADI.**
+Ölçtüm: ızgara karosu `AppRoutes.complaints`e gidiyor ve `?bildir=1`
+**taşımıyor**; formu açan tek yol o parametre (`bildirModu`). Yani karo
+zaten takip listesine açıyor. Formu açan giriş, ana ekrandaki "Bildir"
+menüsünün "Talep/Arıza Bildir" satırı — ve onun doğrusu bu. Gözlenen
+davranış kurulu eski yapıdan geliyor olmalı. Tahmine bırakmamak için
+**kilit yazıldı** (`talep_takip_yonlendirmesi_test.dart`): karo `bildir`
+taşırsa ve `/complaints`e giden karo sayısı 1'i aşarsa test düşer.
+
+**2. GÜRÜLTÜ ŞİKAYETİ KAROSU** — P145'te silinmişti; aynı kilit
+`/complaints`e giden karo sayısını **1**'de sabitliyor. Ses şikayetinin
+takibi Şikayet Haritası'ndan.
+
+**3. GERİ ALMA — SİLME DEĞİL GEÇİŞ.** İki durum enum'una `geri_alindi`
+eklendi (göç 0034). Silmek, yönetimin gördüğü bir kaydın izsiz kaybolması
+olurdu; audit ve timeline'ın anlamı kalmazdı.
+
+* **Yalnız `acik`tan:** iş emrine dönüşmüş talep geri alınamaz (sahada iş
+  başlamış olabilir, geri alma yetim görev bırakır) → 422. Kısıt geçiş
+  tablosunda **tek yerde**.
+* **Kimin hakkı:** `POST /complaints/{id}/withdraw` yalnız açan rollerine
+  açık; yönetim 403 alır — onun yolu `decline`. Başkasının kaydı için
+  **404** (varlık sızdırılmaz) — bu kural yeniden yazılmadı, mevcut
+  kendi-kapsamından geliyor.
+* **Gizlilik:** daire şikayetinde `complainant_user_id` yalnız iç eşleşme
+  için okunur, cevapta dönmez.
+* **SESSİZ YETKİ GENİŞLEMESİ ÖNLENDİ:** `UnitComplaintDecision` yönetimin
+  karar şemasıydı ve durum alanı aynı Literal'i paylaşıyordu — `geri_alindi`
+  eklenince yönetim bir kaydı "sahibi geri aldı" diye damgalayabilirdi.
+  Şema ayrıldı ve bunu **ayrı bir test ölçüyor** (422).
+* **Arayüz:** geri alınan talepler "Reddedilen" sekmesinde ("çözülmeden
+  kapandı" kaydı); "Açık"a düşselerdi sakin geri aldığı talebi hâlâ açık
+  sanırdı. Kural `talepGeriAlinabilir` içinde tek yerde ve ekran onu
+  çağırıyor — **mutasyonla sınandı**: kuralı `true` yapınca 4 test düştü.
+* 7 dil, onay diyaloglu, hata SnackBar'a yazılıyor (sessiz başarısızlık yok).
+
+**TOPLU DEĞİŞTİRME YİNE RİSK ÜRETTİ (bu kez yakalandı):** sözleşmedeki
+`enum: [acik, kapali]` dört yerde eşleşti; dördü de daire şikayetiydi ama
+biri **yönetimin karar şemasıydı** ve oraya `geri_alindi` sızmamalıydı.
+Eşleşmeler tek tek sahiplerine bakılarak doğrulandı ve o satır geri alındı.
+
 ### NOT — Sign in with Apple (4.8)
 **GEÇERSİZ (N/A):** üçüncü taraf sosyal giriş **kullanmıyoruz** (Google/Facebook
 girişi yok; kimlik doğrulama tesis tarafından verilen hesapla). 4.8 yalnız

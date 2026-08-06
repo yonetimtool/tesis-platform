@@ -4769,4 +4769,23 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get dilSeciciBaslik => 'Sprache';
+
+  @override
+  String get talepGeriAl => 'Zurückziehen';
+
+  @override
+  String get talepGeriAlOnay =>
+      'Diese Anfrage zurückziehen? Eine zurückgezogene Anfrage wird nicht an die Verwaltung weitergeleitet und dies kann nicht rückgängig gemacht werden.';
+
+  @override
+  String get talepGeriAlindi => 'Anfrage zurückgezogen';
+
+  @override
+  String get talepDurumGeriAlindi => 'Zurückgezogen';
+
+  @override
+  String get sikayetGeriAl => 'Beschwerde zurückziehen';
+
+  @override
+  String get sikayetGeriAlindi => 'Beschwerde zurückgezogen';
 }

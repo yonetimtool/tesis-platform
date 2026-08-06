@@ -1427,5 +1427,11 @@
   "izgaraKaydet": "حفظ",
   "izgaraSecim": "{secili}/{enCok} محدد",
   "izgaraTavanUyarisi": "لقد وصلت إلى الحد. أزل واحدًا لإضافة آخر ({enCok} مربعات).",
-  "dilSeciciBaslik": "اللغة"
+  "dilSeciciBaslik": "اللغة",
+  "talepGeriAl": "سحب",
+  "talepGeriAlOnay": "هل تريد سحب هذا الطلب؟ الطلب المسحوب لا يُرسل إلى الإدارة ولا يمكن التراجع عن هذا الإجراء.",
+  "talepGeriAlindi": "تم سحب الطلب",
+  "talepDurumGeriAlindi": "مسحوب",
+  "sikayetGeriAl": "سحب الشكوى",
+  "sikayetGeriAlindi": "تم سحب الشكوى"
 }

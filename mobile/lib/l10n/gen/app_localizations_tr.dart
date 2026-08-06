@@ -4601,4 +4601,23 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get dilSeciciBaslik => 'Dil';
+
+  @override
+  String get talepGeriAl => 'Geri Al';
+
+  @override
+  String get talepGeriAlOnay =>
+      'Bu talebi geri almak istiyor musunuz? Geri alınan talep yönetime iletilmez ve bu işlem geri alınamaz.';
+
+  @override
+  String get talepGeriAlindi => 'Talep geri alındı';
+
+  @override
+  String get talepDurumGeriAlindi => 'Geri Alındı';
+
+  @override
+  String get sikayetGeriAl => 'Şikayeti geri al';
+
+  @override
+  String get sikayetGeriAlindi => 'Şikayet geri alındı';
 }

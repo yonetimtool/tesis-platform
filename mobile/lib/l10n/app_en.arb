@@ -1427,5 +1427,11 @@
   "izgaraKaydet": "Save",
   "izgaraSecim": "{secili}/{enCok} selected",
   "izgaraTavanUyarisi": "You've reached the limit. Remove one to add another ({enCok} tiles).",
-  "dilSeciciBaslik": "Language"
+  "dilSeciciBaslik": "Language",
+  "talepGeriAl": "Withdraw",
+  "talepGeriAlOnay": "Withdraw this request? A withdrawn request is not passed to management, and this cannot be undone.",
+  "talepGeriAlindi": "Request withdrawn",
+  "talepDurumGeriAlindi": "Withdrawn",
+  "sikayetGeriAl": "Withdraw complaint",
+  "sikayetGeriAlindi": "Complaint withdrawn"
 }
