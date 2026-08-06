@@ -14,7 +14,11 @@ if (file("google-services.json").exists()) {
 
 android {
     namespace = "com.tesisguvenlik.mobile"
-    compileSdk = flutter.compileSdkVersion
+    // (P141) API 36 ACIKCA SABITLENDI — Flutter varsayilanina BIRAKILMADI.
+    // Play kurali: 31.08.2026'dan itibaren yeni uygulamalar API 36
+    // hedeflemek ZORUNDA. Varsayilana birakmak, Flutter surumu degistiginde
+    // hedefin SESSIZCE dusmesi demekti; burada sabit oldugu icin denetlenebilir.
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -28,7 +32,7 @@ android {
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
