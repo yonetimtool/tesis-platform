@@ -70,13 +70,14 @@ kullanıcıyla ilişkilendirilemez hale gelir.
 | `kargo` + fotoğrafları | süreli | Silinir (**MinIO objeleri dahil**) |
 | `rezervasyon` | süreli | Silinir |
 | `complaint` (çözüldü/reddedildi) | 36 ay | Metin arşivlenir, satır kalır |
+| `complaint_photo` | 36 ay | Silinir (**MinIO objeleri dahil**) |
 | `audit_log` | süreli | Purge |
 
 Sonuç `audit_log`'a `erasure_run` olarak yazılır.
 
 ---
 
-## 5. AÇIK BULGULAR — forma "silinebilir" yazmadan önce kapatılmalı
+## 5. BULGULAR (a ve b kapatıldı, c açık)
 
 **(a) Hesap silinince avatar objesi MinIO'da kalıyordu — KAPATILDI (P141.6).**
 `hesap_silme.py` yalnız `avatar_key = None` yapıyordu; obje depoda yetim
@@ -84,15 +85,12 @@ kalıyordu. Artık `storage.delete_objects` çağrılıyor. MinIO erişilemezse
 hata kaydı kırmıyor — depo arızasında kullanıcının hesabını silememesi
 daha kötü olurdu.
 
-**(b) Talep fotoğrafları hiçbir zaman silinmiyor.**
+**(b) Talep fotoğrafları hiçbir zaman silinmiyordu — KAPATILDI (P141.6).**
 Retention talep metnini arşivliyor ama `complaint_photo` objelerine
-dokunmuyor (`retention.py` içinde sıfır referans). Fotoğraflar süresiz
-kalıyor.
-
-Kalan madde (b), sayfada ve bu belgede yazdığımız "fotoğraflar operasyonel
-kayıt olarak saklanır" ifadesiyle **çelişmiyor** — ama süresiz saklama
-bilinçli bir karar değil, sadece retention'da atlanmış bir tablo. Süre
-belirlenip retention'a eklenmeli.
+dokunmuyordu. Kerem 36 ay belirledi: fotoğraflar artık **metinle aynı
+pencerede** siliniyor (MinIO objesi + satır). Aynı pencere bilinçli —
+metin arşivlenip fotoğraf kalsaydı, "(arşivlendi)" yazan bir talebin
+görseli hâlâ olayı anlatırdı.
 
 **(c) Firebase'in kendi topladıkları ölçülmedi.** `firebase_messaging` SDK'sı
 Google tarafında hangi tanılama verisini topluyor, Firebase konsolundaki

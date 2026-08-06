@@ -46,6 +46,9 @@ def test_retention_siler_ve_anonimlestirir_esik_hassas(world, owner_conn):
             (str(vid), str(tid), str(unit_id), str(admin_id), str(resident_id)),
         )
 
+    # (P141.6) Talep FOTOGRAFLARI da 36 ayda silinir — metinle AYNI pencere.
+    # Once bu tablo ATLANMISTI: metin arsivleniyor, fotograf suresiz
+    # kaliyordu. Bu test o eksigin geri gelmesini engeller.
     # Cozulmus talep (36 ay otesi) -> anonimlestirilecek; guncel cozulmus KALIR.
     old_complaint = uuid.uuid4()
     new_complaint = uuid.uuid4()
@@ -56,6 +59,14 @@ def test_retention_siler_ve_anonimlestirir_esik_hassas(world, owner_conn):
             f"VALUES (%s, %s, %s, 'Gizli Baslik', 'Gizli mesaj icerigi', 'cozuldu', "
             f"now() - interval '{age}', now() - interval '{age}')",
             (str(cid), str(tid), str(resident_id)),
+        )
+
+    # Her iki talebe de birer fotograf.
+    for cid in (old_complaint, new_complaint):
+        owner_conn.execute(
+            "INSERT INTO complaint_photo (tenant_id, complaint_id, foto_key, sira) "
+            "VALUES (%s, %s, %s, 1)",
+            (str(tid), str(cid), f"{tid}/talep/{uuid.uuid4().hex}.jpg"),
         )
 
     # Eski denetim satiri (24 ay otesi) -> purge; guncel KALIR.
@@ -81,6 +92,18 @@ def test_retention_siler_ve_anonimlestirir_esik_hassas(world, owner_conn):
         "SELECT baslik, mesaj FROM complaint WHERE id=%s", (str(new_complaint),)
     ).fetchone()
     assert new_row == ("Gizli Baslik", "Gizli mesaj icerigi")
+
+    # (P141.6) FOTOGRAF DA GITMIS OLMALI: metni arsivleyip gorseli birakmak
+    # arsivlemeyi yarim birakirdi — "(arşivlendi)" yazan bir talebin
+    # fotografi hala olayi anlatirdi.
+    def _foto(cid):
+        return owner_conn.execute(
+            "SELECT count(*) FROM complaint_photo WHERE complaint_id = %s",
+            (str(cid),),
+        ).fetchone()[0]
+
+    assert _foto(old_complaint) == 0, "36 ayi gecen talebin fotografi kalmis"
+    assert _foto(new_complaint) == 1, "guncel talebin fotografi SILINMEMELI"
 
     # Denetim: eski purge edildi + erasure_run sistem kaydi yazildi.
     assert _exists(owner_conn, "audit_log", old_audit) == 0

@@ -41,6 +41,7 @@ def run_retention() -> dict:
         "kargo_photos": 0,
         "reservations": 0,
         "tickets_anonymized": 0,
+        "talep_photos": 0,
         "audit_purged": 0,
     }
 
@@ -92,6 +93,47 @@ def run_retention() -> dict:
                     "WHERE tarih < (current_date - make_interval(months => %s))",
                     (m.retention_reservations_months,),
                 ).rowcount
+
+                # (P141.6) Talep FOTOGRAFLARI (36 ay) — metinle AYNI pencerede.
+                #
+                # Onceki surumde bu tablo ATLANMISTI: metin arsivleniyor ama
+                # fotograflar SURESIZ kaliyordu. Sessiz bir eksikti — Play
+                # veri guvenligi envanterinde bulundu (bkz.
+                # docs/play-console-veri-guvenligi.md).
+                #
+                # AYNI PENCERE (36 ay) BILINCLI: metin arsivlenip fotograf
+                # kalsaydi, "arsivlendi" yazan bir talebin gorseli hala
+                # olayi anlatiyor olurdu — arsivleme yarim kalirdi.
+                #
+                # Kargo desenin AYNISI: once MinIO, sonra satir. MinIO
+                # erisilemezse satirlar BU GECE silinmez ve sonraki gece
+                # tekrar denenir — foto asla DB kaydi olmadan ortada kalmaz.
+                talep_keys = [
+                    row[0]
+                    for row in conn.execute(
+                        "SELECT p.foto_key FROM complaint_photo p "
+                        "JOIN complaint c ON c.id = p.complaint_id "
+                        "WHERE p.foto_key IS NOT NULL "
+                        "AND c.durum IN ('cozuldu', 'reddedildi', 'geri_alindi') "
+                        "AND c.updated_at < now() - make_interval(months => %s)",
+                        (m.retention_tickets_months,),
+                    ).fetchall()
+                ]
+                talep_foto_ok = True
+                if talep_keys:
+                    try:
+                        totals["talep_photos"] += storage.delete_objects(talep_keys)
+                    except Exception:
+                        talep_foto_ok = False
+                if talep_foto_ok:
+                    conn.execute(
+                        "DELETE FROM complaint_photo p "
+                        "USING complaint c "
+                        "WHERE c.id = p.complaint_id "
+                        "AND c.durum IN ('cozuldu', 'reddedildi', 'geri_alindi') "
+                        "AND c.updated_at < now() - make_interval(months => %s)",
+                        (m.retention_tickets_months,),
+                    )
 
                 # Talep/sikayet (cozuldu/reddedildi, 36 ay) -> ANONIMLESTIR (satir
                 # is-emri/defter butunlugu icin kalir; serbest metin arsivlenir).
