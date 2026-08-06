@@ -8927,8 +8927,8 @@ Acceptance: elle tablo yazan sayfa **23 → 0** · kilit mutasyonla sınanmış 
 kapılar yeşil.
 
 ### P139 — Mobil: avatar oranı, splash regresyonu, ana ekran ızgarası
-Status: KISMEN(avatar + denetçi çıkmazı + ızgara BİTTİ ve BAĞLANDI ·
-dönüş-splash KÖK NEDEN BULUNAMADI — cihaz gerekiyor) · Depends-on: P132
+Status: BITTI(2026-08-06 · avatar + denetçi çıkmazı + ızgara + dönüş-splash;
+splash teşhisi P140'ta DÜZELTİLDİ — aşağıdaki §2 notuna bak) · Depends-on: P132
 Scope: Kerem'in üç maddesi. **Not:** brief "P134" diyordu, o numara dolu
 (backend günlük turu) — P139 açıldı. **Derleme numarasına dokunulmadı**,
 App Store Connect'e hiçbir şey gönderilmedi (yapım 3 incelemede).
@@ -8947,7 +8947,18 @@ personel formu). `ResizeImagePolicy.fit` ile oran korunuyor, hiçbir eksen
 **tam eşitlikle** bekliyordu, yani kusuru kilitlemişti; iddia üst sınıra
 çevrildi.
 
-**2. SPLASH — BİR GERÇEK KUSUR BULUNDU, ASIL HİPOTEZ ÇÜRÜDÜ.**
+**2. SPLASH — [DÜZELTME, P140] BU BAŞLIK YANLIŞTI: HİPOTEZ ÇÜRÜMEMİŞTİ.**
+> **Aşağıdaki "çürüdü" sonucu GEÇERSİZ.** P140'ta gerçek bir
+> `ProviderContainer` + `invalidate` ile yeniden ölçtüm: yeniden-yüklemede
+> `isLoading=true, hasValue=true` oluyor ve `when()` **splash** çiziyor,
+> `when(skipLoadingOnReload: true)` ise **ekranı** çiziyor. Yani düzeltme
+> no-op değildi, geri almam **hatalıydı**; düzeltme koda geri kondu ve iki
+> testle kilitlendi (`splash_yenilemede_cikmaz_test.dart`,
+> `splash_yalniz_soguk_acilis_test.dart`). Çürütme ölçümüm elde kurulmuş
+> bir `AsyncLoading().copyWithPrevious(...)` üzerineydi — gerçek yaşam
+> döngüsünü taklit etmiyordu. **Ders: bir hipotezi çürütmek için kullanılan
+> ölçüm de en az hipotez kadar dikkatli kurulmalı.**
+
 İlk teşhisim: dönüş → `home_refresh` `tenantSettingsProvider`i invalidate
 eder → `kurulumKapisiProvider` `loading`e düşer → `HomeGate` splash çizer.
 Çözüm olarak `skipLoadingOnReload: true` eklemiştim. **Ölçtüm, çöktü:** bu
