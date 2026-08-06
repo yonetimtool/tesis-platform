@@ -471,6 +471,31 @@ async def resolve_complaint(
     return await _load_out(db, obj, acan_ad)
 
 
+@router.post("/{complaint_id}/withdraw", response_model=ComplaintOut)
+async def withdraw_complaint(
+    complaint_id: uuid.UUID,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_OPENER),
+) -> ComplaintOut:
+    """(P146) ACAN kendi talebini GERI CEKER — silmez.
+
+    Neden `_OPENER`: geri alma ACANIN hakkidir; yonetim tarafinin kapatma
+    yolu `decline`dir. `_get_or_404` acan rolleri zaten KENDI kayitlarina
+    kisitlar (baskasininki 404 — varligi da sizmaz), yani "yalniz kendi"
+    kurali burada tekrar yazilmaz, MEVCUT kapsamdan gelir.
+
+    Neden yalniz `acik`: gecis tablosu (`ticketing`) is emrine donusmus
+    talebin geri alinmasini reddeder -> 422 `invalid_transition`.
+    """
+    obj, acan_ad = await _get_or_404(db, complaint_id, user)
+    await _close(db, user, obj, durum="geri_alindi", sebep=None)
+    await audit_user(
+        db, user, Action.COMPLAINT_WITHDRAW,
+        resource_type="complaint", resource_id=obj.id,
+    )
+    return await _load_out(db, obj, acan_ad)
+
+
 @router.post("/{complaint_id}/decline", response_model=ComplaintOut)
 async def decline_complaint(
     complaint_id: uuid.UUID,

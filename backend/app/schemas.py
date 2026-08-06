@@ -1147,7 +1147,7 @@ class AnnouncementListResponse(BaseModel):
 
 
 # ----------------------------- complaints ---------------------------------- #
-ComplaintDurum = Literal["acik", "is_emri", "cozuldu", "reddedildi"]
+ComplaintDurum = Literal["acik", "is_emri", "cozuldu", "reddedildi", "geri_alindi"]
 TaskOncelik = Literal["dusuk", "orta", "yuksek"]
 
 
@@ -3165,7 +3165,7 @@ class IntegrationPresetOut(BaseModel):
 UnitComplaintKategori = Literal[
     "gurultu", "kapi_onu_ayakkabi", "zarar_verme", "goruntu_kirliligi", "diger"
 ]
-UnitComplaintDurum = Literal["acik", "kapali"]
+UnitComplaintDurum = Literal["acik", "kapali", "geri_alindi"]
 # P24 — DORT KADEME: 0 yesil · 1-2 sari · 3-4 kirmizi · 5+ mor.
 # Esikler `routers/unit_complaints._ESIKLER` tablosundadir (tek kaynak).
 DensityRenk = Literal["yesil", "sari", "kirmizi", "mor"]
@@ -3178,9 +3178,15 @@ class UnitComplaintCreate(BaseModel):
 
 
 class UnitComplaintDecision(BaseModel):
-    """Yonetim kapatma karari — YALNIZ durum (sikayet edeni GORMEDEN)."""
+    """Yonetim kapatma karari — YALNIZ durum (sikayet edeni GORMEDEN).
 
-    durum: UnitComplaintDurum
+    (P146) `geri_alindi` BILEREK DISARIDA: geri alma SIKAYET EDENIN
+    hakkidir ve kendi ucundan (`/withdraw`) yapilir. Ayni Literal'i burada
+    da kullansaydik yonetim, sikayeti "sahibi geri aldi" gibi
+    isaretleyebilirdi — kaydin anlamini bozan sessiz bir yetki genislemesi.
+    """
+
+    durum: Literal["acik", "kapali"]
 
 
 class UnitComplaintOut(BaseModel):

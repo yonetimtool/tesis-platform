@@ -285,3 +285,69 @@ def test_kategori_gecersiz_uuid_422(client, world):
         json={"baslik": "x", "mesaj": "y", "kategori_id": "olmayan-tur"},
     )
     assert r.status_code == 422, r.text
+
+
+# --------------------------- (P146) GERI ALMA -------------------------------- #
+def test_acan_kendi_talebini_geri_alir(client, world):
+    """Geri alma SILME DEGIL bir GECISTIR: kayit durur, durum degisir."""
+    sakin = _headers(client, world["slug_a"], world["resident_a"])
+    t = _new(client, sakin)
+    r = client.post(f"/complaints/{t['id']}/withdraw", headers=sakin)
+    assert r.status_code == 200, r.text
+    assert r.json()["durum"] == "geri_alindi"
+    # Kayit YOK OLMADI — hala okunabiliyor.
+    g = client.get(f"/complaints/{t['id']}", headers=sakin)
+    assert g.status_code == 200, g.text
+    assert g.json()["durum"] == "geri_alindi"
+
+
+def test_baskasinin_talebi_geri_alinamaz_404(client, world):
+    """Varligi da sizdirilmaz: 403 degil 404."""
+    sakin = _headers(client, world["slug_a"], world["resident_a"])
+    t = _new(client, sakin)
+    digeri = _second_resident(client, world)
+    r = client.post(f"/complaints/{t['id']}/withdraw", headers=digeri)
+    assert r.status_code == 404, r.text
+
+
+def test_yonetim_geri_alamaz_403(client, world):
+    """Geri alma ACANIN hakki; yonetimin yolu `decline`."""
+    sakin = _headers(client, world["slug_a"], world["resident_a"])
+    t = _new(client, sakin)
+    mgr = _headers(client, world["slug_a"], world["admin_a"])
+    r = client.post(f"/complaints/{t['id']}/withdraw", headers=mgr)
+    assert r.status_code == 403, r.text
+
+
+def test_is_emrine_donusen_talep_geri_alinamaz_422(client, world):
+    """Sahada is baslamis olabilir — geri alma yetim gorev birakir."""
+    sakin = _headers(client, world["slug_a"], world["resident_a"])
+    mgr = _headers(client, world["slug_a"], world["admin_a"])
+    t = _new(client, sakin)
+    saha = _headers(client, world["slug_a"], world["guard_a"])
+    ben = client.get("/me", headers=saha).json()
+    kat = _new_category(client, mgr)
+    c = client.post(
+        f"/complaints/{t['id']}/convert",
+        headers=mgr,
+        json={"atanan_user_id": ben["id"], "task_category_id": kat["id"]},
+    )
+    assert c.status_code == 200, c.text
+    r = client.post(f"/complaints/{t['id']}/withdraw", headers=sakin)
+    assert r.status_code == 422, r.text
+    assert r.json()["error"]["code"] == "invalid_transition"
+
+
+def test_geri_alinan_talep_TERMINAL(client, world):
+    """Ikinci kez geri alinamaz; yonetim de uzerine cozuldu yazamaz."""
+    sakin = _headers(client, world["slug_a"], world["resident_a"])
+    mgr = _headers(client, world["slug_a"], world["admin_a"])
+    t = _new(client, sakin)
+    assert client.post(
+        f"/complaints/{t['id']}/withdraw", headers=sakin).status_code == 200
+    assert client.post(
+        f"/complaints/{t['id']}/withdraw", headers=sakin).status_code == 422
+    r = client.post(
+        f"/complaints/{t['id']}/resolve", headers=mgr,
+        json={"cozum_notu": "olmaz"})
+    assert r.status_code == 422, r.text

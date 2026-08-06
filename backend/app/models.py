@@ -92,7 +92,7 @@ ASSET_DURUM = ENUM(
     name="asset_durum", create_type=False,
 )
 COMPLAINT_DURUM = ENUM(
-    "acik", "is_emri", "cozuldu", "reddedildi",
+    "acik", "is_emri", "cozuldu", "reddedildi", "geri_alindi",
     name="complaint_durum", create_type=False,
 )
 # COMPLAINT_KATEGORI KALDIRILDI (kategori artik task_category FK).
@@ -206,7 +206,7 @@ UNIT_COMPLAINT_KATEGORI = ENUM(
     name="unit_complaint_kategori", create_type=False,
 )
 UNIT_COMPLAINT_DURUM = ENUM(
-    "acik", "kapali",
+    "acik", "kapali", "geri_alindi",
     name="unit_complaint_durum", create_type=False,
 )
 GECIS_KAYNAK = ENUM(

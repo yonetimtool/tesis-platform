@@ -1216,7 +1216,7 @@ paths:
         - name: durum
           in: query
           required: false
-          schema: { type: string, enum: [acik, is_emri, cozuldu, reddedildi] }
+          schema: { type: string, enum: [acik, is_emri, cozuldu, reddedildi, geri_alindi] }
         - name: oncelik
           in: query
           required: false
@@ -1404,6 +1404,58 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Complaint" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /complaints/{id}/withdraw:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    post:
+      tags: [complaints]
+      summary: Talebi GERI AL (acan — security + tesis_gorevlisi + resident)
+      description: |
+        (P146) Talebi ACAN kendi kaydini geri ceker. SILME DEGIL: kayit
+        durur, durum `geri_alindi` olur ve timeline'a satir yazilir.
+
+        Gecerli gecis YALNIZ acik -> geri_alindi; is emrine donusmus talep
+        icin 422 invalid_transition (sahada is baslamis olabilir, geri alma
+        yetim gorev birakir).
+
+        Yonetim rolleri bu ucu CAGIRAMAZ (403) — onlarin kapatma yolu
+        `decline`. Baskasinin talebi icin 404 (varligi sizdirilmaz).
+      responses:
+        "200":
+          description: Geri alindi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Complaint" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /unit-complaints/{id}/withdraw:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    post:
+      tags: [unit-complaints]
+      summary: Daire sikayetini GERI AL (yalniz sikayet eden — resident)
+      description: |
+        (P146) Sikayeti ACAN kendi kaydini geri ceker; durum
+        `geri_alindi` olur. Gizlilik korunur: `complainant_user_id` yalniz
+        IC eslesme icin kullanilir, cevapta DONMEZ.
+
+        Yalniz `acik` sikayet geri alinabilir — yonetim kapattiktan sonra
+        karar verilmis kaydi sahibi tek tarafli degistiremez (422).
+        Baskasinin sikayeti icin 404.
+      responses:
+        "200":
+          description: Geri alindi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UnitComplaint" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
@@ -6921,7 +6973,7 @@ paths:
         - name: durum
           in: query
           required: false
-          schema: { type: string, enum: [acik, kapali] }
+          schema: { type: string, enum: [acik, kapali, geri_alindi] }
         - name: kategori
           in: query
           required: false
@@ -7002,7 +7054,7 @@ paths:
         - name: durum
           in: query
           required: false
-          schema: { type: string, enum: [acik, kapali] }
+          schema: { type: string, enum: [acik, kapali, geri_alindi] }
         - name: kategori
           in: query
           required: false
@@ -8591,7 +8643,7 @@ components:
           type: string
           nullable: true
           description: YALNIZ admin+yonetici icin dolu; diger rollerde null
-        durum: { type: string, enum: [acik, kapali] }
+        durum: { type: string, enum: [acik, kapali, geri_alindi] }
         created_at: { type: string, format: date-time }
         complainant_user_id:
           type: string
@@ -8625,7 +8677,7 @@ components:
       type: object
       required: [durum]
       properties:
-        durum: { type: string, enum: [acik, kapali] }
+        durum: { type: string, enum: [acik, kapali] }  # (P146) geri_alindi YOK: geri alma sahibinin ucundan (/withdraw)
     UnitDensityItem:
       type: object
       description: Daire-basi ANONIM yogunluk (sikayet eden YOK)
@@ -9664,7 +9716,7 @@ components:
       description: Durum gecis timeline'i satiri — user_id ASLA tutulmaz, YALNIZ actor_role.
       required: [durum, actor_role, created_at]
       properties:
-        durum: { type: string, enum: [acik, is_emri, cozuldu, reddedildi] }
+        durum: { type: string, enum: [acik, is_emri, cozuldu, reddedildi, geri_alindi] }
         actor_role:
           type: string
           enum:
@@ -9695,7 +9747,7 @@ components:
           type: string
           nullable: true
           description: Kategori adi (join ile doldurulur)
-        durum: { type: string, enum: [acik, is_emri, cozuldu, reddedildi] }
+        durum: { type: string, enum: [acik, is_emri, cozuldu, reddedildi, geri_alindi] }
         unit_id:
           type: string
           format: uuid

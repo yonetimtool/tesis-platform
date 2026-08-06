@@ -495,6 +495,52 @@ async def mark_unit_complaint_read(
 
 
 # ------------------------------- kapatma ------------------------------------ #
+@router.post("/{complaint_id}/withdraw", response_model=UnitComplaintOut)
+async def withdraw_unit_complaint(
+    complaint_id: uuid.UUID,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_FILER),
+) -> UnitComplaintOut:
+    """(P146) SIKAYET EDEN kendi sikayetini GERI CEKER — silmez.
+
+    Gizlilik korunur: kayit `complainant_user_id`yi ZATEN ic alan olarak
+    tutuyor (disari donmez); burada yalnizca ESLESME icin kullanilir.
+    Baskasinin sikayeti icin 404 doner — varligi da sizdirilmaz.
+
+    Yalniz `acik` sikayet geri alinir: yonetim kapattiktan sonra karar
+    verilmis bir kaydi sahibi tek tarafli degistiremez.
+    """
+    obj = (
+        await db.execute(
+            select(UnitComplaint).where(
+                and_(
+                    UnitComplaint.id == complaint_id,
+                    UnitComplaint.complainant_user_id == user.id,
+                )
+            )
+        )
+    ).scalar_one_or_none()
+    if obj is None:
+        raise APIError(404, "not_found", "kayit_bulunamadi")
+    if obj.durum != "acik":
+        raise APIError(
+            422, "invalid_transition", "gecersiz_durum_gecisi",
+            mevcut=obj.durum, hedef="geri_alindi",
+        )
+    obj.durum = "geri_alindi"
+    obj.updated_at = func.now()
+    await db.flush()
+    await db.refresh(obj)
+    await audit_user(
+        db, user, Action.UNIT_COMPLAINT_WITHDRAW,
+        resource_type="unit_complaint", resource_id=obj.id,
+    )
+    unit_no = (
+        await db.execute(select(Unit.no).where(Unit.id == obj.target_unit_id))
+    ).scalar_one_or_none()
+    return UnitComplaintOut.from_model(obj, unit_no=unit_no, include_note=False)
+
+
 @router.patch("/{complaint_id}", response_model=UnitComplaintOut)
 async def close_unit_complaint(
     complaint_id: uuid.UUID,

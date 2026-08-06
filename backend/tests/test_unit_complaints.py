@@ -552,3 +552,53 @@ def test_p24_olmayan_sikayet_404(ucworld, client):
     admin = _headers(client, ucworld["slug_a"], ucworld["admin_a"])
     r = client.post(f"/unit-complaints/{uuid.uuid4()}/okundu", headers=admin)
     assert r.status_code == 404
+
+
+# --------------------------- (P146) GERI ALMA -------------------------------- #
+def test_sikayet_eden_kendi_sikayetini_geri_alir(ucworld, client):
+    slug = ucworld["slug_a"]
+    r0 = ucworld["residents"][0]
+    sid = _file(client, slug, r0, ucworld["unit1"]).json()["id"]
+    r = client.post(
+        f"/unit-complaints/{sid}/withdraw", headers=_headers(client, slug, r0)
+    )
+    assert r.status_code == 200, r.text
+    assert r.json()["durum"] == "geri_alindi"
+    # GIZLILIK KORUNUYOR: geri alma kimligi acmaz.
+    assert r.json()["complainant_user_id"] is None
+
+
+def test_baskasinin_sikayeti_geri_alinamaz_404(ucworld, client):
+    slug = ucworld["slug_a"]
+    sid = _file(client, slug, ucworld["residents"][0], ucworld["unit1"]).json()["id"]
+    r = client.post(
+        f"/unit-complaints/{sid}/withdraw",
+        headers=_headers(client, slug, ucworld["residents"][1]),
+    )
+    assert r.status_code == 404, r.text
+
+
+def test_kapanmis_sikayet_geri_alinamaz_422(ucworld, client):
+    slug = ucworld["slug_a"]
+    r0 = ucworld["residents"][0]
+    sid = _file(client, slug, r0, ucworld["unit1"]).json()["id"]
+    mgr = _headers(client, slug, ucworld["yonetici_a"])
+    assert client.patch(
+        f"/unit-complaints/{sid}", headers=mgr, json={"durum": "kapali"}
+    ).status_code == 200
+    r = client.post(
+        f"/unit-complaints/{sid}/withdraw", headers=_headers(client, slug, r0)
+    )
+    assert r.status_code == 422, r.text
+
+
+def test_yonetim_geri_alindi_DAMGALAYAMAZ_422(ucworld, client):
+    """Yonetimin karar semasi `geri_alindi` KABUL ETMEZ: kaydi 'sahibi geri
+    aldi' diye isaretlemek sessiz bir yetki genislemesi olurdu."""
+    slug = ucworld["slug_a"]
+    sid = _file(client, slug, ucworld["residents"][0], ucworld["unit1"]).json()["id"]
+    mgr = _headers(client, slug, ucworld["yonetici_a"])
+    r = client.patch(
+        f"/unit-complaints/{sid}", headers=mgr, json={"durum": "geri_alindi"}
+    )
+    assert r.status_code == 422, r.text

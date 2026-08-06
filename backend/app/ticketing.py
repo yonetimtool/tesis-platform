@@ -11,12 +11,17 @@ from .errors import APIError
 from .models import ComplaintStatusHistory
 from .scheduler.notify import dispatch_external
 
-# Gecerli gecisler. cozuldu/reddedildi terminal.
+# Gecerli gecisler. cozuldu/reddedildi/geri_alindi terminal.
+#
+# (P146) `geri_alindi` YALNIZ `acik`tan gelir: talep is emrine donustuyse
+# sahada is baslamis olabilir ve geri alma yetim bir gorev birakir. Bu
+# kisit burada tek yerde durur — uc onu tekrar etmez, cagirir.
 VALID_TRANSITIONS: dict[str, set[str]] = {
-    "acik": {"is_emri", "cozuldu", "reddedildi"},
+    "acik": {"is_emri", "cozuldu", "reddedildi", "geri_alindi"},
     "is_emri": {"cozuldu"},
     "cozuldu": set(),
     "reddedildi": set(),
+    "geri_alindi": set(),
 }
 
 
