@@ -423,6 +423,27 @@ METINLER: dict[str, PushMetni] = {
         },
         params=("daire", "ad"),
     ),
+    "sikayet_cozuldu": PushMetni(
+        baslik={
+            "tr": "Şikayetiniz",
+            "en": "Your complaint",
+            "ar": "شكواك",
+            "ru": "Ваша жалоба",
+            "de": "Ihre Beschwerde",
+            "fr": "Votre plainte",
+            "es": "Su queja",
+        },
+        govde={
+            "tr": "Şikayetiniz sonuçlandırıldı ({daire})",
+            "en": "Your complaint has been resolved ({daire})",
+            "ar": "تمت معالجة شكواك ({daire})",
+            "ru": "Ваша жалоба рассмотрена ({daire})",
+            "de": "Ihre Beschwerde wurde bearbeitet ({daire})",
+            "fr": "Votre plainte a été traitée ({daire})",
+            "es": "Su queja ha sido resuelta ({daire})",
+        },
+        params=('daire',),
+    ),
     "rezervasyon": PushMetni(
         baslik={
             "tr": "Rezervasyon",

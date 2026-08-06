@@ -242,7 +242,11 @@ def test_notify_opener_cagrilari_kimlik_tasir():
                 continue
             adlar = {kw.arg for kw in d.keywords}
             # `mesaj`/`title` gibi METIN parametreleri KALDIRILDI.
-            fazla = adlar - {"complaint", "tenant_id", "tip"}
+            # (P147) `db` EKLENDI: anlik push'un yaninda KALICI bildirim
+            # satirini yazmak icin oturum gerekiyor. Kilidin amaci
+            # DARALMADI — hala METIN parametresi sizmasini yakaliyor;
+            # `db` bir metin tasiyicisi degil.
+            fazla = adlar - {"complaint", "tenant_id", "tip", "db"}
             if fazla:
                 sizanlar.append(f"{yol.name}:{d.lineno} fazla arguman: {sorted(fazla)}")
             tip = next((kw.value for kw in d.keywords if kw.arg == "tip"), None)

@@ -81,6 +81,8 @@ NOTIFICATION_TIP = ENUM(
     "kacirilan_tur", "eksik_checkpoint", "gecikmis_okutma",
     "peyzaj_yaklasan", "peyzaj_kacirilan",
     "talep_is_emri", "talep_cozuldu", "talep_reddedildi", "is_emri_atandi",
+    # (P147) Sakinin KENDI olaylarinin geri donusu.
+    "kargo", "ziyaretci", "rezervasyon", "sikayet_cozuldu",
     name="notification_tip", create_type=False,
 )
 ASSET_KATEGORI = ENUM(
@@ -784,6 +786,11 @@ class Notification(Base):
         nullable=False,
     )
     tip: Mapped[str] = mapped_column(NOTIFICATION_TIP, nullable=False)
+    #: (P147) Bildirimin ALICISI. NULL = tesise ait YONETIM alarmi (bugunku
+    #: butun satirlar boyle); dolu = su kisiye ait olay. Iki anlam ayri
+    #: okunur: sakin yalnizca kendi satirlarini, yonetim yalnizca NULL
+    #: olanlari gorur.
+    user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     patrol_window_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     patrol_plan_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     checkpoint_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)

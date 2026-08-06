@@ -56,6 +56,7 @@ def notify_opener(
     complaint,
     tenant_id: uuid.UUID,
     tip: str,
+    db=None,
 ) -> None:
     """EK push — talebi acana. Hatasi kaydi kirmaz (dispatch_external try/except).
 
@@ -69,3 +70,16 @@ def notify_opener(
         params={"baslik": complaint.baslik},
         data={"tip": tip, "complaint_id": str(complaint.id)},
     )
+    # (P147) Anlik push'un KALICI ikizi. `db` opsiyonel: eski cagirilar
+    # (ve testler) satir yazmadan calismaya devam eder, ama uc yollarinin
+    # hepsi verir — bildirimi kaciran sakin olayi listede bulur.
+    if db is not None:
+        from .sakin_bildirimi import sakin_bildirimi_yaz
+
+        sakin_bildirimi_yaz(
+            db,
+            tenant_id=tenant_id,
+            tip=tip,
+            user_ids=(complaint.acan_user_id,),
+            veri={"baslik": complaint.baslik},
+        )

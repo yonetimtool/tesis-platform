@@ -28,6 +28,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
+from ..sakin_bildirimi import sakin_bildirimi_yaz
 from ..audit import Action, audit_user
 from ..crud_helpers import translate_integrity
 from ..deps import get_tenant_db, require_role
@@ -170,6 +171,15 @@ async def create_kargo(
             target_user_ids=tuple(dict.fromkeys(sakinler)),
             params={"firma": body.firma, "daire": unit.no},
             data={"tip": "kargo", "kargo_id": str(obj.id)},
+        )
+        # (P147) Anlik push'un KALICI ikizi: bildirimi kaciran sakin olayi
+        # Bildirimler sayfasinda bulur.
+        sakin_bildirimi_yaz(
+            db,
+            tenant_id=user.tenant_id,
+            tip="kargo",
+            user_ids=sakinler,
+            veri={"firma": body.firma, "daire": unit.no},
         )
     await audit_user(
         db, user, Action.KARGO_CREATE, resource_type="kargo",

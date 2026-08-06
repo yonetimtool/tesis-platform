@@ -42,6 +42,7 @@ from ..audit import Action, audit_user
 from ..crud_helpers import get_or_404, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..gurultu_akisi import esik_kontrol
+from ..sakin_bildirimi import sakin_bildirimi_yaz
 from ..errors import APIError
 from ..models import AppUser, Unit, UnitComplaint, UnitComplaintOkuma, UnitResident
 from ..schemas import (
@@ -564,6 +565,17 @@ async def close_unit_complaint(
             select(Unit.no).where(Unit.id == obj.target_unit_id)
         )
     ).scalar_one_or_none()
+    # (P147) Sikayet edene KALICI bildirim: "sikayetiniz sonuclandirildi".
+    # GIZLILIK KORUNUR — bildirim SIKAYET EDENE gider, kimligi yonetime
+    # acmaz; `complainant_user_id` yalnizca alici secmek icin okunur.
+    if obj.durum == "kapali":
+        sakin_bildirimi_yaz(
+            db,
+            tenant_id=user.tenant_id,
+            tip="sikayet_cozuldu",
+            user_ids=(obj.complainant_user_id,),
+            veri={"daire": unit_no or "-"},
+        )
     # Okuma durumu da donsun: istemci kapattigi satiri listede yerinde
     # tazeliyor; None donseydi okunmus satir tekrar OKUNMAMIS gorunurdu.
     okundu = (

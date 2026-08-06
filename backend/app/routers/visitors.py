@@ -29,6 +29,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
+from ..sakin_bildirimi import sakin_bildirimi_yaz
 from ..audit import Action, audit_user
 from ..crud_helpers import translate_integrity
 from ..deps import get_tenant_db, require_role
@@ -167,6 +168,13 @@ async def create_visitor(
         target_user_ids=(body.target_resident_user_id,),
         params={"ad": body.ziyaretci_ad, "daire": unit.no},
         data={"tip": "ziyaretci", "visitor_id": str(obj.id)},
+    )
+    sakin_bildirimi_yaz(  # (P147) kalici ikiz
+        db,
+        tenant_id=user.tenant_id,
+        tip="ziyaretci",
+        user_ids=(body.target_resident_user_id,),
+        veri={"ad": body.ziyaretci_ad, "daire": unit.no},
     )
     await audit_user(
         db, user, Action.VISITOR_CREATE, resource_type="visitor",

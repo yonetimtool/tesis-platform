@@ -114,7 +114,11 @@ def test_notifications_rbac(client, world):
     sec = _headers(client, world["slug_a"], world["guard_a"])
     res = _headers(client, world["slug_a"], world["resident_a"])
     assert client.get("/notifications", headers=sec).status_code == 200
-    assert client.get("/notifications", headers=res).status_code == 403
+    # (P147) Sakin ARTIK 403 ALMIYOR — uc ona da acildi, ama AYNI
+    # SATIRLARI GORMUYOR. Erisimin yerini KAPSAM aldi: yonetim alarmlari
+    # (`user_id IS NULL`) sakine donmez. Bu kilit erisimi, kapsam ayrimini
+    # ise `test_sakin_bildirimleri.py` olcer — biri gevserse digeri duser.
+    assert client.get("/notifications", headers=res).status_code == 200
 
 
 # --------------------------- PATCH /notifications -------------------------- #

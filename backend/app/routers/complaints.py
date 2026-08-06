@@ -417,7 +417,7 @@ async def convert_complaint(
     except IntegrityError as exc:
         raise translate_integrity(exc)
     await db.refresh(obj)
-    notify_opener(complaint=obj, tenant_id=user.tenant_id, tip="talep_is_emri")
+    notify_opener(db=db, complaint=obj, tenant_id=user.tenant_id, tip="talep_is_emri")
     # EK push: is emri atanan saha personeline.
     dispatch_external(
         "is_emri_atandi",
@@ -466,7 +466,7 @@ async def resolve_complaint(
 ) -> ComplaintOut:
     obj, acan_ad = await _get_or_404(db, complaint_id, user)
     await _close(db, user, obj, durum="cozuldu", sebep=body.cozum_notu)
-    notify_opener(complaint=obj, tenant_id=user.tenant_id, tip="talep_cozuldu")
+    notify_opener(db=db, complaint=obj, tenant_id=user.tenant_id, tip="talep_cozuldu")
     await audit_user(db, user, Action.COMPLAINT_RESOLVE, resource_type="complaint", resource_id=obj.id)
     return await _load_out(db, obj, acan_ad)
 
@@ -505,6 +505,6 @@ async def decline_complaint(
 ) -> ComplaintOut:
     obj, acan_ad = await _get_or_404(db, complaint_id, user)
     await _close(db, user, obj, durum="reddedildi", sebep=body.sebep)
-    notify_opener(complaint=obj, tenant_id=user.tenant_id, tip="talep_reddedildi")
+    notify_opener(db=db, complaint=obj, tenant_id=user.tenant_id, tip="talep_reddedildi")
     await audit_user(db, user, Action.COMPLAINT_DECLINE, resource_type="complaint", resource_id=obj.id)
     return await _load_out(db, obj, acan_ad)
