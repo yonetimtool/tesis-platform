@@ -2,6 +2,8 @@
 // ayni olacak. `/complaints`e giden karolar ekranin kendi adini
 // ("Talep / Arıza") kullanir; "Sikayetler" adli karo BINA SEMASINA
 // gidiyordu, adi da o oldu.
+// (P144) KANONIK AD = EKRANIN KENDI BASLIGI (Kerem'in karari): ayni
+// ekrana giden butun karolar o ekranin AppBar basligini tasir.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -155,10 +157,10 @@ void main() {
     // Izgaranin 8 karti (referans sirasi).
     for (final baslik in [
       'Ziyaretçiler',
-      'Kargolarım',
-      'Aidat Bilgileri',
+      'Kargo',
+      'Aidatım',
       'Şikayetlerim',
-      'Site Raporları',
+      'Şeffaflık',
     ]) {
       expect(find.text(baslik), findsOneWidget, reason: baslik);
     }

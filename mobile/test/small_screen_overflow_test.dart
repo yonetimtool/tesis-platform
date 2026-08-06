@@ -94,7 +94,9 @@ void main() {
     expect(tester.takeException(), isNull);
     // Vardiya bolumu yok; serit karti (dar ekranda 2 sutuna dusen izgara
     // degil, yatay serit) yerinde durur.
-    expect(find.text('Vardiya Durumu'), findsNothing);
-    expect(find.text('Vardiya Durum'), findsOneWidget);
+    // (P144) Serit karti artik "Vardiyalar" — kisalan kanonik ad 320dp'de
+    // KIRPILMADAN sigiyor (eskiden "Vardiya Durum"a kirpiliyordu).
+    expect(find.text('Vardiya Durumu'), findsNothing); // bolum yok
+    expect(find.text('Vardiyalar'), findsOneWidget); // serit karti
   });
 }

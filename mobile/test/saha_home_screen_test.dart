@@ -1,3 +1,8 @@
+// (P144) Karo adi = gittigi ekranin basligi -> serit karti artik
+// "Vardiyalar" (/vardiyalar). BOLUM BASLIGI hala "Vardiya Durumu";
+// bolum basligi karo degil, P144 kapsami disinda. Ikisi AYRI olcusun.
+// (P144) KANONIK AD = EKRANIN KENDI BASLIGI (Kerem'in karari): ayni
+// ekrana giden butun karolar o ekranin AppBar basligini tasir.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -131,9 +136,9 @@ void main() {
       expect(find.text('24°C'), findsNothing);
 
       // Referans serit kartlari.
-      expect(find.text('Vardiya Durum'), findsOneWidget);
+      expect(find.text('Vardiyalar'), findsOneWidget);
       expect(find.text('Kargo'), findsOneWidget);
-      expect(find.text('Ziyaretçi'), findsOneWidget);
+      expect(find.text('Ziyaretçiler'), findsOneWidget);
 
       // Vardiya bolumu GERCEK /shifts verisinden.
       expect(find.text('Vardiya Durumu'), findsOneWidget);
@@ -219,7 +224,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Kargo'), findsNothing);
-      expect(find.text('Ziyaretçi'), findsNothing);
+      expect(find.text('Ziyaretçiler'), findsNothing);
       expect(find.text('Araç Plaka'), findsNothing);
       // /violations tesis_gorevlisine 403 — kart cizilmez ('—' de gostermez).
       expect(find.text('İhlaller'), findsNothing);
@@ -231,7 +236,7 @@ void main() {
         expect(find.text(baslik), findsOneWidget, reason: baslik);
       }
 
-      expect(find.text('Vardiya Durum'), findsOneWidget); // serit karti
+      expect(find.text('Vardiyalar'), findsOneWidget); // serit karti
       expect(find.text('Vardiya Durumu'), findsOneWidget); // bolum basligi
       expect(find.text('Son Hareketler'), findsOneWidget);
       expect(find.text('Görev Tamamlandı'), findsOneWidget);
@@ -246,7 +251,7 @@ void main() {
       expect(find.text('Vardiya Durumu'), findsNothing); // bolum basligi yok
       expect(find.text('Öğle Vardiyası'), findsNothing);
       expect(find.text('Kerem Aşçı'), findsNothing); // mock yonetici karti yok
-      expect(find.text('Vardiya Durum'), findsOneWidget); // serit karti durur
+      expect(find.text('Vardiyalar'), findsOneWidget); // serit karti durur
     });
 
     testWidgets('Son Hareketler HATASI: "Yüklenemedi" + yeniden dene',

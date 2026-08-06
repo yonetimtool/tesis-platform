@@ -9392,6 +9392,54 @@ Desen `sayı/sayı`ya daraltıldı.
 
 KAPILAR: `flutter analyze` temiz · `flutter test` **1806** (~3 atlandı).
 
+Notes (2026-08-06, P144) — **KALAN ON ÇAKIŞMA KAPANDI; KİLİDİN BEKLEYEN
+LİSTESİ BOŞALDI.**
+
+**KURAL (Kerem'in kararı): kanonik ad = ekranın kendi başlığı.** P142'de
+on çakışma "karar bekliyor" diye kilitte açıkta bırakılmıştı. Kerem kuralı
+verdi: aynı ekrana giden bütün karolar o ekranın **AppBar başlığını**
+taşır — "kullanıcı bir karoya basınca adından beklediği yere gitmeli".
+Ad **uydurulmadı**, her rotanın hedef ekranından okundu: `/vardiyalar`→
+"Vardiyalar", `/reports`→"Aylık raporlar", `/transparency`→"Şeffaflık",
+`/financial-summary`→"Finansal özet", `/my-dues`→"Aidatım", `/otopark`→
+"Otopark", `/tasks?gorunum=yonetim`→"Görev Yönetimi", `/kargo`→"Kargo",
+`/visitors`→"Ziyaretçiler", `/yonetici-iletisim`→"Yönetici İletişim".
+13 kart + 10 modül girişi bu anahtarlara bağlandı; `bekleyen` listesi
+**boşaldı** ama kilitte **duruyor** — yeni bir çakışma çıkarsa test düşer.
+
+**TOPLU ETİKET SÜPÜRMEM GERÇEK HASAR VERDİ — GERİ ALINDI.** Testlerdeki
+eski adları düz metin değiştirmeyle taradım; süpürge P144'ün kapsamı
+DIŞINDAKİ dizeleri de vurdu: (a) **bölüm başlıkları** (yöneticinin
+"Vardiya Durumu" bölümü karo değil), (b) **sentetik test verisi**
+(`_kural('Otopark Kullanımı')`), (c) uzun-etiket boyut testinin bilerek
+seçtiği uzun ad. En kötüsü `small_screen_overflow_test`'teydi: kasten
+farklı olan `'Vardiya Durumu'`/`'Vardiya Durum'` (kısaltma) çiftini aynı
+dizeye çökerttim — test kendi kendisiyle çelişir hale geldi ve **yine de
+geçti**, çünkü `findsNothing` + `findsOneWidget` aynı metin için sessizce
+sağlanıyordu. Yedi dosya `git checkout` ile geri alındı; kalan dört dosya
+elle, tek tek düzeltildi. Ders: **toplu metin değiştirme bir ölçüm aracı
+değil**; kilit dosyalarında kapsam daraltılmadan kullanılmamalı.
+
+**AD BİRLEŞTİRME ÖLÇÜMÜ KESKİNLEŞTİRDİ.** Yöneticide `findsNWidgets(2)`
+ile tek dizeye yığılan iki ayrı şey (izgara karosu + bölüm başlığı; karo +
+alt-bar sekmesi) artık **ayrı ayrı** ölçülüyor: "Vardiyalar"=karo,
+"Vardiya Durumu"=bölüm; "Aylık raporlar"=karo, "Raporlar"=sekme.
+
+**YERLEŞİM KİLİTLERİ: ADLARIN KISALMASI PUNTOYU BÜYÜTTÜ.** İki altın
+dosyada tekdüze `69x20` satırlar `11` ve `22`ye ayrıştı. Körlemesine
+yenilenmedi, farkı okundu: `11`=tek satır, `22`=iki satır. Eski `20`,
+"Aidat Bilgileri"/"Site Raporları" gibi uzun adların ortak yazı boyutunu
+kısmasıyla oluşan **iki satır × 10px**'ti. Kısalan kanonik adlar sıkışmayı
+kaldırdı — adlar tek satıra indi, punto büyüdü. Gerileme değil iyileşme;
+taşma testleri (400dp 4x2, küçük ekran) geçiyor.
+
+**AÇIK KALAN (Kerem'de):** sakinin ızgarasındaki yineleme — `geriBildirim`
+ve `gurultuSikayeti` ikisi de `/complaints`'e gidiyor, artık aynı adla iki
+karo çıkıyor. `findsNWidgets(2)` ile **ölçülüyor**, gizlenmedi.
+
+KAPILAR: `flutter analyze` temiz · `flutter test` **1806** (~3 atlandı).
+Build numarası **DEĞİŞMEDİ** (build 3 hâlâ App Store incelemesinde).
+
 ### NOT — Sign in with Apple (4.8)
 **GEÇERSİZ (N/A):** üçüncü taraf sosyal giriş **kullanmıyoruz** (Google/Facebook
 girişi yok; kimlik doğrulama tesis tarafından verilen hesapla). 4.8 yalnız

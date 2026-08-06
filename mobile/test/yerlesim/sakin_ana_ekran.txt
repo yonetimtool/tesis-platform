@@ -6,31 +6,31 @@
   36,  94  222x11  GÜVENLİK & DANIŞMANLIK
   72,  16  394x30  Merhaba, Çiğdem
  103,  16  342x20  Daire 12  •  Site Sakini
- 165, 232  19x19  U+E041
- 170,  47  19x19  U+E497
- 170, 139  19x19  U+E34A
- 170, 324  19x19  U+E2E3
- 199, 207  69x20  Aidat Bilgileri
- 205,  22  69x20  Ziyaretçiler
- 205, 115  69x20  Kargolarım
- 205, 300  69x20  Talep / Arıza
- 222, 207  69x11  ₺1.250,00
- 228,  27  58x11  0 Kayıt
- 228, 115  69x11  0 Bekliyor
- 228, 309  50x11  0 Açık
- 233, 208  66x11  Borç Yok
- 297,  47  19x19  U+E138
- 297, 139  19x19  U+EFAE
- 297, 232  19x19  U+E33C
- 297, 324  19x19  U+E0CC
- 332,  22  69x20  Talep / Arıza
- 332, 115  69x20  Şikayetlerim
- 332, 207  69x20  Duyurular
- 332, 300  69x20  Site Raporları
- 355,  32  50x11  0 Açık
- 355, 124  50x11  0 Açık
- 355, 217  50x11  0 Yeni
- 355, 300  69x11  Aylık Özet
+ 169,  47  19x19  U+E497
+ 169, 232  19x19  U+E041
+ 169, 324  19x19  U+E2E3
+ 175, 139  19x19  U+E34A
+ 204,  22  69x22  Ziyaretçiler
+ 204, 209  65x11  Aidatım
+ 204, 300  69x22  Talep / Arıza
+ 209, 126  46x11  Kargo
+ 218, 207  69x11  ₺1.250,00
+ 223, 115  69x11  0 Bekliyor
+ 229,  27  58x11  0 Kayıt
+ 229, 208  66x11  Borç Yok
+ 229, 309  50x11  0 Açık
+ 296,  47  19x19  U+E138
+ 296, 139  19x19  U+EFAE
+ 296, 232  19x19  U+E33C
+ 296, 324  19x19  U+E0CC
+ 331,  22  69x22  Talep / Arıza
+ 331, 115  69x22  Şikayetlerim
+ 331, 207  69x22  Duyurular
+ 331, 300  69x22  Şeffaflık
+ 356,  32  50x11  0 Açık
+ 356, 124  50x11  0 Açık
+ 356, 217  50x11  0 Yeni
+ 356, 300  69x11  Aylık Özet
  416,  16  188x26  Ödeme ve Aidat Durumu
  419, 208  143x20  Tümünü Gör
  420, 352  18x18  U+E15F

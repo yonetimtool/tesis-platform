@@ -1,3 +1,5 @@
+// (P144) KANONIK AD = EKRANIN KENDI BASLIGI (Kerem'in karari): ayni
+// ekrana giden butun karolar o ekranin AppBar basligini tasir.
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/l10n/gen/app_localizations.dart';
@@ -34,7 +36,7 @@ void main() {
         onSec: (_) {},
       )));
 
-      expect(find.text('Vardiya Durum'), findsOneWidget);
+      expect(find.text('Vardiyalar'), findsOneWidget);
       expect(find.text('Kargo'), findsOneWidget);
       // Taban SAYI TASIMAZ: bes kartin tamami gercek uca baglidir, sayac
       // gelene kadar iskelet cizilir ('Yakında' etiketi KALMADI).
@@ -84,10 +86,10 @@ void main() {
       )));
 
       for (final baslik in [
-        'Vardiya Durumu',
-        'Görevler',
-        'Aidat Durumu',
-        'Otopark Kullanımı',
+        'Vardiyalar',
+        'Görev Yönetimi',
+        'Finansal özet',
+        'Otopark',
         'İhlaller',
         // (P142) AD BIRLESTIRME (Kerem onayi): "karo adi ile gittigi
         // ekranin adi ayni olacak". `/complaints`e giden karolarin hepsi
@@ -95,7 +97,7 @@ void main() {
         // adli karo BINA SEMASINA gidiyordu, adi da o oldu.
         'Talep / Arıza',
         'Şikayet Haritası',
-        'Raporlar',
+        'Aylık raporlar',
       ]) {
         expect(find.text(baslik), findsOneWidget, reason: baslik);
       }
@@ -115,7 +117,7 @@ void main() {
         width: 368,
         child: HizliErisimIzgarasi(kartlar: kartlar, onSec: (_) {}),
       )));
-      expect(find.text('Aidat Bilgileri'), findsOneWidget);
+      expect(find.text('Aidatım'), findsOneWidget);
       expect(find.text('₺1.250,00'), findsOneWidget);
       expect(find.text('Borç Yok'), findsOneWidget);
       expect(tester.takeException(), isNull);

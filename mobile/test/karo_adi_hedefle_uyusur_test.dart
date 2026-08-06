@@ -48,11 +48,12 @@ void main() {
     //
     // Liste BILEREK burada: yeni bir cakisma eklenirse test duser, ama
     // bilinenler tur tur kapatilir. Kapatildikca bu listeden SILINIR.
-    const bekleyen = {
-      '/vardiyalar', '/kargo', '/visitors', '/yonetici-iletisim',
-      '/my-dues', '/transparency', '/tasks?gorunum=yonetim',
-      '/financial-summary', '/otopark', '/reports',
-    };
+    // (P144) BEKLEYEN LISTE BOSALDI. On rotanin hepsi kanonik ada
+    // baglandi ve kanonik ad EKRANIN KENDI BASLIGIDIR (Kerem'in karari) —
+    // "kullanici bir karoya basinca adindan bekledigi yere gitmeli".
+    // Liste bilerek DURUYOR: yeni bir cakisma cikarsa once burada
+    // gerekcesiyle kaydedilir, sessizce gecistirilmez.
+    const bekleyen = <String>{};
 
     final cakisan = <String>[];
     adlar.forEach((rota, kume) {

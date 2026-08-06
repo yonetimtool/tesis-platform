@@ -7,29 +7,29 @@
   72,  16  368x30  Merhaba, Kerem
  105,  16  214x20  Yönetici Paneli
  172,  47  19x19  U+E3A2
+ 172, 139  19x19  U+EE9B
  172, 232  19x19  U+EFAE
- 172, 324  19x19  U+E1D7
- 177, 139  19x19  U+EE9B
- 207,  22  69x20  Vardiya Durumu
- 207, 207  69x20  Aidat Durumu
- 207, 300  69x20  Otopark Kullanımı
- 212, 116  66x10  Görevler
- 225, 145  8x11  —
+ 177, 324  19x19  U+E1D7
+ 207,  22  69x20  Vardiyalar
+ 207, 115  69x20  Görev Yönetimi
+ 207, 207  69x20  Finansal özet
+ 212, 305  58x10  Otopark
+ 225, 305  58x11  3 / 120
  230,  27  58x11  0 Aktif
+ 230, 145  8x11  —
  230, 212  58x11  4 Daire
- 230, 305  58x11  3 / 120
  299, 139  19x19  U+F1D6
  299, 232  19x19  U+EF27
+ 299, 324  19x19  U+E0CC
  304,  47  19x19  U+E238
- 304, 324  19x19  U+E0CC
  334, 115  69x20  Talep / Arıza
  334, 207  69x20  Şikayet Haritası
+ 334, 300  69x20  Aylık raporlar
  339,  23  66x10  İhlaller
- 339, 301  66x10  Raporlar
  352,  52  8x11  —
- 352, 300  69x11  Aylık Özet
  357, 145  8x11  —
  357, 237  8x11  —
+ 357, 300  69x11  Aylık Özet
  427,  16  358x26  Hızlı Özet
  486,  47  18x18  U+E2EE
  486, 140  18x18  U+F24E

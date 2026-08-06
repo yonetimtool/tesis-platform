@@ -2,6 +2,8 @@
 // ayni olacak. `/complaints`e giden karolar ekranin kendi adini
 // ("Talep / Arıza") kullanir; "Sikayetler" adli karo BINA SEMASINA
 // gidiyordu, adi da o oldu.
+// (P144) KANONIK AD = EKRANIN KENDI BASLIGI (Kerem'in karari): ayni
+// ekrana giden butun karolar o ekranin AppBar basligini tasir.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -131,21 +133,29 @@ void main() {
 
     // Izgaranin referans kartlari.
     for (final baslik in [
-      'Görevler',
-      'Aidat Durumu',
-      'Otopark Kullanımı',
+      'Görev Yönetimi',
+      'Finansal özet',
+      'Otopark',
       'İhlaller',
       'Şikayet Haritası',
     ]) {
       expect(find.text(baslik), findsOneWidget, reason: baslik);
     }
-    // "Vardiya Durumu" iki yerde mesru: izgara karti + bolum basligi;
-    // "Raporlar" da oyle: izgara karti + alt-bar sekmesi.
-    expect(find.text('Vardiya Durumu'), findsNWidgets(2));
-    expect(find.text('Raporlar'), findsNWidgets(2));
+    // (P144) Karo adi artik gittigi EKRANIN basligi. Bu, daha once ayni
+    // dizeye yigilan iki AYRI seyi ayirdi ve olcumu keskinlestirdi:
+    // izgara karosu "Vardiyalar" (rota /vardiyalar), bolum basligi ise
+    // hala "Vardiya Durumu" — bolum basligi karo degil, P144 disinda.
+    expect(find.text('Vardiyalar'), findsOneWidget); // izgara karosu
+    expect(find.text('Vardiya Durumu'), findsOneWidget); // bolum basligi
+    // Ayni ayrisma "Raporlar"da: karo "Aylık raporlar" (/reports),
+    // "Raporlar" ise alt-bar sekmesi.
+    expect(find.text('Aylık raporlar'), findsOneWidget); // izgara karosu
+    expect(find.text('Raporlar'), findsOneWidget); // alt-bar sekmesi
 
     final sira = [
-      for (final baslik in ['Görevler', 'Hızlı Özet', 'Son Hareketler'])
+      // (P144) Izgaranin ilk karosu artik "Görev Yönetimi" (gittigi ekranin
+      // basligi); bolum SIRASI olcumunun capasi olarak o kullaniliyor.
+      for (final baslik in ['Görev Yönetimi', 'Hızlı Özet', 'Son Hareketler'])
         tester.getTopLeft(find.text(baslik).first).dy
     ];
     expect(sira[0] < sira[1], isTrue);
@@ -234,7 +244,7 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.text('Hızlı Özet'), findsOneWidget);
-    expect(find.text('Görevler'), findsOneWidget); // kartlar duruyor
+    expect(find.text('Görev Yönetimi'), findsOneWidget); // kartlar duruyor
     // Uydurma deger YOK: hata → '—'.
     expect(find.text('₺248.750'), findsNothing);
     expect(find.text('—'), findsWidgets);
@@ -266,7 +276,7 @@ void main() {
     await tester.pumpWidget(_app());
     await tester.pumpAndSettle();
     expect(find.text('Sabah Vardiyası'), findsNothing);
-    expect(find.text('Vardiya Durumu'), findsOneWidget); // yalniz izgara karti
+    expect(find.text('Vardiyalar'), findsOneWidget); // yalniz izgara karti
   });
 
   testWidgets('Son Hareketler TEK uctan (/activity) cizilir — istemci '

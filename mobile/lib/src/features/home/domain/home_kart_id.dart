@@ -63,10 +63,14 @@ enum OzetKutuId { toplamDaire, toplamTahsilat, tahsilatOrani, otoparkDoluluk }
 
 /// Kart basligi — aktif dilden.
 String kartBasligi(AppLocalizations l10n, HomeKartId id) => switch (id) {
-      HomeKartId.vardiyaDurum => l10n.kartVardiyaDurum,
-      HomeKartId.vardiyaDurumu => l10n.bolumVardiyaDurumu,
-      HomeKartId.kargo => l10n.kartKargo,
-      HomeKartId.ziyaretci => l10n.kartZiyaretci,
+      // (P144) KANONIK AD = EKRANIN KENDI BASLIGI (Kerem'in karari).
+      // Once ayni ekrana farkli adlarla giriliyordu (or. /vardiyalar UC
+      // ad tasiyordu: "Vardiya Durum", "Vardiya Durumu", "Vardiyalar").
+      // Artik hepsi gidilen ekranin AppBar basligini kullanir.
+      HomeKartId.vardiyaDurum => l10n.vardiyaBaslik,
+      HomeKartId.vardiyaDurumu => l10n.vardiyaBaslik,
+      HomeKartId.kargo => l10n.karBaslik,
+      HomeKartId.ziyaretci => l10n.modulZiyaretciler,
       HomeKartId.aracPlaka => l10n.kartAracPlaka,
       HomeKartId.ihlaller => l10n.kartIhlaller,
       HomeKartId.gorevlerim => l10n.kartGorevlerim,
@@ -76,10 +80,10 @@ String kartBasligi(AppLocalizations l10n, HomeKartId id) => switch (id) {
       HomeKartId.duyurular => l10n.bolumDuyurular,
       HomeKartId.etkinlikler => l10n.bolumEtkinlikler,
       HomeKartId.siteKurallari => l10n.bolumSiteKurallari,
-      HomeKartId.yonetici => l10n.kartYonetici,
-      HomeKartId.ziyaretciler => l10n.kartZiyaretciler,
-      HomeKartId.kargolarim => l10n.kartKargolarim,
-      HomeKartId.aidatBilgileri => l10n.kartAidatBilgileri,
+      HomeKartId.yonetici => l10n.yonIletisimBaslik,
+      HomeKartId.ziyaretciler => l10n.modulZiyaretciler,
+      HomeKartId.kargolarim => l10n.karBaslik,
+      HomeKartId.aidatBilgileri => l10n.aidatBaslik,
       // (P142) AD BIRLESTIRME — Kerem'in karari: "karo adi ile gittigi
       // ekranin adi ayni olacak; kullanici bir karoya basinca adindan
       // bekledigi yere gitmeli."
@@ -91,16 +95,16 @@ String kartBasligi(AppLocalizations l10n, HomeKartId id) => switch (id) {
       HomeKartId.gurultuSikayeti => l10n.kartTalepAriza,
       HomeKartId.geriBildirim => l10n.kartTalepAriza,
       HomeKartId.sikayetlerim => l10n.kartSikayetlerim,
-      HomeKartId.siteRaporlari => l10n.kartSiteRaporlari,
-      HomeKartId.gorevler => l10n.kartGorevler,
-      HomeKartId.aidatDurumu => l10n.kartAidatDurumu,
-      HomeKartId.otoparkKullanimi => l10n.kartOtoparkKullanimi,
+      HomeKartId.siteRaporlari => l10n.modulSeffaflik,
+      HomeKartId.gorevler => l10n.modulGorevYonetimi,
+      HomeKartId.aidatDurumu => l10n.butFinansalOzet,
+      HomeKartId.otoparkKullanimi => l10n.modulOtopark,
       // (P142) EN ZARARLI CAKISMA BUYDU: karonun adi "Sikayetler"di ama
       // gittigi ekran BINA SEMASIYDI (`/sikayetHaritasi`). Kullanici
       // sikayet listesi beklerken kat plani buluyordu. Ad, gittigi
       // ekranin adiyla degistirildi.
       HomeKartId.sikayetler => l10n.modulSikayetHaritasi,
-      HomeKartId.raporlar => l10n.kartRaporlar,
+      HomeKartId.raporlar => l10n.raporBaslik,
       HomeKartId.gonderimKuyrugu => l10n.kartGonderimKuyrugu,
     };
 
