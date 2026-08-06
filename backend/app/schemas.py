@@ -329,7 +329,13 @@ class HesapSilmeIstek(BaseModel):
     baskasinin hesabini silememeli; `PATCH /me/password` ile ayni desen.
     """
 
-    current_password: str = Field(..., min_length=1, max_length=200)
+    #: (P149) Parolasiz kullanicida BOS kalir — sunucu o durumda `kod`
+    #: ister. Zorunlu birakmak, kendi kaydolan sakinin hesabini SILEMEMESI
+    #: demekti (Play sartinin ihlali).
+    current_password: str | None = Field(None, min_length=1, max_length=200)
+    #: (P149) Parolasiz kullanici icin telefon kodu. Parolasi olan
+    #: kullanicida bos birakilir — hangisinin isteneceğini SUNUCU secer.
+    kod: str | None = None
 
 
 class HesapSilmeSonuc(BaseModel):
@@ -1166,6 +1172,15 @@ class KayitBaslaResponse(BaseModel):
     tesis_ad: str
     daire: str
     telefon_maskeli: str
+
+
+class TelefonIstek(BaseModel):
+    telefon: str = Field(min_length=5, max_length=32)
+
+
+class TelefonKodIstek(BaseModel):
+    telefon: str = Field(min_length=5, max_length=32)
+    kod: str = Field(min_length=4, max_length=12)
 
 
 class KayitDurumResponse(BaseModel):

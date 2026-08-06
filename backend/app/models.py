@@ -207,6 +207,9 @@ UNIT_COMPLAINT_KATEGORI = ENUM(
     "diger",
     name="unit_complaint_kategori", create_type=False,
 )
+KOD_AMACI = ENUM(
+    "kayit", "giris", "hesap_silme", name="kod_amaci", create_type=False,
+)
 KAYIT_DURUM = ENUM(
     "telefon_bekliyor", "onay_bekliyor", "onaylandi", "reddedildi",
     name="kayit_durum", create_type=False,
@@ -774,13 +777,19 @@ class KayitDogrulama(Base):
         ForeignKey("tenant.id", ondelete="CASCADE"),
         nullable=False,
     )
-    unit_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    #: YALNIZ `amac='kayit'`te dolu: giris/silme kodunun dairesi yoktur.
+    unit_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     telefon: Mapped[str] = mapped_column(Text, nullable=False)
     #: Kod DUZ METIN tutulmaz (giris kodlariyla ayni kural).
     kod_hash: Mapped[str] = mapped_column(Text, nullable=False)
     son_gecerlilik = mapped_column(TIMESTAMP(timezone=True), nullable=False)
     #: Kaba kuvvet sayaci — 6 haneli kod sayilmadan dakikalar icinde bulunur.
     deneme: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
+    #: (P149) Kodun NE ICIN uretildigi. Giris kodu hesap silmeyi ONAYLAYAMAZ
+    #: — "tek kod her kapiyi acar" hatasi yapisal olarak engellenir.
+    amac: Mapped[str] = mapped_column(
+        KOD_AMACI, nullable=False, server_default=text("'kayit'")
+    )
     #: (P148.2) Basvuru sahibinin verdigi ad — onay ekraninda gorunur.
     ad: Mapped[str | None] = mapped_column(Text, nullable=True)
     durum: Mapped[str] = mapped_column(

@@ -23,6 +23,8 @@ from ..db import SessionLocal, set_tenant
 from ..deps import get_redis, gorev_penceresi_disinda
 from ..errors import APIError
 from ..mesajlasma import LogSmsSaglayici
+from ..telefon_kodu import GECERSIZ as TK_GECERSIZ
+from ..telefon_kodu import kod_uret_ve_gonder, kodu_dogrula
 from ..models import (
     AppUser,
     KayitDogrulama,
@@ -31,6 +33,8 @@ from ..models import (
     UnitResident,
 )
 from ..schemas import (
+    TelefonIstek,
+    TelefonKodIstek,
     KayitBaslaRequest,
     KayitBaslaResponse,
     KayitDogrulaRequest,
@@ -525,3 +529,83 @@ async def kayit_dogrula(body: KayitDogrulaRequest) -> KayitDurumResponse:
             await session.flush()
 
     return KayitDurumResponse(durum="onay_bekliyor")
+
+
+# ==================== (P149) PAROLASIZ GIRIS (telefon + kod) ================ #
+#
+# NEDEN VAR: P148 sakinleri PAROLASIZ aciyor (`password_hash=NULL`). Mevcut
+# `login-phone` ya kalici parola ya gecici kod ariyordu; ikisi de olmayan
+# kullanici HIC GIRIS YAPAMIYORDU — onaylanan hesap kullanilamaz kaliyordu.
+#
+# Kod mekanizmasi kayitla AYNI (`telefon_kodu`): guvenlik ozellikleri tek
+# yerde, `amac` ayrimi giris kodunun baska bir kapiyi acmasini engelliyor.
+
+
+@router.post("/giris/kod-iste", response_model=KayitDurumResponse)
+async def giris_kodu_iste(body: TelefonIstek) -> KayitDurumResponse:
+    """Kayitli ve AKTIF numaraya giris kodu gonderir.
+
+    NUMARA VARLIGINI SIZDIRMAZ: numara kayitli olmasa da yanit AYNIDIR.
+    Aksi halde bu uc bir "hangi numaralar kayitli" sorgusuna donusurdu.
+    """
+    try:
+        phone = normalize_phone(body.telefon)
+    except ValueError:
+        return KayitDurumResponse(durum="onay_bekliyor")
+
+    async with SessionLocal() as session:
+        async with session.begin():
+            tenant_id = (
+                await session.execute(
+                    text("SELECT public.tenant_id_by_phone(:p)"), {"p": phone}
+                )
+            ).scalar_one_or_none()
+            if tenant_id is None:
+                return KayitDurumResponse(durum="onay_bekliyor")
+            await set_tenant(session, tenant_id)
+            user = (
+                await session.execute(
+                    select(AppUser).where(AppUser.telefon == phone)
+                )
+            ).scalar_one_or_none()
+            if user is None or not user.is_active:
+                return KayitDurumResponse(durum="onay_bekliyor")
+            await kod_uret_ve_gonder(
+                session, tenant_id=tenant_id, telefon=phone, amac="giris"
+            )
+    return KayitDurumResponse(durum="onay_bekliyor")
+
+
+@router.post("/giris/kod-dogrula", response_model=TokenPair)
+async def giris_kodu_dogrula(
+    body: TelefonKodIstek,
+    redis: aioredis.Redis = Depends(get_redis),
+) -> TokenPair:
+    """Kod dogru ise OTURUM ACAR — parola aranmaz."""
+    try:
+        phone = normalize_phone(body.telefon)
+    except ValueError:
+        raise TK_GECERSIZ
+
+    async with SessionLocal() as session:
+        async with session.begin():
+            kayit = await kodu_dogrula(
+                session, telefon=phone, kod=body.kod, amac="giris"
+            )
+            await set_tenant(session, kayit.tenant_id)
+            user = (
+                await session.execute(
+                    select(AppUser).where(AppUser.telefon == phone)
+                )
+            ).scalar_one_or_none()
+            if user is None or not user.is_active:
+                raise TK_GECERSIZ
+            # (P128) Gorev suresi disindaki denetci token ALMAZ — parolali
+            # yolla ayni kural; buraya da konmali, yoksa parolasiz yol
+            # kapiyi delerdi.
+            if gorev_penceresi_disinda(user):
+                raise _GOREV_SURESI_DISINDA
+            # Kod TUKETILIR: tekrar kullanilamaz.
+            kayit.durum = "onaylandi"
+            await session.flush()
+            return await _issue_token_pair(redis, user)

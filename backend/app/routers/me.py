@@ -14,6 +14,7 @@ from ..audit import Action, record_audit
 from ..audit import audit_user
 from ..deps import get_current_user, get_tenant_db, require_role
 from ..errors import APIError
+from ..telefon_kodu import kod_uret_ve_gonder, kodu_dogrula
 from ..hesap_silme import hesabi_sil_veya_anonimlestir, son_admin_mi
 from ..models import AppUser, Checkpoint
 from ..schemas import (
@@ -100,7 +101,23 @@ async def change_my_password(
     login'deki gizlilik ilkesi burada gerekmez — kullanici zaten kimlikli).
     Basarida yeni bcrypt hash yazilir; oturum (refresh) devam eder.
     """
-    if not verify_password(body.current_password, user.password_hash):
+    # (P149) PAROLASIZ KULLANICI DA HESABINI SILEBILMELI.
+    #
+    # P148 sakinleri `password_hash=NULL` ile aciyor; burasi kosulsuz parola
+    # ariyordu, yani kendi kaydolan sakin hesabini SILEMIYORDU. Play'in
+    # "silme yolu calismali" sarti dogrudan ihlal ediliyordu.
+    #
+    # Dogrulama ARACI degisir, GUCU degismez: parolasi olanda parola,
+    # olmayanda telefonuna gonderilen KOD. Ikisi de "hesabin sahibi
+    # oldugunu kanitla" ayni esigi tasir; kod `amac='hesap_silme'` ile
+    # uretilir, giris kodu buraya YARAMAZ.
+    if user.password_hash is None:
+        if not body.kod:
+            raise APIError(400, "code_required", "silme_kodu_gerekli")
+        await kodu_dogrula(
+            db, telefon=user.telefon or "", kod=body.kod, amac="hesap_silme"
+        )
+    elif not verify_password(body.current_password or "", user.password_hash):
         raise APIError(400, "invalid_credentials", "mevcut_parola_hatali")
     user.password_hash = hash_password(body.new_password)
     user.password_set = True
@@ -111,6 +128,24 @@ async def change_my_password(
     )
     # get_tenant_db transaction'i cikista commit eder (user ayni oturuma bagli).
     return Response(status_code=204)
+
+
+@router.post("/me/hesap-sil/kod-iste", response_model=dict)
+async def hesap_silme_kodu_iste(
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(get_current_user),
+) -> dict[str, str]:
+    """(P149) Parolasiz kullanici icin silme onay kodu.
+
+    Parolasi olan kullanici bu ucu cagirmaz; cagirirsa da zarari yok —
+    kod uretilir ama silme yolu ondan parola ister.
+    """
+    if not user.telefon:
+        raise APIError(422, "no_phone", "telefon_yok")
+    await kod_uret_ve_gonder(
+        db, tenant_id=user.tenant_id, telefon=user.telefon, amac="hesap_silme"
+    )
+    return {"durum": "gonderildi"}
 
 
 @router.post("/me/hesap-sil", response_model=HesapSilmeSonuc)
@@ -141,7 +176,23 @@ async def delete_my_account(
     kimlik alanlari + cihaz kayitlari gider; yasal saklama yukumlulugu olan
     finans/denetim satirlari **anonim** olarak kalir.
     """
-    if not verify_password(body.current_password, user.password_hash):
+    # (P149) PAROLASIZ KULLANICI DA HESABINI SILEBILMELI.
+    #
+    # P148 sakinleri `password_hash=NULL` ile aciyor; burasi kosulsuz parola
+    # ariyordu, yani kendi kaydolan sakin hesabini SILEMIYORDU. Play'in
+    # "silme yolu calismali" sarti dogrudan ihlal ediliyordu.
+    #
+    # Dogrulama ARACI degisir, GUCU degismez: parolasi olanda parola,
+    # olmayanda telefonuna gonderilen KOD. Ikisi de "hesabin sahibi
+    # oldugunu kanitla" ayni esigi tasir; kod `amac='hesap_silme'` ile
+    # uretilir, giris kodu buraya YARAMAZ.
+    if user.password_hash is None:
+        if not body.kod:
+            raise APIError(400, "code_required", "silme_kodu_gerekli")
+        await kodu_dogrula(
+            db, telefon=user.telefon or "", kod=body.kod, amac="hesap_silme"
+        )
+    elif not verify_password(body.current_password or "", user.password_hash):
         raise APIError(400, "invalid_credentials", "mevcut_parola_hatali")
     if await son_admin_mi(db, user):
         raise APIError(409, "conflict", "son_yonetici_devretmeden_silinemez")
