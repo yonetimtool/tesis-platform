@@ -1,3 +1,4 @@
+import '../../../core/izin/belirgin_aciklama.dart';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -846,6 +847,15 @@ class _ComplaintFormState extends ConsumerState<_ComplaintForm> {
       ),
     );
     if (source == null) return;
+    // (P141.5) BELIRGIN ACIKLAMA: KAMERA secildiginde, isletim sistemi
+    // iznini istemeden ONCE amaci goster. Galeri seciminde gosterilmez —
+    // Android Photo Picker izin ISTEMEZ, aciklama da gereksiz gurultudur.
+    if (source == ImageSource.camera) {
+      if (!mounted) return;
+      final onay =
+          await belirginAciklamaGoster(context, IzinTuru.talepFotograf);
+      if (!onay || !mounted) return;
+    }
     final ayrinti = await _form.addPhoto(source);
     if (ayrinti != null && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(

@@ -1433,5 +1433,10 @@
   "talepGeriAlindi": "Solicitud retirada",
   "talepDurumGeriAlindi": "Retirada",
   "sikayetGeriAl": "Retirar la queja",
-  "sikayetGeriAlindi": "Queja retirada"
+  "sikayetGeriAlindi": "Queja retirada",
+  "izinDevam": "Continuar",
+  "izinKonumBaslik": "¿Por qué se necesita la ubicación?",
+  "izinKonumGovde": "Al escanear un punto de control, se registra su ubicación en ese momento para confirmar que la ronda se realizó realmente en el sitio. La ubicación se obtiene SOLO en el momento del escaneo; la aplicación no le rastrea en segundo plano.",
+  "izinKameraBaslik": "¿Por qué se necesita la cámara?",
+  "izinKameraGovde": "La cámara se usa para que pueda adjuntar una foto al informar una solicitud o avería. La foto solo se toma cuando usted la hace y se envía a la administración."
 }

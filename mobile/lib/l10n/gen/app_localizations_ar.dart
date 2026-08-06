@@ -4889,4 +4889,21 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get sikayetGeriAlindi => 'تم سحب الشكوى';
+
+  @override
+  String get izinDevam => 'متابعة';
+
+  @override
+  String get izinKonumBaslik => 'لماذا نحتاج إذن الموقع؟';
+
+  @override
+  String get izinKonumGovde =>
+      'عند مسح نقطة الدورية، يُسجَّل موقعك في تلك اللحظة للتأكد من أن الجولة تمت فعليًا في الموقع. يُلتقط الموقع فقط لحظة المسح؛ التطبيق لا يتتبعك في الخلفية.';
+
+  @override
+  String get izinKameraBaslik => 'لماذا نحتاج إذن الكاميرا؟';
+
+  @override
+  String get izinKameraGovde =>
+      'تُستخدم الكاميرا لتتمكن من إرفاق صورة عند الإبلاغ عن طلب أو عطل. لا تُلتقط الصورة إلا عندما تلتقطها أنت، وتُرسل إلى إدارة المجمع.';
 }

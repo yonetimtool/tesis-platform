@@ -1433,5 +1433,10 @@
   "talepGeriAlindi": "Request withdrawn",
   "talepDurumGeriAlindi": "Withdrawn",
   "sikayetGeriAl": "Withdraw complaint",
-  "sikayetGeriAlindi": "Complaint withdrawn"
+  "sikayetGeriAlindi": "Complaint withdrawn",
+  "izinDevam": "Continue",
+  "izinKonumBaslik": "Why is location needed?",
+  "izinKonumGovde": "When you scan a patrol checkpoint, your location at that moment is recorded to confirm the round was actually walked on site. Location is captured ONLY at the moment of scanning; the app does not track you in the background.",
+  "izinKameraBaslik": "Why is the camera needed?",
+  "izinKameraGovde": "The camera is used so you can attach a photo when reporting a request or fault. A photo is captured only when you take it, and it is sent to the building management."
 }

@@ -4775,4 +4775,23 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get sikayetGeriAlindi => 'Plainte retirée';
+
+  @override
+  String get izinDevam => 'Continuer';
+
+  @override
+  String get izinKonumBaslik =>
+      'Pourquoi la localisation est-elle nécessaire ?';
+
+  @override
+  String get izinKonumGovde =>
+      'Lorsque vous scannez un point de contrôle, votre position à cet instant est enregistrée pour confirmer que la ronde a bien été effectuée sur place. La position est relevée UNIQUEMENT au moment du scan ; l\'application ne vous suit pas en arrière-plan.';
+
+  @override
+  String get izinKameraBaslik =>
+      'Pourquoi l\'appareil photo est-il nécessaire ?';
+
+  @override
+  String get izinKameraGovde =>
+      'L\'appareil photo permet de joindre une photo lors du signalement d\'une demande ou d\'une panne. Une photo n\'est prise que par vous et elle est envoyée à la gestion.';
 }

@@ -4788,4 +4788,21 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get sikayetGeriAlindi => 'Beschwerde zurückgezogen';
+
+  @override
+  String get izinDevam => 'Weiter';
+
+  @override
+  String get izinKonumBaslik => 'Warum wird der Standort benötigt?';
+
+  @override
+  String get izinKonumGovde =>
+      'Beim Scannen eines Kontrollpunkts wird Ihr Standort in diesem Moment erfasst, um zu bestätigen, dass der Rundgang tatsächlich vor Ort erfolgt ist. Der Standort wird NUR beim Scannen erfasst; die App verfolgt Sie nicht im Hintergrund.';
+
+  @override
+  String get izinKameraBaslik => 'Warum wird die Kamera benötigt?';
+
+  @override
+  String get izinKameraGovde =>
+      'Die Kamera wird verwendet, damit Sie bei einer Anfrage oder Störung ein Foto anhängen können. Ein Foto wird nur aufgenommen, wenn Sie es machen, und an die Verwaltung gesendet.';
 }

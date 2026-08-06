@@ -4620,4 +4620,21 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get sikayetGeriAlindi => 'Şikayet geri alındı';
+
+  @override
+  String get izinDevam => 'Devam';
+
+  @override
+  String get izinKonumBaslik => 'Konum izni neden gerekli?';
+
+  @override
+  String get izinKonumGovde =>
+      'Devriye noktasını okuttuğunuzda, turun gerçekten sahada yapıldığını doğrulamak için o anki konumunuz kaydedilir. Konumunuz YALNIZCA okutma anında alınır; uygulama sizi arka planda takip etmez.';
+
+  @override
+  String get izinKameraBaslik => 'Kamera izni neden gerekli?';
+
+  @override
+  String get izinKameraGovde =>
+      'Talep veya arıza bildirirken fotoğraf ekleyebilmeniz için kamera kullanılır. Fotoğraf yalnızca siz çektiğinizde alınır ve tesis yönetimine iletilir.';
 }

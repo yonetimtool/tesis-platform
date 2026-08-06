@@ -4808,4 +4808,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sikayetGeriAlindi => 'Complaint withdrawn';
+
+  @override
+  String get izinDevam => 'Continue';
+
+  @override
+  String get izinKonumBaslik => 'Why is location needed?';
+
+  @override
+  String get izinKonumGovde =>
+      'When you scan a patrol checkpoint, your location at that moment is recorded to confirm the round was actually walked on site. Location is captured ONLY at the moment of scanning; the app does not track you in the background.';
+
+  @override
+  String get izinKameraBaslik => 'Why is the camera needed?';
+
+  @override
+  String get izinKameraGovde =>
+      'The camera is used so you can attach a photo when reporting a request or fault. A photo is captured only when you take it, and it is sent to the building management.';
 }

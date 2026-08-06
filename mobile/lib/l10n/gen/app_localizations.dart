@@ -8170,6 +8170,36 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Şikayet geri alındı'**
   String get sikayetGeriAlindi;
+
+  /// No description provided for @izinDevam.
+  ///
+  /// In tr, this message translates to:
+  /// **'Devam'**
+  String get izinDevam;
+
+  /// No description provided for @izinKonumBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Konum izni neden gerekli?'**
+  String get izinKonumBaslik;
+
+  /// No description provided for @izinKonumGovde.
+  ///
+  /// In tr, this message translates to:
+  /// **'Devriye noktasını okuttuğunuzda, turun gerçekten sahada yapıldığını doğrulamak için o anki konumunuz kaydedilir. Konumunuz YALNIZCA okutma anında alınır; uygulama sizi arka planda takip etmez.'**
+  String get izinKonumGovde;
+
+  /// No description provided for @izinKameraBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kamera izni neden gerekli?'**
+  String get izinKameraBaslik;
+
+  /// No description provided for @izinKameraGovde.
+  ///
+  /// In tr, this message translates to:
+  /// **'Talep veya arıza bildirirken fotoğraf ekleyebilmeniz için kamera kullanılır. Fotoğraf yalnızca siz çektiğinizde alınır ve tesis yönetimine iletilir.'**
+  String get izinKameraGovde;
 }
 
 class _AppLocalizationsDelegate

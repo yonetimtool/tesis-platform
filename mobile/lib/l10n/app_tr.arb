@@ -2025,5 +2025,10 @@
   "talepGeriAlindi": "Talep geri alındı",
   "talepDurumGeriAlindi": "Geri Alındı",
   "sikayetGeriAl": "Şikayeti geri al",
-  "sikayetGeriAlindi": "Şikayet geri alındı"
+  "sikayetGeriAlindi": "Şikayet geri alındı",
+  "izinDevam": "Devam",
+  "izinKonumBaslik": "Konum izni neden gerekli?",
+  "izinKonumGovde": "Devriye noktasını okuttuğunuzda, turun gerçekten sahada yapıldığını doğrulamak için o anki konumunuz kaydedilir. Konumunuz YALNIZCA okutma anında alınır; uygulama sizi arka planda takip etmez.",
+  "izinKameraBaslik": "Kamera izni neden gerekli?",
+  "izinKameraGovde": "Talep veya arıza bildirirken fotoğraf ekleyebilmeniz için kamera kullanılır. Fotoğraf yalnızca siz çektiğinizde alınır ve tesis yönetimine iletilir."
 }

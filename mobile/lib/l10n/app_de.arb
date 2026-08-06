@@ -1433,5 +1433,10 @@
   "talepGeriAlindi": "Anfrage zurückgezogen",
   "talepDurumGeriAlindi": "Zurückgezogen",
   "sikayetGeriAl": "Beschwerde zurückziehen",
-  "sikayetGeriAlindi": "Beschwerde zurückgezogen"
+  "sikayetGeriAlindi": "Beschwerde zurückgezogen",
+  "izinDevam": "Weiter",
+  "izinKonumBaslik": "Warum wird der Standort benötigt?",
+  "izinKonumGovde": "Beim Scannen eines Kontrollpunkts wird Ihr Standort in diesem Moment erfasst, um zu bestätigen, dass der Rundgang tatsächlich vor Ort erfolgt ist. Der Standort wird NUR beim Scannen erfasst; die App verfolgt Sie nicht im Hintergrund.",
+  "izinKameraBaslik": "Warum wird die Kamera benötigt?",
+  "izinKameraGovde": "Die Kamera wird verwendet, damit Sie bei einer Anfrage oder Störung ein Foto anhängen können. Ein Foto wird nur aufgenommen, wenn Sie es machen, und an die Verwaltung gesendet."
 }

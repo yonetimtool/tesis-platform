@@ -4764,4 +4764,21 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get sikayetGeriAlindi => 'Queja retirada';
+
+  @override
+  String get izinDevam => 'Continuar';
+
+  @override
+  String get izinKonumBaslik => '¿Por qué se necesita la ubicación?';
+
+  @override
+  String get izinKonumGovde =>
+      'Al escanear un punto de control, se registra su ubicación en ese momento para confirmar que la ronda se realizó realmente en el sitio. La ubicación se obtiene SOLO en el momento del escaneo; la aplicación no le rastrea en segundo plano.';
+
+  @override
+  String get izinKameraBaslik => '¿Por qué se necesita la cámara?';
+
+  @override
+  String get izinKameraGovde =>
+      'La cámara se usa para que pueda adjuntar una foto al informar una solicitud o avería. La foto solo se toma cuando usted la hace y se envía a la administración.';
 }

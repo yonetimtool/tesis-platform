@@ -4878,4 +4878,21 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get sikayetGeriAlindi => 'Жалоба отозвана';
+
+  @override
+  String get izinDevam => 'Продолжить';
+
+  @override
+  String get izinKonumBaslik => 'Зачем нужен доступ к геолокации?';
+
+  @override
+  String get izinKonumGovde =>
+      'При сканировании контрольной точки записывается ваше местоположение в этот момент, чтобы подтвердить, что обход действительно выполнен на объекте. Местоположение фиксируется ТОЛЬКО в момент сканирования; приложение не отслеживает вас в фоновом режиме.';
+
+  @override
+  String get izinKameraBaslik => 'Зачем нужен доступ к камере?';
+
+  @override
+  String get izinKameraGovde =>
+      'Камера нужна, чтобы вы могли приложить фотографию при сообщении о заявке или неисправности. Фото делается только вами и отправляется управляющей компании.';
 }

@@ -1,3 +1,4 @@
+import '../../../core/izin/belirgin_aciklama.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -137,7 +138,21 @@ class _NfcScreenState extends ConsumerState<NfcScreen> {
   }
 
   /// Konumu alir; SONUC NE OLURSA OLSUN okutma devam eder.
+  /// Aciklama oturum basina BIR KEZ: her okutmada tekrar cikmasi
+  /// sahada is yavaslatir; Play sarti "izin istenmeden once"dir,
+  /// "her seferinde" degil.
+  bool _konumAciklamasiGosterildi = false;
+
   Future<KonumSonucu> _konumAl() async {
+    // (P141.5) BELIRGIN ACIKLAMA isletim sisteminin izin sorusundan ONCE.
+    // Kullanici onaylamazsa izin HIC ISTENMEZ — "once izni al, sonra
+    // acikla" Play sartini karsilamis GORUNUP karsilamaz.
+    if (!_konumAciklamasiGosterildi) {
+      final onay = await belirginAciklamaGoster(context, IzinTuru.devriyeKonum);
+      if (!mounted) return const KonumSonucu.yok(KonumDurumu.izinYok);
+      if (!onay) return const KonumSonucu.yok(KonumDurumu.izinYok);
+      _konumAciklamasiGosterildi = true;
+    }
     final sonuc = await ref.read(konumKaynagiProvider).al(
           zamanAsimi: const Duration(seconds: 6),
         );
