@@ -48,6 +48,11 @@ from sqlalchemy import delete as sa_delete, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+import logging
+
+logger = logging.getLogger(__name__)
+
+from . import storage
 from .models import AppUser, HesapSilmeKaydi, UnitResident, UserDevice
 
 #: KVKK anonimlestirme yer tutucusu.
@@ -125,6 +130,20 @@ async def _anonimlestir(db: AsyncSession, hedef: AppUser) -> None:
     hedef.is_active = False
     # Avatar da kisisel veridir; anahtarin kalmasi nesnenin adresini
     # birakmak demekti.
+    # (P141.6) OBJEYI DE SIL, yalniz referansi degil. Once burada sadece
+    # `avatar_key = None` vardi ve dosya MinIO'da YETIM KALIYORDU: kayit
+    # "silindi" gorunuyor ama kisinin yuz fotografi depoda duruyordu.
+    # Bir avatar operasyonel/denetim kaydi DEGILDIR — devriye fotografi
+    # gibi savunulabilir bir saklama gerekcesi yok.
+    #
+    # HATA KAYDI KIRMAZ: MinIO erisilemezse silme islemi geri sarilmaz;
+    # kullanicinin hesabi silinir ve obje gecelik retention'a kalir.
+    # Tersi, depo arizasinda kullanicinin hesabini silememesi olurdu.
+    if hedef.avatar_key:
+        try:
+            storage.delete_objects([hedef.avatar_key])
+        except Exception:
+            logger.warning("[hesap-silme] avatar objesi silinemedi")
     hedef.avatar_key = None
     hedef.updated_at = now
     await db.flush()
