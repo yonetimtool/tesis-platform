@@ -4,7 +4,11 @@ export type PatrolWindowDurum = "bekliyor" | "tamamlandi" | "kacirildi";
 export type AlarmTip =
   | "kacirilan_tur"
   | "eksik_checkpoint"
-  | "gecikmis_okutma";
+  | "gecikmis_okutma"
+  | "kargo"
+  | "ziyaretci"
+  | "rezervasyon"
+  | "sikayet_cozuldu";
 
 export interface AktifTur {
   patrol_window_id: string;

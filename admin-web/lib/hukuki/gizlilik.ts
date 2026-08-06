@@ -80,6 +80,7 @@ export const GIZLILIK: BelgeSeti = {
         paragraflar: [
           "KVKK md. 11 ve GDPR kapsamında: verilerinize erişme, düzeltilmesini isteme, silinmesini isteme, işlemeye itiraz etme ve rızanızı geri alma haklarına sahipsiniz.",
           "**Hesabınızı uygulama içinden silebilirsiniz:** Ayarlar → Hesabımı sil. Adınız, telefonunuz, e-postanız, profil fotoğrafınız ve cihaz kayıtlarınız silinir; giriş yapamaz hâle gelirsiniz.",
+          "**Devriye okutmalarında kaydedilen konum bilgileri ve yüklediğiniz fotoğraflar silinmez:** bunlar tesisin operasyonel ve denetim kaydıdır ve silinmeleri o kaydın geçmişini bozardı. Silme sonrasında bu kayıtlar sizinle ilişkilendirilemez hâle gelir. Ayrıntı: yonetiyor.com/hesap-silme",
           "Yasal olarak saklanması zorunlu olan aidat/ödeme ve denetim kayıtları silinemez; bu kayıtlar **adınızla ilişkisi kesilerek anonim** hâlde saklanmaya devam eder. Bu, tesisin diğer sakinlerinin doğru hesap görme hakkının korunması için zorunludur.",
           "Diğer talepleriniz için önce tesis yönetiminize, sonuç alamazsanız aşağıdaki adrese başvurabilirsiniz.",
         ],
@@ -182,6 +183,7 @@ export const GIZLILIK: BelgeSeti = {
         paragraflar: [
           "Under KVKK art. 11 and the GDPR you have the right to access your data, to have it corrected or deleted, to object to processing and to withdraw your consent.",
           "**You can delete your account from inside the app:** Settings → Delete my account. Your name, phone number, e-mail address, profile photo and device records are deleted and you can no longer sign in.",
+          "**Location recorded during patrol scans and photos you uploaded are not deleted:** they are the building's operational and audit record, and deleting them would break that record's history. After deletion these records can no longer be linked to you. Details: yonetiyor.com/hesap-silme",
           "Dues/payment and audit records that we are legally required to keep cannot be deleted; they remain stored **anonymously, with the link to your name removed**. This is necessary to protect the other residents' right to correct accounts.",
           "For other requests, contact your site management first and, if that does not resolve the matter, the address below.",
         ],
@@ -284,6 +286,7 @@ export const GIZLILIK: BelgeSeti = {
         paragraflar: [
           "بموجب المادة 11 من KVKK واللائحة الأوروبية: لك حق الاطلاع والتصحيح والحذف والاعتراض وسحب الموافقة.",
           "**يمكنك حذف حسابك من داخل التطبيق:** الإعدادات ← حذف حسابي. يُحذف اسمك ورقم هاتفك وبريدك وصورتك وسجلات أجهزتك ولن تتمكن من تسجيل الدخول.",
+          "**بيانات الموقع المسجَّلة أثناء مسح الدوريات والصور التي رفعتها لا تُحذف:** فهي السجل التشغيلي والرقابي للمجمّع، وحذفها يُفسد تاريخ ذلك السجل. بعد الحذف لا يمكن ربط هذه السجلات بك. التفاصيل: yonetiyor.com/hesap-silme",
           "لا يمكن حذف سجلات الرسوم والمدفوعات والتدقيق التي يلزمنا القانون بحفظها؛ تبقى مخزَّنة **بشكل مجهول بعد فصلها عن اسمك**. هذا ضروري لحماية حق بقية السكان في حسابات صحيحة.",
           "للطلبات الأخرى راجع إدارة موقعك أولًا، ثم العنوان أدناه إن لم تُحل المسألة.",
         ],
@@ -386,6 +389,7 @@ export const GIZLILIK: BelgeSeti = {
         paragraflar: [
           "Согласно ст. 11 KVKK и GDPR вы вправе получить доступ к данным, потребовать их исправления или удаления, возразить против обработки и отозвать согласие.",
           "**Учётную запись можно удалить прямо в приложении:** Настройки → Удалить мою учётную запись. Ваше имя, телефон, e-mail, фотография профиля и записи об устройствах удаляются, и вход становится невозможным.",
+          "**Данные о местоположении, записанные при сканировании обходов, и загруженные вами фотографии не удаляются:** это операционные и контрольные записи объекта, их удаление нарушило бы историю записи. После удаления эти записи невозможно связать с вами. Подробнее: yonetiyor.com/hesap-silme",
           "Записи о взносах, платежах и аудите, которые мы обязаны хранить по закону, удалить нельзя; они остаются в системе **обезличенными, без связи с вашим именем**. Это необходимо для защиты права других жильцов на корректные расчёты.",
           "По остальным вопросам обращайтесь сначала в управление объекта, а затем по адресу ниже.",
         ],
@@ -488,6 +492,7 @@ export const GIZLILIK: BelgeSeti = {
         paragraflar: [
           "Nach KVKK Art. 11 und DSGVO haben Sie das Recht auf Auskunft, Berichtigung, Löschung, Widerspruch und Widerruf Ihrer Einwilligung.",
           "**Sie können Ihr Konto in der App löschen:** Einstellungen → Mein Konto löschen. Name, Telefonnummer, E-Mail-Adresse, Profilbild und Geräteeinträge werden gelöscht; eine Anmeldung ist danach nicht mehr möglich.",
+          "**Bei Rundgang-Scans erfasste Standortdaten und von Ihnen hochgeladene Fotos werden nicht gelöscht:** Sie sind der betriebliche und Prüf-Nachweis des Objekts; ihre Löschung würde dessen Historie zerstören. Nach der Löschung sind diese Datensätze Ihnen nicht mehr zuordenbar. Details: yonetiyor.com/hesap-silme",
           "Beitrags-, Zahlungs- und Prüfunterlagen, zu deren Aufbewahrung wir gesetzlich verpflichtet sind, können nicht gelöscht werden; sie bleiben **anonymisiert und ohne Bezug zu Ihrem Namen** gespeichert. Das schützt das Recht der übrigen Bewohner auf korrekte Abrechnungen.",
           "Für weitere Anliegen wenden Sie sich zuerst an Ihre Verwaltung und anschließend an die untenstehende Adresse.",
         ],
@@ -590,6 +595,7 @@ export const GIZLILIK: BelgeSeti = {
         paragraflar: [
           "Au titre de l'art. 11 de la KVKK et du RGPD, vous disposez d'un droit d'accès, de rectification, d'effacement, d'opposition et de retrait du consentement.",
           "**Vous pouvez supprimer votre compte depuis l'application :** Paramètres → Supprimer mon compte. Vos nom, téléphone, e-mail, photo de profil et enregistrements d'appareils sont supprimés et la connexion devient impossible.",
+          "**Les données de localisation enregistrées lors des rondes et les photos que vous avez téléversées ne sont pas supprimées :** elles constituent le registre opérationnel et d'audit du site, et les supprimer romprait l'historique de ce registre. Après suppression, ces enregistrements ne peuvent plus vous être rattachés. Détails : yonetiyor.com/hesap-silme",
           "Les pièces de charges, de paiement et d'audit que la loi nous impose de conserver ne peuvent pas être supprimées ; elles restent stockées **de façon anonyme, sans lien avec votre nom**. C'est nécessaire pour protéger le droit des autres résidents à des comptes exacts.",
           "Pour toute autre demande, adressez-vous d'abord à la gestion de votre site, puis à l'adresse ci-dessous.",
         ],
@@ -692,6 +698,7 @@ export const GIZLILIK: BelgeSeti = {
         paragraflar: [
           "Conforme al art. 11 de la KVKK y al RGPD, tiene derecho de acceso, rectificación, supresión, oposición y retirada del consentimiento.",
           "**Puede eliminar su cuenta desde la aplicación:** Ajustes → Eliminar mi cuenta. Se eliminan su nombre, teléfono, correo electrónico, foto de perfil y registros de dispositivos, y ya no podrá iniciar sesión.",
+          "**Los datos de ubicación registrados en las rondas y las fotos que subió no se eliminan:** son el registro operativo y de auditoría del edificio, y eliminarlos rompería su historial. Tras la eliminación, estos registros ya no pueden vincularse con usted. Detalles: yonetiyor.com/hesap-silme",
           "Los registros de cuotas, pagos y auditoría que la ley nos obliga a conservar no pueden eliminarse; permanecen almacenados **de forma anónima, sin vínculo con su nombre**. Esto es necesario para proteger el derecho de los demás vecinos a cuentas correctas.",
           "Para el resto de solicitudes, diríjase primero a la administración de su comunidad y después a la dirección indicada abajo.",
         ],

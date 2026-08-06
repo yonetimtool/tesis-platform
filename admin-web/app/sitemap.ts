@@ -7,7 +7,7 @@ import { konakYuzeyi } from "@/lib/yuzey";
 
 // (P127) sitemap.xml — YALNIZ tanitim yuzeyinde anlamli.
 //
-// Uc PUBLIC adres var: kok, gizlilik, kosullar. Calisma alani rotalari
+// Dort PUBLIC adres var: kok, gizlilik, kosullar, hesap-silme. Calisma alani rotalari
 // BILEREK YOK — hepsi oturum arkasindadir ve haritaya koymak, tarayiciyi
 // 302 zincirine sokup indeks butcesini bosa harcatirdi.
 //
@@ -35,5 +35,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
     { url: `${koken}/gizlilik`, lastModified: GUNCELLEME, changeFrequency: "yearly", priority: 0.3 },
     { url: `${koken}/kosullar`, lastModified: GUNCELLEME, changeFrequency: "yearly", priority: 0.3 },
+    // (P141.3) Play'in ZORUNLU tuttugu girissiz silme sayfasi.
+    { url: `${koken}/hesap-silme`, lastModified: GUNCELLEME, changeFrequency: "yearly", priority: 0.3 },
   ];
 }

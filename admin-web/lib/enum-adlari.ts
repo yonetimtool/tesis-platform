@@ -28,6 +28,13 @@ export const BILDIRIM_TIP: EnumHarita = {
   talep_cozuldu: "bildirimTipTalepCozuldu",
   talep_reddedildi: "bildirimTipTalepReddedildi",
   is_emri_atandi: "bildirimTipIsEmriAtandi",
+  // (P147) Sakinin KENDI olaylarinin geri donusu. Bu dort deger arka uca
+  // eklendiginde BURASI unutulmustu ve `enum-bag` kilidi yakaladi —
+  // aynanin varlik sebebi tam olarak bu.
+  kargo: "bildirimTipKargo",
+  ziyaretci: "bildirimTipZiyaretci",
+  rezervasyon: "bildirimTipRezervasyon",
+  sikayet_cozuldu: "bildirimTipSikayetCozuldu",
 };
 
 /** `patrol_window_durum` (pano "Bugunun turlari" + tur raporu). */
