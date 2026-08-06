@@ -22,7 +22,7 @@ from ..config import settings
 from ..db import SessionLocal, set_tenant
 from ..deps import get_redis, gorev_penceresi_disinda
 from ..errors import APIError
-from ..mesajlasma import LogSmsSaglayici
+from ..mesajlasma import sms_saglayicisi
 from ..telefon_kodu import GECERSIZ as TK_GECERSIZ
 from ..telefon_kodu import kod_uret_ve_gonder, kodu_dogrula
 from ..models import (
@@ -466,7 +466,7 @@ async def kayit_basla(
             # SMS saglayici bugun LOG saglayicisidir: kod GONDERILMEZ,
             # gunluge yazilir. Gercek gecit baglanmasi YAPILANDIRMA isidir
             # (bkz. mesajlasma.MesajSaglayici) — bu uc degismez.
-            LogSmsSaglayici().gonder(
+            sms_saglayicisi().gonder(
                 phone, None,
                 f"Yönetio kayıt kodunuz: {kod} "
                 f"({_KAYIT_KOD_OMRU_DK} dakika geçerli)",

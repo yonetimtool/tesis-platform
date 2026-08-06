@@ -162,6 +162,14 @@ class Settings(BaseSettings):
     # --- E-posta (P32) — SMTP YAPILANDIRILMAMISSA saglayici LOG'a duser.
     # Mimarinin kosulu buydu: gercek gonderim bir YAPILANDIRMA degisikligi
     # olmali, kod degisikligi degil.
+    # (P150) SMS GECIDI. Hicbiri verilmezse saglayici LOG'dur ve SMS
+    # GERCEKTEN GITMEZ — bu, "yanlislikla gonderim" yerine "hic gonderim"
+    # tarafinda hata yapmak icin bilincli bir varsayilan.
+    sms_saglayici: str | None = None        # "netgsm" | None
+    sms_kullanici: str | None = None
+    sms_parola: str | None = None
+    sms_baslik: str | None = None           # onayli gonderici basligi
+    sms_url: str = "https://api.netgsm.com.tr/sms/send/get"
     smtp_host: str | None = None
     smtp_port: int = 587
     smtp_user: str | None = None

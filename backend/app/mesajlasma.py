@@ -163,6 +163,64 @@ class LogSmsSaglayici(MesajSaglayici):
         return GonderimSonucu("gonderildi", self.ad)
 
 
+class NetgsmSmsSaglayici(MesajSaglayici):
+    """(P150) Gercek SMS gecidi — Netgsm HTTP API.
+
+    NEDEN NETGSM: Turkiye'de bu urun tipinin yaygin saglayicisi ve basit
+    bir HTTP GET arayuzu var. SECIM BAGLAYICI DEGIL: saglayici
+    `MesajSaglayici` arayuzunun arkasinda ve `SMS_SAGLAYICI` ile secilir;
+    baskasina gecmek bu dosyaya BIR SINIF eklemek demek.
+
+    GOVDE VE NUMARA GUNLUGE YAZILMAZ (P134): hata halinde bile yalniz
+    saglayicinin kod/mesaji kaydedilir.
+
+    ZAMAN ASIMI ZORUNLU: SMS gonderimi bir kullanici isteginin ICINDE
+    calisiyor; zaman asimsiz bir cagri, saglayici yavasladiginda giris
+    ucunu de kilitlerdi.
+    """
+
+    ad = "netgsm"
+    ZAMAN_ASIMI_SN = 8
+
+    def __init__(
+        self, kullanici: str, parola: str, baslik: str, url: str
+    ) -> None:
+        self._kullanici = kullanici
+        self._parola = parola
+        self._baslik = baslik
+        self._url = url
+
+    def gonder(self, hedef: str, konu: str | None, govde: str) -> GonderimSonucu:
+        import httpx
+
+        try:
+            yanit = httpx.get(
+                self._url,
+                params={
+                    "usercode": self._kullanici,
+                    "password": self._parola,
+                    "gsmno": hedef.lstrip("+"),
+                    "message": govde,
+                    "msgheader": self._baslik,
+                },
+                timeout=self.ZAMAN_ASIMI_SN,
+            )
+        except Exception as exc:  # ag hatasi: kaydi KIRMAZ
+            logger.warning("[SMS/netgsm] gonderilemedi: %s", type(exc).__name__)
+            return GonderimSonucu("hata", self.ad, hata="baglanti")
+
+        # Netgsm "00 <jobid>" ile basari, iki haneli kod ile hata doner.
+        govde_yanit = (yanit.text or "").strip()
+        kod = govde_yanit.split()[0] if govde_yanit else ""
+        if yanit.status_code == 200 and kod in {"00", "01", "02"}:
+            logger.info("[SMS/netgsm] %s <- gonderildi", maskele_kimlik(hedef))
+            # "gonderildi" DENIR, "iletildi" DENMEZ — teslim bilgisi ayri
+            # bir sorgudur ve uydurmak panelde YANLIS kanit gosterirdi.
+            return GonderimSonucu("gonderildi", self.ad)
+        logger.warning("[SMS/netgsm] saglayici reddetti: %s", kod or "bos")
+        return GonderimSonucu("hata", self.ad, hata=kod or "bos_yanit")
+
+
 class LogEpostaSaglayici(MesajSaglayici):
     """VARSAYILAN e-posta saglayicisi — SMTP yapilandirilmamissa loglar."""
 
@@ -250,3 +308,41 @@ VARSAYILAN_SABLONLAR: tuple[tuple[str, str, str | None, str, str], ...] = (
      "güncel bakiyesi {kiraci_bakiyesi} TL'dir.\n\n{borcu_detayli}\n\n"
      "Saygılarımızla,\n{site_adi} Yönetimi", "operasyonel"),
 )
+
+
+def sms_saglayicisi() -> MesajSaglayici:
+    """(P150) YAPILANDIRMAYA gore SMS saglayicisi — TEK SECIM NOKTASI.
+
+    Eksik/yarim yapilandirmada LOG saglayicisina duser ve bunu UYARIR.
+    Yarim yapilandirmayi "calisiyor" saymak, kodlarin sessizce hicbir yere
+    gitmemesi demekti — kullanici giris yapamaz, sebebi de gorunmezdi.
+    """
+    from .config import settings
+
+    ad = (settings.sms_saglayici or "").strip().lower()
+    if not ad:
+        return LogSmsSaglayici()
+    if ad == "netgsm":
+        eksik = [
+            k
+            for k, v in (
+                ("SMS_KULLANICI", settings.sms_kullanici),
+                ("SMS_PAROLA", settings.sms_parola),
+                ("SMS_BASLIK", settings.sms_baslik),
+            )
+            if not v
+        ]
+        if eksik:
+            logger.error(
+                "[SMS] saglayici '%s' secildi ama %s eksik — LOG'a dusuldu",
+                ad, ", ".join(eksik),
+            )
+            return LogSmsSaglayici()
+        return NetgsmSmsSaglayici(
+            settings.sms_kullanici,  # type: ignore[arg-type]
+            settings.sms_parola,  # type: ignore[arg-type]
+            settings.sms_baslik,  # type: ignore[arg-type]
+            settings.sms_url,
+        )
+    logger.error("[SMS] bilinmeyen saglayici '%s' — LOG'a dusuldu", ad)
+    return LogSmsSaglayici()

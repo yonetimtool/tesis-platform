@@ -19,7 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from .db import SessionLocal, set_tenant
 from .errors import APIError
-from .mesajlasma import LogSmsSaglayici
+from .mesajlasma import sms_saglayicisi
 from .models import KayitDogrulama
 from .security import hash_password, verify_password
 
@@ -63,9 +63,10 @@ async def kod_uret_ve_gonder(
             + timedelta(minutes=KOD_OMRU_DK),
         )
     )
-    # SMS saglayici bugun LOG saglayicisidir: kod kullaniciya ULASMAZ.
-    # Gercek gecit baglanmasi YAPILANDIRMA isidir (mesajlasma.MesajSaglayici).
-    LogSmsSaglayici().gonder(
+    # (P150) Saglayici YAPILANDIRMADAN gelir: `SMS_SAGLAYICI` verilmemisse
+    # LOG'dur ve kod kullaniciya ULASMAZ. Gonderim hatasi kaydi KIRMAZ —
+    # kod yazilmistir, kullanici "tekrar gonder" diyebilir.
+    sms_saglayicisi().gonder(
         telefon, None, f"Yönetio doğrulama kodunuz: {kod} ({KOD_OMRU_DK} dk)"
     )
 

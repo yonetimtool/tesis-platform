@@ -231,6 +231,13 @@ services:
       migrate:
         condition: service_completed_successfully
     environment:
+      # (P150) SMS GECIDI. Verilmezse saglayici LOG'dur ve kodlar
+      # KULLANICIYA GITMEZ — sakin giris yapamaz. Kapali teste
+      # gercek kullanici sokmadan once doldurulmali.
+      SMS_SAGLAYICI: ${SMS_SAGLAYICI:-}
+      SMS_KULLANICI: ${SMS_KULLANICI:-}
+      SMS_PAROLA: ${SMS_PAROLA:-}
+      SMS_BASLIK: ${SMS_BASLIK:-}
       <<: *tz
       # Uygulama app_rw (async asyncpg) ile baglanir — RLS'e TABI.
       DATABASE_URL: postgresql+asyncpg://${APP_DB_USER}:${APP_DB_PASSWORD:?APP_DB_PASSWORD gerekli}@db:5432/${POSTGRES_DB}

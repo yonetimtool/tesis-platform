@@ -23,6 +23,7 @@ from ..crud_helpers import get_or_404, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..mesajlasma import (
+    sms_saglayicisi,
     LogEpostaSaglayici,
     LogSmsSaglayici,
     SmtpEpostaSaglayici,
@@ -67,10 +68,10 @@ _TOPLU_UST_SINIR = 500
 
 def _saglayici(kanal: str):
     if kanal == "sms":
-        # Gercek SMS hesabi [DIŞ]; mimari saglayiciyi YAPILANDIRMA ile
-        # degistirebilmeli, bu yuzden gonderim yolu bugun de sonuna kadar
-        # calisir ve yalnizca bu sinif degisir.
-        return LogSmsSaglayici()
+        # (P150) Secim TEK YERDE: `sms_saglayicisi()`. Burada `LogSms`
+        # sabitlenmis olsaydi, gecit baglandiginda toplu mesajlar hala
+        # hicbir yere gitmezdi — sessiz ve fark edilmesi zor bir kusur.
+        return sms_saglayicisi()
     sunucu = getattr(settings, "smtp_host", None)
     if sunucu:
         return SmtpEpostaSaglayici(
