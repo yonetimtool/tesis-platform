@@ -1442,5 +1442,8 @@
   "girisKodlaBaslik": "لا كلمة مرور — سجّل الدخول برمز",
   "girisKodlaAciklama": "سنرسل رمز تحقق من ستة أرقام إلى هاتفك.",
   "girisKoduGonder": "إرسال الرمز",
-  "girisKodAlani": "رمز التحقق"
+  "girisKodAlani": "رمز التحقق",
+  "hesapSilKodlaOnayla": "لا كلمة مرور — أكّد برمز",
+  "hesapSilKodAciklama": "سنرسل رمزًا من ستة أرقام إلى هاتفك لتأكيد الحذف.",
+  "hesapSilKodGerekli": "أدخل رمز التأكيد"
 }

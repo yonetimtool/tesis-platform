@@ -4794,4 +4794,14 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get girisKodAlani => 'Código de verificación';
+
+  @override
+  String get hesapSilKodlaOnayla => 'Sin contraseña: confirmar con un código';
+
+  @override
+  String get hesapSilKodAciklama =>
+      'Enviaremos un código de seis dígitos a su teléfono para confirmar la eliminación.';
+
+  @override
+  String get hesapSilKodGerekli => 'Introduzca el código de confirmación';
 }

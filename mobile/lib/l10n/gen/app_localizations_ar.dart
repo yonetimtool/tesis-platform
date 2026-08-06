@@ -4918,4 +4918,14 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get girisKodAlani => 'رمز التحقق';
+
+  @override
+  String get hesapSilKodlaOnayla => 'لا كلمة مرور — أكّد برمز';
+
+  @override
+  String get hesapSilKodAciklama =>
+      'سنرسل رمزًا من ستة أرقام إلى هاتفك لتأكيد الحذف.';
+
+  @override
+  String get hesapSilKodGerekli => 'أدخل رمز التأكيد';
 }

@@ -4908,4 +4908,14 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get girisKodAlani => 'Код подтверждения';
+
+  @override
+  String get hesapSilKodlaOnayla => 'Нет пароля — подтвердить кодом';
+
+  @override
+  String get hesapSilKodAciklama =>
+      'Мы отправим шестизначный код на ваш телефон для подтверждения удаления.';
+
+  @override
+  String get hesapSilKodGerekli => 'Введите код подтверждения';
 }

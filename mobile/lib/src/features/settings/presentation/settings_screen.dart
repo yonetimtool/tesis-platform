@@ -467,19 +467,57 @@ class _HesapSilDiyalogu extends ConsumerStatefulWidget {
 
 class _HesapSilDiyaloguState extends ConsumerState<_HesapSilDiyalogu> {
   final _parola = TextEditingController();
+
+  /// (P149) Parolasiz kullanicinin onay kodu.
+  final _kod = TextEditingController();
+
+  /// Ekran KOD MODUNDA mi. Girise eklenen desenin aynisi: gecis
+  /// KULLANICININ ACIK secimiyle olur. Otomatik gecemeyiz cunku istemci
+  /// kullanicinin parolasi olup olmadigini BILMEZ — bunu sunucu bilir ve
+  /// tahmin etmek yanlis alani gostermek olurdu.
+  bool _kodModu = false;
+  bool _kodGonderildi = false;
   bool _calisiyor = false;
   String? _hata;
 
   @override
   void dispose() {
     _parola.dispose();
+    _kod.dispose();
     super.dispose();
+  }
+
+  /// (P149) Parolasiz kullanici icin onay kodu iste.
+  Future<void> _koduIste() async {
+    setState(() {
+      _calisiyor = true;
+      _hata = null;
+    });
+    try {
+      await ref.read(profileApiProvider).hesapSilmeKoduIste();
+      if (mounted) {
+        setState(() {
+          _calisiyor = false;
+          _kodGonderildi = true;
+        });
+      }
+    } on ApiException catch (e) {
+      if (mounted) {
+        setState(() {
+          _calisiyor = false;
+          _hata = e.message;
+        });
+      }
+    }
   }
 
   Future<void> _sil() async {
     final l10n = context.l10n;
-    if (_parola.text.isEmpty) {
-      setState(() => _hata = l10n.hesapSilParolaGerekli);
+    // Hangi alanin dolu olmasi gerektigi MODA bagli; sunucu da zaten
+    // hangisini kabul edecegini kendisi secer.
+    if (_kodModu ? _kod.text.isEmpty : _parola.text.isEmpty) {
+      setState(() => _hata =
+          _kodModu ? l10n.hesapSilKodGerekli : l10n.hesapSilParolaGerekli);
       return;
     }
     setState(() {
@@ -491,7 +529,10 @@ class _HesapSilDiyaloguState extends ConsumerState<_HesapSilDiyalogu> {
     try {
       final tamSilindi = await ref
           .read(profileApiProvider)
-          .deleteAccount(currentPassword: _parola.text);
+          .deleteAccount(
+            currentPassword: _kodModu ? null : _parola.text,
+            kod: _kodModu ? _kod.text.trim() : null,
+          );
       // IKI SONUC DA OLUMLUDUR. `false` "silinemedi" demek DEGIL, "yasal
       // olarak saklanmasi gereken kayitlar anonimlestirildi" demektir;
       // kullaniciya bunu soylemek, sonradan "verim duruyor mu" sorusunu
@@ -543,15 +584,45 @@ class _HesapSilDiyaloguState extends ConsumerState<_HesapSilDiyalogu> {
                 ),
               ),
               const SizedBox(height: 8),
-              TextField(
-                controller: _parola,
-                obscureText: true,
-                enabled: !_calisiyor,
-                decoration: InputDecoration(
-                  labelText: l10n.hesapSilParolaEtiket,
-                  border: const OutlineInputBorder(),
+              if (!_kodModu) ...[
+                TextField(
+                  controller: _parola,
+                  obscureText: true,
+                  enabled: !_calisiyor,
+                  decoration: InputDecoration(
+                    labelText: l10n.hesapSilParolaEtiket,
+                    border: const OutlineInputBorder(),
+                  ),
                 ),
-              ),
+                // (P149) Kendi kaydolan sakinin PAROLASI YOKTUR; bu yol
+                // olmadan hesabini SILEMEZDI (Play sartinin ihlali).
+                TextButton(
+                  onPressed: _calisiyor
+                      ? null
+                      : () => setState(() {
+                            _kodModu = true;
+                            _hata = null;
+                          }),
+                  child: Text(l10n.hesapSilKodlaOnayla),
+                ),
+              ] else if (!_kodGonderildi) ...[
+                Text(l10n.hesapSilKodAciklama,
+                    style: Theme.of(context).textTheme.bodySmall),
+                const SizedBox(height: 8),
+                OutlinedButton(
+                  onPressed: _calisiyor ? null : _koduIste,
+                  child: Text(l10n.girisKoduGonder),
+                ),
+              ] else
+                TextField(
+                  controller: _kod,
+                  keyboardType: TextInputType.number,
+                  enabled: !_calisiyor,
+                  decoration: InputDecoration(
+                    labelText: l10n.girisKodAlani,
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
               if (_hata != null) ...[
                 const SizedBox(height: 12),
                 Text(_hata!, style: TextStyle(color: renk)),

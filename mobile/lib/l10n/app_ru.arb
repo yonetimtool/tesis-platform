@@ -1442,5 +1442,8 @@
   "girisKodlaBaslik": "Нет пароля — вход по коду",
   "girisKodlaAciklama": "Мы отправим шестизначный код подтверждения на ваш телефон.",
   "girisKoduGonder": "Отправить код",
-  "girisKodAlani": "Код подтверждения"
+  "girisKodAlani": "Код подтверждения",
+  "hesapSilKodlaOnayla": "Нет пароля — подтвердить кодом",
+  "hesapSilKodAciklama": "Мы отправим шестизначный код на ваш телефон для подтверждения удаления.",
+  "hesapSilKodGerekli": "Введите код подтверждения"
 }

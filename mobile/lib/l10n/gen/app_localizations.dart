@@ -8224,6 +8224,24 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Doğrulama kodu'**
   String get girisKodAlani;
+
+  /// No description provided for @hesapSilKodlaOnayla.
+  ///
+  /// In tr, this message translates to:
+  /// **'Parolam yok, kodla onayla'**
+  String get hesapSilKodlaOnayla;
+
+  /// No description provided for @hesapSilKodAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Telefonunuza silme onayı için altı haneli bir kod göndereceğiz.'**
+  String get hesapSilKodAciklama;
+
+  /// No description provided for @hesapSilKodGerekli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Onay kodunu girin'**
+  String get hesapSilKodGerekli;
 }
 
 class _AppLocalizationsDelegate

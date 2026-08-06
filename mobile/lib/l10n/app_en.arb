@@ -1442,5 +1442,8 @@
   "girisKodlaBaslik": "No password — sign in with a code",
   "girisKodlaAciklama": "We'll send a six-digit verification code to your phone.",
   "girisKoduGonder": "Send code",
-  "girisKodAlani": "Verification code"
+  "girisKodAlani": "Verification code",
+  "hesapSilKodlaOnayla": "No password — confirm with a code",
+  "hesapSilKodAciklama": "We'll send a six-digit code to your phone to confirm deletion.",
+  "hesapSilKodGerekli": "Enter the confirmation code"
 }

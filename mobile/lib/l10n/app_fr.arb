@@ -1442,5 +1442,8 @@
   "girisKodlaBaslik": "Pas de mot de passe – se connecter avec un code",
   "girisKodlaAciklama": "Nous enverrons un code de vérification à six chiffres sur votre téléphone.",
   "girisKoduGonder": "Envoyer le code",
-  "girisKodAlani": "Code de vérification"
+  "girisKodAlani": "Code de vérification",
+  "hesapSilKodlaOnayla": "Pas de mot de passe – confirmer avec un code",
+  "hesapSilKodAciklama": "Nous enverrons un code à six chiffres sur votre téléphone pour confirmer la suppression.",
+  "hesapSilKodGerekli": "Saisissez le code de confirmation"
 }

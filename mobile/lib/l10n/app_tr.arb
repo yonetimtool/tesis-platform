@@ -2034,5 +2034,8 @@
   "girisKodlaBaslik": "Parolam yok, kodla giriş yap",
   "girisKodlaAciklama": "Telefonunuza altı haneli bir doğrulama kodu göndereceğiz.",
   "girisKoduGonder": "Kod gönder",
-  "girisKodAlani": "Doğrulama kodu"
+  "girisKodAlani": "Doğrulama kodu",
+  "hesapSilKodlaOnayla": "Parolam yok, kodla onayla",
+  "hesapSilKodAciklama": "Telefonunuza silme onayı için altı haneli bir kod göndereceğiz.",
+  "hesapSilKodGerekli": "Onay kodunu girin"
 }

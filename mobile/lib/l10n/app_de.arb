@@ -1442,5 +1442,8 @@
   "girisKodlaBaslik": "Kein Passwort – mit Code anmelden",
   "girisKodlaAciklama": "Wir senden einen sechsstelligen Bestätigungscode an Ihr Telefon.",
   "girisKoduGonder": "Code senden",
-  "girisKodAlani": "Bestätigungscode"
+  "girisKodAlani": "Bestätigungscode",
+  "hesapSilKodlaOnayla": "Kein Passwort – mit Code bestätigen",
+  "hesapSilKodAciklama": "Wir senden einen sechsstelligen Code zur Bestätigung der Löschung an Ihr Telefon.",
+  "hesapSilKodGerekli": "Bestätigungscode eingeben"
 }

@@ -4818,4 +4818,14 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get girisKodAlani => 'Bestätigungscode';
+
+  @override
+  String get hesapSilKodlaOnayla => 'Kein Passwort – mit Code bestätigen';
+
+  @override
+  String get hesapSilKodAciklama =>
+      'Wir senden einen sechsstelligen Code zur Bestätigung der Löschung an Ihr Telefon.';
+
+  @override
+  String get hesapSilKodGerekli => 'Bestätigungscode eingeben';
 }

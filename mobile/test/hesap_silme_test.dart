@@ -43,6 +43,11 @@ class _SahteProfilApi extends ProfileApi {
   /// Gonderilen parolalar — YENIDEN KIMLIK DOGRULAMANIN kaniti.
   final gonderilenParolalar = <String>[];
 
+  int kodIstegi = 0;
+
+  @override
+  Future<void> hesapSilmeKoduIste() async => kodIstegi++;
+
   @override
   Future<bool> deleteAccount({String? currentPassword, String? kod}) async {
     // (P149) Parolasiz kullanicida `kod` gelir; hangisi geldiyse kaydet
@@ -189,5 +194,28 @@ void main() {
     expect(find.textContaining('yetki devredin'), findsOneWidget);
     // Pencere ACIK kalir: kullanici metni okuyup vazgecebilmeli.
     expect(find.text('Hesabımı kalıcı olarak sil'), findsOneWidget);
+  });
+
+  // (P149) PAROLASIZ KULLANICI DA HESABINI SILEBILMELI — Play'in "silme
+  // yolu calismali" sartinin dogrudan karsiligi. Once ekran KOSULSUZ
+  // parola istiyordu ve kendi kaydolan sakin burada TAKILIYORDU.
+  testWidgets('PAROLASIZ: kod istenir ve PAROLA DEGIL KOD gonderilir',
+      (tester) async {
+    final api = _SahteProfilApi(tamSilindi: true);
+    await tester.pumpWidget(_ayarlar(profil: api));
+    await tester.pumpAndSettle();
+    await _silmeyiAc(tester);
+
+    await tester.tap(find.text('Parolam yok, kodla onayla'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Kod gönder'));
+    await tester.pumpAndSettle();
+    expect(api.kodIstegi, 1, reason: 'silme kodu SUNUCUDAN istenmeli');
+
+    await tester.enterText(find.byType(TextField).last, '123456');
+    await tester.tap(find.text('Hesabımı kalıcı olarak sil'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(api.gonderilenParolalar, ['123456']);
   });
 }

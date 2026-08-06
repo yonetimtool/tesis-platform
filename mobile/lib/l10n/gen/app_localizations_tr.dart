@@ -4650,4 +4650,14 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get girisKodAlani => 'Doğrulama kodu';
+
+  @override
+  String get hesapSilKodlaOnayla => 'Parolam yok, kodla onayla';
+
+  @override
+  String get hesapSilKodAciklama =>
+      'Telefonunuza silme onayı için altı haneli bir kod göndereceğiz.';
+
+  @override
+  String get hesapSilKodGerekli => 'Onay kodunu girin';
 }

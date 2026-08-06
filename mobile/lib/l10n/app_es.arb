@@ -1442,5 +1442,8 @@
   "girisKodlaBaslik": "Sin contraseña: iniciar sesión con un código",
   "girisKodlaAciklama": "Enviaremos un código de verificación de seis dígitos a su teléfono.",
   "girisKoduGonder": "Enviar código",
-  "girisKodAlani": "Código de verificación"
+  "girisKodAlani": "Código de verificación",
+  "hesapSilKodlaOnayla": "Sin contraseña: confirmar con un código",
+  "hesapSilKodAciklama": "Enviaremos un código de seis dígitos a su teléfono para confirmar la eliminación.",
+  "hesapSilKodGerekli": "Introduzca el código de confirmación"
 }
