@@ -1,98 +1,160 @@
-# Play Console — Veri Güvenliği Formu Envanteri
+# Play Console — Veri Güvenliği Formu
 
-**Kaynak:** koddan ölçülmüştür, beyan değildir. Her satırın karşılığı
-belirtilen dosyadadır. Form doldurulurken **bu belge tek kaynaktır**;
-`/hesap-silme` sayfası ve gizlilik politikası da bununla tutarlıdır.
+**TEK KAYNAK.** Form buradan doldurulur. Önceki turda envanter ile Play
+kategori tablosu iki ayrı yerde durup çelişmişti (Finansal bilgi ve
+Uygulama etkinliği tabloda vardı, envanterde yoktu) — birleştirildi.
 
-Son ölçüm: 6 Ağustos 2026 · P141.6
+Kaynak: koddan ölçüm, beyan değil. Son ölçüm: 7 Ağustos 2026 · P141.6
 
 ---
 
-## 1. Toplanan veri tipleri
+## 1. Form satırları (Play'in kendi kategorileri)
 
-| Veri | Nerede | Sunucuya | Zorunlu mu | Amaç |
-|---|---|---|---|---|
-| Telefon numarası | Kayıt, giriş, profil | ✓ `app_user.telefon` | Evet (kimlik) | Hesap yönetimi, kimlik doğrulama |
-| Ad | Kayıt, profil | ✓ `app_user.ad` | Evet | Uygulama işlevi |
-| E-posta | Yönetici/personel hesapları | ✓ `app_user.email` | Hayır (sakinde boş) | Hesap yönetimi |
-| Profil fotoğrafı | `PATCH /me/avatar` | ✓ MinIO + `avatar_key` | Hayır | Uygulama işlevi |
-| Yaklaşık + kesin konum | Devriye okutma, demirbaş zimmeti | ✓ `scan_event.gps_*`, `asset_checkout.alma_gps_*` | Hayır | Uygulama işlevi (saha kanıtı) |
-| Fotoğraf | Talep, duyuru, site kuralı, kargo, görev kanıtı | ✓ MinIO | Hayır | Uygulama işlevi |
-| Push jetonu | Uygulama açılışı | ✓ `user_device.fcm_token` | Evet | Bildirim |
-| Uygulama içi mesaj/metin | Talep başlığı+mesajı, daire şikayeti notu | ✓ | Hayır | Uygulama işlevi |
+| Play kategorisi | Toplanıyor | Paylaşılıyor | Zorunlu/İsteğe bağlı | Amaç | Aktarımda şifreli | Silme istenebilir |
+|---|---|---|---|---|---|---|
+| Konum — yaklaşık | Evet | Hayır | İsteğe bağlı | Uygulama işlevi | Evet | **Hayır** |
+| Konum — kesin | Evet | Hayır | İsteğe bağlı | Uygulama işlevi | Evet | **Hayır** |
+| Kişisel bilgiler — ad | Evet | Hayır | Zorunlu | Uygulama işlevi, Hesap yönetimi | Evet | Evet |
+| Kişisel bilgiler — e-posta | Evet | Hayır | İsteğe bağlı | Hesap yönetimi | Evet | Evet |
+| Kişisel bilgiler — telefon | Evet | **Evet** | Zorunlu | Hesap yönetimi, Dolandırıcılık önleme | Evet | Evet |
+| Kişisel bilgiler — kullanıcı kimliği | Evet | Hayır | Zorunlu | Uygulama işlevi, Hesap yönetimi | Evet | Evet |
+| Kişisel bilgiler — adres | Evet | **Evet** | Zorunlu | Uygulama işlevi | Evet | Evet |
+| Finansal bilgi — diğer finansal bilgiler | Evet | Hayır | Zorunlu | Uygulama işlevi, Hesap yönetimi | Evet | **Hayır** |
+| Mesajlar — diğer uygulama içi mesajlar | Evet | Hayır | İsteğe bağlı | Uygulama işlevi | Evet | **Hayır** |
+| Fotoğraflar ve videolar — fotoğraflar | Evet | Hayır | İsteğe bağlı | Uygulama işlevi | Evet | **Hayır** |
+| Uygulama etkinliği — diğer eylemler | Evet | Hayır | Zorunlu | Uygulama işlevi | Evet | **Hayır** |
+| Cihaz veya diğer kimlikler | Evet | **Evet** | Zorunlu | Uygulama işlevi | Evet | Evet |
 
-### Toplanmayanlar (formda "hayır" işaretlenecek)
+**Toplanmayan kategoriler:** Sağlık ve fitness · Ses dosyaları · Dosyalar ve
+belgeler · Takvim · Kişiler · Web tarama · Uygulama bilgileri ve performansı.
 
-* **Cihaz veya reklam kimliği** — `device_info`/reklam kimliği kütüphanesi yok.
-* **Çökme kayıtları / tanılama** — Crashlytics, Sentry, analitik SDK'sı yok.
-* **Firebase Analytics** — `pubspec.yaml`'da yalnız `firebase_core` +
-  `firebase_messaging` var; `firebase_analytics` **yok**.
-* Konum **arka planda** toplanmıyor: `ACCESS_BACKGROUND_LOCATION` manifest'te
-  yok, `geolocator` yalnız okutma anında çağrılıyor.
+### İki sınır kararı ve gerekçesi
 
-## 2. Üçüncü taraf aktarımı
+**Finansal bilgi — EVET, beyan edilir.** Play bu kategoriyi "ödeme
+bilgileri, satın alma geçmişi, kredi notu, **diğer finansal bilgiler**"
+diye tanımlıyor. Aidat borcu, ödeme geçmişi ve tahsilat kayıtları
+kullanıcıya ait bir mali yükümlülük kaydıdır ve son madde bunu kapsar.
+**Kart/ödeme aracı verisi YOK** — ödeme tesis tarafından kaydedilir,
+uygulamada kart bilgisi girilmez. Az beyan Play ihlalidir, fazla beyan
+değildir; sınırdaki kategori beyan edilir.
 
-| Servis | Üçüncü taraf mı | Giden veri |
+> App Store gizlilik anketiyle tutarlılık: orada "ödeme verisi
+> toplanmıyor" denmişti. O beyan ödeme **aracına** dairse çelişki yok.
+> "Hiç finansal veri yok" biçiminde verildiyse App Store tarafı
+> düzeltilmeli — iki mağaza formu birbiriyle çelişmemeli.
+
+**Uygulama etkinliği — EVET, beyan edilir.** Play "diğer eylemler" alt
+başlığını "kullanıcının gerçekleştirdiği diğer eylemler" diye tanımlıyor.
+`audit_log` ve olay kayıtları (devriye okutma, ziyaretçi onayı, talep
+açma) doğrudan uygulama kullanımından üretiliyor. Sunucu tarafında
+üretilmiş olması kategoriyi değiştirmez.
+
+## 2. Veri tipleri — koddaki karşılıkları
+
+| Play kategorisi | Kod karşılığı |
+|---|---|
+| Konum | `scan_event.gps_lat/lng/dogruluk_m`, `asset_checkout.alma_gps_*` |
+| Ad / e-posta / telefon / kimlik | `app_user.ad / email / telefon / id` |
+| Adres | `unit.blok` + `unit.no`, `unit_resident` bağlantısı |
+| Finansal bilgi | aidat / borç / tahsilat tabloları |
+| Mesajlar | `complaint.baslik`+`mesaj`, `unit_complaint.notlar` |
+| Fotoğraflar | MinIO: `avatar_key`, `complaint_photo`, kargo/görev/duyuru |
+| Uygulama etkinliği | `audit_log`, olay kayıtları |
+| Cihaz kimliği | `user_device.fcm_token` |
+
+### Toplanmadığının kanıtı
+
+* Cihaz/reklam kimliği: `device_info`/reklam kimliği kütüphanesi yok.
+* Çökme ve tanılama: Crashlytics/Sentry yok.
+* **Firebase Analytics yok** — `pubspec.yaml`'da yalnız `firebase_core` +
+  `firebase_messaging`. Analytics SDK'sı kurulu olmadığı için Google
+  konsol tarafında da toplama olmaz.
+* Arka plan konumu: `ACCESS_BACKGROUND_LOCATION` manifest'te yok.
+* **WebView yok** — yalnız `url_launcher` (harici tarayıcı).
+
+## 3. Üçüncü taraf aktarımı
+
+| Servis | Üçüncü taraf | Giden veri |
 |---|---|---|
-| **Firebase Cloud Messaging (Google)** | **Evet** | Push jetonu + bildirim başlığı/gövdesi |
+| Firebase Cloud Messaging (Google) | **Evet** | Push jetonu + bildirim başlığı/gövdesi |
 | Apple APNs | Evet (iOS teslimi FCM üzerinden) | Aynı |
-| LibreTranslate | **Hayır** — kendi sunucumuz, iç ağ | — |
-| MinIO | **Hayır** — kendi sunucumuz, dışarı kapalı | — |
-| SMS sağlayıcı (Netgsm) | **Evet, yapılandırılırsa** | Telefon numarası + doğrulama kodu metni |
+| SMS sağlayıcı (Netgsm) | **Evet, yapılandırılırsa** | Telefon + doğrulama kodu metni |
+| LibreTranslate | Hayır — kendi sunucumuz, iç ağ | — |
+| MinIO | Hayır — kendi sunucumuz, dışa kapalı | — |
 
-> Bildirim gövdesi kişisel veri **taşıyabiliyor** (örn. "Kargonuz geldi —
-> {firma} (A-1)" daire numarası içerir). Formda beyan edilmelidir.
-
-## 3. Şifreleme
-
-* **Aktarımda:** ✓ TLS (Caddy + Let's Encrypt), HTTP→HTTPS yönlendirme.
-* **Beklemede:** ✗ Veritabanı ve obje deposu şifresiz. Parolalar ve
-  doğrulama kodları bcrypt'li; telefon/ad/e-posta/GPS düz metin sütunlarda.
+Bildirim gövdesi kişisel veri taşıyabiliyor ("Kargonuz geldi — {firma}
+(A-1)"): tablodaki **adres** ve **cihaz kimliği** satırlarındaki
+"paylaşılıyor" işareti buradan geliyor.
 
 ## 4. Silme
 
-**Kullanıcı silebilir:** ✓ Uygulama içi (Ayarlar → Hesabımı sil) ve
-girişsiz web sayfası `https://yönetiyor.com/hesap-silme`.
+**Uygulama içi:** Ayarlar → Hesabımı sil (parola **veya** telefon kodu).
+**Web (girişsiz):** `/hesap-silme` — adres için §6.
 
-Silinen: ad, e-posta, telefon, avatar kaydı, cihaz kayıtları (push
-jetonları), oturum, daire bağlantısı. Referans veren kayıt yoksa hesap
-tamamen silinir; varsa **anonimleştirilir** (`hesap_silme.py`).
+**Tam silinir → "kullanıcılar silinmesini isteyebilir" işaretlenebilir:**
+Kişisel bilgiler (ad, e-posta, telefon, kullanıcı kimliği, adres
+bağlantısı) · Cihaz veya diğer kimlikler.
 
-**Silinmeyen ve nedeni:** devriye GPS kayıtları, yüklenen fotoğraflar,
-talep metinleri — tesisin operasyonel ve denetim kaydı. Silme sonrası
-kullanıcıyla ilişkilendirilemez hale gelir.
+**Kısmen saklanır → işaretlenirse YANLIŞ BEYAN:**
+
+| Kategori | Neden |
+|---|---|
+| Konum (yaklaşık + kesin) | Devriye GPS'i operasyonel/denetim kaydı |
+| Fotoğraflar | Avatar silinir, **talep fotoğrafı yalnız 36 ayda** |
+| Mesajlar | Talep metni 36 ayda arşivlenir, talep üzerine değil |
+| Finansal bilgi | Yasal saklama süresi |
+| Uygulama etkinliği | Denetim kaydı |
+
+Bu kategorilerde doğru cevap silme değil **anonimleştirme**; `/hesap-silme`
+sayfası ve gizlilik politikası da aynı şeyi yazar.
 
 ### Gecelik saklama işi (`retention.py`, beat)
 
 | Tablo | Süre | İşlem |
 |---|---|---|
 | `visitor` | 24 ay | Silinir |
-| `kargo` + fotoğrafları | süreli | Silinir (**MinIO objeleri dahil**) |
+| `kargo` + fotoğrafları | süreli | Silinir (MinIO objeleri dahil) |
 | `rezervasyon` | süreli | Silinir |
-| `complaint` (çözüldü/reddedildi) | 36 ay | Metin arşivlenir, satır kalır |
-| `complaint_photo` | 36 ay | Silinir (**MinIO objeleri dahil**) |
+| `complaint` | 36 ay | Metin arşivlenir, satır kalır |
+| `complaint_photo` | 36 ay | Silinir (MinIO objeleri dahil) |
 | `audit_log` | süreli | Purge |
 
-Sonuç `audit_log`'a `erasure_run` olarak yazılır.
+## 5. Şifreleme
+
+**Aktarımda:** ✓ TLS (Caddy + Let's Encrypt), HTTP→HTTPS.
+
+**Beklemede: ✗ BİLİNEN EKSİK.** Veritabanı ve obje deposu şifresiz;
+telefon, ad, e-posta ve GPS düz metin sütunlarda. Parolalar ve doğrulama
+kodları bcrypt'li, ama bu alan şifrelemesi değildir. Play formu at-rest
+sormuyor — **form engeli değil**; KVKK tarafında ele alınacak bir eksik
+olarak kayıtlıdır. Seçenekler: sütun bazlı şifreleme (pgcrypto), disk
+şifreleme, ya da yönetilen veritabanı şifrelemesi.
+
+## 6. Hesap silme URL'i — DAĞITIM BEKLİYOR
+
+**Ölçüm (7 Ağustos 2026, prod):**
+
+| Adres | `/` | `/gizlilik` | `/hesap-silme` |
+|---|---|---|---|
+| `yonetio.site` | 200 | 200 | **404** |
+| `xn--ynetiyor-n4a.com` | 200 | 200 | **404** |
+
+İki alan adı da **canlı ve TLS'li**; 404 yönlendirme sorunu değil
+**dağıtım** sorunu: sayfa depoda var, prod'a yeniden dağıtım yapılmadı.
+
+**Forma girmeden önce admin-web prod'a dağıtılmalı**, sonra adres yeniden
+ölçülmeli. Play botu URL'i açıp kontrol eder; 404 red sebebidir.
+
+**Öneri: `https://yonetio.site/hesap-silme`.** Gerekçe: tamamen ASCII, IDN
+belirsizliği yok, bugün canlı ve uygulamanın mevcut bağlantıları da bu
+alan adına gidiyor. Marka alan adı tercih edilecekse **punycode biçimi**
+(`xn--ynetiyor-n4a.com`) girilmeli — `ö` harfli biçim forma yazılmamalı,
+normalleştirme davranışı garanti değil.
 
 ---
 
-## 5. BULGULAR (a ve b kapatıldı, c açık)
+## 7. Açık kalan
 
-**(a) Hesap silinince avatar objesi MinIO'da kalıyordu — KAPATILDI (P141.6).**
-`hesap_silme.py` yalnız `avatar_key = None` yapıyordu; obje depoda yetim
-kalıyordu. Artık `storage.delete_objects` çağrılıyor. MinIO erişilemezse
-hata kaydı kırmıyor — depo arızasında kullanıcının hesabını silememesi
-daha kötü olurdu.
-
-**(b) Talep fotoğrafları hiçbir zaman silinmiyordu — KAPATILDI (P141.6).**
-Retention talep metnini arşivliyor ama `complaint_photo` objelerine
-dokunmuyordu. Kerem 36 ay belirledi: fotoğraflar artık **metinle aynı
-pencerede** siliniyor (MinIO objesi + satır). Aynı pencere bilinçli —
-metin arşivlenip fotoğraf kalsaydı, "(arşivlendi)" yazan bir talebin
-görseli hâlâ olayı anlatırdı.
-
-**(c) Firebase'in kendi topladıkları ölçülmedi.** `firebase_messaging` SDK'sı
-Google tarafında hangi tanılama verisini topluyor, Firebase konsolundaki
-ayarlara bakılmadı. Analytics SDK'sı kurulu değil, ama konsol tarafı
-doğrulanmalı.
+Önceki turların (a) avatar objesi, (b) talep fotoğrafı saklama süresi ve
+(c) Firebase Analytics maddeleri **kapandı**. Tek bekleyen iş §6'daki prod
+dağıtımı; §5'teki at-rest şifreleme ise form dışı, ayrı bir tur.
