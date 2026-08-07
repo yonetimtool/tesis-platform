@@ -55,7 +55,7 @@ export const HESAP_SILME: BelgeSeti = {
       {
         baslik: "5. İletişim",
         paragraflar: [
-          "Silme talepleri ve sorularınız için: **destek@yonetio.site**",
+          "Silme talepleri ve sorularınız için: **destek@yonetiyor.com**",
           "Hesabınız bir tesise bağlıdır; veri sorumlusu o tesisin yönetimidir. Talebinizi tesis yönetimine de iletebilirsiniz.",
         ],
       },
@@ -104,7 +104,7 @@ export const HESAP_SILME: BelgeSeti = {
       {
         baslik: "5. Contact",
         paragraflar: [
-          "For deletion requests and questions: **destek@yonetio.site**",
+          "For deletion requests and questions: **destek@yonetiyor.com**",
           "Your account belongs to a building; the data controller is that building's management. You may also address your request to them.",
         ],
       },
@@ -153,7 +153,7 @@ export const HESAP_SILME: BelgeSeti = {
       {
         baslik: "5. Kontakt",
         paragraflar: [
-          "For deletion requests and questions: **destek@yonetio.site**",
+          "For deletion requests and questions: **destek@yonetiyor.com**",
           "Your account belongs to a building; the data controller is that building's management. You may also address your request to them.",
         ],
       },
@@ -202,7 +202,7 @@ export const HESAP_SILME: BelgeSeti = {
       {
         baslik: "5. Contact",
         paragraflar: [
-          "For deletion requests and questions: **destek@yonetio.site**",
+          "For deletion requests and questions: **destek@yonetiyor.com**",
           "Your account belongs to a building; the data controller is that building's management. You may also address your request to them.",
         ],
       },
@@ -251,7 +251,7 @@ export const HESAP_SILME: BelgeSeti = {
       {
         baslik: "5. Contacto",
         paragraflar: [
-          "For deletion requests and questions: **destek@yonetio.site**",
+          "For deletion requests and questions: **destek@yonetiyor.com**",
           "Your account belongs to a building; the data controller is that building's management. You may also address your request to them.",
         ],
       },
@@ -300,7 +300,7 @@ export const HESAP_SILME: BelgeSeti = {
       {
         baslik: "5. Контакты",
         paragraflar: [
-          "For deletion requests and questions: **destek@yonetio.site**",
+          "For deletion requests and questions: **destek@yonetiyor.com**",
           "Your account belongs to a building; the data controller is that building's management. You may also address your request to them.",
         ],
       },
@@ -349,7 +349,7 @@ export const HESAP_SILME: BelgeSeti = {
       {
         baslik: "٥. التواصل",
         paragraflar: [
-          "For deletion requests and questions: **destek@yonetio.site**",
+          "For deletion requests and questions: **destek@yonetiyor.com**",
           "Your account belongs to a building; the data controller is that building's management. You may also address your request to them.",
         ],
       },

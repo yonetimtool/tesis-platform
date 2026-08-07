@@ -217,7 +217,11 @@ describe("rol x yuzey kapisi (P126.1)", () => {
 describe("Caddy — app.* artik uygulamaya proxy'leniyor", () => {
   it("app. blogu `admin-web:3000`e gider (yer tutucu DEGIL)", () => {
     const caddy = readFileSync("../infra/Caddyfile", "utf8");
-    const blok = caddy.slice(caddy.indexOf("app.{$PORTAL_DOMAIN} {"));
+    // (P149) Blok basligi ARTIK IKI ADLI: `app.{$PORTAL_DOMAIN},
+    // app.{$PORTAL_DOMAIN_IDN} {`. Tam basligi aramak kilidi kirdi —
+    // testin olctugu sey basligin METNI degil, `app.` blogunun gercekten
+    // uygulamaya PROXY'lenmesi. Baslangic isareti ona gore daraltildi.
+    const blok = caddy.slice(caddy.indexOf("app.{$PORTAL_DOMAIN}"));
     const govde = blok.slice(0, blok.indexOf("\n}"));
     expect(govde).toContain("reverse_proxy admin-web:3000");
     expect(govde).not.toContain("/srv/portal/app");

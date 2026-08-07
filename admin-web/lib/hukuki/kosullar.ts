@@ -74,7 +74,7 @@ export const KOSULLAR: BelgeSeti = {
         baslik: "8. Uygulanacak hukuk ve iletişim",
         paragraflar: [
           "Bu koşullara Türkiye Cumhuriyeti hukuku uygulanır.",
-          "İletişim: **destek@yonetio.site**",
+          "İletişim: **destek@yonetiyor.com**",
         ],
       },
     ],
@@ -146,7 +146,7 @@ export const KOSULLAR: BelgeSeti = {
         baslik: "8. Governing law and contact",
         paragraflar: [
           "These terms are governed by the laws of the Republic of Türkiye.",
-          "Contact: **destek@yonetio.site**",
+          "Contact: **destek@yonetiyor.com**",
         ],
       },
     ],
@@ -217,7 +217,7 @@ export const KOSULLAR: BelgeSeti = {
         baslik: "٨. القانون الواجب التطبيق والتواصل",
         paragraflar: [
           "تخضع هذه الشروط لقوانين جمهورية تركيا.",
-          "للتواصل: **destek@yonetio.site**",
+          "للتواصل: **destek@yonetiyor.com**",
         ],
       },
     ],
@@ -289,7 +289,7 @@ export const KOSULLAR: BelgeSeti = {
         baslik: "8. Применимое право и контакты",
         paragraflar: [
           "К настоящим условиям применяется право Турецкой Республики.",
-          "Контакт: **destek@yonetio.site**",
+          "Контакт: **destek@yonetiyor.com**",
         ],
       },
     ],
@@ -361,7 +361,7 @@ export const KOSULLAR: BelgeSeti = {
         baslik: "8. Anwendbares Recht und Kontakt",
         paragraflar: [
           "Auf diese Bedingungen findet das Recht der Republik Türkei Anwendung.",
-          "Kontakt: **destek@yonetio.site**",
+          "Kontakt: **destek@yonetiyor.com**",
         ],
       },
     ],
@@ -433,7 +433,7 @@ export const KOSULLAR: BelgeSeti = {
         baslik: "8. Droit applicable et contact",
         paragraflar: [
           "Ces conditions sont régies par le droit de la République de Türkiye.",
-          "Contact : **destek@yonetio.site**",
+          "Contact : **destek@yonetiyor.com**",
         ],
       },
     ],
@@ -505,7 +505,7 @@ export const KOSULLAR: BelgeSeti = {
         baslik: "8. Ley aplicable y contacto",
         paragraflar: [
           "Estas condiciones se rigen por la legislación de la República de Türkiye.",
-          "Contacto: **destek@yonetio.site**",
+          "Contacto: **destek@yonetiyor.com**",
         ],
       },
     ],
