@@ -33,11 +33,21 @@ class AppConfig {
   ///
   /// Adresler SABITTIR: App Store Connect ve Google Play'e girilen URL'ler
   /// bunlar; degismemeleri gerekir.
+  ///
+  /// (P149) VARSAYILAN `yonetiyor.com`a tasindi (ASCII asil alan adi).
+  /// IDN bicimi (`ö` harfli) BURAYA YAZILMAZ: yapim icine gomulen bir
+  /// adresin punycode donusumu istemciden istemciye degisebilir.
+  ///
+  /// INCELEMEDEKI YAPIM KIRILMAZ: eski adres 301 ile buraya gelir, yani
+  /// build 3'un icindeki `yonetio.site` calismaya devam eder.
   static const String webBaseUrl = String.fromEnvironment(
     'WEB_BASE_URL',
-    defaultValue: 'https://yonetio.site',
+    defaultValue: 'https://yonetiyor.com',
   );
 
   static String get gizlilikUrl => '$webBaseUrl/gizlilik';
   static String get kosullarUrl => '$webBaseUrl/kosullar';
+
+  /// (P141.3) Play'in zorunlu tuttugu girissiz hesap silme sayfasi.
+  static String get hesapSilmeUrl => '$webBaseUrl/hesap-silme';
 }

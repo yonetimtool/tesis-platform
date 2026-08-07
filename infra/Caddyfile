@@ -62,7 +62,9 @@
 # HTTP'ye hic gelemez (Kerem'in gordugu `000` budur). Bir konagi DNS'te
 # acip Caddy'de tanimlamamak, "site yok" degil "BAGLANTI KOPTU" uretir;
 # ikisi cok farkli seylerdir ve ikincisi teshisi zorlastirir.
-{$PORTAL_DOMAIN}, www.{$PORTAL_DOMAIN}, {$PORTAL_DOMAIN_ESKI}, www.{$PORTAL_DOMAIN_ESKI} {
+# (P149) ASIL ALAN ADI ARTIK `yonetiyor.com` (ASCII). Eski ve IDN bicimleri
+# ARTIK SERVIS ETMIYOR, 301 ile buraya gonderiyor (asagidaki blok).
+{$PORTAL_DOMAIN}, www.{$PORTAL_DOMAIN} {
 	import security_headers
 	header X-Frame-Options "DENY"
 	encode gzip zstd
@@ -94,6 +96,29 @@
 # Iki ayri dagitim YAPILMADI: ayni kod tabani, ayni oturum mantigi, tek imaj.
 # Ikinci bir Next surecini beslemek, ayni sayfalarin iki kopyasini bakimda
 # tutmak demekti.
+# --- (P149) ESKI VE IDN ADRESLER -> 301 ------------------------------------ #
+#
+# NEDEN 301 (302 DEGIL): tasima kalicidir; arama motoru ve tarayici onbellegi
+# yeni adresi ogrenmeli. Yer imleri ve eski baglantilar calismaya devam eder.
+#
+# `{uri}` KORUNUR: /gizlilik, /hesap-silme gibi derin baglantilar karsiligina
+# gider. Koke atmak, Play formuna girilen silme adresinin bozulmasi demekti.
+#
+# API VE STORAGE BU LISTEDE **YOK** ve bu bilinclidir: incelemedeki mobil
+# yapinin icine `api.yonetio.site` GOMULU. Onu 301'lemek yayindaki
+# uygulamayi kirardi (istemciler yonlendirme izlemeyebilir, CORS/cerez
+# yuzeyi degisir). Eski API adresi AYNEN calismaya devam eder.
+# `www.<IDN>` BILEREK YOK: Kerem'in DNS kaydinda IDN alan adi icin @, app ve
+# panel var, **www yok**. Cozulmeyen bir ada sertifika istemek ACME hatasi
+# uretir ve Caddy'nin acilisini bozar — DNS'te olmayan konak buraya yazilmaz.
+{$PORTAL_DOMAIN_ESKI}, www.{$PORTAL_DOMAIN_ESKI}, {$PORTAL_DOMAIN_IDN} {
+	redir https://{$PORTAL_DOMAIN}{uri} permanent
+}
+
+app.{$PORTAL_DOMAIN_IDN} {
+	redir https://app.{$PORTAL_DOMAIN}{uri} permanent
+}
+
 app.{$PORTAL_DOMAIN} {
 	import security_headers
 	header X-Frame-Options "DENY"
@@ -115,7 +140,12 @@ app.{$PORTAL_DOMAIN} {
 # --- Yonetim paneli (admin-web) ------------------------------------------- #
 # IKI ADRES DE AYNI PANELI verir; eskisi AYNEN calismaya devam eder
 # (kayitli kullanicinin yer imi ve tarayici parola kasasi ona bagli).
-{$PANEL_DOMAIN}, {$PANEL_DOMAIN_YENI} {
+# (P149) Panelin ASIL adresi yeni alan adinda; eski ve IDN bicimleri 301.
+{$PANEL_DOMAIN_ESKI}, {$PANEL_DOMAIN_IDN} {
+	redir https://{$PANEL_DOMAIN}{uri} permanent
+}
+
+{$PANEL_DOMAIN} {
 	import security_headers
 	# Panel clickjacking'e karsi cerceveye alinamaz.
 	header X-Frame-Options "DENY"

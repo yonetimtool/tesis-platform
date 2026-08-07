@@ -34,13 +34,16 @@ services:
       <<: *tz
       ACME_EMAIL: ${ACME_EMAIL:?ACME_EMAIL gerekli (Let's Encrypt bildirimleri)}
       API_DOMAIN: ${API_DOMAIN:-api.yonetio.site}
-      PANEL_DOMAIN: ${PANEL_DOMAIN:-panel.yonetio.site}
+      PANEL_DOMAIN: ${PANEL_DOMAIN:-panel.yonetiyor.com}
+      PANEL_DOMAIN_ESKI: ${PANEL_DOMAIN_ESKI:-panel.yonetio.site}
+      PANEL_DOMAIN_IDN: ${PANEL_DOMAIN_IDN:-panel.xn--ynetiyor-n4a.com}
       STORAGE_DOMAIN: ${STORAGE_DOMAIN:-storage.yonetio.site}
       # (P120) YENI BIRINCIL ALAN — yönetiyor.com, PUNYCODE bicimiyle.
       # Unicode yazmak eslesmeyen bir site blogu birakirdi: tarayici ve
       # TLS SNI daima punycode gonderir.
-      PORTAL_DOMAIN: ${PORTAL_DOMAIN:-xn--ynetiyor-n4a.com}
-      PANEL_DOMAIN_YENI: ${PANEL_DOMAIN_YENI:-panel.xn--ynetiyor-n4a.com}
+      # (P149) ASIL alan adi ASCII: IDN bicimi 301 ile buraya gelir.
+      PORTAL_DOMAIN: ${PORTAL_DOMAIN:-yonetiyor.com}
+      PORTAL_DOMAIN_IDN: ${PORTAL_DOMAIN_IDN:-xn--ynetiyor-n4a.com}
       # ESKI kok alan — kapatilmadi. Mobil yapimin icindeki hukuki belge
       # adresleri (`https://yonetio.site/gizlilik`) buraya bakiyor.
       PORTAL_DOMAIN_ESKI: ${PORTAL_DOMAIN_ESKI:-yonetio.site}
