@@ -2,6 +2,8 @@
 # (P149) Alan adi tasimasi — DAGITIM SONRASI dogrulama.
 # Kullanim: bash infra/p149-dogrula.sh
 set -u
+# DAGITIMDAN ONCE: bash infra/caddy-onkontrol.sh  (GERCEK .env.prod ile
+# yapilandirmanin yuklenebildigini dogrular — bu betik DAGITIM SONRASIDIR).
 YENI="yonetiyor.com"; IDN="xn--ynetiyor-n4a.com"; ESKI="yonetio.site"
 hata=0
 

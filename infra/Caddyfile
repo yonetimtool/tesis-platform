@@ -64,7 +64,19 @@
 # ikisi cok farkli seylerdir ve ikincisi teshisi zorlastirir.
 # (P149) ASIL ALAN ADI ARTIK `yonetiyor.com` (ASCII). Eski ve IDN bicimleri
 # ARTIK SERVIS ETMIYOR, 301 ile buraya gonderiyor (asagidaki blok).
-{$PORTAL_DOMAIN}, www.{$PORTAL_DOMAIN} {
+{$PORTAL_DOMAIN}, www.{$PORTAL_DOMAIN}, {$PORTAL_DOMAIN_ESKI}, www.{$PORTAL_DOMAIN_ESKI}, {$PORTAL_DOMAIN_IDN} {
+	# (P149-fix) TEK BLOK — ayri bir yonlendirme blogu YOK.
+	#
+	# NEDEN: ayri blok yazdigimda prod DUSTU ("ambiguous site definition").
+	# `.env.prod`da PANEL_DOMAIN hala eski adi tasiyordu ve ayni ad iki
+	# blokta gorundu. Tek blokta bu MUMKUN DEGIL.
+	#
+	# `not host {kanonik}` KENDINI DUZELTIR: eski/IDN degiskeni kanonikle
+	# AYNI degere ayarlanmissa matcher onu ESLEMEZ -> sonsuz yonlendirme
+	# dongusu de olusmaz. Yapilandirma yanlissa bile sunucu AYAKTA kalir.
+	@kanonikDisi not host {$PORTAL_DOMAIN} www.{$PORTAL_DOMAIN}
+	redir @kanonikDisi https://{$PORTAL_DOMAIN}{uri} permanent
+
 	import security_headers
 	header X-Frame-Options "DENY"
 	encode gzip zstd
@@ -111,15 +123,9 @@
 # `www.<IDN>` BILEREK YOK: Kerem'in DNS kaydinda IDN alan adi icin @, app ve
 # panel var, **www yok**. Cozulmeyen bir ada sertifika istemek ACME hatasi
 # uretir ve Caddy'nin acilisini bozar — DNS'te olmayan konak buraya yazilmaz.
-{$PORTAL_DOMAIN_ESKI}, www.{$PORTAL_DOMAIN_ESKI}, {$PORTAL_DOMAIN_IDN} {
-	redir https://{$PORTAL_DOMAIN}{uri} permanent
-}
-
-app.{$PORTAL_DOMAIN_IDN} {
-	redir https://app.{$PORTAL_DOMAIN}{uri} permanent
-}
-
-app.{$PORTAL_DOMAIN} {
+app.{$PORTAL_DOMAIN}, app.{$PORTAL_DOMAIN_IDN} {
+	@kanonikDisi not host app.{$PORTAL_DOMAIN}
+	redir @kanonikDisi https://app.{$PORTAL_DOMAIN}{uri} permanent
 	import security_headers
 	header X-Frame-Options "DENY"
 	encode gzip zstd
@@ -141,11 +147,9 @@ app.{$PORTAL_DOMAIN} {
 # IKI ADRES DE AYNI PANELI verir; eskisi AYNEN calismaya devam eder
 # (kayitli kullanicinin yer imi ve tarayici parola kasasi ona bagli).
 # (P149) Panelin ASIL adresi yeni alan adinda; eski ve IDN bicimleri 301.
-{$PANEL_DOMAIN_ESKI}, {$PANEL_DOMAIN_IDN} {
-	redir https://{$PANEL_DOMAIN}{uri} permanent
-}
-
-{$PANEL_DOMAIN} {
+{$PANEL_DOMAIN}, {$PANEL_DOMAIN_ESKI}, {$PANEL_DOMAIN_IDN} {
+	@kanonikDisi not host {$PANEL_DOMAIN}
+	redir @kanonikDisi https://{$PANEL_DOMAIN}{uri} permanent
 	import security_headers
 	# Panel clickjacking'e karsi cerceveye alinamaz.
 	header X-Frame-Options "DENY"
