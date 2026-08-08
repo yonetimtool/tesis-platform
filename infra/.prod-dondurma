@@ -1,0 +1,7 @@
+KAPALI TEST SURUYOR — prod dondurulmustur.
+Baslangic: 2026-08-08
+Tahmini bitis: kapali test + uretim onayi tamamlanana kadar
+Sebep: testcilerin istemcisi MEVCUT kimlik sistemine bagli. P142-148
+(sakin kendi kaydolur, parolasiz giris, onay kapisi) prod'a giderse
+testciler giris yapamaz ve Google'in 14 gunluk sayaci sifirlanir.
+Kaldiran: Kerem (uretim onayindan SONRA `rm infra/.prod-dondurma`)
