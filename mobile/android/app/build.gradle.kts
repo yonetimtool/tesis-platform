@@ -27,7 +27,7 @@ val anahtar = Properties().apply {
 }
 
 android {
-    namespace = "com.tesisguvenlik.mobile"
+    namespace = "com.app.yonetiyor"
     // (P141) API 36 ACIKCA SABITLENDI — Flutter varsayilanina BIRAKILMADI.
     // Play kurali: 31.08.2026'dan itibaren yeni uygulamalar API 36
     // hedeflemek ZORUNDA. Varsayilana birakmak, Flutter surumu degistiginde
@@ -56,7 +56,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.tesisguvenlik.mobile"
+        applicationId = "com.app.yonetiyor"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

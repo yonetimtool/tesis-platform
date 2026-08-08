@@ -1,4 +1,4 @@
-package com.tesisguvenlik.mobile
+package com.app.yonetiyor
 
 import io.flutter.embedding.android.FlutterActivity
 
