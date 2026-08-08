@@ -1,3 +1,7 @@
+// (P150) `java.util.Properties` TAM ADLA cozulmuyor: Kotlin DSL'de
+// `java` adi Java eklentisine baglanip paketi GOLGELIYOR. Acik import sart.
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
@@ -10,6 +14,16 @@ plugins {
 // uygulama push'u sessizce devre disi birakir.
 if (file("google-services.json").exists()) {
     apply(plugin = "com.google.gms.google-services")
+}
+
+// (P150) YUKLEME ANAHTARI — Play App Signing kullaniliyor.
+// Google UYGULAMA imza anahtarini tutar; bizdeki YUKLEME anahtaridir ve
+// kaybolursa Google sifirlayabilir. Depoya GIRMEZ (.gitignore).
+//
+// DOSYA YOKSA DERLEME KIRILMAZ: anahtari olmayan ortam debug ile calisir.
+val anahtarDosyasi = rootProject.file("key.properties")
+val anahtar = Properties().apply {
+    if (anahtarDosyasi.exists()) anahtarDosyasi.inputStream().use { load(it) }
 }
 
 android {
@@ -26,6 +40,20 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    signingConfigs {
+        create("release") {
+            if (anahtarDosyasi.exists()) {
+                storeFile = file(anahtar.getProperty("storeFile"))
+                storePassword = anahtar.getProperty("storePassword")
+                keyAlias = anahtar.getProperty("keyAlias")
+                // Parola keystore parolasiyla AYNI; yine de ayri okunur ki
+                // ileride ayrilirsa kod degismesin.
+                keyPassword = anahtar.getProperty("keyPassword")
+                    ?: anahtar.getProperty("storePassword")
+            }
+        }
+    }
+
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.tesisguvenlik.mobile"
@@ -39,9 +67,14 @@ android {
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // (P150) Anahtar VARSA uretim imzasi, YOKSA debug — boylece
+            // anahtarsiz bir ortamda `flutter run --release` calismaya
+            // devam eder ama YAYIN yapimi kazara debug ile IMZALANMAZ:
+            // AAB uretimi anahtar dosyasini zorunlu kilar (asagidaki
+            // kontrol betigi bunu ayrica dogrular).
+            signingConfig = if (anahtarDosyasi.exists())
+                signingConfigs.getByName("release")
+            else signingConfigs.getByName("debug")
         }
     }
 }

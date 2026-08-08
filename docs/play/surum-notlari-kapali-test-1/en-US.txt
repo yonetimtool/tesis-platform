@@ -1,0 +1,8 @@
+Yönetio closed test release.
+
+• Residents: announcements, dues status, parcel and visitor notifications, reporting and tracking requests/faults
+• Security: NFC patrol checkpoint scanning, visitor registration, shift view
+• Facility staff: task list, photo proof of work, asset check-out
+• Manager: request management, work order assignment, financial summary, patrol tracking
+
+Please send feedback from the Support section inside the app.

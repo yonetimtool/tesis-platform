@@ -1,0 +1,8 @@
+Yönetio Testversion (geschlossener Test).
+
+• Bewohner: Ankündigungen, Beitragsstatus, Paket- und Besucherbenachrichtigungen, Anfragen/Störungen melden und verfolgen
+• Sicherheit: NFC-Kontrollpunkte scannen, Besuchererfassung, Schichtansicht
+• Hauspersonal: Aufgabenliste, Fotonachweis, Inventarausgabe
+• Verwaltung: Anfragenverwaltung, Auftragszuweisung, Finanzübersicht, Rundgangverfolgung
+
+Feedback bitte über den Support-Bereich in der App.

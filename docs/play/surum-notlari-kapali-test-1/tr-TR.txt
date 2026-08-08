@@ -1,0 +1,8 @@
+Yönetio kapalı test sürümü.
+
+• Site sakinleri: duyurular, aidat durumu, kargo ve ziyaretçi bildirimleri, talep/arıza bildirme ve takibi
+• Güvenlik: NFC ile devriye noktası okutma, ziyaretçi kaydı, vardiya görünümü
+• Tesis görevlisi: görev listesi, fotoğraflı iş kanıtı, demirbaş zimmeti
+• Yönetici: talep yönetimi, iş emri atama, finansal özet, devriye takibi
+
+Geri bildirimlerinizi uygulama içindeki Destek bölümünden iletebilirsiniz.

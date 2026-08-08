@@ -1,0 +1,8 @@
+Version de test fermé de Yönetio.
+
+• Résidents : annonces, état des charges, notifications de colis et de visiteurs, signalement et suivi des demandes/pannes
+• Sécurité : scan NFC des points de ronde, enregistrement des visiteurs, vue des équipes
+• Personnel : liste des tâches, preuve photo, sortie de matériel
+• Gestionnaire : gestion des demandes, affectation des ordres de travail, synthèse financière, suivi des rondes
+
+Envoyez vos retours depuis la section Assistance de l'application.

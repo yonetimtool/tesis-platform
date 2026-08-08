@@ -198,8 +198,76 @@ def main() -> int:
             (tenant_id, unit_id, donem, (datetime.now(tz=timezone.utc) + timedelta(days=10)).date()),
         )
 
+        # (P150) KAPALI TEST VERISI — 17 testci 14 gun boyunca BAKACAK bir
+        # sey bulmali. Google "yuklenip acilmamis" kullanimi test SAYMIYOR.
+        _kapali_test_verisi(conn, tenant_id, unit_id)
+
     print("[demo] TAMAM — docs/app-store/review-notes.md ile birlikte kullanin.")
     return 0
+
+
+def _rol(conn, tenant_id, rol):
+    """Rolun kullanici id'si — cagiran kapsamda bir sozluk YOK, kaynaktan okunur."""
+    r = conn.execute(
+        "SELECT id FROM app_user WHERE tenant_id = %s AND role = %s LIMIT 1",
+        (tenant_id, rol),
+    ).fetchone()
+    return r[0] if r else None
+
+
+def _kapali_test_verisi(conn, tenant_id, unit_id):
+    """Acik gorev + rezervasyon + kargo + gecikmis devriye alarmi.
+
+    IDEMPOTENT: her satir dogal anahtariyla kontrol edilir.
+    """
+    yonetici = _rol(conn, tenant_id, "yonetici")
+    gorevli = _rol(conn, tenant_id, "tesis_gorevlisi")
+    guvenlik = _rol(conn, tenant_id, "security")
+    sakin = _rol(conn, tenant_id, "resident")
+
+    for baslik, oncelik in (("Asansör aylık bakımı", "orta"),
+                            ("Otopark aydınlatma arızası", "yuksek"),
+                            ("Çatı su sızıntısı kontrolü", "dusuk")):
+        conn.execute(
+            # SEMA VARSAYILMADI, OKUNDU: `task` sutunlari ad/aciklama/
+            # atanan_user_id/oncelik/aktif — `baslik`/`durum`/`son_tarih` YOK.
+            "INSERT INTO task (tenant_id, ad, aciklama, atanan_user_id, "
+            "oncelik, aktif) SELECT %s, %s, %s, %s, %s, true "
+            "WHERE NOT EXISTS (SELECT 1 FROM task WHERE tenant_id = %s AND ad = %s)",
+            (tenant_id, baslik, baslik, gorevli, oncelik, tenant_id, baslik),
+        )
+
+    alan = conn.execute(
+        "SELECT id FROM ortak_alan WHERE tenant_id = %s LIMIT 1", (tenant_id,)
+    ).fetchone()
+    if alan and sakin:
+        conn.execute(
+            "INSERT INTO rezervasyon (tenant_id, alan_id, unit_id, "
+            "talep_eden_user_id, tarih, baslangic, bitis, durum) "
+            "SELECT %s, %s, %s, %s, current_date + 1, '14:00', '16:00', "
+            "'onaylandi' WHERE NOT EXISTS (SELECT 1 FROM rezervasyon "
+            "WHERE tenant_id = %s AND alan_id = %s AND tarih = current_date + 1)",
+            (tenant_id, alan[0], unit_id, sakin, tenant_id, alan[0]),
+        )
+
+    if unit_id and guvenlik:
+        for firma in ("Yurtiçi Kargo", "Aras Kargo"):
+            conn.execute(
+                "INSERT INTO kargo (tenant_id, unit_id, firma, durum, kaydeden_user_id) "
+                "SELECT %s, %s, %s, 'bekliyor', %s WHERE NOT EXISTS "
+                "(SELECT 1 FROM kargo WHERE tenant_id = %s AND unit_id = %s AND firma = %s)",
+                (tenant_id, unit_id, firma, guvenlik, tenant_id, unit_id, firma),
+            )
+
+    # `user_id` NULL: YONETIM alarmi (P147 kapsam ayrimi).
+    conn.execute(
+        "INSERT INTO notification (tenant_id, tip, mesaj, mesaj_kimlik) "
+        "SELECT %s, 'kacirilan_tur', 'Gece turu kaçırıldı', 'kacirilan_tur' "
+        "WHERE NOT EXISTS (SELECT 1 FROM notification WHERE tenant_id = %s "
+        "AND tip = 'kacirilan_tur')",
+        (tenant_id, tenant_id),
+    )
+    print("[demo] kapali test verisi: 3 acik gorev, 1 rezervasyon, 2 kargo, 1 alarm")
 
 
 if __name__ == "__main__":

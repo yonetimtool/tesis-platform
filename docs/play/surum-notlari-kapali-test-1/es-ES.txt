@@ -1,0 +1,8 @@
+Versión de prueba cerrada de Yönetio.
+
+• Residentes: avisos, estado de cuotas, notificaciones de paquetes y visitantes, informar y seguir solicitudes/averías
+• Seguridad: escaneo NFC de puntos de ronda, registro de visitantes, vista de turnos
+• Personal: lista de tareas, prueba fotográfica, entrega de activos
+• Administrador: gestión de solicitudes, asignación de órdenes de trabajo, resumen financiero, seguimiento de rondas
+
+Envíe sus comentarios desde la sección de Soporte de la aplicación.

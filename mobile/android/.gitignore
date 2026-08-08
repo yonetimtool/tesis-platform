@@ -12,3 +12,8 @@ GeneratedPluginRegistrant.java
 key.properties
 **/*.keystore
 **/*.jks
+
+# (P150) Yukleme anahtari ASLA depoya girmez — depo disinda tutulur,
+# bu kural yalnizca kaza sonucu kopyalanmaya karsi savunmadir.
+*.jks
+*.keystore
