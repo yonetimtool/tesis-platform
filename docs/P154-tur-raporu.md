@@ -1,6 +1,6 @@
 # P154 TUR RAPORU — P142–160 brief'inin ilk turu
 
-> Tarih: **2026-08-09** · Dal: `main` · Başlangıç: `ca6b5aa` → Bitiş: `7412380`
+> Tarih: **2026-08-09** · Dal: `main` · Başlangıç: `ca6b5aa`
 >
 > Brief 13 aşama içeriyordu (A, 0–11). Bu tur **beşini tamamladı**, birini
 > kısmen yaptı, yedisine **başlamadı**. Aşağısı ne yapıldığını, hangi
@@ -185,9 +185,7 @@ Son tam koşum 2026-08-05'ti; aradan sekiz commit geçmişti.
 | `test_denetci_salt_okuma` | Aynı 5 kimlik-öncesi uç rol kapısız | Yukarıdakiyle aynı kök |
 | `test_sayfalama_siralamasi` | Kararsız sayfalama 4 > 3 (`kayit_basvurulari.py:66`, `kvkk.py:48`, `reports.py:121`, `transparency.py:149`) | P148 borcu; `order_by(..., Model.id)` eklemek gerekiyor |
 | `depo-alan-adi` kapısı | 5 bulgu; en ciddisi `www.xn--ynetiyor-n4a.com` belgede vaat ediliyor ama Caddyfile'da yok → ziyaretçi **TLS el sıkışması düşmesi** görür | Düzeltmek **canlı Caddy yapılandırmasına** dokunmayı gerektiriyor; kilitli kural 6 yasaklıyor. Yalnız belgeyi düzeltmek, gerçek TLS kusurunu kapatmadan uyarıyı susturmak olurdu |
-| `goc-tersinir` [3] "salınım" | **0036'nın `downgrade()` sırası yanlış** (aşağıda) | `docs/MIGRATION-POLITIKASI.md` §2 uygulanmış revizyonlarda **DDL'e dokunmayı yasaklıyor**; 0036 prod'da uygulanmış. Kararı Kerem'in |
-
-### 6.4 `goc-tersinir` — durum düzeldi ama bir adım kaldı
+### 6.4 `goc-tersinir` — **KAPANDI** (Kerem'in kararıyla)
 
 Tur başındaki koşumda bu kapı **benim 33 karakterlik revizyon kimliğim
 yüzünden** referans upgrade'de patlıyordu (45 bulgu). Kimlik düzeltildikten
@@ -198,7 +196,7 @@ sonra:
 | `goc-uyum` | **OK — bulgu: 0** ✔ (önceden HATA) |
 | `goc-tersinir` [1] `downgrade base` sonrası şema boş | **OK** ✔ |
 | `goc-tersinir` [2] gidiş-dönüş şeması düz `upgrade` ile **aynı** (7910 satır) | **OK** ✔ |
-| `goc-tersinir` [3] salınım (head'ten N adım aşağı-yukarı) | **HATA** |
+| `goc-tersinir` [3] salınım (head'ten N adım aşağı-yukarı) | **OK — bulgu: 0** ✔ |
 
 **[3]'ün kök nedeni ölçüldü ve 0041'den bağımsız olduğu KANITLANDI.**
 Tek kullanımlık taze bir veritabanına **yalnız 0036'ya kadar** göç
@@ -231,18 +229,35 @@ varsayılan dururken fonksiyonu düşürmeyi reddeder.
 **Düzeltme tek satırlık:** `drop_column`u fonksiyon düşürmelerinden
 **önce** taşımak.
 
-**BU TURDA YAPILMADI — bilinçli.** `docs/MIGRATION-POLITIKASI.md` §2:
-*"Mevcut revizyon dosyalarında yalnız şu değişiklikler yapılabilir:
-yorum/docstring düzeltmesi, biçimlendirme, yazım hatası. **DDL'e
-dokunulmaz.**"* §3'teki istisna yalnız **hiçbir ortama uygulanmamış**
-revizyonlar için ve 0036 prod'da uygulanmış.
+**KEREM'İN KARARIYLA DÜZELTİLDİ.** Politika normalde uygulanmış
+revizyonlarda DDL'e dokunmayı yasaklıyordu (§2); Kerem `downgrade()`
+gövdesinin bu kuralın dışında olduğuna karar verdi — gerekçe: prod'da
+**hiç koşmadı ve koşmayacak**, dolayısıyla düzeltme uygulanmış hiçbir
+durumu değiştirmez.
 
-**Kerem'in karar vermesi gereken:** politikanın "DDL'e dokunulmaz"
-kuralı `downgrade()` gövdesini de kapsıyor mu? Pratik gerçek şu:
-`downgrade()` prod'da **hiç koşmadı** ve koşmayacak; onu düzeltmek
-uygulanmış hiçbir durumu değiştirmez. Ama "pratikte risksiz" muhakemesi
-tam olarak yerinde düzenlemelerin sızma yoludur — o yüzden karar
-politikanın sahibine bırakıldı, tek taraflı alınmadı.
+Karar `docs/MIGRATION-POLITIKASI.md`'ye **§3b** olarak yazıldı ve
+**dar tutuldu** — üç şartı var: (a) `upgrade()` gövdesine dokunulmaz,
+(b) düzeltme `goc-tersinirlik.sh`in **kırmızı** bir adımını yeşile
+çevirmelidir (ölçülmüş kusur, tercih değil), (c) commit ve docstring
+kusuru **ve nasıl ölçüldüğünü** yazar.
+
+**Uygulanan değişiklik:** yalnız sıralama. `drop_column("tenant",
+"kayit_kodu")` fonksiyon düşürmesinden **önceye** alındı; gövde aynı.
+
+**Doğrulandı — üç ayrı ölçüm:**
+
+| Ölçüm | Sonuç |
+|---|---|
+| Taze DB: `upgrade 0036 → downgrade 0035 → upgrade 0036 → downgrade base` | **dördü de temiz** |
+| `goc-uyum` (taze şema ≡ göç etmiş şema) | **bulgu: 0** — yani `upgrade()` yolu bit bit aynı, §3b(a) şartı sağlandı |
+| `goc-tersinir` (tam zincir + salınım) | **bulgu: 0** — tur başında 45'ti |
+
+`goc-tersinir`in tamamen temiz gelmesi ayrıca şunu söylüyor: **başka
+hiçbir revizyonda benzer bir `downgrade` sırası kusuru yok.**
+
+> **Not — `DROP FUNCTION IF EXISTS` neden korumadı:** `IF EXISTS`
+> yalnızca "nesne yok" durumunu susturur, "bağımlı nesne var" durumunu
+> **değil**. Kusur tam da bu yüzden gözden kaçmıştı.
 
 ---
 
@@ -286,10 +301,9 @@ gizli aksiyonların görünürlüğü · görev kategorisi kolaylaştırma.
    formu mu gizlensin (§4.6)? Şu an brief'teki yazılı istek uygulandı.
 5. **Karar: `+905777777777` denetçi** hesabı `demo_tenant.py`'ye kalıcı
    eklensin mi? Şu an depoda yok, canlıda elle açılmış.
-6. **Karar: göç politikası** — `MIGRATION-POLITIKASI.md` §2'nin "DDL'e
-   dokunulmaz" kuralı `downgrade()` gövdesini de kapsıyor mu? Kapsamıyorsa
-   `0036`nın tek satırlık sıra hatası düzeltilip `goc-tersinir` kapısı
-   yeşile döner (§6.4).
+6. ~~**Karar: göç politikası**~~ — **KARAR VERİLDİ:** `downgrade()`
+   gövdesi "DDL'e dokunulmaz" kuralının dışında. Politikaya §3b olarak
+   yazıldı, `0036` düzeltildi, `goc-tersinir` yeşile döndü (§6.4).
 
 ## 9. CİHAZDA DOĞRULANACAKLAR
 

@@ -45,6 +45,22 @@ Diğer sekiz revizyon hiç değişmemiş.
    zorundadır. (Örnek: `0009`un `down_revision`ı `0008b` eklenirken
    değiştirildi; gerekçe dosyanın docstring'inde — prod'un başarısız koşumu
    tek işlemde atomik geri alınmıştı, yani `0009` hiçbir yerde uygulanmamıştı.)
+3b. **İstisna — uygulanmış bir revizyonun `downgrade()` gövdesi.** (P154,
+   Kerem'in kararı.) `downgrade()` prod'da **hiç koşmadı ve koşmayacak**;
+   dolayısıyla oradaki bir hatayı düzeltmek **uygulanmış hiçbir durumu
+   değiştirmez**. Bu istisna DARDIR ve üç şartı vardır:
+   * `upgrade()` gövdesine **dokunulmaz** — taze kurulan şema bit bit aynı
+     kalmalı, `infra/goc-uyum-dogrula.sh` bunu doğrular;
+   * düzeltme, `infra/goc-tersinirlik.sh`in **kırmızı** bir adımını yeşile
+     çevirmelidir (yani ortada ölçülmüş bir kusur vardır, tercih değil);
+   * commit ve dosya docstring'i, kusuru ve **nasıl ölçüldüğünü** yazar.
+
+   (Örnek: `0036`, `gen_kayit_kodu()`u ona `DEFAULT` ile bağımlı olan
+   `tenant.kayit_kodu` sütunundan **önce** düşürüyordu →
+   `DependentObjectsStillExist`. Sıra değişti, gövde aynı kaldı.
+   `DROP FUNCTION IF EXISTS` bu hatayı yutmaz: `IF EXISTS` yalnızca
+   "nesne yok" durumunu susturur, "bağımlı nesne var" durumunu değil.)
+
 4. **Geri alma (`downgrade`) yazılır.** `infra/goc-tersinirlik.sh` zinciri
    head'ten base'e indirip şemayı düz `upgrade` ile karşılaştırıyor; yeni
    revizyon bu kontrolü geçmek zorunda.

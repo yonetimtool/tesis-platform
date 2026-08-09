@@ -113,8 +113,34 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    # (P154) SIRA DUZELTILDI — govde ayni, YALNIZ SIRALAMA degisti.
+    #
+    # KUSUR: `gen_kayit_kodu()` fonksiyonu, ona `DEFAULT` ile bagimli olan
+    # `tenant.kayit_kodu` sutunundan ONCE dusuruluyordu (yukarida
+    # `alter_column(..., server_default=text("public.gen_kayit_kodu()"))`).
+    # PostgreSQL bunu reddeder:
+    #
+    #   psycopg.errors.DependentObjectsStillExist:
+    #     cannot drop function gen_kayit_kodu() because other objects
+    #     depend on it
+    #
+    # `DROP FUNCTION IF EXISTS` bu hatayi YUTMAZ: `IF EXISTS` yalnizca
+    # "nesne yok" durumunu susturur, "bagimli nesne var" durumunu degil.
+    #
+    # OLCULDU, TAHMIN EDILMEDI: tek kullanimlik taze bir veritabanina
+    # YALNIZ 0036'ya kadar goc uygulandi ve 0035'e indirildi; 0041 devrede
+    # bile degilken ayni hata cikti. `infra/goc-tersinirlik.sh`in [3]
+    # "salinim" adimi bu yuzden kirmiziydi.
+    #
+    # NEDEN UYGULANMIS BIR REVIZYON DUZENLENDI (MIGRATION-POLITIKASI §2
+    # normalde DDL'e dokunmayi yasaklar): Kerem'in acik karari —
+    # `downgrade()` prod'da HIC KOSMADI ve kosmayacak, dolayisiyla bu
+    # duzeltme uygulanmis HICBIR durumu degistirmez. `upgrade()` govdesine
+    # DOKUNULMADI; taze kurulan sema bit bit aynidir ve
+    # `infra/goc-uyum-dogrula.sh` bunu dogrular.
     op.execute("DROP FUNCTION IF EXISTS public.tenant_id_by_kayit_kodu(text);")
-    op.execute("DROP FUNCTION IF EXISTS public.gen_kayit_kodu();")
     op.drop_table("kayit_dogrulama")
     op.drop_constraint("uq_tenant_kayit_kodu", "tenant", type_="unique")
+    # SUTUN ONCE: varsayilanini tasidigi fonksiyonu serbest birakir.
     op.drop_column("tenant", "kayit_kodu")
+    op.execute("DROP FUNCTION IF EXISTS public.gen_kayit_kodu();")
