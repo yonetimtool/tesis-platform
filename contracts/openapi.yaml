@@ -270,6 +270,187 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/Error" }
 
+  # ----------------------------------------------------------------- #
+  # (P148) SAKININ KENDI KAYDI — iki adim, OTURUM ACMAZ.
+  # (P154) Sozlesmeye eklendi: uclar P148/P149'da yazilmis ama buraya
+  # islenmemisti; `test_sozlesme_sapmasi` o gunden beri kirmiziydi.
+  /auth/kayit/basla:
+    post:
+      tags: [auth]
+      summary: Sakin kaydi 1. adim — tesis kodu + daire + telefon, SMS kodu gonderir
+      security: []   # kimlik ONCESI: kullanicinin henuz hesabi yok
+      description: |
+        Tesis, `tenant_id_by_kayit_kodu` ile KODDAN cozulur (oturum yok).
+
+        ADIMLARI AYIRT ETTIRMEYEN TEK HATA: "kod yanlis", "daire yok" ve
+        "tesis yok" durumlarinin HEPSI ayni 422 `invalid_registration`
+        yanitini verir. Ayirmak, tesisin daire listesini disariya
+        sizdirirdi.
+
+        DAIRE SAHIPLIGI DOGRULANMAZ (Kerem'in acik karari, bkz.
+        tests/test_sakin_kaydi.py modul basligi).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/KayitBaslaRequest" }
+      responses:
+        "200":
+          description: |
+            Kod gonderildi. KODUN KENDISI DONMEZ; yanit yalnizca
+            kullanicinin dogru tesisi/daireyi sectigini teyit etmesi icin
+            ad tasir ve telefonu MASKELI gosterir.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KayitBaslaResponse" }
+        "422":
+          description: Kayit bilgileri gecersiz (adimlari ayirt ETTIRMEZ)
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  /auth/kayit/dogrula:
+    post:
+      tags: [auth]
+      summary: Sakin kaydi 2. adim — kod dogru ise basvuru ONAYA duser
+      security: []
+      description: |
+        (P148.2) HESAP BURADA ACILMAZ ve OTURUM DONMEZ. Onceki surumde bu
+        uc kullaniciyi acip token donuyordu; Kerem onay adimini actigi icin
+        hesap ancak YONETICI ONAYINDAN sonra acilir. Boylece tahmin
+        edilebilir tesis kodu tek basina veriye erisim saglamaz.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/KayitDogrulaRequest" }
+      responses:
+        "200":
+          description: Basvuru onay bekliyor (token YOK)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KayitDurumResponse" }
+        "422":
+          description: Kayit bilgileri gecersiz (adimlari ayirt ETTIRMEZ)
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  # ----------------------------------------------------------------- #
+  # (P149) PAROLASIZ GIRIS — tek kod mekanizmasi.
+  /auth/giris/kod-iste:
+    post:
+      tags: [auth]
+      summary: Kayitli ve AKTIF numaraya giris kodu gonderir
+      security: []
+      description: |
+        NUMARA VARLIGINI SIZDIRMAZ: numara kayitli olmasa da yanit
+        AYNIDIR (`durum: onay_bekliyor`). Aksi hâlde bu uc, hangi
+        numaralarin sistemde oldugunu sorgulayan bir arac olurdu.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TelefonIstek" }
+      responses:
+        "200":
+          description: Islem alindi (numara kayitli OLMASA DA ayni yanit)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KayitDurumResponse" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /auth/giris/kod-dogrula:
+    post:
+      tags: [auth]
+      summary: Kod dogru ise OTURUM ACAR — parola aranmaz
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TelefonKodIstek" }
+      responses:
+        "200":
+          description: Token cifti
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TokenPair" }
+        "422":
+          description: |
+            Kod gecersiz. "kod yanlis" ile "boyle kullanici yok" AYNI
+            yaniti verir — fark, kayitli numaralarin sizmasi demekti.
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  # ----------------------------------------------------------------- #
+  # (P148.2) KAYIT BASVURULARI — yoneticinin onay kuyrugu.
+  /kayit-basvurulari:
+    get:
+      tags: [kayit]
+      summary: Onay bekleyen sakin basvurulari (admin + yonetici)
+      parameters:
+        - { name: limit,  in: query, schema: { type: integer, minimum: 1, maximum: 200, default: 50 } }
+        - { name: offset, in: query, schema: { type: integer, minimum: 0, default: 0 } }
+      responses:
+        "200":
+          description: Basvuru listesi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KayitBasvuruListesi" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /kayit-basvurulari/{basvuru_id}/onayla:
+    parameters:
+      - name: basvuru_id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [kayit]
+      summary: Basvuruyu onayla — HESAP BURADA ACILIR
+      description: |
+        Hesap PAROLASIZ ve daireye bagli olarak acilir; kullanici
+        `/auth/giris/kod-iste` ile girer. Basvuru bulunamazsa 404.
+      responses:
+        "201":
+          description: Hesap acildi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [user_id]
+                properties:
+                  user_id: { type: string, format: uuid }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /kayit-basvurulari/{basvuru_id}/reddet:
+    parameters:
+      - name: basvuru_id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [kayit]
+      summary: Basvuruyu reddet
+      description: |
+        Basvuru SILINMEZ, reddedilir: iz kalir ve AYNI numara yeniden
+        basvurabilir (acik-basvuru kismi indeksi buna izin verir).
+      responses:
+        "200":
+          description: Reddedildi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [durum]
+                properties:
+                  durum: { type: string, enum: [reddedildi] }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   # ================================================================= #
   # SELF-SERVIS PROFIL (/me/*) — tum roller, yalniz kendi kaydi
   # ================================================================= #
@@ -299,6 +480,31 @@ paths:
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "422": { $ref: "#/components/responses/ValidationError" }
+
+  # (P149) PAROLASIZ kullanici icin silme onay kodu. Parolali kullanici
+  # bu ucu KULLANMAZ — silme dogrudan parolayla onaylanir.
+  /me/hesap-sil/kod-iste:
+    post:
+      tags: [me]
+      summary: Parolasiz kullanici icin hesap silme onay kodu gonderir
+      description: |
+        Hesabinda kayitli telefon yoksa 422 `no_phone` — kod gonderilecek
+        bir kanal olmadigi icin silme akisi baslatilamaz.
+      responses:
+        "200":
+          description: Kod gonderildi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [durum]
+                properties:
+                  durum: { type: string, enum: [gonderildi] }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422":
+          description: Hesapta kayitli telefon numarasi yok
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
 
   /me/hesap-sil:
     post:
@@ -9078,6 +9284,73 @@ components:
         user_id: { type: string, format: uuid }
         ad: { type: string }
         temp_code: { type: string, description: "BIR KEZ doner; admin ilgiliye iletir" }
+    # (P148/P149) Sakin kaydi + parolasiz giris. (P154'te sozlesmeye
+    # islendi; uclar daha once yazilmisti.)
+    KayitBaslaRequest:
+      type: object
+      description: |
+        Sakin kaydinin 1. adimi. `blok` opsiyoneldir: tek bloklu tesiste
+        sakin blok adini bilmeyebilir.
+      required: [tesis_kodu, daire_no, telefon]
+      properties:
+        tesis_kodu: { type: string, minLength: 4, maxLength: 32, example: "OLTU-260715" }
+        blok:       { type: string, maxLength: 32, nullable: true, example: "A" }
+        daire_no:   { type: string, minLength: 1, maxLength: 32, example: "12" }
+        telefon:    { type: string, minLength: 5, maxLength: 32, example: "+905321112203" }
+    KayitBaslaResponse:
+      type: object
+      description: |
+        KOD DONMEZ. Yanit yalnizca kullanicinin dogru tesisi/daireyi
+        sectigini teyit etmesi icindir; telefon MASKELIDIR.
+      required: [tesis_ad, daire, telefon_maskeli]
+      properties:
+        tesis_ad:        { type: string, example: "Oltu Sitesi" }
+        daire:           { type: string, example: "A-12" }
+        telefon_maskeli: { type: string, example: "+9053****203" }
+    KayitDogrulaRequest:
+      type: object
+      required: [telefon, kod, ad]
+      properties:
+        telefon: { type: string, minLength: 5, maxLength: 32 }
+        kod:     { type: string, minLength: 4, maxLength: 12 }
+        ad:      { type: string, minLength: 2, maxLength: 120 }
+    KayitDurumResponse:
+      type: object
+      description: |
+        (P148.2) Kayit akisinin durumu — OTURUM DEGIL. Bilerek token
+        DONMEZ: hesap yonetici onayindan SONRA acilir.
+      required: [durum]
+      properties:
+        durum: { type: string, enum: [onay_bekliyor] }
+    TelefonIstek:
+      type: object
+      required: [telefon]
+      properties:
+        telefon: { type: string, minLength: 5, maxLength: 32, example: "+905321112203" }
+    TelefonKodIstek:
+      type: object
+      required: [telefon, kod]
+      properties:
+        telefon: { type: string, minLength: 5, maxLength: 32 }
+        kod:     { type: string, minLength: 4, maxLength: 12 }
+    KayitBasvuruOut:
+      type: object
+      description: Yoneticinin onay ekranindaki satir.
+      required: [id, telefon, daire, created_at]
+      properties:
+        id:         { type: string, format: uuid }
+        ad:         { type: string, nullable: true }
+        telefon:    { type: string }
+        daire:      { type: string, example: "A-12" }
+        created_at: { type: string, format: date-time }
+    KayitBasvuruListesi:
+      type: object
+      required: [items, meta]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/KayitBasvuruOut" }
+        meta: { $ref: "#/components/schemas/PageMeta" }
     PhoneLoginRequest:
       type: object
       description: |

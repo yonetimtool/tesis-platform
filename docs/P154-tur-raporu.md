@@ -168,21 +168,19 @@ Son tam koşum 2026-08-05'ti; aradan sekiz commit geçmişti.
 |---|---|
 | `web-tsc` | **OK** (temiz) |
 | `web-vitest` | **OK — 677** (676 → +1 yeni kilit) |
-| `backend-pytest` | **7 failed, 1479 passed** → sonra yetki kilidi kapandı: **6 kalan** |
+| `backend-pytest` | **3 failed, 1483 passed** (taban: 11 failed / 1462 passed) |
 | Hedefli koşum (yetki + secdef + göç kimlikleri + çoklu yönetici) | **22/22** |
-| Göç `up → down → up` | **temiz** (üç kez koşturuldu) |
+| `goc-uyum` / `goc-tersinir` | **ikisi de bulgu: 0** ✔ |
 | `mobil-*` | **dokunulmadı** (mobil dosyası değişmedi) |
 
-**Net:** taban 11 hatadan **5'i kapatıldı**, **yeni hata üretilmedi**,
-+17 test eklendi.
+**Net:** taban 11 hatadan **8'i kapatıldı**, **yeni hata üretilmedi**,
++21 test eklendi. Göç kapılarının ikisi de sıfırlandı.
 
 ### 6.3 KALAN KIRMIZILAR — hepsi bu turdan ÖNCE de kırmızıydı
 
 | Test | Sebep | Neden bu turda kapatılmadı |
 |---|---|---|
 | `test_rls_kapsam` ×2 | `kayit_dogrulama` RLS'siz | §4.7 — açmak kayıt akışını kırardı; tasarım kararı gerekiyor |
-| `test_sozlesme_sapmasi` ×2 | 8 uç `openapi.yaml`da yok (`/auth/giris/*`, `/auth/kayit/*`, `/kayit-basvurulari*`, `/me/hesap-sil/kod-iste`) | P148/P149 borcu; 8 uç şeması yazmak ayrı bir iş. **Benim uçlarım bu listede YOK** — sözleşmeye eklendi |
-| `test_denetci_salt_okuma` | Aynı 5 kimlik-öncesi uç rol kapısız | Yukarıdakiyle aynı kök |
 | `test_sayfalama_siralamasi` | Kararsız sayfalama 4 > 3 (`kayit_basvurulari.py:66`, `kvkk.py:48`, `reports.py:121`, `transparency.py:149`) | P148 borcu; `order_by(..., Model.id)` eklemek gerekiyor |
 | `depo-alan-adi` kapısı | 5 bulgu; en ciddisi `www.xn--ynetiyor-n4a.com` belgede vaat ediliyor ama Caddyfile'da yok → ziyaretçi **TLS el sıkışması düşmesi** görür | Düzeltmek **canlı Caddy yapılandırmasına** dokunmayı gerektiriyor; kilitli kural 6 yasaklıyor. Yalnız belgeyi düzeltmek, gerçek TLS kusurunu kapatmadan uyarıyı susturmak olurdu |
 ### 6.4 `goc-tersinir` — **KAPANDI** (Kerem'in kararıyla)
@@ -258,6 +256,37 @@ hiçbir revizyonda benzer bir `downgrade` sırası kusuru yok.**
 > **Not — `DROP FUNCTION IF EXISTS` neden korumadı:** `IF EXISTS`
 > yalnızca "nesne yok" durumunu susturur, "bağımlı nesne var" durumunu
 > **değil**. Kusur tam da bu yüzden gözden kaçmıştı.
+
+### 6.5 `test_sozlesme_sapmasi` + `test_denetci_salt_okuma` — **KAPANDI**
+
+P148/P149'da yazılıp sözleşmeye işlenmeyen **8 uç** `contracts/openapi.yaml`'a
+eklendi (kural 6: *"/contracts → openapi.yaml her uç/şema değişikliğinde
+güncellenir"*). Şemalar **uydurulmadı** — her biri `routers/auth.py`,
+`routers/kayit_basvurulari.py`, `routers/me.py` ve `schemas.py`'deki gerçek
+imzadan okundu.
+
+| Uç | Rol kapısı | Yanıt |
+|---|---|---|
+| `POST /auth/kayit/basla` | **yok** (kimlik öncesi) | `KayitBaslaResponse` — kod DÖNMEZ, telefon maskeli |
+| `POST /auth/kayit/dogrula` | **yok** | `KayitDurumResponse` — **token DÖNMEZ**, başvuru onaya düşer |
+| `POST /auth/giris/kod-iste` | **yok** | `KayitDurumResponse` — numara kayıtlı olmasa da **aynı** yanıt |
+| `POST /auth/giris/kod-dogrula` | **yok** | `TokenPair` — oturum açar |
+| `GET /kayit-basvurulari` | admin + yönetici | `KayitBasvuruListesi` |
+| `POST /kayit-basvurulari/{id}/onayla` | admin + yönetici | `201 {user_id}` — **hesap burada açılır** |
+| `POST /kayit-basvurulari/{id}/reddet` | admin + yönetici | `200 {durum: reddedildi}` |
+| `POST /me/hesap-sil/kod-iste` | kimlik var, rol yok | `200 {durum: gonderildi}` |
+
+`test_denetci_salt_okuma`'nın `KAPISIZ_MUTASYONLAR` kümesine 5 uç
+**gerekçesiyle** eklendi: dördünün rol kapısı **olamaz** (isteği atanın
+henüz hesabı/oturumu yok) ve hiçbiri tesisin kayıtlarına yazmaz —
+`kayit/*` yalnız bekleyen bir başvuru yazar, **hesabı açan uç rol
+kapılıdır**. Beşincisi (`/me/hesap-sil/kod-iste`) kişinin kendi hakkıdır.
+
+**Zincirleme etki — beklenen ve doğru:** 8 uç artık sözleşmede olduğu için
+**rol matrisi kilidine de girdiler**. Kilit yenilendi; git farkı tam olarak
+o 8 satır. Satırlar doğrulandı: 4 public uç her role `IZIN`, 3 başvuru ucu
+yalnız ilk iki sütunda `IZIN` (`_MANAGER = admin, yonetici`),
+`/me/hesap-sil/kod-iste` her kimlikli role `IZIN`.
 
 ---
 

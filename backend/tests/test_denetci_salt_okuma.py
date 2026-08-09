@@ -52,11 +52,35 @@ KAPISIZ_MUTASYONLAR: frozenset[tuple[str, str]] = frozenset({
     ("POST", "/auth/set-password"),
     ("POST", "/public/{slug}/iletisim"),
     ("POST", "/webhooks/payments/{provider}"),
+    # --- (P148/P149) KIMLIK ONCESI kayit ve parolasiz giris ---
+    # Dordunun de rol kapisi OLAMAZ: istegi atan kisinin henuz hesabi
+    # (kayit) ya da oturumu (giris) yoktur. Tesisin kayitlarina yazmazlar:
+    # `kayit/*` yalniz `kayit_dogrulama` tablosuna bekleyen bir basvuru
+    # yazar ve HESAP ACMAZ — hesap yonetici onayindan sonra
+    # `POST /kayit-basvurulari/{id}/onayla` ile acilir ve O UC rol
+    # kapilidir (admin + yonetici). `giris/*` yalniz kod uretir/dogrular.
+    #
+    # SIZDIRMAMA: dordu de adimlari ayirt ETTIRMEYEN tek bir yanit doner
+    # (kayitli olmayan numara ile kayitli olan AYNI cevabi alir), yani
+    # kapisiz olmalari bir numara/daire sorgulama araci uretmez.
+    #
+    # (P154) Bu dort satir bu turda YAZILMADI, KAYDA GECIRILDI: uclar
+    # P148/P149'da eklenmis ama kume guncellenmemisti ve test o gunden
+    # beri kirmiziydi.
+    ("POST", "/auth/kayit/basla"),
+    ("POST", "/auth/kayit/dogrula"),
+    ("POST", "/auth/giris/kod-iste"),
+    ("POST", "/auth/giris/kod-dogrula"),
     # --- KENDI hesabi (kisinin haklari) ---
     ("PATCH", "/me/contact"),
     ("PATCH", "/me/password"),
     ("PATCH", "/me/pazarlama-tercihleri"),
     ("POST", "/me/hesap-sil"),
+    # (P149) Parolasiz kullanicinin silme onay kodu. `/me/hesap-sil` ile
+    # AYNI hakka aittir — kisi kendi hesabini silebilmelidir — ve
+    # `get_current_user` kimligi zaten zorunlu kilar; eksik olan yalniz
+    # ROL kapisidir ki burada anlamsizdir: her rol kendi hesabini siler.
+    ("POST", "/me/hesap-sil/kod-iste"),
     ("POST", "/kvkk/onay"),
     # --- kendi cihazinin push kaydi ---
     ("POST", "/devices"),
