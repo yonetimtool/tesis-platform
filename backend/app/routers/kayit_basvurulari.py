@@ -63,7 +63,13 @@ async def list_basvurular(
             select(KayitDogrulama, Unit.no)
             .join(Unit, Unit.id == KayitDogrulama.unit_id)
             .where(kosul)
-            .order_by(KayitDogrulama.created_at.asc())
+            # (P154) KARARLI KUYRUK: `created_at` TEK BASINA kararsizdir ve
+            # burada esitlik NADIR DEGIL — bir daireye ait sakinler ayni
+            # anda kaydolur (aile, tasinma gunu) ve seed toplu satir yazar.
+            # Kararsiz siralamada yonetici ikinci sayfada AYNI basvuruyu
+            # yeniden gorur, bir baskasini HIC gormez ve hicbir yerde hata
+            # cikmaz — onaylanmayan bir sakin sessizce beklerdi.
+            .order_by(KayitDogrulama.created_at.asc(), KayitDogrulama.id.asc())
             .limit(limit)
             .offset(offset)
         )

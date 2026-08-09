@@ -25,6 +25,13 @@ uçları, P108: kalan hepsi). Geriye **3** satır kaldı ve üçü de
 
 Çırçır bu üçü için duruyor: sayı ARTAMAZ; yeni uç eklerken kararlı
 sıralama zorunludur.
+
+(P154) ÇIRÇIR İŞE YARADI — sayı 3'ten 4'e çıkmıştı: P148'de eklenen
+`kayit_basvurulari.py` yalnız `created_at` ile sıralıyordu. Eşitlik orada
+nadir değil (bir daireye ait sakinler aynı anda kaydolur), yani yönetici
+ikinci sayfada aynı başvuruyu yeniden görür, bir başkasını hiç görmez ve
+**onaylanmayan sakin sessizce beklerdi**. `id` eklendi, sayı 3'e döndü.
+Bu, eşiğin neden "azaltılabilir, artırılamaz" olduğunun kanıtıdır.
 """
 import pathlib
 import re

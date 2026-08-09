@@ -168,20 +168,20 @@ Son tam koşum 2026-08-05'ti; aradan sekiz commit geçmişti.
 |---|---|
 | `web-tsc` | **OK** (temiz) |
 | `web-vitest` | **OK — 677** (676 → +1 yeni kilit) |
-| `backend-pytest` | **3 failed, 1483 passed** (taban: 11 failed / 1462 passed) |
+| `backend-pytest` | **2 failed, 1484 passed** (taban: 11 failed / 1462 passed) |
 | Hedefli koşum (yetki + secdef + göç kimlikleri + çoklu yönetici) | **22/22** |
 | `goc-uyum` / `goc-tersinir` | **ikisi de bulgu: 0** ✔ |
 | `mobil-*` | **dokunulmadı** (mobil dosyası değişmedi) |
 
-**Net:** taban 11 hatadan **8'i kapatıldı**, **yeni hata üretilmedi**,
-+21 test eklendi. Göç kapılarının ikisi de sıfırlandı.
+**Net:** taban 11 hatadan **9'u kapatıldı**, **yeni hata üretilmedi**,
++22 test eklendi. Göç kapılarının ikisi de sıfırlandı. Geriye tek bir
+kusur sınıfı kaldı: `kayit_dogrulama` RLS'i (§4.7 — tasarım kararı).
 
 ### 6.3 KALAN KIRMIZILAR — hepsi bu turdan ÖNCE de kırmızıydı
 
 | Test | Sebep | Neden bu turda kapatılmadı |
 |---|---|---|
 | `test_rls_kapsam` ×2 | `kayit_dogrulama` RLS'siz | §4.7 — açmak kayıt akışını kırardı; tasarım kararı gerekiyor |
-| `test_sayfalama_siralamasi` | Kararsız sayfalama 4 > 3 (`kayit_basvurulari.py:66`, `kvkk.py:48`, `reports.py:121`, `transparency.py:149`) | P148 borcu; `order_by(..., Model.id)` eklemek gerekiyor |
 | `depo-alan-adi` kapısı | 5 bulgu; en ciddisi `www.xn--ynetiyor-n4a.com` belgede vaat ediliyor ama Caddyfile'da yok → ziyaretçi **TLS el sıkışması düşmesi** görür | Düzeltmek **canlı Caddy yapılandırmasına** dokunmayı gerektiriyor; kilitli kural 6 yasaklıyor. Yalnız belgeyi düzeltmek, gerçek TLS kusurunu kapatmadan uyarıyı susturmak olurdu |
 ### 6.4 `goc-tersinir` — **KAPANDI** (Kerem'in kararıyla)
 
@@ -287,6 +287,28 @@ kapılıdır**. Beşincisi (`/me/hesap-sil/kod-iste`) kişinin kendi hakkıdır.
 o 8 satır. Satırlar doğrulandı: 4 public uç her role `IZIN`, 3 başvuru ucu
 yalnız ilk iki sütunda `IZIN` (`_MANAGER = admin, yonetici`),
 `/me/hesap-sil/kod-iste` her kimlikli role `IZIN`.
+
+### 6.6 `test_sayfalama_siralamasi` — **KAPANDI**
+
+Bu kapı bir **çırçır** (ratchet): kararsız sayfalı sorgu sayısı
+azaltılabilir, **artırılamaz**. Sayı 3'ten 4'e çıkmıştı.
+
+**Artan tek satır `kayit_basvurulari.py:66` idi** (P148). Diğer üçü
+(`reports.py`, `transparency.py`, `kvkk.py`) testin kendi docstring'inde
+**bilinçli** olarak açıklanmış: ilk ikisi toplulaştırma (`id` `GROUP BY`da
+yok, eklenemez — kararlı kuyruk gruplama anahtarıdır), üçüncüsünde
+`(tenant_id, surum)` zaten benzersiz.
+
+**Kusurun bedeli soyut değildi:** onay kuyruğu yalnız `created_at` ile
+sıralanıyordu ve orada eşitlik **nadir değil** — bir daireye ait sakinler
+aynı anda kaydolur (aile, taşınma günü), seed toplu satır yazar. Kararsız
+sıralamada yönetici ikinci sayfada aynı başvuruyu yeniden görür, bir
+başkasını **hiç görmez** ve hiçbir yerde hata çıkmaz: **onaylanmayan bir
+sakin sessizce beklerdi.**
+
+`.order_by(created_at.asc(), id.asc())` eklendi; sayı 3'e döndü. Çırçırın
+neden "azaltılabilir, artırılamaz" olduğunun kanıtı olarak testin
+docstring'ine de yazıldı.
 
 ---
 
