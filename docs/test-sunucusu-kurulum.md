@@ -490,6 +490,72 @@ iki noktada ayrıldı ve **ikisi de altyapı kısıtından**:
 
 ---
 
+### 6.6.1 ⚠ TİRELİ ADLARIN KIRDIĞI ŞEY — düzeltildi (kod)
+
+Adlar tek seviyeye inince (`app-test`, `panel-test`) **panel ve uygulama
+kullanılamaz hâle gelmişti** ve bunun `.env.test` ile ilgisi yoktu.
+
+**Kök neden:** `admin-web/lib/yuzey.ts::konakYuzeyi()` yüzeyi konaktan
+çözerken `h.startsWith("app.")` / `startsWith("panel.")` — yani **noktalı**
+önek arıyordu. `app-test.…` tireyle başladığı için eşleşmiyor ve konak
+**"tanıtım"** sayılıyordu. Middleware ise tanıtım yüzeyinde `/` **dışındaki
+her yolu** köke geri atıyor.
+
+**Dışarıdan ölçüldü (2026-08-09):**
+
+```
+https://panel-test.yonetio.site/tenants    307 -> https://panel-test.yonetio.site/
+https://panel-test.yonetio.site/dashboard  307 -> https://panel-test.yonetio.site/
+https://app-test.yonetio.site/dues         307 -> https://app-test.yonetio.site/
+```
+
+Üç konak da kökte **aynı tanıtım sayfasını** veriyordu.
+
+**Düzeltme:** eşleşme artık **ilk DNS etiketi** üzerinden. Etiket ya tam
+`app`/`panel` olacak ya da `app-`/`panel-` ile başlayacak. Noktalı biçim
+(`app.yonetiyor.com`) aynen çalışmaya devam eder; `test.yonetio.site`
+tanıtım kalır; `napp.`/`apps.`/`panelx.` gibi gevşek eşleşmeler
+**reddedilir** (test ediliyor).
+
+> **Sunucuda uygulanması için:** `git pull` + `admin-web` imajını yeniden
+> kurmak gerekir. Yalnız `.env.test` düzenlemek bu kusuru **kapatmaz**.
+
+### 6.6.2 `.env.test` — dışarıdan doğrulanabilen kısmı
+
+`.env.test` sunucuda durur ve depoda **yoktur** (gitignore). Aşağıdakiler
+çalışan sunucudan ölçüldü:
+
+| Ayar | Ölçüm | Durum |
+|---|---|---|
+| `CORS_ORIGINS` | `OPTIONS /auth/login` + `Origin: https://panel-test.yonetio.site` → `access-control-allow-origin` **aynı adresi** döndü | ✅ gerçek adrese göre |
+| `MINIO_PUBLIC_URL` / storage konağı | `https://storage-test.yonetio.site/` → **403** (MinIO yanıtı; özel bucket için doğru) | ✅ ayakta |
+| Şema sürümü | `/health` → `0041_kod_ve_coklu_yonetici` | ⚠ **bir göç geride** — `0042_kayit_dogrulama_rls` uygulanmamış |
+
+**Dışarıdan ölçülemeyen ve elle teyit edilmesi gerekenler:**
+`PORTAL_BASE_URL` (SMS'teki `{odeme_linki}` bundan üretilir — `test.yonetio.site`
+olmalı), `PORTAL_DOMAIN*` / `PANEL_DOMAIN*` / `API_DOMAIN` (Cloudflare Tunnel
+kullanıldığı için Caddy devrede olmayabilir), `ACME_EMAIL` (tünelde TLS'i
+Cloudflare sonlandırdığı için işlevsiz).
+
+### 6.6.3 Sunucuyu güncel koda çekme
+
+`/health` şemayı `0041` gösteriyor; yani sunucu **0042'den önceki** bir
+commit'te. Bu hâliyle `scripts/test_seed.py`, Aşama 3 kayıt uçları,
+gönderim katmanı ve yukarıdaki yüzey düzeltmesi **sunucuda yok**.
+
+```bash
+cd /opt/yonetio/tesis-platform && git pull
+cd infra
+DC="docker compose -f docker-compose.prod.yml --env-file .env.test -p yonetio-test"
+$DC build api admin-web worker
+$DC up -d
+$DC logs migrate | tail -20
+curl -s https://api-test.yonetio.site/health          # 0042_kayit_dogrulama_rls beklenir
+$DC run --rm worker python -m scripts.test_seed
+```
+
+---
+
 ## 6.7 TOHUMLAMA — `scripts/test_seed.py`
 
 Boş veritabanını çalışır hale getiren **tek komut** (idempotent):

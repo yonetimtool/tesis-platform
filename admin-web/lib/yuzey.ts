@@ -127,9 +127,26 @@ const _YEREL_KONAKLAR = ["localhost", "127.0.0.1", "0.0.0.0", "::1", ""];
 
 export function konakYuzeyi(host: string | null | undefined): Yuzey {
   const h = (host ?? "").toLowerCase().split(":")[0];
-  if (h.startsWith("app.")) return "tesis";
-  if (h.startsWith("panel.")) return "platform";
   if (_YEREL_KONAKLAR.includes(h)) return "platform";
+  // (P154) ILK DNS ETIKETINE bakilir, ham onege DEGIL.
+  //
+  // NEDEN DEGISTI — OLCULDU: test sunucusu Cloudflare Tunnel arkasinda
+  // kuruldu ve ucretsiz sertifika IKI SEVIYELI alt alani (`app.test.*`)
+  // kapsamadigi icin adlar TEK SEVIYEYE indirildi:
+  // `app-test.yonetio.site`, `panel-test.yonetio.site`.
+  //
+  // Eski kural `h.startsWith("app.")` idi ve TIRE ile eslesmiyordu, yani
+  // ikisi de "tanitim" sayiliyordu. Sonucu kucuk degildi: middleware
+  // tanitim yuzeyinde `/` DISINDAKI HER YOLU koke geri atiyor, dolayisiyla
+  // panel ve uygulama o sunucuda TAMAMEN kullanilamaz haldeydi.
+  // Dogrulandi: /tenants, /dashboard, /dues -> hepsi 307 -> `/`.
+  //
+  // ETIKET SINIRI ONEMLI: `h.includes("app")` gibi gevsek bir kural
+  // `napp.example.com`u da tesis sayardi. Ilk etiket ya TAM `app`/`panel`
+  // olmali ya da `app-`/`panel-` ile BASLAMALI.
+  const etiket = h.split(".")[0];
+  if (etiket === "app" || etiket.startsWith("app-")) return "tesis";
+  if (etiket === "panel" || etiket.startsWith("panel-")) return "platform";
   // Kok ve www — tanitim. (`www.` oneki ATILIR: ayni sitedir.)
   return "tanitim";
 }

@@ -36,6 +36,28 @@ describe("(P127) konak -> yuzey", () => {
     expect(konakYuzeyi("www.yonetio.site")).toBe("tanitim");
   });
 
+  it("(P154) TIRELI alt alanlar da dogru yuzeye duser", () => {
+    // Test sunucusu Cloudflare Tunnel arkasinda ve ucretsiz sertifika
+    // IKI SEVIYELI alt alani kapsamadigi icin adlar tek seviyeye indi.
+    // Eski `startsWith("app.")` kurali tireyle eslesmiyordu ve ikisi de
+    // "tanitim" sayiliyordu — middleware o yuzeyde `/` disindaki HER yolu
+    // koke geri attigi icin panel ve uygulama KULLANILAMAZ haldeydi.
+    expect(konakYuzeyi("app-test.yonetio.site")).toBe("tesis");
+    expect(konakYuzeyi("panel-test.yonetio.site")).toBe("platform");
+    // Nokta bicimi AYNEN calismaya devam eder.
+    expect(konakYuzeyi("app.yonetiyor.com")).toBe("tesis");
+    expect(konakYuzeyi("panel.yonetiyor.com")).toBe("platform");
+  });
+
+  it("(P154) ETIKET SINIRI: gevsek eslesme YOK", () => {
+    // `includes("app")` gibi bir kural bunlari da tesis sayardi.
+    expect(konakYuzeyi("napp.example.com")).toBe("tanitim");
+    expect(konakYuzeyi("apps.example.com")).toBe("tanitim");
+    expect(konakYuzeyi("panelx.example.com")).toBe("tanitim");
+    // `test.yonetio.site` TANITIM kalmali — tire kurali onu kapmamali.
+    expect(konakYuzeyi("test.yonetio.site")).toBe("tanitim");
+  });
+
   it("app./panel. DEGISMEDI (gerileme kapisi)", () => {
     expect(konakYuzeyi(APP)).toBe("tesis");
     expect(konakYuzeyi(PANEL)).toBe("platform");
