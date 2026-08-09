@@ -238,6 +238,21 @@ describe("bilinmeyen rol / rota", () => {
     expect(rotaRoldeGorunur("/audit", "resident")).toBe(false);
   });
 
+  it("(P154) /olaylar YONETICIYE GORUNMEZ — yazma ucu ona kapali", () => {
+    // KOK NEDEN, tahmin degil olcum: violations.py'de _READER yoneticiyi
+    // iceriyor (liste aciliyor) ama _WRITER icermiyor; sayfanin "Olay
+    // bildir" dugmesi POST yapiyor ve yonetici 403 aliyor. Kerem'in
+    // karari sayfayi yoneticiden kaldirmak yonunde.
+    //
+    // BU KILIT NE ICIN: rol listesi bir gun "yonetim de gorsun" diye geri
+    // eklenirse, ayni 403 sessizce geri gelir. Test onu yazan kisiye
+    // once _WRITER'i acmasi gerektigini hatirlatir.
+    expect(rotaRoldeGorunur("/olaylar", "admin")).toBe(true);
+    expect(rotaRoldeGorunur("/olaylar", "yonetici")).toBe(false);
+    // `security` bu ucu MOBILDEN kullanir; `app.*` yuzeyinde zaten yok.
+    expect(rotaRoldeGorunur("/olaylar", "security")).toBe(false);
+  });
+
   it("SINIFLANDIRILMAMIS rota menuye girmez", () => {
     expect(rotaRoldeGorunur("/bilinmeyen", "admin")).toBe(false);
   });

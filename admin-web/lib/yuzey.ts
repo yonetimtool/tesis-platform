@@ -286,8 +286,26 @@ export const ROTA_ROLLERI: Record<string, readonly string[]> = {
   "/kameralar": ["admin", "yonetici"],
   // Olaylar: guvenlik BILDIRIR (mobilde), yonetim OKUR (burada).
   // (P129) `security` cikarildi — `app.*`ta oturumu yok; kaydi mobilden
-  // olusturur. Sayfanin kendisi yonetim gorunumu olarak DURUYOR.
-  "/olaylar": ["admin", "yonetici"],
+  // olusturur.
+  //
+  // (P154) `yonetici` DE CIKARILDI — Kerem'in karari. KOK NEDEN OLCULDU,
+  // tahmin edilmedi:
+  //   * `violations.py:43` _READER = admin, yonetici, security -> yonetici
+  //     listeyi OKUYABILIYOR ve sayfa aciliyordu,
+  //   * `violations.py:42` _WRITER = admin, security -> yonetici YAZAMIYOR,
+  //   * `olaylar/page.tsx` "Olay bildir" dugmesi POST /api/violations yapiyor.
+  // Yani yonetici sayfayi aciyor, listeyi goruyor, dugmeye basiyor ve 403
+  // aliyor. Bildirilen "yetki hatasi" tam olarak budur.
+  //
+  // ALTERNATIF (uygulanmadi, karar Kerem'in): yalniz YAZMA formunu
+  // yoneticiden gizleyip salt-okuma listesini birakmak. Kusur okumada
+  // degil yazmadaydi; sayfayi tumden kaldirmak calisan bir okuma
+  // yetenegini de goturur. Brief acikca "yoneticiden kaldir" dedigi icin
+  // yazili istek uygulandi ve takas burada kayda gecti.
+  //
+  // `security` bu ucu GERCEKTEN kullaniyor (mobil olay bildirimi), bu
+  // yuzden uc kaldirilmadi — yalniz web rota gorunurlugu daraldi.
+  "/olaylar": ["admin"],
 
   // --- PARK EDILDI (P129) — SAKIN / GUVENLIK / SAHA ----------------------
   // Sayfalar SILINMEDI: dosyalari duruyor, testleri kosuyor. `app.*`
