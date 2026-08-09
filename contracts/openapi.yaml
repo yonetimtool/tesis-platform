@@ -4879,6 +4879,14 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
         "422": { $ref: "#/components/responses/ValidationError" }
+        "429":
+          description: |
+            (P154) Tesisin GUNLUK gonderim kotasi doldu. Kontrol gonderim
+            BASLAMADAN yapilir: 300 kisilik listede 50. alicida kotaya
+            takilmak, kime gidip kime gitmedigini aciklamasi zor bir durum
+            birakirdi — yarim gonderim YERINE hic.
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
   /mesajlar/gecmis:
     get:
       tags: [mesajlar]
@@ -11781,6 +11789,18 @@ components:
           description: Verilirse suzgec YERINE bu kisiler
         blok: { type: string, nullable: true }
         borc_durumu: { type: string, nullable: true, enum: [borclu, tumu] }
+        rol:
+          type: string
+          maxLength: 32
+          nullable: true
+          description: |
+            (P154) ROL BAZLI segment. Diger suzgeclerden AYRI calisir ve
+            erken doner: blok/borc suzgecleri SAKIN listesinden turuyor
+            (`unit_resident`), oysa `security`/`tesis_gorevlisi` daireye
+            bagli DEGILDIR ve o listede hic gorunmez. Tek sorguya
+            sikistirmak "guvenlige duyuru gonder"i SESSIZCE bos liste
+            yapardi.
+
     MesajGonderSonuc:
       type: object
       required: [gonderildi, basarisiz, riza_yok, adres_yok]

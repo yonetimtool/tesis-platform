@@ -26,8 +26,12 @@ import redis.asyncio as aioredis
 from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy import text
 
-from .mesajlar import _saglayici
 from ..config import settings
+# (P154 / Asama 9) Kanal secimi ORTAK katmandan. Onceden bu dosya
+# `routers.mesajlar._saglayici` (PRIVATE bir router fonksiyonu) import
+# ediyordu — iki router arasinda gizli bir bagimlilikti ve e-posta
+# yapilandirmasi degisince hangi yollarin etkilendigi gorunmuyordu.
+from ..gonderim import saglayici as kanal_saglayicisi
 from ..db import SessionLocal
 from ..deps import get_redis, require_role
 from ..errors import APIError
@@ -88,7 +92,7 @@ def _bildir(kayit_id: uuid.UUID, body: TanitimIletisimIstek) -> None:
 
     Hedef `smtp_from`dur: ayri bir "satis adresi" ayari eklemek, bugun
     kimsenin doldurmayacagi ikinci bir yapilandirma alani olurdu. SMTP
-    yapilandirilmamissa saglayici LOG'a yazar (bkz. `_saglayici`).
+    yapilandirilmamissa saglayici LOG'a yazar (bkz. `gonderim.saglayici`).
     """
     hedef = getattr(settings, "smtp_from", None)
     if not hedef:
@@ -100,7 +104,7 @@ def _bildir(kayit_id: uuid.UUID, body: TanitimIletisimIstek) -> None:
         f"Telefon: {body.telefon or '-'}\nDil: {body.dil or '-'}\n\n{body.mesaj}"
     )
     try:
-        _saglayici("eposta").gonder(hedef, "Yönetio — yeni iletişim mesajı", govde)
+        kanal_saglayicisi("eposta").gonder(hedef, "Yönetio — yeni iletişim mesajı", govde)
     except Exception as exc:  # noqa: BLE001 — kayit zaten atildi
         log.warning("tanitim iletisim %s bildirimi basarisiz: %s", kayit_id, exc)
 

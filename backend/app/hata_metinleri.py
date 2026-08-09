@@ -857,6 +857,18 @@ METINLER: dict[str, dict[str, str]] = {
     # (P154) Kod isteme hiz siniri. Metin KAC ISTEK KALDIGINI SOYLEMEZ:
     # sayaci geri okumak, saldirgana ne zaman yeniden deneyecegini
     # ogretirdi. "Bir sure sonra" bilincli olarak belirsizdir.
+    # (P154 / Asama 9) Tesis basina gunluk gonderim kotasi. Metin KALAN
+    # HAKKI SOYLEMEZ: sayiyi vermek, kotayi tam sinirinda kullanmayi
+    # tesvik eder ve asil mesaj "yarin devam edin"dir.
+    "gunluk_mesaj_kotasi_doldu": {
+        "tr": "Bu tesis için günlük mesaj gönderim sınırına ulaşıldı. Yarın tekrar deneyin.",
+        "en": "The daily message limit for this facility has been reached. Try again tomorrow.",
+        "ar": "تم بلوغ الحد اليومي للرسائل لهذا المرفق. حاول مرة أخرى غدًا.",
+        "ru": "Достигнут дневной лимит сообщений для этого объекта. Повторите попытку завтра.",
+        "de": "Das tägliche Nachrichtenlimit für diese Anlage ist erreicht. Versuchen Sie es morgen erneut.",
+        "fr": "La limite quotidienne de messages pour cet établissement est atteinte. Réessayez demain.",
+        "es": "Se ha alcanzado el límite diario de mensajes para esta instalación. Inténtelo mañana.",
+    },
     "cok_fazla_kod_istegi": {
         "tr": "Çok fazla kod isteği gönderildi. Lütfen bir süre sonra tekrar deneyin.",
         "en": "Too many code requests. Please try again later.",

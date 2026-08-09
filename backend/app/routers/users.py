@@ -7,6 +7,7 @@ is_active=false (PATCH).
 """
 from __future__ import annotations
 
+import logging
 import uuid
 
 from fastapi import APIRouter, Depends, Query
@@ -18,7 +19,7 @@ from ..audit import Action, audit_user
 from ..crud_helpers import get_or_404, is_unique_violation, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
-from ..models import AppUser
+from ..models import AppUser, Tenant
 from ..roller import yonetilebilir
 from ..schemas import (
     AcilabilirRollerOut,
@@ -33,6 +34,7 @@ from ..schemas import (
     UserRoleLiteral,
     UserUpdate,
 )
+from ..gonderim import saglayici as gonderim_saglayici
 from ..security import generate_temp_code, hash_password
 from ..storage import delete_objects, presign_get
 
@@ -81,6 +83,8 @@ def _yonetim_kapisi(user: AppUser, hedef_rol: str) -> None:
 _CONTACT_MANAGER = require_role("admin", "yonetici")
 # telefon global benzersiz; email tenant-ici benzersiz — hangisi cakisti
 # ayirt edilmeden tek mesaj.
+logger = logging.getLogger(__name__)
+
 _CONTACT_CONFLICT = APIError(409, "conflict", "telefon_veya_email_zaten_kayitli")
 # Saha personeli fotosu YALNIZ yonetici yonetir (spec P3); hedef saha personeli.
 _AVATAR_MANAGER = require_role("yonetici")
@@ -220,6 +224,32 @@ async def create_user(
             "gorev_penceresi": bool(obj.gorev_baslangic or obj.gorev_bitis),
         },
     )
+    # (P154 / Asama 3 EKSIGI, Asama 9 altyapisiyla) Parola verilmediyse
+    # uretilen TEK SEFERLIK kod, kisinin e-postasina gonderilir.
+    #
+    # AYRI E-POSTA KODU YAZILMADI (brief'in cakisma kurali): kanal secimi
+    # `gonderim.saglayici()`den geliyor, yani SMTP yapilandirmasi tek
+    # yerde. SMTP yoksa saglayici LOG'dur ve kod ekrandaki yanitta ZATEN
+    # bir kez donuyor — yani gonderim BASARISIZ olsa da yonetici kodu
+    # iletebilir; bu yuzden hata istegi KIRMAZ.
+    #
+    # E-POSTASI OLMAYAN KISIYE denenmez: `hedef` bos gecmek, saglayiciya
+    # anlamsiz bir istek yaptirip gecmise sahte bir basarisizlik yazardi.
+    tenant_adi = (
+        await db.execute(select(Tenant.ad).where(Tenant.id == user.tenant_id))
+    ).scalar_one_or_none() or ""
+    if temp_code and obj.email:
+        try:
+            gonderim_saglayici("eposta").gonder(
+                obj.email,
+                f"{tenant_adi} — hesabınız açıldı",
+                f"Sayın {obj.ad},\n\n{tenant_adi} için hesabınız açıldı.\n"
+                f"Tek seferlik giriş kodunuz: {temp_code}\n\n"
+                "İlk girişte bu kodla giriş yapıp parolanızı belirleyin.",
+            )
+        except Exception:  # noqa: BLE001 — gonderim kaydi KIRMAZ
+            logger.warning("[users] gecici kod e-postasi gonderilemedi")
+
     return UserCreatedOut(
         id=obj.id,
         ad=obj.ad,

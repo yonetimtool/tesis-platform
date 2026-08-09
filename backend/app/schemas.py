@@ -4834,6 +4834,15 @@ class MesajGonderIstek(BaseModel):
     blok: str | None = None
     #: "borclu" | "tumu" — borc durumuna gore suzgec.
     borc_durumu: str | None = Field(None, max_length=20)
+    #: (P154 / Asama 9) ROL BAZLI segment — brief'in dorduncu alici kumesi.
+    #:
+    #: DIGER SUZGECLERDEN AYRI CALISIR: blok/borc suzgecleri SAKIN
+    #: listesinden turuyor (`unit_resident` uzerinden); rol segmenti ise
+    #: PERSONELI de kapsamali (guvenlik, tesis gorevlisi — onlarin dairesi
+    #: yoktur ve sakin listesinde HIC gorunmezler). Ikisini tek sorguya
+    #: sikistirmak, "guvenlige duyuru gonder" dendiginde SESSIZCE bos liste
+    #: uretirdi.
+    rol: str | None = Field(None, max_length=32)
 
 
 class MesajGonderimOut(BaseModel):

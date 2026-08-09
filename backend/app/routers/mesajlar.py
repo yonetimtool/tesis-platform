@@ -22,6 +22,7 @@ from ..config import settings
 from ..crud_helpers import get_or_404, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
+from ..gonderim import kota_kontrol, saglayici as kanal_saglayicisi
 from ..mesajlasma import (
     sms_saglayicisi,
     LogEpostaSaglayici,
@@ -66,22 +67,10 @@ _YONETIM = require_role("admin", "yonetici")
 _TOPLU_UST_SINIR = 500
 
 
-def _saglayici(kanal: str):
-    if kanal == "sms":
-        # (P150) Secim TEK YERDE: `sms_saglayicisi()`. Burada `LogSms`
-        # sabitlenmis olsaydi, gecit baglandiginda toplu mesajlar hala
-        # hicbir yere gitmezdi — sessiz ve fark edilmesi zor bir kusur.
-        return sms_saglayicisi()
-    sunucu = getattr(settings, "smtp_host", None)
-    if sunucu:
-        return SmtpEpostaSaglayici(
-            sunucu,
-            int(getattr(settings, "smtp_port", 587) or 587),
-            getattr(settings, "smtp_user", None),
-            getattr(settings, "smtp_password", None),
-            getattr(settings, "smtp_from", None) or "no-reply@localhost",
-        )
-    return LogEpostaSaglayici()
+# (P154 / Asama 9) Kanal secimi BU DOSYADAN CIKTI: `gonderim.saglayici()`
+# artik dort kanalin da TEK giris noktasi. Burada satir ici kalmasi,
+# e-posta gondermek isteyen ikinci bir yolun (orn. gecici kod e-postasi)
+# SMTP yapilandirmasini KOPYALAMASI demekti.
 
 
 def _cikti(obj: MesajSablonu) -> MesajSablonuOut:
@@ -294,6 +283,25 @@ async def _alicilar(
     if body.user_ids:
         return list(dict.fromkeys(body.user_ids))[:_TOPLU_UST_SINIR]
 
+    # (P154 / Asama 9) ROL BAZLI segment AYRI SORGUDUR ve erken doner.
+    # Sebep: asagidaki suzgecler SAKIN listesinden turuyor
+    # (`unit_resident` join'i), oysa `security` / `tesis_gorevlisi` gibi
+    # roller daireye bagli DEGILDIR ve o listede HIC gorunmezler.
+    # Rol segmentini oraya iliştirmek, "guvenlige duyuru gonder"
+    # dendiginde SESSIZCE bos liste uretirdi.
+    if body.rol:
+        idler = list(
+            (
+                await db.execute(
+                    select(AppUser.id).where(
+                        AppUser.role == body.rol,
+                        AppUser.is_active.is_(True),
+                    )
+                )
+            ).scalars().all()
+        )
+        return idler[:_TOPLU_UST_SINIR]
+
     q = (
         select(UnitResident.user_id)
         .join(Unit, Unit.id == UnitResident.unit_id)
@@ -344,7 +352,13 @@ async def gonder(
         ).scalars().all()
     } if idler else {}
 
-    saglayici = _saglayici(sablon.kanal)
+    # (P154 / Asama 9) GUNLUK KOTA — gonderim BASLAMADAN kontrol edilir.
+    # YARIM GONDERIM YERINE HIC: 300 kisilik bir listede 50. alicida
+    # kotaya takilmak, kime gidip kime gitmedigini kullaniciya aciklamasi
+    # zor bir durum birakirdi.
+    await kota_kontrol(db, user.tenant_id, len(idler))
+
+    saglayici = kanal_saglayicisi(sablon.kanal)
     gonderildi = basarisiz = riza_yok = adres_yok = 0
 
     for kid in idler:
