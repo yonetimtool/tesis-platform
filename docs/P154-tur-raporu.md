@@ -105,12 +105,11 @@ Kök neden ölçüldü: `_READER` yöneticiyi içeriyor (sayfa açılıyor),
 formunu gizlemek okuma yeteneğini korurdu. Brief açıkça "yöneticiden
 kaldır" dediği için yazılı istek uygulandı.
 
-### 4.7 `kayit_dogrulama`ya RLS **açılmadı** (bilinçli)
-Tablo **kimlik öncesi** okunuyor: `auth.kayit_dogrula` ve
-`telefon_kodu.kodu_dogrula` satırı **telefondan** bulur ve tenant o an
-bilinmez. Tenant izolasyon politikası eklemek sakin kaydını ve parolasız
-girişi **sessizce sıfır satıra** düşürürdü. Kapıyı yeşile boyamak için
-akış kırılmadı; doğru çözüm bir `SECURITY DEFINER` çözücüdür.
+### 4.7 `kayit_dogrulama` RLS altına alındı — çözücü tasarlanıp uygulandı
+Tablo **kimlik öncesi** okunuyor: satırı görmek için tenant bağlamı
+gerekiyor, tenant'ı öğrenmek için de satırı görmek. Döngü, `tenant_id_by_slug`
+ile aynı desende — **yalnız tenant kimliği döndüren** bir `SECURITY DEFINER`
+fonksiyonla kırıldı. Ayrıntı: §6.7.
 
 ---
 
@@ -168,20 +167,20 @@ Son tam koşum 2026-08-05'ti; aradan sekiz commit geçmişti.
 |---|---|
 | `web-tsc` | **OK** (temiz) |
 | `web-vitest` | **OK — 677** (676 → +1 yeni kilit) |
-| `backend-pytest` | **2 failed, 1484 passed** (taban: 11 failed / 1462 passed) |
+| `backend-pytest` | **0 failed, 1492 passed** ✔ (taban: 11 failed / 1462 passed) |
 | Hedefli koşum (yetki + secdef + göç kimlikleri + çoklu yönetici) | **22/22** |
 | `goc-uyum` / `goc-tersinir` | **ikisi de bulgu: 0** ✔ |
 | `mobil-*` | **dokunulmadı** (mobil dosyası değişmedi) |
 
-**Net:** taban 11 hatadan **9'u kapatıldı**, **yeni hata üretilmedi**,
-+22 test eklendi. Göç kapılarının ikisi de sıfırlandı. Geriye tek bir
-kusur sınıfı kaldı: `kayit_dogrulama` RLS'i (§4.7 — tasarım kararı).
+**Net:** taban 11 hatanın **hepsi** kapatıldı, **yeni hata üretilmedi**,
++30 test eklendi. **Backend takımı tamamen yeşil (1492/1492).** Göç
+kapılarının ikisi de sıfır. Geriye yalnız `depo-alan-adi` kapısı kaldı ve
+o, canlı Caddy yapılandırmasına dokunmayı gerektiriyor (kilitli kural 6).
 
-### 6.3 KALAN KIRMIZILAR — hepsi bu turdan ÖNCE de kırmızıydı
+### 6.3 KALAN KIRMIZI — tek kapı, canlıya dokunmayı gerektiriyor
 
 | Test | Sebep | Neden bu turda kapatılmadı |
 |---|---|---|
-| `test_rls_kapsam` ×2 | `kayit_dogrulama` RLS'siz | §4.7 — açmak kayıt akışını kırardı; tasarım kararı gerekiyor |
 | `depo-alan-adi` kapısı | 5 bulgu; en ciddisi `www.xn--ynetiyor-n4a.com` belgede vaat ediliyor ama Caddyfile'da yok → ziyaretçi **TLS el sıkışması düşmesi** görür | Düzeltmek **canlı Caddy yapılandırmasına** dokunmayı gerektiriyor; kilitli kural 6 yasaklıyor. Yalnız belgeyi düzeltmek, gerçek TLS kusurunu kapatmadan uyarıyı susturmak olurdu |
 ### 6.4 `goc-tersinir` — **KAPANDI** (Kerem'in kararıyla)
 
@@ -309,6 +308,55 @@ sakin sessizce beklerdi.**
 `.order_by(created_at.asc(), id.asc())` eklendi; sayı 3'e döndü. Çırçırın
 neden "azaltılabilir, artırılamaz" olduğunun kanıtı olarak testin
 docstring'ine de yazıldı.
+
+### 6.7 `test_rls_kapsam` — **KAPANDI** (göç 0042)
+
+Bu, turun kalan son kod kusuruydu ve "politikayı ekle geç" ile
+kapatılamıyordu: `kayit_dogrulama` **kimlik öncesi** okunuyor, yani
+politikanın bakacağı `app.current_tenant_id` daha set edilememiş oluyor.
+Naif bir politika sakin kaydını ve parolasız girişi **sessizce sıfır
+satıra** düşürürdü — hiçbir yerde hata çıkmadan, kullanıcı yalnızca
+"kod geçersiz" görürdü.
+
+**Üç `SECURITY DEFINER` fonksiyon**, hiçbiri satır döndürmüyor:
+
+| Fonksiyon | Döndürdüğü | Neden var |
+|---|---|---|
+| `kayit_dogrulama_tenant_coz(telefon, amac)` | `uuid` | Kimlik öncesi bağlamı kurar. Kod/ad/daire **çıkmaz** |
+| `kayit_dogrulama_acik_temizle(telefon, amac)` | silinen sayı | "Bekleyen kodu ez" — `durum='telefon_bekliyor'` |
+| `kayit_dogrulama_telefon_sifirla(telefon)` | silinen sayı | "Kayda baştan başla" — süzgeçsiz |
+
+**Neden temizlik fonksiyona taşındı:** `uq_kayit_acik_basvuru` **kısmi ve
+GLOBAL** bir benzersizlik indeksi — bir telefon tüm platformda tek açık
+başvuru taşıyabilir. Kişi A sitesinde kayda başlayıp B'de başlarsa, RLS'e
+tabi bir `DELETE` A'nın satırını **göremez** ve `INSERT` benzersizlik
+ihlaliyle **500** verir. Yani "ezme" tanımı gereği tenant-üstü bir
+işlemdir ve politikayla ifade **edilemez**.
+
+**Neden iki ayrı temizlik fonksiyonu:** kodda iki farklı semantik vardı ve
+ikisi de korundu. `kod_uret_ve_gonder` (amaç + `telefon_bekliyor`) ile
+`auth.kayit_basla`ın satır içi `DELETE`'i (**süzgeçsiz** — kişi onay
+bekleyen başvurusunu iptal edip baştan başlayabilsin diye) aynı şey
+değil. Tek fonksiyona `p_amac IS NULL ⇒ hepsi` dalı koymak, çağıranın
+hangi kuralın işlediğini ancak gövdeyi okuyarak anlaması demekti.
+
+**Test önce yazıldı ve gerçek bir kusuru yakaladı.**
+`test_kayit_dogrulama_rls.py::test_A_sitesinde_baslayip_B_sitesinde_kaydolabilir`
+**500 verdi** — çünkü `auth.kayit_basla` `kod_uret_ve_gonder`'i
+**çağırmıyor**, kendi satır içi kopyasını taşıyor ve ilk düzeltme o yolu
+ıskalamıştı. Kusur ekranda değil, testte bulundu.
+
+**Bağlam ezilmiyor, doğrulanıyor:** `/me/*` uçları `get_tenant_db` ile
+gelir ve bağlamı kuruludur. Orada bağlamı ezmek, bir kullanıcının başka
+bir tesisin satırına ulaşmasına açılan kapı olurdu — çözücü uyuşmazlıkta
+`None` döner ve çağıran "geçersiz kod" der, ayrımı sızdırmadan.
+
+**Yan bulgu:** `auth.kayit_dogrula`da `amac` süzgeci **yoktu**.
+`uq_kayit_acik_basvuru` `(telefon, amac)` üzerinde olduğu için aynı
+telefon farklı amaçlarla birden fazla açık satır taşıyabilir ve
+`scalar_one_or_none()` `MultipleResultsFound` ile **500** verirdi. Süzgeç
+eklendi; ayrıca bir **giriş** kodunun kayıt doğrulamasını tamamlaması da
+engellenmiş oldu.
 
 ---
 

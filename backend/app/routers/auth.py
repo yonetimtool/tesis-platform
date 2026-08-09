@@ -24,7 +24,11 @@ from ..deps import get_redis, gorev_penceresi_disinda
 from ..errors import APIError
 from ..mesajlasma import sms_saglayicisi
 from ..telefon_kodu import GECERSIZ as TK_GECERSIZ
-from ..telefon_kodu import kod_uret_ve_gonder, kodu_dogrula
+from ..telefon_kodu import (
+    kod_uret_ve_gonder,
+    kodu_dogrula,
+    tenant_baglamini_kur,
+)
 from ..models import (
     AppUser,
     KayitDogrulama,
@@ -450,8 +454,23 @@ async def kayit_basla(
                 raise _KAYIT_GECERSIZ
 
             kod = f"{secrets.randbelow(1_000_000):06d}"
+            # (P154) TENANT SINIRINI GECER — bu yuzden duz DELETE degil,
+            # SECURITY DEFINER fonksiyon. `kayit_dogrulama` artik RLS
+            # altinda (goc 0042) ve buradaki temizlik BASKA BIR TESISIN
+            # satirina dokunmak zorunda: `uq_kayit_acik_basvuru` KISMI ve
+            # GLOBAL bir benzersizlik indeksidir (bir telefon TUM
+            # PLATFORMDA tek acik basvuru). Kisi A sitesinde kayda baslayip
+            # B sitesinde baslarsa, RLS'e tabi bir DELETE A'nin satirini
+            # goremez ve INSERT benzersizlik ihlaliyle 500 verirdi —
+            # test_kayit_dogrulama_rls.py bunu OLCUYOR.
+            #
+            # `acik_temizle` DEGIL `telefon_sifirla`: buradaki eski DELETE
+            # `amac` ve `durum` suzgeci TASIMIYORDU (kisi onay bekleyen
+            # basvurusunu iptal edip bastan baslayabilsin diye). Davranis
+            # bit bit korundu.
             await session.execute(
-                text("DELETE FROM kayit_dogrulama WHERE telefon = :p"), {"p": phone}
+                text("SELECT public.kayit_dogrulama_telefon_sifirla(:p)"),
+                {"p": phone},
             )
             session.add(
                 KayitDogrulama(
@@ -496,10 +515,26 @@ async def kayit_dogrula(body: KayitDogrulaRequest) -> KayitDurumResponse:
 
     async with SessionLocal() as session:
         async with session.begin():
+            # (P154) `kayit_dogrulama` RLS altinda (goc 0042) ve burada
+            # kullanicinin HENUZ OTURUMU YOK. Baglami yalniz tenant
+            # kimligi donduren SECURITY DEFINER cozucu kurar.
+            if (
+                await tenant_baglamini_kur(session, telefon=phone, amac="kayit")
+                is None
+            ):
+                raise _KAYIT_GECERSIZ
             kayit = (
                 await session.execute(
                     select(KayitDogrulama).where(
                         KayitDogrulama.telefon == phone,
+                        # (P154) `amac` SUZGECI EKLENDI. Onceden yoktu ve
+                        # `uq_kayit_acik_basvuru` (telefon, amac) uzerinde
+                        # oldugu icin ayni telefon farkli amaclarla BIRDEN
+                        # FAZLA acik satir tasiyabilirdi — o durumda
+                        # `scalar_one_or_none()` MultipleResultsFound ile
+                        # 500 verirdi. Ayrica bir GIRIS kodunun kayit
+                        # dogrulamasini tamamlamasi da engellenmis olur.
+                        KayitDogrulama.amac == "kayit",
                         KayitDogrulama.durum == "telefon_bekliyor",
                     )
                 )

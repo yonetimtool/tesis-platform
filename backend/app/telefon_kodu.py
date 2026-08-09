@@ -45,11 +45,18 @@ async def kod_uret_ve_gonder(
     saldirgana ayni anda bes gecerli hedef verirdi.
     """
     kod = f"{secrets.randbelow(1_000_000):06d}"
+    # (P154) EZME TENANT SINIRINI GECER — bu yuzden duz DELETE degil,
+    # SECURITY DEFINER fonksiyon. `uq_kayit_acik_basvuru` KISMI ve GLOBAL
+    # bir benzersizlik indeksidir: bir telefon TUM PLATFORMDA tek acik
+    # basvuru tasiyabilir. Kisi A sitesinde kayda baslayip B sitesinde
+    # kaydolmaya calisirsa B'nin INSERT'i A'nin satiriyla catisir.
+    # RLS acildiktan sonra duz DELETE yalniz KENDI tenant'ini gorur, A'nin
+    # satirini SILEMEZ ve INSERT benzersizlik ihlaliyle 500 verirdi.
+    # Fonksiyonun semantigi eski DELETE ile BIRE BIR ayni (ayni telefon,
+    # ayni amac, yalniz `telefon_bekliyor`); degisen tek sey tenant
+    # sinirini gecmesi. Bkz. goc 0042.
     await session.execute(
-        text(
-            "DELETE FROM kayit_dogrulama WHERE telefon = :p AND amac = :a "
-            "AND durum = 'telefon_bekliyor'"
-        ),
+        text("SELECT public.kayit_dogrulama_acik_temizle(:p, :a)"),
         {"p": telefon, "a": amac},
     )
     session.add(
@@ -71,11 +78,50 @@ async def kod_uret_ve_gonder(
     )
 
 
+async def tenant_baglamini_kur(
+    session: AsyncSession, *, telefon: str, amac: str
+) -> uuid.UUID | None:
+    """(P154) KIMLIK ONCESI tenant baglamini kurar; kuramazsa `None`.
+
+    `kayit_dogrulama` artik RLS altinda (goc 0042) ve bu tablo, kullanicinin
+    HENUZ OTURUMU YOKKEN okunuyor. Satiri gormek icin once tenant baglami
+    gerekiyor, tenant'i ogrenmek icin de satiri gormek — dongu, YALNIZ
+    tenant kimligi donduren bir SECURITY DEFINER fonksiyonla kirilir
+    (`tenant_id_by_slug` / `tenant_id_by_phone` ile ayni desen).
+
+    OTURUMUN BAGLAMI ZATEN VARSA DEGISTIRILMEZ, DOGRULANIR: `/me/*`
+    uclari `get_tenant_db` ile gelir ve baglami kuruludur. Orada baglami
+    ezmek, bir kullanicinin baska bir tesisin satirina ulasmasina acilan
+    kapi olurdu. Uyusmuyorsa `None` doneriz ve cagiran "gecersiz kod" der —
+    ayrimi disariya SIZDIRMADAN.
+    """
+    mevcut = (
+        await session.execute(
+            text("SELECT current_setting('app.current_tenant_id', true)")
+        )
+    ).scalar()
+    cozulen = (
+        await session.execute(
+            text("SELECT public.kayit_dogrulama_tenant_coz(:p, :a)"),
+            {"p": telefon, "a": amac},
+        )
+    ).scalar_one_or_none()
+    if cozulen is None:
+        return None
+    if mevcut:
+        return cozulen if str(cozulen) == str(mevcut) else None
+    await set_tenant(session, cozulen)
+    return cozulen
+
+
 async def kodu_dogrula(
     session: AsyncSession, *, telefon: str, kod: str, amac: str
 ) -> KayitDogrulama:
     """Dogru ise kaydi doner; her basarisiz yolda `GECERSIZ` firlatir."""
     from sqlalchemy import select
+
+    if await tenant_baglamini_kur(session, telefon=telefon, amac=amac) is None:
+        raise GECERSIZ
 
     kayit = (
         await session.execute(

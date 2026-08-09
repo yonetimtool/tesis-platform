@@ -75,6 +75,27 @@ ENVANTER: dict[str, tuple[str, tuple[str, str] | None]] = {
     # (P148) Sakin kaydolurken oturumu YOKTUR; tesis, kayit kodundan cozulur.
     # (P154'te REVOKE/GRANT ve `search_path=''` eklendi — 0036'da unutulmustu.)
     "tenant_id_by_kayit_kodu": ("public", None),
+    # (P154) `kayit_dogrulama` RLS altina alindi (goc 0042) ve o tablo KIMLIK
+    # ONCESI okunuyor: satiri gormek icin tenant baglami gerekiyor, tenant'i
+    # ogrenmek icin de satiri gormek. Dongu bu iki fonksiyonla kirilir.
+    #
+    # `tenant_coz` SATIR DONDURMEZ — yalniz `uuid`. Kod, ad, daire, hicbiri
+    # disari cikmaz; cagiran uclar da "adimlari ayirt ETTIRMEYEN" tek bir
+    # yanit verdigi icin NULL/degil ayrimi HTTP'de gorunmez.
+    #
+    # `acik_temizle` TENANT SINIRINI GECMEK ZORUNDA: `uq_kayit_acik_basvuru`
+    # KISMI ve GLOBAL bir benzersizlik indeksidir (bir telefon tum platformda
+    # tek acik basvuru), dolayisiyla "bekleyen kodu ezme" tanimi geregi
+    # tenant-uzeri bir islemdir ve politikayla ifade EDILEMEZ. Yalniz silinen
+    # SAYIYI doner.
+    #
+    # IKI TEMIZLIK FONKSIYONU var cunku kodda IKI FARKLI semantik vardi:
+    # `acik_temizle` bekleyen KODU ezer (amac + telefon_bekliyor);
+    # `telefon_sifirla` kayda BASTAN BASLAMAYI karsilar (suzgec yok) ve
+    # `auth.kayit_basla`in satir ici DELETE'inin bire bir karsiligidir.
+    "kayit_dogrulama_tenant_coz": ("public", None),
+    "kayit_dogrulama_acik_temizle": ("public", None),
+    "kayit_dogrulama_telefon_sifirla": ("public", None),
     # Saglayici webhook'u imzayla dogrulanir; tenant provider_ref'ten cozulur.
     "payment_tenant_by_ref": ("public", None),
     # ANPR girisi (P16): kamera kutusu JWT tasimaz, kimlik `X-ANPR-Key`
