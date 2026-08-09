@@ -38,6 +38,7 @@ async def kod_uret_ve_gonder(
     telefon: str,
     amac: str,
     unit_id: uuid.UUID | None = None,
+    user_id: uuid.UUID | None = None,
 ) -> None:
     """Ayni amac icin bekleyen kodu EZER ve yenisini gonderir.
 
@@ -63,6 +64,11 @@ async def kod_uret_ve_gonder(
         KayitDogrulama(
             tenant_id=tenant_id,
             unit_id=unit_id,
+            # (P154) `user_id` DOLU ise satir bir ROL KAYDIDIR (hesap var,
+            # sahipleniliyor); NULL ise P148 basvurusudur (hesap henuz yok).
+            # Iki akis ayni tabloyu ve ayni `amac` degerini paylasir; ayrim
+            # bu sutundadir. Bkz. routers/auth.py rol-kayit bolumu.
+            user_id=user_id,
             telefon=telefon,
             amac=amac,
             kod_hash=hash_password(kod),

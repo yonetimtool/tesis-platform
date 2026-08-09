@@ -335,6 +335,84 @@ paths:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
 
   # ----------------------------------------------------------------- #
+  # (P154 / Asama 3) ROL SECIMLI KAYIT.
+  #
+  # P148 `kayit/basla` ile KARISTIRILMAMALI. Orada hesap HENUZ YOKTUR ve
+  # basvuru yonetici onayina duser. Burada hesap yonetici tarafindan
+  # ZATEN ACILMISTIR; kisi onu SAHIPLENIR ve onay adimi YOKTUR — onay,
+  # hesabi acan yoneticinin kendisidir.
+  /auth/kayit/rol-basla:
+    post:
+      tags: [auth]
+      summary: Rol + tesis ID + telefon -> eslesirse SMS kodu gonderir
+      security: []   # kimlik ONCESI
+      description: |
+        ESLESME SONUCU YANITTAN OKUNAMAZ. Numara o tesiste o rolde kayitli
+        olsa da olmasa da yanit AYNIDIR; SMS yalnizca eslesmede gider.
+        Aksi hâlde uc "hangi numara bu tesiste hangi rolde" sorusunu
+        yanitlayan bir TARAMA ARACI olurdu.
+
+        Tesis kodu hatasi ise SOYLENIR (422): kod zaten kamuya aciktir
+        (bkz. goc 0037 guvenlik notu) ve en sik yazim hatasi orada olur.
+
+        Kaydolamayan durumlar (hepsi sessiz): numara tesiste yok · rol
+        uyusmuyor · hesap pasif · **hesabin parolasi ZATEN belirlenmis**
+        (kayit, parola belirlenmemis hesabi sahiplenmektir; parolasini
+        unutanin yolu `/auth/giris/kod-iste`) · `resident` icin beyan
+        edilen daire kisinin dairesi degil.
+
+        HIZ SINIRI: telefon basina 15 dakikada 3 istek; asilirsa 429.
+        Sayac DOGRULAMADAN ONCE artar, yoksa eslesmeyen numara icin
+        sinirsiz deneme kalirdi.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RolKayitBaslaRequest" }
+      responses:
+        "200":
+          description: Tesis dogrulandi (eslesme sonucu SOYLENMEZ)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RolKayitBaslaResponse" }
+        "422":
+          description: Tesis kodu gecersiz ya da govde kurali ihlal edildi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "429":
+          description: Cok fazla kod istegi (hiz siniri)
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  /auth/kayit/rol-dogrula:
+    post:
+      tags: [auth]
+      summary: Kod dogru ise PAROLA BELIRLEME jetonu doner (oturum DEGIL)
+      security: []
+      description: |
+        Donen `setup_token` YALNIZ `/auth/set-password`te gecer ve TEK
+        KULLANIMLIKTIR. Kayit, parola belirlenene kadar tamamlanmis
+        sayilmaz.
+
+        P148 basvurusu bu uctan TAMAMLANAMAZ (dogru kodla bile): orada
+        hesap henuz yoktur ve akis yonetici onayindan gecer.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RolKayitDogrulaRequest" }
+      responses:
+        "200":
+          description: Parola belirleme jetonu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RolKayitDogrulaResponse" }
+        "422":
+          description: Kod gecersiz (adimlari ayirt ETTIRMEZ)
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  # ----------------------------------------------------------------- #
   # (P149) PAROLASIZ GIRIS — tek kod mekanizmasi.
   /auth/giris/kod-iste:
     post:
@@ -9322,6 +9400,48 @@ components:
       required: [durum]
       properties:
         durum: { type: string, enum: [onay_bekliyor] }
+    # (P154 / Asama 3) Rol secimli kayit.
+    RolKayitBaslaRequest:
+      type: object
+      description: |
+        `daire_no` YALNIZ `resident` icin anlamlidir ve orada ZORUNLUDUR;
+        yoneticiden daire istenmez.
+
+        `rol` kumesi: `admin` YOK (platform sahibi, tesis kaydiyla
+        acilmaz); `guvenlik_amiri` YOK (brief'in mobil/web rol
+        listelerinde gecmiyor — enum'da duruyor, kaydolabilir yapmak
+        ayri bir urun karari).
+      required: [rol, tesis_kodu, telefon]
+      properties:
+        rol:
+          type: string
+          enum: [yonetici, resident, security, tesis_gorevlisi, denetci]
+        tesis_kodu: { type: string, minLength: 4, maxLength: 32, example: "OLTU-260715" }
+        telefon:    { type: string, minLength: 5, maxLength: 32, example: "+905321112203" }
+        daire_no:   { type: string, maxLength: 32, nullable: true, description: "`resident` icin ZORUNLU" }
+        blok:       { type: string, maxLength: 32, nullable: true }
+    RolKayitBaslaResponse:
+      type: object
+      description: |
+        `telefon_maskeli` KULLANICININ YAZDIGI numaradan uretilir, kayitli
+        bir numaradan degil — maskenin kendisi bilgi tasimaz.
+      required: [tesis_ad, telefon_maskeli]
+      properties:
+        tesis_ad:        { type: string, example: "Oltu Sitesi" }
+        telefon_maskeli: { type: string, example: "+9053***203" }
+    RolKayitDogrulaRequest:
+      type: object
+      required: [telefon, kod]
+      properties:
+        telefon: { type: string, minLength: 5, maxLength: 32 }
+        kod:     { type: string, minLength: 4, maxLength: 12 }
+    RolKayitDogrulaResponse:
+      type: object
+      required: [setup_token]
+      properties:
+        setup_token:
+          type: string
+          description: YALNIZ /auth/set-password'te gecer; TEK KULLANIMLIK.
     TelefonIstek:
       type: object
       required: [telefon]

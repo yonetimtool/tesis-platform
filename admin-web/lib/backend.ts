@@ -125,6 +125,27 @@ export async function backendPhoneLogin(body: {
   return { ok: res.ok, status: res.status, data };
 }
 
+/**
+ * (P154 / Asama 3) KIMLIK ONCESI vekil — oturum cerezi TASIMAZ.
+ *
+ * NEDEN `proxyJson` DEGIL: o, `ACCESS_COOKIE`/`REFRESH_COOKIE` okur ve
+ * gerektiginde jeton yeniler. Rol secimli kayitta kullanicinin HENUZ
+ * OTURUMU YOKTUR; oraya cerez mantigini sokmak, kaydolmaya calisan birinin
+ * baskasinin (ayni tarayicidaki) oturumuyla islem yapmasina acilan bir
+ * yol olurdu. Bu vekil yalniz govdeyi tasir.
+ *
+ * Yanit AYNEN gecer: sunucunun "adimlari ayirt ETTIRMEYEN" metni burada
+ * yeniden yazilmamali.
+ */
+export async function anonimVekil(
+  path: string,
+  body: unknown,
+): Promise<NextResponse> {
+  const res = await callBackend(path, "POST", undefined, body);
+  const data = await res.json().catch(() => null);
+  return NextResponse.json(data, { status: res.status });
+}
+
 export function loginResponse(access: string, refresh: string): NextResponse {
   const res = NextResponse.json({ ok: true });
   setAuthCookies(res, access, refresh);

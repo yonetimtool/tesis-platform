@@ -1207,6 +1207,73 @@ class KayitBasvuruListesi(BaseModel):
     meta: PageMetaOut
 
 
+#: (P154) ROL SECIMLI KAYIT — kaydolabilen roller.
+#:
+#: `admin` YOK: platform sahibidir, tesis kaydiyla acilmaz.
+#: `guvenlik_amiri` YOK: brief'in mobil (yonetici/sakin/guvenlik/tesis
+#: gorevlisi) ve web (yonetici/denetci) listelerinde GECMIYOR. Enum'da
+#: duruyor ve demo hesabi var; kaydolabilir yapmak bir URUN karari
+#: oldugu icin tek tarafli alinmadi.
+KayitRolu = Literal["yonetici", "resident", "security", "tesis_gorevlisi", "denetci"]
+
+
+class RolKayitBaslaRequest(BaseModel):
+    """(P154) Rol secimli kaydin 1. adimi.
+
+    `daire_no` YALNIZ `resident` icin anlamlidir ve orada ZORUNLUDUR;
+    yoneticiden daire istenmez (brief). Dogrulamasi `model_validator`da,
+    uc govdesinde degil: kural sozlesmenin parcasi olmali ki openapi'yi
+    okuyan istemci de bilsin.
+    """
+
+    rol: KayitRolu
+    tesis_kodu: str = Field(min_length=4, max_length=32, examples=["OLTU-260715"])
+    telefon: str = Field(min_length=5, max_length=32, examples=["+905321112203"])
+    daire_no: str | None = Field(default=None, max_length=32)
+    blok: str | None = Field(default=None, max_length=32)
+
+    @model_validator(mode="after")
+    def _daire_kurali(self) -> "RolKayitBaslaRequest":
+        if self.rol == "resident" and not (self.daire_no or "").strip():
+            raise ValueError("Site sakini icin daire no zorunludur.")
+        return self
+
+
+class RolKayitBaslaResponse(BaseModel):
+    """Tesis DOGRULANDI; eslesme sonucu SOYLENMEZ.
+
+    `tesis_ad` donuyor cunku tesis kodu zaten kamuya aciktir (P148.1
+    guvenlik notu) ve en sik yazim hatasi orada olur — kullaniciya
+    "yanlis tesis" geri bildirimi vermek bir sey sizdirmaz.
+
+    Telefonun O TESISTE KAYITLI OLUP OLMADIGI ise SOYLENMEZ: yanit
+    eslesme olsa da olmasa da AYNIDIR ve SMS yalnizca eslesmede gider.
+    Aksi hâlde uc, "hangi numara bu tesiste hangi rolde" sorusunu
+    yanitlayan bir SORGULAMA ARACI olurdu.
+
+    `telefon_maskeli`, KULLANICININ YAZDIGI numaradan uretilir — kayitli
+    bir numaradan degil; dolayisiyla maskenin kendisi de bilgi tasimaz.
+    """
+
+    tesis_ad: str
+    telefon_maskeli: str
+
+
+class RolKayitDogrulaRequest(BaseModel):
+    telefon: str = Field(min_length=5, max_length=32)
+    kod: str = Field(min_length=4, max_length=12)
+
+
+class RolKayitDogrulaResponse(BaseModel):
+    """Kod dogru: parola belirleme jetonu.
+
+    OTURUM DEGIL — `setup_token` yalnizca `/auth/set-password`te gecer.
+    Kayit, parola belirlenene kadar TAMAMLANMAMIS sayilir.
+    """
+
+    setup_token: str
+
+
 class KayitDogrulaRequest(BaseModel):
     telefon: str = Field(min_length=5, max_length=32)
     kod: str = Field(min_length=4, max_length=12)

@@ -24,6 +24,7 @@ from ..deps import get_redis, gorev_penceresi_disinda
 from ..errors import APIError
 from ..mesajlasma import sms_saglayicisi
 from ..telefon_kodu import GECERSIZ as TK_GECERSIZ
+from ..hiz_siniri import kod_istegi_say
 from ..telefon_kodu import (
     kod_uret_ve_gonder,
     kodu_dogrula,
@@ -43,6 +44,10 @@ from ..schemas import (
     KayitBaslaResponse,
     KayitDogrulaRequest,
     KayitDurumResponse,
+    RolKayitBaslaRequest,
+    RolKayitBaslaResponse,
+    RolKayitDogrulaRequest,
+    RolKayitDogrulaResponse,
     LoginRequest,
     PhoneLoginRequest,
     PhoneLoginResponse,
@@ -564,6 +569,186 @@ async def kayit_dogrula(body: KayitDogrulaRequest) -> KayitDurumResponse:
             await session.flush()
 
     return KayitDurumResponse(durum="onay_bekliyor")
+
+
+# ==================== (P154) ROL SECIMLI KAYIT ============================== #
+#
+# BRIEF: rol -> tesis ID -> telefon -> parola. Tesis ID + telefon ONCEDEN
+# TANIMLI bir kayitla eslesmiyorsa kaydolunamaz.
+#
+# P148'DEN FARKI (ve neden ayri bir yol): P148 `kayit/basla`, HENUZ HESABI
+# OLMAYAN bir sakinin daire uzerinden basvurmasidir ve yonetici onayina
+# duser. Burasi TERSI: hesap yonetici tarafindan ZATEN ACILMIS, kisi
+# yalnizca onu SAHIPLENIYOR. Onay adimi YOKTUR — onay, hesabi acan
+# yoneticinin kendisidir.
+#
+# AYNI TABLOYU (`kayit_dogrulama`) ve AYNI `amac='kayit'` degerini
+# kullaniyoruz; ikisi `user_id` ile ayrilir:
+#     user_id IS NULL      -> P148 basvurusu (hesap HENUZ YOK)
+#     user_id IS NOT NULL  -> P154 rol kaydi (hesap VAR, sahipleniliyor)
+# Enum'a yeni bir `amac` EKLENMEDI cunku enum degeri geri alinamaz ve
+# `goc-tersinirlik` kapisi downgrade sonrasi semayi karsilastiriyor —
+# artik kalan bir enum degeri o kapiyi kirardi.
+#
+# CAKISMA YOK: P148 zaten telefonu bir kullaniciya ait olan basvuruyu
+# reddediyor (`tenant_id_by_phone`), bu yol ise TAM TERSINI ariyor. Bir
+# telefon ayni anda iki akista olamaz.
+
+
+def _maskele(telefon: str) -> str:
+    """Kullanicinin YAZDIGI numarayi maskeler (kayitli bir numarayi degil)."""
+    if len(telefon) <= 6:
+        return "*" * len(telefon)
+    return f"{telefon[:5]}***{telefon[-3:]}"
+
+
+@router.post("/kayit/rol-basla", response_model=RolKayitBaslaResponse)
+async def rol_kayit_basla(
+    body: RolKayitBaslaRequest,
+    redis: aioredis.Redis = Depends(get_redis),
+) -> RolKayitBaslaResponse:
+    """Rol + tesis ID + telefon -> eslesirse SMS kodu gonderir.
+
+    ESLESME SONUCU YANITTAN OKUNAMAZ (bkz. `RolKayitBaslaResponse`).
+    """
+    try:
+        phone = normalize_phone(body.telefon)
+    except ValueError:
+        raise _KAYIT_GECERSIZ
+
+    # HIZ SINIRI DOGRULAMADAN ONCE: sonra saymak, eslesmeyen numara icin
+    # sinirsiz deneme birakip ucu bir sorgulama aracina cevirirdi.
+    await kod_istegi_say(redis, phone, kapsam="rol_kayit")
+
+    async with SessionLocal() as session:
+        async with session.begin():
+            tenant_id = (
+                await session.execute(
+                    text("SELECT public.tenant_id_by_kayit_kodu(:k)"),
+                    {"k": body.tesis_kodu.strip()},
+                )
+            ).scalar_one_or_none()
+            # TESIS KODU HATASI SOYLENIR: kod zaten kamuya aciktir ve en
+            # sik yazim hatasi orada olur.
+            if tenant_id is None:
+                raise _KAYIT_GECERSIZ
+
+            await set_tenant(session, tenant_id)
+            tenant_ad = (
+                await session.execute(select(Tenant.ad).where(Tenant.id == tenant_id))
+            ).scalar_one()
+
+            user = (
+                await session.execute(
+                    select(AppUser).where(AppUser.telefon == phone)
+                )
+            ).scalar_one_or_none()
+
+            # BURADAN SONRASI SESSIZ: hicbir dal yaniti degistirmez, yalniz
+            # SMS gonderilip gonderilmeyecegini belirler.
+            uygun = (
+                user is not None
+                and user.is_active
+                and user.role == body.rol
+                # PAROLASI OLAN HESAP BU YOLDAN GECMEZ: kayit, parola
+                # BELIRLENMEMIS hesabi sahiplenmektir. Aksi hâlde uc,
+                # ikinci bir parola SIFIRLAMA yuzeyi olurdu; parolasini
+                # unutan kullanicinin yolu `/auth/giris/kod-iste`tir.
+                and not user.password_set
+            )
+            if uygun and body.rol == "resident":
+                uygun = await _daire_eslesiyor(
+                    session, user=user, daire_no=body.daire_no, blok=body.blok
+                )
+
+            if uygun and user is not None:
+                await kod_uret_ve_gonder(
+                    session,
+                    tenant_id=tenant_id,
+                    telefon=phone,
+                    amac="kayit",
+                    user_id=user.id,
+                )
+
+    return RolKayitBaslaResponse(
+        tesis_ad=tenant_ad, telefon_maskeli=_maskele(phone)
+    )
+
+
+async def _daire_eslesiyor(
+    session, *, user: AppUser, daire_no: str | None, blok: str | None
+) -> bool:
+    """Sakinin BEYAN ETTIGI daire, gercekten bagli oldugu daire mi?
+
+    Daire eslesmesi iki bicimi de kabul eder (`unit.no` bazi tesislerde
+    blok onekini icinde tasir) — P148'deki kuralin AYNISI; iki yerde iki
+    farkli eslestirme, kullaniciya ayni ekranda farkli davranirdi.
+    """
+    aranan = (daire_no or "").strip().lower()
+    b = (blok or "").strip().lower()
+    birlesik = f"{b}-{aranan}" if b else aranan
+    return bool(
+        (
+            await session.execute(
+                select(Unit.id)
+                .join(UnitResident, UnitResident.unit_id == Unit.id)
+                .where(
+                    UnitResident.user_id == user.id,
+                    or_(
+                        func.lower(Unit.no) == aranan,
+                        func.lower(Unit.no) == birlesik,
+                    ),
+                )
+            )
+        ).first()
+    )
+
+
+@router.post("/kayit/rol-dogrula", response_model=RolKayitDogrulaResponse)
+async def rol_kayit_dogrula(
+    body: RolKayitDogrulaRequest,
+) -> RolKayitDogrulaResponse:
+    """Kod dogru ise PAROLA BELIRLEME jetonu doner (oturum DEGIL).
+
+    Jeton tek kullanimliktir: `set-password` `temp_code_hash`i temizler ve
+    ayni jeton ikinci kez gecmez.
+    """
+    try:
+        phone = normalize_phone(body.telefon)
+    except ValueError:
+        raise _KAYIT_GECERSIZ
+
+    async with SessionLocal() as session:
+        async with session.begin():
+            # `kodu_dogrula` tenant baglamini kendi kurar (goc 0042) ve
+            # deneme sayacini AYRI oturumda artirir.
+            kayit = await kodu_dogrula(
+                session, telefon=phone, kod=body.kod, amac="kayit"
+            )
+            # P148 BASVURUSU BU YOLDAN TAMAMLANAMAZ: orada hesap henuz
+            # yoktur ve akis yonetici onayindan gecer.
+            if kayit.user_id is None:
+                raise _KAYIT_GECERSIZ
+
+            user = (
+                await session.execute(
+                    select(AppUser).where(AppUser.id == kayit.user_id)
+                )
+            ).scalar_one_or_none()
+            if user is None or not user.is_active or user.password_set:
+                raise _KAYIT_GECERSIZ
+
+            # `set-password` tek kullanimliligi `temp_code_hash`ten okur;
+            # dogrulanan kodun hash'ini oraya tasiyoruz ki O KAPI aynen
+            # islesin ve ikinci bir tek-kullanim mekanizmasi yazilmasin.
+            user.temp_code_hash = kayit.kod_hash
+            kayit.durum = "onaylandi"
+            kayit.karar_at = func.now()
+            await session.flush()
+
+            jeton = create_setup_token(user_id=user.id, tenant_id=user.tenant_id)
+
+    return RolKayitDogrulaResponse(setup_token=jeton)
 
 
 # ==================== (P149) PAROLASIZ GIRIS (telefon + kod) ================ #

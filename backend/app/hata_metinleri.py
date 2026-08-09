@@ -854,6 +854,18 @@ METINLER: dict[str, dict[str, str]] = {
     # "boyle daire/kullanici yok" arasindaki fark disariya sizardi. Ceviriler
     # bu belirsizligi KORUR — daha yardimsever bir metin yazmak, kodun
     # bilincli olarak sakladigi seyi acardi.
+    # (P154) Kod isteme hiz siniri. Metin KAC ISTEK KALDIGINI SOYLEMEZ:
+    # sayaci geri okumak, saldirgana ne zaman yeniden deneyecegini
+    # ogretirdi. "Bir sure sonra" bilincli olarak belirsizdir.
+    "cok_fazla_kod_istegi": {
+        "tr": "Çok fazla kod isteği gönderildi. Lütfen bir süre sonra tekrar deneyin.",
+        "en": "Too many code requests. Please try again later.",
+        "ar": "طلبات رمز كثيرة جدًا. يرجى المحاولة لاحقًا.",
+        "ru": "Слишком много запросов кода. Повторите попытку позже.",
+        "de": "Zu viele Code-Anfragen. Bitte versuchen Sie es später erneut.",
+        "fr": "Trop de demandes de code. Veuillez réessayer plus tard.",
+        "es": "Demasiadas solicitudes de código. Inténtelo de nuevo más tarde.",
+    },
     "kayit_bilgileri_gecersiz": {
         "tr": "Kayıt bilgileri geçersiz.",
         "en": "The registration details are not valid.",

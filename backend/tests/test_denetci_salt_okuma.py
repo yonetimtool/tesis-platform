@@ -69,6 +69,12 @@ KAPISIZ_MUTASYONLAR: frozenset[tuple[str, str]] = frozenset({
     # beri kirmiziydi.
     ("POST", "/auth/kayit/basla"),
     ("POST", "/auth/kayit/dogrula"),
+    # (P154 / Asama 3) Rol secimli kayit. Rol kapisi OLAMAZ: kisi henuz
+    # oturum acmamistir — zaten acabilseydi kaydolmasina gerek kalmazdi.
+    # Tesisin kayitlarina YAZMAZ: yalniz bekleyen bir kod satiri yazar ve
+    # hesap ACMAZ (hesap yonetici tarafindan onceden acilmistir).
+    ("POST", "/auth/kayit/rol-basla"),
+    ("POST", "/auth/kayit/rol-dogrula"),
     ("POST", "/auth/giris/kod-iste"),
     ("POST", "/auth/giris/kod-dogrula"),
     # --- KENDI hesabi (kisinin haklari) ---

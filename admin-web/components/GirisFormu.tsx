@@ -332,6 +332,20 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
               </motion.p>
             )}
 
+            {/* (P154 / Asama 3) KAYIT BAGLANTISI YALNIZ `app.*`TA.
+                `panel.*` platform sahibinin yuzeyidir ve oraya YALNIZ
+                `admin` girer; admin hesabi tesis kaydiyla ACILMAZ, o
+                yuzden orada "kayit ol" gostermek varolmayan bir kapiya
+                isaret etmek olurdu. Kayit sayfasi web'de yonetici ve
+                denetci sunar — ikisi de `app.*` rolleridir. */}
+            {yuzey === "tesis" && (
+              <p className="text-center text-sm">
+                <a href="/kayit" className="text-primary underline">
+                  {t("kayitBaslik")}
+                </a>
+              </p>
+            )}
+
             {magazaGoster && (MAGAZA_ANDROID || MAGAZA_IOS) && (
               <motion.p
                 initial={{ opacity: 0 }}
