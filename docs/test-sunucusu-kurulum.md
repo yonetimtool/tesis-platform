@@ -456,6 +456,69 @@ PY
 
 ---
 
+## 6.6 KURULAN SUNUCU — gerçek adresler (2026-08-09)
+
+Sunucu **ayakta ve dışarıdan erişilebilir**. Kurulum §5'te tasarlanandan
+iki noktada ayrıldı ve **ikisi de altyapı kısıtından**:
+
+| Konu | Planlanan | Gerçekleşen | Neden |
+|---|---|---|---|
+| Erişim | pfSense'te 80/443 yönlendirme | **Cloudflare Tunnel** | Sunucu **CGNAT** arkasında; port yönlendirme çalışmıyor (public IP yok) |
+| Alan adları | `api.test.yonetiyor.com` | **`api-test.yonetio.site`** | Cloudflare ücretsiz sertifikası **iki seviyeli** alt alanı (`*.test.*`) kapsamıyor; tek seviyeye indirildi |
+
+**Canlı adresler:**
+
+| Yüzey | Adres |
+|---|---|
+| API | `api-test.yonetio.site` |
+| Panel (platform) | `panel-test.yonetio.site` |
+| Uygulama (tesis) | `app-test.yonetio.site` |
+| Tanıtım / portal | `test.yonetio.site` |
+
+> **Not — §4.2'deki `.env.test` örneği `test.yonetiyor.com` yazıyor.**
+> Gerçek kurulum `yonetio.site` altında ve tek seviyeli. Kurulum
+> tekrarlanırsa **gerçekleşen** adlar kullanılmalı; `CORS_ORIGINS`,
+> `MINIO_PUBLIC_URL` ve `PORTAL_BASE_URL` de buna göre yazılmalı.
+
+> **Cloudflare Tunnel'ın getirdiği fark:** TLS'i Cloudflare sonlandırır,
+> yani §5'teki Let's Encrypt/ACME adımı bu kurulumda **devre dışıdır** ve
+> §8'deki "Let's Encrypt oran sınırı" riski de düşer. Buna karşılık
+> **istekler Cloudflare üzerinden gelir**: istemci IP'si artık
+> `CF-Connecting-IP` başlığındadır. `app/hiz_siniri.py` bilerek IP değil
+> **telefon** ekseninde sayıyor, dolayısıyla bugün bir kusur yok — ama
+> ileride IP tabanlı bir sınır eklenirse bu başlık hesaba katılmalı.
+
+---
+
+## 6.7 TOHUMLAMA — `scripts/test_seed.py`
+
+Boş veritabanını çalışır hale getiren **tek komut** (idempotent):
+
+```bash
+cd /opt/yonetio/tesis-platform/infra
+docker compose -f docker-compose.prod.yml --env-file .env.test -p yonetio-test \
+  run --rm worker python -m scripts.test_seed
+```
+
+* Parola `TEST_SEED_PAROLA` ile verilebilir; verilmezse **güçlü bir parola
+  üretilir ve bir kez ekrana basılır**. Sabit varsayılan **yoktur** —
+  internete açık bir sunucuda "Test123!" herkesin bildiği bir hesap demekti.
+* **Unutulursa betiği tekrar koşun:** idempotenttir ve parolaları günceller.
+* **Tesis ID elle yazılmaz:** `kayit_kodu` tetikleyicisi (göç 0037/0040/0041)
+  üretir; betik yalnız okur. Kuralı ikinci kez yazmak iki kaynak yaratırdı.
+* Ürettiği veri: 1 tesis · 2 blok · 21 daire · 8 kullanıcı (her rolden) ·
+  3 duyuru · 3 görev + 3 kategori · 4 NFC noktası · 42 aidat tahakkuku ·
+  2 talep.
+* **KVKK:** tüm veri kodun içinde üretilir; prod'dan hiçbir satır
+  kopyalanmaz. Telefonlar `+90555…` (Türkiye'de operatöre tahsis
+  edilmemiş aralık), e-postalar `@test.yonetio.site`.
+
+**Doğrulandı** (geliştirme veritabanında, iki kez koşularak): satır
+sayıları ikinci koşumda birebir aynı ve dört rolün de `login-phone` ile
+girişi **200** döndü.
+
+---
+
 ## 7. `noindex` — arama motoru test sunucusunu indekslemesin
 
 İki katman, çünkü **`robots.txt` tek başına yetmez**: `robots.txt`
