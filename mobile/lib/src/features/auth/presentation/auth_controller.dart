@@ -172,6 +172,26 @@ class AuthController extends Notifier<AuthState> {
     }
   }
 
+  /// (P154 / Asama 3) Rol secimli kayit, kod dogrulandiktan SONRA cagrilir.
+  ///
+  /// NEDEN AYRI BIR PAROLA EKRANI YAZILMADI: `setupToken` dolunca router
+  /// zaten `/set-password`e goturuyor (bkz. app_router redirect) ve o ekran
+  /// parola kuralini, gosterme/gizlemeyi ve 401'de kurulumu iptal etmeyi
+  /// coktan cozmus. Kayit akisina ikinci bir parola ekrani yazmak, ayni
+  /// kurallari iki yerde tutmak olurdu.
+  ///
+  /// `rememberMe`/`phone` BURADA SET EDILMEZ: kayit bir GIRIS degildir ve
+  /// "beni hatirla" tercihi kullaniciya SORULMADI; varsaymak, secmedigi
+  /// bir tercihi onun adina isaretlemek olurdu.
+  void kayitKodunuOnayla(String setupToken) {
+    state = state.copyWith(
+      setupToken: setupToken,
+      errorMessage: null,
+      hataKimligi: null,
+      submitting: false,
+    );
+  }
+
   /// Ilk giristeki zorunlu kalici parola belirleme. Basarida oturum acilir;
   /// setup token'i olmusse (401) kurulum iptal edilip login'e donulur.
   Future<void> submitNewPassword(String newPassword) async {

@@ -45,6 +45,64 @@ class AuthApi {
     }
   }
 
+  /// (P154 / Asama 3) `POST /auth/kayit/rol-basla` — rol + tesis ID +
+  /// telefon; eslesirse SMS kodu gonderilir.
+  ///
+  /// ESLESME SONUCU YANITTAN OKUNAMAZ: numara o tesiste o rolde kayitli
+  /// olsa da olmasa da yanit AYNIDIR (sunucu bilerek sizdirmiyor). Bu
+  /// yuzden istemci de "numara bulunamadi" DEMEZ — yalniz kod ekranina
+  /// gecer ve kodun gelmeyebilecegini yazar.
+  ///
+  /// Donen `tesis_ad`, kullanicinin dogru tesisi sectigini teyit etmesi
+  /// icindir; tesis kodu KAMUYA ACIK oldugu icin bunu gostermek bir sey
+  /// sizdirmaz (bkz. goc 0037 guvenlik notu).
+  Future<({String tesisAd, String telefonMaskeli})> rolKayitBasla({
+    required String rol,
+    required String tesisKodu,
+    required String telefon,
+    String? daireNo,
+    String? blok,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/auth/kayit/rol-basla',
+        data: {
+          'rol': rol,
+          'tesis_kodu': tesisKodu,
+          'telefon': telefon,
+          if (daireNo != null && daireNo.isNotEmpty) 'daire_no': daireNo,
+          if (blok != null && blok.isNotEmpty) 'blok': blok,
+        },
+      );
+      return (
+        tesisAd: res.data!['tesis_ad'] as String,
+        telefonMaskeli: res.data!['telefon_maskeli'] as String,
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// (P154 / Asama 3) `POST /auth/kayit/rol-dogrula` — kod dogruysa
+  /// PAROLA BELIRLEME jetonu doner (oturum DEGIL).
+  ///
+  /// Jeton yalniz `/auth/set-password`te gecer; kayit, parola
+  /// belirlenene kadar tamamlanmis sayilmaz.
+  Future<String> rolKayitDogrula({
+    required String telefon,
+    required String kod,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/auth/kayit/rol-dogrula',
+        data: {'telefon': telefon, 'kod': kod},
+      );
+      return res.data!['setup_token'] as String;
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
   /// (P149) `POST /auth/giris/kod-dogrula` — kod dogruysa TAM OTURUM.
   /// Parola akisindan farkli olarak `setup_token` asamasi YOKTUR: parolasiz
   /// kullanicinin belirleyecegi bir parola da yoktur.

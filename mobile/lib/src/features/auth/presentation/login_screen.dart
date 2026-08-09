@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/branding/yonetio_logo.dart';
 import '../../../core/i18n/l10n.dart';
@@ -8,6 +9,7 @@ import 'auth_controller.dart';
 import 'giris_hata_metni.dart';
 import '../../../core/ui/telefon_alani.dart';
 import '../../../core/ui/telefon_hata_metni.dart';
+import '../../../routing/app_router.dart';
 
 /// Telefonla giris ekrani (contracts/auth.md §1): cep telefonu (global
 /// benzersiz) + parola/gecici kod. Tenant numaradan otomatik cozulur — tesis
@@ -233,6 +235,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                       ],
                     ],
+                    // (P154 / Asama 3) KAYIT KAPISI. Hesabi yonetici
+                    // aciyor ama kisi onu SAHIPLENMEDEN giremiyor; bu
+                    // baglanti olmadan kayit ekranina ulasilamazdi.
+                    const SizedBox(height: 8),
+                    TextButton(
+                      key: const Key('login-kayit-baglantisi'),
+                      onPressed:
+                          submitting ? null : () => context.go(AppRoutes.kayit),
+                      child: Text(l10n.kayitBaslik),
+                    ),
                   ],
                 ),
               ),

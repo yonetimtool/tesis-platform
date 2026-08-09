@@ -8242,6 +8242,120 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Onay kodunu girin'**
   String get hesapSilKodGerekli;
+
+  /// No description provided for @kayitBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kayıt ol'**
+  String get kayitBaslik;
+
+  /// No description provided for @kayitAltBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Size uygun olanı seçiniz'**
+  String get kayitAltBaslik;
+
+  /// No description provided for @kayitRolYonetici.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yönetici'**
+  String get kayitRolYonetici;
+
+  /// No description provided for @kayitRolSakin.
+  ///
+  /// In tr, this message translates to:
+  /// **'Site sakini'**
+  String get kayitRolSakin;
+
+  /// No description provided for @kayitRolGuvenlik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Güvenlik görevlisi'**
+  String get kayitRolGuvenlik;
+
+  /// No description provided for @kayitRolTesisGorevlisi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tesis görevlisi'**
+  String get kayitRolTesisGorevlisi;
+
+  /// No description provided for @kayitTesisKodu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tesis ID'**
+  String get kayitTesisKodu;
+
+  /// No description provided for @kayitTesisKoduIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yönetiminizin verdiği kod (örn. OLTU-260715)'**
+  String get kayitTesisKoduIpucu;
+
+  /// No description provided for @kayitDaireNo.
+  ///
+  /// In tr, this message translates to:
+  /// **'Daire no'**
+  String get kayitDaireNo;
+
+  /// No description provided for @kayitBlok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Blok (varsa)'**
+  String get kayitBlok;
+
+  /// No description provided for @kayitDevam.
+  ///
+  /// In tr, this message translates to:
+  /// **'Devam et'**
+  String get kayitDevam;
+
+  /// No description provided for @kayitKodBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Doğrulama kodu'**
+  String get kayitKodBaslik;
+
+  /// Kod gonderildi bilgisi; numara kayitli DEGILSE kod gelmez (sunucu sizdirmaz)
+  ///
+  /// In tr, this message translates to:
+  /// **'{tesis} için {telefon} numarasına bir kod gönderildi. Numara sistemde kayıtlı değilse kod gelmez.'**
+  String kayitKodAciklama(String tesis, String telefon);
+
+  /// No description provided for @kayitKodAlani.
+  ///
+  /// In tr, this message translates to:
+  /// **'6 haneli kod'**
+  String get kayitKodAlani;
+
+  /// No description provided for @kayitTesisKoduGerekli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tesis ID gerekli.'**
+  String get kayitTesisKoduGerekli;
+
+  /// No description provided for @kayitDaireGerekli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Daire no gerekli.'**
+  String get kayitDaireGerekli;
+
+  /// No description provided for @kayitKodGerekli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kodu girin.'**
+  String get kayitKodGerekli;
+
+  /// No description provided for @kayitGirisLinki.
+  ///
+  /// In tr, this message translates to:
+  /// **'Zaten hesabınız var mı? Giriş yapın'**
+  String get kayitGirisLinki;
+
+  /// Kayit akisi adim gostergesi
+  ///
+  /// In tr, this message translates to:
+  /// **'Adım {n}/3'**
+  String kayitAdim(String n);
 }
 
 class _AppLocalizationsDelegate

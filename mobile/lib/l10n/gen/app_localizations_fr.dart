@@ -4819,4 +4819,66 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get hesapSilKodGerekli => 'Saisissez le code de confirmation';
+
+  @override
+  String get kayitBaslik => 'S\'inscrire';
+
+  @override
+  String get kayitAltBaslik => 'Choisissez ce qui vous correspond';
+
+  @override
+  String get kayitRolYonetici => 'Gestionnaire';
+
+  @override
+  String get kayitRolSakin => 'Résident';
+
+  @override
+  String get kayitRolGuvenlik => 'Agent de sécurité';
+
+  @override
+  String get kayitRolTesisGorevlisi => 'Agent d\'établissement';
+
+  @override
+  String get kayitTesisKodu => 'ID de l\'établissement';
+
+  @override
+  String get kayitTesisKoduIpucu =>
+      'Le code fourni par votre gestion (ex. OLTU-260715)';
+
+  @override
+  String get kayitDaireNo => 'N° de logement';
+
+  @override
+  String get kayitBlok => 'Bloc (le cas échéant)';
+
+  @override
+  String get kayitDevam => 'Continuer';
+
+  @override
+  String get kayitKodBaslik => 'Code de vérification';
+
+  @override
+  String kayitKodAciklama(String tesis, String telefon) {
+    return 'Un code a été envoyé au $telefon pour $tesis. Si le numéro n\'est pas enregistré, aucun code n\'arrivera.';
+  }
+
+  @override
+  String get kayitKodAlani => 'Code à 6 chiffres';
+
+  @override
+  String get kayitTesisKoduGerekli => 'L\'ID de l\'établissement est requis.';
+
+  @override
+  String get kayitDaireGerekli => 'Le n° de logement est requis.';
+
+  @override
+  String get kayitKodGerekli => 'Saisissez le code.';
+
+  @override
+  String get kayitGirisLinki => 'Vous avez déjà un compte ? Se connecter';
+
+  @override
+  String kayitAdim(String n) {
+    return 'Étape $n/3';
+  }
 }

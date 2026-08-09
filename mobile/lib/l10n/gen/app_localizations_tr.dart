@@ -4660,4 +4660,66 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get hesapSilKodGerekli => 'Onay kodunu girin';
+
+  @override
+  String get kayitBaslik => 'Kayıt ol';
+
+  @override
+  String get kayitAltBaslik => 'Size uygun olanı seçiniz';
+
+  @override
+  String get kayitRolYonetici => 'Yönetici';
+
+  @override
+  String get kayitRolSakin => 'Site sakini';
+
+  @override
+  String get kayitRolGuvenlik => 'Güvenlik görevlisi';
+
+  @override
+  String get kayitRolTesisGorevlisi => 'Tesis görevlisi';
+
+  @override
+  String get kayitTesisKodu => 'Tesis ID';
+
+  @override
+  String get kayitTesisKoduIpucu =>
+      'Yönetiminizin verdiği kod (örn. OLTU-260715)';
+
+  @override
+  String get kayitDaireNo => 'Daire no';
+
+  @override
+  String get kayitBlok => 'Blok (varsa)';
+
+  @override
+  String get kayitDevam => 'Devam et';
+
+  @override
+  String get kayitKodBaslik => 'Doğrulama kodu';
+
+  @override
+  String kayitKodAciklama(String tesis, String telefon) {
+    return '$tesis için $telefon numarasına bir kod gönderildi. Numara sistemde kayıtlı değilse kod gelmez.';
+  }
+
+  @override
+  String get kayitKodAlani => '6 haneli kod';
+
+  @override
+  String get kayitTesisKoduGerekli => 'Tesis ID gerekli.';
+
+  @override
+  String get kayitDaireGerekli => 'Daire no gerekli.';
+
+  @override
+  String get kayitKodGerekli => 'Kodu girin.';
+
+  @override
+  String get kayitGirisLinki => 'Zaten hesabınız var mı? Giriş yapın';
+
+  @override
+  String kayitAdim(String n) {
+    return 'Adım $n/3';
+  }
 }

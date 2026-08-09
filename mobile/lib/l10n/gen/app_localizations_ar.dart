@@ -4928,4 +4928,66 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get hesapSilKodGerekli => 'أدخل رمز التأكيد';
+
+  @override
+  String get kayitBaslik => 'إنشاء حساب';
+
+  @override
+  String get kayitAltBaslik => 'اختر ما ينطبق عليك';
+
+  @override
+  String get kayitRolYonetici => 'مدير';
+
+  @override
+  String get kayitRolSakin => 'ساكن';
+
+  @override
+  String get kayitRolGuvenlik => 'ضابط أمن';
+
+  @override
+  String get kayitRolTesisGorevlisi => 'موظف المنشأة';
+
+  @override
+  String get kayitTesisKodu => 'معرّف المنشأة';
+
+  @override
+  String get kayitTesisKoduIpucu =>
+      'الرمز الذي أعطته لك الإدارة (مثل OLTU-260715)';
+
+  @override
+  String get kayitDaireNo => 'رقم الوحدة';
+
+  @override
+  String get kayitBlok => 'المبنى (إن وجد)';
+
+  @override
+  String get kayitDevam => 'متابعة';
+
+  @override
+  String get kayitKodBaslik => 'رمز التحقق';
+
+  @override
+  String kayitKodAciklama(String tesis, String telefon) {
+    return 'تم إرسال رمز إلى $telefon من أجل $tesis. إذا لم يكن الرقم مسجّلاً فلن يصل رمز.';
+  }
+
+  @override
+  String get kayitKodAlani => 'رمز من 6 أرقام';
+
+  @override
+  String get kayitTesisKoduGerekli => 'معرّف المنشأة مطلوب.';
+
+  @override
+  String get kayitDaireGerekli => 'رقم الوحدة مطلوب.';
+
+  @override
+  String get kayitKodGerekli => 'أدخل الرمز.';
+
+  @override
+  String get kayitGirisLinki => 'لديك حساب بالفعل؟ سجّل الدخول';
+
+  @override
+  String kayitAdim(String n) {
+    return 'الخطوة $n/3';
+  }
 }

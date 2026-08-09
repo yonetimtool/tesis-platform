@@ -4828,4 +4828,66 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get hesapSilKodGerekli => 'Bestätigungscode eingeben';
+
+  @override
+  String get kayitBaslik => 'Registrieren';
+
+  @override
+  String get kayitAltBaslik => 'Wählen Sie, was auf Sie zutrifft';
+
+  @override
+  String get kayitRolYonetici => 'Verwalter';
+
+  @override
+  String get kayitRolSakin => 'Bewohner';
+
+  @override
+  String get kayitRolGuvenlik => 'Sicherheitsmitarbeiter';
+
+  @override
+  String get kayitRolTesisGorevlisi => 'Anlagenmitarbeiter';
+
+  @override
+  String get kayitTesisKodu => 'Anlagen-ID';
+
+  @override
+  String get kayitTesisKoduIpucu =>
+      'Der Code Ihrer Verwaltung (z. B. OLTU-260715)';
+
+  @override
+  String get kayitDaireNo => 'Wohnungsnr.';
+
+  @override
+  String get kayitBlok => 'Block (falls vorhanden)';
+
+  @override
+  String get kayitDevam => 'Weiter';
+
+  @override
+  String get kayitKodBaslik => 'Bestätigungscode';
+
+  @override
+  String kayitKodAciklama(String tesis, String telefon) {
+    return 'Für $tesis wurde ein Code an $telefon gesendet. Ist die Nummer nicht registriert, kommt kein Code an.';
+  }
+
+  @override
+  String get kayitKodAlani => '6-stelliger Code';
+
+  @override
+  String get kayitTesisKoduGerekli => 'Anlagen-ID ist erforderlich.';
+
+  @override
+  String get kayitDaireGerekli => 'Wohnungsnr. ist erforderlich.';
+
+  @override
+  String get kayitKodGerekli => 'Geben Sie den Code ein.';
+
+  @override
+  String get kayitGirisLinki => 'Sie haben bereits ein Konto? Anmelden';
+
+  @override
+  String kayitAdim(String n) {
+    return 'Schritt $n/3';
+  }
 }

@@ -1,11 +1,12 @@
- 272, 103  184x26  yönetio
- 342,  36  24x24  U+F290
- 342,  76  274x24  örn. 0532 111 22 03
- 346,  76  198x16  Cep telefonu
- 414,  36  24x24  U+E3B1
- 414, 330  24x24  U+F4A1
- 418,  76  238x16  Parola veya geçici kod
- 458,  40  310x32  İlk girişte yönetimden aldığınız geçici kodu yazın.
- 512,  80  286x20  Beni hatırla
- 586, 132  127x20  Giriş yap
- 638,  36  318x40  Parolam yok, kodla giriş yap
+ 244, 103  184x26  yönetio
+ 314,  36  24x24  U+F290
+ 314,  76  274x24  örn. 0532 111 22 03
+ 318,  76  198x16  Cep telefonu
+ 386,  36  24x24  U+E3B1
+ 386, 330  24x24  U+F4A1
+ 390,  76  238x16  Parola veya geçici kod
+ 430,  40  310x32  İlk girişte yönetimden aldığınız geçici kodu yazın.
+ 484,  80  286x20  Beni hatırla
+ 558, 132  127x20  Giriş yap
+ 610,  36  318x40  Parolam yok, kodla giriş yap
+ 680, 139  113x20  Kayıt ol

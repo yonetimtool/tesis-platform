@@ -11,6 +11,7 @@ import '../features/assets/presentation/assets_screen.dart';
 import '../features/auth/presentation/auth_controller.dart';
 import '../features/complaints/presentation/complaints_screen.dart';
 import '../features/auth/presentation/login_screen.dart';
+import '../features/auth/presentation/kayit_screen.dart';
 import '../features/auth/presentation/set_password_screen.dart';
 import '../features/budget/presentation/budget_screen.dart';
 import '../features/building_map/presentation/bina_duzenleme_screen.dart';
@@ -64,6 +65,8 @@ class AppRoutes {
   static const splash = '/splash';
   static const login = '/login';
   static const setPassword = '/set-password';
+  /// (P154 / Asama 3) Rol secimli kayit — OTURUM GEREKTIRMEZ.
+  static const kayit = '/kayit';
   static const home = '/home';
   static const nfc = '/nfc';
   static const outbox = '/outbox';
@@ -205,6 +208,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.setPassword,
         builder: (context, state) => const SetPasswordScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.kayit,
+        builder: (context, state) => const KayitScreen(),
       ),
       GoRoute(
         // Onboarding Model A: yonetici ilk giriste tesisi adlandirmamissa
@@ -467,6 +474,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       final onAuthFlow =
           location == AppRoutes.login ||
           location == AppRoutes.splash ||
+          // (P154) Kayit da bir OTURUM ONCESI ekrandir: oturum acilinca
+          // buradan da ana ekrana gecilmeli, yoksa kaydini bitiren
+          // kullanici kayit formunda asili kalirdi.
+          location == AppRoutes.kayit ||
           location == AppRoutes.setPassword;
 
       if (loggedIn) {
@@ -476,8 +487,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       if (auth.setupToken != null) {
         return location == AppRoutes.setPassword ? null : AppRoutes.setPassword;
       }
-      // Oturum yok → login disindaki her yerden login'e.
-      return location == AppRoutes.login ? null : AppRoutes.login;
+      // Oturum yok → login disindaki her yerden login'e. (P154) `/kayit`
+      // de oturumsuz erisilebilir olmali; aksi hâlde kaydolmak icin once
+      // giris yapmak gerekirdi.
+      return location == AppRoutes.login || location == AppRoutes.kayit
+          ? null
+          : AppRoutes.login;
     },
   );
 });

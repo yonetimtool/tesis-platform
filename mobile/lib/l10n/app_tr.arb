@@ -2037,5 +2037,43 @@
   "girisKodAlani": "Doğrulama kodu",
   "hesapSilKodlaOnayla": "Parolam yok, kodla onayla",
   "hesapSilKodAciklama": "Telefonunuza silme onayı için altı haneli bir kod göndereceğiz.",
-  "hesapSilKodGerekli": "Onay kodunu girin"
+  "hesapSilKodGerekli": "Onay kodunu girin",
+  "kayitBaslik": "Kayıt ol",
+  "kayitAltBaslik": "Size uygun olanı seçiniz",
+  "kayitRolYonetici": "Yönetici",
+  "kayitRolSakin": "Site sakini",
+  "kayitRolGuvenlik": "Güvenlik görevlisi",
+  "kayitRolTesisGorevlisi": "Tesis görevlisi",
+  "kayitTesisKodu": "Tesis ID",
+  "kayitTesisKoduIpucu": "Yönetiminizin verdiği kod (örn. OLTU-260715)",
+  "kayitDaireNo": "Daire no",
+  "kayitBlok": "Blok (varsa)",
+  "kayitDevam": "Devam et",
+  "kayitKodBaslik": "Doğrulama kodu",
+  "kayitKodAciklama": "{tesis} için {telefon} numarasına bir kod gönderildi. Numara sistemde kayıtlı değilse kod gelmez.",
+  "@kayitKodAciklama": {
+    "description": "Kod gonderildi bilgisi; numara kayitli DEGILSE kod gelmez (sunucu sizdirmaz)",
+    "placeholders": {
+      "tesis": {
+        "type": "String"
+      },
+      "telefon": {
+        "type": "String"
+      }
+    }
+  },
+  "kayitKodAlani": "6 haneli kod",
+  "kayitTesisKoduGerekli": "Tesis ID gerekli.",
+  "kayitDaireGerekli": "Daire no gerekli.",
+  "kayitKodGerekli": "Kodu girin.",
+  "kayitGirisLinki": "Zaten hesabınız var mı? Giriş yapın",
+  "kayitAdim": "Adım {n}/3",
+  "@kayitAdim": {
+    "description": "Kayit akisi adim gostergesi",
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  }
 }

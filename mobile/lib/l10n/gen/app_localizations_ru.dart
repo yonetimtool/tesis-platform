@@ -4918,4 +4918,66 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get hesapSilKodGerekli => 'Введите код подтверждения';
+
+  @override
+  String get kayitBaslik => 'Регистрация';
+
+  @override
+  String get kayitAltBaslik => 'Выберите подходящий вариант';
+
+  @override
+  String get kayitRolYonetici => 'Управляющий';
+
+  @override
+  String get kayitRolSakin => 'Житель';
+
+  @override
+  String get kayitRolGuvenlik => 'Сотрудник охраны';
+
+  @override
+  String get kayitRolTesisGorevlisi => 'Сотрудник объекта';
+
+  @override
+  String get kayitTesisKodu => 'ID объекта';
+
+  @override
+  String get kayitTesisKoduIpucu =>
+      'Код, который выдало управление (напр. OLTU-260715)';
+
+  @override
+  String get kayitDaireNo => 'Номер квартиры';
+
+  @override
+  String get kayitBlok => 'Блок (если есть)';
+
+  @override
+  String get kayitDevam => 'Продолжить';
+
+  @override
+  String get kayitKodBaslik => 'Код подтверждения';
+
+  @override
+  String kayitKodAciklama(String tesis, String telefon) {
+    return 'Код отправлен на $telefon для «$tesis». Если номер не зарегистрирован, код не придёт.';
+  }
+
+  @override
+  String get kayitKodAlani => '6-значный код';
+
+  @override
+  String get kayitTesisKoduGerekli => 'Требуется ID объекта.';
+
+  @override
+  String get kayitDaireGerekli => 'Требуется номер квартиры.';
+
+  @override
+  String get kayitKodGerekli => 'Введите код.';
+
+  @override
+  String get kayitGirisLinki => 'Уже есть аккаунт? Войти';
+
+  @override
+  String kayitAdim(String n) {
+    return 'Шаг $n/3';
+  }
 }

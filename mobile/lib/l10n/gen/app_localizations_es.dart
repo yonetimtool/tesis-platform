@@ -4804,4 +4804,66 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get hesapSilKodGerekli => 'Introduzca el código de confirmación';
+
+  @override
+  String get kayitBaslik => 'Registrarse';
+
+  @override
+  String get kayitAltBaslik => 'Elija lo que le corresponde';
+
+  @override
+  String get kayitRolYonetici => 'Administrador';
+
+  @override
+  String get kayitRolSakin => 'Residente';
+
+  @override
+  String get kayitRolGuvenlik => 'Agente de seguridad';
+
+  @override
+  String get kayitRolTesisGorevlisi => 'Personal de la instalación';
+
+  @override
+  String get kayitTesisKodu => 'ID de la instalación';
+
+  @override
+  String get kayitTesisKoduIpucu =>
+      'El código que le dio su administración (p. ej. OLTU-260715)';
+
+  @override
+  String get kayitDaireNo => 'N.º de vivienda';
+
+  @override
+  String get kayitBlok => 'Bloque (si lo hay)';
+
+  @override
+  String get kayitDevam => 'Continuar';
+
+  @override
+  String get kayitKodBaslik => 'Código de verificación';
+
+  @override
+  String kayitKodAciklama(String tesis, String telefon) {
+    return 'Se envió un código al $telefon para $tesis. Si el número no está registrado, no llegará ningún código.';
+  }
+
+  @override
+  String get kayitKodAlani => 'Código de 6 dígitos';
+
+  @override
+  String get kayitTesisKoduGerekli => 'El ID de la instalación es obligatorio.';
+
+  @override
+  String get kayitDaireGerekli => 'El n.º de vivienda es obligatorio.';
+
+  @override
+  String get kayitKodGerekli => 'Introduzca el código.';
+
+  @override
+  String get kayitGirisLinki => '¿Ya tiene una cuenta? Iniciar sesión';
+
+  @override
+  String kayitAdim(String n) {
+    return 'Paso $n/3';
+  }
 }
