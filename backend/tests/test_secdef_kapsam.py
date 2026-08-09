@@ -54,6 +54,14 @@ ENVANTER: dict[str, tuple[str, tuple[str, str] | None]] = {
         ("post", "/tenants/{tid}/yonetici/reset-credential"),
     ),
     "delete_tenant": ("admin", ("delete", "/tenants/{tid}")),
+    # (P154) Tesis basina COKLU yonetici. Ucu de tenant sinirini GECER
+    # (admin baska bir tesisin kadrosunu yonetir) ve ucu de YALNIZ admin.
+    "tenant_yoneticiler": ("admin", ("get", "/tenants/{tid}/yoneticiler")),
+    "add_tenant_yonetici": ("admin", ("post", "/tenants/{tid}/yoneticiler")),
+    "remove_tenant_yonetici": (
+        "admin",
+        ("delete", "/tenants/{tid}/yoneticiler/{uid}"),
+    ),
     # --- platform destek kanali: TUM tenant'larin biletleri ---
     "support_ticket_list": ("admin", ("get", "/support/all")),
     "support_ticket_answer": ("admin", ("patch", "/support/{tid}")),
@@ -64,6 +72,9 @@ ENVANTER: dict[str, tuple[str, tuple[str, str] | None]] = {
     # bypass SART. Ikisi de yalniz bir uuid doner, satir vermez.
     "tenant_id_by_slug": ("public", None),
     "tenant_id_by_phone": ("public", None),
+    # (P148) Sakin kaydolurken oturumu YOKTUR; tesis, kayit kodundan cozulur.
+    # (P154'te REVOKE/GRANT ve `search_path=''` eklendi — 0036'da unutulmustu.)
+    "tenant_id_by_kayit_kodu": ("public", None),
     # Saglayici webhook'u imzayla dogrulanir; tenant provider_ref'ten cozulur.
     "payment_tenant_by_ref": ("public", None),
     # ANPR girisi (P16): kamera kutusu JWT tasimaz, kimlik `X-ANPR-Key`

@@ -26,6 +26,10 @@ from ..schemas import (
     TenantAdminListItem,
     TenantAdminListResponse,
     TenantAdminUpdate,
+    TenantYoneticiAdd,
+    TenantYoneticiAddedOut,
+    TenantYoneticiListItem,
+    TenantYoneticiListResponse,
     TenantYoneticiOut,
     TenantYoneticiResetOut,
     TenantYoneticiUpdate,
@@ -306,6 +310,130 @@ async def reset_yonetici_credential(
             if updated is None:
                 raise APIError(404, "not_found", "tesiste_yonetici_yok")
     return TenantYoneticiResetOut(temp_code=temp_code)
+
+
+# ------------------- (P154) tesis basina COKLU yonetici -------------------- #
+#
+# NEDEN AYRI BIR YOL (`/yoneticiler`, cogul): var olan `/{tid}/yonetici`
+# (tekil) BIRINCIL yoneticiyi hedefler ve kimligi govdede TASIMAZ. Ayni yola
+# bir `user_id` eklemek, eski cagiranlarin sessizce baska bir kaydi
+# guncellemesine yol acabilirdi. Tekil yol OLDUGU GIBI kaldi.
+
+_YONETICILER_SQL = text(
+    "SELECT yonetici_id, yonetici_ad, telefon, is_active, password_set, "
+    "birincil, created_at FROM public.tenant_yoneticiler(:tid)"
+)
+
+
+@router.get("/{tenant_id}/yoneticiler", response_model=TenantYoneticiListResponse)
+async def list_yoneticiler(
+    tenant_id: uuid.UUID,
+    _: AppUser = Depends(_ADMIN),
+) -> TenantYoneticiListResponse:
+    """Admin: tesisin TUM yoneticileri (birincil once).
+
+    Tesis yoksa 404 — bos liste donmek "tesis var ama yoneticisi yok" ile
+    "boyle bir tesis yok"u ayirt edilemez kilardi.
+    """
+    async with SessionLocal() as session:
+        async with session.begin():
+            await _detail_or_404(session, tenant_id)
+            rows = (await session.execute(_YONETICILER_SQL, {"tid": tenant_id})).all()
+    return TenantYoneticiListResponse(
+        items=[
+            TenantYoneticiListItem(
+                id=r.yonetici_id,
+                ad=r.yonetici_ad,
+                telefon=r.telefon,
+                is_active=r.is_active,
+                password_set=r.password_set,
+                birincil=r.birincil,
+                created_at=r.created_at,
+            )
+            for r in rows
+        ]
+    )
+
+
+@router.post(
+    "/{tenant_id}/yoneticiler",
+    response_model=TenantYoneticiAddedOut,
+    status_code=201,
+)
+async def add_yonetici(
+    tenant_id: uuid.UUID,
+    body: TenantYoneticiAdd,
+    _: AppUser = Depends(_ADMIN),
+) -> TenantYoneticiAddedOut:
+    """Admin: var olan tesise yonetici ekler; TEK SEFERLIK gecici kod doner.
+
+    Yeni yonetici BIRINCIL DEGILDIR (bkz. goc 0041). Telefon global benzersiz
+    -> cakisma 409.
+    """
+    try:
+        phone = normalize_phone(body.phone)
+    except ValueError:
+        raise APIError(422, "validation_error", "telefon_gecersiz")
+
+    temp_code = generate_temp_code()
+    async with SessionLocal() as session:
+        async with session.begin():
+            try:
+                new_id = (
+                    await session.execute(
+                        text(
+                            "SELECT public.add_tenant_yonetici"
+                            "(:tid, :ad, :tel, :tch)"
+                        ),
+                        {
+                            "tid": tenant_id,
+                            "ad": body.ad,
+                            "tel": phone,
+                            "tch": hash_password(temp_code),
+                        },
+                    )
+                ).scalar()
+            except IntegrityError:
+                raise APIError(409, "conflict", "telefon_zaten_kayitli")
+            if new_id is None:
+                raise APIError(404, "not_found", "tenant_bulunamadi")
+    return TenantYoneticiAddedOut(user_id=new_id, ad=body.ad, temp_code=temp_code)
+
+
+@router.delete("/{tenant_id}/yoneticiler/{user_id}", status_code=204)
+async def remove_yonetici(
+    tenant_id: uuid.UUID,
+    user_id: uuid.UUID,
+    _: AppUser = Depends(_ADMIN),
+) -> Response:
+    """Admin: yoneticiyi tesisten CIKARIR (sert silme).
+
+    Uc ayri 409 uretir ve UCUNUN DE anlami farklidir — tek bir "silinemedi"
+    mesaji kullaniciya ne yapacagini soylemezdi:
+      * `son_yonetici`         -> once baska bir yonetici ekleyin
+      * `birincil_yonetici`    -> once baskasini birincil yapin
+      * `yonetici_kayitlari_var`-> silinemez; pasiflestirin (PATCH is_active)
+    """
+    async with SessionLocal() as session:
+        async with session.begin():
+            try:
+                sonuc = (
+                    await session.execute(
+                        text("SELECT public.remove_tenant_yonetici(:tid, :uid)"),
+                        {"tid": tenant_id, "uid": user_id},
+                    )
+                ).scalar()
+            except IntegrityError:
+                # ON DELETE RESTRICT tasiyan kayitlari var (ornegin actigi
+                # talepler). Sert silme veriyi de goturecegi icin reddedilir.
+                raise APIError(409, "conflict", "yonetici_kayitlari_var")
+            if sonuc is None:
+                raise APIError(404, "not_found", "yonetici_bulunamadi")
+            if sonuc == "son_yonetici":
+                raise APIError(409, "conflict", "son_yonetici_silinemez")
+            if sonuc == "birincil":
+                raise APIError(409, "conflict", "birincil_yonetici_silinemez")
+    return Response(status_code=204)
 
 
 @router.delete("/{tenant_id}", status_code=204)

@@ -3372,6 +3372,92 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  # (P154) TESIS BASINA COKLU YONETICI.
+  # Tekil `/yonetici` yolu BIRINCIL yoneticiyi hedefler ve DEGISMEDI; bu
+  # cogul yol kadroyu yonetir (ekleme/silme). Ikisi ayri durur cunku tekil
+  # yola bir kimlik eklemek, eski cagiranlarin sessizce baska bir kaydi
+  # guncellemesine yol acabilirdi.
+  /tenants/{tenant_id}/yoneticiler:
+    parameters:
+      - name: tenant_id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [tenant]
+      summary: Admin — tesisin TUM yoneticileri (birincil once)
+      description: |
+        Tesis yoksa 404: bos liste donmek "tesis var ama yoneticisi yok" ile
+        "boyle bir tesis yok"u ayirt edilemez kilardi.
+      responses:
+        "200":
+          description: Yonetici listesi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TenantYoneticiListResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    post:
+      tags: [tenant]
+      summary: Admin — var olan tesise SONRADAN yonetici ekler
+      description: |
+        Yeni yonetici BIRINCIL DEGILDIR (birincil tenant basina tektir ve
+        sahipligi sessizce devretmek panelde kimin sorumlu oldugunu
+        degistirirdi). Parola ALINMAZ: uzaktan ekleme yapilirken admin'in
+        baskasi adina parola secmesi, o parolayi bir kanaldan iletmesi
+        demektir. Tek yol TEK SEFERLIK gecici koddur ve BIR KEZ doner.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TenantYoneticiAdd" }
+      responses:
+        "201":
+          description: Eklendi (tek seferlik kod ile)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TenantYoneticiAddedOut" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Bu telefon zaten kayitli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /tenants/{tenant_id}/yoneticiler/{user_id}:
+    parameters:
+      - name: tenant_id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+      - name: user_id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    delete:
+      tags: [tenant]
+      summary: Admin — yoneticiyi tesisten cikarir (sert silme)
+      description: |
+        UC AYRI 409 uretir ve ucunun de anlami farklidir; tek bir
+        "silinemedi" mesaji kullaniciya ne yapacagini soylemezdi:
+          * son_yonetici_silinemez      -> once baska bir yonetici ekleyin
+          * birincil_yonetici_silinemez -> once baskasini birincil yapin
+          * yonetici_kayitlari_var      -> silinemez; hesabi pasiflestirin
+        Yumusak silme (is_active=false) AYRI bir istir ve tekil
+        `/yonetici` PATCH ucundan yapilir.
+      responses:
+        "204": { description: Silindi }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Son yonetici / birincil yonetici / kayitlari var
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
   # ================================================================= #
   # AIDAT — unit (daire) + sakin + tahakkuk + odeme
   # ================================================================= #
@@ -8951,6 +9037,47 @@ components:
       required: [temp_code]
       properties:
         temp_code: { type: string, example: "K7MR-2QWX", description: "Yeni tek-seferlik kod" }
+    # (P154) Tesis basina COKLU yonetici.
+    TenantYoneticiListItem:
+      type: object
+      description: |
+        `TenantYoneticiOut` + `birincil` + `created_at`. `birincil` tekil
+        detayda YOKTUR (orasi zaten yalniz birincili doner); listede ise
+        hangi satirin silinemeyecegini soyleyen tek isarettir.
+      required: [id, ad, is_active, password_set, birincil, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        ad: { type: string }
+        telefon: { type: string, nullable: true }
+        is_active: { type: boolean }
+        password_set: { type: boolean }
+        birincil: { type: boolean, description: "Tenant basina TEK; silinemez" }
+        created_at: { type: string, format: date-time }
+    TenantYoneticiListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/TenantYoneticiListItem" }
+    TenantYoneticiAdd:
+      type: object
+      description: |
+        Parola alani YOK — bilincli fark. Tesis kurulumunda admin bazen
+        yoneticiyle ayni odadadir; sonradan ekleme uzaktan yapilir ve
+        admin'in baskasi adina parola secmesi onu bir kanaldan iletmek
+        demektir. Tek yol tek seferlik koddur.
+      required: [ad, phone]
+      properties:
+        ad: { type: string, minLength: 2, maxLength: 120, example: "Ayse Yilmaz" }
+        phone: { type: string, minLength: 1, example: "+905321112203" }
+    TenantYoneticiAddedOut:
+      type: object
+      required: [user_id, ad, temp_code]
+      properties:
+        user_id: { type: string, format: uuid }
+        ad: { type: string }
+        temp_code: { type: string, description: "BIR KEZ doner; admin ilgiliye iletir" }
     PhoneLoginRequest:
       type: object
       description: |

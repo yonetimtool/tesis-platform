@@ -2494,6 +2494,41 @@ class TenantYoneticiResetOut(BaseModel):
     temp_code: str
 
 
+# ------------------- (P154) tesis basina COKLU yonetici -------------------- #
+class TenantYoneticiListItem(TenantYoneticiOut):
+    """Listedeki bir yonetici. `birincil` EKLENDI: tekil `TenantAdminDetail`
+    yalniz birincili donduruyordu, dolayisiyla o alan orada gereksizdi; listede
+    ise hangi satirin silinemeyecegini kullaniciya soyleyen tek isarettir."""
+
+    birincil: bool
+    created_at: datetime
+
+
+class TenantYoneticiListResponse(BaseModel):
+    items: list[TenantYoneticiListItem]
+
+
+class TenantYoneticiAdd(BaseModel):
+    """Var olan bir tesise SONRADAN yonetici ekleme.
+
+    `password` YOK — `YoneticiCreate`ten kasitli fark: tesis kurulumunda admin
+    bazen yoneticiyle ayni odadadir ve parolayi birlikte belirler. Sonradan
+    ekleme uzaktan yapilir; admin'in baskasi adina parola secmesi, o parolayi
+    bir kanaldan iletmesi demektir. Tek yol TEK SEFERLIK gecici koddur.
+    """
+
+    ad: str = Field(..., min_length=2, max_length=120, examples=["Ayse Yilmaz"])
+    phone: str = Field(..., min_length=1, examples=["+905321112203"])
+
+
+class TenantYoneticiAddedOut(BaseModel):
+    """Eklenen yonetici + BIR KEZ donen gecici kod (admin ilgiliye iletir)."""
+
+    user_id: uuid.UUID
+    ad: str
+    temp_code: str
+
+
 # -------------------------------- aidat ------------------------------------ #
 ResidentRol = Literal["malik", "kiraci"]
 DuesYontem = Literal["elden", "havale", "kart", "diger"]

@@ -845,6 +845,89 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "Ce numéro de téléphone est déjà enregistré.",
         "es": "Este número de teléfono ya está registrado.",
     },
+    # (P154) P148/P149'da EKLENIP KATALOGA YAZILMAYAN bes kimlik. Sonuc:
+    # Arapca arayuzdeki sakin, kaydolurken Turkce bir kimlik dizesi
+    # ("kayit_bilgileri_gecersiz") goruyordu — cumle bile degil. Kapi
+    # (`test_kaynakta_ham_cumle_kalmadi`) bunu zaten kirmizi tutuyordu.
+    #
+    # UCU DE ADIMLARI AYIRT ETTIRMEYEN metinlerdir: "kod yanlis" ile
+    # "boyle daire/kullanici yok" arasindaki fark disariya sizardi. Ceviriler
+    # bu belirsizligi KORUR — daha yardimsever bir metin yazmak, kodun
+    # bilincli olarak sakladigi seyi acardi.
+    "kayit_bilgileri_gecersiz": {
+        "tr": "Kayıt bilgileri geçersiz.",
+        "en": "The registration details are not valid.",
+        "ar": "بيانات التسجيل غير صالحة.",
+        "ru": "Регистрационные данные недействительны.",
+        "de": "Die Registrierungsdaten sind ungültig.",
+        "fr": "Les informations d'inscription ne sont pas valides.",
+        "es": "Los datos de registro no son válidos.",
+    },
+    "kod_gecersiz": {
+        "tr": "Kod geçersiz.",
+        "en": "The code is not valid.",
+        "ar": "الرمز غير صالح.",
+        "ru": "Код недействителен.",
+        "de": "Der Code ist ungültig.",
+        "fr": "Le code n'est pas valide.",
+        "es": "El código no es válido.",
+    },
+    "silme_kodu_gerekli": {
+        "tr": "Devam etmek için telefonunuza gönderilen kodu girin.",
+        "en": "Enter the code sent to your phone to continue.",
+        "ar": "أدخل الرمز المُرسل إلى هاتفك للمتابعة.",
+        "ru": "Введите код, отправленный на ваш телефон, чтобы продолжить.",
+        "de": "Geben Sie den an Ihr Telefon gesendeten Code ein, um fortzufahren.",
+        "fr": "Saisissez le code envoyé à votre téléphone pour continuer.",
+        "es": "Introduzca el código enviado a su teléfono para continuar.",
+    },
+    "telefon_yok": {
+        "tr": "Hesabınızda kayıtlı telefon numarası yok.",
+        "en": "There is no phone number on your account.",
+        "ar": "لا يوجد رقم هاتف مسجّل في حسابك.",
+        "ru": "К вашей учётной записи не привязан номер телефона.",
+        "de": "In Ihrem Konto ist keine Telefonnummer hinterlegt.",
+        "fr": "Aucun numéro de téléphone n'est enregistré sur votre compte.",
+        "es": "No hay ningún número de teléfono registrado en su cuenta.",
+    },
+    # (P154) Tesis basina COKLU yonetici. Ucu de 409 ama anlamlari FARKLI:
+    # kullaniciya yalniz "silinemedi" demek, ne yapacagini soylememek olurdu.
+    "yonetici_bulunamadi": {
+        "tr": "Bu tesiste böyle bir yönetici yok.",
+        "en": "There is no such manager in this facility.",
+        "ar": "لا يوجد مثل هذا المدير في هذا المرفق.",
+        "ru": "В этом объекте нет такого управляющего.",
+        "de": "In dieser Anlage gibt es keinen solchen Verwalter.",
+        "fr": "Il n'y a pas de gestionnaire de ce type dans cet établissement.",
+        "es": "No existe tal administrador en esta instalación.",
+    },
+    "son_yonetici_silinemez": {
+        "tr": "Tesisin son yöneticisi silinemez. Önce başka bir yönetici ekleyin.",
+        "en": "The last manager of a facility cannot be removed. Add another manager first.",
+        "ar": "لا يمكن حذف آخر مدير للمرفق. أضف مديرًا آخر أولاً.",
+        "ru": "Последнего управляющего объекта удалить нельзя. Сначала добавьте другого.",
+        "de": "Der letzte Verwalter einer Anlage kann nicht entfernt werden. Fügen Sie zuerst einen weiteren Verwalter hinzu.",
+        "fr": "Le dernier gestionnaire d'un établissement ne peut pas être supprimé. Ajoutez d'abord un autre gestionnaire.",
+        "es": "No se puede eliminar al último administrador de la instalación. Añada primero otro administrador.",
+    },
+    "birincil_yonetici_silinemez": {
+        "tr": "Birincil yönetici silinemez. Önce başka bir yöneticiyi birincil yapın.",
+        "en": "The primary manager cannot be removed. Make another manager primary first.",
+        "ar": "لا يمكن حذف المدير الأساسي. اجعل مديرًا آخر أساسيًا أولاً.",
+        "ru": "Основного управляющего удалить нельзя. Сначала назначьте основным другого.",
+        "de": "Der primäre Verwalter kann nicht entfernt werden. Machen Sie zuerst einen anderen Verwalter zum primären.",
+        "fr": "Le gestionnaire principal ne peut pas être supprimé. Désignez d'abord un autre gestionnaire comme principal.",
+        "es": "No se puede eliminar al administrador principal. Designe primero a otro administrador como principal.",
+    },
+    "yonetici_kayitlari_var": {
+        "tr": "Bu yöneticinin kayıtları var; silinemez. Hesabı pasifleştirin.",
+        "en": "This manager has records and cannot be deleted. Deactivate the account instead.",
+        "ar": "لدى هذا المدير سجلات ولا يمكن حذفه. عطّل الحساب بدلاً من ذلك.",
+        "ru": "У этого управляющего есть записи, удалить нельзя. Деактивируйте учётную запись.",
+        "de": "Dieser Verwalter hat Datensätze und kann nicht gelöscht werden. Deaktivieren Sie stattdessen das Konto.",
+        "fr": "Ce gestionnaire possède des enregistrements et ne peut pas être supprimé. Désactivez plutôt le compte.",
+        "es": "Este administrador tiene registros y no se puede eliminar. Desactive la cuenta en su lugar.",
+    },
     "telefon_birden_fazla_yoneticide": {
         "tr": "Aynı telefon birden fazla yöneticide kullanılamaz.",
         "en": "The same phone number cannot be used by more than one manager.",

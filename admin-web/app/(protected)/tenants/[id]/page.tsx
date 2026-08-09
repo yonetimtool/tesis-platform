@@ -28,6 +28,14 @@ interface TenantDetail {
   yonetici: Yonetici | null;
 }
 
+/** (P154) Listedeki yonetici. `birincil`, tekil detayda YOKTUR: orasi zaten
+ *  yalniz birincili doner. Listede ise hangi satirin silinemeyecegini
+ *  kullaniciya soyleyen tek isarettir. */
+interface YoneticiSatiri extends Yonetici {
+  birincil: boolean;
+  created_at: string;
+}
+
 function fmtDate(iso: string): string {
   try {
     return tarihSaatUzun(iso);
@@ -58,7 +66,70 @@ export default function TenantDetailPage() {
   const [nameErr, setNameErr] = useState<string | null>(null);
   const [nameSaving, setNameSaving] = useState(false);
 
+  // (P154) Coklu yonetici. AYRI bir SWR anahtari: tekil detay yalniz
+  // birincili doner ve o gorunum degismedi; listeyi oraya sikistirmak
+  // mevcut cagiranlarin bekledigi bicimi bozardi.
+  const {
+    data: yoneticiler,
+    error: yonHata,
+    mutate: yonYenile,
+  } = useSWR<{ items: YoneticiSatiri[] }>(
+    id ? `/api/tenants/${id}/yoneticiler` : null,
+    jsonFetcher,
+  );
+  const [ekleAcik, setEkleAcik] = useState(false);
+  const [yeniAd, setYeniAd] = useState("");
+  const [yeniTel, setYeniTel] = useState("");
+  const [yeniHata, setYeniHata] = useState<string | null>(null);
+  const [ekliyor, setEkliyor] = useState(false);
+
   const y = data?.yonetici ?? null;
+
+  async function yoneticiEkle(e: React.FormEvent) {
+    e.preventDefault();
+    setEkliyor(true);
+    setYeniHata(null);
+    try {
+      const r = await apiSend<{ ad: string; temp_code: string }>(
+        `/api/tenants/${id}/yoneticiler`,
+        "POST",
+        { ad: yeniAd.trim(), phone: telefonNormalle(yeniTel) ?? yeniTel.trim() },
+      );
+      // Kod BIR KEZ doner; kapanabilen bir bildirim yerine onay gerektiren
+      // bir kutu: kullanici kodu kopyalamadan ekrani birakirsa geri
+      // getirilemez, yalniz sifirlanabilir.
+      window.alert(t("tesisYeniYoneticiKodu", { ad: r.ad, kod: r.temp_code }));
+      setEkleAcik(false);
+      setYeniAd("");
+      setYeniTel("");
+      yonYenile();
+      mutate();
+      toast.success(t("tesisYoneticiEklendi"));
+    } catch (err) {
+      const m = err instanceof Error ? err.message : t("ortakKaydedilemedi");
+      setYeniHata(/telefon|zaten kay/i.test(m) ? t("tesisTelefonKayitli") : m);
+    } finally {
+      setEkliyor(false);
+    }
+  }
+
+  async function yoneticiSil(satir: YoneticiSatiri) {
+    if (!window.confirm(t("tesisYoneticiSilOnay", { ad: satir.ad }))) return;
+    setBusy(true);
+    try {
+      await apiSend(`/api/tenants/${id}/yoneticiler/${satir.id}`, "DELETE");
+      yonYenile();
+      mutate();
+      toast.success(t("tesisYoneticiSilindi"));
+    } catch (err) {
+      // Sunucu UC AYRI 409 uretir (son yonetici / birincil / kayitlari var)
+      // ve ucunun metni de kullaniciya NE yapacagini soyler. Kendi
+      // cumlemizi uydurmak o bilgiyi silerdi.
+      toast.error(err instanceof Error ? err.message : t("ortakSilinemedi"));
+    } finally {
+      setBusy(false);
+    }
+  }
 
   function openNameEdit() {
     if (!data) return;
@@ -303,6 +374,112 @@ export default function TenantDetailPage() {
                     {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
                   </button>
                   <button type="button" className={btnGhost} onClick={() => setEditing(false)}>
+                    {t("ortakIptal")}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+
+          {/* (P154) COKLU YONETICI — brief Asama 1'in "EKSIK" maddesi.
+              Yukaridaki kart BIRINCIL yoneticinin kimlik islemleridir
+              (parola sifirlama, pasiflestirme) ve OLDUGU GIBI durur; burasi
+              tesisin yonetici KADROSUDUR. */}
+          <div className={`${cardCls} p-5`}>
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <h2 className="font-medium">{t("tesisYoneticilerBaslik")}</h2>
+              {!ekleAcik && (
+                <button className={btnGhost} onClick={() => setEkleAcik(true)} disabled={busy}>
+                  {t("tesisYoneticiEkle")}
+                </button>
+              )}
+            </div>
+
+            {yonHata && <ErrorBox message={yonHata.message} />}
+
+            {yoneticiler && (
+              <ul className="divide-y divide-cizgi">
+                {yoneticiler.items.map((satir) => (
+                  <li key={satir.id} className="flex flex-wrap items-center gap-2 py-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="flex flex-wrap items-center gap-2 text-sm font-medium">
+                        <span className="break-words">{satir.ad}</span>
+                        {satir.birincil && (
+                          <span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-medium text-sky-800">
+                            {t("tesisBirincilRozet")}
+                          </span>
+                        )}
+                        {!satir.is_active && (
+                          <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs font-medium text-metin-body">
+                            {t("ortakPasif")}
+                          </span>
+                        )}
+                      </p>
+                      <p className="text-xs text-metin-muted">
+                        {satir.telefon ?? "—"}
+                        {" · "}
+                        {satir.password_set
+                          ? t("tesisParolaBelirlendi")
+                          : t("tesisGeciciKodAsamasi")}
+                      </p>
+                    </div>
+                    {/* Birincil satirda dugme CIZILMEZ ama nedeni YAZILIR:
+                        pasif bir dugme "neden calismiyor?" sorusunu
+                        uretir, hicbir sey gostermemek ise sessiz kalirdi. */}
+                    {satir.birincil ? (
+                      <span className="text-xs text-metin-muted">
+                        {t("tesisBirincilSilinemezIpucu")}
+                      </span>
+                    ) : (
+                      <button
+                        className={btnGhost}
+                        onClick={() => yoneticiSil(satir)}
+                        disabled={busy}
+                      >
+                        {t("ortakSil")}
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {ekleAcik && (
+              <form onSubmit={yoneticiEkle} className="mt-4 space-y-4 border-t border-cizgi pt-4">
+                <p className="text-sm text-metin-muted">{t("tesisYoneticiEkleAciklama")}</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <Field label={t("ortakAd")}>
+                    <input
+                      className={inputCls}
+                      value={yeniAd}
+                      onChange={(e) => setYeniAd(e.target.value)}
+                      required
+                      minLength={2}
+                      maxLength={120}
+                      autoFocus
+                    />
+                  </Field>
+                  <Field label={t("kullaniciTelefon")} hint={t("tesisGlobalBenzersiz")}>
+                    <input
+                      className={inputCls}
+                      value={telefonGiris(yeniTel)}
+                      onChange={(e) => setYeniTel(telefonGiris(e.target.value))}
+                      placeholder={t("kullaniciTelefonOrnek")}
+                      required
+                    />
+                  </Field>
+                </div>
+                <ErrorBox message={yeniHata} />
+                <div className="flex gap-2">
+                  <button type="submit" className={btnPrimary} disabled={ekliyor}>
+                    {ekliyor ? t("ortakKaydediliyor") : t("ortakKaydet")}
+                  </button>
+                  <button
+                    type="button"
+                    className={btnGhost}
+                    onClick={() => setEkleAcik(false)}
+                    disabled={ekliyor}
+                  >
                     {t("ortakIptal")}
                   </button>
                 </div>
