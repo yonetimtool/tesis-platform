@@ -16,6 +16,18 @@ enum HomeMenuEntry {
   /// Devriye takibi — yonetici: bugunun pencereleri + gecmis (salt izleme).
   patrolTracking,
 
+  /// (P154 / Asama 7.2) Devriye planlari — tur penceresi tanimlama.
+  /// Kontrol noktalari ile AYNI DURUM: ekran vardi, MODUL GIRISI YOKTU.
+  /// Devriye Takibi'nin sag ustunde ETIKETSIZ bir ikonun ardindaydi ve
+  /// tooltip'i gormek uzun basmayi gerektiriyor — yani cogu kullanici
+  /// varligini HIC ogrenmiyordu. Gorunurluk `patrolTracking`ten turedi
+  /// (ikonu tasiyan ekran odur): yonetici.
+  patrolPlans,
+
+  /// (P154 / Asama 7.2) Kontrol noktalari — NFC etiketi tanimlama.
+  /// Brief'in "gizli aksiyonlar" ornegi tam olarak budur.
+  checkpoints,
+
   /// Gorevlerim — saha personeli: tamamlama akisiyla.
   tasks,
 
@@ -278,6 +290,8 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.unitAccess,
         HomeMenuEntry.rezervasyon,
         HomeMenuEntry.patrolTracking,
+        HomeMenuEntry.patrolPlans,
+        HomeMenuEntry.checkpoints,
         HomeMenuEntry.taskTracking,
         HomeMenuEntry.budget,
         HomeMenuEntry.financialSummary,
@@ -346,6 +360,8 @@ String moduleBaslik(AppLocalizations l10n, HomeMenuEntry entry) =>
       HomeMenuEntry.announcements => l10n.modulDuyurular,
       HomeMenuEntry.patrol => l10n.modulTurlarim,
       HomeMenuEntry.patrolTracking => l10n.modulDevriyeTakibi,
+      HomeMenuEntry.patrolPlans => l10n.devriyePlanlariBaslik,
+      HomeMenuEntry.checkpoints => l10n.devriyeKontrolNoktalari,
       HomeMenuEntry.tasks => l10n.modulGorevlerim,
       HomeMenuEntry.taskTracking => l10n.modulGorevYonetimi,
       HomeMenuEntry.assets => l10n.modulDemirbas,
@@ -416,6 +432,8 @@ enum HomeMenuGrup {
 HomeMenuGrup homeMenuGrubu(HomeMenuEntry e) => switch (e) {
   HomeMenuEntry.patrol ||
   HomeMenuEntry.patrolTracking ||
+      HomeMenuEntry.patrolPlans ||
+      HomeMenuEntry.checkpoints ||
   HomeMenuEntry.nfc ||
   HomeMenuEntry.outbox ||
   HomeMenuEntry.visitors ||

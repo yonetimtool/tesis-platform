@@ -829,6 +829,9 @@ export const de: Sozluk = {
   ekDosyaEkle: "Datei anhängen",
   ekSil: "Löschen",
   ekSilOnay: "Diesen Anhang löschen?",
+  // (P154 / Asama 7.2) Parola goster/gizle
+  parolaGoster: "Passwort anzeigen",
+  parolaGizle: "Passwort verbergen",
   // (P154 / Asama 7.1) Menu mimarisi
   kabukGrupIcra: "Vollstreckungsakten",
   kabukGrupTanimlar: "Stammdaten",

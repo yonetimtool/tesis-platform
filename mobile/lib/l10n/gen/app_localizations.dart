@@ -600,6 +600,18 @@ abstract class AppLocalizations {
   /// **'Raporlar'**
   String get sekmeRaporlar;
 
+  /// (P154/7.2) Alt-bar 4. yuva — SAKIN. Ayni yuva yoneticide Raporlar, sahada Gorevlerim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şeffaflık'**
+  String get sekmeSeffaflik;
+
+  /// (P154/7.2) Alt-bar 4. yuva — guvenlik + tesis gorevlisi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Görevlerim'**
+  String get sekmeGorevlerim;
+
   /// No description provided for @sekmeAyarlar.
   ///
   /// In tr, this message translates to:
@@ -7628,7 +7640,7 @@ abstract class AppLocalizations {
   /// No description provided for @modulDaireTanimlari.
   ///
   /// In tr, this message translates to:
-  /// **'Bağımsız Bölüm Tanımları'**
+  /// **'Daire Tipleri'**
   String get modulDaireTanimlari;
 
   /// No description provided for @daireTanimSekmeTipler.

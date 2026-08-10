@@ -49,6 +49,15 @@ export function adsizDenetimler(yol: string, kaynak: string): string[] {
     const onceki = satirlar.slice(Math.max(0, i - 16), i).join("\n");
     if (/<(Field|label|motion\.label)\b/.test(onceki)) return;
 
+    // (P154 / Asama 7.2) ORTAK ILKELIN KENDISI: `ParolaAlani` bir girdi
+    // CIZER ama adini KENDISI tasimaz — adi cagiran taraftaki `<Field>`
+    // ya da `<label>` verir ve tarama dosyalar arasini goremez.
+    //
+    // MUAFIYET BEDAVA DEGIL: asagidaki "her cagri yeri etiketli" testi bu
+    // varsayimi OLCER. Yalniz muaf tutup gecmek, ilkeli etiketsiz
+    // kullanan bir sayfayi sessizce onaylamak olurdu.
+    if (yol.endsWith("components/ParolaAlani.tsx")) return;
+
     sizanlar.push(`${yol}:${i + 1} ${satir.trim().slice(0, 50)}`);
   });
   return sizanlar;
@@ -76,5 +85,31 @@ describe("erisilebilir etiket", () => {
       "</Field>",
     ].join("\n");
     expect(adsizDenetimler("sentetik.tsx", temiz)).toEqual([]);
+  });
+});
+
+describe("(P154 / Asama 7.2) ParolaAlani cagri yerleri ETIKETLI", () => {
+  it("her kullanim bir Field/label icinde", () => {
+    const sizanlar: string[] = [];
+    for (const yol of taranacakDosyalar(["app", "components"])) {
+      if (yol.endsWith("components/ParolaAlani.tsx")) continue;
+      const satirlar = readFileSync(yol, "utf8").split("\n");
+      satirlar.forEach((satir, i) => {
+        if (!/<ParolaAlani\b/.test(satir)) return;
+        const onceki = satirlar.slice(Math.max(0, i - 16), i).join("\n");
+        if (/<(Field|label|motion\.label)\b/.test(onceki)) return;
+        sizanlar.push(`${yol}:${i + 1}`);
+      });
+    }
+    expect(sizanlar, "etiketsiz ParolaAlani").toEqual([]);
+  });
+
+  it("olcum BOSA DUSMUYOR — en az bir kullanim var", () => {
+    const kullanim = taranacakDosyalar(["app", "components"]).filter(
+      (y) =>
+        !y.endsWith("components/ParolaAlani.tsx") &&
+        /<ParolaAlani\b/.test(readFileSync(y, "utf8")),
+    );
+    expect(kullanim.length).toBeGreaterThanOrEqual(5);
   });
 });

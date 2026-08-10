@@ -829,6 +829,9 @@ export const ar: Sozluk = {
   ekDosyaEkle: "إرفاق ملف",
   ekSil: "حذف",
   ekSilOnay: "هل تريد حذف هذا المرفق؟",
+  // (P154 / Asama 7.2) Parola goster/gizle
+  parolaGoster: "إظهار كلمة المرور",
+  parolaGizle: "إخفاء كلمة المرور",
   // (P154 / Asama 7.1) Menu mimarisi
   kabukGrupIcra: "ملفات التنفيذ",
   kabukGrupTanimlar: "التعريفات",

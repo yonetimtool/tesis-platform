@@ -882,6 +882,9 @@ export const tr = {
   ekDosyaEkle: "Dosya ekle",
   ekSil: "Sil",
   ekSilOnay: "Bu ek silinsin mi?",
+  // (P154 / Asama 7.2) Parola goster/gizle
+  parolaGoster: "Parolayı göster",
+  parolaGizle: "Parolayı gizle",
   // (P154 / Asama 7.1) Menu mimarisi
   kabukGrupIcra: "İcra dosyaları",
   kabukGrupTanimlar: "Tanımlar",

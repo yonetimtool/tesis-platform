@@ -9,6 +9,7 @@ import type { ApiError } from "@/lib/types";
 
 import { DilSecici } from "@/components/DilSecici";
 import { MAGAZA_ANDROID, MAGAZA_IOS } from "@/lib/config";
+import { ParolaAlani } from "@/components/ParolaAlani";
 import { useT } from "@/lib/i18n/kullan";
 import { telefonGiris, telefonHatasi, telefonNormalle } from "@/lib/telefon";
 import type { Yuzey } from "@/lib/yuzey";
@@ -297,11 +298,10 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
 
             <motion.label variants={item} className="block">
               <span className={labelText}>{t("girisParola")}</span>
-              <input
-                type="password"
+              <ParolaAlani
                 className={field}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={setPassword}
                 autoComplete="current-password"
                 minLength={8}
                 required

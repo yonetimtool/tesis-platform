@@ -829,6 +829,9 @@ export const en: Sozluk = {
   ekDosyaEkle: "Attach file",
   ekSil: "Delete",
   ekSilOnay: "Delete this attachment?",
+  // (P154 / Asama 7.2) Parola goster/gizle
+  parolaGoster: "Show password",
+  parolaGizle: "Hide password",
   // (P154 / Asama 7.1) Menu mimarisi
   kabukGrupIcra: "Enforcement files",
   kabukGrupTanimlar: "Definitions",

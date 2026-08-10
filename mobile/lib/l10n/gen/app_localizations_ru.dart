@@ -385,6 +385,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get sekmeRaporlar => 'Отчёты';
 
   @override
+  String get sekmeSeffaflik => 'Прозрачность';
+
+  @override
+  String get sekmeGorevlerim => 'Мои задачи';
+
+  @override
   String get sekmeAyarlar => 'Настройки';
 
   @override
@@ -4570,7 +4576,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'Этот адрес не зашифрован (http). По возможности используйте https.';
 
   @override
-  String get modulDaireTanimlari => 'Определения помещений';
+  String get modulDaireTanimlari => 'Типы квартир';
 
   @override
   String get daireTanimSekmeTipler => 'Типы';

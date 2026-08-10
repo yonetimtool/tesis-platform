@@ -27,7 +27,8 @@
 | **6.3** — Global arama | `/arama` ucu + üst bar; yetki routerdan okunuyor | `7ff8d2e` |
 | **6.4** — Not ve ek sistemi | göç 0043 + `/ekler` + ortak `Ekler` bileşeni | `e57a944` |
 | **7.1** — Menü mimarisi (web) | brief taksonomisi + `/icra` ekranı + daire tipleri | `e45eff7` |
-| **7.1** — Menü mimarisi (mobil) | çekmece bölümlendi, katlanabilir, tercih kalıcı | bu tur |
+| **7.1** — Menü mimarisi (mobil) | çekmece bölümlendi, katlanabilir, tercih kalıcı | `1f856a0` |
+| **7.2 (6/7 madde)** — UI temizliği | parola göster/gizle · daire tipleri · alt menü rol bazlı · FAB yazısız · gizli aksiyonlar · görev kategorisi | bu tur |
 
 ---
 
@@ -147,6 +148,40 @@ Sorgu `href`e **gömülmedi**: `rotaYuzeyi`/`rotaRoldeGorunur` tam eşleşme
 yapar, `"/finans?tip=gelir"` yazsaydık arama boşa düşer ve öğe hiçbir
 rolde görünmezdi — sessizce. Tekillik kilidi `href`ten `href+sorgu`ya
 taşındı; `key` ve aktiflik bu değerden okunuyor.
+
+### 4.11 Alt menünün 4. yuvası saha rollerinde İŞE YARAMIYORDU (Aşama 7.2)
+
+Ölçüldü: beş yuvanın biri güvenlik ve tesis görevlisi için yalnızca
+"raporlar yakında" bildirimi gösteriyordu. Gerekçe doğruydu (rapor ucu
+RBAC'ta yöneticiye kapalı) ama sonuç, **navigasyonun beşte birinin boşa
+gitmesiydi.** Brief'in istediği "Görevlerim" zaten onların günlük ekranı
+ve ucu onlara açık.
+
+Sakinde ise yuva `/transparency`e gidiyor ama **"Raporlar" yazıyordu** —
+tıklanan ad ile açılan ekran farklıydı.
+
+### 4.12 Gizli aksiyonlar: ikon büyütülmedi, MENÜYE giriş açıldı (Aşama 7.2)
+
+Brief çözümü bana bıraktı. Ölçüm: Devriye Takibi'nin sağ üstündeki iki
+etiketsiz ikon **iki ayrı EKRANI** açıyordu ve o ekranların başka hiçbir
+girişi yoktu — yönlendiricide bile kayıtlı değillerdi.
+
+İkonu büyütmek ya da yanına yazı koymak dar bir bara üçüncü bir çözüm
+sıkıştırmak olurdu. Bunun yerine kodun kendi kurduğu desen izlendi
+(P139.3/P143: "ekran vardı, modül girişi yoktu"): iki ekrana da rota +
+**etiketli menü girişi** açıldı, böylece çekmeceden ve ana ekran
+ızgarasından bulunuyorlar. App-bar ikonları bağlam içi kısayol olarak
+kaldı.
+
+### 4.13 FAB'ın yazısı kaldırıldı ama ADI kaldı (Aşama 7.2)
+
+Brief "sadece '+' kalsın" diyor. Çıplak bir "+" ekran okuyucuya yalnızca
+"düğme" der; ad `Semantics`e taşındı. Görsel sadeleşmenin bedeli
+erişilebilirlik **olmadı** ve bunu ölçen ayrı bir test yazıldı.
+
+**Bir gerileme yakalandı:** `Column`u kaldırınca daire esnek kısıtları
+benimseyip 56 yerine **160 piksel** çizildi; `merkez FAB 56px` testi
+yakaladı, `Center` ile kısıtlandı.
 
 ## 5. BULUNAN GERÇEK KUSURLAR
 

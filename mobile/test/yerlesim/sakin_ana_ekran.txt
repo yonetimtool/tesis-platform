@@ -37,13 +37,12 @@
  547,  30  147x17  Son Ödeme: —
  581, 240  111x19  Geçmiş Ödemeler
  583, 218  16x16  U+E2B8
- 776, 181  28x28  U+E047
+ 789, 181  28x28  U+E047
  790,  27  24x24  U+E318
  790, 105  24x24  U+F237
- 790, 261  24x24  U+F12A
+ 790, 261  24x24  U+F4A1
  790, 339  24x24  U+F36E
  818,   0  78x17  Ana Sayfa
  818,  78  78x17  Bildirimler
- 818, 234  78x17  Raporlar
+ 818, 234  78x17  Şeffaflık
  818, 312  78x17  Ayarlar
- 820, 156  78x17  Talep / Bildir

@@ -290,6 +290,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get sekmeRaporlar => 'Rapports';
 
   @override
+  String get sekmeSeffaflik => 'Transparence';
+
+  @override
+  String get sekmeGorevlerim => 'Mes tâches';
+
+  @override
   String get sekmeAyarlar => 'Paramètres';
 
   @override
@@ -4463,7 +4469,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Cette adresse n\'est pas chiffrée (http). Utilisez https si possible.';
 
   @override
-  String get modulDaireTanimlari => 'Définitions des lots';
+  String get modulDaireTanimlari => 'Types de logement';
 
   @override
   String get daireTanimSekmeTipler => 'Types';

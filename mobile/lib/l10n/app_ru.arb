@@ -83,6 +83,8 @@
   "sekmeAnaSayfa": "Главная",
   "sekmeBildirimler": "Уведомления",
   "sekmeRaporlar": "Отчёты",
+  "sekmeSeffaflik": "Прозрачность",
+  "sekmeGorevlerim": "Мои задачи",
   "sekmeAyarlar": "Настройки",
   "kabukGrupGuvenlik": "Безопасность",
   "kabukGrupTesis": "Объект",
@@ -1315,7 +1317,7 @@
     }
   },
   "kameraUrlSifrelenmemisUyari": "Этот адрес не зашифрован (http). По возможности используйте https.",
-  "modulDaireTanimlari": "Определения помещений",
+  "modulDaireTanimlari": "Типы квартир",
   "daireTanimSekmeTipler": "Типы",
   "daireTanimSekmeGruplar": "Группы",
   "daireTanimAd": "Название",

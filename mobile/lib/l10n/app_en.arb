@@ -83,6 +83,8 @@
   "sekmeAnaSayfa": "Home",
   "sekmeBildirimler": "Notifications",
   "sekmeRaporlar": "Reports",
+  "sekmeSeffaflik": "Transparency",
+  "sekmeGorevlerim": "My Tasks",
   "sekmeAyarlar": "Settings",
   "kabukGrupGuvenlik": "Security",
   "kabukGrupTesis": "Facility",
@@ -1315,7 +1317,7 @@
     }
   },
   "kameraUrlSifrelenmemisUyari": "This address is unencrypted (http). Use https if possible.",
-  "modulDaireTanimlari": "Unit Definitions",
+  "modulDaireTanimlari": "Unit Types",
   "daireTanimSekmeTipler": "Types",
   "daireTanimSekmeGruplar": "Groups",
   "daireTanimAd": "Name",

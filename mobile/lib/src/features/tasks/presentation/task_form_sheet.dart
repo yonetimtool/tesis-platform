@@ -221,29 +221,54 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
                   ),
                 )
               else ...[
-                DropdownButtonFormField<String?>(
-                  initialValue: _kategoriId,
-                  isExpanded: true, // uzun kategori adi/ceviri tasmasin
-                  decoration: InputDecoration(
-                    labelText: l10n.gorevTipi,
-                    border: const OutlineInputBorder(),
-                  ),
-                  items: [
-                    DropdownMenuItem<String?>(
-                      value: null,
-                      child: Text(l10n.gorevKategoriDiger),
+                // (P154 / Asama 7.2) Brief: "Gorev kategorisi secimi zor
+                // bulunuyor; kolaylastir."
+                //
+                // NEDEN ZORDU: acilir liste seceneklerin HICBIRINI
+                // gostermez. Kullanici once dokunup listeyi acmak, sonra
+                // okumak, sonra secmek zorundaydi — UC DOKUNUS ve secim
+                // yapana kadar "hangi tipler var" sorusu yanitsiz. Ustelik
+                // varsayilan "Diger" ilk sirada durdugu icin, tip
+                // tanimlanmis bir sitede bile tipsiz gorev acmak en kolay
+                // yoldu.
+                //
+                // COZUM: az sayida tipte CIP izgarasi — hepsi ayni anda
+                // GORUNUR ve secim TEK DOKUNUS. Cok tipte acilir liste
+                // korunur; yirmi cip form sayfasini yutar ve okunmasi
+                // listeden daha zor olurdu.
+                if (_kategoriler!.length <= _cipEsigi)
+                  _KategoriCipleri(
+                    kategoriler: _kategoriler!,
+                    secili: _kategoriId,
+                    etiket: l10n.gorevTipi,
+                    digerEtiketi: l10n.gorevKategoriDiger,
+                    silinmisEtiketi: l10n.gorevKategoriSilinmis,
+                    onSec: (v) => setState(() => _kategoriId = v),
+                  )
+                else
+                  DropdownButtonFormField<String?>(
+                    initialValue: _kategoriId,
+                    isExpanded: true, // uzun kategori adi/ceviri tasmasin
+                    decoration: InputDecoration(
+                      labelText: l10n.gorevTipi,
+                      border: const OutlineInputBorder(),
                     ),
-                    for (final k in _kategoriler!)
+                    items: [
                       DropdownMenuItem<String?>(
-                        value: k.id,
-                        child: Text(
-                          k.ad.isEmpty ? l10n.gorevKategoriSilinmis : k.ad,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                        value: null,
+                        child: Text(l10n.gorevKategoriDiger),
                       ),
-                  ],
-                  onChanged: (v) => setState(() => _kategoriId = v),
-                ),
+                      for (final k in _kategoriler!)
+                        DropdownMenuItem<String?>(
+                          value: k.id,
+                          child: Text(
+                            k.ad.isEmpty ? l10n.gorevKategoriSilinmis : k.ad,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                    ],
+                    onChanged: (v) => setState(() => _kategoriId = v),
+                  ),
                 if (_kategoriler!.isEmpty)
                   Padding(
                     padding: const EdgeInsets.only(top: 6),
@@ -442,6 +467,69 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Cip izgarasina gecis esigi.
+///
+/// SEKIZ: bir telefonda sekiz cip iki-uc satir tutar ve form bolumunu
+/// yutmaz. Ustunde acilir liste daha okunakli — kaydirilabilir tek bir
+/// sutun, sarilmis yirmi cipten kolay taranir. Deger UYDURULDU ama
+/// GEREKCESI yazili; kullanim verisi geldiginde degistirilecek TEK yer
+/// burasi.
+const _cipEsigi = 8;
+
+/// (P154 / Asama 7.2) Gorev tipi secimi — hepsi GORUNUR, secim TEK
+/// DOKUNUS.
+class _KategoriCipleri extends StatelessWidget {
+  const _KategoriCipleri({
+    required this.kategoriler,
+    required this.secili,
+    required this.etiket,
+    required this.digerEtiketi,
+    required this.silinmisEtiketi,
+    required this.onSec,
+  });
+
+  final List<TaskCategory> kategoriler;
+  final String? secili;
+  final String etiket;
+  final String digerEtiketi;
+  final String silinmisEtiketi;
+  final ValueChanged<String?> onSec;
+
+  @override
+  Widget build(BuildContext context) {
+    // ETIKET AYRI BIR METIN: cipler bir `InputDecorator` icinde degil,
+    // dolayisiyla alanin ADI kendiliginden okunmaz. Onsuz ekran okuyucu
+    // kullanicisi bir dizi secenek duyar ama NEYIN secenegi oldugunu
+    // bilmez.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(etiket, style: Theme.of(context).textTheme.labelLarge),
+        const SizedBox(height: 6),
+        Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          children: [
+            // "DIGER" SONA ALINDI: basta dururken, tip tanimlanmis bir
+            // sitede bile tipsiz gorev acmak en kolay yoldu.
+            for (final k in kategoriler)
+              ChoiceChip(
+                label: Text(k.ad.isEmpty ? silinmisEtiketi : k.ad),
+                selected: secili == k.id,
+                onSelected: (_) => onSec(k.id),
+              ),
+            ChoiceChip(
+              label: Text(digerEtiketi),
+              selected: secili == null,
+              onSelected: (_) => onSec(null),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

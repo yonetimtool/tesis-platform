@@ -160,10 +160,13 @@ void main() {
       'Kargo',
       'Aidatım',
       'Şikayetlerim',
-      'Şeffaflık',
     ]) {
       expect(find.text(baslik), findsOneWidget, reason: baslik);
     }
+    // (P154 / Asama 7.2) "Şeffaflık" ARTIK IKI YERDE: izgara karti +
+    // sakinin alt-bar 4. yuvasi (brief: "sakin -> Seffaflik"). Kopya
+    // DEGIL — biri modul karti, oteki sekme; sorgu daraltildi.
+    expect(find.text('Şeffaflık'), findsNWidgets(2));
     // "Duyurular" iki yerde mesru degil: duyuru YOKKEN bolum cizilmez →
     // yalniz izgara karti kalir.
     expect(find.text('Duyurular'), findsOneWidget);

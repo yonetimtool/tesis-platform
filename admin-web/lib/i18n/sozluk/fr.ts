@@ -829,6 +829,9 @@ export const fr: Sozluk = {
   ekDosyaEkle: "Joindre un fichier",
   ekSil: "Supprimer",
   ekSilOnay: "Supprimer cette pièce jointe ?",
+  // (P154 / Asama 7.2) Parola goster/gizle
+  parolaGoster: "Afficher le mot de passe",
+  parolaGizle: "Masquer le mot de passe",
   // (P154 / Asama 7.1) Menu mimarisi
   kabukGrupIcra: "Dossiers d'exécution",
   kabukGrupTanimlar: "Définitions",

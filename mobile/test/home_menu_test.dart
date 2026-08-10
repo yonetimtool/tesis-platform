@@ -136,6 +136,12 @@ void main() {
           HomeMenuEntry.unitAccess,
           HomeMenuEntry.rezervasyon,
           HomeMenuEntry.patrolTracking,
+          // (P154 / Asama 7.2) Devriye planlari + Kontrol noktalari
+          // MENUYE GELDI. Ikisi de EKRAN olarak vardi ama yalnizca Devriye
+          // Takibi'nin sag ustundeki ETIKETSIZ ikonlardan aciliyordu;
+          // brief "gizli aksiyonlar daha gorunur olsun" diyor.
+          HomeMenuEntry.patrolPlans,
+          HomeMenuEntry.checkpoints,
           HomeMenuEntry.taskTracking,
           HomeMenuEntry.budget,
           HomeMenuEntry.financialSummary,

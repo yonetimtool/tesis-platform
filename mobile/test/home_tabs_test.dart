@@ -39,17 +39,41 @@ void main() {
       }
     });
 
-    test('destinasyon etiketleri sabit sirada: Ana Sayfa/Bildirimler/'
-        'Raporlar/Ayarlar (rolden bagimsiz)', () {
+    test('UC yuva rolden BAGIMSIZ: Ana Sayfa / Bildirimler / Ayarlar', () {
       for (final role in UserRole.values) {
         final labels = homeShellSlots(trL10n, role).map((s) => s.label).toList();
-        expect(
-          labels,
-          ['Ana Sayfa', 'Bildirimler', fabLabelForRole(trL10n, role), 'Raporlar',
-              'Ayarlar'],
-          reason: role.wire,
-        );
+        expect(labels[0], 'Ana Sayfa', reason: role.wire);
+        expect(labels[1], 'Bildirimler', reason: role.wire);
+        expect(labels[2], fabLabelForRole(trL10n, role), reason: role.wire);
+        expect(labels[4], 'Ayarlar', reason: role.wire);
       }
+    });
+
+    test('DORDUNCU yuva ROLE GORE: yonetici Raporlar · sakin Seffaflik · '
+        'saha Gorevlerim', () {
+      // (P154 / Asama 7.2) Bu test eskiden "etiketler rolden BAGIMSIZ"
+      // diyordu ve dogruydu — brief o sozlesmeyi bilerek degistirdi.
+      //
+      // Eski hâlde sakin `/transparency`e gidiyor ama yuva "Raporlar"
+      // diyordu (tiklanan sey ile gorulen sey ayni ad DEGILDI), saha
+      // rolleri ise bir "yakinda" bildirimi aliyordu — bes yuvanin biri
+      // onlar icin HICBIR ISE YARAMIYORDU.
+      String dord(UserRole r) => homeShellSlots(trL10n, r)[3].label;
+      expect(dord(UserRole.yonetici), 'Raporlar');
+      expect(dord(UserRole.admin), 'Raporlar');
+      expect(dord(UserRole.resident), 'Şeffaflık');
+      expect(dord(UserRole.security), 'Görevlerim');
+      expect(dord(UserRole.tesisGorevlisi), 'Görevlerim');
+    });
+
+    test('dorduncu yuvanin KIMLIGI de degisir (rota cozumu ona bakar)', () {
+      // Etiket degisip kimlik ayni kalsaydi, rota cozumu uc ekranda ayri
+      // `switch` yazmayi gerektirirdi ve biri unutuldugunda yuva yanlis
+      // yere giderdi.
+      expect(dorduncuYuva(UserRole.resident), HomeSlotId.seffaflik);
+      expect(dorduncuYuva(UserRole.security), HomeSlotId.gorevlerim);
+      expect(dorduncuYuva(UserRole.tesisGorevlisi), HomeSlotId.gorevlerim);
+      expect(dorduncuYuva(UserRole.yonetici), HomeSlotId.raporlar);
     });
 
     test('merkez FAB etiketi role gore (homeBildirLabel ile ayni sozlesme)',

@@ -15,8 +15,6 @@ import 'home_marka.dart';
 import '../../../../core/ui/gorsel_cozme.dart';
 import '../../../../core/ui/merkez_diyalog.dart';
 
-
-
 /// Referans ana ekranin ORTAK KABUGU — uc rol varyantinda da AYNI widget:
 ///   * app-bar: solda hamburger, yaninda marka kilidi, sagda rozetli zil +
 ///     40px avatar (sag altinda yesil online noktasi),
@@ -82,17 +80,24 @@ class HomeShell extends ConsumerWidget {
         final l10n = context.l10n;
         // Metin SUNUCUDAN gelir (cihazin diline gore uretilir, tur 16);
         // yuk bossa cizim katmani kendi cevrilmis metnini yazar.
-        final metin =
-            yeni.displayText.isEmpty ? l10n.bildirimYeniPush : yeni.displayText;
+        final metin = yeni.displayText.isEmpty
+            ? l10n.bildirimYeniPush
+            : yeni.displayText;
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
-          ..showSnackBar(SnackBar(
-            content: Text(metin, maxLines: 2, overflow: TextOverflow.ellipsis),
-            action: SnackBarAction(
-              label: l10n.ortakGoster,
-              onPressed: () => onDestinationSelected(1),
+          ..showSnackBar(
+            SnackBar(
+              content: Text(
+                metin,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              action: SnackBarAction(
+                label: l10n.ortakGoster,
+                onPressed: () => onDestinationSelected(1),
+              ),
             ),
-          ));
+          );
         // Rozet sayaci ayri uctan gelir; push gelince TAZELENMELI.
         ref.invalidate(unreadNotificationCountProvider);
       },
@@ -408,7 +413,15 @@ class _DestinationSlot extends StatelessWidget {
   }
 }
 
-/// Merkez yuva: 56px mavi daire (bar'in ustune tasar) + altinda etiket.
+/// Merkez yuva: 56px mavi daire (bar'in ustune tasar). YAZI YOK.
+///
+/// (P154 / Asama 7.2) Brief: "'Olay bildir' butonundan yazi kaldirilsin,
+/// sadece '+' kalsin".
+///
+/// ETIKET YOK OLMADI, YALNIZ GORUNMEZ OLDU. Ciplak bir "+" ekran
+/// okuyucuya "dugme" der ve baska hicbir sey — kullanici neyi actigini
+/// bilemez. Ad `Semantics`e tasindi, yani gorsel sadelesme bir
+/// ERISILEBILIRLIK KAYBI DEGIL.
 class _FabSlot extends StatelessWidget {
   const _FabSlot({required this.slot, required this.onTap});
 
@@ -418,14 +431,19 @@ class _FabSlot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = HomeSurface.of(context);
-    return InkResponse(
-      key: const Key('home-fab'),
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          Container(
+    return Semantics(
+      button: true,
+      label: slot.label,
+      child: InkResponse(
+        key: const Key('home-fab'),
+        onTap: onTap,
+        // `Center` SART: yuva bar icinde GENIS bir kutu aliyor ve
+        // `Container` esnek kisitlari oldugu gibi benimsiyor — olculdu,
+        // daire 56 yerine 160 piksel cizildi. Onceki hâlde bu isi
+        // `Column(mainAxisSize: min)` yapiyordu; yazi kalkinca sutun da
+        // gereksizlesti ama KISITLAMA gerekliligi kalkmadi.
+        child: Center(
+          child: Container(
             width: HomeTokens.fabSize,
             height: HomeTokens.fabSize,
             decoration: BoxDecoration(
@@ -435,19 +453,7 @@ class _FabSlot extends StatelessWidget {
             ),
             child: Icon(slot.icon, color: Colors.white, size: 28),
           ),
-          const SizedBox(height: 2),
-          Text(
-            slot.label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: HomeText.navLabel.copyWith(
-              // FAB DAIRESI ham vurgu kalir (uzerinde beyaz ikon var);
-              // altindaki ETIKET bar zemininde okunmali (tur 32).
-              color: s.accentText(HomeTokens.primary),
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

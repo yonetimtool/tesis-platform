@@ -290,6 +290,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get sekmeRaporlar => 'Berichte';
 
   @override
+  String get sekmeSeffaflik => 'Transparenz';
+
+  @override
+  String get sekmeGorevlerim => 'Meine Aufgaben';
+
+  @override
   String get sekmeAyarlar => 'Einstellungen';
 
   @override
@@ -4475,7 +4481,7 @@ class AppLocalizationsDe extends AppLocalizations {
       'Diese Adresse ist unverschlüsselt (http). Verwenden Sie nach Möglichkeit https.';
 
   @override
-  String get modulDaireTanimlari => 'Einheitendefinitionen';
+  String get modulDaireTanimlari => 'Wohnungstypen';
 
   @override
   String get daireTanimSekmeTipler => 'Typen';

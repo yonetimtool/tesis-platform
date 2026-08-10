@@ -12,6 +12,7 @@ import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { ROLE_OPTIONS as ROLES, ROLE_STYLE, rolAdi } from "@/lib/roles";
 import type { UserDetail, UserListResponse, UserRole, UserRow } from "@/lib/types";
+import { ParolaAlani } from "@/components/ParolaAlani";
 import { useT } from "@/lib/i18n/kullan";
 import { telefonGiris, telefonNormalle } from "@/lib/telefon";
 
@@ -343,11 +344,10 @@ export default function UsersPage() {
                   : t("kullaniciParolaBosYeni")
               }
             >
-              <input
-                type="password"
+              <ParolaAlani
                 className={inputCls}
                 value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                onChange={(v) => setForm({ ...form, password: v })}
                 minLength={8}
                 placeholder={
                   editingId ? t("kullaniciParolaBosDuzenle") : t("kullaniciParolaBosKisa")

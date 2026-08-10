@@ -7,6 +7,7 @@ import { useState } from "react";
 import { DilSecici } from "@/components/DilSecici";
 import { ErrorBox, btnGhost, btnPrimary, cardCls, inputCls } from "@/components/form";
 import { YonetioLogo } from "@/components/YonetioLogo";
+import { ParolaAlani } from "@/components/ParolaAlani";
 import { useT } from "@/lib/i18n/kullan";
 import { telefonGiris, telefonHatasi, telefonNormalle } from "@/lib/telefon";
 
@@ -281,24 +282,21 @@ export default function KayitSayfasi() {
           <h2 className="font-medium">{t("kayitParolaBaslik")}</h2>
           <label className="block">
             <span className="text-sm font-medium">{t("kayitParola")}</span>
-            <input
-              type="password"
+            <ParolaAlani
               className={`${inputCls} mt-1`}
               value={parola}
-              onChange={(e) => setParola(e.target.value)}
+              onChange={setParola}
               required
               minLength={8}
               autoComplete="new-password"
-              autoFocus
             />
           </label>
           <label className="block">
             <span className="text-sm font-medium">{t("kayitParolaTekrar")}</span>
-            <input
-              type="password"
+            <ParolaAlani
               className={`${inputCls} mt-1`}
               value={parola2}
-              onChange={(e) => setParola2(e.target.value)}
+              onChange={setParola2}
               required
               minLength={8}
               autoComplete="new-password"

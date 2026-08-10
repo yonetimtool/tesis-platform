@@ -362,6 +362,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sekmeRaporlar => 'Reports';
 
   @override
+  String get sekmeSeffaflik => 'Transparency';
+
+  @override
+  String get sekmeGorevlerim => 'My Tasks';
+
+  @override
   String get sekmeAyarlar => 'Settings';
 
   @override
@@ -4500,7 +4506,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'This address is unencrypted (http). Use https if possible.';
 
   @override
-  String get modulDaireTanimlari => 'Unit Definitions';
+  String get modulDaireTanimlari => 'Unit Types';
 
   @override
   String get daireTanimSekmeTipler => 'Types';

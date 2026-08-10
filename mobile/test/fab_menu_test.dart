@@ -108,7 +108,11 @@ void main() {
     await tester.pumpAndSettle();
     await _tapFab(tester);
 
-    expect(find.text('Olay Bildir'), findsNWidgets(2)); // FAB etiketi + menu
+    // (P154 / Asama 7.2) FAB'IN GORUNEN YAZISI KALDIRILDI (brief: "sadece
+    // '+' kalsin"), o yuzden bu metin artik YALNIZ menu basliginda geciyor.
+    // FAB'in ADI kaybolmadi — `Semantics`e tasindi ve `home_shell_test`
+    // orada olcuyor.
+    expect(find.text('Olay Bildir'), findsOneWidget);
     // "Görevlerim"/"Turlarım" ARTIK izgarada da birer karttir; FAB menusundeki
     // girisler ListTile oldugu icin onlarla hedeflenir (kart + menu = 2).
     for (final etiket in ['Görevlerim', 'Turlarım']) {
@@ -136,7 +140,7 @@ void main() {
     await tester.pumpAndSettle();
     await _tapFab(tester);
 
-    expect(find.text('Olay Bildir'), findsNWidgets(2));
+    expect(find.text('Olay Bildir'), findsOneWidget);
     expect(find.text('Turlarım'), findsNothing); // ne kart ne menu (RBAC)
   });
 }

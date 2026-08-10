@@ -409,6 +409,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get sekmeRaporlar => 'التقارير';
 
   @override
+  String get sekmeSeffaflik => 'الشفافية';
+
+  @override
+  String get sekmeGorevlerim => 'مهامي';
+
+  @override
   String get sekmeAyarlar => 'الإعدادات';
 
   @override
@@ -4584,7 +4590,7 @@ class AppLocalizationsAr extends AppLocalizations {
       'هذا العنوان غير مشفّر (http). استخدم https إن أمكن.';
 
   @override
-  String get modulDaireTanimlari => 'تعريفات الوحدات';
+  String get modulDaireTanimlari => 'أنواع الوحدات';
 
   @override
   String get daireTanimSekmeTipler => 'الأنواع';

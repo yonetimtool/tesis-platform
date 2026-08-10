@@ -289,6 +289,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get sekmeRaporlar => 'Raporlar';
 
   @override
+  String get sekmeSeffaflik => 'Şeffaflık';
+
+  @override
+  String get sekmeGorevlerim => 'Görevlerim';
+
+  @override
   String get sekmeAyarlar => 'Ayarlar';
 
   @override
@@ -4314,7 +4320,7 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bu adres şifrelenmemiş (http). Mümkünse https kullanın.';
 
   @override
-  String get modulDaireTanimlari => 'Bağımsız Bölüm Tanımları';
+  String get modulDaireTanimlari => 'Daire Tipleri';
 
   @override
   String get daireTanimSekmeTipler => 'Tipler';

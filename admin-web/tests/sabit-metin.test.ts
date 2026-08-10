@@ -84,7 +84,11 @@ const UCLU_TEKNIK =
   // ile AYNI sinif — kullaniciya gorunen metin degil, protokol/teknik
   // sabit. Modal'in alt cubugu `kaydet` verilmisse dugme, verilmemisse
   // form gonderimi olur ve secim bir ucluyle yapilir.
-  /^(rtl|ltr|asc|desc|GET|POST|PATCH|PUT|DELETE|button|submit|true|false|light|dark|auto|none|row|col|small|medium|large|default|platform|tenant|security|resident|yonetici|temizlik|kontrol|emerald|teal|amber|red|slate|indigo|blue|green|orange|purple|application[/]json|page|[a-z_]+_[a-z_]+)$/;
+  //
+  // (P154 / Asama 7.2) `password|text`: yine `type` degerleri —
+  // `ParolaAlani` goster/gizle icin ikisi arasinda gecer. Gorunen metin
+  // olmadiklari icin cevrilecek bir sey yok.
+  /^(rtl|ltr|asc|desc|GET|POST|PATCH|PUT|DELETE|button|submit|password|text|true|false|light|dark|auto|none|row|col|small|medium|large|default|platform|tenant|security|resident|yonetici|temizlik|kontrol|emerald|teal|amber|red|slate|indigo|blue|green|orange|purple|application[/]json|page|[a-z_]+_[a-z_]+)$/;
 
 /** TAILWIND sinif dizgesi mi? Uclularin cogu `className` secimidir:
  * `kosul ? "bg-ink text-white" : "text-slate-600"`. Bunlar metin DEGIL. */

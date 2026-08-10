@@ -10,6 +10,7 @@ import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/componen
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
+import { ParolaAlani } from "@/components/ParolaAlani";
 import { useT } from "@/lib/i18n/kullan";
 import type {
   AuthType,
@@ -273,11 +274,10 @@ export default function IntegrationsPage() {
                   : t("entegSirYazmaOzel")
               }
             >
-              <input
-                type="password"
+              <ParolaAlani
                 className={inputCls}
                 value={form.auth_secret}
-                onChange={(e) => setForm({ ...form, auth_secret: e.target.value })}
+                onChange={(v) => setForm({ ...form, auth_secret: v })}
                 placeholder={editingSecretSet ? t("entegSirBos") : ""}
                 disabled={form.auth_type === "none"}
               />

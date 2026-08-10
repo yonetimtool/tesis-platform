@@ -829,6 +829,9 @@ export const ru: Sozluk = {
   ekDosyaEkle: "Прикрепить файл",
   ekSil: "Удалить",
   ekSilOnay: "Удалить это вложение?",
+  // (P154 / Asama 7.2) Parola goster/gizle
+  parolaGoster: "Показать пароль",
+  parolaGizle: "Скрыть пароль",
   // (P154 / Asama 7.1) Menu mimarisi
   kabukGrupIcra: "Исполнительные дела",
   kabukGrupTanimlar: "Справочники",

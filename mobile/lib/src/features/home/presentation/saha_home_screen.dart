@@ -301,11 +301,16 @@ class SahaHomeScreen extends ConsumerWidget {
               content: Text(context.l10n.anaBildirimlerRolYok),
             ));
         }
-      case 3: // Raporlar — saha rollerine acik rapor ucu yok (RBAC yonetici).
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(
-              SnackBar(content: Text(context.l10n.anaRaporlarYakinda)));
+      case 3:
+        // (P154 / Asama 7.2) ARTIK GERCEK BIR EKRAN. Once burada
+        // "raporlar yakinda" yaziyordu ve sebebi de dogruydu: rapor ucu
+        // saha rollerine kapali (RBAC yonetici). Ama sonuc, bes yuvanin
+        // BIRININ saha personeli icin HICBIR ISE YARAMAMASIYDI.
+        //
+        // Brief 7.2: "guvenlik + tesis gorevlisi -> 'Gorevlerim'".
+        // Gorevlerim zaten saha personelinin gunluk ekrani ve ucu ONLARA
+        // ACIK; yuva bos bir vaat yerine ona baglandi.
+        context.push(AppRoutes.tasks);
       case 4: // Ayarlar.
         context.push(AppRoutes.settings);
     }

@@ -89,6 +89,14 @@
   "sekmeAnaSayfa": "Ana Sayfa",
   "sekmeBildirimler": "Bildirimler",
   "sekmeRaporlar": "Raporlar",
+  "sekmeSeffaflik": "Şeffaflık",
+  "@sekmeSeffaflik": {
+    "description": "(P154/7.2) Alt-bar 4. yuva — SAKIN. Ayni yuva yoneticide Raporlar, sahada Gorevlerim."
+  },
+  "sekmeGorevlerim": "Görevlerim",
+  "@sekmeGorevlerim": {
+    "description": "(P154/7.2) Alt-bar 4. yuva — guvenlik + tesis gorevlisi."
+  },
   "sekmeAyarlar": "Ayarlar",
   "kabukGrupGuvenlik": "Güvenlik",
   "@kabukGrupGuvenlik": {
@@ -1850,7 +1858,7 @@
     }
   },
   "kameraUrlSifrelenmemisUyari": "Bu adres şifrelenmemiş (http). Mümkünse https kullanın.",
-  "modulDaireTanimlari": "Bağımsız Bölüm Tanımları",
+  "modulDaireTanimlari": "Daire Tipleri",
   "daireTanimSekmeTipler": "Tipler",
   "daireTanimSekmeGruplar": "Gruplar",
   "daireTanimAd": "Ad",

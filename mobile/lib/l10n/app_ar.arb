@@ -83,6 +83,8 @@
   "sekmeAnaSayfa": "الرئيسية",
   "sekmeBildirimler": "الإشعارات",
   "sekmeRaporlar": "التقارير",
+  "sekmeSeffaflik": "الشفافية",
+  "sekmeGorevlerim": "مهامي",
   "sekmeAyarlar": "الإعدادات",
   "kabukGrupGuvenlik": "الأمن",
   "kabukGrupTesis": "المنشأة",
@@ -1315,7 +1317,7 @@
     }
   },
   "kameraUrlSifrelenmemisUyari": "هذا العنوان غير مشفّر (http). استخدم https إن أمكن.",
-  "modulDaireTanimlari": "تعريفات الوحدات",
+  "modulDaireTanimlari": "أنواع الوحدات",
   "daireTanimSekmeTipler": "الأنواع",
   "daireTanimSekmeGruplar": "المجموعات",
   "daireTanimAd": "الاسم",

@@ -39,6 +39,16 @@ const _purple = Color(0xFF7C3AED);
 /// giris eklenince derleyici burayi zorlar.
 ModuleCardSpec moduleCardSpec(HomeMenuEntry entry) {
   switch (entry) {
+    case HomeMenuEntry.patrolPlans:
+      return const ModuleCardSpec(
+          icon: Icons.route_outlined,
+          accent: _navy,
+          route: AppRoutes.patrolPlans);
+    case HomeMenuEntry.checkpoints:
+      return const ModuleCardSpec(
+          icon: Icons.add_location_alt_outlined,
+          accent: _navy,
+          route: AppRoutes.checkpoints);
     case HomeMenuEntry.aracGecis:
       return const ModuleCardSpec(
           icon: Icons.directions_car_outlined,

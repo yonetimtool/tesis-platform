@@ -41,18 +41,35 @@ Widget _shell({
 
 void main() {
   group('HomeShell — app-bar + govde + 5 yuvali alt-bar (referans)', () {
-    testWidgets('govdeyi ve 5 yuva etiketini gosterir', (tester) async {
+    testWidgets('govdeyi ve 4 sekme etiketini gosterir', (tester) async {
       await tester.pumpWidget(_shell());
       expect(find.text('GOVDE'), findsOneWidget);
       for (final label in [
         'Ana Sayfa',
         'Bildirimler',
-        'Olay Bildir',
         'Raporlar',
         'Ayarlar',
       ]) {
         expect(find.text(label), findsOneWidget, reason: label);
       }
+      // (P154 / Asama 7.2) MERKEZ FAB'IN YAZISI KALDIRILDI (brief: "sadece
+      // '+' kalsin"). Gorunen metin yok — ama ADI DURUYOR: asagidaki
+      // erisilebilirlik testi onu olcer.
+      expect(find.text('Olay Bildir'), findsNothing);
+    });
+
+    testWidgets('FAB YAZISIZ ama ADSIZ DEGIL (ekran okuyucu)', (tester) async {
+      // Ciplak bir "+" ekran okuyucuya yalnizca "dugme" der; kullanici
+      // neyi actigini bilemez. Gorsel sadelesmenin bedeli erisilebilirlik
+      // OLMAMALI — ad `Semantics`e tasindi.
+      final tanit = tester.ensureSemantics();
+      await tester.pumpWidget(_shell());
+      expect(
+        find.bySemanticsLabel('Olay Bildir'),
+        findsOneWidget,
+        reason: 'FAB erisilebilir adini kaybetti',
+      );
+      tanit.dispose();
     });
 
     testWidgets('marka kilidi: kelime isareti + harf arali alt-baslik',
@@ -62,10 +79,14 @@ void main() {
       expect(find.text('GÜVENLİK & DANIŞMANLIK'), findsOneWidget);
     });
 
-    testWidgets('resident merkez FAB "Talep / Bildir" (homeBildirLabel)',
+    testWidgets('resident merkez FAB adi "Talep / Bildir" (homeBildirLabel)',
         (tester) async {
+      // Etiket role gore hâlâ DEGISIR; yalnizca gorunur olmaktan cikip
+      // erisilebilir ada tasindi.
+      final tanit = tester.ensureSemantics();
       await tester.pumpWidget(_shell(role: UserRole.resident));
-      expect(find.text('Talep / Bildir'), findsOneWidget);
+      expect(find.bySemanticsLabel('Talep / Bildir'), findsOneWidget);
+      tanit.dispose();
     });
 
     testWidgets('merkez FAB dokununca onBildir cagrilir', (tester) async {
@@ -156,11 +177,20 @@ void main() {
       await tester.pumpAndSettle();
 
       // Referans hizli erisim seridinde OLMAYAN moduller cekmecede duruyor.
-      expect(find.text('Turlarım'), findsOneWidget);
-      expect(find.text('Görevlerim'), findsOneWidget);
-      expect(find.text('Demirbaş'), findsOneWidget);
+      //
+      // (P154 / Asama 7.2) ARAMA CEKMECEYE DARALTILDI: saha rollerinin
+      // alt-bar 4. yuvasi artik "Gorevlerim" ve ayni metin ekranda IKI
+      // KEZ bulunuyor. Bu bir kopya DEGIL — biri sekme, oteki modul
+      // girisi; testin daralmasi gereken sey sorgunun kapsami.
+      Finder cekmecede(String metin) => find.descendant(
+            of: find.byType(Drawer),
+            matching: find.text(metin),
+          );
+      expect(cekmecede('Turlarım'), findsOneWidget);
+      expect(cekmecede('Görevlerim'), findsOneWidget);
+      expect(cekmecede('Demirbaş'), findsOneWidget);
 
-      await tester.tap(find.text('Demirbaş'));
+      await tester.tap(cekmecede('Demirbaş'));
       await tester.pumpAndSettle();
       expect(rota, '/assets');
     });

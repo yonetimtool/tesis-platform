@@ -829,6 +829,9 @@ export const es: Sozluk = {
   ekDosyaEkle: "Adjuntar archivo",
   ekSil: "Eliminar",
   ekSilOnay: "¿Eliminar este adjunto?",
+  // (P154 / Asama 7.2) Parola goster/gizle
+  parolaGoster: "Mostrar contraseña",
+  parolaGizle: "Ocultar contraseña",
   // (P154 / Asama 7.1) Menu mimarisi
   kabukGrupIcra: "Expedientes de ejecución",
   kabukGrupTanimlar: "Definiciones",

@@ -12,6 +12,7 @@ import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import type { TenantAdminCreate, TenantAdminCreatedOut } from "@/lib/types";
+import { ParolaAlani } from "@/components/ParolaAlani";
 import { useT } from "@/lib/i18n/kullan";
 import { ApiHatasi } from "@/lib/client";
 import { tarihSaatUzun } from "@/lib/tarih";
@@ -262,11 +263,10 @@ export default function TenantsPage() {
                     label={t("tesisParolaOpsiyonel")}
                     hint={t("kullaniciParolaBosYeni")}
                   >
-                    <input
-                      type="password"
+                    <ParolaAlani
                       className={inputCls}
                       value={y.password}
-                      onChange={(e) => setYonetici(i, { password: e.target.value })}
+                      onChange={(v) => setYonetici(i, { password: v })}
                       minLength={8}
                       placeholder={t("kullaniciParolaBosKisa")}
                     />

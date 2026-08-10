@@ -284,7 +284,10 @@ class ResidentHomeScreen extends ConsumerWidget {
         // Uc kapsam ayrimiyla acildi (sakin yalnizca KENDI satirlarini
         // gorur), sekme de gercek ekrana baglandi.
         context.push(AppRoutes.notifications);
-      case 3: // Raporlar — sakin icin seffaflik (aylik anonim ozet).
+      case 3:
+        // (P154 / Asama 7.2) Sakin ZATEN buraya geliyordu; degisen sey
+        // ETIKET: yuva "Raporlar" diyordu, acilan ekran Seffaflik'ti.
+        // Tiklanan sey ile gorulen sey ayni adi tasimali.
         context.push(AppRoutes.transparency);
       case 4: // Ayarlar.
         context.push(AppRoutes.settings);

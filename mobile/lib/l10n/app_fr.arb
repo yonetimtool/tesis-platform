@@ -83,6 +83,8 @@
   "sekmeAnaSayfa": "Accueil",
   "sekmeBildirimler": "Notifications",
   "sekmeRaporlar": "Rapports",
+  "sekmeSeffaflik": "Transparence",
+  "sekmeGorevlerim": "Mes tâches",
   "sekmeAyarlar": "Paramètres",
   "kabukGrupGuvenlik": "Sécurité",
   "kabukGrupTesis": "Installation",
@@ -1315,7 +1317,7 @@
     }
   },
   "kameraUrlSifrelenmemisUyari": "Cette adresse n'est pas chiffrée (http). Utilisez https si possible.",
-  "modulDaireTanimlari": "Définitions des lots",
+  "modulDaireTanimlari": "Types de logement",
   "daireTanimSekmeTipler": "Types",
   "daireTanimSekmeGruplar": "Groupes",
   "daireTanimAd": "Nom",

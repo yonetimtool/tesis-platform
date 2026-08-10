@@ -67,6 +67,15 @@ class _PatrolTrackingScreenState extends ConsumerState<PatrolTrackingScreen> {
       child: Scaffold(
         appBar: AppBar(
           title: Text(baslikBuyuk(l10n.devriyeTakibiBaslik, context.dilKodu)),
+          // (P154 / Asama 7.2) BU IKONLAR KALDI ama artik TEK YOL DEGIL.
+          //
+          // Ikisi de baska bir EKRANA aciliyor ve etiketsizdi; tooltip
+          // uzun basmayi gerektirdigi icin cogu kullanici varliklarini
+          // hic ogrenmiyordu. Cozum ikonu buyutmek ya da yazi eklemek
+          // OLMADI (bar zaten dar): iki ekrana da MENUDE ETIKETLI GIRIS
+          // acildi (`HomeMenuEntry.patrolPlans` / `.checkpoints`), yani
+          // artik cekmeceden ve ana ekran izgarasindan da bulunuyorlar.
+          // Buradaki ikonlar baglam ici KISAYOL olarak duruyor.
           actions: [
             IconButton(
               tooltip: l10n.devriyePlanlariBaslik,

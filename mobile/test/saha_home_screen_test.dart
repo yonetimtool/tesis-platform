@@ -232,9 +232,14 @@ void main() {
       // kameralari doner (suzgec SUNUCUDA — istemci ek suzgec uygulamaz).
       expect(find.text('Canlı Kamera'), findsOneWidget);
       // Rolun KENDI is kartlari izgarada.
-      for (final baslik in ['Görevlerim', 'Demirbaş', 'Site Kuralları']) {
+      for (final baslik in ['Demirbaş', 'Site Kuralları']) {
         expect(find.text(baslik), findsOneWidget, reason: baslik);
       }
+      // (P154 / Asama 7.2) "Görevlerim" ARTIK IKI YERDE: izgara karti +
+      // saha rollerinin alt-bar 4. yuvasi (brief: "guvenlik + tesis
+      // gorevlisi -> Gorevlerim"). Kopya DEGIL; biri modul karti, oteki
+      // sekme.
+      expect(find.text('Görevlerim'), findsNWidgets(2));
 
       expect(find.text('Vardiyalar'), findsOneWidget); // serit karti
       expect(find.text('Vardiya Durumu'), findsOneWidget); // bolum basligi

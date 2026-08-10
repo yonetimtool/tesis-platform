@@ -83,6 +83,8 @@
   "sekmeAnaSayfa": "Start",
   "sekmeBildirimler": "Mitteilungen",
   "sekmeRaporlar": "Berichte",
+  "sekmeSeffaflik": "Transparenz",
+  "sekmeGorevlerim": "Meine Aufgaben",
   "sekmeAyarlar": "Einstellungen",
   "kabukGrupGuvenlik": "Sicherheit",
   "kabukGrupTesis": "Anlage",
@@ -1315,7 +1317,7 @@
     }
   },
   "kameraUrlSifrelenmemisUyari": "Diese Adresse ist unverschlüsselt (http). Verwenden Sie nach Möglichkeit https.",
-  "modulDaireTanimlari": "Einheitendefinitionen",
+  "modulDaireTanimlari": "Wohnungstypen",
   "daireTanimSekmeTipler": "Typen",
   "daireTanimSekmeGruplar": "Gruppen",
   "daireTanimAd": "Name",

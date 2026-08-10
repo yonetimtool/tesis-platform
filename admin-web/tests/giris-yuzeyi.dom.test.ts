@@ -51,6 +51,13 @@ afterEach(() => {
   localStorage.clear();
 });
 
+/// (P154 / Asama 7.2) Parola alaninda artik bir GOSTER/GIZLE dugmesi de
+/// var ve onun erisilebilir adi da "Parola" ile basliyor. `getByLabelText`
+/// ikisini birden buluyor — bu bir URUN KUSURU DEGIL, sorgunun fazla
+/// genis olmasi: biri metin kutusu, oteki dugme.
+const parolaGirdisi = () =>
+  screen.getByLabelText(/Parola/i, { selector: "input" });
+
 describe("app.* (tesis yuzeyi) — TELEFONLA giris", () => {
   const Form = () => createElement(GirisFormu, { yuzey: "tesis" as const });
 
@@ -67,7 +74,7 @@ describe("app.* (tesis yuzeyi) — TELEFONLA giris", () => {
     const tel = screen.getByLabelText(/Cep telefonu/i);
     await userEvent.type(tel, "5321112201");
     expect(tel).toHaveValue("0532 111 22 01");
-    await userEvent.type(screen.getByLabelText(/Parola/i), "Yonetici123!");
+    await userEvent.type(parolaGirdisi(), "Yonetici123!");
     await userEvent.click(screen.getByRole("button", { name: /Giriş yap/i }));
 
     await waitFor(() => expect(c.length).toBe(1));
@@ -79,7 +86,7 @@ describe("app.* (tesis yuzeyi) — TELEFONLA giris", () => {
     const c = taklit();
     ciz(Form);
     await userEvent.type(screen.getByLabelText(/Cep telefonu/i), "532111");
-    await userEvent.type(screen.getByLabelText(/Parola/i), "Yonetici123!");
+    await userEvent.type(parolaGirdisi(), "Yonetici123!");
     await userEvent.click(screen.getByRole("button", { name: /Giriş yap/i }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(/eksik/i);
@@ -90,7 +97,7 @@ describe("app.* (tesis yuzeyi) — TELEFONLA giris", () => {
     taklit();
     ciz(Form);
     await userEvent.type(screen.getByLabelText(/Cep telefonu/i), "5321112203");
-    await userEvent.type(screen.getByLabelText(/Parola/i), "Resident123!");
+    await userEvent.type(parolaGirdisi(), "Resident123!");
     await userEvent.click(screen.getByRole("button", { name: /Giriş yap/i }));
     // `/dashboard` YAZILMAZ: panoyu yalniz yonetim gorur.
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/"));
@@ -105,7 +112,7 @@ describe("app.* (tesis yuzeyi) — TELEFONLA giris", () => {
     });
     ciz(Form);
     await userEvent.type(screen.getByLabelText(/Cep telefonu/i), "5321112206");
-    await userEvent.type(screen.getByLabelText(/Parola/i), "123456");
+    await userEvent.type(parolaGirdisi(), "123456");
     await userEvent.click(screen.getByRole("button", { name: /Giriş yap/i }));
     expect(await screen.findByRole("alert")).toHaveTextContent(/mobil uygulamadan/i);
   });
@@ -114,7 +121,7 @@ describe("app.* (tesis yuzeyi) — TELEFONLA giris", () => {
     taklit();
     ciz(Form);
     await userEvent.type(screen.getByLabelText(/Cep telefonu/i), "5321112201");
-    await userEvent.type(screen.getByLabelText(/Parola/i), "Yonetici123!");
+    await userEvent.type(parolaGirdisi(), "Yonetici123!");
     await userEvent.click(screen.getByRole("checkbox"));
     await userEvent.click(screen.getByRole("button", { name: /Giriş yap/i }));
     await waitFor(() =>
@@ -139,7 +146,7 @@ describe("panel.* (platform yuzeyi) — E-POSTA + TESIS KODU", () => {
     ciz(Form);
     await userEvent.type(screen.getByLabelText(/Tesis \(slug\)/i), "demo");
     await userEvent.type(screen.getByLabelText(/E-posta/i), "a@b.test");
-    await userEvent.type(screen.getByLabelText(/Parola/i), "Admin123!");
+    await userEvent.type(parolaGirdisi(), "Admin123!");
     await userEvent.click(screen.getByRole("button", { name: /Giriş yap/i }));
 
     await waitFor(() => expect(c.length).toBe(1));

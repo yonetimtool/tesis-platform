@@ -34,6 +34,8 @@ import '../features/etkinlik/presentation/etkinlik_screen.dart';
 import '../features/patrol/presentation/patrol_screen.dart';
 import '../features/profile/presentation/profile_screen.dart';
 import '../features/residents/presentation/residents_screen.dart';
+import '../features/checkpoints/presentation/checkpoints_screen.dart';
+import '../features/patrol/presentation/patrol_plans_screen.dart';
 import '../features/patrol/presentation/patrol_tracking_screen.dart';
 import '../features/reports/presentation/reports_screen.dart';
 import '../features/rezervasyon/presentation/rezervasyon_screen.dart';
@@ -78,6 +80,13 @@ class AppRoutes {
   static const assets = '/assets';
   static const announcements = '/announcements';
   static const patrolTracking = '/patrol-tracking';
+  // (P154 / Asama 7.2) Bu iki ekran BUGUNE KADAR yonlendiricide YOKTU:
+  // yalnizca Devriye Takibi'nin sag ustundeki ETIKETSIZ ikonlardan
+  // `MaterialPageRoute` ile aciliyorlardi. Brief "gizli aksiyonlar daha
+  // gorunur olsun" diyor; gorunur kilmanin ilk sarti ADRESLENEBILIR
+  // olmalari.
+  static const patrolPlans = '/patrol-plans';
+  static const checkpoints = '/checkpoints';
   static const reports = '/reports';
   static const budget = '/budget';
   static const financialSummary = '/financial-summary';
@@ -254,6 +263,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.patrolTracking,
         builder: (context, state) => const PatrolTrackingScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.patrolPlans,
+        builder: (context, state) => const PatrolPlansScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.checkpoints,
+        builder: (context, state) => const CheckpointsScreen(),
       ),
       GoRoute(
         path: AppRoutes.reports,
