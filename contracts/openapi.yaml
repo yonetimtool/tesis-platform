@@ -4309,110 +4309,24 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
 
   # ================================================================= #
-  # SITE WEB PORTALI + ANKET (P38)
-  # IKI YUZ: `/public/{slug}/...` KIMLIK ISTEMEZ (`security: []`),
-  # `/portal` ve `/anketler` kimliklidir.
-  # PUBLIC ICERIK BILINCLI SECILMISTIR: sakin listesi, daire sayisi, finans
-  # ve personel BURADA YOKTUR; duyurunun yalniz OZETI cikar — tam govde
-  # site ICINE yoneliktir.
-  # YAYIN KAPISI: `yayinda=false` ise PUBLIC uc **404** doner (403 degil).
-  # 403, "bu tesis var ama kapali" bilgisini sizdirir ve slug tahminiyle
-  # tesis envanteri cikarilabilirdi.
+  # ANKET (P38) — sakinlerin karar araci
+  #
+  # (P154 / Asama 7.2) SITE WEB PORTALI KALDIRILDI: `/public/{slug}`,
+  # `/portal` ve `/portal/...` uclari silindi (ozel domain hizmeti
+  # sunulmuyor). Anket AYNI ROUTERDA yasiyordu ve birlikte silinseydi
+  # CALISAN bir ozellik giderdi — mobil anket ekrani bilerek salt-okuma,
+  # yonetim yuzeyi panelde. Once ayrildi (`routers/anketler.py` + panelde
+  # `/anketler` sayfasi), sonra portal kaldirildi.
+  #
+  # UCLARIN YOLU VE DAVRANISI DEGISMEDI — bu bir tasima, sozlesme
+  # degisikligi degil.
+  #
+  # SONUC KAPANANA KADAR GIZLI: acik bir ankette guncel dagilimi gostermek
+  # sonraki oy verenleri etkiler. Yonetim sonucu HER ZAMAN gorur.
   # ================================================================= #
-  /public/{slug}:
-    get:
-      tags: [portal]
-      summary: Tesisin PUBLIC web sayfasi (kimlik YOK)
-      security: []
-      parameters:
-        - { name: slug, in: path, required: true, schema: { type: string } }
-      responses:
-        "200":
-          description: portal icerigi
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/PortalPublic" }
-        "404": { $ref: "#/components/responses/NotFound" }
-  /public/{slug}/iletisim:
-    post:
-      tags: [portal]
-      summary: Iletisim formu (kimlik YOK)
-      security: []
-      description: |
-        KAYIT ONCE, BILDIRIM SONRA: mesaji dogrudan e-postaya cevirmek,
-        SMTP yapilandirilmamis bir sitede mesajin **sessizce kaybolmasi**
-        demekti. Once tenant'a yazilir (yonetim panelden gorur), sonra push
-        denenir — push hatasi kaydi ETKILEMEZ.
-
-        Telefon VEYA e-posta ZORUNLU (422): ikisi de olmayan bir mesaja
-        yonetim cevap veremezdi (DB CHECK'i de ayni sozu tutar).
-      parameters:
-        - { name: slug, in: path, required: true, schema: { type: string } }
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: "#/components/schemas/IletisimMesajIstek" }
-      responses:
-        "201": { description: alindi }
-        "404": { $ref: "#/components/responses/NotFound" }
-        "422": { $ref: "#/components/responses/ValidationError" }
-  /portal:
-    get:
-      tags: [portal]
-      summary: Portal icerigi (admin + yonetici)
-      responses:
-        "200": { description: icerik }
-        "403": { $ref: "#/components/responses/Forbidden" }
-    patch:
-      tags: [portal]
-      summary: Portal icerigi + YAYIN anahtari (admin + yonetici)
-      description: >
-        VARSAYILAN KAPALI: bir tesisin adi, adresi ve fotograflari yonetim
-        ACIKCA yayinlamadan internete cikmamalidir. Yayin acma/kapama
-        `audit_log`a yazilir.
-      responses:
-        "200": { description: guncellendi }
-        "403": { $ref: "#/components/responses/Forbidden" }
-  /portal/galeri:
-    get:
-      tags: [portal]
-      summary: Galeri (admin + yonetici)
-      responses:
-        "200": { description: gorseller }
-    post:
-      tags: [portal]
-      summary: Galeriye gorsel ekle
-      description: >
-        `obje_anahtari` tenant ad-alaninda dogrulanir — baska tenant'in
-        objesini kendi galerisine koymak IDOR olurdu (422
-        `invalid_foto_key`). Ayni anahtar iki kez eklenemez (409).
-      responses:
-        "201": { description: eklendi }
-        "409": { $ref: "#/components/responses/Conflict" }
-        "422": { $ref: "#/components/responses/ValidationError" }
-  /portal/galeri/{galeri_id}:
-    delete:
-      tags: [portal]
-      summary: Galeriden kaldir
-      parameters:
-        - { name: galeri_id, in: path, required: true, schema: { type: string, format: uuid } }
-      responses:
-        "204": { description: silindi }
-        "404": { $ref: "#/components/responses/NotFound" }
-  /portal/iletisim:
-    get:
-      tags: [portal]
-      summary: Gelen iletisim mesajlari (admin + yonetici)
-      parameters:
-        - $ref: "#/components/parameters/Limit"
-        - $ref: "#/components/parameters/Offset"
-      responses:
-        "200": { description: mesajlar }
-        "403": { $ref: "#/components/responses/Forbidden" }
   /anketler:
     get:
-      tags: [portal]
+      tags: [anket]
       summary: Anketler (bilinen TUM roller okur)
       description: |
         SONUC KAPANANA KADAR GIZLI: acik bir ankette guncel dagilimi
@@ -4429,7 +4343,7 @@ paths:
       responses:
         "200": { description: anketler }
     post:
-      tags: [portal]
+      tags: [anket]
       summary: Anket olustur (admin + yonetici)
       description: >
         EN AZ IKI secenek: tek secenekli bir anket oy toplamaz, ONAY toplar.
@@ -4444,7 +4358,7 @@ paths:
         "422": { $ref: "#/components/responses/ValidationError" }
   /anketler/{anket_id}:
     patch:
-      tags: [portal]
+      tags: [anket]
       summary: Anketi guncelle (admin + yonetici)
       description: >
         SECENEKLER DEGISTIRILEMEZ (govdede kabul EDILMEZ): oy verilmis bir
@@ -4457,7 +4371,7 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
   /anketler/{anket_id}/oy:
     post:
-      tags: [portal]
+      tags: [anket]
       summary: Oy ver (YALNIZ resident)
       description: |
         TEK OY, DEGISTIRILEMEZ. "Oyumu degistireyim" akisi BILINCLI OLARAK

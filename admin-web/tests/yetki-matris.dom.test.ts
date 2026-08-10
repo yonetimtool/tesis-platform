@@ -18,7 +18,9 @@ const MATRIS = {
   items: [
     { metot: "GET", yol: "/health", roller: null, moda_bagli: false },
     { metot: "POST", yol: "/shifts", roller: ["admin", "yonetici", "guvenlik_amiri"], moda_bagli: true },
-    { metot: "GET", yol: "/portal", roller: ["admin", "yonetici"], moda_bagli: false },
+    // (P154 / Asama 7.2) `/portal` kaldirildi; ornek satir `/anketler`e
+    // cevrildi (bu test MATRISIN CIZIMINI olcer, hangi yol oldugunu degil).
+    { metot: "GET", yol: "/anketler", roller: ["admin", "yonetici"], moda_bagli: false },
   ],
 };
 
@@ -53,7 +55,7 @@ describe("Yetki matrisi sayfasi", () => {
     const satir = screen.getByText("/shifts").closest("tr");
     expect(satir!.textContent).toContain("(mod)");
     // Moda bagli OLMAYAN satirda isaret YOK.
-    expect(screen.getByText("/portal").closest("tr")!.textContent).not.toContain("(mod)");
+    expect(screen.getByText("/anketler").closest("tr")!.textContent).not.toContain("(mod)");
   });
 
   it("arama YOL uzerinde suzer", async () => {
@@ -61,8 +63,8 @@ describe("Yetki matrisi sayfasi", () => {
     ciz(YetkiPage);
     await waitFor(() => expect(screen.getByText("/shifts")).toBeInTheDocument());
 
-    await userEvent.type(screen.getByPlaceholderText("Yol ara"), "portal");
-    expect(screen.getByText("/portal")).toBeInTheDocument();
+    await userEvent.type(screen.getByPlaceholderText("Yol ara"), "anket");
+    expect(screen.getByText("/anketler")).toBeInTheDocument();
     expect(screen.queryByText("/shifts")).not.toBeInTheDocument();
   });
 

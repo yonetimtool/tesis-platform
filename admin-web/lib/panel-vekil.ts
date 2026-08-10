@@ -38,10 +38,7 @@ export const OKUMA: Record<string, string> = {
   "kvkk-metinler": "/kvkk/metinler",
   // --- gurultu (P37) ---
   "unit-uyarilari": "/unit-uyarilari",
-  // --- portal + anket (P38) ---
-  portal: "/portal",
-  "portal-galeri": "/portal/galeri",
-  "portal-iletisim": "/portal/iletisim",
+  // --- anket (P38) ---
   anketler: "/anketler",
   // --- yetki matrisi (P41) — SALT OKUMA ---
   "yetki-matrisi": "/yetki-matrisi",
@@ -69,7 +66,6 @@ export const YAZMA: Record<string, string> = {
   "site-aktar": "/site-aktar",
   "kvkk-metin": "/kvkk/metin",
   anketler: "/anketler",
-  "portal-galeri": "/portal/galeri",
   ekler: "/ekler",
 };
 

@@ -68,7 +68,9 @@ export const TESIS_ROTALARI = [
   "/users",
   "/announcements",
   "/mesajlar",
-  "/portal",
+  // (P154 / Asama 7.2) `/portal` KALDIRILDI — ozel domain hizmeti
+  // sunmuyoruz. Anket yonetimi kendi sayfasina tasindi.
+  "/anketler",
   "/complaints",
   "/notifications",
   "/yonetisim",
@@ -302,7 +304,7 @@ export const ROTA_ROLLERI: Record<string, readonly string[]> = {
   "/users": ["admin", "yonetici"],
   "/announcements": ["admin", "yonetici"],
   "/mesajlar": ["admin", "yonetici"],
-  "/portal": ["admin", "yonetici"],
+  "/anketler": ["admin", "yonetici"],
   "/complaints": ["admin", "yonetici"],
   "/notifications": ["admin", "yonetici"],
   "/yonetisim": ["admin", "yonetici"],

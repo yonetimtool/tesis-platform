@@ -5159,68 +5159,11 @@ class UnitUyariListResponse(BaseModel):
     items: list[UnitUyariOut]
 
 
-# ========================= P38 PORTAL + ANKET =============================== #
-class PortalIcerikUpdate(BaseModel):
-    """Portal icerigi — KISMI guncelleme (gonderilmeyen alan degismez)."""
-
-    yayinda: bool | None = None
-    hero_baslik: str | None = Field(None, max_length=200)
-    hero_alt: str | None = Field(None, max_length=400)
-    hakkimizda: str | None = Field(None, max_length=20_000)
-    iletisim_adres: str | None = Field(None, max_length=500)
-    iletisim_telefon: str | None = Field(None, max_length=40)
-    iletisim_email: str | None = Field(None, max_length=200)
-    model_config = ConfigDict(extra="forbid")
-
-    @model_validator(mode="after")
-    def _en_az_bir(self) -> "PortalIcerikUpdate":
-        if not self.model_fields_set:
-            raise ValueError("en az bir alan gerekli")
-        return self
-
-
-class GaleriOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-    id: uuid.UUID
-    obje_anahtari: str
-    baslik: str | None = None
-    sira: int
-    #: Kisa omurlu imzali GET (depo yapilandirilmamissa null).
-    foto_url: str | None = None
-
-
-class GaleriCreate(BaseModel):
-    obje_anahtari: str = Field(..., min_length=1, max_length=500)
-    baslik: str | None = Field(None, max_length=200)
-    sira: int = Field(0, ge=0, le=9999)
-
-
-class PortalIcerikOut(BaseModel):
-    """Yonetim gorunumu — `yayinda` dahil."""
-
-    model_config = ConfigDict(from_attributes=True)
-    yayinda: bool = False
-    hero_baslik: str | None = None
-    hero_alt: str | None = None
-    hakkimizda: str | None = None
-    iletisim_adres: str | None = None
-    iletisim_telefon: str | None = None
-    iletisim_email: str | None = None
-
-
-class PortalDuyuruOzet(BaseModel):
-    """Portalda gosterilen duyuru — YALNIZ baslik + ozet + tarih.
-
-    Tam govde PUBLIC uce KOYULMAZ: duyuru site ICINE yoneliktir ve tamamini
-    internete acmak, sakinlere yazilmis bir metni herkese yayinlamak olurdu.
-    """
-
-    id: uuid.UUID
-    baslik: str
-    ozet: str
-    created_at: datetime
-
-
+# ============================== P38 ANKET =================================== #
+# (P154 / Asama 7.2) PORTAL SEMALARI SILINDI. `/portal` ve `/public/{slug}`
+# uclari kaldirildi (brief: "ozel domain hizmeti sunmuyoruz"); sema
+# sinif-larini birakmak, hicbir ucun uretmedigi bir sozlesmeyi surdurmek
+# olurdu. Anket semalari KALDI — anket calisiyor ve mobil karsiligi var.
 class PortalAnketSecenek(BaseModel):
     id: uuid.UUID
     metin: str
@@ -5336,65 +5279,6 @@ class TanitimIletisimOkunduIstek(BaseModel):
     okundu: bool = True
 
 
-class IletisimMesajIstek(BaseModel):
-    """Portal iletisim formu — PUBLIC.
-
-    Telefon VEYA e-posta ZORUNLU: ikisi de olmayan bir mesaja yonetim cevap
-    veremezdi (DB CHECK'i de ayni sozu tutar).
-    """
-
-    ad: str = Field(..., min_length=2, max_length=150)
-    telefon: str | None = Field(None, max_length=40)
-    email: str | None = Field(None, max_length=200)
-    mesaj: str = Field(..., min_length=5, max_length=5000)
-
-    @model_validator(mode="after")
-    def _donus_yolu(self) -> "IletisimMesajIstek":
-        if not (self.telefon or self.email):
-            raise ValueError("telefon veya e-posta gerekli")
-        return self
-
-
-class IletisimMesajOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-    id: uuid.UUID
-    ad: str
-    telefon: str | None = None
-    email: str | None = None
-    mesaj: str
-    okundu: bool
-    created_at: datetime
-
-
-class IletisimMesajListResponse(BaseModel):
-    meta: PageMetaOut
-    items: list[IletisimMesajOut]
-
-
-class PortalPublicOut(BaseModel):
-    """PUBLIC portal yaniti — kimlik DOGRULAMASI YOK.
-
-    Icerigin tamami BILINCLI olarak secilmistir: sakin listesi, daire
-    sayisi, finans ve personel BURADA YOKTUR.
-    """
-
-    slug: str
-    tesis_adi: str
-    hero_baslik: str | None = None
-    hero_alt: str | None = None
-    hakkimizda: str | None = None
-    iletisim_adres: str | None = None
-    iletisim_telefon: str | None = None
-    iletisim_email: str | None = None
-    #: Harita gomulusu icin (tenant ayarlarindan).
-    konum_lat: float | None = None
-    konum_lon: float | None = None
-    galeri: list[GaleriOut] = Field(default_factory=list)
-    duyurular: list[PortalDuyuruOzet] = Field(default_factory=list)
-    anketler: list[AnketOut] = Field(default_factory=list)
-
-
-# ============================ P41 YETKI MATRISI ============================= #
 class YetkiSatiri(BaseModel):
     """Tek bir (METOT, yol) icin rol kapisi."""
 

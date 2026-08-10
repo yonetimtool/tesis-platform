@@ -50,7 +50,8 @@ KAPISIZ_MUTASYONLAR: frozenset[tuple[str, str]] = frozenset({
     ("POST", "/auth/login-phone"),
     ("POST", "/auth/refresh"),
     ("POST", "/auth/set-password"),
-    ("POST", "/public/{slug}/iletisim"),
+    # (P154 / Asama 7.2) `/public/{slug}/iletisim` KALDIRILDI — portal
+    # iletisim formu, portalla birlikte silindi.
     ("POST", "/webhooks/payments/{provider}"),
     # --- (P148/P149) KIMLIK ONCESI kayit ve parolasiz giris ---
     # Dordunun de rol kapisi OLAMAZ: istegi atan kisinin henuz hesabi

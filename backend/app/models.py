@@ -3176,6 +3176,17 @@ class UnitUyari(Base):
 class TenantPortal(Base):
     """(P38) Tesisin PUBLIC web sayfasi icerigi.
 
+    (P154 / Asama 7.2) UCLARI KALDIRILDI, MODEL DURUYOR — ve bu bilincli.
+
+    Brief "olu kod kalmasin" diyor ve `/portal` + `/public/{slug}` uclari
+    ile panel sayfasi SILINDI. Ama TABLO duruyor: icini dolduran tesisler
+    olabilir ve `DROP TABLE` GERI ALINAMAZ bir veri kaybidir. Modeli
+    silmek de mumkun degil — `goc-uyum` kapisi semayi modelle
+    karsilastirir; tablo dururken modeli kaldirmak kapiyi kirardi.
+
+    YANI BU BIR "OLU KOD" DEGIL, TABLONUN TANIMI. Tablolarin dusurulmesi
+    ayri ve ACIK ONAY gerektiren bir adimdir (bkz. docs/P154-tur-raporu).
+
     VARSAYILAN KAPALI (`yayinda=false`): bir tesisin adi, adresi ve
     fotograflari yonetim ACIKCA yayinlamadan internete cikmamalidir.
     """
@@ -3202,6 +3213,8 @@ class TenantPortal(Base):
 class PortalGaleri(Base):
     """(P38) Portal galerisi — sunucu dosyayi TASIMAZ, anahtari tutar."""
 
+    # (P154 / Asama 7.2) Ucu kaldirildi, tablo + model duruyor —
+    # gerekce `TenantPortal`da.
     __tablename__ = "portal_galeri"
     __table_args__ = (
         UniqueConstraint("id", "tenant_id", name="uq_portal_galeri_id_tenant"),
@@ -3338,6 +3351,8 @@ class IletisimMesaji(Base):
     baglidir ve yapilandirilmamis bir sitede mesaj SESSIZCE KAYBOLURDU.
     """
 
+    # (P154 / Asama 7.2) Portal iletisim formu kaldirildi; tablo + model
+    # duruyor (gelmis mesajlar veri) — gerekce `TenantPortal`da.
     __tablename__ = "iletisim_mesaji"
 
     id: Mapped[uuid.UUID] = _pk()

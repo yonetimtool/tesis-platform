@@ -129,4 +129,6 @@ def test_YENI_UC_matriste_KENDILIGINDEN_belirir(matris):
     listede olmali — elle liste tutulsaydi burasi bos kalirdi."""
     yollar = {x["yol"] for x in matris["items"]}
     assert "/yetki-matrisi" in yollar
-    assert "/anketler" in yollar and "/portal" in yollar
+    # (P154 / Asama 7.2) `/portal` KALDIRILDI; olcum `/anketler` ile
+    # surduruluyor (matrisin gercekten dolu geldigini kanitlar).
+    assert "/anketler" in yollar and "/ekler" in yollar

@@ -144,7 +144,7 @@ export const config = {
     "/raporlar/:path*",
     "/mesajlar/:path*",
     "/yonetisim/:path*",
-    "/portal/:path*",
+    "/anketler/:path*",
     "/yetki/:path*",
     "/audit/:path*",
     "/complaints/:path*",
@@ -158,12 +158,11 @@ export const config = {
     "/aidatim/:path*",
     "/taleplerim/:path*",
     "/duyurular/:path*",
-    // `/site-kurallari` DEGIL: public tenant portali `/site/[slug]`ta
-    // yasiyor ve `portal-public` testi "matcher `/site` ile baslayan bir
-    // giris ICERMEZ" diye muhafazakar bir kontrol yapiyor. O kontrolu
-    // gevsetmek yerine rota yeniden adlandirildi: public bir rotayi
-    // koruyan kapi olabildigince kati kalmali (ve `/kurallar` tesis
-    // calisma alaninda zaten daha iyi bir adres).
+    // `/site-kurallari` DEGIL, `/kurallar`. Gerekce eskiden public tenant
+    // portalinin `/site/[slug]`ta yasamasiydi; (P154 / Asama 7.2) o portal
+    // KALDIRILDI ama ad DEGISTIRILMEDI: `/kurallar` tesis calisma alaninda
+    // zaten daha iyi bir adres ve calisan bir rotayi yalnizca eski gerekce
+    // dustu diye yeniden adlandirmak, kayitli baglantilari kirardi.
     "/kurallar/:path*",
     "/etkinlikler/:path*",
     "/rezervasyonlarim/:path*",

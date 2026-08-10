@@ -28,7 +28,8 @@
 | **6.4** — Not ve ek sistemi | göç 0043 + `/ekler` + ortak `Ekler` bileşeni | `e57a944` |
 | **7.1** — Menü mimarisi (web) | brief taksonomisi + `/icra` ekranı + daire tipleri | `e45eff7` |
 | **7.1** — Menü mimarisi (mobil) | çekmece bölümlendi, katlanabilir, tercih kalıcı | `1f856a0` |
-| **7.2 (6/7 madde)** — UI temizliği | parola göster/gizle · daire tipleri · alt menü rol bazlı · FAB yazısız · gizli aksiyonlar · görev kategorisi | bu tur |
+| **7.2 (6/7 madde)** — UI temizliği | parola göster/gizle · daire tipleri · alt menü rol bazlı · FAB yazısız · gizli aksiyonlar · görev kategorisi | `a513d82` |
+| **7.2 (7/7)** — "Site sayfası" kaldırıldı | anket ayrıldı → portal silindi; **tablolar duruyor** | bu tur |
 
 ---
 
@@ -182,6 +183,39 @@ erişilebilirlik **olmadı** ve bunu ölçen ayrı bir test yazıldı.
 **Bir gerileme yakalandı:** `Column`u kaldırınca daire esnek kısıtları
 benimseyip 56 yerine **160 piksel** çizildi; `merkez FAB 56px` testi
 yakaladı, `Center` ile kısıtlandı.
+
+### 4.14 Portal kaldırıldı — ama önce anket ayrıldı (Aşama 7.2)
+
+Brief: "'Site sayfası' kaldırılacak … ölü kod kalmasın."
+
+**Ölçüm önce yapıldı ve silmeyi durdurdu:** `/portal` sayfası **anket
+yönetiminin tek yüzeyiydi** ve backend'de `portal.py` hem portal hem anket
+uçlarını taşıyordu. Mobil anket ekranı bilerek salt-okumadır
+("oluşturma/kapatma yönetim işidir ve panele"). Portalı olduğu gibi
+silmek, uçtan uca çalışan bir özelliği götürürdü.
+
+Sıra: **(1)** anket kendi router'ına (`routers/anketler.py`) ve kendi
+panel sayfasına (`/anketler`) taşındı — **uçların yolu ve davranışı
+değişmedi**, yani mobil istemci etkilenmedi; **(2)** portal kaldırıldı:
+`/public/{slug}`, `/public/{slug}/iletisim`, `/portal*` uçları, panel
+sayfası, public `/site/[slug]` sayfası, menü girişi, rota kayıtları,
+middleware eşleşmesi, BFF beyaz listesi, 9 Pydantic şeması ve `portal*`
+çeviri anahtarları.
+
+Rol matrisinden **tam olarak sekiz satır** düştü; başka hiçbir değişiklik
+yok.
+
+**TABLOLAR DURUYOR — Kerem'in açık kararıyla.** `tenant_portal`,
+`portal_galeri`, `iletisim_mesaji`: `DROP TABLE` geri alınamaz bir veri
+kaybıdır. Modeller de duruyor ve bu bir "ölü kod" değil **tablonun
+tanımıdır**: `goc-uyum` kapısı şemayı modelle karşılaştırır, tablo
+dururken modeli silmek kapıyı kırardı. Gerekçe `models.py`de
+`TenantPortal`ın altına yazıldı.
+
+**Kaybolmayan testler:** portal testleri silindi ama anket testleri
+`test_anket.py`ye taşındı. Yalnız *public portal üzerinden* anket okuyan
+tek test düştü — ölçtüğü yüzey artık yok. `test_tenant_izolasyonu`
+portalsız yeniden yazıldı; anket izolasyonu ölçülmeye devam ediyor.
 
 ## 5. BULUNAN GERÇEK KUSURLAR
 

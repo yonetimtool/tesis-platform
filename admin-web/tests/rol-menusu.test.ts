@@ -63,6 +63,9 @@ const BIRINCIL_UC: Record<string, string> = {
   "/sayac-okuma": "GET /sayaclar/ana",
   "/dues": "GET /dues/assessments",
   "/finans": "GET /finans/ozet",
+  // (P154 / Asama 7.2) `/portal` KALDIRILDI; anket yonetimi kendi
+  // sayfasina tasindi ve UCU DEGISMEDI.
+  "/anketler": "GET /anketler",
   // (P154 / Asama 7.1) Icra ayri ust bolum. Uc denetciye de OKUMA aciyor
   // (`_OKUMA = admin+yonetici+denetci`); yazma yalniz admin, o yuzden
   // sayfa yoneticiye "yeni dosya" dugmesi cizmez.
@@ -75,7 +78,6 @@ const BIRINCIL_UC: Record<string, string> = {
   "/users": "GET /users",
   "/announcements": "GET /announcements",
   "/mesajlar": "GET /mesaj-sablonlari",
-  "/portal": "GET /portal",
   "/complaints": "GET /complaints",
   "/notifications": "GET /notifications",
   "/yonetisim": "GET /karar-defteri",
@@ -184,7 +186,7 @@ describe("MENUDEKI HER ROTA O ROLUN ACABILDIGI ROTADIR", () => {
 });
 
 describe("rol calisma alanlari birbirine karismaz", () => {
-  const yonetimSayfalari = ["/finans", "/dues", "/users", "/sayac-okuma", "/portal"];
+  const yonetimSayfalari = ["/finans", "/dues", "/users", "/sayac-okuma", "/anketler"];
   const sakinSayfalari = ["/aidatim", "/taleplerim", "/rezervasyonlarim"];
   const kapiSayfalari = ["/ziyaretciler", "/kargolar", "/arac-gecisleri"];
 

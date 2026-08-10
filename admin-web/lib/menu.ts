@@ -211,7 +211,7 @@ const OGELER: readonly MenuOgesi[] = [
   { href: "/mesajlar", sorgu: "kanal=eposta", anahtar: "kabukEpostaGonderimi", icon: "chat", grup: "iletisim" },
   { href: "/complaints", anahtar: "kabukTalepler", icon: "chat", grup: "iletisim" },
   { href: "/taleplerim", anahtar: "kabukTaleplerim", icon: "chat", grup: "iletisim" },
-  { href: "/portal", anahtar: "kabukPortal", icon: "building", grup: "iletisim" },
+  { href: "/anketler", anahtar: "kabukAnketler", icon: "chat", grup: "iletisim" },
   { href: "/yonetim-iletisim", anahtar: "kabukYonetimIletisim", icon: "chat", grup: "iletisim" },
   { href: "/support", anahtar: "kabukDestek", icon: "chat", grup: "iletisim" },
 
