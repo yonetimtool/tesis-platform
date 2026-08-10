@@ -4822,6 +4822,30 @@ class MesajOnizlemeOut(BaseModel):
     sms: SmsOlcumOut | None = None
 
 
+# ------------------------- (P154 / Asama 6.3) ARAMA ------------------------ #
+class AramaVurusu(BaseModel):
+    """Tek bir arama vurusu.
+
+    GOVDE DONMEZ, yalniz baslik + kisa ayrinti: arama sonucu bir ONIZLEME
+    yuzeyidir. Tam kaydi vermek, listeleme uclarinin suzgeclerini (ornegin
+    talebin `_own_scope`u degil ama alan bazli gizlemeleri) atlayan
+    ikinci bir okuma yolu acardi. Kullanici satira tiklayip ASIL uca
+    gider.
+    """
+
+    kaynak: Literal[
+        "kisi", "daire", "blok", "firma", "gorev", "duyuru", "talep", "finans"
+    ]
+    id: uuid.UUID
+    baslik: str
+    ayrinti: str | None = None
+
+
+class AramaSonucu(BaseModel):
+    q: str
+    items: list[AramaVurusu]
+
+
 class MesajGonderIstek(BaseModel):
     """Bireysel + toplu gonderim TEK govdede.
 

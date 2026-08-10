@@ -3742,6 +3742,44 @@ paths:
           content:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
 
+  # (P154 / Asama 6.3) GLOBAL ARAMA.
+  /arama:
+    get:
+      tags: [arama]
+      summary: Cok kaynakli arama — YALNIZ kullanicinin gorebilecegi kayitlar
+      description: |
+        ARAMA YENI BIR YETKI YUZEYI ACMAZ. Iki katman birlikte isler:
+
+        * TENANT — `get_tenant_db` + RLS (burada ek bir sey yapilmaz;
+          yapilsaydi ikinci bir dogruluk kaynagi olurdu),
+        * ROL — her kaynagin rol kumesi ILGILI ROUTERIN kendi
+          `require_role` kumesinden OKUNUR, kopyalanmaz. Bir routerin
+          kumesi degisince arama kendiliginden ayni degisimi alir.
+        * SATIR KAPSAMI — rol kumesi yetmez: `talep` kaynaginda saha ve
+          sakin roller YALNIZ KENDI actiklarini gorur
+          (`complaints._own_scope` ile ayni kural).
+
+        Uc duzeyinde rol kapisi YOK ve bu bilincli: her tesis rolu en az
+        bir kaynak gorebilir (duyuru herkese acik). Kapiyi uca koymak
+        sakinin duyuru aramasini da kapatirdi. Suzgec KAYNAK duzeyinde.
+
+        Kaynak basina en fazla 5 vurus; GOVDE DONMEZ (baslik + kisa
+        ayrinti). Tam kayit icin ilgili ucca gidilir.
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema: { type: string, minLength: 2, maxLength: 100 }
+          description: En az IKI karakter — tek harf butun tesisi tarar.
+      responses:
+        "200":
+          description: Vuruslar
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AramaSonucu" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
   # ================================================================= #
   # AIDAT — unit (daire) + sakin + tahakkuk + odeme
   # ================================================================= #
@@ -9450,6 +9488,29 @@ components:
         setup_token:
           type: string
           description: YALNIZ /auth/set-password'te gecer; TEK KULLANIMLIK.
+    # (P154 / Asama 6.3) Arama.
+    AramaVurusu:
+      type: object
+      description: |
+        GOVDE DONMEZ, yalniz baslik + kisa ayrinti: arama bir ONIZLEME
+        yuzeyidir. Tam kaydi vermek, listeleme uclarinin alan bazli
+        gizlemelerini atlayan ikinci bir okuma yolu acardi.
+      required: [kaynak, id, baslik]
+      properties:
+        kaynak:
+          type: string
+          enum: [kisi, daire, blok, firma, gorev, duyuru, talep, finans]
+        id:      { type: string, format: uuid }
+        baslik:  { type: string }
+        ayrinti: { type: string, nullable: true }
+    AramaSonucu:
+      type: object
+      required: [q, items]
+      properties:
+        q: { type: string }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/AramaVurusu" }
     TelefonIstek:
       type: object
       required: [telefon]

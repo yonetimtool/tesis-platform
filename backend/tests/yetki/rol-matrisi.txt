@@ -14,6 +14,7 @@ GET    /arac-kayitlari                                      IZIN   IZIN   RED   
 POST   /arac-kayitlari                                      IZIN   IZIN   RED    RED    RED    RED    RED   
 DELETE /arac-kayitlari/{id}                                 IZIN   IZIN   RED    RED    RED    RED    RED   
 PATCH  /arac-kayitlari/{id}                                 IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /arama                                               IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
 GET    /assets                                              IZIN   IZIN   IZIN   IZIN   RED    RED    RED   
 POST   /assets                                              IZIN   RED    RED    RED    RED    RED    RED   
 DELETE /assets/{id}                                         IZIN   RED    RED    RED    RED    RED    RED   

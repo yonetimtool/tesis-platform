@@ -37,9 +37,16 @@ describe("(P140.4) dil secici konumu", () => {
     expect(kod).toContain("<ThemeToggle />");
   });
 
-  it("MASAUSTU seridi SAGA hizali ve yalniz genis ekranda", () => {
+  it("MASAUSTU seridi yalniz genis ekranda ve dil secici SAG UCTA", () => {
     const kod = kodSatirlari(KABUK);
-    expect(kod).toMatch(/hidden justify-end[^"]*lg:flex/);
+    // (P154) `justify-end` YERINE `justify-between`: serit artik IKI oge
+    // tasiyor (global arama solda, dil secici sagda). Kilidin OLCTUGU sey
+    // sinif adi degil ILKEYDI — "serit yalniz genis ekranda cizilir ve
+    // dil secici SAG UCTA durur". Sinif adina baglanmak, ilkeyi bozmayan
+    // bir duzenlemede testi dusururdu; nitekim oyle oldu.
+    expect(kod).toMatch(/hidden[^"]*justify-between[^"]*lg:flex/);
+    // Dil secici seridin SON ogesi: arama ondan ONCE gelir.
+    expect(kod).toMatch(/<GlobalArama \/>[\s\S]{0,80}<DilSecici \/>/);
   });
 
   it("MOBIL ust cubukta duruyor", () => {

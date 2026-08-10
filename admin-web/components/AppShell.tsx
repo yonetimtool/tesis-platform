@@ -7,6 +7,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import useSWR from "swr";
 
 import { DilSecici } from "@/components/DilSecici";
+import { GlobalArama } from "@/components/GlobalArama";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useT } from "@/lib/i18n/kullan";
 import { YonetioLogo } from "@/components/YonetioLogo";
@@ -509,7 +510,11 @@ export function AppShell({
               Kendi basina bir baslik cubugu DEGIL: yalnizca hizalama
               seridi, boylece sayfa basliklari (`SayfaBasligi`) ikinci bir
               baslik seviyesiyle yarismaz. */}
-          <div className="hidden justify-end px-4 pt-4 sm:px-6 lg:flex lg:px-8">
+          <div className="hidden items-center justify-between gap-4 px-4 pt-4 sm:px-6 lg:flex lg:px-8">
+            {/* (P154 / Asama 6.3) GLOBAL ARAMA — TEK yer. Her ekrana ayri
+                arama yazmak, yetki kuralini her ekranda tekrar etmek ve
+                biri unutuldugunda SESSIZ bir sizinti birakmak olurdu. */}
+            <GlobalArama />
             <DilSecici />
           </div>
           <main id="icerik" className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8 lg:pt-4">
