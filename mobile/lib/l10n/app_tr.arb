@@ -90,6 +90,26 @@
   "sekmeBildirimler": "Bildirimler",
   "sekmeRaporlar": "Raporlar",
   "sekmeAyarlar": "Ayarlar",
+  "kabukGrupGuvenlik": "Güvenlik",
+  "@kabukGrupGuvenlik": {
+    "description": "(P154/7.1) Cekmece bolum basligi — taksonomi WEB ile AYNI (admin-web/lib/menu.ts). Iki urun ayni kavram agacini gosterir."
+  },
+  "kabukGrupTesis": "Tesis",
+  "@kabukGrupTesis": {
+    "description": "(P154/7.1) Cekmece bolum basligi — taksonomi WEB ile AYNI (admin-web/lib/menu.ts). Iki urun ayni kavram agacini gosterir."
+  },
+  "kabukGrupFinans": "Finans",
+  "@kabukGrupFinans": {
+    "description": "(P154/7.1) Cekmece bolum basligi — taksonomi WEB ile AYNI (admin-web/lib/menu.ts). Iki urun ayni kavram agacini gosterir."
+  },
+  "kabukGrupIletisim": "İletişim",
+  "@kabukGrupIletisim": {
+    "description": "(P154/7.1) Cekmece bolum basligi — taksonomi WEB ile AYNI (admin-web/lib/menu.ts). Iki urun ayni kavram agacini gosterir."
+  },
+  "kabukGrupTanimlar": "Tanımlar",
+  "@kabukGrupTanimlar": {
+    "description": "(P154/7.1) Cekmece bolum basligi — taksonomi WEB ile AYNI (admin-web/lib/menu.ts). Iki urun ayni kavram agacini gosterir."
+  },
   "kabukProfil": "Profil",
   "kabukCikisYap": "Çıkış Yap",
   "fabOlayBildir": "Olay Bildir",

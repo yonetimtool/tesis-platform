@@ -388,6 +388,21 @@ class AppLocalizationsRu extends AppLocalizations {
   String get sekmeAyarlar => 'Настройки';
 
   @override
+  String get kabukGrupGuvenlik => 'Безопасность';
+
+  @override
+  String get kabukGrupTesis => 'Объект';
+
+  @override
+  String get kabukGrupFinans => 'Финансы';
+
+  @override
+  String get kabukGrupIletisim => 'Коммуникация';
+
+  @override
+  String get kabukGrupTanimlar => 'Справочники';
+
+  @override
   String get kabukProfil => 'Профиль';
 
   @override

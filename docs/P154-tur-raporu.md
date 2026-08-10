@@ -25,7 +25,9 @@
 | — | Test sunucusu seed'i (tamamen uydurma veri) | `e9ec4fd` |
 | **6.1 + 6.2** — Ortak `Modal` + `Liste` | `/tanimlar` bu ikisine geçirildi | `5eb1817` |
 | **6.3** — Global arama | `/arama` ucu + üst bar; yetki routerdan okunuyor | `7ff8d2e` |
-| **6.4** — Not ve ek sistemi | göç 0043 + `/ekler` + ortak `Ekler` bileşeni | bu tur |
+| **6.4** — Not ve ek sistemi | göç 0043 + `/ekler` + ortak `Ekler` bileşeni | `e57a944` |
+| **7.1** — Menü mimarisi (web) | brief taksonomisi + `/icra` ekranı + daire tipleri | `e45eff7` |
+| **7.1** — Menü mimarisi (mobil) | çekmece bölümlendi, katlanabilir, tercih kalıcı | bu tur |
 
 ---
 
@@ -118,6 +120,33 @@ ile aynı desende — **yalnız tenant kimliği döndüren** bir `SECURITY DEFIN
 fonksiyonla kırıldı. Ayrıntı: §6.7.
 
 ---
+
+### 4.8 Menü satır bütçesi korundu — kilit gevşetilmedi (Aşama 7.1)
+
+Brief FİNANS bölümünde yedi satır istiyor. Altısını `finans` grubuna
+koyunca **ölçüldü:** bölüm 5 satırdan 11'e çıktı ve finans açıkken menü
+17 satır oldu. Kerem'in ölçülebilir şartı "900px'te kaydırmasız ~10
+satır"dı ve kilit 12'de duruyor.
+
+Kilidi 17'ye yükseltmek ölçüyü işin peşinden sürümek olurdu. Bunun
+yerine altı satır kendi **katlı** bölümüne alındı ("Finans hareketleri"),
+mevcut "Daha fazla" desenini kullanarak: hepsi erişilebilir, günlük bütçe
+11'de kaldı.
+
+### 4.9 WhatsApp menü satırı BİLEREK eklenmedi (Aşama 7.1)
+
+Brief'in İLETİŞİM listesinde WhatsApp var. Ama `mesaj_kanal` enum'u bugün
+yalnız `sms, eposta` taşıyor — tıklanabilir ama şablonu **kaydedilemeyen**
+bir satır, envanterde kusur olarak yazdığım "ölü bağlantı" sınıfının ta
+kendisi olurdu. Aşama 9'un kalan işi (enum + şablon onay alanları,
+`docs/whatsapp-arastirma.md`) bittiğinde tek satırla açılır.
+
+### 4.10 Menü öğesinin kimliği artık (rota + sorgu) (Aşama 7.1)
+
+Sorgu `href`e **gömülmedi**: `rotaYuzeyi`/`rotaRoldeGorunur` tam eşleşme
+yapar, `"/finans?tip=gelir"` yazsaydık arama boşa düşer ve öğe hiçbir
+rolde görünmezdi — sessizce. Tekillik kilidi `href`ten `href+sorgu`ya
+taşındı; `key` ve aktiflik bu değerden okunuyor.
 
 ## 5. BULUNAN GERÇEK KUSURLAR
 
@@ -375,7 +404,7 @@ dört aşama** ve 9'un artığı:
 |---|---|---|
 | **4** — OAuth (Google/Microsoft/Apple) | Üç sağlayıcı × iki platform + hesap birleştirme; en büyük tek kalem | Test sunucusu için geri dönüş adresleri `docs/test-sunucusu-kurulum.md` §8'de yazılı |
 | **5** — Kullanıcı + yapı yönetimi | Aşama 6 ve 8'e bağımlı (modal + import) | Ölçülen 7 boşluk `docs/envanter.md`'de listeli (toplu daire web'de yok, kat silme yok, sürükle-bırak yok, daire tipi ataması web'de yok…). Modal + Liste **artık hazır** (6.1/6.2) |
-| **7.1/7.3/7.4** — Menü, onboarding, bağımlılık | 7.2'nin bir maddesi yapıldı | Menü **zaten gruplu ve katlanabilir** (`lib/menu.ts`); bağımlılık haritası 16 satır hazır |
+| **7.3/7.4** — Onboarding sihirbazı, bağımlılık yönlendirmesi | 7.1 bitti, 7.2'nin üç maddesi yapıldı | Bağımlılık haritası 16 satır hazır (Aşama 0.4); yönlendirme **tek bileşen** olarak kurulacak |
 | **8** — Import framework | `/site-aktar` üstüne kurulacak | Uç + şablon **zaten çalışıyor** |
 | **9 (artık)** — Kuyruk + yeniden deneme, zengin metin e-posta, gönderim ekranı | Sağlayıcı katmanı kuruldu, üstü kalmadı | `app/gonderim.py` tek giriş noktası; `mesaj_gonderim` tablosundan kota sayılıyor |
 | **10** — Apsiyon B kovası | 6'ya bağımlı | 14 A− maddesi listeli; **6 artık bitti** |

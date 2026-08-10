@@ -412,6 +412,21 @@ class AppLocalizationsAr extends AppLocalizations {
   String get sekmeAyarlar => 'الإعدادات';
 
   @override
+  String get kabukGrupGuvenlik => 'الأمن';
+
+  @override
+  String get kabukGrupTesis => 'المنشأة';
+
+  @override
+  String get kabukGrupFinans => 'المالية';
+
+  @override
+  String get kabukGrupIletisim => 'التواصل';
+
+  @override
+  String get kabukGrupTanimlar => 'التعريفات';
+
+  @override
   String get kabukProfil => 'الملف الشخصي';
 
   @override

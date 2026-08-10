@@ -606,6 +606,36 @@ abstract class AppLocalizations {
   /// **'Ayarlar'**
   String get sekmeAyarlar;
 
+  /// (P154/7.1) Cekmece bolum basligi — taksonomi WEB ile AYNI (admin-web/lib/menu.ts). Iki urun ayni kavram agacini gosterir.
+  ///
+  /// In tr, this message translates to:
+  /// **'Güvenlik'**
+  String get kabukGrupGuvenlik;
+
+  /// (P154/7.1) Cekmece bolum basligi — taksonomi WEB ile AYNI (admin-web/lib/menu.ts). Iki urun ayni kavram agacini gosterir.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tesis'**
+  String get kabukGrupTesis;
+
+  /// (P154/7.1) Cekmece bolum basligi — taksonomi WEB ile AYNI (admin-web/lib/menu.ts). Iki urun ayni kavram agacini gosterir.
+  ///
+  /// In tr, this message translates to:
+  /// **'Finans'**
+  String get kabukGrupFinans;
+
+  /// (P154/7.1) Cekmece bolum basligi — taksonomi WEB ile AYNI (admin-web/lib/menu.ts). Iki urun ayni kavram agacini gosterir.
+  ///
+  /// In tr, this message translates to:
+  /// **'İletişim'**
+  String get kabukGrupIletisim;
+
+  /// (P154/7.1) Cekmece bolum basligi — taksonomi WEB ile AYNI (admin-web/lib/menu.ts). Iki urun ayni kavram agacini gosterir.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tanımlar'**
+  String get kabukGrupTanimlar;
+
   /// No description provided for @kabukProfil.
   ///
   /// In tr, this message translates to:

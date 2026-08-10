@@ -374,3 +374,104 @@ String moduleBaslik(AppLocalizations l10n, HomeMenuEntry entry) =>
       HomeMenuEntry.sikayetlerim => l10n.modulSikayetlerim,
       HomeMenuEntry.yoneticiIletisim => l10n.yonIletisimBaslik,
     };
+
+// ===========================================================================
+// (P154 / Asama 7.1) MENU MIMARISI — KATEGORI
+// ===========================================================================
+// Brief: "MENU MIMARISI (web + mobil, kategorize, katlanabilir, tercih
+// kalici)". Web tarafi `admin-web/lib/menu.ts`te bolumlendi; mobil cekmece
+// duz bir liste olarak duruyordu ve yoneticide 17 satira ciktigi icin
+// kaydirma gerektiriyordu.
+//
+// TAKSONOMI WEB'DEKIYLE AYNI ve bu bilincli: iki urun ayni kavram agacini
+// gostermeli, aksi hâlde ayni kullanici telefonda ve panelde farkli bir
+// zihinsel harita kurar. Bolum adlari da AYNI ceviri kavramlarindan gelir.
+//
+// GORUNURLUK BURADA DEGISMEZ: gruplama bir SUZGEC DEGILDIR. Hangi rolun
+// neyi gordugu yine `homeMenuForRole`dan gelir; buradaki tek is, o kumeyi
+// bolumlere dagitmaktir. `home_menu_grup_test.dart` bunu iki yonlu
+// kilitler (hicbir giris kaybolmaz, hicbir giris eklenmez).
+
+/// Cekmecedeki bolum kimlikleri. Sira BURADAKI siradir.
+enum HomeMenuGrup {
+  /// Gunluk saha akisi — devriye, vardiya, ziyaretci, kargo.
+  guvenlik,
+
+  /// Binanin kendisi — gorev, demirbas, alan, etkinlik.
+  tesis,
+
+  /// Para.
+  finans,
+
+  /// Siteye seslenme + sakinden gelen.
+  iletisim,
+
+  /// Kurulum kayitlari — blok, daire tipleri, personel, sakinler.
+  tanimlar,
+}
+
+/// Girisin bolumu. Switch EKSIKSIZ (default yok): yeni bir giris eklenince
+/// derleyici burayi da doldurmaya zorlar — bir modulun sessizce gruba
+/// dusmemesi (ve menuden kaybolmasi) boyle onlenir.
+HomeMenuGrup homeMenuGrubu(HomeMenuEntry e) => switch (e) {
+  HomeMenuEntry.patrol ||
+  HomeMenuEntry.patrolTracking ||
+  HomeMenuEntry.nfc ||
+  HomeMenuEntry.outbox ||
+  HomeMenuEntry.visitors ||
+  HomeMenuEntry.kargo ||
+  HomeMenuEntry.unitAccess ||
+  HomeMenuEntry.vardiyalar ||
+  HomeMenuEntry.ihlaller ||
+  HomeMenuEntry.aracGecis ||
+  HomeMenuEntry.otopark => HomeMenuGrup.guvenlik,
+  HomeMenuEntry.tasks ||
+  HomeMenuEntry.taskTracking ||
+  HomeMenuEntry.assets ||
+  HomeMenuEntry.rezervasyon ||
+  HomeMenuEntry.etkinlik ||
+  HomeMenuEntry.siteKurallari ||
+  HomeMenuEntry.disHizmet ||
+  HomeMenuEntry.sikayetHaritasi ||
+  HomeMenuEntry.sikayetlerim => HomeMenuGrup.tesis,
+  HomeMenuEntry.reports ||
+  HomeMenuEntry.budget ||
+  HomeMenuEntry.financialSummary ||
+  HomeMenuEntry.transparency ||
+  HomeMenuEntry.siteBudget ||
+  HomeMenuEntry.myDues => HomeMenuGrup.finans,
+  HomeMenuEntry.announcements ||
+  HomeMenuEntry.complaints ||
+  HomeMenuEntry.anketler ||
+  HomeMenuEntry.yoneticiIletisim => HomeMenuGrup.iletisim,
+  HomeMenuEntry.personel ||
+  HomeMenuEntry.sakinler ||
+  HomeMenuEntry.binaDuzenleme ||
+  HomeMenuEntry.daireTanimlari ||
+  HomeMenuEntry.integrations => HomeMenuGrup.tanimlar,
+};
+
+/// Rolun menusu, BOLUMLENMIS. Bos bolum DONMEZ.
+///
+/// Bos bolum cizmek, menuyu kisaltmak icin yapilan isi tersine cevirirdi:
+/// tesis gorevlisi dort modul goruyor, bes baslik altinda dort satir
+/// gostermek onu daha da uzatirdi (web tarafinda ayni kural).
+Map<HomeMenuGrup, List<HomeMenuEntry>> homeMenuGruplariForRole(UserRole rol) {
+  final girisler = homeMenuForRole(rol);
+  final sonuc = <HomeMenuGrup, List<HomeMenuEntry>>{};
+  for (final g in HomeMenuGrup.values) {
+    final uyeler = girisler.where((e) => homeMenuGrubu(e) == g).toList();
+    if (uyeler.isNotEmpty) sonuc[g] = uyeler;
+  }
+  return sonuc;
+}
+
+/// Bolum basligi — aktif dilden. Switch EKSIKSIZ.
+String homeMenuGrupBasligi(AppLocalizations l10n, HomeMenuGrup g) =>
+    switch (g) {
+      HomeMenuGrup.guvenlik => l10n.kabukGrupGuvenlik,
+      HomeMenuGrup.tesis => l10n.kabukGrupTesis,
+      HomeMenuGrup.finans => l10n.kabukGrupFinans,
+      HomeMenuGrup.iletisim => l10n.kabukGrupIletisim,
+      HomeMenuGrup.tanimlar => l10n.kabukGrupTanimlar,
+    };

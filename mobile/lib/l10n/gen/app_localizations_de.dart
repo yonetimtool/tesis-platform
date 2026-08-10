@@ -293,6 +293,21 @@ class AppLocalizationsDe extends AppLocalizations {
   String get sekmeAyarlar => 'Einstellungen';
 
   @override
+  String get kabukGrupGuvenlik => 'Sicherheit';
+
+  @override
+  String get kabukGrupTesis => 'Anlage';
+
+  @override
+  String get kabukGrupFinans => 'Finanzen';
+
+  @override
+  String get kabukGrupIletisim => 'Kommunikation';
+
+  @override
+  String get kabukGrupTanimlar => 'Stammdaten';
+
+  @override
   String get kabukProfil => 'Profil';
 
   @override

@@ -292,6 +292,21 @@ class AppLocalizationsTr extends AppLocalizations {
   String get sekmeAyarlar => 'Ayarlar';
 
   @override
+  String get kabukGrupGuvenlik => 'Güvenlik';
+
+  @override
+  String get kabukGrupTesis => 'Tesis';
+
+  @override
+  String get kabukGrupFinans => 'Finans';
+
+  @override
+  String get kabukGrupIletisim => 'İletişim';
+
+  @override
+  String get kabukGrupTanimlar => 'Tanımlar';
+
+  @override
   String get kabukProfil => 'Profil';
 
   @override
