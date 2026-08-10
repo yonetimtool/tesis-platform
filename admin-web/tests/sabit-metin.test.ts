@@ -80,7 +80,11 @@ const UCLU = /([?:])\s*("([^"]{2,80})"|'([^']{2,80})')/g;
  * metin degil. `red` zaten listedeydi; kalan dordunun disarida kalmasi
  * tutarsizlikti. */
 const UCLU_TEKNIK =
-  /^(rtl|ltr|asc|desc|GET|POST|PATCH|PUT|DELETE|true|false|light|dark|auto|none|row|col|small|medium|large|default|platform|tenant|security|resident|yonetici|temizlik|kontrol|emerald|teal|amber|red|slate|indigo|blue|green|orange|purple|application[/]json|page|[a-z_]+_[a-z_]+)$/;
+  // (P154) `button|submit`: HTML `type` oznitelik degerleri. `GET|POST`
+  // ile AYNI sinif — kullaniciya gorunen metin degil, protokol/teknik
+  // sabit. Modal'in alt cubugu `kaydet` verilmisse dugme, verilmemisse
+  // form gonderimi olur ve secim bir ucluyle yapilir.
+  /^(rtl|ltr|asc|desc|GET|POST|PATCH|PUT|DELETE|button|submit|true|false|light|dark|auto|none|row|col|small|medium|large|default|platform|tenant|security|resident|yonetici|temizlik|kontrol|emerald|teal|amber|red|slate|indigo|blue|green|orange|purple|application[/]json|page|[a-z_]+_[a-z_]+)$/;
 
 /** TAILWIND sinif dizgesi mi? Uclularin cogu `className` secimidir:
  * `kosul ? "bg-ink text-white" : "text-slate-600"`. Bunlar metin DEGIL. */

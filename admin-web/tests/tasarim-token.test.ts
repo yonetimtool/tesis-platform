@@ -300,8 +300,16 @@ describe("(P138) TABLO ILKELI — elle iskelet geri gelmesin", () => {
   // degistirilmiyordu. Bu kilit kaldiraci korur.
   const SAYFALAR = sayfalar();
 
-  // ILKELIN KENDISI kapsam disi: `<table>`i TEK yazan yer orasidir.
-  const ILKEL = "components/tablo.tsx";
+  // ILKELLERIN KENDISI kapsam disi: `<table>`i yazan YERLER onlardir.
+  //
+  // (P154) `components/Liste.tsx` EKLENDI. Gerekce: bu kilidin amaci
+  // "her SAYFA kendi tablosunu yazmasin"; Liste ise sayfalarin
+  // KULLANDIGI ortak davranis katmani (siralama, suzgec, sayfalama) ve
+  // iskeleti bir kez yazip `tablo.tsx`in hucrelerini kullaniyor.
+  // Muaf tutmasaydik kilit, tam da kendisini gereksiz kilan bilesenin
+  // yazilmasini engellerdi.
+  const ILKELLER = ["components/tablo.tsx", "components/Liste.tsx"];
+  const ilkelMi = (y: string) => ILKELLER.some((i) => y.endsWith(i));
 
   // Yorum satirlari da disarida: bu kilidin GEREKCESI de `<table>` yazmak
   // zorunda ve kendi aciklamasina takilan bir kilit yazilamaz.
@@ -314,14 +322,14 @@ describe("(P138) TABLO ILKELI — elle iskelet geri gelmesin", () => {
   it("hicbir sayfa <table>/<thead> iskeletini KENDI yazmiyor", () => {
     const sizanlar = SAYFALAR.filter(
       ([y, s]) =>
-        !y.endsWith(ILKEL) && /<table\b|<thead\b/.test(kodSatirlari(s)),
+        !ilkelMi(y) && /<table\b|<thead\b/.test(kodSatirlari(s)),
     ).map(([y]) => y.split("admin-web/")[1]);
     expect(sizanlar, "ortak ilkel yerine elle tablo").toEqual([]);
   });
 
   it("hicbir sayfa ham <th>/<td> hucresi yazmiyor", () => {
     const sizanlar = SAYFALAR.filter(
-      ([y, s]) => !y.endsWith(ILKEL) && /<t[hd]\s+className=/.test(kodSatirlari(s)),
+      ([y, s]) => !ilkelMi(y) && /<t[hd]\s+className=/.test(kodSatirlari(s)),
     ).map(([y]) => y.split("admin-web/")[1]);
     expect(sizanlar, "ortak ilkel yerine ham hucre").toEqual([]);
   });

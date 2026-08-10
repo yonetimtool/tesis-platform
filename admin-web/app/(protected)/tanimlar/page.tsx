@@ -16,7 +16,8 @@ import {
   panelCls,
   panelMotion,
 } from "@/components/form";
-import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
+import { Liste } from "@/components/Liste";
+import { Modal, ModalEylemler } from "@/components/Modal";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
@@ -547,126 +548,131 @@ function DefterGorunumu({ defter }: { defter: Defter }) {
       {!isLoading && !error && kayitlar.length === 0 ? (
         <EmptyState title={t("tanimKayitYok")} />
       ) : null}
+      {/* (P154 / Asama 6.2) ORTAK LISTE. Elle yazilmis `<table>` kalkti;
+          siralama, kolon suzgeci, sayfa basina kayit ve sayfalama artik
+          BEDAVA geliyor. Dokuz defterin dokuzu da ayni davranisi aliyor —
+          onceki hâlde her biri kendi tablosunu ciziyordu ve hicbirinde
+          sayfalama yoktu (`/tanimlar` 200 daireli bir tesiste tek sayfada
+          200 satir cizerdi). */}
       {kayitlar.length > 0 ? (
-        <div className="overflow-x-auto">
-          <Tablo>
-            <TabloBasligi zeminsiz>
-                {sutunlar.map((a) => (
-                  <th key={a.ad} className="p-2 text-start">
-                    {t(a.etiket)}
-                  </th>
-                ))}
-                <Th dolgusuz className="p-2" />
-              </TabloBasligi>
-            <tbody>
-              {kayitlar.map((k) => (
-                <tr key={String(k.id)} className="border-t">
-                  {sutunlar.map((a) => (
-                    <td key={a.ad} className="p-2">
-                      {a.tip === "bool"
-                        ? k[a.ad]
-                          ? "✓"
-                          : "—"
-                        : // (P111) REFERANS sutunu: ham UUID degil, sunucunun
-                          // COZDUGU ad. Kimligi gostermek kullaniciya hicbir
-                          // sey anlatmaz.
-                          a.tip === "referans"
-                          ? String(k[a.sutunAlani ?? a.ad] ?? "—")
-                          : a.tip === "kurus"
-                          ? // (P47) TABLODA `kurusToTL`, FORMDA `liraya`.
-                            // Ikisi AYNI DEGILDIR ve olmamalidir: form girdisi
-                            // AYRISTIRILABILIR olmali (`5000.00`), tablo ise
-                            // OKUNABILIR (`5.000,00 ₺`). Tabloda `liraya`
-                            // kullanmak, Turkce'de BINLIK ayirici olan noktayi
-                            // ondalik yerine koymak demekti: `5000.00` okuyan
-                            // kullanici bes yuz bin sanabilirdi.
-                            kurusToTL(Number(k[a.ad] ?? 0))
-                          : String(k[a.ad] ?? "—")}
-                    </td>
-                  ))}
-                  <Td dolgusuz className="p-2 text-end whitespace-nowrap">
-                    <button type="button" className={btnGhost} onClick={() => ac(k)}>
-                      {t("ortakDuzenle")}
-                    </button>{" "}
-                    <button type="button" className={btnDanger} onClick={() => void sil(k)}>
-                      {t("ortakSil")}
-                    </button>
-                  </Td>
-                </tr>
-              ))}
-            </tbody>
-          </Tablo>
-        </div>
+        <Liste<Kayit>
+          kolonlar={sutunlar.map((a) => ({
+            anahtar: a.ad,
+            baslik: t(a.etiket),
+            hizala: a.tip === "kurus" ? ("end" as const) : undefined,
+            // SIRALAMA/SUZGEC ham degeri: gorunen metin degil. `kurus`
+            // alaninda gorunen "5.000,00 ₺"dir ve ona gore siralamak
+            // METIN siralamasi olurdu (1.000 > 900).
+            deger: (k: Kayit) =>
+              a.tip === "kurus"
+                ? Number(k[a.ad] ?? 0)
+                : a.tip === "referans"
+                  ? String(k[a.sutunAlani ?? a.ad] ?? "")
+                  : a.tip === "bool"
+                    ? (k[a.ad] ? "1" : "0")
+                    : String(k[a.ad] ?? ""),
+            suzgec: a.tip === "metin",
+            ciz: (k: Kayit) =>
+              a.tip === "bool"
+                ? k[a.ad]
+                  ? "✓"
+                  : "—"
+                : a.tip === "referans"
+                  ? String(k[a.sutunAlani ?? a.ad] ?? "—")
+                  : a.tip === "kurus"
+                    ? // (P47) TABLODA `kurusToTL`, FORMDA `liraya` — ikisi
+                      // AYNI DEGILDIR. Tabloda `liraya` kullanmak, Turkce'de
+                      // BINLIK ayirici olan noktayi ondalik yerine koymak
+                      // demekti: `5000.00` okuyan kullanici bes yuz bin
+                      // sanabilirdi.
+                      kurusToTL(Number(k[a.ad] ?? 0))
+                    : String(k[a.ad] ?? "—"),
+          }))}
+          satirlar={kayitlar}
+          kimlik={(k) => String(k.id)}
+          eylemler={(k) => (
+            <span className="whitespace-nowrap">
+              <button type="button" className={btnGhost} onClick={() => ac(k)}>
+                {t("ortakDuzenle")}
+              </button>{" "}
+              <button type="button" className={btnDanger} onClick={() => void sil(k)}>
+                {t("ortakSil")}
+              </button>
+            </span>
+          )}
+        />
       ) : null}
 
-      {acik ? (
-        <motion.div {...panelMotion} className={panelCls}>
-          <ErrorBox message={formHata} />
-          <div className="grid gap-3 sm:grid-cols-2">
-            {defter.alanlar.map((a) => (
-              <Field key={a.ad} label={t(a.etiket)}>
-                {a.tip === "bool" ? (
-                  <input
-                    type="checkbox"
-                    checked={Boolean(form[a.ad])}
-                    onChange={(e) => setForm({ ...form, [a.ad]: e.target.checked })}
-                  />
-                ) : a.tip === "referans" ? (
-                  <ReferansSecici
-                    alan={a}
-                    deger={String(form[a.ad] ?? "")}
-                    // Duzenlemede DEGISTIRILEMEZ olan alan pasif cizilir:
-                    // gizlemek, kullanicinin hangi daire oldugunu
-                    // gorememesi demekti.
-                    devre={Boolean(a.sadeceOlustur && duzenlenen)}
-                    onDegis={(v) => setForm({ ...form, [a.ad]: v })}
-                  />
-                ) : a.tip === "secim" ? (
-                  // (P63) ACIK `aria-label`: referans dali araya girince
-                  // `Field` sarmalayicisi 16 satirlik pencereden cikti ve
-                  // etiket kanitlanamaz oldu. Acik ad her hâlükârda dogru.
-                  <select
-                    aria-label={t(a.etiket)}
-                    className={inputCls}
-                    value={String(form[a.ad] ?? "")}
-                    onChange={(e) => setForm({ ...form, [a.ad]: e.target.value })}
-                  >
-                    <option value="">—</option>
-                    {(a.secenekler ?? []).map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  // (P63) ACIK `aria-label` — settings ile ayni gerekce.
-                  <input
-                    aria-label={t(a.etiket)}
-                    className={inputCls}
-                    type={girisTipi(a.tip)}
-                    inputMode={girisModu(a.tip)}
-                    value={String(form[a.ad] ?? "")}
-                    onChange={(e) => setForm({ ...form, [a.ad]: e.target.value })}
-                  />
-                )}
-              </Field>
-            ))}
-          </div>
-          <div className="mt-3 flex gap-2">
-            <button
-              type="button"
-              className={btnPrimary}
-              disabled={kaydediyor}
-              onClick={() => void kaydet()}
-            >
-              {kaydediyor ? t("ortakKaydediliyor") : t("ortakKaydet")}
-            </button>
-            <button type="button" className={btnGhost} onClick={() => setAcik(false)}>
-              {t("ortakVazgec")}
-            </button>
-          </div>
-        </motion.div>
-      ) : null}
+      {/* (P154 / Asama 6.1) ORTAK MODAL. Onceden form SAYFANIN USTUNDE
+          bir panel aciyordu: ESC yoktu, dis tik yoktu, odak tuzagi yoktu
+          ve kaydedilmemis degisiklikle kapatmak SESSIZCE veriyi atardi.
+          Ucu de artik bilesende. */}
+      <Modal
+        baslik={duzenlenen ? t("ortakDuzenle") : t("tanimYeniKayit")}
+        acik={acik}
+        kapat={() => setAcik(false)}
+        // KIRLI: yeni kayitta herhangi bir alan doldurulduysa, duzenlemede
+        // formun acilis degerinden sapildiysa.
+        kirli={kaydediyor ? false : Object.values(form).some((v) => v !== "" && v !== false)}
+        altBilgi={
+          <ModalEylemler
+            iptal={() => setAcik(false)}
+            kaydet={() => void kaydet()}
+            kaydediyor={kaydediyor}
+          />
+        }
+      >
+        <ErrorBox message={formHata} />
+        <div className="grid gap-3 sm:grid-cols-2">
+          {defter.alanlar.map((a) => (
+            <Field key={a.ad} label={t(a.etiket)}>
+              {a.tip === "bool" ? (
+                <input
+                  type="checkbox"
+                  checked={Boolean(form[a.ad])}
+                  onChange={(e) => setForm({ ...form, [a.ad]: e.target.checked })}
+                />
+              ) : a.tip === "referans" ? (
+                <ReferansSecici
+                  alan={a}
+                  deger={String(form[a.ad] ?? "")}
+                  // Duzenlemede DEGISTIRILEMEZ olan alan pasif cizilir:
+                  // gizlemek, kullanicinin hangi daire oldugunu
+                  // gorememesi demekti.
+                  devre={Boolean(a.sadeceOlustur && duzenlenen)}
+                  onDegis={(v) => setForm({ ...form, [a.ad]: v })}
+                />
+              ) : a.tip === "secim" ? (
+                // (P63) ACIK `aria-label`: referans dali araya girince
+                // `Field` sarmalayicisi pencereden cikti ve etiket
+                // kanitlanamaz oldu. Acik ad her hâlukârda dogru.
+                <select
+                  aria-label={t(a.etiket)}
+                  className={inputCls}
+                  value={String(form[a.ad] ?? "")}
+                  onChange={(e) => setForm({ ...form, [a.ad]: e.target.value })}
+                >
+                  <option value="">—</option>
+                  {(a.secenekler ?? []).map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  aria-label={t(a.etiket)}
+                  className={inputCls}
+                  type={girisTipi(a.tip)}
+                  inputMode={girisModu(a.tip)}
+                  value={String(form[a.ad] ?? "")}
+                  onChange={(e) => setForm({ ...form, [a.ad]: e.target.value })}
+                />
+              )}
+            </Field>
+          ))}
+        </div>
+      </Modal>
     </div>
   );
 }
