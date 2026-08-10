@@ -53,6 +53,17 @@ sunucusunda **`-p yonetio-test`** bayrağıyla ezilir. Bu bayrak aşağıdaki
 her komutta vardır — atlanırsa konteynerler `yonetio-prod` adıyla açılır
 ve iki ortam log/isim düzeyinde karışır.
 
+> ⚠ **KURULAN SUNUCUDA PROJE ADI FARKLI.** Bu rehber `-p yonetio-test` +
+> `.env.test` tasarlamıştı; gerçek kurulum **`yonetio-prod` projesi +
+> `.env.prod`** ile yapıldı (`docker compose ls` ile ölçüldü). O sunucuda
+> komutlar şöyle:
+> ```bash
+> DC="docker compose -f docker-compose.prod.yml --env-file .env.prod"
+> ```
+> Aşağıdaki `-p yonetio-test` içeren komutlar **o sunucuda çalışmaz**
+> (`couldn't find env file`). Yeni bir sunucu kurarken ayrım korunmalı;
+> var olanı yeniden adlandırmak konteynerleri baştan yaratır.
+
 > **Kolaylık:** aşağıdaki komutlarda tekrarlanan üçlüyü bir kez tanımlayın.
 > ```bash
 > echo "alias dcT='docker compose -f /opt/yonetio/tesis-platform/infra/docker-compose.prod.yml --env-file /opt/yonetio/tesis-platform/infra/.env.test -p yonetio-test'" >> ~/.bashrc
@@ -90,9 +101,42 @@ newgrp docker
 docker --version && docker compose version   # ikisi de sürüm yazmalı
 ```
 
-**Güvenlik duvarı** — yalnız 22/80/443:
+**Güvenlik duvarı** — ⚠ **kurulum biçimine bağlı, körü körüne açmayın.**
+
+> **TÜNEL KULLANIYORSANIZ UFW'Yİ AÇMAYIN.** Bu rehberin ilk sürümü koşulsuz
+> `ufw --force enable` diyordu ve **kurulan sunucuyu çökertti** (2026-08-10).
+> Kök neden ölçüldü:
+>
+> ```
+> Default: deny (incoming), allow (outgoing), deny (routed)   ← FORWARD = DROP
+> Chain FORWARD (policy DROP)
+> ```
+>
+> Docker'ın köprü trafiği **"routed"** sayılır. UFW onu düşürünce:
+> * `docker-proxy` bağlantıyı **kabul eder ama iletemez** → istek sıfır
+>   bayt ile asılır (dışarıdan Cloudflare 530/1033 görünür),
+> * konteynerler internete çıkamaz → Caddy günlüğünde
+>   `dial tcp …:443: connect: no route to host`.
+>
+> Belirti sinsi: `ufw status` "active" der, `ip_forward` **1**'dir, tünel
+> **çalışır** ve konteynerler **healthy** görünür. Yine de hiçbir istek
+> yanıtlanmaz.
+
+**(a) Cloudflare Tunnel / CGNAT kurulumu (bu sunucunun durumu):** UFW'yi
+**açmayın**. Dışarıya açık port yoktur; tüm giriş tünelin `config.yml`
+ingress kurallarından geçer, koruma oradadır. Açıksa kapatın:
 
 ```bash
+sudo ufw disable
+sudo systemctl restart docker      # Docker iptables kurallarini yeniden kurar
+```
+
+**(b) Klasik port yönlendirmeli kurulum** (80/443 doğrudan sunucuya
+geliyorsa) UFW anlamlıdır — ama **FORWARD politikası düzeltilmeden**
+açılmamalıdır:
+
+```bash
+sudo sed -i 's/^DEFAULT_FORWARD_POLICY=.*/DEFAULT_FORWARD_POLICY="ACCEPT"/' /etc/default/ufw
 sudo ufw default deny incoming
 sudo ufw default allow outgoing
 sudo ufw allow 22/tcp
@@ -100,8 +144,21 @@ sudo ufw allow 80/tcp
 sudo ufw allow 443/tcp
 sudo ufw allow 443/udp     # HTTP/3 (QUIC) — Caddy
 sudo ufw --force enable
-sudo ufw status verbose
+sudo ufw status verbose    # "deny (routed)" GORMEMELISINIZ
 ```
+
+**Teşhis — bu sınıf tekrar ederse:**
+
+```bash
+sudo ufw status verbose | grep routed        # "deny (routed)" -> sebep bu
+docker exec <caddy-konteyneri> wget -qO- --timeout=5 https://1.1.1.1 \
+  >/dev/null && echo "EGRESS OK" || echo "EGRESS KOPUK"
+curl -s -m 10 -o /dev/null -w '%{http_code}\n' \
+  -H 'Host: panel-test.yonetio.site' http://localhost:80/
+```
+
+> `Host: localhost` ile denemeyin — hiçbir Caddy sitesiyle eşleşmez ve
+> sonucu yanlış yorumlarsınız (bu turda tam olarak o hata yapıldı).
 
 **Kaynak notu:** `libretranslate` ilk kalkışta ~1–2 GB argos modeli indirir.
 Sunucuda **en az 4 GB RAM ve 40 GB disk** olsun. Daha küçük bir makinede
