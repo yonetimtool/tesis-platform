@@ -29,7 +29,8 @@
 | **7.1** — Menü mimarisi (web) | brief taksonomisi + `/icra` ekranı + daire tipleri | `e45eff7` |
 | **7.1** — Menü mimarisi (mobil) | çekmece bölümlendi, katlanabilir, tercih kalıcı | `1f856a0` |
 | **7.2 (6/7 madde)** — UI temizliği | parola göster/gizle · daire tipleri · alt menü rol bazlı · FAB yazısız · gizli aksiyonlar · görev kategorisi | `a513d82` |
-| **7.2 (7/7)** — "Site sayfası" kaldırıldı | anket ayrıldı → portal silindi; **tablolar duruyor** | bu tur |
+| **7.2 (7/7)** — "Site sayfası" kaldırıldı | anket ayrıldı → portal silindi; **tablolar duruyor** | `7654572` |
+| **7.3** — Onboarding sihirbazı | göç 0044 + `/kurulum` ucu + panel sayfası + ayarlar bağlantısı | bu tur |
 
 ---
 
@@ -216,6 +217,33 @@ dururken modeli silmek kapıyı kırardı. Gerekçe `models.py`de
 `test_anket.py`ye taşındı. Yalnız *public portal üzerinden* anket okuyan
 tek test düştü — ölçtüğü yüzey artık yok. `test_tenant_izolasyonu`
 portalsız yeniden yazıldı; anket izolasyonu ölçülmeye devam ediyor.
+
+### 4.15 Kurulum sihirbazı: tamamlanma SAYILIR, saklanmaz (Aşama 7.3)
+
+Brief sekiz adımlık bir sihirbaz ve "tamamlananların **kalıcı**
+işaretlenmesi" istiyor. Buna rağmen hiçbir adım için "tamamlandı" bayrağı
+tutulmadı.
+
+**Neden:** her adımın çıktısı zaten veritabanında (blok satırı, daire,
+daire tipi, sakin, personel, görev kategorisi, NFC noktası, aidat
+tahakkuku). Bayrak tutmak aynı gerçeğin ikinci bir kaynağını üretirdi ve
+ayrışırdı — yönetici tek bloğunu silince bayrak "tamamlandı" demeye devam
+ederdi. Tamamlanma her istekte veriden sayılıyor ve bunu ölçen bir test
+var (`test_ADIM_verisi_SILININCE_geri_acilir`).
+
+**Atlama ise veriden türetilemez** ve saklanıyor: "bu sitede NFC yok" ile
+"henüz eklemedim" verisel olarak **aynıdır** (ikisi de sıfır satır), ama
+kullanıcı için değil. Bu tek bilgi `tenant.kurulum_atlanan`da duruyor
+(göç 0044) — cihazda değil **tesiste**, çünkü bir tesiste iki yönetici
+olabilir ve biri "NFC yok" dediyse öteki de bunu görmeli.
+
+**İlerleme atlananı sayar.** Saymasaydık, bilinçli atlayan bir tesis
+%100'e asla ulaşamaz ve gösterge kalıcı bir sitem hâline gelirdi.
+
+**Sihirbaz kendi formlarını çizmez** — sekiz adımın sekizinin de çalışan
+bir ekranı zaten var; içine ikinci bir "blok ekle" formu koymak aynı
+doğrulamayı iki yerde tutmak olurdu. Adımlar **kilitli değil**: kilitlemek
+brief'in "yarım bırakıp devam edebilme" şartıyla çelişirdi.
 
 ## 5. BULUNAN GERÇEK KUSURLAR
 

@@ -102,6 +102,17 @@ METINLER: dict[str, dict[str, str]] = {
     },
     # (P154 / Asama 6.4) Ek takilabilen varliklar KAPALI KUME (goc 0043
     # `ck_varlik_eki_tipi`). Bilinmeyen bir tip yazim hatasidir.
+    # (P154 / Asama 7.3) Kurulum sihirbazinin adim kodlari SABIT KUME
+    # (`routers/kurulum.py::ADIMLAR`). Bilinmeyen kod yazim hatasidir.
+    "kurulum_adimi_gecersiz": {
+        "tr": "Böyle bir kurulum adımı yok.",
+        "en": "No such setup step.",
+        "ar": "لا توجد خطوة إعداد بهذا الاسم.",
+        "ru": "Такого шага настройки нет.",
+        "de": "Diesen Einrichtungsschritt gibt es nicht.",
+        "fr": "Cette étape de configuration n'existe pas.",
+        "es": "No existe ese paso de configuración.",
+    },
     "varlik_tipi_gecersiz": {
         "tr": "Bu kayıt türüne ek eklenemez.",
         "en": "Attachments are not supported for this record type.",

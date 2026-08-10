@@ -71,6 +71,7 @@ export const TESIS_ROTALARI = [
   // (P154 / Asama 7.2) `/portal` KALDIRILDI — ozel domain hizmeti
   // sunmuyoruz. Anket yonetimi kendi sayfasina tasindi.
   "/anketler",
+  "/kurulum",
   "/complaints",
   "/notifications",
   "/yonetisim",
@@ -305,6 +306,9 @@ export const ROTA_ROLLERI: Record<string, readonly string[]> = {
   "/announcements": ["admin", "yonetici"],
   "/mesajlar": ["admin", "yonetici"],
   "/anketler": ["admin", "yonetici"],
+  // (P154 / Asama 7.3) Kurulum sihirbazi YONETIM isidir. Denetci
+  // SALT-OKUR ve kurulum onun isi degil; uc de ayni kumeyi kapiliyor.
+  "/kurulum": ["admin", "yonetici"],
   "/complaints": ["admin", "yonetici"],
   "/notifications": ["admin", "yonetici"],
   "/yonetisim": ["admin", "yonetici"],

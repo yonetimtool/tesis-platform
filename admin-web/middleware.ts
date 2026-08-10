@@ -145,6 +145,7 @@ export const config = {
     "/mesajlar/:path*",
     "/yonetisim/:path*",
     "/anketler/:path*",
+    "/kurulum/:path*",
     "/yetki/:path*",
     "/audit/:path*",
     "/complaints/:path*",

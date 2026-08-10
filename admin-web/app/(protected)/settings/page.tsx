@@ -4,7 +4,9 @@ import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import useSWR from "swr";
 
-import { Field, ErrorBox, PageHeader, inputCls, btnPrimary, panelCls, panelMotion } from "@/components/form";
+import Link from "next/link";
+
+import { Field, ErrorBox, PageHeader, inputCls, btnGhost, btnPrimary, panelCls, panelMotion } from "@/components/form";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
@@ -166,7 +168,18 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-2xl space-y-5">
-      <PageHeader title={t("kabukAyarlar")} />
+      {/* (P154 / Asama 7.3) Brief: sihirbaz "bitince ayarlardan tekrar
+          acilabilme". Menude de bir girisi var ama kullanicinin onu
+          ARADIGI yer burasi — kurulum bittikten sonra sihirbaz akilda
+          "bir ayar" olarak kalir. */}
+      <PageHeader
+        title={t("kabukAyarlar")}
+        action={
+          <Link href="/kurulum" className={btnGhost}>
+            {t("kurulumBaslik")}
+          </Link>
+        }
+      />
 
       {error && <ErrorBox message={error.message} />}
       {isLoading && !data && <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>}

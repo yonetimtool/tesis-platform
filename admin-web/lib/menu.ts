@@ -228,6 +228,10 @@ const OGELER: readonly MenuOgesi[] = [
   // BLOK BURAYA TASINDI (once TESIS'teydi): brief blogu bir TANIM sayar.
   // Daire (`/units`) TESIS'te kaldi — o gunluk bakilan bir liste, blok
   // ise kurulumda bir kez cizilir.
+  // (P154 / Asama 7.3) Sihirbaz TANIMLAR bolumunun BASINDA: kurulum
+  // adimlarinin cogu bu bolumun ekranlaridir ve yeni yonetici once
+  // buraya bakmali.
+  { href: "/kurulum", anahtar: "kurulumBaslik", icon: "check", grup: "tanimlar" },
   { href: "/building-editor", anahtar: "kabukBloklar", icon: "edit", grup: "tanimlar" },
   { href: "/tanimlar", anahtar: "kabukTanimlar", icon: "box", grup: "tanimlar" },
   { href: "/tanimlar", sorgu: "defter=unit-tipleri", anahtar: "kabukDaireTipleri", icon: "home", grup: "tanimlar" },

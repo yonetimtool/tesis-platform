@@ -4309,6 +4309,54 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
 
   # ================================================================= #
+  # KURULUM SIHIRBAZI (P154 / Asama 7.3)
+  #
+  # TEK UC, SEKIZ SAYIM. Istemci bunu sekiz ayri liste ucuna giderek de
+  # cikarabilirdi ama sekiz gidis-donus olur, uclarin yanit SEKILLERI ayni
+  # degildir ve en onemlisi "bu adim bitti mi" KARARI sekiz yere dagilirdi.
+  #
+  # TAMAMLANMA SAYILIR, SAKLANMAZ: her adimin ciktisi zaten veritabaninda.
+  # Bayrak tutmak ayni gercegin ikinci kaynagini uretir ve ayrisir —
+  # yonetici tek blogunu silince bayrak "tamamlandi" demeye devam ederdi.
+  #
+  # ATLAMA saklanir (`tenant.kurulum_atlanan`, goc 0044) cunku veriden
+  # TURETILEMEZ: "bu sitede NFC yok" ile "henuz eklemedim" verisel olarak
+  # aynidir, kullanici icin degil.
+  # ================================================================= #
+  /kurulum:
+    get:
+      tags: [kurulum]
+      summary: Kurulum adimlarinin durumu (admin + yonetici)
+      responses:
+        "200":
+          description: Sekiz adim + ilerleme
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KurulumDurumu" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    patch:
+      tags: [kurulum]
+      summary: Bir adimi atla / atlamayi geri al (admin + yonetici)
+      description: >
+        GERI ALINABILIR olmasi sart: "NFC yok" diyen bir tesis sonradan NFC
+        kurabilir ve o zaman adimi geri getirebilmeli.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/KurulumAtla" }
+      responses:
+        "200":
+          description: Guncel durum
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KurulumDurumu" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  # ================================================================= #
   # ANKET (P38) — sakinlerin karar araci
   #
   # (P154 / Asama 7.2) SITE WEB PORTALI KALDIRILDI: `/public/{slug}`,
@@ -9556,6 +9604,49 @@ components:
         items:
           type: array
           items: { $ref: "#/components/schemas/Ek" }
+    # ---------- (P154 / Asama 7.3) KURULUM SIHIRBAZI ---------- #
+    KurulumAdimi:
+      type: object
+      required: [kod, sayi, tamam, atlandi]
+      properties:
+        kod:
+          type: string
+          description: |
+            Adim kodu — METIN DEGIL KIMLIK. Etiket istemcide aktif dilde
+            cozulur. Kume SABIT ve `routers/kurulum.py::ADIMLAR` ile ayni.
+          enum: [blok, daire, daire_tipi, sakin, personel, gorev_alani,
+                 nfc_noktasi, aidat]
+        sayi:
+          type: integer
+          description: >
+            Adimin uretmis oldugu kayit sayisi. `tamam` ile birlikte doner
+            cunku "3 blok var" ile "blok var" kullaniciya ayni seyi
+            soylemez.
+        tamam: { type: boolean, description: "sayi > 0 — VERIDEN sayilir" }
+        atlandi: { type: boolean, description: "BILINCLI atlandi" }
+    KurulumDurumu:
+      type: object
+      required: [adimlar, toplam, gecilen]
+      properties:
+        adimlar:
+          type: array
+          items: { $ref: "#/components/schemas/KurulumAdimi" }
+        toplam: { type: integer }
+        gecilen:
+          type: integer
+          description: >
+            Tamamlanan + BILINCLI ATLANAN. Atlanani saymasaydik, bilincli
+            atlayan bir tesis %100'e asla ulasamaz ve gosterge kalici bir
+            sitem olurdu.
+    KurulumAtla:
+      type: object
+      required: [kod]
+      properties:
+        kod: { $ref: "#/components/schemas/KurulumAdimi/properties/kod" }
+        atla:
+          type: boolean
+          default: true
+          description: "`false` ATLAMAYI GERI ALIR."
     AramaSonucu:
       type: object
       required: [q, items]

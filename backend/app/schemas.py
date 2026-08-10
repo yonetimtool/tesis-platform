@@ -5297,3 +5297,35 @@ class YetkiMatrisiResponse(BaseModel):
     #: Sutun sirasi — panel ile test kilidi yan yana okunabilsin.
     roller: list[str]
     items: list[YetkiSatiri]
+
+
+# ==================== (P154 / Asama 7.3) KURULUM SIHIRBAZI ================== #
+class KurulumAdimOut(BaseModel):
+    """Tek bir kurulum adimi.
+
+    `sayi` DA DONER, yalniz `tamam` degil: "3 blok var" ile "blok var"
+    kullaniciya ayni seyi soylemez ve sihirbaz ilerlemeyi anlatabilmeli.
+    Metin DEGIL KOD doner — etiket istemcide aktif dilde cozulur.
+    """
+
+    kod: str
+    sayi: int
+    tamam: bool
+    atlandi: bool
+
+
+class KurulumDurumOut(BaseModel):
+    adimlar: list[KurulumAdimOut]
+    toplam: int
+    #: Tamamlanan + BILINCLI ATLANAN. Atlanani saymasaydik, "bu sitede NFC
+    #: yok" diyen bir tesis %100'e asla ulasamaz ve gosterge kalici bir
+    #: sitem olurdu.
+    gecilen: int
+
+
+class KurulumAtlaIstek(BaseModel):
+    kod: str = Field(max_length=32)
+    #: `false` ATLAMAYI GERI ALIR — tek yonlu bir atlama, sonradan NFC
+    #: kuran bir tesise sihirbazi bir daha tam gosteremezdi.
+    atla: bool = True
+    model_config = ConfigDict(extra="forbid")

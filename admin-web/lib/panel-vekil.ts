@@ -47,6 +47,8 @@ export const OKUMA: Record<string, string> = {
   // olarak `[kaynak]` ve `[kaynak]/[id]` isleyicilerinin yaptigi is.
   // Ucuncu bir vekil dosyasi ayni on satiri kopyalamak olurdu.
   ekler: "/ekler",
+  // --- kurulum sihirbazi (P154 / Asama 7.3) ---
+  kurulum: "/kurulum",
 };
 
 /** POST ile YAZILAN kaynaklar (okumadan AYRI: bir ucu yanlislikla yazmaya
@@ -67,6 +69,8 @@ export const YAZMA: Record<string, string> = {
   "kvkk-metin": "/kvkk/metin",
   anketler: "/anketler",
   ekler: "/ekler",
+  // PATCH hedefi kaynak KOKUDUR — sihirbaz adim atlamayi boyle yazar.
+  kurulum: "/kurulum",
 };
 
 /** Kaynak basina ILETILEBILEN sorgu parametreleri (yine beyaz liste:

@@ -279,6 +279,17 @@ class Tenant(Base):
     kurulum_tamamlandi: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("true")
     )
+    #: (P154 / Asama 7.3) Kurulum sihirbazinda BILINCLI ATLANAN adimlarin
+    #: kodlari. TAMAMLANMA burada TUTULMAZ — o her istekte VERIDEN sayilir
+    #: (bkz. routers/kurulum.py); ikinci bir dogruluk kaynagi, yonetici tek
+    #: blogunu silince "tamamlandi" demeye devam ederdi.
+    #:
+    #: Atlama ise veriden TURETILEMEZ: "bu sitede NFC yok" ile "henuz
+    #: eklemedim" verisel olarak aynidir (ikisi de sifir satir), kullanici
+    #: icin degil.
+    kurulum_atlanan: Mapped[list] = mapped_column(
+        JSONB, nullable=False, server_default=text("'[]'::jsonb")
+    )
     # Tesisin yonetim maili (tenant seviyesi; kisisel veya ortak olabilir —
     # anlamsal kisit yok). Yonetici iletisim kartinda tum uyelere gorunur.
     yonetim_email: Mapped[str | None] = mapped_column(Text, nullable=True)
