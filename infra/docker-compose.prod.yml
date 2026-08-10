@@ -47,6 +47,14 @@ services:
       # ESKI kok alan — kapatilmadi. Mobil yapimin icindeki hukuki belge
       # adresleri (`https://yonetio.site/gizlilik`) buraya bakiyor.
       PORTAL_DOMAIN_ESKI: ${PORTAL_DOMAIN_ESKI:-yonetio.site}
+      # (P154) TESIS CALISMA ALANI KONAGI. Varsayilan `app.<portal>` —
+      # yani PROD DAVRANISI AYNEN KORUNUR. Tek seviyeli ad kullanan
+      # kurulumlar (orn. Cloudflare Tunnel + ucretsiz sertifika:
+      # `app-test.yonetio.site`) bunu .env'de ezer. Caddyfile'da `app.`
+      # oneki SABIT yazildigi surece o adlar icin site blogu — ve
+      # dolayisiyla SERTIFIKA — hic uretilmiyordu.
+      APP_DOMAIN: ${APP_DOMAIN:-app.${PORTAL_DOMAIN:-yonetiyor.com}}
+      APP_DOMAIN_IDN: ${APP_DOMAIN_IDN:-app.${PORTAL_DOMAIN_IDN:-xn--ynetiyor-n4a.com}}
     ports:
       - "80:80"
       - "443:443"

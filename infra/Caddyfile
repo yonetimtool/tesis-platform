@@ -123,9 +123,26 @@
 # `www.<IDN>` BILEREK YOK: Kerem'in DNS kaydinda IDN alan adi icin @, app ve
 # panel var, **www yok**. Cozulmeyen bir ada sertifika istemek ACME hatasi
 # uretir ve Caddy'nin acilisini bozar — DNS'te olmayan konak buraya yazilmaz.
-app.{$PORTAL_DOMAIN}, app.{$PORTAL_DOMAIN_IDN} {
-	@kanonikDisi not host app.{$PORTAL_DOMAIN}
-	redir @kanonikDisi https://app.{$PORTAL_DOMAIN}{uri} permanent
+# (P154) KONAK ADI ARTIK DEGISKEN — `app.` oneki SABIT DEGIL.
+#
+# NEDEN: test sunucusu Cloudflare Tunnel arkasinda kuruldu ve ucretsiz
+# sertifika IKI SEVIYELI alt alani (`app.test.yonetio.site`) kapsamadigi
+# icin adlar TEK SEVIYEYE indi: `app-test.yonetio.site`. Bu blok
+# `app.{$PORTAL_DOMAIN}` yazdigi surece o ad icin HICBIR SITE ureTMIYOR,
+# dolayisiyla Caddy ona SERTIFIKA DA ALMIYOR.
+#
+# Kusur sinsi bicimde gizlendi: tunel origin'e SNI'siz baglanirken istek
+# varsayilan bloga dusup tanitim sayfasi donuyordu (yani "calisiyor" gibi
+# gorunuyordu). SNI acilinca eslesen sertifika bulunamadi -> 502.
+# Olculdu: /data/caddy/certificates altinda api-test, panel-test,
+# storage-test, test VAR; app-test YOK.
+#
+# `APP_DOMAIN` varsayilani compose'ta `app.${PORTAL_DOMAIN}` olarak
+# turetiliyor — yani PROD DAVRANISI DEGISMEZ; yalniz tek seviyeli ad
+# kullanan kurulumlar degiskeni ezer.
+{$APP_DOMAIN}, {$APP_DOMAIN_IDN} {
+	@kanonikDisi not host {$APP_DOMAIN}
+	redir @kanonikDisi https://{$APP_DOMAIN}{uri} permanent
 	import security_headers
 	header X-Frame-Options "DENY"
 	encode gzip zstd
