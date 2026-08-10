@@ -55,6 +55,10 @@ services:
       # dolayisiyla SERTIFIKA — hic uretilmiyordu.
       APP_DOMAIN: ${APP_DOMAIN:-app.${PORTAL_DOMAIN:-yonetiyor.com}}
       APP_DOMAIN_IDN: ${APP_DOMAIN_IDN:-app.${PORTAL_DOMAIN_IDN:-xn--ynetiyor-n4a.com}}
+      # (P154) TLS saglayicisi. BOS = otomatik HTTPS (prod davranisi).
+      # Cloudflare Tunnel arkasinda `tls internal` verilir: ACME origin'e
+      # ulasamadigi icin Let's Encrypt orada CALISMAZ (bkz. Caddyfile notu).
+      CADDY_TLS: ${CADDY_TLS:-}
     ports:
       - "80:80"
       - "443:443"

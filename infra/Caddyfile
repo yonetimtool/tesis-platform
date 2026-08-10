@@ -34,6 +34,21 @@
 }
 
 # --- ortak guvenlik basliklari (snippet) ---------------------------------- #
+# (P154) TLS SAGLAYICISI DEGISKEN — `{$CADDY_TLS}`.
+#
+# VARSAYILAN BOS: prod'da satir bos genisler ve Caddy'nin OTOMATIK HTTPS'i
+# (Let's Encrypt) aynen calisir. HICBIR DAVRANIS DEGISMEZ.
+#
+# TUNEL KURULUMUNDA `CADDY_TLS="tls internal"` verilir. Gerekcesi olculdu:
+# Cloudflare Tunnel arkasinda TLS'i CLOUDFLARE sonlandirir ve ACME
+# dogrulamasi origin'e HIC ULASAMAZ — HTTP-01 istegi Cloudflare'in
+# "Always Use HTTPS" kurali yuzunden kenarda 308'leniyor:
+#   curl -D- http://app-test.../.well-known/acme-challenge/x
+#   -> HTTP/1.1 308 ... Server: cloudflare
+# Yani o kurulumda Let's Encrypt sertifikasi ALINAMAZ; alinmis olanlar da
+# KASIMDA YENILENEMEZ. Ic sertifika bu bagimliligi tumden kaldirir:
+# origin bacagi yine sifreli, dogrulamayi cloudflared `noTLSVerify` ile
+# atlar (baglanti makinenin ICINDE kaliyor).
 (security_headers) {
 	header {
 		# HSTS — 1 yil, alt-alanlar dahil.
@@ -65,6 +80,7 @@
 # (P149) ASIL ALAN ADI ARTIK `yonetiyor.com` (ASCII). Eski ve IDN bicimleri
 # ARTIK SERVIS ETMIYOR, 301 ile buraya gonderiyor (asagidaki blok).
 {$PORTAL_DOMAIN}, www.{$PORTAL_DOMAIN}, {$PORTAL_DOMAIN_ESKI}, www.{$PORTAL_DOMAIN_ESKI}, {$PORTAL_DOMAIN_IDN} {
+	{$CADDY_TLS}
 	# (P149-fix) TEK BLOK — ayri bir yonlendirme blogu YOK.
 	#
 	# NEDEN: ayri blok yazdigimda prod DUSTU ("ambiguous site definition").
@@ -141,6 +157,7 @@
 # turetiliyor — yani PROD DAVRANISI DEGISMEZ; yalniz tek seviyeli ad
 # kullanan kurulumlar degiskeni ezer.
 {$APP_DOMAIN}, {$APP_DOMAIN_IDN} {
+	{$CADDY_TLS}
 	@kanonikDisi not host {$APP_DOMAIN}
 	redir @kanonikDisi https://{$APP_DOMAIN}{uri} permanent
 	import security_headers
@@ -155,6 +172,7 @@
 # API adresi acmak, hangisinin kanonik oldugunu belirsizlestirir ve CORS/
 # cerez yuzeyini bedelsiz buyuturdu.
 {$API_DOMAIN} {
+	{$CADDY_TLS}
 	import security_headers
 	encode gzip zstd
 	reverse_proxy api:8000
@@ -165,6 +183,7 @@
 # (kayitli kullanicinin yer imi ve tarayici parola kasasi ona bagli).
 # (P149) Panelin ASIL adresi yeni alan adinda; eski ve IDN bicimleri 301.
 {$PANEL_DOMAIN}, {$PANEL_DOMAIN_ESKI}, {$PANEL_DOMAIN_IDN} {
+	{$CADDY_TLS}
 	@kanonikDisi not host {$PANEL_DOMAIN}
 	redir @kanonikDisi https://{$PANEL_DOMAIN}{uri} permanent
 	import security_headers
@@ -181,6 +200,7 @@
 # (path-style: /{bucket}/{key}); prefix soyulmaz. CORS (tarayici PUT preflight)
 # MinIO tarafindan yonetilir (varsayilan tum origin'lere izinli).
 {$STORAGE_DOMAIN} {
+	{$CADDY_TLS}
 	import security_headers
 	reverse_proxy minio:9000 {
 		# Buyuk foto yuklemelerinde erken zaman asimini onle.
