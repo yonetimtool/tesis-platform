@@ -24,6 +24,7 @@ import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import { kurusToTL, kurusToTLSade, tlToKurus } from "@/lib/money";
 import { sayiCoz } from "@/lib/sayi";
+import { useSorguSecimi } from "@/lib/sorgu-secimi";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 
 /**
@@ -220,6 +221,34 @@ const DEFTERLER: Defter[] = [
     ],
     ekEylem: (yenile) => <OtomatikSayacUretimi onBitti={yenile} />,
   },
+  // (P154 / Asama 7.1+7.2) DAIRE TIPLERI — brief'in "Bagimsiz bolum
+  // tanimlari -> Daire Tipleri, ayni sayfa WEB'e" maddesi. Uc (P26) vardi,
+  // panelde ekrani yoktu.
+  //
+  // `varsayilan_aidat_kurus` NULL "tanimsiz" demektir, 0 DEGIL — 0 gecerli
+  // bir tutardir (muaf daire). `kurus` alan tipi bos girisi null olarak
+  // gonderir, bu ayrimi korur.
+  {
+    kaynak: "unit-tipleri",
+    baslikAnahtari: "tanimDaireTipleri",
+    alanlar: [
+      { ad: "ad", etiket: "tanimAlanAd", tip: "metin", zorunlu: true, sutun: true },
+      { ad: "varsayilan_aidat_kurus", etiket: "tanimAlanVarsayilanAidat", tip: "kurus", sutun: true },
+      { ad: "aktif", etiket: "tanimAlanAktif", tip: "bool", sutun: true },
+    ],
+  },
+  // GRUP ve TIP AYRI KAVRAMLAR (P26): grup bolumun NE OLDUGU (Daire /
+  // Villa / Dukkan), tip buyukluk/duzen (1+0, 2+1) + varsayilan aidat.
+  // Tek deftere sikistirmak her grup x tip kombinasyonunu ayri satira
+  // zorlardi.
+  {
+    kaynak: "unit-gruplari",
+    baslikAnahtari: "tanimDaireGruplari",
+    alanlar: [
+      { ad: "ad", etiket: "tanimAlanAd", tip: "metin", zorunlu: true, sutun: true },
+      { ad: "aktif", etiket: "tanimAlanAktif", tip: "bool", sutun: true },
+    ],
+  },
 ];
 
 type Kayit = Record<string, unknown>;
@@ -402,10 +431,31 @@ function formDegeri(alan: Alan, kayit: Kayit | null): string | boolean {
   return ham === null || ham === undefined ? "" : String(ham);
 }
 
+/** Defter adlari — menudeki `?defter=` baglantilarinin gecerli kumesi. */
+const DEFTER_ADLARI = DEFTERLER.map((d) => d.kaynak);
+
 export default function TanimlarPage() {
   const t = useT();
-  const [sekme, setSekme] = useState(0);
+  // (P154 / Asama 7.1) Menudeki TANIMLAR bolumu her deftere DOGRUDAN
+  // baglaniyor (`?defter=kasalar`). Sekme adresten okunmasaydi baglanti
+  // dogru sayfayi acar ama HEP ilk defteri gosterirdi.
+  const [defterAdi, setDefterAdi] = useSorguSecimi(
+    "defter",
+    DEFTER_ADLARI,
+    DEFTER_ADLARI[0],
+  );
+  // -1 "Ayarlar" sekmesi (defter degil) — kendi durumunda tutulur.
+  const [ayarlarda, setAyarlarda] = useState(false);
+  const sekme = ayarlarda ? -1 : DEFTERLER.findIndex((d) => d.kaynak === defterAdi);
   const defter = DEFTERLER[sekme];
+  const setSekme = (i: number) => {
+    if (i === -1) {
+      setAyarlarda(true);
+      return;
+    }
+    setAyarlarda(false);
+    setDefterAdi(DEFTERLER[i].kaynak);
+  };
   return (
     <div className="space-y-4">
       <PageHeader title={t("kabukTanimlar")} />

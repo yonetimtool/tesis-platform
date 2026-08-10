@@ -21,6 +21,7 @@ import { apiSend, genIdempotencyKey } from "@/lib/client";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import { kurusToTL, tlToKurus } from "@/lib/money";
+import { useSorguSecimi } from "@/lib/sorgu-secimi";
 
 /**
  * P40 — FINANS bolumu (P29 API'si).
@@ -61,12 +62,17 @@ interface Ozet {
 
 const LIMIT = 20;
 const TIPLER = ["tahsilat", "gider", "gelir", "virman", "iade", "acilis"] as const;
+/** Suzgec degeri: alti tipten biri ya da "" (hepsi). */
+type TipSecimi = "" | (typeof TIPLER)[number];
 
 export default function FinansPage() {
   const t = useT();
   const toast = useToast();
   const [offset, setOffset] = useState(0);
-  const [tip, setTip] = useState("");
+  // (P154 / Asama 7.1) Menuden gelen `?tip=gelir` gibi baglantilar
+  // burada karsilanir; okunmasaydi menu satiri dogru adrese gider ama
+  // sayfa tum hareketleri gosterirdi.
+  const [tip, setTip] = useSorguSecimi<TipSecimi>("tip", TIPLER, "");
 
   const suzgec = tip ? `&tip=${encodeURIComponent(tip)}` : "";
   const { data: ozet, error: ozetErr } = useSWR<Ozet>(
@@ -255,7 +261,7 @@ export default function FinansPage() {
             style={{ maxWidth: 200 }}
             value={tip}
             onChange={(e) => {
-              setTip(e.target.value);
+              setTip(e.target.value as TipSecimi);
               setOffset(0);
             }}
           >

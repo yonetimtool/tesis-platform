@@ -21,6 +21,17 @@ import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
+import { useSorguSecimi } from "@/lib/sorgu-secimi";
+
+/** Sablon kanallari — veritabanindaki `mesaj_kanal` enum'uyla AYNI.
+ *
+ * WHATSAPP BURADA YOK ve bu bilincli: enum bugun yalnizca `sms, eposta`
+ * tasiyor. Secenegi eklemek, kaydedilemeyen bir sablon formu acmak
+ * olurdu. WhatsApp Asama 9'un kalan isidir (enum + sablon onay alanlari,
+ * bkz. docs/whatsapp-arastirma.md).
+ */
+type Kanal = "sms" | "eposta";
+const KANALLAR: readonly Kanal[] = ["sms", "eposta"];
 
 /**
  * P40 — MESAJ bolumu (P32 API'si).
@@ -82,7 +93,9 @@ export default function MesajlarPage() {
   );
 
   // --- yeni sablon ---
-  const [kanal, setKanal] = useState("sms");
+  // (P154 / Asama 7.1) Menudeki "SMS gonderimi / WhatsApp / E-posta
+  // gonderimi" satirlari uc ayri sayfa DEGIL, bu secimin on ayarlari.
+  const [kanal, setKanal] = useSorguSecimi<Kanal>("kanal", KANALLAR, "sms");
   const [ad, setAd] = useState("");
   const [konu, setKonu] = useState("");
   const [govde, setGovde] = useState("");
@@ -199,7 +212,7 @@ export default function MesajlarPage() {
         <h2 className="mb-3 text-sm font-semibold">{t("mesajYeniSablon")}</h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Field label={t("mesajKanal")}>
-            <select className={inputCls} value={kanal} onChange={(e) => setKanal(e.target.value)}>
+            <select className={inputCls} value={kanal} onChange={(e) => setKanal(e.target.value as Kanal)}>
               <option value="sms">{t("mesajKanal_sms")}</option>
               <option value="eposta">{t("mesajKanal_eposta")}</option>
             </select>

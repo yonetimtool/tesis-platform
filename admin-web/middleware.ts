@@ -139,6 +139,8 @@ export const config = {
     // agacini gezip her sayfanin burada bir girisi oldugunu dogruluyor.
     // --- P40 panel bolumu ---
     "/finans/:path*",
+    // (P154 / Asama 7.1) Icra ayri ust bolum oldu.
+    "/icra/:path*",
     "/raporlar/:path*",
     "/mesajlar/:path*",
     "/yonetisim/:path*",

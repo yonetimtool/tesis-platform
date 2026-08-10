@@ -20,6 +20,11 @@ const yol = { simdiki: "/dashboard" };
 vi.mock("next/navigation", () => ({
   usePathname: () => yol.simdiki,
   useRouter: () => ({ replace: vi.fn(), refresh: vi.fn(), push: vi.fn() }),
+  // (P154 / Asama 7.1) Menu artik ayni rotanin ALT GORUNUMLERINI tasiyor
+  // (`/finans?tip=gelir`); kabuk aktif satiri bulmak icin sorguyu da
+  // okuyor. Sahte olmadan `useSearchParams` tanimsiz doner ve kabuk cizim
+  // aninda patlar.
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 function Kabuk(rol = "yonetici") {

@@ -18,6 +18,7 @@ import {
   PROFIL_OGESI,
   _OGELER,
   menuGruplari,
+  ogeBaglantisi,
   profilGorunur,
   rotaninGrubu,
 } from "@/lib/menu";
@@ -30,9 +31,23 @@ describe("(P133.1) hicbir sayfa KAYBOLMADI", () => {
     }
   });
 
-  it("ayni href IKI kez listelenmemis", () => {
-    const hrefler = _OGELER.map((o) => o.href);
-    expect(hrefler.length).toBe(new Set(hrefler).size);
+  it("ayni BAGLANTI IKI kez listelenmemis", () => {
+    // (P154 / Asama 7.1) OGE KIMLIGI ARTIK (rota + sorgu). Brief FINANS
+    // bolumunde yedi satir istiyor ve altisi `/finans`in `tip` suzgeci —
+    // yalniz `href`e bakan eski kural bunlari "kopya" sayardi.
+    //
+    // Tekillik SART: `key` ve aktiflik bu degerden okunuyor; iki ayni
+    // baglanti, menude ayirt edilemeyen iki satir demekti.
+    const baglantilar = _OGELER.map(ogeBaglantisi);
+    expect(baglantilar.length).toBe(new Set(baglantilar).size);
+  });
+
+  it("SORGULU oge, rotasi ROL LISTESINDE olan bir sayfaya isaret eder", () => {
+    // Sorgu `href`e gomulseydi (`"/finans?tip=gelir"`) rol/yuzey aramasi
+    // TAM ESLESME yaptigi icin bosa duser ve oge HICBIR ROLDE gorunmezdi.
+    for (const o of _OGELER.filter((x) => x.sorgu)) {
+      expect(rotaYuzeyi(o.href), `${ogeBaglantisi(o)} yuzeysiz`).not.toBeNull();
+    }
   });
 
   it("gruplama ROLE GORUNEN kumeyi AYNEN tasir (eksiltmez, eklemez)", () => {

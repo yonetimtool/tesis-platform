@@ -16,6 +16,11 @@ import { ciz, fetchSahtele } from "./yardimci";
 vi.mock("next/navigation", () => ({
   usePathname: () => "/profil",
   useRouter: () => ({ replace: vi.fn(), refresh: vi.fn(), push: vi.fn() }),
+  // (P154 / Asama 7.1) Menu artik ayni rotanin ALT GORUNUMLERINI tasiyor
+  // (`/finans?tip=gelir`); kabuk aktif satiri bulmak icin sorguyu da
+  // okuyor. Sahte olmadan `useSearchParams` tanimsiz doner ve kabuk cizim
+  // aninda patlar.
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 // (P126 sonrasi) YUZEY ARTIK UCLUDAN GELIR — duzen onu `Host` basligindan

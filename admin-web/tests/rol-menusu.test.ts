@@ -63,6 +63,10 @@ const BIRINCIL_UC: Record<string, string> = {
   "/sayac-okuma": "GET /sayaclar/ana",
   "/dues": "GET /dues/assessments",
   "/finans": "GET /finans/ozet",
+  // (P154 / Asama 7.1) Icra ayri ust bolum. Uc denetciye de OKUMA aciyor
+  // (`_OKUMA = admin+yonetici+denetci`); yazma yalniz admin, o yuzden
+  // sayfa yoneticiye "yeni dosya" dugmesi cizmez.
+  "/icra": "GET /finans/icra-dosyalari",
   "/reports/dues": "GET /dues/payments",
   "/reports/patrols": "GET /patrol-plans",
   "/reports/tasks": "GET /tasks",

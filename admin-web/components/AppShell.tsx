@@ -2,7 +2,7 @@
 
 import { motion, MotionConfig } from "framer-motion";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import useSWR from "swr";
 
@@ -15,6 +15,8 @@ import { jsonFetcher } from "@/lib/fetcher";
 import {
   KATLI_GRUPLAR,
   menuGruplari,
+  ogeAktif,
+  ogeBaglantisi,
   profilGorunur,
   rotaninGrubu,
   PROFIL_OGESI,
@@ -125,7 +127,7 @@ function MenuSatiri({
   const t = useT();
   return (
     <Link
-      href={oge.href}
+      href={ogeBaglantisi(oge)}
       onClick={onNavigate}
       aria-current={aktif ? "page" : undefined}
       // (P132) Aktif oge MAVI tint — mobil alt barin aktif sekme dili.
@@ -163,12 +165,14 @@ function Bolum({
   grup,
   acik,
   pathname,
+  sorgu,
   onCevir,
   onNavigate,
 }: {
   grup: MenuGrubu;
   acik: boolean;
   pathname: string;
+  sorgu: URLSearchParams | null;
   onCevir: () => void;
   onNavigate?: () => void;
 }) {
@@ -190,9 +194,9 @@ function Bolum({
         <div className="space-y-0.5">
           {grup.ogeler.map((o) => (
             <MenuSatiri
-              key={o.href}
+              key={ogeBaglantisi(o)}
               oge={o}
-              aktif={pathname === o.href}
+              aktif={ogeAktif(o, pathname, sorgu)}
               onNavigate={onNavigate}
             />
           ))}
@@ -212,6 +216,10 @@ function SidebarBody({
   yuzey: Yuzey;
 }) {
   const pathname = usePathname();
+  // (P154 / Asama 7.1) Menu artik ayni rotanin ALT GORUNUMLERINI de tasiyor
+  // (`/finans?tip=gelir`). Aktif satiri bulmak icin sorgu da gerekli;
+  // yalniz yola bakan bir kural yedi finans satirini birden boyardi.
+  const sorgu = useSearchParams();
   const router = useRouter();
   const t = useT();
   const [cikisHatasi, setCikisHatasi] = useState(false);
@@ -355,6 +363,7 @@ function SidebarBody({
       grup={g}
       acik={acik.includes(g.id)}
       pathname={pathname}
+      sorgu={sorgu}
       onCevir={() => grupCevir(g.id)}
       onNavigate={onNavigate}
     />
@@ -398,7 +407,7 @@ function SidebarBody({
         {profilVar && (
           <MenuSatiri
             oge={PROFIL_OGESI}
-            aktif={pathname === PROFIL_OGESI.href}
+            aktif={ogeAktif(PROFIL_OGESI, pathname, sorgu)}
             onNavigate={onNavigate}
           />
         )}

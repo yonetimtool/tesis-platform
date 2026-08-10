@@ -18,6 +18,11 @@ const replace = vi.fn();
 vi.mock("next/navigation", () => ({
   usePathname: () => "/dashboard",
   useRouter: () => ({ replace, refresh: vi.fn(), push: vi.fn() }),
+  // (P154 / Asama 7.1) Menu artik ayni rotanin ALT GORUNUMLERINI tasiyor
+  // (`/finans?tip=gelir`); kabuk aktif satiri bulmak icin sorguyu da
+  // okuyor. Sahte olmadan `useSearchParams` tanimsiz doner ve kabuk cizim
+  // aninda patlar.
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 // JSX YOK (P43 gerekcesi): kabuk `children` alir, bos govdeyle cizilir.

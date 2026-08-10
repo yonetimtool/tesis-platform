@@ -59,6 +59,7 @@ export const TESIS_ROTALARI = [
   "/sayac-okuma",
   "/dues",
   "/finans",
+  "/icra",
   "/reports/dues",
   "/reports/patrols",
   "/reports/tasks",
@@ -282,6 +283,11 @@ export const ROTA_ROLLERI: Record<string, readonly string[]> = {
   "/sayac-okuma": ["admin", "yonetici"],
   "/dues": ["admin", "yonetici"],
   "/finans": ["admin", "yonetici"],
+  // (P154 / Asama 7.1) ICRA — brief "ayri ust sekme" istiyor. Rol kumesi
+  // `/finans` ile AYNI degil: uc (`/finans/icra-dosyalari`) okumayi
+  // admin+yonetici+DENETCI'ye aciyor. Denetci burayi gorur ama sayfa ona
+  // yazma dugmesi cizmez (salt-okuma, P128).
+  "/icra": ["admin", "yonetici", "denetci"],
   "/reports/dues": ["admin", "yonetici"],
   "/reports/patrols": ["admin", "yonetici"],
   "/reports/tasks": ["admin", "yonetici"],
