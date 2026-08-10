@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import useSWR from "swr";
 
+import { BagimlilikUyarisi } from "@/components/BagimlilikUyarisi";
 import { Ekler } from "@/components/Ekler";
 import { EmptyState } from "@/components/EmptyState";
 import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, btnGhost, btnDanger, panelCls, panelMotion,
@@ -262,6 +263,13 @@ export default function TasksPage() {
         </div>
       </div>
 
+      {/* (P154 / Asama 7.4) Kategori yoksa gorev acilamaz: sunucu
+          `422 butce_kategori_bulunamadi` doner ve kullanici nereye
+          gidecegini bilmez (olculdu, envanter §0.4). */}
+      <BagimlilikUyarisi
+        kod="gorevKategorisi"
+        eksik={(kategoriler?.items?.length ?? 1) === 0}
+      />
       {error && <ErrorBox message={error.message} />}
       {isLoading && !data && <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>}
 

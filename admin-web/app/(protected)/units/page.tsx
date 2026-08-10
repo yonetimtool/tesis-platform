@@ -9,6 +9,7 @@ import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, btnGhost, btn
 import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
 import { useToast } from "@/components/Toast";
 import { UnitDetail } from "@/components/UnitDetail";
+import { BagimlilikUyarisi } from "@/components/BagimlilikUyarisi";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { sayiBicimi, sayiCoz, tamsayiCoz } from "@/lib/sayi";
@@ -42,6 +43,11 @@ export default function UnitsPage() {
   const [offset, setOffset] = useState(0);
   const [blok, setBlok] = useState("");
   const blokQs = blok ? `&blok=${encodeURIComponent(blok)}` : "";
+  // (P154 / Asama 7.4) Blok listesi YALNIZ bagimlilik uyarisi icin
+  // cekiliyor: daire olusturmada `blok` ZORUNLU (canli-site kurali) ve
+  // blok yoksa kullanici formu doldurup takiliyor. Liste kucuk ve
+  // sayfa basina bir kez.
+  const { data: bloklar } = useSWR<{ items: unknown[] }>("/api/blocks", jsonFetcher);
   const { data, error, isLoading, mutate } = useSWR<UnitList>(
     `/api/units?limit=${LIMIT}&offset=${offset}${blokQs}`,
     jsonFetcher,
@@ -135,6 +141,11 @@ export default function UnitsPage() {
         action={
           <button className={btnPrimary} onClick={openNew}>{t("daireYeni")}</button>
         }
+      />
+
+      <BagimlilikUyarisi
+        kod="blok"
+        eksik={(bloklar?.items?.length ?? 1) === 0}
       />
 
       <div className="flex items-end gap-2">

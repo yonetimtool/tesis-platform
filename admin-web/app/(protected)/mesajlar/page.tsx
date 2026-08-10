@@ -20,6 +20,7 @@ import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/componen
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
+import { BagimlilikUyarisi } from "@/components/BagimlilikUyarisi";
 import { useT } from "@/lib/i18n/kullan";
 import { useSorguSecimi } from "@/lib/sorgu-secimi";
 
@@ -166,6 +167,12 @@ export default function MesajlarPage() {
   return (
     <div className="space-y-6">
       <PageHeader title={t("mesajBaslik")} subtitle={t("mesajAlt")} />
+      {/* (P154 / Asama 7.4) Sablon yoksa gonderim YAPILAMAZ
+          (`POST /mesajlar/gonder`, envanter §0.4). */}
+      <BagimlilikUyarisi
+        kod="mesajSablonu"
+        eksik={(sablonlar?.items.length ?? 1) === 0}
+      />
       <ErrorBox message={hata ?? (sErr ? t("mesajSablonHata") : null)} />
 
       {/* ----------------------------- sablonlar --------------------------- */}

@@ -117,6 +117,12 @@ describe("koyu tema kapsami", () => {
     "border-primary",
     "border-accent-green",
     "border-accent-red",
+    // (P154 / Asama 7.4) Ayni sinif: bagimlilik uyarisinin turuncu ve
+    // geri-donus seridinin mavi kenarligi. Ikisi de METIN TASIMAZ ve
+    // durumu (eksik tanim / donus bekliyor) iki temada da AYNI anlamla
+    // isaretler; uzerlerindeki tint zemin `bg-accent-*` zaten muaf.
+    "border-accent-orange",
+    "border-accent-blue",
   ]);
 
   it("dark: oneksiz her TASARIM TOKEN'i da devrilmis", () => {

@@ -1,6 +1,7 @@
 import { cookies, headers } from "next/headers";
 
 import { AppShell } from "@/components/AppShell";
+import { DonusCubugu } from "@/components/DonusCubugu";
 import { ToastProvider } from "@/components/Toast";
 import { ACCESS_COOKIE } from "@/lib/cookies";
 import { tokenRolu } from "@/lib/rol-token";
@@ -33,6 +34,12 @@ export default async function ProtectedLayout({
   return (
     <ToastProvider>
       <AppShell rol={rol} yuzey={yuzey}>
+        {/* (P154 / Asama 7.4) Bagimlilik yonlendirmesinin "geri donus"
+            ayagi. Duzende TEK KEZ: `?donus=` tasiyan her sayfada
+            kendiliginden gorunur, tasimayan hicbir sayfada gorunmez.
+            Her hedef ekrana ayri bir "geri don" dugmesi koymak, ayni
+            davranisi dokuz kez yazmak olurdu. */}
+        <DonusCubugu />
         {children}
       </AppShell>
     </ToastProvider>

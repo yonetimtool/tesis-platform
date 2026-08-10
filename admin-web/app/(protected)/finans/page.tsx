@@ -20,6 +20,7 @@ import { useToast } from "@/components/Toast";
 import { apiSend, genIdempotencyKey } from "@/lib/client";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
+import { BagimlilikUyarisi } from "@/components/BagimlilikUyarisi";
 import { kurusToTL, tlToKurus } from "@/lib/money";
 import { useSorguSecimi } from "@/lib/sorgu-secimi";
 
@@ -158,6 +159,15 @@ export default function FinansPage() {
           <OzetKart etiket={t("finansOzetIcra")} deger={String(ozet.icra_acik_dosya)} />
         </motion.div>
       ) : null}
+
+      {/* (P154 / Asama 7.4) Kasa yoksa tahsilat AKISI TAMAMLANAMAZ:
+          `POST /finans/tahsilat` govdesinde `kasa_id` zorunlu (envanter
+          §0.4). Bugun kullanici bunu ancak formu doldurup takilinca
+          anliyor. */}
+      <BagimlilikUyarisi
+        kod="kasa"
+        eksik={(kasalar?.items.length ?? 1) === 0}
+      />
 
       {/* ------------------------------ kasalar ---------------------------- */}
       <motion.section {...panelMotion} className={panelCls}>
