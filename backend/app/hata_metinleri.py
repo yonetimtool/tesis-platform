@@ -100,6 +100,17 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "Enregistrement introuvable.",
         "es": "Registro no encontrado.",
     },
+    # (P154 / Asama 6.4) Ek takilabilen varliklar KAPALI KUME (goc 0043
+    # `ck_varlik_eki_tipi`). Bilinmeyen bir tip yazim hatasidir.
+    "varlik_tipi_gecersiz": {
+        "tr": "Bu kayıt türüne ek eklenemez.",
+        "en": "Attachments are not supported for this record type.",
+        "ar": "لا يمكن إضافة مرفقات لهذا النوع من السجلات.",
+        "ru": "Для этого типа записи вложения не поддерживаются.",
+        "de": "Für diesen Datensatztyp sind keine Anhänge möglich.",
+        "fr": "Les pièces jointes ne sont pas prises en charge pour ce type d'enregistrement.",
+        "es": "No se pueden adjuntar archivos a este tipo de registro.",
+    },
     "kayit_zaten_mevcut": {
         "tr": "Kayıt zaten mevcut (benzersizlik ihlali).",
         "en": "The record already exists (uniqueness violation).",

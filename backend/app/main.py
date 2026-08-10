@@ -15,6 +15,7 @@ from .gunlukleme import yapilandir as gunlukleri_yapilandir
 from .errors import install_error_handlers
 from .routers import activity as activity_router
 from .routers import arama as arama_router
+from .routers import ekler as ekler_router
 from .routers import announcements as announcements_router
 from .routers import assets as assets_router
 from .routers import audit as audit_router
@@ -224,6 +225,7 @@ app.include_router(anpr_router.router)
 # G5: birlesik "Son Hareketler" akisi (istemci tarafi birlestirmeyi kaldirir).
 app.include_router(activity_router.router)
 app.include_router(arama_router.router)
+app.include_router(ekler_router.router)
 
 
 @app.get("/health", tags=["health"])

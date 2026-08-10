@@ -20,6 +20,12 @@
 | **11** — ERP yol haritası | `docs/erp-yol-haritasi.md` | `9701ef5` |
 | **7.2 (kısmen)** — "Olaylar" 403'ü | rol kapısı + kilit testi | `915827f` |
 | — | Rol matrisi kilidi (9 satır, hepsi yazılı) | `7412380` |
+| **3** — Rol seçimli kayıt | 2 uç + web `/kayit` + mobil ekran (4 rol) | `2025f50`, `0987fc5` |
+| **9 (kod, kısmen)** — Ortak gönderim | `app/gonderim.py` — kanal seçimi tek yerde | `1bdecf9` |
+| — | Test sunucusu seed'i (tamamen uydurma veri) | `e9ec4fd` |
+| **6.1 + 6.2** — Ortak `Modal` + `Liste` | `/tanimlar` bu ikisine geçirildi | `5eb1817` |
+| **6.3** — Global arama | `/arama` ucu + üst bar; yetki routerdan okunuyor | `7ff8d2e` |
+| **6.4** — Not ve ek sistemi | göç 0043 + `/ekler` + ortak `Ekler` bileşeni | bu tur |
 
 ---
 
@@ -362,19 +368,17 @@ engellenmiş oldu.
 
 ## 7. YAPILMAYAN AŞAMALAR — dürüst kayıt
 
-Brief'in **yedi aşamasına başlanmadı.** Yarım iş bırakmamak için hiçbirine
-kısmen girilmedi (brief'in kendi kuralı).
+Aşama 3, 6 ve 9'un bir bölümü sonradan yapıldı (§1'e işlendi). **Kalan
+dört aşama** ve 9'un artığı:
 
 | Aşama | Neden başlanmadı | Aşama 0'dan hazır girdi |
 |---|---|---|
-| **3** — Rol seçimli kayıt | Mobil + web akış değişikliği; tek turda bitmezdi | `login-phone`, `telefon_kodu`, `kayit_basvurulari` **zaten var**; rol seçimi bunların **üstüne** kurulacak |
 | **4** — OAuth (Google/Microsoft/Apple) | Üç sağlayıcı × iki platform + hesap birleştirme; en büyük tek kalem | Test sunucusu için geri dönüş adresleri `docs/test-sunucusu-kurulum.md` §8'de yazılı |
-| **5** — Kullanıcı + yapı yönetimi | Aşama 6 ve 8'e bağımlı (modal + import) | Ölçülen 7 boşluk `docs/envanter.md`'de listeli (toplu daire web'de yok, kat silme yok, sürükle-bırak yok, daire tipi ataması web'de yok…) |
-| **6** — Ortak UI altyapısı | Modal + liste + arama + ek = ~4 kalem, her biri günler | `/tanimlar`'daki **veri-sürücülü `Defter` deseni** genelleştirilecek; sıfırdan liste bileşeni yazılmayacak |
+| **5** — Kullanıcı + yapı yönetimi | Aşama 6 ve 8'e bağımlı (modal + import) | Ölçülen 7 boşluk `docs/envanter.md`'de listeli (toplu daire web'de yok, kat silme yok, sürükle-bırak yok, daire tipi ataması web'de yok…). Modal + Liste **artık hazır** (6.1/6.2) |
 | **7.1/7.3/7.4** — Menü, onboarding, bağımlılık | 7.2'nin bir maddesi yapıldı | Menü **zaten gruplu ve katlanabilir** (`lib/menu.ts`); bağımlılık haritası 16 satır hazır |
 | **8** — Import framework | `/site-aktar` üstüne kurulacak | Uç + şablon **zaten çalışıyor** |
-| **9 (kod)** — Bildirim/şablon altyapısı | Araştırma yapıldı, kod yapılmadı | `POST /mesajlar/gonder` **var**, ekranı yok; WhatsApp için `mesaj_sablonu`ya 3 alan gerektiği ölçüldü |
-| **10** — Apsiyon B kovası | 6'ya bağımlı | 14 A− maddesi listeli |
+| **9 (artık)** — Kuyruk + yeniden deneme, zengin metin e-posta, gönderim ekranı | Sağlayıcı katmanı kuruldu, üstü kalmadı | `app/gonderim.py` tek giriş noktası; `mesaj_gonderim` tablosundan kota sayılıyor |
+| **10** — Apsiyon B kovası | 6'ya bağımlı | 14 A− maddesi listeli; **6 artık bitti** |
 
 ### 7.2'nin yapılmayan maddeleri
 Parola göster/gizle · "Bağımsız bölüm tanımları" → "Daire Tipleri" ·

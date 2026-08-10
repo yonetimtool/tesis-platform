@@ -97,6 +97,8 @@ COMPLAINT_DURUM = ENUM(
     "acik", "is_emri", "cozuldu", "reddedildi", "geri_alindi",
     name="complaint_durum", create_type=False,
 )
+# (P154, goc 0043) Ek turu: not mu, dosya mi.
+EK_TURU = ENUM("not", "dosya", name="ek_turu", create_type=False)
 # COMPLAINT_KATEGORI KALDIRILDI (kategori artik task_category FK).
 TASK_ONCELIK = ENUM(
     "dusuk", "orta", "yuksek", name="task_oncelik", create_type=False,
@@ -2983,6 +2985,44 @@ class TenantDokuman(Base):
 
 
 # --------------------------------------------------------------------------- #
+class VarlikEki(Base):
+    """(P154 / Asama 6.4) NOT ve EK — her varliga takilabilen TEK sistem.
+
+    POLIMORFIK BAG: `(varlik_tipi, varlik_id)`. Veritabani bu bagi
+    ZORLAYAMAZ (FK yok) — bu bilincli bir takas ve bedeli goc 0043'un
+    modul basliginda yazili. Butunluk uc katmanda karsilaniyor:
+    `varlik_tipi` CHECK ile kapali kume, uc ust kaydin varligini VE
+    gorunurlugunu dogruluyor, yetim temizligi ust silme yolunun isi.
+
+    NOT ve DOSYA ayni tabloda (`tur`): ikisi de "bu kayda iliskin ek
+    bilgi" ve ayni yetki kuralina tabi. Ayirmak, kullanicinin TEK bir
+    zaman cizgisinde gormek istedigi seyi iki uca bolerdi.
+    """
+
+    __tablename__ = "varlik_eki"
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    varlik_tipi: Mapped[str] = mapped_column(Text, nullable=False)
+    varlik_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    # `Text` DEGIL, ENUM: sutun goc 0043'te `ek_turu` tipinde. `Text`
+    # yazildiginda INSERT'te asyncpg parametreyi `varchar` olarak bagliyor
+    # ve Postgres "column tur is of type ek_turu but expression is of type
+    # character varying" ile 500 veriyor — YAZMA YOLU HIC CALISMIYOR.
+    # Yalniz mutlu-yol testi yakalar; yetki testleri POST'a ulasmadan
+    # 403/404 doner.
+    tur: Mapped[str] = mapped_column(EK_TURU, nullable=False)
+    metin: Mapped[str | None] = mapped_column(Text, nullable=True)
+    dosya_key: Mapped[str | None] = mapped_column(Text, nullable=True)
+    dosya_adi: Mapped[str | None] = mapped_column(Text, nullable=True)
+    olusturan_user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), nullable=False
+    )
+    created_at = _created_at()
+
+
 class KvkkMetin(Base):
     """(P36) Aydinlatma metni — TENANT ICERIGI, urun sabiti DEGIL.
 

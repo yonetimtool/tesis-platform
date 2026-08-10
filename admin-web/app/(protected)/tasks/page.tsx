@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import useSWR from "swr";
 
+import { Ekler } from "@/components/Ekler";
 import { EmptyState } from "@/components/EmptyState";
 import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, btnGhost, btnDanger, panelCls, panelMotion,
   EksikVeriUyarisi,
@@ -487,6 +488,11 @@ export default function TasksPage() {
               </Tablo>
             </div>
           </div>
+
+          {/* (P154 / Asama 6.4) Ortak not/ek yuzeyi. Goreve ozel bir ek
+              tablosu ve yukleme akisi YAZILMADI: `Ekler` bileseni
+              `varlikTipi` alir ve sekiz varlikta ayni sekilde calisir. */}
+          <Ekler varlikTipi="task" varlikId={detail.id} />
         </motion.div>
       )}
 

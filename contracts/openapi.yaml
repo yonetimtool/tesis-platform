@@ -3781,6 +3781,94 @@ paths:
         "422": { $ref: "#/components/responses/ValidationError" }
 
   # ================================================================= #
+  # NOT VE EK (P154 / Asama 6.4) — her varliga takilabilen TEK sistem
+  # ================================================================= #
+  /ekler:
+    get:
+      tags: [ekler]
+      summary: Bir varligin notlari + dosyalari — TEK zaman cizgisi
+      description: |
+        EK, ANA KAYDIN YETKISINI MIRAS ALIR. Bir ekin gizliligi ana
+        kaydinkiyle AYNIDIR: daireye yazilmis not daireyi gorebilenlere
+        aciktir, icra dosyasina yazilmis not yalnizca finans
+        okuyabilenlere. Bu uc KENDI rol kumesini tutmaz — her varlik tipi
+        icin ILGILI ROUTERIN `require_role` kumesini okur, boylece ana
+        kaydin yetkisi degistiginde ekinki kendiliginden degisir.
+
+        Not ve dosya AYNI listede doner (`tur` ayrimiyla): kullanici
+        ikisini tek zaman cizgisinde gormek ister.
+      parameters:
+        - name: varlik_tipi
+          in: query
+          required: true
+          schema: { $ref: "#/components/schemas/EkVarlikTipi" }
+        - name: varlik_id
+          in: query
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Ekler, eskiden yeniye
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EkListesi" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403":
+          description: Ana kaydi okuma yetkisi yok. Bu kapi VARLIK
+            SORGUSUNDAN ONCE isler — aksi hâlde yetkisiz bir cagiran
+            403/404 farkindan "boyle bir kayit var mi" sorusunu
+            yanitlardi.
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+    post:
+      tags: [ekler]
+      summary: Not ya da dosya ekler
+      description: |
+        DOSYA YUKLEME BURADA YAPILMAZ: istemci once `POST
+        /uploads/presign` ile imzali URL alir, dosyayi DOGRUDAN depoya
+        koyar, donen anahtari `dosya_key` olarak buraya yazar. Ikinci bir
+        yukleme yolu, boyut/tur dogrulamasini iki yerde tutmak olurdu.
+
+        UST KAYIT DOGRULANIR: polimorfik bag (FK yok) yuzunden bu kontrol
+        UCTA yapilir. Yoksa rastgele bir UUID'ye ek takilir ve hicbir
+        ekranda gorunmeyen kayitlar birikirdi.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EkGirdi" }
+      responses:
+        "201":
+          description: Eklendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Ek" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /ekler/{ek_id}:
+    delete:
+      tags: [ekler]
+      summary: Eki siler
+      description: |
+        KIM SILEBILIR: ekin SAHIBI ya da ana kayda YAZMA yetkisi olan.
+        Yalniz sahibe birakmak isten ayrilan bir personelin notlarini
+        kalici kilardi; yalniz yoneticiye birakmak ise kisinin kendi
+        yazdigi notu duzeltmesini engellerdi.
+      parameters:
+        - name: ek_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "204": { description: Silindi }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  # ================================================================= #
   # AIDAT — unit (daire) + sakin + tahakkuk + odeme
   # ================================================================= #
   # ================================================================= #
@@ -9503,6 +9591,57 @@ components:
         id:      { type: string, format: uuid }
         baslik:  { type: string }
         ayrinti: { type: string, nullable: true }
+    # ---------------- (P154 / Asama 6.4) NOT VE EK ---------------- #
+    EkVarlikTipi:
+      type: string
+      description: |
+        Ek takilabilen varliklar — KAPALI KUME. Serbest metin birakmak,
+        `unit` yerine `units` yazan bir cagiranin sessizce erisilemez bir
+        ek uretmesi demekti. Ayni kume goc 0043'teki `ck_varlik_eki_tipi`
+        CHECK kisitinda ve `routers/ekler.py::VARLIKLAR`ta durur;
+        `test_ekler.py::test_varlik_tipleri_GOCLE_AYNI` ikisini kilitler.
+      enum: [unit, app_user, task, icra_dosyasi, tenant_dokuman,
+             complaint, firma, building_block]
+    EkTuru:
+      type: string
+      description: |
+        `not` -> `metin` zorunlu. `dosya` -> `dosya_key` zorunlu, `metin`
+        opsiyonel aciklamadir. Kural hem burada hem veritabanindaki
+        `ck_varlik_eki_icerik` CHECK'inde; sozlesme duzeyinde reddetmek
+        kullaniciya NE eksik oldugunu soyler.
+      enum: [not, dosya]
+    EkGirdi:
+      type: object
+      required: [varlik_tipi, varlik_id, tur]
+      properties:
+        varlik_tipi: { $ref: "#/components/schemas/EkVarlikTipi" }
+        varlik_id:   { type: string, format: uuid }
+        tur:         { $ref: "#/components/schemas/EkTuru" }
+        metin:       { type: string, maxLength: 4000, nullable: true }
+        dosya_key:   { type: string, maxLength: 500, nullable: true }
+        dosya_adi:   { type: string, maxLength: 255, nullable: true }
+    Ek:
+      type: object
+      required: [id, tur, created_at]
+      properties:
+        id:        { type: string, format: uuid }
+        tur:       { $ref: "#/components/schemas/EkTuru" }
+        metin:     { type: string, nullable: true }
+        dosya_key: { type: string, nullable: true }
+        dosya_adi: { type: string, nullable: true }
+        olusturan_ad:
+          type: string
+          nullable: true
+          description: Kim ekledi. "kim yazdi" bilinmeyen bir not, kayit
+            defterinde ise yaramaz.
+        created_at: { type: string, format: date-time }
+    EkListesi:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Ek" }
     AramaSonucu:
       type: object
       required: [q, items]

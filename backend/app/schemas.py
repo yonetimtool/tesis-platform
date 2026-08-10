@@ -4822,6 +4822,55 @@ class MesajOnizlemeOut(BaseModel):
     sms: SmsOlcumOut | None = None
 
 
+# ------------------------ (P154 / Asama 6.4) NOT VE EK --------------------- #
+EkTuru = Literal["not", "dosya"]
+
+
+class EkCreate(BaseModel):
+    """Not ya da dosya eki.
+
+    DOSYA YUKLEME BURADA DEGIL: istemci once `/uploads/presign` ile
+    imzali URL alir, dosyayi DOGRUDAN depoya koyar, sonra donen anahtari
+    (`dosya_key`) buraya yazar. Ikinci bir yukleme yolu, boyut/tur
+    dogrulamasini iki yerde tutmak olurdu.
+    """
+
+    varlik_tipi: str = Field(max_length=32)
+    varlik_id: uuid.UUID
+    tur: EkTuru
+    metin: str | None = Field(None, max_length=4000)
+    dosya_key: str | None = Field(None, max_length=500)
+    dosya_adi: str | None = Field(None, max_length=255)
+
+    @model_validator(mode="after")
+    def _icerik_zorunlu(self) -> "EkCreate":
+        # Goc 0043'teki `ck_varlik_eki_icerik` CHECK'iyle AYNI kural.
+        # Burada da olculuyor cunku veritabani hatasi kullaniciya
+        # "IntegrityError" olarak doner; sozlesme duzeyinde reddetmek
+        # ona NE eksik oldugunu soyler.
+        if self.tur == "not" and not (self.metin or "").strip():
+            raise ValueError("Not icin metin zorunludur.")
+        if self.tur == "dosya" and not (self.dosya_key or "").strip():
+            raise ValueError("Dosya eki icin dosya_key zorunludur.")
+        return self
+
+
+class EkOut(BaseModel):
+    id: uuid.UUID
+    tur: EkTuru
+    metin: str | None = None
+    dosya_key: str | None = None
+    dosya_adi: str | None = None
+    #: Kim ekledi. "kim yazdi" bilinmeyen bir not, kayit defterinde ise
+    #: yaramaz.
+    olusturan_ad: str | None = None
+    created_at: datetime
+
+
+class EkListResponse(BaseModel):
+    items: list[EkOut]
+
+
 # ------------------------- (P154 / Asama 6.3) ARAMA ------------------------ #
 class AramaVurusu(BaseModel):
     """Tek bir arama vurusu.

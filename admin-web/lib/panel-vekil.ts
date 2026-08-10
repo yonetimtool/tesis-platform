@@ -45,6 +45,11 @@ export const OKUMA: Record<string, string> = {
   anketler: "/anketler",
   // --- yetki matrisi (P41) — SALT OKUMA ---
   "yetki-matrisi": "/yetki-matrisi",
+  // --- not ve ek (P154 / Asama 6.4) ---
+  // Ayri bir `route.ts` YAZILMADI: bu kaydin GET/POST/DELETE deseni tam
+  // olarak `[kaynak]` ve `[kaynak]/[id]` isleyicilerinin yaptigi is.
+  // Ucuncu bir vekil dosyasi ayni on satiri kopyalamak olurdu.
+  ekler: "/ekler",
 };
 
 /** POST ile YAZILAN kaynaklar (okumadan AYRI: bir ucu yanlislikla yazmaya
@@ -65,6 +70,7 @@ export const YAZMA: Record<string, string> = {
   "kvkk-metin": "/kvkk/metin",
   anketler: "/anketler",
   "portal-galeri": "/portal/galeri",
+  ekler: "/ekler",
 };
 
 /** Kaynak basina ILETILEBILEN sorgu parametreleri (yine beyaz liste:
@@ -77,6 +83,9 @@ export const SUZGECLER: Record<string, string[]> = {
   "unit-uyarilari": ["unit_id"],
   "karar-defteri": [],
   anketler: [],
+  // Ikisi de ZORUNLU: backend bunlarsiz 422 doner. Beyaz listede
+  // olmasalardi vekil onlari duserdi ve her ek listesi hata verirdi.
+  ekler: ["varlik_tipi", "varlik_id"],
 };
 
 export function okumaYolu(kaynak: string): string | null {
