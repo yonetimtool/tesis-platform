@@ -30,7 +30,8 @@
 | **7.1** — Menü mimarisi (mobil) | çekmece bölümlendi, katlanabilir, tercih kalıcı | `1f856a0` |
 | **7.2 (6/7 madde)** — UI temizliği | parola göster/gizle · daire tipleri · alt menü rol bazlı · FAB yazısız · gizli aksiyonlar · görev kategorisi | `a513d82` |
 | **7.2 (7/7)** — "Site sayfası" kaldırıldı | anket ayrıldı → portal silindi; **tablolar duruyor** | `7654572` |
-| **7.3** — Onboarding sihirbazı | göç 0044 + `/kurulum` ucu + panel sayfası + ayarlar bağlantısı | bu tur |
+| **7.3** — Onboarding sihirbazı | göç 0044 + `/kurulum` ucu + panel sayfası + ayarlar bağlantısı | `a7b8ad7` |
+| **7.4** — Bağımlılık yönlendirmesi | `BagimlilikUyarisi` + `DonusCubugu` + 9 satırlık kayıt; 4 ekrana bağlandı | `8d18f56` |
 
 ---
 
@@ -244,6 +245,35 @@ olabilir ve biri "NFC yok" dediyse öteki de bunu görmeli.
 bir ekranı zaten var; içine ikinci bir "blok ekle" formu koymak aynı
 doğrulamayı iki yerde tutmak olurdu. Adımlar **kilitli değil**: kilitlemek
 brief'in "yarım bırakıp devam edebilme" şartıyla çelişirdi.
+
+### 4.16 Bağımlılık yönlendirmesi: geri dönüş ADRESTE taşınır (Aşama 7.4)
+
+Brief üç şey istiyor: uyarı cümlesi + ilgili alana yönlendirme + **işlem
+bitince geri dönüş**, hepsi TEK bileşende.
+
+**`history.back()` kullanılmadı.** Kullanıcı hedef ekranda birkaç adım
+gezinir (defter sekmesi değiştirir, modal açar, kaydeder); `back()` onu
+işini bitirdiği yere değil bir önceki karesine gönderirdi. Dönüş adresi
+`?donus=` ile taşınıyor ve bu gezinmelerden etkilenmiyor.
+
+**Dönüş şeridi korumalı düzende, tek yerde.** Bileşen dokuz farklı hedefe
+yollayabiliyor; her hedefe bir "geri dön" düğmesi koymak aynı davranışı
+dokuz kez yazmak olurdu.
+
+**Açık yönlendirme kapatıldı.** `?donus=https://baska-site` yazan biri
+panelden dışarı yönlendiren bir düğme üretebilirdi. Yalnız uygulama içi
+yollar kabul ediliyor — `//host` ve `/\host` de reddediliyor, çünkü ikisi
+de tarayıcıda mutlak adrestir. Üçü de test edildi.
+
+**`eksik` kararı çağırandadır.** Ekranların çoğu bağlı olduğu listeyi
+zaten çekiyor; bileşen kendi sorgusunu atsaydı aynı veriyi ikinci kez
+indirirdi. Yalnız `/units`te blok listesi uyarı için ayrıca çekiliyor.
+
+**Bağlanan dört ekran:** görevler (kategori), finans (kasa), mesajlar
+(şablon), daireler (blok). Kalan kayıtlar bileşene hazır — her biri tek
+satır. `/dues`e uyarı **konulmadı**: envanterdeki 422 `/borclandirma`
+ucuna ait, `/api/dues/assessments`e değil; yanlış yerde uyarı göstermek
+uyarısızlıktan kötüdür.
 
 ## 5. BULUNAN GERÇEK KUSURLAR
 
