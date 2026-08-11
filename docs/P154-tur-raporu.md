@@ -1016,28 +1016,39 @@ engellenmiş oldu.
 
 ---
 
-## 7. YAPILMAYAN AŞAMALAR — dürüst kayıt
+## 7. AŞAMA DURUMU — hepsi bitti, açık kalanlar aşağıda
 
-Aşama 3, 6 ve 9'un bir bölümü sonradan yapıldı (§1'e işlendi). **Kalan
-dört aşama** ve 9'un artığı:
+**A, 0, 1, 2, 3, 4, 5, 6.1–6.4, 7.1–7.4, 8, 9, 10, 11 — TAMAM.**
+Brief'te 6.5 diye bir madde YOK (Aşama 0'da ölçüldü; 6 dört alt maddeden
+oluşuyor). Her aşamanın çıktısı ve commit'i §1'deki tabloda.
 
-| Aşama | Neden başlanmadı | Aşama 0'dan hazır girdi |
+> Bu bölüm daha önce "yapılmayan aşamalar" listesiydi (5 · 7.3/7.4 · 8 ·
+> 9-artık · 10). Hepsi sonradan yapıldı; liste bayat kaldığı için
+> değiştirildi — duran bir "yapılmadı" listesi, biteni bitmemiş
+> gösterirdi.
+
+### Aşama bitti ama ÇALIŞMASI Kerem'e bağlı olanlar
+
+| Aşama | Kod durumu | Eksik olan |
 |---|---|---|
-| **5** — Kullanıcı + yapı yönetimi | Aşama 6 ve 8'e bağımlı (modal + import) | Ölçülen 7 boşluk `docs/envanter.md`'de listeli (toplu daire web'de yok, kat silme yok, sürükle-bırak yok, daire tipi ataması web'de yok…). Modal + Liste **artık hazır** (6.1/6.2) |
-| **7.3/7.4** — Onboarding sihirbazı, bağımlılık yönlendirmesi | 7.1 bitti, 7.2'nin üç maddesi yapıldı | Bağımlılık haritası 16 satır hazır (Aşama 0.4); yönlendirme **tek bileşen** olarak kurulacak |
-| **8** — Import framework | `/site-aktar` üstüne kurulacak | Uç + şablon **zaten çalışıyor** |
-| **9 (artık)** — Kuyruk + yeniden deneme, zengin metin e-posta, gönderim ekranı | Sağlayıcı katmanı kuruldu, üstü kalmadı | `app/gonderim.py` tek giriş noktası; `mesaj_gonderim` tablosundan kota sayılıyor |
-| **10** — Apsiyon B kovası | 6'ya bağımlı | 14 A− maddesi listeli; **6 artık bitti** |
+| **4** — OAuth | Bitti, testli | Üç konsolun yapılandırması (`docs/oauth-kurulum.md`). Yapılmadan sosyal giriş **kapalı** — bu bilinçli, hiçbir yerde düğme görünmez. |
+| **9** — SMS/WhatsApp/e-posta | Altyapı bitti (kuyruk + yeniden deneme + kota) | Netgsm başlık onayı; WhatsApp için **model A/B kararı** |
+| **A** — Test sunucusu | Kılavuz bitti | Sunucu + DNS |
 
-### 7.2'nin yapılmayan maddeleri
-Parola göster/gizle · "Bağımsız bölüm tanımları" → "Daire Tipleri" ·
-"Site sayfası" kaldırma · alt menü rol adları · mobil "+" düğmesi ·
-gizli aksiyonların görünürlüğü · görev kategorisi kolaylaştırma.
+### Aşama kapsamında OLMAYAN, açık tek karar
 
-> **"Site sayfası" için uyarı (Aşama 0'da ölçüldü):** `/portal`ı silmek
-> **anketi de götürür** — `/anketler` uçları `routers/portal.py` altında
-> ve anket uçtan uca çalışıyor, mobil karşılığı da var. Önce anket
-> ayrılmalı.
+**Daire başına tek hesap — veritabanı kısıtı** (§4.47–§4.53). Uygulama
+katmanı çalışıyor ve testli; kısıt ölçüldü ve geri alındı. Öneri: A
+(`unit_id, rol_tipi`).
+
+### Bu turda BULUNAN, kapatılmayan iki kusur
+
+1. **`daire_dolu_mu` fazla katı** (§4.49) — `rol_tipi`ne bakmadan her
+   ikinci sakini reddediyor, yani malik+kiracı **uçtan kurulamıyor**.
+   Yukarıdaki kararla birlikte düzeltilmeli.
+2. **`test_dashboard` yarış koşulu** (§4.46) — beat'in pencere üreticisi
+   testin saydığı pencereleri şişiriyor. Ürün kodunda değil, testin
+   varsayımında.
 
 ---
 
