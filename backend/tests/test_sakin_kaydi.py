@@ -223,9 +223,18 @@ def test_AYNI_taban_cakisirsa_sira_eki_alir(owner_conn):
         )
         kodlar = [r[0] for r in cur.fetchall()]
     assert len(set(kodlar)) == 2, "cakisma sessizce ayni kodu uretemez"
-    # Sira numarasina DEGIL kurala baglaniyoruz: onceki kosumlardan kalan
-    # ayni-adli tesisler varsa ek `-3`, `-4` olabilir. Olculen sey: ikisi de
-    # AYNI tabani tasir ve en az biri sira eki almistir.
+    # Sira numarasina DEGIL kurala baglaniyoruz. Olculen sey: ikisi de AYNI
+    # tabani tasir ve en az biri EK almistir.
+    #
+    # IKI EK BICIMI DE MESRU (`tenant_kayit_kodu_ata`, goc 0041):
+    #   * `-<10..99>` — normal yol, rastgele iki haneli (kilitli kural 3),
+    #   * `-<6 hex>`  — SONLANMA GARANTISI: 90 iki haneli aday tukenince.
+    #
+    # ESKIDEN YALNIZ ILKI KABUL EDILIYORDU ve bu test, veritabaninda 90'dan
+    # fazla ayni-tabanli tesis birikince KALICI OLARAK duserdi — nitekim
+    # dustu (112 artik fixture tesisi; rapor §4.54). Yedek yol da urunun
+    # belgelenmis davranisi; testin onu reddetmesi yanlisti.
     taban = "OLTU-260715"
     assert all(k.startswith(taban) for k in kodlar)
-    assert any(re.fullmatch(rf"{taban}-\d+", k) for k in kodlar)
+    ek = re.compile(rf"{re.escape(taban)}-([0-9]{{2}}|[0-9a-f]{{6}})$")
+    assert any(ek.fullmatch(k) for k in kodlar), kodlar

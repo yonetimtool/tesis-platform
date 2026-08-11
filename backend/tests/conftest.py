@@ -54,6 +54,23 @@ FIXTURE_SLUG_ONEKLERI = (
     "kurulum-bekliyor-",
 )
 
+#: ONEKLE ifade EDILEMEYEN fixture slug'lari — TAM DESEN gerekir.
+#:
+#: `test_sakin_kaydi` ve `test_tesis_kodu_ve_coklu_yonetici` tesisleri
+#: `c-<8 hex>` slug'iyla aciyor. Bunu `FIXTURE_SLUG_ONEKLERI`ne "c-" diye
+#: eklemek KOLAY ama TEHLIKELI olurdu: "C Blok Sitesi" gibi GERCEK bir
+#: tesisin slug'i da `c-blok-sitesi` olur ve temizlik onu silerdi.
+#:
+#: NEDEN EKLENDI (olculdu): bu satirlar hicbir onege uymadigi icin HER
+#: TAM KOSUMDA birikiyordu — 112 artik tesis sayildi. Zararsiz curuf
+#: degil: `tenant_kayit_kodu_ata` cakismada 90 iki-haneli adaydan secer
+#: ve o havuz tukendiginde 6 haneli hex yedege duser. Yani birikinti
+#: URUN DAVRANISINI degistirip `test_AYNI_taban_cakisirsa_sira_eki_alir`i
+#: dusurdu (rapor §4.54).
+FIXTURE_SLUG_DESENLERI = (
+    r"^c-[0-9a-f]{8}$",
+)
+
 
 #: (P75) Kosum kilidi anahtari — sabit ve keyfi; yalniz bu suit kullanir.
 _KOSUM_KILIDI = 815_074_001
@@ -104,6 +121,8 @@ def _artik_temizligi():
                 )
             for onek in FIXTURE_SLUG_ONEKLERI:
                 cur.execute("DELETE FROM tenant WHERE slug LIKE %s", (onek + "%",))
+            for desen in FIXTURE_SLUG_DESENLERI:
+                cur.execute("DELETE FROM tenant WHERE slug ~ %s", (desen,))
         yield
     finally:
         conn.close()

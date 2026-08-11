@@ -179,7 +179,13 @@ def test_dashboard_alarm_mesaji_istegin_dilinde(client, world, owner_conn):
 
 
 def _alti_kacirilan_pencere(client, world, owner_conn, plan_ad="E-Devriye"):
-    """Ayni planin ALTI kacirilmis penceresi -> alti alarm."""
+    """Ayni planin ALTI kacirilmis penceresi -> alti alarm.
+
+    URETTIGI PENCERE KIMLIKLERINI DE DONER: cagiran "bu plandaki TUM
+    alarmlar" yerine "BENIM ekledigim pencereler" uzerinden iddia
+    kurabilsin diye. Gerekcesi
+    `test_ayni_planin_alti_alarmi_TEK_GRUBA_dusuyor` icinde.
+    """
     admin = _headers(client, world["slug_a"], world["admin_a"])
     cp = _checkpoint(client, admin)
     plan = client.post(
@@ -193,7 +199,7 @@ def _alti_kacirilan_pencere(client, world, owner_conn, plan_ad="E-Devriye"):
         headers=admin,
         json={"items": [{"checkpoint_id": cp["id"]}]},
     )
-    for saat in range(6):
+    pencereler = [
         _ins_window(
             owner_conn,
             world["a"],
@@ -201,25 +207,68 @@ def _alti_kacirilan_pencere(client, world, owner_conn, plan_ad="E-Devriye"):
             PAST_START + timedelta(hours=saat),
             PAST_START + timedelta(hours=saat, minutes=59),
         )
+        for saat in range(6)
+    ]
     detect_missed(now=NOW_AFTER)
-    return admin, plan
+    return admin, plan, pencereler
 
 
 def test_ayni_planin_alti_alarmi_TEK_GRUBA_dusuyor(client, world, owner_conn):
-    admin, plan = _alti_kacirilan_pencere(client, world, owner_conn)
-    body = client.get("/dashboard/live", headers=admin, params={"alarm_limit": 100}).json()
+    """Ayni planin alarmlari TEK grupta toplanir.
 
+    IDDIA SAYIYA DEGIL KIMLIGE DAYANIR — ve bu bir gevsetme degil,
+    KUSUR DUZELTMESIDIR.
+
+    Eski hâli `sayi == 6` diyordu; bu, "bu planin TEK pencere kaynagi
+    benim" varsayimiydi ve YANLISTI: beat'in `generate_patrol_windows`
+    gorevi ayni plan icin 12 pencere daha uretiyor (bugun + yarin x 6) ve
+    `NOW_AFTER` cok ileri bir tarih oldugu icin onlar da "kacirilmis"
+    sayiliyor. Test tam takimda 6 yerine 18 gorup dustu (rapor §4.46).
+
+    Testin ASIL iddiasi zaten sayi degildi: "alti alarm ALTI GRUP degil
+    TEK grup olur". Asagidaki uc olcum onu sayidan bagimsiz kurar.
+
+    URETICI BURADA TAKLIT EDILIYOR: yarisin kazara olusmasini beklemek
+    yerine fazladan pencereler BILEREK ekleniyor. Boylece test, bagimsiz
+    oldugunu HER kosumda KANITLIYOR — yaris penceresi kucuk oldugu icin
+    "gecti" demek yeterli degildi.
+    """
+    admin, plan, pencereler = _alti_kacirilan_pencere(client, world, owner_conn)
+
+    # Beat'in uretecegi pencerelerin taklidi (farkli zaman araligi,
+    # ayni plan). Bunlar da gecmiste ve `bekliyor` oldugu icin ayni
+    # `detect_missed` cagrisinda kacirilmis sayilirlar.
+    for saat in range(12):
+        _ins_window(
+            owner_conn,
+            world["a"],
+            plan["id"],
+            PAST_START - timedelta(hours=saat + 1),
+            PAST_START - timedelta(hours=saat, minutes=1),
+        )
+    detect_missed(now=NOW_AFTER)
+
+    body = client.get("/dashboard/live", headers=admin, params={"alarm_limit": 100}).json()
     gruplar = [g for g in body["alarm_gruplari"] if g["patrol_plan_id"] == plan["id"]]
+
+    # (1) GRUPLAMA IDDIASI: 18 alarm da TEK grupta.
     assert len(gruplar) == 1, f"tek grup bekleniyordu, {len(gruplar)} geldi"
     g = gruplar[0]
-    assert g["sayi"] == 6, g["sayi"]
-    assert len(g["olaylar"]) == 6
+
+    # (2) BENIM pencerelerimin HEPSI o grupta.
+    gorulen = {o["patrol_window_id"] for o in g["olaylar"]}
+    eksik = {str(w) for w in pencereler} - gorulen
+    assert not eksik, f"eklenen pencereler grupta yok: {eksik}"
+
+    # (3) IC TUTARLILIK: `sayi` olay sayisiyla ayni olmali.
+    assert g["sayi"] == len(g["olaylar"]), (g["sayi"], len(g["olaylar"]))
+
     assert g["patrol_plan_ad"] == "E-Devriye"
     assert g["tip"] == "kacirilan_tur"
 
 
 def test_grup_EN_SON_zamani_olaylarin_en_yenisi(client, world, owner_conn):
-    admin, plan = _alti_kacirilan_pencere(client, world, owner_conn, "Zaman Devriyesi")
+    admin, plan, _ = _alti_kacirilan_pencere(client, world, owner_conn, "Zaman Devriyesi")
     g = next(
         x for x in client.get(
             "/dashboard/live", headers=admin, params={"alarm_limit": 100}
@@ -231,8 +280,8 @@ def test_grup_EN_SON_zamani_olaylarin_en_yenisi(client, world, owner_conn):
 
 def test_FARKLI_PLANLAR_ayri_gruplarda(client, world, owner_conn):
     """Gruplama (tip, DEVRIYE) ikilisiyle — hepsini tek yigina atmaz."""
-    admin, plan1 = _alti_kacirilan_pencere(client, world, owner_conn, "A Devriyesi")
-    _, plan2 = _alti_kacirilan_pencere(client, world, owner_conn, "B Devriyesi")
+    admin, plan1, _ = _alti_kacirilan_pencere(client, world, owner_conn, "A Devriyesi")
+    _, plan2, _ = _alti_kacirilan_pencere(client, world, owner_conn, "B Devriyesi")
     gruplar = client.get(
         "/dashboard/live", headers=admin, params={"alarm_limit": 100}
     ).json()["alarm_gruplari"]
@@ -243,7 +292,7 @@ def test_FARKLI_PLANLAR_ayri_gruplarda(client, world, owner_conn):
 
 
 def test_ONEM_tipe_gore(client, world, owner_conn):
-    admin, plan = _alti_kacirilan_pencere(client, world, owner_conn, "Onem Devriyesi")
+    admin, plan, _ = _alti_kacirilan_pencere(client, world, owner_conn, "Onem Devriyesi")
     g = next(
         x for x in client.get(
             "/dashboard/live", headers=admin, params={"alarm_limit": 100}
@@ -259,7 +308,7 @@ def test_OLAY_govdesinde_tip_ve_plan_TEKRARLANMIYOR(client, world, owner_conn):
     Bu alanlar olay basina da donseydi gruplama gorsel bir duzenleme
     olurdu; olculen sey KUCULMENIN GERCEK oldugudur.
     """
-    admin, plan = _alti_kacirilan_pencere(client, world, owner_conn, "Govde Devriyesi")
+    admin, plan, _ = _alti_kacirilan_pencere(client, world, owner_conn, "Govde Devriyesi")
     g = next(
         x for x in client.get(
             "/dashboard/live", headers=admin, params={"alarm_limit": 100}
@@ -276,7 +325,7 @@ def test_OLAY_govdesinde_tip_ve_plan_TEKRARLANMIYOR(client, world, owner_conn):
 
 
 def test_TENANT_YALITIMI_gruplarda_da_gecerli(client, world, owner_conn):
-    admin_a, plan = _alti_kacirilan_pencere(client, world, owner_conn, "Yalitim Devriyesi")
+    admin_a, plan, _ = _alti_kacirilan_pencere(client, world, owner_conn, "Yalitim Devriyesi")
     admin_b = _headers(client, world["slug_b"], world["admin_b"])
     gruplar_b = client.get(
         "/dashboard/live", headers=admin_b, params={"alarm_limit": 100}
@@ -290,7 +339,7 @@ def test_ALARM_LIMIT_olay_sayisina_uygulanir(client, world, owner_conn):
     "Son 20 grup" ile "son 20 olay" farkli seylerdir; ikincisi secildi ki
     limit gruplama oncesi/sonrasi AYNI anlami tasisin.
     """
-    admin, plan = _alti_kacirilan_pencere(client, world, owner_conn, "Limit Devriyesi")
+    admin, plan, _ = _alti_kacirilan_pencere(client, world, owner_conn, "Limit Devriyesi")
     body = client.get("/dashboard/live", headers=admin, params={"alarm_limit": 3}).json()
     toplam_olay = sum(len(g["olaylar"]) for g in body["alarm_gruplari"])
     assert toplam_olay == 3, toplam_olay
@@ -308,7 +357,7 @@ def test_GOVDE_KUCULDU_gruplama_gorsel_duzenleme_degil(client, world, owner_conn
     `patrol_window_id` (36 karakterlik UUID + alan adi) grubun ustune tek
     kez cikti.
     """
-    admin, _ = _alti_kacirilan_pencere(client, world, owner_conn, "Olcum Devriyesi")
+    admin, _, _ = _alti_kacirilan_pencere(client, world, owner_conn, "Olcum Devriyesi")
     yeni = client.get(
         "/dashboard/live", headers=admin, params={"alarm_limit": 100}
     ).json()

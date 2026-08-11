@@ -643,30 +643,76 @@ yapılandırılmamış sağlayıcı hiçbir yerde düğme olarak görünmüyor,
 telefon/parola girişi hiç etkilenmiyor (brief'in şartı: "tıkanırsa Aşama
 3 tek başına çalışsın", `test_ASAMA_3_SOSYAL_GIRIS_OLMADAN_CALISIR`).
 
-### 4.46 BULUNAN (ÜRETİLMEYEN) KUSUR: `test_dashboard` yarış koşulu
+### 4.46 `test_dashboard` yarış koşulu — bulundu ve DÜZELTİLDİ
 
-Tam takım koşumunda `test_ayni_planin_alti_alarmi_TEK_GRUBA_dusuyor`
-düştü: 6 alarm beklerken **18** geldi. Aşama 4 ile ilgisi yok, ölçüldü.
+Tam takımda `test_ayni_planin_alti_alarmi_TEK_GRUBA_dusuyor` 6 alarm
+beklerken **18** gördü.
 
-**Mekanizma:** test plana altı pencere ekleyip `detect_missed(now=
-2030-01-01)` çağırıyor. Beat'in `generate_patrol_windows` görevi ise aynı
-plan için **12 pencere** üretiyor (bugün + yarın × 6). `NOW_AFTER` çok
-ileri bir tarih olduğu için üretilen pencereler de "kaçırılmış" sayılıyor
-ve 6 + 12 = 18 çıkıyor.
+**Mekanizma:** test plana altı pencere ekleyip
+`detect_missed(now=2030-01-01)` çağırıyor. Beat'in
+`generate_patrol_windows` görevi ise aynı plan için **12 pencere** daha
+üretiyor (bugün + yarın × 6); `NOW_AFTER` çok ileri bir tarih olduğu için
+onlar da "kaçırılmış" sayılıyor. 6 + 12 = 18.
 
-**Kanıt:** (a) aynı arka uç koduyla 30 dakika önceki koşumda geçti,
-(b) tek başına koşunca geçiyor (18/18), (c) worker günlüğünde
-`generate_patrol_windows ... {'created': 12}` satırları var, (d) 18 tam
-olarak 6 + 12.
+**Kusur testin varsayımındaydı:** `sayi == 6` demek, "bu planın tek
+pencere kaynağı benim" demekti. Testin **asıl iddiası** zaten sayı
+değildi — "altı alarm ALTI GRUP değil TEK grup olur".
 
-**Bu turda düzeltilmedi ve sebebi:** kusur testin varsayımında (planın
-tek pencere kaynağı kendisi olduğunu sanıyor), ürün kodunda değil.
-Aşama 4 sürerken ilgisiz bir testin iddiasını gevşetmek, o kilidin ne
-koruduğunu düşünmeden değiştirmek olurdu. Doğru düzeltme testin yalnız
-KENDİ eklediği pencereleri saymasıdır; ayrı bir turda yapılmalı.
+**Düzeltme, iddiayı sayıdan kimliğe taşıdı:**
+1. bu plan için **tek** grup var (gruplama iddiası),
+2. testin eklediği altı pencerenin **hepsi** o gruptaki olaylarda,
+3. `sayi == len(olaylar)` (iç tutarlılık).
 
-**Doğrulama koşumu beat durdurularak alındı** — beat bir dev arka plan
-süreci, testin sözleşmesinin parçası değil.
+**Ve test artık bağımsızlığını KANITLIYOR:** yarışın kazara oluşmasını
+beklemek yerine üreticinin ekleyeceği 12 pencere **bilerek** ekleniyor.
+Yarış penceresi küçük olduğu için "geçti" demek yeterli değildi — eski
+hâli bu enjeksiyonla **her** koşumda düşerdi.
+
+**Doğrulama beat AÇIKKEN yapıldı.** Önceki iki tur beat durdurularak
+yeşile alınmıştı; artık gerek yok.
+
+> Bu bir gevşetme değil: kaldırılan tek şey yanlış olan varsayımdı.
+> Gruplama iddiası, kapsama iddiası ve iç tutarlılık — üçü de eskisinden
+> daha sıkı ölçülüyor.
+
+### 4.54 Yarışı kovalarken ikinci bir kusur çıktı: test çöpü ÜRÜN DAVRANIŞINI değiştirdi
+
+Pano düzeltmesinden sonraki tam takımda **başka** bir test düştü:
+`test_AYNI_taban_cakisirsa_sira_eki_alir`. Zincir şöyle çıktı ve
+ilginç kısmı ortadaki halka:
+
+1. `test_sakin_kaydi` ve `test_tesis_kodu_ve_coklu_yonetici` tesisleri
+   `c-<8 hex>` slug'ıyla açıyor. `conftest`in artık temizliği **önek**
+   listesiyle çalışıyor ve `c-` o listede **yok** — yani bu satırlar her
+   tam koşumda birikiyordu. **112 artık tesis** sayıldı.
+2. `tenant_kayit_kodu_ata` (göç 0041) çakışmada **90 iki haneli**
+   adaydan rastgele seçer; 20 denemede bulamazsa 6 haneli hex yedeğe
+   düşer ("sonlanma garantisi").
+3. 112 birikinti o 90 slotu **tüketti**. Artık her yeni `OLTU-260715`
+   kaydı hex ek alıyor: `OLTU-260715-fde3b9`.
+4. Test yalnız `-\d+` biçimini kabul ediyordu → kalıcı kırmızı.
+
+**Yani test çöpü zararsız kirlilik değildi; ürünün hangi kod yolunu
+seçtiğini değiştirdi.** `conftest`in kendi yorumu bu sınıfı zaten
+kaydetmişti (100 birikmiş "kurulum-bekliyor-" tesisi); aynı tuzağın
+ikinci örneği.
+
+**İki taraf da düzeltildi:**
+
+- **Temizlik**: `FIXTURE_SLUG_DESENLERI` eklendi (`^c-[0-9a-f]{8}$`).
+  Önek listesine `"c-"` yazmak **kolaydı ama tehlikeli**: "C Blok
+  Sitesi" gibi gerçek bir tesisin slug'ı da `c-blok-sitesi` olur ve
+  temizlik onu silerdi. Ölçüm: veritabanında bu desene uyan 112 kaydın
+  **hepsi** fixture, başka `c-` tesisi **yok**. 112'si silindi;
+  birikmenin durduğu iki ardışık koşumla doğrulandı (sabit 2).
+- **Test**: artık **iki meşru ek biçimini de** kabul ediyor —
+  `-<10..99>` (normal yol, kilitli kural 3'ün "rastgele sayı"sı) ve
+  `-<6 hex>` (yedek yol). Yedek yol ürünün belgelenmiş davranışı; testin
+  onu reddetmesi yanlıştı.
+
+**Tetikleyicide kusur YOK.** 90 slot + hex kaçış yolu bilinçli bir
+tasarım ve kilitli kural 3'ü karşılıyor. Kusur, ona 112 çöp satırla
+gelinmesindeydi.
 
 ### 4.47 Daire başına tek hesap: **A seçeneği uygulandı** (göç 0049)
 
@@ -1020,14 +1066,12 @@ oluşuyor). Her aşamanın çıktısı ve commit'i §1'deki tabloda.
 | **9** — SMS/WhatsApp/e-posta | Altyapı bitti (kuyruk + yeniden deneme + kota) | Netgsm başlık onayı; WhatsApp için **model A/B kararı** |
 | **A** — Test sunucusu | Kılavuz bitti | Sunucu + DNS |
 
-### Bu turda BULUNAN, kapatılmayan tek kusur
+### Bu turda bulunan kusurların hepsi kapandı
 
-**`test_dashboard` yarış koşulu** (§4.46) — beat'in pencere üreticisi
-testin saydığı pencereleri şişiriyor. Ürün kodunda değil, testin
-varsayımında; doğru düzeltme testin yalnız kendi eklediği pencereleri
-saymasıdır.
-
-> `daire_dolu_mu`nun fazla katı olması (§4.50) A seçeneğiyle **kapandı**.
+- **`daire_dolu_mu` fazla katıydı** (§4.50) → A seçeneğiyle kapandı.
+- **`test_dashboard` yarış koşulu** (§4.46) → düzeltildi; test artık
+  bağımsızlığını her koşumda kanıtlıyor ve tam takım **beat açıkken**
+  yeşil.
 
 ---
 
