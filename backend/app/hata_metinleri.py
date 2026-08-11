@@ -106,6 +106,43 @@ METINLER: dict[str, dict[str, str]] = {
     # (`routers/kurulum.py::ADIMLAR`). Bilinmeyen kod yazim hatasidir.
     # (P154 / Asama 8) Ice aktarim catisi.
     # (P154 / Asama 10) Ters kayit (iptal).
+    # (P154 / Asama 5) Yapi duzenleme + kullanici silme.
+    "kendi_hesabini_silemez": {
+        "tr": "Kendi hesabınızı buradan silemezsiniz.",
+        "en": "You cannot delete your own account here.",
+        "ar": "لا يمكنك حذف حسابك من هنا.",
+        "ru": "Свою учётную запись здесь удалить нельзя.",
+        "de": "Ihr eigenes Konto können Sie hier nicht löschen.",
+        "fr": "Vous ne pouvez pas supprimer votre propre compte ici.",
+        "es": "No puede eliminar su propia cuenta aquí.",
+    },
+    "daire_zaten_dolu": {
+        "tr": "Bu dairenin zaten aktif bir sakini var.",
+        "en": "This unit already has an active resident.",
+        "ar": "لهذه الوحدة ساكن نشط بالفعل.",
+        "ru": "В этой квартире уже есть активный жилец.",
+        "de": "Diese Wohnung hat bereits einen aktiven Bewohner.",
+        "fr": "Ce logement a déjà un résident actif.",
+        "es": "Esta vivienda ya tiene un residente activo.",
+    },
+    "kat_silme_onayi_gerekli": {
+        "tr": "Bu katta daireler var; silmek için onay gerekir.",
+        "en": "This floor has units; deletion requires confirmation.",
+        "ar": "يحتوي هذا الطابق على وحدات؛ الحذف يتطلب تأكيداً.",
+        "ru": "На этом этаже есть квартиры; удаление требует подтверждения.",
+        "de": "Diese Etage hat Wohnungen; Löschen erfordert eine Bestätigung.",
+        "fr": "Cet étage contient des logements ; la suppression exige une confirmation.",
+        "es": "Esta planta tiene viviendas; la eliminación requiere confirmación.",
+    },
+    "guncellenecek_alan_yok": {
+        "tr": "Güncellenecek alan belirtilmedi.",
+        "en": "No field given to update.",
+        "ar": "لم يتم تحديد أي حقل للتحديث.",
+        "ru": "Не указано ни одного поля для обновления.",
+        "de": "Kein zu aktualisierendes Feld angegeben.",
+        "fr": "Aucun champ à mettre à jour n'a été indiqué.",
+        "es": "No se indicó ningún campo para actualizar.",
+    },
     "iptal_iptal_edilemez": {
         "tr": "Bir iptal kaydı iptal edilemez.",
         "en": "A reversal entry cannot be reversed.",

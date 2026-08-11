@@ -74,6 +74,26 @@ export default function BuildingEditorPage() {
   const drilledIn = openBlock !== null;
   const isBlockless = openBlock === BLOCKLESS;
 
+  /**
+   * (P154 / Asama 5) SURUKLE-BIRAK SONRASI YERLESIMI KAYDET.
+   *
+   * TEK ISTEK (`PATCH /units/siralama`): her daire icin ayri PATCH
+   * atmak, yirmi dairelik bir katta yirmi istek ve ARADA KESILME riski
+   * demekti — yarim uygulanmis bir siralama, kullanicinin gordugu
+   * duzenle veritabanindakini ayirirdi.
+   */
+  async function siralamayiKaydet(
+    satirlar: { id: string; kat: number; sira: number }[],
+  ) {
+    if (satirlar.length === 0) return;
+    try {
+      await apiSend("/api/units/siralama", "PATCH", { satirlar });
+      refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : t("ortakHataOlustu"));
+    }
+  }
+
   function refresh() {
     void blocks.mutate();
     void units.mutate();
@@ -342,6 +362,7 @@ export default function BuildingEditorPage() {
           label={isBlockless ? BLOCKLESS : (openBlock as string)}
           units={isBlockless ? blocklessUnits : unitItems.filter((u) => u.blok === openBlock)}
           pendingFloors={pendingFloors}
+          onSirala={(satirlar) => void siralamayiKaydet(satirlar)}
           yuklemeHatasi={Boolean(loadError)}
           onAddFloor={addFloor}
           onAddUnit={(kat) => openNewUnit(isBlockless ? null : (openBlock as string), kat)}
@@ -439,7 +460,7 @@ function BlockTiles({
 
 function BlockDetail({
   label, units, pendingFloors, yuklemeHatasi,
-  onAddFloor, onAddUnit, onEditUnit, onRemoveUnit,
+  onAddFloor, onAddUnit, onEditUnit, onRemoveUnit, onSirala,
 }: {
   label: string;
   units: Unit[];
@@ -451,9 +472,15 @@ function BlockDetail({
   onAddUnit: (kat?: number) => void;
   onEditUnit: (u: Unit) => void;
   onRemoveUnit: (u: Unit) => void;
+  /** (P154 / Asama 5) Yeni yerlesim — TEK istekte kaydedilir. */
+  onSirala: (satirlar: { id: string; kat: number; sira: number }[]) => void;
 }) {
   const t = useT();
   const blockless = label === BLOCKLESS;
+  // Suruklenen daire. Sayfa duzeyinde DEGIL blok detayinda: surukleme
+  // yalniz ayni blogun katlari arasinda anlamli (daireyi baska bloga
+  // tasimak `no` degistirmeyi gerektirir, o AYRI bir is).
+  const [suruklenen, setSuruklenen] = useState<Unit | null>(null);
 
   const floorSet = new Set<number>(pendingFloors);
   for (const u of units) if (u.kat != null) floorSet.add(u.kat);
@@ -461,6 +488,54 @@ function BlockDetail({
   const katsiz = units.filter((u) => u.kat == null);
 
   const bySira = (a: Unit, b: Unit) => (a.sira ?? 1e9) - (b.sira ?? 1e9) || a.no.localeCompare(b.no);
+
+  /**
+   * `tasinan`i `hedefKat`in `hedefIndeks`ine koyar ve ETKILENEN
+   * KATLARIN TAMAMINI 1..n yeniden numaralandirir.
+   *
+   * NEDEN TUM KAT: yalnizca iki daireyi takas etmek, arada bosluk ya da
+   * cift `sira` birakabilirdi (veri zaten bosluklu gelebiliyor —
+   * `sira` NULL olabilir). Yeniden numaralandirma, gorulen duzen ile
+   * saklanan duzeni AYNI kilar.
+   */
+  function yerlesimHesapla(
+    tasinan: Unit, hedefKat: number, hedefIndeks: number,
+  ): { id: string; kat: number; sira: number }[] {
+    const kaynakKat = tasinan.kat;
+    const katUnits = (k: number) =>
+      units.filter((u) => u.kat === k && u.id !== tasinan.id).sort(bySira);
+
+    const hedef = katUnits(hedefKat);
+    hedef.splice(Math.max(0, Math.min(hedefIndeks, hedef.length)), 0, tasinan);
+
+    const sonuc = hedef.map((u, i) => ({ id: u.id, kat: hedefKat, sira: i + 1 }));
+    if (kaynakKat != null && kaynakKat !== hedefKat) {
+      sonuc.push(
+        ...katUnits(kaynakKat).map((u, i) => ({
+          id: u.id, kat: kaynakKat, sira: i + 1,
+        })),
+      );
+    }
+    return sonuc;
+  }
+
+  /** Klavye esdegeri — bkz. `DaireKutusu` icindeki gerekce. */
+  function klavyeTasi(u: Unit, yon: "sol" | "sag" | "yukari" | "asagi") {
+    if (u.kat == null) return;
+    const ayni = units.filter((x) => x.kat === u.kat).sort(bySira);
+    const i = ayni.findIndex((x) => x.id === u.id);
+    if (yon === "sol" || yon === "sag") {
+      const yeni = yon === "sol" ? i - 1 : i + 1;
+      if (yeni < 0 || yeni >= ayni.length) return;
+      onSirala(yerlesimHesapla(u, u.kat, yeni));
+      return;
+    }
+    // Kat listesi USTTEN ALTA sirali (buyuk kat once): "yukari" kat NO'sunu
+    // ARTIRIR. Ekranda gordugu yonle veri ayni yone gitmeli.
+    const hedefKat = yon === "yukari" ? u.kat + 1 : u.kat - 1;
+    if (!floorSet.has(hedefKat)) return;
+    onSirala(yerlesimHesapla(u, hedefKat, Number.MAX_SAFE_INTEGER));
+  }
 
   return (
     <div className={`space-y-3 ${cardCls} p-5`}>
@@ -497,9 +572,19 @@ function BlockDetail({
           onAddUnit={() => onAddUnit(kat)}
           onEditUnit={onEditUnit}
           onRemoveUnit={onRemoveUnit}
+          suruklenen={suruklenen}
+          setSuruklenen={setSuruklenen}
+          onBirak={(indeks) => {
+            if (suruklenen) onSirala(yerlesimHesapla(suruklenen, kat, indeks));
+            setSuruklenen(null);
+          }}
+          onKlavye={klavyeTasi}
         />
       ))}
 
+      {/* KATSIZ SATIRDA SURUKLEME YOK: kat bilinmeden siralama anlamsizdir
+          ve `PATCH /units/siralama` `kat` zorunlu ister. Kullanici once
+          daireye bir kat verir. */}
       {katsiz.length > 0 && (
         <FloorRow
           katLabel="Kat yok"
@@ -516,6 +601,7 @@ function BlockDetail({
 
 function FloorRow({
   katLabel, units, canAdd, onAddUnit, onEditUnit, onRemoveUnit,
+  suruklenen, setSuruklenen, onBirak, onKlavye,
 }: {
   katLabel: string;
   units: Unit[];
@@ -523,15 +609,69 @@ function FloorRow({
   onAddUnit: () => void;
   onEditUnit: (u: Unit) => void;
   onRemoveUnit: (u: Unit) => void;
+  suruklenen?: Unit | null;
+  setSuruklenen?: (u: Unit | null) => void;
+  /** Hedef indekse birakildi. Verilmezse SURUKLEME KAPALI (katsiz satir). */
+  onBirak?: (indeks: number) => void;
+  onKlavye?: (u: Unit, yon: "sol" | "sag" | "yukari" | "asagi") => void;
 }) {
   const t = useT();
+  const surukleAcik = Boolean(onBirak);
   return (
-    <div className="flex items-start gap-3 border-t border-yuzey-divider pt-3">
+    <div
+      className="flex items-start gap-3 border-t border-yuzey-divider pt-3"
+      onDragOver={surukleAcik ? (e) => e.preventDefault() : undefined}
+      // Satirin BOSLUGUNA birakmak SONA ekler: kullanici bir daireyi
+      // katin sonuna tasimak istediginde son kutuya nisan almak zorunda
+      // kalmamali.
+      onDrop={surukleAcik ? () => onBirak?.(units.length) : undefined}
+    >
       <span className="w-16 shrink-0 pt-3 text-xs font-medium text-metin-muted">{katLabel}</span>
       <div className="flex flex-wrap gap-2">
-        {units.map((u) => (
+        {units.map((u, indeks) => (
           <div
             key={u.id}
+            draggable={surukleAcik}
+            onDragStart={() => setSuruklenen?.(u)}
+            onDragEnd={() => setSuruklenen?.(null)}
+            onDragOver={surukleAcik ? (e) => e.preventDefault() : undefined}
+            onDrop={
+              surukleAcik
+                ? (e) => {
+                    e.stopPropagation();
+                    onBirak?.(indeks);
+                  }
+                : undefined
+            }
+            // (P154 / Asama 5) KLAVYE ESDEGERI — SURUKLE-BIRAK TEK YOL
+            // DEGIL.
+            //
+            // Fare suruklemesi klavyeyle ERISILEMEZ ve brief'in kendi
+            // sarti "klavye navigasyonu" diyor. Alt+Ok, ayni isi yapar:
+            // sol/sag kat icinde, yukari/asagi kat degistirir. `Alt`
+            // secildi cunku ciplak ok tuslari sayfayi kaydirir ve
+            // odaklanmis bir kutuda kaydirmayi yutmak, klavye
+            // kullanicisini sayfada hapsederdi.
+            tabIndex={surukleAcik ? 0 : undefined}
+            onKeyDown={
+              surukleAcik
+                ? (e) => {
+                    if (!e.altKey) return;
+                    const yon = {
+                      ArrowLeft: "sol", ArrowRight: "sag",
+                      ArrowUp: "yukari", ArrowDown: "asagi",
+                    }[e.key] as "sol" | "sag" | "yukari" | "asagi" | undefined;
+                    if (!yon) return;
+                    e.preventDefault();
+                    onKlavye?.(u, yon);
+                  }
+                : undefined
+            }
+            aria-label={
+              surukleAcik
+                ? t("binaDaireTasiEtiket", { no: u.no, kat: katLabel })
+                : undefined
+            }
             // (P122) TIP RENGI YALNIZ AKTIF dairede: pasif daire her tipte
             // ayni soluk grivi tasimali, yoksa "pasif" durumu renk
             // gurultusunde kaybolur.
@@ -540,8 +680,10 @@ function FloorRow({
             title={[u.no, u.unit_tip_ad, u.sira != null ? `#${u.sira}` : null]
               .filter(Boolean)
               .join(" · ")}
-            className={`group relative flex h-16 w-20 flex-col items-center justify-center rounded-lg border text-white ${
+            className={`odak-ic group relative flex h-16 w-20 flex-col items-center justify-center rounded-lg border text-white ${
               u.aktif ? "border-black/20" : "border-slate-400 bg-slate-400"
+            } ${suruklenen?.id === u.id ? "opacity-50" : ""} ${
+              surukleAcik ? "cursor-move" : ""
             }`}
           >
             <span className="text-sm font-semibold">{u.no}</span>

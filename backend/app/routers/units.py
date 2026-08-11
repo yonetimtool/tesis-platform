@@ -23,6 +23,11 @@ from ..schemas import (
     ResidentAssign,
     UnitBulkCreate,
     UnitBulkResult,
+    TopluIslemSonuc,
+    TopluSilSonuc,
+    KatSilIstek,
+    UnitSiralama,
+    UnitTopluGuncelle,
     UnitCreate,
     UnitLayoutUpdate,
     UnitListResponse,
@@ -218,7 +223,11 @@ async def bulk_create_units(
     # Plani kur: (no, kat, sira) — kat kat, ardisik numaralandirma.
     plan: list[tuple[str, int, int]] = []
     n = body.baslangic_no
-    for kat in range(1, body.kat_sayisi + 1):
+    # (P154 / Asama 5) BASLANGIC KATI: eskiden katlar HER ZAMAN 1'den
+    # basliyordu ve bodrumlu bir binada kat numaralari bir kaydirmayla
+    # yaziliyordu — veri binanin kendisini anlatmiyordu.
+    ilk = body.baslangic_kat
+    for kat in range(ilk, ilk + body.kat_sayisi):
         for sira in range(1, body.kat_basi_daire + 1):
             no = f"{body.blok}-{n}"  # blok ZORUNLU (schema) => her zaman prefix'li
             plan.append((no, kat, sira))
@@ -258,6 +267,124 @@ async def bulk_create_units(
         atlanan=atlanan,
         bitis_no=body.bitis_no,
     )
+
+
+
+# ===================== (P154 / Asama 5) TOPLU YAPI ISLEMLERI ================ #
+@router.patch("/toplu", response_model=TopluIslemSonuc)
+async def toplu_guncelle(
+    body: UnitTopluGuncelle,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_LAYOUT_EDITOR),
+) -> TopluIslemSonuc:
+    """Secili dairelerin niteligini TOPLU degistirir.
+
+    Brief: "daire numaralarini virgulle toplu secme ve secilenlerin
+    niteligini toplu degistirme".
+
+    ARALIK AYRISTIRMASI ("3,5,7-12") ARAYUZDE: ifade kullanicinin EKRANDA
+    GORDUGU listeye gore anlam kazanir (suzgec acikken "7-12" baska
+    daireleri gosterir). Sunucuda cozmek, istemcinin gordugu kume ile
+    sunucunun anladigi kumenin ayrismasi demekti — ve yanlis daireye toplu
+    islem uygulamak geri alinmasi zor bir hatadir.
+
+    ATLANANLAR RAPORLANIR: RLS baska tenant'in kimligini zaten gostermez;
+    bulunamayan kimlik SESSIZCE dusmez, sayida gorunur.
+    """
+    await _tanim_dogrula(db, body.unit_tip_id, body.unit_grup_id)
+    alanlar = body.model_dump(exclude_unset=True, exclude={"unit_ids"})
+    if not alanlar:
+        raise APIError(422, "validation_error", "guncellenecek_alan_yok")
+
+    kayitlar = (
+        (await db.execute(select(Unit).where(Unit.id.in_(body.unit_ids))))
+        .scalars().all()
+    )
+    for k in kayitlar:
+        for ad, deger in alanlar.items():
+            setattr(k, ad, deger)
+        k.updated_at = func.now()
+    await db.flush()
+    await audit_user(
+        db, user, Action.UNIT_UPDATE, resource_type="unit",
+        meta={"adet": len(kayitlar), "alanlar": sorted(alanlar)},
+    )
+    bulunan = {k.id for k in kayitlar}
+    return TopluIslemSonuc(
+        etkilenen=len(kayitlar),
+        atlanan=[str(i) for i in body.unit_ids if i not in bulunan],
+    )
+
+
+@router.patch("/siralama", response_model=TopluIslemSonuc)
+async def siralama_guncelle(
+    body: UnitSiralama,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_LAYOUT_EDITOR),
+) -> TopluIslemSonuc:
+    """Surukle-birak sonrasi yeni yerlesim — TEK ISTEKTE.
+
+    Her daire icin ayri PATCH atmak, yirmi dairelik bir katta yirmi istek
+    ve ARADA KESILME riski demekti: yarim uygulanmis bir siralama,
+    kullanicinin gordugu duzenle veritabanindakini ayirirdi. Tek istek =
+    tek islem.
+    """
+    harita = {s.id: s for s in body.satirlar}
+    kayitlar = (
+        (await db.execute(select(Unit).where(Unit.id.in_(list(harita)))))
+        .scalars().all()
+    )
+    for k in kayitlar:
+        yeni = harita[k.id]
+        k.kat, k.sira = yeni.kat, yeni.sira
+        k.updated_at = func.now()
+    await db.flush()
+    await audit_user(
+        db, user, Action.UNIT_UPDATE, resource_type="unit",
+        meta={"siralama": len(kayitlar)},
+    )
+    bulunan = {k.id for k in kayitlar}
+    return TopluIslemSonuc(
+        etkilenen=len(kayitlar),
+        atlanan=[str(i) for i in harita if i not in bulunan],
+    )
+
+
+@router.post("/kat-sil", response_model=TopluSilSonuc)
+async def kat_sil(
+    body: KatSilIstek,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_LAYOUT_EDITOR),
+) -> TopluSilSonuc:
+    """Bir katin TUM dairelerini siler.
+
+    KAZA KORUMASI blok silmedekiyle AYNI: daireler varsa `cascade=false`
+    409 doner ve UI once onay ister. Bir kati yanlislikla silmek, o kattaki
+    sakinlerin, tahakkuklarin ve rezervasyonlarin da gitmesi demektir
+    (DB seviyesinde ON DELETE CASCADE).
+    """
+    kayitlar = (
+        (await db.execute(
+            select(Unit).where(Unit.blok == body.blok, Unit.kat == body.kat)
+        )).scalars().all()
+    )
+    if not kayitlar:
+        raise APIError(404, "not_found", "kayit_bulunamadi")
+    if not body.cascade:
+        raise APIError(
+            409, "conflict", "kat_silme_onayi_gerekli", kullanan=len(kayitlar)
+        )
+    for k in kayitlar:
+        await db.delete(k)
+    try:
+        await db.flush()
+    except IntegrityError as exc:
+        raise translate_integrity(exc)
+    await audit_user(
+        db, user, Action.UNIT_DELETE, resource_type="unit",
+        meta={"blok": body.blok, "kat": body.kat, "adet": len(kayitlar)},
+    )
+    return TopluSilSonuc(silinen=len(kayitlar))
 
 
 @router.patch("/{unit_id}", response_model=UnitOut)
@@ -337,6 +464,35 @@ async def list_residents(
     return list(rows)
 
 
+async def daire_dolu_mu(db: AsyncSession, unit_id: uuid.UUID) -> bool:
+    """(P154 / Asama 5) Bu dairenin AKTIF bir sakini var mi?
+
+    Brief'in KILITLI KURALI: "Bir daire icin en fazla 1 hesap."
+
+    "AKTIF" olculur (`bitis IS NULL`), "hic" degil: gecmis sakinler
+    sayilsaydi bir daire EL DEGISTIREMEZDI — kiraci cikip yenisi
+    girdiginde daire sonsuza dek dolu gorunurdu.
+
+    ORTAK YARDIMCI: ayni kural hem bu router'da hem ICE AKTARIMDA
+    gerekiyor; iki yere yazmak, birinde unutulmasi demekti.
+
+    NOT — VERITABANI KISITI YOK ve bu bilincli bir EKSIK: kismi bir
+    UNIQUE indeks kurali kanitlanabilir kilardi ama MEVCUT VERIDE ihlal
+    olculdu (dev veritabaninda bir daire, iki aktif sakin). Indeksi
+    eklemek once o satirlarin KAPATILMASINI gerektirir — yani uretim
+    verisinde bir degisiklik — ve bu Kerem'in karari. Kayda gecti.
+    """
+    var = (
+        await db.execute(
+            select(UnitResident.id).where(
+                UnitResident.unit_id == unit_id,
+                UnitResident.bitis.is_(None),
+            )
+        )
+    ).first()
+    return var is not None
+
+
 @router.post("/{unit_id}/residents", response_model=UnitResidentOut, status_code=201)
 async def assign_resident(
     unit_id: uuid.UUID,
@@ -352,6 +508,8 @@ async def assign_resident(
         raise APIError(422, "invalid_reference", "user_id_bulunamadi")
     if target.role != "resident":
         raise APIError(422, "invalid_reference", "atanacak_kullanici_resident_olmali")
+    if await daire_dolu_mu(db, unit_id):
+        raise APIError(409, "conflict", "daire_zaten_dolu")
 
     obj = UnitResident(
         tenant_id=user.tenant_id,

@@ -2738,6 +2738,23 @@ class UnitBulkCreate(BaseModel):
     kat_sayisi: int = Field(..., ge=1, le=_KAT_MAX)
     kat_basi_daire: int = Field(..., ge=1, le=_SIRA_MAX)
     baslangic_no: int = Field(..., ge=0, le=999999)
+    #: (P154 / Asama 5) BASLANGIC KATI. Brief: "-2, -1, 0, zemin, 1...".
+    #:
+    #: NEGATIF DEGER SERBEST: bodrum ve zemin gercek katlardir. Eskiden
+    #: katlar HER ZAMAN 1'den basliyordu ve bodrumlu bir binada kat
+    #: numaralari bir kaydirmayla yaziliyordu — yani veri, binanin
+    #: kendisini anlatmiyordu.
+    #:
+    #: "ZEMIN" AYRI BIR DEGER DEGIL, 0'DIR: metin bir kat numarasi
+    #: siralanamaz ve "zemin" ile "0" iki ayri deger olarak durursa
+    #: siralama iki kurala baglanirdi. Etiket ARAYUZDE cozulur.
+    #:
+    #: VARSAYILAN 1, 0 DEGIL — ve bu bilincli. Brief "baslangic kati
+    #: SECILEBILSIN" diyor, "varsayilan degissin" demiyor. 0 yapmak,
+    #: alani hic gondermeyen HER cagirani (mobil toplu olusturma dahil)
+    #: sessizce etkilerdi: bugune kadar 1'den baslayan binalar bir anda
+    #: zeminden baslardi. `test_units_bulk` bu kaymayi yakaladi.
+    baslangic_kat: int = Field(1, ge=-_KAT_MAX, le=_KAT_MAX)
     # PARTI BASINA siniflandirma (P26): toplu olusturmada her daireye tek tek
     # tip secmek anlamsizdir — bir blok genelde tek tiptir. Daire basi
     # istisnalar sonradan PATCH ile duzeltilir.
@@ -5371,3 +5388,79 @@ class IceAktarimOut(BaseModel):
 class IceAktarimListResponse(BaseModel):
     meta: PageMetaOut
     items: list[IceAktarimOut]
+
+
+# ================== (P154 / Asama 5) YAPI DUZENLEME TOPLU ISLEMLERI ========= #
+class TopluIslemSonuc(BaseModel):
+    """Toplu GUNCELLEME/SIRALAMA sonucu.
+
+    `UnitBulkResult` YENIDEN KULLANILMADI: onun `olusturulan` ve
+    `bitis_no` alanlari bir guncellemede ANLAMSIZDIR ve doldurmak icin
+    uydurma deger yazmak gerekirdi (olculdu: bos birakinca 500).
+    """
+
+    etkilenen: int
+    #: Bulunamayan kimlikler — RLS baska tenant'in satirini zaten
+    #: gostermez; kimlik SESSIZCE dusmez, burada gorunur.
+    atlanan: list[str] = Field(default_factory=list)
+
+
+class UnitTopluGuncelle(BaseModel):
+    """Secili dairelerin niteligini TOPLU degistirir.
+
+    KIMLIK LISTESI ALINIR, "3,5,7-12" GIBI BIR ARALIK DEGIL: aralik ifadesi
+    kullanicinin EKRANDA GORDUGU listeye gore anlam kazanir (suzgec acikken
+    "7-12" baska daireleri gosterir). Sunucuda cozmek, istemcinin gordugu
+    kume ile sunucunun anladigi kumenin AYRISMASI demekti — ve yanlis
+    daireye toplu islem uygulamak geri alinmasi zor bir hatadir.
+    Aralik ayristirmasi arayuzdedir; sunucuya kesinlesmis kimlikler gelir.
+    """
+
+    unit_ids: list[uuid.UUID] = Field(..., min_length=1, max_length=500)
+    unit_tip_id: uuid.UUID | None = None
+    unit_grup_id: uuid.UUID | None = None
+    aktif: bool | None = None
+    model_config = ConfigDict(extra="forbid")
+
+
+class UnitSiralamaSatiri(BaseModel):
+    id: uuid.UUID
+    kat: int
+    sira: int
+
+
+class UnitSiralama(BaseModel):
+    """Surukle-birak sonrasi yeni yerlesim — TEK ISTEKTE.
+
+    Her daire icin ayri PATCH atmak, yirmi dairelik bir katta yirmi istek
+    ve ARADA KESILME riski demekti: yarim uygulanmis bir siralama,
+    kullanicinin gordugu duzenle veritabanindakini ayirirdi.
+    """
+
+    satirlar: list[UnitSiralamaSatiri] = Field(..., min_length=1, max_length=500)
+    model_config = ConfigDict(extra="forbid")
+
+
+class KatSilIstek(BaseModel):
+    """Bir katin TUM dairelerini siler."""
+
+    blok: str = Field(..., min_length=1, max_length=8)
+    kat: int
+    #: Dairelerin bagli kayitlari varsa (sakin, tahakkuk...) islem 409
+    #: doner; `cascade=true` ile onaylanir. Blok silmedeki kaza korumasinin
+    #: aynisi.
+    cascade: bool = False
+    model_config = ConfigDict(extra="forbid")
+
+
+class TopluSilIstek(BaseModel):
+    ids: list[uuid.UUID] = Field(..., min_length=1, max_length=200)
+    cascade: bool = False
+    model_config = ConfigDict(extra="forbid")
+
+
+class TopluSilSonuc(BaseModel):
+    silinen: int
+    #: Silinemeyenler ve SEBEBI — sessizce atlamak, kullanicinin sildigini
+    #: sanmasi demekti.
+    atlanan: list[dict] = Field(default_factory=list)

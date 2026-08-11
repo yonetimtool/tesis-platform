@@ -5,6 +5,8 @@ import { useState } from "react";
 import useSWR from "swr";
 
 import { EmptyState } from "@/components/EmptyState";
+import Link from "next/link";
+
 import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, btnGhost, panelCls, panelMotion } from "@/components/form";
 import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
 import { useToast } from "@/components/Toast";
@@ -204,7 +206,17 @@ export default function UsersPage() {
       <PageHeader
         title={t("kabukKullanicilar")}
         action={
-          <button className={btnPrimary} onClick={openNew}>{t("kullaniciYeni")}</button>
+          <div className="flex flex-wrap gap-2">
+            {/* (P154 / Asama 5) EXCEL ILE TOPLU SAKIN YUKLEME — brief:
+                "Asama 8'deki import framework'u kullanacak, AYRI YUKLEME
+                KODU YAZMA". Bu yuzden burada bir yukleme formu YOK,
+                catiya yonlendirme var; `kisi` turu daire_no ile var olan
+                daireye baglar. */}
+            <Link href="/ice-aktarim?tur=kisi" className={btnGhost}>
+              {t("kullaniciTopluYukle")}
+            </Link>
+            <button className={btnPrimary} onClick={openNew}>{t("kullaniciYeni")}</button>
+          </div>
         }
       />
 

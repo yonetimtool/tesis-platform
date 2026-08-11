@@ -10,7 +10,7 @@ from __future__ import annotations
 import logging
 import uuid
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -310,6 +310,52 @@ async def update_user(
         meta={"fields": list(data.keys()), "hedef_rol": obj.role},
     )
     return _admin_out(obj)
+
+
+@router.delete("/{user_id}", status_code=204)
+async def delete_user(
+    user_id: uuid.UUID,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_USER_CREATOR),
+) -> Response:
+    """(P154 / Asama 5) Kullaniciyi SILER.
+
+    Brief: "Yonetici; sakin, guvenlik, tesis gorevlisi ve denetci
+    hesaplarinin telefonunu guncelleyebilir, KULLANICIYI SILEBILIR."
+
+    SERT SILME, `is_active=false` DEGIL — ve bu Asama 1'deki yonetici
+    silmeyle AYNI gerekce: yumusak silme ZATEN `PATCH is_active` ile
+    yapilabiliyor; iki dugmenin ayni isi yapmasi kullaniciyi yaniltirdi.
+    "Sil" dendiginde kayit gitmelidir.
+
+    AYNI KAPIDAN GECER: `_yonetim_kapisi` — yonetici kendi kumesi disindaki
+    (orn. admin) bir kaydi silemez. Kapiyi burada tekrar yazmak, biri
+    guncellenip otekinin unutulmasi demekti.
+
+    KENDINI SILEMEZ: oturumu acik olan kisinin kendi kaydini silmesi,
+    tesisi yoneticisiz birakabilir ve geri alinamaz. Kendi hesabini silmek
+    isteyen icin AYRI ve onayli bir yol var (`POST /me/hesap-sil`, KVKK).
+    """
+    obj = await get_or_404(db, AppUser, user_id)
+    # KENDI HESABI KONTROLU KAPIDAN ONCE: sirasi ters olsaydi kendi
+    # kaydini silmeye calisan bir yonetici "bu hesap turunu duzenleme
+    # yetkiniz yok" mesajini alirdi — dogru ama YANILTICI; asil sebep
+    # yetki degil, kendini silemiyor olmasi.
+    if obj.id == user.id:
+        raise APIError(409, "conflict", "kendi_hesabini_silemez")
+    _yonetim_kapisi(user, obj.role)
+
+    await audit_user(
+        db, user, Action.USER_DELETE, resource_type="app_user",
+        resource_id=obj.id,
+        meta={"rol": obj.role, "ad": obj.ad},
+    )
+    await db.delete(obj)
+    try:
+        await db.flush()
+    except IntegrityError as exc:
+        raise translate_integrity(exc)
+    return Response(status_code=204)
 
 
 @router.post("/{user_id}/reset-password", response_model=ResidentResetPasswordOut)

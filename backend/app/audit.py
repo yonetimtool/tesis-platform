@@ -53,6 +53,10 @@ class Action:
     USER_UPDATE = "user_update"
     USER_RESET_PASSWORD = "user_reset_password"
     USER_CONTACT_UPDATE = "user_contact_update"   # telefon/aranabilir (riza)
+    # (P154 / Asama 5) Kullanici SILME. Sert silme; yumusak silme zaten
+    # `is_active` ile yapiliyor ve iki dugmenin ayni isi yapmasi
+    # kullaniciyi yaniltirdi.
+    USER_DELETE = "user_delete"
     AVATAR_UPDATE = "avatar_update"               # profil fotografi (yukle/kaldir)
     SHIFT_ASSIGN = "shift_assign"                 # vardiya personel atamasi (tam-liste)
     CAMERA_CREATE = "camera_create"

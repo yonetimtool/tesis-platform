@@ -228,6 +228,17 @@ async def _uygula_kisi(b: _Bag, satir_no: int, d: dict) -> None:
             b.hata(satir_no, "daire_no", "daire_bulunamadi")
             return
         unit_id = satir[0]
+        # (P154 / Asama 5) DAIRE BASINA TEK HESAP — kilitli kural.
+        #
+        # EXCEL'DE AYNI DAIREYE IKI SATIR GELIRSE: ILKI KAZANIR, ikincisi
+        # HATA olarak raporlanir. Uzerine yazmak, ilk satiri kullaniciya
+        # hic soylemeden atmak olurdu; ikisini de baglamak ise kurali
+        # cignerdi. Dosyanin sirasi kullanicinin kendi sirasidir.
+        from .units import daire_dolu_mu
+
+        if await daire_dolu_mu(b.db, unit_id):
+            b.hata(satir_no, "daire_no", "daire_zaten_dolu")
+            return
 
     if b.yalniz_dogrula:
         b.sonuc.olusan += 1

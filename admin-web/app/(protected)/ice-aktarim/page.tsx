@@ -17,6 +17,7 @@ import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
+import { useSorguSecimi } from "@/lib/sorgu-secimi";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 
 /**
@@ -79,6 +80,11 @@ interface Kosum {
 // bu bir CEVIRI ANAHTARI, gorunen metin degil. (6.3'teki ayni ders.)
 const _YEDEK_TUR_ETIKET: SozlukAnahtari = "iceAktarimTur";
 
+type TurKodu = "daire" | "kisi" | "acilis_bakiye" | "arac";
+const TUR_KODLARI: readonly TurKodu[] = [
+  "daire", "kisi", "acilis_bakiye", "arac",
+];
+
 const TUR_ETIKET: Record<string, SozlukAnahtari> = {
   daire: "iceAktarimTurDaire",
   kisi: "iceAktarimTurKisi",
@@ -94,7 +100,12 @@ function hucreler(satir: string): string[] {
 export default function IceAktarimPage() {
   const t = useT();
   const toast = useToast();
-  const [turKod, setTurKod] = useState("daire");
+  // (P154 / Asama 5) `?tur=kisi` ile DOGRUDAN gelinebilir: `/users`
+  // ekranindaki "toplu yukle" dugmesi buraya yollar. Kanca 7.1'de
+  // yazilmisti; ikinci bir adres-okuma kodu yazilmadi.
+  const [turKod, setTurKod] = useSorguSecimi<TurKodu>(
+    "tur", TUR_KODLARI, "daire",
+  );
   const [ham, setHam] = useState("");
   const [baslikVar, setBaslikVar] = useState(true);
   const [esleme, setEsleme] = useState<Record<number, string>>({});
@@ -189,7 +200,7 @@ export default function IceAktarimPage() {
             style={{ maxWidth: 280 }}
             value={turKod}
             onChange={(e) => {
-              setTurKod(e.target.value);
+              setTurKod(e.target.value as TurKodu);
               // ESLEME SIFIRLANIR: alanlar degisti, eski esleme artik
               // baska bir turun alanlarina isaret ediyordu.
               setEsleme({});

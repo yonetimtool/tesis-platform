@@ -4349,6 +4349,122 @@ paths:
                         moda_bagli: { type: boolean, default: false }
         "403": { $ref: "#/components/responses/Forbidden" }
 
+  /users/{user_id}:
+    delete:
+      tags: [users]
+      summary: Kullaniciyi sil (admin + yonetici + guvenlik_amiri)
+      description: >
+        (P154 / Asama 5) SERT SILME — `is_active=false` DEGIL. Yumusak
+        silme zaten `PATCH /users/{user_id}` ile yapilabiliyor; iki
+        dugmenin ayni isi yapmasi kullaniciyi yaniltirdi. Ayni yetki
+        kapisindan gecer: cagiran, kendi yonetebildigi rollerdeki bir
+        kaydi silebilir. KENDI hesabini silemez (409) — kendi hesabi icin
+        onayli ayri yol var (`POST /me/hesap-sil`).
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "204": { description: Silindi }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Kendi hesabini silemez
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  /units/toplu:
+    patch:
+      tags: [units]
+      summary: Secili dairelerin niteligini TOPLU degistir (admin + yonetici)
+      description: >
+        (P154 / Asama 5) KIMLIK LISTESI ALINIR, "3,5,7-12" gibi bir aralik
+        DEGIL: aralik ifadesi kullanicinin EKRANDA GORDUGU listeye gore
+        anlam kazanir (blok suzgeci acikken "7-12" baska daireleri
+        gosterir). Ayristirma arayuzdedir; sunucuya KESINLESMIS kimlikler
+        gelir.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UnitTopluGuncelle" }
+      responses:
+        "200":
+          description: Etkilenen + atlanan
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TopluIslemSonuc" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /units/siralama:
+    patch:
+      tags: [units]
+      summary: Surukle-birak yerlesimi TEK ISTEKTE kaydet (admin + yonetici)
+      description: >
+        Her daire icin ayri PATCH atmak, yirmi dairelik bir katta yirmi
+        istek ve ARADA KESILME riski demekti: yarim uygulanmis bir
+        siralama, kullanicinin gordugu duzenle veritabanindakini ayirirdi.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UnitSiralama" }
+      responses:
+        "200":
+          description: Etkilenen + atlanan
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TopluIslemSonuc" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /units/kat-sil:
+    post:
+      tags: [units]
+      summary: Bir katin TUM dairelerini sil (admin + yonetici)
+      description: >
+        KAZA KORUMASI blok silmedekiyle AYNI: daireler varsa
+        `cascade=false` **409** doner ve UI once onay ister.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/KatSilIstek" }
+      responses:
+        "200":
+          description: Silinen sayisi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TopluSilSonuc" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Onay gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  /blocks/toplu-sil:
+    post:
+      tags: [building]
+      summary: Birden fazla blogu sil (admin + yonetici)
+      description: >
+        HEP YA DA HIC DEGIL, SATIR SATIR: on blogun ikisi doluysa
+        otekilerin silinmesini engellemek, kullaniciyi listeyi elle
+        ayiklamaya zorlardi. Silinemeyenler SEBEBIYLE doner.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TopluSilIstek" }
+      responses:
+        "200":
+          description: Silinen + atlanan (sebepli)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TopluSilSonuc" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   # ================================================================= #
   # ICE AKTARIM CATISI (P154 / Asama 8)
   #
@@ -9700,6 +9816,72 @@ components:
         items:
           type: array
           items: { $ref: "#/components/schemas/Ek" }
+    # ---------- (P154 / Asama 5) YAPI DUZENLEME TOPLU ISLEMLERI ---------- #
+    TopluIslemSonuc:
+      type: object
+      required: [etkilenen]
+      properties:
+        etkilenen: { type: integer }
+        atlanan:
+          type: array
+          items: { type: string }
+          description: >
+            Bulunamayan kimlikler. RLS baska tenant'in satirini zaten
+            gostermez; kimlik SESSIZCE dusmez, burada gorunur.
+    UnitTopluGuncelle:
+      type: object
+      required: [unit_ids]
+      properties:
+        unit_ids:
+          type: array
+          minItems: 1
+          maxItems: 500
+          items: { type: string, format: uuid }
+        unit_tip_id: { type: string, format: uuid, nullable: true }
+        unit_grup_id: { type: string, format: uuid, nullable: true }
+        aktif: { type: boolean, nullable: true }
+    UnitSiralamaSatiri:
+      type: object
+      required: [id, kat, sira]
+      properties:
+        id: { type: string, format: uuid }
+        kat: { type: integer }
+        sira: { type: integer }
+    UnitSiralama:
+      type: object
+      required: [satirlar]
+      properties:
+        satirlar:
+          type: array
+          minItems: 1
+          maxItems: 500
+          items: { $ref: "#/components/schemas/UnitSiralamaSatiri" }
+    KatSilIstek:
+      type: object
+      required: [blok, kat]
+      properties:
+        blok: { type: string, minLength: 1, maxLength: 8 }
+        kat: { type: integer }
+        cascade: { type: boolean, default: false }
+    TopluSilIstek:
+      type: object
+      required: [ids]
+      properties:
+        ids:
+          type: array
+          minItems: 1
+          maxItems: 200
+          items: { type: string, format: uuid }
+        cascade: { type: boolean, default: false }
+    TopluSilSonuc:
+      type: object
+      required: [silinen]
+      properties:
+        silinen: { type: integer }
+        atlanan:
+          type: array
+          items: { type: object }
+          description: "Silinemeyenler ve SEBEBI — sessizce atlamak, kullanicinin sildigini sanmasi demekti."
     # ---------- (P154 / Asama 8) ICE AKTARIM CATISI ---------- #
     IceAktarimAlan:
       type: object
@@ -13232,6 +13414,18 @@ components:
         kat_sayisi: { type: integer, minimum: 1, maximum: 200 }
         kat_basi_daire: { type: integer, minimum: 1, maximum: 999 }
         baslangic_no: { type: integer, minimum: 0, maximum: 999999 }
+        baslangic_kat:
+          type: integer
+          default: 1
+          minimum: -200
+          maximum: 200
+          description: >
+            (P154 / Asama 5) BASLANGIC KATI. Negatif serbest: bodrum ve
+            zemin gercek katlardir ve eskiden katlar HER ZAMAN 1'den
+            basliyordu — bodrumlu bir binada kat numaralari bir kaydirmayla
+            yaziliyordu. "Zemin" AYRI BIR DEGER DEGIL 0'dir; metin bir kat
+            numarasi siralanamaz. VARSAYILAN 1 KALDI: brief "secilebilsin"
+            diyor, "varsayilan degissin" demiyor.
         unit_tip_id:
           type: string
           format: uuid

@@ -34,7 +34,8 @@
 | **7.4** — Bağımlılık yönlendirmesi | `BagimlilikUyarisi` + `DonusCubugu` + 9 satırlık kayıt; 4 ekrana bağlandı | `8d18f56` |
 | **8** — Import framework | göç 0045 + `/ice-aktarim` çatısı (4 tür) + geri alma + panel sayfası; `/site-aktar` kaldırıldı | bu tur |
 | **9** — Bildirim/şablon altyapısı **TAM** | göç 0046 + mesaj kuyruğu + yeniden deneme; politika `yeniden_deneme.py`de paylaşıldı | bu tur |
-| **10** — Apsiyon B kovası (kalanlar) | göç 0047 — ters kayıt + defterde silme kilidi; triyajda **iki yanlış ölçüm düzeltildi** | bu tur |
+| **10** — Apsiyon B kovası (kalanlar) | göç 0047 — ters kayıt + defterde silme kilidi; triyajda **iki yanlış ölçüm düzeltildi** | `e4f5a1d` |
+| **5** — Kullanıcı ve yapı yönetimi | **12 maddenin 12'si**: kullanıcı silme · başlangıç katı · toplu nitelik/tip · sürükle-bırak (+klavye) · kat silme · blok toplu silme · toplu daire oluşturma · aralık seçimi · Excel→çatı · daire başına tek hesap | bu tur |
 
 ---
 
@@ -422,6 +423,96 @@ FK var; ikisi de kendi öncü kolonuyla indekslendi.
 Göç 0045 **yerinde düzeltildi**: commit'lenmemiş ve hiçbir yere
 gitmemişti; ikinci bir düzeltme göçü eklemek, hiç yaşamamış bir kusuru
 tarihe yazmak olurdu.
+
+### 4.27 Aralık ifadesi ("3,5,7-12") SUNUCUDA çözülmüyor (Aşama 5)
+
+Brief "aralık desteğini de değerlendir" dedi. Değerlendirme sonucu:
+destek **var** ama ayrıştırma **arayüzde**.
+
+Sebep: ifade kullanıcının **ekranda gördüğü** listeye göre anlam kazanır.
+Blok süzgeci açıkken "7-12" o bloğun daireleridir. Sunucuda çözmek,
+istemcinin gördüğü küme ile sunucunun anladığı kümenin **ayrışması**
+demekti — ve yanlış daireye toplu işlem uygulamak geri alması zor bir
+hatadır. Sunucuya kesinleşmiş kimlikler gider.
+
+**Eşleşmeyen parçalar sessizce düşmez:** "12 daire seçtim" deyip 9'unu
+işlemek en kötü sonuçtur; kullanıcıya hangi parçanın bulunamadığı
+söylenir. 9 test.
+
+### 4.28 "Zemin" ayrı bir değer değil, 0'dır (Aşama 5)
+
+Brief başlangıç katı için "-2, -1, 0, **zemin**, 1..." diyor. `zemin`
+metin olarak saklanmadı: bir kat numarası sıralanamaz hâle gelirdi ve
+"zemin" ile "0" iki ayrı değer olarak dururken sıralama iki kurala
+bağlanırdı. Etiket arayüzde çözülür.
+
+Eskiden katlar **her zaman 1'den** başlıyordu; bodrumlu bir binada kat
+numaraları bir kaydırmayla yazılıyordu — yani veri, binanın kendisini
+anlatmıyordu.
+
+### 4.29 Kullanıcı silme: sert, ama kendi hesabına kapalı (Aşama 5)
+
+`is_active` zaten var; ikinci bir yumuşak silme düğmesi kullanıcıyı
+yanıltırdı (Aşama 1'deki yönetici silmeyle aynı gerekçe). Aynı
+`_yonetim_kapisi`ndan geçer — kapıyı tekrar yazmak, birinin güncellenip
+ötekinin unutulması demekti.
+
+**Kendi hesabı kontrolü kapıdan ÖNCE:** sırası ters olsaydı kendi kaydını
+silmeye çalışan yönetici "bu hesap türünü düzenleme yetkiniz yok"
+mesajını alırdı — doğru ama yanıltıcı.
+
+### 4.30 Toplu güncelleme için `UnitBulkResult` yeniden KULLANILMADI
+
+İlk denemede kullandım ve **500 aldım**: `olusturulan` ve `bitis_no`
+alanları bir güncellemede anlamsız ve doldurmak için uydurma değer yazmak
+gerekirdi. Ayrı bir `TopluIslemSonuc` tipi yazıldı.
+
+### 4.31 Sürükle-bırak TEK YOL DEĞİL — klavye eşdeğeri var (Aşama 5)
+
+Fare sürüklemesi klavyeyle **erişilemez** ve brief'in kendi şartı "klavye
+navigasyonu" diyor. Tek yol olsaydı klavye/ekran okuyucu kullanıcısı
+yerleşimi hiç değiştiremezdi.
+
+`Alt + ok` aynı işi yapar: sol/sağ kat içinde, yukarı/aşağı kat
+değiştirir. `Alt` seçildi çünkü çıplak ok tuşları sayfayı kaydırır ve
+odaklanmış bir kutuda kaydırmayı yutmak, klavye kullanıcısını sayfada
+hapsederdi. 4 test — biri "Alt'sız ok yerleşimi değiştirmez" diye ölçüyor.
+
+**Etkilenen katın tamamı yeniden numaralanır** (1..n). İki daireyi takas
+etmek boşluk ya da çift `sira` bırakabilirdi — veri zaten boşluklu
+gelebiliyor (`sira` NULL olabilir).
+
+**Katsız satırda sürükleme kapalı:** kat bilinmeden sıralama anlamsız ve
+uç `kat`ı zorunlu istiyor.
+
+### 4.32 Başlangıç katı varsayılanını 0 yaptım — kilit yakaladı (Aşama 5)
+
+Brief "başlangıç katı **seçilebilsin**" diyor. Ben varsayılanı 0 (zemin)
+yaptım; `test_units_bulk` düştü. Haklıydı: alanı hiç göndermeyen **her
+çağıranı** (mobil toplu oluşturma dahil) sessizce etkilerdi — bugüne
+kadar 1'den başlayan binalar bir anda zeminden başlardı.
+
+Varsayılan **1'de bırakıldı**; seçilebilirlik eklendi. Bu, brief'in
+istediğinin tam karşılığı ve bir davranış kayması değil.
+
+### 4.33 Kilitli kural 4 hiçbir yerde zorlanmıyordu (Aşama 5)
+
+"Bir daire için en fazla 1 hesap" ne uçta ne veritabanında vardı. Artık
+`assign_resident` ve içe aktarımın `kisi` türü **ortak bir yardımcıdan**
+geçiyor — iki yere yazmak, birinde unutulması demekti.
+
+"Aktif" ölçülür (`bitis IS NULL`), "hiç" değil: geçmiş sakinler
+sayılsaydı bir daire **el değiştiremezdi**.
+
+**Excel'de aynı daireye iki satır: İLKİ KAZANIR**, ikincisi satır hatası
+olarak raporlanır. Üzerine yazmak ilk satırı kullanıcıya hiç söylemeden
+atmak olurdu; ikisini de bağlamak kuralı çiğnerdi.
+
+**Veritabanı kısıtı EKLENMEDİ ve sebebi kayıtlı:** kısmi bir UNIQUE
+indeks kuralı kanıtlanabilir kılardı ama mevcut veride ihlal ölçüldü
+(`A-12` dairesinde iki aktif sakin). İndeks önce o satırların
+kapatılmasını gerektirir — yani üretim verisinde bir değişiklik, ve o
+Kerem'in kararı.
 
 ## 5. BULUNAN GERÇEK KUSURLAR
 

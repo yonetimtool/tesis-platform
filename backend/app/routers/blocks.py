@@ -22,7 +22,14 @@ from ..crud_helpers import get_or_404, is_unique_violation, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..models import AppUser, BuildingBlock, Unit
-from ..schemas import BlockCreate, BlockListResponse, BlockOut, BlockUpdate
+from ..schemas import (
+    BlockCreate,
+    BlockListResponse,
+    BlockOut,
+    BlockUpdate,
+    TopluSilIstek,
+    TopluSilSonuc,
+)
 
 router = APIRouter(prefix="/blocks", tags=["building"])
 
@@ -139,6 +146,62 @@ async def update_block(
     )
     counts = await _unit_counts(db)
     return _out(obj, counts.get(obj.ad, 0))
+
+
+@router.post("/toplu-sil", response_model=TopluSilSonuc)
+async def toplu_sil(
+    body: TopluSilIstek,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_MANAGER),
+) -> TopluSilSonuc:
+    """(P154 / Asama 5) Birden fazla blogu TEK ISTEKTE siler.
+
+    HEP YA DA HIC DEGIL, SATIR SATIR — ve bu bilincli. Blok silme tekil
+    uctaki gibi `cascade` kapisina tabidir; on blogun ikisi doluysa
+    otekilerin silinmesini engellemek, kullaniciyi listeyi elle ayiklamaya
+    zorlardi. Silinemeyenler SEBEBIYLE doner; sessizce atlamak
+    "sildim" sanmasi demekti.
+
+    Tekil ucun mantigi KOPYALANMADI: ayni `cascade` kurali burada da
+    uygulanir cunku ikisi de ayni soruyu sorar — "bu blogun daireleri var
+    mi".
+    """
+    silinen = 0
+    atlanan: list[dict] = []
+    for blok_id in body.ids:
+        obj = (
+            await db.execute(
+                select(BuildingBlock).where(BuildingBlock.id == blok_id)
+            )
+        ).scalar_one_or_none()
+        if obj is None:
+            atlanan.append({"id": str(blok_id), "sebep": "bulunamadi"})
+            continue
+        kullanan = (
+            await db.execute(
+                select(func.count()).select_from(Unit).where(Unit.blok == obj.ad)
+            )
+        ).scalar_one()
+        if kullanan and not body.cascade:
+            atlanan.append({
+                "id": str(blok_id), "ad": obj.ad,
+                "sebep": "daire_var", "kullanan": kullanan,
+            })
+            continue
+        if kullanan:
+            await db.execute(delete(Unit).where(Unit.blok == obj.ad))
+        await db.delete(obj)
+        silinen += 1
+    try:
+        await db.flush()
+    except IntegrityError as exc:
+        raise translate_integrity(exc)
+    if silinen:
+        await audit_user(
+            db, user, Action.BLOCK_DELETE, resource_type="building_block",
+            meta={"adet": silinen, "atlanan": len(atlanan)},
+        )
+    return TopluSilSonuc(silinen=silinen, atlanan=atlanan)
 
 
 @router.delete("/{block_id}", status_code=204)
