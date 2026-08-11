@@ -228,15 +228,20 @@ async def _uygula_kisi(b: _Bag, satir_no: int, d: dict) -> None:
             b.hata(satir_no, "daire_no", "daire_bulunamadi")
             return
         unit_id = satir[0]
-        # (P154 / Asama 5) DAIRE BASINA TEK HESAP — kilitli kural.
+        # (P154 / Asama 5) DAIREDE HER ROLDEN TEK HESAP — kilitli kural 4,
+        # rol basina uygulaniyor (goc 0049; karar rapor §4.51).
         #
-        # EXCEL'DE AYNI DAIREYE IKI SATIR GELIRSE: ILKI KAZANIR, ikincisi
-        # HATA olarak raporlanir. Uzerine yazmak, ilk satiri kullaniciya
-        # hic soylemeden atmak olurdu; ikisini de baglamak ise kurali
-        # cignerdi. Dosyanin sirasi kullanicinin kendi sirasidir.
-        from .units import daire_dolu_mu
+        # EXCEL'DE AYNI DAIREYE AYNI ROLDEN IKI SATIR GELIRSE: ILKI
+        # KAZANIR, ikincisi HATA olarak raporlanir. Uzerine yazmak, ilk
+        # satiri kullaniciya hic soylemeden atmak olurdu; ikisini de
+        # baglamak ise kurali cignerdi. Dosyanin sirasi kullanicinin
+        # kendi sirasidir.
+        #
+        # FARKLI ROL (malik + kiraci) GECER ve bu dogru: `hedef_sec`
+        # tam olarak o durumu cozmek icin var.
+        from .units import daire_rolu_dolu_mu
 
-        if await daire_dolu_mu(b.db, unit_id):
+        if await daire_rolu_dolu_mu(b.db, unit_id, rol):
             b.hata(satir_no, "daire_no", "daire_zaten_dolu")
             return
 

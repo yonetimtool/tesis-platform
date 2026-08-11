@@ -258,7 +258,10 @@ def _daire(client, yon):
 
 
 def test_DAIRE_BASINA_TEK_HESAP(client, yon):
-    """Brief'in KILITLI KURALI. Ikinci atama 409 doner."""
+    """Kilitli kural 4 — ROL BASINA (goc 0049; karar rapor §4.51).
+
+    Rolsuz iki atama: ikincisi 409. NULL da BIR DEGERDIR.
+    """
     u = _daire(client, yon)
     a, b = _sakin(client, yon, "Sakin A"), _sakin(client, yon, "Sakin B")
 
@@ -300,3 +303,177 @@ def test_EXCELDE_AYNI_DAIREYE_IKI_SATIR_ILKI_KAZANIR(client, yon):
     assert sonuc["olusan"] == 1, "iki satir da yazildi — kural cignendi"
     assert sonuc["hatali"] == 1
     assert sonuc["hatalar"][0]["satir_no"] == 2, "ILK satir kazanmali"
+
+
+# ============ (P154 / goc 0049) DAIREDE HER ROLDEN TEK AKTIF HESAP ========== #
+#
+# Kuralin HARFI (rol'e bakmadan tek sakin) olculdu ve tam takimda 1 kirik +
+# 104 hata verdi; kirilan test `test_hedefleme_KIRACI_VAR_YOK_IKISI_BIRDEN`
+# idi. `borclandirma.hedef_sec`in `kiraci_oncelikli` kurali bir dairede
+# malik VE kiraci bulunabilmesi uzerine kurulu. Kerem A secenegini
+# onayladi: her ROLDEN en fazla bir aktif hesap.
+
+
+def test_MALIK_ve_KIRACI_AYNI_DAIREDE_yasal(client, yon):
+    """Bu, kuralin KORUDUGU sey — engelledigi degil.
+
+    `hedef_sec`in `kiraci_oncelikli` kurali ("kiraci varsa ona, yoksa
+    malike") tam olarak bu durumu cozmek icin var; engellenseydi o kural
+    olu koda donerdi.
+    """
+    u = _daire(client, yon)
+    m, k = _sakin(client, yon, "Malik"), _sakin(client, yon, "Kiraci")
+
+    assert client.post(f"/units/{u['id']}/residents", headers=yon,
+                       json={"user_id": m, "rol_tipi": "malik"}).status_code == 201
+    r = client.post(f"/units/{u['id']}/residents", headers=yon,
+                    json={"user_id": k, "rol_tipi": "kiraci"})
+    assert r.status_code == 201, r.text
+
+
+def test_AYNI_ROLDEN_IKINCI_hesap_409(client, yon):
+    u = _daire(client, yon)
+    a, b = _sakin(client, yon, "Malik A"), _sakin(client, yon, "Malik B")
+
+    assert client.post(f"/units/{u['id']}/residents", headers=yon,
+                       json={"user_id": a, "rol_tipi": "malik"}).status_code == 201
+    r = client.post(f"/units/{u['id']}/residents", headers=yon,
+                    json={"user_id": b, "rol_tipi": "malik"})
+    assert r.status_code == 409, r.text
+
+
+def test_KISIT_VERITABANINDA_var_ve_ROL_BASINA(owner_conn):
+    """Indeks `(unit_id, rol_tipi)` ve KISMI.
+
+    KISMI olmasi SART: kosulsuz benzersizlik, bir daireye GECMISTE
+    baglanmis herkesi sonsuza dek engellerdi.
+
+    ESKI INDEKS DE DURUYOR: `(unit_id, user_id)` AYNI KISININ iki kez
+    baglanmasini engelliyor ve yeni indeks bunu KAPSAMIYOR (ayni kisi
+    malik + kiraci olarak catismadan gecerdi).
+    """
+    with owner_conn.cursor() as cur:
+        cur.execute(
+            "SELECT indexname, indexdef FROM pg_indexes "
+            "WHERE tablename = 'unit_resident' AND indexname LIKE 'uq_%'"
+        )
+        idx = dict(cur.fetchall())
+
+    yeni = idx.get("uq_unitresident_daire_rol")
+    assert yeni is not None, "goc 0049'un indeksi YOK"
+    assert "UNIQUE" in yeni and "rol_tipi" in yeni
+    assert "bitis IS NULL" in yeni, "kismi degil — daire el degistiremezdi"
+
+    eski = idx.get("uq_unitresident_aktif")
+    assert eski is not None, (
+        "eski indeks dusurulmus — ayni kisi malik+kiraci olarak iki kez "
+        "baglanabilir hâle gelir (ve seed'in ON CONFLICT'i kirilir)"
+    )
+
+
+def test_KISIT_UCU_ATLAYAN_yazmayi_da_durdurur(client, yon, owner_conn):
+    """Indeksin ASIL isi: uc katmanini HIC gormeyen bir yazma yolu.
+
+    Fixture baglantisi AUTOCOMMIT oldugu icin basarisiz INSERT
+    baglantiyi bozmaz; SAVEPOINT'e gerek yok (denendi: "SAVEPOINT can
+    only be used in transaction blocks").
+    """
+    import psycopg
+
+    u = _daire(client, yon)
+    a, b = _sakin(client, yon, "SQL A"), _sakin(client, yon, "SQL B")
+    assert client.post(f"/units/{u['id']}/residents", headers=yon,
+                       json={"user_id": a, "rol_tipi": "malik"}).status_code == 201
+
+    with owner_conn.cursor() as cur:
+        cur.execute("SELECT tenant_id FROM unit WHERE id = %s", (u["id"],))
+        tenant_id = cur.fetchone()[0]
+        try:
+            cur.execute(
+                "INSERT INTO unit_resident (tenant_id, unit_id, user_id, rol_tipi) "
+                "VALUES (%s, %s, %s, 'malik')",
+                (tenant_id, u["id"], b),
+            )
+        except psycopg.errors.UniqueViolation:
+            pass
+        else:
+            raise AssertionError("ikinci malik YAZILDI — kisit yok")
+
+
+def test_ROLSUZ_BOSLUGU_UYGULAMA_kapatir(client, yon, owner_conn):
+    """PostgreSQL benzersiz indekste NULL'lari CATISTIRMAZ.
+
+    Yani rolsuz ikinci sakin VERITABANINDAN gecer; kontrol uygulama
+    katmanindadir ve bu bilincli bir sinirdir (goc 0049 basligi: boslugu
+    veritabaninda kapatmanin iki yolu da elendi — `COALESCE` IMMUTABLE
+    degil, ayri kismi indeks 37 testi kirdi).
+
+    Test IKISINI DE olcer: uc reddeder, dogrudan SQL gecer.
+    """
+    u = _daire(client, yon)
+    a, b = _sakin(client, yon, "Rolsuz A"), _sakin(client, yon, "Rolsuz B")
+    assert client.post(f"/units/{u['id']}/residents", headers=yon,
+                       json={"user_id": a}).status_code == 201
+
+    # UC: reddeder.
+    assert client.post(f"/units/{u['id']}/residents", headers=yon,
+                       json={"user_id": b}).status_code == 409
+
+    # DOGRUDAN SQL: gecer — belgelenen sinir.
+    with owner_conn.cursor() as cur:
+        cur.execute("SELECT tenant_id FROM unit WHERE id = %s", (u["id"],))
+        tenant_id = cur.fetchone()[0]
+        cur.execute(
+            "INSERT INTO unit_resident (tenant_id, unit_id, user_id) "
+            "VALUES (%s, %s, %s) RETURNING id",
+            (tenant_id, u["id"], b),
+        )
+        assert cur.fetchone() is not None, (
+            "rolsuz ikinci satir veritabanindan GECMELIYDI — gecmiyorsa "
+            "indeks degismis ve 37 ziyaretci testi kirilmis olmali"
+        )
+
+
+def test_KAPATILAN_bag_AYNI_ROLE_yer_acar(client, yon, owner_conn):
+    """`bitis` yazilmis bag kisiti ISGAL ETMEZ.
+
+    Kapatma = SILME DEGIL: eski satir tarihcede kalir, hesap ve erisim
+    dokunulmaz (kilitli kural 1) — ama rol yeniden atanabilir.
+    """
+    u = _daire(client, yon)
+    a, b = _sakin(client, yon, "Cikan Malik"), _sakin(client, yon, "Giren Malik")
+    client.post(f"/units/{u['id']}/residents", headers=yon,
+                json={"user_id": a, "rol_tipi": "malik"})
+    assert client.delete(
+        f"/units/{u['id']}/residents/{a}", headers=yon
+    ).status_code == 204
+
+    r = client.post(f"/units/{u['id']}/residents", headers=yon,
+                    json={"user_id": b, "rol_tipi": "malik"})
+    assert r.status_code == 201, r.text
+
+    with owner_conn.cursor() as cur:
+        cur.execute(
+            "SELECT count(*) FROM unit_resident WHERE unit_id = %s", (u["id"],)
+        )
+        assert cur.fetchone()[0] == 2, "eski satir silinmis — tarihce kaybi"
+
+
+def test_EXCELDE_FARKLI_ROL_IKI_SATIR_IKISI_de_gecer(client, yon):
+    """Ayni daireye malik + kiraci satiri: IKISI de yazilir.
+
+    Ayni rolden iki satirda ilki kazaniyordu
+    (`test_EXCELDE_AYNI_DAIREYE_IKI_SATIR_ILKI_KAZANIR`); ayrim ROLDE.
+    """
+    u = _daire(client, yon)
+    t1, t2 = (f"+9053{uuid.uuid4().int % 10**8:08d}" for _ in range(2))
+
+    r = client.post("/ice-aktarim/kisi", headers=yon, json={"satirlar": [
+        {"satir_no": 1, "degerler": {"ad": "Malik", "telefon": t1,
+                                     "daire_no": u["no"], "rol_tipi": "malik"}},
+        {"satir_no": 2, "degerler": {"ad": "Kiraci", "telefon": t2,
+                                     "daire_no": u["no"], "rol_tipi": "kiraci"}},
+    ]})
+    assert r.status_code == 201, r.text
+    assert r.json()["olusan"] == 2, r.json()
+    assert r.json()["hatali"] == 0

@@ -464,29 +464,47 @@ async def list_residents(
     return list(rows)
 
 
-async def daire_dolu_mu(db: AsyncSession, unit_id: uuid.UUID) -> bool:
-    """(P154 / Asama 5) Bu dairenin AKTIF bir sakini var mi?
+async def daire_rolu_dolu_mu(
+    db: AsyncSession, unit_id: uuid.UUID, rol_tipi: str | None
+) -> bool:
+    """(P154 / Asama 5) Bu dairede BU ROLDEN aktif bir sakin var mi?
 
-    Brief'in KILITLI KURALI: "Bir daire icin en fazla 1 hesap."
+    Kilitli kural 4 ("bir daire icin en fazla 1 hesap") ROL BASINA
+    uygulanir: bir dairede en fazla bir MALIK ve bir KIRACI olabilir.
+
+    NEDEN ROL BASINA — OLCULDU: kuralin harfi (rol'e bakmadan tek sakin)
+    tam takimda 1 kirik + 104 hata uretti. Kirilan test
+    `test_hedefleme_KIRACI_VAR_YOK_IKISI_BIRDEN`'di; `borclandirma.
+    hedef_sec`in `kiraci_oncelikli` kurali bir dairede malik VE kiraci
+    bulunabilmesi uzerine kurulu. Kerem A secenegini onayladi
+    (rapor §4.47-§4.53).
 
     "AKTIF" olculur (`bitis IS NULL`), "hic" degil: gecmis sakinler
     sayilsaydi bir daire EL DEGISTIREMEZDI — kiraci cikip yenisi
     girdiginde daire sonsuza dek dolu gorunurdu.
 
+    NULL'U DA BIR DEGER SAYAR ve bu, indeksten DAHA SIKI olmasinin
+    bilincli sebebidir: PostgreSQL benzersiz indekslerde NULL'lari
+    catistirmaz, yani `uq_unitresident_daire_rol` rolsuz iki sakini
+    gecirir. Uctan gecen hicbir yazma o boslugu kullanamasin diye
+    kontrol BURADA kapatiliyor. (Boslugu veritabaninda kapatmak da
+    denendi: `COALESCE(rol_tipi::text,...)` IMMUTABLE degil, ayri bir
+    kismi indeks ise 37 testi kirdi — goc 0049'un basligi.)
+
     ORTAK YARDIMCI: ayni kural hem bu router'da hem ICE AKTARIMDA
     gerekiyor; iki yere yazmak, birinde unutulmasi demekti.
-
-    NOT — VERITABANI KISITI YOK ve bu bilincli bir EKSIK: kismi bir
-    UNIQUE indeks kurali kanitlanabilir kilardi ama MEVCUT VERIDE ihlal
-    olculdu (dev veritabaninda bir daire, iki aktif sakin). Indeksi
-    eklemek once o satirlarin KAPATILMASINI gerektirir — yani uretim
-    verisinde bir degisiklik — ve bu Kerem'in karari. Kayda gecti.
     """
+    kosul = (
+        UnitResident.rol_tipi.is_(None)
+        if rol_tipi is None
+        else UnitResident.rol_tipi == rol_tipi
+    )
     var = (
         await db.execute(
             select(UnitResident.id).where(
                 UnitResident.unit_id == unit_id,
                 UnitResident.bitis.is_(None),
+                kosul,
             )
         )
     ).first()
@@ -508,7 +526,7 @@ async def assign_resident(
         raise APIError(422, "invalid_reference", "user_id_bulunamadi")
     if target.role != "resident":
         raise APIError(422, "invalid_reference", "atanacak_kullanici_resident_olmali")
-    if await daire_dolu_mu(db, unit_id):
+    if await daire_rolu_dolu_mu(db, unit_id, body.rol_tipi):
         raise APIError(409, "conflict", "daire_zaten_dolu")
 
     obj = UnitResident(

@@ -232,6 +232,14 @@ def main() -> int:
 
         # 2b) ikinci sakin: gecici kod BEKLEYEN hesap (ilk giris akisi testi).
         #     Ayni daireye (A-12) baglanir -> ayni dairede coklu sakin ornegi.
+        #
+        #     (P154 / goc 0049) ROLU `kiraci` OLDU. Eskiden ikisi de
+        #     `malik`ti ve bu, "bir dairede her rolden en fazla bir aktif
+        #     hesap" kuralini cigniyordu — goc onkosulu seed'i durdururdu.
+        #     Cozum bagi KOPARMAK degil DOGRU rolu vermek: malik + kiraci
+        #     ayni dairede YASAL ve `borclandirma.hedef_sec`in
+        #     `kiraci_oncelikli` kurali tam olarak bu durumu cozmek icin
+        #     var. Boylece seed o yolu da GERCEK veriyle sergiliyor.
         conn.execute(
             """
             INSERT INTO app_user (tenant_id, ad, email, telefon, password_hash,
@@ -249,7 +257,7 @@ def main() -> int:
             """,
             (
                 tenant_id,
-                "Acme Sakin Es",
+                "Acme Kiraci",
                 "resident2@acme.com",
                 "+905321112206",
                 hash_password(RESIDENT2_TEMP_CODE),
@@ -273,10 +281,11 @@ def main() -> int:
             (tenant_id,),
         ).fetchone()[0]
         # Iki sakin de A-12'ye baglanir (ayni dairede coklu sakin — her biri
-        # kendi parolasi/koduyla girer).
+        # kendi parolasi/koduyla girer). ROLLER FARKLI: goc 0049 ayni
+        # rolden ikinci aktif hesabi engelliyor, farkli rolu degil.
         for email, rol_tipi in [
             ("resident@acme.com", "malik"),
-            ("resident2@acme.com", "malik"),
+            ("resident2@acme.com", "kiraci"),
         ]:
             resident_id = conn.execute(
                 "SELECT id FROM app_user WHERE tenant_id=%s AND email=%s",
