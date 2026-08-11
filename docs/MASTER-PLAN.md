@@ -9290,7 +9290,7 @@ gecer (elle SQL hash YOK).
 | `+905000000103` | tesis_gorevlisi | gorevli@demo.yonetio.site |
 | `+905000000104` | resident | sakin@demo.yonetio.site |
 | **`+905000000105`** | **guvenlik_amiri** | amir@demo.yonetio.site |
-| `+905777777777` | denetci | *(depoda YOK — elle acilmis)* |
+| `+905777777777` | denetci | `scripts/demo_tenant.py` (P154'te eklendi) |
 
 **`denetci` hesabi seed betiginde DEGIL.** Kerem'in listesinde var ama
 `demo_tenant.py`de yok; elle acilmis. Not: betikteki "denetci" kelimesi

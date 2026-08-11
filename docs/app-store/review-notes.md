@@ -52,8 +52,16 @@ docker compose -f infra/docker-compose.yml \
 | Sakin | `05000000104` | `sakin@demo.yonetio.site` | Aidatım, talep aç, duyurular, rezervasyon |
 | Güvenlik amiri | `05000000105` | `amir@demo.yonetio.site` | Dış güvenlik şirketi amiri: tur/vardiya, ihlal ve araç geçişi okuma, ekip yönetimi |
 
-**Parola:** dördü de aynı — App Store Connect'in parola alanına Kerem
-girer (`DEMO_PAROLA`).
+**Parola:** hepsi aynı — App Store Connect'in parola alanına Kerem
+girer (`DEMO_PAROLA`). (Eskiden "dördü de aynı" yazıyordu; hesap sayısı
+arttıkça bayatlayan bir sayıydı.)
+
+> **Tabloda `denetci` rolü YOK ve bu bilinçli.** `demo_tenant.py` altıncı
+> bir hesap daha açıyor (`+905777777777`, kilitli kural 2 gereği) ama o
+> rolün **mobil yüzeyi yoktur** (kilitli kural 5): mobilde yalnızca web
+> paneline yönlendiren bir ekran görür. Denetçiye o hesabı vermek, ona
+> "boş" görünen bir ekran açtırmak ve uygulamayı bozuk göstermek olurdu.
+> Hesap **yönetim paneli** içindir.
 
 **Tesis kodu (`demo`) mobilde SORULMAZ:** telefon numarası global
 benzersizdir, sunucu tesisi ondan çözer. Tesis kodu yalnız yönetim

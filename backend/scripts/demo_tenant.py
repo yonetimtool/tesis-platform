@@ -68,7 +68,27 @@ HESAPLAR = [
     # soylemek, calistigini VARSAYMAKTIR.
     ("Demo Güvenlik Amiri", "amir@demo.yonetio.site", "guvenlik_amiri",
      "+905000000105"),
+    # (P154) DENETCI — kilitli kural 2 bu numarayi ADIYLA sayiyor
+    # (`+905777777777 denetci`) ama hesap HICBIR BETIKTE yoktu; prod'da
+    # ELLE acilmisti (docs/test-sunucusu-kurulum.md §6.5). Yani her yeni
+    # ortam (test sunucusu, yeniden kurulum) o kurali karsilamiyordu ve
+    # eksik ancak birinin giris yapamamasiyla anlasilirdi.
+    #
+    # NUMARA NEDEN `+90500000010X` DIZISINDE DEGIL: kilitli kural onu
+    # `+905777777777` diye yaziyor. Diziyi "duzeltmek" kurali degistirmek
+    # olurdu.
+    ("Demo Denetçi", "denetci@demo.yonetio.site", "denetci", "+905777777777"),
 ]
+
+# DENETCININ GOREV PENCERESI BILEREK BOS BIRAKILIR
+# (`gorev_baslangic`/`gorev_bitis` NULL — bkz. `_hesap_yaz`).
+#
+# `deps.gorev_penceresi_disinda` ikisi de NULL ise "pencere yok" sayar ve
+# girisi HER ZAMAN kabul eder. Tarihli bir pencere vermek, demo hesabini
+# ONCEDEN BELIRLI bir gunde SESSIZCE calismaz hâle getirirdi — ve bunu
+# fark eden ilk kisi App Store denetcisi olurdu. Kilitli kural 2 "demo
+# hesaplar calismaya DEVAM edecek" diyor; suresiz gorev bunun tek
+# garantili bicimi.
 
 #: Tur noktalari. UID'ler SABIT: denetim notlarindaki "simule okutma"
 #: adimlari bu noktalara isaret eder.
@@ -77,6 +97,68 @@ NOKTALAR = [
     ("Otopark Girişi", "DEMO-NFC-0002"),
     ("Bahçe", "DEMO-NFC-0003"),
 ]
+
+
+def _hesap_yaz(conn, tenant_id, ad: str, email: str, rol: str,
+               tel: str, pw: str) -> None:
+    """Hesabi acar ya da gunceller — TELEFONA GORE COZEREK.
+
+    NEDEN ONCE TELEFON: `telefon` GLOBAL benzersizdir
+    (`uq_app_user_telefon`, goc 0001) ama upsert `(tenant_id, lower(email))`
+    uzerinde. Numara BASKA bir e-postayla zaten kayitliysa INSERT e-posta
+    catismasina DEGIL telefon kisitina carpar ve betik anlasilmaz bir
+    "duplicate key ... uq_app_user_telefon" ile durur.
+
+    Bu KURGUSAL bir risk degil: bu hesaplar bir donem ELLE acildi
+    (docs/test-sunucusu-kurulum.md §6.5) ve oradaki SQL baska bir e-posta
+    kullaniyor (`denetci@test.yonetiyor.com`). Yani betigin ilk kosumu
+    tam olarak bu duvara carpardi.
+
+    BASKA TENANT'TA ISE DOKUNMAZ, DURUR: o satiri bu betigin sahiplenmesi,
+    baska bir tesisin kullanicisinin rolunu ve parolasini sessizce
+    degistirmek olurdu (kilitli kural 1). Operatore hangi tesis oldugunu
+    soyleyip cikar.
+    """
+    mevcut = conn.execute(
+        "SELECT id, tenant_id FROM app_user WHERE telefon = %s", (tel,)
+    ).fetchone()
+
+    if mevcut is not None and mevcut[1] != tenant_id:
+        raise SystemExit(
+            f"HATA: {tel} numarasi BASKA bir tesiste kayitli "
+            f"(tenant_id={mevcut[1]}). Bu betik ona dokunmaz. Once o kaydi "
+            f"cozun; demo hesabi acmak icin numarayi serbest birakin."
+        )
+
+    if mevcut is not None:
+        # SAHIPLEN: ayni tesiste, numara zaten burada. E-posta farkli
+        # olabilir (elle acilmis kayit) — kanonik degerlere getirilir.
+        conn.execute(
+            """
+            UPDATE app_user
+               SET ad = %s, email = %s, password_hash = %s, password_set = true,
+                   role = %s::user_role, is_active = true,
+                   gorev_baslangic = NULL, gorev_bitis = NULL
+             WHERE id = %s
+            """,
+            (ad, email, pw, rol, mevcut[0]),
+        )
+        return
+
+    conn.execute(
+        """
+        INSERT INTO app_user (tenant_id, ad, email, password_hash,
+                              password_set, role, is_active, telefon,
+                              aranabilir, birincil)
+        VALUES (%s, %s, %s, %s, true, %s::user_role, true, %s, false, false)
+        ON CONFLICT (tenant_id, lower(email)) DO UPDATE
+            SET ad = EXCLUDED.ad, password_hash = EXCLUDED.password_hash,
+                password_set = true, role = EXCLUDED.role,
+                is_active = true, telefon = EXCLUDED.telefon,
+                gorev_baslangic = NULL, gorev_bitis = NULL
+        """,
+        (tenant_id, ad, email, pw, rol, tel),
+    )
 
 
 def main() -> int:
@@ -120,19 +202,7 @@ def main() -> int:
 
         pw = hash_password(PAROLA)
         for ad, email, rol, tel in HESAPLAR:
-            conn.execute(
-                """
-                INSERT INTO app_user (tenant_id, ad, email, password_hash,
-                                      password_set, role, is_active, telefon,
-                                      aranabilir, birincil)
-                VALUES (%s, %s, %s, %s, true, %s::user_role, true, %s, false, false)
-                ON CONFLICT (tenant_id, lower(email)) DO UPDATE
-                    SET ad = EXCLUDED.ad, password_hash = EXCLUDED.password_hash,
-                        password_set = true, role = EXCLUDED.role,
-                        is_active = true, telefon = EXCLUDED.telefon
-                """,
-                (tenant_id, ad, email, pw, rol, tel),
-            )
+            _hesap_yaz(conn, tenant_id, ad, email, rol, tel, pw)
         print(f"[demo] {len(HESAPLAR)} hesap (parola env: DEMO_PAROLA)")
 
         # Daire — sakin ekraninin bos kalmamasi icin.

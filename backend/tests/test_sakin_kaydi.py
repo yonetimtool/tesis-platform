@@ -70,11 +70,30 @@ def test_yanlis_tesis_kodu_ve_yanlis_daire_AYNI_hatayi_verir(client, world, owne
 
 
 def test_var_olan_telefon_ikinci_kez_kaydolamaz(client, world, owner_conn):
-    """Telefon KIMLIGIN kendisi — iki kullaniciya ait olamaz."""
+    """Telefon KIMLIGIN kendisi — iki kullaniciya ait olamaz.
+
+    NUMARA FIXTURE'DAN ALINIR (`resident_a["phone"]`) — eskiden
+    `resident_a.get("telefon") or "+905000000101"` yaziyordu ve iki kusuru
+    birden tasiyordu:
+
+      1. Fixture'daki anahtar `phone`, `telefon` DEGIL. Yani `.get()` HER
+         ZAMAN `None` donuyor, test hicbir zaman fixture'in numarasini
+         kullanmiyordu — `or` sagdaki sabite dusuyordu.
+      2. O sabit (`+905000000101`) DEMO TESISININ yoneticisine ait ve demo
+         tesisi yalniz `demo_tenant.py` kosulmussa VAR. Yani test, dev
+         veritabaninda o betigin bir kez kosturulmus olmasina BAGLIYDI —
+         hem de `demo_mod=true`ya, ki o betigin kendi basligi "dev'de ASLA
+         acilmamali" diyor.
+
+    Demo tesisi dev veritabanindan kaldirilinca test dustu ve gizli
+    bagimlilik boyle gorundu (rapor §4.56). Artik testin numarasi kendi
+    fixture'indan geliyor: var oldugu KESIN ve baska hicbir seye bagli
+    degil.
+    """
     r = client.post("/auth/kayit/basla", json={
         "tesis_kodu": _kod(client, owner_conn, world["slug_a"]),
         "daire_no": _daire(owner_conn, world["slug_a"]),
-        "telefon": world["resident_a"].get("telefon") or "+905000000101",
+        "telefon": world["resident_a"]["phone"],
     })
     assert r.status_code == 422, r.text
 

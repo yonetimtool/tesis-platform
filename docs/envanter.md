@@ -295,5 +295,5 @@ kaldırılacak. Aksi hâlde çalışan bir özellik sessizce kaybolur.
    geçti.
 3. **`kartGeriBildirim` ARB artığı** — P147'de karo kaldırıldı, çeviri
    anahtarı 7 dilde duruyor. Aşama 7.2'de temizlenecek.
-4. **`+905777777777` denetçi hesabının depoda olmaması** — bkz.
+4. ~~**`+905777777777` denetçi hesabının depoda olmaması**~~ — **ÇÖZÜLDÜ (P154):** `scripts/demo_tenant.py` artık açıyor; ayrıntı `docs/test-sunucusu-kurulum.md` §6.5.
    `docs/test-sunucusu-kurulum.md` §6.5.

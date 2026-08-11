@@ -146,6 +146,28 @@ USERS = [
         "birincil": False,
     },
     {
+        # (P154) DENETCI — dev'de bu rolun hesabi HIC YOKTU.
+        #
+        # NEDEN EKLENDI: denetci yuzeyini yerelde tiklayarak denemenin tek
+        # yolu `demo_tenant.py` kosturmakti; o betik ise tesise
+        # `demo_mod = true` yazar ve kendi basligi "dev'de ASLA acilmamali"
+        # diyor (tur kaydinin kanit degerini askiya alan bir bayrak).
+        # Yani dogru olani yapmak icin yanlis olani yapmak gerekiyordu.
+        #
+        # GOREV PENCERESI YOK (`gorev_baslangic`/`gorev_bitis` verilmiyor):
+        # `deps.gorev_penceresi_disinda` ikisi de NULL ise girisi her zaman
+        # kabul eder. Tarihli bir pencere, dev hesabini onceden belirli bir
+        # gunde sessizce calismaz hâle getirirdi.
+        #
+        # NUMARA 208: 200-207 dolu (bkz. ustteki not).
+        "ad": "Acme Denetci",
+        "email": "denetci@acme.com",
+        "role": "denetci",
+        "password": os.getenv("SEED_DENETCI_PASSWORD", "Denetci123!"),
+        "telefon": "+905321112208",
+        "aranabilir": False,
+    },
+    {
         "ad": "Acme Guard",
         "email": "guard@acme.com",
         "role": "security",

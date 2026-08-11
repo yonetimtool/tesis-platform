@@ -675,6 +675,87 @@ yeşile alınmıştı; artık gerek yok.
 > Gruplama iddiası, kapsama iddiası ve iç tutarlılık — üçü de eskisinden
 > daha sıkı ölçülüyor.
 
+### 4.56 Gizli bağımlılık: bir test DEMO TESİSİNİN varlığına bağlıymış
+
+Doğrulama için dev veritabanında bir `demo` tesisi açtım (`demo_mod=true`)
+ve işim bitince **sildim** — o betiğin kendi başlığı "dev'de ASLA
+açılmamalı" diyor. Silince `test_var_olan_telefon_ikinci_kez_kaydolamaz`
+düştü.
+
+Sebep testin tek satırındaydı:
+
+```python
+"telefon": world["resident_a"].get("telefon") or "+905000000101",
+```
+
+İki kusur üst üste:
+
+1. Fixture'daki anahtar **`phone`**, `telefon` değil. Yani `.get()` **her
+   zaman** `None` dönüyor; test hiçbir zaman fixture'ın numarasını
+   kullanmıyordu — `or` sağdaki sabite düşüyordu.
+2. O sabit `+905000000101` **demo tesisinin** yöneticisine ait. Yani test,
+   dev veritabanında `demo_tenant.py`'nin bir kez koşturulmuş olmasına —
+   ve `demo_mod=true`nun dev'de **açık kalmış** olmasına — bağlıydı.
+
+`or` ilk kusuru gizliyordu: test yıllardır yeşildi ve ölçtüğünü sandığı
+şeyi ölçmüyordu. Artık numara `world["resident_a"]["phone"]`den geliyor —
+var olduğu **kesin** ve başka hiçbir şeye bağlı değil.
+
+**Bu turda ikinci kez aynı ders:** dev veritabanındaki artık veri
+zararsız kirlilik değil; testlerin neyi ölçtüğünü değiştiriyor (ilki
+§4.54, 112 birikmiş tesis).
+
+### 4.55 Denetçi hesabı depoya girdi — ve bir tuzak kapatıldı
+
+Kilitli kural 2 `+905777777777 denetci`'yi **adıyla** sayıyordu ama hesap
+hiçbir betikte yoktu; canlıda elle açılmıştı. Yani her yeni ortam o
+kuralı karşılamıyordu ve eksik ancak birinin giriş yapamamasıyla
+anlaşılırdı. Artık `demo_tenant.py`'nin `HESAPLAR` listesinde.
+
+**Görev penceresi bilerek boş.** `gorev_penceresi_disinda` ikisi de NULL
+ise "pencere yok" sayar ve girişi her zaman kabul eder. Tarihli bir
+pencere, demo hesabını **önceden belirli bir günde sessizce** çalışmaz
+hâle getirirdi — ve bunu fark eden ilk kişi App Store denetçisi olurdu.
+Kilitli kural 2 "demo hesaplar çalışmaya **devam** edecek" diyor;
+süresiz görev bunun tek garantili biçimi.
+
+**Eklerken bir tuzak çıktı ve ölçülerek kapatıldı.** Betiğin upsert'ü
+`(tenant_id, lower(email))` üzerindeydi; oysa `telefon` **global**
+benzersiz. Numara başka bir e-postayla kayıtlıysa INSERT e-posta
+çakışmasına değil `uq_app_user_telefon`'a çarpar. Bu kurgusal değildi:
+elle açma SQL'i `denetci@test.yonetiyor.com` kullanıyordu, yani betiğin
+ilk koşumu tam o duvara çarpardı. **Ölçtüm** — aynı numarayı yeni bir
+e-postayla eklemeyi denedim: `duplicate key value violates unique
+constraint "uq_app_user_telefon"`.
+
+`_hesap_yaz` artık **önce telefona** bakıyor:
+- aynı tesiste bulunursa **sahiplenir** (kanonik ad/e-posta/parolaya
+  getirir) — ölçüldü, çakışmadı,
+- **başka bir tesiste** ise dokunmaz ve hangi tesis olduğunu söyleyip
+  durur — başka bir tesisin kullanıcısının rolünü ve parolasını sessizce
+  değiştirmek kilitli kural 1'i çiğnerdi; ölçüldü, doğru mesajla durdu.
+
+Kural altı hesabın **hepsine** uygulandı, yalnız denetçiye değil: risk
+aynı ve iki ayrı yol yazmak brief'in "aynı işi iki kez yapma" kuralına
+aykırıydı.
+
+**Uçtan uca doğrulandı:** `login-phone` 200 · `/me` 200 ·
+`POST /blocks` **403** (salt okuma kapısı çalışıyor) · ikinci koşumda
+hesap sayısı 6'da sabit.
+
+**Dev seed'e de bir denetçi eklendi** (`+905321112208`,
+`denetci@acme.com`) — ayrı bir gerekçeyle: dev'de bu rolün hesabı hiç
+yoktu ve yüzeyi yerelde tıklamanın tek yolu `demo_tenant.py` koşturmaktı.
+O betik ise tesise `demo_mod = true` yazar ve kendi başlığı "dev'de ASLA
+açılmamalı" der (tur kaydının kanıt değerini askıya alan bir bayrak).
+Yani doğru olanı yapmak için yanlış olanı yapmak gerekiyordu.
+
+**App Store notlarına EKLENMEDİ ve bu bilinçli:** denetçinin **mobil
+yüzeyi yoktur** (kilitli kural 5) — mobilde yalnız web paneline
+yönlendiren ekranı görür. Denetçiye o hesabı vermek, ona boş görünen bir
+ekran açtırıp uygulamayı bozuk göstermek olurdu. Oradaki bayat "dördü de
+aynı" ifadesi de sayısızlaştırıldı.
+
 ### 4.54 Yarışı kovalarken ikinci bir kusur çıktı: test çöpü ÜRÜN DAVRANIŞINI değiştirdi
 
 Pano düzeltmesinden sonraki tam takımda **başka** bir test düştü:
@@ -1085,8 +1166,8 @@ oluşuyor). Her aşamanın çıktısı ve commit'i §1'deki tabloda.
    planlanıyorsa **şimdi** başlamalı.
 4. **Karar: "Olaylar"** yöneticiden tamamen kalksın mı, yoksa yalnız yazma
    formu mu gizlensin (§4.6)? Şu an brief'teki yazılı istek uygulandı.
-5. **Karar: `+905777777777` denetçi** hesabı `demo_tenant.py`'ye kalıcı
-   eklensin mi? Şu an depoda yok, canlıda elle açılmış.
+5. ~~**Karar: `+905777777777` denetçi**~~ — **KARAR VERİLDİ ve YAPILDI:**
+   hesap `scripts/demo_tenant.py`'ye eklendi (§4.55).
 6. ~~**Karar: göç politikası**~~ — **KARAR VERİLDİ:** `downgrade()`
    gövdesi "DDL'e dokunulmaz" kuralının dışında. Politikaya §3b olarak
    yazıldı, `0036` düzeltildi, `goc-tersinir` yeşile döndü (§6.4).

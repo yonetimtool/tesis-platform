@@ -475,41 +475,37 @@ ezilebilir; ezilmezse aşağıdaki varsayılanlar geçerlidir.
 | Demo Sakin | `sakin@demo.yonetio.site` | `resident` | `+905000000104` |
 | Demo Güvenlik Amiri | `amir@demo.yonetio.site` | `guvenlik_amiri` | `+905000000105` |
 
-### 6.5 ⚠ BULGU — `+905777777777` denetçi hesabı depoda YOK
+### 6.5 ✅ ÇÖZÜLDÜ — `+905777777777` denetçi hesabı artık depoda
 
 Kilitli kural 2 beş hesap sayıyor ve beşincisi `+905777777777 denetci`.
-**Bu hesap hiçbir betikte yok**; canlıda elle açılmış
-(`docs/MASTER-PLAN.md:9293` bunu zaten "depoda YOK — elle açılmış" diye
-kaydetmiş). Ayrıca briefteki `...103 tesis_gorevlisi` eşleşmesi doğru,
-fakat koddaki beşinci hesap `+905000000105 guvenlik_amiri`'dir — brief
-onu saymıyor.
+Bu hesap eskiden **hiçbir betikte yoktu**; canlıda elle açılmıştı. Yani
+her yeni ortam (test sunucusu, yeniden kurulum) o kuralı karşılamıyordu
+ve eksik ancak birinin giriş yapamamasıyla anlaşılıyordu.
 
-**Karar:** test sunucusunda denetçi hesabı **elle** açılır (canlıya
-dokunulmaz). `demo_tenant.py`'ye kalıcı olarak eklemek ayrı bir iştir ve
-canlıyı da etkileyeceği için bu turda **yapılmadı**:
+**Artık `demo_tenant.py`'nin `HESAPLAR` listesinde:**
+
+| Ad | E-posta | Rol | Telefon |
+|---|---|---|---|
+| Demo Denetçi | `denetci@demo.yonetio.site` | `denetci` | `+905777777777` |
+
+Elle SQL çalıştırmaya **gerek yok**; olağan komut yeter:
 
 ```bash
-$DC run --rm worker python - <<'PY'
-import os, psycopg
-from app.security import hash_password
-parola = os.environ["DENETCI_PAROLA"]
-with psycopg.connect(os.environ["OWNER_DSN"]) as c, c.cursor() as k:
-    k.execute("SELECT id FROM tenant ORDER BY created_at LIMIT 1")
-    tid = k.fetchone()[0]
-    k.execute("""
-        INSERT INTO app_user (tenant_id, ad, email, password_hash, password_set,
-                              role, is_active, telefon, aranabilir, birincil)
-        VALUES (%s,'Test Denetçi','denetci@test.yonetiyor.com',%s,true,
-                'denetci'::user_role,true,'+905777777777',false,false)
-        ON CONFLICT (telefon) DO UPDATE
-          SET password_hash = EXCLUDED.password_hash, password_set = true
-    """, (tid, hash_password(parola)))
-    c.commit()
-print("denetci hesabi acildi")
-PY
+$DC run --rm -e DEMO_PAROLA='<parola>' worker python -m scripts.demo_tenant
 ```
 
-Çağırırken `-e DENETCI_PAROLA='<uretilen>'` verin.
+**Görev penceresi bilerek boş** (`gorev_baslangic`/`gorev_bitis` NULL).
+`gorev_penceresi_disinda` ikisi de NULL ise "pencere yok" sayar ve girişi
+her zaman kabul eder. Tarihli bir pencere, demo hesabını önceden belirli
+bir günde **sessizce** çalışmaz hâle getirirdi — ve bunu fark eden ilk
+kişi App Store denetçisi olurdu.
+
+**Elle açılmış hesabı olan ortamlar:** betik numarayı **sahiplenir**,
+çakışmaz. Çözümleme e-postaya değil **telefona** göre yapılır; numara
+başka bir e-postayla kayıtlıysa o satır kanonik değerlere güncellenir.
+Numara **başka bir tesiste** ise betik dokunmaz ve hangi tesis olduğunu
+söyleyip durur — başka bir tesisin kullanıcısının rolünü ve parolasını
+sessizce değiştirmek kilitli kural 1'i çiğnerdi.
 
 ---
 
