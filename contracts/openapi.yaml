@@ -6924,6 +6924,19 @@ paths:
         `rol_tipi` (malik | kiraci) bag uzerinde durur; ayni dairede hem malik
         hem kiraci olabilir (ayri kayitlar).
 
+        (P154 / goc 0049) BIR DAIREDE HER ROLDEN EN FAZLA BIR AKTIF HESAP.
+        Kilitli kural 4 rol basina uygulanir: malik + kiraci birlikte YASAL,
+        ikinci bir malik (ya da ikinci bir kiraci) **409**. Kural hem uc
+        katmaninda (`units.daire_rolu_dolu_mu`) hem veritabaninda
+        (`uq_unitresident_daire_rol`) zorlanir.
+
+        `rol_tipi` VERILMEZSE (NULL) o da BIR DEGER sayilir: rolsuz ikinci
+        sakin de 409 alir. Bu kontrol YALNIZ uc katmanindadir — PostgreSQL
+        benzersiz indekste NULL'lari catistirmaz (gerekce goc 0049'da).
+
+        "Aktif" `bitis IS NULL` demektir: bag kapatilinca o rol yeniden
+        atanabilir, yani daire el degistirebilir.
+
         Hedef kullanici `resident` DEGILSE 422; ayni (daire, kullanici) bagi
         zaten varsa 409.
       requestBody:
