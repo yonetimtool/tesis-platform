@@ -4887,4 +4887,38 @@ class AppLocalizationsEs extends AppLocalizations {
   String kayitAdim(String n) {
     return 'Paso $n/3';
   }
+
+  @override
+  String sosyalIleDevam(String saglayici) {
+    return 'Continuar con $saglayici';
+  }
+
+  @override
+  String get sosyalBaslik => 'Vincule su cuenta';
+
+  @override
+  String sosyalEslesmeAciklama(String saglayici) {
+    return 'Su cuenta de $saglayici está verificada. Introduzca el ID de la finca y su número de teléfono para localizar su cuenta.';
+  }
+
+  @override
+  String get sosyalRelayUyari =>
+      'Apple ocultó su dirección de correo; no se puede enviar correo a ella.';
+
+  @override
+  String get sosyalTesisKodu => 'ID de la finca';
+
+  @override
+  String get sosyalKodGonder => 'Enviar código de verificación';
+
+  @override
+  String sosyalKodAciklama(String tesis, String telefon) {
+    return '$tesis — introduzca el código enviado al $telefon.';
+  }
+
+  @override
+  String get sosyalDogrula => 'Verificar y acceder';
+
+  @override
+  String get sosyalVazgec => 'Cancelar';
 }

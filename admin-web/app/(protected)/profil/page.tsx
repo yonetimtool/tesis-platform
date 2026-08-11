@@ -21,6 +21,7 @@ import {
   cardCls,
   inputCls,
 } from "@/components/form";
+import { GirisYontemlerim } from "@/components/GirisYontemlerim";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
@@ -146,6 +147,9 @@ export default function ProfilPage() {
           </div>
         </div>
       </section>
+
+      {/* (P154 / Asama 4) Sosyal giris yontemleri — ekleme/kaldirma. */}
+      <GirisYontemlerim />
     </div>
   );
 }

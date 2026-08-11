@@ -26,6 +26,9 @@ class AuthState {
     this.hataKimligi,
     this.setupToken,
     this.kodBekleniyor = false,
+    this.oauthBaglamaJetonu,
+    this.oauthSaglayici,
+    this.oauthRelay = false,
   });
 
   final AuthStatus status;
@@ -46,8 +49,21 @@ class AuthState {
   /// token'i. Dolu ise router parola belirleme ekranina yonlendirir.
   final String? setupToken;
 
+  /// (P154 / Asama 4) Sosyal hesap DOGRULANDI ama bir kullaniciya BAGLI
+  /// DEGIL. Dolu ise ekran tesis kodu + telefon adimina gecer — brief'in
+  /// merkez kurali: sosyal hesap kimlik dogrulama YONTEMIDIR, eslesme
+  /// anahtari degil.
+  final String? oauthBaglamaJetonu;
+  final String? oauthSaglayici;
+
+  /// Apple "e-postami gizle" dediyse true; kullaniciya soylenir.
+  final bool oauthRelay;
+
   AuthState copyWith({
     bool? kodBekleniyor,
+    Object? oauthBaglamaJetonu = _sentinel,
+    Object? oauthSaglayici = _sentinel,
+    bool? oauthRelay,
     AuthStatus? status,
     bool? submitting,
     Object? errorMessage = _sentinel,
@@ -66,6 +82,13 @@ class AuthState {
           : hataKimligi as GirisAkisHatasi?,
       setupToken:
           setupToken == _sentinel ? this.setupToken : setupToken as String?,
+      oauthBaglamaJetonu: oauthBaglamaJetonu == _sentinel
+          ? this.oauthBaglamaJetonu
+          : oauthBaglamaJetonu as String?,
+      oauthSaglayici: oauthSaglayici == _sentinel
+          ? this.oauthSaglayici
+          : oauthSaglayici as String?,
+      oauthRelay: oauthRelay ?? this.oauthRelay,
     );
   }
 
@@ -249,6 +272,100 @@ class AuthController extends Notifier<AuthState> {
   /// Ilk giriste girilen telefon; parola kurulumu sonrasi ON-DOLDURMA kaydinda
   /// (telefon + yeni parola) kullanilir.
   String? _pendingPhone;
+
+  // ================= (P154 / Asama 4) SOSYAL GIRIS ================= #
+
+  /// Tarayici akisini kosar.
+  ///
+  /// UC SONUC: oturum acildi · eslesme gerekiyor · KULLANICI VAZGECTI.
+  /// Ucuncusu HATA DEGILDIR ve ekranda kirmizi bir kutu gostermez —
+  /// tarayiciyi kapatmak bilincli bir eylemdir.
+  Future<void> oauthAkisi(String saglayici) async {
+    state = state.copyWith(
+      submitting: true, errorMessage: null, hataKimligi: null);
+    try {
+      final sonuc = await ref.read(oauthRepositoryProvider).akis(saglayici);
+      // `null` YALNIZ VAZGECME: kullanici tarayiciyi kapatti. Durum
+      // degismez, hata da gosterilmez.
+      if (sonuc == null) {
+        state = state.copyWith(submitting: false);
+        return;
+      }
+      // Kimlik ZATEN BAGLIYSA jetonlar depoya yazilmistir.
+      if (sonuc.girisYapildi) {
+        state = state.copyWith(
+          submitting: false, status: AuthStatus.authenticated);
+        return;
+      }
+      state = state.copyWith(
+        submitting: false,
+        oauthBaglamaJetonu: sonuc.baglamaJetonu,
+        oauthSaglayici: sonuc.saglayici,
+        oauthRelay: sonuc.relay,
+      );
+    } on ApiException catch (e) {
+      state = state.copyWith(
+        submitting: false, errorMessage: e.message, hataKimligi: e.code);
+    }
+  }
+
+  /// Sosyal baglama — 1. adim: tesis kodu + telefon, eslesirse SMS.
+  ///
+  /// ESLESME SONUCU AYIRT ETTIRILMEZ (`girisKoduIste` ile ayni ilke).
+  Future<({String tesisAd, String telefonMaskeli})?> oauthBaglanBasla({
+    required String tesisKodu,
+    required String telefon,
+  }) async {
+    final jeton = state.oauthBaglamaJetonu;
+    if (jeton == null) return null;
+    state = state.copyWith(
+      submitting: true, errorMessage: null, hataKimligi: null);
+    try {
+      final r = await ref.read(oauthRepositoryProvider).baglanBasla(
+            baglamaJetonu: jeton, tesisKodu: tesisKodu, telefon: telefon);
+      state = state.copyWith(submitting: false, kodBekleniyor: true);
+      return r;
+    } on ApiException catch (e) {
+      state = state.copyWith(
+        submitting: false, errorMessage: e.message, hataKimligi: e.code);
+      return null;
+    }
+  }
+
+  /// Sosyal baglama — 2. adim: SMS kodu dogruysa BAGLAR ve oturum acar.
+  Future<void> oauthBaglanDogrula({
+    required String telefon,
+    required String kod,
+  }) async {
+    final jeton = state.oauthBaglamaJetonu;
+    if (jeton == null) return;
+    state = state.copyWith(
+      submitting: true, errorMessage: null, hataKimligi: null);
+    try {
+      await ref.read(oauthRepositoryProvider).baglanDogrula(
+            baglamaJetonu: jeton, telefon: telefon, kod: kod);
+      state = state.copyWith(
+        status: AuthStatus.authenticated,
+        submitting: false,
+        kodBekleniyor: false,
+        oauthBaglamaJetonu: null,
+      );
+    } on ApiException catch (e) {
+      state = state.copyWith(
+        submitting: false, errorMessage: e.message, hataKimligi: e.code);
+    }
+  }
+
+  /// Baglama akisindan cikis — kullanici vazgecti.
+  void oauthIptal() {
+    state = state.copyWith(
+      oauthBaglamaJetonu: null,
+      oauthSaglayici: null,
+      kodBekleniyor: false,
+      errorMessage: null,
+      hataKimligi: null,
+    );
+  }
 
   Future<void> logout() async {
     // Push cihaz kaydini auth token'lar HENUZ gecerliyken pasiflestir

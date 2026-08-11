@@ -9,6 +9,8 @@ import 'package:mobile/src/features/auth/presentation/login_screen.dart';
 
 import 'helpers/l10n_test_app.dart';
 
+import 'helpers/sosyal_kapali.dart';
+
 const _tokens = TokenPair(
   accessToken: 'acc',
   refreshToken: 'ref',
@@ -70,7 +72,7 @@ void main() {
   Future<void> pumpLogin(WidgetTester tester) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [authRepositoryProvider.overrideWithValue(repo)],
+        overrides: [...sosyalKapali, authRepositoryProvider.overrideWithValue(repo)],
         child: l10nApp(const LoginScreen()),
       ),
     );

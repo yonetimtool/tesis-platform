@@ -460,6 +460,309 @@ paths:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
 
   # ----------------------------------------------------------------- #
+  # (P154 / Asama 4) SOSYAL GIRIS — Google / Microsoft / Apple.
+  #
+  # MERKEZ KURAL: sosyal hesap kimlik dogrulama YONTEMIDIR, eslesme
+  # anahtari DEGIL. Hicbir uc kullanici YARATMAZ; kimlik her zaman tesis
+  # ID + telefon ile bulunan MEVCUT bir hesaba baglanir ve ilk baglama
+  # SMS ile dogrulanir.
+  #
+  # YOL SEKLI `/baslat/{saglayici}` — degisken segment SONDA. Basta
+  # olsaydi `/baglan/basla` istegi o kaliba duser ve BASKA bir semayla
+  # dogrulanip 422 verirdi (olculdu).
+  # ----------------------------------------------------------------- #
+  /auth/oauth/saglayicilar:
+    get:
+      tags: [auth]
+      summary: Yapilandirilmis saglayicilar — arayuz dugmeleri buradan
+      security: []
+      responses:
+        "200":
+          description: Acik saglayicilarin kodlari
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [saglayicilar]
+                properties:
+                  saglayicilar:
+                    type: array
+                    items: { type: string, enum: [google, microsoft, apple] }
+
+  /auth/oauth/baslat/{saglayici}:
+    post:
+      tags: [auth]
+      summary: Saglayiciya gidilecek adresi uretir (PKCE + state)
+      security: []
+      parameters:
+        - name: saglayici
+          in: path
+          required: true
+          schema: { type: string, enum: [google, microsoft, apple] }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                yuzey:
+                  type: string
+                  enum: [web, mobil]
+                  default: web
+                  description: |
+                    Callback SONRASI nereye donulecegini belirler; adresin
+                    KENDISI ayarlardan gelir (istekten alinmaz — acik
+                    yonlendirme acigi olurdu).
+      responses:
+        "200":
+          description: Yetkilendirme adresi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [adres, state]
+                properties:
+                  adres: { type: string }
+                  state: { type: string }
+        "404":
+          description: Bilinmeyen saglayici
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "503":
+          description: Saglayici yapilandirilmamis
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  /auth/oauth/callback/{saglayici}:
+    get:
+      tags: [auth]
+      summary: Google/Microsoft geri donusu
+      security: []
+      parameters:
+        - name: saglayici
+          in: path
+          required: true
+          schema: { type: string }
+        - name: code
+          in: query
+          schema: { type: string }
+        - name: state
+          in: query
+          schema: { type: string }
+      responses:
+        "303":
+          description: |
+            Yuzeyin donus adresine `?oauth=<sonuc_id>` ile yonlendirir.
+            JETON URL'DE TASINMAZ — sonuc_id tek kullanimliktir ve
+            `POST /auth/oauth/sonuc` ile jetona cevrilir.
+    post:
+      tags: [auth]
+      summary: Apple geri donusu (form_post)
+      description: |
+        Apple `name`/`email` kapsamlarinda sonucu GET sorgu dizesiyle
+        degil POST govdesiyle gonderir; ayni uc iki metotla acilmazsa
+        Apple girisi callback'te 405 alirdi.
+      security: []
+      parameters:
+        - name: saglayici
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: false
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                code: { type: string }
+                state: { type: string }
+      responses:
+        "303":
+          description: Yuzeyin donus adresine yonlendirir
+
+  /auth/oauth/sonuc:
+    post:
+      tags: [auth]
+      summary: Tek kullanimlik sonucu jetona ya da baglama istegine cevirir
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [sonuc_id]
+              properties:
+                sonuc_id: { type: string }
+      responses:
+        "200":
+          description: |
+            `durum=giris` ise `jetonlar` dolu; `durum=baglama_gerekli` ise
+            `baglama_jetonu` ile tesis kodu + telefon adimina gecilir.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [durum]
+                properties:
+                  durum: { type: string, enum: [giris, baglama_gerekli] }
+                  jetonlar: { $ref: "#/components/schemas/TokenPair" }
+                  saglayici: { type: string, nullable: true }
+                  eposta:
+                    type: string
+                    nullable: true
+                    description: YALNIZ GORUNTULEME — eslesmede kullanilmaz.
+                  relay:
+                    type: boolean
+                    description: |
+                      Apple "e-postami gizle" dediyse true. Arayuz bunu
+                      soyler cunku o adrese posta gonderilemez.
+                  baglama_jetonu: { type: string, nullable: true }
+        "400":
+          description: Sonuc bulunamadi ya da suresi doldu
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  /auth/oauth/baglan/basla:
+    post:
+      tags: [auth]
+      summary: Tesis kodu + telefon eslesirse SMS kodu gonderir
+      description: |
+        ESLESME SONUCU YANITTAN OKUNAMAZ: eslesen ve eslesmeyen numara
+        AYNI yaniti alir. Aksi hâlde uc "bu numara bu sitede kayitli mi"
+        sorgusuna donusurdu.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [baglama_jetonu, tesis_kodu, telefon]
+              properties:
+                baglama_jetonu: { type: string }
+                tesis_kodu: { type: string }
+                telefon: { type: string }
+      responses:
+        "200":
+          description: Tesis dogrulandi; eslesme sonucu SOYLENMEZ
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [tesis_ad, telefon_maskeli]
+                properties:
+                  tesis_ad: { type: string }
+                  telefon_maskeli: { type: string }
+        "400":
+          description: Baglama jetonu ya da tesis kodu gecersiz
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "429":
+          description: Telefon basina kod isteme siniri asildi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  /auth/oauth/baglan/dogrula:
+    post:
+      tags: [auth]
+      summary: SMS kodu dogruysa kimligi baglar VE oturum acar
+      description: |
+        ILK BAGLAMADA SMS ZORUNLU: saglayici "bu Google hesabinin
+        sahibisin" der, "bu telefonun sahibisin" DEMEZ. Yeni bir kapi
+        acmaz — SMS bu urunde zaten tek basina oturum aciyor
+        (`/auth/giris/kod-dogrula`).
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [baglama_jetonu, telefon, kod]
+              properties:
+                baglama_jetonu: { type: string }
+                telefon: { type: string }
+                kod: { type: string }
+      responses:
+        "200":
+          description: Token cifti
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TokenPair" }
+        "409":
+          description: Bu sosyal hesap BASKA bir kullaniciya bagli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422":
+          description: Kod gecersiz
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  /auth/oauth/baglantilarim:
+    get:
+      tags: [auth]
+      summary: Kendi bagli giris yontemlerim
+      responses:
+        "200":
+          description: Baglantilar
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OauthBaglantiListesi" }
+    post:
+      tags: [auth]
+      summary: Oturum acikken yeni bir giris yontemi ekler
+      description: |
+        SMS ARANMAZ ve bu bilincli: cagiran zaten gecerli bir oturum
+        tasiyor, yani kimligini KANITLAMIS durumda. Ayni tarayici akisi
+        kullanilir (`/baslat` -> callback -> `sonuc_id`).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [sonuc_id]
+              properties:
+                sonuc_id: { type: string }
+      responses:
+        "200":
+          description: Guncel baglanti listesi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OauthBaglantiListesi" }
+        "409":
+          description: Bu sosyal hesap BASKA bir kullaniciya bagli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  /auth/oauth/baglantilarim/{saglayici}:
+    delete:
+      tags: [auth]
+      summary: Giris yontemini kaldirir
+      description: |
+        SON GIRIS YOLUNU kaldirmaya IZIN VERMEZ — kullanicinin elinde
+        parola, baska bir sosyal kimlik ya da telefon (SMS ile giris)
+        kalmali; yoksa kendi hesabina bir daha giremez.
+      parameters:
+        - name: saglayici
+          in: path
+          required: true
+          schema: { type: string, enum: [google, microsoft, apple] }
+      responses:
+        "204": { description: Kaldirildi }
+        "404":
+          description: Bu saglayici hesaba bagli degil
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "409":
+          description: Tek giris yontemi kaldirilamaz
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  # ----------------------------------------------------------------- #
   # (P148.2) KAYIT BASVURULARI — yoneticinin onay kuyrugu.
   /kayit-basvurulari:
     get:
@@ -14325,3 +14628,23 @@ components:
             karosu bunu periyodik ceker. YALNIZ http(s) — `rtsp://` 422
             verir. `null` gonderilirse kare kaldirilir ve karo yer tutucuya
             doner.
+
+    OauthBaglantiListesi:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            required: [saglayici, created_at]
+            properties:
+              saglayici: { type: string, enum: [google, microsoft, apple] }
+              eposta:
+                type: string
+                nullable: true
+                description: |
+                  YALNIZ GORUNTULEME. Apple private relay adresi olabilir;
+                  eslesmede kullanilmaz ve `app_user.email`i ezmez.
+              son_giris_at: { type: string, format: date-time, nullable: true }
+              created_at: { type: string, format: date-time }

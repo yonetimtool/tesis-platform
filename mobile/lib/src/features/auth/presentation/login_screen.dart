@@ -7,6 +7,8 @@ import '../../../core/i18n/l10n.dart';
 import '../data/auth_repository_impl.dart';
 import 'auth_controller.dart';
 import 'giris_hata_metni.dart';
+import 'sosyal_baglama_formu.dart';
+import 'sosyal_giris.dart';
 import '../../../core/ui/telefon_alani.dart';
 import '../../../core/ui/telefon_hata_metni.dart';
 import '../../../routing/app_router.dart';
@@ -103,7 +105,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 420),
-              child: Form(
+              // (P154 / Asama 4) SOSYAL HESAP DOGRULANDI AMA ESLESMEDI:
+              // ekran eslestirme moduna gecer. Ayri bir rota DEGIL —
+              // akis giristen ayrilmaz ve geri tusuyla yarim kalmis bir
+              // duruma dusulmez.
+              child: auth.oauthBaglamaJetonu != null
+                  ? Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Center(child: YonetioLogoVertical(iconSize: 100)),
+                        SizedBox(height: 28),
+                        SosyalBaglamaFormu(),
+                      ],
+                    )
+                  : Form(
                 key: _formKey,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -245,6 +260,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           submitting ? null : () => context.go(AppRoutes.kayit),
                       child: Text(l10n.kayitBaslik),
                     ),
+                    // (P154 / Asama 4) Sosyal giris dugmeleri — saglayici
+                    // yapilandirilmamissa HIC cizilmez.
+                    const SosyalGirisDugmeleri(),
                   ],
                 ),
               ),

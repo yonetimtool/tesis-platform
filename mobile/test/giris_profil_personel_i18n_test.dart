@@ -31,6 +31,8 @@ import 'package:mobile/src/features/staff/presentation/staff_screen.dart';
 import 'helpers/ekran_surus.dart';
 import 'helpers/l10n_test_app.dart';
 
+import 'helpers/sosyal_kapali.dart';
+
 // --------------------------------------------------------------------------
 // Sahteler (ag YOK)
 // --------------------------------------------------------------------------
@@ -49,7 +51,7 @@ Widget _girisEkrani(Locale locale) => ProviderScope(
     );
 
 Widget _profilEkrani(Locale locale, {Profile? profil}) => ProviderScope(
-      overrides: [
+      overrides: [...sosyalKapali, 
         profileProvider.overrideWith((ref) async => profil ?? _profil()),
       ],
       child: l10nApp(const ProfileScreen(), locale: locale),
@@ -72,7 +74,7 @@ class _FakeStaffApi extends StaffApi {
 
 Widget _personelEkrani(Locale locale, {List<StaffMember>? items}) =>
     ProviderScope(
-      overrides: [
+      overrides: [...sosyalKapali, 
         fieldStaffProvider.overrideWith((ref) async => items ?? [_personel()]),
         staffApiProvider
             .overrideWithValue(_FakeStaffApi(items ?? [_personel()])),

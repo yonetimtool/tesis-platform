@@ -5464,3 +5464,84 @@ class TopluSilSonuc(BaseModel):
     #: Silinemeyenler ve SEBEBI — sessizce atlamak, kullanicinin sildigini
     #: sanmasi demekti.
     atlanan: list[dict] = Field(default_factory=list)
+
+
+# ===================== (P154 / Asama 4) SOSYAL GIRIS ======================= #
+
+
+class OauthSaglayiciListesi(BaseModel):
+    """Yapilandirilmis saglayicilar. Arayuz dugmeleri buradan kurar —
+    kapali bir saglayiciyi gostermek, kullaniciyi kesin basarisiz bir
+    yola sokmak olurdu."""
+
+    saglayicilar: list[str]
+
+
+class OauthBaslaRequest(BaseModel):
+    #: `web` | `mobil`. Callback SONRASI nereye donulecegini belirler;
+    #: adresin KENDISI ayarlardan gelir (acik yonlendirme).
+    yuzey: str = "web"
+    model_config = ConfigDict(extra="forbid")
+
+
+class OauthBaslaResponse(BaseModel):
+    adres: str
+    #: Cagiran, donen `state`i kendi tarafinda da eslestirebilsin diye
+    #: doner. Sunucu dogrulamasi buna BAGLI DEGIL — state Redis'te tutulur.
+    state: str
+
+
+class OauthSonucIstek(BaseModel):
+    sonuc_id: str = Field(..., min_length=8, max_length=200)
+    model_config = ConfigDict(extra="forbid")
+
+
+class OauthSonucResponse(BaseModel):
+    """`giris` ya da `baglama_gerekli`.
+
+    IKI DURUM TEK SEMADA: cagiran tek bir yanit sekli bekler ve `durum`a
+    bakar. Iki ayri uc, arayuzde iki ayri hata yolu demekti.
+    """
+
+    durum: str
+    jetonlar: TokenPair | None = None
+    saglayici: str | None = None
+    #: YALNIZ GORUNTULEME — "hangi hesabi bagliyorum" sorusu icin.
+    eposta: str | None = None
+    #: Apple "e-postami gizle" dediyse `true`; arayuz bunu kullaniciya
+    #: soyler, cunku o adrese posta gonderilemeyecegini bilmeli.
+    relay: bool = False
+    baglama_jetonu: str | None = None
+
+
+class OauthKayitBaslaResponse(BaseModel):
+    """`RolKayitBaslaResponse` ile AYNI ILKE: eslesme sonucu SOYLENMEZ."""
+
+    tesis_ad: str
+    telefon_maskeli: str
+
+
+class OauthBaglaBaslaRequest(BaseModel):
+    baglama_jetonu: str
+    tesis_kodu: str = Field(..., min_length=1, max_length=64)
+    telefon: str = Field(..., min_length=5, max_length=32)
+    model_config = ConfigDict(extra="forbid")
+
+
+class OauthBaglaDogrulaRequest(BaseModel):
+    baglama_jetonu: str
+    telefon: str = Field(..., min_length=5, max_length=32)
+    kod: str = Field(..., min_length=4, max_length=10)
+    model_config = ConfigDict(extra="forbid")
+
+
+class OauthBaglantiOut(BaseModel):
+    saglayici: str
+    eposta: str | None = None
+    son_giris_at: datetime | None = None
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+
+class OauthBaglantiListesi(BaseModel):
+    items: list[OauthBaglantiOut]

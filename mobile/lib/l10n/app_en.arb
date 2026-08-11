@@ -1471,5 +1471,14 @@
   "kayitDaireGerekli": "Unit no is required.",
   "kayitKodGerekli": "Enter the code.",
   "kayitGirisLinki": "Already have an account? Sign in",
-  "kayitAdim": "Step {n}/3"
+  "kayitAdim": "Step {n}/3",
+  "sosyalIleDevam": "Continue with {saglayici}",
+  "sosyalBaslik": "Match your account",
+  "sosyalEslesmeAciklama": "Your {saglayici} account is verified. Enter your facility ID and phone number so we can find your account.",
+  "sosyalRelayUyari": "Apple hid your e-mail address; mail cannot be sent to it.",
+  "sosyalTesisKodu": "Facility ID",
+  "sosyalKodGonder": "Send verification code",
+  "sosyalKodAciklama": "{tesis} — enter the code sent to {telefon}.",
+  "sosyalDogrula": "Verify and sign in",
+  "sosyalVazgec": "Cancel"
 }

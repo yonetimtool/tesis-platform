@@ -2,8 +2,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/api_exception.dart';
 import '../domain/auth_repository.dart';
+import '../domain/oauth_repository.dart';
+import '../domain/oauth_sonuc.dart';
 import '../domain/phone_login_result.dart';
 import 'auth_api.dart';
+import 'oauth_tarayici.dart';
 import 'token_storage.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
@@ -108,5 +111,68 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepositoryImpl(
     api: ref.watch(authApiProvider),
     storage: ref.watch(tokenStorageProvider),
+  );
+});
+
+/// (P154 / Asama 4) Sosyal giris deposu — gerekce `OauthRepository`de.
+class OauthRepositoryImpl implements OauthRepository {
+  OauthRepositoryImpl({
+    required this.api,
+    required this.storage,
+    required this.tarayici,
+  });
+
+  final AuthApi api;
+  final TokenStorage storage;
+  final OauthTarayici tarayici;
+
+  @override
+  Future<List<String>> saglayicilar() => api.oauthSaglayicilar();
+
+  @override
+  Future<OauthSonuc?> akis(String saglayici) async {
+    final adres = await api.oauthBaslat(saglayici);
+    final sonucId = await tarayici.akisiCalistir(adres);
+    // VAZGECME: kullanici tarayiciyi kapatti. Hata degil.
+    if (sonucId == null) return null;
+    final sonuc = await api.oauthSonuc(sonucId);
+    if (sonuc.girisYapildi) {
+      await storage.save(sonuc.jetonlar!);
+    }
+    return sonuc;
+  }
+
+  @override
+  Future<({String tesisAd, String telefonMaskeli})> baglanBasla({
+    required String baglamaJetonu,
+    required String tesisKodu,
+    required String telefon,
+  }) =>
+      api.oauthBaglanBasla(
+        baglamaJetonu: baglamaJetonu,
+        tesisKodu: tesisKodu,
+        telefon: telefon,
+      );
+
+  @override
+  Future<void> baglanDogrula({
+    required String baglamaJetonu,
+    required String telefon,
+    required String kod,
+  }) async {
+    final tokens = await api.oauthBaglanDogrula(
+      baglamaJetonu: baglamaJetonu,
+      telefon: telefon,
+      kod: kod,
+    );
+    await storage.save(tokens);
+  }
+}
+
+final oauthRepositoryProvider = Provider<OauthRepository>((ref) {
+  return OauthRepositoryImpl(
+    api: ref.watch(authApiProvider),
+    storage: ref.watch(tokenStorageProvider),
+    tarayici: ref.watch(oauthTarayiciProvider),
   );
 });

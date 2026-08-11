@@ -8398,6 +8398,60 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Adım {n}/3'**
   String kayitAdim(String n);
+
+  /// No description provided for @sosyalIleDevam.
+  ///
+  /// In tr, this message translates to:
+  /// **'{saglayici} ile devam et'**
+  String sosyalIleDevam(String saglayici);
+
+  /// No description provided for @sosyalBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hesabınızı eşleştirin'**
+  String get sosyalBaslik;
+
+  /// No description provided for @sosyalEslesmeAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'{saglayici} hesabınız doğrulandı. Hesabınızı bulabilmemiz için tesis ID\'nizi ve telefon numaranızı girin.'**
+  String sosyalEslesmeAciklama(String saglayici);
+
+  /// No description provided for @sosyalRelayUyari.
+  ///
+  /// In tr, this message translates to:
+  /// **'Apple e-posta adresinizi gizledi; bu adrese posta gönderilemez.'**
+  String get sosyalRelayUyari;
+
+  /// No description provided for @sosyalTesisKodu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tesis ID'**
+  String get sosyalTesisKodu;
+
+  /// No description provided for @sosyalKodGonder.
+  ///
+  /// In tr, this message translates to:
+  /// **'Doğrulama kodu gönder'**
+  String get sosyalKodGonder;
+
+  /// No description provided for @sosyalKodAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'{tesis} — {telefon} numarasına gönderilen kodu girin.'**
+  String sosyalKodAciklama(String tesis, String telefon);
+
+  /// No description provided for @sosyalDogrula.
+  ///
+  /// In tr, this message translates to:
+  /// **'Doğrula ve giriş yap'**
+  String get sosyalDogrula;
+
+  /// No description provided for @sosyalVazgec.
+  ///
+  /// In tr, this message translates to:
+  /// **'Vazgeç'**
+  String get sosyalVazgec;
 }
 
 class _AppLocalizationsDelegate

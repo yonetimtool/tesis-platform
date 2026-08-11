@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/api_exception.dart';
 import '../../../core/network/dio_provider.dart';
+import '../domain/oauth_sonuc.dart';
 import '../domain/phone_login_result.dart';
 import '../domain/token_pair.dart';
 
@@ -40,6 +41,115 @@ class AuthApi {
         '/auth/giris/kod-iste',
         data: {'telefon': telefon},
       );
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  // ==================== (P154 / Asama 4) SOSYAL GIRIS ==================== #
+  //
+  // MOBIL YEREL SDK KULLANMAZ, TARAYICI AKISINI KULLANIR. Gerekce:
+  //   * Apple "Sign in with Apple" geri donus adresinde https ISTER; ozel
+  //     sema kabul etmez. Tarayici akisinda saglayici yalniz arka ucun
+  //     https callback'ini gorur, ozel semaya donusu BIZ yapariz.
+  //   * Boylece her saglayicida KAYDEDILECEK TEK BIR adres kalir; mobil
+  //     icin ayri istemci/anahtar kaydi gerekmez.
+  //   * Ve dogrulama TEK yerde olur (arka uc). Yerel SDK jetonu ayri bir
+  //     dogrulama yolu acardi ve `aud`/`iss` kontrolunun ikinci bir
+  //     kopyasi demekti.
+
+  /// `GET /auth/oauth/saglayicilar` — hangi dugmeler cizilecek?
+  ///
+  /// Yapilandirilmamis saglayiciyi gostermek, kullaniciyi KESIN BASARISIZ
+  /// bir yola sokmak olurdu.
+  Future<List<String>> oauthSaglayicilar() async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/auth/oauth/saglayicilar',
+      );
+      final ham = res.data?['saglayicilar'];
+      if (ham is! List) return const [];
+      return ham.map((e) => e.toString()).toList(growable: false);
+    } on DioException {
+      // SESSIZ: sosyal giris bir EK yoldur. Listeyi alamamak parola/kod
+      // girisini engellememeli (brief: "tikanirsa Asama 3 tek basina
+      // calissin").
+      return const [];
+    }
+  }
+
+  /// `POST /auth/oauth/baslat/{saglayici}` — yetkilendirme adresi.
+  Future<String> oauthBaslat(String saglayici) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/auth/oauth/baslat/$saglayici',
+        data: {'yuzey': 'mobil'},
+      );
+      return res.data!['adres'] as String;
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// `POST /auth/oauth/sonuc` — tek kullanimlik sonucu coz.
+  ///
+  /// Iki sonuctan biri: oturum acildi (`jetonlar`) ya da hesap eslesmesi
+  /// gerekiyor (`baglama_jetonu`). Ikincisi brief'in merkez kurali:
+  /// sosyal hesap kimlik dogrulama YONTEMIDIR, eslesme anahtari degil.
+  Future<OauthSonuc> oauthSonuc(String sonucId) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/auth/oauth/sonuc',
+        data: {'sonuc_id': sonucId},
+      );
+      return OauthSonuc.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// `POST /auth/oauth/baglan/basla` — tesis kodu + telefon; eslesirse SMS.
+  ///
+  /// ESLESME SONUCU YANITTAN OKUNAMAZ (`rolKayitBasla` ile ayni ilke).
+  Future<({String tesisAd, String telefonMaskeli})> oauthBaglanBasla({
+    required String baglamaJetonu,
+    required String tesisKodu,
+    required String telefon,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/auth/oauth/baglan/basla',
+        data: {
+          'baglama_jetonu': baglamaJetonu,
+          'tesis_kodu': tesisKodu,
+          'telefon': telefon,
+        },
+      );
+      return (
+        tesisAd: res.data!['tesis_ad'] as String,
+        telefonMaskeli: res.data!['telefon_maskeli'] as String,
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// `POST /auth/oauth/baglan/dogrula` — SMS dogruysa baglar VE oturum acar.
+  Future<TokenPair> oauthBaglanDogrula({
+    required String baglamaJetonu,
+    required String telefon,
+    required String kod,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/auth/oauth/baglan/dogrula',
+        data: {
+          'baglama_jetonu': baglamaJetonu,
+          'telefon': telefon,
+          'kod': kod,
+        },
+      );
+      return TokenPair.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }

@@ -5001,4 +5001,38 @@ class AppLocalizationsRu extends AppLocalizations {
   String kayitAdim(String n) {
     return 'Шаг $n/3';
   }
+
+  @override
+  String sosyalIleDevam(String saglayici) {
+    return 'Продолжить через $saglayici';
+  }
+
+  @override
+  String get sosyalBaslik => 'Сопоставьте учётную запись';
+
+  @override
+  String sosyalEslesmeAciklama(String saglayici) {
+    return 'Аккаунт $saglayici подтверждён. Введите ID объекта и номер телефона, чтобы мы нашли вашу учётную запись.';
+  }
+
+  @override
+  String get sosyalRelayUyari =>
+      'Apple скрыл ваш адрес e-mail; письма на него не доходят.';
+
+  @override
+  String get sosyalTesisKodu => 'ID объекта';
+
+  @override
+  String get sosyalKodGonder => 'Отправить код подтверждения';
+
+  @override
+  String sosyalKodAciklama(String tesis, String telefon) {
+    return '$tesis — введите код, отправленный на $telefon.';
+  }
+
+  @override
+  String get sosyalDogrula => 'Подтвердить и войти';
+
+  @override
+  String get sosyalVazgec => 'Отмена';
 }

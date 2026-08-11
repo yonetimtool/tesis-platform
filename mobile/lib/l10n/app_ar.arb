@@ -1471,5 +1471,14 @@
   "kayitDaireGerekli": "رقم الوحدة مطلوب.",
   "kayitKodGerekli": "أدخل الرمز.",
   "kayitGirisLinki": "لديك حساب بالفعل؟ سجّل الدخول",
-  "kayitAdim": "الخطوة {n}/3"
+  "kayitAdim": "الخطوة {n}/3",
+  "sosyalIleDevam": "المتابعة عبر {saglayici}",
+  "sosyalBaslik": "طابق حسابك",
+  "sosyalEslesmeAciklama": "تم التحقق من حساب {saglayici}. أدخل معرّف المنشأة ورقم هاتفك لنتمكن من العثور على حسابك.",
+  "sosyalRelayUyari": "أخفت Apple عنوان بريدك؛ لا يمكن إرسال بريد إليه.",
+  "sosyalTesisKodu": "معرّف المنشأة",
+  "sosyalKodGonder": "إرسال رمز التحقق",
+  "sosyalKodAciklama": "{tesis} — أدخل الرمز المُرسل إلى {telefon}.",
+  "sosyalDogrula": "تحقق وسجّل الدخول",
+  "sosyalVazgec": "إلغاء"
 }

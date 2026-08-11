@@ -33,10 +33,18 @@ type Cagri = { url: string; body: unknown };
 function taklit(durum = 200, govde: unknown = { ok: true }): Cagri[] {
   const cagrilar: Cagri[] = [];
   globalThis.fetch = (async (girdi: RequestInfo | URL, init?: RequestInit) => {
-    cagrilar.push({
-      url: String(girdi),
-      body: init?.body ? JSON.parse(String(init.body)) : undefined,
-    });
+    // (P154 / Asama 4) SAGLAYICI LISTESI SAYILMAZ. `SosyalGiris` cizim
+    // aninda "hangi sosyal dugmeler acik" diye sorar; bu, olculen seyle
+    // (GIRIS istegi nereye gitti, govdesi ne) ilgisiz bir cagridir.
+    // Toplam cagri sayisi zaten bir VEKIL olcumdu — asil iddia "giris
+    // istegi TAM OLARAK BIR KEZ ve dogru uca gitti"dir; listeyi disarida
+    // birakmak o iddiayi korur, gevsetmez.
+    if (!String(girdi).includes("/oauth/saglayicilar")) {
+      cagrilar.push({
+        url: String(girdi),
+        body: init?.body ? JSON.parse(String(init.body)) : undefined,
+      });
+    }
     return new Response(JSON.stringify(govde), {
       status: durum,
       headers: { "Content-Type": "application/json" },

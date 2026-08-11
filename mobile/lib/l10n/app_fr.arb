@@ -1471,5 +1471,14 @@
   "kayitDaireGerekli": "Le n° de logement est requis.",
   "kayitKodGerekli": "Saisissez le code.",
   "kayitGirisLinki": "Vous avez déjà un compte ? Se connecter",
-  "kayitAdim": "Étape {n}/3"
+  "kayitAdim": "Étape {n}/3",
+  "sosyalIleDevam": "Continuer avec {saglayici}",
+  "sosyalBaslik": "Associer votre compte",
+  "sosyalEslesmeAciklama": "Votre compte {saglayici} est vérifié. Saisissez l'identifiant du site et votre numéro de téléphone pour que nous trouvions votre compte.",
+  "sosyalRelayUyari": "Apple a masqué votre adresse e-mail ; aucun courrier ne peut y être envoyé.",
+  "sosyalTesisKodu": "Identifiant du site",
+  "sosyalKodGonder": "Envoyer le code de vérification",
+  "sosyalKodAciklama": "{tesis} — saisissez le code envoyé au {telefon}.",
+  "sosyalDogrula": "Vérifier et se connecter",
+  "sosyalVazgec": "Annuler"
 }

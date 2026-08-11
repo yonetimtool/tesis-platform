@@ -4931,4 +4931,38 @@ class AppLocalizationsEn extends AppLocalizations {
   String kayitAdim(String n) {
     return 'Step $n/3';
   }
+
+  @override
+  String sosyalIleDevam(String saglayici) {
+    return 'Continue with $saglayici';
+  }
+
+  @override
+  String get sosyalBaslik => 'Match your account';
+
+  @override
+  String sosyalEslesmeAciklama(String saglayici) {
+    return 'Your $saglayici account is verified. Enter your facility ID and phone number so we can find your account.';
+  }
+
+  @override
+  String get sosyalRelayUyari =>
+      'Apple hid your e-mail address; mail cannot be sent to it.';
+
+  @override
+  String get sosyalTesisKodu => 'Facility ID';
+
+  @override
+  String get sosyalKodGonder => 'Send verification code';
+
+  @override
+  String sosyalKodAciklama(String tesis, String telefon) {
+    return '$tesis — enter the code sent to $telefon.';
+  }
+
+  @override
+  String get sosyalDogrula => 'Verify and sign in';
+
+  @override
+  String get sosyalVazgec => 'Cancel';
 }

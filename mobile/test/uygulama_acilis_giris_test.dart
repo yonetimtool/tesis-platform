@@ -45,6 +45,8 @@ import 'package:mobile/src/features/yonetici_iletisim/data/yonetici_iletisim_api
 import 'helpers/bellek_depo.dart';
 import 'helpers/sahte_jwt.dart';
 
+import 'helpers/sosyal_kapali.dart';
+
 class _FakeOutbox extends ScanOutbox {
   @override
   ScanOutboxState build() => const ScanOutboxState(loaded: true);
@@ -103,7 +105,7 @@ class _SahteAuthRepo implements AuthRepository {
 Widget _uygulama(BellekDepo depo, UserRole role) {
   final storage = TokenStorage(depo);
   return ProviderScope(
-    overrides: [
+    overrides: [...sosyalKapali, 
       secureStorageProvider.overrideWithValue(depo),
       authRepositoryProvider
           .overrideWithValue(_SahteAuthRepo(storage, role)),

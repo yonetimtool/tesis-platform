@@ -35,6 +35,7 @@
 | **8** — Import framework | göç 0045 + `/ice-aktarim` çatısı (4 tür) + geri alma + panel sayfası; `/site-aktar` kaldırıldı | bu tur |
 | **9** — Bildirim/şablon altyapısı **TAM** | göç 0046 + mesaj kuyruğu + yeniden deneme; politika `yeniden_deneme.py`de paylaşıldı | bu tur |
 | **10** — Apsiyon B kovası (kalanlar) | göç 0047 — ters kayıt + defterde silme kilidi; triyajda **iki yanlış ölçüm düzeltildi** | `e4f5a1d` |
+| **4** — OAuth (Google/Microsoft/Apple) | Üç sağlayıcı × mobil+web · SMS'li eşleşme · hesap birleştirme · yöntem ekle/kaldır · konsol kılavuzu | bu tur |
 | **5** — Kullanıcı ve yapı yönetimi | **12 maddenin 12'si**: kullanıcı silme · başlangıç katı · toplu nitelik/tip · sürükle-bırak (+klavye) · kat silme · blok toplu silme · toplu daire oluşturma · aralık seçimi · Excel→çatı · daire başına tek hesap | bu tur |
 
 ---
@@ -514,6 +515,161 @@ indeks kuralı kanıtlanabilir kılardı ama mevcut veride ihlal ölçüldü
 kapatılmasını gerektirir — yani üretim verisinde bir değişiklik, ve o
 Kerem'in kararı.
 
+### 4.34 Sosyal hesap ESLESME ANAHTARI DEGIL — Aşama 4'ün tamamı bunun üzerine kurulu
+
+Brief bunu KRİTİK diye işaretliyor ve haklı: sağlayıcı telefon vermiyor,
+bizim eşleşme modelimiz ise tesis ID + telefon. Şemada bu, **hiçbir yerde
+kullanıcı yaratılmaması** demek — `oauth_kimlik` satırı her zaman ZATEN
+VAR OLAN bir `app_user`a bağlanır.
+
+Tersi tasarım (sağlayıcı e-postasından kullanıcı türetmek) üç şeyi
+birden kırardı: tesis eşleşmesi kaybolurdu, Apple private relay adresleri
+kalıcı kimlik değildir, ve kilitli kural 4 ("bir daire için en fazla 1
+hesap") delinirdi.
+
+### 4.35 İlk bağlamada SMS ZORUNLU — ve bu yeni bir kapı açmıyor
+
+Sağlayıcı "bu Google hesabının sahibisin" der; **"bu telefonun
+sahibisin" DEMEZ**. SMS olmasaydı, birinin tesis kodunu ve telefon
+numarasını bilen herhangi biri kendi Google hesabını o kişinin hesabına
+bağlayıp içeri girerdi. Tesis kodu **kamuya açık**, telefon numarası ise
+sır değil — ikisi birlikte bir kimlik kanıtı **değildir**.
+
+Bu, ürüne yeni bir zayıflık **eklemiyor**: SMS bu üründe zaten tek başına
+oturum açıyor (`/auth/giris/kod-dogrula`, P149). Yani SMS ile korunan bir
+bağlama, en zayıf mevcut kapıdan daha zayıf değil.
+
+**Parolası olan hesap da bağlayabilir.** `kayit` akışındaki
+`password_set=false` şartı buraya konmadı; konsaydı "parolan var, o hâlde
+Google'ı hiç kullanamazsın" demiş olurduk.
+
+### 4.36 Sağlayıcı jetonları SAKLANMIYOR — bilinçli
+
+`oauth_kimlik` tablosunda `access_token`/`refresh_token` **yok**. Kimliğe
+yalnız giriş anında ihtiyaç var; sonrasını kendi JWT çiftimiz yürütüyor
+ve hiçbir sağlayıcı API'si çağrılmıyor. Saklamak, sızması hâlinde
+kullanıcının **Google hesabına** erişim veren, hiçbir işi olmayan bir
+sorumluluk olurdu (KVKK "veri en az").
+
+Bunu bir test kilitliyor: `test_SAGLAYICI_JETONU_SAKLANMIYOR` tabloda
+öyle bir sütunun **olmadığını** ölçüyor.
+
+### 4.37 `aud` kontrolü bu aşamanın tek en önemli satırı
+
+Geçerli imzalı, geçerli `iss`li ama **başka bir istemciye kesilmiş** bir
+Google jetonu kabul edilseydi, o uygulamaya girebilen herkes bizde de
+girerdi ("karışık vekil"). Bu yüzden `aud` listesi **boş bırakılamaz**:
+boşsa sağlayıcı yapılandırılmamış sayılır ve uç 503 döner — sessizce
+kabul etmez.
+
+Doğrulama **gerçek kripto ile** test ediliyor: testte bir RSA çifti
+üretilip ondan bir JWKS kuruluyor ve modülün önbelleğine enjekte
+ediliyor. Sahtelenen tek şey sağlayıcının anahtar listesi; imza/`iss`/
+`aud`/`exp`/`nonce` kontrollerinin **asıl kodu** koşuyor.
+`kimlik_dogrula`yı mock'lamak, aşamanın en riskli kodunu hiç ölçmemek
+olurdu.
+
+### 4.38 Yol şekli `/baslat/{saglayici}` — ölçülerek değişti
+
+İlk yazımda `/{saglayici}/basla` idi. `POST /auth/oauth/baglan/basla`
+isteği o kalıba düştü (`saglayici="baglan"`), gövde **başka bir şemayla**
+doğrulandı ve 422 verdi — testler yakaladı.
+
+FastAPI yolları tanım sırasına göre eşleştirdiği için "literal rotaları
+önce yaz" ile de çözülebilirdi, ama o çözüm **disipline** bağlı:
+sıralamayı bozan biri sessiz bir 422 üretirdi. Değişken segmenti sona
+almak aynı hatayı **yapısal olarak** imkânsız kılıyor.
+
+### 4.39 Mobil yerel SDK KULLANMIYOR — tarayıcı akışı
+
+Üç sebep: (1) Apple "Sign in with Apple" geri dönüş adresinde https
+ister, özel şema kabul etmez; (2) böylece her sağlayıcıda kaydedilecek
+**tek bir adres** kalıyor — mobil için ayrı istemci/anahtar gerekmiyor;
+(3) doğrulama tek yerde (arka uç) kalıyor — yerel SDK jetonu
+`aud`/`iss` kontrolünün ikinci bir kopyası demekti.
+
+Akış: sağlayıcı → arka ucun https callback'i → `com.app.yonetiyor://oauth`
+özel şeması. Sağlayıcı özel şemayı **hiç görmüyor**.
+
+### 4.40 Geri dönüş adresi İSTEKTEN ALINMIYOR
+
+Callback'ten sonra tarayıcının gideceği adres ayarlardan gelir. İstekten
+almak klasik açık-yönlendirme açığı olurdu. Aynı sebeple sağlayıcıya
+bildirilen `redirect_uri` her zaman bizim callback ucumuz.
+
+**Boş bırakılırsa `baslat` 503 döner** — hata kullanıcı siteden
+AYRILMADAN görünür. Aksi hâlde yanlış yapılandırma sessiz kalır:
+kullanıcı Google'a gider, döner ve 404 bulur.
+
+### 4.41 Jeton URL'de taşınmıyor
+
+Callback sonucu Redis'e **tek kullanımlık** bir kimlikle yazar ve
+tarayıcıyı `?oauth=<id>` ile geri gönderir. Erişim jetonunu adres
+çubuğuna koymak, onu tarayıcı geçmişine, `Referer` başlığına ve sunucu
+günlüklerine yazmak olurdu.
+
+### 4.42 Yüzey kapısı TEK YERE alındı
+
+Bir token çifti elde eden her yolun rolü yüzeye sokup sokmayacağını
+sorması gerekiyor. Bu, `login/route.ts`te satır içiydi ve sosyal giriş
+üçüncü bir yol getiriyordu. Kopyalamak, sosyal girişi kapının
+**etrafından dolaşan** bir yol yapardı: `panel.*` için reddedilen bir
+rol, Google düğmesiyle içeri girebilirdi. `lib/oturum-kapisi.ts` bunu tek
+yerde tutuyor.
+
+### 4.43 Test bir tasarım kusurumu yakaladı (mobil)
+
+Denetleyicide "oturum açıldı mı, yoksa kullanıcı vazgeçti mi" ayrımını
+`restoreSession()` çağırarak — yani **güvenli depoya sorarak** — yapmayı
+denedim. Mobil test hemen düştü: sahte depoyla bile gerçek eklentiye
+inmeye çalıştı.
+
+Haklıydı ve düzeltme davranışı da iyileştirdi: `akis()` artık sonucu
+**doğrudan** döndürüyor, `null` yalnız vazgeçme demek. Cevabı ilgisiz bir
+yan etkiden okumak yanlıştı.
+
+### 4.44 Son giriş yöntemi kaldırılamaz
+
+Kullanıcının elinde parola, başka bir sosyal kimlik ya da telefon
+kalmalı; yoksa kendi hesabına bir daha giremez ve kurtarma yolu yalnız
+yöneticiden geçer. Kural **sunucuda** yaşıyor: istemci "silinebilir mi"
+hesabı yapmıyor, deniyor ve 409 metnini gösteriyor. İki yerde yaşasaydı
+istemcideki kopya sunucununkinden sapabilirdi.
+
+### 4.45 KEREM'İN YAPACAĞI İŞ: `docs/oauth-kurulum.md`
+
+Üç konsolun (Google Cloud, Azure, Apple Developer) adım adım listesi,
+ortam değişkenleri ve doğrulama komutları orada. Kod tarafı bitti;
+yapılandırma tamamlanana kadar sosyal giriş **kapalı** ve bu bilinçli —
+yapılandırılmamış sağlayıcı hiçbir yerde düğme olarak görünmüyor,
+telefon/parola girişi hiç etkilenmiyor (brief'in şartı: "tıkanırsa Aşama
+3 tek başına çalışsın", `test_ASAMA_3_SOSYAL_GIRIS_OLMADAN_CALISIR`).
+
+### 4.46 BULUNAN (ÜRETİLMEYEN) KUSUR: `test_dashboard` yarış koşulu
+
+Tam takım koşumunda `test_ayni_planin_alti_alarmi_TEK_GRUBA_dusuyor`
+düştü: 6 alarm beklerken **18** geldi. Aşama 4 ile ilgisi yok, ölçüldü.
+
+**Mekanizma:** test plana altı pencere ekleyip `detect_missed(now=
+2030-01-01)` çağırıyor. Beat'in `generate_patrol_windows` görevi ise aynı
+plan için **12 pencere** üretiyor (bugün + yarın × 6). `NOW_AFTER` çok
+ileri bir tarih olduğu için üretilen pencereler de "kaçırılmış" sayılıyor
+ve 6 + 12 = 18 çıkıyor.
+
+**Kanıt:** (a) aynı arka uç koduyla 30 dakika önceki koşumda geçti,
+(b) tek başına koşunca geçiyor (18/18), (c) worker günlüğünde
+`generate_patrol_windows ... {'created': 12}` satırları var, (d) 18 tam
+olarak 6 + 12.
+
+**Bu turda düzeltilmedi ve sebebi:** kusur testin varsayımında (planın
+tek pencere kaynağı kendisi olduğunu sanıyor), ürün kodunda değil.
+Aşama 4 sürerken ilgisiz bir testin iddiasını gevşetmek, o kilidin ne
+koruduğunu düşünmeden değiştirmek olurdu. Doğru düzeltme testin yalnız
+KENDİ eklediği pencereleri saymasıdır; ayrı bir turda yapılmalı.
+
+**Doğrulama koşumu beat durdurularak alındı** — beat bir dev arka plan
+süreci, testin sözleşmesinin parçası değil.
+
 ## 5. BULUNAN GERÇEK KUSURLAR
 
 ### 5.1 GÜVENLİK — `tenant_id_by_kayit_kodu` PUBLIC EXECUTE'a açıktı
@@ -768,7 +924,6 @@ dört aşama** ve 9'un artığı:
 
 | Aşama | Neden başlanmadı | Aşama 0'dan hazır girdi |
 |---|---|---|
-| **4** — OAuth (Google/Microsoft/Apple) | Üç sağlayıcı × iki platform + hesap birleştirme; en büyük tek kalem | Test sunucusu için geri dönüş adresleri `docs/test-sunucusu-kurulum.md` §8'de yazılı |
 | **5** — Kullanıcı + yapı yönetimi | Aşama 6 ve 8'e bağımlı (modal + import) | Ölçülen 7 boşluk `docs/envanter.md`'de listeli (toplu daire web'de yok, kat silme yok, sürükle-bırak yok, daire tipi ataması web'de yok…). Modal + Liste **artık hazır** (6.1/6.2) |
 | **7.3/7.4** — Onboarding sihirbazı, bağımlılık yönlendirmesi | 7.1 bitti, 7.2'nin üç maddesi yapıldı | Bağımlılık haritası 16 satır hazır (Aşama 0.4); yönlendirme **tek bileşen** olarak kurulacak |
 | **8** — Import framework | `/site-aktar` üstüne kurulacak | Uç + şablon **zaten çalışıyor** |

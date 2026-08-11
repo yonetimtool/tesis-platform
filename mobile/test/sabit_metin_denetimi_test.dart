@@ -23,6 +23,11 @@ import 'package:flutter_test/flutter_test.dart';
 ///   gosterilmez, yalnizca "alan hala varsayilan mi" karsilastirmasi icin
 ///   kullanilir. Cevrilirse karsilastirma bozulur.
 /// * marka kilidi (README §15)
+/// * `Google` / `Microsoft` / `Apple`: SAGLAYICI MARKA ADLARI (P154 /
+///   Asama 4). Cevrilmezler — Almanca arayuzde "Google" yine "Google"dir
+///   ve saglayicinin marka kilavuzu da bunu sart kosar. Cevrilen sey
+///   onlari saran cumledir (`sosyalIleDevam`), ki o zaten sozlukte.
+///
 /// * `app.yonetiyor.com`: TESIS YUZEYININ ADRESI. Cevrilecek bir cumle
 ///   degil bir ADRESTIR ve her dilde AYNI yazilir; cevrilirse denetciye
 ///   calismayan bir adres verilmis olur (P139.2).
@@ -34,6 +39,7 @@ final _izinli = RegExp(
   r'|\[.*\]|[a-zA-Z0-9]+([-_][a-zA-Z0-9]+)+'
   r'|PICCData|\(Kurulum bekliyor\)|\{\{.*\}\}.*'
   r'|Yönetio|GÜVENLİK & DANIŞMANLIK|app\.yonetiyor\.com'
+  r'|Google|Microsoft|Apple'
   r')$',
 );
 

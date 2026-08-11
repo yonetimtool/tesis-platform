@@ -99,6 +99,10 @@ COMPLAINT_DURUM = ENUM(
 )
 # (P154, goc 0043) Ek turu: not mu, dosya mi.
 EK_TURU = ENUM("not", "dosya", name="ek_turu", create_type=False)
+# (P154, goc 0048) Sosyal giris saglayicisi.
+OAUTH_SAGLAYICI = ENUM(
+    "google", "microsoft", "apple", name="oauth_saglayici", create_type=False,
+)
 # COMPLAINT_KATEGORI KALDIRILDI (kategori artik task_category FK).
 TASK_ONCELIK = ENUM(
     "dusuk", "orta", "yuksek", name="task_oncelik", create_type=False,
@@ -215,7 +219,12 @@ UNIT_COMPLAINT_KATEGORI = ENUM(
     name="unit_complaint_kategori", create_type=False,
 )
 KOD_AMACI = ENUM(
-    "kayit", "giris", "hesap_silme", name="kod_amaci", create_type=False,
+    # (P154, goc 0048) 'oauth': sosyal hesabin ILK baglanmasinda telefon
+    # sahipligini kanitlayan kod. GOCE EKLEYIP BURAYA EKLEMEMEK 500
+    # verir — 0047'de ayni sinif hata olculdu ("'iptal' is not among the
+    # defined enum values").
+    "kayit", "giris", "hesap_silme", "oauth",
+    name="kod_amaci", create_type=False,
 )
 KAYIT_DURUM = ENUM(
     "telefon_bekliyor", "onay_bekliyor", "onaylandi", "reddedildi",
@@ -3468,4 +3477,35 @@ class IceAktarimKayit(Base):
     tablo: Mapped[str] = mapped_column(Text, nullable=False)
     kayit_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     sira: Mapped[int] = mapped_column(Integer, nullable=False)
+    created_at = _created_at()
+
+
+class OauthKimlik(Base):
+    """(P154 / Asama 4) Bir kullanicinin sosyal giris kimligi.
+
+    BURADA KULLANICI YARATILMAZ: satir her zaman ZATEN VAR OLAN bir
+    `app_user`a baglanir. Brief'in kritik cumlesi — "sosyal hesap kimlik
+    dogrulama YONTEMI, eslesme anahtari degil" — semada tam olarak bu
+    demek. Gerekce ve iki benzersizligin ayrimi goc 0048'in basliginda.
+
+    SAGLAYICI JETONU TASIMAZ: kimlik yalniz giris aninda gerekir, sonrasini
+    kendi JWT ciftimiz yurutur. Saklamak, hicbir isi olmayan bir
+    sorumluluk olurdu (goc 0048).
+    """
+
+    __tablename__ = "oauth_kimlik"
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    # `Text` DEGIL ENUM — 0043'te olculen kusurun aynisi: asyncpg
+    # parametreyi `varchar` baglar ve YAZMA YOLU HIC calismaz.
+    saglayici: Mapped[str] = mapped_column(OAUTH_SAGLAYICI, nullable=False)
+    subject: Mapped[str] = mapped_column(Text, nullable=False)
+    # YALNIZ GORUNTULEME. Eslesmede kullanilmaz, `app_user.email`i ezmez
+    # (Apple private relay kalici adres degildir).
+    eposta: Mapped[str | None] = mapped_column(Text, nullable=True)
+    son_giris_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     created_at = _created_at()

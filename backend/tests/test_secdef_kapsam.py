@@ -93,6 +93,12 @@ ENVANTER: dict[str, tuple[str, tuple[str, str] | None]] = {
     # `acik_temizle` bekleyen KODU ezer (amac + telefon_bekliyor);
     # `telefon_sifirla` kayda BASTAN BASLAMAYI karsilar (suzgec yok) ve
     # `auth.kayit_basla`in satir ici DELETE'inin bire bir karsiligidir.
+    # (P154 / Asama 4) Sosyal giriste kullanicinin oturumu YOKTUR: hangi
+    # tesise ait oldugu bilinmeden `app.current_tenant_id` set edilemez,
+    # set edilmeden RLS satiri gostermez. `tenant_id_by_phone` ile AYNI
+    # SINIF bir cozucu ve ayni kurallara tabi: YALNIZ uuid doner (satir,
+    # e-posta, subject sizdirmaz).
+    "tenant_id_by_oauth": ("public", None),
     "kayit_dogrulama_tenant_coz": ("public", None),
     "kayit_dogrulama_acik_temizle": ("public", None),
     "kayit_dogrulama_telefon_sifirla": ("public", None),

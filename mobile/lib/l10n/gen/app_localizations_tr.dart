@@ -4743,4 +4743,38 @@ class AppLocalizationsTr extends AppLocalizations {
   String kayitAdim(String n) {
     return 'Adım $n/3';
   }
+
+  @override
+  String sosyalIleDevam(String saglayici) {
+    return '$saglayici ile devam et';
+  }
+
+  @override
+  String get sosyalBaslik => 'Hesabınızı eşleştirin';
+
+  @override
+  String sosyalEslesmeAciklama(String saglayici) {
+    return '$saglayici hesabınız doğrulandı. Hesabınızı bulabilmemiz için tesis ID\'nizi ve telefon numaranızı girin.';
+  }
+
+  @override
+  String get sosyalRelayUyari =>
+      'Apple e-posta adresinizi gizledi; bu adrese posta gönderilemez.';
+
+  @override
+  String get sosyalTesisKodu => 'Tesis ID';
+
+  @override
+  String get sosyalKodGonder => 'Doğrulama kodu gönder';
+
+  @override
+  String sosyalKodAciklama(String tesis, String telefon) {
+    return '$tesis — $telefon numarasına gönderilen kodu girin.';
+  }
+
+  @override
+  String get sosyalDogrula => 'Doğrula ve giriş yap';
+
+  @override
+  String get sosyalVazgec => 'Vazgeç';
 }

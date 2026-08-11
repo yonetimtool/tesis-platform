@@ -1471,5 +1471,14 @@
   "kayitDaireGerekli": "Wohnungsnr. ist erforderlich.",
   "kayitKodGerekli": "Geben Sie den Code ein.",
   "kayitGirisLinki": "Sie haben bereits ein Konto? Anmelden",
-  "kayitAdim": "Schritt {n}/3"
+  "kayitAdim": "Schritt {n}/3",
+  "sosyalIleDevam": "Mit {saglayici} fortfahren",
+  "sosyalBaslik": "Konto zuordnen",
+  "sosyalEslesmeAciklama": "Ihr {saglayici}-Konto ist verifiziert. Geben Sie Ihre Anlagen-ID und Telefonnummer ein, damit wir Ihr Konto finden.",
+  "sosyalRelayUyari": "Apple hat Ihre E-Mail-Adresse verborgen; an sie kann keine Post gesendet werden.",
+  "sosyalTesisKodu": "Anlagen-ID",
+  "sosyalKodGonder": "Bestätigungscode senden",
+  "sosyalKodAciklama": "{tesis} — geben Sie den an {telefon} gesendeten Code ein.",
+  "sosyalDogrula": "Bestätigen und anmelden",
+  "sosyalVazgec": "Abbrechen"
 }

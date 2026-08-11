@@ -10,6 +10,7 @@ import type { ApiError } from "@/lib/types";
 import { DilSecici } from "@/components/DilSecici";
 import { MAGAZA_ANDROID, MAGAZA_IOS } from "@/lib/config";
 import { ParolaAlani } from "@/components/ParolaAlani";
+import { SosyalGiris } from "@/components/SosyalGiris";
 import { useT } from "@/lib/i18n/kullan";
 import { telefonGiris, telefonHatasi, telefonNormalle } from "@/lib/telefon";
 import type { Yuzey } from "@/lib/yuzey";
@@ -388,6 +389,14 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
               )}
               {loading ? t("girisYapiliyor") : t("girisYap")}
             </motion.button>
+
+            {/* (P154 / Asama 4) SOSYAL GIRIS — parola formunun ALTINDA.
+                Ustune koymak, ana yolu (parola) ikincillestirirdi; sosyal
+                giris bir EK yoldur ve saglayici yapilandirilmamissa
+                bilesen HIC cizilmez. */}
+            <motion.div variants={item}>
+              <SosyalGiris niyet="giris" />
+            </motion.div>
           </motion.form>
         </section>
       </main>

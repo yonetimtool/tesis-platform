@@ -78,6 +78,31 @@ KAPISIZ_MUTASYONLAR: frozenset[tuple[str, str]] = frozenset({
     ("POST", "/auth/kayit/rol-dogrula"),
     ("POST", "/auth/giris/kod-iste"),
     ("POST", "/auth/giris/kod-dogrula"),
+    # --- (P154 / Asama 4) SOSYAL GIRIS ---
+    # KIMLIK ONCESI dordu: rol kapisi OLAMAZ, cunku istegi atanin henuz
+    # oturumu yoktur — `/auth/login` ile ayni sinif. Tesisin kayitlarina
+    # YAZMAZLAR: `baslat`/`callback`/`sonuc` yalniz Redis'te kisa omurlu
+    # bir oturum tutar, `baglan/basla` yalniz bekleyen bir kod satiri
+    # yazar. `baglan/dogrula` TEK YAZAN: bir `oauth_kimlik` satiri acar,
+    # ve bunu ancak SMS kodu dogrulandiktan sonra yapar.
+    #
+    # SIZDIRMAMA: `baglan/basla` eslesen ve eslesmeyen numaraya AYNI
+    # yaniti verir (`test_oauth.py::test_ESLESMEYEN_numara_AYNI_yaniti_alir`).
+    ("POST", "/auth/oauth/baslat/{saglayici}"),
+    ("POST", "/auth/oauth/callback/{saglayici}"),
+    ("POST", "/auth/oauth/sonuc"),
+    ("POST", "/auth/oauth/baglan/basla"),
+    ("POST", "/auth/oauth/baglan/dogrula"),
+    # KENDI GIRIS YONTEMLERI — `/me/password` ile AYNI SINIF. Kimlik
+    # ZORUNLU (`get_current_user`), eksik olan yalniz ROL kapisi ve orada
+    # anlamsiz: her rol kendi giris yontemini ekleyip kaldirabilmeli.
+    #
+    # DENETCI DE DAHIL, BILINCLI: "salt okuma" tesisin KAYITLARI icindir.
+    # Denetcinin kendi hesabina Google eklemesi tesis verisine dokunmaz;
+    # yasaklamak, zaten giris yapabilen bir kullaniciya giris yontemini
+    # secme hakkini keyfi olarak kapatmak olurdu.
+    ("POST", "/auth/oauth/baglantilarim"),
+    ("DELETE", "/auth/oauth/baglantilarim/{saglayici}"),
     # --- KENDI hesabi (kisinin haklari) ---
     ("PATCH", "/me/contact"),
     ("PATCH", "/me/password"),

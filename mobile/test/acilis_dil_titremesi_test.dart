@@ -23,6 +23,8 @@ import 'package:mobile/src/features/scan/data/scan_outbox.dart';
 
 import 'helpers/bellek_depo.dart';
 
+import 'helpers/sosyal_kapali.dart';
+
 class _FakeOutbox extends ScanOutbox {
   @override
   ScanOutboxState build() => const ScanOutboxState(loaded: true);
@@ -36,7 +38,7 @@ class _FakeOutbox extends ScanOutbox {
 /// altinda `await` etmek kilitlenmeye yol acar).
 Widget _uygulama(BellekDepo depo, {AcilisTercihleri? tohum}) {
   return ProviderScope(
-    overrides: [
+    overrides: [...sosyalKapali, 
       secureStorageProvider.overrideWithValue(depo),
       if (tohum != null) acilisTercihleriProvider.overrideWithValue(tohum),
       outboxAutoSyncProvider.overrideWithValue(null),
@@ -139,7 +141,7 @@ void main() {
 
     test('tohumlanan container ILK okumada koyu temayi verir', () async {
       final depo = BellekDepo({'ui.theme_mode': 'dark'});
-      final container = ProviderContainer(overrides: [
+      final container = ProviderContainer(overrides: [...sosyalKapali, 
         secureStorageProvider.overrideWithValue(depo),
         acilisTercihleriProvider
             .overrideWithValue(await acilisTercihleriniOku(depo)),

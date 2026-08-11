@@ -5011,4 +5011,38 @@ class AppLocalizationsAr extends AppLocalizations {
   String kayitAdim(String n) {
     return 'الخطوة $n/3';
   }
+
+  @override
+  String sosyalIleDevam(String saglayici) {
+    return 'المتابعة عبر $saglayici';
+  }
+
+  @override
+  String get sosyalBaslik => 'طابق حسابك';
+
+  @override
+  String sosyalEslesmeAciklama(String saglayici) {
+    return 'تم التحقق من حساب $saglayici. أدخل معرّف المنشأة ورقم هاتفك لنتمكن من العثور على حسابك.';
+  }
+
+  @override
+  String get sosyalRelayUyari =>
+      'أخفت Apple عنوان بريدك؛ لا يمكن إرسال بريد إليه.';
+
+  @override
+  String get sosyalTesisKodu => 'معرّف المنشأة';
+
+  @override
+  String get sosyalKodGonder => 'إرسال رمز التحقق';
+
+  @override
+  String sosyalKodAciklama(String tesis, String telefon) {
+    return '$tesis — أدخل الرمز المُرسل إلى $telefon.';
+  }
+
+  @override
+  String get sosyalDogrula => 'تحقق وسجّل الدخول';
+
+  @override
+  String get sosyalVazgec => 'إلغاء';
 }

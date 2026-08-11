@@ -1471,5 +1471,14 @@
   "kayitDaireGerekli": "Требуется номер квартиры.",
   "kayitKodGerekli": "Введите код.",
   "kayitGirisLinki": "Уже есть аккаунт? Войти",
-  "kayitAdim": "Шаг {n}/3"
+  "kayitAdim": "Шаг {n}/3",
+  "sosyalIleDevam": "Продолжить через {saglayici}",
+  "sosyalBaslik": "Сопоставьте учётную запись",
+  "sosyalEslesmeAciklama": "Аккаунт {saglayici} подтверждён. Введите ID объекта и номер телефона, чтобы мы нашли вашу учётную запись.",
+  "sosyalRelayUyari": "Apple скрыл ваш адрес e-mail; письма на него не доходят.",
+  "sosyalTesisKodu": "ID объекта",
+  "sosyalKodGonder": "Отправить код подтверждения",
+  "sosyalKodAciklama": "{tesis} — введите код, отправленный на {telefon}.",
+  "sosyalDogrula": "Подтвердить и войти",
+  "sosyalVazgec": "Отмена"
 }

@@ -41,6 +41,22 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <!-- (P154 / Asama 4) SOSYAL GIRIS GERI DONUSU.
+             Saglayici arka ucun https callback'ine doner; arka uc da
+             tarayiciyi bu ozel semaya yonlendirir ve guvenli tarayici
+             oturumu (Custom Tabs) boylece KAPANIR. Bu filtre olmadan
+             kullanici bos bir tarayici sekmesinde kalirdi.
+             Sema, arka uctaki `oauth_mobil_donus` ile AYNI olmali. -->
+        <activity
+            android:name="com.linusu.flutter_web_auth_2.CallbackActivity"
+            android:exported="true">
+            <intent-filter android:label="flutter_web_auth_2">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="com.app.yonetiyor"/>
+            </intent-filter>
+        </activity>
         <!-- Bildirim kucuk ikonu: Android bunu ALFA MASKESI olarak cizer —
              renk atilir, yalniz saydamlik kalir. Bu yuzden tam (gradyanli)
              logo DEGIL, basitlestirilmis monokrom isaret kullanilir; aksi

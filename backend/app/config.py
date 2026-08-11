@@ -225,5 +225,60 @@ class Settings(BaseSettings):
     # Tek DELETE/UPDATE partisi (bellek/kilit basincini sinirlar).
     retention_batch_size: int = 500
 
+    # --- (P154 / Asama 4) SOSYAL GIRIS — Google / Microsoft / Apple ---
+    #
+    # HEPSI BOS VARSAYILANLI: yapilandirilmamis saglayici KAPALIDIR ve
+    # `/auth/oauth/saglayicilar` onu listelemez. Brief'in sarti bu —
+    # "tikanirsa Asama 3 tek basina calissin": sosyal giris hic
+    # yapilandirilmasa da telefon/parola akislari degismeden isler.
+    #
+    # `*_aud` NEDEN AYRI: ayni Google projesi web ve Android icin AYRI
+    # istemci kimlikleri uretir ve `id_token.aud` hangisiyle giris
+    # yapildiysa onu tasir. Virgulle ayrilmis liste; bos birakilirsa
+    # `*_client_id` tek basina kullanilir (yalniz web).
+    oauth_google_client_id: str = ""
+    oauth_google_client_secret: str = ""
+    oauth_google_aud: str = ""
+    oauth_microsoft_client_id: str = ""
+    oauth_microsoft_client_secret: str = ""
+    oauth_microsoft_aud: str = ""
+    # `common` = hem is/okul hem kisisel Microsoft hesaplari. Tek bir
+    # kiraciya kilitlemek, sakinlerin kisisel hesaplarini disarida
+    # birakirdi.
+    oauth_microsoft_tenant: str = "common"
+    # Apple'da `client_id` bir "Services ID"dir (web) ya da paket
+    # kimligidir (mobil); ikisi de `oauth_apple_aud` listesine girer.
+    oauth_apple_client_id: str = ""
+    oauth_apple_aud: str = ""
+    oauth_apple_team_id: str = ""
+    oauth_apple_key_id: str = ""
+    # .p8 dosyasinin ICERIGI. Env'de tek satira sigmasi icin `\n`
+    # kacislari kabul edilir (`oauth._apple_istemci_sirri` cozer).
+    oauth_apple_private_key: str = ""
+    # Sosyal giris oturumunun (state) omru. Kisa: kullanici saglayiciya
+    # gidip donene kadar yeter, calinan bir `state`in kullanim
+    # penceresini dar tutar.
+    # Saglayiciya bildirilen `redirect_uri`nin tabani. TERS VEKIL
+    # ARKASINDA ZORUNLU: saglayicilar adresi TAM ESLESME ile dogrular ve
+    # istekten turetilen adres (ic konak, http, farkli port) kayitli
+    # adresle tutmazdi. Bos birakilirsa istegin taban adresi kullanilir.
+    oauth_callback_taban: str = ""
+    # Callback sonrasi tarayicinin gonderilecegi adresler. ISTEKTEN
+    # ALINMAZ — istekten almak acik-yonlendirme acigi olurdu.
+    # BOS = O YUZEY KAPALI. Varsayilan olarak bos: panelin mutlak adresi
+    # sunucudan bilinemez ve gorece bir adres callback'te API konagina
+    # cozulup 404 verirdi. Bos birakildiginda `basla` 503 doner — hata,
+    # kullanici siteden AYRILMADAN gorunur.
+    oauth_web_donus: str = ""
+    # Mobil, tarayici oturumunu bir OZEL SEMA ile kapatir; adres
+    # saglayiciya HIC bildirilmez (saglayici yalniz callback'i gorur),
+    # bu yuzden Apple'in "https zorunlu" kurali ihlal edilmez.
+    oauth_mobil_donus: str = "com.app.yonetiyor://oauth"
+    oauth_state_ttl_seconds: int = 600
+    # Kimligi dogrulanmis ama HENUZ ESLESMEMIS kullanicinin elindeki
+    # baglama jetonunun omru: tesis kodu + telefon + SMS kodu girecek
+    # kadar sure.
+    oauth_baglama_ttl_seconds: int = 900
+
 
 settings = Settings()

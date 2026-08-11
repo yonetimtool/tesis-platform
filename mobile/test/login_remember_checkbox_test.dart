@@ -8,6 +8,8 @@ import 'package:mobile/src/features/auth/presentation/login_screen.dart';
 
 import 'helpers/l10n_test_app.dart';
 
+import 'helpers/sosyal_kapali.dart';
+
 /// loginPhone cagrilarini kaydeden sahte auth deposu (HTTP/storage'a inmez).
 class _RecordingAuthRepository implements AuthRepository {
   // (P149) Parolasiz giris ucu — bu sahtelerin olcumu parola yolundadir;
@@ -64,7 +66,7 @@ void main() {
   Future<void> pumpLogin(WidgetTester tester) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [authRepositoryProvider.overrideWithValue(repo)],
+        overrides: [...sosyalKapali, authRepositoryProvider.overrideWithValue(repo)],
         child: l10nApp(const LoginScreen()),
       ),
     );

@@ -2103,5 +2103,38 @@
         "type": "String"
       }
     }
-  }
+  },
+  "sosyalIleDevam": "{saglayici} ile devam et",
+  "@sosyalIleDevam": {
+    "placeholders": {
+      "saglayici": {
+        "type": "String"
+      }
+    }
+  },
+  "sosyalBaslik": "Hesabınızı eşleştirin",
+  "sosyalEslesmeAciklama": "{saglayici} hesabınız doğrulandı. Hesabınızı bulabilmemiz için tesis ID'nizi ve telefon numaranızı girin.",
+  "@sosyalEslesmeAciklama": {
+    "placeholders": {
+      "saglayici": {
+        "type": "String"
+      }
+    }
+  },
+  "sosyalRelayUyari": "Apple e-posta adresinizi gizledi; bu adrese posta gönderilemez.",
+  "sosyalTesisKodu": "Tesis ID",
+  "sosyalKodGonder": "Doğrulama kodu gönder",
+  "sosyalKodAciklama": "{tesis} — {telefon} numarasına gönderilen kodu girin.",
+  "@sosyalKodAciklama": {
+    "placeholders": {
+      "tesis": {
+        "type": "String"
+      },
+      "telefon": {
+        "type": "String"
+      }
+    }
+  },
+  "sosyalDogrula": "Doğrula ve giriş yap",
+  "sosyalVazgec": "Vazgeç"
 }

@@ -107,6 +107,83 @@ METINLER: dict[str, dict[str, str]] = {
     # (P154 / Asama 8) Ice aktarim catisi.
     # (P154 / Asama 10) Ters kayit (iptal).
     # (P154 / Asama 5) Yapi duzenleme + kullanici silme.
+    # (P154 / Asama 4) SOSYAL GIRIS. Hicbiri hangi adimin patladigini
+    # soylemez: "imza gecersiz" ile "aud uymadi" arasindaki fark, ucu bir
+    # kesif aracina cevirirdi. `_INVALID_CREDS` ile ayni ilke.
+    "oauth_dogrulanamadi": {
+        "tr": "Sosyal hesap doğrulanamadı. Lütfen tekrar deneyin.",
+        "en": "Could not verify the social account. Please try again.",
+        "ar": "تعذر التحقق من حساب التواصل الاجتماعي. يرجى المحاولة مرة أخرى.",
+        "ru": "Не удалось подтвердить учётную запись. Попробуйте ещё раз.",
+        "de": "Das Social-Konto konnte nicht verifiziert werden. Bitte erneut versuchen.",
+        "fr": "Impossible de vérifier le compte social. Veuillez réessayer.",
+        "es": "No se pudo verificar la cuenta social. Inténtelo de nuevo.",
+    },
+    "oauth_saglayici_gecersiz": {
+        "tr": "Bu sosyal giriş sağlayıcısı tanınmıyor.",
+        "en": "This social sign-in provider is not recognised.",
+        "ar": "مزوّد تسجيل الدخول هذا غير معروف.",
+        "ru": "Этот поставщик входа не распознан.",
+        "de": "Dieser Anmeldeanbieter ist unbekannt.",
+        "fr": "Ce fournisseur de connexion n'est pas reconnu.",
+        "es": "Este proveedor de inicio de sesión no se reconoce.",
+    },
+    "oauth_saglayici_kapali": {
+        "tr": "Bu sosyal giriş yöntemi şu anda kullanılamıyor.",
+        "en": "This social sign-in method is currently unavailable.",
+        "ar": "طريقة تسجيل الدخول هذه غير متاحة حالياً.",
+        "ru": "Этот способ входа сейчас недоступен.",
+        "de": "Diese Anmeldemethode ist derzeit nicht verfügbar.",
+        "fr": "Cette méthode de connexion est actuellement indisponible.",
+        "es": "Este método de inicio de sesión no está disponible ahora.",
+    },
+    "oauth_oturum_gecersiz": {
+        "tr": "Giriş oturumu geçersiz ya da süresi doldu. Lütfen baştan deneyin.",
+        "en": "The sign-in session is invalid or expired. Please start again.",
+        "ar": "جلسة تسجيل الدخول غير صالحة أو منتهية. يرجى البدء من جديد.",
+        "ru": "Сессия входа недействительна или истекла. Начните заново.",
+        "de": "Die Anmeldesitzung ist ungültig oder abgelaufen. Bitte erneut beginnen.",
+        "fr": "La session de connexion est invalide ou expirée. Veuillez recommencer.",
+        "es": "La sesión de inicio no es válida o ha caducado. Empiece de nuevo.",
+    },
+    "oauth_baglama_gecersiz": {
+        "tr": "Bağlama isteği geçersiz. Lütfen baştan deneyin.",
+        "en": "The linking request is invalid. Please start again.",
+        "ar": "طلب الربط غير صالح. يرجى البدء من جديد.",
+        "ru": "Запрос на привязку недействителен. Начните заново.",
+        "de": "Die Verknüpfungsanfrage ist ungültig. Bitte erneut beginnen.",
+        "fr": "La demande de liaison est invalide. Veuillez recommencer.",
+        "es": "La solicitud de vinculación no es válida. Empiece de nuevo.",
+    },
+    "oauth_baska_hesaba_bagli": {
+        "tr": "Bu sosyal hesap başka bir kullanıcıya bağlı.",
+        "en": "This social account is linked to another user.",
+        "ar": "حساب التواصل هذا مرتبط بمستخدم آخر.",
+        "ru": "Эта учётная запись привязана к другому пользователю.",
+        "de": "Dieses Social-Konto ist mit einem anderen Benutzer verknüpft.",
+        "fr": "Ce compte social est lié à un autre utilisateur.",
+        "es": "Esta cuenta social está vinculada a otro usuario.",
+    },
+    "oauth_baglanti_yok": {
+        "tr": "Bu sağlayıcı hesabınıza bağlı değil.",
+        "en": "This provider is not linked to your account.",
+        "ar": "هذا المزوّد غير مرتبط بحسابك.",
+        "ru": "Этот поставщик не привязан к вашей учётной записи.",
+        "de": "Dieser Anbieter ist nicht mit Ihrem Konto verknüpft.",
+        "fr": "Ce fournisseur n'est pas lié à votre compte.",
+        "es": "Este proveedor no está vinculado a su cuenta.",
+    },
+    # SON YOL KALDIRILAMAZ: kullanicinin elinde parola, baska bir sosyal
+    # kimlik ya da telefon (SMS ile giris) kalmali.
+    "oauth_son_giris_yontemi": {
+        "tr": "Tek giriş yönteminizi kaldıramazsınız. Önce başka bir yöntem ekleyin.",
+        "en": "You cannot remove your only sign-in method. Add another one first.",
+        "ar": "لا يمكنك إزالة طريقة تسجيل الدخول الوحيدة. أضف طريقة أخرى أولاً.",
+        "ru": "Нельзя удалить единственный способ входа. Сначала добавьте другой.",
+        "de": "Sie können Ihre einzige Anmeldemethode nicht entfernen. Fügen Sie zuerst eine weitere hinzu.",
+        "fr": "Vous ne pouvez pas supprimer votre seule méthode de connexion. Ajoutez-en une autre d'abord.",
+        "es": "No puede eliminar su único método de acceso. Añada otro primero.",
+    },
     "kendi_hesabini_silemez": {
         "tr": "Kendi hesabınızı buradan silemezsiniz.",
         "en": "You cannot delete your own account here.",

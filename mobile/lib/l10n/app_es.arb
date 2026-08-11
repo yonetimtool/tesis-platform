@@ -1471,5 +1471,14 @@
   "kayitDaireGerekli": "El n.º de vivienda es obligatorio.",
   "kayitKodGerekli": "Introduzca el código.",
   "kayitGirisLinki": "¿Ya tiene una cuenta? Iniciar sesión",
-  "kayitAdim": "Paso {n}/3"
+  "kayitAdim": "Paso {n}/3",
+  "sosyalIleDevam": "Continuar con {saglayici}",
+  "sosyalBaslik": "Vincule su cuenta",
+  "sosyalEslesmeAciklama": "Su cuenta de {saglayici} está verificada. Introduzca el ID de la finca y su número de teléfono para localizar su cuenta.",
+  "sosyalRelayUyari": "Apple ocultó su dirección de correo; no se puede enviar correo a ella.",
+  "sosyalTesisKodu": "ID de la finca",
+  "sosyalKodGonder": "Enviar código de verificación",
+  "sosyalKodAciklama": "{tesis} — introduzca el código enviado al {telefon}.",
+  "sosyalDogrula": "Verificar y acceder",
+  "sosyalVazgec": "Cancelar"
 }

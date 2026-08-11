@@ -146,6 +146,20 @@ export async function anonimVekil(
   return NextResponse.json(data, { status: res.status });
 }
 
+/**
+ * (P154 / Asama 4) KIMLIK ONCESI GET — `anonimVekil`in okuma ikizi.
+ *
+ * `proxyJson` KULLANILMADI: o cerez okur ve gerekirse jeton yeniler.
+ * Giris ekraninda cagrilan bir uc icin cerez mantigi yalniz gereksiz
+ * degil, `anonimVekil`in belgeledigi sinifta bir risk (baskasinin ayni
+ * tarayicidaki oturumu).
+ */
+export async function anonimGet(path: string): Promise<NextResponse> {
+  const res = await callBackend(path, "GET", undefined);
+  const data = await res.json().catch(() => null);
+  return NextResponse.json(data, { status: res.status });
+}
+
 export function loginResponse(access: string, refresh: string): NextResponse {
   const res = NextResponse.json({ ok: true });
   setAuthCookies(res, access, refresh);
