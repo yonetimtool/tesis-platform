@@ -4513,6 +4513,19 @@ class VirmanIstek(BaseModel):
         return self
 
 
+class IptalIstek(BaseModel):
+    """(P154 / Asama 10) Bir hareketi TERS KAYITLA iptal eder.
+
+    TUTAR ALINMAZ: kismi iptal diye bir sey yoktur. Kismen geri odenen
+    para IADEDIR (`/finans/iade`) ve o uc kismi tutari zaten destekler.
+    Iptal, "bu kayit yanlis girildi" demektir ve yarim yanlis olmaz.
+    """
+
+    aciklama: str | None = Field(None, max_length=500)
+    tarih: date | None = None
+    model_config = ConfigDict(extra="forbid")
+
+
 class IadeIstek(BaseModel):
     """Odeme iadesi — IADE ETTIGI hareketi gosterir."""
 
@@ -5033,47 +5046,6 @@ class DokumanListResponse(BaseModel):
     items: list[DokumanOut]
 
 
-class SiteAktarSatir(BaseModel):
-    """Excel'den gelen TEK satir — istemci ayristirir (P28/P29 ile ayni
-    gerekce: xlsx ayristirma bir saldiri yuzeyidir)."""
-
-    satir_no: int
-    blok: str | None = Field(None, max_length=8)
-    daire_no: str | None = Field(None, max_length=50)
-    ad: str | None = Field(None, max_length=150)
-    telefon: str | None = Field(None, max_length=30)
-    rol_tipi: str | None = Field(None, max_length=20)
-
-
-class SiteAktarIstek(BaseModel):
-    satirlar: list[SiteAktarSatir] = Field(..., min_length=1, max_length=1000)
-    #: True ise HICBIR SEY YAZILMAZ, yalnizca dogrulama raporu doner.
-    yalniz_dogrula: bool = False
-
-
-class SiteAktarHata(BaseModel):
-    satir_no: int
-    alan: str | None = None
-    hata: str
-
-
-class SiteAktarSonuc(BaseModel):
-    blok_olusan: int = 0
-    daire_olusan: int = 0
-    kisi_olusan: int = 0
-    atlanan: int = 0
-    hatalar: list[SiteAktarHata] = Field(default_factory=list)
-
-
-class SiteAktarSablonSatiri(BaseModel):
-    """Indirilebilir sablonun basliklari + ornek satiri."""
-
-    basliklar: list[str]
-    ornek: list[str]
-    aciklama: str
-
-
-# ======================== P36 KVKK ONAY + PAZARLAMA ========================= #
 class KvkkMetinCreate(BaseModel):
     """Yeni SURUM yayinla. `surum` ISTEMCIDEN ALINMAZ — sunucu artirir:
     istemcinin surum secmesi, iki yoneticinin ayni numarayi vermesi ya da
@@ -5329,3 +5301,73 @@ class KurulumAtlaIstek(BaseModel):
     #: kuran bir tesise sihirbazi bir daha tam gosteremezdi.
     atla: bool = True
     model_config = ConfigDict(extra="forbid")
+
+
+# ==================== (P154 / Asama 8) ICE AKTARIM CATISI =================== #
+class IceAktarimAlanOut(BaseModel):
+    """Bir turun tek alani — istemcinin KOLON ESLEMESI bunun uzerine kurulur."""
+
+    kod: str
+    zorunlu: bool
+    ornek: str
+
+
+class IceAktarimTurOut(BaseModel):
+    kod: str
+    #: Aciklama METIN DEGIL ANAHTAR: etiket istemcide aktif dilde cozulur.
+    aciklama_kodu: str
+    alanlar: list[IceAktarimAlanOut]
+
+
+class IceAktarimSatir(BaseModel):
+    """Excel'den gelen TEK satir — istemci ayristirir ve BIZIM alan
+    kodlarimizla gonderir (xlsx ayristirma bir saldiri yuzeyidir, P28/P29).
+    """
+
+    satir_no: int
+    degerler: dict[str, str | int | float | None] = Field(default_factory=dict)
+
+
+class IceAktarimIstek(BaseModel):
+    satirlar: list[IceAktarimSatir] = Field(..., min_length=1, max_length=2000)
+    #: True ise HICBIR SEY YAZILMAZ, yalnizca dogrulama raporu doner.
+    yalniz_dogrula: bool = False
+    #: Yalniz gecmis listesinde gosterilir. DOSYANIN KENDISI SAKLANMAZ —
+    #: icinde kisisel veri olabilir (KVKK: veri en az).
+    dosya_adi: str | None = Field(None, max_length=255)
+    model_config = ConfigDict(extra="forbid")
+
+
+class IceAktarimHata(BaseModel):
+    satir_no: int
+    alan: str | None = None
+    hata: str
+
+
+class IceAktarimSonuc(BaseModel):
+    satir_sayisi: int = 0
+    olusan: int = 0
+    atlanan: int = 0
+    hatali: int = 0
+    hatalar: list[IceAktarimHata] = Field(default_factory=list)
+    #: Yalniz UYGULANDIGINDA doner; onizlemede `null`. Geri alma bunu
+    #: kullanir.
+    aktarim_id: uuid.UUID | None = None
+
+
+class IceAktarimOut(BaseModel):
+    id: uuid.UUID
+    tur: str
+    dosya_adi: str | None = None
+    satir_sayisi: int
+    olusan: int
+    atlanan: int
+    hatali: int
+    durum: str
+    created_at: datetime
+    geri_alma_at: datetime | None = None
+
+
+class IceAktarimListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[IceAktarimOut]

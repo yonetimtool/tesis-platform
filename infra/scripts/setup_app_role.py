@@ -90,6 +90,21 @@ def main() -> int:
             )
             print("[setup_app_role] audit_log append-only (UPDATE/DELETE revoked).")
 
+        # --- finansal_hareket: SILINMEZ (P154 / Asama 10, goc 0047) ---
+        # Ayni gerekce: defter satiri "hic olmamis" hâle getirilemez,
+        # yalnizca TERS KAYITLA cevrilebilir. Blanket GRANT DELETE'i geri
+        # verdigi icin revoke BURADA da yapilir — yalniz gocte yapmak, ilk
+        # `migrate` kosumundan sonra kilidi SESSIZCE acardi.
+        if conn.execute(
+            "SELECT to_regclass('public.finansal_hareket')"
+        ).fetchone()[0] is not None:
+            conn.execute(
+                sql.SQL("REVOKE DELETE ON finansal_hareket FROM {role}").format(
+                    role=role
+                )
+            )
+            print("[setup_app_role] finansal_hareket silinmez (DELETE revoked).")
+
     print(f"[setup_app_role] '{app_user}' rolu hazir (LOGIN + GRANT).")
     return 0
 

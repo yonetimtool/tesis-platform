@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Link from "next/link";
 import { useState } from "react";
 import useSWR from "swr";
 
@@ -56,11 +57,6 @@ interface Dokuman {
   yukleyen_ad: string | null;
   created_at: string;
 }
-interface AktarHata {
-  satir_no: number;
-  alan: string;
-  mesaj: string;
-}
 interface KvkkMetin {
   id: string;
   surum: number;
@@ -76,12 +72,6 @@ interface Uyari {
   kanal: string;
   durum: string;
   created_at: string;
-}
-interface AktarSonuc {
-  blok_olusan: number;
-  daire_olusan: number;
-  kisi_olusan: number;
-  hatalar: AktarHata[];
 }
 
 export default function YonetisimPage() {
@@ -147,55 +137,6 @@ export default function YonetisimPage() {
     }
   }
 
-  // ------------------------------- site aktarim ------------------------------
-  const [aktarMetin, setAktarMetin] = useState("");
-  const [aktarSonuc, setAktarSonuc] = useState<AktarSonuc | null>(null);
-  const [kuruCalisma, setKuruCalisma] = useState(true);
-
-  /** Yapistirilmis metni satirlara cevirir (`blok;daire;ad;telefon;rol`).
-   *  Ayirici olarak `;` ve TAB kabul edilir: Excel'den kopyalama TAB uretir,
-   *  elle yazan `;` kullanir — birini desteklemek digerini sessizce bos
-   *  satira cevirirdi. */
-  function satirlariCoz(): Record<string, unknown>[] {
-    return aktarMetin
-      .split("\n")
-      .map((s) => s.trim())
-      .filter(Boolean)
-      .map((satir, i) => {
-        const p = satir.split(/[;\t]/).map((x) => x.trim());
-        return {
-          // Satir numarasi 1 DEGIL 2'den baslar: kullanicinin dosyasinda
-          // 1. satir basliktir ve hata raporundaki numaranin Excel'deki
-          // satirla ORTUSMESI gerekir.
-          satir_no: i + 2,
-          blok: p[0] ?? "",
-          daire_no: p[1] ?? "",
-          ad: p[2] || null,
-          telefon: p[3] || null,
-          rol_tipi: p[4] || null,
-        };
-      });
-  }
-
-  async function aktar(): Promise<void> {
-    setHata(null);
-    const satirlar = satirlariCoz();
-    if (satirlar.length === 0) {
-      setHata(t("yonAktarBos"));
-      return;
-    }
-    try {
-      const sonuc = (await apiSend("/api/panel/site-aktar", "POST", {
-        yalniz_dogrula: kuruCalisma,
-        satirlar,
-      })) as AktarSonuc;
-      setAktarSonuc(sonuc);
-      if (!kuruCalisma) toast.success(t("yonAktarTamam"));
-    } catch (e) {
-      setAktarSonuc(null);
-      setHata(e instanceof Error ? e.message : String(e));
-    }
-  }
 
   // ------------------------------ KVKK metni --------------------------------
   const { data: kvkk, error: kvErr, mutate: kvkkTazele } = useSWR<KvkkMetin[]>(
@@ -444,53 +385,16 @@ export default function YonetisimPage() {
         ) : null}
       </motion.section>
 
-      {/* ---------------------------- site aktarim ------------------------- */}
+      {/* (P154 / Asama 8) SITE AKTARIM BURADAN CIKTI. Ice aktarim artik
+          TEK CATI uzerinden yapiliyor (`/ice-aktarim`): kolon esleme,
+          onizleme, hata raporu ve GERI ALMA orada. Ikinci bir yukleme
+          yuzeyi tutmak, ayni akisi iki yerde surdurmek olurdu. */}
       <motion.section {...panelMotion} className={panelCls}>
-        <h2 className="mb-3 text-sm font-semibold">{t("yonAktar")}</h2>
-        <p className="mb-2 text-xs text-metin-muted">{t("yonAktarIpucu")}</p>
-        {/* (P63) Baslik gorsel olarak yakin ama BAGLI degil; ekran
-            okuyucu metin kutusunu adsiz duyururdu. */}
-        <textarea
-          aria-label={t("yonAktar")}
-          className={`${inputCls} min-h-32 font-mono text-xs`}
-          value={aktarMetin}
-          onChange={(e) => setAktarMetin(e.target.value)}
-        />
-        <div className="mt-3 flex flex-wrap items-center gap-3">
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              className="h-4 w-4"
-              checked={kuruCalisma}
-              onChange={(e) => setKuruCalisma(e.target.checked)}
-            />
-            {t("yonKuruCalisma")}
-          </label>
-          <button className={btnPrimary} onClick={aktar}>
-            {kuruCalisma ? t("yonAktarDogrula") : t("yonAktarUygula")}
-          </button>
-        </div>
-        {aktarSonuc ? (
-          <div className="mt-3 space-y-2 text-sm">
-            <div className="text-metin-body dark:text-slate-400">
-              {t("yonAktarBlok")}: <b className="tabular-nums">{aktarSonuc.blok_olusan}</b> ·{" "}
-              {t("yonAktarDaire")}: <b className="tabular-nums">{aktarSonuc.daire_olusan}</b> ·{" "}
-              {t("yonAktarKisi")}: <b className="tabular-nums">{aktarSonuc.kisi_olusan}</b>
-            </div>
-            {aktarSonuc.hatalar.length > 0 ? (
-              // SATIR BAZLI HATA (P33): 4 hatali satir yuzunden 296 dogru
-              // satiri reddetmek, kullaniciyi dosyayi elle ayiklamaya
-              // zorlardi — bu yuzden hatalar SATIR NUMARASIYLA listelenir.
-              <ul className="rounded bg-rose-50 p-3 text-xs text-rose-900 dark:bg-rose-950 dark:text-rose-200">
-                {aktarSonuc.hatalar.map((h, i) => (
-                  <li key={i}>
-                    #{h.satir_no} · {h.alan} · {h.mesaj}
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-          </div>
-        ) : null}
+        <h2 className="mb-1 text-sm font-semibold">{t("yonAktar")}</h2>
+        <p className="mb-3 text-xs text-metin-muted">{t("yonAktarTasindi")}</p>
+        <Link href="/ice-aktarim" className={btnPrimary}>
+          {t("iceAktarimBaslik")}
+        </Link>
       </motion.section>
     </div>
   );

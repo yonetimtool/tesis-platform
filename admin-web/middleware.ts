@@ -146,6 +146,7 @@ export const config = {
     "/yonetisim/:path*",
     "/anketler/:path*",
     "/kurulum/:path*",
+    "/ice-aktarim/:path*",
     "/yetki/:path*",
     "/audit/:path*",
     "/complaints/:path*",

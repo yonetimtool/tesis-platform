@@ -4056,6 +4056,47 @@ paths:
         "422": { $ref: "#/components/responses/ValidationError" }
         "409":
           description: Ayni Idempotency-Key FARKLI bir para hareketiyle gonderildi
+  /finans/hareketler/{hareket_id}/iptal:
+    post:
+      tags: [finans]
+      summary: Hareketi TERS KAYITLA iptal et (admin)
+      description: |
+        (P154 / Asama 10) KAYIT SILINMEZ — silinemez de: `finansal_hareket`
+        uzerinde `app_rw`nin DELETE yetkisi goc 0047'de GERI ALINDI. Bir
+        muhasebe kaydi "hic olmamis" hâle getirilemez; gecmis raporlari
+        geriye donuk degistirirdi.
+
+        IPTAL ILE IADE AYRI SEYLER ve ayri tiplerdir:
+          * IADE  — musteriye para donusu. GERCEK bir hareket, kismi olabilir.
+          * IPTAL — kayit duzeltmesi. Tam tutar, ters yon, kismi OLMAZ.
+
+        Iptal satiri `ters_kayit_id` ile IPTAL ETTIGINI gosterir —
+        `iade_edilen_id` ile AYNI YON.
+      parameters:
+        - name: hareket_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/IptalIstek" }
+      responses:
+        "201":
+          description: Ters kayit
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Hareket" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Bu hareket zaten iptal edilmis
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
   /finans/iade:
     post:
       tags: [finans]
@@ -4307,6 +4348,113 @@ paths:
                           items: { type: string }
                         moda_bagli: { type: boolean, default: false }
         "403": { $ref: "#/components/responses/Forbidden" }
+
+  # ================================================================= #
+  # ICE AKTARIM CATISI (P154 / Asama 8)
+  #
+  # DORT TUR, TEK AKIS: daire · kisi · acilis_bakiye · arac. Dort ayri uc
+  # yazmak ONIZLEME + HATA RAPORU + GERI ALMA + ISLEM SINIRI mantigini
+  # dort kez kopyalamak olurdu.
+  #
+  # KOLON ESLEME ARAYUZDE: sunucu ALANLARI bildirir (`/ice-aktarim/turler`),
+  # istemci kullanicinin Excel basliklarini onlara esler ve satirlari BIZIM
+  # alan kodlarimizla gonderir. XLSX AYRISTIRMA SUNUCUDA YAPILMAZ (bir
+  # saldiri yuzeyidir) — dosyayi zaten istemci aciyor.
+  #
+  # KISMI BASARI: gecerli satirlar YAZILIR, hatali satirlar raporlanir.
+  # 300 satirlik bir dosyada 4 hatali satir yuzunden 296 dogru satiri
+  # reddetmek, kullaniciyi dosyayi elle ayiklamaya zorlardi. Bedeli iki
+  # seyle odendi: ONIZLEME hicbir sey yazmaz, GERI ALMA kosumun tamamini
+  # kaldirir.
+  #
+  # (Eski `/site-aktar` KALDIRILDI — bu cati onun yerini aldi.)
+  # ================================================================= #
+  /ice-aktarim/turler:
+    get:
+      tags: [ice-aktarim]
+      summary: Turler + ALANLARI (admin + yonetici)
+      responses:
+        "200":
+          description: Kolon eslemesinin kurulacagi alan tanimlari
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/IceAktarimTur" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /ice-aktarim/{tur}:
+    post:
+      tags: [ice-aktarim]
+      summary: Dogrulama ya da aktarim (admin + yonetici)
+      parameters:
+        - name: tur
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [daire, kisi, acilis_bakiye, arac]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/IceAktarimIstek" }
+      responses:
+        "201":
+          description: Sonuc raporu. `yalniz_dogrula=true` ise HICBIR SEY yazilmaz.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/IceAktarimSonuc" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /ice-aktarim:
+    get:
+      tags: [ice-aktarim]
+      summary: Gecmis kosumlar (admin + yonetici)
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Kosum listesi — geri alma bu listeden yapilir
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/IceAktarimKosum" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /ice-aktarim/{aktarim_id}/geri-al:
+    post:
+      tags: [ice-aktarim]
+      summary: Kosumun yarattigi HER SATIRI kaldirir — HEP YA DA HIC
+      description: >
+        Ters sirada silinir (once cocuk, sonra ebeveyn). Bir satir
+        silinemiyorsa TUM geri alma duser (409). KISMI GERI ALMA YAPILMAZ:
+        yarim geri alinmis bir aktarim, kullanicinin "sildim" sandigi ama
+        bir kismi duran bir veri birakirdi. Kosum kaydi SILINMEZ, durumu
+        `geri_alindi` olur.
+      parameters:
+        - name: aktarim_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Guncel kosum
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/IceAktarimKosum" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Zaten geri alinmis ya da kayitlar kullanimda
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
 
   # ================================================================= #
   # KURULUM SIHIRBAZI (P154 / Asama 7.3)
@@ -4763,58 +4911,6 @@ paths:
       responses:
         "204": { description: silindi }
         "404": { $ref: "#/components/responses/NotFound" }
-  /site-aktar/sablon:
-    get:
-      tags: [yonetisim]
-      summary: Toplu kurulum sablonunun basliklari + ornek satir
-      description: |
-        Sunucu XLSX URETMEZ: panel bu basliklardan dosyayi kendisi kurar.
-        Boylece sablon ile kabul edilen bicim TEK KAYNAKTAN gelir ve
-        "indirdigim sablon reddedildi" durumu olusmaz.
-      responses:
-        "200": { description: "basliklar: blok, daire_no, ad, telefon, rol_tipi" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-  /site-aktar:
-    post:
-      tags: [yonetisim]
-      summary: Toplu site kurulumu (blok + daire + kisi)
-      description: |
-        SATIR BAZLI HATA RAPORU: 300 satirlik bir dosyada 4 hatali satir
-        yuzunden 296 dogru satiri reddetmek, kullaniciyi dosyayi elle
-        ayiklamaya zorlardi. Her hata `satir_no` + `alan` + mesaj dondurur.
-
-        `yalniz_dogrula=true` HICBIR SEY YAZMAZ (onizleme). Kurulum tek
-        seferlik ve GERI ALMASI ZOR bir islemdir.
-
-        IDEMPOTENT: var olan blok/daire/kisi ATLANIR, dosya yeniden
-        yuklenebilir.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: "#/components/schemas/SiteAktarIstek" }
-      responses:
-        "201": { description: aktarim raporu (sayaclar + satir hatalari) }
-        "403": { $ref: "#/components/responses/Forbidden" }
-  # ================================================================= #
-  # RAPOR MOTORU + KATALOG (P31)
-  # TEK UC, UC BICIM: bicim basina ayri uc acmak, ayni parametre modelini
-  # uc kez dogrulamak ve uc yerde degistirmek demekti.
-  # UCU DE AYNI SATIRLARDAN uretilir — ayri uretmek ayni raporun uc yerde
-  # farkli rakam gostermesine yol acardi.
-  # CIKTI URETIMI SUNUCUDA: istemcide XLSX/PDF uretmek, panelin ve mobilin
-  # ayni raporu iki kez (ve farkli) bicimlendirmesi olurdu.
-  # RBAC: admin + yonetici (raporlar site finansini ve kisi adlarini tasir).
-  # ================================================================= #
-  # ================================================================= #
-  # MESAJ SABLONLARI + GONDERIM (P32)
-  # RIZA DENETIMI: `amac='pazarlama'` sablonlar YALNIZCA rizasi olan
-  # kisilere gonderilir. Riza kaydi P36'nin isidir; o gelene kadar bu uc
-  # pazarlama gonderimini HIC yapmaz ve atlananlari SAYAR. "Simdilik
-  # gonderelim, rizayi sonra ekleriz" demek KVKK ihlalini urune
-  # yerlestirmek olurdu. OPERASYONEL finansal bildirim AYRI bir hukuki
-  # dayanaktir (KMK yukumluluk) ve riza gerektirmez.
-  # ================================================================= #
   /mesaj-sablonlari:
     get:
       tags: [mesajlar]
@@ -9604,6 +9700,93 @@ components:
         items:
           type: array
           items: { $ref: "#/components/schemas/Ek" }
+    # ---------- (P154 / Asama 8) ICE AKTARIM CATISI ---------- #
+    IceAktarimAlan:
+      type: object
+      required: [kod, zorunlu, ornek]
+      properties:
+        kod: { type: string, description: "Istemcinin kolon eslemesi bunun uzerine kurulur." }
+        zorunlu: { type: boolean }
+        ornek: { type: string }
+    IceAktarimTur:
+      type: object
+      required: [kod, aciklama_kodu, alanlar]
+      properties:
+        kod:
+          type: string
+          enum: [daire, kisi, acilis_bakiye, arac]
+        aciklama_kodu:
+          type: string
+          description: "METIN DEGIL ANAHTAR — etiket istemcide aktif dilde cozulur."
+        alanlar:
+          type: array
+          items: { $ref: "#/components/schemas/IceAktarimAlan" }
+    IceAktarimSatir:
+      type: object
+      required: [satir_no]
+      properties:
+        satir_no: { type: integer }
+        degerler:
+          type: object
+          additionalProperties: { type: string, nullable: true }
+          description: "BIZIM alan kodlarimizla; esleme istemcide yapilir."
+    IceAktarimIstek:
+      type: object
+      required: [satirlar]
+      properties:
+        satirlar:
+          type: array
+          minItems: 1
+          maxItems: 2000
+          items: { $ref: "#/components/schemas/IceAktarimSatir" }
+        yalniz_dogrula:
+          type: boolean
+          default: false
+          description: "True ise HICBIR SEY yazilmaz, yalnizca rapor doner."
+        dosya_adi:
+          type: string
+          nullable: true
+          maxLength: 255
+          description: >
+            Yalniz gecmis listesinde gosterilir. DOSYANIN KENDISI SAKLANMAZ
+            — icinde kisisel veri olabilir (KVKK: veri en az).
+    IceAktarimHata:
+      type: object
+      required: [satir_no, hata]
+      properties:
+        satir_no: { type: integer }
+        alan: { type: string, nullable: true }
+        hata: { type: string }
+    IceAktarimSonuc:
+      type: object
+      required: [satir_sayisi, olusan, atlanan, hatali, hatalar]
+      properties:
+        satir_sayisi: { type: integer }
+        olusan: { type: integer }
+        atlanan: { type: integer, description: "Zaten var olan kayit (IDEMPOTENT)." }
+        hatali: { type: integer }
+        hatalar:
+          type: array
+          items: { $ref: "#/components/schemas/IceAktarimHata" }
+        aktarim_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: "Yalniz UYGULANDIGINDA doner; onizlemede null."
+    IceAktarimKosum:
+      type: object
+      required: [id, tur, satir_sayisi, olusan, atlanan, hatali, durum, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        tur: { type: string, enum: [daire, kisi, acilis_bakiye, arac] }
+        dosya_adi: { type: string, nullable: true }
+        satir_sayisi: { type: integer }
+        olusan: { type: integer }
+        atlanan: { type: integer }
+        hatali: { type: integer }
+        durum: { type: string, enum: [uygulandi, geri_alindi] }
+        created_at: { type: string, format: date-time }
+        geri_alma_at: { type: string, format: date-time, nullable: true }
     # ---------- (P154 / Asama 7.3) KURULUM SIHIRBAZI ---------- #
     KurulumAdimi:
       type: object
@@ -12264,6 +12447,15 @@ components:
         tutar_kurus: { type: integer, format: int64, minimum: 1 }
         tarih: { type: string, format: date, nullable: true }
         aciklama: { type: string, nullable: true, maxLength: 500 }
+    IptalIstek:
+      type: object
+      description: >
+        TUTAR ALINMAZ: kismi iptal diye bir sey yoktur. Kismen geri odenen
+        para IADEDIR (`/finans/iade`). Iptal "bu kayit yanlis girildi"
+        demektir ve yarim yanlis olmaz.
+      properties:
+        aciklama: { type: string, nullable: true, maxLength: 500 }
+        tarih: { type: string, format: date, nullable: true }
     IadeIstek:
       type: object
       required: [hareket_id]

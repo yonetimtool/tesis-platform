@@ -32,6 +32,9 @@
 | **7.2 (7/7)** — "Site sayfası" kaldırıldı | anket ayrıldı → portal silindi; **tablolar duruyor** | `7654572` |
 | **7.3** — Onboarding sihirbazı | göç 0044 + `/kurulum` ucu + panel sayfası + ayarlar bağlantısı | `a7b8ad7` |
 | **7.4** — Bağımlılık yönlendirmesi | `BagimlilikUyarisi` + `DonusCubugu` + 9 satırlık kayıt; 4 ekrana bağlandı | `8d18f56` |
+| **8** — Import framework | göç 0045 + `/ice-aktarim` çatısı (4 tür) + geri alma + panel sayfası; `/site-aktar` kaldırıldı | bu tur |
+| **9** — Bildirim/şablon altyapısı **TAM** | göç 0046 + mesaj kuyruğu + yeniden deneme; politika `yeniden_deneme.py`de paylaşıldı | bu tur |
+| **10** — Apsiyon B kovası (kalanlar) | göç 0047 — ters kayıt + defterde silme kilidi; triyajda **iki yanlış ölçüm düzeltildi** | bu tur |
 
 ---
 
@@ -274,6 +277,151 @@ indirirdi. Yalnız `/units`te blok listesi uyarı için ayrıca çekiliyor.
 satır. `/dues`e uyarı **konulmadı**: envanterdeki 422 `/borclandirma`
 ucuna ait, `/api/dues/assessments`e değil; yanlış yerde uyarı göstermek
 uyarısızlıktan kötüdür.
+
+### 4.17 İçe aktarım: kısmi başarı tanımı ve bedeli (Aşama 8)
+
+Brief açıkça istedi: "Kısmi başarı davranışını tanımla ve gerekçelendir."
+
+**TANIM:** geçerli satırlar yazılır, hatalı satırlar yazılmaz ve satır
+numarası + **alan adıyla** raporlanır. Koşum bir işlemdir.
+
+**GEREKÇE:** 300 satırlık bir dosyada 4 hatalı satır yüzünden 296 doğru
+satırı reddetmek, kullanıcıyı dosyayı Excel'de elle ayıklamaya zorlardı —
+ve o ayıklama, hata raporunu okuyup 4 satırı düzeltmekten çok daha
+hatalı bir iştir.
+
+**TAKASI DÜRÜSTÇE:** bu, "yarım aktarım" durumunu mümkün kılar. Bedeli iki
+şeyle ödendi — **önizleme** hiçbir şey yazmadan aynı raporu verir ve
+**geri alma** koşumun tamamını kaldırır. Kullanıcı yarım kalmış bir
+sonuca mahkûm değildir.
+
+### 4.18 Geri alma için hedef tablolara sütun EKLENMEDİ (Aşama 8)
+
+Alternatif, içe aktarılan her tabloya bir `aktarim_id` sütunu eklemekti.
+Reddedildi: altı tabloya göç demekti, her yeni tür yeni bir göç
+gerektirirdi, o sütunlar aktarılmamış satırlarda sonsuza kadar boş
+dururdu — ve en önemlisi `finansal_hareket` gibi **defter** tablolarına
+"bunu bir dosya yazdı" bilgisini gömerdi. Defterin işi para hareketini
+anlatmaktır, nereden geldiğini değil.
+
+Bunun yerine bir **iz tablosu** (`ice_aktarim_kayit`) bu bilgiyi dışarıda
+tutuyor; hedef tablolar hiç değişmedi.
+
+**Geri alma HEP YA DA HİÇ.** Ters sırada silinir (önce çocuk, sonra
+ebeveyn). Bir satır silinemiyorsa tüm geri alma düşer. Kısmi geri alma
+yapılmaz: yarım geri alınmış bir aktarım, kullanıcının "sildim" sandığı
+ama bir kısmı duran bir veri bırakırdı. Koşum kaydı **silinmez**, durumu
+`geri_alindi` olur — silmek denetim izinin anlatması gereken şeyi yok
+etmek olurdu.
+
+### 4.19 `/site-aktar` kaldırıldı — davranış farkı dürüstçe (Aşama 8)
+
+Brief'in çakışma notu "hepsi tek framework üzerinden" diyordu; ikinci bir
+içe aktarım ucu tutmak önizleme + hata raporu + işlem sınırı mantığını
+iki yerde sürdürmek olurdu.
+
+**Davranış farkı:** eski uç TEK SATIRDA blok+daire+kişi yaratıyordu; çatı
+bunları ayrı türlere bölüyor (brief'in kapsam listesi de "daireler/
+bloklar" ve "kişiler/sakinler" diye ayırıyor). `kisi` türü `daire_no`
+alanıyla var olan daireye bağlanır — aynı sonuç **iki geçişte** elde
+edilir ve ikinci geçiş, ilkini geri almadan yinelenebilir.
+
+Ölçülen garantiler kaybolmadı: eski dosyadaki dört test
+`test_ice_aktarim.py`ye taşındı, üstüne geri alma ve iki tür daha eklendi.
+
+### 4.20 Yeniden deneme politikası KOPYALANMADI, paylaşıldı (Aşama 9)
+
+Katlanan geri çekilme (1/5/25 dk) P37'de caydırıcı webhook kuyruğu için
+zaten yazılıydı. Mesaj kuyruğu tam olarak aynı şeye ihtiyaç duyuyordu:
+"kaçıncı deneme, ne zaman tekrar, ne zaman vazgeç".
+
+Kopyalasaydım iki politika olurdu — biri düzeltilir, öteki unutulurdu ve
+"neden SMS 3 kez ama webhook 5 kez deneniyor" sorusunun cevabı hiçbir
+yerde yazılı olmazdı. `yeniden_deneme.py`ye taşındı; `gurultu.py` çağrı
+yerleri değişmesin diye iki ince sarmalayıcı tutuyor. **Max deneme sayısı
+çağrıya bırakıldı** — ortak olan zamanlama eğrisi, sayı değil.
+
+### 4.21 Başarısız gönderim artık SON SÖZ DEĞİL (Aşama 9)
+
+Ölçüldü: gönderim istek içinde senkron yapılıyordu ve sağlayıcı bir kez
+başarısız olunca kayıt `basarisiz` yazılıp bırakılıyordu. Yani
+sağlayıcının beş saniyelik bir kesintisi, üç yüz kişilik bir duyurunun
+**kalıcı olarak** eksik gitmesi demekti.
+
+Yeniden denemeyi isteğin içine koymak da çözüm değildi: yöneticinin
+tarayıcısını sağlayıcının geri çekilme süresi boyunca bekletirdi.
+
+**Ayrı kuyruk tablosu açılmadı.** `mesaj_gonderim` zaten alıcıyı, gövdeyi,
+durumu (`kuyrukta` enum'da mevcuttu) ve hatayı tutuyordu; eksik olan tek
+şey zamanlamaydı (iki sütun). Ayrı tablo, aynı satırı iki yerde tutmak ve
+"geçmiş" ile "kuyruk" arasında hangisinin doğru olduğu sorusunu üretmek
+olurdu.
+
+**Kalıcı hata ayırt edilemiyor — dürüstçe:** "numara geçersiz" ile
+"sağlayıcı düştü" bizim için aynı görünüyor (`GonderimSonucu` bir hata
+metni taşıyor, sınıf değil). Bu yüzden deneme sayısı düşük tutuldu (3).
+Sağlayıcı hata taksonomisi eklendiğinde doğru yer orasıdır.
+
+**Kota deneme değil MESAJ sayar:** yeniden deneme yeni satır açmaz, var
+olanı günceller. Aksi hâlde düşük bir sağlayıcı, günlük kotayı kendi
+arızasıyla tüketirdi.
+
+### 4.22 Kendi testim yanlış varsayımla yazılmıştı (Aşama 9)
+
+Kuyruğun tükenme yolunu ölçen test "sağlayıcı test ortamında başarısız
+olur" varsayıyordu. **Ölçtüm: sağlayıcı başarılı dönüyor** — satır ilk
+denemede kapanıyor ve tükenme yolu hiç koşmuyordu. Test düşen bir sahte
+sağlayıcıyla yeniden yazıldı; kuyruğun kararı artık sağlayıcı
+yapılandırmasından bağımsız ölçülüyor.
+
+### 4.23 Aşama 10: kendi triyajımda iki yanlış ölçüm buldum
+
+B kovasında hiçbir kodlama aşamasının sahiplenmediği üç madde vardı.
+Ölçtüm — **ikisi zaten yapılmıştı:**
+
+| Triyajda yazan | Ölçüm |
+|---|---|
+| "Çoklu satır finansal işlem — **tek satır**, 2 g" | **Zaten var:** `POST /finans/hareketler` çok satırlı (`idempotency_key` + `idem_satir`) |
+| "Finansal denetim kaydı — finans **bağlanmamış**" | **Bağlanmış:** 9 yazma ucunun 8'inde `audit_user`; 9.'su (`banka-eslestir`) hiçbir şey yazmıyor — öneri üreticisi, denetlenecek mutasyon yok |
+
+Triyaj belgesi düzeltildi. Gerçek iş tek maddeydi: **ters kayıt + defterde
+silme kilidi**.
+
+### 4.24 DELETE veritabanında kapatıldı, uygulamada değil (Aşama 10)
+
+Bugün hiçbir uç `finansal_hareket` silmiyor; yarın biri yazarsa kimse
+fark etmez. Yetkiyi geri almak kuralı **kanıtlanabilir** kılar —
+`audit_log`un append-only yapıldığı yolun aynısı.
+
+**Blanket GRANT her `migrate` sonrası koşuyor** ve DELETE'i geri veriyor;
+bu yüzden REVOKE hem göçte hem `setup_app_role.py`de. Yalnız göçte yapmak
+kilidi ilk koşumdan sonra **sessizce açardı.**
+
+**Bağın yönü yol haritasının önerisinin tersine kondu:** iptal satırı
+iptal ettiğini gösterir. Sebep, tabloda zaten aynı işi yapan
+`iade_edilen_id`nin bu yönde olması — iki benzer bağı iki farklı yönde
+tutmak, her okuyanın durup bakması demekti.
+
+### 4.25 AŞAMALAR ARASI ÇAKIŞMA — 8 ile 10 (Aşama 10)
+
+DELETE'i kilitlemek **Aşama 8'in geri almasını kırıyordu**:
+`acilis_bakiye` içe aktarımı defter satırı yaratıyor ve geri alma onları
+siliyordu.
+
+Kilidi gevşetmedim. Geri alma artık defter satırları için **ters kayıt**
+yazıyor: kullanıcı açısından sonuç aynı (bakiye eski hâline döner) ama
+defter ne olduğunu anlatmaya devam ediyor. Bunu ölçen bir test var.
+
+### 4.26 Kendi göçüm FK indeksini iki kez kaçırdı (Aşama 8/10)
+
+`test_indeks_kapsam` `ice_aktarim_kayit(tenant_id)` FK'sının indekssiz
+olduğunu yakaladı. Düzeltirken tek indeksi `tenant_id` ile başlattım — bu
+kez **`aktarim_id` açıkta kaldı** ve aynı test onu yakaladı. Tabloda iki
+FK var; ikisi de kendi öncü kolonuyla indekslendi.
+
+Göç 0045 **yerinde düzeltildi**: commit'lenmemiş ve hiçbir yere
+gitmemişti; ikinci bir düzeltme göçü eklemek, hiç yaşamamış bir kusuru
+tarihe yazmak olurdu.
 
 ## 5. BULUNAN GERÇEK KUSURLAR
 

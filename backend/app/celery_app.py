@@ -47,6 +47,12 @@ celery_app.conf.beat_schedule = {
         "task": "scheduler.gurultu_kuyrugu",
         "schedule": 60.0,
     },
+    # (P154 / Asama 9) Mesaj yeniden deneme kuyrugu. Ayni gerekce:
+    # geri cekilme dakikalar mertebesinde, dakikada bir bakmak yeterli.
+    "mesaj-kuyrugu": {
+        "task": "scheduler.mesaj_kuyrugu",
+        "schedule": 60.0,
+    },
     # KVKK saklama & imha — her gece 04:00 Europe/Istanbul. App TZ = UTC; TR
     # yil boyu UTC+3 (DST yok) => 01:00 UTC = 04:00 Istanbul.
     "run-retention": {

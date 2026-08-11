@@ -387,13 +387,25 @@ async def gonder(
         govde = etiketleri_coz(sablon.govde, degerler)
         konu = etiketleri_coz(sablon.konu, degerler) if sablon.konu else None
         sonuc = saglayici.gonder(hedef, konu, govde)
+        # (P154 / Asama 9) BASARISIZ ARTIK SON SOZ DEGIL: satir KUYRUGA
+        # alinir ve `mesaj_kuyruk` katlanan geri cekilmeyle yeniden dener.
+        # Eskiden saglayicinin bes saniyelik bir kesintisi, uc yuz kisilik
+        # bir duyurunun KALICI olarak eksik gitmesi demekti.
+        #
+        # Ilk deneme BURADA yapildi; sayac 1'den baslar ki kuyruk ikinci
+        # denemeyi bir dakika sonraya koysun (sifirdan baslasaydi HEMEN
+        # tekrar denerdi — yani geri cekilme hic olmazdi).
+        kuyrukta = sonuc.durum == "basarisiz"
         db.add(MesajGonderim(
             tenant_id=user.tenant_id, sablon_id=sablon.id, kanal=sablon.kanal,
             amac=sablon.amac, user_id=kid, hedef=hedef, konu=konu,
-            govde=govde, durum=sonuc.durum, hata=sonuc.hata,
+            govde=govde,
+            durum="kuyrukta" if kuyrukta else sonuc.durum,
+            hata=sonuc.hata,
             saglayici=sonuc.saglayici, gonderen_user_id=user.id,
+            deneme=1, son_deneme_at=func.now(),
         ))
-        if sonuc.durum == "basarisiz":
+        if kuyrukta:
             basarisiz += 1
         else:
             gonderildi += 1

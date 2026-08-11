@@ -20,19 +20,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..audit import Action, audit_user
 from ..crud_helpers import get_or_404, translate_integrity
-from ..security import normalize_phone
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
-from ..hata_metinleri import hata_metni, istek_dili
 from ..models import (
     AppUser,
-    BuildingBlock,
     KararDefteri,
     KararUyesi,
     Tenant,
     TenantDokuman,
-    Unit,
-    UnitResident,
 )
 from ..rapor_ciktilari import metin_pdf
 from ..schemas import (
@@ -44,9 +39,6 @@ from ..schemas import (
     KararDefteriOut,
     KararDefteriUpdate,
     KararUyesiIn,
-    SiteAktarIstek,
-    SiteAktarSablonSatiri,
-    SiteAktarSonuc,
 )
 
 router = APIRouter(tags=["yonetisim"])
@@ -319,150 +311,19 @@ async def dokuman_sil(
 
 
 # =============================== SITE AKTAR ================================= #
-_SABLON_BASLIKLAR = ["blok", "daire_no", "ad", "telefon", "rol_tipi"]
-
-
-@router.get("/site-aktar/sablon", response_model=SiteAktarSablonSatiri)
-async def aktar_sablonu(_: AppUser = Depends(_YONETIM)) -> SiteAktarSablonSatiri:
-    """Indirilebilir sablonun BASLIKLARI + ornek satir.
-
-    Sunucu XLSX URETMEZ: panel bu basliklardan dosyayi kendisi kurar. Boylece
-    sablon ile kabul edilen bicim TEK KAYNAKTAN gelir ve "indirdigim sablon
-    reddedildi" durumu olusmaz.
-    """
-    return SiteAktarSablonSatiri(
-        basliklar=_SABLON_BASLIKLAR,
-        ornek=["A", "A-1", "Ali Veli", "+905321112233", "malik"],
-        aciklama=(
-            "blok ve daire_no zorunludur. ad + telefon birlikte verilirse "
-            "sakin de olusturulur; rol_tipi malik|kiraci (bos birakilabilir). "
-            "Var olan blok/daire/kisi ATLANIR — dosya yeniden yuklenebilir."
-        ),
-    )
-
-
-@router.post("/site-aktar", response_model=SiteAktarSonuc, status_code=201)
-async def site_aktar(
-    body: SiteAktarIstek,
-    accept_language: str | None = None,
-    db: AsyncSession = Depends(get_tenant_db),
-    user: AppUser = Depends(_YONETIM),
-) -> SiteAktarSonuc:
-    """Toplu site kurulumu: bloklar + daireler + kisiler.
-
-    SATIR BAZLI HATA RAPORU (P28 ice aktarimiyla ayni gerekce): 300 satirlik
-    bir dosyada 4 hatali satir yuzunden 296 dogru satiri reddetmek,
-    kullaniciyi dosyayi elle ayiklamaya zorlardi.
-
-    `yalniz_dogrula=true` HICBIR SEY YAZMAZ — kullanici once raporu gorup
-    sonra isler. Kurulum tek seferlik ve GERI ALMASI ZOR bir islemdir; onizleme
-    olmadan yapilmasi yanlis bir dosyayi 300 satir boyunca uygulamak olurdu.
-
-    IDEMPOTENT: var olan blok/daire/kisi ATLANIR, yani dosya yeniden
-    yuklenebilir.
-    """
-    dil = istek_dili(accept_language)
-    sonuc = SiteAktarSonuc()
-
-    mevcut_bloklar = set(
-        (await db.execute(select(BuildingBlock.ad))).scalars().all()
-    )
-    mevcut_daireler = dict(
-        (await db.execute(select(Unit.no, Unit.id))).all()
-    )
-    mevcut_telefonlar = set(
-        (await db.execute(
-            select(AppUser.telefon).where(AppUser.telefon.is_not(None))
-        )).scalars().all()
-    )
-
-    for satir in body.satirlar:
-        blok = (satir.blok or "").strip()
-        daire = (satir.daire_no or "").strip()
-        if not blok or not daire:
-            sonuc.hatalar.append({
-                "satir_no": satir.satir_no,
-                "alan": "blok" if not blok else "daire_no",
-                "hata": hata_metni("zorunlu_alan_eksik", dil),
-            })
-            sonuc.atlanan += 1
-            continue
-
-        if blok not in mevcut_bloklar:
-            if not body.yalniz_dogrula:
-                db.add(BuildingBlock(tenant_id=user.tenant_id, ad=blok))
-                await db.flush()
-            mevcut_bloklar.add(blok)
-            sonuc.blok_olusan += 1
-
-        unit_id = mevcut_daireler.get(daire)
-        if unit_id is None:
-            if body.yalniz_dogrula:
-                sonuc.daire_olusan += 1
-            else:
-                u = Unit(tenant_id=user.tenant_id, no=daire, blok=blok)
-                db.add(u)
-                try:
-                    await db.flush()
-                except IntegrityError as exc:
-                    raise translate_integrity(exc)
-                mevcut_daireler[daire] = u.id
-                unit_id = u.id
-                sonuc.daire_olusan += 1
-
-        ad = (satir.ad or "").strip()
-        tel_ham = (satir.telefon or "").strip()
-        if not ad or not tel_ham:
-            # Kisi satiri OPSIYONELDIR: yalniz daire kurmak gecerli bir
-            # kullanim (once yapi, sonra sakinler).
-            continue
-        try:
-            telefon = normalize_phone(tel_ham)
-        except ValueError:
-            sonuc.hatalar.append({
-                "satir_no": satir.satir_no, "alan": "telefon",
-                "hata": hata_metni("telefon_bicimi", dil),
-            })
-            sonuc.atlanan += 1
-            continue
-        if telefon in mevcut_telefonlar:
-            continue
-        rol = (satir.rol_tipi or "").strip().lower() or None
-        if rol not in (None, "malik", "kiraci"):
-            sonuc.hatalar.append({
-                "satir_no": satir.satir_no, "alan": "rol_tipi",
-                "hata": hata_metni("gecersiz_rol_tipi", dil),
-            })
-            sonuc.atlanan += 1
-            continue
-
-        if not body.yalniz_dogrula:
-            kisi = AppUser(
-                tenant_id=user.tenant_id, ad=ad, telefon=telefon,
-                role="resident", password_set=False,
-                password_hash="!",  # parola BELIRLENMEMIS (gecici kod akisi)
-            )
-            db.add(kisi)
-            try:
-                await db.flush()
-            except IntegrityError as exc:
-                raise translate_integrity(exc)
-            if unit_id is not None:
-                db.add(UnitResident(
-                    tenant_id=user.tenant_id, unit_id=unit_id,
-                    user_id=kisi.id, rol_tipi=rol,
-                ))
-                await db.flush()
-        mevcut_telefonlar.add(telefon)
-        sonuc.kisi_olusan += 1
-
-    if not body.yalniz_dogrula and (
-        sonuc.blok_olusan or sonuc.daire_olusan or sonuc.kisi_olusan
-    ):
-        await audit_user(
-            db, user, Action.SITE_AKTAR, resource_type="tenant",
-            resource_id=user.tenant_id,
-            meta={"blok": sonuc.blok_olusan, "daire": sonuc.daire_olusan,
-                  "kisi": sonuc.kisi_olusan, "hatali": len(sonuc.hatalar)},
-        )
-    return sonuc
+# (P154 / Asama 8) KALDIRILDI — ICE AKTARIM CATISINA devredildi.
+#
+# Brief'in cakisma notu acikti: "Apsiyon 'Excel ile Site Aktar' + Asama 5
+# sakin yukleme + Apsiyon kisi/daire aktarimi — HEPSI tek framework
+# uzerinden." Ikinci bir ice aktarim ucu tutmak, ONIZLEME + HATA RAPORU +
+# ISLEM SINIRI mantigini iki yerde tutmak ve birine GERI ALMA eklerken
+# otekini unutmak olurdu.
+#
+# KARSILIGI: `POST /ice-aktarim/daire` + `POST /ice-aktarim/kisi`.
+#
+# DAVRANIS FARKI DURUSTCE: eski uc TEK SATIRDA blok+daire+kisi
+# yaratiyordu; cati bunlari AYRI TURLERE boluyor (brief'in kapsam listesi
+# de "daireler/bloklar" ve "kisiler/sakinler" diye ayiriyor). Kisi turu
+# `daire_no` alani ile var olan daireye baglanir, yani ayni sonuc IKI
+# GECISTE elde edilir — ve ikinci gecis, ilkini geri almadan
+# yinelenebilir.

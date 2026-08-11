@@ -69,6 +69,9 @@ const BIRINCIL_UC: Record<string, string> = {
   // (P154 / Asama 7.3) Kurulum sihirbazi — TEK uc sekiz adimin durumunu
   // doner (istemci sekiz ayri liste ucuna gitmez).
   "/kurulum": "GET /kurulum",
+  // (P154 / Asama 8) Ice aktarim catisi — eski `/site-aktar` bunun
+  // yerine gecti.
+  "/ice-aktarim": "GET /ice-aktarim",
   // (P154 / Asama 7.1) Icra ayri ust bolum. Uc denetciye de OKUMA aciyor
   // (`_OKUMA = admin+yonetici+denetci`); yazma yalniz admin, o yuzden
   // sayfa yoneticiye "yeni dosya" dugmesi cizmez.

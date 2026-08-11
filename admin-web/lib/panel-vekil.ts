@@ -33,7 +33,6 @@ export const OKUMA: Record<string, string> = {
   // --- yonetisim (P33) ---
   "karar-defteri": "/karar-defteri",
   dokumanlar: "/dokumanlar",
-  "site-aktar-sablon": "/site-aktar/sablon",
   // --- KVKK (P36) ---
   "kvkk-metinler": "/kvkk/metinler",
   // --- gurultu (P37) ---
@@ -49,6 +48,9 @@ export const OKUMA: Record<string, string> = {
   ekler: "/ekler",
   // --- kurulum sihirbazi (P154 / Asama 7.3) ---
   kurulum: "/kurulum",
+  // --- ice aktarim catisi (P154 / Asama 8) ---
+  "ice-aktarim-turler": "/ice-aktarim/turler",
+  "ice-aktarim": "/ice-aktarim",
 };
 
 /** POST ile YAZILAN kaynaklar (okumadan AYRI: bir ucu yanlislikla yazmaya
@@ -65,12 +67,18 @@ export const YAZMA: Record<string, string> = {
   "mesaj-gonder": "/mesajlar/gonder",
   "karar-defteri": "/karar-defteri",
   dokumanlar: "/dokumanlar",
-  "site-aktar": "/site-aktar",
   "kvkk-metin": "/kvkk/metin",
   anketler: "/anketler",
   ekler: "/ekler",
   // PATCH hedefi kaynak KOKUDUR — sihirbaz adim atlamayi boyle yazar.
   kurulum: "/kurulum",
+  // Ice aktarim: her TUR ayri bir beyaz liste girisi. Tur adini yola
+  // dogrudan gecirmek, istemcinin `/ice-aktarim/../users` gibi bir yol
+  // uydurabilmesi demekti (beyaz listenin varlik sebebi).
+  "ice-aktarim-daire": "/ice-aktarim/daire",
+  "ice-aktarim-kisi": "/ice-aktarim/kisi",
+  "ice-aktarim-acilis_bakiye": "/ice-aktarim/acilis_bakiye",
+  "ice-aktarim-arac": "/ice-aktarim/arac",
 };
 
 /** Kaynak basina ILETILEBILEN sorgu parametreleri (yine beyaz liste:

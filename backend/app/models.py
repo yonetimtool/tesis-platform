@@ -174,6 +174,11 @@ BORC_HEDEF_KURALI = ENUM(
 )
 HAREKET_TIP = ENUM(
     "tahsilat", "gider", "gelir", "virman", "iade", "acilis",
+    # (P154 / Asama 10, goc 0047) TERS KAYIT. `iade`den AYRI: iade
+    # musteriye para donusudur (gercek hareket), iptal bir KAYIT
+    # DUZELTMESIDIR. Ikisini ayni tiple yazmak "bu ay ne kadar iade
+    # verdik" sorusunu yanlis yanitlardi.
+    "iptal",
     name="hareket_tip", create_type=False,
 )
 HAREKET_YON = ENUM("giris", "cikis", name="hareket_yon", create_type=False)
@@ -2811,6 +2816,15 @@ class FinansalHareket(Base):
     iade_edilen_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), nullable=True
     )
+    #: (P154 / Asama 10) IPTAL SATIRI, IPTAL ETTIGI SATIRI gosterir —
+    #: `iade_edilen_id` ile AYNI YON. Iki benzer bagi iki farkli yonde
+    #: tutmak, her okuyanin durup bakmasi demekti.
+    #:
+    #: IPTAL ILE IADE AYRI SEYLER: iade musteriye para donusudur (gercek
+    #: bir hareket), iptal ise bir KAYIT DUZELTMESIDIR.
+    ters_kayit_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
     kaydeden_user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), nullable=True
     )
@@ -2919,6 +2933,14 @@ class MesajGonderim(Base):
     gonderen_user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), nullable=True
     )
+    #: (P154 / Asama 9) KUYRUK DEFTERI. Ayri bir kuyruk tablosu acmak, ayni
+    #: satiri iki yerde tutmak ve "gecmis" ile "kuyruk" arasinda hangisinin
+    #: dogru oldugu sorusunu uretmek olurdu — `durum='kuyrukta'` zaten
+    #: enum'da vardi, eksik olan yalnizca ZAMANLAMAYDI.
+    deneme: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default=text("0")
+    )
+    son_deneme_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     created_at = _created_at()
 
 
@@ -3377,4 +3399,73 @@ class IletisimMesaji(Base):
     okundu: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("false")
     )
+    created_at = _created_at()
+
+
+class IceAktarim(Base):
+    """(P154 / Asama 8) Ice aktarim KOSUMU.
+
+    Geri alinan kosum SILINMEZ, `durum='geri_alindi'` olur: silmek "bu
+    dosya bir kez yuklendi ve geri alindi" gercegini yok etmek olurdu ve
+    denetim izinin anlatmasi gereken sey tam da budur.
+
+    DOSYANIN KENDISI SAKLANMAZ — yalniz adi. Icinde kisisel veri olabilir
+    ve saklamanin bir amaci yok (KVKK: veri en az).
+    """
+
+    __tablename__ = "ice_aktarim"
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    tur: Mapped[str] = mapped_column(Text, nullable=False)
+    dosya_adi: Mapped[str | None] = mapped_column(Text, nullable=True)
+    satir_sayisi: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default=text("0")
+    )
+    olusan: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default=text("0")
+    )
+    atlanan: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default=text("0")
+    )
+    hatali: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default=text("0")
+    )
+    durum: Mapped[str] = mapped_column(
+        Text, nullable=False, server_default=text("'uygulandi'")
+    )
+    olusturan_user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), nullable=False
+    )
+    created_at = _created_at()
+    geri_alma_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+
+
+class IceAktarimKayit(Base):
+    """(P154 / Asama 8) Bir kosumda yaratilan TEK satirin izi.
+
+    `tablo` METINDIR ve FK YOKTUR: hedef onlarca tablodan biri olabilir.
+    Kume uygulama tarafinda kapali (`routers/ice_aktarim.py`) — yeni bir
+    ice aktarim turu eklemek GOC gerektirmemeli.
+
+    `sira` yaratilma sirasidir; geri alma TERS SIRADA siler (once cocuk,
+    sonra ebeveyn). Sirasiz silmek FK yuzunden rastgele basarisiz olurdu.
+    """
+
+    __tablename__ = "ice_aktarim_kayit"
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    aktarim_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("ice_aktarim.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    tablo: Mapped[str] = mapped_column(Text, nullable=False)
+    kayit_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    sira: Mapped[int] = mapped_column(Integer, nullable=False)
     created_at = _created_at()

@@ -104,6 +104,71 @@ METINLER: dict[str, dict[str, str]] = {
     # `ck_varlik_eki_tipi`). Bilinmeyen bir tip yazim hatasidir.
     # (P154 / Asama 7.3) Kurulum sihirbazinin adim kodlari SABIT KUME
     # (`routers/kurulum.py::ADIMLAR`). Bilinmeyen kod yazim hatasidir.
+    # (P154 / Asama 8) Ice aktarim catisi.
+    # (P154 / Asama 10) Ters kayit (iptal).
+    "iptal_iptal_edilemez": {
+        "tr": "Bir iptal kaydı iptal edilemez.",
+        "en": "A reversal entry cannot be reversed.",
+        "ar": "لا يمكن إلغاء قيد إلغاء.",
+        "ru": "Сторнирующую проводку нельзя сторнировать.",
+        "de": "Eine Stornobuchung kann nicht storniert werden.",
+        "fr": "Une écriture d'annulation ne peut pas être annulée.",
+        "es": "Un asiento de anulación no se puede anular.",
+    },
+    "hareket_zaten_iptal": {
+        "tr": "Bu hareket zaten iptal edilmiş.",
+        "en": "This entry has already been reversed.",
+        "ar": "تم إلغاء هذه الحركة بالفعل.",
+        "ru": "Эта проводка уже сторнирована.",
+        "de": "Diese Buchung wurde bereits storniert.",
+        "fr": "Cette écriture a déjà été annulée.",
+        "es": "Este asiento ya se ha anulado.",
+    },
+    "tutar_bicimi": {
+        "tr": "Tutar biçimi geçersiz.",
+        "en": "Invalid amount format.",
+        "ar": "صيغة المبلغ غير صالحة.",
+        "ru": "Неверный формат суммы.",
+        "de": "Ungültiges Betragsformat.",
+        "fr": "Format de montant invalide.",
+        "es": "Formato de importe no válido.",
+    },
+    "ice_aktarim_turu_gecersiz": {
+        "tr": "Böyle bir içe aktarım türü yok.",
+        "en": "No such import type.",
+        "ar": "لا يوجد نوع استيراد بهذا الاسم.",
+        "ru": "Такого типа импорта нет.",
+        "de": "Diesen Importtyp gibt es nicht.",
+        "fr": "Ce type d'import n'existe pas.",
+        "es": "No existe ese tipo de importación.",
+    },
+    "ice_aktarim_zaten_geri_alindi": {
+        "tr": "Bu aktarım zaten geri alınmış.",
+        "en": "This import has already been undone.",
+        "ar": "تم التراجع عن هذا الاستيراد بالفعل.",
+        "ru": "Этот импорт уже отменён.",
+        "de": "Dieser Import wurde bereits rückgängig gemacht.",
+        "fr": "Cet import a déjà été annulé.",
+        "es": "Esta importación ya se ha deshecho.",
+    },
+    "ice_aktarim_kullanimda": {
+        "tr": "Bu aktarımdaki kayıtlar kullanılmaya başlanmış; geri alınamaz.",
+        "en": "Records from this import are already in use; it cannot be undone.",
+        "ar": "سجلات هذا الاستيراد قيد الاستخدام؛ لا يمكن التراجع.",
+        "ru": "Записи этого импорта уже используются; отменить нельзя.",
+        "de": "Datensätze dieses Imports werden bereits verwendet; kein Rückgängig.",
+        "fr": "Des enregistrements de cet import sont utilisés ; annulation impossible.",
+        "es": "Los registros de esta importación ya se usan; no se puede deshacer.",
+    },
+    "ice_aktarim_geri_alinamaz": {
+        "tr": "Bu aktarım geri alınamıyor.",
+        "en": "This import cannot be undone.",
+        "ar": "لا يمكن التراجع عن هذا الاستيراد.",
+        "ru": "Этот импорт нельзя отменить.",
+        "de": "Dieser Import kann nicht rückgängig gemacht werden.",
+        "fr": "Cet import ne peut pas être annulé.",
+        "es": "Esta importación no se puede deshacer.",
+    },
     "kurulum_adimi_gecersiz": {
         "tr": "Böyle bir kurulum adımı yok.",
         "en": "No such setup step.",

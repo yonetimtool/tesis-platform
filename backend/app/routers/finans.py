@@ -42,6 +42,7 @@ from ..schemas import (
     HareketOut,
     HareketToplu,
     IadeIstek,
+    IptalIstek,
     IcraDosyasiCreate,
     IcraDosyasiListResponse,
     IcraDosyasiOut,
@@ -445,6 +446,79 @@ async def iade(
             resource_type="finansal_hareket",
             resource_id=satirlar[0].id,
             meta={"tip": "iade", "orijinal": str(orijinal.id)},
+        )
+    return (await _adlarla(db, satirlar))[0]
+
+
+@router.post(
+    "/finans/hareketler/{hareket_id}/iptal",
+    response_model=HareketOut,
+    status_code=201,
+)
+async def hareket_iptal(
+    hareket_id: uuid.UUID,
+    body: IptalIstek,
+    response: Response,
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_ADMIN),
+) -> HareketOut:
+    """(P154 / Asama 10) YANLIS GIRILEN KAYDI TERS KAYITLA IPTAL EDER.
+
+    KAYIT SILINMEZ — silinemez de: `finansal_hareket` uzerinde app_rw'nin
+    DELETE yetkisi goc 0047'de GERI ALINDI. Bir muhasebe kaydi "hic
+    olmamis" hâle getirilemez; gecmis raporlari geriye donuk degistirirdi.
+
+    IPTAL ILE IADE AYRI SEYLER ve ayri tiplerdir:
+      * IADE  — musteriye para donusu. GERCEK bir hareket, kismi olabilir.
+      * IPTAL — kayit duzeltmesi. Tam tutar, ters yon, kismi OLMAZ.
+    Ikisini ayni tiple yazmak, "bu ay ne kadar iade verdik" sorusunu
+    yanlis yanitlardi.
+
+    IKINCI KEZ IPTAL EDILEMEZ (409): iki ters kayit, orijinali geri
+    getirmis gibi gorunen bir bakiye uretirdi.
+    """
+    orijinal = await get_or_404(db, FinansalHareket, hareket_id)
+    if orijinal.tip == "iptal":
+        raise APIError(422, "validation_error", "iptal_iptal_edilemez")
+
+    zaten = (
+        await db.execute(
+            select(FinansalHareket.id)
+            .where(FinansalHareket.ters_kayit_id == orijinal.id)
+        )
+    ).first()
+    if zaten is not None:
+        raise APIError(409, "conflict", "hareket_zaten_iptal")
+
+    obj = _hareket(
+        user, tip="iptal",
+        # TERS yon: girisi olan bir kaydin iptali kasadan CIKAR.
+        yon="cikis" if orijinal.yon == "giris" else "giris",
+        tutar_kurus=orijinal.tutar_kurus, kasa_id=orijinal.kasa_id,
+        user_id=orijinal.user_id, unit_id=orijinal.unit_id,
+        firma_id=orijinal.firma_id,
+        gelir_gider_tanim_id=orijinal.gelir_gider_tanim_id,
+        ters_kayit_id=orijinal.id,
+        aciklama=body.aciklama, tarih=body.tarih,
+    )
+    satirlar, tekrar = await _idem_yaz(db, response, _idem(idempotency_key), [obj])
+    if not tekrar:
+        # ESKI/YENI DEGER `meta`ya yazilir, ayri sutuna DEGIL: `audit_log`
+        # semasi geneldir ve finans icin sutun eklemek onu tek bir modulun
+        # tablosuna cevirirdi (yol haritasi §8.2).
+        await audit_user(
+            db, user, Action.FINANS_HAREKET_CREATE,
+            resource_type="finansal_hareket",
+            resource_id=satirlar[0].id,
+            meta={
+                "tip": "iptal",
+                "iptal_edilen": str(orijinal.id),
+                "eski": {"tip": orijinal.tip, "yon": orijinal.yon,
+                         "tutar_kurus": orijinal.tutar_kurus},
+                "yeni": {"tip": "iptal", "yon": satirlar[0].yon,
+                         "tutar_kurus": satirlar[0].tutar_kurus},
+            },
         )
     return (await _adlarla(db, satirlar))[0]
 

@@ -1,4 +1,7 @@
-"""Yonetisim modulleri (P33) — karar defteri, dokuman, site aktarim."""
+"""Yonetisim modulleri (P33) — karar defteri, dokuman.
+
+(P154 / Asama 8) Site aktarim buradan cikti: `test_ice_aktarim.py`.
+"""
 from __future__ import annotations
 
 import uuid
@@ -129,85 +132,11 @@ def test_ayni_obje_anahtari_409(client, adm):
 
 
 # ============================== SITE AKTAR ================================== #
-def test_sablon_basliklari(client, adm):
-    r = client.get("/site-aktar/sablon", headers=adm).json()
-    assert r["basliklar"] == ["blok", "daire_no", "ad", "telefon", "rol_tipi"]
-    assert len(r["ornek"]) == len(r["basliklar"])
-    assert r["aciklama"]
-
-
-def test_YALNIZ_DOGRULA_hicbir_sey_yazmaz(client, adm):
-    """Kurulum tek seferlik ve GERI ALMASI ZOR: onizleme olmadan yapilmasi
-    yanlis bir dosyayi 300 satir boyunca uygulamak olurdu."""
-    blok = f"Z{_sfx()[:3].upper()}"
-    daire = f"{blok}-1"
-    r = client.post("/site-aktar", headers=adm, json={
-        "yalniz_dogrula": True,
-        "satirlar": [{"satir_no": 2, "blok": blok, "daire_no": daire}],
-    })
-    assert r.status_code == 201, r.text
-    assert r.json()["daire_olusan"] == 1
-
-    liste = client.get("/units", headers=adm,
-                       params={"limit": 200}).json()["items"]
-    assert daire not in [u["no"] for u in liste], "dogrulama YAZDI!"
-
-
-def test_aktarim_blok_daire_kisi_olusturur(client, adm):
-    blok = f"Y{_sfx()[:3].upper()}"
-    tel = f"+9053{uuid.uuid4().int % 10**8:08d}"
-    r = client.post("/site-aktar", headers=adm, json={"satirlar": [
-        {"satir_no": 2, "blok": blok, "daire_no": f"{blok}-1",
-         "ad": "Aktarim Sakin", "telefon": tel, "rol_tipi": "malik"},
-        {"satir_no": 3, "blok": blok, "daire_no": f"{blok}-2"},
-    ]})
-    assert r.status_code == 201, r.text
-    s = r.json()
-    assert s["blok_olusan"] == 1 and s["daire_olusan"] == 2
-    assert s["kisi_olusan"] == 1 and s["hatalar"] == []
-
-    daireler = [u["no"] for u in client.get(
-        "/units", headers=adm, params={"limit": 200}).json()["items"]]
-    assert f"{blok}-1" in daireler and f"{blok}-2" in daireler
-
-
-def test_SATIR_BAZLI_hata_raporu_TUM_ISLEMI_DUSURMEZ(client, adm):
-    """300 satirlik bir dosyada 4 hatali satir yuzunden 296 dogru satiri
-    reddetmek, kullaniciyi dosyayi elle ayiklamaya zorlardi."""
-    blok = f"X{_sfx()[:3].upper()}"
-    r = client.post("/site-aktar", headers=adm, json={"satirlar": [
-        {"satir_no": 2, "blok": blok, "daire_no": f"{blok}-1"},
-        {"satir_no": 3, "blok": "", "daire_no": "OLMAZ"},
-        {"satir_no": 4, "blok": blok, "daire_no": f"{blok}-2",
-         "ad": "Kotu Telefon", "telefon": "abc"},
-        {"satir_no": 5, "blok": blok, "daire_no": f"{blok}-3",
-         "ad": "Kotu Rol", "telefon": f"+9053{uuid.uuid4().int % 10**8:08d}",
-         "rol_tipi": "sahibi"},
-    ]}).json()
-    assert r["daire_olusan"] >= 1
-    numaralar = {h["satir_no"] for h in r["hatalar"]}
-    assert numaralar == {3, 4, 5}, r["hatalar"]
-    # Hata ALANI da doner (kullanici hangi hucreyi duzeltecegini bilsin).
-    assert {h["alan"] for h in r["hatalar"]} == {"blok", "telefon", "rol_tipi"}
-
-
-def test_aktarim_IDEMPOTENT(client, adm):
-    """Var olan blok/daire/kisi ATLANIR — dosya yeniden yuklenebilir."""
-    blok = f"W{_sfx()[:3].upper()}"
-    govde = {"satirlar": [
-        {"satir_no": 2, "blok": blok, "daire_no": f"{blok}-1"}]}
-    ilk = client.post("/site-aktar", headers=adm, json=govde).json()
-    ikinci = client.post("/site-aktar", headers=adm, json=govde).json()
-    assert ilk["daire_olusan"] == 1
-    assert ikinci["daire_olusan"] == 0 and ikinci["blok_olusan"] == 0
-
-
-def test_KISI_SATIRI_OPSIYONEL(client, adm):
-    """Yalniz daire kurmak gecerli bir kullanim (once yapi, sonra sakinler)."""
-    blok = f"V{_sfx()[:3].upper()}"
-    r = client.post("/site-aktar", headers=adm, json={"satirlar": [
-        {"satir_no": 2, "blok": blok, "daire_no": f"{blok}-1"}]}).json()
-    assert r["kisi_olusan"] == 0 and r["hatalar"] == []
+# (P154 / Asama 8) Bu bolumun testleri `test_ice_aktarim.py`ye TASINDI —
+# uc ICE AKTARIM CATISINA devredildi. Olculen garantiler kaybolmadi:
+# onizleme yazmaz, satir bazli hata raporu tum islemi dusurmez, sablon
+# alanlari bildirilir. Cati ustune GERI ALMA ve iki tur daha (acilis
+# bakiyesi, arac) eklendi.
 
 
 # ============================ IS TAKIBI GENISLETMESI ======================== #

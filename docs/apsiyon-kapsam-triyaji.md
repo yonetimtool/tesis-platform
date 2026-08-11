@@ -105,10 +105,10 @@ tekrar ele alınmaz.
 | 9.5 **Virman** | **A−** | `POST /finans/virman` + BFF açık, **ekran yok** | **10** | 1 g |
 | 9.6 **Ödeme iadesi** | **A−** | `POST /finans/iade` + BFF açık, **ekran yok** | **10** | 1 g |
 | 9.7 **Açılış fişi** | **A−** | `POST /finans/acilis` var, **BFF'te yok**, ekran yok | **10** | 1 g |
-| Çoklu satır finansal işlem | **B** | tek satır | **10** | 2 g |
+| Çoklu satır finansal işlem | ~~**B**~~ → **A** | **ÖLÇÜM DÜZELTMESİ (Aşama 10):** `POST /finans/hareketler` ZATEN çok satırlı (`HareketToplu.satirlar` + `idempotency_key`/`idem_satir`). Triyajda "tek satır" yazması hataydı. | — | 0 |
 | Finansal belge numaralandırma | **C** | yok | **11** (tasarım) + **11 ilke** | 1 h |
-| Finansal kayıt **silinmez**, ters kayıt | **B** | `finansal_hareket` var; iptal mekanizması **ölçülmedi** | **11 ilkeleri** | 2 g |
-| Finansal denetim kaydı (eski/yeni değer) | **B** | `audit_log` append-only **var**; finans bağlanmamış | **11 ilkeleri** | 2 g |
+| Finansal kayıt **silinmez**, ters kayıt | **B** | **YAPILDI (Aşama 10):** göç 0047 — `iptal` tipi + `ters_kayit_id` + `REVOKE DELETE` (hem göçte hem `setup_app_role`'da) | **10** | ✅ |
+| Finansal denetim kaydı (eski/yeni değer) | ~~**B**~~ → **A** | **ÖLÇÜM DÜZELTMESİ (Aşama 10):** finans yazma uçlarının 9'undan 8'i `audit_user` çağırıyor; 9.'su (`banka-eslestir`) hiçbir şey **yazmıyor** (öneri üreticisi), denetlenecek bir mutasyon yok. İptal ucu eski/yeni değeri `meta`ya yazar. | — | 0 |
 
 ### Bölüm 10 — İcra dosyaları
 

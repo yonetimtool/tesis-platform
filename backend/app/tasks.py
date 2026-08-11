@@ -87,3 +87,19 @@ def run_retention() -> dict:
     from .retention import run_retention as _run
 
     return _run()
+
+
+@celery_app.task(name="scheduler.mesaj_kuyrugu")
+def mesaj_kuyrugu() -> dict:
+    """(P154 / Asama 9) Beat: basarisiz mesaj gonderimlerini yeniden dener.
+
+    ISTEK YOLUNDA DEGIL: yeniden denemeyi istegin icine koymak,
+    yoneticinin tarayicisini saglayicinin geri-cekilme suresi boyunca
+    bekletirdi. Tenant enumerasyonu OWNER ile (RLS bootstrap), asil is her
+    tenant icin `app.current_tenant_id` baglami altinda.
+    """
+    import asyncio
+
+    from .mesaj_kuyruk import tum_tenantlar_icin
+
+    return {"islenen": asyncio.run(tum_tenantlar_icin())}

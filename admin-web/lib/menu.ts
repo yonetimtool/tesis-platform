@@ -232,6 +232,7 @@ const OGELER: readonly MenuOgesi[] = [
   // adimlarinin cogu bu bolumun ekranlaridir ve yeni yonetici once
   // buraya bakmali.
   { href: "/kurulum", anahtar: "kurulumBaslik", icon: "check", grup: "tanimlar" },
+  { href: "/ice-aktarim", anahtar: "iceAktarimBaslik", icon: "box", grup: "tanimlar" },
   { href: "/building-editor", anahtar: "kabukBloklar", icon: "edit", grup: "tanimlar" },
   { href: "/tanimlar", anahtar: "kabukTanimlar", icon: "box", grup: "tanimlar" },
   { href: "/tanimlar", sorgu: "defter=unit-tipleri", anahtar: "kabukDaireTipleri", icon: "home", grup: "tanimlar" },

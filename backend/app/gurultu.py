@@ -11,6 +11,8 @@ import hmac
 import json
 from datetime import datetime, timedelta
 
+from .yeniden_deneme import denenmeli as _denenmeli, gecikme as _gecikme
+
 #: Varsayilan uyari metni (tenant kendi metnini yazabilir). Ton BILINCLI
 #: OLARAK NOTR: caydirici bir CEZA DEGIL hatirlatmadir ve suclayici bir
 #: metin, hakkinda haksiz sikayet birikmis bir daireye de aynen giderdi.
@@ -94,26 +96,22 @@ def imza_dogrula(gizli: str, govde: bytes, zaman_damgasi: int, imza: str) -> boo
     return hmac.compare_digest(imzala(gizli, govde, zaman_damgasi), imza)
 
 
-def yeniden_deneme_gecikmesi(deneme: int) -> timedelta:
-    """Katlanan geri cekilme: 1., 2., 3. deneme -> 1, 5, 25 dakika.
+# (P154 / Asama 9) POLITIKA `yeniden_deneme.py`YE TASINDI. Mesaj kuyrugu
+# TAM OLARAK ayni seye ihtiyac duyuyordu; kopyalamak iki politika
+# uretirdi — biri duzeltilir, oteki unutulurdu. Buradaki iki sarmalayici
+# CAGRI YERLERI DEGISMESIN diye duruyor ve `MAX_DENEME`yi baglar.
 
-    Sabit aralik, gecici olarak dusmus bir uca dakikada bir vurmak olurdu;
-    katlanan aralik hem yuku dagitir hem de kalici arizada kuyrugu hizla
-    boaltir (MAX_DENEME'de durur).
-    """
-    ussu = max(0, deneme)
-    return timedelta(minutes=5 ** ussu)
+
+def yeniden_deneme_gecikmesi(deneme: int) -> timedelta:
+    """Bkz. `yeniden_deneme.gecikme`."""
+    return _gecikme(deneme)
 
 
 def yeniden_denenmeli(
     *, deneme: int, son_deneme_at: datetime | None, simdi: datetime
 ) -> bool:
-    """Bu satirin siradaki denemesinin vadesi geldi mi?
-
-    `son_deneme_at` YOKSA (henuz hic denenmemis kayit) HEMEN denenir.
-    """
-    if deneme >= MAX_DENEME:
-        return False
-    if son_deneme_at is None:
-        return True
-    return simdi >= son_deneme_at + yeniden_deneme_gecikmesi(deneme)
+    """Bkz. `yeniden_deneme.denenmeli` — webhook icin MAX_DENEME bagli."""
+    return _denenmeli(
+        deneme=deneme, son_deneme_at=son_deneme_at,
+        simdi=simdi, max_deneme=MAX_DENEME,
+    )

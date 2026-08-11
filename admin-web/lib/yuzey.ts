@@ -72,6 +72,7 @@ export const TESIS_ROTALARI = [
   // sunmuyoruz. Anket yonetimi kendi sayfasina tasindi.
   "/anketler",
   "/kurulum",
+  "/ice-aktarim",
   "/complaints",
   "/notifications",
   "/yonetisim",
@@ -309,6 +310,8 @@ export const ROTA_ROLLERI: Record<string, readonly string[]> = {
   // (P154 / Asama 7.3) Kurulum sihirbazi YONETIM isidir. Denetci
   // SALT-OKUR ve kurulum onun isi degil; uc de ayni kumeyi kapiliyor.
   "/kurulum": ["admin", "yonetici"],
+  // (P154 / Asama 8) Ice aktarim catisi — kurulum isi.
+  "/ice-aktarim": ["admin", "yonetici"],
   "/complaints": ["admin", "yonetici"],
   "/notifications": ["admin", "yonetici"],
   "/yonetisim": ["admin", "yonetici"],
