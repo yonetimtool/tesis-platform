@@ -509,11 +509,10 @@ sayılsaydı bir daire **el değiştiremezdi**.
 olarak raporlanır. Üzerine yazmak ilk satırı kullanıcıya hiç söylemeden
 atmak olurdu; ikisini de bağlamak kuralı çiğnerdi.
 
-**Veritabanı kısıtı EKLENMEDİ ve sebebi kayıtlı:** kısmi bir UNIQUE
-indeks kuralı kanıtlanabilir kılardı ama mevcut veride ihlal ölçüldü
-(`A-12` dairesinde iki aktif sakin). İndeks önce o satırların
-kapatılmasını gerektirir — yani üretim verisinde bir değişiklik, ve o
-Kerem'in kararı.
+**Veritabanı kısıtı DENENDİ ve GERİ ALINDI:** kuralın harfi (`unit_id`
+üzerinde benzersizlik) tam takımda 1 kırık + 104 hata üretti — çoklu
+sakin bu üründe taşıyıcı bir varsayım. Ölçüm, üç seçenek ve öneri:
+§4.47–§4.53.
 
 ### 4.34 Sosyal hesap ESLESME ANAHTARI DEGIL — Aşama 4'ün tamamı bunun üzerine kurulu
 
@@ -669,6 +668,106 @@ KENDİ eklediği pencereleri saymasıdır; ayrı bir turda yapılmalı.
 
 **Doğrulama koşumu beat durdurularak alındı** — beat bir dev arka plan
 süreci, testin sözleşmesinin parçası değil.
+
+### 4.47 Daire başına tek hesap kısıtı: DENENDİ, ÖLÇÜLDÜ, GERİ ALINDI
+
+Kerem "A-12'deki çift sakini kapat, sonra DB kısıtını ekle" dedi. Yaptım
+ve **kısıt tam takımı yıktı**: 104 hata + 1 kırık test. Değişiklik geri
+alındı; karar Kerem'e döndü, çünkü ilerlemenin iki yolu da kilitli bir
+kuralı ya da çalışan bir özelliği çiğniyor.
+
+**Ölçüm:**
+
+| Kısıt | Sonuç |
+|---|---|
+| `(unit_id) WHERE bitis IS NULL` — kuralın harfi | **1 kırık + 104 hata** |
+| `(unit_id, rol_tipi) WHERE bitis IS NULL` | Önceki 55 kırığın **55'i geçti** |
+| Bugünkü hâl (kısıt yok) | yeşil |
+
+Kırılan test tesadüf değil:
+`test_hedefleme_KIRACI_VAR_YOK_IKISI_BIRDEN`. 104 hatanın çoğu da
+fixture kurulumunda — örneğin `mapworld` ("3 sakin bloka bağlı"),
+ziyaretçi ve bina şeması testleri.
+
+### 4.48 Çoklu sakin bu üründe TAŞIYICI bir varsayım
+
+`borclandirma.hedef_sec` (P28) **bir dairede malik ve kiracı birlikte
+bulunabilsin diye** yazılmış: `kiraci_oncelikli` = "kiracı varsa ona,
+yoksa malike". Tek sakinli bir dairede bu kuralın seçecek bir şeyi
+kalmaz. İçe aktarımın `rol_tipi` sütunu (Aşama 8) da aynı varsayımı
+taşıyor. A-12'deki çift kayıt bir veri kiri değil, seed'in kasıtlı
+kurgusuydu: "aynı dairede çoklu sakin — her biri kendi parolasıyla
+girer".
+
+Yani kilitli kural 4 ile ürünün bugünkü hâli **çelişiyor**. Bu, brief'in
+kendi durma koşulu: ihlal etmeden ilerlenemiyor.
+
+### 4.49 KENDİ KUSURUM: Aşama 5 zaten fazla katıydı ve testler göremedi
+
+`units.daire_dolu_mu` `rol_tipi`ne **bakmadan** her ikinci aktif sakini
+reddediyor — yani malik+kiracı birlikteliği `a237863`'ten beri **uçtan
+kurulamıyor**. Aşama 5'i raporlarken bunu yazmamıştım; eksikti.
+
+Testler bunu yakalamadı çünkü o 104 fixture sakinleri **doğrudan SQL**
+ile bağlıyor, uçtan değil. Kısıtı veritabanına koyunca görünür oldu.
+Ders: uygulama katmanındaki bir kural, fixture'lar o katmanı atlıyorsa
+test edilmemiş sayılır.
+
+### 4.50 Yan bulgu: eski indeksi düşürmek `ON CONFLICT` çıkarımını kırıyor
+
+`uq_unitresident_aktif` `(unit_id, user_id)` idi. Yeni indeks onu
+semantik olarak kapsıyor **ama** `ON CONFLICT (unit_id, user_id)`
+*eşleşen bir indeks* arar; seed "no unique or exclusion constraint
+matching the ON CONFLICT specification" ile düştü. Kod tabanında tek
+kullanıcısı seed'di. Ölçmeden "kapsıyor, sorun olmaz" demek bunu
+kaçırırdı — hangi seçenek uygulanırsa uygulansın bu satır güncellenmeli.
+
+### 4.51 KEREM'İN KARARI — üç seçenek
+
+**A. `(unit_id, rol_tipi)` — ÖNERİLEN.** Bir dairede en fazla bir malik
+ve bir kiracı. A-12'deki iki-malik durumunu ve Excel'in aynı role iki
+satırını **engeller**; malik+kiracıyı **korur**. Ölçüldü: kırılan 55
+testin 55'i geçiyor. Bedeli: kuralın harfi ("1 hesap") değil, ruhu
+uygulanır — ve `rol_tipi` boş olan satırlar veritabanı katmanında
+serbest kalır (uygulama katmanı onları yine reddeder).
+
+**B. `(unit_id)` — kuralın harfi.** Ürünün malik+kiracı desteği
+kaldırılır. 104 fixture yeniden yazılmalı, `hedef_sec`'in
+`kiraci_oncelikli` kuralı ve `test_hedefleme_KIRACI_VAR_YOK_IKISI_BIRDEN`
+silinmeli, içe aktarımın `rol_tipi` sütunu anlamsızlaşır. Yapılabilir
+ama bu bir **ürün kararı**, bir temizlik değil.
+
+**C. Kısıt yok, uygulama katmanı yeter.** Bugünkü hâl. Kural
+`daire_dolu_mu`da yaşar ve testlidir; doğrudan SQL yazan bir yol onu
+delebilir.
+
+Ne seçilirse seçilsin `daire_dolu_mu` **aynı yönde** değişmeli: A'da
+`rol_tipi` başına saymalı, B'de olduğu gibi kalmalı. Yalnız indeksi
+değiştirmek ötekini sessizce etkisiz bırakır.
+
+### 4.52 Üretim görülemiyor — ön kontrol aracı hazır
+
+Dev makineden üretime erişim yok (yalnız 80/443); oradaki ihlaller
+ölçülemiyor ve ham bir `CREATE UNIQUE INDEX` hatası **hangi dairenin**
+sorunlu olduğunu söylemez.
+
+`infra/scripts/daire_tek_hesap_onkontrol.py` bu boşluğu kapatıyor: salt
+okunur koşar, tesis/daire/kişi/telefon/bağ-id listesi verir ve kapatma
+SQL'ini yazar. **Seçimi yapmaz ve yapmamalı** — yanlış kişiyi daireden
+düşürmek aidatın kime yazılacağını değiştirir. **Owner bağlantısı ister:**
+`app_rw` ile koşsaydı RLS yüzünden hiçbir satır göremez ve "temiz" derdi,
+mümkün olan en tehlikeli yanlış cevap.
+
+Bu araç üç seçenekten hangisi seçilirse seçilsin gerekli, o yüzden
+bırakıldı.
+
+### 4.53 Kapatma SİLME değildir — geri alındı, kanıtlandı
+
+A-12'nin fazla bağı `bitis` yazılarak kapatılmıştı; hesap, telefon,
+`is_active`, parola durumu hiç değişmedi (kilitli kural 1). Karar
+ertelenince bağ `bitis = NULL` ile **geri açıldı** ve şema göç 0048'e
+döndürüldü. Ortam bu turun başındaki hâlinde; ölçüm için yapılan hiçbir
+şey kalıcı değil.
 
 ## 5. BULUNAN GERÇEK KUSURLAR
 
