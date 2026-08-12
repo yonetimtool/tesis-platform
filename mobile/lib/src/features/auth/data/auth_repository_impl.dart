@@ -72,6 +72,34 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<void> davetParola({
+    required String jeton,
+    String? ad,
+    required String newPassword,
+  }) async {
+    final tokens = await api.davetParola(
+      jeton: jeton, ad: ad, newPassword: newPassword,
+    );
+    await storage.save(tokens);
+    // Davet yolunda "beni hatirla" akisi YOK: kullanici bir bagdan geldi,
+    // parola on-doldurmasi burada anlamsiz.
+    await storage.clearCredentials();
+  }
+
+  @override
+  Future<void> davetSosyal({
+    required String jeton,
+    required String baglamaJetonu,
+    String? ad,
+  }) async {
+    final tokens = await api.davetSosyal(
+      jeton: jeton, baglamaJetonu: baglamaJetonu, ad: ad,
+    );
+    await storage.save(tokens);
+    await storage.clearCredentials();
+  }
+
+  @override
   Future<({String phone, String password})?> readSavedCredentials() =>
       storage.readCredentials();
 

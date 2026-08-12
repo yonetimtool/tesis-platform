@@ -8464,6 +8464,48 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Vazgeç'**
   String get sosyalVazgec;
+
+  /// No description provided for @davetBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kayıt'**
+  String get davetBaslik;
+
+  /// No description provided for @davetGecersizBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bağlantı çalışmıyor'**
+  String get davetGecersizBaslik;
+
+  /// No description provided for @davetSuresiDoldu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu davet bağlantısının süresi dolmuş.'**
+  String get davetSuresiDoldu;
+
+  /// No description provided for @davetKullanilmis.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu davet zaten kullanılmış.'**
+  String get davetKullanilmis;
+
+  /// No description provided for @davetBulunamadi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu davet bağlantısı geçersiz.'**
+  String get davetBulunamadi;
+
+  /// No description provided for @davetYoneticinizeBasvurun.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni bir davet için yöneticinize başvurun.'**
+  String get davetYoneticinizeBasvurun;
+
+  /// No description provided for @davetOzet.
+  ///
+  /// In tr, this message translates to:
+  /// **'{tesis} sizi {rol} olarak davet etti.'**
+  String davetOzet(String tesis, String rol);
 }
 
 class _AppLocalizationsDelegate

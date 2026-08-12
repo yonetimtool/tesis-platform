@@ -1,0 +1,11 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "REPLACE_TEAMID.site.yonetio.app",
+        "paths": [ "/davet/*" ]
+      }
+    ]
+  }
+}

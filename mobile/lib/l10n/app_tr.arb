@@ -2138,5 +2138,13 @@
     }
   },
   "sosyalDogrula": "Doğrula ve giriş yap",
-  "sosyalVazgec": "Vazgeç"
+  "sosyalVazgec": "Vazgeç",
+  "davetBaslik": "Kayıt",
+  "davetGecersizBaslik": "Bağlantı çalışmıyor",
+  "davetSuresiDoldu": "Bu davet bağlantısının süresi dolmuş.",
+  "davetKullanilmis": "Bu davet zaten kullanılmış.",
+  "davetBulunamadi": "Bu davet bağlantısı geçersiz.",
+  "davetYoneticinizeBasvurun": "Yeni bir davet için yöneticinize başvurun.",
+  "davetOzet": "{tesis} sizi {rol} olarak davet etti.",
+  "@davetOzet": {"placeholders": {"tesis": {"type": "String"}, "rol": {"type": "String"}}}
 }

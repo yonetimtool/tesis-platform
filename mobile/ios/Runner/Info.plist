@@ -130,5 +130,10 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<!-- (P155 §8) Flutter'in YERLESIK derin baglanti yonlendirmesi. Gelen
+	     Universal Link'in YOLU (/davet/<jeton>) dogrudan go_router'a
+	     verilir; ek paket (app_links/uni_links) GEREKMEZ. -->
+	<key>FlutterDeepLinkingEnabled</key>
+	<true/>
 </dict>
 </plist>

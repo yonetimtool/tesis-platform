@@ -147,8 +147,8 @@ async def list_tenants(
             rows = (
                 await session.execute(
                     text(
-                        "SELECT id, ad, kurulum_tamamlandi, created_at "
-                        "FROM public.list_all_tenants()"
+                        "SELECT id, ad, kayit_kodu, kurulum_tamamlandi, "
+                        "created_at FROM public.list_all_tenants()"
                     )
                 )
             ).all()
@@ -157,6 +157,7 @@ async def list_tenants(
             TenantAdminListItem(
                 id=r.id,
                 ad=r.ad,
+                kayit_kodu=r.kayit_kodu,
                 kurulum_tamamlandi=r.kurulum_tamamlandi,
                 created_at=r.created_at,
             )
@@ -166,9 +167,9 @@ async def list_tenants(
 
 
 _DETAIL_SQL = text(
-    "SELECT tenant_id, tenant_ad, kurulum_tamamlandi, tenant_created_at, "
-    "yonetici_id, yonetici_ad, telefon, is_active, password_set "
-    "FROM public.tenant_detail(:tid)"
+    "SELECT tenant_id, tenant_ad, tenant_kayit_kodu, kurulum_tamamlandi, "
+    "tenant_created_at, yonetici_id, yonetici_ad, telefon, is_active, "
+    "password_set FROM public.tenant_detail(:tid)"
 )
 
 
@@ -185,6 +186,7 @@ def _to_detail(row) -> TenantAdminDetail:
     return TenantAdminDetail(
         tenant_id=row.tenant_id,
         ad=row.tenant_ad,
+        kayit_kodu=row.tenant_kayit_kodu,
         kurulum_tamamlandi=row.kurulum_tamamlandi,
         created_at=row.tenant_created_at,
         yonetici=yonetici,

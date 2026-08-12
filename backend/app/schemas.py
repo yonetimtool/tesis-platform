@@ -261,6 +261,8 @@ class UserCreatedOut(BaseModel):
     gorev_bitis: date | None = None
     created_at: datetime
     temp_code: str | None = None
+    # (P155 §7) Davet gonderim ozeti (parolasiz acilan hesap).
+    davet: "DavetGonderimSonucu | None" = None
 
 
 class UserUpdate(BaseModel):
@@ -2506,6 +2508,10 @@ class TenantAdminCreatedOut(BaseModel):
 class TenantAdminListItem(BaseModel):
     id: uuid.UUID
     ad: str
+    # (P155 §6) Yoneticinin ILETECEGI tanimlayici — panelde birincil gosterilir.
+    # Tetikleyici her tenant'a atar (goc 0037); teoride NULL olmamali ama
+    # eski/yaris bir satira karsi opsiyonel birakilir (panel bos gosterir).
+    kayit_kodu: str | None = None
     kurulum_tamamlandi: bool
     created_at: datetime
 
@@ -2536,6 +2542,7 @@ class TenantAdminDetail(BaseModel):
 
     tenant_id: uuid.UUID
     ad: str
+    kayit_kodu: str | None = None  # (P155 §6) panelde birincil + kopyalanabilir
     kurulum_tamamlandi: bool
     created_at: datetime
     yonetici: TenantYoneticiOut | None = None
@@ -2934,6 +2941,10 @@ class ResidentCreatedOut(BaseModel):
     email: str | None = None
     # Parola verilmediyse gecici kod doner; parola verildiyse null.
     temp_code: str | None = None
+    # (P155 §7) Davet gonderim ozeti — parolasiz acilan hesaba jetonlu bag
+    # gonderildi mi. Saglayici yapilandirilmamissa gonderildi=false gelir ve
+    # panel yoneticiye "gitmeyeni" gosterir.
+    davet: "DavetGonderimSonucu | None" = None
 
 
 # Site sakini yonetimi (yonetici) — liste ogesi. Telefon KVKK geregi DONMEZ.
@@ -5557,3 +5568,90 @@ class OauthBaglantiOut(BaseModel):
 
 class OauthBaglantiListesi(BaseModel):
     items: list[OauthBaglantiOut]
+
+
+# ==================== (P155 / §7) DAVET JETONU ============================= #
+
+
+class DavetCozRequest(BaseModel):
+    """Jetonu cozer — GET yerine POST: jeton, tarayici gecmisine ve sunucu
+    erisim gunluguune URL parametresi olarak dusmesin (jeton bir sirdir)."""
+
+    jeton: str = Field(..., min_length=8, max_length=128)
+
+
+class DavetCozResponse(BaseModel):
+    """Cozulen davet baglami. TELEFON MASKELI doner (kullanici dogruladigini
+    gorsun ama tam numara sizmasin). `ad` on-doldurma icindir."""
+
+    tesis_ad: str
+    rol: str
+    ad: str
+    telefon_maskeli: str
+    daire_no: str | None = None  # yalniz sakinde dolu
+
+
+class DavetParolaRequest(BaseModel):
+    """Davetle gelen kullanici PAROLA yontemi secti.
+
+    `ad` opsiyonel: sosyal olmayan yolda kullanici adini duzeltebilir
+    (yonetici yalniz telefon girmis, ad daireden turetilmis olabilir)."""
+
+    jeton: str = Field(..., min_length=8, max_length=128)
+    ad: str | None = Field(None, min_length=1, max_length=120)
+    new_password: str = Field(..., min_length=8)
+
+    @field_validator("new_password")
+    @classmethod
+    def _strong(cls, v: str) -> str:
+        return validate_password_strength(v)
+
+
+class DavetSosyalRequest(BaseModel):
+    """Davetle gelen kullanici SOSYAL yontem secti; saglayici akisi bitti.
+
+    SMS YOK (sartname §7): davet jetonu, yoneticinin bu kisiyi ekledigi
+    kanittir; sosyal saglayici kimligi kanitlar. Ikisi birlikte SMS'in
+    yerini tutar."""
+
+    jeton: str = Field(..., min_length=8, max_length=128)
+    baglama_jetonu: str
+    ad: str | None = Field(None, min_length=1, max_length=120)
+
+
+class DavetDurumOut(BaseModel):
+    """Panel 'davetler' satiri — yoneticinin gitmeyeni gormesi icin."""
+
+    user_id: uuid.UUID
+    ad: str
+    rol: str
+    telefon: str
+    daire_no: str | None = None
+    son_kanal: str | None = None
+    son_durum: str | None = None
+    son_hata: str | None = None
+    son_gonderim_at: datetime | None = None
+    used_at: datetime | None = None
+    son_gecerlilik: datetime
+
+
+class DavetDurumListResponse(BaseModel):
+    # (P155 §7) Yoneticinin kendi tesis kodu — saglayici yokken "gitmeyen"
+    # daveti ELLE iletmenin yedegi (davet bagi hash'li oldugu icin panelde
+    # gosterilemez; elle iletilen sey TESIS KODUDUR ve kisi §4 yedek yoluyla
+    # kaydolur).
+    tesis_kodu: str | None = None
+    items: list[DavetDurumOut]
+
+
+class DavetGonderimSonucu(BaseModel):
+    """Sakin/personel eklemede davet gonderim ozeti — yoneticiye gorunur."""
+
+    gonderildi: bool
+    kanal: str | None = None
+
+
+# (P155 §7) Forward-ref cozumu: `DavetGonderimSonucu` dosya sonunda tanimli;
+# ona atifta bulunan yanit semalari modul yuklendikten sonra yeniden kurulur.
+ResidentCreatedOut.model_rebuild()
+UserCreatedOut.model_rebuild()

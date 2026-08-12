@@ -20,6 +20,7 @@ from .routers import announcements as announcements_router
 from .routers import assets as assets_router
 from .routers import audit as audit_router
 from .routers import auth as auth_router
+from .routers import davet as davet_router
 from .routers import kayit_basvurulari
 from .routers import budget as budget_router
 from .routers import cameras as cameras_router
@@ -160,6 +161,7 @@ if settings.cors_origin_list:
     )
 
 app.include_router(auth_router.router)
+app.include_router(davet_router.router)
 app.include_router(kayit_basvurulari.router)
 app.include_router(residents_router.router)
 app.include_router(me_router.router)

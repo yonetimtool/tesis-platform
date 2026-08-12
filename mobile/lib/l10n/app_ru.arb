@@ -1482,5 +1482,12 @@
   "sosyalKodGonder": "Отправить код подтверждения",
   "sosyalKodAciklama": "{tesis} — введите код, отправленный на {telefon}.",
   "sosyalDogrula": "Подтвердить и войти",
-  "sosyalVazgec": "Отмена"
+  "sosyalVazgec": "Отмена",
+  "davetBaslik": "Регистрация",
+  "davetGecersizBaslik": "Ссылка не работает",
+  "davetSuresiDoldu": "Срок действия ссылки истёк.",
+  "davetKullanilmis": "Это приглашение уже использовано.",
+  "davetBulunamadi": "Эта ссылка-приглашение недействительна.",
+  "davetYoneticinizeBasvurun": "Обратитесь к управляющему за новым приглашением.",
+  "davetOzet": "{tesis} пригласил вас как {rol}."
 }

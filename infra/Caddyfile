@@ -60,6 +60,31 @@
 	}
 }
 
+# --- (P155 §8) DERIN BAGLANTI DOGRULAMA DOSYALARI ------------------------- #
+# Universal Links (iOS) ve App Links (Android), davet bagini KULLANICI
+# HICBIR SEY ARAMADAN uygulamada acar. Isleyis icin iki dosya, davet
+# alan adinin KOKUNDE, dogru icerik tipiyle ve YONLENDIRMESIZ servis
+# edilmeli:
+#   /.well-known/apple-app-site-association  (uzantisiz, application/json)
+#   /.well-known/assetlinks.json             (application/json)
+# Dosyalar `infra/portal/.well-known/` altinda; portal mount'u zaten var
+# (`./portal:/srv/portal`). Icerik tipi ELLE veriliyor cunku AASA'nin
+# uzantisi yok ve file_server onu `application/octet-stream` yapardi —
+# Android o durumda dogrulamayi reddeder.
+#
+# YONLENDIRME YOK: iOS/Android dogrulayicilari 3xx izlemez. Bu yuzden
+# snippet portal bloguna `redir`DEN ONCE degil, AYRI bir `handle` ile
+# konur ve `handle` yol eslesmesi kanonik-disi yonlendirmesinden once
+# terminal olur.
+(wellknown) {
+	@wellknown path /.well-known/apple-app-site-association /.well-known/assetlinks.json
+	handle @wellknown {
+		header Content-Type application/json
+		root * /srv/portal
+		file_server
+	}
+}
+
 # --- Genel portal: kok + www (HER IKI ALAN) ------------------------------- #
 # NEDEN VAR (P120): kok alan adi bugune kadar HIC sunulmuyordu — Caddy'de
 # yalniz api./panel./storage. bloklari vardi. Oysa mobil uygulamada
@@ -97,6 +122,11 @@
 	header X-Frame-Options "DENY"
 	encode gzip zstd
 
+	# (P155 §8) Derin baglanti dosyalari — reverse_proxy'DEN once, terminal.
+	# `handle @wellknown` eslesirse dosyayi verir ve asagidaki `handle`ye
+	# GECMEZ (handle gruplari karsilikli dislayici).
+	import wellknown
+
 	# (P127) TANITIM SITESI ARTIK GERCEK: kok/www UYGULAMAYA gider.
 	#
 	# P120'de burasi STATIK bir yer tutucuydu ve gerekcesi suydu: "admin-web'in
@@ -113,7 +143,13 @@
 	# gizlilik/kosullar/_next uygulamaya gitsin) ARTIK GEREKSIZ — her sey
 	# uygulamanindir. Bilinmeyen yollarda Next'in kendi 404'u doner (statik
 	# `file_server`in 404'u ile ayni sonuc, dogru sayfa ile).
-	reverse_proxy admin-web:3000
+	#
+	# (P155 §8) `handle` ile SARILDI: well-known `handle`si ile karsilikli
+	# dislayici olsun diye. Disarida bir `reverse_proxy`, well-known
+	# dosyalarini da uygulamaya proxy'lerdi.
+	handle {
+		reverse_proxy admin-web:3000
+	}
 }
 
 # --- app. — TESIS CALISMA ALANI (P126.1) ---------------------------------- #

@@ -39,6 +39,22 @@ abstract interface class AuthRepository {
   /// login ekrani acilista alanlari bununla ON-DOLDURUR. Yoksa null.
   Future<({String phone, String password})?> readSavedCredentials();
 
+  /// (P155 §7) Davetle gelen kullanici PAROLA belirler (SMS YOK) ve oturum
+  /// acilir. Donen jetonlar saklanir.
+  Future<void> davetParola({
+    required String jeton,
+    String? ad,
+    required String newPassword,
+  });
+
+  /// (P155 §7) Davetle gelen kullanici SOSYAL hesabini baglar (SMS YOK) ve
+  /// oturum acilir.
+  Future<void> davetSosyal({
+    required String jeton,
+    required String baglamaJetonu,
+    String? ad,
+  });
+
   /// Acilista saklanan oturumu geri yuklemeye calisir: "beni hatirla" bayragi
   /// + refresh token varsa `POST /auth/refresh` denenir. Basarili → true
   /// (login ekrani atlanir). Bayrak yoksa ya da refresh kurtarilamazsa →

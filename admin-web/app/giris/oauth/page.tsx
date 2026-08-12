@@ -24,6 +24,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { ErrorBox, Field, btnPrimary, cardCls, inputCls } from "@/components/form";
 import {
   OAUTH_NIYET,
+  davetJetonuOku,
   kayitBilgisiOku,
   saglayiciEtiketi,
 } from "@/components/SosyalGiris";
@@ -50,6 +51,7 @@ const UC_SONUC = "/api/auth/oauth/sonuc";
 const UC_BAGLANTILAR = "/api/auth/oauth/baglantilarim";
 const UC_BAGLAN_BASLA = "/api/auth/oauth/baglan/basla";
 const UC_BAGLAN_DOGRULA = "/api/auth/oauth/baglan/dogrula";
+const UC_DAVET_SOSYAL = "/api/auth/davet/sosyal";
 
 type BaslaYanit = {
   tesis_ad?: string;
@@ -113,6 +115,31 @@ function OauthDonus() {
           return;
         }
         if (d?.durum === "baglama_gerekli") {
+          // (P155 §7) DAVETTEN GELINDIYSE: jeton tesis/rol/daire/telefonu
+          // biliyor. Tesis+telefon formunu ATLA, dogrudan `/davet/sosyal`
+          // ile bagla ve oturum ac.
+          const davetJetonu = davetJetonuOku();
+          if (davetJetonu && d.baglama_jetonu) {
+            void (async () => {
+              const dr = await fetch(UC_DAVET_SOSYAL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  jeton: davetJetonu,
+                  baglama_jetonu: d.baglama_jetonu,
+                }),
+              });
+              if (dr.ok) {
+                router.replace("/");
+                router.refresh();
+              } else {
+                const dv = (await dr.json().catch(() => null)) as Sonuc | null;
+                setHata(dv?.error?.message ?? t("ortakHataOlustu"));
+                setAdim("hata");
+              }
+            })();
+            return;
+          }
           setSonuc(d);
           setAdim("tesis");
           // (P154) KAYIT AKISINDAN GELINDIYSE tesis ID + telefon ZATEN

@@ -5041,4 +5041,28 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get sosyalVazgec => 'Отмена';
+
+  @override
+  String get davetBaslik => 'Регистрация';
+
+  @override
+  String get davetGecersizBaslik => 'Ссылка не работает';
+
+  @override
+  String get davetSuresiDoldu => 'Срок действия ссылки истёк.';
+
+  @override
+  String get davetKullanilmis => 'Это приглашение уже использовано.';
+
+  @override
+  String get davetBulunamadi => 'Эта ссылка-приглашение недействительна.';
+
+  @override
+  String get davetYoneticinizeBasvurun =>
+      'Обратитесь к управляющему за новым приглашением.';
+
+  @override
+  String davetOzet(String tesis, String rol) {
+    return '$tesis пригласил вас как $rol.';
+  }
 }

@@ -1482,5 +1482,12 @@
   "sosyalKodGonder": "Bestätigungscode senden",
   "sosyalKodAciklama": "{tesis} — geben Sie den an {telefon} gesendeten Code ein.",
   "sosyalDogrula": "Bestätigen und anmelden",
-  "sosyalVazgec": "Abbrechen"
+  "sosyalVazgec": "Abbrechen",
+  "davetBaslik": "Registrierung",
+  "davetGecersizBaslik": "Link funktioniert nicht",
+  "davetSuresiDoldu": "Dieser Einladungslink ist abgelaufen.",
+  "davetKullanilmis": "Diese Einladung wurde bereits verwendet.",
+  "davetBulunamadi": "Dieser Einladungslink ist ungültig.",
+  "davetYoneticinizeBasvurun": "Wenden Sie sich für eine neue Einladung an Ihren Verwalter.",
+  "davetOzet": "{tesis} hat Sie als {rol} eingeladen."
 }

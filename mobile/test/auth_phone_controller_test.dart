@@ -64,6 +64,20 @@ class _FakeAuthRepository implements AuthRepository {
       null;
 
   @override
+  Future<void> davetParola({
+    required String jeton,
+    String? ad,
+    required String newPassword,
+  }) async {}
+
+  @override
+  Future<void> davetSosyal({
+    required String jeton,
+    required String baglamaJetonu,
+    String? ad,
+  }) async {}
+
+  @override
   Future<void> logout() async {}
 }
 

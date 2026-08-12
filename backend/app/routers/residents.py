@@ -14,17 +14,19 @@ from __future__ import annotations
 import uuid
 
 from fastapi import APIRouter, Depends, Response
-from sqlalchemy import and_, func, select
+from sqlalchemy import and_, func, select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..audit import Action, audit_user
 from ..crud_helpers import is_unique_violation, translate_integrity
+from ..davet import davet_olustur_ve_gonder
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..hesap_silme import hesabi_sil_veya_anonimlestir
 from ..models import AppUser, Unit, UnitResident
 from ..schemas import (
+    DavetGonderimSonucu,
     ResidentCreate,
     ResidentCreatedOut,
     ResidentDeleteOut,
@@ -131,6 +133,22 @@ async def create_resident(
         db, user, Action.RESIDENT_CREATE, resource_type="app_user",
         resource_id=resident.id, meta={"unit_id": str(unit.id)},
     )
+
+    # (P155 §7) DAVET: parolasiz acilan hesaba jetonlu kayit bagi gonder.
+    # Parola VERILDIYSE davet anlamsizdir (hesap zaten girebilir).
+    davet_ozeti = None
+    if not password_set:
+        tenant_ad = (
+            await db.execute(
+                text("SELECT ad FROM tenant WHERE id = :t"),
+                {"t": str(user.tenant_id)},
+            )
+        ).scalar_one()
+        gonderildi = await davet_olustur_ve_gonder(
+            db, user=resident, tenant_ad=tenant_ad, gonderen_id=user.id,
+        )
+        davet_ozeti = DavetGonderimSonucu(gonderildi=gonderildi, kanal="sms")
+
     return ResidentCreatedOut(
         user_id=resident.id,
         unit_id=unit.id,
@@ -138,6 +156,7 @@ async def create_resident(
         ad=resident.ad,
         email=resident.email,
         temp_code=temp_code,
+        davet=davet_ozeti,
     )
 
 

@@ -5051,4 +5051,28 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get sosyalVazgec => 'إلغاء';
+
+  @override
+  String get davetBaslik => 'التسجيل';
+
+  @override
+  String get davetGecersizBaslik => 'الرابط لا يعمل';
+
+  @override
+  String get davetSuresiDoldu => 'انتهت صلاحية رابط الدعوة هذا.';
+
+  @override
+  String get davetKullanilmis => 'تم استخدام هذه الدعوة بالفعل.';
+
+  @override
+  String get davetBulunamadi => 'رابط الدعوة هذا غير صالح.';
+
+  @override
+  String get davetYoneticinizeBasvurun =>
+      'تواصل مع المسؤول للحصول على دعوة جديدة.';
+
+  @override
+  String davetOzet(String tesis, String rol) {
+    return 'دعاك $tesis بصفة $rol.';
+  }
 }

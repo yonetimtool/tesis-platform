@@ -260,6 +260,90 @@ class AuthApi {
       throw ApiException.fromDio(e);
     }
   }
+
+  // ==================== (P155 §7) DAVET ==================== #
+
+  /// `POST /davet/coz` — jetonu cozer; tesis/rol/daire/telefon(maskeli)/ad.
+  /// COZME jetonu TUKETMEZ (derin baglanti tarayicida da acilabilir).
+  Future<DavetCozum> davetCoz(String jeton) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/davet/coz',
+        data: {'jeton': jeton},
+      );
+      final d = res.data!;
+      return DavetCozum(
+        tesisAd: d['tesis_ad'] as String,
+        rol: d['rol'] as String,
+        ad: d['ad'] as String,
+        telefonMaskeli: d['telefon_maskeli'] as String,
+        daireNo: d['daire_no'] as String?,
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// `POST /davet/parola` — davetle gelen kullanici parola belirler (SMS
+  /// YOK); tam oturum doner.
+  Future<TokenPair> davetParola({
+    required String jeton,
+    String? ad,
+    required String newPassword,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/davet/parola',
+        data: {
+          'jeton': jeton,
+          if (ad != null && ad.isNotEmpty) 'ad': ad,
+          'new_password': newPassword,
+        },
+      );
+      return TokenPair.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// `POST /davet/sosyal` — davetle gelen kullanici sosyal hesabini baglar
+  /// (SMS YOK); tam oturum doner.
+  Future<TokenPair> davetSosyal({
+    required String jeton,
+    required String baglamaJetonu,
+    String? ad,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/davet/sosyal',
+        data: {
+          'jeton': jeton,
+          'baglama_jetonu': baglamaJetonu,
+          if (ad != null && ad.isNotEmpty) 'ad': ad,
+        },
+      );
+      return TokenPair.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+}
+
+/// (P155 §7) Cozulmus davet baglami — mobil davet ekrani bunu gosterir.
+class DavetCozum {
+  const DavetCozum({
+    required this.tesisAd,
+    required this.rol,
+    required this.ad,
+    required this.telefonMaskeli,
+    this.daireNo,
+  });
+
+  final String tesisAd;
+  final String rol;
+  final String ad;
+  final String telefonMaskeli;
+  final String? daireNo;
 }
 
 final authApiProvider = Provider<AuthApi>((ref) {

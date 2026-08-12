@@ -38,6 +38,115 @@ security:
 
 paths:
   # ================================================================= #
+  # DAVET (P155 §7) — jetonlu kayit bagi
+  # ================================================================= #
+  /davet/coz:
+    post:
+      tags: [davet]
+      summary: Davet jetonunu cozer (tesis/rol/daire/telefon)
+      security: []   # kullanicinin henuz oturumu yok
+      description: |
+        Jeton cozuldugunde tesis/rol/daire/telefon bellidir. COZME jetonu
+        TUKETMEZ (bag tarayicida acilip sonra uygulamada da acilabilir).
+        404 bulunamadi · 410 suresi doldu / kullanilmis.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DavetCozRequest" }
+      responses:
+        "200":
+          description: Davet baglami (telefon maskeli)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DavetCozResponse" }
+        "404":
+          description: Davet bulunamadi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "410":
+          description: Davet suresi doldu ya da kullanilmis
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /davet/parola:
+    post:
+      tags: [davet]
+      summary: Davetle gelen kullanici parola belirler (SMS yok)
+      security: []   # jeton govdede; kimlik oncesi
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DavetParolaRequest" }
+      responses:
+        "200":
+          description: Oturum acildi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TokenPair" }
+        "410":
+          description: Davet gecersiz
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422":
+          description: Zayif parola
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /davet/sosyal:
+    post:
+      tags: [davet]
+      summary: Davetle gelen kullanici sosyal hesabini baglar (SMS yok)
+      security: []   # jeton + baglama jetonu govdede
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DavetSosyalRequest" }
+      responses:
+        "200":
+          description: Oturum acildi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TokenPair" }
+        "410":
+          description: Davet gecersiz
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /davet:
+    get:
+      tags: [davet]
+      summary: Yonetici — tesisin davetleri + son gonderim durumu
+      responses:
+        "200":
+          description: Davet listesi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DavetDurumListResponse" }
+  /davet/{user_id}/yeniden:
+    post:
+      tags: [davet]
+      summary: Yonetici — daveti tazeler ve yeniden gonderir
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Davet yeniden gonderildi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DavetDurumOut" }
+        "404":
+          description: Kullanici bulunamadi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "409":
+          description: Kullanici zaten kayitli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  # ================================================================= #
   # AUTH
   # ================================================================= #
   /auth/login:
@@ -9195,6 +9304,64 @@ components:
           schema: { $ref: "#/components/schemas/Error" }
 
   schemas:
+    # ---------------------------- davet (P155 §7) ------------------ #
+    DavetCozRequest:
+      type: object
+      required: [jeton]
+      properties:
+        jeton: { type: string, minLength: 8, maxLength: 128 }
+    DavetCozResponse:
+      type: object
+      required: [tesis_ad, rol, ad, telefon_maskeli]
+      properties:
+        tesis_ad:        { type: string, example: "Oltu Sitesi" }
+        rol:             { type: string, example: "resident" }
+        ad:              { type: string }
+        telefon_maskeli: { type: string, example: "+9053***203" }
+        daire_no:        { type: string, nullable: true }
+    DavetParolaRequest:
+      type: object
+      required: [jeton, new_password]
+      properties:
+        jeton:        { type: string, minLength: 8, maxLength: 128 }
+        ad:           { type: string, nullable: true, minLength: 1, maxLength: 120 }
+        new_password: { type: string, minLength: 8 }
+    DavetSosyalRequest:
+      type: object
+      required: [jeton, baglama_jetonu]
+      properties:
+        jeton:          { type: string, minLength: 8, maxLength: 128 }
+        baglama_jetonu: { type: string }
+        ad:             { type: string, nullable: true, minLength: 1, maxLength: 120 }
+    DavetDurumOut:
+      type: object
+      required: [user_id, ad, rol, telefon, son_gecerlilik]
+      properties:
+        user_id:         { type: string, format: uuid }
+        ad:              { type: string }
+        rol:             { type: string }
+        telefon:         { type: string }
+        daire_no:        { type: string, nullable: true }
+        son_kanal:       { type: string, nullable: true }
+        son_durum:       { type: string, nullable: true }
+        son_hata:        { type: string, nullable: true }
+        son_gonderim_at: { type: string, format: date-time, nullable: true }
+        used_at:         { type: string, format: date-time, nullable: true }
+        son_gecerlilik:  { type: string, format: date-time }
+    DavetDurumListResponse:
+      type: object
+      required: [items]
+      properties:
+        tesis_kodu: { type: string, nullable: true }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/DavetDurumOut" }
+    DavetGonderimSonucu:
+      type: object
+      required: [gonderildi]
+      properties:
+        gonderildi: { type: boolean }
+        kanal:      { type: string, nullable: true }
     # ---------------------------- ortak ---------------------------- #
     Error:
       type: object

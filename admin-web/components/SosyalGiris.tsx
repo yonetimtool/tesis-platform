@@ -65,6 +65,35 @@ export function kayitBilgisiOku(): KayitBilgisi | null {
   }
 }
 
+/**
+ * (P155 §7) DAVET jetonu — davet web yedeginde sosyal yontem secilince
+ * saglayiciya gitmeden once saklanir; donuste `/giris/oauth` onu okuyup
+ * `/davet/sosyal` ile tamamlar (tesis/telefon SORULMAZ — jeton biliyor).
+ *
+ * `kayitBilgisi` ile AYNI mekanizma (`sessionStorage`), AYRI anahtar: davet
+ * yolunda tesis+telefon yok, jeton var. Ikisi ayni donuste birlikte
+ * bulunmaz.
+ */
+export const OAUTH_DAVET = "yonetio.oauth.davet";
+
+export function davetJetonuYaz(jeton: string) {
+  try {
+    sessionStorage.setItem(OAUTH_DAVET, jeton);
+  } catch {
+    // Depolama yoksa donuste jeton bulunmaz; kullanici parola yolunu secebilir.
+  }
+}
+
+export function davetJetonuOku(): string | null {
+  try {
+    const j = sessionStorage.getItem(OAUTH_DAVET);
+    sessionStorage.removeItem(OAUTH_DAVET);
+    return j || null;
+  } catch {
+    return null;
+  }
+}
+
 /** Sunucunun tanidigi saglayici kodlari. */
 const ETIKET: Record<string, string> = {
   google: "Google",
@@ -92,12 +121,16 @@ export function SosyalGiris({
   niyet,
   yuzey = "web",
   kayitBilgisi,
+  davetJetonu,
 }: {
   niyet: "giris" | "bagla";
   yuzey?: "web" | "mobil";
   /** (P154) Kayit akisindan gelindiyse: donuste tekrar sorulmasin diye
    *  saglayiciya gitmeden ONCE saklanan tesis ID + telefon. */
   kayitBilgisi?: KayitBilgisi;
+  /** (P155 §7) Davet web yedeginden gelindiyse: donuste `/davet/sosyal`
+   *  ile tamamlanacak jeton. */
+  davetJetonu?: string;
 }) {
   const t = useT();
   const [saglayicilar, setSaglayicilar] = useState<string[]>([]);
@@ -145,6 +178,7 @@ export function SosyalGiris({
       }
       niyetiYaz(niyet);
       if (kayitBilgisi) kayitBilgisiYaz(kayitBilgisi);
+      if (davetJetonu) davetJetonuYaz(davetJetonu);
       window.location.href = d.adres;
     } catch {
       setHata(t("ortakSunucuyaUlasilamadi"));

@@ -1482,5 +1482,12 @@
   "sosyalKodGonder": "Envoyer le code de vérification",
   "sosyalKodAciklama": "{tesis} — saisissez le code envoyé au {telefon}.",
   "sosyalDogrula": "Vérifier et se connecter",
-  "sosyalVazgec": "Annuler"
+  "sosyalVazgec": "Annuler",
+  "davetBaslik": "Inscription",
+  "davetGecersizBaslik": "Le lien ne fonctionne pas",
+  "davetSuresiDoldu": "Ce lien d'invitation a expiré.",
+  "davetKullanilmis": "Cette invitation a déjà été utilisée.",
+  "davetBulunamadi": "Ce lien d'invitation n'est pas valide.",
+  "davetYoneticinizeBasvurun": "Contactez votre gestionnaire pour une nouvelle invitation.",
+  "davetOzet": "{tesis} vous a invité en tant que {rol}."
 }

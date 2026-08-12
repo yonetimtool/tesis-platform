@@ -3509,3 +3509,42 @@ class OauthKimlik(Base):
     eposta: Mapped[str | None] = mapped_column(Text, nullable=True)
     son_giris_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     created_at = _created_at()
+
+
+class Davet(Base):
+    """(P155 / §7) Tek kullanimlik, sureli kayit bagi.
+
+    Yonetici bir sakin/personel eklediginde, o (parolasiz) hesap icin bir
+    davet uretilir ve jetonlu bir bag SMS/e-posta ile gonderilir. Jeton
+    cozuldugunde tesis/rol/daire/telefon ZATEN bellidir (goc 0051
+    `davet_coz`); kullanici yalniz yontem secer.
+
+    JETON DUZ METIN DEGIL: `jeton_hash` (sha256) saklanir; duz jeton yalniz
+    bagda ve bir kez uretilir (parola hash'i ile ayni ilke).
+
+    KULLANICI BASINA TEK satir (`uq_davet_user`): yeniden gonderim satiri
+    TAZELER. `son_*` alanlari panelin "gitmeyen davetler" gorunumu icin
+    son gonderim ozetidir; ayrintili gecmis `mesaj_gonderim`dedir.
+    """
+
+    __tablename__ = "davet"
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    jeton_hash: Mapped[str] = mapped_column(Text, nullable=False)
+    son_gecerlilik = mapped_column(TIMESTAMP(timezone=True), nullable=False)
+    used_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    son_kanal: Mapped[str | None] = mapped_column(MESAJ_KANAL, nullable=True)
+    son_durum: Mapped[str | None] = mapped_column(MESAJ_DURUM, nullable=True)
+    son_hata: Mapped[str | None] = mapped_column(Text, nullable=True)
+    son_gonderim_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    olusturan_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    created_at = _created_at()
+    updated_at = mapped_column(
+        TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
+    )

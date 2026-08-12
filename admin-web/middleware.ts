@@ -41,6 +41,10 @@ export function middleware(req: NextRequest): NextResponse {
     url.pathname = "/";
     return NextResponse.redirect(url);
   }
+  // NOT (P155 §7/§8): `/davet/‹jeton›` bilincli olarak `config.matcher`DE
+  // YOK — yani middleware ona HIC dokunmaz ve sayfa oturum kapisi olmadan
+  // dogrudan sunulur (davetin web yedegi tanitim alan adinda public
+  // olmali). Buraya bir istisna yazmak GEREKMEZ; matcher zaten disliyor.
 
   if (!hasSession) {
     const url = req.nextUrl.clone();
@@ -171,6 +175,7 @@ export const config = {
     "/kvkk/:path*",
     "/ziyaretciler/:path*",
     "/kargolar/:path*",
+    "/davetler/:path*",
     "/olaylar/:path*",
     "/arac-gecisleri/:path*",
     "/gorevlerim/:path*",

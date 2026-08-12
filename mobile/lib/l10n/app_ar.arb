@@ -1482,5 +1482,12 @@
   "sosyalKodGonder": "إرسال رمز التحقق",
   "sosyalKodAciklama": "{tesis} — أدخل الرمز المُرسل إلى {telefon}.",
   "sosyalDogrula": "تحقق وسجّل الدخول",
-  "sosyalVazgec": "إلغاء"
+  "sosyalVazgec": "إلغاء",
+  "davetBaslik": "التسجيل",
+  "davetGecersizBaslik": "الرابط لا يعمل",
+  "davetSuresiDoldu": "انتهت صلاحية رابط الدعوة هذا.",
+  "davetKullanilmis": "تم استخدام هذه الدعوة بالفعل.",
+  "davetBulunamadi": "رابط الدعوة هذا غير صالح.",
+  "davetYoneticinizeBasvurun": "تواصل مع المسؤول للحصول على دعوة جديدة.",
+  "davetOzet": "دعاك {tesis} بصفة {rol}."
 }

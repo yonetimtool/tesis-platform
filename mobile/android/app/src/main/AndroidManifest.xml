@@ -40,7 +40,28 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- (P155 §8) APP LINKS — davet bagi (https://<portal>/davet/…)
+                 KULLANICI HICBIR SEY ARAMADAN uygulamayi acsin.
+                 `autoVerify`: sistem alan adinin kokunde
+                 `/.well-known/assetlinks.json`i dogrular (Caddy servis
+                 ediyor). Parmak izi Play App Signing anahtarininki olmali
+                 (KONSOL ISI — bkz. docs/derin-baglanti-kurulum.md).
+                 UC ALAN: test + prod(yeni) + prod(eski). YOL ONEKI /davet:
+                 diger bag turleri (gizlilik/hesap-silme) tarayicida kalir. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https" android:host="test.yonetio.site" android:pathPrefix="/davet"/>
+                <data android:scheme="https" android:host="yonetiyor.com" android:pathPrefix="/davet"/>
+                <data android:scheme="https" android:host="yonetio.site" android:pathPrefix="/davet"/>
+            </intent-filter>
         </activity>
+        <!-- (P155 §8) Flutter'in YERLESIK derin baglanti yonlendirmesi:
+             gelen App Link'in YOLU (/davet/<jeton>) go_router'a verilir. -->
+        <meta-data
+            android:name="flutter_deeplinking_enabled"
+            android:value="true" />
         <!-- (P154 / Asama 4) SOSYAL GIRIS GERI DONUSU.
              Saglayici arka ucun https callback'ine doner; arka uc da
              tarayiciyi bu ozel semaya yonlendirir ve guvenli tarayici

@@ -93,6 +93,16 @@ KAPISIZ_MUTASYONLAR: frozenset[tuple[str, str]] = frozenset({
     ("POST", "/auth/oauth/sonuc"),
     ("POST", "/auth/oauth/baglan/basla"),
     ("POST", "/auth/oauth/baglan/dogrula"),
+    # --- (P155 §7) DAVET (kimlik oncesi) ---
+    # Rol kapisi OLAMAZ: davetle gelen kisinin henuz oturumu yoktur
+    # (`/auth/kayit/rol-*` ile ayni sinif). Tesisin kayitlarina KEYFI
+    # yazmazlar: `coz` yalniz okur; `parola`/`sosyal` YALNIZ jetonun ait
+    # oldugu (yoneticinin actigi parolasiz) hesaba dokunur — jeton o
+    # hesabin ta kendisini adresler. Denetci dahil herkese acik olmasi
+    # dogrudur: kaydolan kisi zaten oturumsuzdur.
+    ("POST", "/davet/coz"),
+    ("POST", "/davet/parola"),
+    ("POST", "/davet/sosyal"),
     # KENDI GIRIS YONTEMLERI — `/me/password` ile AYNI SINIF. Kimlik
     # ZORUNLU (`get_current_user`), eksik olan yalniz ROL kapisi ve orada
     # anlamsiz: her rol kendi giris yontemini ekleyip kaldirabilmeli.

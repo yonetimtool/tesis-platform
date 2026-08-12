@@ -4971,4 +4971,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sosyalVazgec => 'Cancel';
+
+  @override
+  String get davetBaslik => 'Registration';
+
+  @override
+  String get davetGecersizBaslik => 'Link not working';
+
+  @override
+  String get davetSuresiDoldu => 'This invitation link has expired.';
+
+  @override
+  String get davetKullanilmis => 'This invitation has already been used.';
+
+  @override
+  String get davetBulunamadi => 'This invitation link is invalid.';
+
+  @override
+  String get davetYoneticinizeBasvurun =>
+      'Contact your administrator for a new invitation.';
+
+  @override
+  String davetOzet(String tesis, String rol) {
+    return '$tesis invited you as $rol.';
+  }
 }

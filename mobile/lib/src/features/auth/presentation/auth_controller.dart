@@ -151,6 +151,53 @@ class AuthController extends Notifier<AuthState> {
     }
   }
 
+  // ==================== (P155 §7) DAVET TAMAMLAMA ==================== #
+
+  /// Davetle gelen kullanici PAROLA belirledi → oturum acilir (SMS YOK).
+  Future<void> davetParolaTamamla({
+    required String jeton,
+    String? ad,
+    required String newPassword,
+  }) async {
+    state = state.copyWith(
+      submitting: true, errorMessage: null, hataKimligi: null);
+    try {
+      await ref.read(authRepositoryProvider).davetParola(
+            jeton: jeton, ad: ad, newPassword: newPassword);
+      state = state.copyWith(
+        status: AuthStatus.authenticated, submitting: false);
+    } on ApiException catch (e) {
+      state = state.copyWith(
+        submitting: false, errorMessage: e.message, hataKimligi: e.code);
+    }
+  }
+
+  /// Davetle gelen kullanici SOSYAL hesabini bagladi → oturum acilir.
+  ///
+  /// IKI ASAMA: once tarayici akisi ([oauthAkisi]) baglama jetonu uretir,
+  /// sonra bu metot onu davetle birlestirir. SMS YOK.
+  Future<void> davetSosyalTamamla({
+    required String jeton,
+    String? ad,
+  }) async {
+    final baglama = state.oauthBaglamaJetonu;
+    if (baglama == null) return;
+    state = state.copyWith(
+      submitting: true, errorMessage: null, hataKimligi: null);
+    try {
+      await ref.read(authRepositoryProvider).davetSosyal(
+            jeton: jeton, baglamaJetonu: baglama, ad: ad);
+      state = state.copyWith(
+        status: AuthStatus.authenticated,
+        submitting: false,
+        oauthBaglamaJetonu: null,
+      );
+    } on ApiException catch (e) {
+      state = state.copyWith(
+        submitting: false, errorMessage: e.message, hataKimligi: e.code);
+    }
+  }
+
   Future<void> loginPhone({
     required String phone,
     required String password,

@@ -96,6 +96,8 @@ export const TESIS_ROTALARI = [
   "/kameralar",
   "/dis-hizmetler",
   "/yonetim-iletisim",
+  // (P155 §7) Davet gonderim durumu — tesis yuzeyi (yonetici).
+  "/davetler",
 ] as const;
 
 /**
@@ -306,6 +308,8 @@ export const ROTA_ROLLERI: Record<string, readonly string[]> = {
   "/users": ["admin", "yonetici"],
   "/announcements": ["admin", "yonetici"],
   "/mesajlar": ["admin", "yonetici"],
+  // (P155 §7) Davet gonderim durumu — yalniz yonetici/admin.
+  "/davetler": ["admin", "yonetici"],
   "/anketler": ["admin", "yonetici"],
   // (P154 / Asama 7.3) Kurulum sihirbazi YONETIM isidir. Denetci
   // SALT-OKUR ve kurulum onun isi degil; uc de ayni kumeyi kapiliyor.

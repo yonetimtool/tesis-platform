@@ -97,6 +97,8 @@ const BIRINCIL_UC: Record<string, string> = {
   "/kvkk": "GET /me/pazarlama-tercihleri",
   "/ziyaretciler": "GET /visitors",
   "/kargolar": "GET /kargo",
+  // (P155 §7) Davet gonderim durumu — yonetici/admin.
+  "/davetler": "GET /davet",
   "/olaylar": "GET /violations",
   "/arac-gecisleri": "GET /vehicle-passes",
   "/gorevlerim": "GET /tasks",

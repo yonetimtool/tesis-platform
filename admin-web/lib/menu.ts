@@ -213,6 +213,8 @@ const OGELER: readonly MenuOgesi[] = [
   { href: "/taleplerim", anahtar: "kabukTaleplerim", icon: "chat", grup: "iletisim" },
   { href: "/anketler", anahtar: "kabukAnketler", icon: "chat", grup: "iletisim" },
   { href: "/yonetim-iletisim", anahtar: "kabukYonetimIletisim", icon: "chat", grup: "iletisim" },
+  // (P155 §7) Davet gonderim durumu — kisiye kayit bagi gonderildi mi.
+  { href: "/davetler", anahtar: "kabukDavetler", icon: "megaphone", grup: "iletisim" },
   { href: "/support", anahtar: "kabukDestek", icon: "chat", grup: "iletisim" },
 
   // --- YONETIM: kurulum + hesap verebilirlik -----------------------------

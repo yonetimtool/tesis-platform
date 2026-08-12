@@ -4783,4 +4783,28 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get sosyalVazgec => 'Vazgeç';
+
+  @override
+  String get davetBaslik => 'Kayıt';
+
+  @override
+  String get davetGecersizBaslik => 'Bağlantı çalışmıyor';
+
+  @override
+  String get davetSuresiDoldu => 'Bu davet bağlantısının süresi dolmuş.';
+
+  @override
+  String get davetKullanilmis => 'Bu davet zaten kullanılmış.';
+
+  @override
+  String get davetBulunamadi => 'Bu davet bağlantısı geçersiz.';
+
+  @override
+  String get davetYoneticinizeBasvurun =>
+      'Yeni bir davet için yöneticinize başvurun.';
+
+  @override
+  String davetOzet(String tesis, String rol) {
+    return '$tesis sizi $rol olarak davet etti.';
+  }
 }

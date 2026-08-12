@@ -6,6 +6,7 @@ import { useState } from "react";
 import useSWR from "swr";
 
 import { Field, ErrorBox, btnPrimary, btnGhost, inputCls, cardCls } from "@/components/form";
+import { KopyaKod } from "@/components/KopyaKod";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
@@ -23,6 +24,7 @@ interface Yonetici {
 interface TenantDetail {
   tenant_id: string;
   ad: string;
+  kayit_kodu: string | null;
   kurulum_tamamlandi: boolean;
   created_at: string;
   yonetici: Yonetici | null;
@@ -246,6 +248,13 @@ export default function TenantDetailPage() {
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
                     <h1 className="text-2xl font-semibold break-words">{data.ad}</h1>
+                    {/* (P155 §6) Yoneticinin ILETECEGI kod birincil ve
+                        kopyalanabilir; teknik UUID altta kucuk kalir. */}
+                    {data.kayit_kodu ? (
+                      <div className="mt-1">
+                        <KopyaKod deger={data.kayit_kodu} etiket={t("tesisKayitKodu")} />
+                      </div>
+                    ) : null}
                     <p className="mt-1 font-mono text-xs break-all text-metin-muted">
                       {data.tenant_id}
                     </p>

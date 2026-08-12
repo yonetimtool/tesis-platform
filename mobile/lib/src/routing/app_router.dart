@@ -12,6 +12,7 @@ import '../features/assets/presentation/assets_screen.dart';
 import '../features/auth/presentation/auth_controller.dart';
 import '../features/complaints/presentation/complaints_screen.dart';
 import '../features/auth/presentation/login_screen.dart';
+import '../features/auth/presentation/davet_screen.dart';
 import '../features/auth/presentation/kayit_screen.dart';
 import '../features/auth/presentation/set_password_screen.dart';
 import '../features/budget/presentation/budget_screen.dart';
@@ -70,6 +71,9 @@ class AppRoutes {
   static const setPassword = '/set-password';
   /// (P154 / Asama 3) Rol secimli kayit — OTURUM GEREKTIRMEZ.
   static const kayit = '/kayit';
+  /// (P155 §7/§8) Davet derin baglantisi — OTURUM GEREKTIRMEZ. Gercek yol
+  /// `/davet/:jeton`; bu sabit yalniz onektir (yonlendirme karsilastirmasi).
+  static const davet = '/davet';
   static const home = '/home';
   static const nfc = '/nfc';
   static const outbox = '/outbox';
@@ -222,6 +226,15 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.kayit,
         builder: (context, state) => const KayitScreen(),
+      ),
+      // (P155 §7/§8) DAVET DERIN BAGLANTISI. Universal/App Link
+      // `https://<portal>/davet/<jeton>` -> Flutter yolu `/davet/<jeton>`
+      // -> bu rota. Jeton yol parametresidir; ekran onu cozup yontem
+      // sectirir (tesis kodu/daire SORULMAZ).
+      GoRoute(
+        path: '/davet/:jeton',
+        builder: (context, state) =>
+            DavetScreen(jeton: state.pathParameters['jeton'] ?? ''),
       ),
       GoRoute(
         // Onboarding Model A: yonetici ilk giriste tesisi adlandirmamissa
@@ -488,6 +501,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         return location == AppRoutes.splash ? null : AppRoutes.splash;
       }
 
+      // (P155 §7/§8) DAVET derin baglantisi oturumdan BAGIMSIZDIR: bagi
+      // acan kisi oturumsuzdur ve kaydini burada tamamlar. Oturumu OLAN
+      // birine davet gelirse (nadir) davet ekranini gostermeye devam
+      // etmeyiz — ana ekrana atariz; yoksa zaten kayitli biri kendini
+      // yeniden kaydetmeye calisirdi.
+      final davettte = location.startsWith(AppRoutes.davet);
+
       final loggedIn = status == AuthStatus.authenticated;
       final onAuthFlow =
           location == AppRoutes.login ||
@@ -496,11 +516,14 @@ final routerProvider = Provider<GoRouter>((ref) {
           // buradan da ana ekrana gecilmeli, yoksa kaydini bitiren
           // kullanici kayit formunda asili kalirdi.
           location == AppRoutes.kayit ||
+          davettte ||
           location == AppRoutes.setPassword;
 
       if (loggedIn) {
         return onAuthFlow ? AppRoutes.home : null;
       }
+      // Oturum yok + davet bagi → davet ekranini GOSTER (login'e atma).
+      if (davettte) return null;
       // Sakinin gecici kodla ilk girisi → zorunlu parola belirleme ekrani.
       if (auth.setupToken != null) {
         return location == AppRoutes.setPassword ? null : AppRoutes.setPassword;

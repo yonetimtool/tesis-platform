@@ -7,6 +7,7 @@ import useSWR from "swr";
 
 import { EmptyState } from "@/components/EmptyState";
 import { Field, ErrorBox, PageHeader, btnPrimary, btnGhost, btnDanger, inputCls, panelCls, panelMotion } from "@/components/form";
+import { KopyaKod } from "@/components/KopyaKod";
 import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
@@ -21,6 +22,7 @@ import { telefonGiris, telefonNormalle } from "@/lib/telefon";
 interface TenantRow {
   id: string;
   ad: string;
+  kayit_kodu: string | null;
   kurulum_tamamlandi: boolean;
   created_at: string;
 }
@@ -302,7 +304,7 @@ export default function TenantsPage() {
           <Tablo>
             <TabloBasligi>
                 <Th>{t("ayarTesisAdi")}</Th>
-                <Th>{t("tesisKimlikId")}</Th>
+                <Th>{t("tesisKayitKodu")}</Th>
                 <Th>{t("tesisKurulum")}</Th>
                 <Th>{t("tesisOlusturulma")}</Th>
                 <Th />
@@ -315,7 +317,17 @@ export default function TenantsPage() {
                       {tesis.ad}
                     </Link>
                   </Td>
-                  <Td className="font-mono text-xs text-metin-muted">{tesis.id}</Td>
+                  {/* (P155 §6) Yoneticinin ILETECEGI kod birincil; teknik
+                      UUID `title` icinde erisilebilir kalir. */}
+                  <Td>
+                    {tesis.kayit_kodu ? (
+                      <KopyaKod deger={tesis.kayit_kodu} etiket={t("tesisKayitKodu")} />
+                    ) : (
+                      <span className="text-xs text-metin-muted" title={tesis.id}>
+                        —
+                      </span>
+                    )}
+                  </Td>
                   <Td>
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs font-medium ${

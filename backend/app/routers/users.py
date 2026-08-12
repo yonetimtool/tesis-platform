@@ -7,7 +7,6 @@ is_active=false (PATCH).
 """
 from __future__ import annotations
 
-import logging
 import uuid
 
 from fastapi import APIRouter, Depends, Query, Response
@@ -24,6 +23,7 @@ from ..roller import yonetilebilir
 from ..schemas import (
     AcilabilirRollerOut,
     AvatarUpdate,
+    DavetGonderimSonucu,
     ResidentResetPasswordOut,
     UserAdminListItem,
     UserAdminListResponse,
@@ -34,7 +34,7 @@ from ..schemas import (
     UserRoleLiteral,
     UserUpdate,
 )
-from ..gonderim import saglayici as gonderim_saglayici
+from ..davet import davet_olustur_ve_gonder
 from ..security import generate_temp_code, hash_password
 from ..storage import delete_objects, presign_get
 
@@ -83,7 +83,6 @@ def _yonetim_kapisi(user: AppUser, hedef_rol: str) -> None:
 _CONTACT_MANAGER = require_role("admin", "yonetici")
 # telefon global benzersiz; email tenant-ici benzersiz — hangisi cakisti
 # ayirt edilmeden tek mesaj.
-logger = logging.getLogger(__name__)
 
 _CONTACT_CONFLICT = APIError(409, "conflict", "telefon_veya_email_zaten_kayitli")
 # Saha personeli fotosu YALNIZ yonetici yonetir (spec P3); hedef saha personeli.
@@ -224,31 +223,24 @@ async def create_user(
             "gorev_penceresi": bool(obj.gorev_baslangic or obj.gorev_bitis),
         },
     )
-    # (P154 / Asama 3 EKSIGI, Asama 9 altyapisiyla) Parola verilmediyse
-    # uretilen TEK SEFERLIK kod, kisinin e-postasina gonderilir.
+    # (P155 §7) DAVET: parolasiz acilan personel/denetci hesabina jetonlu
+    # kayit bagi gonderilir. Eskiden yalniz E-POSTASI OLANA tek-seferlik kod
+    # gidiyordu; davet SMS'i ASIL kanal yapar (telefon her zaman var) ve
+    # e-postayi EK yapar — sartname §7'nin kanal onceligi. Gonderim katmani
+    # (`gonderim.saglayici`) ayni: SMTP/SMS yoksa saglayici LOG'dur ve
+    # `gonderildi=false` doner; yonetici panelden gitmeyeni gorur.
     #
-    # AYRI E-POSTA KODU YAZILMADI (brief'in cakisma kurali): kanal secimi
-    # `gonderim.saglayici()`den geliyor, yani SMTP yapilandirmasi tek
-    # yerde. SMTP yoksa saglayici LOG'dur ve kod ekrandaki yanitta ZATEN
-    # bir kez donuyor — yani gonderim BASARISIZ olsa da yonetici kodu
-    # iletebilir; bu yuzden hata istegi KIRMAZ.
-    #
-    # E-POSTASI OLMAYAN KISIYE denenmez: `hedef` bos gecmek, saglayiciya
-    # anlamsiz bir istek yaptirip gecmise sahte bir basarisizlik yazardi.
-    tenant_adi = (
-        await db.execute(select(Tenant.ad).where(Tenant.id == user.tenant_id))
-    ).scalar_one_or_none() or ""
-    if temp_code and obj.email:
-        try:
-            gonderim_saglayici("eposta").gonder(
-                obj.email,
-                f"{tenant_adi} — hesabınız açıldı",
-                f"Sayın {obj.ad},\n\n{tenant_adi} için hesabınız açıldı.\n"
-                f"Tek seferlik giriş kodunuz: {temp_code}\n\n"
-                "İlk girişte bu kodla giriş yapıp parolanızı belirleyin.",
-            )
-        except Exception:  # noqa: BLE001 — gonderim kaydi KIRMAZ
-            logger.warning("[users] gecici kod e-postasi gonderilemedi")
+    # AD OPSIYONEL DEGIL (personelde): `UserCreate.ad` zorunlu; davet ad
+    # on-doldurmasi burada gerekmiyor.
+    davet_ozeti = None
+    if not password_set:
+        tenant_adi = (
+            await db.execute(select(Tenant.ad).where(Tenant.id == user.tenant_id))
+        ).scalar_one_or_none() or ""
+        gonderildi = await davet_olustur_ve_gonder(
+            db, user=obj, tenant_ad=tenant_adi, gonderen_id=user.id,
+        )
+        davet_ozeti = DavetGonderimSonucu(gonderildi=gonderildi, kanal="sms")
 
     return UserCreatedOut(
         id=obj.id,
@@ -262,6 +254,7 @@ async def create_user(
         gorev_bitis=obj.gorev_bitis,
         created_at=obj.created_at,
         temp_code=temp_code,
+        davet=davet_ozeti,
     )
 
 
