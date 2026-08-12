@@ -4896,11 +4896,17 @@ class AppLocalizationsFr extends AppLocalizations {
   String get kayitKodGerekli => 'Saisissez le code.';
 
   @override
+  String get kayitYontemBaslik => 'Comment vous connecterez-vous ?';
+
+  @override
+  String get kayitYontemParola => 'Créer un mot de passe';
+
+  @override
   String get kayitGirisLinki => 'Vous avez déjà un compte ? Se connecter';
 
   @override
   String kayitAdim(String n) {
-    return 'Étape $n/3';
+    return 'Étape $n/4';
   }
 
   @override

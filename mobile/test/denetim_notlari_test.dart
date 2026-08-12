@@ -21,6 +21,11 @@ const _notlar = '../docs/app-store/review-notes.md';
 const _tohum = '../backend/scripts/demo_tenant.py';
 const _giris = 'lib/src/features/auth/presentation/login_screen.dart';
 
+/// (P154) Mobil yuzeyi OLMAYAN demo hesabi. Girise uygun degildir ve bu
+/// yuzden giris tablosunda yer almaz — ama notta ADI GECMELIDIR, yoksa
+/// tohumlamanin actigi bir hesap belgesiz kalir.
+const _denetciTel = '+905777777777';
+
 String _oku(String yol) => File(yol).readAsStringSync();
 
 /// `+905000000101` → `05000000101` (kullanıcının yazdığı biçim).
@@ -52,14 +57,36 @@ void main() {
         .toSet();
     // (P143) DORT -> BES: `guvenlik_amiri` hesabi eklendi. Rol enum'da
     // vardi ama PROD'DA TEK KULLANICISI YOKTU — yani hic denenmemisti.
-    expect(numaralar.length, 5,
-        reason: 'tohumlama betiginde bes demo numarasi bekleniyor');
+    // (P154) BES -> ALTI: `denetci` hesabi eklendi.
+    expect(numaralar.length, 6,
+        reason: 'tohumlama betiginde alti demo numarasi bekleniyor');
 
     final n = _oku(_notlar);
     for (final e164 in numaralar) {
-      expect(n, contains(_yerel(e164)),
-          reason: '$e164 (yerel: ${_yerel(e164)}) denetim notlarinda yok');
+      // GIRIS TABLOSUNDAKILER yerel bicimde yazilir (denetci onlari
+      // uygulamaya oyle girer); denetci hesabi ise TABLODA DEGIL,
+      // gerekcesiyle birlikte E.164 olarak aniliyor — asagidaki teste
+      // bakin.
+      expect(n, contains(e164 == _denetciTel ? e164 : _yerel(e164)),
+          reason: '$e164 denetim notlarinda hic gecmiyor');
     }
+  });
+
+  test('DENETCI hesabi giris tablosunda YOK ama notta ACIKLANMIS', () {
+    // Kilitli kural 5: "Denetcinin mobil yuzeyi yoktur." Hesabi giris
+    // tablosuna koymak, App Store denetcisine mobilde bos gorunen bir
+    // ekran actirir ve uygulamayi bozuk gosterirdi. Kaldirmak da olmaz:
+    // hesap yonetim paneli icin GERCEKTEN aciliyor.
+    final n = _oku(_notlar);
+    expect(n, contains(_denetciTel),
+        reason: 'denetci hesabi notta hic anilmiyor');
+    // Tabloda OLMADIGI da yazili olmali — yoksa bir sonraki tur onu
+    // "eksik" sanip tabloya ekler.
+    expect(n, contains('`denetci` rolü YOK'),
+        reason: 'denetcinin tabloda neden olmadigi yazilmamis');
+    // Ve tabloya SIZMAMIS olmali (satirlar `| Rol | 0... |` bicimindedir).
+    expect(n, isNot(contains('| ${_yerel(_denetciTel)} |')),
+        reason: 'denetci hesabi giris tablosuna girmis');
   });
 
   test('NOTTAKI e-postalar da tohumlama betigiyle AYNI', () {
@@ -70,8 +97,9 @@ void main() {
         .allMatches(tohum)
         .map((m) => m.group(1)!)
         .toSet();
-    // (P143) Bes hesap: dort rol + guvenlik amiri.
-    expect(postalar.length, 5);
+    // (P143) Bes hesap: dort rol + guvenlik amiri. (P154) Altinci:
+    // denetci — o TABLODA degil, gerekce paragrafinda geciyor.
+    expect(postalar.length, 6);
     final n = _oku(_notlar);
     for (final e in postalar) {
       expect(n, contains(e), reason: '$e denetim notlarinda yok');

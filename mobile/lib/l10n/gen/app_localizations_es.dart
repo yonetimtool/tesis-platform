@@ -4881,11 +4881,17 @@ class AppLocalizationsEs extends AppLocalizations {
   String get kayitKodGerekli => 'Introduzca el código.';
 
   @override
+  String get kayitYontemBaslik => '¿Cómo iniciará sesión?';
+
+  @override
+  String get kayitYontemParola => 'Crear una contraseña';
+
+  @override
   String get kayitGirisLinki => '¿Ya tiene una cuenta? Iniciar sesión';
 
   @override
   String kayitAdim(String n) {
-    return 'Paso $n/3';
+    return 'Paso $n/4';
   }
 
   @override

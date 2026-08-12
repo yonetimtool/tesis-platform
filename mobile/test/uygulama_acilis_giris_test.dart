@@ -18,6 +18,8 @@ import 'package:mobile/src/features/auth/domain/auth_repository.dart';
 import 'package:mobile/src/features/auth/domain/phone_login_result.dart';
 import 'package:mobile/src/features/auth/domain/token_pair.dart';
 import 'package:mobile/src/features/auth/domain/user_role.dart';
+import 'package:mobile/src/core/startup/acilis_tercihleri.dart';
+import 'package:mobile/src/features/auth/presentation/kayit_screen.dart';
 import 'package:mobile/src/features/auth/presentation/login_screen.dart';
 import 'package:mobile/src/features/cameras/data/cameras_api.dart';
 import 'package:mobile/src/features/complaints/data/complaint_api.dart';
@@ -102,11 +104,15 @@ class _SahteAuthRepo implements AuthRepository {
       throw UnimplementedError('${invocation.memberName}');
 }
 
-Widget _uygulama(BellekDepo depo, UserRole role) {
+Widget _uygulama(BellekDepo depo, UserRole role, {AcilisTercihleri? tohum}) {
   final storage = TokenStorage(depo);
   return ProviderScope(
-    overrides: [...sosyalKapali, 
+    overrides: [...sosyalKapali,
       secureStorageProvider.overrideWithValue(depo),
+      // (P154 / Asama 2) Tohum VERILMEZSE `acilisTercihleriProvider` null
+      // kalir ve ilk-acilis yonlendirmesi HIC devreye girmez — mevcut
+      // senaryolar (giris → rol ana ekrani) aynen surer.
+      if (tohum != null) acilisTercihleriProvider.overrideWithValue(tohum),
       authRepositoryProvider
           .overrideWithValue(_SahteAuthRepo(storage, role)),
       // Kok widget'in izledigi eklenti-bagimli yan etkiler (baglanti dinleme,
@@ -172,6 +178,62 @@ void main() {
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
   }
+
+  // ============ (P154 / Asama 2) ILK ACILIS = ROL LISTESI ============ //
+  //
+  // Brief: "Kullanici uygulamayi indirip ILK ACTIGINDA ekranda 'Size uygun
+  // olanı seçiniz' yazar ve rol listesi cikar." Onceki surumde acilis her
+  // zaman GIRIS ekranindaydi ve rol listesine ancak oradaki baglantiyla
+  // ulasiliyordu — yani kaydolmaya gelen kullanici once "giris yap"
+  // demek zorundaydi.
+
+  testWidgets('ILK acilis rol listesine duser', (tester) async {
+    tall(tester);
+    // Bos depo = uygulama YENI INDIRILDI.
+    final depo = BellekDepo({});
+    await tester.pumpWidget(_uygulama(
+      depo,
+      UserRole.yonetici,
+      tohum: await acilisTercihleriniOku(depo),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(KayitScreen), findsOneWidget);
+    expect(find.byType(LoginScreen), findsNothing);
+    // Brief'in cumlesi EKRANDA: rol listesinin basligi budur.
+    expect(find.byKey(const Key('kayit-rol-yonetici')), findsOneWidget);
+  });
+
+  testWidgets('IKINCI acilis girise duser (rol listesi bir kez gosterilir)',
+      (tester) async {
+    tall(tester);
+    final depo = BellekDepo({rolSecimiKey: '1'});
+    await tester.pumpWidget(_uygulama(
+      depo,
+      UserRole.yonetici,
+      tohum: await acilisTercihleriniOku(depo),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(LoginScreen), findsOneWidget);
+    expect(find.byType(KayitScreen), findsNothing);
+  });
+
+  testWidgets('rol listesi GORULUNCE depoya yazilir', (tester) async {
+    tall(tester);
+    final depo = BellekDepo({});
+    await tester.pumpWidget(_uygulama(
+      depo,
+      UserRole.yonetici,
+      tohum: await acilisTercihleriniOku(depo),
+    ));
+    await tester.pumpAndSettle();
+
+    // Bayrak KAYDOLMA TAMAMLANINCA degil, liste GORULUNCE yazilir:
+    // kaydolmadan cikan kullanici bir dahaki acilista girise duser ve
+    // oradaki baglantiyla buraya donebilir.
+    expect(await depo.read(key: rolSecimiKey), '1');
+  });
 
   testWidgets('KAYITLI DIL varken (ui.locale=ar) giris + rol yonlendirmesi '
       'bozulmaz', (tester) async {

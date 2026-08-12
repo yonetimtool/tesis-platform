@@ -8387,6 +8387,18 @@ abstract class AppLocalizations {
   /// **'Kodu girin.'**
   String get kayitKodGerekli;
 
+  /// No description provided for @kayitYontemBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Nasıl giriş yapacaksınız?'**
+  String get kayitYontemBaslik;
+
+  /// No description provided for @kayitYontemParola.
+  ///
+  /// In tr, this message translates to:
+  /// **'Parola oluştur'**
+  String get kayitYontemParola;
+
   /// No description provided for @kayitGirisLinki.
   ///
   /// In tr, this message translates to:
@@ -8396,7 +8408,7 @@ abstract class AppLocalizations {
   /// Kayit akisi adim gostergesi
   ///
   /// In tr, this message translates to:
-  /// **'Adım {n}/3'**
+  /// **'Adım {n}/4'**
   String kayitAdim(String n);
 
   /// No description provided for @sosyalIleDevam.

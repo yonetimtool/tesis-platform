@@ -4925,11 +4925,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get kayitKodGerekli => 'Enter the code.';
 
   @override
+  String get kayitYontemBaslik => 'How will you sign in?';
+
+  @override
+  String get kayitYontemParola => 'Create a password';
+
+  @override
   String get kayitGirisLinki => 'Already have an account? Sign in';
 
   @override
   String kayitAdim(String n) {
-    return 'Step $n/3';
+    return 'Step $n/4';
   }
 
   @override

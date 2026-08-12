@@ -43,18 +43,20 @@ class ResidentsApi {
   }
 
   /// Yeni sakin: daire + hesap + gecici kod (password bossa temp_code doner).
+  /// (P154 / Asama 5) TELEFON + DAIRE NO — govdede baska alan YOK.
+  ///
+  /// `ad` ve `password` GONDERILMIYOR (parametreleri de kaldirildi):
+  /// sunucu ad verilmediginde daireden turetilen gecici bir ad yazar ve
+  /// parolayi kullanicinin KENDI kayit akisi belirler. Gerekce
+  /// `_AddResidentSheetState` basliginda.
   Future<String?> addResident({
-    required String ad,
     required String telefon,
     required String unitNo,
-    String? password,
   }) async {
     final data = <String, dynamic>{
-      'ad': ad,
       'telefon': telefon,
       'unit_no': unitNo,
     };
-    if (password != null && password.isNotEmpty) data['password'] = password;
     try {
       final res = await _dio.post<Map<String, dynamic>>(
         '/residents',

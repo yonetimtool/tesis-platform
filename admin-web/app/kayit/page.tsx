@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import { DilSecici } from "@/components/DilSecici";
 import { ErrorBox, btnGhost, btnPrimary, cardCls, inputCls } from "@/components/form";
+import { SosyalGiris } from "@/components/SosyalGiris";
 import { YonetioLogo } from "@/components/YonetioLogo";
 import { ParolaAlani } from "@/components/ParolaAlani";
 import { useT } from "@/lib/i18n/kullan";
@@ -24,12 +25,22 @@ import { telefonGiris, telefonHatasi, telefonNormalle } from "@/lib/telefon";
  * Yani bu liste bir GUVENLIK siniri degil, bir UX secimidir; ikisini
  * karistirmamak icin yaziya dokuldu.
  *
- * DORT ADIM: rol -> tesis+telefon -> kod -> parola. Tek sayfada dort
- * form yerine adimlar, cunku kullanicinin elindeki bilgi de sirayla
+ * BES ADIM: rol -> tesis+telefon -> YONTEM -> kod -> parola. Tek sayfada
+ * bes form yerine adimlar, cunku kullanicinin elindeki bilgi de sirayla
  * geliyor (kodu ancak telefonu girdikten sonra aliyor).
+ *
+ * (P154 duzeltme turu) YONTEM ADIMI SONRADAN EKLENDI. Brief kimlik
+ * dogrulama yontemini KULLANICININ SECIMI sayiyor: parola · Google ·
+ * Microsoft · Apple. Onceki surum dogrudan paroladan devam ediyordu;
+ * sosyal hesapla kaydolmak yalnizca GIRIS ekranindan mumkundu.
+ *
+ * SOSYAL DAL BU SAYFADA BITMEZ: web'de saglayiciya tam yonlendirme var,
+ * yani akis `/giris/oauth`ta devam eder. Girilen tesis ID + telefon
+ * `sessionStorage`a birakilir (bkz. `kayitBilgisiYaz`) ve o sayfa ayni
+ * seyi bir daha sormaz.
  */
 
-type Adim = "rol" | "kimlik" | "kod" | "parola";
+type Adim = "rol" | "kimlik" | "yontem" | "kod" | "parola";
 type Rol = "yonetici" | "denetci";
 
 const UC_BASLA = "/api/auth/kayit/rol-basla";
@@ -72,9 +83,14 @@ export default function KayitSayfasi() {
   const [hata, setHata] = useState<string | null>(null);
   const [bekliyor, setBekliyor] = useState(false);
 
-  const adimNo = { rol: 1, kimlik: 2, kod: 3, parola: 4 }[adim];
+  const adimNo = { rol: 1, kimlik: 2, yontem: 3, kod: 4, parola: 5 }[adim];
 
-  async function kimlikGonder(e: React.FormEvent) {
+  /**
+   * Kimlik adimi ARTIK AG CAGIRMIYOR: yalniz dogrulayip yontem adimina
+   * gecer. SMS'i baslatan sey yontem secimidir — kimlik adimi cagirsaydi
+   * "Google" secen kullaniciya once gereksiz bir kayit SMS'i giderdi.
+   */
+  function kimlikGonder(e: React.FormEvent) {
     e.preventDefault();
     // `telefonHatasi` KIMLIK doner (metin degil) — cevirisi burada
     // cozulur; GirisFormu ile AYNI esleme kullaniliyor ki iki ekran ayni
@@ -84,6 +100,12 @@ export default function KayitSayfasi() {
       setHata(telHata === "gecersizOnEk" ? t("telefonHataOnEk") : t("telefonHataEksik"));
       return;
     }
+    setHata(null);
+    setAdim("yontem");
+  }
+
+  /** (a) Parola olustur — kayit ucu SMS gonderir, kod adimina gecilir. */
+  async function parolaYolu() {
     setBekliyor(true);
     setHata(null);
     try {
@@ -236,6 +258,39 @@ export default function KayitSayfasi() {
         </form>
       )}
 
+      {adim === "yontem" && (
+        <div className="space-y-4">
+          <h2 className="font-medium">{t("kayitYontemBaslik")}</h2>
+          <button
+            type="button"
+            disabled={bekliyor}
+            className={`${btnPrimary} w-full py-3`}
+            onClick={() => void parolaYolu()}
+          >
+            {t("kayitYontemParola")}
+          </button>
+          {/* SAGLAYICI LISTESI SUNUCUDAN: hicbiri yapilandirilmamissa
+              bilesen KENDINI cizmez ve geriye yalniz parola kalir —
+              brief'in "tikanirsa Asama 3 tek basina calissin" kurali. */}
+          <SosyalGiris
+            niyet="giris"
+            // Bu adima ancak `kimlikGonder` telefonu DOGRULADIKTAN sonra
+            // gelinir; normalleştirme bos donemez.
+            kayitBilgisi={{
+              tesisKodu: tesisKodu.trim(),
+              telefon: telefonNormalle(telefon),
+            }}
+          />
+          <button
+            type="button"
+            className={`${btnGhost} w-full px-4 py-3`}
+            onClick={() => setAdim("kimlik")}
+          >
+            {t("kayitGeri")}
+          </button>
+        </div>
+      )}
+
       {adim === "kod" && (
         <form onSubmit={kodGonder} className="space-y-4">
           <h2 className="font-medium">{t("kayitKodBaslik")}</h2>
@@ -269,7 +324,7 @@ export default function KayitSayfasi() {
             <button
               type="button"
               className={`${btnGhost} px-4 py-3`}
-              onClick={() => setAdim("kimlik")}
+              onClick={() => setAdim("yontem")}
             >
               {t("kayitGeri")}
             </button>

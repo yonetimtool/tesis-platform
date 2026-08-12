@@ -5005,11 +5005,17 @@ class AppLocalizationsAr extends AppLocalizations {
   String get kayitKodGerekli => 'أدخل الرمز.';
 
   @override
+  String get kayitYontemBaslik => 'كيف ستسجّل الدخول؟';
+
+  @override
+  String get kayitYontemParola => 'إنشاء كلمة مرور';
+
+  @override
   String get kayitGirisLinki => 'لديك حساب بالفعل؟ سجّل الدخول';
 
   @override
   String kayitAdim(String n) {
-    return 'الخطوة $n/3';
+    return 'الخطوة $n/4';
   }
 
   @override

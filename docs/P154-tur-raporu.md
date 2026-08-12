@@ -1186,3 +1186,142 @@ sunucusu yok ve canlıya dokunmak yasak. Sunucu kalkınca:
 5. Yeni tesis oluştur → kod `XXXX-YYAAGG` biçiminde mi?
 6. Aynı ad + aynı gün ikinci tesis → ek **iki haneli** mi?
 7. Yönetici rolüyle `/olaylar` menüde **görünmüyor** mu?
+
+---
+
+# 10. DÜZELTME TURU — kayıt ve giriş şartnamesine göre ölçüm
+
+> Kerem tam şartnameyi yeniden yazdı ve "mevcut uygulamayı buna göre ölç,
+> sonra düzelt" dedi. Bu bölüm **önce ölçümü**, sonra kapatılan dört
+> maddeyi yazar.
+
+## 10.1 Ölçüm — 25 maddenin 21'i zaten doğruydu
+
+| Madde | Durum |
+|---|---|
+| §1 Site oluşturma (6 madde: panel · ID biçimi · rastgele ek · telefon+ad ile yönetici · çoklu yönetici · sonradan ekle/sil) | **6/6 vardı** (göç 0037/0041) |
+| §2.1 İlk açılışta rol listesi | **EKSİK** → 10.2 |
+| §2.2–2.3 Mobil 4 rol / web 2 rol | vardı |
+| §3.1 Sıra: tesis ID → telefon | vardı |
+| §3.2 Kimlik doğrulama yöntemi **seçimi** | **EKSİK** → 10.3 |
+| §3.3–3.6 Role göre daire kuralı | vardı |
+| §3.7–3.9 Eşleşme kuralı · kimin tanımladığı · sosyal kayıtta tesis+telefon | vardı |
+| §4 Sonraki girişler (parola · sosyal · tek hesap iki yöntem) | vardı (göç 0048) |
+| §5.1 Web Excel toplu yükleme | vardı (göç 0045) |
+| §5.2 Mobil tekli ekleme "yalnız telefon" | **YANLIŞ** → 10.4 |
+| §5.3–5.4 Telefon güncelleme · silme · saha/denetçi hesabını yönetici açar | vardı |
+| §6.1 Daire başına hesap sınırı | göç 0049 → 10.5 |
+| §6.2 Denetçinin mobil yüzeyi yok | vardı |
+
+## 10.2 §2.1 — ilk açılış artık rol listesine düşüyor
+
+Uygulama **her** açılışta giriş ekranıyla başlıyordu; rol listesine ancak
+giriş ekranındaki bağlantıyla ulaşılıyordu. Yani kaydolmaya gelen
+kullanıcı önce "giriş yap" demek zorundaydı.
+
+Artık `ui.rol_secimi_gosterildi` bayrağı yok iken açılış `/kayit`a düşer.
+**Bayrak liste GÖRÜLÜNCE yazılır**, kaydolma tamamlanınca değil: brief
+listeyi "ilk açılışın ekranı" sayıyor, kaydolmanın ödülü değil.
+
+**Varsayılan `true` ve bu bilinçli.** "İlk açılış" iddiası ancak depo
+GERÇEKTEN okunup anahtar bulunamayınca yapılabilir (`acilisTercihleriniOku`).
+Elle kurulan her `AcilisTercihleri` — depo hatasındaki fallback ve dil/tema
+tohumlayan testler dahil — "gösterildi" sayılır. Varsayılan `false` olsaydı
+okunamayan bir depo, hesabı olan kullanıcıyı **her açılışta** kayıt
+ekranına düşürürdü.
+
+**Ölçülen kusur:** işaretleme önce `Future(...)` ile ertelenmişti; o bir
+ZAMANLAYICI kurar ve ağaç çalışmadan atılırsa `flutter_test` "A Timer is
+still pending" ile düşer — `acilis_dil_titremesi_test` böyle kırıldı.
+`addPostFrameCallback` ağaçla birlikte düşer.
+
+## 10.3 §3.2 — kimlik doğrulama yöntemi artık bir ADIM
+
+Akış kimlik adımından **doğrudan paroladan** devam ediyordu. Sosyal
+hesapla kaydolmak yalnızca **giriş** ekranından mümkündü; yani brief'in
+"(a) parola (b) Google (c) Microsoft (d) Apple" seçimi hiç sorulmuyordu.
+
+Mobil `rol → kimlik → YÖNTEM → kod`, web `rol → kimlik → YÖNTEM → kod →
+parola` oldu.
+
+**SMS neden hâlâ var:** brief onu saymıyor ama sağlayıcı "bu telefonun
+sahibisin" DEMEZ. İki yolda da telefon sahipliğini kanıtlayan şey SMS'tir;
+yöntem seçimi onun **yerine** değil, **önüne** kondu.
+
+**SMS artık yöntemden SONRA gönderiliyor.** Önce kimlik adımında
+gönderiliyordu: "Google" seçen kullanıcıya önce bir `amac=kayit` SMS'i
+gider, ardından sosyal yol kendi kodunu gönderirdi — **iki kod, tek
+telefon**.
+
+**Web'de tesis ID + telefon TAŞINIYOR.** Web'de sağlayıcıya tam
+yönlendirme var; dönüşte `/giris/oauth` yeni bir React ağacıdır ve
+bellekteki hiçbir şey yaşamaz. İki alan `sessionStorage`a bırakılır
+(niyet ile **aynı** mekanizma — iki ayrı saklama yeri, birinin
+temizlenip ötekinin kalması demekti) ve dönüş sayfası aynı şeyi bir daha
+sormaz.
+
+**Bilinen asimetri (kapatılmadı, yazıya döküldü):** sosyal dalda sakinin
+**daire eşleşmesi** doğrulanmıyor — `/oauth/baglan/basla` daire almıyor.
+Kapatmak, aynı ucu kullanan "açık oturuma yöntem ekle" akışını da daire
+sormaya zorlardı. Daire bir **güvenlik sınırı değil** (sınır telefon
+sahipliği + SMS'tir); doğrulanması kişinin kendi dairesini bildiğinin ek
+teyididir.
+
+## 10.4 §5.2 — mobil tekli ekleme: telefon + daire no
+
+Form **Ad + telefon + daire no + parola** istiyordu. Kerem "telefon +
+daire no kalsın" dedi (sakinin hangi daireye bağlanacağı başka türlü
+bilinmiyor ve §3'ün daire eşleşmesi buna dayanıyor).
+
+* **Ad kalktı** — yönetici numarayı bilir, adı çoğu zaman bilmez.
+* **Parola kalktı** — brief'te sakinin parolasını yönetici belirlemiyor;
+  kullanıcı kendi kayıt akışında seçiyor. Yöneticinin parola koyması, o
+  akışın "hesabı SAHİPLENME" adımını baştan tüketirdi.
+
+**`app_user.ad` NULLABLE YAPILMADI.** Sütun NOT NULL, **87 yerde**
+okunuyor ve **20+ yanıt şemasında** `ad: str` olarak zorunlu. Global
+nullable yapmak, brief'in dokunmadığı her ekranı (personel, yönetici,
+denetçi listeleri) ilgilendiren bir değişiklik olurdu. Bunun yerine uç,
+ad verilmediğinde **daireden türetilen** geçici bir ad yazar
+(`"A-12 sakini"`): listede anlamlı görünür, geçici olduğu okunur ve kişi
+kaydolunca profilinden düzeltir.
+
+## 10.5 §6.1 — kural ROL BAŞINA, ve NULL boşluğu kapatıldı
+
+Kerem netleştirdi: **"her daire tek malik tek kiracı"** — yani göç
+0049'un davranışı doğru, sıkılaştırma yok. Kuralın harfi (role bakmadan
+tek sakin) `borclandirma.hedef_sec`in `kiraci_oncelikli` kuralını seçecek
+bir şey bırakmazdı.
+
+**Ama bu turda gerçek bir boşluk bulundu:** kontrol
+`units.assign_resident` ve içe aktarımda vardı, sakin açmanın **asıl
+kapısı** olan `POST /residents`te **YOKTU**. Veritabanı indeksi
+`(unit_id, rol_tipi)` ikinci bir MALİKİ yakalar; ama PostgreSQL benzersiz
+indekslerde NULL'ları çatıştırmaz — **rol tipi verilmeden açılan sakinler
+aynı daireye sınırsız eklenebiliyordu**. Mobil form artık rol tipi
+sormadığı için (10.4) o dal **varsayılan yol** hâline geliyordu.
+
+`POST /residents` artık `daire_rolu_dolu_mu` çağırıyor (NULL'u da bir
+değer sayan ortak yardımcı) ve ikinci rolsüz sakini 409 ile reddediyor.
+
+## 10.6 Yan bulgu — denetim notları testi bayattı
+
+`denetim_notlari_test` tohumlamada **5** demo hesabı bekliyordu; `f864415`
+altıncısını (denetçi) eklemişti. Belge doğruydu ve denetçinin giriş
+tablosunda **neden** olmadığını zaten yazıyordu; bayat olan **testti**.
+
+Test artık niyeti tam olarak kodluyor: altı hesap tohumlanır, beşi giriş
+tablosundadır, altıncısı tabloda **olmamalıdır** ama notta **anılmalıdır**.
+Belgeye eksik olan `denetci@demo.yonetio.site` eklendi.
+
+## 10.7 Testler
+
+| Nerede | Ne ölçülüyor |
+|---|---|
+| `test_rol_secimli_kayit.py` | **Beş rolün her biri** için uçtan uca: rol → tesis ID → telefon → kod → parola → **giriş** (parametrik) |
+| `test_rol_secimli_kayit.py` | Denetçi UCU açık — kapalı olan LİSTE; sınır yazıya döküldü |
+| `test_sakin_ekleme_telefon_daire.py` | Ad'sız ekleme · ad daireden türer · verilen ad ezilmez · ikinci malik 409 · malik+kiracı birlikte · **rolsüz ikinci sakin 409** |
+| `kayit_rol_secimi_test.dart` | Yöntem adımı dört seçenek · sağlayıcı yoksa yalnız parola · sosyal yolda kayıt ucu **çağrılmaz** · tesis+telefon ikinci kez sorulmaz |
+| `uygulama_acilis_giris_test.dart` | İlk açılış rol listesi · ikinci açılış giriş · bayrak depoya yazılır |
+| `kayit-rolleri.test.ts` | Adım sırası brief'inki · dört seçenek · SMS yöntemden sonra · tesis+telefon taşınır |
+| `denetim_notlari_test.dart` | Altı hesap · denetçi tabloda yok ama notta açıklanmış |

@@ -274,3 +274,95 @@ def test_kod_istegi_HIZ_SINIRINA_takilir(client, world, owner_conn):
     son = client.post("/auth/kayit/rol-basla", json=govde)
     assert son.status_code == 429, son.text
     assert son.json()["error"]["code"] == "rate_limited"
+
+
+# ============ 5) (P154 duzeltme turu) HER ROL ICIN UCTAN UCA =============== #
+#
+# Brief: "Her rol icin uctan uca akisi test et: rol sec -> tesis ID ->
+# telefon -> parola -> giris."
+#
+# Onceki testler yalniz `yonetici` ve `resident`i suruyordu; `security`,
+# `tesis_gorevlisi` ve `denetci` icin akisin SONUNA (parola + giris) kadar
+# giden hicbir olcum yoktu. Rol yolu her rolde AYNI kodu kosuyor ama
+# "ayni kodu kosuyor" bir VARSAYIMDIR — daire kurali, gorev penceresi ve
+# `login-phone` kapisi role gore ayrisan yerlerdir.
+
+import pytest
+
+
+def _daire_bagla(owner_conn, slug: str, user_id) -> str:
+    """Sakin icin daire acar ve baglar; daire no doner."""
+    no = f"E2E-{uuid.uuid4().hex[:5]}"
+    with owner_conn.cursor() as cur:
+        cur.execute(
+            "INSERT INTO unit (tenant_id, blok, no) "
+            "SELECT id, 'A', %s FROM tenant WHERE slug = %s RETURNING id",
+            (no, slug),
+        )
+        unit_id = cur.fetchone()[0]
+        cur.execute(
+            "INSERT INTO unit_resident (tenant_id, unit_id, user_id, rol_tipi) "
+            "SELECT id, %s, %s, 'malik' FROM tenant WHERE slug = %s",
+            (unit_id, user_id, slug),
+        )
+    return no
+
+
+@pytest.mark.parametrize(
+    "rol",
+    ["yonetici", "resident", "security", "tesis_gorevlisi", "denetci"],
+)
+def test_UCTAN_UCA_her_rol_kaydolur_ve_girer(client, world, owner_conn, rol):
+    """rol sec -> tesis ID -> telefon -> kod -> parola -> GIRIS."""
+    tel = _tel()
+    uid = _parolasiz_kullanici(owner_conn, world["slug_a"], rol, tel)
+
+    govde = {
+        "rol": rol,
+        "tesis_kodu": _kod(owner_conn, world["slug_a"]),
+        "telefon": tel,
+    }
+    # DAIRE YALNIZ SAKINDE: brief yoneticiden, saha rollerinden ve
+    # denetciden daire ISTEMIYOR. Digerlerine daire eklemek sozlesmeyi
+    # de bozardi (`RolKayitBaslaRequest` onu yalniz `resident`ta bekler).
+    if rol == "resident":
+        govde["daire_no"] = _daire_bagla(owner_conn, world["slug_a"], uid)
+
+    r = client.post("/auth/kayit/rol-basla", json=govde)
+    assert r.status_code == 200, r.text
+
+    kod = _kodu_al(owner_conn, tel)
+    d = client.post("/auth/kayit/rol-dogrula", json={"telefon": tel, "kod": kod})
+    assert d.status_code == 200, d.text
+
+    parola = "UctanUca1!"
+    sp = client.post("/auth/set-password", json={
+        "setup_token": d.json()["setup_token"], "new_password": parola})
+    assert sp.status_code == 200, sp.text
+
+    # SONRAKI GIRIS (brief §4): telefon + parola.
+    lp = client.post("/auth/login-phone", json={"phone": tel, "password": parola})
+    assert lp.status_code == 200, lp.text
+    assert lp.json()["password_setup_required"] is False
+    assert lp.json()["access_token"]
+
+
+def test_DENETCI_kaydolabilir_mobil_liste_URUN_karari(client, world, owner_conn):
+    """Denetcinin mobil YUZEYI yok; UCU kapali DEGIL — ve bu bilincli.
+
+    Brief "denetcinin mobil yuzeyi yoktur, mobilde rol listesinde
+    GORUNMEZ" diyor. Kapatilan sey LISTEDIR (istemci karari); ucu role
+    gore kapatmak, denetcinin WEB kaydini da kirardi cunku iki yuzey
+    AYNI ucu cagirir. Bu test o siniri yaziya dokuyor ki biri "denetci
+    zaten kaydolamamali" diye ucu kapatmasin.
+    """
+    tel = _tel()
+    _parolasiz_kullanici(owner_conn, world["slug_a"], "denetci", tel)
+    r = client.post("/auth/kayit/rol-basla", json={
+        "rol": "denetci",
+        "tesis_kodu": _kod(owner_conn, world["slug_a"]),
+        "telefon": tel,
+    })
+    assert r.status_code == 200, r.text
+    # Ve kod GERCEKTEN uretildi (eslesme oldu) — sessiz dal degil.
+    assert _kodu_al(owner_conn, tel)

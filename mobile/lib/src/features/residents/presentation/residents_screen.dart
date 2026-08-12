@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
 import '../../../core/ui/temp_code_dialog.dart';
-import '../../../core/validators/password_rule.dart';
 import '../data/residents_api.dart';
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/ui/merkez_diyalog.dart';
@@ -398,20 +397,31 @@ class _AddResidentSheet extends ConsumerStatefulWidget {
   ConsumerState<_AddResidentSheet> createState() => _AddResidentSheetState();
 }
 
+/// (P154 / Asama 5) MOBIL TEKLI EKLEME — telefon + daire no, BASKA ALAN YOK.
+///
+/// Brief: "MOBIL: 'Site sakini' sekmesinden TEKLI ekler; eklerken YALNIZ
+/// TELEFON girer." Kerem daire no'nun kalmasini netlestirdi (sakinin hangi
+/// daireye baglanacagi baska turlu bilinmiyor ve §3'un daire eslesmesi
+/// buna dayaniyor).
+///
+/// KALKAN IKI ALAN VE NEDENLERI:
+///  * AD SOYAD — yonetici numarayi bilir, adi cogu zaman bilmez. Ad artik
+///    opsiyonel (`ResidentCreate`); verilmezse sunucu daireden turetilen
+///    gecici bir ad yazar ve kisi kaydolunca profilinden duzeltir.
+///  * PAROLA — brief'te sakinin parolasini YONETICI belirlemiyor;
+///    kullanici kendi kayit akisinda (rol -> tesis ID -> telefon ->
+///    yontem) seciyor. Yoneticinin parola koymasi, o akisin "hesabi
+///    SAHIPLENME" adimini bastan tuketirdi.
 class _AddResidentSheetState extends ConsumerState<_AddResidentSheet> {
   final _formKey = GlobalKey<FormState>();
-  final _adCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
   final _unitCtrl = TextEditingController();
-  final _passwordCtrl = TextEditingController();
   bool _submitting = false;
 
   @override
   void dispose() {
-    _adCtrl.dispose();
     _phoneCtrl.dispose();
     _unitCtrl.dispose();
-    _passwordCtrl.dispose();
     super.dispose();
   }
 
@@ -426,10 +436,8 @@ class _AddResidentSheetState extends ConsumerState<_AddResidentSheet> {
       final tempCode = await ref
           .read(residentsApiProvider)
           .addResident(
-            ad: _adCtrl.text.trim(),
             telefon: telefonNormalle(_phoneCtrl.text),
             unitNo: _unitCtrl.text.trim(),
-            password: _passwordCtrl.text,
           );
       if (!mounted) return;
       navigator.pop('ok');
@@ -467,18 +475,6 @@ class _AddResidentSheetState extends ConsumerState<_AddResidentSheet> {
             ),
             const SizedBox(height: 12),
             TextFormField(
-              controller: _adCtrl,
-              enabled: !_submitting,
-              decoration: InputDecoration(
-                labelText: l10n.ortakAdSoyad,
-                prefixIcon: const Icon(Icons.person_outline),
-                border: const OutlineInputBorder(),
-              ),
-              validator: (v) =>
-                  (v?.trim() ?? '').length < 2 ? l10n.butAdZorunlu : null,
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
               controller: _phoneCtrl,
               enabled: !_submitting,
               keyboardType: TextInputType.phone,
@@ -507,20 +503,6 @@ class _AddResidentSheetState extends ConsumerState<_AddResidentSheet> {
               ),
               validator: (v) =>
                   (v?.trim() ?? '').isEmpty ? l10n.sakinDaireNoZorunlu : null,
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _passwordCtrl,
-              enabled: !_submitting,
-              obscureText: true,
-              decoration: InputDecoration(
-                labelText: l10n.sakinParolaOpsiyonel,
-                helperText: l10n.sakinBosBirakKod,
-                prefixIcon: const Icon(Icons.lock_outline),
-                border: const OutlineInputBorder(),
-              ),
-              validator: (v) =>
-                  (v ?? '').isEmpty ? null : parolaHataMetni(l10n, v),
             ),
             const SizedBox(height: 16),
             FilledButton(

@@ -22,7 +22,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 
 import { ErrorBox, Field, btnPrimary, cardCls, inputCls } from "@/components/form";
-import { OAUTH_NIYET, saglayiciEtiketi } from "@/components/SosyalGiris";
+import {
+  OAUTH_NIYET,
+  kayitBilgisiOku,
+  saglayiciEtiketi,
+} from "@/components/SosyalGiris";
 import { useT } from "@/lib/i18n/kullan";
 import { telefonGiris, telefonHatasi, telefonNormalle } from "@/lib/telefon";
 
@@ -111,6 +115,20 @@ function OauthDonus() {
         if (d?.durum === "baglama_gerekli") {
           setSonuc(d);
           setAdim("tesis");
+          // (P154) KAYIT AKISINDAN GELINDIYSE tesis ID + telefon ZATEN
+          // girilmisti; alanlari doldurup adimi KENDILIGINDEN gecelim.
+          // Basarisiz olursa form dolu ve gorunur durumda kalir —
+          // kullanici duzeltip yeniden deneyebilir.
+          const saklanan = kayitBilgisiOku();
+          if (saklanan) {
+            setTesisKodu(saklanan.tesisKodu);
+            setTelefon(saklanan.telefon);
+            void tesisGonder({
+              tesisKodu: saklanan.tesisKodu,
+              telefon: saklanan.telefon,
+              jeton: d.baglama_jetonu ?? undefined,
+            });
+          }
           return;
         }
         // `durum=giris`: cerez yazildi. KOKE gidilir, sabit bir sayfaya
@@ -124,8 +142,19 @@ function OauthDonus() {
     })();
   }, [sonucId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function tesisGonder() {
-    const th = telefonHatasi(telefon);
+  /**
+   * `acik` VERILEBILIR cunku bu islev iki yerden cagriliyor: kullanicinin
+   * dugmesinden (durum okunur) ve kayit akisindan otomatik (durum HENUZ
+   * yazilmadi — `setState` senkron degildir, ayni karede okunamaz).
+   */
+  async function tesisGonder(acik?: {
+    tesisKodu: string;
+    telefon: string;
+    jeton?: string;
+  }) {
+    const kullanilanKod = (acik?.tesisKodu ?? tesisKodu).trim();
+    const kullanilanTel = acik?.telefon ?? telefon;
+    const th = telefonHatasi(kullanilanTel);
     if (th) {
       setHata(th === "gecersizOnEk" ? t("telefonHataOnEk") : t("telefonHataEksik"));
       return;
@@ -137,9 +166,9 @@ function OauthDonus() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          baglama_jetonu: sonuc?.baglama_jetonu,
-          tesis_kodu: tesisKodu.trim(),
-          telefon: telefonNormalle(telefon),
+          baglama_jetonu: acik?.jeton ?? sonuc?.baglama_jetonu,
+          tesis_kodu: kullanilanKod,
+          telefon: telefonNormalle(kullanilanTel),
         }),
       });
       const d = (await r.json().catch(() => null)) as BaslaYanit | null;
@@ -226,7 +255,7 @@ function OauthDonus() {
             <button
               className={btnPrimary}
               disabled={gonderiliyor || !tesisKodu.trim()}
-              onClick={() => void tesisGonder()}
+              onClick={() => void tesisGonder(undefined)}
             >
               {gonderiliyor ? t("ortakKaydediliyor") : t("sosyalKodGonder")}
             </button>

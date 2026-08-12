@@ -23,6 +23,48 @@ import { useT } from "@/lib/i18n/kullan";
 
 export const OAUTH_NIYET = "yonetio.oauth.niyet";
 
+/**
+ * (P154 duzeltme turu) KAYIT AKISINDA GIRILEN tesis ID + telefon.
+ *
+ * NEDEN DEPOYA YAZILIYOR: web'de sosyal akis sayfadan TAMAMEN ayrilir
+ * (saglayiciya tam yonlendirme) ve donuste `/giris/oauth` yeni bir React
+ * agacidir — bellekteki hicbir sey hayatta kalmaz. Brief bu iki alani
+ * yontemden ONCE istiyor; donuste yeniden sormak, kullaniciya ayni seyi
+ * iki kez yazdirmak olurdu.
+ *
+ * `niyet` ile AYNI mekanizma (`sessionStorage`) bilincli: iki ayri
+ * saklama yeri, birinin temizlenip otekinin kalmasi demekti.
+ */
+export const OAUTH_KAYIT = "yonetio.oauth.kayit";
+
+export interface KayitBilgisi {
+  tesisKodu: string;
+  telefon: string;
+}
+
+export function kayitBilgisiYaz(bilgi: KayitBilgisi) {
+  try {
+    sessionStorage.setItem(OAUTH_KAYIT, JSON.stringify(bilgi));
+  } catch {
+    // Depolama yoksa donuste alanlar bos gelir ve kullanici elle yazar —
+    // akis KIRILMAZ, yalnizca kisalmaz.
+  }
+}
+
+/** Okur VE SILER: bilgi tek kullanimliktir (niyet ile ayni kural). */
+export function kayitBilgisiOku(): KayitBilgisi | null {
+  try {
+    const ham = sessionStorage.getItem(OAUTH_KAYIT);
+    sessionStorage.removeItem(OAUTH_KAYIT);
+    if (!ham) return null;
+    const d = JSON.parse(ham) as Partial<KayitBilgisi>;
+    if (!d.tesisKodu || !d.telefon) return null;
+    return { tesisKodu: d.tesisKodu, telefon: d.telefon };
+  } catch {
+    return null;
+  }
+}
+
 /** Sunucunun tanidigi saglayici kodlari. */
 const ETIKET: Record<string, string> = {
   google: "Google",
@@ -49,9 +91,13 @@ export function niyetiYaz(niyet: "giris" | "bagla") {
 export function SosyalGiris({
   niyet,
   yuzey = "web",
+  kayitBilgisi,
 }: {
   niyet: "giris" | "bagla";
   yuzey?: "web" | "mobil";
+  /** (P154) Kayit akisindan gelindiyse: donuste tekrar sorulmasin diye
+   *  saglayiciya gitmeden ONCE saklanan tesis ID + telefon. */
+  kayitBilgisi?: KayitBilgisi;
 }) {
   const t = useT();
   const [saglayicilar, setSaglayicilar] = useState<string[]>([]);
@@ -98,6 +144,7 @@ export function SosyalGiris({
         return;
       }
       niyetiYaz(niyet);
+      if (kayitBilgisi) kayitBilgisiYaz(kayitBilgisi);
       window.location.href = d.adres;
     } catch {
       setHata(t("ortakSunucuyaUlasilamadi"));

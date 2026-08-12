@@ -46,3 +46,56 @@ describe("(P154) web kayit rolleri", () => {
     expect(baslaBlok).not.toContain("parola");
   });
 });
+
+/**
+ * (P154 duzeltme turu) KIMLIK DOGRULAMA YONTEMI — brief §3.
+ *
+ * "Kimlik dogrulama yontemi, KULLANICININ SECIMI: (a) parola olustur
+ * (b) Google (c) Microsoft (d) Apple." Onceki surumde secim YOKTU: akis
+ * kimlik adimindan dogrudan paroladan devam ediyordu ve sosyal hesapla
+ * kaydolmak yalnizca GIRIS ekranindan mumkundu.
+ */
+describe("(P154) kayit akisinda yontem secimi", () => {
+  it("yontem AYRI bir adim ve sira brief'inki", () => {
+    const m = KAYNAK.match(/type Adim = ([^;]+);/);
+    expect(m, "`type Adim` bulunamadi").not.toBeNull();
+    const adimlar = m![1].split("|").map((s) => s.trim().replace(/"/g, ""));
+    // Tesis ID + telefon ("kimlik") YONTEMDEN ONCE gelir.
+    expect(adimlar).toEqual(["rol", "kimlik", "yontem", "kod", "parola"]);
+  });
+
+  it("dort secenek de sunuluyor (parola + saglayici dugmeleri)", () => {
+    const blok = KAYNAK.slice(
+      KAYNAK.indexOf('{adim === "yontem" &&'),
+      KAYNAK.indexOf('{adim === "kod" &&'),
+    );
+    expect(blok, "yontem adimi cizilmiyor").not.toBe("");
+    // (a) parola
+    expect(blok).toContain("kayitYontemParola");
+    // (b/c/d) — saglayici dugmeleri TEK bilesenden gelir; listeyi
+    // sunucu verir, bu yuzden burada bilesen aranir, marka adlari degil.
+    expect(blok).toContain("<SosyalGiris");
+  });
+
+  it("SMS'i baslatan cagri yontem seciminden SONRA yapilir", () => {
+    // Kimlik adimi `UC_BASLA`yi cagirsaydi, "Google" secen kullaniciya
+    // once gereksiz bir kayit SMS'i giderdi (iki kod, tek telefon).
+    const kimlik = KAYNAK.slice(
+      KAYNAK.indexOf("function kimlikGonder"),
+      KAYNAK.indexOf("async function parolaYolu"),
+    );
+    expect(kimlik).not.toContain("UC_BASLA");
+    expect(kimlik).toContain('setAdim("yontem")');
+  });
+
+  it("sosyal dala girilen tesis ID + telefon TASINIR", () => {
+    // Web'de saglayiciya tam yonlendirme var; donuste `/giris/oauth`
+    // yeni bir agactir. Tasinmasaydi kullanici ayni iki alani ikinci
+    // kez yazardi.
+    const blok = KAYNAK.slice(
+      KAYNAK.indexOf('{adim === "yontem" &&'),
+      KAYNAK.indexOf('{adim === "kod" &&'),
+    );
+    expect(blok).toContain("kayitBilgisi=");
+  });
+});

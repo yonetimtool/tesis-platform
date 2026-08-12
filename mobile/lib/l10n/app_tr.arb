@@ -2094,8 +2094,10 @@
   "kayitTesisKoduGerekli": "Tesis ID gerekli.",
   "kayitDaireGerekli": "Daire no gerekli.",
   "kayitKodGerekli": "Kodu girin.",
+  "kayitYontemBaslik": "Nasıl giriş yapacaksınız?",
+  "kayitYontemParola": "Parola oluştur",
   "kayitGirisLinki": "Zaten hesabınız var mı? Giriş yapın",
-  "kayitAdim": "Adım {n}/3",
+  "kayitAdim": "Adım {n}/4",
   "@kayitAdim": {
     "description": "Kayit akisi adim gostergesi",
     "placeholders": {

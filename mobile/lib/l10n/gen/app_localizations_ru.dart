@@ -4995,11 +4995,17 @@ class AppLocalizationsRu extends AppLocalizations {
   String get kayitKodGerekli => 'Введите код.';
 
   @override
+  String get kayitYontemBaslik => 'Как вы будете входить?';
+
+  @override
+  String get kayitYontemParola => 'Создать пароль';
+
+  @override
   String get kayitGirisLinki => 'Уже есть аккаунт? Войти';
 
   @override
   String kayitAdim(String n) {
-    return 'Шаг $n/3';
+    return 'Шаг $n/4';
   }
 
   @override

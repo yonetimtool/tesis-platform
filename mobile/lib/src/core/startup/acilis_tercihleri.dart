@@ -19,6 +19,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../features/auth/data/token_storage.dart' show secureStorageProvider;
 import '../i18n/locale_controller.dart';
 
 /// Acilistan once okunmus tercihler. Alanlarin `null` olmasi "KULLANICI SECIMI
@@ -27,10 +28,34 @@ import '../i18n/locale_controller.dart';
 /// olarak ifade eder.
 @immutable
 class AcilisTercihleri {
-  const AcilisTercihleri({this.dil, this.temaModu});
+  const AcilisTercihleri({
+    this.dil,
+    this.temaModu,
+    this.rolSecimiGosterildi = true,
+  });
 
   final AppDil? dil;
   final ThemeMode? temaModu;
+
+  /// (P154 / Asama 2) Rol listesi bu cihazda DAHA ONCE gosterildi mi?
+  ///
+  /// Brief: "Kullanici uygulamayi indirip ILK ACTIGINDA ekranda 'Size uygun
+  /// olanı seçiniz' yazar ve rol listesi cikar." Yani rol listesi ilk
+  /// acilisin ekranidir, her acilisin degil — ikincisi, hesabi olan
+  /// kullaniciya her seferinde kaydolmasini teklif etmek olurdu.
+  ///
+  /// `false` = henuz gosterilmedi (ilk acilis) → acilis rol listesine duser.
+  ///
+  /// VARSAYILAN `true` VE BU BILINCLI: "ilk acilis" iddiasi ancak depo
+  /// GERCEKTEN OKUNUP anahtar bulunamayinca yapilabilir — onu yalniz
+  /// [acilisTercihleriniOku] yapar. Elle kurulan her `AcilisTercihleri`
+  /// (depo hatasindaki `const AcilisTercihleri()` fallback'i ve dil/tema
+  /// tohumlayan testler dahil) "gosterildi" sayilir.
+  ///
+  /// Varsayilan `false` OLSAYDI: okunamayan bir depo, hesabi olan
+  /// kullaniciyi her acilista kayit ekranina dusururdu. Ters yondeki
+  /// zarar kucuktur — giris ekraninda zaten `login-kayit-baglantisi` var.
+  final bool rolSecimiGosterildi;
 }
 
 /// `null` → ON-OKUMA YAPILMADI (testler): denetleyiciler async yolu kullanir.
@@ -39,6 +64,40 @@ final acilisTercihleriProvider = Provider<AcilisTercihleri?>((ref) => null);
 
 const _dilKey = 'ui.locale';
 const _temaKey = 'ui.theme_mode';
+/// Yazan taraf [RolSecimiBekliyor.gosterildi], okuyan taraf
+/// [acilisTercihleriniOku] — ayni anahtar, tek sabit.
+const rolSecimiKey = 'ui.rol_secimi_gosterildi';
+
+/// (P154) Rol listesi HENUZ gosterilmedi mi? `true` → acilis rol listesine
+/// duser.
+///
+/// ON-OKUMA YOKSA `false`: `acilisTercihleriProvider` null iken (widget
+/// testleri) yonlendirme HIC devreye girmez. Testler beklemedikleri bir
+/// ekrana dusmez, cunku bu yonlendirme ACILISA aittir, ekranlara degil.
+class RolSecimiBekliyor extends Notifier<bool> {
+  @override
+  bool build() {
+    final tercih = ref.watch(acilisTercihleriProvider);
+    return tercih != null && !tercih.rolSecimiGosterildi;
+  }
+
+  /// Rol listesi gosterildi: bu acilista bir daha yonlendirme yapilmaz ve
+  /// karar depoya yazilir.
+  ///
+  /// YAZMA HATASI YUTULUR: isaretleyemezsek kullanici bir sonraki acilista
+  /// rol listesini bir kez daha gorur — acilisi bir depo hatasi yuzunden
+  /// kirmaktan iyidir.
+  Future<void> gosterildi() async {
+    if (!state) return;
+    state = false;
+    try {
+      await ref.read(secureStorageProvider).write(key: rolSecimiKey, value: '1');
+    } catch (_) {}
+  }
+}
+
+final rolSecimiBekliyorProvider =
+    NotifierProvider<RolSecimiBekliyor, bool>(RolSecimiBekliyor.new);
 
 /// Depodan dil + tema tercihini okur. Depo hata verirse (ilk kurulum, Keystore
 /// sorunu) varsayilanlarla doner — ACILIS ASLA BLOKE OLMAZ.
@@ -48,7 +107,12 @@ Future<AcilisTercihleri> acilisTercihleriniOku([
   try {
     final dil = AppDil.fromKod(await depo.read(key: _dilKey));
     final tema = temaModuCoz(await depo.read(key: _temaKey));
-    return AcilisTercihleri(dil: dil, temaModu: tema);
+    final rol = await depo.read(key: rolSecimiKey);
+    return AcilisTercihleri(
+      dil: dil,
+      temaModu: tema,
+      rolSecimiGosterildi: rol == '1',
+    );
   } catch (_) {
     return const AcilisTercihleri();
   }

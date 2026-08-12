@@ -4905,11 +4905,17 @@ class AppLocalizationsDe extends AppLocalizations {
   String get kayitKodGerekli => 'Geben Sie den Code ein.';
 
   @override
+  String get kayitYontemBaslik => 'Wie möchten Sie sich anmelden?';
+
+  @override
+  String get kayitYontemParola => 'Passwort erstellen';
+
+  @override
   String get kayitGirisLinki => 'Sie haben bereits ein Konto? Anmelden';
 
   @override
   String kayitAdim(String n) {
-    return 'Schritt $n/3';
+    return 'Schritt $n/4';
   }
 
   @override

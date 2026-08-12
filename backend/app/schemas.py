@@ -2885,11 +2885,23 @@ class ResidentCreate(BaseModel):
     """Yonetici daire + sakin hesabini tek adimda acar; gecici kod uretilir.
 
     telefon global benzersiz LOGIN anahtaridir (E.164 normalize); sakin
-    telefonla girer (daire no login KALDIRILDI). email opsiyonel."""
+    telefonla girer (daire no login KALDIRILDI). email opsiyonel.
+
+    (P154 / Asama 5) `ad` ARTIK OPSIYONEL. Brief mobil tekli eklemeyi
+    "yalniz telefon" diye tarif ediyor (Kerem netlestirdi: telefon +
+    daire no); yonetici sakini eklerken adini BILMEK ZORUNDA DEGIL.
+
+    NEDEN SEMA `ad`I NULL YAPMIYOR: `app_user.ad` NOT NULL ve 87 yerde
+    okunuyor, 20+ yanit semasinda `ad: str` olarak ZORUNLU. Sutunu
+    global nullable yapmak, brief'in dokunmadigi her ekrani (personel,
+    yonetici, denetci listeleri) ilgilendiren bir degisiklik olurdu.
+    Bunun yerine uc, ad verilmediginde DAIREDEN TURETILEN gecici bir ad
+    yazar ("A-12 sakini") — listede anlamli gorunur, gecici oldugu
+    okunur ve kisi kaydolunca profilinden duzeltir."""
 
     unit_no: str = Field(..., min_length=1, examples=["A-12"])
     blok: str | None = None  # yalniz YENI acilan unit'e islenir
-    ad: str = Field(..., min_length=1)
+    ad: str | None = Field(None, min_length=1)
     telefon: str = Field(..., min_length=1, examples=["+905321112203"])
     email: EmailStr | None = None  # sakinde opsiyonel
     rol_tipi: ResidentRol | None = None

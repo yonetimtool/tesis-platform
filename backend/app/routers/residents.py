@@ -50,8 +50,8 @@ async def create_resident(
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_YONETIM),
 ) -> ResidentCreatedOut:
-    # 1) unit: ayni no varsa mevcut kullanilir (ayni dairede coklu sakin),
-    #    yoksa ortulu olusturulur.
+    # 1) unit: ayni no varsa mevcut kullanilir (ayni daireye malik VE
+    #    kiraci baglanabilir — sinir 1b'de), yoksa ortulu olusturulur.
     unit: Unit | None = (
         await db.execute(select(Unit).where(Unit.no == body.unit_no))
     ).scalar_one_or_none()
@@ -62,6 +62,21 @@ async def create_resident(
             await db.flush()
         except IntegrityError as exc:
             raise translate_integrity(exc)
+
+    # 1b) (P154 / Asama 5) DAIRE BASINA HER ROLDEN BIR AKTIF HESAP.
+    #
+    # KONTROL BURADA EKSIKTI: kural goc 0049 ile kondu ve `units.
+    # assign_resident` ile ICE AKTARIM onu `daire_rolu_dolu_mu` uzerinden
+    # uyguluyordu; sakin acmanin ASIL kapisi olan BU UC ise uygulamiyordu.
+    # Veritabani indeksi (unit_id, rol_tipi) ikinci bir MALIKI yakalar ama
+    # PostgreSQL benzersiz indekslerde NULL'lari catistirmaz — yani
+    # `rol_tipi` verilmeden acilan sakinler bu daireye SINIRSIZ eklenirdi.
+    # Mobil form artik ad ve rol tipi SORMADIGI icin (yalniz telefon +
+    # daire no) o dal varsayilan yol hâline geliyor; bosluk kapatilmali.
+    from .units import daire_rolu_dolu_mu  # yerel import: ice_aktarim ile ayni
+
+    if await daire_rolu_dolu_mu(db, unit.id, body.rol_tipi):
+        raise APIError(409, "conflict", "daire_zaten_dolu")
 
     # 2) sakin hesabi. Parola VERILDIYSE dogrudan belirlenir (gecici kod YOK);
     #    verilmediyse tek seferlik gecici kod uretilir.
@@ -77,7 +92,10 @@ async def create_resident(
         temp_code_hash = hash_password(temp_code)
     resident = AppUser(
         tenant_id=user.tenant_id,
-        ad=body.ad,
+        # Ad verilmediyse DAIREDEN turetilen gecici ad — gerekcesi
+        # `ResidentCreate` docstring'inde (sutunu global nullable yapmak
+        # brief'in dokunmadigi her ekrani ilgilendirirdi).
+        ad=body.ad or f"{unit.no} sakini",
         email=str(body.email) if body.email else None,
         telefon=body.telefon,
         role="resident",

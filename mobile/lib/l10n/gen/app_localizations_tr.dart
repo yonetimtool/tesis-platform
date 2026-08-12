@@ -4737,11 +4737,17 @@ class AppLocalizationsTr extends AppLocalizations {
   String get kayitKodGerekli => 'Kodu girin.';
 
   @override
+  String get kayitYontemBaslik => 'Nasıl giriş yapacaksınız?';
+
+  @override
+  String get kayitYontemParola => 'Parola oluştur';
+
+  @override
   String get kayitGirisLinki => 'Zaten hesabınız var mı? Giriş yapın';
 
   @override
   String kayitAdim(String n) {
-    return 'Adım $n/3';
+    return 'Adım $n/4';
   }
 
   @override

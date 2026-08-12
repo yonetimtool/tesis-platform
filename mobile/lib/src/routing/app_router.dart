@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/startup/acilis_tercihleri.dart';
 import '../features/announcements/presentation/announcements_screen.dart';
 import '../features/cameras/domain/camera_models.dart';
 import '../features/cameras/presentation/camera_player_screen.dart';
@@ -503,6 +504,19 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Sakinin gecici kodla ilk girisi → zorunlu parola belirleme ekrani.
       if (auth.setupToken != null) {
         return location == AppRoutes.setPassword ? null : AppRoutes.setPassword;
+      }
+      // (P154 / Asama 2) ILK ACILIS ROL LISTESINE DUSER — girise degil.
+      // Brief: "uygulamayi indirip ilk actiginda ekranda 'Size uygun olanı
+      // seçiniz' yazar ve rol listesi cikar."
+      //
+      // YALNIZ SPLASH'TAN: kullanici rol listesinden girise gectiyse
+      // (`login-kayit-baglantisi`nin tersi) onu geri surukleyemeyiz;
+      // bayrak zaten ekran acilirken yaziliyor ama yazma ASENKRON ve
+      // yonlendirme SENKRON — kosulu splash'a baglamak ikisinin
+      // yarismasini imkânsiz kilar.
+      if (location == AppRoutes.splash &&
+          ref.read(rolSecimiBekliyorProvider)) {
+        return AppRoutes.kayit;
       }
       // Oturum yok → login disindaki her yerden login'e. (P154) `/kayit`
       // de oturumsuz erisilebilir olmali; aksi hâlde kaydolmak icin once

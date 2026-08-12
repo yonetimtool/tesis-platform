@@ -57,7 +57,8 @@ girer (`DEMO_PAROLA`). (Eskiden "dördü de aynı" yazıyordu; hesap sayısı
 arttıkça bayatlayan bir sayıydı.)
 
 > **Tabloda `denetci` rolü YOK ve bu bilinçli.** `demo_tenant.py` altıncı
-> bir hesap daha açıyor (`+905777777777`, kilitli kural 2 gereği) ama o
+> bir hesap daha açıyor (`+905777777777` / `denetci@demo.yonetio.site`,
+> kilitli kural 2 gereği) ama o
 > rolün **mobil yüzeyi yoktur** (kilitli kural 5): mobilde yalnızca web
 > paneline yönlendiren bir ekran görür. Denetçiye o hesabı vermek, ona
 > "boş" görünen bir ekran açtırmak ve uygulamayı bozuk göstermek olurdu.
