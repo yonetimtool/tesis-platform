@@ -1473,7 +1473,7 @@
   "kayitYontemBaslik": "¿Cómo iniciará sesión?",
   "kayitYontemParola": "Crear una contraseña",
   "kayitGirisLinki": "¿Ya tiene una cuenta? Iniciar sesión",
-  "kayitAdim": "Paso {n}/4",
+  "kayitAdim": "Paso {n}/{toplam}",
   "sosyalIleDevam": "Continuar con {saglayici}",
   "sosyalBaslik": "Vincule su cuenta",
   "sosyalEslesmeAciklama": "Su cuenta de {saglayici} está verificada. Introduzca el ID de la finca y su número de teléfono para localizar su cuenta.",
@@ -1489,5 +1489,34 @@
   "davetKullanilmis": "Esta invitación ya se ha utilizado.",
   "davetBulunamadi": "Este enlace de invitación no es válido.",
   "davetYoneticinizeBasvurun": "Solicite una nueva invitación a su administrador.",
-  "davetOzet": "{tesis} le invitó como {rol}."
+  "davetOzet": "{tesis} le invitó como {rol}.",
+  "@kayitAdim": {
+    "description": "Kayit akisi adim gostergesi",
+    "placeholders": {
+      "n": {
+        "type": "String"
+      },
+      "toplam": {
+        "type": "String"
+      }
+    }
+  },
+  "kayitYontemEposta": "Registrarse con correo/teléfono",
+  "kayitYontemVeya": "o",
+  "kayitBilgilerBaslik": "Sus datos",
+  "kayitAdSoyad": "Nombre y apellidos",
+  "kayitAdGerekli": "El nombre y apellidos es obligatorio.",
+  "kayitParola": "Contraseña",
+  "kayitParolaGerekli": "La contraseña debe tener al menos 8 caracteres.",
+  "kayitTesisAdBaslik": "Cree su comunidad",
+  "kayitTesisAd": "Introduzca el nombre de la comunidad",
+  "kayitTesisAdIpucu": "p. ej. Residencial Oltu",
+  "kayitTesisAdGerekli": "El nombre de la comunidad es obligatorio.",
+  "kayitZatenSitemVar": "Ya tengo una comunidad",
+  "kayitTesisKoduBaslik": "Su código de comunidad",
+  "kayitTesisKoduPaylas": "Comparta este código con sus residentes y personal; lo usan para unirse.",
+  "kayitKopyala": "Copiar",
+  "kayitKopyalandi": "Copiado",
+  "kayitTamamla": "Continuar",
+  "kayitSosyalAdNotu": "Nombre obtenido de su cuenta; puede cambiarlo."
 }

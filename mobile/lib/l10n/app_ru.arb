@@ -1473,7 +1473,7 @@
   "kayitYontemBaslik": "Как вы будете входить?",
   "kayitYontemParola": "Создать пароль",
   "kayitGirisLinki": "Уже есть аккаунт? Войти",
-  "kayitAdim": "Шаг {n}/4",
+  "kayitAdim": "Шаг {n}/{toplam}",
   "sosyalIleDevam": "Продолжить через {saglayici}",
   "sosyalBaslik": "Сопоставьте учётную запись",
   "sosyalEslesmeAciklama": "Аккаунт {saglayici} подтверждён. Введите ID объекта и номер телефона, чтобы мы нашли вашу учётную запись.",
@@ -1489,5 +1489,34 @@
   "davetKullanilmis": "Это приглашение уже использовано.",
   "davetBulunamadi": "Эта ссылка-приглашение недействительна.",
   "davetYoneticinizeBasvurun": "Обратитесь к управляющему за новым приглашением.",
-  "davetOzet": "{tesis} пригласил вас как {rol}."
+  "davetOzet": "{tesis} пригласил вас как {rol}.",
+  "@kayitAdim": {
+    "description": "Kayit akisi adim gostergesi",
+    "placeholders": {
+      "n": {
+        "type": "String"
+      },
+      "toplam": {
+        "type": "String"
+      }
+    }
+  },
+  "kayitYontemEposta": "Регистрация по эл. почте/телефону",
+  "kayitYontemVeya": "или",
+  "kayitBilgilerBaslik": "Ваши данные",
+  "kayitAdSoyad": "Имя и фамилия",
+  "kayitAdGerekli": "Укажите имя и фамилию.",
+  "kayitParola": "Пароль",
+  "kayitParolaGerekli": "Пароль должен содержать не менее 8 символов.",
+  "kayitTesisAdBaslik": "Создайте свой объект",
+  "kayitTesisAd": "Введите название объекта",
+  "kayitTesisAdIpucu": "напр. ЖК «Олту»",
+  "kayitTesisAdGerekli": "Укажите название объекта.",
+  "kayitZatenSitemVar": "У меня уже есть объект",
+  "kayitTesisKoduBaslik": "Код вашего объекта",
+  "kayitTesisKoduPaylas": "Передайте этот код жильцам и сотрудникам — по нему они присоединятся.",
+  "kayitKopyala": "Копировать",
+  "kayitKopyalandi": "Скопировано",
+  "kayitTamamla": "Продолжить",
+  "kayitSosyalAdNotu": "Имя взято из вашей учётной записи; его можно изменить."
 }

@@ -69,6 +69,16 @@ class _RecordingAuthRepository implements AuthRepository {
   Future<bool> restoreSession() async => false;
 
   @override
+  Future<({String tesisAd, String tesisKodu})> tesisOlustur({
+    required String tesisAd,
+    required String ad,
+    required String telefon,
+    String? parola,
+    String? baglamaJetonu,
+  }) async =>
+      (tesisAd: tesisAd, tesisKodu: 'SINA-260101');
+
+  @override
   Future<void> logout() async {}
 }
 

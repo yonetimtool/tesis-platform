@@ -2097,11 +2097,14 @@
   "kayitYontemBaslik": "Nasıl giriş yapacaksınız?",
   "kayitYontemParola": "Parola oluştur",
   "kayitGirisLinki": "Zaten hesabınız var mı? Giriş yapın",
-  "kayitAdim": "Adım {n}/4",
+  "kayitAdim": "Adım {n}/{toplam}",
   "@kayitAdim": {
     "description": "Kayit akisi adim gostergesi",
     "placeholders": {
       "n": {
+        "type": "String"
+      },
+      "toplam": {
         "type": "String"
       }
     }
@@ -2146,5 +2149,32 @@
   "davetBulunamadi": "Bu davet bağlantısı geçersiz.",
   "davetYoneticinizeBasvurun": "Yeni bir davet için yöneticinize başvurun.",
   "davetOzet": "{tesis} sizi {rol} olarak davet etti.",
-  "@davetOzet": {"placeholders": {"tesis": {"type": "String"}, "rol": {"type": "String"}}}
+  "@davetOzet": {
+    "placeholders": {
+      "tesis": {
+        "type": "String"
+      },
+      "rol": {
+        "type": "String"
+      }
+    }
+  },
+  "kayitYontemEposta": "E-posta/telefon ile kaydol",
+  "kayitYontemVeya": "veya",
+  "kayitBilgilerBaslik": "Bilgileriniz",
+  "kayitAdSoyad": "Ad soyad",
+  "kayitAdGerekli": "Ad soyad gerekli.",
+  "kayitParola": "Parola",
+  "kayitParolaGerekli": "Parola en az 8 karakter olmalı.",
+  "kayitTesisAdBaslik": "Tesisinizi oluşturun",
+  "kayitTesisAd": "Tesis adını giriniz",
+  "kayitTesisAdIpucu": "Örn. Oltu Sitesi",
+  "kayitTesisAdGerekli": "Tesis adı gerekli.",
+  "kayitZatenSitemVar": "Zaten bir sitem var",
+  "kayitTesisKoduBaslik": "Tesis kodunuz",
+  "kayitTesisKoduPaylas": "Bu kodu sakinlerinize ve personelinize iletin; uygulamaya bu kodla katılırlar.",
+  "kayitKopyala": "Kopyala",
+  "kayitKopyalandi": "Kopyalandı",
+  "kayitTamamla": "Devam et",
+  "kayitSosyalAdNotu": "Ad soyad hesabınızdan alındı; değiştirebilirsiniz."
 }

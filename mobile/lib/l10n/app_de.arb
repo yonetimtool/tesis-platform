@@ -1473,7 +1473,7 @@
   "kayitYontemBaslik": "Wie möchten Sie sich anmelden?",
   "kayitYontemParola": "Passwort erstellen",
   "kayitGirisLinki": "Sie haben bereits ein Konto? Anmelden",
-  "kayitAdim": "Schritt {n}/4",
+  "kayitAdim": "Schritt {n}/{toplam}",
   "sosyalIleDevam": "Mit {saglayici} fortfahren",
   "sosyalBaslik": "Konto zuordnen",
   "sosyalEslesmeAciklama": "Ihr {saglayici}-Konto ist verifiziert. Geben Sie Ihre Anlagen-ID und Telefonnummer ein, damit wir Ihr Konto finden.",
@@ -1489,5 +1489,34 @@
   "davetKullanilmis": "Diese Einladung wurde bereits verwendet.",
   "davetBulunamadi": "Dieser Einladungslink ist ungültig.",
   "davetYoneticinizeBasvurun": "Wenden Sie sich für eine neue Einladung an Ihren Verwalter.",
-  "davetOzet": "{tesis} hat Sie als {rol} eingeladen."
+  "davetOzet": "{tesis} hat Sie als {rol} eingeladen.",
+  "@kayitAdim": {
+    "description": "Kayit akisi adim gostergesi",
+    "placeholders": {
+      "n": {
+        "type": "String"
+      },
+      "toplam": {
+        "type": "String"
+      }
+    }
+  },
+  "kayitYontemEposta": "Mit E-Mail/Telefon registrieren",
+  "kayitYontemVeya": "oder",
+  "kayitBilgilerBaslik": "Ihre Angaben",
+  "kayitAdSoyad": "Vor- und Nachname",
+  "kayitAdGerekli": "Vor- und Nachname ist erforderlich.",
+  "kayitParola": "Passwort",
+  "kayitParolaGerekli": "Das Passwort muss mindestens 8 Zeichen haben.",
+  "kayitTesisAdBaslik": "Erstellen Sie Ihre Anlage",
+  "kayitTesisAd": "Namen der Anlage eingeben",
+  "kayitTesisAdIpucu": "z. B. Oltu Wohnanlage",
+  "kayitTesisAdGerekli": "Name der Anlage ist erforderlich.",
+  "kayitZatenSitemVar": "Ich habe bereits eine Anlage",
+  "kayitTesisKoduBaslik": "Ihr Anlagencode",
+  "kayitTesisKoduPaylas": "Teilen Sie diesen Code mit Ihren Bewohnern und Mitarbeitern; damit treten sie bei.",
+  "kayitKopyala": "Kopieren",
+  "kayitKopyalandi": "Kopiert",
+  "kayitTamamla": "Weiter",
+  "kayitSosyalAdNotu": "Name aus Ihrem Konto übernommen; Sie können ihn ändern."
 }

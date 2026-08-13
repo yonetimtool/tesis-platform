@@ -724,6 +724,16 @@ paths:
                     description: |
                       Apple "e-postami gizle" dediyse true. Arayuz bunu
                       soyler cunku o adrese posta gonderilemez.
+                  ad:
+                    type: string
+                    nullable: true
+                    description: |
+                      (P155r2 §2) Saglayicinin bildirdigi ad soyad — kayit
+                      formunu ON-DOLDURMAK icin; kullanici duzeltebilir.
+                      Eslesmede KULLANILMAZ. Apple bunu `id_token`da
+                      vermez (yalniz ilk yetkilendirmenin govdesinde);
+                      bos gelir ve akis kirilmaz. TELEFON HICBIR
+                      SAGLAYICIDAN GELMEZ — kullanici doldurur.
                   baglama_jetonu: { type: string, nullable: true }
         "400":
           description: Sonuc bulunamadi ya da suresi doldu

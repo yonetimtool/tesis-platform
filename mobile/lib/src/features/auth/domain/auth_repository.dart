@@ -55,6 +55,18 @@ abstract interface class AuthRepository {
     String? ad,
   });
 
+  /// (P155r2 §3) Yonetici tesisini acar ve OTURUM ACILIR.
+  ///
+  /// Donen `tesisKodu` cagirana verilir (ekranda gosterilip
+  /// kopyalanabilmesi icin); jetonlar saklanir.
+  Future<({String tesisAd, String tesisKodu})> tesisOlustur({
+    required String tesisAd,
+    required String ad,
+    required String telefon,
+    String? parola,
+    String? baglamaJetonu,
+  });
+
   /// Acilista saklanan oturumu geri yuklemeye calisir: "beni hatirla" bayragi
   /// + refresh token varsa `POST /auth/refresh` denenir. Basarili → true
   /// (login ekrani atlanir). Bayrak yoksa ya da refresh kurtarilamazsa →

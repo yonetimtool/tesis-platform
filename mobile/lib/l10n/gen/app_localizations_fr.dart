@@ -4905,8 +4905,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get kayitGirisLinki => 'Vous avez déjà un compte ? Se connecter';
 
   @override
-  String kayitAdim(String n) {
-    return 'Étape $n/4';
+  String kayitAdim(String n, String toplam) {
+    return 'Étape $n/$toplam';
   }
 
   @override
@@ -4966,4 +4966,61 @@ class AppLocalizationsFr extends AppLocalizations {
   String davetOzet(String tesis, String rol) {
     return '$tesis vous a invité en tant que $rol.';
   }
+
+  @override
+  String get kayitYontemEposta => 'S\'inscrire avec e-mail/téléphone';
+
+  @override
+  String get kayitYontemVeya => 'ou';
+
+  @override
+  String get kayitBilgilerBaslik => 'Vos informations';
+
+  @override
+  String get kayitAdSoyad => 'Nom et prénom';
+
+  @override
+  String get kayitAdGerekli => 'Le nom et prénom est obligatoire.';
+
+  @override
+  String get kayitParola => 'Mot de passe';
+
+  @override
+  String get kayitParolaGerekli =>
+      'Le mot de passe doit comporter au moins 8 caractères.';
+
+  @override
+  String get kayitTesisAdBaslik => 'Créez votre résidence';
+
+  @override
+  String get kayitTesisAd => 'Saisissez le nom de la résidence';
+
+  @override
+  String get kayitTesisAdIpucu => 'p. ex. Résidence Oltu';
+
+  @override
+  String get kayitTesisAdGerekli => 'Le nom de la résidence est obligatoire.';
+
+  @override
+  String get kayitZatenSitemVar => 'J\'ai déjà une résidence';
+
+  @override
+  String get kayitTesisKoduBaslik => 'Votre code de résidence';
+
+  @override
+  String get kayitTesisKoduPaylas =>
+      'Communiquez ce code à vos résidents et à votre personnel ; il leur permet de vous rejoindre.';
+
+  @override
+  String get kayitKopyala => 'Copier';
+
+  @override
+  String get kayitKopyalandi => 'Copié';
+
+  @override
+  String get kayitTamamla => 'Continuer';
+
+  @override
+  String get kayitSosyalAdNotu =>
+      'Nom repris de votre compte ; vous pouvez le modifier.';
 }

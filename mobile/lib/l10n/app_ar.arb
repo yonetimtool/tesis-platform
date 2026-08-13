@@ -1473,7 +1473,7 @@
   "kayitYontemBaslik": "كيف ستسجّل الدخول؟",
   "kayitYontemParola": "إنشاء كلمة مرور",
   "kayitGirisLinki": "لديك حساب بالفعل؟ سجّل الدخول",
-  "kayitAdim": "الخطوة {n}/4",
+  "kayitAdim": "الخطوة {n}/{toplam}",
   "sosyalIleDevam": "المتابعة عبر {saglayici}",
   "sosyalBaslik": "طابق حسابك",
   "sosyalEslesmeAciklama": "تم التحقق من حساب {saglayici}. أدخل معرّف المنشأة ورقم هاتفك لنتمكن من العثور على حسابك.",
@@ -1489,5 +1489,34 @@
   "davetKullanilmis": "تم استخدام هذه الدعوة بالفعل.",
   "davetBulunamadi": "رابط الدعوة هذا غير صالح.",
   "davetYoneticinizeBasvurun": "تواصل مع المسؤول للحصول على دعوة جديدة.",
-  "davetOzet": "دعاك {tesis} بصفة {rol}."
+  "davetOzet": "دعاك {tesis} بصفة {rol}.",
+  "@kayitAdim": {
+    "description": "Kayit akisi adim gostergesi",
+    "placeholders": {
+      "n": {
+        "type": "String"
+      },
+      "toplam": {
+        "type": "String"
+      }
+    }
+  },
+  "kayitYontemEposta": "التسجيل بالبريد الإلكتروني/الهاتف",
+  "kayitYontemVeya": "أو",
+  "kayitBilgilerBaslik": "بياناتك",
+  "kayitAdSoyad": "الاسم الكامل",
+  "kayitAdGerekli": "الاسم الكامل مطلوب.",
+  "kayitParola": "كلمة المرور",
+  "kayitParolaGerekli": "يجب ألا تقل كلمة المرور عن ٨ أحرف.",
+  "kayitTesisAdBaslik": "أنشئ مجمّعك",
+  "kayitTesisAd": "أدخل اسم المجمّع",
+  "kayitTesisAdIpucu": "مثال: مجمّع أولتو",
+  "kayitTesisAdGerekli": "اسم المجمّع مطلوب.",
+  "kayitZatenSitemVar": "لديّ مجمّع بالفعل",
+  "kayitTesisKoduBaslik": "رمز مجمّعك",
+  "kayitTesisKoduPaylas": "شارك هذا الرمز مع السكان والموظفين؛ به ينضمّون إلى التطبيق.",
+  "kayitKopyala": "نسخ",
+  "kayitKopyalandi": "تم النسخ",
+  "kayitTamamla": "متابعة",
+  "kayitSosyalAdNotu": "تم أخذ الاسم من حسابك، ويمكنك تغييره."
 }

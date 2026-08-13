@@ -256,6 +256,20 @@ class Kimlik:
     eposta: str | None
     #: Apple'in private relay adresi mi? Arayuz bunu kullaniciya soyler.
     relay: bool = False
+    #: (P155r2 / §2) Saglayicinin bildirdigi ad soyad — KAYIT FORMUNU
+    #: ON-DOLDURMAK icin. Sartname: "sağlayıcıdan gelen ad soyad ve
+    #: (varsa) telefon FORMA OTOMATİK DOLAR, kullanıcı düzenleyebilir."
+    #:
+    #: ESLESMEDE KULLANILMAZ — `eposta` ile ayni sinifta bir goruntuleme
+    #: alanidir. Kullanici duzeltebildigi icin zaten guvenilir bir kimlik
+    #: tasiyicisi degil; sunucuya `ad` alaninda AYRICA gelir.
+    #:
+    #: TELEFON YOK ve OLMAYACAK: uc saglayicinin hicbiri OpenID Connect
+    #: `id_token`inda telefon vermiyor (`phone_number` kapsami Google'da
+    #: yok, Microsoft'ta ayri bir Graph izni ister, Apple'da hic yok).
+    #: Sartname bunu zaten varsayiyor: "Sağlayıcı telefon vermez —
+    #: telefon alanı boş gelir ve kullanıcı doldurur."
+    ad: str | None = None
 
 
 async def kimlik_dogrula(kod: str, id_token: str, *, nonce: str | None = None) -> Kimlik:
@@ -295,11 +309,22 @@ async def kimlik_dogrula(kod: str, id_token: str, *, nonce: str | None = None) -
     # eslesme anahtari olarak kullanilmaz; yalniz "hangi hesabi
     # bagladim" sorusunu yanitlar.
     relay = bool(eposta) and str(eposta).endswith("@privaterelay.appleid.com")
+
+    # AD: Google ve Microsoft `name` iddiasini `profile` kapsamiyla verir.
+    # APPLE VERMEZ — Apple adi yalniz ILK yetkilendirmede, `id_token`da
+    # DEGIL, `form_post` govdesindeki `user` alaninda gonderir ve bir daha
+    # asla tekrarlamaz. Onu yakalamak icin callback govdesini ayrica
+    # ayikla mak gerekirdi; yapilmadi ve sebebi su: ad zaten kullanicinin
+    # DUZENLEYEBILECEGI bir on-doldurmadir, Apple'da bos gelmesi akisi
+    # kirmaz (kullanici yazar). Sessiz bir bos alan, yalniz ilk giriste
+    # calisip sonra bozulan bir ozellikten iyidir.
+    ad = iddialar.get("name")
     return Kimlik(
         saglayici=sag.kod,
         subject=subject,
         eposta=str(eposta) if eposta else None,
         relay=relay,
+        ad=str(ad).strip() or None if ad else None,
     )
 
 

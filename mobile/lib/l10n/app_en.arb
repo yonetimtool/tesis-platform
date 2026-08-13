@@ -1473,7 +1473,7 @@
   "kayitYontemBaslik": "How will you sign in?",
   "kayitYontemParola": "Create a password",
   "kayitGirisLinki": "Already have an account? Sign in",
-  "kayitAdim": "Step {n}/4",
+  "kayitAdim": "Step {n}/{toplam}",
   "sosyalIleDevam": "Continue with {saglayici}",
   "sosyalBaslik": "Match your account",
   "sosyalEslesmeAciklama": "Your {saglayici} account is verified. Enter your facility ID and phone number so we can find your account.",
@@ -1489,5 +1489,34 @@
   "davetKullanilmis": "This invitation has already been used.",
   "davetBulunamadi": "This invitation link is invalid.",
   "davetYoneticinizeBasvurun": "Contact your administrator for a new invitation.",
-  "davetOzet": "{tesis} invited you as {rol}."
+  "davetOzet": "{tesis} invited you as {rol}.",
+  "@kayitAdim": {
+    "description": "Kayit akisi adim gostergesi",
+    "placeholders": {
+      "n": {
+        "type": "String"
+      },
+      "toplam": {
+        "type": "String"
+      }
+    }
+  },
+  "kayitYontemEposta": "Sign up with email/phone",
+  "kayitYontemVeya": "or",
+  "kayitBilgilerBaslik": "Your details",
+  "kayitAdSoyad": "Full name",
+  "kayitAdGerekli": "Full name is required.",
+  "kayitParola": "Password",
+  "kayitParolaGerekli": "Password must be at least 8 characters.",
+  "kayitTesisAdBaslik": "Create your property",
+  "kayitTesisAd": "Enter the property name",
+  "kayitTesisAdIpucu": "e.g. Oltu Residences",
+  "kayitTesisAdGerekli": "Property name is required.",
+  "kayitZatenSitemVar": "I already have a property",
+  "kayitTesisKoduBaslik": "Your property code",
+  "kayitTesisKoduPaylas": "Share this code with your residents and staff; they use it to join.",
+  "kayitKopyala": "Copy",
+  "kayitKopyalandi": "Copied",
+  "kayitTamamla": "Continue",
+  "kayitSosyalAdNotu": "Name taken from your account; you can change it."
 }

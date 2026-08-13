@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -14,37 +15,60 @@ import '../data/auth_api.dart';
 import 'auth_controller.dart';
 import 'sosyal_giris.dart';
 
-/// (P154 / Asama 3) ROL SECIMLI KAYIT — mobil yuzey.
+/// (P155r2) ROL SECIMLI KAYIT — mobil yuzey, SARTNAME SIRASIYLA.
 ///
-/// BRIEF: mobilde dort rol (Yonetici · Site sakini · Guvenlik gorevlisi ·
-/// Tesis gorevlisi). Web AYRI bir kume sunar (yonetici + denetci) cunku
-/// denetcinin isi raporlarda, sahada degil.
+/// ===========================================================================
+/// SIRA DEGISTI: rol -> YONTEM -> bilgiler -> ROLE OZEL
+/// ===========================================================================
+/// P154'te sira `rol -> tesis kodu+telefon -> yontem -> kod` idi. Sartname
+/// §2 acikca yontemi ROL SECIMINDEN HEMEN SONRA istiyor ve gerekcesi
+/// urun tarafinda: kullaniciya once "nasil giris yapacaksin" sorulur,
+/// tesis bilgisi ondan SONRA gelir. Eski sirada sosyal hesapla kaydolmak
+/// isteyen kisi once iki alan doldurmak zorundaydi.
 ///
-/// KUME NEDEN ISTEMCIDE: sunucu bes rolu de kabul eder ve GERCEK kapi
-/// "tesis ID + telefon onceden tanimli kayitla eslesiyor mu" kontroludur.
-/// Bir sakin buradan `yonetici` secse bile eslesmedigi icin kod ALAMAZ.
-/// Yani bu liste bir GUVENLIK siniri degil, bir URUN karari.
+/// ADIMLAR (sartname §2/§3):
+///   1. ROL          — dort rol (web AYRI kume sunar: yonetici + denetci)
+///   2. YONTEM       — once sosyal, sonra "E-posta/telefon ile kaydol"
+///   3. BILGILER     — ad soyad + telefon (+ parola, elle kayitta)
+///   4. ROLE OZEL    — yonetici: TESIS ADI · oteki roller: TESIS KODU
+///   5. KOD          — yalniz eslesme yolunda (yonetici-yeni'de YOK)
 ///
-/// DORT ADIM: rol -> kimlik -> YONTEM -> kod. Parola ekrani YAZILMADI
-/// — `setupToken` dolunca router zaten `/set-password`e goturuyor ve o
-/// ekran parola kuralini, gosterme/gizlemeyi ve 401'de kurulumu iptal
-/// etmeyi coktan cozmus (bkz. `AuthController.kayitKodunuOnayla`).
+/// ===========================================================================
+/// YONETICI ICIN IKI CIKIS: yeni tesis VEYA var olana katilma
+/// ===========================================================================
+/// Sartname §3: "Tesis adini giriniz" alaninin ALTINDA "Zaten bir sitem
+/// var" bagi; ikinci/ucuncu yonetici boyle katilir.
 ///
-/// (P154 duzeltme turu) YONTEM ADIMI SONRADAN EKLENDI. Brief'in sirasi
-/// "tesis ID -> telefon -> kimlik dogrulama yontemi" ve yontem
-/// KULLANICININ SECIMI: parola · Google · Microsoft · Apple. Onceki surum
-/// dogrudan paroladan devam ediyordu; sosyal hesapla kaydolmak yalnizca
-/// GIRIS ekranindan mumkundu, yani kaydolmaya gelen kullanici once "giris
-/// yap" demek zorundaydi.
+/// KATILMA, TESIS ACMA DEGIL BIR ROL ESLESMESIDIR ve bu KISITLAR'dan
+/// geliyor: "Kod bilen biri kayit olamamali, yalniz onceden eklenmis
+/// telefonla eslesen kaydolur." Yani ikinci yonetici de mevcut yonetici
+/// tarafindan EKLENMIS olmali. Aksi tasarim (kodu bilen yonetici olur)
+/// tesisin tamamen devralinmasi demekti — kod kamuya acik ve tahmin
+/// edilebilir (goc 0037 guvenlik notu).
 ///
-/// SMS NEDEN HÂLÂ VAR: brief onu saymiyor ama saglayici "bu telefonun
-/// sahibisin" DEMEZ (bkz. routers/oauth.py basligi). Iki yolda da telefon
-/// sahipligini kanitlayan sey SMS'tir; yontem secimi onun YERINE degil,
-/// ONUNE kondu.
+/// Bu yuzden "Zaten bir sitem var" yalnizca `_katil` bayragini kaldirir
+/// ve akis oteki rollerle AYNI yola (tesis kodu + eslesme) duser.
 ///
-/// SMS ARTIK KIMLIK ADIMINDA DEGIL YONTEMDEN SONRA GONDERILIYOR: aksi
-/// halde "Google" secen kullaniciya once bir `amac=kayit` SMS'i gider,
-/// ardindan sosyal yol kendi kodunu gonderirdi — iki kod, tek telefon.
+/// ===========================================================================
+/// PAROLA IKI KEZ SORULMAZ
+/// ===========================================================================
+/// Kullanici paroласini 3. adimda giriyor. Eslesme yolunda sunucu, kod
+/// dogrulaninca bir `setup_token` doner ve normalde `/set-password`
+/// ekrani acilirdi — kullaniciya AZ ONCE yazdigi parolayi tekrar
+/// sordururdu. Bunun yerine jeton alinir alinmaz parola OTOMATIK
+/// gonderilir; ekran hic gorunmez.
+///
+/// ===========================================================================
+/// SMS NEDEN HÂLÂ VAR (eslesme yolunda)
+/// ===========================================================================
+/// Saglayici "bu Google hesabinin sahibisin" der; "bu telefonun
+/// sahibisin" DEMEZ. Tesis kodu kamuya acik, telefon numarasi sir degil —
+/// ikisi birlikte kimlik kaniti DEGILDIR. Var olan bir hesabi
+/// SAHIPLENMEK icin telefon sahipligi kanitlanmali.
+///
+/// YONETICI-YENI yolunda SMS YOKTUR ve celiski degil: orada
+/// sahiplenilecek bir hesap yok — hesap O ANDA yaratiliyor ve numara
+/// bos olmak zorunda. Kanitlanacak bir sahiplik yok.
 class KayitScreen extends ConsumerStatefulWidget {
   const KayitScreen({super.key});
 
@@ -65,21 +89,26 @@ enum KayitRolu {
   /// kimlik ASLA cevrilmez.
   final String kimlik;
 
-  /// YALNIZ sakinden daire istenir (brief). Yoneticiye daire sormak,
+  /// YALNIZ sakinden daire istenir (sartname). Yoneticiye daire sormak,
   /// dairesi olmayan birine zorunlu alan gostermek olurdu.
   bool get daireIster => this == KayitRolu.sakin;
 }
 
-enum _Adim { rol, kimlik, yontem, kod }
+enum _Adim { rol, yontem, bilgiler, rolOzel, kod, sonuc }
 
-/// Kod adimina HANGI yoldan gelindi — dogrulama ucu buna gore secilir.
+/// Kimlik dogrulama yolu — hangi ucun kullanilacagini belirler.
 enum _Yol { parola, sosyal }
 
 class _KayitScreenState extends ConsumerState<KayitScreen> {
-  final _kimlikFormKey = GlobalKey<FormState>();
+  final _bilgiFormKey = GlobalKey<FormState>();
+  final _rolOzelFormKey = GlobalKey<FormState>();
   final _kodFormKey = GlobalKey<FormState>();
-  final _tesisCtrl = TextEditingController();
+
+  final _adCtrl = TextEditingController();
   final _telefonCtrl = TextEditingController();
+  final _parolaCtrl = TextEditingController();
+  final _tesisAdCtrl = TextEditingController();
+  final _tesisKoduCtrl = TextEditingController();
   final _daireCtrl = TextEditingController();
   final _blokCtrl = TextEditingController();
   final _kodCtrl = TextEditingController();
@@ -87,27 +116,32 @@ class _KayitScreenState extends ConsumerState<KayitScreen> {
   _Adim _adim = _Adim.rol;
   KayitRolu _rol = KayitRolu.yonetici;
   _Yol _yol = _Yol.parola;
+
+  /// Yonetici VAR OLAN bir tesise katiliyor mu ("Zaten bir sitem var")?
+  bool _katil = false;
+
   String _tesisAd = '';
   String _telefonMaskeli = '';
+  String _uretilenKod = '';
   String? _hata;
   bool _bekliyor = false;
+
+  /// Yonetici YENI tesis aciyorsa SMS adimi yoktur → 4 adim; oteki her
+  /// durumda eslesme + kod adimi var → 5.
+  bool get _tesisAcar => _rol == KayitRolu.yonetici && !_katil;
+  int get _toplamAdim => _tesisAcar ? 4 : 5;
 
   @override
   void initState() {
     super.initState();
     // (P154 / Asama 2) ROL LISTESI GORULDU. Bayrak EKRAN ACILIRKEN
-    // yaziliyor, "kaydolma tamamlaninca" degil: brief listeyi ILK ACILISIN
-    // ekrani sayar, kaydolmanin odulu saymaz. Kaydolmadan cikan kullanici
-    // bir dahaki acilista girise duser ve oradaki `login-kayit-baglantisi`
-    // ile buraya geri donebilir.
-    // ERTELEME ZORUNLU: Riverpod bir provider'in `initState` icinde
-    // degistirilmesini yasaklar (agac insa edilirken iki dinleyici farkli
-    // durum gorebilirdi).
+    // yaziliyor, "kaydolma tamamlaninca" degil: sartname listeyi ILK
+    // ACILISIN ekrani sayar, kaydolmanin odulu saymaz.
     //
     // `Future(...)` DEGIL `addPostFrameCallback`: ilki bir ZAMANLAYICI
     // kurar ve agac calismadan once atilirsa `flutter_test` "A Timer is
-    // still pending" ile duser (olculdu — `acilis_dil_titremesi_test`
-    // boyle kirildi). Kare geri cagrisi agacla birlikte duser.
+    // still pending" ile duser (olculdu). Kare geri cagrisi agacla
+    // birlikte duser.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       unawaited(ref.read(rolSecimiBekliyorProvider.notifier).gosterildi());
@@ -116,48 +150,167 @@ class _KayitScreenState extends ConsumerState<KayitScreen> {
 
   @override
   void dispose() {
-    _tesisCtrl.dispose();
+    _adCtrl.dispose();
     _telefonCtrl.dispose();
+    _parolaCtrl.dispose();
+    _tesisAdCtrl.dispose();
+    _tesisKoduCtrl.dispose();
     _daireCtrl.dispose();
     _blokCtrl.dispose();
     _kodCtrl.dispose();
     super.dispose();
   }
 
-  /// Kimlik adimi ARTIK AG CAGIRMIYOR: yalniz formu dogrulayip yontem
-  /// adimina gecer. Cagriyi yontem secimi baslatir (bkz. sinif basligi).
-  void _kimlikGonder() {
-    FocusScope.of(context).unfocus();
-    if (!_kimlikFormKey.currentState!.validate()) return;
+  String get _telefon => telefonNormalle(_telefonCtrl.text);
+
+  // ======================= ADIM 2: YONTEM ================================= //
+
+  void _parolaYolunuSec() {
     setState(() {
+      _yol = _Yol.parola;
       _hata = null;
-      _adim = _Adim.yontem;
+      _adim = _Adim.bilgiler;
     });
   }
 
-  String get _telefon => telefonNormalle(_telefonCtrl.text);
+  /// Sosyal yol: once tarayici akisi (saglayici kimligi kanitlar), sonra
+  /// BILGILER adimi — ad soyad saglayicidan ON-DOLDURULUR.
+  Future<void> _sosyalYolunuSec(String saglayici) async {
+    setState(() {
+      _bekliyor = true;
+      _hata = null;
+    });
+    final denetleyici = ref.read(authControllerProvider.notifier);
+    // ONCE TEMIZLE: onceki denemeden kalmis bir baglama jetonu olabilir
+    // (Google secildi, hata alindi, bu kez Apple secildi). Temizlemezsek
+    // ESKI saglayicinin jetonuyla devam ederdik.
+    denetleyici.oauthIptal();
+    await denetleyici.oauthAkisi(saglayici);
+    if (!mounted) return;
 
-  /// (a) Parola olustur — kayit ucu SMS gonderir, kod adimina gecilir.
-  Future<void> _parolaYolu() async {
+    final durum = ref.read(authControllerProvider);
+    // Kimlik ZATEN bagliysa oturum acildi; router devralir.
+    if (durum.status == AuthStatus.authenticated) return;
+    // Kullanici tarayiciyi kapatti → sessizce yontem adiminda kal.
+    if (durum.oauthBaglamaJetonu == null) {
+      setState(() {
+        _bekliyor = false;
+        _hata = durum.errorMessage;
+      });
+      return;
+    }
+
+    setState(() {
+      _yol = _Yol.sosyal;
+      // SARTNAME §2: saglayicidan gelen ad soyad forma OTOMATIK DOLAR ve
+      // kullanici duzeltebilir. Apple ad vermez → alan bos kalir,
+      // kullanici yazar. Telefon HICBIR saglayicidan gelmez.
+      //
+      // KULLANICININ YAZDIGI EZILMEZ: geri donup baska bir saglayici
+      // secen birinin duzelttigi ad korunur.
+      if (_adCtrl.text.trim().isEmpty && (durum.oauthAd ?? '').isNotEmpty) {
+        _adCtrl.text = durum.oauthAd!;
+      }
+      _bekliyor = false;
+      _adim = _Adim.bilgiler;
+    });
+  }
+
+  // ======================= ADIM 3: BILGILER =============================== //
+
+  void _bilgileriGonder() {
+    FocusScope.of(context).unfocus();
+    if (!_bilgiFormKey.currentState!.validate()) return;
+    setState(() {
+      _hata = null;
+      _adim = _Adim.rolOzel;
+    });
+  }
+
+  // ======================= ADIM 4: ROLE OZEL ============================== //
+
+  Future<void> _rolOzelGonder() async {
+    FocusScope.of(context).unfocus();
+    if (!_rolOzelFormKey.currentState!.validate()) return;
+    if (_tesisAcar) {
+      await _tesisiAc();
+    } else {
+      await _eslesmeyeBasla();
+    }
+  }
+
+  /// Yonetici YENI tesis aciyor: tek istekte tesis + hesap + oturum.
+  Future<void> _tesisiAc() async {
+    setState(() {
+      _bekliyor = true;
+      _hata = null;
+    });
+    final sonuc = await ref.read(authControllerProvider.notifier).tesisOlustur(
+          tesisAd: _tesisAdCtrl.text.trim(),
+          ad: _adCtrl.text.trim(),
+          telefon: _telefon,
+          parola: _yol == _Yol.parola ? _parolaCtrl.text : null,
+          sosyal: _yol == _Yol.sosyal,
+        );
+    if (!mounted) return;
+    if (sonuc == null) {
+      setState(() {
+        _bekliyor = false;
+        _hata = ref.read(authControllerProvider).errorMessage;
+      });
+      return;
+    }
+    // OTURUM ZATEN ACIK. Router'i hemen birakmiyoruz: kullaniciya TESIS
+    // KODUNU gostermeliyiz (sartname §4 — SMS saglayicisi baglanana
+    // kadar yonetici kodu ELLE iletecek). "Devam et" deyince ana ekrana
+    // duser; `authenticated` oldugu icin yonlendirme kendiliginden olur.
+    setState(() {
+      _tesisAd = sonuc.tesisAd;
+      _uretilenKod = sonuc.tesisKodu;
+      _bekliyor = false;
+      _adim = _Adim.sonuc;
+    });
+  }
+
+  /// Oteki roller (+ katilan yonetici): tesis kodu + telefon eslesmesi.
+  Future<void> _eslesmeyeBasla() async {
     setState(() {
       _bekliyor = true;
       _hata = null;
     });
     try {
-      final sonuc = await ref.read(authApiProvider).rolKayitBasla(
-            rol: _rol.kimlik,
-            tesisKodu: _tesisCtrl.text.trim(),
-            telefon: _telefon,
-            daireNo: _rol.daireIster ? _daireCtrl.text.trim() : null,
-            blok: _rol.daireIster ? _blokCtrl.text.trim() : null,
-          );
+      final ({String tesisAd, String telefonMaskeli}) sonuc;
+      if (_yol == _Yol.sosyal) {
+        final s = await ref
+            .read(authControllerProvider.notifier)
+            .oauthBaglanBasla(
+              tesisKodu: _tesisKoduCtrl.text.trim(),
+              telefon: _telefon,
+            );
+        if (s == null) {
+          if (!mounted) return;
+          setState(() {
+            _bekliyor = false;
+            _hata = ref.read(authControllerProvider).errorMessage;
+          });
+          return;
+        }
+        sonuc = s;
+      } else {
+        sonuc = await ref.read(authApiProvider).rolKayitBasla(
+              rol: _rol.kimlik,
+              tesisKodu: _tesisKoduCtrl.text.trim(),
+              telefon: _telefon,
+              daireNo: _rol.daireIster ? _daireCtrl.text.trim() : null,
+              blok: _rol.daireIster ? _blokCtrl.text.trim() : null,
+            );
+      }
       if (!mounted) return;
       setState(() {
         _tesisAd = sonuc.tesisAd;
         _telefonMaskeli = sonuc.telefonMaskeli;
-        _yol = _Yol.parola;
-        _adim = _Adim.kod;
         _bekliyor = false;
+        _adim = _Adim.kod;
       });
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -170,60 +323,7 @@ class _KayitScreenState extends ConsumerState<KayitScreen> {
     }
   }
 
-  /// (b/c/d) Google · Microsoft · Apple.
-  ///
-  /// IKI ASAMA: once tarayici akisi (saglayici kimligi kanitlar), sonra
-  /// ZATEN GIRILMIS tesis kodu + telefon ile eslesme (SMS). Giris
-  /// ekranindaki `SosyalBaglamaFormu` ikinciyi kullaniciya YENIDEN
-  /// sordurur; burada sormaya gerek yok, cunku brief bu iki alani
-  /// yontemden ONCE istiyor ve elimizde duruyorlar.
-  Future<void> _sosyalYol(String saglayici) async {
-    setState(() {
-      _bekliyor = true;
-      _hata = null;
-    });
-    final denetleyici = ref.read(authControllerProvider.notifier);
-    // ONCE TEMIZLE: onceki denemeden kalmis bir baglama jetonu olabilir
-    // (ornegin Google secildi, eslesme adimi hata verdi, kullanici bu kez
-    // Apple'i secti). Temizlemezsek ve kullanici bu akisi yarida birakirsa
-    // ESKI saglayicinin jetonuyla devam ederdik.
-    denetleyici.oauthIptal();
-    await denetleyici.oauthAkisi(saglayici);
-    if (!mounted) return;
-
-    final durum = ref.read(authControllerProvider);
-    // Kimlik ZATEN bagliysa oturum acildi; router devrali r.
-    if (durum.status == AuthStatus.authenticated) return;
-    // Kullanici tarayiciyi kapatti (jeton yok, hata da yok) → sessizce
-    // yontem adiminda kal.
-    if (durum.oauthBaglamaJetonu == null) {
-      setState(() {
-        _bekliyor = false;
-        _hata = durum.errorMessage;
-      });
-      return;
-    }
-
-    final sonuc = await denetleyici.oauthBaglanBasla(
-      tesisKodu: _tesisCtrl.text.trim(),
-      telefon: _telefon,
-    );
-    if (!mounted) return;
-    if (sonuc == null) {
-      setState(() {
-        _bekliyor = false;
-        _hata = ref.read(authControllerProvider).errorMessage;
-      });
-      return;
-    }
-    setState(() {
-      _tesisAd = sonuc.tesisAd;
-      _telefonMaskeli = sonuc.telefonMaskeli;
-      _yol = _Yol.sosyal;
-      _adim = _Adim.kod;
-      _bekliyor = false;
-    });
-  }
+  // ========================= ADIM 5: KOD ================================== //
 
   Future<void> _kodGonder() async {
     FocusScope.of(context).unfocus();
@@ -232,8 +332,9 @@ class _KayitScreenState extends ConsumerState<KayitScreen> {
       _bekliyor = true;
       _hata = null;
     });
-    // SOSYAL YOL: kod dogrulanınca hesap BAGLANIR ve oturum acilir —
-    // parola ekrani YOKTUR (kullanici parola istemedigini zaten secti).
+
+    // SOSYAL YOL: kod dogrulanınca kimlik BAGLANIR ve oturum acilir —
+    // parola yoktur (kullanici parola istemedigini zaten secti).
     if (_yol == _Yol.sosyal) {
       await ref.read(authControllerProvider.notifier).oauthBaglanDogrula(
             telefon: _telefon,
@@ -256,10 +357,21 @@ class _KayitScreenState extends ConsumerState<KayitScreen> {
             kod: _kodCtrl.text.trim(),
           );
       if (!mounted) return;
-      // Jetonu denetleyiciye birak: router `setupToken` dolunca parola
-      // ekranina KENDISI goturur. Buradan elle `context.go` cagirmak,
-      // ayni karari iki yerde tutmak olurdu.
-      ref.read(authControllerProvider.notifier).kayitKodunuOnayla(jeton);
+      // PAROLA IKI KEZ SORULMAZ: kullanici 3. adimda yazdi. Jetonu
+      // denetleyiciye verip parolayi HEMEN gonderiyoruz; `/set-password`
+      // ekrani hic gorunmez. (Ekran korunuyor — davet ve gecici kod
+      // yollari onu hâlâ kullaniyor.)
+      final denetleyici = ref.read(authControllerProvider.notifier);
+      denetleyici.kayitKodunuOnayla(jeton);
+      await denetleyici.submitNewPassword(_parolaCtrl.text);
+      if (!mounted) return;
+      final durum = ref.read(authControllerProvider);
+      if (durum.status != AuthStatus.authenticated) {
+        setState(() {
+          _hata = durum.errorMessage;
+          _bekliyor = false;
+        });
+      }
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() {
@@ -274,15 +386,15 @@ class _KayitScreenState extends ConsumerState<KayitScreen> {
     // halde jeton durumda asili kalir ve kullanici giris ekranina
     // dondugunde beklenmedik bir eslestirme formu bulurdu.
     //
-    // KOSULSUZ CAGRILIYOR: jeton yalniz kod adiminda degil, YONTEM
-    // adiminda da askida kalabilir (tarayici akisi bitti ama eslesme
-    // adimi hata verdi). Bekleyen bir sey yokken zararsizdir.
+    // KOSULSUZ CAGRILIYOR: jeton yalniz kod adiminda degil, sonraki her
+    // adimda askida kalabilir. Bekleyen bir sey yokken zararsizdir.
     ref.read(authControllerProvider.notifier).oauthIptal();
     setState(() {
       _hata = null;
       _adim = switch (_adim) {
-        _Adim.kod => _Adim.yontem,
-        _Adim.yontem => _Adim.kimlik,
+        _Adim.kod => _Adim.rolOzel,
+        _Adim.rolOzel => _Adim.bilgiler,
+        _Adim.bilgiler => _Adim.yontem,
         _ => _Adim.rol,
       };
     });
@@ -310,15 +422,19 @@ class _KayitScreenState extends ConsumerState<KayitScreen> {
     final l10n = context.l10n;
     final adimNo = switch (_adim) {
       _Adim.rol => 1,
-      _Adim.kimlik => 2,
-      _Adim.yontem => 3,
-      _Adim.kod => 4,
+      _Adim.yontem => 2,
+      _Adim.bilgiler => 3,
+      _Adim.rolOzel => 4,
+      _Adim.kod => 5,
+      _Adim.sonuc => _toplamAdim,
     };
 
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.kayitBaslik),
-        leading: _adim == _Adim.rol
+        // SONUC adiminda geri YOK: hesap ACILDI, geri donulecek bir
+        // adim kalmadi.
+        leading: (_adim == _Adim.rol || _adim == _Adim.sonuc)
             ? null
             : BackButton(onPressed: _bekliyor ? null : _geri),
       ),
@@ -333,7 +449,7 @@ class _KayitScreenState extends ConsumerState<KayitScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    l10n.kayitAdim('$adimNo'),
+                    l10n.kayitAdim('$adimNo', '$_toplamAdim'),
                     style: Theme.of(context).textTheme.labelMedium,
                   ),
                   const SizedBox(height: 16),
@@ -350,15 +466,18 @@ class _KayitScreenState extends ConsumerState<KayitScreen> {
                     const SizedBox(height: 16),
                   ],
                   if (_adim == _Adim.rol) _rolSecimi(l10n),
-                  if (_adim == _Adim.kimlik) _kimlikFormu(l10n),
                   if (_adim == _Adim.yontem) _yontemSecimi(l10n),
+                  if (_adim == _Adim.bilgiler) _bilgiFormu(l10n),
+                  if (_adim == _Adim.rolOzel) _rolOzelFormu(l10n),
                   if (_adim == _Adim.kod) _kodFormu(l10n),
+                  if (_adim == _Adim.sonuc) _sonucKarti(l10n),
                   const SizedBox(height: 24),
-                  TextButton(
-                    onPressed:
-                        _bekliyor ? null : () => context.go(AppRoutes.login),
-                    child: Text(l10n.kayitGirisLinki),
-                  ),
+                  if (_adim != _Adim.sonuc)
+                    TextButton(
+                      onPressed:
+                          _bekliyor ? null : () => context.go(AppRoutes.login),
+                      child: Text(l10n.kayitGirisLinki),
+                    ),
                 ],
               ),
             ),
@@ -367,6 +486,8 @@ class _KayitScreenState extends ConsumerState<KayitScreen> {
       ),
     );
   }
+
+  // ============================ ADIM 1 ==================================== //
 
   Widget _rolSecimi(AppLocalizations l10n) {
     return Column(
@@ -387,7 +508,8 @@ class _KayitScreenState extends ConsumerState<KayitScreen> {
               trailing: const Icon(Icons.chevron_right),
               onTap: () => setState(() {
                 _rol = rol;
-                _adim = _Adim.kimlik;
+                _katil = false;
+                _adim = _Adim.yontem;
               }),
             ),
           ),
@@ -396,33 +518,114 @@ class _KayitScreenState extends ConsumerState<KayitScreen> {
     );
   }
 
-  Widget _kimlikFormu(AppLocalizations l10n) {
+  // ============================ ADIM 2 ==================================== //
+
+  /// KIMLIK YONTEMI — sartname §2: once SOSYAL onerilir, ayirac, sonra
+  /// "E-posta/telefon ile kaydol".
+  ///
+  /// SOSYAL YALNIZ YAPILANDIRILMISSA: saglayici listesi sunucudan gelir
+  /// (`oauthSaglayicilarProvider`) ve bos olabilir. Cizilmeyen bir dugme,
+  /// kullaniciyi KESIN BASARISIZ bir yola sokmaktan iyidir —
+  /// `SosyalGirisDugmeleri` ile AYNI kural; ikisi ayni provider'i okur
+  /// ki liste tek yerden gelsin.
+  Widget _yontemSecimi(AppLocalizations l10n) {
+    final saglayicilar =
+        ref.watch(oauthSaglayicilarProvider).value ?? const <String>[];
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          l10n.kayitYontemBaslik,
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: 16),
+        for (final s in saglayicilar) ...[
+          FilledButton.tonal(
+            key: Key('kayit-yontem-$s'),
+            onPressed: _bekliyor ? null : () => _sosyalYolunuSec(s),
+            style: FilledButton.styleFrom(
+              minimumSize: const Size.fromHeight(52),
+            ),
+            child: Text(l10n.sosyalIleDevam(kSaglayiciEtiketi[s] ?? s)),
+          ),
+          const SizedBox(height: 8),
+        ],
+        if (saglayicilar.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Expanded(child: Divider()),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Text(
+                  l10n.kayitYontemVeya,
+                  style: Theme.of(context).textTheme.labelMedium,
+                ),
+              ),
+              const Expanded(child: Divider()),
+            ],
+          ),
+          const SizedBox(height: 16),
+        ],
+        OutlinedButton(
+          key: const Key('kayit-yontem-parola'),
+          onPressed: _bekliyor ? null : _parolaYolunuSec,
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size.fromHeight(52),
+          ),
+          child: _bekliyor
+              ? const SizedBox(
+                  height: 22,
+                  width: 22,
+                  child: CircularProgressIndicator(strokeWidth: 2.5),
+                )
+              : Text(l10n.kayitYontemEposta),
+        ),
+      ],
+    );
+  }
+
+  // ============================ ADIM 3 ==================================== //
+
+  Widget _bilgiFormu(AppLocalizations l10n) {
     return Form(
-      key: _kimlikFormKey,
+      key: _bilgiFormKey,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          Text(
+            l10n.kayitBilgilerBaslik,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          if (_yol == _Yol.sosyal) ...[
+            const SizedBox(height: 8),
+            Text(
+              l10n.kayitSosyalAdNotu,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+          const SizedBox(height: 16),
           TextFormField(
-            controller: _tesisCtrl,
+            controller: _adCtrl,
+            key: const Key('kayit-ad'),
             enabled: !_bekliyor,
             textInputAction: TextInputAction.next,
-            autocorrect: false,
-            textCapitalization: TextCapitalization.characters,
+            textCapitalization: TextCapitalization.words,
             decoration: InputDecoration(
-              labelText: l10n.kayitTesisKodu,
-              helperText: l10n.kayitTesisKoduIpucu,
-              helperMaxLines: 2,
-              prefixIcon: const Icon(Icons.qr_code_2_outlined),
+              labelText: l10n.kayitAdSoyad,
+              prefixIcon: const Icon(Icons.person_outline),
               border: const OutlineInputBorder(),
             ),
-            validator: (v) => (v ?? '').trim().length < 4
-                ? l10n.kayitTesisKoduGerekli
-                : null,
+            validator: (v) =>
+                (v ?? '').trim().length < 2 ? l10n.kayitAdGerekli : null,
           ),
           const SizedBox(height: 16),
           TextFormField(
             controller: _telefonCtrl,
+            key: const Key('kayit-telefon'),
             enabled: !_bekliyor,
             textInputAction: TextInputAction.next,
             keyboardType: TextInputType.phone,
@@ -438,37 +641,134 @@ class _KayitScreenState extends ConsumerState<KayitScreen> {
             ),
             validator: (v) => telefonHataMetni(l10n, v ?? ''),
           ),
-          if (_rol.daireIster) ...[
+          // PAROLA YALNIZ ELLE KAYITTA: sosyal yolda kimlik
+          // saglayicidadir ve parola HIC yazilmaz (sunucu da kabul etmez).
+          if (_yol == _Yol.parola) ...[
             const SizedBox(height: 16),
             TextFormField(
-              controller: _daireCtrl,
+              controller: _parolaCtrl,
+              key: const Key('kayit-parola'),
               enabled: !_bekliyor,
-              textInputAction: TextInputAction.next,
-              decoration: InputDecoration(
-                labelText: l10n.kayitDaireNo,
-                prefixIcon: const Icon(Icons.meeting_room_outlined),
-                border: const OutlineInputBorder(),
-              ),
-              validator: (v) => (v ?? '').trim().isEmpty
-                  ? l10n.kayitDaireGerekli
-                  : null,
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _blokCtrl,
-              enabled: !_bekliyor,
+              obscureText: true,
               textInputAction: TextInputAction.done,
               decoration: InputDecoration(
-                labelText: l10n.kayitBlok,
-                prefixIcon: const Icon(Icons.domain_outlined),
+                labelText: l10n.kayitParola,
+                prefixIcon: const Icon(Icons.lock_outline),
                 border: const OutlineInputBorder(),
               ),
+              validator: (v) =>
+                  (v ?? '').length < 8 ? l10n.kayitParolaGerekli : null,
             ),
           ],
           const SizedBox(height: 24),
           FilledButton(
-            key: const Key('kayit-kimlik-gonder'),
-            onPressed: _bekliyor ? null : _kimlikGonder,
+            key: const Key('kayit-bilgi-gonder'),
+            onPressed: _bekliyor ? null : _bilgileriGonder,
+            style: FilledButton.styleFrom(
+              minimumSize: const Size.fromHeight(52),
+            ),
+            child: Text(l10n.kayitDevam),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ============================ ADIM 4 ==================================== //
+
+  Widget _rolOzelFormu(AppLocalizations l10n) {
+    return Form(
+      key: _rolOzelFormKey,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (_tesisAcar) ...[
+            Text(
+              l10n.kayitTesisAdBaslik,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _tesisAdCtrl,
+              key: const Key('kayit-tesis-ad'),
+              enabled: !_bekliyor,
+              textInputAction: TextInputAction.done,
+              textCapitalization: TextCapitalization.words,
+              decoration: InputDecoration(
+                labelText: l10n.kayitTesisAd,
+                helperText: l10n.kayitTesisAdIpucu,
+                prefixIcon: const Icon(Icons.apartment_outlined),
+                border: const OutlineInputBorder(),
+              ),
+              validator: (v) =>
+                  (v ?? '').trim().length < 2 ? l10n.kayitTesisAdGerekli : null,
+            ),
+            const SizedBox(height: 8),
+            // SARTNAME §3: "Tesis adini giriniz" alaninin ALTINDA.
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: TextButton(
+                key: const Key('kayit-zaten-sitem-var'),
+                onPressed: _bekliyor
+                    ? null
+                    : () => setState(() {
+                          _katil = true;
+                          _hata = null;
+                        }),
+                child: Text(l10n.kayitZatenSitemVar),
+              ),
+            ),
+          ] else ...[
+            TextFormField(
+              controller: _tesisKoduCtrl,
+              key: const Key('kayit-tesis-kodu'),
+              enabled: !_bekliyor,
+              textInputAction: TextInputAction.next,
+              autocorrect: false,
+              textCapitalization: TextCapitalization.characters,
+              decoration: InputDecoration(
+                labelText: l10n.kayitTesisKodu,
+                helperText: l10n.kayitTesisKoduIpucu,
+                helperMaxLines: 2,
+                prefixIcon: const Icon(Icons.qr_code_2_outlined),
+                border: const OutlineInputBorder(),
+              ),
+              validator: (v) => (v ?? '').trim().length < 4
+                  ? l10n.kayitTesisKoduGerekli
+                  : null,
+            ),
+            if (_rol.daireIster) ...[
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _daireCtrl,
+                enabled: !_bekliyor,
+                textInputAction: TextInputAction.next,
+                decoration: InputDecoration(
+                  labelText: l10n.kayitDaireNo,
+                  prefixIcon: const Icon(Icons.meeting_room_outlined),
+                  border: const OutlineInputBorder(),
+                ),
+                validator: (v) =>
+                    (v ?? '').trim().isEmpty ? l10n.kayitDaireGerekli : null,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _blokCtrl,
+                enabled: !_bekliyor,
+                textInputAction: TextInputAction.done,
+                decoration: InputDecoration(
+                  labelText: l10n.kayitBlok,
+                  prefixIcon: const Icon(Icons.domain_outlined),
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ],
+          const SizedBox(height: 24),
+          FilledButton(
+            key: const Key('kayit-rol-ozel-gonder'),
+            onPressed: _bekliyor ? null : _rolOzelGonder,
             style: FilledButton.styleFrom(
               minimumSize: const Size.fromHeight(52),
             ),
@@ -485,54 +785,7 @@ class _KayitScreenState extends ConsumerState<KayitScreen> {
     );
   }
 
-  /// (P154 / Asama 3) KIMLIK DOGRULAMA YONTEMI — kullanicinin secimi.
-  ///
-  /// PAROLA HER ZAMAN VAR, SOSYAL YALNIZ YAPILANDIRILMISSA: saglayici
-  /// listesi sunucudan gelir (`oauthSaglayicilarProvider`) ve bos ya da
-  /// alinamaz olabilir. Cizilmeyen bir dugme, kullaniciyi KESIN
-  /// BASARISIZ bir yola sokmaktan iyidir — `SosyalGirisDugmeleri` ile
-  /// AYNI kural; ikisi ayni provider'i okur ki liste tek yerden gelsin.
-  Widget _yontemSecimi(AppLocalizations l10n) {
-    final saglayicilar =
-        ref.watch(oauthSaglayicilarProvider).value ?? const <String>[];
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          l10n.kayitYontemBaslik,
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        const SizedBox(height: 16),
-        FilledButton(
-          key: const Key('kayit-yontem-parola'),
-          onPressed: _bekliyor ? null : _parolaYolu,
-          style: FilledButton.styleFrom(
-            minimumSize: const Size.fromHeight(52),
-          ),
-          child: _bekliyor
-              ? const SizedBox(
-                  height: 22,
-                  width: 22,
-                  child: CircularProgressIndicator(strokeWidth: 2.5),
-                )
-              : Text(l10n.kayitYontemParola),
-        ),
-        for (final s in saglayicilar) ...[
-          const SizedBox(height: 8),
-          OutlinedButton(
-            key: Key('kayit-yontem-$s'),
-            onPressed: _bekliyor ? null : () => _sosyalYol(s),
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size.fromHeight(52),
-            ),
-            child: Text(l10n.sosyalIleDevam(kSaglayiciEtiketi[s] ?? s)),
-          ),
-        ],
-      ],
-    );
-  }
+  // ============================ ADIM 5 ==================================== //
 
   Widget _kodFormu(AppLocalizations l10n) {
     return Form(
@@ -563,9 +816,8 @@ class _KayitScreenState extends ConsumerState<KayitScreen> {
               prefixIcon: const Icon(Icons.sms_outlined),
               border: const OutlineInputBorder(),
             ),
-            validator: (v) => (v ?? '').trim().isEmpty
-                ? l10n.kayitKodGerekli
-                : null,
+            validator: (v) =>
+                (v ?? '').trim().isEmpty ? l10n.kayitKodGerekli : null,
           ),
           const SizedBox(height: 24),
           FilledButton(
@@ -584,6 +836,92 @@ class _KayitScreenState extends ConsumerState<KayitScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  // ============================ SONUC ===================================== //
+
+  /// Tesis ACILDI — kod gosterilir ve KOPYALANABILIR.
+  ///
+  /// SARTNAME §4: "Yonetici tesis kodunu bu arada elle iletir; arayuzde
+  /// tesis kodu gorunur ve kopyalanabilir olsun." SMS saglayicisi
+  /// baglanana kadar bu ekran, kodun kullaniciya ulastigi TEK yerdir —
+  /// bu yuzden ana ekrana atlamiyoruz.
+  Widget _sonucKarti(AppLocalizations l10n) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Icon(
+          Icons.check_circle_outline,
+          size: 48,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+        const SizedBox(height: 16),
+        Text(
+          _tesisAd,
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: 24),
+        Text(
+          l10n.kayitTesisKoduBaslik,
+          style: Theme.of(context).textTheme.labelMedium,
+        ),
+        const SizedBox(height: 8),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                Expanded(
+                  // `SelectableText`: kod KOPYALANACAK bir kimliktir.
+                  // Kopyala dugmesi calismasa da (pano izni) kullanici
+                  // elle secebilmeli.
+                  child: SelectableText(
+                    _uretilenKod,
+                    key: const Key('kayit-uretilen-kod'),
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                ),
+                IconButton(
+                  key: const Key('kayit-kod-kopyala'),
+                  tooltip: l10n.kayitKopyala,
+                  icon: const Icon(Icons.copy_outlined),
+                  onPressed: () async {
+                    // Messenger `await`TEN ONCE yakalaniyor: sonrasinda
+                    // `context`e dokunmak, agac bu arada soklulmusse
+                    // hatadir (`use_build_context_synchronously`).
+                    final messenger = ScaffoldMessenger.of(context);
+                    await Clipboard.setData(ClipboardData(text: _uretilenKod));
+                    if (!mounted) return;
+                    messenger.showSnackBar(
+                      SnackBar(content: Text(l10n.kayitKopyalandi)),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          l10n.kayitTesisKoduPaylas,
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        const SizedBox(height: 24),
+        FilledButton(
+          key: const Key('kayit-sonuc-devam'),
+          // Oturum ZATEN acik; router `authenticated` durumunu gorunce
+          // ana ekrana goturur. Buradan elle `context.go` cagirmak, ayni
+          // karari iki yerde tutmak olurdu.
+          onPressed: () => context.go(AppRoutes.home),
+          style: FilledButton.styleFrom(
+            minimumSize: const Size.fromHeight(52),
+          ),
+          child: Text(l10n.kayitTamamla),
+        ),
+      ],
     );
   }
 }

@@ -4746,8 +4746,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get kayitGirisLinki => 'Zaten hesabınız var mı? Giriş yapın';
 
   @override
-  String kayitAdim(String n) {
-    return 'Adım $n/4';
+  String kayitAdim(String n, String toplam) {
+    return 'Adım $n/$toplam';
   }
 
   @override
@@ -4807,4 +4807,60 @@ class AppLocalizationsTr extends AppLocalizations {
   String davetOzet(String tesis, String rol) {
     return '$tesis sizi $rol olarak davet etti.';
   }
+
+  @override
+  String get kayitYontemEposta => 'E-posta/telefon ile kaydol';
+
+  @override
+  String get kayitYontemVeya => 'veya';
+
+  @override
+  String get kayitBilgilerBaslik => 'Bilgileriniz';
+
+  @override
+  String get kayitAdSoyad => 'Ad soyad';
+
+  @override
+  String get kayitAdGerekli => 'Ad soyad gerekli.';
+
+  @override
+  String get kayitParola => 'Parola';
+
+  @override
+  String get kayitParolaGerekli => 'Parola en az 8 karakter olmalı.';
+
+  @override
+  String get kayitTesisAdBaslik => 'Tesisinizi oluşturun';
+
+  @override
+  String get kayitTesisAd => 'Tesis adını giriniz';
+
+  @override
+  String get kayitTesisAdIpucu => 'Örn. Oltu Sitesi';
+
+  @override
+  String get kayitTesisAdGerekli => 'Tesis adı gerekli.';
+
+  @override
+  String get kayitZatenSitemVar => 'Zaten bir sitem var';
+
+  @override
+  String get kayitTesisKoduBaslik => 'Tesis kodunuz';
+
+  @override
+  String get kayitTesisKoduPaylas =>
+      'Bu kodu sakinlerinize ve personelinize iletin; uygulamaya bu kodla katılırlar.';
+
+  @override
+  String get kayitKopyala => 'Kopyala';
+
+  @override
+  String get kayitKopyalandi => 'Kopyalandı';
+
+  @override
+  String get kayitTamamla => 'Devam et';
+
+  @override
+  String get kayitSosyalAdNotu =>
+      'Ad soyad hesabınızdan alındı; değiştirebilirsiniz.';
 }

@@ -29,6 +29,7 @@ class AuthState {
     this.oauthBaglamaJetonu,
     this.oauthSaglayici,
     this.oauthRelay = false,
+    this.oauthAd,
   });
 
   final AuthStatus status;
@@ -59,9 +60,14 @@ class AuthState {
   /// Apple "e-postami gizle" dediyse true; kullaniciya soylenir.
   final bool oauthRelay;
 
+  /// (P155r2 §2) Saglayicinin bildirdigi ad soyad — kayit formu bunu
+  /// ON-DOLDURUR ve kullanici duzeltebilir. Apple'da BOS gelir.
+  final String? oauthAd;
+
   AuthState copyWith({
     bool? kodBekleniyor,
     Object? oauthBaglamaJetonu = _sentinel,
+    Object? oauthAd = _sentinel,
     Object? oauthSaglayici = _sentinel,
     bool? oauthRelay,
     AuthStatus? status,
@@ -85,6 +91,7 @@ class AuthState {
       oauthBaglamaJetonu: oauthBaglamaJetonu == _sentinel
           ? this.oauthBaglamaJetonu
           : oauthBaglamaJetonu as String?,
+      oauthAd: oauthAd == _sentinel ? this.oauthAd : oauthAd as String?,
       oauthSaglayici: oauthSaglayici == _sentinel
           ? this.oauthSaglayici
           : oauthSaglayici as String?,
@@ -195,6 +202,48 @@ class AuthController extends Notifier<AuthState> {
     } on ApiException catch (e) {
       state = state.copyWith(
         submitting: false, errorMessage: e.message, hataKimligi: e.code);
+    }
+  }
+
+  /// (P155r2 §3) Yonetici tesisini acar → OTURUM ACILIR.
+  ///
+  /// Basarida `(tesisAd, tesisKodu)` doner ki ekran kodu gosterip
+  /// kopyalatabilsin; basarisizlikta `null` doner ve hata `state`e
+  /// yazilir (ekran onu okur). Depodaki oteki akislarla ayni desen.
+  ///
+  /// SOSYAL YOLDA baglama jetonu `state`ten alinir — cagiran onu
+  /// tasimaz; jetonun tek sahibi denetleyicidir ve iki yerde tutmak
+  /// onu ayristirirdi.
+  Future<({String tesisAd, String tesisKodu})?> tesisOlustur({
+    required String tesisAd,
+    required String ad,
+    required String telefon,
+    String? parola,
+    bool sosyal = false,
+  }) async {
+    final baglama = sosyal ? state.oauthBaglamaJetonu : null;
+    if (sosyal && baglama == null) return null;
+    state = state.copyWith(
+      submitting: true, errorMessage: null, hataKimligi: null);
+    try {
+      final sonuc = await ref.read(authRepositoryProvider).tesisOlustur(
+            tesisAd: tesisAd,
+            ad: ad,
+            telefon: telefon,
+            parola: parola,
+            baglamaJetonu: baglama,
+          );
+      state = state.copyWith(
+        status: AuthStatus.authenticated,
+        submitting: false,
+        oauthBaglamaJetonu: null,
+        oauthAd: null,
+      );
+      return sonuc;
+    } on ApiException catch (e) {
+      state = state.copyWith(
+        submitting: false, errorMessage: e.message, hataKimligi: e.code);
+      return null;
     }
   }
 
@@ -349,6 +398,7 @@ class AuthController extends Notifier<AuthState> {
         oauthBaglamaJetonu: sonuc.baglamaJetonu,
         oauthSaglayici: sonuc.saglayici,
         oauthRelay: sonuc.relay,
+        oauthAd: sonuc.ad,
       );
     } on ApiException catch (e) {
       state = state.copyWith(

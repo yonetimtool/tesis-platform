@@ -100,6 +100,28 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<({String tesisAd, String tesisKodu})> tesisOlustur({
+    required String tesisAd,
+    required String ad,
+    required String telefon,
+    String? parola,
+    String? baglamaJetonu,
+  }) async {
+    final sonuc = await api.tesisOlustur(
+      tesisAd: tesisAd, ad: ad, telefon: telefon,
+      parola: parola, baglamaJetonu: baglamaJetonu,
+    );
+    await storage.save(sonuc.jetonlar);
+    // "Beni hatirla" on-doldurmasi BURADA YAPILMIYOR ve davet yoluyla
+    // ayni gerekce: kullanici hesabini AZ ONCE acti, oturumu zaten
+    // acik ve bir sonraki girise kadar parolasini hatirlatmamiz
+    // gerekmiyor. Saklamak, hic istenmemis bir veriyi cihazda
+    // tutmak olurdu.
+    await storage.clearCredentials();
+    return (tesisAd: sonuc.tesisAd, tesisKodu: sonuc.tesisKodu);
+  }
+
+  @override
   Future<({String phone, String password})?> readSavedCredentials() =>
       storage.readCredentials();
 

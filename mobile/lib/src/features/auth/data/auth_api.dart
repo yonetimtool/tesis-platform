@@ -193,6 +193,46 @@ class AuthApi {
     }
   }
 
+  /// (P155r2 / §3) `POST /auth/kayit/tesis-olustur` — YONETICI SELF-SIGNUP.
+  ///
+  /// Tesis O ANDA olusur, kodu sunucu uretir ve OTURUM ACILIR; admin
+  /// paneli adimi yoktur. Donen `tesisKodu` ilk ekranda gosterilir
+  /// cunku yoneticinin sakinlerine iletecegi sey odur.
+  ///
+  /// YONTEM TEK: ya `parola` ya `baglamaJetonu`. Ikisini birden
+  /// gondermek sunucuda 422'dir; bu yuzden cagiran tarafta da ayrilar.
+  Future<({String tesisAd, String tesisKodu, TokenPair jetonlar})>
+      tesisOlustur({
+    required String tesisAd,
+    required String ad,
+    required String telefon,
+    String? parola,
+    String? baglamaJetonu,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/auth/kayit/tesis-olustur',
+        data: {
+          'tesis_ad': tesisAd,
+          'ad': ad,
+          'telefon': telefon,
+          if (parola != null && parola.isNotEmpty) 'parola': parola,
+          if (baglamaJetonu != null && baglamaJetonu.isNotEmpty)
+            'baglama_jetonu': baglamaJetonu,
+        },
+      );
+      return (
+        tesisAd: res.data!['tesis_ad'] as String,
+        tesisKodu: res.data!['tesis_kodu'] as String,
+        jetonlar: TokenPair.fromJson(
+          res.data!['jetonlar'] as Map<String, dynamic>,
+        ),
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
   /// (P154 / Asama 3) `POST /auth/kayit/rol-dogrula` — kod dogruysa
   /// PAROLA BELIRLEME jetonu doner (oturum DEGIL).
   ///

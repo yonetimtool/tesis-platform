@@ -5014,8 +5014,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get kayitGirisLinki => 'لديك حساب بالفعل؟ سجّل الدخول';
 
   @override
-  String kayitAdim(String n) {
-    return 'الخطوة $n/4';
+  String kayitAdim(String n, String toplam) {
+    return 'الخطوة $n/$toplam';
   }
 
   @override
@@ -5075,4 +5075,59 @@ class AppLocalizationsAr extends AppLocalizations {
   String davetOzet(String tesis, String rol) {
     return 'دعاك $tesis بصفة $rol.';
   }
+
+  @override
+  String get kayitYontemEposta => 'التسجيل بالبريد الإلكتروني/الهاتف';
+
+  @override
+  String get kayitYontemVeya => 'أو';
+
+  @override
+  String get kayitBilgilerBaslik => 'بياناتك';
+
+  @override
+  String get kayitAdSoyad => 'الاسم الكامل';
+
+  @override
+  String get kayitAdGerekli => 'الاسم الكامل مطلوب.';
+
+  @override
+  String get kayitParola => 'كلمة المرور';
+
+  @override
+  String get kayitParolaGerekli => 'يجب ألا تقل كلمة المرور عن ٨ أحرف.';
+
+  @override
+  String get kayitTesisAdBaslik => 'أنشئ مجمّعك';
+
+  @override
+  String get kayitTesisAd => 'أدخل اسم المجمّع';
+
+  @override
+  String get kayitTesisAdIpucu => 'مثال: مجمّع أولتو';
+
+  @override
+  String get kayitTesisAdGerekli => 'اسم المجمّع مطلوب.';
+
+  @override
+  String get kayitZatenSitemVar => 'لديّ مجمّع بالفعل';
+
+  @override
+  String get kayitTesisKoduBaslik => 'رمز مجمّعك';
+
+  @override
+  String get kayitTesisKoduPaylas =>
+      'شارك هذا الرمز مع السكان والموظفين؛ به ينضمّون إلى التطبيق.';
+
+  @override
+  String get kayitKopyala => 'نسخ';
+
+  @override
+  String get kayitKopyalandi => 'تم النسخ';
+
+  @override
+  String get kayitTamamla => 'متابعة';
+
+  @override
+  String get kayitSosyalAdNotu => 'تم أخذ الاسم من حسابك، ويمكنك تغييره.';
 }

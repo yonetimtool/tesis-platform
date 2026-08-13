@@ -1473,7 +1473,7 @@
   "kayitYontemBaslik": "Comment vous connecterez-vous ?",
   "kayitYontemParola": "Créer un mot de passe",
   "kayitGirisLinki": "Vous avez déjà un compte ? Se connecter",
-  "kayitAdim": "Étape {n}/4",
+  "kayitAdim": "Étape {n}/{toplam}",
   "sosyalIleDevam": "Continuer avec {saglayici}",
   "sosyalBaslik": "Associer votre compte",
   "sosyalEslesmeAciklama": "Votre compte {saglayici} est vérifié. Saisissez l'identifiant du site et votre numéro de téléphone pour que nous trouvions votre compte.",
@@ -1489,5 +1489,34 @@
   "davetKullanilmis": "Cette invitation a déjà été utilisée.",
   "davetBulunamadi": "Ce lien d'invitation n'est pas valide.",
   "davetYoneticinizeBasvurun": "Contactez votre gestionnaire pour une nouvelle invitation.",
-  "davetOzet": "{tesis} vous a invité en tant que {rol}."
+  "davetOzet": "{tesis} vous a invité en tant que {rol}.",
+  "@kayitAdim": {
+    "description": "Kayit akisi adim gostergesi",
+    "placeholders": {
+      "n": {
+        "type": "String"
+      },
+      "toplam": {
+        "type": "String"
+      }
+    }
+  },
+  "kayitYontemEposta": "S'inscrire avec e-mail/téléphone",
+  "kayitYontemVeya": "ou",
+  "kayitBilgilerBaslik": "Vos informations",
+  "kayitAdSoyad": "Nom et prénom",
+  "kayitAdGerekli": "Le nom et prénom est obligatoire.",
+  "kayitParola": "Mot de passe",
+  "kayitParolaGerekli": "Le mot de passe doit comporter au moins 8 caractères.",
+  "kayitTesisAdBaslik": "Créez votre résidence",
+  "kayitTesisAd": "Saisissez le nom de la résidence",
+  "kayitTesisAdIpucu": "p. ex. Résidence Oltu",
+  "kayitTesisAdGerekli": "Le nom de la résidence est obligatoire.",
+  "kayitZatenSitemVar": "J'ai déjà une résidence",
+  "kayitTesisKoduBaslik": "Votre code de résidence",
+  "kayitTesisKoduPaylas": "Communiquez ce code à vos résidents et à votre personnel ; il leur permet de vous rejoindre.",
+  "kayitKopyala": "Copier",
+  "kayitKopyalandi": "Copié",
+  "kayitTamamla": "Continuer",
+  "kayitSosyalAdNotu": "Nom repris de votre compte ; vous pouvez le modifier."
 }

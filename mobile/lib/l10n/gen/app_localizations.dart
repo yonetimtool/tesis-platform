@@ -8408,8 +8408,8 @@ abstract class AppLocalizations {
   /// Kayit akisi adim gostergesi
   ///
   /// In tr, this message translates to:
-  /// **'Adım {n}/4'**
-  String kayitAdim(String n);
+  /// **'Adım {n}/{toplam}'**
+  String kayitAdim(String n, String toplam);
 
   /// No description provided for @sosyalIleDevam.
   ///
@@ -8506,6 +8506,114 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'{tesis} sizi {rol} olarak davet etti.'**
   String davetOzet(String tesis, String rol);
+
+  /// No description provided for @kayitYontemEposta.
+  ///
+  /// In tr, this message translates to:
+  /// **'E-posta/telefon ile kaydol'**
+  String get kayitYontemEposta;
+
+  /// No description provided for @kayitYontemVeya.
+  ///
+  /// In tr, this message translates to:
+  /// **'veya'**
+  String get kayitYontemVeya;
+
+  /// No description provided for @kayitBilgilerBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bilgileriniz'**
+  String get kayitBilgilerBaslik;
+
+  /// No description provided for @kayitAdSoyad.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ad soyad'**
+  String get kayitAdSoyad;
+
+  /// No description provided for @kayitAdGerekli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ad soyad gerekli.'**
+  String get kayitAdGerekli;
+
+  /// No description provided for @kayitParola.
+  ///
+  /// In tr, this message translates to:
+  /// **'Parola'**
+  String get kayitParola;
+
+  /// No description provided for @kayitParolaGerekli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Parola en az 8 karakter olmalı.'**
+  String get kayitParolaGerekli;
+
+  /// No description provided for @kayitTesisAdBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tesisinizi oluşturun'**
+  String get kayitTesisAdBaslik;
+
+  /// No description provided for @kayitTesisAd.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tesis adını giriniz'**
+  String get kayitTesisAd;
+
+  /// No description provided for @kayitTesisAdIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Örn. Oltu Sitesi'**
+  String get kayitTesisAdIpucu;
+
+  /// No description provided for @kayitTesisAdGerekli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tesis adı gerekli.'**
+  String get kayitTesisAdGerekli;
+
+  /// No description provided for @kayitZatenSitemVar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Zaten bir sitem var'**
+  String get kayitZatenSitemVar;
+
+  /// No description provided for @kayitTesisKoduBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tesis kodunuz'**
+  String get kayitTesisKoduBaslik;
+
+  /// No description provided for @kayitTesisKoduPaylas.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu kodu sakinlerinize ve personelinize iletin; uygulamaya bu kodla katılırlar.'**
+  String get kayitTesisKoduPaylas;
+
+  /// No description provided for @kayitKopyala.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kopyala'**
+  String get kayitKopyala;
+
+  /// No description provided for @kayitKopyalandi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kopyalandı'**
+  String get kayitKopyalandi;
+
+  /// No description provided for @kayitTamamla.
+  ///
+  /// In tr, this message translates to:
+  /// **'Devam et'**
+  String get kayitTamamla;
+
+  /// No description provided for @kayitSosyalAdNotu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ad soyad hesabınızdan alındı; değiştirebilirsiniz.'**
+  String get kayitSosyalAdNotu;
 }
 
 class _AppLocalizationsDelegate

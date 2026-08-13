@@ -298,6 +298,8 @@ async def _callback_isle(
         subject=kimlik.subject,
         eposta=kimlik.eposta,
         relay=kimlik.relay,
+        # (P155r2 / §2) Kayit formunun ad on-doldurmasi.
+        ad=kimlik.ad,
     )
     sonuc_id = await _sonucu_yaz(redis, veri)
 
@@ -344,6 +346,11 @@ def _baglama_jetonu(kimlik: dict) -> str:
             "saglayici": kimlik["saglayici"],
             "subject": kimlik["subject"],
             "eposta": kimlik.get("eposta"),
+            # Ad JETONA konuyor: `tesis-olustur` cagrisi callback'ten
+            # DAKIKALAR sonra gelebilir ve Redis'teki sonuc o ana kadar
+            # tuketilmis olur. Jeton kisa omurlu ve imzali; icindeki ad
+            # yalniz on-doldurma icin okunur.
+            "ad": kimlik.get("ad"),
             "iat": int(simdi.timestamp()),
             "exp": int(
                 (
@@ -391,6 +398,7 @@ async def sonuc(
             saglayici=veri["saglayici"],
             eposta=veri.get("eposta"),
             relay=bool(veri.get("relay")),
+            ad=veri.get("ad"),
             baglama_jetonu=_baglama_jetonu(veri),
         )
 

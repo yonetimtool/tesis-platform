@@ -4890,8 +4890,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get kayitGirisLinki => '¿Ya tiene una cuenta? Iniciar sesión';
 
   @override
-  String kayitAdim(String n) {
-    return 'Paso $n/4';
+  String kayitAdim(String n, String toplam) {
+    return 'Paso $n/$toplam';
   }
 
   @override
@@ -4951,4 +4951,61 @@ class AppLocalizationsEs extends AppLocalizations {
   String davetOzet(String tesis, String rol) {
     return '$tesis le invitó como $rol.';
   }
+
+  @override
+  String get kayitYontemEposta => 'Registrarse con correo/teléfono';
+
+  @override
+  String get kayitYontemVeya => 'o';
+
+  @override
+  String get kayitBilgilerBaslik => 'Sus datos';
+
+  @override
+  String get kayitAdSoyad => 'Nombre y apellidos';
+
+  @override
+  String get kayitAdGerekli => 'El nombre y apellidos es obligatorio.';
+
+  @override
+  String get kayitParola => 'Contraseña';
+
+  @override
+  String get kayitParolaGerekli =>
+      'La contraseña debe tener al menos 8 caracteres.';
+
+  @override
+  String get kayitTesisAdBaslik => 'Cree su comunidad';
+
+  @override
+  String get kayitTesisAd => 'Introduzca el nombre de la comunidad';
+
+  @override
+  String get kayitTesisAdIpucu => 'p. ej. Residencial Oltu';
+
+  @override
+  String get kayitTesisAdGerekli => 'El nombre de la comunidad es obligatorio.';
+
+  @override
+  String get kayitZatenSitemVar => 'Ya tengo una comunidad';
+
+  @override
+  String get kayitTesisKoduBaslik => 'Su código de comunidad';
+
+  @override
+  String get kayitTesisKoduPaylas =>
+      'Comparta este código con sus residentes y personal; lo usan para unirse.';
+
+  @override
+  String get kayitKopyala => 'Copiar';
+
+  @override
+  String get kayitKopyalandi => 'Copiado';
+
+  @override
+  String get kayitTamamla => 'Continuar';
+
+  @override
+  String get kayitSosyalAdNotu =>
+      'Nombre obtenido de su cuenta; puede cambiarlo.';
 }

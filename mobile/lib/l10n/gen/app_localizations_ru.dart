@@ -5004,8 +5004,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get kayitGirisLinki => 'Уже есть аккаунт? Войти';
 
   @override
-  String kayitAdim(String n) {
-    return 'Шаг $n/4';
+  String kayitAdim(String n, String toplam) {
+    return 'Шаг $n/$toplam';
   }
 
   @override
@@ -5065,4 +5065,61 @@ class AppLocalizationsRu extends AppLocalizations {
   String davetOzet(String tesis, String rol) {
     return '$tesis пригласил вас как $rol.';
   }
+
+  @override
+  String get kayitYontemEposta => 'Регистрация по эл. почте/телефону';
+
+  @override
+  String get kayitYontemVeya => 'или';
+
+  @override
+  String get kayitBilgilerBaslik => 'Ваши данные';
+
+  @override
+  String get kayitAdSoyad => 'Имя и фамилия';
+
+  @override
+  String get kayitAdGerekli => 'Укажите имя и фамилию.';
+
+  @override
+  String get kayitParola => 'Пароль';
+
+  @override
+  String get kayitParolaGerekli =>
+      'Пароль должен содержать не менее 8 символов.';
+
+  @override
+  String get kayitTesisAdBaslik => 'Создайте свой объект';
+
+  @override
+  String get kayitTesisAd => 'Введите название объекта';
+
+  @override
+  String get kayitTesisAdIpucu => 'напр. ЖК «Олту»';
+
+  @override
+  String get kayitTesisAdGerekli => 'Укажите название объекта.';
+
+  @override
+  String get kayitZatenSitemVar => 'У меня уже есть объект';
+
+  @override
+  String get kayitTesisKoduBaslik => 'Код вашего объекта';
+
+  @override
+  String get kayitTesisKoduPaylas =>
+      'Передайте этот код жильцам и сотрудникам — по нему они присоединятся.';
+
+  @override
+  String get kayitKopyala => 'Копировать';
+
+  @override
+  String get kayitKopyalandi => 'Скопировано';
+
+  @override
+  String get kayitTamamla => 'Продолжить';
+
+  @override
+  String get kayitSosyalAdNotu =>
+      'Имя взято из вашей учётной записи; его можно изменить.';
 }

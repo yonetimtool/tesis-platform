@@ -5544,6 +5544,10 @@ class OauthSonucResponse(BaseModel):
     #: Apple "e-postami gizle" dediyse `true`; arayuz bunu kullaniciya
     #: soyler, cunku o adrese posta gonderilemeyecegini bilmeli.
     relay: bool = False
+    #: (P155r2 / §2) Saglayicinin bildirdigi ad soyad — kayit formunu
+    #: ON-DOLDURMAK icin; kullanici duzeltebilir. Apple bunu `id_token`da
+    #: VERMEZ, bos gelir ve akis kirilmaz.
+    ad: str | None = None
     baglama_jetonu: str | None = None
 
 

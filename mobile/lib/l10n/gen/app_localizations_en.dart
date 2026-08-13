@@ -4934,8 +4934,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get kayitGirisLinki => 'Already have an account? Sign in';
 
   @override
-  String kayitAdim(String n) {
-    return 'Step $n/4';
+  String kayitAdim(String n, String toplam) {
+    return 'Step $n/$toplam';
   }
 
   @override
@@ -4995,4 +4995,60 @@ class AppLocalizationsEn extends AppLocalizations {
   String davetOzet(String tesis, String rol) {
     return '$tesis invited you as $rol.';
   }
+
+  @override
+  String get kayitYontemEposta => 'Sign up with email/phone';
+
+  @override
+  String get kayitYontemVeya => 'or';
+
+  @override
+  String get kayitBilgilerBaslik => 'Your details';
+
+  @override
+  String get kayitAdSoyad => 'Full name';
+
+  @override
+  String get kayitAdGerekli => 'Full name is required.';
+
+  @override
+  String get kayitParola => 'Password';
+
+  @override
+  String get kayitParolaGerekli => 'Password must be at least 8 characters.';
+
+  @override
+  String get kayitTesisAdBaslik => 'Create your property';
+
+  @override
+  String get kayitTesisAd => 'Enter the property name';
+
+  @override
+  String get kayitTesisAdIpucu => 'e.g. Oltu Residences';
+
+  @override
+  String get kayitTesisAdGerekli => 'Property name is required.';
+
+  @override
+  String get kayitZatenSitemVar => 'I already have a property';
+
+  @override
+  String get kayitTesisKoduBaslik => 'Your property code';
+
+  @override
+  String get kayitTesisKoduPaylas =>
+      'Share this code with your residents and staff; they use it to join.';
+
+  @override
+  String get kayitKopyala => 'Copy';
+
+  @override
+  String get kayitKopyalandi => 'Copied';
+
+  @override
+  String get kayitTamamla => 'Continue';
+
+  @override
+  String get kayitSosyalAdNotu =>
+      'Name taken from your account; you can change it.';
 }
