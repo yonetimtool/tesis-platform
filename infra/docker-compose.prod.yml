@@ -286,6 +286,53 @@ services:
       TRANSLATE_URL: ${TRANSLATE_URL:-http://libretranslate:5000}
       FCM_PROJECT_ID: ${FCM_PROJECT_ID:-}
       FCM_SERVICE_ACCOUNT_PATH: ${FCM_SERVICE_ACCOUNT_PATH:-/secrets/fcm-service-account.json}
+      # --- (P154 / Asama 4) SOSYAL GIRIS — Google / Microsoft / Apple ---
+      #
+      # HEPSI OPSIYONEL (`:-` ile bos varsayilan) ve bu bilincli:
+      # yapilandirilmamis saglayici `/auth/oauth/saglayicilar` listesinde
+      # GORUNMEZ, dolayisiyla arayuzde dugmesi de cizilmez. Eksik bir
+      # degisken compose'u KIRMAMALI — sosyal giris bir EK yoldur ve
+      # telefon/parola girisi ondan bagimsiz calisir. `:?` (zorunlu)
+      # kullanmak, sosyal girisi yapilandirmamis her kurulumun
+      # ACILMAMASI demekti.
+      #
+      # NEDEN BU BLOK GEC EKLENDI (P155r2): `environment` bloklari ACIK
+      # BEYAZ LISTEDIR — compose'da `env_file` yok, yani burada adi
+      # gecmeyen hicbir degisken konteynere ULASMAZ. `.env`e yazmak tek
+      # basina YETMIYORDU ve hata SESSIZDI: `saglayicilar` bos liste
+      # doner, arayuz dugme cizmez, hicbir yerde hata gorunmez. Test
+      # takimi da yakalayamazdi: `tests/test_oauth.py` `settings`i
+      # DOGRUDAN monkeypatch'liyor, konteyner ortamina hic bakmiyor.
+      # Gerileme kilidi: `tests/test_compose_oauth.py`.
+      OAUTH_GOOGLE_CLIENT_ID: ${OAUTH_GOOGLE_CLIENT_ID:-}
+      OAUTH_GOOGLE_CLIENT_SECRET: ${OAUTH_GOOGLE_CLIENT_SECRET:-}
+      # `*_AUD`: `id_token.aud` icin KABUL EDILEN degerler (virgulle
+      # ayrilir). BOS BIRAKILIRSA `CLIENT_ID` kullanilir — tek istemcili
+      # (yalniz web) kurulumda yeterlidir. MOBIL EKLENINCE ZORUNLU olur:
+      # Google/Apple mobil icin AYRI istemci kimligi uretir ve jetonun
+      # `aud`u O kimligi tasir; liste guncellenmezse mobil giris sessizce
+      # reddedilir. Sartname listesinde YOKTU, bilerek eklendi.
+      OAUTH_GOOGLE_AUD: ${OAUTH_GOOGLE_AUD:-}
+      OAUTH_MICROSOFT_CLIENT_ID: ${OAUTH_MICROSOFT_CLIENT_ID:-}
+      OAUTH_MICROSOFT_CLIENT_SECRET: ${OAUTH_MICROSOFT_CLIENT_SECRET:-}
+      OAUTH_MICROSOFT_AUD: ${OAUTH_MICROSOFT_AUD:-}
+      OAUTH_MICROSOFT_TENANT: ${OAUTH_MICROSOFT_TENANT:-common}
+      OAUTH_APPLE_CLIENT_ID: ${OAUTH_APPLE_CLIENT_ID:-}
+      OAUTH_APPLE_AUD: ${OAUTH_APPLE_AUD:-}
+      OAUTH_APPLE_TEAM_ID: ${OAUTH_APPLE_TEAM_ID:-}
+      OAUTH_APPLE_KEY_ID: ${OAUTH_APPLE_KEY_ID:-}
+      # `.p8` ICERIGI tek satirda; satir sonlari `\n` kacisi olarak yazilir
+      # ve uygulama onlari cozer (`oauth._apple_istemci_sirri`).
+      OAUTH_APPLE_PRIVATE_KEY: ${OAUTH_APPLE_PRIVATE_KEY:-}
+      # Saglayiciya bildirilen `redirect_uri`nin tabani. TERS VEKIL
+      # ARKASINDA ZORUNLU: istekten turetilen adres (ic konak, http,
+      # farkli port) kayitli adresle tutmaz ve giris "redirect_uri
+      # mismatch" ile patlar.
+      OAUTH_CALLBACK_TABAN: ${OAUTH_CALLBACK_TABAN:-}
+      # BOS = O YUZEY KAPALI: `baslat` 503 doner ve hata kullanici siteden
+      # AYRILMADAN gorunur (saglayicidan donunce 404 bulmasindan iyidir).
+      OAUTH_WEB_DONUS: ${OAUTH_WEB_DONUS:-}
+      OAUTH_MOBIL_DONUS: ${OAUTH_MOBIL_DONUS:-com.app.yonetiyor://oauth}
     volumes:
       # Klasor mount (dosya yoksa da baslar); FCM json yoksa push unconfigured.
       - ./secrets:/secrets:ro

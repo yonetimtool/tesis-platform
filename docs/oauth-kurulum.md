@@ -187,6 +187,40 @@ karşısına çıkmamalı.
 
 ---
 
+## 4b. DEĞİŞKENLERİ YAZMAK TEK BAŞINA YETMEZ — compose'a da geçmeli
+
+> **(P155r2) ÖLÇÜLEN KUSUR.** Konsollar yapılandırıldı, değerler
+> `.env.prod`a yazıldı ve `/auth/oauth/saglayicilar` yine **boş liste**
+> döndü. Sebep: compose'da `env_file` **yok**; `environment:` blokları
+> **açık beyaz listedir** ve adı orada geçmeyen değişken konteynere
+> **ulaşmaz**. Hata sessizdi — hiçbir yerde uyarı çıkmıyor, sadece düğme
+> çizilmiyor.
+>
+> **Düzeltildi:** tüm `OAUTH_*` değişkenleri hem `docker-compose.yml`
+> hem `docker-compose.prod.yml` içindeki `api` servisine eklendi (hepsi
+> `:-` ile opsiyonel). Bir daha sessizce kaymaması için kilit test:
+> `backend/tests/test_compose_oauth.py` — `Settings`teki her `oauth_*`
+> alanını kodun kendisinden okuyup iki compose dosyasında da arıyor.
+
+**Değiştirdikten sonra konteyneri YENİDEN OLUŞTURUN.** Sadece `restart`
+yetmez; `environment` yalnız kapsayıcı yaratılırken okunur:
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.prod \
+  up -d --force-recreate api
+```
+
+**worker/beat'e gerek YOK:** OAuth yalnız istek yolunda kullanılıyor
+(`routers/oauth.py`); hiçbir Celery görevi ona dokunmuyor. Değişkenleri
+oraya da geçirmek, sırları gereksiz bir sürece taşımak olurdu.
+
+**admin-web'e de gerek YOK:** panel sağlayıcı listesini **kendi sunucu
+tarafından** okuyor (`/api/auth/oauth/saglayicilar` → BFF → backend);
+tarayıcı API'ye doğrudan gitmiyor ve admin-web'de hiçbir OAuth ortam
+değişkeni yok. Yani yapılandırma **tek yerde**: api servisi.
+
+---
+
 ## 5. DOĞRULAMA (yapılandırma sonrası)
 
 ```bash
@@ -202,6 +236,20 @@ curl -s -X POST https://api-test.yonetio.site/auth/oauth/baslat/google \
 
 Adres dönüyorsa panelde ve mobilde düğmeler kendiliğinden belirir; ayrı
 bir dağıtım gerekmez (liste her istekte okunur).
+
+**`saglayicilar` boş dönüyorsa** sırayla bakın:
+
+```bash
+# 1) Değişken KONTEYNERE ulaşmış mı? (en sık kaçırılan adım)
+docker compose -f docker-compose.prod.yml --env-file .env.prod \
+  exec api printenv | grep OAUTH_
+# Boş çıktı => compose'un `environment` bloğunda eksik ya da konteyner
+#              eski (`up -d --force-recreate api` koşun).
+
+# 2) Değer var ama liste boş => `izinli_aud` boş demektir.
+#    `hazir` özelliği hem CLIENT_ID hem aud listesi ister; aud boşken
+#    CLIENT_ID'ye düşer, yani CLIENT_ID de boşsa sağlayıcı kapalıdır.
+```
 
 ---
 

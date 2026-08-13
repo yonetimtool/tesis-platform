@@ -212,6 +212,36 @@ services:
       # icin: TRANSLATE_PROVIDER=libretranslate (servis zaten ayakta).
       TRANSLATE_PROVIDER: ${TRANSLATE_PROVIDER:-echo}
       TRANSLATE_URL: ${TRANSLATE_URL:-http://libretranslate:5000}
+      # --- (P154 / Asama 4) SOSYAL GIRIS — Google / Microsoft / Apple ---
+      #
+      # HEPSI OPSIYONEL (`:-` ile bos varsayilan): yapilandirilmamis
+      # saglayici `/auth/oauth/saglayicilar` listesinde GORUNMEZ ve
+      # arayuzde dugmesi cizilmez. Dev'de normal durum BOSTUR — sosyal
+      # giris kapali, telefon/parola girisi calisir.
+      #
+      # PROD DOSYASIYLA AYNI KUME OLMALI: `environment` bloklari ACIK
+      # BEYAZ LISTEDIR (compose'da `env_file` yok), yani burada adi
+      # gecmeyen degisken konteynere ULASMAZ. Iki dosyanin ayrismasi,
+      # dev'de calisan bir yapilandirmanin prod'da SESSIZCE calismamasi
+      # demek olurdu — P155r2'de tam olarak bu yasandi (ikisinde de
+      # yoktu). Kilit: `tests/test_compose_oauth.py`.
+      OAUTH_GOOGLE_CLIENT_ID: ${OAUTH_GOOGLE_CLIENT_ID:-}
+      OAUTH_GOOGLE_CLIENT_SECRET: ${OAUTH_GOOGLE_CLIENT_SECRET:-}
+      # `*_AUD` bos ise `CLIENT_ID` kullanilir; mobil eklenince (ayri
+      # istemci kimligi) ZORUNLU olur.
+      OAUTH_GOOGLE_AUD: ${OAUTH_GOOGLE_AUD:-}
+      OAUTH_MICROSOFT_CLIENT_ID: ${OAUTH_MICROSOFT_CLIENT_ID:-}
+      OAUTH_MICROSOFT_CLIENT_SECRET: ${OAUTH_MICROSOFT_CLIENT_SECRET:-}
+      OAUTH_MICROSOFT_AUD: ${OAUTH_MICROSOFT_AUD:-}
+      OAUTH_MICROSOFT_TENANT: ${OAUTH_MICROSOFT_TENANT:-common}
+      OAUTH_APPLE_CLIENT_ID: ${OAUTH_APPLE_CLIENT_ID:-}
+      OAUTH_APPLE_AUD: ${OAUTH_APPLE_AUD:-}
+      OAUTH_APPLE_TEAM_ID: ${OAUTH_APPLE_TEAM_ID:-}
+      OAUTH_APPLE_KEY_ID: ${OAUTH_APPLE_KEY_ID:-}
+      OAUTH_APPLE_PRIVATE_KEY: ${OAUTH_APPLE_PRIVATE_KEY:-}
+      OAUTH_CALLBACK_TABAN: ${OAUTH_CALLBACK_TABAN:-}
+      OAUTH_WEB_DONUS: ${OAUTH_WEB_DONUS:-}
+      OAUTH_MOBIL_DONUS: ${OAUTH_MOBIL_DONUS:-com.app.yonetiyor://oauth}
     ports:
       - "8000:8000"
     volumes:
@@ -220,6 +250,18 @@ services:
       # yalniz `backend/`i kopyaliyor, bu yuzden sozlesme SALT OKUNUR baglanir.
       # (Yalniz gelistirme compose'unda; prod imaji test kosmuyor.)
       - ../contracts:/contracts:ro
+      # (P155r2) `tests/test_compose_oauth.py` icin: compose dosyalari,
+      # `settings`teki her `oauth_*` ayarini GERCEKTEN gecirdiklerini
+      # kanitliyor. `contracts` ile AYNI gerekce — imaj yalniz `backend/`i
+      # kopyaliyor, dolayisiyla test okuyacagi dosyayi bulamazdi ve
+      # SESSIZCE atlanirdi (hep atlayan bir test hicbir sey korumaz).
+      #
+      # `../infra` KLASORU BAGLANMADI, YALNIZ IKI DOSYA: klasorde `.env`
+      # ve `secrets/` duruyor; onlari api konteynerine sokmak, testi
+      # kosmak icin sir yuzeyini buyutmek olurdu. Dosyalar SALT OKUNUR ve
+      # sir icermiyor (yalniz degisken REFERANSLARI).
+      - ./docker-compose.yml:/infra/docker-compose.yml:ro
+      - ./docker-compose.prod.yml:/infra/docker-compose.prod.yml:ro
     healthcheck:
       test:
         - CMD
