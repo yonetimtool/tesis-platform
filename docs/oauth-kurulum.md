@@ -1,4 +1,9 @@
-# Sosyal Giriş — Konsol Kurulumu (P154 / Aşama 4)
+# Sosyal Giriş — Konsol Kurulumu (P154 / Aşama 4 · P155r2 §5 güncellemesi)
+
+> **(P155r2) ALAN ADLARI DÜZELTİLDİ.** Bu belge `api.test.yonetiyor.com`
+> yazıyordu; test sunucusu Cloudflare Tunnel'a taşınınca adlar **tek
+> seviyeye** indi (ücretsiz sertifika `*.test.*`'i kapsamıyor —
+> `docs/test-sunucusu-kurulum.md` §son). Gerçek adlar aşağıdaki tabloda.
 
 Bu belge **Kerem'in üç sağlayıcı konsolunda yapması gereken işleri** ve
 karşılık gelen ortam değişkenlerini tam liste hâlinde verir. Kod tarafı
@@ -29,6 +34,20 @@ Sağlayıcılar adresi tam eşleşmeyle doğrular; canlı istemciye ikinci bir
 adres eklemek, canlı istemcinin yapılandırmasını test için değiştirmek
 olur. Her ortam için **ayrı istemci** açılır.
 
+**3. İKİ ORTAMIN ALAN ADLARI (her adım bunlara bakar).**
+
+| | **TEST** | **CANLI (prod)** |
+|---|---|---|
+| API | `api-test.yonetio.site` | `api.yonetio.site` |
+| Panel (platform) | `panel-test.yonetio.site` | `panel.yonetio.site` |
+| Uygulama (tesis) | `app-test.yonetio.site` | `app.yonetio.site` |
+| Portal | `test.yonetio.site` | `yonetiyor.com` (IDN: `xn--ynetiyor-n4a.com`) |
+
+> Canlı API neden `yonetio.site` (yeni alan `yonetiyor.com` değil):
+> App Store'daki mobil yapımın **içine gömülü** adres `api.yonetio.site`
+> ve o tur o adresi değiştirmiyor. İki API adresi açmak hangisinin
+> kanonik olduğunu belirsizleştirirdi (`infra/Caddyfile`).
+
 ---
 
 ## 1. GOOGLE (Google Cloud Console)
@@ -44,9 +63,9 @@ olur. Her ortam için **ayrı istemci** açılır.
 3. **APIs & Services → Credentials → Create credentials → OAuth client ID**
    - Application type: **Web application**
    - Name: `Yonetio TEST` (canlı için ayrı: `Yonetio PROD`)
-   - **Authorized redirect URIs** — tam olarak:
-     - test: `https://api.test.yonetiyor.com/auth/oauth/callback/google`
-     - canlı: `https://api.yonetiyor.com/auth/oauth/callback/google`
+   - **Authorized redirect URIs** — tam olarak (istemci başına BİR tane):
+     - `Yonetio TEST` → `https://api-test.yonetio.site/auth/oauth/callback/google`
+     - `Yonetio PROD` → `https://api.yonetio.site/auth/oauth/callback/google`
    - "Authorized JavaScript origins" **gerekmez** (kod akışı kullanıyoruz,
      tarayıcıda jeton işlemiyoruz).
 4. Çıkan **Client ID** ve **Client secret** değerlerini alın.
@@ -69,7 +88,8 @@ OAUTH_GOOGLE_CLIENT_SECRET=<...>
      kilitlemek, sakinlerin kişisel Microsoft hesaplarını dışarıda
      bırakırdı.
    - Redirect URI: platform **Web**, adres:
-     `https://api.test.yonetiyor.com/auth/oauth/callback/microsoft`
+     - TEST kaydı → `https://api-test.yonetio.site/auth/oauth/callback/microsoft`
+     - PROD kaydı → `https://api.yonetio.site/auth/oauth/callback/microsoft`
 2. **Certificates & secrets → New client secret** → değeri **hemen**
    kopyalayın (bir daha gösterilmez).
 3. **API permissions**: `openid`, `email`, `profile` (Microsoft Graph →
@@ -100,8 +120,16 @@ Apple üç ayrı nesne ister; sırası önemli.
    - Identifier: `com.app.yonetiyor.web` (web tarafının `client_id`'si)
    - **Configure → Sign in with Apple**
      - Primary App ID: yukarıdaki App ID
-     - **Domains and Subdomains:** `api.test.yonetiyor.com`
-     - **Return URLs:** `https://api.test.yonetiyor.com/auth/oauth/callback/apple`
+     - **Domains and Subdomains:**
+       - TEST Services ID → `api-test.yonetio.site`
+       - PROD Services ID → `api.yonetio.site`
+     - **Return URLs:**
+       - TEST → `https://api-test.yonetio.site/auth/oauth/callback/apple`
+       - PROD → `https://api.yonetio.site/auth/oauth/callback/apple`
+   - **İKİ AYRI Services ID açın** (`com.app.yonetiyor.web.test` ve
+     `com.app.yonetiyor.web`): Apple bir Services ID'de birden çok alan
+     adına izin verse de, canlı istemciyi test için düzenlemek yukarıdaki
+     2. kuralı çiğnerdi.
 3. **Key** — Keys → yeni anahtar
    - **Sign in with Apple** işaretle, Primary App ID'yi seç
    - `.p8` dosyasını indirin — **BİR KEZ indirilir**, kaybolursa yeni
@@ -127,16 +155,30 @@ OAUTH_APPLE_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\nMIGT...\n-----END PRIVATE K
 
 ## 4. ORTAK AYARLAR (her ortam için)
 
+**TEST** (`infra/.env`):
+
 ```env
 # Sağlayıcıya bildirilen redirect_uri'nin tabanı. TERS VEKİL ARKASINDA
 # ZORUNLU: istekten türetilen adres (iç konak, http, farklı port) kayıtlı
 # adresle tutmaz ve giriş "redirect_uri mismatch" ile patlar.
-OAUTH_CALLBACK_TABAN=https://api.test.yonetiyor.com
-
+OAUTH_CALLBACK_TABAN=https://api-test.yonetio.site
 # Callback sonrası tarayıcının gönderileceği yerler. BOŞ = O YÜZEY KAPALI.
-OAUTH_WEB_DONUS=https://panel.test.yonetiyor.com/giris/oauth
+OAUTH_WEB_DONUS=https://app-test.yonetio.site/giris/oauth
 OAUTH_MOBIL_DONUS=com.app.yonetiyor://oauth
 ```
+
+**CANLI** (`infra/.env.prod`):
+
+```env
+OAUTH_CALLBACK_TABAN=https://api.yonetio.site
+OAUTH_WEB_DONUS=https://app.yonetio.site/giris/oauth
+OAUTH_MOBIL_DONUS=com.app.yonetiyor://oauth
+```
+
+> `OAUTH_WEB_DONUS` neden `app.` (panel değil): kayıt ve sosyal giriş
+> **tesis yüzeyindedir**; `panel.` yalnız platform admin'e açıktır
+> (bkz. hafıza notu "app.* vs panel.*"). Yöneticiyi panel'e döndürmek
+> onu göremeyeceği bir yüzeye düşürürdü.
 
 `OAUTH_WEB_DONUS` boş bırakılırsa `POST /auth/oauth/baslat/{saglayici}`
 **503** döner — hata kullanıcı siteden ayrılmadan görünür. Bu bilinçli:
@@ -149,11 +191,11 @@ karşısına çıkmamalı.
 
 ```bash
 # 1) Sağlayıcı açık mı?
-curl -s https://api.test.yonetiyor.com/auth/oauth/saglayicilar
+curl -s https://api-test.yonetio.site/auth/oauth/saglayicilar
 # {"saglayicilar":["google","microsoft","apple"]}
 
 # 2) Yetkilendirme adresi üretiliyor mu?
-curl -s -X POST https://api.test.yonetiyor.com/auth/oauth/baslat/google \
+curl -s -X POST https://api-test.yonetio.site/auth/oauth/baslat/google \
      -H 'Content-Type: application/json' -d '{"yuzey":"web"}'
 # {"adres":"https://accounts.google.com/o/oauth2/v2/auth?...","state":"..."}
 ```
@@ -164,6 +206,17 @@ bir dağıtım gerekmez (liste her istekte okunur).
 ---
 
 ## 6. İLK GİRİŞTE NE OLUR
+
+> **(P155r2) YÖNETİCİ İÇİN İSTİSNA:** yönetici *yeni bir tesis açıyorsa*
+> aşağıdaki SMS adımı **yoktur** — `POST /auth/kayit/tesis-olustur`
+> sağlayıcı kimliğiyle doğrudan tesis + hesap açar. Sebep: orada
+> sahiplenilecek mevcut bir hesap yok, hesap o anda yaratılıyor ve numara
+> boş olmak zorunda. Kanıtlanacak bir sahiplik yok. Aşağıdaki akış
+> **var olan bir hesabı sahiplenme** durumu içindir.
+>
+> Sağlayıcıdan gelen **ad soyad** kayıt formuna otomatik dolar
+> (Google/Microsoft `name` iddiası; **Apple vermez**, alan boş gelir).
+> **Telefon hiçbir sağlayıcıdan gelmez** — kullanıcı doldurur.
 
 Sosyal hesap **kimlik doğrulama yöntemidir, eşleşme anahtarı değil.**
 Google "bu hesabın sahibisin" der; hangi tesiste kim olduğunuzu söylemez.
