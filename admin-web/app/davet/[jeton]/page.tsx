@@ -16,7 +16,7 @@
  *
  * SOSYAL YONTEM: saglayiciya tam yonlendirme var; donuste `/giris/oauth`
  * jetonu `sessionStorage`dan okuyup `/davet/sosyal` ile tamamlar (kayit
- * akisindaki `kayitBilgisi` mekanizmasinin aynisi).
+ * akisindaki `kayitTaslagi` mekanizmasinin aynisi).
  */
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";

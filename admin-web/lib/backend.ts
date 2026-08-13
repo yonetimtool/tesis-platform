@@ -160,8 +160,21 @@ export async function anonimGet(path: string): Promise<NextResponse> {
   return NextResponse.json(data, { status: res.status });
 }
 
-export function loginResponse(access: string, refresh: string): NextResponse {
-  const res = NextResponse.json({ ok: true });
+/**
+ * Oturum cerezlerini yazan yanit.
+ *
+ * (P155r2) `ek` OPSIYONEL ve yalniz JETON OLMAYAN alanlar icindir —
+ * `/auth/kayit/tesis-olustur` uretilen TESIS KODUNU dondurmek zorunda
+ * (yonetici onu sakinlerine iletecek). Jetonlar HER ZAMAN cerezde kalir;
+ * `ek`e jeton koymak, onlari JS'e gorunur kilmak olurdu ve bu fonksiyonun
+ * varlik sebebini bozardi.
+ */
+export function loginResponse(
+  access: string,
+  refresh: string,
+  ek?: Record<string, unknown>,
+): NextResponse {
+  const res = NextResponse.json({ ok: true, ...ek });
   setAuthCookies(res, access, refresh);
   return res;
 }

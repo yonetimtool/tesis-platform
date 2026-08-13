@@ -25,7 +25,8 @@ import { ErrorBox, Field, btnPrimary, cardCls, inputCls } from "@/components/for
 import {
   OAUTH_NIYET,
   davetJetonuOku,
-  kayitBilgisiOku,
+  kayitSosyalSonucYaz,
+  kayitTaslagiOku,
   saglayiciEtiketi,
 } from "@/components/SosyalGiris";
 import { useT } from "@/lib/i18n/kullan";
@@ -36,6 +37,9 @@ type Sonuc = {
   saglayici?: string | null;
   eposta?: string | null;
   relay?: boolean;
+  /** (P155r2 §2) Saglayicinin bildirdigi ad soyad — kayit formunun
+   *  on-doldurmasi. Apple vermez; bos gelir ve akis kirilmaz. */
+  ad?: string | null;
   baglama_jetonu?: string | null;
   error?: { message?: string };
 };
@@ -140,22 +144,29 @@ function OauthDonus() {
             })();
             return;
           }
+          // (P155r2) KAYIT AKISINDAN GELINDIYSE forma BURADA devam
+          // EDILMEZ: yeni sirada (rol -> yontem -> bilgiler -> role ozel)
+          // kullanici saglayiciya tesis/telefon girmeden ONCE gidiyor ve
+          // geriye ad soyad + telefon + tesis adimlari kaliyor. Onlari
+          // burada da cizmek, kayit formunun IKINCI bir kopyasini
+          // uretirdi (iki ekran zamanla ayrisirdi). Bunun yerine sonucu
+          // birakip `/kayit`a donuyoruz; o sayfa kaldigi yerden devam
+          // ediyor ve adi saglayicidan gelen degerle on-dolduruyor.
+          const taslak = kayitTaslagiOku();
+          if (taslak && d.baglama_jetonu) {
+            kayitSosyalSonucYaz({
+              rol: taslak.rol,
+              baglamaJetonu: d.baglama_jetonu,
+              saglayici: d.saglayici ?? "",
+              ad: d.ad ?? undefined,
+            });
+            router.replace("/kayit");
+            return;
+          }
+          // GIRIS ekranindan gelen sosyal akis: kimlik bir hesaba bagli
+          // degil. Burasi o durumun yeri — tesis ID + telefon + SMS.
           setSonuc(d);
           setAdim("tesis");
-          // (P154) KAYIT AKISINDAN GELINDIYSE tesis ID + telefon ZATEN
-          // girilmisti; alanlari doldurup adimi KENDILIGINDEN gecelim.
-          // Basarisiz olursa form dolu ve gorunur durumda kalir —
-          // kullanici duzeltip yeniden deneyebilir.
-          const saklanan = kayitBilgisiOku();
-          if (saklanan) {
-            setTesisKodu(saklanan.tesisKodu);
-            setTelefon(saklanan.telefon);
-            void tesisGonder({
-              tesisKodu: saklanan.tesisKodu,
-              telefon: saklanan.telefon,
-              jeton: d.baglama_jetonu ?? undefined,
-            });
-          }
           return;
         }
         // `durum=giris`: cerez yazildi. KOKE gidilir, sabit bir sayfaya

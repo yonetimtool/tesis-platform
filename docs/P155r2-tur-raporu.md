@@ -305,6 +305,33 @@ sağlayıcı ne mobilde ne web'de düğme olarak çizilir
 
 ---
 
+## 6b. WEB (`admin-web`) — mobille AYNI sıraya geçti
+
+`/kayit` sayfası da `rol → yöntem → bilgiler → role özel` sırasına geçti;
+yönetici artık panelden de tesisini açabiliyor ve **üretilen kod ekranda
+kopyalanabilir** görünüyor. Denetçi tesis **açamaz** (bir tesise atanır,
+kurmaz) — onun 4. adımı her zaman tesis kodu.
+
+**Web'e özgü tek zorluk — sosyal akış sayfadan ayrılıyor.** Sağlayıcıya tam
+yönlendirme var, dönüşte `/giris/oauth` yepyeni bir React ağacı. Yeni
+sırada kullanıcı sağlayıcıya **tesis/telefon girmeden önce** gidiyor, yani
+geriye ad soyad + telefon + tesis adımları kalıyor.
+
+Kararım: **kayıt formu tek yerde kalsın.** `/giris/oauth` sonucu çözüp
+`sessionStorage`a bırakıyor ve `/kayit`a geri gönderiyor; `/kayit` 3.
+adımdan, **ad soyad sağlayıcıdan dolu** olarak devam ediyor. Formu
+`/giris/oauth`ta da çizmek daha kısa görünürdü ama ikinci bir kopya
+üretirdi ve iki ekran zamanla ayrışırdı.
+
+`baglama_jetonu` **URL'e konmadı** — adres çubuğuna koymak onu tarayıcı
+geçmişine, `Referer` başlığına ve sunucu günlüklerine yazmak olurdu
+(arka ucun aynı kararının web tarafındaki karşılığı).
+
+Taşınan veri de küçüldü: eskiden tesis kodu + telefon taşınıyordu, artık
+**yalnız rol** — çünkü öteki ikisi henüz girilmemiş oluyor.
+
+---
+
 ## 7. TESTLER
 
 | Nerede | Ne | Sonuç |
@@ -314,6 +341,8 @@ sağlayıcı ne mobilde ne web'de düğme olarak çizilir
 | `test_rol_secimli_kayit.py` | P148 kesişim testi kaldırıldı | ✅ |
 | `test_sozlesme_sapmasi` · `test_yetki_kapsam` · `test_yetki_matrisi` · `test_denetci_salt_okuma` · `test_yuzey_yalitimi` | 79 yeşil, kilit yeniden üretildi | ✅ |
 | `kayit_rol_secimi_test.dart` (**10**) | yeni sıra · tesis açma + kod kopyalama · "zaten sitem var" · sosyal ad ön-doldurma · sosyal+yönetici · parola otomatik gönderimi · daire yalnız sakinde | ✅ |
+| `kayit-rolleri.test.ts` (**11**) | web sırası · sosyal önce/elle sonra düzeni · rol taşınması · ad ön-doldurma · tesis açma · denetçi açamaz · kod kopyalanabilir · ayrı parola adımı YOK | ✅ |
+| **Web tam takım** | | **743 ✓** (`lint` + `tsc` temiz) |
 | **Mobil tam takım** | | **1862 ✓** |
 | **Backend tam takım** | | **1632 ✓** (1 atlandı, 0 kırmızı — 28 dk) |
 | `flutter analyze` | | temiz |
@@ -356,12 +385,7 @@ tasarımı hazır (eşleşme ucu + tesis kodu ekseninde ikinci bir hız sınır�
 mevcut yol olduğu gibi çalışmaya başlar — **kod değişmez, yalnız ortam
 değişkeni**.
 
-### 8b. Web (`admin-web`) kayıt yüzeyi güncellenmedi
-Mobil yeni sıraya geçti; web `/kayit` sayfası hâlâ eski sırada ve
-`tesis-olustur` düğmesi yok. Backend ucu hazır olduğu için bu **saf arayüz
-işi**. Web'de yöneticinin bugünkü yolu davet bağı + panel.
-
-### 8c. `POST /auth/kayit/tesis-olustur` canlıda denenmedi
+### 8b. `POST /auth/kayit/tesis-olustur` canlıda denenmedi
 KİLİTLİ KURAL 1 gereği deploy yok. Aşağıdaki komutlar test sunucusunda
 koşulacak.
 
@@ -447,4 +471,10 @@ curl -s https://api-test.yonetio.site/auth/oauth/saglayicilar
   `auth_repository{,_impl}.dart` · `auth_controller.dart` ·
   `oauth_sonuc.dart` · ARB ×7 (18 anahtar + `kayitAdim`) ·
   `kayit_rol_secimi_test.dart` + 4 sahte depo
+- **Web:** `app/kayit/page.tsx` (yeniden yazıldı) ·
+  `app/api/auth/kayit/tesis-olustur/route.ts` (**yeni BFF**) ·
+  `app/giris/oauth/page.tsx` (kayıt dalı `/kayit`a devrediliyor) ·
+  `components/SosyalGiris.tsx` (`kayitBilgisi` → `kayitRolu` +
+  `kayitSosyalSonuc`) · `lib/backend.ts` (`loginResponse` ek gövde) ·
+  sözlük ×7 (14 anahtar) · `tests/kayit-rolleri.test.ts`
 - **Docs:** `oauth-kurulum.md` (alan adları + iki ortam) · bu rapor

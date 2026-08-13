@@ -48,54 +48,121 @@ describe("(P154) web kayit rolleri", () => {
 });
 
 /**
- * (P154 duzeltme turu) KIMLIK DOGRULAMA YONTEMI — brief §3.
+ * (P155r2) KAYIT SIRASI — sartname §2.
  *
- * "Kimlik dogrulama yontemi, KULLANICININ SECIMI: (a) parola olustur
- * (b) Google (c) Microsoft (d) Apple." Onceki surumde secim YOKTU: akis
- * kimlik adimindan dogrudan paroladan devam ediyordu ve sosyal hesapla
- * kaydolmak yalnizca GIRIS ekranindan mumkundu.
+ * "Kullanıcıya önce sosyal hesapla kayıt önerilir … ROL SEÇİMİNDEN
+ * SONRA." Yani yontem, tesis/telefon alanlarindan ONCE gelir. P154'te
+ * sira `rol -> kimlik -> yontem` idi; sosyal hesapla kaydolmak isteyen
+ * kisi once iki alan doldurmak zorundaydi.
  */
-describe("(P154) kayit akisinda yontem secimi", () => {
-  it("yontem AYRI bir adim ve sira brief'inki", () => {
+describe("(P155r2) kayit akisinda sira ve yontem secimi", () => {
+  it("sira sartnamenin sirasi: rol -> yontem -> bilgiler -> role ozel", () => {
     const m = KAYNAK.match(/type Adim = ([^;]+);/);
     expect(m, "`type Adim` bulunamadi").not.toBeNull();
     const adimlar = m![1].split("|").map((s) => s.trim().replace(/"/g, ""));
-    // Tesis ID + telefon ("kimlik") YONTEMDEN ONCE gelir.
-    expect(adimlar).toEqual(["rol", "kimlik", "yontem", "kod", "parola"]);
+    expect(adimlar).toEqual([
+      "rol",
+      "yontem",
+      "bilgiler",
+      "rolOzel",
+      "kod",
+      "sonuc",
+    ]);
   });
 
-  it("dort secenek de sunuluyor (parola + saglayici dugmeleri)", () => {
+  it("yontem adimi ROL'DEN HEMEN SONRA gelir", () => {
+    // Rol dugmesi dogrudan yonteme goturmeli; araya bir alan girseydi
+    // sartnamenin sirasi bozulurdu.
+    const rolBlok = KAYNAK.slice(
+      KAYNAK.indexOf('{adim === "rol" &&'),
+      KAYNAK.indexOf('{adim === "yontem" &&'),
+    );
+    expect(rolBlok).toContain('setAdim("yontem")');
+  });
+
+  it("SOSYAL ONCE, elle kayit SONRA sunulur (sartname §2 duzeni)", () => {
     const blok = KAYNAK.slice(
       KAYNAK.indexOf('{adim === "yontem" &&'),
-      KAYNAK.indexOf('{adim === "kod" &&'),
+      KAYNAK.indexOf('{adim === "bilgiler" &&'),
     );
     expect(blok, "yontem adimi cizilmiyor").not.toBe("");
-    // (a) parola
-    expect(blok).toContain("kayitYontemParola");
-    // (b/c/d) — saglayici dugmeleri TEK bilesenden gelir; listeyi
-    // sunucu verir, bu yuzden burada bilesen aranir, marka adlari degil.
+    // Saglayici dugmeleri TEK bilesenden gelir; listeyi sunucu verir, bu
+    // yuzden burada bilesen aranir, marka adlari degil.
     expect(blok).toContain("<SosyalGiris");
-  });
-
-  it("SMS'i baslatan cagri yontem seciminden SONRA yapilir", () => {
-    // Kimlik adimi `UC_BASLA`yi cagirsaydi, "Google" secen kullaniciya
-    // once gereksiz bir kayit SMS'i giderdi (iki kod, tek telefon).
-    const kimlik = KAYNAK.slice(
-      KAYNAK.indexOf("function kimlikGonder"),
-      KAYNAK.indexOf("async function parolaYolu"),
+    expect(blok).toContain("kayitYontemEposta");
+    // SOSYAL ONDE: sartname once sosyali oneriyor, ayirac sonra geliyor.
+    expect(blok.indexOf("<SosyalGiris")).toBeLessThan(
+      blok.indexOf("kayitYontemEposta"),
     );
-    expect(kimlik).not.toContain("UC_BASLA");
-    expect(kimlik).toContain('setAdim("yontem")');
   });
 
-  it("sosyal dala girilen tesis ID + telefon TASINIR", () => {
+  it("SMS'i baslatan cagri BILGILER adiminda DEGIL, 4. adimda yapilir", () => {
+    // Bilgiler adimi `UC_BASLA`yi cagirsaydi, tesis kodu daha girilmeden
+    // eslesme denenirdi.
+    const bilgiler = KAYNAK.slice(
+      KAYNAK.indexOf("function bilgileriGonder"),
+      KAYNAK.indexOf("async function rolOzelGonder"),
+    );
+    expect(bilgiler).not.toContain("UC_BASLA");
+    expect(bilgiler).toContain('setAdim("rolOzel")');
+  });
+
+  it("sosyal dala secilen ROL tasinir", () => {
     // Web'de saglayiciya tam yonlendirme var; donuste `/giris/oauth`
-    // yeni bir agactir. Tasinmasaydi kullanici ayni iki alani ikinci
-    // kez yazardi.
+    // yeni bir agactir. Rol tasinmasaydi kullanici kayda bastan baslardi.
+    // (Tesis/telefon ARTIK TASINMIYOR: yeni sirada saglayiciya onlar
+    // girilmeden ONCE gidiliyor.)
     const blok = KAYNAK.slice(
       KAYNAK.indexOf('{adim === "yontem" &&'),
-      KAYNAK.indexOf('{adim === "kod" &&'),
+      KAYNAK.indexOf('{adim === "bilgiler" &&'),
     );
-    expect(blok).toContain("kayitBilgisi=");
+    expect(blok).toContain("kayitRolu={rol}");
+  });
+
+  it("saglayicidan DONUSTE ad soyad ON-DOLDURULUR", () => {
+    // Sartname §2: "sağlayıcıdan gelen ad soyad … FORMA OTOMATİK DOLAR".
+    expect(KAYNAK).toContain("kayitSosyalSonucOku");
+    expect(KAYNAK).toContain("if (s.ad) setAd(s.ad)");
+  });
+});
+
+/**
+ * (P155r2 §3) YONETICI SELF-SIGNUP — tesis panelden acilir.
+ */
+describe("(P155r2) yonetici tesis acar", () => {
+  it("tesis olusturma ucu KULLANILIYOR", () => {
+    expect(KAYNAK).toContain('"/api/auth/kayit/tesis-olustur"');
+  });
+
+  it("DENETCI tesis ACAMAZ — yalniz yonetici", () => {
+    // Denetci bir tesise ATANIR, tesis kurmaz.
+    const m = KAYNAK.match(/const tesisAcar = ([^;]+);/);
+    expect(m, "`tesisAcar` bulunamadi").not.toBeNull();
+    expect(m![1]).toContain('rol === "yonetici"');
+  });
+
+  it('"Zaten bir sitem var" tesis kodu yoluna gecirir', () => {
+    expect(KAYNAK).toContain("kayitZatenSitemVar");
+    expect(KAYNAK).toContain("setKatil(true)");
+  });
+
+  it("uretilen TESIS KODU gosterilir ve kopyalanabilir", () => {
+    // Sartname §4: SMS saglayicisi baglanana kadar yonetici kodu ELLE
+    // iletecek; kod gorunur ve kopyalanabilir olmali.
+    expect(KAYNAK).toContain("kayit-uretilen-kod");
+    expect(KAYNAK).toContain("kayitKopyala");
+    expect(KAYNAK).toContain("writeText");
+  });
+
+  it("PAROLA IKI KEZ SORULMAZ — ayri parola adimi YOK", () => {
+    // Kod dogrulaninca `set-password` OTOMATIK cagrilir; kullaniciya az
+    // once yazdigi parola tekrar sorulmaz.
+    const kodGonder = KAYNAK.slice(
+      KAYNAK.indexOf("async function kodGonder"),
+      KAYNAK.indexOf("function geri()"),
+    );
+    expect(kodGonder).toContain("UC_PAROLA");
+    const m = KAYNAK.match(/type Adim = ([^;]+);/);
+    expect(m![1]).not.toContain("parola");
   });
 });

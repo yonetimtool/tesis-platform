@@ -24,42 +24,95 @@ import { useT } from "@/lib/i18n/kullan";
 export const OAUTH_NIYET = "yonetio.oauth.niyet";
 
 /**
- * (P154 duzeltme turu) KAYIT AKISINDA GIRILEN tesis ID + telefon.
+ * (P155r2) KAYIT AKISINDAN GELINDI — hangi ROL secilmisti.
  *
  * NEDEN DEPOYA YAZILIYOR: web'de sosyal akis sayfadan TAMAMEN ayrilir
  * (saglayiciya tam yonlendirme) ve donuste `/giris/oauth` yeni bir React
- * agacidir — bellekteki hicbir sey hayatta kalmaz. Brief bu iki alani
- * yontemden ONCE istiyor; donuste yeniden sormak, kullaniciya ayni seyi
- * iki kez yazdirmak olurdu.
+ * agacidir — bellekteki hicbir sey hayatta kalmaz.
+ *
+ * NEDEN ARTIK YALNIZ `rol` (eskiden tesis ID + telefon idi): yeni sirada
+ * (rol -> YONTEM -> bilgiler -> role ozel) saglayiciya, kullanici tesis
+ * ya da telefon girmeden ONCE gidiliyor. Elde yalnizca rol var; geri
+ * kalanini donuste `/kayit` soruyor — ki ad soyad ancak o zaman
+ * saglayicidan gelip forma dolabilsin (sartname §2).
  *
  * `niyet` ile AYNI mekanizma (`sessionStorage`) bilincli: iki ayri
  * saklama yeri, birinin temizlenip otekinin kalmasi demekti.
  */
 export const OAUTH_KAYIT = "yonetio.oauth.kayit";
 
-export interface KayitBilgisi {
-  tesisKodu: string;
-  telefon: string;
+export interface KayitTaslak {
+  rol: string;
 }
 
-export function kayitBilgisiYaz(bilgi: KayitBilgisi) {
+export function kayitTaslagiYaz(taslak: KayitTaslak) {
   try {
-    sessionStorage.setItem(OAUTH_KAYIT, JSON.stringify(bilgi));
+    sessionStorage.setItem(OAUTH_KAYIT, JSON.stringify(taslak));
   } catch {
-    // Depolama yoksa donuste alanlar bos gelir ve kullanici elle yazar —
-    // akis KIRILMAZ, yalnizca kisalmaz.
+    // Depolama yoksa donuste rol bilinmez ve kullanici kayda bastan
+    // baslar — akis KIRILMAZ, yalnizca kisalmaz.
   }
 }
 
-/** Okur VE SILER: bilgi tek kullanimliktir (niyet ile ayni kural). */
-export function kayitBilgisiOku(): KayitBilgisi | null {
+/** Okur VE SILER: taslak tek kullanimliktir (niyet ile ayni kural). */
+export function kayitTaslagiOku(): KayitTaslak | null {
   try {
     const ham = sessionStorage.getItem(OAUTH_KAYIT);
     sessionStorage.removeItem(OAUTH_KAYIT);
     if (!ham) return null;
-    const d = JSON.parse(ham) as Partial<KayitBilgisi>;
-    if (!d.tesisKodu || !d.telefon) return null;
-    return { tesisKodu: d.tesisKodu, telefon: d.telefon };
+    const d = JSON.parse(ham) as Partial<KayitTaslak>;
+    return d.rol ? { rol: d.rol } : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * (P155r2) Saglayici donusunun KAYIT icin gereken parcasi.
+ *
+ * `/giris/oauth` sonucu cozer ama kayit formunu O sayfa BARINDIRMAZ —
+ * kullaniciyi `/kayit`a geri gonderir ve gereken alanlari buraya birakir.
+ * Boylece kayit arayuzu TEK YERDE kalir; ikinci bir kopya, iki ekranin
+ * ayrisip farkli davranmasi demekti.
+ *
+ * NEDEN URL'DE DEGIL: `baglama_jetonu` adres cubuguna konsaydi tarayici
+ * gecmisine, `Referer` basligina ve sunucu gunluklerine yazilirdi — arka
+ * ucun jetonu URL'de tasimama karari (bkz. routers/oauth.py basligi)
+ * burada da gecerli. `sessionStorage` ayni sekmeye baglidir ve sekme
+ * kapaninca ucar; jeton zaten kisa omurlu ve imzali.
+ */
+export const OAUTH_KAYIT_SONUC = "yonetio.oauth.kayit.sonuc";
+
+export interface KayitSosyalSonuc {
+  rol: string;
+  baglamaJetonu: string;
+  saglayici: string;
+  /** Saglayicinin bildirdigi ad soyad; Apple'da BOS gelir. */
+  ad?: string;
+}
+
+export function kayitSosyalSonucYaz(sonuc: KayitSosyalSonuc) {
+  try {
+    sessionStorage.setItem(OAUTH_KAYIT_SONUC, JSON.stringify(sonuc));
+  } catch {
+    // Yazilamazsa `/kayit` bastan baslar; yarim bir akis birakilmaz.
+  }
+}
+
+/** Okur VE SILER — tek kullanimlik. */
+export function kayitSosyalSonucOku(): KayitSosyalSonuc | null {
+  try {
+    const ham = sessionStorage.getItem(OAUTH_KAYIT_SONUC);
+    sessionStorage.removeItem(OAUTH_KAYIT_SONUC);
+    if (!ham) return null;
+    const d = JSON.parse(ham) as Partial<KayitSosyalSonuc>;
+    if (!d.rol || !d.baglamaJetonu || !d.saglayici) return null;
+    return {
+      rol: d.rol,
+      baglamaJetonu: d.baglamaJetonu,
+      saglayici: d.saglayici,
+      ad: d.ad,
+    };
   } catch {
     return null;
   }
@@ -70,7 +123,7 @@ export function kayitBilgisiOku(): KayitBilgisi | null {
  * saglayiciya gitmeden once saklanir; donuste `/giris/oauth` onu okuyup
  * `/davet/sosyal` ile tamamlar (tesis/telefon SORULMAZ — jeton biliyor).
  *
- * `kayitBilgisi` ile AYNI mekanizma (`sessionStorage`), AYRI anahtar: davet
+ * `kayitTaslagi` ile AYNI mekanizma (`sessionStorage`), AYRI anahtar: davet
  * yolunda tesis+telefon yok, jeton var. Ikisi ayni donuste birlikte
  * bulunmaz.
  */
@@ -120,14 +173,14 @@ export function niyetiYaz(niyet: "giris" | "bagla") {
 export function SosyalGiris({
   niyet,
   yuzey = "web",
-  kayitBilgisi,
+  kayitRolu,
   davetJetonu,
 }: {
   niyet: "giris" | "bagla";
   yuzey?: "web" | "mobil";
-  /** (P154) Kayit akisindan gelindiyse: donuste tekrar sorulmasin diye
-   *  saglayiciya gitmeden ONCE saklanan tesis ID + telefon. */
-  kayitBilgisi?: KayitBilgisi;
+  /** (P155r2) Kayit akisindan gelindiyse: secilen rol. Donuste `/kayit`
+   *  kaldigi yerden devam edebilsin diye saglayiciya gitmeden saklanir. */
+  kayitRolu?: string;
   /** (P155 §7) Davet web yedeginden gelindiyse: donuste `/davet/sosyal`
    *  ile tamamlanacak jeton. */
   davetJetonu?: string;
@@ -177,7 +230,7 @@ export function SosyalGiris({
         return;
       }
       niyetiYaz(niyet);
-      if (kayitBilgisi) kayitBilgisiYaz(kayitBilgisi);
+      if (kayitRolu) kayitTaslagiYaz({ rol: kayitRolu });
       if (davetJetonu) davetJetonuYaz(davetJetonu);
       window.location.href = d.adres;
     } catch {
