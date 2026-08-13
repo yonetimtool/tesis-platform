@@ -1155,27 +1155,6 @@ class AnnouncementListResponse(BaseModel):
 
 
 # ----------------------------- complaints ---------------------------------- #
-class KayitBaslaRequest(BaseModel):
-    """(P148) Sakinin kendi kaydinin BIRINCI adimi."""
-
-    tesis_kodu: str = Field(min_length=4, max_length=32)
-    blok: str | None = Field(default=None, max_length=32)
-    daire_no: str = Field(min_length=1, max_length=32)
-    telefon: str = Field(min_length=5, max_length=32)
-
-
-class KayitBaslaResponse(BaseModel):
-    """Kod GONDERILDI — kodun KENDISI DONMEZ.
-
-    Yanit yalnizca kullanicinin dogru tesisi/daireyi sectigini teyit
-    etmesi icin ad tasir; "kod nereye gitti"yi de maskeli gosterir.
-    """
-
-    tesis_ad: str
-    daire: str
-    telefon_maskeli: str
-
-
 class TelefonIstek(BaseModel):
     telefon: str = Field(min_length=5, max_length=32)
 
@@ -1186,27 +1165,18 @@ class TelefonKodIstek(BaseModel):
 
 
 class KayitDurumResponse(BaseModel):
-    """(P148.2) Kayit akisinin durumu — OTURUM DEGIL.
+    """`POST /auth/giris/kod-iste`in KASTEN BILGISIZ yaniti.
 
-    Bilerek token DONMEZ: hesap yonetici onayindan sonra acilir.
+    (P155r2) Bu sema P148 onay akisindan ARTA KALDI ve tek tasidigi deger
+    (`onay_bekliyor`) artik bir onay kuyrugunu ANLATMIYOR — o kuyruk
+    kaldirildi. Yine de DEGISTIRILMEDI ve sebebi guvenlik: `kod-iste`
+    numaranin kayitli olup olmadigini SIZDIRMAMALI, yani yanit her
+    durumda BYTE BYTE AYNI olmali. Sabit tek degerli bir alan bunu
+    yapisal olarak garantiler; "gonderildi/gonderilmedi" gibi anlamli bir
+    ad koymak, ilk degistiren kisiyi sizintiya davet ederdi.
     """
 
     durum: Literal["onay_bekliyor"]
-
-
-class KayitBasvuruOut(BaseModel):
-    """Yoneticinin onay ekranindaki satir."""
-
-    id: uuid.UUID
-    ad: str | None
-    telefon: str
-    daire: str
-    created_at: datetime
-
-
-class KayitBasvuruListesi(BaseModel):
-    items: list[KayitBasvuruOut]
-    meta: PageMetaOut
 
 
 #: (P154) ROL SECIMLI KAYIT — kaydolabilen roller.
@@ -1217,6 +1187,52 @@ class KayitBasvuruListesi(BaseModel):
 #: duruyor ve demo hesabi var; kaydolabilir yapmak bir URUN karari
 #: oldugu icin tek tarafli alinmadi.
 KayitRolu = Literal["yonetici", "resident", "security", "tesis_gorevlisi", "denetci"]
+
+
+# ==================== (P155r2 / §3) YONETICI SELF-SIGNUP =================== #
+
+
+class TesisOlusturRequest(BaseModel):
+    """Yonetici tesisini UYGULAMADAN acar — admin paneli adimi YOK.
+
+    IKI YONTEMDEN BIRI ZORUNLU (`parola` ya da `baglama_jetonu`), IKISI
+    BIRDEN DEGIL. Kural `model_validator`da (uc govdesinde degil) ki
+    sozlesmeyi okuyan istemci de bilsin.
+
+    `tesis_kodu` ISTENMEZ ve GONDERILEMEZ: kodu SUNUCU uretir (`ad` +
+    kayit tarihi, goc 0037/0041). Istemciye birakmak, ayni kurali iki
+    yerde tutmak ve cakisma cozumunu istemciye yikmak olurdu.
+    """
+
+    tesis_ad: str = Field(min_length=2, max_length=120, examples=["Oltu Sitesi"])
+    ad: str = Field(min_length=2, max_length=120, examples=["Ayse Yilmaz"])
+    telefon: str = Field(min_length=5, max_length=32, examples=["+905321112203"])
+    #: Elle kayit yolu. Sosyal yolda BOS birakilir.
+    parola: str | None = Field(default=None, min_length=8, max_length=128)
+    #: Sosyal yol: `POST /auth/oauth/sonuc`tan gelen kisa omurlu jeton.
+    baglama_jetonu: str | None = None
+
+    @model_validator(mode="after")
+    def _yontem_kurali(self) -> "TesisOlusturRequest":
+        if bool(self.parola) == bool(self.baglama_jetonu):
+            raise ValueError(
+                "Parola VEYA sosyal baglama jetonu verilmeli (ikisi birden degil)."
+            )
+        return self
+
+
+class TesisOlusturResponse(BaseModel):
+    """Tesis ACILDI ve oturum ACILDI — ayri bir giris adimi YOK.
+
+    `tesis_kodu` DONUYOR cunku yoneticinin sakinlerine/personeline
+    iletecegi sey odur ve SMS saglayicisi baglanana kadar tek dagitim
+    yolu ELLE iletmektir (sartname §4). Kodu ilk ekranda gostermek,
+    yoneticiyi onu aramaya gondermekten iyidir.
+    """
+
+    tesis_ad: str
+    tesis_kodu: str = Field(examples=["OLTU-260715"])
+    jetonlar: TokenPair
 
 
 class RolKayitBaslaRequest(BaseModel):
@@ -1274,12 +1290,6 @@ class RolKayitDogrulaResponse(BaseModel):
     """
 
     setup_token: str
-
-
-class KayitDogrulaRequest(BaseModel):
-    telefon: str = Field(min_length=5, max_length=32)
-    kod: str = Field(min_length=4, max_length=12)
-    ad: str = Field(min_length=2, max_length=120)
 
 
 ComplaintDurum = Literal["acik", "is_emri", "cozuldu", "reddedildi", "geri_alindi"]

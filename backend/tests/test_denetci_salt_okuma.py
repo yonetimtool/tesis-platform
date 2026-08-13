@@ -53,23 +53,22 @@ KAPISIZ_MUTASYONLAR: frozenset[tuple[str, str]] = frozenset({
     # (P154 / Asama 7.2) `/public/{slug}/iletisim` KALDIRILDI — portal
     # iletisim formu, portalla birlikte silindi.
     ("POST", "/webhooks/payments/{provider}"),
-    # --- (P148/P149) KIMLIK ONCESI kayit ve parolasiz giris ---
-    # Dordunun de rol kapisi OLAMAZ: istegi atan kisinin henuz hesabi
-    # (kayit) ya da oturumu (giris) yoktur. Tesisin kayitlarina yazmazlar:
-    # `kayit/*` yalniz `kayit_dogrulama` tablosuna bekleyen bir basvuru
-    # yazar ve HESAP ACMAZ — hesap yonetici onayindan sonra
-    # `POST /kayit-basvurulari/{id}/onayla` ile acilir ve O UC rol
-    # kapilidir (admin + yonetici). `giris/*` yalniz kod uretir/dogrular.
+    # --- (P149) KIMLIK ONCESI parolasiz giris ---
+    # Rol kapisi OLAMAZ: istegi atan kisinin henuz oturumu yoktur.
+    # Tesisin kayitlarina yazmaz: yalniz kod uretir/dogrular.
     #
-    # SIZDIRMAMA: dordu de adimlari ayirt ETTIRMEYEN tek bir yanit doner
-    # (kayitli olmayan numara ile kayitli olan AYNI cevabi alir), yani
-    # kapisiz olmalari bir numara/daire sorgulama araci uretmez.
+    # SIZDIRMAMA: adimlari ayirt ETTIRMEYEN tek bir yanit doner (kayitli
+    # olmayan numara ile kayitli olan AYNI cevabi alir), yani kapisiz
+    # olmasi bir numara sorgulama araci uretmez.
     #
-    # (P154) Bu dort satir bu turda YAZILMADI, KAYDA GECIRILDI: uclar
-    # P148/P149'da eklenmis ama kume guncellenmemisti ve test o gunden
-    # beri kirmiziydi.
-    ("POST", "/auth/kayit/basla"),
-    ("POST", "/auth/kayit/dogrula"),
+    # (P155r2) `/auth/kayit/basla` ve `/auth/kayit/dogrula` BU KUMEDEN
+    # CIKARILDI — uclarin kendisi kaldirildi (P148 onay akisi).
+    #
+    # (P155r2 / §3) Yonetici self-signup. Rol kapisi OLAMAZ: kisinin
+    # henuz hesabi YOK — hesabi bu uc aciyor. BASKA BIR TESISIN verisine
+    # dokunmaz: yeni bir tenant yaratir ve yalniz onun icine yazar.
+    # Kotuye kullanim yuzeyi hiz siniriyla kapatilir, rol kapisiyla degil.
+    ("POST", "/auth/kayit/tesis-olustur"),
     # (P154 / Asama 3) Rol secimli kayit. Rol kapisi OLAMAZ: kisi henuz
     # oturum acmamistir — zaten acabilseydi kaydolmasina gerek kalmazdi.
     # Tesisin kayitlarina YAZMAZ: yalniz bekleyen bir kod satiri yazar ve

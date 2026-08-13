@@ -221,42 +221,6 @@ def test_PAROLASI_OLAN_hesap_bu_yoldan_gecemez(client, world, owner_conn):
         assert cur.fetchone()[0] == 0
 
 
-# ===================== 3) P148 AKISIYLA KARISMAMA ========================== #
-
-def test_P148_basvurusu_ROL_DOGRULAMADAN_gecemez(client, world, owner_conn):
-    """Iki akis ayni tabloyu ve ayni `amac`i paylasir; ayrim `user_id`de.
-
-    P148 basvurusunda hesap HENUZ YOKTUR (`user_id IS NULL`) ve akis
-    yonetici onayindan gecer. `rol-dogrula` onu tamamlayabilseydi, onay
-    adimi ATLANMIS olurdu.
-    """
-    tel = _tel()
-    with owner_conn.cursor() as cur:
-        cur.execute(
-            "SELECT no FROM unit WHERE tenant_id = "
-            "(SELECT id FROM tenant WHERE slug = %s) LIMIT 1", (world["slug_a"],))
-        satir = cur.fetchone()
-        if satir is None:
-            no = f"P-{uuid.uuid4().hex[:4]}"
-            cur.execute(
-                "INSERT INTO unit (tenant_id, blok, no) "
-                "SELECT id, 'A', %s FROM tenant WHERE slug = %s", (no, world["slug_a"]))
-        else:
-            no = satir[0]
-
-    r = client.post("/auth/kayit/basla", json={
-        "tesis_kodu": _kod(owner_conn, world["slug_a"]),
-        "daire_no": no,
-        "telefon": tel,
-    })
-    assert r.status_code == 200, r.text
-    kod = _kodu_al(owner_conn, tel)
-
-    # Dogru kod OLMASINA RAGMEN rol yolundan gecmez.
-    d = client.post("/auth/kayit/rol-dogrula", json={"telefon": tel, "kod": kod})
-    assert d.status_code == 422, d.text
-
-
 # ===================== 4) HIZ SINIRI ======================================= #
 
 def test_kod_istegi_HIZ_SINIRINA_takilir(client, world, owner_conn):

@@ -27,6 +27,10 @@ Turkce karakter SMS'i 70 karaktere dusurur (`mesajlasma.sms_olc`). Davet
 metni + ~68 karakterlik bag cogu durumda 2-3 parcaya bolunur; bu beklenen
 ve kabul edilen bir maliyettir (bag kisaltilamaz — jeton tahmin edilemez
 olmali). Olcum `mesaj_gonderim`e degil, yalniz gunluge yazilir.
+
+(P155r2) Metne TESIS KODU ve MAGAZA BAGLANTILARI eklendi (sartname §4);
+parca sayisi 3-5'e cikti. Takas ve neden kabul edildigi `davet_mesaji`
+govdesinde yazili.
 """
 from __future__ import annotations
 
@@ -35,7 +39,7 @@ import secrets
 import uuid
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .config import settings
@@ -70,9 +74,41 @@ def davet_bagi(duz_jeton: str) -> str:
     return f"{taban}/davet/{duz_jeton}"
 
 
-def davet_mesaji(tenant_ad: str, bag: str) -> str:
-    """Sartname §7 metni. Marka adi 'Yönetio' cevrilmez."""
-    return f"{tenant_ad} sizi Yönetio'ya davet etti. Kaydolmak için: {bag}"
+def davet_mesaji(tenant_ad: str, bag: str, tesis_kodu: str | None = None) -> str:
+    """Davet SMS/e-posta govdesi. Marka adi 'Yönetio' cevrilmez.
+
+    (P155r2 / §4) UC SEY EKLENDI: TESIS KODU ve iki MAGAZA BAGLANTISI.
+    Sartname bunlari acikca istiyor ("Eklenen kişilere SMS gitmeli:
+    uygulama indirme bağlantıları (Android + iOS), TESİS KODU").
+
+    NEDEN KOD DA GIDIYOR — bag zaten her seyi tasirken:
+    bag TEK KULLANIMLIK ve SURELIDIR (30 gun). Suresi dolarsa, ya da
+    kullanici mesaji baskasina iletip bag tuketilirse, elinde kalan tek
+    sey koddur ve onunla elle kayit yolundan (`/auth/kayit/rol-basla`)
+    devam edebilir. Kod ayrica yoneticinin telefonda okuyabilecegi
+    seydir; bag degil.
+
+    MAGAZA BAGLANTILARI KOSULLU: yalniz YAPILANDIRILMIS olan eklenir
+    (bkz. `settings.app_store_url`). App Store id'si henuz yok; bos bir
+    id ile kirik baglanti gondermek, hic gondermemekten kotudur.
+
+    SMS UZUNLUGU — DURUSTCE: Turkce karakter SMS'i 70 karaktere dusurur.
+    Bu metin kod + bag + bir/iki magaza baglantisiyla 3-5 parcaya boluner
+    ve bu GERCEK bir maliyettir. Kabul edildi cunku alternatif (kodu ya
+    da magazayi cikarmak) sartnamenin acik maddesini bosa dusururdu.
+    Maliyeti dusurmenin dogru yolu bag KISALTMAKTIR (kendi alanimizda bir
+    yonlendirici) ve bu ayri bir istir — burada yapilirsa jeton uzunlugu
+    ile guvenlik arasinda aceleci bir takas yapilmis olurdu.
+    """
+    parcalar = [f"{tenant_ad} sizi Yönetio'ya davet etti."]
+    if tesis_kodu:
+        parcalar.append(f"Tesis kodu: {tesis_kodu}")
+    parcalar.append(f"Kaydolmak için: {bag}")
+    if settings.play_store_url:
+        parcalar.append(f"Android: {settings.play_store_url}")
+    if settings.app_store_url:
+        parcalar.append(f"iOS: {settings.app_store_url}")
+    return " ".join(parcalar)
 
 
 async def davet_olustur_veya_tazele(
@@ -126,9 +162,20 @@ async def davet_gonder(
     SMS ASIL KANAL (telefon her zaman var); e-posta VARSA ek olarak gider.
     Donus: SMS gonderildi mi (panel "gitmeyen davetler" bunu kullanir —
     e-posta bonustur, SMS asildir).
+
+    (P155r2) TESIS KODU BURADA OKUNUYOR, cagirandan ISTENMIYOR: uc ayri
+    cagiran (residents / users / davet-yeniden) var ve her birine bir
+    parametre daha eklemek, birinde unutuldugunda SESSIZCE kodsuz SMS
+    gonderirdi. Tek okuma, tek kural.
     """
     bag = davet_bagi(duz_jeton)
-    govde = davet_mesaji(tenant_ad, bag)
+    tesis_kodu = (
+        await session.execute(
+            text("SELECT kayit_kodu FROM tenant WHERE id = :t"),
+            {"t": str(user.tenant_id)},
+        )
+    ).scalar_one_or_none()
+    govde = davet_mesaji(tenant_ad, bag, tesis_kodu)
     konu = f"{tenant_ad} sizi Yönetio'ya davet etti"
 
     # --- SMS (asil) ---

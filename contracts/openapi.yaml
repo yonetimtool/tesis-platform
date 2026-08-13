@@ -380,76 +380,72 @@ paths:
               schema: { $ref: "#/components/schemas/Error" }
 
   # ----------------------------------------------------------------- #
-  # (P148) SAKININ KENDI KAYDI — iki adim, OTURUM ACMAZ.
-  # (P154) Sozlesmeye eklendi: uclar P148/P149'da yazilmis ama buraya
-  # islenmemisti; `test_sozlesme_sapmasi` o gunden beri kirmiziydi.
-  /auth/kayit/basla:
+  # (P155r2 / §3) YONETICI SELF-SIGNUP — tesis UYGULAMADAN acilir.
+  /auth/kayit/tesis-olustur:
     post:
       tags: [auth]
-      summary: Sakin kaydi 1. adim — tesis kodu + daire + telefon, SMS kodu gonderir
+      summary: Tesis adi + yonetici -> tesis olusur, kod uretilir, oturum acilir
       security: []   # kimlik ONCESI: kullanicinin henuz hesabi yok
       description: |
-        Tesis, `tenant_id_by_kayit_kodu` ile KODDAN cozulur (oturum yok).
+        Yonetici tesisini uygulamadan acar; ADMIN PANELI ADIMI YOKTUR.
+        `POST /tenants` kaldirilmadi ama artik BIRINCIL yol degil — o,
+        platform sahibinin destek/tohum islerine kaldi.
 
-        ADIMLARI AYIRT ETTIRMEYEN TEK HATA: "kod yanlis", "daire yok" ve
-        "tesis yok" durumlarinin HEPSI ayni 422 `invalid_registration`
-        yanitini verir. Ayirmak, tesisin daire listesini disariya
-        sizdirirdi.
+        TESIS KODU ISTEMCIDEN ALINMAZ: kural (`ad`in ilk 4 harfi + '-' +
+        YYAAGG) veritabanindaki tetikleyicidedir (goc 0037/0041). Turkce
+        harf donusumu, 4 harften kisa ad, rakamla baslayan ad ve ayni gun
+        ayni ad cakismasi (rastgele iki haneli ek) ORADA cozulur.
 
-        DAIRE SAHIPLIGI DOGRULANMAZ (Kerem'in acik karari, bkz.
-        tests/test_sakin_kaydi.py modul basligi).
+        ATOMIK: tesis + yonetici + (sosyal yolda) kimlik bagi TEK
+        transaction'da yazilir. "Tesis olustu ama yonetici tamamlamadi"
+        diye bir ara durum YOKTUR.
+
+        YONTEM: `parola` VEYA `baglama_jetonu` — ikisi birden DEGIL.
+        Sosyal yolda parola hic yazilmaz; kimlik saglayicidadir.
+
+        HIZ SINIRI telefon basinadir ve DOGRULAMADAN ONCE sayar.
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: "#/components/schemas/KayitBaslaRequest" }
+            schema: { $ref: "#/components/schemas/TesisOlusturRequest" }
       responses:
-        "200":
+        "201":
           description: |
-            Kod gonderildi. KODUN KENDISI DONMEZ; yanit yalnizca
-            kullanicinin dogru tesisi/daireyi sectigini teyit etmesi icin
-            ad tasir ve telefonu MASKELI gosterir.
+            Tesis acildi ve OTURUM ACILDI. `tesis_kodu` doner cunku
+            yoneticinin sakinlerine iletecegi sey odur (SMS saglayicisi
+            baglanana kadar tek dagitim yolu ELLE iletmektir).
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/KayitBaslaResponse" }
-        "422":
-          description: Kayit bilgileri gecersiz (adimlari ayirt ETTIRMEZ)
+              schema: { $ref: "#/components/schemas/TesisOlusturResponse" }
+        "409":
+          description: |
+            Telefon zaten kayitli, ya da sosyal kimlik baska bir hesaba
+            bagli. Numaranin kendi numarasi oldugu icin AYIRT EDICI hata
+            veriliyor — kullaniciyi dogru kapiya (giris) yollamak icin.
+            Numara taramasini engelleyen sey hiz siniridir.
           content:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
-
-  /auth/kayit/dogrula:
-    post:
-      tags: [auth]
-      summary: Sakin kaydi 2. adim — kod dogru ise basvuru ONAYA duser
-      security: []
-      description: |
-        (P148.2) HESAP BURADA ACILMAZ ve OTURUM DONMEZ. Onceki surumde bu
-        uc kullaniciyi acip token donuyordu; Kerem onay adimini actigi icin
-        hesap ancak YONETICI ONAYINDAN sonra acilir. Boylece tahmin
-        edilebilir tesis kodu tek basina veriye erisim saglamaz.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: "#/components/schemas/KayitDogrulaRequest" }
-      responses:
-        "200":
-          description: Basvuru onay bekliyor (token YOK)
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/KayitDurumResponse" }
         "422":
-          description: Kayit bilgileri gecersiz (adimlari ayirt ETTIRMEZ)
+          description: Telefon gecersiz ya da yontem kurali ihlal edildi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "429":
+          description: Hiz siniri asildi
           content:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
 
   # ----------------------------------------------------------------- #
   # (P154 / Asama 3) ROL SECIMLI KAYIT.
   #
-  # P148 `kayit/basla` ile KARISTIRILMAMALI. Orada hesap HENUZ YOKTUR ve
-  # basvuru yonetici onayina duser. Burada hesap yonetici tarafindan
-  # ZATEN ACILMISTIR; kisi onu SAHIPLENIR ve onay adimi YOKTUR — onay,
-  # hesabi acan yoneticinin kendisidir.
+  # Hesap yonetici tarafindan ZATEN ACILMISTIR; kisi onu SAHIPLENIR ve
+  # onay adimi YOKTUR — onay, hesabi acan yoneticinin kendisidir.
+  #
+  # (P155r2) Bunun KARSITI olan P148 akisi (`/auth/kayit/basla` +
+  # `/auth/kayit/dogrula`: hesabi OLMAYAN birinin daire uzerinden basvurup
+  # yonetici onayina dusmesi) KALDIRILDI. Yeni kural "yalniz onceden
+  # eklenmis telefonla eslesen kaydolur" oldugu icin o akisin karsiligi
+  # kalmadi; `/kayit-basvurulari` onay kuyrugu da onunla birlikte gitti.
   /auth/kayit/rol-basla:
     post:
       tags: [auth]
@@ -870,76 +866,6 @@ paths:
           description: Tek giris yontemi kaldirilamaz
           content:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
-
-  # ----------------------------------------------------------------- #
-  # (P148.2) KAYIT BASVURULARI — yoneticinin onay kuyrugu.
-  /kayit-basvurulari:
-    get:
-      tags: [kayit]
-      summary: Onay bekleyen sakin basvurulari (admin + yonetici)
-      parameters:
-        - { name: limit,  in: query, schema: { type: integer, minimum: 1, maximum: 200, default: 50 } }
-        - { name: offset, in: query, schema: { type: integer, minimum: 0, default: 0 } }
-      responses:
-        "200":
-          description: Basvuru listesi
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/KayitBasvuruListesi" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-
-  /kayit-basvurulari/{basvuru_id}/onayla:
-    parameters:
-      - name: basvuru_id
-        in: path
-        required: true
-        schema: { type: string, format: uuid }
-    post:
-      tags: [kayit]
-      summary: Basvuruyu onayla — HESAP BURADA ACILIR
-      description: |
-        Hesap PAROLASIZ ve daireye bagli olarak acilir; kullanici
-        `/auth/giris/kod-iste` ile girer. Basvuru bulunamazsa 404.
-      responses:
-        "201":
-          description: Hesap acildi
-          content:
-            application/json:
-              schema:
-                type: object
-                required: [user_id]
-                properties:
-                  user_id: { type: string, format: uuid }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "404": { $ref: "#/components/responses/NotFound" }
-
-  /kayit-basvurulari/{basvuru_id}/reddet:
-    parameters:
-      - name: basvuru_id
-        in: path
-        required: true
-        schema: { type: string, format: uuid }
-    post:
-      tags: [kayit]
-      summary: Basvuruyu reddet
-      description: |
-        Basvuru SILINMEZ, reddedilir: iz kalir ve AYNI numara yeniden
-        basvurabilir (acik-basvuru kismi indeksi buna izin verir).
-      responses:
-        "200":
-          description: Reddedildi
-          content:
-            application/json:
-              schema:
-                type: object
-                required: [durum]
-                properties:
-                  durum: { type: string, enum: [reddedildi] }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "404": { $ref: "#/components/responses/NotFound" }
 
   # ================================================================= #
   # SELF-SERVIS PROFIL (/me/*) — tum roller, yalniz kendi kaydi
@@ -10153,44 +10079,50 @@ components:
         user_id: { type: string, format: uuid }
         ad: { type: string }
         temp_code: { type: string, description: "BIR KEZ doner; admin ilgiliye iletir" }
-    # (P148/P149) Sakin kaydi + parolasiz giris. (P154'te sozlesmeye
-    # islendi; uclar daha once yazilmisti.)
-    KayitBaslaRequest:
-      type: object
-      description: |
-        Sakin kaydinin 1. adimi. `blok` opsiyoneldir: tek bloklu tesiste
-        sakin blok adini bilmeyebilir.
-      required: [tesis_kodu, daire_no, telefon]
-      properties:
-        tesis_kodu: { type: string, minLength: 4, maxLength: 32, example: "OLTU-260715" }
-        blok:       { type: string, maxLength: 32, nullable: true, example: "A" }
-        daire_no:   { type: string, minLength: 1, maxLength: 32, example: "12" }
-        telefon:    { type: string, minLength: 5, maxLength: 32, example: "+905321112203" }
-    KayitBaslaResponse:
-      type: object
-      description: |
-        KOD DONMEZ. Yanit yalnizca kullanicinin dogru tesisi/daireyi
-        sectigini teyit etmesi icindir; telefon MASKELIDIR.
-      required: [tesis_ad, daire, telefon_maskeli]
-      properties:
-        tesis_ad:        { type: string, example: "Oltu Sitesi" }
-        daire:           { type: string, example: "A-12" }
-        telefon_maskeli: { type: string, example: "+9053****203" }
-    KayitDogrulaRequest:
-      type: object
-      required: [telefon, kod, ad]
-      properties:
-        telefon: { type: string, minLength: 5, maxLength: 32 }
-        kod:     { type: string, minLength: 4, maxLength: 12 }
-        ad:      { type: string, minLength: 2, maxLength: 120 }
     KayitDurumResponse:
       type: object
       description: |
-        (P148.2) Kayit akisinin durumu — OTURUM DEGIL. Bilerek token
-        DONMEZ: hesap yonetici onayindan SONRA acilir.
+        `POST /auth/giris/kod-iste`in KASTEN BILGISIZ yaniti.
+
+        (P155r2) Tek degeri (`onay_bekliyor`) P148 onay kuyrugundan arta
+        kaldi ve artik bir kuyrugu ANLATMIYOR — o kuyruk kaldirildi.
+        Yine de degistirilmedi: `kod-iste` numaranin kayitli olup
+        olmadigini SIZDIRMAMALI, yani yanit her durumda AYNI olmali.
+        Sabit tek degerli bir alan bunu yapisal olarak garantiler.
       required: [durum]
       properties:
         durum: { type: string, enum: [onay_bekliyor] }
+    # (P155r2 / §3) Yonetici self-signup.
+    TesisOlusturRequest:
+      type: object
+      description: |
+        `tesis_kodu` ISTENMEZ ve GONDERILEMEZ — kodu sunucu uretir.
+        `parola` VEYA `baglama_jetonu` verilmeli, ikisi birden DEGIL.
+      required: [tesis_ad, ad, telefon]
+      properties:
+        tesis_ad: { type: string, minLength: 2, maxLength: 120, example: "Oltu Sitesi" }
+        ad:       { type: string, minLength: 2, maxLength: 120, example: "Ayse Yilmaz" }
+        telefon:  { type: string, minLength: 5, maxLength: 32, example: "+905321112203" }
+        parola:
+          type: string
+          minLength: 8
+          maxLength: 128
+          nullable: true
+          description: Elle kayit yolu. Sosyal yolda BOS birakilir.
+        baglama_jetonu:
+          type: string
+          nullable: true
+          description: |
+            Sosyal yol: `POST /auth/oauth/sonuc`un dondugu kisa omurlu
+            jeton. Saglayicidan gelen ad soyad ISTEMCIDE forma doldurulur
+            ve kullanici duzeltebilir; sunucuya `ad` alaninda gelir.
+    TesisOlusturResponse:
+      type: object
+      required: [tesis_ad, tesis_kodu, jetonlar]
+      properties:
+        tesis_ad:   { type: string, example: "Oltu Sitesi" }
+        tesis_kodu: { type: string, example: "OLTU-260715" }
+        jetonlar:   { $ref: "#/components/schemas/TokenPair" }
     # (P154 / Asama 3) Rol secimli kayit.
     RolKayitBaslaRequest:
       type: object
@@ -10514,24 +10446,6 @@ components:
       properties:
         telefon: { type: string, minLength: 5, maxLength: 32 }
         kod:     { type: string, minLength: 4, maxLength: 12 }
-    KayitBasvuruOut:
-      type: object
-      description: Yoneticinin onay ekranindaki satir.
-      required: [id, telefon, daire, created_at]
-      properties:
-        id:         { type: string, format: uuid }
-        ad:         { type: string, nullable: true }
-        telefon:    { type: string }
-        daire:      { type: string, example: "A-12" }
-        created_at: { type: string, format: date-time }
-    KayitBasvuruListesi:
-      type: object
-      required: [items, meta]
-      properties:
-        items:
-          type: array
-          items: { $ref: "#/components/schemas/KayitBasvuruOut" }
-        meta: { $ref: "#/components/schemas/PageMeta" }
     PhoneLoginRequest:
       type: object
       description: |

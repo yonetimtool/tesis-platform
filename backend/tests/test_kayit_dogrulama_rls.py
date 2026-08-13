@@ -9,41 +9,20 @@ hata cikmadan, kullanici yalnizca "kod gecersiz" gorurdu.
 Bu dosya, cozucunun (`kayit_dogrulama_tenant_coz`) ve tenant-uzeri
 ezmenin (`kayit_dogrulama_acik_temizle`) o sinifi kapattigini olcer.
 
-NEDEN AYRI DOSYA: `test_sakin_kaydi.py` KAYIT KURALLARINI olcer (kod
-bicimi, sizdirmama, kaba kuvvet). Burasi ALTYAPIYI olcer — ayni akis
-kirilirsa iki dosya farkli seyler soyler ve kok neden daha cabuk bulunur.
+NEDEN AYRI DOSYA: rol kaydi testleri (`test_rol_secimli_kayit.py`) KAYIT
+KURALLARINI olcer (sizdirmama, rol eslesmesi, kaba kuvvet). Burasi
+ALTYAPIYI olcer — ayni akis kirilirsa iki dosya farkli seyler soyler ve
+kok neden daha cabuk bulunur.
+
+(P155r2) TESTLER P148 UCLARINDAN COZULDU. Eskiden `/auth/kayit/basla`
+surulyordu; o akis kaldirildi. OLCULEN RISK DEGISMEDI — `kayit_dogrulama`
+hâlâ kimlik oncesi okunuyor (`giris`/`oauth`/`kayit` kodlari) ve ayni
+cozucuye bagli. Testler bu yuzden silinmedi, YASAYAN bir uca
+(`/auth/giris/kod-iste` + `/kod-dogrula`) tasindi.
 """
 from __future__ import annotations
 
 import uuid
-
-
-def _kod(owner_conn, slug: str) -> str:
-    with owner_conn.cursor() as cur:
-        cur.execute("SELECT kayit_kodu FROM tenant WHERE slug = %s", (slug,))
-        return cur.fetchone()[0]
-
-
-def _daire(owner_conn, slug: str) -> str:
-    """Tesiste daire YOKSA acar — `world` fixture'i daire kurmuyor."""
-    with owner_conn.cursor() as cur:
-        cur.execute(
-            "SELECT no FROM unit WHERE tenant_id = "
-            "(SELECT id FROM tenant WHERE slug = %s) LIMIT 1", (slug,)
-        )
-        satir = cur.fetchone()
-        if satir:
-            return satir[0]
-        no = f"R-{uuid.uuid4().hex[:4]}"
-        cur.execute(
-            "INSERT INTO unit (tenant_id, blok, no) SELECT id, 'A', %s "
-            "FROM tenant WHERE slug = %s", (no, slug),
-        )
-        return no
-
-
-def _tel() -> str:
-    return "+9059" + str(uuid.uuid4().int)[:8]
 
 
 # ===================== 1) RLS GERCEKTEN ACIK MI ============================ #
@@ -82,37 +61,41 @@ def test_cozucu_YALNIZ_tenant_kimligi_doner(owner_conn):
 
 # ============ 2) KIMLIK ONCESI AKISLAR CALISMAYA DEVAM EDIYOR ============== #
 
-def test_kayit_basla_ve_DOGRULA_ucdan_uca(client, world, owner_conn):
+def test_kod_iste_ve_DOGRULA_ucdan_uca(client, world, owner_conn):
     """RLS'in kirabilecegi ASIL yol: kod TELEFONDAN bulunuyor.
 
-    Baglami cozucu kurmasaydi `kayit/dogrula` satiri goremez ve dogru kod
+    Baglami cozucu kurmasaydi `kod-dogrula` satiri goremez ve dogru kod
     bile 422 alirdi.
     """
-    tel = _tel()
-    r = client.post("/auth/kayit/basla", json={
-        "tesis_kodu": _kod(owner_conn, world["slug_a"]),
-        "daire_no": _daire(owner_conn, world["slug_a"]),
-        "telefon": tel,
-    })
+    tel = world["resident_a"]["phone"]
+    with owner_conn.cursor() as cur:
+        cur.execute(
+            "DELETE FROM kayit_dogrulama WHERE telefon = %s AND amac = 'giris'",
+            (tel,),
+        )
+
+    r = client.post("/auth/giris/kod-iste", json={"telefon": tel})
     assert r.status_code == 200, r.text
 
     # Kod SMS ile gider ve yanitta DONMEZ; testte veritabanindan okunamaz
-    # (hash). Bu yuzden dogrulamayi YANLIS kodla deneyip AYIRT EDICI hatayi
-    # olcuyoruz: satir GORULUYORSA yanit 422 `invalid_registration`tir ve
-    # deneme sayaci ARTAR. Satir GORULMESEYDI sayac hic artmazdi.
+    # (hash). Bu yuzden dogrulamayi YANLIS kodla deneyip AYIRT EDICI etkiyi
+    # olcuyoruz: satir GORULUYORSA deneme sayaci ARTAR. Satir
+    # GORULMESEYDI sayac hic artmazdi.
     with owner_conn.cursor() as cur:
         cur.execute(
-            "SELECT deneme FROM kayit_dogrulama WHERE telefon = %s", (tel,)
+            "SELECT deneme FROM kayit_dogrulama "
+            "WHERE telefon = %s AND amac = 'giris'", (tel,)
         )
         onceki = cur.fetchone()[0]
 
-    r = client.post("/auth/kayit/dogrula", json={
-        "telefon": tel, "kod": "000000", "ad": "Test Sakin"})
+    r = client.post("/auth/giris/kod-dogrula",
+                    json={"telefon": tel, "kod": "000000"})
     assert r.status_code == 422
 
     with owner_conn.cursor() as cur:
         cur.execute(
-            "SELECT deneme FROM kayit_dogrulama WHERE telefon = %s", (tel,)
+            "SELECT deneme FROM kayit_dogrulama "
+            "WHERE telefon = %s AND amac = 'giris'", (tel,)
         )
         sonraki = cur.fetchone()[0]
     assert sonraki == onceki + 1, (
@@ -136,42 +119,50 @@ def test_giris_kodu_iste_KIRILMADI(client, world):
 
 # ================ 3) ASIL RISK: TENANT-UZERI "EZME" ======================== #
 
-def test_A_sitesinde_baslayip_B_sitesinde_kaydolabilir(client, world, owner_conn):
+def test_BASKA_TESISTE_asili_kalan_satir_akisi_KIRMAZ(client, world, owner_conn):
     """`uq_kayit_acik_basvuru` KISMI ve GLOBAL: bir telefon TUM PLATFORMDA
-    tek acik basvuru tasiyabilir.
+    (telefon, amac) basina tek acik satir tasiyabilir.
 
-    Kisi A sitesinde kayda baslar, vazgecip B sitesinde baslar. Ezme
-    tenant sinirini GECMEZSE B'nin INSERT'i A'nin satiriyla catisir ve
-    kullanici 500 alir. Bu testin varlik sebebi tam olarak o 500'dur.
+    SENARYO: numaraya ait acik bir `giris` satiri BASKA bir tesiste asili
+    kalmis (kullanici tasindi, hesabi tasindi, ya da eski bir akistan
+    arta kaldi). Simdi numaranin GERCEK tesisinde kod isteniyor. Ezme
+    tenant sinirini GECMEZSE yeni INSERT o satirla catisir ve kullanici
+    500 alir. Bu testin varlik sebebi tam olarak o 500'dur.
+
+    (P155r2) Senaryo ESKIDEN `/auth/kayit/basla`yi iki tesiste cagirarak
+    kuruluyordu; o uc kaldirildi. Asili satir artik DOGRUDAN yaziliyor —
+    olculen sey (tenant-uzeri ezme) ayni, kurulumu daha dogrudan.
     """
-    tel = _tel()
-    a = client.post("/auth/kayit/basla", json={
-        "tesis_kodu": _kod(owner_conn, world["slug_a"]),
-        "daire_no": _daire(owner_conn, world["slug_a"]),
-        "telefon": tel,
-    })
-    assert a.status_code == 200, a.text
+    tel = world["resident_a"]["phone"]
+    with owner_conn.cursor() as cur:
+        cur.execute("DELETE FROM kayit_dogrulama WHERE telefon = %s", (tel,))
+        # Numaranin sahibi A'da; acik satiri B'ye koyuyoruz.
+        cur.execute(
+            "INSERT INTO kayit_dogrulama "
+            "(tenant_id, telefon, kod_hash, son_gecerlilik, amac, durum) "
+            "SELECT id, %s, 'x', now() + interval '10 min', "
+            "       'giris'::kod_amaci, 'telefon_bekliyor'::kayit_durum "
+            "FROM tenant WHERE slug = %s",
+            (tel, world["slug_b"]),
+        )
 
-    b = client.post("/auth/kayit/basla", json={
-        "tesis_kodu": _kod(owner_conn, world["slug_b"]),
-        "daire_no": _daire(owner_conn, world["slug_b"]),
-        "telefon": tel,
-    })
-    assert b.status_code == 200, (
-        f"ikinci tesiste kayit DUSTU ({b.status_code}) — tenant-uzeri ezme "
-        f"calismiyor: {b.text}"
+    r = client.post("/auth/giris/kod-iste", json={"telefon": tel})
+    assert r.status_code == 200, (
+        f"kod istegi DUSTU ({r.status_code}) — tenant-uzeri ezme "
+        f"calismiyor: {r.text}"
     )
 
-    # Ve geriye TEK acik basvuru kalir; sahibi B'dir.
+    # Ve geriye TEK acik satir kalir; sahibi numaranin GERCEK tesisidir (A).
     with owner_conn.cursor() as cur:
         cur.execute(
             "SELECT t.slug FROM kayit_dogrulama k JOIN tenant t "
             "ON t.id = k.tenant_id "
-            "WHERE k.telefon = %s AND k.durum = 'telefon_bekliyor'", (tel,)
+            "WHERE k.telefon = %s AND k.amac = 'giris' "
+            "AND k.durum = 'telefon_bekliyor'", (tel,)
         )
         satirlar = cur.fetchall()
-    assert len(satirlar) == 1, f"tek acik basvuru bekleniyordu: {satirlar}"
-    assert satirlar[0][0] == world["slug_b"]
+    assert len(satirlar) == 1, f"tek acik satir bekleniyordu: {satirlar}"
+    assert satirlar[0][0] == world["slug_a"]
 
 
 def test_ezme_BASKA_amaci_silmez(client, world, owner_conn):

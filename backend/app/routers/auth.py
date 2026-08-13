@@ -9,30 +9,21 @@ tum aile iptal edilir.
 """
 from __future__ import annotations
 
-import secrets
-from datetime import datetime, timedelta, timezone
-
 import jwt
 import redis.asyncio as aioredis
 from fastapi import APIRouter, Depends
-from sqlalchemy import func, or_, select, text, update
+from sqlalchemy import func, or_, select, text
 
 from ..audit import Action, record_audit
 from ..config import settings
 from ..db import SessionLocal, set_tenant
 from ..deps import get_redis, gorev_penceresi_disinda
 from ..errors import APIError
-from ..mesajlasma import sms_saglayicisi
 from ..telefon_kodu import GECERSIZ as TK_GECERSIZ
 from ..hiz_siniri import kod_istegi_say
-from ..telefon_kodu import (
-    kod_uret_ve_gonder,
-    kodu_dogrula,
-    tenant_baglamini_kur,
-)
+from ..telefon_kodu import kod_uret_ve_gonder, kodu_dogrula
 from ..models import (
     AppUser,
-    KayitDogrulama,
     Tenant,
     Unit,
     UnitResident,
@@ -40,9 +31,6 @@ from ..models import (
 from ..schemas import (
     TelefonIstek,
     TelefonKodIstek,
-    KayitBaslaRequest,
-    KayitBaslaResponse,
-    KayitDogrulaRequest,
     KayitDurumResponse,
     RolKayitBaslaRequest,
     RolKayitBaslaResponse,
@@ -376,199 +364,32 @@ async def refresh(
         expires_in=access_token_ttl_seconds(),
     )
 
-# ======================= (P148) SAKIN KENDI KAYDOLUR ======================= #
+# ============================ KAYIT — ORTAK ================================ #
 #
-# GUVEN SINIRI — ACIKCA KAYDEDILDI: bu akista daire sahipligi
-# DOGRULANMIYOR. Tesis kodunu ogrenen herkes herhangi bir daireye
-# kaydolabilir ve o dairenin verisini gorur. Kerem bu riski secenekler
-# gosterildikten SONRA acikca kabul etti (bkz. MASTER-PLAN P148). Kodun
-# kendisi bu yuzden bir SIR gibi ele alinmali; sizarsa tesis kodu
-# DEGISTIRILEBILIR olmali.
+# (P155r2) P148 "SAKIN KENDI KAYDOLUR" AKISI KALDIRILDI. Ne yapiyordu:
+# tesis kodu + blok/daire + telefon ile basvuru acilir, SMS ile telefon
+# dogrulanir, basvuru YONETICI ONAYINA duser, onaylanunca hesap acilirdi
+# (`/auth/kayit/basla`, `/auth/kayit/dogrula`, `/kayit-basvurulari`).
 #
-# PAROLA YOK: kullanici satiri `password_hash=NULL`, `password_set=False`
-# ile acilir. Kimlik = DOGRULANMIS TELEFON. Yeni bir sema alani
-# eklenmedi — var olanlar bu durumu zaten ifade ediyor.
+# NEDEN KALDIRILDI — iki bagimsiz sebep:
+#   1. YENI SISTEMDE KARSILIGI YOK. Yeni kural (sartname KISITLAR):
+#      "yalniz ONCEDEN EKLENMIS telefonla eslesen kaydolur". P148 tam
+#      TERSIYDI — hesabi OLMAYAN biri basvuruyordu ve dogrulama daire
+#      sahipligi degil, tesis kodunu BILMEKTI. Onay adimi da o acigi
+#      kapatmak icin sonradan eklenmisti (P148.2); acik kalkinca onay
+#      adiminin de sebebi kalmadi.
+#   2. HIC KULLANILMIYORDU. Olculdu: ne mobil ne web bu uclari cagiriyor
+#      (yalniz testler). Yani kaldirilan sey CANLI bir yol degil, olu bir
+#      yoldu.
+#
+# VERI: `kayit_dogrulama` tablosu ve `kayit_durum` enum'u DURUYOR — tablo
+# `amac='giris'`/`'oauth'` kodlari icin hâlâ kullaniliyor ve gecmis
+# satirlar silinmiyor. Olcum: kaldirma aninda tabloda 0 satir vardi, yani
+# kimsenin bekleyen basvurusu kaybolmadi.
 
-_KAYIT_KOD_OMRU_DK = 10
-_KAYIT_MAX_DENEME = 5
-#: Adimlari ayirt ETTIRMEYEN tek hata: "kod yanlis" ile "daire yok"
-#: arasindaki fark, tesisin daire listesini disariya sizdirirdi.
+#: Adimlari ayirt ETTIRMEYEN tek hata: "kod yanlis" ile "hesap yok"
+#: arasindaki fark, tesisin kullanici listesini disariya sizdirirdi.
 _KAYIT_GECERSIZ = APIError(422, "invalid_registration", "kayit_bilgileri_gecersiz")
-
-
-def _telefon_maskele(t: str) -> str:
-    return t[:-6] + "***" + t[-3:] if len(t) > 8 else "***"
-
-
-@router.post("/kayit/basla", response_model=KayitBaslaResponse)
-async def kayit_basla(
-    body: KayitBaslaRequest,
-    redis: aioredis.Redis = Depends(get_redis),
-) -> KayitBaslaResponse:
-    """Tesis kodu + blok/daire + telefon -> SMS kodu gonderir."""
-    try:
-        phone = normalize_phone(body.telefon)
-    except ValueError:
-        raise _KAYIT_GECERSIZ
-
-    async with SessionLocal() as session:
-        async with session.begin():
-            tenant_id = (
-                await session.execute(
-                    text("SELECT public.tenant_id_by_kayit_kodu(:k)"),
-                    {"k": body.tesis_kodu.strip()},
-                )
-            ).scalar_one_or_none()
-            if tenant_id is None:
-                raise _KAYIT_GECERSIZ
-
-            await set_tenant(session, tenant_id)
-            tenant_ad = (
-                await session.execute(select(Tenant.ad).where(Tenant.id == tenant_id))
-            ).scalar_one()
-
-            # DAIRE ESLESMESI IKI BICIMI DE KABUL EDER ve bu KEYFI DEGIL:
-            # olcum gosterdi ki `unit.no` bazi tesislerde blok onekini
-            # ZATEN icinde tasiyor ("A-1"), bazilarinda tasimiyor ("1").
-            # Kullanicidan hangi bicimde yazdigini bilmesini beklemek
-            # yanlis olurdu; ikisi de denenir.
-            aranan = body.daire_no.strip().lower()
-            blok = (body.blok or "").strip().lower()
-            birlesik = f"{blok}-{aranan}" if blok else aranan
-            unit = (
-                await session.execute(
-                    select(Unit).where(
-                        or_(
-                            func.lower(Unit.no) == aranan,
-                            func.lower(Unit.no) == birlesik,
-                        )
-                    )
-                )
-            ).scalars().first()
-            if unit is None:
-                raise _KAYIT_GECERSIZ
-
-            # Telefon BASKA bir kullaniciya aitse kayit acilmaz: telefon
-            # global benzersiz ve kimligin ta kendisi.
-            varolan = (
-                await session.execute(
-                    text("SELECT public.tenant_id_by_phone(:p)"), {"p": phone}
-                )
-            ).scalar_one_or_none()
-            if varolan is not None:
-                raise _KAYIT_GECERSIZ
-
-            kod = f"{secrets.randbelow(1_000_000):06d}"
-            # (P154) TENANT SINIRINI GECER — bu yuzden duz DELETE degil,
-            # SECURITY DEFINER fonksiyon. `kayit_dogrulama` artik RLS
-            # altinda (goc 0042) ve buradaki temizlik BASKA BIR TESISIN
-            # satirina dokunmak zorunda: `uq_kayit_acik_basvuru` KISMI ve
-            # GLOBAL bir benzersizlik indeksidir (bir telefon TUM
-            # PLATFORMDA tek acik basvuru). Kisi A sitesinde kayda baslayip
-            # B sitesinde baslarsa, RLS'e tabi bir DELETE A'nin satirini
-            # goremez ve INSERT benzersizlik ihlaliyle 500 verirdi —
-            # test_kayit_dogrulama_rls.py bunu OLCUYOR.
-            #
-            # `acik_temizle` DEGIL `telefon_sifirla`: buradaki eski DELETE
-            # `amac` ve `durum` suzgeci TASIMIYORDU (kisi onay bekleyen
-            # basvurusunu iptal edip bastan baslayabilsin diye). Davranis
-            # bit bit korundu.
-            await session.execute(
-                text("SELECT public.kayit_dogrulama_telefon_sifirla(:p)"),
-                {"p": phone},
-            )
-            session.add(
-                KayitDogrulama(
-                    tenant_id=tenant_id,
-                    unit_id=unit.id,
-                    telefon=phone,
-                    kod_hash=hash_password(kod),
-                    son_gecerlilik=datetime.now(timezone.utc)
-                    + timedelta(minutes=_KAYIT_KOD_OMRU_DK),
-                )
-            )
-            # SMS saglayici bugun LOG saglayicisidir: kod GONDERILMEZ,
-            # gunluge yazilir. Gercek gecit baglanmasi YAPILANDIRMA isidir
-            # (bkz. mesajlasma.MesajSaglayici) — bu uc degismez.
-            sms_saglayicisi().gonder(
-                phone, None,
-                f"Yönetio kayıt kodunuz: {kod} "
-                f"({_KAYIT_KOD_OMRU_DK} dakika geçerli)",
-            )
-
-    return KayitBaslaResponse(
-        tesis_ad=tenant_ad,
-        # `no` blok onekini zaten tasiyorsa TEKRAR eklenmez ("A-A-1" olurdu).
-        daire=unit.no,
-        telefon_maskeli=_telefon_maskele(phone),
-    )
-
-
-@router.post("/kayit/dogrula", response_model=KayitDurumResponse)
-async def kayit_dogrula(body: KayitDogrulaRequest) -> KayitDurumResponse:
-    """(P148.2) Kod dogru ise basvuru ONAYA dusuer — HESAP ACILMAZ.
-
-    Onceki surumde burasi kullaniciyi acip token donuyordu. Kerem onay
-    adimini actigi icin (bkz. MASTER-PLAN P148.2) hesap ancak yonetici
-    onayindan SONRA acilir; bu uc artik oturum DONDURMEZ. Boylece tahmin
-    edilebilir tesis kodu tek basina veriye erisim saglamaz.
-    """
-    try:
-        phone = normalize_phone(body.telefon)
-    except ValueError:
-        raise _KAYIT_GECERSIZ
-
-    async with SessionLocal() as session:
-        async with session.begin():
-            # (P154) `kayit_dogrulama` RLS altinda (goc 0042) ve burada
-            # kullanicinin HENUZ OTURUMU YOK. Baglami yalniz tenant
-            # kimligi donduren SECURITY DEFINER cozucu kurar.
-            if (
-                await tenant_baglamini_kur(session, telefon=phone, amac="kayit")
-                is None
-            ):
-                raise _KAYIT_GECERSIZ
-            kayit = (
-                await session.execute(
-                    select(KayitDogrulama).where(
-                        KayitDogrulama.telefon == phone,
-                        # (P154) `amac` SUZGECI EKLENDI. Onceden yoktu ve
-                        # `uq_kayit_acik_basvuru` (telefon, amac) uzerinde
-                        # oldugu icin ayni telefon farkli amaclarla BIRDEN
-                        # FAZLA acik satir tasiyabilirdi — o durumda
-                        # `scalar_one_or_none()` MultipleResultsFound ile
-                        # 500 verirdi. Ayrica bir GIRIS kodunun kayit
-                        # dogrulamasini tamamlamasi da engellenmis olur.
-                        KayitDogrulama.amac == "kayit",
-                        KayitDogrulama.durum == "telefon_bekliyor",
-                    )
-                )
-            ).scalar_one_or_none()
-            if kayit is None:
-                raise _KAYIT_GECERSIZ
-            if kayit.son_gecerlilik < datetime.now(timezone.utc):
-                raise _KAYIT_GECERSIZ
-            if kayit.deneme >= _KAYIT_MAX_DENEME:
-                raise _KAYIT_GECERSIZ
-            if not verify_password(body.kod, kayit.kod_hash):
-                # SAYAC AYRI OTURUMDA: bu istek 422 ile bitecek ve
-                # `session.begin()` blogu artisi GERI SARARDI (olculdu —
-                # ilk yazimda koruma hic calismiyordu).
-                async with SessionLocal() as s2:
-                    async with s2.begin():
-                        await set_tenant(s2, kayit.tenant_id)
-                        await s2.execute(
-                            update(KayitDogrulama)
-                            .where(KayitDogrulama.id == kayit.id)
-                            .values(deneme=KayitDogrulama.deneme + 1)
-                        )
-                raise _KAYIT_GECERSIZ
-
-            kayit.ad = body.ad.strip()
-            kayit.durum = "onay_bekliyor"
-            await session.flush()
-
-    return KayitDurumResponse(durum="onay_bekliyor")
 
 
 # ==================== (P154) ROL SECIMLI KAYIT ============================== #
@@ -576,23 +397,21 @@ async def kayit_dogrula(body: KayitDogrulaRequest) -> KayitDurumResponse:
 # BRIEF: rol -> tesis ID -> telefon -> parola. Tesis ID + telefon ONCEDEN
 # TANIMLI bir kayitla eslesmiyorsa kaydolunamaz.
 #
-# P148'DEN FARKI (ve neden ayri bir yol): P148 `kayit/basla`, HENUZ HESABI
-# OLMAYAN bir sakinin daire uzerinden basvurmasidir ve yonetici onayina
-# duser. Burasi TERSI: hesap yonetici tarafindan ZATEN ACILMIS, kisi
-# yalnizca onu SAHIPLENIYOR. Onay adimi YOKTUR — onay, hesabi acan
-# yoneticinin kendisidir.
+# HESAP ZATEN ACILMIS, kisi yalnizca onu SAHIPLENIYOR. Onay adimi YOKTUR
+# — onay, hesabi acan yoneticinin kendisidir.
 #
-# AYNI TABLOYU (`kayit_dogrulama`) ve AYNI `amac='kayit'` degerini
-# kullaniyoruz; ikisi `user_id` ile ayrilir:
-#     user_id IS NULL      -> P148 basvurusu (hesap HENUZ YOK)
-#     user_id IS NOT NULL  -> P154 rol kaydi (hesap VAR, sahipleniliyor)
+# (P155r2) BU ARTIK TEK ELLE-KAYIT YOLU. Karsiti olan P148 akisi (hesabi
+# OLMAYAN birinin daire uzerinden basvurup onaya dusmesi) kaldirildi;
+# yukaridaki "KAYIT — ORTAK" basligina bakiniz. Dolayisiyla
+# `kayit_dogrulama` uzerinde `amac='kayit'` tasiyan her satirin artik
+# `user_id`si DOLUDUR — eskiden NULL/DOLU ayrimi iki akisi ayiriyordu,
+# simdi ayrilacak ikinci akis yok. `user_id IS NULL` kontrolu yine de
+# BIRAKILDI (bkz. `rol_kayit_dogrula`): eski satirlar tabloda durabilir
+# ve onlarin bu yoldan gecmemesi gerekir.
+#
 # Enum'a yeni bir `amac` EKLENMEDI cunku enum degeri geri alinamaz ve
 # `goc-tersinirlik` kapisi downgrade sonrasi semayi karsilastiriyor —
 # artik kalan bir enum degeri o kapiyi kirardi.
-#
-# CAKISMA YOK: P148 zaten telefonu bir kullaniciya ait olan basvuruyu
-# reddediyor (`tenant_id_by_phone`), bu yol ise TAM TERSINI ariyor. Bir
-# telefon ayni anda iki akista olamaz.
 
 
 def _maskele(telefon: str) -> str:
