@@ -68,6 +68,24 @@ HESAPLAR: tuple[tuple[str, str, str, str], ...] = (
     ("resident",         "İlker Sakin",       "sakin3",    _tel(203)),
 )
 
+#: (P155r2) SAHIPLENILMEMIS HESAPLAR — yeni kayit akisini denemek icin.
+#:
+#: NEDEN GEREKLI: yukaridaki `HESAPLAR`in hepsinin parolasi KURULUDUR ve
+#: yeni kayit yolu (`/auth/kayit/rol-basla`) parolasi olan hesabi BILEREK
+#: reddeder — kayit, PAROLASIZ bir hesabi sahiplenmektir. Yani o hesaplarla
+#: kayit akisi test sunucusunda HIC denenemezdi; ekipteki biri "kayit
+#: bozuk" diye rapor ederdi, oysa kural boyle.
+#:
+#: Bunlar yoneticinin ONCEDEN EKLEDIGI kisilerdir: parola YOK, gecici kod
+#: YOK. Tesis kodu + telefonla kaydolup parolalarini KENDILERI belirlerler.
+SAHIPSIZ: tuple[tuple[str, str, str, str], ...] = (
+    ("resident",        "Kayıtsız Sakin",     "yeni-sakin",    _tel(301)),
+    ("security",        "Kayıtsız Güvenlik",  "yeni-guvenlik", _tel(302)),
+    ("tesis_gorevlisi", "Kayıtsız Görevli",   "yeni-gorevli",  _tel(303)),
+    # Ikinci yonetici: sartname §3 "Zaten bir sitem var" akisini dener.
+    ("yonetici",        "Kayıtsız Yönetici",  "yeni-yonetici", _tel(304)),
+)
+
 BLOKLAR = (("A", 4), ("B", 3))   # (ad, kat sayisi)
 DAIRE_PER_KAT = 3
 
@@ -194,6 +212,44 @@ def main() -> int:
             )
             uid[yerel] = cur.fetchone()[0]
 
+        # ------------------------------------- (P155r2) SAHIPSIZ HESAPLAR
+        #
+        # PAROLA YOK, GECICI KOD YOK: `password_hash=NULL`,
+        # `password_set=false`, `temp_code_hash=NULL`. Yeni kayit akisinin
+        # aradigi durum tam olarak budur.
+        #
+        # TEKRAR KOSUMDA SIFIRLANIR (`password_set = false` ile UPDATE) ve
+        # bu BILINCLI: biri akisi deneyip hesabi sahiplendikten sonra
+        # betigi tekrar kosan kisi, akisi BIR KEZ DAHA deneyebilmeli.
+        # Ustteki `HESAPLAR` icin bunun tersi gecerli (orada parola
+        # kuruluyor) — iki liste iki farkli isi yapiyor.
+        for rol, ad, yerel, telefon in SAHIPSIZ:
+            cur.execute(
+                "INSERT INTO app_user (tenant_id, ad, email, telefon, password_hash, "
+                "                      password_set, temp_code_hash, role, is_active, "
+                "                      aranabilir, birincil) "
+                "VALUES (%s,%s,%s,%s, NULL, false, NULL, %s::user_role, true, %s, false) "
+                "ON CONFLICT (tenant_id, email) DO UPDATE "
+                "  SET password_hash = NULL, password_set = false, "
+                "      temp_code_hash = NULL, ad = EXCLUDED.ad, "
+                "      telefon = EXCLUDED.telefon, is_active = true "
+                "RETURNING id",
+                (tid, ad, f"{yerel}@test.yonetio.site", telefon, rol,
+                 rol in ("yonetici", "security")),
+            )
+            uid[yerel] = cur.fetchone()[0]
+
+        # SAHIPSIZ SAKIN BIR DAIREYE BAGLANIR: `rol-basla` sakin icin
+        # daire eslesmesi de arar (`_daire_eslesiyor`); bagli olmayan bir
+        # sakin dogru tesis kodunu girse bile kaydolamazdi.
+        cur.execute(
+            "INSERT INTO unit_resident (tenant_id, unit_id, user_id, rol_tipi) "
+            "SELECT %s, u.id, %s, 'kiraci' FROM unit u "
+            " WHERE u.tenant_id = %s AND u.no = %s "
+            "ON CONFLICT DO NOTHING",
+            (tid, uid["yeni-sakin"], tid, daireler[3][0]),
+        )
+
         # ------------------------------------------------- sakin <-> daire
         # Uc sakin, A blokun ilk uc dairesine. `uq_unitresident_aktif`
         # (unit_id, user_id) WHERE bitis IS NULL — tekrar kosumda catismasin
@@ -308,6 +364,27 @@ def main() -> int:
     print("-" * 96)
     for rol, ad, yerel, telefon in HESAPLAR:
         print(f"{rol:<18}{ad:<24}{yerel + '@test.yonetio.site':<34}{telefon}")
+    print()
+    print("SAHIPSIZ HESAPLAR — YENI KAYIT AKISINI BUNLARLA DENEYIN")
+    print("-" * 96)
+    print("  Parolalari YOK. Uygulamada: rol sec -> yontem -> ad/telefon/parola")
+    print(f"  -> tesis kodu ({kayit_kodu}). Kendi parolalarini belirlerler.")
+    print("  Betigi tekrar kosarsaniz yeniden SAHIPSIZ olurlar (akis tekrar denenir).")
+    print()
+    print(f"{'ROL':<18}{'AD':<24}{'DENENECEK AKIS':<34}{'TELEFON'}")
+    print("-" * 96)
+    _AKIS = {
+        "resident": "tesis kodu + daire eslesmesi",
+        "security": "tesis kodu eslesmesi",
+        "tesis_gorevlisi": "tesis kodu eslesmesi",
+        "yonetici": "'Zaten bir sitem var'",
+    }
+    for rol, ad, _yerel, telefon in SAHIPSIZ:
+        print(f"{rol:<18}{ad:<24}{_AKIS[rol]:<34}{telefon}")
+    print()
+    print("  Yonetici SELF-SIGNUP'i (yeni tesis acma) denemek icin bu listeye")
+    print("  gerek YOK: kaydolma ekraninda 'Yonetici' + 'Tesis adini giriniz'")
+    print("  ile HIC KAYITLI OLMAYAN bir numara kullanin.")
     print()
     print("GIRIS YOLLARI:")
     print("  panel-test.yonetio.site : e-posta + parola (yalniz `admin` rolu)")

@@ -64,17 +64,25 @@ hesap açılırdı.
 Yani **kimsenin bekleyen başvurusu kaybolmadı** ve göç geri alınabilir
 (hiçbir DDL yazılmadı — bu turda **yeni göç YOK**).
 
-### 1c. `POST /tenants` — silinmedi, bilinçli
+### 1c. `POST /tenants` + admin panel ekranı — silinmedi, bilinçli
 
-Şartname bunu envantere sokmuştu. Kararım: **kaldırılmadı, birincil
+Şartname ikisini de envantere sokmuştu. Kararım: **kaldırılmadı, birincil
 olmaktan çıkarıldı.**
 
+| Yüzey | Durum |
+|---|---|
+| `POST /tenants` (uç) | **duruyor**, yalnız `admin` rolü |
+| `admin-web /(protected)/tenants` (liste + tesis açma formu) | **duruyor**, yalnız `admin` rolü |
+| `/tenants/{id}` (detay, yönetici ekle/çıkar, kod göster) | **duruyor** |
+
 - **Kaldırılmama sebebi:** platform sahibinin destek işlerinde (bir tesisi
-  elle açmak) ve **tohum/demo verisinde** tek yol. **KİLİTLİ KURAL 2**
-  gereği iki mağazanın incelediği demo hesapları buna bağlı; kaldırmak
-  onları kırardı.
+  elle açmak, yöneticiyi değiştirmek) ve **tohum/demo verisinde** tek yol.
+  **KİLİTLİ KURAL 2** gereği iki mağazanın incelediği demo hesapları buna
+  bağlı; kaldırmak onları kırardı.
 - **Değişen:** yönetici artık ondan geçmiyor. Normal akışta admin adımı
-  **yok**.
+  **yok** — ekran bir *operasyon aracı*, kayıt akışının parçası değil.
+- **Yönetici ön tanımlama** (tek seferlik kod üretme) da aynı sebeple
+  duruyor; artık yalnız bu operasyon yolunda kullanılıyor.
 
 ### 1d. RLS testleri silinmedi, TAŞINDI
 
@@ -240,6 +248,25 @@ Kaydolmak için: https://…/davet/‹jeton› Android: https://play.google.com/
   **ayrı bir iştir** — burada yapılsaydı jeton uzunluğu ile güvenlik
   arasında aceleci bir takas yapılmış olurdu.
 
+### 4b. "Kuyruğa girsin" — GİRMİYOR, dürüst not
+
+Şartname §4 gönderimin **kuyruğa girmesini** istiyor. Bugün girmiyor:
+gönderim **istek içinde senkron** yapılıyor. `mesaj_durum` enum'unda
+`kuyrukta` değeri **var** ama hiçbir yol onu yazmıyor — bu, P154 Aşama
+9'da bilerek açık bırakılmış ve `gonderim.py`nin "BİLİNEN SINIRLAR"
+başlığında yazılı bir sınır; bu turda **kapatılmadı**.
+
+**Neden bu turda yapılmadı:** kuyruğa geçmek Celery işi ekler ve gönderim
+kaydının durum geçişlerini (`kuyrukta → gonderildi/basarisiz`) değiştirir;
+panelin "gitmeyen davetler" ekranı bugün `son_durum`u okuyor ve o da
+değişirdi. Sağlayıcı **henüz bağlı olmadığı** için kuyruğun bugün
+pratik bir faydası da yok — kuyruk, gönderim başarısız olduğunda yeniden
+denemek içindir; şu an her gönderim "yapılandırılmadı" ile bitiyor.
+
+**Şartnamenin asıl istediği korunuyor:** sağlayıcı yokken **sessizce
+"gönderildi" DENMİYOR** (`durum='basarisiz'` + panelde görünür). Kuyruk,
+Netgsm bağlandığında yapılacak işin parçası.
+
 ---
 
 ## 5. GÖÇ PLANI (§6) — **uygulanmadı, çünkü gerekmiyor**
@@ -339,17 +366,47 @@ Taşınan veri de küçüldü: eskiden tesis kodu + telefon taşınıyordu, art�
 | `test_tesis_olustur.py` (**16 yeni**) | tesis+oturum uçtan uca · kod biçimi · Türkçe harf · `i` yerel bağımsızlığı · kısa/rakamlı/harfsiz ad · aynı gün çakışması · ad değişince kod sabit · telefon normalizasyonu (4 biçim) · ikinci tesis 409 · yöntem kuralı · hız sınırı | ✅ |
 | `test_kayit_dogrulama_rls.py` | yaşayan uca taşındı, kapsam korundu | ✅ |
 | `test_rol_secimli_kayit.py` | P148 kesişim testi kaldırıldı | ✅ |
+| `test_kayit_gerilemeleri.py` (**13 yeni**) | **demo rolleri (6) telefon+parola ile giriyor** · yanlış parola 401 · parolalı hesap kayıt yolundan geçemez · **sosyal+parola = tek hesap iki yöntem** · aynı sosyal kimlik iki hesaba bağlanamaz · **SMS metni: tesis kodu + mağaza bağlantısı** · yapılandırılmamış mağaza eklenmiyor | ✅ |
 | `test_sozlesme_sapmasi` · `test_yetki_kapsam` · `test_yetki_matrisi` · `test_denetci_salt_okuma` · `test_yuzey_yalitimi` | 79 yeşil, kilit yeniden üretildi | ✅ |
 | `kayit_rol_secimi_test.dart` (**10**) | yeni sıra · tesis açma + kod kopyalama · "zaten sitem var" · sosyal ad ön-doldurma · sosyal+yönetici · parola otomatik gönderimi · daire yalnız sakinde | ✅ |
 | `kayit-rolleri.test.ts` (**11**) | web sırası · sosyal önce/elle sonra düzeni · rol taşınması · ad ön-doldurma · tesis açma · denetçi açamaz · kod kopyalanabilir · ayrı parola adımı YOK | ✅ |
 | **Web tam takım** | | **743 ✓** (`lint` + `tsc` temiz) |
 | **Mobil tam takım** | | **1862 ✓** |
-| **Backend tam takım** | | **1632 ✓** (1 atlandı, 0 kırmızı — 28 dk) |
+| **Backend tam takım** | | **1645 ✓** (1 atlandı, 0 kırmızı — 29 dk) |
 | `flutter analyze` | | temiz |
 
-**Demo hesapları (KİLİTLİ KURAL 2):** giriş yolları hiç değişmediği için
-`+905000000101/102/103/104` ve `+905777777777` etkilenmedi; tam backend
-takımı (1632 test) bunu ölçüyor ve **tamamı yeşil**.
+**Demo hesapları (KİLİTLİ KURAL 2):** giriş yolları hiç değişmedi ve bu
+artık **açıkça ölçülüyor** — `test_kayit_gerilemeleri.py` altı rolün
+(yönetici · security · tesis_gorevlisi · resident · denetçi ·
+guvenlik_amiri) telefon+parola ile giriş yapabildiğini rol başına ayrı
+ayrı doğruluyor. Gerçek demo tenant'ı `scripts/demo_tenant.py` ile ayrı
+kurulduğu ve test veritabanında bulunmadığı için test hesapları
+**kendisi üretiyor**; korunan şey hesaplar değil **giriş yoludur**.
+
+**`scripts/test_seed.py` yeni akışa göre güncellendi.** Eskiden her
+hesabın parolası kuruluydu ve yeni kayıt yolu parolalı hesabı bilerek
+reddettiği için **akış test sunucusunda hiç denenemiyordu**. Artık dört
+**sahipsiz** (parolasız) hesap açılıyor — sakin (daireye bağlı), güvenlik,
+tesis görevlisi ve ikinci yönetici ("Zaten bir sitem var" için). Betiğin
+çıktısı hangi hesapla hangi akışın deneneceğini yazıyor; tekrar
+koşulduğunda bu hesaplar **yeniden sahipsiz** oluyor (akış tekrar
+denenebilsin). Ölçüldü: iki koşumda hesap sayısı 12'de sabit, sahipsiz
+hesapla `rol-basla` kod satırı üretiyor, parolalı hesapla **üretmiyor**.
+
+---
+
+## 7b. ERİŞİLEBİLİRLİK
+
+- **44pt/44px dokunma hedefi:** mobilde rol kartları `ListTile` (56dp),
+  düğmeler `Size.fromHeight(52)`. Web'de düğmeler `py-3` + metin.
+  **Bir kusur bulundu ve düzeltildi:** web'deki "Zaten bir sitem var"
+  düz bir metin bağıydı (~20px) — `min-h-[44px]` eklendi.
+- **Ekran okuyucu adları:** her alan `labelText` / `<label><span>` ile
+  adlandırılmış (Flutter ve tarayıcı bunları erişilebilirlik ağacına
+  aktarır); kopyala düğmesinin `tooltip`i semantik adı oluyor; rol
+  düğmelerinde `aria-pressed` var. Sonuç ekranındaki onay simgesi
+  **bilerek adsız**: dekoratiftir ve yanındaki metni tekrar ederdi —
+  ekran okuyucuya iki kez aynı şeyi söyletmek gürültüdür.
 
 ---
 

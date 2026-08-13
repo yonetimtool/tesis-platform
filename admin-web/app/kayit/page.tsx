@@ -453,11 +453,14 @@ export default function KayitSayfasi() {
                   {t("kayitTesisAdIpucu")}
                 </span>
               </label>
-              {/* SARTNAME §3: "Tesis adini giriniz" alaninin ALTINDA. */}
+              {/* SARTNAME §3: "Tesis adini giriniz" alaninin ALTINDA.
+                  `min-h-[44px]` + `inline-flex items-center`: duz bir
+                  metin bagi ~20px yuksekliginde olurdu ve 44px dokunma
+                  hedefini (erisilebilirlik kurali) tutmazdi. */}
               <button
                 type="button"
                 data-test="kayit-zaten-sitem-var"
-                className="text-sm text-primary underline"
+                className="inline-flex min-h-[44px] items-center text-sm text-primary underline"
                 onClick={() => {
                   setKatil(true);
                   setHata(null);
