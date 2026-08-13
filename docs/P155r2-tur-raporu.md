@@ -315,11 +315,12 @@ sağlayıcı ne mobilde ne web'de düğme olarak çizilir
 | `test_sozlesme_sapmasi` · `test_yetki_kapsam` · `test_yetki_matrisi` · `test_denetci_salt_okuma` · `test_yuzey_yalitimi` | 79 yeşil, kilit yeniden üretildi | ✅ |
 | `kayit_rol_secimi_test.dart` (**10**) | yeni sıra · tesis açma + kod kopyalama · "zaten sitem var" · sosyal ad ön-doldurma · sosyal+yönetici · parola otomatik gönderimi · daire yalnız sakinde | ✅ |
 | **Mobil tam takım** | | **1862 ✓** |
+| **Backend tam takım** | | **1632 ✓** (1 atlandı, 0 kırmızı — 28 dk) |
 | `flutter analyze` | | temiz |
 
 **Demo hesapları (KİLİTLİ KURAL 2):** giriş yolları hiç değişmediği için
 `+905000000101/102/103/104` ve `+905777777777` etkilenmedi; tam backend
-takımı (1613 test) bunu ölçüyor ve yeşil.
+takımı (1632 test) bunu ölçüyor ve **tamamı yeşil**.
 
 ---
 
