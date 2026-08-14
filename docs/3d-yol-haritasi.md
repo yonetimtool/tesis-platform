@@ -12,15 +12,18 @@
 | Sahne | Durum | Nerede |
 |---|---|---|
 | **BuildingScene** (site/bina maketi) | ✅ **yapıldı** | Canlı Panel |
-| **RouteScene** (devriye rotası) | ⏸ planlandı — §4 | NFC Noktaları · Devriye Planları |
+| **RouteScene** (devriye rotası) | ✅ **yapıldı** — §4 | NFC Noktaları · Devriye Planları |
 
-`components/3d/` altında iki dosya: `bina-sahnesi.tsx` (sahne) ve
-`sahne-yukleyici.tsx` (tembel yükleme + geri düşüş). Ayrım kasıtlı —
+`components/3d/` altında üç dosya: `bina-sahnesi.tsx`, `rota-sahnesi.tsx`
+ve **ikisinin paylaştığı** `sahne-yukleyici.tsx` (tembel yükleme + WebGL
+ölçümü + tema/hareket/mobil kararı + geri düşüş). Ayrım kasıtlı —
 `next/dynamic` kararı sahnenin *dışında* verilmeli, yoksa modül zaten
-yüklenmiş olur.
+yüklenmiş olur. §4'ün "ikinci bir tembel yükleme mekanizması yazılmayacak"
+kuralı bu yüzden `useSahneOrtami` ile karşılandı.
 
-**Ölçüldü:** paylaşılan paket **87.5 → 87.6 kB** (+0.1). 3D ana pakete
-girmedi.
+**Ölçüldü:** paylaşılan paket **87.5 → 87.9 kB** (+0.4; artışın kaynağı
+`Grafik` kabuğu, 3D değil). Üç.js hâlâ ana pakete girmiyor: `/checkpoints`
+3,94 kB · `/patrol-plans` 5,61 kB.
 
 ---
 
@@ -91,7 +94,27 @@ components/3d/rota-sahnesi.tsx
 - `BinaSahnesi` ile **aynı yükleyiciyi** kullanır — ikinci bir tembel
   yükleme mekanizması yazılmayacak.
 
-**Tahmini iş:** 1 tur (sahne + veri bağlama + testler).
+### Uygulanınca ne değişti (dürüst not)
+
+Tasarım büyük ölçüde aynen uygulandı; **iki sapma** var:
+
+1. **`ilerleme` dışarıdan alınmıyor, okutulan noktalardan TÜRETİLİYOR.**
+   İki kaynak olsaydı çizgi ile noktalar birbirini yalanlayabilirdi.
+2. **`rotaCizgisi` diye bir anahtar eklendi.** `/checkpoints` sayfasındaki
+   noktalar bir plana bağlı **değil** — aralarında sıra yok. Orada çizgi
+   çizmek, olmayan bir devriye yolu göstermek olurdu; sahne o sayfada
+   yalnız durum işaretçilerini çiziyor ve ekranda bunu **yazıyor**.
+
+**Durum nereden geliyor** (`lib/rota-durumu.ts`, tek tanım):
+`GET /scans` bugünkü okutmaları, `GET /dashboard/live` alarmları verir.
+Öncelik: `eksik_checkpoint` → atlandı · `gecikmis_okutma` → gecikti ·
+taramada var → okutuldu · aksi halde bekliyor. **Alarm okutmayı ezer**,
+çünkü alarm sonradan üretilir: dün okutulmuş ama bugünkü turda atlanmış
+bir noktayı yeşil göstermek yanlış olurdu.
+
+**Eklenen tek şey bir BFF köprüsü:** `/api/scans`. Uç
+(`backend/app/routers/scans.py`) baştan beri vardı, panelde karşılığı
+yoktu — backend'e dokunulmadı.
 
 ---
 

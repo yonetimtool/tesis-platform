@@ -13,18 +13,40 @@ import {
   type Kolon,
   type TabloDurumu,
 } from "@/components/ui";
+import { RotaSahnesiYukleyici } from "@/components/3d/sahne-yukleyici";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
-import type { Checkpoint, CheckpointList } from "@/lib/types";
+import type {
+  AlarmGrubu,
+  Checkpoint,
+  CheckpointList,
+  DashboardLive,
+  OkutmaRaporu,
+} from "@/lib/types";
 import { sayiCoz } from "@/lib/sayi";
 import { useT } from "@/lib/i18n/kullan";
+import { alarmHaritasi, noktaDurumu } from "@/lib/rota-durumu";
 
 // Mobil POC ile tutarli: buyuk harf hex, ayracsiz.
 const NFC_PLACEHOLDER = "04A1B2C3D4";
 // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
 const DURUM_OLUMLU = "olumlu" as const;
 const DURUM_NOTR = "notr" as const;
+
+/** Nokta durumu -> rozet rengi ve sozluk anahtari (sahneyle ayni aile). */
+const ROZET_DURUMU = {
+  okutuldu: "olumlu",
+  gecikti: "uyari",
+  atlandi: "kritik",
+  bekliyor: "notr",
+} as const;
+const DURUM_ANAHTARI = {
+  okutuldu: "rotaDurumOkutuldu",
+  gecikti: "rotaDurumGecikti",
+  atlandi: "rotaDurumAtlandi",
+  bekliyor: "rotaDurumBekliyor",
+} as const;
 
 interface FormState {
   ad: string;
@@ -55,6 +77,12 @@ export default function CheckpointsPage() {
     `/api/checkpoints?limit=${tabloDurumu.boy}&offset=${offset}`,
     jsonFetcher,
   );
+
+  // (P160 / Asama 5) BUGUNKU OKUTMA DURUMU. Iki kaynak da bu sayfanin
+  // ASIL listesiyle ayni yetkiye sahip (admin + yonetici); ek bir kapi
+  // gerekmiyor.
+  const { data: okutmalar } = useSWR<OkutmaRaporu>("/api/scans", jsonFetcher);
+  const { data: pano } = useSWR<DashboardLive>("/api/dashboard/live", jsonFetcher);
 
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -125,6 +153,31 @@ export default function CheckpointsPage() {
     }
   }
 
+  const okutulanIdler = useMemo(
+    () => new Set((okutmalar?.items ?? []).map((o) => o.checkpoint_id)),
+    [okutmalar],
+  );
+  const alarmlar = useMemo(
+    () => alarmHaritasi((pano?.alarm_gruplari ?? []) as AlarmGrubu[]),
+    [pano],
+  );
+  /** Sahnenin noktalari — YALNIZ AKTIF noktalar.
+   *
+   *  Pasif nokta okutulmasi BEKLENMEZ; onu "bekliyor" diye cizmek,
+   *  olmayan bir eksigi varmis gibi gostermekti. */
+  const sahneNoktalari = useMemo(
+    () =>
+      (data?.items ?? [])
+        .filter((c) => c.aktif)
+        .map((c, i) => ({
+          id: c.id,
+          ad: c.ad,
+          sira: i,
+          durum: noktaDurumu(c.id, { okutulanIdler, alarmGruplari: [] }, alarmlar),
+        })),
+    [data, okutulanIdler, alarmlar],
+  );
+
   const kolonlar: Kolon<Checkpoint>[] = useMemo(
     () => [
       { id: "ad", baslik: t("ortakAd"), hucre: (c) => c.ad, gizlenebilir: false },
@@ -154,6 +207,15 @@ export default function CheckpointsPage() {
         ),
       },
       {
+        id: "okutma",
+        baslik: t("rotaSahneNoktaBaslik"),
+        hucre: (c) => {
+          if (!c.aktif) return "—";
+          const d = noktaDurumu(c.id, { okutulanIdler, alarmGruplari: [] }, alarmlar);
+          return <Rozet durum={ROZET_DURUMU[d]}>{t(DURUM_ANAHTARI[d])}</Rozet>;
+        },
+      },
+      {
         id: "eylem",
         baslik: "",
         gizlenebilir: false,
@@ -170,7 +232,7 @@ export default function CheckpointsPage() {
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [t],
+    [t, okutulanIdler, alarmlar],
   );
 
   return (
@@ -272,6 +334,21 @@ export default function CheckpointsPage() {
           )}
         </form>
       </Modal>
+
+      {/* NOKTA DURUMU SAHNESI — CIZGI YOK. Bu sayfadaki noktalar bir
+          plana bagli DEGIL; aralarinda bir sira yok ve olmayan bir
+          devriye yolunu cizmek kullaniciyi yanlis yonlendirirdi. */}
+      {sahneNoktalari.length > 0 && (
+        <div className="space-y-1">
+          <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
+            {t("rotaSahneNoktaBaslik")}
+          </h2>
+          <RotaSahnesiYukleyici noktalar={sahneNoktalari} rotaCizgisi={false} />
+          <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-3)" }}>
+            {t("rotaSahneNotSirasiz")}
+          </p>
+        </div>
+      )}
 
       <VeriTablosu<Checkpoint>
         kolonlar={kolonlar}

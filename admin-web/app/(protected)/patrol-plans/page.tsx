@@ -17,14 +17,19 @@ import {
   type Kolon,
   type TabloDurumu,
 } from "@/components/ui";
+import { RotaSahnesiYukleyici } from "@/components/3d/sahne-yukleyici";
 import { useToast } from "@/components/Toast";
 import { kisaKimlik } from "@/lib/kimlik";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { tamsayiCoz } from "@/lib/sayi";
 import { useT } from "@/lib/i18n/kullan";
+import { alarmHaritasi, noktaDurumu } from "@/lib/rota-durumu";
 import type {
+  AlarmGrubu,
   CheckpointList,
+  DashboardLive,
+  OkutmaRaporu,
   PatrolPlan,
   PatrolPlanCheckpoint,
   PatrolPlanList,
@@ -34,6 +39,27 @@ import type {
 // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
 const DURUM_OLUMLU = "olumlu" as const;
 const DURUM_NOTR = "notr" as const;
+const DURUM_BEKLIYOR = "bekliyor" as const;
+// UCLUDE DIZE YAZILMAZ — bunlar UC ADRESI, cevrilecek metin degil; kural
+// yine de gecerli ve adresler modul duzeyinde duruyor.
+const UC_OKUTMALAR = "/api/scans" as const;
+const UC_PANO = "/api/dashboard/live" as const;
+
+/** Nokta durumu -> rozet rengi. Sahnedeki renklerle AYNI aile. */
+const ROZET_DURUMU = {
+  okutuldu: "olumlu",
+  gecikti: "uyari",
+  atlandi: "kritik",
+  bekliyor: "notr",
+} as const;
+
+/** Nokta durumu -> sozluk anahtari. */
+const DURUM_ANAHTARI = {
+  okutuldu: "rotaDurumOkutuldu",
+  gecikti: "rotaDurumGecikti",
+  atlandi: "rotaDurumAtlandi",
+  bekliyor: "rotaDurumBekliyor",
+} as const;
 
 interface FormState {
   ad: string;
@@ -81,8 +107,23 @@ export default function PatrolPlansPage() {
     "/api/shifts?limit=200&offset=0",
     jsonFetcher,
   );
+  // `assignPlan` SWR ANAHTARLARINDA kullanildigi icin BURADA tanimli:
+  // asagida kalsaydi "kullanimdan once tanimlanmis olmali" hatasi verirdi.
+  const [assignPlan, setAssignPlan] = useState<PatrolPlan | null>(null);
   const { data: checkpoints } = useSWR<CheckpointList>(
     "/api/checkpoints?limit=200&offset=0",
+    jsonFetcher,
+  );
+  // (P160 / Asama 5) ROTA SAHNESININ IKI GERCEK KAYNAGI. Ikisi de
+  // CEKMECE ACIKKEN cekilir (`assignPlan` yoksa anahtar `null`):
+  // sayfaya girer girmez iki ek istek atmak, sahneyi hic acmayacak
+  // kullaniciya bedel odetirdi.
+  const { data: okutmalar } = useSWR<OkutmaRaporu>(
+    assignPlan ? UC_OKUTMALAR : null,
+    jsonFetcher,
+  );
+  const { data: pano } = useSWR<DashboardLive>(
+    assignPlan ? UC_PANO : null,
     jsonFetcher,
   );
 
@@ -93,7 +134,6 @@ export default function PatrolPlansPage() {
   const [saving, setSaving] = useState(false);
 
   // atama
-  const [assignPlan, setAssignPlan] = useState<PatrolPlan | null>(null);
   const [selected, setSelected] = useState<string[]>([]);
   const [assignErr, setAssignErr] = useState<string | null>(null);
   // MEVCUT ATAMA CEKILEBILDI MI — asagida neden onemli oldugu yaziyor.
@@ -206,6 +246,29 @@ export default function PatrolPlansPage() {
       setAssignSaving(false);
     }
   }
+
+  // (P160 / Asama 5) SAHNENIN NOKTALARI. Durum kurali `lib/rota-durumu`
+  // dosyasinda TEK YERDE tanimli — ayni kural `/checkpoints`te de
+  // kullaniliyor ve iki kopya tutmak birinin unutulmasi demekti.
+  const okutulanIdler = useMemo(
+    () => new Set((okutmalar?.items ?? []).map((o) => o.checkpoint_id)),
+    [okutmalar],
+  );
+  const alarmlar = useMemo(
+    () => alarmHaritasi((pano?.alarm_gruplari ?? []) as AlarmGrubu[]),
+    [pano],
+  );
+  const rotaNoktalari = useMemo(
+    () =>
+      selected.map((cid, i) => ({
+        id: cid,
+        ad: cpName(cid),
+        sira: i,
+        durum: noktaDurumu(cid, { okutulanIdler, alarmGruplari: [] }, alarmlar),
+      })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selected, okutulanIdler, alarmlar, checkpoints],
+  );
 
   function cpName(id: string): string {
     return checkpoints?.items.find((c) => c.id === id)?.ad ?? kisaKimlik(id);
@@ -425,6 +488,19 @@ export default function PatrolPlansPage() {
             {t("planSiraliListe")}
           </p>
 
+          {/* ROTA SAHNESI — yalniz nokta VARSA. Bos bir egri, olmayan bir
+              rotayi cizmek olurdu. */}
+          {assignOkundu && rotaNoktalari.length > 0 && (
+            <div className="space-y-1">
+              <RotaSahnesiYukleyici noktalar={rotaNoktalari} />
+              {/* SAHNENIN NE OLMADIGINI YAZAR: konum verisi yok, bu bir
+                  harita degil akis semasi. */}
+              <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-3)" }}>
+                {t("rotaSahneNot")}
+              </p>
+            </div>
+          )}
+
           {assignErr && !assignOkundu ? (
             <HataDurumu
               mesaj={assignErr}
@@ -443,11 +519,14 @@ export default function PatrolPlansPage() {
                       color: "var(--yz-text)",
                     }}
                   >
-                    <span>
-                      <span className="me-2" style={{ color: "var(--yz-text-3)" }}>
-                        {i + 1}.
-                      </span>
+                    <span className="flex items-center gap-2">
+                      <span style={{ color: "var(--yz-text-3)" }}>{i + 1}.</span>
                       {cpName(cid)}
+                      {/* DURUM METINDIR: sahnedeki renk tek tasiyici
+                          olsaydi renk koru kullanici ayrimi kaybederdi. */}
+                      <Rozet durum={ROZET_DURUMU[rotaNoktalari[i]?.durum ?? DURUM_BEKLIYOR]}>
+                        {t(DURUM_ANAHTARI[rotaNoktalari[i]?.durum ?? DURUM_BEKLIYOR])}
+                      </Rozet>
                     </span>
                     <span className="flex gap-1">
                       <Dugme boy="kucuk" onClick={() => move(i, -1)} disabled={i === 0}>

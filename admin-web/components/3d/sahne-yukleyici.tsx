@@ -24,6 +24,7 @@ import { useT } from "@/lib/i18n/kullan";
 
 import { Iskelet } from "../ui/durumlar";
 import type { BinaSahnesiProps } from "./bina-sahnesi";
+import type { RotaSahnesiProps } from "./rota-sahnesi";
 
 /**
  * WebGL destegi — BIR KEZ olculur.
@@ -50,6 +51,43 @@ const Sahne = dynamic(() => import("./bina-sahnesi"), {
   loading: () => <Iskelet className="h-full w-full" />,
 });
 
+// (P160 / Asama 5) IKINCI SAHNE, AYNI YUKLEYICI. `3d-yol-haritasi.md` §4:
+// "BinaSahnesi ile AYNI yukleyiciyi kullanir — ikinci bir tembel yukleme
+// mekanizmasi yazilmayacak." Asagidaki `useSahneOrtami` da o yuzden
+// paylasiliyor: WebGL olcumu, tema, hareket tercihi ve mobil karari
+// sahne basina TEKRARLANMAZ.
+const RotaSahne = dynamic(() => import("./rota-sahnesi"), {
+  ssr: false,
+  loading: () => <Iskelet className="h-full w-full" />,
+});
+
+/**
+ * Sahne ORTAMI — iki sahnenin de ihtiyac duydugu istemci olcumleri.
+ *
+ * TUM OLCUMLER ISTEMCIDE: `window` sunucuda yok ve ilk kare sunucuda
+ * ciziliyor. `hazir` bayragi olmadan sunucu/istemci farki hidrasyon
+ * uyusmazligi uretirdi.
+ */
+function useSahneOrtami() {
+  const [hazir, setHazir] = useState(false);
+  const [destek, setDestek] = useState(true);
+  const [koyu, setKoyu] = useState(false);
+  const [hareket, setHareket] = useState(true);
+  const [mobil, setMobil] = useState(false);
+
+  useEffect(() => {
+    setDestek(webglVar());
+    setKoyu(document.documentElement.classList.contains("dark"));
+    setHareket(!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
+    // MOBIL: sahne cizilir ama DURAGAN (brief). Dokunmatik cihazda
+    // surekli render pil tuketir ve kucuk ekranda maket zaten okunmaz.
+    setMobil(window.matchMedia?.("(max-width: 768px)").matches ?? false);
+    setHazir(true);
+  }, []);
+
+  return { hazir, destek, koyu, hareketVar: hareket && !mobil };
+}
+
 export function BinaSahnesiYukleyici(
   props: Omit<BinaSahnesiProps, "koyu" | "hareketVar"> & {
     /** Sahne yuksekligi (CSS). */
@@ -58,26 +96,7 @@ export function BinaSahnesiYukleyici(
 ) {
   const t = useT();
   const { yukseklik = "320px", ...sahneProps } = props;
-  const [hazir, setHazir] = useState(false);
-  const [destek, setDestek] = useState(true);
-  const [koyu, setKoyu] = useState(false);
-  const [hareket, setHareket] = useState(true);
-  const [mobil, setMobil] = useState(false);
-
-  // TUM OLCUMLER ISTEMCIDE: `window` sunucuda yok ve ilk kare sunucuda
-  // ciziliyor. `hazir` bayragi olmadan sunucu/istemci farki hidrasyon
-  // uyusmazligi uretirdi.
-  useEffect(() => {
-    setDestek(webglVar());
-    setKoyu(document.documentElement.classList.contains("dark"));
-    setHareket(
-      !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches,
-    );
-    // MOBIL: sahne cizilir ama DURAGAN (brief). Dokunmatik cihazda
-    // surekli render pil tuketir ve kucuk ekranda maket zaten okunmaz.
-    setMobil(window.matchMedia?.("(max-width: 768px)").matches ?? false);
-    setHazir(true);
-  }, []);
+  const { hazir, destek, koyu, hareketVar } = useSahneOrtami();
 
   if (!hazir) {
     return <Iskelet className="w-full" {...{ style: { height: yukseklik } }} />;
@@ -117,7 +136,67 @@ export function BinaSahnesiYukleyici(
       role="img"
       aria-label={t("sahneBlokSayisi", { n: String(sahneProps.bloklar.length) })}
     >
-      <Sahne {...sahneProps} koyu={koyu} hareketVar={hareket && !mobil} />
+      <Sahne {...sahneProps} koyu={koyu} hareketVar={hareketVar} />
+    </div>
+  );
+}
+
+/* ==================================================================== */
+
+/**
+ * ROTA SAHNESI YUKLEYICISI — devriye rotasi / nokta durumu.
+ *
+ * GERI DUSUS METNI FARKLI ve bu onemli: bina sahnesinde "kac blok" bilgi
+ * tasiyordu; burada tasidigi sey ILERLEME. WebGL yoksa kullanici o
+ * ilerlemeyi yine gormeli.
+ */
+export function RotaSahnesiYukleyici(
+  props: Omit<RotaSahnesiProps, "koyu" | "hareketVar"> & { yukseklik?: string },
+) {
+  const t = useT();
+  const { yukseklik = "260px", ...sahneProps } = props;
+  const { hazir, destek, koyu, hareketVar } = useSahneOrtami();
+
+  const okutulan = sahneProps.noktalar.filter((n) => n.durum === "okutuldu").length;
+  const ozet = t("rotaSahneOzet", {
+    okutulan: String(okutulan),
+    toplam: String(sahneProps.noktalar.length),
+  });
+
+  if (!hazir) {
+    return <Iskelet className="w-full" {...{ style: { height: yukseklik } }} />;
+  }
+
+  if (!destek) {
+    return (
+      <div
+        className="flex w-full flex-col items-center justify-center gap-2 p-6 text-center"
+        style={{
+          height: yukseklik,
+          borderRadius: "var(--yz-radius-card)",
+          background: "var(--yz-surface-sunken)",
+          boxShadow: "var(--yz-sunken)",
+        }}
+      >
+        <p style={{ fontSize: "var(--yz-fs-body)", color: "var(--yz-text)" }}>{ozet}</p>
+        <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+          {t("sahneWebglYok")}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      style={{ height: yukseklik, borderRadius: "var(--yz-radius-card)" }}
+      className="overflow-hidden"
+      // SAHNE DEKORDUR: her noktanin adi ve durumu sayfadaki listede
+      // METIN olarak zaten var. Tuvale okunacak bir sey yok; ozet
+      // `aria-label` ile veriliyor.
+      role="img"
+      aria-label={ozet}
+    >
+      <RotaSahne {...sahneProps} koyu={koyu} hareketVar={hareketVar} />
     </div>
   );
 }

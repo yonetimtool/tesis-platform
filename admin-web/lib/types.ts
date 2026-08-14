@@ -737,3 +737,26 @@ export interface KameraListResponse {
   meta: PageMeta;
   items: Kamera[];
 }
+
+/* --------------------------- okutma raporu ------------------------------ */
+
+/** (P160) `GET /scans` satiri — sunucu sozlesmesi `ScanReportItem`. */
+export interface OkutmaSatiri {
+  id: string;
+  checkpoint_id: string;
+  checkpoint_ad: string;
+  guard_id: string;
+  guard_ad: string;
+  okutma_zamani: string;
+  gps_lat?: number | null;
+  gps_lng?: number | null;
+  konum_durumu: string;
+  gps_dogruluk_m?: number | null;
+}
+
+export interface OkutmaRaporu {
+  tarih: string;
+  items: OkutmaSatiri[];
+  /** (P34) Filtreden BAGIMSIZ konumsuz okutma sayisi. */
+  konumsuz_sayisi: number;
+}
