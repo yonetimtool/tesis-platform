@@ -1,0 +1,302 @@
+/* ===========================================================================
+   (P160 / Asama 1) YONETIO TASARIM SISTEMI — FIRCALANMIS METAL + NEUMORPHISM
+   ===========================================================================
+
+   TEK TOKEN KATMANI. Bilesenlerde SABIT RENK YAZILMAZ; her deger buradan
+   gelir. Renk, tipografi, bosluk, radius, golge, kenarlik, gradyan,
+   animasyon suresi, z-index ve kirilma noktalari tek dosyada.
+
+   ---------------------------------------------------------------------------
+   NEDEN AYRI DOSYA — `globals.css`e KARISTIRILMADI (P160 karari: secenek C)
+   ---------------------------------------------------------------------------
+   `tests/tasarim-token.test.ts` (27 assertion) web'in `tailwind.config.ts`
+   + `globals.css` degerlerini `mobile/.../home_tokens.dart` ile BIREBIR
+   esitliyor. Kilitli kural 1 mobile dokunmayi, kural 6 testi kirmayi
+   yasakliyor. Bu yuzden yeni dil ESKININ USTUNE YAZILMADI, YANINA konuldu:
+   eski tokenlar oldugu gibi durur (49 tasinmamis sayfa onlarla calisiyor),
+   yeni yuzeyler YALNIZ buradaki `--yz-*` degiskenlerini kullanir.
+
+   BEDELI DURUSTCE: gecis boyunca iki dil bir arada yasar — brief bunu
+   normalde yasakliyor, Kerem olcuyu gorup C'yi secti. Gecis bitince
+   `globals.css`teki `.dark` ezmeleri ve eski renk tokenlari kaldirilabilir
+   (o an parite testi de birlikte emekliye ayrilir).
+
+   ---------------------------------------------------------------------------
+   TEMA ANAHTARI PAYLASILIYOR — ikinci bir toggle YOK
+   ---------------------------------------------------------------------------
+   Degiskenler `.dark` sinifina baglandi; o sinifi `layout.tsx`teki
+   satir-ici script ve `ThemeToggle` zaten yonetiyor. Ayri bir anahtar
+   yazmak, kullanicinin iki yerden tema secmesi demekti.
+
+   VARSAYILAN `system` OLARAK BIRAKILDI. Brief "dark varsayilan" diyor;
+   bunu TASARIM DILININ birincil temasi olarak okudum (referans gorseller
+   koyu), kullanicinin KAYITLI tercihini ezme talimati olarak degil.
+   Kayitli tercihi ezmek, calisan bir davranisi geri goturmek olurdu.
+   Tek satirlik bir degisiklik; istenirse acilir.
+   =========================================================================== */
+
+:root {
+  /* ---------------------------------------------------------------------
+     ACIK TEMA — yuzeyler
+     --------------------------------------------------------------------- */
+  --yz-bg-app: #f7f9fb;
+  --yz-bg-app-grad: linear-gradient(180deg, #fbfcfd 0%, #f4f7fa 100%);
+  --yz-bg-sidebar: #ffffff;
+  --yz-surface-1: #ffffff;
+  --yz-surface-2: #f2f5f8;
+  --yz-surface-sunken: #edf1f5;
+  --yz-border: #e1e7ed;
+  /* Metalik hissin kaynagi: ust kenar parlamasi. Renk DEGIL, ISIK. */
+  --yz-border-shine: #ffffff;
+
+  /* Metin — uc kademe */
+  --yz-text: #1f2933;
+  /* OLCULDU VE KOYULASTIRILDI: brief #7B8794 veriyordu; sayfa zemininde
+     (#F7F9FB) 3.47 — AA'yi TUTMUYOR. Ayni ton BEYAZ kartta 4.37 ile de
+     dusuyordu. Ton (hue) ve doygunluk korunarak yalniz aciklik kaydirildi;
+     `tests/yz-token-kontrast.test.ts` en zor yuzeyde 4.5'i kilitliyor.
+     P132.6'da ayni sinif kusur olculmustu: kartta gecip zeminde dusen ton. */
+  --yz-text-2: #646f7b;
+  /* Brief #A3ADB8; sayfa zemininde 2.16 idi. Bu kademe YALNIZ buyuk metin
+     ve dekoratif etiket icindir (esik 3.0), govde metninde kullanilmaz. */
+  --yz-text-3: #7e8c9c;
+
+  /* Durum renkleri. RENK YALNIZ SINYALDIR (halka, rozet, uyari seridi);
+     dolgu blok olarak KULLANILMAZ — P133'un "tinted blocks" dili bu
+     turda terk edildi. */
+  --yz-accent: #5b8def;
+  --yz-success: #3fa97a;
+  --yz-warning: #d6963c;
+  --yz-danger: #d45b5e;
+
+  /* Durum renklerinin METIN uzerinde okunur varyantlari.
+     OLCULDU: ham `--yz-warning` (#D6963C) beyaz uzerinde 2.4:1 — AA'yi
+     TUTMAZ. Ikon/halka ham tonda kalir (grafik ogesi, 3:1 esigi),
+     METIN bu koyulastirilmis tonu kullanir. */
+  --yz-accent-ink: #2165e9;
+  --yz-success-ink: #2e7b59;
+  --yz-warning-ink: #94631f;
+  --yz-danger-ink: #ca363a;
+
+  /* ANLAM TASIYAN GRAFIK OGESI (WCAG 1.4.11, esik 3.0): KPI halkasinin
+     cizgisi, rozet kenari, uyari seridi. Ham ton bu esigi TUTMUYOR
+     (olculdu: accent 2.85 · success 2.58 · warning 2.23) — ama ham tonu
+     KOYULASTIRMAK brief'in paletini gorunur bicimde bozardi (ozellikle
+     warning: #D6963C -> #BC7E27 kahverengilesir).
+     Cozum depoda ZATEN olan desen (`vurguInk`): ham ton DOLGU ve dekoratif
+     parlama icin kalir (kontrast sarti yok), anlam tasiyan CIZGI bu
+     varyanti kullanir. Boylece hem palet hem AA korunur. */
+  --yz-accent-edge: #5488ee;
+  --yz-success-edge: #3a9b70;
+  --yz-warning-edge: #bc7e27;
+  --yz-danger-edge: #d45b5e;
+
+  /* ---------------------------------------------------------------------
+     KABARTMA — metalik yuzeyin kalbi (brief: token olarak tanimla)
+     --------------------------------------------------------------------- */
+  --yz-raised:
+    inset 0 1px 0 var(--yz-border-shine),
+    0 2px 8px rgba(31, 41, 51, 0.08);
+  --yz-raised-hover:
+    inset 0 1px 0 var(--yz-border-shine),
+    0 6px 16px rgba(31, 41, 51, 0.12);
+  /* Girintili: ustte koyu ic golge, altta acik — kabartmanin TERSI.
+     Input ve girintili alanlar bunu kullanir. */
+  --yz-sunken:
+    inset 0 2px 4px rgba(31, 41, 51, 0.10),
+    inset 0 -1px 0 var(--yz-border-shine);
+  --yz-ring-glow: 0 0 0 1px rgba(91, 141, 239, 0.18);
+
+  /* Metalik yuzey gradyani — duz dolgu DEGIL, ust-alt ince fark. */
+  --yz-metal-1: linear-gradient(180deg, #ffffff 0%, #f4f7fa 100%);
+  --yz-metal-2: linear-gradient(180deg, #f7fafc 0%, #eaeff5 100%);
+  --yz-metal-accent: linear-gradient(180deg, #6f9bf2 0%, #4b7fe0 100%);
+
+  color-scheme: light;
+}
+
+.dark {
+  /* ---------------------------------------------------------------------
+     KOYU TEMA (tasarim dilinin BIRINCIL temasi — referans gorseller)
+     --------------------------------------------------------------------- */
+  --yz-bg-app: #2a333b;
+  --yz-bg-app-grad: linear-gradient(180deg, #303942 0%, #262e36 100%);
+  --yz-bg-sidebar: #1e262e;
+  --yz-surface-1: #333c45;
+  --yz-surface-2: #3b444e;
+  --yz-surface-sunken: #262e36;
+  --yz-border: #4a555f;
+  --yz-border-shine: #6b7885;
+
+  --yz-text: #e8edf2;
+  /* Brief #98A3AE; kart uzerinde (#333C45) 4.37 — esigin hemen altinda. */
+  --yz-text-2: #a7b0ba;
+  /* Brief #6E7883; sayfa zemininde 2.86. */
+  --yz-text-3: #868f99;
+
+  --yz-accent: #6ba3d6;
+  --yz-success: #5bb98c;
+  --yz-warning: #e0a458;
+  --yz-danger: #d9686a;
+
+  /* Koyu zeminde ham tonlar ZATEN okunur (olculdu, hepsi > 4.5:1);
+     ayri bir "ink" varyanti gerekmiyor, ama ad KORUNUYOR ki bilesenler
+     tek bir degisken adiyla yazilsin ve tema degisince kendiliginden
+     dogru tonu alsin. */
+  --yz-accent-ink: #86b4de;
+  --yz-success-ink: #6bc097;
+  --yz-warning-ink: #e0a458;
+  --yz-danger-ink: #e69c9d;
+
+  /* Koyu temada ham tonlarin cogu 3.0'i ZATEN tutuyor (accent 3.69 ·
+     success 4.13 · warning 4.53); yalniz `danger` 2.89 ile dusuyordu. */
+  --yz-accent-edge: #6ba3d6;
+  --yz-success-edge: #5bb98c;
+  --yz-warning-edge: #e0a458;
+  --yz-danger-edge: #da6d6f;
+
+  --yz-raised:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 2px 8px rgba(0, 0, 0, 0.35);
+  --yz-raised-hover:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 6px 18px rgba(0, 0, 0, 0.45);
+  --yz-sunken:
+    inset 0 2px 5px rgba(0, 0, 0, 0.40),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.05);
+  --yz-ring-glow: 0 0 0 1px rgba(107, 163, 214, 0.25);
+
+  --yz-metal-1: linear-gradient(180deg, #3a434d 0%, #2f3841 100%);
+  --yz-metal-2: linear-gradient(180deg, #424c57 0%, #363f49 100%);
+  --yz-metal-accent: linear-gradient(180deg, #7cb0e0 0%, #5590c6 100%);
+
+  color-scheme: dark;
+}
+
+/* =========================================================================
+   TEMADAN BAGIMSIZ TOKENLAR — olcu, ritim, hareket
+   ========================================================================= */
+:root {
+  /* --- TIPOGRAFI ---------------------------------------------------------
+     Inter; `next/font` ile yuklenip `--yz-font` degiskenine baglanir
+     (layout.tsx). Yedek yigin sistem fontlarina duser — ag yoksa ekran
+     yine dogru olculerde cizilir. */
+  --yz-font: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --yz-font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Olcek — brief: "basliklar abartili degil, Merhaba ~28-32px". */
+  --yz-fs-display: 30px;   /* sayfa selamlamasi */
+  --yz-fs-h1: 24px;
+  --yz-fs-h2: 18px;
+  --yz-fs-h3: 15px;
+  --yz-fs-body: 14px;
+  --yz-fs-sm: 13px;
+  --yz-fs-xs: 12px;
+  /* KPI sayisi: BUYUK ve INCE (brief). */
+  --yz-fs-kpi: 34px;
+  --yz-fw-kpi: 300;
+
+  --yz-lh-tight: 1.2;
+  --yz-lh-body: 1.5;
+  --yz-tracking-label: 0.04em;
+
+  /* --- BOSLUK (4px ritmi) ---------------------------------------------- */
+  --yz-space-1: 4px;
+  --yz-space-2: 8px;
+  --yz-space-3: 12px;
+  --yz-space-4: 16px;
+  --yz-space-5: 20px;
+  --yz-space-6: 24px;
+  --yz-space-8: 32px;
+  --yz-space-10: 40px;
+  --yz-space-12: 48px;
+
+  /* --- RADIUS (brief: olculu) ------------------------------------------ */
+  --yz-radius-card: 12px;
+  --yz-radius-btn: 8px;
+  --yz-radius-input: 8px;
+  --yz-radius-chip: 999px;
+  --yz-radius-ring: 50%;
+
+  /* --- KENARLIK -------------------------------------------------------- */
+  --yz-border-w: 1px;
+
+  /* --- HAREKET ---------------------------------------------------------
+     Brief: sayfa gecisi 300-500ms, mikro etkilesim hizli. */
+  --yz-dur-fast: 120ms;
+  --yz-dur-base: 200ms;
+  --yz-dur-slow: 320ms;
+  --yz-dur-page: 400ms;
+  --yz-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --yz-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* --- Z-INDEX (tek olcek — sayfa sayfa uydurma yok) ------------------- */
+  --yz-z-base: 0;
+  --yz-z-sticky: 10;
+  --yz-z-sidebar: 20;
+  --yz-z-header: 30;
+  --yz-z-dropdown: 40;
+  --yz-z-drawer: 50;
+  --yz-z-modal: 60;
+  --yz-z-toast: 70;
+  --yz-z-tooltip: 80;
+}
+
+/* --- KIRILMA NOKTALARI ---------------------------------------------------
+   CSS degiskeni medya sorgusunda KULLANILAMAZ (spesifikasyon geregi), bu
+   yuzden burada BELGE olarak duruyorlar; tek kaynak `lib/ui/kirilma.ts`
+   ve Tailwind `screens`. Uc yere dagilmasin diye TS tarafi disari acilir.
+     sm 640 · md 768 · lg 1024 · xl 1280 · 2xl 1536
+   Brief'in saydigi hedefler: 1920 / 1440 / 1366 / 1280 + tablet + mobil.
+   -------------------------------------------------------------------------- */
+
+/* =========================================================================
+   HAREKET AZALTMA — brief kurali (3D dahil)
+   ========================================================================= */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --yz-dur-fast: 0ms;
+    --yz-dur-base: 0ms;
+    --yz-dur-slow: 0ms;
+    --yz-dur-page: 0ms;
+  }
+}
+
+/* =========================================================================
+   YUZEY YARDIMCILARI — bilesenler bunlari kullanir, elle golge yazmaz
+   ========================================================================= */
+.yz-raised {
+  background: var(--yz-metal-1);
+  border: var(--yz-border-w) solid var(--yz-border);
+  box-shadow: var(--yz-raised);
+}
+
+.yz-raised-2 {
+  background: var(--yz-metal-2);
+  border: var(--yz-border-w) solid var(--yz-border);
+  box-shadow: var(--yz-raised);
+}
+
+.yz-sunken {
+  background: var(--yz-surface-sunken);
+  border: var(--yz-border-w) solid var(--yz-border);
+  box-shadow: var(--yz-sunken);
+}
+
+/* Yukselme YALNIZ hover'da ve 2px — brief. `transform` kullaniliyor
+   (layout tetiklemez); hareket azaltmada sure 0 olur, sicrama olmaz. */
+.yz-lift {
+  transition:
+    box-shadow var(--yz-dur-base) var(--yz-ease),
+    transform var(--yz-dur-base) var(--yz-ease);
+}
+.yz-lift:hover {
+  box-shadow: var(--yz-raised-hover);
+  transform: translateY(-2px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .yz-lift:hover {
+    transform: none;
+  }
+}

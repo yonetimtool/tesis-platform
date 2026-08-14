@@ -284,3 +284,42 @@ boş/hata durumu. Bu, tek turda bitecek bir iş **değil**; brief'in
 **Önerilen bölünme:** Aşama 1–3 (token + kabuk + bileşen katmanı) tek
 tur; Aşama 4–5 (dashboard + 3D) ikinci tur; Aşama 6 öncelik gruplarına
 göre üç tur; Aşama 7–10 kapanış turu.
+
+---
+
+## 9. PAKET BOYUTU TEMELİ (Aşama 9 ölçümünün "önce"si)
+
+`npm run build` · 2026-08-14 · **3D/harita/grafik eklenmeden önce**:
+
+```
+First Load JS shared by all        87.5 kB
+  chunks/2117-…                    31.7 kB
+  chunks/fd9d1056-…                53.6 kB
+  diğer paylaşılan                  2.15 kB
+Middleware                         28 kB
+```
+
+En ağır sayfalar: `/units` 158 kB · `/tasks` 155 kB · `/tenants` 152 kB ·
+`/users` 152 kB. Aşama 9'da 3D **sonrası** aynı tablo alınıp
+karşılaştırılacak; kural: **paylaşılan paket 87.5 kB'ı aşmayacak**
+(3D `next/dynamic` + `ssr:false` ile yalnız kendi rotasına inecek).
+
+---
+
+## 10. AŞAMA 1 — TESLİM EDİLEN (2026-08-14)
+
+- `app/tasarim-sistemi.css` — tek token katmanı (`--yz-*`): renk (iki
+  tema), tipografi, boşluk, radius, gölge/kabartma, kenarlık, gradyan,
+  animasyon süresi, z-index; kırılma noktaları belgelenmiş.
+- `app/layout.tsx` — katman + **Inter** (`next/font`, self-host) bağlandı.
+- `tests/yz-token-kontrast.test.ts` — 15 test, **iki tema için ayrı**
+  WCAG doğrulaması + eski dille çakışmama kilidi.
+
+**Ölçülen ve düzeltilen:** brief'in verdiği hex'lerin **beşi** WCAG AA'yı
+tutmuyordu (ayrıntı ve yeni değerler CSS'te satır satır yazılı). Ton ve
+doygunluk korunarak yalnız açıklık kaydırıldı.
+
+**Durum renkleri için üç varyant** (depodaki `vurguInk` deseninin
+devamı): ham ton = dolgu/dekor · `-ink` = metin (4.5) · `-edge` = anlam
+taşıyan grafik (3.0). Ham tonu 3.0'a zorlamak brief'in paletini görünür
+biçimde bozardı (`warning` kahverengileşiyordu).
