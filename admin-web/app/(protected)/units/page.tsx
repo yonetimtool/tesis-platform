@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import useSWR from "swr";
 
 import { EmptyState } from "@/components/EmptyState";
@@ -13,6 +13,15 @@ import { BagimlilikUyarisi } from "@/components/BagimlilikUyarisi";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { aralikCoz } from "@/lib/aralik";
+import {
+  Dugme,
+  HataDurumu,
+  Rozet,
+  VeriTablosu,
+  type Kolon,
+  type SayfaBoyu,
+  type TabloDurumu,
+} from "@/components/ui";
 import { Modal, ModalEylemler } from "@/components/Modal";
 import { sayiBicimi, sayiCoz, tamsayiCoz } from "@/lib/sayi";
 import type { Unit, UnitList } from "@/lib/types";
@@ -39,10 +48,30 @@ const EMPTY: FormState = { no: "", blok: "", kat: "", sira: "", metrekare: "", a
 // (P56) `intOrNull` KALDIRILDI — metrekareyle ayni gerekce: gecersiz
 // girdi `null` donuyordu ve `null` "alani temizle" demekti.
 
+/** Sayfa boyu artik kullanici secimli; bu yalniz ILK degerdir. */
+const ILK_BOY: SayfaBoyu = 25;
+/** Sutun basligi — cevrilmeyen SI birimi. */
+const BIRIM_M2 = "m²";
+
+// UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
+const DURUM_OLUMLU = "olumlu" as const;
+const DURUM_NOTR = "notr" as const;
+
 export default function UnitsPage() {
   const t = useT();
   const toast = useToast();
-  const [offset, setOffset] = useState(0);
+  // (P160) SAYFALAMA `VeriTablosu`nun durumuna gecti; `offset` ondan
+  // TURETILIR. Boylece sayfa basina kayit secimi (10/25/50/100) bedava
+  // geldi — eskiden sabit `LIMIT`ti.
+  const [tabloDurumu, setTabloDurumu] = useState<TabloDurumu>({
+    sayfa: 1,
+    boy: ILK_BOY,
+    siraKolon: null,
+    siraYonu: "artan",
+  });
+  const offset = (tabloDurumu.sayfa - 1) * tabloDurumu.boy;
+  const setOffset = (v: number) =>
+    setTabloDurumu((d) => ({ ...d, sayfa: Math.floor(v / d.boy) + 1 }));
   const [blok, setBlok] = useState("");
   const blokQs = blok ? `&blok=${encodeURIComponent(blok)}` : "";
   // (P154 / Asama 7.4) Blok listesi YALNIZ bagimlilik uyarisi icin
@@ -248,14 +277,86 @@ export default function UnitsPage() {
     }
   }
 
+  const kolonlar: Kolon<Unit>[] = useMemo(
+    () => [
+      { id: "no", baslik: t("daireNoKisa"), hucre: (u) => u.no, gizlenebilir: false },
+      {
+        id: "blok",
+        baslik: t("ortakBlok"),
+        hucre: (u) => u.blok ?? t("daireBlokAtanmamis"),
+      },
+      {
+        // (Duzeltme) DAIRE TIPI (P26) listede HIC gosterilmiyordu.
+        // `unit_tip_ad` API'den ZATEN geliyordu — sayfa okumuyordu.
+        // Tip ATANMAMISSA "-": bos hucre "veri gelmedi mi?" sorusunu
+        // uretir, tire "atanmamis" der.
+        id: "tip",
+        baslik: t("tanimAlanTip"),
+        hucre: (u) => u.unit_tip_ad ?? "—",
+        darEkrandaGizle: true,
+      },
+      {
+        id: "kat",
+        baslik: t("daireKatSira"),
+        sayisal: true,
+        hucre: (u) =>
+          u.kat != null || u.sira != null
+            ? `${u.kat ?? "—"} / ${u.sira ?? "—"}`
+            : "—",
+        darEkrandaGizle: true,
+      },
+      {
+        id: "m2",
+        baslik: BIRIM_M2,
+        sayisal: true,
+        hucre: (u) => sayiBicimi(u.metrekare),
+        darEkrandaGizle: true,
+      },
+      {
+        id: "durum",
+        baslik: t("ortakDurum"),
+        hucre: (u) => (
+          <Rozet durum={u.aktif ? DURUM_OLUMLU : DURUM_NOTR}>
+            {u.aktif ? t("ortakAktif") : t("ortakPasif")}
+          </Rozet>
+        ),
+      },
+      {
+        id: "eylem",
+        baslik: "",
+        gizlenebilir: false,
+        hucre: (u) => (
+          <div className="flex justify-end gap-2">
+            <Dugme
+              boy="kucuk"
+              onClick={() => setDetail(detail?.id === u.id ? null : u)}
+            >
+              {detail?.id === u.id ? t("ortakKapat") : t("daireDetayAidat")}
+            </Dugme>
+            <Dugme boy="kucuk" onClick={() => openEdit(u)}>
+              {t("ortakDuzenle")}
+            </Dugme>
+            <Dugme boy="kucuk" tur="tehlike" onClick={() => void remove(u)}>
+              {t("ortakSil")}
+            </Dugme>
+          </div>
+        ),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [t, detail],
+  );
+
   return (
     <div className="space-y-5">
-      <PageHeader
-        title={t("kabukDaireler")}
-        action={
-          <button className={btnPrimary} onClick={openNew}>{t("daireYeni")}</button>
-        }
-      />
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+          {t("kabukDaireler")}
+        </h1>
+        <Dugme tur="birincil" boy="kucuk" onClick={openNew}>
+          {t("daireYeni")}
+        </Dugme>
+      </div>
 
       <BagimlilikUyarisi
         kod="blok"
@@ -278,8 +379,9 @@ export default function UnitsPage() {
         </div>
       </div>
 
-      {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>}
+      {/* Liste cekilemezse BOS TABLO degil, sebep + "Tekrar dene".
+          Yukleme durumu artik `VeriTablosu`nun ISKELETI. */}
+      {error && <HataDurumu mesaj={error.message} onTekrar={() => void mutate()} />}
 
       {open && (
         <motion.form {...panelMotion} onSubmit={save} className={`space-y-4 ${panelCls}`}>
@@ -369,20 +471,8 @@ export default function UnitsPage() {
             />
           </Field>
         </div>
-        <button type="button" className={btnGhost} onClick={araligiUygula}>
-          {t("daireAralikUygula")}
-        </button>
-        <button type="button" className={btnGhost} onClick={() => setOAcik(true)}>
-          {t("daireTopluOlustur")}
-        </button>
-        <button
-          type="button"
-          className={btnPrimary}
-          disabled={secili.length === 0}
-          onClick={() => setTopluAcik(true)}
-        >
-          {t("daireTopluDegistir", { adet: secili.length })}
-        </button>
+        <Dugme onClick={araligiUygula}>{t("daireAralikUygula")}</Dugme>
+        <Dugme onClick={() => setOAcik(true)}>{t("daireTopluOlustur")}</Dugme>
         <div className="w-full sm:w-32">
           <Field label={t("daireKatSil")}>
             <input
@@ -393,108 +483,41 @@ export default function UnitsPage() {
             />
           </Field>
         </div>
-        <button
-          type="button"
-          className={btnDanger}
-          disabled={!blok}
-          onClick={() => void katSil()}
-        >
+        <Dugme tur="tehlike" disabled={!blok} onClick={() => void katSil()}>
           {t("daireKatSil")}
-        </button>
+        </Dugme>
       </section>
       <ErrorBox message={topluHata} />
 
-      <TabloKart>
-        <Tablo>
-          <TabloBasligi>
-            <Th>
-              {/* Basliktaki kutu GORUNEN sayfayi secer — tum kayitlari
-                  degil. "Hepsini sec" deyip 20 kayit isleyip 500 kaydin
-                  islendigini sanmak en kotu sonuctur. */}
-              <input
-                type="checkbox"
-                aria-label={t("daireHepsiniSec")}
-                checked={
-                  (data?.items ?? []).length > 0 &&
-                  secili.length === (data?.items ?? []).length
-                }
-                onChange={(e) =>
-                  setSecili(e.target.checked ? (data?.items ?? []).map((u) => u.id) : [])
-                }
-              />
-            </Th>
-            <Th>{t("daireNoKisa")}</Th>
-            <Th>{t("ortakBlok")}</Th>
-            {/* (Duzeltme) DAIRE TIPI (P26) listede HIC gosterilmiyordu.
-                `unit_tip_ad` API'den ZATEN geliyordu - sayfa okumuyordu.
-                Blok'un yaninda: ikisi de dairenin "nerede/ne" bilgisi. */}
-            <Th>{t("tanimAlanTip")}</Th>
-            <Th>{t("daireKatSira")}</Th>
-            <Th>m²</Th>
-            <Th>{t("ortakDurum")}</Th>
-            <Th />
-          </TabloBasligi>
-            <tbody>
-              {(data?.items ?? []).map((u) => (
-                <Tr key={u.id}>
-                  <Td>
-                    <input
-                      type="checkbox"
-                      aria-label={t("daireSatirSec", { no: u.no })}
-                      checked={secili.includes(u.id)}
-                      onChange={(e) =>
-                        setSecili((s) =>
-                          e.target.checked
-                            ? [...s, u.id]
-                            : s.filter((x) => x !== u.id),
-                        )
-                      }
-                    />
-                  </Td>
-                  <Td>{u.no}</Td>
-                  <Td className="text-metin-body">{u.blok ?? t("daireBlokAtanmamis")}</Td>
-                  {/* Tip ATANMAMISSA "-": bos hucre "veri gelmedi mi?"
-                      sorusunu uretir, tire "atanmamis" der. */}
-                  <Td className="text-metin-body">{u.unit_tip_ad ?? "—"}</Td>
-                  <Td sayi className="text-metin-body">
-                    {u.kat != null || u.sira != null ? `${u.kat ?? "—"} / ${u.sira ?? "—"}` : "—"}
-                  </Td>
-                  <Td sayi className="text-metin-body">{sayiBicimi(u.metrekare)}</Td>
-                  <Td>
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                        u.aktif ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-metin-body"
-                      }`}
-                    >
-                      {u.aktif ? t("ortakAktif") : t("ortakPasif")}
-                    </span>
-                  </Td>
-                  <Td hizala="end">
-                    <div className="flex justify-end gap-2">
-                      <button
-                        className={btnGhost}
-                        onClick={() => setDetail(detail?.id === u.id ? null : u)}
-                      >
-                        {detail?.id === u.id ? t("ortakKapat") : t("daireDetayAidat")}
-                      </button>
-                      <button className={btnGhost} onClick={() => openEdit(u)}>
-                        {t("ortakDuzenle")}
-                      </button>
-                      <button className={btnDanger} onClick={() => remove(u)}>
-                        {t("ortakSil")}
-                      </button>
-                    </div>
-                  </Td>
-                </Tr>
-              ))}
-              {data && data.items.length === 0 && (
-                <BosSatir sutun={7}>
-                  <EmptyState title={t("daireYok")} description={t("daireYokAlt")} />
-                </BosSatir>
-              )}
-            </tbody>
-        </Tablo>
-      </TabloKart>
+      {/* (P160 / Asama 6) TABLO -> `VeriTablosu`.
+          Satir secimi, "hepsini sec" (BELIRSIZ secimde `indeterminate`),
+          toplu islem seridi ve SAYFA BASINA KAYIT SECIMI artik ilkelden
+          geliyor; sayfa bunlari kendi yazmiyor. Aralik ifadesi ve toplu
+          islem DUGMELERI korundu — onlar bu sayfaya ozel. */}
+      <VeriTablosu<Unit>
+        kolonlar={kolonlar}
+        satirlar={data?.items ?? []}
+        satirId={(u) => u.id}
+        yukleniyor={isLoading && !data}
+        bosBaslik={t("daireYok")}
+        bosAciklama={t("daireYokAlt")}
+        secilebilir
+        secili={secili}
+        onSeciliDegisti={setSecili}
+        sunucuTarafli
+        toplam={data?.meta.total ?? 0}
+        durum={tabloDurumu}
+        onDurumDegisti={setTabloDurumu}
+        topluEylemler={() => (
+          <Dugme
+            boy="kucuk"
+            tur="birincil"
+            onClick={() => setTopluAcik(true)}
+          >
+            {t("daireTopluDegistir", { adet: secili.length })}
+          </Dugme>
+        )}
+      />
 
       {detail && <UnitDetail unit={detail} />}
 

@@ -1,24 +1,73 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { useState } from "react";
+import Link from "next/link";
+import { useMemo, useState } from "react";
 import useSWR from "swr";
 
-import { EmptyState } from "@/components/EmptyState";
-import Link from "next/link";
-
-import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, btnGhost, panelCls, panelMotion } from "@/components/form";
-import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
 import { useToast } from "@/components/Toast";
+import {
+  Alan,
+  AlanSarmal,
+  AramaAlani,
+  Dugme,
+  Girinti,
+  HataDurumu,
+  Modal,
+  Rozet,
+  Secim,
+  VeriTablosu,
+  type Kolon,
+  type RozetDurumu,
+  type SayfaBoyu,
+  type TabloDurumu,
+} from "@/components/ui";
+import { ParolaAlani } from "@/components/ParolaAlani";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
-import { ROLE_OPTIONS as ROLES, ROLE_STYLE, rolAdi } from "@/lib/roles";
-import type { UserDetail, UserListResponse, UserRole, UserRow } from "@/lib/types";
-import { ParolaAlani } from "@/components/ParolaAlani";
 import { useT } from "@/lib/i18n/kullan";
+import { ROLE_OPTIONS as ROLES, rolAdi } from "@/lib/roles";
 import { telefonGiris, telefonNormalle } from "@/lib/telefon";
+import type { UserDetail, UserListResponse, UserRole, UserRow } from "@/lib/types";
 
-const LIMIT = 20;
+/**
+ * (P160 / Asama 6) KULLANICILAR — yeni tasarim diline tasindi.
+ *
+ * =========================================================================
+ * NE DEGISTI, NE DEGISMEDI
+ * =========================================================================
+ * DEGISMEYEN (kilitli kural 2): butun veri mantigi birebir korundu —
+ * suzgecler (rol · durum · arama), sunucudan gelen ACILABILIR ROL kumesi,
+ * duzenlenen kaydin rolunun listede tutulmasi, denetciye ozel gorev
+ * penceresi, telefon normalizasyonu, parolanin opsiyonelligi, gecici kod
+ * uyarisi, aktiflestir/pasiflestir ve toplu yukleme bagi.
+ *
+ * DEGISEN (sunum):
+ *   * Form SAYFA USTUNDE ALAN ACMA yerine MODAL'da (brief).
+ *   * Tablo `VeriTablosu`: siralama, kolon gorunurlugu ve SAYFA BASINA
+ *     KAYIT SECIMI (10/25/50/100) BEDAVA geldi — eskiden sabit 20'ydi.
+ *   * Iskelet yukleme durumu (eskiden duz "Yukleniyor..." metniydi).
+ *   * Rol ve durum rozetleri: renkli DOLGU yerine kenar+metin.
+ *
+ * =========================================================================
+ * SUNUCU TARAFLI SAYFALAMA
+ * =========================================================================
+ * Uc `limit`/`offset` + `meta.total` ile calisiyor, yani tablo kendi
+ * dilimlemez (`sunucuTarafli`). Aksi halde 5000 kullanicili bir tesiste
+ * TUM listeyi cekmek gerekirdi.
+ */
+
+/** Sayfa boyu artik kullanici secimli; bu yalniz ILK degerdir. */
+const ILK_BOY: SayfaBoyu = 25;
+
+/** Rol -> rozet durumu. Renk SINYALDIR; ad zaten metinde yazili. */
+const ROL_DURUMU: Record<string, RozetDurumu> = {
+  admin: "kritik",
+  yonetici: "uyari",
+  denetci: "bilgi",
+};
+
+const VARSAYILAN_ROL: UserRole = "security";
+const ROL_DENETCI = "denetci";
 
 interface FormState {
   ad: string;
@@ -36,21 +85,34 @@ const EMPTY: FormState = {
   email: "",
   telefon: "",
   aranabilir: false,
-  role: "security",
+  role: VARSAYILAN_ROL,
   password: "",
   gorevBaslangic: "",
   gorevBitis: "",
 };
 
+// UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
+const DURUM_OLUMLU = "olumlu" as const;
+const DURUM_NOTR = "notr" as const;
+
 export default function UsersPage() {
   const t = useT();
   const toast = useToast();
-  const [offset, setOffset] = useState(0);
+
+  const [durum, setDurum] = useState<TabloDurumu>({
+    sayfa: 1,
+    boy: ILK_BOY,
+    siraKolon: null,
+    siraYonu: "artan",
+  });
   const [role, setRole] = useState<string>("");
   const [aktif, setAktif] = useState<string>("");
   const [q, setQ] = useState("");
 
-  const qs = new URLSearchParams({ limit: String(LIMIT), offset: String(offset) });
+  const qs = new URLSearchParams({
+    limit: String(durum.boy),
+    offset: String((durum.sayfa - 1) * durum.boy),
+  });
   if (role) qs.set("role", role);
   if (aktif) qs.set("is_active", aktif);
   if (q.trim()) qs.set("q", q.trim());
@@ -70,9 +132,10 @@ export default function UsersPage() {
   // `undefined` = HENUZ BILINMIYOR (bos kumeyle ayni sey degil): liste
   // gelene kadar secenek cizmek, gelince degisen bir form demek olurdu.
   const acilabilirRoller = acilabilir?.roller;
-  const formRolleri = acilabilirRoller
-    ? ROLES.filter((r) => acilabilirRoller.includes(r.value))
-    : [];
+  const formRolleri = useMemo(
+    () => (acilabilirRoller ? ROLES.filter((r) => acilabilirRoller.includes(r.value)) : []),
+    [acilabilirRoller],
+  );
 
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -89,11 +152,12 @@ export default function UsersPage() {
       ? [mevcutRol, ...formRolleri]
       : formRolleri;
 
-  function resetFilters(next: { role?: string; aktif?: string; q?: string }) {
+  /** Suzgec degisince ILK SAYFAYA don — 7. sayfada suzmek bos ekran verirdi. */
+  function suzgec(next: { role?: string; aktif?: string; q?: string }) {
     if (next.role !== undefined) setRole(next.role);
     if (next.aktif !== undefined) setAktif(next.aktif);
     if (next.q !== undefined) setQ(next.q);
-    setOffset(0);
+    setDurum((d) => ({ ...d, sayfa: 1 }));
   }
 
   function openNew() {
@@ -105,6 +169,7 @@ export default function UsersPage() {
     setFormErr(null);
     setOpen(true);
   }
+
   async function openEdit(u: UserRow) {
     setEditingId(u.id);
     // Numara listede DONMEZ (KVKK); tek-kayit detayindan cekilir.
@@ -113,7 +178,7 @@ export default function UsersPage() {
       email: u.email,
       telefon: "",
       aranabilir: u.aranabilir ?? false,
-      role: (u.role as UserRole) ?? "security",
+      role: (u.role as UserRole) ?? VARSAYILAN_ROL,
       password: "",
       gorevBaslangic: u.gorev_baslangic ?? "",
       gorevBitis: u.gorev_bitis ?? "",
@@ -171,9 +236,7 @@ export default function UsersPage() {
           body,
         );
         if (created?.temp_code) {
-          window.alert(
-            t("kullaniciGeciciKod", { kod: created.temp_code }),
-          );
+          window.alert(t("kullaniciGeciciKod", { kod: created.temp_code }));
         }
       }
       setOpen(false);
@@ -201,108 +264,242 @@ export default function UsersPage() {
     }
   }
 
+  const kolonlar: Kolon<UserRow>[] = useMemo(
+    () => [
+      {
+        id: "ad",
+        baslik: t("ortakAd"),
+        hucre: (u) => u.ad,
+        // Siralama SUNUCU TARAFLI kipte istemcide yapilmaz; uc bugun
+        // `sort` parametresi almiyor, bu yuzden kolonlar siralanabilir
+        // ISARETLENMEDI. Yanlis calisan bir ok gostermektense hic
+        // gostermemek dogru.
+        gizlenebilir: false,
+      },
+      { id: "email", baslik: t("girisEposta"), hucre: (u) => u.email },
+      {
+        id: "aranabilir",
+        baslik: t("kullaniciAranabilir"),
+        hucre: (u) => (u.aranabilir ? t("ortakEvet") : "—"),
+        darEkrandaGizle: true,
+      },
+      {
+        id: "rol",
+        baslik: t("ortakRol"),
+        hucre: (u) => (
+          <Rozet durum={ROL_DURUMU[u.role] ?? DURUM_NOTR} nokta>
+            {rolAdi(t, u.role)}
+          </Rozet>
+        ),
+      },
+      {
+        id: "durum",
+        baslik: t("ortakDurum"),
+        hucre: (u) => (
+          <Rozet durum={u.is_active ? DURUM_OLUMLU : DURUM_NOTR}>
+            {u.is_active ? t("ortakAktif") : t("ortakPasif")}
+          </Rozet>
+        ),
+      },
+      {
+        id: "eylem",
+        baslik: "",
+        gizlenebilir: false,
+        hucre: (u) => (
+          <div className="flex justify-end gap-2">
+            <Dugme boy="kucuk" onClick={() => void openEdit(u)}>
+              {t("ortakDuzenle")}
+            </Dugme>
+            <Dugme
+              boy="kucuk"
+              onClick={() => void setActive(u, !u.is_active)}
+            >
+              {u.is_active ? t("ortakPasiflestir") : t("ortakAktiflestir")}
+            </Dugme>
+          </div>
+        ),
+      },
+    ],
+    // `t` disindaki bagimliliklar kararli; `openEdit`/`setActive` her
+    // cizimde yeniden kurulsa da kolon tanimi yalniz metin tasiyor.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [t],
+  );
+
   return (
     <div className="space-y-5">
-      <PageHeader
-        title={t("kabukKullanicilar")}
-        action={
-          <div className="flex flex-wrap gap-2">
-            {/* (P154 / Asama 5) EXCEL ILE TOPLU SAKIN YUKLEME — brief:
-                "Asama 8'deki import framework'u kullanacak, AYRI YUKLEME
-                KODU YAZMA". Bu yuzden burada bir yukleme formu YOK,
-                catiya yonlendirme var; `kisi` turu daire_no ile var olan
-                daireye baglar. */}
-            <Link href="/ice-aktarim?tur=kisi" className={btnGhost}>
-              {t("kullaniciTopluYukle")}
-            </Link>
-            <button className={btnPrimary} onClick={openNew}>{t("kullaniciYeni")}</button>
-          </div>
-        }
-      />
-
-      <div className="flex flex-wrap items-end gap-3">
-        <div className="w-44">
-          <Field label={t("ortakRol")}>
-            <select className={inputCls} value={role} onChange={(e) => resetFilters({ role: e.target.value })}>
-              <option value="">{t("ortakTumu")}</option>
-              {ROLES.map((r) => (
-                <option key={r.value} value={r.value}>
-                  {t(r.anahtar)}
-                </option>
-              ))}
-            </select>
-          </Field>
-        </div>
-        <div className="w-44">
-          <Field label={t("ortakDurum")}>
-            <select className={inputCls} value={aktif} onChange={(e) => resetFilters({ aktif: e.target.value })}>
-              <option value="">{t("ortakTumu")}</option>
-              <option value="true">{t("ortakAktif")}</option>
-              <option value="false">{t("ortakPasif")}</option>
-            </select>
-          </Field>
-        </div>
-        <div className="grow">
-          <Field label={t("kullaniciArama")}>
-            <input
-              className={inputCls}
-              value={q}
-              onChange={(e) => resetFilters({ q: e.target.value })}
-              placeholder={t("kullaniciAramaIpucu")}
-            />
-          </Field>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+          {t("kabukKullanicilar")}
+        </h1>
+        <div className="flex flex-wrap gap-2">
+          {/* (P154 / Asama 5) EXCEL ILE TOPLU SAKIN YUKLEME — brief:
+              "Asama 8'deki import framework'u kullanacak, AYRI YUKLEME
+              KODU YAZMA". Bu yuzden burada bir yukleme formu YOK,
+              catiya yonlendirme var. */}
+          <Link href="/ice-aktarim?tur=kisi">
+            <Dugme boy="kucuk">{t("kullaniciTopluYukle")}</Dugme>
+          </Link>
+          <Dugme tur="birincil" boy="kucuk" onClick={openNew}>
+            {t("kullaniciYeni")}
+          </Dugme>
         </div>
       </div>
 
-      {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>}
+      {/* HATA DURUMU: liste cekilemezse BOS TABLO degil, sebep + tekrar. */}
+      {error ? (
+        <HataDurumu mesaj={error.message} onTekrar={() => void mutate()} />
+      ) : (
+        <VeriTablosu<UserRow>
+          kolonlar={kolonlar}
+          satirlar={data?.items ?? []}
+          satirId={(u) => u.id}
+          yukleniyor={isLoading && !data}
+          bosBaslik={t("kullaniciYok")}
+          bosAciklama={t("kullaniciYokAlt")}
+          sunucuTarafli
+          toplam={data?.meta.total ?? 0}
+          durum={durum}
+          onDurumDegisti={setDurum}
+          araclar={
+            <div className="flex flex-wrap items-end gap-3">
+              <div className="w-44">
+                <AlanSarmal etiket={t("ortakRol")}>
+                  {(b) => (
+                    <Secim
+                      {...b}
+                      value={role}
+                      onChange={(e) => suzgec({ role: e.target.value })}
+                    >
+                      <option value="">{t("ortakTumu")}</option>
+                      {ROLES.map((r) => (
+                        <option key={r.value} value={r.value}>
+                          {t(r.anahtar)}
+                        </option>
+                      ))}
+                    </Secim>
+                  )}
+                </AlanSarmal>
+              </div>
+              <div className="w-44">
+                <AlanSarmal etiket={t("ortakDurum")}>
+                  {(b) => (
+                    <Secim
+                      {...b}
+                      value={aktif}
+                      onChange={(e) => suzgec({ aktif: e.target.value })}
+                    >
+                      <option value="">{t("ortakTumu")}</option>
+                      <option value="true">{t("ortakAktif")}</option>
+                      <option value="false">{t("ortakPasif")}</option>
+                    </Secim>
+                  )}
+                </AlanSarmal>
+              </div>
+              <div className="min-w-[220px] grow">
+                <AramaAlani
+                  deger={q}
+                  onDegisim={(v) => suzgec({ q: v })}
+                  etiket={t("kullaniciArama")}
+                  yerTutucu={t("kullaniciAramaIpucu")}
+                  temizleEtiketi={t("ortakKapat")}
+                />
+              </div>
+            </div>
+          }
+        />
+      )}
 
-      {open && (
-        <motion.form {...panelMotion} onSubmit={save} className={`space-y-4 ${panelCls}`}>
-          <h2 className="font-medium">{editingId ? t("kullaniciDuzenle") : t("kullaniciYeni")}</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <Field label={t("ortakAd")}>
-              <input
-                className={inputCls}
+      {/* FORM ARTIK MODALDA (brief: "sayfa ustunde alan acma deseni
+          kaldirilacak"). Odak tuzagi, ESC ve kapanista odagin geri
+          donmesi `Modal`da. */}
+      <Modal
+        acik={open}
+        onKapat={() => setOpen(false)}
+        baslik={editingId ? t("kullaniciDuzenle") : t("kullaniciYeni")}
+        genislikSinifi="max-w-2xl"
+        eylemler={
+          <>
+            <Dugme tur="sessiz" onClick={() => setOpen(false)} disabled={saving}>
+              {t("ortakIptal")}
+            </Dugme>
+            <Dugme tur="birincil" type="submit" form="kullanici-form" yukleniyor={saving}>
+              {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
+            </Dugme>
+          </>
+        }
+      >
+        {/* `form` ID ile alttaki dugmeye baglandi: eylemler modalin
+            SABIT altinda duruyor ve govdeyle birlikte kaymiyor. */}
+        <form id="kullanici-form" onSubmit={save} className="grid gap-4 sm:grid-cols-2">
+          <AlanSarmal etiket={t("ortakAd")} zorunlu>
+            {(b) => (
+              <Alan
+                {...b}
                 value={form.ad}
                 onChange={(e) => setForm({ ...form, ad: e.target.value })}
                 required
               />
-            </Field>
-            <Field label={t("kullaniciEpostaOpsiyonel")} hint={t("kullaniciEpostaIpucu")}>
-              <input
+            )}
+          </AlanSarmal>
+
+          <AlanSarmal
+            etiket={t("kullaniciEpostaOpsiyonel")}
+            ipucu={t("kullaniciEpostaIpucu")}
+          >
+            {(b) => (
+              <Alan
+                {...b}
                 type="email"
-                className={inputCls}
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
               />
-            </Field>
-            <Field
-              label={t("kullaniciTelefon")}
-              hint={t("kullaniciTelefonIpucu")}
-            >
-              <input
-                className={inputCls}
+            )}
+          </AlanSarmal>
+
+          <AlanSarmal
+            etiket={t("kullaniciTelefon")}
+            ipucu={t("kullaniciTelefonIpucu")}
+            zorunlu
+          >
+            {(b) => (
+              <Alan
+                {...b}
                 value={telefonGiris(form.telefon)}
                 // (P123) TEK bicimlendirici — bkz. lib/telefon.ts.
-                onChange={(e) => setForm({ ...form, telefon: telefonGiris(e.target.value) })}
+                onChange={(e) =>
+                  setForm({ ...form, telefon: telefonGiris(e.target.value) })
+                }
                 placeholder={t("kullaniciTelefonOrnek")}
                 required
               />
-            </Field>
-            <Field label={t("kullaniciAranabilir")} hint={t("kullaniciAranabilirIpucu")}>
-              <label className="flex h-10 items-center gap-2 text-sm">
+            )}
+          </AlanSarmal>
+
+          <AlanSarmal
+            etiket={t("kullaniciAranabilir")}
+            ipucu={t("kullaniciAranabilirIpucu")}
+          >
+            {(b) => (
+              <label
+                className="flex h-11 items-center gap-2"
+                style={{ fontSize: "var(--yz-fs-body)", color: "var(--yz-text)" }}
+              >
                 <input
+                  {...b}
                   type="checkbox"
                   checked={form.aranabilir}
                   onChange={(e) => setForm({ ...form, aranabilir: e.target.checked })}
                 />
                 {t("kullaniciAranabilirOnay")}
               </label>
-            </Field>
-            <Field label={t("ortakRol")}>
-              <select
-                className={inputCls}
+            )}
+          </AlanSarmal>
+
+          <AlanSarmal etiket={t("ortakRol")}>
+            {(b) => (
+              <Secim
+                {...b}
                 value={form.role}
                 disabled={acilabilirRoller === undefined}
                 onChange={(e) => setForm({ ...form, role: e.target.value as UserRole })}
@@ -312,143 +509,81 @@ export default function UsersPage() {
                     {t(r.anahtar)}
                   </option>
                 ))}
-              </select>
-            </Field>
-            {form.role === "denetci" ? (
-              // (P128) YALNIZ DENETCIDE GORUNUR: gorev penceresi bugun
-              // baska bir rolde anlam tasimiyor ve her role gostermek,
-              // doldurulunca hicbir sey yapmayan bir alan demekti.
-              <>
-                <Field
-                  label={t("kullaniciGorevBaslangic")}
-                  hint={t("kullaniciGorevIpucu")}
-                >
-                  <input
+              </Secim>
+            )}
+          </AlanSarmal>
+
+          {form.role === ROL_DENETCI ? (
+            // (P128) YALNIZ DENETCIDE GORUNUR: gorev penceresi bugun
+            // baska bir rolde anlam tasimiyor ve her role gostermek,
+            // doldurulunca hicbir sey yapmayan bir alan demekti.
+            <>
+              <AlanSarmal
+                etiket={t("kullaniciGorevBaslangic")}
+                ipucu={t("kullaniciGorevIpucu")}
+              >
+                {(b) => (
+                  <Alan
+                    {...b}
                     type="date"
-                    className={inputCls}
                     value={form.gorevBaslangic}
                     onChange={(e) =>
                       setForm({ ...form, gorevBaslangic: e.target.value })
                     }
                   />
-                </Field>
-                <Field label={t("kullaniciGorevBitis")}>
-                  <input
+                )}
+              </AlanSarmal>
+              <AlanSarmal etiket={t("kullaniciGorevBitis")}>
+                {(b) => (
+                  <Alan
+                    {...b}
                     type="date"
-                    className={inputCls}
                     value={form.gorevBitis}
-                    onChange={(e) =>
-                      setForm({ ...form, gorevBitis: e.target.value })
-                    }
+                    onChange={(e) => setForm({ ...form, gorevBitis: e.target.value })}
                   />
-                </Field>
-              </>
-            ) : null}
-            <Field
-              label={
-                editingId
-                  ? t("kullaniciYeniParola")
-                  : t("kullaniciParolaOpsiyonel")
-              }
-              hint={
-                editingId
-                  ? t("kullaniciEnAz8")
-                  : t("kullaniciParolaBosYeni")
-              }
+                )}
+              </AlanSarmal>
+            </>
+          ) : null}
+
+          <AlanSarmal
+            etiket={editingId ? t("kullaniciYeniParola") : t("kullaniciParolaOpsiyonel")}
+            ipucu={editingId ? t("kullaniciEnAz8") : t("kullaniciParolaBosYeni")}
+          >
+            {(b) => (
+              // `ParolaAlani` ORTAK ILKEL ve `style` KABUL ETMIYOR
+              // (bilincli: gorunumu cagirandan almiyor). Yeni yuzeye
+              // uydurmak icin GIRINTILI kapsayiciya konuyor; girdi
+              // saydam kaliyor. Bilesenin kendisine dokunulmadi —
+              // alti sayfa daha onu kullaniyor.
+              <Girinti className="flex items-center px-1">
+                <ParolaAlani
+                  {...b}
+                  className="h-11 w-full bg-transparent px-2 outline-none"
+                    value={form.password}
+                  onChange={(v) => setForm({ ...form, password: v })}
+                  minLength={8}
+                  placeholder={
+                    editingId
+                      ? t("kullaniciParolaBosDuzenle")
+                      : t("kullaniciParolaBosKisa")
+                  }
+                />
+              </Girinti>
+            )}
+          </AlanSarmal>
+
+          {formErr && (
+            <p
+              role="alert"
+              className="sm:col-span-2"
+              style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-danger-ink)" }}
             >
-              <ParolaAlani
-                className={inputCls}
-                value={form.password}
-                onChange={(v) => setForm({ ...form, password: v })}
-                minLength={8}
-                placeholder={
-                  editingId ? t("kullaniciParolaBosDuzenle") : t("kullaniciParolaBosKisa")
-                }
-              />
-            </Field>
-          </div>
-          <ErrorBox message={formErr} />
-          <div className="flex gap-2">
-            <button type="submit" className={btnPrimary} disabled={saving}>
-              {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
-            </button>
-            <button type="button" className={btnGhost} onClick={() => setOpen(false)}>
-              {t("ortakIptal")}
-            </button>
-          </div>
-        </motion.form>
-      )}
-
-      <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
-        <div className="odak-ic overflow-x-auto" tabIndex={0}>
-          <Tablo>
-            <TabloBasligi>
-                <Th>{t("ortakAd")}</Th>
-                <Th>{t("girisEposta")}</Th>
-                <Th>{t("kullaniciAranabilir")}</Th>
-                <Th>{t("ortakRol")}</Th>
-                <Th>{t("ortakDurum")}</Th>
-                <Th />
-              </TabloBasligi>
-            <tbody>
-              {(data?.items ?? []).map((u) => (
-                <tr key={u.id} className={`border-t border-yuzey-divider transition-colors hover:bg-yuzey-bg ${u.is_active ? "" : "bg-yuzey-bg"}`}>
-                  <Td>{u.ad}</Td>
-                  <Td className="text-metin-body">{u.email}</Td>
-                  <Td className="text-metin-body">
-                    {u.aranabilir ? t("ortakEvet") : "—"}
-                  </Td>
-                  <Td>
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${ROLE_STYLE[u.role] ?? "bg-slate-100 text-metin-body"}`}
-                    >
-                      {rolAdi(t, u.role)}
-                    </span>
-                  </Td>
-                  <Td>
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                        u.is_active ? "bg-emerald-100 text-emerald-800" : "bg-slate-200 text-metin-body"
-                      }`}
-                    >
-                      {u.is_active ? t("ortakAktif") : t("ortakPasif")}
-                    </span>
-                  </Td>
-                  <Td hizala="end">
-                    <div className="flex justify-end gap-2">
-                      <button className={btnGhost} onClick={() => openEdit(u)}>
-                        {t("ortakDuzenle")}
-                      </button>
-                      {u.is_active ? (
-                        <button className={btnGhost} onClick={() => setActive(u, false)}>{t("ortakPasiflestir")}</button>
-                      ) : (
-                        <button className={btnGhost} onClick={() => setActive(u, true)}>{t("ortakAktiflestir")}</button>
-                      )}
-                    </div>
-                  </Td>
-                </tr>
-              ))}
-              {data && data.items.length === 0 && (
-                <tr>
-                  <Td colSpan={6}>
-                    <EmptyState title={t("kullaniciYok")} description={t("kullaniciYokAlt")} />
-                  </Td>
-                </tr>
-              )}
-            </tbody>
-          </Tablo>
-        </div>
-      </div>
-
-      {data && (
-        <Pager
-          offset={offset}
-          limit={LIMIT}
-          total={data.meta.total}
-          onPrev={() => setOffset(Math.max(0, offset - LIMIT))}
-          onNext={() => setOffset(offset + LIMIT)}
-        />
-      )}
+              {formErr}
+            </p>
+          )}
+        </form>
+      </Modal>
     </div>
   );
 }

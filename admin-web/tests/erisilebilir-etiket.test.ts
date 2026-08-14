@@ -138,7 +138,12 @@ describe("(P154 / Asama 7.2) ParolaAlani cagri yerleri ETIKETLI", () => {
       satirlar.forEach((satir, i) => {
         if (!/<ParolaAlani\b/.test(satir)) return;
         const onceki = satirlar.slice(Math.max(0, i - 16), i).join("\n");
-        if (/<(Field|label|motion\.label)\b/.test(onceki)) return;
+        // (P160) `AlanSarmal` EKLENDI: yeni tasarim dilinin form
+        // sarmalayicisi GERCEK bir `<label>` cizer ve `htmlFor`/`id`
+        // bagini kendisi kurar. Ustelik `etiket` prop'u TIP SEVIYESINDE
+        // ZORUNLU — yani `Field`ten DAHA GUCLU bir garanti veriyor.
+        // Taramanin gormedigi sey bilesenin ICI; adi tanitmak yeterli.
+        if (/<(Field|AlanSarmal|label|motion\.label)\b/.test(onceki)) return;
         sizanlar.push(`${yol}:${i + 1}`);
       });
     }
