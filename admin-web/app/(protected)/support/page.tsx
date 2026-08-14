@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import useSWR, { mutate } from "swr";
 
 import { Foto } from "@/components/Foto";
-import { Pager } from "@/components/form";
 import {
   Alan,
   CokSatir,

@@ -2,17 +2,17 @@
 
 import { motion } from "framer-motion";
 import { useMemo, useState } from "react";
+
+import { EksikVeriUyarisi } from "@/components/form";
 import useSWR from "swr";
 
 import { BagimlilikUyarisi } from "@/components/BagimlilikUyarisi";
 import { Ekler } from "@/components/Ekler";
-import { EmptyState } from "@/components/EmptyState";
-import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, btnGhost, btnDanger, panelCls, panelMotion,
-  EksikVeriUyarisi,
-} from "@/components/form";
-import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
 import { useToast } from "@/components/Toast";
 import {
+  IskeletMetin,
+  BosDurum,
+  Alan,
   AlanSarmal,
   Dugme,
   HataDurumu,
@@ -25,6 +25,7 @@ import {
   type Kolon,
   type TabloDurumu,
 } from "@/components/ui";
+import { Tablo, TabloBasligi, Td, Th, Tr } from "@/components/tablo";
 import { kisaKimlik } from "@/lib/kimlik";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
@@ -112,12 +113,24 @@ const DURUM_NOTR = "notr" as const;
 export default function TasksPage() {
   const t = useT();
   const toast = useToast();
-  const [offset, setOffset] = useState(0);
+  const [tabloDurumu, setTabloDurumu] = useState<TabloDurumu>({
+    sayfa: 1,
+    boy: 25,
+    siraKolon: null,
+    siraYonu: "artan",
+  });
   const [kategoriFiltre, setKategoriFiltre] = useState("");
   const [aktif, setAktif] = useState("");
   const [atananFiltre, setAtananFiltre] = useState("");
 
-  const qs = new URLSearchParams({ limit: String(LIMIT), offset: String(offset) });
+  // (P160) SAYFALAMA TEK KAYNAKTAN: `offset` artik tablo durumundan
+  // TURETILIR. Iki ayri sayac tutuldugunda tabloda "2. sayfa" yazarken
+  // istek hala ILK sayfayi cekiyordu — kullanici ayni kayitlari
+  // sayfa degistirmis gibi goruyordu.
+  const qs = new URLSearchParams({
+    limit: String(tabloDurumu.boy),
+    offset: String((tabloDurumu.sayfa - 1) * tabloDurumu.boy),
+  });
   if (kategoriFiltre) qs.set("kategori_id", kategoriFiltre);
   if (aktif) qs.set("aktif", aktif);
   if (atananFiltre) qs.set("atanan_user_id", atananFiltre);
@@ -222,12 +235,6 @@ export default function TasksPage() {
   }
 
   const [gorunum, setGorunum] = useState<Gorunum>(GORUNUM_LISTE);
-  const [tabloDurumu, setTabloDurumu] = useState<TabloDurumu>({
-    sayfa: 1,
-    boy: 25,
-    siraKolon: null,
-    siraYonu: "artan",
-  });
   const gorevler = data?.items ?? [];
 
   /**
@@ -321,12 +328,14 @@ export default function TasksPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader
-        title={t("kabukGorevler")}
-        action={
-          <button className={btnPrimary} onClick={openNew}>{t("gorevYeni")}</button>
-        }
-      />
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+          {t("kabukGorevler")}
+        </h1>
+        <Dugme tur="birincil" boy="kucuk" onClick={openNew}>
+          {t("gorevYeni")}
+        </Dugme>
+      </div>
 
       <EksikVeriUyarisi
         mesaj={usersErr || kategorilerErr ? t("ortakSecenekYuklenemedi") : null}
@@ -344,7 +353,7 @@ export default function TasksPage() {
                 value={kategoriFiltre}
                 onChange={(e) => {
                   setKategoriFiltre(e.target.value);
-                  setOffset(0);
+                  setTabloDurumu((d) => ({ ...d, sayfa: 1 }));
                 }}
               >
                 <option value="">{t("ortakTumu")}</option>
@@ -359,29 +368,27 @@ export default function TasksPage() {
           </AlanSarmal>
         </div>
         <div className="w-44">
-          <Field label={t("ortakDurum")}>
-            <select
-              className={inputCls}
-              value={aktif}
+          <AlanSarmal etiket={t("ortakDurum")}>
+  {(b) => (
+    <Secim {...b} value={aktif}
               onChange={(e) => {
                 setAktif(e.target.value);
-                setOffset(0);
+                setTabloDurumu((d) => ({ ...d, sayfa: 1 }));
               }}
             >
               <option value="">{t("ortakTumu")}</option>
               <option value="true">{t("ortakAktif")}</option>
-              <option value="false">{t("ortakPasif")}</option>
-            </select>
-          </Field>
+              <option value="false">{t("ortakPasif")}</option></Secim>
+  )}
+</AlanSarmal>
         </div>
         <div className="w-56">
-          <Field label={t("gorevAtanan")}>
-            <select
-              className={inputCls}
-              value={atananFiltre}
+          <AlanSarmal etiket={t("gorevAtanan")}>
+  {(b) => (
+    <Secim {...b} value={atananFiltre}
               onChange={(e) => {
                 setAtananFiltre(e.target.value);
-                setOffset(0);
+                setTabloDurumu((d) => ({ ...d, sayfa: 1 }));
               }}
             >
               <option value="">{t("ortakTumu")}</option>
@@ -389,9 +396,9 @@ export default function TasksPage() {
                 <option key={u.id} value={u.id}>
                   {u.ad} ({rolAdi(t, u.role)})
                 </option>
-              ))}
-            </select>
-          </Field>
+              ))}</Secim>
+  )}
+</AlanSarmal>
         </div>
       </div>
 
@@ -404,7 +411,7 @@ export default function TasksPage() {
       />
       {/* Liste cekilemezse BOS TABLO degil, sebep + "Tekrar dene".
           Yukleme durumu artik `VeriTablosu`nun ISKELETI. */}
-      {isLoading && !data && <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>}
+      {isLoading && !data && <IskeletMetin satir={3} />}
 
       {/* FORM ARTIK MODALDA (brief: "sayfa ustunde alan acma deseni
           kaldirilacak"). Odak tuzagi, ESC ve kapanista odagin geri
@@ -428,25 +435,22 @@ export default function TasksPage() {
         <form id="gorev-form" onSubmit={save} className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
 
-            <Field label={t("ortakBaslik")}>
-              <input
-                className={inputCls}
-                value={form.ad}
+            <AlanSarmal etiket={t("ortakBaslik")}>
+  {(b) => (
+    <Alan {...b} value={form.ad}
                 onChange={(e) => setForm({ ...form, ad: e.target.value })}
-                required
-              />
-            </Field>
-            <Field label={t("ortakAciklamaOpsiyonel")}>
-              <input
-                className={inputCls}
-                value={form.aciklama}
-                onChange={(e) => setForm({ ...form, aciklama: e.target.value })}
-              />
-            </Field>
-            <Field label={t("gorevAtananOpsiyonel")}>
-              <select
-                className={inputCls}
-                value={form.atanan_user_id}
+                required />
+  )}
+</AlanSarmal>
+            <AlanSarmal etiket={t("ortakAciklamaOpsiyonel")}>
+  {(b) => (
+    <Alan {...b} value={form.aciklama}
+                onChange={(e) => setForm({ ...form, aciklama: e.target.value })} />
+  )}
+</AlanSarmal>
+            <AlanSarmal etiket={t("gorevAtananOpsiyonel")}>
+  {(b) => (
+    <Secim {...b} value={form.atanan_user_id}
                 onChange={(e) => setForm({ ...form, atanan_user_id: e.target.value })}
               >
                 <option value="">{t("ortakSecimYok")}</option>
@@ -454,13 +458,12 @@ export default function TasksPage() {
                   <option key={u.id} value={u.id}>
                     {u.ad} ({rolAdi(t, u.role)})
                   </option>
-                ))}
-              </select>
-            </Field>
-            <Field label={t("demirbasKategoriOpsiyonel")} hint={t("gorevKategoriIpucu")}>
-              <select
-                className={inputCls}
-                value={form.kategori_id}
+                ))}</Secim>
+  )}
+</AlanSarmal>
+            <AlanSarmal etiket={t("demirbasKategoriOpsiyonel")} ipucu={t("gorevKategoriIpucu")}>
+  {(b) => (
+    <Secim {...b} value={form.kategori_id}
                 onChange={(e) => setForm({ ...form, kategori_id: e.target.value })}
               >
                 <option value="">{t("ortakSecimYok")}</option>
@@ -468,26 +471,22 @@ export default function TasksPage() {
                   <option key={k.id} value={k.id}>
                     {k.ad}
                   </option>
-                ))}
-              </select>
-            </Field>
-            <Field label={t("gorevPeriyotDakikaOpsiyonel")} hint={t("gorevPeriyodikIpucu")}>
-              <input
-                type="number"
-                min={1}
-                className={inputCls}
-                value={form.periyot_dakika}
-                onChange={(e) => setForm({ ...form, periyot_dakika: e.target.value })}
-              />
-            </Field>
-            <Field label={t("gorevSonrakiPlanlananOpsiyonel")} hint={t("gorevPeriyodikSaatIpucu")}>
-              <input
-                type="datetime-local"
-                className={inputCls}
-                value={form.sonraki_planlanan}
-                onChange={(e) => setForm({ ...form, sonraki_planlanan: e.target.value })}
-              />
-            </Field>
+                ))}</Secim>
+  )}
+</AlanSarmal>
+            <AlanSarmal etiket={t("gorevPeriyotDakikaOpsiyonel")} ipucu={t("gorevPeriyodikIpucu")}>
+  {(b) => (
+    <Alan {...b} type="number"
+                min={1}value={form.periyot_dakika}
+                onChange={(e) => setForm({ ...form, periyot_dakika: e.target.value })} />
+  )}
+</AlanSarmal>
+            <AlanSarmal etiket={t("gorevSonrakiPlanlananOpsiyonel")} ipucu={t("gorevPeriyodikSaatIpucu")}>
+  {(b) => (
+    <Alan {...b} type="datetime-local"value={form.sonraki_planlanan}
+                onChange={(e) => setForm({ ...form, sonraki_planlanan: e.target.value })} />
+  )}
+</AlanSarmal>
           </div>
           <div className="flex gap-6">
             <label className="flex items-center gap-2 text-sm">
@@ -561,7 +560,7 @@ export default function TasksPage() {
       />
 
       {detail && (
-        <motion.div {...panelMotion} className={`space-y-3 ${panelCls}`}>
+        <Kart className="space-y-3">
           <h2 className="text-lg font-medium">
             {t("gorevTamamlamaKayitlari", { ad: detail.ad })}
           </h2>
@@ -611,7 +610,7 @@ export default function TasksPage() {
                 {completions && completions.items.length === 0 && (
                   <tr>
                     <Td colSpan={4}>
-                      <EmptyState title={t("denetimKayitYok")} />
+                      <BosDurum baslik={t("denetimKayitYok")} />
                     </Td>
                   </tr>
                 )}
@@ -624,18 +623,9 @@ export default function TasksPage() {
               tablosu ve yukleme akisi YAZILMADI: `Ekler` bileseni
               `varlikTipi` alir ve sekiz varlikta ayni sekilde calisir. */}
           <Ekler varlikTipi="task" varlikId={detail.id} />
-        </motion.div>
+        </Kart>
       )}
 
-      {data && (
-        <Pager
-          offset={offset}
-          limit={LIMIT}
-          total={data.meta.total}
-          onPrev={() => setOffset(Math.max(0, offset - LIMIT))}
-          onNext={() => setOffset(offset + LIMIT)}
-        />
-      )}
     </div>
   );
 }

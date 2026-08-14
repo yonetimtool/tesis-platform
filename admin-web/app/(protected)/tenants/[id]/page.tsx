@@ -5,7 +5,13 @@ import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import useSWR from "swr";
 
-import { Field, ErrorBox, btnPrimary, btnGhost, inputCls, cardCls } from "@/components/form";
+import {
+  Alan,
+  AlanSarmal,
+  Dugme,
+  HataDurumu,
+  IskeletMetin,
+} from "@/components/ui";
 import { KopyaKod } from "@/components/KopyaKod";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
@@ -232,17 +238,21 @@ export default function TenantDetailPage() {
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-3">
-        <Link href="/tenants" className={btnGhost}>
+        <Link
+          href="/tenants"
+          className="odak-ic underline"
+          style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-accent-ink)" }}
+        >
           <span aria-hidden="true">←</span> {t("kabukTesisler")}
         </Link>
       </div>
 
-      {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>}
+      {error && <HataDurumu mesaj={error.message} />}
+      {isLoading && !data && <IskeletMetin satir={3} />}
 
       {data && (
         <>
-          <div className={`${cardCls} p-5`}>
+          <div className="">
             {!nameEditing && (
               <>
                 <div className="flex flex-wrap items-start justify-between gap-2">
@@ -275,47 +285,46 @@ export default function TenantDetailPage() {
                   <p className="text-sm text-metin-body">
                     {t("tesisOlusturulmaTarihi", { zaman: fmtDate(data.created_at) })}
                   </p>
-                  <button className={btnGhost} onClick={openNameEdit}>
+                  <Dugme boy="kucuk" onClick={openNameEdit}>
                     {t("tesisAdiDuzenle")}
-                  </button>
+                  </Dugme>
                 </div>
               </>
             )}
 
             {nameEditing && (
               <form onSubmit={saveName} className="space-y-3">
-                <Field label={t("ayarTesisAdi")}>
-                  <input
-                    className={inputCls}
-                    value={nameInput}
+                <AlanSarmal etiket={t("ayarTesisAdi")}>
+  {(b) => (
+    <Alan {...b} value={nameInput}
                     onChange={(e) => setNameInput(e.target.value)}
                     minLength={2}
                     maxLength={120}
                     required
-                    autoFocus
-                  />
-                </Field>
-                {nameErr && <ErrorBox message={nameErr} />}
+                    autoFocus />
+  )}
+</AlanSarmal>
+                {nameErr && <HataDurumu mesaj={nameErr} />}
                 <div className="flex gap-2">
-                  <button type="submit" className={btnPrimary} disabled={nameSaving}>
+                  <Dugme type="submit" tur="birincil" disabled={nameSaving}>
                     {nameSaving ? t("ortakKaydediliyor") : t("ortakKaydet")}
-                  </button>
-                  <button
+                  </Dugme>
+                  <Dugme
                     type="button"
-                    className={btnGhost}
+                    boy="kucuk"
                     onClick={() => setNameEditing(false)}
                     disabled={nameSaving}
                   >
                     {t("ortakVazgec")}
-                  </button>
+                  </Dugme>
                 </div>
               </form>
             )}
           </div>
 
-          <div className={`${cardCls} p-5`}>
+          <div className="">
             <h2 className="mb-3 font-medium">{t("rolYonetici")}</h2>
-            {!y && <p className="text-sm text-metin-muted">{t("tesisYoneticiYok")}</p>}
+            {!y && <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>{t("tesisYoneticiYok")}</p>}
 
             {y && !editing && (
               <div className="space-y-3">
@@ -342,15 +351,15 @@ export default function TenantDetailPage() {
                   </dd>
                 </dl>
                 <div className="flex flex-wrap gap-2 pt-1">
-                  <button className={btnGhost} onClick={openEdit} disabled={busy}>
+                  <Dugme boy="kucuk" onClick={openEdit} disabled={busy}>
                     {t("tesisAdTelefonDuzenle")}
-                  </button>
-                  <button className={btnGhost} onClick={resetCredential} disabled={busy}>
+                  </Dugme>
+                  <Dugme boy="kucuk" onClick={resetCredential} disabled={busy}>
                     {t("tesisParolaSifirla")}
-                  </button>
-                  <button className={btnGhost} onClick={toggleActive} disabled={busy}>
+                  </Dugme>
+                  <Dugme boy="kucuk" onClick={toggleActive} disabled={busy}>
                     {y.is_active ? t("ortakPasiflestir") : t("ortakAktiflestir")}
-                  </button>
+                  </Dugme>
                 </div>
               </div>
             )}
@@ -358,33 +367,31 @@ export default function TenantDetailPage() {
             {y && editing && (
               <form onSubmit={saveEdit} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
-                  <Field label={t("ortakAd")}>
-                    <input
-                      className={inputCls}
-                      value={ad}
+                  <AlanSarmal etiket={t("ortakAd")}>
+  {(b) => (
+    <Alan {...b} value={ad}
                       onChange={(e) => setAd(e.target.value)}
                       required
-                      minLength={2}
-                    />
-                  </Field>
-                  <Field label={t("kullaniciTelefon")} hint={t("tesisGlobalBenzersiz")}>
-                    <input
-                      className={inputCls}
-                      value={telefonGiris(telefon)}
+                      minLength={2} />
+  )}
+</AlanSarmal>
+                  <AlanSarmal etiket={t("kullaniciTelefon")} ipucu={t("tesisGlobalBenzersiz")}>
+  {(b) => (
+    <Alan {...b} value={telefonGiris(telefon)}
                       // (P123) TEK bicimlendirici — bkz. lib/telefon.ts.
                       onChange={(e) => setTelefon(telefonGiris(e.target.value))}
-                      placeholder={t("kullaniciTelefonOrnek")}
-                    />
-                  </Field>
+                      placeholder={t("kullaniciTelefonOrnek")} />
+  )}
+</AlanSarmal>
                 </div>
-                <ErrorBox message={formErr} />
+                <HataDurumu mesaj={formErr} />
                 <div className="flex gap-2">
-                  <button type="submit" className={btnPrimary} disabled={saving}>
+                  <Dugme type="submit" tur="birincil" disabled={saving}>
                     {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
-                  </button>
-                  <button type="button" className={btnGhost} onClick={() => setEditing(false)}>
+                  </Dugme>
+                  <Dugme type="button" boy="kucuk" onClick={() => setEditing(false)}>
                     {t("ortakIptal")}
-                  </button>
+                  </Dugme>
                 </div>
               </form>
             )}
@@ -394,17 +401,17 @@ export default function TenantDetailPage() {
               Yukaridaki kart BIRINCIL yoneticinin kimlik islemleridir
               (parola sifirlama, pasiflestirme) ve OLDUGU GIBI durur; burasi
               tesisin yonetici KADROSUDUR. */}
-          <div className={`${cardCls} p-5`}>
+          <div className="">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <h2 className="font-medium">{t("tesisYoneticilerBaslik")}</h2>
+              <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{t("tesisYoneticilerBaslik")}</h2>
               {!ekleAcik && (
-                <button className={btnGhost} onClick={() => setEkleAcik(true)} disabled={busy}>
+                <Dugme boy="kucuk" onClick={() => setEkleAcik(true)} disabled={busy}>
                   {t("tesisYoneticiEkle")}
-                </button>
+                </Dugme>
               )}
             </div>
 
-            {yonHata && <ErrorBox message={yonHata.message} />}
+            {yonHata && <HataDurumu mesaj={yonHata.message} />}
 
             {yoneticiler && (
               <ul className="divide-y divide-cizgi">
@@ -424,7 +431,7 @@ export default function TenantDetailPage() {
                           </span>
                         )}
                       </p>
-                      <p className="text-xs text-metin-muted">
+                      <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
                         {satir.telefon ?? "—"}
                         {" · "}
                         {satir.password_set
@@ -436,17 +443,17 @@ export default function TenantDetailPage() {
                         pasif bir dugme "neden calismiyor?" sorusunu
                         uretir, hicbir sey gostermemek ise sessiz kalirdi. */}
                     {satir.birincil ? (
-                      <span className="text-xs text-metin-muted">
+                      <span style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
                         {t("tesisBirincilSilinemezIpucu")}
                       </span>
                     ) : (
-                      <button
-                        className={btnGhost}
+                      <Dugme
+                        boy="kucuk"
                         onClick={() => yoneticiSil(satir)}
                         disabled={busy}
                       >
                         {t("ortakSil")}
-                      </button>
+                      </Dugme>
                     )}
                   </li>
                 ))}
@@ -455,42 +462,40 @@ export default function TenantDetailPage() {
 
             {ekleAcik && (
               <form onSubmit={yoneticiEkle} className="mt-4 space-y-4 border-t border-cizgi pt-4">
-                <p className="text-sm text-metin-muted">{t("tesisYoneticiEkleAciklama")}</p>
+                <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>{t("tesisYoneticiEkleAciklama")}</p>
                 <div className="grid grid-cols-2 gap-4">
-                  <Field label={t("ortakAd")}>
-                    <input
-                      className={inputCls}
-                      value={yeniAd}
+                  <AlanSarmal etiket={t("ortakAd")}>
+  {(b) => (
+    <Alan {...b} value={yeniAd}
                       onChange={(e) => setYeniAd(e.target.value)}
                       required
                       minLength={2}
                       maxLength={120}
-                      autoFocus
-                    />
-                  </Field>
-                  <Field label={t("kullaniciTelefon")} hint={t("tesisGlobalBenzersiz")}>
-                    <input
-                      className={inputCls}
-                      value={telefonGiris(yeniTel)}
+                      autoFocus />
+  )}
+</AlanSarmal>
+                  <AlanSarmal etiket={t("kullaniciTelefon")} ipucu={t("tesisGlobalBenzersiz")}>
+  {(b) => (
+    <Alan {...b} value={telefonGiris(yeniTel)}
                       onChange={(e) => setYeniTel(telefonGiris(e.target.value))}
                       placeholder={t("kullaniciTelefonOrnek")}
-                      required
-                    />
-                  </Field>
+                      required />
+  )}
+</AlanSarmal>
                 </div>
-                <ErrorBox message={yeniHata} />
+                <HataDurumu mesaj={yeniHata} />
                 <div className="flex gap-2">
-                  <button type="submit" className={btnPrimary} disabled={ekliyor}>
+                  <Dugme type="submit" tur="birincil" disabled={ekliyor}>
                     {ekliyor ? t("ortakKaydediliyor") : t("ortakKaydet")}
-                  </button>
-                  <button
+                  </Dugme>
+                  <Dugme
                     type="button"
-                    className={btnGhost}
+                    boy="kucuk"
                     onClick={() => setEkleAcik(false)}
                     disabled={ekliyor}
                   >
                     {t("ortakIptal")}
-                  </button>
+                  </Dugme>
                 </div>
               </form>
             )}
@@ -506,9 +511,9 @@ export default function TenantDetailPage() {
                   KAYBOLUR ve ekran okuyucularin bir kismi hic okumaz.
                   Burasi bir TESISI SILME onayidir — adini duyamayan
                   kullanicinin ne yazdigini bilmeden onaylamasi demekti. */}
-              <input
+              <Alan
                 aria-label={t("tesisSilOnayEtiketi")}
-                className={`${inputCls} max-w-xs`}
+                className="max-w-xs"
                 value={confirmAd}
                 onChange={(e) => setConfirmAd(e.target.value)}
                 placeholder={t("tesisSilOnayKelimesi")}

@@ -4,7 +4,13 @@ import { useMemo, useState } from "react";
 import useSWR from "swr";
 import { daireTipiKisa, daireTipiRengi } from "@/lib/daire-tipi-rengi";
 
-import { Field, ErrorBox, PageHeader, inputCls, btnPrimary, btnGhost, panelCls, cardCls } from "@/components/form";
+import {
+  Kart,
+  Alan,
+  AlanSarmal,
+  Dugme,
+  HataDurumu,
+} from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
@@ -247,64 +253,81 @@ export default function BuildingEditorPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader
-        title={t("kabukBinaDuzenleme")}
-        subtitle={t("binaAciklama")}
-        action={
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+            {t("kabukBinaDuzenleme")}
+          </h1>
+          <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+            {t("binaAciklama")}
+          </p>
+        </div>
+        {
           drilledIn ? (
-            <button className={btnGhost} onClick={closeDetail}>{t("binaBloklaraDon")}</button>
-          ) : undefined
+            <Dugme boy="kucuk" onClick={closeDetail}>{t("binaBloklaraDon")}</Dugme>
+          ) : null
         }
-      />
+      </div>
 
-      <div className="rounded-lg border kart-kenar bg-yuzey-bg px-4 py-2 text-xs text-metin-body">
+      <div
+        className="px-4 py-2"
+        style={{
+          borderRadius: "var(--yz-r-md)",
+          border: "1px solid var(--yz-border)",
+          background: "var(--yz-surface-2)",
+          fontSize: "var(--yz-fs-xs)",
+          color: "var(--yz-text-2)",
+        }}
+      >
         {t("binaYetkiNotu", { ekran: t("kabukBinaDuzenleme") })}
       </div>
 
-      {loadError && <ErrorBox message={t("binaVerilerYuklenemedi")} />}
+      {loadError && <HataDurumu mesaj={t("binaVerilerYuklenemedi")} />}
 
       {/* YUKLENIYOR: veri gelene kadar ekran BOS gorunuyordu ve kullanici
           "hic blok yok" saniyordu (tur 44 yavas-ag surusu). */}
       {(blocks.isLoading || units.isLoading) && (
-        <p role="status" className="text-sm text-metin-muted">
+        <p role="status" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
           {t("ortakYukleniyor")}
         </p>
       )}
 
       {/* Blok ekle/duzenle formu */}
       {blockForm.open && (
-        <form onSubmit={saveBlock} className={`space-y-4 ${panelCls}`}>
-          <h2 className="font-medium">{blockForm.editingId ? t("binaBlokDuzenle") : t("binaBlokYeni")}</h2>
+        <Kart>
+          <form onSubmit={saveBlock} className="space-y-4">
+          <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{blockForm.editingId ? t("binaBlokDuzenle") : t("binaBlokYeni")}</h2>
           <div className="grid grid-cols-1 gap-4 sm:max-w-xs">
-            <Field label={t("binaBlokEtiketi")} hint={t("binaBlokIpucu")}>
-              <input
-                className={inputCls}
-                value={blockForm.ad}
+            <AlanSarmal etiket={t("binaBlokEtiketi")} ipucu={t("binaBlokIpucu")}>
+  {(b) => (
+    <Alan {...b} value={blockForm.ad}
                 onChange={(e) => setBlockForm({ ...blockForm, ad: e.target.value })}
                 pattern="[A-Za-z0-9]+"
                 maxLength={8}
                 title={t("blokGecersiz")}
                 placeholder="A"
-                required
-              />
-            </Field>
+                required />
+  )}
+</AlanSarmal>
           </div>
-          <ErrorBox message={blockForm.err} />
+          <HataDurumu mesaj={blockForm.err} />
           <div className="flex gap-2">
-            <button type="submit" className={btnPrimary} disabled={blockForm.saving}>
+            <Dugme type="submit" tur="birincil" disabled={blockForm.saving}>
               {blockForm.saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
-            </button>
-            <button type="button" className={btnGhost} onClick={() => setBlockForm(EMPTY_BLOCK)}>
+            </Dugme>
+            <Dugme type="button" boy="kucuk" onClick={() => setBlockForm(EMPTY_BLOCK)}>
               {t("ortakIptal")}
-            </button>
+            </Dugme>
           </div>
-        </form>
+          </form>
+        </Kart>
       )}
 
       {/* Daire ekle/duzenle formu */}
       {unitForm.open && (
-        <form onSubmit={saveUnit} className={`space-y-4 ${panelCls}`}>
-          <h2 className="font-medium">
+        <Kart>
+          <form onSubmit={saveUnit} className="space-y-4">
+          <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
             {unitForm.editingId ? t("daireDuzenle") : t("daireYeni")}
             <span className="ms-2 text-sm text-metin-muted">
               {unitForm.blok
@@ -313,47 +336,45 @@ export default function BuildingEditorPage() {
             </span>
           </h2>
           <div className="grid grid-cols-3 gap-4">
-            <Field label={t("binaDaireNo")} hint={t("binaDaireNoIpucu")}>
-              <input
-                className={inputCls}
-                value={unitForm.no}
+            <AlanSarmal etiket={t("binaDaireNo")} ipucu={t("binaDaireNoIpucu")}>
+  {(b) => (
+    <Alan {...b} value={unitForm.no}
                 onChange={(e) => setUnitForm({ ...unitForm, no: e.target.value })}
                 pattern="[A-Za-z0-9-]+"
                 maxLength={50}
                 title={t("binaDaireNoGecersiz")}
                 placeholder="A-12"
-                required
-              />
-            </Field>
-            <Field label={t("binaKat")} hint={t("binaZeminIpucu")}>
-              <input
-                className={inputCls}
-                inputMode="numeric"
+                required />
+  )}
+</AlanSarmal>
+            <AlanSarmal etiket={t("binaKat")} ipucu={t("binaZeminIpucu")}>
+  {(b) => (
+    <Alan {...b} inputMode="numeric"
                 value={unitForm.kat}
                 onChange={(e) => setUnitForm({ ...unitForm, kat: e.target.value })}
-                placeholder="1"
-              />
-            </Field>
-            <Field label={t("binaSira")} hint={t("binaKattakiKonum")}>
-              <input
-                className={inputCls}
-                inputMode="numeric"
+                placeholder="1" />
+  )}
+</AlanSarmal>
+            <AlanSarmal etiket={t("binaSira")} ipucu={t("binaKattakiKonum")}>
+  {(b) => (
+    <Alan {...b} inputMode="numeric"
                 value={unitForm.sira}
                 onChange={(e) => setUnitForm({ ...unitForm, sira: e.target.value })}
-                placeholder="1"
-              />
-            </Field>
+                placeholder="1" />
+  )}
+</AlanSarmal>
           </div>
-          <ErrorBox message={unitForm.err} />
+          <HataDurumu mesaj={unitForm.err} />
           <div className="flex gap-2">
-            <button type="submit" className={btnPrimary} disabled={unitForm.saving}>
+            <Dugme type="submit" tur="birincil" disabled={unitForm.saving}>
               {unitForm.saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
-            </button>
-            <button type="button" className={btnGhost} onClick={() => setUnitForm(EMPTY_UNIT)}>
+            </Dugme>
+            <Dugme type="button" boy="kucuk" onClick={() => setUnitForm(EMPTY_UNIT)}>
               {t("ortakIptal")}
-            </button>
+            </Dugme>
           </div>
-        </form>
+          </form>
+        </Kart>
       )}
 
       {/* Icerik: kutucuk listesi veya blok detayi */}
@@ -538,12 +559,12 @@ function BlockDetail({
   }
 
   return (
-    <div className={`space-y-3 ${cardCls} p-5`}>
+    <Kart className="space-y-3">
       <div className="flex items-center justify-between">
-        <h2 className="font-medium">{blockless ? t("binaBloksuzDaireler") : `Blok ${label}`}</h2>
+        <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{blockless ? t("binaBloksuzDaireler") : `Blok ${label}`}</h2>
         {/* Bloksuz kovaya yeni daire EKLENMEZ (her daire bir bloga baglanir). */}
         {!blockless && (
-          <button className={btnGhost} onClick={onAddFloor}>{t("binaKatEkleKisa")}</button>
+          <Dugme boy="kucuk" onClick={onAddFloor}>{t("binaKatEkleKisa")}</Dugme>
         )}
       </div>
 
@@ -595,7 +616,7 @@ function BlockDetail({
           onRemoveUnit={onRemoveUnit}
         />
       )}
-    </div>
+    </Kart>
   );
 }
 

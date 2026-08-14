@@ -1,21 +1,21 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { useState, type ReactNode } from "react";
 import useSWR from "swr";
 
-import { EmptyState } from "@/components/EmptyState";
+// UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
+const TUR_BIRINCIL = "birincil" as const;
+const TUR_IKINCIL = "ikincil" as const;
+
 import {
-  ErrorBox,
-  Field,
-  PageHeader,
-  btnDanger,
-  btnGhost,
-  btnPrimary,
-  inputCls,
-  panelCls,
-  panelMotion,
-} from "@/components/form";
+  Kart,
+  Secim,
+  Alan,
+  AlanSarmal,
+  BosDurum,
+  Dugme,
+  HataDurumu,
+} from "@/components/ui";
 import { Liste } from "@/components/Liste";
 import { Modal, ModalEylemler } from "@/components/Modal";
 import { useToast } from "@/components/Toast";
@@ -326,9 +326,8 @@ function ReferansSecici({
   );
   const secenekler = data?.items ?? [];
   return (
-    <select
+    <Secim
       aria-label={t(alan.etiket)}
-      className={inputCls}
       disabled={devre || isLoading || error !== undefined}
       value={deger}
       onChange={(e) => onDegis(e.target.value)}
@@ -345,7 +344,7 @@ function ReferansSecici({
           {String(s[alan.etiketAlani ?? REFERANS_VARSAYILAN_ETIKET] ?? s.id)}
         </option>
       ))}
-    </select>
+    </Secim>
   );
 }
 
@@ -392,13 +391,15 @@ function OtomatikSayacUretimi({ onBitti }: { onBitti: () => void }) {
   }
 
   return (
-    <div className={panelCls}>
-      <p className="mb-2 text-sm font-medium">{t("tanimSayacUretimBaslik")}</p>
+    <Kart>
+      <p className="mb-2" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}>
+        {t("tanimSayacUretimBaslik")}
+      </p>
       <div className="flex flex-wrap items-end gap-2">
-        <Field label={t("tanimAlanAnaSayac")}>
-          <select
-            aria-label={t("tanimAlanAnaSayac")}
-            className={inputCls}
+        <AlanSarmal etiket={t("tanimAlanAnaSayac")}>
+          {(b) => (
+          <Secim
+            {...b}
             value={anaId}
             onChange={(e) => setAnaId(e.target.value)}
           >
@@ -408,19 +409,22 @@ function OtomatikSayacUretimi({ onBitti }: { onBitti: () => void }) {
                 {String(s.ad ?? s.id)}
               </option>
             ))}
-          </select>
-        </Field>
-        <button
+          </Secim>
+          )}
+        </AlanSarmal>
+        <Dugme
           type="button"
-          className={btnPrimary}
+          tur="birincil"
           disabled={!anaId || calisiyor}
           onClick={() => void uret()}
         >
           {calisiyor ? t("ortakKaydediliyor") : t("tanimSayacUret")}
-        </button>
+        </Dugme>
       </div>
-      <p className="mt-2 text-sm opacity-70">{t("tanimSayacUretimNotu")}</p>
-    </div>
+      <p className="mt-2" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+        {t("tanimSayacUretimNotu")}
+      </p>
+    </Kart>
   );
 }
 
@@ -458,25 +462,32 @@ export default function TanimlarPage() {
   };
   return (
     <div className="space-y-4">
-      <PageHeader title={t("kabukTanimlar")} />
+      <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+        {t("kabukTanimlar")}
+      </h1>
       <div className="flex flex-wrap gap-2">
         {DEFTERLER.map((d, i) => (
-          <button
+          <Dugme
             key={d.kaynak}
-            type="button"
+            boy="kucuk"
+            tur={i === sekme ? TUR_BIRINCIL : TUR_IKINCIL}
+            /* (P160) `aria-pressed`: acik defter eskiden yalniz RENKLE
+               belliydi ve ekran okuyucu hangisinin acik oldugunu
+               soylemiyordu. */
+            aria-pressed={i === sekme}
             onClick={() => setSekme(i)}
-            className={i === sekme ? btnPrimary : btnGhost}
           >
             {t(d.baslikAnahtari)}
-          </button>
+          </Dugme>
         ))}
-        <button
-          type="button"
+        <Dugme
+          boy="kucuk"
+          tur={sekme === -1 ? TUR_BIRINCIL : TUR_IKINCIL}
+          aria-pressed={sekme === -1}
           onClick={() => setSekme(-1)}
-          className={sekme === -1 ? btnPrimary : btnGhost}
         >
           {t("tanimAyarlar")}
-        </button>
+        </Dugme>
       </div>
       {sekme === -1 ? <Ayarlar /> : <DefterGorunumu key={defter.kaynak} defter={defter} />}
     </div>
@@ -585,18 +596,18 @@ function DefterGorunumu({ defter }: { defter: Defter }) {
   return (
     <div className="space-y-3">
       <div className="flex justify-end">
-        <button type="button" className={btnPrimary} onClick={() => ac(null)}>
+        <Dugme type="button" tur="birincil" onClick={() => ac(null)}>
           {t("tanimYeniKayit")}
-        </button>
+        </Dugme>
       </div>
       {defter.ekEylem?.(() => void mutate())}
       {/* (P60) `String(error)` "Error: " onekini de yazardi. */}
-      {error instanceof Error ? <ErrorBox message={error.message} /> : null}
+      {error instanceof Error ? <HataDurumu mesaj={error.message} /> : null}
       {isLoading ? <p>{t("ortakYukleniyor")}</p> : null}
       {/* (P61) `!error` SART: yukleme dustugunde de liste bostur ve sayfa
           "Kayit yok" derdi — ustundeki hata kutusuyla celiserek. */}
       {!isLoading && !error && kayitlar.length === 0 ? (
-        <EmptyState title={t("tanimKayitYok")} />
+        <BosDurum baslik={t("tanimKayitYok")} />
       ) : null}
       {/* (P154 / Asama 6.2) ORTAK LISTE. Elle yazilmis `<table>` kalkti;
           siralama, kolon suzgeci, sayfa basina kayit ve sayfalama artik
@@ -642,12 +653,12 @@ function DefterGorunumu({ defter }: { defter: Defter }) {
           kimlik={(k) => String(k.id)}
           eylemler={(k) => (
             <span className="whitespace-nowrap">
-              <button type="button" className={btnGhost} onClick={() => ac(k)}>
+              <Dugme type="button" boy="kucuk" onClick={() => ac(k)}>
                 {t("ortakDuzenle")}
-              </button>{" "}
-              <button type="button" className={btnDanger} onClick={() => void sil(k)}>
+              </Dugme>{" "}
+              <Dugme type="button" tur="tehlike" boy="kucuk" onClick={() => void sil(k)}>
                 {t("ortakSil")}
-              </button>
+              </Dugme>
             </span>
           )}
         />
@@ -672,11 +683,12 @@ function DefterGorunumu({ defter }: { defter: Defter }) {
           />
         }
       >
-        <ErrorBox message={formHata} />
+        <HataDurumu mesaj={formHata} />
         <div className="grid gap-3 sm:grid-cols-2">
           {defter.alanlar.map((a) => (
-            <Field key={a.ad} label={t(a.etiket)}>
-              {a.tip === "bool" ? (
+            <AlanSarmal key={a.ad} etiket={t(a.etiket)}>
+              {() =>
+                a.tip === "bool" ? (
                 <input
                   type="checkbox"
                   checked={Boolean(form[a.ad])}
@@ -696,9 +708,8 @@ function DefterGorunumu({ defter }: { defter: Defter }) {
                 // (P63) ACIK `aria-label`: referans dali araya girince
                 // `Field` sarmalayicisi pencereden cikti ve etiket
                 // kanitlanamaz oldu. Acik ad her hâlukârda dogru.
-                <select
+                <Secim
                   aria-label={t(a.etiket)}
-                  className={inputCls}
                   value={String(form[a.ad] ?? "")}
                   onChange={(e) => setForm({ ...form, [a.ad]: e.target.value })}
                 >
@@ -708,18 +719,18 @@ function DefterGorunumu({ defter }: { defter: Defter }) {
                       {s}
                     </option>
                   ))}
-                </select>
+                </Secim>
               ) : (
-                <input
+                <Alan
                   aria-label={t(a.etiket)}
-                  className={inputCls}
                   type={girisTipi(a.tip)}
                   inputMode={girisModu(a.tip)}
                   value={String(form[a.ad] ?? "")}
                   onChange={(e) => setForm({ ...form, [a.ad]: e.target.value })}
                 />
-              )}
-            </Field>
+              )
+              }
+            </AlanSarmal>
           ))}
         </div>
       </Modal>
@@ -759,40 +770,37 @@ function Ayarlar() {
   }
 
   return (
-    <motion.div {...panelMotion} className={panelCls}>
-      <ErrorBox message={hata} />
+    <Kart>
+      <HataDurumu mesaj={hata} />
       <div className="grid gap-3 sm:grid-cols-3">
-        <Field label={t("tanimAlanEvrakSeri")}>
-          <input
-            className={inputCls}
-            value={seri}
-            onChange={(e) => setForm({ ...form, evrak_seri: e.target.value.toUpperCase() })}
-          />
-        </Field>
-        <Field label={t("tanimAlanEvrakSira")}>
-          <input
-            className={inputCls}
-            inputMode="numeric"
+        <AlanSarmal etiket={t("tanimAlanEvrakSeri")}>
+  {(b) => (
+    <Alan {...b} value={seri}
+            onChange={(e) => setForm({ ...form, evrak_seri: e.target.value.toUpperCase() })} />
+  )}
+</AlanSarmal>
+        <AlanSarmal etiket={t("tanimAlanEvrakSira")}>
+  {(b) => (
+    <Alan {...b} inputMode="numeric"
             value={sira}
-            onChange={(e) => setForm({ ...form, evrak_sira: e.target.value })}
-          />
-        </Field>
-        <Field label={t("tanimAlanParaBirimi")}>
-          <input
-            className={inputCls}
-            value={para}
-            onChange={(e) => setForm({ ...form, para_birimi: e.target.value.toUpperCase() })}
-          />
-        </Field>
+            onChange={(e) => setForm({ ...form, evrak_sira: e.target.value })} />
+  )}
+</AlanSarmal>
+        <AlanSarmal etiket={t("tanimAlanParaBirimi")}>
+  {(b) => (
+    <Alan {...b} value={para}
+            onChange={(e) => setForm({ ...form, para_birimi: e.target.value.toUpperCase() })} />
+  )}
+</AlanSarmal>
       </div>
       {/* Para biriminin YALNIZ gosterim oldugu ekranda YAZAR: aksi halde
           kullanici kur cevirisi bekler ve sessizce yanlis toplam okur. */}
-      <p className="mt-2 text-sm opacity-70">{t("tanimParaBirimiNotu")}</p>
+      <p className="mt-2" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>{t("tanimParaBirimiNotu")}</p>
       <div className="mt-3">
-        <button type="button" className={btnPrimary} onClick={() => void kaydet()}>
+        <Dugme type="button" tur="birincil" onClick={() => void kaydet()}>
           {t("ortakKaydet")}
-        </button>
+        </Dugme>
       </div>
-    </motion.div>
+    </Kart>
   );
 }

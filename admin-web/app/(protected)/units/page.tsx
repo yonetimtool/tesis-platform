@@ -1,12 +1,8 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { useMemo, useState } from "react";
 import useSWR from "swr";
 
-import { EmptyState } from "@/components/EmptyState";
-import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, btnGhost, btnDanger, panelCls, panelMotion } from "@/components/form";
-import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
 import { useToast } from "@/components/Toast";
 import { UnitDetail } from "@/components/UnitDetail";
 import { BagimlilikUyarisi } from "@/components/BagimlilikUyarisi";
@@ -14,6 +10,10 @@ import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { aralikCoz } from "@/lib/aralik";
 import {
+  Secim,
+  Kart,
+  AlanSarmal,
+  Alan,
   Dugme,
   HataDurumu,
   Rozet,
@@ -192,7 +192,7 @@ export default function UnitsPage() {
     }
   }
   const { data, error, isLoading, mutate } = useSWR<UnitList>(
-    `/api/units?limit=${LIMIT}&offset=${offset}${blokQs}`,
+    `/api/units?limit=${tabloDurumu.boy}&offset=${offset}${blokQs}`,
     jsonFetcher,
   );
 
@@ -365,17 +365,16 @@ export default function UnitsPage() {
 
       <div className="flex items-end gap-2">
         <div className="w-full sm:w-48">
-          <Field label={t("daireBlokFiltresi")}>
-            <input
-              className={inputCls}
-              value={blok}
+          <AlanSarmal etiket={t("daireBlokFiltresi")}>
+  {(b) => (
+    <Alan {...b} value={blok}
               onChange={(e) => {
                 setBlok(e.target.value);
                 setOffset(0);
               }}
-              placeholder="A"
-            />
-          </Field>
+              placeholder="A" />
+  )}
+</AlanSarmal>
         </div>
       </div>
 
@@ -383,58 +382,54 @@ export default function UnitsPage() {
           Yukleme durumu artik `VeriTablosu`nun ISKELETI. */}
 
       {open && (
-        <motion.form {...panelMotion} onSubmit={save} className={`space-y-4 ${panelCls}`}>
+        <Kart>
+          <form onSubmit={save} className="space-y-4">
           <h2 className="font-medium">{editingId ? t("daireDuzenle") : t("daireYeni")}</h2>
           <div className="grid grid-cols-3 gap-4">
-            <Field label={t("binaDaireNo")} hint={t("daireNoIpucu")}>
-              <input
-                className={inputCls}
-                value={form.no}
+            <AlanSarmal etiket={t("binaDaireNo")} ipucu={t("daireNoIpucu")}>
+  {(b) => (
+    <Alan {...b} value={form.no}
                 onChange={(e) => setForm({ ...form, no: e.target.value })}
                 placeholder="A-12"
                 pattern="[A-Za-z0-9-]+"
                 title={t("daireNoGecersiz")}
-                required
-              />
-            </Field>
-            <Field label={t("ortakBlok")} hint={t("blokIpucu")}>
-              <input
-                className={inputCls}
-                value={form.blok}
+                required />
+  )}
+</AlanSarmal>
+            <AlanSarmal etiket={t("ortakBlok")} ipucu={t("blokIpucu")}>
+  {(b) => (
+    <Alan {...b} value={form.blok}
                 onChange={(e) => setForm({ ...form, blok: e.target.value })}
                 pattern="[A-Za-z0-9]+"
                 maxLength={8}
                 title={t("blokGecersiz")}
                 placeholder="A"
-                required
-              />
-            </Field>
-            <Field label={t("daireMetrekareOpsiyonel")}>
-              <input
-                className={inputCls}
-                inputMode="decimal"
+                required />
+  )}
+</AlanSarmal>
+            <AlanSarmal etiket={t("daireMetrekareOpsiyonel")}>
+  {(b) => (
+    <Alan {...b} inputMode="decimal"
                 value={form.metrekare}
-                onChange={(e) => setForm({ ...form, metrekare: e.target.value })}
-              />
-            </Field>
-            <Field label={t("daireKatOpsiyonel")} hint={t("katIpucu")}>
-              <input
-                className={inputCls}
-                inputMode="numeric"
+                onChange={(e) => setForm({ ...form, metrekare: e.target.value })} />
+  )}
+</AlanSarmal>
+            <AlanSarmal etiket={t("daireKatOpsiyonel")} ipucu={t("katIpucu")}>
+  {(b) => (
+    <Alan {...b} inputMode="numeric"
                 value={form.kat}
                 onChange={(e) => setForm({ ...form, kat: e.target.value })}
-                placeholder="1"
-              />
-            </Field>
-            <Field label={t("siraOpsiyonel")} hint={t("siraIpucu")}>
-              <input
-                className={inputCls}
-                inputMode="numeric"
+                placeholder="1" />
+  )}
+</AlanSarmal>
+            <AlanSarmal etiket={t("siraOpsiyonel")} ipucu={t("siraIpucu")}>
+  {(b) => (
+    <Alan {...b} inputMode="numeric"
                 value={form.sira}
                 onChange={(e) => setForm({ ...form, sira: e.target.value })}
-                placeholder="2"
-              />
-            </Field>
+                placeholder="2" />
+  )}
+</AlanSarmal>
           </div>
           <label className="flex items-center gap-2 text-sm">
             <input
@@ -444,16 +439,21 @@ export default function UnitsPage() {
             />
             {t("ortakAktif")}
           </label>
-          <ErrorBox message={formErr} />
+          {formErr && (
+            <p role="alert" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-danger-ink)" }}>
+              {formErr}
+            </p>
+          )}
           <div className="flex gap-2">
-            <button type="submit" className={btnPrimary} disabled={saving}>
+            <Dugme type="submit" tur="birincil" disabled={saving}>
               {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
-            </button>
-            <button type="button" className={btnGhost} onClick={() => setOpen(false)}>
+            </Dugme>
+            <Dugme type="button" boy="kucuk" onClick={() => setOpen(false)}>
               {t("ortakIptal")}
-            </button>
+            </Dugme>
           </div>
-        </motion.form>
+          </form>
+        </Kart>
       )}
 
       {/* (P154 / Asama 5) TOPLU ISLEM SERIDI. Aralik ifadesi EKRANDAKI
@@ -461,32 +461,34 @@ export default function UnitsPage() {
           daireleridir (bkz. `lib/aralik.ts`). */}
       <section className="flex flex-wrap items-end gap-2">
         <div className="w-full sm:w-56">
-          <Field label={t("daireAralikSec")} hint={t("daireAralikIpucu")}>
-            <input
-              className={inputCls}
-              value={aralikIfade}
+          <AlanSarmal etiket={t("daireAralikSec")} ipucu={t("daireAralikIpucu")}>
+  {(b) => (
+    <Alan {...b} value={aralikIfade}
               onChange={(e) => setAralikIfade(e.target.value)}
-              placeholder="3,5,7-12"
-            />
-          </Field>
+              placeholder="3,5,7-12" />
+  )}
+</AlanSarmal>
         </div>
         <Dugme onClick={araligiUygula}>{t("daireAralikUygula")}</Dugme>
         <Dugme onClick={() => setOAcik(true)}>{t("daireTopluOlustur")}</Dugme>
         <div className="w-full sm:w-32">
-          <Field label={t("daireKatSil")}>
-            <input
-              className={inputCls}
-              value={katSilKat}
+          <AlanSarmal etiket={t("daireKatSil")}>
+  {(b) => (
+    <Alan {...b} value={katSilKat}
               onChange={(e) => setKatSilKat(e.target.value)}
-              placeholder="1"
-            />
-          </Field>
+              placeholder="1" />
+  )}
+</AlanSarmal>
         </div>
         <Dugme tur="tehlike" disabled={!blok} onClick={() => void katSil()}>
           {t("daireKatSil")}
         </Dugme>
       </section>
-      <ErrorBox message={topluHata} />
+      {topluHata && (
+            <p role="alert" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-danger-ink)" }}>
+              {topluHata}
+            </p>
+          )}
 
       {/* (P160 / Asama 6) TABLO -> `VeriTablosu`.
           Satir secimi, "hepsini sec" (BELIRSIZ secimde `indeterminate`),
@@ -529,40 +531,55 @@ export default function UnitsPage() {
         kirli={oBlok !== ""}
       >
         <div className="space-y-3">
-          <ErrorBox message={oHata} />
+          {oHata && (
+            <p role="alert" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-danger-ink)" }}>
+              {oHata}
+            </p>
+          )}
           <div className="grid gap-3 sm:grid-cols-2">
-            <Field label={t("ortakBlok")}>
-              <input className={inputCls} value={oBlok}
+            <AlanSarmal etiket={t("ortakBlok")}>
+  {(b) => (
+    <Alan {...b} value={oBlok}
                      onChange={(e) => setOBlok(e.target.value)} />
-            </Field>
-            <Field label={t("daireKatSayisi")}>
-              <input className={inputCls} value={oKat}
+  )}
+</AlanSarmal>
+            <AlanSarmal etiket={t("daireKatSayisi")}>
+  {(b) => (
+    <Alan {...b} value={oKat}
                      onChange={(e) => setOKat(e.target.value)} />
-            </Field>
-            <Field label={t("daireKatBasi")}>
-              <input className={inputCls} value={oDaire}
+  )}
+</AlanSarmal>
+            <AlanSarmal etiket={t("daireKatBasi")}>
+  {(b) => (
+    <Alan {...b} value={oDaire}
                      onChange={(e) => setODaire(e.target.value)} />
-            </Field>
-            <Field label={t("daireBaslangicNo")}>
-              <input className={inputCls} value={oBaslangicNo}
+  )}
+</AlanSarmal>
+            <AlanSarmal etiket={t("daireBaslangicNo")}>
+  {(b) => (
+    <Alan {...b} value={oBaslangicNo}
                      onChange={(e) => setOBaslangicNo(e.target.value)} />
-            </Field>
+  )}
+</AlanSarmal>
             {/* (P154 / Asama 5) BASLANGIC KATI: bodrum ve zemin gercek
                 katlardir. "Zemin" ayri bir DEGER degil 0'dir — metin bir
                 kat numarasi siralanamaz. */}
-            <Field label={t("daireBaslangicKat")} hint={t("daireBaslangicKatIpucu")}>
-              <input className={inputCls} value={oBaslangicKat}
+            <AlanSarmal etiket={t("daireBaslangicKat")} ipucu={t("daireBaslangicKatIpucu")}>
+  {(b) => (
+    <Alan {...b} value={oBaslangicKat}
                      onChange={(e) => setOBaslangicKat(e.target.value)} />
-            </Field>
-            <Field label={t("tanimAlanTip")}>
-              <select className={inputCls} value={oTip}
+  )}
+</AlanSarmal>
+            <AlanSarmal etiket={t("tanimAlanTip")}>
+  {(b) => (
+    <Secim {...b} value={oTip}
                       onChange={(e) => setOTip(e.target.value)}>
                 <option value="">—</option>
                 {(tipler?.items ?? []).map((x) => (
                   <option key={x.id} value={x.id}>{x.ad}</option>
-                ))}
-              </select>
-            </Field>
+                ))}</Secim>
+  )}
+</AlanSarmal>
           </div>
           <ModalEylemler
             iptal={() => setOAcik(false)}
@@ -580,32 +597,30 @@ export default function UnitsPage() {
           <p className="text-sm text-metin-muted">
             {t("daireTopluSecili", { adet: secili.length })}
           </p>
-          <Field label={t("ortakDurum")}>
-            <select
-              className={inputCls}
-              value={topluAktif}
+          <AlanSarmal etiket={t("ortakDurum")}>
+  {(b) => (
+    <Secim {...b} value={topluAktif}
               onChange={(e) => setTopluAktif(e.target.value)}
             >
               <option value="">{t("daireTopluDegistirme")}</option>
               <option value="1">{t("ortakAktif")}</option>
-              <option value="0">{t("ortakPasif")}</option>
-            </select>
-          </Field>
+              <option value="0">{t("ortakPasif")}</option></Secim>
+  )}
+</AlanSarmal>
           {/* (P154 / Asama 5) DAIRE TIPI DEGISTIRME — brief: "Web'de daire
               tipi degistirme eklensin". Tekil PATCH zaten vardi ama
               arayuzde hicbir yerde acik degildi. */}
-          <Field label={t("tanimAlanTip")}>
-            <select
-              className={inputCls}
-              value={topluTip}
+          <AlanSarmal etiket={t("tanimAlanTip")}>
+  {(b) => (
+    <Secim {...b} value={topluTip}
               onChange={(e) => setTopluTip(e.target.value)}
             >
               <option value="">{t("daireTopluDegistirme")}</option>
               {(tipler?.items ?? []).map((x) => (
                 <option key={x.id} value={x.id}>{x.ad}</option>
-              ))}
-            </select>
-          </Field>
+              ))}</Secim>
+  )}
+</AlanSarmal>
           <ModalEylemler
             iptal={() => setTopluAcik(false)}
             kaydet={() => void topluGuncelle()}
@@ -613,15 +628,6 @@ export default function UnitsPage() {
         </div>
       </Modal>
 
-      {data && (
-        <Pager
-          offset={offset}
-          limit={LIMIT}
-          total={data.meta.total}
-          onPrev={() => setOffset(Math.max(0, offset - LIMIT))}
-          onNext={() => setOffset(offset + LIMIT)}
-        />
-      )}
     </div>
   );
 }

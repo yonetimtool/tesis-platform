@@ -1,12 +1,20 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { useState } from "react";
 import useSWR from "swr";
 
-import { EmptyState } from "@/components/EmptyState";
-import { Field, ErrorBox, PageHeader, inputCls, btnPrimary, btnGhost, btnDanger, panelCls, panelMotion } from "@/components/form";
-import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
+import {
+  Kart,
+  CokSatir,
+  Alan,
+  AlanSarmal,
+  BosDurum,
+  Dugme,
+  HataDurumu,
+  IskeletMetin,
+  Secim,
+} from "@/components/ui";
+import { Tablo, TabloBasligi, Td, Th } from "@/components/tablo";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
@@ -177,25 +185,31 @@ export default function IntegrationsPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader
-        title={t("kabukEntegrasyonlar")}
-        subtitle={t("entegAciklama")}
-        action={
-          <button className={btnPrimary} onClick={openNew}>{t("entegYeni")}</button>
-        }
-      />
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+            {t("kabukEntegrasyonlar")}
+          </h1>
+          <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+            {t("entegAciklama")}
+          </p>
+        </div>
+        <Dugme tur="birincil" boy="kucuk" onClick={openNew}>
+          {t("entegYeni")}
+        </Dugme>
+      </div>
 
-      {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>}
+      {error && <HataDurumu mesaj={error.message} />}
+      {isLoading && !data && <IskeletMetin satir={3} />}
 
       {open && (
-        <motion.form {...panelMotion} onSubmit={save} className={`space-y-4 ${panelCls}`}>
-          <h2 className="font-medium">{editingId ? t("entegDuzenle") : t("entegYeni")}</h2>
+        <Kart>
+          <form onSubmit={save} className="space-y-4">
+          <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{editingId ? t("entegDuzenle") : t("entegYeni")}</h2>
           {!editingId && presets && presets.length > 0 && (
-            <Field label={t("entegSablon")} hint={t("entegSablonIpucu")}>
-              <select
-                className={inputCls}
-                defaultValue=""
+            <AlanSarmal etiket={t("entegSablon")} ipucu={t("entegSablonIpucu")}>
+  {(b) => (
+    <Secim {...b} defaultValue=""
                 onChange={(e) => e.target.value && applyPreset(e.target.value)}
               >
                 <option value="">{t("entegSablonSec")}</option>
@@ -203,23 +217,21 @@ export default function IntegrationsPage() {
                   <option key={p.key} value={p.key}>
                     {p.key}
                   </option>
-                ))}
-              </select>
-            </Field>
+                ))}</Secim>
+  )}
+</AlanSarmal>
           )}
           <div className="grid grid-cols-2 gap-4">
-            <Field label={t("ortakAd")}>
-              <input
-                className={inputCls}
-                value={form.ad}
+            <AlanSarmal etiket={t("ortakAd")}>
+  {(b) => (
+    <Alan {...b} value={form.ad}
                 onChange={(e) => setForm({ ...form, ad: e.target.value })}
-                required
-              />
-            </Field>
-            <Field label={t("entegKanalTipi")}>
-              <select
-                className={inputCls}
-                value={form.channel_type}
+                required />
+  )}
+</AlanSarmal>
+            <AlanSarmal etiket={t("entegKanalTipi")}>
+  {(b) => (
+    <Secim {...b} value={form.channel_type}
                 onChange={(e) =>
                   setForm({ ...form, channel_type: e.target.value as IntegrationChannel })
                 }
@@ -228,93 +240,92 @@ export default function IntegrationsPage() {
                   <option key={c} value={c}>
                     {c}
                   </option>
-                ))}
-              </select>
-            </Field>
-            <Field label={t("entegEndpointUrl")} hint={t("entegUrlIpucu")}>
-              <input
-                className={inputCls}
-                value={form.endpoint_url}
+                ))}</Secim>
+  )}
+</AlanSarmal>
+            <AlanSarmal etiket={t("entegEndpointUrl")} ipucu={t("entegUrlIpucu")}>
+  {(b) => (
+    <Alan {...b} value={form.endpoint_url}
                 onChange={(e) => setForm({ ...form, endpoint_url: e.target.value })}
                 placeholder="https://..."
-                required
-              />
-            </Field>
-            <Field label={t("entegHttpMetodu")}>
-              <select
-                className={inputCls}
-                value={form.http_method}
+                required />
+  )}
+</AlanSarmal>
+            <AlanSarmal etiket={t("entegHttpMetodu")}>
+  {(b) => (
+    <Secim {...b} value={form.http_method}
                 onChange={(e) => setForm({ ...form, http_method: e.target.value as HttpMethod })}
               >
                 {METHODS.map((m) => (
                   <option key={m} value={m}>
                     {m}
                   </option>
-                ))}
-              </select>
-            </Field>
-            <Field label={t("entegKimlikDogrulama")}>
-              <select
-                className={inputCls}
-                value={form.auth_type}
+                ))}</Secim>
+  )}
+</AlanSarmal>
+            <AlanSarmal etiket={t("entegKimlikDogrulama")}>
+  {(b) => (
+    <Secim {...b} value={form.auth_type}
                 onChange={(e) => setForm({ ...form, auth_type: e.target.value as AuthType })}
               >
                 {AUTH_TYPES.map((a) => (
                   <option key={a} value={a}>
                     {a}
                   </option>
-                ))}
-              </select>
-            </Field>
-            <Field
-              label={t("entegSir")}
-              hint={
-                editingSecretSet
-                  ? t("entegSirKayitli")
-                  : t("entegSirYazmaOzel")
-              }
+                ))}</Secim>
+  )}
+</AlanSarmal>
+            {/* PAROLA ALANI kendi etiketini `AlanSarmal`dan alir; gorunur
+                etiket + ipucu ayni sarmalayicidan gelir. */}
+            <AlanSarmal
+              etiket={t("entegSir")}
+              ipucu={editingSecretSet ? t("entegSirKayitli") : t("entegSirYazmaOzel")}
             >
-              <ParolaAlani
-                className={inputCls}
-                value={form.auth_secret}
-                onChange={(v) => setForm({ ...form, auth_secret: v })}
-                placeholder={editingSecretSet ? t("entegSirBos") : ""}
-                disabled={form.auth_type === "none"}
-              />
-            </Field>
+              {(b) => (
+                <ParolaAlani
+                  // `AlanSarmal`in urettigi kimlik BAGLANMALI: etiket
+                  // `htmlFor` ile bu kimlige isaret ediyor. Baglamazsak
+                  // gorunur bir etiket var ama denetimle ILISKISIZ olur.
+                  id={b.id}
+                  value={form.auth_secret}
+                  onChange={(v) => setForm({ ...form, auth_secret: v })}
+                  placeholder={editingSecretSet ? t("entegSirBos") : ""}
+                  disabled={form.auth_type === "none"}
+                />
+              )}
+            </AlanSarmal>
           </div>
-          <Field label={t("entegHeaderlar")}>
-            <textarea
-              className={`${inputCls} font-mono`}
-              rows={3}
+          <AlanSarmal etiket={t("entegHeaderlar")}>
+            {(b) => (
+              <CokSatir {...b} rows={4}
               value={form.headers_text}
-              onChange={(e) => setForm({ ...form, headers_text: e.target.value })}
-            />
-          </Field>
-          <Field label={t("entegPayloadSablonu")} hint={t("entegYerTutucular")}>
-            <textarea
-              className={`${inputCls} font-mono`}
-              rows={3}
+              onChange={(e) => setForm({ ...form, headers_text: e.target.value })} />
+            )}
+          </AlanSarmal>
+          <AlanSarmal etiket={t("entegPayloadSablonu")} ipucu={t("entegYerTutucular")}>
+            {(b) => (
+              <CokSatir {...b} rows={4}
               value={form.payload_template}
-              onChange={(e) => setForm({ ...form, payload_template: e.target.value })}
-            />
-          </Field>
+              onChange={(e) => setForm({ ...form, payload_template: e.target.value })} />
+            )}
+          </AlanSarmal>
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
               checked={form.aktif}
               onChange={(e) => setForm({ ...form, aktif: e.target.checked })}
             />{t("ortakAktif")}</label>
-          <ErrorBox message={formErr} />
+          <HataDurumu mesaj={formErr} />
           <div className="flex gap-2">
-            <button type="submit" className={btnPrimary} disabled={saving}>
+            <Dugme type="submit" tur="birincil" disabled={saving}>
               {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
-            </button>
-            <button type="button" className={btnGhost} onClick={() => setOpen(false)}>
+            </Dugme>
+            <Dugme type="button" boy="kucuk" onClick={() => setOpen(false)}>
               {t("ortakIptal")}
-            </button>
+            </Dugme>
           </div>
-        </motion.form>
+          </form>
+        </Kart>
       )}
 
       <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
@@ -346,19 +357,19 @@ export default function IntegrationsPage() {
                   <Td hizala="end">
                     <div className="flex flex-col items-end gap-1">
                       <div className="flex justify-end gap-2">
-                        <button
-                          className={btnGhost}
+                        <Dugme
+                          boy="kucuk"
                           onClick={() => test(it)}
                           disabled={testing === it.id}
                         >
                           {testing === it.id ? t("entegTestEdiliyor") : t("entegTest")}
-                        </button>
-                        <button className={btnGhost} onClick={() => openEdit(it)}>
+                        </Dugme>
+                        <Dugme boy="kucuk" onClick={() => openEdit(it)}>
                           {t("ortakDuzenle")}
-                        </button>
-                        <button className={btnDanger} onClick={() => remove(it)}>
+                        </Dugme>
+                        <Dugme tur="tehlike" boy="kucuk" onClick={() => remove(it)}>
                           {t("ortakSil")}
-                        </button>
+                        </Dugme>
                       </div>
                       {tr && (
                         <span
@@ -377,7 +388,7 @@ export default function IntegrationsPage() {
             {data && data.items.length === 0 && (
               <tr>
                 <Td colSpan={6}>
-                  <EmptyState title={t("entegYok")} description={t("entegYokAlt")} />
+                  <BosDurum baslik={t("entegYok")} aciklama={t("entegYokAlt")} />
                 </Td>
               </tr>
             )}

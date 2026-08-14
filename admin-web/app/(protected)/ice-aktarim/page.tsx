@@ -4,15 +4,13 @@ import { useState } from "react";
 import useSWR from "swr";
 
 import {
-  ErrorBox,
-  Field,
-  PageHeader,
-  btnDanger,
-  btnGhost,
-  btnPrimary,
-  cardCls,
-  inputCls,
-} from "@/components/form";
+  Kart,
+  CokSatir,
+  AlanSarmal,
+  Dugme,
+  HataDurumu,
+  Secim,
+} from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
@@ -189,15 +187,21 @@ export default function IceAktarimPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title={t("iceAktarimBaslik")} subtitle={t("iceAktarimAlt")} />
-      <ErrorBox message={hata} />
+      <div>
+        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+          {t("iceAktarimBaslik")}
+        </h1>
+        <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+          {t("iceAktarimAlt")}
+        </p>
+      </div>
+      <HataDurumu mesaj={hata} />
 
       {/* --------------------------- 1) TUR + SABLON --------------------- */}
-      <section className={`${cardCls} space-y-3 p-kart`}>
-        <Field label={t("iceAktarimTur")}>
-          <select
-            className={inputCls}
-            style={{ maxWidth: 280 }}
+      <Kart className="space-y-3">
+        <AlanSarmal etiket={t("iceAktarimTur")}>
+  {(b) => (
+    <Secim {...b} style={{ maxWidth: 280 }}
             value={turKod}
             onChange={(e) => {
               setTurKod(e.target.value as TurKodu);
@@ -211,11 +215,11 @@ export default function IceAktarimPage() {
               <option key={x.kod} value={x.kod}>
                 {t(TUR_ETIKET[x.kod] ?? _YEDEK_TUR_ETIKET)}
               </option>
-            ))}
-          </select>
-        </Field>
+            ))}</Secim>
+  )}
+</AlanSarmal>
         {tur && (
-          <p className="text-xs text-metin-muted">
+          <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
             {t("iceAktarimSablonSatiri")}:{" "}
             <code className="break-all">
               {tur.alanlar.map((a) => a.kod).join(";")}
@@ -227,20 +231,19 @@ export default function IceAktarimPage() {
             </code>
           </p>
         )}
-      </section>
+      </Kart>
 
       {/* ----------------------------- 2) YUKLEME ------------------------ */}
-      <section className={`${cardCls} space-y-3 p-kart`}>
-        <Field label={t("iceAktarimVeri")} hint={t("iceAktarimVeriIpucu")}>
-          <textarea
-            className={`${inputCls} min-h-32 font-mono text-xs`}
-            value={ham}
+      <Kart className="space-y-3">
+        <AlanSarmal etiket={t("iceAktarimVeri")} ipucu={t("iceAktarimVeriIpucu")}>
+            {(b) => (
+              <CokSatir {...b} rows={4} value={ham}
             onChange={(e) => {
               setHam(e.target.value);
               setSonuc(null);
-            }}
-          />
-        </Field>
+            }} />
+            )}
+          </AlanSarmal>
         <label className="flex items-center gap-2 text-sm">
           <input
             type="checkbox"
@@ -250,59 +253,61 @@ export default function IceAktarimPage() {
           />
           {t("iceAktarimBaslikSatiri")}
         </label>
-      </section>
+      </Kart>
 
       {/* --------------------------- 3) KOLON ESLEME --------------------- */}
       {basliklar.length > 0 && tur && (
-        <section className={`${cardCls} space-y-3 p-kart`}>
-          <h2 className="text-sm font-semibold">{t("iceAktarimEsleme")}</h2>
+        <Kart className="space-y-3">
+          <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{t("iceAktarimEsleme")}</h2>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {basliklar.map((b, i) => (
-              <Field
+              <AlanSarmal
                 key={i}
-                label={baslikVar ? b || `#${i + 1}` : `${t("iceAktarimKolon")} ${i + 1}`}
+                etiket={baslikVar ? b || `#${i + 1}` : `${t("iceAktarimKolon")} ${i + 1}`}
               >
-                <select
-                  className={inputCls}
-                  value={esleme[i] ?? ""}
-                  onChange={(e) => alanSec(i, e.target.value)}
-                >
-                  <option value="">{t("iceAktarimKullanma")}</option>
-                  {tur.alanlar.map((a) => (
-                    <option key={a.kod} value={a.kod}>
-                      {a.kod}
-                      {a.zorunlu ? " *" : ""}
-                    </option>
-                  ))}
-                </select>
-              </Field>
+                {(bag) => (
+                  <Secim
+                    {...bag}
+                    value={esleme[i] ?? ""}
+                    onChange={(e) => alanSec(i, e.target.value)}
+                  >
+                    <option value="">{t("iceAktarimKullanma")}</option>
+                    {tur.alanlar.map((a) => (
+                      <option key={a.kod} value={a.kod}>
+                        {a.kod}
+                        {a.zorunlu ? " *" : ""}
+                      </option>
+                    ))}
+                  </Secim>
+                )}
+              </AlanSarmal>
             ))}
           </div>
           <div className="flex flex-wrap gap-2">
             {/* ONIZLEME ONCE: hicbir sey yazmadan ayni raporu verir. */}
-            <button
+            <Dugme
               type="button"
-              className={btnGhost}
+              boy="kucuk"
               disabled={mesgul}
               onClick={() => void calistir(true)}
             >
               {t("iceAktarimOnizle")}
-            </button>
-            <button
+            </Dugme>
+            <Dugme
               type="button"
-              className={btnPrimary}
+              tur="birincil"
               disabled={mesgul}
               onClick={() => void calistir(false)}
             >
               {t("iceAktarimUygula")}
-            </button>
+            </Dugme>
           </div>
-        </section>
+        </Kart>
       )}
 
       {/* ---------------------------- 4) SONUC --------------------------- */}
       {sonuc && (
-        <section className={`${cardCls} space-y-2 p-kart`} aria-live="polite">
+        <section className="space-y-2 p-kart" aria-live="polite">
           <p className="text-sm text-metin-body">
             {t("iceAktarimOzet", {
               satir: sonuc.satir_sayisi,
@@ -325,10 +330,10 @@ export default function IceAktarimPage() {
       )}
 
       {/* --------------------------- 5) GECMIS + GERI ALMA --------------- */}
-      <section className={`${cardCls} space-y-2 p-kart`}>
-        <h2 className="text-sm font-semibold">{t("iceAktarimGecmis")}</h2>
+      <section className="space-y-2 p-kart">
+        <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{t("iceAktarimGecmis")}</h2>
         {(gecmis?.items ?? []).length === 0 && (
-          <p className="text-sm text-metin-muted">{t("iceAktarimGecmisYok")}</p>
+          <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>{t("iceAktarimGecmisYok")}</p>
         )}
         {(gecmis?.items ?? []).map((k) => (
           <div
@@ -341,17 +346,17 @@ export default function IceAktarimPage() {
               {t("iceAktarimOzetKisa", { olusan: k.olusan, hatali: k.hatali })}
             </span>
             {k.durum === "geri_alindi" ? (
-              <span className="text-xs text-metin-muted">
+              <span style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
                 {t("iceAktarimGeriAlinmis")}
               </span>
             ) : (
-              <button
+              <Dugme
                 type="button"
-                className={btnDanger}
+                tur="tehlike" boy="kucuk"
                 onClick={() => void geriAl(k.id)}
               >
                 {t("iceAktarimGeriAl")}
-              </button>
+              </Dugme>
             )}
           </div>
         ))}

@@ -5,19 +5,16 @@ import Link from "next/link";
 import { useState } from "react";
 import useSWR from "swr";
 
-import { EmptyState } from "@/components/EmptyState";
 import {
-  ErrorBox,
-  Field,
-  PageHeader,
-  btnDanger,
-  btnGhost,
-  btnPrimary,
-  inputCls,
-  panelCls,
-  panelMotion,
-} from "@/components/form";
-import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
+  CokSatir,
+  Kart,
+  Alan,
+  AlanSarmal,
+  BosDurum,
+  Dugme,
+  HataDurumu,
+} from "@/components/ui";
+import { Tablo, TabloBasligi, Td, Th } from "@/components/tablo";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
@@ -189,15 +186,22 @@ export default function YonetisimPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title={t("yonBaslik")} subtitle={t("yonAlt")} />
-      <ErrorBox message={hata} />
+      <div>
+        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+          {t("yonBaslik")}
+        </h1>
+        <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+          {t("yonAlt")}
+        </p>
+      </div>
+      <HataDurumu mesaj={hata} />
 
       {/* --------------------------- karar defteri ------------------------- */}
-      <motion.section {...panelMotion} className={panelCls}>
-        <h2 className="mb-3 text-sm font-semibold">{t("yonKararDefteri")}</h2>
-        <ErrorBox message={kErr ? t("yonKararHata") : null} />
+      <Kart>
+        <h2 className="mb-3" style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{t("yonKararDefteri")}</h2>
+        <HataDurumu mesaj={kErr ? t("yonKararHata") : null} />
         {kararlar && kararlar.items.length === 0 && !kErr ? (
-          <EmptyState title={t("yonKararYok")} description={t("yonKararYokAlt")} />
+          <BosDurum baslik={t("yonKararYok")} aciklama={t("yonKararYokAlt")} />
         ) : null}
         {kararlar && kararlar.items.length > 0 ? (
           <div className="overflow-x-auto">
@@ -221,7 +225,11 @@ export default function YonetisimPage() {
                           YAZIDIR, tabloya sikistirmak metni hucrelere
                           bolerdi. */}
                       <a
-                        className={btnGhost}
+                        className="odak-ic underline"
+                        style={{
+                          fontSize: "var(--yz-fs-sm)",
+                          color: "var(--yz-accent-ink)",
+                        }}
                         href={`/api/panel/karar-pdf/${k.id}`}
                         target="_blank"
                         rel="noreferrer"
@@ -237,45 +245,46 @@ export default function YonetisimPage() {
         ) : null}
 
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Field label={t("yonKararNo")}>
-            <input className={inputCls} value={kNo} onChange={(e) => setKNo(e.target.value)} />
-          </Field>
-          <Field label={t("yonKararKonu")}>
-            <input className={inputCls} value={kKonu} onChange={(e) => setKKonu(e.target.value)} />
-          </Field>
-          <Field label={t("yonKararBaskan")}>
-            <input
-              className={inputCls}
-              value={kBaskan}
-              onChange={(e) => setKBaskan(e.target.value)}
-            />
-          </Field>
-          <Field label={t("yonKararUyeler")}>
-            <textarea
-              className={`${inputCls} min-h-16`}
-              value={kUyeler}
-              onChange={(e) => setKUyeler(e.target.value)}
-            />
-          </Field>
+          <AlanSarmal etiket={t("yonKararNo")}>
+  {(b) => (
+    <Alan {...b} value={kNo} onChange={(e) => setKNo(e.target.value)} />
+  )}
+</AlanSarmal>
+          <AlanSarmal etiket={t("yonKararKonu")}>
+  {(b) => (
+    <Alan {...b} value={kKonu} onChange={(e) => setKKonu(e.target.value)} />
+  )}
+</AlanSarmal>
+          <AlanSarmal etiket={t("yonKararBaskan")}>
+  {(b) => (
+    <Alan {...b} value={kBaskan}
+              onChange={(e) => setKBaskan(e.target.value)} />
+  )}
+</AlanSarmal>
+          <AlanSarmal etiket={t("yonKararUyeler")}>
+            {(b) => (
+              <CokSatir {...b} rows={4} value={kUyeler}
+              onChange={(e) => setKUyeler(e.target.value)} />
+            )}
+          </AlanSarmal>
         </div>
-        <Field label={t("yonKararMetin")}>
-          <textarea
-            className={`${inputCls} min-h-24`}
-            value={kMetin}
-            onChange={(e) => setKMetin(e.target.value)}
-          />
-        </Field>
-        <button className={`${btnPrimary} mt-3`} onClick={kararEkle}>
+        <AlanSarmal etiket={t("yonKararMetin")}>
+            {(b) => (
+              <CokSatir {...b} rows={4} value={kMetin}
+            onChange={(e) => setKMetin(e.target.value)} />
+            )}
+          </AlanSarmal>
+        <Dugme tur="birincil" onClick={kararEkle}>
           {t("yonKararKaydet")}
-        </button>
-      </motion.section>
+        </Dugme>
+      </Kart>
 
       {/* ----------------------------- dokumanlar -------------------------- */}
-      <motion.section {...panelMotion} className={panelCls}>
-        <h2 className="mb-3 text-sm font-semibold">{t("yonDokumanlar")}</h2>
-        <ErrorBox message={dErr ? t("yonDokumanHata") : null} />
+      <Kart>
+        <h2 className="mb-3" style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{t("yonDokumanlar")}</h2>
+        <HataDurumu mesaj={dErr ? t("yonDokumanHata") : null} />
         {dokumanlar && dokumanlar.items.length === 0 && !dErr ? (
-          <EmptyState title={t("yonDokumanYok")} description={t("yonDokumanYokAlt")} />
+          <BosDurum baslik={t("yonDokumanYok")} aciklama={t("yonDokumanYokAlt")} />
         ) : null}
         {dokumanlar && dokumanlar.items.length > 0 ? (
           <div className="overflow-x-auto">
@@ -293,9 +302,9 @@ export default function YonetisimPage() {
                     <Td sik>{d.yukleyen_ad ?? "—"}</Td>
                     <Td sik className="whitespace-nowrap">{formatDateTime(d.created_at)}</Td>
                     <Td sik hizala="end">
-                      <button className={btnDanger} onClick={() => dokumanSil(d.id)}>
+                      <Dugme tur="tehlike" boy="kucuk" onClick={() => dokumanSil(d.id)}>
                         {t("ortakSil")}
-                      </button>
+                      </Dugme>
                     </Td>
                   </tr>
                 ))}
@@ -307,14 +316,14 @@ export default function YonetisimPage() {
             silmek, yanlislikla silinen bir yonetim planinin geri
             alinamamasi demekti. */}
         <p className="mt-2 text-xs text-metin-muted">{t("yonDokumanSilmeNotu")}</p>
-      </motion.section>
+      </Kart>
 
       {/* ------------------------- KVKK aydinlatma ------------------------- */}
-      <motion.section {...panelMotion} className={panelCls}>
-        <h2 className="mb-3 text-sm font-semibold">{t("yonKvkk")}</h2>
-        <ErrorBox message={kvErr ? t("yonKvkkHata") : null} />
+      <Kart>
+        <h2 className="mb-3" style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{t("yonKvkk")}</h2>
+        <HataDurumu mesaj={kvErr ? t("yonKvkkHata") : null} />
         {kvkk && kvkk.length === 0 && !kvErr ? (
-          <EmptyState title={t("yonKvkkYok")} description={t("yonKvkkYokAlt")} />
+          <BosDurum baslik={t("yonKvkkYok")} aciklama={t("yonKvkkYokAlt")} />
         ) : null}
         {kvkk && kvkk.length > 0 ? (
           <ul className="mb-3 space-y-1 text-sm">
@@ -323,33 +332,34 @@ export default function YonetisimPage() {
                 <span>
                   v{m.surum} · {m.baslik}
                 </span>
-                <span className="text-xs text-metin-muted">{formatDateTime(m.created_at)}</span>
+                <span style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>{formatDateTime(m.created_at)}</span>
               </li>
             ))}
           </ul>
         ) : null}
         <p className="mb-2 text-xs text-metin-muted">{t("yonKvkkNotu")}</p>
-        <Field label={t("yonKvkkBaslik")}>
-          <input className={inputCls} value={kvBaslik} onChange={(e) => setKvBaslik(e.target.value)} />
-        </Field>
-        <Field label={t("yonKvkkGovde")}>
-          <textarea
-            className={`${inputCls} min-h-32`}
-            value={kvGovde}
-            onChange={(e) => setKvGovde(e.target.value)}
-          />
-        </Field>
-        <button className={`${btnPrimary} mt-3`} onClick={kvkkYayinla}>
+        <AlanSarmal etiket={t("yonKvkkBaslik")}>
+  {(b) => (
+    <Alan {...b} value={kvBaslik} onChange={(e) => setKvBaslik(e.target.value)} />
+  )}
+</AlanSarmal>
+        <AlanSarmal etiket={t("yonKvkkGovde")}>
+            {(b) => (
+              <CokSatir {...b} rows={4} value={kvGovde}
+            onChange={(e) => setKvGovde(e.target.value)} />
+            )}
+          </AlanSarmal>
+        <Dugme tur="birincil" onClick={kvkkYayinla}>
           {t("yonKvkkYayinla")}
-        </button>
-      </motion.section>
+        </Dugme>
+      </Kart>
 
       {/* -------------------------- gurultu uyarilari ---------------------- */}
-      <motion.section {...panelMotion} className={panelCls}>
-        <h2 className="mb-3 text-sm font-semibold">{t("yonUyarilar")}</h2>
-        <ErrorBox message={uErr ? t("yonUyariHata") : null} />
+      <Kart>
+        <h2 className="mb-3" style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{t("yonUyarilar")}</h2>
+        <HataDurumu mesaj={uErr ? t("yonUyariHata") : null} />
         {uyarilar && uyarilar.items.length === 0 && !uErr ? (
-          <EmptyState title={t("yonUyariYok")} description={t("yonUyariYokAlt")} />
+          <BosDurum baslik={t("yonUyariYok")} aciklama={t("yonUyariYokAlt")} />
         ) : null}
         {uyarilar && uyarilar.items.length > 0 ? (
           <div className="overflow-x-auto">
@@ -372,9 +382,9 @@ export default function YonetisimPage() {
                     <Td sik>{t(`yonUyariDurum_${u.durum}` as never)}</Td>
                     <Td sik hizala="end">
                       {u.durum === "manuel_bekliyor" ? (
-                        <button className={btnGhost} onClick={() => uyariYapildi(u.id)}>
+                        <Dugme boy="kucuk" onClick={() => uyariYapildi(u.id)}>
                           {t("yonUyariYapildi")}
-                        </button>
+                        </Dugme>
                       ) : null}
                     </Td>
                   </tr>
@@ -383,19 +393,34 @@ export default function YonetisimPage() {
             </Tablo>
           </div>
         ) : null}
-      </motion.section>
+      </Kart>
 
       {/* (P154 / Asama 8) SITE AKTARIM BURADAN CIKTI. Ice aktarim artik
           TEK CATI uzerinden yapiliyor (`/ice-aktarim`): kolon esleme,
           onizleme, hata raporu ve GERI ALMA orada. Ikinci bir yukleme
           yuzeyi tutmak, ayni akisi iki yerde surdurmek olurdu. */}
-      <motion.section {...panelMotion} className={panelCls}>
-        <h2 className="mb-1 text-sm font-semibold">{t("yonAktar")}</h2>
-        <p className="mb-3 text-xs text-metin-muted">{t("yonAktarTasindi")}</p>
-        <Link href="/ice-aktarim" className={btnPrimary}>
+      <Kart>
+        <h2 className="mb-1" style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
+          {t("yonAktar")}
+        </h2>
+        <p className="mb-3" style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
+          {t("yonAktarTasindi")}
+        </p>
+        {/* BAGLANTI, DUGME DEGIL — baska bir sayfaya goturur. */}
+        <Link
+          href="/ice-aktarim"
+          className="odak-ic yz-lift inline-flex items-center px-3 py-2"
+          style={{
+            borderRadius: "var(--yz-radius-btn)",
+            border: "var(--yz-border-w) solid var(--yz-border)",
+            fontSize: "var(--yz-fs-sm)",
+            color: "var(--yz-on-fill)",
+            background: "var(--yz-metal-accent)",
+          }}
+        >
           {t("iceAktarimBaslik")}
         </Link>
-      </motion.section>
+      </Kart>
     </div>
   );
 }

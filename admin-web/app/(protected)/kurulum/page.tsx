@@ -5,12 +5,9 @@ import { useState } from "react";
 import useSWR from "swr";
 
 import {
-  ErrorBox,
-  PageHeader,
-  btnGhost,
-  btnPrimary,
-  cardCls,
-} from "@/components/form";
+  Dugme,
+  HataDurumu,
+} from "@/components/ui";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
@@ -122,11 +119,18 @@ export default function KurulumPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title={t("kurulumBaslik")} subtitle={t("kurulumAlt")} />
-      <ErrorBox message={hata ?? (error ? t("kurulumHata") : null)} />
+      <div>
+        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+          {t("kurulumBaslik")}
+        </h1>
+        <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+          {t("kurulumAlt")}
+        </p>
+      </div>
+      <HataDurumu mesaj={hata ?? (error ? t("kurulumHata") : null)} />
 
       {data && (
-        <section className={`${cardCls} p-kart`} aria-label={t("kurulumIlerleme")}>
+        <section className="p-kart" aria-label={t("kurulumIlerleme")}>
           <div className="flex items-center justify-between gap-3">
             <span className="text-sm font-medium text-metin-body">
               {bitti ? t("kurulumTamamlandi") : t("kurulumIlerleme")}
@@ -159,7 +163,7 @@ export default function KurulumPage() {
           const h = HEDEF[a.kod];
           if (!h) return null;
           return (
-            <li key={a.kod} className={`${cardCls} p-kart`}>
+            <li key={a.kod} className="p-kart">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="flex items-center gap-2 text-sm font-medium text-metin-body">
@@ -185,22 +189,34 @@ export default function KurulumPage() {
                           : t("kurulumAdimBekliyor")}
                     </span>
                   </p>
-                  <p className="mt-1 text-xs text-metin-muted">{t(h.aciklama)}</p>
+                  <p className="mt-1" style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>{t(h.aciklama)}</p>
                 </div>
                 <div className="flex shrink-0 flex-wrap gap-2">
-                  <Link href={h.rota} className={a.tamam ? btnGhost : btnPrimary}>
+                  {/* BAGLANTI, DUGME DEGIL: adim bir SAYFAYA gider ve orta
+                      tikla yeni sekmede acilabilmeli. */}
+                  <Link
+                    href={h.rota}
+                    className="odak-ic yz-lift inline-flex items-center px-3 py-2"
+                    style={{
+                      borderRadius: "var(--yz-radius-btn)",
+                      border: "var(--yz-border-w) solid var(--yz-border)",
+                      fontSize: "var(--yz-fs-sm)",
+                      color: a.tamam ? "var(--yz-text)" : "var(--yz-on-fill)",
+                      background: a.tamam ? "var(--yz-metal-1)" : "var(--yz-metal-accent)",
+                    }}
+                  >
                     {a.tamam ? t("kurulumGoruntule") : t("kurulumGit")}
                   </Link>
                   {/* ATLAMA yalniz BITMEMIS adimda anlamli; biten bir adimi
                       atlamak kullaniciya hicbir sey kazandirmaz. */}
                   {!a.tamam && (
-                    <button
+                    <Dugme
                       type="button"
-                      className={btnGhost}
+                      boy="kucuk"
                       onClick={() => void atla(a.kod, !a.atlandi)}
                     >
                       {a.atlandi ? t("kurulumAtlamayiGeriAl") : t("kurulumAtla")}
-                    </button>
+                    </Dugme>
                   )}
                 </div>
               </div>

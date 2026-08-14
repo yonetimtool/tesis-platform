@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import useSWR from "swr";
 
-import { EksikVeriUyarisi, Pager } from "@/components/form";
+import { EksikVeriUyarisi } from "@/components/form";
 import {
   Alan,
   Kart,

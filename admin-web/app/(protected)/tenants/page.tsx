@@ -1,14 +1,26 @@
 "use client";
 
-import { motion } from "framer-motion";
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import useSWR from "swr";
 
-import { EmptyState } from "@/components/EmptyState";
-import { Field, ErrorBox, PageHeader, btnPrimary, btnGhost, btnDanger, inputCls, panelCls, panelMotion } from "@/components/form";
+// UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
+const R_OLUMLU = "olumlu" as const;
+const R_UYARI = "uyari" as const;
+
+import {
+  Rozet,
+  VeriTablosu,
+  type Kolon,
+  Kart,
+  Alan,
+  AlanSarmal,
+  BosDurum,
+  Dugme,
+  HataDurumu,
+  IskeletMetin,
+} from "@/components/ui";
 import { KopyaKod } from "@/components/KopyaKod";
-import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
@@ -166,47 +178,129 @@ export default function TenantsPage() {
     }
   }
 
+  const kolonlar: Kolon<TenantRow>[] = useMemo(
+    () => [
+      {
+        id: "ad",
+        baslik: t("ayarTesisAdi"),
+        gizlenebilir: false,
+        deger: (x) => x.ad,
+        hucre: (x) => (
+          <Link
+            href={`/tenants/${x.id}`}
+            className="odak-ic underline"
+            style={{ fontWeight: 600, color: "var(--yz-accent-ink)" }}
+          >
+            {x.ad}
+          </Link>
+        ),
+      },
+      {
+        // (P155 §6) Yoneticinin ILETECEGI kod birincil; teknik UUID
+        // `title` icinde erisilebilir kalir.
+        id: "kod",
+        baslik: t("tesisKayitKodu"),
+        hucre: (x) =>
+          x.kayit_kodu ? (
+            <KopyaKod deger={x.kayit_kodu} etiket={t("tesisKayitKodu")} />
+          ) : (
+            <span
+              style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}
+              title={x.id}
+            >
+              —
+            </span>
+          ),
+      },
+      {
+        id: "kurulum",
+        baslik: t("tesisKurulum"),
+        hucre: (x) => (
+          <Rozet durum={x.kurulum_tamamlandi ? R_OLUMLU : R_UYARI}>
+            {x.kurulum_tamamlandi ? t("tesisTamamlandi") : t("tesisBekliyor")}
+          </Rozet>
+        ),
+      },
+      {
+        id: "olusturma",
+        baslik: t("tesisOlusturulma"),
+        darEkrandaGizle: true,
+        hucre: (x) => fmtDate(x.created_at),
+      },
+      {
+        id: "eylem",
+        baslik: "",
+        gizlenebilir: false,
+        hucre: (x) => (
+          <div className="flex justify-end gap-2">
+            <Link
+              href={`/tenants/${x.id}`}
+              className="odak-ic yz-lift inline-flex items-center px-3 py-2"
+              style={{
+                borderRadius: "var(--yz-radius-btn)",
+                border: "var(--yz-border-w) solid var(--yz-border)",
+                fontSize: "var(--yz-fs-sm)",
+                color: "var(--yz-text)",
+                background: "var(--yz-metal-1)",
+              }}
+            >
+              {t("tesisYonet")}
+            </Link>
+            <Dugme tur="tehlike" boy="kucuk" onClick={() => void removeTenant(x)}>
+              {t("ortakSil")}
+            </Dugme>
+          </div>
+        ),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [t],
+  );
+
   return (
     <div className="space-y-5">
-      <PageHeader
-        title={t("kabukTesisler")}
-        subtitle={t("tesisListeAciklama")}
-        action={
-          <button className={btnPrimary} onClick={openNew}>{t("tesisYeni")}</button>
-        }
-      />
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+            {t("kabukTesisler")}
+          </h1>
+          <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+            {t("tesisListeAciklama")}
+          </p>
+        </div>
+        <Dugme tur="birincil" boy="kucuk" onClick={openNew}>
+          {t("tesisYeni")}
+        </Dugme>
+      </div>
 
-      {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>}
+      {error && <HataDurumu mesaj={error.message} />}
+      {isLoading && !data && <IskeletMetin satir={3} />}
 
       {open && (
-        <motion.form {...panelMotion} onSubmit={save} className={`space-y-4 ${panelCls}`}>
-          <h2 className="font-medium">{t("tesisYeni")}</h2>
+        <Kart>
+          <form onSubmit={save} className="space-y-4">
+          <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{t("tesisYeni")}</h2>
           <div className="grid grid-cols-2 gap-4">
-            <Field
-              label={t("tesisAdiOpsiyonel")}
-              hint={t("tesisAdiBosIpucu")}
-            >
-              <input
-                className={inputCls}
-                value={form.ad}
+            <AlanSarmal etiket={t("tesisAdiOpsiyonel")} ipucu={t("tesisAdiBosIpucu")}>
+              {(b) => (
+                <Alan {...b}
+                                value={form.ad}
                 onChange={(e) => setForm({ ...form, ad: e.target.value })}
                 minLength={2}
                 placeholder={t("tesisAdiOrnek")}
               />
-            </Field>
-            <Field
-              label={t("tesisYonetimMaili")}
-              hint={t("tesisYonetimMailiIpucu")}
-            >
-              <input
+              )}
+            </AlanSarmal>
+            <AlanSarmal etiket={t("tesisYonetimMaili")} ipucu={t("tesisYonetimMailiIpucu")}>
+              {(b) => (
+                <Alan {...b}
                 type="email"
-                className={inputCls}
-                value={form.yonetim_email}
+                                value={form.yonetim_email}
                 onChange={(e) => setForm({ ...form, yonetim_email: e.target.value })}
                 placeholder={t("tesisYonetimMailiOrnek")}
               />
-            </Field>
+              )}
+            </AlanSarmal>
           </div>
 
           <div className="space-y-4">
@@ -220,7 +314,7 @@ export default function TenantsPage() {
                         : t("tesisYoneticiSira", { n: i + 1 })}
                     </h3>
                     {i === 0 && (
-                      <p className="text-xs text-metin-muted">{t("tesisIlkGirisAdlandirir")}</p>
+                      <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>{t("tesisIlkGirisAdlandirir")}</p>
                     )}
                   </div>
                   {i > 0 && (
@@ -239,133 +333,78 @@ export default function TenantsPage() {
                   )}
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <Field label={t("tesisAdSoyad")}>
-                    <input
-                      className={inputCls}
-                      value={y.ad}
+                  <AlanSarmal etiket={t("tesisAdSoyad")}>
+  {(b) => (
+    <Alan {...b} value={y.ad}
                       onChange={(e) => setYonetici(i, { ad: e.target.value })}
                       required
-                      minLength={2}
-                    />
-                  </Field>
-                  <Field
-                    label={t("kullaniciTelefon")}
-                    hint={t("tesisTelefonIpucu")}
-                  >
-                    <input
-                      className={inputCls}
-                      value={telefonGiris(y.phone)}
+                      minLength={2} />
+  )}
+</AlanSarmal>
+                  <AlanSarmal etiket={t("kullaniciTelefon")} ipucu={t("tesisTelefonIpucu")}>
+              {(b) => (
+                <Alan {...b}
+                                      value={telefonGiris(y.phone)}
                       // (P123) TEK bicimlendirici — bkz. lib/telefon.ts.
                       onChange={(e) => setYonetici(i, { phone: telefonGiris(e.target.value) })}
                       placeholder={t("kullaniciTelefonOrnek")}
                       required
-                    />
-                  </Field>
-                  <Field
-                    label={t("tesisParolaOpsiyonel")}
-                    hint={t("kullaniciParolaBosYeni")}
+              />
+              )}
+            </AlanSarmal>
+                  <AlanSarmal
+                    etiket={t("tesisParolaOpsiyonel")}
+                    ipucu={t("kullaniciParolaBosYeni")}
                   >
-                    <ParolaAlani
-                      className={inputCls}
-                      value={y.password}
-                      onChange={(v) => setYonetici(i, { password: v })}
-                      minLength={8}
-                      placeholder={t("kullaniciParolaBosKisa")}
-                    />
-                  </Field>
+                    {(b) => (
+                      <ParolaAlani
+                        // Etiket kimligi BAGLANMALI: `AlanSarmal` `htmlFor`
+                        // ile bu kimlige isaret ediyor.
+                        id={b.id}
+                        value={y.password}
+                        onChange={(v) => setYonetici(i, { password: v })}
+                        minLength={8}
+                        placeholder={t("kullaniciParolaBosKisa")}
+                      />
+                    )}
+                  </AlanSarmal>
                 </div>
               </div>
             ))}
-            <button
+            <Dugme
               type="button"
-              className={btnGhost}
+              boy="kucuk"
               onClick={() =>
                 setForm({ ...form, yoneticiler: [...form.yoneticiler, bosYonetici()] })
               }
             >
               {t("tesisYoneticiEkle")}
-            </button>
+            </Dugme>
           </div>
 
-          <ErrorBox message={formErr} />
+          <HataDurumu mesaj={formErr} />
           <div className="flex gap-2">
-            <button type="submit" className={btnPrimary} disabled={saving}>
+            <Dugme type="submit" tur="birincil" disabled={saving}>
               {saving ? t("tesisOlusturuluyor") : t("tesisOlustur")}
-            </button>
-            <button type="button" className={btnGhost} onClick={() => setOpen(false)}>
+            </Dugme>
+            <Dugme type="button" boy="kucuk" onClick={() => setOpen(false)}>
               {t("ortakIptal")}
-            </button>
+            </Dugme>
           </div>
-        </motion.form>
+          </form>
+        </Kart>
       )}
 
-      <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
-        <div className="odak-ic overflow-x-auto" tabIndex={0}>
-          <Tablo>
-            <TabloBasligi>
-                <Th>{t("ayarTesisAdi")}</Th>
-                <Th>{t("tesisKayitKodu")}</Th>
-                <Th>{t("tesisKurulum")}</Th>
-                <Th>{t("tesisOlusturulma")}</Th>
-                <Th />
-              </TabloBasligi>
-            <tbody>
-              {(data?.items ?? []).map((tesis) => (
-                <Tr key={tesis.id}>
-                  <Td>
-                    <Link href={`/tenants/${tesis.id}`} className="font-medium text-ink hover:underline">
-                      {tesis.ad}
-                    </Link>
-                  </Td>
-                  {/* (P155 §6) Yoneticinin ILETECEGI kod birincil; teknik
-                      UUID `title` icinde erisilebilir kalir. */}
-                  <Td>
-                    {tesis.kayit_kodu ? (
-                      <KopyaKod deger={tesis.kayit_kodu} etiket={t("tesisKayitKodu")} />
-                    ) : (
-                      <span className="text-xs text-metin-muted" title={tesis.id}>
-                        —
-                      </span>
-                    )}
-                  </Td>
-                  <Td>
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                        tesis.kurulum_tamamlandi
-                          ? "bg-emerald-100 text-emerald-800"
-                          : "bg-amber-100 text-amber-800"
-                      }`}
-                    >
-                      {tesis.kurulum_tamamlandi ? t("tesisTamamlandi") : t("tesisBekliyor")}
-                    </span>
-                  </Td>
-                  <Td className="text-metin-body">{fmtDate(tesis.created_at)}</Td>
-                  <Td hizala="end">
-                    <div className="flex justify-end gap-2">
-                      <Link href={`/tenants/${tesis.id}`} className={btnGhost}>
-                        {t("tesisYonet")}
-                      </Link>
-                      <button
-                        className={btnDanger}
-                        onClick={() => removeTenant(tesis)}
-                      >
-                        {t("ortakSil")}
-                      </button>
-                    </div>
-                  </Td>
-                </Tr>
-              ))}
-              {data && data.items.length === 0 && (
-                <tr>
-                  <Td colSpan={5}>
-                    <EmptyState title={t("tesisYok")} description={t("tesisYokAlt")} />
-                  </Td>
-                </tr>
-              )}
-            </tbody>
-          </Tablo>
-        </div>
-      </div>
+      <VeriTablosu<TenantRow>
+        kolonlar={kolonlar}
+        satirlar={data?.items ?? []}
+        satirId={(x) => x.id}
+        hata={error ? error.message : null}
+        onTekrar={() => void mutate()}
+        yukleniyor={isLoading && !data}
+        bosBaslik={t("tesisYok")}
+        bosAciklama={t("tesisYokAlt")}
+      />
     </div>
   );
 }
