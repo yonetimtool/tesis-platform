@@ -62,8 +62,13 @@ export interface OkutmaIsareti {
   id: string;
   lat: number;
   lon: number;
-  /** Ipucu metni: kim, ne zaman, noktaya uzaklik. */
+  /** Ipucu metni: kim, ne zaman, noktaya uzaklik, esik sonucu. */
   ipucu: string;
+  /**
+   * Isaretci tonu — ESIK SONUCUNDAN gelir (icinde/disinda/belirsiz).
+   * Verilmezse notr okutma tonu kullanilir.
+   */
+  ton?: string;
   /** Baglandigi noktanin konumu — varsa aralarina cizgi cizilir. */
   nokta?: { lat: number; lon: number };
 }
@@ -175,7 +180,7 @@ export default function KonumHaritasi({
                   [o.nokta.lat, o.nokta.lon],
                 ]}
                 pathOptions={{
-                  color: OKUTMA_TONU,
+                  color: o.ton ?? OKUTMA_TONU,
                   weight: 2,
                   dashArray: BAG_DESENI,
                   opacity: 0.8,
@@ -188,7 +193,7 @@ export default function KonumHaritasi({
               // ayirt edilsin.
               radius={6}
               pathOptions={{
-                color: OKUTMA_TONU,
+                color: o.ton ?? OKUTMA_TONU,
                 weight: 3,
                 fillColor: HALE,
                 fillOpacity: 1,

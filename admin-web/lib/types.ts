@@ -539,6 +539,8 @@ export interface TenantSettings {
   tur_baslangic_foto_zorunlu?: boolean;
   guvenlik_modu?: "yonetim_ici" | "dis_sirket";
   gurultu_esigi?: number;
+  /** (P160) Okutmanin NFC noktasina azami uzakligi (metre). Varsayilan 50. */
+  okutma_mesafe_esigi_m?: number;
   gurultu_uyari_metni?: string | null;
   gurultu_integration_id?: string | null;
   // (P132) Tesis konumu — panodaki harita bunlari kullanir. UCU DE

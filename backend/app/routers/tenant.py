@@ -50,6 +50,9 @@ _YONETICI_YAZABILIR = {
     # (P37) Gurultu caydiricisi SITE YONETIMININ isidir: esigi ve anons
     # metnini komsuluk iliskisini bilen kisi ayarlar.
     "gurultu_esigi", "gurultu_uyari_metni", "gurultu_integration_id",
+    # (P160) Okutma mesafe esigi SAHA ISLETMESIDIR: noktalari yerlestiren
+    # ve site duzenini bilen kisi ayarlamali.
+    "okutma_mesafe_esigi_m",
 }
 
 
@@ -71,6 +74,7 @@ def _to_settings(t: Tenant) -> TenantSettings:
         tur_baslangic_foto_zorunlu=t.tur_baslangic_foto_zorunlu,
         guvenlik_modu=t.guvenlik_modu,
         gurultu_esigi=t.gurultu_esigi,
+        okutma_mesafe_esigi_m=t.okutma_mesafe_esigi_m,
         gurultu_uyari_metni=t.gurultu_uyari_metni,
         gurultu_integration_id=t.gurultu_integration_id,
     )

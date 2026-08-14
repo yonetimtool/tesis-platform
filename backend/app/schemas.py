@@ -2373,6 +2373,11 @@ class TenantSettings(BaseModel):
     guvenlik_modu: GuvenlikModu = "yonetim_ici"
     # (P37) Gurultu caydiricisi. `gurultu_integration_id` NULL = MANUEL MOD.
     gurultu_esigi: int = 5
+    #: (P160) Okutmanin NFC noktasina azami uzakligi (metre). Panel
+    #: haritasi bunun uzerindeki okutmayi "esik disi" isaretler. Sabit
+    #: DEGIL: bir sitede noktalar 10 m araliklarla, digerinde bloklar
+    #: arasi 200 m — ayni sayi ikisinde de anlamli olamaz.
+    okutma_mesafe_esigi_m: int = 50
     gurultu_uyari_metni: str | None = None
     gurultu_integration_id: uuid.UUID | None = None
     # (P34) Tur gecikme alarmi. Tolerans TENANT AYARIDIR: 10 dk bir sitede
@@ -2412,6 +2417,10 @@ class TenantSettingsUpdate(BaseModel):
     #: (P37) Sinir DB CHECK'iyle ayni. `gurultu_uyari_metni: null` gonderimi
     #: metni VARSAYILANA dondurur (silmek degil, varsayilana donmek).
     gurultu_esigi: int | None = Field(None, ge=1, le=50)
+    #: (P160) Semadaki CHECK ile AYNI aralik — iki yerde iki
+    #: farkli sinir, API'den gecen degerin veritabaninda
+    #: reddedilmesi demekti.
+    okutma_mesafe_esigi_m: int | None = Field(None, ge=1, le=5000)
     gurultu_uyari_metni: str | None = Field(None, max_length=1000)
     gurultu_integration_id: uuid.UUID | None = None
 

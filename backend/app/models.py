@@ -355,6 +355,13 @@ class Tenant(Base):
     gurultu_esigi: Mapped[int] = mapped_column(
         Integer, nullable=False, server_default=text("5")
     )
+    #: (P160) Okutmanin NFC noktasina azami uzakligi (metre). Bunun
+    #: uzerindeki okutma panelde "esik disi" isaretlenir. Sabit degil
+    #: cunku site olcekleri cok farkli: bir sitede noktalar 10 m
+    #: araliklarla, digerinde bloklar arasi 200 m.
+    okutma_mesafe_esigi_m: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default=text("50")
+    )
     #: (P37) NULL = varsayilan metin. Bos metin de varsayilana duser
     #: (iceriksiz anons kullanicinin niyeti olamaz).
     gurultu_uyari_metni: Mapped[str | None] = mapped_column(Text, nullable=True)

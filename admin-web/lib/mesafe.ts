@@ -1,21 +1,30 @@
 /**
- * (P160) IKI KOORDINAT ARASI MESAFE — metre.
+ * (P160) IKI KOORDINAT ARASI MESAFE + ESIK KARARI.
  *
  * =========================================================================
- * BU BIR OLCUMDUR, BIR YARGI DEGIL
+ * ESIK ARTIK VAR — VE BIR AYARDIR
  * =========================================================================
- * Okutma haritasi "bu okutma noktadan N metre uzakta yapilmis" diyor ve
- * ORADA DURUYOR. "Supheli", "uzak", "kural disi" DEMIYOR — cunku sistemde
- * boyle bir esik YOK ve uydurmak bir URUN KARARI olurdu.
+ * Onceki turda burada "sistemde esik YOK, uydurmak urun karari olurdu"
+ * yaziyordu. Karar ALINDI (Kerem): varsayilan 50 m, `tenant`ta
+ * `okutma_mesafe_esigi_m` olarak tutulur ve Ayarlar'dan degistirilir.
+ * Esik SABIT DEGIL cunku site olcekleri cok farkli: bir sitede noktalar
+ * 10 m araliklarla, digerinde bloklar arasi 200 m.
+ *
+ * =========================================================================
+ * "BELIRSIZ" UCUNCU BIR SONUCTUR — VE ZORUNLUDUR
+ * =========================================================================
+ * GPS dogrulugu esikten BUYUKSE karsilastirma KARAR VEREMEZ: ±100 m
+ * hatayla olculmus bir mesafenin 50 m esigini gecip gecmedigi
+ * bilinemez. Bunu "esik disi" saymak, olcum hatasini ihlal diye
+ * raporlamakti — yani birini yanlis suclamak.
+ *
+ * Bu bir URUN KARARI DEGIL, ARITMETIK: hata payi esigin tamamindan
+ * buyukse kiyas anlamsizdir. O yuzden panel ucuncu bir sonuc doner ve
+ * mesafeyi yine yazar; yargiyi kullaniciya birakir.
  *
  * Sunucunun kendi gerekcesi de bu yonde (`routers/scans.py`): NTAG424 SDM
  * etiketin FIZIKSEL varligini kriptografik olarak kanitliyor; GPS "konumu
- * ekler", tek basina bir kanit degil. Yani mesafeyi alarma cevirmek,
- * sunucunun kurmadigi bir kurali panelde icat etmekti.
- *
- * MESAFE YANINDA DOGRULUK DA YAZILIR: ±50 m dogrulukla olculmus 30 m'lik
- * bir sapma HICBIR SEY soylemez. Ikisini birlikte gostermek, sayiyi
- * yanlis okumayi engelleyen tek yol.
+ * ekler", tek basina bir kanit degil.
  *
  * =========================================================================
  * HAVERSINE — neden bu
@@ -43,4 +52,22 @@ export function mesafeMetre(
     Math.sin(dLat / 2) ** 2 +
     Math.cos(derece(aLat)) * Math.cos(derece(bLat)) * Math.sin(dLon / 2) ** 2;
   return Math.round(2 * DUNYA_YARICAPI * Math.asin(Math.min(1, Math.sqrt(h))));
+}
+
+/** Bir okutmanin esige gore durumu. */
+export type EsikSonucu = "icinde" | "disinda" | "belirsiz";
+
+/**
+ * Mesafeyi esikle karsilastirir.
+ *
+ * `dogruluk` bilinmiyorsa (eski istemci) karsilastirma yapilir — elde
+ * baska bir sey yok ve "belirsiz" demek her okutmayi belirsiz yapardi.
+ */
+export function esikSonucu(
+  mesafe: number,
+  esik: number,
+  dogruluk: number | null | undefined,
+): EsikSonucu {
+  if (dogruluk != null && dogruluk > esik) return "belirsiz";
+  return mesafe > esik ? "disinda" : "icinde";
 }

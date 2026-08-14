@@ -214,22 +214,53 @@ beş değerli ve dördü "konum yok" demek (`izin_yok`, `servis_kapali`,
 NULL'a indirmemeyi açıkça savunuyor. Haritaya konamayan okutmaların
 sayısı ekranda yazılır.
 
-#### Mesafe bir ÖLÇÜMDÜR, bir YARGI değil
+#### Eşik: ürün kararı olarak alındı — ve bir AYAR
 
-İpucunda *"Noktaya uzaklık: 50 m · GPS doğruluğu ±12 m"* yazıyor ve
-**orada duruyor**. "Şüpheli", "uzak", "kural dışı" **demiyor** — çünkü:
+Önceki turda burada *"sistemde eşik yok, uydurmak ürün kararı olurdu"*
+yazıyordu. **Karar alındı (Kerem): varsayılan 50 m, tesis bazında
+değiştirilebilir.**
 
-* Sistemde böyle bir **eşik yok**; uydurmak bir ürün kararı olurdu.
-* Sunucunun kendi gerekçesi (`routers/scans.py`) bu yönde: NTAG424 SDM
-  etiketin fiziksel varlığını **kriptografik olarak** kanıtlıyor; GPS
-  "konumu ekler", tek başına bir kanıt değil.
-* **Doğruluk da yazılıyor**, çünkü ±50 m doğrulukla ölçülmüş 30 m'lik bir
-  sapma hiçbir şey söylemez. İkisini birlikte göstermek, sayıyı yanlış
-  okumayı engelleyen tek yol.
+Eşik `tenant.okutma_mesafe_esigi_m` kolonunda (göç `0052`), Ayarlar →
+Operasyon altında yönetici tarafından değiştirilir. **Sabit kodlamak
+yanlış olurdu:** bir sitede noktalar bahçe içinde 10 m aralıklarla
+dizilidir, diğerinde bloklar arası 200 m vardır — aynı sayı ikisinde de
+anlamlı olamaz. `localStorage` da yanlış olurdu: eşik bir **tesis
+politikası**, kişisel tercih değil; iki yönetici farklı "eşik dışı"
+listesi görürdü.
 
-Bir test bunu kilitliyor: `haritaOkutma*` sözlük metinlerinde
-"şüpheli/ihlal/kural dışı" geçemez. Bir gün eşik konacaksa **önce ürün
-kararı olarak alınmalı**, sessizce metne sızmamalı.
+Sınırlar **iki yerde de aynı**: şema `CHECK BETWEEN 1 AND 5000`, API
+`Field(ge=1, le=5000)`. Farklı olsalardı API'den geçen bir değer
+veritabanında reddedilir ve istek 500 ile düşerdi — bir test bunu
+doğrudan veritabanına sorarak kilitliyor.
+
+#### "Belirsiz" üçüncü bir sonuçtur — ve zorunludur
+
+GPS doğruluğu eşikten **büyükse** karşılaştırma karar veremez: ±100 m
+hatayla ölçülmüş bir mesafenin 50 m eşiğini geçip geçmediği bilinemez.
+Bunu "eşik dışı" saymak, **ölçüm hatasını ihlal diye raporlamaktı** —
+yani birini yanlış suçlamak.
+
+Bu bir ürün kararı değil, **aritmetik**: hata payı eşiğin tamamından
+büyükse kıyas anlamsızdır. Panel üçüncü bir sonuç döner (`belirsiz`),
+mesafeyi yine yazar ve yargıyı kullanıcıya bırakır. Doğruluk alanı hiç
+gelmiyorsa (eski istemci) karşılaştırma yapılır — elde başka bir şey yok
+ve her okutmayı belirsiz saymak eşiği işe yaramaz kılardı.
+
+**Dil hâlâ ölçüm dili:** "eşik dışı" bir **gözlem** bildirir, "şüpheli"
+ya da "ihlal" bir **suç atfeder**. 60 m uzakta okutma yapmış bir
+görevliyi panelin suçlaması, ölçümün taşıyabileceğinden fazlasını iddia
+etmekti. Bir test sözlükte bu kelimelerin geçmemesini kilitliyor.
+
+#### Eşik BİLDİRİM ÜRETMEZ — bilinmesi gereken sınır
+
+Ölçüldü: sunucu **hiçbir yerde mesafe hesaplamıyor**. Alarm üretimi
+(`kacirilan_tur`, `eksik_checkpoint`, `gecikmis_okutma`) yalnız *eksik* ve
+*geciken* okutmayla ilgili; mesafeyle değil.
+
+Yani eşiği değiştirmek **haritanın neyi işaretlediğini** değiştirir ama
+bildirim/alarm üretmez. Yönetici "eşiği koydum, artık uyarı alırım"
+beklerse yanılır. Eşiğin alarma dönüşmesi ayrı bir iş: alarm üretimi,
+bildirim ve worker tarafı — bu turda **istenmedi ve yapılmadı**.
 
 ## 6. PERFORMANS BÜTÇESİ (her yeni sahne bunu tutmalı)
 

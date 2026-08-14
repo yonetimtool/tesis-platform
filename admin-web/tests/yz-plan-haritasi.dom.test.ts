@@ -374,17 +374,135 @@ describe("(P160) mesafe OLCUMDUR, yargi DEGIL", () => {
     expect(mesafeMetre(41.0082, 28.9784, 41.0082, 28.9784)).toBe(0);
   });
 
-  it("sozlukte 'supheli'/'uzak' gibi bir YARGI metni YOK", async () => {
-    // Sistemde mesafe esigi yok; panel de uydurmamali. Bu test, bir gun
-    // birinin "50 m'den uzak = ihlal" diye bir cumle eklemesini
-    // GORUNUR kilar — eklenecekse once esik urun karari olarak alinmali.
+  it("esik metni SUCLAMA degil OLCUM dili kullanir", async () => {
+    // Esik artik VAR (urun karari, tesis ayari). Ama metin hala bir
+    // GOZLEM bildirir ("esik disi"), bir SUC atfetmez ("ihlal",
+    // "supheli"): 60 m uzakta okutma yapmis bir gorevliyi panelin
+    // suclamasi, olcumun tasiyabileceginden fazlasini iddia etmekti.
     const { SOZLUKLER } = await import("@/lib/i18n/sozluk");
-    const okutmaMetinleri = Object.entries(SOZLUKLER.tr)
-      .filter(([k]) => k.startsWith("haritaOkutma"))
+    const metinler = Object.entries(SOZLUKLER.tr)
+      .filter(
+        ([k]) =>
+          k.startsWith("haritaOkutma") ||
+          k.startsWith("haritaEsik") ||
+          k.startsWith("haritaOlcum"),
+      )
       .map(([, v]) => String(v));
-    expect(okutmaMetinleri.length).toBeGreaterThan(0);
-    for (const metin of okutmaMetinleri) {
-      expect(metin).not.toMatch(/şüpheli|ihlal|uzakta yapıl|kural dışı/i);
+    expect(metinler.length).toBeGreaterThan(0);
+    for (const metin of metinler) {
+      expect(metin).not.toMatch(/şüpheli|ihlal|kural dışı|suç/i);
     }
+  });
+});
+
+/* ==================================================================== */
+/* ESIK — urun karari, tesis ayari                                      */
+/* ==================================================================== */
+
+describe("(P160) esik karari — 'belirsiz' UCUNCU sonuctur", () => {
+  it("esigin ALTINDA -> icinde", async () => {
+    const { esikSonucu } = await import("@/lib/mesafe");
+    expect(esikSonucu(30, 50, 10)).toBe("icinde");
+  });
+
+  it("esigin USTUNDE -> disinda", async () => {
+    const { esikSonucu } = await import("@/lib/mesafe");
+    expect(esikSonucu(80, 50, 10)).toBe("disinda");
+  });
+
+  it("TAM esikte -> icinde (sinir DAHIL)", async () => {
+    const { esikSonucu } = await import("@/lib/mesafe");
+    expect(esikSonucu(50, 50, 10)).toBe("icinde");
+  });
+
+  it("GPS HATASI ESIKTEN BUYUKSE -> belirsiz, 'disinda' DEGIL", async () => {
+    // EN ONEMLI KURAL: ±100 m hatayla olculmus 80 m'lik bir mesafenin
+    // 50 m esigini gecip gecmedigi BILINEMEZ. Bunu "esik disi" saymak,
+    // olcum hatasini ihlal diye raporlamak — yani birini yanlis
+    // suclamakti.
+    const { esikSonucu } = await import("@/lib/mesafe");
+    expect(esikSonucu(80, 50, 100)).toBe("belirsiz");
+    // Mesafe esigin altinda olsa bile karar VERILEMEZ.
+    expect(esikSonucu(10, 50, 100)).toBe("belirsiz");
+  });
+
+  it("DOGRULUK BILINMIYORSA karsilastirma YAPILIR", async () => {
+    // Eski istemci alani gondermiyor. Her okutmayi "belirsiz" saymak,
+    // esigi tamamen ise yaramaz kilardi.
+    const { esikSonucu } = await import("@/lib/mesafe");
+    expect(esikSonucu(80, 50, null)).toBe("disinda");
+    expect(esikSonucu(30, 50, undefined)).toBe("icinde");
+  });
+});
+
+describe("(P160) esik AYARDAN gelir, sabit degil", () => {
+  const NOKTA = {
+    id: "c1",
+    ad: "A blok giris",
+    nfc_tag_uid: "01",
+    gps_lat: 41.0082,
+    gps_lng: 28.9784,
+    aktif: true,
+  };
+  /** ~50 m kuzeyde, ±5 m dogrulukla. */
+  const OKUTMA = {
+    id: "s1",
+    checkpoint_id: "c1",
+    checkpoint_ad: "A blok giris",
+    guard_id: "g1",
+    guard_ad: "Ali Veli",
+    okutma_zamani: "2026-08-14T23:10:00Z",
+    gps_lat: 41.00865,
+    gps_lng: 28.9784,
+    konum_durumu: "var",
+    gps_dogruluk_m: 5,
+  };
+
+  function esikSahtele(esik: number | undefined) {
+    globalThis.fetch = (async (girdi: RequestInfo | URL) => {
+      const url = String(girdi);
+      const yanit = (govde: unknown) =>
+        ({ ok: true, status: 200, json: async () => govde }) as Response;
+      if (url.includes("/api/tenant/settings")) {
+        return yanit({
+          tenant_id: "t1",
+          ad: "Demo",
+          slug: "demo",
+          timezone: "Europe/Istanbul",
+          kurulum_tamamlandi: true,
+          okutma_mesafe_esigi_m: esik,
+        });
+      }
+      if (url.includes("/api/scans")) {
+        return yanit({ tarih: "2026-08-14", konumsuz_sayisi: 0, items: [OKUTMA] });
+      }
+      if (url.includes("/api/dashboard/live")) {
+        return yanit({ generated_at: "x", aktif_turlar: [], alarm_gruplari: [] });
+      }
+      return yanit({ meta: { limit: 25, offset: 0, total: 1 }, items: [NOKTA] });
+    }) as typeof fetch;
+  }
+
+  it("DAR esikte (10 m) ayni okutma ESIK DISI sayilir", async () => {
+    esikSahtele(10);
+    ciz(CheckpointsPage);
+    await waitFor(() =>
+      expect(screen.getByText(/1 okutma eşiğin \(10 m\) dışında/)).toBeInTheDocument(),
+    );
+  });
+
+  it("GENIS esikte (200 m) ayni okutma ESIK ICINDE — uyari YOK", async () => {
+    esikSahtele(200);
+    ciz(CheckpointsPage);
+    await waitFor(() => expect(screen.getByText("A blok giris")).toBeInTheDocument());
+    expect(screen.queryByText(/eşiğin .* dışında/)).toBeNull();
+  });
+
+  it("AYAR HENUZ GELMEMISKEN semadaki varsayilan (50) kullanilir", async () => {
+    // ~50 m'lik okutma, 50 m esikte SINIR DAHIL -> icinde.
+    esikSahtele(undefined);
+    ciz(CheckpointsPage);
+    await waitFor(() => expect(screen.getByText("A blok giris")).toBeInTheDocument());
+    expect(screen.queryByText(/eşiğin .* dışında/)).toBeNull();
   });
 });

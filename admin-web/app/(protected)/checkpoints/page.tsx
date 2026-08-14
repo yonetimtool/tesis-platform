@@ -20,19 +20,19 @@ import { RotaSahnesiYukleyici } from "@/components/3d/sahne-yukleyici";
 import { KonumHaritasiYukleyici } from "@/components/harita/harita-yukleyici";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
-import { jsonFetcher } from "@/lib/fetcher";
+import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
 import type {
   AlarmGrubu,
   Checkpoint,
   CheckpointList,
   DashboardLive,
   OkutmaRaporu,
+  TenantSettings,
 } from "@/lib/types";
 import { sayiCoz } from "@/lib/sayi";
 import { useT } from "@/lib/i18n/kullan";
 import { alarmHaritasi, noktaDurumu } from "@/lib/rota-durumu";
-import { mesafeMetre } from "@/lib/mesafe";
-import { formatDateTime } from "@/lib/fetcher";
+import { esikSonucu, mesafeMetre } from "@/lib/mesafe";
 
 // Mobil POC ile tutarli: buyuk harf hex, ayracsiz.
 const NFC_PLACEHOLDER = "04A1B2C3D4";
@@ -66,6 +66,14 @@ const GORUNUM_HARITA = "harita" as const;
 const GORUNUM_AKIS = "akis" as const;
 // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
 const KONUM_VAR = "var" as const;
+/** Ayar ucu gelene kadar kullanilan deger — semadaki DEFAULT ile ayni. */
+const VARSAYILAN_ESIK = 50;
+/** Esik sonucu -> isaretci tonu. */
+const ESIK_TONU = {
+  icinde: "var(--yz-accent)",
+  disinda: "var(--yz-danger-edge)",
+  belirsiz: "var(--yz-text-3)",
+} as const;
 const TUR_BIRINCIL = "birincil" as const;
 const TUR_IKINCIL = "ikincil" as const;
 
@@ -104,6 +112,11 @@ export default function CheckpointsPage() {
   // gerekmiyor.
   const { data: okutmalar } = useSWR<OkutmaRaporu>("/api/scans", jsonFetcher);
   const { data: pano } = useSWR<DashboardLive>("/api/dashboard/live", jsonFetcher);
+  // (P160) ESIK TESIS AYARIDIR. Sunucu her zaman bir deger doner
+  // (`NOT NULL DEFAULT 50`); `?? 50` yalniz ayar ucu HENUZ gelmemisken
+  // ilk cizim icin — sabit bir kural degil.
+  const { data: tesis } = useSWR<TenantSettings>("/api/tenant/settings", jsonFetcher);
+  const esik = tesis?.okutma_mesafe_esigi_m ?? VARSAYILAN_ESIK;
 
   const [gorunum, setGorunum] = useState<string>(GORUNUM_HARITA);
   // OKUTMA KATMANI VARSAYILAN ACIK: kullanicinin haritayi actigi an
@@ -267,12 +280,32 @@ export default function CheckpointsPage() {
                 dogruluk: Math.round(o.gps_dogruluk_m),
               })
             : t("haritaOkutmaUzaklikSade", { mesafe: m });
-        return { id: o.id, lat, lon, ipucu: `${bilgi} · ${uzaklik}`, nokta };
+        // ESIK SONUCU: icinde / disinda / BELIRSIZ. Ucuncusu zorunlu —
+        // GPS hatasi esikten buyukse kiyas KARAR VEREMEZ ve olcum
+        // hatasini ihlal diye raporlamak birini yanlis suclamakti.
+        const sonuc = esikSonucu(m, esik, o.gps_dogruluk_m);
+        const not =
+          sonuc === "disinda"
+            ? ` · ${t("haritaEsikDisi", { esik })}`
+            : sonuc === "belirsiz"
+              ? ` · ${t("haritaOlcumBelirsiz")}`
+              : "";
+        return {
+          id: o.id,
+          lat,
+          lon,
+          ipucu: `${bilgi} · ${uzaklik}${not}`,
+          ton: ESIK_TONU[sonuc],
+          nokta,
+          sonuc,
+        };
       });
-  }, [data, okutmalar, t]);
+  }, [data, okutmalar, t, esik]);
   /** Konumu OLMAYAN okutma sayisi — sunucunun P34 kavramiyla ayni. */
   const konumsuzOkutma =
     (okutmalar?.items ?? []).length - okutmaIsaretleri.length;
+  /** Esigin DISINDA olcumlenen okutma sayisi (belirsizler HARIC). */
+  const esikDisi = okutmaIsaretleri.filter((o) => o.sonuc === "disinda").length;
 
   const kolonlar: Kolon<Checkpoint>[] = useMemo(
     () => [
@@ -471,6 +504,15 @@ export default function CheckpointsPage() {
                       okutmalar={okutmaKatmani ? okutmaIsaretleri : []}
                     />
                     {/* SESSIZ EKSIK YOK: konumu olmayan okutma sayilir. */}
+                    {/* ESIK DISI SAYISI — renk tek tasiyici degil. */}
+                    {okutmaKatmani && esikDisi > 0 && (
+                      <p
+                        role="status"
+                        style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-danger-ink)" }}
+                      >
+                        {t("haritaEsikDisiSayi", { sayi: esikDisi, esik })}
+                      </p>
+                    )}
                     {okutmaKatmani && konumsuzOkutma > 0 && (
                       <p
                         role="status"

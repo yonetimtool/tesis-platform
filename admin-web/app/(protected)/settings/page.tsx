@@ -88,6 +88,18 @@ const OPERASYON: Ayar[] = [
     ],
     adminOnly: true,
   },
+  // --- (P160) okutma mesafe esigi ---
+  {
+    anahtar: "okutma_mesafe_esigi_m",
+    etiket: "ayarOkutmaMesafe",
+    ipucu: "ayarOkutmaMesafeIpucu",
+    tip: "sayi",
+    // Sinirlar SUNUCUYLA AYNI (sema CHECK + API Field): burada dar bir
+    // aralik yazmak, sunucunun kabul ettigi bir degeri panelde
+    // reddetmek olurdu.
+    min: 1,
+    max: 5000,
+  },
   // --- P37 gurultu caydirici ---
   {
     anahtar: "gurultu_esigi",
