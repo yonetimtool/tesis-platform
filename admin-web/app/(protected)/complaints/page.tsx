@@ -3,9 +3,17 @@
 import { useState } from "react";
 import useSWR from "swr";
 
-import { EmptyState } from "@/components/EmptyState";
 import { Foto } from "@/components/Foto";
-import { ErrorBox, Pager, PageHeader, btnPrimary, btnGhost, btnDanger, cardCls, inputCls, Field } from "@/components/form";
+import { Pager } from "@/components/form";
+import {
+  AlanSarmal,
+  BosDurum,
+  CokSatir,
+  Dugme,
+  Kart,
+  HataDurumu,
+  IskeletMetin,
+} from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
@@ -13,6 +21,10 @@ import type { Complaint, ComplaintDurum, ComplaintList, ComplaintStatusHistory }
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 
+// UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
+const TUR_BIRINCIL = "birincil" as const;
+const TUR_IKINCIL = "ikincil" as const;
+const TUR_TEHLIKE = "tehlike" as const;
 const LIMIT = 20;
 
 // Durum rozetleri — mobil ile ayni wire kodu: acik=amber, is_emri=mavi,
@@ -78,50 +90,49 @@ export default function ComplaintsPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader
-        title={t("talepBaslik")}
-        action={
-          <div className="flex flex-wrap gap-1">
-            {FILTERS.map((f) => (
-              <button
-                key={f.value}
-                className={`rounded-lg px-3 py-1.5 text-sm transition ${
-                  durum === f.value
-                    ? "bg-ink text-white"
-                    : "text-metin-body hover:bg-slate-100"
-                }`}
-                onClick={() => {
-                  setDurum(f.value);
-                  setOffset(0);
-                }}
-              >
-                {t(f.anahtar)}
-              </button>
-            ))}
-          </div>
-        }
-      />
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+          {t("talepBaslik")}
+        </h1>
+        {/* (P160) `aria-pressed` EKLENDI: secili suzgec eskiden yalniz
+            RENKLE anlatiliyordu ve ekran okuyucu hangisinin acik oldugunu
+            SOYLEMIYORDU. */}
+        <div className="flex flex-wrap gap-1">
+          {FILTERS.map((f) => (
+            <Dugme
+              key={f.value}
+              boy="kucuk"
+              tur={durum === f.value ? TUR_BIRINCIL : TUR_IKINCIL}
+              aria-pressed={durum === f.value}
+              onClick={() => {
+                setDurum(f.value);
+                setOffset(0);
+              }}
+            >
+              {t(f.anahtar)}
+            </Dugme>
+          ))}
+        </div>
+      </div>
 
-      <p className="text-sm text-metin-muted">
+      <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
         {t("talepPanelNotu", { coz: t("talepCoz"), reddet: t("talepReddet") })}
       </p>
 
-      {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>}
+      {error && <HataDurumu mesaj={error.message} />}
+      {isLoading && !data && <IskeletMetin satir={3} />}
 
       <ul className="space-y-3">
         {(data?.items ?? []).map((c) => (
           <ComplaintCard key={c.id} complaint={c} onChanged={() => mutate()} />
         ))}
-        {data && data.items.length === 0 && (
-          <EmptyState
-            title={durum ? t("talepDurumdaYok") : t("talepYok")}
-            description={
-              durum
-                ? t("talepFiltreDegistir")
-                : t("talepYokAlt")
-            }
-          />
+        {data && data.items.length === 0 && !error && (
+          <Kart>
+            <BosDurum
+              baslik={durum ? t("talepDurumdaYok") : t("talepYok")}
+              aciklama={durum ? t("talepFiltreDegistir") : t("talepYokAlt")}
+            />
+          </Kart>
         )}
       </ul>
 
@@ -151,11 +162,11 @@ function ComplaintCard({
   const canAct = c.durum === "acik";
 
   return (
-    <li className={`${cardCls} p-5`}>
+    <li className="">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="font-medium">{c.baslik}</h3>
+            <h3 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{c.baslik}</h3>
             <DurumBadge durum={c.durum} />
             <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-metin-body">
               {c.kategori_ad ?? t("ortakDiger")}
@@ -207,10 +218,10 @@ function ComplaintCard({
 
         {canAct && !action && (
           <div className="flex shrink-0 flex-col gap-2">
-            <button className={btnPrimary} onClick={() => setAction("coz")}>{t("talepCoz")}</button>
-            <button className={btnDanger} onClick={() => setAction("reddet")}>
+            <Dugme tur="birincil" onClick={() => setAction("coz")}>{t("talepCoz")}</Dugme>
+            <Dugme tur="tehlike" boy="kucuk" onClick={() => setAction("reddet")}>
               {t("talepReddet")}
-            </button>
+            </Dugme>
           </div>
         )}
       </div>
@@ -247,8 +258,8 @@ function Timeline({ gecmis }: { gecmis: ComplaintStatusHistory[] }) {
               />
               <div className="min-w-0">
                 <div className="flex flex-wrap items-baseline gap-x-2">
-                  <span className="font-medium">{meta ? t(meta.anahtar) : g.durum}</span>
-                  <span className="text-xs text-metin-muted">
+                  <span style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{meta ? t(meta.anahtar) : g.durum}</span>
+                  <span style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
                     {ROLE_ANAHTAR[g.actor_role] ? t(ROLE_ANAHTAR[g.actor_role]) : g.actor_role} ·{" "}
                     {formatDateTime(g.created_at)}
                   </span>
@@ -312,35 +323,44 @@ function ActionForm({
   }
 
   return (
-    <form onSubmit={submit} className="mt-4 space-y-4 border-t border-yuzey-divider pt-4">
-      <Field
-        label={isReddet ? t("talepRedSebebi") : t("talepCozumNotu")}
-        hint={
-          isReddet
-            ? t("talepNotZorunlu")
-            : t("talepNotIstege")
-        }
+    <form
+      onSubmit={submit}
+      className="mt-4 space-y-4 pt-4"
+      style={{ borderTop: "1px solid var(--yz-border)" }}
+    >
+      <AlanSarmal
+        etiket={isReddet ? t("talepRedSebebi") : t("talepCozumNotu")}
+        ipucu={isReddet ? t("talepNotZorunlu") : t("talepNotIstege")}
+        zorunlu={isReddet}
       >
-        <textarea
-          className={`${inputCls} min-h-24`}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          maxLength={5000}
-          autoFocus
-        />
-      </Field>
-      <ErrorBox message={err} />
+        {(b) => (
+          <CokSatir
+            {...b}
+            rows={4}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            maxLength={5000}
+            autoFocus
+          />
+        )}
+      </AlanSarmal>
+      {err && (
+        <p role="alert" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-danger-ink)" }}>
+          {err}
+        </p>
+      )}
       <div className="flex gap-2">
-        <button
+        <Dugme
           type="submit"
-          className={`${isReddet ? btnDanger : btnPrimary} disabled:opacity-60`}
+          tur={isReddet ? TUR_TEHLIKE : TUR_BIRINCIL}
           disabled={submitDisabled}
+          yukleniyor={saving}
         >
           {saving ? t("destekGonderiliyor") : isReddet ? t("talepReddet") : t("talepCoz")}
-        </button>
-        <button type="button" className={btnGhost} onClick={onClose}>
+        </Dugme>
+        <Dugme type="button" boy="kucuk" onClick={onClose}>
           {t("ortakIptal")}
-        </button>
+        </Dugme>
       </div>
     </form>
   );

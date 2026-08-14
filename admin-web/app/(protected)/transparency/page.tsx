@@ -3,8 +3,13 @@
 import { useEffect, useState } from "react";
 import useSWR from "swr";
 
-import { EmptyState } from "@/components/EmptyState";
-import { ErrorBox, Field, PageHeader, inputCls } from "@/components/form";
+import {
+  BosDurum,
+  AlanSarmal,
+  HataDurumu,
+  IskeletMetin,
+  Secim,
+} from "@/components/ui";
 import { jsonFetcher } from "@/lib/fetcher";
 import { kurusToTL } from "@/lib/money";
 import type { TransparencyBoard, TransparencyList } from "@/lib/types";
@@ -55,30 +60,28 @@ export default function TransparencyPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader
-        title={t("seffafPano")}
-        subtitle={t("seffafAciklama")}
-      />
+      <div>
+        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+          {t("seffafPano")}
+        </h1>
+        <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>{t("seffafAciklama")}</p>
+      </div>
 
-      {list.error && <ErrorBox message={t("seffafAylarYuklenemedi")} />}
+      {list.error && <HataDurumu mesaj={t("seffafAylarYuklenemedi")} />}
       {list.isLoading && !list.data && (
-        <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>
+        <IskeletMetin satir={3} />
       )}
 
       {list.data && months.length === 0 && (
-        <EmptyState
-          title={t("seffafVeriYok")}
-          description={t("seffafVeriYokAlt")}
-        />
+        <BosDurum baslik={t("seffafVeriYok")} aciklama={t("seffafVeriYokAlt")} />
       )}
 
       {months.length > 0 && (
         <>
           <div className="w-full sm:w-64">
-            <Field label={t("ortakDonem")}>
-              <select
-                className={inputCls}
-                value={ay}
+            <AlanSarmal etiket={t("ortakDonem")}>
+  {(b) => (
+    <Secim {...b} value={ay}
                 onChange={(e) => setAy(e.target.value)}
               >
                 {months.map((m) => (
@@ -86,12 +89,12 @@ export default function TransparencyPage() {
                     {ayBaslik(m.ay, dil)}
                     {m.yayinlandi ? "" : ` • ${t("seffafTaslak")}`}
                   </option>
-                ))}
-              </select>
-            </Field>
+                ))}</Secim>
+  )}
+</AlanSarmal>
           </div>
 
-          {board.error && <ErrorBox message={t("seffafOzetYuklenemedi")} />}
+          {board.error && <HataDurumu mesaj={t("seffafOzetYuklenemedi")} />}
           {b && (
             <div className="grid gap-4 lg:grid-cols-2 [&>*]:min-w-0">
               {/* Özet */}
@@ -138,7 +141,7 @@ export default function TransparencyPage() {
               <div className="rounded-kart border kart-kenar bg-white p-5">
                 <h2 className="mb-3 font-medium">{t("seffafAidatToplama")}</h2>
                 {b.aidat.daire_orani_yuzde == null ? (
-                  <p className="text-sm text-metin-muted">{t("seffafTahakkukYok")}</p>
+                  <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>{t("seffafTahakkukYok")}</p>
                 ) : (
                   <>
                     <div className="mb-1 flex justify-between text-sm">
@@ -166,7 +169,7 @@ export default function TransparencyPage() {
               <div className="rounded-kart border kart-kenar bg-white p-5 lg:col-span-2">
                 <h2 className="mb-3 font-medium">{t("seffafGiderDagilimi")}</h2>
                 {b.gider_dagilimi.length === 0 ? (
-                  <p className="text-sm text-metin-muted">{t("seffafGiderYok")}</p>
+                  <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>{t("seffafGiderYok")}</p>
                 ) : (
                   <div className="space-y-3">
                     {b.gider_dagilimi.map((k) => (

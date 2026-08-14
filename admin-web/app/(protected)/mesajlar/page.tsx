@@ -1,22 +1,20 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import useSWR from "swr";
 
-import { EmptyState } from "@/components/EmptyState";
 import {
-  ErrorBox,
-  Field,
-  PageHeader,
-  btnDanger,
-  btnGhost,
-  btnPrimary,
-  inputCls,
-  panelCls,
-  panelMotion,
-} from "@/components/form";
-import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
+  Alan,
+  CokSatir,
+  Kart,
+  VeriTablosu,
+  type Kolon,
+  AlanSarmal,
+  BosDurum,
+  Dugme,
+  HataDurumu,
+  Secim,
+} from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
@@ -164,102 +162,162 @@ export default function MesajlarPage() {
     }
   }
 
+  const gecmisKolonlari: Kolon<Gecmis>[] = useMemo(
+    () => [
+      {
+        id: "tarih",
+        baslik: t("mesajTarih"),
+        gizlenebilir: false,
+        hucre: (g) => <span className="whitespace-nowrap">{formatDateTime(g.created_at)}</span>,
+      },
+      {
+        id: "kanal",
+        baslik: t("mesajKanal"),
+        hucre: (g) => t(`mesajKanal_${g.kanal}` as never),
+      },
+      { id: "hedef", baslik: t("mesajHedef"), hucre: (g) => g.hedef },
+      {
+        id: "durum",
+        baslik: t("mesajDurum"),
+        hucre: (g) => (
+          <>
+            {t(`mesajDurum_${g.durum}` as never)}
+            {/* SEBEP GORUNUR KALIR: "basarisiz" tek basina ne yapilacagini
+                soylemiyor; saglayici hatasi burada yaziyor. */}
+            {g.hata ? (
+              <span className="ms-1" style={{ color: "var(--yz-danger-ink)" }}>
+                · {g.hata}
+              </span>
+            ) : null}
+          </>
+        ),
+      },
+    ],
+    [t],
+  );
+
+  const sablonKolonlari: Kolon<Sablon>[] = useMemo(
+    () => [
+      {
+        id: "kanal",
+        baslik: t("mesajKanal"),
+        gizlenebilir: false,
+        hucre: (s) => t(`mesajKanal_${s.kanal}` as never),
+      },
+      { id: "ad", baslik: t("mesajAd"), hucre: (s) => s.ad },
+      {
+        id: "amac",
+        baslik: t("mesajAmac"),
+        // AMAC SABLONDA (P32): ayni sablonun bir gun pazarlama bir gun
+        // operasyonel gonderilmesi riza denetimini anlamsiz kilardi — bu
+        // yuzden gonderimde secilemez.
+        hucre: (s) => t(`mesajAmac_${s.amac}` as never),
+      },
+      {
+        id: "eylem",
+        baslik: "",
+        gizlenebilir: false,
+        hucre: (s) => (
+          <div className="flex justify-end">
+            <Dugme tur="tehlike" boy="kucuk" onClick={() => void sablonSil(s.id)}>
+              {t("ortakSil")}
+            </Dugme>
+          </div>
+        ),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [t],
+  );
+
   return (
     <div className="space-y-6">
-      <PageHeader title={t("mesajBaslik")} subtitle={t("mesajAlt")} />
+      <div>
+        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+          {t("mesajBaslik")}
+        </h1>
+        <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>{t("mesajAlt")}</p>
+      </div>
       {/* (P154 / Asama 7.4) Sablon yoksa gonderim YAPILAMAZ
           (`POST /mesajlar/gonder`, envanter §0.4). */}
       <BagimlilikUyarisi
         kod="mesajSablonu"
         eksik={(sablonlar?.items.length ?? 1) === 0}
       />
-      <ErrorBox message={hata ?? (sErr ? t("mesajSablonHata") : null)} />
+      <HataDurumu mesaj={hata ?? (sErr ? t("mesajSablonHata") : null)} />
 
       {/* ----------------------------- sablonlar --------------------------- */}
-      <motion.section {...panelMotion} className={panelCls}>
-        <h2 className="mb-3 text-sm font-semibold">{t("mesajSablonlar")}</h2>
-        {sablonlar && sablonlar.items.length === 0 ? (
-          <EmptyState title={t("mesajSablonYok")} description={t("mesajSablonYokAlt")} />
-        ) : null}
-        {sablonlar && sablonlar.items.length > 0 ? (
-          <div className="overflow-x-auto">
-            <Tablo>
-              <TabloBasligi zeminsiz>
-                  <Th sik>{t("mesajKanal")}</Th>
-                  <Th sik>{t("mesajAd")}</Th>
-                  <Th sik>{t("mesajAmac")}</Th>
-                  <Th sik />
-                </TabloBasligi>
-              <tbody>
-                {sablonlar.items.map((s) => (
-                  <tr key={s.id} className="border-t border-yuzey-divider dark:border-slate-800">
-                    <Td sik>{t(`mesajKanal_${s.kanal}` as never)}</Td>
-                    <Td sik>{s.ad}</Td>
-                    <Td sik>
-                      {/* AMAC SABLONDA (P32): ayni sablonun bir gun pazarlama
-                          bir gun operasyonel gonderilmesi riza denetimini
-                          anlamsiz kilardi — bu yuzden gonderimde secilemez. */}
-                      {t(`mesajAmac_${s.amac}` as never)}
-                    </Td>
-                    <Td sik hizala="end">
-                      <button className={btnDanger} onClick={() => sablonSil(s.id)}>
-                        {t("ortakSil")}
-                      </button>
-                    </Td>
-                  </tr>
-                ))}
-              </tbody>
-            </Tablo>
-          </div>
-        ) : null}
-      </motion.section>
+      <section className="space-y-3">
+        <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
+          {t("mesajSablonlar")}
+        </h2>
+        <VeriTablosu<Sablon>
+          kolonlar={sablonKolonlari}
+          satirlar={sablonlar?.items ?? []}
+          satirId={(s) => s.id}
+          hata={sErr ? t("mesajSablonHata") : null}
+          yukleniyor={!sablonlar && !sErr}
+          bosBaslik={t("mesajSablonYok")}
+          bosAciklama={t("mesajSablonYokAlt")}
+        />
+      </section>
 
       {/* ---------------------------- yeni sablon -------------------------- */}
-      <motion.section {...panelMotion} className={panelCls}>
-        <h2 className="mb-3 text-sm font-semibold">{t("mesajYeniSablon")}</h2>
+      <Kart>
+        <h2 className="mb-3" style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
+          {t("mesajYeniSablon")}
+        </h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Field label={t("mesajKanal")}>
-            <select className={inputCls} value={kanal} onChange={(e) => setKanal(e.target.value as Kanal)}>
+          <AlanSarmal etiket={t("mesajKanal")}>
+  {(b) => (
+    <Secim {...b} value={kanal} onChange={(e) => setKanal(e.target.value as Kanal)}>
               <option value="sms">{t("mesajKanal_sms")}</option>
-              <option value="eposta">{t("mesajKanal_eposta")}</option>
-            </select>
-          </Field>
-          <Field label={t("mesajAd")}>
-            <input className={inputCls} value={ad} onChange={(e) => setAd(e.target.value)} />
-          </Field>
-          <Field label={t("mesajAmac")}>
-            <select className={inputCls} value={amac} onChange={(e) => setAmac(e.target.value)}>
+              <option value="eposta">{t("mesajKanal_eposta")}</option></Secim>
+  )}
+</AlanSarmal>
+          <AlanSarmal etiket={t("mesajAd")}>
+  {(b) => (
+    <Alan {...b} value={ad} onChange={(e) => setAd(e.target.value)} />
+  )}
+</AlanSarmal>
+          <AlanSarmal etiket={t("mesajAmac")}>
+  {(b) => (
+    <Secim {...b} value={amac} onChange={(e) => setAmac(e.target.value)}>
               <option value="operasyonel">{t("mesajAmac_operasyonel")}</option>
-              <option value="pazarlama">{t("mesajAmac_pazarlama")}</option>
-            </select>
-          </Field>
+              <option value="pazarlama">{t("mesajAmac_pazarlama")}</option></Secim>
+  )}
+</AlanSarmal>
           {kanal === "eposta" ? (
-            <Field label={t("mesajKonu")}>
-              <input className={inputCls} value={konu} onChange={(e) => setKonu(e.target.value)} />
-            </Field>
+            <AlanSarmal etiket={t("mesajKonu")}>
+  {(b) => (
+    <Alan {...b} value={konu} onChange={(e) => setKonu(e.target.value)} />
+  )}
+</AlanSarmal>
           ) : null}
         </div>
-        <Field label={t("mesajGovde")}>
-          <textarea
-            className={`${inputCls} min-h-24`}
-            value={govde}
-            onChange={(e) => setGovde(e.target.value)}
-          />
-        </Field>
-        <p className="mt-1 text-xs text-metin-muted">{t("mesajEtiketIpucu")}</p>
-        <button className={`${btnPrimary} mt-3`} disabled={mesgul} onClick={sablonEkle}>
+        <AlanSarmal etiket={t("mesajGovde")}>
+          {(b) => (
+            <CokSatir
+              {...b}
+              rows={4}
+              value={govde}
+              onChange={(e) => setGovde(e.target.value)}
+            />
+          )}
+        </AlanSarmal>
+        <p className="mt-1" style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>{t("mesajEtiketIpucu")}</p>
+        <Dugme tur="birincil" disabled={mesgul} onClick={sablonEkle}>
           {t("mesajSablonKaydet")}
-        </button>
-      </motion.section>
+        </Dugme>
+      </Kart>
 
       {/* --------------------------- onizleme ------------------------------ */}
-      <motion.section {...panelMotion} className={panelCls}>
+      <Kart>
         <h2 className="mb-3 text-sm font-semibold">{t("mesajOnizleme")}</h2>
         <div className="flex flex-wrap items-end gap-3">
-          <Field label={t("mesajSablon")}>
-            <select
-              className={inputCls}
-              value={seciliId}
+          <AlanSarmal etiket={t("mesajSablon")}>
+  {(b) => (
+    <Secim {...b} value={seciliId}
               onChange={(e) => {
                 setSeciliId(e.target.value);
                 setOnizleme(null);
@@ -270,12 +328,12 @@ export default function MesajlarPage() {
                 <option key={s.id} value={s.id}>
                   {s.ad}
                 </option>
-              ))}
-            </select>
-          </Field>
-          <button className={btnGhost} disabled={mesgul || !seciliId} onClick={onizle}>
+              ))}</Secim>
+  )}
+</AlanSarmal>
+          <Dugme boy="kucuk" disabled={mesgul || !seciliId} onClick={onizle}>
             {t("mesajOnizle")}
-          </button>
+          </Dugme>
         </div>
         {onizleme ? (
           <div className="mt-3 space-y-2">
@@ -304,44 +362,29 @@ export default function MesajlarPage() {
             {t("mesajSonucBasarisiz")}: {sonuc.basarisiz}
           </div>
         ) : null}
-      </motion.section>
+      </Kart>
 
       {/* ------------------------------ gecmis ----------------------------- */}
-      <motion.section {...panelMotion} className={panelCls}>
-        <h2 className="mb-3 text-sm font-semibold">{t("mesajGecmis")}</h2>
-        <ErrorBox message={gErr ? t("mesajGecmisHata") : null} />
-        {gecmis && gecmis.items.length === 0 && !gErr ? (
-          <EmptyState title={t("mesajGecmisYok")} description={t("mesajGecmisYokAlt")} />
-        ) : null}
-        {gecmis && gecmis.items.length > 0 ? (
-          <div className="overflow-x-auto">
-            <Tablo>
-              <TabloBasligi zeminsiz>
-                  <Th sik>{t("mesajTarih")}</Th>
-                  <Th sik>{t("mesajKanal")}</Th>
-                  <Th sik>{t("mesajHedef")}</Th>
-                  <Th sik>{t("mesajDurum")}</Th>
-                </TabloBasligi>
-              <tbody>
-                {gecmis.items.map((g) => (
-                  <tr key={g.id} className="border-t border-yuzey-divider dark:border-slate-800">
-                    <Td sik className="whitespace-nowrap">{formatDateTime(g.created_at)}</Td>
-                    <Td sik>{t(`mesajKanal_${g.kanal}` as never)}</Td>
-                    <Td sik>{g.hedef}</Td>
-                    <Td sik>
-                      {t(`mesajDurum_${g.durum}` as never)}
-                      {g.hata ? <span className="ms-1 text-rose-600">· {g.hata}</span> : null}
-                    </Td>
-                  </tr>
-                ))}
-              </tbody>
-            </Tablo>
-          </div>
-        ) : null}
-        <button className={`${btnGhost} mt-3`} onClick={() => gecmisTazele()}>
-          {t("ortakYenile")}
-        </button>
-      </motion.section>
+      <section className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
+            {t("mesajGecmis")}
+          </h2>
+          <Dugme boy="kucuk" onClick={() => void gecmisTazele()}>
+            {t("ortakYenile")}
+          </Dugme>
+        </div>
+        <VeriTablosu<Gecmis>
+          kolonlar={gecmisKolonlari}
+          satirlar={gecmis?.items ?? []}
+          satirId={(g) => g.id}
+          hata={gErr ? t("mesajGecmisHata") : null}
+          onTekrar={() => void gecmisTazele()}
+          yukleniyor={!gecmis && !gErr}
+          bosBaslik={t("mesajGecmisYok")}
+          bosAciklama={t("mesajGecmisYokAlt")}
+        />
+      </section>
     </div>
   );
 }

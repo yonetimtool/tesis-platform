@@ -1,12 +1,19 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import useSWR from "swr";
 
 import Link from "next/link";
 
-import { Field, ErrorBox, PageHeader, inputCls, btnGhost, btnPrimary, panelCls, panelMotion } from "@/components/form";
+import {
+  Alan,
+  Kart,
+  Secim,
+  AlanSarmal,
+  Dugme,
+  HataDurumu,
+  IskeletMetin,
+} from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
@@ -172,63 +179,92 @@ export default function SettingsPage() {
           acilabilme". Menude de bir girisi var ama kullanicinin onu
           ARADIGI yer burasi — kurulum bittikten sonra sihirbaz akilda
           "bir ayar" olarak kalir. */}
-      <PageHeader
-        title={t("kabukAyarlar")}
-        action={
-          <Link href="/kurulum" className={btnGhost}>
-            {t("kurulumBaslik")}
-          </Link>
-        }
-      />
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+          {t("kabukAyarlar")}
+        </h1>
+        {/* BAGLANTI, DUGME DEGIL: orta tikla yeni sekmede acilir ve ekran
+            okuyucu "baglanti" der. `Dugme` gorunumu tasiyan bir `<a>`. */}
+        <Link
+          href="/kurulum"
+          className="odak-ic yz-lift inline-flex items-center px-3 py-2"
+          style={{
+            borderRadius: "var(--yz-radius-btn)",
+            border: "var(--yz-border-w) solid var(--yz-border)",
+            fontSize: "var(--yz-fs-sm)",
+            color: "var(--yz-text)",
+            background: "var(--yz-metal-1)",
+          }}
+        >
+          {t("kurulumBaslik")}
+        </Link>
+      </div>
 
-      {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>}
+      {error && <HataDurumu mesaj={error.message} />}
+      {isLoading && !data && <IskeletMetin satir={3} />}
 
       {data && (
         <>
-          <motion.form {...panelMotion} onSubmit={save} className={`space-y-4 ${panelCls}`}>
-            <div className="grid grid-cols-2 gap-3 text-sm text-metin-muted">
+          <Kart>
+          <form onSubmit={save} className="space-y-4">
+            <div
+              className="grid grid-cols-2 gap-3"
+              style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}
+            >
               <div>
-                <span className="block font-medium text-metin-body">{t("ayarTesisKodu")}</span>
+                <span className="block" style={{ fontWeight: 600, color: "var(--yz-text)" }}>
+                  {t("ayarTesisKodu")}
+                </span>
                 {data.slug}
               </div>
               <div>
-                <span className="block font-medium text-metin-body">{t("ayarTenantId")}</span>
+                <span className="block" style={{ fontWeight: 600, color: "var(--yz-text)" }}>
+                  {t("ayarTenantId")}
+                </span>
                 <span className="font-mono">{data.tenant_id.slice(0, 8)}</span>
               </div>
             </div>
 
-            <Field label={t("ayarTesisAdi")}>
-              <input className={inputCls} value={ad} onChange={(e) => setAd(e.target.value)} required />
-            </Field>
+            <AlanSarmal etiket={t("ayarTesisAdi")}>
+  {(b) => (
+    <Alan {...b} value={ad} onChange={(e) => setAd(e.target.value)} required />
+  )}
+</AlanSarmal>
 
-            <Field label={t("ayarZamanDilimi")} hint={t("ayarSaatDilimiOrnek")}>
-              <input
-                className={inputCls}
-                value={timezone}
+            <AlanSarmal etiket={t("ayarZamanDilimi")} ipucu={t("ayarSaatDilimiOrnek")}>
+  {(b) => (
+    <Alan {...b} value={timezone}
                 onChange={(e) => setTimezone(e.target.value)}
-                required
-              />
-            </Field>
+                required />
+  )}
+</AlanSarmal>
 
-            <ErrorBox message={formErr} />
-            {ok && <p className="text-sm text-emerald-700">{ok}</p>}
+            <HataDurumu mesaj={formErr} />
+            {ok && (
+              <p role="status" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-success-ink)" }}>
+                {ok}
+              </p>
+            )}
 
-            <button type="submit" className={btnPrimary} disabled={saving}>
+            <Dugme type="submit" tur="birincil" disabled={saving}>
               {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
-            </button>
-          </motion.form>
+            </Dugme>
+          </form>
+          </Kart>
 
           {/* ------------------------ operasyon ayarlari ------------------- */}
-          <motion.section {...panelMotion} className={`space-y-4 ${panelCls}`}>
-            <h2 className="text-sm font-semibold">{t("ayarOperasyon")}</h2>
+          <Kart className="space-y-4">
+            <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
+              {t("ayarOperasyon")}
+            </h2>
             {OPERASYON.map((a) => (
-              <Field
+              <AlanSarmal
                 key={a.anahtar}
-                label={t(a.etiket)}
-                hint={a.ipucu ? t(a.ipucu) : undefined}
+                etiket={t(a.etiket)}
+                ipucu={a.ipucu ? t(a.ipucu) : undefined}
               >
-                {a.tip === "bool" ? (
+                {() =>
+                a.tip === "bool" ? (
                   <input
                     type="checkbox"
                     className="h-4 w-4"
@@ -236,8 +272,8 @@ export default function SettingsPage() {
                     onChange={(e) => setOps({ ...ops, [a.anahtar]: e.target.checked })}
                   />
                 ) : a.tip === "secim" ? (
-                  <select
-                    className={inputCls}
+                  <Secim
+                    aria-label={t(a.etiket)}
                     value={String(ops[a.anahtar] ?? "")}
                     onChange={(e) => setOps({ ...ops, [a.anahtar]: e.target.value })}
                   >
@@ -246,16 +282,15 @@ export default function SettingsPage() {
                         {t(s.etiket)}
                       </option>
                     ))}
-                  </select>
+                  </Secim>
                 ) : (
                   // (P63) ACIK `aria-label`: bu girdi `<Field>`in UC DALLI
                   // icerigindeki son daldir ve sarmalayici onlarca satir
                   // yukarida kalir. Ad zaten `Field`ten geliyor; burada
                   // TEKRAR etmek, dallanma buyudukce sessizce kopmasini
                   // engeller (kilit de bu yuzden bu dosyayi isaret etti).
-                  <input
+                  <Alan
                     aria-label={t(a.etiket)}
-                    className={inputCls}
                     type={GIRDI_TIPI[a.tip]}
                     min={a.min}
                     max={a.max}
@@ -272,14 +307,15 @@ export default function SettingsPage() {
                       })
                     }
                   />
-                )}
-              </Field>
+                )
+                }
+              </AlanSarmal>
             ))}
-            <p className="text-xs text-metin-muted">{t("ayarGuvenlikModuAdminNotu")}</p>
-            <button className={btnPrimary} disabled={saving} onClick={opKaydet}>
+            <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>{t("ayarGuvenlikModuAdminNotu")}</p>
+            <Dugme tur="birincil" disabled={saving} onClick={opKaydet}>
               {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
-            </button>
-          </motion.section>
+            </Dugme>
+          </Kart>
         </>
       )}
     </div>

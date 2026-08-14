@@ -1,14 +1,24 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import useSWR from "swr";
 
-import { EmptyState } from "@/components/EmptyState";
-import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, btnGhost, panelCls, panelMotion,
-  EksikVeriUyarisi,
-} from "@/components/form";
-import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
+import { EksikVeriUyarisi, Pager } from "@/components/form";
+import {
+  Alan,
+  Kart,
+  Modal,
+  Rozet,
+  VeriTablosu,
+  type Kolon,
+  type TabloDurumu,
+  AlanSarmal,
+  BosDurum,
+  Dugme,
+  HataDurumu,
+  IskeletMetin,
+  Secim,
+} from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { kisaKimlik } from "@/lib/kimlik";
 import { DEMIRBAS_DURUM, DEMIRBAS_KATEGORI, enumAdi } from "@/lib/enum-adlari";
@@ -17,6 +27,7 @@ import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 import type {
+  AssetCheckout,
   Asset,
   AssetCheckoutList,
   AssetKategori,
@@ -24,7 +35,19 @@ import type {
   UserListResponse,
 } from "@/lib/types";
 
-const LIMIT = 20;
+// UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
+// NFC bir TEKNIK KIMLIKTIR — cevrilmez, sozluge girmez.
+const NFC_BASLIK = "NFC" as const;
+const R_OLUMLU = "olumlu" as const;
+const R_UYARI = "uyari" as const;
+const R_NOTR = "notr" as const;
+
+/** Demirbas durumu -> rozet rengi. */
+function durumRengi(d: string) {
+  if (d === "musait") return R_OLUMLU;
+  if (d === "zimmetli") return R_UYARI;
+  return R_NOTR;
+}
 const NFC_PLACEHOLDER = "04A1B2C3D4";
 // METIN DEGIL KIMLIK (modul duzeyinde `t()` yok — README tur 18 dersi).
 const KATEGORI: { value: AssetKategori; anahtar: SozlukAnahtari }[] = [
@@ -51,11 +74,18 @@ const EMPTY: FormState = { ad: "", kategori: "", nfc_tag_uid: "", aciklama: "", 
 export default function AssetsPage() {
   const t = useT();
   const toast = useToast();
-  const [offset, setOffset] = useState(0);
+  // (P160) SAYFALAMA `VeriTablosu` durumuna gecti.
+  const [tabloDurumu, setTabloDurumu] = useState<TabloDurumu>({
+    sayfa: 1,
+    boy: 25,
+    siraKolon: null,
+    siraYonu: "artan",
+  });
+  const offset = (tabloDurumu.sayfa - 1) * tabloDurumu.boy;
   const [kategori, setKategori] = useState("");
   const [durum, setDurum] = useState("");
 
-  const qs = new URLSearchParams({ limit: String(LIMIT), offset: String(offset) });
+  const qs = new URLSearchParams({ limit: String(tabloDurumu.boy), offset: String(offset) });
   if (kategori) qs.set("kategori", kategori);
   if (durum) qs.set("durum", durum);
   const { data, error, isLoading, mutate } = useSWR<AssetList>(
@@ -136,14 +166,90 @@ export default function AssetsPage() {
 
   const openCheckout = (history?.items ?? []).find((h) => !h.birakma_zamani) ?? null;
 
+  const kolonlar: Kolon<Asset>[] = useMemo(
+    () => [
+      { id: "ad", baslik: t("ortakAd"), gizlenebilir: false, hucre: (a) => a.ad },
+      {
+        id: "kategori",
+        baslik: t("gorevKategoriAlan"),
+        hucre: (a) => enumAdi(t, DEMIRBAS_KATEGORI, a.kategori),
+      },
+      {
+        id: "nfc",
+        baslik: NFC_BASLIK,
+        darEkrandaGizle: true,
+        hucre: (a) => <span className="font-mono">{a.nfc_tag_uid ?? "—"}</span>,
+      },
+      {
+        id: "durum",
+        baslik: t("ortakDurum"),
+        hucre: (a) => (
+          <Rozet durum={durumRengi(a.durum)}>{enumAdi(t, DEMIRBAS_DURUM, a.durum)}</Rozet>
+        ),
+      },
+      {
+        id: "aktif",
+        baslik: t("ortakAktif"),
+        darEkrandaGizle: true,
+        hucre: (a) => (a.aktif ? t("ortakEvet2") : t("ortakHayir2")),
+      },
+      {
+        id: "eylem",
+        baslik: "",
+        gizlenebilir: false,
+        hucre: (a) => (
+          <div className="flex justify-end gap-2">
+            <Dugme
+              boy="kucuk"
+              aria-expanded={detail?.id === a.id}
+              onClick={() => setDetail(detail?.id === a.id ? null : a)}
+            >
+              {detail?.id === a.id ? t("ortakKapat") : t("demirbasZimmet")}
+            </Dugme>
+            <Dugme boy="kucuk" onClick={() => openEdit(a)}>
+              {t("ortakDuzenle")}
+            </Dugme>
+            <Dugme boy="kucuk" onClick={() => setActive(a, !a.aktif)}>
+              {a.aktif ? t("ortakPasiflestir") : t("ortakAktiflestir")}
+            </Dugme>
+          </div>
+        ),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [t, detail],
+  );
+
+  const gecmisKolonlari: Kolon<AssetCheckout>[] = useMemo(
+    () => [
+      {
+        id: "alan",
+        baslik: t("demirbasAlan"),
+        gizlenebilir: false,
+        hucre: (h) => userName(h.alan_user_id),
+      },
+      { id: "alma", baslik: t("demirbasAlma"), hucre: (h) => formatDateTime(h.alma_zamani) },
+      {
+        id: "birakma",
+        baslik: t("demirbasBirakma"),
+        hucre: (h) =>
+          h.birakma_zamani ? formatDateTime(h.birakma_zamani) : t("demirbasAcik"),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [t, users],
+  );
+
   return (
     <div className="space-y-5">
-      <PageHeader
-        title={t("kabukDemirbas")}
-        action={
-          <button className={btnPrimary} onClick={openNew}>{t("demirbasYeni")}</button>
-        }
-      />
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+          {t("kabukDemirbas")}
+        </h1>
+        <Dugme tur="birincil" boy="kucuk" onClick={openNew}>
+          {t("demirbasYeni")}
+        </Dugme>
+      </div>
 
       <EksikVeriUyarisi
         mesaj={usersErr ? t("ortakSecenekYuklenemedi") : null}
@@ -151,13 +257,12 @@ export default function AssetsPage() {
 
       <div className="flex flex-wrap items-end gap-3">
         <div className="w-44">
-          <Field label={t("gorevKategoriAlan")}>
-            <select
-              className={inputCls}
-              value={kategori}
+          <AlanSarmal etiket={t("gorevKategoriAlan")}>
+  {(b) => (
+    <Secim {...b} value={kategori}
               onChange={(e) => {
                 setKategori(e.target.value);
-                setOffset(0);
+                setTabloDurumu((d) => ({ ...d, sayfa: 1 }));
               }}
             >
               <option value="">{t("ortakTumu")}</option>
@@ -165,48 +270,58 @@ export default function AssetsPage() {
                 <option key={k.value} value={k.value}>
                   {t(k.anahtar)}
                 </option>
-              ))}
-            </select>
-          </Field>
+              ))}</Secim>
+  )}
+</AlanSarmal>
         </div>
         <div className="w-44">
-          <Field label={t("ortakDurum")}>
-            <select
-              className={inputCls}
-              value={durum}
+          <AlanSarmal etiket={t("ortakDurum")}>
+  {(b) => (
+    <Secim {...b} value={durum}
               onChange={(e) => {
                 setDurum(e.target.value);
-                setOffset(0);
+                setTabloDurumu((d) => ({ ...d, sayfa: 1 }));
               }}
             >
               <option value="">{t("ortakTumu")}</option>
               <option value="musait">{t("demirbasMusait")}</option>
               <option value="zimmetli">{t("demirbasZimmetli")}</option>
-              <option value="bakimda">{t("demirbasBakimda")}</option>
-            </select>
-          </Field>
+              <option value="bakimda">{t("demirbasBakimda")}</option></Secim>
+  )}
+</AlanSarmal>
         </div>
       </div>
 
-      {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>}
+      {error && <HataDurumu mesaj={error.message} />}
+      {isLoading && !data && <IskeletMetin satir={3} />}
 
-      {open && (
-        <motion.form {...panelMotion} onSubmit={save} className={`space-y-4 ${panelCls}`}>
-          <h2 className="font-medium">{editingId ? t("demirbasDuzenle") : t("demirbasYeni")}</h2>
+      <Modal
+        acik={open}
+        onKapat={() => setOpen(false)}
+        baslik={editingId ? t("demirbasDuzenle") : t("demirbasYeni")}
+        eylemler={
+          <>
+            <Dugme tur="sessiz" onClick={() => setOpen(false)} disabled={saving}>
+              {t("ortakIptal")}
+            </Dugme>
+            <Dugme tur="birincil" type="submit" form="demirbas-form" yukleniyor={saving}>
+              {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
+            </Dugme>
+          </>
+        }
+      >
+        <form id="demirbas-form" onSubmit={save} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <Field label={t("ortakAd")}>
-              <input
-                className={inputCls}
-                value={form.ad}
+            <AlanSarmal etiket={t("ortakAd")}>
+  {(b) => (
+    <Alan {...b} value={form.ad}
                 onChange={(e) => setForm({ ...form, ad: e.target.value })}
-                required
-              />
-            </Field>
-            <Field label={t("demirbasKategoriOpsiyonel")}>
-              <select
-                className={inputCls}
-                value={form.kategori}
+                required />
+  )}
+</AlanSarmal>
+            <AlanSarmal etiket={t("demirbasKategoriOpsiyonel")}>
+  {(b) => (
+    <Secim {...b} value={form.kategori}
                 onChange={(e) => setForm({ ...form, kategori: e.target.value })}
               >
                 <option value="">{t("ortakYokSecim")}</option>
@@ -214,162 +329,97 @@ export default function AssetsPage() {
                   <option key={k.value} value={k.value}>
                     {t(k.anahtar)}
                   </option>
-                ))}
-              </select>
-            </Field>
-            <Field
-              label={t("demirbasNfcUidOpsiyonel")}
-              hint={t("demirbasEtiketIpucu")}
+                ))}</Secim>
+  )}
+</AlanSarmal>
+            <AlanSarmal
+              etiket={t("demirbasNfcUidOpsiyonel")}
+              ipucu={t("demirbasEtiketIpucu")}
             >
-              <input
-                className={`${inputCls} font-mono uppercase`}
-                value={form.nfc_tag_uid}
-                placeholder={NFC_PLACEHOLDER}
-                onChange={(e) => setForm({ ...form, nfc_tag_uid: e.target.value.toUpperCase() })}
-              />
-            </Field>
-            <Field label={t("ortakAciklamaOpsiyonel")}>
-              <input
-                className={inputCls}
-                value={form.aciklama}
-                onChange={(e) => setForm({ ...form, aciklama: e.target.value })}
-              />
-            </Field>
+              {(b) => (
+                <Alan
+                  {...b}
+                  className="font-mono uppercase"
+                  value={form.nfc_tag_uid}
+                  placeholder={NFC_PLACEHOLDER}
+                  onChange={(e) =>
+                    setForm({ ...form, nfc_tag_uid: e.target.value.toUpperCase() })
+                  }
+                />
+              )}
+            </AlanSarmal>
+            <AlanSarmal etiket={t("ortakAciklamaOpsiyonel")}>
+  {(b) => (
+    <Alan {...b} value={form.aciklama}
+                onChange={(e) => setForm({ ...form, aciklama: e.target.value })} />
+  )}
+</AlanSarmal>
           </div>
-          <label className="flex items-center gap-2 text-sm">
+          <label
+            className="flex items-center gap-2"
+            style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}
+          >
             <input
               type="checkbox"
               checked={form.aktif}
               onChange={(e) => setForm({ ...form, aktif: e.target.checked })}
-            />{t("ortakAktif")}</label>
-          <ErrorBox message={formErr} />
-          <div className="flex gap-2">
-            <button type="submit" className={btnPrimary} disabled={saving}>
-              {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
-            </button>
-            <button type="button" className={btnGhost} onClick={() => setOpen(false)}>
-              {t("ortakIptal")}
-            </button>
-          </div>
-        </motion.form>
-      )}
+            />
+            {t("ortakAktif")}
+          </label>
+          {formErr && (
+            <p role="alert" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-danger-ink)" }}>
+              {formErr}
+            </p>
+          )}
+        </form>
+      </Modal>
 
-      <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
-        <div className="odak-ic overflow-x-auto" tabIndex={0}>
-          <Tablo>
-          <TabloBasligi>
-              <Th>{t("ortakAd")}</Th>
-              <Th>{t("gorevKategoriAlan")}</Th>
-              <Th>NFC</Th>
-              <Th>{t("ortakDurum")}</Th>
-              <Th>{t("ortakAktif")}</Th>
-              <Th />
-            </TabloBasligi>
-          <tbody>
-            {(data?.items ?? []).map((a) => (
-              <tr key={a.id} className={`border-t border-yuzey-divider transition-colors hover:bg-yuzey-bg ${a.aktif ? "" : "bg-yuzey-bg"}`}>
-                <Td>{a.ad}</Td>
-                <Td className="text-metin-body">{enumAdi(t, DEMIRBAS_KATEGORI, a.kategori)}</Td>
-                <Td className="font-mono text-metin-body">{a.nfc_tag_uid ?? "—"}</Td>
-                <Td>
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${DURUM_STYLE[a.durum] ?? "bg-slate-100 text-metin-body"}`}
-                  >
-                    {enumAdi(t, DEMIRBAS_DURUM, a.durum)}
-                  </span>
-                </Td>
-                <Td className="text-metin-body">{a.aktif ? t("ortakEvet2") : t("ortakHayir2")}</Td>
-                <Td hizala="end">
-                  <div className="flex justify-end gap-2">
-                    <button
-                      className={btnGhost}
-                      onClick={() => setDetail(detail?.id === a.id ? null : a)}
-                    >
-                      {detail?.id === a.id ? t("ortakKapat") : t("demirbasZimmet")}
-                    </button>
-                    <button className={btnGhost} onClick={() => openEdit(a)}>
-                      {t("ortakDuzenle")}
-                    </button>
-                    <button className={btnGhost} onClick={() => setActive(a, !a.aktif)}>
-                      {a.aktif ? t("ortakPasiflestir") : t("ortakAktiflestir")}
-                    </button>
-                  </div>
-                </Td>
-              </tr>
-            ))}
-            {data && data.items.length === 0 && (
-              <tr>
-                <Td colSpan={6}>
-                  <EmptyState title={t("demirbasYok")} description={t("demirbasYokAlt")} />
-                </Td>
-              </tr>
-            )}
-          </tbody>
-          </Tablo>
-        </div>
-      </div>
+      <VeriTablosu<Asset>
+        kolonlar={kolonlar}
+        satirlar={data?.items ?? []}
+        satirId={(a) => a.id}
+        hata={error ? error.message : null}
+        onTekrar={() => void mutate()}
+        yukleniyor={isLoading && !data}
+        bosBaslik={t("demirbasYok")}
+        bosAciklama={t("demirbasYokAlt")}
+        sunucuTarafli
+        toplam={data?.meta.total ?? 0}
+        durum={tabloDurumu}
+        onDurumDegisti={setTabloDurumu}
+      />
 
       {detail && (
-        <motion.div {...panelMotion} className={`space-y-3 ${panelCls}`}>
-          <h2 className="text-lg font-medium">
+        <Kart className="space-y-3">
+          <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
             {t("demirbasZimmetBaslik", { ad: detail.ad })}
           </h2>
-          <p className="text-sm">
+          <p style={{ fontSize: "var(--yz-fs-sm)" }}>
             {openCheckout ? (
-              <span className="text-amber-700">
+              <span style={{ color: "var(--yz-warning-ink)" }}>
                 {t("demirbasSuAnUzerinde", {
                   kisi: userName(openCheckout.alan_user_id),
                   zaman: formatDateTime(openCheckout.alma_zamani),
                 })}
               </span>
             ) : (
-              <span className="text-emerald-700">{t("demirbasKimsedeDegil")}</span>
+              <span style={{ color: "var(--yz-success-ink)" }}>
+                {t("demirbasKimsedeDegil")}
+              </span>
             )}
           </p>
-          <p className="text-xs text-metin-muted">
+          <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
             {t("demirbasPanelNotu")}
           </p>
-          <div className="overflow-hidden rounded-lg border kart-kenar">
-            <div className="odak-ic overflow-x-auto" tabIndex={0}>
-              <Tablo>
-              <TabloBasligi>
-                  <Th>{t("demirbasAlan")}</Th>
-                  <Th>{t("demirbasAlma")}</Th>
-                  <Th>{t("demirbasBirakma")}</Th>
-                </TabloBasligi>
-              <tbody>
-                {(history?.items ?? []).map((h) => (
-                  <Tr key={h.id}>
-                    <Td>{userName(h.alan_user_id)}</Td>
-                    <Td className="text-metin-body">{formatDateTime(h.alma_zamani)}</Td>
-                    <Td className="text-metin-body">
-                      {h.birakma_zamani ? formatDateTime(h.birakma_zamani) : t("demirbasAcik")}
-                    </Td>
-                  </Tr>
-                ))}
-                {history && history.items.length === 0 && (
-                  <tr>
-                    <Td colSpan={3}>
-                      <EmptyState title={t("demirbasZimmetYok")} />
-                    </Td>
-                  </tr>
-                )}
-              </tbody>
-              </Tablo>
-            </div>
-          </div>
-        </motion.div>
+          <VeriTablosu<AssetCheckout>
+            kolonlar={gecmisKolonlari}
+            satirlar={history?.items ?? []}
+            satirId={(h) => h.id}
+            bosBaslik={t("demirbasZimmetYok")}
+          />
+        </Kart>
       )}
 
-      {data && (
-        <Pager
-          offset={offset}
-          limit={LIMIT}
-          total={data.meta.total}
-          onPrev={() => setOffset(Math.max(0, offset - LIMIT))}
-          onNext={() => setOffset(offset + LIMIT)}
-        />
-      )}
     </div>
   );
 }

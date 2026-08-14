@@ -11,8 +11,11 @@
 // döner ve ekran her daireyi ayrı kart olarak gösterir.
 import useSWR from "swr";
 
-import { EmptyState } from "@/components/EmptyState";
-import { ErrorBox, PageHeader, cardCls } from "@/components/form";
+import {
+  BosDurum,
+  HataDurumu,
+  IskeletMetin,
+} from "@/components/ui";
 import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
 import { jsonFetcher } from "@/lib/fetcher";
 import { tarihBicimi } from "@/lib/tarih";
@@ -50,21 +53,23 @@ export default function AidatimPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title={t("aidatimBaslik")} />
-      {error ? <ErrorBox message={t("ortakHataOlustu")} /> : null}
+      <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+        {t("aidatimBaslik")}
+      </h1>
+      {error ? <HataDurumu mesaj={t("ortakHataOlustu")} /> : null}
 
       {isLoading ? (
-        <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>
+        <IskeletMetin satir={3} />
       ) : null}
 
       {!isLoading && !error && daireler.length === 0 ? (
-        <EmptyState title={t("aidatimYok")} />
+        <BosDurum baslik={t("aidatimYok")} />
       ) : null}
 
       {daireler.map((d) => (
-        <section key={d.unit_id} className={`${cardCls} space-y-4 p-5`}>
+        <section key={d.unit_id} className="space-y-4">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 className="font-medium">{t("aidatimDaire", { no: d.no })}</h2>
+            <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{t("aidatimDaire", { no: d.no })}</h2>
             <p
               className={`text-lg font-semibold tabular-nums ${
                 d.bakiye_kurus > 0 ? "text-red-700" : "text-emerald-700"
@@ -76,13 +81,13 @@ export default function AidatimPage() {
 
           <dl className="grid gap-3 sm:grid-cols-2">
             <div>
-              <dt className="text-xs text-metin-muted">{t("aidatimTahakkuk")}</dt>
+              <dt style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>{t("aidatimTahakkuk")}</dt>
               <dd className="tabular-nums">
                 {kurusToTL(d.toplam_tahakkuk_kurus)}
               </dd>
             </div>
             <div>
-              <dt className="text-xs text-metin-muted">{t("aidatimOdenen")}</dt>
+              <dt style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>{t("aidatimOdenen")}</dt>
               <dd className="tabular-nums">
                 {kurusToTL(d.toplam_odenen_kurus)}
               </dd>

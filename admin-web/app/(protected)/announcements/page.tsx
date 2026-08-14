@@ -1,12 +1,20 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { useRef, useState } from "react";
 import useSWR from "swr";
 
-import { EmptyState } from "@/components/EmptyState";
 import { Foto } from "@/components/Foto";
-import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, btnGhost, btnDanger, cardCls, panelCls, panelMotion } from "@/components/form";
+import { Pager } from "@/components/form";
+import {
+  Alan,
+  BosDurum,
+  CokSatir,
+  Kart,
+  AlanSarmal,
+  Dugme,
+  HataDurumu,
+  IskeletMetin,
+} from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
@@ -160,61 +168,84 @@ export default function AnnouncementsPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title={t("kabukDuyurular")} />
+      <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+        {t("kabukDuyurular")}
+      </h1>
 
-      <p className="text-sm text-metin-muted">
+      <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
         {t("duyuruPanelNotu")}
       </p>
 
-      {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>}
+      {error && <HataDurumu mesaj={error.message} />}
+      {isLoading && !data && <IskeletMetin satir={3} />}
 
       {open && (
-        <motion.form {...panelMotion} onSubmit={save} className={`space-y-4 ${panelCls}`}>
-          <h2 className="font-medium">{t("duyuruDuzenle")}</h2>
-          <Field label={t("ortakBaslik")} hint={t("duyuruEnFazla200")}>
-            <input
-              className={inputCls}
-              value={form.baslik}
+        <Kart>
+          <form onSubmit={save} className="space-y-4">
+          <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{t("duyuruDuzenle")}</h2>
+          <AlanSarmal etiket={t("ortakBaslik")} ipucu={t("duyuruEnFazla200")}>
+  {(b) => (
+    <Alan {...b} value={form.baslik}
               onChange={(e) => setForm({ ...form, baslik: e.target.value })}
               maxLength={200}
-              required
-            />
-          </Field>
-          <Field label={t("duyuruMetni")} hint={t("duyuruEnFazla5000")}>
-            <textarea
-              className={`${inputCls} min-h-32`}
-              value={form.govde}
-              onChange={(e) => setForm({ ...form, govde: e.target.value })}
-              maxLength={5000}
-              required
-            />
-          </Field>
-          <Field label={t("duyuruGorselOpsiyonel")} hint={t("duyuruGorselHerkes")}>
+              required />
+  )}
+</AlanSarmal>
+          <AlanSarmal etiket={t("duyuruMetni")} ipucu={t("duyuruEnFazla5000")}>
+            {(b) => (
+              <CokSatir
+                {...b}
+                rows={6}
+                value={form.govde}
+                onChange={(e) => setForm({ ...form, govde: e.target.value })}
+                maxLength={5000}
+                required
+              />
+            )}
+          </AlanSarmal>
+          {/* GORSEL ALANI bir `AlanSarmal` DEGIL: icinde tek bir denetim
+              yok (onizleme + dosya secici + kaldir dugmesi). Dosya
+              secicinin kendi etiketi var. */}
+          <div className="space-y-2">
+            <span style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}>
+              {t("duyuruGorselOpsiyonel")}
+            </span>
+            <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
+              {t("duyuruGorselHerkes")}
+            </p>
             <div className="space-y-2">
               {/* Onizleme: yeni secim > mevcut gorsel (kaldirilmadiysa) */}
               {(photo.previewUrl || (editing?.foto_url && !photo.removed && !photo.fotoKey)) && (
-                <Foto
-                  src={photo.previewUrl ?? editing?.foto_url ?? ""}
-                  alt={t("duyuruGorseli")}
-                  className="h-40 w-full rounded-lg border kart-kenar object-cover"
-                />
+                <div
+                  className="overflow-hidden"
+                  style={{
+                    borderRadius: "var(--yz-r-md)",
+                    border: "1px solid var(--yz-border)",
+                  }}
+                >
+                  <Foto
+                    src={photo.previewUrl ?? editing?.foto_url ?? ""}
+                    alt={t("duyuruGorseli")}
+                    className="h-40 w-full object-cover"
+                  />
+                </div>
               )}
-              {photo.uploading && <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>}
-              {photo.error && <ErrorBox message={photo.error} />}
+              {photo.uploading && <IskeletMetin satir={3} />}
+              {photo.error && <HataDurumu mesaj={photo.error} />}
               <div className="flex items-center gap-2">
                 <input
                   ref={fileRef}
+                  aria-label={t("duyuruGorselOpsiyonel")}
                   type="file"
                   accept="image/*"
                   onChange={pickPhoto}
-                  className="text-sm"
+                  style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}
                   disabled={photo.uploading || saving}
                 />
                 {(photo.fotoKey || (editing?.foto_key && !photo.removed)) && (
-                  <button
+                  <Dugme
                     type="button"
-                    className={btnGhost}
+                    boy="kucuk"
                     disabled={photo.uploading || saving}
                     onClick={() => {
                       resetPhoto();
@@ -222,61 +253,75 @@ export default function AnnouncementsPage() {
                     }}
                   >
                     {t("duyuruGorseliKaldir")}
-                  </button>
+                  </Dugme>
                 )}
               </div>
             </div>
-          </Field>
-          <ErrorBox message={formErr} />
-          <div className="flex gap-2">
-            <button type="submit" className={btnPrimary} disabled={saving}>
-              {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
-            </button>
-            <button type="button" className={btnGhost} onClick={() => setOpen(false)}>
-              {t("ortakIptal")}
-            </button>
           </div>
-        </motion.form>
+          {formErr && (
+            <p role="alert" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-danger-ink)" }}>
+              {formErr}
+            </p>
+          )}
+          <div className="flex gap-2">
+            <Dugme type="submit" tur="birincil" disabled={saving}>
+              {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
+            </Dugme>
+            <Dugme type="button" boy="kucuk" onClick={() => setOpen(false)}>
+              {t("ortakIptal")}
+            </Dugme>
+          </div>
+          </form>
+        </Kart>
       )}
 
       <ul className="space-y-3">
         {(data?.items ?? []).map((a) => (
-          <li key={a.id} className={`${cardCls} p-5`}>
+          <li key={a.id}>
+            <Kart>
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="min-w-0 flex-1">
-                <h3 className="font-medium">{a.baslik}</h3>
-                <p className="mt-1 whitespace-pre-wrap text-sm text-metin-body">{a.govde}</p>
+                <h3 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{a.baslik}</h3>
+                <p className="mt-1 whitespace-pre-wrap" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}>{a.govde}</p>
                 {a.foto_url && (
                   // Presigned GET URL kisa omurlu — liste her yenilendiginde taze gelir.
                   <a href={a.foto_url} target="_blank" rel="noreferrer" className="mt-2 block w-fit">
-                    <Foto
-                      src={a.foto_url}
-                      alt={t("gorselAlt", { baslik: a.baslik })}
-                      className="h-40 w-full rounded-lg border kart-kenar object-cover"
-                    />
+                    <div
+                      className="overflow-hidden"
+                      style={{
+                        borderRadius: "var(--yz-r-md)",
+                        border: "1px solid var(--yz-border)",
+                      }}
+                    >
+                      <Foto
+                        src={a.foto_url}
+                        alt={t("gorselAlt", { baslik: a.baslik })}
+                        className="h-40 w-full object-cover"
+                      />
+                    </div>
                   </a>
                 )}
-                <p className="mt-2 text-xs text-metin-muted">
+                <p className="mt-2" style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
                   {a.olusturan_ad ?? "—"} · {formatDateTime(a.created_at)}
                   {a.updated_at !== a.created_at && ` ${t("duyuruDuzenlendiEki")}`}
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <button className={btnGhost} onClick={() => openEdit(a)}>
+                <Dugme boy="kucuk" onClick={() => openEdit(a)}>
                   {t("ortakDuzenle")}
-                </button>
-                <button className={btnDanger} onClick={() => remove(a)}>
+                </Dugme>
+                <Dugme tur="tehlike" boy="kucuk" onClick={() => remove(a)}>
                   {t("ortakSil")}
-                </button>
+                </Dugme>
               </div>
             </div>
+            </Kart>
           </li>
         ))}
-        {data && data.items.length === 0 && (
-          <EmptyState
-            title={t("duyuruYok")}
-            description={t("duyuruYokAlt")}
-          />
+        {data && data.items.length === 0 && !error && (
+          <Kart>
+            <BosDurum baslik={t("duyuruYok")} aciklama={t("duyuruYokAlt")} />
+          </Kart>
         )}
       </ul>
 
