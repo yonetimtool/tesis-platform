@@ -1,20 +1,17 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { useState } from "react";
 import useSWR from "swr";
 
-import { EmptyState } from "@/components/EmptyState";
 import {
-  ErrorBox,
-  Field,
-  PageHeader,
-  btnGhost,
-  btnPrimary,
-  inputCls,
-  panelCls,
-  panelMotion,
-} from "@/components/form";
+  Alan,
+  AlanSarmal,
+  BosDurum,
+  Dugme,
+  IskeletMetin,
+  Kart,
+  Secim,
+} from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
@@ -67,6 +64,8 @@ function onizlemeTutar(
 }
 
 const DONEM_BICIMI = /^\d{4}-\d{2}$/;
+// UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
+const ADIM = "step" as const;
 
 export default function SayacOkumaPage() {
   const t = useT();
@@ -205,116 +204,135 @@ export default function SayacOkumaPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title={t("kabukSayacOkuma")} />
-      <p className="text-sm opacity-70">{t("sayacSihirbazNotu")}</p>
+      <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+        {t("kabukSayacOkuma")}
+      </h1>
+      <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+        {t("sayacSihirbazNotu")}
+      </p>
 
-      <div className="flex flex-wrap gap-2">
+      {/* ADIM SERIDI. (P160) Aktif adim eskiden YALNIZ RENKLE belliydi:
+          ekran okuyucu dort etiketi ust uste okuyor, hangisinde
+          olundugunu SOYLEMIYORDU. `aria-current="step"` o bilgiyi
+          tasir; sira numarasi da `<ol>` ile yapisal hale geldi. */}
+      <ol className="flex flex-wrap gap-2">
         {adimBasliklari.map((baslik, i) => (
-          <span
+          <li
             key={baslik}
-            className={
-              i === adim
-                ? "rounded-lg bg-brand-tealInk px-3 py-1.5 text-sm text-white"
-                : "rounded-lg border border-slate-300 px-3 py-1.5 text-sm opacity-70"
-            }
+            aria-current={i === adim ? ADIM : undefined}
+            className={i === adim ? "yz-raised" : ""}
+            style={{
+              borderRadius: "var(--yz-r-md)",
+              padding: "0.375rem 0.75rem",
+              fontSize: "var(--yz-fs-sm)",
+              border: i === adim ? "none" : "1px solid var(--yz-border)",
+              color: i === adim ? "var(--yz-text)" : "var(--yz-text-3)",
+              fontWeight: i === adim ? 600 : 400,
+            }}
           >
             {baslik}
-          </span>
+          </li>
         ))}
-      </div>
+      </ol>
 
-      <motion.div {...panelMotion} className={panelCls}>
-        <ErrorBox message={hata} />
+      <Kart>
+        {hata && (
+          <p
+            role="alert"
+            className="mb-3"
+            style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-danger-ink)" }}
+          >
+            {hata}
+          </p>
+        )}
 
         {adim === 0 ? (
-          <Field label={t("sayacAlanKalem")}>
-            <select
-              aria-label={t("sayacAlanKalem")}
-              className={inputCls}
-              value={kalemId}
-              onChange={(e) => setKalemId(e.target.value)}
-            >
-              <option value="">—</option>
-              {kalemler.map((k) => (
-                <option key={String(k.id)} value={String(k.id)}>
-                  {String(k.ad ?? k.id)}
-                </option>
-              ))}
-            </select>
-          </Field>
+          <AlanSarmal etiket={t("sayacAlanKalem")}>
+            {(b) => (
+              <Secim {...b} value={kalemId} onChange={(e) => setKalemId(e.target.value)}>
+                <option value="">—</option>
+                {kalemler.map((k) => (
+                  <option key={String(k.id)} value={String(k.id)}>
+                    {String(k.ad ?? k.id)}
+                  </option>
+                ))}
+              </Secim>
+            )}
+          </AlanSarmal>
         ) : null}
 
         {adim === 1 ? (
           <div className="grid gap-3 sm:grid-cols-2">
-            <Field label={t("sayacAlanAnaSayac")}>
-              <select
-                aria-label={t("sayacAlanAnaSayac")}
-                className={inputCls}
-                value={anaId}
-                onChange={(e) => setAnaId(e.target.value)}
-              >
-                <option value="">—</option>
-                {anaSayaclar.map((s) => (
-                  <option key={String(s.id)} value={String(s.id)}>
-                    {String(s.ad ?? s.id)}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <Field label={t("ortakDonem")}>
-              <input
-                aria-label={t("ortakDonem")}
-                className={inputCls}
-                placeholder="2026-08"
-                value={donem}
-                onChange={(e) => setDonem(e.target.value)}
-              />
-            </Field>
-            <Field label={t("sayacAlanAnaTuketim")}>
-              <input
-                aria-label={t("sayacAlanAnaTuketim")}
-                className={inputCls}
-                inputMode="decimal"
-                value={anaTuketim}
-                onChange={(e) => setAnaTuketim(e.target.value)}
-              />
-            </Field>
-            <Field label={t("sayacAlanBirimFiyat")}>
-              <input
-                aria-label={t("sayacAlanBirimFiyat")}
-                className={inputCls}
-                inputMode="decimal"
-                value={birimFiyat}
-                onChange={(e) => setBirimFiyat(e.target.value)}
-              />
-            </Field>
+            <AlanSarmal etiket={t("sayacAlanAnaSayac")}>
+              {(b) => (
+                <Secim {...b} value={anaId} onChange={(e) => setAnaId(e.target.value)}>
+                  <option value="">—</option>
+                  {anaSayaclar.map((s) => (
+                    <option key={String(s.id)} value={String(s.id)}>
+                      {String(s.ad ?? s.id)}
+                    </option>
+                  ))}
+                </Secim>
+              )}
+            </AlanSarmal>
+            <AlanSarmal etiket={t("ortakDonem")}>
+              {(b) => (
+                <Alan
+                  {...b}
+                  placeholder="2026-08"
+                  value={donem}
+                  onChange={(e) => setDonem(e.target.value)}
+                />
+              )}
+            </AlanSarmal>
+            <AlanSarmal etiket={t("sayacAlanAnaTuketim")}>
+              {(b) => (
+                <Alan
+                  {...b}
+                  inputMode="decimal"
+                  value={anaTuketim}
+                  onChange={(e) => setAnaTuketim(e.target.value)}
+                />
+              )}
+            </AlanSarmal>
+            <AlanSarmal etiket={t("sayacAlanBirimFiyat")}>
+              {(b) => (
+                <Alan
+                  {...b}
+                  inputMode="decimal"
+                  value={birimFiyat}
+                  onChange={(e) => setBirimFiyat(e.target.value)}
+                />
+              )}
+            </AlanSarmal>
           </div>
         ) : null}
 
         {adim === 2 ? (
           bolumYukleniyor ? (
-            <p>{t("ortakYukleniyor")}</p>
+            <IskeletMetin satir={4} />
           ) : bolumler.length === 0 ? (
             // BOS LISTE SESSIZ GECILMEZ: bos bir 3. adimdan "ileri" demek,
             // hicbir daireyi borclandirmayan bir istek atmak olurdu.
-            <EmptyState title={t("sayacBolumYok")} />
+            <BosDurum baslik={t("sayacBolumYok")} />
           ) : (
             <div className="space-y-2">
               {bolumler.map((b) => (
-                <Field key={String(b.id)} label={String(b.unit_no ?? b.id)}>
-                  <input
-                    aria-label={String(b.unit_no ?? b.id)}
-                    className={inputCls}
-                    inputMode="decimal"
-                    value={tuketimler[String(b.id)] ?? ""}
-                    onChange={(e) =>
-                      setTuketimler({
-                        ...tuketimler,
-                        [String(b.id)]: e.target.value,
-                      })
-                    }
-                  />
-                </Field>
+                <AlanSarmal key={String(b.id)} etiket={String(b.unit_no ?? b.id)}>
+                  {(alan) => (
+                    <Alan
+                      {...alan}
+                      inputMode="decimal"
+                      value={tuketimler[String(b.id)] ?? ""}
+                      onChange={(e) =>
+                        setTuketimler({
+                          ...tuketimler,
+                          [String(b.id)]: e.target.value,
+                        })
+                      }
+                    />
+                  )}
+                </AlanSarmal>
               ))}
             </div>
           )
@@ -323,81 +341,84 @@ export default function SayacOkumaPage() {
         {adim === 3 ? (
           <div className="space-y-3">
             <dl className="grid gap-2 sm:grid-cols-2">
-              <div>
-                <dt className="text-sm opacity-70">{t("sayacAlanAnaTuketim")}</dt>
-                <dd>{sayiBicimi(anaDeger)}</dd>
-              </div>
-              <div>
-                <dt className="text-sm opacity-70">{t("sayacToplamTuketim")}</dt>
-                <dd>{sayiBicimi(bolumToplam)}</dd>
-              </div>
-              <div>
-                <dt className="text-sm opacity-70">{t("sayacOrtakAlanFarki")}</dt>
-                <dd>{sayiBicimi(fark)}</dd>
-              </div>
-              <div>
-                <dt className="text-sm opacity-70">{t("sayacTahminiTutar")}</dt>
-                <dd>
-                  {kurusToTL(
-                    onizlemeTutar(anaDeger, bolumToplam, birimKurus, ortakYuzde),
-                  )}
-                </dd>
-              </div>
+              <OzetSatir etiket={t("sayacAlanAnaTuketim")} deger={sayiBicimi(anaDeger)} />
+              <OzetSatir etiket={t("sayacToplamTuketim")} deger={sayiBicimi(bolumToplam)} />
+              <OzetSatir etiket={t("sayacOrtakAlanFarki")} deger={sayiBicimi(fark)} />
+              <OzetSatir
+                etiket={t("sayacTahminiTutar")}
+                deger={kurusToTL(
+                  onizlemeTutar(anaDeger, bolumToplam, birimKurus, ortakYuzde),
+                )}
+              />
             </dl>
             {/* Fark NEGATIFSE ortak alan payi hesaplanamaz — sunucu da
                 boyle davranir; kullanici bunu GONDERMEDEN once gormeli. */}
-            {fark < 0 ? <ErrorBox message={t("sayacFarkUyarisi")} /> : null}
+            {fark < 0 ? (
+              <p
+                role="alert"
+                style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-danger-ink)" }}
+              >
+                {t("sayacFarkUyarisi")}
+              </p>
+            ) : null}
             <div className="grid gap-3 sm:grid-cols-2">
-              <Field label={t("sayacAlanSonOdeme")}>
-                <input
-                  aria-label={t("sayacAlanSonOdeme")}
-                  className={inputCls}
-                  type="date"
-                  value={sonOdeme}
-                  onChange={(e) => setSonOdeme(e.target.value)}
-                />
-              </Field>
-              <Field label={t("ortakAciklamaOpsiyonel")}>
-                <input
-                  aria-label={t("ortakAciklamaOpsiyonel")}
-                  className={inputCls}
-                  value={aciklama}
-                  onChange={(e) => setAciklama(e.target.value)}
-                />
-              </Field>
+              <AlanSarmal etiket={t("sayacAlanSonOdeme")}>
+                {(b) => (
+                  <Alan
+                    {...b}
+                    type="date"
+                    value={sonOdeme}
+                    onChange={(e) => setSonOdeme(e.target.value)}
+                  />
+                )}
+              </AlanSarmal>
+              <AlanSarmal etiket={t("ortakAciklamaOpsiyonel")}>
+                {(b) => (
+                  <Alan {...b} value={aciklama} onChange={(e) => setAciklama(e.target.value)} />
+                )}
+              </AlanSarmal>
             </div>
           </div>
         ) : null}
 
         <div className="mt-4 flex gap-2">
           {adim > 0 ? (
-            <button
-              type="button"
-              className={btnGhost}
+            <Dugme
+              tur="sessiz"
               onClick={() => {
                 setHata(null);
                 setAdim(adim - 1);
               }}
             >
               {t("sayacGeri")}
-            </button>
+            </Dugme>
           ) : null}
           {adim < 3 ? (
-            <button type="button" className={btnPrimary} onClick={ileri}>
+            <Dugme tur="birincil" onClick={ileri}>
               {t("sayacIleri")}
-            </button>
+            </Dugme>
           ) : (
-            <button
-              type="button"
-              className={btnPrimary}
+            <Dugme
+              tur="birincil"
               disabled={gonderiyor || bolumler.length === 0}
+              yukleniyor={gonderiyor}
               onClick={() => void borclandir()}
             >
               {gonderiyor ? t("sayacBorclandiriliyor") : t("sayacBorclandir")}
-            </button>
+            </Dugme>
           )}
         </div>
-      </motion.div>
+      </Kart>
+    </div>
+  );
+}
+
+/** Ozet adiminin tek satiri — dort kez tekrarlanan bicimi tek yerde tutar. */
+function OzetSatir({ etiket, deger }: { etiket: string; deger: string }) {
+  return (
+    <div>
+      <dt style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>{etiket}</dt>
+      <dd style={{ color: "var(--yz-text)" }}>{deger}</dd>
     </div>
   );
 }

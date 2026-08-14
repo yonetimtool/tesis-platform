@@ -1,29 +1,54 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import useSWR from "swr";
 
-import { EmptyState } from "@/components/EmptyState";
-import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, panelCls, panelMotion } from "@/components/form";
-import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
+import {
+  Alan,
+  AlanSarmal,
+  Dugme,
+  Kart,
+  Rozet,
+  Sekmeler,
+  VeriTablosu,
+  type Kolon,
+  type TabloDurumu,
+} from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { ODEME_DURUM, ODEME_YONTEM, enumAdi } from "@/lib/enum-adlari";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
+import { kisaKimlik } from "@/lib/kimlik";
 import { kurusToTL, tlToKurus } from "@/lib/money";
 import { useT } from "@/lib/i18n/kullan";
 import type {
   DuesAssessmentList,
   DuesAssessmentResult,
+  DuesPayment,
+  DuesAssessment,
   DuesPaymentList,
+  UnitList,
 } from "@/lib/types";
 
-const LIMIT = 20;
+// UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
+const SEKME_TAHAKKUK = "tahakkuk" as const;
+const SEKME_ODEME = "odeme" as const;
+const DURUM_OLUMLU = "olumlu" as const;
+const DURUM_UYARI = "uyari" as const;
+const DURUM_NOTR = "notr" as const;
+
+const BOS_DURUM: TabloDurumu = {
+  sayfa: 1,
+  boy: 25,
+  siraKolon: null,
+  siraYonu: "artan",
+};
 
 export default function DuesPage() {
   const t = useT();
   const toast = useToast();
+  const [sekme, setSekme] = useState<string>(SEKME_TAHAKKUK);
+
   // --- toplu tahakkuk ---
   const [donem, setDonem] = useState("");
   const [tl, setTl] = useState("");
@@ -35,7 +60,8 @@ export default function DuesPage() {
 
   // --- listeler ---
   const [aDonem, setADonem] = useState("");
-  const [aOffset, setAOffset] = useState(0);
+  const [aDurum, setADurum] = useState<TabloDurumu>(BOS_DURUM);
+  const aOffset = (aDurum.sayfa - 1) * aDurum.boy;
   const aQs = aDonem ? `&donem=${encodeURIComponent(aDonem)}` : "";
   // HATA SESSIZ KALMAMALI: uc dustugunde sayfa "Tahakkuk yok" gosteriyordu —
   // kullanici "kayit yok" ile "sunucu dustu"yu ayirt edemiyordu (tur 42).
@@ -45,19 +71,38 @@ export default function DuesPage() {
     isLoading: aYukleniyor,
     mutate: mutateA,
   } = useSWR<DuesAssessmentList>(
-    `/api/dues/assessments?limit=${LIMIT}&offset=${aOffset}${aQs}`,
+    `/api/dues/assessments?limit=${aDurum.boy}&offset=${aOffset}${aQs}`,
     jsonFetcher,
   );
 
-  const [pOffset, setPOffset] = useState(0);
+  const [pDurum, setPDurum] = useState<TabloDurumu>(BOS_DURUM);
+  const pOffset = (pDurum.sayfa - 1) * pDurum.boy;
   const {
     data: payments,
     error: pErr,
     isLoading: pYukleniyor,
+    mutate: mutateP,
   } = useSWR<DuesPaymentList>(
-    `/api/dues/payments?limit=${LIMIT}&offset=${pOffset}`,
+    `/api/dues/payments?limit=${pDurum.boy}&offset=${pOffset}`,
     jsonFetcher,
   );
+
+  // (P160) DAIRE NUMARASI. Sozlesme yalniz `unit_id` donuyor ve sayfa
+  // ekrana `u.slice(0,8)` — yani bir UUID parcasi — yaziyordu. Aidat
+  // ekraninda "hangi daire" en temel sorudur ve UUID onu YANITLAMIYOR.
+  // Uc DEGISTIRILMEDI (kilitli kural 1); daire listesi ayrica cekilip
+  // istemcide eslestiriliyor. Uc en fazla 200 daire dondurdugu icin
+  // eslesmeyen kimlik ESKI davranisa (kisa kimlik) duser — uydurma ad
+  // gosterilmez.
+  const { data: units } = useSWR<UnitList>("/api/units?limit=200&offset=0", jsonFetcher);
+  const daireAdlari = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const u of units?.items ?? []) {
+      m.set(u.id, u.blok ? `${u.blok}/${u.no}` : u.no);
+    }
+    return m;
+  }, [units]);
+  const daireAdi = (id: string) => daireAdlari.get(id) ?? kisaKimlik(id);
 
   async function bulk(e: React.FormEvent) {
     e.preventDefault();
@@ -87,174 +132,218 @@ export default function DuesPage() {
     }
   }
 
+  const tahakkukKolonlari: Kolon<DuesAssessment>[] = useMemo(
+    () => [
+      {
+        id: "daire",
+        baslik: t("raporTabloDaire"),
+        gizlenebilir: false,
+        hucre: (a) => daireAdi(a.unit_id),
+      },
+      { id: "donem", baslik: t("ortakDonem"), hucre: (a) => a.donem },
+      {
+        id: "tutar",
+        baslik: t("raporTabloTutar"),
+        sayisal: true,
+        hucre: (a) => <span className="font-medium">{kurusToTL(a.tutar_kurus)}</span>,
+      },
+      {
+        id: "son",
+        baslik: t("aidatSonOdemeKisa"),
+        hucre: (a) => a.son_odeme_tarihi ?? "—",
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [t, daireAdlari],
+  );
+
+  const odemeKolonlari: Kolon<DuesPayment>[] = useMemo(
+    () => [
+      {
+        id: "daire",
+        baslik: t("raporTabloDaire"),
+        gizlenebilir: false,
+        hucre: (p) => daireAdi(p.unit_id),
+      },
+      { id: "yontem", baslik: t("aidatYontem"), hucre: (p) => enumAdi(t, ODEME_YONTEM, p.yontem) },
+      {
+        id: "durum",
+        baslik: t("ortakDurum"),
+        hucre: (p) => (
+          <Rozet
+            durum={
+              p.durum === "basarili"
+                ? DURUM_OLUMLU
+                : p.durum === "bekliyor"
+                  ? DURUM_UYARI
+                  : DURUM_NOTR
+            }
+          >
+            {enumAdi(t, ODEME_DURUM, p.durum)}
+          </Rozet>
+        ),
+      },
+      {
+        id: "tutar",
+        baslik: t("raporTabloTutar"),
+        sayisal: true,
+        hucre: (p) => <span className="font-medium">{kurusToTL(p.tutar_kurus)}</span>,
+      },
+      {
+        id: "zaman",
+        baslik: t("raporTabloZaman"),
+        darEkrandaGizle: true,
+        hucre: (p) => formatDateTime(p.odeme_zamani),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [t, daireAdlari],
+  );
+
   return (
     <div className="space-y-6">
-      <PageHeader title={t("aidatBaslik")} />
-      {(aErr || pErr) && <ErrorBox message={(aErr ?? pErr).message} />}
-      {(aYukleniyor || pYukleniyor) && (
-        <p role="status" className="text-sm text-metin-muted">
-          {t("ortakYukleniyor")}
-        </p>
-      )}
+      <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+        {t("aidatBaslik")}
+      </h1>
 
-      {/* Toplu tahakkuk */}
-      <motion.form {...panelMotion} onSubmit={bulk} className={`space-y-3 ${panelCls}`}>
-        <h2 className="font-medium">{t("aidatTopluBaslik")}</h2>
-        {/* DAR EKRAN: 4 sutun 360 dp'ye sigmiyor — Rusca etiketlerle sayfa
-            yana kayiyordu (tur 25 surusu +23 px olctu). Dar ekranda 2,
-            sm'den itibaren 4 sutun. */}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Field label={t("ortakDonem")} hint={t("aidatDonemOrnek")}>
-            <input
-              className={inputCls}
-              value={donem}
-              onChange={(e) => setDonem(e.target.value)}
-              placeholder="2026-07"
-              required
-            />
-          </Field>
-          <Field label={t("aidatTutarTl")}>
-            <input
-              className={inputCls}
-              inputMode="decimal"
-              value={tl}
-              onChange={(e) => setTl(e.target.value)}
-              placeholder="750,00"
-              required
-            />
-          </Field>
-          <Field label={t("aidatSonOdeme")}>
-            <input type="date" className={inputCls} value={son} onChange={(e) => setSon(e.target.value)} />
-          </Field>
-          <Field label={t("ortakAciklamaOpsiyonel")}>
-            <input className={inputCls} value={desc} onChange={(e) => setDesc(e.target.value)} />
-          </Field>
-        </div>
-        <ErrorBox message={bErr} />
-        {bRes && (
-          <p className="text-sm text-emerald-700">
-            {t("aidatTopluSonuc", { olusan: bRes.created, atlanan: bRes.atlanan })}
-          </p>
-        )}
-        <button type="submit" className={btnPrimary} disabled={bBusy}>
-          {bBusy ? t("aidatOlusturuluyor") : t("aidatTopluOlustur")}
-        </button>
-      </motion.form>
+      {/* TOPLU TAHAKKUK — MODALA ALINMADI. Bu sayfanin ASIL ISI ve ayda
+          bir yapilan bir islem; dugme arkasina saklamak onu bulunmaz
+          yapardi. Yukseltilmis yuzeyde, listelerin ustunde durur. */}
+      <Kart>
+        <form onSubmit={bulk} className="space-y-3">
+          <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
+            {t("aidatTopluBaslik")}
+          </h2>
+          {/* DAR EKRAN: 4 sutun 360 dp'ye sigmiyor — Rusca etiketlerle sayfa
+              yana kayiyordu (tur 25 surusu +23 px olctu). Dar ekranda 2,
+              sm'den itibaren 4 sutun. */}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <AlanSarmal etiket={t("ortakDonem")} ipucu={t("aidatDonemOrnek")} zorunlu>
+              {(b) => (
+                <Alan
+                  {...b}
+                  value={donem}
+                  onChange={(e) => setDonem(e.target.value)}
+                  placeholder="2026-07"
+                  required
+                />
+              )}
+            </AlanSarmal>
+            <AlanSarmal etiket={t("aidatTutarTl")} zorunlu>
+              {(b) => (
+                <Alan
+                  {...b}
+                  inputMode="decimal"
+                  value={tl}
+                  onChange={(e) => setTl(e.target.value)}
+                  placeholder="750,00"
+                  required
+                />
+              )}
+            </AlanSarmal>
+            <AlanSarmal etiket={t("aidatSonOdeme")}>
+              {(b) => (
+                <Alan {...b} type="date" value={son} onChange={(e) => setSon(e.target.value)} />
+              )}
+            </AlanSarmal>
+            <AlanSarmal etiket={t("ortakAciklamaOpsiyonel")}>
+              {(b) => (
+                <Alan {...b} value={desc} onChange={(e) => setDesc(e.target.value)} />
+              )}
+            </AlanSarmal>
+          </div>
 
-      {/* Tahakkuk listesi */}
-      <section className="space-y-3">
-        <div className="flex flex-wrap items-end justify-between gap-2">
-          <h2 className="text-lg font-medium">{t("aidatTahakkuklar")}</h2>
-          <div className="w-full sm:w-48">
-            <Field label={t("aidatDonemFiltresi")}>
-              <input
-                className={inputCls}
-                value={aDonem}
-                onChange={(e) => {
-                  setADonem(e.target.value);
-                  setAOffset(0);
-                }}
-                placeholder="2026-07"
+          {bErr && (
+            <p
+              role="alert"
+              style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-danger-ink)" }}
+            >
+              {bErr}
+            </p>
+          )}
+          {bRes && (
+            <p
+              role="status"
+              style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-success-ink)" }}
+            >
+              {t("aidatTopluSonuc", { olusan: bRes.created, atlanan: bRes.atlanan })}
+            </p>
+          )}
+
+          <Dugme tur="birincil" type="submit" yukleniyor={bBusy}>
+            {bBusy ? t("aidatOlusturuluyor") : t("aidatTopluOlustur")}
+          </Dugme>
+        </form>
+      </Kart>
+
+      {/* IKI LISTE SEKMEDE: ikisi de 4-5 sutunlu ve AYRI sayfaliyor;
+          alt alta konunca sayfa surekli kaydiriliyordu. Ikisi de tek
+          tik uzakta — gizlenmiyor. */}
+      <Sekmeler
+        aktifId={sekme}
+        onDegis={setSekme}
+        sekmeler={[
+          {
+            id: SEKME_TAHAKKUK,
+            baslik: t("aidatTahakkuklar"),
+            icerik: (
+              <VeriTablosu<DuesAssessment>
+                kolonlar={tahakkukKolonlari}
+                satirlar={assessments?.items ?? []}
+                satirId={(a) => a.id}
+                hata={aErr ? aErr.message : null}
+                onTekrar={() => void mutateA()}
+                yukleniyor={aYukleniyor && !assessments}
+                bosBaslik={t("aidatTahakkukYok")}
+                bosAciklama={t("aidatTahakkukYokAlt")}
+                sunucuTarafli
+                toplam={assessments?.meta.total ?? 0}
+                durum={aDurum}
+                onDurumDegisti={setADurum}
+                araclar={
+                  <div className="w-full sm:w-48">
+                    <AlanSarmal etiket={t("aidatDonemFiltresi")}>
+                      {(b) => (
+                        <Alan
+                          {...b}
+                          value={aDonem}
+                          onChange={(e) => {
+                            setADonem(e.target.value);
+                            // Suzgec degisince BASA don: eski sayfada
+                            // kalmak bos gorunen bir liste demekti.
+                            setADurum({ ...aDurum, sayfa: 1 });
+                          }}
+                          placeholder="2026-07"
+                        />
+                      )}
+                    </AlanSarmal>
+                  </div>
+                }
               />
-            </Field>
-          </div>
-        </div>
-        <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
-          <div className="odak-ic overflow-x-auto" tabIndex={0}>
-            <Tablo>
-              <TabloBasligi>
-                  <Th>{t("raporTabloDaire")}</Th>
-                  <Th>{t("ortakDonem")}</Th>
-                  <Th>{t("raporTabloTutar")}</Th>
-                  <Th>{t("aidatSonOdemeKisa")}</Th>
-                </TabloBasligi>
-              <tbody>
-                {(assessments?.items ?? []).map((a) => (
-                  <Tr key={a.id}>
-                    <Td className="font-mono text-metin-body">{a.unit_id.slice(0, 8)}</Td>
-                    <Td>{a.donem}</Td>
-                    <Td sayi className="font-medium">{kurusToTL(a.tutar_kurus)}</Td>
-                    <Td className="text-metin-body">{a.son_odeme_tarihi ?? "—"}</Td>
-                  </Tr>
-                ))}
-                {assessments && assessments.items.length === 0 && (
-                  <tr>
-                    <Td colSpan={4}>
-                      <EmptyState title={t("aidatTahakkukYok")} description={t("aidatTahakkukYokAlt")} />
-                    </Td>
-                  </tr>
-                )}
-              </tbody>
-            </Tablo>
-          </div>
-        </div>
-        {assessments && (
-          <Pager
-            offset={aOffset}
-            limit={LIMIT}
-            total={assessments.meta.total}
-            onPrev={() => setAOffset(Math.max(0, aOffset - LIMIT))}
-            onNext={() => setAOffset(aOffset + LIMIT)}
-          />
-        )}
-      </section>
-
-      {/* Odeme listesi */}
-      <section className="space-y-3">
-        <h2 className="text-lg font-medium">{t("aidatOdemeler")}</h2>
-        <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
-          <div className="odak-ic overflow-x-auto" tabIndex={0}>
-            <Tablo>
-              <TabloBasligi>
-                  <Th>{t("raporTabloDaire")}</Th>
-                  <Th>{t("aidatYontem")}</Th>
-                  <Th>{t("ortakDurum")}</Th>
-                  <Th>{t("raporTabloTutar")}</Th>
-                  <Th>{t("raporTabloZaman")}</Th>
-                </TabloBasligi>
-              <tbody>
-                {(payments?.items ?? []).map((p) => (
-                  <Tr key={p.id}>
-                    <Td className="font-mono text-metin-body">{p.unit_id.slice(0, 8)}</Td>
-                    <Td>{enumAdi(t, ODEME_YONTEM, p.yontem)}</Td>
-                    <Td>
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                          p.durum === "basarili"
-                            ? "bg-emerald-100 text-emerald-800"
-                            : p.durum === "bekliyor"
-                              ? "bg-amber-100 text-amber-800"
-                              : "bg-slate-100 text-metin-body"
-                        }`}
-                      >
-                        {enumAdi(t, ODEME_DURUM, p.durum)}
-                      </span>
-                    </Td>
-                    <Td sayi className="font-medium">{kurusToTL(p.tutar_kurus)}</Td>
-                    <Td className="text-metin-body">{formatDateTime(p.odeme_zamani)}</Td>
-                  </Tr>
-                ))}
-                {payments && payments.items.length === 0 && (
-                  <tr>
-                    <Td colSpan={5}>
-                      <EmptyState title={t("aidatOdemeYok")} description={t("aidatOdemeYokAlt")} />
-                    </Td>
-                  </tr>
-                )}
-              </tbody>
-            </Tablo>
-          </div>
-        </div>
-        {payments && (
-          <Pager
-            offset={pOffset}
-            limit={LIMIT}
-            total={payments.meta.total}
-            onPrev={() => setPOffset(Math.max(0, pOffset - LIMIT))}
-            onNext={() => setPOffset(pOffset + LIMIT)}
-          />
-        )}
-      </section>
+            ),
+          },
+          {
+            id: SEKME_ODEME,
+            baslik: t("aidatOdemeler"),
+            icerik: (
+              <VeriTablosu<DuesPayment>
+                kolonlar={odemeKolonlari}
+                satirlar={payments?.items ?? []}
+                satirId={(p) => p.id}
+                hata={pErr ? pErr.message : null}
+                onTekrar={() => void mutateP()}
+                yukleniyor={pYukleniyor && !payments}
+                bosBaslik={t("aidatOdemeYok")}
+                bosAciklama={t("aidatOdemeYokAlt")}
+                sunucuTarafli
+                toplam={payments?.meta.total ?? 0}
+                durum={pDurum}
+                onDurumDegisti={setPDurum}
+              />
+            ),
+          },
+        ]}
+      />
     </div>
   );
 }
