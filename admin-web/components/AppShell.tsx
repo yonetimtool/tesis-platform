@@ -796,9 +796,27 @@ export function AppShell({
               <DilSecici />
             </div>
           </div>
-          <main id="icerik" className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8 lg:pt-4">
+          {/* (P160 / Asama 7) SAYFA GECISI — beyaz ekran YOK.
+              `key={pathname}`: rota degisince icerik yeniden monte olur ve
+              giris animasyonu tetiklenir. Cikis animasyonu bilerek YOK:
+              Next App Router'da eski sayfa zaten soklulmus oluyor ve
+              `exit` beklemek gecisi YAVASLATIR.
+
+              8px kayma + solma: brief "gosteris degil, geri bildirim ve
+              hiyerarsi" diyor. Buyuk kayma her gezinmede sayfayi ziplatir.
+
+              `MotionConfig reducedMotion="user"` yukarida: hareket
+              azaltmada bu animasyon KENDILIGINDEN kapanir. */}
+          <motion.main
+            id="icerik"
+            key={pathname}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
+            className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8 lg:pt-4"
+          >
             {children}
-          </main>
+          </motion.main>
         </div>
       </div>
     </MotionConfig>
