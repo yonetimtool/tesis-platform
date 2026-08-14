@@ -34,7 +34,16 @@ export function ThemeToggle() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem("theme") as Mode | null;
+    // (P160) KORUMASIZ OKUMA DUZELTILDI: gizli sekmede / depolama
+    // engelliyken `localStorage` ERISIMI FIRLATIR ve bu, tema anahtarini
+    // degil TUM KABUGU cizilemez hale getiriyordu (kabuk katlanma testi
+    // olctu). Erisilemez depolamada varsayilan `system` modda kalinir.
+    let stored: Mode | null = null;
+    try {
+      stored = localStorage.getItem("theme") as Mode | null;
+    } catch {
+      stored = null;
+    }
     if (stored === "light" || stored === "dark" || stored === "system") {
       setMode(stored);
     }
@@ -53,7 +62,11 @@ export function ThemeToggle() {
   function cycle() {
     const next = ORDER[(ORDER.indexOf(mode) + 1) % ORDER.length];
     setMode(next);
-    localStorage.setItem("theme", next);
+    try {
+      localStorage.setItem("theme", next);
+    } catch {
+      // Yazilamazsa tercih bu oturumda gecerli olur, kalici olmaz.
+    }
     applyMode(next);
   }
 

@@ -165,6 +165,8 @@ export const ar: Sozluk = {
   tanimZorunluAlan: "{alan} مطلوب",
   kabukAyarlar: "الإعدادات",
   kabukMenuyuAc: "فتح القائمة",
+  kabukMenuDaralt: "طيّ القائمة",
+  kabukMenuGenislet: "توسيع القائمة",
   kabukIcerigeAtla: "تخطَّ إلى المحتوى",
   kabukGrupGuvenlik: "الأمن",
   pano2Selam: "مرحبًا",

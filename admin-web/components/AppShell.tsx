@@ -30,6 +30,44 @@ import { kokRotaRol, type Yuzey } from "@/lib/yuzey";
 // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
 const SEFFAF = "transparent";
 const GOLGESIZ = "none";
+const YON_SOL = "sol";
+
+/** Katlama oku. Yon MANTIKSAL degil gorsel: RTL'de `rotate-180` ile
+ *  cevrilir (Tailwind `rtl:` varyanti). */
+function OkKatla({ yon }: { yon: "sol" | "sag" }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={`h-4 w-4 rtl:rotate-180 ${yon === YON_SOL ? "" : "rotate-180"}`}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M15 6l-6 6 6 6" />
+    </svg>
+  );
+}
+
+function CikisIkonu() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="mx-auto h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4" />
+      <path d="M16 17l5-5-5-5M21 12H10" />
+    </svg>
+  );
+}
 
 function Icon({ name }: { name: IconName }) {
   const p = {
@@ -99,6 +137,8 @@ function Icon({ name }: { name: IconName }) {
 
 /** Kullanicinin acik/kapali bolum tercihi (tarayici basina). */
 const MENU_DURUM_ANAHTARI = "yonetio.menu.durum";
+/** (P160) Kenar cubugu dar mi — KABUGA ait, menu durumundan AYRI. */
+const DAR_ANAHTARI = "yonetio.menu.dar";
 
 /** Bolum basliginin acilir oku — 90 derece doner. */
 function Ok({ acik }: { acik: boolean }) {
@@ -123,16 +163,24 @@ function MenuSatiri({
   oge,
   aktif,
   onNavigate,
+  dar = false,
 }: {
   oge: MenuOgesi;
   aktif: boolean;
   onNavigate?: () => void;
+  /** (P160) Kenar cubugu DAR modda mi — etiket gorsel olarak gizlenir. */
+  dar?: boolean;
 }) {
   const t = useT();
+  const etiket = t(oge.anahtar);
   return (
     <Link
       href={ogeBaglantisi(oge)}
       onClick={onNavigate}
+      // DAR MODDA `title`: fare kullanicisi ikonun ne oldugunu gorebilmeli.
+      // Ekran okuyucu icin etiket `sr-only` olarak DOM'da KALIR (asagida) —
+      // `title` tek basina guvenilir bir ad kaynagi degildir.
+      title={dar ? etiket : undefined}
       aria-current={aktif ? "page" : undefined}
       // (P160) AKTIF OGE: hafif KABARTMALI KAPSUL + sol gosterge.
       //
@@ -141,7 +189,9 @@ function MenuSatiri({
       // RENKLE degil YUZEYLE anlatiliyor — satir zeminden bir kademe
       // yukselir. Bu ayni zamanda daha erisilebilir: renk korlugu olan
       // kullanici da kabartmayi gorur.
-      className="odak-ic group relative flex items-center gap-3 py-2 pe-3 ps-7 transition-[background,box-shadow]"
+      className={`odak-ic group relative flex items-center gap-3 py-2 transition-[background,box-shadow] ${
+        dar ? "justify-center px-2" : "pe-3 ps-7"
+      }`}
       style={{
         borderRadius: "var(--yz-radius-btn)",
         fontSize: "var(--yz-fs-body)",
@@ -162,7 +212,16 @@ function MenuSatiri({
       <span style={{ color: aktif ? "var(--yz-accent-edge)" : "var(--yz-text-3)" }}>
         <Icon name={oge.icon} />
       </span>
-      <span className="truncate">{t(oge.anahtar)}</span>
+      {/* ETIKET: dar modda GORSEL olarak silinir ama DOM'da kalir —
+          baglantinin erisilebilir ADI odur. Kaldirsaydik ekran okuyucu
+          yalnizca "baglanti" derdi. Gecis, genislik ve solma birlikte
+          (brief: "genislik gecisi, etiket solma"). */}
+      <span
+        className={dar ? "sr-only" : "truncate transition-opacity"}
+        style={dar ? undefined : { transitionDuration: "var(--yz-dur-base)" }}
+      >
+        {etiket}
+      </span>
     </Link>
   );
 }
@@ -182,6 +241,7 @@ function Bolum({
   sorgu,
   onCevir,
   onNavigate,
+  dar = false,
 }: {
   grup: MenuGrubu;
   acik: boolean;
@@ -189,9 +249,39 @@ function Bolum({
   sorgu: URLSearchParams | null;
   onCevir: () => void;
   onNavigate?: () => void;
+  dar?: boolean;
 }) {
   const t = useT();
   const baslik = t(grup.anahtar);
+
+  // DAR MODDA BOLUM BASLIGI CIZILMEZ ve bolum HER ZAMAN ACIKTIR.
+  //
+  // Neden: 68px'e sigan bir baslik yok; kisaltilmis bir metin ("Guv...")
+  // bilgi tasimaz. Katlanmayi da kapatmak gerekiyor cunku basligi
+  // gizleyip katlamayi acik birakmak, kullanicinin ACAMAYACAGI kapali
+  // bir bolum birakirdi — satirlar erisilemez olurdu.
+  if (dar) {
+    return (
+      <div
+        className="space-y-0.5 border-t pt-2 first:border-t-0 first:pt-0"
+        style={{ borderColor: "var(--yz-border)" }}
+        // Bolum adi GORSEL olarak yok ama gruplama ekran okuyucuda KALIR.
+        aria-label={baslik}
+        role="group"
+      >
+        {grup.ogeler.map((o) => (
+          <MenuSatiri
+            key={ogeBaglantisi(o)}
+            oge={o}
+            aktif={ogeAktif(o, pathname, sorgu)}
+            onNavigate={onNavigate}
+            dar
+          />
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div>
       <button
@@ -230,10 +320,16 @@ function SidebarBody({
   onNavigate,
   rolBaslangic,
   yuzey,
+  dar = false,
+  onDarCevir,
 }: {
   onNavigate?: () => void;
   rolBaslangic: string | null;
   yuzey: Yuzey;
+  /** (P160) DAR mod — yalniz masaustu kenar cubugunda. Cekmece HER ZAMAN
+   *  genistir: mobilde 68px'lik bir cekmece anlamsizdir. */
+  dar?: boolean;
+  onDarCevir?: () => void;
 }) {
   const pathname = usePathname();
   // (P154 / Asama 7.1) Menu artik ayni rotanin ALT GORUNUMLERINI de tasiyor
@@ -380,6 +476,7 @@ function SidebarBody({
   const bolum = (g: MenuGrubu) => (
     <Bolum
       key={g.id}
+      dar={dar}
       grup={g}
       acik={acik.includes(g.id)}
       pathname={pathname}
@@ -391,11 +488,47 @@ function SidebarBody({
 
   return (
     <div className="flex h-full flex-col">
-      <div className="kart-kenar flex h-16 shrink-0 items-center border-b px-5">
+      <div
+        className={`flex h-16 shrink-0 items-center border-b ${
+          dar ? "justify-center px-2" : "justify-between px-5"
+        }`}
+        style={{
+          borderColor: "var(--yz-border)",
+          borderBottomWidth: "var(--yz-border-w)",
+        }}
+      >
         <Link href={kokHedef} aria-label="Yönetio" onClick={onNavigate}>
           <YonetioLogo size={26} />
         </Link>
+        {/* KATLAMA DUGMESI YALNIZ MASAUSTUNDE (`onDarCevir` verildiginde).
+            Cekmecede cizilmez: mobilde daraltmanin karsiligi yok. */}
+        {onDarCevir && !dar && (
+          <button
+            type="button"
+            onClick={onDarCevir}
+            aria-label={t("kabukMenuDaralt")}
+            className="odak-ic flex h-8 w-8 items-center justify-center rounded-lg"
+            style={{ color: "var(--yz-text-3)" }}
+          >
+            <OkKatla yon="sol" />
+          </button>
+        )}
       </div>
+      {/* DAR MODDA genisletme dugmesi logonun ALTINDA: 68px'lik seritte
+          logo ve dugme yan yana sigmaz. */}
+      {onDarCevir && dar && (
+        <div className="flex justify-center py-2">
+          <button
+            type="button"
+            onClick={onDarCevir}
+            aria-label={t("kabukMenuGenislet")}
+            className="odak-ic flex h-8 w-8 items-center justify-center rounded-lg"
+            style={{ color: "var(--yz-text-3)" }}
+          >
+            <OkKatla yon="sag" />
+          </button>
+        </div>
+      )}
 
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
         {ustGruplar.map(bolum)}
@@ -432,18 +565,29 @@ function SidebarBody({
             oge={PROFIL_OGESI}
             aktif={ogeAktif(PROFIL_OGESI, pathname, sorgu)}
             onNavigate={onNavigate}
+            dar={dar}
           />
         )}
         {/* (P140.4) DIL SECICI BURADAN KALDIRILDI — sag uste tasindi.
             Iki yerde birden durmasi, "hangisi gecerli?" sorusunu ureten
             bir tekrardir. Tema anahtari burada KALIR: o bir gorunum
             tercihi ve kenar cubugunun dibi onun icin dogru yer. */}
-        <div className="flex flex-wrap gap-2">
-          <ThemeToggle />
-        </div>
+        {/* DAR MODDA TEMA ANAHTARI GIZLENIR: bileseni 68px'e sigdirmak
+            onu yeniden yazmak demekti ve tema tercihi gunluk bir islem
+            degil — kullanici menuyu genisletip degistirir. Gizlenen sey
+            bir YOL degil, bir kisayol. */}
+        {!dar && (
+          <div className="flex flex-wrap gap-2">
+            <ThemeToggle />
+          </div>
+        )}
         <button
           onClick={logout}
-          className="odak-ic w-full border px-3 py-2 text-start transition"
+          aria-label={dar ? t("kabukCikisYap") : undefined}
+          title={dar ? t("kabukCikisYap") : undefined}
+          className={`odak-ic w-full border px-3 py-2 transition ${
+            dar ? "text-center" : "text-start"
+          }`}
           style={{
             borderRadius: "var(--yz-radius-btn)",
             borderColor: "var(--yz-border)",
@@ -454,7 +598,8 @@ function SidebarBody({
             fontSize: "var(--yz-fs-sm)",
           }}
         >
-          {t("kabukCikisYap")}
+          <span className={dar ? "sr-only" : undefined}>{t("kabukCikisYap")}</span>
+          {dar && <CikisIkonu />}
         </button>
         {cikisHatasi && (
           <p role="alert" className="text-xs text-accent-red">
@@ -481,6 +626,39 @@ export function AppShell({
   const pathname = usePathname();
   const t = useT();
 
+  // (P160) KENAR CUBUGU DAR MI — kalici tercih.
+  //
+  // AYRI ANAHTAR, `SidebarBody`nin menu durumuyla BIRLESTIRILMEDI: o kayit
+  // (`yonetio.menu.durum`) SidebarBody'ye ait ve onu yaziyor; bu deger ise
+  // KABUGA ait (genislik, icerik bosluğu). Tek kaydi iki bilesenin
+  // yazmasi, birinin otekinin alanini ezmesi demekti — ikisi farkli
+  // zamanlarda okuyup yaziyor.
+  //
+  // `false` BASLAR ve etkide doldurulur: sunucu cizimi ile ilk istemci
+  // karesi AYNI olmali (hidrasyon uyusmazligi yok) — `SidebarBody`nin
+  // menu durumunda kullanilan desenin aynisi.
+  const [dar, setDar] = useState(false);
+
+  useEffect(() => {
+    try {
+      setDar(localStorage.getItem(DAR_ANAHTARI) === "1");
+    } catch {
+      // Erisilemez depolama kabugu KIRMAZ — genis varsayilanda kalinir.
+    }
+  }, []);
+
+  function darCevir() {
+    setDar((onceki) => {
+      const yeni = !onceki;
+      try {
+        localStorage.setItem(DAR_ANAHTARI, yeni ? "1" : "0");
+      } catch {
+        // Yazilamazsa tercih bu oturumda gecerli olur, kalici olmaz.
+      }
+      return yeni;
+    });
+  }
+
   // Rota degisince mobil cekmeceyi kapat.
   useEffect(() => setOpen(false), [pathname]);
 
@@ -506,15 +684,24 @@ export function AppShell({
         {/* RTL: `left/border-r` yerine MANTIKSAL kenar — Arapcada kenar
             cubugu saga gecer (tur 17). */}
         <aside
-          className="fixed inset-y-0 start-0 hidden w-64 border-e lg:block"
+          className={`fixed inset-y-0 start-0 hidden border-e transition-[width] lg:block ${
+            dar ? "w-[68px]" : "w-64"
+          }`}
           style={{
             zIndex: "var(--yz-z-sidebar)" as unknown as number,
             background: "var(--yz-bg-sidebar)",
             borderColor: "var(--yz-border)",
             borderInlineEndWidth: "var(--yz-border-w)",
+            transitionDuration: "var(--yz-dur-slow)",
+            transitionTimingFunction: "var(--yz-ease)",
           }}
         >
-          <SidebarBody rolBaslangic={rol} yuzey={yuzey} />
+          <SidebarBody
+            rolBaslangic={rol}
+            yuzey={yuzey}
+            dar={dar}
+            onDarCevir={darCevir}
+          />
         </aside>
 
         {/* Mobil ust cubuk */}
@@ -574,7 +761,16 @@ export function AppShell({
         </aside>
 
         {/* Icerik */}
-        <div className="lg:ps-64">
+        {/* ICERIK BOSLUGU kenar cubugunun genisligini IZLER ve ayni sure
+            ile gecis yapar — ikisi ayri hizda hareket etseydi icerik bir
+            an cubugun altina girerdi. */}
+        <div
+          className={`transition-[padding] ${dar ? "lg:ps-[68px]" : "lg:ps-64"}`}
+          style={{
+            transitionDuration: "var(--yz-dur-slow)",
+            transitionTimingFunction: "var(--yz-ease)",
+          }}
+        >
           {/* (P140.4) MASAUSTU SAG UST — dil secicinin tek yeri.
               Kendi basina bir baslik cubugu DEGIL: yalnizca hizalama
               seridi, boylece sayfa basliklari (`SayfaBasligi`) ikinci bir

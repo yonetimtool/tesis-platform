@@ -179,6 +179,8 @@ export const tr = {
   tanimZorunluAlan: "{alan} zorunludur",
   kabukAyarlar: "Ayarlar",
   kabukMenuyuAc: "Menüyü aç",
+  kabukMenuDaralt: "Menüyü daralt",
+  kabukMenuGenislet: "Menüyü genişlet",
   kabukIcerigeAtla: "İçeriğe atla",
   kabukGrupGuvenlik: "Güvenlik",
   pano2Selam: "Merhaba",

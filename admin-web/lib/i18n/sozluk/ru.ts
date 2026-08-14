@@ -165,6 +165,8 @@ export const ru: Sozluk = {
   tanimZorunluAlan: "{alan} обязательно",
   kabukAyarlar: "Настройки",
   kabukMenuyuAc: "Открыть меню",
+  kabukMenuDaralt: "Свернуть меню",
+  kabukMenuGenislet: "Развернуть меню",
   kabukIcerigeAtla: "Перейти к содержимому",
   kabukGrupGuvenlik: "Безопасность",
   pano2Selam: "Здравствуйте",

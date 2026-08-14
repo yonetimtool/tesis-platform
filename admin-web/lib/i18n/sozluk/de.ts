@@ -165,6 +165,8 @@ export const de: Sozluk = {
   tanimZorunluAlan: "{alan} ist erforderlich",
   kabukAyarlar: "Einstellungen",
   kabukMenuyuAc: "Menü öffnen",
+  kabukMenuDaralt: "Menü einklappen",
+  kabukMenuGenislet: "Menü ausklappen",
   kabukIcerigeAtla: "Zum Inhalt springen",
   kabukGrupGuvenlik: "Sicherheit",
   pano2Selam: "Hallo",
