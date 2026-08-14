@@ -45,6 +45,8 @@ export const tr = {
   ortakKayitYok: "Kayıt yok.",
   ortakBaglantiYok: "Bağlantı kurulamadı — internet bağlantınızı kontrol edip tekrar deneyin.",
   ortakHataOlustu: "Bir hata oluştu.",
+  ortakTekrarDene: "Tekrar dene",
+  ortakVeriYuklenemedi: "Veriler yüklenemedi.",
   ortakOturumSuresiDoldu: "Oturum süresi doldu.",
   ortakSunucuyaUlasilamadi: "Sunucuya ulaşılamadı.",
   ortakGeriDon: "Geri dön",

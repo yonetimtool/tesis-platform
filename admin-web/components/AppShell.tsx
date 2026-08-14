@@ -27,6 +27,10 @@ import {
 } from "@/lib/menu";
 import { kokRotaRol, type Yuzey } from "@/lib/yuzey";
 
+// UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
+const SEFFAF = "transparent";
+const GOLGESIZ = "none";
+
 function Icon({ name }: { name: IconName }) {
   const p = {
     fill: "none",
@@ -130,22 +134,32 @@ function MenuSatiri({
       href={ogeBaglantisi(oge)}
       onClick={onNavigate}
       aria-current={aktif ? "page" : undefined}
-      // (P132) Aktif oge MAVI tint — mobil alt barin aktif sekme dili.
-      // Tint %12, metin vurgu rengi: ikisi de token.
-      className={`odak-ic group relative flex items-center gap-3 rounded-lg py-2 pe-3 ps-7 text-sm transition-colors ${
-        aktif
-          ? "bg-accent-blue/12 font-medium text-accent-blue"
-          : "text-metin-body hover:bg-yuzey-divider"
-      }`}
+      // (P160) AKTIF OGE: hafif KABARTMALI KAPSUL + sol gosterge.
+      //
+      // P132'nin "mavi tint" dili TERK EDILDI (brief: renkli dolgu bloklar
+      // yerine metalik yuzey; renk yalniz durum sinyali). Aktiflik artik
+      // RENKLE degil YUZEYLE anlatiliyor — satir zeminden bir kademe
+      // yukselir. Bu ayni zamanda daha erisilebilir: renk korlugu olan
+      // kullanici da kabartmayi gorur.
+      className="odak-ic group relative flex items-center gap-3 py-2 pe-3 ps-7 transition-[background,box-shadow]"
+      style={{
+        borderRadius: "var(--yz-radius-btn)",
+        fontSize: "var(--yz-fs-body)",
+        color: aktif ? "var(--yz-text)" : "var(--yz-text-2)",
+        background: aktif ? "var(--yz-metal-2)" : SEFFAF,
+        boxShadow: aktif ? "var(--yz-raised)" : GOLGESIZ,
+        transitionDuration: "var(--yz-dur-fast)",
+      }}
     >
       {aktif && (
         <motion.span
           layoutId="nav-active-bar"
-          className="absolute inset-y-1.5 start-0 w-1 rounded-e-full bg-primary"
+          className="absolute inset-y-1.5 start-0 w-1 rounded-e-full"
+          style={{ background: "var(--yz-accent-edge)" }}
           transition={{ type: "spring", stiffness: 500, damping: 40 }}
         />
       )}
-      <span className={aktif ? "text-accent-blue" : "text-metin-muted"}>
+      <span style={{ color: aktif ? "var(--yz-accent-edge)" : "var(--yz-text-3)" }}>
         <Icon name={oge.icon} />
       </span>
       <span className="truncate">{t(oge.anahtar)}</span>
@@ -185,7 +199,13 @@ function Bolum({
         onClick={onCevir}
         aria-expanded={acik}
         aria-label={acik ? t("kabukBolumKapat", { bolum: baslik }) : t("kabukBolumAc", { bolum: baslik })}
-        className="odak-ic flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-start text-[11px] font-semibold tracking-wide text-metin-muted transition-colors hover:bg-yuzey-divider"
+        className="odak-ic flex w-full items-center gap-2 px-3 py-1.5 text-start font-semibold uppercase transition-colors"
+        style={{
+          borderRadius: "var(--yz-radius-btn)",
+          fontSize: "var(--yz-fs-xs)",
+          letterSpacing: "var(--yz-tracking-label)",
+          color: "var(--yz-text-3)",
+        }}
       >
         <Ok acik={acik} />
         <span className="truncate">{baslik}</span>
@@ -401,7 +421,10 @@ function SidebarBody({
         )}
       </nav>
 
-      <div className="kart-kenar shrink-0 space-y-2 border-t px-3 py-4">
+      <div
+        className="shrink-0 space-y-2 border-t px-3 py-4"
+        style={{ borderColor: "var(--yz-border)", borderTopWidth: "var(--yz-border-w)" }}
+      >
         {/* PROFIL BOLUMDE DEGIL: kullanicinin KENDI kaydidir, bir yonetim
             isi degil — her rolde ayni yerde, cikisin yaninda durur. */}
         {profilVar && (
@@ -420,7 +443,16 @@ function SidebarBody({
         </div>
         <button
           onClick={logout}
-          className="kart-kenar w-full rounded-lg border bg-yuzey-card px-3 py-1.5 text-start text-sm text-metin-body transition hover:bg-yuzey-divider"
+          className="odak-ic w-full border px-3 py-2 text-start transition"
+          style={{
+            borderRadius: "var(--yz-radius-btn)",
+            borderColor: "var(--yz-border)",
+            borderWidth: "var(--yz-border-w)",
+            background: "var(--yz-metal-1)",
+            boxShadow: "var(--yz-raised)",
+            color: "var(--yz-text-2)",
+            fontSize: "var(--yz-fs-sm)",
+          }}
         >
           {t("kabukCikisYap")}
         </button>
@@ -454,7 +486,12 @@ export function AppShell({
 
   return (
     <MotionConfig reducedMotion="user">
-      <div className="min-h-screen bg-yuzey-bg">
+      {/* (P160) Zemin DUZ RENK DEGIL GRADYAN: brief "ustten alta hafif
+          acilan" bir yuzey istiyor ve metalik hissin ilk katmani bu. */}
+      <div
+        className="min-h-screen"
+        style={{ background: "var(--yz-bg-app-grad)", color: "var(--yz-text)" }}
+      >
         {/* (P132) ICERIGE ATLA — klavye kullanicisi 30+ menu baglantisini
             tek tek gecmek zorunda kalmasin. Gorunmez durur, ODAKLANINCA
             gorunur: fareyle gelen kullaniciyi rahatsiz etmez, klavyeyle
@@ -468,12 +505,28 @@ export function AppShell({
         {/* Masaustu sabit kenar cubugu */}
         {/* RTL: `left/border-r` yerine MANTIKSAL kenar — Arapcada kenar
             cubugu saga gecer (tur 17). */}
-        <aside className="kart-kenar fixed inset-y-0 start-0 z-30 hidden w-64 border-e bg-yuzey-card lg:block">
+        <aside
+          className="fixed inset-y-0 start-0 hidden w-64 border-e lg:block"
+          style={{
+            zIndex: "var(--yz-z-sidebar)" as unknown as number,
+            background: "var(--yz-bg-sidebar)",
+            borderColor: "var(--yz-border)",
+            borderInlineEndWidth: "var(--yz-border-w)",
+          }}
+        >
           <SidebarBody rolBaslangic={rol} yuzey={yuzey} />
         </aside>
 
         {/* Mobil ust cubuk */}
-        <header className="kart-kenar sticky top-0 z-20 flex h-14 items-center justify-between border-b bg-yuzey-card px-4 lg:hidden">
+        <header
+          className="sticky top-0 flex h-14 items-center justify-between border-b px-4 lg:hidden"
+          style={{
+            zIndex: "var(--yz-z-header)" as unknown as number,
+            background: "var(--yz-bg-sidebar)",
+            borderColor: "var(--yz-border)",
+            borderBottomWidth: "var(--yz-border-w)",
+          }}
+        >
           <button
             onClick={() => setOpen(true)}
             aria-label={t("kabukMenuyuAc")}
@@ -500,7 +553,14 @@ export function AppShell({
         <aside
           // Cekmece RTL'de SAGDAN girer: `start-0` + `rtl:translate-x-full`
           // (Tailwind'in `-translate-x-full`u yon farkindaligi TASIMAZ).
-          className={`kart-kenar fixed inset-y-0 start-0 z-50 w-64 border-e bg-yuzey-card shadow-yuzen transition-transform duration-300 lg:hidden ${
+          style={{
+            zIndex: "var(--yz-z-drawer)" as unknown as number,
+            background: "var(--yz-bg-sidebar)",
+            borderColor: "var(--yz-border)",
+            borderInlineEndWidth: "var(--yz-border-w)",
+            boxShadow: "var(--yz-raised-hover)",
+          }}
+          className={`fixed inset-y-0 start-0 w-64 border-e transition-transform duration-300 lg:hidden ${
             open
               ? "translate-x-0"
               : "-translate-x-full rtl:translate-x-full"

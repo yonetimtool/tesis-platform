@@ -35,6 +35,8 @@ export const de: Sozluk = {
   ortakKayitYok: "Keine Datensätze.",
   ortakBaglantiYok: "Keine Verbindung — prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.",
   ortakHataOlustu: "Ein Fehler ist aufgetreten.",
+  ortakTekrarDene: "Erneut versuchen",
+  ortakVeriYuklenemedi: "Daten konnten nicht geladen werden.",
   ortakOturumSuresiDoldu: "Ihre Sitzung ist abgelaufen.",
   ortakSunucuyaUlasilamadi: "Der Server ist nicht erreichbar.",
   ortakGeriDon: "Zurück",

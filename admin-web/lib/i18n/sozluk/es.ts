@@ -35,6 +35,8 @@ export const es: Sozluk = {
   ortakKayitYok: "Sin registros.",
   ortakBaglantiYok: "No se pudo conectar: compruebe su conexión a Internet e inténtelo de nuevo.",
   ortakHataOlustu: "Se produjo un error.",
+  ortakTekrarDene: "Reintentar",
+  ortakVeriYuklenemedi: "No se pudieron cargar los datos.",
   ortakOturumSuresiDoldu: "Su sesión ha caducado.",
   ortakSunucuyaUlasilamadi: "No se pudo conectar con el servidor.",
   ortakGeriDon: "Volver",

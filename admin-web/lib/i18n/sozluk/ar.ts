@@ -35,6 +35,8 @@ export const ar: Sozluk = {
   ortakKayitYok: "لا توجد سجلات.",
   ortakBaglantiYok: "تعذّر الاتصال — تحقّق من اتصالك بالإنترنت وحاول مرة أخرى.",
   ortakHataOlustu: "حدث خطأ.",
+  ortakTekrarDene: "إعادة المحاولة",
+  ortakVeriYuklenemedi: "تعذّر تحميل البيانات.",
   ortakOturumSuresiDoldu: "انتهت صلاحية جلستك.",
   ortakSunucuyaUlasilamadi: "تعذّر الوصول إلى الخادم.",
   ortakGeriDon: "رجوع",

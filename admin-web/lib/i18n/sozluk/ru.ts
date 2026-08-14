@@ -35,6 +35,8 @@ export const ru: Sozluk = {
   ortakKayitYok: "Записей нет.",
   ortakBaglantiYok: "Не удалось подключиться — проверьте интернет-соединение и повторите попытку.",
   ortakHataOlustu: "Произошла ошибка.",
+  ortakTekrarDene: "Повторить",
+  ortakVeriYuklenemedi: "Не удалось загрузить данные.",
   ortakOturumSuresiDoldu: "Срок действия сессии истёк.",
   ortakSunucuyaUlasilamadi: "Не удалось подключиться к серверу.",
   ortakGeriDon: "Назад",

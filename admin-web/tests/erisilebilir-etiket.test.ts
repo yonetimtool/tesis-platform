@@ -58,6 +58,18 @@ export function adsizDenetimler(yol: string, kaynak: string): string[] {
     // kullanan bir sayfayi sessizce onaylamak olurdu.
     if (yol.endsWith("components/ParolaAlani.tsx")) return;
 
+    // (P160 / Asama 3) AYNI SINIF, AYNI EMSAL: `components/ui/alan.tsx`
+    // form PRIMITIFLERI cizer (`Alan`, `CokSatir`, `Secim`) ve adlarini
+    // KENDILERI tasimaz — adi `AlanSarmal` verir, `htmlFor`/`id` bagini
+    // o kurar. Tarama dosyalar arasini goremez.
+    //
+    // MUAFIYET BEDAVA DEGIL: asagidaki "yeni form ilkelleri etiketli
+    // kullaniliyor" testi bu varsayimi OLCER.
+    //
+    // `AramaAlani` BU DOSYADA ama muafiyete IHTIYACI YOK: kendi `sr-only`
+    // etiketini ciziyor ve zorunlu `etiket` prop'u aliyor.
+    if (yol.endsWith("components/ui/alan.tsx")) return;
+
     sizanlar.push(`${yol}:${i + 1} ${satir.trim().slice(0, 50)}`);
   });
   return sizanlar;
@@ -70,6 +82,35 @@ describe("erisilebilir etiket", () => {
       sizanlar.push(...adsizDenetimler(yol, readFileSync(yol, "utf8")));
     }
     expect(sizanlar, "adsiz form denetimi").toEqual([]);
+  });
+
+  // (P160) MUAFIYETIN BEDELI — `ParolaAlani` icin kurulan desenin aynisi.
+  //
+  // `Alan`/`CokSatir`/`Secim` adsiz cizilebilir; kurali saglayan sey
+  // ONLARIN `AlanSarmal` icinde kullanilmasidir. Bu test her cagri
+  // yerini denetler. BUGUN CAGRI YERI YOK (bilesenler yeni yazildi ve
+  // sayfalar henuz tasinmadi) — test o yuzden bugun bos gecer, ama
+  // TASIMA BASLAYINCA calisir. Kilidi tasimadan ONCE koymak, ilk
+  // etiketsiz kullanimin sessizce girmesini engeller.
+  it("yeni form ilkelleri ETIKETLI kullaniliyor (AlanSarmal ya da aria-label)", () => {
+    const ilkeller = /<(Alan|CokSatir|Secim)\b/;
+    const sizanlar: string[] = [];
+    for (const yol of taranacakDosyalar(["app", "components"])) {
+      // Ilkellerin KENDI dosyasi disarida: tanim orada.
+      if (yol.endsWith("components/ui/alan.tsx")) continue;
+      const kaynak = readFileSync(yol, "utf8");
+      const satirlar = kaynak.split("\n");
+      satirlar.forEach((satir, i) => {
+        if (!ilkeller.test(satir)) return;
+        if (/^\s*(\/\/|\*|\{\/\*)/.test(satir)) return;
+        const parca = satirlar.slice(i, i + 8).join("\n");
+        if (/aria-label/.test(parca)) return;
+        const onceki = satirlar.slice(Math.max(0, i - 16), i).join("\n");
+        if (/<AlanSarmal\b/.test(onceki)) return;
+        sizanlar.push(`${yol}:${i + 1} ${satir.trim().slice(0, 50)}`);
+      });
+    }
+    expect(sizanlar, "etiketsiz form ilkeli kullanimi").toEqual([]);
   });
 
   // (P137) POZITIF KONTROL — desen atesliyor mu.

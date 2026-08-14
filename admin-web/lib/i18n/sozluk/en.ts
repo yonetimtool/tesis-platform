@@ -35,6 +35,8 @@ export const en: Sozluk = {
   ortakKayitYok: "No records.",
   ortakBaglantiYok: "Could not connect — check your internet connection and try again.",
   ortakHataOlustu: "An error occurred.",
+  ortakTekrarDene: "Try again",
+  ortakVeriYuklenemedi: "Could not load data.",
   ortakOturumSuresiDoldu: "Your session has expired.",
   ortakSunucuyaUlasilamadi: "The server could not be reached.",
   ortakGeriDon: "Go back",
