@@ -1,20 +1,17 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { useState } from "react";
 import useSWR from "swr";
 
-import { EmptyState } from "@/components/EmptyState";
 import {
-  ErrorBox,
-  Field,
-  PageHeader,
-  btnDanger,
-  btnPrimary,
-  inputCls,
-  panelCls,
-  panelMotion,
-} from "@/components/form";
+  CokSatir,
+  Kart,
+  Alan,
+  AlanSarmal,
+  BosDurum,
+  Dugme,
+  HataDurumu,
+} from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
@@ -101,23 +98,36 @@ export default function AnketlerPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title={t("kabukAnketler")} subtitle={t("anketAlt")} />
-      <ErrorBox message={hata ?? (aErr ? t("anketHata") : null)} />
+      <div>
+        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+          {t("kabukAnketler")}
+        </h1>
+        <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+          {t("anketAlt")}
+        </p>
+      </div>
+      <HataDurumu mesaj={hata ?? (aErr ? t("anketHata") : null)} />
 
-      <motion.section {...panelMotion} className={panelCls}>
+      <Kart>
         {anketler && anketler.items.length === 0 ? (
-          <EmptyState title={t("anketYok")} description={t("anketYokAlt")} />
+          <BosDurum baslik={t("anketYok")} aciklama={t("anketYokAlt")} />
         ) : null}
 
         <div className="space-y-3">
           {(anketler?.items ?? []).map((a) => (
             <div
               key={a.id}
-              className="kart-kenar rounded-lg border p-3 text-sm dark:border-slate-700"
+              className="p-3"
+              style={{
+                borderRadius: "var(--yz-r-md)",
+                border: "1px solid var(--yz-border)",
+                fontSize: "var(--yz-fs-sm)",
+                color: "var(--yz-text)",
+              }}
             >
               <div className="flex items-center justify-between gap-3">
-                <span className="font-medium">{a.baslik}</span>
-                <span className="text-xs text-metin-muted">
+                <span style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{a.baslik}</span>
+                <span style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
                   {a.acik ? t("anketAcik") : t("anketKapali")}
                   {a.toplam_oy != null ? ` · ${a.toplam_oy}` : ""}
                 </span>
@@ -135,42 +145,45 @@ export default function AnketlerPage() {
                 ))}
               </ul>
               {a.aktif ? (
-                <button
-                  type="button"
-                  className={`${btnDanger} mt-2`}
+                <Dugme
+                  className="mt-2"
+                  tur="tehlike"
+                  boy="kucuk"
                   onClick={() => void kapat(a.id)}
                 >
                   {t("anketKapat")}
-                </button>
+                </Dugme>
               ) : null}
             </div>
           ))}
         </div>
 
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          <Field label={t("anketBaslik")}>
-            <input
-              className={inputCls}
-              value={baslik}
-              onChange={(e) => setBaslik(e.target.value)}
-            />
-          </Field>
-          <Field label={t("anketSecenekler")} hint={t("anketSecenekIpucu")}>
-            <textarea
-              className={`${inputCls} min-h-20`}
-              value={secenekMetni}
-              onChange={(e) => setSecenekMetni(e.target.value)}
-            />
-          </Field>
+          <AlanSarmal etiket={t("anketBaslik")}>
+  {(b) => (
+    <Alan {...b} value={baslik}
+              onChange={(e) => setBaslik(e.target.value)} />
+  )}
+</AlanSarmal>
+          <AlanSarmal etiket={t("anketSecenekler")} ipucu={t("anketSecenekIpucu")}>
+            {(b) => (
+              <CokSatir
+                {...b}
+                rows={3}
+                value={secenekMetni}
+                onChange={(e) => setSecenekMetni(e.target.value)}
+              />
+            )}
+          </AlanSarmal>
         </div>
-        <button
+        <Dugme
           type="button"
-          className={`${btnPrimary} mt-3`}
+          tur="birincil"
           onClick={() => void ekle()}
         >
           {t("anketEkle")}
-        </button>
-      </motion.section>
+        </Dugme>
+      </Kart>
     </div>
   );
 }

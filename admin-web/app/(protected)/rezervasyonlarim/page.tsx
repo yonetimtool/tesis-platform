@@ -12,16 +12,16 @@
 import { useState } from "react";
 import useSWR from "swr";
 
-import { EmptyState } from "@/components/EmptyState";
 import {
-  ErrorBox,
-  Field,
-  PageHeader,
-  btnGhost,
-  btnPrimary,
-  cardCls,
-  inputCls,
-} from "@/components/form";
+  Alan,
+  AlanSarmal,
+  BosDurum,
+  Dugme,
+  HataDurumu,
+  IskeletMetin,
+  Kart,
+  Secim,
+} from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
@@ -118,15 +118,16 @@ export default function RezervasyonlarimPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title={t("rezervasyonBaslik")} />
+      <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+        {t("rezervasyonBaslik")}
+      </h1>
 
-      <section className={`${cardCls} space-y-4 p-5`}>
-        <h2 className="font-medium">{t("rezervasyonYeni")}</h2>
+      <section className="space-y-4">
+        <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{t("rezervasyonYeni")}</h2>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label={t("rezervasyonAlan")}>
-            <select
-              className={inputCls}
-              value={alanId}
+          <AlanSarmal etiket={t("rezervasyonAlan")}>
+  {(b) => (
+    <Secim {...b} value={alanId}
               onChange={(e) => setAlanId(e.target.value)}
             >
               <option value="">{t("ortakSeciniz")}</option>
@@ -134,85 +135,81 @@ export default function RezervasyonlarimPage() {
                 <option key={a.id} value={a.id}>
                   {a.ad}
                 </option>
-              ))}
-            </select>
-          </Field>
-          <Field label={t("rezervasyonTarih")}>
-            <input
-              className={inputCls}
-              type="date"
+              ))}</Secim>
+  )}
+</AlanSarmal>
+          <AlanSarmal etiket={t("rezervasyonTarih")}>
+  {(b) => (
+    <Alan {...b} type="date"
               value={tarih}
-              onChange={(e) => setTarih(e.target.value)}
-            />
-          </Field>
-          <Field label={t("rezervasyonBaslangic")}>
-            <input
-              className={inputCls}
-              type="time"
+              onChange={(e) => setTarih(e.target.value)} />
+  )}
+</AlanSarmal>
+          <AlanSarmal etiket={t("rezervasyonBaslangic")}>
+  {(b) => (
+    <Alan {...b} type="time"
               value={baslangic}
-              onChange={(e) => setBaslangic(e.target.value)}
-            />
-          </Field>
-          <Field label={t("rezervasyonBitis")}>
-            <input
-              className={inputCls}
-              type="time"
+              onChange={(e) => setBaslangic(e.target.value)} />
+  )}
+</AlanSarmal>
+          <AlanSarmal etiket={t("rezervasyonBitis")}>
+  {(b) => (
+    <Alan {...b} type="time"
               value={bitis}
-              onChange={(e) => setBitis(e.target.value)}
-            />
-          </Field>
-          <Field label={t("rezervasyonKisi")}>
-            <input
-              className={inputCls}
-              type="number"
+              onChange={(e) => setBitis(e.target.value)} />
+  )}
+</AlanSarmal>
+          <AlanSarmal etiket={t("rezervasyonKisi")}>
+  {(b) => (
+    <Alan {...b} type="number"
               min={1}
               value={kisi}
-              onChange={(e) => setKisi(e.target.value)}
-            />
-          </Field>
+              onChange={(e) => setKisi(e.target.value)} />
+  )}
+</AlanSarmal>
         </div>
-        <ErrorBox message={formHata} />
+        <HataDurumu mesaj={formHata} />
         <div>
-          <button
-            className={btnPrimary}
+          <Dugme
+            tur="birincil"
             disabled={gonderiyor}
             onClick={() => void gonder()}
           >
             {gonderiyor ? t("ortakKaydediliyor") : t("rezervasyonTalepEt")}
-          </button>
+          </Dugme>
         </div>
       </section>
 
       <section className="space-y-3">
-        <h2 className="font-medium">{t("rezervasyonListe")}</h2>
-        {error ? <ErrorBox message={t("ortakHataOlustu")} /> : null}
+        <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{t("rezervasyonListe")}</h2>
+        {error ? <HataDurumu mesaj={t("ortakHataOlustu")} /> : null}
         {isLoading ? (
-          <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>
+          <IskeletMetin satir={3} />
         ) : null}
         {!isLoading && !error && kayitlar.length === 0 ? (
-          <EmptyState title={t("rezervasyonYok")} />
+          <BosDurum baslik={t("rezervasyonYok")} />
         ) : null}
         {kayitlar.map((r) => (
-          <article key={r.id} className={`${cardCls} space-y-1 p-4`}>
+          <Kart key={r.id} className="space-y-1">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h3 className="font-medium">{r.alan_ad ?? "—"}</h3>
+              <h3 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{r.alan_ad ?? "—"}</h3>
               <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs">
                 {t(durumAnahtari(r.durum))}
               </span>
             </div>
-            <p className="text-sm text-metin-muted">
+            <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
               {tarihBicimi(r.tarih)} · {r.baslangic}–{r.bitis} ·{" "}
               {t("rezervasyonKisiSayisi", { n: r.kisi_sayisi })}
             </p>
             {r.durum !== "iptal" ? (
-              <button
-                className={btnGhost}
+              <Dugme
+                boy="kucuk"
                 onClick={() => void iptalEt(r.id)}
               >
                 {t("rezervasyonIptalEt")}
-              </button>
+              </Dugme>
             ) : null}
-          </article>
+          </Kart>
         ))}
       </section>
     </div>

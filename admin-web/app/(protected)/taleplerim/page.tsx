@@ -16,15 +16,15 @@
 import { useState } from "react";
 import useSWR from "swr";
 
-import { EmptyState } from "@/components/EmptyState";
 import {
-  ErrorBox,
-  Field,
-  PageHeader,
-  btnPrimary,
-  cardCls,
-  inputCls,
-} from "@/components/form";
+  CokSatir,
+  Alan,
+  AlanSarmal,
+  BosDurum,
+  Dugme,
+  HataDurumu,
+  IskeletMetin,
+} from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
@@ -111,58 +111,62 @@ export default function TaleplerimPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title={t("talebimBaslik")} />
+      <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+        {t("talebimBaslik")}
+      </h1>
 
-      <section className={`${cardCls} space-y-4 p-5`}>
-        <h2 className="font-medium">{t("talebimYeni")}</h2>
+      <section className="space-y-4">
+        <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{t("talebimYeni")}</h2>
         <div className="grid gap-4">
-          <Field label={t("talebimKonu")}>
-            <input
-              className={inputCls}
-              value={baslik}
+          <AlanSarmal etiket={t("talebimKonu")}>
+  {(b) => (
+    <Alan {...b} value={baslik}
               onChange={(e) => setBaslik(e.target.value)}
-              maxLength={200}
-            />
-          </Field>
-          <Field label={t("talebimAciklama")}>
-            <textarea
-              className={`${inputCls} min-h-24`}
-              value={mesaj}
-              onChange={(e) => setMesaj(e.target.value)}
-              maxLength={5000}
-            />
-          </Field>
-          <ErrorBox message={formHata} />
+              maxLength={200} />
+  )}
+</AlanSarmal>
+          <AlanSarmal etiket={t("talebimAciklama")}>
+            {(b) => (
+              <CokSatir
+                {...b}
+                rows={4}
+                value={mesaj}
+                onChange={(e) => setMesaj(e.target.value)}
+                maxLength={5000}
+              />
+            )}
+          </AlanSarmal>
+          <HataDurumu mesaj={formHata} />
           <div>
-            <button
-              className={btnPrimary}
+            <Dugme
+              tur="birincil"
               disabled={gonderiyor}
               onClick={() => void gonder()}
             >
               {gonderiyor ? t("ortakKaydediliyor") : t("talebimGonder")}
-            </button>
+            </Dugme>
           </div>
         </div>
       </section>
 
       <section className="space-y-3">
-        <h2 className="font-medium">{t("talebimGecmis")}</h2>
-        {error ? <ErrorBox message={t("ortakHataOlustu")} /> : null}
+        <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{t("talebimGecmis")}</h2>
+        {error ? <HataDurumu mesaj={t("ortakHataOlustu")} /> : null}
         {isLoading ? (
-          <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>
+          <IskeletMetin satir={3} />
         ) : null}
         {!isLoading && !error && talepler.length === 0 ? (
-          <EmptyState title={t("talebimYok")} />
+          <BosDurum baslik={t("talebimYok")} />
         ) : null}
         {talepler.map((c) => (
-          <article key={c.id} className={`${cardCls} space-y-1 p-4`}>
+          <article key={c.id} className="space-y-1">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h3 className="font-medium">{c.baslik}</h3>
+              <h3 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{c.baslik}</h3>
               <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs">
                 {t(durumAnahtari(c.durum))}
               </span>
             </div>
-            <p className="text-xs text-metin-muted">{tarihSaatUzun(c.created_at)}</p>
+            <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>{tarihSaatUzun(c.created_at)}</p>
             <p className="text-sm">{c.mesaj}</p>
           </article>
         ))}

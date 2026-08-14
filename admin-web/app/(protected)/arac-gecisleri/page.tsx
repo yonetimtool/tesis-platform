@@ -8,8 +8,12 @@
 // yalnız `GET` açıyor.
 import useSWR from "swr";
 
-import { EmptyState } from "@/components/EmptyState";
-import { ErrorBox, PageHeader, cardCls } from "@/components/form";
+import {
+  BosDurum,
+  HataDurumu,
+  IskeletMetin,
+  Kart,
+} from "@/components/ui";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import { tarihSaatUzun } from "@/lib/tarih";
@@ -34,27 +38,31 @@ export default function AracGecisleriPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title={t("aracBaslik")} />
-      <p className="text-sm text-metin-muted">{t("aracOtomatikNot")}</p>
-      {error ? <ErrorBox message={t("ortakHataOlustu")} /> : null}
+      <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+        {t("aracBaslik")}
+      </h1>
+      <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>{t("aracOtomatikNot")}</p>
+      {error ? <HataDurumu mesaj={t("ortakHataOlustu")} /> : null}
       {isLoading ? (
-        <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>
+        <IskeletMetin satir={3} />
       ) : null}
       {!isLoading && !error && kayitlar.length === 0 ? (
-        <EmptyState title={t("aracYok")} />
+        <Kart>
+          <BosDurum baslik={t("aracYok")} />
+        </Kart>
       ) : null}
       {kayitlar.map((g) => (
-        <article key={g.id} className={`${cardCls} space-y-1 p-4`}>
+        <Kart key={g.id} className="space-y-1">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h2 className="font-medium tabular-nums">{g.plaka}</h2>
-            <span className="text-xs text-metin-muted">{g.unit_no ?? "—"}</span>
+            <span style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>{g.unit_no ?? "—"}</span>
           </div>
-          <p className="text-xs text-metin-muted">
+          <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
             {tarihSaatUzun(g.giris_zamani)}
             {g.cikis_zamani ? ` → ${tarihSaatUzun(g.cikis_zamani)}` : ""}
           </p>
           {g.arac_tanim ? <p className="text-sm">{g.arac_tanim}</p> : null}
-        </article>
+        </Kart>
       ))}
     </div>
   );

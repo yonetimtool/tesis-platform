@@ -14,13 +14,12 @@ import { useEffect, useState } from "react";
 import useSWR from "swr";
 
 import {
-  ErrorBox,
-  Field,
-  PageHeader,
-  btnPrimary,
-  cardCls,
-  inputCls,
-} from "@/components/form";
+  Alan,
+  AlanSarmal,
+  Dugme,
+  HataDurumu,
+  IskeletMetin,
+} from "@/components/ui";
 import { GirisYontemlerim } from "@/components/GirisYontemlerim";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
@@ -88,35 +87,36 @@ export default function ProfilPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title={t("profilBaslik")} />
+      <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+        {t("profilBaslik")}
+      </h1>
 
-      {error ? <ErrorBox message={t("ortakHataOlustu")} /> : null}
+      {error ? <HataDurumu mesaj={t("ortakHataOlustu")} /> : null}
 
-      <section className={`${cardCls} space-y-4 p-5`}>
-        <h2 className="font-medium">{t("profilKimlik")}</h2>
+      <section className="space-y-4">
+        <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{t("profilKimlik")}</h2>
         {isLoading ? (
-          <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>
+          <IskeletMetin satir={3} />
         ) : (
           <dl className="grid gap-3 sm:grid-cols-2">
             <div>
-              <dt className="text-xs text-metin-muted">{t("profilAd")}</dt>
+              <dt style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>{t("profilAd")}</dt>
               <dd>{data?.ad ?? "—"}</dd>
             </div>
             <div>
-              <dt className="text-xs text-metin-muted">{t("profilEposta")}</dt>
+              <dt style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>{t("profilEposta")}</dt>
               <dd>{data?.email ?? "—"}</dd>
             </div>
           </dl>
         )}
       </section>
 
-      <section className={`${cardCls} space-y-4 p-5`}>
-        <h2 className="font-medium">{t("profilIletisim")}</h2>
+      <section className="space-y-4">
+        <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{t("profilIletisim")}</h2>
         <div className="grid gap-4 sm:max-w-md">
-          <Field label={t("kullaniciTelefon")} hint={t("profilTelefonIpucu")}>
-            <input
-              className={inputCls}
-              // `telefonGiris` CIZIMDE de uygulanir (fikirsizdir/idempotent):
+          <AlanSarmal etiket={t("kullaniciTelefon")} ipucu={t("profilTelefonIpucu")}>
+  {(b) => (
+    <Alan {...b} // `telefonGiris` CIZIMDE de uygulanir (fikirsizdir/idempotent):
               // garantiyi "her setter dogru cagirmis olmali"ya dayandirmak
               // kirilgandi — ileride durumu bicimlendirmeden yazan bir
               // duzenleme yine maskeli cizer. P123 kapsam kilidi bu yuzden
@@ -124,9 +124,9 @@ export default function ProfilPage() {
               value={telefonGiris(telefon)}
               // (P123) TEK biçimlendirici — bkz. lib/telefon.ts.
               onChange={(e) => setTelefon(telefonGiris(e.target.value))}
-              placeholder={t("kullaniciTelefonOrnek")}
-            />
-          </Field>
+              placeholder={t("kullaniciTelefonOrnek")} />
+  )}
+</AlanSarmal>
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
@@ -135,15 +135,15 @@ export default function ProfilPage() {
             />
             {t("profilAranabilir")}
           </label>
-          <ErrorBox message={iletisimHata} />
+          <HataDurumu mesaj={iletisimHata} />
           <div>
-            <button
-              className={btnPrimary}
+            <Dugme
+              tur="birincil"
               disabled={kaydediyor}
               onClick={() => void iletisimKaydet()}
             >
               {kaydediyor ? t("ortakKaydediliyor") : t("ortakKaydet")}
-            </button>
+            </Dugme>
           </div>
         </div>
       </section>

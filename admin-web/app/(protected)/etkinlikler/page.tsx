@@ -9,8 +9,12 @@
 // alt-adımında gelir.
 import useSWR from "swr";
 
-import { EmptyState } from "@/components/EmptyState";
-import { ErrorBox, PageHeader, cardCls } from "@/components/form";
+import {
+  BosDurum,
+  HataDurumu,
+  IskeletMetin,
+  Kart,
+} from "@/components/ui";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import { tarihSaatUzun } from "@/lib/tarih";
@@ -33,23 +37,27 @@ export default function EtkinliklerPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title={t("sakinEtkinlikBaslik")} />
-      {error ? <ErrorBox message={t("ortakHataOlustu")} /> : null}
+      <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+        {t("sakinEtkinlikBaslik")}
+      </h1>
+      {error ? <HataDurumu mesaj={t("ortakHataOlustu")} /> : null}
       {isLoading ? (
-        <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>
+        <IskeletMetin satir={3} />
       ) : null}
       {!isLoading && !error && kayitlar.length === 0 ? (
-        <EmptyState title={t("sakinEtkinlikYok")} />
+        <Kart>
+          <BosDurum baslik={t("sakinEtkinlikYok")} />
+        </Kart>
       ) : null}
       {kayitlar.map((e) => (
-        <article key={e.id} className={`${cardCls} space-y-1 p-4`}>
-          <h2 className="font-medium">{e.baslik}</h2>
-          <p className="text-xs text-metin-muted">
+        <Kart key={e.id} className="space-y-1">
+          <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{e.baslik}</h2>
+          <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
             {tarihSaatUzun(e.tarih)}
             {e.konum ? ` · ${e.konum}` : ""}
           </p>
-          <p className="whitespace-pre-line text-sm">{e.aciklama}</p>
-        </article>
+          <p className="whitespace-pre-line" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}>{e.aciklama}</p>
+        </Kart>
       ))}
     </div>
   );

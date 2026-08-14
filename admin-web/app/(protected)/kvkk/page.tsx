@@ -12,7 +12,11 @@
 import { useEffect, useState } from "react";
 import useSWR from "swr";
 
-import { ErrorBox, PageHeader, btnPrimary, cardCls } from "@/components/form";
+import {
+  Dugme,
+  HataDurumu,
+  IskeletMetin,
+} from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
@@ -65,14 +69,16 @@ export default function KvkkPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title={t("kvkkBaslik")} />
-      {error ? <ErrorBox message={t("ortakHataOlustu")} /> : null}
+      <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+        {t("kvkkBaslik")}
+      </h1>
+      {error ? <HataDurumu mesaj={t("ortakHataOlustu")} /> : null}
 
-      <section className={`${cardCls} space-y-4 p-5`}>
-        <h2 className="font-medium">{t("kvkkPazarlama")}</h2>
-        <p className="text-sm text-metin-muted">{t("kvkkPazarlamaAciklama")}</p>
+      <section className="space-y-4">
+        <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{t("kvkkPazarlama")}</h2>
+        <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>{t("kvkkPazarlamaAciklama")}</p>
         {isLoading ? (
-          <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>
+          <IskeletMetin satir={3} />
         ) : (
           <div className="space-y-2">
             {KANALLAR.map((k) => (
@@ -89,20 +95,20 @@ export default function KvkkPage() {
             ))}
           </div>
         )}
-        <ErrorBox message={hata} />
+        <HataDurumu mesaj={hata} />
         <div>
-          <button
-            className={btnPrimary}
+          <Dugme
+            tur="birincil"
             disabled={kaydediyor}
             onClick={() => void kaydet()}
           >
             {kaydediyor ? t("ortakKaydediliyor") : t("ortakKaydet")}
-          </button>
+          </Dugme>
         </div>
       </section>
 
-      <section className={`${cardCls} space-y-2 p-5`}>
-        <h2 className="font-medium">{t("kvkkBelgeler")}</h2>
+      <section className="space-y-2">
+        <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{t("kvkkBelgeler")}</h2>
         <ul className="space-y-1 text-sm">
           <li>
             <a className="underline" href="/gizlilik" target="_blank" rel="noreferrer">

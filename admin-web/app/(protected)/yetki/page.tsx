@@ -1,11 +1,14 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import useSWR from "swr";
 
-import { ErrorBox, PageHeader, inputCls, panelCls, panelMotion } from "@/components/form";
-import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
+import {
+  AramaAlani,
+  HataDurumu,
+  VeriTablosu,
+  type Kolon,
+} from "@/components/ui";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 
@@ -42,70 +45,93 @@ export default function YetkiPage() {
     (s) => !ara || s.yol.toLowerCase().includes(ara.toLowerCase()),
   );
 
+  // Kolonlar SUNUCUDAN gelen rol listesine gore kurulur: panelde sabit
+  // bir rol dizisi tutmak, sunucuya rol eklendiginde matrisin EKSIK
+  // gorunmesi demekti.
+  const kolonlar: Kolon<Satir>[] = useMemo(() => {
+    const temel: Kolon<Satir>[] = [
+      {
+        id: "metot",
+        baslik: t("yetkiMetot"),
+        gizlenebilir: false,
+        deger: (s) => s.metot,
+        hucre: (s) => <span className="font-mono">{s.metot}</span>,
+      },
+      {
+        id: "yol",
+        baslik: t("yetkiYol"),
+        gizlenebilir: false,
+        deger: (s) => s.yol,
+        hucre: (s) => (
+          <span className="font-mono">
+            {s.yol}
+            {s.moda_bagli ? (
+              <span
+                className="ms-1"
+                style={{ color: "var(--yz-warning-ink)" }}
+                title={t("yetkiModaBagliIpucu")}
+              >
+                {t("yetkiModaBagli")}
+              </span>
+            ) : null}
+          </span>
+        ),
+      },
+    ];
+    for (const r of data?.roller ?? []) {
+      temel.push({
+        id: r,
+        // Rol adlari SOZLUKTEN: sunucu wire degerini doner, panel onu
+        // kullanicinin dilinde cizer.
+        baslik: t(`rol_${r}` as never),
+        hucre: (s) =>
+          s.roller === null ? (
+            // "rol kapisi yok" ile "herkese acik" AYNI SEY DEGILDIR.
+            <span style={{ color: "var(--yz-text-3)" }} title={t("yetkiKapisizIpucu")}>
+              {t("yetkiKapisiz")}
+            </span>
+          ) : s.roller.includes(r) ? (
+            <span style={{ color: "var(--yz-success-ink)" }}>{t("yetkiIzin")}</span>
+          ) : (
+            <span style={{ color: "var(--yz-text-3)" }}>{t("yetkiRed")}</span>
+          ),
+      });
+    }
+    return temel;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [t, data]);
+
   return (
     <div className="space-y-6">
-      <PageHeader title={t("yetkiBaslik")} subtitle={t("yetkiAlt")} />
-      <ErrorBox message={error ? t("yetkiHata") : null} />
+      <div>
+        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+          {t("yetkiBaslik")}
+        </h1>
+        <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>{t("yetkiAlt")}</p>
+      </div>
 
-      <motion.section {...panelMotion} className={panelCls}>
-        {/* (P63) Yer tutucu tek basina erisilebilir AD saglamaz. */}
-        <input
-          aria-label={t("yetkiAra")}
-          className={`${inputCls} mb-3`}
-          placeholder={t("yetkiAra")}
-          value={ara}
-          onChange={(e) => setAra(e.target.value)}
-        />
-        <p className="mb-3 text-xs text-metin-muted">{t("yetkiNotu")}</p>
-        {data ? (
-          <div className="overflow-x-auto">
-            <Tablo className="text-xs">
-              <TabloBasligi zeminsiz>
-                  <Th dolgusuz className="px-2 py-2">{t("yetkiMetot")}</Th>
-                  <Th dolgusuz className="px-2 py-2">{t("yetkiYol")}</Th>
-                  {data.roller.map((r) => (
-                    <th key={r} className="px-2 py-2 text-center">
-                      {/* Rol adlari SOZLUKTEN: sunucu wire degerini doner,
-                          panel onu kullanicinin dilinde cizer. */}
-                      {t(`rol_${r}` as never)}
-                    </th>
-                  ))}
-                </TabloBasligi>
-              <tbody>
-                {satirlar.map((s) => (
-                  <tr
-                    key={`${s.metot} ${s.yol}`}
-                    className="border-t border-yuzey-divider dark:border-slate-800"
-                  >
-                    <Td dolgusuz className="px-2 py-1.5 font-mono">{s.metot}</Td>
-                    <Td dolgusuz className="px-2 py-1.5 font-mono">
-                      {s.yol}
-                      {s.moda_bagli ? (
-                        <span className="ms-1 text-amber-600" title={t("yetkiModaBagliIpucu")}>
-                          {t("yetkiModaBagli")}
-                        </span>
-                      ) : null}
-                    </Td>
-                    {data.roller.map((r) => (
-                      <td key={r} className="px-2 py-1.5 text-center">
-                        {s.roller === null ? (
-                          <span className="text-metin-muted" title={t("yetkiKapisizIpucu")}>
-                            {t("yetkiKapisiz")}
-                          </span>
-                        ) : s.roller.includes(r) ? (
-                          <span className="text-emerald-600">{t("yetkiIzin")}</span>
-                        ) : (
-                          <span className="text-slate-300">{t("yetkiRed")}</span>
-                        )}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </Tablo>
+      {error && <HataDurumu mesaj={t("yetkiHata")} />}
+
+      <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>{t("yetkiNotu")}</p>
+
+      <VeriTablosu<Satir>
+        kolonlar={kolonlar}
+        satirlar={satirlar}
+        satirId={(s) => `${s.metot} ${s.yol}`}
+        yukleniyor={!data && !error}
+        araclar={
+          <div className="w-full sm:w-72">
+            {/* (P63) Yer tutucu tek basina erisilebilir AD saglamaz. */}
+            <AramaAlani
+              etiket={t("yetkiAra")}
+              yerTutucu={t("yetkiAra")}
+              temizleEtiketi={t("ortakKapat")}
+              deger={ara}
+              onDegisim={setAra}
+            />
           </div>
-        ) : null}
-      </motion.section>
+        }
+      />
     </div>
   );
 }

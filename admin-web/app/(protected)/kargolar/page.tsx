@@ -8,15 +8,15 @@
 import { useState } from "react";
 import useSWR from "swr";
 
-import { EmptyState } from "@/components/EmptyState";
 import {
-  ErrorBox,
-  Field,
-  PageHeader,
-  btnPrimary,
-  cardCls,
-  inputCls,
-} from "@/components/form";
+  Alan,
+  AlanSarmal,
+  BosDurum,
+  Dugme,
+  HataDurumu,
+  IskeletMetin,
+  Kart,
+} from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
@@ -91,71 +91,70 @@ export default function KargolarPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title={t("kargoBaslik")} />
+      <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+        {t("kargoBaslik")}
+      </h1>
 
-      <section className={`${cardCls} space-y-4 p-5`}>
-        <h2 className="font-medium">{t("kargoYeni")}</h2>
+      <section className="space-y-4">
+        <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{t("kargoYeni")}</h2>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label={t("kargoDaire")}>
-            <input
-              className={inputCls}
-              value={daireNo}
+          <AlanSarmal etiket={t("kargoDaire")}>
+  {(b) => (
+    <Alan {...b} value={daireNo}
               onChange={(e) => setDaireNo(e.target.value)}
-              maxLength={30}
-            />
-          </Field>
-          <Field label={t("kargoFirma")}>
-            <input
-              className={inputCls}
-              value={firma}
+              maxLength={30} />
+  )}
+</AlanSarmal>
+          <AlanSarmal etiket={t("kargoFirma")}>
+  {(b) => (
+    <Alan {...b} value={firma}
               onChange={(e) => setFirma(e.target.value)}
-              maxLength={80}
-            />
-          </Field>
-          <Field label={t("kargoNot")}>
-            <input
-              className={inputCls}
-              value={notlar}
+              maxLength={80} />
+  )}
+</AlanSarmal>
+          <AlanSarmal etiket={t("kargoNot")}>
+  {(b) => (
+    <Alan {...b} value={notlar}
               onChange={(e) => setNotlar(e.target.value)}
-              maxLength={500}
-            />
-          </Field>
+              maxLength={500} />
+  )}
+</AlanSarmal>
         </div>
-        <ErrorBox message={hata} />
+        <HataDurumu mesaj={hata} />
         <div>
-          <button
-            className={btnPrimary}
+          <Dugme
+            tur="birincil"
             disabled={gonderiyor}
             onClick={() => void kaydet()}
           >
             {gonderiyor ? t("ortakKaydediliyor") : t("kargoTeslimAl")}
-          </button>
+          </Dugme>
         </div>
       </section>
 
       <section className="space-y-3">
-        <h2 className="font-medium">{t("kargoListe")}</h2>
-        {error ? <ErrorBox message={t("ortakHataOlustu")} /> : null}
+        <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{t("kargoListe")}</h2>
+        {error ? <HataDurumu mesaj={t("ortakHataOlustu")} /> : null}
         {isLoading ? (
-          <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>
+          <IskeletMetin satir={3} />
         ) : null}
         {!isLoading && !error && kayitlar.length === 0 ? (
-          <EmptyState title={t("kargoYok")} />
+          <BosDurum baslik={t("kargoYok")} />
         ) : null}
         {kayitlar.map((k) => (
-          <article key={k.id} className={`${cardCls} space-y-1 p-4`}>
+          <Kart key={k.id} className="space-y-1">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h3 className="font-medium">{k.unit_no ?? "—"}</h3>
+              <h3 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{k.unit_no ?? "—"}</h3>
               <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs">
                 {t(durumAnahtari(k.durum))}
               </span>
             </div>
-            <p className="text-xs text-metin-muted">
+            <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
               {tarihSaatUzun(k.created_at)}
               {k.firma ? ` · ${k.firma}` : ""}
             </p>
             {k.notlar ? <p className="text-sm">{k.notlar}</p> : null}
-          </article>
+          </Kart>
         ))}
       </section>
     </div>

@@ -6,8 +6,12 @@
 // numaralandırılmış bir metindir ve yönetimin verdiği sıra anlamlıdır.
 import useSWR from "swr";
 
-import { EmptyState } from "@/components/EmptyState";
-import { ErrorBox, PageHeader, cardCls } from "@/components/form";
+import {
+  BosDurum,
+  HataDurumu,
+  IskeletMetin,
+  Kart,
+} from "@/components/ui";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 
@@ -28,19 +32,23 @@ export default function SiteKurallariPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title={t("sakinKurallarBaslik")} />
-      {error ? <ErrorBox message={t("ortakHataOlustu")} /> : null}
+      <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+        {t("sakinKurallarBaslik")}
+      </h1>
+      {error ? <HataDurumu mesaj={t("ortakHataOlustu")} /> : null}
       {isLoading ? (
-        <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>
+        <IskeletMetin satir={3} />
       ) : null}
       {!isLoading && !error && kurallar.length === 0 ? (
-        <EmptyState title={t("sakinKurallarYok")} />
+        <Kart>
+          <BosDurum baslik={t("sakinKurallarYok")} />
+        </Kart>
       ) : null}
       <ol className="space-y-3">
         {kurallar.map((k) => (
-          <li key={k.id} className={`${cardCls} space-y-1 p-4`}>
-            <h2 className="font-medium">{k.baslik}</h2>
-            <p className="whitespace-pre-line text-sm">{k.icerik}</p>
+          <li key={k.id} className="space-y-1">
+            <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{k.baslik}</h2>
+            <p className="whitespace-pre-line" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}>{k.icerik}</p>
           </li>
         ))}
       </ol>

@@ -7,8 +7,12 @@
 // koymak, aynı veriyi iki yerden yönetilebilir gösterirdi.
 import useSWR from "swr";
 
-import { EmptyState } from "@/components/EmptyState";
-import { ErrorBox, PageHeader, cardCls } from "@/components/form";
+import {
+  BosDurum,
+  HataDurumu,
+  IskeletMetin,
+  Kart,
+} from "@/components/ui";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import { telefonGiris } from "@/lib/telefon";
@@ -31,28 +35,32 @@ export default function YonetimIletisimPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title={t("yonetimIletisimBaslik")} />
-      {error ? <ErrorBox message={t("ortakHataOlustu")} /> : null}
+      <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+        {t("yonetimIletisimBaslik")}
+      </h1>
+      {error ? <HataDurumu mesaj={t("ortakHataOlustu")} /> : null}
       {isLoading ? (
-        <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>
+        <IskeletMetin satir={3} />
       ) : null}
 
       {data?.yonetim_email ? (
-        <section className={`${cardCls} space-y-1 p-4`}>
-          <h2 className="font-medium">{t("yonetimIletisimEposta")}</h2>
-          <a className="text-sm underline" href={`mailto:${data.yonetim_email}`}>
+        <Kart className="space-y-1">
+          <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{t("yonetimIletisimEposta")}</h2>
+          <a className="underline" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-accent-ink)" }} href={`mailto:${data.yonetim_email}`}>
             {data.yonetim_email}
           </a>
-        </section>
+        </Kart>
       ) : null}
 
       {!isLoading && !error && yoneticiler.length === 0 ? (
-        <EmptyState title={t("yonetimIletisimYok")} />
+        <Kart>
+          <BosDurum baslik={t("yonetimIletisimYok")} />
+        </Kart>
       ) : null}
 
       {yoneticiler.map((y) => (
-        <article key={y.user_id} className={`${cardCls} space-y-1 p-4`}>
-          <h2 className="font-medium">{y.ad_soyad}</h2>
+        <Kart key={y.user_id} className="space-y-1">
+          <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{y.ad_soyad}</h2>
           {/* NUMARA `aranabilir` RIZASINA BAKMAZ — ve bu BILINCLIDIR:
               `yonetici` bir HIZMET rolu; numarayi tesis kurulurken admin
               girer ve sakinin yonetime ulasabilmesi urun geregidir. Kapiyi
@@ -60,13 +68,13 @@ export default function YonetimIletisimPage() {
               C1a istisnasi) — istemcide ikinci bir riza suzgeci eklemek,
               sunucunun bilerek dondurdugu numarayi sessizce gizlerdi. */}
           {y.telefon ? (
-            <a className="text-sm underline" href={`tel:${y.telefon}`}>
+            <a className="underline" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-accent-ink)" }} href={`tel:${y.telefon}`}>
               {telefonGiris(y.telefon)}
             </a>
           ) : (
-            <p className="text-sm text-metin-muted">{t("yonetimIletisimTelefonYok")}</p>
+            <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>{t("yonetimIletisimTelefonYok")}</p>
           )}
-        </article>
+        </Kart>
       ))}
     </div>
   );

@@ -10,15 +10,16 @@
 import { useState } from "react";
 import useSWR from "swr";
 
-import { EmptyState } from "@/components/EmptyState";
 import {
-  ErrorBox,
-  Field,
-  PageHeader,
-  btnPrimary,
-  cardCls,
-  inputCls,
-} from "@/components/form";
+  CokSatir,
+  Alan,
+  AlanSarmal,
+  BosDurum,
+  Dugme,
+  HataDurumu,
+  IskeletMetin,
+  Kart,
+} from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
@@ -105,71 +106,70 @@ export default function OlaylarPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title={t("olayBaslik")} />
+      <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+        {t("olayBaslik")}
+      </h1>
 
-      <section className={`${cardCls} space-y-4 p-5`}>
-        <h2 className="font-medium">{t("olayYeniBildir")}</h2>
+      <section className="space-y-4">
+        <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{t("olayYeniBildir")}</h2>
         <div className="grid gap-4">
-          <Field label={t("olayKonu")}>
-            <input
-              className={inputCls}
-              value={baslik}
+          <AlanSarmal etiket={t("olayKonu")}>
+  {(b) => (
+    <Alan {...b} value={baslik}
               onChange={(e) => setBaslik(e.target.value)}
-              maxLength={200}
-            />
-          </Field>
-          <Field label={t("olayKonum")}>
-            <input
-              className={inputCls}
-              value={konum}
+              maxLength={200} />
+  )}
+</AlanSarmal>
+          <AlanSarmal etiket={t("olayKonum")}>
+  {(b) => (
+    <Alan {...b} value={konum}
               onChange={(e) => setKonum(e.target.value)}
-              maxLength={200}
-            />
-          </Field>
-          <Field label={t("olayAciklama")}>
-            <textarea
-              className={`${inputCls} min-h-24`}
-              value={aciklama}
+              maxLength={200} />
+  )}
+</AlanSarmal>
+          <AlanSarmal etiket={t("olayAciklama")}>
+            {(b) => (
+              <CokSatir {...b} rows={4} value={aciklama}
               onChange={(e) => setAciklama(e.target.value)}
-              maxLength={5000}
-            />
-          </Field>
+              maxLength={5000} />
+            )}
+          </AlanSarmal>
         </div>
-        <ErrorBox message={hata} />
+        <HataDurumu mesaj={hata} />
         <div>
-          <button
-            className={btnPrimary}
+          <Dugme
+            tur="birincil"
             disabled={gonderiyor}
             onClick={() => void bildir()}
           >
             {gonderiyor ? t("ortakKaydediliyor") : t("olayBildir")}
-          </button>
+          </Dugme>
         </div>
       </section>
 
       <section className="space-y-3">
-        <h2 className="font-medium">{t("olayListe")}</h2>
-        {error ? <ErrorBox message={t("ortakHataOlustu")} /> : null}
+        <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{t("olayListe")}</h2>
+        {error ? <HataDurumu mesaj={t("ortakHataOlustu")} /> : null}
         {isLoading ? (
-          <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>
+          <IskeletMetin satir={3} />
         ) : null}
         {!isLoading && !error && kayitlar.length === 0 ? (
-          <EmptyState title={t("olayYok")} />
+          <BosDurum baslik={t("olayYok")} />
         ) : null}
         {kayitlar.map((o) => (
-          <article key={o.id} className={`${cardCls} space-y-1 p-4`}>
+          <Kart key={o.id} className="space-y-1">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h3 className="font-medium">{o.baslik}</h3>
+              <h3 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{o.baslik}</h3>
               <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs">
                 {t(durumAnahtari(o.durum))}
               </span>
             </div>
-            <p className="text-xs text-metin-muted">
+            <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
               {tarihSaatUzun(o.created_at)} · {t(kaynakAnahtari(o.kaynak))}
               {o.konum ? ` · ${o.konum}` : ""}
             </p>
             {o.aciklama ? <p className="text-sm">{o.aciklama}</p> : null}
-          </article>
+          </Kart>
         ))}
       </section>
     </div>

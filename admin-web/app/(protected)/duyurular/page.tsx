@@ -11,8 +11,12 @@
 // demektir.
 import useSWR from "swr";
 
-import { EmptyState } from "@/components/EmptyState";
-import { ErrorBox, PageHeader, cardCls } from "@/components/form";
+import {
+  BosDurum,
+  HataDurumu,
+  IskeletMetin,
+  Kart,
+} from "@/components/ui";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import { tarihSaatUzun } from "@/lib/tarih";
@@ -34,20 +38,24 @@ export default function DuyurularPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title={t("sakinDuyurularBaslik")} />
-      {error ? <ErrorBox message={t("ortakHataOlustu")} /> : null}
+      <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+        {t("sakinDuyurularBaslik")}
+      </h1>
+      {error ? <HataDurumu mesaj={t("ortakHataOlustu")} /> : null}
       {isLoading ? (
-        <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>
+        <IskeletMetin satir={3} />
       ) : null}
       {!isLoading && !error && kayitlar.length === 0 ? (
-        <EmptyState title={t("sakinDuyurularYok")} />
+        <Kart>
+          <BosDurum baslik={t("sakinDuyurularYok")} />
+        </Kart>
       ) : null}
       {kayitlar.map((d) => (
-        <article key={d.id} className={`${cardCls} space-y-1 p-4`}>
-          <h2 className="font-medium">{d.baslik}</h2>
-          <p className="text-xs text-metin-muted">{tarihSaatUzun(d.created_at)}</p>
-          <p className="whitespace-pre-line text-sm">{d.govde}</p>
-        </article>
+        <Kart key={d.id} className="space-y-1">
+          <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{d.baslik}</h2>
+          <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>{tarihSaatUzun(d.created_at)}</p>
+          <p className="whitespace-pre-line" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}>{d.govde}</p>
+        </Kart>
       ))}
     </div>
   );

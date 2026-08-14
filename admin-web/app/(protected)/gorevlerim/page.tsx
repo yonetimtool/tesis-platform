@@ -18,14 +18,13 @@
 import { useState } from "react";
 import useSWR from "swr";
 
-import { EmptyState } from "@/components/EmptyState";
 import {
-  ErrorBox,
-  PageHeader,
-  btnGhost,
-  cardCls,
-  inputCls,
-} from "@/components/form";
+  Alan,
+  BosDurum,
+  Dugme,
+  HataDurumu,
+  IskeletMetin,
+} from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend, genIdempotencyKey } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
@@ -80,57 +79,60 @@ export default function GorevlerimPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title={t("gorevimBaslik")} />
-      {error ? <ErrorBox message={t("ortakHataOlustu")} /> : null}
+      <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+        {t("gorevimBaslik")}
+      </h1>
+      {error ? <HataDurumu mesaj={t("ortakHataOlustu")} /> : null}
       {isLoading ? (
-        <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>
+        <IskeletMetin satir={3} />
       ) : null}
       {!isLoading && !error && gorevler.length === 0 ? (
-        <EmptyState title={t("gorevimYok")} />
+        <BosDurum baslik={t("gorevimYok")} />
       ) : null}
 
       {gorevler.map((g) => (
-        <article key={g.id} className={`${cardCls} space-y-2 p-4`}>
-          <h2 className="font-medium">{g.ad}</h2>
+        <article key={g.id} className="space-y-2">
+          <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{g.ad}</h2>
           {g.sonraki_planlanan ? (
-            <p className="text-xs text-metin-muted">
+            <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
               {tarihSaatUzun(g.sonraki_planlanan)}
             </p>
           ) : null}
           {g.aciklama ? <p className="text-sm">{g.aciklama}</p> : null}
 
           {g.checkpoint_id ? (
-            <p className="text-xs text-metin-muted">{t("gorevimNfcNotu")}</p>
+            <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>{t("gorevimNfcNotu")}</p>
           ) : null}
 
           {g.foto_zorunlu ? (
             // Dugme AKTIF BIRAKILIP 422 aldirilmaz: sebebi yazilir.
-            <p className="text-sm text-amber-700">{t("gorevimFotoMobil")}</p>
+            <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-warning-ink)" }}>
+              {t("gorevimFotoMobil")}
+            </p>
           ) : (
             <div className="space-y-2">
-              <input
-                className={inputCls}
+              {/* `placeholder` bir ERISILEBILIR AD DEGILDIR: ekran
+                  okuyucu onu ad olarak okumaz ve yazi girilince kaybolur.
+                  Her gorev karti icin gorunur bir etiket koymak listeyi
+                  gurultulu yapardi; `aria-label` dogru cozum. */}
+              <Alan
+                aria-label={t("gorevimNot")}
                 value={notlar[g.id] ?? ""}
                 onChange={(e) =>
                   setNotlar({ ...notlar, [g.id]: e.target.value })
                 }
-                // `placeholder` bir ERISILEBILIR AD DEGILDIR: ekran
-                // okuyucu onu ad olarak okumaz ve yazi girilince kaybolur.
-                // Her gorev karti icin gorunur bir etiket koymak listeyi
-                // gurultulu yapardi; `aria-label` dogru cozum.
-                aria-label={t("gorevimNot")}
                 placeholder={t("gorevimNot")}
                 maxLength={500}
               />
-              <button
-                className={btnGhost}
+              <Dugme
+                boy="kucuk"
                 disabled={calisan === g.id}
                 onClick={() => void tamamla(g)}
               >
                 {calisan === g.id
                   ? t("ortakKaydediliyor")
                   : t("gorevimTamamla")}
-              </button>
+              </Dugme>
             </div>
           )}
         </article>
