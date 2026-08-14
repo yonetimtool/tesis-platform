@@ -23,18 +23,20 @@
 import { useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
 
-import { EmptyState } from "@/components/EmptyState";
+
 import { KameraOynatici } from "@/components/KameraOynatici";
 import {
-  ErrorBox,
-  Field,
-  PageHeader,
-  btnGhost,
-  btnPrimary,
-  cardCls,
-  inputCls,
-  panelCls,
-} from "@/components/form";
+  Alan,
+  AlanSarmal,
+  BosDurum,
+  Dugme,
+  HataDurumu,
+  IskeletMetin,
+  Kart,
+  Modal,
+  Rozet,
+  Secim,
+} from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
@@ -52,6 +54,14 @@ import type { CameraTur, Kamera, KameraListResponse } from "@/lib/types";
 const KARE_ARALIGI_MS = 8000;
 
 const TURLER: CameraTur[] = ["hls", "mp4", "rtsp"];
+// UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
+const ROZET_UYARI = "uyari" as const;
+// Tur adlari TEKNIK KIMLIKTIR (HLS/MP4/RTSP) — cevrilmez, sozluge girmez.
+const TUR_SECENEKLERI = TURLER.map((tr) => (
+  <option key={tr} value={tr}>
+    {tr.toUpperCase()}
+  </option>
+));
 
 type Form = {
   ad: string;
@@ -225,192 +235,239 @@ export default function KameralarPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader
-        title={t("kameraBaslikWeb")}
-        action={
-          <button className={btnPrimary} onClick={yeni}>
-            {t("kameraYeni")}
-          </button>
-        }
-      />
-      {error ? <ErrorBox message={t("ortakHataOlustu")} /> : null}
-      {isLoading ? (
-        <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>
-      ) : null}
-      {!isLoading && !error && gorunen.length === 0 ? (
-        <EmptyState title={t("kameraYokWeb")} />
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+          {t("kameraBaslikWeb")}
+        </h1>
+        <Dugme tur="birincil" boy="kucuk" onClick={yeni}>
+          {t("kameraYeni")}
+        </Dugme>
+      </div>
+
+      {/* HATA VARSA IZGARA DALI CALISMAZ: `gorunen` bos gelir ve "kamera
+          yok" yazmak, kamera OLMADIGINI soylemek olurdu — oysa bilinen
+          tek sey listenin okunamadigi. */}
+      {error ? (
+        <HataDurumu mesaj={t("ortakHataOlustu")} onTekrar={() => void mutate()} />
+      ) : isLoading ? (
+        <Kart>
+          <IskeletMetin satir={3} />
+        </Kart>
+      ) : gorunen.length === 0 ? (
+        <Kart>
+          <BosDurum baslik={t("kameraYokWeb")} />
+        </Kart>
       ) : null}
 
       {oynatilan && (
-        <section className={panelCls}>
+        <Kart>
           <div className="mb-2 flex items-center justify-between gap-3">
-            <h2 className="font-medium">{oynatilan.ad}</h2>
-            <button className={btnGhost} onClick={() => setOynatilan(null)}>
+            <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
+              {oynatilan.ad}
+            </h2>
+            <Dugme boy="kucuk" onClick={() => setOynatilan(null)}>
               {t("ortakKapat")}
-            </button>
+            </Dugme>
           </div>
           <KameraOynatici
-            // RESTREAM VARSA O OYNATILIR (P17): `stream_url` kameranın KENDİ
-            // adresidir ve rtsp olabilir; geçit HLS yayınlar.
+            // RESTREAM VARSA O OYNATILIR (P17): `stream_url` kameranin KENDI
+            // adresidir ve rtsp olabilir; gecit HLS yayinlar.
             url={oynatilan.restream_url || oynatilan.stream_url}
             mp4={oynatilan.tur === "mp4" && !oynatilan.restream_url}
             poster={oynatilan.snapshot_url}
           />
-        </section>
+        </Kart>
       )}
 
       {bilgi && (
-        <section className={panelCls}>
+        <Kart>
           <div className="mb-2 flex items-center justify-between gap-3">
-            <h2 className="font-medium">{bilgi.ad}</h2>
-            <button className={btnGhost} onClick={() => setBilgi(null)}>
+            <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{bilgi.ad}</h2>
+            <Dugme boy="kucuk" onClick={() => setBilgi(null)}>
               {t("ortakKapat")}
-            </button>
+            </Dugme>
           </div>
-          {/* NEDEN AÇILMIYOR — teşhisi kullanıcıya bırakmıyoruz. */}
-          <p className="text-sm text-metin-muted">{t("kameraRtspAciklama")}</p>
-        </section>
+          {/* NEDEN ACILMIYOR — teshisi kullaniciya birakmiyoruz. */}
+          <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+            {t("kameraRtspAciklama")}
+          </p>
+        </Kart>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {gorunen.map((k) => {
-          const oynar = k.oynatilabilir ?? oynatilabilirMi(k.tur, k.restream_url);
-          return (
-            <article key={k.id} className={`${cardCls} overflow-hidden`}>
-              <button
-                type="button"
-                className="block w-full text-start"
-                aria-label={oynar ? t("kameraOynat", { ad: k.ad }) : t("kameraNedenOynamiyor", { ad: k.ad })}
-                onClick={() => (oynar ? setOynatilan(k) : setBilgi(k))}
-              >
-                <div className="relative aspect-video bg-slate-100">
-                  {k.snapshot_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={`${k.snapshot_url}${k.snapshot_url.includes("?") ? "&" : "?"}_k=${nesil}`}
-                      alt={k.ad}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-xs text-metin-muted">
-                      {t("kameraKareYokWeb")}
-                    </div>
-                  )}
-                  {!oynar && (
-                    <span className="absolute end-2 top-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
-                      {t("kameraOynatilamazRozet")}
-                    </span>
-                  )}
+      {!error && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {gorunen.map((k) => {
+            const oynar = k.oynatilabilir ?? oynatilabilirMi(k.tur, k.restream_url);
+            return (
+              <Kart key={k.id} className="!p-0 overflow-hidden">
+                <button
+                  type="button"
+                  className="odak-ic block w-full text-start"
+                  aria-label={
+                    oynar
+                      ? t("kameraOynat", { ad: k.ad })
+                      : t("kameraNedenOynamiyor", { ad: k.ad })
+                  }
+                  onClick={() => (oynar ? setOynatilan(k) : setBilgi(k))}
+                >
+                  <div
+                    className="relative aspect-video"
+                    style={{ background: "var(--yz-metal-2)" }}
+                  >
+                    {k.snapshot_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={`${k.snapshot_url}${k.snapshot_url.includes("?") ? "&" : "?"}_k=${nesil}`}
+                        alt={k.ad}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div
+                        className="flex h-full items-center justify-center"
+                        style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-3)" }}
+                      >
+                        {t("kameraKareYokWeb")}
+                      </div>
+                    )}
+                    {!oynar && (
+                      <span className="absolute end-2 top-2">
+                        <Rozet durum={ROZET_UYARI}>{t("kameraOynatilamazRozet")}</Rozet>
+                      </span>
+                    )}
+                  </div>
+                </button>
+                <div className="space-y-0.5 p-3">
+                  <h2 style={{ fontSize: "var(--yz-fs-body)", color: "var(--yz-text)" }}>
+                    {k.ad}
+                  </h2>
+                  {k.konum ? (
+                    <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
+                      {k.konum}
+                    </p>
+                  ) : null}
+                  <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-3)" }}>
+                    {k.snapshot_url ? t("kameraCanliWeb") : t("kameraGoruntuYokWeb")}
+                  </p>
+                  <div className="flex gap-2 pt-2">
+                    <Dugme boy="kucuk" onClick={() => duzenle(k)}>
+                      {t("ortakDuzenle")}
+                    </Dugme>
+                    <Dugme boy="kucuk" tur="tehlike" onClick={() => void sil(k)}>
+                      {t("ortakSil")}
+                    </Dugme>
+                  </div>
                 </div>
-              </button>
-              <div className="space-y-0.5 p-3">
-                <h2 className="font-medium">{k.ad}</h2>
-                {k.konum ? <p className="text-xs text-metin-muted">{k.konum}</p> : null}
-                <p className="text-xs text-metin-muted">
-                  {k.snapshot_url ? t("kameraCanliWeb") : t("kameraGoruntuYokWeb")}
-                </p>
-                <div className="flex gap-2 pt-2">
-                  <button className={btnGhost} onClick={() => duzenle(k)}>
-                    {t("ortakDuzenle")}
-                  </button>
-                  <button className={btnGhost} onClick={() => sil(k)}>
-                    {t("ortakSil")}
-                  </button>
-                </div>
-              </div>
-            </article>
-          );
-        })}
-      </div>
+              </Kart>
+            );
+          })}
+        </div>
+      )}
 
-      {acik && (
-        <form className={panelCls} onSubmit={kaydet}>
-          <h2 className="mb-3 font-medium">
-            {duzenlenen ? t("kameraDuzenle") : t("kameraYeni")}
-          </h2>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Field label={t("kameraAd")}>
-              <input
-                className={inputCls}
-                value={form.ad}
-                onChange={(e) => setForm({ ...form, ad: e.target.value })}
-                required
-              />
-            </Field>
-            <Field label={t("kameraKonum")}>
-              <input
-                className={inputCls}
-                value={form.konum}
-                onChange={(e) => setForm({ ...form, konum: e.target.value })}
-              />
-            </Field>
-            <Field label={t("kameraTur")}>
-              <select
-                className={inputCls}
-                value={form.tur}
-                onChange={(e) => setForm({ ...form, tur: e.target.value as CameraTur })}
-              >
-                {TURLER.map((tr) => (
-                  <option key={tr} value={tr}>
-                    {tr.toUpperCase()}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <Field label={t("kameraYayinAdresi")} hint={t("kameraYayinIpucu")}>
-              <input
-                className={inputCls}
-                value={form.stream_url}
-                onChange={(e) => setForm({ ...form, stream_url: e.target.value })}
-                required
-              />
-            </Field>
-            <Field label={t("kameraRestream")} hint={t("kameraRestreamIpucu")}>
-              <input
-                className={inputCls}
-                value={form.restream_url}
-                onChange={(e) => setForm({ ...form, restream_url: e.target.value })}
-              />
-            </Field>
-            <Field label={t("kameraSnapshot")} hint={t("kameraSnapshotIpucu")}>
-              <input
-                className={inputCls}
-                value={form.snapshot_url}
-                onChange={(e) => setForm({ ...form, snapshot_url: e.target.value })}
-              />
-            </Field>
-            <Field label={t("kameraSakinGorebilir")} hint={t("kameraSakinGorebilirIpucu")}>
-              <label className="flex h-10 items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={form.sakin_gorebilir}
-                  onChange={(e) => setForm({ ...form, sakin_gorebilir: e.target.checked })}
-                />
-                {t("kameraSakinGorebilirOnay")}
-              </label>
-            </Field>
-            <Field label={t("ortakDurum")}>
-              <label className="flex h-10 items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={form.aktif}
-                  onChange={(e) => setForm({ ...form, aktif: e.target.checked })}
-                />
-                {t("ortakAktif")}
-              </label>
-            </Field>
-          </div>
-          <ErrorBox message={formHata} />
-          <div className="mt-3 flex gap-2">
-            <button className={btnPrimary} type="submit" disabled={kaydediliyor}>
-              {t("ortakKaydet")}
-            </button>
-            <button className={btnGhost} type="button" onClick={() => setAcik(false)}>
+      <Modal
+        acik={acik}
+        onKapat={() => setAcik(false)}
+        baslik={duzenlenen ? t("kameraDuzenle") : t("kameraYeni")}
+        eylemler={
+          <>
+            <Dugme tur="sessiz" onClick={() => setAcik(false)} disabled={kaydediliyor}>
               {t("ortakVazgec")}
-            </button>
+            </Dugme>
+            <Dugme tur="birincil" type="submit" form="kamera-form" yukleniyor={kaydediliyor}>
+              {t("ortakKaydet")}
+            </Dugme>
+          </>
+        }
+      >
+        <form id="kamera-form" onSubmit={kaydet} className="space-y-3">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <AlanSarmal etiket={t("kameraAd")} zorunlu>
+              {(b) => (
+                <Alan
+                  {...b}
+                  value={form.ad}
+                  onChange={(e) => setForm({ ...form, ad: e.target.value })}
+                  required
+                />
+              )}
+            </AlanSarmal>
+            <AlanSarmal etiket={t("kameraKonum")}>
+              {(b) => (
+                <Alan
+                  {...b}
+                  value={form.konum}
+                  onChange={(e) => setForm({ ...form, konum: e.target.value })}
+                />
+              )}
+            </AlanSarmal>
+            <AlanSarmal etiket={t("kameraTur")}>
+              {(b) => (
+                <Secim
+                  {...b}
+                  value={form.tur}
+                  onChange={(e) => setForm({ ...form, tur: e.target.value as CameraTur })}
+                >
+                  {TUR_SECENEKLERI}
+                </Secim>
+              )}
+            </AlanSarmal>
+            <AlanSarmal etiket={t("kameraYayinAdresi")} ipucu={t("kameraYayinIpucu")} zorunlu>
+              {(b) => (
+                <Alan
+                  {...b}
+                  value={form.stream_url}
+                  onChange={(e) => setForm({ ...form, stream_url: e.target.value })}
+                  required
+                />
+              )}
+            </AlanSarmal>
+            <AlanSarmal etiket={t("kameraRestream")} ipucu={t("kameraRestreamIpucu")}>
+              {(b) => (
+                <Alan
+                  {...b}
+                  value={form.restream_url}
+                  onChange={(e) => setForm({ ...form, restream_url: e.target.value })}
+                />
+              )}
+            </AlanSarmal>
+            <AlanSarmal etiket={t("kameraSnapshot")} ipucu={t("kameraSnapshotIpucu")}>
+              {(b) => (
+                <Alan
+                  {...b}
+                  value={form.snapshot_url}
+                  onChange={(e) => setForm({ ...form, snapshot_url: e.target.value })}
+                />
+              )}
+            </AlanSarmal>
+            <label
+              className="flex items-center gap-2"
+              style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}
+            >
+              <input
+                type="checkbox"
+                checked={form.sakin_gorebilir}
+                onChange={(e) => setForm({ ...form, sakin_gorebilir: e.target.checked })}
+              />
+              {t("kameraSakinGorebilirOnay")}
+            </label>
+            <label
+              className="flex items-center gap-2"
+              style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}
+            >
+              <input
+                type="checkbox"
+                checked={form.aktif}
+                onChange={(e) => setForm({ ...form, aktif: e.target.checked })}
+              />
+              {t("ortakAktif")}
+            </label>
           </div>
+          {formHata && (
+            <p role="alert" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-danger-ink)" }}>
+              {formHata}
+            </p>
+          )}
         </form>
-      )}
+      </Modal>
     </div>
   );
 }

@@ -12,15 +12,16 @@
 import { useState } from "react";
 import useSWR from "swr";
 
-import { EmptyState } from "@/components/EmptyState";
 import {
-  ErrorBox,
-  Field,
-  PageHeader,
-  btnPrimary,
-  cardCls,
-  inputCls,
-} from "@/components/form";
+  Alan,
+  AlanSarmal,
+  BosDurum,
+  Dugme,
+  HataDurumu,
+  IskeletMetin,
+  Kart,
+  Rozet,
+} from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
@@ -37,6 +38,9 @@ type Hizmet = {
 };
 /** Liste yaniti bir de BOLUM NOTU tasir (yoneticinin serbest metni). */
 type Liste = { note: string | null; items: Hizmet[] };
+
+// UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
+const ROZET_NOTR = "notr" as const;
 
 export default function DisHizmetlerPage() {
   const t = useT();
@@ -97,95 +101,117 @@ export default function DisHizmetlerPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title={t("disHizmetBaslik")} />
+      <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+        {t("disHizmetBaslik")}
+      </h1>
 
       {data?.note ? (
-        <p className={`${cardCls} p-4 text-sm`}>{data.note}</p>
+        <Kart>
+          <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}>{data.note}</p>
+        </Kart>
       ) : null}
 
-      <section className={`${cardCls} space-y-4 p-5`}>
-        <h2 className="font-medium">{t("disHizmetYeni")}</h2>
+      <Kart className="space-y-4">
+        <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
+          {t("disHizmetYeni")}
+        </h2>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label={t("disHizmetTur")}>
-            <input
-              className={inputCls}
-              value={tur}
-              onChange={(e) => setTur(e.target.value)}
-              maxLength={60}
-            />
-          </Field>
-          <Field label={t("disHizmetAd")}>
-            <input
-              className={inputCls}
-              value={ad}
-              onChange={(e) => setAd(e.target.value)}
-              maxLength={80}
-            />
-          </Field>
-          <Field label={t("disHizmetSoyad")}>
-            <input
-              className={inputCls}
-              value={soyad}
-              onChange={(e) => setSoyad(e.target.value)}
-              maxLength={80}
-            />
-          </Field>
-          <Field label={t("kullaniciTelefon")}>
-            <input
-              className={inputCls}
-              // (P123) TEK bicimlendirici — bkz. lib/telefon.ts.
-              value={telefonGiris(telefon)}
-              onChange={(e) => setTelefon(telefonGiris(e.target.value))}
-              placeholder={t("kullaniciTelefonOrnek")}
-            />
-          </Field>
-          <Field label={t("disHizmetAciklama")}>
-            <input
-              className={inputCls}
-              value={aciklama}
-              onChange={(e) => setAciklama(e.target.value)}
-              maxLength={500}
-            />
-          </Field>
+          <AlanSarmal etiket={t("disHizmetTur")} zorunlu>
+            {(b) => (
+              <Alan {...b} value={tur} onChange={(e) => setTur(e.target.value)} maxLength={60} />
+            )}
+          </AlanSarmal>
+          <AlanSarmal etiket={t("disHizmetAd")} zorunlu>
+            {(b) => (
+              <Alan {...b} value={ad} onChange={(e) => setAd(e.target.value)} maxLength={80} />
+            )}
+          </AlanSarmal>
+          <AlanSarmal etiket={t("disHizmetSoyad")} zorunlu>
+            {(b) => (
+              <Alan
+                {...b}
+                value={soyad}
+                onChange={(e) => setSoyad(e.target.value)}
+                maxLength={80}
+              />
+            )}
+          </AlanSarmal>
+          <AlanSarmal etiket={t("kullaniciTelefon")} zorunlu>
+            {(b) => (
+              <Alan
+                {...b}
+                // (P123) TEK bicimlendirici — bkz. lib/telefon.ts.
+                value={telefonGiris(telefon)}
+                onChange={(e) => setTelefon(telefonGiris(e.target.value))}
+                placeholder={t("kullaniciTelefonOrnek")}
+              />
+            )}
+          </AlanSarmal>
+          <AlanSarmal etiket={t("disHizmetAciklama")}>
+            {(b) => (
+              <Alan
+                {...b}
+                value={aciklama}
+                onChange={(e) => setAciklama(e.target.value)}
+                maxLength={500}
+              />
+            )}
+          </AlanSarmal>
         </div>
-        <ErrorBox message={hata} />
+        {hata && (
+          <p role="alert" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-danger-ink)" }}>
+            {hata}
+          </p>
+        )}
         <div>
-          <button
-            className={btnPrimary}
-            disabled={gonderiyor}
-            onClick={() => void ekle()}
-          >
+          <Dugme tur="birincil" disabled={gonderiyor} yukleniyor={gonderiyor} onClick={() => void ekle()}>
             {gonderiyor ? t("ortakKaydediliyor") : t("ortakEkle")}
-          </button>
+          </Dugme>
         </div>
-      </section>
+      </Kart>
 
       <section className="space-y-3">
-        <h2 className="font-medium">{t("disHizmetListe")}</h2>
-        {error ? <ErrorBox message={t("ortakHataOlustu")} /> : null}
-        {isLoading ? (
-          <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>
-        ) : null}
-        {!isLoading && !error && kayitlar.length === 0 ? (
-          <EmptyState title={t("disHizmetYok")} />
-        ) : null}
-        {kayitlar.map((h) => (
-          <article key={h.id} className={`${cardCls} space-y-1 p-4`}>
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h3 className="font-medium">
-                {h.ad} {h.soyad}
-              </h3>
-              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs">
-                {h.tur}
-              </span>
-            </div>
-            {/* `tel:` baglantisi: rehberdeki numara ARANMAK icindir. */}
-            <a className="text-sm underline" href={`tel:${h.telefon}`}>
-              {telefonGiris(h.telefon)}
-            </a>
-            {h.aciklama ? <p className="text-sm">{h.aciklama}</p> : null}
-          </article>
-        ))}
+        <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
+          {t("disHizmetListe")}
+        </h2>
+        {/* HATA VARSA LISTE DALI HIC CALISMAZ: `kayitlar` bos gelir ve
+            "kayitli esnaf yok" yazmak, rehberin BOS oldugunu soylemek
+            olurdu — oysa bilinen tek sey okunamadigi. */}
+        {error ? (
+          <HataDurumu mesaj={t("ortakHataOlustu")} onTekrar={() => void mutate()} />
+        ) : isLoading ? (
+          <Kart>
+            <IskeletMetin satir={3} />
+          </Kart>
+        ) : kayitlar.length === 0 ? (
+          <Kart>
+            <BosDurum baslik={t("disHizmetYok")} />
+          </Kart>
+        ) : (
+          kayitlar.map((h) => (
+            <Kart key={h.id} className="space-y-1">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <h3 style={{ fontSize: "var(--yz-fs-body)", color: "var(--yz-text)" }}>
+                  {h.ad} {h.soyad}
+                </h3>
+                <Rozet durum={ROZET_NOTR}>{h.tur}</Rozet>
+              </div>
+              {/* `tel:` baglantisi: rehberdeki numara ARANMAK icindir. */}
+              <a
+                className="underline"
+                style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-accent-ink)" }}
+                href={`tel:${h.telefon}`}
+              >
+                {telefonGiris(h.telefon)}
+              </a>
+              {h.aciklama ? (
+                <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+                  {h.aciklama}
+                </p>
+              ) : null}
+            </Kart>
+          ))
+        )}
       </section>
     </div>
   );

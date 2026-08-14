@@ -182,7 +182,7 @@ describe("Dış hizmetler", () => {
     await screen.findByText(/Kayıtlı hizmet yok/i);
 
     await userEvent.type(screen.getByLabelText(/Hizmet türü/i), "Çilingir");
-    await userEvent.type(screen.getByLabelText(/^Ad$/i), "Ali");
+    await userEvent.type(screen.getByRole("textbox", { name: "Ad" }), "Ali");
     await userEvent.type(screen.getByLabelText(/Soyad/i), "Veli");
     const tel = screen.getByLabelText(/Telefon/i);
     await userEvent.type(tel, "5431992904");
@@ -203,7 +203,7 @@ describe("Dış hizmetler", () => {
     await screen.findByText(/Kayıtlı hizmet yok/i);
 
     await userEvent.type(screen.getByLabelText(/Hizmet türü/i), "Çilingir");
-    await userEvent.type(screen.getByLabelText(/^Ad$/i), "Ali");
+    await userEvent.type(screen.getByRole("textbox", { name: "Ad" }), "Ali");
     await userEvent.type(screen.getByLabelText(/Telefon/i), "5431992904");
     await userEvent.click(screen.getByRole("button", { name: /Ekle/i }));
 
@@ -217,7 +217,7 @@ describe("Dış hizmetler", () => {
     await screen.findByText(/Kayıtlı hizmet yok/i);
 
     await userEvent.type(screen.getByLabelText(/Hizmet türü/i), "Çilingir");
-    await userEvent.type(screen.getByLabelText(/^Ad$/i), "Ali");
+    await userEvent.type(screen.getByRole("textbox", { name: "Ad" }), "Ali");
     await userEvent.type(screen.getByLabelText(/Soyad/i), "Veli");
     await userEvent.type(screen.getByLabelText(/Telefon/i), "543199");
     await userEvent.click(screen.getByRole("button", { name: /Ekle/i }));

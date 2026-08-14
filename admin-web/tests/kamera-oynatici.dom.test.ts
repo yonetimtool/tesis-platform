@@ -101,7 +101,7 @@ describe("(P131) yonetim formu — ORTAK kural uygulanir", () => {
     const cagrilar = fetchTaklidi([]);
     ciz(KameralarPage);
     const kullanici = await formuAc();
-    await kullanici.type(screen.getByLabelText(/^Ad$/i), "Kapı");
+    await kullanici.type(screen.getByRole("textbox", { name: "Ad" }), "Kapı");
     await kullanici.type(
       screen.getByLabelText(/Yayın adresi/i),
       "https://www.youtube.com/watch?v=abc",
@@ -117,7 +117,7 @@ describe("(P131) yonetim formu — ORTAK kural uygulanir", () => {
     const cagrilar = fetchTaklidi([]);
     ciz(KameralarPage);
     const kullanici = await formuAc();
-    await kullanici.type(screen.getByLabelText(/^Ad$/i), "Kapı");
+    await kullanici.type(screen.getByRole("textbox", { name: "Ad" }), "Kapı");
     await kullanici.type(
       screen.getByLabelText(/Yayın adresi/i),
       "https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_fmp4/master.m3u8",
@@ -137,7 +137,7 @@ describe("(P131) yonetim formu — ORTAK kural uygulanir", () => {
     const cagrilar = fetchTaklidi([]);
     ciz(KameralarPage);
     const kullanici = await formuAc();
-    await kullanici.type(screen.getByLabelText(/^Ad$/i), "Otopark");
+    await kullanici.type(screen.getByRole("textbox", { name: "Ad" }), "Otopark");
     await kullanici.selectOptions(screen.getByLabelText(/Yayın türü/i), "rtsp");
     await kullanici.type(screen.getByLabelText(/Yayın adresi/i), "https://ornek/1");
     await kullanici.click(screen.getByRole("button", { name: /Kaydet/i }));
