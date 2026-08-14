@@ -29,6 +29,7 @@ export {
   BosDurum,
   HataDurumu,
 } from "./durumlar";
+export { Modal, OnayDiyalogu, type ModalProps } from "./modal";
 export {
   Alan,
   CokSatir,

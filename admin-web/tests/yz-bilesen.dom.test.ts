@@ -27,6 +27,8 @@ import {
   HataDurumu,
   IkonDugmesi,
   Kpi,
+  Modal,
+  OnayDiyalogu,
   Rozet,
 } from "@/components/ui";
 
@@ -274,5 +276,119 @@ describe("(P160) Rozet", () => {
   it("metin durumu SOYLER — renk tek basina anlam tasimaz", () => {
     ciz(createElement(Rozet, { durum: "olumlu", children: "Aktif" }));
     expect(screen.getByText("Aktif")).toBeInTheDocument();
+  });
+});
+
+/* ======================================================================
+   7) MODAL — odak, ESC, kirli kapanis
+   ====================================================================== */
+
+describe("(P160) Modal", () => {
+  it("adli bir diyalogdur (role=dialog + aria-modal + baslik bagi)", () => {
+    ciz(
+      createElement(Modal, {
+        acik: true,
+        onKapat: vi.fn(),
+        baslik: "Yeni kullanici",
+        children: createElement("p", null, "govde"),
+      }),
+    );
+    const d = screen.getByRole("dialog", { name: "Yeni kullanici" });
+    expect(d).toHaveAttribute("aria-modal", "true");
+  });
+
+  it("kapali iken DOM'a HIC girmez", () => {
+    ciz(
+      createElement(Modal, {
+        acik: false,
+        onKapat: vi.fn(),
+        baslik: "Gizli",
+        children: createElement("p", null, "govde"),
+      }),
+    );
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("ESC kapatir", async () => {
+    const kapat = vi.fn();
+    ciz(
+      createElement(Modal, {
+        acik: true,
+        onKapat: kapat,
+        baslik: "Form",
+        children: createElement("p", null, "govde"),
+      }),
+    );
+    await userEvent.keyboard("{Escape}");
+    expect(kapat).toHaveBeenCalledOnce();
+  });
+
+  it("KAYITSIZ DEGISIKLIK varsa ESC dogrudan kapatmaz, karari devreder", async () => {
+    const kapat = vi.fn();
+    const kirliKapat = vi.fn();
+    ciz(
+      createElement(Modal, {
+        acik: true,
+        onKapat: kapat,
+        onKirliKapat: kirliKapat,
+        kirliMi: true,
+        baslik: "Form",
+        children: createElement("p", null, "govde"),
+      }),
+    );
+    await userEvent.keyboard("{Escape}");
+    expect(kirliKapat, "kirli kapanis devredilmedi").toHaveBeenCalledOnce();
+    expect(kapat, "kayitsiz degisiklik varken dogrudan kapandi").not.toHaveBeenCalled();
+  });
+
+  it("acilista odak MODALIN ICINE gider", () => {
+    ciz(
+      createElement(Modal, {
+        acik: true,
+        onKapat: vi.fn(),
+        baslik: "Form",
+        children: createElement("input", { "aria-label": "Ad" }),
+      }),
+    );
+    // Ilk odaklanabilir oge — kapatma dugmesi ya da govdedeki alan.
+    const d = screen.getByRole("dialog");
+    expect(d.contains(document.activeElement)).toBe(true);
+  });
+
+  it("uzun formda govde kayar, baslik ve eylemler SABIT kalir", () => {
+    ciz(
+      createElement(Modal, {
+        acik: true,
+        onKapat: vi.fn(),
+        baslik: "Uzun",
+        eylemler: createElement("button", null, "Kaydet"),
+        children: createElement("p", null, "govde"),
+      }),
+    );
+    const d = screen.getByRole("dialog");
+    // Govde kapsayicisi kaydirilabilir olmali.
+    expect(d.querySelector(".overflow-y-auto")).not.toBeNull();
+  });
+});
+
+describe("(P160) OnayDiyalogu", () => {
+  it("yikici islemde TEHLIKE turu kullanilir ve onay/iptal ayrilir", async () => {
+    const onay = vi.fn();
+    const iptal = vi.fn();
+    ciz(
+      createElement(OnayDiyalogu, {
+        acik: true,
+        baslik: "Silinsin mi?",
+        mesaj: "Bu islem geri alinamaz.",
+        onayMetni: "Sil",
+        onOnay: onay,
+        onIptal: iptal,
+        tehlikeli: true,
+      }),
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Sil" }));
+    expect(onay).toHaveBeenCalledOnce();
+    await userEvent.click(screen.getByRole("button", { name: "İptal" }));
+    expect(iptal).toHaveBeenCalledOnce();
   });
 });
