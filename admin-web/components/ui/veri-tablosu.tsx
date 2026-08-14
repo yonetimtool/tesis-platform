@@ -38,7 +38,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useT } from "@/lib/i18n/kullan";
 
 import { Dugme } from "./dugme";
-import { BosDurum, IskeletTablo } from "./durumlar";
+import { BosDurum, HataDurumu, IskeletTablo } from "./durumlar";
 import { Kart } from "./yuzey";
 
 export const SAYFA_BOYLARI = [10, 25, 50, 100] as const;
@@ -91,6 +91,19 @@ export interface VeriTablosuProps<T> {
   satirId: (satir: T) => string;
 
   yukleniyor?: boolean;
+  /**
+   * Liste CEKILEMEDIYSE hata mesaji. Verilirse tablo govdesi yerine
+   * "tekrar dene" cikar.
+   *
+   * NEDEN TABLONUN ICINDE: cagiran sayfalar `{hata && <HataDurumu/>}`
+   * yazip tabloyu ALTINDA cizmeye devam ediyordu; uc dustugunde
+   * `satirlar` bos oldugu icin tablo "kayit yok" yaziyordu. Yani ayni
+   * ekranda hem "cekilemedi" hem "kayit yok" — ikincisi bir IDDIADIR ve
+   * yanlisti; kayit olabilir de, bilmiyoruz. Karari tabloya alarak
+   * her cagiranin ayni hatayi tekrar yapmasi engellendi.
+   */
+  hata?: string | null;
+  onTekrar?: () => void;
   /** Bos durum basligi (i18n). Verilmezse genel metin. */
   bosBaslik?: string;
   bosAciklama?: string;
@@ -119,6 +132,8 @@ export function VeriTablosu<T>({
   satirlar,
   satirId,
   yukleniyor = false,
+  hata = null,
+  onTekrar,
   bosBaslik,
   bosAciklama,
   bosEylem,
@@ -258,7 +273,9 @@ export function VeriTablosu<T>({
       )}
 
       {/* ---------------- GOVDE ---------------------------------------- */}
-      {yukleniyor ? (
+      {hata ? (
+        <HataDurumu mesaj={hata} onTekrar={onTekrar} />
+      ) : yukleniyor ? (
         <IskeletTablo kolon={gorunen.length || 4} />
       ) : gosterilen.length === 0 ? (
         <BosDurum
@@ -351,7 +368,7 @@ export function VeriTablosu<T>({
       )}
 
       {/* ---------------- ALT SERIT: sayfalama --------------------------- */}
-      {!yukleniyor && toplamKayit > 0 && (
+      {!hata && !yukleniyor && toplamKayit > 0 && (
         <Sayfalama
           durum={d}
           toplam={toplamKayit}

@@ -529,6 +529,7 @@ export const de: Sozluk = {
   noktaGpsEnlem: "GPS-Breitengrad (optional)",
   noktaGpsBoylam: "GPS-Längengrad (optional)",
   noktaUid: "NFC-UID",
+  noktaGps: "GPS",
   noktaYok: "Keine Kontrollpunkte",
   noktaYokAlt: "Beginnen Sie mit dem ersten NFC-Kontrollpunkt.",
   seffafPano: "Transparenz-Board",

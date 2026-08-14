@@ -529,6 +529,7 @@ export const ru: Sozluk = {
   noktaGpsEnlem: "Широта GPS (необязательно)",
   noktaGpsBoylam: "Долгота GPS (необязательно)",
   noktaUid: "NFC UID",
+  noktaGps: "GPS",
   noktaYok: "Точек нет",
   noktaYokAlt: "Начните с добавления первой NFC-точки.",
   seffafPano: "Панель прозрачности",

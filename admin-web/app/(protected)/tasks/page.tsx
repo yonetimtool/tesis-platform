@@ -404,7 +404,6 @@ export default function TasksPage() {
       />
       {/* Liste cekilemezse BOS TABLO degil, sebep + "Tekrar dene".
           Yukleme durumu artik `VeriTablosu`nun ISKELETI. */}
-      {error && <HataDurumu mesaj={error.message} onTekrar={() => void mutate()} />}
       {isLoading && !data && <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>}
 
       {/* FORM ARTIK MODALDA (brief: "sayfa ustunde alan acma deseni
@@ -530,7 +529,9 @@ export default function TasksPage() {
                 kolonlar={kolonlar}
                 satirlar={gorevler}
                 satirId={(g) => g.id}
-                yukleniyor={isLoading && !data}
+                hata={error ? error.message : null}
+        onTekrar={() => void mutate()}
+        yukleniyor={isLoading && !data}
                 bosBaslik={t("gorevYok")}
                 bosAciklama={t("gorevYokAlt")}
                 sunucuTarafli

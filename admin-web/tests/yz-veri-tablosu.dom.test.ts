@@ -233,3 +233,47 @@ describe("(P160) VeriTablosu — durumlar", () => {
     );
   });
 });
+
+/* ==================================================================== */
+
+describe("(P160) VeriTablosu — HATA, bos durumu EZER", () => {
+  // Gercek kusurun testi: uc dustugunde `satirlar` bos gelir ve tablo
+  // "kayit yok" yazardi. Bu bir IDDIADIR ve yanlisti — kayit olabilir
+  // de, bilmiyoruz. Kullanici listeyi bos gorup "demek ki yok" diyordu.
+  it("hata varken BOS DURUM cizilmez, sebep + tekrar dene cikar", () => {
+    ciz(tablo({ satirlar: [], hata: "Sunucuya ulasilamadi", onTekrar: vi.fn() }));
+    expect(screen.queryByText("Gösterilecek kayıt yok.")).toBeNull();
+    expect(screen.getByText("Sunucuya ulasilamadi")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Tekrar dene" }),
+    ).toBeInTheDocument();
+  });
+
+  it("hata varken TABLO ve SAYFALAMA da cizilmez", () => {
+    ciz(
+      tablo({
+        satirlar: [],
+        hata: "kopuk",
+        sunucuTarafli: true,
+        toplam: 500,
+        durum: { sayfa: 1, boy: 25, siraKolon: null, siraYonu: "artan" },
+        onDurumDegisti: vi.fn(),
+      }),
+    );
+    expect(screen.queryByRole("table")).toBeNull();
+    // "Toplam: 500" hatali bir sayidir: o sayiyi getiren istek dustu.
+    expect(screen.queryByText(/Toplam: 500/)).toBeNull();
+  });
+
+  it("TEKRAR DENE cagirani uyarir", async () => {
+    const tekrar = vi.fn();
+    ciz(tablo({ satirlar: [], hata: "kopuk", onTekrar: tekrar }));
+    await userEvent.click(screen.getByRole("button", { name: "Tekrar dene" }));
+    expect(tekrar).toHaveBeenCalledTimes(1);
+  });
+
+  it("hata YOKKEN davranis degismedi (gerileme)", () => {
+    ciz(tablo({}));
+    expect(screen.getByRole("table")).toBeInTheDocument();
+  });
+});

@@ -346,14 +346,15 @@ export default function UsersPage() {
         </div>
       </div>
 
-      {/* HATA DURUMU: liste cekilemezse BOS TABLO degil, sebep + tekrar. */}
-      {error ? (
-        <HataDurumu mesaj={error.message} onTekrar={() => void mutate()} />
-      ) : (
+      {/* HATA DURUMU artik TABLONUN ICINDE (`hata` ozelligi). Disarida
+          bir dal olsaydi hata cikinca SUZGECLER de kaybolurdu — oysa
+          kullanicinin ilk refleksi suzgeci degistirip tekrar denemek. */}
         <VeriTablosu<UserRow>
           kolonlar={kolonlar}
           satirlar={data?.items ?? []}
           satirId={(u) => u.id}
+          hata={error ? error.message : null}
+          onTekrar={() => void mutate()}
           yukleniyor={isLoading && !data}
           bosBaslik={t("kullaniciYok")}
           bosAciklama={t("kullaniciYokAlt")}
@@ -408,7 +409,6 @@ export default function UsersPage() {
             </div>
           }
         />
-      )}
 
       {/* FORM ARTIK MODALDA (brief: "sayfa ustunde alan acma deseni
           kaldirilacak"). Odak tuzagi, ESC ve kapanista odagin geri

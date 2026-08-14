@@ -570,6 +570,7 @@ export const tr = {
   noktaGpsEnlem: "GPS enlem (opsiyonel)",
   noktaGpsBoylam: "GPS boylam (opsiyonel)",
   noktaUid: "NFC UID",
+  noktaGps: "GPS",
   noktaYok: "Nokta yok",
   noktaYokAlt: "İlk NFC noktasını ekleyerek başlayın.",
   seffafPano: "Şeffaflık Panosu",

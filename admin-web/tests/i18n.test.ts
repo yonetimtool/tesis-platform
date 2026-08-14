@@ -96,6 +96,10 @@ describe("sozluk butunlugu", () => {
     // ve Fransizcada da ayni yazilir (Fr. "Plateforme" secildi, o farkli);
     // ceviri eksigi degil es-sozcuktur.
     "Platform",
+    // (P160) NFC noktasi kolon basligi. "GPS" bir SISTEM ADIDIR
+    // (Global Positioning System) ve yedi dilin hepsinde ayni harflerle
+    // yazilir — Arapcada da Latin harfleriyle. Ceviri eksigi degil.
+    "GPS",
     // (P133.2) Ozet cumlesinin yan cumle AYIRICISI. Ceviri degil NOKTALAMA:
     // Latin alfabesi kullanan dillerin hepsinde ", " — Arapca "، " ile
     // ayrildigi icin anahtar yine de sozlukte durur.

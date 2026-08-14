@@ -184,7 +184,6 @@ export default function ShiftsPage() {
 
       {/* Liste cekilemezse BOS TABLO degil, sebep + "Tekrar dene".
           Yukleme durumu artik `VeriTablosu`nun ISKELETI. */}
-      {error && <HataDurumu mesaj={error.message} onTekrar={() => void mutate()} />}
 
       {/* FORM ARTIK MODALDA (brief). Odak tuzagi, ESC ve kapanista
           odagin geri donmesi `Modal`dan geliyor. */}
@@ -273,6 +272,8 @@ export default function ShiftsPage() {
         kolonlar={kolonlar}
         satirlar={data?.items ?? []}
         satirId={(v) => v.id}
+        hata={error ? error.message : null}
+        onTekrar={() => void mutate()}
         yukleniyor={isLoading && !data}
         bosBaslik={t("vardiyaYok")}
         bosAciklama={t("vardiyaYokAlt")}

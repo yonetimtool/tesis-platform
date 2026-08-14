@@ -529,6 +529,7 @@ export const en: Sozluk = {
   noktaGpsEnlem: "GPS latitude (optional)",
   noktaGpsBoylam: "GPS longitude (optional)",
   noktaUid: "NFC UID",
+  noktaGps: "GPS",
   noktaYok: "No checkpoints",
   noktaYokAlt: "Start by adding the first NFC checkpoint.",
   seffafPano: "Transparency Board",

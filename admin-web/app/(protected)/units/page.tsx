@@ -381,7 +381,6 @@ export default function UnitsPage() {
 
       {/* Liste cekilemezse BOS TABLO degil, sebep + "Tekrar dene".
           Yukleme durumu artik `VeriTablosu`nun ISKELETI. */}
-      {error && <HataDurumu mesaj={error.message} onTekrar={() => void mutate()} />}
 
       {open && (
         <motion.form {...panelMotion} onSubmit={save} className={`space-y-4 ${panelCls}`}>
@@ -498,6 +497,8 @@ export default function UnitsPage() {
         kolonlar={kolonlar}
         satirlar={data?.items ?? []}
         satirId={(u) => u.id}
+        hata={error ? error.message : null}
+        onTekrar={() => void mutate()}
         yukleniyor={isLoading && !data}
         bosBaslik={t("daireYok")}
         bosAciklama={t("daireYokAlt")}

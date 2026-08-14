@@ -529,6 +529,7 @@ export const ar: Sozluk = {
   noktaGpsEnlem: "خط العرض GPS (اختياري)",
   noktaGpsBoylam: "خط الطول GPS (اختياري)",
   noktaUid: "معرّف NFC",
+  noktaGps: "GPS",
   noktaYok: "لا توجد نقاط",
   noktaYokAlt: "ابدأ بإضافة أول نقطة NFC.",
   seffafPano: "لوحة الشفافية",

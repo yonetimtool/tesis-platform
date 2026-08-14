@@ -1,24 +1,22 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import useSWR from "swr";
 
-import { EmptyState } from "@/components/EmptyState";
+import { EksikVeriUyarisi } from "@/components/form";
 import {
-  Field,
-  ErrorBox,
-  Pager,
-  PageHeader,
-  inputCls,
-  btnPrimary,
-  btnGhost,
-  btnDanger,
-  panelCls,
-  panelMotion,
-  EksikVeriUyarisi,
-} from "@/components/form";
-import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
+  Alan,
+  AlanSarmal,
+  Cekmece,
+  Dugme,
+  HataDurumu,
+  Modal,
+  Rozet,
+  Secim,
+  VeriTablosu,
+  type Kolon,
+  type TabloDurumu,
+} from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { kisaKimlik } from "@/lib/kimlik";
 import { apiSend } from "@/lib/client";
@@ -33,7 +31,9 @@ import type {
   ShiftList,
 } from "@/lib/types";
 
-const LIMIT = 20;
+// UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
+const DURUM_OLUMLU = "olumlu" as const;
+const DURUM_NOTR = "notr" as const;
 
 interface FormState {
   ad: string;
@@ -64,12 +64,23 @@ function windowCount(bas: string, bit: string, per: number): number {
 export default function PatrolPlansPage() {
   const t = useT();
   const toast = useToast();
-  const [offset, setOffset] = useState(0);
+  // (P160) SAYFALAMA `VeriTablosu` durumuna gecti; `offset` ondan
+  // TURETILIR ve sayfa basina kayit secimi bedava geldi.
+  const [tabloDurumu, setTabloDurumu] = useState<TabloDurumu>({
+    sayfa: 1,
+    boy: 25,
+    siraKolon: null,
+    siraYonu: "artan",
+  });
+  const offset = (tabloDurumu.sayfa - 1) * tabloDurumu.boy;
   const { data, error, isLoading, mutate } = useSWR<PatrolPlanList>(
-    `/api/patrol-plans?limit=${LIMIT}&offset=${offset}`,
+    `/api/patrol-plans?limit=${tabloDurumu.boy}&offset=${offset}`,
     jsonFetcher,
   );
-  const { data: shifts, error: shiftsErr } = useSWR<ShiftList>("/api/shifts?limit=200&offset=0", jsonFetcher);
+  const { data: shifts, error: shiftsErr } = useSWR<ShiftList>(
+    "/api/shifts?limit=200&offset=0",
+    jsonFetcher,
+  );
   const { data: checkpoints } = useSWR<CheckpointList>(
     "/api/checkpoints?limit=200&offset=0",
     jsonFetcher,
@@ -85,6 +96,8 @@ export default function PatrolPlansPage() {
   const [assignPlan, setAssignPlan] = useState<PatrolPlan | null>(null);
   const [selected, setSelected] = useState<string[]>([]);
   const [assignErr, setAssignErr] = useState<string | null>(null);
+  // MEVCUT ATAMA CEKILEBILDI MI — asagida neden onemli oldugu yaziyor.
+  const [assignOkundu, setAssignOkundu] = useState(false);
   const [assignSaving, setAssignSaving] = useState(false);
   const [addPick, setAddPick] = useState<string>("");
 
@@ -155,7 +168,9 @@ export default function PatrolPlansPage() {
   async function openAssign(p: PatrolPlan) {
     setAssignPlan(p);
     setAssignErr(null);
+    setAssignOkundu(false);
     setAddPick("");
+    setSelected([]);
     try {
       const list = await apiSend<PatrolPlanCheckpoint[]>(
         `/api/patrol-plans/${p.id}/checkpoints`,
@@ -163,13 +178,20 @@ export default function PatrolPlansPage() {
       );
       const ordered = [...list].sort((a, b) => a.sira - b.sira).map((x) => x.checkpoint_id);
       setSelected(ordered);
-    } catch {
-      setSelected([]);
+      setAssignOkundu(true);
+    } catch (err) {
+      // (P160) KUSUR DUZELTILDI — sessiz `catch { setSelected([]) }`.
+      // Mevcut atama CEKILEMEDIGINDE liste BOS aciliyordu; ekranda hicbir
+      // uyari yoktu. Kaydet'e basan kullanici planin butun noktalarini
+      // SILIYORDU (`PUT` tam listeyi degistirir) ve devriye o gece bos
+      // kaliyordu. Artik sebep gorunuyor ve `assignOkundu` false oldugu
+      // surece KAYDETMEK KAPALI: bilmedigimiz bir listeyi ezemeyiz.
+      setAssignErr(err instanceof Error ? err.message : t("ortakVeriYuklenemedi"));
     }
   }
 
   async function saveAssign() {
-    if (!assignPlan) return;
+    if (!assignPlan || !assignOkundu) return;
     setAssignSaving(true);
     setAssignErr(null);
     try {
@@ -207,85 +229,154 @@ export default function PatrolPlansPage() {
     Number(form.periyot_dakika),
   );
 
+  const kolonlar: Kolon<PatrolPlan>[] = useMemo(
+    () => [
+      { id: "ad", baslik: t("ortakAd"), hucre: (p) => p.ad, gizlenebilir: false },
+      { id: "vardiya", baslik: t("devriyeVardiya"), hucre: (p) => shiftName(p.shift_id) },
+      {
+        id: "saat",
+        baslik: t("devriyeSaatPeriyot"),
+        hucre: (p) =>
+          `${p.baslangic_saat}–${p.bitis_saat} · ${t("devriyePeriyotN", {
+            n: p.periyot_dakika,
+          })}`,
+      },
+      {
+        id: "durum",
+        baslik: t("ortakDurum"),
+        hucre: (p) => (
+          <Rozet durum={p.aktif ? DURUM_OLUMLU : DURUM_NOTR}>
+            {p.aktif ? t("ortakAktif") : t("ortakPasif")}
+          </Rozet>
+        ),
+      },
+      {
+        id: "eylem",
+        baslik: "",
+        gizlenebilir: false,
+        hucre: (p) => (
+          <div className="flex justify-end gap-2">
+            <Dugme boy="kucuk" onClick={() => void openAssign(p)}>
+              {t("planNoktalar")}
+            </Dugme>
+            <Dugme boy="kucuk" onClick={() => openEdit(p)}>
+              {t("ortakDuzenle")}
+            </Dugme>
+            <Dugme boy="kucuk" tur="tehlike" onClick={() => void remove(p)}>
+              {t("ortakSil")}
+            </Dugme>
+          </div>
+        ),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [t, shifts],
+  );
+
   return (
     <div className="space-y-5">
-      <PageHeader
-        title={t("kabukDevriyePlanlari")}
-        action={
-          <button className={btnPrimary} onClick={openNew}>{t("planYeni")}</button>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+          {t("kabukDevriyePlanlari")}
+        </h1>
+        <Dugme tur="birincil" boy="kucuk" onClick={openNew}>
+          {t("planYeni")}
+        </Dugme>
+      </div>
+
+      {/* Vardiya listesi cekilemediyse SECIM EKSIK olur; sessiz kalmak
+          "bu planin vardiyasi yok" yanilgisini uretir. */}
+      <EksikVeriUyarisi mesaj={shiftsErr ? t("ortakSecenekYuklenemedi") : null} />
+
+      {/* PLAN FORMU — modalda. */}
+      <Modal
+        acik={open}
+        onKapat={() => setOpen(false)}
+        baslik={editingId ? t("planDuzenle") : t("planYeni")}
+        eylemler={
+          <>
+            <Dugme tur="sessiz" onClick={() => setOpen(false)} disabled={saving}>
+              {t("ortakIptal")}
+            </Dugme>
+            <Dugme tur="birincil" type="submit" form="plan-form" yukleniyor={saving}>
+              {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
+            </Dugme>
+          </>
         }
-      />
+      >
+        <form id="plan-form" onSubmit={save} className="space-y-4">
+          <AlanSarmal etiket={t("ortakAd")} zorunlu>
+            {(b) => (
+              <Alan
+                {...b}
+                value={form.ad}
+                onChange={(e) => setForm({ ...form, ad: e.target.value })}
+                required
+              />
+            )}
+          </AlanSarmal>
 
-      <EksikVeriUyarisi
-        mesaj={shiftsErr ? t("ortakSecenekYuklenemedi") : null}
-      />
+          <AlanSarmal etiket={t("devriyeVardiyaOpsiyonel")}>
+            {(b) => (
+              <Secim
+                {...b}
+                value={form.shift_id}
+                onChange={(e) => setForm({ ...form, shift_id: e.target.value })}
+              >
+                <option value="">{t("ortakSecimYok")}</option>
+                {(shifts?.items ?? []).map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.ad}
+                  </option>
+                ))}
+              </Secim>
+            )}
+          </AlanSarmal>
 
-      {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>}
-
-      {open && (
-        <motion.form
-          {...panelMotion}
-          onSubmit={save}
-          className={`space-y-4 ${panelCls}`}
-        >
-          <h2 className="font-medium">{editingId ? t("planDuzenle") : t("planYeni")}</h2>
-          <Field label={t("ortakAd")}>
-            <input
-              className={inputCls}
-              value={form.ad}
-              onChange={(e) => setForm({ ...form, ad: e.target.value })}
-              required
-            />
-          </Field>
-          <Field label={t("devriyeVardiyaOpsiyonel")}>
-            <select
-              className={inputCls}
-              value={form.shift_id}
-              onChange={(e) => setForm({ ...form, shift_id: e.target.value })}
-            >
-              <option value="">{t("ortakSecimYok")}</option>
-              {(shifts?.items ?? []).map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.ad}
-                </option>
-              ))}
-            </select>
-          </Field>
           <div className="grid grid-cols-3 gap-4">
-            <Field label={t("ortakBaslangic")} hint={t("ortakSaatBicimi")}>
-              <input
-                type="time"
-                className={inputCls}
-                value={form.baslangic_saat}
-                onChange={(e) => setForm({ ...form, baslangic_saat: e.target.value })}
-                required
-              />
-            </Field>
-            <Field label={t("ortakBitis")} hint={t("ortakSaatBicimi")}>
-              <input
-                type="time"
-                className={inputCls}
-                value={form.bitis_saat}
-                onChange={(e) => setForm({ ...form, bitis_saat: e.target.value })}
-                required
-              />
-            </Field>
-            <Field label={t("devriyePeriyotDk")}>
-              <input
-                type="number"
-                min={1}
-                className={inputCls}
-                value={form.periyot_dakika}
-                onChange={(e) => setForm({ ...form, periyot_dakika: e.target.value })}
-                required
-              />
-            </Field>
+            <AlanSarmal etiket={t("ortakBaslangic")} ipucu={t("ortakSaatBicimi")} zorunlu>
+              {(b) => (
+                <Alan
+                  {...b}
+                  type="time"
+                  value={form.baslangic_saat}
+                  onChange={(e) => setForm({ ...form, baslangic_saat: e.target.value })}
+                  required
+                />
+              )}
+            </AlanSarmal>
+            <AlanSarmal etiket={t("ortakBitis")} ipucu={t("ortakSaatBicimi")} zorunlu>
+              {(b) => (
+                <Alan
+                  {...b}
+                  type="time"
+                  value={form.bitis_saat}
+                  onChange={(e) => setForm({ ...form, bitis_saat: e.target.value })}
+                  required
+                />
+              )}
+            </AlanSarmal>
+            <AlanSarmal etiket={t("devriyePeriyotDk")} zorunlu>
+              {(b) => (
+                <Alan
+                  {...b}
+                  type="number"
+                  min={1}
+                  value={form.periyot_dakika}
+                  onChange={(e) => setForm({ ...form, periyot_dakika: e.target.value })}
+                  required
+                />
+              )}
+            </AlanSarmal>
           </div>
-          <p className="text-xs text-metin-muted">
+
+          {/* Kac tur gezilecegi ONIZLEME: periyot/aralik hatasi ancak
+              sayiya donusunce fark ediliyor ("6 saatte 1 tur" gibi). */}
+          <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
             {t("planOnizleme", { sayi: previewWindows })}
           </p>
-          <label className="flex items-center gap-2 text-sm">
+
+          <label className="flex items-center gap-2" style={{ fontSize: "var(--yz-fs-sm)" }}>
             <input
               type="checkbox"
               checked={form.aktif}
@@ -293,167 +384,164 @@ export default function PatrolPlansPage() {
             />
             {t("ortakAktif")}
           </label>
-          <ErrorBox message={formErr} />
-          <div className="flex gap-2">
-            <button type="submit" className={btnPrimary} disabled={saving}>
-              {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
-            </button>
-            <button type="button" className={btnGhost} onClick={() => setOpen(false)}>
-              {t("ortakIptal")}
-            </button>
-          </div>
-        </motion.form>
-      )}
 
-      {assignPlan && (
-        <motion.div {...panelMotion} className={`space-y-4 ${panelCls}`}>
-          <h2 className="font-medium">{t("planNoktalariBaslik", { ad: assignPlan.ad })}</h2>
-          <p className="text-xs text-metin-muted">
+          {formErr && (
+            <p
+              role="alert"
+              style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-danger-ink)" }}
+            >
+              {formErr}
+            </p>
+          )}
+        </form>
+      </Modal>
+
+      {/* NOKTA ATAMA — CEKMECEDE, modalda degil: sirali liste uzun olabilir
+          ve kullanici sirayi verirken plan tablosunu yaninda gormeli. */}
+      <Cekmece
+        acik={assignPlan != null}
+        onKapat={() => setAssignPlan(null)}
+        baslik={assignPlan ? t("planNoktalariBaslik", { ad: assignPlan.ad }) : ""}
+        eylemler={
+          <>
+            <Dugme tur="sessiz" onClick={() => setAssignPlan(null)}>
+              {t("ortakKapat")}
+            </Dugme>
+            <Dugme
+              tur="birincil"
+              onClick={() => void saveAssign()}
+              yukleniyor={assignSaving}
+              // MEVCUT LISTE OKUNAMADIYSA KAYDETME KAPALI: `PUT` tam
+              // listeyi degistirir, bos kaydetmek atamalari SILERDI.
+              disabled={!assignOkundu}
+            >
+              {assignSaving ? t("ortakKaydediliyor") : t("planAtamayiKaydet")}
+            </Dugme>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
             {t("planSiraliListe")}
           </p>
 
-          <ol className="space-y-2">
-            {selected.map((cid, i) => (
-              <li
-                key={cid}
-                className="flex items-center justify-between rounded-lg border kart-kenar px-3 py-2 text-sm"
-              >
-                <span>
-                  <span className="me-2 text-metin-muted">{i + 1}.</span>
-                  {cpName(cid)}
-                </span>
-                <span className="flex gap-1">
-                  <button className={btnGhost} onClick={() => move(i, -1)} disabled={i === 0}>
-                    {t("ortakYukari")}
-                  </button>
-                  <button
-                    className={btnGhost}
-                    onClick={() => move(i, 1)}
-                    disabled={i === selected.length - 1}
+          {assignErr && !assignOkundu ? (
+            <HataDurumu
+              mesaj={assignErr}
+              onTekrar={() => assignPlan && void openAssign(assignPlan)}
+            />
+          ) : (
+            <>
+              <ol className="space-y-2">
+                {selected.map((cid, i) => (
+                  <li
+                    key={cid}
+                    className="yz-raised flex items-center justify-between gap-2 px-3 py-2"
+                    style={{
+                      borderRadius: "var(--yz-r-md)",
+                      fontSize: "var(--yz-fs-sm)",
+                      color: "var(--yz-text)",
+                    }}
                   >
-                    {t("ortakAsagi")}
-                  </button>
-                  <button
-                    className={btnDanger}
-                    onClick={() => setSelected(selected.filter((x) => x !== cid))}
-                  >
-                    {t("kullaniciCikar")}
-                  </button>
-                </span>
-              </li>
-            ))}
-            {selected.length === 0 && (
-              <li className="rounded-lg border border-dashed border-slate-300 px-3 py-4 text-center text-metin-muted">
-                {t("planNoktaYok")}
-              </li>
-            )}
-          </ol>
-
-          <div className="flex items-end gap-2">
-            <div className="grow">
-              <Field label={t("devriyeNoktaEkle")}>
-                <select
-                  className={inputCls}
-                  value={addPick}
-                  onChange={(e) => setAddPick(e.target.value)}
-                >
-                  <option value="">{t("planSec")}</option>
-                  {available.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.ad} ({c.nfc_tag_uid})
-                    </option>
-                  ))}
-                </select>
-              </Field>
-            </div>
-            <button
-              className={btnGhost}
-              disabled={!addPick}
-              onClick={() => {
-                if (addPick) setSelected([...selected, addPick]);
-                setAddPick("");
-              }}
-            >
-              {t("ortakEkle")}
-            </button>
-          </div>
-
-          <ErrorBox message={assignErr} />
-          <div className="flex gap-2">
-            <button className={btnPrimary} onClick={saveAssign} disabled={assignSaving}>
-              {assignSaving ? t("ortakKaydediliyor") : t("planAtamayiKaydet")}
-            </button>
-            <button className={btnGhost} onClick={() => setAssignPlan(null)}>
-              {t("ortakKapat")}
-            </button>
-          </div>
-        </motion.div>
-      )}
-
-      <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
-        <div className="odak-ic overflow-x-auto" tabIndex={0}>
-          <Tablo>
-            <TabloBasligi>
-                <Th>{t("ortakAd")}</Th>
-                <Th>{t("devriyeVardiya")}</Th>
-                <Th>{t("devriyeSaatPeriyot")}</Th>
-                <Th>{t("ortakDurum")}</Th>
-                <Th />
-              </TabloBasligi>
-            <tbody>
-              {(data?.items ?? []).map((p) => (
-                <Tr key={p.id}>
-                  <Td>{p.ad}</Td>
-                  <Td className="text-metin-body">{shiftName(p.shift_id)}</Td>
-                  <Td className="text-metin-body">
-                    {p.baslangic_saat}–{p.bitis_saat} ·{" "}
-                    {t("devriyePeriyotN", { n: p.periyot_dakika })}
-                  </Td>
-                  <Td>
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                        p.aktif ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-metin-body"
-                      }`}
-                    >
-                      {p.aktif ? t("ortakAktif") : t("ortakPasif")}
+                    <span>
+                      <span className="me-2" style={{ color: "var(--yz-text-3)" }}>
+                        {i + 1}.
+                      </span>
+                      {cpName(cid)}
                     </span>
-                  </Td>
-                  <Td hizala="end">
-                    <div className="flex justify-end gap-2">
-                      <button className={btnGhost} onClick={() => openAssign(p)}>
-                        {t("planNoktalar")}
-                      </button>
-                      <button className={btnGhost} onClick={() => openEdit(p)}>
-                        {t("ortakDuzenle")}
-                      </button>
-                      <button className={btnDanger} onClick={() => remove(p)}>
-                        {t("ortakSil")}
-                      </button>
-                    </div>
-                  </Td>
-                </Tr>
-              ))}
-              {data && data.items.length === 0 && (
-                <tr>
-                  <Td colSpan={5}>
-                    <EmptyState title={t("devriyePlanYok")} description={t("planYokAlt")} />
-                  </Td>
-                </tr>
-              )}
-            </tbody>
-          </Tablo>
-        </div>
-      </div>
+                    <span className="flex gap-1">
+                      <Dugme boy="kucuk" onClick={() => move(i, -1)} disabled={i === 0}>
+                        {t("ortakYukari")}
+                      </Dugme>
+                      <Dugme
+                        boy="kucuk"
+                        onClick={() => move(i, 1)}
+                        disabled={i === selected.length - 1}
+                      >
+                        {t("ortakAsagi")}
+                      </Dugme>
+                      <Dugme
+                        boy="kucuk"
+                        tur="tehlike"
+                        onClick={() => setSelected(selected.filter((x) => x !== cid))}
+                      >
+                        {t("kullaniciCikar")}
+                      </Dugme>
+                    </span>
+                  </li>
+                ))}
+                {selected.length === 0 && (
+                  <li
+                    className="px-3 py-4 text-center"
+                    style={{
+                      borderRadius: "var(--yz-r-md)",
+                      border: "1px dashed var(--yz-border)",
+                      fontSize: "var(--yz-fs-sm)",
+                      color: "var(--yz-text-2)",
+                    }}
+                  >
+                    {t("planNoktaYok")}
+                  </li>
+                )}
+              </ol>
 
-      {data && (
-        <Pager
-          offset={offset}
-          limit={LIMIT}
-          total={data.meta.total}
-          onPrev={() => setOffset(Math.max(0, offset - LIMIT))}
-          onNext={() => setOffset(offset + LIMIT)}
-        />
-      )}
+              <div className="flex items-end gap-2">
+                <div className="grow">
+                  <AlanSarmal etiket={t("devriyeNoktaEkle")}>
+                    {(b) => (
+                      <Secim
+                        {...b}
+                        value={addPick}
+                        onChange={(e) => setAddPick(e.target.value)}
+                      >
+                        <option value="">{t("planSec")}</option>
+                        {available.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.ad} ({c.nfc_tag_uid})
+                          </option>
+                        ))}
+                      </Secim>
+                    )}
+                  </AlanSarmal>
+                </div>
+                <Dugme
+                  disabled={!addPick}
+                  onClick={() => {
+                    if (addPick) setSelected([...selected, addPick]);
+                    setAddPick("");
+                  }}
+                >
+                  {t("ortakEkle")}
+                </Dugme>
+              </div>
+
+              {assignErr && (
+                <p
+                  role="alert"
+                  style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-danger-ink)" }}
+                >
+                  {assignErr}
+                </p>
+              )}
+            </>
+          )}
+        </div>
+      </Cekmece>
+
+      <VeriTablosu<PatrolPlan>
+        kolonlar={kolonlar}
+        satirlar={data?.items ?? []}
+        satirId={(p) => p.id}
+        hata={error ? error.message : null}
+        onTekrar={() => void mutate()}
+        yukleniyor={isLoading && !data}
+        bosBaslik={t("devriyePlanYok")}
+        bosAciklama={t("planYokAlt")}
+        sunucuTarafli
+        toplam={data?.meta.total ?? 0}
+        durum={tabloDurumu}
+        onDurumDegisti={setTabloDurumu}
+      />
     </div>
   );
 }
