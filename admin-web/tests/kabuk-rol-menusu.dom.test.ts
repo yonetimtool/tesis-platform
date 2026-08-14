@@ -56,10 +56,22 @@ function tumBolumleriAc(): void {
   const dahaFazla = screen.queryAllByRole("button", { name: /daha fazla/i });
   for (const d of dahaFazla) fireEvent.click(d);
   // Kapali bolumler: `aria-expanded="false"` tasiyan her baslik.
+  //
+  // (P160) TARAMA `nav` ICINE DARALTILDI. Eskiden EKRANDAKI her
+  // `aria-expanded="false"` dugmesine tikliyordu; bildirim merkezi ust
+  // barra eklenince onun ACILIR dugmesi de bu kaliba uydu, panel acildi
+  // ve icindeki "Tumunu gor" baglantisi MENU SAYIMINA karisti — "sakine
+  // menu bos cizilir" testi hatali kirmizi dondu.
+  //
+  // Dongunun AMACI zaten "katli MENU BOLUMLERINI ac"; bir bildirim
+  // aciliri menu bolumu degildir. Kapsami daraltmak testi GEVSETMEZ,
+  // kendi tanimina sadik kilar — ve menu disi bir dugmenin sayimi
+  // kirletmesini yapisal olarak imkansizlastirir.
   let guvenlik = 0;
   for (;;) {
     const kapali = screen
-      .queryAllByRole("button")
+      .queryAllByRole("navigation")
+      .flatMap((n) => [...n.querySelectorAll<HTMLElement>("button")])
       .filter((b) => b.getAttribute("aria-expanded") === "false");
     if (kapali.length === 0 || guvenlik++ > 20) break;
     for (const b of kapali) fireEvent.click(b);

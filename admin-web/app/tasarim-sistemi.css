@@ -110,7 +110,20 @@
   /* Metalik yuzey gradyani — duz dolgu DEGIL, ust-alt ince fark. */
   --yz-metal-1: linear-gradient(180deg, #ffffff 0%, #f4f7fa 100%);
   --yz-metal-2: linear-gradient(180deg, #f7fafc 0%, #eaeff5 100%);
-  --yz-metal-accent: linear-gradient(180deg, #6f9bf2 0%, #4b7fe0 100%);
+  /* ACCENT DOLGUSU KOYULASTIRILDI — OLCULDU VE DUZELTILDI.
+     Ilk yazimda #6F9BF2 -> #4B7FE0 idi ve uzerindeki BEYAZ metin 3.88
+     ile AA'yi TUTMUYORDU (kodda "kontrast olculdu" yaziyordu ama
+     olculmemisti — kusur `yz-bilesen` token testi rozeti yakalayinca
+     ortaya cikti). Ton korunarak yalniz aciklik dusuruldu; en acik
+     durak (gradyanin ustu) 4.5'i tutuyor, alt durak zaten daha koyu. */
+  --yz-metal-accent: linear-gradient(180deg, #3170ec 0%, #3972dd 100%);
+  /* DOLGU UZERINDEKI METIN — accent/danger gibi RENKLI zeminlerde.
+     Token oldu ki bilesenler `#ffffff` yazmasin ve zemin degisince
+     tek yerden guncellensin. */
+  --yz-on-fill: #ffffff;
+  /* Rozet/etiket DOLGUSU (uzerinde beyaz metin). `--yz-danger-edge`
+     CIZGI icindir (3.0 esigi); dolgu METIN tasidigi icin 4.5 ister. */
+  --yz-danger-fill: #cf474a;
 
   color-scheme: light;
 }
@@ -168,7 +181,10 @@
 
   --yz-metal-1: linear-gradient(180deg, #3a434d 0%, #2f3841 100%);
   --yz-metal-2: linear-gradient(180deg, #424c57 0%, #363f49 100%);
-  --yz-metal-accent: linear-gradient(180deg, #7cb0e0 0%, #5590c6 100%);
+  /* Ayni olcum koyu temada da yapildi: 3.39 -> 4.51. */
+  --yz-metal-accent: linear-gradient(180deg, #2e7ac0 0%, #3c7ab3 100%);
+  --yz-on-fill: #ffffff;
+  --yz-danger-fill: #d04648;
 
   color-scheme: dark;
 }

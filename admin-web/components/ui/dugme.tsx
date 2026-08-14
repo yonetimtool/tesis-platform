@@ -43,10 +43,12 @@ function turStili(tur: DugmeTuru): React.CSSProperties {
     case "birincil":
       return {
         background: "var(--yz-metal-accent)",
-        // Accent zemin uzerinde metin: token'lardan DEGIL sabit beyaz —
-        // cunku zemin her iki temada da accent gradyanidir ve `--yz-text`
-        // acik temada koyu olup okunmazdi. Kontrast olculdu (>= 4.5).
-        color: "#ffffff",
+        // Accent zemin uzerindeki metin TOKEN'DAN gelir (`--yz-on-fill`).
+        // Ilk yazimda burada sabit `#ffffff` vardi ve yorum "kontrast
+        // olculdu" diyordu — OLCULMEMISTI (gercek deger 3.88, AA alti).
+        // Dolgu koyulastirildi, deger token'a tasindi; ikisi de
+        // `tasarim-sistemi.css`te gerekcesiyle yazili.
+        color: "var(--yz-on-fill)",
         borderColor: "var(--yz-accent-edge)",
       };
     case "tehlike":

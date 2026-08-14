@@ -140,6 +140,29 @@ describe("(P160) yeni token paleti — WCAG AA", () => {
         }
       });
 
+      // (P160) DOLGU UZERINDEKI METIN — olculmemis bir varsayimin
+      // yakalandigi yer. `--yz-metal-accent` gradyaninin ustunde beyaz
+      // metin 3.88 ile AA'yi TUTMUYORDU ve kodda "kontrast olculdu"
+      // yaziyordu. Dolgular koyulastirildi; bu test o degerin geri
+      // gelmesini engelliyor.
+      //
+      // GRADYANIN EN ACIK DURAGI olculur: metin en zor orada okunur.
+      it("dolgu uzerindeki metin AA (accent gradyani + rozet dolgusu)", () => {
+        const enAcikDurak = (grad: string) => {
+          const duraklar = grad.match(/#[0-9a-fA-F]{6}/g) ?? [];
+          expect(duraklar.length, "gradyanda durak yok").toBeGreaterThan(0);
+          return duraklar.reduce((a, b) => (parlaklik(a) >= parlaklik(b) ? a : b));
+        };
+        const metin = t("yz-on-fill");
+        for (const [ad, zemin] of [
+          ["metal-accent", enAcikDurak(t("yz-metal-accent"))],
+          ["danger-fill", t("yz-danger-fill")],
+        ] as const) {
+          const o = oran(metin, zemin);
+          expect(o, `--yz-on-fill / ${ad} = ${o.toFixed(2)}`).toBeGreaterThanOrEqual(4.5);
+        }
+      });
+
       it("kenarlik yuzeyden ayirt edilebilir (>=1.5)", () => {
         // Metalik hissin sarti: kenar GORUNMELI. Cok dusuk oran, kartin
         // zemine karismasi demek.
@@ -159,6 +182,7 @@ describe("(P160) yeni token paleti — WCAG AA", () => {
       "yz-accent-edge", "yz-success-edge", "yz-warning-edge", "yz-danger-edge",
       "yz-raised", "yz-raised-hover", "yz-sunken",
       "yz-metal-1", "yz-metal-2", "yz-metal-accent",
+      "yz-on-fill", "yz-danger-fill",
     ];
     for (const ad of gerekli) {
       expect(() => token(":root", ad), `acik: --${ad}`).not.toThrow();

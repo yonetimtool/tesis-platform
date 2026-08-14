@@ -74,11 +74,13 @@ function uiDosyalari(): { ad: string; govde: string }[] {
 
 describe("(P160) token disiplini", () => {
   it("bilesenlerde SABIT HEX RENK yok (belgelenmis istisna disinda)", () => {
-    // TEK ISTISNA: `dugme.tsx`teki `#ffffff` — accent gradyani uzerindeki
-    // metin. Token'dan gelemez cunku o zemin HER IKI temada da accent'tir
-    // ve `--yz-text` acik temada koyu olup okunmazdi. Gerekce dosyada
-    // yazili; kontrast olculdu.
-    const izinli = new Map([["dugme.tsx", ['"#ffffff"']]]);
+    // ISTISNA YOK — ve bu bilincli. Ilk yazimda `dugme.tsx`teki
+    // `#ffffff` muaf tutulmustu; sonra bildirim rozeti ayni sabiti
+    // isteyince anlasildi ki muafiyet COGALAN bir seydi. Deger
+    // `--yz-on-fill` token'ina tasindi ve muafiyet KALDIRILDI.
+    // (Ustelik o sirada dolgu kontrastinin AA'yi tutmadigi da ortaya
+    // cikti — muafiyet, olculmemis bir varsayimi saklamisti.)
+    const izinli = new Map<string, string[]>();
     for (const { ad, govde } of uiDosyalari()) {
       const hexler = [...govde.matchAll(/"#[0-9a-fA-F]{3,8}"/g)].map((m) => m[0]);
       const kalan = hexler.filter((h) => !(izinli.get(ad) ?? []).includes(h));

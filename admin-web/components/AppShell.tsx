@@ -9,6 +9,7 @@ import useSWR from "swr";
 import { DilSecici } from "@/components/DilSecici";
 import { GlobalArama } from "@/components/GlobalArama";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { BildirimMerkezi, KomutPaleti } from "@/components/ui";
 import { useT } from "@/lib/i18n/kullan";
 import { YonetioLogo } from "@/components/YonetioLogo";
 import { jsonFetcher } from "@/lib/fetcher";
@@ -670,6 +671,9 @@ export function AppShell({
         className="min-h-screen"
         style={{ background: "var(--yz-bg-app-grad)", color: "var(--yz-text)" }}
       >
+        {/* (P160) KOMUT PALETI — kabugun KOKUNDE, cunku Ctrl+K her
+            sayfada calismali. Kapaliyken hicbir sey cizmez. */}
+        <KomutPaleti />
         {/* (P132) ICERIGE ATLA — klavye kullanicisi 30+ menu baglantisini
             tek tek gecmek zorunda kalmasin. Gorunmez durur, ODAKLANINCA
             gorunur: fareyle gelen kullaniciyi rahatsiz etmez, klavyeyle
@@ -725,8 +729,13 @@ export function AppShell({
           </button>
           <YonetioLogo size={24} />
           {/* (P140.4) Dil secici SAG UST — eskiden burada yalnizca hizalama
-              icin bos bir `span` duruyordu. */}
-          <DilSecici />
+              icin bos bir `span` duruyordu.
+              (P160) Bildirim merkezi mobilde de gorunur: okunmamis sayisi
+              masaustune ozel bir bilgi degil. */}
+          <div className="flex items-center gap-2">
+            <BildirimMerkezi />
+            <DilSecici />
+          </div>
         </header>
 
         {/* Mobil cekmece + arka plan */}
@@ -780,7 +789,12 @@ export function AppShell({
                 arama yazmak, yetki kuralini her ekranda tekrar etmek ve
                 biri unutuldugunda SESSIZ bir sizinti birakmak olurdu. */}
             <GlobalArama />
-            <DilSecici />
+            {/* (P160) BILDIRIM MERKEZI — dil secicinin yaninda. Sayac
+                ve okundu isaretleme burada; tam liste `/notifications`. */}
+            <div className="flex shrink-0 items-center gap-2">
+              <BildirimMerkezi />
+              <DilSecici />
+            </div>
           </div>
           <main id="icerik" className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8 lg:pt-4">
             {children}

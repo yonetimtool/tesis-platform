@@ -46,12 +46,34 @@ describe("(P140.4) dil secici konumu", () => {
     // bir duzenlemede testi dusururdu; nitekim oyle oldu.
     expect(kod).toMatch(/hidden[^"]*justify-between[^"]*lg:flex/);
     // Dil secici seridin SON ogesi: arama ondan ONCE gelir.
-    expect(kod).toMatch(/<GlobalArama \/>[\s\S]{0,80}<DilSecici \/>/);
+    //
+    // (P160) SERIT UC OGEYE CIKTI (arama · bildirim merkezi · dil).
+    // Kilidin OLCTUGU ILKE degismedi — "dil secici SON" — ama karakter
+    // penceresi (80) araya giren bilesenle doldu. Pencere genisletmek
+    // yerine SIRA ACIKCA dogrulaniyor: bu, sayi ayarlamaktan daha
+    // saglam ve testin kendi cumlesini bire bir olcuyor.
+    const sira = ["<GlobalArama />", "<BildirimMerkezi />", "<DilSecici />"];
+    let imlec = -1;
+    for (const oge of sira) {
+      const yer = kod.indexOf(oge, imlec + 1);
+      expect(yer, `${oge} beklenen sirada degil`).toBeGreaterThan(imlec);
+      imlec = yer;
+    }
   });
 
   it("MOBIL ust cubukta duruyor", () => {
     // Eskiden orada yalnizca hizalama icin bos bir `span` vardi.
     const kod = kodSatirlari(KABUK);
-    expect(kod).toMatch(/YonetioLogo size=\{24\}[\s\S]{0,120}<DilSecici \/>/);
+    // (P160) Mobil cubukta da bildirim merkezi araya girdi; olculen sey
+    // yine SIRA: logo -> bildirim -> dil.
+    const mobilSira = ["YonetioLogo size={24}", "<BildirimMerkezi />", "<DilSecici />"];
+    let mobilImlec = -1;
+    for (const oge of mobilSira) {
+      const yer = kod.indexOf(oge, mobilImlec + 1);
+      expect(yer, `${oge} mobil cubukta beklenen sirada degil`).toBeGreaterThan(
+        mobilImlec,
+      );
+      mobilImlec = yer;
+    }
   });
 });
