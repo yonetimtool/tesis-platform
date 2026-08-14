@@ -308,7 +308,17 @@ describe("(P138) TABLO ILKELI — elle iskelet geri gelmesin", () => {
   // iskeleti bir kez yazip `tablo.tsx`in hucrelerini kullaniyor.
   // Muaf tutmasaydik kilit, tam da kendisini gereksiz kilan bilesenin
   // yazilmasini engellerdi.
-  const ILKELLER = ["components/tablo.tsx", "components/Liste.tsx"];
+  //
+  // (P160) `components/ui/veri-tablosu.tsx` EKLENDI — AYNI GEREKCE.
+  // Yeni tasarim dilinin `VeriTablosu`u da bir ILKELDIR: siralama,
+  // sayfalama, kolon gorunurlugu, satir secimi ve toplu islemi bir kez
+  // yazip tum sayfalara veriyor. Muaf tutmasaydik kilit, kendisini
+  // gereksiz kilan bileseni yasaklamis olurdu.
+  const ILKELLER = [
+    "components/tablo.tsx",
+    "components/Liste.tsx",
+    "components/ui/veri-tablosu.tsx",
+  ];
   const ilkelMi = (y: string) => ILKELLER.some((i) => y.endsWith(i));
 
   // Yorum satirlari da disarida: bu kilidin GEREKCESI de `<table>` yazmak

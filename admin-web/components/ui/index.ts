@@ -31,6 +31,15 @@ export {
 } from "./durumlar";
 export { Modal, OnayDiyalogu, type ModalProps } from "./modal";
 export {
+  VeriTablosu,
+  SAYFA_BOYLARI,
+  type Kolon,
+  type TabloDurumu,
+  type SayfaBoyu,
+  type SiraYonu,
+  type VeriTablosuProps,
+} from "./veri-tablosu";
+export {
   Alan,
   CokSatir,
   Secim,
