@@ -193,9 +193,12 @@ describe("(P160) NFC Noktalari — okutma durumu sutunu", () => {
     expect(within(pasif).queryByText("Bekliyor")).toBeNull();
   });
 
-  it("SAHNE bir HARITA OLMADIGINI yazar", async () => {
+  it("AKIS gorunumu sirasiz oldugunu yazar (cizgi yok)", async () => {
     sahtele();
     ciz(CheckpointsPage);
+    // (P160) Sayfa artik iki sekmeli: VARSAYILAN "Harita" (cografi),
+    // akis ise koordinati olmayan noktalari da tasiyan ikinci gorunum.
+    await userEvent.click(await screen.findByRole("tab", { name: "Akış" }));
     await waitFor(() =>
       expect(screen.getByText(/rotaya bağlı olmadığı için çizgi çizilmez/)).toBeInTheDocument(),
     );

@@ -226,7 +226,7 @@ function Bar({ value }: { value: number }) {
     <div
       aria-hidden="true"
       className="h-1.5 w-full overflow-hidden"
-      style={{ borderRadius: "var(--yz-r-sm)", background: "var(--yz-surface-sunken)" }}
+      style={{ borderRadius: "var(--yz-radius-sm)", background: "var(--yz-surface-sunken)" }}
     >
       <div
         className="h-full"

@@ -272,7 +272,7 @@ export default function BuildingEditorPage() {
       <div
         className="px-4 py-2"
         style={{
-          borderRadius: "var(--yz-r-md)",
+          borderRadius: "var(--yz-radius-btn)",
           border: "1px solid var(--yz-border)",
           background: "var(--yz-surface-2)",
           fontSize: "var(--yz-fs-xs)",

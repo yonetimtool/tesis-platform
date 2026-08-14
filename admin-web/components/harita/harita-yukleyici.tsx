@@ -15,12 +15,25 @@ import dynamic from "next/dynamic";
 
 import { Iskelet } from "../ui/durumlar";
 import type { PlanHaritasiProps } from "./plan-haritasi";
+import type { KonumHaritasiProps } from "./konum-haritasi";
 
 const Plan = dynamic(() => import("./plan-haritasi"), {
   ssr: false,
   loading: () => <Iskelet className="h-full w-full" />,
 });
 
+// IKINCI HARITA, AYNI DOSYA — 3D yukleyicisindeki karar. Iki ayri
+// yukleyici dosyasi, ayni `ssr:false` kuralini iki yerde tutmak olurdu.
+const Konum = dynamic(() => import("./konum-haritasi"), {
+  ssr: false,
+  loading: () => <Iskelet className="h-full w-full" />,
+});
+
 export function PlanHaritasiYukleyici(props: PlanHaritasiProps) {
   return <Plan {...props} />;
+}
+
+/** COGRAFI harita (OSM karolari) — bkz. `konum-haritasi.tsx` dosya basi. */
+export function KonumHaritasiYukleyici(props: KonumHaritasiProps) {
+  return <Konum {...props} />;
 }

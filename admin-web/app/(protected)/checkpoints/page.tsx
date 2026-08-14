@@ -6,7 +6,10 @@ import useSWR from "swr";
 import {
   Alan,
   AlanSarmal,
+  BosDurum,
   Dugme,
+  Kart,
+  Sekmeler,
   Modal,
   Rozet,
   VeriTablosu,
@@ -14,6 +17,7 @@ import {
   type TabloDurumu,
 } from "@/components/ui";
 import { RotaSahnesiYukleyici } from "@/components/3d/sahne-yukleyici";
+import { KonumHaritasiYukleyici } from "@/components/harita/harita-yukleyici";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
@@ -47,6 +51,17 @@ const DURUM_ANAHTARI = {
   atlandi: "rotaDurumAtlandi",
   bekliyor: "rotaDurumBekliyor",
 } as const;
+
+/** Nokta durumu -> harita isaretci tonu (anlamli grafik esigi 3.0). */
+const HARITA_TONU = {
+  okutuldu: "var(--yz-success-edge)",
+  gecikti: "var(--yz-warning-edge)",
+  atlandi: "var(--yz-danger-edge)",
+  bekliyor: "var(--yz-text-3)",
+} as const;
+
+const GORUNUM_HARITA = "harita" as const;
+const GORUNUM_AKIS = "akis" as const;
 
 interface FormState {
   ad: string;
@@ -84,6 +99,7 @@ export default function CheckpointsPage() {
   const { data: okutmalar } = useSWR<OkutmaRaporu>("/api/scans", jsonFetcher);
   const { data: pano } = useSWR<DashboardLive>("/api/dashboard/live", jsonFetcher);
 
+  const [gorunum, setGorunum] = useState<string>(GORUNUM_HARITA);
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY);
@@ -177,6 +193,33 @@ export default function CheckpointsPage() {
         })),
     [data, okutulanIdler, alarmlar],
   );
+
+  /**
+   * HARITANIN NOKTALARI — YALNIZ koordinati OLANLAR.
+   *
+   * `gps_lat/gps_lng` opsiyoneldir. Koordinati olmayan noktayi haritaya
+   * bir yere koymak (site merkezine, listenin ortasina...) onu OLMADIGI
+   * YERDE gostermekti; girilmeyen sayilir ve sayisi ekranda yazilir.
+   */
+  const konumNoktalari = useMemo(
+    () =>
+      (data?.items ?? [])
+        .filter((c) => c.aktif && c.gps_lat != null && c.gps_lng != null)
+        .map((c) => {
+          const d = noktaDurumu(c.id, { okutulanIdler, alarmGruplari: [] }, alarmlar);
+          return {
+            id: c.id,
+            ad: c.ad,
+            lat: Number(c.gps_lat),
+            lon: Number(c.gps_lng),
+            ton: HARITA_TONU[d],
+            ipucu: `${c.ad} · ${t(DURUM_ANAHTARI[d])}`,
+          };
+        }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [data, okutulanIdler, alarmlar, t],
+  );
+  const koordinatsiz = sahneNoktalari.length - konumNoktalari.length;
 
   const kolonlar: Kolon<Checkpoint>[] = useMemo(
     () => [
@@ -335,19 +378,61 @@ export default function CheckpointsPage() {
         </form>
       </Modal>
 
-      {/* NOKTA DURUMU SAHNESI — CIZGI YOK. Bu sayfadaki noktalar bir
-          plana bagli DEGIL; aralarinda bir sira yok ve olmayan bir
-          devriye yolunu cizmek kullaniciyi yanlis yonlendirirdi. */}
+      {/* SPATIAL GORUNUMLER — iki sekme, ikisi de AYNI durumu tasiyor.
+          Ayrimlari NE IDDIA ETTIKLERI:
+            * HARITA  gercek koordinati OLAN noktalari cizer (cografi),
+            * AKIS    TUM aktif noktalari cizer (koordinatsiz olanlar da),
+                      ama aralarinda sira YOK ve cizgi cizilmez.
+          Ikisi de tabloyu ikame etmez: durum her satirda METIN olarak
+          zaten yaziyor. */}
       {sahneNoktalari.length > 0 && (
-        <div className="space-y-1">
-          <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
-            {t("rotaSahneNoktaBaslik")}
-          </h2>
-          <RotaSahnesiYukleyici noktalar={sahneNoktalari} rotaCizgisi={false} />
-          <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-3)" }}>
-            {t("rotaSahneNotSirasiz")}
-          </p>
-        </div>
+        <Sekmeler
+          aktifId={gorunum}
+          onDegis={setGorunum}
+          sekmeler={[
+            {
+              id: GORUNUM_HARITA,
+              baslik: t("haritaGorunumKonum"),
+              icerik:
+                konumNoktalari.length > 0 ? (
+                  <div className="space-y-1">
+                    <KonumHaritasiYukleyici noktalar={konumNoktalari} />
+                    {/* SESSIZ EKSIK YOK: haritada olmayan nokta sayilir. */}
+                    {koordinatsiz > 0 && (
+                      <p
+                        role="status"
+                        style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-warning-ink)" }}
+                      >
+                        {t("haritaKoordinatsizNokta", { sayi: koordinatsiz })}
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  // HICBIRI KOORDINATSIZSA BOS DUNYA HARITASI CIZILMEZ:
+                  // ekrani doldurur ama hicbir sey soylemez. Yerine ne
+                  // yapilacagi yazilir.
+                  <Kart>
+                    <BosDurum
+                      baslik={t("haritaKoordinatYok")}
+                      aciklama={t("haritaKoordinatYokAlt")}
+                    />
+                  </Kart>
+                ),
+            },
+            {
+              id: GORUNUM_AKIS,
+              baslik: t("haritaGorunumAkis"),
+              icerik: (
+                <div className="space-y-1">
+                  <RotaSahnesiYukleyici noktalar={sahneNoktalari} rotaCizgisi={false} />
+                  <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-3)" }}>
+                    {t("rotaSahneNotSirasiz")}
+                  </p>
+                </div>
+              ),
+            },
+          ]}
+        />
       )}
 
       <VeriTablosu<Checkpoint>

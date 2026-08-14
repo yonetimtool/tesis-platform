@@ -514,7 +514,7 @@ export default function PatrolPlansPage() {
                     key={cid}
                     className="yz-raised flex items-center justify-between gap-2 px-3 py-2"
                     style={{
-                      borderRadius: "var(--yz-r-md)",
+                      borderRadius: "var(--yz-radius-btn)",
                       fontSize: "var(--yz-fs-sm)",
                       color: "var(--yz-text)",
                     }}
@@ -553,7 +553,7 @@ export default function PatrolPlansPage() {
                   <li
                     className="px-3 py-4 text-center"
                     style={{
-                      borderRadius: "var(--yz-r-md)",
+                      borderRadius: "var(--yz-radius-btn)",
                       border: "1px dashed var(--yz-border)",
                       fontSize: "var(--yz-fs-sm)",
                       color: "var(--yz-text-2)",

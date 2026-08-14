@@ -119,7 +119,7 @@ export default function AnketlerPage() {
               key={a.id}
               className="p-3"
               style={{
-                borderRadius: "var(--yz-r-md)",
+                borderRadius: "var(--yz-radius-btn)",
                 border: "1px solid var(--yz-border)",
                 fontSize: "var(--yz-fs-sm)",
                 color: "var(--yz-text)",

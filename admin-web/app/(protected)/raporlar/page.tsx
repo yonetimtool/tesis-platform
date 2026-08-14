@@ -226,7 +226,7 @@ export default function RaporlarPage() {
                 secili?.kod === r.kod ? "yz-raised" : "yz-lift",
               ].join(" ")}
               style={{
-                borderRadius: "var(--yz-r-md)",
+                borderRadius: "var(--yz-radius-btn)",
                 border:
                   secili?.kod === r.kod
                     ? "var(--yz-border-w) solid var(--yz-accent)"

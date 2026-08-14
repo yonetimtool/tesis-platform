@@ -359,3 +359,58 @@ describe("(P138) TABLO ILKELI — elle iskelet geri gelmesin", () => {
     expect(SAYFALAR.some(([, s]) => s.includes("TabloKart"))).toBe(true);
   });
 });
+
+/* ==================================================================== */
+
+describe("(P160) TANIMSIZ TOKEN kullanilamaz", () => {
+  /** Butun `.tsx` kaynaklari (app + components). */
+  function tumTsx(): [string, string][] {
+    const cikti: [string, string][] = [];
+    const yigin = [resolve(KOK, "admin-web/app"), resolve(KOK, "admin-web/components")];
+    while (yigin.length) {
+      const d = yigin.pop()!;
+      for (const ad of readdirSync(d)) {
+        const yol = join(d, ad);
+        if (statSync(yol).isDirectory()) yigin.push(yol);
+        else if (ad.endsWith(".tsx")) cikti.push([yol, readFileSync(yol, "utf8")]);
+      }
+    }
+    return cikti;
+  }
+
+  /**
+   * NEDEN BU KILIT VAR — OLCULMUS BIR KUSURDAN.
+   *
+   * Uc ayri yerde `var(--yz-border-strong)` yaziliyordu ama o token
+   * TANIMLI DEGILDI. CSS'te tanimsiz degisken KURALI GECERSIZ KILAR:
+   * `border-color: var(--yok)` yazan bir satir sessizce dusuyor ve
+   * ozellik `currentColor`a (yani metin rengine) kaliyordu. Yani finans
+   * toplam satirinin ayraci ile harita isaretcisinin rengi, kimsenin
+   * secmedigi bir degere dusmustu — ve hicbir test bunu gormuyordu.
+   *
+   * Yazim hatasi da ayni sinif: `--yz-danger-ink` yerine `--yz-danger-ınk`
+   * yazmak, ekranda hicbir uyari uretmeden rengi kaybettirir.
+   */
+  it("kodda gecen her `--yz-*` degiskeni tasarim sisteminde TANIMLI", () => {
+    const css = readFileSync(resolve(KOK, "admin-web/app/tasarim-sistemi.css"), "utf8");
+    const tanimli = new Set(
+      [...css.matchAll(/^\s*(--yz-[a-z0-9-]+)\s*:/gm)].map((m) => m[1]),
+    );
+    // P136 dersi: yokluk iddialari bos kume uzerinde her zaman dogrudur.
+    expect(tanimli.size).toBeGreaterThan(30);
+
+    // Tum `.tsx` kaynaklari + `globals.css` taranir.
+    const eksik = new Set<string>();
+    const kaynaklar: [string, string][] = [
+      ...tumTsx(),
+      [resolve(KOK, "admin-web/app/globals.css"), CSS],
+    ];
+    for (const [yol, kaynak] of kaynaklar) {
+      for (const m of kaynak.matchAll(/var\(\s*(--yz-[a-z0-9-]+)/g)) {
+        if (!tanimli.has(m[1])) eksik.add(`${yol.replace(KOK, "")}: ${m[1]}`);
+      }
+    }
+    expect(kaynaklar.length).toBeGreaterThan(40);
+    expect([...eksik], "tanimsiz tasarim degiskeni").toEqual([]);
+  });
+});

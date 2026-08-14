@@ -81,7 +81,7 @@ function UnitCell({
         selected ? "" : "yz-lift"
       }`}
       style={{
-        borderRadius: "var(--yz-r-md)",
+        borderRadius: "var(--yz-radius-btn)",
         // Secili hucre KALIN kenar: renk zaten yogunlugu tasiyor, kalinlik
         // secimi tasir — ikisi ayri kanal.
         border: `${selected ? KENAR_SECILI : KENAR_NORMAL} solid ${ton}`,
@@ -103,7 +103,7 @@ function Legend() {
     <span className="flex items-center gap-1.5">
       <span
         className="inline-block h-3.5 w-3.5"
-        style={{ borderRadius: "var(--yz-r-sm)", background: renkTonu(renk) }}
+        style={{ borderRadius: "var(--yz-radius-sm)", background: renkTonu(renk) }}
       />
       <span style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>{label}</span>
     </span>
@@ -136,7 +136,7 @@ function DetailPanel({ unit }: { unit: BuildingMapUnit }) {
       <div className="flex items-center gap-2">
         <span
           className="inline-block h-4 w-4"
-          style={{ borderRadius: "var(--yz-r-sm)", background: ton }}
+          style={{ borderRadius: "var(--yz-radius-sm)", background: ton }}
         />
         <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
           {t("haritaDaireNo", { no: unit.unit_no })}
@@ -172,7 +172,7 @@ function DetailPanel({ unit }: { unit: BuildingMapUnit }) {
             key={it.id}
             className="px-3 py-2"
             style={{
-              borderRadius: "var(--yz-r-sm)",
+              borderRadius: "var(--yz-radius-sm)",
               border: "1px solid var(--yz-border)",
               fontSize: "var(--yz-fs-sm)",
               color: "var(--yz-text)",

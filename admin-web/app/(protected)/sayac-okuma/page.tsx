@@ -222,7 +222,7 @@ export default function SayacOkumaPage() {
             aria-current={i === adim ? ADIM : undefined}
             className={i === adim ? "yz-raised" : ""}
             style={{
-              borderRadius: "var(--yz-r-md)",
+              borderRadius: "var(--yz-radius-btn)",
               padding: "0.375rem 0.75rem",
               fontSize: "var(--yz-fs-sm)",
               border: i === adim ? "none" : "1px solid var(--yz-border)",

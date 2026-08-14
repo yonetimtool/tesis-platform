@@ -219,7 +219,7 @@ export default function AnnouncementsPage() {
                 <div
                   className="overflow-hidden"
                   style={{
-                    borderRadius: "var(--yz-r-md)",
+                    borderRadius: "var(--yz-radius-btn)",
                     border: "1px solid var(--yz-border)",
                   }}
                 >
@@ -289,7 +289,7 @@ export default function AnnouncementsPage() {
                     <div
                       className="overflow-hidden"
                       style={{
-                        borderRadius: "var(--yz-r-md)",
+                        borderRadius: "var(--yz-radius-btn)",
                         border: "1px solid var(--yz-border)",
                       }}
                     >

@@ -18,6 +18,7 @@ import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import CheckpointsPage from "@/app/(protected)/checkpoints/page";
 import SchematicPage from "@/app/(protected)/schematic/page";
 
 import { ciz } from "./yardimci";
@@ -173,5 +174,89 @@ describe("(P160) Yerlesimsiz daireler SEMA gorunumunde ERISILIR KALIR", () => {
     // Gorunum degistirmek SECIMI kaybetmez.
     await userEvent.click(screen.getByRole("tab", { name: "Plan haritası" }));
     expect(screen.getByText(/A-1 dairesi|Daire A-1/i)).toBeInTheDocument();
+  });
+});
+
+/* ==================================================================== */
+/* NFC NOKTALARI — COGRAFI HARITA (public OSM karolari)                 */
+/* ==================================================================== */
+
+describe("(P160) NFC noktalari cografi haritasi", () => {
+  const NOKTALAR = {
+    meta: { limit: 25, offset: 0, total: 3 },
+    items: [
+      // Koordinati OLAN nokta -> haritada.
+      { id: "c1", ad: "A blok giris", nfc_tag_uid: "01", gps_lat: 41.0082, gps_lng: 28.9784, aktif: true },
+      // Koordinati OLMAYAN aktif nokta -> haritada DEGIL, akista VAR.
+      { id: "c2", ad: "Otopark", nfc_tag_uid: "02", gps_lat: null, gps_lng: null, aktif: true },
+      // PASIF nokta -> hicbir yerde durum iddia edilmez.
+      { id: "c3", ad: "Kapali nokta", nfc_tag_uid: "03", gps_lat: 41.01, gps_lng: 28.98, aktif: false },
+    ],
+  };
+
+  function noktaSahtele(items = NOKTALAR) {
+    globalThis.fetch = (async (girdi: RequestInfo | URL) => {
+      const url = String(girdi);
+      const yanit = (govde: unknown) =>
+        ({ ok: true, status: 200, json: async () => govde }) as Response;
+      if (url.includes("/api/scans")) {
+        return yanit({ tarih: "2026-08-14", konumsuz_sayisi: 0, items: [] });
+      }
+      if (url.includes("/api/dashboard/live")) {
+        return yanit({ generated_at: "x", aktif_turlar: [], alarm_gruplari: [] });
+      }
+      return yanit(items);
+    }) as typeof fetch;
+  }
+
+  it("HARITA varsayilan gorunum ve AKIS sekmesi de var", async () => {
+    noktaSahtele();
+    ciz(CheckpointsPage);
+    const harita = await screen.findByRole("tab", { name: "Harita" });
+    expect(harita).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: "Akış" })).toBeInTheDocument();
+  });
+
+  it("KOORDINATSIZ nokta sessiz gecilmez — sayilir", async () => {
+    noktaSahtele();
+    ciz(CheckpointsPage);
+    // `c2` aktif ama koordinati yok: haritada olamaz, sayilir.
+    await waitFor(() =>
+      expect(screen.getByText(/1 noktanın koordinatı girilmediği/)).toBeInTheDocument(),
+    );
+  });
+
+  it("KOORDINATSIZ nokta AKIS gorunumunde ve TABLODA kaybolmaz", async () => {
+    noktaSahtele();
+    ciz(CheckpointsPage);
+    await waitFor(() => expect(screen.getByText("Otopark")).toBeInTheDocument());
+    await userEvent.click(screen.getByRole("tab", { name: "Akış" }));
+    // Akis notu: sira yok, cizgi yok.
+    expect(screen.getByText(/çizgi çizilmez/)).toBeInTheDocument();
+  });
+
+  it("HICBIRINDE KOORDINAT YOKSA bos dunya haritasi CIZILMEZ", async () => {
+    noktaSahtele({
+      meta: { limit: 25, offset: 0, total: 1 },
+      items: [
+        { id: "c9", ad: "Tek nokta", nfc_tag_uid: "09", gps_lat: null, gps_lng: null, aktif: true },
+      ],
+    });
+    ciz(CheckpointsPage);
+    // Ekrani dolduran ama hicbir sey soylemeyen bir harita yerine, NE
+    // YAPILACAGINI soyleyen bir bos durum.
+    await waitFor(() =>
+      expect(screen.getByText("Hiçbir noktanın koordinatı girilmemiş")).toBeInTheDocument(),
+    );
+    expect(screen.getByText(/GPS enlem\/boylam girin/)).toBeInTheDocument();
+  });
+
+  it("PASIF nokta koordinati olsa da haritaya GIRMEZ", async () => {
+    noktaSahtele();
+    ciz(CheckpointsPage);
+    await waitFor(() => expect(screen.getByText("Kapali nokta")).toBeInTheDocument());
+    // `c3` pasif: okutulmasi beklenmiyor, haritada durum iddia edilmez.
+    // Koordinatsiz sayaci yalniz `c2`yi sayar (1), `c3`u DEGIL.
+    expect(screen.getByText(/1 noktanın koordinatı girilmediği/)).toBeInTheDocument();
   });
 });

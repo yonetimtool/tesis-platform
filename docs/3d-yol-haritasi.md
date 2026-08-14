@@ -166,13 +166,47 @@ pakete **girmedi**. Paylaşılan paket 87,9 → **88,3 kB** (+0,4); artışın
 kaynağı Leaflet değil (shared parçalarda `leaflet`/`MapContainer` izi yok)
 — kesin kaynağı ayrıştırılmadı, dürüstçe not düşülüyor.
 
-### Coğrafi harita ne zaman anlamlı olur
+### Coğrafi harita — NFC noktaları için YAPILDI
 
-Koordinat taşıyan veri **var**: NFC noktaları (`gps_lat/gps_lng`) ve
-okutmalar (`scan_event` + `konum_durumu`). *"Bu okutma noktadan uzakta
-yapılmış"* sorusu gerçekten coğrafidir ve bir OSM haritası orada iş görür.
-**O zaman karo sunucusu kararı geri gelir** ve Kerem'e sorulur. Bu turda
-yapılmadı: brief'in istediği "şikayet haritası" değil.
+Koordinat taşıyan veri **var**: NFC noktaları (`gps_lat/gps_lng`).
+*"Bu nokta binanın arkasında mı, bahçede mi"* sorusu gerçekten coğrafidir
+ve bir plan şeması onu yanıtlayamaz.
+
+**Karo sunucusu: public OSM — Kerem'in kararı.** Bu seçimin iki
+yükümlülüğü kodda karşılanıyor:
+
+1. **Attribution zorunlu.** `© OpenStreetMap katkıda bulunanlar` ibaresi
+   haritada görünür (ODbL + karo kullanım politikası); metin sözlükten
+   gelir, yedi dilde.
+2. **Karo sunucusu değiştirilebilir.** OSM'nin public karoları bir
+   *nezaket* hizmetidir; yoğun/toplu kullanım politikaya aykırı. Panel
+   kullanımı düşük hacimli (yalnız yönetici) ama kendi sunucumuza geçiş
+   tek satırlık bir ayar olsun diye `NEXT_PUBLIC_KARO_URL` baştan bağlandı.
+
+`/checkpoints` iki sekmeli oldu:
+
+| Sekme | Ne çizer | Ne iddia eder |
+|---|---|---|
+| **Harita** (varsayılan) | koordinatı **olan** aktif noktalar | gerçek coğrafi konum |
+| **Akış** | **tüm** aktif noktalar | sıra yok, çizgi yok — yalnız durum |
+
+**Sessiz eksik yok:** koordinatı girilmemiş noktalar haritada yer alamaz;
+sayıları ekranda yazılır ve Akış görünümünde + tabloda dururlar. Hiçbir
+noktada koordinat yoksa **boş dünya haritası çizilmez** — ne yapılacağını
+söyleyen bir boş durum çıkar.
+
+**İşaretçi `CircleMarker`:** Leaflet'in varsayılan işaretçisi PNG'ye
+bağlıdır ve paketleyici altında yolu bozulur (klasik `marker-icon.png`
+404'ü). Vektör işaretçi dosya istemez; **beyaz hale + renkli dolgu**
+kullanılıyor çünkü karo görüntüsü keyfîdir ve bir rengin karo üzerindeki
+kontrastı önceden ölçülemez — durum ayrıca ipucunda **metin** olarak yazar.
+
+### Sıradaki coğrafi katman (yapılmadı)
+
+`scan_event` de koordinat + `konum_durumu` taşıyor. *"Bu okutma noktadan
+uzakta yapılmış"* sorusu aynı harita üzerinde ikinci bir katmanla
+yanıtlanabilir. Bu turda **kapsam dışı** bırakıldı: istenen NFC
+noktalarının haritasıydı.
 
 ## 6. PERFORMANS BÜTÇESİ (her yeni sahne bunu tutmalı)
 

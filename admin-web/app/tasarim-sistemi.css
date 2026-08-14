@@ -46,6 +46,10 @@
   --yz-surface-2: #f2f5f8;
   --yz-surface-sunken: #edf1f5;
   --yz-border: #e1e7ed;
+  /* GUCLU KENAR — yapisal vurgu icin (toplam satiri ayraci gibi).
+     Normal kenardan gorunur sekilde koyu; ANLAM TASIMAZ (yanindaki
+     "Toplam" kelimesi tasir), o yuzden 3.0 esigi aranmadi. */
+  --yz-border-strong: #b4c0cc;
   /* Metalik hissin kaynagi: ust kenar parlamasi. Renk DEGIL, ISIK. */
   --yz-border-shine: #ffffff;
 
@@ -139,6 +143,7 @@
   --yz-surface-2: #3b444e;
   --yz-surface-sunken: #262e36;
   --yz-border: #4a555f;
+  --yz-border-strong: #7a8794;
   --yz-border-shine: #6b7885;
 
   --yz-text: #e8edf2;
@@ -229,6 +234,10 @@
   --yz-space-12: 48px;
 
   /* --- RADIUS (brief: olculu) ------------------------------------------ */
+  /* Kucuk yaricap — liste ogesi, rozet kutusu, ic kutucuk. Olcek bu
+     adimi tasimiyordu ve tasima sirasinda uydurma bir `--yz-r-sm` adi
+     turetilmisti; ad TEK AILEDE toplandi. */
+  --yz-radius-sm: 6px;
   --yz-radius-card: 12px;
   --yz-radius-btn: 8px;
   --yz-radius-input: 8px;
