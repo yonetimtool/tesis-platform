@@ -178,9 +178,17 @@ describe("(P160) Kpi", () => {
     vi.unstubAllGlobals();
   });
 
-  it("birim sayinin yanina yazilir ve sr metnine de girer", () => {
-    ciz(createElement(Kpi, { deger: 87, etiket: "Tahsilat", birim: "%" }));
-    expect(screen.getByText("Tahsilat: 87%")).toBeInTheDocument();
+  it("BICIMLENDIRICI hem gorsel hem sr metnine uygulanir", () => {
+    // Birim YERI DILE BAGLI oldugu icin bilesen bicimlendirmez; cagiran
+    // verir. Turkce'de yuzde ONDE: "%87".
+    ciz(
+      createElement(Kpi, {
+        deger: 87,
+        etiket: "Tahsilat",
+        bicimle: (n: number) => `%${n}`,
+      }),
+    );
+    expect(screen.getByText("Tahsilat: %87")).toBeInTheDocument();
   });
 });
 

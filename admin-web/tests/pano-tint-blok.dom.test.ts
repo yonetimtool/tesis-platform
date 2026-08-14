@@ -1,16 +1,20 @@
 // @vitest-environment jsdom
-// (P133.2) TINT BLOK DILININ SERT SINIRI.
+// (P160) PANO OLCU SINIRI — DIL DEGISTI, KURAL KALDI.
 //
-// Onaydan birebir: "ekran basina en cok 1 kahraman + 4 ikincil tint blok.
-// Fazlasi notr yuzey kullanir. Renk SINYAL kalmali; alti tintli ekran
-// gurultudur ve bu sinir yonun calismasinin TEK sebebidir."
+// P133.2'nin kurali soyleydi: "ekran basina en cok 1 kahraman + 4 ikincil
+// TINT BLOK. Renk SINYAL kalmali; alti tintli ekran gurultudur."
 //
-// NEDEN TEST: bu tur sinirlar yorumda yasar ve alti ay sonra "bir blok
-// daha ekleyelim" ile sessizce asilir. O an hicbir sey dusmez, yalnizca
-// tasarim geri gider. Burasi sayimi yapar.
+// P160 brief'i tint blok dilini ACIKCA TERK ETTI ("renkli dolgu bloklar
+// yerine metalik yuzeyler; renk yalnizca durum sinyali olarak kalacak").
+// Ikincil bloklar artik METALIK KPI HALKASI.
+//
+// BU DOSYA SILINMEDI ve bu bilincli: kilidin KORUDUGU SEY dil degil
+// OLCUDUR — "bir ekranda en cok dort ikincil gosterge". O kural yeni
+// dilde de gecerli ve ayni sekilde sessizce asilabilir. Testler diline
+// gore degil, KORUDUKLARI KURALA gore yasar.
 //
 // NE OLCULMEZ: renklerin GUZEL olup olmadigi. Olculen sey SAYI ve
-// yapisal kurallar (kenarlik yok, dogru yaricap, ikon dekoratif).
+// erisilebilirlik sozlesmesi.
 import { screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -73,86 +77,46 @@ function tintBloklar(kok: HTMLElement): Element[] {
 afterEach(() => vi.restoreAllMocks());
 
 describe("(P133.2) SERT SINIR — 1 kahraman + 4 ikincil", () => {
-  it("tint blok sayisi 5'i ASMAZ", async () => {
+  it("IKINCIL GOSTERGE (KPI halkasi) EN COK 4", async () => {
     fetchTaklidi();
-    const { container } = ciz(DashboardPage);
-    await screen.findAllByText("Gece turu");
-    const bloklar = tintBloklar(container);
-    expect(bloklar.length, "tint blok sayisi").toBeLessThanOrEqual(5);
-    // Ve gercekten bloklar VAR (secici bosa dusup testi anlamsiz
-    // kilmasin — bu dosyanin en olasi sessiz bozulma bicimi budur).
-    expect(bloklar.length).toBeGreaterThanOrEqual(4);
+    ciz(DashboardPage);
+    await waitFor(() => expect(screen.getByText("Geciken okutma")).toBeInTheDocument());
+    // KPI halkalari `sr-only` metinlerinden sayilir: "<etiket>: <deger>".
+    // Gorsel secici yerine ERISILEBILIR AD kullanmak, hem sayimi hem
+    // erisilebilirligi ayni anda olcer.
+    const halkalar = screen.getAllByText(/^[^:]+: \d+%?$/);
+    expect(halkalar.length).toBeLessThanOrEqual(4);
+    expect(halkalar.length).toBeGreaterThanOrEqual(3);
   });
 
-  it("TAM OLARAK BIR kahraman blok (20px yaricap)", async () => {
-    fetchTaklidi();
-    const { container } = ciz(DashboardPage);
-    await screen.findAllByText("Gece turu");
-    const kahraman = tintBloklar(container).filter((el) =>
-      (el.getAttribute("class") ?? "").includes("rounded-blok"),
-    );
-    expect(kahraman).toHaveLength(1);
-  });
-
-  it("IKINCIL bloklar 16px yaricapli ve EN COK 4", async () => {
-    fetchTaklidi();
-    const { container } = ciz(DashboardPage);
-    await screen.findAllByText("Gece turu");
-    const ikincil = tintBloklar(container).filter((el) =>
-      (el.getAttribute("class") ?? "").includes("rounded-kart"),
-    );
-    expect(ikincil.length).toBeLessThanOrEqual(4);
-    expect(ikincil.length).toBeGreaterThanOrEqual(3);
-  });
-
-  it("MALI blok dususe de sinir korunur (3 ikincil)", async () => {
+  it("MALI HALKA dususe de sinir korunur (3 ikincil)", async () => {
+    // Tahsilat `null` (guvenlik rolu): halka HIC cizilmez.
     fetchTaklidi(null);
-    const { container } = ciz(DashboardPage);
-    await screen.findAllByText("Gece turu");
-    const ikincil = tintBloklar(container).filter((el) =>
-      (el.getAttribute("class") ?? "").includes("rounded-kart"),
-    );
-    expect(ikincil).toHaveLength(3);
-  });
-});
-
-describe("(P133.2) blok YAPISI", () => {
-  it("bloklarda KENARLIK YOK (kart degil, dolu tint)", async () => {
-    fetchTaklidi();
-    const { container } = ciz(DashboardPage);
-    await screen.findAllByText("Gece turu");
-    for (const el of tintBloklar(container)) {
-      const c = el.getAttribute("class") ?? "";
-      expect(c, "tint blok kenarlik tasiyor").not.toMatch(/\bborder\b|kart-kenar/);
-    }
+    ciz(DashboardPage);
+    await waitFor(() => expect(screen.getByText("Geciken okutma")).toBeInTheDocument());
+    const halkalar = screen.getAllByText(/^[^:]+: \d+%?$/);
+    expect(halkalar.length).toBe(3);
+    expect(screen.queryByText(/Tahsilat/)).toBeNull();
   });
 
-  it("blok ikonu DEKORATIF (ekran okuyucuya okunmaz)", async () => {
+  it("HALKA DEKORATIF, gercek deger sr-only metinde", async () => {
     fetchTaklidi();
     const { container } = ciz(DashboardPage);
-    await screen.findAllByText("Gece turu");
-    for (const el of tintBloklar(container)) {
-      const svg = el.querySelector("svg");
-      if (!svg) continue;
-      // Ikonun anlami yanindaki etikettedir; iki kez okunmasi gurultudur.
-      const gizli =
-        svg.getAttribute("aria-hidden") === "true" ||
-        svg.closest("[aria-hidden='true']") !== null;
-      expect(gizli, `ikon aria-hidden degil: ${el.className}`).toBe(true);
-    }
+    await waitFor(() => expect(screen.getByText("Geciken okutma")).toBeInTheDocument());
+    // Sayan rakam ekran okuyucuya OKUNMAZ (aria-hidden); okunan tek sey
+    // "<etiket>: <deger>".
+    expect(container.querySelectorAll('[aria-hidden="true"]').length).toBeGreaterThan(0);
+    expect(screen.getByText(/^Geciken okutma: \d+$/)).toBeInTheDocument();
   });
 
-  it("tint uzerindeki metin ROL TOKEN'i (notr gri DEGIL)", async () => {
-    // Kural: "tint uzerinde notr gri asla". Notr metin token'lari
-    // (`text-metin-*`) blogun KENDI sinifinda gecmemeli.
+  it("KPI halkasi BAGLANTIDIR (dugme degil) — yeni sekmede acilabilsin", async () => {
     fetchTaklidi();
-    const { container } = ciz(DashboardPage);
-    await screen.findAllByText("Gece turu");
-    for (const el of tintBloklar(container)) {
-      const c = el.getAttribute("class") ?? "";
-      expect(c, "tint uzerinde notr metin").not.toMatch(/text-metin-/);
-      expect(c, "vurgu metin token'i yok").toMatch(/text-vurguInk-/);
-    }
+    ciz(DashboardPage);
+    await waitFor(() => expect(screen.getByText("Geciken okutma")).toBeInTheDocument());
+    // Baglanti: orta tikla yeni sekme, ekran okuyucu "baglanti" der ve
+    // router taklidi gerekmez.
+    const bag = screen.getByRole("link", { name: /^Geciken okutma: / });
+    expect(bag).toHaveAttribute("href", "/notifications");
   });
 
   it("KAHRAMAN blok bir SAYI degil DURUM anlatir", async () => {

@@ -127,9 +127,16 @@ describe("(P133.2) pano bolumleri — SIRA", () => {
     });
     ciz(DashboardPage);
     // 2 tur, 1 tamamlanan, 3 geciken olay (grubun `sayi`si), %78 tahsilat.
-    await waitFor(() => expect(screen.getAllByText("2").length).toBeGreaterThan(0));
-    expect(screen.getByText("%78")).toBeInTheDocument();
-    expect(screen.getAllByText("3").length).toBeGreaterThan(0);
+    //
+    // (P160) IDDIA ERISILEBILIR METINDEN OKUNUYOR. KPI halkasinin GORSEL
+    // rakami 0'dan hedefe SAYARAK gelir, yani ara karelerde "%12" gibi bir
+    // deger gosterir; gorsel metne bakan bir test yarisa girer. `sr-only`
+    // metin ise HER ZAMAN gercek degeri tasir (sayan ara degerler ekran
+    // okuyucuya okunmaz) — dogru kaynak da zaten odur.
+    await waitFor(() =>
+      expect(screen.getByText("Aidat tahsilatı: %78")).toBeInTheDocument(),
+    );
+    expect(screen.getByText(/Geciken okutma: 3$/)).toBeInTheDocument();
   });
 
   it("MALI BLOK yetki yoksa HIC cizilmez (0% degil)", async () => {

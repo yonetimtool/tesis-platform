@@ -828,6 +828,8 @@ export const fr: Sozluk = {
   listeSuzgec: "Filtre",
   listeKayitYok: "Aucun enregistrement.",
   aramaEtiket: "Rechercher",
+  sahneWebglYok: "La vue 3D n\u2019est pas prise en charge par ce navigateur.",
+  sahneBlokSayisi: "{n} blocs",
   paletAc: "Rechercher (Ctrl+K)",
   paletKapat: "Fermer la recherche",
   paletIpucu: "Personnes, logements, tâches, demandes, finances…",

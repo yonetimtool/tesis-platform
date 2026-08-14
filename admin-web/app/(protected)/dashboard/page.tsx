@@ -24,7 +24,11 @@
 // `nfc_nokta_sayisi`) AYNI yanita bindirildi — dorduncu bir istek acmak,
 // yeniden tasarimin bedeli olurdu.
 import { useState } from "react";
+import { useMemo } from "react";
 import useSWR from "swr";
+
+import { BinaSahnesiYukleyici } from "@/components/3d/sahne-yukleyici";
+import { IskeletKpi, Kpi } from "@/components/ui";
 
 import { KameraSeridi } from "@/components/KameraSeridi";
 import { SiteHarita } from "@/components/SiteHarita";
@@ -42,10 +46,11 @@ import {
 } from "@/components/tasarim";
 import { BILDIRIM_TIP, enumAdi } from "@/lib/enum-adlari";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
-import { useT } from "@/lib/i18n/kullan";
+import { useI18n, useT } from "@/lib/i18n/kullan";
 import type {
   AktifTur,
   AlarmGrubu,
+  BlockList,
   DashboardLive,
   Kamera,
   KameraListResponse,
@@ -92,8 +97,26 @@ function suruyor(tur: AktifTur, simdi: number): boolean {
   );
 }
 
+// UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
+const KPI_KRITIK = "kritik" as const;
+const KPI_OLUMLU = "olumlu" as const;
+const KPI_UYARI = "uyari" as const;
+/** Tahsilat orani bu esigin altinda UYARI halkasi. */
+const TAHSILAT_ESIGI = 80;
+const DURUM_NORMAL = "normal" as const;
+const DURUM_CEVRIMDISI = "cevrimdisi" as const;
+
 export default function DashboardPage() {
   const t = useT();
+  const { dil } = useI18n();
+  // `Intl` nesnesi her cizimde yeniden kurulmaz.
+  const yuzde = useMemo(() => {
+    const b = new Intl.NumberFormat(dil, {
+      style: "percent",
+      maximumFractionDigits: 0,
+    });
+    return (n: number) => b.format(n / 100);
+  }, [dil]);
   const { data, error, isLoading } = useSWR<DashboardLive>(
     "/api/dashboard/live",
     jsonFetcher,
@@ -110,7 +133,42 @@ export default function DashboardPage() {
 
   const turlar = data?.aktif_turlar ?? [];
   const gruplar = data?.alarm_gruplari ?? [];
-  const kameralar: Kamera[] = kameraYanit?.items ?? [];
+  // `useMemo`: `?? []` her cizimde YENI bir dizi uretir ve asagidaki
+  // `useMemo`nun bagimliligini her karede degistirirdi (lint yakaladi).
+  const kameralar: Kamera[] = useMemo(
+    () => kameraYanit?.items ?? [],
+    [kameraYanit],
+  );
+
+  // (P160 / Asama 5) SAHNE VERISI — UYDURMA DEGIL, GERCEK UCLARDAN.
+  //
+  // Brief'in tartismasiz kurali: "VERIYE BAGLI olacak, dekor degil".
+  // Bloklar `/api/blocks`tan (kat ve daire sayisiyla), isaretciler ise
+  // ZATEN CEKILEN kamera listesinden geliyor — sahne icin ek istek
+  // ATILMIYOR. Kamera cevrimdisiysa isaretci gri olur.
+  const { data: blokYanit } = useSWR<BlockList>("/api/blocks", jsonFetcher, {
+    revalidateOnFocus: false,
+  });
+  const sahneBloklari = useMemo(
+    () =>
+      (blokYanit?.items ?? []).map((b) => ({
+        id: b.id,
+        ad: b.ad,
+        kat: b.kat_sayisi ?? 1,
+        daire: b.unit_sayisi,
+      })),
+    [blokYanit],
+  );
+  const sahneIsaretcileri = useMemo(
+    () =>
+      kameralar.slice(0, 12).map((k) => ({
+        id: k.id,
+        ad: k.ad,
+        // DURUM VERIDEN: cevrimdisi kamera GRI isaretci (brief'in ornegi).
+        durum: k.aktif === false ? DURUM_CEVRIMDISI : DURUM_NORMAL,
+      })),
+    [kameralar],
+  );
 
   const tamamlanan = turlar.filter((x) => x.durum === "tamamlandi").length;
   const gecikmeSayisi = gruplar.reduce((n, g) => n + g.sayi, 0);
@@ -182,42 +240,49 @@ export default function DashboardPage() {
         />
       )}
 
-      {/* --- (c) IKINCIL BLOKLAR: EN COK 4 --------------------------- */}
-      <div className="grid grid-cols-2 gap-izgara lg:grid-cols-4">
-        <TintBlok
-          vurgu={gecikmeSayisi ? "red" : "green"}
-          ikon={<Ikon d={YOL.zil} />}
-          deger={String(gecikmeSayisi)}
-          etiket={t("pano2BlokGecikme")}
-          href="/notifications"
-        />
-        <TintBlok
-          vurgu="blue"
-          ikon={<Ikon d={YOL.tur} />}
-          deger={String(turlar.length)}
-          etiket={t("pano2BlokTur")}
-          href="/patrol-plans"
-        />
-        <TintBlok
-          vurgu="green"
-          ikon={<Ikon d={YOL.onay} />}
-          deger={String(tamamlanan)}
-          etiket={t("pano2BlokTamamlanan")}
-          href="/reports/patrols"
-        />
-        {/* MALI BLOK YALNIZ YETKI VARSA: sunucu tahsilat oranini guvenlik
-            rollerine `null` doner. "0%" cizmek, veriyi sizdirmadan YANLIS
-            bilgi vermek olurdu — blok hic cizilmez. */}
-        {data?.aidat_tahsilat_orani != null && (
-          <TintBlok
-            vurgu="purple"
-            ikon={<Ikon d={YOL.para} />}
-            deger={`%${data.aidat_tahsilat_orani}`}
-            etiket={t("pano2BlokTahsilat")}
-            href="/finans"
+      {/* --- (c) KPI HALKALARI ---------------------------------------
+          (P160) P133'un "tint blok"lari METALIK HALKAYA gecti: renk artik
+          DOLGU degil, halkanin cizgisi (durum sinyali). Sayilar 0'dan
+          hedefe sayarak gelir; hareket azaltmada dogrudan yazilir. */}
+      {isLoading && !data ? (
+        <IskeletKpi adet={4} />
+      ) : (
+        <div className="flex flex-wrap justify-center gap-8 sm:justify-start">
+          <Kpi
+            deger={gecikmeSayisi}
+            etiket={t("pano2BlokGecikme")}
+            durum={gecikmeSayisi ? KPI_KRITIK : KPI_OLUMLU}
+            href="/notifications"
           />
-        )}
-      </div>
+          <Kpi
+            deger={turlar.length}
+            etiket={t("pano2BlokTur")}
+            durum="bilgi"
+            href="/patrol-plans"
+          />
+          <Kpi
+            deger={tamamlanan}
+            etiket={t("pano2BlokTamamlanan")}
+            durum="olumlu"
+            href="/reports/patrols"
+          />
+          {/* MALI HALKA YALNIZ YETKI VARSA: sunucu tahsilat oranini
+              guvenlik rollerine `null` doner. "0%" cizmek, veriyi
+              sizdirmadan YANLIS bilgi vermek olurdu — halka hic cizilmez. */}
+          {data?.aidat_tahsilat_orani != null && (
+            <Kpi
+              deger={data.aidat_tahsilat_orani}
+              // BIRIM YERI DILE BAGLI: tr "%78", en "78%". `Intl` bunu
+              // aktif dile gore kendisi koyar; elle yazmak yedi dilden
+              // altisinda yanlis olurdu.
+              bicimle={yuzde}
+              etiket={t("pano2BlokTahsilat")}
+              durum={data.aidat_tahsilat_orani >= TAHSILAT_ESIGI ? KPI_OLUMLU : KPI_UYARI}
+              href="/finans"
+            />
+          )}
+        </div>
+      )}
 
       {/* --- ALARMLAR (gruplu) + (d) TESIS BLOGU ---------------------
           YENIDEN AKAN IZGARA, sabit iki sutun DEGIL: eski duzen sagda
@@ -242,7 +307,17 @@ export default function DashboardPage() {
         <section className="lg:col-span-2">
           <BolumBasligi baslik={t("pano2TesisBaslik")} />
           <Kart className="overflow-hidden">
-            {/* Harita BLOK GENISLIGINI doldurur — kucuk kucuk resim degil. */}
+            {/* (P160 / Asama 5) 3D SAHNE — harita yerine izometrik maket.
+                Bloklar GERCEK veriden (kat/daire sayisi) cizilir; model
+                dosyasi yok, yer tutucu geometri kullanilir (brief).
+                Paket TEMBEL yuklenir: ana pakete girmez. */}
+            <BinaSahnesiYukleyici
+              bloklar={sahneBloklari}
+              isaretciler={sahneIsaretcileri}
+              yukseklik="260px"
+            />
+            {/* Harita KALDIRILMADI: konum bilgisi hâlâ degerli ve 3D
+                sahne onun yerine gecmiyor, YANINA geliyor. */}
             <SiteHarita
               lat={tesis?.konum_lat}
               lon={tesis?.konum_lon}

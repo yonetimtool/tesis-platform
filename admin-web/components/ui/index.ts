@@ -32,6 +32,7 @@ export {
 export { Modal, OnayDiyalogu, type ModalProps } from "./modal";
 export { KomutPaleti, PALET_HEDEF, type PaletVurusu } from "./komut-paleti";
 export { BildirimMerkezi } from "./bildirim-merkezi";
+export { Sekmeler, Ipucu, Cekmece, type Sekme } from "./sekmeler";
 export {
   VeriTablosu,
   SAYFA_BOYLARI,

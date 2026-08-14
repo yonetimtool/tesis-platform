@@ -828,6 +828,8 @@ export const ru: Sozluk = {
   listeSuzgec: "Фильтр",
   listeKayitYok: "Нет записей.",
   aramaEtiket: "Поиск",
+  sahneWebglYok: "3D-просмотр не поддерживается в этом браузере.",
+  sahneBlokSayisi: "Блоков: {n}",
   paletAc: "Поиск (Ctrl+K)",
   paletKapat: "Закрыть поиск",
   paletIpucu: "Люди, квартиры, задачи, заявки, финансы…",

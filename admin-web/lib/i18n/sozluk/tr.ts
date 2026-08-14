@@ -881,6 +881,8 @@ export const tr = {
   listeSuzgec: "Süzgeç",
   listeKayitYok: "Kayıt yok.",
   aramaEtiket: "Ara",
+  sahneWebglYok: "3B görünüm bu tarayıcıda desteklenmiyor.",
+  sahneBlokSayisi: "{n} blok",
   paletAc: "Ara (Ctrl+K)",
   paletKapat: "Aramayı kapat",
   paletIpucu: "Kişi, daire, görev, talep, finans…",

@@ -828,6 +828,8 @@ export const ar: Sozluk = {
   listeSuzgec: "تصفية",
   listeKayitYok: "لا توجد سجلات.",
   aramaEtiket: "بحث",
+  sahneWebglYok: "العرض ثلاثي الأبعاد غير مدعوم في هذا المتصفح.",
+  sahneBlokSayisi: "{n} كتلة",
   paletAc: "بحث (Ctrl+K)",
   paletKapat: "إغلاق البحث",
   paletIpucu: "أشخاص، وحدات، مهام، طلبات، مالية…",

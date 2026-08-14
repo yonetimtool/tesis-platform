@@ -28,6 +28,7 @@
  * gorunmez metinde durur. Halka da `aria-hidden` — o bir dekordur;
  * anlami sayi ve etiket tasir.
  */
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 const ETIKET_DUGME = "button";
@@ -121,9 +122,21 @@ export interface KpiProps {
   /** Trend metni (orn. "+12%"). Yonu `trendYonu` belirler. */
   trend?: string;
   trendYonu?: "yukari" | "asagi" | "sabit";
-  /** Sayinin sonuna eklenen birim (orn. "%"). Sayacta ANIMASYONA girmez. */
-  birim?: string;
-  /** Tiklanabilirse: karta gecis. */
+  /**
+   * Sayiyi METNE cevirir. VERILMEZSE duz sayi yazilir.
+   *
+   * NEDEN BILESEN BICIMLENDIRMEZ: birim YERI DILE BAGLIDIR — Turkce
+   * "%78" yazar, Ingilizce "78%". Bileseni bir tarafa sabitlemek, yedi
+   * dilden altisinda yanlis olurdu. Cagiran `Intl` ile aktif dile gore
+   * bicimler; bilesen yalnizca SAYIYI animasyonlar.
+   */
+  bicimle?: (n: number) => string;
+  /** Tiklanabilirse: karta gecis.
+   *
+   *  `href` TERCIH EDILIR: baglanti orta tikla yeni sekmede acilir,
+   *  ekran okuyucu onu "baglanti" diye duyurur ve router taklidi
+   *  gerektirmez. `onClick` yalniz gercekten bir EYLEM varsa. */
+  href?: string;
   onClick?: () => void;
   /** Halka capi (px). Varsayilan 116 — referans gorseldeki olcek. */
   cap?: number;
@@ -136,22 +149,26 @@ export function Kpi({
   ikon,
   trend,
   trendYonu = "sabit",
-  birim,
+  bicimle,
+  href,
   onClick,
   cap = 116,
 }: KpiProps) {
   const gosterilen = useSayac(deger);
   // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`): tarama ucludeki
   // her dizeyi cevrilmemis metin adayi sayar ve HAKLIDIR.
-  const Etiket = (onClick ? ETIKET_DUGME : ETIKET_KUTU) as React.ElementType;
+  const Etiket = (
+    href ? Link : onClick ? ETIKET_DUGME : ETIKET_KUTU
+  ) as React.ElementType;
 
   return (
     <Etiket
-      type={onClick ? "button" : undefined}
+      href={href}
+      type={!href && onClick ? ETIKET_DUGME : undefined}
       onClick={onClick}
       className={[
         "flex flex-col items-center gap-3",
-        onClick ? "odak-ic yz-lift rounded-xl p-2" : "",
+        href || onClick ? "odak-ic yz-lift rounded-xl p-2" : "",
       ]
         .filter(Boolean)
         .join(" ")}
@@ -196,16 +213,14 @@ export function Kpi({
               fontVariantNumeric: "tabular-nums",
             }}
           >
-            {gosterilen}
-            {birim}
+            {bicimle ? bicimle(gosterilen) : gosterilen}
           </span>
         </span>
       </div>
 
       {/* GERCEK DEGER — ekran okuyucunun okudugu tek yer. */}
       <span className="sr-only">
-        {etiket}: {deger}
-        {birim ?? ""}
+        {etiket}: {bicimle ? bicimle(deger) : deger}
       </span>
 
       <span className="flex flex-col items-center gap-0.5">

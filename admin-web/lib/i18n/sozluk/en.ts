@@ -828,6 +828,8 @@ export const en: Sozluk = {
   listeSuzgec: "Filter",
   listeKayitYok: "No records.",
   aramaEtiket: "Search",
+  sahneWebglYok: "3D view is not supported in this browser.",
+  sahneBlokSayisi: "{n} blocks",
   paletAc: "Search (Ctrl+K)",
   paletKapat: "Close search",
   paletIpucu: "People, units, tasks, requests, finance…",
