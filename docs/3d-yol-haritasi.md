@@ -201,12 +201,35 @@ bağlıdır ve paketleyici altında yolu bozulur (klasik `marker-icon.png`
 kullanılıyor çünkü karo görüntüsü keyfîdir ve bir rengin karo üzerindeki
 kontrastı önceden ölçülemez — durum ayrıca ipucunda **metin** olarak yazar.
 
-### Sıradaki coğrafi katman (yapılmadı)
+### Okutma katmanı — YAPILDI
 
-`scan_event` de koordinat + `konum_durumu` taşıyor. *"Bu okutma noktadan
-uzakta yapılmış"* sorusu aynı harita üzerinde ikinci bir katmanla
-yanıtlanabilir. Bu turda **kapsam dışı** bırakıldı: istenen NFC
-noktalarının haritasıydı.
+Aynı harita ikinci bir katman taşıyor: o günün okutmaları. Nokta
+işaretçileri dolu daire, okutmalar **daha küçük ve içi açık**; ikisi
+arasına **kesikli bir çizgi** çekiliyor — sapma bir bakışta görünüyor.
+Katman düğmeyle kapatılabilir (`aria-pressed`), varsayılan açık.
+
+**Yalnız `konum_durumu === "var"` olan okutmalar haritaya girer.** Enum
+beş değerli ve dördü "konum yok" demek (`izin_yok`, `servis_kapali`,
+`zaman_asimi`, `bilinmiyor`) — sunucunun P34 gerekçesi bu üçünü tek bir
+NULL'a indirmemeyi açıkça savunuyor. Haritaya konamayan okutmaların
+sayısı ekranda yazılır.
+
+#### Mesafe bir ÖLÇÜMDÜR, bir YARGI değil
+
+İpucunda *"Noktaya uzaklık: 50 m · GPS doğruluğu ±12 m"* yazıyor ve
+**orada duruyor**. "Şüpheli", "uzak", "kural dışı" **demiyor** — çünkü:
+
+* Sistemde böyle bir **eşik yok**; uydurmak bir ürün kararı olurdu.
+* Sunucunun kendi gerekçesi (`routers/scans.py`) bu yönde: NTAG424 SDM
+  etiketin fiziksel varlığını **kriptografik olarak** kanıtlıyor; GPS
+  "konumu ekler", tek başına bir kanıt değil.
+* **Doğruluk da yazılıyor**, çünkü ±50 m doğrulukla ölçülmüş 30 m'lik bir
+  sapma hiçbir şey söylemez. İkisini birlikte göstermek, sayıyı yanlış
+  okumayı engelleyen tek yol.
+
+Bir test bunu kilitliyor: `haritaOkutma*` sözlük metinlerinde
+"şüpheli/ihlal/kural dışı" geçemez. Bir gün eşik konacaksa **önce ürün
+kararı olarak alınmalı**, sessizce metne sızmamalı.
 
 ## 6. PERFORMANS BÜTÇESİ (her yeni sahne bunu tutmalı)
 

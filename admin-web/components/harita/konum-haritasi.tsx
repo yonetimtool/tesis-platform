@@ -37,13 +37,36 @@
  * bir VEKTORDUR: dosya istemez, rengi durumdan gelir ve `--yz-*-edge`
  * ailesiyle ayni tonlari kullanir.
  */
-import { useMemo } from "react";
+import { Fragment, useMemo } from "react";
 import type { LatLngBoundsExpression, LatLngExpression } from "leaflet";
-import { CircleMarker, MapContainer, TileLayer, Tooltip, useMap } from "react-leaflet";
+import {
+  CircleMarker,
+  MapContainer,
+  Polyline,
+  TileLayer,
+  Tooltip,
+  useMap,
+} from "react-leaflet";
 
 import { useT } from "@/lib/i18n/kullan";
 
 import "leaflet/dist/leaflet.css";
+
+/**
+ * Bir OKUTMA olayi — konumu OLAN (`konum_durumu === "var"`) kayitlar.
+ *
+ * Konumu olmayan okutmalar (izin yok / servis kapali / zaman asimi /
+ * bilinmiyor) buraya HIC girmez; sayilari cagiran tarafta yazilir.
+ */
+export interface OkutmaIsareti {
+  id: string;
+  lat: number;
+  lon: number;
+  /** Ipucu metni: kim, ne zaman, noktaya uzaklik. */
+  ipucu: string;
+  /** Baglandigi noktanin konumu — varsa aralarina cizgi cizilir. */
+  nokta?: { lat: number; lon: number };
+}
 
 /** Haritadaki tek nokta. */
 export interface KonumNoktasi {
@@ -69,6 +92,10 @@ const AZAMI_ZOOM = 19;
 const TEK_NOKTA_ZOOM = 17;
 /** Isaretci halesi — karo uzerinde ayirt edilebilirlik icin. */
 const HALE = "var(--yz-on-fill)";
+/** Okutma isaretcisi — noktalardan GORSEL OLARAK ayri olmali. */
+const OKUTMA_TONU = "var(--yz-accent)";
+/** Okutma ile noktayi birlestiren cizgi (sapmayi gosterir). */
+const BAG_DESENI = "4 4";
 
 /** Haritayi noktalara SIGDIRIR — sabit bir olcek uydurmak yerine olcer. */
 function NoktalaraSigdir({ sinir }: { sinir: LatLngBoundsExpression | null }) {
@@ -81,26 +108,32 @@ function NoktalaraSigdir({ sinir }: { sinir: LatLngBoundsExpression | null }) {
 
 export interface KonumHaritasiProps {
   noktalar: KonumNoktasi[];
+  /** Okutma katmani — bos dizi verilirse katman cizilmez. */
+  okutmalar?: OkutmaIsareti[];
   onSec?: (id: string) => void;
   yukseklik?: string;
 }
 
 export default function KonumHaritasi({
   noktalar,
+  okutmalar = [],
   onSec,
   yukseklik = "420px",
 }: KonumHaritasiProps) {
   const t = useT();
 
+  // SINIR HER IKI KATMANI DA KAPSAR: okutma noktanin disindaysa
+  // cerceve disinda kalmamali — gosterilmek istenen sey tam da o sapma.
   const sinir = useMemo<LatLngBoundsExpression | null>(() => {
-    if (noktalar.length === 0) return null;
-    const enler = noktalar.map((n) => n.lat);
-    const boylar = noktalar.map((n) => n.lon);
+    const hepsi = [...noktalar, ...okutmalar];
+    if (hepsi.length === 0) return null;
+    const enler = hepsi.map((n) => n.lat);
+    const boylar = hepsi.map((n) => n.lon);
     return [
       [Math.min(...enler), Math.min(...boylar)],
       [Math.max(...enler), Math.max(...boylar)],
     ];
-  }, [noktalar]);
+  }, [noktalar, okutmalar]);
 
   // Merkez yalniz ILK cizim icin; `NoktalaraSigdir` hemen ardindan
   // gercek sinirlara oturur.
@@ -128,6 +161,43 @@ export default function KonumHaritasi({
         {/* ATTRIBUTION KALDIRILAMAZ — OSM karolarini kullanmanin sarti. */}
         <TileLayer url={KARO_URL} maxZoom={AZAMI_ZOOM} attribution={t("haritaOsmKatki")} />
         <NoktalaraSigdir sinir={sinir} />
+
+        {/* OKUTMA KATMANI ONCE cizilir: noktalar USTTE kalsin, cunku
+            asil kayit onlar. */}
+        {okutmalar.map((o) => (
+          <Fragment key={o.id}>
+            {o.nokta && (
+              // SAPMA CIZGISI — iki GERCEK koordinat arasinda. Bir yargi
+              // tasimaz; yalnizca "bu okutma su noktaya ait" der.
+              <Polyline
+                positions={[
+                  [o.lat, o.lon],
+                  [o.nokta.lat, o.nokta.lon],
+                ]}
+                pathOptions={{
+                  color: OKUTMA_TONU,
+                  weight: 2,
+                  dashArray: BAG_DESENI,
+                  opacity: 0.8,
+                }}
+              />
+            )}
+            <CircleMarker
+              center={[o.lat, o.lon]}
+              // Noktalardan KUCUK ve ICI ACIK: iki katman bir bakista
+              // ayirt edilsin.
+              radius={6}
+              pathOptions={{
+                color: OKUTMA_TONU,
+                weight: 3,
+                fillColor: HALE,
+                fillOpacity: 1,
+              }}
+            >
+              <Tooltip direction="top">{o.ipucu}</Tooltip>
+            </CircleMarker>
+          </Fragment>
+        ))}
 
         {noktalar.map((n) => (
           <CircleMarker

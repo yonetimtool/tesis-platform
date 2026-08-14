@@ -31,6 +31,8 @@ import type {
 import { sayiCoz } from "@/lib/sayi";
 import { useT } from "@/lib/i18n/kullan";
 import { alarmHaritasi, noktaDurumu } from "@/lib/rota-durumu";
+import { mesafeMetre } from "@/lib/mesafe";
+import { formatDateTime } from "@/lib/fetcher";
 
 // Mobil POC ile tutarli: buyuk harf hex, ayracsiz.
 const NFC_PLACEHOLDER = "04A1B2C3D4";
@@ -62,6 +64,10 @@ const HARITA_TONU = {
 
 const GORUNUM_HARITA = "harita" as const;
 const GORUNUM_AKIS = "akis" as const;
+// UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
+const KONUM_VAR = "var" as const;
+const TUR_BIRINCIL = "birincil" as const;
+const TUR_IKINCIL = "ikincil" as const;
 
 interface FormState {
   ad: string;
@@ -100,6 +106,10 @@ export default function CheckpointsPage() {
   const { data: pano } = useSWR<DashboardLive>("/api/dashboard/live", jsonFetcher);
 
   const [gorunum, setGorunum] = useState<string>(GORUNUM_HARITA);
+  // OKUTMA KATMANI VARSAYILAN ACIK: kullanicinin haritayi actigi an
+  // sordugu sey "bugun nerede okutuldu" — katmani kapali baslatmak o
+  // yaniti bir tik arkasina saklamakti.
+  const [okutmaKatmani, setOkutmaKatmani] = useState(true);
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY);
@@ -220,6 +230,49 @@ export default function CheckpointsPage() {
     [data, okutulanIdler, alarmlar, t],
   );
   const koordinatsiz = sahneNoktalari.length - konumNoktalari.length;
+
+  /**
+   * OKUTMA KATMANI — YALNIZ konumu OLAN okutmalar.
+   *
+   * `konum_durumu` bes degerlidir ve DORDU "konum yok" demektir
+   * (`izin_yok`, `servis_kapali`, `zaman_asimi`, `bilinmiyor`). Bunlari
+   * haritaya bir yere koymak imkansiz; sayilari ayrica yaziliyor.
+   *
+   * UZAKLIK BIR OLCUMDUR, BIR YARGI DEGIL: yanina GPS dogrulugu da
+   * yaziliyor cunku ±50 m dogrulukla olculmus 30 m'lik bir sapma hicbir
+   * sey soylemez. Sistemde bir "uzak" esigi YOK ve panelde
+   * uydurulmuyor (bkz. `lib/mesafe.ts`).
+   */
+  const okutmaIsaretleri = useMemo(() => {
+    const noktaKonumu = new Map(
+      (data?.items ?? [])
+        .filter((c) => c.gps_lat != null && c.gps_lng != null)
+        .map((c) => [c.id, { lat: Number(c.gps_lat), lon: Number(c.gps_lng) }]),
+    );
+    return (okutmalar?.items ?? [])
+      .filter((o) => o.konum_durumu === KONUM_VAR && o.gps_lat != null && o.gps_lng != null)
+      .map((o) => {
+        const lat = Number(o.gps_lat);
+        const lon = Number(o.gps_lng);
+        const nokta = noktaKonumu.get(o.checkpoint_id);
+        // AYRAC bir CUMLE DEGIL: sozluge girseydi yedi dilde birebir
+        // ayni durur ve "cevrilmemis" taramasini hakli olarak tetiklerdi.
+        const bilgi = `${o.guard_ad} · ${formatDateTime(o.okutma_zamani)}`;
+        if (!nokta) return { id: o.id, lat, lon, ipucu: bilgi };
+        const m = mesafeMetre(lat, lon, nokta.lat, nokta.lon);
+        const uzaklik =
+          o.gps_dogruluk_m != null
+            ? t("haritaOkutmaUzaklik", {
+                mesafe: m,
+                dogruluk: Math.round(o.gps_dogruluk_m),
+              })
+            : t("haritaOkutmaUzaklikSade", { mesafe: m });
+        return { id: o.id, lat, lon, ipucu: `${bilgi} · ${uzaklik}`, nokta };
+      });
+  }, [data, okutmalar, t]);
+  /** Konumu OLMAYAN okutma sayisi — sunucunun P34 kavramiyla ayni. */
+  const konumsuzOkutma =
+    (okutmalar?.items ?? []).length - okutmaIsaretleri.length;
 
   const kolonlar: Kolon<Checkpoint>[] = useMemo(
     () => [
@@ -395,8 +448,37 @@ export default function CheckpointsPage() {
               baslik: t("haritaGorunumKonum"),
               icerik:
                 konumNoktalari.length > 0 ? (
-                  <div className="space-y-1">
-                    <KonumHaritasiYukleyici noktalar={konumNoktalari} />
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {/* KATMAN ANAHTARI — secililik `aria-pressed` ile
+                          bildirilir, renkle degil. */}
+                      <Dugme
+                        boy="kucuk"
+                        tur={okutmaKatmani ? TUR_BIRINCIL : TUR_IKINCIL}
+                        aria-pressed={okutmaKatmani}
+                        onClick={() => setOkutmaKatmani((a) => !a)}
+                      >
+                        {t("haritaOkutmaKatmani")}
+                      </Dugme>
+                      {okutmaKatmani && okutmaIsaretleri.length === 0 && (
+                        <span style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
+                          {t("haritaOkutmaYok")}
+                        </span>
+                      )}
+                    </div>
+                    <KonumHaritasiYukleyici
+                      noktalar={konumNoktalari}
+                      okutmalar={okutmaKatmani ? okutmaIsaretleri : []}
+                    />
+                    {/* SESSIZ EKSIK YOK: konumu olmayan okutma sayilir. */}
+                    {okutmaKatmani && konumsuzOkutma > 0 && (
+                      <p
+                        role="status"
+                        style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-warning-ink)" }}
+                      >
+                        {t("haritaOkutmaKonumsuz", { sayi: konumsuzOkutma })}
+                      </p>
+                    )}
                     {/* SESSIZ EKSIK YOK: haritada olmayan nokta sayilir. */}
                     {koordinatsiz > 0 && (
                       <p

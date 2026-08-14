@@ -260,3 +260,131 @@ describe("(P160) NFC noktalari cografi haritasi", () => {
     expect(screen.getByText(/1 noktanın koordinatı girilmediği/)).toBeInTheDocument();
   });
 });
+
+/* ==================================================================== */
+/* OKUTMA KATMANI — "olcum, yargi degil"                                */
+/* ==================================================================== */
+
+describe("(P160) Okutma katmani", () => {
+  const NOKTA = {
+    id: "c1",
+    ad: "A blok giris",
+    nfc_tag_uid: "01",
+    gps_lat: 41.0082,
+    gps_lng: 28.9784,
+    aktif: true,
+  };
+
+  /** ~50 m kuzeyde bir okutma (enlemde 0.00045 derece ≈ 50 m). */
+  const OKUTMA_KONUMLU = {
+    id: "s1",
+    checkpoint_id: "c1",
+    checkpoint_ad: "A blok giris",
+    guard_id: "g1",
+    guard_ad: "Ali Veli",
+    okutma_zamani: "2026-08-14T23:10:00Z",
+    gps_lat: 41.00865,
+    gps_lng: 28.9784,
+    konum_durumu: "var",
+    gps_dogruluk_m: 12,
+  };
+  /** Konumu OLMAYAN okutma — haritaya giremez. */
+  const OKUTMA_KONUMSUZ = {
+    id: "s2",
+    checkpoint_id: "c1",
+    checkpoint_ad: "A blok giris",
+    guard_id: "g1",
+    guard_ad: "Ali Veli",
+    okutma_zamani: "2026-08-14T23:40:00Z",
+    gps_lat: null,
+    gps_lng: null,
+    konum_durumu: "izin_yok",
+    gps_dogruluk_m: null,
+  };
+
+  function katmanSahtele(okutmalar: unknown[]) {
+    globalThis.fetch = (async (girdi: RequestInfo | URL) => {
+      const url = String(girdi);
+      const yanit = (govde: unknown) =>
+        ({ ok: true, status: 200, json: async () => govde }) as Response;
+      if (url.includes("/api/scans")) {
+        return yanit({ tarih: "2026-08-14", konumsuz_sayisi: 0, items: okutmalar });
+      }
+      if (url.includes("/api/dashboard/live")) {
+        return yanit({ generated_at: "x", aktif_turlar: [], alarm_gruplari: [] });
+      }
+      return yanit({ meta: { limit: 25, offset: 0, total: 1 }, items: [NOKTA] });
+    }) as typeof fetch;
+  }
+
+  it("KATMAN ANAHTARI var ve VARSAYILAN ACIK", async () => {
+    katmanSahtele([OKUTMA_KONUMLU]);
+    ciz(CheckpointsPage);
+    const dugme = await screen.findByRole("button", { name: "Okutmaları göster" });
+    expect(dugme).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("KATMAN KAPATILABILIR", async () => {
+    katmanSahtele([OKUTMA_KONUMLU]);
+    ciz(CheckpointsPage);
+    const dugme = await screen.findByRole("button", { name: "Okutmaları göster" });
+    await userEvent.click(dugme);
+    expect(dugme).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("KONUMSUZ okutma sessiz gecilmez — sayilir", async () => {
+    katmanSahtele([OKUTMA_KONUMLU, OKUTMA_KONUMSUZ]);
+    ciz(CheckpointsPage);
+    // `izin_yok` konumu olmayan bir okutmadir; haritaya konamaz.
+    await waitFor(() =>
+      expect(screen.getByText(/1 okutmanın konumu yok/)).toBeInTheDocument(),
+    );
+  });
+
+  it("HIC KONUMLU OKUTMA YOKSA bunu SOYLER", async () => {
+    katmanSahtele([OKUTMA_KONUMSUZ]);
+    ciz(CheckpointsPage);
+    await waitFor(() =>
+      expect(screen.getByText("Bugün konumu olan okutma yok.")).toBeInTheDocument(),
+    );
+  });
+
+  it("KATMAN KAPALIYKEN konumsuz uyarisi da CIKMAZ (gurultu yok)", async () => {
+    katmanSahtele([OKUTMA_KONUMLU, OKUTMA_KONUMSUZ]);
+    ciz(CheckpointsPage);
+    await waitFor(() =>
+      expect(screen.getByText(/1 okutmanın konumu yok/)).toBeInTheDocument(),
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Okutmaları göster" }));
+    expect(screen.queryByText(/1 okutmanın konumu yok/)).toBeNull();
+  });
+});
+
+describe("(P160) mesafe OLCUMDUR, yargi DEGIL", () => {
+  it("haversine bilinen bir araligi dogru olcer", async () => {
+    const { mesafeMetre } = await import("@/lib/mesafe");
+    // Enlemde 0.00045 derece ≈ 50 m (1 derece ≈ 111,32 km).
+    const m = mesafeMetre(41.0082, 28.9784, 41.00865, 28.9784);
+    expect(m).toBeGreaterThan(45);
+    expect(m).toBeLessThan(55);
+  });
+
+  it("ayni nokta icin sifir doner", async () => {
+    const { mesafeMetre } = await import("@/lib/mesafe");
+    expect(mesafeMetre(41.0082, 28.9784, 41.0082, 28.9784)).toBe(0);
+  });
+
+  it("sozlukte 'supheli'/'uzak' gibi bir YARGI metni YOK", async () => {
+    // Sistemde mesafe esigi yok; panel de uydurmamali. Bu test, bir gun
+    // birinin "50 m'den uzak = ihlal" diye bir cumle eklemesini
+    // GORUNUR kilar — eklenecekse once esik urun karari olarak alinmali.
+    const { SOZLUKLER } = await import("@/lib/i18n/sozluk");
+    const okutmaMetinleri = Object.entries(SOZLUKLER.tr)
+      .filter(([k]) => k.startsWith("haritaOkutma"))
+      .map(([, v]) => String(v));
+    expect(okutmaMetinleri.length).toBeGreaterThan(0);
+    for (const metin of okutmaMetinleri) {
+      expect(metin).not.toMatch(/şüpheli|ihlal|uzakta yapıl|kural dışı/i);
+    }
+  });
+});
