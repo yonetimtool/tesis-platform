@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import useSWR from "swr";
+import { useMemo } from "react";
 
 import { EmptyState } from "@/components/EmptyState";
 import {
@@ -17,7 +18,17 @@ import {
   panelCls,
   panelMotion,
 } from "@/components/form";
-import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
+import {
+  Alan,
+  AlanSarmal,
+  Dugme,
+  HataDurumu,
+  Modal,
+  Secim,
+  VeriTablosu,
+  type Kolon,
+  type TabloDurumu,
+} from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
@@ -58,9 +69,17 @@ function gunTipiAdi(t: (a: SozlukAnahtari) => string, v: string): string {
 export default function ShiftsPage() {
   const t = useT();
   const toast = useToast();
-  const [offset, setOffset] = useState(0);
+  // (P160) SAYFALAMA `VeriTablosu` durumuna gecti; `offset` ondan
+  // TURETILIR ve sayfa basina kayit secimi bedava geldi.
+  const [tabloDurumu, setTabloDurumu] = useState<TabloDurumu>({
+    sayfa: 1,
+    boy: 25,
+    siraKolon: null,
+    siraYonu: "artan",
+  });
+  const offset = (tabloDurumu.sayfa - 1) * tabloDurumu.boy;
   const { data, error, isLoading, mutate } = useSWR<ShiftList>(
-    `/api/shifts?limit=${LIMIT}&offset=${offset}`,
+    `/api/shifts?limit=${tabloDurumu.boy}&offset=${offset}`,
     jsonFetcher,
   );
 
@@ -118,132 +137,150 @@ export default function ShiftsPage() {
 
   const overnight = form.baslangic_saat > form.bitis_saat;
 
+  const kolonlar: Kolon<Shift>[] = useMemo(
+    () => [
+      { id: "ad", baslik: t("ortakAd"), hucre: (v) => v.ad, gizlenebilir: false },
+      {
+        id: "saat",
+        baslik: t("ortakSaat"),
+        sayisal: true,
+        hucre: (v) => `${v.baslangic_saat} – ${v.bitis_saat}`,
+      },
+      {
+        id: "gun",
+        baslik: t("vardiyaGunTipi"),
+        hucre: (v) => gunTipiAdi(t, v.gun_tipi),
+      },
+      {
+        id: "eylem",
+        baslik: "",
+        gizlenebilir: false,
+        hucre: (v) => (
+          <div className="flex justify-end gap-2">
+            <Dugme boy="kucuk" onClick={() => openEdit(v)}>
+              {t("ortakDuzenle")}
+            </Dugme>
+            <Dugme boy="kucuk" tur="tehlike" onClick={() => void remove(v)}>
+              {t("ortakSil")}
+            </Dugme>
+          </div>
+        ),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [t],
+  );
+
   return (
     <div className="space-y-5">
-      <PageHeader
-        title={t("kabukVardiyalar")}
-        action={
-          <button className={btnPrimary} onClick={openNew}>{t("vardiyaYeni")}</button>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+          {t("kabukVardiyalar")}
+        </h1>
+        <Dugme tur="birincil" boy="kucuk" onClick={openNew}>
+          {t("vardiyaYeni")}
+        </Dugme>
+      </div>
+
+      {/* Liste cekilemezse BOS TABLO degil, sebep + "Tekrar dene".
+          Yukleme durumu artik `VeriTablosu`nun ISKELETI. */}
+      {error && <HataDurumu mesaj={error.message} onTekrar={() => void mutate()} />}
+
+      {/* FORM ARTIK MODALDA (brief). Odak tuzagi, ESC ve kapanista
+          odagin geri donmesi `Modal`dan geliyor. */}
+      <Modal
+        acik={open}
+        onKapat={() => setOpen(false)}
+        baslik={editingId ? t("vardiyaDuzenle") : t("vardiyaYeni")}
+        eylemler={
+          <>
+            <Dugme tur="sessiz" onClick={() => setOpen(false)} disabled={saving}>
+              {t("ortakIptal")}
+            </Dugme>
+            <Dugme tur="birincil" type="submit" form="vardiya-form" yukleniyor={saving}>
+              {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
+            </Dugme>
+          </>
         }
-      />
-
-      {error && <ErrorBox message={error.message} />}
-      {isLoading && !data && <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>}
-
-      {open && (
-        <motion.form {...panelMotion} onSubmit={save} className={`space-y-4 ${panelCls}`}>
-          <h2 className="font-medium">{editingId ? t("vardiyaDuzenle") : t("vardiyaYeni")}</h2>
-          <Field label={t("ortakAd")}>
-            <input
-              className={inputCls}
-              value={form.ad}
-              onChange={(e) => setForm({ ...form, ad: e.target.value })}
-              required
-            />
-          </Field>
+      >
+        <form id="vardiya-form" onSubmit={save} className="space-y-4">
+          <AlanSarmal etiket={t("ortakAd")} zorunlu>
+            {(b) => (
+              <Alan
+                {...b}
+                value={form.ad}
+                onChange={(e) => setForm({ ...form, ad: e.target.value })}
+                required
+              />
+            )}
+          </AlanSarmal>
           <div className="grid grid-cols-2 gap-4">
-            <Field label={t("ortakBaslangic")} hint={t("ortakSaat24")}>
-              <input
-                type="time"
-                className={inputCls}
-                value={form.baslangic_saat}
-                onChange={(e) => setForm({ ...form, baslangic_saat: e.target.value })}
-                required
-              />
-            </Field>
-            <Field label={t("ortakBitis")} hint={t("ortakSaat24")}>
-              <input
-                type="time"
-                className={inputCls}
-                value={form.bitis_saat}
-                onChange={(e) => setForm({ ...form, bitis_saat: e.target.value })}
-                required
-              />
-            </Field>
+            <AlanSarmal etiket={t("ortakBaslangic")} ipucu={t("ortakSaat24")} zorunlu>
+              {(b) => (
+                <Alan
+                  {...b}
+                  type="time"
+                  value={form.baslangic_saat}
+                  onChange={(e) => setForm({ ...form, baslangic_saat: e.target.value })}
+                  required
+                />
+              )}
+            </AlanSarmal>
+            <AlanSarmal etiket={t("ortakBitis")} ipucu={t("ortakSaat24")} zorunlu>
+              {(b) => (
+                <Alan
+                  {...b}
+                  type="time"
+                  value={form.bitis_saat}
+                  onChange={(e) => setForm({ ...form, bitis_saat: e.target.value })}
+                  required
+                />
+              )}
+            </AlanSarmal>
           </div>
           {overnight && (
-            <p className="text-xs text-amber-700">
+            <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-warning-ink)" }}>
               {t("vardiyaGeceNotu")}
             </p>
           )}
-          <Field label={t("vardiyaGunTipi")}>
-            <select
-              className={inputCls}
-              value={form.gun_tipi}
-              onChange={(e) => setForm({ ...form, gun_tipi: e.target.value as GunTipi })}
-            >
+          <AlanSarmal etiket={t("vardiyaGunTipi")}>
+            {(b) => (
+              <Secim
+                {...b}
+                value={form.gun_tipi}
+                onChange={(e) => setForm({ ...form, gun_tipi: e.target.value as GunTipi })}
+              >
               {GUN_TIPI_OPTS.map((o) => (
                 <option key={o.value} value={o.value}>
                   {t(o.anahtar)}
                 </option>
-              ))}
-            </select>
-          </Field>
-          <ErrorBox message={formErr} />
-          <div className="flex gap-2">
-            <button type="submit" className={btnPrimary} disabled={saving}>
-              {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
-            </button>
-            <button type="button" className={btnGhost} onClick={() => setOpen(false)}>
-              {t("ortakIptal")}
-            </button>
-          </div>
-        </motion.form>
-      )}
+                ))}
+              </Secim>
+            )}
+          </AlanSarmal>
+          {formErr && (
+            <p
+              role="alert"
+              style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-danger-ink)" }}
+            >
+              {formErr}
+            </p>
+          )}
+        </form>
+      </Modal>
 
-      <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
-        <div className="odak-ic overflow-x-auto" tabIndex={0}>
-          <Tablo>
-            <TabloBasligi>
-                <Th>{t("ortakAd")}</Th>
-                <Th>{t("ortakSaat")}</Th>
-                <Th>{t("vardiyaGunTipi")}</Th>
-                <Th />
-              </TabloBasligi>
-            <tbody>
-              {(data?.items ?? []).map((s) => (
-                <Tr key={s.id}>
-                  <Td>{s.ad}</Td>
-                  <Td sayi className="text-metin-body">
-                    {s.baslangic_saat} – {s.bitis_saat}
-                  </Td>
-                  <Td className="text-metin-body">{gunTipiAdi(t, s.gun_tipi)}</Td>
-                  <Td hizala="end">
-                    <div className="flex justify-end gap-2">
-                      <button className={btnGhost} onClick={() => openEdit(s)}>
-                        {t("ortakDuzenle")}
-                      </button>
-                      <button className={btnDanger} onClick={() => remove(s)}>
-                        {t("ortakSil")}
-                      </button>
-                    </div>
-                  </Td>
-                </Tr>
-              ))}
-              {data && data.items.length === 0 && (
-                <tr>
-                  <Td colSpan={4}>
-                    <EmptyState
-                      title={t("vardiyaYok")}
-                      description={t("vardiyaYokAlt")}
-                    />
-                  </Td>
-                </tr>
-              )}
-            </tbody>
-          </Tablo>
-        </div>
-      </div>
-
-      {data && (
-        <Pager
-          offset={offset}
-          limit={LIMIT}
-          total={data.meta.total}
-          onPrev={() => setOffset(Math.max(0, offset - LIMIT))}
-          onNext={() => setOffset(offset + LIMIT)}
-        />
-      )}
+      <VeriTablosu<Shift>
+        kolonlar={kolonlar}
+        satirlar={data?.items ?? []}
+        satirId={(v) => v.id}
+        yukleniyor={isLoading && !data}
+        bosBaslik={t("vardiyaYok")}
+        bosAciklama={t("vardiyaYokAlt")}
+        sunucuTarafli
+        toplam={data?.meta.total ?? 0}
+        durum={tabloDurumu}
+        onDurumDegisti={setTabloDurumu}
+      />
     </div>
   );
 }
