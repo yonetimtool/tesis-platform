@@ -54,7 +54,11 @@ export default function ProfilPage() {
   useEffect(() => {
     if (!data) return;
     setTelefon(telefonGiris(data.telefon ?? ""));
-    setAranabilir(data.aranabilir);
+    // `?? false` SART: onay kutusu DENETIMLIDIR ve `undefined` gormesi
+    // React'te denetimliden denetimsize gecis demek (kullanicinin
+    // isaretini sessizce kaybettiren sinif). Sozlesme bugun alani her
+    // zaman gonderiyor; kutu yine de kendi basina saglam durmali.
+    setAranabilir(data.aranabilir ?? false);
   }, [data?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function iletisimKaydet() {
