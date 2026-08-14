@@ -119,6 +119,17 @@ export interface VeriTablosuProps<T> {
   /** Ust seritte cizilecek arama/filtre denetimleri. */
   araclar?: ReactNode;
 
+  /**
+   * TOPLAM SATIRI (`<tfoot>`). GORUNEN kolonlari alir — kullanici bir
+   * kolonu gizlediyse altbilgi de o kolonu atlamali, yoksa hucreler
+   * kayar ve toplam YANLIS SUTUNUN altinda gorunur.
+   *
+   * `<tfoot>` bilincli: gorsel olarak son satir gibi duran bir `<tr>`,
+   * ekran okuyucuya sirdan bir veri satiri gibi okunur. `tfoot` "bu
+   * ozettir" der.
+   */
+  altbilgi?: (gorunenKolonlar: Kolon<T>[]) => ReactNode;
+
   /** Sunucu tarafli kip: tablo yalniz durumu tasir. */
   sunucuTarafli?: boolean;
   /** Sunucu taraflida ZORUNLU — toplam kayit sayisi. */
@@ -142,6 +153,7 @@ export function VeriTablosu<T>({
   onSeciliDegisti,
   topluEylemler,
   araclar,
+  altbilgi,
   sunucuTarafli = false,
   toplam,
   durum,
@@ -363,6 +375,17 @@ export function VeriTablosu<T>({
                 );
               })}
             </tbody>
+            {altbilgi && (
+              <tfoot
+                style={{
+                  borderTopWidth: "2px",
+                  borderTopStyle: "solid",
+                  borderColor: "var(--yz-border-strong)",
+                }}
+              >
+                {altbilgi(gorunen)}
+              </tfoot>
+            )}
           </table>
         </div>
       )}

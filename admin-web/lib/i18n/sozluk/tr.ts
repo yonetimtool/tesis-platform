@@ -1046,6 +1046,8 @@ export const tr = {
   icraAciklama: "Açıklama",
   icraDurum: "Durum",
   icraDurumHepsi: "Tümü",
+  icraDurumDegistir: "{no} dosyasının durumunu değiştir",
+  icraDurumDegistirKisa: "Durumu değiştir",
   icraDurum_acik: "Açık",
   icraDurum_takipte: "Takipte",
   icraDurum_tahsil_edildi: "Tahsil edildi",

@@ -1,24 +1,22 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import useSWR from "swr";
 
-import { EmptyState } from "@/components/EmptyState";
 import {
-  ErrorBox,
-  Field,
-  PageHeader,
-  btnGhost,
-  btnPrimary,
-  inputCls,
-  panelCls,
-  panelMotion,
-} from "@/components/form";
-import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
+  Alan,
+  AlanSarmal,
+  BosDurum,
+  Dugme,
+  HataDurumu,
+  Kart,
+  VeriTablosu,
+  type Kolon,
+} from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { agIstegi } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
+import { kurusToTLSade } from "@/lib/money";
 import { useT } from "@/lib/i18n/kullan";
 
 /**
@@ -32,6 +30,22 @@ import { useT } from "@/lib/i18n/kullan";
  * PARAMETRE MODALI TEK MODEL (P31 karari): her rapor ayni alan kumesinin
  * bir alt kumesini kullanir; rapor basina ayri form, ayni dogrulamayi on
  * kez yazmak olurdu.
+ *
+ * =========================================================================
+ * (P160) BU SAYFADA UC KUSUR VARDI — ucu de "Goster" ciktisini bozuyordu
+ * =========================================================================
+ * 1. SUTUN ANAHTARLARI YANLISTI. Sunucu `{anahtar, baslik, tip}` doner
+ *    (`RaporSutun`); sayfa `{ad, etiket, tip}` okuyordu. Sonuc: baslik
+ *    satiri BOS ciziliyor ve `satir[undefined]` her hucreyi "—" yapiyordu.
+ *    Yani "Goster" dugmesi calisiyor gibi gorunup BOS BIR TABLO veriyordu.
+ * 2. KURUS SUTUNLARI HAM SAYIYDI. Tablo bicimi satirlari HAM dondurur;
+ *    `125050` ekranda oldugu gibi yaziliyordu. Ayni raporun Excel'i
+ *    `1250,50` yazar — panel ile dosya AYNI RAPOR icin farkli rakam
+ *    gosteriyordu. (Koddaki "sunucu bicimlendirilmis metin doner" notu
+ *    yanlisti; kurus sutunlari icin dogru degil.)
+ * 3. TOPLAMLAR HIC CIZILMIYORDU. Sunucu `toplamlar` doner, Excel ve PDF
+ *    kalin bir TOPLAM satiri basar; ekranda o satir YOKTU. Rapor alan
+ *    kisi toplami gormek icin dosyayi indirmek zorundaydi.
  */
 
 interface KatalogOgesi {
@@ -39,15 +53,16 @@ interface KatalogOgesi {
   baslik: string;
   aciklama: string;
 }
-interface Sutun {
-  ad: string;
-  etiket: string;
+/** Sunucu sozlesmesi: `RaporSutun` (backend/app/schemas.py). */
+interface RaporSutun {
+  anahtar: string;
+  baslik: string;
   tip?: string;
 }
-interface Tablo {
+interface RaporTablosu {
   kod: string;
   baslik: string;
-  sutunlar: Sutun[];
+  sutunlar: RaporSutun[];
   satirlar: Record<string, unknown>[];
   toplamlar: Record<string, unknown>;
   metin: string | null;
@@ -59,6 +74,16 @@ interface Tablo {
  *  Bunlar KULLANICI METNI DEGIL dosya uzantisi oldugu icin sozluge degil
  *  bu haritaya girer. */
 const UZANTI: Record<string, string> = { excel: "xlsx", pdf: "pdf" };
+const TIP_KURUS = "kurus";
+
+/** Hucre metni. KURUS sutunu TL'ye cevrilir — Excel/PDF ile ayni rakam. */
+function hucreMetni(sutun: RaporSutun, ham: unknown): string {
+  if (ham === null || ham === undefined) return "—";
+  if (sutun.tip === TIP_KURUS && typeof ham === "number") {
+    return kurusToTLSade(ham);
+  }
+  return String(ham);
+}
 
 export default function RaporlarPage() {
   const t = useT();
@@ -73,7 +98,7 @@ export default function RaporlarPage() {
   const [bitis, setBitis] = useState("");
   const [blok, setBlok] = useState("");
   const [ismiGoster, setIsmiGoster] = useState(true);
-  const [tablo, setTablo] = useState<Tablo | null>(null);
+  const [tablo, setTablo] = useState<RaporTablosu | null>(null);
   const [hata, setHata] = useState<string | null>(null);
   const [mesgul, setMesgul] = useState(false);
 
@@ -99,7 +124,7 @@ export default function RaporlarPage() {
       if (res === null) return; // (P101/P102) oturum bitti -> yonlendirildi
       const veri = await res.json();
       if (!res.ok) throw new Error(veri?.error?.message ?? String(res.status));
-      setTablo(veri as Tablo);
+      setTablo(veri as RaporTablosu);
     } catch (e) {
       setTablo(null);
       setHata(e instanceof Error ? e.message : String(e));
@@ -143,129 +168,203 @@ export default function RaporlarPage() {
     }
   }
 
+  // Kolonlar SUNUCUDAN gelir: sayfa hicbir rapor sutununu kendisi
+  // tanimlamaz, yoksa yeni bir sutun eklenince panelde eksik kalirdi.
+  const kolonlar: Kolon<Record<string, unknown>>[] = useMemo(
+    () =>
+      (tablo?.sutunlar ?? []).map((s) => ({
+        id: s.anahtar,
+        baslik: s.baslik,
+        sayisal: s.tip === TIP_KURUS,
+        hucre: (satir: Record<string, unknown>) => hucreMetni(s, satir[s.anahtar]),
+        deger: (satir: Record<string, unknown>) => {
+          const ham = satir[s.anahtar];
+          return typeof ham === "number" || typeof ham === "string" ? ham : null;
+        },
+      })),
+    [tablo],
+  );
+
+  const toplamVar = tablo != null && Object.keys(tablo.toplamlar ?? {}).length > 0;
+
   return (
     <div className="space-y-6">
-      <PageHeader title={t("raporBaslik")} subtitle={t("raporAlt")} />
-      <ErrorBox message={katErr ? t("raporKatalogHata") : hata} />
+      <div>
+        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+          {t("raporBaslik")}
+        </h1>
+        <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+          {t("raporAlt")}
+        </p>
+      </div>
+
+      {(katErr || hata) && <HataDurumu mesaj={katErr ? t("raporKatalogHata") : hata!} />}
 
       {/* ----------------------------- katalog ----------------------------- */}
-      <motion.section {...panelMotion} className={panelCls}>
-        <h2 className="mb-3 text-sm font-semibold">{t("raporKatalog")}</h2>
+      <Kart>
+        <h2 className="mb-3" style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
+          {t("raporKatalog")}
+        </h2>
         {katalog && katalog.items.length === 0 ? (
-          <EmptyState title={t("raporYok")} description={t("raporYokAlt")} />
+          <BosDurum baslik={t("raporYok")} aciklama={t("raporYokAlt")} />
         ) : null}
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {(katalog?.items ?? []).map((r) => (
+            // (P160) `aria-pressed` EKLENDI: secili rapor eskiden yalniz
+            // KENAR RENGIYLE belliydi; ekran okuyucu hangi raporun secili
+            // oldugunu soylemiyordu.
             <button
               key={r.kod}
+              type="button"
+              aria-pressed={secili?.kod === r.kod}
               onClick={() => {
                 setSecili(r);
                 setTablo(null);
               }}
-              className={`rounded-lg border p-3 text-start text-sm transition ${
-                secili?.kod === r.kod
-                  ? "border-slate-900 bg-yuzey-bg dark:border-slate-200 dark:bg-slate-800"
-                  : "kart-kenar hover:border-slate-400 dark:border-slate-700"
-              }`}
+              className={[
+                "odak-ic p-3 text-start",
+                secili?.kod === r.kod ? "yz-raised" : "yz-lift",
+              ].join(" ")}
+              style={{
+                borderRadius: "var(--yz-r-md)",
+                border:
+                  secili?.kod === r.kod
+                    ? "var(--yz-border-w) solid var(--yz-accent)"
+                    : "var(--yz-border-w) solid var(--yz-border)",
+                background: "var(--yz-metal-1)",
+              }}
             >
-              <div className="font-medium">{r.baslik}</div>
-              <div className="mt-1 text-xs text-metin-muted">{r.aciklama}</div>
+              <div style={{ fontSize: "var(--yz-fs-body)", color: "var(--yz-text)" }}>
+                {r.baslik}
+              </div>
+              <div
+                className="mt-1"
+                style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}
+              >
+                {r.aciklama}
+              </div>
             </button>
           ))}
         </div>
-      </motion.section>
+      </Kart>
 
       {/* ---------------------------- parametre ---------------------------- */}
       {secili ? (
-        <motion.section {...panelMotion} className={panelCls}>
-          <h2 className="mb-3 text-sm font-semibold">{secili.baslik}</h2>
+        <Kart>
+          <h2 className="mb-3" style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
+            {secili.baslik}
+          </h2>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <Field label={t("raporBaslangic")}>
-              <input
-                className={inputCls}
-                type="date"
-                value={baslangic}
-                onChange={(e) => setBaslangic(e.target.value)}
-              />
-            </Field>
-            <Field label={t("raporBitis")}>
-              <input
-                className={inputCls}
-                type="date"
-                value={bitis}
-                onChange={(e) => setBitis(e.target.value)}
-              />
-            </Field>
-            <Field label={t("raporBlok")}>
-              <input className={inputCls} value={blok} onChange={(e) => setBlok(e.target.value)} />
-            </Field>
-            <Field label={t("raporIsmiGoster")}>
-              {/* KVKK (P31): kapiya asilacak listede ad OLMAMALI — bu
-                  anahtar o kullanim icindir. */}
+            <AlanSarmal etiket={t("raporBaslangic")}>
+              {(b) => (
+                <Alan
+                  {...b}
+                  type="date"
+                  value={baslangic}
+                  onChange={(e) => setBaslangic(e.target.value)}
+                />
+              )}
+            </AlanSarmal>
+            <AlanSarmal etiket={t("raporBitis")}>
+              {(b) => (
+                <Alan {...b} type="date" value={bitis} onChange={(e) => setBitis(e.target.value)} />
+              )}
+            </AlanSarmal>
+            <AlanSarmal etiket={t("raporBlok")}>
+              {(b) => <Alan {...b} value={blok} onChange={(e) => setBlok(e.target.value)} />}
+            </AlanSarmal>
+            {/* KVKK (P31): kapiya asilacak listede ad OLMAMALI — bu
+                anahtar o kullanim icindir. */}
+            <label
+              className="flex items-center gap-2 self-end pb-2"
+              style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}
+            >
               <input
                 type="checkbox"
-                className="mt-2 h-4 w-4"
                 checked={ismiGoster}
                 onChange={(e) => setIsmiGoster(e.target.checked)}
               />
-            </Field>
+              {t("raporIsmiGoster")}
+            </label>
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
-            <button className={btnPrimary} disabled={mesgul} onClick={() => goster(secili.kod)}>
+            <Dugme tur="birincil" disabled={mesgul} onClick={() => void goster(secili.kod)}>
               {t("raporGoster")}
-            </button>
-            <button className={btnGhost} disabled={mesgul} onClick={() => indir(secili.kod, "excel")}>
+            </Dugme>
+            <Dugme disabled={mesgul} onClick={() => void indir(secili.kod, "excel")}>
               {t("raporExcel")}
-            </button>
-            <button className={btnGhost} disabled={mesgul} onClick={() => indir(secili.kod, "pdf")}>
+            </Dugme>
+            <Dugme disabled={mesgul} onClick={() => void indir(secili.kod, "pdf")}>
               {t("raporPdf")}
-            </button>
+            </Dugme>
           </div>
-        </motion.section>
+        </Kart>
       ) : null}
 
       {/* ------------------------------ sonuc ------------------------------ */}
       {tablo ? (
-        <motion.section {...panelMotion} className={panelCls}>
-          <h2 className="mb-3 text-sm font-semibold">{tablo.baslik}</h2>
+        <div className="space-y-3">
+          <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{tablo.baslik}</h2>
           {tablo.metin ? (
             // Serbest metin bolumu (ihtar govdesi, denetim notu): duz metin
             // olarak cizilir — HTML kabul etmek XSS yuzeyi acardi.
-            <pre className="mb-3 whitespace-pre-wrap rounded bg-yuzey-bg p-3 text-xs dark:bg-slate-800">
-              {tablo.metin}
-            </pre>
+            <Kart>
+              <pre
+                className="whitespace-pre-wrap"
+                style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text)" }}
+              >
+                {tablo.metin}
+              </pre>
+            </Kart>
           ) : null}
+          {/* SATIR YOKSA BOS DURUM — sutun sayisindan BAGIMSIZ. Once
+              "sutun varsa tablo ciz" yazmistim; sutunsuz donen raporlarda
+              (serbest metin raporlari boyle doner) ekranda hicbir sey
+              kalmiyordu, yani "kayit bulunamadi" bilgisi kayboluyordu. */}
           {tablo.satirlar.length === 0 ? (
-            <EmptyState title={t("raporSatirYok")} description={t("raporSatirYokAlt")} />
+            <Kart>
+              <BosDurum baslik={t("raporSatirYok")} aciklama={t("raporSatirYokAlt")} />
+            </Kart>
           ) : (
-            <div className="overflow-x-auto">
-              <Tablo>
-                <TabloBasligi zeminsiz>
-                    {tablo.sutunlar.map((s) => (
-                      <Th sik className="whitespace-nowrap" key={s.ad}>
-                        {s.etiket}
-                      </Th>
-                    ))}
-                  </TabloBasligi>
-                <tbody>
-                  {tablo.satirlar.map((satir, i) => (
-                    <tr key={i} className="border-t border-yuzey-divider dark:border-slate-800">
-                      {tablo.sutunlar.map((s) => (
-                        <Td key={s.ad}
-                          className={`px-3 py-2 ${s.tip === "kurus" ? "text-end tabular-nums" : ""}`}>
-                          {/* Sunucu bicimlendirilmis METIN doner (P31): panelde
-                              yeniden bicimlendirmek, Excel/PDF ile panelin
-                              farkli rakam gostermesi demekti. */}
-                          {String(satir[s.ad] ?? "—")}
-                        </Td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </Tablo>
-            </div>
+            <VeriTablosu<Record<string, unknown>>
+              kolonlar={kolonlar}
+              satirlar={tablo.satirlar}
+              // Rapor satirlarinin kimligi YOK; sira numarasi kararlidir
+              // cunku liste tek seferde gelir ve yerinde degismez.
+              satirId={(satir) => String(tablo.satirlar.indexOf(satir))}
+              bosBaslik={t("raporSatirYok")}
+              bosAciklama={t("raporSatirYokAlt")}
+              altbilgi={
+                toplamVar
+                  ? (gorunen) => (
+                      <tr>
+                        {gorunen.map((k, i) => (
+                          <td
+                            key={k.id}
+                            className={["p-3", k.sayisal ? "text-end tabular-nums" : ""]
+                              .filter(Boolean)
+                              .join(" ")}
+                            style={{
+                              fontSize: "var(--yz-fs-body)",
+                              fontWeight: 600,
+                              color: "var(--yz-text)",
+                            }}
+                          >
+                            {i === 0
+                              ? t("ortakToplam")
+                              : hucreMetni(
+                                  tablo.sutunlar.find((s) => s.anahtar === k.id)!,
+                                  tablo.toplamlar[k.id],
+                                )}
+                          </td>
+                        ))}
+                      </tr>
+                    )
+                  : undefined
+              }
+            />
           )}
-        </motion.section>
+        </div>
       ) : null}
     </div>
   );

@@ -1,14 +1,17 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import useSWR from "swr";
 
-import { EmptyState } from "@/components/EmptyState";
-import { Field, ErrorBox, PageHeader, inputCls, btnPrimary, btnGhost, panelCls, panelMotion,
-  EksikVeriUyarisi,
-} from "@/components/form";
-import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
+import { EksikVeriUyarisi } from "@/components/form";
+import {
+  Alan,
+  AlanSarmal,
+  Dugme,
+  Kart,
+  VeriTablosu,
+  type Kolon,
+} from "@/components/ui";
 import { ReportsTabs } from "@/components/ReportsTabs";
 import { kisaKimlik } from "@/lib/kimlik";
 import { ODEME_YONTEM, enumAdi } from "@/lib/enum-adlari";
@@ -16,7 +19,7 @@ import { fetchAllPaged } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
 import { kurusToTL } from "@/lib/money";
 import type { DuesAssessment, DuesPayment, UnitList } from "@/lib/types";
-import { useT } from "@/lib/i18n/kullan";
+import { useI18n, useT } from "@/lib/i18n/kullan";
 
 interface BorcRow {
   unit_id: string;
@@ -63,6 +66,12 @@ export default function DuesReportPage() {
   const t = useT();
   const [donem, setDonem] = useState("");
   const [busy, setBusy] = useState(false);
+  const { dil } = useI18n();
+  // Yuzde birimi DILE BAGLI (tr "%78", en "78%"); `Intl` koyar.
+  const yuzde = useMemo(() => {
+    const b = new Intl.NumberFormat(dil, { style: "percent", maximumFractionDigits: 0 });
+    return (n: number) => b.format(n / 100);
+  }, [dil]);
   const [err, setErr] = useState<string | null>(null);
   const [report, setReport] = useState<Report | null>(null);
   /** (P65) Eski odeme taramasi ust sinira takildi mi — rapor EKSIKTIR. */
@@ -200,60 +209,153 @@ export default function DuesReportPage() {
     csvDownload(`borclu-daireler-${report.donem}.csv`, rows);
   }
 
+  const borcKolonlari: Kolon<BorcRow>[] = useMemo(
+    () => [
+      { id: "no", baslik: t("raporTabloDaire"), gizlenebilir: false, hucre: (b) => b.no },
+      {
+        id: "tahakkuk",
+        baslik: t("raporTabloTahakkuk"),
+        sayisal: true,
+        deger: (b) => b.tahakkuk,
+        hucre: (b) => kurusToTL(b.tahakkuk),
+      },
+      {
+        id: "odenen",
+        baslik: t("raporOdenen"),
+        sayisal: true,
+        deger: (b) => b.odenen,
+        hucre: (b) => kurusToTL(b.odenen),
+      },
+      {
+        id: "kalan",
+        baslik: t("raporKalanBorc"),
+        sayisal: true,
+        deger: (b) => b.kalan,
+        hucre: (b) => (
+          <span style={{ color: "var(--yz-danger-ink)", fontWeight: 600 }}>
+            {kurusToTL(b.kalan)}
+          </span>
+        ),
+      },
+      {
+        id: "son",
+        baslik: t("aidatSonOdemeKisa"),
+        darEkrandaGizle: true,
+        hucre: (b) => b.son_odeme ?? "—",
+      },
+    ],
+    [t],
+  );
+
+  const odemeKolonlari: Kolon<OdemeRow>[] = useMemo(
+    () => [
+      { id: "no", baslik: t("raporTabloDaire"), gizlenebilir: false, hucre: (o) => o.no },
+      {
+        id: "tutar",
+        baslik: t("raporTabloTutar"),
+        sayisal: true,
+        deger: (o) => o.tutar,
+        hucre: (o) => <span className="font-medium">{kurusToTL(o.tutar)}</span>,
+      },
+      {
+        id: "yontem",
+        baslik: t("aidatYontem"),
+        hucre: (o) => enumAdi(t, ODEME_YONTEM, o.yontem),
+      },
+      {
+        id: "zaman",
+        baslik: t("raporTabloZaman"),
+        darEkrandaGizle: true,
+        hucre: (o) => formatDateTime(o.zaman),
+      },
+    ],
+    [t],
+  );
+
   return (
     <div className="space-y-6">
       <ReportsTabs />
-      <PageHeader title={t("raporAidatTahsilatBaslik")} />
+      <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+        {t("raporAidatTahsilatBaslik")}
+      </h1>
 
-      <EksikVeriUyarisi
-        mesaj={unitsErr ? t("ortakSecenekYuklenemedi") : null}
-      />
+      <EksikVeriUyarisi mesaj={unitsErr ? t("ortakSecenekYuklenemedi") : null} />
 
-      <motion.form {...panelMotion} onSubmit={run} className={`flex items-end gap-3 ${panelCls}`}>
-        <div className="w-56">
-          <Field label={t("ortakDonem")} hint={t("raporDonemOrnek")}>
-            <input
-              className={inputCls}
-              value={donem}
-              onChange={(e) => setDonem(e.target.value)}
-              placeholder="2026-06"
-            />
-          </Field>
-        </div>
-        <button type="submit" className={btnPrimary} disabled={busy}>
-          {busy ? t("raporHesaplaniyor") : t("raporGetir")}
-        </button>
-      </motion.form>
+      <Kart>
+        <form onSubmit={run} className="flex items-end gap-3">
+          <div className="w-56">
+            <AlanSarmal etiket={t("ortakDonem")} ipucu={t("raporDonemOrnek")}>
+              {(b) => (
+                <Alan
+                  {...b}
+                  value={donem}
+                  onChange={(e) => setDonem(e.target.value)}
+                  placeholder="2026-06"
+                />
+              )}
+            </AlanSarmal>
+          </div>
+          <Dugme tur="birincil" type="submit" disabled={busy} yukleniyor={busy}>
+            {busy ? t("raporHesaplaniyor") : t("raporGetir")}
+          </Dugme>
+        </form>
+      </Kart>
 
-      {err && <ErrorBox message={err} />}
+      {err && (
+        <p role="alert" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-danger-ink)" }}>
+          {err}
+        </p>
+      )}
       {/* (P65) SESSIZ KIRPMA YOK: ust sinira takilan tarama, EKSIK bir
           raporu tam sanmak demektir. */}
       {eskiKesildi && (
-        <p className="text-xs text-amber-700">{t("raporEskiOdemeKesildi")}</p>
+        <p role="status" style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-warning-ink)" }}>
+          {t("raporEskiOdemeKesildi")}
+        </p>
       )}
       {unitTruncated && (
-        <p className="text-xs text-amber-700">
+        <p role="status" style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-warning-ink)" }}>
           {t("raporDaireNotu")}
         </p>
       )}
 
       {report && (
         <>
-          {/* Ozet kartlari */}
+          {/* OZET — PARA, o yuzden SAYACSIZ (bkz. /finans karari): sayan
+              bir rakam, animasyon boyunca gercek olmayan bir tutar
+              gosterir ve bu ekranda o tutarlar karar dayanagidir. */}
           <div className="grid gap-3 md:grid-cols-4">
-            <Card baslik={t("raporToplamTahakkuk")} deger={kurusToTL(report.toplamTahakkuk)} />
-            <Card baslik={t("raporToplamTahsilat")} deger={kurusToTL(report.toplamTahsilat)} tone="emerald" />
-            <Card baslik={t("raporBakiyeBorc")} deger={kurusToTL(report.bakiye)} tone={report.bakiye > 0 ? "red" : "emerald"} />
-            <Card baslik={t("raporTahsilatOrani")} deger={`% ${report.oranYuzde}`} />
+            <OzetKart etiket={t("raporToplamTahakkuk")} deger={kurusToTL(report.toplamTahakkuk)} />
+            <OzetKart
+              etiket={t("raporToplamTahsilat")}
+              deger={kurusToTL(report.toplamTahsilat)}
+              renk="var(--yz-success-ink)"
+            />
+            <OzetKart
+              etiket={t("raporBakiyeBorc")}
+              deger={kurusToTL(report.bakiye)}
+              renk={report.bakiye > 0 ? "var(--yz-danger-ink)" : "var(--yz-success-ink)"}
+            />
+            {/* (P160) `% 78` ELLE kuruluyordu — Turkce yazim, yedi dilin
+                altisinda yanlis. `Intl` birimi aktif dile gore koyar. */}
+            <OzetKart etiket={t("raporTahsilatOrani")} deger={yuzde(report.oranYuzde)} />
           </div>
           <div className="grid gap-3 md:grid-cols-3">
-            <Card baslik={t("raporTahakkukEdilenDaire")} deger={String(report.daireTahakkuk)} />
-            <Card baslik={t("raporTamOdeyen")} deger={String(report.daireTamOdeyen)} tone="emerald" />
-            <Card baslik={t("raporBorcluDaire")} deger={String(report.daireBorclu)} tone={report.daireBorclu > 0 ? "red" : "emerald"} />
+            <OzetKart etiket={t("raporTahakkukEdilenDaire")} deger={String(report.daireTahakkuk)} />
+            <OzetKart
+              etiket={t("raporTamOdeyen")}
+              deger={String(report.daireTamOdeyen)}
+              renk="var(--yz-success-ink)"
+            />
+            <OzetKart
+              etiket={t("raporBorcluDaire")}
+              deger={String(report.daireBorclu)}
+              renk={report.daireBorclu > 0 ? "var(--yz-danger-ink)" : "var(--yz-success-ink)"}
+            />
           </div>
 
           {report.serbestBasariliSayi > 0 && (
-            <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            <p role="status" style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-warning-ink)" }}>
               {t("raporDonemsizNot", { sayi: report.serbestBasariliSayi })}
             </p>
           )}
@@ -261,76 +363,38 @@ export default function DuesReportPage() {
           {/* Borclu daireler */}
           <section className="space-y-2">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-medium">{t("raporBorcluDaireler")}</h2>
-              <button className={btnGhost} onClick={exportBorclular} disabled={report.borclular.length === 0}>
+              <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
+                {t("raporBorcluDaireler")}
+              </h2>
+              <Dugme
+                boy="kucuk"
+                onClick={() => void exportBorclular()}
+                disabled={report.borclular.length === 0}
+              >
                 {t("raporCsvIndir")}
-              </button>
+              </Dugme>
             </div>
-            <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
-              <div className="odak-ic overflow-x-auto" tabIndex={0}>
-                <Tablo>
-                  <TabloBasligi>
-                      <Th>{t("raporTabloDaire")}</Th>
-                      <Th>{t("raporTabloTahakkuk")}</Th>
-                      <Th>{t("raporOdenen")}</Th>
-                      <Th>{t("raporKalanBorc")}</Th>
-                      <Th>{t("aidatSonOdemeKisa")}</Th>
-                    </TabloBasligi>
-                  <tbody>
-                    {report.borclular.map((b) => (
-                      <Tr key={b.unit_id}>
-                        <Td>{b.no}</Td>
-                        <Td sayi className="text-metin-body">{kurusToTL(b.tahakkuk)}</Td>
-                        <Td sayi className="text-metin-body">{kurusToTL(b.odenen)}</Td>
-                        <Td sayi className="font-medium text-red-700">{kurusToTL(b.kalan)}</Td>
-                        <Td className="text-metin-body">{b.son_odeme ?? "—"}</Td>
-                      </Tr>
-                    ))}
-                    {report.borclular.length === 0 && (
-                      <tr>
-                        <Td colSpan={5}>
-                          <EmptyState title={t("raporBorcluYok")} description={t("raporBorcluYokAlt")} />
-                        </Td>
-                      </tr>
-                    )}
-                  </tbody>
-                </Tablo>
-              </div>
-            </div>
+            <VeriTablosu<BorcRow>
+              kolonlar={borcKolonlari}
+              satirlar={report.borclular}
+              satirId={(b) => b.unit_id}
+              bosBaslik={t("raporBorcluYok")}
+              bosAciklama={t("raporBorcluYokAlt")}
+            />
           </section>
 
           {/* Odemeler */}
           <section className="space-y-2">
-            <h2 className="text-lg font-medium">{t("raporDonemTahsilatlari")}</h2>
-            <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
-              <div className="odak-ic overflow-x-auto" tabIndex={0}>
-                <Tablo>
-                  <TabloBasligi>
-                      <Th>{t("raporTabloDaire")}</Th>
-                      <Th>{t("raporTabloTutar")}</Th>
-                      <Th>{t("aidatYontem")}</Th>
-                      <Th>{t("raporTabloZaman")}</Th>
-                    </TabloBasligi>
-                  <tbody>
-                    {report.odemeler.map((o) => (
-                      <Tr key={o.id}>
-                        <Td>{o.no}</Td>
-                        <Td sayi className="font-medium">{kurusToTL(o.tutar)}</Td>
-                        <Td className="text-metin-body">{enumAdi(t, ODEME_YONTEM, o.yontem)}</Td>
-                        <Td className="text-metin-body">{formatDateTime(o.zaman)}</Td>
-                      </Tr>
-                    ))}
-                    {report.odemeler.length === 0 && (
-                      <tr>
-                        <Td colSpan={4}>
-                          <EmptyState title={t("aidatOdemeYok")} description={t("raporOdemeYok")} />
-                        </Td>
-                      </tr>
-                    )}
-                  </tbody>
-                </Tablo>
-              </div>
-            </div>
+            <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
+              {t("raporDonemTahsilatlari")}
+            </h2>
+            <VeriTablosu<OdemeRow>
+              kolonlar={odemeKolonlari}
+              satirlar={report.odemeler}
+              satirId={(o) => o.id}
+              bosBaslik={t("aidatOdemeYok")}
+              bosAciklama={t("raporOdemeYok")}
+            />
           </section>
         </>
       )}
@@ -338,25 +402,21 @@ export default function DuesReportPage() {
   );
 }
 
-function Card({
-  baslik,
-  deger,
-  tone,
-}: {
-  baslik: string;
-  deger: string;
-  tone?: "emerald" | "red";
-}) {
-  const cls =
-    tone === "red"
-      ? "bg-red-50 text-red-700"
-      : tone === "emerald"
-        ? "bg-emerald-50 text-emerald-700"
-        : "bg-yuzey-bg text-slate-800";
+/** Ozet kutusu — para/sayilar SAYACSIZ (gerekce yukarida). */
+function OzetKart({ etiket, deger, renk }: { etiket: string; deger: string; renk?: string }) {
   return (
-    <div className={`rounded-xl p-4 ${cls}`}>
-      <div className="text-xs text-metin-body">{baslik}</div>
-      <div className="text-xl font-semibold">{deger}</div>
-    </div>
+    <Kart className="!p-4">
+      <div style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>{etiket}</div>
+      <div
+        className="mt-1 tabular-nums"
+        style={{
+          fontSize: "var(--yz-fs-h3)",
+          fontWeight: "var(--yz-fw-kpi)" as unknown as number,
+          color: renk ?? "var(--yz-text)",
+        }}
+      >
+        {deger}
+      </div>
+    </Kart>
   );
 }

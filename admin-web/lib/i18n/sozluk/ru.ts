@@ -993,6 +993,8 @@ export const ru: Sozluk = {
   icraAciklama: "Примечания",
   icraDurum: "Статус",
   icraDurumHepsi: "Все",
+  icraDurumDegistir: "Изменить статус дела {no}",
+  icraDurumDegistirKisa: "Изменить статус",
   icraDurum_acik: "Открыто",
   icraDurum_takipte: "В производстве",
   icraDurum_tahsil_edildi: "Взыскано",

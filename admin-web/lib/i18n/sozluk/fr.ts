@@ -993,6 +993,8 @@ export const fr: Sozluk = {
   icraAciklama: "Remarques",
   icraDurum: "Statut",
   icraDurumHepsi: "Tous",
+  icraDurumDegistir: "Changer le statut du dossier {no}",
+  icraDurumDegistirKisa: "Changer le statut",
   icraDurum_acik: "Ouvert",
   icraDurum_takipte: "En procédure",
   icraDurum_tahsil_edildi: "Recouvré",

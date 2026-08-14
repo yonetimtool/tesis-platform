@@ -993,6 +993,8 @@ export const ar: Sozluk = {
   icraAciklama: "ملاحظات",
   icraDurum: "الحالة",
   icraDurumHepsi: "الكل",
+  icraDurumDegistir: "تغيير حالة الملف {no}",
+  icraDurumDegistirKisa: "تغيير الحالة",
   icraDurum_acik: "مفتوح",
   icraDurum_takipte: "قيد الإجراءات",
   icraDurum_tahsil_edildi: "تم التحصيل",

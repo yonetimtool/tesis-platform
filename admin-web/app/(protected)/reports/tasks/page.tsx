@@ -1,14 +1,21 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import useSWR from "swr";
 
-import { EmptyState } from "@/components/EmptyState";
-import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, btnGhost, panelCls, panelMotion,
-  EksikVeriUyarisi,
-} from "@/components/form";
-import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
+import { EksikVeriUyarisi } from "@/components/form";
+import {
+  Alan,
+  AlanSarmal,
+  Dugme,
+  Kart,
+  Kpi,
+  Rozet,
+  Secim,
+  VeriTablosu,
+  type Kolon,
+  type TabloDurumu,
+} from "@/components/ui";
 import { ReportsTabs } from "@/components/ReportsTabs";
 import { kisaKimlik } from "@/lib/kimlik";
 import { fetchAllPaged } from "@/lib/client";
@@ -22,12 +29,16 @@ import type {
 import { useT } from "@/lib/i18n/kullan";
 
 
-const LIMIT = 20;
 // GOREV TIPI = DINAMIK KATEGORI. Sabit dort tip (temizlik/kontrol/ilaclama/
 // peyzaj) backend'den kaldirilmisti; panel eski alanlari okumaya devam
 // ediyordu ve rapor ozet kartlari ekrana "undefined" yaziyordu (tur 41).
 // Kategori adlari SUNUCU VERISIDIR — cevrilmez, oldugu gibi gosterilir.
-const KART_TONLARI = ["teal", "blue", "violet", "emerald"] as const;
+// UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
+const D_OLUMLU = "olumlu" as const;
+const D_NOTR = "notr" as const;
+const D_BILGI = "bilgi" as const;
+// Ozet halkalarinin renk dongusu — kategori sayisi degiskendir.
+const HALKA_DONGUSU = [D_BILGI, D_OLUMLU, D_NOTR] as const;
 
 function toIso(local: string): string {
   if (!local) return "";
@@ -55,7 +66,13 @@ export default function TaskReportPage() {
   const [committed, setCommitted] = useState<string | null>(null);
   /** (P65) Cekim ust sinira takildi mi — rapor EKSIKTIR. */
   const [kesildi, setKesildi] = useState(false);
-  const [offset, setOffset] = useState(0);
+  const [tabloDurumu, setTabloDurumu] = useState<TabloDurumu>({
+    sayfa: 1,
+    boy: 25,
+    siraKolon: null,
+    siraYonu: "artan",
+  });
+  const offset = (tabloDurumu.sayfa - 1) * tabloDurumu.boy;
 
   const { data: users, error: usersErr } = useSWR<UserListResponse>("/api/users?limit=200&offset=0", jsonFetcher);
   // Suzgec KATEGORI uzerinden (sunucu `kategori_id` bekler). Eskiden sabit
@@ -81,12 +98,12 @@ export default function TaskReportPage() {
   function submit(e: React.FormEvent) {
     e.preventDefault();
     setCommitted(buildFilters());
-    setOffset(0);
+    setTabloDurumu((d) => ({ ...d, sayfa: 1 }));
   }
 
   const key =
     committed !== null
-      ? `/api/task-completions?${[committed, `limit=${LIMIT}`, `offset=${offset}`]
+      ? `/api/task-completions?${[committed, `limit=${tabloDurumu.boy}`, `offset=${offset}`]
           .filter(Boolean)
           .join("&")}`
       : null;
@@ -116,182 +133,201 @@ export default function TaskReportPage() {
     csvDownload("gorev-gecmisi.csv", rows);
   }
 
+  const kategoriSecenekleri = (kategoriler?.items ?? []).map((k) => (
+    <option key={k.id} value={k.id}>
+      {k.ad}
+    </option>
+  ));
+  const kisiSecenekleri = (users?.items ?? []).map((u) => (
+    <option key={u.id} value={u.id}>
+      {u.ad}
+    </option>
+  ));
+
+  const kolonlar: Kolon<TaskCompletionRow>[] = useMemo(
+    () => [
+      {
+        id: "gorev",
+        baslik: t("raporGorev"),
+        gizlenebilir: false,
+        hucre: (c) => c.task_adi ?? "—",
+      },
+      {
+        id: "tip",
+        baslik: t("raporTabloTip"),
+        // Kategori adlari SUNUCU VERISIDIR — cevrilmez, oldugu gibi.
+        hucre: (c) => <Rozet durum={D_NOTR}>{c.kategori_ad}</Rozet>,
+      },
+      {
+        id: "tamamlayan",
+        baslik: t("raporTabloTamamlayan"),
+        hucre: (c) => userName(c.tamamlayan_user_id),
+      },
+      {
+        id: "zaman",
+        baslik: t("raporTabloZaman"),
+        hucre: (c) => formatDateTime(c.tamamlanma_zamani),
+      },
+      {
+        id: "foto",
+        baslik: t("raporTabloFoto"),
+        darEkrandaGizle: true,
+        hucre: (c) =>
+          c.foto_var ? <Rozet durum={D_OLUMLU}>{t("raporVar")}</Rozet> : t("raporYok"),
+      },
+      {
+        id: "nfc",
+        baslik: t("raporTabloNfc"),
+        darEkrandaGizle: true,
+        // (P160) EskiDEN yalniz bir "✓" isareti vardi: ekran okuyucu
+        // "onay isareti" der ya da hic okumaz, ve olumsuz durum "—" ile
+        // anlatiliyordu. Ikisi de METIN degildi. Artik Evet/Hayir.
+        hucre: (c) =>
+          c.nfc_dogrulandi ? (
+            <Rozet durum={D_OLUMLU}>{t("ortakEvet")}</Rozet>
+          ) : (
+            t("ortakHayir")
+          ),
+      },
+      {
+        id: "not",
+        baslik: t("raporNot"),
+        darEkrandaGizle: true,
+        hucre: (c) => c.notlar ?? "—",
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [t, users],
+  );
+
   return (
     <div className="space-y-6">
       <ReportsTabs />
-      <PageHeader title={t("raporGorevGecmisiBaslik")} />
+      <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+        {t("raporGorevGecmisiBaslik")}
+      </h1>
 
       <EksikVeriUyarisi
         mesaj={usersErr || kategorilerErr ? t("ortakSecenekYuklenemedi") : null}
       />
 
-      <motion.form {...panelMotion} onSubmit={submit} className={`flex flex-wrap items-end gap-3 ${panelCls}`}>
-        <div className="w-full sm:w-52">
-          <Field label={t("ortakBaslangic")} hint={t("ortakYerelSaatOpsiyonel")}>
-            <input type="datetime-local" className={inputCls} value={bas} onChange={(e) => setBas(e.target.value)} />
-          </Field>
-        </div>
-        <div className="w-full sm:w-52">
-          <Field label={t("ortakBitis")} hint={t("ortakYerelSaatOpsiyonel")}>
-            <input type="datetime-local" className={inputCls} value={bit} onChange={(e) => setBit(e.target.value)} />
-          </Field>
-        </div>
-        <div className="w-full sm:w-52">
-          <Field label={t("gorevKategoriAlan")}>
-            <select
-              className={inputCls}
-              value={kategoriId}
-              onChange={(e) => setKategoriId(e.target.value)}
-            >
-              <option value="">{t("ortakTumu")}</option>
-              {(kategoriler?.items ?? []).map((k) => (
-                <option key={k.id} value={k.id}>
-                  {k.ad}
-                </option>
-              ))}
-            </select>
-          </Field>
-        </div>
-        <div className="w-full sm:w-52">
-          <Field label={t("raporTamamlayanOpsiyonel")}>
-            <select className={inputCls} value={tamamlayan} onChange={(e) => setTamamlayan(e.target.value)}>
-              <option value="">{t("ortakTumu")}</option>
-              {(users?.items ?? []).map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.ad}
-                </option>
-              ))}
-            </select>
-          </Field>
-        </div>
-        <button type="submit" className={btnPrimary}>
-          {t("raporGetir")}
-        </button>
-      </motion.form>
+      <Kart>
+        <form onSubmit={submit} className="flex flex-wrap items-end gap-3">
+          <div className="w-full sm:w-52">
+            <AlanSarmal etiket={t("ortakBaslangic")} ipucu={t("ortakYerelSaatOpsiyonel")}>
+              {(b) => (
+                <Alan
+                  {...b}
+                  type="datetime-local"
+                  value={bas}
+                  onChange={(e) => setBas(e.target.value)}
+                />
+              )}
+            </AlanSarmal>
+          </div>
+          <div className="w-full sm:w-52">
+            <AlanSarmal etiket={t("ortakBitis")} ipucu={t("ortakYerelSaatOpsiyonel")}>
+              {(b) => (
+                <Alan
+                  {...b}
+                  type="datetime-local"
+                  value={bit}
+                  onChange={(e) => setBit(e.target.value)}
+                />
+              )}
+            </AlanSarmal>
+          </div>
+          <div className="w-full sm:w-52">
+            <AlanSarmal etiket={t("gorevKategoriAlan")}>
+              {(b) => (
+                <Secim
+                  {...b}
+                  value={kategoriId}
+                  onChange={(e) => setKategoriId(e.target.value)}
+                >
+                  <option value="">{t("ortakTumu")}</option>
+                  {kategoriSecenekleri}
+                </Secim>
+              )}
+            </AlanSarmal>
+          </div>
+          <div className="w-full sm:w-52">
+            <AlanSarmal etiket={t("raporTamamlayanOpsiyonel")}>
+              {(b) => (
+                <Secim
+                  {...b}
+                  value={tamamlayan}
+                  onChange={(e) => setTamamlayan(e.target.value)}
+                >
+                  <option value="">{t("ortakTumu")}</option>
+                  {kisiSecenekleri}
+                </Secim>
+              )}
+            </AlanSarmal>
+          </div>
+          <Dugme tur="birincil" type="submit">
+            {t("raporGetir")}
+          </Dugme>
+        </form>
+      </Kart>
 
-      {error && <ErrorBox message={error.message} />}
-
+      {/* (P65) Cekim ust sinira takildi: rapor EKSIKTIR. */}
       {kesildi && (
-
-        <p className="text-xs text-amber-700">{t("raporKesildi")}</p>
-
+        <p role="status" style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-warning-ink)" }}>
+          {t("raporKesildi")}
+        </p>
       )}
       {committed === null && (
-        <p className="text-sm text-metin-muted">{t("raporFiltreSecin")}</p>
+        <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+          {t("raporFiltreSecin")}
+        </p>
       )}
-      {isLoading && committed !== null && !data && <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>}
 
-      {data && (
+      {committed !== null && (
         <>
-          <div className="grid gap-3 md:grid-cols-5">
-            <Card baslik={t("raporToplamTamamlama")} deger={String(data.ozet.toplam)} />
-            {data.ozet.kalemler.map((k, i) => (
-              <Card
-                key={k.kategori_ad}
-                baslik={k.kategori_ad}
-                deger={String(k.sayi)}
-                tone={KART_TONLARI[i % KART_TONLARI.length]}
-              />
-            ))}
-          </div>
+          {data && (
+            <div className="grid gap-3 md:grid-cols-5">
+              <Kpi deger={data.ozet.toplam} etiket={t("raporToplamTamamlama")} />
+              {data.ozet.kalemler.map((k, i) => (
+                <Kpi
+                  key={k.kategori_ad}
+                  deger={k.sayi}
+                  etiket={k.kategori_ad}
+                  durum={HALKA_DONGUSU[i % HALKA_DONGUSU.length]}
+                />
+              ))}
+            </div>
+          )}
 
           <section className="space-y-2">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-medium">{t("raporTamamlamalar")}</h2>
-              <button className={btnGhost} onClick={exportCsv} disabled={data.items.length === 0}>
+              <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
+                {t("raporTamamlamalar")}
+              </h2>
+              <Dugme
+                boy="kucuk"
+                onClick={() => void exportCsv()}
+                disabled={(data?.items.length ?? 0) === 0}
+              >
                 {t("raporCsvIndir")}
-              </button>
+              </Dugme>
             </div>
-            <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
-              <div className="odak-ic overflow-x-auto" tabIndex={0}>
-                <Tablo>
-                  <TabloBasligi>
-                      <Th>{t("raporGorev")}</Th>
-                      <Th>{t("raporTabloTip")}</Th>
-                      <Th>{t("raporTabloTamamlayan")}</Th>
-                      <Th>{t("raporTabloZaman")}</Th>
-                      <Th>{t("raporTabloFoto")}</Th>
-                      <Th>{t("raporTabloNfc")}</Th>
-                      <Th>{t("raporNot")}</Th>
-                    </TabloBasligi>
-                  <tbody>
-                    {data.items.map((c) => (
-                      <Tr key={c.id}>
-                        <Td>{c.task_adi ?? "—"}</Td>
-                        <Td>
-                          <span
-                            className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-metin-body"
-                          >
-                            {c.kategori_ad}
-                          </span>
-                        </Td>
-                        <Td>{userName(c.tamamlayan_user_id)}</Td>
-                        <Td className="text-metin-body">{formatDateTime(c.tamamlanma_zamani)}</Td>
-                        <Td>
-                          {c.foto_var ? (
-                            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800">{t("raporVar")}</span>
-                          ) : (
-                            <span className="text-metin-muted">{t("raporYok")}</span>
-                          )}
-                        </Td>
-                        <Td>
-                          {c.nfc_dogrulandi ? (
-                            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800">✓</span>
-                          ) : (
-                            <span className="text-metin-muted">—</span>
-                          )}
-                        </Td>
-                        <Td className="text-metin-body">{c.notlar ?? "—"}</Td>
-                      </Tr>
-                    ))}
-                    {data.items.length === 0 && (
-                      <tr>
-                        <Td colSpan={7}>
-                          <EmptyState title={t("raporTamamlamaYok")} description={t("raporSonucYok")} />
-                        </Td>
-                      </tr>
-                    )}
-                  </tbody>
-                </Tablo>
-              </div>
-            </div>
-            <Pager
-              offset={offset}
-              limit={LIMIT}
-              total={data.meta.total}
-              onPrev={() => setOffset(Math.max(0, offset - LIMIT))}
-              onNext={() => setOffset(offset + LIMIT)}
+            <VeriTablosu<TaskCompletionRow>
+              kolonlar={kolonlar}
+              satirlar={data?.items ?? []}
+              satirId={(c) => c.id}
+              hata={error ? error.message : null}
+              yukleniyor={isLoading && !data}
+              bosBaslik={t("raporTamamlamaYok")}
+              bosAciklama={t("raporSonucYok")}
+              sunucuTarafli
+              toplam={data?.meta.total ?? 0}
+              durum={tabloDurumu}
+              onDurumDegisti={setTabloDurumu}
             />
           </section>
         </>
       )}
-    </div>
-  );
-}
-
-function Card({
-  baslik,
-  deger,
-  tone,
-}: {
-  baslik: string;
-  deger: string;
-  tone?: "teal" | "blue" | "violet" | "emerald";
-}) {
-  const cls =
-    tone === "teal"
-      ? "bg-teal-50 text-teal-700"
-      : tone === "blue"
-        ? "bg-blue-50 text-blue-700"
-        : tone === "violet"
-          ? "bg-violet-50 text-violet-700"
-          : tone === "emerald"
-            ? "bg-emerald-50 text-emerald-700"
-            : "bg-yuzey-bg text-slate-800";
-  return (
-    <div className={`rounded-xl p-4 ${cls}`}>
-      <div className="text-xs text-metin-body">{baslik}</div>
-      <div className="text-xl font-semibold">{deger}</div>
     </div>
   );
 }

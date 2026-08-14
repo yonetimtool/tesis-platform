@@ -1,26 +1,39 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import useSWR from "swr";
 
-import { EmptyState } from "@/components/EmptyState";
-import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, btnGhost, panelCls, panelMotion,
-  EksikVeriUyarisi,
-} from "@/components/form";
-import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
+import { EksikVeriUyarisi } from "@/components/form";
+import {
+  Alan,
+  AlanSarmal,
+  Dugme,
+  Kart,
+  Kpi,
+  Rozet,
+  Secim,
+  VeriTablosu,
+  type Kolon,
+  type TabloDurumu,
+} from "@/components/ui";
 import { ReportsTabs } from "@/components/ReportsTabs";
 import { TUR_DURUM, enumAdi } from "@/lib/enum-adlari";
 import { fetchAllPaged } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
 import type { PatrolPlanList, PatrolWindowListResponse, PatrolWindowRow } from "@/lib/types";
-import { useT } from "@/lib/i18n/kullan";
+import { useI18n, useT } from "@/lib/i18n/kullan";
 
-const LIMIT = 20;
-const DURUM_STYLE: Record<string, string> = {
-  tamamlandi: "bg-emerald-100 text-emerald-800",
-  kacirildi: "bg-red-100 text-red-800",
-  bekliyor: "bg-amber-100 text-amber-800",
+// UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
+const D_OLUMLU = "olumlu" as const;
+const D_KRITIK = "kritik" as const;
+const D_UYARI = "uyari" as const;
+const D_NOTR = "notr" as const;
+
+/** Pencere durumu -> rozet/halka rengi. */
+const DURUM_RENGI: Record<string, typeof D_OLUMLU | typeof D_KRITIK | typeof D_UYARI> = {
+  tamamlandi: D_OLUMLU,
+  kacirildi: D_KRITIK,
+  bekliyor: D_UYARI,
 };
 
 function toIso(local: string): string {
@@ -50,7 +63,21 @@ export default function PatrolReportPage() {
   /** (P65) Cekim ust sinira takildi mi — rapor EKSIKTIR. */
   const [kesildi, setKesildi] = useState(false);
   const [committed, setCommitted] = useState<string | null>(null);
-  const [offset, setOffset] = useState(0);
+  const [tabloDurumu, setTabloDurumu] = useState<TabloDurumu>({
+    sayfa: 1,
+    boy: 25,
+    siraKolon: null,
+    siraYonu: "artan",
+  });
+  const offset = (tabloDurumu.sayfa - 1) * tabloDurumu.boy;
+  const { dil } = useI18n();
+  // (P160) YUZDE BICIMI DILE BAGLI. Deger `"% 78"` diye ELLE kuruluyordu;
+  // bu Turkce yazimdir ve yedi dilin altisinda yanlisti (en. "78%").
+  // `Intl` birimi aktif dile gore koyar.
+  const yuzde = useMemo(() => {
+    const b = new Intl.NumberFormat(dil, { style: "percent", maximumFractionDigits: 0 });
+    return (n: number) => b.format(n / 100);
+  }, [dil]);
 
   const { data: plans, error: plansErr } = useSWR<PatrolPlanList>("/api/patrol-plans?limit=200&offset=0", jsonFetcher);
 
@@ -68,21 +95,21 @@ export default function PatrolReportPage() {
   function submit(e: React.FormEvent) {
     e.preventDefault();
     setCommitted(buildFilters());
-    setOffset(0);
+    setTabloDurumu((d) => ({ ...d, sayfa: 1 }));
   }
 
   const key =
     committed !== null
-      ? `/api/patrol-windows?${[committed, `limit=${LIMIT}`, `offset=${offset}`]
+      ? `/api/patrol-windows?${[committed, `limit=${tabloDurumu.boy}`, `offset=${offset}`]
           .filter(Boolean)
           .join("&")}`
       : null;
   const { data, error, isLoading } = useSWR<PatrolWindowListResponse>(key, jsonFetcher);
 
-  const oran =
+  const oranSayi =
     data && data.ozet.toplam > 0
-      ? `% ${Math.floor((data.ozet.tamamlandi * 100) / data.ozet.toplam)}`
-      : "—";
+      ? Math.floor((data.ozet.tamamlandi * 100) / data.ozet.toplam)
+      : 0;
 
   async function exportCsv() {
     if (committed === null) return;
@@ -107,156 +134,172 @@ export default function PatrolReportPage() {
     csvDownload("tur-gecmisi.csv", rows);
   }
 
+  const planSecenekleri = (plans?.items ?? []).map((p) => (
+    <option key={p.id} value={p.id}>
+      {p.ad}
+    </option>
+  ));
+
+  const kolonlar: Kolon<PatrolWindowRow>[] = useMemo(
+    () => [
+      {
+        id: "plan",
+        baslik: t("raporTabloPlan"),
+        gizlenebilir: false,
+        hucre: (w) => w.plan_adi ?? "—",
+      },
+      {
+        id: "bas",
+        baslik: t("ortakBaslangic"),
+        hucre: (w) => formatDateTime(w.pencere_baslangic),
+      },
+      {
+        id: "bit",
+        baslik: t("ortakBitis"),
+        darEkrandaGizle: true,
+        hucre: (w) => formatDateTime(w.pencere_bitis),
+      },
+      {
+        id: "durum",
+        baslik: t("ortakDurum"),
+        hucre: (w) => (
+          <Rozet durum={DURUM_RENGI[w.durum] ?? D_NOTR}>
+            {enumAdi(t, TUR_DURUM, w.durum)}
+          </Rozet>
+        ),
+      },
+      {
+        id: "cp",
+        baslik: t("raporTabloCheckpoint"),
+        sayisal: true,
+        hucre: (w) => `${w.okutulan_checkpoint_sayisi}/${w.beklenen_checkpoint_sayisi}`,
+      },
+    ],
+    [t],
+  );
+
   return (
     <div className="space-y-6">
       <ReportsTabs />
-      <PageHeader title={t("raporTurGecmisiBaslik")} />
+      <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+        {t("raporTurGecmisiBaslik")}
+      </h1>
 
-      <EksikVeriUyarisi
-        mesaj={plansErr ? t("ortakSecenekYuklenemedi") : null}
-      />
+      <EksikVeriUyarisi mesaj={plansErr ? t("ortakSecenekYuklenemedi") : null} />
 
-      <motion.form {...panelMotion} onSubmit={submit} className={`flex flex-wrap items-end gap-3 ${panelCls}`}>
-        <div className="w-full sm:w-52">
-          <Field label={t("ortakBaslangic")} hint={t("ortakYerelSaatOpsiyonel")}>
-            <input type="datetime-local" className={inputCls} value={bas} onChange={(e) => setBas(e.target.value)} />
-          </Field>
-        </div>
-        <div className="w-full sm:w-52">
-          <Field label={t("ortakBitis")} hint={t("ortakYerelSaatOpsiyonel")}>
-            <input type="datetime-local" className={inputCls} value={bit} onChange={(e) => setBit(e.target.value)} />
-          </Field>
-        </div>
-        <div className="w-44">
-          <Field label={t("ortakDurum")}>
-            <select className={inputCls} value={durum} onChange={(e) => setDurum(e.target.value)}>
-              <option value="">{t("ortakTumu")}</option>
-              <option value="tamamlandi">{t("raporTamamlandi")}</option>
-              <option value="kacirildi">{t("raporKacirildi")}</option>
-              <option value="bekliyor">{t("panelBekleyen")}</option>
-            </select>
-          </Field>
-        </div>
-        <div className="w-full sm:w-52">
-          <Field label={t("devriyePlanOpsiyonel")}>
-            <select className={inputCls} value={planId} onChange={(e) => setPlanId(e.target.value)}>
-              <option value="">{t("ortakTumu")}</option>
-              {(plans?.items ?? []).map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.ad}
-                </option>
-              ))}
-            </select>
-          </Field>
-        </div>
-        <button type="submit" className={btnPrimary}>
-          {t("raporGetir")}
-        </button>
-      </motion.form>
+      <Kart>
+        <form onSubmit={submit} className="flex flex-wrap items-end gap-3">
+          <div className="w-full sm:w-52">
+            <AlanSarmal etiket={t("ortakBaslangic")} ipucu={t("ortakYerelSaatOpsiyonel")}>
+              {(b) => (
+                <Alan
+                  {...b}
+                  type="datetime-local"
+                  value={bas}
+                  onChange={(e) => setBas(e.target.value)}
+                />
+              )}
+            </AlanSarmal>
+          </div>
+          <div className="w-full sm:w-52">
+            <AlanSarmal etiket={t("ortakBitis")} ipucu={t("ortakYerelSaatOpsiyonel")}>
+              {(b) => (
+                <Alan
+                  {...b}
+                  type="datetime-local"
+                  value={bit}
+                  onChange={(e) => setBit(e.target.value)}
+                />
+              )}
+            </AlanSarmal>
+          </div>
+          <div className="w-44">
+            <AlanSarmal etiket={t("ortakDurum")}>
+              {(b) => (
+                <Secim {...b} value={durum} onChange={(e) => setDurum(e.target.value)}>
+                  <option value="">{t("ortakTumu")}</option>
+                  <option value="tamamlandi">{t("raporTamamlandi")}</option>
+                  <option value="kacirildi">{t("raporKacirildi")}</option>
+                  <option value="bekliyor">{t("panelBekleyen")}</option>
+                </Secim>
+              )}
+            </AlanSarmal>
+          </div>
+          <div className="w-full sm:w-52">
+            <AlanSarmal etiket={t("devriyePlanOpsiyonel")}>
+              {(b) => (
+                <Secim {...b} value={planId} onChange={(e) => setPlanId(e.target.value)}>
+                  <option value="">{t("ortakTumu")}</option>
+                  {planSecenekleri}
+                </Secim>
+              )}
+            </AlanSarmal>
+          </div>
+          <Dugme tur="birincil" type="submit">
+            {t("raporGetir")}
+          </Dugme>
+        </form>
+      </Kart>
 
-      {error && <ErrorBox message={error.message} />}
-
+      {/* (P65) Cekim ust sinira takildi: rapor EKSIKTIR ve bunu sessiz
+          gecmek, eksik bir CSV'yi tam sanmak demekti. */}
       {kesildi && (
-
-        <p className="text-xs text-amber-700">{t("raporKesildi")}</p>
-
+        <p role="status" style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-warning-ink)" }}>
+          {t("raporKesildi")}
+        </p>
       )}
       {committed === null && (
-        <p className="text-sm text-metin-muted">{t("raporFiltreSecin")}</p>
+        <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+          {t("raporFiltreSecin")}
+        </p>
       )}
-      {isLoading && committed !== null && !data && <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>}
 
-      {data && (
+      {committed !== null && (
         <>
-          <div className="grid gap-3 md:grid-cols-5">
-            <Card baslik={t("raporToplamPencere")} deger={String(data.ozet.toplam)} />
-            <Card baslik={t("panelTamamlanan")} deger={String(data.ozet.tamamlandi)} tone="emerald" />
-            <Card baslik={t("raporKacirilan")} deger={String(data.ozet.kacirildi)} tone="red" />
-            <Card baslik={t("panelBekleyen")} deger={String(data.ozet.bekliyor)} tone="amber" />
-            <Card baslik={t("raporTamamlanmaOrani")} deger={oran} />
-          </div>
+          {data && (
+            <div className="grid gap-3 md:grid-cols-5">
+              <Kpi deger={data.ozet.toplam} etiket={t("raporToplamPencere")} />
+              <Kpi deger={data.ozet.tamamlandi} etiket={t("panelTamamlanan")} durum={D_OLUMLU} />
+              <Kpi deger={data.ozet.kacirildi} etiket={t("raporKacirilan")} durum={D_KRITIK} />
+              <Kpi deger={data.ozet.bekliyor} etiket={t("panelBekleyen")} durum={D_UYARI} />
+              <Kpi
+                deger={oranSayi}
+                etiket={t("raporTamamlanmaOrani")}
+                // Birim YERI dile bagli — `Intl` koyar, biz degil.
+                bicimle={yuzde}
+              />
+            </div>
+          )}
 
           <section className="space-y-2">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-medium">{t("raporPencereler")}</h2>
-              <button className={btnGhost} onClick={exportCsv} disabled={data.items.length === 0}>
+              <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
+                {t("raporPencereler")}
+              </h2>
+              <Dugme
+                boy="kucuk"
+                onClick={() => void exportCsv()}
+                disabled={(data?.items.length ?? 0) === 0}
+              >
                 {t("raporCsvIndir")}
-              </button>
+              </Dugme>
             </div>
-            <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
-              <div className="odak-ic overflow-x-auto" tabIndex={0}>
-                <Tablo>
-                  <TabloBasligi>
-                      <Th>{t("raporTabloPlan")}</Th>
-                      <Th>{t("ortakBaslangic")}</Th>
-                      <Th>{t("ortakBitis")}</Th>
-                      <Th>{t("ortakDurum")}</Th>
-                      <Th>{t("raporTabloCheckpoint")}</Th>
-                    </TabloBasligi>
-                  <tbody>
-                    {data.items.map((w) => (
-                      <Tr key={w.id}>
-                        <Td>{w.plan_adi ?? "—"}</Td>
-                        <Td className="text-metin-body">{formatDateTime(w.pencere_baslangic)}</Td>
-                        <Td className="text-metin-body">{formatDateTime(w.pencere_bitis)}</Td>
-                        <Td>
-                          <span
-                            className={`rounded-full px-2 py-0.5 text-xs font-medium ${DURUM_STYLE[w.durum] ?? "bg-slate-100 text-metin-body"}`}
-                          >
-                            {enumAdi(t, TUR_DURUM, w.durum)}
-                          </span>
-                        </Td>
-                        <Td sayi className="text-metin-body">
-                          {w.okutulan_checkpoint_sayisi}/{w.beklenen_checkpoint_sayisi}
-                        </Td>
-                      </Tr>
-                    ))}
-                    {data.items.length === 0 && (
-                      <tr>
-                        <Td colSpan={5}>
-                          <EmptyState title={t("devriyePencereYok")} description={t("raporPencereYok")} />
-                        </Td>
-                      </tr>
-                    )}
-                  </tbody>
-                </Tablo>
-              </div>
-            </div>
-            <Pager
-              offset={offset}
-              limit={LIMIT}
-              total={data.meta.total}
-              onPrev={() => setOffset(Math.max(0, offset - LIMIT))}
-              onNext={() => setOffset(offset + LIMIT)}
+            <VeriTablosu<PatrolWindowRow>
+              kolonlar={kolonlar}
+              satirlar={data?.items ?? []}
+              satirId={(w) => w.id}
+              hata={error ? error.message : null}
+              yukleniyor={isLoading && !data}
+              bosBaslik={t("devriyePencereYok")}
+              bosAciklama={t("raporPencereYok")}
+              sunucuTarafli
+              toplam={data?.meta.total ?? 0}
+              durum={tabloDurumu}
+              onDurumDegisti={setTabloDurumu}
             />
           </section>
         </>
       )}
-    </div>
-  );
-}
-
-function Card({
-  baslik,
-  deger,
-  tone,
-}: {
-  baslik: string;
-  deger: string;
-  tone?: "emerald" | "red" | "amber";
-}) {
-  const cls =
-    tone === "red"
-      ? "bg-red-50 text-red-700"
-      : tone === "emerald"
-        ? "bg-emerald-50 text-emerald-700"
-        : tone === "amber"
-          ? "bg-amber-50 text-amber-700"
-          : "bg-yuzey-bg text-slate-800";
-  return (
-    <div className={`rounded-xl p-4 ${cls}`}>
-      <div className="text-xs text-metin-body">{baslik}</div>
-      <div className="text-xl font-semibold">{deger}</div>
     </div>
   );
 }
