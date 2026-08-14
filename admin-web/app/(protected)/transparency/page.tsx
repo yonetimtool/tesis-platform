@@ -3,7 +3,12 @@
 import { useEffect, useState } from "react";
 import useSWR from "swr";
 
+// Tahsilat orani ESIGI — urun karari, renk degil.
+const ESIK_IYI = 80;
+
 import {
+  Grafik,
+  Kart,
   BosDurum,
   AlanSarmal,
   HataDurumu,
@@ -98,7 +103,7 @@ export default function TransparencyPage() {
           {b && (
             <div className="grid gap-4 lg:grid-cols-2 [&>*]:min-w-0">
               {/* Özet */}
-              <div className="rounded-kart border kart-kenar bg-white p-5">
+              <Kart>
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                   <h2 className="min-w-0 font-medium break-words">
                     {t("seffafOzetBasligi", { ay: ayBaslik(b.ay, dil) })}
@@ -131,14 +136,17 @@ export default function TransparencyPage() {
                     gecersizdir. Ilk denemede `p`yi `div` yapmak yetmemisti;
                     ogeyi listenin DISINA almak gerekti (tur 30/31). */}
                 {b.onceki_ay_net_kurus != null && (
-                  <p className="pt-1 text-xs text-metin-muted">
+                  <p
+                    className="pt-1"
+                    style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}
+                  >
                     {t("seffafOncekiAyNet", { tutar: tl(b.onceki_ay_net_kurus) })}
                   </p>
                 )}
-              </div>
+              </Kart>
 
               {/* Aidat */}
-              <div className="rounded-kart border kart-kenar bg-white p-5">
+              <Kart>
                 <h2 className="mb-3 font-medium">{t("seffafAidatToplama")}</h2>
                 {b.aidat.daire_orani_yuzde == null ? (
                   <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>{t("seffafTahakkukYok")}</p>
@@ -160,31 +168,27 @@ export default function TransparencyPage() {
                     </p>
                   </>
                 )}
-                <p className="mt-3 text-sm">
+                <p className="mt-3" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}>
                   {t("seffafGecikenDaire", { sayi: b.aidat.geciken_daire_sayisi })}
                 </p>
-              </div>
+              </Kart>
 
               {/* Gider dağılımı */}
-              <div className="rounded-kart border kart-kenar bg-white p-5 lg:col-span-2">
-                <h2 className="mb-3 font-medium">{t("seffafGiderDagilimi")}</h2>
-                {b.gider_dagilimi.length === 0 ? (
-                  <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>{t("seffafGiderYok")}</p>
-                ) : (
-                  <div className="space-y-3">
-                    {b.gider_dagilimi.map((k) => (
-                      <div key={k.ad}>
-                        <div className="mb-1 flex justify-between text-sm">
-                          <span>{k.ad}</span>
-                          <span className="text-metin-muted">
-                            %{k.yuzde} · {tl(k.toplam_kurus)}
-                          </span>
-                        </div>
-                        <Bar value={k.yuzde} indigo />
-                      </div>
-                    ))}
-                  </div>
-                )}
+              {/* Gider dagilimi — (P160) GRAFIK. Kategorilerin BIRBIRINE
+                  gore agirligi cubuk listesinden zor okunuyordu; pasta o
+                  karsilastirmayi bir bakista veriyor. Rakamlar KAYBOLMUYOR:
+                  bilesen ayni veriyi bir TABLO olarak da ciziyor ve ekran
+                  okuyucunun okudugu sey o tablodur. */}
+              <div className="lg:col-span-2">
+                <Grafik
+                  baslik={t("seffafGiderDagilimi")}
+                  bosBaslik={t("seffafGiderYok")}
+                  dilimler={b.gider_dagilimi.map((k) => ({
+                    ad: k.ad,
+                    deger: k.toplam_kurus,
+                  }))}
+                  bicimle={(n) => tl(n)}
+                />
               </div>
             </div>
           )}
@@ -215,12 +219,22 @@ function Row({
   );
 }
 
-function Bar({ value, indigo }: { value: number; indigo?: boolean }) {
+/** Oran cubugu — DEKOR: yanindaki yuzde METNI gercek tasiyicidir. */
+function Bar({ value }: { value: number }) {
   const pct = Math.max(0, Math.min(100, value));
-  const color = indigo ? "bg-indigo-500" : pct >= 80 ? "bg-emerald-500" : "bg-amber-500";
   return (
-    <div className="h-1.5 w-full overflow-hidden rounded bg-slate-100">
-      <div className={`h-full ${color}`} style={{ width: `${pct}%` }} />
+    <div
+      aria-hidden="true"
+      className="h-1.5 w-full overflow-hidden"
+      style={{ borderRadius: "var(--yz-r-sm)", background: "var(--yz-surface-sunken)" }}
+    >
+      <div
+        className="h-full"
+        style={{
+          width: `${pct}%`,
+          background: pct >= ESIK_IYI ? "var(--yz-success-edge)" : "var(--yz-warning-edge)",
+        }}
+      />
     </div>
   );
 }

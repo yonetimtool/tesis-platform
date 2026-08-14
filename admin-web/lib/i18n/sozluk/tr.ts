@@ -36,6 +36,8 @@ export const tr = {
   ortakDiger: "Diğer",
   ortakBaslangic: "Başlangıç",
   ortakBitis: "Bitiş",
+  tarihAraligiTers: "Bitiş tarihi başlangıçtan önce olamaz.",
+  grafikTabloNotu: "Aynı veriler aşağıdaki tabloda yazılı.",
   ortakDonem: "Dönem",
   ortakBaslik: "Başlık",
   ortakAciklama: "Açıklama",

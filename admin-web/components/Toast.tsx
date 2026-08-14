@@ -38,10 +38,19 @@ export function useToast(): ToastApi {
   return ctx;
 }
 
-const KIND_STYLE: Record<ToastKind, { dot: string; ring: string }> = {
-  success: { dot: "bg-emerald-500", ring: "border-emerald-200" },
-  error: { dot: "bg-red-500", ring: "border-red-200" },
-  info: { dot: "bg-brand-tealInk", ring: "kart-kenar" },
+/**
+ * (P160) TEMA TOKENLERI. Bildirim kutusu `bg-white` ile sabitlenmisti:
+ * KOYU TEMADA ekranin kosesinde BEYAZ bir kart cikiyordu ve metin rengi
+ * (`text-ink`) da acik tema icin secilmisti. Kutu artik iki temada da
+ * yuzey rengini okuyor.
+ *
+ * NOKTA RENGI anlamli grafiktir (3.0 esigi) — `-edge` tonlari tam bunun
+ * icin olculdu; metin zaten `--yz-text` ile AA.
+ */
+const KIND_NOKTA: Record<ToastKind, string> = {
+  success: "var(--yz-success-edge)",
+  error: "var(--yz-danger-edge)",
+  info: "var(--yz-accent)",
 };
 
 export function ToastProvider({ children }: { children: ReactNode }) {
@@ -82,7 +91,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         >
           <AnimatePresence initial={false}>
             {items.map((t) => {
-              const s = KIND_STYLE[t.kind];
+              const nokta = KIND_NOKTA[t.kind];
               return (
                 <motion.div
                   key={t.id}
@@ -91,14 +100,31 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.96 }}
                   transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] as const }}
-                  className={`pointer-events-auto flex items-start gap-3 rounded-xl border bg-white px-4 py-3 shadow-lift ${s.ring}`}
+                  className="pointer-events-auto flex items-start gap-3 px-4 py-3"
+                  style={{
+                    borderRadius: "var(--yz-radius-card)",
+                    background: "var(--yz-metal-1)",
+                    borderWidth: "var(--yz-border-w)",
+                    borderStyle: "solid",
+                    borderColor: "var(--yz-border)",
+                    boxShadow: "var(--yz-raised-hover)",
+                  }}
                 >
-                  <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${s.dot}`} />
-                  <p className="flex-1 text-sm text-ink">{t.message}</p>
+                  <span
+                    className="mt-1.5 h-2 w-2 shrink-0 rounded-full"
+                    style={{ background: nokta }}
+                  />
+                  <p
+                    className="flex-1"
+                    style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}
+                  >
+                    {t.message}
+                  </p>
                   <button
                     onClick={() => remove(t.id)}
                     aria-label={ceviri("ortakKapat")}
-                    className="-me-1 shrink-0 rounded-md p-1 text-metin-muted transition hover:bg-slate-100 hover:text-metin-body"
+                    className="odak-ic -me-1 shrink-0 rounded-md p-1"
+                    style={{ color: "var(--yz-text-2)" }}
                   >
                     <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                       <line x1="6" y1="6" x2="18" y2="18" /><line x1="18" y1="6" x2="6" y2="18" />

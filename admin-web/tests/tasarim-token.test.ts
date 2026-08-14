@@ -314,10 +314,19 @@ describe("(P138) TABLO ILKELI — elle iskelet geri gelmesin", () => {
   // sayfalama, kolon gorunurlugu, satir secimi ve toplu islemi bir kez
   // yazip tum sayfalara veriyor. Muaf tutmasaydik kilit, kendisini
   // gereksiz kilan bileseni yasaklamis olurdu.
+  //
+  // (P160) `components/ui/grafik.tsx` EKLENDI — AMA FARKLI GEREKCEYLE.
+  // Bu bir tablo bileseni degil, bir GRAFIK bileseni; tabloyu yazma
+  // sebebi de tam olarak bu: pasta dilimi bir sayi TASIMAZ, o yuzden
+  // bilesen ayni veriyi HER ZAMAN bir `<table>` olarak da ciziyor ve
+  // grafigi `aria-hidden` yapiyor. Yani buradaki `<table>`, kilidin
+  // korumaya calistigi seyin (erisilebilir tablo yapisi) ta kendisidir;
+  // yasaklamak grafigi ekran okuyucuya kapali birakmak olurdu.
   const ILKELLER = [
     "components/tablo.tsx",
     "components/Liste.tsx",
     "components/ui/veri-tablosu.tsx",
+    "components/ui/grafik.tsx",
   ];
   const ilkelMi = (y: string) => ILKELLER.some((i) => y.endsWith(i));
 

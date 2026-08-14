@@ -26,6 +26,8 @@ export const fr: Sozluk = {
   ortakDiger: "Autre",
   ortakBaslangic: "Début",
   ortakBitis: "Fin",
+  tarihAraligiTers: "La date de fin ne peut pas précéder la date de début.",
+  grafikTabloNotu: "Les mêmes données figurent dans le tableau ci-dessous.",
   ortakDonem: "Période",
   ortakBaslik: "Titre",
   ortakAciklama: "Description",

@@ -26,6 +26,8 @@ export const ar: Sozluk = {
   ortakDiger: "أخرى",
   ortakBaslangic: "البداية",
   ortakBitis: "النهاية",
+  tarihAraligiTers: "لا يمكن أن يكون تاريخ الانتهاء قبل تاريخ البدء.",
+  grafikTabloNotu: "البيانات نفسها مذكورة في الجدول أدناه.",
   ortakDonem: "الفترة",
   ortakBaslik: "العنوان",
   ortakAciklama: "الوصف",

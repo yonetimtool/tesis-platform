@@ -26,6 +26,8 @@ export const ru: Sozluk = {
   ortakDiger: "Другое",
   ortakBaslangic: "Начало",
   ortakBitis: "Окончание",
+  tarihAraligiTers: "Дата окончания не может быть раньше даты начала.",
+  grafikTabloNotu: "Те же данные приведены в таблице ниже.",
   ortakDonem: "Период",
   ortakBaslik: "Заголовок",
   ortakAciklama: "Описание",

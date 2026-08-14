@@ -8,6 +8,8 @@ import {
   Alan,
   AlanSarmal,
   Dugme,
+  TarihAraligi,
+  aralikGecerli,
   Kart,
   Kpi,
   Rozet,
@@ -189,30 +191,17 @@ export default function PatrolReportPage() {
 
       <Kart>
         <form onSubmit={submit} className="flex flex-wrap items-end gap-3">
-          <div className="w-full sm:w-52">
-            <AlanSarmal etiket={t("ortakBaslangic")} ipucu={t("ortakYerelSaatOpsiyonel")}>
-              {(b) => (
-                <Alan
-                  {...b}
-                  type="datetime-local"
-                  value={bas}
-                  onChange={(e) => setBas(e.target.value)}
-                />
-              )}
-            </AlanSarmal>
-          </div>
-          <div className="w-full sm:w-52">
-            <AlanSarmal etiket={t("ortakBitis")} ipucu={t("ortakYerelSaatOpsiyonel")}>
-              {(b) => (
-                <Alan
-                  {...b}
-                  type="datetime-local"
-                  value={bit}
-                  onChange={(e) => setBit(e.target.value)}
-                />
-              )}
-            </AlanSarmal>
-          </div>
+          {/* (P160) TEK BILESEN + TUTARLILIK KURALI. Iki alan ayri
+              dururken bitisi baslangictan once secen kullanici BOS bir
+              rapor aliyor ve sebebini goremiyordu. */}
+          <TarihAraligi
+            tip="datetime-local"
+            ipucu={t("ortakYerelSaatOpsiyonel")}
+            baslangic={bas}
+            bitis={bit}
+            onBaslangic={setBas}
+            onBitis={setBit}
+          />
           <div className="w-44">
             <AlanSarmal etiket={t("ortakDurum")}>
               {(b) => (
@@ -235,7 +224,9 @@ export default function PatrolReportPage() {
               )}
             </AlanSarmal>
           </div>
-          <Dugme tur="birincil" type="submit">
+          {/* Aralik TERSKEN istek ATILMAZ: bos bir rapor gostermek,
+              kullaniciya "kayit yok" demek olurdu. */}
+          <Dugme tur="birincil" type="submit" disabled={!aralikGecerli(bas, bit)}>
             {t("raporGetir")}
           </Dugme>
         </form>
