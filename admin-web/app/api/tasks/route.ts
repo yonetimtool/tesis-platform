@@ -10,8 +10,10 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const qs = new URLSearchParams();
   qs.set("limit", sp.get("limit") ?? "20");
   qs.set("offset", sp.get("offset") ?? "0");
-  const tip = sp.get("tip");
-  if (tip) qs.set("tip", tip);
+  // (P160) `tip` GECISI KALDIRILDI: `GET /tasks` boyle bir parametre
+  // ALMIYOR (FastAPI bilinmeyeni yok sayar), yani bu satir istegi
+  // buyutup hicbir sey yapmiyordu. Gorev tipi 087f33f'te dinamik
+  // `kategori_id`ye cevrilmisti; o parametre asagida zaten geciyor.
   const aktif = sp.get("aktif");
   if (aktif === "true" || aktif === "false") qs.set("aktif", aktif);
   const atanan = sp.get("atanan_user_id");

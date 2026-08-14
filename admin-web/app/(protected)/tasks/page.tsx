@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import useSWR from "swr";
 
 import { BagimlilikUyarisi } from "@/components/BagimlilikUyarisi";
@@ -12,36 +12,64 @@ import { Field, ErrorBox, Pager, PageHeader, inputCls, btnPrimary, btnGhost, btn
 } from "@/components/form";
 import { BosSatir, Tablo, TabloBasligi, TabloKart, Td, Th, Tr } from "@/components/tablo";
 import { useToast } from "@/components/Toast";
+import {
+  AlanSarmal,
+  Dugme,
+  HataDurumu,
+  Kart,
+  Rozet,
+  Modal,
+  Secim,
+  Sekmeler,
+  VeriTablosu,
+  type Kolon,
+  type TabloDurumu,
+} from "@/components/ui";
 import { kisaKimlik } from "@/lib/kimlik";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
 import { SAHA_ROLLERI, rolAdi } from "@/lib/roles";
 import { tamsayiCoz } from "@/lib/sayi";
-import { useT } from "@/lib/i18n/kullan";
+import { useI18n, useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 import type {
   Task,
   TaskCategoryList,
   TaskCompletionList,
   TaskList,
-  TaskTip,
   UserListResponse,
 } from "@/lib/types";
 
+/**
+ * (P160 / Asama 6) OLU `tip` ZINCIRI KALDIRILDI — olculdu.
+ *
+ * Bu sayfa sabit bir TIP listesi (temizlik/kontrol/.../peyzaj) tutuyor,
+ * onu forma koyuyor, `?tip=` ile suzuyor ve tabloda bir sutun ciziyordu.
+ * UCUNUN DE KARSILIGI YOKTU:
+ *   * `TaskCreate`/`TaskUpdate` sozlesmesinde `tip` ALANI YOK — Pydantic
+ *     `extra="forbid"` kullanmadigi icin gonderilen deger SESSIZCE
+ *     ATILIYORDU. Kullanici "Temizlik" seciyor, hicbir sey olmuyordu.
+ *   * `GET /tasks` `tip` SORGU PARAMETRESI ALMIYOR — suzgec hicbir sey
+ *     yapmiyordu (FastAPI bilinmeyen parametreyi yok sayar).
+ *   * `TaskOut` `tip` DONDURMUYOR — tablodaki sutun `undefined` ciziyordu.
+ *
+ * Sebep: gorev tipi 087f33f'te DINAMIK KATEGORIYE (`task_category`)
+ * cevrildi ve sabit enum kaldirildi; bu sayfa guncellenmemis. Yerine
+ * gecen alan (`kategori_id`) ZATEN bu sayfada vardi — yani ozellik
+ * kaybi degil, YALAN SOYLEYEN bir denetimin kaldirilmasi.
+ *
+ * SUZGEC ARTIK GERCEK: `kategori_id` backend'de destekleniyor ("diger"
+ * = kategorisiz) ve suzgec bu tur CALISIYOR.
+ */
 const LIMIT = 20;
-// METIN DEGIL KIMLIK (modul duzeyi — README tur 18 dersi).
-const TIPLER: { value: TaskTip; anahtar: SozlukAnahtari }[] = [
-  { value: "temizlik", anahtar: "gorevTipiTemizlik" },
-  { value: "kontrol", anahtar: "gorevTipiKontrol" },
-  { value: "ilaclama", anahtar: "gorevTipiIlaclama" },
-  { value: "bakim", anahtar: "gorevTipiBakim" },
-  { value: "peyzaj", anahtar: "gorevTipiPeyzaj" },
-  { value: "diger", anahtar: "ortakDiger" },
-];
-function tipAdi(ceviri: (a: SozlukAnahtari) => string, v: string): string {
-  const o = TIPLER.find((x) => x.value === v);
-  return o ? ceviri(o.anahtar) : v;
-}
+
+/** Kategorisiz gorevlerin sutun/suzgec kimligi — backend "diger" bekliyor. */
+const KATEGORISIZ = "diger";
+
+type Gorunum = "liste" | "kanban" | "takvim";
+const GORUNUM_LISTE = "liste" as const;
+const GORUNUM_KANBAN = "kanban" as const;
+const GORUNUM_TAKVIM = "takvim" as const;
 
 function toIso(local: string): string | null {
   if (!local) return null;
@@ -57,7 +85,6 @@ function isoToLocalInput(iso?: string | null): string {
 }
 
 interface FormState {
-  tip: TaskTip;
   ad: string;
   aciklama: string;
   atanan_user_id: string;
@@ -68,7 +95,6 @@ interface FormState {
   aktif: boolean;
 }
 const EMPTY: FormState = {
-  tip: "temizlik",
   ad: "",
   aciklama: "",
   atanan_user_id: "",
@@ -79,16 +105,20 @@ const EMPTY: FormState = {
   aktif: true,
 };
 
+// UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
+const DURUM_OLUMLU = "olumlu" as const;
+const DURUM_NOTR = "notr" as const;
+
 export default function TasksPage() {
   const t = useT();
   const toast = useToast();
   const [offset, setOffset] = useState(0);
-  const [tip, setTip] = useState("");
+  const [kategoriFiltre, setKategoriFiltre] = useState("");
   const [aktif, setAktif] = useState("");
   const [atananFiltre, setAtananFiltre] = useState("");
 
   const qs = new URLSearchParams({ limit: String(LIMIT), offset: String(offset) });
-  if (tip) qs.set("tip", tip);
+  if (kategoriFiltre) qs.set("kategori_id", kategoriFiltre);
   if (aktif) qs.set("aktif", aktif);
   if (atananFiltre) qs.set("atanan_user_id", atananFiltre);
   const { data, error, isLoading, mutate } = useSWR<TaskList>(
@@ -132,7 +162,6 @@ export default function TasksPage() {
   function openEdit(t: Task) {
     setEditingId(t.id);
     setForm({
-      tip: (t.tip as TaskTip) ?? "temizlik",
       ad: t.ad,
       aciklama: t.aciklama ?? "",
       atanan_user_id: t.atanan_user_id ?? "",
@@ -158,7 +187,6 @@ export default function TasksPage() {
       return;
     }
     const body = {
-      tip: form.tip,
       ad: form.ad,
       aciklama: form.aciklama || null,
       atanan_user_id: form.atanan_user_id || null,
@@ -193,6 +221,104 @@ export default function TasksPage() {
     }
   }
 
+  const [gorunum, setGorunum] = useState<Gorunum>(GORUNUM_LISTE);
+  const [tabloDurumu, setTabloDurumu] = useState<TabloDurumu>({
+    sayfa: 1,
+    boy: 25,
+    siraKolon: null,
+    siraYonu: "artan",
+  });
+  const gorevler = data?.items ?? [];
+
+  /**
+   * Kanban surukleme/secim sonucu: gorevin KATEGORISINI degistirir.
+   *
+   * IYIMSER GUNCELLEME YOK: istek dusersse kart eski sutununa "geri
+   * ziplamaz", cunku hic tasinmamis olur. Iyimser tasima, basarisiz
+   * istekte kullaniciya YANLIS bir dunya gosterirdi.
+   */
+  async function kategoriTasi(gorev: Task, kategoriId: string | null) {
+    try {
+      await apiSend(`/api/tasks/${gorev.id}`, "PATCH", { kategori_id: kategoriId });
+      await mutate();
+      const ad =
+        kategoriId === null
+          ? t("gorevKategorisiz")
+          : ((kategoriler?.items ?? []).find((k) => k.id === kategoriId)?.ad ?? "");
+      toast.success(t("gorevKategoriDegisti", { ad }));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("ortakGuncellenemedi"));
+    }
+  }
+
+  const kolonlar: Kolon<Task>[] = useMemo(
+    () => [
+      {
+        id: "ad",
+        baslik: t("ortakBaslik"),
+        gizlenebilir: false,
+        hucre: (g) => (
+          <span className="flex items-center gap-2">
+            {g.ad}
+            {g.foto_zorunlu && (
+              <Rozet durum="bilgi">{t("gorevFotoZorunluRozet")}</Rozet>
+            )}
+          </span>
+        ),
+      },
+      {
+        id: "kategori",
+        baslik: t("gorevKategoriAlan"),
+        hucre: (g) => kategoriAd(g.kategori_id),
+      },
+      {
+        id: "atanan",
+        baslik: t("gorevAtanan"),
+        hucre: (g) => userName(g.atanan_user_id),
+        darEkrandaGizle: true,
+      },
+      {
+        id: "sonraki",
+        baslik: t("gorevSonraki"),
+        hucre: (g) =>
+          g.sonraki_planlanan ? formatDateTime(g.sonraki_planlanan) : "—",
+        darEkrandaGizle: true,
+      },
+      {
+        id: "aktif",
+        baslik: t("ortakDurum"),
+        hucre: (g) => (
+          <Rozet durum={g.aktif ? DURUM_OLUMLU : DURUM_NOTR}>
+            {g.aktif ? t("ortakAktif") : t("ortakPasif")}
+          </Rozet>
+        ),
+      },
+      {
+        id: "eylem",
+        baslik: "",
+        gizlenebilir: false,
+        hucre: (g) => (
+          <div className="flex justify-end gap-2">
+            <Dugme
+              boy="kucuk"
+              onClick={() => setDetail(detail?.id === g.id ? null : g)}
+            >
+              {detail?.id === g.id ? t("ortakKapat") : t("gorevKayitlar")}
+            </Dugme>
+            <Dugme boy="kucuk" onClick={() => openEdit(g)}>
+              {t("ortakDuzenle")}
+            </Dugme>
+            <Dugme boy="kucuk" tur="tehlike" onClick={() => void remove(g)}>
+              {t("ortakSil")}
+            </Dugme>
+          </div>
+        ),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [t, detail, kategoriler, users],
+  );
+
   return (
     <div className="space-y-5">
       <PageHeader
@@ -207,24 +333,30 @@ export default function TasksPage() {
       />
 
       <div className="flex flex-wrap items-end gap-3">
-        <div className="w-44">
-          <Field label={t("raporTabloTip")}>
-            <select
-              className={inputCls}
-              value={tip}
-              onChange={(e) => {
-                setTip(e.target.value);
-                setOffset(0);
-              }}
-            >
-              <option value="">{t("ortakTumu")}</option>
-              {TIPLER.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {t(o.anahtar)}
-                </option>
-              ))}
-            </select>
-          </Field>
+        {/* SUZGEC ARTIK GERCEK: `kategori_id` backend'de destekleniyor
+            ("diger" = kategorisiz). Eski `tip` suzgeci hicbir sey
+            yapmiyordu (bkz. dosya basi). */}
+        <div className="w-52">
+          <AlanSarmal etiket={t("gorevKategoriAlan")}>
+            {(b) => (
+              <Secim
+                {...b}
+                value={kategoriFiltre}
+                onChange={(e) => {
+                  setKategoriFiltre(e.target.value);
+                  setOffset(0);
+                }}
+              >
+                <option value="">{t("ortakTumu")}</option>
+                <option value={KATEGORISIZ}>{t("gorevKategorisiz")}</option>
+                {(kategoriler?.items ?? []).map((k) => (
+                  <option key={k.id} value={k.id}>
+                    {k.ad}
+                  </option>
+                ))}
+              </Secim>
+            )}
+          </AlanSarmal>
         </div>
         <div className="w-44">
           <Field label={t("ortakDurum")}>
@@ -270,26 +402,33 @@ export default function TasksPage() {
         kod="gorevKategorisi"
         eksik={(kategoriler?.items?.length ?? 1) === 0}
       />
-      {error && <ErrorBox message={error.message} />}
+      {/* Liste cekilemezse BOS TABLO degil, sebep + "Tekrar dene".
+          Yukleme durumu artik `VeriTablosu`nun ISKELETI. */}
+      {error && <HataDurumu mesaj={error.message} onTekrar={() => void mutate()} />}
       {isLoading && !data && <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>}
 
-      {open && (
-        <motion.form {...panelMotion} onSubmit={save} className={`space-y-4 ${panelCls}`}>
-          <h2 className="font-medium">{editingId ? t("gorevDuzenle") : t("gorevYeni")}</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <Field label={t("raporTabloTip")}>
-              <select
-                className={inputCls}
-                value={form.tip}
-                onChange={(e) => setForm({ ...form, tip: e.target.value as TaskTip })}
-              >
-                {TIPLER.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {t(o.anahtar)}
-                  </option>
-                ))}
-              </select>
-            </Field>
+      {/* FORM ARTIK MODALDA (brief: "sayfa ustunde alan acma deseni
+          kaldirilacak"). Odak tuzagi, ESC ve kapanista odagin geri
+          donmesi `Modal`dan geliyor. */}
+      <Modal
+        acik={open}
+        onKapat={() => setOpen(false)}
+        baslik={editingId ? t("gorevDuzenle") : t("gorevYeni")}
+        genislikSinifi="max-w-2xl"
+        eylemler={
+          <>
+            <Dugme tur="sessiz" onClick={() => setOpen(false)} disabled={saving}>
+              {t("ortakIptal")}
+            </Dugme>
+            <Dugme tur="birincil" type="submit" form="gorev-form" yukleniyor={saving}>
+              {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
+            </Dugme>
+          </>
+        }
+      >
+        <form id="gorev-form" onSubmit={save} className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+
             <Field label={t("ortakBaslik")}>
               <input
                 className={inputCls}
@@ -367,75 +506,58 @@ export default function TasksPage() {
                 onChange={(e) => setForm({ ...form, aktif: e.target.checked })}
               />{t("ortakAktif")}</label>
           </div>
-          <ErrorBox message={formErr} />
-          <div className="flex gap-2">
-            <button type="submit" className={btnPrimary} disabled={saving}>
-              {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
-            </button>
-            <button type="button" className={btnGhost} onClick={() => setOpen(false)}>
-              {t("ortakIptal")}
-            </button>
-          </div>
-        </motion.form>
-      )}
+          {formErr && (
+            <p
+              role="alert"
+              style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-danger-ink)" }}
+            >
+              {formErr}
+            </p>
+          )}
+        </form>
+      </Modal>
 
-      <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
-        <div className="odak-ic overflow-x-auto" tabIndex={0}>
-          <Tablo>
-          <TabloBasligi>
-              <Th>{t("ortakBaslik")}</Th>
-              <Th>{t("raporTabloTip")}</Th>
-              <Th>{t("gorevKategoriAlan")}</Th>
-              <Th>{t("gorevAtanan")}</Th>
-              <Th>{t("gorevSonraki")}</Th>
-              <Th>{t("ortakAktif")}</Th>
-              <Th />
-            </TabloBasligi>
-          <tbody>
-            {(data?.items ?? []).map((gorev) => (
-              <tr key={gorev.id} className={`border-t border-yuzey-divider transition-colors hover:bg-yuzey-bg ${gorev.aktif ? "" : "bg-yuzey-bg"}`}>
-                <Td>
-                  {gorev.ad}
-                  {gorev.foto_zorunlu && (
-                    <span className="ms-2 rounded-full bg-sky-100 px-2 py-0.5 text-xs text-sky-800">
-                      {t("gorevFotoZorunluRozet")}
-                    </span>
-                  )}
-                </Td>
-                <Td className="text-metin-body">{tipAdi(t, gorev.tip)}</Td>
-                <Td className="text-metin-body">{kategoriAd(gorev.kategori_id)}</Td>
-                <Td className="text-metin-body">{userName(gorev.atanan_user_id)}</Td>
-                <Td className="text-metin-body">
-                  {gorev.sonraki_planlanan ? formatDateTime(gorev.sonraki_planlanan) : "—"}
-                </Td>
-                <Td className="text-metin-body">{gorev.aktif ? t("ortakEvet2") : t("ortakHayir2")}</Td>
-                <Td hizala="end">
-                  <div className="flex justify-end gap-2">
-                    <button
-                      className={btnGhost}
-                      onClick={() => setDetail(detail?.id === gorev.id ? null : gorev)}
-                    >
-                      {detail?.id === gorev.id ? t("ortakKapat") : t("gorevKayitlar")}
-                    </button>
-                    <button className={btnGhost} onClick={() => openEdit(gorev)}>
-                      {t("ortakDuzenle")}
-                    </button>
-                    <button className={btnDanger} onClick={() => remove(gorev)}>{t("ortakSil")}</button>
-                  </div>
-                </Td>
-              </tr>
-            ))}
-            {data && data.items.length === 0 && (
-              <tr>
-                <Td colSpan={7}>
-                  <EmptyState title={t("gorevYok")} description={t("gorevYokAlt")} />
-                </Td>
-              </tr>
-            )}
-          </tbody>
-          </Tablo>
-        </div>
-      </div>
+      {/* --- UC GORUNUM (brief: "Kanban + liste + takvim") ------------ */}
+      <Sekmeler
+        aktifId={gorunum}
+        onDegis={(id) => setGorunum(id as Gorunum)}
+        sekmeler={[
+          {
+            id: GORUNUM_LISTE,
+            baslik: t("gorevGorunumListe"),
+            icerik: (
+              <VeriTablosu<Task>
+                kolonlar={kolonlar}
+                satirlar={gorevler}
+                satirId={(g) => g.id}
+                yukleniyor={isLoading && !data}
+                bosBaslik={t("gorevYok")}
+                bosAciklama={t("gorevYokAlt")}
+                sunucuTarafli
+                toplam={data?.meta.total ?? 0}
+                durum={tabloDurumu}
+                onDurumDegisti={setTabloDurumu}
+              />
+            ),
+          },
+          {
+            id: GORUNUM_KANBAN,
+            baslik: t("gorevGorunumKanban"),
+            icerik: (
+              <Kanban
+                gorevler={gorevler}
+                kategoriler={kategoriler?.items ?? []}
+                onTasi={(g, kategoriId) => void kategoriTasi(g, kategoriId)}
+              />
+            ),
+          },
+          {
+            id: GORUNUM_TAKVIM,
+            baslik: t("gorevGorunumTakvim"),
+            icerik: <Takvim gorevler={gorevler} onSec={(g) => openEdit(g)} />,
+          },
+        ]}
+      />
 
       {detail && (
         <motion.div {...panelMotion} className={`space-y-3 ${panelCls}`}>
@@ -512,6 +634,298 @@ export default function TasksPage() {
           onPrev={() => setOffset(Math.max(0, offset - LIMIT))}
           onNext={() => setOffset(offset + LIMIT)}
         />
+      )}
+    </div>
+  );
+}
+
+
+/* ======================================================================
+   KANBAN — KATEGORIYE gore, SURUKLE-BIRAK ile kategori degistirir.
+   ======================================================================
+   NEDEN KATEGORI, NEDEN "DURUM" DEGIL: `Task` semasinda DURUM ALANI YOK
+   (todo/yapiliyor/bitti). Uydurmak arka uc degisikligi gerektirirdi ve
+   kilitli kural 1 buna kapali. Kategori ise GERCEK ve `PATCH
+   kategori_id` ile degistirilebiliyor — yani surukleme gercek bir
+   mutasyon yapiyor, dekor degil.
+
+   SURUKLEME ICIN KUTUPHANE EKLENMEDI: HTML5 `dragstart`/`drop` yeterli.
+   ERISILEBILIR YEDEK ZORUNLU — surukleme klavyeyle yapilamaz; her kartta
+   kategoriyi degistiren bir SECIM de var. Yalniz surukleme sunmak,
+   klavye ve ekran okuyucu kullanicisini bu gorunumden tamamen dislardi.
+   ====================================================================== */
+
+function Kanban({
+  gorevler,
+  kategoriler,
+  onTasi,
+}: {
+  gorevler: Task[];
+  kategoriler: { id: string; ad: string }[];
+  onTasi: (gorev: Task, kategoriId: string | null) => void;
+}) {
+  const t = useT();
+  const [uzerinde, setUzerinde] = useState<string | null>(null);
+
+  // Kategorisiz sutun HER ZAMAN var: kategorisi olmayan gorevler bir
+  // yere dusmeli, yoksa panoda GORUNMEZ olurlardi.
+  const sutunlar = [
+    { id: KATEGORISIZ, ad: t("gorevKategorisiz") },
+    ...kategoriler.map((k) => ({ id: k.id, ad: k.ad })),
+  ];
+
+  return (
+    <div>
+      <p
+        className="mb-3"
+        style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}
+      >
+        {t("gorevSuruklemeIpucu")}
+      </p>
+      <div className="flex gap-3 overflow-x-auto pb-2">
+        {sutunlar.map((sutun) => {
+          const icerik = gorevler.filter(
+            (g) => (g.kategori_id ?? KATEGORISIZ) === sutun.id,
+          );
+          return (
+            <section
+              key={sutun.id}
+              aria-label={sutun.ad}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setUzerinde(sutun.id);
+              }}
+              onDragLeave={() => setUzerinde((u) => (u === sutun.id ? null : u))}
+              onDrop={(e) => {
+                e.preventDefault();
+                setUzerinde(null);
+                const id = e.dataTransfer.getData("text/plain");
+                const gorev = gorevler.find((g) => g.id === id);
+                if (!gorev) return;
+                const hedef = sutun.id === KATEGORISIZ ? null : sutun.id;
+                if ((gorev.kategori_id ?? null) === hedef) return;
+                onTasi(gorev, hedef);
+              }}
+              className="w-64 shrink-0 p-2"
+              style={{
+                borderRadius: "var(--yz-radius-card)",
+                background:
+                  uzerinde === sutun.id
+                    ? "var(--yz-surface-2)"
+                    : "var(--yz-surface-sunken)",
+                boxShadow: "var(--yz-sunken)",
+              }}
+            >
+              <h3
+                className="mb-2 flex items-center justify-between px-1"
+                style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}
+              >
+                {sutun.ad}
+                <span style={{ color: "var(--yz-text-3)" }}>{icerik.length}</span>
+              </h3>
+              <div className="space-y-2">
+                {icerik.map((g) => (
+                  <Kart
+                    key={g.id}
+                    ton="yukseltilmis"
+                    className="cursor-grab p-3"
+                    {...{
+                      draggable: true,
+                      onDragStart: (e: React.DragEvent) =>
+                        e.dataTransfer.setData("text/plain", g.id),
+                    }}
+                  >
+                    <p style={{ fontSize: "var(--yz-fs-body)" }}>{g.ad}</p>
+                    {g.sonraki_planlanan && (
+                      <p
+                        className="mt-1"
+                        style={{
+                          fontSize: "var(--yz-fs-xs)",
+                          color: "var(--yz-text-3)",
+                        }}
+                      >
+                        {formatDateTime(g.sonraki_planlanan)}
+                      </p>
+                    )}
+                    {/* KLAVYE YEDEGI — surukleme tek yol OLAMAZ. */}
+                    <label className="mt-2 block">
+                      <span className="sr-only">
+                        {t("gorevTasi", { gorev: g.ad })}
+                      </span>
+                      <Secim
+                        value={g.kategori_id ?? KATEGORISIZ}
+                        onChange={(e) =>
+                          onTasi(
+                            g,
+                            e.target.value === KATEGORISIZ ? null : e.target.value,
+                          )
+                        }
+                        className="!h-9"
+                      >
+                        {sutunlar.map((sc) => (
+                          <option key={sc.id} value={sc.id}>
+                            {sc.ad}
+                          </option>
+                        ))}
+                      </Secim>
+                    </label>
+                  </Kart>
+                ))}
+              </div>
+            </section>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ======================================================================
+   TAKVIM — `sonraki_planlanan` uzerinden AY IZGARASI.
+   ======================================================================
+   SALT OKUNUR ve bu bilincli: surukleyerek tarih degistirmek `PATCH
+   sonraki_planlanan` ile mumkun ama periyodik gorevlerde o alan
+   TAMAMLANINCA KENDILIGINDEN ILERLIYOR (bkz. sozlesme notu). Elle
+   surukleme, periyodun bir sonraki adimini sessizce ezerdi; once o
+   etkilesimin ne anlama geldigine karar verilmeli.
+
+   Ay adi `Intl` ile AKTIF DILDEN gelir — sozluge on iki ay adi yazmak,
+   tarayicinin zaten bildigi seyi yedi kez kopyalamak olurdu.
+   ====================================================================== */
+
+function Takvim({
+  gorevler,
+  onSec,
+}: {
+  gorevler: Task[];
+  onSec: (gorev: Task) => void;
+}) {
+  const t = useT();
+  const { dil } = useI18n();
+  const [ay, setAy] = useState(() => {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth(), 1);
+  });
+
+  const baslik = useMemo(
+    () =>
+      new Intl.DateTimeFormat(dil, { month: "long", year: "numeric" }).format(ay),
+    [dil, ay],
+  );
+
+  const gunler = useMemo(() => {
+    const ilk = new Date(ay.getFullYear(), ay.getMonth(), 1);
+    const sonGun = new Date(ay.getFullYear(), ay.getMonth() + 1, 0).getDate();
+    // Pazartesi = 0 olacak sekilde kaydir (TR/AB haftasi).
+    const bosluk = (ilk.getDay() + 6) % 7;
+    return { bosluk, sonGun };
+  }, [ay]);
+
+  /** Gun -> o gune planlanmis gorevler. */
+  const gunGorevleri = useMemo(() => {
+    const harita = new Map<number, Task[]>();
+    for (const g of gorevler) {
+      if (!g.sonraki_planlanan) continue;
+      const d = new Date(g.sonraki_planlanan);
+      if (Number.isNaN(d.getTime())) continue;
+      if (d.getFullYear() !== ay.getFullYear() || d.getMonth() !== ay.getMonth()) {
+        continue;
+      }
+      const liste = harita.get(d.getDate()) ?? [];
+      liste.push(g);
+      harita.set(d.getDate(), liste);
+    }
+    return harita;
+  }, [gorevler, ay]);
+
+  const plansiz = gorevler.filter((g) => !g.sonraki_planlanan);
+
+  return (
+    <div>
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <Dugme
+          boy="kucuk"
+          onClick={() => setAy(new Date(ay.getFullYear(), ay.getMonth() - 1, 1))}
+          aria-label={t("ortakOnceki")}
+        >
+          {t("ortakOnceki")}
+        </Dugme>
+        <h3 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
+          {baslik}
+        </h3>
+        <Dugme
+          boy="kucuk"
+          onClick={() => setAy(new Date(ay.getFullYear(), ay.getMonth() + 1, 1))}
+          aria-label={t("ortakSonraki")}
+        >
+          {t("ortakSonraki")}
+        </Dugme>
+      </div>
+
+      <div className="grid grid-cols-7 gap-1">
+        {Array.from({ length: gunler.bosluk }).map((_, i) => (
+          <div key={`bos-${i}`} />
+        ))}
+        {Array.from({ length: gunler.sonGun }).map((_, i) => {
+          const gun = i + 1;
+          const liste = gunGorevleri.get(gun) ?? [];
+          return (
+            <div
+              key={gun}
+              className="min-h-[76px] p-1.5"
+              style={{
+                borderRadius: "var(--yz-radius-btn)",
+                background: "var(--yz-surface-sunken)",
+                boxShadow: "var(--yz-sunken)",
+              }}
+            >
+              <span
+                style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-3)" }}
+              >
+                {gun}
+              </span>
+              <div className="mt-1 space-y-1">
+                {liste.map((g) => (
+                  <button
+                    key={g.id}
+                    type="button"
+                    onClick={() => onSec(g)}
+                    className="odak-ic block w-full truncate px-1 py-0.5 text-start"
+                    style={{
+                      borderRadius: "var(--yz-radius-btn)",
+                      background: "var(--yz-metal-2)",
+                      boxShadow: "var(--yz-raised)",
+                      fontSize: "var(--yz-fs-xs)",
+                      color: "var(--yz-text)",
+                    }}
+                  >
+                    {g.ad}
+                  </button>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* PLANSIZ GOREVLER GIZLENMEZ: takvimde yeri yok ama VARLAR.
+          Gostermemek, kullaniciya "gorev kalmadi" demek olurdu. */}
+      {plansiz.length > 0 && (
+        <section className="mt-4">
+          <h3
+            className="mb-2"
+            style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}
+          >
+            {t("gorevPlansiz")} ({plansiz.length})
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {plansiz.map((g) => (
+              <Dugme key={g.id} boy="kucuk" onClick={() => onSec(g)}>
+                {g.ad}
+              </Dugme>
+            ))}
+          </div>
+        </section>
       )}
     </div>
   );

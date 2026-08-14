@@ -443,11 +443,8 @@ export interface PatrolWindowListResponse {
 }
 
 // -------------------------------- tasks ------------------------------------ #
-export type TaskTip = "temizlik" | "kontrol" | "ilaclama" | "bakim" | "peyzaj" | "diger";
-
 export interface Task {
   id: string;
-  tip: string;
   ad: string;
   aciklama?: string | null;
   atanan_user_id?: string | null;

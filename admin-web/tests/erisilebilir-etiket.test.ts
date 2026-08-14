@@ -106,7 +106,13 @@ describe("erisilebilir etiket", () => {
         const parca = satirlar.slice(i, i + 8).join("\n");
         if (/aria-label/.test(parca)) return;
         const onceki = satirlar.slice(Math.max(0, i - 16), i).join("\n");
-        if (/<AlanSarmal\b/.test(onceki)) return;
+        // `AlanSarmal` YA DA duz `<label>`: ikisi de gecerli ad kaynagi.
+        // Duz `<label>` ilk yazimda unutulmustu ve ustteki `ParolaAlani`
+        // kontrolu onu ZATEN kabul ediyordu — iki kontrolun ayni kurali
+        // farkli tanimlamasi tutarsizdi. Sarmalayan bir `<label>`
+        // (icinde `sr-only` metinle bile olsa) erisilebilir adi GERCEKTEN
+        // veriyor; reddetmek dogru kullanimi cezalandirmakti.
+        if (/<(AlanSarmal|label)\b/.test(onceki)) return;
         sizanlar.push(`${yol}:${i + 1} ${satir.trim().slice(0, 50)}`);
       });
     }

@@ -83,6 +83,10 @@ describe("sozluk butunlugu", () => {
     // cevirileri ayni oldugundan buradalar.
     "Admin", "Platform Admin", "Endpoint", "Endpoint URL", "Foto", "Kamera",
     "Kanal", "Meta", "Model", "Net", "Plan", "Rol", "Telefon", "Tema", "Test",
+    // (P160) Gorev gorunum sekmesi. "Liste" Almanca ve Fransizcada da
+    // AYNI yazilir (de. "Liste", fr. "Liste"); ceviri eksigi degil
+    // es-sozcuk. Ingilizce "List", Ispanyolca "Lista" — onlar farkli.
+    "Liste",
     // (P131) Oynaticinin SECTIGI YOL — teknik kimlik, cumle degil.
     // "HLS" bir bicim adi, "hls.js" bir kutuphane adidir; ikisi de
     // cevrilmez. Etiketin varlik sebebi destek sorusudur ("bende
