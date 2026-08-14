@@ -145,11 +145,12 @@ Tarama **iki gerçek şey buldu**:
 ## 5. KALAN İŞ
 
 ### Yapılmadı, gerekçesi var
-* **Aşama 5 · RouteScene** — tasarımı `docs/3d-yol-haritasi.md` §4'te
-  hazır; NFC noktaları/devriye planları ekranına bağlanacak.
-* **Leaflet / Şikayet haritası 2D** — `/schematic` bugün **bina şeması**;
-  coğrafi harita ayrı bir karar ve **karo sunucusu seçimi Kerem'de**
-  (3d-yol-haritasi §5).
+* ~~**Aşama 5 · RouteScene**~~ — **YAPILDI**, NFC noktaları ve devriye
+  planlarına bağlandı (`docs/3d-yol-haritasi.md` §4).
+* ~~**Leaflet / Şikayet haritası 2D**~~ — **YAPILDI.** `/schematic` iki
+  sekmeli oldu: Şema (erişilebilir, varsayılan) + Plan haritası (Leaflet
+  `CRS.Simple`). **Karo sunucusu kararı düştü**: bu haritada karo yok.
+  Gerekçe ve ölçüm `docs/3d-yol-haritasi.md` §5'te.
 * **`components/form` ve `components/tablo`nun tümden emekliye
   ayrılması** — §3'teki iki bağımlılık sürüyor.
 

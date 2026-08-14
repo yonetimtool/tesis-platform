@@ -118,23 +118,61 @@ yoktu — backend'e dokunulmadı.
 
 ---
 
-## 5. ŞİKAYET HARİTASI — 3D DEĞİL, 2D
+## 5. ŞİKAYET HARİTASI — 2D, ama COĞRAFİ DEĞİL
 
-Brief Aşama 6 zaten *"Leaflet/MapLibre + OpenStreetMap"* diyor ve bu
-doğru: şikayetin konumu **coğrafi**, mimari değil. 3D bir şehir sahnesi
-hem karo veri hem model ister, hem de kullanıcıya adres bulmayı
-**zorlaştırır**.
+> **Bu bölüm bir turda düzeltildi.** Önceki hâli *"şikayetin konumu
+> coğrafi, mimari değil"* diyordu ve **yanlıştı** — iddia ölçülmeden
+> yazılmıştı.
 
-`leaflet` bu turda **kurulmadı** — Şikayet Haritası taşınırken kurulacak.
-Karar gerekçesi: bugün kullanılmayan bir paketi `package.json`'a eklemek,
-ölçülen paket temelini kirletir.
+### Ölçüm
 
-**Karo sunucusu kararı gerekiyor:** public OSM karoları kullanım
-şartlarına tabi ve kurumsal ağda erişilemeyebilir. Seçenekler: (a) public
-OSM (hızlı, şartlara tabi), (b) kendi karo sunucumuz (bağımsız, işletme
-yükü), (c) karosuz — yalnız işaretçi + adres metni. Karar Kerem'de.
+Depoda `lat/lng` taşıyan tablolar: `tenant` (hava durumu konumu),
+`checkpoint`, `scan_event`, `task_completion`, `asset_checkout`.
+**`unit_complaint`, `unit` ve `block` hiç koordinat taşımıyor.** Bir
+şikayet bir *daireye* bağlıdır; daire de bloğa, kata ve sıraya. Yani
+coğrafi bir OSM haritası ancak **şikayet başına konum uydurularak**
+çizilebilirdi.
 
----
+### Karar: Leaflet, `CRS.Simple` kipinde
+
+Leaflet kuruldu (`leaflet` 1.9 + `react-leaflet` **4.2.1** — v5 React 19
+istiyor, projede React 18 var) ama **coğrafi kipte değil**. `CRS.Simple`
+kat planı/şema haritaları için tasarlanmış düzlemsel bir koordinat
+sistemidir; girdi gerçek veridir: `blok` (yatay şerit), `sıra` (sütun),
+`kat` (dikey eksen).
+
+**Bunun iki sonucu var:**
+
+1. **Karo sunucusu kararı DÜŞTÜ.** Bu bölümün eski hâli Kerem'e (a) public
+   OSM / (b) kendi sunucumuz / (c) karosuz seçimini bırakıyordu. `CRS.Simple`
+   haritasında **karo yok**, dolayısıyla dış istek de yok. Karar gereksiz.
+2. Harita *"burası dünyada şu nokta"* demiyor, *"bu daire bu bloğun bu
+   katında"* diyor — kayıtla **birebir aynı** iddia.
+
+### Şema kaldı, harita yanına geldi
+
+`/schematic` artık iki sekmeli: **Şema** (varsayılan) ve **Plan haritası**.
+Şema kaldı çünkü **erişilebilir yüzey odur**: her hücre gerçek bir
+`<button>`, klavyeyle gezilir, `aria-pressed` taşır. Bir tuval üzerindeki
+dikdörtgen bunu veremez. Harita büyük sitelerde pan/zoom kazandıran
+**alternatif** görünümdür, tek görünüm değil.
+
+**Sessiz eksik yok:** kat/sıra girilmemiş daireler haritada yer alamaz
+(uydurma sütun, daireyi olmadığı yere koymaktı) — sayıları ekranda
+yazılır ve şema görünümünde erişilebilir kalırlar.
+
+**Ölçüldü:** `leaflet` kendi tembel parçasında (**148 kB**), paylaşılan
+pakete **girmedi**. Paylaşılan paket 87,9 → **88,3 kB** (+0,4); artışın
+kaynağı Leaflet değil (shared parçalarda `leaflet`/`MapContainer` izi yok)
+— kesin kaynağı ayrıştırılmadı, dürüstçe not düşülüyor.
+
+### Coğrafi harita ne zaman anlamlı olur
+
+Koordinat taşıyan veri **var**: NFC noktaları (`gps_lat/gps_lng`) ve
+okutmalar (`scan_event` + `konum_durumu`). *"Bu okutma noktadan uzakta
+yapılmış"* sorusu gerçekten coğrafidir ve bir OSM haritası orada iş görür.
+**O zaman karo sunucusu kararı geri gelir** ve Kerem'e sorulur. Bu turda
+yapılmadı: brief'in istediği "şikayet haritası" değil.
 
 ## 6. PERFORMANS BÜTÇESİ (her yeni sahne bunu tutmalı)
 

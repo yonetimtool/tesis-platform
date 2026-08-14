@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import useSWR from "swr";
 
-import { BosDurum, HataDurumu, IskeletMetin, Kart } from "@/components/ui";
+import { BosDurum, HataDurumu, IskeletMetin, Kart, Sekmeler } from "@/components/ui";
+import { PlanHaritasiYukleyici } from "@/components/harita/harita-yukleyici";
+import type { PlanBlogu, PlanHucresi } from "@/components/harita/plan-haritasi";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
@@ -33,6 +35,9 @@ const RENK_TOKEN: Record<DensityRenk, string> = {
   kirmizi: "var(--yz-danger-edge)",
 };
 const NOTR_TOKEN = "var(--yz-border)";
+// UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
+const GORUNUM_SEMA = "sema" as const;
+const GORUNUM_HARITA = "harita" as const;
 // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`) — CSS olcusu de dize.
 const KENAR_SECILI = "3px" as const;
 const KENAR_NORMAL = "2px" as const;
@@ -209,6 +214,59 @@ export default function SchematicPage() {
   const t = useT();
   const { data, error, isLoading } = useSWR<BuildingMap>("/api/building-map", jsonFetcher);
   const [selected, setSelected] = useState<BuildingMapUnit | null>(null);
+  const [gorunum, setGorunum] = useState<string>(GORUNUM_SEMA);
+
+  /**
+   * (P160) PLAN HARITASININ GIRDISI — `blok`/`kat`/`sira` GERCEK VERI.
+   *
+   * Duzlem su sekilde kuruluyor: her blok yatayda kendi seridini alir,
+   * blok icinde `sira` sutunu, `kat` ise dikey ekseni verir. Uydurulan
+   * hicbir sey yok; kat/sira girilmemis daire zaten `unplaced` kovasinda
+   * ve haritaya HIC girmiyor (asagida ayrica yaziyor).
+   */
+  const { hucreler, planBloklari, yerlesimsiz } = useMemo(() => {
+    const h: PlanHucresi[] = [];
+    const b: PlanBlogu[] = [];
+    let x = 0;
+    for (const blok of data?.bloklar ?? []) {
+      let genislik = 1;
+      for (const kat of blok.katlar) {
+        for (const u of kat.units) {
+          // `sira` yoksa hucre cizilemez: uydurma bir sutun, daireyi
+          // olmadigi yere koymakti.
+          if (u.sira == null || u.kat == null) continue;
+          genislik = Math.max(genislik, u.sira);
+          h.push({
+            id: u.unit_id,
+            etiket: u.unit_no,
+            x: x + (u.sira - 1),
+            y: u.kat,
+            ton: renkTonu(u.color),
+            ipucu: t("haritaKartBaslik", {
+              daire: u.unit_no,
+              sayi: u.complaint_count ?? 0,
+            }),
+            secili: selected?.unit_id === u.unit_id,
+          });
+        }
+      }
+      b.push({ ad: blok.blok, x, genislik });
+      x += genislik + 1; // bloklar arasinda bir birim bosluk
+    }
+    // Kat/sira girilmemis daireler haritada YOK — sayisi yaziliyor ki
+    // "haritada gormedigim daire yok" sanilmasin.
+    const eksik =
+      (data?.bloklar ?? []).reduce(
+        (n, blok) =>
+          n +
+          blok.katlar.reduce(
+            (m, kat) => m + kat.units.filter((u) => u.sira == null || u.kat == null).length,
+            0,
+          ),
+        0,
+      ) + (data?.unplaced?.length ?? 0);
+    return { hucreler: h, planBloklari: b, yerlesimsiz: eksik };
+  }, [data, selected, t]);
 
   return (
     <div className="space-y-5">
@@ -226,8 +284,19 @@ export default function SchematicPage() {
       )}
 
       <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
-        {/* Sema: blok -> kat (ust kat yukarida) -> renkli hucreler */}
-        <div className="space-y-4">
+        <Sekmeler
+          aktifId={gorunum}
+          onDegis={setGorunum}
+          sekmeler={[
+            {
+              id: GORUNUM_SEMA,
+              baslik: t("haritaGorunumSema"),
+              // SEMA ERISILEBILIR YUZEYDIR ve VARSAYILANDIR: her hucre
+              // gercek bir dugmedir, klavyeyle gezilir ve ekran okuyucu
+              // adini okur. Harita onun yerine GECMEZ, yanina gelir.
+              // Sema: blok -> kat (ust kat yukarida) -> renkli hucreler.
+              icerik: (
+                <div className="space-y-4">
           {(data?.bloklar ?? []).map((blok) => (
             <Kart key={blok.blok} className="space-y-3">
               <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
@@ -288,6 +357,44 @@ export default function SchematicPage() {
             </Kart>
           )}
         </div>
+              ),
+            },
+            {
+              id: GORUNUM_HARITA,
+              baslik: t("haritaGorunumHarita"),
+              // HARITA: buyuk sitelerde pan/zoom kazandirir. Tuval
+              // uzerindeki dikdortgen ekran okuyucuya bir sey soylemez —
+              // bu yuzden ALTERNATIF gorunum, tek gorunum degil.
+              icerik: (
+                <div className="space-y-2">
+                  <PlanHaritasiYukleyici
+                    hucreler={hucreler}
+                    bloklar={planBloklari}
+                    onSec={(id) => {
+                      const bulunan = (data?.bloklar ?? [])
+                        .flatMap((b) => b.katlar.flatMap((k) => k.units))
+                        .find((u) => u.unit_id === id);
+                      if (bulunan) setSelected(bulunan);
+                    }}
+                  />
+                  {/* HARITANIN NE OLMADIGINI YAZAR. */}
+                  <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-3)" }}>
+                    {t("haritaPlanNotu")}
+                  </p>
+                  {/* SESSIZ EKSIK YOK: haritada olmayan daireler sayilir. */}
+                  {yerlesimsiz > 0 && (
+                    <p
+                      role="status"
+                      style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-warning-ink)" }}
+                    >
+                      {t("haritaPlanEksik", { sayi: yerlesimsiz })}
+                    </p>
+                  )}
+                </div>
+              ),
+            },
+          ]}
+        />
 
         {/* Detay paneli — secili daire */}
         <div>
