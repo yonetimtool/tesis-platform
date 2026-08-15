@@ -132,7 +132,10 @@ describe("(P160) yeni token paleti — WCAG AA", () => {
       // ve WCAG'in istemedigi bir sey olurdu.
       it("durum renkleri ANLAMLI GRAFIK olarak >=3.0 (-edge varyanti)", () => {
         for (const [yad, y] of Object.entries(yuzeyler())) {
-          for (const ad2 of ["accent", "success", "warning", "danger"]) {
+          // (P161) `nfc` ve `kamera` da bu ailede: sahne etiketlerinin
+          // noktalari onlari kullaniyor ve hex olarak yazildiklarinda
+          // acik temada 3.0'i GECMIYORLARDI.
+          for (const ad2 of ["accent", "success", "warning", "danger", "nfc", "kamera"]) {
             const o = oran(t(`yz-${ad2}-edge`), y);
             expect(o, `--yz-${ad2}-edge / ${yad} = ${o.toFixed(2)}`)
               .toBeGreaterThanOrEqual(3.0);
@@ -180,6 +183,7 @@ describe("(P160) yeni token paleti — WCAG AA", () => {
       "yz-accent", "yz-success", "yz-warning", "yz-danger",
       "yz-accent-ink", "yz-success-ink", "yz-warning-ink", "yz-danger-ink",
       "yz-accent-edge", "yz-success-edge", "yz-warning-edge", "yz-danger-edge",
+      "yz-nfc-edge", "yz-kamera-edge",
       "yz-raised", "yz-raised-hover", "yz-sunken",
       "yz-metal-1", "yz-metal-2", "yz-metal-accent",
       "yz-on-fill", "yz-danger-fill",
@@ -192,15 +196,21 @@ describe("(P160) yeni token paleti — WCAG AA", () => {
 });
 
 describe("(P160) eski dil ile CAKISMA YOK", () => {
-  it("yeni katman globals.css'i DEGISTIRMEZ", () => {
-    // Secenek C'nin tek sarti: parite testinin okudugu dosyaya
-    // dokunulmamasi. Yeni tokenlarin hepsi `--yz-` onekli ve AYRI
-    // dosyada; `globals.css`te `--yz-` gecmemeli.
+  it("globals.css `--yz-` TOKENI TANIMLAMAZ (kullanmasi serbest)", () => {
+    // Secenek C'nin tek sarti: TANIMLARIN tek dosyada olmasi. Iddia
+    // once "globals.css'te `--yz-` GECMEMELI" seklindeydi; bu, KULLANIMI
+    // da yasakliyordu ve fazla genisti. (P161) tema gecisi ile koyu tema
+    // harita katmani globals.css'te durmak ZORUNDA — ikisi de oradaki
+    // hareket-azaltma blogundan ONCE gelmeli ki kaskad dogru kalsin.
+    // Token OKUMAK zaten tema katmaninin isidir; sakincali olan TANIMIN
+    // ikiye bolunmesidir, cunku o zaman hangi dosyanin kazandigi belirsiz
+    // olur. Test tam olarak onu olcuyor.
     const globals = readFileSync(
       resolve(dirname(fileURLToPath(import.meta.url)), "..", "app", "globals.css"),
       "utf8",
     );
-    expect(globals).not.toContain("--yz-");
+    const tanimlar = [...globals.matchAll(/(--yz-[a-z0-9-]+)\s*:/g)].map((m) => m[1]);
+    expect(tanimlar, `globals.css'te token TANIMI: ${tanimlar.join(", ")}`).toEqual([]);
   });
 
   it("yeni tokenlar TAMAMEN `--yz-` onekli (ad cakismasi imkansiz)", () => {

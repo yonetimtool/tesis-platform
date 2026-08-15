@@ -44,10 +44,11 @@ import { easing } from "maath";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Color, InstancedMesh, Object3D, Vector3 } from "three";
 
-import { DURUM_RENGI, SECIM_RENGI, sahnePaleti } from "./site-palet";
+import { durumRenkleri, sahnePaleti, secimRengi } from "./site-palet";
 import {
   KAT_YUKSEKLIGI,
   ORNEK_ONEK,
+  daireOlcegi,
   TABAN_PAYI,
   ornekSite,
   kameraUzakligi,
@@ -81,13 +82,21 @@ const DONGU_SUREKLI = "always" as const;
 const DONGU_TALEP = "demand" as const;
 const YATAY = "nowrap" as const;
 
-/** Etiket noktasi renkleri — arayuzun durum ailesiyle ayni. */
+/**
+ * ETIKET NOKTASI RENKLERI — TOKEN'DAN, hex'ten DEGIL.
+ *
+ * Etiketler `Html` ile DOM'da cizilir; yani WebGL'in aksine CSS
+ * degiskenlerini OKUYABILIRLER. Onceki surumde burada sabit hexler vardi
+ * ve olculdugunde yonetici/sakin/kamera noktalari acik temada 3.0
+ * esigini gecmiyordu (2.63 / 2.93 / 2.69). Token ailesi her iki tema
+ * icin AYRI olculmus degerleri tasiyor.
+ */
 const TUR_RENGI: Record<IsaretciTuru, string> = {
-  yonetici: "#4da3ff",
-  sakin: "#3fa97a",
-  nfc: "#8b7fd4",
-  kamera: "#5aa9b8",
-  alarm: "#d45b5e",
+  yonetici: "var(--yz-accent-edge)",
+  sakin: "var(--yz-success-edge)",
+  nfc: "var(--yz-nfc-edge)",
+  kamera: "var(--yz-kamera-edge)",
+  alarm: "var(--yz-danger-edge)",
 };
 
 /**
@@ -109,7 +118,7 @@ const GECICI_RENK = new Color();
 /** Pencerenin cepheden disa tasma miktari. */
 const PENCERE_TASMA = 0.09;
 /** Secili olmayan blogun pencerelerinin cektigi notr renk. */
-const SOLUK_RENK = new Color("#9aa5b1");
+const SOLUK_RENK = new Color("#8a949f");
 
 /* ====================================================================== */
 /*  KAMERA                                                                */
@@ -357,6 +366,8 @@ function Blok({
   onDaireSec: (blokId: string, daireId: string, kat: number) => void;
 }) {
   const p = sahnePaleti(koyu);
+  const durumlar = durumRenkleri(koyu);
+  const secimRenk = secimRengi(koyu);
   const [uzerinde, setUzerinde] = useState(false);
   const pencereRef = useRef<InstancedMesh>(null);
   const cizgiRef = useRef<InstancedMesh>(null);
@@ -381,7 +392,9 @@ function Blok({
       const nz = Math.cos(y.yon);
       GECICI.position.set(y.x + nx * PENCERE_TASMA, y.y, y.z + nz * PENCERE_TASMA);
       GECICI.rotation.set(0, y.yon, 0);
-      GECICI.scale.setScalar(1);
+      // RENK TEK KANAL DEGIL: alarmli daire biraz buyuk cizilir (bkz.
+      // `daireOlcegi`). Instancing'de olcek zaten matriste; bedeli yok.
+      GECICI.scale.setScalar(daireOlcegi(y.daire.durum));
       GECICI.updateMatrix();
       m.setMatrixAt(i, GECICI.matrix);
     }
@@ -398,7 +411,7 @@ function Blok({
       const seciliDaire = secim.daireId === d.id;
       // ONCELIK: secili daire > secili kat > durum. Ucunu karistirmak,
       // "tikladigim daire nerede" sorusunu cevapsiz birakirdi.
-      GECICI_RENK.set(seciliDaire ? SECIM_RENGI : DURUM_RENGI[d.durum]);
+      GECICI_RENK.set(seciliDaire ? secimRenk : durumlar[d.durum]);
       // BASKA BLOK SECILI: bu blogun pencereleri durum rengini BIRAKIR.
       if (soluk) GECICI_RENK.lerp(SOLUK_RENK, 0.78);
       // BU BLOKTA BASKA KAT SECILI: kat disi pencereler kararir.
@@ -406,7 +419,7 @@ function Blok({
       m.setColorAt(i, GECICI_RENK);
     }
     if (m.instanceColor) m.instanceColor.needsUpdate = true;
-  }, [daireYerleri, secim.daireId, secim.kat, katSeciliMi, soluk]);
+  }, [daireYerleri, secim.daireId, secim.kat, katSeciliMi, soluk, durumlar, secimRenk]);
 
   // --- kat cizgileri: her katin tabaninda ince bir seri ---
   useLayoutEffect(() => {

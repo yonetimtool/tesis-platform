@@ -118,6 +118,23 @@ export function cepheNoktalari(
   return noktalar;
 }
 
+/**
+ * DAIRE PENCERESININ OLCEGI — RENK TEK KANAL OLMASIN.
+ *
+ * OLCULEN SORUN: `alarm` (kirmizi) ile `normal` (mavi) neredeyse AYNI
+ * ISIKLIKTA. Ikisi de duvardan ayriliyor ama BIRBIRINDEN yalnizca RENK
+ * TONUYLA ayriliyorlar (oran 1.01). Renk korlugu olan bir kullanici,
+ * gri tonlamali bir cikti ya da parlak gunes altindaki bir ekran icin
+ * bu tek kanal yeterli degil.
+ *
+ * Rengi bozmak yerine IKINCI BIR KANAL eklendi: alarmli daire biraz
+ * BUYUK cizilir. Instancing'de olcek zaten ornek matrisinde tasiniyor,
+ * yani bedeli sifir.
+ */
+export function daireOlcegi(durum: DaireDurumu): number {
+  return durum === "alarm" ? 1.32 : 1;
+}
+
 /** Kat sayisi = en yuksek kat + 1; en az 1 (kat bilgisi yoksa tek kat). */
 export function katSayisi(daireler: SahneDairesi[]): number {
   let enUst = 0;

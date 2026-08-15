@@ -56,20 +56,55 @@ export interface SahnePaleti {
 }
 
 /**
- * DAIRE DURUM RENKLERI — arayuzun `--yz-*-edge` ailesiyle ayni.
+ * DAIRE DURUM RENKLERI — TEMAYA BAGLI, cunku OLCULDU.
  *
- * `pasif` KASTEN SOLUK: "kayit kapali" bir DURUM DEGIL, bir YOKLUK; onu
- * uyari renginde gostermek olmayan bir sorunu isaret ederdi.
+ * =========================================================================
+ * ILK PALET IKI TEMADA DA DUSUYORDU
+ * =========================================================================
+ * Tek bir renk kumesi vardi ve duvar renginin degistigi hesaba
+ * katilmamisti. Olcum (WCAG 1.4.11, anlamli grafik ogesi icin 3.0):
+ *
+ *   acik temada duvar #e8edf2 uzerinde: normal 2.10, borclu 2.15,
+ *   secim 2.23 — UCU DE DUSUK.
+ *   koyu temada duvar #8f9aa6 uzerinde: 1.09 ile 1.58 arasi — HEPSI.
+ *
+ * Yani koyu temada pencere ile duvari ayirt etmek neredeyse imkansizdi
+ * ve "daire durumunu renkle goster" maddesi kagit uzerinde kaliyordu.
+ *
+ * COZUM IKI YONLU: koyu temada duvar KOYULASTI (#5a646e) ve pencereler
+ * PARLADI — gece maketinde isikli pencere zaten dogru okuma. Acik temada
+ * duvar ayni kaldi, pencereler koyulastirildi. Butun degerler >= 3.2
+ * (esikten pay birakilarak) ve `tests/sahne-kontrast.test.ts` ile kilitli.
+ *
+ * `pasif` KASTEN SOLUK KALDI: "kayit kapali" bir DURUM DEGIL, bir YOKLUK;
+ * onu uyari renginde gostermek olmayan bir sorunu isaret ederdi. Ama artik
+ * SOLUK OLMAK ile GORUNMEZ OLMAK ayrildi — o da esigi geciyor.
  */
-export const DURUM_RENGI: Record<DaireDurumu, string> = {
-  normal: "#7fa9cf",
-  borclu: "#d6963c",
+const DURUM_ACIK: Record<DaireDurumu, string> = {
+  normal: "#6586a4",
+  borclu: "#ad7930",
   alarm: "#d45b5e",
   pasif: "#6b7885",
 };
 
+const DURUM_KOYU: Record<DaireDurumu, string> = {
+  normal: "#93c3ef",
+  borclu: "#faaf46",
+  alarm: "#ffa5ab",
+  pasif: "#abc0d5",
+};
+
+export function durumRenkleri(koyu: boolean): Record<DaireDurumu, string> {
+  return koyu ? DURUM_KOYU : DURUM_ACIK;
+}
+
 /** Secili dairenin vurgu rengi — durumdan BAGIMSIZ (secim bir durum degil). */
-export const SECIM_RENGI = "#4da3ff";
+const SECIM_ACIK = "#3f86d2";
+const SECIM_KOYU = "#5fc8ff";
+
+export function secimRengi(koyu: boolean): string {
+  return koyu ? SECIM_KOYU : SECIM_ACIK;
+}
 
 const KOYU: SahnePaleti = {
   arkaPlan: "#151b22",
@@ -81,22 +116,22 @@ const KOYU: SahnePaleti = {
   havuz: "#1d4f6b",
   agacGovde: "#3a3229",
   agacTepe: "#2f5a45",
-  kutle: "#8f9aa6",
-  katCizgisi: "#6b7580",
-  cati: "#7b8692",
-  balkon: "#a3aeba",
+  kutle: "#5a646e",
+  katCizgisi: "#47505a",
+  cati: "#4d5761",
+  balkon: "#6a747f",
   pencere: "#7fa9cf",
   serit: "#3d8fd4",
   ortamIsik: "#9fc0e0",
-  ortamGuc: 0.45,
+  ortamGuc: 0.58,
   anahtarIsik: "#cfe2f5",
   anahtarGuc: 1.25,
   dolguIsik: "#5f7ea6",
-  dolguGuc: 0.5,
+  dolguGuc: 0.62,
 };
 
 const ACIK: SahnePaleti = {
-  arkaPlan: "#eef2f6",
+  arkaPlan: "#d8e0e9",
   platform: "#e2e9f0",
   platformKenar: "#cfd9e3",
   cim: "#cfe0cf",

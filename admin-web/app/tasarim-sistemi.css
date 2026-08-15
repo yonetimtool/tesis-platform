@@ -94,6 +94,14 @@
   --yz-success-edge: #3a9b70;
   --yz-warning-edge: #bc7e27;
   --yz-danger-edge: #d45b5e;
+  /* (P161) SAHNE ISARETCI RENKLERI. Maketteki etiketler bes TUR tasiyor
+     (yonetici / sakin / NFC / kamera / alarm); dordu mevcut durum
+     ailesinden karsilanabildi ama NFC ve KAMERA icin karsilik YOKTU ve
+     sahne kendi hexlerini uyduruyordu — olculdugunde ikisi de acik
+     temada 3.0 esigini GECMIYORDU. Bunlar 1.4.11 (arayuz bileseni)
+     esigine gore secildi ve `yz-token-kontrast` testiyle kilitli. */
+  --yz-nfc-edge: #887cd0;
+  --yz-kamera-edge: #4d919e;
 
   /* ---------------------------------------------------------------------
      KABARTMA — metalik yuzeyin kalbi (brief: token olarak tanimla)
@@ -172,6 +180,8 @@
   --yz-success-edge: #5bb98c;
   --yz-warning-edge: #e0a458;
   --yz-danger-edge: #da6d6f;
+  --yz-nfc-edge: #9386e0;
+  --yz-kamera-edge: #5aa9b8;
 
   --yz-raised:
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
@@ -334,6 +344,17 @@
   .yz-satir-giris {
     animation: none;
   }
+}
+
+/* Tema anahtari — hover zemini de tokendan. */
+.yz-tema-dugme {
+  transition:
+    background-color var(--yz-dur-fast) var(--yz-ease),
+    border-color var(--yz-dur-fast) var(--yz-ease);
+}
+.yz-tema-dugme:hover {
+  background: var(--yz-surface-2);
+  border-color: var(--yz-border-strong);
 }
 
 /* Yukselme YALNIZ hover'da ve 2px — brief. `transform` kullaniliyor

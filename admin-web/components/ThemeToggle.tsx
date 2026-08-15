@@ -4,11 +4,16 @@ import { useEffect, useState } from "react";
 
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
+import { kayitliMod, moduKaydet, temayiUygula, type TemaModu } from "@/lib/tema";
 
 // Tema modu: sistem (OS'i izle), acik veya koyu. Secim localStorage'da kalici.
 // Ilk boyama oncesi `.dark` sinifi layout'taki satir-ici script ile atanir
 // (FOUC yok); bu bilesen calisma-zamani degisimini ve senkronu yonetir.
-type Mode = "system" | "light" | "dark";
+//
+// (P161) UYGULAMA MANTIGI `lib/tema.ts`e TASINDI: modun hangi sinifi
+// verdigi ve 200 ms'lik renk gecisi artik tek kaynakta. Bu bilesen
+// yalnizca DUGME.
+type Mode = TemaModu;
 
 const ORDER: Mode[] = ["system", "light", "dark"];
 // Etiket METIN degil ANAHTAR (tur 17) — cizim aninda aktif dilde cozulur.
@@ -19,34 +24,15 @@ const LABEL: Record<Mode, SozlukAnahtari> = {
 };
 const ICON: Record<Mode, string> = { system: "🖥️", light: "☀️", dark: "🌙" };
 
-function systemPrefersDark(): boolean {
-  return window.matchMedia("(prefers-color-scheme: dark)").matches;
-}
-
-function applyMode(mode: Mode) {
-  const dark = mode === "dark" || (mode === "system" && systemPrefersDark());
-  document.documentElement.classList.toggle("dark", dark);
-}
-
 export function ThemeToggle() {
   const t = useT();
   const [mode, setMode] = useState<Mode>("system");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // (P160) KORUMASIZ OKUMA DUZELTILDI: gizli sekmede / depolama
-    // engelliyken `localStorage` ERISIMI FIRLATIR ve bu, tema anahtarini
-    // degil TUM KABUGU cizilemez hale getiriyordu (kabuk katlanma testi
-    // olctu). Erisilemez depolamada varsayilan `system` modda kalinir.
-    let stored: Mode | null = null;
-    try {
-      stored = localStorage.getItem("theme") as Mode | null;
-    } catch {
-      stored = null;
-    }
-    if (stored === "light" || stored === "dark" || stored === "system") {
-      setMode(stored);
-    }
+    // Korumali okuma `lib/tema.ts`te; erisilemez depolamada `system`.
+    const stored = kayitliMod();
+    if (stored) setMode(stored);
     setMounted(true);
   }, []);
 
@@ -54,7 +40,9 @@ export function ThemeToggle() {
   useEffect(() => {
     if (mode !== "system") return;
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    const onChange = () => applyMode("system");
+    // Isletim sistemi temasi degisince de YUMUSAK gecilir: ani bir renk
+    // sicramasi, kullanicinin kendi yapmadigi bir degisimde daha rahatsiz.
+    const onChange = () => temayiUygula("system", true);
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
   }, [mode]);
@@ -62,12 +50,8 @@ export function ThemeToggle() {
   function cycle() {
     const next = ORDER[(ORDER.indexOf(mode) + 1) % ORDER.length];
     setMode(next);
-    try {
-      localStorage.setItem("theme", next);
-    } catch {
-      // Yazilamazsa tercih bu oturumda gecerli olur, kalici olmaz.
-    }
-    applyMode(next);
+    moduKaydet(next);
+    temayiUygula(next, true);
   }
 
   // Hydration uyumu: sunucu modu bilmez; ilk render'da notr etiket goster.
@@ -79,7 +63,17 @@ export function ThemeToggle() {
       onClick={cycle}
       title={`${t("temaSecici")}: ${label}`}
       aria-label={`${t("temaSecici")}: ${label}`}
-      className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-metin-body transition hover:bg-slate-100"
+      // (P161) TOKEN'A GECTI. Tema anahtarinin KENDISI temasizdi:
+      // `border-slate-300` ve `hover:bg-slate-100` sabit acik-tema
+      // renkleriydi; koyu temada dugme cevresinden kopuk duruyordu.
+      className="yz-tema-dugme rounded-lg px-3 py-1.5 text-sm"
+      style={{
+        borderWidth: "var(--yz-border-w)",
+        borderStyle: "solid",
+        borderColor: "var(--yz-border)",
+        background: "var(--yz-surface-1)",
+        color: "var(--yz-text-2)",
+      }}
     >
       <span aria-hidden>{icon}</span> {label}
     </button>

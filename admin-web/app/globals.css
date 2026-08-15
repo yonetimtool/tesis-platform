@@ -94,6 +94,32 @@ textarea:focus-visible,
   border-color: #2cc4b7;
 }
 
+/* (P161 §4) TEMA GECISI — 200 ms, YALNIZ RENK.
+   
+   Brief: "tema degisimi 200 ms yumusak gecisle olsun, sicrama olmasin".
+   
+   KURAL GECICIDIR: sinif tema anahtarinda `<html>`e eklenir ve 220 ms
+   sonra kaldirilir. Kalici bir `transition: all` yazmak, HER hover ve
+   HER durum degisimini de yavaslatirdi — dugmeye basinca rengin 200 ms
+   surunmesi, tepkisiz bir arayuz demekti.
+   
+   YALNIZ RENK OZELLIKLERI listeleniyor: `width`/`transform` gibi duzen
+   ozellikleri listeye GIRMEZ, bu yuzden gecis sirasinda sicrama olamaz.
+   
+   Bu blok, asagidaki hareket-azaltma blogundan ONCE duruyor: ikisi de
+   `!important` ve esit ozgullukte, yani KAYNAK SIRASI karar veriyor —
+   hareket azaltilmissa gecis suresi 0.01 ms'ye duser. */
+.yz-tema-gecisi,
+.yz-tema-gecisi *,
+.yz-tema-gecisi *::before,
+.yz-tema-gecisi *::after {
+  transition-property: background-color, background-image, color, border-color,
+    box-shadow, fill, stroke, outline-color !important;
+  transition-duration: 200ms !important;
+  transition-timing-function: var(--yz-ease, ease) !important;
+  transition-delay: 0s !important;
+}
+
 /* HAREKET-AZALTMA — GENEL KURAL (P161).
    
    Onceki surum yalniz iki `animate-drift` sinifini durduruyordu; geri
@@ -294,4 +320,31 @@ textarea:focus-visible,
 .odak-ters:focus-visible,
 .dark .odak-ters:focus-visible {
   outline-color: #ffffff;
+}
+
+/* ---------------------------------------------------------------------------
+   (P161 §4) HARITA KATMANI — KOYU TEMA.
+
+   Brief tema anahtarinin "harita katmanini" da surmesini istiyor. Koyu bir
+   panelin ortasindaki bembeyaz bir OSM karosu hem goz aliyor hem de gece
+   vardiyasinda bakan gorevliyi rahatsiz ediyordu.
+
+   NEDEN YENI BIR KARO SAGLAYICISI DEGIL: koyu karo sunan servisler AYRI bir
+   ucuncu taraf host demek (yeni alan adi, yeni kullanim sartlari, yeni
+   kesinti noktasi). P160'ta public OSM bilincli secilmisti. Filtre ayni
+   kaynagi kullanir ve hicbir sey eklemez.
+
+   YALNIZ `tilePane`: Leaflet isaretcileri, vektorleri ve acilir kutulari
+   AYRI panelerde cizer. Filtreyi tuvalin tamamina uygulamak, durum
+   renklerini de ters cevirir ve kirmizi alarmi yesile dondururdu.
+   --------------------------------------------------------------------------- */
+.dark .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.9)
+    saturate(0.85);
+}
+/* Katki metni karolarin uzerinde degil kendi kutusunda; filtreden
+   etkilenmez ama zemini temaya baglanmali. */
+.dark .leaflet-control-attribution {
+  background: var(--yz-surface-1);
+  color: var(--yz-text-2);
 }
