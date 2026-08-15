@@ -46,6 +46,23 @@ Metin "su nokta {mesafe} m uzaktan okutuldu (esik {esik} m)" der. "Ihlal",
 degil. Gorevlinin ADI push metnine GIRMEZ — kayit zaten kimin okuttugunu
 tutuyor ve yonetici bakabilir; bir kisinin adini alarm bildirimine
 koymak, olayin kendisinden once kisiyi hedef gostermekti.
+
+===========================================================================
+KIME GIDER — DEGISTI (urun karari)
+===========================================================================
+Ilk surumde push YALNIZ yonetime gidiyordu; gerekce "bildirim bir olcum
+bildirir, uyari cezasi degil; kisiyi dogrudan titretmek onu sanik
+konumuna koyar" idi. KARAR DEGISTI (Kerem): gorevli de bildirim alir.
+
+Karsi gerekce daha guclu: okutmayi yapan kisi, okutmasinin noktadan uzak
+kaydedildigini OGRENMEZSE duzeltemez de. Bildirimi yalnizca yonetime
+gondermek, kisiyi haberi olmadan bir listeye yazmak olurdu — haber
+vermek, sessizce raporlamaktan daha durust.
+
+IN-APP SATIR ZATEN GORUNUYORDU: `notifications._YONETIM_GOZU` icinde
+`security` var, yani gorevli `user_id IS NULL` satirlarini okuyabiliyor.
+Bu yuzden KISIYE OZEL IKINCI BIR SATIR YAZILMIYOR — yazsaydik gorevlinin
+listesinde AYNI olay iki kez gorunurdu. Eksik olan yalnizca PUSH'tu.
 """
 from __future__ import annotations
 
@@ -67,9 +84,9 @@ logger = logging.getLogger("uzak_okutma")
 #: Bildirim kimligi = `notification.tip` = `data.tip` (tek deger).
 TIP = "uzak_okutma"
 
-#: Alarmi alan roller. Esigi KOYAN taraf yonetimdir; alarm da ona gider.
-#: Gorevlinin kendisi hedeflenmez: bildirim bir OLCUM bildirir, bir uyari
-#: cezasi degil — kisiyi dogrudan titretmek onu sanik konumuna koyardi.
+#: Alarmi ROL olarak alanlar. Gorevli AYRICA KISI olarak hedeflenir
+#: (asagida): rol yayinina birakmak, o vardiyada olmayan tum guvenlik
+#: personelini de titretirdi — `gecikmis_okutma`daki ayni ayrim.
 ALARM_ROLLERI: tuple[str, ...] = ("admin", "yonetici", "guvenlik_amiri")
 
 
@@ -131,11 +148,24 @@ async def uzak_okutma_alarmi(
     )
     # PUSH EK GONDERIMDIR: hatasi kaydi kirmaz (dispatch_external kendi
     # icinde yutar) — in-app bildirim her halukarda yazilmistir.
+    tenant = uuid.UUID(str(scan.tenant_id))
+    data = {"tip": TIP, "checkpoint_id": str(checkpoint.id)}
+    # GOREVLIYE KISI OLARAK: okutmayi yapan kisi durumu OGRENMEZSE
+    # duzeltemez de. Once o, cunku eylemi duzeltebilecek tek kisi odur.
+    if scan.guard_id is not None:
+        dispatch_external(
+            TIP,
+            tenant_id=tenant,
+            target_user_ids=[uuid.UUID(str(scan.guard_id))],
+            params=veri,
+            data=data,
+        )
+    # YONETIME ROL OLARAK: esigi koyan taraf sonucu da gormeli.
     dispatch_external(
         TIP,
-        tenant_id=uuid.UUID(str(scan.tenant_id)),
+        tenant_id=tenant,
         target_roles=ALARM_ROLLERI,
         params=veri,
-        data={"tip": TIP, "checkpoint_id": str(checkpoint.id)},
+        data=data,
     )
     return True

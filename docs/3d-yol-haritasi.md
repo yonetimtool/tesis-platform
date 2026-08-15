@@ -294,9 +294,32 @@ bildirim "eşik dışı" der ve yönetici hangisine inanacağını bilemezdi.
 okutuldu (eşik {esik} m)"* der. "İhlal"/"şüpheli" demez ve **görevlinin
 adı push metnine girmez** — kayıt zaten kimin okuttuğunu tutuyor;
 bir kişinin adını alarm bildirimine koymak, olayın kendisinden önce
-kişiyi hedef göstermekti. Alarm **yönetime** gider (admin · yönetici ·
-güvenlik amiri), görevliye değil: bildirim bir ölçüm bildirir, uyarı
-cezası değil.
+kişiyi hedef göstermekti.
+
+#### Kime gider — bu karar DEĞİŞTİ
+
+İlk sürümde push yalnız yönetime gidiyordu; gerekçe *"bildirim bir ölçüm
+bildirir, uyarı cezası değil; kişiyi doğrudan titretmek onu sanık
+konumuna koyar"* idi. **Karar değişti (Kerem): görevli de bildirim alır.**
+
+Karşı gerekçe daha güçlü: okutmayı yapan kişi, okutmasının noktadan uzak
+kaydedildiğini **öğrenmezse düzeltemez de**. Bildirimi yalnızca yönetime
+göndermek, kişiyi haberi olmadan bir listeye yazmak olurdu — haber
+vermek, sessizce raporlamaktan daha dürüst.
+
+| Kime | Nasıl | Neden |
+|---|---|---|
+| **Görevli** (okutmayı yapan) | `target_user_ids` — kişi | Eylemi düzeltebilecek tek kişi o |
+| **Yönetim** (admin · yönetici · güvenlik amiri) | `target_roles` — rol | Eşiği koyan taraf sonucu da görmeli |
+
+İki **ayrı** çağrı: görevliyi rol yayınına bırakmak, o vardiyada olmayan
+tüm güvenlik personelini de titretirdi (`gecikmis_okutma`daki aynı ayrım).
+
+**Kişiye özel ikinci bir in-app satır YAZILMIYOR.** Ölçüldü:
+`notifications._YONETIM_GOZU` içinde `security` var, yani görevli
+`user_id IS NULL` satırlarını zaten okuyabiliyor. İkinci satır yazsaydık
+görevlinin listesinde **aynı olay iki kez** görünürdü. Eksik olan yalnızca
+push'tu.
 
 ## 6. PERFORMANS BÜTÇESİ (her yeni sahne bunu tutmalı)
 
