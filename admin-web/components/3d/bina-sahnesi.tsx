@@ -44,7 +44,7 @@ import { easing } from "maath";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Color, InstancedMesh, Object3D, Vector3 } from "three";
 
-import { durumRenkleri, sahnePaleti, secimRengi } from "./site-palet";
+import { durumRenkleri, hoverRengi, sahnePaleti, secimRengi } from "./site-palet";
 import {
   KAT_YUKSEKLIGI,
   ORNEK_ONEK,
@@ -368,7 +368,11 @@ function Blok({
   const p = sahnePaleti(koyu);
   const durumlar = durumRenkleri(koyu);
   const secimRenk = secimRengi(koyu);
+  const hoverRenk = hoverRengi(koyu);
   const [uzerinde, setUzerinde] = useState(false);
+  // (P162 §8.1) HOVER'DAKI DAIRE. `instancedMesh` uzerinde imlecin hangi
+  // ornekte oldugu `e.instanceId` ile gelir; ayri bir mesh gerekmez.
+  const [uzerindekiDaire, setUzerindekiDaire] = useState<number | null>(null);
   const pencereRef = useRef<InstancedMesh>(null);
   const cizgiRef = useRef<InstancedMesh>(null);
   const balkonRef = useRef<InstancedMesh>(null);
@@ -409,9 +413,14 @@ function Blok({
       const d = daireYerleri[i].daire;
       const katVurgusu = katSeciliMi && d.kat === secim.kat;
       const seciliDaire = secim.daireId === d.id;
+      const uzerindekiMi = uzerindekiDaire === i;
       // ONCELIK: secili daire > secili kat > durum. Ucunu karistirmak,
       // "tikladigim daire nerede" sorusunu cevapsiz birakirdi.
-      GECICI_RENK.set(seciliDaire ? secimRenk : durumlar[d.durum]);
+      // ONCELIK: secim > hover > durum. Hover'i secimin ustune koymak,
+      // secili dairenin imlec gecince rengini degistirmesi demekti.
+      GECICI_RENK.set(
+        seciliDaire ? secimRenk : uzerindekiMi ? hoverRenk : durumlar[d.durum],
+      );
       // BASKA BLOK SECILI: bu blogun pencereleri durum rengini BIRAKIR.
       if (soluk) GECICI_RENK.lerp(SOLUK_RENK, 0.78);
       // BU BLOKTA BASKA KAT SECILI: kat disi pencereler kararir.
@@ -419,7 +428,7 @@ function Blok({
       m.setColorAt(i, GECICI_RENK);
     }
     if (m.instanceColor) m.instanceColor.needsUpdate = true;
-  }, [daireYerleri, secim.daireId, secim.kat, katSeciliMi, soluk, durumlar, secimRenk]);
+  }, [daireYerleri, secim.daireId, secim.kat, katSeciliMi, soluk, durumlar, secimRenk, hoverRenk, uzerindekiDaire]);
 
   // --- kat cizgileri: her katin tabaninda ince bir seri ---
   useLayoutEffect(() => {
@@ -568,6 +577,11 @@ function Blok({
       <instancedMesh
         ref={pencereRef}
         args={[undefined, undefined, Math.max(1, daireYerleri.length)]}
+        onPointerMove={(e) => {
+          e.stopPropagation();
+          setUzerindekiDaire(e.instanceId ?? null);
+        }}
+        onPointerOut={() => setUzerindekiDaire(null)}
         onClick={(e) => {
           e.stopPropagation();
           const i = e.instanceId;

@@ -309,7 +309,12 @@ export default function AnnouncementsPage() {
                   </a>
                 )}
                 <p className="mt-2" style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
-                  {a.olusturan_ad ?? "—"} · {formatDateTime(a.created_at)}
+{/* (P162 §7.3) DUYURAN ADI YERINE ROL.
+                  Duyuru TESIS YONETIMI adina yapilir; hangi calisanin
+                  yazdigi sakin icin bilgi degildir ve kisiyi gereksizce
+                  one cikarir. Kayit `olusturan_user_id` ile denetimde
+                  DURUYOR — gizlenen sey veri degil, GORUNUM. */}
+                  {t("duyuranRol")} · {formatDateTime(a.created_at)}
                   {a.updated_at !== a.created_at && ` ${t("duyuruDuzenlendiEki")}`}
                 </p>
               </div>

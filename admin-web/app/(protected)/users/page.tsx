@@ -20,9 +20,10 @@ import {
   type RozetDurumu,
   type SayfaBoyu,
   type TabloDurumu,
+  useOnay,
 } from "@/components/ui";
 import { ParolaAlani } from "@/components/ParolaAlani";
-import { apiSend } from "@/lib/client";
+import { alanliHataMetni, apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import { ROLE_OPTIONS as ROLES, rolAdi } from "@/lib/roles";
@@ -97,6 +98,8 @@ const DURUM_NOTR = "notr" as const;
 
 export default function UsersPage() {
   const t = useT();
+  // (P162) Yikici onay tema/dil taniyan diyalogdan gecer.
+  const { onayla, diyalog } = useOnay();
   const toast = useToast();
 
   const [durum, setDurum] = useState<TabloDurumu>({
@@ -254,6 +257,35 @@ export default function UsersPage() {
     }
   }
 
+  /**
+   * (P162 §4.3) KULLANICI SILME — WEBDE YOKTU.
+   *
+   * Uc (`DELETE /users/{id}`) ve BFF rotasi ZATEN VARDI; eksik olan
+   * yalnizca dugmeydi. Mobilde silinebilen bir hesap webde silinemiyordu
+   * (brief'in web/mobil esitligi maddesi).
+   *
+   * ONAY METNI SERT SILMEYI ACIKCA SOYLER: sunucu `is_active=false`
+   * DEGIL, kaydi GERCEKTEN siliyor. Yumusak silme zaten ayri bir dugme
+   * ("Pasiflestir"); ikisini ayni cumleyle anlatmak kullaniciyi geri
+   * alinabilir sanip silmeye iterdi.
+   */
+  async function sil(u: UserRow) {
+    const ok = await onayla({
+      baslik: t("ortakSilBaslik"),
+      mesaj: t("kullaniciSilOnay", { ad: u.ad }),
+      onayMetni: t("ortakSil"),
+      tehlikeli: true,
+    });
+    if (!ok) return;
+    try {
+      await apiSend(`/api/users/${u.id}`, "DELETE");
+      mutate();
+      toast.success(t("kullaniciSilindi"));
+    } catch (err) {
+      toast.error(alanliHataMetni(err, t("ortakSilinemedi")));
+    }
+  }
+
   async function setActive(u: UserRow, active: boolean) {
     try {
       await apiSend(`/api/users/${u.id}`, "PATCH", { is_active: active });
@@ -315,6 +347,9 @@ export default function UsersPage() {
               onClick={() => void setActive(u, !u.is_active)}
             >
               {u.is_active ? t("ortakPasiflestir") : t("ortakAktiflestir")}
+            </Dugme>
+            <Dugme boy="kucuk" tur="tehlike" onClick={() => void sil(u)}>
+              {t("ortakSil")}
             </Dugme>
           </div>
         ),
@@ -584,6 +619,7 @@ export default function UsersPage() {
           )}
         </form>
       </Modal>
+      {diyalog}
     </div>
   );
 }

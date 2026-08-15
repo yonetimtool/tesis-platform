@@ -9,6 +9,7 @@ import { ODEME_DURUM, ODEME_YONTEM, enumAdi } from "@/lib/enum-adlari";
 import { apiSend, genIdempotencyKey } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { kurusToTL, tlToKurus } from "@/lib/money";
+import { useOnay } from "@/components/ui";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 import type {
@@ -34,6 +35,8 @@ const ROL: { value: ResidentRol; anahtar: SozlukAnahtari }[] = [
 
 export function UnitDetail({ unit }: { unit: Unit }) {
   const t = useT();
+  // (P162) Yikici onay tema/dil taniyan diyalogdan gecer.
+  const { onayla, diyalog } = useOnay();
   const toast = useToast();
   const { data: dues, mutate: mutateDues } = useSWR<UnitDuesStatus>(
     `/api/units/${unit.id}/dues`,
@@ -179,7 +182,15 @@ export function UnitDetail({ unit }: { unit: Unit }) {
   }
 
   async function removeResident(userId: string) {
-    if (!window.confirm(t("daireSakinCikarilsinMi"))) return;
+    if (
+      !(await onayla({
+        baslik: t("ortakOnayBaslik"),
+        mesaj: t("daireSakinCikarilsinMi"),
+        onayMetni: t("ortakSil"),
+        tehlikeli: true,
+      }))
+    )
+      return;
     try {
       await apiSend(`/api/units/${unit.id}/residents/${userId}`, "DELETE");
       mutateRes();
@@ -436,6 +447,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
         </form>
         <ErrorBox message={rErr} />
       </div>
+      {diyalog}
     </div>
   );
 }

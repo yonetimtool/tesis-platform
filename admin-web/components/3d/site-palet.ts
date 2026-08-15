@@ -98,12 +98,35 @@ export function durumRenkleri(koyu: boolean): Record<DaireDurumu, string> {
   return koyu ? DURUM_KOYU : DURUM_ACIK;
 }
 
-/** Secili dairenin vurgu rengi — durumdan BAGIMSIZ (secim bir durum degil). */
-const SECIM_ACIK = "#3f86d2";
-const SECIM_KOYU = "#5fc8ff";
+/**
+ * SECIM RENGI — (P162 §8.1) MAVIDEN YESILE.
+ *
+ * OLCULEN KUSUR: secim rengi maviydi (#3f86d2 / #5fc8ff) ve `normal`
+ * durum da mavi. Kullanici bir daireye tikladiginda "mavi tonu maviye
+ * donuyor" — yani secim ANLASILMIYORDU. Kontrast oranlari duvara gore
+ * dogruydu ama SECIM ILE NORMALIN BIRBIRINE gore farki degildi.
+ *
+ * Yesil secildi cunku durum ailesinde (mavi=normal, amber=borclu,
+ * kirmizi=alarm, gri=pasif) KULLANILMAYAN tek belirgin ton oydu; yani
+ * hicbir durumla karistirilmaz.
+ */
+const SECIM_ACIK = "#1f7a4d";
+const SECIM_KOYU = "#5fe0a0";
 
 export function secimRengi(koyu: boolean): string {
   return koyu ? SECIM_KOYU : SECIM_ACIK;
+}
+
+/**
+ * HOVER RENGI — secimden AYRI ton (brief: "Hover ayri bir ton, secim
+ * ayri"). Yesilin daha soluk/soguk bir kademesi: ayni aileden oldugu
+ * icin "buraya tiklarsan secilir" der, ama secili olanla karistirilmaz.
+ */
+const HOVER_ACIK = "#40926a";
+const HOVER_KOYU = "#9defc6";
+
+export function hoverRengi(koyu: boolean): string {
+  return koyu ? HOVER_KOYU : HOVER_ACIK;
 }
 
 const KOYU: SahnePaleti = {

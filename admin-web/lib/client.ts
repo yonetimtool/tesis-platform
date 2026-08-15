@@ -9,11 +9,31 @@ import { metin } from "./i18n/metin";
 /// sunucu metni tur 14'te 7 dile cevrilince o regex Turkce disi her dilde
 /// SESSIZCE calismaz oldu. Artik `code`/`status` bakilir (mobil tur 11'de
 /// ayni hata `e.code === "conflict"` ile duzeltilmisti).
+/** Sunucunun dondugu ALAN DUZEYINDE hata — `422` govdesindeki `details`. */
+export interface AlanHatasi {
+  /** Alan yolu (`blok`, `kat_sayisi`, ...). */
+  alan: string;
+  /** Pydantic'in kendi (Ingilizce) teknik metni. */
+  mesaj: string;
+}
+
 export class ApiHatasi extends Error {
   constructor(
     message: string,
     readonly code?: string,
     readonly status?: number,
+    /**
+     * (P162) ALAN AYRINTILARI ARTIK KAYBOLMUYOR.
+     *
+     * OLCULEN KUSUR: sunucu 422'de `error.details[]` ile HANGI ALANIN
+     * NEDEN reddedildigini soyluyordu (`errors.py` bunu bilerek
+     * dolduruyor) ama istemci YALNIZ `error.message`i okuyup gerisini
+     * atiyordu. Kullaniciya kalan tek cumle "Istek govdesi gecersiz"
+     * oluyordu — hangi alanin sorunlu oldugu EKRANDA HIC GORUNMUYORDU.
+     * Toplu daire olusturmadaki "Bir hata olustu" sikayetinin kaynagi
+     * tam olarak buydu.
+     */
+    readonly alanlar?: AlanHatasi[],
   ) {
     super(message);
     this.name = "ApiHatasi";
@@ -106,12 +126,17 @@ export async function apiSend<T = unknown>(
   const data: unknown = await res.json().catch(() => null);
   if (!res.ok) {
     const zarf = (data as {
-      error?: { code?: string; message?: string };
+      error?: {
+        code?: string;
+        message?: string;
+        details?: { field?: string; message?: string }[];
+      };
     } | null)?.error;
     throw new ApiHatasi(
       zarf?.message ?? metin("ortakHataOlustu"),
       zarf?.code,
       res.status,
+      zarf?.details?.map((d) => ({ alan: d.field ?? "", mesaj: d.message ?? "" })),
     );
   }
   return data as T;
@@ -175,4 +200,31 @@ export function genIdempotencyKey(): string {
   const c = (globalThis as { crypto?: { randomUUID?: () => string } }).crypto;
   if (c && typeof c.randomUUID === "function") return c.randomUUID();
   return `k-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+/**
+ * (P162 §4.1) SUNUCU HATASINI KULLANICININ ANLAYACAGI HALE GETIRIR.
+ *
+ * OLCULEN KUSUR: sunucu 422'de `error.details[]` ile hangi alanin neden
+ * reddedildigini soyluyor, ama ekranda yalnizca ust cumle ("Istek govdesi
+ * gecersiz") gorunuyordu. Kullanici hangi alani duzeltecegini
+ * BILEMIYORDU — toplu daire olusturmadaki "Bir hata olustu" sikayetinin
+ * kaynagi buydu.
+ *
+ * ALAN ADLARI CEVRILMEZ ve bu bilincli: `blok`, `kat_sayisi` gibi adlar
+ * SOZLESME adlaridir; onlari yerellestirmek, kullanicinin gordugu adla
+ * belgelerdeki adi ayirirdi. Cevrilen sey UST CUMLEDIR (sunucu zaten
+ * istegin dilinde doner).
+ */
+export function alanliHataMetni(hata: unknown, varsayilan: string): string {
+  if (!(hata instanceof ApiHatasi)) {
+    return hata instanceof Error ? hata.message : varsayilan;
+  }
+  const alanlar = hata.alanlar ?? [];
+  if (alanlar.length === 0) return hata.message;
+  const ayrinti = alanlar
+    .filter((a) => a.alan)
+    .map((a) => `${a.alan}: ${a.mesaj}`)
+    .join(" · ");
+  return ayrinti ? `${hata.message} — ${ayrinti}` : hata.message;
 }

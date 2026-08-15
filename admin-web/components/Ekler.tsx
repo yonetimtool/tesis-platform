@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { btnDanger, btnGhost, btnPrimary, inputCls } from "@/components/form";
 import { ApiHatasi, apiSend } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
+import { useOnay } from "@/components/ui";
 import { useT } from "@/lib/i18n/kullan";
 
 /**
@@ -49,6 +50,8 @@ export function Ekler({
   varlikId: string;
 }) {
   const t = useT();
+  // (P162) Yikici onay tema/dil taniyan diyalogdan gecer.
+  const { onayla, diyalog } = useOnay();
   const [ekler, setEkler] = useState<Ek[]>([]);
   const [not, setNot] = useState("");
   const [mesgul, setMesgul] = useState(false);
@@ -128,7 +131,15 @@ export function Ekler({
   }
 
   async function sil(id: string) {
-    if (!window.confirm(t("ekSilOnay"))) return;
+    if (
+      !(await onayla({
+        baslik: t("ortakSilBaslik"),
+        mesaj: t("ekSilOnay"),
+        onayMetni: t("ortakSil"),
+        tehlikeli: true,
+      }))
+    )
+      return;
     setHata(null);
     try {
       await apiSend(`${UC}/${id}`, "DELETE");
@@ -168,7 +179,8 @@ export function Ekler({
                 </p>
               )}
               <p className="mt-0.5 text-xs text-metin-muted">
-                {e.olusturan_ad ?? "—"} · {formatDateTime(e.created_at)}
+{/* (P162 §7.3) Duyuran adi yerine ROL — bkz. announcements. */}
+                {t("duyuranRol")} · {formatDateTime(e.created_at)}
               </p>
             </div>
             <button
@@ -233,6 +245,7 @@ export function Ekler({
           </div>
         </div>
       )}
+      {diyalog}
     </section>
   );
 }

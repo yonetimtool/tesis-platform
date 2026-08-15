@@ -20,7 +20,7 @@
 // bir palet, kucuk bir ton oynamasinda sessizce dusen bir palettir.
 import { describe, expect, it } from "vitest";
 
-import { durumRenkleri, sahnePaleti, secimRengi } from "@/components/3d/site-palet";
+import { durumRenkleri, hoverRengi, sahnePaleti, secimRengi } from "@/components/3d/site-palet";
 import { daireOlcegi } from "@/components/3d/site-yerlesim";
 import type { DaireDurumu } from "@/components/3d/site-yerlesim";
 
@@ -65,6 +65,25 @@ describe("(P161) sahne paleti — WCAG 1.4.11 (3.0)", () => {
 
       it("SECILI daire duvardan ayirt edilebilir", () => {
         expect(oran(secimRengi(koyu), p.kutle)).toBeGreaterThanOrEqual(ESIK);
+      });
+
+      it("HOVER duvardan ayirt edilebilir", () => {
+        expect(oran(hoverRengi(koyu), p.kutle)).toBeGreaterThanOrEqual(ESIK);
+      });
+
+      it("SECIM ile NORMAL AYNI AILEDEN DEGIL (P162 §8.1)", () => {
+        // OLCULEN SIKAYET: "daireye tiklayinca renk degisimi
+        // anlasilmiyor, mavi tonu maviye donuyor". Secim rengi mavi,
+        // `normal` durum da maviydi. Artik secim YESIL: durum ailesinde
+        // kullanilmayan tek belirgin ton, yani hicbir durumla
+        // karistirilamaz. Test HUE AYRIMINI olcer — parlaklik degil.
+        const yesil = (h: string) => {
+          const n = parseInt(h.slice(1), 16);
+          const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+          return g > r && g > b;
+        };
+        expect(yesil(secimRengi(koyu)), "secim yesil olmali").toBe(true);
+        expect(yesil(durumlar.normal), "normal yesil OLMAMALI").toBe(false);
       });
 
       it("ALARM RENKTEN BASKA bir kanal da tasir", () => {

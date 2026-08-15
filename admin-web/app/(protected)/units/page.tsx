@@ -6,7 +6,7 @@ import useSWR from "swr";
 import { useToast } from "@/components/Toast";
 import { UnitDetail } from "@/components/UnitDetail";
 import { BagimlilikUyarisi } from "@/components/BagimlilikUyarisi";
-import { apiSend } from "@/lib/client";
+import { alanliHataMetni, apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { aralikCoz } from "@/lib/aralik";
 import {
@@ -27,6 +27,9 @@ import {
 import { sayiBicimi, sayiCoz, tamsayiCoz } from "@/lib/sayi";
 import type { Unit, UnitList } from "@/lib/types";
 import { useT } from "@/lib/i18n/kullan";
+
+/** Sunucudaki `_BLOK_PATTERN` ile AYNI — ikisi ayrisirsa test duser. */
+const BLOK_KALIBI = /^[A-Za-z0-9]+$/;
 
 const LIMIT = 20;
 
@@ -113,6 +116,19 @@ export default function UnitsPage() {
 
   async function topluOlustur(): Promise<void> {
     setOHata(null);
+    // (P162 §4.1) BLOK ADI SUNUCUDA `^[A-Za-z0-9]+$` — bosluk, tire ve
+    // Turkce harf KABUL EDILMIYOR.
+    //
+    // KOK NEDEN BUYDU: kullanici "A Blok" ya da "B-1" yaziyor, sunucu 422
+    // doneriyor ve ekranda yalnizca "Bir hata olustu" beliriyordu.
+    // Kisitlama SUNUCUDA KALIYOR ve bu dogru: daire numarasi `{blok}-{n}`
+    // olarak kuruluyor ve `_UNIT_NO_PATTERN` bosluk kabul etmiyor — yani
+    // bosluklu bir blok, gecersiz bir daire numarasi uretirdi. Sozlesme
+    // degistirilmedi (kilitli kural); ISTEMCI ARTIK SEBEBI SOYLUYOR.
+    if (!BLOK_KALIBI.test(oBlok.trim())) {
+      setOHata(t("daireBlokKalibi"));
+      return;
+    }
     const sayilar = {
       kat_sayisi: tamsayiCoz(oKat),
       kat_basi_daire: tamsayiCoz(oDaire),
@@ -137,7 +153,9 @@ export default function UnitsPage() {
       await mutate();
       toast.success(t("daireTopluOlusturuldu"));
     } catch (e) {
-      setOHata(e instanceof Error ? e.message : t("ortakHataOlustu"));
+      // ALAN AYRINTISI VARSA ONU GOSTER: "Istek govdesi gecersiz" tek
+      // basina kullaniciya hicbir sey soylemiyordu.
+      setOHata(alanliHataMetni(e, t("ortakHataOlustu")));
     }
   }
 
