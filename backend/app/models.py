@@ -83,6 +83,11 @@ NOTIFICATION_TIP = ENUM(
     "talep_is_emri", "talep_cozuldu", "talep_reddedildi", "is_emri_atandi",
     # (P147) Sakinin KENDI olaylarinin geri donusu.
     "kargo", "ziyaretci", "rezervasyon", "sikayet_cozuldu",
+    # (P160) Okutma YAPILDI ve ZAMANINDA yapildi ama noktadan esikten
+    # uzakta yapildi — digerlerinin hicbiri bu olayi anlatmiyor.
+    # SIRA SONDA: `ALTER TYPE ... ADD VALUE` degeri sona ekler ve bu
+    # dosya gocun BIREBIR AYNASIDIR.
+    "uzak_okutma",
     name="notification_tip", create_type=False,
 )
 ASSET_KATEGORI = ENUM(

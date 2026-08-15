@@ -24,6 +24,7 @@ export const BILDIRIM_TIP: EnumHarita = {
   kacirilan_tur: "bildirimTipKacirilanTur",
   eksik_checkpoint: "bildirimTipEksikCheckpoint",
   gecikmis_okutma: "bildirimTipGecikmisOkutma",
+  uzak_okutma: "bildirimTipUzakOkutma",
   talep_is_emri: "bildirimTipTalepIsEmri",
   talep_cozuldu: "bildirimTipTalepCozuldu",
   talep_reddedildi: "bildirimTipTalepReddedildi",

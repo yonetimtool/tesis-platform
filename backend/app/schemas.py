@@ -922,7 +922,9 @@ class ScanReportResponse(BaseModel):
 
 
 # ------------------------------ dashboard ---------------------------------- #
-AlarmTip = Literal["kacirilan_tur", "eksik_checkpoint", "gecikmis_okutma"]
+AlarmTip = Literal[
+    "kacirilan_tur", "eksik_checkpoint", "gecikmis_okutma", "uzak_okutma"
+]
 
 
 class AktifTurOut(BaseModel):
@@ -963,6 +965,10 @@ ALARM_ONEMI: dict[str, str] = {
     "eksik_checkpoint": "orta",
     # Okutma gecikti: sahada olabilir, gec kalmis.
     "gecikmis_okutma": "dusuk",
+    # (P160) ORTA: tur yapilmis, kayit var — ama nerede yapildigi
+    # soruluyor. `kacirilan_tur` kadar agir degil, `gecikmis_okutma`dan
+    # daha somut (olculmus bir sapma var).
+    "uzak_okutma": "orta",
 }
 AlarmOnemLiteral = Literal["dusuk", "orta", "yuksek"]
 

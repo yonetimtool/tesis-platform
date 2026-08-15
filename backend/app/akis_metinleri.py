@@ -36,6 +36,7 @@ _BASLIKLAR: dict[str, str] = {
     "alarm_kacirilan_tur": "Kaçırılan Tur",
     "alarm_eksik_checkpoint": "Eksik Checkpoint",
     "alarm_gecikmis_okutma": "Gecikmiş Okutma",
+    "alarm_uzak_okutma": "Uzak Okutma",
     "ziyaretci_giris": "Ziyaretçi Girişi",
     "ziyaretci_cikis": "Ziyaretçi Çıkışı",
     "kargo": "Kargo Kaydedildi",

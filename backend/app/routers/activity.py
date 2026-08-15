@@ -151,6 +151,7 @@ SELECT n.id, 'alarm',
        CASE n.tip
            WHEN 'kacirilan_tur'    THEN 'alarm_kacirilan_tur'
            WHEN 'eksik_checkpoint' THEN 'alarm_eksik_checkpoint'
+           WHEN 'uzak_okutma' THEN 'alarm_uzak_okutma'
            ELSE                         'alarm_gecikmis_okutma'
        END,
        jsonb_strip_nulls(jsonb_build_object(
@@ -161,7 +162,8 @@ SELECT n.id, 'alarm',
 FROM notification n
 LEFT JOIN patrol_window pw ON pw.id = n.patrol_window_id
 LEFT JOIN patrol_plan pp ON pp.id = n.patrol_plan_id
-WHERE n.tip IN ('kacirilan_tur', 'eksik_checkpoint', 'gecikmis_okutma')
+WHERE n.tip IN ('kacirilan_tur', 'eksik_checkpoint', 'gecikmis_okutma',
+                'uzak_okutma')
 """
 
 _ZIYARETCI_GIRIS = """

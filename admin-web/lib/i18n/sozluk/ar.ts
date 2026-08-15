@@ -1275,6 +1275,7 @@ export const ar: Sozluk = {
   bildirimTipSikayetCozuldu: "تمت معالجة الشكوى",
   bildirimTipEksikCheckpoint: "نقطة فائتة",
   bildirimTipGecikmisOkutma: "مسح متأخر",
+  bildirimTipUzakOkutma: "مسح بعيد",
   bildirimTipTalepIsEmri: "طلب ← أمر عمل",
   bildirimTipTalepCozuldu: "تم حل الطلب",
   bildirimTipTalepReddedildi: "تم رفض الطلب",

@@ -1337,6 +1337,7 @@ export const tr = {
   bildirimTipSikayetCozuldu: "şikayet sonuçlandı",
   bildirimTipEksikCheckpoint: "eksik nokta",
   bildirimTipGecikmisOkutma: "gecikmiş okutma",
+  bildirimTipUzakOkutma: "Uzak okutma",
   bildirimTipTalepIsEmri: "talep → iş emri",
   bildirimTipTalepCozuldu: "talep çözüldü",
   bildirimTipTalepReddedildi: "talep reddedildi",

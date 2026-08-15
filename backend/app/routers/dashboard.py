@@ -92,7 +92,8 @@ _ALARMLAR_SQL = text(
            n.checkpoint_id, n.mesaj, n.mesaj_kimlik, n.mesaj_veri, n.created_at
     FROM notification n
     LEFT JOIN patrol_plan p ON p.id = n.patrol_plan_id
-    WHERE n.tip IN ('kacirilan_tur', 'eksik_checkpoint', 'gecikmis_okutma')
+    WHERE n.tip IN ('kacirilan_tur', 'eksik_checkpoint', 'gecikmis_okutma',
+                'uzak_okutma')
     -- Tum alarmlar esit oncelikli => en yeni ustte. (Oncelik yukseltmesi
     -- yalniz SOS alarmi icindi; o ozellik kaldirildi.)
     ORDER BY n.created_at DESC

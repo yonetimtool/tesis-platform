@@ -121,6 +121,31 @@ METINLER: dict[str, PushMetni] = {
         },
         params=('plan', 'dakika'),
     ),
+    # (P160) UZAK OKUTMA: okutma yapildi ve zamanindaydi ama noktadan
+    # esikten uzakta yapildi. METIN OLCUM BILDIRIR, SUC ATFETMEZ —
+    # "ihlal"/"supheli" gecmez ve gorevlinin ADI metne girmez (kayit
+    # zaten kimin okuttugunu tutuyor).
+    "uzak_okutma": PushMetni(
+        baslik={
+            "tr": "Uzak okutma",
+            "en": "Distant scan",
+            "ar": "مسح بعيد",
+            "ru": "Отметка вдали от точки",
+            "de": "Entfernte Erfassung",
+            "fr": "Scan éloigné",
+            "es": "Escaneo lejano",
+        },
+        govde={
+            "tr": "{nokta} noktası {mesafe} m uzaktan okutuldu (eşik {esik} m).",
+            "en": "{nokta} was scanned {mesafe} m away (threshold {esik} m).",
+            "ar": "تم مسح {nokta} من مسافة {mesafe} م (الحد {esik} م).",
+            "ru": "Точка «{nokta}» отмечена в {mesafe} м (порог {esik} м).",
+            "de": "{nokta} wurde aus {mesafe} m Entfernung erfasst (Grenze {esik} m).",
+            "fr": "{nokta} a été scanné à {mesafe} m (seuil {esik} m).",
+            "es": "{nokta} se escaneó a {mesafe} m (umbral {esik} m).",
+        },
+        params=("nokta", "mesafe", "esik"),
+    ),
     # (P37) MANUEL MOD: entegrasyonu olmayan sitede anonsu YONETICI yapar.
     "gurultu_uyarisi": PushMetni(
         baslik={

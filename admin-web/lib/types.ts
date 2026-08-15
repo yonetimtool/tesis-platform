@@ -5,6 +5,7 @@ export type AlarmTip =
   | "kacirilan_tur"
   | "eksik_checkpoint"
   | "gecikmis_okutma"
+  | "uzak_okutma"
   | "kargo"
   | "ziyaretci"
   | "rezervasyon"

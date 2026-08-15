@@ -1275,6 +1275,7 @@ export const en: Sozluk = {
   bildirimTipSikayetCozuldu: "complaint resolved",
   bildirimTipEksikCheckpoint: "missed checkpoint",
   bildirimTipGecikmisOkutma: "late scan",
+  bildirimTipUzakOkutma: "Distant scan",
   bildirimTipTalepIsEmri: "request → work order",
   bildirimTipTalepCozuldu: "request resolved",
   bildirimTipTalepReddedildi: "request rejected",

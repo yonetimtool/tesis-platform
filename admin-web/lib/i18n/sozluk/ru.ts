@@ -1275,6 +1275,7 @@ export const ru: Sozluk = {
   bildirimTipSikayetCozuldu: "жалоба рассмотрена",
   bildirimTipEksikCheckpoint: "пропущенная точка",
   bildirimTipGecikmisOkutma: "опоздавшее сканирование",
+  bildirimTipUzakOkutma: "Отметка вдали от точки",
   bildirimTipTalepIsEmri: "заявка → наряд",
   bildirimTipTalepCozuldu: "заявка решена",
   bildirimTipTalepReddedildi: "заявка отклонена",

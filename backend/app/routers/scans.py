@@ -36,6 +36,7 @@ from ..config import settings
 from ..crud_helpers import get_or_404, norm_nfc, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
+from ..uzak_okutma import uzak_okutma_alarmi
 from ..models import AppUser, Checkpoint, PatrolWindow, ScanEvent, Tenant
 from ..nfc_sdm import decrypt_key, verify_sdm
 from ..schemas import (
@@ -506,6 +507,13 @@ async def create_scan(
         # eksik noktasiysa pencere HEMEN 'tamamlandi' olur (scheduler'in bitiste
         # yaptigi tamamlandi tanimiyla ayni; ama pencere-bitisini beklemez).
         await _mark_completed_windows(db, checkpoint.id, okutma)
+        # 8) (P160) UZAK OKUTMA ALARMI — AYNI TRANSACTION. Okutma geri
+        # alinirsa alarm da geri alinir; olmayan bir okutma icin alarm
+        # uretmek yoneticiyi var olmayan bir olaya yollamakti. Karar
+        # icin gereken her sey (iki koordinat + tesis esigi) BU ANDA
+        # elimizde; zamanlayiciya birakmak alarmi dakikalarca
+        # geciktirir ve ayni veriyi ikinci kez okurdu.
+        await uzak_okutma_alarmi(db, scan=obj, checkpoint=checkpoint)
         await db.refresh(obj)
         return JSONResponse(
             status_code=201, content=ScanEventOut.model_validate(obj).model_dump(mode="json")

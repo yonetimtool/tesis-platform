@@ -251,16 +251,52 @@ ya da "ihlal" bir **suç atfeder**. 60 m uzakta okutma yapmış bir
 görevliyi panelin suçlaması, ölçümün taşıyabileceğinden fazlasını iddia
 etmekti. Bir test sözlükte bu kelimelerin geçmemesini kilitliyor.
 
-#### Eşik BİLDİRİM ÜRETMEZ — bilinmesi gereken sınır
+#### Eşik artık ALARM üretiyor — `uzak_okutma`
 
-Ölçüldü: sunucu **hiçbir yerde mesafe hesaplamıyor**. Alarm üretimi
-(`kacirilan_tur`, `eksik_checkpoint`, `gecikmis_okutma`) yalnız *eksik* ve
-*geciken* okutmayla ilgili; mesafeyle değil.
+Önceki turda burada *"eşik bildirim üretmez"* yazıyordu. **Kapatıldı:**
+göç `0053` `notification_tip` enum'una `uzak_okutma` değerini ekledi ve
+eşik dışı okutma artık kalıcı bildirim + push üretiyor.
 
-Yani eşiği değiştirmek **haritanın neyi işaretlediğini** değiştirir ama
-bildirim/alarm üretmez. Yönetici "eşiği koydum, artık uyarı alırım"
-beklerse yanılır. Eşiğin alarma dönüşmesi ayrı bir iş: alarm üretimi,
-bildirim ve worker tarafı — bu turda **istenmedi ve yapılmadı**.
+**Neden yeni bir tip:** mevcut alarmların hiçbiri bu olayı anlatmıyor —
+`kacirilan_tur` (tur yapılmadı), `eksik_checkpoint` (nokta hiç
+okutulmadı), `gecikmis_okutma` (okutma gecikti). Uzak okutma bunların
+hiçbiri değil: okutma **yapıldı**, **zamanında** yapıldı, ama noktadan
+uzakta yapıldı. Var olan bir tipe bindirmek iki farklı olayı aynı satırda
+toplar ve panonun gruplamasını bozardı.
+
+**Nerede üretiliyor: okutma anında, zamanlayıcıda değil.** Tur alarmları
+zamanlayıcıda üretilir çünkü ölçülen şey *zamanın geçmesidir* — kimse bir
+şey yapmadığı için kimse tetiklemez. Burada tam tersi: olay zaten bir
+istektir ve karar için gereken her şey (iki koordinat + eşik) o anda
+elimizdedir. Yazma, okutma INSERT'i ile **aynı transaction** içinde:
+okutma geri alınırsa alarm da geri alınır.
+
+**Dedup okutma başına** (`uzak_okutma:{scan_id}`): bir okutma tek bir
+olaydır. `gecikmis_okutma` tekrar eder çünkü orada ölçülen *süren* bir
+eksikliktir.
+
+#### Alarm ÜRETİLMEYEN üç durum — hepsi bilinçli
+
+Bir alarm birinin telefonunu çaldırır; haritada renk değiştirmekten çok
+daha ağır bir iddiadır ve yanlış alarm, doğru alarmın değerini de düşürür.
+
+1. **Konum yoksa** (`konum_durumu != 'var'`): karşılaştırılacak şey yok.
+2. **Noktanın koordinatı yoksa:** "uzak" diyebilmek için bir *referans*
+   gerekir; olmayan referansa göre uzaklık ölçmek uydurmaktı.
+3. **Ölçüm belirsizse** (`doğruluk > eşik`): ±100 m hatayla ölçülmüş bir
+   mesafenin 50 m eşiğini geçip geçmediği bilinemez.
+
+**Kural iki dilde birebir aynı** (`backend/app/mesafe.py` ve
+`admin-web/lib/mesafe.ts`). Ayrışsalardı harita "eşik içinde" derken
+bildirim "eşik dışı" der ve yönetici hangisine inanacağını bilemezdi.
+
+**Dil hâlâ ölçüm dili:** metin *"{nokta} noktası {mesafe} m uzaktan
+okutuldu (eşik {esik} m)"* der. "İhlal"/"şüpheli" demez ve **görevlinin
+adı push metnine girmez** — kayıt zaten kimin okuttuğunu tutuyor;
+bir kişinin adını alarm bildirimine koymak, olayın kendisinden önce
+kişiyi hedef göstermekti. Alarm **yönetime** gider (admin · yönetici ·
+güvenlik amiri), görevliye değil: bildirim bir ölçüm bildirir, uyarı
+cezası değil.
 
 ## 6. PERFORMANS BÜTÇESİ (her yeni sahne bunu tutmalı)
 

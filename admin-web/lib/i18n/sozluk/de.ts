@@ -1275,6 +1275,7 @@ export const de: Sozluk = {
   bildirimTipSikayetCozuldu: "Beschwerde bearbeitet",
   bildirimTipEksikCheckpoint: "verpasster Punkt",
   bildirimTipGecikmisOkutma: "verspäteter Scan",
+  bildirimTipUzakOkutma: "Entfernte Erfassung",
   bildirimTipTalepIsEmri: "Anfrage → Arbeitsauftrag",
   bildirimTipTalepCozuldu: "Anfrage gelöst",
   bildirimTipTalepReddedildi: "Anfrage abgelehnt",
