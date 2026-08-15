@@ -6,3 +6,7 @@
 *.tsbuildinfo
 next-env.d.ts.bak
 .DS_Store
+
+# (P161) Olcum betikleri gecici cikti uretmez; ama denemeler icin
+# `olcum/_*.mjs` adi kullanildi — depoya girmesin.
+olcum/_*.mjs

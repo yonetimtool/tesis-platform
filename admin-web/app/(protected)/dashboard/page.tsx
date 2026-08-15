@@ -28,7 +28,8 @@ import { useMemo } from "react";
 import useSWR from "swr";
 
 import { BinaSahnesiYukleyici } from "@/components/3d/sahne-yukleyici";
-import { IskeletKpi, Kpi } from "@/components/ui";
+import type { SahneBlogu, SahneSecimi } from "@/components/3d/bina-sahnesi";
+import { Dugme, IskeletKpi, Kpi } from "@/components/ui";
 
 import { KameraSeridi } from "@/components/KameraSeridi";
 import { SiteHarita } from "@/components/SiteHarita";
@@ -51,6 +52,7 @@ import type {
   AktifTur,
   AlarmGrubu,
   BlockList,
+  BuildingMap,
   DashboardLive,
   Kamera,
   KameraListResponse,
@@ -103,8 +105,131 @@ const KPI_OLUMLU = "olumlu" as const;
 const KPI_UYARI = "uyari" as const;
 /** Tahsilat orani bu esigin altinda UYARI halkasi. */
 const TAHSILAT_ESIGI = 80;
-const DURUM_NORMAL = "normal" as const;
-const DURUM_CEVRIMDISI = "cevrimdisi" as const;
+// UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
+const TUR_KAMERA = "kamera" as const;
+const TUR_ALARM = "alarm" as const;
+const DAIRE_NORMAL = "normal" as const;
+const DAIRE_ALARM = "alarm" as const;
+const BOS_SECIM: SahneSecimi = { blokId: null, kat: null, daireId: null };
+const SECILI_TUR = "birincil" as const;
+const SECILMEMIS_TUR = "ikincil" as const;
+
+/**
+ * (P161) SAHNE SECIM PANELI — maketteki secimin METIN KARSILIGI.
+ *
+ * SAHNE TEK BASINA YETMEZ: bir pencerenin rengi "acik sikayet var"
+ * demeyi beceremez, klavye kullanicisi zaten tuvale tiklayamaz. Panel
+ * hem acilimi surer (blok -> kat -> daire) hem de sahnenin tasidigi
+ * bilgiyi okunur halde verir. Yani sahne olmadan da CALISIR.
+ */
+function SahneSecimPaneli({
+  secim,
+  bloklar,
+  onSecim,
+  onKapat,
+}: {
+  secim: SahneSecimi;
+  bloklar: SahneBlogu[];
+  onSecim: (s: SahneSecimi) => void;
+  onKapat: () => void;
+}) {
+  const t = useT();
+  const blok = bloklar.find((b) => b.id === secim.blokId) ?? null;
+
+  if (!blok) {
+    return (
+      <Kart className="p-kart">
+        <p className="text-satiralt leading-[1.6] text-metin-muted">
+          {t("sahneSecimIpucu")}
+        </p>
+      </Kart>
+    );
+  }
+
+  const katlar = [...new Set(blok.daireler.map((d) => d.kat))].sort((a, b) => a - b);
+  const katDaireleri = blok.daireler
+    .filter((d) => d.kat === secim.kat)
+    .sort((a, b) => a.sira - b.sira);
+  const daire = blok.daireler.find((d) => d.id === secim.daireId) ?? null;
+  const katAdi = (k: number) => (k === 0 ? t("sahneZeminKat") : t("sahneKatAdi", { n: k }));
+
+  return (
+    <Kart className="space-y-3 p-kart">
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <p className="text-kartbaslik text-metin-heading">{blok.ad}</p>
+          <p className="mt-0.5 text-satiralt text-metin-muted">
+            {t("sahneBlokOzeti", { kat: katlar.length, daire: blok.daireler.length })}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onKapat}
+          className="shrink-0 text-satiralt underline text-metin-muted"
+        >
+          {t("sahneSecimTemizle")}
+        </button>
+      </div>
+
+      <div>
+        <p className="text-satiralt font-medium text-metin-heading">{t("sahneKatBaslik")}</p>
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
+          {katlar.map((k) => (
+            <Dugme
+              key={k}
+              boy="kucuk"
+              tur={secim.kat === k ? SECILI_TUR : SECILMEMIS_TUR}
+              aria-pressed={secim.kat === k}
+              onClick={() =>
+                onSecim({ blokId: blok.id, kat: secim.kat === k ? null : k, daireId: null })
+              }
+            >
+              {katAdi(k)}
+            </Dugme>
+          ))}
+        </div>
+      </div>
+
+      {secim.kat !== null && (
+        <div>
+          <p className="text-satiralt font-medium text-metin-heading">
+            {t("sahneDaireBaslik")}
+          </p>
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {katDaireleri.map((d) => (
+              <Dugme
+                key={d.id}
+                boy="kucuk"
+                tur={secim.daireId === d.id ? SECILI_TUR : SECILMEMIS_TUR}
+                aria-pressed={secim.daireId === d.id}
+                onClick={() =>
+                  onSecim({
+                    blokId: blok.id,
+                    kat: d.kat,
+                    daireId: secim.daireId === d.id ? null : d.id,
+                  })
+                }
+              >
+                {d.no}
+              </Dugme>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {daire && (
+        <div className="border-t border-yuzey-divider pt-3">
+          <p className="text-satiralt text-metin-muted">
+            {t("sahneDaireOzeti", { no: daire.no, kat: katAdi(daire.kat) })}
+          </p>
+          <p className="mt-1 text-satiralt text-metin-heading">
+            {daire.durum === DAIRE_ALARM ? t("sahneDaireAlarm") : t("sahneDaireNormal")}
+          </p>
+        </div>
+      )}
+    </Kart>
+  );
+}
 
 export default function DashboardPage() {
   const t = useT();
@@ -117,6 +242,9 @@ export default function DashboardPage() {
     });
     return (n: number) => b.format(n / 100);
   }, [dil]);
+  // Secim SAHNE ile PANEL arasinda paylasilir: ikisi de ayni durumu
+  // surer, biri digerinin kopyasini tutmaz.
+  const [secim, setSecim] = useState<SahneSecimi>(BOS_SECIM);
   const { data, error, isLoading } = useSWR<DashboardLive>(
     "/api/dashboard/live",
     jsonFetcher,
@@ -132,7 +260,9 @@ export default function DashboardPage() {
   );
 
   const turlar = data?.aktif_turlar ?? [];
-  const gruplar = data?.alarm_gruplari ?? [];
+  // `useMemo`: `?? []` her cizimde YENI dizi uretir ve etiket
+  // `useMemo`sunun bagimliligini her karede degistirirdi (lint yakaladi).
+  const gruplar: AlarmGrubu[] = useMemo(() => data?.alarm_gruplari ?? [], [data]);
   // `useMemo`: `?? []` her cizimde YENI bir dizi uretir ve asagidaki
   // `useMemo`nun bagimliligini her karede degistirirdi (lint yakaladi).
   const kameralar: Kamera[] = useMemo(
@@ -140,34 +270,73 @@ export default function DashboardPage() {
     [kameraYanit],
   );
 
-  // (P160 / Asama 5) SAHNE VERISI — UYDURMA DEGIL, GERCEK UCLARDAN.
+  // (P161) SAHNE VERISI — UYDURMA DEGIL, GERCEK UCLARDAN.
   //
   // Brief'in tartismasiz kurali: "VERIYE BAGLI olacak, dekor degil".
-  // Bloklar `/api/blocks`tan (kat ve daire sayisiyla), isaretciler ise
-  // ZATEN CEKILEN kamera listesinden geliyor — sahne icin ek istek
-  // ATILMIYOR. Kamera cevrimdisiysa isaretci gri olur.
+  // P160'ta sahne yalniz `/api/blocks`i (kat + daire SAYISI) okuyordu;
+  // sayiyla kutu buyutmek DAIRE cizmek degildi. Artik yapiyi
+  // `/unit-complaints/building-map` veriyor: blok -> kat -> daire, her
+  // dairenin kimligi ve numarasiyla. Uc ZATEN VARDI ve rol-farkindadir
+  // (sayim/renk yalnizca yonetime dolu doner) — sozlesme degismedi.
+  //
+  // IKI UC BIRLESTIRILIYOR: `/blocks` blogun RESMI listesidir (dairesi
+  // girilmemis blok da orada), `building-map` ise dairelerin yerlesimi.
+  // Yalniz birine bakmak, ya bos bloklari ya da blok kaydi olmayan
+  // daireleri sahneden dusururdu.
   const { data: blokYanit } = useSWR<BlockList>("/api/blocks", jsonFetcher, {
     revalidateOnFocus: false,
   });
-  const sahneBloklari = useMemo(
-    () =>
-      (blokYanit?.items ?? []).map((b) => ({
-        id: b.id,
-        ad: b.ad,
-        kat: b.kat_sayisi ?? 1,
-        daire: b.unit_sayisi,
-      })),
-    [blokYanit],
-  );
+  const { data: binaHaritasi } = useSWR<BuildingMap>("/api/building-map", jsonFetcher, {
+    revalidateOnFocus: false,
+  });
+
+  const sahneBloklari = useMemo(() => {
+    const haritada = new Map((binaHaritasi?.bloklar ?? []).map((b) => [b.blok, b]));
+    const daireleriCikar = (ad: string) =>
+      (haritada.get(ad)?.katlar ?? []).flatMap((k) =>
+        k.units.map((u, i) => ({
+          id: u.unit_id,
+          no: u.unit_no,
+          kat: k.kat,
+          sira: u.sira ?? i,
+          // DURUM YALNIZ VERININ TASIDIGI KADAR. `complaint_count` acik
+          // sikayet sayisidir ve sunucu bunu yonetim disindaki rollere
+          // `null` doner — o zaman renk de yoktur, uydurulmaz.
+          durum: (u.complaint_count ?? 0) > 0 ? DAIRE_ALARM : DAIRE_NORMAL,
+        })),
+      );
+
+    const resmi = (blokYanit?.items ?? []).map((b) => ({
+      id: b.ad,
+      ad: b.ad,
+      daireler: daireleriCikar(b.ad),
+    }));
+    // Blok KAYDI olmayan ama dairesi olan adlar (zayif metin bagi) da
+    // sahneye girer — yoksa o daireler gorunmez olurdu.
+    const resmiAdlar = new Set(resmi.map((b) => b.ad));
+    const artiklar = (binaHaritasi?.bloklar ?? [])
+      .filter((b) => !resmiAdlar.has(b.blok))
+      .map((b) => ({ id: b.blok, ad: b.blok, daireler: daireleriCikar(b.blok) }));
+    return [...resmi, ...artiklar];
+  }, [blokYanit, binaHaritasi]);
+
+  // ETIKETLER: ZATEN CEKILEN listelerden — sahne icin ek istek ATILMIYOR.
   const sahneIsaretcileri = useMemo(
-    () =>
-      kameralar.slice(0, 12).map((k) => ({
+    () => [
+      ...gruplar.slice(0, 4).map((g) => ({
+        id: `alarm-${g.tip}-${g.patrol_plan_id ?? "-"}`,
+        ad: enumAdi(t, BILDIRIM_TIP, g.tip),
+        tur: TUR_ALARM,
+      })),
+      ...kameralar.slice(0, 8).map((k) => ({
         id: k.id,
         ad: k.ad,
-        // DURUM VERIDEN: cevrimdisi kamera GRI isaretci (brief'in ornegi).
-        durum: k.aktif === false ? DURUM_CEVRIMDISI : DURUM_NORMAL,
+        tur: TUR_KAMERA,
+        // Cevrimdisi kameranin noktasi SOLUKLASIR (brief'in ornegi).
+        sonuk: k.aktif === false,
       })),
-    [kameralar],
+    ],
+    [gruplar, kameralar, t],
   );
 
   const tamamlanan = turlar.filter((x) => x.durum === "tamamlandi").length;
@@ -306,18 +475,9 @@ export default function DashboardPage() {
 
         <section className="lg:col-span-2">
           <BolumBasligi baslik={t("pano2TesisBaslik")} />
+          {/* HARITA ARTIK AYRI KART (brief): 3D sahne kendi tam genislikte
+              bolumune tasindi, harita onun altinda ezilmiyor. */}
           <Kart className="overflow-hidden">
-            {/* (P160 / Asama 5) 3D SAHNE — harita yerine izometrik maket.
-                Bloklar GERCEK veriden (kat/daire sayisi) cizilir; model
-                dosyasi yok, yer tutucu geometri kullanilir (brief).
-                Paket TEMBEL yuklenir: ana pakete girmez. */}
-            <BinaSahnesiYukleyici
-              bloklar={sahneBloklari}
-              isaretciler={sahneIsaretcileri}
-              yukseklik="260px"
-            />
-            {/* Harita KALDIRILMADI: konum bilgisi hâlâ degerli ve 3D
-                sahne onun yerine gecmiyor, YANINA geliyor. */}
             <SiteHarita
               lat={tesis?.konum_lat}
               lon={tesis?.konum_lon}
@@ -335,6 +495,32 @@ export default function DashboardPage() {
           </Kart>
         </section>
       </div>
+
+      {/* --- (e) SITE MAKETI — TAM GENISLIK -------------------------------
+          Brief: "3D sahneye panoda sag sutunun tamamini ya da tam genislik
+          bir bolum ver". 260 px'lik bir kutunun icinde blok->kat->daire
+          acilimi YAPILAMIYORDU: secili kata yaklasan kamera icin yer yoktu.
+          Paket TEMBEL yuklenir; ana pakete girmez. */}
+      <section>
+        <BolumBasligi baslik={t("sahneSiteBaslik")} />
+        <div className="grid gap-bolum lg:grid-cols-4">
+          <Kart className="overflow-hidden lg:col-span-3">
+            <BinaSahnesiYukleyici
+              bloklar={sahneBloklari}
+              isaretciler={sahneIsaretcileri}
+              secim={secim}
+              onSecim={setSecim}
+              yukseklik="clamp(320px, 46vh, 520px)"
+            />
+          </Kart>
+          <SahneSecimPaneli
+            secim={secim}
+            bloklar={sahneBloklari}
+            onSecim={setSecim}
+            onKapat={() => setSecim(BOS_SECIM)}
+          />
+        </div>
+      </section>
 
       <KameraSeridi kameralar={kameralar} />
     </div>

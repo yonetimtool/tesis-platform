@@ -85,18 +85,32 @@ function useSahneOrtami() {
     setHazir(true);
   }, []);
 
-  return { hazir, destek, koyu, hareketVar: hareket && !mobil };
+  // (P161) TEMA ARTIK CANLI IZLENIYOR. Eski surum temayi BIR KEZ okuyordu;
+  // basliktaki anahtar temayi cevirince sahne eski isikta kaliyordu —
+  // brief §4'un "3D sahne isiklandirmasi da temaya baglanacak" maddesi
+  // tam olarak bunu kastediyor. `MutationObserver` kok siniftaki degisimi
+  // dinler; olay yayini icin ayri bir kanal acmaya gerek yok.
+  useEffect(() => {
+    const kok = document.documentElement;
+    const gozcu = new MutationObserver(() => setKoyu(kok.classList.contains("dark")));
+    gozcu.observe(kok, { attributes: true, attributeFilter: ["class"] });
+    return () => gozcu.disconnect();
+  }, []);
+
+  // `sade`: mobil VEYA hareket azaltma. Ikisinde de yumusak golge,
+  // yansima ve isik seridi kapanir — biri pil, digeri rahatsizlik icin.
+  return { hazir, destek, koyu, hareketVar: hareket && !mobil, sade: mobil || !hareket };
 }
 
 export function BinaSahnesiYukleyici(
-  props: Omit<BinaSahnesiProps, "koyu" | "hareketVar"> & {
+  props: Omit<BinaSahnesiProps, "koyu" | "hareketVar" | "sade"> & {
     /** Sahne yuksekligi (CSS). */
     yukseklik?: string;
   },
 ) {
   const t = useT();
   const { yukseklik = "320px", ...sahneProps } = props;
-  const { hazir, destek, koyu, hareketVar } = useSahneOrtami();
+  const { hazir, destek, koyu, hareketVar, sade } = useSahneOrtami();
 
   if (!hazir) {
     return <Iskelet className="w-full" {...{ style: { height: yukseklik } }} />;
@@ -136,7 +150,7 @@ export function BinaSahnesiYukleyici(
       role="img"
       aria-label={t("sahneBlokSayisi", { n: String(sahneProps.bloklar.length) })}
     >
-      <Sahne {...sahneProps} koyu={koyu} hareketVar={hareketVar} />
+      <Sahne {...sahneProps} koyu={koyu} hareketVar={hareketVar} sade={sade} />
     </div>
   );
 }

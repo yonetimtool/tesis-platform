@@ -1,115 +1,484 @@
 "use client";
 
 /**
- * (P160 / Asama 5) BINA SAHNESI — izometrik site modeli.
+ * (P161) SITE SAHNESI — izometrik mimari maket.
  *
  * =========================================================================
  * BU DOSYA ANA PAKETE GIRMEZ
  * =========================================================================
  * `three` + R3F + drei birlikte ~600-900 kB. Sarmalayici
  * (`sahne-yukleyici.tsx`) bunu `next/dynamic` + `ssr:false` ile yukler;
- * yani paket YALNIZ sahneyi gercekten cizen rotada inar. Asama 9'un
- * olcumu buna bagli: paylasilan paket 87.5 kB'da KALMALI.
- *
- * `ssr:false` ZORUNLU: R3F sunucuda `window`/WebGL arar ve derleme
- * aninda patlar.
+ * paket YALNIZ sahneyi gercekten cizen rotada iner. `ssr:false` ZORUNLU:
+ * R3F sunucuda `window`/WebGL arar.
  *
  * =========================================================================
- * VERIYE BAGLI — DEKOR DEGIL (brief'in tartismasiz kurali)
+ * P160'TAKI SAHNE NEDEN YETMEDI
  * =========================================================================
- * Her isaretci bir KAYDA baglidir ve durumu veriden gelir:
- *   * kamera cevrimdisiysa isaretci GRI,
- *   * o konumda alarm varsa KIRMIZI ve nabiz atar,
- *   * NFC noktasi okutulmadiysa AMBER.
- * Renk `--yz-*-edge` token'larindan okunur (WCAG 1.4.11, 3:1) — sahne
- * de arayuzun bir parcasi ve kendi paletini uydurmaz.
+ * Onceki surum her blogu TEK BIR GRI KUTU ciziyordu: kat cizgisi yok,
+ * pencere yok, peyzaj yok, daire kavrami hic yok. "Bina" oldugu ancak
+ * etiketinden anlasiliyordu. Bu surumde:
+ *
+ *   * kutle KAT CIZGILERI, BALKON RITMI ve CATI DETAYI tasir,
+ *   * HER PENCERE BIR DAIREDIR — sayisi da yeri de veriden gelir,
+ *   * zemin peyzajli: yol, otopark, yaya yolu, havuz, agaclar,
+ *   * blok -> kat -> daire acilimi var (kamera yumusak gecer).
  *
  * =========================================================================
- * MODEL YOK — YER TUTUCU GEOMETRI (brief'in kurali)
+ * YUZLERCE DAIRE, BLOK BASINA TEK CIZIM CAGRISI
  * =========================================================================
- * Depoda glTF model YOK ve bu turda uretilmedi. Bloklar `blocks` ucundan
- * gelen gercek sayilarla KUTU olarak ciziliyor: kat sayisi yuksekligi,
- * daire sayisi genisligi belirliyor. Mimari maket hissi (acik gri
- * kutleler, yumusak golge, ustten isik) modelle degil ISIK ve MALZEME
- * ile kuruluyor. Model geldiginde yalniz `Blok` bileseni degisir.
+ * Daireler `instancedMesh` ile cizilir. 400 daireli bir sitede 400 ayri
+ * mesh, 400 ayri cizim cagrisi demekti ve orta seviye bir dizustunde
+ * kare suresini tek basina ucuruyordu. Instancing ile blok basina TEK
+ * cagri kalir; secim `e.instanceId` uzerinden yapilir, renk ise
+ * `setColorAt` ile ornek basina yazilir.
+ *
+ * =========================================================================
+ * OLCEK VERIDEN (brief) — GEOMETRI MATEMATIGI AYRI DOSYADA
+ * =========================================================================
+ * Bkz. `site-yerlesim.ts`: orada `three` yok, bu yuzden kurallar jsdom'da
+ * test edilebiliyor. Burada yalniz CIZIM var.
  */
-import { Canvas } from "@react-three/fiber";
 import { Html, OrbitControls, SoftShadows } from "@react-three/drei";
-import { useMemo, useRef, useState } from "react";
-import type { Mesh } from "three";
-import { useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { easing } from "maath";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Color, InstancedMesh, Object3D, Vector3 } from "three";
 
-export interface SahneBlogu {
-  id: string;
-  ad: string;
-  /** Kat sayisi — kutle yuksekligi. */
-  kat: number;
-  /** Daire sayisi — kutle genisligi (kabaca). */
-  daire: number;
-}
+import { DURUM_RENGI, SECIM_RENGI, sahnePaleti } from "./site-palet";
+import {
+  KAT_YUKSEKLIGI,
+  ORNEK_ONEK,
+  TABAN_PAYI,
+  ornekSite,
+  kameraUzakligi,
+  siteYerlesimi,
+  type BlokOlcusu,
+  type DaireDurumu,
+  type SahneBlogu,
+} from "./site-yerlesim";
 
-export type IsaretciDurumu = "normal" | "uyari" | "kritik" | "cevrimdisi";
+export type { DaireDurumu, SahneBlogu } from "./site-yerlesim";
+
+/** Etiket turleri — renkli nokta + metin kapsulu (brief). */
+export type IsaretciTuru = "yonetici" | "sakin" | "nfc" | "kamera" | "alarm";
 
 export interface SahneIsaretcisi {
   id: string;
   ad: string;
-  durum: IsaretciDurumu;
-  /** Izgara konumu (blok sirasina gore); verilmezse dagitilir. */
-  x?: number;
-  z?: number;
+  tur: IsaretciTuru;
+  /** Cevrimdisi/pasif mi — nokta soluklasir. */
+  sonuk?: boolean;
 }
 
-// UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`). Sahne renkleri
-// CSS degiskeni OKUYAMAZ (WebGL malzemesi), bu yuzden sabit — ama tek
-// yerde ve arayuz paletiyle ayni ailede.
-const KUTLE = "#dfe6ee";
-const KUTLE_SECILI = "#c9d6e4";
-const ZEMIN_KOYU = "#2a333b";
-const ZEMIN_ACIK = "#f7f9fb";
-const ISIK_KOYU = "#9fc0e0";
-const ISIK_ACIK = "#ffffff";
-const YON_ISIK_KOYU = "#cfe2f5";
-const YON_ISIK_ACIK = "#fffaf0";
-const PLATFORM_KOYU = "#39434d";
-const PLATFORM_ACIK = "#e8eef4";
+export interface SahneSecimi {
+  blokId: string | null;
+  kat: number | null;
+  daireId: string | null;
+}
+
+// UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
 const DONGU_SUREKLI = "always" as const;
 const DONGU_TALEP = "demand" as const;
+const YATAY = "nowrap" as const;
 
-/** Durum -> renk. Arayuzle AYNI token ailesi. */
-const DURUM_RENGI: Record<IsaretciDurumu, string> = {
-  normal: "#3fa97a",
-  uyari: "#d6963c",
-  kritik: "#d45b5e",
-  cevrimdisi: "#7e8c9c",
+/** Etiket noktasi renkleri — arayuzun durum ailesiyle ayni. */
+const TUR_RENGI: Record<IsaretciTuru, string> = {
+  yonetici: "#4da3ff",
+  sakin: "#3fa97a",
+  nfc: "#8b7fd4",
+  kamera: "#5aa9b8",
+  alarm: "#d45b5e",
 };
 
 /**
- * Tek blok kutlesi. Hover'da hafif yukselir ve etiket cikar.
- *
- * `castShadow`/`receiveShadow`: maket hissinin kaynagi golge; onsuz
- * kutuler havada yuzuyor gibi durur.
+ * KAMERA GECIS SURESI. Brief 400-600 ms ister; `damp3` bir SONLANMA
+ * suresi degil ZAMAN SABITI alir — 0.32 sn'lik sabit, gozle gorulur
+ * hareketin ~%95'ini 0.5 sn'de bitirir. Sabit kare sayisina degil
+ * GECEN SUREYE bagli oldugu icin 30 fps'te de 120 fps'te de ayni hizda
+ * gorunur.
  */
-function Blok({
-  blok,
-  konum,
-  onSec,
-  secili,
+const GECIS_SABITI = 0.32;
+
+/** Kameranin dikey gorus acisi — kadraj hesabi da bunu kullanir. */
+const GORUS_ACISI = 38;
+
+/** Yuzlerce ornegi doldururken tek bir gecici nesne yeter (cop uretme). */
+const GECICI = new Object3D();
+const GECICI_RENK = new Color();
+
+/** Pencerenin cepheden disa tasma miktari. */
+const PENCERE_TASMA = 0.09;
+/** Secili olmayan blogun pencerelerinin cektigi notr renk. */
+const SOLUK_RENK = new Color("#9aa5b1");
+
+/* ====================================================================== */
+/*  KAMERA                                                                */
+/* ====================================================================== */
+
+/**
+ * Kamerayi hedefe YUMUSAK goturur.
+ *
+ * NEDEN `damp3`, NEDEN ELDE YAZILMIS LERP DEGIL: elde yazilan lerp kare
+ * basina sabit oran uygular ve dusuk fps'te YAVASLAR — 30 fps'lik bir
+ * dizustunde gecis iki katina cikardi. `damp3` gecen sureyi kullanir.
+ */
+function KameraSurucusu({
+  hedefKonum,
+  hedefBakis,
+  kontrolRef,
+  hareketVar,
 }: {
-  blok: SahneBlogu;
-  konum: [number, number, number];
-  onSec: (id: string) => void;
-  secili: boolean;
+  hedefKonum: Vector3;
+  hedefBakis: Vector3;
+  kontrolRef: React.MutableRefObject<{ target: Vector3; update: () => void } | null>;
+  hareketVar: boolean;
 }) {
-  const [uzerinde, setUzerinde] = useState(false);
-  const yukseklik = Math.max(1, blok.kat) * 0.6;
-  const genislik = Math.min(2.2, 0.8 + blok.daire * 0.06);
+  const { camera, invalidate } = useThree();
+
+  // HAREKET AZALTMADA GECIS YOK: kamera hedefe ANINDA oturur. Brief'in
+  // `prefers-reduced-motion` kurali kamerayi da baglar.
+  useEffect(() => {
+    if (hareketVar) return;
+    camera.position.copy(hedefKonum);
+    kontrolRef.current?.target.copy(hedefBakis);
+    kontrolRef.current?.update();
+    invalidate();
+  }, [hareketVar, hedefKonum, hedefBakis, camera, kontrolRef, invalidate]);
+
+  useFrame((_, dt) => {
+    if (!hareketVar) return;
+    easing.damp3(camera.position, hedefKonum, GECIS_SABITI, dt);
+    const k = kontrolRef.current;
+    if (k) {
+      easing.damp3(k.target, hedefBakis, GECIS_SABITI, dt);
+      k.update();
+    }
+  });
+  return null;
+}
+
+/* ====================================================================== */
+/*  ZEMIN — platform + peyzaj                                             */
+/* ====================================================================== */
+
+/**
+ * Peyzaj: cim, cevre yolu, otopark, yaya yolu, havuz, agaclar.
+ *
+ * Hepsi BASIT GEOMETRI ve hepsi sabit — her cizimde ayni yerde durur.
+ * Rastgele konum, sayfayi her acisinda agaclarin yer degistirmesi
+ * demekti; maket hissi tam da DEGISMEZLIKTEN geliyor.
+ *
+ * AGACLAR TEK INSTANCED CIZIM: 24 agac 48 ayri mesh olurdu.
+ */
+function Zemin({ yaricap, koyu, sade }: { yaricap: number; koyu: boolean; sade: boolean }) {
+  const p = sahnePaleti(koyu);
+  const govdeRef = useRef<InstancedMesh>(null);
+  const tepeRef = useRef<InstancedMesh>(null);
+
+  // Agac yerleri: platform kenarina yakin bir halka uzerinde, kararli.
+  const agaclar = useMemo(() => {
+    const n = sade ? 10 : 22;
+    return Array.from({ length: n }, (_, i) => {
+      const a = (i / n) * Math.PI * 2;
+      // AGACLAR YOLUN DISINDA. Onceki deger (0.82) tam yol halkasinin
+      // (0.72-0.86) uzerine dusuyordu: agaclar asfaltin ortasinda
+      // duruyordu.
+      const r = yaricap * 0.93;
+      return { x: Math.cos(a) * r, z: Math.sin(a) * r, olcek: 0.8 + ((i * 37) % 5) * 0.09 };
+    });
+  }, [yaricap, sade]);
+
+  useLayoutEffect(() => {
+    for (let i = 0; i < agaclar.length; i++) {
+      const t = agaclar[i];
+      GECICI.position.set(t.x, 0.12 * t.olcek, t.z);
+      GECICI.scale.setScalar(t.olcek);
+      GECICI.rotation.set(0, 0, 0);
+      GECICI.updateMatrix();
+      govdeRef.current?.setMatrixAt(i, GECICI.matrix);
+      GECICI.position.set(t.x, 0.34 * t.olcek, t.z);
+      GECICI.updateMatrix();
+      tepeRef.current?.setMatrixAt(i, GECICI.matrix);
+    }
+    if (govdeRef.current) govdeRef.current.instanceMatrix.needsUpdate = true;
+    if (tepeRef.current) tepeRef.current.instanceMatrix.needsUpdate = true;
+  }, [agaclar]);
 
   return (
-    <group position={konum}>
+    <group>
+      {/* PLATFORM — maket tablasi. Kenari ayri bir halka: ince bir kalinlik
+          maketin "durdugu" hissini veriyor; tek duzlem havada yuzuyordu. */}
+      <mesh position={[0, -0.06, 0]} receiveShadow>
+        {/* Silindirin ekseni ZATEN Y: dondurmeye gerek yok, dondurmek
+            tablayi dikey bir tekere cevirirdi. */}
+        <cylinderGeometry args={[yaricap, yaricap, 0.12, 64]} />
+        <meshStandardMaterial color={p.platformKenar} roughness={0.9} />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.001, 0]} receiveShadow>
+        <circleGeometry args={[yaricap, 64]} />
+        <meshStandardMaterial color={p.cim} roughness={0.95} />
+      </mesh>
+
+      {/* CEVRE YOLU — halka. */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.004, 0]} receiveShadow>
+        <ringGeometry args={[yaricap * 0.72, yaricap * 0.86, 64]} />
+        <meshStandardMaterial color={p.yol} roughness={1} />
+      </mesh>
+
+      {/* YAYA YOLU — bloklarin arasindan gecen ince hac. */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.006, 0]} receiveShadow>
+        <planeGeometry args={[yaricap * 1.5, 0.26]} />
+        <meshStandardMaterial color={p.patika} roughness={1} />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, Math.PI / 2]} position={[0, 0.006, 0]} receiveShadow>
+        <planeGeometry args={[yaricap * 1.5, 0.26]} />
+        <meshStandardMaterial color={p.patika} roughness={1} />
+      </mesh>
+
+      {/* OTOPARK ve HAVUZ — BLOKLARLA YOL ARASINDAKI BOS HALKADA.
+          Onceki konumlari (+-0.55 x yaricap) izgaranin ustune dusuyordu
+          ve ikisi de kutlelerin altinda kaliyordu; ekranda hic
+          gorunmuyorlardi. `yaricap * 0.64` blok kosesi ile yol halkasi
+          arasindaki serbest bant. */}
+      <mesh
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={[yaricap * 0.45, 0.007, -yaricap * 0.45]}
+        receiveShadow
+      >
+        <planeGeometry args={[1.7, 1.05]} />
+        <meshStandardMaterial color={p.yol} roughness={1} />
+      </mesh>
+
+      <mesh
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={[-yaricap * 0.45, 0.008, yaricap * 0.45]}
+        receiveShadow
+      >
+        <circleGeometry args={[0.66, 32]} />
+        <meshStandardMaterial color={p.havuz} roughness={0.2} metalness={0.1} />
+      </mesh>
+
+      {/* AGACLAR — iki instanced cizim (govde + tepe). */}
+      <instancedMesh ref={govdeRef} args={[undefined, undefined, agaclar.length]} castShadow>
+        <cylinderGeometry args={[0.035, 0.045, 0.24, 6]} />
+        <meshStandardMaterial color={p.agacGovde} roughness={1} />
+      </instancedMesh>
+      <instancedMesh ref={tepeRef} args={[undefined, undefined, agaclar.length]} castShadow>
+        <icosahedronGeometry args={[0.18, 0]} />
+        <meshStandardMaterial color={p.agacTepe} roughness={0.9} flatShading />
+      </instancedMesh>
+    </group>
+  );
+}
+
+/* ====================================================================== */
+/*  ISIK SERITLERI                                                        */
+/* ====================================================================== */
+
+/**
+ * AKAN MAVI ISIK SERITLERI — abartisiz (brief'in kelimesi).
+ *
+ * Cevre yolu uzerinde donen birkac kucuk parlak nokta. Neon bir halka
+ * degil: sahne bir MAKET, isik onun uzerinde gezinen bir ipucu.
+ * Hareket kapaliysa noktalar SABIT durur (silinmez — silinince koyu
+ * temada yol tamamen olu kaliyordu).
+ */
+function IsikSeritleri({
+  yaricap,
+  koyu,
+  hareketVar,
+  adet,
+}: {
+  yaricap: number;
+  koyu: boolean;
+  hareketVar: boolean;
+  adet: number;
+}) {
+  const p = sahnePaleti(koyu);
+  const ref = useRef<InstancedMesh>(null);
+  const r = yaricap * 0.79;
+
+  useFrame(({ clock }) => {
+    const m = ref.current;
+    if (!m) return;
+    const t = hareketVar ? clock.getElapsedTime() * 0.22 : 0;
+    for (let i = 0; i < adet; i++) {
+      const a = t + (i / adet) * Math.PI * 2;
+      GECICI.position.set(Math.cos(a) * r, 0.03, Math.sin(a) * r);
+      // Serit YOLA UZANIR: tegete dondurulmus ince bir cubuk. Kure
+      // seklindeki benekler ekranda toz gibi duruyordu.
+      GECICI.rotation.set(0, -a, 0);
+      GECICI.scale.set(1, 1, 1);
+      GECICI.updateMatrix();
+      m.setMatrixAt(i, GECICI.matrix);
+    }
+    m.instanceMatrix.needsUpdate = true;
+  });
+
+  return (
+    <instancedMesh ref={ref} args={[undefined, undefined, adet]}>
+      <boxGeometry args={[0.05, 0.02, 0.9]} />
+      <meshStandardMaterial
+        color={p.serit}
+        emissive={p.serit}
+        emissiveIntensity={koyu ? 1.6 : 0.7}
+        toneMapped={false}
+      />
+    </instancedMesh>
+  );
+}
+
+/* ====================================================================== */
+/*  BLOK                                                                  */
+/* ====================================================================== */
+
+/**
+ * Tek blok: kutle + kat cizgileri + balkon ritmi + cati + DAIRE
+ * PENCERELERI.
+ *
+ * KAT SECILINCE KUTLE IKIYE BOLUNUR: secili katin ALTI opak, USTU yari
+ * saydam cizilir. Tek kutuya saydamlik vermek "ustteki katlar
+ * saydamlassin" istegini karsilamiyordu — butun bina saydamlasiyordu.
+ */
+function Blok({
+  olcu,
+  koyu,
+  secim,
+  soluk,
+  onBlokSec,
+  onDaireSec,
+}: {
+  olcu: BlokOlcusu;
+  koyu: boolean;
+  secim: SahneSecimi;
+  /** Baska blok secili — bu blok geri cekilir. */
+  soluk: boolean;
+  onBlokSec: (id: string) => void;
+  onDaireSec: (blokId: string, daireId: string, kat: number) => void;
+}) {
+  const p = sahnePaleti(koyu);
+  const [uzerinde, setUzerinde] = useState(false);
+  const pencereRef = useRef<InstancedMesh>(null);
+  const cizgiRef = useRef<InstancedMesh>(null);
+  const balkonRef = useRef<InstancedMesh>(null);
+
+  const seciliBlok = secim.blokId === olcu.blok.id;
+  const { genislik, derinlik, yukseklik, katSayisi, daireYerleri } = olcu;
+  const katSeciliMi = seciliBlok && secim.kat !== null;
+  const bolmeY = katSeciliMi ? TABAN_PAYI + ((secim.kat ?? 0) + 1) * KAT_YUKSEKLIGI : yukseklik;
+
+  // --- pencere (daire) ornekleri ---
+  useLayoutEffect(() => {
+    const m = pencereRef.current;
+    if (!m) return;
+    for (let i = 0; i < daireYerleri.length; i++) {
+      const y = daireYerleri[i];
+      // DISA DOGRU KUCUK BIR TASMA: pencere tam cephe duzleminde olunca
+      // kat bantlariyla ayni derinlige dusuyor ve z-savasi (titreme)
+      // uretiyordu. Disari 0.09 birim cikinca hem titreme biter hem de
+      // pencere duvara TAKILI gorunur.
+      const nx = Math.sin(y.yon);
+      const nz = Math.cos(y.yon);
+      GECICI.position.set(y.x + nx * PENCERE_TASMA, y.y, y.z + nz * PENCERE_TASMA);
+      GECICI.rotation.set(0, y.yon, 0);
+      GECICI.scale.setScalar(1);
+      GECICI.updateMatrix();
+      m.setMatrixAt(i, GECICI.matrix);
+    }
+    m.instanceMatrix.needsUpdate = true;
+  }, [daireYerleri]);
+
+  // --- pencere renkleri: durum + secim ---
+  useLayoutEffect(() => {
+    const m = pencereRef.current;
+    if (!m) return;
+    for (let i = 0; i < daireYerleri.length; i++) {
+      const d = daireYerleri[i].daire;
+      const katVurgusu = katSeciliMi && d.kat === secim.kat;
+      const seciliDaire = secim.daireId === d.id;
+      // ONCELIK: secili daire > secili kat > durum. Ucunu karistirmak,
+      // "tikladigim daire nerede" sorusunu cevapsiz birakirdi.
+      GECICI_RENK.set(seciliDaire ? SECIM_RENGI : DURUM_RENGI[d.durum]);
+      // BASKA BLOK SECILI: bu blogun pencereleri durum rengini BIRAKIR.
+      if (soluk) GECICI_RENK.lerp(SOLUK_RENK, 0.78);
+      // BU BLOKTA BASKA KAT SECILI: kat disi pencereler kararir.
+      else if (katSeciliMi && !katVurgusu && !seciliDaire) GECICI_RENK.multiplyScalar(0.42);
+      m.setColorAt(i, GECICI_RENK);
+    }
+    if (m.instanceColor) m.instanceColor.needsUpdate = true;
+  }, [daireYerleri, secim.daireId, secim.kat, katSeciliMi, soluk]);
+
+  // --- kat cizgileri: her katin tabaninda ince bir seri ---
+  useLayoutEffect(() => {
+    const m = cizgiRef.current;
+    if (!m) return;
+    for (let i = 0; i < katSayisi; i++) {
+      GECICI.position.set(0, TABAN_PAYI + i * KAT_YUKSEKLIGI, 0);
+      GECICI.rotation.set(0, 0, 0);
+      GECICI.scale.set(genislik + 0.02, 0.025, derinlik + 0.02);
+      GECICI.updateMatrix();
+      m.setMatrixAt(i, GECICI.matrix);
+    }
+    m.instanceMatrix.needsUpdate = true;
+  }, [katSayisi, genislik, derinlik]);
+
+  // --- BALKON RITMI: kat asiri, DORT CEPHEDE ince cikma bant ---
+  //
+  // OLCULEN KUSUR: ilk surumde balkonlar on cepheye konmus iki kutuydu ve
+  // ekranda "havada duran beyaz bloklar" gibi duruyordu — pencerelerin
+  // ustune biniyor, binaya ait gorunmuyorlardi. Artik her iki katta bir,
+  // cephe boyunca uzanan INCE BIR CIKMA var: bina siluetine ritim verir,
+  // pencereyi kapatmaz.
+  const balkonlar = useMemo(() => {
+    const liste: { y: number; enX: number; enZ: number }[] = [];
+    for (let k = 1; k < katSayisi; k += 2) {
+      liste.push({
+        y: TABAN_PAYI + k * KAT_YUKSEKLIGI + KAT_YUKSEKLIGI * 0.12,
+        enX: genislik + 0.14,
+        enZ: derinlik + 0.14,
+      });
+    }
+    return liste;
+  }, [katSayisi, genislik, derinlik]);
+
+  useLayoutEffect(() => {
+    const m = balkonRef.current;
+    if (!m) return;
+    for (let i = 0; i < balkonlar.length; i++) {
+      const b = balkonlar[i];
+      GECICI.position.set(0, b.y, 0);
+      GECICI.rotation.set(0, 0, 0);
+      GECICI.scale.set(b.enX, KAT_YUKSEKLIGI * 0.16, b.enZ);
+      GECICI.updateMatrix();
+      m.setMatrixAt(i, GECICI.matrix);
+    }
+    m.instanceMatrix.needsUpdate = true;
+  }, [balkonlar]);
+
+  const yukselti = seciliBlok ? 0.16 : 0;
+  // SOLUKLASTIRMA ALFAYLA YAPILAMAZ — OLCULDU.
+  //
+  // Ilk iki denemem de ekranda HICBIR SEY degistirmedi:
+  //   1. `opacity: 0.28` — acik temada kutle (#e8edf2) da arka plan
+  //      (#eef2f6) da acik; acik grinin uzerine acik gri karisinca
+  //      sonuc yine acik gri oldu.
+  //   2. Rengi arka plana dogru cekmek — ayni sebeple bos: iki renk
+  //      zaten neredeyse ayni.
+  //
+  // SINYALI RENKLI OGEYE TASIDIM. Sahnedeki tek doygun renk PENCERELER
+  // (daire durumu). Secili olmayan bloklarin pencereleri durum rengini
+  // BIRAKIR ve duvar rengine yaklasir; secili blok tek renkli kalan blok
+  // olur. Bu iki temada da anlasilir cunku fark DOYGUNLUKTA, parlaklikta
+  // degil. Kutlenin saydamligi olculu kalir: bicim okunur kalsin.
+  const saydamlik = soluk ? 0.72 : 1;
+
+  return (
+    <group position={[olcu.merkezX, yukselti, olcu.merkezZ]}>
+      {/* --- KUTLE: secili katin altinda kalan opak govde --- */}
       <mesh
         castShadow
         receiveShadow
-        position={[0, yukseklik / 2, 0]}
+        position={[0, bolmeY / 2, 0]}
         onPointerOver={(e) => {
           e.stopPropagation();
           setUzerinde(true);
@@ -117,24 +486,99 @@ function Blok({
         onPointerOut={() => setUzerinde(false)}
         onClick={(e) => {
           e.stopPropagation();
-          onSec(blok.id);
+          onBlokSec(olcu.blok.id);
         }}
-        scale={uzerinde || secili ? 1.04 : 1}
       >
-        <boxGeometry args={[genislik, yukseklik, genislik]} />
-        {/* Acik gri kutle — fotogercekci degil, MAKET. */}
+        <boxGeometry args={[genislik, bolmeY, derinlik]} />
         <meshStandardMaterial
-          color={secili ? KUTLE_SECILI : KUTLE}
-          roughness={0.75}
-          metalness={0.05}
+          color={p.kutle}
+          roughness={0.78}
+          metalness={0.04}
+          transparent={saydamlik < 1}
+          opacity={saydamlik}
         />
       </mesh>
 
-      {(uzerinde || secili) && (
-        // `Html`: 3B konuma bagli ama DOM'da cizilen etiket. Ekran
-        // okuyucu icin gercek metin — sahne icine cizilmis bir doku
-        // olsaydi hicbir yardimci teknoloji okuyamazdi.
-        <Html position={[0, yukseklik + 0.35, 0]} center distanceFactor={10}>
+      {/* --- USTTEKI KATLAR: kat secilince YARI SAYDAM (brief) --- */}
+      {katSeciliMi && bolmeY < yukseklik && (
+        <mesh position={[0, bolmeY + (yukseklik - bolmeY) / 2, 0]}>
+          <boxGeometry args={[genislik, yukseklik - bolmeY, derinlik]} />
+          <meshStandardMaterial color={p.kutle} roughness={0.78} transparent opacity={0.22} />
+        </mesh>
+      )}
+
+      {/* --- CATI: govdeden hafif tasan bir saçak + ustunde parapet --- */}
+      <mesh castShadow position={[0, yukseklik + 0.03, 0]}>
+        <boxGeometry args={[genislik + 0.09, 0.06, derinlik + 0.09]} />
+        <meshStandardMaterial
+          color={p.cati}
+          roughness={0.8}
+          transparent={saydamlik < 1}
+          opacity={saydamlik}
+        />
+      </mesh>
+      <mesh castShadow position={[0, yukseklik + 0.12, 0]}>
+        <boxGeometry args={[genislik * 0.34, 0.12, derinlik * 0.34]} />
+        <meshStandardMaterial
+          color={p.cati}
+          roughness={0.8}
+          transparent={saydamlik < 1}
+          opacity={saydamlik}
+        />
+      </mesh>
+
+      {/* --- KAT CIZGILERI --- */}
+      <instancedMesh ref={cizgiRef} args={[undefined, undefined, katSayisi]}>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshStandardMaterial
+          color={p.katCizgisi}
+          roughness={0.9}
+          transparent={saydamlik < 1}
+          opacity={saydamlik}
+        />
+      </instancedMesh>
+
+      {/* --- BALKONLAR --- */}
+      {balkonlar.length > 0 && (
+        <instancedMesh ref={balkonRef} args={[undefined, undefined, balkonlar.length]} castShadow>
+          <boxGeometry args={[1, 1, 1]} />
+          <meshStandardMaterial
+            color={p.balkon}
+            roughness={0.7}
+            transparent={saydamlik < 1}
+            opacity={saydamlik}
+          />
+        </instancedMesh>
+      )}
+
+      {/* --- DAIRELER: TEK CIZIM CAGRISI, ornek basina renk --- */}
+      <instancedMesh
+        ref={pencereRef}
+        args={[undefined, undefined, Math.max(1, daireYerleri.length)]}
+        onClick={(e) => {
+          e.stopPropagation();
+          const i = e.instanceId;
+          if (i === undefined) return;
+          const y = daireYerleri[i];
+          if (!y) return;
+          onDaireSec(olcu.blok.id, y.daire.id, y.daire.kat);
+        }}
+      >
+        <boxGeometry args={[0.24, KAT_YUKSEKLIGI * 0.46, 0.03]} />
+        <meshStandardMaterial
+          roughness={0.35}
+          metalness={0.1}
+          emissiveIntensity={koyu ? 0.35 : 0.1}
+          transparent={saydamlik < 1}
+          opacity={saydamlik}
+        />
+      </instancedMesh>
+
+      {/* --- ETIKET: uzerine gelince ya da seciliyken --- */}
+      {(uzerinde || seciliBlok) && (
+        // `Html`: 3B konuma bagli ama DOM'da cizilen etiket. Sahne icine
+        // doku olarak cizilseydi hicbir yardimci teknoloji okuyamazdi.
+        <Html position={[0, yukseklik + 0.42, 0]} center distanceFactor={11}>
           <span
             style={{
               background: "var(--yz-surface-1)",
@@ -144,10 +588,10 @@ function Blok({
               boxShadow: "var(--yz-raised)",
               fontSize: "var(--yz-fs-xs)",
               padding: "2px 8px",
-              whiteSpace: "nowrap",
+              whiteSpace: YATAY,
             }}
           >
-            {blok.ad}
+            {olcu.blok.ad}
           </span>
         </Html>
       )}
@@ -155,153 +599,270 @@ function Blok({
   );
 }
 
-/** Isaretci — kamera / NFC noktasi. Kritik durumda nabiz atar. */
-function Isaretci({
+/* ====================================================================== */
+/*  ETIKETLER                                                             */
+/* ====================================================================== */
+
+/** Yuzen etiket: renkli nokta + metin kapsulu. Uzerine gelince belirir. */
+function Etiket({
   isaretci,
   konum,
-  hareketVar,
+  onSec,
 }: {
   isaretci: SahneIsaretcisi;
   konum: [number, number, number];
-  hareketVar: boolean;
+  onSec?: (id: string) => void;
 }) {
-  const ref = useRef<Mesh>(null);
-
-  useFrame(({ clock }) => {
-    if (!ref.current) return;
-    // NABIZ YALNIZ KRITIKTE ve YALNIZ hareket aciksa: brief'in
-    // `prefers-reduced-motion` kurali sahneyi de baglar.
-    if (!hareketVar || isaretci.durum !== "kritik") {
-      ref.current.scale.setScalar(1);
-      return;
-    }
-    const t = clock.getElapsedTime();
-    ref.current.scale.setScalar(1 + Math.sin(t * 4) * 0.15);
-  });
-
+  const [uzerinde, setUzerinde] = useState(false);
+  const renk = TUR_RENGI[isaretci.tur];
   return (
-    <mesh ref={ref} position={konum} castShadow>
-      <sphereGeometry args={[0.12, 16, 16]} />
-      <meshStandardMaterial
-        color={DURUM_RENGI[isaretci.durum]}
-        emissive={DURUM_RENGI[isaretci.durum]}
-        emissiveIntensity={isaretci.durum === "cevrimdisi" ? 0 : 0.4}
-      />
-    </mesh>
+    <Html position={konum} center distanceFactor={12}>
+      <button
+        type="button"
+        onPointerEnter={() => setUzerinde(true)}
+        onPointerLeave={() => setUzerinde(false)}
+        onClick={() => onSec?.(isaretci.id)}
+        className="flex items-center gap-1.5"
+        style={{
+          background: "var(--yz-surface-1)",
+          color: "var(--yz-text)",
+          border: "1px solid var(--yz-border)",
+          borderRadius: "var(--yz-radius-chip)",
+          boxShadow: uzerinde ? "var(--yz-raised-hover)" : "var(--yz-raised)",
+          fontSize: "var(--yz-fs-xs)",
+          padding: "2px 8px",
+          whiteSpace: YATAY,
+          opacity: isaretci.sonuk ? 0.6 : 1,
+          transform: uzerinde ? "translateY(-2px)" : "none",
+          transitionProperty: "transform, box-shadow",
+          transitionDuration: "var(--yz-dur-fast)",
+        }}
+      >
+        <span
+          aria-hidden="true"
+          style={{
+            width: "7px",
+            height: "7px",
+            borderRadius: "50%",
+            background: isaretci.sonuk ? "var(--yz-text-3)" : renk,
+            flex: "0 0 auto",
+          }}
+        />
+        {isaretci.ad}
+      </button>
+    </Html>
   );
 }
+
+/* ====================================================================== */
+/*  SAHNE                                                                 */
+/* ====================================================================== */
 
 export interface BinaSahnesiProps {
   bloklar: SahneBlogu[];
   isaretciler?: SahneIsaretcisi[];
-  /** Bloga tiklaninca — cagiran detay paneli acar. */
-  onBlokSec?: (id: string) => void;
-  /** Koyu tema mi — sahne isigi buna gore serinler/isinir. */
+  /** Secim degisince — cagiran yan paneli acar. */
+  onSecim?: (secim: SahneSecimi) => void;
+  onIsaretciSec?: (id: string) => void;
+  /** Disaridan surulen secim (yan panel kapatilinca sifirlanir). */
+  secim?: SahneSecimi;
   koyu?: boolean;
-  /** `prefers-reduced-motion` kapali mi (yani hareket serbest mi). */
   hareketVar?: boolean;
+  /** Mobil/dusuk guc: yansima, yumusak golge ve serit kapanir. */
+  sade?: boolean;
 }
+
+const BOS_SECIM: SahneSecimi = { blokId: null, kat: null, daireId: null };
 
 export default function BinaSahnesi({
   bloklar,
   isaretciler = [],
-  onBlokSec,
+  onSecim,
+  onIsaretciSec,
+  secim: disSecim,
   koyu = false,
   hareketVar = true,
+  sade = false,
 }: BinaSahnesiProps) {
-  const [secili, setSecili] = useState<string | null>(null);
+  const p = sahnePaleti(koyu);
+  const kontrolRef = useRef<{ target: Vector3; update: () => void } | null>(null);
+  const [icSecim, setIcSecim] = useState<SahneSecimi>(BOS_SECIM);
+  const secim = disSecim ?? icSecim;
 
-  // Bloklar bir IZGARAYA dizilir. Konum verisi API'de YOK; uydurma
-  // koordinat yerine KARARLI bir duzen kuruluyor — ayni girdi her zaman
-  // ayni sahneyi verir (rastgelelik olsaydi her cizimde site tasinirdi).
-  const yerlesim = useMemo(() => {
-    const satirBoyu = Math.ceil(Math.sqrt(Math.max(1, bloklar.length)));
-    return bloklar.map((b, i) => {
-      const sx = (i % satirBoyu) - (satirBoyu - 1) / 2;
-      const sz = Math.floor(i / satirBoyu) - (satirBoyu - 1) / 2;
-      return { blok: b, konum: [sx * 3, 0, sz * 3] as [number, number, number] };
-    });
-  }, [bloklar]);
+  // VERI YOKSA BOS EKRAN YOK (brief): makul bir ornek site cizilir.
+  const ornekMi = bloklar.length === 0;
+  const cizilecek = useMemo(() => (ornekMi ? ornekSite() : bloklar), [ornekMi, bloklar]);
+  const yerlesim = useMemo(() => siteYerlesimi(cizilecek), [cizilecek]);
 
-  const isaretciYerlesimi = useMemo(
-    () =>
-      isaretciler.map((m, i) => {
-        const a = (i / Math.max(1, isaretciler.length)) * Math.PI * 2;
-        const r = 4.5;
-        return {
-          isaretci: m,
-          konum: [
-            m.x ?? Math.cos(a) * r,
-            0.4,
-            m.z ?? Math.sin(a) * r,
-          ] as [number, number, number],
-        };
-      }),
-    [isaretciler],
+  const seciliOlcu = yerlesim.bloklar.find((b) => b.blok.id === secim.blokId) ?? null;
+  // Golge kamerasinin kapsamasi gereken yari genislik.
+  const golgeAlani = yerlesim.yaricap * 1.35;
+
+  // --- kamera hedefi: genel -> blok -> kat -> daire ---
+  const genelUzaklik = useMemo(
+    () => kameraUzakligi(yerlesim.yaricap, yerlesim.enYuksek, GORUS_ACISI),
+    [yerlesim.yaricap, yerlesim.enYuksek],
   );
 
-  function sec(id: string) {
-    setSecili(id);
-    onBlokSec?.(id);
+  const { hedefKonum, hedefBakis } = useMemo(() => {
+    // BAKIS YONU sabit izometrik: (1, 0.8, 1). Uzaklik degisir, ACI DEGIL
+    // — aci da degisseydi her secim kullaniciyi baska bir yone dondururdu.
+    const yon = new Vector3(1, 0.8, 1).normalize();
+    if (!seciliOlcu) {
+      const merkez = new Vector3(0, yerlesim.enYuksek * 0.42, 0);
+      return {
+        hedefKonum: merkez.clone().addScaledVector(yon, genelUzaklik),
+        hedefBakis: merkez,
+      };
+    }
+    const katY =
+      secim.kat !== null
+        ? TABAN_PAYI + secim.kat * KAT_YUKSEKLIGI + KAT_YUKSEKLIGI / 2
+        : seciliOlcu.yukseklik * 0.5;
+    // Blok seciliyken cerceve BLOGUN KENDISINE gore kurulur; site olcegi
+    // orada bilgi tasimiyor. Daireye inince en yakin kadraj.
+    const uzaklik = secim.daireId
+      ? Math.max(1.8, seciliOlcu.genislik * 1.5)
+      : secim.kat !== null
+        ? Math.max(2.6, seciliOlcu.genislik * 2.4)
+        : kameraUzakligi(
+            Math.max(seciliOlcu.genislik, seciliOlcu.derinlik),
+            seciliOlcu.yukseklik,
+            GORUS_ACISI,
+          );
+    const merkez = new Vector3(seciliOlcu.merkezX, katY, seciliOlcu.merkezZ);
+    return {
+      hedefKonum: merkez.clone().addScaledVector(yon, uzaklik),
+      hedefBakis: merkez,
+    };
+  }, [seciliOlcu, secim.kat, secim.daireId, yerlesim.enYuksek, genelUzaklik]);
+
+  function uygula(yeni: SahneSecimi) {
+    if (!disSecim) setIcSecim(yeni);
+    onSecim?.(yeni);
   }
+
+  function blokSec(id: string) {
+    // ORNEK SITE TIKLANMAZ: olmayan bir bloga acilim yapmak, kullaniciyi
+    // var sanip veri arayacagi bir panele goturmekti.
+    if (id.startsWith(ORNEK_ONEK)) return;
+    if (secim.blokId !== id) {
+      uygula({ blokId: id, kat: null, daireId: null });
+      return;
+    }
+    // ZATEN SECILI BLOGA TIKLAMAK BIR KADEME GERI ALIR (daire -> kat ->
+    // blok -> site). Onceki davranis dogrudan en disa firlatiyordu:
+    // yakinlasmis kullanici duvara denk gelen bir tiklamayla butun
+    // baglamini kaybediyordu.
+    if (secim.daireId) uygula({ blokId: id, kat: secim.kat, daireId: null });
+    else if (secim.kat !== null) uygula({ blokId: id, kat: null, daireId: null });
+    else uygula(BOS_SECIM);
+  }
+
+  function daireSec(blokId: string, daireId: string, kat: number) {
+    if (blokId.startsWith(ORNEK_ONEK)) return;
+    uygula({ blokId, kat, daireId: secim.daireId === daireId ? null : daireId });
+  }
+
+  // Isaretciler platformun cevresine kararli olarak dagitilir; konum
+  // verisi API'de yok, uydurma koordinat yerine duzenli bir halka.
+  const isaretciYerleri = useMemo(
+    () =>
+      isaretciler.map((m, i) => {
+        const a = (i / Math.max(1, isaretciler.length)) * Math.PI * 2 + Math.PI / 7;
+        const r = yerlesim.yaricap * 0.92;
+        return { isaretci: m, konum: [Math.cos(a) * r, 0.5, Math.sin(a) * r] as [number, number, number] };
+      }),
+    [isaretciler, yerlesim.yaricap],
+  );
 
   return (
     <Canvas
-      shadows
-      dpr={[1, 2]}
-      camera={{ position: [8, 7, 8], fov: 40 }}
-      // FPS BUTCESI: `frameloop="demand"` sahneyi YALNIZ degisince cizer.
-      // Surekli 60 fps cizmek, hareketsiz bir maket icin pil ve CPU
-      // israfiydi; OrbitControls etkilesimi kareyi kendisi tetikler.
+      shadows={!sade}
+      // DPR TAVANI SADE KIPTE DUSER: retina bir tablette 2x cizmek, ayni
+      // sahne icin dort kat piksel demekti.
+      dpr={sade ? [1, 1.5] : [1, 2]}
+      // ILK KARE ZATEN DOGRU YERDE: baslangic konumu da kadraj
+      // hesabindan gelir, yoksa sahne acilirken kamera iceriden disariya
+      // dogru bir sicrama yapiyordu.
+      camera={{
+        position: [genelUzaklik * 0.585, genelUzaklik * 0.468, genelUzaklik * 0.585],
+        fov: GORUS_ACISI,
+      }}
+      // FPS BUTCESI: hareket kapaliyken sahne YALNIZ degisince cizilir.
       frameloop={hareketVar ? DONGU_SUREKLI : DONGU_TALEP}
       style={{ width: "100%", height: "100%" }}
     >
-      {/* USTTEN YUMUSAK ISIK — mimari maket hissi. Dark temada serin
-          mavi, light temada notr gun isigi (brief). */}
-      <color attach="background" args={[koyu ? ZEMIN_KOYU : ZEMIN_ACIK]} />
-      <ambientLight intensity={koyu ? 0.5 : 0.75} color={koyu ? ISIK_KOYU : ISIK_ACIK} />
+      <color attach="background" args={[p.arkaPlan]} />
+
+      {/* ISIK: koyu temada serin mavi anahtar + dusuk ortam; acikta notr
+          gun isigi + yuksek ortam (brief §4 — sahne isigi AYRI tanimli). */}
+      <ambientLight intensity={p.ortamGuc} color={p.ortamIsik} />
       <directionalLight
-        position={[6, 10, 6]}
-        intensity={koyu ? 1.1 : 1.5}
-        color={koyu ? YON_ISIK_KOYU : YON_ISIK_ACIK}
-        castShadow
-        shadow-mapSize={[1024, 1024]}
+        position={[6, 11, 5]}
+        intensity={p.anahtarGuc}
+        color={p.anahtarIsik}
+        castShadow={!sade}
+        shadow-mapSize={[2048, 2048]}
+        shadow-camera-near={1}
+        shadow-camera-far={60}
+        // GOLGE KAMERASI SITEYE OTURUR: varsayilan +-5'lik kutu buyuk bir
+        // siteyi kapsamiyordu ve golge kenarda kesiliyordu.
+        shadow-camera-left={-golgeAlani}
+        shadow-camera-right={golgeAlani}
+        shadow-camera-top={golgeAlani}
+        shadow-camera-bottom={-golgeAlani}
+        // AKNE: yuzeyin kendi kendini golgelemesi (ekranda kirli benek
+        // olarak gorunuyordu). `normalBias` yuzeyi normali boyunca kucuk
+        // bir miktar kaydirir; `bias`tan farki, egik yuzeylerde Peter-Pan
+        // etkisi uretmemesi.
+        shadow-normalBias={0.035}
+        shadow-bias={-0.0005}
       />
-      <SoftShadows size={12} samples={8} />
+      {/* DOLGU ISIGI: golgeli yuzler tamamen kararmasin — maket
+          fotografciliginda "ikinci isik". Golge URETMEZ (bedava). */}
+      <directionalLight position={[-7, 4, -6]} intensity={p.dolguGuc} color={p.dolguIsik} />
+      {!sade && <SoftShadows size={14} samples={8} focus={0.8} />}
 
-      {/* PLATFORM — modelin altindaki ince zemin (brief'in "ince
-          yansima/platform" istegi). */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
-        <circleGeometry args={[8, 48]} />
-        <meshStandardMaterial color={koyu ? PLATFORM_KOYU : PLATFORM_ACIK} roughness={0.9} />
-      </mesh>
-
-      {yerlesim.map(({ blok, konum }) => (
-        <Blok
-          key={blok.id}
-          blok={blok}
-          konum={konum}
-          onSec={sec}
-          secili={secili === blok.id}
-        />
-      ))}
-
-      {isaretciYerlesimi.map(({ isaretci, konum }) => (
-        <Isaretci
-          key={isaretci.id}
-          isaretci={isaretci}
-          konum={konum}
+      <Zemin yaricap={yerlesim.yaricap} koyu={koyu} sade={sade} />
+      {!sade && (
+        <IsikSeritleri
+          yaricap={yerlesim.yaricap}
+          koyu={koyu}
           hareketVar={hareketVar}
+          adet={5}
+        />
+      )}
+
+      {yerlesim.bloklar.map((o) => (
+        <Blok
+          key={o.blok.id}
+          olcu={o}
+          koyu={koyu}
+          secim={secim}
+          soluk={secim.blokId !== null && secim.blokId !== o.blok.id}
+          onBlokSec={blokSec}
+          onDaireSec={daireSec}
         />
       ))}
 
+      {isaretciYerleri.map(({ isaretci, konum }) => (
+        <Etiket key={isaretci.id} isaretci={isaretci} konum={konum} onSec={onIsaretciSec} />
+      ))}
+
+      <KameraSurucusu
+        hedefKonum={hedefKonum}
+        hedefBakis={hedefBakis}
+        kontrolRef={kontrolRef}
+        hareketVar={hareketVar}
+      />
       <OrbitControls
-        enablePan
-        // Kamera yere GOMULMEZ: alt aci sinirli.
-        maxPolarAngle={Math.PI / 2.2}
-        minDistance={5}
-        maxDistance={20}
-        // Hareket azaltmada otomatik donus KAPALI.
+        ref={kontrolRef as never}
+        enablePan={false}
+        // Kamera yere GOMULMEZ.
+        maxPolarAngle={Math.PI / 2.15}
+        minDistance={2}
+        maxDistance={genelUzaklik * 1.8}
         autoRotate={false}
       />
     </Canvas>
