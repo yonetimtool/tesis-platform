@@ -82,6 +82,8 @@ describe("Mesaj sayfasi", () => {
       "/api/panel/mesaj-gecmis": GECMIS,
     });
     ciz(MesajlarPage);
+    // (P161) Form artik MODALDA: once acilir.
+    await userEvent.click(await screen.findByRole("button", { name: "Yeni şablon" }));
     await waitFor(() =>
       expect(screen.getAllByText("Bakiye Bildirimi").length).toBeGreaterThan(0),
     );
@@ -99,6 +101,8 @@ describe("Mesaj sayfasi", () => {
       "/api/panel/mesaj-gecmis": GECMIS,
     });
     ciz(MesajlarPage);
+    // (P161) Form artik MODALDA: once acilir.
+    await userEvent.click(await screen.findByRole("button", { name: "Yeni şablon" }));
     await waitFor(() =>
       expect(screen.getAllByText("Bakiye Bildirimi").length).toBeGreaterThan(0),
     );

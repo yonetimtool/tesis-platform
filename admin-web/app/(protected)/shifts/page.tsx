@@ -14,6 +14,7 @@ import {
   VeriTablosu,
   type Kolon,
   type TabloDurumu,
+  useOnay,
 } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
@@ -54,6 +55,8 @@ function gunTipiAdi(t: (a: SozlukAnahtari) => string, v: string): string {
 
 export default function ShiftsPage() {
   const t = useT();
+  // (P161) Yikici onaylar yerel `confirm()` degil, tema/dil taniyan diyalog.
+  const { onayla, diyalog } = useOnay();
   const toast = useToast();
   // (P160) SAYFALAMA `VeriTablosu` durumuna gecti; `offset` ondan
   // TURETILIR ve sayfa basina kayit secimi bedava geldi.
@@ -111,7 +114,7 @@ export default function ShiftsPage() {
   }
 
   async function remove(s: Shift) {
-    if (!window.confirm(t("ortakSilOnay", { ad: s.ad }))) return;
+    if (!(await onayla({ baslik: t("ortakSilBaslik"), mesaj: t("ortakSilOnay", { ad: s.ad }), onayMetni: t("ortakSil"), tehlikeli: true }))) return;
     try {
       await apiSend(`/api/shifts/${s.id}`, "DELETE");
       mutate();
@@ -268,6 +271,7 @@ export default function ShiftsPage() {
         durum={tabloDurumu}
         onDurumDegisti={setTabloDurumu}
       />
+      {diyalog}
     </div>
   );
 }

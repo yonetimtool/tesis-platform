@@ -179,6 +179,8 @@ describe("Dış hizmetler", () => {
       "/api/external-services": { note: null, items: [] },
     });
     ciz(DisHizmetlerPage);
+    // (P161) Form artik MODALDA: once acilir.
+    await userEvent.click(await screen.findByRole("button", { name: "Yeni kayıt" }));
     await screen.findByText(/Kayıtlı hizmet yok/i);
 
     await userEvent.type(screen.getByLabelText(/Hizmet türü/i), "Çilingir");
@@ -200,6 +202,8 @@ describe("Dış hizmetler", () => {
   it("SOYAD boşken istek GÖNDERİLMEZ", async () => {
     const c = taklit({ "/api/external-services": { note: null, items: [] } });
     ciz(DisHizmetlerPage);
+    // (P161) Form artik MODALDA: once acilir.
+    await userEvent.click(await screen.findByRole("button", { name: "Yeni kayıt" }));
     await screen.findByText(/Kayıtlı hizmet yok/i);
 
     await userEvent.type(screen.getByLabelText(/Hizmet türü/i), "Çilingir");
@@ -214,6 +218,8 @@ describe("Dış hizmetler", () => {
   it("EKSİK telefonla istek GÖNDERİLMEZ", async () => {
     const c = taklit({ "/api/external-services": { note: null, items: [] } });
     ciz(DisHizmetlerPage);
+    // (P161) Form artik MODALDA: once acilir.
+    await userEvent.click(await screen.findByRole("button", { name: "Yeni kayıt" }));
     await screen.findByText(/Kayıtlı hizmet yok/i);
 
     await userEvent.type(screen.getByLabelText(/Hizmet türü/i), "Çilingir");

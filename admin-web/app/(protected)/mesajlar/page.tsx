@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import useSWR from "swr";
 
 import {
+  Modal,
   Alan,
   CokSatir,
   Kart,
@@ -101,6 +102,7 @@ export default function MesajlarPage() {
   const [amac, setAmac] = useState("operasyonel");
   const [hata, setHata] = useState<string | null>(null);
   const [mesgul, setMesgul] = useState(false);
+  const [modalAcik, setModalAcik] = useState(false);
 
   // --- onizleme + gonderim ---
   const [seciliId, setSeciliId] = useState("");
@@ -233,9 +235,14 @@ export default function MesajlarPage() {
   return (
     <div className="space-y-6">
       <div>
+        <div className="flex flex-wrap items-end justify-between gap-3">
         <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
           {t("mesajBaslik")}
         </h1>
+        <Dugme tur="birincil" boy="kucuk" onClick={() => setModalAcik(true)}>
+          {t("mesajYeniSablon")}
+        </Dugme>
+      </div>
         <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>{t("mesajAlt")}</p>
       </div>
       {/* (P154 / Asama 7.4) Sablon yoksa gonderim YAPILAMAZ
@@ -263,11 +270,23 @@ export default function MesajlarPage() {
       </section>
 
       {/* ---------------------------- yeni sablon -------------------------- */}
-      <Kart>
-        <h2 className="mb-3" style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
-          {t("mesajYeniSablon")}
-        </h2>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <Modal
+        acik={modalAcik}
+        onKapat={() => setModalAcik(false)}
+        baslik={t("mesajYeniSablon")}
+        eylemler={
+          <>
+            <Dugme tur="sessiz" onClick={() => setModalAcik(false)} disabled={mesgul}>
+              {t("ortakIptal")}
+            </Dugme>
+            <Dugme tur="birincil" disabled={mesgul} onClick={sablonEkle}>
+          {t("mesajSablonKaydet")}
+        </Dugme>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <AlanSarmal etiket={t("mesajKanal")}>
   {(b) => (
     <Secim {...b} value={kanal} onChange={(e) => setKanal(e.target.value as Kanal)}>
@@ -306,10 +325,8 @@ export default function MesajlarPage() {
           )}
         </AlanSarmal>
         <p className="mt-1" style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>{t("mesajEtiketIpucu")}</p>
-        <Dugme tur="birincil" disabled={mesgul} onClick={sablonEkle}>
-          {t("mesajSablonKaydet")}
-        </Dugme>
-      </Kart>
+        </div>
+      </Modal>
 
       {/* --------------------------- onizleme ------------------------------ */}
       <Kart>

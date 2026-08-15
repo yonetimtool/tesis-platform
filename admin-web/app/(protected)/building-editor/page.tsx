@@ -5,11 +5,13 @@ import useSWR from "swr";
 import { daireTipiKisa, daireTipiRengi } from "@/lib/daire-tipi-rengi";
 
 import {
+  Modal,
   Kart,
   Alan,
   AlanSarmal,
   Dugme,
   HataDurumu,
+  useOnay,
 } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
@@ -53,6 +55,8 @@ const EMPTY_UNIT: UnitFormState = {
 
 export default function BuildingEditorPage() {
   const t = useT();
+  // (P161) Yikici onaylar yerel `confirm()` degil, tema/dil taniyan diyalog.
+  const { onayla, diyalog } = useOnay();
   const toast = useToast();
   const blocks = useSWR<BlockList>("/api/blocks", jsonFetcher);
   const units = useSWR<UnitList>("/api/units?limit=200&offset=0", jsonFetcher);
@@ -139,7 +143,7 @@ export default function BuildingEditorPage() {
     const count = unitItems.filter((u) => u.blok === b.ad).length;
     let cascade = false;
     if (count === 0) {
-      if (!window.confirm(t("binaBlokBasitSilOnay", { blok: b.ad }))) return;
+      if (!(await onayla({ baslik: t("ortakSilBaslik"), mesaj: t("binaBlokBasitSilOnay", { blok: b.ad }), onayMetni: t("ortakSil"), tehlikeli: true }))) return;
     } else {
       // Yikici: daireleri + bagli kayitlari siler. Sert onay: blok adini yaz.
       const typed = window.prompt(
@@ -200,7 +204,7 @@ export default function BuildingEditorPage() {
   }
 
   async function removeUnit(u: Unit) {
-    if (!window.confirm(t("ortakSilOnay", { ad: u.no }))) return;
+    if (!(await onayla({ baslik: t("ortakSilBaslik"), mesaj: t("ortakSilOnay", { ad: u.no }), onayMetni: t("ortakSil"), tehlikeli: true }))) return;
     try {
       await apiSend(`/api/units/${u.id}`, "DELETE");
       refresh();
@@ -293,10 +297,22 @@ export default function BuildingEditorPage() {
       )}
 
       {/* Blok ekle/duzenle formu */}
-      {blockForm.open && (
-        <Kart>
-          <form onSubmit={saveBlock} className="space-y-4">
-          <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{blockForm.editingId ? t("binaBlokDuzenle") : t("binaBlokYeni")}</h2>
+      <Modal
+        acik={blockForm.open}
+        onKapat={() => setBlockForm(EMPTY_BLOCK)}
+        baslik={blockForm.editingId ? t("binaBlokDuzenle") : t("binaBlokYeni")}
+        eylemler={
+          <>
+            <Dugme tur="sessiz" onClick={() => setBlockForm(EMPTY_BLOCK)}>
+              {t("ortakIptal")}
+            </Dugme>
+            <Dugme type="submit" form="block" tur="birincil" disabled={blockForm.saving}>
+              {blockForm.saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
+            </Dugme>
+          </>
+        }
+      >
+        <form id="block" onSubmit={saveBlock} className="space-y-4">
           <div className="grid grid-cols-1 gap-4 sm:max-w-xs">
             <AlanSarmal etiket={t("binaBlokEtiketi")} ipucu={t("binaBlokIpucu")}>
   {(b) => (
@@ -311,30 +327,34 @@ export default function BuildingEditorPage() {
 </AlanSarmal>
           </div>
           <HataDurumu mesaj={blockForm.err} />
-          <div className="flex gap-2">
-            <Dugme type="submit" tur="birincil" disabled={blockForm.saving}>
-              {blockForm.saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
-            </Dugme>
-            <Dugme type="button" boy="kucuk" onClick={() => setBlockForm(EMPTY_BLOCK)}>
-              {t("ortakIptal")}
-            </Dugme>
-          </div>
-          </form>
-        </Kart>
-      )}
+        </form>
+      </Modal>
 
       {/* Daire ekle/duzenle formu */}
-      {unitForm.open && (
-        <Kart>
-          <form onSubmit={saveUnit} className="space-y-4">
-          <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
-            {unitForm.editingId ? t("daireDuzenle") : t("daireYeni")}
-            <span className="ms-2 text-sm text-metin-muted">
-              {unitForm.blok
-                ? t("daireBlokEki", { ad: unitForm.blok })
-                : t("daireBloksuzEki")}
-            </span>
-          </h2>
+      <Modal
+        acik={unitForm.open}
+        onKapat={() => setUnitForm(EMPTY_UNIT)}
+        baslik={unitForm.editingId ? t("daireDuzenle") : t("daireYeni")}
+        eylemler={
+          <>
+            <Dugme tur="sessiz" onClick={() => setUnitForm(EMPTY_UNIT)}>
+              {t("ortakIptal")}
+            </Dugme>
+            <Dugme type="submit" form="unit" tur="birincil" disabled={unitForm.saving}>
+              {unitForm.saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
+            </Dugme>
+          </>
+        }
+      >
+        <form id="unit" onSubmit={saveUnit} className="space-y-4">
+          {/* HANGI BLOK: eskiden basligin yanindaydi. `Modal.baslik` ekran
+              okuyucu icin STRING; bilgi kaybolmasin diye govdenin basina
+              alindi. */}
+          <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+            {unitForm.blok
+              ? t("daireBlokEki", { ad: unitForm.blok })
+              : t("daireBloksuzEki")}
+          </p>
           <div className="grid grid-cols-3 gap-4">
             <AlanSarmal etiket={t("binaDaireNo")} ipucu={t("binaDaireNoIpucu")}>
   {(b) => (
@@ -365,17 +385,8 @@ export default function BuildingEditorPage() {
 </AlanSarmal>
           </div>
           <HataDurumu mesaj={unitForm.err} />
-          <div className="flex gap-2">
-            <Dugme type="submit" tur="birincil" disabled={unitForm.saving}>
-              {unitForm.saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
-            </Dugme>
-            <Dugme type="button" boy="kucuk" onClick={() => setUnitForm(EMPTY_UNIT)}>
-              {t("ortakIptal")}
-            </Dugme>
-          </div>
-          </form>
-        </Kart>
-      )}
+        </form>
+      </Modal>
 
       {/* Icerik: kutucuk listesi veya blok detayi */}
       {drilledIn ? (
@@ -403,6 +414,7 @@ export default function BuildingEditorPage() {
           onAddBlock={openNewBlock}
         />
       )}
+      {diyalog}
     </div>
   );
 }

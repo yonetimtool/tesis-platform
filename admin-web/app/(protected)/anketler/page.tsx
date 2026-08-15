@@ -4,6 +4,7 @@ import { useState } from "react";
 import useSWR from "swr";
 
 import {
+  Modal,
   CokSatir,
   Kart,
   Alan,
@@ -53,6 +54,7 @@ export default function AnketlerPage() {
   const t = useT();
   const toast = useToast();
   const [hata, setHata] = useState<string | null>(null);
+  const [modalAcik, setModalAcik] = useState(false);
   const [baslik, setBaslik] = useState("");
   const [secenekMetni, setSecenekMetni] = useState("");
 
@@ -98,13 +100,18 @@ export default function AnketlerPage() {
 
   return (
     <div className="space-y-6">
-      <div>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
         <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
           {t("kabukAnketler")}
         </h1>
         <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
           {t("anketAlt")}
         </p>
+        </div>
+        <Dugme tur="birincil" boy="kucuk" onClick={() => setModalAcik(true)}>
+          {t("anketEkle")}
+        </Dugme>
       </div>
       <HataDurumu mesaj={hata ?? (aErr ? t("anketHata") : null)} />
 
@@ -158,7 +165,25 @@ export default function AnketlerPage() {
           ))}
         </div>
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+      </Kart>
+
+      <Modal
+        acik={modalAcik}
+        onKapat={() => setModalAcik(false)}
+        baslik={t("anketEkle")}
+        eylemler={
+          <>
+            <Dugme tur="sessiz" onClick={() => setModalAcik(false)}>
+              {t("ortakIptal")}
+            </Dugme>
+            <Dugme tur="birincil" onClick={() => void ekle()}>
+              {t("ortakKaydet")}
+            </Dugme>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
           <AlanSarmal etiket={t("anketBaslik")}>
   {(b) => (
     <Alan {...b} value={baslik}
@@ -176,14 +201,8 @@ export default function AnketlerPage() {
             )}
           </AlanSarmal>
         </div>
-        <Dugme
-          type="button"
-          tur="birincil"
-          onClick={() => void ekle()}
-        >
-          {t("anketEkle")}
-        </Dugme>
-      </Kart>
+        </div>
+      </Modal>
     </div>
   );
 }

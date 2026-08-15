@@ -127,6 +127,8 @@ describe("Taleplerim", () => {
   it("YENI TALEP gonderilir ve liste tazelenir", async () => {
     const c = taklit({ "/api/complaints": { items: [] } });
     ciz(TaleplerimPage);
+    // (P161) Form artik MODALDA: once acilir.
+    await userEvent.click(await screen.findByRole("button", { name: "Yeni talep" }));
     await userEvent.type(
       screen.getByLabelText(/Konu/i),
       "Su kaçağı",
@@ -148,6 +150,8 @@ describe("Taleplerim", () => {
   it("BOS alanla gonderilmez", async () => {
     const c = taklit({ "/api/complaints": { items: [] } });
     ciz(TaleplerimPage);
+    // (P161) Form artik MODALDA: once acilir.
+    await userEvent.click(await screen.findByRole("button", { name: "Yeni talep" }));
     await userEvent.click(screen.getByRole("button", { name: /Gönder/i }));
     expect(await screen.findByText(/zorunludur/i)).toBeInTheDocument();
     expect(c.some((x) => x.method === "POST")).toBe(false);

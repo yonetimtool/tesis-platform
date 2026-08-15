@@ -10,6 +10,7 @@ import {
   Dugme,
   HataDurumu,
   Secim,
+  useOnay,
 } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
@@ -97,6 +98,8 @@ function hucreler(satir: string): string[] {
 
 export default function IceAktarimPage() {
   const t = useT();
+  // (P161) Yikici onaylar yerel `confirm()` degil, tema/dil taniyan diyalog.
+  const { onayla, diyalog } = useOnay();
   const toast = useToast();
   // (P154 / Asama 5) `?tur=kisi` ile DOGRUDAN gelinebilir: `/users`
   // ekranindaki "toplu yukle" dugmesi buraya yollar. Kanca 7.1'de
@@ -175,7 +178,7 @@ export default function IceAktarimPage() {
   }
 
   async function geriAl(id: string) {
-    if (!window.confirm(t("iceAktarimGeriAlOnay"))) return;
+    if (!(await onayla({ baslik: t("ortakOnayBaslik"), mesaj: t("iceAktarimGeriAlOnay"), onayMetni: t("iceAktarimGeriAl"), tehlikeli: true }))) return;
     try {
       await apiSend(`/api/panel/ice-aktarim/${id}/geri-al`, "POST");
       toast.success(t("iceAktarimGeriAlindi"));
@@ -361,6 +364,7 @@ export default function IceAktarimPage() {
           </div>
         ))}
       </section>
+      {diyalog}
     </div>
   );
 }

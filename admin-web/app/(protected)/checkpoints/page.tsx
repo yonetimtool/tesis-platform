@@ -15,6 +15,7 @@ import {
   VeriTablosu,
   type Kolon,
   type TabloDurumu,
+  useOnay,
 } from "@/components/ui";
 import { RotaSahnesiYukleyici } from "@/components/3d/sahne-yukleyici";
 import { KonumHaritasiYukleyici } from "@/components/harita/harita-yukleyici";
@@ -92,6 +93,8 @@ const EMPTY: FormState = { ad: "", nfc_tag_uid: "", gps_lat: "", gps_lng: "", ak
 
 export default function CheckpointsPage() {
   const t = useT();
+  // (P161) Yikici onaylar yerel `confirm()` degil, tema/dil taniyan diyalog.
+  const { onayla, diyalog } = useOnay();
   const toast = useToast();
   // (P160) SAYFALAMA `VeriTablosu` durumuna gecti; `offset` ondan
   // TURETILIR ve sayfa basina kayit secimi bedava geldi.
@@ -182,7 +185,7 @@ export default function CheckpointsPage() {
   }
 
   async function remove(c: Checkpoint) {
-    if (!window.confirm(t("ortakSilOnay", { ad: c.ad }))) return;
+    if (!(await onayla({ baslik: t("ortakSilBaslik"), mesaj: t("ortakSilOnay", { ad: c.ad }), onayMetni: t("ortakSil"), tehlikeli: true }))) return;
     try {
       await apiSend(`/api/checkpoints/${c.id}`, "DELETE");
       mutate();
@@ -573,6 +576,7 @@ export default function CheckpointsPage() {
         durum={tabloDurumu}
         onDurumDegisti={setTabloDurumu}
       />
+      {diyalog}
     </div>
   );
 }

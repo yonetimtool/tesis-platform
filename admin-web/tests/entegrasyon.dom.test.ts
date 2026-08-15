@@ -54,6 +54,8 @@ describe("Entegrasyonlar", () => {
       "/api/integrations/e1": { ...KAYIT },
     });
     ciz(IntegrationsPage);
+    // (P161) Form artik MODALDA: once acilir.
+    await userEvent.click(await screen.findByRole("button", { name: "Yeni entegrasyon" }));
     await waitFor(() =>
       expect(screen.getByText("Gürültü rölesi")).toBeInTheDocument(),
     );

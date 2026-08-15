@@ -4,6 +4,7 @@ import { useState } from "react";
 import useSWR from "swr";
 
 import {
+  Modal,
   Kart,
   CokSatir,
   Alan,
@@ -13,6 +14,7 @@ import {
   HataDurumu,
   IskeletMetin,
   Secim,
+  useOnay,
 } from "@/components/ui";
 import { Tablo, TabloBasligi, Td, Th } from "@/components/tablo";
 import { useToast } from "@/components/Toast";
@@ -59,6 +61,8 @@ const AUTH_TYPES: AuthType[] = ["none", "bearer", "api_key"];
 
 export default function IntegrationsPage() {
   const t = useT();
+  // (P161) Yikici onaylar yerel `confirm()` degil, tema/dil taniyan diyalog.
+  const { onayla, diyalog } = useOnay();
   const toast = useToast();
   const { data, error, isLoading, mutate } = useSWR<IntegrationList>(
     "/api/integrations?limit=200",
@@ -154,7 +158,7 @@ export default function IntegrationsPage() {
   }
 
   async function remove(it: Integration) {
-    if (!window.confirm(t("ortakSilOnay", { ad: it.ad }))) return;
+    if (!(await onayla({ baslik: t("ortakSilBaslik"), mesaj: t("ortakSilOnay", { ad: it.ad }), onayMetni: t("ortakSil"), tehlikeli: true }))) return;
     try {
       await apiSend(`/api/integrations/${it.id}`, "DELETE");
       mutate();
@@ -202,10 +206,22 @@ export default function IntegrationsPage() {
       {error && <HataDurumu mesaj={error.message} />}
       {isLoading && !data && <IskeletMetin satir={3} />}
 
-      {open && (
-        <Kart>
-          <form onSubmit={save} className="space-y-4">
-          <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{editingId ? t("entegDuzenle") : t("entegYeni")}</h2>
+      <Modal
+        acik={open}
+        onKapat={() => setOpen(false)}
+        baslik={editingId ? t("entegDuzenle") : t("entegYeni")}
+        eylemler={
+          <>
+            <Dugme tur="sessiz" onClick={() => setOpen(false)} disabled={saving}>
+              {t("ortakIptal")}
+            </Dugme>
+            <Dugme type="submit" form="enteg-form" tur="birincil" yukleniyor={saving}>
+              {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
+            </Dugme>
+          </>
+        }
+      >
+        <form id="enteg-form" onSubmit={save} className="space-y-4">
           {!editingId && presets && presets.length > 0 && (
             <AlanSarmal etiket={t("entegSablon")} ipucu={t("entegSablonIpucu")}>
   {(b) => (
@@ -316,17 +332,8 @@ export default function IntegrationsPage() {
               onChange={(e) => setForm({ ...form, aktif: e.target.checked })}
             />{t("ortakAktif")}</label>
           <HataDurumu mesaj={formErr} />
-          <div className="flex gap-2">
-            <Dugme type="submit" tur="birincil" disabled={saving}>
-              {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
-            </Dugme>
-            <Dugme type="button" boy="kucuk" onClick={() => setOpen(false)}>
-              {t("ortakIptal")}
-            </Dugme>
-          </div>
-          </form>
-        </Kart>
-      )}
+        </form>
+      </Modal>
 
       <div className="overflow-hidden rounded-kart border kart-kenar bg-white">
         <div className="odak-ic overflow-x-auto" tabIndex={0}>
@@ -396,6 +403,7 @@ export default function IntegrationsPage() {
           </Tablo>
         </div>
       </div>
+      {diyalog}
     </div>
   );
 }

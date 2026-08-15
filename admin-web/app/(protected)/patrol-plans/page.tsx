@@ -16,6 +16,7 @@ import {
   VeriTablosu,
   type Kolon,
   type TabloDurumu,
+  useOnay,
 } from "@/components/ui";
 import { RotaSahnesiYukleyici } from "@/components/3d/sahne-yukleyici";
 import { useToast } from "@/components/Toast";
@@ -89,6 +90,8 @@ function windowCount(bas: string, bit: string, per: number): number {
 
 export default function PatrolPlansPage() {
   const t = useT();
+  // (P161) Yikici onaylar yerel `confirm()` degil, tema/dil taniyan diyalog.
+  const { onayla, diyalog } = useOnay();
   const toast = useToast();
   // (P160) SAYFALAMA `VeriTablosu` durumuna gecti; `offset` ondan
   // TURETILIR ve sayfa basina kayit secimi bedava geldi.
@@ -195,7 +198,7 @@ export default function PatrolPlansPage() {
   }
 
   async function remove(p: PatrolPlan) {
-    if (!window.confirm(t("ortakSilOnay", { ad: p.ad }))) return;
+    if (!(await onayla({ baslik: t("ortakSilBaslik"), mesaj: t("ortakSilOnay", { ad: p.ad }), onayMetni: t("ortakSil"), tehlikeli: true }))) return;
     try {
       await apiSend(`/api/patrol-plans/${p.id}`, "DELETE");
       mutate();
@@ -621,6 +624,7 @@ export default function PatrolPlansPage() {
         durum={tabloDurumu}
         onDurumDegisti={setTabloDurumu}
       />
+      {diyalog}
     </div>
   );
 }

@@ -13,6 +13,7 @@ import { useState } from "react";
 import useSWR from "swr";
 
 import {
+  Modal,
   Alan,
   AlanSarmal,
   BosDurum,
@@ -57,6 +58,7 @@ export default function DisHizmetlerPage() {
   const [aciklama, setAciklama] = useState("");
   const [hata, setHata] = useState<string | null>(null);
   const [gonderiyor, setGonderiyor] = useState(false);
+  const [modalAcik, setModalAcik] = useState(false);
 
   const kayitlar = data?.items ?? [];
 
@@ -101,9 +103,14 @@ export default function DisHizmetlerPage() {
 
   return (
     <div className="space-y-6">
-      <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
         {t("disHizmetBaslik")}
       </h1>
+        <Dugme tur="birincil" boy="kucuk" onClick={() => setModalAcik(true)}>
+          {t("disHizmetYeni")}
+        </Dugme>
+      </div>
 
       {data?.note ? (
         <Kart>
@@ -111,11 +118,23 @@ export default function DisHizmetlerPage() {
         </Kart>
       ) : null}
 
-      <Kart className="space-y-4">
-        <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
-          {t("disHizmetYeni")}
-        </h2>
-        <div className="grid gap-4 sm:grid-cols-2">
+      <Modal
+        acik={modalAcik}
+        onKapat={() => setModalAcik(false)}
+        baslik={t("disHizmetYeni")}
+        eylemler={
+          <>
+            <Dugme tur="sessiz" onClick={() => setModalAcik(false)} disabled={gonderiyor}>
+              {t("ortakIptal")}
+            </Dugme>
+            <Dugme tur="birincil" disabled={gonderiyor} yukleniyor={gonderiyor} onClick={() => void ekle()}>
+            {gonderiyor ? t("ortakKaydediliyor") : t("ortakEkle")}
+          </Dugme>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
           <AlanSarmal etiket={t("disHizmetTur")} zorunlu>
             {(b) => (
               <Alan {...b} value={tur} onChange={(e) => setTur(e.target.value)} maxLength={60} />
@@ -163,12 +182,8 @@ export default function DisHizmetlerPage() {
             {hata}
           </p>
         )}
-        <div>
-          <Dugme tur="birincil" disabled={gonderiyor} yukleniyor={gonderiyor} onClick={() => void ekle()}>
-            {gonderiyor ? t("ortakKaydediliyor") : t("ortakEkle")}
-          </Dugme>
         </div>
-      </Kart>
+      </Modal>
 
       <section className="space-y-3">
         <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>

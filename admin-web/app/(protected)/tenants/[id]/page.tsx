@@ -6,11 +6,13 @@ import { useState } from "react";
 import useSWR from "swr";
 
 import {
+  Modal,
   Alan,
   AlanSarmal,
   Dugme,
   HataDurumu,
   IskeletMetin,
+  useOnay,
 } from "@/components/ui";
 import { KopyaKod } from "@/components/KopyaKod";
 import { useToast } from "@/components/Toast";
@@ -54,6 +56,8 @@ function fmtDate(iso: string): string {
 
 export default function TenantDetailPage() {
   const t = useT();
+  // (P161) Yikici onaylar yerel `confirm()` degil, tema/dil taniyan diyalog.
+  const { onayla, diyalog } = useOnay();
   const toast = useToast();
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -122,7 +126,7 @@ export default function TenantDetailPage() {
   }
 
   async function yoneticiSil(satir: YoneticiSatiri) {
-    if (!window.confirm(t("tesisYoneticiSilOnay", { ad: satir.ad }))) return;
+    if (!(await onayla({ baslik: t("ortakSilBaslik"), mesaj: t("tesisYoneticiSilOnay", { ad: satir.ad }), onayMetni: t("ortakSil"), tehlikeli: true }))) return;
     setBusy(true);
     try {
       await apiSend(`/api/tenants/${id}/yoneticiler/${satir.id}`, "DELETE");
@@ -192,7 +196,7 @@ export default function TenantDetailPage() {
   async function toggleActive() {
     if (!y) return;
     const next = !y.is_active;
-    if (!window.confirm(next ? t("tesisYoneticiAktifOnay") : t("tesisYoneticiPasifOnay"))) return;
+    if (!(await onayla({ baslik: t("ortakOnayBaslik"), mesaj: next ? t("tesisYoneticiAktifOnay") : t("tesisYoneticiPasifOnay"), onayMetni: next ? t("ortakAktiflestir") : t("ortakPasiflestir"), tehlikeli: !next }))) return;
     setBusy(true);
     try {
       await apiSend(`/api/tenants/${id}/yonetici`, "PATCH", { is_active: next });
@@ -206,7 +210,7 @@ export default function TenantDetailPage() {
   }
 
   async function resetCredential() {
-    if (!window.confirm(t("tesisParolaSifirlaOnay"))) return;
+    if (!(await onayla({ baslik: t("ortakOnayBaslik"), mesaj: t("tesisParolaSifirlaOnay"), onayMetni: t("tesisParolaSifirla"), tehlikeli: true }))) return;
     setBusy(true);
     try {
       const r = await apiSend<{ temp_code: string }>(
@@ -292,8 +296,22 @@ export default function TenantDetailPage() {
               </>
             )}
 
-            {nameEditing && (
-              <form onSubmit={saveName} className="space-y-3">
+            <Modal
+              acik={nameEditing}
+              onKapat={() => setNameEditing(false)}
+              baslik={t("tesisAdiDuzenle")}
+              eylemler={
+                <>
+                  <Dugme tur="sessiz" onClick={() => setNameEditing(false)}>
+                    {t("ortakIptal")}
+                  </Dugme>
+                  <Dugme type="submit" form="tesis-adi" tur="birincil" disabled={nameSaving}>
+                    {nameSaving ? t("ortakKaydediliyor") : t("ortakKaydet")}
+                  </Dugme>
+                </>
+              }
+            >
+              <form id="tesis-adi" onSubmit={saveName} className="space-y-4">
                 <AlanSarmal etiket={t("ayarTesisAdi")}>
   {(b) => (
     <Alan {...b} value={nameInput}
@@ -305,21 +323,8 @@ export default function TenantDetailPage() {
   )}
 </AlanSarmal>
                 {nameErr && <HataDurumu mesaj={nameErr} />}
-                <div className="flex gap-2">
-                  <Dugme type="submit" tur="birincil" disabled={nameSaving}>
-                    {nameSaving ? t("ortakKaydediliyor") : t("ortakKaydet")}
-                  </Dugme>
-                  <Dugme
-                    type="button"
-                    boy="kucuk"
-                    onClick={() => setNameEditing(false)}
-                    disabled={nameSaving}
-                  >
-                    {t("ortakVazgec")}
-                  </Dugme>
-                </div>
               </form>
-            )}
+            </Modal>
           </div>
 
           <div className="">
@@ -364,8 +369,22 @@ export default function TenantDetailPage() {
               </div>
             )}
 
-            {y && editing && (
-              <form onSubmit={saveEdit} className="space-y-4">
+            <Modal
+              acik={Boolean(y) && editing}
+              onKapat={() => setEditing(false)}
+              baslik={t("tesisYoneticiDuzenle")}
+              eylemler={
+                <>
+                  <Dugme tur="sessiz" onClick={() => setEditing(false)}>
+                    {t("ortakIptal")}
+                  </Dugme>
+                  <Dugme type="submit" form="yonetici-duzenle" tur="birincil" disabled={saving}>
+                    {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
+                  </Dugme>
+                </>
+              }
+            >
+              <form id="yonetici-duzenle" onSubmit={saveEdit} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <AlanSarmal etiket={t("ortakAd")}>
   {(b) => (
@@ -385,16 +404,8 @@ export default function TenantDetailPage() {
 </AlanSarmal>
                 </div>
                 <HataDurumu mesaj={formErr} />
-                <div className="flex gap-2">
-                  <Dugme type="submit" tur="birincil" disabled={saving}>
-                    {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
-                  </Dugme>
-                  <Dugme type="button" boy="kucuk" onClick={() => setEditing(false)}>
-                    {t("ortakIptal")}
-                  </Dugme>
-                </div>
               </form>
-            )}
+            </Modal>
           </div>
 
           {/* (P154) COKLU YONETICI — brief Asama 1'in "EKSIK" maddesi.
@@ -460,8 +471,22 @@ export default function TenantDetailPage() {
               </ul>
             )}
 
-            {ekleAcik && (
-              <form onSubmit={yoneticiEkle} className="mt-4 space-y-4 border-t border-cizgi pt-4">
+            <Modal
+              acik={ekleAcik}
+              onKapat={() => setEkleAcik(false)}
+              baslik={t("tesisYoneticiEkleBaslik")}
+              eylemler={
+                <>
+                  <Dugme tur="sessiz" onClick={() => setEkleAcik(false)}>
+                    {t("ortakIptal")}
+                  </Dugme>
+                  <Dugme type="submit" form="yonetici-ekle" tur="birincil" disabled={ekliyor}>
+                    {ekliyor ? t("ortakKaydediliyor") : t("ortakKaydet")}
+                  </Dugme>
+                </>
+              }
+            >
+              <form id="yonetici-ekle" onSubmit={yoneticiEkle} className="space-y-4">
                 <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>{t("tesisYoneticiEkleAciklama")}</p>
                 <div className="grid grid-cols-2 gap-4">
                   <AlanSarmal etiket={t("ortakAd")}>
@@ -484,21 +509,8 @@ export default function TenantDetailPage() {
 </AlanSarmal>
                 </div>
                 <HataDurumu mesaj={yeniHata} />
-                <div className="flex gap-2">
-                  <Dugme type="submit" tur="birincil" disabled={ekliyor}>
-                    {ekliyor ? t("ortakKaydediliyor") : t("ortakKaydet")}
-                  </Dugme>
-                  <Dugme
-                    type="button"
-                    boy="kucuk"
-                    onClick={() => setEkleAcik(false)}
-                    disabled={ekliyor}
-                  >
-                    {t("ortakIptal")}
-                  </Dugme>
-                </div>
               </form>
-            )}
+            </Modal>
           </div>
 
           <div className="rounded-xl border border-rose-200 bg-rose-50 p-5">
@@ -529,6 +541,7 @@ export default function TenantDetailPage() {
           </div>
         </>
       )}
+      {diyalog}
     </div>
   );
 }

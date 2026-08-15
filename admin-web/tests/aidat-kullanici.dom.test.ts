@@ -4,7 +4,7 @@
 // Bu iki sayfa panelin en pahali hatalarini barindirir: yanlis para
 // gosterimi ve yanlis rol. Ikisi de "ekran aciliyor" testiyle degil,
 // SOMUT HATA SINIFLARIYLA korunur.
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -45,6 +45,8 @@ describe("Aidat sayfasi", () => {
       "/api/dues/payments": ODEME,
     });
     ciz(DuesPage);
+    // (P161) Form artik MODALDA: once acilir.
+    await userEvent.click(await screen.findByRole("button", { name: "Toplu tahakkuk oluştur" }));
     await waitFor(() =>
       expect(screen.getAllByText(/1\.250,50/).length).toBeGreaterThan(0),
     );
@@ -54,13 +56,13 @@ describe("Aidat sayfasi", () => {
     // UYGULAMANIN dogrulamasi oldugu icin alanlar DOLDURULUR ve tutar
     // GECERSIZ verilir (sifir).
     const oncekiSayi = cagrilanUrller().filter((u) => u.includes("bulk")).length;
-    // Sayfada IKI "Dönem" alani var (toplu form + liste suzgeci); ilki
-    // formun kendisidir.
-    await userEvent.type(screen.getAllByLabelText(/^Dönem/)[0], "2026-08");
-    await userEvent.type(screen.getByLabelText(/Tutar \(TL\)/), "0");
-    await userEvent.click(
-      screen.getByRole("button", { name: "Toplu tahakkuk oluştur" }),
-    );
+    // (P161) Form MODALDA. Sayfada IKI "Dönem" alani var (form + liste
+    // suzgeci); ayrimi DOM sirasina degil, DIYALOG kapsamina birakiyoruz —
+    // portal sirasi degisince "ilki" sessizce yanlis alani secerdi.
+    const kutu = within(await screen.findByRole("dialog"));
+    await userEvent.type(kutu.getByLabelText(/^Dönem/), "2026-08");
+    await userEvent.type(kutu.getByLabelText(/Tutar \(TL\)/), "0");
+    await userEvent.click(kutu.getByRole("button", { name: "Kaydet" }));
     // Bos donem/tutar ile POST ATILMAMALI ve kullaniciya NEDEN soylenmeli.
     await waitFor(() =>
       expect(

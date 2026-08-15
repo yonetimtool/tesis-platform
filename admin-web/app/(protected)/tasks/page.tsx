@@ -24,6 +24,7 @@ import {
   VeriTablosu,
   type Kolon,
   type TabloDurumu,
+  useOnay,
 } from "@/components/ui";
 import { Tablo, TabloBasligi, Td, Th, Tr } from "@/components/tablo";
 import { kisaKimlik } from "@/lib/kimlik";
@@ -112,6 +113,8 @@ const DURUM_NOTR = "notr" as const;
 
 export default function TasksPage() {
   const t = useT();
+  // (P161) Yikici onaylar yerel `confirm()` degil, tema/dil taniyan diyalog.
+  const { onayla, diyalog } = useOnay();
   const toast = useToast();
   const [tabloDurumu, setTabloDurumu] = useState<TabloDurumu>({
     sayfa: 1,
@@ -223,7 +226,7 @@ export default function TasksPage() {
   }
 
   async function remove(gorev: Task) {
-    if (!window.confirm(t("gorevSilOnay", { ad: gorev.ad }))) return;
+    if (!(await onayla({ baslik: t("ortakSilBaslik"), mesaj: t("gorevSilOnay", { ad: gorev.ad }), onayMetni: t("ortakSil"), tehlikeli: true }))) return;
     try {
       await apiSend(`/api/tasks/${gorev.id}`, "DELETE");
       if (detail?.id === gorev.id) setDetail(null);
@@ -626,6 +629,7 @@ export default function TasksPage() {
         </Kart>
       )}
 
+      {diyalog}
     </div>
   );
 }

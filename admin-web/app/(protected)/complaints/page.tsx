@@ -6,6 +6,7 @@ import useSWR from "swr";
 import { Foto } from "@/components/Foto";
 import { Pager } from "@/components/form";
 import {
+  Modal,
   AlanSarmal,
   BosDurum,
   CokSatir,
@@ -323,45 +324,54 @@ function ActionForm({
   }
 
   return (
-    <form
-      onSubmit={submit}
-      className="mt-4 space-y-4 pt-4"
-      style={{ borderTop: "1px solid var(--yz-border)" }}
+    // (P161) COZ/REDDET ARTIK MODALDA. Bu bir KAYIT DEGISTIRME islemidir
+    // (talep kapanir, karar metni kalici olur) — brief'in "istisnasiz"
+    // dedigi sinifa girer. Eskiden detayin altinda acilan bolum, uzun
+    // listede ekranin disinda kalabiliyordu.
+    <Modal
+      acik
+      onKapat={onClose}
+      baslik={isReddet ? t("talepReddet") : t("talepCoz")}
+      eylemler={
+        <>
+          <Dugme tur="sessiz" onClick={onClose} disabled={saving}>
+            {t("ortakIptal")}
+          </Dugme>
+          <Dugme
+            type="submit"
+            form="talep-karar-form"
+            tur={isReddet ? TUR_TEHLIKE : TUR_BIRINCIL}
+            disabled={submitDisabled}
+            yukleniyor={saving}
+          >
+            {saving ? t("destekGonderiliyor") : isReddet ? t("talepReddet") : t("talepCoz")}
+          </Dugme>
+        </>
+      }
     >
-      <AlanSarmal
-        etiket={isReddet ? t("talepRedSebebi") : t("talepCozumNotu")}
-        ipucu={isReddet ? t("talepNotZorunlu") : t("talepNotIstege")}
-        zorunlu={isReddet}
-      >
-        {(b) => (
-          <CokSatir
-            {...b}
-            rows={4}
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            maxLength={5000}
-            autoFocus
-          />
-        )}
-      </AlanSarmal>
-      {err && (
-        <p role="alert" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-danger-ink)" }}>
-          {err}
-        </p>
-      )}
-      <div className="flex gap-2">
-        <Dugme
-          type="submit"
-          tur={isReddet ? TUR_TEHLIKE : TUR_BIRINCIL}
-          disabled={submitDisabled}
-          yukleniyor={saving}
+      <form id="talep-karar-form" onSubmit={submit} className="space-y-4">
+        <AlanSarmal
+          etiket={isReddet ? t("talepRedSebebi") : t("talepCozumNotu")}
+          ipucu={isReddet ? t("talepNotZorunlu") : t("talepNotIstege")}
+          zorunlu={isReddet}
         >
-          {saving ? t("destekGonderiliyor") : isReddet ? t("talepReddet") : t("talepCoz")}
-        </Dugme>
-        <Dugme type="button" boy="kucuk" onClick={onClose}>
-          {t("ortakIptal")}
-        </Dugme>
-      </div>
-    </form>
+          {(b) => (
+            <CokSatir
+              {...b}
+              rows={4}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              maxLength={5000}
+              autoFocus
+            />
+          )}
+        </AlanSarmal>
+        {err && (
+          <p role="alert" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-danger-ink)" }}>
+            {err}
+          </p>
+        )}
+      </form>
+    </Modal>
   );
 }

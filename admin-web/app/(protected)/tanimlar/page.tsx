@@ -15,6 +15,7 @@ import {
   BosDurum,
   Dugme,
   HataDurumu,
+  useOnay,
 } from "@/components/ui";
 import { Liste } from "@/components/Liste";
 import { Modal, ModalEylemler } from "@/components/Modal";
@@ -496,6 +497,8 @@ export default function TanimlarPage() {
 
 function DefterGorunumu({ defter }: { defter: Defter }) {
   const t = useT();
+  // (P161) Yikici onaylar yerel `confirm()` degil, tema/dil taniyan diyalog.
+  const { onayla, diyalog } = useOnay();
   const toast = useToast();
   const { data, error, isLoading, mutate } = useSWR<{ items: Kayit[] }>(
     `/api/tanimlar/${defter.kaynak}?limit=200`,
@@ -580,7 +583,7 @@ function DefterGorunumu({ defter }: { defter: Defter }) {
   }
 
   async function sil(kayit: Kayit) {
-    if (!window.confirm(t("tanimSilOnay"))) return;
+    if (!(await onayla({ baslik: t("ortakSilBaslik"), mesaj: t("tanimSilOnay"), onayMetni: t("ortakSil"), tehlikeli: true }))) return;
     try {
       await apiSend(`/api/tanimlar/${defter.kaynak}/${String(kayit.id)}`, "DELETE");
     } catch (e) {
@@ -734,6 +737,7 @@ function DefterGorunumu({ defter }: { defter: Defter }) {
           ))}
         </div>
       </Modal>
+      {diyalog}
     </div>
   );
 }

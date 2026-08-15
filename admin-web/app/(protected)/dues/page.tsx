@@ -8,6 +8,7 @@ import {
   AlanSarmal,
   Dugme,
   Kart,
+  Modal,
   Rozet,
   Sekmeler,
   VeriTablosu,
@@ -57,6 +58,7 @@ export default function DuesPage() {
   const [bErr, setBErr] = useState<string | null>(null);
   const [bRes, setBRes] = useState<{ created: number; atlanan: number } | null>(null);
   const [bBusy, setBBusy] = useState(false);
+  const [modalAcik, setModalAcik] = useState(false);
 
   // --- listeler ---
   const [aDonem, setADonem] = useState("");
@@ -202,18 +204,36 @@ export default function DuesPage() {
 
   return (
     <div className="space-y-6">
-      <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
         {t("aidatBaslik")}
       </h1>
+        <Dugme tur="birincil" boy="kucuk" onClick={() => setModalAcik(true)}>
+          {t("aidatTopluOlustur")}
+        </Dugme>
+      </div>
 
-      {/* TOPLU TAHAKKUK — MODALA ALINMADI. Bu sayfanin ASIL ISI ve ayda
-          bir yapilan bir islem; dugme arkasina saklamak onu bulunmaz
-          yapardi. Yukseltilmis yuzeyde, listelerin ustunde durur. */}
-      <Kart>
-        <form onSubmit={bulk} className="space-y-3">
-          <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
-            {t("aidatTopluBaslik")}
-          </h2>
+      {/* TOPLU TAHAKKUK — (P161) MODALA ALINDI.
+          P160'ta "dugme arkasina saklamak onu bulunmaz yapardi" diye
+          sayfada birakilmisti. P161 butun olusturma islemlerini modala
+          topladi ve gerekce degisti: bulunurluk artik BASLIKTAKI
+          dugmeyle saglaniyor, form ise listeyi asagi itmiyor. */}
+      <Modal
+        acik={modalAcik}
+        onKapat={() => setModalAcik(false)}
+        baslik={t("aidatTopluBaslik")}
+        eylemler={
+          <>
+            <Dugme tur="sessiz" onClick={() => setModalAcik(false)} disabled={bBusy}>
+              {t("ortakIptal")}
+            </Dugme>
+            <Dugme tur="birincil" type="submit" form="aidat-form" yukleniyor={bBusy}>
+              {t("ortakKaydet")}
+            </Dugme>
+          </>
+        }
+      >
+        <form id="aidat-form" onSubmit={bulk} className="space-y-3">
           {/* DAR EKRAN: 4 sutun 360 dp'ye sigmiyor — Rusca etiketlerle sayfa
               yana kayiyordu (tur 25 surusu +23 px olctu). Dar ekranda 2,
               sm'den itibaren 4 sutun. */}
@@ -269,12 +289,8 @@ export default function DuesPage() {
               {t("aidatTopluSonuc", { olusan: bRes.created, atlanan: bRes.atlanan })}
             </p>
           )}
-
-          <Dugme tur="birincil" type="submit" yukleniyor={bBusy}>
-            {bBusy ? t("aidatOlusturuluyor") : t("aidatTopluOlustur")}
-          </Dugme>
         </form>
-      </Kart>
+      </Modal>
 
       {/* IKI LISTE SEKMEDE: ikisi de 4-5 sutunlu ve AYRI sayfaliyor;
           alt alta konunca sayfa surekli kaydiriliyordu. Ikisi de tek

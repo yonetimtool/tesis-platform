@@ -6,6 +6,7 @@ import useSWR from "swr";
 import { Foto } from "@/components/Foto";
 import { Pager } from "@/components/form";
 import {
+  Modal,
   Alan,
   BosDurum,
   CokSatir,
@@ -14,6 +15,7 @@ import {
   Dugme,
   HataDurumu,
   IskeletMetin,
+  useOnay,
 } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
@@ -56,6 +58,8 @@ const PHOTO_EMPTY: PhotoState = {
 // (auth.md §4) — panelden gonderilen duyuru mobil kullanicilara da duser.
 export default function AnnouncementsPage() {
   const t = useT();
+  // (P161) Yikici onaylar yerel `confirm()` degil, tema/dil taniyan diyalog.
+  const { onayla, diyalog } = useOnay();
   const toast = useToast();
   const [offset, setOffset] = useState(0);
   const { data, error, isLoading, mutate } = useSWR<AnnouncementList>(
@@ -156,7 +160,7 @@ export default function AnnouncementsPage() {
   }
 
   async function remove(a: Announcement) {
-    if (!window.confirm(t("ortakSilOnay", { ad: a.baslik }))) return;
+    if (!(await onayla({ baslik: t("ortakSilBaslik"), mesaj: t("ortakSilOnay", { ad: a.baslik }), onayMetni: t("ortakSil"), tehlikeli: true }))) return;
     try {
       await apiSend(`/api/announcements/${a.id}`, "DELETE");
       mutate();
@@ -179,10 +183,22 @@ export default function AnnouncementsPage() {
       {error && <HataDurumu mesaj={error.message} />}
       {isLoading && !data && <IskeletMetin satir={3} />}
 
-      {open && (
-        <Kart>
-          <form onSubmit={save} className="space-y-4">
-          <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{t("duyuruDuzenle")}</h2>
+      <Modal
+        acik={open}
+        onKapat={() => setOpen(false)}
+        baslik={t("duyuruDuzenle")}
+        eylemler={
+          <>
+            <Dugme tur="sessiz" onClick={() => setOpen(false)} disabled={saving}>
+              {t("ortakIptal")}
+            </Dugme>
+            <Dugme type="submit" form="duyuru-form" tur="birincil" yukleniyor={saving}>
+              {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
+            </Dugme>
+          </>
+        }
+      >
+        <form id="duyuru-form" onSubmit={save} className="space-y-4">
           <AlanSarmal etiket={t("ortakBaslik")} ipucu={t("duyuruEnFazla200")}>
   {(b) => (
     <Alan {...b} value={form.baslik}
@@ -263,17 +279,8 @@ export default function AnnouncementsPage() {
               {formErr}
             </p>
           )}
-          <div className="flex gap-2">
-            <Dugme type="submit" tur="birincil" disabled={saving}>
-              {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
-            </Dugme>
-            <Dugme type="button" boy="kucuk" onClick={() => setOpen(false)}>
-              {t("ortakIptal")}
-            </Dugme>
-          </div>
-          </form>
-        </Kart>
-      )}
+        </form>
+      </Modal>
 
       <ul className="space-y-3">
         {(data?.items ?? []).map((a) => (
@@ -334,6 +341,7 @@ export default function AnnouncementsPage() {
           onNext={() => setOffset(offset + LIMIT)}
         />
       )}
+      {diyalog}
     </div>
   );
 }

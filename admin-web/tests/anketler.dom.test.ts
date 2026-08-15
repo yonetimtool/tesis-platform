@@ -28,13 +28,15 @@ describe("Anketler", () => {
     }) as typeof fetch;
 
     ciz(AnketlerPage);
+    // (P161) Form artik MODALDA: basliktaki dugme onu acar.
+    await userEvent.click(await screen.findByRole("button", { name: "Anketi aç" }));
     await waitFor(() =>
       expect(screen.getByLabelText("Anket başlığı")).toBeInTheDocument(),
     );
 
     await userEvent.type(screen.getByLabelText("Anket başlığı"), "Otopark");
     await userEvent.type(screen.getByLabelText(/Seçenekler/), "Evet");
-    await userEvent.click(screen.getByRole("button", { name: "Anketi aç" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Kaydet" }));
 
     await waitFor(() =>
       expect(

@@ -10,6 +10,7 @@ import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { aralikCoz } from "@/lib/aralik";
 import {
+  Modal,
   Secim,
   Kart,
   AlanSarmal,
@@ -21,8 +22,8 @@ import {
   type Kolon,
   type SayfaBoyu,
   type TabloDurumu,
+  useOnay,
 } from "@/components/ui";
-import { Modal, ModalEylemler } from "@/components/Modal";
 import { sayiBicimi, sayiCoz, tamsayiCoz } from "@/lib/sayi";
 import type { Unit, UnitList } from "@/lib/types";
 import { useT } from "@/lib/i18n/kullan";
@@ -59,6 +60,8 @@ const DURUM_NOTR = "notr" as const;
 
 export default function UnitsPage() {
   const t = useT();
+  // (P161) Yikici onaylar yerel `confirm()` degil, tema/dil taniyan diyalog.
+  const { onayla, diyalog } = useOnay();
   const toast = useToast();
   // (P160) SAYFALAMA `VeriTablosu`nun durumuna gecti; `offset` ondan
   // TURETILIR. Boylece sayfa basina kayit secimi (10/25/50/100) bedava
@@ -180,7 +183,7 @@ export default function UnitsPage() {
       setTopluHata(t("daireKatSilAlanlar"));
       return;
     }
-    if (!window.confirm(t("daireKatSilOnay", { kat: kat.deger, blok }))) return;
+    if (!(await onayla({ baslik: t("ortakSilBaslik"), mesaj: t("daireKatSilOnay", { kat: kat.deger, blok }), onayMetni: t("ortakSil"), tehlikeli: true }))) return;
     try {
       await apiSend("/api/units/kat-sil", "POST", {
         blok, kat: kat.deger, cascade: true,
@@ -266,7 +269,7 @@ export default function UnitsPage() {
   }
 
   async function remove(u: Unit) {
-    if (!window.confirm(t("ortakSilOnay", { ad: u.no }))) return;
+    if (!(await onayla({ baslik: t("ortakSilBaslik"), mesaj: t("ortakSilOnay", { ad: u.no }), onayMetni: t("ortakSil"), tehlikeli: true }))) return;
     try {
       await apiSend(`/api/units/${u.id}`, "DELETE");
       if (detail?.id === u.id) setDetail(null);
@@ -381,10 +384,22 @@ export default function UnitsPage() {
       {/* Liste cekilemezse BOS TABLO degil, sebep + "Tekrar dene".
           Yukleme durumu artik `VeriTablosu`nun ISKELETI. */}
 
-      {open && (
-        <Kart>
-          <form onSubmit={save} className="space-y-4">
-          <h2 className="font-medium">{editingId ? t("daireDuzenle") : t("daireYeni")}</h2>
+      <Modal
+        acik={open}
+        onKapat={() => setOpen(false)}
+        baslik={editingId ? t("daireDuzenle") : t("daireYeni")}
+        eylemler={
+          <>
+            <Dugme tur="sessiz" onClick={() => setOpen(false)} disabled={saving}>
+              {t("ortakIptal")}
+            </Dugme>
+            <Dugme type="submit" form="daire-form" tur="birincil" yukleniyor={saving}>
+              {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
+            </Dugme>
+          </>
+        }
+      >
+        <form id="daire-form" onSubmit={save} className="space-y-4">
           <div className="grid grid-cols-3 gap-4">
             <AlanSarmal etiket={t("binaDaireNo")} ipucu={t("daireNoIpucu")}>
   {(b) => (
@@ -444,17 +459,8 @@ export default function UnitsPage() {
               {formErr}
             </p>
           )}
-          <div className="flex gap-2">
-            <Dugme type="submit" tur="birincil" disabled={saving}>
-              {saving ? t("ortakKaydediliyor") : t("ortakKaydet")}
-            </Dugme>
-            <Dugme type="button" boy="kucuk" onClick={() => setOpen(false)}>
-              {t("ortakIptal")}
-            </Dugme>
-          </div>
-          </form>
-        </Kart>
-      )}
+        </form>
+      </Modal>
 
       {/* (P154 / Asama 5) TOPLU ISLEM SERIDI. Aralik ifadesi EKRANDAKI
           listeye uygulanir; blok suzgeci acikken "7-12" o blogun
@@ -527,8 +533,28 @@ export default function UnitsPage() {
       <Modal
         baslik={t("daireTopluOlustur")}
         acik={oAcik}
-        kapat={() => setOAcik(false)}
-        kirli={oBlok !== ""}
+        onKapat={() => setOAcik(false)}
+        kirliMi={oBlok !== ""}
+        onKirliKapat={() => {
+          void onayla({
+            baslik: t("modalKirliBaslik"),
+            mesaj: t("modalKirliUyari"),
+            onayMetni: t("ortakVazgec"),
+            tehlikeli: true,
+          }).then((o) => {
+            if (o) setOAcik(false);
+          });
+        }}
+        eylemler={
+          <>
+            <Dugme tur="sessiz" onClick={() => setOAcik(false)}>
+              {t("ortakIptal")}
+            </Dugme>
+            <Dugme tur="birincil" onClick={() => void topluOlustur()}>
+              {t("ortakKaydet")}
+            </Dugme>
+          </>
+        }
       >
         <div className="space-y-3">
           {oHata && (
@@ -581,17 +607,23 @@ export default function UnitsPage() {
   )}
 </AlanSarmal>
           </div>
-          <ModalEylemler
-            iptal={() => setOAcik(false)}
-            kaydet={() => void topluOlustur()}
-          />
         </div>
       </Modal>
 
       <Modal
         baslik={t("daireTopluBaslik")}
         acik={topluAcik}
-        kapat={() => setTopluAcik(false)}
+        onKapat={() => setTopluAcik(false)}
+        eylemler={
+          <>
+            <Dugme tur="sessiz" onClick={() => setTopluAcik(false)}>
+              {t("ortakIptal")}
+            </Dugme>
+            <Dugme tur="birincil" onClick={() => void topluGuncelle()}>
+              {t("ortakKaydet")}
+            </Dugme>
+          </>
+        }
       >
         <div className="space-y-3">
           <p className="text-sm text-metin-muted">
@@ -621,13 +653,10 @@ export default function UnitsPage() {
               ))}</Secim>
   )}
 </AlanSarmal>
-          <ModalEylemler
-            iptal={() => setTopluAcik(false)}
-            kaydet={() => void topluGuncelle()}
-          />
         </div>
       </Modal>
 
+      {diyalog}
     </div>
   );
 }

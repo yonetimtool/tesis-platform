@@ -9,6 +9,7 @@ const R_OLUMLU = "olumlu" as const;
 const R_UYARI = "uyari" as const;
 
 import {
+  Modal,
   Rozet,
   VeriTablosu,
   type Kolon,
@@ -19,6 +20,7 @@ import {
   Dugme,
   HataDurumu,
   IskeletMetin,
+  useOnay,
 } from "@/components/ui";
 import { KopyaKod } from "@/components/KopyaKod";
 import { useToast } from "@/components/Toast";
@@ -83,6 +85,8 @@ function fmtDate(iso: string): string {
 
 export default function TenantsPage() {
   const t = useT();
+  // (P161) Yikici onaylar tema/dil taniyan diyalogdan gecer.
+  const { onayla, diyalog } = useOnay();
   const toast = useToast();
   const { data, error, isLoading, mutate } = useSWR<TenantListResponse>(
     "/api/tenants",
@@ -104,9 +108,12 @@ export default function TenantsPage() {
     // Tesisi + TUM verisini kalici siler (geri alinamaz). Tek adimli net onay
     // (yeni tesisin adi "(Kurulum bekliyor)" yer tutucu oldugundan ad-yazdirma
     // pratik degil).
-    const ok = window.confirm(
-      t("tesisSilOnayMetni", { ad: tesis.ad }),
-    );
+    const ok = await onayla({
+      baslik: t("ortakSilBaslik"),
+      mesaj: t("tesisSilOnayMetni", { ad: tesis.ad }),
+      onayMetni: t("ortakSil"),
+      tehlikeli: true,
+    });
     if (!ok) return;
     try {
       await apiSend(`/api/tenants/${tesis.id}`, "DELETE");
@@ -276,10 +283,34 @@ export default function TenantsPage() {
       {error && <HataDurumu mesaj={error.message} />}
       {isLoading && !data && <IskeletMetin satir={3} />}
 
-      {open && (
-        <Kart>
-          <form onSubmit={save} className="space-y-4">
-          <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{t("tesisYeni")}</h2>
+      <Modal
+        acik={open}
+        onKapat={() => setOpen(false)}
+        baslik={t("tesisYeni")}
+        // Doldurulmus form kazara kapanmasin.
+        kirliMi={form.ad !== "" || form.yonetim_email !== ""}
+        onKirliKapat={() => {
+          void onayla({
+            baslik: t("modalKirliBaslik"),
+            mesaj: t("modalKirliUyari"),
+            onayMetni: t("ortakVazgec"),
+            tehlikeli: true,
+          }).then((o) => {
+            if (o) setOpen(false);
+          });
+        }}
+        eylemler={
+          <>
+            <Dugme tur="sessiz" onClick={() => setOpen(false)} disabled={saving}>
+              {t("ortakIptal")}
+            </Dugme>
+            <Dugme type="submit" form="tesis-form" tur="birincil" yukleniyor={saving}>
+              {saving ? t("tesisOlusturuluyor") : t("tesisOlustur")}
+            </Dugme>
+          </>
+        }
+      >
+        <form id="tesis-form" onSubmit={save} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <AlanSarmal etiket={t("tesisAdiOpsiyonel")} ipucu={t("tesisAdiBosIpucu")}>
               {(b) => (
@@ -383,17 +414,8 @@ export default function TenantsPage() {
           </div>
 
           <HataDurumu mesaj={formErr} />
-          <div className="flex gap-2">
-            <Dugme type="submit" tur="birincil" disabled={saving}>
-              {saving ? t("tesisOlusturuluyor") : t("tesisOlustur")}
-            </Dugme>
-            <Dugme type="button" boy="kucuk" onClick={() => setOpen(false)}>
-              {t("ortakIptal")}
-            </Dugme>
-          </div>
-          </form>
-        </Kart>
-      )}
+        </form>
+      </Modal>
 
       <VeriTablosu<TenantRow>
         kolonlar={kolonlar}
@@ -405,6 +427,7 @@ export default function TenantsPage() {
         bosBaslik={t("tesisYok")}
         bosAciklama={t("tesisYokAlt")}
       />
+      {diyalog}
     </div>
   );
 }

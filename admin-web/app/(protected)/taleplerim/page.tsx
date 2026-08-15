@@ -17,6 +17,7 @@ import { useState } from "react";
 import useSWR from "swr";
 
 import {
+  Modal,
   CokSatir,
   Alan,
   AlanSarmal,
@@ -82,6 +83,7 @@ export default function TaleplerimPage() {
   const [mesaj, setMesaj] = useState("");
   const [formHata, setFormHata] = useState<string | null>(null);
   const [gonderiyor, setGonderiyor] = useState(false);
+  const [modalAcik, setModalAcik] = useState(false);
 
   const talepler = data?.items ?? [];
 
@@ -111,13 +113,36 @@ export default function TaleplerimPage() {
 
   return (
     <div className="space-y-6">
-      <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
         {t("talebimBaslik")}
       </h1>
+        <Dugme tur="birincil" boy="kucuk" onClick={() => setModalAcik(true)}>
+          {t("talebimYeni")}
+        </Dugme>
+      </div>
 
-      <section className="space-y-4">
-        <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{t("talebimYeni")}</h2>
-        <div className="grid gap-4">
+      <Modal
+        acik={modalAcik}
+        onKapat={() => setModalAcik(false)}
+        baslik={t("talebimYeni")}
+        eylemler={
+          <>
+            <Dugme tur="sessiz" onClick={() => setModalAcik(false)} disabled={gonderiyor}>
+              {t("ortakIptal")}
+            </Dugme>
+            <Dugme
+              tur="birincil"
+              disabled={gonderiyor}
+              onClick={() => void gonder()}
+            >
+              {gonderiyor ? t("ortakKaydediliyor") : t("talebimGonder")}
+            </Dugme>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div className="grid gap-4">
           <AlanSarmal etiket={t("talebimKonu")}>
   {(b) => (
     <Alan {...b} value={baslik}
@@ -137,17 +162,10 @@ export default function TaleplerimPage() {
             )}
           </AlanSarmal>
           <HataDurumu mesaj={formHata} />
-          <div>
-            <Dugme
-              tur="birincil"
-              disabled={gonderiyor}
-              onClick={() => void gonder()}
-            >
-              {gonderiyor ? t("ortakKaydediliyor") : t("talebimGonder")}
-            </Dugme>
-          </div>
+          
         </div>
-      </section>
+        </div>
+      </Modal>
 
       <section className="space-y-3">
         <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{t("talebimGecmis")}</h2>

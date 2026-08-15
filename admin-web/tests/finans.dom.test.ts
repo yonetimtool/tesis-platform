@@ -134,6 +134,8 @@ describe("Finans sayfasi", () => {
     });
     const toplanan = anahtarlar();
     ciz(FinansPage);
+    // (P161) Form artik MODALDA: once acilir.
+    await userEvent.click(await screen.findByRole("button", { name: "Yeni hareket" }));
     await waitFor(() => expect(screen.getAllByText("Merkez Kasa").length).toBeGreaterThan(0));
 
     await hareketYaz("100");
@@ -173,6 +175,8 @@ describe("Finans sayfasi", () => {
     }) as typeof fetch;
 
     ciz(FinansPage);
+    // (P161) Form artik MODALDA: once acilir.
+    await userEvent.click(await screen.findByRole("button", { name: "Yeni hareket" }));
     await waitFor(() => expect(screen.getAllByText("Merkez Kasa").length).toBeGreaterThan(0));
 
     await hareketYaz("100");

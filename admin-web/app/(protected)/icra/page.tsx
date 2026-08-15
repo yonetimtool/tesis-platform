@@ -16,6 +16,7 @@ import {
   VeriTablosu,
   type Kolon,
   type TabloDurumu,
+  useOnay,
 } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
@@ -79,6 +80,8 @@ function durumRengi(d: string) {
 
 export default function IcraPage() {
   const t = useT();
+  // (P161) Yikici onaylar tema/dil taniyan diyalogdan gecer.
+  const { onayla, diyalog } = useOnay();
   const toast = useToast();
   const [tabloDurumu, setTabloDurumu] = useState<TabloDurumu>({
     sayfa: 1,
@@ -319,7 +322,14 @@ export default function IcraPage() {
           // `window.confirm` bilincli: depoda zaten bu desen kullaniliyor
           // (blok silme, tesis silme) ve modal icinde modal acmak daha
           // kotu bir odak sorunu uretirdi.
-          if (window.confirm(t("modalKirliUyari"))) setAcik(false);
+          void onayla({
+            baslik: t("modalKirliBaslik"),
+            mesaj: t("modalKirliUyari"),
+            onayMetni: t("ortakVazgec"),
+            tehlikeli: true,
+          }).then((o) => {
+            if (o) setAcik(false);
+          });
         }}
         eylemler={
           <>
@@ -411,6 +421,7 @@ export default function IcraPage() {
           </AlanSarmal>
         </form>
       </Modal>
+      {diyalog}
     </div>
   );
 }

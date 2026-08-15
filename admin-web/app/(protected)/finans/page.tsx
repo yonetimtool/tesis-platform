@@ -3,9 +3,10 @@
 import { useMemo, useState } from "react";
 import useSWR from "swr";
 
-import { BosDurum } from "@/components/ui";
 import {
   Alan,
+  BosDurum,
+  Modal,
   AlanSarmal,
   Dugme,
   HataDurumu,
@@ -115,6 +116,7 @@ export default function FinansPage() {
   const [yAciklama, setYAciklama] = useState("");
   const [yHata, setYHata] = useState<string | null>(null);
   const [ymesgul, setYMesgul] = useState(false);
+  const [modalAcik, setModalAcik] = useState(false);
   // (P64) CIFT KAYIT KORUMASI. Dugmenin `ymesgul` kilidi yalniz HIZLI CIFT
   // TIKLAMAYI onler; korunmayan sey ZAMAN ASIMI SONRASI TEKRARDI — istek
   // sunucuya ulasip yanit donmezse kullanici "kaydedilmedi" sanip tekrar
@@ -208,9 +210,14 @@ export default function FinansPage() {
   return (
     <div className="space-y-6">
       <div>
+        <div className="flex flex-wrap items-end justify-between gap-3">
         <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
           {t("finansBaslik")}
         </h1>
+        <Dugme tur="birincil" boy="kucuk" onClick={() => setModalAcik(true)}>
+          {t("finansYeniHareket")}
+        </Dugme>
+      </div>
         <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
           {t("finansAlt")}
         </p>
@@ -283,11 +290,29 @@ export default function FinansPage() {
       </Kart>
 
       {/* --------------------------- yeni hareket -------------------------- */}
-      <Kart>
-        <h2 className="mb-3" style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
-          {t("finansYeniHareket")}
-        </h2>
-        {yHata && (
+      <Modal
+        acik={modalAcik}
+        onKapat={() => setModalAcik(false)}
+        baslik={t("finansYeniHareket")}
+        eylemler={
+          <>
+            <Dugme tur="sessiz" onClick={() => setModalAcik(false)} disabled={ymesgul}>
+              {t("ortakIptal")}
+            </Dugme>
+            <Dugme
+          tur="birincil"
+          className="mt-3"
+          disabled={ymesgul}
+          yukleniyor={ymesgul}
+          onClick={() => void hareketEkle()}
+        >
+          {t("finansEkle")}
+        </Dugme>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          {yHata && (
           <p
             role="alert"
             className="mb-3"
@@ -341,16 +366,8 @@ export default function FinansPage() {
             )}
           </AlanSarmal>
         </div>
-        <Dugme
-          tur="birincil"
-          className="mt-3"
-          disabled={ymesgul}
-          yukleniyor={ymesgul}
-          onClick={() => void hareketEkle()}
-        >
-          {t("finansEkle")}
-        </Dugme>
-      </Kart>
+        </div>
+      </Modal>
 
       {/* ----------------------------- hareketler -------------------------- */}
       <div className="space-y-3">

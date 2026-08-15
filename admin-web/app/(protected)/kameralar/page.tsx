@@ -36,6 +36,7 @@ import {
   Modal,
   Rozet,
   Secim,
+  useOnay,
 } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
@@ -87,6 +88,8 @@ const BOS_FORM: Form = {
 
 export default function KameralarPage() {
   const t = useT();
+  // (P161) Yikici onaylar yerel `confirm()` degil, tema/dil taniyan diyalog.
+  const { onayla, diyalog } = useOnay();
   const toast = useToast();
   const { data, error, isLoading, mutate } = useSWR<KameraListResponse>(
     "/api/cameras?limit=50&offset=0",
@@ -223,7 +226,7 @@ export default function KameralarPage() {
   }
 
   async function sil(k: Kamera) {
-    if (!window.confirm(t("kameraSilOnay", { ad: k.ad }))) return;
+    if (!(await onayla({ baslik: t("ortakSilBaslik"), mesaj: t("kameraSilOnay", { ad: k.ad }), onayMetni: t("ortakSil"), tehlikeli: true }))) return;
     try {
       await apiSend(`/api/cameras/${k.id}`, "DELETE");
       mutate();
@@ -468,6 +471,7 @@ export default function KameralarPage() {
           )}
         </form>
       </Modal>
+      {diyalog}
     </div>
   );
 }
