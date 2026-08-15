@@ -47,7 +47,15 @@ export function adsizDenetimler(yol: string, kaynak: string): string[] {
     // dalinda olabilir ve acilis 16 satir yukarida kalir. Dar pencere,
     // etiketli denetimleri hata gibi gosterirdi.
     const onceki = satirlar.slice(Math.max(0, i - 16), i).join("\n");
-    if (/<(Field|label|motion\.label)\b/.test(onceki)) return;
+    // (P162) `AlanSarmal` EKLENDI — TARAMADAKI GERCEK BOSLUK.
+    //
+    // Bu liste eski sarmalayicilari (`Field`, `label`) taniyordu ama yeni
+    // tasarim dilinin sarmalayicisini TANIMIYORDU. Asagidaki "yeni form
+    // ilkelleri etiketli" testi `AlanSarmal`i zaten gecerli bir ad
+    // kaynagi sayiyor (bkz. o testteki ayni liste) — yani depo kendi
+    // icinde tutarsizdi. `AlanSarmal` etiketi `<label htmlFor>` ile
+    // baglar; bir denetimi ona sarmak, `<label>`a sarmakla AYNI seydir.
+    if (/<(Field|AlanSarmal|label|motion\.label)\b/.test(onceki)) return;
 
     // (P154 / Asama 7.2) ORTAK ILKELIN KENDISI: `ParolaAlani` bir girdi
     // CIZER ama adini KENDISI tasimaz — adi cagiran taraftaki `<Field>`

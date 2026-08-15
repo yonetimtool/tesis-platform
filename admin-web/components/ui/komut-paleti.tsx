@@ -48,22 +48,114 @@ export interface PaletVurusu {
   ayrinti?: string | null;
 }
 
-/** Kaynak -> (etiket anahtari, rota). `GlobalArama` ile AYNI tablo. */
-export const PALET_HEDEF: Record<string, { etiket: SozlukAnahtari; rota: string }> = {
-  kisi: { etiket: "kabukKullanicilar", rota: "/users" },
-  daire: { etiket: "kabukDaireler", rota: "/units" },
-  blok: { etiket: "kabukBinaDuzenleme", rota: "/building-editor" },
-  firma: { etiket: "kabukTanimlar", rota: "/tanimlar" },
-  gorev: { etiket: "kabukGorevler", rota: "/tasks" },
-  duyuru: { etiket: "kabukDuyurular", rota: "/announcements" },
-  talep: { etiket: "kabukTalepler", rota: "/complaints" },
-  finans: { etiket: "kabukFinans", rota: "/finans" },
+/**
+ * Kaynak -> (etiket anahtari, rota, ikon). `GlobalArama` ile AYNI tablo.
+ *
+ * (P162 §3) SEKIZ KAYNAKTAN ON YEDIYE. Sunucu artik demirbas, etkinlik,
+ * arac, NFC noktasi, kamera, devriye plani, vardiya, icra ve sayac da
+ * tariyor; bu tablo onlarin NEREYE GOTURECEGINI soyler. Tablodaki bir
+ * kaynak eksik kalirsa sonuc koke ("/") giderdi — yani kullanici
+ * tikladigi kaydi bulamazdi. `tests/global-arama.test.ts` sunucudaki
+ * kaynak listesiyle bu tablonun AYNI oldugunu kilitler.
+ *
+ * IKON: kaynak turunu bir bakista ayirir (brief: "tipe gore gruplanmis,
+ * ikonlu"). Tek bir `path` dizesi — ayri ikon dosyasi getirmeye degmez.
+ */
+export interface PaletHedef {
+  etiket: SozlukAnahtari;
+  rota: string;
+  /** 24x24 `viewBox` icin SVG `d` — cizgi ikon. */
+  ikon: string;
+}
+
+const I_KISI = "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8";
+const I_BINA = "M3 21h18M5 21V7l7-4 7 4v14M9 21v-4h6v4";
+const I_KUTU = "M21 8v8a2 2 0 0 1-1 1.7l-7 4a2 2 0 0 1-2 0l-7-4A2 2 0 0 1 3 16V8a2 2 0 0 1 1-1.7l7-4a2 2 0 0 1 2 0l7 4A2 2 0 0 1 21 8zM3.3 7L12 12l8.7-5M12 22V12";
+const I_LISTE = "M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01";
+const I_MEGAFON = "M3 11v2a1 1 0 0 0 1 1h2l4 4V6L6 10H4a1 1 0 0 0-1 1zM16 8a5 5 0 0 1 0 8";
+const I_TAKVIM = "M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z";
+const I_SOHBET = "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z";
+const I_PARA = "M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6";
+const I_ARAC = "M5 17h14M6 17v2M18 17v2M3 13l2-6h14l2 6v4H3zM7 13h.01M17 13h.01";
+const I_NOKTA = "M12 21s7-6 7-11a7 7 0 1 0-14 0c0 5 7 11 7 11zM12 10h.01";
+const I_KAMERA = "M23 7l-7 5 7 5V7zM14 5H3a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2z";
+const I_ROTA = "M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01";
+const I_SAAT = "M12 6v6l4 2M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z";
+const I_DOSYA = "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M9 15h6";
+const I_SAYAC = "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 12l4-4";
+const I_FIRMA = "M3 21h18M5 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16M15 21v-9h4v9M9 7h2M9 11h2M9 15h2";
+
+export const PALET_HEDEF: Record<string, PaletHedef> = {
+  kisi: { etiket: "kabukKullanicilar", rota: "/users", ikon: I_KISI },
+  daire: { etiket: "kabukDaireler", rota: "/units", ikon: I_BINA },
+  blok: { etiket: "kabukBinaDuzenleme", rota: "/building-editor", ikon: I_BINA },
+  firma: { etiket: "kabukTanimlar", rota: "/tanimlar", ikon: I_FIRMA },
+  gorev: { etiket: "kabukGorevler", rota: "/tasks", ikon: I_LISTE },
+  duyuru: { etiket: "kabukDuyurular", rota: "/announcements", ikon: I_MEGAFON },
+  talep: { etiket: "kabukTalepler", rota: "/complaints", ikon: I_SOHBET },
+  finans: { etiket: "kabukFinans", rota: "/finans", ikon: I_PARA },
+  demirbas: { etiket: "kabukDemirbas", rota: "/assets", ikon: I_KUTU },
+  etkinlik: { etiket: "kabukEtkinlikler", rota: "/etkinlikler", ikon: I_TAKVIM },
+  arac: { etiket: "kabukAraclar", rota: "/tanimlar", ikon: I_ARAC },
+  nokta: { etiket: "kabukNfcNoktalari", rota: "/checkpoints", ikon: I_NOKTA },
+  kamera: { etiket: "kabukKameralar", rota: "/kameralar", ikon: I_KAMERA },
+  plan: { etiket: "kabukDevriyePlanlari", rota: "/patrol-plans", ikon: I_ROTA },
+  vardiya: { etiket: "kabukVardiyalar", rota: "/shifts", ikon: I_SAAT },
+  icra: { etiket: "kabukIcra", rota: "/icra", ikon: I_DOSYA },
+  sayac: { etiket: "kabukSayaclar", rota: "/tanimlar", ikon: I_SAYAC },
 };
 
 const UC = "/api/panel/arama";
 const YEDEK_ETIKET: SozlukAnahtari = "aramaEtiket";
 const GECIKME_MS = 300;
 const KOK_ROTA = "/";
+const BUYUK_HARF = "uppercase" as const;
+
+/** Kaynak ikonu — 24x24 cizgi. */
+function Ikon({ d }: { d: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-3.5 w-3.5 shrink-0"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d={d} />
+    </svg>
+  );
+}
+
+/**
+ * Vuruslari KAYNAGA gore gruplar ve her grubun DUZ LISTEDEKI baslangic
+ * indeksini tasir.
+ *
+ * Baslangic indeksi olmadan klavye gezinmesi kirilirdi: `secili` duz bir
+ * sayidir (0..n-1) ve gruplu cizimde her grup kendi icinde 0'dan
+ * baslasaydi ikinci gruptaki ilk oge de "0" olurdu.
+ */
+export function vuruslariGrupla(
+  vuruslar: PaletVurusu[],
+): { kaynak: string; ogeler: PaletVurusu[]; baslangic: number }[] {
+  const gruplar: { kaynak: string; ogeler: PaletVurusu[]; baslangic: number }[] = [];
+  for (const v of vuruslar) {
+    const son = gruplar[gruplar.length - 1];
+    // BITISIK AYNI KAYNAKLAR tek grup: sunucu kaynagi bloklar halinde
+    // donuyor. Haritaya almak yerine bitisiklik kullanmak, sunucunun
+    // siralamasini oldugu gibi korur.
+    if (son && son.kaynak === v.kaynak) son.ogeler.push(v);
+    else gruplar.push({ kaynak: v.kaynak, ogeler: [v], baslangic: 0 });
+  }
+  let n = 0;
+  for (const g of gruplar) {
+    g.baslangic = n;
+    n += g.ogeler.length;
+  }
+  return gruplar;
+}
 
 export function KomutPaleti() {
   const t = useT();
@@ -76,6 +168,7 @@ export function KomutPaleti() {
   const girdiRef = useRef<HTMLInputElement | null>(null);
   const acanRef = useRef<HTMLElement | null>(null);
   const listeId = useId();
+  const gruplar = vuruslariGrupla(vuruslar);
 
   const kapat = useCallback(() => {
     setAcik(false);
@@ -226,29 +319,59 @@ export function KomutPaleti() {
               {t("aramaSonucYok")}
             </p>
           )}
-          {vuruslar.map((v, i) => (
-            <button
-              key={`${v.kaynak}-${v.id}`}
-              id={`${listeId}-${i}`}
-              type="button"
-              role="option"
-              aria-selected={i === secili}
-              onClick={() => git(v)}
-              onMouseEnter={() => setSecili(i)}
-              className="flex w-full flex-col items-start gap-0.5 px-3 py-2 text-start"
-              style={{
-                borderRadius: "var(--yz-radius-btn)",
-                background: i === secili ? "var(--yz-surface-2)" : undefined,
-              }}
-            >
-              <span style={{ fontSize: "var(--yz-fs-body)", color: "var(--yz-text)" }}>
-                {v.baslik}
-              </span>
-              <span style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
-                {t(PALET_HEDEF[v.kaynak]?.etiket ?? YEDEK_ETIKET)}
-                {v.ayrinti ? ` · ${v.ayrinti}` : ""}
-              </span>
-            </button>
+          {/* (P162 §3) TIPE GORE GRUPLU. Duz bir liste, on yedi kaynakta
+              okunmaz oluyordu: kullanici "bu hangi tur kayit" sorusunu
+              her satirda yeniden soruyordu. Gruplama SUNUCUNUN dondugu
+              SIRAYI korur (kaynak sirasi zaten anlamli) — istemcide
+              yeniden siralamak, sunucunun oncelik karari varsa onu
+              bozardi.
+
+              KLAVYE INDEKSI DUZ KALIR: `mutlakIndeks` gruplar arasinda
+              artmaya devam eder, yoksa ok tuslari grup basinda takilirdi. */}
+          {gruplar.map(({ kaynak, ogeler, baslangic }) => (
+            <div key={kaynak} role="group" aria-labelledby={`${listeId}-b-${kaynak}`}>
+              <p
+                id={`${listeId}-b-${kaynak}`}
+                className="flex items-center gap-1.5 px-3 pb-1 pt-3"
+                style={{
+                  fontSize: "var(--yz-fs-xs)",
+                  color: "var(--yz-text-3)",
+                  textTransform: BUYUK_HARF,
+                  letterSpacing: "0.04em",
+                }}
+              >
+                <Ikon d={PALET_HEDEF[kaynak]?.ikon ?? ""} />
+                {t(PALET_HEDEF[kaynak]?.etiket ?? YEDEK_ETIKET)}
+              </p>
+              {ogeler.map((v, j) => {
+                const i = baslangic + j;
+                return (
+                  <button
+                    key={`${v.kaynak}-${v.id}`}
+                    id={`${listeId}-${i}`}
+                    type="button"
+                    role="option"
+                    aria-selected={i === secili}
+                    onClick={() => git(v)}
+                    onMouseEnter={() => setSecili(i)}
+                    className="flex w-full flex-col items-start gap-0.5 px-3 py-2 text-start"
+                    style={{
+                      borderRadius: "var(--yz-radius-btn)",
+                      background: i === secili ? "var(--yz-surface-2)" : undefined,
+                    }}
+                  >
+                    <span style={{ fontSize: "var(--yz-fs-body)", color: "var(--yz-text)" }}>
+                      {v.baslik}
+                    </span>
+                    {v.ayrinti && (
+                      <span style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
+                        {v.ayrinti}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           ))}
         </div>
       </div>

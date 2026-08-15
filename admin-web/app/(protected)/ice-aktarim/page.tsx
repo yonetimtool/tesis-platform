@@ -129,6 +129,70 @@ export default function IceAktarimPage() {
     setEsleme((e) => ({ ...e, [kolon]: alanKod }));
   }
 
+  /**
+   * (P162 §4.2) DOSYA OKUMA — eksik olan tek halka buydu.
+   *
+   * Boru hattinin GERISI zaten vardi (kolon esleme, dogrulama, onizleme,
+   * hata raporu, kismi basari, geri alma). Sayfa yalnizca YAPISTIRMA
+   * kabul ediyordu; kullanici `.xlsx` dosyasini secince hicbir sey
+   * olmuyordu — "Excel ice aktarma calismiyor" sikayetinin kaynagi.
+   *
+   * OKUNAN DOSYA AYNI BORUYA DOKULUR: satirlar sekmeyle birlestirilip
+   * `ham` metnine yaziliyor. Boylece esleme/onizleme/aktarim yollarinin
+   * TEK bir girdi bicimi var; ikinci bir kod yolu acilmadi.
+   */
+  async function dosyaSec(dosya: File | null) {
+    if (!dosya) return;
+    setHata(null);
+    setSonuc(null);
+    setEsleme({});
+    try {
+      const satirlar = /\.xlsx$/i.test(dosya.name)
+        ? await (await import("@/lib/xlsx-oku")).xlsxSatirlari(dosya)
+        : (await dosya.text())
+            .split(/\r?\n/)
+            .map((r) => hucreler(r.trimEnd()));
+      const metin = satirlar
+        .filter((r) => r.some((h) => h.trim()))
+        .map((r) => r.join("\t"))
+        .join("\n");
+      if (!metin) {
+        setHata(t("iceAktarimDosyaBos"));
+        return;
+      }
+      setHam(metin);
+    } catch (e) {
+      const ad = e instanceof Error ? e.constructor.name : "";
+      // DESTEK YOKSA SESSIZ KALMA: kullaniciyi yapistirma yoluna yolla.
+      setHata(ad === "XlsxDesteklenmiyor" ? t("iceAktarimXlsxYok") : t("iceAktarimDosyaOkunamadi"));
+    }
+  }
+
+  /**
+   * SABLON INDIRME (brief). Sunucu XLSX URETMEZ ve uretmemeli; sablon
+   * alan listesinden kuruluyor — yani kabul edilen bicim ile indirilen
+   * sablon TEK KAYNAKTAN geliyor ve ayrisamaz.
+   *
+   * CSV (`;`) secildi: Excel bunu dogrudan acar ve bir yazici kitapligi
+   * gerektirmez. BOM VAR — BOM'suz UTF-8'de Excel Turkce harfleri bozuk
+   * gosterir ve kullanici sablonu "bozuk" sanardi.
+   */
+  function sablonIndir() {
+    if (!tur) return;
+    const satirlar = [
+      tur.alanlar.map((a) => a.kod).join(";"),
+      tur.alanlar.map((a) => a.ornek).join(";"),
+    ].join("\r\n");
+    const bag = URL.createObjectURL(
+      new Blob(["\uFEFF" + satirlar], { type: "text/csv;charset=utf-8" }),
+    );
+    const a = document.createElement("a");
+    a.href = bag;
+    a.download = `yonetio-${tur.kod}-sablon.csv`;
+    a.click();
+    URL.revokeObjectURL(bag);
+  }
+
   /** Eslemeye gore satirlari BIZIM alan kodlarimizla kurar. */
   function govdeSatirlari() {
     return veriSatirlari.map((s, i) => {
@@ -234,10 +298,30 @@ export default function IceAktarimPage() {
             </code>
           </p>
         )}
+        {tur && (
+          <Dugme boy="kucuk" onClick={sablonIndir}>
+            {t("iceAktarimSablonIndir")}
+          </Dugme>
+        )}
       </Kart>
 
       {/* ----------------------------- 2) YUKLEME ------------------------ */}
       <Kart className="space-y-3">
+        {/* DOSYA YOLU ONCE: kullanicinin elinde bir dosya var ve once onu
+            arar. Yapistirma ALTTA duruyor — kaldirilmadi, cunku kopyala
+            yapistir hala en hizli yol ve dosyasi olmayan kullaniciyi
+            dosya uretmeye zorlamak gerileme olurdu. */}
+        <AlanSarmal etiket={t("iceAktarimDosya")} ipucu={t("iceAktarimDosyaIpucu")}>
+          {(b) => (
+            <input
+              {...b}
+              type="file"
+              accept=".xlsx,.csv,.txt,text/csv"
+              className="block w-full text-sm"
+              onChange={(e) => void dosyaSec(e.target.files?.[0] ?? null)}
+            />
+          )}
+        </AlanSarmal>
         <AlanSarmal etiket={t("iceAktarimVeri")} ipucu={t("iceAktarimVeriIpucu")}>
             {(b) => (
               <CokSatir {...b} rows={4} value={ham}

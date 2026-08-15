@@ -49,7 +49,13 @@ def test_rol_kumeleri_ROUTERLARLA_AYNI():
     """
     from app.routers.arama import KAYNAKLAR
     from app.routers.announcements import _READER as duyuru
+    from app.routers.assets import _VIEWER as demirbas
     from app.routers.blocks import _READER as blok
+    from app.routers.cameras import _READER as kamera
+    from app.routers.checkpoints import _READER as nokta
+    from app.routers.events import _READER as etkinlik
+    from app.routers.patrol_plans import _READER as plan
+    from app.routers.shifts import _READER as vardiya
     from app.routers.complaints import _READER as talep
     from app.routers.finans import _OKUMA as finans
     from app.routers.muhasebe_tanimlari import _TANIM_OKUR as firma
@@ -57,9 +63,20 @@ def test_rol_kumeleri_ROUTERLARLA_AYNI():
     from app.routers.units import _LAYOUT_READER as daire
     from app.routers.users import _READER as kisi
 
+    # (P162 §3) SEKIZ KAYNAKTAN ON YEDIYE. Testin NIYETI degismedi: her
+    # kaynagin rol kumesi ILGILI ROUTERDAN gelmeli. Yeni bir kaynak
+    # eklenip buraya yazilmazsa test duser — yani kimse aramaya sessizce
+    # yeni bir yetki yuzeyi ekleyemez.
+    #
+    # `arac` ve `sayac` muhasebe tanimlarinin okuma kapisini, `icra` ise
+    # finans okuma kapisini kullanir: ucu de kendi uclarinda AYNI kapinin
+    # arkasinda duruyor, arama da o kapiyi okuyor.
     beklenen = {
         "kisi": kisi, "daire": daire, "blok": blok, "firma": firma,
         "gorev": gorev, "duyuru": duyuru, "talep": talep, "finans": finans,
+        "demirbas": demirbas, "etkinlik": etkinlik, "arac": firma,
+        "nokta": nokta, "kamera": kamera, "plan": plan, "vardiya": vardiya,
+        "icra": finans, "sayac": firma,
     }
     assert {k.ad for k in KAYNAKLAR} == set(beklenen)
     for k in KAYNAKLAR:
