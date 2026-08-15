@@ -9,6 +9,7 @@ import { useState } from "react";
 import useSWR from "swr";
 
 import {
+  Modal,
   Alan,
   AlanSarmal,
   BosDurum,
@@ -45,6 +46,7 @@ export default function ZiyaretcilerPage() {
   const [notlar, setNotlar] = useState("");
   const [hata, setHata] = useState<string | null>(null);
   const [gonderiyor, setGonderiyor] = useState(false);
+  const [modalAcik, setModalAcik] = useState(false);
 
   const kayitlar = data?.items ?? [];
 
@@ -87,13 +89,36 @@ export default function ZiyaretcilerPage() {
 
   return (
     <div className="space-y-6">
-      <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
         {t("ziyaretciBaslik")}
       </h1>
+        <Dugme tur="birincil" boy="kucuk" onClick={() => setModalAcik(true)}>
+          {t("ziyaretciYeni")}
+        </Dugme>
+      </div>
 
-      <section className="space-y-4">
-        <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{t("ziyaretciYeni")}</h2>
-        <div className="grid gap-4 sm:grid-cols-2">
+      <Modal
+        acik={modalAcik}
+        onKapat={() => setModalAcik(false)}
+        baslik={t("ziyaretciYeni")}
+        eylemler={
+          <>
+            <Dugme tur="sessiz" onClick={() => setModalAcik(false)} disabled={gonderiyor}>
+              {t("ortakIptal")}
+            </Dugme>
+            <Dugme
+            tur="birincil"
+            disabled={gonderiyor}
+            onClick={() => void kaydet()}
+          >
+            {gonderiyor ? t("ortakKaydediliyor") : t("ziyaretciGirisKaydet")}
+          </Dugme>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
           <AlanSarmal etiket={t("ziyaretciAd")}>
   {(b) => (
     <Alan {...b} value={ad}
@@ -117,16 +142,8 @@ export default function ZiyaretcilerPage() {
 </AlanSarmal>
         </div>
         <HataDurumu mesaj={hata} />
-        <div>
-          <Dugme
-            tur="birincil"
-            disabled={gonderiyor}
-            onClick={() => void kaydet()}
-          >
-            {gonderiyor ? t("ortakKaydediliyor") : t("ziyaretciGirisKaydet")}
-          </Dugme>
         </div>
-      </section>
+      </Modal>
 
       <section className="space-y-3">
         <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{t("ziyaretciListe")}</h2>

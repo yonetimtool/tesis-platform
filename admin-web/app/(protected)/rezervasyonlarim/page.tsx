@@ -13,6 +13,7 @@ import { useState } from "react";
 import useSWR from "swr";
 
 import {
+  Modal,
   Alan,
   AlanSarmal,
   BosDurum,
@@ -73,6 +74,7 @@ export default function RezervasyonlarimPage() {
   const [kisi, setKisi] = useState("2");
   const [formHata, setFormHata] = useState<string | null>(null);
   const [gonderiyor, setGonderiyor] = useState(false);
+  const [modalAcik, setModalAcik] = useState(false);
 
   const kayitlar = data?.items ?? [];
   const alanlar = (alanVeri?.items ?? []).filter((a) => a.aktif);
@@ -118,13 +120,36 @@ export default function RezervasyonlarimPage() {
 
   return (
     <div className="space-y-6">
-      <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
         {t("rezervasyonBaslik")}
       </h1>
+        <Dugme tur="birincil" boy="kucuk" onClick={() => setModalAcik(true)}>
+          {t("rezervasyonYeni")}
+        </Dugme>
+      </div>
 
-      <section className="space-y-4">
-        <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{t("rezervasyonYeni")}</h2>
-        <div className="grid gap-4 sm:grid-cols-2">
+      <Modal
+        acik={modalAcik}
+        onKapat={() => setModalAcik(false)}
+        baslik={t("rezervasyonYeni")}
+        eylemler={
+          <>
+            <Dugme tur="sessiz" onClick={() => setModalAcik(false)} disabled={gonderiyor}>
+              {t("ortakIptal")}
+            </Dugme>
+            <Dugme
+            tur="birincil"
+            disabled={gonderiyor}
+            onClick={() => void gonder()}
+          >
+            {gonderiyor ? t("ortakKaydediliyor") : t("rezervasyonTalepEt")}
+          </Dugme>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
           <AlanSarmal etiket={t("rezervasyonAlan")}>
   {(b) => (
     <Secim {...b} value={alanId}
@@ -169,16 +194,8 @@ export default function RezervasyonlarimPage() {
 </AlanSarmal>
         </div>
         <HataDurumu mesaj={formHata} />
-        <div>
-          <Dugme
-            tur="birincil"
-            disabled={gonderiyor}
-            onClick={() => void gonder()}
-          >
-            {gonderiyor ? t("ortakKaydediliyor") : t("rezervasyonTalepEt")}
-          </Dugme>
         </div>
-      </section>
+      </Modal>
 
       <section className="space-y-3">
         <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{t("rezervasyonListe")}</h2>

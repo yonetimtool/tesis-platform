@@ -8,7 +8,7 @@
 //  2. ARAC GECISLERINDE YAZMA YOK — kayitlar ANPR'den otomatik gelir;
 //     elle plaka yazmak, otomatik kayitla celisen ikinci bir gercek uretir.
 //  3. Hata varken "kayit yok" DENMEZ (P61).
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -68,9 +68,12 @@ describe("Kargolar", () => {
   it("DAIRE NO olmadan gonderilmez", async () => {
     const c = taklit({ "/api/kargo": { items: [] } });
     ciz(KargolarPage);
-    await userEvent.click(
-      await screen.findByRole("button", { name: /Teslim al/i }),
-    );
+    // (P161) Form artik MODALDA: once acilir. Kaydet dugmesi MODAL
+    // KAPSAMINDA aranir — acici dugme ("Yeni kargo teslim al") ayni
+    // ifadeyi tasiyor ve kapsamsiz sorgu ikisini birden bulur.
+    await userEvent.click(await screen.findByRole("button", { name: "Yeni kargo teslim al" }));
+    const kutu = await screen.findByRole("dialog");
+    await userEvent.click(within(kutu).getByRole("button", { name: /Teslim al/i }));
     expect(await screen.findByText(/zorunludur/i)).toBeInTheDocument();
     expect(c.some((x) => x.method === "POST")).toBe(false);
   });
@@ -78,8 +81,10 @@ describe("Kargolar", () => {
   it("kayit DAIRE NUMARASI ile gider", async () => {
     const c = taklit({ "/api/kargo": { items: [] } });
     ciz(KargolarPage);
-    await userEvent.type(await screen.findByLabelText(/Daire no/i), "B-3");
-    await userEvent.click(screen.getByRole("button", { name: /Teslim al/i }));
+    await userEvent.click(await screen.findByRole("button", { name: "Yeni kargo teslim al" }));
+    const kutu = await screen.findByRole("dialog");
+    await userEvent.type(within(kutu).getByLabelText(/Daire no/i), "B-3");
+    await userEvent.click(within(kutu).getByRole("button", { name: /Teslim al/i }));
     await waitFor(() => {
       const post = c.find((x) => x.method === "POST");
       expect(post?.body).toMatchObject({ unit_no: "B-3" });
@@ -101,6 +106,8 @@ describe("Olaylar", () => {
   it("KAYNAK `manuel` SABIT gonderilir — kullaniciya sectirilmez", async () => {
     const c = taklit({ "/api/violations": { items: [] } });
     ciz(OlaylarPage);
+    // (P161) Form artik MODALDA.
+    await userEvent.click(await screen.findByRole("button", { name: "Yeni olay bildir" }));
     // `/Konu/i` "Konum" ile de eslesiyor; TAM eslesme sart.
     await userEvent.type(await screen.findByLabelText("Konu"), "Kapı açık");
     await userEvent.click(screen.getByRole("button", { name: /^Bildir$/i }));
@@ -115,6 +122,8 @@ describe("Olaylar", () => {
   it("KONU olmadan gonderilmez", async () => {
     const c = taklit({ "/api/violations": { items: [] } });
     ciz(OlaylarPage);
+    // (P161) Form artik MODALDA.
+    await userEvent.click(await screen.findByRole("button", { name: "Yeni olay bildir" }));
     await userEvent.click(
       await screen.findByRole("button", { name: /^Bildir$/i }),
     );

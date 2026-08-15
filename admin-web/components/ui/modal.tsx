@@ -34,6 +34,7 @@
  * cagrilir ve karari cagiran verir (genelde bir onay). Vermezse davranis
  * degismez — yani bu ozellik opt-in ve mevcut kullanimlari bozmaz.
  */
+import { MotionConfig, motion } from "framer-motion";
 import { useCallback, useEffect, useId, useRef, type ReactNode } from "react";
 
 import { useT } from "@/lib/i18n/kullan";
@@ -57,6 +58,14 @@ export interface ModalProps {
   /** Genislik sinifi (Tailwind). Uzun formlar icin genisletilebilir. */
   genislikSinifi?: string;
 }
+
+// UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`) — CSS degerleri de dize.
+const ORTU_RENGI = "rgba(0,0,0,.55)";
+const ORTU_BULANIK = "blur(6px)";
+const SURE_ORTU = 0.2;
+const SURE_KUTU = 0.22;
+/** Kurumsal easing — hizli baslar, hedefte yumusar. */
+const YUMUSAK = [0.22, 1, 0.36, 1] as const;
 
 export function Modal({
   acik,
@@ -139,6 +148,11 @@ export function Modal({
   if (!acik) return null;
 
   return (
+    // (P161) HAREKET. `MotionConfig reducedMotion="user"`: isletim
+    // sistemi "hareketi azalt" diyorsa framer-motion butun gecisleri
+    // KENDISI kapatir — her bilesende ayri kosul yazmak, birini unutmak
+    // demekti.
+    <MotionConfig reducedMotion="user">
     <div
       className="fixed inset-0 flex items-center justify-center p-4"
       style={{ zIndex: "var(--yz-z-modal)" as unknown as number }}
@@ -146,14 +160,23 @@ export function Modal({
       {/* ORTU — tiklama kapatir. `button` DEGIL `div`: ekran okuyucuya
           "dugme" diye duyurulan bir ortu, gercek eylemleri gizler.
           Klavye yolu ESC'tir ve o zaten var. */}
-      <div
+      <motion.div
         aria-hidden="true"
         onClick={kapatIstegi}
         className="absolute inset-0"
-        style={{ background: "rgba(0,0,0,.5)", backdropFilter: "blur(2px)" }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: SURE_ORTU }}
+        // ARKA PLAN BULANIKLASIR (brief): 2px "biraz bulanik" degil
+        // "kirli cam" gibi duruyordu; 6px odagi gercekten modala tasir.
+        style={{ background: ORTU_RENGI, backdropFilter: ORTU_BULANIK }}
       />
-      <div
+      <motion.div
         ref={kutuRef}
+        // SOLUKLASARAK OLCEKLENME 0.96 -> 1 (brief).
+        initial={{ opacity: 0, scale: 0.96 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: SURE_KUTU, ease: YUMUSAK }}
         role="dialog"
         aria-modal="true"
         aria-labelledby={baslikId}
@@ -209,8 +232,9 @@ export function Modal({
             {eylemler}
           </div>
         )}
-      </div>
+      </motion.div>
     </div>
+    </MotionConfig>
   );
 }
 

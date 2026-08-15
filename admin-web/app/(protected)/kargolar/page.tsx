@@ -9,6 +9,7 @@ import { useState } from "react";
 import useSWR from "swr";
 
 import {
+  Modal,
   Alan,
   AlanSarmal,
   BosDurum,
@@ -59,6 +60,7 @@ export default function KargolarPage() {
   const [notlar, setNotlar] = useState("");
   const [hata, setHata] = useState<string | null>(null);
   const [gonderiyor, setGonderiyor] = useState(false);
+  const [modalAcik, setModalAcik] = useState(false);
 
   const kayitlar = data?.items ?? [];
 
@@ -91,13 +93,36 @@ export default function KargolarPage() {
 
   return (
     <div className="space-y-6">
-      <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
         {t("kargoBaslik")}
       </h1>
+        <Dugme tur="birincil" boy="kucuk" onClick={() => setModalAcik(true)}>
+          {t("kargoYeni")}
+        </Dugme>
+      </div>
 
-      <section className="space-y-4">
-        <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{t("kargoYeni")}</h2>
-        <div className="grid gap-4 sm:grid-cols-2">
+      <Modal
+        acik={modalAcik}
+        onKapat={() => setModalAcik(false)}
+        baslik={t("kargoYeni")}
+        eylemler={
+          <>
+            <Dugme tur="sessiz" onClick={() => setModalAcik(false)} disabled={gonderiyor}>
+              {t("ortakIptal")}
+            </Dugme>
+            <Dugme
+            tur="birincil"
+            disabled={gonderiyor}
+            onClick={() => void kaydet()}
+          >
+            {gonderiyor ? t("ortakKaydediliyor") : t("kargoTeslimAl")}
+          </Dugme>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
           <AlanSarmal etiket={t("kargoDaire")}>
   {(b) => (
     <Alan {...b} value={daireNo}
@@ -121,16 +146,8 @@ export default function KargolarPage() {
 </AlanSarmal>
         </div>
         <HataDurumu mesaj={hata} />
-        <div>
-          <Dugme
-            tur="birincil"
-            disabled={gonderiyor}
-            onClick={() => void kaydet()}
-          >
-            {gonderiyor ? t("ortakKaydediliyor") : t("kargoTeslimAl")}
-          </Dugme>
         </div>
-      </section>
+      </Modal>
 
       <section className="space-y-3">
         <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{t("kargoListe")}</h2>

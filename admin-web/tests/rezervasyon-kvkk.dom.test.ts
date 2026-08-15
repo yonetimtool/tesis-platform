@@ -66,6 +66,10 @@ describe("Rezervasyonlarım", () => {
       },
     });
     ciz(RezervasyonlarimPage);
+    // (P161) Form artik MODALDA: secenekler de onun icinde.
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Yeni rezervasyon" }),
+    );
     // Ad HEM kartta HEM secenekte gecer; sorgu ROLE ile daraltilir yoksa
     // "birden cok eleman" hatasi verir (ilk yazimda tam bu oldu).
     expect(
@@ -84,6 +88,10 @@ describe("Rezervasyonlarım", () => {
       "/api/common-areas": { items: [ALAN] },
     });
     ciz(RezervasyonlarimPage);
+    // (P161) Form artik MODALDA: secenekler de onun icinde.
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Yeni rezervasyon" }),
+    );
     await userEvent.click(
       await screen.findByRole("button", { name: /Rezervasyon yap/i }),
     );
@@ -102,6 +110,10 @@ describe("Rezervasyonlarım", () => {
       {},
     );
     ciz(RezervasyonlarimPage);
+    // (P161) Form artik MODALDA: secenekler de onun icinde.
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Yeni rezervasyon" }),
+    );
     await screen.findByRole("option", { name: "Toplantı salonu" });
     await userEvent.selectOptions(screen.getByLabelText(/Alan/i), "a1");
     await userEvent.type(screen.getByLabelText(/Tarih/i), "2026-09-01");

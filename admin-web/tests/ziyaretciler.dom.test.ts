@@ -83,6 +83,10 @@ describe("Ziyaretçiler", () => {
   it("EKSIK alanla kayit GONDERILMEZ", async () => {
     const c = taklit({ "/api/visitors": { items: [] } });
     ciz(ZiyaretcilerPage);
+    // (P161) Form artik MODALDA: once acilir.
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Yeni ziyaretçi girişi" }),
+    );
     await userEvent.click(
       await screen.findByRole("button", { name: /Girişi kaydet/i }),
     );
@@ -94,6 +98,9 @@ describe("Ziyaretçiler", () => {
     // Kapida gorevli daire NUMARASINI bilir, kaydin kimligini degil.
     const c = taklit({ "/api/visitors": { items: [] } });
     ciz(ZiyaretcilerPage);
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Yeni ziyaretçi girişi" }),
+    );
     await userEvent.type(await screen.findByLabelText(/Ziyaretçi adı/i), "Ali Veli");
     await userEvent.type(screen.getByLabelText(/Daire no/i), "A-12");
     await userEvent.click(screen.getByRole("button", { name: /Girişi kaydet/i }));

@@ -11,6 +11,7 @@ import { useState } from "react";
 import useSWR from "swr";
 
 import {
+  Modal,
   CokSatir,
   Alan,
   AlanSarmal,
@@ -74,6 +75,7 @@ export default function OlaylarPage() {
   const [konum, setKonum] = useState("");
   const [hata, setHata] = useState<string | null>(null);
   const [gonderiyor, setGonderiyor] = useState(false);
+  const [modalAcik, setModalAcik] = useState(false);
 
   const kayitlar = data?.items ?? [];
 
@@ -106,13 +108,36 @@ export default function OlaylarPage() {
 
   return (
     <div className="space-y-6">
-      <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
         {t("olayBaslik")}
       </h1>
+        <Dugme tur="birincil" boy="kucuk" onClick={() => setModalAcik(true)}>
+          {t("olayYeniBildir")}
+        </Dugme>
+      </div>
 
-      <section className="space-y-4">
-        <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{t("olayYeniBildir")}</h2>
-        <div className="grid gap-4">
+      <Modal
+        acik={modalAcik}
+        onKapat={() => setModalAcik(false)}
+        baslik={t("olayYeniBildir")}
+        eylemler={
+          <>
+            <Dugme tur="sessiz" onClick={() => setModalAcik(false)} disabled={gonderiyor}>
+              {t("ortakIptal")}
+            </Dugme>
+            <Dugme
+            tur="birincil"
+            disabled={gonderiyor}
+            onClick={() => void bildir()}
+          >
+            {gonderiyor ? t("ortakKaydediliyor") : t("olayBildir")}
+          </Dugme>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div className="grid gap-4">
           <AlanSarmal etiket={t("olayKonu")}>
   {(b) => (
     <Alan {...b} value={baslik}
@@ -136,16 +161,8 @@ export default function OlaylarPage() {
           </AlanSarmal>
         </div>
         <HataDurumu mesaj={hata} />
-        <div>
-          <Dugme
-            tur="birincil"
-            disabled={gonderiyor}
-            onClick={() => void bildir()}
-          >
-            {gonderiyor ? t("ortakKaydediliyor") : t("olayBildir")}
-          </Dugme>
         </div>
-      </section>
+      </Modal>
 
       <section className="space-y-3">
         <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{t("olayListe")}</h2>
