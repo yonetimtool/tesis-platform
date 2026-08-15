@@ -241,6 +241,11 @@ class SahaHomeScreen extends ConsumerWidget {
             child: hareketler.durum(
               veri: (satirlar) => SonHareketlerKarti(
                 satirlar: hareketSatirlari(l10n, dil, satirlar, now),
+                // (P162 §9) Satira dokununca ilgili ekrana git. `rota`
+                // bos olan satirlar TIKLANMAZ kalir (bkz. hareketRotasi).
+                onSatir: (h) {
+                  if (h.rota != null) context.push(h.rota!);
+                },
                 onSeeAll:
                     guvenlik ? () => context.push(AppRoutes.notifications) : null,
               ),

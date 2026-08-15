@@ -25,6 +25,7 @@
 // yeniden tasarimin bedeli olurdu.
 import { useState } from "react";
 import { useMemo } from "react";
+import Link from "next/link";
 import useSWR from "swr";
 
 import { BinaSahnesiYukleyici } from "@/components/3d/sahne-yukleyici";
@@ -225,6 +226,34 @@ function SahneSecimPaneli({
           <p className="mt-1 text-satiralt text-metin-heading">
             {daire.durum === DAIRE_ALARM ? t("sahneDaireAlarm") : t("sahneDaireNormal")}
           </p>
+
+          {/* (P162 §8.2) SECILI DAIREDEN ILGILI HER YERE.
+              Maketten bir daire secmek tek basina bir sey yapmiyordu:
+              kullanici daireyi buluyor, sonra menuden ilgili ekrani elle
+              ariyordu. Baglantilar kaydin KIMLIGINI tasiyor — hedef
+              ekranlar sorgu parametresiyle suzuluyor. */}
+          <p className="mt-3 text-satiralt font-medium text-metin-heading">
+            {t("sahneEylemler")}
+          </p>
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {[
+              { anahtar: "sahneEylemDaire" as const, yol: `/units?daire=${daire.id}` },
+              { anahtar: "sahneEylemSakin" as const, yol: `/users?daire=${daire.id}` },
+              { anahtar: "sahneEylemSikayet" as const, yol: `/complaints?daire=${daire.id}` },
+              { anahtar: "sahneEylemAidat" as const, yol: `/dues?daire=${daire.id}` },
+              { anahtar: "sahneEylemGorev" as const, yol: `/tasks?daire=${daire.id}` },
+              { anahtar: "sahneEylemDemirbas" as const, yol: `/assets?daire=${daire.id}` },
+            ].map((e) => (
+              <Link
+                key={e.anahtar}
+                href={e.yol}
+                className="odak-ic rounded-btn px-2 py-1 text-satiralt underline"
+                style={{ color: "var(--yz-accent-ink)" }}
+              >
+                {t(e.anahtar)}
+              </Link>
+            ))}
+          </div>
         </div>
       )}
     </Kart>

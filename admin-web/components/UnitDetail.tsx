@@ -4,12 +4,12 @@ import { useState } from "react";
 import useSWR from "swr";
 
 import { ErrorBox, Field, btnDanger, btnGhost, btnPrimary, cardCls, inputCls } from "@/components/form";
+import { Dugme, Modal, useOnay } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { ODEME_DURUM, ODEME_YONTEM, enumAdi } from "@/lib/enum-adlari";
 import { apiSend, genIdempotencyKey } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { kurusToTL, tlToKurus } from "@/lib/money";
-import { useOnay } from "@/components/ui";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 import type {
@@ -99,6 +99,11 @@ export function UnitDetail({ unit }: { unit: Unit }) {
 
   // --- tahsilat (odeme) ---
   const [pOpen, setPOpen] = useState(false);
+  // (P162 §2) Tahakkuk ve sakin atama da MODALA girdi: bu panel bir
+  // OKUMA yuzeyidir (bakiye, tahakkuklar, odemeler, sakinler) ve iki
+  // form onu ikiye boluyordu. Formlar artik dugme arkasinda.
+  const [aOpen, setAOpen] = useState(false);
+  const [rOpen, setROpen] = useState(false);
   const [pKey, setPKey] = useState("");
   const [pTl, setPTl] = useState("");
   const [pYontem, setPYontem] = useState<DuesYontem>("elden");
@@ -235,9 +240,22 @@ export function UnitDetail({ unit }: { unit: Unit }) {
         </button>
       </div>
 
-      {pOpen && (
-        <form onSubmit={pay} className="space-y-3 rounded-lg border kart-kenar p-4">
-          <h3 className="font-medium">{t("aidatManuelTahsilat")}</h3>
+      <Modal
+        acik={pOpen}
+        onKapat={() => setPOpen(false)}
+        baslik={t("aidatManuelTahsilat")}
+        eylemler={
+          <>
+            <Dugme tur="sessiz" onClick={() => setPOpen(false)} disabled={pBusy}>
+              {t("ortakIptal")}
+            </Dugme>
+            <Dugme tur="birincil" type="submit" form="tahsilat-form" yukleniyor={pBusy}>
+              {t("ortakKaydet")}
+            </Dugme>
+          </>
+        }
+      >
+        <form id="tahsilat-form" onSubmit={pay} className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <Field label={t("aidatTutarTl")} hint={t("daireTutarOrnek")}>
               <input
@@ -302,15 +320,12 @@ export function UnitDetail({ unit }: { unit: Unit }) {
           </div>
           <ErrorBox message={pErr} />
           <div className="flex gap-2">
-            <button type="submit" className={btnPrimary} disabled={pBusy}>
-              {pBusy ? t("ortakKaydediliyor") : t("daireTahsilEt")}
-            </button>
             <button type="button" className={btnGhost} onClick={() => setPOpen(false)}>
               {t("ortakIptal")}
             </button>
           </div>
         </form>
-      )}
+      </Modal>
 
       {/* Tahakkuk + odeme listeleri */}
       <div className="grid gap-4 md:grid-cols-2">
@@ -349,10 +364,33 @@ export function UnitDetail({ unit }: { unit: Unit }) {
         </div>
       </div>
 
-      {/* Tek daire tahakkuk ekle */}
-      <form onSubmit={addAssessment} className="space-y-3 rounded-lg border kart-kenar p-4">
-        <h3 className="font-medium">{t("aidatTahakkukEkleDaire")}</h3>
-        <div className="grid grid-cols-2 gap-3">
+      {/* Tek daire tahakkuk ekle — ACICI DUGME */}
+      <div className="flex flex-wrap gap-2">
+        <Dugme boy="kucuk" onClick={() => setAOpen(true)}>
+          {t("aidatTahakkukEkleDaire")}
+        </Dugme>
+        <Dugme boy="kucuk" onClick={() => setROpen(true)}>
+          {t("sakinEkle")}
+        </Dugme>
+      </div>
+
+      <Modal
+        acik={aOpen}
+        onKapat={() => setAOpen(false)}
+        baslik={t("aidatTahakkukEkleDaire")}
+        eylemler={
+          <>
+            <Dugme tur="sessiz" onClick={() => setAOpen(false)} disabled={aBusy}>
+              {t("ortakIptal")}
+            </Dugme>
+            <Dugme tur="birincil" type="submit" form="tahakkuk-form" yukleniyor={aBusy}>
+              {t("ortakKaydet")}
+            </Dugme>
+          </>
+        }
+      >
+        <form id="tahakkuk-form" onSubmit={addAssessment} className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
           <Field label={t("ortakDonem")} hint={t("daireDonemOrnek")}>
             <input
               className={inputCls}
@@ -386,10 +424,8 @@ export function UnitDetail({ unit }: { unit: Unit }) {
         </div>
         <ErrorBox message={aErr} />
         {aOk && <p className="text-sm text-emerald-700">{aOk}</p>}
-        <button type="submit" className={btnPrimary} disabled={aBusy}>
-          {aBusy ? t("ortakEkleniyor") : t("aidatTahakkukEkle")}
-        </button>
-      </form>
+        </form>
+      </Modal>
 
       {/* Sakinler */}
       <div className="space-y-3 rounded-lg border kart-kenar p-4">
@@ -409,7 +445,22 @@ export function UnitDetail({ unit }: { unit: Unit }) {
             <li className="text-metin-muted">{t("daireAktifSakinYok")}</li>
           )}
         </ul>
-        <form onSubmit={addResident} className="flex items-end gap-2">
+        <Modal
+        acik={rOpen}
+        onKapat={() => setROpen(false)}
+        baslik={t("sakinEkle")}
+        eylemler={
+          <>
+            <Dugme tur="sessiz" onClick={() => setROpen(false)} disabled={false}>
+              {t("ortakIptal")}
+            </Dugme>
+            <Dugme tur="birincil" type="submit" form="sakin-form" yukleniyor={false}>
+              {t("ortakKaydet")}
+            </Dugme>
+          </>
+        }
+      >
+        <form id="sakin-form" onSubmit={addResident} className="space-y-3">
           <div className="grow">
             <Field label={t("sakinEkle")} hint={t("daireSakinIpucu")}>
               <select
@@ -443,8 +494,8 @@ export function UnitDetail({ unit }: { unit: Unit }) {
               </select>
             </Field>
           </div>
-          <button type="submit" className={btnGhost} disabled={rBusy}>{t("ortakEkle")}</button>
         </form>
+      </Modal>
         <ErrorBox message={rErr} />
       </div>
       {diyalog}

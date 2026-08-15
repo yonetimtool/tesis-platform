@@ -182,7 +182,13 @@ class ResidentHomeScreen extends ConsumerWidget {
           HomeSectionPad(
             child: hareketler.durum(
               veri: (satirlar) =>
-                  SonHareketlerKarti(satirlar: hareketSatirlari(l10n, dil, satirlar, now)),
+                  SonHareketlerKarti(
+                    satirlar: hareketSatirlari(l10n, dil, satirlar, now),
+                    // (P162 §9) Satira dokununca ilgili ekrana git.
+                    onSatir: (h) {
+                      if (h.rota != null) context.push(h.rota!);
+                    },
+                  ),
               yukleniyor: () =>
                   HomeBolumIskeleti(baslik: l10n.bolumSonHareketler),
               hata: () => HomeBolumHatasi(

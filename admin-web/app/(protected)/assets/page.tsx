@@ -24,6 +24,7 @@ import { kisaKimlik } from "@/lib/kimlik";
 import { DEMIRBAS_DURUM, DEMIRBAS_KATEGORI, enumAdi } from "@/lib/enum-adlari";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
+import { useAcilinca } from "@/lib/kaydir";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 import type {
@@ -99,6 +100,8 @@ export default function AssetsPage() {
   const [form, setForm] = useState<FormState>(EMPTY);
   const [formErr, setFormErr] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  // (P162 §7.1) Acilan detay alanina yumusak kaydirma — tek yardimci.
+  const { ref: detayRef, kaydir: detayKaydir } = useAcilinca();
   const [detail, setDetail] = useState<Asset | null>(null);
 
   const { data: history } = useSWR<AssetCheckoutList>(
@@ -202,7 +205,7 @@ export default function AssetsPage() {
             <Dugme
               boy="kucuk"
               aria-expanded={detail?.id === a.id}
-              onClick={() => setDetail(detail?.id === a.id ? null : a)}
+              onClick={() => { setDetail(detail?.id === a.id ? null : a); detayKaydir(); }}
             >
               {detail?.id === a.id ? t("ortakKapat") : t("demirbasZimmet")}
             </Dugme>
@@ -389,6 +392,7 @@ export default function AssetsPage() {
         onDurumDegisti={setTabloDurumu}
       />
 
+      <div ref={detayRef} />
       {detail && (
         <Kart className="space-y-3">
           <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>

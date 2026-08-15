@@ -24,6 +24,7 @@ import {
 } from "@/components/ui";
 import { ParolaAlani } from "@/components/ParolaAlani";
 import { alanliHataMetni, apiSend } from "@/lib/client";
+import type { UnitList } from "@/lib/types";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import { ROLE_OPTIONS as ROLES, rolAdi } from "@/lib/roles";
@@ -96,10 +97,28 @@ const EMPTY: FormState = {
 const DURUM_OLUMLU = "olumlu" as const;
 const DURUM_NOTR = "notr" as const;
 
+const ROL_SAKIN = "resident" as const;
+
 export default function UsersPage() {
   const t = useT();
   // (P162) Yikici onay tema/dil taniyan diyalogdan gecer.
   const { onayla, diyalog } = useOnay();
+  // (P162 §6) SAKIN OLUSTURURKEN DAIRE ATAMASI.
+  //
+  // Mobilde tek adimda yapilabiliyordu, webde YAPILAMIYORDU: once
+  // kullanici olusturulup sonra Daireler ekranindan atanmasi gerekiyordu.
+  // Iki adim, ikinci adimin unutulmasi demekti — sakin kaydi var, hangi
+  // dairede oldugu belirsiz.
+  //
+  // UC DEGISMEDI: kullanici `POST /users`, atama `POST /units/{id}/
+  // residents`. Ikisi ARDISIK cagriliyor; sunucuya birlesik bir uc
+  // eklemek sozlesmeyi degistirmek olurdu (kilitli kural).
+  const [atanacakDaire, setAtanacakDaire] = useState("");
+  const { data: daireListesi } = useSWR<UnitList>(
+    "/api/units?limit=200&offset=0",
+    jsonFetcher,
+    { revalidateOnFocus: false },
+  );
   const toast = useToast();
 
   const [durum, setDurum] = useState<TabloDurumu>({
@@ -233,13 +252,28 @@ export default function UsersPage() {
         if (form.gorevBitis) body.gorev_bitis = form.gorevBitis;
         if (form.email) body.email = form.email;
         if (form.password) body.password = form.password;
-        const created = await apiSend<{ temp_code?: string | null }>(
+        const created = await apiSend<{ temp_code?: string | null; id?: string }>(
           "/api/users",
           "POST",
           body,
         );
         if (created?.temp_code) {
           window.alert(t("kullaniciGeciciKod", { kod: created.temp_code }));
+        }
+        // DAIRE ATAMASI — kullanici olustuktan SONRA.
+        //
+        // HATASI KULLANICI KAYDINI GERI ALMAZ ve bu bilincli: hesap
+        // acildi, atama basarisiz oldu. Sessizce yutmak "atandi" sanmaya
+        // yol acardi; bu yuzden AYRI bir uyari veriliyor ve kullanici
+        // atamayi Daireler ekranindan tamamlayabiliyor.
+        if (atanacakDaire && created?.id) {
+          try {
+            await apiSend(`/api/units/${atanacakDaire}/residents`, "POST", {
+              user_id: created.id,
+            });
+          } catch {
+            toast.error(t("kullaniciDaireAtanamadi"));
+          }
         }
       }
       setOpen(false);
@@ -467,6 +501,29 @@ export default function UsersPage() {
         {/* `form` ID ile alttaki dugmeye baglandi: eylemler modalin
             SABIT altinda duruyor ve govdeyle birlikte kaymiyor. */}
         <form id="kullanici-form" onSubmit={save} className="grid gap-4 sm:grid-cols-2">
+          {/* (P162 §6) DAIRE ATAMASI — YALNIZ YENI SAKINDE.
+              Duzenlemede gosterilmiyor: mevcut bir sakinin dairesi
+              Daireler ekranindan yonetiliyor ve ayni isi iki yerden
+              yapmak, hangisinin gecerli oldugunu belirsizlestirirdi. */}
+          {!editingId && form.role === ROL_SAKIN && (
+            <AlanSarmal etiket={t("kullaniciDaireAta")}>
+              {(b) => (
+                <Secim
+                  {...b}
+                  value={atanacakDaire}
+                  onChange={(e) => setAtanacakDaire(e.target.value)}
+                >
+                  <option value="">{t("kullaniciDaireYok")}</option>
+                  {(daireListesi?.items ?? []).map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.blok ? `${u.blok}/${u.no}` : u.no}
+                    </option>
+                  ))}
+                </Secim>
+              )}
+            </AlanSarmal>
+          )}
+
           <AlanSarmal etiket={t("ortakAd")} zorunlu>
             {(b) => (
               <Alan

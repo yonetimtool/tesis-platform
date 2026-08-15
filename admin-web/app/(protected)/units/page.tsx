@@ -26,6 +26,7 @@ import {
 } from "@/components/ui";
 import { sayiBicimi, sayiCoz, tamsayiCoz } from "@/lib/sayi";
 import type { Unit, UnitList } from "@/lib/types";
+import { useAcilinca } from "@/lib/kaydir";
 import { useT } from "@/lib/i18n/kullan";
 
 /** Sunucudaki `_BLOK_PATTERN` ile AYNI — ikisi ayrisirsa test duser. */
@@ -222,6 +223,8 @@ export default function UnitsPage() {
   const [form, setForm] = useState<FormState>(EMPTY);
   const [formErr, setFormErr] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  // (P162 §7.1) Acilan detay alanina yumusak kaydirma — tek yardimci.
+  const { ref: detayRef, kaydir: detayKaydir } = useAcilinca();
   const [detail, setDetail] = useState<Unit | null>(null);
 
   function openNew() {
@@ -350,7 +353,7 @@ export default function UnitsPage() {
           <div className="flex justify-end gap-2">
             <Dugme
               boy="kucuk"
-              onClick={() => setDetail(detail?.id === u.id ? null : u)}
+              onClick={() => { setDetail(detail?.id === u.id ? null : u); detayKaydir(); }}
             >
               {detail?.id === u.id ? t("ortakKapat") : t("daireDetayAidat")}
             </Dugme>
@@ -546,7 +549,7 @@ export default function UnitsPage() {
         )}
       />
 
-      {detail && <UnitDetail unit={detail} />}
+      <div ref={detayRef}>{detail && <UnitDetail unit={detail} />}</div>
 
       <Modal
         baslik={t("daireTopluOlustur")}

@@ -28,6 +28,7 @@ import {
 } from "@/components/ui";
 import { Tablo, TabloBasligi, Td, Th, Tr } from "@/components/tablo";
 import { kisaKimlik } from "@/lib/kimlik";
+import { useAcilinca } from "@/lib/kaydir";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
 import { SAHA_ROLLERI, rolAdi } from "@/lib/roles";
@@ -162,6 +163,8 @@ export default function TasksPage() {
   const [form, setForm] = useState<FormState>(EMPTY);
   const [formErr, setFormErr] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  // (P162 §7.1) Acilan detay alanina yumusak kaydirma — tek yardimci.
+  const { ref: detayRef, kaydir: detayKaydir } = useAcilinca();
   const [detail, setDetail] = useState<Task | null>(null);
 
   const { data: completions } = useSWR<TaskCompletionList>(
@@ -311,7 +314,7 @@ export default function TasksPage() {
           <div className="flex justify-end gap-2">
             <Dugme
               boy="kucuk"
-              onClick={() => setDetail(detail?.id === g.id ? null : g)}
+              onClick={() => { setDetail(detail?.id === g.id ? null : g); detayKaydir(); }}
             >
               {detail?.id === g.id ? t("ortakKapat") : t("gorevKayitlar")}
             </Dugme>
@@ -562,6 +565,7 @@ export default function TasksPage() {
         ]}
       />
 
+      <div ref={detayRef} />
       {detail && (
         <Kart className="space-y-3">
           <h2 className="text-lg font-medium">

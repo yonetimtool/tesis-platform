@@ -67,6 +67,10 @@ export default function AnnouncementsPage() {
     jsonFetcher,
   );
 
+  // (P162 §7.2) Gorsele tiklayinca acilan DETAY modali.
+
+  const [detay, setDetay] = useState<Announcement | null>(null);
+
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editing, setEditing] = useState<Announcement | null>(null);
@@ -282,6 +286,33 @@ export default function AnnouncementsPage() {
         </form>
       </Modal>
 
+      {/* DETAY: baslik + TAM aciklama + gorsel BIRLIKTE. */}
+      <Modal
+        acik={detay !== null}
+        onKapat={() => setDetay(null)}
+        baslik={detay?.baslik ?? ""}
+        genislikSinifi="max-w-2xl"
+      >
+        <div className="space-y-3">
+          {detay?.foto_url && (
+            <Foto
+              src={detay.foto_url}
+              alt={t("gorselAlt", { baslik: detay.baslik })}
+              className="max-h-[55vh] w-full object-contain"
+            />
+          )}
+          <p
+            className="whitespace-pre-wrap"
+            style={{ fontSize: "var(--yz-fs-body)", color: "var(--yz-text)" }}
+          >
+            {detay?.govde}
+          </p>
+          <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
+            {t("duyuranRol")} · {detay ? formatDateTime(detay.created_at) : ""}
+          </p>
+        </div>
+      </Modal>
+
       <ul className="space-y-3">
         {(data?.items ?? []).map((a) => (
           <li key={a.id}>
@@ -291,8 +322,24 @@ export default function AnnouncementsPage() {
                 <h3 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{a.baslik}</h3>
                 <p className="mt-1 whitespace-pre-wrap" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}>{a.govde}</p>
                 {a.foto_url && (
-                  // Presigned GET URL kisa omurlu — liste her yenilendiginde taze gelir.
-                  <a href={a.foto_url} target="_blank" rel="noreferrer" className="mt-2 block w-fit">
+                  // (P162 §7.2) GORSELE TIKLAYINCA DETAY MODALI acilir —
+                  // ham dosya yeni sekmede DEGIL.
+                  //
+                  // OLCULEN KUSUR: fotograf `<a href={foto_url}>` idi;
+                  // tiklayinca kullanici uygulamadan CIKIP bir depolama
+                  // URL'sine dusuyordu. Orada duyurunun basligi da
+                  // aciklamasi da YOKTU — yalnizca bir resim. Yaziya
+                  // tiklayinca gorulen bilginin tamami, resme tiklayinca
+                  // KAYBOLUYORDU.
+                  //
+                  // Presigned GET URL kisa omurlu — liste her
+                  // yenilendiginde taze gelir.
+                  <button
+                    type="button"
+                    onClick={() => setDetay(a)}
+                    aria-label={t("duyuruDetayAc", { baslik: a.baslik })}
+                    className="mt-2 block w-fit"
+                  >
                     <div
                       className="overflow-hidden"
                       style={{
@@ -306,7 +353,7 @@ export default function AnnouncementsPage() {
                         className="h-40 w-full object-cover"
                       />
                     </div>
-                  </a>
+                  </button>
                 )}
                 <p className="mt-2" style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
 {/* (P162 §7.3) DUYURAN ADI YERINE ROL.

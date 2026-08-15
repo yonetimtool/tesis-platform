@@ -79,16 +79,10 @@ const SAYFA_ICI_KALIR = new Set([
   // `settings` ile ayni gerekce. Bir dugme arkasina saklamak, iletisim
   // sayfasini bos birakirdi.
   "components/TanitimForm.tsx",
-  // ------------------------------------------------------------------
-  // KAPATILMAMIS IS — P162 raporunda ACIKCA yaziyor.
-  //
-  // `UnitDetail` uc form aciyor (manuel tahsilat, tek daire tahakkuk,
-  // sakin ekle). Ucu de modala TASINMADI: tarama alani P162'de
-  // genisletildiginde ortaya ciktilar ve o turda baglam yetmedi.
-  // Muafiyet GECICIDIR ve bir gerekce DEGIL, bir borctur.
-  // ------------------------------------------------------------------
-  "components/UnitDetail.tsx",
 ]);
+// NOT: `components/UnitDetail.tsx` bir sure muafiyet listesindeydi (uc
+// formu sayfa icinde aciyordu). P162'de ucu de modala tasindi ve muafiyet
+// KALDIRILDI — yani artik tarama onu da olcuyor.
 
 /** Rapor icin kisa yol. */
 function kisaYol(yol: string): string {

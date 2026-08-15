@@ -14,6 +14,7 @@ import '../../dues/domain/dues_models.dart';
 import '../../shifts/domain/shift_models.dart';
 import '../../weather/domain/weather_models.dart';
 import '../../../core/i18n/l10n.dart';
+import '../../../routing/app_router.dart';
 import '../../../core/theme/home_tokens.dart';
 import '../domain/activity_models.dart';
 import '../domain/home_view_models.dart';
@@ -88,8 +89,37 @@ List<HareketSatiri> hareketSatirlari(
           zaman: hareketZamanEtiketi(o.zaman, now, l10n, dil),
           ikonAccent: _ikonAccent(o.tur),
           noktaRengi: _nokta(o.renk),
+          rota: hareketRotasi(o.tur),
         ),
     ];
+
+/// (P162 §9) HAREKET SATIRI -> HEDEF EKRAN.
+///
+/// OLCULEN KUSUR: "Son Hareketler" satirlari TIKLANMIYORDU. `HareketSatiri`
+/// bir `rota` alani tasiyordu ama HIC DOLDURULMUYORDU ve ana ekranlar
+/// `onSatir` gecmiyordu — yani alan vardi, kablo yoktu. Kullanici
+/// "gecikmis okutma" satirini goruyor, dokunuyor, hicbir sey olmuyordu.
+///
+/// EKRAN KIMLIGE DEGIL TURE GORE SECILIR: akis ogesinin `kaynakId`si
+/// hedef ekranlarin hepsinde derin baglanti olarak desteklenmiyor. Listeye
+/// goturmek, hicbir yere goturmemekten iyidir; ve yanlis bir kimlikle
+/// bos detay ekrani acmaktan da iyidir.
+///
+/// `null` DONEBILIR: hedefi olmayan tur icin satir TIKLANMAZ kalir —
+/// dokunulabilir gorunup hicbir sey yapmamak, tiklanmaz olmaktan kotudur.
+String? hareketRotasi(ActivityTur tur) => switch (tur) {
+      ActivityTur.devriyeOkutma => AppRoutes.patrolTracking,
+      ActivityTur.gorevTamamlama => AppRoutes.tasks,
+      ActivityTur.aidatOdeme => AppRoutes.myDues,
+      ActivityTur.talep => AppRoutes.complaints,
+      ActivityTur.daireSikayeti => AppRoutes.sikayetlerim,
+      ActivityTur.alarm => AppRoutes.notifications,
+      ActivityTur.ziyaretciGiris || ActivityTur.ziyaretciCikis => AppRoutes.visitors,
+      ActivityTur.kargo || ActivityTur.kargoTeslim => AppRoutes.kargo,
+      ActivityTur.aracGiris || ActivityTur.aracCikis => AppRoutes.unitAccessRecords,
+      ActivityTur.ihlal => AppRoutes.notifications,
+      ActivityTur.bilinmeyen => null,
+    };
 
 /// Satir zaman etiketi — [now] DISARIDAN (deterministik test; saat-flake yok).
 /// Ayni gun SAAT (dile gore bicim), dun "Dün", daha eski GUN.AY (dile gore).
