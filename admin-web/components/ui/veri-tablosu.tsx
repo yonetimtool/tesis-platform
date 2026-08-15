@@ -35,6 +35,7 @@
  */
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
+import { siraGecikmesi } from "@/lib/hareket";
 import { useT } from "@/lib/i18n/kullan";
 
 import { Dugme } from "./dugme";
@@ -330,13 +331,18 @@ export function VeriTablosu<T>({
               </tr>
             </thead>
             <tbody>
-              {gosterilen.map((satir) => {
+              {gosterilen.map((satir, sira) => {
                 const id = satirId(satir);
                 const bu = secili.includes(id);
                 return (
                   <tr
                     key={id}
+                    // SIRALI GIRIS (brief). Gecikme `lib/hareket` tek
+                    // kaynagindan; hareket azaltmada CSS animasyonu
+                    // kapanir ve gecikmenin bir hukmu kalmaz.
+                    className="yz-satir-giris"
                     style={{
+                      animationDelay: `${siraGecikmesi(sira, true)}s`,
                       borderTopWidth: "var(--yz-border-w)",
                       borderTopStyle: "solid",
                       borderColor: "var(--yz-border)",

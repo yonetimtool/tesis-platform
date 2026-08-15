@@ -94,12 +94,35 @@ textarea:focus-visible,
   border-color: #2cc4b7;
 }
 
-/* Hareket-azaltma: ambient orb animasyonlarini durdur. (framer-motion bilesen
-   hareketini ayrica MotionConfig reducedMotion="user" ile kapatir.) */
+/* HAREKET-AZALTMA — GENEL KURAL (P161).
+   
+   Onceki surum yalniz iki `animate-drift` sinifini durduruyordu; geri
+   kalan her sey (cekmece kaymasi, kart yukselmesi, dugme basisi, sekme
+   gostergesi) CSS gecisleriyle yapildigi icin ayari acan kullanicida da
+   HAREKET ETMEYE DEVAM EDIYORDU. Tek tek kapatmak, bir sonraki gecisin
+   unutulmasi demekti.
+   
+   framer-motion bundan ETKILENMEZ (kendi hareketini WAAPI/inline stille
+   yapar) — orada kural `MotionConfig reducedMotion="user"`. Depoda
+   `transitionend`/`animationend` dinleyen kod YOK (tarandi), yani sureyi
+   sifirlamak hicbir akisi kirmaz. */
 @media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
   .animate-drift,
   .animate-driftAlt {
     animation: none !important;
+  }
+  /* Basma geri bildirimi tamamen kalkar: 0.98'lik olcek "ani" olsa bile
+     bir sicrama olarak gorunurdu. */
+  button:active {
+    transform: none !important;
   }
 }
 

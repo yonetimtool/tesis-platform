@@ -10,6 +10,7 @@
  * BU DOSYA ERISILEBILIRLIK TASIMAZ: cagiran (`grafik.tsx`) ciziMi
  * `aria-hidden` yapar ve rakamlari bir tabloda verir.
  */
+import { useHareket } from "@/lib/hareket";
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
 
 export function Pasta({
@@ -19,6 +20,7 @@ export function Pasta({
   dilimler: { ad: string; deger: number }[];
   palet: string[];
 }) {
+  const hareketVar = useHareket();
   return (
     <ResponsiveContainer width="100%" height={220}>
       <PieChart>
@@ -28,10 +30,16 @@ export function Pasta({
           nameKey="ad"
           innerRadius={55}
           outerRadius={90}
-          // Animasyon KAPALI: `prefers-reduced-motion` ayarini Recharts
-          // okumaz ve donen bir pasta o ayari acan kullanici icin tam da
-          // kacinilmasi gereken sey.
-          isAnimationActive={false}
+          // (P161) GIRIS ANIMASYONU ACILDI — AMA KOSULLU.
+          //
+          // Onceki surum animasyonu HERKESE kapatiyordu; gerekce dogruydu
+          // (Recharts `prefers-reduced-motion`u okumaz) ama cozum fazla
+          // genisti: ayari acmayan kullanici da hicbir giris hareketi
+          // gormuyordu. Artik tercihi BIZ okuyoruz (`useHareket`) ve
+          // karari Recharts'a veriyoruz.
+          isAnimationActive={hareketVar}
+          animationDuration={520}
+          animationEasing="ease-out"
           stroke="var(--yz-metal-1)"
           strokeWidth={2}
         >

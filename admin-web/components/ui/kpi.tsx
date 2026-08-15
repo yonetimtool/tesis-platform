@@ -73,12 +73,13 @@ function hareketAzaltilmis(): boolean {
  * SUNUCU CIZIMINDE HEDEF DEGER DONER: ilk kare `0` olsaydi sunucu ve
  * istemci farkli metin uretir, hidrasyon uyusmazligi cikardi.
  */
-function useSayac(hedef: number, sure = 900): number {
+function useSayac(hedef: number, saysinMi: boolean, sure = 900): number {
   const [deger, setDeger] = useState(hedef);
   const ilkCizim = useRef(true);
 
   useEffect(() => {
-    if (hareketAzaltilmis()) {
+    // SAYMAYACAKSA (para) ya da hareket azaltilmissa: DOGRUDAN hedef.
+    if (!saysinMi || hareketAzaltilmis()) {
       setDeger(hedef);
       return;
     }
@@ -106,12 +107,20 @@ function useSayac(hedef: number, sure = 900): number {
     // `deger` BILEREK bagimliliklarda YOK: her sayim adiminda etkiyi
     // yeniden kurmak sayaci sonsuza kadar yeniden baslatirdi.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hedef, sure]);
+  }, [hedef, sure, saysinMi]);
 
   return deger;
 }
 
 export interface KpiProps {
+  /**
+   * PARA MI? Brief'in acik kurali: "mali tutarlar sayarak gelmesin —
+   * gercek olmayan bakiye gosterilmesin". 12.400 TL'lik bir bakiyenin
+   * 0'dan sayarak gelmesi, yolun ortasinda EKRANDA DURAN "3.180 TL"
+   * gibi bir rakam uretir; ekran goruntusu alan ya da o anda bakan biri
+   * icin bu YANLIS BIR BAKIYEDIR. Adet ve yuzde icin ayni sakinca yok.
+   */
+  para?: boolean;
   /** Gosterilecek sayi. */
   deger: number;
   /** Halkanin altindaki etiket — i18n'den gelmis olmali. */
@@ -143,6 +152,7 @@ export interface KpiProps {
 }
 
 export function Kpi({
+  para = false,
   deger,
   etiket,
   durum = "notr",
@@ -154,7 +164,7 @@ export function Kpi({
   onClick,
   cap = 116,
 }: KpiProps) {
-  const gosterilen = useSayac(deger);
+  const gosterilen = useSayac(deger, !para);
   // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`): tarama ucludeki
   // her dizeyi cevrilmemis metin adayi sayar ve HAKLIDIR.
   const Etiket = (

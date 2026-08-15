@@ -309,6 +309,33 @@
   box-shadow: var(--yz-sunken);
 }
 
+/* (P161) SIRALI SATIR GIRISI — brief: "tablo satirlari 30 ms arayla".
+   
+   NEDEN CSS, NEDEN framer-motion DEGIL: 100 satirlik bir tabloda 100
+   `motion.tr` demek 100 React aboneligi demekti. Buradaki hareket sabit
+   bir keyframe; gecikme satir basina INLINE veriliyor. Hareket azaltma
+   kurali da CSS'te duruyor — yani unutulamaz.
+   
+   `both` dolgu kipi: oge gecikme boyunca gorunmez kalir, sonra girer. */
+@keyframes yz-satir-giris {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.yz-satir-giris {
+  animation: yz-satir-giris var(--yz-dur-base) var(--yz-ease) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .yz-satir-giris {
+    animation: none;
+  }
+}
+
 /* Yukselme YALNIZ hover'da ve 2px — brief. `transform` kullaniliyor
    (layout tetiklemez); hareket azaltmada sure 0 olur, sicrama olmaz. */
 .yz-lift {

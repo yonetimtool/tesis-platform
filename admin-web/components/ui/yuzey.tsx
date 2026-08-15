@@ -59,7 +59,7 @@ export interface KartProps {
 export function Kart({
   children,
   ton = "kart",
-  kalkan = false,
+  kalkan,
   dolgu = true,
   className = "",
   style,
@@ -68,13 +68,20 @@ export function Kart({
 }: KartProps) {
   // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
   const Etiket = (as ?? (onClick ? ETIKET_DUGME : ETIKET_KUTU)) as ElementType;
+  // (P161) TIKLANABILIR KART VARSAYILAN OLARAK YUKSELIR.
+  //
+  // Brief "kart hover: 2 px yukselme + daha derin golge" der ama `kalkan`
+  // opt-in'di ve cogu tiklanabilir kartta unutulmustu: tiklanabildigi
+  // ekrandan anlasilmiyordu. Yukselme artik ETKILESIMDEN turer; kapatmak
+  // isteyen `kalkan={false}` yazar (karar hala cagiranin).
+  const yukselsin = kalkan ?? Boolean(onClick);
   return (
     <Etiket
       onClick={onClick}
       type={Etiket === "button" ? "button" : undefined}
       className={[
         TON_SINIFI[ton],
-        kalkan ? "yz-lift" : "",
+        yukselsin ? "yz-lift" : "",
         dolgu ? "p-4" : "",
         onClick ? "text-start w-full" : "",
         className,
