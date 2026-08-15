@@ -35,6 +35,7 @@ export function ParolaAlani({
   id,
   name,
   disabled,
+  style,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -46,6 +47,8 @@ export function ParolaAlani({
   id?: string;
   name?: string;
   disabled?: boolean;
+  /** (P162) Giris ekrani cam yuzeyi token DEGIL satir-ici stil kullanir. */
+  style?: React.CSSProperties;
 }) {
   const t = useT();
   const [acik, setAcik] = useState(false);
@@ -60,7 +63,9 @@ export function ParolaAlani({
         type={acik ? "text" : "password"}
         className={className}
         // Goz dugmesi metnin USTUNE binmesin: sag (RTL'de sol) ic bosluk.
-        style={{ paddingInlineEnd: "2.5rem" }}
+        // Cagiranin stili ONCE gelir, ic bosluk SONRA: ic bosluk bilesenin
+        // kendi duzen sarti, cagiran onu ezerse goz dugmesi metne biner.
+        style={{ ...style, paddingInlineEnd: "2.5rem" }}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         autoComplete={autoComplete}

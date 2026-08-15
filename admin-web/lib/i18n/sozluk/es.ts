@@ -423,6 +423,7 @@ export const es: Sozluk = {
   girisBeniHatirla: "Recordarme",
   girisYap: "Iniciar sesión",
   girisYapiliyor: "Iniciando sesión...",
+  girisBasarili: "Sesión iniciada",
   girisParolaBelirlemeGerek: "En el primer inicio de sesión debe establecer su contraseña en la app móvil.",
   girisCalismaAlani: "Espacio de trabajo del sitio",
   girisTumRoller: "Administrador, residente, seguridad y personal",

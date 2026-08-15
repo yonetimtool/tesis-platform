@@ -8,6 +8,24 @@ import { useEffect, useState } from "react";
 import type { ApiError } from "@/lib/types";
 
 import { DilSecici } from "@/components/DilSecici";
+import { GirisSahnesi } from "@/components/giris/sahne";
+import {
+  CAM_KENAR,
+  CAM_KENAR_ZAYIF,
+  CAM_ZEMIN,
+  CAM_ZEMIN_KOYU,
+  CAM_ZEMIN_MOBIL,
+  EGRI_DIZI,
+  GIRIS_SIRASI,
+  METIN,
+  METIN_IKINCIL,
+  METIN_SOLUK,
+  TURKUAZ,
+  TURKUAZ_ACIK,
+  TURKUAZ_KOYU,
+} from "@/components/giris/palet";
+import { CTA_GRADYANI } from "@/components/giris/stil";
+import { useHareket } from "@/lib/hareket";
 import { MAGAZA_ANDROID, MAGAZA_IOS } from "@/lib/config";
 import { ParolaAlani } from "@/components/ParolaAlani";
 import { SosyalGiris } from "@/components/SosyalGiris";
@@ -59,6 +77,18 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
   const [error, setError] = useState<string | null>(null);
   const [magazaGoster, setMagazaGoster] = useState(false);
   const [loading, setLoading] = useState(false);
+  // (P162) BASARI ANIMASYONU (sartname §40): dugme loading -> onay -> kart
+  // soluklasarak panele gecis. Yonlendirme bu bayrak dolayisiyla KISA BIR
+  // SURE geciktirilir; akis degismez, yalnizca gorunur hale gelir.
+  const [basarili, setBasarili] = useState(false);
+  // Hata TITREMESI icin sayac: ayni hata iki kez gelirse de animasyon
+  // tekrar calissin diye anahtar olarak kullaniliyor.
+  const [hataSayaci, setHataSayaci] = useState(0);
+  const hareketVar = useHareket();
+  const [mobil, setMobil] = useState(false);
+  useEffect(() => {
+    setMobil(window.matchMedia?.("(max-width: 768px)").matches ?? false);
+  }, []);
 
   // Mount: saklanmış tesis+e-posta varsa ÖN-DOLDUR + kutuyu işaretle. Parola
   // saklanmaz; tarayıcı autofill (autocomplete) parolayı kendi keychain'inden
@@ -116,6 +146,7 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
       const th = telefonHatasi(telefon);
       if (th) {
         setError(th === "gecersizOnEk" ? t("telefonHataOnEk") : t("telefonHataEksik"));
+        setHataSayaci((n) => n + 1);
         return;
       }
     }
@@ -136,6 +167,7 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
         // Sunucu metni ONCE (tur 14'ten beri istegin dilinde gelir); yoksa
         // panel sozlugunden genel metin.
         setError(data?.error?.message ?? t("girisBasarisiz"));
+        setHataSayaci((n) => n + 1);
         // (P129) MOBIL-YALNIZ ROL: sunucu 403 + `mobil_uygulama` kodu
         // doner. Magaza baglantilari ancak TANIMLIYSA cizilir (bkz.
         // lib/config.ts) — uygulama yayinda degilken 404'e giden bir
@@ -145,6 +177,11 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
       }
       // Başarılı giriş: işaretliyse bilgileri sakla, değilse temizle.
       persistRememberMe();
+      // BASARI: once onay durumu cizilir, sonra yonlendirilir. 520 ms
+      // kartin soluklasmasina yeter ve kullaniciya "oldu" der; daha uzun
+      // olsaydi bekleme hissi verirdi.
+      setBasarili(true);
+      await new Promise((c) => setTimeout(c, 520));
       // KOKE GIDILIR, PANOYA DEGIL: `/` middleware'de ROLE gore cozulur
       // (kokRotaRol) — yonetici Pano'ya, sakin Aidatim'a, guvenlik
       // Ziyaretciler'e, saha gorevlisi Gorevlerim'e duser. Burada sabit
@@ -158,204 +195,272 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
     }
   }
 
-  const field =
-    "w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-ink outline-none transition focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/25";
-  const labelText = "mb-1.5 block text-sm font-medium text-metin-body";
+  // ------------------------------------------------------------------
+  // (P162) SUNUM KATMANI — sartname `docs/design-refs`.
+  //
+  // MEVCUT KIMLIK AKISI DEGISMEDI: yukaridaki durum, dogrulama, uc
+  // secimi, "beni hatirla" ve yonlendirme AYNEN duruyor. Burasi yalnizca
+  // gorunum ve hareket.
+  //
+  // PALET AYRI (brief'in acik karari): giris VITRIN, panel CALISMA ALANI.
+  // Vitrin deep navy + turkuaz; panelin `--yz-*` metalik dili buraya
+  // GIRMEZ. Gecis sertligi `basarili` durumundaki soluklasmayla yumusar.
+  // ------------------------------------------------------------------
+  const alanSinifi =
+    "w-full rounded-xl px-3.5 py-2.5 text-sm outline-none transition-[border-color,box-shadow,background] duration-[250ms]";
+  const alanStili: React.CSSProperties = {
+    background: CAM_ZEMIN_KOYU,
+    // KENAR UC AYRI OZELLIK: `border: "1px solid X"` kisayolu bir SABLON
+    // DIZGESI olurdu ve depo taramasi (hakli olarak) sablon icindeki
+    // metni cevrilmemis dize sayiyor.
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: CAM_KENAR_ZAYIF,
+    color: METIN,
+  };
+  const etiketSinifi = "mb-1.5 block text-sm font-medium";
+  const etiketStili: React.CSSProperties = { color: METIN_IKINCIL };
 
-  const container = {
-    hidden: {},
-    show: { transition: { staggerChildren: 0.06, delayChildren: 0.1 } },
-  };
-  const item = {
-    hidden: { opacity: 0, y: 10 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: EASE } },
-  };
+  /** Sahne giris zamanlamasi (§28) — hareket kapaliysa hepsi 0. */
+  const giris = (gecikme: number) => ({
+    initial: { opacity: 0, y: 14 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.62, ease: EGRI_DIZI, delay: hareketVar ? gecikme : 0 },
+  });
 
   return (
     <MotionConfig reducedMotion="user">
-      <main className="grid min-h-screen lg:grid-cols-[1.05fr_1fr]">
-        {/* ---- Sol: marka gradyan paneli (navy → teal) + suzulen orb'ler ---- */}
-        {/* `p-6` dar ekranda: 20 px kok yazi boyunda `p-8` (2rem = 40 px x2)
-            govdeyi tasiriyordu (tur 28 surusu, de +6 px). */}
-        <section className="relative flex min-h-[36vh] min-w-0 flex-col justify-between overflow-hidden bg-brand-gradient p-6 sm:p-8 lg:min-h-screen lg:p-12">
-          {/* Imza: yumusak suzulen orb'ler (GPU transform; reduced-motion durur) */}
-          <div aria-hidden className="pointer-events-none absolute inset-0">
-            <div className="animate-drift absolute -start-16 top-8 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
-            <div className="animate-driftAlt absolute -end-10 top-1/3 h-80 w-80 rounded-full bg-brand-teal/25 blur-3xl" />
-            <div className="animate-drift absolute bottom-0 start-1/3 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
-          </div>
+      <main
+        className="relative flex min-h-screen w-full flex-col overflow-hidden lg:grid lg:grid-cols-[1.15fr_1fr]"
+        style={{ background: "#061426" }}
+      >
+        <GirisSahnesi hareketVar={hareketVar} mobil={mobil} />
 
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, ease: EASE }}
-            className="relative z-10 flex items-center gap-2.5"
-          >
+        {/* ---- DIL SECICI (§23) — sag ust ---- */}
+        <div className="absolute end-4 top-4 z-30 sm:end-6 sm:top-6">
+          <DilSecici />
+        </div>
+
+        {/* ---- SOL: marka + hero (§2, §20) ---- */}
+        <section className="relative z-10 flex min-w-0 flex-col justify-between px-6 pb-6 pt-20 sm:px-10 lg:px-14 lg:py-14">
+          <motion.div {...giris(GIRIS_SIRASI.logo)}>
+            {/* MARKA BANNERI — brief: "giris sayfasinin SOL tarafinda".
+                ACIK (ters) varyant kullaniliyor: marka murekkebi koyu
+                lacivert ve zemin de deep navy; olculdugunde kontrast
+                orani ~1.2 cikiyordu, yani marka kayboluyordu. */}
             <Image
-              src="/yonetio-master.png"
+              src="/yonetio-marka-acik.png"
               alt="Yönetio"
-              width={36}
-              height={36}
+              width={1271}
+              height={339}
               priority
-              className="shrink-0 rounded-md"
+              className="h-9 w-auto transition-transform duration-300 hover:scale-[1.02] sm:h-11"
             />
-            <span className="text-2xl font-semibold tracking-tight text-white">
-              yönetio
-            </span>
           </motion.div>
+
+          <div className="max-w-[520px] py-10 lg:py-0">
+            <motion.h1
+              {...giris(GIRIS_SIRASI.baslik)}
+              className="break-words text-[28px] font-semibold leading-[1.1] tracking-[-1px] sm:text-[40px] lg:text-[52px] lg:tracking-[-1.5px]"
+              style={{ color: METIN }}
+            >
+              {t("girisSloganBaslik")}
+            </motion.h1>
+            <motion.p
+              {...giris(GIRIS_SIRASI.aciklama)}
+              className="mt-5 break-words text-base leading-relaxed"
+              style={{ color: METIN_IKINCIL }}
+            >
+              {t("girisSloganAlt")}
+            </motion.p>
+          </div>
 
           <motion.div
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: EASE, delay: 0.12 }}
-            className="relative z-10 max-w-md"
+            {...giris(GIRIS_SIRASI.aciklama)}
+            className="text-xs"
+            style={{ color: METIN_SOLUK }}
           >
-            {/* `break-words`: Almanca birlesik sozcukler ("Anlagenbetrieb")
-                buyuk puntoda satira sigmayip tasiyordu. */}
-            <h1 className="text-3xl font-semibold leading-tight tracking-tight text-white break-words sm:text-4xl">
-              {t("girisSloganBaslik")}
-            </h1>
-            <p className="mt-4 break-words text-base leading-relaxed text-white/75">
-              {t("girisSloganAlt")}
-            </p>
-          </motion.div>
-
-          <div className="relative z-10 text-xs text-white/60">
             © {t("girisAltBilgi")}
-          </div>
+          </motion.div>
         </section>
 
-        {/* ---- Sag: temiz form karti ---- */}
-        {/* `min-w-0`: GRID OGESI varsayilan olarak min-content'in ALTINA
-            INMEZ. `break-words` (overflow-wrap) tasmayi onler ama intrinsic
-            min-content genisligini DUSURMEZ — bu yuzden 20 px kok yazi
-            boyunda uzun Almanca sozcuk izgarayi 366 px'e itiyordu (tur 28).
-            Cozum kelime kirma degil, ogenin KUCULEBILMESI. */}
-        <section className="relative flex min-w-0 items-center justify-center bg-[#fafbfc] px-4 py-10 sm:px-8 dark:bg-transparent">
-          <div className="absolute end-4 top-4 z-20">
-            <DilSecici />
-          </div>
+        {/* ---- SAG: glassmorphism giris karti (§11, §12) ---- */}
+        <section className="relative z-10 flex min-w-0 items-center justify-center px-4 pb-12 sm:px-8 lg:pb-0">
           <motion.form
             onSubmit={onSubmit}
-            variants={container}
-            initial="hidden"
-            animate="show"
-            className="w-full max-w-sm space-y-5 rounded-kart border kart-kenar bg-white p-8"
+            initial={{ opacity: 0, y: 30, scale: 0.97 }}
+            animate={
+              basarili
+                ? { opacity: 0, y: 0, scale: 0.98 }
+                : { opacity: 1, y: 0, scale: 1 }
+            }
+            transition={{
+              duration: basarili ? 0.42 : 0.9,
+              ease: EGRI_DIZI,
+              delay: basarili || !hareketVar ? 0 : GIRIS_SIRASI.kart,
+            }}
+            // HOVER: cok kucuk kalkis (§13). `rotateX/Y` BILINCLI OLARAK
+            // YOK — form alanlarinin uzerindeyken egilen bir yuzey, imleç
+            // ile alanin gercek yeri arasinda kayma uretiyordu.
+            whileHover={hareketVar ? { y: -3 } : undefined}
+            className="w-[calc(100%-32px)] max-w-[420px] space-y-5 p-7 sm:w-full sm:p-8"
+            style={{
+              // MOBILDE DAHA OPAK ZEMIN — olculdu.
+              //
+              // Sartname §31 mobilde yogun blur'u yasakliyor, o yuzden
+              // `backdrop-filter` kapali. Ama cam yuzey (%8 beyaz) tek
+              // basina AYIRMIYOR: blur olmayinca arkadaki partikuller
+              // kartin uzerinden KESKIN gorunuyor ve etiketler okunmuyor
+              // (ekran goruntusuyle goruldu). Mobilde ayirmayi blur degil
+              // OPAKLIK yapiyor.
+              background: mobil ? CAM_ZEMIN_MOBIL : CAM_ZEMIN,
+              backdropFilter: mobil ? undefined : "blur(25px)",
+              WebkitBackdropFilter: mobil ? undefined : "blur(25px)",
+              borderWidth: "1px",
+              borderStyle: "solid",
+              borderColor: CAM_KENAR,
+              borderRadius: "18px",
+              boxShadow: "0 25px 80px rgba(0,0,0,0.35)",
+            }}
           >
-            <motion.div variants={item}>
-              <h2 className="text-xl font-semibold tracking-tight break-words">
+            <div>
+              <h2
+                className="break-words text-xl font-semibold tracking-tight"
+                style={{ color: METIN }}
+              >
                 {telefonla ? t("girisCalismaAlani") : t("girisYonetimPaneli")}
               </h2>
-              <p className="mt-1 text-sm text-metin-muted">
+              <p className="mt-1 text-sm" style={{ color: METIN_SOLUK }}>
                 {telefonla ? t("girisTumRoller") : t("girisYalnizAdmin")}
               </p>
-            </motion.div>
+            </div>
 
             {telefonla ? (
-              <motion.label variants={item} className="block">
-                <span className={labelText}>{t("kullaniciTelefon")}</span>
+              <label className="block">
+                <span className={etiketSinifi} style={etiketStili}>
+                  {t("kullaniciTelefon")}
+                </span>
                 <input
+                  key={`tel-${hataSayaci}`}
                   type="tel"
                   inputMode="numeric"
-                  className={field}
-                  // (P123) TEK bicimlendirici — bkz. lib/telefon.ts.
+                  className={`${alanSinifi} giris-alan${error ? " giris-titre" : ""}`}
+                  style={alanStili}
+                  // (P123) TEK bicimlendirici — 05XX XXX XX XX.
                   value={telefonGiris(telefon)}
                   onChange={(e) => setTelefon(telefonGiris(e.target.value))}
                   placeholder={t("kullaniciTelefonOrnek")}
                   autoComplete="username"
+                  aria-label={t("kullaniciTelefon")}
                   required
                 />
-                <span className="mt-1.5 block text-xs text-metin-muted">
+                <span className="mt-1.5 block text-xs" style={{ color: METIN_SOLUK }}>
                   {t("girisTelefonYardim")}
                 </span>
-              </motion.label>
+              </label>
             ) : (
               <>
-                <motion.label variants={item} className="block">
-                  <span className={labelText}>{t("girisTesisSlug")}</span>
+                <label className="block">
+                  <span className={etiketSinifi} style={etiketStili}>
+                    {t("girisTesisSlug")}
+                  </span>
                   <input
-                    className={field}
+                    className={`${alanSinifi} giris-alan`}
+                    style={alanStili}
                     value={tenantSlug}
                     onChange={(e) => setTenantSlug(e.target.value)}
                     placeholder="yonetio"
                     autoComplete="organization"
+                    aria-label={t("girisTesisSlug")}
                     required
                   />
-                </motion.label>
+                </label>
 
-                <motion.label variants={item} className="block">
-                  <span className={labelText}>{t("girisEposta")}</span>
+                <label className="block">
+                  <span className={etiketSinifi} style={etiketStili}>
+                    {t("girisEposta")}
+                  </span>
                   <input
+                    key={`eposta-${hataSayaci}`}
                     type="email"
-                    className={field}
+                    className={`${alanSinifi} giris-alan${error ? " giris-titre" : ""}`}
+                    style={alanStili}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     autoComplete="username"
+                    aria-label={t("girisEposta")}
                     required
                   />
-                </motion.label>
+                </label>
               </>
             )}
 
-            <motion.label variants={item} className="block">
-              <span className={labelText}>{t("girisParola")}</span>
+            <label className="block">
+              <span className={etiketSinifi} style={etiketStili}>
+                {t("girisParola")}
+              </span>
               <ParolaAlani
-                className={field}
+                className={`${alanSinifi} giris-alan`}
+                style={alanStili}
                 value={password}
                 onChange={setPassword}
                 autoComplete="current-password"
                 minLength={8}
                 required
               />
-            </motion.label>
+            </label>
 
-            <motion.label
-              variants={item}
-              className="flex cursor-pointer select-none items-center gap-2.5"
-            >
+            <label className="flex cursor-pointer select-none items-center gap-2.5">
               <input
                 type="checkbox"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="h-4 w-4 rounded border-slate-300 accent-brand-teal focus:ring-2 focus:ring-brand-teal/25"
+                className="h-4 w-4 rounded"
+                style={{ accentColor: TURKUAZ }}
               />
-              <span className="text-sm text-metin-body">{t("girisBeniHatirla")}</span>
-            </motion.label>
+              <span className="text-sm" style={{ color: METIN_IKINCIL }}>
+                {t("girisBeniHatirla")}
+              </span>
+            </label>
 
             {error && (
               <motion.p
                 role="alert"
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+                className="rounded-lg px-3 py-2 text-sm"
+                style={{
+                  background: "rgba(220,80,80,0.12)",
+                  borderWidth: "1px",
+                  borderStyle: "solid",
+                  borderColor: "rgba(255,140,140,0.35)",
+                  color: "#FFC9C9",
+                }}
               >
                 {error}
               </motion.p>
             )}
 
-            {/* (P154 / Asama 3) KAYIT BAGLANTISI YALNIZ `app.*`TA.
-                `panel.*` platform sahibinin yuzeyidir ve oraya YALNIZ
-                `admin` girer; admin hesabi tesis kaydiyla ACILMAZ, o
-                yuzden orada "kayit ol" gostermek varolmayan bir kapiya
-                isaret etmek olurdu. Kayit sayfasi web'de yonetici ve
-                denetci sunar — ikisi de `app.*` rolleridir. */}
+            {/* KAYIT BAGLANTISI YALNIZ `app.*`TA — `panel.*` platform
+                sahibinindir ve oraya yalniz `admin` girer. */}
             {yuzey === "tesis" && (
               <p className="text-center text-sm">
-                <a href="/kayit" className="text-primary underline">
+                <a
+                  href="/kayit"
+                  className="giris-bag inline-block"
+                  style={{ color: TURKUAZ_ACIK }}
+                >
                   {t("kayitBaslik")}
                 </a>
               </p>
             )}
 
             {magazaGoster && (MAGAZA_ANDROID || MAGAZA_IOS) && (
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="flex gap-3 text-sm"
-              >
+              <p className="flex gap-3 text-sm">
                 {MAGAZA_ANDROID && (
                   <a
-                    className="text-brand-teal underline"
+                    className="underline"
+                    style={{ color: TURKUAZ_ACIK }}
                     href={MAGAZA_ANDROID}
                     target="_blank"
                     rel="noreferrer"
@@ -365,7 +470,8 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
                 )}
                 {MAGAZA_IOS && (
                   <a
-                    className="text-brand-teal underline"
+                    className="underline"
+                    style={{ color: TURKUAZ_ACIK }}
                     href={MAGAZA_IOS}
                     target="_blank"
                     rel="noreferrer"
@@ -373,30 +479,47 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
                     {t("girisMagazaIos")}
                   </a>
                 )}
-              </motion.p>
+              </p>
             )}
 
             <motion.button
-              variants={item}
-              whileHover={{ y: -1 }}
-              whileTap={{ y: 1 }}
+              {...(hareketVar
+                ? { initial: { opacity: 0 }, animate: { opacity: 1 },
+                    transition: { delay: GIRIS_SIRASI.cta, duration: 0.5, ease: EGRI_DIZI } }
+                : {})}
+              whileHover={hareketVar ? { y: -1, scale: 1.01 } : undefined}
+              whileTap={hareketVar ? { scale: 0.985 } : undefined}
               type="submit"
-              disabled={loading}
-              className="odak-ters inline-flex w-full items-center justify-center gap-2 rounded-lg bg-brand-tealInk py-2.5 text-sm font-medium text-white shadow-soft transition-shadow hover:shadow-lift disabled:opacity-60"
+              disabled={loading || basarili}
+              className="giris-cta odak-ters inline-flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold transition-shadow disabled:opacity-70"
+              style={{
+                background: CTA_GRADYANI,
+                color: "#04222A",
+                boxShadow: "0 10px 30px rgba(20,200,190,0.20)",
+              }}
             >
-              {loading && (
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+              {basarili ? (
+                <>
+                  {/* ONAY (§40): metin yerine kisa bir tik. */}
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M5 13l4 4L19 7" />
+                  </svg>
+                  {t("girisBasarili")}
+                </>
+              ) : (
+                <>
+                  {loading && (
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-black/25 border-t-black/70" />
+                  )}
+                  {loading ? t("girisYapiliyor") : t("girisYap")}
+                </>
               )}
-              {loading ? t("girisYapiliyor") : t("girisYap")}
             </motion.button>
 
-            {/* (P154 / Asama 4) SOSYAL GIRIS — parola formunun ALTINDA.
-                Ustune koymak, ana yolu (parola) ikincillestirirdi; sosyal
-                giris bir EK yoldur ve saglayici yapilandirilmamissa
-                bilesen HIC cizilmez. */}
-            <motion.div variants={item}>
+            {/* SOSYAL GIRIS — parola formunun ALTINDA (ek yol, ana yol degil). */}
+            <div>
               <SosyalGiris niyet="giris" />
-            </motion.div>
+            </div>
           </motion.form>
         </section>
       </main>

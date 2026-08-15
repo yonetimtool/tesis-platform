@@ -423,6 +423,7 @@ export const ru: Sozluk = {
   girisBeniHatirla: "Запомнить меня",
   girisYap: "Войти",
   girisYapiliyor: "Вход...",
+  girisBasarili: "Вход выполнен",
   girisParolaBelirlemeGerek: "При первом входе задайте пароль в мобильном приложении.",
   girisCalismaAlani: "Рабочее пространство комплекса",
   girisTumRoller: "Управляющий, житель, охрана и персонал",

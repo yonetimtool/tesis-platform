@@ -441,6 +441,7 @@ export const tr = {
   girisBeniHatirla: "Beni hatırla",
   girisYap: "Giriş yap",
   girisYapiliyor: "Giriş yapılıyor...",
+  girisBasarili: "Giriş yapıldı",
   girisParolaBelirlemeGerek: "İlk girişte parolanızı mobil uygulamadan belirlemeniz gerekir.",
   girisCalismaAlani: "Site çalışma alanı",
   girisTumRoller: "Yönetici, sakin, güvenlik ve tesis görevlisi",

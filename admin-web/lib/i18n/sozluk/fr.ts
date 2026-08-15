@@ -423,6 +423,7 @@ export const fr: Sozluk = {
   girisBeniHatirla: "Se souvenir de moi",
   girisYap: "Se connecter",
   girisYapiliyor: "Connexion...",
+  girisBasarili: "Connecté",
   girisParolaBelirlemeGerek: "À la première connexion, définissez votre mot de passe dans l’application mobile.",
   girisCalismaAlani: "Espace de travail du site",
   girisTumRoller: "Gestionnaire, résident, sécurité et personnel",

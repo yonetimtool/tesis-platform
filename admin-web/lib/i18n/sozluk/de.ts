@@ -423,6 +423,7 @@ export const de: Sozluk = {
   girisBeniHatirla: "Angemeldet bleiben",
   girisYap: "Anmelden",
   girisYapiliyor: "Anmeldung läuft...",
+  girisBasarili: "Angemeldet",
   girisParolaBelirlemeGerek: "Beim ersten Anmelden müssen Sie Ihr Passwort in der mobilen App festlegen.",
   girisCalismaAlani: "Arbeitsbereich der Anlage",
   girisTumRoller: "Verwaltung, Bewohner, Sicherheit und Personal",

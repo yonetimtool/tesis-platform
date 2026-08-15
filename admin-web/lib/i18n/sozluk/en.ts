@@ -423,6 +423,7 @@ export const en: Sozluk = {
   girisBeniHatirla: "Remember me",
   girisYap: "Sign in",
   girisYapiliyor: "Signing in...",
+  girisBasarili: "Signed in",
   girisParolaBelirlemeGerek: "On first sign-in you must set your password in the mobile app.",
   girisCalismaAlani: "Site workspace",
   girisTumRoller: "Manager, resident, security and facility staff",

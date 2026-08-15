@@ -423,6 +423,7 @@ export const ar: Sozluk = {
   girisBeniHatirla: "تذكّرني",
   girisYap: "تسجيل الدخول",
   girisYapiliyor: "جارٍ تسجيل الدخول...",
+  girisBasarili: "تم تسجيل الدخول",
   girisParolaBelirlemeGerek: "عند تسجيل الدخول لأول مرة يجب تعيين كلمة المرور من تطبيق الجوال.",
   girisCalismaAlani: "مساحة عمل المجمع",
   girisTumRoller: "المدير والساكن والأمن وموظف المرافق",
