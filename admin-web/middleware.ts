@@ -135,6 +135,10 @@ export const config = {
     "/assets/:path*",
     "/tasks/:path*",
     "/announcements/:path*",
+    // (P162) Site kurali ve etkinlik YONETIM ekranlari — sakin
+    // gorunumlerinden ayri sayfalar, ayri rol kapisi.
+    "/site-kurallari/:path*",
+    "/etkinlik-yonetimi/:path*",
     "/settings/:path*",
     "/reports/:path*",
     // Sonradan eklenen sayfalar — bunlar bir sure KAPI DISINDA kalmisti

@@ -50,6 +50,10 @@ function kilidiOku(): { roller: string[]; satir: Map<string, string[]> } {
  * 403 aliniyorsa ekran BOSTUR, yardimci cagrilarin durumu degistirmez.
  */
 const BIRINCIL_UC: Record<string, string> = {
+  // (P162) Yonetim ekranlari: sakin gorunumleriyle AYNI ucu okurlar ama
+  // yazma da yaparlar; rol kapisi sunucudaki `_MANAGER` ile ayni.
+  "/site-kurallari": "GET /site-rules",
+  "/etkinlik-yonetimi": "GET /events",
   "/dashboard": "GET /dashboard/live",
   "/shifts": "GET /shifts",
   "/checkpoints": "GET /checkpoints",

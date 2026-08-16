@@ -67,6 +67,11 @@ export const TESIS_ROTALARI = [
   "/transparency",
   "/users",
   "/announcements",
+  // (P162) Site kurali ve etkinlik YONETIM ekranlari. Sakin gorunumleri
+  // (`/kurallar`, `/etkinlikler`) ayri kalir — duyurulardaki desenin
+  // aynisi.
+  "/site-kurallari",
+  "/etkinlik-yonetimi",
   "/mesajlar",
   // (P154 / Asama 7.2) `/portal` KALDIRILDI — ozel domain hizmeti
   // sunmuyoruz. Anket yonetimi kendi sayfasina tasindi.
@@ -307,6 +312,11 @@ export const ROTA_ROLLERI: Record<string, readonly string[]> = {
   "/transparency": ["admin", "yonetici", "denetci"],
   "/users": ["admin", "yonetici"],
   "/announcements": ["admin", "yonetici"],
+  // (P162) Sunucudaki `_MANAGER` ile AYNI kume (site_rules + events).
+  // Ayrisirlarsa ya yetkisiz kullaniciya dugme gosterilir ya da yetkili
+  // kullanici sayfayi hic goremez.
+  "/site-kurallari": ["admin", "yonetici"],
+  "/etkinlik-yonetimi": ["admin", "yonetici"],
   "/mesajlar": ["admin", "yonetici"],
   // (P155 §7) Davet gonderim durumu — yalniz yonetici/admin.
   "/davetler": ["admin", "yonetici"],

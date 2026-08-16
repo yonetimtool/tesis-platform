@@ -197,6 +197,17 @@ const OGELER: readonly MenuOgesi[] = [
 
   // --- ILETISIM: siteye seslenme + sakinden gelen -----------------------
   { href: "/announcements", anahtar: "kabukDuyurular", icon: "megaphone", grup: "iletisim" },
+  // (P162) SITE KURALI ve ETKINLIK YONETIMI — `iletisim` grubunda, TESIS
+  // grubunda DEGIL. Iki gerekce:
+  //
+  //  1. ANLAM: ucu de yonetimin SAKINE YAYINLADIGI icerik. Duyuru
+  //     yonetimi zaten burada; kural ve etkinlik ondan farkli degil.
+  //  2. OLCUM: `tesis` grubu zaten en kalabalik olan. Iki satir daha
+  //     eklemek acilistaki gorunur satiri 13'e cikariyordu ve
+  //     `menu-gruplari` testi (P133.1: en cok 12) hakli olarak dustu.
+  //     Bu bir bicim kurali degil, kaydirma cubugunu onleyen bir butce.
+  { href: "/site-kurallari", anahtar: "kabukKuralYonetimi", icon: "check", grup: "iletisim" },
+  { href: "/etkinlik-yonetimi", anahtar: "kabukEtkinlikYonetimi", icon: "clock", grup: "iletisim" },
   { href: "/duyurular", anahtar: "kabukDuyurularim", icon: "megaphone", grup: "iletisim" },
   { href: "/mesajlar", anahtar: "kabukMesajlar", icon: "megaphone", grup: "iletisim" },
   // (P154 / Asama 7.1) Brief: "SMS gonderimi · WhatsApp · E-posta

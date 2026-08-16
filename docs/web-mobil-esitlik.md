@@ -37,8 +37,8 @@ nereye bakılacağını söyledi.
 | Kargo | ekle | ekle · düzenle | ⚠️ mobilde teslim güncellemesi var |
 | Talep / şikayet | aç · çöz/reddet | aç · çöz | ✅ eşit |
 | Duyuru | düzenle · sil (**ekleme yok**) | ekle · düzenle · sil | ⛔ **bilinçli** — `auth.md §4`: `POST /announcements` admin'e 403; duyuru site yöneticisine ait (mobil) |
-| Site kuralı | **yalnız okuma** | ekle · düzenle · sil | ⛔ **açık fark** — aşağıya bakın |
-| Etkinlik | **yalnız okuma** | ekle · düzenle · sil · RSVP | ⛔ **açık fark** — aşağıya bakın |
+| Site kuralı | ekle · düzenle · sil (`/site-kurallari`) | ekle · düzenle · sil | ✅ **P162'de kapandı** |
+| Etkinlik | ekle · düzenle · sil (`/etkinlik-yonetimi`) | ekle · düzenle · sil · RSVP | ✅ **P162'de kapandı** (RSVP sakin işi) |
 | Finans / gelir-gider | ekle | — | ✅ web daha zengin |
 | İcra dosyası | ekle · düzenle | — | ✅ web daha zengin |
 | Tanımlar (firma, personel, araç, sayaç, kasa) | ekle · düzenle · sil | kısmi | ✅ web daha zengin |
@@ -46,22 +46,6 @@ nereye bakılacağını söyledi.
 | Dış hizmet | ekle | ekle · düzenle · sil | ⚠️ mobilde düzenleme/silme var |
 
 ## Kapatılmayan farklar ve nedeni
-
-### Site kuralı ve etkinlik — web'de yönetim ekranı YOK
-
-Ölçüm: `/kurallar` ve `/etkinlikler` sayfalarının ikisinde de **hiç
-`apiSend` çağrısı yok**; uçlar (`POST/PATCH/DELETE /site-rules`,
-`/events`) ve mobil istemci ise tam CRUD yapıyor.
-
-Bu turda kapatmaya çalıştım ve **yanlış yaptım**: yazma düğmelerini
-`/kurallar` sayfasına ekledim. `tests/sakin-okuma.dom.test.ts` bunu
-düşürdü ve haklıydı — o sayfa **sakin görünümüdür** (P126.3), yönetim
-ekranı değil. Sakine, basınca 403 alacağı bir düğme göstermek "yetkim var
-sandım" demektir. Değişiklik geri alındı.
-
-Doğru kapanış, duyurularda olduğu gibi **ayrı bir yönetim sayfası**
-açmaktır (`/duyurular` sakin ↔ `/announcements` yönetim). Bu iki yeni
-ekran demek ve bu turda yapılmadı.
 
 ### Ziyaretçi / kargo / dış hizmet güncellemeleri
 
@@ -73,3 +57,18 @@ Mobilde var, webde yok. Küçük farklar; kapatılmadı.
 2. **Sakin oluştururken daire ataması** (`5a76ae49`) — webde iki adım
    gerekiyordu; artık tek adımda, `POST /users` ardından
    `POST /units/{id}/residents`. Sözleşme değişmedi.
+3. **Site kuralı ve etkinlik yönetimi** — iki yeni sayfa:
+   `/site-kurallari` ve `/etkinlik-yonetimi`, rol kapısı
+   `["admin", "yonetici"]` (sunucudaki `_MANAGER` ile aynı küme).
+
+   **Bir kez yanlış yaptım ve test yakaladı:** yazma düğmelerini önce
+   sakin sayfasına (`/kurallar`) eklemiştim; `sakin-okuma` kilidi haklı
+   olarak düşürdü. Doğru desen depoda zaten vardı —
+   `/duyurular` (sakin) ↔ `/announcements` (yönetim) — ve bu iki sayfa
+   onun aynısı.
+
+   Menüde `tesis` değil **`iletişim`** grubuna kondular: hem anlamca
+   (üçü de yönetimin sakine yayınladığı içerik, duyuru yönetimi zaten
+   orada) hem de ölçümle — `tesis` grubuna eklemek açılıştaki görünür
+   satırı 13'e çıkarıyordu ve `menu-gruplari` bütçesi (en çok 12)
+   düşüyordu.
