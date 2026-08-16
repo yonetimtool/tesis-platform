@@ -8,7 +8,11 @@ import '../domain/rezervasyon_models.dart';
 
 String rezDurumAdi(AppLocalizations l10n, RezervasyonDurum d) => switch (d) {
       RezervasyonDurum.onaylandi => l10n.rezDurumOnayli,
-      RezervasyonDurum.iptal => l10n.ortakIptal,
+      // (P165 §3) DURUM ETIKETI EMIR KIPINDE OLMAZ. `ortakIptal` ("Iptal")
+      // dugme metnidir; ayni sozcugu durum rozetinde kullanmak, olup
+      // biteni degil YAPILACAK ISI anlatiyordu. Web'de zaten "Iptal
+      // edildi" yaziyor — mobil ona hizalandi.
+      RezervasyonDurum.iptal => l10n.rezIptalEdildi,
       RezervasyonDurum.unknown => l10n.devriyeDurumBilinmiyor,
     };
 

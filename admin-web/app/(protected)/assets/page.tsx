@@ -387,7 +387,7 @@ export default function AssetsPage() {
         bosBaslik={t("demirbasYok")}
         bosAciklama={t("demirbasYokAlt")}
         sunucuTarafli
-        toplam={data?.meta.total ?? 0}
+        toplam={data?.meta?.total ?? 0}
         durum={tabloDurumu}
         onDurumDegisti={setTabloDurumu}
       />

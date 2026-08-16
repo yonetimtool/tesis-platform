@@ -314,6 +314,7 @@ GET    /units                                               IZIN   IZIN   IZIN  
 POST   /units                                               IZIN   IZIN   RED    RED    RED    RED    RED   
 POST   /units/bulk                                          IZIN   IZIN   RED    RED    RED    RED    RED   
 GET    /units/by-no/{unit_no}/residents                     IZIN   IZIN   IZIN   RED    RED    RED    RED   
+GET    /units/kat-onizleme                                  IZIN   IZIN   RED    RED    RED    RED    RED   
 POST   /units/kat-sil                                       IZIN   IZIN   RED    RED    RED    RED    RED   
 PATCH  /units/siralama                                      IZIN   IZIN   RED    RED    RED    RED    RED   
 PATCH  /units/toplu                                         IZIN   IZIN   RED    RED    RED    RED    RED   

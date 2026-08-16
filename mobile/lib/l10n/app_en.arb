@@ -1562,5 +1562,22 @@
   "ortakAktif": "Active",
   "ortakPasif": "Inactive",
   "binaBaslangicKat": "Start floor",
-  "binaBaslangicKatIpucu": "Negative for basements: -2, -1, 0 (ground), 1…"
+  "binaBaslangicKatIpucu": "Negative for basements: -2, -1, 0 (ground), 1…",
+  "rezSekmeGecmis": "Past",
+  "rezGecmisYok": "No past reservations.",
+  "rezGecmisTamam": "Completed",
+  "rezIptalEden": "Cancelled by: {ad}",
+  "@rezIptalEden": {
+    "placeholders": {
+      "ad": {
+        "type": "String"
+      }
+    }
+  },
+  "binaKatBos": "No units on this floor; deleting affects no records.",
+  "binaKatOzet": "{daire} units · {sakin} residents · {talep} open complaints",
+  "binaKatOzetMali": "{tahakkuk} assessments · {odeme} payments · {rezervasyon} reservations",
+  "binaKatMaliUyari": "This floor has dues records. Deleting it permanently removes assessments and payments; the accounting trail cannot be restored. Consider deactivating the units instead.",
+  "binaKatOnayYaz": "Type the floor number to confirm ({kat})",
+  "binaKatSilOzetOnay": "Floor {kat} of block {blok} will be deleted: {daire} units, {sakin} residents and {kayit} linked records are removed permanently. This cannot be undone."
 }

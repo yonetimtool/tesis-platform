@@ -1562,5 +1562,22 @@
   "ortakAktif": "Aktiv",
   "ortakPasif": "Inaktiv",
   "binaBaslangicKat": "Startetage",
-  "binaBaslangicKatIpucu": "Negativ für Untergeschosse: -2, -1, 0 (EG), 1…"
+  "binaBaslangicKatIpucu": "Negativ für Untergeschosse: -2, -1, 0 (EG), 1…",
+  "rezSekmeGecmis": "Vergangen",
+  "rezGecmisYok": "Keine vergangenen Reservierungen.",
+  "rezGecmisTamam": "Abgeschlossen",
+  "rezIptalEden": "Storniert von: {ad}",
+  "@rezIptalEden": {
+    "placeholders": {
+      "ad": {
+        "type": "String"
+      }
+    }
+  },
+  "binaKatBos": "Keine Wohnungen auf dieser Etage; das Löschen betrifft keine Daten.",
+  "binaKatOzet": "{daire} Wohnungen · {sakin} Bewohner · {talep} offene Beschwerden",
+  "binaKatOzetMali": "{tahakkuk} Sollstellungen · {odeme} Zahlungen · {rezervasyon} Reservierungen",
+  "binaKatMaliUyari": "Auf dieser Etage gibt es Beitragsdaten. Beim Löschen gehen Sollstellungen und Zahlungen dauerhaft verloren; die Buchungsspur ist nicht wiederherstellbar. Erwägen Sie stattdessen eine Deaktivierung.",
+  "binaKatOnayYaz": "Zum Bestätigen die Etagennummer eingeben ({kat})",
+  "binaKatSilOzetOnay": "Etage {kat} in Block {blok} wird gelöscht: {daire} Wohnungen, {sakin} Bewohner und {kayit} verknüpfte Datensätze werden dauerhaft entfernt. Nicht rückgängig zu machen."
 }

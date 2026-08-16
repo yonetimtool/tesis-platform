@@ -129,3 +129,31 @@ iki yerde tutmak olurdu.
    orada) hem de ölçümle — `tesis` grubuna eklemek açılıştaki görünür
    satırı 13'e çıkarıyordu ve `menu-gruplari` bütçesi (en çok 12)
    düşüyordu.
+
+## P165 — iki fark daha kapandı (ikisi de MOBİL tarafta)
+
+P165 web tarafında iki yeni davranış getirdi; ölçüm, ikisinin de mobilde
+karşılığı olmadığını gösterdi. Brief'in kısıtı açıktı: *"web ve mobil
+davranışı aynı olacak"*.
+
+| Yetenek | Web | Mobil | Durum |
+|---|---|---|---|
+| Kat silme **etki özeti** (`/units/kat-onizleme`) | ✅ | ✅ **P165'te eklendi** | eşit |
+| Mali kayıtta **ikinci kapı** (kat no yazma) | ✅ | ✅ **P165'te eklendi** | eşit |
+| Rezervasyon **Aktif / Geçmiş** ayrımı (`?gecmis=`) | ✅ | ✅ **P165'te eklendi** | eşit |
+| Geçmiş kayıtta "İptal et" görünmez | ✅ | ✅ **P165'te eklendi** | eşit |
+
+**Metinler tek kaynaktan.** Mobil arb'lere eklenen altı anahtarın yedi
+dildeki karşılığı web sözlüğünden (`admin-web/lib/i18n/sozluk/*.ts`)
+kopyalandı. Aynı cümlenin iki yüzeyde farklı çevirisi olması, "davranış
+aynı" kısıtını metin düzeyinde bozardı — kullanıcı için ekranda gördüğü
+cümle davranışın kendisidir.
+
+### Ölçüm burada da beklenmedik bir kusur buldu
+
+Mobilde "Katı sil", **bir bloğa girilmeden** (üst seviyeden) açıldığında
+`blok` alanını **boş** gönderiyordu. Uç `blok`u zorunlu tutuyor
+(`min_length=1`), yani işlem her seferinde 422 ile düşüyordu — kullanıcı
+sebebini anlamadığı bir hata alıyordu. Webde modalın ilk alanı zaten blok
+seçimi; mobil ona hizalandı (blok seçilene kadar "Sil" kapalı, kat listesi
+de çizilmez).

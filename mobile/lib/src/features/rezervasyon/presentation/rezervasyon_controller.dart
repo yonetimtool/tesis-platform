@@ -15,6 +15,9 @@ class RezervasyonState {
     this.hataKimligi,
     this.alanlar = const [],
     this.items = const [],
+    this.gecmisItems = const [],
+    this.gecmisYuklendi = false,
+    this.gecmisLoading = false,
     this.canManageAreas = false,
     this.canRequest = false,
     this.currentUserId,
@@ -31,9 +34,28 @@ class RezervasyonState {
   /// (sunucu daraltir).
   final List<OrtakAlan> alanlar;
 
-  /// Sunucu sirasi: created_at DESC. Sakin icin sunucu zaten YALNIZ kendi
-  /// dairesinin rezervasyonlarini doner.
+  /// AKTIF rezervasyonlar (suren + gelecek). Sunucu sirasi: created_at
+  /// DESC. Sakin icin sunucu zaten YALNIZ kendi dairesinin
+  /// rezervasyonlarini doner.
   final List<Rezervasyon> items;
+
+  /// (P165) GECMIS rezervasyonlar — bitis saati gecmis olanlar.
+  ///
+  /// AYRI ISTEK, yerel suzgec DEGIL: `gecmis=true` sunucuda ayrica
+  /// TESISIN SAKLAMA PENCERESINI uygular (`rezervasyon_gecmis_ay`).
+  /// Tek listeyi istemcide bolmek, o pencereyi atlamak olurdu.
+  final List<Rezervasyon> gecmisItems;
+
+  /// Gecmis listesi BIR KEZ cekildi mi (TEMBEL YUKLEME).
+  ///
+  /// Her tazelemede iki istek atmak, gecmise hic bakmayan kullanicilarda da
+  /// trafigi ikiye katlardi. Web de yalniz ACIK sekmeyi ceker (SWR anahtari
+  /// sekmeye bagli) — davranis ayni.
+  final bool gecmisYuklendi;
+
+  /// Gecmis sekmesi kendi basina yukleniyor (ana `loading`den AYRI: aktif
+  /// liste ekranda dururken gecmis yukleniyor olabilir).
+  final bool gecmisLoading;
 
   /// Rol admin/yonetici mi — alan olustur/duzenle. Yalniz UX kapisi;
   /// gercek yetki backend RBAC'ta.
@@ -56,6 +78,16 @@ class RezervasyonState {
   /// YAPMAZ: aksi halde slota yakin/gecmis kayitlarda buton sessizce gizlenir
   /// ("neden iptal edemiyorum?"). Buton kendi aktif rezervasyonunda hep gorunur.
   bool canCancel(Rezervasyon r) {
+    // (P165 §3) GECMIS REZERVASYON IPTAL EDILEMEZ.
+    //
+    // Bildirilen kusur: saati gecmis kayitlarin altinda "Iptal et"
+    // duruyordu. `r.gecmis` SUNUCUNUN hesapladigi bayrak — cihaz saatine
+    // guvenilmez ve `tarih + bitis` ancak tesisin saat diliminde bir ANA
+    // donusur.
+    //
+    // SEKMEYE BAKMAK YETMEZ: sayfa acikken bitis saati gecebilir; kosul
+    // kaydin KENDI bayragi.
+    if (r.gecmis) return false;
     if (!r.onayli) return false;
     return canRequest && r.talepEdenUserId == currentUserId;
   }
@@ -70,6 +102,9 @@ class RezervasyonState {
     Object? hataKimligi = _sentinel,
     List<OrtakAlan>? alanlar,
     List<Rezervasyon>? items,
+    List<Rezervasyon>? gecmisItems,
+    bool? gecmisYuklendi,
+    bool? gecmisLoading,
     bool? canManageAreas,
     bool? canRequest,
     Object? currentUserId = _sentinel,
@@ -85,6 +120,9 @@ class RezervasyonState {
           : hataKimligi as AkisHatasi?,
       alanlar: alanlar ?? this.alanlar,
       items: items ?? this.items,
+      gecmisItems: gecmisItems ?? this.gecmisItems,
+      gecmisYuklendi: gecmisYuklendi ?? this.gecmisYuklendi,
+      gecmisLoading: gecmisLoading ?? this.gecmisLoading,
       canManageAreas: canManageAreas ?? this.canManageAreas,
       canRequest: canRequest ?? this.canRequest,
       currentUserId: currentUserId == _sentinel
@@ -102,6 +140,7 @@ class RezervasyonState {
 /// (ApiException yukari firlatilir — orn. cakisma 409'u).
 class RezervasyonController extends Notifier<RezervasyonState> {
   bool _refreshing = false;
+  bool _gecmisYukleniyor = false;
 
   @override
   RezervasyonState build() {
@@ -120,8 +159,11 @@ class RezervasyonController extends Notifier<RezervasyonState> {
       final alanlar = await api.fetchAreas();
       // Saha rolleri /reservations goremez (403) — bu ekran zaten menude yok;
       // yine de savunmaci: rol izinliyse cek.
+      // (P165) AKTIF LISTE `gecmis=false` ILE CEKILIR — istemci suzgeci
+      // DEGIL. Ayrim sunucuda ve TESISIN saat diliminde yapilir; cihaz
+      // saati yanlis kurulu olabilir.
       final items = role.canViewReservations
-          ? await api.fetchReservations()
+          ? await api.fetchReservations(gecmis: false)
           : <Rezervasyon>[];
       if (!ref.mounted) return;
       state = state.copyWith(
@@ -150,6 +192,53 @@ class RezervasyonController extends Notifier<RezervasyonState> {
       );
     } finally {
       _refreshing = false;
+    }
+    // GECMIS ZATEN ACILDIYSA O DA TAZELENIR. Acilmadiysa istek atilmaz —
+    // tembel yuklemenin butun amaci bu.
+    if (state.gecmisYuklendi) await gecmisTazele(zorla: true);
+  }
+
+  /// (P165 §3) GECMIS LISTESI — SEKME ACILINCA cekilir.
+  ///
+  /// [zorla] false ise bir kez cekildikten sonra tekrar istek atmaz
+  /// (sekmeler arasi gidip gelmek trafige donusmez).
+  ///
+  /// AYRI ISTEK, YEREL SUZGEC DEGIL: `gecmis=true` sunucuda ayrica TESISIN
+  /// SAKLAMA PENCERESINI uygular (`rezervasyon_gecmis_ay`, goc 0054). Tek
+  /// listeyi istemcide bolmek o pencereyi atlamak olurdu.
+  Future<void> gecmisTazele({bool zorla = false}) async {
+    if (_gecmisYukleniyor) return;
+    if (state.gecmisYuklendi && !zorla) return;
+    _gecmisYukleniyor = true;
+    state = state.copyWith(gecmisLoading: true);
+    try {
+      final role = await ref.read(currentUserRoleProvider.future);
+      final liste = role.canViewReservations
+          ? await ref.read(rezervasyonApiProvider).fetchReservations(gecmis: true)
+          : <Rezervasyon>[];
+      if (!ref.mounted) return;
+      state = state.copyWith(
+        gecmisItems: liste,
+        gecmisYuklendi: true,
+        gecmisLoading: false,
+      );
+    } on ApiException catch (e) {
+      if (!ref.mounted) return;
+      // HATA ANA KANALDAN gosterilir; `gecmisYuklendi` FALSE kalir ki
+      // kullanici sekmeye donunce yeniden denensin.
+      state = state.copyWith(
+        gecmisLoading: false,
+        errorMessage: e.message,
+        hataKimligi: e.agHatasi,
+      );
+    } catch (_) {
+      if (!ref.mounted) return;
+      state = state.copyWith(
+        gecmisLoading: false,
+        hataKimligi: AkisHatasi.beklenmeyen,
+      );
+    } finally {
+      _gecmisYukleniyor = false;
     }
   }
 

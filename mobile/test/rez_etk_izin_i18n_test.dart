@@ -46,7 +46,10 @@ class _FakeRezApi extends RezervasyonApi {
   Future<List<OrtakAlan>> fetchAreas() async => _alanlar;
 
   @override
-  Future<List<Rezervasyon>> fetchReservations() async => _items;
+  // (P165) `gecmis` suzgeci EKLENDI: sahte istemci de imzayi tasimali.
+  // Sahte veri tek liste; suzgec YOK SAYILIR — testler aktif/gecmis
+  // ayrimini degil, ekranin geri kalanini olcuyor.
+  Future<List<Rezervasyon>> fetchReservations({bool? gecmis}) async => _items;
 
   @override
   Future<List<Slot>> fetchSlots(String alanId, String date) async => _slots;

@@ -312,7 +312,7 @@ export default function TaskReportPage() {
               bosBaslik={t("raporTamamlamaYok")}
               bosAciklama={t("raporSonucYok")}
               sunucuTarafli
-              toplam={data?.meta.total ?? 0}
+              toplam={data?.meta?.total ?? 0}
               durum={tabloDurumu}
               onDurumDegisti={setTabloDurumu}
             />

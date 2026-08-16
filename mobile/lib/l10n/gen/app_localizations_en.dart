@@ -5108,4 +5108,52 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get binaBaslangicKatIpucu =>
       'Negative for basements: -2, -1, 0 (ground), 1…';
+
+  @override
+  String get rezSekmeGecmis => 'Past';
+
+  @override
+  String get rezGecmisYok => 'No past reservations.';
+
+  @override
+  String get rezGecmisTamam => 'Completed';
+
+  @override
+  String rezIptalEden(String ad) {
+    return 'Cancelled by: $ad';
+  }
+
+  @override
+  String get binaKatBos =>
+      'No units on this floor; deleting affects no records.';
+
+  @override
+  String binaKatOzet(int daire, int sakin, int talep) {
+    return '$daire units · $sakin residents · $talep open complaints';
+  }
+
+  @override
+  String binaKatOzetMali(int tahakkuk, int odeme, int rezervasyon) {
+    return '$tahakkuk assessments · $odeme payments · $rezervasyon reservations';
+  }
+
+  @override
+  String get binaKatMaliUyari =>
+      'This floor has dues records. Deleting it permanently removes assessments and payments; the accounting trail cannot be restored. Consider deactivating the units instead.';
+
+  @override
+  String binaKatOnayYaz(int kat) {
+    return 'Type the floor number to confirm ($kat)';
+  }
+
+  @override
+  String binaKatSilOzetOnay(
+    String blok,
+    int kat,
+    int daire,
+    int sakin,
+    int kayit,
+  ) {
+    return 'Floor $kat of block $blok will be deleted: $daire units, $sakin residents and $kayit linked records are removed permanently. This cannot be undone.';
+  }
 }

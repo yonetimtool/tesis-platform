@@ -88,7 +88,12 @@ class RezervasyonApi {
     }
   }
 
-  Future<List<Rezervasyon>> fetchReservations() async {
+  /// (P165) `gecmis`: `true` = bitis saati gecmisler, `false` = aktif
+  /// (suren + gelecek), `null` = hepsi.
+  ///
+  /// SUZGEC SUNUCUDA: cihaz saatine guvenilmez ve `gecmis=true` ayrica
+  /// tesisin SAKLAMA PENCERESINI uygular (bkz. `rezervasyon_gecmis_ay`).
+  Future<List<Rezervasyon>> fetchReservations({bool? gecmis}) async {
     final out = <Rezervasyon>[];
     var offset = 0;
     const limit = 200;
@@ -96,7 +101,11 @@ class RezervasyonApi {
       while (true) {
         final res = await _dio.get<Map<String, dynamic>>(
           '/reservations',
-          queryParameters: {'limit': limit, 'offset': offset},
+          queryParameters: {
+            'limit': limit,
+            'offset': offset,
+            'gecmis': ?gecmis,
+          },
         );
         final items = res.data?['items'];
         if (items is! List || items.isEmpty) break;

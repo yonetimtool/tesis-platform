@@ -4920,4 +4920,51 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get binaBaslangicKatIpucu =>
       'Bodrum için negatif: -2, -1, 0 (zemin), 1…';
+
+  @override
+  String get rezSekmeGecmis => 'Geçmiş';
+
+  @override
+  String get rezGecmisYok => 'Geçmiş rezervasyon yok.';
+
+  @override
+  String get rezGecmisTamam => 'Tamamlandı';
+
+  @override
+  String rezIptalEden(String ad) {
+    return 'İptal eden: $ad';
+  }
+
+  @override
+  String get binaKatBos => 'Bu katta daire yok; silmek bir kaydı etkilemez.';
+
+  @override
+  String binaKatOzet(int daire, int sakin, int talep) {
+    return '$daire daire · $sakin sakin · $talep açık şikayet';
+  }
+
+  @override
+  String binaKatOzetMali(int tahakkuk, int odeme, int rezervasyon) {
+    return '$tahakkuk tahakkuk · $odeme tahsilat · $rezervasyon rezervasyon';
+  }
+
+  @override
+  String get binaKatMaliUyari =>
+      'Bu katta aidat kaydı var. Silinirse tahakkuk ve tahsilat kayıtları da kalıcı olarak gider; muhasebe izi geri getirilemez. Daireleri silmek yerine pasifleştirmeyi değerlendirin.';
+
+  @override
+  String binaKatOnayYaz(int kat) {
+    return 'Onaylamak için kat numarasını yazın ($kat)';
+  }
+
+  @override
+  String binaKatSilOzetOnay(
+    String blok,
+    int kat,
+    int daire,
+    int sakin,
+    int kayit,
+  ) {
+    return '$blok bloğu $kat. kat silinecek: $daire daire, $sakin sakin ve $kayit bağlı kayıt kalıcı olarak gider. Bu işlem geri alınamaz.';
+  }
 }

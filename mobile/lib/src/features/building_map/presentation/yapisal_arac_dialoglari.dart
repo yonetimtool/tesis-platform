@@ -52,11 +52,78 @@ class _KatSilDialogState extends ConsumerState<KatSilDialog> {
   String? _hata;
   bool _mesgul = false;
 
+  /// Ust seviyeden acildiginda kullanicinin sectigi blok; bir blogun
+  /// icindeyken kullanilmaz ([_etkinBlok]).
+  String? _blok;
+
+  /// Uzerinde calisilan blok — acik blok varsa O, yoksa secilen.
+  String? get _etkinBlok {
+    final acik = widget.blok;
+    if (acik != null && acik.isNotEmpty) return acik;
+    final secilen = _blok;
+    return (secilen != null && secilen.isNotEmpty) ? secilen : null;
+  }
+
+  /// (P165) SUNUCUNUN ETKI OZETI — `null` = henuz sorulmadi/gelmedi.
+  ///
+  /// Yerel sayim (`daireler.where(kat)`) YALNIZ DAIREYI bilir; sakini,
+  /// tahakkugu, talebi BILMEZ — oysa kaybedilen esas sey onlar.
+  KatOnizleme? _onizleme;
+  bool _onizlemeYukleniyor = false;
+
+  /// Kacinci istegin cevabi bekleniyor — kullanici kati hizli degistirirse
+  /// ONCEKI istek sonradan donup YANLIS ozeti yazabilirdi.
+  int _istekSayaci = 0;
+
+  /// Mali kayit varken IKINCI KAPI: kat numarasi ELLE yazilir.
+  final _onayCtrl = TextEditingController();
+
+  /// Ikinci kapi acildi mi — buton bunun uzerinden kilitlenir.
+  bool get _kapiAcik {
+    if (_onizleme?.maliKayit != true) return true;
+    return _onayCtrl.text.trim() == '${_kat ?? ''}';
+  }
+
+  @override
+  void dispose() {
+    _onayCtrl.dispose();
+    super.dispose();
+  }
+
+  /// Kat secilince ozeti ceker. BLOK YOKSA ISTEK ATILMAZ: uc `blok`u
+  /// zorunlu tutar (min_length=1) ve bos gondermek 422 demekti.
+  Future<void> _onizlemeCek(int kat) async {
+    final blok = _etkinBlok;
+    if (blok == null) return;
+    final sira = ++_istekSayaci;
+    setState(() => _onizlemeYukleniyor = true);
+    try {
+      final ozet = await ref
+          .read(binaDuzenlemeApiProvider)
+          .fetchKatOnizleme(blok: blok, kat: kat);
+      if (!mounted || sira != _istekSayaci) return;
+      setState(() {
+        _onizleme = ozet;
+        _onizlemeYukleniyor = false;
+      });
+    } on ApiException catch (e) {
+      if (!mounted || sira != _istekSayaci) return;
+      // OZET GELMEZSE SILME ENGELLENMEZ ama SESSIZ de kalmaz: kullanici
+      // ozetsiz karar verdigini bilmeli.
+      setState(() {
+        _onizleme = null;
+        _onizlemeYukleniyor = false;
+        _hata = e.message;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final state = ref.watch(binaDuzenlemeControllerProvider);
-    final daireler = _daireler(state, widget.blok);
+    final blok = _etkinBlok;
+    final daireler = blok == null ? const <EditorUnit>[] : _daireler(state, blok);
     // KATLAR VERIDEN: elle sayi yazdirmak, olmayan bir kati silmeye
     // calismak demekti. Yalnizca GERCEKTEN VAR OLAN katlar listelenir.
     final katlar = <int>{
@@ -74,7 +141,34 @@ class _KatSilDialogState extends ConsumerState<KatSilDialog> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (katlar.isEmpty)
+          // BLOK SECIMI — ust seviyeden acildiginda (bir bloga girilmeden).
+          //
+          // ONCE YOKTU ve islem SESSIZCE 422 aliyordu: uc `blok`u zorunlu
+          // tutuyor (`min_length=1`), diyalog ise bos gonderiyordu. Web'de
+          // modalin ilk alani zaten blok secimi — mobil ona hizalandi.
+          if (widget.blok == null || widget.blok!.isEmpty) ...[
+            DropdownButtonFormField<String>(
+              initialValue: _blok,
+              decoration: InputDecoration(labelText: l10n.binaBlokEtiketi),
+              items: [
+                for (final b in state.blocks)
+                  DropdownMenuItem(value: b.ad, child: Text(b.ad)),
+              ],
+              onChanged: (v) => setState(() {
+                _blok = v;
+                _kat = null;
+                _onizleme = null;
+                _hata = null;
+                _onayCtrl.clear();
+              }),
+            ),
+            const SizedBox(height: 12),
+          ],
+          // Blok secilene kadar kat listesi CIZILMEZ: baska bir blogun
+          // katlarini gostermek, yanlis kati secmeye davet olurdu.
+          if (blok == null)
+            const SizedBox.shrink()
+          else if (katlar.isEmpty)
             Text(l10n.binaKatYok)
           else
             DropdownButtonFormField<int>(
@@ -87,16 +181,79 @@ class _KatSilDialogState extends ConsumerState<KatSilDialog> {
                     child: Text(l10n.binaKatEtiket(k)),
                   ),
               ],
-              onChanged: (v) => setState(() {
-                _kat = v;
-                _hata = null;
-              }),
+              onChanged: (v) {
+                setState(() {
+                  _kat = v;
+                  _hata = null;
+                  _onizleme = null;
+                  _onayCtrl.clear();
+                });
+                if (v != null) _onizlemeCek(v);
+              },
             ),
-          if (_kat != null) ...[
+          // YEREL SAYIM YALNIZ OZET YOKKEN: sunucunun ozeti geldiginde ayni
+          // sayiyi iki kez yazmak (ve ikisi ayrisirsa hangisinin dogru
+          // oldugunu tartistirmak) gereksiz.
+          if (_kat != null && _onizleme == null) ...[
             const SizedBox(height: 12),
             // NE SILINECEGI ACIKCA YAZAR: "kati sil" tek basina kac
             // dairenin gidecegini soylemiyordu.
             Text(l10n.binaKatSilOzet(silinecek)),
+          ],
+          // (P165) ETKI OZETI — brief'in kurali: "kullanici ne
+          // kaybedecegini SILMEDEN ONCE gorsun". Web'deki ile AYNI
+          // kademeler: bos kat · daireli ama mali kayitsiz · mali kayitli.
+          if (_kat != null && _onizlemeYukleniyor && _onizleme == null) ...[
+            const SizedBox(height: 12),
+            const SizedBox(
+              height: 16,
+              width: 16,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          ] else if (_onizleme != null) ...[
+            const SizedBox(height: 8),
+            if (_onizleme!.bos)
+              // BOS KAT: kaybedilecek bir sey yok, tek onayla gider.
+              Text(
+                l10n.binaKatBos,
+                style: Theme.of(context).textTheme.bodySmall,
+              )
+            else ...[
+              Text(l10n.binaKatOzet(
+                _onizleme!.daire,
+                _onizleme!.sakin,
+                _onizleme!.talep,
+              )),
+              const SizedBox(height: 2),
+              Text(
+                l10n.binaKatOzetMali(
+                  _onizleme!.tahakkuk,
+                  _onizleme!.odeme,
+                  _onizleme!.rezervasyon,
+                ),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              if (_onizleme!.maliKayit) ...[
+                const SizedBox(height: 8),
+                // MALI KAYIT AYRI UYARI: sakin ya da talep yeniden
+                // olusturulabilir, bir TAHSILAT KAYDI olusturulamaz.
+                Text(
+                  l10n.binaKatMaliUyari,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+                const SizedBox(height: 8),
+                // IKINCI KAPI: islev KALDIRILMADI (silme hala mumkun);
+                // yalnizca KAZAYLA olmasi engellendi.
+                TextField(
+                  controller: _onayCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: l10n.binaKatOnayYaz(_kat!),
+                  ),
+                  onChanged: (_) => setState(() {}),
+                ),
+              ],
+            ],
           ],
           if (_hata != null) ...[
             const SizedBox(height: 12),
@@ -113,7 +270,10 @@ class _KatSilDialogState extends ConsumerState<KatSilDialog> {
           child: Text(l10n.ortakIptal),
         ),
         FilledButton(
-          onPressed: (_kat == null || _mesgul) ? null : _sil,
+          // MALI KAYIT VARSA kat numarasi yazilmadan dugme ACILMAZ.
+          onPressed: (_kat == null || _etkinBlok == null || _mesgul || !_kapiAcik)
+              ? null
+              : _sil,
           child: Text(l10n.ortakSil),
         ),
       ],
@@ -128,7 +288,24 @@ class _KatSilDialogState extends ConsumerState<KatSilDialog> {
       context: context,
       builder: (c) => AlertDialog(
         title: Text(l10n.ortakEminMisiniz),
-        content: Text(l10n.binaKatSilOnay(_kat!)),
+        // ONAY METNI SOMUT: "kati sil" tek basina kac dairenin, kac
+        // sakinin gidecegini soylemiyordu. Ozet gelmediyse (blok-suz mod
+        // ya da ag hatasi) eski GENEL metin kullanilir — onaysiz birakmak
+        // degil, az bilgiyle onaylatmak.
+        content: Text(
+          _onizleme == null
+              ? l10n.binaKatSilOnay(_kat!)
+              : l10n.binaKatSilOzetOnay(
+                  _etkinBlok ?? '',
+                  _kat!,
+                  _onizleme!.daire,
+                  _onizleme!.sakin,
+                  _onizleme!.tahakkuk +
+                      _onizleme!.odeme +
+                      _onizleme!.talep +
+                      _onizleme!.rezervasyon,
+                ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(c).pop(false),
@@ -147,7 +324,7 @@ class _KatSilDialogState extends ConsumerState<KatSilDialog> {
     try {
       await ref
           .read(binaDuzenlemeControllerProvider.notifier)
-          .deleteFloor(blok: widget.blok ?? '', kat: _kat!);
+          .deleteFloor(blok: _etkinBlok!, kat: _kat!);
       if (mounted) Navigator.of(context).pop();
     } on ApiException catch (e) {
       // Sunucu mesaji EKRANDA kalir; diyalog kapanmaz.

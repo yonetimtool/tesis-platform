@@ -2220,5 +2220,74 @@
   "ortakAktif": "Aktif",
   "ortakPasif": "Pasif",
   "binaBaslangicKat": "Başlangıç katı",
-  "binaBaslangicKatIpucu": "Bodrum için negatif: -2, -1, 0 (zemin), 1…"
+  "binaBaslangicKatIpucu": "Bodrum için negatif: -2, -1, 0 (zemin), 1…",
+  "rezSekmeGecmis": "Geçmiş",
+  "rezGecmisYok": "Geçmiş rezervasyon yok.",
+  "rezGecmisTamam": "Tamamlandı",
+  "rezIptalEden": "İptal eden: {ad}",
+  "@rezIptalEden": {
+    "placeholders": {
+      "ad": {
+        "type": "String"
+      }
+    }
+  },
+  "binaKatBos": "Bu katta daire yok; silmek bir kaydı etkilemez.",
+  "binaKatOzet": "{daire} daire · {sakin} sakin · {talep} açık şikayet",
+  "@binaKatOzet": {
+    "placeholders": {
+      "daire": {
+        "type": "int"
+      },
+      "sakin": {
+        "type": "int"
+      },
+      "talep": {
+        "type": "int"
+      }
+    }
+  },
+  "binaKatOzetMali": "{tahakkuk} tahakkuk · {odeme} tahsilat · {rezervasyon} rezervasyon",
+  "@binaKatOzetMali": {
+    "placeholders": {
+      "tahakkuk": {
+        "type": "int"
+      },
+      "odeme": {
+        "type": "int"
+      },
+      "rezervasyon": {
+        "type": "int"
+      }
+    }
+  },
+  "binaKatMaliUyari": "Bu katta aidat kaydı var. Silinirse tahakkuk ve tahsilat kayıtları da kalıcı olarak gider; muhasebe izi geri getirilemez. Daireleri silmek yerine pasifleştirmeyi değerlendirin.",
+  "binaKatOnayYaz": "Onaylamak için kat numarasını yazın ({kat})",
+  "@binaKatOnayYaz": {
+    "placeholders": {
+      "kat": {
+        "type": "int"
+      }
+    }
+  },
+  "binaKatSilOzetOnay": "{blok} bloğu {kat}. kat silinecek: {daire} daire, {sakin} sakin ve {kayit} bağlı kayıt kalıcı olarak gider. Bu işlem geri alınamaz.",
+  "@binaKatSilOzetOnay": {
+    "placeholders": {
+      "blok": {
+        "type": "String"
+      },
+      "kat": {
+        "type": "int"
+      },
+      "daire": {
+        "type": "int"
+      },
+      "sakin": {
+        "type": "int"
+      },
+      "kayit": {
+        "type": "int"
+      }
+    }
+  }
 }

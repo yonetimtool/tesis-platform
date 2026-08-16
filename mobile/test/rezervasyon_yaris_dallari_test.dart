@@ -52,7 +52,13 @@ class _SahteRezApi extends RezervasyonApi {
   }
 
   @override
-  Future<List<Rezervasyon>> fetchReservations({RezervasyonDurum? durum}) async {
+  // (P165) `gecmis` suzgeci EKLENDI: sahte istemci de imzayi tasimali.
+  // Sahte veri tek liste; suzgec YOK SAYILIR — testler aktif/gecmis
+  // ayrimini degil, ekranin geri kalanini olcuyor.
+  Future<List<Rezervasyon>> fetchReservations({
+    RezervasyonDurum? durum,
+    bool? gecmis,
+  }) async {
     listeCagrisi++;
     if (listeHatasi != null) throw listeHatasi!;
     return items;

@@ -11965,6 +11965,17 @@ components:
         iptal_eden_ad: { type: string, nullable: true }
         iptal_zamani: { type: string, format: date-time, nullable: true }
         created_at: { type: string, format: date-time }
+        gecmis:
+          type: boolean
+          default: false
+          description: >
+            (P165) BITIS SAATI GECTI MI — SUNUCU hesaplar, tesisin saat
+            diliminde (`tarih` bir GUN, `bitis` gun-ici bir SAAT; ikisi
+            ancak bir saat diliminde bir ANA donusur). Istemci bunu KENDI
+            saatiyle hesaplamamalidir: saati yanlis kurulu bir cihaz
+            gecmis bir kaydin yaninda "Iptal et" gosterirdi. `true` iken
+            iptal MUMKUN DEGILDIR. Olcu BITIS, baslangic degil — su an
+            SUREN bir rezervasyon aktiftir ve iptal edilebilir.
     RezervasyonCreate:
       type: object
       required: [alan_id, tarih, baslangic, bitis, kisi_sayisi]
@@ -12605,6 +12616,17 @@ components:
             (P37) Caydirici webhook'u olarak kullanilacak `/integrations`
             kaydi. **NULL = MANUEL MOD** (hata degil): esik asilinca
             yoneticiye bildirim gider ve anonsu o yapar.
+        rezervasyon_gecmis_ay:
+          type: integer
+          minimum: 0
+          maximum: 120
+          default: 12
+          description: >
+            (P165) `GET /reservations?gecmis=true` listesinin kac AY geriye
+            gidecegi. **0 = SINIRSIZ.** Bu bir GORUNUM penceresidir —
+            rezervasyon SILINMEZ, yalnizca gecmis listesinde gizlenir
+            (kayit ortak alan anlasmazliginda kanittir). Yonetici
+            yazabilir.
         guvenlik_modu:
           type: string
           enum: [yonetim_ici, dis_sirket]
@@ -12687,6 +12709,11 @@ components:
           format: uuid
           nullable: true
           description: "(P37) null = manuel mod"
+        rezervasyon_gecmis_ay:
+          type: integer
+          minimum: 0
+          maximum: 120
+          description: "(P165) gecmis listesi penceresi (ay); 0 = sinirsiz"
 
     # ---------------------- yonetici iletisim ---------------------- #
     YoneticiKart:

@@ -1562,5 +1562,22 @@
   "ortakAktif": "Activo",
   "ortakPasif": "Inactivo",
   "binaBaslangicKat": "Planta inicial",
-  "binaBaslangicKatIpucu": "Negativo para sótanos: -2, -1, 0 (baja), 1…"
+  "binaBaslangicKatIpucu": "Negativo para sótanos: -2, -1, 0 (baja), 1…",
+  "rezSekmeGecmis": "Pasadas",
+  "rezGecmisYok": "No hay reservas pasadas.",
+  "rezGecmisTamam": "Completada",
+  "rezIptalEden": "Cancelado por: {ad}",
+  "@rezIptalEden": {
+    "placeholders": {
+      "ad": {
+        "type": "String"
+      }
+    }
+  },
+  "binaKatBos": "No hay viviendas en esta planta; eliminarla no afecta a ningún registro.",
+  "binaKatOzet": "{daire} viviendas · {sakin} residentes · {talep} quejas abiertas",
+  "binaKatOzetMali": "{tahakkuk} cuotas · {odeme} cobros · {rezervasyon} reservas",
+  "binaKatMaliUyari": "Esta planta tiene registros de cuotas. Al eliminarla se borran permanentemente cuotas y cobros; el rastro contable no se puede recuperar. Considere desactivar las viviendas en su lugar.",
+  "binaKatOnayYaz": "Escriba el número de planta para confirmar ({kat})",
+  "binaKatSilOzetOnay": "Se eliminará la planta {kat} del bloque {blok}: {daire} viviendas, {sakin} residentes y {kayit} registros vinculados se borrarán permanentemente. No se puede deshacer."
 }

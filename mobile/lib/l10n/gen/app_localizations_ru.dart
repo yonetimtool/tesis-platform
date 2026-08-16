@@ -5179,4 +5179,52 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get binaBaslangicKatIpucu =>
       'Отрицательные для подвалов: -2, -1, 0 (первый), 1…';
+
+  @override
+  String get rezSekmeGecmis => 'Прошедшие';
+
+  @override
+  String get rezGecmisYok => 'Прошедших броней нет.';
+
+  @override
+  String get rezGecmisTamam => 'Завершена';
+
+  @override
+  String rezIptalEden(String ad) {
+    return 'Отменил: $ad';
+  }
+
+  @override
+  String get binaKatBos =>
+      'На этом этаже нет квартир; удаление не затронет записи.';
+
+  @override
+  String binaKatOzet(int daire, int sakin, int talep) {
+    return '$daire квартир · $sakin жильцов · $talep открытых жалоб';
+  }
+
+  @override
+  String binaKatOzetMali(int tahakkuk, int odeme, int rezervasyon) {
+    return '$tahakkuk начислений · $odeme платежей · $rezervasyon броней';
+  }
+
+  @override
+  String get binaKatMaliUyari =>
+      'На этаже есть записи по взносам. При удалении начисления и платежи исчезнут навсегда; бухгалтерский след восстановить нельзя. Рассмотрите деактивацию квартир.';
+
+  @override
+  String binaKatOnayYaz(int kat) {
+    return 'Введите номер этажа для подтверждения ($kat)';
+  }
+
+  @override
+  String binaKatSilOzetOnay(
+    String blok,
+    int kat,
+    int daire,
+    int sakin,
+    int kayit,
+  ) {
+    return 'Этаж $kat блока $blok будет удалён: $daire квартир, $sakin жильцов и $kayit связанных записей исчезнут навсегда. Отменить нельзя.';
+  }
 }

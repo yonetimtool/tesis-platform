@@ -5080,4 +5080,52 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get binaBaslangicKatIpucu =>
       'Négatif pour les sous-sols : -2, -1, 0 (RDC), 1…';
+
+  @override
+  String get rezSekmeGecmis => 'Passées';
+
+  @override
+  String get rezGecmisYok => 'Aucune réservation passée.';
+
+  @override
+  String get rezGecmisTamam => 'Terminée';
+
+  @override
+  String rezIptalEden(String ad) {
+    return 'Annulé par : $ad';
+  }
+
+  @override
+  String get binaKatBos =>
+      'Aucun logement à cet étage ; la suppression n\'affecte aucun enregistrement.';
+
+  @override
+  String binaKatOzet(int daire, int sakin, int talep) {
+    return '$daire logements · $sakin résidents · $talep réclamations ouvertes';
+  }
+
+  @override
+  String binaKatOzetMali(int tahakkuk, int odeme, int rezervasyon) {
+    return '$tahakkuk appels de charges · $odeme paiements · $rezervasyon réservations';
+  }
+
+  @override
+  String get binaKatMaliUyari =>
+      'Cet étage comporte des données de charges. La suppression efface définitivement les appels et les paiements ; la piste comptable est irrécupérable. Envisagez plutôt de désactiver les logements.';
+
+  @override
+  String binaKatOnayYaz(int kat) {
+    return 'Saisissez le numéro d\'étage pour confirmer ($kat)';
+  }
+
+  @override
+  String binaKatSilOzetOnay(
+    String blok,
+    int kat,
+    int daire,
+    int sakin,
+    int kayit,
+  ) {
+    return 'L\'étage $kat du bloc $blok sera supprimé : $daire logements, $sakin résidents et $kayit enregistrements liés seront définitivement effacés. Action irréversible.';
+  }
 }

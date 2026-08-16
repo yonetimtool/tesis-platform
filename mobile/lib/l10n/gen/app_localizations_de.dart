@@ -5089,4 +5089,52 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get binaBaslangicKatIpucu =>
       'Negativ für Untergeschosse: -2, -1, 0 (EG), 1…';
+
+  @override
+  String get rezSekmeGecmis => 'Vergangen';
+
+  @override
+  String get rezGecmisYok => 'Keine vergangenen Reservierungen.';
+
+  @override
+  String get rezGecmisTamam => 'Abgeschlossen';
+
+  @override
+  String rezIptalEden(String ad) {
+    return 'Storniert von: $ad';
+  }
+
+  @override
+  String get binaKatBos =>
+      'Keine Wohnungen auf dieser Etage; das Löschen betrifft keine Daten.';
+
+  @override
+  String binaKatOzet(int daire, int sakin, int talep) {
+    return '$daire Wohnungen · $sakin Bewohner · $talep offene Beschwerden';
+  }
+
+  @override
+  String binaKatOzetMali(int tahakkuk, int odeme, int rezervasyon) {
+    return '$tahakkuk Sollstellungen · $odeme Zahlungen · $rezervasyon Reservierungen';
+  }
+
+  @override
+  String get binaKatMaliUyari =>
+      'Auf dieser Etage gibt es Beitragsdaten. Beim Löschen gehen Sollstellungen und Zahlungen dauerhaft verloren; die Buchungsspur ist nicht wiederherstellbar. Erwägen Sie stattdessen eine Deaktivierung.';
+
+  @override
+  String binaKatOnayYaz(int kat) {
+    return 'Zum Bestätigen die Etagennummer eingeben ($kat)';
+  }
+
+  @override
+  String binaKatSilOzetOnay(
+    String blok,
+    int kat,
+    int daire,
+    int sakin,
+    int kayit,
+  ) {
+    return 'Etage $kat in Block $blok wird gelöscht: $daire Wohnungen, $sakin Bewohner und $kayit verknüpfte Datensätze werden dauerhaft entfernt. Nicht rückgängig zu machen.';
+  }
 }

@@ -5065,4 +5065,52 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get binaBaslangicKatIpucu =>
       'Negativo para sótanos: -2, -1, 0 (baja), 1…';
+
+  @override
+  String get rezSekmeGecmis => 'Pasadas';
+
+  @override
+  String get rezGecmisYok => 'No hay reservas pasadas.';
+
+  @override
+  String get rezGecmisTamam => 'Completada';
+
+  @override
+  String rezIptalEden(String ad) {
+    return 'Cancelado por: $ad';
+  }
+
+  @override
+  String get binaKatBos =>
+      'No hay viviendas en esta planta; eliminarla no afecta a ningún registro.';
+
+  @override
+  String binaKatOzet(int daire, int sakin, int talep) {
+    return '$daire viviendas · $sakin residentes · $talep quejas abiertas';
+  }
+
+  @override
+  String binaKatOzetMali(int tahakkuk, int odeme, int rezervasyon) {
+    return '$tahakkuk cuotas · $odeme cobros · $rezervasyon reservas';
+  }
+
+  @override
+  String get binaKatMaliUyari =>
+      'Esta planta tiene registros de cuotas. Al eliminarla se borran permanentemente cuotas y cobros; el rastro contable no se puede recuperar. Considere desactivar las viviendas en su lugar.';
+
+  @override
+  String binaKatOnayYaz(int kat) {
+    return 'Escriba el número de planta para confirmar ($kat)';
+  }
+
+  @override
+  String binaKatSilOzetOnay(
+    String blok,
+    int kat,
+    int daire,
+    int sakin,
+    int kayit,
+  ) {
+    return 'Se eliminará la planta $kat del bloque $blok: $daire viviendas, $sakin residentes y $kayit registros vinculados se borrarán permanentemente. No se puede deshacer.';
+  }
 }

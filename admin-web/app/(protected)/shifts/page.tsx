@@ -267,7 +267,7 @@ export default function ShiftsPage() {
         bosBaslik={t("vardiyaYok")}
         bosAciklama={t("vardiyaYokAlt")}
         sunucuTarafli
-        toplam={data?.meta.total ?? 0}
+        toplam={data?.meta?.total ?? 0}
         durum={tabloDurumu}
         onDurumDegisti={setTabloDurumu}
       />

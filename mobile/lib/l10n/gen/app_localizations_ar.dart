@@ -5186,4 +5186,52 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get binaBaslangicKatIpucu => 'سالب للأقبية: -2، -1، 0 (الأرضي)، 1…';
+
+  @override
+  String get rezSekmeGecmis => 'السابقة';
+
+  @override
+  String get rezGecmisYok => 'لا توجد حجوزات سابقة.';
+
+  @override
+  String get rezGecmisTamam => 'مكتمل';
+
+  @override
+  String rezIptalEden(String ad) {
+    return 'ألغاه: $ad';
+  }
+
+  @override
+  String get binaKatBos =>
+      'لا توجد شقق في هذا الطابق؛ الحذف لن يؤثر على أي سجل.';
+
+  @override
+  String binaKatOzet(int daire, int sakin, int talep) {
+    return '$daire شقة · $sakin ساكن · $talep شكوى مفتوحة';
+  }
+
+  @override
+  String binaKatOzetMali(int tahakkuk, int odeme, int rezervasyon) {
+    return '$tahakkuk استحقاق · $odeme تحصيل · $rezervasyon حجز';
+  }
+
+  @override
+  String get binaKatMaliUyari =>
+      'يحتوي هذا الطابق على سجلات رسوم. الحذف يزيل الاستحقاقات والتحصيلات نهائيًا ولا يمكن استرجاع الأثر المحاسبي. فكّر في إلغاء تنشيط الشقق بدلًا من ذلك.';
+
+  @override
+  String binaKatOnayYaz(int kat) {
+    return 'اكتب رقم الطابق للتأكيد ($kat)';
+  }
+
+  @override
+  String binaKatSilOzetOnay(
+    String blok,
+    int kat,
+    int daire,
+    int sakin,
+    int kayit,
+  ) {
+    return 'سيتم حذف الطابق $kat من المبنى $blok: $daire شقة و$sakin ساكن و$kayit سجلًا مرتبطًا نهائيًا. لا يمكن التراجع.';
+  }
 }

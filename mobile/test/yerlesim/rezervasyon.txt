@@ -1,7 +1,8 @@
   14,  16  242x28  REZERVASYON
   16, 354  24x24  U+E514
-  69,  16  163x20  Rezervasyonlar (1)
-  69, 215  155x20  Alanlar (1)
+  69,  16  98x20  Rezervasyonlar (1)
+  69, 146  98x20  Alanlar (1)
+  69, 283  85x20  Geçmiş
  137,  32  20x20  U+F02F
  137,  58  211x20  Havuz
  138, 277  74x17  Onaylı

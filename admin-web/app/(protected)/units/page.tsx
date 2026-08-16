@@ -442,7 +442,7 @@ export default function UnitsPage() {
         secili={secili}
         onSeciliDegisti={setSecili}
         sunucuTarafli
-        toplam={data?.meta.total ?? 0}
+        toplam={data?.meta?.total ?? 0}
         durum={tabloDurumu}
         onDurumDegisti={setTabloDurumu}
         topluEylemler={() => (

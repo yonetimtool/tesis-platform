@@ -8710,6 +8710,72 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Bodrum için negatif: -2, -1, 0 (zemin), 1…'**
   String get binaBaslangicKatIpucu;
+
+  /// No description provided for @rezSekmeGecmis.
+  ///
+  /// In tr, this message translates to:
+  /// **'Geçmiş'**
+  String get rezSekmeGecmis;
+
+  /// No description provided for @rezGecmisYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Geçmiş rezervasyon yok.'**
+  String get rezGecmisYok;
+
+  /// No description provided for @rezGecmisTamam.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tamamlandı'**
+  String get rezGecmisTamam;
+
+  /// No description provided for @rezIptalEden.
+  ///
+  /// In tr, this message translates to:
+  /// **'İptal eden: {ad}'**
+  String rezIptalEden(String ad);
+
+  /// No description provided for @binaKatBos.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu katta daire yok; silmek bir kaydı etkilemez.'**
+  String get binaKatBos;
+
+  /// No description provided for @binaKatOzet.
+  ///
+  /// In tr, this message translates to:
+  /// **'{daire} daire · {sakin} sakin · {talep} açık şikayet'**
+  String binaKatOzet(int daire, int sakin, int talep);
+
+  /// No description provided for @binaKatOzetMali.
+  ///
+  /// In tr, this message translates to:
+  /// **'{tahakkuk} tahakkuk · {odeme} tahsilat · {rezervasyon} rezervasyon'**
+  String binaKatOzetMali(int tahakkuk, int odeme, int rezervasyon);
+
+  /// No description provided for @binaKatMaliUyari.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu katta aidat kaydı var. Silinirse tahakkuk ve tahsilat kayıtları da kalıcı olarak gider; muhasebe izi geri getirilemez. Daireleri silmek yerine pasifleştirmeyi değerlendirin.'**
+  String get binaKatMaliUyari;
+
+  /// No description provided for @binaKatOnayYaz.
+  ///
+  /// In tr, this message translates to:
+  /// **'Onaylamak için kat numarasını yazın ({kat})'**
+  String binaKatOnayYaz(int kat);
+
+  /// No description provided for @binaKatSilOzetOnay.
+  ///
+  /// In tr, this message translates to:
+  /// **'{blok} bloğu {kat}. kat silinecek: {daire} daire, {sakin} sakin ve {kayit} bağlı kayıt kalıcı olarak gider. Bu işlem geri alınamaz.'**
+  String binaKatSilOzetOnay(
+    String blok,
+    int kat,
+    int daire,
+    int sakin,
+    int kayit,
+  );
 }
 
 class _AppLocalizationsDelegate

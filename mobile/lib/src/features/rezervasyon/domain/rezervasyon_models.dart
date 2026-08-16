@@ -158,6 +158,7 @@ class Rezervasyon {
     this.iptalEdenUserId,
     this.iptalEdenAd,
     this.iptalZamani,
+    this.gecmis = false,
   });
 
   final String id;
@@ -192,8 +193,20 @@ class Rezervasyon {
 
   final DateTime createdAt;
 
+  /// (P165) BITIS SAATI GECTI MI — SUNUCU hesaplar, tesisin saat
+  /// diliminde. Cihaz saatiyle hesaplamak, saati yanlis kurulu bir
+  /// telefonda gecmis kaydin yaninda "Iptal et" gostermekti; `tarih` bir
+  /// GUN ve `bitis` gun-ici bir SAAT oldugu icin ikisi ancak bir saat
+  /// diliminde bir ANA donusur.
+  final bool gecmis;
+
   bool get onayli => durum == RezervasyonDurum.onaylandi;
   bool get iptalEdildi => durum == RezervasyonDurum.iptal;
+
+  /// Iptal edilebilir mi: GECMIS DEGIL ve zaten iptal edilmemis.
+  ///
+  /// OLCU BITIS, BASLANGIC DEGIL: su an SUREN bir rezervasyon aktiftir.
+  bool get iptalEdilebilir => !gecmis && !iptalEdildi;
 
   factory Rezervasyon.fromJson(Map<String, dynamic> json) => Rezervasyon(
         id: json['id'] as String? ?? '',
@@ -216,6 +229,7 @@ class Rezervasyon {
             : DateTime.tryParse(json['iptal_zamani'] as String? ?? ''),
         createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ??
             DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+        gecmis: json['gecmis'] as bool? ?? false,
       );
 }
 

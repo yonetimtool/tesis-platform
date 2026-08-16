@@ -741,3 +741,233 @@ def test_rezerve_musaitlik_penceresi_disi_422(client, rworld):
     # pencere ici -> 201
     _post(client, resident, alan["id"],
           (tarih, f"{h:02d}:00", f"{h + 1:02d}:00"), expect=201)
+
+
+# ======================= (P165 §3/§4) AKTIF / GECMIS ========================= #
+#
+# Iki AYRI iddia, ikisi de "sessizce yanlis" sinifindan:
+#
+#  §3 AYRIM SUNUCUDA VE TESISIN SAAT DILIMINDE. Cihaz saati yanlis kurulu
+#     olabilir; `tarih + bitis` de ancak bir SAAT DILIMINDE bir ANA donusur.
+#     Istemcide hesaplansaydi, saati farkli bir cihaz gelecekteki bir
+#     rezervasyonu "gecmis" gorur (ya da gecmis bir kaydin yaninda
+#     "Iptal et" gosterirdi — bildirilen kusur tam olarak buydu).
+#
+#  §4 SAKLAMA SINIRI GIZLEMEDIR, SILME DEGIL. Pencerenin disina dusen kayit
+#     VERITABANINDA DURUR; yalnizca gecmis listesinde gorunmez (bkz. goc
+#     0054 basligi). Testler bunu ACIKCA olcer: gizlenen kayit `gecmis=None`
+#     ile hala gelir.
+#
+# GECMIS KAYIT API ILE URETILEMEZ (24 saat kurali gelecege zorlar), bu yuzden
+# dogrudan INSERT edilir — kural ATLANMIYOR, kuralin KAPSAMADIGI bir gecmis
+# durumu kuruluyor (uretimde zaman GECEREK olusur).
+
+
+def _gecmis_slot(*, gun=0, dakika=0):
+    """Tenant-yerel "simdi"den `gun`/`dakika` ONCE BITEN bir saatlik slot."""
+    bit = _now() - timedelta(days=gun, minutes=dakika)
+    bas = bit - timedelta(hours=1)
+    assert bas.date() == bit.date(), (
+        f"slot gece yarisini sardi ({bas} -> {bit}); TEST_TZ={TEST_TZ}"
+    )
+    return bit.date().isoformat(), bas.strftime("%H:%M"), bit.strftime("%H:%M")
+
+
+def _rez_ekle(owner_conn, rworld, slot, *, durum="onaylandi"):
+    """Rezervasyonu DOGRUDAN yazar (zamanlama kurallarinin disinda)."""
+    tarih, bas, bit = slot
+    with owner_conn.cursor() as cur:
+        cur.execute(
+            "INSERT INTO rezervasyon (tenant_id, alan_id, unit_id, "
+            "talep_eden_user_id, tarih, baslangic, bitis, kisi_sayisi, durum) "
+            "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id",
+            (
+                rworld["a"], rworld["alan1"], rworld["unit1"],
+                rworld["resident_a_id"], tarih, bas, bit, 2, durum,
+            ),
+        )
+        return str(cur.fetchone()[0])
+
+
+def _ids(client, headers, **params):
+    r = client.get(
+        "/reservations", headers=headers, params={"limit": 200, **params}
+    )
+    assert r.status_code == 200, r.text
+    return [it["id"] for it in r.json()["items"]]
+
+
+def _gecmis_ay_ayarla(client, rworld, ay):
+    """Tesis ayari — YONETICI yazabilir (denetci degil, bkz. tenant.py)."""
+    yonetici = _headers(client, rworld["slug_a"], rworld["yonetici_a"])
+    r = client.patch(
+        "/tenant/settings", headers=yonetici, json={"rezervasyon_gecmis_ay": ay}
+    )
+    assert r.status_code == 200, r.text
+    assert r.json()["rezervasyon_gecmis_ay"] == ay
+
+
+def test_gecmis_bayragi_sunucudan_gelir(client, rworld, owner_conn):
+    resident = _headers(client, rworld["slug_a"], rworld["resident_a"])
+    # DUNKU kayit: "gunde bir rezervasyon" kotasi TAKVIM GUNU basina
+    # islediginden bugune yazilsaydi asagidaki gercek talep 409 alirdi.
+    eski = _rez_ekle(owner_conn, rworld, _gecmis_slot(gun=1))
+    yeni = _post(client, resident, rworld["alan2"], _hslot(2))["id"]
+
+    kayitlar = {
+        it["id"]: it
+        for it in client.get(
+            "/reservations", headers=resident, params={"limit": 200}
+        ).json()["items"]
+    }
+    # ISTEMCI HESAPLAMAZ, OKUR: bayrak her satirda hazir gelir.
+    assert kayitlar[eski]["gecmis"] is True
+    assert kayitlar[yeni]["gecmis"] is False
+
+
+def test_gecmis_suzgeci_iki_listeyi_AYIRIR(client, rworld, owner_conn):
+    resident = _headers(client, rworld["slug_a"], rworld["resident_a"])
+    # DUNKU kayit: "gunde bir rezervasyon" kotasi TAKVIM GUNU basina
+    # islediginden bugune yazilsaydi asagidaki gercek talep 409 alirdi.
+    eski = _rez_ekle(owner_conn, rworld, _gecmis_slot(gun=1))
+    yeni = _post(client, resident, rworld["alan2"], _hslot(2))["id"]
+
+    aktif = _ids(client, resident, gecmis="false")
+    gecmis = _ids(client, resident, gecmis="true")
+    assert yeni in aktif and eski not in aktif
+    assert eski in gecmis and yeni not in gecmis
+    # Suzgec YOKSA ikisi de gelir (mevcut davranis KORUNDU).
+    hepsi = _ids(client, resident)
+    assert eski in hepsi and yeni in hepsi
+
+
+def test_SUREN_rezervasyon_AKTIFTIR_olcu_bitis(client, rworld, owner_conn):
+    """Su an DEVAM EDEN kullanim gecmis DEGILDIR — olcu baslangic degil bitis.
+
+    Baslangica gore olculseydi, salonu kullanmakta olan sakin rezervasyonunu
+    iptal edemez hale gelirdi.
+    """
+    resident = _headers(client, rworld["slug_a"], rworld["resident_a"])
+    simdi = _now()
+    bas = simdi - timedelta(minutes=30)
+    bit = simdi + timedelta(minutes=30)
+    if bas.date() != bit.date():  # gece yarisi — bu kosumda anlamsiz
+        pytest.skip("slot gece yarisini sardi")
+    suren = _rez_ekle(
+        owner_conn, rworld,
+        (bas.date().isoformat(), bas.strftime("%H:%M"), bit.strftime("%H:%M")),
+    )
+    assert suren in _ids(client, resident, gecmis="false")
+    assert suren not in _ids(client, resident, gecmis="true")
+
+
+def test_ayrim_TESISIN_saat_dilimine_gore(client, rworld, owner_conn):
+    """AYNI KAYIT, tenant saat dilimi degisince taraf degistirir.
+
+    Bu testin ispatladigi sey: karsilastirma sunucu-yerel saate ya da
+    UTC'ye degil, TENANT'in saat dilimine baglidir.
+    """
+    resident = _headers(client, rworld["slug_a"], rworld["resident_a"])
+    simdi = _now()
+    # Tenant-yerel saatle 90 dakika ONCE bitmis bir slot.
+    bit = simdi - timedelta(minutes=90)
+    bas = bit - timedelta(hours=1)
+    if bas.date() != bit.date():
+        pytest.skip("slot gece yarisini sardi")
+    rez = _rez_ekle(
+        owner_conn, rworld,
+        (bit.date().isoformat(), bas.strftime("%H:%M"), bit.strftime("%H:%M")),
+    )
+    assert rez in _ids(client, resident, gecmis="true")
+
+    # Tenant'i 3 saat GERIYE al: ayni duvar saati artik HENUZ GELMEDI.
+    geri = ZoneInfo(f"Etc/GMT{-(_utc_ofset_saat(TEST_TZ) - 3):+d}")
+    with owner_conn.cursor() as cur:
+        cur.execute("UPDATE tenant SET timezone=%s WHERE id=%s", (str(geri), rworld["a"]))
+    try:
+        assert rez in _ids(client, resident, gecmis="false")
+        assert rez not in _ids(client, resident, gecmis="true")
+    finally:
+        with owner_conn.cursor() as cur:
+            cur.execute(
+                "UPDATE tenant SET timezone=%s WHERE id=%s", (str(TEST_TZ), rworld["a"])
+            )
+
+
+def _utc_ofset_saat(tz: ZoneInfo) -> int:
+    return int(datetime.now(tz).utcoffset().total_seconds() // 3600)
+
+
+# --------------------------- saklama sinirlari ------------------------------ #
+def test_saklama_penceresi_SINIR_KOSULLARI(client, rworld, owner_conn):
+    resident = _headers(client, rworld["slug_a"], rworld["resident_a"])
+    # 1 ay = ~30/31 gun. Sinirin IKI yaninda birer kayit; 5 gunluk pay
+    # ay uzunlugu farklarini (28..31) kapsar, esiti test etmez.
+    icerde = _rez_ekle(owner_conn, rworld, _gecmis_slot(gun=20))
+    disarda = _rez_ekle(owner_conn, rworld, _gecmis_slot(gun=45))
+
+    _gecmis_ay_ayarla(client, rworld, 1)
+    gecmis = _ids(client, resident, gecmis="true")
+    assert icerde in gecmis
+    assert disarda not in gecmis
+
+    # PENCERE GENISLEYINCE KAYIT GERI GELIR -> SILINMEMISTI.
+    _gecmis_ay_ayarla(client, rworld, 12)
+    assert disarda in _ids(client, resident, gecmis="true")
+
+
+def test_saklama_SIFIR_sinirsiz_demektir(client, rworld, owner_conn):
+    """`0` bir politikayi ZORLAMAMANIN yolu: "hepsini goster"."""
+    resident = _headers(client, rworld["slug_a"], rworld["resident_a"])
+    cok_eski = _rez_ekle(owner_conn, rworld, _gecmis_slot(gun=1500))  # ~4 yil
+
+    _gecmis_ay_ayarla(client, rworld, 12)
+    assert cok_eski not in _ids(client, resident, gecmis="true")
+    _gecmis_ay_ayarla(client, rworld, 0)
+    assert cok_eski in _ids(client, resident, gecmis="true")
+
+
+def test_saklama_GIZLEMEDIR_SILME_DEGIL(client, rworld, owner_conn):
+    """Pencere disindaki kayit VERITABANINDA DURUR.
+
+    §4'un can alici iddiasi. Gizlenen kayit `gecmis` suzgeci OLMADAN hala
+    gelir — yani rapor/denetim/anlasmazlik yollari etkilenmez.
+    """
+    resident = _headers(client, rworld["slug_a"], rworld["resident_a"])
+    eski = _rez_ekle(owner_conn, rworld, _gecmis_slot(gun=400))
+    _gecmis_ay_ayarla(client, rworld, 1)
+
+    assert eski not in _ids(client, resident, gecmis="true")
+    assert eski in _ids(client, resident)  # suzgecsiz: DURUYOR
+    with owner_conn.cursor() as cur:
+        cur.execute("SELECT count(*) FROM rezervasyon WHERE id=%s", (eski,))
+        assert cur.fetchone()[0] == 1
+
+
+def test_saklama_AKTIF_listeyi_ETKILEMEZ(client, rworld):
+    """Pencere yalniz GECMIS listesini kisaltir.
+
+    Yanlis kurulmus olsaydi 1 aydan uzak bir GELECEK rezervasyonu da
+    gizlenirdi — sakin kendi kaydini goremezdi.
+    """
+    resident = _headers(client, rworld["slug_a"], rworld["resident_a"])
+    _gecmis_ay_ayarla(client, rworld, 1)
+    yakin = _post(client, resident, rworld["alan1"], _hslot(2))["id"]
+    assert yakin in _ids(client, resident, gecmis="false")
+
+
+def test_saklama_ayari_SINIRLARI(client, rworld):
+    yonetici = _headers(client, rworld["slug_a"], rworld["yonetici_a"])
+    for ay, beklenen in ((0, 200), (120, 200), (-1, 422), (121, 422)):
+        r = client.patch(
+            "/tenant/settings", headers=yonetici, json={"rezervasyon_gecmis_ay": ay}
+        )
+        assert r.status_code == beklenen, f"ay={ay}: {r.text}"
+
+
+def test_saklama_ayarini_SAKIN_DEGISTIREMEZ(client, rworld):
+    resident = _headers(client, rworld["slug_a"], rworld["resident_a"])
+    r = client.patch(
+        "/tenant/settings", headers=resident, json={"rezervasyon_gecmis_ay": 3}
+    )
+    assert r.status_code == 403, r.text

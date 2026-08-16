@@ -1562,5 +1562,22 @@
   "ortakAktif": "Активен",
   "ortakPasif": "Неактивен",
   "binaBaslangicKat": "Начальный этаж",
-  "binaBaslangicKatIpucu": "Отрицательные для подвалов: -2, -1, 0 (первый), 1…"
+  "binaBaslangicKatIpucu": "Отрицательные для подвалов: -2, -1, 0 (первый), 1…",
+  "rezSekmeGecmis": "Прошедшие",
+  "rezGecmisYok": "Прошедших броней нет.",
+  "rezGecmisTamam": "Завершена",
+  "rezIptalEden": "Отменил: {ad}",
+  "@rezIptalEden": {
+    "placeholders": {
+      "ad": {
+        "type": "String"
+      }
+    }
+  },
+  "binaKatBos": "На этом этаже нет квартир; удаление не затронет записи.",
+  "binaKatOzet": "{daire} квартир · {sakin} жильцов · {talep} открытых жалоб",
+  "binaKatOzetMali": "{tahakkuk} начислений · {odeme} платежей · {rezervasyon} броней",
+  "binaKatMaliUyari": "На этаже есть записи по взносам. При удалении начисления и платежи исчезнут навсегда; бухгалтерский след восстановить нельзя. Рассмотрите деактивацию квартир.",
+  "binaKatOnayYaz": "Введите номер этажа для подтверждения ({kat})",
+  "binaKatSilOzetOnay": "Этаж {kat} блока {blok} будет удалён: {daire} квартир, {sakin} жильцов и {kayit} связанных записей исчезнут навсегда. Отменить нельзя."
 }

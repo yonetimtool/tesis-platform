@@ -158,6 +158,27 @@ class BinaDuzenlemeApi {
     }
   }
 
+  /// (P165) `GET /units/kat-onizleme` — kat silinirse NE KAYBEDILECEK.
+  ///
+  /// SAYAR, SILMEZ. Ayri uc cunku ozet KARAR ANINDA gerekiyor: `kat-sil`
+  /// `cascade=false` iken zaten 409 doner, ama o yanit ancak kullanici
+  /// SILMEYE BASTIKTAN sonra gorunur — hata yolunu bilgi yolu olarak
+  /// kullanmak, kullaniciyi once denemeye zorlamakti.
+  Future<KatOnizleme> fetchKatOnizleme({
+    required String blok,
+    required int kat,
+  }) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/units/kat-onizleme',
+        queryParameters: {'blok': blok, 'kat': kat},
+      );
+      return KatOnizleme.fromJson(res.data ?? const {});
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
   /// `POST /units/kat-sil` — bir blogun BIR KATINI siler.
   ///
   /// `cascade` ZORUNLU OLARAK true gonderilmez; cagiran karar verir.

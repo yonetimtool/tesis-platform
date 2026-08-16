@@ -428,7 +428,7 @@ export default function UsersPage() {
           bosBaslik={t("kullaniciYok")}
           bosAciklama={t("kullaniciYokAlt")}
           sunucuTarafli
-          toplam={data?.meta.total ?? 0}
+          toplam={data?.meta?.total ?? 0}
           durum={durum}
           onDurumDegisti={setDurum}
           araclar={

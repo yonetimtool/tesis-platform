@@ -60,7 +60,7 @@ export default function NotificationsPage() {
     setOffset(0);
   }
 
-  const total = data?.meta.total ?? 0;
+  const total = data?.meta?.total ?? 0;
 
   return (
     <div className="space-y-5">

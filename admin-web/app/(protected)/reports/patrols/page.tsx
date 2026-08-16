@@ -284,7 +284,7 @@ export default function PatrolReportPage() {
               bosBaslik={t("devriyePencereYok")}
               bosAciklama={t("raporPencereYok")}
               sunucuTarafli
-              toplam={data?.meta.total ?? 0}
+              toplam={data?.meta?.total ?? 0}
               durum={tabloDurumu}
               onDurumDegisti={setTabloDurumu}
             />

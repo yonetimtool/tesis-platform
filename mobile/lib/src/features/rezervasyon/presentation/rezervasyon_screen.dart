@@ -72,7 +72,7 @@ class _RezervasyonScreenState extends ConsumerState<RezervasyonScreen> {
     final ilkSekmeSayi =
         state.canManageAreas ? state.alanlar.length : state.items.length;
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
           title: Text(baslikBuyuk(context.l10n.modulRezervasyon, context.dilKodu)),
@@ -85,8 +85,17 @@ class _RezervasyonScreenState extends ConsumerState<RezervasyonScreen> {
           ],
           bottom: TabBar(
             tabs: [
+              // (P165 §3) UC SEKME: aktif · alanlar · GECMIS.
+              //
+              // Gecmis AYRI SEKMEDE cunku saati gecmis bir rezervasyon
+              // IPTAL EDILEMEZ; aktif listede durup altinda "Iptal et"
+              // gostermesi yanilticiydi.
               Tab(text: context.l10n.rezSekmeRezervasyonlar('$ilkSekmeSayi')),
               Tab(text: context.l10n.rezSekmeAlanlar('${state.alanlar.length}')),
+              // SAYAC YOK: gecmis TEMBEL yuklenir, sekme acilana kadar
+              // sayi BILINMEZ. "Gecmis (0)" yazip sonra "(12)"ye
+              // atlamak, olmayan bir bilgiyi varmis gibi gostermekti.
+              Tab(text: context.l10n.rezSekmeGecmis),
             ],
           ),
         ),
@@ -118,6 +127,11 @@ class _RezervasyonScreenState extends ConsumerState<RezervasyonScreen> {
                     : _AreaListMode.slots,
               ),
             ),
+            // (P165 §3) GECMIS: ayni liste bileseni, AYRI veri.
+            // `_ReservationList` iptal dugmesini `state.canCancel`e gore
+            // ciziyor ve o da `r.gecmis` icin false doner — buton burada
+            // kendiliginden gorunmez olur.
+            _GecmisSekmesi(state: state),
           ],
         ),
       ),
@@ -165,23 +179,36 @@ class _ReservationList extends ConsumerWidget {
     required this.state,
     required this.items,
     required this.emptyText,
+    this.loading,
   });
 
   final RezervasyonState state;
   final List<Rezervasyon> items;
   final String emptyText;
 
+  /// (P165) BU LISTENIN yukleme durumu; null ise ana akisinki.
+  ///
+  /// Kapilar `state.items`e (AKTIF liste) bakiyordu ve gecmis sekmesinde
+  /// YANLIS cevap veriyordu: gecmis istegi HATA verse bile aktif listede
+  /// tek bir kayit varsa hata HIC gorunmuyor, ekran "Gecmis rezervasyon
+  /// yok." diyordu — sessiz kusur. Olcut CIZILEN liste olmali.
+  final bool? loading;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (state.loading && state.items.isEmpty) {
+    final yukleniyor = loading ?? state.loading;
+    // HATA TEK KANALDAN: gecmis istegi de `state.errorMessage`e yazar
+    // (bkz. `gecmisTazele`); ayrilan sey KAPININ OLCUSU — cizilen liste.
+    final hata = state.errorMessage;
+    if (yukleniyor && items.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
-    if (state.errorMessage != null && state.items.isEmpty) {
+    if (hata != null && items.isEmpty) {
       return ListView(
         padding: const EdgeInsets.all(24),
         children: [
           Text(
-            state.errorMessage!,
+            hata,
             textAlign: TextAlign.center,
             style: const TextStyle(color: Colors.red),
           ),
@@ -209,12 +236,21 @@ class _ReservationList extends ConsumerWidget {
 
 /// Durum rozeti — onaylandi=yesil, iptal=gri.
 class _DurumChip extends StatelessWidget {
-  const _DurumChip({required this.durum});
+  const _DurumChip({required this.durum, this.gecmis = false});
 
   final RezervasyonDurum durum;
 
+  /// (P165 §3) Bitis saati gecti mi — SUNUCUNUN bayragi.
+  ///
+  /// Gecmis ama IPTAL EDILMEMIS bir kayitta "Onaylandi" yazmak yanilticiydi:
+  /// kullanim BITTI, onay artik bir sey ifade etmiyor. Iptal edilmis kayitta
+  /// "Iptal edildi" DOGRU kalir — onun uzerine yazilmaz.
+  final bool gecmis;
+
+  bool get _tamamlandi => gecmis && durum == RezervasyonDurum.onaylandi;
+
   Color get _color => switch (durum) {
-        RezervasyonDurum.onaylandi => Colors.green,
+        RezervasyonDurum.onaylandi => _tamamlandi ? Colors.grey : Colors.green,
         RezervasyonDurum.iptal => Colors.grey,
         RezervasyonDurum.unknown => Colors.grey,
       };
@@ -228,7 +264,9 @@ class _DurumChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
-        rezDurumAdi(context.l10n, durum),
+        _tamamlandi
+            ? context.l10n.rezGecmisTamam
+            : rezDurumAdi(context.l10n, durum),
         style: TextStyle(
           color: _color,
           fontSize: 12,
@@ -268,7 +306,7 @@ class _ReservationCard extends ConsumerWidget {
                       style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
                   ),
-                  _DurumChip(durum: r.durum),
+                  _DurumChip(durum: r.durum, gecmis: r.gecmis),
                 ],
               ),
               const SizedBox(height: 4),
@@ -285,7 +323,8 @@ class _ReservationCard extends ConsumerWidget {
                 const SizedBox(height: 4),
                 Text(r.notlar!, maxLines: 2, overflow: TextOverflow.ellipsis),
               ],
-              if (r.iptalEdildi) ...[
+              if (r.iptalEdildi &&
+                  (r.iptalEdenAd != null || r.iptalZamani != null)) ...[
                 const SizedBox(height: 6),
                 Row(
                   children: [
@@ -293,10 +332,18 @@ class _ReservationCard extends ConsumerWidget {
                         size: 16, color: Colors.grey),
                     const SizedBox(width: 4),
                     Expanded(
+                      // (P165) "Iptal edildi" ARTIK ROZETTE yaziyor; bu
+                      // satirda tekrar etmek ayni kartta ayni cumleyi iki
+                      // kez gostermekti. Burada yalniz KIM ve NE ZAMAN
+                      // kalir — rozetin sagladigi bilgiyi tekrarlamaz.
                       child: Text(
-                        '${context.l10n.rezIptalEdildi}'
-                        '${r.iptalEdenAd != null ? ' — ${r.iptalEdenAd}' : ''}'
-                        '${r.iptalZamani != null ? ' · ${tarihSaatBicimi(r.iptalZamani!, context.dilKodu, ayirici: '')}' : ''}',
+                        [
+                          if (r.iptalEdenAd != null)
+                            context.l10n.rezIptalEden(r.iptalEdenAd!),
+                          if (r.iptalZamani != null)
+                            tarihSaatBicimi(r.iptalZamani!, context.dilKodu,
+                                ayirici: ''),
+                        ].join(' · '),
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ),
@@ -437,7 +484,7 @@ void _showDetail(BuildContext context, Rezervasyon r,
             if (r.iptalEdildi) ...[
               const SizedBox(height: 4),
               Text(
-                '${context.l10n.ortakIptal}'
+                '${context.l10n.rezIptalEdildi}'
                 '${r.iptalEdenAd != null ? ' — ${r.iptalEdenAd}' : ''}'
                 '${r.iptalZamani != null ? ' · ${tarihSaatBicimi(r.iptalZamani!, context.dilKodu, ayirici: '')}' : ''}',
               ),
@@ -1296,6 +1343,52 @@ class _BookSlotSheetState extends ConsumerState<_BookSlotSheet> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+
+/// (P165 §3) GECMIS SEKMESI — acildiginda veriyi KENDISI ister.
+///
+/// Ayri bir widget cunku tetikleyici `initState`: TabBarView bu sayfayi
+/// ancak kullanici sekmeye gecince kurar. Boylece gecmise hic bakmayan
+/// kullanici icin hicbir istek atilmaz.
+class _GecmisSekmesi extends ConsumerStatefulWidget {
+  const _GecmisSekmesi({required this.state});
+
+  final RezervasyonState state;
+
+  @override
+  ConsumerState<_GecmisSekmesi> createState() => _GecmisSekmesiState();
+}
+
+class _GecmisSekmesiState extends ConsumerState<_GecmisSekmesi> {
+  @override
+  void initState() {
+    super.initState();
+    // Kurulum sirasinda provider yazmak yasak — bir kare sonraya birak.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(rezervasyonControllerProvider.notifier).gecmisTazele();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final state = widget.state;
+    return RefreshIndicator(
+      // ZORLA: kullanici asagi cektiyse taze veri istiyordur.
+      onRefresh: () => ref
+          .read(rezervasyonControllerProvider.notifier)
+          .gecmisTazele(zorla: true),
+      child: _ReservationList(
+        state: state,
+        items: state.gecmisItems,
+        emptyText: context.l10n.rezGecmisYok,
+        // KENDI yukleme durumu: ana `loading` AKTIF listeyi anlatir.
+        loading: state.gecmisLoading,
       ),
     );
   }

@@ -85,6 +85,49 @@ class BlockDraft {
   Map<String, dynamic> toJson() => {'ad': ad};
 }
 
+/// (P165) `GET /units/kat-onizleme` — bir kat silinirse NE KAYBEDILECEK.
+///
+/// SUNUCU SAYAR: daire basina sakin/tahakkuk/talep saymak elli daireli bir
+/// katta elli istek demekti. Sayilar KATEGORI KATEGORI durur — "12 bagli
+/// kayit" bir sey soylemez, "3 sakin, 9 tahakkuk" karar verdirir.
+class KatOnizleme {
+  const KatOnizleme({
+    required this.daire,
+    required this.sakin,
+    required this.tahakkuk,
+    required this.odeme,
+    required this.talep,
+    required this.rezervasyon,
+    required this.maliKayit,
+  });
+
+  final int daire;
+  final int sakin;
+  final int tahakkuk;
+  final int odeme;
+  final int talep;
+  final int rezervasyon;
+
+  /// Tahakkuk ya da tahsilat var mi — SUNUCU isaretler.
+  ///
+  /// Digerleri yeniden olusturulabilir; bir TAHSILAT KAYDI olusturulamaz.
+  /// Bu bayrak ayri uyariyi ve ikinci kapiyi acar.
+  final bool maliKayit;
+
+  /// Daire yoksa kaybedilecek bir sey de yoktur (tek onayla gider).
+  bool get bos => daire == 0;
+
+  factory KatOnizleme.fromJson(Map<String, dynamic> json) => KatOnizleme(
+    daire: (json['daire'] as num?)?.toInt() ?? 0,
+    sakin: (json['sakin'] as num?)?.toInt() ?? 0,
+    tahakkuk: (json['tahakkuk'] as num?)?.toInt() ?? 0,
+    odeme: (json['odeme'] as num?)?.toInt() ?? 0,
+    talep: (json['talep'] as num?)?.toInt() ?? 0,
+    rezervasyon: (json['rezervasyon'] as num?)?.toInt() ?? 0,
+    maliKayit: json['mali_kayit'] as bool? ?? false,
+  );
+}
+
 /// `POST/PATCH /units` govdesi — daire no (alfanumerik + tire) + yerlesim.
 /// Blok-suz modda [blok] null gonderilir (implicit tek blok).
 class EditorUnitDraft {

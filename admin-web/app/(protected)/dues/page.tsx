@@ -319,7 +319,7 @@ export default function DuesPage() {
                 bosBaslik={t("aidatTahakkukYok")}
                 bosAciklama={t("aidatTahakkukYokAlt")}
                 sunucuTarafli
-                toplam={assessments?.meta.total ?? 0}
+                toplam={assessments?.meta?.total ?? 0}
                 durum={aDurum}
                 onDurumDegisti={setADurum}
                 araclar={
@@ -358,7 +358,7 @@ export default function DuesPage() {
                 bosBaslik={t("aidatOdemeYok")}
                 bosAciklama={t("aidatOdemeYokAlt")}
                 sunucuTarafli
-                toplam={payments?.meta.total ?? 0}
+                toplam={payments?.meta?.total ?? 0}
                 durum={pDurum}
                 onDurumDegisti={setPDurum}
               />

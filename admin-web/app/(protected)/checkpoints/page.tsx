@@ -572,7 +572,10 @@ export default function CheckpointsPage() {
         bosBaslik={t("noktaYok")}
         bosAciklama={t("noktaYokAlt")}
         sunucuTarafli
-        toplam={data?.meta.total ?? 0}
+        // (P165) `data?.meta.total` IDI ve `?? 0` yedegi ALDATICIYDI:
+        // govde gelmis ama `meta` yoksa okuma CAKIYORDU (yedek hic
+        // calismiyordu). Depodaki 16 sayfanin hepsinde ayni kalip vardi.
+        toplam={data?.meta?.total ?? 0}
         durum={tabloDurumu}
         onDurumDegisti={setTabloDurumu}
       />

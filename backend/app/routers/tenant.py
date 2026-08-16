@@ -78,6 +78,12 @@ def _to_settings(t: Tenant) -> TenantSettings:
         guvenlik_modu=t.guvenlik_modu,
         gurultu_esigi=t.gurultu_esigi,
         okutma_mesafe_esigi_m=t.okutma_mesafe_esigi_m,
+        # (P165) BU SATIR ILK YAZIMDA UNUTULMUSTU ve kusur SESSIZDI: PATCH
+        # 200 donuyor, deger DB'ye yaziliyor, ama yanit alani tasimadigi
+        # icin sema varsayilani (12) geri geliyordu. Ekran "kaydedildi"
+        # der, kullanici eski degeri gorurdu. Test yakaladi
+        # (`test_saklama_penceresi_SINIR_KOSULLARI`).
+        rezervasyon_gecmis_ay=t.rezervasyon_gecmis_ay,
         gurultu_uyari_metni=t.gurultu_uyari_metni,
         gurultu_integration_id=t.gurultu_integration_id,
     )

@@ -540,7 +540,7 @@ export default function TasksPage() {
                 bosBaslik={t("gorevYok")}
                 bosAciklama={t("gorevYokAlt")}
                 sunucuTarafli
-                toplam={data?.meta.total ?? 0}
+                toplam={data?.meta?.total ?? 0}
                 durum={tabloDurumu}
                 onDurumDegisti={setTabloDurumu}
               />

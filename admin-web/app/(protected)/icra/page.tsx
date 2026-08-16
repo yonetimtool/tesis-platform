@@ -264,7 +264,7 @@ export default function IcraPage() {
         yukleniyor={isLoading && !data}
         bosBaslik={t("icraKayitYok")}
         sunucuTarafli
-        toplam={data?.meta.total ?? 0}
+        toplam={data?.meta?.total ?? 0}
         durum={tabloDurumu}
         onDurumDegisti={setTabloDurumu}
         araclar={

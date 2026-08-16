@@ -1562,5 +1562,22 @@
   "ortakAktif": "Actif",
   "ortakPasif": "Inactif",
   "binaBaslangicKat": "Étage de départ",
-  "binaBaslangicKatIpucu": "Négatif pour les sous-sols : -2, -1, 0 (RDC), 1…"
+  "binaBaslangicKatIpucu": "Négatif pour les sous-sols : -2, -1, 0 (RDC), 1…",
+  "rezSekmeGecmis": "Passées",
+  "rezGecmisYok": "Aucune réservation passée.",
+  "rezGecmisTamam": "Terminée",
+  "rezIptalEden": "Annulé par : {ad}",
+  "@rezIptalEden": {
+    "placeholders": {
+      "ad": {
+        "type": "String"
+      }
+    }
+  },
+  "binaKatBos": "Aucun logement à cet étage ; la suppression n'affecte aucun enregistrement.",
+  "binaKatOzet": "{daire} logements · {sakin} résidents · {talep} réclamations ouvertes",
+  "binaKatOzetMali": "{tahakkuk} appels de charges · {odeme} paiements · {rezervasyon} réservations",
+  "binaKatMaliUyari": "Cet étage comporte des données de charges. La suppression efface définitivement les appels et les paiements ; la piste comptable est irrécupérable. Envisagez plutôt de désactiver les logements.",
+  "binaKatOnayYaz": "Saisissez le numéro d'étage pour confirmer ({kat})",
+  "binaKatSilOzetOnay": "L'étage {kat} du bloc {blok} sera supprimé : {daire} logements, {sakin} résidents et {kayit} enregistrements liés seront définitivement effacés. Action irréversible."
 }

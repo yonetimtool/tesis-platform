@@ -1562,5 +1562,22 @@
   "ortakAktif": "نشط",
   "ortakPasif": "غير نشط",
   "binaBaslangicKat": "الطابق الأول",
-  "binaBaslangicKatIpucu": "سالب للأقبية: -2، -1، 0 (الأرضي)، 1…"
+  "binaBaslangicKatIpucu": "سالب للأقبية: -2، -1، 0 (الأرضي)، 1…",
+  "rezSekmeGecmis": "السابقة",
+  "rezGecmisYok": "لا توجد حجوزات سابقة.",
+  "rezGecmisTamam": "مكتمل",
+  "rezIptalEden": "ألغاه: {ad}",
+  "@rezIptalEden": {
+    "placeholders": {
+      "ad": {
+        "type": "String"
+      }
+    }
+  },
+  "binaKatBos": "لا توجد شقق في هذا الطابق؛ الحذف لن يؤثر على أي سجل.",
+  "binaKatOzet": "{daire} شقة · {sakin} ساكن · {talep} شكوى مفتوحة",
+  "binaKatOzetMali": "{tahakkuk} استحقاق · {odeme} تحصيل · {rezervasyon} حجز",
+  "binaKatMaliUyari": "يحتوي هذا الطابق على سجلات رسوم. الحذف يزيل الاستحقاقات والتحصيلات نهائيًا ولا يمكن استرجاع الأثر المحاسبي. فكّر في إلغاء تنشيط الشقق بدلًا من ذلك.",
+  "binaKatOnayYaz": "اكتب رقم الطابق للتأكيد ({kat})",
+  "binaKatSilOzetOnay": "سيتم حذف الطابق {kat} من المبنى {blok}: {daire} شقة و{sakin} ساكن و{kayit} سجلًا مرتبطًا نهائيًا. لا يمكن التراجع."
 }

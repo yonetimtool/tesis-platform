@@ -393,7 +393,7 @@ export default function FinansPage() {
           bosBaslik={t("finansHareketYok")}
           bosAciklama={t("finansHareketYokAlt")}
           sunucuTarafli
-          toplam={hareketler?.meta.total ?? 0}
+          toplam={hareketler?.meta?.total ?? 0}
           durum={tabloDurumu}
           onDurumDegisti={setTabloDurumu}
           araclar={
