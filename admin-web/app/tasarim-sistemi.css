@@ -39,13 +39,31 @@
   /* ---------------------------------------------------------------------
      ACIK TEMA — yuzeyler
      --------------------------------------------------------------------- */
-  --yz-bg-app: #f7f9fb;
-  --yz-bg-app-grad: linear-gradient(180deg, #fbfcfd 0%, #f4f7fa 100%);
-  --yz-bg-sidebar: #ffffff;
+  /* (P166 §7.1/§7.2) YUZEY BASAMAKLARI YENIDEN AYARLANDI.
+     -----------------------------------------------------------------
+     OLCULEN KUSUR: kart (#FFFFFF) ile sayfa zemini (#F7F9FB) arasindaki
+     kontrast orani 1.03'tu — yani GORUNMEZ. "Acik tema fazla beyaz
+     gorunuyor" sikayetinin sebebi renklerin acikligi degil, KATMANLARIN
+     AYIRT EDILEMEMESIYDI: kart bir yuzey gibi degil, zeminin devami gibi
+     okunuyordu.
+     Zemin bir kademe koyulastirildi; kart BEYAZ KALDI. Yeni oran 1.13 —
+     kart artik zeminden ayrilir, ekran hala acik bir ekrandir.
+
+     KENAR CUBUGU BEYAZ DEGIL, LOGO MAVISI (§7.1). Marka lacivertinin
+     (#0E3C91) cok acik bir tonu: hem logoyla ayni ailede hem de icerik
+     alanindan 1.14 oraniyla NET ayrisiyor. Beyaz bir kenar cubugu, beyaz
+     kartlarla ayni yuzey gibi gorunuyordu.
+
+     BEDELI DURUSTCE: zemin koyulastigi icin metin/ikon tokenlarinin
+     hepsi yeniden olculdu ve ~%5 koyulastirildi (asagida). Palet
+     korundu — ton ve doygunluk ayni, yalniz aciklik kaydi. */
+  --yz-bg-app: #eef1f6;
+  --yz-bg-app-grad: linear-gradient(180deg, #f3f6fa 0%, #e9edf3 100%);
+  --yz-bg-sidebar: #d8e4f5;
   --yz-surface-1: #ffffff;
-  --yz-surface-2: #f2f5f8;
-  --yz-surface-sunken: #edf1f5;
-  --yz-border: #e1e7ed;
+  --yz-surface-2: #eff3f8;
+  --yz-surface-sunken: #e7ecf2;
+  --yz-border: #dbe2ea;
   /* GUCLU KENAR — yapisal vurgu icin (toplam satiri ayraci gibi).
      Normal kenardan gorunur sekilde koyu; ANLAM TASIMAZ (yanindaki
      "Toplam" kelimesi tasir), o yuzden 3.0 esigi aranmadi. */
@@ -60,10 +78,10 @@
      dusuyordu. Ton (hue) ve doygunluk korunarak yalniz aciklik kaydirildi;
      `tests/yz-token-kontrast.test.ts` en zor yuzeyde 4.5'i kilitliyor.
      P132.6'da ayni sinif kusur olculmustu: kartta gecip zeminde dusen ton. */
-  --yz-text-2: #646f7b;
+  --yz-text-2: #5c6671;
   /* Brief #A3ADB8; sayfa zemininde 2.16 idi. Bu kademe YALNIZ buyuk metin
      ve dekoratif etiket icindir (esik 3.0), govde metninde kullanilmaz. */
-  --yz-text-3: #7e8c9c;
+  --yz-text-3: #758291;
 
   /* Durum renkleri. RENK YALNIZ SINYALDIR (halka, rozet, uyari seridi);
      dolgu blok olarak KULLANILMAZ — P133'un "tinted blocks" dili bu
@@ -77,10 +95,10 @@
      OLCULDU: ham `--yz-warning` (#D6963C) beyaz uzerinde 2.4:1 — AA'yi
      TUTMAZ. Ikon/halka ham tonda kalir (grafik ogesi, 3:1 esigi),
      METIN bu koyulastirilmis tonu kullanir. */
-  --yz-accent-ink: #2165e9;
-  --yz-success-ink: #2e7b59;
-  --yz-warning-ink: #94631f;
-  --yz-danger-ink: #ca363a;
+  --yz-accent-ink: #1e5dd6;
+  --yz-success-ink: #2a7152;
+  --yz-warning-ink: #885b1d;
+  --yz-danger-ink: #ba3235;
 
   /* ANLAM TASIYAN GRAFIK OGESI (WCAG 1.4.11, esik 3.0): KPI halkasinin
      cizgisi, rozet kenari, uyari seridi. Ham ton bu esigi TUTMUYOR
@@ -90,18 +108,18 @@
      Cozum depoda ZATEN olan desen (`vurguInk`): ham ton DOLGU ve dekoratif
      parlama icin kalir (kontrast sarti yok), anlam tasiyan CIZGI bu
      varyanti kullanir. Boylece hem palet hem AA korunur. */
-  --yz-accent-edge: #5488ee;
-  --yz-success-edge: #3a9b70;
-  --yz-warning-edge: #bc7e27;
-  --yz-danger-edge: #d45b5e;
+  --yz-accent-edge: #4e7edd;
+  --yz-success-edge: #369068;
+  --yz-warning-edge: #ae7524;
+  --yz-danger-edge: #d25a5d;
   /* (P161) SAHNE ISARETCI RENKLERI. Maketteki etiketler bes TUR tasiyor
      (yonetici / sakin / NFC / kamera / alarm); dordu mevcut durum
      ailesinden karsilanabildi ama NFC ve KAMERA icin karsilik YOKTU ve
      sahne kendi hexlerini uyduruyordu — olculdugunde ikisi de acik
      temada 3.0 esigini GECMIYORDU. Bunlar 1.4.11 (arayuz bileseni)
      esigine gore secildi ve `yz-token-kontrast` testiyle kilitli. */
-  --yz-nfc-edge: #887cd0;
-  --yz-kamera-edge: #4d919e;
+  --yz-nfc-edge: #8276c7;
+  --yz-kamera-edge: #4a8a97;
 
   /* ---------------------------------------------------------------------
      KABARTMA — metalik yuzeyin kalbi (brief: token olarak tanimla)
@@ -144,21 +162,36 @@
   /* ---------------------------------------------------------------------
      KOYU TEMA (tasarim dilinin BIRINCIL temasi — referans gorseller)
      --------------------------------------------------------------------- */
-  --yz-bg-app: #2a333b;
-  --yz-bg-app-grad: linear-gradient(180deg, #303942 0%, #262e36 100%);
-  --yz-bg-sidebar: #1e262e;
-  --yz-surface-1: #333c45;
-  --yz-surface-2: #3b444e;
-  --yz-surface-sunken: #262e36;
-  --yz-border: #4a555f;
-  --yz-border-strong: #7a8794;
-  --yz-border-shine: #6b7885;
+  /* (P166 §7.2) KOYU TEMA BIR KADEME YUKSELTILDI.
+     -----------------------------------------------------------------
+     OLCULEN KUSUR: zemin (#2A333B) ile kart (#333C45) arasi 1.09,
+     kart ile yukseltilmis yuzey arasi 1.10 — uc katman da neredeyse ayni
+     karanlikta. "Koyu tema fazla koyu" sikayetinin sebebi buydu: goz
+     katmanlari ayirt edemeyince ekran tek bir koyu blok gibi okunuyor.
+     Yeni oranlar 1.20 ve 1.19 — kart artik zeminden GORUNUR sekilde
+     yukselir.
+
+     KENAR CUBUGU ZEMINDEN KOYU KALDI (acik temanin tersi yonde ama ayni
+     amacla): koyu temada bir yuzeyi ayirmanin yolu onu KOYULASTIRMAKTIR;
+     acik temada tersi. Iki temada da olcu ayni — icerikten net ayrissin.
+
+     Metin ve ikon tokenlari yeniden olculdu: yuzeyler acildigi icin
+     hepsi ~%20 beyaza karistirildi, yoksa AA duserdi. */
+  --yz-bg-app: #313a44;
+  --yz-bg-app-grad: linear-gradient(180deg, #374049 0%, #2d363f 100%);
+  --yz-bg-sidebar: #262f38;
+  --yz-surface-1: #3b4650;
+  --yz-surface-2: #46515c;
+  --yz-surface-sunken: #2c353e;
+  --yz-border: #55616d;
+  --yz-border-strong: #8592a0;
+  --yz-border-shine: #78868f;
 
   --yz-text: #e8edf2;
   /* Brief #98A3AE; kart uzerinde (#333C45) 4.37 — esigin hemen altinda. */
-  --yz-text-2: #a7b0ba;
+  --yz-text-2: #bcc3ca;
   /* Brief #6E7883; sayfa zemininde 2.86. */
-  --yz-text-3: #868f99;
+  --yz-text-3: #989fa8;
 
   --yz-accent: #6ba3d6;
   --yz-success: #5bb98c;
@@ -169,19 +202,19 @@
      ayri bir "ink" varyanti gerekmiyor, ama ad KORUNUYOR ki bilesenler
      tek bir degisken adiyla yazilsin ve tema degisince kendiliginden
      dogru tonu alsin. */
-  --yz-accent-ink: #86b4de;
-  --yz-success-ink: #6bc097;
-  --yz-warning-ink: #e0a458;
-  --yz-danger-ink: #e69c9d;
+  --yz-accent-ink: #a2c6e6;
+  --yz-success-ink: #90d0b1;
+  --yz-warning-ink: #e8ba81;
+  --yz-danger-ink: #ecb4b5;
 
   /* Koyu temada ham tonlarin cogu 3.0'i ZATEN tutuyor (accent 3.69 ·
      success 4.13 · warning 4.53); yalniz `danger` 2.89 ile dusuyordu. */
-  --yz-accent-edge: #6ba3d6;
+  --yz-accent-edge: #6ca4d6;
   --yz-success-edge: #5bb98c;
   --yz-warning-edge: #e0a458;
-  --yz-danger-edge: #da6d6f;
-  --yz-nfc-edge: #9386e0;
-  --yz-kamera-edge: #5aa9b8;
+  --yz-danger-edge: #e08587;
+  --yz-nfc-edge: #a095e4;
+  --yz-kamera-edge: #5baab8;
 
   --yz-raised:
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
@@ -194,8 +227,11 @@
     inset 0 -1px 0 rgba(255, 255, 255, 0.05);
   --yz-ring-glow: 0 0 0 1px rgba(107, 163, 214, 0.25);
 
-  --yz-metal-1: linear-gradient(180deg, #3a434d 0%, #2f3841 100%);
-  --yz-metal-2: linear-gradient(180deg, #424c57 0%, #363f49 100%);
+  /* (P166 §7.2) Yuzeylerle BIRLIKTE yukseldi: kart #3B4650 olurken
+     metalik dolgunun eski hâli (#3A434D) ondan KOYU kaliyor ve kabartma
+     tersine donuyordu — dugme, uzerinde durdugu kartin icine cokuyordu. */
+  --yz-metal-1: linear-gradient(180deg, #434e59 0%, #38424c 100%);
+  --yz-metal-2: linear-gradient(180deg, #4b5661 0%, #3f4954 100%);
   /* Ayni olcum koyu temada da yapildi: 3.39 -> 4.51. */
   --yz-metal-accent: linear-gradient(180deg, #2e7ac0 0%, #3c7ab3 100%);
   --yz-on-fill: #ffffff;

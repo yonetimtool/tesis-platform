@@ -92,6 +92,8 @@ class HomeTokens {
 class HomeSurface {
   const HomeSurface({
     required this.background,
+    required this.badge,
+    required this.badgeOn,
     required this.card,
     required this.cardBorder,
     required this.divider,
@@ -103,6 +105,21 @@ class HomeSurface {
 
   /// Sayfa zemini.
   final Color background;
+
+  /// (P166 §7.2) ROZET DOLGUSU — TEMAYA GORE.
+  ///
+  /// Koyu tema bir kademe ACILINCA (#0F131A -> #1B222C) zil sayacinin
+  /// kirmizisi (#EF4444) app bar zemininde 4.25'e dustu ve `flutter_test`
+  /// kontrast denetimi bunu YAKALADI. Rozet ANLAM tasiyor (okunmamis
+  /// bildirim) — soluklasmasi kabul edilemez.
+  ///
+  /// Koyu temada dolgu ACILIR ve uzerindeki metin KOYULASIR: ikisi
+  /// birlikte degismek zorunda, yoksa acilan dolgunun ustunde beyaz metin
+  /// okunamaz olurdu (#F26565 uzerinde beyaz 3.08).
+  final Color badge;
+
+  /// Rozet dolgusu uzerindeki metin rengi.
+  final Color badgeOn;
 
   /// Kart zemini.
   final Color card;
@@ -126,25 +143,46 @@ class HomeSurface {
   final Color placeholder;
 
   static const _light = HomeSurface(
-    background: Color(0xFFF4F6FA),
+    // (P166 §7.2) ZEMIN BIR KADEME KOYULASTI, KART BEYAZ KALDI.
+    //
+    // OLCULEN KUSUR: #F4F6FA zemin ile beyaz kart arasindaki kontrast
+    // orani 1.03'tu — yani GORUNMEZ. "Acik tema fazla beyaz gorunuyor"
+    // sikayetinin sebebi renklerin acikligi degil, kartin bir YUZEY gibi
+    // degil zeminin devami gibi okunmasiydi. Yeni oran 1.16.
+    background: Color(0xFFEAEEF5),
+    badge: HomeTokens.red,
+    badgeOn: Color(0xFFFFFFFF),
     card: Color(0xFFFFFFFF),
     cardBorder: Color(0x0A000000), // %4 siyah
-    divider: Color(0xFFF1F2F6),
+    divider: Color(0xFFE4E9F1),
     heading: Color(0xFF111827),
     body: Color(0xFF374151),
-    muted: Color(0xFF6B7280),
+    // Zemin koyulastigi icin YENIDEN OLCULDU: eski #6B7280 yeni zeminde
+    // 4.15 ile AA'nin ALTINA duserdi. Ton korunup aciklik kaydirildi;
+    // yeni deger zeminde 4.75, beyaz kartta 5.52.
+    muted: Color(0xFF626976),
     placeholder: Color(0xFFE5E7EB),
   );
 
   static const _dark = HomeSurface(
-    background: Color(0xFF0F131A),
-    card: Color(0xFF171C25),
+    // (P166 §7.2) KOYU TEMA BIR KADEME YUKSELTILDI.
+    //
+    // #0F131A neredeyse siyahti ve kartla arasi 1.09 — uc katman da ayni
+    // karanlikta okunuyordu ("koyu tema fazla koyu"). Yeni oran 1.17;
+    // kart artik zeminden GORUNUR sekilde yukselir. Metin tonlari
+    // yeniden olculdu: hepsi AA'yi tutuyor (baslik 12.4, govde 9.3,
+    // ikincil 5.4 — kart uzerinde).
+    background: Color(0xFF1B222C),
+    // Olculdu: dolgu/zemin 5.20, metin/dolgu 5.20 — ikisi de AA.
+    badge: Color(0xFFF26565),
+    badgeOn: Color(0xFF1B222C),
+    card: Color(0xFF262E3A),
     cardBorder: Color(0x14FFFFFF),
-    divider: Color(0xFF232A36),
+    divider: Color(0xFF333C4A),
     heading: Color(0xFFF3F4F6),
     body: Color(0xFFD1D5DB),
     muted: Color(0xFF9CA3AF),
-    placeholder: Color(0xFF232A36),
+    placeholder: Color(0xFF333C4A),
   );
 
   /// Vurgu renginin BU YUZEYDE metin olarak kullanilacak bicimi.

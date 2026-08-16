@@ -66,15 +66,19 @@ const config: Config = {
         // Yuzey/metin — acik tema degerleri; koyu tema globals.css'te
         // ayni degisken adlariyla yeniden tanimlanir (tek yer).
         yuzey: {
-          bg: "#F4F6FA",
+          // (P166 §7.2) Mobil `home_tokens.dart` ile AYNI — parite testi
+          // ikisini kilitliyor. Zemin koyulasti ki beyaz kart AYRISSIN.
+          bg: "#EAEEF5",
           card: "#FFFFFF",
-          divider: "#F1F2F6",
+          divider: "#E4E9F1",
           placeholder: "#E5E7EB",
         },
         metin: {
           heading: "#111827",
           body: "#374151",
-          muted: "#6B7280",
+          // (P166 §7.2) Zemin koyulastigi icin yeniden olculdu (eski
+          // #6B7280 yeni zeminde 4.15 ile AA altina duserdi).
+          muted: "#626976",
           // (P132.6) IKINCIL METIN SAYFA ZEMININDE. Kontrast testi olctu:
           // #6B7280 beyaz KART uzerinde 4.83 (gecer) ama sayfa zemininde
           // (#F4F6FA) 4.47 — esigin ALTINDA. Ayni token'i iki yuzeyde

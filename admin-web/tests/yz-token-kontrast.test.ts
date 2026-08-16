@@ -166,6 +166,36 @@ describe("(P160) yeni token paleti — WCAG AA", () => {
         }
       });
 
+      // (P166 §7.2) YUZEY BASAMAKLARI GORUNUR OLMALI.
+      //
+      // Kerem'in bildirimi: "koyu tema fazla koyu, acik tema fazla beyaz
+      // gorunuyor". Olculdugunde sikayetin sebebi renklerin acikligi
+      // DEGIL, katmanlarin ayirt edilememesiydi:
+      //   acik: kart/zemin 1.03 · koyu: kart/zemin 1.09
+      // Yani kart bir YUZEY gibi degil, zeminin devami gibi okunuyordu.
+      //
+      // ESIK 1.10: gozle secilebilen en kucuk kademe. Daha yuksek bir
+      // esik iki temayi da gereksiz sertlestirirdi; daha dusugu ise tam
+      // duzelttigimiz kusuru geri getirirdi.
+      it("(P166 §7.2) KART zeminden AYRISIR (kademe gorunur)", () => {
+        const o = oran(t("yz-surface-1"), t("yz-bg-app"));
+        expect(o, `surface-1 / bg-app = ${o.toFixed(3)}`).toBeGreaterThanOrEqual(1.1);
+      });
+
+      it("(P166 §7.2) YUKSELTILMIS yuzey karttan AYRISIR", () => {
+        const o = oran(t("yz-surface-2"), t("yz-surface-1"));
+        expect(o, `surface-2 / surface-1 = ${o.toFixed(3)}`).toBeGreaterThanOrEqual(1.1);
+      });
+
+      it("(P166 §7.1) KENAR CUBUGU icerikten AYRISIR", () => {
+        // Acik temada kenar cubugu BEYAZDI (#ffffff) ve beyaz kartlarla
+        // ayni yuzey gibi gorunuyordu. Artik logo lacivertinin acik bir
+        // tonu; koyu temada ise zeminden KOYU. Iki temada yon farkli,
+        // OLCU ayni: gorunur bir kademe.
+        const o = oran(t("yz-bg-sidebar"), t("yz-bg-app"));
+        expect(o, `bg-sidebar / bg-app = ${o.toFixed(3)}`).toBeGreaterThanOrEqual(1.1);
+      });
+
       it("kenarlik yuzeyden ayirt edilebilir (>=1.5)", () => {
         // Metalik hissin sarti: kenar GORUNMELI. Cok dusuk oran, kartin
         // zemine karismasi demek.
@@ -174,6 +204,18 @@ describe("(P160) yeni token paleti — WCAG AA", () => {
       });
     });
   }
+
+  it("(P166 §7.1) ACIK TEMADA kenar cubugu BEYAZ DEGIL", () => {
+    // Brief'in acik sarti: "acik temada sol menu beyaz olmayacak".
+    // Deger olarak kilitlemek yerine BEYAZ OLMAMASI kilitleniyor: hangi
+    // mavi tonunun secildigi bir tasarim karari, beyaz olmamasi ise bir
+    // gereksinim.
+    const sb = token(":root", "yz-bg-sidebar").toLowerCase();
+    expect(["#fff", "#ffffff"]).not.toContain(sb);
+    // Ve gercekten MAVIYE calar: mavi kanal kirmizidan belirgin yuksek.
+    const [r, , b] = [1, 3, 5].map((i) => parseInt(sb.slice(i, i + 2), 16));
+    expect(b, `sidebar ${sb}: mavi kanal kirmiziyi gecmeli`).toBeGreaterThan(r + 8);
+  });
 
   it("iki tema da TUM renk tokenlarini tanimlar (eksik token yok)", () => {
     const gerekli = [

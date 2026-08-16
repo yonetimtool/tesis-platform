@@ -254,8 +254,8 @@ textarea:focus-visible,
    ========================================================================== */
 
 /* Yuzey/metin — HomeSurface._dark ile birebir. */
-.dark .bg-yuzey-bg { background-color: #0f131a; }
-.dark .bg-yuzey-card { background-color: #171c25; }
+.dark .bg-yuzey-bg { background-color: #1b222c; }
+.dark .bg-yuzey-card { background-color: #262e3a; }
 .dark .bg-yuzey-divider { background-color: #232a36; }
 .dark .bg-yuzey-placeholder { background-color: #232a36; }
 .dark .border-yuzey-divider { border-color: #232a36; }

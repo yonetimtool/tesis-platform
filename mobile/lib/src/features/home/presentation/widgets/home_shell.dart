@@ -193,8 +193,10 @@ class _ZilButonu extends StatelessWidget {
       onPressed: onTap,
       icon: unreadCount > 0
           ? Badge(
-              backgroundColor: HomeTokens.badge,
-              label: Text('$unreadCount'),
+              // (P166 §7.2) Rozet TEMAYA GORE: koyu tema acilinca sabit
+              // kirmizi app bar zemininde AA'nin altina dusuyordu.
+              backgroundColor: s.badge,
+              label: Text('$unreadCount', style: TextStyle(color: s.badgeOn)),
               child: Icon(Icons.notifications_outlined, color: s.heading),
             )
           : Icon(Icons.notifications_outlined, color: s.heading),
@@ -391,8 +393,11 @@ class _DestinationSlot extends StatelessWidget {
           children: [
             badge > 0
                 ? Badge(
-                    backgroundColor: HomeTokens.badge,
-                    label: Text('$badge'),
+                    backgroundColor: HomeSurface.of(context).badge,
+                    label: Text(
+                      '$badge',
+                      style: TextStyle(color: HomeSurface.of(context).badgeOn),
+                    ),
                     child: iconWidget,
                   )
                 : iconWidget,

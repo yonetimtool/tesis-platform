@@ -48,8 +48,12 @@ function karistir(on: string, alt: string, alfa: number): string {
 }
 
 // --- token'lar (tailwind.config.ts / globals.css ile AYNI) ----------------
-const ACIK = { card: "#FFFFFF", bg: "#F4F6FA", heading: "#111827", body: "#374151", muted: "#6B7280" };
-const KOYU = { card: "#171C25", bg: "#0F131A", heading: "#F3F4F6", body: "#D1D5DB", muted: "#9CA3AF" };
+// (P166 §7.2) DEGERLER GUNCELLENDI — yuzey basamaklari yeniden ayarlandi.
+// Bu sabitler `tailwind.config.ts` / `globals.css` / `home_tokens.dart` ile
+// AYNI olmak zorunda; `tasarim-token.test.ts` uc kaynagin esitligini
+// ayrica kilitliyor, bu dosya ise o degerlerin OKUNABILIR oldugunu olcer.
+const ACIK = { card: "#FFFFFF", bg: "#EAEEF5", heading: "#111827", body: "#374151", muted: "#626976" };
+const KOYU = { card: "#262E3A", bg: "#1B222C", heading: "#F3F4F6", body: "#D1D5DB", muted: "#9CA3AF" };
 const VURGU = {
   blue: "#2563EB",
   green: "#16A34A",
@@ -97,6 +101,10 @@ describe("(P132.6) metin kontrasti — AA (4.5)", () => {
       // zemini icin ayri bir ton tanimlandi (`mutedBg`); koyu temada
       // kart ve zemin yeterince yakin oldugu icin ayrim gerekmiyor.
       const ton = ad === "acik" ? "#636C7A" : tema.muted;
+      // (P166 §7.2) `muted`in KENDISI de artik yeni zeminde gecer (4.75);
+      // `mutedBg` ayrimi 49 sayfada kullanildigi icin KALDIRILMADI ama
+      // gerekliligi kalmadi — bu satir onu da olcer.
+      expect(kontrast(tema.muted, tema.bg), `${ad}/muted@bg`).toBeGreaterThanOrEqual(AA);
       const o = kontrast(ton, tema.bg);
       expect(o, `${ad}/ikincil@bg = ${o.toFixed(2)}`).toBeGreaterThanOrEqual(AA);
     });
@@ -145,4 +153,20 @@ describe("(P132.6) birincil dugme ve odak halkasi", () => {
     expect(kontrast(VURGU_KOYU.blue, KOYU.card)).toBeGreaterThanOrEqual(UI);
     expect(kontrast(VURGU_KOYU.blue, KOYU.bg)).toBeGreaterThanOrEqual(UI);
   });
+});
+
+describe("(P166 §7.2) YUZEY KADEMESI — kart zeminden ayrisir", () => {
+  // Kerem'in bildirimi: "koyu tema fazla koyu, acik tema fazla beyaz".
+  // Olculdugunde sikayetin sebebi renklerin acikligi DEGIL, katmanlarin
+  // ayirt edilememesiydi (acik 1.03 · koyu 1.09). Esik 1.10: gozle
+  // secilebilen en kucuk kademe.
+  for (const [ad, tema] of [
+    ["acik", ACIK],
+    ["koyu", KOYU],
+  ] as const) {
+    it(`${ad} tema: kart / zemin kademesi gorunur`, () => {
+      const o = kontrast(tema.card, tema.bg);
+      expect(o, `${ad}: card/bg = ${o.toFixed(3)}`).toBeGreaterThanOrEqual(1.1);
+    });
+  }
 });
