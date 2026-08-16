@@ -1518,5 +1518,49 @@
   "kayitKopyala": "نسخ",
   "kayitKopyalandi": "تم النسخ",
   "kayitTamamla": "متابعة",
-  "kayitSosyalAdNotu": "تم أخذ الاسم من حسابك، ويمكنك تغييره."
+  "kayitSosyalAdNotu": "تم أخذ الاسم من حسابك، ويمكنك تغييره.",
+  "binaYapisalAraclar": "أدوات هيكلية",
+  "binaKatSil": "حذف الطابق",
+  "binaTopluTip": "تغيير الحالة دفعة واحدة",
+  "binaSiralama": "تعديل الترتيب",
+  "binaKatSilOzet": "سيتم حذف {n} شقة",
+  "@binaKatSilOzet": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "binaKatSilOnay": "سيتم حذف جميع شقق الطابق {kat} نهائيًا. لا يمكن التراجع.",
+  "@binaKatSilOnay": {
+    "placeholders": {
+      "kat": {
+        "type": "int"
+      }
+    }
+  },
+  "binaAralikSec": "اختيار بالرقم",
+  "binaAralikUygula": "اختيار",
+  "binaSeciliSayisi": "{n} شقة محددة",
+  "@binaSeciliSayisi": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "binaAralikBulunamayan": "غير موجود: {parca}",
+  "@binaAralikBulunamayan": {
+    "placeholders": {
+      "parca": {
+        "type": "String"
+      }
+    }
+  },
+  "ortakEminMisiniz": "هل أنت متأكد؟",
+  "ortakDurum": "الحالة",
+  "ortakAktif": "نشط",
+  "ortakPasif": "غير نشط",
+  "binaBaslangicKat": "الطابق الأول",
+  "binaBaslangicKatIpucu": "سالب للأقبية: -2، -1، 0 (الأرضي)، 1…"
 }

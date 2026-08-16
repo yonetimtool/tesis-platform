@@ -1518,5 +1518,49 @@
   "kayitKopyala": "Copier",
   "kayitKopyalandi": "Copié",
   "kayitTamamla": "Continuer",
-  "kayitSosyalAdNotu": "Nom repris de votre compte ; vous pouvez le modifier."
+  "kayitSosyalAdNotu": "Nom repris de votre compte ; vous pouvez le modifier.",
+  "binaYapisalAraclar": "Outils structurels",
+  "binaKatSil": "Supprimer l'étage",
+  "binaTopluTip": "Modifier le statut en lot",
+  "binaSiralama": "Modifier l'ordre",
+  "binaKatSilOzet": "{n} logements seront supprimés",
+  "@binaKatSilOzet": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "binaKatSilOnay": "Tous les logements de l'étage {kat} seront définitivement supprimés. Action irréversible.",
+  "@binaKatSilOnay": {
+    "placeholders": {
+      "kat": {
+        "type": "int"
+      }
+    }
+  },
+  "binaAralikSec": "Sélectionner par numéro",
+  "binaAralikUygula": "Sélectionner",
+  "binaSeciliSayisi": "{n} logements sélectionnés",
+  "@binaSeciliSayisi": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "binaAralikBulunamayan": "Introuvable : {parca}",
+  "@binaAralikBulunamayan": {
+    "placeholders": {
+      "parca": {
+        "type": "String"
+      }
+    }
+  },
+  "ortakEminMisiniz": "Êtes-vous sûr ?",
+  "ortakDurum": "Statut",
+  "ortakAktif": "Actif",
+  "ortakPasif": "Inactif",
+  "binaBaslangicKat": "Étage de départ",
+  "binaBaslangicKatIpucu": "Négatif pour les sous-sols : -2, -1, 0 (RDC), 1…"
 }

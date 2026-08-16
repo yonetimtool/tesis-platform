@@ -1518,5 +1518,49 @@
   "kayitKopyala": "Kopieren",
   "kayitKopyalandi": "Kopiert",
   "kayitTamamla": "Weiter",
-  "kayitSosyalAdNotu": "Name aus Ihrem Konto übernommen; Sie können ihn ändern."
+  "kayitSosyalAdNotu": "Name aus Ihrem Konto übernommen; Sie können ihn ändern.",
+  "binaYapisalAraclar": "Strukturwerkzeuge",
+  "binaKatSil": "Etage löschen",
+  "binaTopluTip": "Status gesammelt ändern",
+  "binaSiralama": "Reihenfolge bearbeiten",
+  "binaKatSilOzet": "{n} Wohnungen werden gelöscht",
+  "@binaKatSilOzet": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "binaKatSilOnay": "Alle Wohnungen auf Etage {kat} werden dauerhaft gelöscht. Nicht rückgängig zu machen.",
+  "@binaKatSilOnay": {
+    "placeholders": {
+      "kat": {
+        "type": "int"
+      }
+    }
+  },
+  "binaAralikSec": "Nach Nummer wählen",
+  "binaAralikUygula": "Wählen",
+  "binaSeciliSayisi": "{n} Wohnungen ausgewählt",
+  "@binaSeciliSayisi": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "binaAralikBulunamayan": "Nicht gefunden: {parca}",
+  "@binaAralikBulunamayan": {
+    "placeholders": {
+      "parca": {
+        "type": "String"
+      }
+    }
+  },
+  "ortakEminMisiniz": "Sind Sie sicher?",
+  "ortakDurum": "Status",
+  "ortakAktif": "Aktiv",
+  "ortakPasif": "Inaktiv",
+  "binaBaslangicKat": "Startetage",
+  "binaBaslangicKatIpucu": "Negativ für Untergeschosse: -2, -1, 0 (EG), 1…"
 }

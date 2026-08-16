@@ -12,6 +12,7 @@ import '../../unit_tanimlari/domain/unit_tanim_models.dart';
 import '../domain/bina_duzenleme_models.dart';
 import 'daire_tipi_rengi.dart';
 import 'bina_duzenleme_controller.dart';
+import 'yapisal_arac_dialoglari.dart';
 import '../../../core/theme/home_tokens.dart';
 import '../../../core/ui/merkez_diyalog.dart';
 
@@ -38,6 +39,17 @@ class BinaDuzenlemeScreen extends ConsumerStatefulWidget {
 
 /// Blok-suz kova icin sentinel etiket (gercek blok etiketi min 1 karakter).
 const String _blocklessKey = '';
+
+/// Yapisal arac secimi.
+///
+/// DIZE DEGIL ENUM ve bu iki sebeple dogru:
+///   1. Uc sabit dize zaten bir enum'un elle yazilmis haliydi.
+///   2. `PopupMenuButton<String>` TIPI, depodaki genel test yardimcisinin
+///      ("menudeki son oge Sil'dir") aradigi tiple CAKISIYORDU: bu menu
+///      app bar'da ve agacta once geldigi icin yardimci onu seciyor,
+///      dokunusu bosa gidiyordu. Enum ile tip ayrisiyor ve iki menu
+///      birbirini gormuyor.
+enum _YapisalArac { katSil, topluTip, siralama }
 
 class _BinaDuzenlemeScreenState extends ConsumerState<BinaDuzenlemeScreen> {
   /// Acik blok: null = kutucuk listesi; '' = bloksuz kova; aksi = o blok.
@@ -79,6 +91,35 @@ class _BinaDuzenlemeScreenState extends ConsumerState<BinaDuzenlemeScreen> {
         leading: drilledIn ? BackButton(onPressed: _closeBlock) : null,
         title: Text(baslikBuyuk(_titleFor(readOnly), context.dilKodu)),
         actions: [
+          // (P164) YAPISAL ARACLAR — webdeki uclunun mobil karsiligi.
+          //
+          // TEK MENUDE toplandi, uc ayri ikon degil: bunlar SEYREK ve
+          // YIKICI islemlerdir; app bar'da uc dugme olarak durmalari,
+          // sik kullanilan "yenile"nin yaninda yanlislikla basilma
+          // riskini artirirdi.
+          //
+          // SALT-OKUMA ROLDE HIC CIZILMEZ: sunucu zaten 403 doner, ama
+          // basilacak bir menu gostermek "yetkim var sandim" demektir.
+          if (!readOnly)
+            PopupMenuButton<_YapisalArac>(
+              tooltip: context.l10n.binaYapisalAraclar,
+              icon: const Icon(Icons.construction_outlined),
+              onSelected: _yapisalArac,
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: _YapisalArac.katSil,
+                  child: Text(context.l10n.binaKatSil),
+                ),
+                PopupMenuItem(
+                  value: _YapisalArac.topluTip,
+                  child: Text(context.l10n.binaTopluTip),
+                ),
+                PopupMenuItem(
+                  value: _YapisalArac.siralama,
+                  child: Text(context.l10n.binaSiralama),
+                ),
+              ],
+            ),
           IconButton(
             tooltip: context.l10n.ortakYenile,
             icon: const Icon(Icons.refresh),
@@ -108,8 +149,11 @@ class _BinaDuzenlemeScreenState extends ConsumerState<BinaDuzenlemeScreen> {
     if (state.loading && state.bos) {
       return const Center(child: CircularProgressIndicator());
     }
-    final hataMetni =
-        akisHatasiCoz(context.l10n, state.hataKimligi, state.errorMessage);
+    final hataMetni = akisHatasiCoz(
+      context.l10n,
+      state.hataKimligi,
+      state.errorMessage,
+    );
     if (hataMetni != null && state.bos) {
       return ListView(
         children: [
@@ -142,8 +186,11 @@ class _BinaDuzenlemeScreenState extends ConsumerState<BinaDuzenlemeScreen> {
   }
 
   Widget? _errorBanner(BinaDuzenlemeState state) {
-    final hataMetni =
-        akisHatasiCoz(context.l10n, state.hataKimligi, state.errorMessage);
+    final hataMetni = akisHatasiCoz(
+      context.l10n,
+      state.hataKimligi,
+      state.errorMessage,
+    );
     if (hataMetni == null || state.bos) return null;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -152,6 +199,23 @@ class _BinaDuzenlemeScreenState extends ConsumerState<BinaDuzenlemeScreen> {
         style: TextStyle(color: Theme.of(context).colorScheme.error),
       ),
     );
+  }
+
+  Future<void> _yapisalArac(_YapisalArac secim) async {
+    await switch (secim) {
+      _YapisalArac.katSil => showDialog<void>(
+        context: context,
+        builder: (_) => KatSilDialog(blok: _openBlock),
+      ),
+      _YapisalArac.topluTip => showDialog<void>(
+        context: context,
+        builder: (_) => TopluTipDialog(blok: _openBlock),
+      ),
+      _YapisalArac.siralama => showDialog<void>(
+        context: context,
+        builder: (_) => SiralamaDialog(blok: _openBlock),
+      ),
+    };
   }
 
   void _addFloor() {
@@ -166,7 +230,9 @@ class _BinaDuzenlemeScreenState extends ConsumerState<BinaDuzenlemeScreen> {
           if (u.kat != null) u.kat!,
         ..._pendingFloors,
       };
-      final next = kats.isEmpty ? 1 : (kats.reduce((a, b) => a > b ? a : b) + 1);
+      final next = kats.isEmpty
+          ? 1
+          : (kats.reduce((a, b) => a > b ? a : b) + 1);
       _pendingFloors.add(next);
     });
   }
@@ -206,8 +272,9 @@ class _BlockList extends ConsumerWidget {
               ? context.l10n.binaSaltGoruntulemeAciklama
               : context.l10n.binaDuzenlemeAciklama,
           style: TextStyle(
-              fontSize: 13,
-              color: Theme.of(context).colorScheme.onSurfaceVariant),
+            fontSize: 13,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
         const SizedBox(height: 12),
         Wrap(
@@ -223,7 +290,11 @@ class _BlockList extends ConsumerWidget {
                 // Salt-okuma: blok yonet (duzenle/sil) kapali.
                 onManage: readOnly || state.blockByLabel(label) == null
                     ? null
-                    : () => _manageBlock(context, ref, state.blockByLabel(label)!),
+                    : () => _manageBlock(
+                        context,
+                        ref,
+                        state.blockByLabel(label)!,
+                      ),
               ),
             if (showBlockless)
               _BlockTile(
@@ -264,11 +335,13 @@ class _BlockTile extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final isDark = scheme.brightness == Brightness.dark;
     const accent = Color(0xFF3949AB);
-    final Color tileFill =
-        isDark ? accent.withValues(alpha: 0.22) : const Color(0xFFE8EAF6);
+    final Color tileFill = isDark
+        ? accent.withValues(alpha: 0.22)
+        : const Color(0xFFE8EAF6);
     final Color iconColor = isDark ? const Color(0xFF9FA8DA) : accent;
-    final Color titleColor =
-        isDark ? const Color(0xFFC5CAE9) : const Color(0xFF283593);
+    final Color titleColor = isDark
+        ? const Color(0xFFC5CAE9)
+        : const Color(0xFF283593);
     return InkWell(
       onTap: onTap,
       onLongPress: onManage,
@@ -295,10 +368,7 @@ class _BlockTile extends StatelessWidget {
             // `maxLines`tir.
             Text(
               icon == null ? context.l10n.binaBlokEtiket(label) : label,
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                color: titleColor,
-              ),
+              style: TextStyle(fontWeight: FontWeight.w700, color: titleColor),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -331,8 +401,9 @@ class _AddTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final isDark = scheme.brightness == Brightness.dark;
-    final Color fill =
-        isDark ? scheme.surfaceContainerHighest : Colors.blueGrey.shade50;
+    final Color fill = isDark
+        ? scheme.surfaceContainerHighest
+        : Colors.blueGrey.shade50;
     final Color fg = isDark ? scheme.onSurfaceVariant : Colors.blueGrey;
     return InkWell(
       onTap: onTap,
@@ -343,7 +414,11 @@ class _AddTile extends StatelessWidget {
         height: MediaQuery.textScalerOf(context).scale(104),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.blueGrey.shade300, width: 1.2, style: BorderStyle.solid),
+          border: Border.all(
+            color: Colors.blueGrey.shade300,
+            width: 1.2,
+            style: BorderStyle.solid,
+          ),
           color: fill,
         ),
         child: Column(
@@ -385,8 +460,9 @@ class _BlockDetail extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final units =
-        _blockless ? state.blocklessUnits : state.unitsForBlock(label);
+    final units = _blockless
+        ? state.blocklessUnits
+        : state.unitsForBlock(label);
 
     // Kat gruplama: daire katlari + bekleyen bos katlar; UST KAT YUKARIDA.
     final floorSet = <int>{
@@ -404,14 +480,15 @@ class _BlockDetail extends ConsumerWidget {
         Text(
           readOnly
               ? (_blockless
-                  ? context.l10n.binaBloksuzDairelerSalt
-                  : context.l10n.binaBlokYerlesimSalt(label))
+                    ? context.l10n.binaBloksuzDairelerSalt
+                    : context.l10n.binaBlokYerlesimSalt(label))
               : (_blockless
-                  ? context.l10n.binaBloksuzUyari
-                  : context.l10n.binaBlokYerlesimYardim(label)),
+                    ? context.l10n.binaBloksuzUyari
+                    : context.l10n.binaBlokYerlesimYardim(label)),
           style: TextStyle(
-              fontSize: 13,
-              color: Theme.of(context).colorScheme.onSurfaceVariant),
+            fontSize: 13,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
         const SizedBox(height: 12),
         // "Kat ekle" + "Toplu daire ekle": salt-okumada ve bloksuz kovada gizli
@@ -427,11 +504,7 @@ class _BlockDetail extends ConsumerWidget {
                 label: Text(context.l10n.binaKatEkle),
               ),
               OutlinedButton.icon(
-                onPressed: () => _showBulkUnitForm(
-                  context,
-                  ref,
-                  blok: label,
-                ),
+                onPressed: () => _showBulkUnitForm(context, ref, blok: label),
                 icon: const Icon(Icons.grid_view),
                 label: Text(context.l10n.binaTopluDaireEkle),
               ),
@@ -444,19 +517,20 @@ class _BlockDetail extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(vertical: 24),
             child: Center(
               child: Text(
-                  readOnly
-                      ? context.l10n.binaBloktaDaireYok
-                      : context.l10n.binaKatYokBos,
-                  style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant),
-                  textAlign: TextAlign.center),
+                readOnly
+                    ? context.l10n.binaBloktaDaireYok
+                    : context.l10n.binaKatYokBos,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
+              ),
             ),
           ),
         for (final kat in floors)
           _FloorRow(
             kat: kat,
-            units: (units.where((u) => u.kat == kat).toList()
-              ..sort(_bySira)),
+            units: (units.where((u) => u.kat == kat).toList()..sort(_bySira)),
             readOnly: readOnly,
             canAdd: !readOnly && !_blockless,
             onAddUnit: () => _openUnitForm(context, ref, kat: kat),
@@ -494,10 +568,14 @@ class _BlockDetail extends ConsumerWidget {
     // Yeni daire icin sira onerisi: bu blok+kattaki en yuksek sira + 1.
     int? siraSuggestion;
     if (existing == null) {
-      final target = _blockless ? state.blocklessUnits : state.unitsForBlock(label);
+      final target = _blockless
+          ? state.blocklessUnits
+          : state.unitsForBlock(label);
       final onKat = target.where((u) => u.kat == kat).toList();
       final maxSira = onKat.fold<int>(
-          0, (m, u) => (u.sira ?? 0) > m ? (u.sira ?? 0) : m);
+        0,
+        (m, u) => (u.sira ?? 0) > m ? (u.sira ?? 0) : m,
+      );
       siraSuggestion = maxSira + 1;
     }
     await merkezSayfaAc<void>(
@@ -548,7 +626,10 @@ class _FloorRow extends StatelessWidget {
                 kat == null
                     ? context.l10n.binaKatYok
                     : context.l10n.binaKatEtiket('$kat'),
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
             Expanded(
@@ -593,17 +674,15 @@ class UnitCell extends StatelessWidget {
     final isDark = scheme.brightness == Brightness.dark;
     // (P122) TIP RENGI YALNIZ AKTIF dairede: pasif daire her tipte ayni
     // soluk griyi tasimali, yoksa "pasif" durumu renk gurultusunde kaybolur.
-    final color = active
-        ? daireTipiRengi(unit.unitTipAd)
-        : Colors.blueGrey;
+    final color = active ? daireTipiRengi(unit.unitTipAd) : Colors.blueGrey;
     // Seffaf dolgu koyu zeminde kaybolmasin diye koyu modda tinti belirginlestir;
     // etiket rengini de aciga cek (koyu indigo/blueGrey koyu modda okunmaz).
     // Etiket rengi TIP RENGINDEN turer: koyu temada aciga, acik temada
     // koyuya cekilir — sabit indigo, turuncu/yesil bir hucrede okunmazdi.
     final Color labelColor = active
         ? (isDark
-            ? Color.lerp(color, Colors.white, 0.62)!
-            : Color.lerp(color, Colors.black, 0.35)!)
+              ? Color.lerp(color, Colors.white, 0.62)!
+              : Color.lerp(color, Colors.black, 0.35)!)
         : (isDark ? Colors.blueGrey.shade200 : Colors.blueGrey);
     final tipKisa = active ? daireTipiKisa(unit.unitTipAd) : '';
     return InkWell(
@@ -621,13 +700,26 @@ class UnitCell extends StatelessWidget {
         label: unit.unitTipAd == null || !active
             ? unit.no
             : '${unit.no}, ${unit.unitTipAd}',
-        child: _hucreGovdesi(context, color, labelColor, tipKisa, scheme, isDark),
+        child: _hucreGovdesi(
+          context,
+          color,
+          labelColor,
+          tipKisa,
+          scheme,
+          isDark,
+        ),
       ),
     );
   }
 
-  Widget _hucreGovdesi(BuildContext context, Color color, Color labelColor,
-      String tipKisa, ColorScheme scheme, bool isDark) {
+  Widget _hucreGovdesi(
+    BuildContext context,
+    Color color,
+    Color labelColor,
+    String tipKisa,
+    ColorScheme scheme,
+    bool isDark,
+  ) {
     // (P122) YAZI OLCEGIYLE BUYU (tur 27 deseni — blok karosu da boyle).
     // Kapi numarasinin yanina tip etiketi eklemek kutuya IKINCI BIR SATIR
     // koymaktir; sabit 46 dp yukseklik, erisilebilirlik icin yaziyi
@@ -636,50 +728,50 @@ class UnitCell extends StatelessWidget {
     // BUYUK istedi, biz de kutuyu buyutuyoruz.
     final olcek = MediaQuery.textScalerOf(context);
     return Container(
-        width: olcek.scale(58),
-        height: olcek.scale(46),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: isDark ? 0.28 : 0.10),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: color, width: 1.5),
-        ),
-        alignment: Alignment.center,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              unit.no,
-              style: TextStyle(
-                color: labelColor,
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-              ),
-              overflow: TextOverflow.ellipsis,
+      width: olcek.scale(58),
+      height: olcek.scale(46),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: isDark ? 0.28 : 0.10),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color, width: 1.5),
+      ),
+      alignment: Alignment.center,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            unit.no,
+            style: TextStyle(
+              color: labelColor,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
             ),
-            // (P122) TIP, SIRADAN ONCELIKLIDIR. Hucre 46 dp yuksektir; ucuncu
-            // bir satir yazi olcegi buyuyen cihazda TASAR. Tip atanmissa
-            // kullanici icin degerli olan odur ("12 · 2+1"); sira yalnizca
-            // yerlesim ayrintisidir ve tip yokken gosterilir.
-            if (tipKisa.isNotEmpty)
-              Text(
-                tipKisa,
-                key: const Key('daire-tip-etiketi'),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: labelColor,
-                ),
-              )
-            else if (unit.sira != null)
-              Text('#${unit.sira}',
-                  style: TextStyle(
-                      fontSize: 10,
-                      color: scheme.onSurfaceVariant)),
-          ],
-        ),
-      );
+            overflow: TextOverflow.ellipsis,
+          ),
+          // (P122) TIP, SIRADAN ONCELIKLIDIR. Hucre 46 dp yuksektir; ucuncu
+          // bir satir yazi olcegi buyuyen cihazda TASAR. Tip atanmissa
+          // kullanici icin degerli olan odur ("12 · 2+1"); sira yalnizca
+          // yerlesim ayrintisidir ve tip yokken gosterilir.
+          if (tipKisa.isNotEmpty)
+            Text(
+              tipKisa,
+              key: const Key('daire-tip-etiketi'),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: labelColor,
+              ),
+            )
+          else if (unit.sira != null)
+            Text(
+              '#${unit.sira}',
+              style: TextStyle(fontSize: 10, color: scheme.onSurfaceVariant),
+            ),
+        ],
+      ),
+    );
   }
 }
 
@@ -722,7 +814,10 @@ Future<void> _addBlock(BuildContext context, WidgetRef ref) async {
 }
 
 Future<void> _manageBlock(
-    BuildContext context, WidgetRef ref, BuildingBlock block) async {
+  BuildContext context,
+  WidgetRef ref,
+  BuildingBlock block,
+) async {
   await merkezSayfaAc<void>(
     context,
     builder: (ctx) => SafeArea(
@@ -737,7 +832,9 @@ Future<void> _manageBlock(
               merkezSayfaAc<void>(
                 context,
                 builder: (c2) => Padding(
-                  padding: EdgeInsets.only(bottom: MediaQuery.of(c2).viewInsets.bottom),
+                  padding: EdgeInsets.only(
+                    bottom: MediaQuery.of(c2).viewInsets.bottom,
+                  ),
                   child: _BlockForm(existing: block),
                 ),
               );
@@ -745,8 +842,10 @@ Future<void> _manageBlock(
           ),
           ListTile(
             leading: const Icon(Icons.delete_outline, color: Colors.red),
-            title: Text(context.l10n.binaBloguSil,
-                style: const TextStyle(color: Colors.red)),
+            title: Text(
+              context.l10n.binaBloguSil,
+              style: const TextStyle(color: Colors.red),
+            ),
             subtitle: block.unitSayisi > 0
                 ? Text(context.l10n.binaBloguSilAlt(block.unitSayisi))
                 : null,
@@ -762,7 +861,10 @@ Future<void> _manageBlock(
 }
 
 Future<void> _deleteBlock(
-    BuildContext context, WidgetRef ref, BuildingBlock block) async {
+  BuildContext context,
+  WidgetRef ref,
+  BuildingBlock block,
+) async {
   final l10n = context.l10n;
   final messenger = ScaffoldMessenger.of(context);
   final count = block.unitSayisi;
@@ -783,11 +885,13 @@ Future<void> _deleteBlock(
         title: Text(l10n.binaBlokSilinsinMi(block.ad)),
         actions: [
           TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: Text(l10n.ortakVazgec)),
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(l10n.ortakVazgec),
+          ),
           FilledButton(
-              onPressed: () => Navigator.of(ctx).pop(true),
-              child: Text(l10n.ortakSil)),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(l10n.ortakSil),
+          ),
         ],
       ),
     );
@@ -798,17 +902,25 @@ Future<void> _deleteBlock(
     await ref
         .read(binaDuzenlemeControllerProvider.notifier)
         .deleteBlock(block.id, cascade: cascade);
-    messenger.showSnackBar(SnackBar(
-      content: Text(cascade
-          ? l10n.binaBlokVeDaireSilindi(block.ad, '$count')
-          : l10n.binaBlokSilindi(block.ad)),
-    ));
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          cascade
+              ? l10n.binaBlokVeDaireSilindi(block.ad, '$count')
+              : l10n.binaBlokSilindi(block.ad),
+        ),
+      ),
+    );
   } on ApiException catch (e) {
-    messenger.showSnackBar(SnackBar(
-      content: Text(e.statusCode == 409
-          ? e.message
-          : l10n.binaBlokSilinemedi(apiHataMetni(l10n, e))),
-    ));
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          e.statusCode == 409
+              ? e.message
+              : l10n.binaBlokSilinemedi(apiHataMetni(l10n, e)),
+        ),
+      ),
+    );
   } catch (_) {
     messenger.showSnackBar(
       SnackBar(content: Text(l10n.binaBlokSilinemediGenel)),
@@ -885,8 +997,9 @@ class _BlockForm extends ConsumerStatefulWidget {
 }
 
 class _BlockFormState extends ConsumerState<_BlockForm> {
-  late final TextEditingController _ad =
-      TextEditingController(text: widget.existing?.ad ?? '');
+  late final TextEditingController _ad = TextEditingController(
+    text: widget.existing?.ad ?? '',
+  );
   bool _busy = false;
   String? _error;
 
@@ -945,10 +1058,11 @@ class _BlockFormState extends ConsumerState<_BlockForm> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-              widget.existing != null
-                  ? context.l10n.binaBlokDuzenle
-                  : context.l10n.binaYeniBlok,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+            widget.existing != null
+                ? context.l10n.binaBlokDuzenle
+                : context.l10n.binaYeniBlok,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          ),
           const SizedBox(height: 12),
           TextField(
             controller: _ad,
@@ -965,7 +1079,10 @@ class _BlockFormState extends ConsumerState<_BlockForm> {
           ),
           if (_error != null) ...[
             const SizedBox(height: 8),
-            Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+            Text(
+              _error!,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
           ],
           const SizedBox(height: 16),
           Row(
@@ -973,9 +1090,11 @@ class _BlockFormState extends ConsumerState<_BlockForm> {
               Expanded(
                 child: FilledButton(
                   onPressed: _busy ? null : _save,
-                  child: Text(_busy
-                      ? context.l10n.ortakKaydediliyor
-                      : context.l10n.ortakKaydet),
+                  child: Text(
+                    _busy
+                        ? context.l10n.ortakKaydediliyor
+                        : context.l10n.ortakKaydet,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -1014,12 +1133,15 @@ class _UnitForm extends ConsumerStatefulWidget {
 }
 
 class _UnitFormState extends ConsumerState<_UnitForm> {
-  late final TextEditingController _no =
-      TextEditingController(text: widget.existing?.no ?? '');
+  late final TextEditingController _no = TextEditingController(
+    text: widget.existing?.no ?? '',
+  );
   late final TextEditingController _kat = TextEditingController(
-      text: (widget.existing?.kat ?? widget.initialKat)?.toString() ?? '');
+    text: (widget.existing?.kat ?? widget.initialKat)?.toString() ?? '',
+  );
   late final TextEditingController _sira = TextEditingController(
-      text: (widget.existing?.sira ?? widget.initialSira)?.toString() ?? '');
+    text: (widget.existing?.sira ?? widget.initialSira)?.toString() ?? '',
+  );
   bool _busy = false;
   String? _error;
   // (P26) Siniflandirma secimleri — mevcut daireden onceden dolar.
@@ -1058,8 +1180,12 @@ class _UnitFormState extends ConsumerState<_UnitForm> {
       _error = null;
     });
     final draft = EditorUnitDraft(
-      no: no, blok: widget.blok, kat: kat, sira: sira,
-      unitTipId: _tipId, unitGrupId: _grupId,
+      no: no,
+      blok: widget.blok,
+      kat: kat,
+      sira: sira,
+      unitTipId: _tipId,
+      unitGrupId: _grupId,
     );
     final controller = ref.read(binaDuzenlemeControllerProvider.notifier);
     try {
@@ -1191,7 +1317,10 @@ class _UnitFormState extends ConsumerState<_UnitForm> {
           ),
           if (_error != null) ...[
             const SizedBox(height: 8),
-            Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+            Text(
+              _error!,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
           ],
           const SizedBox(height: 16),
           Row(
@@ -1199,9 +1328,11 @@ class _UnitFormState extends ConsumerState<_UnitForm> {
               Expanded(
                 child: FilledButton(
                   onPressed: _busy ? null : _save,
-                  child: Text(_busy
-                      ? context.l10n.ortakKaydediliyor
-                      : context.l10n.ortakKaydet),
+                  child: Text(
+                    _busy
+                        ? context.l10n.ortakKaydediliyor
+                        : context.l10n.ortakKaydet,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -1255,6 +1386,11 @@ class _BulkUnitFormState extends ConsumerState<_BulkUnitForm> {
   final _katSayisi = TextEditingController();
   final _katBasi = TextEditingController();
   final _baslangic = TextEditingController(text: '1');
+  // (P164) BASLANGIC KATI EKSIKTI: alan hic gonderilmiyordu ve sunucu 1
+  // varsayiyordu. Bodrumlu bir binada kat numaralari bir kaydirmayla
+  // yaziliyordu — yani veri binanin kendisini anlatmiyordu. Bodrum ve
+  // zemin GERCEK katlardir; negatif deger serbest.
+  final _baslangicKat = TextEditingController(text: '1');
   bool _busy = false;
   String? _error;
   // (P26) Siniflandirma PARTININ TAMAMINA uygulanir — bir blok genelde tek
@@ -1271,12 +1407,17 @@ class _BulkUnitFormState extends ConsumerState<_BulkUnitForm> {
     _katSayisi.dispose();
     _katBasi.dispose();
     _baslangic.dispose();
+    _baslangicKat.dispose();
     super.dispose();
   }
 
   int? get _kat => int.tryParse(_katSayisi.text.trim());
   int? get _mDaire => int.tryParse(_katBasi.text.trim());
   int? get _bas => int.tryParse(_baslangic.text.trim());
+
+  /// Baslangic kati — BOS BIRAKILABILIR (sunucu 1 varsayar). `0` ve
+  /// negatif degerler GECERLIDIR; `int.tryParse` ikisini de cozer.
+  int? get _basKat => int.tryParse(_baslangicKat.text.trim());
 
   String get _no0 => widget.blok != null ? '${widget.blok}-' : '';
 
@@ -1290,7 +1431,12 @@ class _BulkUnitFormState extends ConsumerState<_BulkUnitForm> {
     if (toplam > 500) return _l10n.binaEnFazla500('$toplam');
     final bitis = b + toplam - 1;
     return _l10n.binaTopluOnizleme(
-        '$_no0$b', '$_no0$bitis', '$toplam', '$k', '$m');
+      '$_no0$b',
+      '$_no0$bitis',
+      '$toplam',
+      '$k',
+      '$m',
+    );
   }
 
   Future<void> _submit() async {
@@ -1308,15 +1454,17 @@ class _BulkUnitFormState extends ConsumerState<_BulkUnitForm> {
       _error = null;
     });
     try {
-      final res =
-          await ref.read(binaDuzenlemeControllerProvider.notifier).bulkCreateUnits(
-                blok: widget.blok,
-                katSayisi: k,
-                katBasiDaire: m,
-                baslangicNo: b,
-                unitTipId: _tipId,
-                unitGrupId: _grupId,
-              );
+      final res = await ref
+          .read(binaDuzenlemeControllerProvider.notifier)
+          .bulkCreateUnits(
+            blok: widget.blok,
+            katSayisi: k,
+            katBasiDaire: m,
+            baslangicNo: b,
+            baslangicKat: _basKat,
+            unitTipId: _tipId,
+            unitGrupId: _grupId,
+          );
       if (!mounted) return;
       Navigator.of(context).pop();
       final atl = res.atlanan.isEmpty
@@ -1324,8 +1472,7 @@ class _BulkUnitFormState extends ConsumerState<_BulkUnitForm> {
           : _l10n.binaAtlananEk('${res.atlanan.length}');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-              _l10n.binaDaireEklendi('${res.olusturulanSayi}', atl)),
+          content: Text(_l10n.binaDaireEklendi('${res.olusturulanSayi}', atl)),
         ),
       );
     } on ApiException catch (e) {
@@ -1357,8 +1504,9 @@ class _BulkUnitFormState extends ConsumerState<_BulkUnitForm> {
           Text(
             l10n.binaTopluAciklama,
             style: TextStyle(
-                fontSize: 12,
-                color: Theme.of(context).colorScheme.onSurfaceVariant),
+              fontSize: 12,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 16),
           Row(
@@ -1399,6 +1547,20 @@ class _BulkUnitFormState extends ConsumerState<_BulkUnitForm> {
               border: OutlineInputBorder(),
             ),
           ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _baslangicKat,
+            // EKSI ISARETI GEREKLI: bodrum katlari negatif. `number`
+            // klavyesi bazi cihazlarda eksiyi gostermez; `signed: true`
+            // onu acar.
+            keyboardType: const TextInputType.numberWithOptions(signed: true),
+            onChanged: (_) => setState(() {}),
+            decoration: InputDecoration(
+              labelText: l10n.binaBaslangicKat,
+              hintText: l10n.binaBaslangicKatIpucu,
+              border: OutlineInputBorder(),
+            ),
+          ),
           if (onizleme.isNotEmpty) ...[
             const SizedBox(height: 12),
             Container(
@@ -1408,8 +1570,10 @@ class _BulkUnitFormState extends ConsumerState<_BulkUnitForm> {
                 color: Theme.of(context).colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Text(onizleme,
-                  style: const TextStyle(fontWeight: FontWeight.w600)),
+              child: Text(
+                onizleme,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
             ),
           ],
           // (P26) Siniflandirma PARTININ TAMAMINA uygulanir.

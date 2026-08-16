@@ -126,6 +126,10 @@ class BinaDuzenlemeApi {
     required int katSayisi,
     required int katBasiDaire,
     required int baslangicNo,
+    // (P164) BASLANGIC KATI EKSIKTI: alan gonderilmeyince sunucu 1
+    // varsayiyor ve bodrumlu bir binada kat numaralari bir kaydirmayla
+    // yaziliyordu. Bodrum ve zemin GERCEK katlardir (-2, -1, 0).
+    int? baslangicKat,
     String? unitTipId,
     String? unitGrupId,
   }) async {
@@ -137,6 +141,7 @@ class BinaDuzenlemeApi {
           'kat_sayisi': katSayisi,
           'kat_basi_daire': katBasiDaire,
           'baslangic_no': baslangicNo,
+          'baslangic_kat': ?baslangicKat,
           // (P26) Verilirse PARTININ TAMAMINA uygulanir.
           'unit_tip_id': ?unitTipId,
           'unit_grup_id': ?unitGrupId,
@@ -152,6 +157,83 @@ class BinaDuzenlemeApi {
       throw ApiException.fromDio(e);
     }
   }
+
+  /// `POST /units/kat-sil` — bir blogun BIR KATINI siler.
+  ///
+  /// `cascade` ZORUNLU OLARAK true gonderilmez; cagiran karar verir.
+  /// Sunucu cascade=false iken dolu kat icin 409 doner ve ekran bunu
+  /// kullaniciya gosterir — "sildim" deyip silmemek en kotu sonuctur.
+  Future<int> deleteFloor({
+    required String blok,
+    required int kat,
+    bool cascade = true,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/units/kat-sil',
+        data: {'blok': blok, 'kat': kat, 'cascade': cascade},
+      );
+      return (res.data?['silinen'] as num?)?.toInt() ?? 0;
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// `PATCH /units/toplu` — secili dairelerin tipini/durumunu degistirir.
+  ///
+  /// EN AZ BIR ALAN gonderilmeli; ikisi de null ise sunucu 422 doner.
+  /// Cagiran bunu ONCEDEN engeller (bos istek "yaptim" deyip hicbir sey
+  /// yapmamakti).
+  Future<int> bulkUpdateUnits({
+    required List<String> unitIds,
+    String? unitTipId,
+    bool? aktif,
+  }) async {
+    try {
+      final res = await _dio.patch<Map<String, dynamic>>(
+        '/units/toplu',
+        data: {'unit_ids': unitIds, 'unit_tip_id': ?unitTipId, 'aktif': ?aktif},
+      );
+      return (res.data?['etkilenen'] as num?)?.toInt() ?? unitIds.length;
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// `PATCH /units/siralama` — TEK ISTEKTE kat/sira gunceller.
+  ///
+  /// Daire basina ayri `PATCH` atmak, yirmi dairelik bir katta yirmi
+  /// istek ve ARADA KESILME riski demekti: yarim uygulanmis bir siralama,
+  /// kullanicinin gordugu duzen ile veritabanindakini ayirirdi.
+  Future<void> reorderUnits(List<UnitSiraSatiri> satirlar) async {
+    if (satirlar.isEmpty) return;
+    try {
+      await _dio.patch<Map<String, dynamic>>(
+        '/units/siralama',
+        data: {
+          'satirlar': [
+            for (final s in satirlar)
+              {'id': s.id, 'kat': s.kat, 'sira': s.sira},
+          ],
+        },
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+}
+
+/// `PATCH /units/siralama` govdesindeki tek satir.
+class UnitSiraSatiri {
+  const UnitSiraSatiri({
+    required this.id,
+    required this.kat,
+    required this.sira,
+  });
+
+  final String id;
+  final int kat;
+  final int sira;
 }
 
 /// `POST /units/bulk` sonucu — kac daire olustu, hangileri atlandi, bitis no.

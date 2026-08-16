@@ -5023,4 +5023,61 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get kayitSosyalAdNotu =>
       'Nom repris de votre compte ; vous pouvez le modifier.';
+
+  @override
+  String get binaYapisalAraclar => 'Outils structurels';
+
+  @override
+  String get binaKatSil => 'Supprimer l\'étage';
+
+  @override
+  String get binaTopluTip => 'Modifier le statut en lot';
+
+  @override
+  String get binaSiralama => 'Modifier l\'ordre';
+
+  @override
+  String binaKatSilOzet(int n) {
+    return '$n logements seront supprimés';
+  }
+
+  @override
+  String binaKatSilOnay(int kat) {
+    return 'Tous les logements de l\'étage $kat seront définitivement supprimés. Action irréversible.';
+  }
+
+  @override
+  String get binaAralikSec => 'Sélectionner par numéro';
+
+  @override
+  String get binaAralikUygula => 'Sélectionner';
+
+  @override
+  String binaSeciliSayisi(int n) {
+    return '$n logements sélectionnés';
+  }
+
+  @override
+  String binaAralikBulunamayan(String parca) {
+    return 'Introuvable : $parca';
+  }
+
+  @override
+  String get ortakEminMisiniz => 'Êtes-vous sûr ?';
+
+  @override
+  String get ortakDurum => 'Statut';
+
+  @override
+  String get ortakAktif => 'Actif';
+
+  @override
+  String get ortakPasif => 'Inactif';
+
+  @override
+  String get binaBaslangicKat => 'Étage de départ';
+
+  @override
+  String get binaBaslangicKatIpucu =>
+      'Négatif pour les sous-sols : -2, -1, 0 (RDC), 1…';
 }

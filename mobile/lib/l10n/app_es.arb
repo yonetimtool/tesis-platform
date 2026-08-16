@@ -1518,5 +1518,49 @@
   "kayitKopyala": "Copiar",
   "kayitKopyalandi": "Copiado",
   "kayitTamamla": "Continuar",
-  "kayitSosyalAdNotu": "Nombre obtenido de su cuenta; puede cambiarlo."
+  "kayitSosyalAdNotu": "Nombre obtenido de su cuenta; puede cambiarlo.",
+  "binaYapisalAraclar": "Herramientas estructurales",
+  "binaKatSil": "Eliminar planta",
+  "binaTopluTip": "Cambiar estado en lote",
+  "binaSiralama": "Editar orden",
+  "binaKatSilOzet": "Se eliminarán {n} viviendas",
+  "@binaKatSilOzet": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "binaKatSilOnay": "Todas las viviendas de la planta {kat} se eliminarán permanentemente. No se puede deshacer.",
+  "@binaKatSilOnay": {
+    "placeholders": {
+      "kat": {
+        "type": "int"
+      }
+    }
+  },
+  "binaAralikSec": "Seleccionar por número",
+  "binaAralikUygula": "Seleccionar",
+  "binaSeciliSayisi": "{n} viviendas seleccionadas",
+  "@binaSeciliSayisi": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "binaAralikBulunamayan": "No encontrado: {parca}",
+  "@binaAralikBulunamayan": {
+    "placeholders": {
+      "parca": {
+        "type": "String"
+      }
+    }
+  },
+  "ortakEminMisiniz": "¿Está seguro?",
+  "ortakDurum": "Estado",
+  "ortakAktif": "Activo",
+  "ortakPasif": "Inactivo",
+  "binaBaslangicKat": "Planta inicial",
+  "binaBaslangicKatIpucu": "Negativo para sótanos: -2, -1, 0 (baja), 1…"
 }

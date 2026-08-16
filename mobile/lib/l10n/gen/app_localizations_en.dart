@@ -5051,4 +5051,61 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get kayitSosyalAdNotu =>
       'Name taken from your account; you can change it.';
+
+  @override
+  String get binaYapisalAraclar => 'Structural tools';
+
+  @override
+  String get binaKatSil => 'Delete floor';
+
+  @override
+  String get binaTopluTip => 'Bulk change status';
+
+  @override
+  String get binaSiralama => 'Edit ordering';
+
+  @override
+  String binaKatSilOzet(int n) {
+    return '$n units will be deleted';
+  }
+
+  @override
+  String binaKatSilOnay(int kat) {
+    return 'All units on floor $kat will be permanently deleted. This cannot be undone.';
+  }
+
+  @override
+  String get binaAralikSec => 'Select by number';
+
+  @override
+  String get binaAralikUygula => 'Select';
+
+  @override
+  String binaSeciliSayisi(int n) {
+    return '$n units selected';
+  }
+
+  @override
+  String binaAralikBulunamayan(String parca) {
+    return 'Not found: $parca';
+  }
+
+  @override
+  String get ortakEminMisiniz => 'Are you sure?';
+
+  @override
+  String get ortakDurum => 'Status';
+
+  @override
+  String get ortakAktif => 'Active';
+
+  @override
+  String get ortakPasif => 'Inactive';
+
+  @override
+  String get binaBaslangicKat => 'Start floor';
+
+  @override
+  String get binaBaslangicKatIpucu =>
+      'Negative for basements: -2, -1, 0 (ground), 1…';
 }

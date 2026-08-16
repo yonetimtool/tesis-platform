@@ -28,7 +28,10 @@ class BuildingMapApi {
 
   /// Bir dairenin yerlesimini (blok/kat/sira) gunceller. Guncel daire (tam
   /// yerlesimiyle) tekrar okunabilsin diye guncellenmis birim dondurulur.
-  Future<BuildingMapUnit> updateLayout(String unitId, UnitLayoutDraft draft) async {
+  Future<BuildingMapUnit> updateLayout(
+    String unitId,
+    UnitLayoutDraft draft,
+  ) async {
     try {
       final res = await _dio.patch<Map<String, dynamic>>(
         '/units/$unitId/layout',

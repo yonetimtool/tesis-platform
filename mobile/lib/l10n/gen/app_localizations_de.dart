@@ -5032,4 +5032,61 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get kayitSosyalAdNotu =>
       'Name aus Ihrem Konto übernommen; Sie können ihn ändern.';
+
+  @override
+  String get binaYapisalAraclar => 'Strukturwerkzeuge';
+
+  @override
+  String get binaKatSil => 'Etage löschen';
+
+  @override
+  String get binaTopluTip => 'Status gesammelt ändern';
+
+  @override
+  String get binaSiralama => 'Reihenfolge bearbeiten';
+
+  @override
+  String binaKatSilOzet(int n) {
+    return '$n Wohnungen werden gelöscht';
+  }
+
+  @override
+  String binaKatSilOnay(int kat) {
+    return 'Alle Wohnungen auf Etage $kat werden dauerhaft gelöscht. Nicht rückgängig zu machen.';
+  }
+
+  @override
+  String get binaAralikSec => 'Nach Nummer wählen';
+
+  @override
+  String get binaAralikUygula => 'Wählen';
+
+  @override
+  String binaSeciliSayisi(int n) {
+    return '$n Wohnungen ausgewählt';
+  }
+
+  @override
+  String binaAralikBulunamayan(String parca) {
+    return 'Nicht gefunden: $parca';
+  }
+
+  @override
+  String get ortakEminMisiniz => 'Sind Sie sicher?';
+
+  @override
+  String get ortakDurum => 'Status';
+
+  @override
+  String get ortakAktif => 'Aktiv';
+
+  @override
+  String get ortakPasif => 'Inaktiv';
+
+  @override
+  String get binaBaslangicKat => 'Startetage';
+
+  @override
+  String get binaBaslangicKatIpucu =>
+      'Negativ für Untergeschosse: -2, -1, 0 (EG), 1…';
 }

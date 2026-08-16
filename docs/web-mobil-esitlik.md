@@ -59,14 +59,28 @@ okundu; web tarafı `app/(protected)/building-editor/page.tsx`.
 | Daire ekle / düzenle / sil | ✅ | ✅ | eşit |
 | Kat ekle | ✅ | ✅ | eşit |
 | Toplu daire oluştur (`/units/bulk`) | ✅ **P163'te taşındı** | ✅ | eşit |
-| Kat sil (`/units/kat-sil`) | ✅ **P163'te taşındı** | ❌ | **web daha zengin** |
-| Daire tipi toplu değiştir (`/units/toplu`) | ✅ **P163'te taşındı** | ❌ | **web daha zengin** |
-| Numara ile seç (3,5,7-12) | ✅ **P163'te taşındı** | ❌ | **web daha zengin** |
-| Sürükleyerek sıralama (`/units/siralama`) | ✅ | ❌ | **web daha zengin** |
+| Kat sil (`/units/kat-sil`) | ✅ | ✅ **P164'te eklendi** | eşit |
+| Daire tipi toplu değiştir (`/units/toplu`) | ✅ | ✅ **P164'te eklendi** | eşit |
+| Numara ile seç (3,5,7-12) | ✅ | ✅ **P164'te eklendi** | eşit |
+| Sürükleyerek sıralama (`/units/siralama`) | ✅ | ✅ **P164'te eklendi** | eşit |
+| Toplu oluşturmada başlangıç katı (bodrum/zemin) | ✅ | ✅ **P164'te eklendi** | eşit |
 
-Yani P163 sonrası bu ekranda **web mobilin üstünde**; mobilde eksik olan
-dört yetenek var. Bunlar mobil tarafında ayrı bir tur işidir ve bu turda
-kapsam dışıydı (brief web tarafını istedi).
+**P164 notu — ölçüm beşinci bir farkı ortaya çıkardı.** Dördü kapatılırken
+görüldü ki mobilin toplu oluşturması `baslangic_kat` alanını *hiç
+göndermiyordu*; sunucu 1 varsayıyor ve bodrumlu bir binada kat numaraları
+bir kaydırmayla yazılıyordu. Alan eklendi.
+
+### Aralık ayrıştırıcısı iki yüzeyde AYNI
+
+"3,5,7-12" ifadesi mobilde `domain/daire_araligi.dart` ile çözülüyor ve
+webdeki `lib/aralik.ts`in **birebir** karşılığı. Bu bir tercih değil
+zorunluluk: kullanıcı webde "7-12" yazıp altı daire seçiyorsa mobilde de
+altı seçmeli, yoksa toplu işlem **yanlış dairelere** gider.
+
+`mobile/test/daire_araligi_test.dart` webdeki `aralik.test.ts` ile aynı
+senaryoları koşar — ters aralık, eşleşmeyen parça, kopya üretmeme, aynı
+kuyruğun birden çok satıra denk gelmesi ve tek değerin **önce sayı**
+olarak denenmesi dahil (sırayı ters çevirmek iki yüzeyi ayırırdı).
 
 ## Kapatılmayan fark kalmadı
 

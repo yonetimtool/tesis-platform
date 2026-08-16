@@ -1518,5 +1518,49 @@
   "kayitKopyala": "Copy",
   "kayitKopyalandi": "Copied",
   "kayitTamamla": "Continue",
-  "kayitSosyalAdNotu": "Name taken from your account; you can change it."
+  "kayitSosyalAdNotu": "Name taken from your account; you can change it.",
+  "binaYapisalAraclar": "Structural tools",
+  "binaKatSil": "Delete floor",
+  "binaTopluTip": "Bulk change status",
+  "binaSiralama": "Edit ordering",
+  "binaKatSilOzet": "{n} units will be deleted",
+  "@binaKatSilOzet": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "binaKatSilOnay": "All units on floor {kat} will be permanently deleted. This cannot be undone.",
+  "@binaKatSilOnay": {
+    "placeholders": {
+      "kat": {
+        "type": "int"
+      }
+    }
+  },
+  "binaAralikSec": "Select by number",
+  "binaAralikUygula": "Select",
+  "binaSeciliSayisi": "{n} units selected",
+  "@binaSeciliSayisi": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "binaAralikBulunamayan": "Not found: {parca}",
+  "@binaAralikBulunamayan": {
+    "placeholders": {
+      "parca": {
+        "type": "String"
+      }
+    }
+  },
+  "ortakEminMisiniz": "Are you sure?",
+  "ortakDurum": "Status",
+  "ortakAktif": "Active",
+  "ortakPasif": "Inactive",
+  "binaBaslangicKat": "Start floor",
+  "binaBaslangicKatIpucu": "Negative for basements: -2, -1, 0 (ground), 1…"
 }

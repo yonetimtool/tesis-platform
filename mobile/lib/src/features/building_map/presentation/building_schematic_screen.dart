@@ -39,8 +39,9 @@ class BuildingSchematicScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(baslikBuyuk(
-            context.l10n.modulSikayetHaritasi, context.dilKodu)),
+        title: Text(
+          baslikBuyuk(context.l10n.modulSikayetHaritasi, context.dilKodu),
+        ),
         actions: [
           // TRIYAJ KUYRUGU (P24) — YALNIZ yonetim. Sikayet Haritasi bir
           // GENEL BAKISTIR (hangi daire ne durumda); kuyruk ise "bugun neye
@@ -118,11 +119,17 @@ class _Body extends StatelessWidget {
     if (state.loading && state.map == null) {
       return const Center(child: CircularProgressIndicator());
     }
-    final hataMetni =
-        akisHatasiCoz(context.l10n, state.hataKimligi, state.errorMessage);
+    final hataMetni = akisHatasiCoz(
+      context.l10n,
+      state.hataKimligi,
+      state.errorMessage,
+    );
     if (hataMetni != null && state.map == null) {
       return ListView(
-        children: [const SizedBox(height: 120), Center(child: Text(hataMetni))],
+        children: [
+          const SizedBox(height: 120),
+          Center(child: Text(hataMetni)),
+        ],
       );
     }
     final map = state.map;
@@ -138,10 +145,7 @@ class _Body extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       children: [
-        if (map.showsDensity)
-          const _Legend()
-        else
-          const _StructureNote(),
+        if (map.showsDensity) const _Legend() else const _StructureNote(),
         const SizedBox(height: 12),
         for (final blok in map.bloklar)
           _BlokSchematic(blok: blok, map: map, isResident: isResident),
@@ -160,20 +164,20 @@ class _Legend extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Widget item(DensityRenk renk, String label) => Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 14,
-              height: 14,
-              decoration: BoxDecoration(
-                color: densityColor(renk),
-                borderRadius: BorderRadius.circular(3),
-              ),
-            ),
-            const SizedBox(width: 4),
-            Text(label, style: const TextStyle(fontSize: 12)),
-          ],
-        );
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 14,
+          height: 14,
+          decoration: BoxDecoration(
+            color: densityColor(renk),
+            borderRadius: BorderRadius.circular(3),
+          ),
+        ),
+        const SizedBox(width: 4),
+        Text(label, style: const TextStyle(fontSize: 12)),
+      ],
+    );
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -181,8 +185,10 @@ class _Legend extends StatelessWidget {
           spacing: 16,
           runSpacing: 8,
           children: [
-            Text(context.l10n.semaYogunluk,
-                style: const TextStyle(fontWeight: FontWeight.w600)),
+            Text(
+              context.l10n.semaYogunluk,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
             // Esik metinleri SUNUCUDAKI `_ESIKLER` tablosuyla ayni (P24).
             item(DensityRenk.yesil, '0'),
             item(DensityRenk.sari, '1–2'),
@@ -238,8 +244,10 @@ class _BlokSchematic extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(context.l10n.binaBlokEtiket(blok.blok),
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+            Text(
+              context.l10n.binaBlokEtiket(blok.blok),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            ),
             const SizedBox(height: 8),
             for (final kat in katlar)
               _KatRow(kat: kat, map: map, isResident: isResident),
@@ -251,7 +259,11 @@ class _BlokSchematic extends StatelessWidget {
 }
 
 class _KatRow extends StatelessWidget {
-  const _KatRow({required this.kat, required this.map, required this.isResident});
+  const _KatRow({
+    required this.kat,
+    required this.map,
+    required this.isResident,
+  });
 
   final BuildingMapKat kat;
   final BuildingMap map;
@@ -266,10 +278,13 @@ class _KatRow extends StatelessWidget {
         children: [
           SizedBox(
             width: 52,
-            child: Text(context.l10n.binaKatEtiket('${kat.kat}'),
-                style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant)),
+            child: Text(
+              context.l10n.binaKatEtiket('${kat.kat}'),
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
           ),
           Expanded(
             child: Wrap(
@@ -294,7 +309,11 @@ const Color _ownComplaintColor = Color(0xFF3949AB); // indigo
 /// Tek daire hucresi — yonetimde renk+sayi; resident'ta KENDI sikayeti varsa
 /// vurgulu + "iletildi" isareti; digerinde noturr (yapi).
 class _UnitCell extends StatelessWidget {
-  const _UnitCell({required this.unit, required this.map, required this.isResident});
+  const _UnitCell({
+    required this.unit,
+    required this.map,
+    required this.isResident,
+  });
 
   final BuildingMapUnit unit;
   final BuildingMap map;
@@ -322,10 +341,11 @@ class _UnitCell extends StatelessWidget {
     final Color fill = density
         ? color.withValues(alpha: 0.85)
         : own
-            ? color.withValues(alpha: isDark ? 0.30 : 0.12)
-            : (isDark ? scheme.surfaceContainerHighest : Colors.white);
+        ? color.withValues(alpha: isDark ? 0.30 : 0.12)
+        : (isDark ? scheme.surfaceContainerHighest : Colors.white);
     return InkWell(
-      onTap: () => showUnitDetailSheet(context, unit, map: map, isResident: isResident),
+      onTap: () =>
+          showUnitDetailSheet(context, unit, map: map, isResident: isResident),
       borderRadius: BorderRadius.circular(8),
       child: Container(
         // KUTU YAZIYLA BIRLIKTE BUYUR (tur 27): sabit 58x46, kullanici
@@ -349,8 +369,8 @@ class _UnitCell extends StatelessWidget {
                 color: density
                     ? Colors.white
                     : own
-                        ? (isDark ? const Color(0xFF9FA8DA) : _ownComplaintColor)
-                        : (isDark ? scheme.onSurface : Colors.black87),
+                    ? (isDark ? const Color(0xFF9FA8DA) : _ownComplaintColor)
+                    : (isDark ? scheme.onSurface : Colors.black87),
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
               ),
@@ -364,9 +384,11 @@ class _UnitCell extends StatelessWidget {
               )
             // resident: KENDI sikayeti iletildi isareti (genel yogunluk yok).
             else if (own)
-              Icon(Icons.check_circle,
-                  size: 13,
-                  color: isDark ? const Color(0xFF9FA8DA) : _ownComplaintColor),
+              Icon(
+                Icons.check_circle,
+                size: 13,
+                color: isDark ? const Color(0xFF9FA8DA) : _ownComplaintColor,
+              ),
           ],
         ),
       ),
@@ -398,8 +420,10 @@ class _UnplacedList extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(context.l10n.semaYerlesimGirilmemis,
-                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+            Text(
+              context.l10n.semaYerlesimGirilmemis,
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+            ),
             const SizedBox(height: 4),
             Wrap(
               spacing: 6,
@@ -515,9 +539,13 @@ class _UnitDetailSheetState extends ConsumerState<_UnitDetailSheet> {
                   const SizedBox(width: 8),
                 ],
                 Expanded(
-                  child: Text(context.l10n.semaDaireEtiket(u.unitNo),
-                      style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.w700)),
+                  child: Text(
+                    context.l10n.semaDaireEtiket(u.unitNo),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ),
                 if (widget.showsDensity) ...[
                   const SizedBox(width: 8),
@@ -526,7 +554,9 @@ class _UnitDetailSheetState extends ConsumerState<_UnitDetailSheet> {
                       context.l10n.semaAcikSikayet(u.complaintCount ?? 0),
                       textAlign: TextAlign.end,
                       style: TextStyle(
-                          color: color, fontWeight: FontWeight.w600),
+                        color: color,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ],
@@ -538,15 +568,18 @@ class _UnitDetailSheetState extends ConsumerState<_UnitDetailSheet> {
               SizedBox(height: 220, child: _ComplaintList(future: _future))
             // resident: bu daireye KENDI ilettigi sikayetler (kategori/tarih/durum).
             else if (_showsOwn) ...[
-              Text(context.l10n.semaBuDaireSikayetlerim,
-                  style: const TextStyle(fontWeight: FontWeight.w600)),
+              Text(
+                context.l10n.semaBuDaireSikayetlerim,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
               const SizedBox(height: 6),
               SizedBox(height: 160, child: _OwnComplaintList(future: _future)),
             ] else
               Text(
                 context.l10n.semaYogunlukYonetim,
                 style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             if (widget.isResident) ...[
               const Divider(),
@@ -575,9 +608,7 @@ class _UnitDetailSheetState extends ConsumerState<_UnitDetailSheet> {
     if (filed == true) {
       // Gitti mi geri bildirimi: harita uzerinde daire artik "iletildi" olarak
       // isaretlenir; ayri sayfaya gitmeye gerek yok.
-      messenger.showSnackBar(
-        SnackBar(content: Text(l10n.semaSikayetIletildi)),
-      );
+      messenger.showSnackBar(SnackBar(content: Text(l10n.semaSikayetIletildi)));
       await ref.read(buildingMapControllerProvider.notifier).refresh();
       if (mounted) _reload();
     }
@@ -616,8 +647,7 @@ class _ComplaintList extends StatelessWidget {
               dense: true,
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.report_gmailerrorred_outlined),
-              title: Text(
-                  unitComplaintKategoriAdi(context.l10n, c.kategori)),
+              title: Text(unitComplaintKategoriAdi(context.l10n, c.kategori)),
               subtitle: Text(
                 '${tarihBicimi(c.createdAt, context.dilKodu)}'
                 '${c.notlar != null ? '\n${c.notlar}' : ''}',
@@ -669,8 +699,7 @@ class _OwnComplaintList extends StatelessWidget {
                 c.acik ? Icons.check_circle_outline : Icons.task_alt,
                 color: c.acik ? _ownComplaintColor : Colors.green,
               ),
-              title: Text(
-                  unitComplaintKategoriAdi(context.l10n, c.kategori)),
+              title: Text(unitComplaintKategoriAdi(context.l10n, c.kategori)),
               subtitle: Text(
                 '${tarihBicimi(c.createdAt, context.dilKodu)} · $durumLabel'
                 '${c.notlar != null ? '\n${c.notlar}' : ''}',
@@ -719,7 +748,9 @@ class _FileComplaintFormState extends ConsumerState<_FileComplaintForm> {
       _error = null;
     });
     try {
-      await ref.read(unitComplaintApiProvider).file(
+      await ref
+          .read(unitComplaintApiProvider)
+          .file(
             UnitComplaintDraft(
               targetUnitId: widget.unit.unitId,
               kategori: _kategori,
@@ -760,14 +791,17 @@ class _FileComplaintFormState extends ConsumerState<_FileComplaintForm> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(context.l10n.semaSikayetEtBaslik(widget.unit.unitNo),
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+          Text(
+            context.l10n.semaSikayetEtBaslik(widget.unit.unitNo),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          ),
           const SizedBox(height: 4),
           Text(
             context.l10n.semaSikayetAnonimNot,
             style: TextStyle(
-                fontSize: 12,
-                color: Theme.of(context).colorScheme.onSurfaceVariant),
+              fontSize: 12,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<UnitComplaintKategori>(
@@ -782,8 +816,9 @@ class _FileComplaintFormState extends ConsumerState<_FileComplaintForm> {
             items: [
               for (final k in UnitComplaintKategori.values)
                 DropdownMenuItem(
-                    value: k,
-                    child: Text(unitComplaintKategoriAdi(context.l10n, k))),
+                  value: k,
+                  child: Text(unitComplaintKategoriAdi(context.l10n, k)),
+                ),
             ],
             onChanged: (v) => setState(() => _kategori = v ?? _kategori),
           ),
@@ -799,16 +834,21 @@ class _FileComplaintFormState extends ConsumerState<_FileComplaintForm> {
           ),
           if (_error != null) ...[
             const SizedBox(height: 4),
-            Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+            Text(
+              _error!,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
           ],
           const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
             child: FilledButton(
               onPressed: _busy ? null : _submit,
-              child: Text(_busy
-                  ? context.l10n.gorevGonderiliyor
-                  : context.l10n.semaSikayetiGonder),
+              child: Text(
+                _busy
+                    ? context.l10n.gorevGonderiliyor
+                    : context.l10n.semaSikayetiGonder,
+              ),
             ),
           ),
         ],

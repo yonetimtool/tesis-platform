@@ -30,9 +30,9 @@ enum DensityRenk {
   final String wire;
 
   static DensityRenk fromWire(String? value) => DensityRenk.values.firstWhere(
-        (r) => r.wire == value,
-        orElse: () => DensityRenk.unknown,
-      );
+    (r) => r.wire == value,
+    orElse: () => DensityRenk.unknown,
+  );
 }
 
 /// Haritada tek daire — yerlesim + anonim sayim/renk.
@@ -73,7 +73,8 @@ class BuildingMapUnit {
   /// Yerlesim tam mi (blok + kat girilmis)? Haritada cizilebilir demektir.
   bool get yerlesik => blok != null && kat != null;
 
-  factory BuildingMapUnit.fromJson(Map<String, dynamic> json) => BuildingMapUnit(
+  factory BuildingMapUnit.fromJson(Map<String, dynamic> json) =>
+      BuildingMapUnit(
         unitId: json['unit_id'] as String? ?? '',
         unitNo: json['unit_no'] as String? ?? '',
         blok: json['blok'] as String?,
@@ -97,12 +98,12 @@ class BuildingMapKat {
   final List<BuildingMapUnit> units;
 
   factory BuildingMapKat.fromJson(Map<String, dynamic> json) => BuildingMapKat(
-        kat: (json['kat'] as num?)?.toInt() ?? 0,
-        units: (json['units'] as List? ?? const [])
-            .whereType<Map>()
-            .map((m) => BuildingMapUnit.fromJson(Map<String, dynamic>.from(m)))
-            .toList(),
-      );
+    kat: (json['kat'] as num?)?.toInt() ?? 0,
+    units: (json['units'] as List? ?? const [])
+        .whereType<Map>()
+        .map((m) => BuildingMapUnit.fromJson(Map<String, dynamic>.from(m)))
+        .toList(),
+  );
 }
 
 /// Tek blok — kat'a gore sirali (0=zemin altta).
@@ -112,7 +113,8 @@ class BuildingMapBlok {
   final String blok;
   final List<BuildingMapKat> katlar;
 
-  factory BuildingMapBlok.fromJson(Map<String, dynamic> json) => BuildingMapBlok(
+  factory BuildingMapBlok.fromJson(Map<String, dynamic> json) =>
+      BuildingMapBlok(
         blok: json['blok'] as String? ?? '',
         katlar: (json['katlar'] as List? ?? const [])
             .whereType<Map>()
@@ -141,16 +143,16 @@ class BuildingMap {
   bool get bos => bloklar.isEmpty && unplaced.isEmpty;
 
   factory BuildingMap.fromJson(Map<String, dynamic> json) => BuildingMap(
-        showsDensity: json['shows_density'] as bool? ?? false,
-        bloklar: (json['bloklar'] as List? ?? const [])
-            .whereType<Map>()
-            .map((m) => BuildingMapBlok.fromJson(Map<String, dynamic>.from(m)))
-            .toList(),
-        unplaced: (json['unplaced'] as List? ?? const [])
-            .whereType<Map>()
-            .map((m) => BuildingMapUnit.fromJson(Map<String, dynamic>.from(m)))
-            .toList(),
-      );
+    showsDensity: json['shows_density'] as bool? ?? false,
+    bloklar: (json['bloklar'] as List? ?? const [])
+        .whereType<Map>()
+        .map((m) => BuildingMapBlok.fromJson(Map<String, dynamic>.from(m)))
+        .toList(),
+    unplaced: (json['unplaced'] as List? ?? const [])
+        .whereType<Map>()
+        .map((m) => BuildingMapUnit.fromJson(Map<String, dynamic>.from(m)))
+        .toList(),
+  );
 }
 
 /// `PATCH /units/{id}/layout` govdesi — yerlesim girisi (yonetim).
@@ -183,8 +185,8 @@ class UnitLayoutDraft {
       !clearSira;
 
   Map<String, dynamic> toJson() => {
-        if (clearBlok) 'blok': null else if (blok != null) 'blok': blok,
-        if (clearKat) 'kat': null else if (kat != null) 'kat': kat,
-        if (clearSira) 'sira': null else if (sira != null) 'sira': sira,
-      };
+    if (clearBlok) 'blok': null else if (blok != null) 'blok': blok,
+    if (clearKat) 'kat': null else if (kat != null) 'kat': kat,
+    if (clearSira) 'sira': null else if (sira != null) 'sira': sira,
+  };
 }

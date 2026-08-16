@@ -5130,4 +5130,60 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get kayitSosyalAdNotu => 'تم أخذ الاسم من حسابك، ويمكنك تغييره.';
+
+  @override
+  String get binaYapisalAraclar => 'أدوات هيكلية';
+
+  @override
+  String get binaKatSil => 'حذف الطابق';
+
+  @override
+  String get binaTopluTip => 'تغيير الحالة دفعة واحدة';
+
+  @override
+  String get binaSiralama => 'تعديل الترتيب';
+
+  @override
+  String binaKatSilOzet(int n) {
+    return 'سيتم حذف $n شقة';
+  }
+
+  @override
+  String binaKatSilOnay(int kat) {
+    return 'سيتم حذف جميع شقق الطابق $kat نهائيًا. لا يمكن التراجع.';
+  }
+
+  @override
+  String get binaAralikSec => 'اختيار بالرقم';
+
+  @override
+  String get binaAralikUygula => 'اختيار';
+
+  @override
+  String binaSeciliSayisi(int n) {
+    return '$n شقة محددة';
+  }
+
+  @override
+  String binaAralikBulunamayan(String parca) {
+    return 'غير موجود: $parca';
+  }
+
+  @override
+  String get ortakEminMisiniz => 'هل أنت متأكد؟';
+
+  @override
+  String get ortakDurum => 'الحالة';
+
+  @override
+  String get ortakAktif => 'نشط';
+
+  @override
+  String get ortakPasif => 'غير نشط';
+
+  @override
+  String get binaBaslangicKat => 'الطابق الأول';
+
+  @override
+  String get binaBaslangicKatIpucu => 'سالب للأقبية: -2، -1، 0 (الأرضي)، 1…';
 }

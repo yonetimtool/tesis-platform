@@ -1518,5 +1518,49 @@
   "kayitKopyala": "Копировать",
   "kayitKopyalandi": "Скопировано",
   "kayitTamamla": "Продолжить",
-  "kayitSosyalAdNotu": "Имя взято из вашей учётной записи; его можно изменить."
+  "kayitSosyalAdNotu": "Имя взято из вашей учётной записи; его можно изменить.",
+  "binaYapisalAraclar": "Структурные инструменты",
+  "binaKatSil": "Удалить этаж",
+  "binaTopluTip": "Массово изменить статус",
+  "binaSiralama": "Изменить порядок",
+  "binaKatSilOzet": "Будет удалено квартир: {n}",
+  "@binaKatSilOzet": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "binaKatSilOnay": "Все квартиры на этаже {kat} будут удалены навсегда. Отменить нельзя.",
+  "@binaKatSilOnay": {
+    "placeholders": {
+      "kat": {
+        "type": "int"
+      }
+    }
+  },
+  "binaAralikSec": "Выбрать по номеру",
+  "binaAralikUygula": "Выбрать",
+  "binaSeciliSayisi": "Выбрано квартир: {n}",
+  "@binaSeciliSayisi": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "binaAralikBulunamayan": "Не найдено: {parca}",
+  "@binaAralikBulunamayan": {
+    "placeholders": {
+      "parca": {
+        "type": "String"
+      }
+    }
+  },
+  "ortakEminMisiniz": "Вы уверены?",
+  "ortakDurum": "Статус",
+  "ortakAktif": "Активен",
+  "ortakPasif": "Неактивен",
+  "binaBaslangicKat": "Начальный этаж",
+  "binaBaslangicKatIpucu": "Отрицательные для подвалов: -2, -1, 0 (первый), 1…"
 }

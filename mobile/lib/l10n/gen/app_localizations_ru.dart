@@ -5122,4 +5122,61 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get kayitSosyalAdNotu =>
       'Имя взято из вашей учётной записи; его можно изменить.';
+
+  @override
+  String get binaYapisalAraclar => 'Структурные инструменты';
+
+  @override
+  String get binaKatSil => 'Удалить этаж';
+
+  @override
+  String get binaTopluTip => 'Массово изменить статус';
+
+  @override
+  String get binaSiralama => 'Изменить порядок';
+
+  @override
+  String binaKatSilOzet(int n) {
+    return 'Будет удалено квартир: $n';
+  }
+
+  @override
+  String binaKatSilOnay(int kat) {
+    return 'Все квартиры на этаже $kat будут удалены навсегда. Отменить нельзя.';
+  }
+
+  @override
+  String get binaAralikSec => 'Выбрать по номеру';
+
+  @override
+  String get binaAralikUygula => 'Выбрать';
+
+  @override
+  String binaSeciliSayisi(int n) {
+    return 'Выбрано квартир: $n';
+  }
+
+  @override
+  String binaAralikBulunamayan(String parca) {
+    return 'Не найдено: $parca';
+  }
+
+  @override
+  String get ortakEminMisiniz => 'Вы уверены?';
+
+  @override
+  String get ortakDurum => 'Статус';
+
+  @override
+  String get ortakAktif => 'Активен';
+
+  @override
+  String get ortakPasif => 'Неактивен';
+
+  @override
+  String get binaBaslangicKat => 'Начальный этаж';
+
+  @override
+  String get binaBaslangicKatIpucu =>
+      'Отрицательные для подвалов: -2, -1, 0 (первый), 1…';
 }

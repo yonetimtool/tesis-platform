@@ -2176,5 +2176,49 @@
   "kayitKopyala": "Kopyala",
   "kayitKopyalandi": "Kopyalandı",
   "kayitTamamla": "Devam et",
-  "kayitSosyalAdNotu": "Ad soyad hesabınızdan alındı; değiştirebilirsiniz."
+  "kayitSosyalAdNotu": "Ad soyad hesabınızdan alındı; değiştirebilirsiniz.",
+  "binaYapisalAraclar": "Yapısal araçlar",
+  "binaKatSil": "Katı sil",
+  "binaTopluTip": "Toplu durum değiştir",
+  "binaSiralama": "Sıralamayı düzenle",
+  "binaKatSilOzet": "{n} daire silinecek",
+  "@binaKatSilOzet": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "binaKatSilOnay": "{kat}. kattaki tüm daireler kalıcı olarak silinecek. Bu işlem geri alınamaz.",
+  "@binaKatSilOnay": {
+    "placeholders": {
+      "kat": {
+        "type": "int"
+      }
+    }
+  },
+  "binaAralikSec": "Numara ile seç",
+  "binaAralikUygula": "Seç",
+  "binaSeciliSayisi": "{n} daire seçili",
+  "@binaSeciliSayisi": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "binaAralikBulunamayan": "Bulunamayan: {parca}",
+  "@binaAralikBulunamayan": {
+    "placeholders": {
+      "parca": {
+        "type": "String"
+      }
+    }
+  },
+  "ortakEminMisiniz": "Emin misiniz?",
+  "ortakDurum": "Durum",
+  "ortakAktif": "Aktif",
+  "ortakPasif": "Pasif",
+  "binaBaslangicKat": "Başlangıç katı",
+  "binaBaslangicKatIpucu": "Bodrum için negatif: -2, -1, 0 (zemin), 1…"
 }

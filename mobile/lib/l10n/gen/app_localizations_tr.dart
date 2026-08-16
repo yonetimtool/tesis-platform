@@ -4863,4 +4863,61 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get kayitSosyalAdNotu =>
       'Ad soyad hesabınızdan alındı; değiştirebilirsiniz.';
+
+  @override
+  String get binaYapisalAraclar => 'Yapısal araçlar';
+
+  @override
+  String get binaKatSil => 'Katı sil';
+
+  @override
+  String get binaTopluTip => 'Toplu durum değiştir';
+
+  @override
+  String get binaSiralama => 'Sıralamayı düzenle';
+
+  @override
+  String binaKatSilOzet(int n) {
+    return '$n daire silinecek';
+  }
+
+  @override
+  String binaKatSilOnay(int kat) {
+    return '$kat. kattaki tüm daireler kalıcı olarak silinecek. Bu işlem geri alınamaz.';
+  }
+
+  @override
+  String get binaAralikSec => 'Numara ile seç';
+
+  @override
+  String get binaAralikUygula => 'Seç';
+
+  @override
+  String binaSeciliSayisi(int n) {
+    return '$n daire seçili';
+  }
+
+  @override
+  String binaAralikBulunamayan(String parca) {
+    return 'Bulunamayan: $parca';
+  }
+
+  @override
+  String get ortakEminMisiniz => 'Emin misiniz?';
+
+  @override
+  String get ortakDurum => 'Durum';
+
+  @override
+  String get ortakAktif => 'Aktif';
+
+  @override
+  String get ortakPasif => 'Pasif';
+
+  @override
+  String get binaBaslangicKat => 'Başlangıç katı';
+
+  @override
+  String get binaBaslangicKatIpucu =>
+      'Bodrum için negatif: -2, -1, 0 (zemin), 1…';
 }

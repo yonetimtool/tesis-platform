@@ -8614,6 +8614,102 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Ad soyad hesabınızdan alındı; değiştirebilirsiniz.'**
   String get kayitSosyalAdNotu;
+
+  /// No description provided for @binaYapisalAraclar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yapısal araçlar'**
+  String get binaYapisalAraclar;
+
+  /// No description provided for @binaKatSil.
+  ///
+  /// In tr, this message translates to:
+  /// **'Katı sil'**
+  String get binaKatSil;
+
+  /// No description provided for @binaTopluTip.
+  ///
+  /// In tr, this message translates to:
+  /// **'Toplu durum değiştir'**
+  String get binaTopluTip;
+
+  /// No description provided for @binaSiralama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sıralamayı düzenle'**
+  String get binaSiralama;
+
+  /// No description provided for @binaKatSilOzet.
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} daire silinecek'**
+  String binaKatSilOzet(int n);
+
+  /// No description provided for @binaKatSilOnay.
+  ///
+  /// In tr, this message translates to:
+  /// **'{kat}. kattaki tüm daireler kalıcı olarak silinecek. Bu işlem geri alınamaz.'**
+  String binaKatSilOnay(int kat);
+
+  /// No description provided for @binaAralikSec.
+  ///
+  /// In tr, this message translates to:
+  /// **'Numara ile seç'**
+  String get binaAralikSec;
+
+  /// No description provided for @binaAralikUygula.
+  ///
+  /// In tr, this message translates to:
+  /// **'Seç'**
+  String get binaAralikUygula;
+
+  /// No description provided for @binaSeciliSayisi.
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} daire seçili'**
+  String binaSeciliSayisi(int n);
+
+  /// No description provided for @binaAralikBulunamayan.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bulunamayan: {parca}'**
+  String binaAralikBulunamayan(String parca);
+
+  /// No description provided for @ortakEminMisiniz.
+  ///
+  /// In tr, this message translates to:
+  /// **'Emin misiniz?'**
+  String get ortakEminMisiniz;
+
+  /// No description provided for @ortakDurum.
+  ///
+  /// In tr, this message translates to:
+  /// **'Durum'**
+  String get ortakDurum;
+
+  /// No description provided for @ortakAktif.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aktif'**
+  String get ortakAktif;
+
+  /// No description provided for @ortakPasif.
+  ///
+  /// In tr, this message translates to:
+  /// **'Pasif'**
+  String get ortakPasif;
+
+  /// No description provided for @binaBaslangicKat.
+  ///
+  /// In tr, this message translates to:
+  /// **'Başlangıç katı'**
+  String get binaBaslangicKat;
+
+  /// No description provided for @binaBaslangicKatIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bodrum için negatif: -2, -1, 0 (zemin), 1…'**
+  String get binaBaslangicKatIpucu;
 }
 
 class _AppLocalizationsDelegate
