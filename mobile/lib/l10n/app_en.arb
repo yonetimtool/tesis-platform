@@ -1047,7 +1047,7 @@
   "ortakSecenekYuklenemedi": "Some options could not be loaded — the list may be incomplete.",
   "noktaBoylam": "Longitude (opt.)",
   "noktaPasifAlt": "An inactive checkpoint will not match a scan",
-  "noktaYok": "No checkpoints yet.\nAdd an NFC checkpoint from the bottom right.",
+  "noktaYok": "No checkpoints yet.",
   "kuyrukHatalariTemizle": "Clear permanent failures",
   "kuyrukBos": "The queue is empty.",
   "kuyrukOzet": "{bekleyen} pending · {hatali} permanent failures",
@@ -1630,5 +1630,10 @@
   "kurulumHatirlaticiBaslik": "Finish the setup",
   "kurulumHatirlaticiMetin": "A few steps remain before your facility is ready. The wizard takes you to each screen in turn.",
   "kurulumHatirlaticiGit": "Open the wizard",
-  "kurulumHatirlaticiSonra": "Later"
+  "kurulumHatirlaticiSonra": "Later",
+  "noktaYokAlt": "Checkpoints are the NFC tags scanned during patrol rounds.",
+  "devriyePlanYokAlt": "A patrol plan defines which checkpoints are scanned and when.",
+  "personelYokAlt": "Create security and facility officer accounts here.",
+  "sakinYokAlt": "Added residents are linked to units and can sign in to the app.",
+  "ortakDahaFazlaSecenek": "More options"
 }

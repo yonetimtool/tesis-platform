@@ -98,7 +98,10 @@ Future<void> _katSilAc(WidgetTester tester) async {
   await tester.pumpAndSettle();
   await tester.tap(find.text('Blok A'));
   await tester.pumpAndSettle();
-  await tester.tap(find.byIcon(Icons.construction_outlined));
+  // (P166 §10) IKON ARTIK IKI YERDE: app bar menusu + govdedeki ETIKETLI
+  // giris. Ikisi de ayni araclara gider; test app bar menusunu ANAHTARLA
+  // hedefler — `byIcon` ikisini birden bulup "belirsiz" der.
+  await tester.tap(find.byKey(const Key('yapisal-araclar-menu')));
   await tester.pumpAndSettle();
   await tester.tap(find.text('Katı sil').last);
   await tester.pumpAndSettle();
@@ -179,7 +182,10 @@ void main() {
     final api = _FakeApi(onizleme: _ozet());
     await tester.pumpWidget(_app(api));
     await tester.pumpAndSettle();
-    await tester.tap(find.byIcon(Icons.construction_outlined));
+    // (P166 §10) IKON ARTIK IKI YERDE: app bar menusu + govdedeki ETIKETLI
+  // giris. Ikisi de ayni araclara gider; test app bar menusunu ANAHTARLA
+  // hedefler — `byIcon` ikisini birden bulup "belirsiz" der.
+  await tester.tap(find.byKey(const Key('yapisal-araclar-menu')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Katı sil').last);
     await tester.pumpAndSettle();

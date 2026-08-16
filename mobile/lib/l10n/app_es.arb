@@ -1047,7 +1047,7 @@
   "ortakSecenekYuklenemedi": "No se pudieron cargar algunas opciones: la lista puede estar incompleta.",
   "noktaBoylam": "Longitud (opc.)",
   "noktaPasifAlt": "Un punto inactivo no coincide al escanear",
-  "noktaYok": "Aún no hay puntos de control.\nAñada un punto NFC desde abajo a la derecha.",
+  "noktaYok": "Todavía no hay puntos de control.",
   "kuyrukHatalariTemizle": "Borrar errores permanentes",
   "kuyrukBos": "La cola está vacía.",
   "kuyrukOzet": "{bekleyen} pendientes · {hatali} errores permanentes",
@@ -1630,5 +1630,10 @@
   "kurulumHatirlaticiBaslik": "Complete la configuración",
   "kurulumHatirlaticiMetin": "Faltan algunos pasos para dejar sus instalaciones listas. El asistente le lleva a cada pantalla.",
   "kurulumHatirlaticiGit": "Abrir el asistente",
-  "kurulumHatirlaticiSonra": "Más tarde"
+  "kurulumHatirlaticiSonra": "Más tarde",
+  "noktaYokAlt": "Los puntos de control son las etiquetas NFC que se leen durante las rondas.",
+  "devriyePlanYokAlt": "Un plan de ronda define qué puntos se leen y cuándo.",
+  "personelYokAlt": "Aquí crea las cuentas de seguridad y personal de instalaciones.",
+  "sakinYokAlt": "Los residentes añadidos se vinculan a viviendas y pueden iniciar sesión.",
+  "ortakDahaFazlaSecenek": "Más opciones"
 }

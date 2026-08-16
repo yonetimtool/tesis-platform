@@ -245,12 +245,17 @@ void main() {
     _ekran(tester);
     await tester.pumpWidget(_noktaEkrani(const Locale('en'), items: const []));
     await tester.pumpAndSettle();
-    expect(
-      find.text(
-        'No checkpoints yet.\nAdd an NFC checkpoint from the bottom right.',
-      ),
-      findsOneWidget,
-    );
+    // (P166 §10) METIN KISALDI ve BU BILINCLI.
+    //
+    // Eski cumle "sag alttan ... ekleyin" diyordu — yani DUGMENIN NEREDE
+    // OLDUGUNU tarif ediyordu. Bir dugmenin yerini yaziyla anlatmak zorunda
+    // kalmak, o dugmenin BULUNAMADIGININ itirafidir. Cagri dugmesi artik
+    // bos durumun ICINDE, kullanicinin baktigi yerde; yonergeye gerek yok.
+    expect(find.text('No checkpoints yet.'), findsOneWidget);
+    // Aciklama satiri ozelligin NE OLDUGUNU anlatir (yerini degil).
+    expect(find.textContaining('NFC tags'), findsOneWidget);
+    // Ve cagri dugmesi CIZILIR — bos ekranin tek cikisi budur.
+    expect(find.widgetWithText(FilledButton, 'Add checkpoint'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

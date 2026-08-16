@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
+import '../../../core/ui/bos_durum.dart';
 import '../../../core/ui/temp_code_dialog.dart';
 import '../../../core/validators/password_rule.dart';
 import '../../auth/domain/user_role.dart';
@@ -46,7 +47,16 @@ class StaffScreen extends ConsumerWidget {
           onRetry: () => ref.invalidate(fieldStaffProvider),
         ),
         data: (list) => list.isEmpty
-            ? const _EmptyState()
+            // (P166 §10) Bos durumda cagri dugmesi: liste yokken goz
+            // ekranin ortasindadir, ekranin dibindeki FAB'de degil.
+            ? BosDurum(
+                ikon: Icons.groups_outlined,
+                baslik: l10n.personelYok,
+                aciklama: l10n.personelYokAlt,
+                eylemEtiketi: l10n.personelEkle,
+                eylemIkonu: Icons.person_add_alt_1,
+                onEylem: () => _openAddSheet(context, ref),
+              )
             : RefreshIndicator(
                 onRefresh: () async => ref.invalidate(fieldStaffProvider),
                 child: ListView.separated(
@@ -515,33 +525,6 @@ String _contentTypeFor(XFile file) {
   if (lower.endsWith('.webp')) return 'image/webp';
   if (lower.endsWith('.heic') || lower.endsWith('.heif')) return 'image/heic';
   return 'image/jpeg';
-}
-
-class _EmptyState extends StatelessWidget {
-  const _EmptyState();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.groups_outlined, size: 48),
-            const SizedBox(height: 12),
-            Text(
-              context.l10n.personelYok,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 class _ErrorState extends StatelessWidget {

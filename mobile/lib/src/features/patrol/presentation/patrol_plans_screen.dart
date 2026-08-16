@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
+import '../../../core/ui/bos_durum.dart';
 import '../../../core/ui/eksik_veri_uyarisi.dart';
 import '../../checkpoints/data/checkpoint_api.dart';
 import '../data/patrol_plan_api.dart';
@@ -45,7 +46,14 @@ class PatrolPlansScreen extends ConsumerWidget {
           ),
         ),
         data: (list) => list.isEmpty
-            ? const _Empty()
+            // (P166 §10) Bos durumda cagri dugmesi — bkz. checkpoints.
+            ? BosDurum(
+                ikon: Icons.route_outlined,
+                baslik: l10n.devriyePlanYokBos,
+                aciklama: l10n.devriyePlanYokAlt,
+                eylemEtiketi: l10n.devriyePlanEkle,
+                onEylem: () => _openForm(context, ref),
+              )
             : RefreshIndicator(
                 onRefresh: () async => ref.invalidate(patrolPlansProvider),
                 child: ListView.separated(
@@ -456,33 +464,6 @@ class _PlanFormState extends ConsumerState<_PlanForm> {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _Empty extends StatelessWidget {
-  const _Empty();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.route_outlined, size: 48),
-            const SizedBox(height: 12),
-            Text(
-              context.l10n.devriyePlanYokBos,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
         ),
       ),
     );

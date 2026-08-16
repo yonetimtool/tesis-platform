@@ -42,6 +42,11 @@ void main() {
         // EKLEYEMIYORDU. Gorunurluk kartinin cizildigi rollerden turedi.
         HomeMenuEntry.ihlaller,
         HomeMenuEntry.vardiyalar,
+        // (P166 §10) Gorev kategorileri: ekran VARDI, girisi yalniz
+        // "Gorev yonetimi"nin sag ustundeki etiketsiz ikondu.
+        HomeMenuEntry.taskCategories,
+        // (P166 §8.2) Kurulum sihirbazi — mobilde ilk kez.
+        HomeMenuEntry.kurulum,
         HomeMenuEntry.outbox,
       ]);
       expect(homeMenuForRole(UserRole.security), const [

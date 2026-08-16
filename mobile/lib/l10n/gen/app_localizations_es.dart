@@ -3758,8 +3758,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get noktaPasifAlt => 'Un punto inactivo no coincide al escanear';
 
   @override
-  String get noktaYok =>
-      'Aún no hay puntos de control.\nAñada un punto NFC desde abajo a la derecha.';
+  String get noktaYok => 'Todavía no hay puntos de control.';
 
   @override
   String get kuyrukHatalariTemizle => 'Borrar errores permanentes';
@@ -5224,4 +5223,23 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get kurulumHatirlaticiSonra => 'Más tarde';
+
+  @override
+  String get noktaYokAlt =>
+      'Los puntos de control son las etiquetas NFC que se leen durante las rondas.';
+
+  @override
+  String get devriyePlanYokAlt =>
+      'Un plan de ronda define qué puntos se leen y cuándo.';
+
+  @override
+  String get personelYokAlt =>
+      'Aquí crea las cuentas de seguridad y personal de instalaciones.';
+
+  @override
+  String get sakinYokAlt =>
+      'Los residentes añadidos se vinculan a viviendas y pueden iniciar sesión.';
+
+  @override
+  String get ortakDahaFazlaSecenek => 'Más opciones';
 }

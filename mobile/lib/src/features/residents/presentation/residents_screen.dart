@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
+import '../../../core/ui/bos_durum.dart';
 import '../../../core/ui/temp_code_dialog.dart';
 import '../data/residents_api.dart';
 import '../../../core/error/akis_hatasi.dart';
@@ -39,7 +40,15 @@ class ResidentsScreen extends ConsumerWidget {
           onRetry: () => ref.invalidate(residentsProvider),
         ),
         data: (list) => list.isEmpty
-            ? const _EmptyState()
+            // (P166 §10) Bos durumda cagri dugmesi — bkz. personel.
+            ? BosDurum(
+                ikon: Icons.home_outlined,
+                baslik: l10n.sakinYok,
+                aciklama: l10n.sakinYokAlt,
+                eylemEtiketi: l10n.sakinEkle,
+                eylemIkonu: Icons.person_add_alt_1,
+                onEylem: () => _openAddSheet(context, ref),
+              )
             : RefreshIndicator(
                 onRefresh: () async => ref.invalidate(residentsProvider),
                 child: ListView.separated(
@@ -523,33 +532,6 @@ class _AddResidentSheetState extends ConsumerState<_AddResidentSheet> {
                       child: CircularProgressIndicator(strokeWidth: 2.5),
                     )
                   : Text(l10n.ortakEkle),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _EmptyState extends StatelessWidget {
-  const _EmptyState();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.home_outlined, size: 48),
-            const SizedBox(height: 12),
-            Text(
-              context.l10n.sakinYok,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
             ),
           ],
         ),

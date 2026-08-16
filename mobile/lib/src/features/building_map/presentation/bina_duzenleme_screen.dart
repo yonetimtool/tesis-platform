@@ -101,7 +101,19 @@ class _BinaDuzenlemeScreenState extends ConsumerState<BinaDuzenlemeScreen> {
           // SALT-OKUMA ROLDE HIC CIZILMEZ: sunucu zaten 403 doner, ama
           // basilacak bir menu gostermek "yetkim var sandim" demektir.
           if (!readOnly)
+            // (P166 §10) ETIKET APP BAR'A SIGMADI — GOVDEYE KONDU.
+            //
+            // ILK DENEME METNI BURAYA YAZMAKTI ve DAR EKRAN TESTI onu
+            // dogru sekilde curuttu: 320dp'de app bar 43 piksel tasiyor
+            // (Almanca/Fransizca basliklar daha da uzun). App bar zaten
+            // baslik + geri + yenile tasiyor; dorduncu bir METIN oraya
+            // sigmaz.
+            //
+            // Ikon BURADA KALIR (baglam ici kisayol), ETIKETLI GIRIS ise
+            // govdenin ustune kondu — bkz. `_AraclarSeridi`. Gorunurluk
+            // sorunu cozuluyor, tasma uretilmeden.
             PopupMenuButton<_YapisalArac>(
+              key: const Key('yapisal-araclar-menu'),
               tooltip: context.l10n.binaYapisalAraclar,
               icon: const Icon(Icons.construction_outlined),
               onSelected: _yapisalArac,
@@ -127,9 +139,37 @@ class _BinaDuzenlemeScreenState extends ConsumerState<BinaDuzenlemeScreen> {
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: controller.refresh,
-        child: _body(state, readOnly),
+      body: Column(
+        children: [
+          // (P166 §10) YAPISAL ARACLAR — ETIKETLI GIRIS.
+          //
+          // P163/P164'te kat silme, toplu daire ekleme, numara ile secme
+          // ve siralama daire listesinden BURAYA tasindi; yani bu menu
+          // artik DORT YETENEGIN TEK GIRISI. Adini ancak uzun basinca
+          // soyleyen bir ikonun ardinda birakmak, tasima isini bosa
+          // cikarirdi: kullanici araclari ne eski yerinde bulur ne yeni
+          // yerinde gorur.
+          //
+          // SALT-OKUMA ROLDE CIZILMEZ (app bar menusuyle ayni kural).
+          if (!readOnly)
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                child: TextButton.icon(
+                  onPressed: () => _yapisalAraclariAc(),
+                  icon: const Icon(Icons.construction_outlined),
+                  label: Text(context.l10n.binaYapisalAraclar),
+                ),
+              ),
+            ),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: controller.refresh,
+              child: _body(state, readOnly),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -199,6 +239,49 @@ class _BinaDuzenlemeScreenState extends ConsumerState<BinaDuzenlemeScreen> {
         style: TextStyle(color: Theme.of(context).colorScheme.error),
       ),
     );
+  }
+
+  /// (P166 §10) Govdedeki ETIKETLI giristen acilan arac listesi.
+  ///
+  /// MERKEZ DIYALOG (`merkezSayfaAc`), alt sayfa DEGIL: P22(a) kilidi
+  /// "tum acilir pencereler ORTADAN acilsin" diyor ve `merkez_diyalog_test`
+  /// `lib` icinde tek bir `showModalBottomSheet` cagrisina bile izin
+  /// vermiyor. Ilk yazimim alt sayfaydi ve test onu DOGRU sekilde durdurdu.
+  ///
+  /// Acilir menu de degil: menu dokunulan noktanin yanindan acilir ve
+  /// govdenin ortasindaki bir dugmede tuhaf durur. Diyalog ayrica her
+  /// satira IKON sigdirir — ucu de yikici islem, ne yaptiklarini okumak
+  /// SART.
+  ///
+  /// SECIM AYNI YERE GIDER (`_yapisalArac`): app bar menusu ve bu liste
+  /// tek bir davranisi paylasir; ikisi ayrisirsa biri duzeltilip oteki
+  /// unutulurdu.
+  Future<void> _yapisalAraclariAc() async {
+    final l10n = context.l10n;
+    final secim = await merkezSayfaAc<_YapisalArac>(
+      context,
+      builder: (ctx) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.layers_clear_outlined),
+            title: Text(l10n.binaKatSil),
+            onTap: () => Navigator.of(ctx).pop(_YapisalArac.katSil),
+          ),
+          ListTile(
+            leading: const Icon(Icons.category_outlined),
+            title: Text(l10n.binaTopluTip),
+            onTap: () => Navigator.of(ctx).pop(_YapisalArac.topluTip),
+          ),
+          ListTile(
+            leading: const Icon(Icons.swap_vert_outlined),
+            title: Text(l10n.binaSiralama),
+            onTap: () => Navigator.of(ctx).pop(_YapisalArac.siralama),
+          ),
+        ],
+      ),
+    );
+    if (secim != null && mounted) await _yapisalArac(secim);
   }
 
   Future<void> _yapisalArac(_YapisalArac secim) async {

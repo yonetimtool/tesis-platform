@@ -1047,7 +1047,7 @@
   "ortakSecenekYuklenemedi": "تعذّر تحميل بعض الخيارات — قد تكون القائمة ناقصة.",
   "noktaBoylam": "خط الطول (اختياري)",
   "noktaPasifAlt": "النقطة غير النشطة لا تُطابق أي مسح",
-  "noktaYok": "لا توجد نقاط تفتيش بعد.\nأضف نقطة NFC من أسفل اليمين.",
+  "noktaYok": "لا توجد نقاط تفتيش بعد.",
   "kuyrukHatalariTemizle": "امسح الأخطاء الدائمة",
   "kuyrukBos": "القائمة فارغة.",
   "kuyrukOzet": "{bekleyen} في الانتظار · {hatali} أخطاء دائمة",
@@ -1630,5 +1630,10 @@
   "kurulumHatirlaticiBaslik": "أكمل الإعداد",
   "kurulumHatirlaticiMetin": "بقيت بضع خطوات حتى يصبح مرفقك جاهزًا. سيأخذك المعالج إلى كل شاشة.",
   "kurulumHatirlaticiGit": "فتح المعالج",
-  "kurulumHatirlaticiSonra": "لاحقًا"
+  "kurulumHatirlaticiSonra": "لاحقًا",
+  "noktaYokAlt": "نقاط التفتيش هي بطاقات NFC التي تُقرأ أثناء جولات الدورية.",
+  "devriyePlanYokAlt": "تحدد خطة الدورية أي النقاط تُقرأ ومتى.",
+  "personelYokAlt": "من هنا تُنشئ حسابات الأمن وموظفي المرفق.",
+  "sakinYokAlt": "يُربط السكان المضافون بالوحدات ويمكنهم تسجيل الدخول إلى التطبيق.",
+  "ortakDahaFazlaSecenek": "خيارات إضافية"
 }

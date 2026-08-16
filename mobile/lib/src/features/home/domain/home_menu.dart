@@ -182,6 +182,19 @@ enum HomeMenuEntry {
   /// giris olmadan amir onu izgarasina koyamiyordu.
   aracGecis,
 
+  /// (P166 §10) PLAKA OKUMALARI (ANPR defteri) — ekran VARDI, MODUL GIRISI
+  /// YOKTU.
+  ///
+  /// Tek giris "Arac Gecisleri" ekraninin sag ustundeki ETIKETSIZ bir
+  /// ikondu; yani ekrana ulasmanin on kosulu, once BASKA bir ekrana gidip
+  /// orada bir ikonun ne oldugunu tahmin etmekti. P154'te devriye
+  /// planlari ve kontrol noktalari icin verilen karar burada da gecerli:
+  /// menude ETIKETLI giris acilir, ikon baglam ici KISAYOL olarak kalir.
+  ///
+  /// GORUNURLUK `aracGecis`TEN TUREDI (ikonu tasiyan ekran odur) — yeni
+  /// bir yetki karari uretilmedi.
+  plakaOlaylari,
+
   /// (P139.5) Ihlaller — arac/park ihlal kayitlari. Otopark ve Vardiya ile
   /// AYNI DURUM: kart vardi, MODUL GIRISI YOKTU. Kurasyon sonrasi bu
   /// eksiklik gorunur oldu — kart varsayilan izgaradan dusuyor ve
@@ -222,6 +235,10 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.otopark,
         HomeMenuEntry.ihlaller,
         HomeMenuEntry.vardiyalar,
+        // (P166 §10 / §8.2) Gorev kategorileri ve kurulum sihirbazi —
+        // ikisi de yonetim isidir ve admin yonetici duzenini gorur.
+        HomeMenuEntry.taskCategories,
+        HomeMenuEntry.kurulum,
         HomeMenuEntry.outbox,
       ];
     case UserRole.guvenlikAmiri:
@@ -242,6 +259,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.vardiyalar,
         HomeMenuEntry.ihlaller,
         HomeMenuEntry.aracGecis,
+        HomeMenuEntry.plakaOlaylari,
         HomeMenuEntry.outbox,
       ];
     case UserRole.security:
@@ -370,6 +388,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
 String moduleBaslik(AppLocalizations l10n, HomeMenuEntry entry) =>
     switch (entry) {
       HomeMenuEntry.aracGecis => l10n.kartAracPlaka,
+      HomeMenuEntry.plakaOlaylari => l10n.aracPlakaOkumalari,
       HomeMenuEntry.ihlaller => l10n.modulIhlaller,
       HomeMenuEntry.otopark => l10n.modulOtopark,
       HomeMenuEntry.vardiyalar => l10n.vardiyaBaslik,
@@ -461,6 +480,7 @@ HomeMenuGrup homeMenuGrubu(HomeMenuEntry e) => switch (e) {
   HomeMenuEntry.vardiyalar ||
   HomeMenuEntry.ihlaller ||
   HomeMenuEntry.aracGecis ||
+  HomeMenuEntry.plakaOlaylari ||
   HomeMenuEntry.otopark => HomeMenuGrup.guvenlik,
   HomeMenuEntry.tasks ||
   HomeMenuEntry.taskTracking ||

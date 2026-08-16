@@ -1,5 +1,5 @@
   14,  16  310x28  GÖRÜNTÜLEME İZNİ
-  16, 354  24x24  U+EE7A
+  16, 354  24x24  U+E404
   84,  28  220x60  Daire görüntüleme isteği — A-12
  106, 256  98x17  Bekliyor
  148,  28  314x20  İsteyen: Acme Yonetici

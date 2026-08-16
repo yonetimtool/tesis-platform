@@ -16,6 +16,11 @@ import '../../../core/theme/home_tokens.dart';
 ///     izin ister; onaylanan taleplerde ziyaretci/kargo kayitlarini BiR KEZ
 ///     goruntuler. Toplu istek per-daire sakin RIZASINI baypas ETMEZ.
 ///   * resident: kendi dairesine gelen talepleri Onayla/Reddet eder.
+/// Acilir menudeki eylemler. ENUM, dize DEGIL: P164'te sihirli dizeler
+/// depodaki genel test yardimcisiyla cakismisti — tip ayrimi o sinifi
+/// yapisal olarak imkansiz kilar.
+enum _IzinEylem { tumDairelere }
+
 class UnitAccessScreen extends ConsumerWidget {
   const UnitAccessScreen({super.key});
 
@@ -28,11 +33,34 @@ class UnitAccessScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(baslikBuyuk(context.l10n.izinBaslik, context.dilKodu)),
         actions: [
+          // (P166 §10) ETIKETSIZ IKON -> ETIKETLI MENU OGESI.
+          //
+          // "Tum dairelere izin iste" ekranin IKINCIL ama nadir ve GERI
+          // ALINAMAZ bir eylemidir (her daireye bildirim gider). Adini
+          // ancak uzun basinca soyleyen bir ikon, hem bulunamaz hem de
+          // yanlislikla basilabilir olur.
+          //
+          // ETIKETI APP BAR'A YAZMAYI DENEDIM ve DAR EKRAN TESTI (320dp,
+          // alti dil) onu curuttu: baslik + dugme yan yana tasiyor. Tasma
+          // uretmeden etiket gostermenin yolu ACILIR MENU: uc nokta
+          // evrensel olarak "burada baska secenekler var" demektir ve
+          // acilinca eylemin ADI okunur.
           if (state.canRequest)
-            IconButton(
-              tooltip: context.l10n.izinTumDairelere,
-              icon: Icon(Icons.apartment_outlined),
-              onPressed: () => _bulkRequest(context, ref),
+            PopupMenuButton<_IzinEylem>(
+              tooltip: context.l10n.ortakDahaFazlaSecenek,
+              onSelected: (_) => _bulkRequest(context, ref),
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: _IzinEylem.tumDairelere,
+                  child: Row(
+                    children: [
+                      const Icon(Icons.apartment_outlined),
+                      const SizedBox(width: 12),
+                      Flexible(child: Text(context.l10n.izinTumDairelere)),
+                    ],
+                  ),
+                ),
+              ],
             ),
         ],
       ),

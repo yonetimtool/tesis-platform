@@ -1524,7 +1524,7 @@
   "ortakSecenekYuklenemedi": "Bazı seçenekler yüklenemedi — liste eksik olabilir.",
   "noktaBoylam": "Boylam (ops.)",
   "noktaPasifAlt": "Pasif nokta okutmada eşleşmez",
-  "noktaYok": "Henüz kontrol noktası yok.\nSağ alttan NFC noktası ekleyin.",
+  "noktaYok": "Henüz kontrol noktası yok.",
   "kuyrukHatalariTemizle": "Kalıcı hataları temizle",
   "kuyrukBos": "Kuyruk boş.",
   "kuyrukOzet": "{bekleyen} bekliyor · {hatali} kalıcı hata",
@@ -2340,5 +2340,10 @@
   "kurulumHatirlaticiBaslik": "Kurulumu tamamlayın",
   "kurulumHatirlaticiMetin": "Tesisinizi kullanıma hazır hâle getirmek için birkaç adım kaldı. Sihirbaz sizi tek tek ilgili ekranlara götürür.",
   "kurulumHatirlaticiGit": "Sihirbazı aç",
-  "kurulumHatirlaticiSonra": "Daha sonra"
+  "kurulumHatirlaticiSonra": "Daha sonra",
+  "noktaYokAlt": "Kontrol noktaları, devriye turlarında okutulan NFC etiketleridir.",
+  "devriyePlanYokAlt": "Devriye planı, hangi noktaların hangi saatlerde okutulacağını belirler.",
+  "personelYokAlt": "Güvenlik ve tesis görevlisi hesaplarını buradan açarsınız.",
+  "sakinYokAlt": "Sakinleri ekleyince dairelere bağlanır ve uygulamaya giriş yapabilirler.",
+  "ortakDahaFazlaSecenek": "Daha fazla seçenek"
 }

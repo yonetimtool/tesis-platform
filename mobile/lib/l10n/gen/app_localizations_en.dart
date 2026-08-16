@@ -3808,8 +3808,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noktaPasifAlt => 'An inactive checkpoint will not match a scan';
 
   @override
-  String get noktaYok =>
-      'No checkpoints yet.\nAdd an NFC checkpoint from the bottom right.';
+  String get noktaYok => 'No checkpoints yet.';
 
   @override
   String get kuyrukHatalariTemizle => 'Clear permanent failures';
@@ -5266,4 +5265,23 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get kurulumHatirlaticiSonra => 'Later';
+
+  @override
+  String get noktaYokAlt =>
+      'Checkpoints are the NFC tags scanned during patrol rounds.';
+
+  @override
+  String get devriyePlanYokAlt =>
+      'A patrol plan defines which checkpoints are scanned and when.';
+
+  @override
+  String get personelYokAlt =>
+      'Create security and facility officer accounts here.';
+
+  @override
+  String get sakinYokAlt =>
+      'Added residents are linked to units and can sign in to the app.';
+
+  @override
+  String get ortakDahaFazlaSecenek => 'More options';
 }

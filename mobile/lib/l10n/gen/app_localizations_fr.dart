@@ -3767,8 +3767,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get noktaPasifAlt => 'Un point inactif ne correspond à aucun scan';
 
   @override
-  String get noktaYok =>
-      'Aucun point de contrôle.\nAjoutez un point NFC depuis le bas à droite.';
+  String get noktaYok => 'Aucun point de contrôle pour l\'instant.';
 
   @override
   String get kuyrukHatalariTemizle => 'Effacer les échecs définitifs';
@@ -5240,4 +5239,23 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get kurulumHatirlaticiSonra => 'Plus tard';
+
+  @override
+  String get noktaYokAlt =>
+      'Les points de contrôle sont les étiquettes NFC scannées pendant les rondes.';
+
+  @override
+  String get devriyePlanYokAlt =>
+      'Un plan de ronde définit quels points sont scannés et quand.';
+
+  @override
+  String get personelYokAlt =>
+      'Créez ici les comptes des agents de sécurité et d\'entretien.';
+
+  @override
+  String get sakinYokAlt =>
+      'Les résidents ajoutés sont liés aux logements et peuvent se connecter.';
+
+  @override
+  String get ortakDahaFazlaSecenek => 'Plus d\'options';
 }

@@ -3900,8 +3900,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get noktaPasifAlt => 'النقطة غير النشطة لا تُطابق أي مسح';
 
   @override
-  String get noktaYok =>
-      'لا توجد نقاط تفتيش بعد.\nأضف نقطة NFC من أسفل اليمين.';
+  String get noktaYok => 'لا توجد نقاط تفتيش بعد.';
 
   @override
   String get kuyrukHatalariTemizle => 'امسح الأخطاء الدائمة';
@@ -5342,4 +5341,21 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get kurulumHatirlaticiSonra => 'لاحقًا';
+
+  @override
+  String get noktaYokAlt =>
+      'نقاط التفتيش هي بطاقات NFC التي تُقرأ أثناء جولات الدورية.';
+
+  @override
+  String get devriyePlanYokAlt => 'تحدد خطة الدورية أي النقاط تُقرأ ومتى.';
+
+  @override
+  String get personelYokAlt => 'من هنا تُنشئ حسابات الأمن وموظفي المرفق.';
+
+  @override
+  String get sakinYokAlt =>
+      'يُربط السكان المضافون بالوحدات ويمكنهم تسجيل الدخول إلى التطبيق.';
+
+  @override
+  String get ortakDahaFazlaSecenek => 'خيارات إضافية';
 }

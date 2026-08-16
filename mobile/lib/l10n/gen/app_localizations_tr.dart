@@ -3624,8 +3624,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get noktaPasifAlt => 'Pasif nokta okutmada eşleşmez';
 
   @override
-  String get noktaYok =>
-      'Henüz kontrol noktası yok.\nSağ alttan NFC noktası ekleyin.';
+  String get noktaYok => 'Henüz kontrol noktası yok.';
 
   @override
   String get kuyrukHatalariTemizle => 'Kalıcı hataları temizle';
@@ -5078,4 +5077,23 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get kurulumHatirlaticiSonra => 'Daha sonra';
+
+  @override
+  String get noktaYokAlt =>
+      'Kontrol noktaları, devriye turlarında okutulan NFC etiketleridir.';
+
+  @override
+  String get devriyePlanYokAlt =>
+      'Devriye planı, hangi noktaların hangi saatlerde okutulacağını belirler.';
+
+  @override
+  String get personelYokAlt =>
+      'Güvenlik ve tesis görevlisi hesaplarını buradan açarsınız.';
+
+  @override
+  String get sakinYokAlt =>
+      'Sakinleri ekleyince dairelere bağlanır ve uygulamaya giriş yapabilirler.';
+
+  @override
+  String get ortakDahaFazlaSecenek => 'Daha fazla seçenek';
 }

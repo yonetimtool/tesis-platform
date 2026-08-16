@@ -189,6 +189,11 @@ ModuleCardSpec moduleCardSpec(HomeMenuEntry entry) {
           icon: Icons.hub_outlined,
           accent: _navy,
           route: AppRoutes.integrations);
+    case HomeMenuEntry.plakaOlaylari:
+      return const ModuleCardSpec(
+          icon: Icons.document_scanner_outlined,
+          accent: _navy,
+          route: AppRoutes.plakaOlaylari);
     case HomeMenuEntry.kurulum:
       return const ModuleCardSpec(
           icon: Icons.checklist_outlined,

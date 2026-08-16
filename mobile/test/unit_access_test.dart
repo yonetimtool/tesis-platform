@@ -165,8 +165,15 @@ void main() {
       final (api, app) = _app(UserRole.yonetici, items: [_r()]);
       await tester.pumpWidget(app);
       await tester.pumpAndSettle();
-      // AppBar aksiyonu (tooltip ile bulunur)
-      await tester.tap(find.byTooltip('Tüm dairelere izin iste'));
+      // (P166 §10) EYLEM ARTIK ACILIR MENUDE, ETIKETLI.
+      //
+      // Once app bar'da ETIKETSIZ bir ikondu: adini yalniz uzun basinca
+      // soyluyordu, yani bulunamiyor ve yanlislikla basilabiliyordu.
+      // Metni dogrudan app bar'a yazmak 320dp'de TASMA uretti (dar ekran
+      // testi curuttu); acilir menu ikisini de cozer.
+      await tester.tap(find.byTooltip('Daha fazla seçenek'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Tüm dairelere izin iste').last);
       await tester.pumpAndSettle();
       // Onay dialogu -> Gönder
       expect(find.text('Tüm dairelere izin iste'), findsWidgets);
@@ -179,7 +186,7 @@ void main() {
       final (_, app) = _app(UserRole.resident, items: [_r()]);
       await tester.pumpWidget(app);
       await tester.pumpAndSettle();
-      expect(find.byTooltip('Tüm dairelere izin iste'), findsNothing);
+      expect(find.byTooltip('Daha fazla seçenek'), findsNothing);
     });
 
     testWidgets('granted-units karti: gorunur daireler listelenir', (tester) async {

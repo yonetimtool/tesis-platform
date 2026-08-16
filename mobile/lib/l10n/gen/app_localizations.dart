@@ -6398,7 +6398,7 @@ abstract class AppLocalizations {
   /// No description provided for @noktaYok.
   ///
   /// In tr, this message translates to:
-  /// **'Henüz kontrol noktası yok.\nSağ alttan NFC noktası ekleyin.'**
+  /// **'Henüz kontrol noktası yok.'**
   String get noktaYok;
 
   /// No description provided for @kuyrukHatalariTemizle.
@@ -8980,6 +8980,36 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Daha sonra'**
   String get kurulumHatirlaticiSonra;
+
+  /// No description provided for @noktaYokAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kontrol noktaları, devriye turlarında okutulan NFC etiketleridir.'**
+  String get noktaYokAlt;
+
+  /// No description provided for @devriyePlanYokAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Devriye planı, hangi noktaların hangi saatlerde okutulacağını belirler.'**
+  String get devriyePlanYokAlt;
+
+  /// No description provided for @personelYokAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Güvenlik ve tesis görevlisi hesaplarını buradan açarsınız.'**
+  String get personelYokAlt;
+
+  /// No description provided for @sakinYokAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sakinleri ekleyince dairelere bağlanır ve uygulamaya giriş yapabilirler.'**
+  String get sakinYokAlt;
+
+  /// No description provided for @ortakDahaFazlaSecenek.
+  ///
+  /// In tr, this message translates to:
+  /// **'Daha fazla seçenek'**
+  String get ortakDahaFazlaSecenek;
 }
 
 class _AppLocalizationsDelegate

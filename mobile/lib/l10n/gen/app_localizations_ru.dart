@@ -3878,8 +3878,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'Неактивная точка не сопоставляется при сканировании';
 
   @override
-  String get noktaYok =>
-      'Контрольных точек пока нет.\nДобавьте NFC-точку кнопкой справа снизу.';
+  String get noktaYok => 'Точек обхода пока нет.';
 
   @override
   String get kuyrukHatalariTemizle => 'Очистить постоянные ошибки';
@@ -5337,4 +5336,23 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get kurulumHatirlaticiSonra => 'Позже';
+
+  @override
+  String get noktaYokAlt =>
+      'Точки обхода — это NFC-метки, которые сканируют во время обходов.';
+
+  @override
+  String get devriyePlanYokAlt =>
+      'План обхода определяет, какие точки и когда сканируются.';
+
+  @override
+  String get personelYokAlt =>
+      'Здесь создаются учётные записи охраны и обслуживающего персонала.';
+
+  @override
+  String get sakinYokAlt =>
+      'Добавленные жители привязываются к квартирам и могут входить в приложение.';
+
+  @override
+  String get ortakDahaFazlaSecenek => 'Другие параметры';
 }

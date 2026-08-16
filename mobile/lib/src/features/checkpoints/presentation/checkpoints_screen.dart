@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
+import '../../../core/ui/bos_durum.dart';
 import '../../../core/sayi.dart';
 import '../data/checkpoint_api.dart';
 import '../../scan/data/scan_api.dart';
@@ -43,7 +44,18 @@ class CheckpointsScreen extends ConsumerWidget {
           ),
         ),
         data: (list) => list.isEmpty
-            ? const _Empty()
+            // (P166 §10) BOS DURUMDA CAGRI DUGMESI. Eskiden yalniz
+            // "nokta yok" yaziyordu ve kullanici orada kaliyordu; ekleme
+            // yolu ekranin dibindeki FAB'diydi ve bos ekranda goz oraya
+            // gitmiyor.
+            ? BosDurum(
+                ikon: Icons.location_off_outlined,
+                baslik: l10n.noktaYok,
+                aciklama: l10n.noktaYokAlt,
+                eylemEtiketi: l10n.noktaEkle,
+                eylemIkonu: Icons.add_location_alt_outlined,
+                onEylem: () => _openForm(context, ref),
+              )
             : RefreshIndicator(
                 onRefresh: () async => ref.invalidate(checkpointsProvider),
                 child: ListView.separated(
@@ -408,32 +420,6 @@ class _CheckpointFormState extends ConsumerState<_CheckpointForm> {
                       child: CircularProgressIndicator(strokeWidth: 2.5),
                     )
                   : Text(_isEdit ? l10n.ortakGuncelle : l10n.ortakEkle),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Empty extends StatelessWidget {
-  const _Empty();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.location_off_outlined, size: 48),
-            const SizedBox(height: 12),
-            Text(
-              context.l10n.noktaYok,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
           ],
         ),

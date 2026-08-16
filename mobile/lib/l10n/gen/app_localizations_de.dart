@@ -3778,8 +3778,7 @@ class AppLocalizationsDe extends AppLocalizations {
       'Ein inaktiver Punkt wird beim Scannen nicht erkannt';
 
   @override
-  String get noktaYok =>
-      'Noch keine Kontrollpunkte.\nUnten rechts einen NFC-Punkt hinzufügen.';
+  String get noktaYok => 'Noch keine Kontrollpunkte.';
 
   @override
   String get kuyrukHatalariTemizle => 'Dauerhafte Fehler löschen';
@@ -5249,4 +5248,23 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get kurulumHatirlaticiSonra => 'Später';
+
+  @override
+  String get noktaYokAlt =>
+      'Kontrollpunkte sind die NFC-Tags, die bei Rundgängen gescannt werden.';
+
+  @override
+  String get devriyePlanYokAlt =>
+      'Ein Rundgangsplan legt fest, welche Punkte wann gescannt werden.';
+
+  @override
+  String get personelYokAlt =>
+      'Hier legen Sie Konten für Sicherheits- und Objektpersonal an.';
+
+  @override
+  String get sakinYokAlt =>
+      'Hinzugefügte Bewohner werden Wohnungen zugeordnet und können sich anmelden.';
+
+  @override
+  String get ortakDahaFazlaSecenek => 'Weitere Optionen';
 }
