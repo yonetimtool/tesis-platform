@@ -72,6 +72,7 @@ export const tr = {
   ortakKayitYok: "Kayıt yok.",
   ortakBaglantiYok: "Bağlantı kurulamadı — internet bağlantınızı kontrol edip tekrar deneyin.",
   ortakHataOlustu: "Bir hata oluştu.",
+  ortakSunucuHatasi: "İşlem tamamlanamadı (durum {durum}). Sorun sürerse bu referansı iletin: {referans}",
   ortakTekrarDene: "Tekrar dene",
   ortakVeriYuklenemedi: "Veriler yüklenemedi.",
   ortakOturumSuresiDoldu: "Oturum süresi doldu.",
@@ -1101,7 +1102,10 @@ export const tr = {
   daireKatBasi: "Kat başına daire",
   daireBaslangicNo: "Başlangıç numarası",
   daireBaslangicKat: "Başlangıç katı",
-  daireBaslangicKatIpucu: "Bodrum için -1, -2; zemin için 0.",
+  binaTopluTip: "Daire tipi toplu değiştir",
+  daireSeciliSayisi: "{sayi} daire seçili",
+  daireDegistirme: "Değiştirme",
+  daireBaslangicKatIpucu: "Bodrum için negatif yazın: -2, -1, 0 (zemin), 1…",
   daireTopluOlusturAlanlar: "Blok ve sayısal alanlar geçerli olmalı.",
   daireBlokKalibi: "Blok adı yalnızca harf ve rakam içerebilir (boşluk, tire ve Türkçe harf olmaz).",
   daireTopluOlusturuldu: "Daireler oluşturuldu.",
@@ -1250,7 +1254,6 @@ export const tr = {
   // tur 20 — yukleme BFF hatalari
   yuklemeDosyaYok: "Dosya bulunamadı.",
   // tur 21 — gozle surus: cok satirli JSX metinleri
-  binaYetkiNotu: "Bu düzenleyici panelde yalnızca platform adminine açıktır; site yöneticileri (yönetici) aynı düzenlemeyi mobil {ekran} ekranından yapar. Yetki backend'de admin+yönetici olarak tanımlıdır.",
   duyuruPanelNotu: "Duyuruyu SİTE YÖNETİCİSİ mobil uygulamadan oluşturur; panel yalnız düzenleme/silme (moderasyon) içindir. Duyurular tüm rollere görünür; yayınlandığında tesisin kayıtlı tüm cihazlarına bildirim denenir.",
   talepPanelNotu: "Sakinlerin ve saha ekibinin ilettiği talep/arızalar. Açık talebi {coz} ya da {reddet} ile sonuçlandırın; iş emrine dönüştürme (atama) mobil uygulamadan yapılır.",
   talepReddet: "Reddet",

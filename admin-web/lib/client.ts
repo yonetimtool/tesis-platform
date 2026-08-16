@@ -132,8 +132,21 @@ export async function apiSend<T = unknown>(
         details?: { field?: string; message?: string }[];
       };
     } | null)?.error;
+    // (P163 §2) GOVDESIZ YANITTA DA ANLAMLI MESAJ.
+    //
+    // OLCULEN KUSUR: 405 ve 500 gibi yanitlarda govde YOK ya da JSON
+    // DEGIL; `data` `null` oluyor, `zarf` tanimsiz kaliyor ve kullaniciya
+    // "Bir hata olustu" yaziliyordu. O cumle hicbir sey soylemez —
+    // kullanici da destek de nereden baslayacagini bilemez.
+    //
+    // Artik durum kodu ve REFERANS yaziliyor. Referans = metot + yol:
+    // hatayi ureten istegi TEK BASINA belirler ve sunucu gunlugunde
+    // aranabilir. Kimlik ya da govde ICERMEZ — hata metni bir sizinti
+    // yuzeyi degildir.
+    const referans = `${method} ${url}`;
     throw new ApiHatasi(
-      zarf?.message ?? metin("ortakHataOlustu"),
+      zarf?.message ??
+        metin("ortakSunucuHatasi", { durum: String(res.status), referans }),
       zarf?.code,
       res.status,
       zarf?.details?.map((d) => ({ alan: d.field ?? "", mesaj: d.message ?? "" })),

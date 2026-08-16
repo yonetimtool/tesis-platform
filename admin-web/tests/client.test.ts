@@ -85,8 +85,23 @@ describe("apiSend", () => {
     stubFetchSeq([{ status: 409, body: { error: { message: "Ayni ad zaten var." } } }]);
     await expect(apiSend("/api/x", "POST", {})).rejects.toThrow("Ayni ad zaten var.");
 
+    // (P163 §2) GOVDESIZ YANITTA ARTIK DURUM + REFERANS.
+    //
+    // Eskiden burada "Bir hata olustu." bekleniyordu ve o cumle
+    // kullaniciya da destege de hicbir sey soylemiyordu. 405 ve 500 gibi
+    // yanitlarda govde YOK; mesaj artik durum kodunu ve istegi TEK
+    // BASINA belirleyen bir referansi (metot + yol) tasiyor.
     stubFetchSeq([{ status: 500, body: null }]);
-    await expect(apiSend("/api/x", "POST", {})).rejects.toThrow("Bir hata oluştu.");
+    await expect(apiSend("/api/x", "POST", {})).rejects.toThrow(/500/);
+    stubFetchSeq([{ status: 500, body: null }]);
+    await expect(apiSend("/api/x", "POST", {})).rejects.toThrow(/POST \/api\/x/);
+  });
+
+  it("(P163) 405'te de ANLAMLI mesaj — sessiz kalmaz", async () => {
+    // Bildirilen hatanin ta kendisi: toplu daire olusturmada 405 doniyor
+    // ve ekranda hicbir ipucu yoktu.
+    stubFetchSeq([{ status: 405, body: null }]);
+    await expect(apiSend("/api/units/bulk", "POST", {})).rejects.toThrow(/405/);
   });
 });
 

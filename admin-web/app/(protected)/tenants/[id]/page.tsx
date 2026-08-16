@@ -416,7 +416,11 @@ export default function TenantDetailPage() {
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{t("tesisYoneticilerBaslik")}</h2>
               {!ekleAcik && (
-                <Dugme boy="kucuk" onClick={() => setEkleAcik(true)} disabled={busy}>
+                <Dugme boy="kucuk" onClick={() => {
+                    // (P163 §2) Acilista eski hata temizlenir.
+                    setYeniHata(null);
+                    setEkleAcik(true);
+                  }} disabled={busy}>
                   {t("tesisYoneticiEkle")}
                 </Dugme>
               )}

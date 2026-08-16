@@ -31,8 +31,11 @@ const SUNUCU_SEMA = readFileSync(
   join(KOK, "..", "backend", "app", "schemas.py"),
   "utf8",
 );
+// (P163 §4) TOPLU OLUSTURMA BINA DUZENLEME'YE TASINDI. Kalip kontrolu de
+// oraya bakiyor — testin niyeti (istemci ile sunucu kalibi AYNI kalsin)
+// degismedi, yalnizca dosya degisti.
 const UNITS_SAYFASI = readFileSync(
-  join(KOK, "app", "(protected)", "units", "page.tsx"),
+  join(KOK, "app", "(protected)", "building-editor", "page.tsx"),
   "utf8",
 );
 

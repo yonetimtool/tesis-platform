@@ -45,6 +45,29 @@ nereye bakılacağını söyledi.
 | Entegrasyon | ekle · düzenle · sil | ekle · düzenle · sil | ✅ eşit |
 | Dış hizmet | ekle · **düzenle** · **sil** | ekle · düzenle · sil | ✅ **P162'de kapandı** |
 
+## Bina Düzenleme ekranı (P163 §5)
+
+Ayrı ölçüldü, çünkü P163'te web tarafına üç yapısal araç taşındı.
+
+**Yöntem:** mobil `features/building_map/` altındaki API çağrıları
+(`bina_duzenleme_api.dart`, `bina_duzenleme_controller.dart`) tek tek
+okundu; web tarafı `app/(protected)/building-editor/page.tsx`.
+
+| Yetenek | Web | Mobil | Durum |
+|---|---|---|---|
+| Blok ekle / düzenle / sil (cascade) | ✅ | ✅ | eşit |
+| Daire ekle / düzenle / sil | ✅ | ✅ | eşit |
+| Kat ekle | ✅ | ✅ | eşit |
+| Toplu daire oluştur (`/units/bulk`) | ✅ **P163'te taşındı** | ✅ | eşit |
+| Kat sil (`/units/kat-sil`) | ✅ **P163'te taşındı** | ❌ | **web daha zengin** |
+| Daire tipi toplu değiştir (`/units/toplu`) | ✅ **P163'te taşındı** | ❌ | **web daha zengin** |
+| Numara ile seç (3,5,7-12) | ✅ **P163'te taşındı** | ❌ | **web daha zengin** |
+| Sürükleyerek sıralama (`/units/siralama`) | ✅ | ❌ | **web daha zengin** |
+
+Yani P163 sonrası bu ekranda **web mobilin üstünde**; mobilde eksik olan
+dört yetenek var. Bunlar mobil tarafında ayrı bir tur işidir ve bu turda
+kapsam dışıydı (brief web tarafını istedi).
+
 ## Kapatılmayan fark kalmadı
 
 Tablodaki tek ⛔ satırı (duyuru oluşturma) bir eksik değil, **bilinçli bir

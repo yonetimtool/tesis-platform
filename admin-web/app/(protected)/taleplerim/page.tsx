@@ -117,7 +117,13 @@ export default function TaleplerimPage() {
         <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
         {t("talebimBaslik")}
       </h1>
-        <Dugme tur="birincil" boy="kucuk" onClick={() => setModalAcik(true)}>
+        <Dugme tur="birincil" boy="kucuk" onClick={() => {
+          // (P163 §2) ACILISTA ESKI HATA TEMIZLENIR: modal yeniden acildiginda
+          // onceki denemenin mesaji ekranda duruyordu ve kullanici hic
+          // denemeden hata gormus oluyordu.
+          setFormHata(null);
+          setModalAcik(true);
+        }}>
           {t("talebimYeni")}
         </Dugme>
       </div>

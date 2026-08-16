@@ -180,27 +180,25 @@ describe("(P160) Daireler — tasima sonrasi", () => {
     expect(screen.getByText("1 kayıt seçili")).toBeInTheDocument();
   });
 
-  it("ARALIK IFADESI araci KORUNDU", async () => {
+  it("(P163 §4) YAPISAL ARACLAR BU SAYFADAN KALKTI — KAYBOLMADI, TASINDI", async () => {
+    // Testin ASIL NIYETI "arac kaybolmasin"di ve o niyet KORUNUYOR:
+    // araclar artik BINA DUZENLEME ekraninda ve orada
+    // `bina-yapisal-araclar.dom.test.ts` ile olculuyor.
+    //
+    // Burada olculen sey, tasimanin GERCEKTEN yapildigi: bu sayfa bir
+    // liste/CRUD yuzeyi olarak kaldi. Iki yerde birden durursa hangisinin
+    // gecerli oldugu belirsizlesir.
     sahte([DAIRE]);
     ciz(UnitsPage);
     await waitFor(() => expect(screen.getByText("A-12")).toBeInTheDocument());
-    expect(
-      screen.getByRole("button", { name: "Seç" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Toplu daire oluştur" }),
-    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Seç" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Toplu daire oluştur" })).toBeNull();
+    // CRUD KORUNDU.
+    expect(screen.getByRole("button", { name: "Yeni daire" })).toBeInTheDocument();
   });
 
-  it("KAT SIL dugmesi blok suzgeci BOSKEN kapali (yikici islem korumasi)", async () => {
-    sahte([DAIRE]);
-    ciz(UnitsPage);
-    await waitFor(() => expect(screen.getByText("A-12")).toBeInTheDocument());
-    const katSil = screen
-      .getAllByRole("button", { name: "Katı sil" })
-      .at(-1)!;
-    expect(katSil).toBeDisabled();
-  });
+  // KAT SIL testi KALDIRILDI: dugme bu sayfada yok artik. Yikici islem
+  // korumasi (blok secilmeden silinemez) yeni yerinde olculuyor.
 
   it("UC DUSTUGUNDE hata + TEKRAR DENE cikar", async () => {
     globalThis.fetch = (async () =>

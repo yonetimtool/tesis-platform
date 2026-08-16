@@ -12,9 +12,11 @@ import {
   Dugme,
   HataDurumu,
   useOnay,
+  Secim,
 } from "@/components/ui";
 import { useToast } from "@/components/Toast";
-import { apiSend } from "@/lib/client";
+import { alanliHataMetni, apiSend } from "@/lib/client";
+import { aralikCoz } from "@/lib/aralik";
 import { jsonFetcher } from "@/lib/fetcher";
 import type { Block, BlockList, Unit, UnitList } from "@/lib/types";
 import { tamsayiCoz } from "@/lib/sayi";
@@ -52,6 +54,9 @@ interface UnitFormState {
 const EMPTY_UNIT: UnitFormState = {
   open: false, editingId: null, blok: null, no: "", kat: "", sira: "", err: null, saving: false,
 };
+
+/** Sunucudaki `_BLOK_PATTERN` ile AYNI — ayrisirsa test duser. */
+const BLOK_KALIBI = /^[A-Za-z0-9]+$/;
 
 export default function BuildingEditorPage() {
   const t = useT();
@@ -103,6 +108,143 @@ export default function BuildingEditorPage() {
       toast.error(e instanceof Error ? e.message : t("ortakHataOlustu"));
     }
   }
+  // ==================================================================
+  // (P163 §4) YAPISAL ARACLAR — "Daireler" listesinden BURAYA TASINDI.
+  //
+  // Brief: "Toplu daire olustur · Kat sil · Numara ile sec bunlar BINA
+  // DUZENLEME ekranina tasinacak; yapisal islemler tek yerde toplanmali.
+  // Daireler listesi liste/filtre/CRUD ekrani olarak kalsin."
+  //
+  // GEREKCE: bir daireyi duzenlemek ile BINANIN YAPISINI degistirmek
+  // ayri islerdir. Toplu olusturma ve kat silme, bir listeyi suzerken
+  // yanlislikla basilabilecek eylemler degil; binanin semasina bakarken
+  // yapilan eylemlerdir. Zaten "+ Kat" ve daire "+" dugmeleri burada.
+  //
+  // UCLAR DEGISMEDI: `POST /units/bulk`, `POST /units/kat-sil`,
+  // `PATCH /units/toplu`. Tasinan sey ARAYUZ.
+  // ==================================================================
+  const [topluAcik, setTopluAcik] = useState(false);
+  const [oBlok, setOBlok] = useState("");
+  const [oKat, setOKat] = useState("3");
+  const [oDaire, setODaire] = useState("4");
+  const [oBaslangicNo, setOBaslangicNo] = useState("1");
+  const [oBaslangicKat, setOBaslangicKat] = useState("1");
+  const [oTip, setOTip] = useState("");
+  const [oHata, setOHata] = useState<string | null>(null);
+
+  const [katSilAcik, setKatSilAcik] = useState(false);
+  const [katSilBlok, setKatSilBlok] = useState("");
+  const [katSilKat, setKatSilKat] = useState("");
+  const [katSilHata, setKatSilHata] = useState<string | null>(null);
+
+  const [tipAcik, setTipAcik] = useState(false);
+  const [aralikIfade, setAralikIfade] = useState("");
+  const [secili, setSecili] = useState<string[]>([]);
+  const [topluTip, setTopluTip] = useState("");
+  const [topluAktif, setTopluAktif] = useState("");
+  const [tipHata, setTipHata] = useState<string | null>(null);
+
+  const { data: tipler } = useSWR<{ items: { id: string; ad: string }[] }>(
+    "/api/tanimlar/unit-tipleri?limit=100",
+    jsonFetcher,
+  );
+
+  async function topluOlustur(): Promise<void> {
+    setOHata(null);
+    // (P162 §4.1) BLOK ADI SUNUCUDA `^[A-Za-z0-9]+$`. Istek ATILMADAN
+    // once sebebi soylenir; yoksa kullanici anlamsiz bir 422 alirdi.
+    if (!BLOK_KALIBI.test(oBlok.trim())) {
+      setOHata(t("daireBlokKalibi"));
+      return;
+    }
+    const sayilar = {
+      kat_sayisi: tamsayiCoz(oKat),
+      kat_basi_daire: tamsayiCoz(oDaire),
+      baslangic_no: tamsayiCoz(oBaslangicNo),
+      baslangic_kat: tamsayiCoz(oBaslangicKat),
+    };
+    if (Object.values(sayilar).some((v) => v.tur !== "sayi")) {
+      setOHata(t("daireTopluOlusturAlanlar"));
+      return;
+    }
+    try {
+      await apiSend("/api/units/bulk", "POST", {
+        blok: oBlok.trim(),
+        kat_sayisi: (sayilar.kat_sayisi as { deger: number }).deger,
+        kat_basi_daire: (sayilar.kat_basi_daire as { deger: number }).deger,
+        baslangic_no: (sayilar.baslangic_no as { deger: number }).deger,
+        baslangic_kat: (sayilar.baslangic_kat as { deger: number }).deger,
+        unit_tip_id: oTip || null,
+      });
+      setTopluAcik(false);
+      refresh();
+      toast.success(t("daireTopluOlusturuldu"));
+    } catch (e) {
+      setOHata(alanliHataMetni(e, t("ortakHataOlustu")));
+    }
+  }
+
+  async function katSil(): Promise<void> {
+    setKatSilHata(null);
+    const kat = tamsayiCoz(katSilKat);
+    if (kat.tur !== "sayi" || !katSilBlok) {
+      setKatSilHata(t("daireKatSilAlanlar"));
+      return;
+    }
+    const ok = await onayla({
+      baslik: t("ortakSilBaslik"),
+      mesaj: t("daireKatSilOnay", { kat: kat.deger, blok: katSilBlok }),
+      onayMetni: t("ortakSil"),
+      tehlikeli: true,
+    });
+    if (!ok) return;
+    try {
+      await apiSend("/api/units/kat-sil", "POST", {
+        blok: katSilBlok,
+        kat: kat.deger,
+        cascade: true,
+      });
+      setKatSilAcik(false);
+      refresh();
+      toast.success(t("daireKatSilindi"));
+    } catch (e) {
+      setKatSilHata(alanliHataMetni(e, t("ortakHataOlustu")));
+    }
+  }
+
+  function araligiUygula(): void {
+    setTipHata(null);
+    const sonuc = aralikCoz(
+      aralikIfade,
+      (units.data?.items ?? []).map((u) => ({ id: u.id, no: u.no })),
+    );
+    setSecili(sonuc.idler);
+    if (sonuc.bulunamayan.length > 0) {
+      // SESSIZCE DUSMEZ: "12 daire sectim" deyip 9'unu islemek en kotu
+      // sonuctur.
+      setTipHata(t("daireAralikBulunamayan", { parca: sonuc.bulunamayan.join(", ") }));
+    }
+  }
+
+  async function topluTipUygula(): Promise<void> {
+    setTipHata(null);
+    if (secili.length === 0) return;
+    // EN AZ BIR ALAN: bos istek "yaptim" deyip hicbir sey yapmamakti.
+    if (topluAktif === "" && topluTip === "") return;
+    const govde: Record<string, unknown> = { unit_ids: secili };
+    if (topluAktif !== "") govde.aktif = topluAktif === "1";
+    if (topluTip !== "") govde.unit_tip_id = topluTip;
+    try {
+      await apiSend("/api/units/toplu", "PATCH", govde);
+      setTipAcik(false);
+      setSecili([]);
+      refresh();
+      toast.success(t("daireTopluGuncellendi"));
+    } catch (e) {
+      setTipHata(alanliHataMetni(e, t("ortakHataOlustu")));
+    }
+  }
+
 
   function refresh() {
     void blocks.mutate();
@@ -266,25 +408,207 @@ export default function BuildingEditorPage() {
             {t("binaAciklama")}
           </p>
         </div>
-        {
-          drilledIn ? (
+        {/* (P163 §4) YAPISAL ARAC SERIDI — hepsi MODAL acar (P162 kurali).
+            Bu ucu "Daireler" listesinin ustunden BURAYA tasindi: binanin
+            YAPISINI degistiren islemler, bir liste suzulurken yanlislikla
+            basilacak yerde durmamali. */}
+        <div className="flex flex-wrap items-center gap-2">
+          <Dugme
+            boy="kucuk"
+            onClick={() => {
+              setOHata(null);
+              setTopluAcik(true);
+            }}
+          >
+            {t("daireTopluOlustur")}
+          </Dugme>
+          <Dugme
+            boy="kucuk"
+            onClick={() => {
+              setKatSilHata(null);
+              setKatSilAcik(true);
+            }}
+          >
+            {t("daireKatSil")}
+          </Dugme>
+          <Dugme
+            boy="kucuk"
+            onClick={() => {
+              setTipHata(null);
+              setTipAcik(true);
+            }}
+          >
+            {t("binaTopluTip")}
+          </Dugme>
+          {drilledIn ? (
             <Dugme boy="kucuk" onClick={closeDetail}>{t("binaBloklaraDon")}</Dugme>
-          ) : null
-        }
+          ) : null}
+        </div>
       </div>
 
-      <div
-        className="px-4 py-2"
-        style={{
-          borderRadius: "var(--yz-radius-btn)",
-          border: "1px solid var(--yz-border)",
-          background: "var(--yz-surface-2)",
-          fontSize: "var(--yz-fs-xs)",
-          color: "var(--yz-text-2)",
-        }}
+      {/* --- TOPLU DAIRE OLUSTUR --- */}
+      <Modal
+        acik={topluAcik}
+        onKapat={() => setTopluAcik(false)}
+        baslik={t("daireTopluOlustur")}
+        eylemler={
+          <>
+            <Dugme tur="sessiz" onClick={() => setTopluAcik(false)}>
+              {t("ortakIptal")}
+            </Dugme>
+            <Dugme tur="birincil" onClick={() => void topluOlustur()}>
+              {t("ortakKaydet")}
+            </Dugme>
+          </>
+        }
       >
-        {t("binaYetkiNotu", { ekran: t("kabukBinaDuzenleme") })}
-      </div>
+        <div className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <AlanSarmal etiket={t("binaBlokEtiketi")} ipucu={t("binaBlokIpucu")} zorunlu>
+              {(b) => (
+                <Alan {...b} value={oBlok} onChange={(e) => setOBlok(e.target.value)} />
+              )}
+            </AlanSarmal>
+            <AlanSarmal etiket={t("daireKatSayisi")} zorunlu>
+              {(b) => (
+                <Alan {...b} inputMode="numeric" value={oKat} onChange={(e) => setOKat(e.target.value)} />
+              )}
+            </AlanSarmal>
+            <AlanSarmal etiket={t("daireKatBasi")} zorunlu>
+              {(b) => (
+                <Alan {...b} inputMode="numeric" value={oDaire} onChange={(e) => setODaire(e.target.value)} />
+              )}
+            </AlanSarmal>
+            <AlanSarmal etiket={t("daireBaslangicNo")} zorunlu>
+              {(b) => (
+                <Alan {...b} inputMode="numeric" value={oBaslangicNo} onChange={(e) => setOBaslangicNo(e.target.value)} />
+              )}
+            </AlanSarmal>
+            {/* BASLANGIC KATI NEGATIF OLABILIR: bodrum ve zemin gercek
+                katlardir (-2, -1, 0). `inputMode="numeric"` eksi isaretini
+                engellemez; `type="number"` da kullanilmadi cunku bazi
+                tarayicilarda tekerlek ile deger degistiriyor. */}
+            <AlanSarmal etiket={t("daireBaslangicKat")} ipucu={t("daireBaslangicKatIpucu")}>
+              {(b) => (
+                <Alan {...b} value={oBaslangicKat} onChange={(e) => setOBaslangicKat(e.target.value)} />
+              )}
+            </AlanSarmal>
+            <AlanSarmal etiket={t("tanimAlanTip")}>
+              {(b) => (
+                <Secim {...b} value={oTip} onChange={(e) => setOTip(e.target.value)}>
+                  <option value="">{t("ortakSeciniz")}</option>
+                  {(tipler?.items ?? []).map((x) => (
+                    <option key={x.id} value={x.id}>{x.ad}</option>
+                  ))}
+                </Secim>
+              )}
+            </AlanSarmal>
+          </div>
+          <HataDurumu mesaj={oHata} />
+        </div>
+      </Modal>
+
+      {/* --- KAT SIL --- */}
+      <Modal
+        acik={katSilAcik}
+        onKapat={() => setKatSilAcik(false)}
+        baslik={t("daireKatSil")}
+        eylemler={
+          <>
+            <Dugme tur="sessiz" onClick={() => setKatSilAcik(false)}>
+              {t("ortakIptal")}
+            </Dugme>
+            <Dugme tur="tehlike" onClick={() => void katSil()}>
+              {t("ortakSil")}
+            </Dugme>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <AlanSarmal etiket={t("binaBlokEtiketi")} zorunlu>
+              {(b) => (
+                <Secim {...b} value={katSilBlok} onChange={(e) => setKatSilBlok(e.target.value)}>
+                  <option value="">{t("ortakSeciniz")}</option>
+                  {(blocks.data?.items ?? []).map((x) => (
+                    <option key={x.id} value={x.ad}>{x.ad}</option>
+                  ))}
+                </Secim>
+              )}
+            </AlanSarmal>
+            <AlanSarmal etiket={t("binaKat")} zorunlu>
+              {(b) => (
+                <Alan {...b} value={katSilKat} onChange={(e) => setKatSilKat(e.target.value)} />
+              )}
+            </AlanSarmal>
+          </div>
+          <HataDurumu mesaj={katSilHata} />
+        </div>
+      </Modal>
+
+      {/* --- DAIRE TIPI TOPLU DEGISTIR (numara ile sec) --- */}
+      <Modal
+        acik={tipAcik}
+        onKapat={() => setTipAcik(false)}
+        baslik={t("binaTopluTip")}
+        genislikSinifi="max-w-xl"
+        eylemler={
+          <>
+            <Dugme tur="sessiz" onClick={() => setTipAcik(false)}>
+              {t("ortakIptal")}
+            </Dugme>
+            <Dugme tur="birincil" disabled={secili.length === 0} onClick={() => void topluTipUygula()}>
+              {t("ortakKaydet")}
+            </Dugme>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-end gap-2">
+            <div className="grow">
+              <AlanSarmal etiket={t("daireAralikSec")} ipucu={t("daireAralikIpucu")}>
+                {(b) => (
+                  <Alan {...b} value={aralikIfade} onChange={(e) => setAralikIfade(e.target.value)} placeholder="3,5,7-12" />
+                )}
+              </AlanSarmal>
+            </div>
+            <Dugme onClick={araligiUygula}>{t("daireAralikUygula")}</Dugme>
+          </div>
+          <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+            {t("daireSeciliSayisi", { sayi: secili.length })}
+          </p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <AlanSarmal etiket={t("tanimAlanTip")}>
+              {(b) => (
+                <Secim {...b} value={topluTip} onChange={(e) => setTopluTip(e.target.value)}>
+                  <option value="">{t("daireDegistirme")}</option>
+                  {(tipler?.items ?? []).map((x) => (
+                    <option key={x.id} value={x.id}>{x.ad}</option>
+                  ))}
+                </Secim>
+              )}
+            </AlanSarmal>
+            <AlanSarmal etiket={t("ortakDurum")}>
+              {(b) => (
+                <Secim {...b} value={topluAktif} onChange={(e) => setTopluAktif(e.target.value)}>
+                  <option value="">{t("daireDegistirme")}</option>
+                  <option value="1">{t("ortakAktif")}</option>
+                  <option value="0">{t("ortakPasif")}</option>
+                </Secim>
+              )}
+            </AlanSarmal>
+          </div>
+          <HataDurumu mesaj={tipHata} />
+        </div>
+      </Modal>
+
+      {/* (P163 §3) YETKI NOTU KALDIRILDI — YANLISTI.
+          Metin "bu duzenleyici yalnizca platform adminine aciktir; site
+          yoneticileri ayni duzenlemeyi mobilden yapar" diyordu. Olculdu
+          ve yanlis: `lib/yuzey.ts` -> `/building-editor: ["admin",
+          "yonetici"]`, backend -> `_LAYOUT_EDITOR = admin + yonetici`.
+          Yani yonetici bu ekranda ZATEN duzenleme yapabiliyordu; not onu
+          yapamayacagina inandiriyordu. */}
 
       {loadError && <HataDurumu mesaj={t("binaVerilerYuklenemedi")} />}
 

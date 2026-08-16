@@ -21,6 +21,18 @@ export function aktifSozluguAyarla(sozluk: Sozluk): void {
   _aktif = sozluk;
 }
 
-export function metin(anahtar: SozlukAnahtari): string {
-  return _aktif ? _aktif[anahtar] : String(anahtar);
+export function metin(
+  anahtar: SozlukAnahtari,
+  params?: Record<string, string | number>,
+): string {
+  const ham = _aktif ? _aktif[anahtar] : String(anahtar);
+  // (P163 §2) PARAMETRE IKAMESI — `useT` ile AYNI kural (`{alan}`).
+  //
+  // Gerekce: govdesiz bir yanitta (405/500) kullaniciya durum kodu ve
+  // referans gosterilecek; ikisi de metnin ICINE girer. Ayri bir
+  // birlestirme yazmak, iki farkli ikame kurali demekti.
+  if (!params) return ham;
+  return ham.replace(/\{(\w+)\}/g, (tam, alan) =>
+    alan in params ? String(params[alan]) : tam,
+  );
 }

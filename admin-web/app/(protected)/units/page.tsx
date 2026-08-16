@@ -91,89 +91,21 @@ export default function UnitsPage() {
   // Secim EKRANDAKI listeye gore yapilir; aralik ifadesi de oyle cozulur
   // (bkz. `lib/aralik.ts` — sunucuya KESINLESMIS kimlikler gider).
   const [secili, setSecili] = useState<string[]>([]);
-  const [aralikIfade, setAralikIfade] = useState("");
   const [topluAcik, setTopluAcik] = useState(false);
   const [topluHata, setTopluHata] = useState<string | null>(null);
   const [topluAktif, setTopluAktif] = useState("");
-  const [katSilKat, setKatSilKat] = useState("");
   const [topluTip, setTopluTip] = useState("");
 
   // (P154 / Asama 5) TOPLU DAIRE OLUSTURMA — uc ZATEN VARDI
   // (`POST /units/bulk`), eksik olan yalnizca web yuzeyiydi (mobilde
   // caliyordu). Ikinci bir uc yazilmadi.
-  const [oAcik, setOAcik] = useState(false);
-  const [oBlok, setOBlok] = useState("");
-  const [oKat, setOKat] = useState("3");
-  const [oDaire, setODaire] = useState("4");
-  const [oBaslangicNo, setOBaslangicNo] = useState("1");
-  const [oBaslangicKat, setOBaslangicKat] = useState("1");
-  const [oTip, setOTip] = useState("");
-  const [oHata, setOHata] = useState<string | null>(null);
 
   const { data: tipler } = useSWR<{ items: { id: string; ad: string }[] }>(
     "/api/tanimlar/unit-tipleri?limit=100",
     jsonFetcher,
   );
 
-  async function topluOlustur(): Promise<void> {
-    setOHata(null);
-    // (P162 §4.1) BLOK ADI SUNUCUDA `^[A-Za-z0-9]+$` — bosluk, tire ve
-    // Turkce harf KABUL EDILMIYOR.
-    //
-    // KOK NEDEN BUYDU: kullanici "A Blok" ya da "B-1" yaziyor, sunucu 422
-    // doneriyor ve ekranda yalnizca "Bir hata olustu" beliriyordu.
-    // Kisitlama SUNUCUDA KALIYOR ve bu dogru: daire numarasi `{blok}-{n}`
-    // olarak kuruluyor ve `_UNIT_NO_PATTERN` bosluk kabul etmiyor — yani
-    // bosluklu bir blok, gecersiz bir daire numarasi uretirdi. Sozlesme
-    // degistirilmedi (kilitli kural); ISTEMCI ARTIK SEBEBI SOYLUYOR.
-    if (!BLOK_KALIBI.test(oBlok.trim())) {
-      setOHata(t("daireBlokKalibi"));
-      return;
-    }
-    const sayilar = {
-      kat_sayisi: tamsayiCoz(oKat),
-      kat_basi_daire: tamsayiCoz(oDaire),
-      baslangic_no: tamsayiCoz(oBaslangicNo),
-      baslangic_kat: tamsayiCoz(oBaslangicKat),
-    };
-    const gecersiz = Object.entries(sayilar).find(([, v]) => v.tur !== "sayi");
-    if (!oBlok.trim() || gecersiz) {
-      setOHata(t("daireTopluOlusturAlanlar"));
-      return;
-    }
-    try {
-      await apiSend("/api/units/bulk", "POST", {
-        blok: oBlok.trim(),
-        kat_sayisi: (sayilar.kat_sayisi as { deger: number }).deger,
-        kat_basi_daire: (sayilar.kat_basi_daire as { deger: number }).deger,
-        baslangic_no: (sayilar.baslangic_no as { deger: number }).deger,
-        baslangic_kat: (sayilar.baslangic_kat as { deger: number }).deger,
-        unit_tip_id: oTip || null,
-      });
-      setOAcik(false);
-      await mutate();
-      toast.success(t("daireTopluOlusturuldu"));
-    } catch (e) {
-      // ALAN AYRINTISI VARSA ONU GOSTER: "Istek govdesi gecersiz" tek
-      // basina kullaniciya hicbir sey soylemiyordu.
-      setOHata(alanliHataMetni(e, t("ortakHataOlustu")));
-    }
-  }
 
-  function araligiUygula(): void {
-    setTopluHata(null);
-    const sonuc = aralikCoz(aralikIfade, (data?.items ?? []).map(
-      (u) => ({ id: u.id, no: u.no }),
-    ));
-    setSecili(sonuc.idler);
-    if (sonuc.bulunamayan.length > 0) {
-      // SESSIZCE DUSMEZ: "12 daire sectim" deyip 9'unu islemek en kotu
-      // sonuctur.
-      setTopluHata(t("daireAralikBulunamayan", {
-        parca: sonuc.bulunamayan.join(", "),
-      }));
-    }
-  }
 
   async function topluGuncelle(): Promise<void> {
     setTopluHata(null);
@@ -195,24 +127,6 @@ export default function UnitsPage() {
     }
   }
 
-  async function katSil(): Promise<void> {
-    setTopluHata(null);
-    const kat = tamsayiCoz(katSilKat);
-    if (kat.tur !== "sayi" || !blok) {
-      setTopluHata(t("daireKatSilAlanlar"));
-      return;
-    }
-    if (!(await onayla({ baslik: t("ortakSilBaslik"), mesaj: t("daireKatSilOnay", { kat: kat.deger, blok }), onayMetni: t("ortakSil"), tehlikeli: true }))) return;
-    try {
-      await apiSend("/api/units/kat-sil", "POST", {
-        blok, kat: kat.deger, cascade: true,
-      });
-      await mutate();
-      toast.success(t("daireKatSilindi"));
-    } catch (e) {
-      setTopluHata(e instanceof Error ? e.message : t("ortakHataOlustu"));
-    }
-  }
   const { data, error, isLoading, mutate } = useSWR<UnitList>(
     `/api/units?limit=${tabloDurumu.boy}&offset=${offset}${blokQs}`,
     jsonFetcher,
@@ -483,34 +397,11 @@ export default function UnitsPage() {
         </form>
       </Modal>
 
-      {/* (P154 / Asama 5) TOPLU ISLEM SERIDI. Aralik ifadesi EKRANDAKI
-          listeye uygulanir; blok suzgeci acikken "7-12" o blogun
-          daireleridir (bkz. `lib/aralik.ts`). */}
-      <section className="flex flex-wrap items-end gap-2">
-        <div className="w-full sm:w-56">
-          <AlanSarmal etiket={t("daireAralikSec")} ipucu={t("daireAralikIpucu")}>
-  {(b) => (
-    <Alan {...b} value={aralikIfade}
-              onChange={(e) => setAralikIfade(e.target.value)}
-              placeholder="3,5,7-12" />
-  )}
-</AlanSarmal>
-        </div>
-        <Dugme onClick={araligiUygula}>{t("daireAralikUygula")}</Dugme>
-        <Dugme onClick={() => setOAcik(true)}>{t("daireTopluOlustur")}</Dugme>
-        <div className="w-full sm:w-32">
-          <AlanSarmal etiket={t("daireKatSil")}>
-  {(b) => (
-    <Alan {...b} value={katSilKat}
-              onChange={(e) => setKatSilKat(e.target.value)}
-              placeholder="1" />
-  )}
-</AlanSarmal>
-        </div>
-        <Dugme tur="tehlike" disabled={!blok} onClick={() => void katSil()}>
-          {t("daireKatSil")}
-        </Dugme>
-      </section>
+      {/* (P163 §4) YAPISAL ARACLAR BURADAN KALDIRILDI.
+          Toplu daire olusturma, kat silme ve "numara ile sec" artik
+          BINA DUZENLEME ekraninda. Gerekce: bu sayfa bir LISTE/CRUD
+          yuzeyi; binanin yapisini degistiren islemler, liste suzulurken
+          yanlislikla basilacak yerde durmamali. Uclar degismedi. */}
       {topluHata && (
             <p role="alert" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-danger-ink)" }}>
               {topluHata}
@@ -551,85 +442,6 @@ export default function UnitsPage() {
 
       <div ref={detayRef}>{detail && <UnitDetail unit={detail} />}</div>
 
-      <Modal
-        baslik={t("daireTopluOlustur")}
-        acik={oAcik}
-        onKapat={() => setOAcik(false)}
-        kirliMi={oBlok !== ""}
-        onKirliKapat={() => {
-          void onayla({
-            baslik: t("modalKirliBaslik"),
-            mesaj: t("modalKirliUyari"),
-            onayMetni: t("ortakVazgec"),
-            tehlikeli: true,
-          }).then((o) => {
-            if (o) setOAcik(false);
-          });
-        }}
-        eylemler={
-          <>
-            <Dugme tur="sessiz" onClick={() => setOAcik(false)}>
-              {t("ortakIptal")}
-            </Dugme>
-            <Dugme tur="birincil" onClick={() => void topluOlustur()}>
-              {t("ortakKaydet")}
-            </Dugme>
-          </>
-        }
-      >
-        <div className="space-y-3">
-          {oHata && (
-            <p role="alert" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-danger-ink)" }}>
-              {oHata}
-            </p>
-          )}
-          <div className="grid gap-3 sm:grid-cols-2">
-            <AlanSarmal etiket={t("ortakBlok")}>
-  {(b) => (
-    <Alan {...b} value={oBlok}
-                     onChange={(e) => setOBlok(e.target.value)} />
-  )}
-</AlanSarmal>
-            <AlanSarmal etiket={t("daireKatSayisi")}>
-  {(b) => (
-    <Alan {...b} value={oKat}
-                     onChange={(e) => setOKat(e.target.value)} />
-  )}
-</AlanSarmal>
-            <AlanSarmal etiket={t("daireKatBasi")}>
-  {(b) => (
-    <Alan {...b} value={oDaire}
-                     onChange={(e) => setODaire(e.target.value)} />
-  )}
-</AlanSarmal>
-            <AlanSarmal etiket={t("daireBaslangicNo")}>
-  {(b) => (
-    <Alan {...b} value={oBaslangicNo}
-                     onChange={(e) => setOBaslangicNo(e.target.value)} />
-  )}
-</AlanSarmal>
-            {/* (P154 / Asama 5) BASLANGIC KATI: bodrum ve zemin gercek
-                katlardir. "Zemin" ayri bir DEGER degil 0'dir — metin bir
-                kat numarasi siralanamaz. */}
-            <AlanSarmal etiket={t("daireBaslangicKat")} ipucu={t("daireBaslangicKatIpucu")}>
-  {(b) => (
-    <Alan {...b} value={oBaslangicKat}
-                     onChange={(e) => setOBaslangicKat(e.target.value)} />
-  )}
-</AlanSarmal>
-            <AlanSarmal etiket={t("tanimAlanTip")}>
-  {(b) => (
-    <Secim {...b} value={oTip}
-                      onChange={(e) => setOTip(e.target.value)}>
-                <option value="">—</option>
-                {(tipler?.items ?? []).map((x) => (
-                  <option key={x.id} value={x.id}>{x.ad}</option>
-                ))}</Secim>
-  )}
-</AlanSarmal>
-          </div>
-        </div>
-      </Modal>
 
       <Modal
         baslik={t("daireTopluBaslik")}
