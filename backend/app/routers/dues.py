@@ -47,9 +47,44 @@ from ..schemas import (
 router = APIRouter(tags=["aidat"])
 
 _ADMIN = require_role("admin")
+
+# (P167) TAHAKKUK URETME — admin + YONETICI.
+#
+# ================================================================
+# NEDEN ACILDI
+# ================================================================
+# Aidat yazmak site yoneticisinin ASIL isidir; bunu platform adminine
+# birakmak, her donem basinda musteriyi bize bagimli kilardi. Kusur
+# P166'da kurulum sihirbazi taranirken gorunur oldu: sihirbaz sekizinci
+# adimda ("Aidat tahakkuku") yoneticiyi `/dues`a yolluyor, yonetici toplu
+# tahakkuk dugmesine basinca 403 aliyordu — yani sihirbaz onu
+# YAPAMAYACAGI bir ise gonderiyordu.
+#
+# ================================================================
+# TAHSILAT ACILMADI ve bu bilincli
+# ================================================================
+# `POST /dues/payments` `_ADMIN`de KALDI. Tahakkuk bir BORC YAZMAKTIR ve
+# yanlissa duzeltilebilir/silinir; tahsilat ise PARA ALINDI beyanidir ve
+# muhasebe kaydini kapatir. Ikisini tek kararla acmak, istenmeyen bir
+# yetkiyi istenenin yanina iliştirmek olurdu.
+#
+# ================================================================
+# TENANT IZOLASYONU — YETKI DEGISTI, KAPSAM DEGISMEDI
+# ================================================================
+# Yonetici yalnizca KENDI tesisinin dairelerine yazabilir ve bu YENI bir
+# kontrol gerektirmiyor; uc zaten uc yerden birden kapali:
+#   1. `get_tenant_db` oturumu token'daki tenant'a RLS ile baglar —
+#      baska tesisin `unit` satiri sorguda HIC gorunmez.
+#   2. Tekil modda `unit_id` bulunamaz -> 422 `invalid_reference`;
+#      liste modunda eksik kimlikler -> 422 `daire_listesi_bulunamadi`;
+#      suzgecsiz modda hedef kumesi zaten RLS'in dondugu dairelerdir.
+#   3. Kayit `tenant_id=user.tenant_id` ile yazilir — istekten GELMEZ.
+# `test_dues.py::test_yonetici_tahakkuk_tenant_izolasyonu` uc yolu da
+# ayri ayri kilitler.
+_TAHAKKUK = require_role("admin", "yonetici")
+
 # (P128) Tahakkuk/tahsilat OKUMA — denetcinin "tahakkuk vs tahsilat"
-# karsilastirmasi bu iki listeden cikar. Tahakkuk URETME ve odeme ALMA
-# `_ADMIN`de kalir.
+# karsilastirmasi bu iki listeden cikar. Odeme ALMA `_ADMIN`de kalir.
 _REPORT = require_role("admin", "yonetici", "denetci")
 _RESIDENT = require_role("resident")
 
@@ -173,7 +208,7 @@ async def _unit_status(db: AsyncSession, unit: Unit) -> UnitDuesStatus:
 async def create_assessments(
     body: DuesAssessmentCreate,
     db: AsyncSession = Depends(get_tenant_db),
-    user: AppUser = Depends(_ADMIN),
+    user: AppUser = Depends(_TAHAKKUK),
 ) -> DuesAssessmentResult:
     tanim = await _tanim_coz(db, body.gelir_gider_tanim_id)
     common = dict(

@@ -154,7 +154,7 @@ karşılıyor: ad düzeltme (sil-yeniden-oluştur, kategoriyi kullanan görevler
 pasif bir kategoriye bağlardı) ve soft-delete'i **geri alma** (DELETE
 `aktif=false` yapıyordu, tersi yoktu).
 
-### ÇIKMAZ 2 — "Aidat": adım admin-only, sihirbaz yöneticiye açık ⚠️ işaretlendi
+### ÇIKMAZ 2 — "Aidat": adım admin-only, sihirbaz yöneticiye açık ✅ kapandı (P167)
 `POST /dues/assessments` **yalnız admin** (`rol-matrisi.txt`: yonetici RED),
 ama sihirbaz admin+yönetici'ye görünüyor. Bir yönetici "Git"e basıp `/dues`a
 gidiyor ve toplu tahakkuk düğmesinde **403** alıyordu.
@@ -164,8 +164,11 @@ yetkisi vermek bir politika kararıdır ve tek taraflı alınmaz. Yapılan şey
 kullanıcıyı duvara **yollamamak**: adım "senin rolünle tamamlanamaz" diye
 işaretlenir, düğme "Görüntüle"ye döner ve nedeni yazılır.
 
-> **Karar sende:** yönetici toplu tahakkuk yapabilmeli mi? Cevap "evet" ise
-> `rol-matrisi.txt` + `dues.py` tek satırla açılır.
+> **KARAR VERİLDİ (P167): evet.** `POST /dues/assessments` yöneticiye açıldı;
+> sihirbazın 8. adımı artık yöneticide de tamamlanabiliyor.
+> `POST /dues/payments` **açılmadı** ve admin'de kaldı — tahakkuk bir borç
+> yazmaktır ve düzeltilebilir; tahsilat "para alındı" beyanıdır.
+> Tenant izolasyonu `test_yonetici_tahakkuk_tenant_izolasyonu` ile kilitli.
 
 ### Temiz çıkan altı adım (iddia değil, ölçüm)
 | Adım | Hedef | Gerçek oluşturma yolu |

@@ -11,6 +11,7 @@ import {
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
+import { KURULUM_HEDEFLERI } from "@/lib/kurulum-adimlari";
 import { useRol } from "@/lib/rol-kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 
@@ -50,82 +51,6 @@ interface Durum {
   toplam: number;
   gecilen: number;
 }
-
-/**
- * Adim kodu -> (etiket, aciklama, gidilecek ekran, [tamamlamak icin gereken rol]).
- *
- * (P166 §8.3) `rolGerekli` YENI ve bir CIKMAZI kapatiyor.
- *
- * Sihirbaz admin + yonetici'ye gorunuyor, ama `POST /dues/assessments`
- * YALNIZ ADMIN (`rol-matrisi.txt` satiri: yonetici RED). Yani bir
- * yonetici "Aidat" adiminda "Git"e basiyor, `/dues`a gidiyor ve toplu
- * tahakkuk dugmesinde 403 aliyordu — sihirbaz onu yapamayacagi bir ise
- * yolluyordu. Tam olarak brief'in tarif ettigi zincir.
- *
- * YETKI KURALI DEGISTIRILMEDI: bir yoneticiye tum daireler icin BORC
- * YAZMA yetkisi vermek bir urun/politika kararidir ve tek tarafli
- * alinmaz. Yapilan sey, kullaniciyi duvara YOLLAMAMAK: adim "senin
- * rolunle tamamlanamaz" diye isaretlenir ve "Git" yerine salt-okunur bir
- * not cizilir. Sayfayi GORMEK serbest oldugu icin baglanti korunur.
- */
-const HEDEF: Record<
-  string,
-  {
-    etiket: SozlukAnahtari;
-    aciklama: SozlukAnahtari;
-    rota: string;
-    rolGerekli?: readonly string[];
-  }
-> = {
-  blok: {
-    etiket: "kurulumBlok",
-    aciklama: "kurulumBlokAlt",
-    rota: "/building-editor",
-  },
-  daire: {
-    etiket: "kurulumDaire",
-    aciklama: "kurulumDaireAlt",
-    rota: "/building-editor",
-  },
-  daire_tipi: {
-    etiket: "kurulumDaireTipi",
-    aciklama: "kurulumDaireTipiAlt",
-    rota: "/tanimlar?defter=unit-tipleri",
-  },
-  sakin: {
-    etiket: "kurulumSakin",
-    aciklama: "kurulumSakinAlt",
-    rota: "/users",
-  },
-  personel: {
-    etiket: "kurulumPersonel",
-    aciklama: "kurulumPersonelAlt",
-    rota: "/tanimlar?defter=personel-kayitlari",
-  },
-  gorev_alani: {
-    etiket: "kurulumGorevAlani",
-    aciklama: "kurulumGorevAlaniAlt",
-    // (P166 §8.3) HEDEF DEGISTI: `/tasks` -> kategori DEFTERI.
-    //
-    // Adimin sunucudaki olcusu `TaskCategory` sayisidir (bkz.
-    // `routers/kurulum.py`), yani "gorev alani" = KATEGORI. `/tasks`
-    // kategorileri yalniz OKUYOR; kullanici oraya gidip adimi
-    // tamamlayamiyordu. Adim, olculen seyin YARATILDIGI ekrana bakmali.
-    rota: "/tanimlar?defter=gorev-kategorileri",
-  },
-  nfc_noktasi: {
-    etiket: "kurulumNfc",
-    aciklama: "kurulumNfcAlt",
-    rota: "/checkpoints",
-  },
-  aidat: {
-    etiket: "kurulumAidat",
-    aciklama: "kurulumAidatAlt",
-    rota: "/dues",
-    // Bkz. yukaridaki not: toplu tahakkuk ucu admin'e kilitli.
-    rolGerekli: ["admin"],
-  },
-};
 
 const UC = "/api/panel/kurulum";
 
@@ -194,7 +119,7 @@ export default function KurulumPage() {
 
       <ol className="space-y-2">
         {(data?.adimlar ?? []).map((a, i) => {
-          const h = HEDEF[a.kod];
+          const h = KURULUM_HEDEFLERI[a.kod];
           if (!h) return null;
           // Rol bilinmiyorken (ilk kare) UYARI CIZILMEZ: bilmedigimiz bir
           // seyi "yapamazsin" diye gostermek, dogru rolde olan kullaniciya

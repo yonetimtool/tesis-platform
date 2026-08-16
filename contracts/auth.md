@@ -373,7 +373,7 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | daire sakin atama (`/units/{id}/residents`)| ✅ | ❌  | ❌  | ❌  | ❌  |
 | bina blok CRUD (`/blocks*`)           |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `GET /units/{id}/dues`                |  ✅   | ✅  | ❌  | ❌  | ❌  |
-| `POST /dues/assessments`              |  ✅   | ❌  | ❌  | ❌  | ❌  |
+| `POST /dues/assessments`              |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `GET  /dues/assessments`              |  ✅   | ✅  | ❌  | ❌  | ❌  |
 | `POST /dues/payments`                 |  ✅   | ❌  | ❌  | ❌  | ❌  |
 | `GET  /dues/payments`                 |  ✅   | ✅  | ❌  | ❌  | ❌  |

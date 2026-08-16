@@ -7159,10 +7159,20 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
     post:
       tags: [aidat]
-      summary: Tahakkuk olustur (tek daire veya toplu donem) (admin)
+      summary: Tahakkuk olustur (tek daire veya toplu donem) (admin + yonetici)
       description: |
         `unit_id` verilirse TEK daire (ayni daire+donem ikinci kez → 409). `unit_id`
         yoksa TOPLU: `unit_ids` (verilmezse tum aktif daireler); mevcut donemler atlanir.
+
+        (P167) YONETICIYE ACILDI: aidat yazmak site yoneticisinin asil isidir.
+        `POST /dues/payments` ACILMADI ve admin'de kaldi — tahakkuk bir BORC
+        yazmaktir, tahsilat ise PARA ALINDI beyanidir.
+
+        TENANT IZOLASYONU: yonetici yalniz KENDI tesisinin dairelerine yazabilir.
+        Oturum RLS ile token'daki tenant'a bagli; baska tesisin dairesi tekil
+        modda 422 `invalid_reference`, liste modunda 422
+        `daire_listesi_bulunamadi` doner. `tenant_id` istekten DEGIL oturumdan
+        gelir.
       requestBody:
         required: true
         content:

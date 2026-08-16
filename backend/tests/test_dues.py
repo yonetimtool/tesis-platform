@@ -90,6 +90,118 @@ def test_assessment_duplicate_and_bulk(client, world):
     assert bulk2.json()["atlanan"] == 2 and len(bulk2.json()["created"]) == 0
 
 
+def test_yonetici_tahakkuk_yazabilir(client, world):
+    """(P167) Aidat yazmak site yoneticisinin ASIL isi — 403 DEGIL 201.
+
+    Once yalniz admin yazabiliyordu ve kurulum sihirbazi yoneticiyi
+    "Aidat tahakkuku" adiminda `/dues`a yollayip 403'e carpiyordu.
+    """
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    yonetici = _headers(client, world["slug_a"], world["yonetici_a"])
+    u1 = _new_unit(client, admin)
+    u2 = _new_unit(client, admin)
+
+    # TEK daire
+    tek = client.post(
+        "/dues/assessments",
+        headers=yonetici,
+        json={"unit_id": u1["id"], "donem": "2028-01", "tutar_kurus": 90000},
+    )
+    assert tek.status_code == 201, tek.text
+    assert len(tek.json()["created"]) == 1
+
+    # TOPLU (unit_ids)
+    toplu = client.post(
+        "/dues/assessments",
+        headers=yonetici,
+        json={"unit_ids": [u1["id"], u2["id"]], "donem": "2028-02", "tutar_kurus": 91000},
+    )
+    assert toplu.status_code == 201, toplu.text
+    assert len(toplu.json()["created"]) == 2
+
+    # SUZGECSIZ toplu (tum aktif daireler) — sihirbazin kullandigi yol
+    hepsi = client.post(
+        "/dues/assessments",
+        headers=yonetici,
+        json={"donem": "2028-03", "tutar_kurus": 92000},
+    )
+    assert hepsi.status_code == 201, hepsi.text
+    assert len(hepsi.json()["created"]) >= 2
+
+
+def test_yonetici_tahakkuk_tenant_izolasyonu(client, world):
+    """(P167) YETKI ACILDI, KAPSAM ACILMADI.
+
+    Bir yetkiyi genisletirken en pahali hata, kapsamin da sessizce
+    genislemesidir: A tesisinin yoneticisi B'nin dairesine borc yazarsa
+    bunu kimse fark etmez — kayit B'nin defterinde gorunur ve A'nin
+    denetiminde HIC gorunmez.
+
+    Ucun UC YOLU da ayri ayri olculuyor cunku her biri hedef kumesini
+    BASKA turlu belirliyor; birinde tutan kural otekinde tutmayabilir.
+    """
+    admin_a = _headers(client, world["slug_a"], world["admin_a"])
+    admin_b = _headers(client, world["slug_b"], world["admin_b"])
+    yonetici_a = _headers(client, world["slug_a"], world["yonetici_a"])
+
+    kendi = _new_unit(client, admin_a)
+    yabanci = _new_unit(client, admin_b)
+
+    # 1) TEKIL: baska tesisin dairesi RLS'te GORUNMEZ -> 422 invalid_reference
+    r = client.post(
+        "/dues/assessments",
+        headers=yonetici_a,
+        json={"unit_id": yabanci["id"], "donem": "2028-04", "tutar_kurus": 50000},
+    )
+    assert r.status_code == 422, r.text
+    assert r.json()["error"]["code"] == "invalid_reference"
+
+    # 2) LISTE: yabanci kimlik "bulunamadi" olarak reddedilir ve KENDI
+    #    dairesi de YAZILMAZ — istek butun hâlinde duser (kismi yazma yok).
+    r = client.post(
+        "/dues/assessments",
+        headers=yonetici_a,
+        json={
+            "unit_ids": [kendi["id"], yabanci["id"]],
+            "donem": "2028-05",
+            "tutar_kurus": 50000,
+        },
+    )
+    assert r.status_code == 422, r.text
+    assert r.json()["error"]["code"] == "invalid_reference"
+
+    # 3) SUZGECSIZ TOPLU: hedef kumesi RLS'in dondugu daireler. B'nin
+    #    dairesine tahakkuk YAZILMAMIS olmali.
+    hepsi = client.post(
+        "/dues/assessments",
+        headers=yonetici_a,
+        json={"donem": "2028-06", "tutar_kurus": 50000},
+    )
+    assert hepsi.status_code == 201, hepsi.text
+    yazilan = {k["unit_id"] for k in hepsi.json()["created"]}
+    assert yabanci["id"] not in yazilan
+    assert kendi["id"] in yazilan
+
+    # 4) SONUC B TARAFINDAN DOGRULANIR: B'nin dairesinde 2028-06 tahakkuku
+    #    YOK. Yalniz A'nin yanitina bakmak, "yazdi ama gostermedi" ihtimalini
+    #    disarida birakmazdi.
+    b_liste = client.get(
+        "/dues/assessments",
+        headers=admin_b,
+        params={"unit_id": yabanci["id"], "donem": "2028-06"},
+    )
+    assert b_liste.status_code == 200, b_liste.text
+    assert b_liste.json()["meta"]["total"] == 0
+
+    # 5) TAHSILAT ACILMADI: ayni yonetici odeme ALAMAZ (403).
+    odeme = client.post(
+        "/dues/payments",
+        headers={**yonetici_a, "Idempotency-Key": uuid.uuid4().hex},
+        json={"unit_id": kendi["id"], "tutar_kurus": 1000, "yontem": "nakit"},
+    )
+    assert odeme.status_code == 403, odeme.text
+
+
 def test_assessment_amount_must_be_positive(client, world):
     admin = _headers(client, world["slug_a"], world["admin_a"])
     u = _new_unit(client, admin)
