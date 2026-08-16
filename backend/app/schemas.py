@@ -2048,6 +2048,28 @@ class TaskCategoryCreate(BaseModel):
     ad: str = Field(..., min_length=1, max_length=100)
 
 
+class TaskCategoryUpdate(BaseModel):
+    """(P166 §8.3) Kategori DUZENLEME — yeni.
+
+    NEDEN GEREKLI: kategori CRUD'unda POST/GET/DELETE vardi, PATCH YOKTU.
+    Yazim hatasi duzeltmenin tek yolu sil-yeniden-olustur olurdu ve o,
+    kategoriyi kullanan gorevleri PASIF bir kategoriye baglar; gecmis
+    "silinmis kategori" gorunurdu. Ad degistirmek kimligi degistirmemeli.
+
+    `aktif` de buradan: soft-delete edilmis bir kategoriyi GERI ALMANIN
+    baska yolu yoktu (DELETE `aktif=false` yapiyor, tersi yok).
+    """
+
+    ad: str | None = Field(None, min_length=1, max_length=100)
+    aktif: bool | None = None
+
+    @model_validator(mode="after")
+    def _at_least_one(self) -> "TaskCategoryUpdate":
+        if not self.model_fields_set:
+            raise ValueError("en az bir alan gerekli")
+        return self
+
+
 class TaskCategoryListResponse(BaseModel):
     meta: PageMetaOut
     items: list[TaskCategoryOut]

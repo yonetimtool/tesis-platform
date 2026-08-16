@@ -1579,5 +1579,56 @@
   "binaKatOzetMali": "{tahakkuk} Sollstellungen · {odeme} Zahlungen · {rezervasyon} Reservierungen",
   "binaKatMaliUyari": "Auf dieser Etage gibt es Beitragsdaten. Beim Löschen gehen Sollstellungen und Zahlungen dauerhaft verloren; die Buchungsspur ist nicht wiederherstellbar. Erwägen Sie stattdessen eine Deaktivierung.",
   "binaKatOnayYaz": "Zum Bestätigen die Etagennummer eingeben ({kat})",
-  "binaKatSilOzetOnay": "Etage {kat} in Block {blok} wird gelöscht: {daire} Wohnungen, {sakin} Bewohner und {kayit} verknüpfte Datensätze werden dauerhaft entfernt. Nicht rückgängig zu machen."
+  "binaKatSilOzetOnay": "Etage {kat} in Block {blok} wird gelöscht: {daire} Wohnungen, {sakin} Bewohner und {kayit} verknüpfte Datensätze werden dauerhaft entfernt. Nicht rückgängig zu machen.",
+  "kurulumBaslik": "Einrichtungsassistent",
+  "kurulumAlt": "Schließen Sie die Schritte ab, damit Ihre Anlage einsatzbereit ist.",
+  "kurulumIlerleme": "Fortschritt",
+  "kurulumTamamlandi": "Einrichtung abgeschlossen",
+  "kurulumAdimTamam": "{sayi} Einträge",
+  "@kurulumAdimTamam": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  },
+  "kurulumAdimAtlandi": "Übersprungen",
+  "kurulumAdimBekliyor": "Ausstehend",
+  "kurulumGit": "Öffnen",
+  "kurulumGoruntule": "Ansehen",
+  "kurulumAtla": "Überspringen",
+  "kurulumAtlamayiGeriAl": "Überspringen rückgängig",
+  "kurulumSayac": "{gecilen}/{toplam} Schritte",
+  "@kurulumSayac": {
+    "placeholders": {
+      "gecilen": {
+        "type": "int"
+      },
+      "toplam": {
+        "type": "int"
+      }
+    }
+  },
+  "kurulumHata": "Einrichtungsstatus konnte nicht geladen werden.",
+  "kurulumBlok": "Blöcke",
+  "kurulumBlokAlt": "Legen Sie die Blöcke des Gebäudes an.",
+  "kurulumDaire": "Wohnungen",
+  "kurulumDaireAlt": "Erstellen Sie Etagen und Wohnungen als Stapel.",
+  "kurulumDaireTipi": "Wohnungstypen",
+  "kurulumDaireTipiAlt": "Legen Sie Typen und Standardbeiträge fest.",
+  "kurulumSakin": "Bewohner",
+  "kurulumSakinAlt": "Fügen Sie den Wohnungen Bewohner hinzu.",
+  "kurulumPersonel": "Personal",
+  "kurulumPersonelAlt": "Erfassen Sie die Mitarbeiterdaten.",
+  "kurulumGorevAlani": "Aufgabenkategorien",
+  "kurulumGorevAlaniAlt": "Erstellen Sie die Kategorien für Ihre Aufgaben.",
+  "kurulumNfc": "NFC-Kontrollpunkte",
+  "kurulumNfcAlt": "Legen Sie die Rundgang-Kontrollpunkte fest.",
+  "kurulumAidat": "Beitragsabrechnung",
+  "kurulumAidatAlt": "Buchen Sie die Beiträge der ersten Periode.",
+  "kurulumAdimWebde": "Dieser Schritt ist derzeit nur im Web-Panel mit einem Plattform-Administrator möglich.",
+  "kurulumHatirlaticiBaslik": "Einrichtung abschließen",
+  "kurulumHatirlaticiMetin": "Bis Ihre Anlage einsatzbereit ist, fehlen noch einige Schritte. Der Assistent führt Sie zu jedem Bildschirm.",
+  "kurulumHatirlaticiGit": "Assistent öffnen",
+  "kurulumHatirlaticiSonra": "Später"
 }

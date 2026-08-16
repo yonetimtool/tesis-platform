@@ -262,6 +262,7 @@ PATCH  /tanitim-iletisim/{id}                               IZIN   RED    RED   
 GET    /task-categories                                     IZIN   IZIN   IZIN   IZIN   RED    RED    RED   
 POST   /task-categories                                     IZIN   IZIN   RED    RED    RED    RED    RED   
 DELETE /task-categories/{id}                                IZIN   IZIN   RED    RED    RED    RED    RED   
+PATCH  /task-categories/{id}                                IZIN   IZIN   RED    RED    RED    RED    RED   
 GET    /task-completions                                    IZIN   IZIN   IZIN   IZIN   RED    RED    RED   
 GET    /tasks                                               IZIN   IZIN   IZIN   IZIN   RED    RED    RED   
 POST   /tasks                                               IZIN   IZIN   RED    RED    RED    RED    RED   

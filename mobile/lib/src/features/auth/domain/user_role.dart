@@ -95,6 +95,11 @@ enum UserRole {
   /// admin + yonetici (yonetici yalniz saha rollerine atayabilir; 422).
   bool get canManageTasks => this == admin || this == yonetici;
 
+  /// (P166 §8.2) Kurulum sihirbazi (`GET/PATCH /kurulum`) — admin +
+  /// yonetici. Ucun `require_role`u ile AYNI kume; saha ve sakin 403
+  /// alir, bu yuzden ekran ve hatirlatici onlarda istek bile ATMAZ.
+  bool get canViewKurulum => this == admin || this == yonetici;
+
   /// Seffaflik Panosu yayinlama (ay yayinla/geri-al) — admin + yonetici.
   bool get canPublishTransparency => this == admin || this == yonetici;
 

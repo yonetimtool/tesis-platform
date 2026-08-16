@@ -4967,4 +4967,115 @@ class AppLocalizationsTr extends AppLocalizations {
   ) {
     return '$blok bloğu $kat. kat silinecek: $daire daire, $sakin sakin ve $kayit bağlı kayıt kalıcı olarak gider. Bu işlem geri alınamaz.';
   }
+
+  @override
+  String get kurulumBaslik => 'Kurulum Sihirbazı';
+
+  @override
+  String get kurulumAlt =>
+      'Tesisinizi kullanıma hazır hâle getirmek için adımları tamamlayın.';
+
+  @override
+  String get kurulumIlerleme => 'İlerleme';
+
+  @override
+  String get kurulumTamamlandi => 'Kurulum tamamlandı';
+
+  @override
+  String kurulumAdimTamam(int sayi) {
+    return '$sayi kayıt';
+  }
+
+  @override
+  String get kurulumAdimAtlandi => 'Atlandı';
+
+  @override
+  String get kurulumAdimBekliyor => 'Bekliyor';
+
+  @override
+  String get kurulumGit => 'Git';
+
+  @override
+  String get kurulumGoruntule => 'Görüntüle';
+
+  @override
+  String get kurulumAtla => 'Atla';
+
+  @override
+  String get kurulumAtlamayiGeriAl => 'Atlamayı geri al';
+
+  @override
+  String kurulumSayac(int gecilen, int toplam) {
+    return '$gecilen/$toplam adım';
+  }
+
+  @override
+  String get kurulumHata => 'Kurulum durumu yüklenemedi.';
+
+  @override
+  String get kurulumBlok => 'Bloklar';
+
+  @override
+  String get kurulumBlokAlt => 'Binanın bloklarını tanımlayın.';
+
+  @override
+  String get kurulumDaire => 'Daireler';
+
+  @override
+  String get kurulumDaireAlt => 'Kat ve daireleri toplu olarak oluşturun.';
+
+  @override
+  String get kurulumDaireTipi => 'Daire tipleri';
+
+  @override
+  String get kurulumDaireTipiAlt =>
+      'Tip ve varsayılan aidat tutarlarını tanımlayın.';
+
+  @override
+  String get kurulumSakin => 'Sakinler';
+
+  @override
+  String get kurulumSakinAlt => 'Dairelere sakinleri ekleyin.';
+
+  @override
+  String get kurulumPersonel => 'Personel';
+
+  @override
+  String get kurulumPersonelAlt => 'Çalışan kayıtlarını girin.';
+
+  @override
+  String get kurulumGorevAlani => 'Görev kategorileri';
+
+  @override
+  String get kurulumGorevAlaniAlt =>
+      'Görevleri gruplayacağınız kategorileri oluşturun.';
+
+  @override
+  String get kurulumNfc => 'NFC noktaları';
+
+  @override
+  String get kurulumNfcAlt => 'Devriye kontrol noktalarını tanımlayın.';
+
+  @override
+  String get kurulumAidat => 'Aidat tahakkuku';
+
+  @override
+  String get kurulumAidatAlt => 'İlk dönemin aidatını dairelere yazın.';
+
+  @override
+  String get kurulumAdimWebde =>
+      'Bu adım şu an yalnızca web panelinden ve platform yöneticisi (admin) hesabıyla yapılabilir.';
+
+  @override
+  String get kurulumHatirlaticiBaslik => 'Kurulumu tamamlayın';
+
+  @override
+  String get kurulumHatirlaticiMetin =>
+      'Tesisinizi kullanıma hazır hâle getirmek için birkaç adım kaldı. Sihirbaz sizi tek tek ilgili ekranlara götürür.';
+
+  @override
+  String get kurulumHatirlaticiGit => 'Sihirbazı aç';
+
+  @override
+  String get kurulumHatirlaticiSonra => 'Daha sonra';
 }

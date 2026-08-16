@@ -5128,4 +5128,116 @@ class AppLocalizationsFr extends AppLocalizations {
   ) {
     return 'L\'étage $kat du bloc $blok sera supprimé : $daire logements, $sakin résidents et $kayit enregistrements liés seront définitivement effacés. Action irréversible.';
   }
+
+  @override
+  String get kurulumBaslik => 'Assistant de configuration';
+
+  @override
+  String get kurulumAlt =>
+      'Terminez les étapes pour rendre votre site opérationnel.';
+
+  @override
+  String get kurulumIlerleme => 'Progression';
+
+  @override
+  String get kurulumTamamlandi => 'Configuration terminée';
+
+  @override
+  String kurulumAdimTamam(int sayi) {
+    return '$sayi enregistrements';
+  }
+
+  @override
+  String get kurulumAdimAtlandi => 'Ignoré';
+
+  @override
+  String get kurulumAdimBekliyor => 'En attente';
+
+  @override
+  String get kurulumGit => 'Aller';
+
+  @override
+  String get kurulumGoruntule => 'Voir';
+
+  @override
+  String get kurulumAtla => 'Ignorer';
+
+  @override
+  String get kurulumAtlamayiGeriAl => 'Annuler l\'omission';
+
+  @override
+  String kurulumSayac(int gecilen, int toplam) {
+    return '$gecilen/$toplam étapes';
+  }
+
+  @override
+  String get kurulumHata =>
+      'Impossible de charger l\'état de la configuration.';
+
+  @override
+  String get kurulumBlok => 'Blocs';
+
+  @override
+  String get kurulumBlokAlt => 'Définissez les blocs du bâtiment.';
+
+  @override
+  String get kurulumDaire => 'Logements';
+
+  @override
+  String get kurulumDaireAlt => 'Créez les étages et logements en lot.';
+
+  @override
+  String get kurulumDaireTipi => 'Types de logement';
+
+  @override
+  String get kurulumDaireTipiAlt =>
+      'Définissez les types et montants de charges par défaut.';
+
+  @override
+  String get kurulumSakin => 'Résidents';
+
+  @override
+  String get kurulumSakinAlt => 'Ajoutez les résidents aux logements.';
+
+  @override
+  String get kurulumPersonel => 'Personnel';
+
+  @override
+  String get kurulumPersonelAlt => 'Saisissez les fiches du personnel.';
+
+  @override
+  String get kurulumGorevAlani => 'Catégories de tâches';
+
+  @override
+  String get kurulumGorevAlaniAlt =>
+      'Créez les catégories qui regrouperont vos tâches.';
+
+  @override
+  String get kurulumNfc => 'Points NFC';
+
+  @override
+  String get kurulumNfcAlt => 'Définissez les points de contrôle des rondes.';
+
+  @override
+  String get kurulumAidat => 'Appel de charges';
+
+  @override
+  String get kurulumAidatAlt => 'Émettez les charges de la première période.';
+
+  @override
+  String get kurulumAdimWebde =>
+      'Cette étape n\'est possible que depuis le panneau web avec un compte administrateur de plateforme.';
+
+  @override
+  String get kurulumHatirlaticiBaslik => 'Terminer la configuration';
+
+  @override
+  String get kurulumHatirlaticiMetin =>
+      'Quelques étapes restent avant que votre site soit prêt. L\'assistant vous conduit à chaque écran.';
+
+  @override
+  String get kurulumHatirlaticiGit => 'Ouvrir l\'assistant';
+
+  @override
+  String get kurulumHatirlaticiSonra => 'Plus tard';
 }

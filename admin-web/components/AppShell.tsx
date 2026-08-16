@@ -7,6 +7,7 @@ import { useEffect, useState, type ReactNode } from "react";
 
 import { DilSecici } from "@/components/DilSecici";
 import { GlobalArama } from "@/components/GlobalArama";
+import { KurulumHatirlatici } from "@/components/KurulumHatirlatici";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { BildirimMerkezi, KomutPaleti } from "@/components/ui";
 import { useT } from "@/lib/i18n/kullan";
@@ -640,6 +641,11 @@ export function AppShell({
         {/* (P160) KOMUT PALETI — kabugun KOKUNDE, cunku Ctrl+K her
             sayfada calismali. Kapaliyken hicbir sey cizmez. */}
         <KomutPaleti yuzey={yuzey} rolBaslangic={rol} />
+        {/* (P166 §8.1) KURULUM HATIRLATICISI — kabugun KOKUNDE, cunku ilk
+            acilis hangi sayfa olursa olsun karsilamali. Kurulum bittiyse,
+            kullanici kapattiysa ya da rol yetkisiz ise hicbir sey cizmez
+            ve istek de ATMAZ. */}
+        <KurulumHatirlatici rol={rol} />
         {/* (P132) ICERIGE ATLA — klavye kullanicisi 30+ menu baglantisini
             tek tek gecmek zorunda kalmasin. Gorunmez durur, ODAKLANINCA
             gorunur: fareyle gelen kullaniciyi rahatsiz etmez, klavyeyle

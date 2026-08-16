@@ -256,6 +256,7 @@ const OGELER: readonly MenuOgesi[] = [
   { href: "/tanimlar", sorgu: "defter=unit-tipleri", anahtar: "kabukDaireTipleri", icon: "home", grup: "tanimlar" },
   { href: "/tanimlar", sorgu: "defter=kasalar", anahtar: "kabukKasalar", icon: "money", grup: "tanimlar" },
   { href: "/tanimlar", sorgu: "defter=gelir-gider-tanimlari", anahtar: "kabukGelirGiderTanimlari", icon: "chart", grup: "tanimlar" },
+  { href: "/tanimlar", sorgu: "defter=gorev-kategorileri", anahtar: "tanimGorevKategorileri", icon: "check", grup: "tanimlar" },
   { href: "/tanimlar", sorgu: "defter=personel-kayitlari", anahtar: "kabukPersonel", icon: "users", grup: "tanimlar" },
   { href: "/tanimlar", sorgu: "defter=arac-kayitlari", anahtar: "kabukAraclar", icon: "scan", grup: "tanimlar" },
   { href: "/tanimlar", sorgu: "defter=sayaclar-ana", anahtar: "kabukSayaclar", icon: "chart", grup: "tanimlar" },

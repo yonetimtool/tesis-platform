@@ -2289,5 +2289,56 @@
         "type": "int"
       }
     }
-  }
+  },
+  "kurulumBaslik": "Kurulum Sihirbazı",
+  "kurulumAlt": "Tesisinizi kullanıma hazır hâle getirmek için adımları tamamlayın.",
+  "kurulumIlerleme": "İlerleme",
+  "kurulumTamamlandi": "Kurulum tamamlandı",
+  "kurulumAdimTamam": "{sayi} kayıt",
+  "@kurulumAdimTamam": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  },
+  "kurulumAdimAtlandi": "Atlandı",
+  "kurulumAdimBekliyor": "Bekliyor",
+  "kurulumGit": "Git",
+  "kurulumGoruntule": "Görüntüle",
+  "kurulumAtla": "Atla",
+  "kurulumAtlamayiGeriAl": "Atlamayı geri al",
+  "kurulumSayac": "{gecilen}/{toplam} adım",
+  "@kurulumSayac": {
+    "placeholders": {
+      "gecilen": {
+        "type": "int"
+      },
+      "toplam": {
+        "type": "int"
+      }
+    }
+  },
+  "kurulumHata": "Kurulum durumu yüklenemedi.",
+  "kurulumBlok": "Bloklar",
+  "kurulumBlokAlt": "Binanın bloklarını tanımlayın.",
+  "kurulumDaire": "Daireler",
+  "kurulumDaireAlt": "Kat ve daireleri toplu olarak oluşturun.",
+  "kurulumDaireTipi": "Daire tipleri",
+  "kurulumDaireTipiAlt": "Tip ve varsayılan aidat tutarlarını tanımlayın.",
+  "kurulumSakin": "Sakinler",
+  "kurulumSakinAlt": "Dairelere sakinleri ekleyin.",
+  "kurulumPersonel": "Personel",
+  "kurulumPersonelAlt": "Çalışan kayıtlarını girin.",
+  "kurulumGorevAlani": "Görev kategorileri",
+  "kurulumGorevAlaniAlt": "Görevleri gruplayacağınız kategorileri oluşturun.",
+  "kurulumNfc": "NFC noktaları",
+  "kurulumNfcAlt": "Devriye kontrol noktalarını tanımlayın.",
+  "kurulumAidat": "Aidat tahakkuku",
+  "kurulumAidatAlt": "İlk dönemin aidatını dairelere yazın.",
+  "kurulumAdimWebde": "Bu adım şu an yalnızca web panelinden ve platform yöneticisi (admin) hesabıyla yapılabilir.",
+  "kurulumHatirlaticiBaslik": "Kurulumu tamamlayın",
+  "kurulumHatirlaticiMetin": "Tesisinizi kullanıma hazır hâle getirmek için birkaç adım kaldı. Sihirbaz sizi tek tek ilgili ekranlara götürür.",
+  "kurulumHatirlaticiGit": "Sihirbazı aç",
+  "kurulumHatirlaticiSonra": "Daha sonra"
 }

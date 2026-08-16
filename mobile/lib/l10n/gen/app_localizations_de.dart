@@ -5137,4 +5137,116 @@ class AppLocalizationsDe extends AppLocalizations {
   ) {
     return 'Etage $kat in Block $blok wird gelöscht: $daire Wohnungen, $sakin Bewohner und $kayit verknüpfte Datensätze werden dauerhaft entfernt. Nicht rückgängig zu machen.';
   }
+
+  @override
+  String get kurulumBaslik => 'Einrichtungsassistent';
+
+  @override
+  String get kurulumAlt =>
+      'Schließen Sie die Schritte ab, damit Ihre Anlage einsatzbereit ist.';
+
+  @override
+  String get kurulumIlerleme => 'Fortschritt';
+
+  @override
+  String get kurulumTamamlandi => 'Einrichtung abgeschlossen';
+
+  @override
+  String kurulumAdimTamam(int sayi) {
+    return '$sayi Einträge';
+  }
+
+  @override
+  String get kurulumAdimAtlandi => 'Übersprungen';
+
+  @override
+  String get kurulumAdimBekliyor => 'Ausstehend';
+
+  @override
+  String get kurulumGit => 'Öffnen';
+
+  @override
+  String get kurulumGoruntule => 'Ansehen';
+
+  @override
+  String get kurulumAtla => 'Überspringen';
+
+  @override
+  String get kurulumAtlamayiGeriAl => 'Überspringen rückgängig';
+
+  @override
+  String kurulumSayac(int gecilen, int toplam) {
+    return '$gecilen/$toplam Schritte';
+  }
+
+  @override
+  String get kurulumHata => 'Einrichtungsstatus konnte nicht geladen werden.';
+
+  @override
+  String get kurulumBlok => 'Blöcke';
+
+  @override
+  String get kurulumBlokAlt => 'Legen Sie die Blöcke des Gebäudes an.';
+
+  @override
+  String get kurulumDaire => 'Wohnungen';
+
+  @override
+  String get kurulumDaireAlt =>
+      'Erstellen Sie Etagen und Wohnungen als Stapel.';
+
+  @override
+  String get kurulumDaireTipi => 'Wohnungstypen';
+
+  @override
+  String get kurulumDaireTipiAlt =>
+      'Legen Sie Typen und Standardbeiträge fest.';
+
+  @override
+  String get kurulumSakin => 'Bewohner';
+
+  @override
+  String get kurulumSakinAlt => 'Fügen Sie den Wohnungen Bewohner hinzu.';
+
+  @override
+  String get kurulumPersonel => 'Personal';
+
+  @override
+  String get kurulumPersonelAlt => 'Erfassen Sie die Mitarbeiterdaten.';
+
+  @override
+  String get kurulumGorevAlani => 'Aufgabenkategorien';
+
+  @override
+  String get kurulumGorevAlaniAlt =>
+      'Erstellen Sie die Kategorien für Ihre Aufgaben.';
+
+  @override
+  String get kurulumNfc => 'NFC-Kontrollpunkte';
+
+  @override
+  String get kurulumNfcAlt => 'Legen Sie die Rundgang-Kontrollpunkte fest.';
+
+  @override
+  String get kurulumAidat => 'Beitragsabrechnung';
+
+  @override
+  String get kurulumAidatAlt => 'Buchen Sie die Beiträge der ersten Periode.';
+
+  @override
+  String get kurulumAdimWebde =>
+      'Dieser Schritt ist derzeit nur im Web-Panel mit einem Plattform-Administrator möglich.';
+
+  @override
+  String get kurulumHatirlaticiBaslik => 'Einrichtung abschließen';
+
+  @override
+  String get kurulumHatirlaticiMetin =>
+      'Bis Ihre Anlage einsatzbereit ist, fehlen noch einige Schritte. Der Assistent führt Sie zu jedem Bildschirm.';
+
+  @override
+  String get kurulumHatirlaticiGit => 'Assistent öffnen';
+
+  @override
+  String get kurulumHatirlaticiSonra => 'Später';
 }

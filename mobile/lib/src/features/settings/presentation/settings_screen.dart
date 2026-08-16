@@ -15,6 +15,7 @@ import '../../kvkk/data/kvkk_api.dart';
 import '../../kvkk/presentation/kvkk_onay_screen.dart'
     show PazarlamaAnahtarlari;
 import '../../auth/domain/user_role.dart';
+import '../../kurulum/presentation/kurulum_hatirlatici.dart';
 import '../../tenant/data/tenant_api.dart';
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/theme/home_tokens.dart';
@@ -62,6 +63,32 @@ class SettingsScreen extends ConsumerWidget {
                 // RTL: chevron Directionality ile kendiliginden aynalanir.
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.push(AppRoutes.kameralar),
+              ),
+            ),
+            const SizedBox(height: 8),
+            // (P166 §8.2) KURULUM SIHIRBAZI — ayarlardan erisim.
+            //
+            // Brief: "kapatilabilsin, sonra ayarlardan tekrar acilabilsin."
+            // Iki ayri sey sunuluyor: SIHIRBAZI ACMAK (dokun) ve ILK
+            // GIRISTEKI HATIRLATICIYI GERI GETIRMEK (yenile ikonu). Biri
+            // kullaniciyi bir kez goturur, oteki hatirlatmayi surdurur.
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.checklist_outlined),
+                title: Text(l10n.kurulumBaslik),
+                subtitle: Text(l10n.kurulumAlt),
+                trailing: IconButton(
+                  icon: const Icon(Icons.refresh),
+                  tooltip: l10n.kurulumHatirlaticiBaslik,
+                  onPressed: () async {
+                    await kurulumHatirlaticiyiAc(ref);
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(l10n.kurulumHatirlaticiBaslik)),
+                    );
+                  },
+                ),
+                onTap: () => context.push(AppRoutes.kurulum),
               ),
             ),
             const SizedBox(height: 24),

@@ -122,6 +122,15 @@ void main() {
 
   group('Ayarlar — dil ve tema', () {
     testWidgets('DIL ALT SAYFASI aciliyor ve secim UYGULANIYOR', (tester) async {
+      // (P166 §8.2) UZUN TUVAL: Ayarlara "Kurulum Sihirbazi" karti eklendi
+      // ve dil satiri varsayilan 800px'lik test tuvalinde `ListView`in
+      // TEMBEL cizim sinirinin altina dustu — yani agaca hic girmiyor.
+      // `ensureVisible` de ise yaramaz (var olmayan bir eleman gorunur
+      // kilinamaz). Tuvali buyutmek, olculen seyi (dil secimi) korur.
+      tester.view.physicalSize = const Size(1080, 3000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
       await tester.pumpWidget(_ayarlar());
       await tester.pumpAndSettle();
       // Dil satirina dokun — alt sayfa acilir.

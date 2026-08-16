@@ -1579,5 +1579,56 @@
   "binaKatOzetMali": "{tahakkuk} appels de charges · {odeme} paiements · {rezervasyon} réservations",
   "binaKatMaliUyari": "Cet étage comporte des données de charges. La suppression efface définitivement les appels et les paiements ; la piste comptable est irrécupérable. Envisagez plutôt de désactiver les logements.",
   "binaKatOnayYaz": "Saisissez le numéro d'étage pour confirmer ({kat})",
-  "binaKatSilOzetOnay": "L'étage {kat} du bloc {blok} sera supprimé : {daire} logements, {sakin} résidents et {kayit} enregistrements liés seront définitivement effacés. Action irréversible."
+  "binaKatSilOzetOnay": "L'étage {kat} du bloc {blok} sera supprimé : {daire} logements, {sakin} résidents et {kayit} enregistrements liés seront définitivement effacés. Action irréversible.",
+  "kurulumBaslik": "Assistant de configuration",
+  "kurulumAlt": "Terminez les étapes pour rendre votre site opérationnel.",
+  "kurulumIlerleme": "Progression",
+  "kurulumTamamlandi": "Configuration terminée",
+  "kurulumAdimTamam": "{sayi} enregistrements",
+  "@kurulumAdimTamam": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  },
+  "kurulumAdimAtlandi": "Ignoré",
+  "kurulumAdimBekliyor": "En attente",
+  "kurulumGit": "Aller",
+  "kurulumGoruntule": "Voir",
+  "kurulumAtla": "Ignorer",
+  "kurulumAtlamayiGeriAl": "Annuler l'omission",
+  "kurulumSayac": "{gecilen}/{toplam} étapes",
+  "@kurulumSayac": {
+    "placeholders": {
+      "gecilen": {
+        "type": "int"
+      },
+      "toplam": {
+        "type": "int"
+      }
+    }
+  },
+  "kurulumHata": "Impossible de charger l'état de la configuration.",
+  "kurulumBlok": "Blocs",
+  "kurulumBlokAlt": "Définissez les blocs du bâtiment.",
+  "kurulumDaire": "Logements",
+  "kurulumDaireAlt": "Créez les étages et logements en lot.",
+  "kurulumDaireTipi": "Types de logement",
+  "kurulumDaireTipiAlt": "Définissez les types et montants de charges par défaut.",
+  "kurulumSakin": "Résidents",
+  "kurulumSakinAlt": "Ajoutez les résidents aux logements.",
+  "kurulumPersonel": "Personnel",
+  "kurulumPersonelAlt": "Saisissez les fiches du personnel.",
+  "kurulumGorevAlani": "Catégories de tâches",
+  "kurulumGorevAlaniAlt": "Créez les catégories qui regrouperont vos tâches.",
+  "kurulumNfc": "Points NFC",
+  "kurulumNfcAlt": "Définissez les points de contrôle des rondes.",
+  "kurulumAidat": "Appel de charges",
+  "kurulumAidatAlt": "Émettez les charges de la première période.",
+  "kurulumAdimWebde": "Cette étape n'est possible que depuis le panneau web avec un compte administrateur de plateforme.",
+  "kurulumHatirlaticiBaslik": "Terminer la configuration",
+  "kurulumHatirlaticiMetin": "Quelques étapes restent avant que votre site soit prêt. L'assistant vous conduit à chaque écran.",
+  "kurulumHatirlaticiGit": "Ouvrir l'assistant",
+  "kurulumHatirlaticiSonra": "Plus tard"
 }

@@ -3358,6 +3358,31 @@ paths:
   /task-categories/{id}:
     parameters:
       - $ref: "#/components/parameters/PathId"
+    patch:
+      tags: [tasks]
+      summary: Kategori duzenle — ad ve/veya aktiflik (admin + yonetici)
+      description: |
+        (P166) Bu uc onceden YOKTU: yazim hatasi duzeltmenin tek yolu
+        sil-yeniden-olustur olurdu ve o, kategoriyi kullanan gorevleri PASIF
+        bir kategoriye baglardi. `aktif: true` ayrica soft-delete edilmis bir
+        kategoriyi GERI ALIR (DELETE'in tersi baska yolla mumkun degildi).
+        Ad tenant icinde benzersizdir; cakisma 409 doner (POST ile ayni).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TaskCategoryUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TaskCategory" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
     delete:
       tags: [tasks]
       summary: Kategori sil — SOFT-DELETE (admin + yonetici)
@@ -12290,6 +12315,12 @@ components:
       required: [ad]
       properties:
         ad: { type: string, minLength: 1, maxLength: 100 }
+    TaskCategoryUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        ad: { type: string, minLength: 1, maxLength: 100 }
+        aktif: { type: boolean }
 
     TaskCompletion:
       type: object

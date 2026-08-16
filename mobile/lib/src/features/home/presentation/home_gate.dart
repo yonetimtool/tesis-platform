@@ -9,6 +9,7 @@ import '../../profile/data/profile_api.dart';
 import '../../tenant/data/tenant_api.dart';
 import '../../tenant/presentation/setup_tenant_screen.dart';
 import '../../../routing/splash_screen.dart';
+import '../../kurulum/presentation/kurulum_hatirlatici.dart';
 import 'denetci_yonlendirme_screen.dart';
 import 'resident_home_screen.dart';
 import 'saha_home_screen.dart';
@@ -51,7 +52,9 @@ class HomeGate extends ConsumerWidget {
     }
     // Platform admini yonetim duzenini gorur (brief: admin→yönetici varyanti).
     if (role == UserRole.admin) {
-      return const YoneticiHomeScreen(role: UserRole.admin);
+      return const KurulumHatirlatici(
+        child: YoneticiHomeScreen(role: UserRole.admin),
+      );
     }
     // (P139.2) DENETCI ACIK UCTA KALIYORDU. Bu dal `denetci`yi de yutuyor
     // ve rol cozulmus olmasina ragmen ekran KALICI olarak splash'ta
@@ -74,7 +77,9 @@ class HomeGate extends ConsumerWidget {
     // Profil yuklenirken value null → birincil=false → kisa sure ana ekran;
     // profil gelince kapi acilir.
     final birincil = ref.watch(profileProvider).value?.birincil ?? false;
-    if (!birincil) return const YoneticiHomeScreen();
+    if (!birincil) {
+      return const KurulumHatirlatici(child: YoneticiHomeScreen());
+    }
 
     // Birincil yonetici: kurulum durumunu getir. Kapi ZAMAN SINIRLIDIR
     // (bkz. kurulumKapisiProvider) — yavas/hatali uc kullaniciyi giris
@@ -105,9 +110,14 @@ class HomeGate extends ConsumerWidget {
     // ILK yuklemede (deger henuz yok) splash yine gosterilir.
     return ref.watch(kurulumKapisiProvider).when(
           skipLoadingOnReload: true,
-          data: (kurulumGerekli) =>
-              kurulumGerekli ? const SetupTenantScreen() : const YoneticiHomeScreen(),
-          error: (_, _) => const YoneticiHomeScreen(),
+          // (P166 §8.2) HATIRLATICI TESIS ADLANDIRMASINDAN SONRA.
+          // `SetupTenantScreen` zaten bir kurulum adimidir; onun ustune
+          // ikinci bir kurulum diyalogu bindirmek, kullaniciyi ayni anda
+          // iki ise cagirmakti.
+          data: (kurulumGerekli) => kurulumGerekli
+              ? const SetupTenantScreen()
+              : const KurulumHatirlatici(child: YoneticiHomeScreen()),
+          error: (_, _) => const KurulumHatirlatici(child: YoneticiHomeScreen()),
           loading: () => const SplashScreen(),
         );
   }

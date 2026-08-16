@@ -5113,4 +5113,115 @@ class AppLocalizationsEs extends AppLocalizations {
   ) {
     return 'Se eliminará la planta $kat del bloque $blok: $daire viviendas, $sakin residentes y $kayit registros vinculados se borrarán permanentemente. No se puede deshacer.';
   }
+
+  @override
+  String get kurulumBaslik => 'Asistente de configuración';
+
+  @override
+  String get kurulumAlt =>
+      'Complete los pasos para dejar sus instalaciones listas.';
+
+  @override
+  String get kurulumIlerleme => 'Progreso';
+
+  @override
+  String get kurulumTamamlandi => 'Configuración completada';
+
+  @override
+  String kurulumAdimTamam(int sayi) {
+    return '$sayi registros';
+  }
+
+  @override
+  String get kurulumAdimAtlandi => 'Omitido';
+
+  @override
+  String get kurulumAdimBekliyor => 'Pendiente';
+
+  @override
+  String get kurulumGit => 'Ir';
+
+  @override
+  String get kurulumGoruntule => 'Ver';
+
+  @override
+  String get kurulumAtla => 'Omitir';
+
+  @override
+  String get kurulumAtlamayiGeriAl => 'Deshacer omisión';
+
+  @override
+  String kurulumSayac(int gecilen, int toplam) {
+    return '$gecilen/$toplam pasos';
+  }
+
+  @override
+  String get kurulumHata => 'No se pudo cargar el estado de la configuración.';
+
+  @override
+  String get kurulumBlok => 'Bloques';
+
+  @override
+  String get kurulumBlokAlt => 'Defina los bloques del edificio.';
+
+  @override
+  String get kurulumDaire => 'Viviendas';
+
+  @override
+  String get kurulumDaireAlt => 'Cree pisos y viviendas en lote.';
+
+  @override
+  String get kurulumDaireTipi => 'Tipos de vivienda';
+
+  @override
+  String get kurulumDaireTipiAlt =>
+      'Defina tipos e importes de cuota predeterminados.';
+
+  @override
+  String get kurulumSakin => 'Residentes';
+
+  @override
+  String get kurulumSakinAlt => 'Añada residentes a las viviendas.';
+
+  @override
+  String get kurulumPersonel => 'Personal';
+
+  @override
+  String get kurulumPersonelAlt => 'Introduzca los registros de empleados.';
+
+  @override
+  String get kurulumGorevAlani => 'Categorías de tareas';
+
+  @override
+  String get kurulumGorevAlaniAlt =>
+      'Cree las categorías que agruparán sus tareas.';
+
+  @override
+  String get kurulumNfc => 'Puntos NFC';
+
+  @override
+  String get kurulumNfcAlt => 'Defina los puntos de control de ronda.';
+
+  @override
+  String get kurulumAidat => 'Emisión de cuotas';
+
+  @override
+  String get kurulumAidatAlt => 'Emita las cuotas del primer periodo.';
+
+  @override
+  String get kurulumAdimWebde =>
+      'Este paso solo puede realizarse desde el panel web con una cuenta de administrador de la plataforma.';
+
+  @override
+  String get kurulumHatirlaticiBaslik => 'Complete la configuración';
+
+  @override
+  String get kurulumHatirlaticiMetin =>
+      'Faltan algunos pasos para dejar sus instalaciones listas. El asistente le lleva a cada pantalla.';
+
+  @override
+  String get kurulumHatirlaticiGit => 'Abrir el asistente';
+
+  @override
+  String get kurulumHatirlaticiSonra => 'Más tarde';
 }

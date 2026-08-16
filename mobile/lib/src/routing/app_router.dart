@@ -46,6 +46,7 @@ import '../features/notifications/presentation/notifications_screen.dart';
 import '../features/support/presentation/destek_screen.dart';
 import '../features/anket/presentation/anket_screen.dart';
 import '../features/kvkk/presentation/kvkk_metin_screen.dart';
+import '../features/kurulum/presentation/kurulum_screen.dart';
 import '../features/settings/presentation/settings_screen.dart';
 import '../features/staff/presentation/staff_screen.dart';
 import '../features/dis_hizmet/presentation/dis_hizmet_screen.dart';
@@ -81,6 +82,9 @@ class AppRoutes {
   static const tasks = '/tasks';
   static const taskDetail = '/tasks/detail';
   static const taskCategories = '/tasks/categories';
+
+  /// (P166 §8.2) Kurulum sihirbazi — web ile AYNI adimlar, AYNI uc.
+  static const kurulum = '/kurulum';
   static const yoneticiIletisim = '/yonetici-iletisim';
   static const assets = '/assets';
   static const announcements = '/announcements';
@@ -454,6 +458,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         // ekranindaki AppBar aksiyonundan. Backend RBAC yazmayi zorlar.
         path: AppRoutes.taskCategories,
         builder: (context, state) => const TaskCategoriesScreen(),
+      ),
+      GoRoute(
+        // (P166 §8.2) Kurulum sihirbazi. Giris noktalari: ilk giristeki
+        // hatirlatici, ana ekrandaki "Tum Moduller" ve Ayarlar.
+        path: AppRoutes.kurulum,
+        builder: (context, state) => const KurulumScreen(),
       ),
       GoRoute(
         path: AppRoutes.anketler,

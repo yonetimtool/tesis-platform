@@ -11,6 +11,7 @@ import {
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
+import { useRol } from "@/lib/rol-kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 
 /**
@@ -50,10 +51,31 @@ interface Durum {
   gecilen: number;
 }
 
-/** Adim kodu -> (etiket, aciklama, gidilecek ekran). */
+/**
+ * Adim kodu -> (etiket, aciklama, gidilecek ekran, [tamamlamak icin gereken rol]).
+ *
+ * (P166 §8.3) `rolGerekli` YENI ve bir CIKMAZI kapatiyor.
+ *
+ * Sihirbaz admin + yonetici'ye gorunuyor, ama `POST /dues/assessments`
+ * YALNIZ ADMIN (`rol-matrisi.txt` satiri: yonetici RED). Yani bir
+ * yonetici "Aidat" adiminda "Git"e basiyor, `/dues`a gidiyor ve toplu
+ * tahakkuk dugmesinde 403 aliyordu — sihirbaz onu yapamayacagi bir ise
+ * yolluyordu. Tam olarak brief'in tarif ettigi zincir.
+ *
+ * YETKI KURALI DEGISTIRILMEDI: bir yoneticiye tum daireler icin BORC
+ * YAZMA yetkisi vermek bir urun/politika kararidir ve tek tarafli
+ * alinmaz. Yapilan sey, kullaniciyi duvara YOLLAMAMAK: adim "senin
+ * rolunle tamamlanamaz" diye isaretlenir ve "Git" yerine salt-okunur bir
+ * not cizilir. Sayfayi GORMEK serbest oldugu icin baglanti korunur.
+ */
 const HEDEF: Record<
   string,
-  { etiket: SozlukAnahtari; aciklama: SozlukAnahtari; rota: string }
+  {
+    etiket: SozlukAnahtari;
+    aciklama: SozlukAnahtari;
+    rota: string;
+    rolGerekli?: readonly string[];
+  }
 > = {
   blok: {
     etiket: "kurulumBlok",
@@ -83,7 +105,13 @@ const HEDEF: Record<
   gorev_alani: {
     etiket: "kurulumGorevAlani",
     aciklama: "kurulumGorevAlaniAlt",
-    rota: "/tasks",
+    // (P166 §8.3) HEDEF DEGISTI: `/tasks` -> kategori DEFTERI.
+    //
+    // Adimin sunucudaki olcusu `TaskCategory` sayisidir (bkz.
+    // `routers/kurulum.py`), yani "gorev alani" = KATEGORI. `/tasks`
+    // kategorileri yalniz OKUYOR; kullanici oraya gidip adimi
+    // tamamlayamiyordu. Adim, olculen seyin YARATILDIGI ekrana bakmali.
+    rota: "/tanimlar?defter=gorev-kategorileri",
   },
   nfc_noktasi: {
     etiket: "kurulumNfc",
@@ -94,6 +122,8 @@ const HEDEF: Record<
     etiket: "kurulumAidat",
     aciklama: "kurulumAidatAlt",
     rota: "/dues",
+    // Bkz. yukaridaki not: toplu tahakkuk ucu admin'e kilitli.
+    rolGerekli: ["admin"],
   },
 };
 
@@ -103,6 +133,10 @@ export default function KurulumPage() {
   const t = useT();
   const [hata, setHata] = useState<string | null>(null);
   const { data, error, mutate } = useSWR<Durum>(UC, jsonFetcher);
+  // (P166 §8.3) ROL — hangi adimlarin bu kullaniciyla tamamlanabilecegini
+  // soyler. `useRol(null)` `/api/me`ye gider ve SWR anahtari kabukla AYNI
+  // oldugu icin ek istek uretmez.
+  const rol = useRol(null);
 
   async function atla(kod: string, deger: boolean) {
     setHata(null);
@@ -162,6 +196,11 @@ export default function KurulumPage() {
         {(data?.adimlar ?? []).map((a, i) => {
           const h = HEDEF[a.kod];
           if (!h) return null;
+          // Rol bilinmiyorken (ilk kare) UYARI CIZILMEZ: bilmedigimiz bir
+          // seyi "yapamazsin" diye gostermek, dogru rolde olan kullaniciya
+          // bir an yanlis bilgi vermekti.
+          const yetkisiz =
+            h.rolGerekli !== undefined && rol !== null && !h.rolGerekli.includes(rol);
           return (
             <li key={a.kod} className="p-kart">
               <div className="flex flex-wrap items-start justify-between gap-3">
@@ -192,6 +231,17 @@ export default function KurulumPage() {
                   <p className="mt-1" style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>{t(h.aciklama)}</p>
                 </div>
                 <div className="flex shrink-0 flex-wrap gap-2">
+                  {/* (P166 §8.3) YETKISIZ ADIMDA ONCE ACIKLAMA: kullanici
+                      "Git"e basip 403 gormeden ONCE nedenini okur. */}
+                  {yetkisiz && (
+                    <p
+                      role="note"
+                      className="max-w-xs"
+                      style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}
+                    >
+                      {t("kurulumAdimYetkiGerekli")}
+                    </p>
+                  )}
                   {/* BAGLANTI, DUGME DEGIL: adim bir SAYFAYA gider ve orta
                       tikla yeni sekmede acilabilmeli. */}
                   <Link
@@ -205,7 +255,7 @@ export default function KurulumPage() {
                       background: a.tamam ? "var(--yz-metal-1)" : "var(--yz-metal-accent)",
                     }}
                   >
-                    {a.tamam ? t("kurulumGoruntule") : t("kurulumGit")}
+                    {a.tamam || yetkisiz ? t("kurulumGoruntule") : t("kurulumGit")}
                   </Link>
                   {/* ATLAMA yalniz BITMEMIS adimda anlamli; biten bir adimi
                       atlamak kullaniciya hicbir sey kazandirmaz. */}

@@ -1579,5 +1579,56 @@
   "binaKatOzetMali": "{tahakkuk} assessments · {odeme} payments · {rezervasyon} reservations",
   "binaKatMaliUyari": "This floor has dues records. Deleting it permanently removes assessments and payments; the accounting trail cannot be restored. Consider deactivating the units instead.",
   "binaKatOnayYaz": "Type the floor number to confirm ({kat})",
-  "binaKatSilOzetOnay": "Floor {kat} of block {blok} will be deleted: {daire} units, {sakin} residents and {kayit} linked records are removed permanently. This cannot be undone."
+  "binaKatSilOzetOnay": "Floor {kat} of block {blok} will be deleted: {daire} units, {sakin} residents and {kayit} linked records are removed permanently. This cannot be undone.",
+  "kurulumBaslik": "Setup Wizard",
+  "kurulumAlt": "Complete the steps to get your facility ready to use.",
+  "kurulumIlerleme": "Progress",
+  "kurulumTamamlandi": "Setup complete",
+  "kurulumAdimTamam": "{sayi} records",
+  "@kurulumAdimTamam": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  },
+  "kurulumAdimAtlandi": "Skipped",
+  "kurulumAdimBekliyor": "Pending",
+  "kurulumGit": "Go",
+  "kurulumGoruntule": "View",
+  "kurulumAtla": "Skip",
+  "kurulumAtlamayiGeriAl": "Undo skip",
+  "kurulumSayac": "{gecilen}/{toplam} steps",
+  "@kurulumSayac": {
+    "placeholders": {
+      "gecilen": {
+        "type": "int"
+      },
+      "toplam": {
+        "type": "int"
+      }
+    }
+  },
+  "kurulumHata": "Could not load setup status.",
+  "kurulumBlok": "Blocks",
+  "kurulumBlokAlt": "Define the building blocks.",
+  "kurulumDaire": "Units",
+  "kurulumDaireAlt": "Create floors and units in bulk.",
+  "kurulumDaireTipi": "Unit types",
+  "kurulumDaireTipiAlt": "Define types and default dues amounts.",
+  "kurulumSakin": "Residents",
+  "kurulumSakinAlt": "Add residents to units.",
+  "kurulumPersonel": "Staff",
+  "kurulumPersonelAlt": "Enter employee records.",
+  "kurulumGorevAlani": "Task categories",
+  "kurulumGorevAlaniAlt": "Create the categories your tasks will be grouped by.",
+  "kurulumNfc": "NFC checkpoints",
+  "kurulumNfcAlt": "Define patrol checkpoints.",
+  "kurulumAidat": "Dues assessment",
+  "kurulumAidatAlt": "Issue the first period's dues to units.",
+  "kurulumAdimWebde": "This step can currently only be done from the web panel with a platform administrator account.",
+  "kurulumHatirlaticiBaslik": "Finish the setup",
+  "kurulumHatirlaticiMetin": "A few steps remain before your facility is ready. The wizard takes you to each screen in turn.",
+  "kurulumHatirlaticiGit": "Open the wizard",
+  "kurulumHatirlaticiSonra": "Later"
 }

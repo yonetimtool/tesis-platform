@@ -59,6 +59,84 @@ def test_kategori_crud_ve_soft_delete(client, world):
     )
 
 
+def test_kategori_duzenleme_ve_geri_alma(client, world):
+    """(P166 §8.3) PATCH — ad duzeltme + soft-delete'i GERI ALMA.
+
+    Bu uc P166'ya kadar YOKTU. Web'de kategori ekrani acilirken ortaya
+    cikti: liste/form deseni "Duzenle" sunuyor, sunucuda karsiligi yoktu.
+
+    Iki senaryo olculuyor cunku ikisi ayri kayip:
+      * AD: yazim hatasini duzeltmenin tek yolu sil-yeniden-olustur
+        olurdu ve o, kategoriyi kullanan gorevleri PASIF bir kategoriye
+        birakirdi.
+      * AKTIF: DELETE `aktif=false` yapiyordu ve TERSI YOKTU — yanlislikla
+        silinen bir kategori geri getirilemezdi.
+    """
+    yonetici = _headers(client, world["slug_a"], world["yonetici_a"])
+    kat = _new_category(client, yonetici)
+    yeni_ad = f"Duzeltilmis-{uuid.uuid4().hex[:8]}"
+
+    r = client.patch(
+        f"/task-categories/{kat['id']}", headers=yonetici, json={"ad": yeni_ad}
+    )
+    assert r.status_code == 200, r.text
+    assert r.json()["ad"] == yeni_ad
+    # KIMLIK DEGISMEDI: bagli gorevler ayni kayda bakmaya devam eder.
+    assert r.json()["id"] == kat["id"]
+
+    # Soft-delete -> geri alma
+    assert client.delete(f"/task-categories/{kat['id']}", headers=yonetici).status_code == 204
+    geri = client.patch(
+        f"/task-categories/{kat['id']}", headers=yonetici, json={"aktif": True}
+    )
+    assert geri.status_code == 200 and geri.json()["aktif"] is True
+    aktifler = {
+        it["id"] for it in client.get("/task-categories", headers=yonetici).json()["items"]
+    }
+    assert kat["id"] in aktifler
+
+    # CAKISAN AD -> 409 (POST ile AYNI davranis; istemci iki yol yazmasin)
+    oteki = _new_category(client, yonetici)
+    cakis = client.patch(
+        f"/task-categories/{oteki['id']}", headers=yonetici, json={"ad": yeni_ad}
+    )
+    assert cakis.status_code == 409, cakis.text
+    assert cakis.json()["error"]["code"] == "conflict"
+
+    # BOS GOVDE -> 422 ("en az bir alan"): sunucuya anlamsiz bir yazma
+    # gonderip 200 almak, kullaniciya "kaydettim" demek olurdu.
+    assert (
+        client.patch(f"/task-categories/{kat['id']}", headers=yonetici, json={}).status_code
+        == 422
+    )
+
+    # OLMAYAN kategori -> 404
+    assert (
+        client.patch(
+            f"/task-categories/{uuid.uuid4()}", headers=yonetici, json={"ad": "x"}
+        ).status_code
+        == 404
+    )
+
+
+def test_kategori_patch_rbac(client, world):
+    """PATCH yazma ucudur: saha rolleri ve sakin 403; baska tenant 404."""
+    yonetici = _headers(client, world["slug_a"], world["yonetici_a"])
+    kat = _new_category(client, yonetici)
+    for anahtar in ("guard_a", "gorevli_a", "resident_a"):
+        h = _headers(client, world["slug_a"], world[anahtar])
+        r = client.patch(f"/task-categories/{kat['id']}", headers=h, json={"ad": "x"})
+        assert r.status_code == 403, f"{anahtar}: {r.status_code}"
+
+    admin_b = _headers(client, world["slug_b"], world["admin_b"])
+    assert (
+        client.patch(
+            f"/task-categories/{kat['id']}", headers=admin_b, json={"ad": "x"}
+        ).status_code
+        == 404
+    )
+
+
 def test_kategori_gorev_olusturmada_secilir(client, world):
     yonetici = _headers(client, world["slug_a"], world["yonetici_a"])
     kat = _new_category(client, yonetici)

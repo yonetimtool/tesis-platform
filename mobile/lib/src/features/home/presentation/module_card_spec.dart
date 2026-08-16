@@ -189,6 +189,16 @@ ModuleCardSpec moduleCardSpec(HomeMenuEntry entry) {
           icon: Icons.hub_outlined,
           accent: _navy,
           route: AppRoutes.integrations);
+    case HomeMenuEntry.kurulum:
+      return const ModuleCardSpec(
+          icon: Icons.checklist_outlined,
+          accent: _navy,
+          route: AppRoutes.kurulum);
+    case HomeMenuEntry.taskCategories:
+      return const ModuleCardSpec(
+          icon: Icons.label_outline,
+          accent: _navy,
+          route: AppRoutes.taskCategories);
     case HomeMenuEntry.personel:
       return const ModuleCardSpec(
           icon: Icons.badge_outlined,

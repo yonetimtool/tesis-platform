@@ -5234,4 +5234,112 @@ class AppLocalizationsAr extends AppLocalizations {
   ) {
     return 'سيتم حذف الطابق $kat من المبنى $blok: $daire شقة و$sakin ساكن و$kayit سجلًا مرتبطًا نهائيًا. لا يمكن التراجع.';
   }
+
+  @override
+  String get kurulumBaslik => 'معالج الإعداد';
+
+  @override
+  String get kurulumAlt => 'أكمل الخطوات لتجهيز مرفقك للاستخدام.';
+
+  @override
+  String get kurulumIlerleme => 'التقدم';
+
+  @override
+  String get kurulumTamamlandi => 'اكتمل الإعداد';
+
+  @override
+  String kurulumAdimTamam(int sayi) {
+    return '$sayi سجل';
+  }
+
+  @override
+  String get kurulumAdimAtlandi => 'تم التخطي';
+
+  @override
+  String get kurulumAdimBekliyor => 'قيد الانتظار';
+
+  @override
+  String get kurulumGit => 'انتقال';
+
+  @override
+  String get kurulumGoruntule => 'عرض';
+
+  @override
+  String get kurulumAtla => 'تخطٍ';
+
+  @override
+  String get kurulumAtlamayiGeriAl => 'تراجع عن التخطي';
+
+  @override
+  String kurulumSayac(int gecilen, int toplam) {
+    return '$gecilen/$toplam خطوة';
+  }
+
+  @override
+  String get kurulumHata => 'تعذر تحميل حالة الإعداد.';
+
+  @override
+  String get kurulumBlok => 'الكتل';
+
+  @override
+  String get kurulumBlokAlt => 'عرّف كتل المبنى.';
+
+  @override
+  String get kurulumDaire => 'الوحدات';
+
+  @override
+  String get kurulumDaireAlt => 'أنشئ الطوابق والوحدات دفعةً واحدة.';
+
+  @override
+  String get kurulumDaireTipi => 'أنواع الوحدات';
+
+  @override
+  String get kurulumDaireTipiAlt => 'عرّف الأنواع ومبالغ الرسوم الافتراضية.';
+
+  @override
+  String get kurulumSakin => 'السكان';
+
+  @override
+  String get kurulumSakinAlt => 'أضف السكان إلى الوحدات.';
+
+  @override
+  String get kurulumPersonel => 'الموظفون';
+
+  @override
+  String get kurulumPersonelAlt => 'أدخل سجلات الموظفين.';
+
+  @override
+  String get kurulumGorevAlani => 'فئات المهام';
+
+  @override
+  String get kurulumGorevAlaniAlt => 'أنشئ الفئات التي ستُجمَّع المهام ضمنها.';
+
+  @override
+  String get kurulumNfc => 'نقاط NFC';
+
+  @override
+  String get kurulumNfcAlt => 'عرّف نقاط تفتيش الدوريات.';
+
+  @override
+  String get kurulumAidat => 'تحميل الرسوم';
+
+  @override
+  String get kurulumAidatAlt => 'حمّل رسوم الفترة الأولى على الوحدات.';
+
+  @override
+  String get kurulumAdimWebde =>
+      'يمكن تنفيذ هذه الخطوة حاليًا من لوحة الويب فقط وبحساب مسؤول المنصة.';
+
+  @override
+  String get kurulumHatirlaticiBaslik => 'أكمل الإعداد';
+
+  @override
+  String get kurulumHatirlaticiMetin =>
+      'بقيت بضع خطوات حتى يصبح مرفقك جاهزًا. سيأخذك المعالج إلى كل شاشة.';
+
+  @override
+  String get kurulumHatirlaticiGit => 'فتح المعالج';
+
+  @override
+  String get kurulumHatirlaticiSonra => 'لاحقًا';
 }

@@ -1579,5 +1579,56 @@
   "binaKatOzetMali": "{tahakkuk} начислений · {odeme} платежей · {rezervasyon} броней",
   "binaKatMaliUyari": "На этаже есть записи по взносам. При удалении начисления и платежи исчезнут навсегда; бухгалтерский след восстановить нельзя. Рассмотрите деактивацию квартир.",
   "binaKatOnayYaz": "Введите номер этажа для подтверждения ({kat})",
-  "binaKatSilOzetOnay": "Этаж {kat} блока {blok} будет удалён: {daire} квартир, {sakin} жильцов и {kayit} связанных записей исчезнут навсегда. Отменить нельзя."
+  "binaKatSilOzetOnay": "Этаж {kat} блока {blok} будет удалён: {daire} квартир, {sakin} жильцов и {kayit} связанных записей исчезнут навсегда. Отменить нельзя.",
+  "kurulumBaslik": "Мастер настройки",
+  "kurulumAlt": "Выполните шаги, чтобы подготовить объект к работе.",
+  "kurulumIlerleme": "Прогресс",
+  "kurulumTamamlandi": "Настройка завершена",
+  "kurulumAdimTamam": "записей: {sayi}",
+  "@kurulumAdimTamam": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  },
+  "kurulumAdimAtlandi": "Пропущено",
+  "kurulumAdimBekliyor": "Ожидает",
+  "kurulumGit": "Перейти",
+  "kurulumGoruntule": "Открыть",
+  "kurulumAtla": "Пропустить",
+  "kurulumAtlamayiGeriAl": "Отменить пропуск",
+  "kurulumSayac": "{gecilen}/{toplam} шагов",
+  "@kurulumSayac": {
+    "placeholders": {
+      "gecilen": {
+        "type": "int"
+      },
+      "toplam": {
+        "type": "int"
+      }
+    }
+  },
+  "kurulumHata": "Не удалось загрузить состояние настройки.",
+  "kurulumBlok": "Блоки",
+  "kurulumBlokAlt": "Определите блоки здания.",
+  "kurulumDaire": "Квартиры",
+  "kurulumDaireAlt": "Создайте этажи и квартиры пакетно.",
+  "kurulumDaireTipi": "Типы квартир",
+  "kurulumDaireTipiAlt": "Задайте типы и суммы взносов по умолчанию.",
+  "kurulumSakin": "Жители",
+  "kurulumSakinAlt": "Добавьте жителей в квартиры.",
+  "kurulumPersonel": "Персонал",
+  "kurulumPersonelAlt": "Введите записи сотрудников.",
+  "kurulumGorevAlani": "Категории задач",
+  "kurulumGorevAlaniAlt": "Создайте категории для группировки задач.",
+  "kurulumNfc": "NFC-точки",
+  "kurulumNfcAlt": "Определите точки обхода.",
+  "kurulumAidat": "Начисление взносов",
+  "kurulumAidatAlt": "Начислите взносы за первый период.",
+  "kurulumAdimWebde": "Этот шаг пока доступен только в веб-панели под учётной записью администратора платформы.",
+  "kurulumHatirlaticiBaslik": "Завершите настройку",
+  "kurulumHatirlaticiMetin": "До готовности объекта осталось несколько шагов. Мастер проведёт вас по каждому экрану.",
+  "kurulumHatirlaticiGit": "Открыть мастер",
+  "kurulumHatirlaticiSonra": "Позже"
 }

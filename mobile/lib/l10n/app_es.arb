@@ -1579,5 +1579,56 @@
   "binaKatOzetMali": "{tahakkuk} cuotas · {odeme} cobros · {rezervasyon} reservas",
   "binaKatMaliUyari": "Esta planta tiene registros de cuotas. Al eliminarla se borran permanentemente cuotas y cobros; el rastro contable no se puede recuperar. Considere desactivar las viviendas en su lugar.",
   "binaKatOnayYaz": "Escriba el número de planta para confirmar ({kat})",
-  "binaKatSilOzetOnay": "Se eliminará la planta {kat} del bloque {blok}: {daire} viviendas, {sakin} residentes y {kayit} registros vinculados se borrarán permanentemente. No se puede deshacer."
+  "binaKatSilOzetOnay": "Se eliminará la planta {kat} del bloque {blok}: {daire} viviendas, {sakin} residentes y {kayit} registros vinculados se borrarán permanentemente. No se puede deshacer.",
+  "kurulumBaslik": "Asistente de configuración",
+  "kurulumAlt": "Complete los pasos para dejar sus instalaciones listas.",
+  "kurulumIlerleme": "Progreso",
+  "kurulumTamamlandi": "Configuración completada",
+  "kurulumAdimTamam": "{sayi} registros",
+  "@kurulumAdimTamam": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  },
+  "kurulumAdimAtlandi": "Omitido",
+  "kurulumAdimBekliyor": "Pendiente",
+  "kurulumGit": "Ir",
+  "kurulumGoruntule": "Ver",
+  "kurulumAtla": "Omitir",
+  "kurulumAtlamayiGeriAl": "Deshacer omisión",
+  "kurulumSayac": "{gecilen}/{toplam} pasos",
+  "@kurulumSayac": {
+    "placeholders": {
+      "gecilen": {
+        "type": "int"
+      },
+      "toplam": {
+        "type": "int"
+      }
+    }
+  },
+  "kurulumHata": "No se pudo cargar el estado de la configuración.",
+  "kurulumBlok": "Bloques",
+  "kurulumBlokAlt": "Defina los bloques del edificio.",
+  "kurulumDaire": "Viviendas",
+  "kurulumDaireAlt": "Cree pisos y viviendas en lote.",
+  "kurulumDaireTipi": "Tipos de vivienda",
+  "kurulumDaireTipiAlt": "Defina tipos e importes de cuota predeterminados.",
+  "kurulumSakin": "Residentes",
+  "kurulumSakinAlt": "Añada residentes a las viviendas.",
+  "kurulumPersonel": "Personal",
+  "kurulumPersonelAlt": "Introduzca los registros de empleados.",
+  "kurulumGorevAlani": "Categorías de tareas",
+  "kurulumGorevAlaniAlt": "Cree las categorías que agruparán sus tareas.",
+  "kurulumNfc": "Puntos NFC",
+  "kurulumNfcAlt": "Defina los puntos de control de ronda.",
+  "kurulumAidat": "Emisión de cuotas",
+  "kurulumAidatAlt": "Emita las cuotas del primer periodo.",
+  "kurulumAdimWebde": "Este paso solo puede realizarse desde el panel web con una cuenta de administrador de la plataforma.",
+  "kurulumHatirlaticiBaslik": "Complete la configuración",
+  "kurulumHatirlaticiMetin": "Faltan algunos pasos para dejar sus instalaciones listas. El asistente le lleva a cada pantalla.",
+  "kurulumHatirlaticiGit": "Abrir el asistente",
+  "kurulumHatirlaticiSonra": "Más tarde"
 }

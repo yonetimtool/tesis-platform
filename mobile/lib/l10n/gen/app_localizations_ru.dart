@@ -5227,4 +5227,114 @@ class AppLocalizationsRu extends AppLocalizations {
   ) {
     return 'Этаж $kat блока $blok будет удалён: $daire квартир, $sakin жильцов и $kayit связанных записей исчезнут навсегда. Отменить нельзя.';
   }
+
+  @override
+  String get kurulumBaslik => 'Мастер настройки';
+
+  @override
+  String get kurulumAlt => 'Выполните шаги, чтобы подготовить объект к работе.';
+
+  @override
+  String get kurulumIlerleme => 'Прогресс';
+
+  @override
+  String get kurulumTamamlandi => 'Настройка завершена';
+
+  @override
+  String kurulumAdimTamam(int sayi) {
+    return 'записей: $sayi';
+  }
+
+  @override
+  String get kurulumAdimAtlandi => 'Пропущено';
+
+  @override
+  String get kurulumAdimBekliyor => 'Ожидает';
+
+  @override
+  String get kurulumGit => 'Перейти';
+
+  @override
+  String get kurulumGoruntule => 'Открыть';
+
+  @override
+  String get kurulumAtla => 'Пропустить';
+
+  @override
+  String get kurulumAtlamayiGeriAl => 'Отменить пропуск';
+
+  @override
+  String kurulumSayac(int gecilen, int toplam) {
+    return '$gecilen/$toplam шагов';
+  }
+
+  @override
+  String get kurulumHata => 'Не удалось загрузить состояние настройки.';
+
+  @override
+  String get kurulumBlok => 'Блоки';
+
+  @override
+  String get kurulumBlokAlt => 'Определите блоки здания.';
+
+  @override
+  String get kurulumDaire => 'Квартиры';
+
+  @override
+  String get kurulumDaireAlt => 'Создайте этажи и квартиры пакетно.';
+
+  @override
+  String get kurulumDaireTipi => 'Типы квартир';
+
+  @override
+  String get kurulumDaireTipiAlt =>
+      'Задайте типы и суммы взносов по умолчанию.';
+
+  @override
+  String get kurulumSakin => 'Жители';
+
+  @override
+  String get kurulumSakinAlt => 'Добавьте жителей в квартиры.';
+
+  @override
+  String get kurulumPersonel => 'Персонал';
+
+  @override
+  String get kurulumPersonelAlt => 'Введите записи сотрудников.';
+
+  @override
+  String get kurulumGorevAlani => 'Категории задач';
+
+  @override
+  String get kurulumGorevAlaniAlt =>
+      'Создайте категории для группировки задач.';
+
+  @override
+  String get kurulumNfc => 'NFC-точки';
+
+  @override
+  String get kurulumNfcAlt => 'Определите точки обхода.';
+
+  @override
+  String get kurulumAidat => 'Начисление взносов';
+
+  @override
+  String get kurulumAidatAlt => 'Начислите взносы за первый период.';
+
+  @override
+  String get kurulumAdimWebde =>
+      'Этот шаг пока доступен только в веб-панели под учётной записью администратора платформы.';
+
+  @override
+  String get kurulumHatirlaticiBaslik => 'Завершите настройку';
+
+  @override
+  String get kurulumHatirlaticiMetin =>
+      'До готовности объекта осталось несколько шагов. Мастер проведёт вас по каждому экрану.';
+
+  @override
+  String get kurulumHatirlaticiGit => 'Открыть мастер';
+
+  @override
+  String get kurulumHatirlaticiSonra => 'Позже';
 }

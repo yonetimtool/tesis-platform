@@ -5156,4 +5156,114 @@ class AppLocalizationsEn extends AppLocalizations {
   ) {
     return 'Floor $kat of block $blok will be deleted: $daire units, $sakin residents and $kayit linked records are removed permanently. This cannot be undone.';
   }
+
+  @override
+  String get kurulumBaslik => 'Setup Wizard';
+
+  @override
+  String get kurulumAlt =>
+      'Complete the steps to get your facility ready to use.';
+
+  @override
+  String get kurulumIlerleme => 'Progress';
+
+  @override
+  String get kurulumTamamlandi => 'Setup complete';
+
+  @override
+  String kurulumAdimTamam(int sayi) {
+    return '$sayi records';
+  }
+
+  @override
+  String get kurulumAdimAtlandi => 'Skipped';
+
+  @override
+  String get kurulumAdimBekliyor => 'Pending';
+
+  @override
+  String get kurulumGit => 'Go';
+
+  @override
+  String get kurulumGoruntule => 'View';
+
+  @override
+  String get kurulumAtla => 'Skip';
+
+  @override
+  String get kurulumAtlamayiGeriAl => 'Undo skip';
+
+  @override
+  String kurulumSayac(int gecilen, int toplam) {
+    return '$gecilen/$toplam steps';
+  }
+
+  @override
+  String get kurulumHata => 'Could not load setup status.';
+
+  @override
+  String get kurulumBlok => 'Blocks';
+
+  @override
+  String get kurulumBlokAlt => 'Define the building blocks.';
+
+  @override
+  String get kurulumDaire => 'Units';
+
+  @override
+  String get kurulumDaireAlt => 'Create floors and units in bulk.';
+
+  @override
+  String get kurulumDaireTipi => 'Unit types';
+
+  @override
+  String get kurulumDaireTipiAlt => 'Define types and default dues amounts.';
+
+  @override
+  String get kurulumSakin => 'Residents';
+
+  @override
+  String get kurulumSakinAlt => 'Add residents to units.';
+
+  @override
+  String get kurulumPersonel => 'Staff';
+
+  @override
+  String get kurulumPersonelAlt => 'Enter employee records.';
+
+  @override
+  String get kurulumGorevAlani => 'Task categories';
+
+  @override
+  String get kurulumGorevAlaniAlt =>
+      'Create the categories your tasks will be grouped by.';
+
+  @override
+  String get kurulumNfc => 'NFC checkpoints';
+
+  @override
+  String get kurulumNfcAlt => 'Define patrol checkpoints.';
+
+  @override
+  String get kurulumAidat => 'Dues assessment';
+
+  @override
+  String get kurulumAidatAlt => 'Issue the first period\'s dues to units.';
+
+  @override
+  String get kurulumAdimWebde =>
+      'This step can currently only be done from the web panel with a platform administrator account.';
+
+  @override
+  String get kurulumHatirlaticiBaslik => 'Finish the setup';
+
+  @override
+  String get kurulumHatirlaticiMetin =>
+      'A few steps remain before your facility is ready. The wizard takes you to each screen in turn.';
+
+  @override
+  String get kurulumHatirlaticiGit => 'Open the wizard';
+
+  @override
+  String get kurulumHatirlaticiSonra => 'Later';
 }

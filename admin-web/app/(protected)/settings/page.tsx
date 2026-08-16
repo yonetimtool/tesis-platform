@@ -14,6 +14,7 @@ import {
   HataDurumu,
   IskeletMetin,
 } from "@/components/ui";
+import { kurulumHatirlaticiyiAc } from "@/components/KurulumHatirlatici";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
@@ -224,6 +225,22 @@ export default function SettingsPage() {
           {t("kurulumBaslik")}
         </Link>
       </div>
+
+      {/* (P166 §8.1) HATIRLATICIYI TEKRAR AC.
+          Brief: "kapatilabilsin, sonra ayarlardan tekrar acilabilsin."
+          Ustteki baglanti sihirbazi ACAR; bu dugme ilk acilistaki
+          MODALI geri getirir — ikisi ayri sey: biri kullaniciyi bir kez
+          goturur, oteki hatirlatmayi surdurur. */}
+      <Dugme
+        type="button"
+        boy="kucuk"
+        onClick={() => {
+          kurulumHatirlaticiyiAc();
+          toast.success(t("kurulumTekrarGoster"));
+        }}
+      >
+        {t("kurulumTekrarGoster")}
+      </Dugme>
 
       {error && <HataDurumu mesaj={error.message} />}
       {isLoading && !data && <IskeletMetin satir={3} />}

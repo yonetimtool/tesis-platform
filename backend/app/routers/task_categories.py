@@ -18,7 +18,12 @@ from ..crud_helpers import get_or_404, is_unique_violation, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..models import AppUser, TaskCategory
-from ..schemas import TaskCategoryCreate, TaskCategoryListResponse, TaskCategoryOut
+from ..schemas import (
+    TaskCategoryCreate,
+    TaskCategoryListResponse,
+    TaskCategoryOut,
+    TaskCategoryUpdate,
+)
 
 router = APIRouter(prefix="/task-categories", tags=["task-categories"])
 
@@ -64,6 +69,38 @@ async def list_categories(
     return TaskCategoryListResponse(
         meta={"limit": limit, "offset": offset, "total": total}, items=list(rows)
     )
+
+
+@router.patch("/{category_id}", response_model=TaskCategoryOut)
+async def update_category(
+    category_id: uuid.UUID,
+    body: TaskCategoryUpdate,
+    db: AsyncSession = Depends(get_tenant_db),
+    _: AppUser = Depends(_MANAGER),
+) -> TaskCategory:
+    """(P166 §8.3) Kategoriyi DUZENLE — ad ve/veya aktiflik.
+
+    Bu uc P166'ya kadar YOKTU. Web'de kategori ekrani acilirken ortaya
+    cikti: liste/form deseni duzenleme sunuyor, sunucuda karsiligi yok —
+    "Kaydet" 405 donerdi.
+
+    AD BENZERSIZLIGI: `uq_task_category_tenant_ad` ayni tenant'ta ayni adi
+    engelliyor. Cakismayi 500 yerine 409 olarak dondurmek, POST ile AYNI
+    davranistir; istemci iki yolu ayri ele almak zorunda kalmaz.
+    """
+    obj = await get_or_404(db, TaskCategory, category_id)
+    veri = body.model_dump(exclude_unset=True)
+    for alan, deger in veri.items():
+        setattr(obj, alan, deger)
+    obj.updated_at = func.now()
+    try:
+        await db.flush()
+    except IntegrityError as exc:
+        if is_unique_violation(exc):
+            raise APIError(409, "conflict", "kategori_adi_zaten_kayitli")
+        raise translate_integrity(exc)
+    await db.refresh(obj)
+    return obj
 
 
 @router.delete("/{category_id}", status_code=204)

@@ -113,6 +113,21 @@ enum HomeMenuEntry {
   /// SSRF-korumali tetik. Mobilde YONETICI yonetir (admin panelden).
   integrations,
 
+  /// (P166 §8.2) KURULUM SIHIRBAZI — mobilde ilk kez.
+  ///
+  /// Web'de P154'ten beri var, mobilde YOKTU. Girisi menude olmasaydi
+  /// sihirbaza yalniz ilk giristeki hatirlatici uzerinden ulasilirdi —
+  /// yani bir kez "Daha sonra" diyen kullanici onu bir daha bulamazdi.
+  kurulum,
+
+  /// (P166 §10) GOREV KATEGORILERI — ekran VARDI, MODUL GIRISI YOKTU.
+  ///
+  /// Tek giris "Gorev yonetimi" ekraninin sag ustundeki ETIKETSIZ bir
+  /// ikondu. Ayni kusur P154'te devriye planlari ve kontrol noktalari icin
+  /// olculmustu: tooltip'i gormek uzun basmayi gerektiriyor, yani cogu
+  /// kullanici ozelligin VARLIGINI hic ogrenmiyor.
+  taskCategories,
+
   /// Saha Personeli (Ozellik 3) — YALNIZ yonetici mobil menusunde: guvenlik +
   /// tesis gorevlisi hesaplarini listeler ve ekler (telefon + gecici kod).
   /// yonetici backend'de YALNIZ saha personeli acabilir (RBAC zorlar); admin
@@ -302,6 +317,8 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.integrations,
         HomeMenuEntry.binaDuzenleme,
         HomeMenuEntry.daireTanimlari,
+        HomeMenuEntry.taskCategories,
+        HomeMenuEntry.kurulum,
         HomeMenuEntry.otopark,
         HomeMenuEntry.ihlaller,
         HomeMenuEntry.vardiyalar,
@@ -382,6 +399,8 @@ String moduleBaslik(AppLocalizations l10n, HomeMenuEntry entry) =>
       HomeMenuEntry.siteKurallari => l10n.modulSiteKurallari,
       HomeMenuEntry.disHizmet => l10n.modulDisHizmetler,
       HomeMenuEntry.integrations => l10n.modulEntegrasyonlar,
+      HomeMenuEntry.kurulum => l10n.kurulumBaslik,
+      HomeMenuEntry.taskCategories => l10n.kurulumGorevAlani,
       HomeMenuEntry.personel => l10n.modulPersonel,
       HomeMenuEntry.sakinler => l10n.modulSakinler,
       HomeMenuEntry.binaDuzenleme => l10n.modulBinaYapisi,
@@ -466,6 +485,8 @@ HomeMenuGrup homeMenuGrubu(HomeMenuEntry e) => switch (e) {
   HomeMenuEntry.sakinler ||
   HomeMenuEntry.binaDuzenleme ||
   HomeMenuEntry.daireTanimlari ||
+  HomeMenuEntry.taskCategories ||
+  HomeMenuEntry.kurulum ||
   HomeMenuEntry.integrations => HomeMenuGrup.tanimlar,
 };
 

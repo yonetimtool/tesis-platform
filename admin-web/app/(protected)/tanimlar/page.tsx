@@ -162,6 +162,23 @@ const DEFTERLER: Defter[] = [
     ],
   },
   {
+    // (P166 §8.3) GOREV KATEGORILERI — web'de ilk kez.
+    //
+    // Kurulum sihirbazinin "Gorev alanlari" adimi buraya bakar. Once
+    // `/tasks`e yolluyordu ve orada kategori OLUSTURULAMIYORDU: kullanici
+    // "once bir kategori atamalisiniz" uyarisiyla karsilasip yapacak bir
+    // sey bulamiyordu. Sihirbazdaki tek gercek CIKMAZ buydu.
+    kaynak: "gorev-kategorileri",
+    baslikAnahtari: "tanimGorevKategorileri",
+    alanlar: [
+      { ad: "ad", etiket: "tanimAlanAd", tip: "metin", zorunlu: true, sutun: true },
+      // AKTIF alani ONEMLI: silme SOFT-DELETE'tir (gorev gecmisi
+      // kategoriye referans verir). Pasiflestirileni GERI ALMANIN baska
+      // yolu yok — bu kutu olmasa "yanlislikla sildim" geri alinamazdi.
+      { ad: "aktif", etiket: "tanimAlanAktif", tip: "bool", sutun: true },
+    ],
+  },
+  {
     kaynak: "personel-kayitlari",
     baslikAnahtari: "tanimPersonel",
     alanlar: [

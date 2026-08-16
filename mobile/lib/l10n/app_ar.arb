@@ -1579,5 +1579,56 @@
   "binaKatOzetMali": "{tahakkuk} استحقاق · {odeme} تحصيل · {rezervasyon} حجز",
   "binaKatMaliUyari": "يحتوي هذا الطابق على سجلات رسوم. الحذف يزيل الاستحقاقات والتحصيلات نهائيًا ولا يمكن استرجاع الأثر المحاسبي. فكّر في إلغاء تنشيط الشقق بدلًا من ذلك.",
   "binaKatOnayYaz": "اكتب رقم الطابق للتأكيد ({kat})",
-  "binaKatSilOzetOnay": "سيتم حذف الطابق {kat} من المبنى {blok}: {daire} شقة و{sakin} ساكن و{kayit} سجلًا مرتبطًا نهائيًا. لا يمكن التراجع."
+  "binaKatSilOzetOnay": "سيتم حذف الطابق {kat} من المبنى {blok}: {daire} شقة و{sakin} ساكن و{kayit} سجلًا مرتبطًا نهائيًا. لا يمكن التراجع.",
+  "kurulumBaslik": "معالج الإعداد",
+  "kurulumAlt": "أكمل الخطوات لتجهيز مرفقك للاستخدام.",
+  "kurulumIlerleme": "التقدم",
+  "kurulumTamamlandi": "اكتمل الإعداد",
+  "kurulumAdimTamam": "{sayi} سجل",
+  "@kurulumAdimTamam": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  },
+  "kurulumAdimAtlandi": "تم التخطي",
+  "kurulumAdimBekliyor": "قيد الانتظار",
+  "kurulumGit": "انتقال",
+  "kurulumGoruntule": "عرض",
+  "kurulumAtla": "تخطٍ",
+  "kurulumAtlamayiGeriAl": "تراجع عن التخطي",
+  "kurulumSayac": "{gecilen}/{toplam} خطوة",
+  "@kurulumSayac": {
+    "placeholders": {
+      "gecilen": {
+        "type": "int"
+      },
+      "toplam": {
+        "type": "int"
+      }
+    }
+  },
+  "kurulumHata": "تعذر تحميل حالة الإعداد.",
+  "kurulumBlok": "الكتل",
+  "kurulumBlokAlt": "عرّف كتل المبنى.",
+  "kurulumDaire": "الوحدات",
+  "kurulumDaireAlt": "أنشئ الطوابق والوحدات دفعةً واحدة.",
+  "kurulumDaireTipi": "أنواع الوحدات",
+  "kurulumDaireTipiAlt": "عرّف الأنواع ومبالغ الرسوم الافتراضية.",
+  "kurulumSakin": "السكان",
+  "kurulumSakinAlt": "أضف السكان إلى الوحدات.",
+  "kurulumPersonel": "الموظفون",
+  "kurulumPersonelAlt": "أدخل سجلات الموظفين.",
+  "kurulumGorevAlani": "فئات المهام",
+  "kurulumGorevAlaniAlt": "أنشئ الفئات التي ستُجمَّع المهام ضمنها.",
+  "kurulumNfc": "نقاط NFC",
+  "kurulumNfcAlt": "عرّف نقاط تفتيش الدوريات.",
+  "kurulumAidat": "تحميل الرسوم",
+  "kurulumAidatAlt": "حمّل رسوم الفترة الأولى على الوحدات.",
+  "kurulumAdimWebde": "يمكن تنفيذ هذه الخطوة حاليًا من لوحة الويب فقط وبحساب مسؤول المنصة.",
+  "kurulumHatirlaticiBaslik": "أكمل الإعداد",
+  "kurulumHatirlaticiMetin": "بقيت بضع خطوات حتى يصبح مرفقك جاهزًا. سيأخذك المعالج إلى كل شاشة.",
+  "kurulumHatirlaticiGit": "فتح المعالج",
+  "kurulumHatirlaticiSonra": "لاحقًا"
 }

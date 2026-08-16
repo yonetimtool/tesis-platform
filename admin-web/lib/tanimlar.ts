@@ -21,6 +21,17 @@ export const TANIM_KAYNAKLARI: Record<string, string> = {
   // hem kisa hem de tek-kaynak.
   "unit-tipleri": "/unit-tipleri",
   "unit-gruplari": "/unit-gruplari",
+  // (P166 §8.3) GOREV KATEGORILERI — web'de EKRANI YOKTU.
+  //
+  // Uc (`/task-categories`) ve BFF vekili P153'ten beri duruyor; `/tasks`
+  // sayfasi kategorileri OKUYOR ama olusturamiyordu. Kategori yalniz
+  // MOBILDE acilabiliyordu ve kurulum sihirbazi kullaniciyi "once bir
+  // kategori atamalisiniz" diyen bir ekrana yolluyordu — yapamayacagi bir
+  // ise. Cikmaz buydu.
+  //
+  // AYRI SAYFA YAZILMADI: `/tanimlar` zaten veri-surumlu defter desenidir
+  // ve kategori tam olarak bir tanim kaydidir (ad + aktiflik).
+  "gorev-kategorileri": "/task-categories",
   kasalar: "/kasalar",
   "gelir-gider-gruplari": "/gelir-gider-gruplari",
   "gelir-gider-tanimlari": "/gelir-gider-tanimlari",
@@ -38,6 +49,7 @@ export const TANIM_KAYNAKLARI: Record<string, string> = {
 /** Kaynak basina ILETILEBILEN sorgu parametreleri (yine beyaz liste). */
 export const TANIM_SUZGECLERI: Record<string, string[]> = {
   "unit-tipleri": ["aktif"],
+  "gorev-kategorileri": ["aktif"],
   "unit-gruplari": ["aktif"],
   "gelir-gider-tanimlari": ["tip"],
   "arac-kayitlari": ["plaka"],

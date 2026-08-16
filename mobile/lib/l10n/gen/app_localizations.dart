@@ -8776,6 +8776,210 @@ abstract class AppLocalizations {
     int sakin,
     int kayit,
   );
+
+  /// No description provided for @kurulumBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kurulum Sihirbazı'**
+  String get kurulumBaslik;
+
+  /// No description provided for @kurulumAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tesisinizi kullanıma hazır hâle getirmek için adımları tamamlayın.'**
+  String get kurulumAlt;
+
+  /// No description provided for @kurulumIlerleme.
+  ///
+  /// In tr, this message translates to:
+  /// **'İlerleme'**
+  String get kurulumIlerleme;
+
+  /// No description provided for @kurulumTamamlandi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kurulum tamamlandı'**
+  String get kurulumTamamlandi;
+
+  /// No description provided for @kurulumAdimTamam.
+  ///
+  /// In tr, this message translates to:
+  /// **'{sayi} kayıt'**
+  String kurulumAdimTamam(int sayi);
+
+  /// No description provided for @kurulumAdimAtlandi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Atlandı'**
+  String get kurulumAdimAtlandi;
+
+  /// No description provided for @kurulumAdimBekliyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bekliyor'**
+  String get kurulumAdimBekliyor;
+
+  /// No description provided for @kurulumGit.
+  ///
+  /// In tr, this message translates to:
+  /// **'Git'**
+  String get kurulumGit;
+
+  /// No description provided for @kurulumGoruntule.
+  ///
+  /// In tr, this message translates to:
+  /// **'Görüntüle'**
+  String get kurulumGoruntule;
+
+  /// No description provided for @kurulumAtla.
+  ///
+  /// In tr, this message translates to:
+  /// **'Atla'**
+  String get kurulumAtla;
+
+  /// No description provided for @kurulumAtlamayiGeriAl.
+  ///
+  /// In tr, this message translates to:
+  /// **'Atlamayı geri al'**
+  String get kurulumAtlamayiGeriAl;
+
+  /// No description provided for @kurulumSayac.
+  ///
+  /// In tr, this message translates to:
+  /// **'{gecilen}/{toplam} adım'**
+  String kurulumSayac(int gecilen, int toplam);
+
+  /// No description provided for @kurulumHata.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kurulum durumu yüklenemedi.'**
+  String get kurulumHata;
+
+  /// No description provided for @kurulumBlok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bloklar'**
+  String get kurulumBlok;
+
+  /// No description provided for @kurulumBlokAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Binanın bloklarını tanımlayın.'**
+  String get kurulumBlokAlt;
+
+  /// No description provided for @kurulumDaire.
+  ///
+  /// In tr, this message translates to:
+  /// **'Daireler'**
+  String get kurulumDaire;
+
+  /// No description provided for @kurulumDaireAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kat ve daireleri toplu olarak oluşturun.'**
+  String get kurulumDaireAlt;
+
+  /// No description provided for @kurulumDaireTipi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Daire tipleri'**
+  String get kurulumDaireTipi;
+
+  /// No description provided for @kurulumDaireTipiAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tip ve varsayılan aidat tutarlarını tanımlayın.'**
+  String get kurulumDaireTipiAlt;
+
+  /// No description provided for @kurulumSakin.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sakinler'**
+  String get kurulumSakin;
+
+  /// No description provided for @kurulumSakinAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Dairelere sakinleri ekleyin.'**
+  String get kurulumSakinAlt;
+
+  /// No description provided for @kurulumPersonel.
+  ///
+  /// In tr, this message translates to:
+  /// **'Personel'**
+  String get kurulumPersonel;
+
+  /// No description provided for @kurulumPersonelAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Çalışan kayıtlarını girin.'**
+  String get kurulumPersonelAlt;
+
+  /// No description provided for @kurulumGorevAlani.
+  ///
+  /// In tr, this message translates to:
+  /// **'Görev kategorileri'**
+  String get kurulumGorevAlani;
+
+  /// No description provided for @kurulumGorevAlaniAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Görevleri gruplayacağınız kategorileri oluşturun.'**
+  String get kurulumGorevAlaniAlt;
+
+  /// No description provided for @kurulumNfc.
+  ///
+  /// In tr, this message translates to:
+  /// **'NFC noktaları'**
+  String get kurulumNfc;
+
+  /// No description provided for @kurulumNfcAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Devriye kontrol noktalarını tanımlayın.'**
+  String get kurulumNfcAlt;
+
+  /// No description provided for @kurulumAidat.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aidat tahakkuku'**
+  String get kurulumAidat;
+
+  /// No description provided for @kurulumAidatAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'İlk dönemin aidatını dairelere yazın.'**
+  String get kurulumAidatAlt;
+
+  /// No description provided for @kurulumAdimWebde.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu adım şu an yalnızca web panelinden ve platform yöneticisi (admin) hesabıyla yapılabilir.'**
+  String get kurulumAdimWebde;
+
+  /// No description provided for @kurulumHatirlaticiBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kurulumu tamamlayın'**
+  String get kurulumHatirlaticiBaslik;
+
+  /// No description provided for @kurulumHatirlaticiMetin.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tesisinizi kullanıma hazır hâle getirmek için birkaç adım kaldı. Sihirbaz sizi tek tek ilgili ekranlara götürür.'**
+  String get kurulumHatirlaticiMetin;
+
+  /// No description provided for @kurulumHatirlaticiGit.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sihirbazı aç'**
+  String get kurulumHatirlaticiGit;
+
+  /// No description provided for @kurulumHatirlaticiSonra.
+  ///
+  /// In tr, this message translates to:
+  /// **'Daha sonra'**
+  String get kurulumHatirlaticiSonra;
 }
 
 class _AppLocalizationsDelegate
