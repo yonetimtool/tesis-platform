@@ -8,6 +8,7 @@ import '../data/residents_api.dart';
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/ui/merkez_diyalog.dart';
 import '../../../core/ui/telefon_alani.dart';
+import '../../../core/ui/telefon_hata_metni.dart';
 
 /// Site Sakinleri — yonetici/admin: sakinleri listeler, yeni tasinani ekler
 /// (gecici kod), ayrilani cikarir (pasiflestir). Sakin KENDI kayit olamaz.
@@ -314,6 +315,11 @@ class _EditResidentSheetState extends ConsumerState<_EditResidentSheet> {
                 prefixIcon: const Icon(Icons.phone_outlined),
                 border: const OutlineInputBorder(),
               ),
+              // (P166 §9) DUZENLEMEDE BOS = DEGISMEZ, ama YAZILDIYSA
+              // gecerli olmali. Once hic dogrulayici yoktu: yarim bir
+              // numara kaydedilip sakinin girisini kirardi.
+              validator: (v) =>
+                  telefonHataMetni(l10n, v ?? '', zorunlu: false),
             ),
             const SizedBox(height: 12),
             TextFormField(
@@ -488,8 +494,8 @@ class _AddResidentSheetState extends ConsumerState<_AddResidentSheet> {
                 border: const OutlineInputBorder(),
                 helperText: l10n.sakinGirisAnahtari,
               ),
-              validator: (v) =>
-                  (v?.trim() ?? '').isEmpty ? l10n.ortakTelefonZorunlu : null,
+              // (P166 §9) Bicim de olculur — bkz. personel ekrani.
+              validator: (v) => telefonHataMetni(l10n, v ?? ''),
             ),
             const SizedBox(height: 12),
             TextFormField(

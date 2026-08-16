@@ -24,6 +24,7 @@ import { GirisYontemlerim } from "@/components/GirisYontemlerim";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
+import { TelefonAlani, telefonHataMetni } from "@/components/TelefonAlani";
 import { useT } from "@/lib/i18n/kullan";
 import { telefonGiris, telefonHatasi, telefonNormalle } from "@/lib/telefon";
 
@@ -45,6 +46,8 @@ export default function ProfilPage() {
   );
 
   const [telefon, setTelefon] = useState("");
+  /** (P166 §9) Telefonun ALAN BAZINDA hatasi — sayfa hata kutusundan AYRI. */
+  const [telefonHatasiMetni, setTelefonHatasiMetni] = useState<string | null>(null);
   const [aranabilir, setAranabilir] = useState(false);
   const [iletisimHata, setIletisimHata] = useState<string | null>(null);
   const [kaydediyor, setKaydediyor] = useState(false);
@@ -63,13 +66,17 @@ export default function ProfilPage() {
 
   async function iletisimKaydet() {
     // Telefon İSTEĞE BAĞLI: boş bırakmak numarayı kaldırır.
-    const hata = telefonHatasi(telefon, false);
-    if (hata) {
-      setIletisimHata(
-        hata === "gecersizOnEk" ? t("telefonHataOnEk") : t("telefonHataEksik"),
-      );
+    //
+    // (P166 §9) HATA ALANIN YANINA YAZILIR, sayfanin ustundeki kutuya
+    // DEGIL. Alan artik kendi hatasini gosterdigi icin ikisi birden
+    // cizilirse kullanici AYNI cumleyi iki yerde okur ve ikinci bir
+    // sorun oldugunu sanar. Alan bazinda hata brief'in de sarti.
+    const telHata = telefonHataMetni(telefon, false, t);
+    if (telHata) {
+      setTelefonHatasiMetni(telHata);
       return;
     }
+    setTelefonHatasiMetni(null);
     setIletisimHata(null);
     setKaydediyor(true);
     try {
@@ -118,19 +125,18 @@ export default function ProfilPage() {
       <section className="space-y-4">
         <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{t("profilIletisim")}</h2>
         <div className="grid gap-4 sm:max-w-md">
-          <AlanSarmal etiket={t("kullaniciTelefon")} ipucu={t("profilTelefonIpucu")}>
-  {(b) => (
-    <Alan {...b} // `telefonGiris` CIZIMDE de uygulanir (fikirsizdir/idempotent):
-              // garantiyi "her setter dogru cagirmis olmali"ya dayandirmak
-              // kirilgandi — ileride durumu bicimlendirmeden yazan bir
-              // duzenleme yine maskeli cizer. P123 kapsam kilidi bu yuzden
-              // `value={}` icinde ariyor ve HAKLI.
-              value={telefonGiris(telefon)}
-              // (P123) TEK biçimlendirici — bkz. lib/telefon.ts.
-              onChange={(e) => setTelefon(telefonGiris(e.target.value))}
-              placeholder={t("kullaniciTelefonOrnek")} />
-  )}
-</AlanSarmal>
+          {/* (P166 §9) Profilde telefon OPSIYONEL (kullanici numarasini
+              silebilir); `zorunlu` verilmez, bos deger gecerlidir. */}
+          <TelefonAlani
+            etiket={t("kullaniciTelefon")}
+            ipucu={t("profilTelefonIpucu")}
+            deger={telefon}
+            hata={telefonHatasiMetni}
+            onDegisti={(v) => {
+              setTelefon(v);
+              setTelefonHatasiMetni(null);
+            }}
+          />
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"

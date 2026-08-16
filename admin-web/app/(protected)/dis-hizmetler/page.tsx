@@ -27,6 +27,7 @@ import {
 import { useToast } from "@/components/Toast";
 import { alanliHataMetni, apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
+import { TelefonAlani, telefonHataMetni } from "@/components/TelefonAlani";
 import { useT } from "@/lib/i18n/kullan";
 import { telefonGiris, telefonHatasi, telefonNormalle } from "@/lib/telefon";
 
@@ -56,6 +57,8 @@ export default function DisHizmetlerPage() {
   const [ad, setAd] = useState("");
   const [soyad, setSoyad] = useState("");
   const [telefon, setTelefon] = useState("");
+  /** (P166 §9) Telefonun ALAN BAZINDA hatasi — sayfa hata kutusundan AYRI. */
+  const [telefonHatasiMetni, setTelefonHatasiMetni] = useState<string | null>(null);
   const [aciklama, setAciklama] = useState("");
   const [hata, setHata] = useState<string | null>(null);
   const [gonderiyor, setGonderiyor] = useState(false);
@@ -81,13 +84,14 @@ export default function DisHizmetlerPage() {
       setHata(t("disHizmetAlanZorunlu"));
       return;
     }
-    const telHata = telefonHatasi(telefon);
+    // (P166 §9) HATA ALANIN YANINDA — sayfa kutusunda DEGIL. Ikisi
+    // birden cizilirse kullanici ayni cumleyi iki yerde okur.
+    const telHata = telefonHataMetni(telefon, true, t);
     if (telHata) {
-      setHata(
-        telHata === "gecersizOnEk" ? t("telefonHataOnEk") : t("telefonHataEksik"),
-      );
+      setTelefonHatasiMetni(telHata);
       return;
     }
+    setTelefonHatasiMetni(null);
     setHata(null);
     setGonderiyor(true);
     try {
@@ -206,17 +210,16 @@ export default function DisHizmetlerPage() {
               />
             )}
           </AlanSarmal>
-          <AlanSarmal etiket={t("kullaniciTelefon")} zorunlu>
-            {(b) => (
-              <Alan
-                {...b}
-                // (P123) TEK bicimlendirici — bkz. lib/telefon.ts.
-                value={telefonGiris(telefon)}
-                onChange={(e) => setTelefon(telefonGiris(e.target.value))}
-                placeholder={t("kullaniciTelefonOrnek")}
-              />
-            )}
-          </AlanSarmal>
+          <TelefonAlani
+            etiket={t("kullaniciTelefon")}
+            zorunlu
+            deger={telefon}
+            hata={telefonHatasiMetni}
+            onDegisti={(v) => {
+              setTelefon(v);
+              setTelefonHatasiMetni(null);
+            }}
+          />
           <AlanSarmal etiket={t("disHizmetAciklama")}>
             {(b) => (
               <Alan

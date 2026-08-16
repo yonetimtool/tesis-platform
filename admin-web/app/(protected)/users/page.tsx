@@ -26,9 +26,10 @@ import { ParolaAlani } from "@/components/ParolaAlani";
 import { alanliHataMetni, apiSend } from "@/lib/client";
 import type { UnitList } from "@/lib/types";
 import { jsonFetcher } from "@/lib/fetcher";
+import { TelefonAlani } from "@/components/TelefonAlani";
 import { useT } from "@/lib/i18n/kullan";
 import { ROLE_OPTIONS as ROLES, rolAdi } from "@/lib/roles";
-import { telefonGiris, telefonNormalle } from "@/lib/telefon";
+import { telefonNormalle } from "@/lib/telefon";
 import type { UserDetail, UserListResponse, UserRole, UserRow } from "@/lib/types";
 
 /**
@@ -549,24 +550,16 @@ export default function UsersPage() {
             )}
           </AlanSarmal>
 
-          <AlanSarmal
+          {/* (P166 §9) ORTAK TELEFON ALANI. Once yalniz BICIMLENIYORDU;
+              dogrulama yoktu, yani "0212 …" ya da yarim bir numara
+              sessizce kaydediliyordu. */}
+          <TelefonAlani
             etiket={t("kullaniciTelefon")}
             ipucu={t("kullaniciTelefonIpucu")}
             zorunlu
-          >
-            {(b) => (
-              <Alan
-                {...b}
-                value={telefonGiris(form.telefon)}
-                // (P123) TEK bicimlendirici — bkz. lib/telefon.ts.
-                onChange={(e) =>
-                  setForm({ ...form, telefon: telefonGiris(e.target.value) })
-                }
-                placeholder={t("kullaniciTelefonOrnek")}
-                required
-              />
-            )}
-          </AlanSarmal>
+            deger={form.telefon}
+            onDegisti={(v) => setForm({ ...form, telefon: v })}
+          />
 
           <AlanSarmal
             etiket={t("kullaniciAranabilir")}

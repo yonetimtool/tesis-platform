@@ -28,10 +28,11 @@ import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import type { TenantAdminCreate, TenantAdminCreatedOut } from "@/lib/types";
 import { ParolaAlani } from "@/components/ParolaAlani";
+import { TelefonAlani } from "@/components/TelefonAlani";
 import { useT } from "@/lib/i18n/kullan";
 import { ApiHatasi } from "@/lib/client";
 import { tarihSaatUzun } from "@/lib/tarih";
-import { telefonGiris, telefonNormalle } from "@/lib/telefon";
+import { telefonNormalle } from "@/lib/telefon";
 
 interface TenantRow {
   id: string;
@@ -372,17 +373,13 @@ export default function TenantsPage() {
                       minLength={2} />
   )}
 </AlanSarmal>
-                  <AlanSarmal etiket={t("kullaniciTelefon")} ipucu={t("tesisTelefonIpucu")}>
-              {(b) => (
-                <Alan {...b}
-                                      value={telefonGiris(y.phone)}
-                      // (P123) TEK bicimlendirici — bkz. lib/telefon.ts.
-                      onChange={(e) => setYonetici(i, { phone: telefonGiris(e.target.value) })}
-                      placeholder={t("kullaniciTelefonOrnek")}
-                      required
-              />
-              )}
-            </AlanSarmal>
+                  <TelefonAlani
+                    etiket={t("kullaniciTelefon")}
+                    ipucu={t("tesisTelefonIpucu")}
+                    zorunlu
+                    deger={y.phone}
+                    onDegisti={(v) => setYonetici(i, { phone: v })}
+                  />
                   <AlanSarmal
                     etiket={t("tesisParolaOpsiyonel")}
                     ipucu={t("kullaniciParolaBosYeni")}

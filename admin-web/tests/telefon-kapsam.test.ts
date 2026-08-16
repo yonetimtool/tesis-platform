@@ -70,13 +70,20 @@ describe("telefon girdisi kapsami", () => {
       .toEqual([]);
   });
 
-  it("EN AZ UC girdi olculuyor (bos kume 'temiz' sayilmasin)", () => {
+  it("EN AZ UC ALAN olculuyor (bos kume 'temiz' sayilmasin)", () => {
     // Kapsam kilidinin en sinsi bozulma bicimi: desen degisir, tarama
     // hicbir sey bulamaz ve "gecti" der.
-    const sayi = kaynaklar()
+    //
+    // (P166 §9) SAYIMA `<TelefonAlani` DE GIRDI. Alanlarin cogu artik ham
+    // `<input value={telefonGiris(...)}>` degil, ORTAK BILESEN — yalniz
+    // eski kalibi saymak, gocun kendisini "kapsam kaybi" sanirdi.
+    const metin = kaynaklar()
       .map((f) => yorumsuz(readFileSync(f, "utf8")))
-      .join("\n")
-      .match(/value=\{[^}]*(?:telefon|phone)[^}]*\}/gi)?.length ?? 0;
-    expect(sayi).toBeGreaterThanOrEqual(3);
+      .join("\n");
+    const hamGirdi = metin.match(/value=\{[^}]*(?:telefon|phone)[^}]*\}/gi)?.length ?? 0;
+    const bilesen = metin.match(/<TelefonAlani\b/g)?.length ?? 0;
+    expect(hamGirdi + bilesen).toBeGreaterThanOrEqual(3);
+    // Ve bilesen GERCEKTEN kullaniliyor (goc yarim kalmasin).
+    expect(bilesen).toBeGreaterThanOrEqual(3);
   });
 });

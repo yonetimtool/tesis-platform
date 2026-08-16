@@ -18,6 +18,7 @@ import {
   useOnay,
 } from "@/components/ui";
 import { Liste } from "@/components/Liste";
+import { TelefonAlani, telefonHataMetni } from "@/components/TelefonAlani";
 import { Modal, ModalEylemler } from "@/components/Modal";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
@@ -25,6 +26,7 @@ import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import { kurusToTL, kurusToTLSade, tlToKurus } from "@/lib/money";
 import { sayiCoz } from "@/lib/sayi";
+import { telefonGiris, telefonNormalle } from "@/lib/telefon";
 import { useSorguSecimi } from "@/lib/sorgu-secimi";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 
@@ -40,7 +42,20 @@ import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
  * anlatilir; tablo ve form bundan uretilir.
  */
 
-type AlanTip = "metin" | "sayi" | "kurus" | "tarih" | "bool" | "secim" | "referans";
+// (P166 §9) `telefon` AYRI BIR TIP. Once `metin`di ve personel/firma
+// defterlerinde kullanici sinirsiz rakam yazabiliyordu — Kerem'in
+// bildirdigi kusur buydu. Tip olunca bicimleme, uzunluk siniri, klavye
+// ve hata metni ORTAK BILESENDEN gelir; defter tanimina tek kelime
+// yazmak yetiyor.
+type AlanTip =
+  | "metin"
+  | "telefon"
+  | "sayi"
+  | "kurus"
+  | "tarih"
+  | "bool"
+  | "secim"
+  | "referans";
 
 interface Alan {
   ad: string;
@@ -153,7 +168,7 @@ const DEFTERLER: Defter[] = [
       { ad: "ad", etiket: "tanimAlanAd", tip: "metin", zorunlu: true, sutun: true },
       { ad: "gorev", etiket: "tanimAlanGorev", tip: "metin", sutun: true },
       { ad: "tc", etiket: "tanimAlanTc", tip: "metin" },
-      { ad: "telefon", etiket: "tanimAlanTelefon", tip: "metin", sutun: true },
+      { ad: "telefon", etiket: "tanimAlanTelefon", tip: "telefon", sutun: true },
       { ad: "giris_tarihi", etiket: "tanimAlanGirisTarihi", tip: "tarih" },
       { ad: "cikis_tarihi", etiket: "tanimAlanCikisTarihi", tip: "tarih" },
       { ad: "maas_kurus", etiket: "tanimAlanMaas", tip: "kurus" },
@@ -273,6 +288,7 @@ function liraya(kurus: unknown): string {
  *  saglar (`Record<AlanTip, ...>` eksik anahtari yakalar). */
 const GIRIS_TIPI: Record<AlanTip, string> = {
   metin: "text",
+  telefon: "tel",
   sayi: "text",
   kurus: "text",
   tarih: "date",
@@ -560,6 +576,19 @@ function DefterGorunumu({ defter }: { defter: Defter }) {
           return;
         }
         govde[a.ad] = sonuc.deger;
+      } else if (a.tip === "telefon") {
+        // (P166 §9) GECERSIZ NUMARA ISTEK ATMADAN DURDURULUR. Sunucu
+        // `max_length=30` disinda bir sey denetlemiyor: gecersiz numara
+        // SESSIZCE kaydolur ve ancak SMS gitmeyince fark edilirdi.
+        const telHata = telefonHataMetni(metin, Boolean(a.zorunlu), t);
+        if (telHata) {
+          setFormHata(telHata);
+          return;
+        }
+        // E.164 GONDERILIR — kullanici/tesis kayitlariyla AYNI bicim.
+        // Ayni numaranin iki farkli yazimla iki kayit uretmesi, telefonu
+        // bir esleme anahtari olarak kullanan her yeri bozardi.
+        govde[a.ad] = telefonNormalle(metin);
       } else govde[a.ad] = metin;
     }
     setKaydediyor(true);
@@ -650,7 +679,11 @@ function DefterGorunumu({ defter }: { defter: Defter }) {
                       // demekti: `5000.00` okuyan kullanici bes yuz bin
                       // sanabilirdi.
                       kurusToTL(Number(k[a.ad] ?? 0))
-                    : String(k[a.ad] ?? "—"),
+                    : a.tip === "telefon"
+                      ? // (P166 §9) TABLODA DA BOSLUKLU: depoda E.164
+                        // (`+905431992904`) durur, insan onu okuyamaz.
+                        telefonGiris(String(k[a.ad] ?? "")) || "—"
+                      : String(k[a.ad] ?? "—"),
           }))}
           satirlar={kayitlar}
           kimlik={(k) => String(k.id)}
@@ -688,7 +721,19 @@ function DefterGorunumu({ defter }: { defter: Defter }) {
       >
         <HataDurumu mesaj={formHata} />
         <div className="grid gap-3 sm:grid-cols-2">
-          {defter.alanlar.map((a) => (
+          {defter.alanlar.map((a) =>
+            // (P166 §9) TELEFON KENDI SARMALINI TASIR: hata metni, ipucu
+            // ve `aria-describedby` bagi bilesenin icinde kurulur. Disina
+            // ikinci bir `AlanSarmal` koymak, ic ice iki etiket demekti.
+            a.tip === "telefon" ? (
+              <TelefonAlani
+                key={a.ad}
+                etiket={t(a.etiket)}
+                zorunlu={Boolean(a.zorunlu)}
+                deger={String(form[a.ad] ?? "")}
+                onDegisti={(v) => setForm({ ...form, [a.ad]: v })}
+              />
+            ) : (
             <AlanSarmal key={a.ad} etiket={t(a.etiket)}>
               {() =>
                 a.tip === "bool" ? (
@@ -734,7 +779,8 @@ function DefterGorunumu({ defter }: { defter: Defter }) {
               )
               }
             </AlanSarmal>
-          ))}
+            ),
+          )}
         </div>
       </Modal>
       {diyalog}

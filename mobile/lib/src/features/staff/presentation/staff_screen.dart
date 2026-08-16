@@ -17,6 +17,7 @@ import '../../../core/error/akis_hatasi.dart';
 import '../../../core/ui/gorsel_cozme.dart';
 import '../../../core/ui/merkez_diyalog.dart';
 import '../../../core/ui/telefon_alani.dart';
+import '../../../core/ui/telefon_hata_metni.dart';
 
 /// Saha Personeli (Ozellik 3) — yonetici/admin: guvenlik + tesis gorevlisi
 /// hesaplarini listeler ve ekler. yonetici backend'de YALNIZ saha personeli
@@ -458,10 +459,17 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
                     ? l10n.personelBosBirakDegismezNokta
                     : l10n.sakinGirisAnahtari,
               ),
-              // Duzenlemede telefon opsiyonel (bos = degismez); eklemede zorunlu.
-              validator: (v) => _isEdit || (v?.trim() ?? '').isNotEmpty
-                  ? null
-                  : l10n.ortakTelefonZorunlu,
+              // (P166 §9) DOGRULAMA ARTIK BICIMI DE OLCUYOR.
+              //
+              // Eskiden yalniz "bos mu" bakiliyordu: bicimlendirici
+              // rakam disini yutuyor ve 10 hanede kesiyordu ama YARIM
+              // bir numara (`0543 199`) ya da SABIT HAT (`0212…`)
+              // sorunsuz geciyordu. Kullanici bunu ancak SMS gitmeyince
+              // fark ederdi — yani hic fark etmezdi.
+              //
+              // Duzenlemede telefon opsiyonel (bos = degismez).
+              validator: (v) =>
+                  telefonHataMetni(l10n, v ?? '', zorunlu: !_isEdit),
             ),
             const SizedBox(height: 12),
             // Parola alani YALNIZ eklemede; duzenlemede ayri "Parola sıfırla".

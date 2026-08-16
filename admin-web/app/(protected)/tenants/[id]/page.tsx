@@ -18,9 +18,10 @@ import { KopyaKod } from "@/components/KopyaKod";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
+import { TelefonAlani } from "@/components/TelefonAlani";
 import { useT } from "@/lib/i18n/kullan";
 import { tarihSaatUzun } from "@/lib/tarih";
-import { telefonGiris, telefonNormalle } from "@/lib/telefon";
+import { telefonNormalle } from "@/lib/telefon";
 
 interface Yonetici {
   id: string;
@@ -394,14 +395,12 @@ export default function TenantDetailPage() {
                       minLength={2} />
   )}
 </AlanSarmal>
-                  <AlanSarmal etiket={t("kullaniciTelefon")} ipucu={t("tesisGlobalBenzersiz")}>
-  {(b) => (
-    <Alan {...b} value={telefonGiris(telefon)}
-                      // (P123) TEK bicimlendirici — bkz. lib/telefon.ts.
-                      onChange={(e) => setTelefon(telefonGiris(e.target.value))}
-                      placeholder={t("kullaniciTelefonOrnek")} />
-  )}
-</AlanSarmal>
+                  <TelefonAlani
+                    etiket={t("kullaniciTelefon")}
+                    ipucu={t("tesisGlobalBenzersiz")}
+                    deger={telefon}
+                    onDegisti={setTelefon}
+                  />
                 </div>
                 <HataDurumu mesaj={formErr} />
               </form>
@@ -503,14 +502,13 @@ export default function TenantDetailPage() {
                       autoFocus />
   )}
 </AlanSarmal>
-                  <AlanSarmal etiket={t("kullaniciTelefon")} ipucu={t("tesisGlobalBenzersiz")}>
-  {(b) => (
-    <Alan {...b} value={telefonGiris(yeniTel)}
-                      onChange={(e) => setYeniTel(telefonGiris(e.target.value))}
-                      placeholder={t("kullaniciTelefonOrnek")}
-                      required />
-  )}
-</AlanSarmal>
+                  <TelefonAlani
+                    etiket={t("kullaniciTelefon")}
+                    ipucu={t("tesisGlobalBenzersiz")}
+                    zorunlu
+                    deger={yeniTel}
+                    onDegisti={setYeniTel}
+                  />
                 </div>
                 <HataDurumu mesaj={yeniHata} />
               </form>

@@ -100,6 +100,12 @@ describe("sozluk butunlugu", () => {
     // (Global Positioning System) ve yedi dilin hepsinde ayni harflerle
     // yazilir — Arapcada da Latin harfleriyle. Ceviri eksigi degil.
     "GPS",
+    // (P166 §9) TELEFON YER TUTUCUSU BIR BICIM MASKESIDIR, cumle degil.
+    // `05XX XXX XX XX` Turk cep numarasinin YAZIM KALIBIDIR; hedef dile
+    // cevirmek (orn. `05XX XXX XX XX` yerine yerel bir kalip) numarayi
+    // YANLIS gosterirdi — alan yine TR numarasi bekliyor. Kalibi ceviren
+    // bir "duzeltme", kullaniciya olmayan bir bicimi ogretirdi.
+    "05XX XXX XX XX",
     // (P133.2) Ozet cumlesinin yan cumle AYIRICISI. Ceviri degil NOKTALAMA:
     // Latin alfabesi kullanan dillerin hepsinde ", " — Arapca "، " ile
     // ayrildigi icin anahtar yine de sozlukte durur.
