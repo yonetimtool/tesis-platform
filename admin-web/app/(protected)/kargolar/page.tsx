@@ -1,10 +1,23 @@
 "use client";
 
-// (P126.4) KARGOLAR — güvenliğin teslimat ekranı.
+// (P126.4) KARGOLAR — kapı teslimatı + sakinin teslim alması.
 //
 // Kargo kapıda TESLİM ALINIR, sonra sakine TESLİM EDİLİR: iki ayrı an ve
-// iki ayrı durum (`bekliyor` → `teslim_alindi`). Bu sayfa birincisini
-// kaydeder ve bekleyenleri listeler.
+// iki ayrı durum (`bekliyor` → `teslim_alindi`).
+//
+// (P162 §5) İKİNCİ AN DA BURADA. Ölçüldü: mobilde sakin kargosunu
+// "teslim aldım" diye işaretleyebiliyordu, webde işaretleyemiyordu.
+//
+// AYRI SAYFA AÇILMADI ve bu bilinçli: `GET /kargo` zaten ROL KAPSAMLI —
+// `resident` yalnızca KENDİ dairelerinin kargolarını görür
+// (`_aktif_daire_ids`). Yani sakin bu sayfayı açtığında zaten kendi
+// listesini görüyordu; eksik olan tek şey düğmeydi. İkinci bir sayfa,
+// aynı listeyi iki yerde tutmak olurdu.
+//
+// DÜĞME ROL FARKINDA ama YETKİ KARARI SUNUCUDA: `PATCH /kargo/{id}`
+// yalnız o dairenin aktif sakinine açık (başkasına 404 — varlık
+// sızdırılmaz). İstemcideki kontrol yalnızca GÖRÜNÜRLÜK içindir;
+// güvenliğe basacağı 404 üreten bir düğme göstermemek için.
 import { useState } from "react";
 import useSWR from "swr";
 
@@ -19,7 +32,7 @@ import {
   Kart,
 } from "@/components/ui";
 import { useToast } from "@/components/Toast";
-import { apiSend } from "@/lib/client";
+import { alanliHataMetni, apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
@@ -47,6 +60,11 @@ function durumAnahtari(durum: string): SozlukAnahtari {
   return "kargoDurumBilinmiyor";
 }
 
+// UCLUDE/GOVDEDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
+const ROL_SAKIN = "resident" as const;
+const KARGO_BEKLIYOR = "bekliyor" as const;
+const KARGO_TESLIM = "teslim_alindi" as const;
+
 export default function KargolarPage() {
   const t = useT();
   const toast = useToast();
@@ -61,6 +79,22 @@ export default function KargolarPage() {
   const [hata, setHata] = useState<string | null>(null);
   const [gonderiyor, setGonderiyor] = useState(false);
   const [modalAcik, setModalAcik] = useState(false);
+  // Rol: teslim düğmesinin GÖRÜNÜRLÜĞÜ için (yetki sunucuda).
+  const { data: ben } = useSWR<{ role?: string }>("/api/me", jsonFetcher);
+  const sakinMi = ben?.role === ROL_SAKIN;
+
+  async function teslimAl(id: string) {
+    try {
+      // Sunucu ATOMİK yapar: `durum='bekliyor'` koşullu UPDATE. Eşler
+      // aynı anda bassa bile ikincisi 409 alır ve KİMİN teslim aldığı
+      // değişmez.
+      await apiSend(`/api/kargo/${id}`, "PATCH", { durum: KARGO_TESLIM });
+      toast.success(t("kargoTeslimAlindiBildirim"));
+      void mutate();
+    } catch (e) {
+      toast.error(alanliHataMetni(e, t("ortakHataOlustu")));
+    }
+  }
 
   const kayitlar = data?.items ?? [];
 
@@ -171,6 +205,19 @@ export default function KargolarPage() {
               {k.firma ? ` · ${k.firma}` : ""}
             </p>
             {k.notlar ? <p className="text-sm">{k.notlar}</p> : null}
+            {/* TESLIM ALDIM — yalniz SAKIN ve yalniz BEKLEYEN kargoda.
+                Teslim alinmis bir kargoyu tekrar isaretlemek, geri
+                donusu olmayan bir damgayi ikinci kez basmakti (sunucu da
+                409 doner). Guvenlikte dugme HIC cizilmez: sunucu ona 404
+                verir ve basilacak bir dugme gostermek "yetkim var
+                sandim" demektir. */}
+            {sakinMi && k.durum === KARGO_BEKLIYOR ? (
+              <div className="pt-1">
+                <Dugme boy="kucuk" tur="birincil" onClick={() => void teslimAl(k.id)}>
+                  {t("kargoTeslimAldim")}
+                </Dugme>
+              </div>
+            ) : null}
           </Kart>
         ))}
       </section>

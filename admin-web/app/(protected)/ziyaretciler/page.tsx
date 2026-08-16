@@ -47,6 +47,16 @@ export default function ZiyaretcilerPage() {
   const [hata, setHata] = useState<string | null>(null);
   const [gonderiyor, setGonderiyor] = useState(false);
   const [modalAcik, setModalAcik] = useState(false);
+  // (P162 §5) ZIYARETCI KAYDINI DUZENLEME — webde YOKTU.
+  //
+  // Uc (`PATCH /visitors/{id}`) ve rol kapisi (`_REGISTRAR` = guvenlik)
+  // zaten vardi; mobilde kullaniliyordu, webde vekil ve dugme eksikti.
+  // Kapida yanlis yazilan bir ad ya da daire, vardiya devrinde
+  // duzeltilebilmeli — aksi halde kayit kalici olarak yanlis kalir.
+  //
+  // AYNI MODAL: yeni kayit ile duzenleme tek formu paylasir. Iki ayri
+  // form, iki ayri dogrulama demekti ve biri gerilerdi.
+  const [duzenlenen, setDuzenlenen] = useState<{ id: string } | null>(null);
 
   const kayitlar = data?.items ?? [];
 
@@ -60,14 +70,20 @@ export default function ZiyaretcilerPage() {
     try {
       // DAIRE NO ile gonderilir: kapida görevli daire NUMARASINI bilir,
       // kaydın kimliğini değil. Sunucu numarayı çözer.
-      await apiSend("/api/visitors", "POST", {
+      const govde = {
         unit_no: daireNo.trim(),
         ziyaretci_ad: ad.trim(),
+        // `null` ACIKCA gonderilir: notu TEMIZLEMEK icin tek yol bu.
+        // Alani hic gondermemek "degistirme" demek olurdu.
         notlar: notlar.trim() || null,
-      });
+      };
+      if (duzenlenen) await apiSend(`/api/visitors/${duzenlenen.id}`, "PATCH", govde);
+      else await apiSend("/api/visitors", "POST", govde);
       setAd("");
       setDaireNo("");
       setNotlar("");
+      setDuzenlenen(null);
+      setModalAcik(false);
       toast.success(t("ziyaretciKaydedildi"));
       void mutate();
     } catch (e) {
@@ -93,7 +109,21 @@ export default function ZiyaretcilerPage() {
         <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
         {t("ziyaretciBaslik")}
       </h1>
-        <Dugme tur="birincil" boy="kucuk" onClick={() => setModalAcik(true)}>
+        <Dugme
+          tur="birincil"
+          boy="kucuk"
+          onClick={() => {
+            // YENI KAYIT: duzenleme durumu ve alanlar TEMIZLENIR.
+            // Temizlemeseydik "yeni" dugmesi son duzenlenen kaydin
+            // uzerine yazardi.
+            setDuzenlenen(null);
+            setAd("");
+            setDaireNo("");
+            setNotlar("");
+            setHata(null);
+            setModalAcik(true);
+          }}
+        >
           {t("ziyaretciYeni")}
         </Dugme>
       </div>
@@ -101,7 +131,7 @@ export default function ZiyaretcilerPage() {
       <Modal
         acik={modalAcik}
         onKapat={() => setModalAcik(false)}
-        baslik={t("ziyaretciYeni")}
+        baslik={duzenlenen ? t("ziyaretciDuzenle") : t("ziyaretciYeni")}
         eylemler={
           <>
             <Dugme tur="sessiz" onClick={() => setModalAcik(false)} disabled={gonderiyor}>
@@ -112,7 +142,7 @@ export default function ZiyaretcilerPage() {
             disabled={gonderiyor}
             onClick={() => void kaydet()}
           >
-            {gonderiyor ? t("ortakKaydediliyor") : t("ziyaretciGirisKaydet")}
+            {gonderiyor ? t("ortakKaydediliyor") : duzenlenen ? t("ortakKaydet") : t("ziyaretciGirisKaydet")}
           </Dugme>
           </>
         }
@@ -165,13 +195,33 @@ export default function ZiyaretcilerPage() {
               {z.cikis_zamani ? ` → ${tarihSaatUzun(z.cikis_zamani)}` : ""}
             </p>
             {z.notlar ? <p className="text-sm">{z.notlar}</p> : null}
-            {/* CIKIS DUGMESI yalnizca ICERIDEKI ziyaretcide: cikmis birine
-                tekrar cikis yaptirmak, kaydi ikinci kez damgalamak olurdu. */}
-            {!z.cikis_zamani ? (
-              <Dugme boy="kucuk" onClick={() => void cikisYap(z.id)}>
-                {t("ziyaretciCikis")}
+            <div className="flex flex-wrap gap-2">
+              {/* DUZENLEME CIKISTAN BAGIMSIZ: kapida yanlis yazilan bir ad
+                  ya da daire, ziyaretci ciktiktan SONRA da duzeltilebilmeli
+                  — kayit aksi halde kalici olarak yanlis kalir. Sunucu
+                  kapisi (`_REGISTRAR`) ikisinde de ayni. */}
+              <Dugme
+                boy="kucuk"
+                onClick={() => {
+                  setDuzenlenen({ id: z.id });
+                  setAd(z.ziyaretci_ad);
+                  setDaireNo(z.unit_no ?? "");
+                  setNotlar(z.notlar ?? "");
+                  setHata(null);
+                  setModalAcik(true);
+                }}
+              >
+                {t("ortakDuzenle")}
               </Dugme>
-            ) : null}
+              {/* CIKIS DUGMESI yalnizca ICERIDEKI ziyaretcide: cikmis
+                  birine tekrar cikis yaptirmak, kaydi ikinci kez
+                  damgalamak olurdu. */}
+              {!z.cikis_zamani ? (
+                <Dugme boy="kucuk" onClick={() => void cikisYap(z.id)}>
+                  {t("ziyaretciCikis")}
+                </Dugme>
+              ) : null}
+            </div>
           </Kart>
         ))}
       </section>

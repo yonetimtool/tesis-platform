@@ -22,9 +22,10 @@ import {
   IskeletMetin,
   Kart,
   Rozet,
+  useOnay,
 } from "@/components/ui";
 import { useToast } from "@/components/Toast";
-import { apiSend } from "@/lib/client";
+import { alanliHataMetni, apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import { telefonGiris, telefonHatasi, telefonNormalle } from "@/lib/telefon";
@@ -59,6 +60,17 @@ export default function DisHizmetlerPage() {
   const [hata, setHata] = useState<string | null>(null);
   const [gonderiyor, setGonderiyor] = useState(false);
   const [modalAcik, setModalAcik] = useState(false);
+  // (P162 §5) DIS HIZMET DUZENLEME + SILME — webde YOKTU.
+  //
+  // Uclar (`PATCH/DELETE /external-services/{id}`) ve rol kapisi
+  // (`_WRITER` = admin + yonetici) zaten vardi; mobilde kullaniliyordu,
+  // webde vekil ve dugme eksikti. Rehberdeki bir numara degistiginde
+  // kaydi silip yeniden yazmak, kaydin kimligini (ve ona bagli izleri)
+  // gereksizce degistirmekti.
+  //
+  // AYNI MODAL: yeni kayit ile duzenleme tek formu paylasir.
+  const [duzenlenen, setDuzenlenen] = useState<{ id: string } | null>(null);
+  const { onayla, diyalog } = useOnay();
 
   const kayitlar = data?.items ?? [];
 
@@ -79,19 +91,26 @@ export default function DisHizmetlerPage() {
     setHata(null);
     setGonderiyor(true);
     try {
-      await apiSend("/api/external-services", "POST", {
+      const govde = {
         tur: tur.trim(),
         ad: ad.trim(),
         soyad: soyad.trim(),
         // Sunucuya NORMALLESTIRILMIS gider (P123).
         telefon: telefonNormalle(telefon),
         aciklama: aciklama.trim() || null,
-      });
+      };
+      if (duzenlenen) {
+        await apiSend(`/api/external-services/${duzenlenen.id}`, "PATCH", govde);
+      } else {
+        await apiSend("/api/external-services", "POST", govde);
+      }
       setTur("");
       setAd("");
       setSoyad("");
       setTelefon("");
       setAciklama("");
+      setDuzenlenen(null);
+      setModalAcik(false);
       toast.success(t("disHizmetEklendi"));
       void mutate();
     } catch (e) {
@@ -101,13 +120,45 @@ export default function DisHizmetlerPage() {
     }
   }
 
+  async function sil(h: { id: string; ad: string; soyad: string }) {
+    const ok = await onayla({
+      baslik: t("ortakSilBaslik"),
+      mesaj: t("ortakSilOnay", { ad: `${h.ad} ${h.soyad}` }),
+      onayMetni: t("ortakSil"),
+      tehlikeli: true,
+    });
+    if (!ok) return;
+    try {
+      await apiSend(`/api/external-services/${h.id}`, "DELETE");
+      toast.success(t("ortakSilindi"));
+      void mutate();
+    } catch (e) {
+      toast.error(alanliHataMetni(e, t("ortakSilinemedi")));
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
         {t("disHizmetBaslik")}
       </h1>
-        <Dugme tur="birincil" boy="kucuk" onClick={() => setModalAcik(true)}>
+        <Dugme
+          tur="birincil"
+          boy="kucuk"
+          onClick={() => {
+            // YENI KAYIT: duzenleme durumu ve alanlar temizlenir; aksi
+            // halde "yeni" dugmesi son duzenlenenin uzerine yazardi.
+            setDuzenlenen(null);
+            setTur("");
+            setAd("");
+            setSoyad("");
+            setTelefon("");
+            setAciklama("");
+            setHata(null);
+            setModalAcik(true);
+          }}
+        >
           {t("disHizmetYeni")}
         </Dugme>
       </div>
@@ -224,10 +275,31 @@ export default function DisHizmetlerPage() {
                   {h.aciklama}
                 </p>
               ) : null}
+              <div className="flex flex-wrap gap-2 pt-1">
+                <Dugme
+                  boy="kucuk"
+                  onClick={() => {
+                    setDuzenlenen({ id: h.id });
+                    setTur(h.tur);
+                    setAd(h.ad);
+                    setSoyad(h.soyad);
+                    setTelefon(telefonGiris(h.telefon));
+                    setAciklama(h.aciklama ?? "");
+                    setHata(null);
+                    setModalAcik(true);
+                  }}
+                >
+                  {t("ortakDuzenle")}
+                </Dugme>
+                <Dugme boy="kucuk" tur="tehlike" onClick={() => void sil(h)}>
+                  {t("ortakSil")}
+                </Dugme>
+              </div>
             </Kart>
           ))
         )}
       </section>
+      {diyalog}
     </div>
   );
 }

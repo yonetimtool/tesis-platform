@@ -33,8 +33,8 @@ nereye bakılacağını söyledi.
 | NFC noktası | ekle · düzenle · sil | sil | ✅ web daha zengin |
 | Devriye planı | ekle · düzenle · sil | ekle · düzenle · sil | ✅ eşit |
 | Vardiya | ekle · düzenle · sil | atama (`PUT`) | ✅ eşit (mobildeki `PUT` atamadır, CRUD değil) |
-| Ziyaretçi | ekle | ekle · düzenle | ⚠️ mobilde çıkış güncellemesi var |
-| Kargo | ekle | ekle · düzenle | ⚠️ mobilde teslim güncellemesi var |
+| Ziyaretçi | ekle · **düzenle** · çıkış | ekle · düzenle | ✅ **P162'de kapandı** |
+| Kargo | kapıda kaydet (güvenlik) · **teslim aldım** (sakin) | aynı | ✅ **P162'de kapandı** |
 | Talep / şikayet | aç · çöz/reddet | aç · çöz | ✅ eşit |
 | Duyuru | düzenle · sil (**ekleme yok**) | ekle · düzenle · sil | ⛔ **bilinçli** — `auth.md §4`: `POST /announcements` admin'e 403; duyuru site yöneticisine ait (mobil) |
 | Site kuralı | ekle · düzenle · sil (`/site-kurallari`) | ekle · düzenle · sil | ✅ **P162'de kapandı** |
@@ -43,13 +43,26 @@ nereye bakılacağını söyledi.
 | İcra dosyası | ekle · düzenle | — | ✅ web daha zengin |
 | Tanımlar (firma, personel, araç, sayaç, kasa) | ekle · düzenle · sil | kısmi | ✅ web daha zengin |
 | Entegrasyon | ekle · düzenle · sil | ekle · düzenle · sil | ✅ eşit |
-| Dış hizmet | ekle | ekle · düzenle · sil | ⚠️ mobilde düzenleme/silme var |
+| Dış hizmet | ekle · **düzenle** · **sil** | ekle · düzenle · sil | ✅ **P162'de kapandı** |
 
-## Kapatılmayan farklar ve nedeni
+## Kapatılmayan fark kalmadı
 
-### Ziyaretçi / kargo / dış hizmet güncellemeleri
+Tablodaki tek ⛔ satırı (duyuru oluşturma) bir eksik değil, **bilinçli bir
+ürün kararıdır**: `POST /announcements` admin'e 403 döner; duyuru site
+yöneticisine aittir (`auth.md §4`).
 
-Mobilde var, webde yok. Küçük farklar; kapatılmadı.
+### Ölçüm bir kez tabloyu düzeltti
+
+"Kargo — mobilde teslim güncellemesi var" satırı kaba fiil sayımından
+gelmişti ve **güvenlik ekranının eksiği sanılmıştı**. Sunucuya bakınca
+`PATCH /kargo/{id}` kapısının `_RESIDENT` olduğu görüldü — o bir **sakin**
+eylemi. Doğru kapanış güvenlik ekranına düğme koymak değil, sakinin aynı
+listede kendi kargosunu işaretleyebilmesiydi.
+
+Ayrı bir sakin sayfası da açılmadı: `GET /kargo` zaten rol kapsamlı
+(`resident` yalnızca kendi dairelerininkini görür), yani sakin o sayfayı
+açtığında zaten kendi listesini görüyordu. İkinci bir sayfa, aynı listeyi
+iki yerde tutmak olurdu.
 
 ## P162'de kapatılanlar
 
@@ -57,7 +70,14 @@ Mobilde var, webde yok. Küçük farklar; kapatılmadı.
 2. **Sakin oluştururken daire ataması** (`5a76ae49`) — webde iki adım
    gerekiyordu; artık tek adımda, `POST /users` ardından
    `POST /units/{id}/residents`. Sözleşme değişmedi.
-3. **Site kuralı ve etkinlik yönetimi** — iki yeni sayfa:
+3. **Ziyaretçi kaydı düzenleme** — uç (`PATCH /visitors/{id}`, `_REGISTRAR`)
+   vardı, vekil ve düğme yoktu. Düzenleme **çıkıştan bağımsız**: kapıda
+   yanlış yazılan bir ad, ziyaretçi çıktıktan sonra da düzeltilebilmeli.
+4. **Dış hizmet düzenleme + silme** — uçlar (`_WRITER`) vardı; rehberdeki
+   bir numara değiştiğinde kaydı silip yeniden yazmak, kaydın kimliğini
+   gereksizce değiştirmekti.
+5. **Kargo teslim alma (sakin)** — yukarıdaki ölçüm notuna bakın.
+6. **Site kuralı ve etkinlik yönetimi** — iki yeni sayfa:
    `/site-kurallari` ve `/etkinlik-yonetimi`, rol kapısı
    `["admin", "yonetici"]` (sunucudaki `_MANAGER` ile aynı küme).
 
