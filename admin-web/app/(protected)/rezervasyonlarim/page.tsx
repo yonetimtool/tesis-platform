@@ -22,6 +22,7 @@ import {
   IskeletMetin,
   Kart,
   Secim,
+  Sekmeler,
 } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
@@ -39,6 +40,8 @@ type Rezervasyon = {
   bitis: string;
   kisi_sayisi: number;
   durum: string;
+  /** (P165) Bitis saati gecti mi — SUNUCU hesaplar (tesis saat dilimi). */
+  gecmis: boolean;
 };
 
 // METIN DEGIL KIMLIK (modul duzeyi — tur 18 dersi).
@@ -55,11 +58,26 @@ function durumAnahtari(durum: string): SozlukAnahtari {
   return "rezervasyonDurumBilinmiyor";
 }
 
+// UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
+const SEKME_AKTIF = "aktif" as const;
+const SEKME_GECMIS = "gecmis" as const;
+
 export default function RezervasyonlarimPage() {
   const t = useT();
   const toast = useToast();
+  // (P165 §3) AKTIF / GECMIS AYRIMI — SUNUCU KARAR VERIR.
+  //
+  // Olculen kusur: saati gecmis rezervasyonlar aktif listede duruyor ve
+  // altlarinda "Iptal et" yaziyordu. Gecmis bir rezervasyon iptal
+  // EDILEMEZ; dugme yanilticiydi.
+  //
+  // AYRIM ISTEMCIDE YAPILMAZ: cihaz saati yanlis kurulu olabilir ve
+  // `tarih + bitis` ancak TESISIN saat diliminde bir ANA donusur. Sunucu
+  // `?gecmis=` suzgeciyle cevap veriyor, istemci yalnizca soruyor.
+  const [sekme, setSekme] = useState<string>(SEKME_AKTIF);
+  const gecmisMi = sekme === SEKME_GECMIS;
   const { data, error, isLoading, mutate } = useSWR<{ items: Rezervasyon[] }>(
-    "/api/reservations?limit=50&offset=0",
+    `/api/reservations?limit=50&offset=0&gecmis=${gecmisMi}`,
     jsonFetcher,
   );
   const { data: alanVeri } = useSWR<{ items: Alan[] }>(
@@ -117,6 +135,50 @@ export default function RezervasyonlarimPage() {
       toast.error(e instanceof Error ? e.message : t("ortakHataOlustu"));
     }
   }
+
+  const liste = (
+    <div className="space-y-3">
+        {error ? <HataDurumu mesaj={t("ortakHataOlustu")} /> : null}
+        {isLoading ? (
+          <IskeletMetin satir={3} />
+        ) : null}
+        {!isLoading && !error && kayitlar.length === 0 ? (
+          <BosDurum baslik={gecmisMi ? t("rezervasyonGecmisYok") : t("rezervasyonYok")} />
+        ) : null}
+        {kayitlar.map((r) => (
+          <Kart key={r.id} className="space-y-1">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <h3 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{r.alan_ad ?? "—"}</h3>
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs">
+                {t(durumAnahtari(r.durum))}
+              </span>
+            </div>
+            <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+              {tarihBicimi(r.tarih)} · {r.baslangic}–{r.bitis} ·{" "}
+              {t("rezervasyonKisiSayisi", { n: r.kisi_sayisi })}
+            </p>
+            {/* (P165 §3) GECMISTE "IPTAL ET" YOK.
+                Kosul `r.gecmis` — SUNUCUNUN hesapladigi bayrak. Sekmeye
+                bakmak yetmezdi: aktif sekmede duran bir rezervasyonun
+                bitis saati, sayfa acikken de gecebilir. */}
+            {!r.gecmis && r.durum !== "iptal" ? (
+              <Dugme boy="kucuk" onClick={() => void iptalEt(r.id)}>
+                {t("rezervasyonIptalEt")}
+              </Dugme>
+            ) : r.gecmis ? (
+              // SALT-OKUNUR DURUM: iptal edilmisse "iptal edildi",
+              // edilmemisse "tamamlandi". Ucuncu bir durum (katilim yok)
+              // veride YOK — uydurulmadi.
+              <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
+                {r.durum === "iptal"
+                  ? t("rezervasyonGecmisIptal")
+                  : t("rezervasyonGecmisTamam")}
+              </p>
+            ) : null}
+          </Kart>
+        ))}
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -205,35 +267,17 @@ export default function RezervasyonlarimPage() {
 
       <section className="space-y-3">
         <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{t("rezervasyonListe")}</h2>
-        {error ? <HataDurumu mesaj={t("ortakHataOlustu")} /> : null}
-        {isLoading ? (
-          <IskeletMetin satir={3} />
-        ) : null}
-        {!isLoading && !error && kayitlar.length === 0 ? (
-          <BosDurum baslik={t("rezervasyonYok")} />
-        ) : null}
-        {kayitlar.map((r) => (
-          <Kart key={r.id} className="space-y-1">
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h3 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{r.alan_ad ?? "—"}</h3>
-              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs">
-                {t(durumAnahtari(r.durum))}
-              </span>
-            </div>
-            <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
-              {tarihBicimi(r.tarih)} · {r.baslangic}–{r.bitis} ·{" "}
-              {t("rezervasyonKisiSayisi", { n: r.kisi_sayisi })}
-            </p>
-            {r.durum !== "iptal" ? (
-              <Dugme
-                boy="kucuk"
-                onClick={() => void iptalEt(r.id)}
-              >
-                {t("rezervasyonIptalEt")}
-              </Dugme>
-            ) : null}
-          </Kart>
-        ))}
+        {/* IKI SEKME, TEK LISTE GOVDESI: veri anahtari `gecmisMi`ye
+            bagli, yani sekme degisince SUNUCUYA yeniden soruluyor.
+            Govdeyi iki kez yazmak, iki ayri bakim noktasi demekti. */}
+        <Sekmeler
+          aktifId={sekme}
+          onDegis={setSekme}
+          sekmeler={[
+            { id: SEKME_AKTIF, baslik: t("rezervasyonSekmeAktif"), icerik: liste },
+            { id: SEKME_GECMIS, baslik: t("rezervasyonSekmeGecmis"), icerik: liste },
+          ]}
+        />
       </section>
     </div>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import useSWR from "swr";
 
 import { useToast } from "@/components/Toast";
@@ -141,12 +142,6 @@ export default function UnitsPage() {
   const { ref: detayRef, kaydir: detayKaydir } = useAcilinca();
   const [detail, setDetail] = useState<Unit | null>(null);
 
-  function openNew() {
-    setEditingId(null);
-    setForm(EMPTY);
-    setFormErr(null);
-    setOpen(true);
-  }
   function openEdit(u: Unit) {
     setEditingId(u.id);
     setForm({
@@ -190,11 +185,14 @@ export default function UnitsPage() {
       aktif: form.aktif,
     };
     try {
-      if (editingId) await apiSend(`/api/units/${editingId}`, "PATCH", body);
-      else await apiSend("/api/units", "POST", body);
+      // (P165 §2) MODAL ARTIK YALNIZ DUZENLEME. Olusturma dali
+      // KALDIRILDI cunku bu sayfada onu acan bir yol kalmadi (olu kod).
+      // Daire olusturma BINA DUZENLEME'de kendi formuyla duruyor —
+      // `POST /units` ucu ORADA kullaniliyor, yani uc olu DEGIL.
+      await apiSend(`/api/units/${editingId}`, "PATCH", body);
       setOpen(false);
       mutate();
-      toast.success(editingId ? t("daireGuncellendi") : t("daireOlusturuldu"));
+      toast.success(t("daireGuncellendi"));
     } catch (err) {
       const m = err instanceof Error ? err.message : t("ortakKaydedilemedi");
       setFormErr(/zaten kayitli|conflict|no /i.test(m) ? t("daireNoZatenKayitli") : m);
@@ -291,9 +289,18 @@ export default function UnitsPage() {
         <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
           {t("kabukDaireler")}
         </h1>
-        <Dugme tur="birincil" boy="kucuk" onClick={openNew}>
-          {t("daireYeni")}
-        </Dugme>
+        {/* (P165 §2) "YENI DAIRE" DUGMESI KALDIRILDI.
+            Daire ekleme artik BINA DUZENLEME ekraninda; iki giris
+            noktasi, kullaniciyi "hangisi dogru" sorusuyla birakiyordu.
+            Ekran YINE DE cikmaza sokmuyor: bosken ve baslikta oraya
+            goturen bir bag var. */}
+        <Link
+          href="/building-editor"
+          className="odak-ic rounded-btn px-2 py-1 text-satiralt underline"
+          style={{ color: "var(--yz-accent-ink)" }}
+        >
+          {t("daireBinaDuzenlemeGit")}
+        </Link>
       </div>
 
       <BagimlilikUyarisi
@@ -322,7 +329,7 @@ export default function UnitsPage() {
       <Modal
         acik={open}
         onKapat={() => setOpen(false)}
-        baslik={editingId ? t("daireDuzenle") : t("daireYeni")}
+        baslik={t("daireDuzenle")}
         eylemler={
           <>
             <Dugme tur="sessiz" onClick={() => setOpen(false)} disabled={saving}>
@@ -421,6 +428,15 @@ export default function UnitsPage() {
         onTekrar={() => void mutate()}
         yukleniyor={isLoading && !data}
         bosBaslik={t("daireYok")}
+        bosEylem={
+          <Link
+            href="/building-editor"
+            className="odak-ic rounded-btn px-3 py-1.5 text-satiralt underline"
+            style={{ color: "var(--yz-accent-ink)" }}
+          >
+            {t("daireBosDurumEylem")}
+          </Link>
+        }
         bosAciklama={t("daireYokAlt")}
         secilebilir
         secili={secili}

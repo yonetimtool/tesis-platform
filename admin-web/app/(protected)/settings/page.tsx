@@ -100,6 +100,19 @@ const OPERASYON: Ayar[] = [
     min: 1,
     max: 5000,
   },
+  // --- (P165) rezervasyon gecmisi saklama penceresi ---
+  {
+    anahtar: "rezervasyon_gecmis_ay",
+    etiket: "ayarRezervasyonGecmis",
+    ipucu: "ayarRezervasyonGecmisIpucu",
+    tip: "sayi",
+    // `0 = SINIRSIZ` ve alt sinir bu yuzden 0: ayar bir saklama
+    // politikasini ZORLAMAMALI. Ust sinir 120 ay (10 yil) — daha uzugu
+    // bir politika degil, yanlis girilmis bir deger olurdu. Sinirlar
+    // sunucudaki `Field(ge=0, le=120)` ve DDL `CHECK` ile AYNI.
+    min: 0,
+    max: 120,
+  },
   // --- P37 gurultu caydirici ---
   {
     anahtar: "gurultu_esigi",

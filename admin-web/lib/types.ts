@@ -542,6 +542,8 @@ export interface TenantSettings {
   gurultu_esigi?: number;
   /** (P160) Okutmanin NFC noktasina azami uzakligi (metre). Varsayilan 50. */
   okutma_mesafe_esigi_m?: number;
+  /** (P165) Rezervasyon gecmisi kac ay gorunur (`0 = sinirsiz`). */
+  rezervasyon_gecmis_ay?: number;
   gurultu_uyari_metni?: string | null;
   gurultu_integration_id?: string | null;
   // (P132) Tesis konumu — panodaki harita bunlari kullanir. UCU DE
@@ -617,6 +619,22 @@ export interface IntegrationTriggerResult {
 // GET /unit-complaints/building-map — renk API'den gelir (yesil/sari/kirmizi =
 // 0-2/3-4/5+); istemci ESIK HESAPLAMAZ.
 export type DensityRenk = "yesil" | "sari" | "kirmizi";
+
+// (P165) `GET /units/kat-onizleme` — kat silinirse ne kaybedilecek.
+// Kategoriler AYRI: "12 bagli kayit" bir sey soylemez, "3 sakin 9
+// tahakkuk" karar verdirir.
+export interface KatOnizleme {
+  blok: string;
+  kat: number;
+  daire: number;
+  sakin: number;
+  tahakkuk: number;
+  odeme: number;
+  talep: number;
+  rezervasyon: number;
+  /** Tahakkuk ya da odeme var mi — muhasebe izi (ayri uyari). */
+  mali_kayit: boolean;
+}
 
 export interface BuildingMapUnit {
   unit_id: string;

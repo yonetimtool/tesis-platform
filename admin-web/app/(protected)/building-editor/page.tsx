@@ -18,7 +18,7 @@ import { useToast } from "@/components/Toast";
 import { alanliHataMetni, apiSend } from "@/lib/client";
 import { aralikCoz } from "@/lib/aralik";
 import { jsonFetcher } from "@/lib/fetcher";
-import type { Block, BlockList, Unit, UnitList } from "@/lib/types";
+import type { Block, BlockList, KatOnizleme, Unit, UnitList } from "@/lib/types";
 import { tamsayiCoz } from "@/lib/sayi";
 import { useT } from "@/lib/i18n/kullan";
 
@@ -136,6 +136,21 @@ export default function BuildingEditorPage() {
   const [katSilBlok, setKatSilBlok] = useState("");
   const [katSilKat, setKatSilKat] = useState("");
   const [katSilHata, setKatSilHata] = useState<string | null>(null);
+  // (P165) SILMEDEN ONCE ETKI OZETI. Uc yalniz SAYAR; secim degisince
+  // yeniden cekilir. `null` anahtar = istek atilmaz (blok/kat secilmeden
+  // ozet istemek anlamsiz).
+  const katSilSayi = tamsayiCoz(katSilKat);
+  const onizlemeAnahtari =
+    katSilBlok && katSilSayi.tur === "sayi"
+      ? `/api/units/kat-onizleme?blok=${encodeURIComponent(katSilBlok)}&kat=${katSilSayi.deger}`
+      : null;
+  const { data: onizleme, isLoading: onizlemeYukleniyor } = useSWR<KatOnizleme>(
+    onizlemeAnahtari,
+    jsonFetcher,
+  );
+  // MALI KAYIT VARSA IKINCI KAPI: kullanici kat numarasini YAZARAK
+  // onaylar. Tek tiklamayla bir muhasebe izini yok etmek dogru degil.
+  const [katSilOnayMetni, setKatSilOnayMetni] = useState("");
 
   const [tipAcik, setTipAcik] = useState(false);
   const [aralikIfade, setAralikIfade] = useState("");
@@ -191,9 +206,19 @@ export default function BuildingEditorPage() {
       setKatSilHata(t("daireKatSilAlanlar"));
       return;
     }
+    // ONAY METNI SOMUT: "kati sil" tek basina kac dairenin, kac sakinin
+    // gidecegini soylemiyordu.
     const ok = await onayla({
       baslik: t("ortakSilBaslik"),
-      mesaj: t("daireKatSilOnay", { kat: kat.deger, blok: katSilBlok }),
+      mesaj: onizleme
+        ? t("daireKatSilOzetOnay", {
+            kat: kat.deger,
+            blok: katSilBlok,
+            daire: onizleme.daire,
+            sakin: onizleme.sakin,
+            kayit: onizleme.tahakkuk + onizleme.odeme + onizleme.talep + onizleme.rezervasyon,
+          })
+        : t("daireKatSilOnay", { kat: kat.deger, blok: katSilBlok }),
       onayMetni: t("ortakSil"),
       tehlikeli: true,
     });
@@ -205,6 +230,7 @@ export default function BuildingEditorPage() {
         cascade: true,
       });
       setKatSilAcik(false);
+      setKatSilOnayMetni("");
       refresh();
       toast.success(t("daireKatSilindi"));
     } catch (e) {
@@ -518,7 +544,17 @@ export default function BuildingEditorPage() {
             <Dugme tur="sessiz" onClick={() => setKatSilAcik(false)}>
               {t("ortakIptal")}
             </Dugme>
-            <Dugme tur="tehlike" onClick={() => void katSil()}>
+            <Dugme
+              tur="tehlike"
+              // MALI KAYIT VARSA kat numarasi yazilmadan dugme ACILMAZ.
+              // Islev KALDIRILMADI (silme hala mumkun); yalnizca kaza
+              // ile olmasi engellendi.
+              disabled={
+                onizleme?.mali_kayit === true &&
+                katSilOnayMetni.trim() !== String(katSilSayi.tur === "sayi" ? katSilSayi.deger : "")
+              }
+              onClick={() => void katSil()}
+            >
               {t("ortakSil")}
             </Dugme>
           </>
@@ -542,6 +578,67 @@ export default function BuildingEditorPage() {
               )}
             </AlanSarmal>
           </div>
+          {/* (P165) ETKI OZETI — brief'in kurali: "kullanici ne
+              kaybedecegini SILMEDEN ONCE gorsun". */}
+          {onizlemeAnahtari && (
+            <div
+              className="space-y-1 p-3"
+              style={{
+                borderRadius: "var(--yz-radius-btn)",
+                background: "var(--yz-surface-sunken)",
+              }}
+            >
+              {onizlemeYukleniyor && !onizleme ? (
+                <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+                  {t("ortakYukleniyor")}
+                </p>
+              ) : onizleme && onizleme.daire === 0 ? (
+                // BOS KAT: kaybedilecek bir sey yok, tek onayla gider.
+                <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+                  {t("daireKatBos")}
+                </p>
+              ) : onizleme ? (
+                <>
+                  <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}>
+                    {t("daireKatOzet", {
+                      daire: onizleme.daire,
+                      sakin: onizleme.sakin,
+                      talep: onizleme.talep,
+                    })}
+                  </p>
+                  <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
+                    {t("daireKatOzetMali", {
+                      tahakkuk: onizleme.tahakkuk,
+                      odeme: onizleme.odeme,
+                      rezervasyon: onizleme.rezervasyon,
+                    })}
+                  </p>
+                  {onizleme.mali_kayit && (
+                    <p
+                      role="alert"
+                      style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-danger-ink)" }}
+                    >
+                      {t("daireKatMaliUyari")}
+                    </p>
+                  )}
+                </>
+              ) : null}
+            </div>
+          )}
+
+          {/* MALI KAYITTA IKINCI KAPI: kat numarasi ELLE yazilir. */}
+          {onizleme?.mali_kayit && (
+            <AlanSarmal etiket={t("daireKatOnayYaz", { kat: katSilSayi.tur === "sayi" ? katSilSayi.deger : 0 })}>
+              {(b) => (
+                <Alan
+                  {...b}
+                  value={katSilOnayMetni}
+                  onChange={(e) => setKatSilOnayMetni(e.target.value)}
+                />
+              )}
+            </AlanSarmal>
+          )}
+
           <HataDurumu mesaj={katSilHata} />
         </div>
       </Modal>

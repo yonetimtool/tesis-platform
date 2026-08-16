@@ -2624,6 +2624,26 @@ paths:
         filtrelenir (alan+tarih = gun gorunumu). Onay akisi YOK — durum yalniz
         onaylandi|iptal.
       parameters:
+        - in: query
+          name: gecmis
+          required: false
+          description: |
+            (P165) `true` = bitis saati GECMIS kayitlar, `false` = aktif
+            (suren + gelecek), verilmezse hepsi.
+
+            KARSILASTIRMA SUNUCUDA ve TESISIN SAAT DILIMINDE yapilir:
+            `tarih` bir GUN, `bitis` bir gun-ici SAAT; ikisi ancak bir
+            saat diliminde bir ANA donusur. Istemci saatine guvenmek,
+            saati yanlis kurulu bir cihazda gecmis kaydin yaninda "Iptal
+            et" gostermekti.
+
+            OLCU BITIS, BASLANGIC DEGIL: su an SUREN bir rezervasyon
+            aktiftir ve iptal edilebilmelidir.
+
+            `gecmis=true` ayrica TESIS SAKLAMA PENCERESINI uygular
+            (`tenant.rezervasyon_gecmis_ay`, `0 = sinirsiz`). Bu bir
+            GIZLEMEDIR — kayit veritabaninda DURUR.
+          schema: { type: boolean }
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
         - name: durum
@@ -4767,6 +4787,55 @@ paths:
               schema: { $ref: "#/components/schemas/TopluIslemSonuc" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
+  /units/kat-onizleme:
+    get:
+      tags: [units]
+      summary: Kat silme ETKI OZETI — silmeden once ne kaybedilecek (admin + yonetici)
+      description: |
+        (P165) Bir kat silinirse hangi bagli kayitlarin gidecegini SAYAR;
+        hicbir sey silmez.
+
+        NEDEN AYRI UC: `POST /units/kat-sil` zaten `cascade=false` iken 409
+        doner, ama o yanit ancak kullanici SILMEYE BASTIKTAN sonra gorunur.
+        Ozet ise karar aninda — onay ekraninda — gerekiyor. Hata yolunu
+        bilgi yolu olarak kullanmak, kullaniciyi once denemeye zorlamakti.
+
+        `mali_kayit` AYRI ISARETLENIR: sakin ya da talep yeniden
+        olusturulabilir, bir tahsilat kaydi olusturulamaz. Arayuz bunu ayri
+        bir uyari olarak gosterir.
+
+        BOS KAT 404 DEGIL, SIFIRLARLA doner: kullanici ekranda henuz daire
+        eklenmemis bir kat goruyor olabilir.
+      parameters:
+        - in: query
+          name: blok
+          required: true
+          schema: { type: string, minLength: 1, maxLength: 8 }
+        - in: query
+          name: kat
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Etki ozeti
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [blok, kat, daire, sakin, tahakkuk, odeme, talep, rezervasyon, mali_kayit]
+                properties:
+                  blok: { type: string }
+                  kat: { type: integer }
+                  daire: { type: integer }
+                  sakin: { type: integer }
+                  tahakkuk: { type: integer }
+                  odeme: { type: integer }
+                  talep: { type: integer }
+                  rezervasyon: { type: integer }
+                  mali_kayit:
+                    type: boolean
+                    description: Tahakkuk ya da odeme var mi (muhasebe izi)
+        "403": { $ref: "#/components/responses/Forbidden" }
   /units/kat-sil:
     post:
       tags: [units]

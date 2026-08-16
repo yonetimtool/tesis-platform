@@ -53,6 +53,9 @@ _YONETICI_YAZABILIR = {
     # (P160) Okutma mesafe esigi SAHA ISLETMESIDIR: noktalari yerlestiren
     # ve site duzenini bilen kisi ayarlamali.
     "okutma_mesafe_esigi_m",
+    # (P165) Rezervasyon gecmisi saklama penceresi SITE ISLETMESIDIR:
+    # ortak alan kullanimini yoneten kisi ayarlamali.
+    "rezervasyon_gecmis_ay",
 }
 
 

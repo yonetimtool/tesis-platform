@@ -28,7 +28,7 @@ import uuid
 from datetime import date as date_type
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
@@ -61,20 +61,54 @@ _TALEP_EDEN = aliased(AppUser)
 _IPTAL_EDEN = aliased(AppUser)
 
 
-def _out(row) -> RezervasyonOut:
-    obj, alan_ad, unit_no, talep_eden_ad, iptal_eden_ad = row
+def _bitis_zamani():
+    """Rezervasyonun BITIS anini tesisin saat diliminde `timestamptz` yapar.
+
+    (P165) NEDEN SUNUCUDA: brief "istemci saatine guvenme, cihaz saati
+    yanlis olabilir" diyor ve haklı — telefonu bir gun ileri kurulmus bir
+    kullanici, gelecekteki rezervasyonunu "gecmis" gorurdu (ya da tersi,
+    gecmis bir kaydin yaninda "Iptal et" gorurdu).
+
+    NEDEN TESISIN SAAT DILIMI, UTC DEGIL: `tarih` bir GUN, `bitis` bir
+    GUN-ICI SAAT; ikisi ancak bir saat diliminde bir ANA donusur. UTC
+    varsaymak, Istanbul'daki bir tesiste ucer saatlik kayma demekti —
+    23:00'te biten bir rezervasyon 02:00'ye kadar "aktif" gorunurdu.
+
+    `tenant.timezone` alt sorgu ile okunur; RLS zaten tek tenant'a kapali.
+    """
+    tz = select(Tenant.timezone).limit(1).scalar_subquery()
+    return func.timezone(tz, Rezervasyon.tarih + Rezervasyon.bitis)
+
+
+def _out(row, gecmis: bool | None = None) -> RezervasyonOut:
+    obj, alan_ad, unit_no, talep_eden_ad, iptal_eden_ad = row[:5]
     out = RezervasyonOut.model_validate(obj)
     out.alan_ad = alan_ad
     out.unit_no = unit_no
     out.talep_eden_ad = talep_eden_ad
     out.iptal_eden_ad = iptal_eden_ad
+    # (P165) `gecmis` SUNUCUDAN gelir; cagiran hesaplamis olabilir
+    # (listede tek sorguda), yoksa satirin sonundaki kolondan okunur.
+    if gecmis is not None:
+        out.gecmis = gecmis
+    elif len(row) > 5:
+        out.gecmis = bool(row[5])
     return out
 
 
 def _base_stmt():
     """Liste/detay ortak SELECT'i: alan adi + daire no + kisi adlari join'li."""
     return (
-        select(Rezervasyon, OrtakAlan.ad, Unit.no, _TALEP_EDEN.ad, _IPTAL_EDEN.ad)
+        select(
+            Rezervasyon,
+            OrtakAlan.ad,
+            Unit.no,
+            _TALEP_EDEN.ad,
+            _IPTAL_EDEN.ad,
+            # (P165) GECMIS BAYRAGI AYNI SORGUDA: satir basina ikinci bir
+            # hesap ya da istemci tarafi karsilastirma yok.
+            (_bitis_zamani() < func.now()).label("gecmis"),
+        )
         .join(OrtakAlan, OrtakAlan.id == Rezervasyon.alan_id)
         .join(Unit, Unit.id == Rezervasyon.unit_id)
         .join(_TALEP_EDEN, _TALEP_EDEN.id == Rezervasyon.talep_eden_user_id)
@@ -237,11 +271,20 @@ async def create_reservation(
 
 
 # ------------------------------- okuma -------------------------------------- #
+
 @router.get("", response_model=RezervasyonListResponse)
 async def list_reservations(
     durum: RezervasyonDurum | None = Query(None),
     alan_id: uuid.UUID | None = Query(None),
     tarih: date_type | None = Query(None, description="Gun filtresi (YYYY-MM-DD)"),
+    gecmis: bool | None = Query(
+        None,
+        description=(
+            "(P165) true=bitis saati GECMIS kayitlar, false=aktif (suren + "
+            "gelecek), None=hepsi. Karsilastirma SUNUCUDA ve tesisin saat "
+            "diliminde yapilir."
+        ),
+    ),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_tenant_db),
@@ -250,6 +293,29 @@ async def list_reservations(
     stmt = _base_stmt()
     if durum is not None:
         stmt = stmt.where(Rezervasyon.durum == durum)
+    if gecmis is not None:
+        bitis_ts = _bitis_zamani()
+        if gecmis:
+            # (P165) SAKLAMA PENCERESI — GIZLEME, SILME DEGIL.
+            #
+            # Kayit veritabaninda DURUYOR; yalnizca gecmis listesinde
+            # pencerenin disina dusenler gosterilmiyor. Bir rezervasyon
+            # ortak alan anlasmazliginda kanittir ve kalici silme geri
+            # alinamaz (bkz. goc 0054).
+            #
+            # `0 = sinirsiz`: ayar bir politikayi ZORLAMAZ.
+            ay = select(Tenant.rezervasyon_gecmis_ay).limit(1).scalar_subquery()
+            stmt = stmt.where(
+                or_(
+                    ay == 0,
+                    bitis_ts
+                    >= func.now() - func.make_interval(0, ay),
+                )
+            )
+        # SUREN REZERVASYON AKTIFTIR: olcu BASLANGIC degil BITIS. Su an
+        # devam eden bir kullanim "gecmis" sayilsaydi, kullanici onu
+        # iptal edemez hale gelirdi.
+        stmt = stmt.where(bitis_ts < func.now() if gecmis else bitis_ts >= func.now())
     if alan_id is not None:
         stmt = stmt.where(Rezervasyon.alan_id == alan_id)
     if tarih is not None:

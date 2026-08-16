@@ -1766,6 +1766,13 @@ class RezervasyonOut(BaseModel):
     durum: str
     talep_eden_user_id: uuid.UUID
     talep_eden_ad: str | None = None
+    #: (P165) BITIS SAATI GECTI MI — SUNUCU hesaplar, tesisin saat
+    #: diliminde. Istemci kendi saatiyle hesaplasaydi, saati yanlis kurulu
+    #: bir cihaz gecmis bir kaydin yaninda "Iptal et" gosterirdi.
+    #:
+    #: OLCU BITIS, BASLANGIC DEGIL: su an SUREN bir rezervasyon aktiftir
+    #: ve iptal edilebilmelidir.
+    gecmis: bool = False
     # Iptal eden (sakin/yonetim) + zamani — yalniz durum='iptal'de dolu.
     iptal_eden_user_id: uuid.UUID | None = None
     iptal_eden_ad: str | None = None
@@ -2384,6 +2391,8 @@ class TenantSettings(BaseModel):
     #: DEGIL: bir sitede noktalar 10 m araliklarla, digerinde bloklar
     #: arasi 200 m — ayni sayi ikisinde de anlamli olamaz.
     okutma_mesafe_esigi_m: int = 50
+    #: (P165) Rezervasyon gecmisi kac ay gorunur (`0 = sinirsiz`).
+    rezervasyon_gecmis_ay: int = 12
     gurultu_uyari_metni: str | None = None
     gurultu_integration_id: uuid.UUID | None = None
     # (P34) Tur gecikme alarmi. Tolerans TENANT AYARIDIR: 10 dk bir sitede
@@ -2427,6 +2436,9 @@ class TenantSettingsUpdate(BaseModel):
     #: farkli sinir, API'den gecen degerin veritabaninda
     #: reddedilmesi demekti.
     okutma_mesafe_esigi_m: int | None = Field(None, ge=1, le=5000)
+    #: `0 = sinirsiz`; ust sinir 120 ay (10 yil) — daha uzugu bir politika
+    #: degil, yanlis girilmis bir deger olurdu. Sema kisiti DDL'de de var.
+    rezervasyon_gecmis_ay: int | None = Field(None, ge=0, le=120)
     gurultu_uyari_metni: str | None = Field(None, max_length=1000)
     gurultu_integration_id: uuid.UUID | None = None
 
@@ -5499,6 +5511,35 @@ class KatSilIstek(BaseModel):
     #: aynisi.
     cascade: bool = False
     model_config = ConfigDict(extra="forbid")
+
+
+class KatSilOnizleme(BaseModel):
+    """(P165) KAT SILME ETKI OZETI — silmeden ONCE ne kaybedilecegi.
+
+    Brief: "kullanici ne kaybedecegini SILMEDEN ONCE gorsun". Uc, silme
+    YAPMAZ; yalnizca sayar.
+
+    NEDEN AYRI UC, NEDEN 409 GOVDESINE GOMULMEDI: 409 ancak kullanici
+    SILMEYE BASTIKTAN sonra gorunur. Ozet ise karar ANINDAN once
+    gerekiyor — onay ekraninda. Hata yolunu bilgi yolu olarak kullanmak,
+    kullaniciyi once denemeye zorlamakti.
+
+    KATEGORILER AYRI SAYILIR: "12 bagli kayit" bir sey soylemez; "3
+    sakin, 9 tahakkuk" karar verdirir.
+    """
+
+    blok: str
+    kat: int
+    daire: int
+    sakin: int
+    tahakkuk: int
+    odeme: int
+    talep: int
+    rezervasyon: int
+    #: MALI KAYIT VAR MI — tahakkuk/odeme/finansal hareket. Arayuz bunu
+    #: ayri bir uyari olarak gosterir: aidat kaydi silmek bir muhasebe
+    #: izini yok etmektir ve denetimde aciklanamaz.
+    mali_kayit: bool
 
 
 class TopluSilIstek(BaseModel):

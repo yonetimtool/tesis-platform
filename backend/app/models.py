@@ -293,6 +293,12 @@ class Tenant(Base):
     timezone: Mapped[str] = mapped_column(
         Text, nullable=False, server_default=text("'Europe/Istanbul'")
     )
+    #: (P165/0054) Rezervasyon GECMIS listesinde kac ay geriye gidilir.
+    #: `0 = sinirsiz`. Kayit SILINMEZ, yalnizca listede gizlenir — bir
+    #: rezervasyon anlasmazlikta kanittir ve kalici silme geri alinamaz.
+    rezervasyon_gecmis_ay: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default=text("12")
+    )
     # Onboarding: admin acinca false; BIRINCIL yonetici ilk giriste
     # adlandirinca true.
     kurulum_tamamlandi: Mapped[bool] = mapped_column(

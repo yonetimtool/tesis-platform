@@ -18,8 +18,19 @@ from ..audit import Action, audit_user
 from ..crud_helpers import get_or_404, is_unique_violation, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
-from ..models import AppUser, Unit, UnitGrup, UnitResident, UnitTip
+from ..models import (
+    AppUser,
+    DuesAssessment,
+    DuesPayment,
+    Rezervasyon,
+    Unit,
+    UnitComplaint,
+    UnitGrup,
+    UnitResident,
+    UnitTip,
+)
 from ..schemas import (
+    KatSilOnizleme,
     ResidentAssign,
     UnitBulkCreate,
     UnitBulkResult,
@@ -347,6 +358,64 @@ async def siralama_guncelle(
     return TopluIslemSonuc(
         etkilenen=len(kayitlar),
         atlanan=[str(i) for i in harita if i not in bulunan],
+    )
+
+
+@router.get("/kat-onizleme", response_model=KatSilOnizleme)
+async def kat_onizleme(
+    blok: str = Query(..., min_length=1, max_length=8),
+    kat: int = Query(...),
+    db: AsyncSession = Depends(get_tenant_db),
+    _: AppUser = Depends(_LAYOUT_EDITOR),
+) -> KatSilOnizleme:
+    """(P165) Kat silinirse NE KAYBEDILECEK — sayar, silmez.
+
+    ISTEMCIDE HESAPLANAMAZ: daire basina sakin/tahakkuk/talep saymak,
+    elli daireli bir katta elli istek demekti. Tek sorgu, tek yanit.
+
+    KAPI SILME ILE AYNI (`_LAYOUT_EDITOR`): ozet, silme yetkisi olmayana
+    gosterilecek bir bilgi degil — kac sakini oldugunu ogrenmek de bir
+    okuma yetkisidir.
+    """
+    daire_idler = (
+        (await db.execute(
+            select(Unit.id).where(Unit.blok == blok, Unit.kat == kat)
+        )).scalars().all()
+    )
+    if not daire_idler:
+        # BOS KAT DA GECERLI BIR CEVAPTIR: 404 donmek, arayuzu "kat yok"
+        # demeye zorlardi; oysa kullanici o kati EKRANDA goruyor olabilir
+        # (yerel onizleme kati). Sifirlarla donmek dogru olan.
+        return KatSilOnizleme(
+            blok=blok, kat=kat, daire=0, sakin=0, tahakkuk=0,
+            odeme=0, talep=0, rezervasyon=0, mali_kayit=False,
+        )
+
+    async def _say(model, alan) -> int:
+        return int(
+            (await db.execute(
+                select(func.count()).select_from(model).where(alan.in_(daire_idler))
+            )).scalar_one()
+        )
+
+    sakin = await _say(UnitResident, UnitResident.unit_id)
+    tahakkuk = await _say(DuesAssessment, DuesAssessment.unit_id)
+    odeme = await _say(DuesPayment, DuesPayment.unit_id)
+    talep = await _say(UnitComplaint, UnitComplaint.target_unit_id)
+    rezervasyon = await _say(Rezervasyon, Rezervasyon.unit_id)
+
+    return KatSilOnizleme(
+        blok=blok,
+        kat=kat,
+        daire=len(daire_idler),
+        sakin=sakin,
+        tahakkuk=tahakkuk,
+        odeme=odeme,
+        talep=talep,
+        rezervasyon=rezervasyon,
+        # MALI KAYIT AYRI ISARETLENIR: digerleri yeniden olusturulabilir,
+        # bir tahsilat kaydi olusturulamaz.
+        mali_kayit=tahakkuk > 0 or odeme > 0,
     )
 
 

@@ -193,8 +193,13 @@ describe("(P160) Daireler — tasima sonrasi", () => {
     await waitFor(() => expect(screen.getByText("A-12")).toBeInTheDocument());
     expect(screen.queryByRole("button", { name: "Seç" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Toplu daire oluştur" })).toBeNull();
-    // CRUD KORUNDU.
-    expect(screen.getByRole("button", { name: "Yeni daire" })).toBeInTheDocument();
+    // (P165 §2) "YENI DAIRE" DE KALKTI: daire ekleme tek yerde (bina
+    // duzenleme). Iki giris noktasi "hangisi dogru" sorusunu birakiyordu.
+    expect(screen.queryByRole("button", { name: "Yeni daire" })).toBeNull();
+    // AMA CIKMAZ YOK: bina duzenlemeye goturen bag DURUYOR.
+    expect(screen.getByRole("link", { name: "Bina düzenleme" })).toBeInTheDocument();
+    // DUZENLEME KORUNDU — kaldirilan sey OLUSTURMA girisi.
+    expect(screen.getByRole("button", { name: "Düzenle" })).toBeInTheDocument();
   });
 
   // KAT SIL testi KALDIRILDI: dugme bu sayfada yok artik. Yikici islem
