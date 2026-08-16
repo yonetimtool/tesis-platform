@@ -75,7 +75,7 @@ def davet_bagi(duz_jeton: str) -> str:
 
 
 def davet_mesaji(tenant_ad: str, bag: str, tesis_kodu: str | None = None) -> str:
-    """Davet SMS/e-posta govdesi. Marka adi 'Yönetio' cevrilmez.
+    """Davet SMS/e-posta govdesi. Marka adi 'Yönetiyor' cevrilmez.
 
     (P155r2 / §4) UC SEY EKLENDI: TESIS KODU ve iki MAGAZA BAGLANTISI.
     Sartname bunlari acikca istiyor ("Eklenen kişilere SMS gitmeli:
@@ -100,7 +100,7 @@ def davet_mesaji(tenant_ad: str, bag: str, tesis_kodu: str | None = None) -> str
     yonlendirici) ve bu ayri bir istir — burada yapilirsa jeton uzunlugu
     ile guvenlik arasinda aceleci bir takas yapilmis olurdu.
     """
-    parcalar = [f"{tenant_ad} sizi Yönetio'ya davet etti."]
+    parcalar = [f"{tenant_ad} sizi Yönetiyor'a davet etti."]
     if tesis_kodu:
         parcalar.append(f"Tesis kodu: {tesis_kodu}")
     parcalar.append(f"Kaydolmak için: {bag}")
@@ -176,7 +176,7 @@ async def davet_gonder(
         )
     ).scalar_one_or_none()
     govde = davet_mesaji(tenant_ad, bag, tesis_kodu)
-    konu = f"{tenant_ad} sizi Yönetio'ya davet etti"
+    konu = f"{tenant_ad} sizi Yönetiyor'a davet etti"
 
     # --- SMS (asil) ---
     sms = kanal_saglayicisi("sms").gonder(user.telefon, None, govde)

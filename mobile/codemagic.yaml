@@ -9,7 +9,7 @@
 # yuzden runbook'un §1 Xcode gozle dogrulamasi ATLANAMAZ.
 workflows:
   ios-release:
-    name: Yönetio iOS (TestFlight)
+    name: Yönetiyor iOS (TestFlight)
     instance_type: mac_mini_m2
     max_build_duration: 60
     environment:

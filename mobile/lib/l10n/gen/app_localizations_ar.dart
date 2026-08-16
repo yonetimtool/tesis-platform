@@ -3996,7 +3996,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get destekGorseliDegistir => 'تغيير الصورة';
 
   @override
-  String get destekEkip => 'فريق Yönetio';
+  String get destekEkip => 'فريق Yönetiyor';
 
   @override
   String get tesisKurulumBaslik => 'عرّف مجمّعك';

@@ -75,7 +75,7 @@ void main() {
     testWidgets('marka kilidi: kelime isareti + harf arali alt-baslik',
         (tester) async {
       await tester.pumpWidget(_shell());
-      expect(find.text('Yönetio'), findsOneWidget);
+      expect(find.text('Yönetiyor'), findsOneWidget);
       expect(find.text('GÜVENLİK & DANIŞMANLIK'), findsOneWidget);
     });
 

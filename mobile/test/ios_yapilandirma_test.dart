@@ -60,7 +60,7 @@ void main() {
     final plist = _oku('ios/Runner/Info.plist');
 
     test('GORUNEN AD marka — Flutter sablonunun "Mobile"i DEGIL', () {
-      expect(plist, contains('<string>Yönetio</string>'));
+      expect(plist, contains('<string>Yönetiyor</string>'));
       expect(plist.contains('<string>Mobile</string>'), isFalse);
     });
 

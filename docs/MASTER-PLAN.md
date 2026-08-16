@@ -327,7 +327,7 @@ complaints) ölçümü": 803 → **654** toplam, `building_map` 84 → **0**,
 Varsayıma güvenmeden **ölçüm bugün yeniden koşuldu** (README §15'in kendi
 python komutu, `mobile/` içinde):
 - §15 toplamı: **8 string / 5 dosya** — beşinin beşi de kayıtlı bilinçli
-  istisna (`Yönetio` ×3 marka kilidi + `GÜVENLİK & DANIŞMANLIK`, dil adları
+  istisna (`Yönetiyor` ×3 marka kilidi + `GÜVENLİK & DANIŞMANLIK`, dil adları
   `Türkçe`/`Français`, regex sınıfı `[A-ZÇĞİÖŞÜ]`). **building_map ve complaints
   katkısı 0.**
 - İkinci tarama (tur 12 dersi — diyakritikten BAĞIMSIZ, UI konumundaki tüm
@@ -357,8 +357,8 @@ BUGÜN KOŞULAN ÖLÇÜM (kanıt, P4 Notes'takiyle aynı komut): §15 = **8 stri
 Nihai istisna listesi (README §15 "Kalan 8 string" tablosuyla birebir):
 | # | Dosya | String | Neden |
 |---|---|---|---|
-| 1–3 | `main.dart`, `core/branding/yonetio_logo.dart` (×2) | `Yönetio` / `yönetio` | marka kelime işareti |
-| 4 | `home/.../home_marka.dart` | `Yönetio` | aynı |
+| 1–3 | `main.dart`, `core/branding/yonetio_logo.dart` (×2) | `Yönetiyor` / `yönetiyor` | marka kelime işareti |
+| 4 | `home/.../home_marka.dart` | `Yönetiyor` | aynı |
 | 5 | `home/.../home_marka.dart` | `GÜVENLİK & DANIŞMANLIK` | logo lockup alt başlığı |
 | 6–7 | `core/i18n/locale_controller.dart` | `Türkçe`, `Français` | dil adları kendi dilinde (çevrilirse seçici işlevini yitirir) |
 | 8 | `core/validators/password_rule.dart` | `[A-ZÇĞİÖŞÜ]` | regex karakter sınıfı — teknik sabit |
@@ -642,7 +642,7 @@ Device-verify (biriken liste — agent ekler, Kerem işaretler):
   sekmesinde herhangi bir sayfayı yenile: **dışarı atılmalı**.
 - [ ] **P129 · Mobil-yalnız roller (WEB, `app.*`).** Sakin, güvenlik ve
   tesis görevlisi telefon+parolasıyla `app.*`ta giriş dene → **giriş
-  yapmamalı** ve "Bu hesap türü Yönetio mobil uygulamasında çalışır"
+  yapmamalı** ve "Bu hesap türü Yönetiyor mobil uygulamasında çalışır"
   mesajını görmelisin. Aynı hesaplar **mobil uygulamada** normal
   çalışmaya devam ediyor mu (regresyon kontrolü)?
 - [ ] **[KEREM] P129 · Mağaza bağlantıları.** Uygulama Play/App Store'da
@@ -6415,7 +6415,7 @@ sunucuda çözülür (çerez > `Accept-Language`), yani Apple denetçisi
 
 **İÇERİKTEKİ ÜÇ ASIL KARAR:**
 1. **ROL AYRIMI** — KVKK anlamında **veri sorumlusu her tesisin
-   yönetimidir**; Yönetio **veri işleyendir**. Bunu yazmamak 200 tesisin
+   yönetimidir**; Yönetiyor **veri işleyendir**. Bunu yazmamak 200 tesisin
    sorumluluğunu platforma yıkmak ve kullanıcıya yanlış muhatabı
    göstermek olurdu.
 2. **İŞLEYİCİLER ADIYLA** sayılır ve şu an geçerli olmayanlar "etkin
@@ -7999,7 +7999,7 @@ Notes (2026-08-04) — **KAPSAM DARALDI; KAPI SUNUCUDA, CANLI ÖLÇÜLDÜ.**
 | Rol | `app.*` girişi | Hata kodu | Mesaj |
 |---|---|---|---|
 | yönetici | **200** | — | — |
-| sakin | **403** | `mobil_uygulama` | "…Yönetio mobil uygulamasında çalışır" |
+| sakin | **403** | `mobil_uygulama` | "…Yönetiyor mobil uygulamasında çalışır" |
 | güvenlik | **403** | `mobil_uygulama` | aynı |
 | tesis görevlisi | **403** | `mobil_uygulama` | aynı |
 | yönetici → `panel.*` | **403** | `forbidden` | "panel yalnızca platform yöneticisi" |

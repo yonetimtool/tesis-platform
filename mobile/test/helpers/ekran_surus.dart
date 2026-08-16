@@ -51,7 +51,7 @@ void trSizintisiYok(
   for (final m in gorunenMetinler(tester)) {
     if (veri.any(m.contains)) continue; // sunucu/test VERISI
     // MARKA KILIDI (README §15): kelime isareti + logo alt basligi.
-    if (m.contains('Yönetio') || m.contains('GÜVENLİK & DANIŞMANLIK')) continue;
+    if (m.contains('Yönetiyor') || m.contains('GÜVENLİK & DANIŞMANLIK')) continue;
     expect(_trHarf.hasMatch(m), isFalse, reason: '$dil ekraninda TR: "$m"');
   }
 }
@@ -302,7 +302,7 @@ Future<void> ekranOkuyucuSurusu(
     }
     for (final etiket in anlamsalEtiketler(tester)) {
       if (veri.any(etiket.contains)) continue;
-      if (etiket.contains('Yönetio') ||
+      if (etiket.contains('Yönetiyor') ||
           etiket.contains('GÜVENLİK & DANIŞMANLIK')) {
         continue;
       }

@@ -1467,7 +1467,7 @@ kartı yoktur — o uçlar bu role 403 döner ve kart kalıcı olarak `—` gös
 ### Referans düzenden bilinçli sapmalar
 
 1. **Marka adı.** Referans görsellerdeki kelime işareti "YÖNETİYOR"dur (hazır
-   mockup markası). Ürünün gerçek adı **Yönetio**'dur ve launcher ikonu, splash,
+   mockup markası). Ürünün gerçek adı **Yönetiyor**'dur ve launcher ikonu, splash,
    admin-web ve android kaynakları buna bağlıdır; mockup metnini kopyalamak ürünü
    kendi markasından koparırdı. **Dizilim** (kalkan işareti + kelime işareti +
    harf aralı "GÜVENLİK & DANIŞMANLIK" alt başlığı) görselle birebir, **kelime
@@ -2900,7 +2900,7 @@ grep -rn "contains('" lib/src --include=*.dart | grep -vE "RegExp|contains\('/'\
 grep -rn "\.label" lib/src --include=*.dart | grep -v label(Text|Large|Medium|Small)
 ```
 
-Kalan 2 `home` stringi `home_marka.dart` içindeki **marka kilidi**dir (`Yönetio`,
+Kalan 2 `home` stringi `home_marka.dart` içindeki **marka kilidi**dir (`Yönetiyor`,
 `GÜVENLİK & DANIŞMANLIK`) — aşağıdaki bilinçli istisna.
 
 > **Ölçümün kör noktası (kayda geçti):** bu grep yalnızca Türkçe'ye özgü karakter
@@ -2962,7 +2962,7 @@ for f in sorted(pathlib.Path('lib').rglob('*.dart')):
 EOF
 ```
 
-**Beklenen çıktı: yalnızca `lib/main.dart:83 'Yönetio'` (marka kilidi).**
+**Beklenen çıktı: yalnızca `lib/main.dart:83 'Yönetiyor'` (marka kilidi).**
 
 **Tur 13 (`api_exception` i18n borcu) ölçümü — aynı komut:**
 
@@ -3028,7 +3028,7 @@ metninin korunması) ve `test/api_exception_test.dart`.
 
 | Dosya | Adet | Neden |
 |---|---|---|
-| `main.dart`, `core/branding/yonetio_logo.dart`, `home/.../home_marka.dart` | 5 | **Marka kilidi** — `Yönetio` kelime işareti + `GÜVENLİK & DANIŞMANLIK` alt başlığı |
+| `main.dart`, `core/branding/yonetio_logo.dart`, `home/.../home_marka.dart` | 5 | **Marka kilidi** — `Yönetiyor` kelime işareti + `GÜVENLİK & DANIŞMANLIK` alt başlığı |
 | `core/i18n/locale_controller.dart` | 2 | **Dil adları kendi dilinde** (`Türkçe`, `Français`) — dil seçicinin gereği; çevrilirse seçici işlevini yitirir |
 | `core/validators/password_rule.dart` | 1 | **Regex karakter sınıfı** (`[A-ZÇĞİÖŞÜ]`) — teknik sabit |
 
@@ -3036,7 +3036,7 @@ metninin korunması) ve `test/api_exception_test.dart`.
 
 **Bilinçli istisnalar (çevrilmez):**
 
-* **Marka kilidi** — `Yönetio` kelime işareti ve `GÜVENLİK & DANIŞMANLIK` alt
+* **Marka kilidi** — `Yönetiyor` kelime işareti ve `GÜVENLİK & DANIŞMANLIK` alt
   başlığı logo lockup'ının parçasıdır (`home_marka.dart`, `yonetio_logo.dart`);
   marka adı dile göre değişmez.
 * **Teknik sabitler** — enum tel değerleri (`hls`, `mp4`, `rtsp`, `acik`,

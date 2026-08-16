@@ -104,7 +104,7 @@ def _bildir(kayit_id: uuid.UUID, body: TanitimIletisimIstek) -> None:
         f"Telefon: {body.telefon or '-'}\nDil: {body.dil or '-'}\n\n{body.mesaj}"
     )
     try:
-        kanal_saglayicisi("eposta").gonder(hedef, "Yönetio — yeni iletişim mesajı", govde)
+        kanal_saglayicisi("eposta").gonder(hedef, "Yönetiyor — yeni iletişim mesajı", govde)
     except Exception as exc:  # noqa: BLE001 — kayit zaten atildi
         log.warning("tanitim iletisim %s bildirimi basarisiz: %s", kayit_id, exc)
 

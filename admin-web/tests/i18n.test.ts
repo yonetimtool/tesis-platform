@@ -331,14 +331,14 @@ describe("kaynak taramasi — kabuk/giris yuzeyi", () => {
     "components/UnitDetail.tsx",
   ];
 
-  // MARKA KILIDI: "Yönetio" kelime isareti cevrilmez (mobil README §15 ile
+  // MARKA KILIDI: "Yönetiyor" kelime isareti cevrilmez (mobil README §15 ile
   // ayni karar) — Turkce karakter tasir ama dile gore degismez.
-  // MARKA KILIDI: "Yönetio" kelime isareti cevrilmez (mobil README §15 ile
-  // ayni karar). Satir icinde de gecebilir (`alt="Yönetio"`, logo yazisi) —
+  // MARKA KILIDI: "Yönetiyor" kelime isareti cevrilmez (mobil README §15 ile
+  // ayni karar). Satir icinde de gecebilir (`alt="Yönetiyor"`, logo yazisi) —
   // bu yuzden kalip TAM ESLESME degil, "Turkce karakteri YALNIZ marka
   // kelimesinden geliyor mu" testidir.
   const markaDisi = (v: string) =>
-    v.replace(/Yönetio/gi, "").replace(/yönetio/g, "");
+    v.replace(/Yönetiyor/gi, "").replace(/yönetiyor/g, "");
   const MARKA = { test: (v: string) => !/[çğıöşüÇĞİÖŞÜ]/.test(markaDisi(v)) };
 
   it("cevrilen dosyalarda TURKCE sabit kalmadi", () => {

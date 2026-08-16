@@ -8,7 +8,7 @@ import '../../../../core/theme/home_tokens.dart';
 /// 9px gri alt-baslik.
 ///
 /// NOT — bilincli sapma: referans gorsellerdeki kelime isareti "YÖNETİYOR"dur
-/// (hazir mockup markasi). Urunun GERCEK adi **Yönetio**'dur ve launcher
+/// (hazir mockup markasi). Urunun GERCEK adi **Yönetiyor**'dur ve launcher
 /// ikonu, splash, admin-web ve android kaynaklari bu ada baglidir; mockup
 /// metnini kopyalamak urunu kendi markasindan koparirdi. Bu yuzden DIZILIM
 /// gorselle birebir, KELIME ISARETI gercek markadir.
@@ -37,7 +37,7 @@ class HomeMarka extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Yönetio',
+                  'Yönetiyor',
                   style: TextStyle(
                     fontSize: 19,
                     fontWeight: FontWeight.w800,

@@ -1,4 +1,4 @@
-# Yönetio — Üretim Kurulum Runbook'u (Debian 13)
+# Yönetiyor — Üretim Kurulum Runbook'u (Debian 13)
 
 Tek sunucuda, pfSense NAT arkasında (yalnız TCP **80/443** iletilir) üretim
 kurulumu. Tüm servisler Docker Compose ile çalışır; dışarıya yalnız **Caddy**

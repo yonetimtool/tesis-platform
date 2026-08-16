@@ -22,7 +22,7 @@ async function dilCoz() {
 
 export async function generateMetadata(): Promise<Metadata> {
   const belge = HESAP_SILME[await dilCoz()];
-  return { title: belge.baslik + " — Yönetio", description: belge.giris };
+  return { title: belge.baslik + " — Yönetiyor", description: belge.giris };
 }
 
 export default async function HesapSilmeSayfasi() {

@@ -30,7 +30,7 @@ export async function generateMetadata(): Promise<Metadata> {
   // Marka SONEKI dizgi birlestirmesiyle: sablon dizgesi taramasi (P69)
   // sabit metin arar ve marka sozcugu icin istisnasi yoktur; tur 22
   // taramasinin marka istisnasi ise dizgi literalinde gecerlidir.
-  return { title: belge.baslik + " — Yönetio", description: belge.giris };
+  return { title: belge.baslik + " — Yönetiyor", description: belge.giris };
 }
 
 export default async function KosullarSayfasi() {

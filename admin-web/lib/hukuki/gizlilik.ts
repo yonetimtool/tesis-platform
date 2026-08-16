@@ -19,14 +19,14 @@ export const GIZLILIK: BelgeSeti = {
     guncelleme: "Son güncelleme: 2 Ağustos 2026",
     kaynakBaglayici: "",
     giris:
-      "Bu politika, Yönetio uygulamasını ve yönetim panelini kullandığınızda hangi kişisel verilerin işlendiğini, neden işlendiğini ve haklarınızı açıklar.",
+      "Bu politika, Yönetiyor uygulamasını ve yönetim panelini kullandığınızda hangi kişisel verilerin işlendiğini, neden işlendiğini ve haklarınızı açıklar.",
     bolumler: [
       {
         baslik: "1. Kim veri sorumlusudur?",
         paragraflar: [
-          "Yönetio bir yazılım hizmetidir ve her tesis (site, apartman, rezidans) kendi verisini kendi alanında tutar.",
-          "KVKK anlamında **veri sorumlusu, hesabınızın bağlı olduğu tesisin yönetimidir**. Yönetio, o yönetim adına veriyi işleyen taraftır (veri işleyen).",
-          "Bu ayrım pratikte şu anlama gelir: verinizin silinmesi, düzeltilmesi ya da kime gösterildiği konusundaki talepleriniz önce tesis yönetimine iletilir. Yönetio, yönetimin talimatı dışında verinizi kullanmaz.",
+          "Yönetiyor bir yazılım hizmetidir ve her tesis (site, apartman, rezidans) kendi verisini kendi alanında tutar.",
+          "KVKK anlamında **veri sorumlusu, hesabınızın bağlı olduğu tesisin yönetimidir**. Yönetiyor, o yönetim adına veriyi işleyen taraftır (veri işleyen).",
+          "Bu ayrım pratikte şu anlama gelir: verinizin silinmesi, düzeltilmesi ya da kime gösterildiği konusundaki talepleriniz önce tesis yönetimine iletilir. Yönetiyor, yönetimin talimatı dışında verinizi kullanmaz.",
         ],
       },
       {
@@ -52,7 +52,7 @@ export const GIZLILIK: BelgeSeti = {
       {
         baslik: "4. Kimlerle paylaşılır?",
         paragraflar: [
-          "**Barındırma:** veriler Yönetio'nun kendi sunucularında tutulur.",
+          "**Barındırma:** veriler Yönetiyor'un kendi sunucularında tutulur.",
           "**Otomatik çeviri:** kendi altyapımızda çalışan LibreTranslate kullanılır. Metinleriniz çeviri için **üçüncü bir şirkete gönderilmez**; sunucularımızın dışına çıkmaz.",
           "**Ödeme:** kart ile ödeme özelliği **şu anda etkin değildir**. Etkinleştirildiğinde ödeme bilgileri doğrudan lisanslı ödeme kuruluşuna (iyzico) gider ve kart verisi bizim sistemimizde tutulmaz; bu politika o gün güncellenir.",
           "**Bildirim:** anlık bildirim altyapısı (Firebase Cloud Messaging) **şu anda etkin değildir**. Etkinleştirildiğinde cihaz bildirim jetonu Google'a iletilir; bildirim içeriği kişisel veri taşımayacak şekilde kurgulanır.",
@@ -122,14 +122,14 @@ export const GIZLILIK: BelgeSeti = {
     kaynakBaglayici:
       "This is a translation provided for information. The binding version of this policy is the Turkish one.",
     giris:
-      "This policy explains which personal data is processed when you use the Yönetio app and management panel, why it is processed, and what your rights are.",
+      "This policy explains which personal data is processed when you use the Yönetiyor app and management panel, why it is processed, and what your rights are.",
     bolumler: [
       {
         baslik: "1. Who is the data controller?",
         paragraflar: [
-          "Yönetio is a software service and operates multi-tenant: every site (apartment building, residence) keeps its data in its own space.",
-          "Under Turkish data protection law (KVKK) and the GDPR, **the data controller is the management of the site your account belongs to**. Yönetio acts as the data processor on that management's behalf.",
-          "In practice this means requests about deleting, correcting or sharing your data go to your site management first. Yönetio does not use your data outside the management's instructions.",
+          "Yönetiyor is a software service and operates multi-tenant: every site (apartment building, residence) keeps its data in its own space.",
+          "Under Turkish data protection law (KVKK) and the GDPR, **the data controller is the management of the site your account belongs to**. Yönetiyor acts as the data processor on that management's behalf.",
+          "In practice this means requests about deleting, correcting or sharing your data go to your site management first. Yönetiyor does not use your data outside the management's instructions.",
         ],
       },
       {
@@ -155,7 +155,7 @@ export const GIZLILIK: BelgeSeti = {
       {
         baslik: "4. Who is it shared with?",
         paragraflar: [
-          "**Hosting:** data is kept on Yönetio's own servers.",
+          "**Hosting:** data is kept on Yönetiyor's own servers.",
           "**Automatic translation:** we run LibreTranslate on our own infrastructure. Your text is **not sent to any third-party company** for translation and never leaves our servers.",
           "**Payments:** card payment is **not currently enabled**. When it is enabled, payment details will go directly to a licensed payment institution (iyzico) and card data will not be stored in our system; this policy will be updated on that day.",
           "**Notifications:** push notification infrastructure (Firebase Cloud Messaging) is **not currently enabled**. When enabled, the device notification token will be sent to Google; notification content is designed to carry no personal data.",
@@ -225,14 +225,14 @@ export const GIZLILIK: BelgeSeti = {
     kaynakBaglayici:
       "هذه ترجمة مقدَّمة للاطلاع فقط. النسخة المُلزِمة من هذه السياسة هي النسخة التركية.",
     giris:
-      "توضّح هذه السياسة البيانات الشخصية التي تتم معالجتها عند استخدامك تطبيق Yönetio ولوحة الإدارة، وسبب معالجتها، وحقوقك.",
+      "توضّح هذه السياسة البيانات الشخصية التي تتم معالجتها عند استخدامك تطبيق Yönetiyor ولوحة الإدارة، وسبب معالجتها، وحقوقك.",
     bolumler: [
       {
         baslik: "١. من هو المسؤول عن البيانات؟",
         paragraflar: [
-          "Yönetio خدمة برمجية متعددة المستأجرين: كل موقع (مجمّع سكني، عمارة) يحتفظ ببياناته في مساحته الخاصة.",
-          "بموجب قانون حماية البيانات التركي (KVKK) واللائحة الأوروبية، **المسؤول عن البيانات هو إدارة الموقع التابع له حسابك**. تعمل Yönetio كمعالج للبيانات نيابة عن تلك الإدارة.",
-          "عمليًا: تُوجَّه طلبات الحذف أو التصحيح أو الاطلاع إلى إدارة موقعك أولًا. ولا تستخدم Yönetio بياناتك خارج تعليمات الإدارة.",
+          "Yönetiyor خدمة برمجية متعددة المستأجرين: كل موقع (مجمّع سكني، عمارة) يحتفظ ببياناته في مساحته الخاصة.",
+          "بموجب قانون حماية البيانات التركي (KVKK) واللائحة الأوروبية، **المسؤول عن البيانات هو إدارة الموقع التابع له حسابك**. تعمل Yönetiyor كمعالج للبيانات نيابة عن تلك الإدارة.",
+          "عمليًا: تُوجَّه طلبات الحذف أو التصحيح أو الاطلاع إلى إدارة موقعك أولًا. ولا تستخدم Yönetiyor بياناتك خارج تعليمات الإدارة.",
         ],
       },
       {
@@ -258,7 +258,7 @@ export const GIZLILIK: BelgeSeti = {
       {
         baslik: "٤. مع من تتم المشاركة؟",
         paragraflar: [
-          "**الاستضافة:** تُحفظ البيانات على خوادم Yönetio الخاصة.",
+          "**الاستضافة:** تُحفظ البيانات على خوادم Yönetiyor الخاصة.",
           "**الترجمة الآلية:** نشغّل LibreTranslate على بنيتنا التحتية. **لا تُرسل نصوصك إلى أي شركة خارجية** للترجمة ولا تغادر خوادمنا.",
           "**المدفوعات:** الدفع بالبطاقة **غير مفعّل حاليًا**. وعند تفعيله ستذهب بيانات الدفع مباشرة إلى مؤسسة دفع مرخّصة (iyzico) ولن تُخزَّن بيانات البطاقة لدينا؛ وستُحدَّث هذه السياسة حينها.",
           "**الإشعارات:** بنية الإشعارات الفورية (Firebase Cloud Messaging) **غير مفعّلة حاليًا**. وعند تفعيلها يُرسل رمز الجهاز إلى Google، ويُصمَّم محتوى الإشعار بحيث لا يحمل بيانات شخصية.",
@@ -328,14 +328,14 @@ export const GIZLILIK: BelgeSeti = {
     kaynakBaglayici:
       "Это перевод, предоставленный для ознакомления. Обязательной является турецкая версия политики.",
     giris:
-      "Эта политика объясняет, какие персональные данные обрабатываются при использовании приложения и панели управления Yönetio, зачем они обрабатываются и какие у вас права.",
+      "Эта политика объясняет, какие персональные данные обрабатываются при использовании приложения и панели управления Yönetiyor, зачем они обрабатываются и какие у вас права.",
     bolumler: [
       {
         baslik: "1. Кто является оператором данных?",
         paragraflar: [
-          "Yönetio — программный сервис с мультиарендной архитектурой: данные каждого объекта хранятся в отдельном пространстве.",
-          "Согласно турецкому закону KVKK и GDPR, **оператором данных является управление того объекта, к которому относится ваша учётная запись**. Yönetio выступает обработчиком данных по поручению этого управления.",
-          "На практике: запросы об удалении, исправлении или раскрытии данных сначала направляются в управление вашего объекта. Yönetio не использует ваши данные вне указаний управления.",
+          "Yönetiyor — программный сервис с мультиарендной архитектурой: данные каждого объекта хранятся в отдельном пространстве.",
+          "Согласно турецкому закону KVKK и GDPR, **оператором данных является управление того объекта, к которому относится ваша учётная запись**. Yönetiyor выступает обработчиком данных по поручению этого управления.",
+          "На практике: запросы об удалении, исправлении или раскрытии данных сначала направляются в управление вашего объекта. Yönetiyor не использует ваши данные вне указаний управления.",
         ],
       },
       {
@@ -361,7 +361,7 @@ export const GIZLILIK: BelgeSeti = {
       {
         baslik: "4. Кому передаются данные?",
         paragraflar: [
-          "**Хостинг:** данные хранятся на собственных серверах Yönetio.",
+          "**Хостинг:** данные хранятся на собственных серверах Yönetiyor.",
           "**Автоматический перевод:** мы используем LibreTranslate на собственной инфраструктуре. Ваши тексты **не передаются сторонним компаниям** и не покидают наши серверы.",
           "**Платежи:** оплата картой **сейчас не включена**. При включении платёжные данные будут поступать напрямую в лицензированную платёжную организацию (iyzico), а данные карты не будут храниться у нас; политика будет обновлена в тот же день.",
           "**Уведомления:** инфраструктура push-уведомлений (Firebase Cloud Messaging) **сейчас не включена**. При включении токен устройства будет передаваться в Google; содержимое уведомлений проектируется без персональных данных.",
@@ -431,14 +431,14 @@ export const GIZLILIK: BelgeSeti = {
     kaynakBaglayici:
       "Dies ist eine Übersetzung zu Informationszwecken. Verbindlich ist die türkische Fassung dieser Erklärung.",
     giris:
-      "Diese Erklärung beschreibt, welche personenbezogenen Daten bei der Nutzung der Yönetio-App und des Verwaltungsportals verarbeitet werden, warum sie verarbeitet werden und welche Rechte Sie haben.",
+      "Diese Erklärung beschreibt, welche personenbezogenen Daten bei der Nutzung der Yönetiyor-App und des Verwaltungsportals verarbeitet werden, warum sie verarbeitet werden und welche Rechte Sie haben.",
     bolumler: [
       {
         baslik: "1. Wer ist verantwortlich?",
         paragraflar: [
-          "Yönetio ist ein Softwaredienst und arbeitet mandantenfähig: Jede Anlage speichert ihre Daten in einem eigenen Bereich.",
-          "Nach dem türkischen Datenschutzgesetz (KVKK) und der DSGVO ist **die Verwaltung der Anlage, zu der Ihr Konto gehört, der Verantwortliche**. Yönetio handelt als Auftragsverarbeiter für diese Verwaltung.",
-          "Praktisch heißt das: Anfragen zu Löschung, Berichtigung oder Offenlegung richten Sie zuerst an Ihre Verwaltung. Yönetio nutzt Ihre Daten nicht außerhalb der Weisungen der Verwaltung.",
+          "Yönetiyor ist ein Softwaredienst und arbeitet mandantenfähig: Jede Anlage speichert ihre Daten in einem eigenen Bereich.",
+          "Nach dem türkischen Datenschutzgesetz (KVKK) und der DSGVO ist **die Verwaltung der Anlage, zu der Ihr Konto gehört, der Verantwortliche**. Yönetiyor handelt als Auftragsverarbeiter für diese Verwaltung.",
+          "Praktisch heißt das: Anfragen zu Löschung, Berichtigung oder Offenlegung richten Sie zuerst an Ihre Verwaltung. Yönetiyor nutzt Ihre Daten nicht außerhalb der Weisungen der Verwaltung.",
         ],
       },
       {
@@ -464,7 +464,7 @@ export const GIZLILIK: BelgeSeti = {
       {
         baslik: "4. Wer erhält die Daten?",
         paragraflar: [
-          "**Hosting:** Die Daten liegen auf eigenen Servern von Yönetio.",
+          "**Hosting:** Die Daten liegen auf eigenen Servern von Yönetiyor.",
           "**Automatische Übersetzung:** Wir betreiben LibreTranslate auf eigener Infrastruktur. Ihre Texte werden **an kein Drittunternehmen** übermittelt und verlassen unsere Server nicht.",
           "**Zahlungen:** Kartenzahlung ist **derzeit nicht aktiv**. Bei Aktivierung gehen Zahlungsdaten direkt an ein lizenziertes Zahlungsinstitut (iyzico); Kartendaten werden bei uns nicht gespeichert. Diese Erklärung wird dann aktualisiert.",
           "**Benachrichtigungen:** Die Push-Infrastruktur (Firebase Cloud Messaging) ist **derzeit nicht aktiv**. Bei Aktivierung wird das Gerätetoken an Google übermittelt; Benachrichtigungsinhalte werden ohne personenbezogene Daten gestaltet.",
@@ -534,14 +534,14 @@ export const GIZLILIK: BelgeSeti = {
     kaynakBaglayici:
       "Ceci est une traduction fournie à titre d'information. La version turque de cette politique fait foi.",
     giris:
-      "Cette politique explique quelles données personnelles sont traitées lorsque vous utilisez l'application et le portail de gestion Yönetio, pourquoi elles le sont et quels sont vos droits.",
+      "Cette politique explique quelles données personnelles sont traitées lorsque vous utilisez l'application et le portail de gestion Yönetiyor, pourquoi elles le sont et quels sont vos droits.",
     bolumler: [
       {
         baslik: "1. Qui est responsable du traitement ?",
         paragraflar: [
-          "Yönetio est un service logiciel multi-locataire : chaque site conserve ses données dans son propre espace.",
-          "Au sens de la loi turque KVKK et du RGPD, **le responsable du traitement est la gestion du site auquel votre compte est rattaché**. Yönetio agit comme sous-traitant pour le compte de cette gestion.",
-          "Concrètement : vos demandes de suppression, de rectification ou de communication sont adressées d'abord à la gestion de votre site. Yönetio n'utilise pas vos données en dehors de ses instructions.",
+          "Yönetiyor est un service logiciel multi-locataire : chaque site conserve ses données dans son propre espace.",
+          "Au sens de la loi turque KVKK et du RGPD, **le responsable du traitement est la gestion du site auquel votre compte est rattaché**. Yönetiyor agit comme sous-traitant pour le compte de cette gestion.",
+          "Concrètement : vos demandes de suppression, de rectification ou de communication sont adressées d'abord à la gestion de votre site. Yönetiyor n'utilise pas vos données en dehors de ses instructions.",
         ],
       },
       {
@@ -567,7 +567,7 @@ export const GIZLILIK: BelgeSeti = {
       {
         baslik: "4. Avec qui sont-elles partagées ?",
         paragraflar: [
-          "**Hébergement :** les données sont conservées sur les serveurs de Yönetio.",
+          "**Hébergement :** les données sont conservées sur les serveurs de Yönetiyor.",
           "**Traduction automatique :** nous exploitons LibreTranslate sur notre propre infrastructure. Vos textes **ne sont transmis à aucune société tierce** et ne quittent pas nos serveurs.",
           "**Paiements :** le paiement par carte **n'est pas activé actuellement**. Lors de son activation, les données de paiement iront directement à un établissement de paiement agréé (iyzico) et aucune donnée de carte ne sera stockée chez nous ; cette politique sera alors mise à jour.",
           "**Notifications :** l'infrastructure de notifications push (Firebase Cloud Messaging) **n'est pas activée actuellement**. À son activation, le jeton de l'appareil sera transmis à Google ; le contenu des notifications est conçu sans données personnelles.",
@@ -637,14 +637,14 @@ export const GIZLILIK: BelgeSeti = {
     kaynakBaglayici:
       "Esta es una traducción proporcionada a título informativo. La versión vinculante de esta política es la turca.",
     giris:
-      "Esta política explica qué datos personales se tratan cuando utiliza la aplicación y el panel de gestión de Yönetio, por qué se tratan y cuáles son sus derechos.",
+      "Esta política explica qué datos personales se tratan cuando utiliza la aplicación y el panel de gestión de Yönetiyor, por qué se tratan y cuáles son sus derechos.",
     bolumler: [
       {
         baslik: "1. ¿Quién es el responsable del tratamiento?",
         paragraflar: [
-          "Yönetio es un servicio de software multiinquilino: cada comunidad guarda sus datos en su propio espacio.",
-          "Conforme a la ley turca KVKK y al RGPD, **el responsable del tratamiento es la administración de la comunidad a la que pertenece su cuenta**. Yönetio actúa como encargado del tratamiento por cuenta de esa administración.",
-          "En la práctica: sus solicitudes de supresión, rectificación o comunicación se dirigen primero a la administración de su comunidad. Yönetio no utiliza sus datos fuera de esas instrucciones.",
+          "Yönetiyor es un servicio de software multiinquilino: cada comunidad guarda sus datos en su propio espacio.",
+          "Conforme a la ley turca KVKK y al RGPD, **el responsable del tratamiento es la administración de la comunidad a la que pertenece su cuenta**. Yönetiyor actúa como encargado del tratamiento por cuenta de esa administración.",
+          "En la práctica: sus solicitudes de supresión, rectificación o comunicación se dirigen primero a la administración de su comunidad. Yönetiyor no utiliza sus datos fuera de esas instrucciones.",
         ],
       },
       {
@@ -670,7 +670,7 @@ export const GIZLILIK: BelgeSeti = {
       {
         baslik: "4. ¿Con quién se comparten?",
         paragraflar: [
-          "**Alojamiento:** los datos se guardan en servidores propios de Yönetio.",
+          "**Alojamiento:** los datos se guardan en servidores propios de Yönetiyor.",
           "**Traducción automática:** utilizamos LibreTranslate en nuestra propia infraestructura. Sus textos **no se envían a ninguna empresa externa** ni salen de nuestros servidores.",
           "**Pagos:** el pago con tarjeta **no está activado actualmente**. Cuando se active, los datos de pago irán directamente a una entidad de pago autorizada (iyzico) y los datos de tarjeta no se almacenarán en nuestro sistema; esta política se actualizará ese día.",
           "**Notificaciones:** la infraestructura de notificaciones push (Firebase Cloud Messaging) **no está activada actualmente**. Al activarse, el token del dispositivo se enviará a Google; el contenido de las notificaciones se diseña sin datos personales.",

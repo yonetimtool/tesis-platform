@@ -19,7 +19,7 @@ import { join } from "node:path";
 
 /** Cevrilmesi GEREKMEYEN degerler: marka, teknik jeton, ornek/bicim. */
 const IZINLI =
-  /^(Yönetio|yonetio|yönetio|NFC|CSV|TL|TRY|ID|URL|API|SMS|QR|GPS|MinIO|JSON|HTTP|app_user|HH:MM|https?:\/\/\.\.\.|—|·|✓|→|[\d.,:/+-]+|[A-Z]-\d+|.{0,1})$/;
+  /^(Yönetiyor|yonetio|yönetiyor|NFC|CSV|TL|TRY|ID|URL|API|SMS|QR|GPS|MinIO|JSON|HTTP|app_user|HH:MM|https?:\/\/\.\.\.|—|·|✓|→|[\d.,:/+-]+|[A-Z]-\d+|.{0,1})$/;
 
 /** Kullaniciya GORUNEN oznitelikler. */
 const GORUNEN_PROP =

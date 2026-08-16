@@ -55,7 +55,7 @@ olur. Her ortam için **ayrı istemci** açılır.
 1. <https://console.cloud.google.com> → proje seç/oluştur.
 2. **APIs & Services → OAuth consent screen**
    - User type: **External**
-   - Uygulama adı: `Yönetio`, destek e-postası, geliştirici e-postası
+   - Uygulama adı: `Yönetiyor`, destek e-postası, geliştirici e-postası
    - **Scopes:** `openid`, `.../auth/userinfo.email` — `profile` isteğe
      bağlı. Başka kapsam **istemeyin**: kullanmadığımız her kapsam
      doğrulama sürecini uzatır.

@@ -1,6 +1,6 @@
 import type { Config } from "tailwindcss";
 
-// Yönetio tasarim sistemi (Faz 1). Marka: navy #1E3A5F → teal #0E9594.
+// Yönetiyor tasarim sistemi (Faz 1). Marka: navy #1E3A5F → teal #0E9594.
 // Koyu mod merkezi olarak globals.css'te notrr Tailwind siniflarini yeniden
 // esleyerek yonetilir (mevcut sistem korunur); burada MARKA + golge + hareket
 // token'lari eklenir.

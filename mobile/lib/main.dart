@@ -85,7 +85,7 @@ class TesisGuvenlikApp extends ConsumerWidget {
       if (route != null) router.push(route);
     });
     return MaterialApp.router(
-      title: 'Yönetio',
+      title: 'Yönetiyor',
       debugShowCheckedModeBanner: false,
       scaffoldMessengerKey: rootScaffoldMessengerKey,
       theme: buildLightTheme(),

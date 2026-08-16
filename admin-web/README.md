@@ -292,7 +292,7 @@ denetim, toast.
 > enjekte edildi; tarama ikisini de yakaladi. Sinama sonrasi dosya geri
 > alindi.
 
-> **BILEREK DISARIDA:** marka (`Yönetio`), teknik jetonlar (`NFC`, `CSV`,
+> **BILEREK DISARIDA:** marka (`Yönetiyor`), teknik jetonlar (`NFC`, `CSV`,
 > `HTTP`, `JSON`, `app_user`), bicim ornekleri (`HH:MM`, `https://...`) ve
 > saf sayi/sembol degerleri. Cok satirli JSX ifadelerinin parcalari
 > (`(a.zaman`) dizge sabiti degildir — tarama operator/nokta iceren
@@ -625,7 +625,7 @@ kullandigi icin **metin de bosluk da** buyur. Surus artik dort olcu kosar:
 Tarama artik cok satirli JSX metnini de olcuyor. **Tur 22'de esik SIFIRA
 indi** (`KALAN_ESIK = 0`): panelde — string literali, cok satirli JSX metni,
 sablon dizesi, `confirm()`/`throw new Error()` metinleri dahil — Turkce
-sabit KALMADI. Tek istisna `Yönetio` marka kelimesidir.
+sabit KALMADI. Tek istisna `Yönetiyor` marka kelimesidir.
 
 > **TUR 22'DE BULUNAN SON HATA — metne bakan kontrol akisi.** `tenants`
 > sayfasi telefon cakismasini
@@ -687,7 +687,7 @@ EOF
 | Tur 17 sonrasi (kabuk + giris) | 450 | 32 |
 | Tur 18 sonrasi | 386 | 22 |
 | Tur 19 sonrasi | 251 | 12 |
-| **Tur 20 sonrasi** | **3** | **3** — ucu de MARKA kelimesi (`Yönetio`) |
+| **Tur 20 sonrasi** | **3** | **3** — ucu de MARKA kelimesi (`Yönetiyor`) |
 
 > **IKINCI OLCUM ZORUNLUDUR.** Mobil §15'in en pahali dersi: birinci olcum
 > yalnizca Turkce'ye ozgu karakter **veya** listedeki kelimeyi arar.
@@ -697,7 +697,7 @@ EOF
 > etmeden once UI konumundaki (`label=`, `title=`, `placeholder=`,
 > `aria-label=`, `>metin<`) **tum** literalleri de taramak gerekir.
 
-**KALAN SAYFA YOK.** Olcumdeki son 3 hit `Yönetio` marka kelimesidir
+**KALAN SAYFA YOK.** Olcumdeki son 3 hit `Yönetiyor` marka kelimesidir
 (`login`, `AppShell`, `YonetioLogo`) — bilincli istisna, cevrilmez.
 
 Tur 20'den itibaren kaynak taramasi **dosya listesiyle degil TUM agacla**

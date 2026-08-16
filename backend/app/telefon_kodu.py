@@ -80,7 +80,7 @@ async def kod_uret_ve_gonder(
     # LOG'dur ve kod kullaniciya ULASMAZ. Gonderim hatasi kaydi KIRMAZ —
     # kod yazilmistir, kullanici "tekrar gonder" diyebilir.
     sms_saglayicisi().gonder(
-        telefon, None, f"Yönetio doğrulama kodunuz: {kod} ({KOD_OMRU_DK} dk)"
+        telefon, None, f"Yönetiyor doğrulama kodunuz: {kod} ({KOD_OMRU_DK} dk)"
     )
 
 

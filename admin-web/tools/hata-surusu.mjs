@@ -49,7 +49,7 @@ const SAYFALAR = DENEY ? ['/dashboard'] : ['/dashboard', '/tenants', '/shifts', 
   '/audit'];
 
 const TR = /[ğışĞİŞ]/;
-const MARKA = /Yönetio/i;
+const MARKA = /Yönetiyor/i;
 // HAM TEKNIK METIN — kullaniciya gosterilmemeli. Tur 42'de cevrimdisi kipi
 // her dilde "Failed to fetch" gosteriyordu; tur 41'de rapor kartlari
 // "undefined" yaziyordu. Ikisi de bu kaliba girer.

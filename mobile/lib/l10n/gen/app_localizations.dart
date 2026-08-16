@@ -6560,7 +6560,7 @@ abstract class AppLocalizations {
   /// No description provided for @destekEkip.
   ///
   /// In tr, this message translates to:
-  /// **'Yönetio Ekibi'**
+  /// **'Yönetiyor Ekibi'**
   String get destekEkip;
 
   /// No description provided for @tesisKurulumBaslik.

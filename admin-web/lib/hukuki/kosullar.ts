@@ -14,13 +14,13 @@ export const KOSULLAR: BelgeSeti = {
     guncelleme: "Son güncelleme: 2 Ağustos 2026",
     kaynakBaglayici: "",
     giris:
-      "Yönetio'yu kullanarak aşağıdaki koşulları kabul etmiş olursunuz. Lütfen dikkatlice okuyun.",
+      "Yönetiyor'u kullanarak aşağıdaki koşulları kabul etmiş olursunuz. Lütfen dikkatlice okuyun.",
     bolumler: [
       {
         baslik: "1. Hizmet nedir?",
         paragraflar: [
-          "Yönetio; site, apartman ve rezidans yönetimi için bir yazılım hizmetidir. Aidat takibi, talep ve şikâyet yönetimi, duyuru, etkinlik, ziyaretçi ve güvenlik turu kayıtlarını tek yerde toplar.",
-          "Yönetio tesisin kendisini yönetmez: kararları ve hizmetleri sağlayan taraf **tesis yönetimidir**. Yönetio bu işi kolaylaştıran araçtır.",
+          "Yönetiyor; site, apartman ve rezidans yönetimi için bir yazılım hizmetidir. Aidat takibi, talep ve şikâyet yönetimi, duyuru, etkinlik, ziyaretçi ve güvenlik turu kayıtlarını tek yerde toplar.",
+          "Yönetiyor tesisin kendisini yönetmez: kararları ve hizmetleri sağlayan taraf **tesis yönetimidir**. Yönetiyor bu işi kolaylaştıran araçtır.",
         ],
       },
       {
@@ -36,7 +36,7 @@ export const KOSULLAR: BelgeSeti = {
         paragraflar: [
           "Uygulamada görünen aidat, gecikme ve ödeme tutarları **tesis yönetiminin belirlediği, uygulama dışında tüketilen gerçek dünya hizmetlerinin** bedelidir (yönetim, temizlik, güvenlik, bakım, ortak gider).",
           "Bu nedenle **uygulama içi satın alma (in-app purchase) kullanılmaz**; ödeme, tesisin kendi tahsilat yöntemiyle yapılır.",
-          "Yönetio bu tutarları belirlemez, tahsil etmez ve bunlardan pay almaz; yalnızca kaydını tutar. Tutarlara ilişkin itirazlarınızı tesis yönetimine iletirsiniz.",
+          "Yönetiyor bu tutarları belirlemez, tahsil etmez ve bunlardan pay almaz; yalnızca kaydını tutar. Tutarlara ilişkin itirazlarınızı tesis yönetimine iletirsiniz.",
         ],
       },
       {
@@ -52,7 +52,7 @@ export const KOSULLAR: BelgeSeti = {
         paragraflar: [
           "Duyuru, talep, fotoğraf gibi içeriklerin doğruluğundan bunları giren kullanıcı sorumludur.",
           "Otomatik çeviriler bilgilendirme amaçlıdır ve bağlayıcı metin her zaman orijinaldir; çevrilen her içerik uygulamada bu notu taşır.",
-          "Yönetio, hizmetin kesintisiz ve hatasız olacağını taahhüt etmez; makul çabayı gösterir ve bilinen sorunları giderir.",
+          "Yönetiyor, hizmetin kesintisiz ve hatasız olacağını taahhüt etmez; makul çabayı gösterir ve bilinen sorunları giderir.",
         ],
       },
       {
@@ -86,13 +86,13 @@ export const KOSULLAR: BelgeSeti = {
     kaynakBaglayici:
       "This is a translation provided for information. The binding version of these terms is the Turkish one.",
     giris:
-      "By using Yönetio you accept the terms below. Please read them carefully.",
+      "By using Yönetiyor you accept the terms below. Please read them carefully.",
     bolumler: [
       {
         baslik: "1. What the service is",
         paragraflar: [
-          "Yönetio is a software service for managing apartment buildings, gated communities and residences. It brings dues tracking, requests and complaints, announcements, events, visitors and security patrol records into one place.",
-          "Yönetio does not manage the property itself: decisions and services are provided by **the site management**. Yönetio is the tool that makes that work easier.",
+          "Yönetiyor is a software service for managing apartment buildings, gated communities and residences. It brings dues tracking, requests and complaints, announcements, events, visitors and security patrol records into one place.",
+          "Yönetiyor does not manage the property itself: decisions and services are provided by **the site management**. Yönetiyor is the tool that makes that work easier.",
         ],
       },
       {
@@ -108,7 +108,7 @@ export const KOSULLAR: BelgeSeti = {
         paragraflar: [
           "Dues, late fees and payment amounts shown in the app are the price of **real-world services consumed outside the app** and set by the site management (management, cleaning, security, maintenance, shared costs).",
           "For this reason **in-app purchase is not used**; payment is made through the site's own collection method.",
-          "Yönetio does not set, collect or take a share of these amounts; it only keeps the record. Objections about amounts go to your site management.",
+          "Yönetiyor does not set, collect or take a share of these amounts; it only keeps the record. Objections about amounts go to your site management.",
         ],
       },
       {
@@ -124,7 +124,7 @@ export const KOSULLAR: BelgeSeti = {
         paragraflar: [
           "The user who enters content (announcements, requests, photos) is responsible for its accuracy.",
           "Automatic translations are provided for information and the binding text is always the original; every translated item carries this note in the app.",
-          "Yönetio does not guarantee uninterrupted or error-free operation; it applies reasonable effort and fixes known issues.",
+          "Yönetiyor does not guarantee uninterrupted or error-free operation; it applies reasonable effort and fixes known issues.",
         ],
       },
       {
@@ -157,13 +157,13 @@ export const KOSULLAR: BelgeSeti = {
     guncelleme: "آخر تحديث: 2 أغسطس 2026",
     kaynakBaglayici:
       "هذه ترجمة مقدَّمة للاطلاع فقط. النسخة المُلزِمة من هذه الشروط هي النسخة التركية.",
-    giris: "باستخدامك Yönetio فإنك تقبل الشروط أدناه. يُرجى قراءتها بعناية.",
+    giris: "باستخدامك Yönetiyor فإنك تقبل الشروط أدناه. يُرجى قراءتها بعناية.",
     bolumler: [
       {
         baslik: "١. ما هي الخدمة؟",
         paragraflar: [
-          "Yönetio خدمة برمجية لإدارة المجمّعات والعمارات السكنية: تجمع متابعة الرسوم والطلبات والشكاوى والإعلانات والفعاليات والزوار وسجلات الدوريات الأمنية في مكان واحد.",
-          "لا تدير Yönetio العقار نفسه؛ القرارات والخدمات تقدّمها **إدارة الموقع**، وYönetio هي الأداة التي تسهّل ذلك.",
+          "Yönetiyor خدمة برمجية لإدارة المجمّعات والعمارات السكنية: تجمع متابعة الرسوم والطلبات والشكاوى والإعلانات والفعاليات والزوار وسجلات الدوريات الأمنية في مكان واحد.",
+          "لا تدير Yönetiyor العقار نفسه؛ القرارات والخدمات تقدّمها **إدارة الموقع**، وYönetiyor هي الأداة التي تسهّل ذلك.",
         ],
       },
       {
@@ -179,7 +179,7 @@ export const KOSULLAR: BelgeSeti = {
         paragraflar: [
           "الرسوم والغرامات والمبالغ الظاهرة في التطبيق هي ثمن **خدمات واقعية تُستهلك خارج التطبيق** وتحدّدها إدارة الموقع (الإدارة، النظافة، الأمن، الصيانة، المصاريف المشتركة).",
           "لذلك **لا تُستخدم المشتريات داخل التطبيق**؛ ويتم الدفع بوسيلة التحصيل الخاصة بالموقع.",
-          "لا تحدّد Yönetio هذه المبالغ ولا تحصّلها ولا تأخذ حصة منها، بل تحفظ سجلها فقط. وتُوجَّه الاعتراضات إلى إدارة الموقع.",
+          "لا تحدّد Yönetiyor هذه المبالغ ولا تحصّلها ولا تأخذ حصة منها، بل تحفظ سجلها فقط. وتُوجَّه الاعتراضات إلى إدارة الموقع.",
         ],
       },
       {
@@ -195,7 +195,7 @@ export const KOSULLAR: BelgeSeti = {
         paragraflar: [
           "المستخدم الذي يُدخل المحتوى (إعلان، طلب، صورة) مسؤول عن صحته.",
           "الترجمات الآلية للاطلاع فقط، والنص المُلزِم هو الأصل دائمًا، ويحمل كل محتوى مترجَم هذه الملاحظة داخل التطبيق.",
-          "لا تضمن Yönetio عملًا دون انقطاع أو أخطاء، لكنها تبذل الجهد المعقول وتعالج المشكلات المعروفة.",
+          "لا تضمن Yönetiyor عملًا دون انقطاع أو أخطاء، لكنها تبذل الجهد المعقول وتعالج المشكلات المعروفة.",
         ],
       },
       {
@@ -229,13 +229,13 @@ export const KOSULLAR: BelgeSeti = {
     kaynakBaglayici:
       "Это перевод, предоставленный для ознакомления. Обязательной является турецкая версия условий.",
     giris:
-      "Используя Yönetio, вы принимаете изложенные ниже условия. Пожалуйста, внимательно их прочитайте.",
+      "Используя Yönetiyor, вы принимаете изложенные ниже условия. Пожалуйста, внимательно их прочитайте.",
     bolumler: [
       {
         baslik: "1. Что представляет собой сервис",
         paragraflar: [
-          "Yönetio — программный сервис для управления жилыми комплексами и многоквартирными домами: учёт взносов, заявки и жалобы, объявления, мероприятия, посетители и записи охранных обходов в одном месте.",
-          "Yönetio не управляет самим объектом: решения принимает и услуги оказывает **управление объекта**, а Yönetio — инструмент, который облегчает эту работу.",
+          "Yönetiyor — программный сервис для управления жилыми комплексами и многоквартирными домами: учёт взносов, заявки и жалобы, объявления, мероприятия, посетители и записи охранных обходов в одном месте.",
+          "Yönetiyor не управляет самим объектом: решения принимает и услуги оказывает **управление объекта**, а Yönetiyor — инструмент, который облегчает эту работу.",
         ],
       },
       {
@@ -251,7 +251,7 @@ export const KOSULLAR: BelgeSeti = {
         paragraflar: [
           "Взносы, пени и суммы платежей, отображаемые в приложении, — это стоимость **реальных услуг, потребляемых вне приложения**, которые определяет управление объекта (управление, уборка, охрана, обслуживание, общие расходы).",
           "Поэтому **встроенные покупки не используются**; оплата производится способом, принятым в вашем объекте.",
-          "Yönetio не устанавливает и не взимает эти суммы и не получает от них долю — только ведёт учёт. Возражения по суммам направляйте в управление объекта.",
+          "Yönetiyor не устанавливает и не взимает эти суммы и не получает от них долю — только ведёт учёт. Возражения по суммам направляйте в управление объекта.",
         ],
       },
       {
@@ -267,7 +267,7 @@ export const KOSULLAR: BelgeSeti = {
         paragraflar: [
           "За достоверность внесённых материалов (объявлений, заявок, фотографий) отвечает разместивший их пользователь.",
           "Автоматические переводы носят информационный характер, обязательным всегда является оригинал; каждый переведённый материал сопровождается соответствующей пометкой.",
-          "Yönetio не гарантирует бесперебойной и безошибочной работы, но прилагает разумные усилия и устраняет известные проблемы.",
+          "Yönetiyor не гарантирует бесперебойной и безошибочной работы, но прилагает разумные усилия и устраняет известные проблемы.",
         ],
       },
       {
@@ -301,13 +301,13 @@ export const KOSULLAR: BelgeSeti = {
     kaynakBaglayici:
       "Dies ist eine Übersetzung zu Informationszwecken. Verbindlich ist die türkische Fassung dieser Bedingungen.",
     giris:
-      "Mit der Nutzung von Yönetio akzeptieren Sie die folgenden Bedingungen. Bitte lesen Sie sie aufmerksam.",
+      "Mit der Nutzung von Yönetiyor akzeptieren Sie die folgenden Bedingungen. Bitte lesen Sie sie aufmerksam.",
     bolumler: [
       {
         baslik: "1. Was der Dienst ist",
         paragraflar: [
-          "Yönetio ist ein Softwaredienst für die Verwaltung von Wohnanlagen und Mehrfamilienhäusern: Beitragsverwaltung, Anliegen und Beschwerden, Ankündigungen, Veranstaltungen, Besucher und Sicherheitsrundgänge an einem Ort.",
-          "Yönetio verwaltet die Immobilie nicht selbst: Entscheidungen trifft und Leistungen erbringt **die Verwaltung der Anlage**; Yönetio ist das Werkzeug dafür.",
+          "Yönetiyor ist ein Softwaredienst für die Verwaltung von Wohnanlagen und Mehrfamilienhäusern: Beitragsverwaltung, Anliegen und Beschwerden, Ankündigungen, Veranstaltungen, Besucher und Sicherheitsrundgänge an einem Ort.",
+          "Yönetiyor verwaltet die Immobilie nicht selbst: Entscheidungen trifft und Leistungen erbringt **die Verwaltung der Anlage**; Yönetiyor ist das Werkzeug dafür.",
         ],
       },
       {
@@ -323,7 +323,7 @@ export const KOSULLAR: BelgeSeti = {
         paragraflar: [
           "Die in der App angezeigten Beiträge, Säumniszuschläge und Zahlungsbeträge sind das Entgelt für **außerhalb der App erbrachte reale Leistungen**, die die Verwaltung festlegt (Verwaltung, Reinigung, Sicherheit, Instandhaltung, Gemeinschaftskosten).",
           "Deshalb werden **keine In-App-Käufe verwendet**; die Zahlung erfolgt über das Einzugsverfahren der Anlage.",
-          "Yönetio legt diese Beträge weder fest noch zieht es sie ein oder erhält einen Anteil; es führt nur die Aufzeichnung. Einwände richten Sie an Ihre Verwaltung.",
+          "Yönetiyor legt diese Beträge weder fest noch zieht es sie ein oder erhält einen Anteil; es führt nur die Aufzeichnung. Einwände richten Sie an Ihre Verwaltung.",
         ],
       },
       {
@@ -339,7 +339,7 @@ export const KOSULLAR: BelgeSeti = {
         paragraflar: [
           "Für die Richtigkeit eingestellter Inhalte (Ankündigungen, Anliegen, Fotos) ist die einstellende Person verantwortlich.",
           "Automatische Übersetzungen dienen der Information; verbindlich ist stets das Original. Jeder übersetzte Inhalt trägt in der App einen entsprechenden Hinweis.",
-          "Yönetio sichert keinen unterbrechungs- und fehlerfreien Betrieb zu, unternimmt aber angemessene Anstrengungen und behebt bekannte Probleme.",
+          "Yönetiyor sichert keinen unterbrechungs- und fehlerfreien Betrieb zu, unternimmt aber angemessene Anstrengungen und behebt bekannte Probleme.",
         ],
       },
       {
@@ -373,13 +373,13 @@ export const KOSULLAR: BelgeSeti = {
     kaynakBaglayici:
       "Ceci est une traduction fournie à titre d'information. La version turque de ces conditions fait foi.",
     giris:
-      "En utilisant Yönetio, vous acceptez les conditions ci-dessous. Merci de les lire attentivement.",
+      "En utilisant Yönetiyor, vous acceptez les conditions ci-dessous. Merci de les lire attentivement.",
     bolumler: [
       {
         baslik: "1. Ce qu'est le service",
         paragraflar: [
-          "Yönetio est un service logiciel de gestion de copropriétés et de résidences : suivi des charges, demandes et réclamations, annonces, événements, visiteurs et rondes de sécurité en un seul endroit.",
-          "Yönetio ne gère pas l'immeuble lui-même : les décisions et les prestations relèvent de **la gestion du site** ; Yönetio est l'outil qui facilite ce travail.",
+          "Yönetiyor est un service logiciel de gestion de copropriétés et de résidences : suivi des charges, demandes et réclamations, annonces, événements, visiteurs et rondes de sécurité en un seul endroit.",
+          "Yönetiyor ne gère pas l'immeuble lui-même : les décisions et les prestations relèvent de **la gestion du site** ; Yönetiyor est l'outil qui facilite ce travail.",
         ],
       },
       {
@@ -395,7 +395,7 @@ export const KOSULLAR: BelgeSeti = {
         paragraflar: [
           "Les charges, pénalités et montants affichés dans l'application correspondent au prix de **services réels consommés en dehors de l'application**, fixés par la gestion du site (gestion, nettoyage, sécurité, entretien, charges communes).",
           "C'est pourquoi **aucun achat intégré n'est utilisé** ; le paiement s'effectue selon le mode d'encaissement propre au site.",
-          "Yönetio ne fixe pas ces montants, ne les encaisse pas et n'en perçoit aucune part ; il en tient uniquement le registre. Les contestations sont à adresser à la gestion.",
+          "Yönetiyor ne fixe pas ces montants, ne les encaisse pas et n'en perçoit aucune part ; il en tient uniquement le registre. Les contestations sont à adresser à la gestion.",
         ],
       },
       {
@@ -411,7 +411,7 @@ export const KOSULLAR: BelgeSeti = {
         paragraflar: [
           "L'utilisateur qui saisit un contenu (annonce, demande, photo) est responsable de son exactitude.",
           "Les traductions automatiques sont fournies à titre d'information et le texte qui fait foi reste l'original ; chaque contenu traduit porte cette mention dans l'application.",
-          "Yönetio ne garantit pas un fonctionnement ininterrompu et sans erreur ; il met en œuvre des efforts raisonnables et corrige les problèmes connus.",
+          "Yönetiyor ne garantit pas un fonctionnement ininterrompu et sans erreur ; il met en œuvre des efforts raisonnables et corrige les problèmes connus.",
         ],
       },
       {
@@ -445,13 +445,13 @@ export const KOSULLAR: BelgeSeti = {
     kaynakBaglayici:
       "Esta es una traducción proporcionada a título informativo. La versión vinculante de estas condiciones es la turca.",
     giris:
-      "Al usar Yönetio acepta las condiciones siguientes. Léalas con atención.",
+      "Al usar Yönetiyor acepta las condiciones siguientes. Léalas con atención.",
     bolumler: [
       {
         baslik: "1. Qué es el servicio",
         paragraflar: [
-          "Yönetio es un servicio de software para la administración de comunidades y edificios: seguimiento de cuotas, incidencias y reclamaciones, avisos, eventos, visitantes y rondas de seguridad en un solo lugar.",
-          "Yönetio no administra el inmueble: las decisiones y los servicios corresponden a **la administración de la comunidad**; Yönetio es la herramienta que facilita ese trabajo.",
+          "Yönetiyor es un servicio de software para la administración de comunidades y edificios: seguimiento de cuotas, incidencias y reclamaciones, avisos, eventos, visitantes y rondas de seguridad en un solo lugar.",
+          "Yönetiyor no administra el inmueble: las decisiones y los servicios corresponden a **la administración de la comunidad**; Yönetiyor es la herramienta que facilita ese trabajo.",
         ],
       },
       {
@@ -467,7 +467,7 @@ export const KOSULLAR: BelgeSeti = {
         paragraflar: [
           "Las cuotas, recargos e importes que se muestran en la aplicación son el precio de **servicios del mundo real consumidos fuera de la aplicación** y fijados por la administración (administración, limpieza, seguridad, mantenimiento, gastos comunes).",
           "Por ello **no se utilizan compras dentro de la aplicación**; el pago se realiza por el método de cobro propio de la comunidad.",
-          "Yönetio no fija ni cobra estos importes ni percibe parte alguna; solo mantiene el registro. Las reclamaciones sobre importes se dirigen a la administración.",
+          "Yönetiyor no fija ni cobra estos importes ni percibe parte alguna; solo mantiene el registro. Las reclamaciones sobre importes se dirigen a la administración.",
         ],
       },
       {
@@ -483,7 +483,7 @@ export const KOSULLAR: BelgeSeti = {
         paragraflar: [
           "El usuario que introduce el contenido (avisos, incidencias, fotos) es responsable de su exactitud.",
           "Las traducciones automáticas son informativas y el texto vinculante es siempre el original; todo contenido traducido lleva esta nota en la aplicación.",
-          "Yönetio no garantiza un funcionamiento ininterrumpido y sin errores; aplica un esfuerzo razonable y corrige los problemas conocidos.",
+          "Yönetiyor no garantiza un funcionamiento ininterrumpido y sin errores; aplica un esfuerzo razonable y corrige los problemas conocidos.",
         ],
       },
       {

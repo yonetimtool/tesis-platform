@@ -479,8 +479,8 @@ function SidebarBody({
           borderBottomWidth: "var(--yz-border-w)",
         }}
       >
-        <Link href={kokHedef} aria-label="Yönetio" onClick={onNavigate}>
-          <YonetioLogo size={26} />
+        <Link href={kokHedef} aria-label="Yönetiyor" onClick={onNavigate}>
+          <YonetioLogo size={32} />
         </Link>
         {/* KATLAMA DUGMESI YALNIZ MASAUSTUNDE (`onDarCevir` verildiginde).
             Cekmecede cizilmez: mobilde daraltmanin karsiligi yok. */}
@@ -693,7 +693,7 @@ export function AppShell({
               <line x1="4" y1="7" x2="20" y2="7" /><line x1="4" y1="12" x2="20" y2="12" /><line x1="4" y1="17" x2="20" y2="17" />
             </svg>
           </button>
-          <YonetioLogo size={24} />
+          <YonetioLogo size={30} />
           {/* (P140.4) Dil secici SAG UST — eskiden burada yalnizca hizalama
               icin bos bir `span` duruyordu.
               (P160) Bildirim merkezi mobilde de gorunur: okunmamis sayisi

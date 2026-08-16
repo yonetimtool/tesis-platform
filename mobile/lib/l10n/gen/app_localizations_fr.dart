@@ -3863,7 +3863,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get destekGorseliDegistir => 'Changer l\'image';
 
   @override
-  String get destekEkip => 'L\'équipe Yönetio';
+  String get destekEkip => 'L\'équipe Yönetiyor';
 
   @override
   String get tesisKurulumBaslik => 'Configurez votre site';

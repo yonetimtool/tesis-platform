@@ -3875,7 +3875,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get destekGorseliDegistir => 'Bild ändern';
 
   @override
-  String get destekEkip => 'Das Yönetio-Team';
+  String get destekEkip => 'Das Yönetiyor-Team';
 
   @override
   String get tesisKurulumBaslik => 'Richten Sie Ihr Objekt ein';

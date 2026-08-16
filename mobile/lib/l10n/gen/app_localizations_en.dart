@@ -3904,7 +3904,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get destekGorseliDegistir => 'Change image';
 
   @override
-  String get destekEkip => 'The Yönetio team';
+  String get destekEkip => 'The Yönetiyor team';
 
   @override
   String get tesisKurulumBaslik => 'Set up your site';

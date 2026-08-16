@@ -85,7 +85,7 @@ function menuAdlari(): string[] {
     // (P132) "İçeriğe atla" MENU OGESI DEGILDIR — logo gibi kabugun
     // sabit parcasidir ve erisilebilirlik icin vardir. Menu sayimina
     // katmak, bos menu beklentisini yanlis yere dusururdu.
-    .filter((a) => a.getAttribute("aria-label") !== "Yönetio")
+    .filter((a) => a.getAttribute("aria-label") !== "Yönetiyor")
     .filter((a) => (a.getAttribute("href") ?? "") !== "#icerik")
     .map((a) => a.textContent?.trim() ?? "")
     .filter((s) => s.length > 0);
@@ -130,13 +130,13 @@ describe("app.* menusu role gore", () => {
 
   it("LOGO hedefi ROLE gore — denetci panoya yollanmaz", () => {
     ciz(Kabuk("denetci"));
-    const logo = screen.getAllByLabelText("Yönetio")[0];
+    const logo = screen.getAllByLabelText("Yönetiyor")[0];
     expect(logo).toHaveAttribute("href", "/raporlar");
   });
 
   it("LOGO yonetimde PANO'ya gider", () => {
     ciz(Kabuk("yonetici"));
-    expect(screen.getAllByLabelText("Yönetio")[0]).toHaveAttribute(
+    expect(screen.getAllByLabelText("Yönetiyor")[0]).toHaveAttribute(
       "href",
       "/dashboard",
     );

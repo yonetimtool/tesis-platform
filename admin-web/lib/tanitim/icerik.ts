@@ -57,7 +57,7 @@ export type TanitimSeti = Record<Dil, TanitimIcerik>;
 
 export const TANITIM: TanitimSeti = {
   tr: {
-    metaBaslik: "Yönetio — site ve tesis yönetim platformu",
+    metaBaslik: "Yönetiyor — site ve tesis yönetim platformu",
     metaAciklama:
       "Aidat takibi, arıza ve talep yönetimi, güvenlik turu, ziyaretçi ve kargo kaydı, duyuru ve şeffaflık panosu. Yönetim web'de, saha mobilde.",
     yoneticiBaslik: "Sitenizin işini tek yerden yürütün",
@@ -103,7 +103,7 @@ export const TANITIM: TanitimSeti = {
 
     hakkimizdaBaslik: "Hakkımızda",
     hakkimizdaParagraflar: [
-      "Yönetio, site ve tesis yönetiminin günlük işini yazılıma taşımak için kuruldu: aidatın tahsili, arızanın takibi, turun kaydı ve sakinle iletişim.",
+      "Yönetiyor, site ve tesis yönetiminin günlük işini yazılıma taşımak için kuruldu: aidatın tahsili, arızanın takibi, turun kaydı ve sakinle iletişim.",
       "Ürün iki yüzeyden çalışır: masabaşı işi (tahakkuk, rapor, tanımlar) web'de, saha işi (tur, görev, kapı) mobil uygulamada. Her tesisin verisi kendi alanında durur ve roller yalnız işlerinin gerektirdiği kadarını görür.",
     ],
 
@@ -125,7 +125,7 @@ export const TANITIM: TanitimSeti = {
   },
 
   en: {
-    metaBaslik: "Yönetio — property and facility management platform",
+    metaBaslik: "Yönetiyor — property and facility management platform",
     metaAciklama:
       "Dues tracking, maintenance requests, security patrols, visitor and parcel logs, announcements and a transparency board. Management on the web, field work on mobile.",
     yoneticiBaslik: "Run your building from one place",
@@ -171,7 +171,7 @@ export const TANITIM: TanitimSeti = {
 
     hakkimizdaBaslik: "About us",
     hakkimizdaParagraflar: [
-      "Yönetio was built to move the daily work of property management into software: collecting dues, tracking faults, recording patrols and talking to residents.",
+      "Yönetiyor was built to move the daily work of property management into software: collecting dues, tracking faults, recording patrols and talking to residents.",
       "The product works from two surfaces: desk work (assessments, reports, definitions) on the web, field work (patrols, tasks, the gate) in the mobile app. Each site's data stays in its own space and each role sees only what its job requires.",
     ],
 
@@ -193,7 +193,7 @@ export const TANITIM: TanitimSeti = {
   },
 
   ar: {
-    metaBaslik: "Yönetio — منصة إدارة المجمعات والمنشآت",
+    metaBaslik: "Yönetiyor — منصة إدارة المجمعات والمنشآت",
     metaAciklama:
       "متابعة الرسوم، طلبات الصيانة، جولات الأمن، سجلات الزوار والطرود، الإعلانات ولوحة الشفافية. الإدارة على الويب والعمل الميداني على الهاتف.",
     yoneticiBaslik: "أدر مجمعك من مكان واحد",
@@ -238,7 +238,7 @@ export const TANITIM: TanitimSeti = {
 
     hakkimizdaBaslik: "من نحن",
     hakkimizdaParagraflar: [
-      "أُنشئت Yönetio لنقل العمل اليومي لإدارة المجمعات إلى البرمجيات: تحصيل الرسوم، متابعة الأعطال، تسجيل الجولات، والتواصل مع السكان.",
+      "أُنشئت Yönetiyor لنقل العمل اليومي لإدارة المجمعات إلى البرمجيات: تحصيل الرسوم، متابعة الأعطال، تسجيل الجولات، والتواصل مع السكان.",
       "يعمل المنتج من واجهتين: العمل المكتبي (الاستحقاقات، التقارير، التعريفات) على الويب، والعمل الميداني (الجولات، المهام، البوابة) في التطبيق. تبقى بيانات كل موقع في مساحته، ويرى كل دور ما يحتاجه عمله فقط.",
     ],
 
@@ -259,7 +259,7 @@ export const TANITIM: TanitimSeti = {
   },
 
   ru: {
-    metaBaslik: "Yönetio — платформа управления жилыми комплексами",
+    metaBaslik: "Yönetiyor — платформа управления жилыми комплексами",
     metaAciklama:
       "Учёт взносов, заявки на ремонт, обходы охраны, журналы посетителей и посылок, объявления и доска прозрачности. Управление в вебе, работа на объекте — в приложении.",
     yoneticiBaslik: "Ведите дела дома из одного места",
@@ -304,7 +304,7 @@ export const TANITIM: TanitimSeti = {
 
     hakkimizdaBaslik: "О нас",
     hakkimizdaParagraflar: [
-      "Yönetio создан, чтобы перенести ежедневную работу управляющих в программу: сбор взносов, отслеживание неисправностей, запись обходов и общение с жителями.",
+      "Yönetiyor создан, чтобы перенести ежедневную работу управляющих в программу: сбор взносов, отслеживание неисправностей, запись обходов и общение с жителями.",
       "Продукт работает с двух поверхностей: кабинетная работа (начисления, отчёты, справочники) — в вебе, работа на объекте (обходы, задачи, вход) — в приложении. Данные каждого объекта остаются в своём пространстве, и каждая роль видит лишь необходимое.",
     ],
 
@@ -325,7 +325,7 @@ export const TANITIM: TanitimSeti = {
   },
 
   de: {
-    metaBaslik: "Yönetio — Plattform für Immobilien- und Objektverwaltung",
+    metaBaslik: "Yönetiyor — Plattform für Immobilien- und Objektverwaltung",
     metaAciklama:
       "Hausgeldverwaltung, Störungsmeldungen, Sicherheitsrundgänge, Besucher- und Paketprotokolle, Aushänge und Transparenztafel. Verwaltung im Web, Außendienst mobil.",
     yoneticiBaslik: "Führen Sie Ihre Anlage von einem Ort aus",
@@ -370,7 +370,7 @@ export const TANITIM: TanitimSeti = {
 
     hakkimizdaBaslik: "Über uns",
     hakkimizdaParagraflar: [
-      "Yönetio entstand, um die tägliche Arbeit der Verwaltung in Software zu überführen: Hausgeld einziehen, Störungen verfolgen, Rundgänge dokumentieren und mit Bewohnern sprechen.",
+      "Yönetiyor entstand, um die tägliche Arbeit der Verwaltung in Software zu überführen: Hausgeld einziehen, Störungen verfolgen, Rundgänge dokumentieren und mit Bewohnern sprechen.",
       "Das Produkt arbeitet auf zwei Oberflächen: Schreibtischarbeit (Sollstellungen, Berichte, Stammdaten) im Web, Außendienst (Rundgänge, Aufgaben, Eingang) in der App. Die Daten jeder Anlage bleiben in ihrem eigenen Bereich, und jede Rolle sieht nur das Nötige.",
     ],
 
@@ -392,7 +392,7 @@ export const TANITIM: TanitimSeti = {
   },
 
   fr: {
-    metaBaslik: "Yönetio — plateforme de gestion immobilière",
+    metaBaslik: "Yönetiyor — plateforme de gestion immobilière",
     metaAciklama:
       "Suivi des charges, demandes d'intervention, rondes de sécurité, registres des visiteurs et colis, annonces et tableau de transparence. Gestion sur le web, terrain sur mobile.",
     yoneticiBaslik: "Gérez votre résidence depuis un seul endroit",
@@ -437,7 +437,7 @@ export const TANITIM: TanitimSeti = {
 
     hakkimizdaBaslik: "À propos",
     hakkimizdaParagraflar: [
-      "Yönetio a été créé pour porter le travail quotidien de la gestion immobilière dans un logiciel : encaisser les charges, suivre les pannes, consigner les rondes et parler aux résidents.",
+      "Yönetiyor a été créé pour porter le travail quotidien de la gestion immobilière dans un logiciel : encaisser les charges, suivre les pannes, consigner les rondes et parler aux résidents.",
       "Le produit fonctionne depuis deux surfaces : le travail de bureau (appels de charges, rapports, référentiels) sur le web, le terrain (rondes, tâches, entrée) dans l'application. Les données de chaque site restent dans leur espace et chaque rôle ne voit que le nécessaire.",
     ],
 
@@ -459,7 +459,7 @@ export const TANITIM: TanitimSeti = {
   },
 
   es: {
-    metaBaslik: "Yönetio — plataforma de gestión de comunidades",
+    metaBaslik: "Yönetiyor — plataforma de gestión de comunidades",
     metaAciklama:
       "Control de cuotas, incidencias, rondas de seguridad, registro de visitas y paquetes, avisos y panel de transparencia. Gestión en la web, trabajo de campo en el móvil.",
     yoneticiBaslik: "Gestione su comunidad desde un solo sitio",
@@ -504,7 +504,7 @@ export const TANITIM: TanitimSeti = {
 
     hakkimizdaBaslik: "Sobre nosotros",
     hakkimizdaParagraflar: [
-      "Yönetio nació para llevar el trabajo diario de la administración de fincas al software: cobrar las cuotas, seguir las averías, registrar las rondas y hablar con los vecinos.",
+      "Yönetiyor nació para llevar el trabajo diario de la administración de fincas al software: cobrar las cuotas, seguir las averías, registrar las rondas y hablar con los vecinos.",
       "El producto funciona desde dos superficies: el trabajo de despacho (derramas, informes, maestros) en la web y el de campo (rondas, tareas, portería) en la aplicación. Los datos de cada comunidad permanecen en su espacio y cada rol ve solo lo necesario.",
     ],
 

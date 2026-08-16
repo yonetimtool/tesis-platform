@@ -43,7 +43,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title: i.metaBaslik,
       description: i.metaAciklama,
       url: koken + "/",
-      siteName: "Yönetio",
+      siteName: "Yönetiyor",
       type: "website",
     },
   };

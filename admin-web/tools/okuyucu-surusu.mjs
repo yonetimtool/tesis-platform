@@ -56,7 +56,7 @@ const SAYFALAR = DENEY
 
 // YALNIZ Turkcede bulunan harfler (ç/ö/ü Almanca/Fransizca'da da var).
 const TR = /[ğışĞİŞ]/;
-const MARKA = /Yönetio/i;
+const MARKA = /Yönetiyor/i;
 // SEED/TENANT VERISI — cevrilmemesi DOGRU olan metinler. Sablon cevrilmis
 // olsa da icine giren VERI Turkce kalir: `alt="Image for Demo talep 2:
 // Otopark bariyeri kırık"`. Mobil suruste de ayni ayrim var

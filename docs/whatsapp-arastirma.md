@@ -96,7 +96,7 @@ hakkını açar.
    olmaz.
 2. **Kullanılmamış numara:** WhatsApp Business API'ye kaydedilen numara
    normal WhatsApp/WhatsApp Business uygulamasında **kullanılamaz**.
-   Yönetio'nun mevcut bir iletişim numarası varsa **onu kullanmayın** —
+   Yönetiyor'un mevcut bir iletişim numarası varsa **onu kullanmayın** —
    kayıt, o numaranın normal WhatsApp'ını kapatır.
 3. **Kim doğrulanıyor?** Bu, tasarımın en kritik sorusudur — aşağıda.
 
@@ -110,14 +110,14 @@ gidiyor.
 
 İki model mümkün ve **seçim ürün kararıdır**:
 
-| | **A — Tek numara: Yönetio** | **B — Tesis başına numara** |
+| | **A — Tek numara: Yönetiyor** | **B — Tesis başına numara** |
 |---|---|---|
-| Doğrulanan tüzel kişi | Yönetio | her site yönetimi ayrı |
-| Sakinin gördüğü gönderen | "Yönetio" | "Oltu Sitesi Yönetimi" |
+| Doğrulanan tüzel kişi | Yönetiyor | her site yönetimi ayrı |
+| Sakinin gördüğü gönderen | "Yönetiyor" | "Oltu Sitesi Yönetimi" |
 | Kurulum | **bir kez** | tesis başına 30 güne kadar + belge |
 | Numara | 1 (doğrulama sonrası 20'ye kadar) | tesis başına kullanılmamış numara |
 | Şablon onayı | **merkezî** — bir kez onaylanır, herkes kullanır | tesis başına ayrı onay |
-| Maliyet | Yönetio'nun faturası | tesisin faturası |
+| Maliyet | Yönetiyor'un faturası | tesisin faturası |
 | Ölçeklenme | ✔ | ✘ pratikte imkânsız (yeni site = 30 gün bekleme) |
 
 **Öneri: A.** Gerekçe: B modelinde yeni bir site sisteme girdiğinde
@@ -125,10 +125,10 @@ WhatsApp'ı **30 gün kullanamaz** ve her tesisten belge toplamak gerekir —
 kurulum sihirbazını (Aşama 7.3) haftalarca bekletir. A modelinde şablon
 `{tesis_adi}` değişkeni taşır ve gönderen tek marka olur.
 
-**A'nın kabul edilmesi gereken bedeli:** sakin mesajı "Yönetio"dan alır,
+**A'nın kabul edilmesi gereken bedeli:** sakin mesajı "Yönetiyor"dan alır,
 site yönetiminden değil. Bu bir **marka kararıdır ve Kerem'e aittir.**
 SMS tarafında da aynı durum var: Netgsm'de onaylı gönderici başlığı tek
-ve o da Yönetio'nun.
+ve o da Yönetiyor'un.
 
 ---
 

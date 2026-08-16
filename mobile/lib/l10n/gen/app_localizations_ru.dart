@@ -3974,7 +3974,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get destekGorseliDegistir => 'Заменить изображение';
 
   @override
-  String get destekEkip => 'Команда Yönetio';
+  String get destekEkip => 'Команда Yönetiyor';
 
   @override
   String get tesisKurulumBaslik => 'Опишите ваш объект';

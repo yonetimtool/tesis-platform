@@ -2,7 +2,7 @@
   20, 238  24x24  U+F237
   21, 291  22x22  U+E67B
   21, 343  22x22  U+E497
-  21,  94  134x24  Yönetio
+  21,  94  173x24  Yönetiyor
   36,  94  222x11  GÜVENLİK & DANIŞMANLIK
   72,  16  368x30  Merhaba, Kerem
  105,  16  214x20  Yönetici Paneli

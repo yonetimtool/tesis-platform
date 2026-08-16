@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Yönetio marka kimligi.
+/// Yönetiyor marka kimligi.
 ///
 /// TEK kaynak: `assets/branding/icon_master.png` — saglanan hazir logo
 /// (mavi→teal gradyan yuvarlak-kare; beyaz isaret: uc bina + chevron/cati +
@@ -54,7 +54,7 @@ class YonetioMasterLogo extends StatelessWidget {
       height: size,
       // Master zaten yuvarlak-kare; ek kirpma/koseleme YOK.
       filterQuality: FilterQuality.medium,
-      semanticLabel: 'Yönetio',
+      semanticLabel: 'Yönetiyor',
     );
   }
 }
@@ -83,7 +83,7 @@ class YonetioSimpleMark extends StatelessWidget {
   }
 }
 
-/// Kelime isareti — kucuk harf "yönetio", Roboto (projede zaten var; yeni font
+/// Kelime isareti — kucuk harf "yönetiyor", Roboto (projede zaten var; yeni font
 /// bagimliligi yok). Acik baglamda navy, koyu baglamda beyaz.
 class YonetioWordmark extends StatelessWidget {
   const YonetioWordmark({super.key, this.fontSize = 26, this.color});
@@ -95,7 +95,7 @@ class YonetioWordmark extends StatelessWidget {
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
     return Text(
-      'yönetio',
+      'yönetiyor',
       style: TextStyle(
         fontSize: fontSize,
         fontWeight: FontWeight.w500,

@@ -105,7 +105,7 @@ kayıt "konum yok" nedenini taşır. Uygulama kullanıcıyı izlemez.
 
 Uygulamada görünen **aidat** tutarları, uygulama **dışında** tüketilen
 gerçek dünya hizmetlerinin bedelidir: bina yönetimi, temizlik, güvenlik,
-bakım, ortak giderler. Tutarları **tesis yönetimi** belirler; Yönetio
+bakım, ortak giderler. Tutarları **tesis yönetimi** belirler; Yönetiyor
 bunları belirlemez, tahsil etmez ve bunlardan pay almaz — yalnız kaydını
 tutar.
 
@@ -180,7 +180,7 @@ Any of these formats is accepted: 05000000101 / 5000000101 /
 +90 500 000 01 01. There is no first-time-code step; these accounts sign
 in directly.
 
-Yönetio is a B2B property-management app for apartment buildings and
+Yönetiyor is a B2B property-management app for apartment buildings and
 gated communities. Accounts are created by the site management; there is
 no public sign-up.
 
@@ -203,7 +203,7 @@ PERMISSIONS
 PAYMENTS - 3.1.3(e), NO IAP
 Amounts shown in the app are dues for real-world services consumed
 outside the app (building management, cleaning, security, maintenance,
-shared costs), set and collected by the site management. Yönetio does not
+shared costs), set and collected by the site management. Yönetiyor does not
 set, collect or take a share of them; it only keeps the record. No
 digital goods or features are sold in the app. Card payment is currently
 disabled.

@@ -22,7 +22,7 @@ Calistirma — `worker` servisinden (app modullerini VE OWNER_DSN'i tasir):
     #   ... python -m scripts.create_admin --email you@firma.com
     # tum bayraklarla:
     #   ... --email you@firma.com --password 'Guclu1!' --name 'Ad Soyad' \
-    #       --tenant-slug yonetio --tenant-name 'Yönetio Platform'
+    #       --tenant-slug yonetio --tenant-name 'Yönetiyor Platform'
 
 RLS: tenant tablosunda RLS FORCE etkin — YENI tenant app_rw ile acilamaz. Bu
 yuzden (seed gibi) OWNER (superuser) baglantisi kullanilir; OWNER_DSN env'den okunur.
@@ -95,7 +95,7 @@ def main() -> int:
         help="Bootstrap tenant slug'i (panel giris ekranindaki 'Tesis' alani).",
     )
     ap.add_argument(
-        "--tenant-name", default="Yönetio Platform", help="Bootstrap tenant adi."
+        "--tenant-name", default="Yönetiyor Platform", help="Bootstrap tenant adi."
     )
     args = ap.parse_args()
 

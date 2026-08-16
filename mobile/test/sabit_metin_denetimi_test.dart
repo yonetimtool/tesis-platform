@@ -38,7 +38,7 @@ final _izinli = RegExp(
   r'|[A-Z_]{2,}|(dd|MM|yyyy|HH|mm|ss)[^A-Za-z]*.*|\#[0-9A-Fa-f]{3,8}'
   r'|\[.*\]|[a-zA-Z0-9]+([-_][a-zA-Z0-9]+)+'
   r'|PICCData|\(Kurulum bekliyor\)|\{\{.*\}\}.*'
-  r'|Yönetio|GÜVENLİK & DANIŞMANLIK|app\.yonetiyor\.com'
+  r'|Yönetiyor|GÜVENLİK & DANIŞMANLIK|app\.yonetiyor\.com'
   r'|Google|Microsoft|Apple'
   r')$',
 );

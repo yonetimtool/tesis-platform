@@ -3720,7 +3720,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get destekGorseliDegistir => 'Görseli değiştir';
 
   @override
-  String get destekEkip => 'Yönetio Ekibi';
+  String get destekEkip => 'Yönetiyor Ekibi';
 
   @override
   String get tesisKurulumBaslik => 'Tesisinizi tanımlayın';

@@ -250,7 +250,7 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
                 orani ~1.2 cikiyordu, yani marka kayboluyordu. */}
             <Image
               src="/yonetio-marka-acik.png"
-              alt="Yönetio"
+              alt="Yönetiyor"
               width={1271}
               height={339}
               priority

@@ -1,6 +1,6 @@
 # ANPR kamera kurulumu — Hikvision / Dahua / Frigate (P19)
 
-> Sahadaki kameranın plaka okumalarını Yönetio'ya nasıl gönderteceğinizi
+> Sahadaki kameranın plaka okumalarını Yönetiyor'a nasıl gönderteceğinizi
 > anlatır. Uç sözleşmesi: `contracts/openapi.yaml` →
 > `POST /integrations/anpr/events`. Olay şeması ve Frigate ölçümleri:
 > `docs/frigate-poc.md`.

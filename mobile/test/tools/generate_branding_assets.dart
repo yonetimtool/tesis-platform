@@ -1,6 +1,22 @@
-// Marka varlik ureticisi — TEK kaynak: assets/branding/logo_master.png
+// Marka varlik ureticisi — TEK kaynak: assets/branding/icon_master.png
 // (saglanan hazir logo; yeniden tasarlanmaz). Ortamda PIL/ImageMagick yok;
 // dart:ui PNG'yi natif cozer, bu yuzden tum turevler burada uretilir.
+//
+// (P166 §6.3) KAYNAK DEGISTI ve bu ARAC BOZUKTU.
+//
+// P162'de marka yenilendi: `logo_master.png` artik KARE bir tuval degil,
+// 637x170'lik YATAY bir banner (isaret + kelime isareti). Kare master ise
+// `tools/png-arac.py` ile uretiliyor ve `icon_master.png` olarak duruyor.
+//
+// Bu arac hala `logo_master.png`i kare sanip ondan kare bir kirpma
+// cikarmaya calisiyordu; `side` (170'ten buyuk) goruntu genisligini asinca
+// `clamp(0.0, negatif)` FIRLATIYORDU. Yani P162'den beri arac HIC
+// calismiyordu — launcher ikonlarinin eski logoda kalmasinin sebebi de
+// budur (mipmap dosyalari 2 Agustos, master 15 Agustos tarihli).
+//
+// Kaynak artik kare master. `icon_master.png` uretimi de bir DOGRULAMAYA
+// donustu: onu bu arac degil `png-arac.py` uretiyor, burada yeniden
+// yazmak tek-kaynak kuralini iki kaynaga bolerdi.
 //
 // Dosya adi `_test.dart` ile BITMEDIGI icin `flutter test` (argumansiz) bunu
 // ATLAR. Acikca calistirilir:
@@ -128,19 +144,28 @@ Rect _contentBounds(_Pixels px) {
   return Rect.fromLTWH(sx, sy, side, side);
 }
 
-/// Master'in BEYAZ ISARETINI seffaf zemine cikarir (adaptive fg katmani icin).
+/// Master'in ISARETINI beyaz siluet olarak seffaf zemine cikarir
+/// (adaptive fg katmani icin).
 ///
-/// Neden esikleme calisir: yuvarlak-kare icinde beyaz olan TEK sey isarettir —
-/// gradyan zeminde her zaman bir renk kanali dusuk, yumusak golge ise koyu.
-/// Yuvarlak kosenin DISINDA kalan beyaz kenar boslugu ise ayrica maskelenir,
-/// yoksa kose blob'lari olarak sizardi.
+/// (P166 §6.3) OLCUT DEGISTI: "BEYAZLIK" -> "ALFA".
+///
+/// Eski master, gradyan bir yuvarlak-kare uzerinde BEYAZ bir isaretti; bu
+/// yuzden "en kucuk renk kanali yuksekse isarettir" esiklemesi calisiyordu.
+/// P162'nin yeni markasi ise SEFFAF zemin uzerinde KOYU LACIVERT bir
+/// isaret (olculdu: opak piksel ortalamasi RGB 28,65,124). Eski esikleme
+/// orada HICBIR piksel bulamiyor ve arac "isaret bulunamadi" diye
+/// dusuyordu.
+///
+/// Yeni olcut dogru olandir: seffaf zeminli bir varlikta SILUET ZATEN
+/// ALFA KANALIDIR. Renk esiklemesi bir vekildi; alfa asil olcudur ve
+/// isaretin rengi degistiginde bir daha kirilmaz.
 ///
 /// [lo]..[hi] rampasi kenar yumusatmasini korur (sert esik testere yapardi).
 Future<ui.Image> _extractMark(
   _Pixels px,
   Rect crop, {
-  int lo = 170,
-  int hi = 225,
+  int lo = 24,
+  int hi = 160,
 }) async {
   final side = crop.width.round();
   final out = Uint8List(side * side * 4);
@@ -176,7 +201,7 @@ Future<ui.Image> _extractMark(
 
       var alpha = 0;
       if (inRoundedSquare(x + 0.5, y + 0.5)) {
-        final m = px.minChannel(sxp, syp);
+        final m = px.a(sxp, syp);
         if (m >= hi) {
           alpha = 255;
         } else if (m > lo) {
@@ -227,7 +252,7 @@ void main() {
   late Rect crop;
 
   setUpAll(() async {
-    master = await _decode('$_dir/logo_master.png');
+    master = await _decode('$_dir/icon_master.png');
     px = await _Pixels.of(master);
     crop = _contentBounds(px);
     debugPrint(
@@ -236,44 +261,35 @@ void main() {
     );
   });
 
-  test('icon_master.png — kirpilmis kare master, koseler SEFFAF', () async {
-    final side = crop.width.round();
-    // BUYUTULMEZ: kirpilmis natif boyut korunur.
-    //
-    // Yuvarlak karenin DISINDA kalan beyaz koseler seffaflastirilir: kaynakta
-    // logo beyaz zemine gomulu geldi. Kirpilmazsa koyu temada giris ekraninda
-    // beyaz kose ucgenleri olarak gorunurdu.
-    final img = await _render((canvas, size) {
-      final r = Radius.circular(size.width * _cornerRadiusRatio);
-      canvas.clipRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromLTWH(0, 0, size.width, size.height),
-          r,
-        ),
-      );
-      canvas.drawImageRect(
-        master,
-        crop,
-        Rect.fromLTWH(0, 0, size.width, size.height),
-        Paint()..filterQuality = FilterQuality.high,
-      );
-    }, side);
-    await _writePng('$_dir/icon_master.png', img);
-    expect(File('$_dir/icon_master.png').existsSync(), isTrue);
+  test('icon_master.png — KARE ve koseleri seffaf (uretim DEGIL, dogrulama)',
+      () async {
+    // (P166 §6.3) Bu adim artik YAZMAZ. Kare master `tools/png-arac.py`
+    // ciktisidir; burada yeniden uretmek onu iki kaynaktan turetmek ve
+    // ikisinin ayrisabilmesi demekti. Olculen sey, asagidaki turevlerin
+    // dayandigi VARSAYIM: master karedir ve koseleri seffaftir.
+    expect(master.width, master.height, reason: 'kare master bekleniyor');
+    // Kirpma, kare master uzerinde TUM tuvale esit olmali; degilse master
+    // beyaz kenar payi tasiyor demektir ve turevler kayarak uretilirdi.
+    expect(crop.width.round(), master.width);
+    // Kose SEFFAF: yuvarlak-kare disinda kalan alan. Kirpilmamis olsaydi
+    // koyu temada giris ekraninda beyaz kose ucgenleri gorunurdu.
+    expect(px.a(2, 2), lessThan(8), reason: 'sol ust kose opak');
+    expect(px.a(master.width - 3, 2), lessThan(8), reason: 'sag ust kose opak');
   });
 
-  test('icon_background.png — master kosesinden orneklenen gradyan', () async {
-    // Kose renklerini GERCEK pikselden ornekle (elle hex tahmini yok).
-    final inset = crop.width * 0.16;
-    final topRight = px.colorAt(
-      (crop.right - inset).round().clamp(0, px.width - 1),
-      (crop.top + inset).round().clamp(0, px.height - 1),
-    );
-    final bottomLeft = px.colorAt(
-      (crop.left + inset).round().clamp(0, px.width - 1),
-      (crop.bottom - inset).round().clamp(0, px.height - 1),
-    );
-    debugPrint('GRADYAN ornek: bottomLeft=$bottomLeft topRight=$topRight');
+  test('icon_background.png — marka gradyani (navy -> teal)', () async {
+    // (P166 §6.3) ORNEKLEME KALDIRILDI. Eski master bir GRADYAN KAREYDI ve
+    // kosesinden renk ornekleyebiliyorduk; yeni master seffaf zeminli bir
+    // isaret — ayni noktalar artik TAMAMEN SAYDAM donuyor ve zemin siyah
+    // uretiliyordu (olculdu: alpha 0).
+    //
+    // Renkler `YonetioColors`tan geliyor. Bu bir "elle hex tahmini" DEGIL:
+    // o sabitler zaten logodan orneklenerek konmustu ve android
+    // `values/colors.xml` ile admin-web de AYNI degerleri tasiyor. Tek
+    // kaynak, uc yuzey.
+    const bottomLeft = YonetioColors.navy;
+    const topRight = YonetioColors.teal;
+    debugPrint('GRADYAN marka sabitleri: bottomLeft=$bottomLeft topRight=$topRight');
 
     final img = await _render((canvas, size) {
       final rect = Rect.fromLTWH(0, 0, size.width, size.height);

@@ -196,7 +196,7 @@ def main() -> int:
                     yonetim_email = EXCLUDED.yonetim_email
             RETURNING id
             """,
-            ("Yönetio Demo Sitesi", SLUG, "demo@yonetio.site"),
+            ("Yönetiyor Demo Sitesi", SLUG, "demo@yonetio.site"),
         ).fetchone()[0]
         print(f"[demo] tenant '{SLUG}' -> {tenant_id} (demo_mod=true)")
 

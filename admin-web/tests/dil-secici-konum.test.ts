@@ -69,7 +69,10 @@ describe("(P140.4) dil secici konumu", () => {
     const kod = kodSatirlari(KABUK);
     // (P160) Mobil cubukta da bildirim merkezi araya girdi; olculen sey
     // yine SIRA: logo -> bildirim -> dil.
-    const mobilSira = ["YonetioLogo size={24}", "<BildirimMerkezi />", "<DilSecici />"];
+    const mobilSira = [// (P166 §6.2) Logo BUYUDU (24 -> 30). Olculen sey SIRA, piksel degil —
+      // olcu degistiginde bu satir kirmizi dondu ve HAKLIYDI: sabit bir
+      // sayiyi aramak, sirayi degil boyu kilitliyordu.
+      "<YonetioLogo", "<BildirimMerkezi />", "<DilSecici />"];
     let mobilImlec = -1;
     for (const oge of mobilSira) {
       const yer = kod.indexOf(oge, mobilImlec + 1);

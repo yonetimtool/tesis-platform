@@ -8,7 +8,7 @@
 // ANAHTAR ADLANDIRMA: `<alan><Ne>` (orn. `kabukAyarlar`, `girisParola`).
 // Alan onekleri: ortak / kabuk / giris / panel / ayar.
 //
-// CEVRILMEYENLER (bilincli): marka adi "Yönetio", dil adlari (kendi
+// CEVRILMEYENLER (bilincli): marka adi "Yönetiyor", dil adlari (kendi
 // dilinde), teknik sabitler (slug, kod), tesis/kullanici verisi.
 
 export const tr = {
@@ -467,7 +467,7 @@ export const tr = {
   kabukProfil: "Profilim",
   girisPanelPlatformIcin: "Yönetim paneli yalnızca platform yöneticisi içindir. Tesis hesapları app.yönetiyor.com adresini veya mobil uygulamayı kullanır.",
   girisRolYakinda: "Bu hesap türü için web çalışma alanı henüz hazır değil. Şimdilik mobil uygulamayı kullanın.",
-  girisMobilUygulama: "Bu hesap türü Yönetio mobil uygulamasında çalışır. Telefonunuzdaki uygulamadan giriş yapın.",
+  girisMobilUygulama: "Bu hesap türü Yönetiyor mobil uygulamasında çalışır. Telefonunuzdaki uygulamadan giriş yapın.",
   girisMagazaAndroid: "Google Play'de aç",
   girisMagazaIos: "App Store'da aç",
   girisParola: "Parola",
@@ -484,14 +484,14 @@ export const tr = {
   girisSloganBaslik: "Tesis operasyonunuz, tek panelden.",
   girisSloganAlt:
     "Devriye, görev, aidat ve sakin akışlarını tek yerden yönetin — canlı durum, net raporlar, sade bir arayüz.",
-  girisAltBilgi: "Yönetio · çok kiracılı tesis operasyon platformu",
+  girisAltBilgi: "Yönetiyor · çok kiracılı tesis operasyon platformu",
 
   // ------------------------- sayfa ust verisi -----------------------------
   // `<title>` ve meta aciklama da dile duyarli: tarayici sekmesi ve
   // paylasim onizlemesi kullanicinin dilinde gorunur.
-  metaBaslik: "Yönetio Paneli",
+  metaBaslik: "Yönetiyor Paneli",
   metaAciklama:
-    "Yönetio — çok kiracılı tesis operasyon SaaS yönetim paneli",
+    "Yönetiyor — çok kiracılı tesis operasyon SaaS yönetim paneli",
 
   // -------------------------------- roller --------------------------------
   // Rol ADLARI: sozlesme degeri (`admin`, `yonetici`...) KIMLIKTIR; burada
@@ -1179,7 +1179,7 @@ export const tr = {
   kayitRolSakin: "Site sakini",
   kayitRolGuvenlik: "Güvenlik görevlisi",
   kayitRolTesisGorevlisi: "Tesis görevlisi",
-  davetBaslik: "Yönetio'ya hoş geldiniz",
+  davetBaslik: "Yönetiyor'a hoş geldiniz",
   davetOzet: "{tesis} sizi {rol} olarak davet etti.",
   davetTelefon: "Telefon",
   davetGecersizBaslik: "Bağlantı çalışmıyor",

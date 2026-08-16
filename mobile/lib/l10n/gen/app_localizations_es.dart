@@ -3855,7 +3855,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get destekGorseliDegistir => 'Cambiar imagen';
 
   @override
-  String get destekEkip => 'El equipo de Yönetio';
+  String get destekEkip => 'El equipo de Yönetiyor';
 
   @override
   String get tesisKurulumBaslik => 'Configure su sitio';

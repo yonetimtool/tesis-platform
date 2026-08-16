@@ -70,7 +70,7 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
 
-  # Launcher ikonlari (Yönetio markasi) — kaynak PNG'ler saglanan master
+  # Launcher ikonlari (Yönetiyor markasi) — kaynak PNG'ler saglanan master
   # logodan uretilir (test/tools/generate_branding_assets.dart).
   # Varlik + ikon yeniden uretimi (SIRAYLA):
   #   flutter test test/tools/generate_branding_assets.dart
