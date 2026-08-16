@@ -291,10 +291,21 @@ etmek zorunda kalmak, o düğmenin bulunamadığının itirafıdır.
 |---|---|
 | web | **1174 test yeşil**, `tsc` temiz, `next lint` temiz, `next build` geçti |
 | mobil | **1897 test yeşil** (3 atlandı), `flutter analyze` temiz¹ |
-| backend | kategori 6 · yetki+sözleşme+kurulum 166 yeşil |
+| backend | **1689 test yeşil**, 1 atlandı², 0 hata (27:53) |
 
 ¹ İki `unused_import` uyarısı bu turda **dokunulmayan** test dosyalarında ve
 öncesinde de vardı.
+
+² `test_sakin_odeme.py` — `world` fixture'ında daireye bağlı sakin yok;
+bu turdan bağımsız, önceden de atlanıyordu.
+
+**Tam takım koşarken bir tuzak çıktı ve kaydedildi:** `docker compose exec api
+pytest`i `timeout` ile öldürmek, pytest'i **konteynerin içinde yetim** bırakıyor.
+Yetim, conftest'in advisory lock'unu tutmaya devam ediyor ve sonraki her koşum
+**%100 hata** veriyor — kodda katastrofik bir gerileme gibi görünüyor. Konteyner
+`healthy` kalıyor, logları bile normal trafik gösteriyor (yetimden), yani yanlış
+teşhisi pekiştiriyor. Doğru yol: tam takımı arka planda koşturmak ve `timeout`
+sarmamak.
 
 **Yeni testler:** `sayfa-aramasi` (11 — yetki sızıntısı alt-küme kilidi
 dahil), `telefon-alani.dom` (10), `menu-katlama` (12, yeniden yazıldı),
