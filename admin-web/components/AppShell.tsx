@@ -4,7 +4,6 @@ import { motion, MotionConfig } from "framer-motion";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
-import useSWR from "swr";
 
 import { DilSecici } from "@/components/DilSecici";
 import { GlobalArama } from "@/components/GlobalArama";
@@ -12,9 +11,8 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { BildirimMerkezi, KomutPaleti } from "@/components/ui";
 import { useT } from "@/lib/i18n/kullan";
 import { YonetioLogo } from "@/components/YonetioLogo";
-import { jsonFetcher } from "@/lib/fetcher";
+import { useRol } from "@/lib/rol-kullan";
 import {
-  KATLI_GRUPLAR,
   menuGruplari,
   ogeAktif,
   ogeBaglantisi,
@@ -136,8 +134,20 @@ function Icon({ name }: { name: IconName }) {
   }
 }
 
-/** Kullanicinin acik/kapali bolum tercihi (tarayici basina). */
-const MENU_DURUM_ANAHTARI = "yonetio.menu.durum";
+/**
+ * Kullanicinin acik/kapali bolum tercihi (tarayici basina).
+ *
+ * (P166 §1) ANAHTAR SURUMLENDI (`.v2`). Eski kayit `{acik: ["guvenlik"]}`
+ * gibi bir DAR kume tasiyor — o kume "yalniz bulundugum bolum acik"
+ * varsayimiyla yazilmisti. Yeni varsayilan HEPSI ACIK; eski kaydi okumak,
+ * kaldirdigimiz gizli menuyu kullanicinin tarayicisindan geri getirirdi.
+ * Yeni anahtar, eski kaydi sessizce gecersiz kilar.
+ *
+ * TEKNIK TANIMLAYICI: `yonetio.` oneki BILEREK korundu (bkz. §6 marka
+ * degisikligi) — depolama anahtari kullaniciya gorunen bir metin degildir
+ * ve degistirmek herkesin tercihini bir kez daha sifirlardi.
+ */
+const MENU_DURUM_ANAHTARI = "yonetio.menu.durum.v2";
 /** (P160) Kenar cubugu dar mi — KABUGA ait, menu durumundan AYRI. */
 const DAR_ANAHTARI = "yonetio.menu.dar";
 
@@ -367,15 +377,9 @@ function SidebarBody({
   // menusuyle boyaniyordu (sakine bir an "Tesisler" gorunuyordu).
   // (P126.7) MENU ROLE GORE DE SUZULUR.
   //
-  // Sunucudan gelen `rol` (duzen, cerezden cozdu) BASLANGIC degeridir;
-  // access cerezi dusmusse `null` gelir ve `/api/me` devreye girer — o
-  // istek BFF'in yenileme akisini tetikler, yani menu KENDINI TOPARLAR.
-  // SWR anahtari profil sayfasiyla AYNI: iki istek degil, tek istek.
-  const { data: ben } = useSWR<{ role?: string }>(
-    rolBaslangic ? null : "/api/me",
-    jsonFetcher,
-  );
-  const rol = rolBaslangic ?? ben?.role ?? null;
+  // (P166 §2) Cozum `useRol`e cikarildi: sayfa aramasi da AYNI rolu bilmek
+  // zorunda ve mantigi ikinci kez yazmak iki yerin ayrisabilmesi demekti.
+  const rol = useRol(rolBaslangic);
 
   // Bilinmeyen rota ve rolde OLMAYAN rota MENUYE ALINMAZ: "varsayilan
   // olarak goster" demek, sakine yonetim menusunu cizmek olurdu.
@@ -383,19 +387,19 @@ function SidebarBody({
   const gruplar = menuGruplari(yuzey, rol);
   const profilVar = profilGorunur(yuzey, rol);
 
-  // ACIK BOLUM: bulunulan sayfanin bolumu. Kullanici bir bolumu acip
-  // kapattiginda karari SAKLANIR (kullanici basina, localStorage).
+  // (P166 §1) VARSAYILAN: HEPSI ACIK.
+  //
+  // Eskiden yalniz bulunulan sayfanin bolumu acilirdi ve geri kalan dort
+  // bolum "Daha fazla"nin ardindaydi — yani kullanici menuyu ilk actiginda
+  // 40 sayfanin 8'ini goruyordu. Brief'in olcusu acik: "TUM basliklar ve
+  // alt basliklari tek listede, acik sekilde gorunecek."
+  //
+  // KATLAMA YETENEGI DURUYOR (baslik hâlâ bir dugme) ama artik kullanicinin
+  // KENDI karari; varsayilan bir gizleme degil. Liste uzarsa `nav`
+  // kaydirilir — brief: "gizleme cozumu kullanma".
   const aktifGrup = rotaninGrubu(pathname);
-  // Bulunulan rota bir bolume dusmuyorsa (orn. `/profil`, bolum disidir)
-  // ILK bolum acilir: "hicbiri acik degil" hâli menuyu bos bir baslik
-  // listesine cevirirdi ve kullanici tek bir sayfa adi goremezdi.
-  const varsayilanAcik: GrupId[] = aktifGrup
-    ? [aktifGrup]
-    : gruplar.length > 0
-      ? [gruplar[0].id]
-      : [];
+  const varsayilanAcik: GrupId[] = gruplar.map((g) => g.id);
   const [acikGruplar, setAcikGruplar] = useState<GrupId[] | null>(null);
-  const [dahaFazla, setDahaFazla] = useState(false);
 
   // ILK KARE SUNUCUDA CIZILIR ve orada `localStorage` YOKTUR. Durum bu
   // yuzden `null` baslar ve etkide doldurulur: sunucu ve ilk istemci
@@ -404,20 +408,14 @@ function SidebarBody({
   //
   // BULUNULAN SAYFANIN BOLUMU HER ZAMAN ACIK OLUR — kayitli tercih
   // "kapali" dese bile. Aksi hâlde kullanici bir sayfaya gidip menude
-  // KENDI satirini goremez ve nerede oldugunu kaybeder; bolum KATLI ise
-  // kat da acilir. Bu iki karar (kayit okuma + aktif bolumu acma) TEK
-  // etkide durur: ayri etkilere bolundugunde ikincisi ilk kurulumda
-  // `acikGruplar === null` gorup erken donuyordu ve katli bir bolume
-  // dogrudan girildiginde satir HIC gorunmuyordu.
+  // KENDI satirini goremez ve nerede oldugunu kaybeder.
   useEffect(() => {
     let kayitliAcik: GrupId[] | null = null;
-    let kayitliKat: boolean | null = null;
     try {
       const ham = localStorage.getItem(MENU_DURUM_ANAHTARI);
       if (ham) {
-        const c = JSON.parse(ham) as { acik?: GrupId[]; dahaFazla?: boolean };
+        const c = JSON.parse(ham) as { acik?: GrupId[] };
         if (Array.isArray(c.acik)) kayitliAcik = c.acik;
-        if (typeof c.dahaFazla === "boolean") kayitliKat = c.dahaFazla;
       }
     } catch {
       // Bozuk/erisilemez depolama menuyu KIRMAZ — varsayilana dusulur.
@@ -425,48 +423,31 @@ function SidebarBody({
     const acikKume = new Set(kayitliAcik ?? varsayilanAcik);
     if (aktifGrup) acikKume.add(aktifGrup);
     setAcikGruplar([...acikKume]);
-    setDahaFazla(
-      (aktifGrup !== null && KATLI_GRUPLAR.includes(aktifGrup)) ||
-        (kayitliKat ?? false),
-    );
     // `pathname` degisince yeniden calisir: gezinme aktif bolumu acar.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aktifGrup]);
 
   function grupCevir(id: GrupId) {
-    const simdiki = acikGruplar ?? [];
+    const simdiki = acikGruplar ?? varsayilanAcik;
     const yeni = simdiki.includes(id)
       ? simdiki.filter((x) => x !== id)
       : [...simdiki, id];
     setAcikGruplar(yeni);
-    yaz(yeni, dahaFazla);
+    yaz(yeni);
   }
 
-  function dahaFazlaCevir() {
-    const yeni = !dahaFazla;
-    setDahaFazla(yeni);
-    yaz(acikGruplar ?? [], yeni);
-  }
-
-  function yaz(acik: GrupId[], fazla: boolean) {
+  function yaz(acik: GrupId[]) {
     try {
-      localStorage.setItem(
-        MENU_DURUM_ANAHTARI,
-        JSON.stringify({ acik, dahaFazla: fazla }),
-      );
+      localStorage.setItem(MENU_DURUM_ANAHTARI, JSON.stringify({ acik }));
     } catch {
       // Gizli sekmede depolama yazilamaz; menu yine calisir, hatirlamaz.
     }
   }
 
-  // Sunucu karesinde (`acikGruplar === null`) aktif bolum acik cizilir:
-  // kullanici bulundugu sayfayi menude ILK karede gorur.
+  // Sunucu karesinde (`acikGruplar === null`) varsayilan cizilir: artik
+  // HEPSI ACIK, yani ilk kare de tam listeyi gosterir. (Eskiden burada
+  // yalniz aktif bolum acilirdi ve ilk kare eksik bir menuydu.)
   const acik = acikGruplar ?? varsayilanAcik;
-  // Ilk karede de ayni kural: aktif bolum katliysa kat acik cizilir.
-  const katAcik =
-    dahaFazla || (acikGruplar === null && !!aktifGrup && KATLI_GRUPLAR.includes(aktifGrup));
-  const ustGruplar = gruplar.filter((g) => !g.katli);
-  const katliGruplar = gruplar.filter((g) => g.katli);
 
   // Logo hedefi YUZEY + ROL: panelde tesis panosu yoktur; tesis yuzeyinde de
   // pano YALNIZ yonetimindir. Sabit `/dashboard` birakmak, logoya tiklayan
@@ -531,28 +512,13 @@ function SidebarBody({
         </div>
       )}
 
+      {/* (P166 §1) TEK LISTE. "Daha fazla / Daha az" satiri KALDIRILDI;
+          butun bolumler ayni `nav` icinde, acik olarak cizilir. Liste
+          ekrandan uzunsa `overflow-y-auto` kaydirir — brief'in acik
+          sarti: "Liste uzarsa menu kaydirilabilir olsun; gizleme cozumu
+          kullanma." */}
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
-        {ustGruplar.map(bolum)}
-
-        {/* KATLI BOLUMLER tek bir satirin ardinda: menuyu 28 satirdan
-            ~10'a indiren sey budur. Katlanan bolumler KAYBOLMAZ, bir
-            tiklama uzaga gider. */}
-        {katliGruplar.length > 0 && (
-          <>
-            <button
-              type="button"
-              onClick={dahaFazlaCevir}
-              aria-expanded={katAcik}
-              className="odak-ic flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-metin-muted transition-colors hover:bg-yuzey-divider"
-            >
-              <Ok acik={katAcik} />
-              <span className="truncate">
-                {katAcik ? t("kabukDahaAz") : t("kabukDahaFazla")}
-              </span>
-            </button>
-            {katAcik && katliGruplar.map(bolum)}
-          </>
-        )}
+        {gruplar.map(bolum)}
       </nav>
 
       <div
@@ -673,7 +639,7 @@ export function AppShell({
       >
         {/* (P160) KOMUT PALETI — kabugun KOKUNDE, cunku Ctrl+K her
             sayfada calismali. Kapaliyken hicbir sey cizmez. */}
-        <KomutPaleti />
+        <KomutPaleti yuzey={yuzey} rolBaslangic={rol} />
         {/* (P132) ICERIGE ATLA — klavye kullanicisi 30+ menu baglantisini
             tek tek gecmek zorunda kalmasin. Gorunmez durur, ODAKLANINCA
             gorunur: fareyle gelen kullaniciyi rahatsiz etmez, klavyeyle
@@ -788,7 +754,7 @@ export function AppShell({
             {/* (P154 / Asama 6.3) GLOBAL ARAMA — TEK yer. Her ekrana ayri
                 arama yazmak, yetki kuralini her ekranda tekrar etmek ve
                 biri unutuldugunda SESSIZ bir sizinti birakmak olurdu. */}
-            <GlobalArama />
+            <GlobalArama yuzey={yuzey} rolBaslangic={rol} />
             {/* (P160) BILDIRIM MERKEZI — dil secicinin yaninda. Sayac
                 ve okundu isaretleme burada; tam liste `/notifications`. */}
             <div className="flex shrink-0 items-center gap-2">

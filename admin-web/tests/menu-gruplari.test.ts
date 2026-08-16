@@ -14,7 +14,6 @@ import { describe, expect, it } from "vitest";
 
 import {
   GRUP_ANAHTARI,
-  KATLI_GRUPLAR,
   PROFIL_OGESI,
   _OGELER,
   menuGruplari,
@@ -91,15 +90,13 @@ describe("(P133.1) bolumleme", () => {
     }
   });
 
-  it("KATLI bolumler isaretli, ustteki bolumler degil", () => {
-    const gruplar = menuGruplari("tesis", "yonetici");
-    for (const g of gruplar) {
-      expect(g.katli, g.id).toBe(KATLI_GRUPLAR.includes(g.id));
+  it("(P166 §1) HICBIR BOLUM 'katli' DEGIL — alan kaldirildi", () => {
+    // "Daha fazla"nin ardinda duran bir bolum kavrami kalkti. Bu testin
+    // isi, alanin bir gun sessizce geri gelmemesi: `katli: true` tasiyan
+    // bir grup, gizli menuyu yeniden acardi.
+    for (const g of menuGruplari("tesis", "yonetici")) {
+      expect(g, g.id).not.toHaveProperty("katli");
     }
-    // Ve gercekten hem katli hem ustte bolum VAR (tek tarafli bir liste
-    // bu testi anlamsiz kilardi).
-    expect(gruplar.some((g) => g.katli)).toBe(true);
-    expect(gruplar.some((g) => !g.katli)).toBe(true);
   });
 
   it("PANELDE tesis bolumleri, TESISTE platform bolumu YOK", () => {
@@ -135,42 +132,43 @@ describe("(P133.1) acilista hangi bolum acik", () => {
   });
 });
 
-describe("(P133.1) SATIR SAYISI hedefi", () => {
-  // Kerem'in olculebilir sarti: 900px yukseklikte kaydirmasiz ~10 satir.
-  // Onceki hâl 28 duz satirdi (yonetici) ve kaydirma cubuguna tasiyordu.
+describe("(P166 §1) TAM LISTE — gizli menu katmani yok", () => {
+  // ESKI HEDEF: "acilista en cok 12 gorunur satir" (P133.1). O butce,
+  // dort bolumu "Daha fazla"nin ardina saklayarak tutuluyordu.
   //
-  // NE SAYILIR: acilista GORUNEN satirlar — bolum basliklari + acik olan
-  // bolumun ogeleri + "Daha fazla" satiri + profil. Piksel olcmuyoruz
-  // (jsdom duzen hesaplamaz); satir sayisi hedefin dogru vekilidir cunku
-  // satir yuksekligi sabittir.
-  function gorunenSatir(yuzey: "tesis" | "platform", rol: string, pathname: string) {
-    const gruplar = menuGruplari(yuzey, rol);
-    const aktif = rotaninGrubu(pathname) ?? gruplar[0]?.id ?? null;
-    const ust = gruplar.filter((g) => !g.katli);
-    const katli = gruplar.filter((g) => g.katli);
-    const basliklar = ust.length;
-    const acikOgeler = ust.filter((g) => g.id === aktif).reduce((n, g) => n + g.ogeler.length, 0);
-    const dahaFazlaSatiri = katli.length > 0 ? 1 : 0;
-    const profil = profilGorunur(yuzey, rol) ? 1 : 0;
-    return basliklar + acikOgeler + dahaFazlaSatiri + profil;
+  // Kerem'in olcumu o cozumu curuttu: kullanici o satirin bir MENU
+  // oldugunu anlamiyor, arkasindaki 30+ sayfayi HIC gormuyor. Yeni kural
+  // bunun TERSI ve testi de tersine cevriliyor: hicbir sayfa gizlenmez,
+  // liste uzarsa KAYDIRILIR.
+  function acilistaGorunen(yuzey: "tesis" | "platform", rol: string): string[] {
+    // Kabuk artik TUM bolumleri acik cizer; bu fonksiyon o kurali
+    // veri duzeyinde tekrar eder.
+    return menuGruplari(yuzey, rol).flatMap((g) => g.ogeler.map(ogeBaglantisi));
   }
 
-  it("YONETICI: 28 duz satir -> en cok 12 gorunur satir", () => {
-    // En kotu hâl: en KALABALIK bolum acikken (Guvenlik, 10 oge).
-    const enKotu = Math.max(
-      gorunenSatir("tesis", "yonetici", "/dashboard"),
-      gorunenSatir("tesis", "yonetici", "/dues"),
-      gorunenSatir("tesis", "yonetici", "/units"),
-      gorunenSatir("tesis", "yonetici", "/profil"),
+  it("YONETICI: role gorunen HER sayfa acilista listede", () => {
+    const gorunen = acilistaGorunen("tesis", "yonetici");
+    const tumu = menuGruplari("tesis", "yonetici").flatMap((g) =>
+      g.ogeler.map(ogeBaglantisi),
     );
-    expect(enKotu).toBeLessThanOrEqual(12);
-    // Ve gercekten 28'den cok daha az (test "0 satir" ile de gecmesin).
-    expect(enKotu).toBeGreaterThan(4);
+    expect(gorunen.sort()).toEqual(tumu.sort());
+    // Eskiden katli olan bolumlerin ogeleri de ICINDE (bu testin asil
+    // amaci): kullanicilar, tanimlar, duyurular, finans hareketleri.
+    expect(gorunen).toContain("/users");
+    expect(gorunen).toContain("/tanimlar");
+    expect(gorunen).toContain("/announcements");
+    expect(gorunen).toContain("/finans?tip=gelir");
   });
 
-  it("DENETCI ve ADMIN de kaydirmasiz", () => {
-    expect(gorunenSatir("tesis", "denetci", "/raporlar")).toBeLessThanOrEqual(10);
-    expect(gorunenSatir("platform", "admin", "/tenants")).toBeLessThanOrEqual(10);
+  it("DENETCI ve ADMIN icin de tam liste", () => {
+    for (const [yuzey, rol] of [
+      ["tesis", "denetci"],
+      ["platform", "admin"],
+    ] as const) {
+      const gruplar = menuGruplari(yuzey, rol);
+      const beklenen = gruplar.reduce((n, g) => n + g.ogeler.length, 0);
+      expect(acilistaGorunen(yuzey, rol).length, `${yuzey}/${rol}`).toBe(beklenen);
+    }
   });
 });
 

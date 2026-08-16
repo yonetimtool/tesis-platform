@@ -240,8 +240,6 @@ export const tr = {
   kabukGrupIletisim: "İletişim",
   kabukGrupYonetim: "Yönetim",
   kabukGrupPlatform: "Platform",
-  kabukDahaFazla: "Daha fazla",
-  kabukDahaAz: "Daha az",
   kabukBolumAc: "{bolum} bölümünü aç",
   kabukBolumKapat: "{bolum} bölümünü kapat",
   panoKonumBaslik: "Tesis konumu",
@@ -991,6 +989,8 @@ export const tr = {
   aramaIpucu: "Kişi, daire, görev, talep…",
   aramaSonuclari: "Arama sonuçları",
   aramaSonucYok: "Sonuç bulunamadı.",
+  aramaSayfalar: "Sayfalar",
+  aramaKayitlar: "Kayıtlar",
   // (P154 / Asama 6.4) Not ve ek
   ekBaslik: "Notlar ve ekler",
   ekYok: "Henüz not veya ek yok.",

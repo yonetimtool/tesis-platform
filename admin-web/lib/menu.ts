@@ -95,19 +95,19 @@ export function ogeAktif(
   );
 }
 
-/**
- * KATLI GELEN BOLUMLER — tek bir "Daha fazla" satirinin ardinda.
- *
- * DURUSTCE: elimizde KULLANIM VERISI YOK (telemetri toplanmiyor). Bu
- * yuzden "en az kullanilan" bir OLCUM degil, bir URUN KARARIDIR:
- * `yonetim` kurulum ekranlaridir (kullanicilar, tanimlar, KVKK — haftada
- * bir acilir), `iletisim` ise duyuru/mesaj gibi ITME islerini tasir ve
- * gunluk devriye/aidat akisinin disindadir. Karar tek bir diziden okunur;
- * degistirmek bir satirlik istir.
- */
-export const KATLI_GRUPLAR: readonly GrupId[] = [
-  "finansHareket", "iletisim", "tanimlar", "yonetim",
-];
+// (P166 §1) "DAHA FAZLA / DAHA AZ" KATMANI KALDIRILDI.
+//
+// Eskiden dort bolum (`finansHareket`, `iletisim`, `tanimlar`, `yonetim`)
+// `KATLI_GRUPLAR` dizisindeydi ve tek bir "Daha fazla" satirinin ARDINDA
+// duruyordu. Kerem'in olcumu: uygulamayi bilmeyen kullanici o satirin bir
+// MENU oldugunu anlamiyor, arkasindaki 30+ sayfayi HIC gormuyordu.
+//
+// Katlama bir yer kazanma cozumuydu; yerine KAYDIRMA kondu (`nav` zaten
+// `overflow-y-auto`). Kaydirma cubugu bir sayfanin VAR OLDUGUNU soyler,
+// katlanmis bir baslik soylemez — bulunabilirlik farki budur.
+//
+// GRUP BASLIKLARI KALDI ve hâlâ katlanabilir; degisen sey VARSAYILAN:
+// artik hepsi ACIK baslar. Yani hicbir sayfa "bir tiklama uzakta" degil.
 
 /** Bolum basligi anahtarlari. */
 export const GRUP_ANAHTARI: Record<GrupId, SozlukAnahtari> = {
@@ -122,16 +122,21 @@ export const GRUP_ANAHTARI: Record<GrupId, SozlukAnahtari> = {
   platform: "kabukGrupPlatform",
 };
 
+// (P166 §1) SIRA ARTIK ANLAMA GORE, "hangisi katlanir"a gore DEGIL.
+//
+// Eski dizide `platform` ortadaydi cunku katli olmayan son bolumdu —
+// yani sirayi katlama karari belirliyordu. Katlama gidince olcut de
+// degisti: para hareketleri paranin, tanimlar da yonetimin yanindadir.
 const GRUP_SIRASI: readonly GrupId[] = [
   "guvenlik",
   "tesis",
   "finans",
-  "icra",
-  "platform",
   "finansHareket",
+  "icra",
   "iletisim",
   "tanimlar",
   "yonetim",
+  "platform",
 ];
 
 // Menu ogeleri METIN degil ANAHTAR tasir: etiket cizim aninda aktif dilde
@@ -284,8 +289,6 @@ export interface MenuGrubu {
   id: GrupId;
   anahtar: SozlukAnahtari;
   ogeler: MenuOgesi[];
-  /** Varsayilan olarak "Daha fazla"nin ardinda mi? */
-  katli: boolean;
 }
 
 /**
@@ -302,7 +305,6 @@ export function menuGruplari(yuzey: Yuzey, rol: string | null): MenuGrubu[] {
     id,
     anahtar: GRUP_ANAHTARI[id],
     ogeler: gorunen.filter((o) => o.grup === id),
-    katli: KATLI_GRUPLAR.includes(id),
   })).filter((g) => g.ogeler.length > 0);
 }
 
@@ -329,6 +331,105 @@ export function rotaninGrubu(pathname: string): GrupId | null {
     (a, b) => b.href.length - a.href.length,
   )[0];
   return onek?.grup ?? null;
+}
+
+/* =========================================================================
+ * (P166 §2) SAYFA ARAMASI — "aidat" yazan kullanici Aidat SAYFASINI bulur
+ * =========================================================================
+ *
+ * Global arama bugune kadar yalniz KAYIT ariyordu (kisi, daire, gorev...).
+ * Bir sayfanin ADINI yazan kullanici "sonuc yok" goruyordu; oysa aradigi
+ * sey menude, iki baslik altinda duruyordu.
+ *
+ * NEDEN SUNUCUDA DEGIL, BURADA
+ * ----------------------------
+ * Kayit aramasi sunucudadir ve OYLE KALMALI: kayitlarin icerigi tarayiciya
+ * gonderilemez. Sayfa aramasi ise BASKA bir sey — aranan kume, kenar
+ * cubugunun ZATEN cizdigi kumenin ta kendisi. Sunucuya tasimak, ayni
+ * gorunurluk kararini ikinci bir yerde tekrar etmek olurdu; ikisi
+ * ayrisirsa arama menuden farkli bir kume gosterirdi.
+ *
+ * YETKI SIZINTISI YOK ve bunun gerekcesi tam olarak sudur: kume
+ * `menuGruplari(yuzey, rol)`ten geliyor, yani kenar cubugundakiyle AYNI
+ * fonksiyondan. Aramada gorunen bir sayfa menude de gorunur; menude
+ * gorunmeyen aramada da gorunmez. Ikinci bir suzgec YAZILMADI — yazilsaydi
+ * ikinci bir yetki karari olur ve biri unutuldugunda sizinti SESSIZ olurdu.
+ */
+
+/**
+ * Turkce duyarli, aksan gormeyen karsilastirma anahtari.
+ *
+ * Klavyesinde Turkce harf olmayan ya da acele eden kullanici aksan
+ * yazmaz; aksansiz yazim aksanli basligi BULMALI. `NFD` cozup birlesen
+ * isaretleri atmak bunu saglar.
+ *
+ * NOKTASIZ I (U+0131) AYRI ELE ALINIR: `NFD` onu cozmez (birlesen bir
+ * isareti yoktur, ayri bir harftir) ve `toLocaleLowerCase("tr")` buyuk
+ * `I`yi ona cevirir. Elle esitlenmezse "Iletisim" yazan kullanici
+ * hicbir sey bulamazdi. Kacis dizisiyle yazildi: bu dosyada gorunur
+ * metin YOKTUR ve tarama (tur 22) harfin kendisini sabit metin sanar.
+ */
+function aramaAnahtari(s: string): string {
+  return s
+    .toLocaleLowerCase("tr")
+    .replace(/\u0131/g, "i")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+/** Sayfa vurusu — menu ogesinin kendisi + hangi bolumde oldugu. */
+export interface SayfaVurusu {
+  oge: MenuOgesi;
+  /** Bolum basligi anahtari — sonucta "Finans › Aidat" gibi baglam verir. */
+  grupAnahtari: SozlukAnahtari;
+}
+
+/**
+ * Rolde GORUNEN sayfalar icinde ad aramasi.
+ *
+ * `etiket` disaridan gelir cunku menu ogeleri METIN degil ANAHTAR tasir ve
+ * cozum aktif dile baglidir — bu modul i18n'e (dolayisiyla React'e) bagli
+ * olmamali, testte de saf cagrilabilmeli.
+ *
+ * SIRALAMA: once ADI sorguyla BASLAYANLAR, sonra adinin icinde gecenler,
+ * en sonda yalniz BOLUM ADI eslesenler. "aidat" yazan kullanici once Aidat
+ * sayfasini gormeli, "Finans" bolumunun tamamini degil.
+ */
+export function sayfaAra(
+  yuzey: Yuzey,
+  rol: string | null,
+  q: string,
+  etiket: (a: SozlukAnahtari) => string,
+  sinir = 6,
+): SayfaVurusu[] {
+  const aranan = aramaAnahtari(q.trim());
+  if (aranan.length < 2) return [];
+
+  const gruplar = menuGruplari(yuzey, rol);
+  // PROFIL de bir sayfadir. Menude bolum disinda cizilir ama aranabilir
+  // olmali — kullanici "profil" yazip kendi kaydina gidebilmeli.
+  const kume: SayfaVurusu[] = gruplar.flatMap((g) =>
+    g.ogeler.map((oge) => ({ oge, grupAnahtari: g.anahtar })),
+  );
+  if (profilGorunur(yuzey, rol)) {
+    kume.push({ oge: PROFIL_OGESI, grupAnahtari: GRUP_ANAHTARI[PROFIL_OGESI.grup] });
+  }
+
+  const puanli: { v: SayfaVurusu; puan: number }[] = [];
+  for (const v of kume) {
+    const ad = aramaAnahtari(etiket(v.oge.anahtar));
+    const bolum = aramaAnahtari(etiket(v.grupAnahtari));
+    if (ad.startsWith(aranan)) puanli.push({ v, puan: 0 });
+    else if (ad.includes(aranan)) puanli.push({ v, puan: 1 });
+    else if (bolum.includes(aranan)) puanli.push({ v, puan: 2 });
+  }
+  // KARARLI SIRALAMA: esit puanda menudeki sira korunur, yoksa ayni sorgu
+  // iki cagrida farkli siralar dondurebilirdi.
+  return puanli
+    .map((p, i) => ({ ...p, i }))
+    .sort((a, b) => a.puan - b.puan || a.i - b.i)
+    .slice(0, sinir)
+    .map((p) => p.v);
 }
 
 /** Yalniz testler icin: ham liste (her ogenin bir gruba dustugu olculur). */

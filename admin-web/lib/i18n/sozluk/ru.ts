@@ -226,8 +226,6 @@ export const ru: Sozluk = {
   kabukGrupIletisim: "Коммуникации",
   kabukGrupYonetim: "Администрирование",
   kabukGrupPlatform: "Платформа",
-  kabukDahaFazla: "Ещё",
-  kabukDahaAz: "Свернуть",
   kabukBolumAc: "Открыть раздел «{bolum}»",
   kabukBolumKapat: "Закрыть раздел «{bolum}»",
   panoKonumBaslik: "Расположение объекта",
@@ -938,6 +936,8 @@ export const ru: Sozluk = {
   aramaIpucu: "Человек, квартира, задача, заявка…",
   aramaSonuclari: "Результаты поиска",
   aramaSonucYok: "Ничего не найдено.",
+  aramaSayfalar: "Страницы",
+  aramaKayitlar: "Записи",
   // (P154 / Asama 6.4) Not ve ek
   ekBaslik: "Заметки и вложения",
   ekYok: "Пока нет заметок или вложений.",

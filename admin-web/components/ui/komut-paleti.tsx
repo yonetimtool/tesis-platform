@@ -38,6 +38,9 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
+import { ogeBaglantisi, sayfaAra, type SayfaVurusu } from "@/lib/menu";
+import { useRol } from "@/lib/rol-kullan";
+import type { Yuzey } from "@/lib/yuzey";
 
 import { Girinti } from "./yuzey";
 
@@ -157,9 +160,17 @@ export function vuruslariGrupla(
   return gruplar;
 }
 
-export function KomutPaleti() {
+export function KomutPaleti({
+  yuzey,
+  rolBaslangic,
+}: {
+  yuzey: Yuzey;
+  /** Sunucunun cerezden cozdugu rol; `null` ise `/api/me` ile tamamlanir. */
+  rolBaslangic: string | null;
+}) {
   const t = useT();
   const router = useRouter();
+  const rol = useRol(rolBaslangic);
   const [acik, setAcik] = useState(false);
   const [q, setQ] = useState("");
   const [vuruslar, setVuruslar] = useState<PaletVurusu[]>([]);
@@ -169,6 +180,14 @@ export function KomutPaleti() {
   const acanRef = useRef<HTMLElement | null>(null);
   const listeId = useId();
   const gruplar = vuruslariGrupla(vuruslar);
+
+  /* (P166 §2) SAYFALAR — `GlobalArama` ile AYNI fonksiyondan, ayni yetki
+   * kapisindan. Palet burada da kendi suzgecini yazmiyor. */
+  const sayfalar: SayfaVurusu[] = acik ? sayfaAra(yuzey, rol, q, t) : [];
+  /* KLAVYE INDEKSI TEK DIZI UZERINDE: sayfalar once (0..n-1), kayitlar
+   * onlarin ardindan. Iki ayri sayac tutmak, ok tuslarinin gruplar
+   * arasinda takilmasi demekti. */
+  const toplamSatir = sayfalar.length + vuruslar.length;
 
   const kapat = useCallback(() => {
     setAcik(false);
@@ -235,23 +254,38 @@ export function KomutPaleti() {
     router.push(PALET_HEDEF[v.kaynak]?.rota ?? KOK_ROTA);
   }
 
+  function sayfayaGit(s: SayfaVurusu) {
+    kapat();
+    router.push(ogeBaglantisi(s.oge));
+  }
+
+  /** Duz indeksi (sayfa mi kayit mi) cozup gider. */
+  function indekseGit(i: number) {
+    const s = sayfalar[i];
+    if (s) {
+      sayfayaGit(s);
+      return;
+    }
+    const v = vuruslar[i - sayfalar.length];
+    if (v) git(v);
+  }
+
   function girdiTus(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === "Escape") {
       e.preventDefault();
       kapat();
       return;
     }
-    if (vuruslar.length === 0) return;
+    if (toplamSatir === 0) return;
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setSecili((s) => (s + 1) % vuruslar.length);
+      setSecili((s) => (s + 1) % toplamSatir);
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      setSecili((s) => (s - 1 + vuruslar.length) % vuruslar.length);
+      setSecili((s) => (s - 1 + toplamSatir) % toplamSatir);
     } else if (e.key === "Enter") {
       e.preventDefault();
-      const v = vuruslar[secili];
-      if (v) git(v);
+      indekseGit(secili);
     }
   }
 
@@ -294,10 +328,10 @@ export function KomutPaleti() {
               // ODAK GIRDIDE KALIR; secili satir bununla bildirilir.
               // Oklarla odagi tasisaydik kullanici yazmaya devam edemezdi.
               role="combobox"
-              aria-expanded={vuruslar.length > 0}
+              aria-expanded={toplamSatir > 0}
               aria-controls={listeId}
               aria-activedescendant={
-                vuruslar.length > 0 ? `${listeId}-${secili}` : undefined
+                toplamSatir > 0 ? `${listeId}-${secili}` : undefined
               }
               className="odak-ic h-11 w-full bg-transparent px-3 outline-none"
               style={{ color: "var(--yz-text)", fontSize: "var(--yz-fs-body)" }}
@@ -311,7 +345,7 @@ export function KomutPaleti() {
           aria-label={t("aramaSonuclari")}
           className="max-h-[50vh] overflow-y-auto px-2 pb-2"
         >
-          {vuruslar.length === 0 && !yukleniyor && q.trim().length >= 2 && (
+          {toplamSatir === 0 && !yukleniyor && q.trim().length >= 2 && (
             <p
               className="px-3 py-4"
               style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}
@@ -328,6 +362,47 @@ export function KomutPaleti() {
 
               KLAVYE INDEKSI DUZ KALIR: `mutlakIndeks` gruplar arasinda
               artmaya devam eder, yoksa ok tuslari grup basinda takilirdi. */}
+          {/* (P166 §2) SAYFALAR GRUBU — kayitlarin USTUNDE ve AYRI. */}
+          {sayfalar.length > 0 && (
+            <div role="group" aria-labelledby={`${listeId}-b-sayfa`}>
+              <p
+                id={`${listeId}-b-sayfa`}
+                className="flex items-center gap-1.5 px-3 pb-1 pt-3"
+                style={{
+                  fontSize: "var(--yz-fs-xs)",
+                  color: "var(--yz-text-3)",
+                  textTransform: BUYUK_HARF,
+                  letterSpacing: "0.04em",
+                }}
+              >
+                <Ikon d={I_LISTE} />
+                {t("aramaSayfalar")}
+              </p>
+              {sayfalar.map((s, i) => (
+                <button
+                  key={ogeBaglantisi(s.oge)}
+                  id={`${listeId}-${i}`}
+                  type="button"
+                  role="option"
+                  aria-selected={i === secili}
+                  onClick={() => sayfayaGit(s)}
+                  onMouseEnter={() => setSecili(i)}
+                  className="flex w-full flex-col items-start gap-0.5 px-3 py-2 text-start"
+                  style={{
+                    borderRadius: "var(--yz-radius-btn)",
+                    background: i === secili ? "var(--yz-surface-2)" : undefined,
+                  }}
+                >
+                  <span style={{ fontSize: "var(--yz-fs-body)", color: "var(--yz-text)" }}>
+                    {t(s.oge.anahtar)}
+                  </span>
+                  <span style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
+                    {t(s.grupAnahtari)}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
           {gruplar.map(({ kaynak, ogeler, baslangic }) => (
             <div key={kaynak} role="group" aria-labelledby={`${listeId}-b-${kaynak}`}>
               <p
@@ -344,7 +419,9 @@ export function KomutPaleti() {
                 {t(PALET_HEDEF[kaynak]?.etiket ?? YEDEK_ETIKET)}
               </p>
               {ogeler.map((v, j) => {
-                const i = baslangic + j;
+                // SAYFALAR duz indeksin BASINDA durdugu icin kayit
+                // indeksleri onlarin sayisi kadar kayar.
+                const i = sayfalar.length + baslangic + j;
                 return (
                   <button
                     key={`${v.kaynak}-${v.id}`}

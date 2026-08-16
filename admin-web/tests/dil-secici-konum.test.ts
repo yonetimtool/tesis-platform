@@ -52,7 +52,10 @@ describe("(P140.4) dil secici konumu", () => {
     // penceresi (80) araya giren bilesenle doldu. Pencere genisletmek
     // yerine SIRA ACIKCA dogrulaniyor: bu, sayi ayarlamaktan daha
     // saglam ve testin kendi cumlesini bire bir olcuyor.
-    const sira = ["<GlobalArama />", "<BildirimMerkezi />", "<DilSecici />"];
+    // (P166 §2) `<GlobalArama` — KAPANIS ETIKETSIZ arandi: bilesen artik
+    // `yuzey`/`rolBaslangic` prop'lari aliyor ve tek satirda kapanmiyor.
+    // Olculen sey SIRA, cagrinin yazimi degil.
+    const sira = ["<GlobalArama", "<BildirimMerkezi />", "<DilSecici />"];
     let imlec = -1;
     for (const oge of sira) {
       const yer = kod.indexOf(oge, imlec + 1);

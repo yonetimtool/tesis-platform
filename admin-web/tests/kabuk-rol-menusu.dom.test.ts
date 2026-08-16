@@ -42,19 +42,18 @@ function tesisKonagi() {}
  * hedefidir ve rolden bagimsiz her zaman durur.
  */
 /**
- * (P133.1) MENU ARTIK BOLUMLU ve bolumler KATLI acilir.
+ * (P133.1) MENU BOLUMLU cizilir.
  *
  * Bu dosyanin olctugu sey ROL KAPISIDIR ("sakin yonetim menusunu gormez"),
  * gorunurlugun kac tiklama uzakta oldugu degil. Bu yuzden sayim ONCESINDE
  * her bolum acilir — aksi hâlde test, rol kapisi bozulsa bile "zaten
- * katliydi" diye gecerdi.
+ * kapaliydi" diye gecerdi.
  *
- * Once "Daha fazla" acilir (katli bolumlerin BASLIKLARI ancak ondan sonra
- * DOM'a girer), sonra gorunen tum bolum basliklari.
+ * (P166 §1) "Daha fazla" ACMA ADIMI KALDIRILDI: o katman artik yok,
+ * bolumler zaten acik baslar. Dongu yine de duruyor cunku kullanici bir
+ * bolumu KENDI kapatabilir ve test o durumda da rol kapisini olcmeli.
  */
 function tumBolumleriAc(): void {
-  const dahaFazla = screen.queryAllByRole("button", { name: /daha fazla/i });
-  for (const d of dahaFazla) fireEvent.click(d);
   // Kapali bolumler: `aria-expanded="false"` tasiyan her baslik.
   //
   // (P160) TARAMA `nav` ICINE DARALTILDI. Eskiden EKRANDAKI her

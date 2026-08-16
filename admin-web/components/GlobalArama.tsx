@@ -1,10 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
+import { ogeBaglantisi, sayfaAra, type SayfaVurusu } from "@/lib/menu";
+import { useRol } from "@/lib/rol-kullan";
+import type { Yuzey } from "@/lib/yuzey";
 
 /**
  * (P154 / Asama 6.3) GLOBAL ARAMA — ust barda, TEK yer.
@@ -49,14 +52,38 @@ const _YEDEK_ETIKET: SozlukAnahtari = "aramaEtiket";
 //: Tuslama basina istek atmak, her harfte bir tam metin taramasi demekti.
 const GECIKME_MS = 300;
 
-export function GlobalArama() {
+export function GlobalArama({
+  yuzey,
+  rolBaslangic,
+}: {
+  yuzey: Yuzey;
+  /** Sunucunun cerezden cozdugu rol; `null` ise `/api/me` ile tamamlanir. */
+  rolBaslangic: string | null;
+}) {
   const t = useT();
   const router = useRouter();
+  const rol = useRol(rolBaslangic);
   const [q, setQ] = useState("");
   const [vuruslar, setVuruslar] = useState<Vurus[]>([]);
   const [acik, setAcik] = useState(false);
   const [yukleniyor, setYukleniyor] = useState(false);
   const kutuRef = useRef<HTMLDivElement>(null);
+
+  /* (P166 §2) SAYFALAR — kayit sonuclarindan AYRI grup.
+   *
+   * ANINDA cizilir, sunucu yanitini BEKLEMEZ: kume istemcide (menu
+   * kaydinda) zaten duruyor. 300 ms gecikme kayit aramasi icindir —
+   * "aidat" yazan kullaniciyi sayfa sonucu icin de bekletmek, elde olan
+   * bilgiyi saklamak olurdu.
+   *
+   * `t` her karede yeni bir kapanis oldugu icin bagimliliga KONMADI;
+   * konsaydi `useMemo` her cizimde yeniden hesaplanir, yani `useMemo`
+   * hicbir sey yapmazdi. Dil degisimi zaten kabugu yeniden monte eder. */
+  const sayfalar = useMemo(
+    () => sayfaAra(yuzey, rol, q, t),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [yuzey, rol, q],
+  );
 
   useEffect(() => {
     // EN AZ IKI KARAKTER — sunucunun kurali (422). Istemcide de
@@ -66,6 +93,10 @@ export function GlobalArama() {
       setAcik(false);
       return;
     }
+    // (P166 §2) LISTE HEMEN ACILIR. Eskiden yalniz sunucu yaniti gelince
+    // aciliyordu; sayfa sonuclari istemcide HAZIR oldugu icin bu, elde
+    // olan cevabi 300 ms saklamak olurdu.
+    setAcik(true);
     let iptal = false;
     setYukleniyor(true);
     const zaman = setTimeout(async () => {
@@ -106,13 +137,19 @@ export function GlobalArama() {
     router.push(HEDEF[v.kaynak]?.rota ?? "/");
   }
 
+  function sayfayaGit(s: SayfaVurusu) {
+    setAcik(false);
+    setQ("");
+    router.push(ogeBaglantisi(s.oge));
+  }
+
   return (
     <div ref={kutuRef} className="relative w-full max-w-md">
       <input
         type="search"
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        onFocus={() => vuruslar.length > 0 && setAcik(true)}
+        onFocus={() => (vuruslar.length > 0 || sayfalar.length > 0) && setAcik(true)}
         onKeyDown={(e) => e.key === "Escape" && setAcik(false)}
         placeholder={t("aramaIpucu")}
         aria-label={t("aramaEtiket")}
@@ -125,8 +162,45 @@ export function GlobalArama() {
           aria-label={t("aramaSonuclari")}
           className="kart-kenar absolute end-0 top-full z-40 mt-1 max-h-80 w-full overflow-y-auto rounded-kart border bg-yuzey-card shadow-yuzen"
         >
-          {vuruslar.length === 0 && !yukleniyor && (
+          {vuruslar.length === 0 && sayfalar.length === 0 && !yukleniyor && (
             <p className="px-3 py-4 text-sm text-metin-muted">{t("aramaSonucYok")}</p>
+          )}
+
+          {/* (P166 §2) SAYFALAR ONCE. Kullanici bir sayfa adi yazdiysa
+              (`aidat`, `devriye`) aradigi sey neredeyse her zaman o
+              sayfadir; onlarca aidat KAYDININ altina gomulmesi, aramayi
+              yine ise yaramaz kilardi. Ayri baslik da brief'in sarti. */}
+          {sayfalar.length > 0 && (
+            <div role="group" aria-labelledby="arama-sayfalar-baslik">
+              <p
+                id="arama-sayfalar-baslik"
+                className="px-3 pb-1 pt-2 text-xs uppercase tracking-wide text-metin-muted"
+              >
+                {t("aramaSayfalar")}
+              </p>
+              {sayfalar.map((s) => (
+                <button
+                  key={ogeBaglantisi(s.oge)}
+                  type="button"
+                  role="option"
+                  aria-selected={false}
+                  onClick={() => sayfayaGit(s)}
+                  className="flex w-full flex-col items-start gap-0.5 px-3 py-2 text-start transition hover:bg-yuzey-divider"
+                >
+                  <span className="text-sm font-medium">{t(s.oge.anahtar)}</span>
+                  <span className="text-xs text-metin-muted">{t(s.grupAnahtari)}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {vuruslar.length > 0 && sayfalar.length > 0 && (
+            <p
+              className="px-3 pb-1 pt-2 text-xs uppercase tracking-wide text-metin-muted"
+              aria-hidden="true"
+            >
+              {t("aramaKayitlar")}
+            </p>
           )}
           {vuruslar.map((v) => (
             <button

@@ -226,8 +226,6 @@ export const ar: Sozluk = {
   kabukGrupIletisim: "التواصل",
   kabukGrupYonetim: "الإدارة",
   kabukGrupPlatform: "المنصة",
-  kabukDahaFazla: "المزيد",
-  kabukDahaAz: "أقل",
   kabukBolumAc: "فتح قسم {bolum}",
   kabukBolumKapat: "إغلاق قسم {bolum}",
   panoKonumBaslik: "موقع الموقع",
@@ -938,6 +936,8 @@ export const ar: Sozluk = {
   aramaIpucu: "شخص، وحدة، مهمة، طلب…",
   aramaSonuclari: "نتائج البحث",
   aramaSonucYok: "لا توجد نتائج.",
+  aramaSayfalar: "الصفحات",
+  aramaKayitlar: "السجلات",
   // (P154 / Asama 6.4) Not ve ek
   ekBaslik: "الملاحظات والمرفقات",
   ekYok: "لا توجد ملاحظات أو مرفقات بعد.",

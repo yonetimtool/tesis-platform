@@ -226,8 +226,6 @@ export const es: Sozluk = {
   kabukGrupIletisim: "Comunicación",
   kabukGrupYonetim: "Administración",
   kabukGrupPlatform: "Plataforma",
-  kabukDahaFazla: "Más",
-  kabukDahaAz: "Menos",
   kabukBolumAc: "Abrir la sección {bolum}",
   kabukBolumKapat: "Cerrar la sección {bolum}",
   panoKonumBaslik: "Ubicación de la finca",
@@ -938,6 +936,8 @@ export const es: Sozluk = {
   aramaIpucu: "Persona, vivienda, tarea, solicitud…",
   aramaSonuclari: "Resultados de búsqueda",
   aramaSonucYok: "Sin resultados.",
+  aramaSayfalar: "Páginas",
+  aramaKayitlar: "Registros",
   // (P154 / Asama 6.4) Not ve ek
   ekBaslik: "Notas y adjuntos",
   ekYok: "Aún no hay notas ni adjuntos.",

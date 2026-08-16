@@ -226,8 +226,6 @@ export const en: Sozluk = {
   kabukGrupIletisim: "Communication",
   kabukGrupYonetim: "Administration",
   kabukGrupPlatform: "Platform",
-  kabukDahaFazla: "More",
-  kabukDahaAz: "Less",
   kabukBolumAc: "Open the {bolum} section",
   kabukBolumKapat: "Close the {bolum} section",
   panoKonumBaslik: "Site location",
@@ -938,6 +936,8 @@ export const en: Sozluk = {
   aramaIpucu: "Person, unit, task, request…",
   aramaSonuclari: "Search results",
   aramaSonucYok: "No results found.",
+  aramaSayfalar: "Pages",
+  aramaKayitlar: "Records",
   // (P154 / Asama 6.4) Not ve ek
   ekBaslik: "Notes and attachments",
   ekYok: "No notes or attachments yet.",

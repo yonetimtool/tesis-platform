@@ -226,8 +226,6 @@ export const fr: Sozluk = {
   kabukGrupIletisim: "Communication",
   kabukGrupYonetim: "Administration",
   kabukGrupPlatform: "Plateforme",
-  kabukDahaFazla: "Plus",
-  kabukDahaAz: "Moins",
   kabukBolumAc: "Ouvrir la section {bolum}",
   kabukBolumKapat: "Fermer la section {bolum}",
   panoKonumBaslik: "Emplacement du site",
@@ -938,6 +936,8 @@ export const fr: Sozluk = {
   aramaIpucu: "Personne, logement, tâche, demande…",
   aramaSonuclari: "Résultats de recherche",
   aramaSonucYok: "Aucun résultat.",
+  aramaSayfalar: "Pages",
+  aramaKayitlar: "Enregistrements",
   // (P154 / Asama 6.4) Not ve ek
   ekBaslik: "Notes et pièces jointes",
   ekYok: "Aucune note ni pièce jointe.",
