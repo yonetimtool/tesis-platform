@@ -12,10 +12,12 @@ import { describe, expect, it } from "vitest";
 
 import { SOZLUKLER, type SozlukAnahtari } from "@/lib/i18n/sozluk";
 import {
+  kurulumGorunur,
   menuGruplari,
   ogeBaglantisi,
   profilGorunur,
   sayfaAra,
+  KURULUM_OGESI,
   PROFIL_OGESI,
 } from "@/lib/menu";
 import type { Yuzey } from "@/lib/yuzey";
@@ -78,7 +80,13 @@ function rolMenusu(yuzey: Yuzey, rol: string | null): Set<string> {
   const kume = new Set(
     menuGruplari(yuzey, rol).flatMap((g) => g.ogeler.map((o) => o.href)),
   );
+  // (P167 §1.7/§1.8) PROFIL ve KURULUM SIHIRBAZI bir BOLUMDE degil ama
+  // kenar cubugunda/kabukta hâlâ CIZILIYORLAR — profil sag ust kullanici
+  // menusunde, sihirbaz alt cubukta. Yani kullanicinin gorebildigi kumeye
+  // aittirler ve aramada cikmalari bir sizinti DEGIL. Gorunurlukleri yine
+  // `ROTA_ROLLERI`den geliyor; test onu kendi cagrisiyla dogruluyor.
   if (profilGorunur(yuzey, rol)) kume.add(PROFIL_OGESI.href);
+  if (kurulumGorunur(yuzey, rol)) kume.add(KURULUM_OGESI.href);
   return kume;
 }
 

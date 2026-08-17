@@ -64,10 +64,63 @@ afterEach(() => vi.restoreAllMocks());
 
 describe("Profilim", () => {
   it("KIMLIK bilgileri gosterilir", async () => {
+    // (P167 §1.7) AD ARTIK DUZENLENEBILIR bir alan (salt okunur bir `dd`
+    // degil): brief'in "Hesap Bilgileri" formu onu istiyor ve uc
+    // (`PATCH /me/contact`) `ad` alanini bu turda kabul ediyor.
     fetchTaklidi(PROFIL);
     ciz(ProfilPage);
-    expect(await screen.findByText("Ayşe Yılmaz")).toBeInTheDocument();
-    expect(screen.getByText("ayse@ornek.com")).toBeInTheDocument();
+    expect(await screen.findByDisplayValue("Ayşe Yılmaz")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("ayse@ornek.com")).toBeInTheDocument();
+  });
+
+  it("(P167 §1.7) E-POSTA ALANI SALT OKUNUR — giris anahtaridir", async () => {
+    // Dogrulama akisi olmadan degistirilebilseydi: odunc alinmis bir
+    // oturum adresi degistirip hesabin sahibini kalici olarak disarida
+    // birakabilir, yanlis yazilan bir adres parola sifirlamayi SESSIZCE
+    // calismaz kilardi. Alan GOSTERILIR (gizlemek "neden yok?" sorusu
+    // uretirdi) ama kilitlidir.
+    fetchTaklidi(PROFIL);
+    ciz(ProfilPage);
+    const eposta = await screen.findByDisplayValue("ayse@ornek.com");
+    expect(eposta).toBeDisabled();
+  });
+
+  it("(P167 §1.7) BOS AD kaydettirmez", async () => {
+    // `app_user.ad` NOT NULL ve her ekranda kisinin tek tanimi; bos ad
+    // listelerde adsiz satirlar uretirdi. Telefondan farki tam da bu:
+    // orada bos deger "numarayi kaldir" demektir.
+    const cagrilar = fetchTaklidi(PROFIL);
+    ciz(ProfilPage);
+    const adAlani = await screen.findByDisplayValue("Ayşe Yılmaz");
+    await userEvent.clear(adAlani);
+    await userEvent.click(screen.getByRole("button", { name: /Kaydet/i }));
+    expect(
+      await screen.findByText(/Ad soyad boş bırakılamaz/i),
+    ).toBeInTheDocument();
+    expect(cagrilar.find((c) => c.method === "PATCH")).toBeUndefined();
+  });
+
+  it("(P167 §1.7) SOL MENU bes bolum cizer ve secim degistirir", async () => {
+    fetchTaklidi(PROFIL);
+    ciz(ProfilPage);
+    const gezinme = await screen.findByRole("navigation", {
+      name: "Profil bölümleri",
+    });
+    const bolumler = [...gezinme.querySelectorAll("button")].map(
+      (b) => b.textContent,
+    );
+    expect(bolumler).toEqual([
+      "Hesap bilgileri",
+      "Güvenlik ve giriş",
+      "Bildirim ayarları",
+      "Şifre değiştir",
+      "Hesabımı sil",
+    ]);
+    await userEvent.click(
+      screen.getByRole("button", { name: "Şifre değiştir" }),
+    );
+    // Bolum degisti: parola formunun alanlari ekranda.
+    expect(await screen.findByLabelText(/Mevcut şifre/)).toBeInTheDocument();
   });
 
   it("TELEFON P123 maskesiyle GRUPLANMIS gelir", async () => {

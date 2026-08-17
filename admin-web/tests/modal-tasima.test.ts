@@ -79,6 +79,15 @@ const SAYFA_ICI_KALIR = new Set([
   // `settings` ile ayni gerekce. Bir dugme arkasina saklamak, iletisim
   // sayfasini bos birakirdi.
   "components/TanitimForm.tsx",
+  // (P167 §1.7) PROFIL — `settings` ile BIREBIR ayni gerekce: sayfanin
+  // govdesi zaten formdur. "Sifre degistir" bolumune girip bir de modal
+  // acmak, tek isi olan bir ekranda ikinci bir tiklama katmani olurdu.
+  //
+  // FORM ETIKETI BURADA BIR SUS DEGIL: parola alanlarinin tarayici parola
+  // yoneticisiyle calismasi (`autoComplete=current-password/new-password`)
+  // ve Enter ile gonderim bir `<form>` gerektirir. Div + onClick'e
+  // dusurmek, erisilebilirligi kilit ugruna azaltmak olurdu.
+  "(protected)/profil/page.tsx",
 ]);
 // NOT: `components/UnitDetail.tsx` bir sure muafiyet listesindeydi (uc
 // formu sayfa icinde aciyordu). P162'de ucu de modala tasindi ve muafiyet

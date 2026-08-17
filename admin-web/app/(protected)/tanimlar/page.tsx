@@ -472,6 +472,21 @@ function formDegeri(alan: Alan, kayit: Kayit | null): string | boolean {
 /** Defter adlari — menudeki `?defter=` baglantilarinin gecerli kumesi. */
 const DEFTER_ADLARI = DEFTERLER.map((d) => d.kaynak);
 
+/**
+ * (P167 §1.6) "AYARLAR" SEKMESI DE ADRESE TASINDI.
+ *
+ * Bu sekme bir defter degil (muhasebe ayarlari formu) ve secimi YEREL bir
+ * `useState`te duruyordu. Sonucu: menudeki Tanimlar bolumu on bir deftere
+ * dogrudan baglanabiliyor ama Ayarlar'a baglanamiyordu — sayfanin
+ * menuden ACILAMAYAN tek bolumu oydu.
+ *
+ * Kavram uydurulmadi: ayni `defter` sorgusuna, defter OLMAYAN tek bir
+ * deger eklendi. Boylece secim tek bir yerden (adresten) okunur ve
+ * "hangisi gecerli" sorusu iki duruma bolunmez.
+ */
+const AYARLAR_ADI = "ayarlar";
+const SEKME_ADLARI = [...DEFTER_ADLARI, AYARLAR_ADI];
+
 export default function TanimlarPage() {
   const t = useT();
   // (P154 / Asama 7.1) Menudeki TANIMLAR bolumu her deftere DOGRUDAN
@@ -479,20 +494,15 @@ export default function TanimlarPage() {
   // dogru sayfayi acar ama HEP ilk defteri gosterirdi.
   const [defterAdi, setDefterAdi] = useSorguSecimi(
     "defter",
-    DEFTER_ADLARI,
-    DEFTER_ADLARI[0],
+    SEKME_ADLARI,
+    SEKME_ADLARI[0],
   );
-  // -1 "Ayarlar" sekmesi (defter degil) — kendi durumunda tutulur.
-  const [ayarlarda, setAyarlarda] = useState(false);
+  // -1 "Ayarlar" sekmesi (defter degil) — artik o da ADRESTEN okunuyor.
+  const ayarlarda = defterAdi === AYARLAR_ADI;
   const sekme = ayarlarda ? -1 : DEFTERLER.findIndex((d) => d.kaynak === defterAdi);
   const defter = DEFTERLER[sekme];
   const setSekme = (i: number) => {
-    if (i === -1) {
-      setAyarlarda(true);
-      return;
-    }
-    setAyarlarda(false);
-    setDefterAdi(DEFTERLER[i].kaynak);
+    setDefterAdi(i === -1 ? AYARLAR_ADI : DEFTERLER[i].kaynak);
   };
   return (
     <div className="space-y-4">

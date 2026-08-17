@@ -47,17 +47,31 @@ def test_yonetici_avatar_yukler_me_gorur_null_kaldirir(client, world):
 
 
 def test_me_avatar_yeni_rbac(client, world):
-    # Self-servis avatar YALNIZ yonetici + resident (spec P3). resident artik
-    # yukler; security/tesis_gorevlisi/admin 403; yonetici yabanci onek 422.
+    """(P167 §1.7) Self-servis avatar: admin + yonetici + denetci + resident.
+
+    ADMIN VE DENETCI BU TURDA EKLENDI. Eski kume `yonetici + resident`ti ve
+    gerekcesi "admin'e self-servis gerekmez"di; panelin sag ust kosesi artik
+    HER rol icin avatar cizdigi icin o gerekce dustu.
+
+    SAHA PERSONELI (security / tesis_gorevlisi) HALA 403 ve bu bilincli:
+    onlarin fotografi bir sus degil OPERASYONEL KIMLIK kaydidir (vardiya,
+    devriye, ziyaretci karsilama) ve yonetim `PATCH /users/{id}/avatar`
+    ile yonetir. Kendi degistirebilselerdi kimin kim oldugunu gosteren
+    kayit denetlenemez hale gelirdi.
+    """
     res = _headers(client, world["slug_a"], world["resident_a"])
     key = _upload_foto(client, res)
     assert client.patch("/me/avatar", headers=res,
                         json={"avatar_key": key}).status_code == 200
 
+    for kim in ("admin_a", "denetci_a"):
+        h = _headers(client, world["slug_a"], world[kim])
+        assert client.patch("/me/avatar", headers=h,
+                            json={"avatar_key": None}).status_code == 200, kim
+
     guard = _headers(client, world["slug_a"], world["guard_a"])
     gorevli = _headers(client, world["slug_a"], world["gorevli_a"])
-    admin = _headers(client, world["slug_a"], world["admin_a"])
-    for h in (guard, gorevli, admin):
+    for h in (guard, gorevli):
         assert client.patch("/me/avatar", headers=h,
                             json={"avatar_key": None}).status_code == 403
 

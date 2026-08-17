@@ -454,6 +454,19 @@ class AppUser(Base):
     pazarlama_guncelleme_at = mapped_column(
         TIMESTAMP(timezone=True), nullable=True
     )
+    #: (P167 §1.7) ISLEYIS bildirimlerinin kanal tercihleri — pazarlama
+    #: izinlerinden AYRI ve VARSAYILAN ACIK. Gerekce goc 0055'te: pazarlama
+    #: bir RIZA (varsayilani kapali olmak zorunda), bildirim bir TERCIH
+    #: (kullanici gurultuyu azaltmak icin kapatir).
+    bildirim_eposta: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
+    bildirim_sms: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
+    bildirim_mobil: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
     aranabilir: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("false")
     )

@@ -820,6 +820,18 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "Au moins un champ doit être fourni.",
         "es": "Debe enviarse al menos un campo.",
     },
+    # (P167 §1.7) Kendi cihazini kaldirma. BASKASININ cihaz id'si de bu
+    # metni alir: "senin degil" demek, o id'nin VAR OLDUGUNU dogrulamak
+    # olurdu — bulunamadi, iki durumu da ayni cumleyle karsilar.
+    "cihaz_bulunamadi": {
+        "tr": "Cihaz bulunamadı.",
+        "en": "Device not found.",
+        "ar": "لم يتم العثور على الجهاز.",
+        "ru": "Устройство не найдено.",
+        "de": "Gerät nicht gefunden.",
+        "fr": "Appareil introuvable.",
+        "es": "No se encontró el dispositivo.",
+    },
     "personel_bulunamadi": {
         "tr": "Personel kaydı bulunamadı.",
         "en": "Staff record not found.",

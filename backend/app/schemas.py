@@ -379,6 +379,39 @@ class UserContactUpdate(BaseModel):
         return self
 
 
+class MeContactUpdate(UserContactUpdate):
+    """(P167 §1.7) Self-servis iletisim + GORUNEN AD.
+
+    NEDEN `UserContactUpdate`E EKLENMEDI DE TUREDI: o sema yonetim ucunu
+    (`PATCH /users/{id}/contact`) da besliyor. Oraya `ad` eklemek, "iletisim
+    guncelle" adli bir ucun sessizce KIMLIK alani da degistirebilmesi
+    demekti — yetki matrisi degismeden davranis genisler ve kimse fark
+    etmezdi. Turetmek, yeni alani YALNIZ self-servis yola acar.
+
+    E-POSTA BILEREK YOK. E-posta bu sistemde LOGIN ANAHTARIDIR
+    (`uq_app_user_tenant_email`) ve dogrulama akisi yoktur. Dogrulamasiz
+    degistirilebilseydi: (a) odunc alinmis bir oturum adresi degistirip
+    hesabin sahibini kalici olarak disarida birakabilirdi, (b) yanlis
+    yazilan bir adres parola sifirlamayi SESSIZCE calismaz hale getirirdi.
+    Degisim yolu, dogrulama kodu akisiyla birlikte acilmalidir.
+    """
+
+    ad: str | None = Field(None, min_length=1, max_length=120)
+
+    @field_validator("ad")
+    @classmethod
+    def _ad_bosluk(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        temiz = v.strip()
+        if not temiz:
+            # BOS AD "adi kaldir" DEMEK DEGILDIR (telefondan farki bu):
+            # `app_user.ad` NOT NULL ve her ekranda kisinin tek tanimi.
+            # Bos birakmak, listelerde adsiz satirlar uretirdi.
+            raise ValueError("ad_bos_olamaz")
+        return temiz
+
+
 # Self-servis profil ciktisi (GET /me/profile, PATCH /me/contact) — kullanici
 # KENDI kimlik + iletisim alanlarini gorur. password_hash ASLA yok.
 class MeProfileOut(BaseModel):
@@ -394,6 +427,88 @@ class MeProfileOut(BaseModel):
     # Tenant'in birincil yoneticisi mi? Mobil ilk-giris adlandirma kapisi
     # yalniz buna acilir (yonetici disi rollerde daima false).
     birincil: bool = False
+    # (P167 §1.7) Kisa omurlu presigned GET URL'i; obje anahtari ISTEMCIYE
+    # VERILMEZ (UserOut ile ayni kural). `None` = fotograf yok → arayuz bas
+    # harfleri cizer.
+    #
+    # NEDEN BURAYA EKLENDI: sag ust kullanici menusu (avatar + ad) ile
+    # profil sayfasi AYNI kaydin iki gorunumu. Avatari `/me`den, geri
+    # kalanini `/me/profile`dan cekmek her ekranda IKI istek ve iki ayri
+    # onbellek demekti; ikisi ayrisinca avatar bir yerde eski kalirdi.
+    avatar_url: str | None = None
+
+
+class BildirimTercihleri(BaseModel):
+    """(P167 §1.7) Isleyis bildirimlerinin kanal tercihleri.
+
+    Pazarlama izinlerinin (`PazarlamaTercihleri`) IKIZI DEGILDIR — goc
+    0055'in basligindaki ayrim: pazarlama bir riza, bildirim bir tercih.
+    """
+
+    model_config = ConfigDict(from_attributes=True)
+
+    bildirim_eposta: bool
+    bildirim_sms: bool
+    bildirim_mobil: bool
+
+
+class BildirimTercihUpdate(BaseModel):
+    """KISMI guncelleme — gonderilmeyen kanal DEGISMEZ.
+
+    Uc alanin ucunu birden zorunlu kilmak, tek bir anahtari ceviren
+    arayuzu otekilerin o anki degerini de gondermeye zorlardi; iki sekme
+    acik olan kullanicida bu, digerinin degisikligini SESSIZCE geri alirdi.
+    """
+
+    bildirim_eposta: bool | None = None
+    bildirim_sms: bool | None = None
+    bildirim_mobil: bool | None = None
+
+
+class CihazOut(BaseModel):
+    """(P167 §1.7) "Guvenilen cihazlar" satiri — kullanicinin KENDI cihazi.
+
+    `fcm_token` BILINCLI OLARAK YOK: push adresidir ve disari verilmesi,
+    o kullaniciya bildirim gondermenin anahtarini vermek olurdu. Silme
+    `id` ile yapilir (`DELETE /devices/{fcm_token}` mobil istemcinin kendi
+    token'ini biliyorken kullandigi AYRI bir yol).
+    """
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    platform: str
+    dil: str
+    aktif: bool
+    created_at: datetime
+    #: Son etkinlik — token her uygulama acilisinda upsert edildigi icin
+    #: bu alan pratikte "cihaz en son ne zaman gorundu"yu tasir.
+    updated_at: datetime
+
+
+class HesapEtkinligiOut(BaseModel):
+    """(P167 §1.7) "Son hesap etkinligi" satiri — kendi denetim kaydi.
+
+    `/audit` ucunun kisitlanmis bir kopyasi DEGIL, AYRI bir yetki karari:
+    `/audit` tesisin TAMAMINI gosterir ve yalniz admin/denetci gorur;
+    burasi kisinin YALNIZ KENDI satirlarini doner ve her role aciktir.
+    Kendi hesabinda ne olup bittigini gormek bir yonetim yetkisi degil,
+    hesap guvenliginin temel kosuludur.
+    """
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    action: str
+    resource_type: str | None = None
+    #: `audit_log.resource_id` METIN'dir (uuid degil): kayit her zaman bir
+    #: uuid'ye isaret etmez (orn. bir dosya anahtari). Sema onu oldugu gibi
+    #: tasir — daraltmak, bazi satirlarin dogrulamada patlamasi demekti.
+    resource_id: str | None = None
+    ts: datetime
+    #: Serbest ayrinti (JSON) — "Detaylari gor" acilirinda gosterilir.
+    #: KVKK: `meta` yalniz id/alan-adi tutar, kisisel veri DEGERI ASLA.
+    meta: dict = {}
 
 
 class UserAdminListResponse(BaseModel):

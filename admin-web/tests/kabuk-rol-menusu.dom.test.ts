@@ -110,7 +110,11 @@ describe("app.* menusu role gore", () => {
     ciz(Kabuk("denetci"));
     const adlar = menuAdlari();
     expect(adlar).toContain("Rapor motoru");
-    expect(adlar).toContain("Profilim");
+    // (P167 §1.7) "Profilim" ARTIK KENAR CUBUGUNDA DEGIL — sag ust
+    // kullanici menusune tasindi. Sayfa kaybolmadi, YERI degisti; bu
+    // yuzden burada YOKLUGU olculuyor, gorunurlugu ise asagidaki
+    // "hesap menusu" testinde.
+    expect(adlar).not.toContain("Profilim");
     expect(adlar).not.toContain("Finans");
     expect(adlar).not.toContain("Tahakkuk");
     expect(adlar).not.toContain("Kullanıcılar");
@@ -158,18 +162,43 @@ describe("app.* menusu role gore", () => {
     expect(menuAdlari()).not.toContain("Kullanıcılar");
   });
 
-  it("ROL BILINIYORSA `/api/me`ye HIC gidilmez (gereksiz istek yok)", () => {
+  it("ROL BILINIYORSA menu AGA HIC SORMADAN dogru cizilir", () => {
+    // (P167 §1.7) ESKI OLCUM: "`/api/me`ye HIC gidilmez". O olcum artik
+    // yanlis soruyu soruyor — sag ust kullanici menusu ADI ve AVATARI
+    // icin `/api/me`yi CAGIRMAK ZORUNDA. Korunmasi gereken sey istegin
+    // yoklugu degil, ROLUN AGDAN OGRENILMEMESI: cerezde rol varken menu
+    // ilk karede tam olmali.
+    //
+    // Bu yuzden fetch HIC COZULMEYEN bir soz doner. Menu yine de eksiksiz
+    // ciziliyorsa, kume yalnizca cerezden gelmis demektir — `useRol`
+    // bir gun kosulsuz istek atmaya baslarsa bu test kirmizi doner.
     tesisKonagi();
-    // `fetchSahtele` cagrilari geri vermiyor; burada kendi kaydimizi tutuyoruz.
-    const cagrilar: string[] = [];
-    globalThis.fetch = (async (girdi: RequestInfo | URL) => {
-      cagrilar.push(String(girdi));
-      return new Response("{}", {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
-    }) as typeof fetch;
+    globalThis.fetch = (() => new Promise(() => {})) as unknown as typeof fetch;
     ciz(Kabuk("yonetici"));
-    expect(cagrilar.filter((u) => u.includes("/api/me"))).toEqual([]);
+    const adlar = menuAdlari();
+    expect(adlar).toContain("Kullanıcılar");
+    expect(adlar).toContain("Kameralar");
+  });
+
+  it("(P167 §1.7) HESAP MENUSU sag ustte ve profil bolumlerini acar", () => {
+    tesisKonagi();
+    fetchSahtele({ "/api/me": { ad: "Kerem D", email: null, avatar_url: null } });
+    ciz(Kabuk("yonetici"));
+    // Kenar cubugu iki kez cizildigi icin ust bar da iki kopyadir
+    // (masaustu seridi + mobil baslik) — ilkine tiklamak yeterli.
+    const dugme = screen.getAllByRole("button", { name: "Hesabım" })[0];
+    fireEvent.click(dugme);
+    const menu = screen.getAllByRole("menu", { name: "Hesabım" })[0];
+    const adlar = [...menu.querySelectorAll("a")].map((a) => a.textContent);
+    expect(adlar).toContain("Hesap bilgileri");
+    expect(adlar).toContain("Güvenlik ve giriş");
+    expect(adlar).toContain("Bildirim ayarları");
+    expect(adlar).toContain("Şifre değiştir");
+    expect(adlar).toContain("Hesabımı sil");
+    // Cikis MENUNUN ICINDE bir dugme (baglanti degil — bir sayfaya
+    // gitmiyor, bir eylem yapiyor).
+    expect(
+      [...menu.querySelectorAll("button")].map((b) => b.textContent),
+    ).toContain("Çıkış yap");
   });
 });

@@ -123,9 +123,23 @@ KAPISIZ_MUTASYONLAR: frozenset[tuple[str, str]] = frozenset({
     # ROL kapisidir ki burada anlamsizdir: her rol kendi hesabini siler.
     ("POST", "/me/hesap-sil/kod-iste"),
     ("POST", "/kvkk/onay"),
+    # (P167 §1.7) KENDI BILDIRIM KANALI TERCIHI. `/me/pazarlama-tercihleri`
+    # ile AYNI SINIF: kimlik zorunlu, rol kapisi anlamsiz — hangi kanaldan
+    # bildirim alacagi kisinin kendi karari. DENETCIYE DE ACIK ve bu
+    # "salt okuma" ilkesini bozmaz: ilke tesisin KAYITLARI icindir,
+    # denetcinin kendi SMS anahtarini kapatmasi hicbir tesis verisine
+    # dokunmaz.
+    ("PATCH", "/me/bildirim-tercihleri"),
     # --- kendi cihazinin push kaydi ---
     ("POST", "/devices"),
     ("DELETE", "/devices/{fcm_token}"),
+    # (P167 §1.7) KENDI CIHAZINI KALDIRMA. `DELETE /devices/{fcm_token}`
+    # ile ayni hak, farkli ADRESLEME: mobil istemci kendi token'ini bilir
+    # ve onu kullanir; web istemci token'i GORMEZ (push adresi disari
+    # verilmez) ve satiri `id` ile adresler. Sahiplik sorgunun icinde
+    # kapali — baskasinin cihazi 404 doner.
+    ("DELETE", "/me/cihazlar/{cihaz_id}"),
+    ("POST", "/me/cihazlar/tumunden-cik"),
     # --- kimligi JWT DEGIL: kamera kutusu `X-ANPR-Key` ile yazar (P16).
     # Rol kapisi YOKTUR cunku istegi bir KULLANICI degil bir CIHAZ atar;
     # anahtar tenant basinadir. Denetcinin oturumu buradan gecmez —

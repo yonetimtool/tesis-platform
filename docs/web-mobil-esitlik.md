@@ -157,3 +157,24 @@ Mobilde "Katı sil", **bir bloğa girilmeden** (üst seviyeden) açıldığında
 sebebini anlamadığı bir hata alıyordu. Webde modalın ilk alanı zaten blok
 seçimi; mobil ona hizalandı (blok seçilene kadar "Sil" kapalı, kat listesi
 de çizilmez).
+
+## P167 Aşama 1 — menü mimarisi + profil (ölçüm)
+
+Bu aşama **kabuk** ve **kendi hesabı** ekranlarına dokundu; ikisi de
+"varlık CRUD'u" değil, o yüzden yukarıdaki tabloya satır eklemiyor.
+Değerlendirme madde madde:
+
+| Madde | Mobilde gerekli mi | Gerekçe |
+|---|---|---|
+| §1.1–§1.6 menü ağacı (ikon kuralı, kapalı başlıklar, Özet, İcra taşıma, iletişim birleştirme, Tanımlar) | **hayır** | Mobilde sol menü **yok**; gezinme alt sekme + "Tüm Modüller" (P160). Web menü ağacının mobilde bir karşılığı olmadığı için "fark" da oluşmuyor. |
+| §1.7 avatar yükle/kaldır | **zaten eşit** | `PATCH /me/avatar` P3'ten beri mobilde kullanılıyor; web bu turda ona yetişti. |
+| §1.7 hesabımı sil | **zaten eşit oldu** | Uç P112'de **mobil için** açılmıştı; eksik olan **web** tarafıydı (BFF vekili yoktu) ve bu turda kapandı. |
+| §1.7 ad soyad self-servis | **açık fark — mobil** | Yeni `MeContactUpdate.ad` yalnız web'de kullanılıyor. Mobil profil ekranı adı hâlâ salt okur gösteriyor. Uç hazır, tek eksik ekran alanı. |
+| §1.7 güvenilen cihazlar + hesap etkinliği | **açık fark — mobil** | Uçlar rol bağımsız ve hazır (`/me/cihazlar`, `/me/etkinlik`). "Bu telefonu kaybettim" senaryosunun doğal yeri telefonun kendisidir. |
+| §1.7 bildirim ayarları | **açık fark — mobil, öncelikli** | **Mobil bildirim** anahtarını web'den açıp kapatmak dolaylı bir yol; kullanıcı bildirimi aldığı cihazda kapatmak ister. `GET/PATCH /me/bildirim-tercihleri` hazır. |
+| §1.8 alt bar | **hayır** | Kabuk farkı. |
+
+**Sonuç:** bu aşama mobilde kod değişikliği **gerektirmedi** ama **üç
+açık fark bıraktı** ve üçü de aynı ekrana düşüyor — mobil profil sayfası:
+ad düzenleme, cihaz listesi, bildirim ayarları. Uçların hepsi açık ve rol
+bağımsız; iş yalnız ekran işi. Kapatılması Aşama 6'dan sonraya yazıldı.

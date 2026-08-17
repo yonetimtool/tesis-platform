@@ -13,13 +13,15 @@ import { BildirimMerkezi, KomutPaleti } from "@/components/ui";
 import { useT } from "@/lib/i18n/kullan";
 import { YonetioLogo } from "@/components/YonetioLogo";
 import { useRol } from "@/lib/rol-kullan";
+import { KullaniciMenusu } from "@/components/KullaniciMenusu";
 import {
+  kurulumGorunur,
   menuGruplari,
   ogeAktif,
   ogeBaglantisi,
-  profilGorunur,
   rotaninGrubu,
-  PROFIL_OGESI,
+  GRUP_IKONU,
+  KURULUM_OGESI,
   type GrupId,
   type IconName,
   type MenuGrubu,
@@ -132,23 +134,36 @@ function Icon({ name }: { name: IconName }) {
       return svg(<><circle cx="12" cy="12" r="2.5" /><circle cx="5" cy="6" r="1.6" /><circle cx="19" cy="6" r="1.6" /><circle cx="12" cy="20" r="1.6" /><path d="M6.3 7l4 3.4M17.7 7l-4 3.4M12 14.5V18.4" /></>);
     case "gear":
       return svg(<><circle cx="12" cy="12" r="3" /><path d="M12 3v2.5M12 18.5V21M4.2 7l2.2 1.3M17.6 15.7l2.2 1.3M4.2 17l2.2-1.3M17.6 8.3l2.2-1.3" /></>);
+    // (P167 §1.1) KALKAN — GUVENLIK ana basliginin ikonu. Bolum ikonu
+    // olarak `scan` kullanilamazdi: o zaten NFC noktalari ve arac
+    // gecislerinin satir ikonuydu, baslik onlardan birinin kopyasi gibi
+    // gorunurdu.
+    case "shield":
+      return svg(<><path d="M12 3l7 3v5.5c0 4.4-3 7.6-7 9.5-4-1.9-7-5.1-7-9.5V6z" /><polyline points="9 12 11 14 15 10" /></>);
   }
 }
 
 /**
  * Kullanicinin acik/kapali bolum tercihi (tarayici basina).
  *
- * (P166 §1) ANAHTAR SURUMLENDI (`.v2`). Eski kayit `{acik: ["guvenlik"]}`
- * gibi bir DAR kume tasiyor — o kume "yalniz bulundugum bolum acik"
- * varsayimiyla yazilmisti. Yeni varsayilan HEPSI ACIK; eski kaydi okumak,
- * kaldirdigimiz gizli menuyu kullanicinin tarayicisindan geri getirirdi.
- * Yeni anahtar, eski kaydi sessizce gecersiz kilar.
+ * (P167 §1.2) ANAHTAR YINE SURUMLENDI (`.v3`). P166'da varsayilan "hepsi
+ * acik"ti ve `.v2` kayitlari o varsayimla yazildi — cogunda sekiz bolumun
+ * hepsi listelidir. Yeni varsayilan "HEPSI KAPALI"; eski kaydi okumak,
+ * kullanicilarin tarayicisinda menuyu bir kez daha tamamen acik acardi ve
+ * degisiklik hic yapilmamis gibi gorunurdu. Surum atlamak, eski kaydi
+ * SESSIZCE gecersiz kilmanin en ucuz yolu.
+ *
+ * NEDEN KAPALI BASLIYOR: menu 40+ satira ciktiginda "hepsi acik" bir liste
+ * degil bir DUVAR. Kapali baslik kumesi once BOLUMLERI okutur (yedi satir),
+ * kullanici hedefini secip acar. Bulunabilirlik kaygisi P166'da "gizli
+ * menu"ye karsiydi; burada gizlenen bir sey YOK — yedi baslik da gorunur
+ * ve tercih KALICI (kullanici bir kez acar, oyle kalir).
  *
  * TEKNIK TANIMLAYICI: `yonetio.` oneki BILEREK korundu (bkz. §6 marka
  * degisikligi) — depolama anahtari kullaniciya gorunen bir metin degildir
  * ve degistirmek herkesin tercihini bir kez daha sifirlardi.
  */
-const MENU_DURUM_ANAHTARI = "yonetio.menu.durum.v2";
+const MENU_DURUM_ANAHTARI = "yonetio.menu.durum.v3";
 /** (P160) Kenar cubugu dar mi — KABUGA ait, menu durumundan AYRI. */
 const DAR_ANAHTARI = "yonetio.menu.dar";
 
@@ -176,15 +191,27 @@ function MenuSatiri({
   aktif,
   onNavigate,
   dar = false,
+  ikonlu = false,
 }: {
   oge: MenuOgesi;
   aktif: boolean;
   onNavigate?: () => void;
   /** (P160) Kenar cubugu DAR modda mi — etiket gorsel olarak gizlenir. */
   dar?: boolean;
+  /**
+   * (P167 §1.1) IKON CIZILSIN MI?
+   *
+   * ALT BASLIKLARDA CIZILMEZ — hiyerarsi ikonun yoklugu + girinti ile
+   * anlatilir. Yalniz BAGIMSIZ sekmeler (Ozet) ve alt cubugun satirlari
+   * ikon tasir. DAR MODDA kural TERSINE doner ve zorunlu olarak: 68px'lik
+   * seritte etiket gorunmez, geriye tek tanima araci olarak ikon kalir —
+   * ikonsuz bir dar menu, bos kutucuklardan olusan bir liste olurdu.
+   */
+  ikonlu?: boolean;
 }) {
   const t = useT();
   const etiket = t(oge.anahtar);
+  const ikonGoster = ikonlu || dar;
   return (
     <Link
       href={ogeBaglantisi(oge)}
@@ -201,8 +228,12 @@ function MenuSatiri({
       // RENKLE degil YUZEYLE anlatiliyor — satir zeminden bir kademe
       // yukselir. Bu ayni zamanda daha erisilebilir: renk korlugu olan
       // kullanici da kabartmayi gorur.
+      // GIRINTI (§1.1): ikonsuz alt satir `ps-9`, ikonlu bagimsiz sekme
+      // `ps-3`. Ikisi ayni gorsel eksende hizalanir — bagimsiz sekmenin
+      // ikonu, alt satirlarin metin baslangicinin SOLUNDA kalir ve iki
+      // duzey birbirine karismaz.
       className={`odak-ic group relative flex items-center gap-3 py-2 transition-[background,box-shadow] ${
-        dar ? "justify-center px-2" : "pe-3 ps-7"
+        dar ? "justify-center px-2" : ikonlu ? "pe-3 ps-3" : "pe-3 ps-9"
       }`}
       style={{
         borderRadius: "var(--yz-radius-btn)",
@@ -221,9 +252,11 @@ function MenuSatiri({
           transition={{ type: "spring", stiffness: 500, damping: 40 }}
         />
       )}
-      <span style={{ color: aktif ? "var(--yz-accent-edge)" : "var(--yz-text-3)" }}>
-        <Icon name={oge.icon} />
-      </span>
+      {ikonGoster && (
+        <span style={{ color: aktif ? "var(--yz-accent-edge)" : "var(--yz-text-3)" }}>
+          <Icon name={oge.icon} />
+        </span>
+      )}
       {/* ETIKET: dar modda GORSEL olarak silinir ama DOM'da kalir —
           baglantinin erisilebilir ADI odur. Kaldirsaydik ekran okuyucu
           yalnizca "baglanti" derdi. Gecis, genislik ve solma birlikte
@@ -272,6 +305,18 @@ function Bolum({
   // bilgi tasimaz. Katlanmayi da kapatmak gerekiyor cunku basligi
   // gizleyip katlamayi acik birakmak, kullanicinin ACAMAYACAGI kapali
   // bir bolum birakirdi — satirlar erisilemez olurdu.
+  const satirlar = (ikonlu: boolean) =>
+    grup.ogeler.map((o) => (
+      <MenuSatiri
+        key={ogeBaglantisi(o)}
+        oge={o}
+        aktif={ogeAktif(o, pathname, sorgu)}
+        onNavigate={onNavigate}
+        dar={dar}
+        ikonlu={ikonlu}
+      />
+    ));
+
   if (dar) {
     return (
       <div
@@ -281,17 +326,15 @@ function Bolum({
         aria-label={baslik}
         role="group"
       >
-        {grup.ogeler.map((o) => (
-          <MenuSatiri
-            key={ogeBaglantisi(o)}
-            oge={o}
-            aktif={ogeAktif(o, pathname, sorgu)}
-            onNavigate={onNavigate}
-            dar
-          />
-        ))}
+        {satirlar(true)}
       </div>
     );
+  }
+
+  // (P167 §1.3) BAGIMSIZ SEKME: baslik YOK, satir(lar) IKONLU ve her zaman
+  // gorunur. Katlanacak bir sey olmadigi icin `acik` de sorulmaz.
+  if (grup.bagimsiz) {
+    return <div className="space-y-0.5">{satirlar(true)}</div>;
   }
 
   return (
@@ -301,29 +344,25 @@ function Bolum({
         onClick={onCevir}
         aria-expanded={acik}
         aria-label={acik ? t("kabukBolumKapat", { bolum: baslik }) : t("kabukBolumAc", { bolum: baslik })}
-        className="odak-ic flex w-full items-center gap-2 px-3 py-1.5 text-start font-semibold uppercase transition-colors"
+        // (P167 §1.1) ANA BASLIK ARTIK IKONLU ve satirlarla ayni agirlikta
+        // bir hedef (`py-2`): eskiden 1.5px'lik ince bir etiketti ve
+        // tiklanabilir oldugu anlasilmiyordu. Ok SONA alindi — bas tarafta
+        // ikonla yarisiyor, sonda ise "acilir" isareti olarak okunuyor.
+        className="odak-ic flex w-full items-center gap-3 px-3 py-2 text-start font-semibold uppercase transition-colors"
         style={{
           borderRadius: "var(--yz-radius-btn)",
           fontSize: "var(--yz-fs-xs)",
           letterSpacing: "var(--yz-tracking-label)",
-          color: "var(--yz-text-3)",
+          color: acik ? "var(--yz-text)" : "var(--yz-text-2)",
         }}
       >
+        <span style={{ color: acik ? "var(--yz-accent-edge)" : "var(--yz-text-3)" }}>
+          <Icon name={GRUP_IKONU[grup.id]} />
+        </span>
+        <span className="flex-1 truncate">{baslik}</span>
         <Ok acik={acik} />
-        <span className="truncate">{baslik}</span>
       </button>
-      {acik && (
-        <div className="space-y-0.5">
-          {grup.ogeler.map((o) => (
-            <MenuSatiri
-              key={ogeBaglantisi(o)}
-              oge={o}
-              aktif={ogeAktif(o, pathname, sorgu)}
-              onNavigate={onNavigate}
-            />
-          ))}
-        </div>
-      )}
+      {acik && <div className="space-y-0.5">{satirlar(false)}</div>}
     </div>
   );
 }
@@ -386,20 +425,15 @@ function SidebarBody({
   // olarak goster" demek, sakine yonetim menusunu cizmek olurdu.
   // (P133.1) Kume AYNI kaldi; degisen sey BOLUMLENMESI.
   const gruplar = menuGruplari(yuzey, rol);
-  const profilVar = profilGorunur(yuzey, rol);
+  const kurulumVar = kurulumGorunur(yuzey, rol);
 
-  // (P166 §1) VARSAYILAN: HEPSI ACIK.
+  // (P167 §1.2) VARSAYILAN: HEPSI KAPALI.
   //
-  // Eskiden yalniz bulunulan sayfanin bolumu acilirdi ve geri kalan dort
-  // bolum "Daha fazla"nin ardindaydi — yani kullanici menuyu ilk actiginda
-  // 40 sayfanin 8'ini goruyordu. Brief'in olcusu acik: "TUM basliklar ve
-  // alt basliklari tek listede, acik sekilde gorunecek."
-  //
-  // KATLAMA YETENEGI DURUYOR (baslik hâlâ bir dugme) ama artik kullanicinin
-  // KENDI karari; varsayilan bir gizleme degil. Liste uzarsa `nav`
-  // kaydirilir — brief: "gizleme cozumu kullanma".
+  // Bos dizi BILINCLI bir sabit degil, `[]`in kendisi: "hicbir bolum acik
+  // degil". Kullanici hangisini acarsa `localStorage`a o yazilir ve
+  // tercihi kalir.
   const aktifGrup = rotaninGrubu(pathname);
-  const varsayilanAcik: GrupId[] = gruplar.map((g) => g.id);
+  const varsayilanAcik: GrupId[] = [];
   const [acikGruplar, setAcikGruplar] = useState<GrupId[] | null>(null);
 
   // ILK KARE SUNUCUDA CIZILIR ve orada `localStorage` YOKTUR. Durum bu
@@ -410,6 +444,12 @@ function SidebarBody({
   // BULUNULAN SAYFANIN BOLUMU HER ZAMAN ACIK OLUR — kayitli tercih
   // "kapali" dese bile. Aksi hâlde kullanici bir sayfaya gidip menude
   // KENDI satirini goremez ve nerede oldugunu kaybeder.
+  //
+  // (P167 §1.2) BU KURAL "hepsi kapali baslar" ile CELISMEZ: ilk acilista
+  // gidilen yer `/dashboard`, o da bagimsiz Ozet sekmesi — hicbir bolume
+  // ait degil, dolayisiyla acilista yedi baslik da kapali. Kural ancak
+  // kullanici bir bolum sayfasina gectiginde devreye girer ve orada
+  // istenen sey zaten yon duygusudur.
   useEffect(() => {
     let kayitliAcik: GrupId[] | null = null;
     try {
@@ -513,11 +553,13 @@ function SidebarBody({
         </div>
       )}
 
-      {/* (P166 §1) TEK LISTE. "Daha fazla / Daha az" satiri KALDIRILDI;
-          butun bolumler ayni `nav` icinde, acik olarak cizilir. Liste
-          ekrandan uzunsa `overflow-y-auto` kaydirir — brief'in acik
-          sarti: "Liste uzarsa menu kaydirilabilir olsun; gizleme cozumu
-          kullanma." */}
+      {/* (P166 §1) TEK LISTE — "Daha fazla / Daha az" katmani KALDIRILDI:
+          butun bolumler ayni `nav` icinde.
+          (P167 §1.2) Bolumler artik KAPALI baslar. Bu, kaldirdigimiz gizli
+          menuye donus DEGIL: orada 30+ sayfa tek bir belirsiz satirin
+          ARDINDAYDI, burada yedi baslik da GORUNUR ve tercih kalici.
+          Liste yine de uzayabilir (kullanici bes bolum acabilir), o yuzden
+          `overflow-y-auto` duruyor. */}
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
         {gruplar.map(bolum)}
       </nav>
@@ -526,14 +568,29 @@ function SidebarBody({
         className="shrink-0 space-y-2 border-t px-3 py-4"
         style={{ borderColor: "var(--yz-border)", borderTopWidth: "var(--yz-border-w)" }}
       >
-        {/* PROFIL BOLUMDE DEGIL: kullanicinin KENDI kaydidir, bir yonetim
-            isi degil — her rolde ayni yerde, cikisin yaninda durur. */}
-        {profilVar && (
+        {/* (P167 §1.7) PROFIL SATIRI BURADAN KALDIRILDI — sag ust kullanici
+            menusune tasindi (`KullaniciMenusu`). Kenar cubugu artik yalnizca
+            SITEYE ait ekranlarin listesi; kullanicinin KENDI kaydi ise
+            avatarin ardinda, herkesin aradigi yerde. */}
+
+        {/* (P167 §1.8) ALT CUBUK IKI SATIR:
+              [ Kurulum sihirbazi ]      <- tam genislik
+              [ Tema ] [ Cikis ]         <- ikiye bolunmus
+            Sihirbaz ustte ve tam genislikte cunku bir AKIS: yeni yonetici
+            icin en onemli tek dugme. Tema ve cikis ise gunluk kucuk
+            islemler — ayni satiri paylasmalari onlari dogru agirliga
+            indiriyor ve alt cubugu iki satirda tutuyor. */}
+        {/* DAR MODDA DA CIZILIR (yalnizca ikon): sihirbaz bir YOLDUR, tema
+            gibi bir kisayol degil — 68px'e sigdirilamadigi icin
+            kaldirilmasi, kurulumunu bitirmemis yoneticiyi yolsuz
+            birakirdi. */}
+        {kurulumVar && (
           <MenuSatiri
-            oge={PROFIL_OGESI}
-            aktif={ogeAktif(PROFIL_OGESI, pathname, sorgu)}
+            oge={KURULUM_OGESI}
+            aktif={ogeAktif(KURULUM_OGESI, pathname, sorgu)}
             onNavigate={onNavigate}
             dar={dar}
+            ikonlu
           />
         )}
         {/* (P140.4) DIL SECICI BURADAN KALDIRILDI — sag uste tasindi.
@@ -543,32 +600,35 @@ function SidebarBody({
         {/* DAR MODDA TEMA ANAHTARI GIZLENIR: bileseni 68px'e sigdirmak
             onu yeniden yazmak demekti ve tema tercihi gunluk bir islem
             degil — kullanici menuyu genisletip degistirir. Gizlenen sey
-            bir YOL degil, bir kisayol. */}
-        {!dar && (
-          <div className="flex flex-wrap gap-2">
-            <ThemeToggle />
-          </div>
-        )}
-        <button
-          onClick={logout}
-          aria-label={dar ? t("kabukCikisYap") : undefined}
-          title={dar ? t("kabukCikisYap") : undefined}
-          className={`odak-ic w-full border px-3 py-2 transition ${
-            dar ? "text-center" : "text-start"
-          }`}
-          style={{
-            borderRadius: "var(--yz-radius-btn)",
-            borderColor: "var(--yz-border)",
-            borderWidth: "var(--yz-border-w)",
-            background: "var(--yz-metal-1)",
-            boxShadow: "var(--yz-raised)",
-            color: "var(--yz-text-2)",
-            fontSize: "var(--yz-fs-sm)",
-          }}
-        >
-          <span className={dar ? "sr-only" : undefined}>{t("kabukCikisYap")}</span>
-          {dar && <CikisIkonu />}
-        </button>
+            bir YOL degil, bir kisayol. Dar modda cikis TEK BASINA ve tam
+            genislikte kalir. */}
+        <div className={dar ? undefined : "grid grid-cols-2 gap-2"}>
+          {!dar && <ThemeToggle />}
+          <button
+            onClick={logout}
+            // ERISILEBILIR AD HER ZAMAN TAM CUMLE: gorunen etiket "Cikis"a
+            // kisaldi ama ekran okuyucu kullanicisi icin "Cikis yap" daha
+            // az belirsiz (bir SAYFA adi degil, bir EYLEM oldugu belli).
+            aria-label={t("kabukCikisYap")}
+            title={t("kabukCikisYap")}
+            className="odak-ic w-full border px-3 py-2 text-center transition"
+            style={{
+              borderRadius: "var(--yz-radius-btn)",
+              borderColor: "var(--yz-border)",
+              borderWidth: "var(--yz-border-w)",
+              background: "var(--yz-metal-1)",
+              boxShadow: "var(--yz-raised)",
+              color: "var(--yz-text-2)",
+              fontSize: "var(--yz-fs-sm)",
+            }}
+          >
+            {/* (P167 §1.8) KISA ETIKET: "Cikis yap" iki kolonluk satirda
+                tasiyordu. Anlam kaybi yok — ikon ve konum zaten soyluyor;
+                erisilebilir ad ise `aria-label` ile TAM cumle kalir. */}
+            <span className={dar ? "sr-only" : undefined}>{t("kabukCikis")}</span>
+            {dar && <CikisIkonu />}
+          </button>
+        </div>
         {cikisHatasi && (
           <p role="alert" className="text-xs text-accent-red">
             {t("kabukCikisYapilamadi")}
@@ -598,7 +658,7 @@ export function AppShell({
   //
   // AYRI ANAHTAR, `SidebarBody`nin menu durumuyla BIRLESTIRILMEDI: o kayit
   // (`yonetio.menu.durum`) SidebarBody'ye ait ve onu yaziyor; bu deger ise
-  // KABUGA ait (genislik, icerik bosluğu). Tek kaydi iki bilesenin
+  // KABUGA ait (genislik, icerik boslugu). Tek kaydi iki bilesenin
   // yazmasi, birinin otekinin alanini ezmesi demekti — ikisi farkli
   // zamanlarda okuyup yaziyor.
   //
@@ -704,9 +764,13 @@ export function AppShell({
               icin bos bir `span` duruyordu.
               (P160) Bildirim merkezi mobilde de gorunur: okunmamis sayisi
               masaustune ozel bir bilgi degil. */}
+          {/* (P167 §1.7) Kullanici menusu MOBILDE DE var: profil satiri sol
+              menuden kalktigi icin cekmecede karsiligi yok — buraya
+              koymasaydik mobil kullanicinin hesabina hicbir yol kalmazdi. */}
           <div className="flex items-center gap-2">
             <BildirimMerkezi />
             <DilSecici />
+            <KullaniciMenusu />
           </div>
         </header>
 
@@ -763,9 +827,14 @@ export function AppShell({
             <GlobalArama yuzey={yuzey} rolBaslangic={rol} />
             {/* (P160) BILDIRIM MERKEZI — dil secicinin yaninda. Sayac
                 ve okundu isaretleme burada; tam liste `/notifications`. */}
+            {/* (P167 §1.7) SIRA: bildirim · dil · HESAP. Hesap menusu EN
+                SAGDA cunku kullanicinin kendi kaydi konvansiyon geregi
+                kosede aranir; dil secici brief'in dedigi gibi onun
+                solunda kalir. */}
             <div className="flex shrink-0 items-center gap-2">
               <BildirimMerkezi />
               <DilSecici />
+              <KullaniciMenusu />
             </div>
           </div>
           {/* (P160 / Asama 7) SAYFA GECISI — beyaz ekran YOK.

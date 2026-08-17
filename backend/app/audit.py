@@ -58,6 +58,12 @@ class Action:
     # kullaniciyi yaniltirdi.
     USER_DELETE = "user_delete"
     AVATAR_UPDATE = "avatar_update"               # profil fotografi (yukle/kaldir)
+    # (P167 §1.7) "Guvenlik ve giris" ekranindan yapilan self-servis islemler.
+    # Denetime YAZILIRLAR cunku ikisi de bir GUVENLIK olayidir: cihazin
+    # kaldirilmasi bildirim akisini keser, tercih degisimi ise "bu bildirimi
+    # neden almadim" sorusunun tek kanitidir.
+    DEVICE_REMOVE = "device_remove"               # kendi cihazini pasiflestirdi
+    NOTIFICATION_PREFS_UPDATE = "notification_prefs_update"
     SHIFT_ASSIGN = "shift_assign"                 # vardiya personel atamasi (tam-liste)
     CAMERA_CREATE = "camera_create"
     CAMERA_UPDATE = "camera_update"

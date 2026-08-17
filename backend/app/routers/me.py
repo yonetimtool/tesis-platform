@@ -6,6 +6,8 @@ panel uclari Prompt 3+'te sozlesmeye gore eklenecek.
 """
 from __future__ import annotations
 
+import uuid
+
 from fastapi import APIRouter, Depends, Response
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,15 +18,19 @@ from ..deps import get_current_user, get_tenant_db, require_role
 from ..errors import APIError
 from ..telefon_kodu import kod_uret_ve_gonder, kodu_dogrula
 from ..hesap_silme import hesabi_sil_veya_anonimlestir, son_admin_mi
-from ..models import AppUser, Checkpoint
+from ..models import AppUser, AuditLog, Checkpoint, UserDevice
 from ..schemas import (
     AvatarUpdate,
+    BildirimTercihleri,
+    BildirimTercihUpdate,
     CheckpointBrief,
+    CihazOut,
+    HesapEtkinligiOut,
     HesapSilmeIstek,
     HesapSilmeSonuc,
+    MeContactUpdate,
     MeProfileOut,
     PasswordChangeRequest,
-    UserContactUpdate,
     UserOut,
 )
 from ..security import hash_password, verify_password
@@ -32,10 +38,22 @@ from ..storage import delete_objects, presign_get
 
 router = APIRouter(tags=["me"])
 
-# Self-servis profil fotografi YALNIZ yonetici + resident (kendi fotografi).
-# Saha personeli (security/tesis_gorevlisi) fotosunu yonetici PATCH
-# /users/{id}/avatar ile yonetir; admin'e self-servis gerekmez.
-_AVATAR_ROLLER = require_role("yonetici", "resident")
+# Self-servis profil fotografi — KENDI fotografi.
+#
+# (P167 §1.7) ADMIN VE DENETCI EKLENDI. Eski kume `yonetici + resident`ti ve
+# gerekcesi "admin'e self-servis gerekmez"di. O gerekce bu turda GECERSIZ
+# oldu: panelin sag ust kosesinde artik HER rol icin avatar cizilyor
+# (`KullaniciMenusu`) ve profil sayfasi hepsine acik. Yukleme dugmesini
+# gosterip ucun 403 dondurmesi, kullaniciya sebebi olmayan bir hata
+# vermekti; dugmeyi role gore gizlemek ise ayni kurali ikinci bir yerde
+# (istemcide) tekrar etmek olurdu.
+#
+# SAHA PERSONELI (security / tesis_gorevlisi) HALA DISARIDA ve bu bilincli:
+# onlarin fotografi bir SUS degil OPERASYONEL KIMLIK kaydidir (vardiya,
+# devriye, ziyaretci karsilama) ve yonetim `PATCH /users/{id}/avatar` ile
+# yonetir. Kendi degistirebilselerdi, kimin kim oldugunu gosteren kayit
+# denetlenemez hale gelirdi.
+_AVATAR_ROLLER = require_role("admin", "yonetici", "denetci", "resident")
 
 
 def _user_out(user: AppUser) -> UserOut:
@@ -45,6 +63,19 @@ def _user_out(user: AppUser) -> UserOut:
         role=user.role, is_active=user.is_active,
         avatar_url=presign_get(user.avatar_key) if user.avatar_key else None,
     )
+
+
+def _profile_out(user: AppUser) -> MeProfileOut:
+    """(P167 §1.7) AppUser -> MeProfileOut; `avatar_url` presign ile doldurulur.
+
+    `from_attributes` tek basina YETMEZ: modelde `avatar_key` (obje anahtari)
+    var, semada `avatar_url` (kisa omurlu imzali baglanti). Anahtari
+    istemciye vermek, bir kullanicinin baska bir tenant'in objesini
+    tahmin etmesine zemin hazirlardi — `_user_out` ile AYNI kural.
+    """
+    out = MeProfileOut.model_validate(user)
+    out.avatar_url = presign_get(user.avatar_key) if user.avatar_key else None
+    return out
 
 
 @router.get("/me", response_model=UserOut)
@@ -81,12 +112,12 @@ async def update_my_avatar(
 
 
 @router.get("/me/profile", response_model=MeProfileOut)
-async def my_profile(user: AppUser = Depends(get_current_user)) -> AppUser:
+async def my_profile(user: AppUser = Depends(get_current_user)) -> MeProfileOut:
     """Self-servis profil: kullanicinin KENDI kimlik + iletisim alanlari.
 
     Tum roller kendi kaydini gorur (auth.md self-servis profil).
     """
-    return user
+    return _profile_out(user)
 
 
 @router.patch("/me/password", status_code=204)
@@ -218,14 +249,18 @@ async def delete_my_account(
 
 @router.patch("/me/contact", response_model=MeProfileOut)
 async def update_my_contact(
-    body: UserContactUpdate,
+    body: MeContactUpdate,
     user: AppUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_tenant_db),
-) -> AppUser:
-    """Self-servis iletisim: kullanici KENDI telefon + aranabilir rizasini yonetir.
+) -> MeProfileOut:
+    """Self-servis iletisim: kullanici KENDI ad + telefon + aranabilir rizasini yonetir.
 
     Yonetim ucu (PATCH /users/{id}/contact, admin/yonetici -> baskasi) ayri kalir;
     bu onun kendi-kaydi karsiligidir. Numara OTP'siz dogrudan kaydedilir.
+
+    (P167 §1.7) `ad` BURAYA EKLENDI, yonetim ucuna DEGIL (bkz.
+    `MeContactUpdate`). `email` bilerek DISARIDA: login anahtaridir ve
+    dogrulama akisi olmadan degistirilmesi hesabi kaybettirebilir.
     """
     data = body.model_dump(exclude_unset=True)
     for key, value in data.items():
@@ -233,6 +268,183 @@ async def update_my_contact(
     user.updated_at = func.now()
     await audit_user(
         db, user, Action.USER_CONTACT_UPDATE, resource_type="app_user",
+        resource_id=user.id, meta={"self": True, "fields": list(data.keys())},
+    )
+    return _profile_out(user)
+
+
+# =========================================================================== #
+# (P167 §1.7) "GUVENLIK VE GIRIS" — kendi cihazlarim + kendi hesap etkinligim
+# =========================================================================== #
+#
+# IKISI DE VAR OLAN UCLARIN KISITLI KOPYASI DEGIL, AYRI YETKI KARARLARIDIR:
+#
+#   GET /devices  -> TENANT'in tum cihazlari, YALNIZ admin (hata ayiklama).
+#   GET /audit    -> TESISIN tum denetim kaydi, admin + denetci.
+#
+# Buradaki iki uc ise HER ROLE acik ve YALNIZ kisinin KENDI satirlarini
+# doner. Kendi hesabinda hangi cihazin acik oldugunu ve son ne yapildigini
+# gormek bir yonetim yetkisi degil, hesap guvenliginin en temel kosuludur —
+# "sifremi baskasi mi biliyor" sorusunun tek cevaplanabilir yoludur.
+#
+# SUZGEC SUNUCUDA: istemciye tum liste gonderip orada suzmek, satirlarin
+# TARAYICIYA ULASMASI demekti. Yetki, veriyi ureten sorgunun icinde.
+
+
+@router.get("/me/cihazlar", response_model=list[CihazOut])
+async def my_devices(
+    user: AppUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_tenant_db),
+) -> list[UserDevice]:
+    """Kendi kayitli cihazlarim — en son gorunen ustte.
+
+    PASIF CIHAZLAR DA DONER (`aktif=false`): "kaldirdim mi gercekten"
+    sorusunun cevabi listede gorunmeli. Arayuz onlari soluk cizer.
+    """
+    rows = (
+        await db.execute(
+            select(UserDevice)
+            .where(UserDevice.user_id == user.id)
+            # `id` kirici — `/me/etkinlik` ile ayni gerekce: ayni saniyede
+            # kaydedilen iki cihaz kararsiz sira verirdi. Bu uc sayfalamiyor
+            # ama liste ekranda duruyor ve her tazelemede satirlarin yer
+            # degistirmesi kullaniciya "bir sey degisti" hissi verirdi.
+            .order_by(UserDevice.updated_at.desc(), UserDevice.id.desc())
+        )
+    ).scalars().all()
+    return list(rows)
+
+
+@router.delete("/me/cihazlar/{cihaz_id}", status_code=204)
+async def remove_my_device(
+    cihaz_id: uuid.UUID,
+    user: AppUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_tenant_db),
+) -> Response:
+    """Bir cihazi KALDIR — satir silinmez, `aktif=false` olur.
+
+    SILMEK YERINE PASIFLESTIRMEK bilincli: `uq_user_device_tenant_token`
+    ayni token'in tekrar kaydini upsert'e cevirir; satiri silseydik ayni
+    telefon yeniden giris yaptiginda YENI bir satir acilir ve kullanicinin
+    cihaz gecmisi her giriste sifirlanirdi. Push gonderimi zaten `aktif`
+    bayragina bakiyor — yani kaldirma ANINDA etkili.
+
+    BASKASININ CIHAZI KALDIRILAMAZ: sorgu `user_id` ile kapali, bulunamayan
+    satir 404. Baska bir kullanicinin cihaz id'sini tahmin etmek, ona
+    bildirim gonderimini kesmek demekti.
+    """
+    cihaz = (
+        await db.execute(
+            select(UserDevice).where(
+                UserDevice.id == cihaz_id, UserDevice.user_id == user.id
+            )
+        )
+    ).scalar_one_or_none()
+    if cihaz is None:
+        raise APIError(404, "not_found", "cihaz_bulunamadi")
+    cihaz.aktif = False
+    cihaz.updated_at = func.now()
+    await audit_user(
+        db, user, Action.DEVICE_REMOVE, resource_type="user_device",
+        resource_id=cihaz.id, meta={"self": True},
+    )
+    return Response(status_code=204)
+
+
+@router.post("/me/cihazlar/tumunden-cik", response_model=dict)
+async def remove_all_my_devices(
+    user: AppUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_tenant_db),
+) -> dict[str, int]:
+    """TUM cihazlarimi kaldir — "telefonumu kaybettim" dugmesi.
+
+    NE YAPMAZ: oturumlari sonlandirmaz. Refresh token'lar bu tabloda
+    DEGIL ve burada sonlandirilmis gibi gostermek, kullaniciyi guvende
+    sandigi hâlde guvende OLMADIGI bir yere birakirdi. Dugmenin metni de
+    bunu soyler ("cihazlardan cik"), "her yerden cikis yap" demez.
+    """
+    rows = (
+        await db.execute(
+            select(UserDevice).where(
+                UserDevice.user_id == user.id, UserDevice.aktif.is_(True)
+            )
+        )
+    ).scalars().all()
+    for cihaz in rows:
+        cihaz.aktif = False
+        cihaz.updated_at = func.now()
+    await audit_user(
+        db, user, Action.DEVICE_REMOVE, resource_type="user_device",
+        resource_id=user.id, meta={"self": True, "adet": len(rows)},
+    )
+    return {"kaldirilan": len(rows)}
+
+
+@router.get("/me/etkinlik", response_model=list[HesapEtkinligiOut])
+async def my_activity(
+    limit: int = 20,
+    user: AppUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_tenant_db),
+) -> list[AuditLog]:
+    """Kendi hesap etkinligim — en yeni ustte, varsayilan son 20 satir.
+
+    UST SINIR 100: denetim kaydi bir kullanici icin binlerce satira
+    ciKabilir ve sinirsiz bir `limit`, tek istekle tabloyu suzduren bir
+    yol acardi. Brief'in istedigi sayi 20; 100 rahat bir tavan.
+    """
+    n = max(1, min(limit, 100))
+    rows = (
+        await db.execute(
+            select(AuditLog)
+            .where(AuditLog.actor_user_id == user.id)
+            # KARARLI SIRALAMA (`id` kirici): denetim satirlari toplu
+            # yazildiginda `ts` MILISANIYESINE KADAR AYNI olabilir —
+            # `audit_user` ayni islemde birden fazla satir yazar. Yalniz
+            # `ts`e bakan bir siralama, ayni sorgunun iki cagrida farkli
+            # sira dondurmesi demekti ve `limit` ile birleince bir satir
+            # HER IKI sayfada da (ya da hicbirinde) gorunurdu.
+            .order_by(AuditLog.ts.desc(), AuditLog.id.desc())
+            .limit(n)
+        )
+    ).scalars().all()
+    return list(rows)
+
+
+# =========================================================================== #
+# (P167 §1.7) BILDIRIM AYARLARI — kanal basina acik/kapali
+# =========================================================================== #
+
+
+@router.get("/me/bildirim-tercihleri", response_model=BildirimTercihleri)
+async def my_notification_prefs(
+    user: AppUser = Depends(get_current_user),
+) -> AppUser:
+    """Kendi bildirim kanali tercihlerim (e-posta / SMS / mobil)."""
+    return user
+
+
+@router.patch("/me/bildirim-tercihleri", response_model=BildirimTercihleri)
+async def update_my_notification_prefs(
+    body: BildirimTercihUpdate,
+    user: AppUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_tenant_db),
+) -> AppUser:
+    """KISMI guncelleme — gonderilmeyen kanal DEGISMEZ.
+
+    `/me/pazarlama-tercihleri` ile AYNI desen, AYRI kayit: oradaki bir
+    KVKK RIZASI (varsayilani kapali, ispat yukumlulugu var), buradaki bir
+    kullanim TERCIHI (varsayilani acik). Ikisini tek uca toplamak,
+    pazarlamayi kapatan kisinin aidat bildirimini de kaybetmesi olurdu.
+
+    DENETIME YAZILIR: "bildirimi neden almadim" sorusunun cevabi, tercihin
+    NE ZAMAN degistigidir.
+    """
+    data = body.model_dump(exclude_unset=True)
+    for key, value in data.items():
+        setattr(user, key, value)
+    user.updated_at = func.now()
+    await audit_user(
+        db, user, Action.NOTIFICATION_PREFS_UPDATE, resource_type="app_user",
         resource_id=user.id, meta={"self": True, "fields": list(data.keys())},
     )
     return user

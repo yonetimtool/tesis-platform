@@ -993,13 +993,144 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: "#/components/schemas/UserContactUpdate" }
+            schema: { $ref: "#/components/schemas/MeContactUpdate" }
       responses:
         "200":
           description: Guncellenmis profil
           content:
             application/json:
               schema: { $ref: "#/components/schemas/MeProfileOut" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  # ================================================================= #
+  # (P167 §1.7) "GUVENLIK VE GIRIS" + "BILDIRIM AYARLARI"
+  #
+  # Bu dort uc, var olan uclarin KISITLI KOPYASI DEGIL — AYRI yetki
+  # kararlaridir. `GET /devices` tenant'in TUM cihazlarini yalniz admin'e,
+  # `GET /audit` tesisin TUM denetim kaydini admin+denetci'ye acar.
+  # Asagidakiler HER ROLE aciktir ve YALNIZ kisinin KENDI satirlarini
+  # doner: kendi hesabinda hangi cihazin acik oldugunu gormek bir yonetim
+  # yetkisi degil, hesap guvenliginin temel kosuludur.
+  # ================================================================= #
+  /me/cihazlar:
+    get:
+      tags: [me]
+      summary: Kendi kayitli cihazlarim (en son gorunen ustte)
+      description: |
+        Kullanicinin KENDI push cihazlari. `fcm_token` DONMEZ — push adresidir
+        ve disari verilmesi o kullaniciya bildirim gondermenin anahtarini
+        vermek olurdu; satirlar `id` ile yonetilir.
+
+        PASIF cihazlar da doner (`aktif=false`): "kaldirdim mi gercekten"
+        sorusunun cevabi listede gorunmeli.
+      responses:
+        "200":
+          description: Cihaz listesi
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/CihazOut" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /me/cihazlar/tumunden-cik:
+    post:
+      tags: [me]
+      summary: Tum cihazlarimi kaldir ("telefonumu kaybettim")
+      description: |
+        Aktif cihazlarin hepsini pasiflestirir. OTURUMLARI SONLANDIRMAZ —
+        refresh token'lar bu tabloda degildir ve sonlandirilmis gibi
+        gostermek kullaniciyi guvende SANDIGI ama olmadigi bir yerde
+        birakirdi.
+      responses:
+        "200":
+          description: Kaldirilan cihaz sayisi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [kaldirilan]
+                properties:
+                  kaldirilan: { type: integer, minimum: 0 }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /me/cihazlar/{cihaz_id}:
+    delete:
+      tags: [me]
+      summary: Bir cihazimi kaldir (satir silinmez, pasiflesir)
+      description: |
+        Satir SILINMEZ, `aktif=false` olur: `uq_user_device_tenant_token`
+        ayni token'in tekrar kaydini upsert'e cevirdigi icin silme, ayni
+        telefonun her girisinde cihaz gecmisini sifirlardi. Push gonderimi
+        `aktif` bayragina baktigi icin kaldirma ANINDA etkilidir.
+
+        BASKASININ CIHAZI: sorgu `user_id` ile kapali → 404.
+      parameters:
+        - name: cihaz_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "204": { description: Kaldirildi }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /me/etkinlik:
+    get:
+      tags: [me]
+      summary: Kendi hesap etkinligim (denetim kaydindan, en yeni ustte)
+      description: |
+        YALNIZ `actor_user_id = kendisi` olan denetim satirlari. `/audit`
+        ucunun kisitlanmisi degil, ayri bir yetki karari (bkz. bolum notu).
+        Suzgec SORGUNUN ICINDE — tum listeyi gonderip istemcide suzmek,
+        satirlarin tarayiciya ulasmasi demekti.
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+      responses:
+        "200":
+          description: Etkinlik listesi
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/HesapEtkinligiOut" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /me/bildirim-tercihleri:
+    get:
+      tags: [me]
+      summary: Kendi bildirim kanali tercihlerim (e-posta / SMS / mobil)
+      responses:
+        "200":
+          description: Tercihler
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BildirimTercihleri" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+    patch:
+      tags: [me]
+      summary: Bildirim kanali tercihlerini guncelle (KISMI)
+      description: |
+        Gonderilmeyen kanal DEGISMEZ — iki sekme acik olan kullanicida tam
+        govde, otekinin degisikligini SESSIZCE geri alirdi.
+
+        `/me/pazarlama-tercihleri` ile KARISTIRILMAMALI: orasi bir KVKK
+        RIZASI (varsayilani KAPALI olmak zorunda, ispat yukumlulugu var),
+        burasi bir kullanim TERCIHI (varsayilani ACIK — "aidat borcunuz
+        olustu" bildirimi sozlesme iliskisinin isleyisidir, riza
+        gerektirmez). Tek uca toplamak, pazarlamayi kapatan kisinin aidat
+        bildirimini de kaybetmesi olurdu.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BildirimTercihUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BildirimTercihleri" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "422": { $ref: "#/components/responses/ValidationError" }
 
@@ -8818,10 +8949,21 @@ paths:
       tags: [me]
       summary: Kendi avatarini guncelle (presigned foto_key)
       description: |
-        SELF-SERVIS profil fotografi. RBAC: **yalniz `yonetici` + `resident`**
-        (auth.md). Saha personelinin (security / tesis_gorevlisi) fotografini
-        yonetim `PATCH /users/{id}/avatar` ile yonetir; admin'in self-servise
-        ihtiyaci yoktur → digerleri 403.
+        SELF-SERVIS profil fotografi. RBAC: **admin + yonetici + denetci +
+        resident** (auth.md).
+
+        (P167 §1.7) `admin` ve `denetci` BU TURDA EKLENDI. Eski kume
+        `yonetici + resident`ti ve gerekcesi "admin'e self-servis
+        gerekmez"di; panelin sag ust kosesi artik HER rol icin avatar
+        cizdigi (kullanici menusu) ve profil sayfasi hepsine acik oldugu
+        icin o gerekce dustu. Dugmeyi gosterip 403 donmek kullaniciya
+        sebepsiz bir hata vermek, dugmeyi role gore gizlemek ise ayni
+        kurali istemcide tekrar etmek olurdu.
+
+        SAHA PERSONELI (security / tesis_gorevlisi) HALA 403: onlarin
+        fotografi bir sus degil OPERASYONEL KIMLIK kaydidir (vardiya,
+        devriye, ziyaretci karsilama) ve yonetim
+        `PATCH /users/{id}/avatar` ile yonetir.
 
         `avatar_key` KENDI TENANT namespace'inde olmalidir (`<tenant_id>/...`);
         degilse **422 `invalid_foto_key`** — duyuru fotografiyla ayni IDOR
@@ -9672,13 +9814,31 @@ components:
     UserContactUpdate:
       type: object
       description: >
-        Iletisim ayari (telefon + arama rizasi) — en az bir alan. Yonetim ucunda
-        (PATCH /users/{id}/contact, admin+yonetici -> baskasi) VE self-servis
-        ucunda (PATCH /me/contact, kullanici kendi) ayni govde.
+        Iletisim ayari (telefon + arama rizasi) — en az bir alan. YONETIM ucunun
+        govdesi (PATCH /users/{id}/contact, admin+yonetici -> baskasi).
       minProperties: 1
       properties:
         telefon: { type: string, nullable: true, maxLength: 40 }
         aranabilir: { type: boolean }
+    MeContactUpdate:
+      type: object
+      description: >
+        (P167 §1.7) SELF-SERVIS govde (PATCH /me/contact) — UserContactUpdate +
+        `ad`. Ad yonetim ucuna EKLENMEDI: "iletisim guncelle" adli bir ucun
+        sessizce kimlik alani da degistirebilmesi, yetki matrisi degismeden
+        davranisin genislemesi olurdu.
+
+        `email` BILEREK YOK. Bu sistemde e-posta LOGIN ANAHTARIDIR
+        (uq_app_user_tenant_email) ve dogrulama akisi yoktur. Dogrulamasiz
+        degisim: (a) odunc alinmis bir oturum adresi degistirip hesabin
+        sahibini kalici olarak disarida birakabilir, (b) yanlis yazilan bir
+        adres parola sifirlamayi SESSIZCE calismaz kilar. Degisim yolu,
+        dogrulama kodu akisiyla BIRLIKTE acilmalidir.
+      minProperties: 1
+      properties:
+        telefon: { type: string, nullable: true, maxLength: 40 }
+        aranabilir: { type: boolean }
+        ad: { type: string, minLength: 1, maxLength: 120 }
     HesapSilmeIstek:
       type: object
       required: [current_password]
@@ -9723,6 +9883,71 @@ components:
           description: >
             Tenant'in BIRINCIL yoneticisi mi? Mobil ilk-giris adlandirma kapisi
             (POST /tenant/setup) yalniz buna acilir; yonetici disi rollerde daima false.
+        avatar_url:
+          type: string
+          nullable: true
+          description: >
+            (P167 §1.7) Kisa omurlu presigned GET URL'i; obje anahtari ISTEMCIYE
+            VERILMEZ (UserOut ile ayni kural). null = fotograf yok → arayuz bas
+            harfleri cizer. Buraya eklendi cunku sag ust kullanici menusu ile
+            profil sayfasi AYNI kaydin iki gorunumu; avatari /me'den, gerisini
+            /me/profile'dan cekmek iki istek ve iki onbellek demekti.
+    BildirimTercihleri:
+      type: object
+      description: >
+        (P167 §1.7) Isleyis bildirimlerinin kanal tercihleri. PazarlamaTercihleri
+        ile karistirilmamali — o bir RIZA (varsayilani kapali), bu bir TERCIH
+        (varsayilani acik). Kanal basina ayri: uygulamasi acik olan SMS istemez,
+        uygulamayi kurmamis olana yalniz e-postayla ulasilir.
+      required: [bildirim_eposta, bildirim_sms, bildirim_mobil]
+      properties:
+        bildirim_eposta: { type: boolean }
+        bildirim_sms: { type: boolean }
+        bildirim_mobil: { type: boolean }
+    BildirimTercihUpdate:
+      type: object
+      description: KISMI guncelleme — gonderilmeyen kanal DEGISMEZ.
+      properties:
+        bildirim_eposta: { type: boolean, nullable: true }
+        bildirim_sms: { type: boolean, nullable: true }
+        bildirim_mobil: { type: boolean, nullable: true }
+    CihazOut:
+      type: object
+      description: >
+        (P167 §1.7) "Guvenilen cihazlar" satiri. fcm_token BILINCLI OLARAK YOK —
+        push adresidir; disari verilmesi o kullaniciya bildirim gondermenin
+        anahtarini vermek olurdu.
+      required: [id, platform, dil, aktif, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        platform: { type: string, enum: [android, ios, web] }
+        dil: { type: string }
+        aktif: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at:
+          type: string
+          format: date-time
+          description: >
+            Son etkinlik — token her uygulama acilisinda upsert edildigi icin
+            pratikte "cihaz en son ne zaman gorundu"yu tasir.
+    HesapEtkinligiOut:
+      type: object
+      description: >
+        (P167 §1.7) Kendi denetim kaydi satiri. meta KVKK geregi yalniz
+        id/alan-adi tasir, kisisel veri DEGERI asla.
+      required: [id, action, ts]
+      properties:
+        id: { type: string, format: uuid }
+        action: { type: string }
+        resource_type: { type: string, nullable: true }
+        resource_id:
+          type: string
+          nullable: true
+          description: >
+            METIN (uuid degil): denetim satiri her zaman bir uuid'ye isaret
+            etmez (orn. bir dosya anahtari).
+        ts: { type: string, format: date-time }
+        meta: { type: object, additionalProperties: true }
     CallTarget:
       type: object
       description: >

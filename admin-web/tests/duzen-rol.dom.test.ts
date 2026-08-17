@@ -5,7 +5,7 @@
 // sorar ve menu bir kare GECIKMEYLE dogru gelir. Yani hata SESSIZDIR —
 // tam olarak bir testin yakalamasi gereken tur. Olculen sey: ilk cizimde
 // menu ZATEN dogru.
-import { screen } from "@testing-library/react";
+import { fireEvent, screen } from "@testing-library/react";
 import { createElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -54,7 +54,28 @@ async function cizDuzen() {
   ciz(() => agac);
 }
 
+/**
+ * (P167 §1.2) BOLUMLER KAPALI BASLAR — sayimdan once acilir.
+ *
+ * Bu dosyanin olctugu sey "cerezdeki rol ILK CIZIMDE menuye yansidi mi",
+ * satirlarin kac tiklama uzakta oldugu DEGIL. Acmadan saymak, kapali
+ * menude her rolu "bos" gosterir ve test olcmek istedigi seyi olcmez
+ * hale gelirdi.
+ */
+function tumBolumleriAc(): void {
+  let guvenlik = 0;
+  for (;;) {
+    const kapali = screen
+      .queryAllByRole("navigation")
+      .flatMap((n) => [...n.querySelectorAll<HTMLElement>("button")])
+      .filter((b) => b.getAttribute("aria-expanded") === "false");
+    if (kapali.length === 0 || guvenlik++ > 20) break;
+    for (const b of kapali) fireEvent.click(b);
+  }
+}
+
 function menuAdlari(): string[] {
+  tumBolumleriAc();
   return screen
     .getAllByRole("link")
     // (P132) "İçeriğe atla" MENU OGESI DEGILDIR — logo gibi kabugun

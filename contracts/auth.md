@@ -271,7 +271,12 @@ Kisaltmalar: yon = yonetici · sec = security · tg = tesis_gorevlisi · res = r
 | `GET  /me/profile` (kendi)            |  ✅   | ✅  | ✅  | ✅  | ✅  |
 | `PATCH /me/password` (kendi)          |  ✅   | ✅  | ✅  | ✅  | ✅  |
 | `PATCH /me/contact` (kendi tel/riza)  |  ✅   | ✅  | ✅  | ✅  | ✅  |
-| `PATCH /me/avatar` (kendi profil fotografi) |  ❌   | ✅  | ❌  | ❌  | ✅  |
+| `PATCH /me/avatar` (kendi profil fotografi) |  ✅   | ✅  | ❌  | ❌  | ✅  |
+| `GET  /me/cihazlar` (kendi cihazlarim)|  ✅   | ✅  | ✅  | ✅  | ✅  |
+| `DELETE /me/cihazlar/{id}` (kendi)    |  ✅   | ✅  | ✅  | ✅  | ✅  |
+| `POST /me/cihazlar/tumunden-cik`      |  ✅   | ✅  | ✅  | ✅  | ✅  |
+| `GET  /me/etkinlik` (kendi denetimi)  |  ✅   | ✅  | ✅  | ✅  | ✅  |
+| `GET|PATCH /me/bildirim-tercihleri`   |  ✅   | ✅  | ✅  | ✅  | ✅  |
 | `PATCH /users/{id}/avatar` (saha personeli) | ❌ | ✅  | ❌  | ❌  | ❌  |
 | `GET  /shifts` (liste/detay)          |  ✅   | ✅  | ✅  | ✅  | ❌  |
 | `POST /shifts`                        |  ✅   | ❌  | ❌  | ❌  | ❌  |
@@ -722,10 +727,61 @@ Notlar:
     yonetir (en az bir alan). Numara **OTP'siz dogrudan** kaydedilir (SMS
     altyapisi ileride). Yonetim ucu (`PATCH /users/{id}/contact`, baskasi icin)
     ayri kalir; bu onun kendi-kaydi karsiligidir.
-  - **`PATCH /me/avatar` (kendi profil fotografi):** YALNIZ **yonetici + resident**
-    (kendi fotografi). admin/security/tesis_gorevlisi 403. `avatar_key` kendi
-    tenant namespace'inde olmali (yabanci onek 422 — IDOR). `null` fotografi
-    kaldirir; eski obje MinIO'dan silinir.
+    - **(P167 §1.7) `ad` DA BURADAN degisir** — sema `MeContactUpdate`
+      (`UserContactUpdate`ten turer). Yonetim ucuna EKLENMEDI: "iletisim
+      guncelle" adli bir ucun sessizce KIMLIK alani da degistirebilmesi,
+      yetki matrisi degismeden davranisin genislemesi olurdu. Bos/boslukli
+      ad **422** — `app_user.ad` NOT NULL ve kisinin her ekrandaki tek
+      tanimi; telefondaki "bos = kaldir" kurali burada gecerli DEGIL.
+    - **`email` BILEREK YOK.** E-posta bu sistemde LOGIN ANAHTARIDIR
+      (`uq_app_user_tenant_email`) ve dogrulama akisi yoktur. Dogrulamasiz
+      degisim: (a) odunc alinmis bir oturum adresi degistirip hesabin
+      sahibini kalici olarak disarida birakabilir, (b) yanlis yazilan bir
+      adres parola sifirlamayi SESSIZCE calismaz kilar. Degisim yolu,
+      dogrulama kodu akisiyla BIRLIKTE acilmalidir.
+
+- **(P167 §1.7) Kendi cihazlarim + kendi hesap etkinligim + bildirim
+  tercihleri — TUM roller, YALNIZ kendi satirlari.**
+
+  Bunlar var olan uclarin kisitli kopyasi DEGIL, AYRI yetki kararlaridir:
+  `GET /devices` tenant'in TUM cihazlarini yalniz **admin**'e, `GET /audit`
+  tesisin TUM denetim kaydini **admin + denetci**'ye acar. Asagidakiler HER
+  ROLE aciktir ve suzgec SUNUCUDAKI sorgunun icindedir — kendi hesabinda
+  hangi cihazin acik oldugunu gormek bir yonetim yetkisi degil, hesap
+  guvenliginin temel kosuludur.
+  - **`GET /me/cihazlar`:** `fcm_token` DONMEZ (push adresidir; disari
+    vermek o kullaniciya bildirim gondermenin anahtarini vermektir).
+    Pasif cihazlar da doner — "kaldirdim mi?" sorusunun cevabi gorunmeli.
+  - **`DELETE /me/cihazlar/{id}`:** satir SILINMEZ, `aktif=false` olur.
+    `uq_user_device_tenant_token` ayni token'in tekrar kaydini upsert'e
+    cevirdigi icin silme, ayni telefonun her girisinde cihaz gecmisini
+    sifirlardi. Baskasinin cihazi **404** (sorgu `user_id` ile kapali).
+  - **`POST /me/cihazlar/tumunden-cik`:** OTURUMLARI SONLANDIRMAZ —
+    refresh token'lar bu tabloda degildir ve sonlandirilmis gibi gostermek
+    kullaniciyi guvende SANDIGI ama olmadigi bir yerde birakirdi.
+  - **`GET /me/etkinlik`:** `actor_user_id = kendisi` olan denetim
+    satirlari; `limit` varsayilan 20, **tavan 100** (sinirsiz `limit` tek
+    istekle denetim tablosunu suzduren bir yol acardi).
+  - **`GET|PATCH /me/bildirim-tercihleri`:** `bildirim_eposta`,
+    `bildirim_sms`, `bildirim_mobil` — KISMI guncelleme, varsayilan
+    **ACIK**. `/me/pazarlama-tercihleri` ile KARISTIRILMAMALI: orasi bir
+    KVKK RIZASI (varsayilani KAPALI olmak zorunda), burasi bir kullanim
+    TERCIHI. Tek uca toplamak, pazarlamayi kapatan kisinin aidat
+    bildirimini de kaybetmesi olurdu (goc 0055).
+  - **`PATCH /me/avatar` (kendi profil fotografi):** **admin + yonetici +
+    denetci + resident**. `avatar_key` kendi tenant namespace'inde olmali
+    (yabanci onek 422 — IDOR). `null` fotografi kaldirir; eski obje
+    MinIO'dan silinir.
+    - **(P167 §1.7) admin ve denetci BU TURDA eklendi.** Eski kume
+      `yonetici + resident`ti ve gerekcesi "admin'e self-servis
+      gerekmez"di. Panelin sag ust kosesi artik HER rol icin avatar
+      ciziyor (kullanici menusu) ve profil sayfasi hepsine acik — o
+      gerekce dustu. Dugmeyi gosterip 403 donmek kullaniciya sebepsiz bir
+      hata vermek, dugmeyi role gore gizlemek ise ayni kurali istemcide
+      tekrar etmek olurdu.
+    - **security / tesis_gorevlisi HALA 403.** Onlarin fotografi bir sus
+      degil OPERASYONEL KIMLIK kaydidir (vardiya, devriye, ziyaretci
+      karsilama) ve yonetim `PATCH /users/{id}/avatar` ile yonetir.
   - **`PATCH /users/{id}/avatar` (saha personeli fotografi):** YALNIZ **yonetici**.
     Hedef ayni tenant'ta (RLS 404) ve rolu ∈ {security, tesis_gorevlisi} olmali
     (degilse 422 invalid_target). Saha personeli KENDI fotografini yukleyemez —

@@ -16,28 +16,28 @@ import { rotaRoldeGorunur, rotaYuzeyi, type Yuzey } from "./yuzey";
 export type IconName =
   | "grid" | "building" | "clock" | "scan" | "route" | "check"
   | "box" | "home" | "edit" | "pin" | "money" | "chart"
-  | "users" | "megaphone" | "chat" | "bell" | "hub" | "gear";
+  | "users" | "megaphone" | "chat" | "bell" | "hub" | "gear"
+  | "shield";
 
 /** Bolum kimlikleri. Sira BURADAKI siradir (menude de bu sirayla cizilir). */
 export type GrupId =
+  // (P167 §1.3) OZET — bolum DEGIL, bagimsiz ust sekme. Bir `GrupId` olarak
+  // tutulmasinin nedeni teknik: gorunurluk/arama/aktiflik mantigi tek bir
+  // kume uzerinden yuruyor ve "grupsuz oge" ikinci bir kod yolu acardi.
+  // Cizimde basligi YOKTUR (`bagimsiz`), ogeleri IKONLUDUR.
+  | "ozet"
   | "guvenlik"
   | "tesis"
-  | "finans"
-  // (P154 / Asama 7.1) Brief'in FINANS listesindeki ALTI ALT GORUNUM
-  // (Tahsilatlar, Gelirler, Giderler, Virman, Iade, Acilis fisleri) KENDI
-  // KATLI BOLUMUNDE durur, `finans`in icinde DEGIL.
+  // (P167 §1.4) FINANSAL ISLEMLER — `finansHareket` ve `icra` bolumleri
+  // BURAYA KATILDI.
   //
-  // NEDEN: olculdu — hepsini `finans`a koyunca bolum 5 satirdan 11'e cikti
-  // ve finans acikken menu 17 satir oldu. Kerem'in olculebilir sarti
-  // "900px'te kaydirmasiz ~10 satir"di; `test_..SATIR SAYISI` bunu 12'de
-  // kilitliyor. Kilidi gevsetmek olcuyu isin pesinden surumek olurdu.
-  // "Daha fazla"nin ardinda hepsi ERISILEBILIR, gunluk butce ise korunur.
-  | "finansHareket"
-  // (P154 / Asama 7.1) Brief: "ICRA DOSYALARI: ayri ust sekme". Finansin
-  // altinda bir satir DEGIL, kendi bolumu — icra hukuki bir surectir ve
-  // para hareketiyle ayni yerde durmasi ikisini karistirir (goc 0029'un
-  // notu: borc `dues_assessment`ta durur, icraya KOPYALANMAZ).
-  | "icra"
+  // P154 ikisini ayirmisti ve gerekcesi bir YER butcesiydi: butun bolumler
+  // acik cizildigi icin 11 satirlik bir finans bolumu menuyu tasiriyordu.
+  // P167 §1.2 o butceyi ORTADAN KALDIRIYOR — artik butun ana basliklar
+  // KAPALI baslar, yani bir bolumun kac satir oldugu ancak kullanici onu
+  // actiginda onemli. Ayirmayi surdurmek, sebebi kalkmis bir bolunmeyi
+  // korumak olurdu; icra da (§1.4) para dosyasinin yaninda aranir.
+  | "finans"
   | "iletisim"
   | "tanimlar"
   | "yonetim"
@@ -60,6 +60,18 @@ export interface MenuOgesi {
    */
   sorgu?: string;
   anahtar: SozlukAnahtari;
+  /**
+   * (P167 §1.1) IKON ARTIK YALNIZ BAGIMSIZ SEKMELERDE CIZILIR.
+   *
+   * Kural TERSINE cevrildi: eskiden ana basliklar ciplakti, alt satirlarin
+   * hepsinde ikon vardi — 40 satirlik menude 40 kucuk sekil, hicbiri
+   * otekinden ayirt edilmiyordu. Ikon bir AYIRT EDICI olmaktan cikip
+   * gurultuye donusmustu.
+   *
+   * Simdi ikon BASLIK duzeyinde (`GRUP_IKONU`) ve bagimsiz sekmelerde;
+   * alt satirlar GIRINTIYLE hizalanir. Alan burada KALDI cunku bagimsiz
+   * sekme (Ozet) hâlâ kendi ikonunu tasiyor.
+   */
   icon: IconName;
   grup: GrupId;
 }
@@ -111,28 +123,55 @@ export function ogeAktif(
 
 /** Bolum basligi anahtarlari. */
 export const GRUP_ANAHTARI: Record<GrupId, SozlukAnahtari> = {
+  ozet: "kabukOzet",
   guvenlik: "kabukGrupGuvenlik",
   tesis: "kabukGrupTesis",
   finans: "kabukGrupFinans",
-  finansHareket: "kabukGrupFinansHareket",
-  icra: "kabukGrupIcra",
   iletisim: "kabukGrupIletisim",
   tanimlar: "kabukGrupTanimlar",
   yonetim: "kabukGrupYonetim",
   platform: "kabukGrupPlatform",
 };
 
+/**
+ * (P167 §1.1) BOLUM IKONLARI — ana basligin gorsel capasi.
+ *
+ * Ikon sayisi 40'tan 7'ye dustugu icin her biri artik AYIRT EDICI: kullanici
+ * "para" simgesini gorup Finansal Islemler'i tarayarak degil BAKARAK bulur.
+ * Alt satirlar ikonsuz ve girintili — hiyerarsi ikonun VARLIGI/YOKLUGU ile
+ * anlatiliyor, ayri bir renk ya da cizgiyle degil.
+ */
+export const GRUP_IKONU: Record<GrupId, IconName> = {
+  ozet: "grid",
+  guvenlik: "shield",
+  tesis: "building",
+  finans: "money",
+  iletisim: "chat",
+  tanimlar: "box",
+  yonetim: "gear",
+  platform: "hub",
+};
+
+/**
+ * (P167 §1.3) BASLIKSIZ BOLUMLER — "bagimsiz sekme"ler.
+ *
+ * Ozet bir bolum degil TEK bir sayfadir; ona bir ana baslik verip altina tek
+ * satir koymak, kullaniciyi her acilista bir tiklamaya zorlardi. Bu kumedeki
+ * bolumler basliksiz cizilir ve ogeleri IKONLU olur (§1.1'in son cumlesi).
+ */
+const BAGIMSIZ_GRUPLAR: ReadonlySet<GrupId> = new Set<GrupId>(["ozet"]);
+
 // (P166 §1) SIRA ARTIK ANLAMA GORE, "hangisi katlanir"a gore DEGIL.
 //
 // Eski dizide `platform` ortadaydi cunku katli olmayan son bolumdu —
 // yani sirayi katlama karari belirliyordu. Katlama gidince olcut de
 // degisti: para hareketleri paranin, tanimlar da yonetimin yanindadir.
+// (P167 §1.3) OZET EN USTTE ve basliksiz: gunun ilk bakisi oraya duser.
 const GRUP_SIRASI: readonly GrupId[] = [
+  "ozet",
   "guvenlik",
   "tesis",
   "finans",
-  "finansHareket",
-  "icra",
   "iletisim",
   "tanimlar",
   "yonetim",
@@ -142,8 +181,14 @@ const GRUP_SIRASI: readonly GrupId[] = [
 // Menu ogeleri METIN degil ANAHTAR tasir: etiket cizim aninda aktif dilde
 // cozulur. Sira GRUP ICINDE anlamlidir (once gunluk bakilan, sonra kurulum).
 const OGELER: readonly MenuOgesi[] = [
+  // --- OZET: bagimsiz ust sekme (P167 §1.3) -----------------------------
+  // Eski adi "Canli Panel"di ve GUVENLIK bolumunun altindaydi. Ikisi de
+  // yanlisti: sayfa yalniz guvenligi degil TESISIN TAMAMINI (para, takvim,
+  // maket, alarm) ozetliyor ve gunun ilk bakisi oraya duser — bir bolumun
+  // altinda, kapali bir baslgin ardinda durmamali.
+  { href: "/dashboard", anahtar: "kabukOzet", icon: "grid", grup: "ozet" },
+
   // --- GUVENLIK: gunluk saha akisi --------------------------------------
-  { href: "/dashboard", anahtar: "kabukCanliPanel", icon: "grid", grup: "guvenlik" },
   { href: "/olaylar", anahtar: "kabukOlaylar", icon: "bell", grup: "guvenlik" },
   { href: "/notifications", anahtar: "kabukBildirimler", icon: "bell", grup: "guvenlik" },
   { href: "/kameralar", anahtar: "kabukKameralar", icon: "scan", grup: "guvenlik" },
@@ -176,24 +221,22 @@ const OGELER: readonly MenuOgesi[] = [
   { href: "/dues", anahtar: "kabukAidat", icon: "money", grup: "finans" },
   { href: "/aidatim", anahtar: "kabukAidatim", icon: "money", grup: "finans" },
   { href: "/finans", anahtar: "kabukFinans", icon: "money", grup: "finans" },
-  { href: "/finans", sorgu: "tip=tahsilat", anahtar: "kabukTahsilatlar", icon: "money", grup: "finansHareket" },
-  { href: "/finans", sorgu: "tip=gelir", anahtar: "kabukGelirler", icon: "money", grup: "finansHareket" },
-  { href: "/finans", sorgu: "tip=gider", anahtar: "kabukGiderler", icon: "money", grup: "finansHareket" },
-  { href: "/finans", sorgu: "tip=virman", anahtar: "kabukVirman", icon: "money", grup: "finansHareket" },
-  { href: "/finans", sorgu: "tip=iade", anahtar: "kabukIade", icon: "money", grup: "finansHareket" },
-  { href: "/finans", sorgu: "tip=acilis", anahtar: "kabukAcilisFisleri", icon: "money", grup: "finansHareket" },
+  { href: "/finans", sorgu: "tip=tahsilat", anahtar: "kabukTahsilatlar", icon: "money", grup: "finans" },
+  { href: "/finans", sorgu: "tip=gelir", anahtar: "kabukGelirler", icon: "money", grup: "finans" },
+  { href: "/finans", sorgu: "tip=gider", anahtar: "kabukGiderler", icon: "money", grup: "finans" },
+  { href: "/finans", sorgu: "tip=virman", anahtar: "kabukVirman", icon: "money", grup: "finans" },
+  { href: "/finans", sorgu: "tip=iade", anahtar: "kabukIade", icon: "money", grup: "finans" },
+  { href: "/finans", sorgu: "tip=acilis", anahtar: "kabukAcilisFisleri", icon: "money", grup: "finans" },
+  // (P167 §1.4) ICRA DOSYALARI — bagimsiz ust sekme DEGIL, finansin ALTI.
+  // Icra bir borcun son durumudur; kullanici onu "hukuk" basligi altinda
+  // degil, borcu takip ettigi yerde arar.
+  { href: "/icra", anahtar: "kabukIcra", icon: "scan", grup: "finans" },
   // (P111) Sayac okuma tanimlardan beslenir, ciktisi bir tahakkuktur.
   { href: "/sayac-okuma", anahtar: "kabukSayacOkuma", icon: "chart", grup: "finans" },
   { href: "/reports/dues", anahtar: "kabukRaporlar", icon: "chart", grup: "finans" },
   // (P40) 12 raporluk katalog; `/reports/dues` tek raporluk eski sayfadir
   // ve ikisi YAN YANA durur ki eski baglantilar kirilmasin.
   { href: "/raporlar", anahtar: "kabukRaporMotoru", icon: "chart", grup: "finans" },
-
-  // --- ICRA: ayri ust bolum (brief 7.1) ---------------------------------
-  // Uc (`/finans/icra-dosyalari`) ve BFF kaydi VARDI, EKRANI YOKTU —
-  // envanterdeki "olu BFF ucu" sinifinin bir uyesi. Brief "olmayani ac"
-  // dedigi icin sayfa bu turda acildi.
-  { href: "/icra", anahtar: "kabukIcra", icon: "scan", grup: "icra" },
 
   // --- PLATFORM: yalniz `panel.*` ---------------------------------------
   { href: "/tenants", anahtar: "kabukTesisler", icon: "building", grup: "platform" },
@@ -214,17 +257,18 @@ const OGELER: readonly MenuOgesi[] = [
   { href: "/site-kurallari", anahtar: "kabukKuralYonetimi", icon: "check", grup: "iletisim" },
   { href: "/etkinlik-yonetimi", anahtar: "kabukEtkinlikYonetimi", icon: "clock", grup: "iletisim" },
   { href: "/duyurular", anahtar: "kabukDuyurularim", icon: "megaphone", grup: "iletisim" },
-  { href: "/mesajlar", anahtar: "kabukMesajlar", icon: "megaphone", grup: "iletisim" },
-  // (P154 / Asama 7.1) Brief: "SMS gonderimi · WhatsApp · E-posta
-  // gonderimi". Uc ayri sayfa DEGIL — `/mesajlar` zaten kanal seciyor,
-  // menu yalnizca o secimi onceden yapar.
-  { href: "/mesajlar", sorgu: "kanal=sms", anahtar: "kabukSmsGonderimi", icon: "chat", grup: "iletisim" },
-  // WHATSAPP SATIRI YOK — brief'in listesinde var ama `mesaj_kanal` enum'u
-  // bugun yalniz `sms, eposta` tasiyor. Tiklanabilir ama sablonu
-  // KAYDEDILEMEYEN bir satir, tam da temizlemeye calistigimiz "olu
-  // baglanti" sinifi olurdu. Asama 9'un kalan isi (enum + sablon onay
-  // alanlari) bittiginde tek satirla acilir.
-  { href: "/mesajlar", sorgu: "kanal=eposta", anahtar: "kabukEpostaGonderimi", icon: "chat", grup: "iletisim" },
+  // (P167 §1.5) UC SATIR TEKE INDI: "Mesajlar", "SMS gonderimi" ve
+  // "E-posta gonderimi" UCU DE `/mesajlar`a gidiyordu — ikisi ayni sayfayi
+  // bir sorguyla onceden suzuyordu (P154'un karari).
+  //
+  // Kerem'in olcumu: kullanici uc ayri YETENEK sanip ucunu de tikliyor ve
+  // her seferinde ayni ekrani goruyor. Onceden suzme bir kisayoldu; bedeli
+  // menuyu uc kat yanlis okutmak oldu. Sayfa kanali ZATEN kendi icinde
+  // seciyor, dolayisiyla kaybolan bir yol YOK.
+  //
+  // ROTA OLMEDI: `/mesajlar?kanal=sms` hâlâ gecerli ve sayfa onu okuyor —
+  // eski yer imleri ve `/kurulum` baglantilari kirilmadi.
+  { href: "/mesajlar", anahtar: "kabukSmsEpostaYonetimi", icon: "chat", grup: "iletisim" },
   { href: "/complaints", anahtar: "kabukTalepler", icon: "chat", grup: "iletisim" },
   { href: "/taleplerim", anahtar: "kabukTaleplerim", icon: "chat", grup: "iletisim" },
   { href: "/anketler", anahtar: "kabukAnketler", icon: "chat", grup: "iletisim" },
@@ -246,20 +290,38 @@ const OGELER: readonly MenuOgesi[] = [
   // BLOK BURAYA TASINDI (once TESIS'teydi): brief blogu bir TANIM sayar.
   // Daire (`/units`) TESIS'te kaldi — o gunluk bakilan bir liste, blok
   // ise kurulumda bir kez cizilir.
-  // (P154 / Asama 7.3) Sihirbaz TANIMLAR bolumunun BASINDA: kurulum
-  // adimlarinin cogu bu bolumun ekranlaridir ve yeni yonetici once
-  // buraya bakmali.
-  { href: "/kurulum", anahtar: "kurulumBaslik", icon: "check", grup: "tanimlar" },
-  { href: "/ice-aktarim", anahtar: "iceAktarimBaslik", icon: "box", grup: "tanimlar" },
+  // (P167 §1.6) BOLUM YENIDEN YAZILDI.
+  //
+  // ESKI HALI BOZUKTU ve bozuklugun adi suydu: baslik "Tanimlar" diyordu
+  // ama altinda `/tanimlar` ekraninin ON BIR DEFTERINDEN yalniz yedisi
+  // vardi; buna karsilik KENDINE isaret eden bir "Tanimlar" satiri
+  // (kullaniciya hicbir sey soylemeyen bir dongusellik) ve bir "Kurulum
+  // sihirbazi" duruyordu — sihirbaz bir TANIM degil bir AKIS'tir.
+  //
+  // Yeni kural: bolum, `/tanimlar` ekraninin sekme seridinin BIREBIR
+  // aynasidir; ustune ayni seviyede iki kurulum kaydi (Bloklar, Ice
+  // aktarim) eklenir. Sihirbaz alt cubuga tasindi (§1.8) — orada tek
+  // basina, tam genislikte durur ve bir defter sanilmaz.
+  //
+  // SIRA `/tanimlar` sayfasindaki DEFTERLER dizisiyle AYNI: kullanici
+  // menuden tikladiginda sekme seridinde ayni sirada bulacak.
   { href: "/building-editor", anahtar: "kabukBloklar", icon: "edit", grup: "tanimlar" },
-  { href: "/tanimlar", anahtar: "kabukTanimlar", icon: "box", grup: "tanimlar" },
-  { href: "/tanimlar", sorgu: "defter=unit-tipleri", anahtar: "kabukDaireTipleri", icon: "home", grup: "tanimlar" },
-  { href: "/tanimlar", sorgu: "defter=kasalar", anahtar: "kabukKasalar", icon: "money", grup: "tanimlar" },
-  { href: "/tanimlar", sorgu: "defter=gelir-gider-tanimlari", anahtar: "kabukGelirGiderTanimlari", icon: "chart", grup: "tanimlar" },
+  { href: "/ice-aktarim", anahtar: "iceAktarimBaslik", icon: "box", grup: "tanimlar" },
+  { href: "/tanimlar", sorgu: "defter=kasalar", anahtar: "tanimKasalar", icon: "money", grup: "tanimlar" },
+  { href: "/tanimlar", sorgu: "defter=gelir-gider-gruplari", anahtar: "tanimGelirGiderGruplari", icon: "chart", grup: "tanimlar" },
+  { href: "/tanimlar", sorgu: "defter=gelir-gider-tanimlari", anahtar: "tanimGelirGiderTanimlari", icon: "chart", grup: "tanimlar" },
+  { href: "/tanimlar", sorgu: "defter=firmalar", anahtar: "tanimFirmalar", icon: "building", grup: "tanimlar" },
   { href: "/tanimlar", sorgu: "defter=gorev-kategorileri", anahtar: "tanimGorevKategorileri", icon: "check", grup: "tanimlar" },
-  { href: "/tanimlar", sorgu: "defter=personel-kayitlari", anahtar: "kabukPersonel", icon: "users", grup: "tanimlar" },
-  { href: "/tanimlar", sorgu: "defter=arac-kayitlari", anahtar: "kabukAraclar", icon: "scan", grup: "tanimlar" },
-  { href: "/tanimlar", sorgu: "defter=sayaclar-ana", anahtar: "kabukSayaclar", icon: "chart", grup: "tanimlar" },
+  { href: "/tanimlar", sorgu: "defter=personel-kayitlari", anahtar: "tanimPersonel", icon: "users", grup: "tanimlar" },
+  { href: "/tanimlar", sorgu: "defter=arac-kayitlari", anahtar: "tanimAraclar", icon: "scan", grup: "tanimlar" },
+  { href: "/tanimlar", sorgu: "defter=sayaclar-ana", anahtar: "tanimSayaclar", icon: "chart", grup: "tanimlar" },
+  { href: "/tanimlar", sorgu: "defter=sayaclar-bolum", anahtar: "tanimSayaclarBolum", icon: "chart", grup: "tanimlar" },
+  { href: "/tanimlar", sorgu: "defter=unit-tipleri", anahtar: "tanimDaireTipleri", icon: "home", grup: "tanimlar" },
+  { href: "/tanimlar", sorgu: "defter=unit-gruplari", anahtar: "tanimDaireGruplari", icon: "home", grup: "tanimlar" },
+  // "Ayarlar" sekmesi de bir BOLUMDUR ve menude yeri olmali; sayfada
+  // yerel duruma bagliydi, bu turda o da adrese tasindi (bkz. tanimlar
+  // sayfasi) — yoksa menuden acilamayan tek sekme olarak kalirdi.
+  { href: "/tanimlar", sorgu: "defter=ayarlar", anahtar: "tanimAyarlar", icon: "gear", grup: "tanimlar" },
 
   { href: "/users", anahtar: "kabukKullanicilar", icon: "users", grup: "yonetim" },
   { href: "/transparency", anahtar: "kabukSeffaflik", icon: "money", grup: "yonetim" },
@@ -273,11 +335,17 @@ const OGELER: readonly MenuOgesi[] = [
 ];
 
 /**
- * PROFIL GRUPTA DEGILDIR — alt bolumde, cikis dugmesinin yanindadir.
+ * PROFIL GRUPTA DEGILDIR — ve (P167 §1.7) artik KENAR CUBUGUNDA da degil.
  *
- * Bir bolume koymak onu "yonetim isi" gibi gosterirdi; oysa kullanicinin
- * KENDI kaydidir ve her rolde ayni yerde durmasi beklenir. Gorunurlugu
- * yine `ROTA_ROLLERI`den gelir (bu tur degistirmedi).
+ * SAG USTE tasindi: avatar + tesis adi + kullanici adi, tiklaninca acilan
+ * bir menu. Gerekce, kullanicinin aradigi yerdir — hesabina dair her sey
+ * (bilgiler, guvenlik, bildirim, parola, cikis) bilinen bir konvansiyonla
+ * sag ust kosede aranir; sol menu ise SITEYE ait ekranlarin listesidir.
+ * Ikisini karistirmak, kendi kaydini "yonetim isleri" arasinda aratiyordu.
+ *
+ * KAYIT BURADA KALDI cunku profil hâlâ bir SAYFA: `sayfaAra` onu bulmali
+ * ("profil" yazan kullanici gidebilmeli) ve gorunurlugu yine
+ * `ROTA_ROLLERI`den gelir.
  */
 export const PROFIL_OGESI: MenuOgesi = {
   href: "/profil",
@@ -286,10 +354,36 @@ export const PROFIL_OGESI: MenuOgesi = {
   grup: "yonetim",
 };
 
+/**
+ * (P167 §1.8) KURULUM SIHIRBAZI — bolum ogesi DEGIL, alt cubugun ust satiri.
+ *
+ * Tanimlar bolumunun icindeydi ve orada bir DEFTER gibi gorunuyordu; oysa
+ * sihirbaz bir kayit turu degil, o kayitlari sirayla dolduran bir AKIS.
+ * Alt cubukta tam genislikte tek satir olarak durur: ne bir bolume ait
+ * gorunur ne de tema/cikis ile ayni onem duzeyine iner.
+ *
+ * `PROFIL_OGESI` ile ayni desen — arama onu hâlâ bulur, rol kapisi hâlâ
+ * `ROTA_ROLLERI`den gelir.
+ */
+export const KURULUM_OGESI: MenuOgesi = {
+  href: "/kurulum",
+  anahtar: "kurulumBaslik",
+  icon: "check",
+  grup: "tanimlar",
+};
+
 export interface MenuGrubu {
   id: GrupId;
   anahtar: SozlukAnahtari;
   ogeler: MenuOgesi[];
+  /**
+   * (P167 §1.3) Basliksiz mi cizilecek?
+   *
+   * `true` ise kabuk bolum basligini CIZMEZ ve ogeleri IKONLU gosterir —
+   * "bagimsiz ust sekme" gorunumu. `false` ise baslik ikonlu bir acilir
+   * dugmedir, ogeler ikonsuz ve girintilidir.
+   */
+  bagimsiz: boolean;
 }
 
 /**
@@ -306,23 +400,34 @@ export function menuGruplari(yuzey: Yuzey, rol: string | null): MenuGrubu[] {
     id,
     anahtar: GRUP_ANAHTARI[id],
     ogeler: gorunen.filter((o) => o.grup === id),
+    bagimsiz: BAGIMSIZ_GRUPLAR.has(id),
   })).filter((g) => g.ogeler.length > 0);
 }
 
-/** Profil satiri bu rolde gorunuyor mu? */
+/** Bir menu ogesi bu yuzey + rolde gorunuyor mu? */
+function ogeGorunur(oge: MenuOgesi, yuzey: Yuzey, rol: string | null): boolean {
+  return rotaYuzeyi(oge.href) === yuzey && rotaRoldeGorunur(oge.href, rol);
+}
+
+/** Profil bu rolde gorunuyor mu? (Sag ust kullanici menusu — §1.7) */
 export function profilGorunur(yuzey: Yuzey, rol: string | null): boolean {
-  return (
-    rotaYuzeyi(PROFIL_OGESI.href) === yuzey &&
-    rotaRoldeGorunur(PROFIL_OGESI.href, rol)
-  );
+  return ogeGorunur(PROFIL_OGESI, yuzey, rol);
+}
+
+/** Kurulum sihirbazi bu rolde gorunuyor mu? (Alt cubuk — §1.8) */
+export function kurulumGorunur(yuzey: Yuzey, rol: string | null): boolean {
+  return ogeGorunur(KURULUM_OGESI, yuzey, rol);
 }
 
 /**
  * Bir rotanin ait oldugu bolum — acilista HANGI bolumun acik gelecegini
  * bulmak icin.
  *
- * Bilinmeyen rota `null` doner ve o durumda ILK bolum acilir (bkz. kabuk):
- * "hicbiri acik degil" hâli, menuyu bos bir baslik listesine cevirirdi.
+ * (P167 §1.2) BILINMEYEN ROTA ARTIK HICBIR BOLUMU ACMAZ. Eskiden `null`
+ * gorulunce ILK bolum aciliyordu; yeni varsayilan "hepsi kapali" oldugu
+ * icin bu davranis kullanicinin kapali birakma tercihini bozar. `/profil`
+ * ve `/kurulum` da bilerek `null` doner — ikisi de bolum disidir (§1.7,
+ * §1.8).
  */
 export function rotaninGrubu(pathname: string): GrupId | null {
   const tam = OGELER.find((o) => o.href === pathname);
@@ -412,8 +517,13 @@ export function sayfaAra(
   const kume: SayfaVurusu[] = gruplar.flatMap((g) =>
     g.ogeler.map((oge) => ({ oge, grupAnahtari: g.anahtar })),
   );
-  if (profilGorunur(yuzey, rol)) {
-    kume.push({ oge: PROFIL_OGESI, grupAnahtari: GRUP_ANAHTARI[PROFIL_OGESI.grup] });
+  // PROFIL ve KURULUM SIHIRBAZI menude bolum disindadir (§1.7 sag ust,
+  // §1.8 alt cubuk) ama ikisi de birer SAYFA — aramanin onlari bulmamasi,
+  // kullaniciyi "menude yok, o hâlde yok" sonucuna gotururdu.
+  for (const oge of [PROFIL_OGESI, KURULUM_OGESI]) {
+    if (ogeGorunur(oge, yuzey, rol)) {
+      kume.push({ oge, grupAnahtari: GRUP_ANAHTARI[oge.grup] });
+    }
   }
 
   const puanli: { v: SayfaVurusu; puan: number }[] = [];

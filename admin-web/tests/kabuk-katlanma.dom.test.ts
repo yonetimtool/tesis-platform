@@ -88,7 +88,7 @@ describe("(P160) kenar cubugu katlanmasi", () => {
       // ciziliyor (mevcut kabuk testi de bunu not ediyor), `getByRole`
       // coklu eslesmede patlar.
       expect(
-        screen.getAllByRole("link", { name: "Canlı Panel" }).length,
+        screen.getAllByRole("link", { name: "Özet" }).length,
         "dar modda baglantinin erisilebilir adi KAYBOLMUS",
       ).toBeGreaterThan(0);
     });
@@ -98,7 +98,7 @@ describe("(P160) kenar cubugu katlanmasi", () => {
     ciz();
     await waitFor(() =>
       expect(
-        screen.getAllByRole("link", { name: "Canlı Panel" }).length,
+        screen.getAllByRole("link", { name: "Özet" }).length,
       ).toBeGreaterThan(0),
     );
   });

@@ -63,19 +63,34 @@ beforeEach(() => {
 });
 afterEach(() => vi.restoreAllMocks());
 
-describe("(P166 §1) TEK LISTE — 'Daha fazla' katmani yok", () => {
-  it("ACILISTA TUM bolumler acik", () => {
+describe("(P167 §1.2) ACILISTA TUM ANA BASLIKLAR KAPALI", () => {
+  it("hicbir bolumun ogesi cizilmez; BAGIMSIZ sekme gorunur", () => {
     ciz(Kabuk());
     const h = menuHrefleri();
-    // Guvenlik (bulunulan bolum) — eskiden de aciliyordu.
+    // (P167 §1.3) OZET bir bolum degil, bagimsiz ust sekme — kapali
+    // baslik kurali onu KAPSAMAZ ve ilk bakista gorunur olmali.
     expect(h).toContain("/dashboard");
-    // Finans — eskiden KAPALIYDI.
-    expect(h).toContain("/dues");
-    // Eskiden "Daha fazla"nin ARDINDA olan dort bolumun ogeleri.
-    expect(h).toContain("/users");
-    expect(h).toContain("/announcements");
-    expect(h).toContain("/tanimlar");
-    expect(h).toContain("/finans?tip=gelir");
+    // (P167 §1.8) Kurulum sihirbazi alt cubukta, bolum disinda.
+    expect(h).toContain("/kurulum");
+    // Bolum ogelerinin HICBIRI yok: kullanici hangi basligi acacagini
+    // secene kadar menu yedi satirlik bir icindekiler tablosudur.
+    expect(h).not.toContain("/dues");
+    expect(h).not.toContain("/users");
+    expect(h).not.toContain("/announcements");
+    expect(h).not.toContain("/units");
+  });
+
+  it("BASLIKLAR gorunur (gizlenen bir sey YOK)", () => {
+    // Kapali olmak GIZLI olmak degildir: yedi ana baslik da ekranda,
+    // tiklanabilir dugmeler olarak duruyor.
+    ciz(Kabuk());
+    // REGEX PARCALARI ASCII: JS'in `i` bayragi Turkce "I/i" ciftini
+    // dogru esitlemez (`İ` -> `i` + birlesen nokta) ve /iletişim/i,
+    // "Iletisim bolumunu ac" etiketini BULAMAZ. Ayirt edici ASCII
+    // parcalar kullanildi.
+    for (const ad of [/venlik/i, /tesis/i, /finans/i, /leti/i, /mlar/i, /netim/i]) {
+      expect(screen.getAllByRole("button", { name: ad }).length).toBeGreaterThan(0);
+    }
   });
 
   it("'Daha fazla' / 'Daha az' DUGMESI YOK", () => {
@@ -84,68 +99,59 @@ describe("(P166 §1) TEK LISTE — 'Daha fazla' katmani yok", () => {
     expect(screen.queryAllByRole("button", { name: /daha az/i })).toEqual([]);
   });
 
-  it("MENU KAYDIRILABILIR (gizleme yerine kaydirma)", () => {
-    // Brief: "Liste uzarsa menu kaydirilabilir olsun; gizleme cozumu
-    // kullanma." jsdom duzen hesaplamaz, olculen sey KURALIN VARLIGI.
+  it("MENU KAYDIRILABILIR (uzun listede kirpilmaz)", () => {
     const { container } = ciz(Kabuk());
     const nav = container.querySelector("nav");
     expect(nav?.className).toContain("overflow-y-auto");
   });
 
-  it("ESKI KAYIT gizli menuyu GERI GETIRMEZ", () => {
-    // Surumlenmemis anahtar okunsaydi, eski `{acik:["guvenlik"]}` kaydi
-    // olan kullanici yeni surumde yine tek bolum gorurdu.
+  it("ESKI KAYIT (.v2) 'hepsi acik' halini GERI GETIRMEZ", () => {
+    // P166'nin kayitlarinda sekiz bolumun hepsi listelidir. Surumlenmemis
+    // bir anahtar okunsaydi, o kullanicilar degisikligi HIC gormezdi.
     localStorage.setItem(
-      "yonetio.menu.durum",
-      JSON.stringify({ acik: ["guvenlik"], dahaFazla: false }),
+      "yonetio.menu.durum.v2",
+      JSON.stringify({ acik: ["guvenlik", "finans", "yonetim", "tanimlar"] }),
     );
     ciz(Kabuk());
-    expect(menuHrefleri()).toContain("/users");
+    expect(menuHrefleri()).not.toContain("/users");
+    expect(menuHrefleri()).not.toContain("/dues");
   });
 });
 
 describe("(P133.1) bolum acma/kapama", () => {
-  it("BASLIGA tiklayinca KAPANIR ve tekrar acilir", () => {
-    // Katlama YETENEGI korundu: degisen sey varsayilan, kullanicinin
-    // kendi karari degil.
+  it("BASLIGA tiklayinca ACILIR ve tekrar kapanir", () => {
     ciz(Kabuk());
-    expect(menuHrefleri()).toContain("/dues");
-    bolumCevir(/finans/i);
     expect(menuHrefleri()).not.toContain("/dues");
     bolumCevir(/finans/i);
     expect(menuHrefleri()).toContain("/dues");
-  });
-
-  it("KARAR SAKLANIR — yeniden cizimde kapali kalir", () => {
-    const ilk = ciz(Kabuk());
     bolumCevir(/finans/i);
     expect(menuHrefleri()).not.toContain("/dues");
+  });
+
+  it("KARAR SAKLANIR — yeniden cizimde ACIK kalir", () => {
+    const ilk = ciz(Kabuk());
+    bolumCevir(/finans/i);
+    expect(menuHrefleri()).toContain("/dues");
     ilk.unmount();
 
     ciz(Kabuk());
-    expect(menuHrefleri(), "kayit okunmadi").not.toContain("/dues");
+    expect(menuHrefleri(), "kayit okunmadi").toContain("/dues");
   });
 
-  it("GEZINME aktif bolumu ACAR (kullanici kapatmis olsa bile)", () => {
-    // Kullanici Yonetim'i kapatti, sonra Kullanicilar sayfasina gitti;
-    // hedef sayfada menude KENDI satirini gormeli.
-    const ilk = ciz(Kabuk());
-    bolumCevir(/yönetim/i);
-    expect(menuHrefleri()).not.toContain("/users");
-    ilk.unmount();
-
+  it("GEZINME aktif bolumu ACAR (kullanici acmamis olsa bile)", () => {
+    // Kullanici hicbir bolum acmadi ama komut paletinden Kullanicilar
+    // sayfasina gitti; hedef sayfada menude KENDI satirini gormeli.
     yol.simdiki = "/users";
-    const tekrar = ciz(Kabuk());
+    ciz(Kabuk());
     expect(menuHrefleri()).toContain("/users");
-    tekrar.unmount();
   });
 
   it("BOZUK KAYIT menuyu kirmaz", () => {
-    localStorage.setItem("yonetio.menu.durum.v2", "{bu gecerli json degil");
+    localStorage.setItem("yonetio.menu.durum.v3", "{bu gecerli json degil");
     ciz(Kabuk());
-    // Varsayilana dusulur: hepsi acik.
+    // Varsayilana dusulur: hepsi kapali, bagimsiz sekme yerinde.
     expect(menuHrefleri()).toContain("/dashboard");
-    expect(menuHrefleri()).toContain("/users");
+    expect(menuHrefleri()).not.toContain("/users");
   });
 
   it("DEPOLAMA YAZILAMAZSA (gizli sekme) menu yine calisir", () => {
@@ -156,11 +162,35 @@ describe("(P133.1) bolum acma/kapama", () => {
     try {
       ciz(Kabuk());
       bolumCevir(/finans/i);
-      // Kapanma CALISIR; yalnizca hatirlanmaz.
-      expect(menuHrefleri()).not.toContain("/dues");
+      // Acilma CALISIR; yalnizca hatirlanmaz.
+      expect(menuHrefleri()).toContain("/dues");
     } finally {
       Storage.prototype.setItem = asil;
     }
+  });
+});
+
+describe("(P167 §1.1) IKON KURALI TERSINE", () => {
+  it("ANA BASLIK ikon tasir, ALT SATIR tasimaz", () => {
+    const { container } = ciz(Kabuk());
+    const finans = bolumDugmesi(/finans/i);
+    expect(finans.querySelector("svg")).toBeTruthy();
+    bolumCevir(/finans/i);
+    // Alt satir: ikonsuz ve GIRINTILI (`ps-9`).
+    const aidat = container.querySelector('a[href="/dues"]');
+    expect(aidat?.querySelector("svg")).toBeNull();
+    expect(aidat?.className).toContain("ps-9");
+  });
+
+  it("BAGIMSIZ SEKME (Ozet) ikon tasir ve basligi YOK", () => {
+    const { container } = ciz(Kabuk());
+    // NAV ICINDEN secilir: logo baglantisi da `/dashboard`a gider
+    // (`kokRotaRol`) ve `container.querySelector` ONU bulurdu.
+    const ozet = container.querySelector('nav a[href="/dashboard"]');
+    expect(ozet?.querySelector("svg")).toBeTruthy();
+    expect(ozet?.className).toContain("ps-3");
+    // Ozet icin bir acilir baslik dugmesi CIZILMEZ.
+    expect(screen.queryAllByRole("button", { name: /özet/i })).toEqual([]);
   });
 });
 
@@ -169,19 +199,19 @@ describe("(P133.1) erisilebilirlik", () => {
     ciz(Kabuk());
     const finans = bolumDugmesi(/finans/i);
     expect(finans.tagName).toBe("BUTTON");
-    // (P166 §1) ACIK baslar.
-    expect(finans).toHaveAttribute("aria-expanded", "true");
+    // (P167 §1.2) KAPALI baslar.
+    expect(finans).toHaveAttribute("aria-expanded", "false");
     fireEvent.click(finans);
-    expect(bolumDugmesi(/finans/i)).toHaveAttribute("aria-expanded", "false");
+    expect(bolumDugmesi(/finans/i)).toHaveAttribute("aria-expanded", "true");
   });
 
-  it("KULLANICI KAPATINCA ogeler ODAKLANILABILIR DEGIL (DOM'da yok)", () => {
+  it("KAPALI bolumun ogeleri ODAKLANILABILIR DEGIL (DOM'da yok)", () => {
     // "Gorunmez ama Tab ile gezilebilir" satir, klavye kullanicisi icin
     // en can sikici hatadir: odak bos yere gider.
     ciz(Kabuk());
-    expect(menuHrefleri()).toContain("/dues");
-    bolumCevir(/finans/i);
     expect(menuHrefleri()).not.toContain("/dues");
+    bolumCevir(/finans/i);
+    expect(menuHrefleri()).toContain("/dues");
   });
 
   it("ACILIR OK dekoratiftir (ekran okuyucuya okunmaz)", () => {

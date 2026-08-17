@@ -112,7 +112,22 @@ def test_yonetici_takip_ve_rapor_okur(client, world):
         assert client.get(path, headers=yonetici).status_code == 200, path
 
 
-def test_yonetici_aidat_raporu_okur_yazamaz(client, world):
+def test_yonetici_aidat_raporu_okur_TAHAKKUK_YAZAR_TAHSILAT_YAZAMAZ(client, world):
+    """Yonetici aidat defterini okur, TAHAKKUK yazar, TAHSILAT yazamaz.
+
+    ESKI ADI `..._okur_yazamaz`ti ve iki yazmayi da 403 bekliyordu. Commit
+    `3a71736f` (P167) `POST /dues/assessments`i admin + yoneticiye ACTI —
+    "aidat yazmak site yoneticisinin ASIL isidir; bunu platform adminine
+    birakmak her donem basinda musteriyi bize bagimli kilardi" — ve
+    `test_dues.py`, `rol-matrisi.txt`, `auth.md`, `openapi.yaml`
+    guncellendi ama BU DOSYA atlandi. Yani test, urunun kasitli
+    davranisina karsi kirmizi duruyordu.
+
+    AYRIM KORUNUYOR ve testin asil degeri artik burada: tahakkuk bir BORC
+    YAZMAKTIR (yanlissa duzeltilebilir), tahsilat ise PARA ALINDI
+    beyanidir ve muhasebe kaydini kapatir. Ikisi ayni yetkiye baglanirsa,
+    acilmasi istenen kapinin yaninda istenmeyen kapi da acilir.
+    """
     admin = _headers(client, world["slug_a"], world["admin_a"])
     yonetici = _headers(client, world["slug_a"], world["yonetici_a"])
 
@@ -127,11 +142,13 @@ def test_yonetici_aidat_raporu_okur_yazamaz(client, world):
     r = client.get(f"/units/{u['id']}/dues", headers=yonetici)
     assert r.status_code == 200 and r.json()["toplam_tahakkuk_kurus"] == 50000
 
-    # yazma admin-only
+    # TAHAKKUK: yonetici YAZAR (3a71736f).
     assert client.post(
         "/dues/assessments", headers=yonetici,
         json={"unit_id": u["id"], "donem": "2026-08", "tutar_kurus": 1000},
-    ).status_code == 403
+    ).status_code == 201
+    # TAHSILAT: hala admin-only. Bu satir kasitli olarak KALDI — yetkiyi
+    # genisleten commit'in bilincli sinirini kilitleyen tek olcum bu.
     assert client.post(
         "/dues/payments", headers=yonetici,
         json={"unit_id": u["id"], "tutar_kurus": 1000, "yontem": "elden"},
