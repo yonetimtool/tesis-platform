@@ -1635,5 +1635,20 @@
   "devriyePlanYokAlt": "План обхода определяет, какие точки и когда сканируются.",
   "personelYokAlt": "Здесь создаются учётные записи охраны и обслуживающего персонала.",
   "sakinYokAlt": "Добавленные жители привязываются к квартирам и могут входить в приложение.",
-  "ortakDahaFazlaSecenek": "Другие параметры"
+  "ortakDahaFazlaSecenek": "Другие параметры",
+  "modulDokumanlar": "Документы объекта",
+  "dokumanBaslik": "Документы объекта",
+  "dokumanAra": "Поиск по названию документа",
+  "dokumanYokSakin": "Пока не опубликовано ни одного документа.",
+  "dokumanAramaSonucYok": "Нет документов, соответствующих запросу.",
+  "dokumanAcilamadi": "Не удалось открыть документ.",
+  "dokumanBoyutKb": "{kb} КБ",
+  "@dokumanBoyutKb": {
+    "description": "Dosya boyutu (kilobayt) — sayi istemcide yuvarlanir.",
+    "placeholders": {
+      "kb": {
+        "type": "int"
+      }
+    }
+  }
 }

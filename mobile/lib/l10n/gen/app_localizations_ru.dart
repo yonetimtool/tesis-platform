@@ -5355,4 +5355,27 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get ortakDahaFazlaSecenek => 'Другие параметры';
+
+  @override
+  String get modulDokumanlar => 'Документы объекта';
+
+  @override
+  String get dokumanBaslik => 'Документы объекта';
+
+  @override
+  String get dokumanAra => 'Поиск по названию документа';
+
+  @override
+  String get dokumanYokSakin => 'Пока не опубликовано ни одного документа.';
+
+  @override
+  String get dokumanAramaSonucYok => 'Нет документов, соответствующих запросу.';
+
+  @override
+  String get dokumanAcilamadi => 'Не удалось открыть документ.';
+
+  @override
+  String dokumanBoyutKb(int kb) {
+    return '$kb КБ';
+  }
 }

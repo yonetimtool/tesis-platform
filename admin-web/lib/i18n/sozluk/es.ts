@@ -1944,4 +1944,15 @@ export const es: Sozluk = {
   kvkkMetinYeniSurum: "Publicar una versión nueva",
   gurultuAlt: "Quejas de ruido por encima del umbral y estado del aviso.",
   ortakYok: "—",
+  // ---- (P167 ek) Dokuman gorunurlugu: sakin gorur mu
+  dokumanSakinGorur: "Acceso del residente",
+  dokumanAcikEtiket: "Compartido",
+  dokumanKapaliEtiket: "Privado",
+  dokumanAc: "Compartir con residentes",
+  dokumanKapat: "Hacer privado",
+  dokumanSakineAc: "Permitir que los residentes vean este documento",
+  dokumanAcOnayBaslik: "¿Compartir con los residentes?",
+  dokumanAcOnay: "\"{ad}\" será visible y descargable en la app de cada residente.",
+  dokumanAcildi: "El documento se compartió con los residentes.",
+  dokumanKapatildi: "El documento vuelve a ser privado.",
 };

@@ -1133,6 +1133,39 @@ actor_user_id [FK'siz], actor_rol, action, resource_type, resource_id, meta json
   (`call_initiate`)** (C1a — en kritik iz); kargo fotoğrafı presign-GET
   (`kargo_photo_view`, yalnız tekil detay). Hassas-olmayan LİSTELEME loglanmaz.
 
+### 7.1b Doküman görünürlüğü — sakin erişimi (P167 ek)
+
+`tenant_dokuman` **tek bir arşivdir** ve içinde ne olduğu sözleşmede belirli
+değildir: yönetim planı ve bütçe de olabilir, personel sözleşmesi, hukuki
+yazışma veya bir sakinin borç dosyası da.
+
+Bu yüzden sakin erişimi bir **bayrakla** verilir (`sakine_acik`,
+**varsayılan `false`**), uca rol eklenerek değil:
+
+| Uç | Rol | Kapsam |
+|---|---|---|
+| `GET /dokumanlar` | admin, yönetici | **TÜM** arşiv |
+| `GET /dokumanlar/{id}/indir` | admin, yönetici | TÜM arşiv |
+| `PATCH /dokumanlar/{id}` | admin, yönetici | Yalnız görünürlük; **denetime yazılır** |
+| `GET /me/dokumanlar` | **resident** | Yalnız `sakine_acik AND silindi_at IS NULL` |
+| `GET /me/dokumanlar/{id}/indir` | **resident** | Aynı süzgeç; kapalı/silinmiş → **404** |
+
+**Neden ayrı uç, "yönetim ucuna resident ekleme" değil:** `/dokumanlar` tüm
+arşivi döner. Ona `resident` rolü eklemek, görünürlük süzgecini o ucun
+*içindeki* bir rol dalına bağımlı kılardı — ve o dalın bir gün yanlış
+yazılması **bütün arşivi** sakine açardı. Ayrı uç, kuralın tek bir yerde ve
+tek bir cümleyle yaşamasını sağlar.
+
+**404, 403 değil:** 403 *"bu belge var ama sana kapalı"* demek olurdu ve
+arşivde neyin bulunduğunu doğrulardı. Sakin için o kayıt **yoktur**.
+
+**`yukleyen_ad` sakine null döner:** sakinin ihtiyacı "hangi belge"; "kim
+yükledi" değil. Personel adını her sakine dağıtmak amaç sınırlılığıyla
+bağdaşmazdı.
+
+**Saha personeli (güvenlik, görevli) `/me/dokumanlar`ı kullanamaz:** uç
+*sakin* için açıldı; onlar tesisin sakini değil çalışanıdır.
+
 ### 7.2 Saklama süreleri (retention) — KVKK saklama sınırlama ilkesi (m.4/2-d)
 
 Kişisel veri, işleme amacı geçtikten sonra tutulmaz. Varsayılanlar

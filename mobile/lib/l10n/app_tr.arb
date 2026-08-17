@@ -2345,5 +2345,20 @@
   "devriyePlanYokAlt": "Devriye planı, hangi noktaların hangi saatlerde okutulacağını belirler.",
   "personelYokAlt": "Güvenlik ve tesis görevlisi hesaplarını buradan açarsınız.",
   "sakinYokAlt": "Sakinleri ekleyince dairelere bağlanır ve uygulamaya giriş yapabilirler.",
-  "ortakDahaFazlaSecenek": "Daha fazla seçenek"
+  "ortakDahaFazlaSecenek": "Daha fazla seçenek",
+  "modulDokumanlar": "Site Dokümanları",
+  "dokumanBaslik": "Site Dokümanları",
+  "dokumanAra": "Doküman adında ara",
+  "dokumanYokSakin": "Henüz paylaşılmış doküman yok.",
+  "dokumanAramaSonucYok": "Aramanızla eşleşen doküman yok.",
+  "dokumanAcilamadi": "Doküman açılamadı.",
+  "dokumanBoyutKb": "{kb} KB",
+  "@dokumanBoyutKb": {
+    "description": "Dosya boyutu (kilobayt) — sayi istemcide yuvarlanir.",
+    "placeholders": {
+      "kb": {
+        "type": "int"
+      }
+    }
+  }
 }

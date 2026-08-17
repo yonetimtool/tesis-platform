@@ -5358,4 +5358,27 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get ortakDahaFazlaSecenek => 'خيارات إضافية';
+
+  @override
+  String get modulDokumanlar => 'مستندات المجمع';
+
+  @override
+  String get dokumanBaslik => 'مستندات المجمع';
+
+  @override
+  String get dokumanAra => 'ابحث في أسماء المستندات';
+
+  @override
+  String get dokumanYokSakin => 'لم تتم مشاركة أي مستندات بعد.';
+
+  @override
+  String get dokumanAramaSonucYok => 'لا يوجد مستند يطابق بحثك.';
+
+  @override
+  String get dokumanAcilamadi => 'تعذّر فتح المستند.';
+
+  @override
+  String dokumanBoyutKb(int kb) {
+    return '$kb كيلوبايت';
+  }
 }

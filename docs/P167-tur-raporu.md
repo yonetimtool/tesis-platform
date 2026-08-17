@@ -1368,3 +1368,117 @@ listesine eklendi (kardeşi "PDF" zaten kısaltma olduğu için geçiyordu).
 14. **Saha rolleriyle girin** (güvenlik / görevli / sakin). Dört satırın
     hiçbiri menüde yok ve adres çubuğuna yazsanız da açılmıyor.
 
+---
+
+# EK — Sakinler dokümanları mobilde okuyabilsin
+
+Bu, Aşama 6'nın sonunda **açık soru** olarak bırakılmış ve karar kullanıcıya
+bırakılmış tek maddeydi (`docs/web-mobil-esitlik.md`). Karar geldi: açılsın.
+
+## Ama "ucu sakine aç" DEĞİL — çünkü arşivde ne olduğu belli değil
+
+`tenant_dokuman` **tek bir arşivdir** ve içeriği sözleşmede tanımlı değil:
+yönetim planı ve bütçe de olabilir, personel sözleşmesi, hukuki yazışma,
+ihale teklifi veya bir sakinin borç dosyası da.
+
+`GET /dokumanlar`ı olduğu gibi sakine açmak, bu tabloya **bugüne kadar
+"yalnızca yönetim görür" varsayımıyla yüklenmiş her dosyayı geriye dönük
+yayınlamak** olurdu. Sessiz bir sızıntı: yönetici bir gün panelini açıp
+yıllar önce yüklediği bir sözleşmenin sakin uygulamasında durduğunu görürdü.
+
+Bu yüzden **görünürlük bayrağı** (`sakine_acik`) eklendi — **göç 0061'in asıl
+kararı varsayılanın `false` olmasıdır.** Tersi tek satırlık bir tercih gibi
+görünür ama göç çalıştığı anda bütün arşivi yayına çıkarır ve geri almak, o
+arada indirilmiş dosyaları geri getirmez. **Güvenli yön tek yönlüdür:
+kapalıdan açmaya.**
+
+## Ayrı uç, "yönetim ucuna rol ekleme" değil
+
+| Uç | Rol | Kapsam |
+|---|---|---|
+| `GET /dokumanlar` · `/{id}/indir` | admin, yönetici | **TÜM** arşiv (değişmedi) |
+| `PATCH /dokumanlar/{id}` | admin, yönetici | Yalnız görünürlük; denetime yazılır |
+| `GET /me/dokumanlar` | **resident** | Yalnız `sakine_acik AND silindi_at IS NULL` |
+| `GET /me/dokumanlar/{id}/indir` | **resident** | Aynı süzgeç; kapalı/silinmiş → **404** |
+
+`/dokumanlar` tüm arşivi döner. Ona `resident` rolü eklemek, görünürlük
+süzgecini o ucun **içindeki** bir rol dalına bağımlı kılardı — ve o dalın bir
+gün yanlış yazılması **bütün arşivi** sakine açardı. Ayrı uç, kuralın tek bir
+yerde ve **tek bir cümleyle** yaşamasını sağlar; iki resident ucu da aynı
+`_sakine_gorunur()` ifadesinden beslenir (ayrı yazılsalardı biri
+`silindi_at`i unutur ve silinmiş bir dosya indirilebilir kalırdı — testi var).
+
+**404, 403 değil:** 403 *"bu belge var ama sana kapalı"* demek olurdu ve
+arşivde neyin bulunduğunu doğrulardı. Sakin için o kayıt **yoktur**.
+
+**`yukleyen_ad` sakine `null` döner:** sakinin ihtiyacı "hangi belge"; "kim
+yükledi" değil. Personel adını her sakine dağıtmak amaç sınırlılığıyla
+bağdaşmazdı.
+
+## Mobil: süzgeç istemcide YOK ve model bayrağı taşımıyor
+
+`SiteDokumani` modelinde `sakineAcik` alanı **bilerek yok**. Sakin ucundan
+gelen her kayıt zaten açıktır; alanı taşımak, istemcide ikinci bir "açık mı"
+süzgeci yazma ihtimali doğururdu — ve o süzgeç bir gün yanlış yazılırsa
+kapalı bir belge ekranda görünürdü.
+
+Mobil istemci **yönetim ucuna hiç dokunmaz**; test çağrılan uçları kaydedip
+bunu ölçüyor.
+
+**Dosya uygulamada açılmaz, sisteme devredilir:** PDF/Word/Excel
+görüntüleyici gömülmedi — her biçim için okuyucu taşımak uygulamayı büyütür
+ve biçimlerin çoğunda yine eksik kalırdı. Bağlantı sistemin varsayılan
+uygulamasına verilir.
+
+Karo ana ekranda **site kurallarının yanında**: ikisi de *başvuru
+içeriğidir* — duyuru gibi anlık değil, gerektiğinde bakılan şey. Duyuruların
+arasına koymak, yönetim planını bir gün görünüp ertesi gün akışta kaybolan
+bir şey gibi gösterirdi.
+
+## Web: yönetici bayrağı görür ve çevirir
+
+Tabloda rozet (**Açık / Kapalı**) + satırda "Sakine aç / Sakine kapat";
+yükleme modalinde de işaretlenebilir ve **kapalı başlar**.
+
+**Onay asimetrisi bilinçli:** *açarken* onay sorulur (yayın kararıdır; geri
+almak o arada indirilmiş dosyayı geri getirmez), *kapatırken* sorulmaz
+(geri dönülebilir bir daraltmadır — her daraltmada onay sormak güvenli yönü
+zahmetli kılar ve kullanıcıyı açık bırakmaya iterdi). Testi var.
+
+## Testler
+
+- `backend/tests/test_dokuman_karar.py` — 8 yeni test: varsayılan kapalı,
+  sakin yalnız açılanları görür, kapalıyı indiremez (404) / açığı indirebilir
+  (karşılık testi), silinmiş+açık yine görünmez, `yukleyen_ad` sakine null,
+  sakin yönetim ucuna ulaşamaz, saha personeli sakin ucunu kullanamaz.
+- `admin-web/tests/dokuman-gorunurluk.dom.test.ts` — 5 test (rozet, onaylı
+  açma, onaysız istek gitmez, kapatma onaysız, yükleme kutusu kapalı başlar).
+- `mobile/test/dokuman_ekrani_test.dart` — 8 test (yalnız sakin ucu çağrılır,
+  boş listede arama kutusu yok, anlık süzme ikinci ağ çağrısı yapmaz, dokunma
+  indirme ucunu çağırır, boyut yoksa "0 KB" uydurulmaz, menü rolleri, model
+  bayrak taşımaz).
+- **Göç 0061** — `sakine_acik` + kısmi indeks.
+- **Backend tam takım: `1783 geçti, 0 düştü`** (33 dk).
+
+### Bir kez görülen ve tekrar etmeyen hata — dürüstçe
+
+İlk tam koşum `test_kvkk_riza::test_onay_KISI_BAZLI`da **2 hata** verdi.
+Sayı yeşile yakın diye geçiştirilmedi; araştırıldı:
+
+- İzole koşumda **19/19 geçti** → teste özgü bir kusur değil.
+- Kök neden API log'unda: `asyncpg ConnectionDoesNotExistError:
+  connection was closed in the middle of operation`, **commit anında**.
+- **DB tarafında hiçbir olay yok** — yeniden başlatma yok (`restart=0`),
+  `FATAL`/`terminating`/`too many connections` kaydı yok,
+  `max_connections=100` ve kullanım 11.
+- `pool_pre_ping` **zaten açık**; ama o bağlantıyı *teslim alırken*
+  yoklar. Buradaki bağlantı *işlem ortasında* öldü — pre-ping'in
+  yakalayabileceği bir sınıf değil, yani "ayarı açalım" diye
+  kapatılabilecek bir açık değil.
+- **İkinci tam koşum temiz geçti.**
+
+Makine o sırada 30 dakikalık pytest + docker derlemeleri koşturuyordu.
+Bulgu: ortam kaynaklı geçici kopma. Kod tarafında bir değişiklik
+yapılmadı — çünkü yapılacak doğru değişiklik görünmüyor ve olmayan bir
+soruna kod yazmak, sonraki okuyucuyu yanlış yöne sokardı.
+

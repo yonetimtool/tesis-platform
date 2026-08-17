@@ -1944,4 +1944,15 @@ export const ru: Sozluk = {
   kvkkMetinYeniSurum: "Опубликовать новую версию",
   gurultuAlt: "Жалобы на шум сверх порога и статус объявления.",
   ortakYok: "—",
+  // ---- (P167 ek) Dokuman gorunurlugu: sakin gorur mu
+  dokumanSakinGorur: "Виден жильцу",
+  dokumanAcikEtiket: "Открыт",
+  dokumanKapaliEtiket: "Закрыт",
+  dokumanAc: "Открыть жильцам",
+  dokumanKapat: "Закрыть для жильцов",
+  dokumanSakineAc: "Разрешить жильцам видеть этот документ",
+  dokumanAcOnayBaslik: "Открыть жильцам?",
+  dokumanAcOnay: "«{ad}» станет виден и доступен для скачивания в приложении каждого жильца.",
+  dokumanAcildi: "Документ открыт жильцам.",
+  dokumanKapatildi: "Документ снова закрыт для жильцов.",
 };

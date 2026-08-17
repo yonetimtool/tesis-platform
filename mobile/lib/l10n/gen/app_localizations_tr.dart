@@ -5096,4 +5096,27 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get ortakDahaFazlaSecenek => 'Daha fazla seçenek';
+
+  @override
+  String get modulDokumanlar => 'Site Dokümanları';
+
+  @override
+  String get dokumanBaslik => 'Site Dokümanları';
+
+  @override
+  String get dokumanAra => 'Doküman adında ara';
+
+  @override
+  String get dokumanYokSakin => 'Henüz paylaşılmış doküman yok.';
+
+  @override
+  String get dokumanAramaSonucYok => 'Aramanızla eşleşen doküman yok.';
+
+  @override
+  String get dokumanAcilamadi => 'Doküman açılamadı.';
+
+  @override
+  String dokumanBoyutKb(int kb) {
+    return '$kb KB';
+  }
 }

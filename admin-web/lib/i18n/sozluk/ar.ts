@@ -1944,4 +1944,15 @@ export const ar: Sozluk = {
   kvkkMetinYeniSurum: "نشر إصدار جديد",
   gurultuAlt: "شكاوى الضوضاء التي تجاوزت الحد وحالة الإعلان.",
   ortakYok: "—",
+  // ---- (P167 ek) Dokuman gorunurlugu: sakin gorur mu
+  dokumanSakinGorur: "وصول الساكن",
+  dokumanAcikEtiket: "مشترك",
+  dokumanKapaliEtiket: "خاص",
+  dokumanAc: "مشاركة مع السكان",
+  dokumanKapat: "جعله خاصًا",
+  dokumanSakineAc: "السماح للسكان برؤية هذا المستند",
+  dokumanAcOnayBaslik: "هل تتم المشاركة مع السكان؟",
+  dokumanAcOnay: "سيكون \"{ad}\" مرئيًا وقابلًا للتنزيل في تطبيق كل ساكن.",
+  dokumanAcildi: "تمت مشاركة المستند مع السكان.",
+  dokumanKapatildi: "أصبح المستند خاصًا مرة أخرى.",
 };

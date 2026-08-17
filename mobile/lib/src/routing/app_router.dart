@@ -63,6 +63,7 @@ import '../features/vehicle_pass/presentation/parking_screen.dart';
 import '../features/vehicle_pass/presentation/vehicle_pass_screen.dart';
 import '../features/violations/presentation/violations_screen.dart';
 import '../features/visitors/presentation/visitors_screen.dart';
+import '../features/dokumanlar/presentation/dokuman_screen.dart';
 import 'splash_screen.dart';
 
 class AppRoutes {
@@ -111,6 +112,8 @@ class AppRoutes {
   static const rezervasyon = '/rezervasyon';
   static const etkinlik = '/etkinlik';
   static const siteKurallari = '/site-kurallari';
+  /// (P167 ek) Site dokumanlari — sakin YALNIZ acilanlari gorur.
+  static const dokumanlar = '/dokumanlar';
   static const disHizmet = '/dis-hizmetler';
   static const integrations = '/integrations';
   static const binaDuzenleme = '/bina-duzenleme';
@@ -411,6 +414,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.siteKurallari,
         builder: (context, state) => const SiteKuraliScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.dokumanlar,
+        builder: (context, state) => const DokumanScreen(),
       ),
       GoRoute(
         path: AppRoutes.disHizmet,

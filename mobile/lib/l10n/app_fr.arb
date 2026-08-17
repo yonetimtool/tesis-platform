@@ -1635,5 +1635,20 @@
   "devriyePlanYokAlt": "Un plan de ronde définit quels points sont scannés et quand.",
   "personelYokAlt": "Créez ici les comptes des agents de sécurité et d'entretien.",
   "sakinYokAlt": "Les résidents ajoutés sont liés aux logements et peuvent se connecter.",
-  "ortakDahaFazlaSecenek": "Plus d'options"
+  "ortakDahaFazlaSecenek": "Plus d'options",
+  "modulDokumanlar": "Documents du site",
+  "dokumanBaslik": "Documents du site",
+  "dokumanAra": "Rechercher dans les noms de documents",
+  "dokumanYokSakin": "Aucun document n'a encore été partagé.",
+  "dokumanAramaSonucYok": "Aucun document ne correspond à votre recherche.",
+  "dokumanAcilamadi": "Le document n'a pas pu être ouvert.",
+  "dokumanBoyutKb": "{kb} Ko",
+  "@dokumanBoyutKb": {
+    "description": "Dosya boyutu (kilobayt) — sayi istemcide yuvarlanir.",
+    "placeholders": {
+      "kb": {
+        "type": "int"
+      }
+    }
+  }
 }

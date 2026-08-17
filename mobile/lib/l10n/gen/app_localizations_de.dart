@@ -5267,4 +5267,27 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get ortakDahaFazlaSecenek => 'Weitere Optionen';
+
+  @override
+  String get modulDokumanlar => 'Objektdokumente';
+
+  @override
+  String get dokumanBaslik => 'Objektdokumente';
+
+  @override
+  String get dokumanAra => 'In Dokumentnamen suchen';
+
+  @override
+  String get dokumanYokSakin => 'Es wurden noch keine Dokumente freigegeben.';
+
+  @override
+  String get dokumanAramaSonucYok => 'Kein Dokument passt zu Ihrer Suche.';
+
+  @override
+  String get dokumanAcilamadi => 'Das Dokument konnte nicht geoeffnet werden.';
+
+  @override
+  String dokumanBoyutKb(int kb) {
+    return '$kb KB';
+  }
 }

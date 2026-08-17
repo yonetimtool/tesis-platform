@@ -3179,6 +3179,13 @@ class TenantDokuman(Base):
     #: yapsaydik MinIO objesi sonsuza kadar depoda kalirdi — ve hicbir
     #: uygulama yolundan erisilemedigi icin kimse fark etmezdi.
     silindi_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    #: (P167 ek) Sakin bu dokumani gorebilir mi? VARSAYILAN KAPALI.
+    #: Arsivde ne oldugu sozlesmede belirli degil (yonetim plani da olabilir,
+    #: personel sozlesmesi de); acik varsayilan, gecmiste "yalnizca yonetim
+    #: gorur" varsayimiyla yuklenmis her dosyayi yayina cikarirdi.
+    sakine_acik: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
 
 
 # --------------------------------------------------------------------------- #

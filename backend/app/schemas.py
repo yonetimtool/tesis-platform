@@ -5465,6 +5465,19 @@ class DokumanCreate(BaseModel):
     #: zaman asimina ve mobilde bellek baskisina yol acar.
     boyut_bayt: int | None = Field(None, ge=1, le=26_214_400)
     aciklama: str | None = Field(None, max_length=1000)
+    #: (P167 ek) VARSAYILAN KAPALI — gerekce goc 0061'de.
+    sakine_acik: bool = False
+
+
+class DokumanUpdate(BaseModel):
+    """(P167 ek) Yalnizca GORUNURLUK degistirilebilir.
+
+    Ad/aciklama/dosya duzenleme BILEREK YOK: dosyanin kendisi degismez
+    (yeni surum yeni kayittir) ve adi degistirmek, sakinin indirdigi
+    dosyayla listede gordugu adin ayrismasina yol acardi.
+    """
+
+    sakine_acik: bool
 
 
 class DokumanOut(BaseModel):
@@ -5479,6 +5492,7 @@ class DokumanOut(BaseModel):
     yukleyen_user_id: uuid.UUID | None = None
     yukleyen_ad: str | None = None
     created_at: datetime
+    sakine_acik: bool = False
 
 
 class DokumanListResponse(BaseModel):

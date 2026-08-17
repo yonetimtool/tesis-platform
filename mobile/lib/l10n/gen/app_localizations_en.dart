@@ -5284,4 +5284,27 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ortakDahaFazlaSecenek => 'More options';
+
+  @override
+  String get modulDokumanlar => 'Site Documents';
+
+  @override
+  String get dokumanBaslik => 'Site Documents';
+
+  @override
+  String get dokumanAra => 'Search document names';
+
+  @override
+  String get dokumanYokSakin => 'No documents have been shared yet.';
+
+  @override
+  String get dokumanAramaSonucYok => 'No document matches your search.';
+
+  @override
+  String get dokumanAcilamadi => 'The document could not be opened.';
+
+  @override
+  String dokumanBoyutKb(int kb) {
+    return '$kb KB';
+  }
 }

@@ -222,10 +222,25 @@ iki fark — takvim ekranı ve üç finansal kart alanı — Aşama 1'in bırakt
 |---|---|---|---|
 | Karar Defteri | var | yok | **Bilinçli fark.** Karar yazmak uzun metin girişidir ve masa başı işidir. Sakinin kararları *okuma* ihtiyacı ayrı bir istektir; brief'te yok ve uç bugün admin+yönetici'ye kapalı. |
 | Doküman Yönetimi (yükleme) | var | yok | Sürükle-bırak, 25 MB'lik dosya, çoklu seçim — masa başı işi. |
-| Doküman **okuma** | var | **açık soru** | Sakinin yönetim planına telefondan bakmak istemesi makul; ama uç admin+yönetici'ye kapalı ve açmak bir **yetki kararıdır**. Sessizce alınmadı, burada kayda geçiriliyor. |
+| Doküman **okuma** | var | **var (P167 ek)** | Karar verildi ve açıldı — ama arşivin tamamı değil: `sakine_acik` bayrağı (varsayılan **kapalı**) ve ayrı `/me/dokumanlar` ucu. Ayrıntı aşağıda. |
 | KVKK metni yayınlama | var | yok | Hukuki metin; sürüm mantığı ve geri alınamazlık masaüstünde kalmalı. |
 | Gürültü uyarıları | var | **uç hazır, ekran yok** | Anons "yapıldı" işaretlemesi saha işi olabilir; mobil isterse aynı uç kullanılır. |
 | Merkezî karar numarası (`KRR-…`) | — | **otomatik eşit** | Sunucuda; hangi istemci yazarsa yazsın aynı seriden numara alır. |
 | Doküman yumuşak silme + gecelik süpürme | — | **otomatik eşit** | Sunucuda; mobil bir gün silme yaparsa aynı kurala tabi olur. |
 | Doküman indirme ucu | var | **uç hazır** | `GET /dokumanlar/{id}/indir` istemciden bağımsız. |
+
+---
+
+## P167 ek — Sakin doküman erişimi
+
+Kullanıcı kararı: *"mobilde sakinler dokümanları okuyabilsin."*
+
+| Madde | Web | Mobil | Karar ve gerekçe |
+|---|---|---|---|
+| Sakin doküman listesi | — | **var** | Ana ekranda "Site Dokümanları" karosu (site kurallarının yanında: ikisi de *başvuru içeriğidir*, duyuru gibi anlık değil). |
+| Görünürlük bayrağı (`sakine_acik`) | **var** (yönetici işaretler) | — | Bayrağı sakin göremez ve değiştiremez. Web'de rozet + "Sakine aç / kapat". |
+| Süzgeç nerede | — | **sunucuda** | Mobil model `sakineAcik` alanı **taşımaz**: taşısaydı istemcide ikinci bir süzgeç yazma ihtimali doğar ve o süzgeç bir gün yanlış yazılırsa kapalı bir belge sakinin ekranında görünürdü. |
+| Yönetim ucu (`/dokumanlar`) | var | **yok ve olmamalı** | O uç TÜM arşivi döner. Mobil sakin uygulamasının ona hiç dokunmaması, "yanlışlıkla yönetim ucunu çağırdım" sınıfını kapatır; mobil testi bunu ölçüyor. |
+| Dosyayı açma | tarayıcı | **sistem uygulaması** | PDF/Word görüntüleyici gömülmedi: her biçim için okuyucu taşımak uygulamayı büyütür ve çoğu biçimde yine eksik kalırdı. |
+| Saha personeli (güvenlik/görevli) | — | **hayır** | Uç *sakin* için açıldı; onlar tesisin sakini değil çalışanıdır. Menüde de yok — göstermek, tıklanınca 403 veren bir karo olurdu. |
 

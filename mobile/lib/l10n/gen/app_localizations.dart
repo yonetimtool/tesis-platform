@@ -9010,6 +9010,48 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Daha fazla seçenek'**
   String get ortakDahaFazlaSecenek;
+
+  /// No description provided for @modulDokumanlar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Site Dokümanları'**
+  String get modulDokumanlar;
+
+  /// No description provided for @dokumanBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Site Dokümanları'**
+  String get dokumanBaslik;
+
+  /// No description provided for @dokumanAra.
+  ///
+  /// In tr, this message translates to:
+  /// **'Doküman adında ara'**
+  String get dokumanAra;
+
+  /// No description provided for @dokumanYokSakin.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz paylaşılmış doküman yok.'**
+  String get dokumanYokSakin;
+
+  /// No description provided for @dokumanAramaSonucYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aramanızla eşleşen doküman yok.'**
+  String get dokumanAramaSonucYok;
+
+  /// No description provided for @dokumanAcilamadi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Doküman açılamadı.'**
+  String get dokumanAcilamadi;
+
+  /// Dosya boyutu (kilobayt) — sayi istemcide yuvarlanir.
+  ///
+  /// In tr, this message translates to:
+  /// **'{kb} KB'**
+  String dokumanBoyutKb(int kb);
 }
 
 class _AppLocalizationsDelegate

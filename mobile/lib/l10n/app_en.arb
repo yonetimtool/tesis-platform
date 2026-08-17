@@ -1635,5 +1635,20 @@
   "devriyePlanYokAlt": "A patrol plan defines which checkpoints are scanned and when.",
   "personelYokAlt": "Create security and facility officer accounts here.",
   "sakinYokAlt": "Added residents are linked to units and can sign in to the app.",
-  "ortakDahaFazlaSecenek": "More options"
+  "ortakDahaFazlaSecenek": "More options",
+  "modulDokumanlar": "Site Documents",
+  "dokumanBaslik": "Site Documents",
+  "dokumanAra": "Search document names",
+  "dokumanYokSakin": "No documents have been shared yet.",
+  "dokumanAramaSonucYok": "No document matches your search.",
+  "dokumanAcilamadi": "The document could not be opened.",
+  "dokumanBoyutKb": "{kb} KB",
+  "@dokumanBoyutKb": {
+    "description": "Dosya boyutu (kilobayt) — sayi istemcide yuvarlanir.",
+    "placeholders": {
+      "kb": {
+        "type": "int"
+      }
+    }
+  }
 }

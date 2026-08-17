@@ -36,6 +36,7 @@ from ..schemas import (
     DokumanCreate,
     DokumanListResponse,
     DokumanOut,
+    DokumanUpdate,
     KararDefteriCreate,
     KararDefteriListResponse,
     KararDefteriOut,
@@ -335,6 +336,115 @@ async def dokuman_sil(
     )
     obj.silindi_at = datetime.now(timezone.utc)
     await db.flush()
+
+
+@router.patch("/dokumanlar/{dokuman_id}", response_model=DokumanOut)
+async def dokuman_gorunurluk(
+    dokuman_id: uuid.UUID,
+    body: DokumanUpdate,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_YONETIM),
+) -> DokumanOut:
+    """(P167 ek) Dokumani sakine AC / KAPAT.
+
+    Tek degistirilebilir alan GORUNURLUKTUR. Ad/aciklama/dosya duzenleme
+    bilerek yok: dosyanin kendisi degismez (yeni surum yeni kayittir) ve
+    adi degistirmek, sakinin indirdigi dosyayla listede gordugu adin
+    ayrismasina yol acardi.
+
+    DENETIME YAZILIR: bir dokumani sakine acmak bir YAYIN kararidir;
+    "bunu kim, ne zaman yayina cikardi" sorusunun cevabi olmaliydi.
+    """
+    obj = await get_or_404(db, TenantDokuman, dokuman_id)
+    if obj.silindi_at is not None:
+        raise APIError(404, "not_found", "dokuman_bulunamadi")
+    obj.sakine_acik = body.sakine_acik
+    await db.flush()
+    await audit_user(
+        db, user, Action.DOKUMAN_EKLE, resource_type="tenant_dokuman",
+        resource_id=obj.id,
+        meta={"ad": obj.ad, "sakine_acik": obj.sakine_acik},
+    )
+    return DokumanOut.model_validate(obj)
+
+
+# =========================== SAKIN GORUNUMU ================================ #
+# (P167 ek) AYRI UCLAR, "yonetim ucuna rol ekleme" DEGIL.
+#
+# `/dokumanlar` ve `/dokumanlar/{id}/indir` yonetim uclaridir ve TUM arsivi
+# doner. Onlara `resident` rolu eklemek, gorunurluk suzgecini o uclarin
+# ICINDE bir `if role == ...` dalina bagimli kilardi — ve o dalin bir gun
+# yanlis yazilmasi BUTUN ARSIVI sakine acardi.
+#
+# Ayri uc, kuralin TEK bir yerde ve tek bir cumleyle yasamasini saglar:
+# "sakine acik ve silinmemis". Yonetim uclari hic degismedi.
+_SAKIN = require_role("resident")
+
+#: Sakinin gorebilecegi dokumanlarin TEK kosulu. Iki uc da (liste ve
+#: indirme) BU ifadeden besleniyor: iki ayri yerde yazilsaydi, biri
+#: `silindi_at`i unuttugunda silinmis bir dosya indirilebilir kalirdi.
+def _sakine_gorunur():
+    return (
+        TenantDokuman.sakine_acik.is_(True),
+        TenantDokuman.silindi_at.is_(None),
+    )
+
+
+@router.get("/me/dokumanlar", response_model=DokumanListResponse)
+async def sakin_dokumanlari(
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_tenant_db),
+    _: AppUser = Depends(_SAKIN),
+) -> DokumanListResponse:
+    """Sakine acilmis dokumanlar — yeniden eskiye."""
+    kosul = _sakine_gorunur()
+    total = (
+        await db.execute(
+            select(func.count()).select_from(TenantDokuman).where(*kosul)
+        )
+    ).scalar_one()
+    kayitlar = (
+        (await db.execute(
+            select(TenantDokuman).where(*kosul)
+            .order_by(TenantDokuman.created_at.desc(), TenantDokuman.id.desc())
+            .limit(limit).offset(offset)
+        )).scalars().all()
+    )
+    # YUKLEYEN ADI SAKINE DONMEZ: sakinin ihtiyaci "hangi belge", "kim
+    # yukledi" degil. Personel adini her sakine dagitmak, amac
+    # sinirliligiyla bagdasmazdi.
+    return DokumanListResponse(
+        meta={"limit": limit, "offset": offset, "total": total},
+        items=[
+            DokumanOut.model_validate(k).model_copy(update={"yukleyen_ad": None})
+            for k in kayitlar
+        ],
+    )
+
+
+@router.get("/me/dokumanlar/{dokuman_id}/indir")
+async def sakin_dokuman_indir(
+    dokuman_id: uuid.UUID,
+    db: AsyncSession = Depends(get_tenant_db),
+    _: AppUser = Depends(_SAKIN),
+) -> dict:
+    """Sakine acik dokumanin kisa omurlu indirme baglantisi.
+
+    SAKINE KAPALI DOKUMAN **404** (403 degil): 403 "bu belge var ama sana
+    kapali" demek olurdu ve arsivde neyin BULUNDUGUNU dogrulardi. Sakin
+    icin o kayit YOKTUR.
+    """
+    obj = (
+        await db.execute(
+            select(TenantDokuman).where(
+                TenantDokuman.id == dokuman_id, *_sakine_gorunur()
+            )
+        )
+    ).scalar_one_or_none()
+    if obj is None:
+        raise APIError(404, "not_found", "dokuman_bulunamadi")
+    return {"url": presign_get(obj.obje_anahtari), "dosya_adi": obj.ad}
 
 
 @router.get("/dokumanlar/{dokuman_id}/indir")

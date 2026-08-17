@@ -222,6 +222,132 @@ def test_dokuman_raporu_EXCEL_uretir(client, world):
 
 
 # --------------------------------------------------------------------------- #
+# SAKIN GORUNURLUGU (P167 ek)
+# --------------------------------------------------------------------------- #
+def test_YENI_dokuman_sakine_KAPALI_baslar(client, world):
+    """Bu testin kilitledigi sey bir VARSAYILAN degil, bir KARAR.
+
+    Arsivde ne oldugu sozlesmede belirli degil: yonetim plani da olabilir,
+    personel sozlesmesi de. Acik varsayilan, gecmiste "yalnizca yonetim
+    gorur" varsayimiyla yuklenmis her dosyayi yayina cikarirdi — ve geri
+    almak, o arada indirilmis dosyalari geri getirmezdi.
+    """
+    y = _headers(client, world["slug_a"], world["yonetici_a"])
+    d = _dokuman(client, y)
+    assert d["sakine_acik"] is False
+
+
+def test_SAKIN_yalnizca_ACILANLARI_gorur(client, world):
+    y = _headers(client, world["slug_a"], world["yonetici_a"])
+    r = _headers(client, world["slug_a"], world["resident_a"])
+
+    kapali = _dokuman(client, y, ad=f"Personel-{uuid.uuid4().hex[:6]}")
+    acik = _dokuman(client, y, ad=f"YonetimPlani-{uuid.uuid4().hex[:6]}")
+    assert client.patch(
+        f"/dokumanlar/{acik['id']}", headers=y, json={"sakine_acik": True}
+    ).status_code == 200
+
+    liste = client.get("/me/dokumanlar", headers=r)
+    assert liste.status_code == 200, liste.text
+    idler = {x["id"] for x in liste.json()["items"]}
+    assert acik["id"] in idler
+    assert kapali["id"] not in idler
+    # TOPLAM da yalniz gorunenleri sayar: sayac kapalilari sayarsa,
+    # sayfalama sakine var olmayan bir sayfayi vaat ederdi. Olcum
+    # KARSILASTIRMALI — yonetim sayaci sakin sayacindan BUYUK olmali,
+    # yoksa "suzgec calisiyor" iddiasi bosa duserdi.
+    sakin_toplam = liste.json()["meta"]["total"]
+    yonetim_toplam = client.get("/dokumanlar?limit=1", headers=y).json()["meta"]["total"]
+    assert sakin_toplam < yonetim_toplam, (sakin_toplam, yonetim_toplam)
+
+
+def test_SAKIN_KAPALI_dokumani_INDIREMEZ_404(client, world):
+    # 403 DEGIL 404: 403 "bu belge var ama sana kapali" demek olurdu ve
+    # arsivde neyin BULUNDUGUNU dogrulardi.
+    y = _headers(client, world["slug_a"], world["yonetici_a"])
+    r = _headers(client, world["slug_a"], world["resident_a"])
+    kapali = _dokuman(client, y)
+    assert client.get(
+        f"/me/dokumanlar/{kapali['id']}/indir", headers=r
+    ).status_code == 404
+
+
+def test_SAKIN_ACIK_dokumani_INDIREBILIR(client, world):
+    # Karsilik testi: 404'un sebebi "sakin hic indiremiyor" olmasin.
+    y = _headers(client, world["slug_a"], world["yonetici_a"])
+    r = _headers(client, world["slug_a"], world["resident_a"])
+    d = _dokuman(client, y)
+    client.patch(f"/dokumanlar/{d['id']}", headers=y, json={"sakine_acik": True})
+    res = client.get(f"/me/dokumanlar/{d['id']}/indir", headers=r)
+    assert res.status_code == 200, res.text
+    assert res.json()["url"].startswith("http")
+    assert res.json()["dosya_adi"] == d["ad"]
+
+
+def test_SILINEN_dokuman_ACIK_OLSA_da_sakine_GORUNMEZ(client, world):
+    """Iki suzgec TEK ifadeden besleniyor; bu test onu kilitler.
+
+    Ayri ayri yazilsaydi biri `silindi_at`i unutur ve silinmis bir dosya
+    sakinde indirilebilir kalirdi.
+    """
+    y = _headers(client, world["slug_a"], world["yonetici_a"])
+    r = _headers(client, world["slug_a"], world["resident_a"])
+    d = _dokuman(client, y)
+    client.patch(f"/dokumanlar/{d['id']}", headers=y, json={"sakine_acik": True})
+    client.delete(f"/dokumanlar/{d['id']}", headers=y)
+
+    idler = {x["id"] for x in client.get("/me/dokumanlar", headers=r).json()["items"]}
+    assert d["id"] not in idler
+    assert client.get(
+        f"/me/dokumanlar/{d['id']}/indir", headers=r
+    ).status_code == 404
+
+
+def test_SAKIN_YUKLEYEN_ADINI_gormez(client, world):
+    # Sakinin ihtiyaci "hangi belge"; "kim yukledi" degil. Personel adini
+    # her sakine dagitmak amac sinirliligiyla bagdasmazdi.
+    y = _headers(client, world["slug_a"], world["yonetici_a"])
+    r = _headers(client, world["slug_a"], world["resident_a"])
+    d = _dokuman(client, y)
+    client.patch(f"/dokumanlar/{d['id']}", headers=y, json={"sakine_acik": True})
+
+    yonetim = next(
+        x for x in client.get("/dokumanlar?limit=200", headers=y).json()["items"]
+        if x["id"] == d["id"]
+    )
+    assert yonetim["yukleyen_ad"], "yonetim listesinde yukleyen adi OLMALI"
+
+    sakin = next(
+        x for x in client.get("/me/dokumanlar", headers=r).json()["items"]
+        if x["id"] == d["id"]
+    )
+    assert sakin["yukleyen_ad"] is None
+
+
+def test_SAKIN_YONETIM_ucuna_ULASAMAZ(client, world):
+    """Sakin ucu ACILDI diye yonetim ucu ACILMADI.
+
+    Yonetim ucu TUM arsivi doner; sakinin oraya erisebilmesi, gorunurluk
+    bayragini tamamen anlamsiz kilardi.
+    """
+    r = _headers(client, world["slug_a"], world["resident_a"])
+    assert client.get("/dokumanlar", headers=r).status_code == 403
+    d_id = uuid.uuid4()
+    assert client.get(f"/dokumanlar/{d_id}/indir", headers=r).status_code == 403
+    assert client.patch(
+        f"/dokumanlar/{d_id}", headers=r, json={"sakine_acik": True}
+    ).status_code == 403
+
+
+def test_SAHA_PERSONELI_sakin_ucunu_KULLANAMAZ(client, world):
+    # Uc SAKIN icin acildi. Guvenlik ve gorevli tesisin sakini degil
+    # calisanidir; site dokumani onlarin isi degil.
+    for kim in ("guard_a", "gorevli_a"):
+        h = _headers(client, world["slug_a"], world[kim])
+        assert client.get("/me/dokumanlar", headers=h).status_code == 403, kim
+
+
+# --------------------------------------------------------------------------- #
 # YETKI
 # --------------------------------------------------------------------------- #
 def test_SAHA_ROLLERI_dokuman_ve_karar_goremez(client, world):

@@ -10,6 +10,7 @@ import {
   Dugme,
   HataDurumu,
   Modal,
+  Rozet,
   VeriTablosu,
   useOnay,
   type Kolon,
@@ -51,6 +52,7 @@ interface Dokuman {
   boyut_bayt: number | null;
   yukleyen_ad: string | null;
   created_at: string;
+  sakine_acik: boolean;
 }
 
 interface PresignBileti {
@@ -73,6 +75,8 @@ const VARSAYILAN_TUR = "application/octet-stream";
 const YENI_SEKME = "_blank";
 const SEKME_GUVENLIGI = "noopener";
 const YUZDE_TAM = 100;
+const ROZET_ACIK = "olumlu";
+const ROZET_KAPALI = "notr";
 
 export default function DokumanlarPage() {
   const t = useT();
@@ -96,6 +100,7 @@ export default function DokumanlarPage() {
   const [aciklama, setAciklama] = useState(BOS);
   const [ilerleme, setIlerleme] = useState<number | null>(null);
   const [suruklu, setSuruklu] = useState(false);
+  const [sakineAcik, setSakineAcik] = useState(false);
   const girdiRef = useRef<HTMLInputElement | null>(null);
 
   function kapat(): void {
@@ -103,6 +108,7 @@ export default function DokumanlarPage() {
     setDosya(null);
     setAd(BOS);
     setAciklama(BOS);
+    setSakineAcik(false);
     setHata(null);
     setIlerleme(null);
   }
@@ -168,6 +174,7 @@ export default function DokumanlarPage() {
         icerik_tipi: dosya.type || null,
         boyut_bayt: dosya.size,
         aciklama: aciklama.trim() || null,
+        sakine_acik: sakineAcik,
       });
       toast.success(t("dokumanYuklendi"));
       kapat();
@@ -186,6 +193,37 @@ export default function DokumanlarPage() {
       const veri = await res.json().catch(() => null);
       if (!res.ok) throw new Error(veri?.error?.message ?? String(res.status));
       window.open(veri.url as string, YENI_SEKME, SEKME_GUVENLIGI);
+    } catch (e) {
+      setHata(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  /**
+   * (P167 ek) Dokumani sakine AC / KAPAT.
+   *
+   * ONAY YALNIZ ACARKEN SORULUR: acmak bir YAYIN kararidir ve geri
+   * almak, o arada indirilmis dosyayi geri getirmez. Kapatmak ise geri
+   * donulebilir bir daraltmadir; her daraltmada onay sormak, guvenli
+   * yonu zahmetli kilardi.
+   */
+  async function gorunurluk(d: Dokuman): Promise<void> {
+    const acilacak = !d.sakine_acik;
+    if (
+      acilacak &&
+      !(await onayla({
+        baslik: t("dokumanAcOnayBaslik"),
+        mesaj: t("dokumanAcOnay", { ad: d.ad }),
+        onayMetni: t("dokumanAc"),
+      }))
+    )
+      return;
+    setHata(null);
+    try {
+      await apiSend(`/api/panel/dokumanlar/${d.id}`, "PATCH", {
+        sakine_acik: acilacak,
+      });
+      toast.success(acilacak ? t("dokumanAcildi") : t("dokumanKapatildi"));
+      await mutate();
     } catch (e) {
       setHata(e instanceof Error ? e.message : String(e));
     }
@@ -240,12 +278,25 @@ export default function DokumanlarPage() {
         deger: (d) => d.boyut_bayt,
       },
       {
+        id: "sakine_acik",
+        baslik: t("dokumanSakinGorur"),
+        hucre: (d) => (
+          <Rozet durum={d.sakine_acik ? ROZET_ACIK : ROZET_KAPALI}>
+            {d.sakine_acik ? t("dokumanAcikEtiket") : t("dokumanKapaliEtiket")}
+          </Rozet>
+        ),
+        deger: (d) => String(d.sakine_acik),
+      },
+      {
         id: "eylem",
         baslik: t("listeIslemler"),
         hucre: (d) => (
           <span className="flex gap-2">
             <Dugme boy="kucuk" onClick={() => void indir(d)}>
               {t("dokumanIndir")}
+            </Dugme>
+            <Dugme boy="kucuk" onClick={() => void gorunurluk(d)}>
+              {d.sakine_acik ? t("dokumanKapat") : t("dokumanAc")}
             </Dugme>
             <Dugme tur="tehlike" boy="kucuk" onClick={() => void sil([d.id])}>
               {t("ortakSil")}
@@ -440,6 +491,20 @@ export default function DokumanlarPage() {
               <Alan {...b} value={aciklama} onChange={(e) => setAciklama(e.target.value)} />
             )}
           </AlanSarmal>
+          {/* VARSAYILAN KAPALI ve kutu boyle baslar: acik varsayilan,
+              yoneticinin farkina varmadan bir dosyayi yayina cikarmasi
+              demekti. */}
+          <label
+            className="flex items-center gap-2"
+            style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}
+          >
+            <input
+              type="checkbox"
+              checked={sakineAcik}
+              onChange={(e) => setSakineAcik(e.target.checked)}
+            />
+            {t("dokumanSakineAc")}
+          </label>
         </div>
       </Modal>
     </div>

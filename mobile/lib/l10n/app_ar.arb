@@ -1635,5 +1635,20 @@
   "devriyePlanYokAlt": "تحدد خطة الدورية أي النقاط تُقرأ ومتى.",
   "personelYokAlt": "من هنا تُنشئ حسابات الأمن وموظفي المرفق.",
   "sakinYokAlt": "يُربط السكان المضافون بالوحدات ويمكنهم تسجيل الدخول إلى التطبيق.",
-  "ortakDahaFazlaSecenek": "خيارات إضافية"
+  "ortakDahaFazlaSecenek": "خيارات إضافية",
+  "modulDokumanlar": "مستندات المجمع",
+  "dokumanBaslik": "مستندات المجمع",
+  "dokumanAra": "ابحث في أسماء المستندات",
+  "dokumanYokSakin": "لم تتم مشاركة أي مستندات بعد.",
+  "dokumanAramaSonucYok": "لا يوجد مستند يطابق بحثك.",
+  "dokumanAcilamadi": "تعذّر فتح المستند.",
+  "dokumanBoyutKb": "{kb} كيلوبايت",
+  "@dokumanBoyutKb": {
+    "description": "Dosya boyutu (kilobayt) — sayi istemcide yuvarlanir.",
+    "placeholders": {
+      "kb": {
+        "type": "int"
+      }
+    }
+  }
 }

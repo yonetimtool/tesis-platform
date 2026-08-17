@@ -2006,4 +2006,15 @@ export const tr = {
   kvkkMetinYeniSurum: "Yeni Sürüm Yayınla",
   gurultuAlt: "Eşiği aşan gürültü şikâyetleri ve anons durumları.",
   ortakYok: "—",
+  // ---- (P167 ek) Dokuman gorunurlugu: sakin gorur mu
+  dokumanSakinGorur: "Sakin Görür",
+  dokumanAcikEtiket: "Açık",
+  dokumanKapaliEtiket: "Kapalı",
+  dokumanAc: "Sakine aç",
+  dokumanKapat: "Sakine kapat",
+  dokumanSakineAc: "Sakinler bu dokümanı görebilsin",
+  dokumanAcOnayBaslik: "Sakinlere açılsın mı?",
+  dokumanAcOnay: "\"{ad}\" tüm sakinlerin uygulamasında görünür ve indirilebilir olacak.",
+  dokumanAcildi: "Doküman sakinlere açıldı.",
+  dokumanKapatildi: "Doküman sakinlere kapatıldı.",
 } as const;

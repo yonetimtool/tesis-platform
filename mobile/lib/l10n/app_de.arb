@@ -1635,5 +1635,20 @@
   "devriyePlanYokAlt": "Ein Rundgangsplan legt fest, welche Punkte wann gescannt werden.",
   "personelYokAlt": "Hier legen Sie Konten für Sicherheits- und Objektpersonal an.",
   "sakinYokAlt": "Hinzugefügte Bewohner werden Wohnungen zugeordnet und können sich anmelden.",
-  "ortakDahaFazlaSecenek": "Weitere Optionen"
+  "ortakDahaFazlaSecenek": "Weitere Optionen",
+  "modulDokumanlar": "Objektdokumente",
+  "dokumanBaslik": "Objektdokumente",
+  "dokumanAra": "In Dokumentnamen suchen",
+  "dokumanYokSakin": "Es wurden noch keine Dokumente freigegeben.",
+  "dokumanAramaSonucYok": "Kein Dokument passt zu Ihrer Suche.",
+  "dokumanAcilamadi": "Das Dokument konnte nicht geoeffnet werden.",
+  "dokumanBoyutKb": "{kb} KB",
+  "@dokumanBoyutKb": {
+    "description": "Dosya boyutu (kilobayt) — sayi istemcide yuvarlanir.",
+    "placeholders": {
+      "kb": {
+        "type": "int"
+      }
+    }
+  }
 }

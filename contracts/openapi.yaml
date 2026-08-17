@@ -5779,6 +5779,70 @@ paths:
       responses:
         "204": { description: silindi }
         "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [yonetisim]
+      summary: Dokumani sakine AC / KAPAT (admin+yonetici)
+      description: |
+        **(P167 ek)** Tek degistirilebilir alan GORUNURLUKTUR.
+
+        DENETIME YAZILIR: bir dokumani sakine acmak bir YAYIN kararidir;
+        "bunu kim, ne zaman yayina cikardi" sorusunun bir cevabi olmali.
+      parameters:
+        - { name: dokuman_id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DokumanUpdate" }
+      responses:
+        "200": { description: guncellendi }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /me/dokumanlar:
+    get:
+      tags: [yonetisim]
+      summary: Sakine acilmis dokumanlar (YALNIZ resident)
+      description: |
+        **(P167 ek)** AYRI UC, "yonetim ucuna rol ekleme" DEGIL.
+
+        `/dokumanlar` TUM arsivi doner. Ona `resident` rolu eklemek,
+        gorunurluk suzgecini o ucun ICINDE bir rol dalina bagimli
+        kilardi — ve o dalin bir gun yanlis yazilmasi BUTUN ARSIVI
+        sakine acardi. Ayri uc, kuralin tek bir yerde ve tek bir
+        cumleyle yasamasini saglar: "sakine acik ve silinmemis".
+
+        `yukleyen_ad` **null doner**: sakinin ihtiyaci "hangi belge",
+        "kim yukledi" degil. Personel adini her sakine dagitmak amac
+        sinirliligiyla bagdasmazdi.
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200": { description: dokumanlar }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /me/dokumanlar/{dokuman_id}/indir:
+    get:
+      tags: [yonetisim]
+      summary: Sakine acik dokumanin indirme baglantisi (YALNIZ resident)
+      description: |
+        **(P167 ek)** Sakine KAPALI ya da SILINMIS dokuman **404** doner,
+        403 degil: 403 "bu belge var ama sana kapali" demek olurdu ve
+        arsivde neyin BULUNDUGUNU dogrulardi. Sakin icin o kayit YOKTUR.
+      parameters:
+        - { name: dokuman_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Indirme baglantisi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [url]
+                properties:
+                  url: { type: string }
+                  dosya_adi: { type: string }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
   /dokumanlar/{dokuman_id}/indir:
     get:
       tags: [yonetisim]
@@ -12225,6 +12289,26 @@ components:
           maximum: 26214400
           description: EN FAZLA 25 MB — veritabani CHECK'i ile de korunur
         aciklama: { type: string, nullable: true, maxLength: 1000 }
+        sakine_acik:
+          type: boolean
+          default: false
+          description: >
+            **(P167 ek)** Sakin bu dokumani gorebilir mi? **VARSAYILAN
+            KAPALI.** `tenant_dokuman` tek bir arsivdir ve icinde ne
+            oldugu sozlesmede belirli DEGIL (yonetim plani da olabilir,
+            personel sozlesmesi de). Acik varsayilan, bugune kadar
+            "yalnizca yonetim gorur" varsayimiyla yuklenmis HER dosyayi
+            geriye donuk yayinlamak olurdu.
+    DokumanUpdate:
+      type: object
+      description: >
+        **(P167 ek)** Yalnizca GORUNURLUK degistirilebilir.
+        Ad/aciklama/dosya duzenleme bilerek yok: dosyanin kendisi degismez
+        (yeni surum yeni kayittir) ve adi degistirmek, sakinin indirdigi
+        dosyayla listede gordugu adin ayrismasina yol acardi.
+      required: [sakine_acik]
+      properties:
+        sakine_acik: { type: boolean }
     SiteAktarSatir:
       type: object
       description: >

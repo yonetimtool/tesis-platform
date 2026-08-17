@@ -105,6 +105,12 @@ enum HomeMenuEntry {
   /// ekler/duzenler/siler, TUM roller okur (auth.md §4).
   siteKurallari,
 
+  /// (P167 ek) Site Dokumanlari — yonetim plani, butce, tutanak...
+  /// SAKIN YALNIZ ACILANLARI gorur: arsiv tek tablodur ve icinde personel
+  /// sozlesmesi de olabilir; yonetici hangi dosyanin sakine acik oldugunu
+  /// tek tek isaretler, suzgec SUNUCUDA (`GET /me/dokumanlar`).
+  dokumanlar,
+
   /// Dis Hizmetler — guvenilir esnaf/hizmet kisileri (cilingir/elektrik...) +
   /// yonetici notu. Yonetici ekler/duzenler/siler; yonetici+guvenlik+sakin okur.
   disHizmet,
@@ -354,6 +360,12 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.etkinlik,
         HomeMenuEntry.anketler,
         HomeMenuEntry.siteKurallari,
+        // (P167 ek) Dokumanlar site kurallarinin YANINDA: ikisi de
+        // BASVURU icerigidir — duyuru gibi anlik degil, gerektiginde
+        // bakilan sey. Duyurularin arasina koymak, yonetim planini bir
+        // gun gorunup ertesi gun akista kaybolan bir sey gibi
+        // gosterirdi.
+        HomeMenuEntry.dokumanlar,
         HomeMenuEntry.disHizmet,
         // Sikayet Haritasi: resident KENDI sikayetlerini de HARITA uzerinde
         // gorur (kendi ilettigi daireler isaretli) — ayri "Sikayetlerim"
@@ -416,6 +428,7 @@ String moduleBaslik(AppLocalizations l10n, HomeMenuEntry entry) =>
       HomeMenuEntry.rezervasyon => l10n.modulRezervasyon,
       HomeMenuEntry.etkinlik => l10n.modulEtkinlikler,
       HomeMenuEntry.siteKurallari => l10n.modulSiteKurallari,
+      HomeMenuEntry.dokumanlar => l10n.modulDokumanlar,
       HomeMenuEntry.disHizmet => l10n.modulDisHizmetler,
       HomeMenuEntry.integrations => l10n.modulEntegrasyonlar,
       HomeMenuEntry.kurulum => l10n.kurulumBaslik,
@@ -488,6 +501,7 @@ HomeMenuGrup homeMenuGrubu(HomeMenuEntry e) => switch (e) {
   HomeMenuEntry.rezervasyon ||
   HomeMenuEntry.etkinlik ||
   HomeMenuEntry.siteKurallari ||
+  HomeMenuEntry.dokumanlar ||
   HomeMenuEntry.disHizmet ||
   HomeMenuEntry.sikayetHaritasi ||
   HomeMenuEntry.sikayetlerim => HomeMenuGrup.tesis,

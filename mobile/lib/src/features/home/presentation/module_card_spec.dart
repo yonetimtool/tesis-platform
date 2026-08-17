@@ -179,6 +179,11 @@ ModuleCardSpec moduleCardSpec(HomeMenuEntry entry) {
           icon: Icons.gavel_outlined,
           accent: _amber,
           route: AppRoutes.siteKurallari);
+    case HomeMenuEntry.dokumanlar:
+      return const ModuleCardSpec(
+          icon: Icons.folder_copy_outlined,
+          accent: _amber,
+          route: AppRoutes.dokumanlar);
     case HomeMenuEntry.disHizmet:
       return const ModuleCardSpec(
           icon: Icons.handyman_outlined,

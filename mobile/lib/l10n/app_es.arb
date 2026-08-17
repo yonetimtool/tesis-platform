@@ -1635,5 +1635,20 @@
   "devriyePlanYokAlt": "Un plan de ronda define qué puntos se leen y cuándo.",
   "personelYokAlt": "Aquí crea las cuentas de seguridad y personal de instalaciones.",
   "sakinYokAlt": "Los residentes añadidos se vinculan a viviendas y pueden iniciar sesión.",
-  "ortakDahaFazlaSecenek": "Más opciones"
+  "ortakDahaFazlaSecenek": "Más opciones",
+  "modulDokumanlar": "Documentos del recinto",
+  "dokumanBaslik": "Documentos del recinto",
+  "dokumanAra": "Buscar en nombres de documentos",
+  "dokumanYokSakin": "Todavía no se ha compartido ningún documento.",
+  "dokumanAramaSonucYok": "Ningún documento coincide con su búsqueda.",
+  "dokumanAcilamadi": "No se pudo abrir el documento.",
+  "dokumanBoyutKb": "{kb} KB",
+  "@dokumanBoyutKb": {
+    "description": "Dosya boyutu (kilobayt) — sayi istemcide yuvarlanir.",
+    "placeholders": {
+      "kb": {
+        "type": "int"
+      }
+    }
+  }
 }

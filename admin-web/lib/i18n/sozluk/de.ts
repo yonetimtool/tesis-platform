@@ -1944,4 +1944,15 @@ export const de: Sozluk = {
   kvkkMetinYeniSurum: "Neue Fassung veroeffentlichen",
   gurultuAlt: "Laermbeschwerden ueber dem Schwellenwert und Ansagestatus.",
   ortakYok: "—",
+  // ---- (P167 ek) Dokuman gorunurlugu: sakin gorur mu
+  dokumanSakinGorur: "Fuer Bewohner",
+  dokumanAcikEtiket: "Freigegeben",
+  dokumanKapaliEtiket: "Privat",
+  dokumanAc: "Fuer Bewohner freigeben",
+  dokumanKapat: "Privat schalten",
+  dokumanSakineAc: "Bewohner duerfen dieses Dokument sehen",
+  dokumanAcOnayBaslik: "Fuer Bewohner freigeben?",
+  dokumanAcOnay: "\"{ad}\" wird in der App jedes Bewohners sichtbar und herunterladbar sein.",
+  dokumanAcildi: "Das Dokument wurde fuer Bewohner freigegeben.",
+  dokumanKapatildi: "Das Dokument ist wieder privat.",
 };
