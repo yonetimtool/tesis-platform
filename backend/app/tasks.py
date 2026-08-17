@@ -5,6 +5,8 @@ sonraki prompt'larda eklenecek.
 """
 from __future__ import annotations
 
+import uuid
+
 from .celery_app import celery_app
 
 
@@ -103,3 +105,23 @@ def mesaj_kuyrugu() -> dict:
     from .mesaj_kuyruk import tum_tenantlar_icin
 
     return {"islenen": asyncio.run(tum_tenantlar_icin())}
+
+
+@celery_app.task(name="rapor.uret", bind=True, max_retries=2)
+def rapor_uret_gorevi(self, is_id: str) -> dict:
+    """(P167 Asama 5) Agir raporu arka planda uret.
+
+    ISTEK YOLUNDA DEGIL: `borc_alacak` gibi raporlar tum defteri tarar ve
+    senkron uretimde tarayici yanit gelene kadar bekler; zaman asiminda is
+    YARIM kalir (bkz. `app/rapor_kuyruk.py` basligi).
+
+    YENIDEN DENEME SINIRLI (`max_retries=2`) ve bilincli: hatanin cogu
+    kalicidir (gecersiz parametre, silinmis kasa). Sinirsiz denemek, ayni
+    pahali sorguyu sonsuza kadar tekrarlamak olurdu. Kalici hata zaten
+    satira YAZILIYOR — kullanici sebebini goruyor.
+    """
+    import asyncio
+
+    from .rapor_kuyruk import isi_uret
+
+    return asyncio.run(isi_uret(uuid.UUID(is_id)))

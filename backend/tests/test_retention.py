@@ -115,6 +115,59 @@ def test_retention_siler_ve_anonimlestirir_esik_hassas(world, owner_conn):
     assert result["visitors"] >= 1 and result["tickets_anonymized"] >= 1
 
 
+def test_retention_SILINMIS_dokumani_supurur_ARSIVE_DOKUNMAZ(world, owner_conn):
+    """(P167 §6.3) Supurulen sey ARSIV DEGIL, SILINMIS OLANIN ARTIGI.
+
+    =========================================================================
+    NEDEN BU AYRIM ONEMLI
+    =========================================================================
+    Yonetim plani, butce ve genel kurul tutanagi KISISEL VERI DEGIL,
+    tesisin KENDI ARSIVIDIR. KVKK'nin saklama sinirlamasi kisisel veri
+    icindir; site arsivini YASLA silmek, mevzuatin istemedigi ve GERI
+    ALINAMAZ bir kayip yaratirdi.
+
+    Gercek eksik baskaydi: `DELETE /dokumanlar/{id}` kaydi siliyor ama
+    MinIO objesini birakiyordu — ve artik hicbir uygulama yolundan
+    erisilemedigi icin kimse fark etmiyordu.
+
+    Bu test IKI YONLU: silinmis ve suresi dolmus olan GITMELI, canli olan
+    ve HENUZ suresi dolmamis olan KALMALI. Tek yonlu olsaydi, "hepsini
+    sil" diyen bir regresyon testten gecerdi.
+    """
+    tid = world["a"]
+    admin_id = _uid(owner_conn, tid, "admin")
+
+    canli, yeni_silinen, eski_silinen = uuid.uuid4(), uuid.uuid4(), uuid.uuid4()
+    # (id, silindi_at ifadesi)
+    kayitlar = (
+        (canli, "NULL"),
+        (yeni_silinen, "now() - interval '2 days'"),
+        (eski_silinen, "now() - interval '90 days'"),
+    )
+    for did, silindi in kayitlar:
+        owner_conn.execute(
+            "INSERT INTO tenant_dokuman (id, tenant_id, ad, obje_anahtari, "
+            "yukleyen_user_id, silindi_at) "
+            f"VALUES (%s, %s, 'Yonetim Plani', %s, %s, {silindi})",
+            (str(did), str(tid), f"{tid}/dokuman/{uuid.uuid4().hex}.pdf", str(admin_id)),
+        )
+
+    run_retention()
+
+    # ARSIV DURUYOR — silinmemis dokuman hicbir kosulda supurulmez.
+    assert _exists(owner_conn, "tenant_dokuman", canli) == 1, (
+        "canli arsiv dokumani silinmis — retention ARSIVE DOKUNMAMALI"
+    )
+    # GERI DONUS PENCERESI ISLIYOR: yeni silinen henuz durur.
+    assert _exists(owner_conn, "tenant_dokuman", yeni_silinen) == 1, (
+        "yanlislikla-sildim penceresi calismamis"
+    )
+    # SURESI DOLAN GITTI.
+    assert _exists(owner_conn, "tenant_dokuman", eski_silinen) == 0, (
+        "suresi dolmus silinmis dokuman supurulmemis — depo sizintisi surer"
+    )
+
+
 def test_resident_erasure_anonimlestirir_defteri_korur(world, client, owner_conn):
     """KVKK silme: ledger referansi olan sakin ANONIMLESTIRILIR (silinmez);
     kimlik alanlari temizlenir, finansal/ticket satiri KALIR, audit yazilir."""

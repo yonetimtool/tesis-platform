@@ -5076,6 +5076,29 @@ class RaporParametre(BaseModel):
     ismi_goster: bool = True
     icradakileri_goster: bool = True
 
+    # ---- (P167 Asama 5) brief §5'in alan listesinden gelen EKLER --------
+    # Hepsi OPSIYONEL; varsayilanlar bugunku davranisi korur.
+    kasa_id: uuid.UUID | None = None
+    firma_id: uuid.UUID | None = None
+    user_id: uuid.UUID | None = None
+    unit_id: uuid.UUID | None = None
+    olusturan_user_id: uuid.UUID | None = None
+    bolum: str | None = Field(None, max_length=40)
+    ekstre_turu: str | None = Field(None, max_length=20)
+    evrak_tipi: str | None = Field(None, max_length=20)
+    calisma_sekli: str | None = Field(None, max_length=20)
+    #: BRIEF "bes ayri alan" diyor — o MODAL YERLESIMI. Veri bir LISTE:
+    #: bes ayri alan adi, altincisi istendiginde sozlesme degistirirdi.
+    gelir_gider_tanim_idler: list[uuid.UUID] = Field(default_factory=list, max_length=5)
+    baslangic_ay: int | None = Field(None, ge=1, le=12)
+    baslangic_yil: int | None = Field(None, ge=2000, le=2200)
+    bitis_ay: int | None = Field(None, ge=1, le=12)
+    bitis_yil: int | None = Field(None, ge=2000, le=2200)
+    imza: bool = False
+    aciklamalari_goster: bool = True
+    evrak_bilgisi_goster: bool = True
+    grup_goster: bool = False
+
     @model_validator(mode="after")
     def _aralik_tutarli(self) -> "RaporParametre":
         if self.baslangic and self.bitis and self.bitis < self.baslangic:
@@ -5114,14 +5137,49 @@ class RaporTablo(BaseModel):
     metin: str | None = None
 
 
+class RaporIsOut(BaseModel):
+    """(P167 §5) Arka plan rapor isi.
+
+    `dosya_key` DONMEZ: obje anahtari istemciye verilmez (avatar ve duyuru
+    gorseliyle ayni kural). Indirme, ayri bir uctan alinan kisa omurlu
+    presigned URL ile yapilir.
+    """
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    kod: str
+    bicim: str
+    durum: str
+    dosya_adi: str | None = None
+    #: KULLANICIYA gosterilecek kisa hata kimligi — yigin izi DEGIL.
+    hata: str | None = None
+    created_at: datetime
+    biten_at: datetime | None = None
+
+
 class RaporKatalogOgesi(BaseModel):
     kod: str
     baslik: str
     aciklama: str
+    #: (P167 §5) "listeler" | "ekstreler" | "dokumler" — kart izgarasinin
+    #: bolumu. Istemcide ikinci bir eslestirme tablosu tutulmaz.
+    kategori: str = "dokumler"
+    #: Bu raporun ANLAMLANDIRDIGI parametre alanlari. Modal yalniz bunlari
+    #: cizer; sunucu yalniz bunlari okur. Istemcide ayri bir liste
+    #: tutulsaydi, bir rapora yeni suzgec eklendiginde iki yer ayrisir ve
+    #: kusur SESSIZ olurdu (alan cizilir, sunucu yok sayar).
+    alanlar: list[str] = []
+    #: Tum defteri tarayan rapor mu? Istemci bunlari senkron uc yerine
+    #: KUYRUGA yollar. Olcuyu sunucu bilir; istemci bilemez.
+    agir: bool = False
 
 
 class RaporKatalogResponse(BaseModel):
     items: list[RaporKatalogOgesi]
+    #: Kategori SIRASI — brief §5'in sirasi. Alfabetik siralamak
+    #: "Listeler"i "Dokumler"in altina duşürürdü.
+    kategoriler: list[str] = []
 
 
 # ========================= P32 MESAJ SABLONLARI ============================= #
@@ -5348,7 +5406,11 @@ class KararUyesiIn(BaseModel):
 
 
 class KararDefteriCreate(BaseModel):
-    karar_no: str = Field(..., min_length=1, max_length=30)
+    #: (P167 §6.2) ZORUNLU DEGIL. Brief'in alan listesinde yildiz yalniz
+    #: "Konu"da; numara bos birakilirsa MERKEZI seriden (`KRR-yil-000001`)
+    #: uretilir. Zorunlu tutmak, her karar icin kullaniciyi bir numara
+    #: uydurmaya zorlar ve seri tutarliligini insan hafizasina birakirdi.
+    karar_no: str | None = Field(None, min_length=1, max_length=30)
     konu: str = Field(..., min_length=1, max_length=200)
     tarih: date | None = None
     metin: str = Field(..., min_length=1, max_length=20000)

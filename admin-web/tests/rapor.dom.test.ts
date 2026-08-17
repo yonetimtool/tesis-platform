@@ -12,11 +12,21 @@ import RaporlarPage from "@/app/(protected)/raporlar/page";
 
 import { ciz, fetchSahtele } from "./yardimci";
 
+// (P167 §5) Katalog artik KATEGORI + ALANLAR + AGIR tasiyor: modal
+// alanlarini bu listeden cizer. `agir: false` sectik, cunku bu dosya
+// DOGRUDAN uretim yolunu olcuyor; kuyruk yolunun kendi testi var.
 const KATALOG = {
   items: [
-    { kod: "borc_alacak", baslik: "Borç/Alacak", aciklama: "Daire bazlı bakiye" },
-    { kod: "ihtar_yazisi", baslik: "İhtar Yazısı", aciklama: "KMK m.20" },
+    {
+      kod: "borc_alacak", baslik: "Borç/Alacak", aciklama: "Daire bazlı bakiye",
+      kategori: "listeler", alanlar: ["baslangic", "blok", "ismi_goster"], agir: false,
+    },
+    {
+      kod: "ihtar_yazisi", baslik: "İhtar Yazısı", aciklama: "KMK m.20",
+      kategori: "dokumler", alanlar: ["baslangic"], agir: false,
+    },
   ],
+  kategoriler: ["listeler", "ekstreler", "dokumler"],
 };
 
 afterEach(() => vi.restoreAllMocks());

@@ -51,6 +51,47 @@ class RaporParam:
     #: Icra dosyasi acilmis kisiler listeye girsin mi.
     icradakileri_goster: bool = True
 
+    # ---- (P167 Asama 5) brief §5'in alan listesinden gelen EKLER --------
+    #
+    # HEPSI OPSIYONEL ve varsayilanlari bugunku davranisi KORUR: mevcut
+    # cagiranlar (panel, mobil, kuyruk isleri) aynen calisir.
+    kasa_id: str | None = None
+    firma_id: str | None = None
+    user_id: str | None = None
+    unit_id: str | None = None
+    #: Notlar raporu: notu YAZAN kisi.
+    olusturan_user_id: str | None = None
+    #: Notlar raporu: notun ait oldugu BOLUM (varlik tipi — daire, gorev,
+    #: talep, icra dosyasi...). Brief'te "Bolum*".
+    bolum: str | None = None
+    #: Firma ekstresi: "dokum" | "ozet".
+    ekstre_turu: str | None = None
+    #: Finansal hareketler: "tahsilat" | "gider" | ... (evrak/hareket tipi).
+    evrak_tipi: str | None = None
+    #: "tahakkuk" | "nakit" — isletme defteri ve ozet raporlarinin
+    #: CALISMA SEKLI. Tahakkuk esasinda borc YAZILDIGI anda, nakit
+    #: esasinda TAHSIL EDILDIGI anda sayilir; ikisi ayni donem icin
+    #: FARKLI rakam verir ve hangisi oldugu ciktida yazmali.
+    calisma_sekli: str | None = None
+    #: Detayli borc listesi: en fazla bes borclandirma turu.
+    #:
+    #: BRIEF "bes ayri alan" diyor — o bir MODAL YERLESIMIDIR. Veri bir
+    #: LISTEDIR: bes ayri alan adi acsaydik, altincisi istendiginde
+    #: sozlesme degismek zorunda kalirdi.
+    gelir_gider_tanim_idler: tuple[str, ...] = ()
+    #: Donemsel bakiye: ay/yil ciftleri (brief'in dort ayri alani).
+    baslangic_ay: int | None = None
+    baslangic_yil: int | None = None
+    bitis_ay: int | None = None
+    bitis_yil: int | None = None
+    #: Site sakinleri listesi: imza sutunu (kapiya asilan liste).
+    imza: bool = False
+    #: Isletme defteri gorunum bayraklari.
+    aciklamalari_goster: bool = True
+    evrak_bilgisi_goster: bool = True
+    #: Gelir-gider ozet: kalem GRUBUNA gore de kir.
+    grup_goster: bool = False
+
 
 @dataclass(frozen=True)
 class Sutun:

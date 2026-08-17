@@ -127,7 +127,12 @@ const SAYFALAR: { yol: string; yukle: () => Promise<{ default: React.ComponentTy
   { yol: "/tanimlar", yukle: () => import("@/app/(protected)/tanimlar/page") },
   { yol: "/users", yukle: () => import("@/app/(protected)/users/page") },
   { yol: "/transparency", yukle: () => import("@/app/(protected)/transparency/page") },
-  { yol: "/yonetisim", yukle: () => import("@/app/(protected)/yonetisim/page") },
+  // (P167 §6.1) "/yonetisim" DORDE BOLUNDU; tarama dordunu de kapsar
+  // ki "basligi kaldirdim ama bolumu unuttum" sinifi yakalansin.
+  { yol: "/karar-defteri", yukle: () => import("@/app/(protected)/karar-defteri/page") },
+  { yol: "/dokumanlar", yukle: () => import("@/app/(protected)/dokumanlar/page") },
+  { yol: "/kvkk-metinler", yukle: () => import("@/app/(protected)/kvkk-metinler/page") },
+  { yol: "/gurultu-uyarilari", yukle: () => import("@/app/(protected)/gurultu-uyarilari/page") },
   { yol: "/audit", yukle: () => import("@/app/(protected)/audit/page") },
   { yol: "/yetki", yukle: () => import("@/app/(protected)/yetki/page") },
   { yol: "/kvkk", yukle: () => import("@/app/(protected)/kvkk/page") },

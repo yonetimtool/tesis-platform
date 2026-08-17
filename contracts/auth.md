@@ -1040,10 +1040,23 @@ ve tesis kendi verisini disari dokum olarak tasiyordu.
 **Kural (fiil degil, ETKI):** `denetci` HICBIR mutasyon ucunda yer almaz.
 Bu bir uslup tercihi degil, **yapisal olarak** olculur: rota agacinda
 `denetci`ye acik GET-disi her uc, gerekcesi yazili bir istisna listesinde
-olmak ZORUNDADIR (`backend/tests/test_denetci_salt_okuma.py`). Bugunku tek
-istisna `POST /raporlar/{kod}`: rapor URETIMI bir okumadir (rapor motoru
-tek satir yazmaz), POST secilmesinin sebebi parametrelerin bir govde
-istemesidir.
+olmak ZORUNDADIR (`backend/tests/test_denetci_salt_okuma.py`,
+`DENETCI_ISTISNALARI`). Kilit ONCE `MUTASYON_OLMAYAN_POSTLAR` adini
+tasiyordu ve ad ARTIK DOGRU DEGILDI — icindeki `PATCH /me/avatar` bir
+satiri gercekten degistiriyor. Yanlis adli bir kilit bir gun "ama bu
+mutasyon degil ki" denerek genisletilirdi. GERCEK OLCU: **tesisin
+defterine yazmiyor**. Istisnalar:
+
+* `POST /raporlar/{kod}` — rapor URETIMI bir okumadir (rapor motoru tek
+  satir yazmaz), POST secilmesinin sebebi parametrelerin bir govde
+  istemesidir.
+* `POST /raporlar/{kod}/kuyruk` **(P167 §5)** — ayni uretim, baska bir
+  ZAMANLAMA. Bu uc gercekten bir satir yazar (`rapor_isi`), ama yazdigi
+  sey KULLANICININ KENDI ISTEGININ KAYDIDIR: tesis verisinde hicbir sey
+  degismez, kayit yalnizca "kim ne istedi, hazir mi" sorusunu yanitlar ve
+  yalnizca sahibi gorur. Kapatmak, denetciyi buyuk raporlarin PDF/Excel
+  ciktisindan tamamen mahrum birakirdi — yani denetim gorevinin ana
+  aracindan.
 
 **Ne okur:** raporlar (`/reports/*`, `/raporlar/*`), gelir-gider defteri ve
 butce (`/budget/entries`, `/budget/categories`, `/budget/summary`),

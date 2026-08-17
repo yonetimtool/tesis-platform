@@ -12,6 +12,7 @@ RBAC: admin + yonetici. Karar defteri ve site aktarimi yonetim islemleridir.
 from __future__ import annotations
 
 import uuid
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy import func, select
@@ -19,6 +20,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..audit import Action, audit_user
+from ..belge_no import belge_no_ata
 from ..crud_helpers import get_or_404, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
@@ -40,6 +42,7 @@ from ..schemas import (
     KararDefteriUpdate,
     KararUyesiIn,
 )
+from ..storage import presign_get
 
 router = APIRouter(tags=["yonetisim"])
 
@@ -108,6 +111,12 @@ async def karar_olustur(
     veri = body.model_dump(exclude={"uyeler"})
     if veri.get("tarih") is None:
         veri.pop("tarih", None)
+    # (P167 §6.2) NUMARA MERKEZI SERIDEN. Kullanici yazdiysa onunki
+    # korunur (elinde gercek bir karar numarasi olan kisi engellenmemeli);
+    # bos birakilmissa numara UYDURULMAZ, `belge_sayaci`ndan alinir.
+    veri["karar_no"] = await belge_no_ata(
+        db, user.tenant_id, "karar", veri.get("karar_no"), veri.get("tarih")
+    )
     obj = KararDefteri(tenant_id=user.tenant_id, **veri)
     db.add(obj)
     try:
@@ -230,12 +239,19 @@ async def dokuman_listesi(
     db: AsyncSession = Depends(get_tenant_db),
     _: AppUser = Depends(_YONETIM),
 ) -> DokumanListResponse:
+    # (P167 §6.3) SILINMISLER LISTEDE YOK. Yumusak silme kullaniciya
+    # SILME gibi gorunmeli; "silindi ama hala listede" bir kayit,
+    # dugmenin calismadigi izlenimi verirdi.
+    canli = TenantDokuman.silindi_at.is_(None)
     total = (
-        await db.execute(select(func.count()).select_from(TenantDokuman))
+        await db.execute(
+            select(func.count()).select_from(TenantDokuman).where(canli)
+        )
     ).scalar_one()
     kayitlar = (
         (await db.execute(
-            select(TenantDokuman).order_by(TenantDokuman.created_at.desc(), TenantDokuman.id.desc())
+            select(TenantDokuman).where(canli)
+            .order_by(TenantDokuman.created_at.desc(), TenantDokuman.id.desc())
             .limit(limit).offset(offset)
         )).scalars().all()
     )
@@ -294,20 +310,53 @@ async def dokuman_sil(
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_YONETIM),
 ) -> None:
-    """Kaydi siler.
+    """Kaydi siler — (P167 §6.3) YUMUSAK.
 
-    MinIO OBJESI BURADAN SILINMEZ: nesne yasam dongusu depolama tarafinin
-    isidir ve senkron silme, depolama erisilemezken kayit silmeyi de
-    engellerdi. Kayit gidince obje erisilemez hale gelir (listede yok) ve
-    yasam dongusu kurali temizler.
+    ONCEKI TASARIM VE KUSURU: satir siliniyor, MinIO objesi kaliyordu.
+    Gerekce "yanlislikla silinen bir yonetim plani geri alinabilsin"di —
+    ama kayit gittigi icin dosyaya yalnizca DEPOYA ELLE baglanan biri
+    ulasabiliyordu. Yani pratikte geri alinamiyor, buna karsilik obje
+    depoda SONSUZA KADAR kaliyordu ve kimse fark etmiyordu.
+
+    SIMDI: `silindi_at` doldurulur. Kayit listeden kalkar (kullanici icin
+    silinmistir), obje durur, gecelik retention suresi dolanlarin ONCE
+    objesini sonra satirini siler. Boylece hem geri donus penceresi
+    GERCEKTEN var hem de depo sizintisi kapaniyor.
+
+    IKI KEZ SILME 404: zaten silinmis bir kayda tekrar silme demek, var
+    olmayan bir seyi silmektir.
     """
     obj = await get_or_404(db, TenantDokuman, dokuman_id)
+    if obj.silindi_at is not None:
+        raise APIError(404, "not_found", "dokuman_bulunamadi")
     await audit_user(
         db, user, Action.DOKUMAN_SIL, resource_type="tenant_dokuman",
         resource_id=obj.id, meta={"ad": obj.ad, "anahtar": obj.obje_anahtari},
     )
-    await db.delete(obj)
+    obj.silindi_at = datetime.now(timezone.utc)
     await db.flush()
+
+
+@router.get("/dokumanlar/{dokuman_id}/indir")
+async def dokuman_indir(
+    dokuman_id: uuid.UUID,
+    db: AsyncSession = Depends(get_tenant_db),
+    _: AppUser = Depends(_YONETIM),
+) -> dict:
+    """Dokumanin KISA OMURLU indirme baglantisi.
+
+    BU UC EKSIKTI (P167 §6.3'te olculdu): dosya yuklenebiliyor ve
+    listelenebiliyordu ama INDIRILEMIYORDU — arsivin tek amaci olan sey
+    yapilamiyordu.
+
+    OBJE ANAHTARI DEGIL URL DONER: anahtar istemciye verilse, depo
+    yapisini disari sizdirmis ve iznin suresini kaybetmis olurduk
+    (avatar, duyuru gorseli ve rapor kuyruguyla ayni kural).
+    """
+    obj = await get_or_404(db, TenantDokuman, dokuman_id)
+    if obj.silindi_at is not None:
+        raise APIError(404, "not_found", "dokuman_bulunamadi")
+    return {"url": presign_get(obj.obje_anahtari), "dosya_adi": obj.ad}
 
 
 # =============================== SITE AKTAR ================================= #

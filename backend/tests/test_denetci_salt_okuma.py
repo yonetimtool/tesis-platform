@@ -24,11 +24,30 @@ import pytest
 
 #: Denetciye acik olup GET OLMAYAN uclar — her biri GEREKCELI.
 #:
-#: `POST /raporlar/{kod}`: rapor URETIMI bir okumadir; `rapor_motoru.py`de
-#: tek bir `db.add` yoktur. POST secilmesinin sebebi rapor parametrelerinin
-#: bir govde istemesidir. Kural "fiil GET olsun" degil "MUTASYON olmasin".
-MUTASYON_OLMAYAN_POSTLAR: frozenset[tuple[str, str]] = frozenset({
+#: AD DEGISTI (P167 §5). Eski adi `MUTASYON_OLMAYAN_POSTLAR`di ve ad
+#: ARTIK DOGRU DEGILDI: `PATCH /me/avatar` bir satiri gercekten
+#: degistiriyor, `POST /raporlar/{kod}/kuyruk` ise yeni bir satir yaziyor.
+#: Yanlis adli bir kilit, bir gun "ama bu mutasyon degil ki" denerek
+#: genisletilirdi.
+#:
+#: GERCEK OLCU: "TESISIN DEFTERINE yazmiyor". Denetcinin salt-okurlugu
+#: tesisin kayitlari icindir; kisinin KENDI hesabina ait islemler ve
+#: kendi istediginin kaydi bu kapsamin disindadir.
+DENETCI_ISTISNALARI: frozenset[tuple[str, str]] = frozenset({
+    # Rapor URETIMI bir okumadir; `rapor_motoru.py`de tek bir `db.add`
+    # yoktur. POST secilmesinin sebebi rapor parametrelerinin bir govde
+    # istemesidir.
     ("POST", "/raporlar/{kod}"),
+    # (P167 §5) AYNI URETIM, BASKA BIR ZAMANLAMA. Bu uc gercekten bir
+    # satir yazar (`rapor_isi`) — ama yazdigi sey KULLANICININ KENDI
+    # ISTEGININ KAYDIDIR: tesis verisinde hicbir sey degismez, kayit
+    # yalnizca "kim ne istedi, hazir mi" sorusunu yanitlar ve yalnizca
+    # sahibi gorur.
+    #
+    # Kapatmak, denetciyi BUYUK raporlarin PDF/Excel ciktisindan tamamen
+    # mahrum birakirdi — cunku agir raporlar yalnizca kuyruktan uretilir.
+    # Yani denetim gorevinin ana aracini kapatmak olurdu.
+    ("POST", "/raporlar/{kod}/kuyruk"),
     # (P167 §1.7) `PATCH /me/avatar`: KENDI profil fotografi. Tesisin
     # kayitlarina degil KISININ KENDI kaydina yazar — `PATCH /me/password`
     # ve `/me/pazarlama-tercihleri` ile AYNI SINIF (onlar rol kapisi
@@ -227,7 +246,7 @@ def test_denetci_hicbir_mutasyon_ucunda_YOK():
         for metot in route.methods:
             if metot in ("GET", "HEAD", "OPTIONS"):
                 continue
-            if (metot, route.path) in MUTASYON_OLMAYAN_POSTLAR:
+            if (metot, route.path) in DENETCI_ISTISNALARI:
                 continue
             ihlal.append(f"{metot} {route.path}")
     assert not ihlal, (
@@ -278,7 +297,7 @@ def test_istisna_listesi_GERCEK_uclari_gosteriyor():
         if isinstance(r, APIRoute)
         for m in r.methods
     }
-    assert MUTASYON_OLMAYAN_POSTLAR <= mevcut
+    assert DENETCI_ISTISNALARI <= mevcut
 
 
 # -------------------------- 2) davranissal olcum --------------------------- #

@@ -208,6 +208,11 @@ HATIRLATMA_TEKRAR = ENUM(
     "yok", "gunluk", "haftalik", "aylik",
     name="hatirlatma_tekrar", create_type=False,
 )
+# (P167 Asama 5, goc 0059) Arka plan rapor isinin durumu.
+RAPOR_IS_DURUM = ENUM(
+    "bekliyor", "uretiliyor", "hazir", "hata",
+    name="rapor_is_durum", create_type=False,
+)
 TALEP_ONCELIK = ENUM(
     "dusuk", "normal", "yuksek", "acil",
     name="talep_oncelik", create_type=False,
@@ -2010,6 +2015,49 @@ class DisHizmet(Base):
     updated_at = _created_at()
 
 
+class RaporIsi(Base):
+    """(P167 Asama 5) Arka planda uretilen rapor isi — goc 0059.
+
+    Buyuk raporlar (`KATALOG_KAYITLARI[...].agir`) istek yolunda
+    uretilemez: `borc_alacak` 500 daireli bir sitede butun tahakkuk ve
+    tahsilat gecmisini tarar, tarayici yanit gelene kadar bekler ve zaman
+    asimi olursa is YARIM kalir.
+
+    GORUNURLUK KAPISI `user_id`: rapor ciktisi kisi adlari ve site
+    finansi tasir; ayni tesisteki baska bir yoneticinin BASKASININ
+    istedigi dosyayi indirmesi icin bir sebep yok.
+    """
+
+    __tablename__ = "rapor_isi"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_rapor_isi_id_tenant"),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    kod: Mapped[str] = mapped_column(Text, nullable=False)
+    bicim: Mapped[str] = mapped_column(Text, nullable=False)
+    #: Kullanicinin sectigi suzgecler — is kuyruga girdikten sonra
+    #: DEGISMEMELI ve "ayni raporu tekrar al" bu kayittan beslenir.
+    parametre: Mapped[dict] = mapped_column(
+        JSONB, nullable=False, server_default=text("'{}'::jsonb")
+    )
+    durum: Mapped[str] = mapped_column(
+        RAPOR_IS_DURUM, nullable=False, server_default=text("'bekliyor'")
+    )
+    #: Dosya MinIO'da; tabloda yalnizca ANAHTAR durur (bir Excel megabaytlar
+    #: olabilir ve `bytea` her yedegi sisirirdi).
+    dosya_key: Mapped[str | None] = mapped_column(Text, nullable=True)
+    dosya_adi: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: KULLANICIYA gosterilecek hata metni — yigin izi DEGIL (o log'a ait).
+    hata: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at = _created_at()
+    biten_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+
+
 class Hatirlatma(Base):
     """(P167 Asama 2) Yoneticinin KENDI takvim notu — goc 0056.
 
@@ -3126,6 +3174,11 @@ class TenantDokuman(Base):
         UUID(as_uuid=True), nullable=True
     )
     created_at = _created_at()
+    #: (P167 §6.3) YUMUSAK SILME. Dolu ise kayit listede GORUNMEZ; obje ve
+    #: satir, gecelik supurme suresi dolana kadar durur. Sert silme
+    #: yapsaydik MinIO objesi sonsuza kadar depoda kalirdi — ve hicbir
+    #: uygulama yolundan erisilemedigi icin kimse fark etmezdi.
+    silindi_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
 
 
 # --------------------------------------------------------------------------- #

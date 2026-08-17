@@ -151,7 +151,11 @@ export const config = {
     "/icra/:path*",
     "/raporlar/:path*",
     "/mesajlar/:path*",
-    "/yonetisim/:path*",
+    // (P167 §6.1) "/yonetisim" DORDE BOLUNDU.
+    "/karar-defteri/:path*",
+    "/dokumanlar/:path*",
+    "/kvkk-metinler/:path*",
+    "/gurultu-uyarilari/:path*",
     "/anketler/:path*",
     "/kurulum/:path*",
     "/ice-aktarim/:path*",

@@ -820,6 +820,35 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "Au moins un champ doit être fourni.",
         "es": "Debe enviarse al menos un campo.",
     },
+    # ---- (P167 Asama 6.3) Dokuman yonetimi
+    "dokuman_bulunamadi": {
+        "tr": "Doküman bulunamadı.",
+        "en": "The document was not found.",
+        "ar": "لم يتم العثور على المستند.",
+        "ru": "Документ не найден.",
+        "de": "Das Dokument wurde nicht gefunden.",
+        "fr": "Le document est introuvable.",
+        "es": "No se encontró el documento.",
+    },
+    # ---- (P167 Asama 5) Rapor kuyrugu
+    "rapor_isi_bulunamadi": {
+        "tr": "Rapor işi bulunamadı.",
+        "en": "The report job was not found.",
+        "ar": "لم يتم العثور على مهمة التقرير.",
+        "ru": "Задание отчёта не найдено.",
+        "de": "Der Berichtsauftrag wurde nicht gefunden.",
+        "fr": "La tâche de rapport est introuvable.",
+        "es": "No se encontró la tarea de informe.",
+    },
+    "rapor_isi_hazir_degil": {
+        "tr": "Rapor henüz hazır değil.",
+        "en": "The report is not ready yet.",
+        "ar": "التقرير ليس جاهزًا بعد.",
+        "ru": "Отчёт ещё не готов.",
+        "de": "Der Bericht ist noch nicht fertig.",
+        "fr": "Le rapport n'est pas encore prêt.",
+        "es": "El informe aún no está listo.",
+    },
     # ---- (P167 Asama 2) Ozet sayfasi: takvim + hatirlatma + pano tercihi
     "hatirlatma_bulunamadi": {
         "tr": "Hatırlatma bulunamadı.",

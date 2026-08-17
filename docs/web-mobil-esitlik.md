@@ -201,3 +201,31 @@ iki fark — takvim ekranı ve üç finansal kart alanı — Aşama 1'in bırakt
 | 4.1–4.7 finans ekranları | **hayır** | Masa başı muhasebe işi: çok satırlı giriş, Excel/PDF çıktısı, dönem seçimi. Telefonda satır tablosu doldurmak aracı yanlış işe koşmaktır; mobilin mali ihtiyacı (aidatım, borç görüntüleme) zaten karşılanıyor. |
 | 4.8 icra dosyaları | **hayır** | Hukuki dosya takibi de masa başı işi. |
 | `finansal_hareket.durum` alanı | **kısmi fark** | Mobil hareket listelerinde çizilmiyor. Uç hazır — küçük ekran işi. |
+
+---
+
+## P167 Aşama 5 — Rapor motoru
+
+| Madde | Web | Mobil | Karar ve gerekçe |
+|---|---|---|---|
+| Kategorili kart ızgarası (Listeler / Ekstreler / Dökümler) | var | yok | **Bilinçli fark.** On beş raporluk bir yapılandırma ızgarası masa başı işi; telefonda on beş kartı tarayıp on alanlı bir modal doldurmak aracı yanlış işe koşmaktır. Mobilin rapor ihtiyacı (aidatım, borcum, makbuzum) kendi ekranlarında karşılanıyor. |
+| Ortak `RaporModalı` | var | yok | Yukarıdakinin parçası. |
+| Kuyruk (`/raporlar/{kod}/kuyruk`, `/raporlar/isler`) | var | **uç hazır, ekran yok** | Uçlar rol kapısıyla açık ve istemciden bağımsız. Mobil bir gün rapor üretimi isterse aynı kuyruğu kullanır; bugün mobilde rapor üretim ekranı olmadığı için ekran **yazılmadı** — kullanılmayan bir ekran yazmak, bakımı olan ölü kod olurdu. |
+| Üç yeni rapor (Notlar, Firma Ekstresi, Hesap Ekstresi) | var | **otomatik eşit** | Sunucuda üretiliyor; herhangi bir istemci aynı çıktıyı alır. |
+| Alan tanımının sunucudan gelmesi | var | **otomatik eşit** | Katalog `alanlar` döndürüyor. Mobil bir gün modal çizerse aynı listeden besleneceği için iki istemci ayrışamaz. |
+
+---
+
+## P167 Aşama 6 — Yönetim başlığı
+
+| Madde | Web | Mobil | Karar ve gerekçe |
+|---|---|---|---|
+| Karar Defteri | var | yok | **Bilinçli fark.** Karar yazmak uzun metin girişidir ve masa başı işidir. Sakinin kararları *okuma* ihtiyacı ayrı bir istektir; brief'te yok ve uç bugün admin+yönetici'ye kapalı. |
+| Doküman Yönetimi (yükleme) | var | yok | Sürükle-bırak, 25 MB'lik dosya, çoklu seçim — masa başı işi. |
+| Doküman **okuma** | var | **açık soru** | Sakinin yönetim planına telefondan bakmak istemesi makul; ama uç admin+yönetici'ye kapalı ve açmak bir **yetki kararıdır**. Sessizce alınmadı, burada kayda geçiriliyor. |
+| KVKK metni yayınlama | var | yok | Hukuki metin; sürüm mantığı ve geri alınamazlık masaüstünde kalmalı. |
+| Gürültü uyarıları | var | **uç hazır, ekran yok** | Anons "yapıldı" işaretlemesi saha işi olabilir; mobil isterse aynı uç kullanılır. |
+| Merkezî karar numarası (`KRR-…`) | — | **otomatik eşit** | Sunucuda; hangi istemci yazarsa yazsın aynı seriden numara alır. |
+| Doküman yumuşak silme + gecelik süpürme | — | **otomatik eşit** | Sunucuda; mobil bir gün silme yaparsa aynı kurala tabi olur. |
+| Doküman indirme ucu | var | **uç hazır** | `GET /dokumanlar/{id}/indir` istemciden bağımsız. |
+

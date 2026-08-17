@@ -5760,15 +5760,53 @@ paths:
   /dokumanlar/{dokuman_id}:
     delete:
       tags: [yonetisim]
-      summary: Dokuman kaydini sil
+      summary: Dokuman kaydini sil (YUMUSAK)
       description: |
-        Yalniz KAYIT silinir; MinIO objesi DURUR. Sunucunun tek istekte
-        depoyu da silmesi, yanlislikla silinen bir yonetim planinin geri
-        alinamamasi demekti — obje yasam dongusu depo politikasina birakildi.
+        **(P167 §6.3)** Silme artik YUMUSAK: `silindi_at` doldurulur.
+        Kayit listeden kalkar (kullanici icin silinmistir), MinIO objesi
+        ve satir bir SURE daha durur, gecelik retention suresi dolanlarin
+        ONCE objesini sonra satirini siler.
+
+        ONCEKI TASARIM VE KUSURU: satir siliniyor, obje kaliyordu. Gerekce
+        "yanlislikla silinen bir yonetim plani geri alinabilsin"di — ama
+        kayit gittigi icin dosyaya yalnizca DEPOYA ELLE baglanan biri
+        ulasabiliyordu. Yani pratikte geri alinamiyor, buna karsilik obje
+        depoda SONSUZA KADAR kaliyor ve kimse fark etmiyordu.
+
+        Zaten silinmis bir kayda tekrar silme demek **404**'tur.
       parameters:
         - { name: dokuman_id, in: path, required: true, schema: { type: string, format: uuid } }
       responses:
         "204": { description: silindi }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /dokumanlar/{dokuman_id}/indir:
+    get:
+      tags: [yonetisim]
+      summary: Dokumanin kisa omurlu indirme baglantisi (admin+yonetici)
+      description: |
+        **(P167 §6.3)** BU UC EKSIKTI: dosya yuklenebiliyor ve
+        listelenebiliyordu ama INDIRILEMIYORDU — arsivin tek amaci olan
+        sey yapilamiyordu.
+
+        OBJE ANAHTARI DEGIL URL DONER: anahtar istemciye verilseydi hem
+        depo yapisi disari sizar hem de iznin SURESI kaybolurdu (avatar,
+        duyuru gorseli ve rapor kuyruguyla ayni kural).
+
+        Silinmis dokuman **404**.
+      parameters:
+        - { name: dokuman_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Indirme baglantisi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [url]
+                properties:
+                  url: { type: string }
+                  dosya_adi: { type: string }
+        "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
   /mesaj-sablonlari:
     get:
@@ -6022,6 +6060,104 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
         "422": { $ref: "#/components/responses/ValidationError" }
+  /raporlar/{kod}/kuyruk:
+    post:
+      tags: [raporlar]
+      summary: Agir raporu KUYRUGA al — 202 + is kimligi (admin+yonetici+denetci)
+      description: >
+        **(P167 §5)** Brief: "buyuk raporlar kuyruga girsin ve hazir olunca
+        indirilebilsin (senkron uretim tarayiciyi kilitler)".
+
+        Olculebilir sorun: `borc_alacak` ve `detayli_borc` TUM defteri tarar.
+        500 daireli bir sitede bu, her dairenin butun tahakkuk/tahsilat
+        gecmisini okuyup gecikme tazminatini tek tek hesaplamak demek. Istek
+        yolunda yapildiginda tarayici yanit gelene kadar bekler, ters vekil
+        zaman asimi sinirina takilabilir ve zaman asiminda IS YARIM KALIR —
+        kullanici neyin oldugunu bilmez, yeniden dener, sunucu ayni isi bir
+        kez daha yapar.
+
+        AYRI UC, "bazen kuyruga alan tek uc" DEGIL: senkron uc bir DOSYA,
+        bu uc bir IS KIMLIGI doner. Ayni ucun bazen dosya bazen JSON
+        dondurmesi, ayrimi unutan bir istemcinin JSON'u dosya diye
+        indirmesine yol acardi.
+
+        `bicim=tablo` KABUL EDILMEZ (422): tablo ciktisi ekranda gosterilir
+        ve zaten hizlidir; kuyruga almak kullaniciyi gormek istedigi seyi
+        beklemeye zorlamak olurdu.
+      parameters:
+        - name: kod
+          in: path
+          required: true
+          schema: { type: string }
+        - name: bicim
+          in: query
+          required: true
+          schema: { type: string, enum: [excel, pdf] }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RaporParametre" }
+      responses:
+        "202":
+          description: Is kuyruga alindi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RaporIs" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /raporlar/isler:
+    get:
+      tags: [raporlar]
+      summary: Rapor islerim — YALNIZ kendi isleri (admin+yonetici+denetci)
+      description: >
+        **(P167 §5)** Gorunurluk kapisi `user_id`dir: rapor ciktisi kisi
+        adlari ve site finansi tasir; ayni tesisteki baska bir yoneticinin
+        BASKASININ istedigi dosyayi gormesi icin bir sebep yok — ve bu
+        sizinti sessizdir.
+      responses:
+        "200":
+          description: Isler (yeniden eskiye)
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/RaporIs" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /raporlar/isler/{is_id}/indir:
+    get:
+      tags: [raporlar]
+      summary: Hazir raporu indir — kisa omurlu presigned URL
+      description: >
+        **(P167 §5)** Baskasinin isi icin **404** doner, 403 degil: 403
+        "senin degil" demek olurdu ve o isin VAR OLDUGUNU dogrulardi.
+
+        Hazir olmayan is icin **409**: arayuzun "indir" dugmesini o durumda
+        cizmemesi gerekir, ama uc de reddeder — dugme yarisla goruntulenirse
+        kullanici bos bir dosya indirmemelidir.
+      parameters:
+        - name: is_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Indirme baglantisi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [url]
+                properties:
+                  url: { type: string }
+                  dosya_adi: { type: string, nullable: true }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
   /me/odeme-bilgileri:
     get:
       tags: [aidat]
@@ -12048,12 +12184,20 @@ components:
         gorev: { type: string, nullable: true, maxLength: 100 }
     KararDefteriCreate:
       type: object
-      required: [karar_no, konu, metin]
+      required: [konu, metin]
       properties:
         karar_no:
           type: string
+          nullable: true
           maxLength: 30
-          description: Tenant icinde TEKTIR (cakisma 409)
+          description: >
+            Tenant icinde TEKTIR (cakisma 409). **(P167 §6.2)** ZORUNLU
+            DEGIL: bos birakilirsa MERKEZI seriden uretilir
+            (`KRR-2026-000001`, `belge_sayaci` tablosu). Zorunlu tutmak,
+            her karar icin kullaniciyi bir numara UYDURMAYA zorlar ve
+            serinin tutarliligini insan hafizasina birakirdi. Elinde
+            gercek bir karar numarasi olan kisi ise onu yazabilir —
+            merkezi uretimin amaci kullaniciyi engellemek degil.
         tarih: { type: string, format: date, description: Verilmezse bugun }
         konu: { type: string, minLength: 1, maxLength: 200 }
         metin: { type: string, minLength: 1, maxLength: 20000 }
@@ -13504,6 +13648,31 @@ components:
             yetmez — bos sutun "adi neden yok" sorusunu dogururdu). Kapiya
             asilacak listede ad OLMAMALI.
         icradakileri_goster: { type: boolean, default: true }
+        kasa_id: { type: string, format: uuid, nullable: true }
+        firma_id: { type: string, format: uuid, nullable: true }
+        user_id: { type: string, format: uuid, nullable: true }
+        unit_id: { type: string, format: uuid, nullable: true }
+        olusturan_user_id: { type: string, format: uuid, nullable: true }
+        bolum: { type: string, nullable: true, maxLength: 40 }
+        ekstre_turu: { type: string, nullable: true, maxLength: 20 }
+        evrak_tipi: { type: string, nullable: true, maxLength: 20 }
+        calisma_sekli: { type: string, nullable: true, maxLength: 20 }
+        gelir_gider_tanim_idler:
+          type: array
+          maxItems: 5
+          items: { type: string, format: uuid }
+          description: >
+            Brief "bes ayri alan" diyor — o bir MODAL YERLESIMIDIR; veri bir
+            LISTEDIR. Bes ayri alan adi acmak, altincisi istendiginde
+            sozlesmeyi degistirmek zorunda birakirdi.
+        baslangic_ay: { type: integer, minimum: 1, maximum: 12, nullable: true }
+        baslangic_yil: { type: integer, minimum: 2000, maximum: 2200, nullable: true }
+        bitis_ay: { type: integer, minimum: 1, maximum: 12, nullable: true }
+        bitis_yil: { type: integer, minimum: 2000, maximum: 2200, nullable: true }
+        imza: { type: boolean, default: false }
+        aciklamalari_goster: { type: boolean, default: true }
+        evrak_bilgisi_goster: { type: boolean, default: true }
+        grup_goster: { type: boolean, default: false }
     RaporSutun:
       type: object
       required: [anahtar, baslik]
@@ -13536,18 +13705,63 @@ components:
             hucrelere bolunurdu.
     RaporKatalogOgesi:
       type: object
-      required: [kod, baslik, aciklama]
+      required: [kod, baslik, aciklama, kategori, alanlar, agir]
       properties:
         kod: { type: string }
         baslik: { type: string }
         aciklama: { type: string }
+        kategori:
+          type: string
+          enum: [listeler, ekstreler, dokumler]
+          description: Kart izgarasinin bolumu (P167 §5).
+        alanlar:
+          type: array
+          items: { type: string }
+          description: >
+            Bu raporun ANLAMLANDIRDIGI `RaporParametre` alanlari. Modal
+            yalniz bunlari cizer, sunucu yalniz bunlari okur. Istemcide
+            ikinci bir liste tutulsaydi, bir rapora yeni suzgec
+            eklendiginde iki yer ayrisir ve kusur SESSIZ olurdu: alan
+            cizilir, sunucu yok sayar, kullanici ancak ciktiya bakip anlar.
+        agir:
+          type: boolean
+          description: >
+            Tum defteri tarayan rapor mu? Istemci bunlari senkron uc yerine
+            `/raporlar/{kod}/kuyruk`a yollar. OLCUYU SUNUCU BILIR: istemcide
+            olsaydi, yeni bir agir rapor eklendiginde arayuz onu senkron
+            cagirmaya devam ederdi.
     RaporKatalog:
       type: object
-      required: [items]
+      required: [items, kategoriler]
       properties:
         items:
           type: array
           items: { $ref: "#/components/schemas/RaporKatalogOgesi" }
+        kategoriler:
+          type: array
+          items: { type: string }
+          description: >
+            Kategori SIRASI — brief §5'in sirasi. Alfabetik siralamak
+            "Listeler"i "Dokumler"in altina duserirdi.
+    RaporIs:
+      type: object
+      required: [id, kod, bicim, durum, created_at]
+      description: >
+        Arka planda uretilen rapor isi. `dosya_key` DONMEZ: obje anahtari
+        istemciye verilmez (avatar ve duyuru gorseliyle ayni kural);
+        indirme ayri bir uctan alinan kisa omurlu presigned URL ile yapilir.
+      properties:
+        id: { type: string, format: uuid }
+        kod: { type: string }
+        bicim: { type: string, enum: [excel, pdf] }
+        durum: { type: string, enum: [bekliyor, uretiliyor, hazir, hata] }
+        dosya_adi: { type: string, nullable: true }
+        hata:
+          type: string
+          nullable: true
+          description: KULLANICIYA gosterilecek kisa hata kimligi — yigin izi DEGIL.
+        created_at: { type: string, format: date-time }
+        biten_at: { type: string, format: date-time, nullable: true }
     OdemeBilgileri:
       type: object
       required: [odeme_kodu, borc_kurus, kart_aktif]

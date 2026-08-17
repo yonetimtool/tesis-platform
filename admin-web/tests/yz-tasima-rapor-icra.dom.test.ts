@@ -25,8 +25,16 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 
+// (P167 §5) Katalog KATEGORI + ALANLAR + AGIR tasiyor; `agir: false`
+// dogrudan uretim yolunu secer (kuyruk yolunun kendi testi var).
 const KATALOG = {
-  items: [{ kod: "borc_alacak", baslik: "Borç/Alacak", aciklama: "Daire bazinda" }],
+  items: [
+    {
+      kod: "borc_alacak", baslik: "Borç/Alacak", aciklama: "Daire bazinda",
+      kategori: "listeler", alanlar: ["baslangic", "ismi_goster"], agir: false,
+    },
+  ],
+  kategoriler: ["listeler", "ekstreler", "dokumler"],
 };
 
 /** Sunucunun GERCEK sozlesmesi: `anahtar`/`baslik` (RaporSutun). */
@@ -122,13 +130,21 @@ describe("(P160) Rapor Motoru — korunan davranislar", () => {
     await waitFor(() => expect(screen.getByText("Satır yok")).toBeInTheDocument());
   });
 
-  it("SECILI RAPOR ekran okuyucuya bildirilir (aria-pressed)", async () => {
+  it("SECILI RAPOR ekran okuyucuya bildirilir (diyalog basligi)", async () => {
+    // (P167 §5) ESKI OLCUM `aria-pressed`di, cunku secim SAYFA ICINDE
+    // kaliyordu. Artik kart bir MODAL aciyor ve `aria-pressed` ekran
+    // okuyucuya "acik/kapali anahtar" diye YANLIS bilgi verirdi.
+    //
+    // Yeni olcum daha guclu: diyalogun ERISILEBILIR ADI raporun adidir,
+    // yani ekran okuyucu hangi raporu yapilandirdigini kartin
+    // durumundan degil, ACILAN PENCERENIN KENDISINDEN duyar.
     raporSahtele();
     ciz(RaporlarPage);
     const kart = await screen.findByRole("button", { name: /Borç\/Alacak/ });
-    expect(kart).toHaveAttribute("aria-pressed", "false");
+    expect(kart).toHaveAttribute("aria-haspopup", "dialog");
     await userEvent.click(kart);
-    expect(kart).toHaveAttribute("aria-pressed", "true");
+    const diyalog = await screen.findByRole("dialog");
+    expect(diyalog).toHaveAccessibleName(/Borç\/Alacak/);
   });
 });
 

@@ -102,6 +102,29 @@ def presign_put(
     return key, url, settings.minio_url_expire_seconds
 
 
+def sunucudan_yukle(
+    key: str, icerik: bytes, content_type: str
+) -> None:
+    """(P167 §5) SUNUCU TARAFINDAN dosya yaz — presign akisinin TERSI.
+
+    Presign, dosyayi TARAYICININ yuklemesi icindir (foto, ek): sunucuyu
+    megabaytlarca ikili veriye araci yapmamak ve zaman asimini onlemek
+    icin. Rapor kuyrugunda durum tam TERSI — dosyayi WORKER uretiyor ve
+    tarayici ortada YOK. Presign'i zorlamak, worker'in kendi kendine
+    imzalayip kendi kendine PUT atmasi olurdu: ayni bayt iki kez ag
+    uzerinden gecerdi.
+
+    ANAHTAR CAGIRANDAN GELIR ve tenant onekli olmalidir (`make_foto_key`
+    ile ayni kural): bu fonksiyon anahtari DOGRULAMAZ, yalnizca yazar.
+    """
+    _client().put_object(
+        Bucket=settings.minio_bucket,
+        Key=key,
+        Body=icerik,
+        ContentType=content_type,
+    )
+
+
 def delete_objects(keys: list[str]) -> int:
     """Verilen anahtarlari MinIO'dan siler (retention/imha). Kac obje silindigini
     doner. Presign'in aksine SUNUCU-TARAFI cagridir (MinIO ayakta olmali).

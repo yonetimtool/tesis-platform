@@ -98,7 +98,10 @@ export const TESIS_ROTALARI = [
   "/ice-aktarim",
   "/complaints",
   "/notifications",
-  "/yonetisim",
+  "/karar-defteri",
+  "/dokumanlar",
+  "/kvkk-metinler",
+  "/gurultu-uyarilari",
   // (P126.3) Tesis rollerinin KENDI kayitlari (sakin calisma alani).
   "/profil",
   "/aidatim",
@@ -360,7 +363,11 @@ export const ROTA_ROLLERI: Record<string, readonly string[]> = {
   "/ice-aktarim": ["admin", "yonetici"],
   "/complaints": ["admin", "yonetici"],
   "/notifications": ["admin", "yonetici"],
-  "/yonetisim": ["admin", "yonetici"],
+  // (P167 §6.1) "/yonetisim" DORDE BOLUNDU; roller aynen tasindi.
+  "/karar-defteri": ["admin", "yonetici"],
+  "/dokumanlar": ["admin", "yonetici"],
+  "/kvkk-metinler": ["admin", "yonetici"],
+  "/gurultu-uyarilari": ["admin", "yonetici"],
   "/kameralar": ["admin", "yonetici"],
   // Olaylar: guvenlik BILDIRIR (mobilde), yonetim OKUR (burada).
   // (P129) `security` cikarildi — `app.*`ta oturumu yok; kaydi mobilden

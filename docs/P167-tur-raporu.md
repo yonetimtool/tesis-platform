@@ -10,8 +10,8 @@ dürüstçe raporla") aynen uygulandı.
 | 2 | Özet sayfası (dashboard yeniden inşa) | **bitti** |
 | 3 | Web toplu blok/daire hatası | **bitti** |
 | 4 | Finansal İşlemler (8 sayfa) | **bitti** |
-| 5 | Rapor motoru | başlanmadı |
-| 6 | Yönetim başlığı (karar defteri, doküman) | başlanmadı |
+| 5 | Rapor motoru | **bitti** |
+| 6 | Yönetim başlığı (karar defteri, doküman) | **bitti** |
 
 ---
 
@@ -613,6 +613,420 @@ kilitli, eksik burada yazılı. Uç genişletildiğinde tek satırla açılır.
 | `finansal_hareket.durum` | **kısmi fark** | Alan mobil listelerde çizilmiyor. Küçük ekran işi; uç hazır. |
 ---
 
+# AŞAMA 5 — Rapor motoru
+
+## Görev bölümü: sunucu "hangi alanlar", istemci "nasıl çizilir"
+
+Brief "ortak bir RaporModalı yaz; her rapor kendi alan tanımını versin"
+diyor. Kritik soru şu: **alan tanımı nerede durur?**
+
+Katalog artık her rapor için `alanlar: string[]` döndürüyor — o raporun
+gerçekten anlamlandırdığı `RaporParametre` alanları. İstemci o adları
+`lib/rapor-alanlari.ts` sözlüğünden çözüp çiziyor.
+
+Alternatifi — listeyi istemcide tutmak — ölçülebilir bir kusur sınıfı
+açardı: bir rapora yeni süzgeç eklendiğinde iki yer ayrışır, modal alanı
+çizer, kullanıcı doldurur, sunucu yok sayar. **Ekranda hata çıkmaz,
+log'a satır düşmez**; kusur ancak çıktı yanlış geldiğinde fark edilir.
+`tests/rapor-alanlari.test.ts` backend kaynağını okuyup her alan adının
+istemci karşılığı olduğunu doğruluyor.
+
+Tersi de doğru: "nasıl çizilir" sunucuda dursaydı, backend bir form
+kütüphanesi tarif etmeye başlar ve arayüz değiştiğinde sözleşme
+değişmek zorunda kalırdı.
+
+### Bu, eski sayfadaki gerçek bir kusuru kapatıyor
+
+Eski sayfa **sabit dört alan** çiziyordu (başlangıç, bitiş, blok, ad
+sütunu). Yani kasa ekstresi **kasa seçmeden**, firma ekstresi **firma
+seçmeden** çalışıyordu: rapor üretiliyordu ama **sorulan soru
+sorulmuyordu**. Bu bir eksiklik değil, yanlış cevaptı.
+
+## Üç yeni rapor
+
+| Rapor | Kaynak | Karar |
+|---|---|---|
+| **Notlar** | `varlik_eki` (`tur='not'`) | Ayrı bir "not" varlığı **açılmadı** — notlar zaten orada duruyor. Yeni tablo, aynı veriyi iki yerde tutmak olurdu. |
+| **Firma Ekstresi** | `finansal_hareket` + firma | Kasa ekstresiyle aynı şekil, farklı eksen: biri paranın **nerede durduğunu**, öteki **kiminle çalışıldığını** anlatır. |
+| **Hesap Ekstresi** | borç + tahsilat, tek zaman çizgisi | **Yürüyen bakiye** taşır. Borç ve tahsilatı iki ayrı tabloda göstermek, kullanıcıyı bakiyeyi kafadan hesaplamaya bırakırdı — ekstrenin varlık sebebi tam olarak o sorudur. |
+
+**Yön işareti tutara gömülü:** ekstrede "çıkış" yazıp tutarı artı
+göstermek, sütunun toplamını gözle almayı imkânsız kılardı. Gider
+negatif, tahsilat pozitif.
+
+**Brief'in listesinde olmayan iki rapor korundu** (Tahsilat Performansı,
+Denetim Raporu) — genel kısıt "mevcut işlev kaybolmayacak" diyor.
+Dökümler kategorisine kondular.
+
+## Kuyruk — göç 0059 + Celery
+
+Brief: *"büyük raporlar kuyruğa girsin ve hazır olunca indirilebilsin
+(senkron üretim tarayıcıyı kilitler)"*.
+
+Ölçülebilir sorun: `borc_alacak` ve `detayli_borc` **tüm defteri tarar**.
+500 daireli bir sitede bu, her dairenin bütün tahakkuk/tahsilat geçmişini
+okuyup gecikme tazminatını tek tek hesaplamak demek. İstek yolunda
+yapıldığında tarayıcı yanıt gelene kadar bekler, ters vekil zaman aşımı
+sınırına takılabilir ve **zaman aşımında iş yarım kalır** — kullanıcı
+neyin olduğunu bilmez, yeniden dener, sunucu aynı işi bir kez daha yapar.
+
+### Dört karar, dört gerekçe
+
+1. **Ayrı uç, "bazen kuyruğa alan tek uç" değil.** Senkron uç bir
+   **dosya**, kuyruk ucu bir **iş kimliği** döner (202). Aynı ucun bazen
+   dosya bazen JSON döndürmesi, ayrımı unutan bir istemcinin JSON'u dosya
+   diye indirmesine yol açardı.
+2. **Hangi raporun ağır olduğunu sunucu söyler** (`agir` bayrağı). Ölçü
+   istemcide olsaydı, yeni bir ağır rapor eklendiğinde arayüz onu senkron
+   çağırmaya devam ederdi — ve bunu kimse fark etmezdi.
+3. **Üretim mantığı `_uret` ile aynı fonksiyondan geçiyor.** Kuyruk ayrı
+   bir hesaplama yolu değil, aynı hesaplamanın başka bir zamanlaması.
+   İkinci bir üretici yazsaydık, senkron ve kuyruk çıktıları bir gün
+   ayrışırdı.
+4. **"Göster" ağır raporda da senkron.** Kullanıcı ekranda görmek
+   istiyorsa zaten beklemeye razıdır; tabloyu kuyruğa almak, görmek
+   istediği şeyi indirilecek bir dosyaya çevirmek olurdu.
+
+### Veritabanı kısıtı: "hazır ama dosyasız" iş olamaz
+
+`CONSTRAINT ck_rapor_isi_hazir CHECK (durum <> 'hazir' OR dosya_key IS
+NOT NULL)`. Bu hâl, arayüzde tıklanan ve hiçbir şey indirmeyen bir bağlantı
+demektir — kullanıcının sebebini anlayamayacağı bir sessizlik. Kısıt
+uygulamada değil **veritabanında**, çünkü işi yazan iki yol var (uç ve
+worker) ve ikisinde de aynı kuralı hatırlamak gerekirdi.
+
+**Dosya MinIO'da, veritabanında değil:** bir Excel megabaytlarca olabilir
+ve `bytea` sütunu her yedeği, her replikasyonu ve her `SELECT *`i şişirir.
+Tabloda yalnızca anahtar durur; indirme kısa ömürlü presigned URL ile.
+
+**Görünürlük kapısı `user_id`:** rapor çıktısı kişi adları ve site finansı
+taşır; aynı tesisteki başka bir yöneticinin başkasının istediği dosyayı
+görmesi için bir sebep yok — ve bu sızıntı sessizdir. Başkasının işi için
+**404** döner, 403 değil: 403 "senin değil" demek olurdu ve o işin **var
+olduğunu** doğrulardı.
+
+**Hata yutulmaz, kaydedilir:** görev çökerse Celery yeniden dener ve
+kullanıcı sonsuza kadar "üretiliyor" görür. Durum `hata`ya çekilip kısa
+bir kimlik satıra yazılıyor; yığın izi log'a ait ve arayüze sızmamalı.
+
+## Denetçi kararı — `contracts/auth.md` güncellendi
+
+`POST /raporlar/{kod}/kuyruk` **gerçekten bir satır yazar**, yani
+"denetçi hiçbir mutasyon ucunda yer almaz" ilkesinin karşısına çıkıyor.
+Karar: **açık**, ve gerekçesi yazılı istisna listesine eklendi.
+
+Yazdığı şey **kullanıcının kendi isteğinin kaydıdır**: tesis verisinde
+hiçbir şey değişmez, kayıt yalnızca "kim ne istedi, hazır mı" sorusunu
+yanıtlar ve yalnızca sahibi görür. Kapatmak, denetçiyi büyük raporların
+PDF/Excel çıktısından tamamen mahrum bırakırdı — yani denetim görevinin
+ana aracından.
+
+## Brief'ten bilinçli sapma: "beş ayrı alan"
+
+Brief Detaylı Borç için *"Borçlandırma Türü 1* … Türü 5"* diyor. Bu bir
+**modal yerleşimidir**; veri bir **listedir**. API `gelir_gider_tanim_idler:
+list[UUID] (max 5)` alıyor, modal çoklu seçim çiziyor. Beş ayrı alan adı
+açsaydık, altıncısı istendiğinde **sözleşme** değişmek zorunda kalırdı.
+
+## Değiştirilen bir metin: "Excel indir" → "Excel"
+
+Modal düğmesi ağır raporda **indirmiyor, kuyruğa alıyor**. Eski etiket
+artık tutmayan bir söz veriyordu; brief'in düğme listesi de zaten
+`[İptal] [Göster] [PDF] [Excel]`.
+
+## Değiştirilen bir erişilebilirlik ölçümü
+
+Kart eskiden `aria-pressed` taşıyordu (P160), çünkü seçim **sayfa içinde**
+kalıyordu. Artık kart bir **diyalog** açıyor ve `aria-pressed` ekran
+okuyucuya "açık/kapalı bir anahtar" diye yanlış bilgi verirdi. Yerine
+`aria-haspopup="dialog"` kondu ve test daha güçlü bir şey ölçüyor:
+**diyaloğun erişilebilir adı raporun adıdır**, yani ekran okuyucu hangi
+raporu yapılandırdığını kartın durumundan değil açılan pencerenin
+kendisinden duyar.
+
+## Aşama 5 — yeni uçlar ve göç
+
+| Uç | Rol | Not |
+|---|---|---|
+| `POST /raporlar/{kod}/kuyruk?bicim=excel\|pdf` | admin, yönetici, denetçi | 202 + `RaporIs`. `bicim=tablo` **422**. |
+| `GET /raporlar/isler` | admin, yönetici, denetçi | Yalnız kendi işleri, yeniden eskiye. |
+| `GET /raporlar/isler/{id}/indir` | admin, yönetici, denetçi | Presigned URL. Hazır değilse **409**, başkasınınsa **404**. |
+
+**Göç 0059** — `rapor_isi` + `rapor_is_durum` enum + RLS + `ck_rapor_isi_hazir`
++ `ix_rapor_isi_sahip`. `created_at` indeksli: temizlik tarihe göre tarar.
+Bu göç **temizlik işi kurmaz** — retention zaten gecelik çalışıyor
+(`app/retention.py`) ve kural oraya eklenmelidir; burada yalnızca indeks
+hazır bırakıldı.
+
+## Aşama 5 — web/mobil eşitlik
+
+| Madde | Mobilde gerekli mi | Gerekçe |
+|---|---|---|
+| Kategorili kart ızgarası | **hayır** | On beş raporluk bir yapılandırma ızgarası masa başı işi. Mobilin rapor ihtiyacı (aidatım, borcum) kendi ekranlarında karşılanıyor. |
+| Ortak RaporModalı | **hayır** | Yukarıdakinin parçası. |
+| Kuyruk + iş listesi | **kısmi fark, uç hazır** | Uçlar role göre açık; mobil bir gün rapor isterse aynı kuyruğu kullanır. Bugün mobilde rapor üretim ekranı yok, o yüzden ekran yazılmadı. |
+| Üç yeni rapor | **otomatik eşit** | Sunucuda; herhangi bir istemci aynı çıktıyı alır. |
+
+---
+
+# AŞAMA 6 — Yönetim başlığı
+
+## 6.1 "Yönetişim" kaldırıldı — ve dörde bölündü
+
+Brief: *"Yönetişim alt başlığı tamamen kaldırılsın."*
+
+Ama o başlığın arkasında **dört ayrı iş** duruyordu: karar defteri,
+doküman arşivi, KVKK aydınlatma metni ve gürültü uyarıları. Brief bunlardan
+yalnızca ikisini adıyla anıyor (§6.2, §6.3).
+
+Kalan ikisini de sessizce yok etmek genel kısıtla çelişirdi ("mevcut işlev
+kaybolmayacak") — ve kayıp **sessiz** olurdu: uçlar durur, veri durur, ama
+panelde ulaşılacak hiçbir yol kalmaz. Bu yüzden dördü de kendi menü
+satırına çıktı ve `tests/yonetim-bolunmesi.test.ts` bunu kilitliyor.
+
+Zaten "Yönetişim" bir **iş değil bir soyutlamaydı**: kullanıcı menüde
+"yönetişim" aramaz, "karar defteri" arar. Tek satırın arkasına dört iş
+gizlemek, dördünü de bulunamaz kılıyordu.
+
+**KVKK metni ile `/kvkk` ayrı satırlar:** biri tesisin **yayınladığı**
+aydınlatma metni, öteki kullanıcının **kendi** pazarlama tercihi. Aynı
+satıra koymak ikisini karıştırmak olurdu.
+
+Bölerken **yetki değişmedi** (dördü de admin+yönetici) — bölme sırasında
+yanlışlıkla genişletmek, KVKK metni yayınlama yetkisini başka bir role
+açmak olurdu. Test bunu da ölçüyor.
+
+## 6.2 Karar Defteri
+
+Liste + "+ Karar Ekle" modalı (Konu*, No, Tarih, Karar Metni, Başkan,
+**birden fazla Üye satırı**).
+
+**Form sayfadan modala taşındı.** Eskiden liste ile form aynı sayfadaydı;
+uzun bir karar metni yazarken liste ekrandan kayıyor ve "hangi numaradan
+devam ediyorum" sorusu göz denetimine kalıyordu.
+
+**Üyeler artık ad + görev.** Eski hâl tek bir çok-satırlı kutuydu ve
+üyenin görevini taşıyamıyordu — oysa sunucu modeli `{ad, gorev}` bekliyor.
+
+### Karar numarası artık zorunlu değil — ve merkezî seriden geliyor
+
+Brief'in alan listesinde yıldız yalnız "Konu"da. Numara boş bırakılırsa
+sunucu üretiyor: `KRR-2026-000001`.
+
+**Ayrı bir sayaç yazılmadı.** Aşama 4'ün zorunlu ilkesi *"belge
+numaralandırma merkezî olsun, her modül kendi numarasını üretmesin"*.
+Karar defteri de bir belge serisidir; kendi sayacını açsaydı yıl dönümü
+sıfırlaması ve işlem-geri-alma davranışı iki ayrı yerde yaşar ve biri
+günün birinde ötekinden ayrışırdı.
+
+Kullanıcının yazdığı numara **korunuyor**: elinde gerçek bir karar
+numarası olan kişi engellenmemeli.
+
+## 6.3 Doküman Yönetimi
+
+Liste + "+ Dosya Yükle" + Excel ikonu; seçim sütunu, Eklenme Tarihi,
+Doküman Adı, satır işlemleri, sunucu taraflı sayfalama; sürükle-bırak
+yükleme, boyut/tür sınırı ve ilerleme göstergesi.
+
+### Üç gerçek eksik kapandı — üçü de sessizdi
+
+1. **İndirme yoktu.** Dosya yüklenebiliyor ve listelenebiliyordu ama
+   **indirilemiyordu** — arşivin tek amacı olan şey yapılamıyordu. Yeni
+   uç `GET /dokumanlar/{id}/indir` kısa ömürlü bir bağlantı döner. Obje
+   anahtarı değil URL: anahtar istemciye verilseydi hem depo yapısı
+   dışarı sızar hem de iznin **süresi** kaybolurdu.
+2. **Silme depoda çöp bırakıyordu.** Kayıt siliniyor, MinIO objesi
+   kalıyordu. Gerekçe *"yanlışlıkla silinen bir yönetim planı geri
+   alınabilsin"*di — ama kayıt gittiği için dosyaya yalnızca **depoya
+   elle bağlanan** biri ulaşabiliyordu. Yani pratikte geri alınamıyor,
+   buna karşılık obje sonsuza kadar duruyordu.
+3. **Yükleme akışı yoktu.** Sayfa yalnızca listeliyordu; dosyanın başka
+   bir ekrandan gelmiş olması gerekiyordu.
+
+### Retention: brief'in isteği bilinçli olarak *dar* yorumlandı
+
+Brief *"dosyalar retention politikasına dahil edilsin"* diyor. Bunu
+"yönetim dokümanlarını N ay sonra sil" diye okumak **yanlış** olurdu ve
+söylemekte fayda var: yönetim planı, bütçe, bilanço ve genel kurul
+tutanağı **kişisel veri değil, tesisin kendi arşividir**. KVKK'nın saklama
+sınırlaması kişisel veri içindir; site arşivini yaşla silmek, mevzuatın
+istemediği ve **geri alınamaz** bir kayıp yaratırdı.
+
+Gerçek eksik başka yerdeydi ve ölçülebilirdi: silinen kaydın **artığı**.
+Göç 0060 `silindi_at` ekliyor:
+
+* Silme artık **yumuşak**: kayıt listeden kalkar, obje ve satır bir süre
+  daha durur — "yanlışlıkla sildim" penceresi **artık gerçekten var**.
+* Gecelik retention süresi dolanların **önce MinIO objesini sonra
+  satırını** siler — kargo/talep fotoğrafıyla aynı desen: depo
+  erişilemezse satır o gece silinmez, yani obje asla kayıtsız kalmaz.
+* Ay değil **gün** (varsayılan 30): bu bir saklama sınırı değil, bir geri
+  dönüş penceresi.
+
+Yani dokümanlar retention politikasına **girdi** — ama giren şey arşivin
+kendisi değil, silinmiş olanın artığı.
+
+### Excel: ikinci bir yazıcı yazılmadı
+
+Brief bu ekranda bir Excel dışa-aktarım ikonu istiyor. Rapor motorunun
+Excel/PDF hattı zaten var; sütun biçimlendirmesi ve site başlığı orada.
+Ayrı bir yazıcı, para/tarih biçimlerinin iki yerde yaşaması ve birinde
+düzeltilen bir hatanın ötekinde kalması olurdu.
+
+Bunun yerine kataloğa `dokuman_listesi` raporu eklendi (Dökümler). Yan
+fayda: liste artık Raporlar ekranından da alınabiliyor. **Silinmişler her
+iki çıktıda da yok** — ekranda görünmeyen bir satırın Excel'de görünmesi,
+iki çıktının aynı soruya farklı cevap vermesi olurdu.
+
+**Boyut sütunu "sayı" tipinde**, metin değil: `"1,2 MB"` yazsaydık hücre
+Excel'de toplanamazdı.
+
+## Aşama 5/6 — kilitlerde iki değişiklik
+
+### `MUTASYON_OLMAYAN_POSTLAR` → `DENETCI_ISTISNALARI`
+
+`POST /raporlar/{kod}/kuyruk` denetçiye açık ve **gerçekten bir satır
+yazıyor** (`rapor_isi`). Yapısal test bunu haklı olarak yakaladı: denetçiye
+açık GET-dışı her uç, gerekçesi yazılı bir istisna listesinde olmak zorunda.
+
+Eklerken listenin adının **yalan söylediğini** gördüm: içindeki
+`PATCH /me/avatar` de bir satırı gerçekten değiştiriyor. Yanlış adlı bir
+kilit, bir gün *"ama bu mutasyon değil ki"* denerek genişletilirdi. Ad
+`DENETCI_ISTISNALARI` oldu ve gerçek ölçü yazıldı: **"tesisin defterine
+yazmıyor."** Denetçinin salt-okurluğu tesisin kayıtları içindir; kişinin
+kendi hesabına ait işlem ve kendi isteğinin kaydı o kapsamın dışındadır.
+`contracts/auth.md` de güncellendi.
+
+### Rol matrisi kilidi
+
+Üç yeni uç (`/raporlar/{kod}/kuyruk`, `/raporlar/isler`,
+`/raporlar/isler/{id}/indir`) ve `GET /dokumanlar/{id}/indir` eklendi;
+kilit yeniden üretilip satır satır doğrulandı.
+
+## Ölçüm hatası — dürüstçe
+
+Aşama 5'in 29 dakikalık takım koşumu **3 kırmızı** verdi. Biri gerçekti
+(yukarıdaki denetçi istisnası); **ikisi benim ölçüm hatamdı**.
+
+`infra/docker-compose.yml` api servisine `../contracts:/contracts:ro`
+**canlı mount** ediyor, ama `backend/` kodunu imaja **gömüyor**. Koşum
+sürerken Aşama 6'nın openapi girdilerini yazınca sözleşme yenisini,
+çalışan uygulama eskisini gördü: `GET /dokumanlar/{id}/indir` uygulamada
+yoktu, 404 döndü ve test bunu *"korumasız uç, her role IZIN"* diye
+raporladı — yani sahte bir güvenlik açığı gibi göründü.
+
+Uçta gerçekte `require_role("admin","yonetici")` vardı; imaj yeniden
+kurulduğunda matris `IZIN IZIN RED RED RED RED RED` verdi. Ders: takım
+koşarken `contracts/` altını düzenleme.
+
+## Aşama 6 — yeni uçlar ve göç
+
+| Uç / değişiklik | Not |
+|---|---|
+| `GET /dokumanlar/{id}/indir` | **yeni.** Kısa ömürlü presigned URL. Silinmişte 404. |
+| `DELETE /dokumanlar/{id}` | **davranış değişti:** yumuşak silme. İkinci silme 404. |
+| `GET /dokumanlar` | Silinmişler listede ve `meta.total`da **yok**. |
+| `POST /karar-defteri` | `karar_no` artık **opsiyonel**; boşsa `KRR-…` merkezî seriden. |
+| `POST /raporlar/dokuman_listesi` | **yeni rapor** (Dökümler kategorisi). |
+| **Göç 0060** | `tenant_dokuman.silindi_at` + iki kısmi indeks (canlı liste / süpürme). |
+| `app/retention.py` | Silinmiş dokümanların gecelik süpürmesi (önce depo, sonra satır). |
+
+## Aşama 6 — web/mobil eşitlik
+
+| Madde | Mobilde gerekli mi | Gerekçe |
+|---|---|---|
+| Karar defteri | **hayır** | Yönetim kurulu kararı yazmak masa başı işi; uzun metin girişi telefonda aracı yanlış işe koşmaktır. Sakinin karar defterini **okuma** ihtiyacı ayrı bir istektir ve brief'te yok. |
+| Doküman yönetimi | **hayır (yükleme), açık soru (okuma)** | Yükleme masa başı işi. Sakinin yönetim planına telefondan bakmak istemesi makul bir ihtiyaç ama brief bunu istemiyor ve uç bugün admin+yönetici'ye kapalı — açmak bir **yetki kararıdır**, sessizce alınmamalı. |
+| KVKK metni yayınlama | **hayır** | Hukuki metin yayınlama; sürüm mantığı ve geri alınamazlığı masaüstünde kalmalı. |
+| Gürültü uyarıları | **kısmi fark, uç hazır** | Uç açık; mobilde ekran yok. Anons "yapıldı" işaretlemesi saha işi olabilir — mobil bir gün isterse aynı uç kullanılır. |
+| Merkezî karar numarası | **otomatik eşit** | Sunucuda. |
+| Yumuşak silme + süpürme | **otomatik eşit** | Sunucuda. |
+
+---
+
+## Değişen dosyalar (Aşama 5)
+
+**Sözleşme + göç**
+- `contracts/openapi.yaml` — 3 yeni yol (`/raporlar/{kod}/kuyruk`,
+  `/raporlar/isler`, `/raporlar/isler/{id}/indir`), `RaporIs` şeması,
+  genişletilmiş `RaporKatalogOgesi`/`RaporKatalog`, ~19 yeni
+  `RaporParametre` alanı
+- `contracts/db/migrations/versions/0059_rapor_isi.py` — `rapor_isi` +
+  `rapor_is_durum` enum + RLS + `ck_rapor_isi_hazir` + `ix_rapor_isi_sahip`
+- `contracts/auth.md` — denetçi istisna listesi (kuyruk ucu, gerekçesiyle)
+
+**Backend**
+- `app/routers/rapor_motoru.py` — `KatalogKaydi` (kategori/alanlar/ağır),
+  15 raporluk katalog, 3 yeni rapor dalı, `_param()`, 3 kuyruk ucu
+- `app/rapor_kuyruk.py` *(yeni)* — `isi_uret()`; owner ile tenant çözümü,
+  sonra `tenant_session`; `_uret` ile **aynı** üretim
+- `app/tasks.py` — `rapor.uret` Celery görevi (`max_retries=2`)
+- `app/models.py` — `RaporIsi` + `RAPOR_IS_DURUM`
+- `app/schemas.py` — `RaporIsOut`, genişletilmiş katalog/parametre
+- `app/raporlar.py` — `RaporParam`e karşılık gelen yeni alanlar
+- `app/storage.py` — `sunucudan_yukle()`
+- `app/hata_metinleri.py` — `rapor_isi_bulunamadi`, `rapor_isi_hazir_degil`
+  (7 dil)
+
+**Web**
+- `app/(protected)/raporlar/page.tsx` — kategorili kart ızgarası + iş listesi
+- `components/rapor/rapor-modali.tsx` *(yeni)* — ortak modal, 4 düğme
+- `lib/rapor-alanlari.ts` *(yeni)* — alan sözlüğü (nasıl çizilir)
+- `app/api/panel/rapor/{[kod]/kuyruk,isler,isler/[is_id]/indir}/route.ts`
+  *(yeni)*
+- 7 dilde ~50 anahtar; `raporExcel`/`raporPdf` metinleri düzeltildi
+
+**Test**
+- `tests/rapor-alanlari.test.ts`, `tests/rapor-motoru.dom.test.ts` *(yeni)*
+- `backend/tests/test_rapor_kuyruk.py` *(yeni)*
+- `tests/rapor.dom.test.ts`, `tests/yz-tasima-rapor-icra.dom.test.ts` —
+  yeni sayfa şekline göre güncellendi (`aria-pressed` ölçümü daha güçlü
+  bir ölçümle değişti)
+- `tests/i18n.test.ts` — "Excel" ürün adı istisnası
+
+## Değişen dosyalar (Aşama 6)
+
+**Sözleşme + göç**
+- `contracts/openapi.yaml` — `GET /dokumanlar/{id}/indir` *(yeni)*,
+  `DELETE /dokumanlar/{id}` yumuşak silmeye göre yeniden yazıldı,
+  `KararDefteriCreate.karar_no` artık opsiyonel
+- `contracts/db/migrations/versions/0060_dokuman_saklama.py` —
+  `silindi_at` + iki kısmi indeks
+- `contracts/auth.md` — `DENETCI_ISTISNALARI` ad değişikliği ve gerçek ölçü
+
+**Backend**
+- `app/routers/yonetisim.py` — yumuşak silme, indirme ucu, listede
+  `silindi_at IS NULL`, karar numarası merkezî seriden
+- `app/belge_no.py` — `karar` → `KRR` ön eki
+- `app/models.py` — `TenantDokuman.silindi_at`
+- `app/schemas.py` — `KararDefteriCreate.karar_no` opsiyonel
+- `app/retention.py` — silinmiş dokümanların gecelik süpürmesi
+- `app/config.py` — `retention_dokuman_grace_days` (30)
+- `app/routers/rapor_motoru.py` — `dokuman_listesi` raporu
+- `app/hata_metinleri.py` — `dokuman_bulunamadi` (7 dil)
+
+**Web**
+- `app/(protected)/karar-defteri/page.tsx` *(yeni)*
+- `app/(protected)/dokumanlar/page.tsx` *(yeni)*
+- `app/(protected)/kvkk-metinler/page.tsx` *(yeni)*
+- `app/(protected)/gurultu-uyarilari/page.tsx` *(yeni)*
+- `app/(protected)/yonetisim/page.tsx` **silindi**
+- `app/api/panel/dokumanlar/{route.ts,[id]/route.ts,[id]/indir/route.ts}`
+  *(yeni)* — üçü birden gerekli: düz segment dinamiği yener, aksi hâlde
+  liste ve silme sessizce 404 verirdi
+- `lib/menu.ts` (+`doc` ikonu), `lib/yuzey.ts`, `middleware.ts`,
+  `components/AppShell.tsx`
+- 7 dilde ~50 anahtar
+
+**Test**
+- `tests/yonetim-bolunmesi.test.ts` *(yeni)* — bölünme + yetkinin
+  genişlemediği
+- `backend/tests/test_dokuman_karar.py` *(yeni)*
+- `backend/tests/test_retention.py` — doküman süpürme testi (iki yönlü)
+- `backend/tests/test_denetci_salt_okuma.py` — sabit yeniden adlandırıldı
+- `tests/rol-menusu.test.ts`, `tests/yz-asama10-tarama.dom.test.ts` —
+  dört yeni rota
+
 ## Değişen dosyalar (Aşama 1)
 
 **Sözleşme + göç**
@@ -713,7 +1127,52 @@ sınırını kilitleyen tek ölçüm.
 
 ---
 
-## Test sunucusunda ne göreceksiniz — ekran ekran
+## Test çıktısı (Aşama 5 ve 6)
+
+- **Web:** `131 dosya / 1269 test — hepsi yeşil.` `tsc --noEmit` temiz,
+  `next build` geçti.
+- **Backend tam takım: `1774 geçti, 0 düştü`** (1 atlandı — `world`
+  fixture'ında daireye bağlı sakin yok; bu turdan bağımsız, önceden
+  var olan bir atlama). Süre 29 dk 10 sn.
+- **Yetki matrisi kilidi** dört yeni uç için yenilendi ve diff satır satır
+  doğrulandı:
+  `GET /dokumanlar/{id}/indir` → admin+yönetici;
+  `POST /raporlar/{kod}/kuyruk`, `GET /raporlar/isler`,
+  `GET /raporlar/isler/{id}/indir` → admin+yönetici+denetçi.
+
+### Yol boyunca düşen testler ve nedenleri
+
+**1. `test_denetci_salt_okuma::test_denetci_hicbir_mutasyon_ucunda_YOK` —
+gerçek ve haklı.** `POST /raporlar/{kod}/kuyruk` denetçiye açık ve
+gerçekten bir satır yazıyor. Yapısal kural bunu gerekçeli bir istisna
+listesinde görmek istiyor. Eklerken listenin **adının yalan söylediği**
+görüldü (ayrıntı yukarıda) ve ad `DENETCI_ISTISNALARI` oldu.
+
+**2–3. `test_yetki_kapsam` iki testi — ölçüm hatası, kod hatası değil.**
+Ayrıntı "Ölçüm hatası — dürüstçe" başlığında: koşum sürerken
+`contracts/openapi.yaml` düzenlendi, sözleşme yenisini uygulama eskisini
+gördü. İmaj yeniden kurulunca ikisi de yeşile döndü.
+
+**4. `tests/middleware.test.ts` — bu turun kusuru ve gerçek bir açık
+yakaladı.** Dört yeni rota `middleware.ts` matcher'ına eklenmemişti;
+matcher kapsamayınca o rotalar **auth kapısını atlardı**. Test iki yönlü
+olduğu için hem eksik girişi hem de kaldırılan `/yonetisim` girişini
+gösterdi.
+
+**5. `tests/erisilebilir-etiket.test.ts` — bu turun kusuru.** Doküman
+yükleme ekranındaki gizli `<input type="file">` adsızdı. `hidden` olması
+görünmezliği sağlar ama girdi hâlâ erişilebilirlik ağacında; ekran
+okuyucu adsız bir dosya denetimi okurdu. `aria-label` eklendi.
+
+**6. `tests/sabit-metin.test.ts` ve `tests/i18n.test.ts` — depo
+kuralları.** Üçlüde dizge yazılmıştı (rozet kimliği, girdi tipi, sözlük
+anahtarı — hiçbiri kullanıcı metni değil, sabite çıkarıldı) ve "Excel"
+yedi dilde aynı olduğu için TR kopyası sanıldı; ürün adı olarak istisna
+listesine eklendi (kardeşi "PDF" zaten kısaltma olduğu için geçiyordu).
+
+---
+
+## Test sunucusunda ne göreceksiniz — ekran ekran (Aşama 1)
 
 1. **Giriş sonrası ilk ekran.** Sol menü artık kısa: en üstte ikonlu
    **Özet** satırı, altında **kapalı** altı ana başlık (Güvenlik · Tesis ·
@@ -745,3 +1204,137 @@ sınırını kilitleyen tek ölçüm.
 10. **Şifre değiştir.** Üç alanda da göz ikonu.
 11. **Menüyü daraltın (logo yanındaki ok).** 68 px'lik şeritte ikonlar
     kalır; Kurulum sihirbazı ikonu da orada durur.
+
+---
+
+## Test sunucusunda ne göreceksiniz — ekran ekran (Aşama 2: Özet)
+
+1. **Özet sekmesi.** En üstte **altı kısayol widget'ı**. "Paneli düzenle"ye
+   basın: widget'lar sürüklenebilir hâle gelir, göz ikonuyla bölüm
+   gizlenir, "Varsayılana dön" her şeyi geri alır. Çıkın ve **başka bir
+   tarayıcıdan aynı kullanıcıyla girin** — düzeniniz orada (tercih
+   kullanıcı başına sunucuda).
+2. **Finansal özet.** Altı kart: Borçlandırılan · Tahsil Edilen ·
+   Borçlarım · Alacaklarım · **Onay Bekleyen Hareketler** · Ödenmiş
+   Faturalar. Rakamlar **doğrudan** yazılıyor — sayaç animasyonu yok
+   (brief'in açık isteği).
+3. **Kasalar paneli** ayrı bir kart; altında **Genel Toplam** ve sağ üstte
+   iki ikon: yeşil tablo (Excel), kırmızı belge (PDF). Tıklayın, dosya
+   iner.
+4. **Takvim.** Gün / Hafta / Ay düğmeleri, ok tuşlarıyla gezinme, bugün
+   vurgulu, sağ üstte tam ekran. İçini besleyen altı kaynak: yaklaşan
+   etkinlikler, devriye planları, aidat son ödeme günleri, görev
+   termini, rezervasyonlar ve **sizin eklediğiniz hatırlatmalar**.
+5. **Hatırlatma ekleyin.** Başlık, tarih-saat, açıklama, renk/kategori ve
+   tekrar (yok / günlük / haftalık / aylık). "Her ayın 31'i" seçip Şubat'a
+   gidin: hatırlatma **ayın son gününe** düşer — kaybolmaz, Mart'a da
+   kaymaz.
+6. **Bir olaya tıklayın.** Detay penceresi açılır; "Kayda git" sizi ilgili
+   ekrana götürür.
+7. **Sağ üstte 3D site maketi.** Harita bu sayfadan **tamamen kaldırıldı**.
+
+## Test sunucusunda ne göreceksiniz — ekran ekran (Aşama 3: toplu blok hatası)
+
+1. **Tanımlar → Bloklar.** Mevcut blok sayısını not edin.
+2. **Daireler → Toplu daire ekle.** Blok adına daha önce **hiç
+   kullanılmamış** bir ad yazın (örn. "F Blok"), 1–10 daire oluşturun.
+3. **Bloklar'a dönün.** "F Blok" artık **listede** — düzenlenebilir ve
+   silinebilir. Eskiden bu kayıt "kayıtsız (yalnızca dairede)" olarak
+   görünüyor ve hiçbir şey yapılamıyordu.
+4. **Onarım göçünün sonucu:** göç 0057 uygulandığı için **eskiden kalan**
+   kayıtsız bloklar da listede. Göç yalnızca `INSERT` yapar, hiçbir
+   daireye dokunmaz — veri kaybı riski yoktur, bu yüzden sorulmadan
+   yazıldı.
+
+## Test sunucusunda ne göreceksiniz — ekran ekran (Aşama 4: Finansal İşlemler)
+
+1. **Finansal İşlemler'i açın.** Sekiz ayrı sayfa: Borçlandırmalar ·
+   Tahsilatlar · Giderlerim · Gelirlerim · Virman · Ödeme İadesi ·
+   Açılış Fişleri · İcra Dosyaları.
+2. **Her sayfada aynı iskelet:** DataTable liste · "+ Yeni" · satır
+   menüsünde işlemler · sağ üstte Excel ve PDF ikonları.
+3. **Bir gider girin.** Belge No'yu **boş bırakın** — kayıttan sonra
+   listede `GID-2026-000001` gibi bir numara göreceksiniz. Bir tahsilat
+   girin: `TAH-…`. Seriler **tip ve yıl başına ayrı**, merkezî sayaçtan
+   geliyor; hiçbir modül kendi numarasını üretmiyor.
+4. **Elle numara yazın.** Yazdığınız değer korunur — sayaç sizi ezmez.
+   Aynı numarayı ikinci kez yazmayı deneyin: veritabanı reddeder.
+5. **Silme yok.** Hiçbir finans satırında "Sil" yok; düzeltme yolu iptal
+   veya ters kayıt. Bu bilerek: muhasebe kaydını yerinde değiştirmek
+   geçmiş raporları geriye dönük değiştirirdi.
+6. **İcra Dosyaları.** "+ Yeni" ile dosya açın; kişi seçtiğinizde sağda
+   **açık evrakları** listelenir. Durum seçimi dosyanın aşamasını taşır.
+
+## Test sunucusunda ne göreceksiniz — ekran ekran (Aşama 5: Rapor motoru)
+
+1. **Raporlar'ı açın.** Artık düz bir liste değil: **üç bölüm** —
+   Listeler · Ekstreler · Dökümler — her biri ikonlu kartlardan oluşan bir
+   ızgara. Kart adları ve bölümleri **sunucudan** geliyor.
+2. **"Kasa Ekstresi" kartına tıklayın.** Yapılandırma modalı açılır ve
+   içinde **Kasa** seçimi var. Eskiden bu alan yoktu; ekstre kasa
+   sorulmadan üretiliyordu.
+3. **"Site Sakinleri Listesi"ne tıklayın.** Alanlar **tamamen farklı**
+   (Listeleme tipi · Blok · Ad sütunu · İmza alanı). Her rapor kendi alan
+   listesini sunucudan alıyor.
+4. **Dört düğme:** `[İptal] [PDF] [Excel] [Göster]`. "Göster" tabloyu
+   ekranda çizer, toplam satırıyla birlikte.
+5. **"Borç/Alacak" kartını açın.** Modalın üstünde bir uyarı: bu rapor tüm
+   defteri tarar, PDF/Excel isteği **kuyruğa alınır**. Excel'e basın —
+   dosya inmez, "Rapor kuyruğa alındı" bildirimi gelir.
+6. **Sayfanın altında "Rapor İşlerim" tablosu belirir.** Durum önce
+   *Sırada*, sonra *Üretiliyor*, sonra *Hazır* olur — liste kendi kendine
+   tazelenir, yenilemenize gerek yok. Hazır olunca **İndir** düğmesi
+   çıkar; hazır olmadan o düğme **hiç çizilmez**.
+7. **Üç yeni rapor deneyin:** *Notlar* (kayıtlara düşülen notlar),
+   *Firma Ekstresi* (gider negatif, tahsilat pozitif), *Hesap Ekstresi*
+   (borç ve tahsilat tek zaman çizgisinde, **yürüyen bakiye** sütunuyla).
+8. **Denetçi hesabıyla girin.** Rapor motoru ve kuyruk açık — denetim
+   görevinin ana aracı. Saha rolleri (güvenlik, görevli, sakin) 403 alır.
+9. **Başka bir yöneticiyle girin.** "Rapor İşlerim" listesi **boş**:
+   herkes yalnızca kendi işlerini görür ve yalnızca kendi dosyasını
+   indirebilir.
+
+## Test sunucusunda ne göreceksiniz — ekran ekran (Aşama 6: Yönetim)
+
+1. **Sol menüde Yönetim'i açın.** "Yönetişim" satırı **yok**. Yerine dört
+   ayrı satır: **Karar Defteri · Doküman Yönetimi · KVKK Metinleri ·
+   Gürültü Uyarıları** (Kullanıcılar, Şeffaflık, Denetim kaydı, Yetki ve
+   KVKK tercihlerim yerinde duruyor).
+2. **Karar Defteri.** Liste + sağ üstte "Karar Ekle". Modalı açın:
+   Konu\*, Karar No, Tarih, Başkan, Karar Metni\* ve **Üye satırları**
+   (her satırda ad + görev; "Üye Satırı Ekle" ile çoğaltılır, son satır
+   silinemez).
+3. **Numarayı boş bırakıp kaydedin.** Listede `KRR-2026-000001` görünür.
+   Bir tane daha ekleyin: `…000002`. Alanın altındaki ipucu bunu zaten
+   söylüyor. Kendi numaranızı yazarsanız **o korunur**.
+4. **Satırdaki "PDF"ye tıklayın.** Karar metni sayfası açılır — karar bir
+   *yazıdır*, tabloya sıkıştırılmadı.
+5. **Doküman Yönetimi.** Sağ üstte yeşil **Excel** ikonu ve "Dosya Yükle".
+   Tablo: seçim kutusu · Eklenme Tarihi · Doküman Adı · Yükleyen · Boyut ·
+   işlemler. 25'ten fazla kayıt varsa altta **Önceki / Sonraki**.
+6. **"Dosya Yükle"ye basın.** Kesikli çerçeveli alana dosya **sürükleyin**
+   (ya da tıklayıp seçin — klavyeyle de açılır). Doküman adı dosya
+   adından ön-dolar ama düzenlenebilir. Yükleme sırasında **ilerleme
+   çubuğu** ve yüzde görünür.
+7. **25 MB'tan büyük bir dosya deneyin.** Yükleme **başlamadan** uyarı
+   alırsınız — sınır, dakikalarınızı harcadıktan sonra değil önce
+   kontrol edilir.
+8. **"İndir"e basın.** Dosya yeni sekmede açılır. Bu düğme **yeniydi**:
+   daha önce yüklenen bir doküman panelden hiçbir şekilde alınamıyordu.
+9. **Bir dokümanı silin.** Onay metni size dosyanın *bir süre saklanıp
+   sonra kalıcı silineceğini* söyler. Kayıt listeden kalkar; aynı
+   bağlantıya gitmeyi denerseniz bulunamaz. Arka planda obje bir süre
+   daha durur ve gecelik iş süresi dolanları temizler.
+10. **Birden çok satır seçin.** Üstte "Seçilenleri sil (n)" şeridi çıkar.
+11. **Raporlar → Dökümler → "Doküman Listesi".** Aynı liste; Excel'de
+    boyut sütunu **sayı** olduğu için toplam alınabiliyor. Silinmiş
+    dokümanlar burada da **yok**.
+12. **KVKK Metinleri.** Yayınlanmış sürümler listesi + yeni sürüm formu.
+    Aynı gövdeyi ikinci kez yayınlamayı denerseniz reddedilir —
+    yayınlanmış metnin gövdesi **değiştirilemez**, her yayın yeni bir
+    sürümdür.
+13. **Gürültü Uyarıları.** Eşiği aşan şikâyetler; "Anons bekliyor"
+    olanlarda **"Yapıldı"** düğmesi var, ötekilerde yok.
+14. **Saha rolleriyle girin** (güvenlik / görevli / sakin). Dört satırın
+    hiçbiri menüde yok ve adres çubuğuna yazsanız da açılmıyor.
+

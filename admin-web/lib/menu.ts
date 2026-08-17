@@ -17,7 +17,7 @@ export type IconName =
   | "grid" | "building" | "clock" | "scan" | "route" | "check"
   | "box" | "home" | "edit" | "pin" | "money" | "chart"
   | "users" | "megaphone" | "chat" | "bell" | "hub" | "gear"
-  | "shield";
+  | "shield" | "doc";
 
 /** Bolum kimlikleri. Sira BURADAKI siradir (menude de bu sirayla cizilir). */
 export type GrupId =
@@ -336,9 +336,18 @@ const OGELER: readonly MenuOgesi[] = [
 
   { href: "/users", anahtar: "kabukKullanicilar", icon: "users", grup: "yonetim" },
   { href: "/transparency", anahtar: "kabukSeffaflik", icon: "money", grup: "yonetim" },
-  // (P40) Yonetisim denetim kaydinin YANINDA: ikisi de "ne karar alindi,
-  // kim ne yapti" sorusunu yanitlar.
-  { href: "/yonetisim", anahtar: "kabukYonetisim", icon: "building", grup: "yonetim" },
+  // (P167 §6.1) "YONETISIM" BASLIGI KALDIRILDI ve icindeki dort bolum
+  // KENDI SATIRLARINA cikti. Eski hâlde tek bir satirin arkasinda karar
+  // defteri, dokuman arsivi, KVKK metni ve gurultu uyarilari duruyordu —
+  // yani menude aranan hicbiri BULUNAMIYORDU. "Yonetisim" bir is degil
+  // bir SOYUTLAMADIR; kullanici "karar defteri"ni arar.
+  { href: "/karar-defteri", anahtar: "kabukKararDefteri", icon: "doc", grup: "yonetim" },
+  { href: "/dokumanlar", anahtar: "kabukDokumanlar", icon: "doc", grup: "yonetim" },
+  // KVKK METNI ile `/kvkk` AYRI SEYLER: biri tesisin YAYINLADIGI
+  // aydinlatma metni, oteki kullanicinin KENDI pazarlama tercihi.
+  // Ayni satira koymak ikisini karistirmak olurdu.
+  { href: "/kvkk-metinler", anahtar: "kabukKvkkMetinler", icon: "doc", grup: "yonetim" },
+  { href: "/gurultu-uyarilari", anahtar: "kabukGurultuUyarilari", icon: "bell", grup: "yonetim" },
   { href: "/audit", anahtar: "kabukDenetimKaydi", icon: "scan", grup: "yonetim" },
   // (P41) Yetki matrisi denetimin yaninda.
   { href: "/yetki", anahtar: "kabukYetki", icon: "users", grup: "yonetim" },

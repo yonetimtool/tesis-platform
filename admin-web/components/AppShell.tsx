@@ -99,6 +99,14 @@ function Icon({ name }: { name: IconName }) {
         <line x1="9" y1="11" x2="9" y2="11" /><line x1="15" y1="11" x2="15" y2="11" />
         <path d="M10 21v-3h4v3" />
       </>);
+    // (P167 §6) Belge/dosya — karar defteri, dokuman arsivi, KVKK metni.
+    // `scan` (denetim) ile karistirilmasin diye AYRI bir ikon: ucu de
+    // "yazili belge"dir ve menude yan yana dururlar.
+    case "doc":
+      return svg(<>
+        <path d="M7 3h7l4 4v14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" />
+        <path d="M14 3v5h4M9 13h6M9 17h4" />
+      </>);
     case "clock":
       return svg(<><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></>);
     case "scan":

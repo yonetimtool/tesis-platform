@@ -106,6 +106,12 @@ describe("sozluk butunlugu", () => {
     // YANLIS gosterirdi — alan yine TR numarasi bekliyor. Kalibi ceviren
     // bir "duzeltme", kullaniciya olmayan bir bicimi ogretirdi.
     "05XX XXX XX XX",
+    // (P167 §5) Rapor modalinin dosya bicimi dugmesi. "Excel" bir URUN
+    // ADIDIR (Microsoft Excel) ve yedi dilin hepsinde ayni yazilir —
+    // Arapcada da Latin harfleriyle, cunku dosya uzantisi ve program adi
+    // cevrilmez. Kardesi "PDF" zaten kisaltma oldugu icin gecmisti;
+    // ikisini ayri muamele etmek tutarsiz olurdu.
+    "Excel",
     // (P133.2) Ozet cumlesinin yan cumle AYIRICISI. Ceviri degil NOKTALAMA:
     // Latin alfabesi kullanan dillerin hepsinde ", " — Arapca "، " ile
     // ayrildigi icin anahtar yine de sozlukte durur.

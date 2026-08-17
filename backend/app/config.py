@@ -237,6 +237,11 @@ class Settings(BaseSettings):
     retention_reservations_months: int = 24    # TAMAMLANMIS/IPTAL rezervasyon
     retention_tickets_months: int = 36         # COZULMUS/REDDEDILMIS talep/sikayet
     retention_audit_months: int = 24           # audit_log purge
+    # (P167 §6.3) SILINMIS dokumanin bekleme suresi — GUN cinsinden.
+    # AY degil GUN: bu bir kisisel-veri saklama siniri degil, "yanlislikla
+    # sildim" penceresi. Aylarca beklemek, silinen dosyanin depoda
+    # aylarca durmasi demekti; hemen silmek ise geri donusu yok ederdi.
+    retention_dokuman_grace_days: int = 30
     # Tek DELETE/UPDATE partisi (bellek/kilit basincini sinirlar).
     retention_batch_size: int = 500
 

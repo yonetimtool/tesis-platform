@@ -58,6 +58,16 @@ ON_EKLER: dict[str, str] = {
     # ayni numarayi tasisaydi defterde iki satir ayni belgeye isaret eder
     # ve "hangisi gecerli" sorusu numaradan cevaplanamazdi.
     "iptal": "IPT",
+    # (P167 §6.2) KARAR DEFTERI. Brief karar numarasini ZORUNLU alan
+    # olarak isaretlemiyor ("Konu*" yildizli, "No" degil) — yani numarayi
+    # kullanicidan beklemek yerine URETMEK gerekiyor.
+    #
+    # Ayri bir sayac YAZILMADI: Asama 4'un zorunlu ilkesi "belge
+    # numaralandirma MERKEZI olsun, her modul kendi numarasini
+    # uretmesin". Karar defteri de bir belge serisidir; kendi sayacini
+    # acsaydik, yil donumu sifirlamasi ve islem-geri-alma davranisi iki
+    # ayri yerde yasar ve biri gunun birinde otekinden ayrisirdi.
+    "karar": "KRR",
 }
 
 #: En az kac hane. Asilirsa numara uzar — KESILMEZ; kesmek iki farkli

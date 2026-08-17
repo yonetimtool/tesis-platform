@@ -42,6 +42,8 @@ def run_retention() -> dict:
         "reservations": 0,
         "tickets_anonymized": 0,
         "talep_photos": 0,
+        "dokuman_objeleri": 0,
+        "dokumanlar": 0,
         "audit_purged": 0,
     }
 
@@ -146,6 +148,45 @@ def run_retention() -> dict:
                     "AND mesaj <> '(arşivlendi)'",
                     (m.retention_tickets_months,),
                 ).rowcount
+
+                # (P167 §6.3) SILINMIS DOKUMANLAR — GUN cinsinden.
+                #
+                # SILINEN SUPURULUR, ARSIV DEGIL. Yonetim plani, butce ve
+                # genel kurul tutanagi KISISEL VERI DEGIL tesisin kendi
+                # arsividir; yasa gore silinmesi gereken bir sey degildir
+                # ve yasla silmek GERI ALINAMAZ bir kayip yaratirdi.
+                # Burada supurulen sey yalnizca KULLANICININ SILDIGI
+                # kaydin artigi: onceki tasarimda satir siliniyor ama
+                # MinIO objesi sonsuza kadar depoda kaliyordu.
+                #
+                # AY DEGIL GUN: bu bir saklama siniri degil, "yanlislikla
+                # sildim" penceresi.
+                #
+                # Kargo/talep fotografiyla AYNI DESEN: once depo, sonra
+                # satir. Depo erisilemezse satirlar BU GECE silinmez ve
+                # obje asla kayitsiz kalmaz.
+                dok_keys = [
+                    row[0]
+                    for row in conn.execute(
+                        "SELECT obje_anahtari FROM tenant_dokuman "
+                        "WHERE silindi_at IS NOT NULL "
+                        "AND silindi_at < now() - make_interval(days => %s)",
+                        (m.retention_dokuman_grace_days,),
+                    ).fetchall()
+                ]
+                dok_ok = True
+                if dok_keys:
+                    try:
+                        totals["dokuman_objeleri"] += storage.delete_objects(dok_keys)
+                    except Exception:
+                        dok_ok = False
+                if dok_ok:
+                    totals["dokumanlar"] += conn.execute(
+                        "DELETE FROM tenant_dokuman "
+                        "WHERE silindi_at IS NOT NULL "
+                        "AND silindi_at < now() - make_interval(days => %s)",
+                        (m.retention_dokuman_grace_days,),
+                    ).rowcount
 
     # 2) audit_log purge (24 ay) + sistem erasure_run kaydi — OWNER ile.
     #    (app_rw audit_log'da DELETE yapamaz; tenant-siz kayit RLS bypass ister.)
