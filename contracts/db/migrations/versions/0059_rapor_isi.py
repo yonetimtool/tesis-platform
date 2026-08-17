@@ -40,9 +40,13 @@ site finansi tasir; ayni tesisteki baska bir yoneticinin baskasinin
 istedigi dosyayi indirmesi icin bir sebep yok.
 
 `created_at` INDEKSLI: temizlik (eski isleri ve dosyalarini silme) tarihe
-gore tarar. Bu goc bir temizlik ISI KURMAZ — retention zaten gecelik
-calisiyor (`app/retention.py`) ve kural oraya eklenmelidir; burada
-yalnizca indeks hazir birakiliyor.
+gore tarar. Kural `app/retention.py`de yasar (gecelik) ve varsayilan omur
+`retention_rapor_isi_days` = 7 GUNDUR.
+
+NEDEN DOKUMANDAN KISA: dokuman tesisin ARSIVIDIR, rapor ciktisi GECICI
+BIR TURETMEDIR — kaybolursa aynisi yeniden uretilebilir. Saklamanin tek
+amaci "kullanici indirmeye firsat bulsun". KVKK acisindan da dar olmali:
+`borc_alacak` ciktisi daire daire ad ve borc tasir.
 """
 from alembic import op
 

@@ -168,6 +168,50 @@ def test_retention_SILINMIS_dokumani_supurur_ARSIVE_DOKUNMAZ(world, owner_conn):
     )
 
 
+def test_retention_ESKI_rapor_ciktisini_siler_YENISINI_birakir(world, owner_conn):
+    """(P167 §5) Uretilmis rapor ciktilari sonsuza kadar kalmaz.
+
+    =========================================================================
+    NEDEN DOKUMANDAN AYRI VE DAHA KISA
+    =========================================================================
+    Dokuman tesisin ARSIVIDIR; rapor ciktisi GECICI BIR TURETMEDIR —
+    kaybolursa aynisi yeniden uretilebilir. Saklamanin tek amaci
+    "kullanici indirmeye firsat bulsun".
+
+    KVKK acisindan da dar olmali: `borc_alacak` ciktisi daire daire ad ve
+    borc tasir; yeniden uretilebilen bir dosyayi aylarca tutmak amac
+    sinirliligiyla bagdasmazdi.
+
+    IKI YONLU: suresi dolan GITMELI, henuz dolmayan KALMALI. Tek yonlu
+    olsaydi "hepsini sil" diyen bir regresyon testten gecerdi.
+    """
+    tid = world["a"]
+    admin_id = _uid(owner_conn, tid, "admin")
+
+    yeni_is, eski_is = uuid.uuid4(), uuid.uuid4()
+    for rid, yas in ((yeni_is, "1 day"), (eski_is, "30 days")):
+        owner_conn.execute(
+            "INSERT INTO rapor_isi (id, tenant_id, user_id, kod, bicim, "
+            "durum, dosya_key, dosya_adi, created_at) "
+            "VALUES (%s, %s, %s, 'borc_alacak', 'excel', 'hazir', %s, "
+            f"'borc_alacak.xlsx', now() - interval '{yas}')",
+            (str(rid), str(tid), str(admin_id), f"{tid}/raporlar/{rid}.xlsx"),
+        )
+
+    run_retention()
+
+    assert _exists(owner_conn, "rapor_isi", yeni_is) == 1, (
+        "suresi dolmamis rapor isi silinmis — kullanicinin tam o an "
+        "indirdigi dosya elinden alinirdi"
+    )
+    # SATIR DA GIDER, yalniz dosya degil: `ck_rapor_isi_hazir` kisiti
+    # "durum=hazir iken dosya_key NOT NULL" diyor; dosyayi silip satiri
+    # birakmak o kisiti ihlal ederdi.
+    assert _exists(owner_conn, "rapor_isi", eski_is) == 0, (
+        "suresi dolmus rapor isi supurulmemis — depo sizintisi surer"
+    )
+
+
 def test_resident_erasure_anonimlestirir_defteri_korur(world, client, owner_conn):
     """KVKK silme: ledger referansi olan sakin ANONIMLESTIRILIR (silinmez);
     kimlik alanlari temizlenir, finansal/ticket satiri KALIR, audit yazilir."""

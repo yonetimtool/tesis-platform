@@ -242,6 +242,17 @@ class Settings(BaseSettings):
     # sildim" penceresi. Aylarca beklemek, silinen dosyanin depoda
     # aylarca durmasi demekti; hemen silmek ise geri donusu yok ederdi.
     retention_dokuman_grace_days: int = 30
+    # (P167 §5) URETILMIS RAPOR CIKTILARININ omru — GUN cinsinden.
+    #
+    # DOKUMANDAN DAHA KISA VE BILINCLI: dokuman tesisin ARSIVIDIR, rapor
+    # ciktisi ise GECICI BIR TURETMEDIR — kaybolursa aynisi yeniden
+    # uretilebilir. Saklamanin tek amaci "kullanici indirmeye firsat
+    # bulsun".
+    #
+    # KVKK ACISINDAN DA DAR OLMALI: `borc_alacak` ciktisi daire daire ad
+    # ve borc tasir. Yeniden uretilebilen bir dosyayi aylarca depoda
+    # tutmak, amac sinirliligiyla bagdasmazdi.
+    retention_rapor_isi_days: int = 7
     # Tek DELETE/UPDATE partisi (bellek/kilit basincini sinirlar).
     retention_batch_size: int = 500
 

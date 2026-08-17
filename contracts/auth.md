@@ -1145,11 +1145,15 @@ Kişisel veri, işleme amacı geçtikten sonra tutulmaz. Varsayılanlar
 | Rezervasyon (geçmiş) | 24 ay | SİL | Tamamlanmış/iptal; operasyon amacı geçti |
 | Talep/şikayet (çözülmüş/reddedilmiş) | 36 ay | ANONİMLEŞTİR | İş-emri/defter bütünlüğü için satır kalır; serbest metin arşivlenir |
 | Denetim (`audit_log`) | 24 ay | PURGE (owner) | Hesap verebilirlik ↔ saklama dengesi |
+| Doküman (`tenant_dokuman`) — **YALNIZ SİLİNMİŞ** | 30 **gün** | SİL (+MinIO) | **(P167 §6.3)** Süpürülen şey arşiv değil, kullanıcının sildiği kaydın artığı. Yönetim planı/bütçe/tutanak **kişisel veri değil, tesisin arşividir**; yaşla silmek mevzuatın istemediği ve geri alınamaz bir kayıp olurdu. Süre bir saklama sınırı değil, "yanlışlıkla sildim" penceresidir |
+| Rapor çıktısı (`rapor_isi`) | 7 **gün** | SİL (+MinIO) | **(P167 §5)** Arşiv değil **geçici türetme** — kaybolursa aynısı yeniden üretilebilir; saklamanın tek amacı indirmeye fırsat vermek. Dar tutulur çünkü çıktı daire daire ad ve borç taşır |
 
 Gecelik Celery beat: **04:00 Europe/Istanbul** (`crontab(hour=1)` UTC; TR yıl boyu
 UTC+3). İdempotent, partili; sonuç `audit_log`'a `erasure_run` (yalnız sayılar)
 olarak yazılır. Kargo fotoğrafı önce MinIO'dan silinir, sonra DB satırı (MinIO
-erişilemezse o gece satır silinmez → foto asla DB'siz ortada kalmaz).
+erişilemezse o gece satır silinmez → foto asla DB'siz ortada kalmaz). **Aynı
+desen** talep fotoğrafı, doküman ve rapor çıktısı için de geçerlidir: önce depo,
+sonra satır.
 
 ### 7.3 Sakin imha (KVKK silme hakkı) — `DELETE /residents/{id}`
 

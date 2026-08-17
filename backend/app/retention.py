@@ -44,6 +44,8 @@ def run_retention() -> dict:
         "talep_photos": 0,
         "dokuman_objeleri": 0,
         "dokumanlar": 0,
+        "rapor_dosyalari": 0,
+        "rapor_isleri": 0,
         "audit_purged": 0,
     }
 
@@ -186,6 +188,54 @@ def run_retention() -> dict:
                         "WHERE silindi_at IS NOT NULL "
                         "AND silindi_at < now() - make_interval(days => %s)",
                         (m.retention_dokuman_grace_days,),
+                    ).rowcount
+
+                # (P167 §5) URETILMIS RAPOR CIKTILARI — GUN cinsinden.
+                #
+                # NEDEN BURADA: goc 0059 `ix_rapor_isi_sahip` indeksini
+                # kurdu ama TEMIZLIK ISINI KURMADI ve bunu tur raporunda
+                # yazili birakmistim. Dokumanlarin sizintisini kapatip
+                # bunu birakmak TUTARSIZ olurdu: iki yol da MinIO'ya
+                # yaziyor, ikisi de erisilemez obje birakiyordu.
+                #
+                # ARSIV DEGIL TURETME: rapor ciktisi kaybolursa AYNISI
+                # yeniden uretilebilir (parametre kayitta duruyordu ama
+                # kayit da gidiyor — cunku kaydin tek isi "hazir mi,
+                # indirebilir miyim" sorusunu yanitlamakti).
+                #
+                # SATIR DA SILINIR, YALNIZ DOSYA DEGIL: `ck_rapor_isi_hazir`
+                # kisiti "durum=hazir iken dosya_key NOT NULL" diyor.
+                # Dosyayi silip satiri birakmak o kisiti ihlal ederdi;
+                # durumu degistirmek ise kullaniciya "hazirdi, artik
+                # degil" diyen anlamsiz bir satir birakirdi.
+                #
+                # BEKLEYEN/URETILEN ISLERE DOKUNULMAZ: yalnizca
+                # `created_at` esigi gecmis olanlar taranir; suresi
+                # dolmamis bir isin dosyasini silmek, kullanicinin tam o
+                # an indirdigi seyi elinden almak olurdu.
+                rapor_keys = [
+                    row[0]
+                    for row in conn.execute(
+                        "SELECT dosya_key FROM rapor_isi "
+                        "WHERE dosya_key IS NOT NULL "
+                        "AND created_at < now() - make_interval(days => %s)",
+                        (m.retention_rapor_isi_days,),
+                    ).fetchall()
+                ]
+                rapor_ok = True
+                if rapor_keys:
+                    try:
+                        totals["rapor_dosyalari"] += storage.delete_objects(rapor_keys)
+                    except Exception:
+                        # Kargo/talep/dokuman deseninin AYNISI: depo
+                        # erisilemezse satirlar BU GECE silinmez ve obje
+                        # asla kayitsiz kalmaz.
+                        rapor_ok = False
+                if rapor_ok:
+                    totals["rapor_isleri"] += conn.execute(
+                        "DELETE FROM rapor_isi "
+                        "WHERE created_at < now() - make_interval(days => %s)",
+                        (m.retention_rapor_isi_days,),
                     ).rowcount
 
     # 2) audit_log purge (24 ay) + sistem erasure_run kaydi — OWNER ile.

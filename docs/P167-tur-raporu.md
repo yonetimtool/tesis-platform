@@ -754,9 +754,9 @@ kendisinden duyar.
 
 **Göç 0059** — `rapor_isi` + `rapor_is_durum` enum + RLS + `ck_rapor_isi_hazir`
 + `ix_rapor_isi_sahip`. `created_at` indeksli: temizlik tarihe göre tarar.
-Bu göç **temizlik işi kurmaz** — retention zaten gecelik çalışıyor
-(`app/retention.py`) ve kural oraya eklenmelidir; burada yalnızca indeks
-hazır bırakıldı.
+
+**Temizlik kuralı sonradan eklendi (aşağıya bakın).** İlk yazımda bu göç
+yalnızca indeksi hazır bırakmış, süpürmeyi ertelemişti.
 
 ## Aşama 5 — web/mobil eşitlik
 
@@ -1127,13 +1127,43 @@ sınırını kilitleyen tek ölçüm.
 
 ---
 
+## Ertelenen işin kapatılması: rapor çıktılarının süpürülmesi
+
+Göç 0059'un kendi yorumunda yazılıydı: *"bu göç bir temizlik işi kurmaz…
+kural `app/retention.py`e eklenmelidir; burada yalnızca indeks hazır
+bırakılıyor."*
+
+Aşama 6'da dokümanlar için tam olarak bu sızıntıyı kapattım — ve rapor
+işlerini açık bırakmak **tutarsız** olurdu: iki yol da MinIO'ya yazıyor,
+ikisi de erişilemez obje bırakıyordu. Kapatıldı.
+
+**Ömür 7 gün — dokümandan bilinçli olarak kısa.** Doküman tesisin
+*arşividir*; rapor çıktısı *geçici bir türetmedir* — kaybolursa aynısı
+yeniden üretilebilir. Saklamanın tek amacı "kullanıcı indirmeye fırsat
+bulsun". KVKK açısından da dar olmalı: `borc_alacak` çıktısı daire daire
+ad ve borç taşır; yeniden üretilebilen bir dosyayı aylarca depoda tutmak
+amaç sınırlılığıyla bağdaşmazdı. Ayar tek satırla değiştirilebilir
+(`retention_rapor_isi_days`).
+
+**Satır da silinir, yalnız dosya değil.** `ck_rapor_isi_hazir` kısıtı
+"durum=hazır iken `dosya_key` NOT NULL" diyor; dosyayı silip satırı
+bırakmak o kısıtı ihlal ederdi, durumu değiştirmek ise kullanıcıya
+*"hazırdı, artık değil"* diyen anlamsız bir satır bırakırdı. Kaydın tek
+işi zaten "hazır mı, indirebilir miyim" sorusunu yanıtlamaktı.
+
+**Süresi dolmamış işe dokunulmaz** — o dosyayı silmek, kullanıcının tam o
+an indirdiği şeyi elinden almak olurdu. Test iki yönlü.
+
+Depo erişilemezse satırlar o gece silinmez (kargo/talep/doküman deseninin
+aynısı): obje asla kayıtsız kalmaz.
+
 ## Test çıktısı (Aşama 5 ve 6)
 
 - **Web:** `131 dosya / 1269 test — hepsi yeşil.` `tsc --noEmit` temiz,
   `next build` geçti.
-- **Backend tam takım: `1774 geçti, 0 düştü`** (1 atlandı — `world`
+- **Backend tam takım: `1775 geçti, 0 düştü`** (1 atlandı — `world`
   fixture'ında daireye bağlı sakin yok; bu turdan bağımsız, önceden
-  var olan bir atlama). Süre 29 dk 10 sn.
+  var olan bir atlama). Süre 30 dk 4 sn.
 - **Yetki matrisi kilidi** dört yeni uç için yenilendi ve diff satır satır
   doğrulandı:
   `GET /dokumanlar/{id}/indir` → admin+yönetici;
