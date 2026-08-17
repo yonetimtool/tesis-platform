@@ -59,6 +59,24 @@ export const TESIS_ROTALARI = [
   "/sayac-okuma",
   "/dues",
   "/finans",
+  // (P167 Asama 4) FINANSAL ISLEMLERIN SEKIZ AYRI SAYFASI.
+  //
+  // P154'te bunlar `/finans?tip=...` sorgusuyla TEK sayfanin alt
+  // gorunumleriydi. Brief §4 acikca "her biri AYRI sayfa" diyor ve
+  // gerekcesi ekranlarin kendisinde: her birinin farkli bir "+ Yeni"
+  // formu, farkli sutunlari ve (tahsilat/borclandirmada) ikinci bir
+  // TOPLU akisi var. Tek sayfada yedi ayri modal tutmak, sayfayi
+  // hangi suzgecte oldugunu bilen dev bir kosula cevirirdi.
+  //
+  // `/finans` KALDI: butun hareketlerin tek defteri hala anlamli ve eski
+  // yer imlerini kirmamak gerekiyor.
+  "/finans/borclandirmalar",
+  "/finans/tahsilatlar",
+  "/finans/giderler",
+  "/finans/gelirler",
+  "/finans/virman",
+  "/finans/iade",
+  "/finans/acilis",
   "/icra",
   "/reports/dues",
   "/reports/patrols",
@@ -294,6 +312,20 @@ export const ROTA_ROLLERI: Record<string, readonly string[]> = {
   "/sayac-okuma": ["admin", "yonetici"],
   "/dues": ["admin", "yonetici"],
   "/finans": ["admin", "yonetici"],
+  // (P167 Asama 4) Sekiz finans sayfasi — HEPSI `/finans` ile AYNI kume.
+  //
+  // DENETCI DISARIDA ve bu bilincli: bu sayfalarin tamami YAZMA
+  // ekranidir ("+ Yeni" dugmesi olmayan tek bir tanesi yok). Denetciye
+  // acmak, ona basamayacagi dugmelerle dolu bir ekran gostermek olurdu.
+  // Denetcinin okuma ihtiyacini `/finans` (tum hareketler defteri) ve
+  // `/raporlar` zaten karsiliyor — ikisi de ona ACIK.
+  "/finans/borclandirmalar": ["admin", "yonetici"],
+  "/finans/tahsilatlar": ["admin", "yonetici"],
+  "/finans/giderler": ["admin", "yonetici"],
+  "/finans/gelirler": ["admin", "yonetici"],
+  "/finans/virman": ["admin", "yonetici"],
+  "/finans/iade": ["admin", "yonetici"],
+  "/finans/acilis": ["admin", "yonetici"],
   // (P154 / Asama 7.1) ICRA — brief "ayri ust sekme" istiyor. Rol kumesi
   // `/finans` ile AYNI degil: uc (`/finans/icra-dosyalari`) okumayi
   // admin+yonetici+DENETCI'ye aciyor. Denetci burayi gorur ama sayfa ona

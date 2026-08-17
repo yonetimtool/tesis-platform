@@ -21,6 +21,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..audit import Action, audit_user
+from ..belge_no import belge_no_ata
 from ..crud_helpers import get_or_404, is_unique_violation, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
@@ -230,7 +231,14 @@ async def tahsilat(
     obj = _hareket(
         user, tip="tahsilat", yon="giris", tutar_kurus=body.tutar_kurus,
         kasa_id=body.kasa_id, user_id=body.user_id, unit_id=body.unit_id,
-        assessment_id=body.assessment_id, belge_no=body.belge_no,
+        assessment_id=body.assessment_id,
+        # (P167 Asama 4) BELGE NO MERKEZDEN. Kullanici yazdiysa o korunur
+        # (elindeki gercek makbuz numarasi olabilir); bos biraktiysa seri
+        # `belge_no.py`den gelir. Benzersizligi `uq_hareket_belge_no`
+        # koruyor — elle var olan bir numara yazilirsa istek 409 doner.
+        belge_no=await belge_no_ata(
+            db, user.tenant_id, "tahsilat", body.belge_no, body.tarih
+        ),
         aciklama=body.aciklama, tarih=body.tarih,
     )
     satirlar, tekrar = await _idem_yaz(db, response, _idem(idempotency_key), [obj])
@@ -268,6 +276,12 @@ async def toplu_tahsilat(
             kasa_id=body.kasa_id, user_id=satir.user_id, unit_id=satir.unit_id,
             assessment_id=satir.assessment_id, aciklama=satir.aciklama,
             tarih=body.tarih,
+            # HER SATIR KENDI NUMARASINI ALIR: toplu tahsilat N ayri
+            # makbuzdur, tek belge degil. Fis basina tek numara vermek,
+            # sakinin kendi makbuzunu bulmasini imkansiz kilardi.
+            belge_no=await belge_no_ata(
+                db, user.tenant_id, "tahsilat", None, body.tarih
+            ),
         )
         kayitlar.append(obj)
     satirlar, tekrar = await _idem_yaz(
@@ -307,7 +321,10 @@ async def hareket_ekle(
             tutar_kurus=satir.tutar_kurus, kasa_id=satir.kasa_id,
             firma_id=satir.firma_id,
             gelir_gider_tanim_id=satir.gelir_gider_tanim_id,
-            belge_no=satir.belge_no, aciklama=satir.aciklama, tarih=satir.tarih,
+            belge_no=await belge_no_ata(
+                db, user.tenant_id, satir.tip, satir.belge_no, satir.tarih
+            ),
+            aciklama=satir.aciklama, tarih=satir.tarih,
             # (P167 Asama 2) Satir bazinda durum: ayni fiste bir kalem
             # odenmis, oteki onay bekliyor olabilir. Fis basina tek durum,
             # kullaniciyi fisi bolmeye zorlardi.
@@ -380,6 +397,20 @@ async def virman(
     await _kasa_var(db, body.kaynak_kasa_id)
     await _kasa_var(db, body.hedef_kasa_id)
     grup = uuid.uuid4()
+    # VIRMANIN IKI SATIRI AYNI BELGE NUMARASINI PAYLASIR ve bu bilincli:
+    # ikisi TEK BIR ISLEMDIR (bir kasadan cikip otekine giren ayni para).
+    # Ayri numara vermek, ekstrede iki bagimsiz fis gibi gorunmelerine ve
+    # "bu cikisin karsiligi hangi giris?" sorusunun ancak `virman_grup_id`
+    # okunarak cevaplanmasina yol acardi — o alan ise ciktilarda yok.
+    #
+    # BENZERSIZLIK KISITI BUNU ENGELLEMEZ: `uq_hareket_belge_no`
+    # (tenant, belge_no) uzerinde ve iki satir ayni degeri tasidigi icin
+    # catisirdi. Bu yuzden virman satirlari numarayi ALMAZ — numara
+    # `virman_grup_id`ye baglanir ve ciktida ondan uretilir.
+    #
+    # KARAR: virmanda `belge_no` NULL kalir. Kisit `WHERE belge_no IS NOT
+    # NULL` oldugu icin bu gecerlidir ve ekstrede iki satir ZATEN
+    # `virman_grup_id` ile eslesir.
     cikis = _hareket(
         user, tip="virman", yon="cikis", tutar_kurus=body.tutar_kurus,
         kasa_id=body.kaynak_kasa_id, virman_grup_id=grup,
@@ -441,6 +472,7 @@ async def iade(
         yon="cikis" if orijinal.yon == "giris" else "giris",
         tutar_kurus=tutar, kasa_id=orijinal.kasa_id, user_id=orijinal.user_id,
         unit_id=orijinal.unit_id, iade_edilen_id=orijinal.id,
+        belge_no=await belge_no_ata(db, user.tenant_id, "iade", None, body.tarih),
         aciklama=body.aciklama, tarih=body.tarih,
     )
     satirlar, tekrar = await _idem_yaz(db, response, _idem(idempotency_key), [obj])
@@ -504,6 +536,11 @@ async def hareket_iptal(
         firma_id=orijinal.firma_id,
         gelir_gider_tanim_id=orijinal.gelir_gider_tanim_id,
         ters_kayit_id=orijinal.id,
+        # IPTAL KENDI SERISINI kullanir (`IPT-...`). Iptal edilen belgeyle
+        # AYNI numarayi tasisaydi defterde iki satir ayni belgeye isaret
+        # eder ve "hangisi gecerli" sorusu numaradan cevaplanamazdi;
+        # ayrica benzersizlik kisiti da catisirdi.
+        belge_no=await belge_no_ata(db, user.tenant_id, "iptal", None, body.tarih),
         aciklama=body.aciklama, tarih=body.tarih,
     )
     satirlar, tekrar = await _idem_yaz(db, response, _idem(idempotency_key), [obj])
@@ -547,6 +584,7 @@ async def acilis_fisi(
         user, tip="acilis", yon=body.yon, tutar_kurus=body.tutar_kurus,
         kasa_id=body.kasa_id, user_id=body.user_id, aciklama=body.aciklama,
         tarih=body.tarih,
+        belge_no=await belge_no_ata(db, user.tenant_id, "acilis", None, body.tarih),
     )
     satirlar, tekrar = await _idem_yaz(db, response, _idem(idempotency_key), [obj])
     if not tekrar:

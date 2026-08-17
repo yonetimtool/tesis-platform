@@ -62,7 +62,13 @@ type Durum = (typeof DURUMLAR)[number];
 /** Suzgec: dort durumdan biri ya da "" (hepsi). */
 type DurumSecimi = "" | Durum;
 
-const BOS = { dosya_no: "", user_id: "", veris_tarihi: "", avukat: "", aciklama: "" };
+const BOS = {
+  dosya_no: "", user_id: "", veris_tarihi: "", avukat: "", aciklama: "",
+  // (P167 §4.8) Brief modalda "Dosya Durumu*" istiyor. Varsayilan `acik`:
+  // yeni acilan bir dosya tanimi geregi aciktir ve kullaniciyi her
+  // seferinde ayni secimi yapmaya zorlamak gereksiz bir adim olurdu.
+  durum: "acik",
+};
 
 // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
 const DURUM_UYARI = "uyari" as const;
@@ -134,6 +140,7 @@ export default function IcraPage() {
         veris_tarihi: form.veris_tarihi || null,
         avukat: form.avukat.trim() || null,
         aciklama: form.aciklama.trim() || null,
+        durum: form.durum,
       });
       setAcik(false);
       setForm(BOS);
@@ -315,6 +322,10 @@ export default function IcraPage() {
       <Modal
         baslik={t("icraYeni")}
         acik={acik}
+        // (P167 §4.8) IKI KOLON: brief "Modalin SAG tarafinda ilgili
+        // kisinin acik evraklari listelenir" diyor. Dar bir modalda iki
+        // kolon okunmaz olurdu.
+        genislikSinifi="max-w-4xl"
         onKapat={() => setAcik(false)}
         // Doldurulmus bir form kazara kapanmasin.
         kirliMi={form.dosya_no !== "" || form.user_id !== ""}
@@ -342,6 +353,7 @@ export default function IcraPage() {
           </>
         }
       >
+        <div className="grid gap-4 md:grid-cols-2">
         <form id="icra-form" onSubmit={kaydet} className="space-y-3">
           {formHata && (
             <p
@@ -408,6 +420,19 @@ export default function IcraPage() {
               />
             )}
           </AlanSarmal>
+          <AlanSarmal etiket={t("icraDosyaDurumu")} zorunlu>
+            {(b) => (
+              <Secim
+                {...b}
+                value={form.durum}
+                onChange={(e) => setForm({ ...form, durum: e.target.value })}
+              >
+                {DURUMLAR.map((d) => (
+                  <option key={d} value={d}>{t(`icraDurum_${d}` as never)}</option>
+                ))}
+              </Secim>
+            )}
+          </AlanSarmal>
           <AlanSarmal etiket={t("icraAciklama")}>
             {(b) => (
               <CokSatir
@@ -420,8 +445,85 @@ export default function IcraPage() {
             )}
           </AlanSarmal>
         </form>
+        <AcikEvraklar userId={form.user_id} />
+        </div>
       </Modal>
       {diyalog}
     </div>
   );
+}
+
+/**
+ * (P167 §4.8) KISININ ACIK EVRAKLARI — modalin sag tarafi.
+ *
+ * Brief: "Modalin SAG tarafinda ilgili kisinin acik evraklari listelenir;
+ * yoksa 'Gosterilecek evrak bulunamadi — Kisinin acik evragi
+ * bulunmamaktadir.' Kisi secilince o kisinin acik borclari/evraklari
+ * gelsin."
+ *
+ * NEDEN ICRA DOSYASINA KOPYALANMIYOR: borc `dues_assessment`ta durur ve
+ * icraya KOPYALANMAZ (P29'un karari, goc 0029'un notu). Iki yerde tutulan
+ * borc, biri guncellenip digeri unutuldugunda hangi rakamin dogru
+ * oldugunu belirsiz birakirdi. Bu panel bir GORUNUMDUR: dosya acilirken
+ * "bu kisinin ne kadar borcu var" sorusunu ANLIK olarak yanitlar.
+ *
+ * KISI SECILENE KADAR ISTEK ATILMAZ (`null` anahtar): butun tahakkuklari
+ * cekip istemcide suzmek, bir sitede binlerce satiri tarayiciya tasimak
+ * olurdu.
+ */
+function AcikEvraklar({ userId }: { userId: string }) {
+  const t = useT();
+  const { data, isLoading } = useSWR<{ items: TahakkukSatiri[] }>(
+    userId ? `/api/panel/dues-assessments?user_id=${userId}&limit=50` : null,
+    jsonFetcher,
+  );
+
+  return (
+    <div className="space-y-2">
+      <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}>
+        {t("icraEvrakBaslik")}
+      </p>
+      {!userId ? (
+        <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-3)" }}>
+          {t("icraEvrakKisiSec")}
+        </p>
+      ) : isLoading ? (
+        <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-3)" }}>
+          {t("ortakYukleniyor")}
+        </p>
+      ) : (data?.items.length ?? 0) === 0 ? (
+        <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-3)" }}>
+          {t("icraEvrakYok")}
+        </p>
+      ) : (
+        <ul className="max-h-72 space-y-1 overflow-y-auto">
+          {(data?.items ?? []).map((a) => (
+            <li
+              key={a.id}
+              className="flex items-center justify-between gap-2 border-b py-1 last:border-b-0"
+              style={{ borderColor: "var(--yz-border)" }}
+            >
+              <span style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
+                {a.donem}
+                {a.gelir_gider_tanim_ad ? ` · ${a.gelir_gider_tanim_ad}` : ""}
+              </span>
+              <span
+                className="shrink-0 tabular-nums"
+                style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text)" }}
+              >
+                {kurusToTL(a.tutar_kurus)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+interface TahakkukSatiri {
+  id: string;
+  donem: string;
+  tutar_kurus: number;
+  gelir_gider_tanim_ad: string | null;
 }

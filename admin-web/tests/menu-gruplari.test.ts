@@ -166,7 +166,10 @@ describe("(P166 §1) TAM LISTE — gizli menu katmani yok", () => {
     expect(gorunen).toContain("/tanimlar?defter=kasalar");
     expect(gorunen).toContain("/tanimlar?defter=unit-tipleri");
     expect(gorunen).toContain("/announcements");
-    expect(gorunen).toContain("/finans?tip=gelir");
+    // (P167 Asama 4) SORGU SUZGECLERI GERCEK SAYFA OLDU: `/finans?tip=gelir`
+    // yerine `/finans/gelirler`. Sebep brief §4 — her birinin kendi
+    // formu ve sutunlari var.
+    expect(gorunen).toContain("/finans/gelirler");
     // (P167 §1.4) Icra artik FINANS bolumunun altinda ama listede.
     expect(gorunen).toContain("/icra");
     // (P167 §1.3) Ozet bagimsiz sekme olarak EN USTTE. `gorunen` yukarida

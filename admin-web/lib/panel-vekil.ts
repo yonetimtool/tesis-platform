@@ -25,6 +25,10 @@ export const OKUMA: Record<string, string> = {
   "finans-hareketler": "/finans/hareketler",
   "finans-ozet": "/finans/ozet",
   "icra-dosyalari": "/finans/icra-dosyalari",
+  // (P167 Asama 4) Sekiz sayfanin OKUDUGU uclar.
+  "dues-assessments": "/dues/assessments",
+  "kasalar": "/kasalar",
+  "firmalar": "/firmalar",
   // --- rapor (P31) ---
   "rapor-katalog": "/raporlar/katalog",
   // --- mesaj (P32) ---
@@ -60,6 +64,14 @@ export const YAZMA: Record<string, string> = {
   "finans-tahsilat": "/finans/tahsilat",
   "finans-virman": "/finans/virman",
   "finans-iade": "/finans/iade",
+  // (P167 Asama 4) Brief'in sekiz sayfasinin ihtiyac duydugu, beyaz
+  // listede eksik olan uclar. Yeni `route.ts` YAZILMADI: bu kayitlarin
+  // GET/POST deseni tam olarak `[kaynak]` vekilinin yaptigi is.
+  "finans-acilis": "/finans/acilis",
+  "finans-tahsilat-toplu": "/finans/tahsilat/toplu",
+  "borclandirma-toplu": "/borclandirma/toplu",
+  "borclandirma-toplu-onizleme": "/borclandirma/toplu/onizleme",
+  "dues-assessments": "/dues/assessments",
   "banka-eslestir": "/finans/banka-eslestir",
   "icra-dosyalari": "/finans/icra-dosyalari",
   "mesaj-sablonlari": "/mesaj-sablonlari",

@@ -67,6 +67,17 @@ const BIRINCIL_UC: Record<string, string> = {
   "/sayac-okuma": "GET /sayaclar/ana",
   "/dues": "GET /dues/assessments",
   "/finans": "GET /finans/ozet",
+  // (P167 Asama 4) Sekiz finans sayfasi. BIRINCIL UC = sayfanin LISTESINI
+  // dolduran uc; "+ Yeni" formunun yazdigi uc degil. Rol kapisi olcumu
+  // sayfa ACILDIGINDA ne gorundugune bakar — bos bir ekran ile 403 ayni
+  // sey degildir.
+  "/finans/borclandirmalar": "GET /dues/assessments",
+  "/finans/tahsilatlar": "GET /finans/hareketler",
+  "/finans/giderler": "GET /finans/hareketler",
+  "/finans/gelirler": "GET /finans/hareketler",
+  "/finans/virman": "GET /finans/hareketler",
+  "/finans/iade": "GET /finans/hareketler",
+  "/finans/acilis": "GET /finans/hareketler",
   // (P154 / Asama 7.2) `/portal` KALDIRILDI; anket yonetimi kendi
   // sayfasina tasindi ve UCU DEGISMEDI.
   "/anketler": "GET /anketler",

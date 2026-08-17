@@ -192,3 +192,12 @@ bağımsız; iş yalnız ekran işi. Kapatılması Aşama 6'dan sonraya yazıld�
 **Sonuç:** bu aşama da mobilde kod değişikliği gerektirmedi. Açık kalan
 iki fark — takvim ekranı ve üç finansal kart alanı — Aşama 1'in bıraktığı
 üç farkla birlikte listede.
+
+## P167 Aşama 4 — Finansal İşlemler (ölçüm)
+
+| Madde | Mobilde gerekli mi | Gerekçe |
+|---|---|---|
+| Merkezi belge numaralandırma | **otomatik eşit** | Kural sunucuda (`app/belge_no.py`); mobilin yazdığı her hareket de aynı seriden numara alıyor. Mobil tarafta kod değişikliği gerekmedi. |
+| 4.1–4.7 finans ekranları | **hayır** | Masa başı muhasebe işi: çok satırlı giriş, Excel/PDF çıktısı, dönem seçimi. Telefonda satır tablosu doldurmak aracı yanlış işe koşmaktır; mobilin mali ihtiyacı (aidatım, borç görüntüleme) zaten karşılanıyor. |
+| 4.8 icra dosyaları | **hayır** | Hukuki dosya takibi de masa başı işi. |
+| `finansal_hareket.durum` alanı | **kısmi fark** | Mobil hareket listelerinde çizilmiyor. Uç hazır — küçük ekran işi. |

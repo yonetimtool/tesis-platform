@@ -327,6 +327,25 @@ describe("(P138) TABLO ILKELI — elle iskelet geri gelmesin", () => {
     "components/Liste.tsx",
     "components/ui/veri-tablosu.tsx",
     "components/ui/grafik.tsx",
+    // (P167 Asama 4) `components/finans/satir-tablosu.tsx` — AYNI SINIF,
+    // AMA GEREKCESI FARKLI.
+    //
+    // Bu bir LISTE tablosu degil bir GIRIS IZGARASI: her hucre bir form
+    // alani, her satir henuz KAYDEDILMEMIS bir kayit. `VeriTablosu`
+    // veriyi GOSTERMEK icin yazildi (siralama, sayfalama, kolon
+    // gorunurlugu) ve bunlarin hicbiri burada anlamli degil — kullanici
+    // kendi yazdigi uc satiri siralamaz.
+    //
+    // `<table>` YINE DE DOGRU ISARET: on iki hucreyi `div` izgarasiyla
+    // cizmek, ekran okuyucuda satir/sutun iliskisini KAYBETMEK olurdu
+    // ("Tutar" hucresinin hangi satira ait oldugu okunamazdi). Kilidin
+    // korudugu sey de zaten bu iliski; burada `<table>` yasaklamak, onu
+    // tam tersine cevirirdi.
+    //
+    // ORTAK BILESEN OLDUGU ICIN muaf: brief'in uc satir tabanli modali
+    // (toplu tahsilat, gider, gelir) bunu KULLANIR, kendi tablosunu
+    // yazmaz.
+    "components/finans/satir-tablosu.tsx",
   ];
   const ilkelMi = (y: string) => ILKELLER.some((i) => y.endsWith(i));
 

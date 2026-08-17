@@ -13602,7 +13602,17 @@ components:
         firma_id: { type: string, format: uuid, nullable: true }
         gelir_gider_tanim_id: { type: string, format: uuid, nullable: true }
         assessment_id: { type: string, format: uuid, nullable: true }
-        belge_no: { type: string, nullable: true, maxLength: 50 }
+        belge_no:
+          type: string
+          nullable: true
+          maxLength: 50
+          description: >
+            (P167 Asama 4) BOS BIRAKILIRSA MERKEZI SERIDEN uretilir
+            (`GID-2026-000045` gibi; bkz. app/belge_no.py + goc 0058).
+            Kullanicinin yazdigi numara EZILMEZ — elinde gercek bir fatura
+            numarasi olabilir. Tenant icinde benzersizdir
+            (`uq_hareket_belge_no`); var olan bir numara elle yazilirsa
+            istek 409 doner.
         aciklama: { type: string, nullable: true }
         virman_grup_id:
           type: string

@@ -49,11 +49,20 @@ describe("(P166 §2) sayfa aramasi calisiyor", () => {
   });
 
   it("SORGULU oge de bulunur ve baglantisi sorguyu TASIR", () => {
-    // "gelirler" yazan kullanici `/finans?tip=gelir` satirini bulmali;
-    // sorgusuz `/finans`a gitmek onu yanlis suzgece dusururdu.
+    // Sorgu tasiyan ogeler HALA var (Tanimlar defterleri): "kasalar"
+    // yazan kullanici `/tanimlar?defter=kasalar` satirini bulmali;
+    // sorgusuz `/tanimlar`a gitmek onu yanlis sekmeye dusururdu.
+    const vurus = sayfaAra("tesis", "yonetici", "kasalar", t, 50)[0];
+    expect(vurus).toBeTruthy();
+    expect(ogeBaglantisi(vurus.oge)).toBe("/tanimlar?defter=kasalar");
+  });
+
+  it("(P167 Asama 4) 'gelirler' ARTIK KENDI SAYFASINI bulur", () => {
+    // P154'te bu `/finans?tip=gelir` suzgeciydi; brief §4 onu gercek bir
+    // sayfaya cevirdi.
     const vurus = sayfaAra("tesis", "yonetici", "gelirler", t, 50)[0];
     expect(vurus).toBeTruthy();
-    expect(ogeBaglantisi(vurus.oge)).toBe("/finans?tip=gelir");
+    expect(ogeBaglantisi(vurus.oge)).toBe("/finans/gelirler");
   });
 
   it("TEK HARF arama yapmaz (gurultu)", () => {

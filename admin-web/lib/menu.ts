@@ -221,12 +221,23 @@ const OGELER: readonly MenuOgesi[] = [
   { href: "/dues", anahtar: "kabukAidat", icon: "money", grup: "finans" },
   { href: "/aidatim", anahtar: "kabukAidatim", icon: "money", grup: "finans" },
   { href: "/finans", anahtar: "kabukFinans", icon: "money", grup: "finans" },
-  { href: "/finans", sorgu: "tip=tahsilat", anahtar: "kabukTahsilatlar", icon: "money", grup: "finans" },
-  { href: "/finans", sorgu: "tip=gelir", anahtar: "kabukGelirler", icon: "money", grup: "finans" },
-  { href: "/finans", sorgu: "tip=gider", anahtar: "kabukGiderler", icon: "money", grup: "finans" },
-  { href: "/finans", sorgu: "tip=virman", anahtar: "kabukVirman", icon: "money", grup: "finans" },
-  { href: "/finans", sorgu: "tip=iade", anahtar: "kabukIade", icon: "money", grup: "finans" },
-  { href: "/finans", sorgu: "tip=acilis", anahtar: "kabukAcilisFisleri", icon: "money", grup: "finans" },
+  // (P167 Asama 4) SORGU SUZGECLERI GERCEK SAYFALARA DONDU.
+  //
+  // P154'te bunlar `/finans`in `tip` suzgecleriydi ve o zaman dogruydu:
+  // yedi satirin hepsi AYNI deftere bakiyordu, tek fark neyi gizledigiydi.
+  // Brief §4 bunu degistiriyor — her birinin kendi "+ Yeni" formu, kendi
+  // sutunlari ve bazilarinin ikinci bir TOPLU akisi var. Suzgec olarak
+  // birakmak, tek sayfaya yedi ayri modal doldurmak olurdu.
+  //
+  // BORCLANDIRMALAR AYRI BIR TABLOYU (`dues_assessment`) listeler; oteki
+  // yedisi `finansal_hareket` defterini.
+  { href: "/finans/borclandirmalar", anahtar: "finansBorclandirmalar", icon: "money", grup: "finans" },
+  { href: "/finans/tahsilatlar", anahtar: "kabukTahsilatlar", icon: "money", grup: "finans" },
+  { href: "/finans/giderler", anahtar: "kabukGiderler", icon: "money", grup: "finans" },
+  { href: "/finans/gelirler", anahtar: "kabukGelirler", icon: "money", grup: "finans" },
+  { href: "/finans/virman", anahtar: "kabukVirman", icon: "money", grup: "finans" },
+  { href: "/finans/iade", anahtar: "kabukIade", icon: "money", grup: "finans" },
+  { href: "/finans/acilis", anahtar: "kabukAcilisFisleri", icon: "money", grup: "finans" },
   // (P167 §1.4) ICRA DOSYALARI — bagimsiz ust sekme DEGIL, finansin ALTI.
   // Icra bir borcun son durumudur; kullanici onu "hukuk" basligi altinda
   // degil, borcu takip ettigi yerde arar.

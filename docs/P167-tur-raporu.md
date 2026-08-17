@@ -9,7 +9,7 @@ dürüstçe raporla") aynen uygulandı.
 | 1 | Menü mimarisi (§1.1–§1.8) | **bitti** |
 | 2 | Özet sayfası (dashboard yeniden inşa) | **bitti** |
 | 3 | Web toplu blok/daire hatası | **bitti** |
-| 4 | Finansal İşlemler (8 sayfa) | başlanmadı |
+| 4 | Finansal İşlemler (8 sayfa) | **bitti** |
 | 5 | Rapor motoru | başlanmadı |
 | 6 | Yönetim başlığı (karar defteri, doküman) | başlanmadı |
 
@@ -483,6 +483,134 @@ uygulandığının kaydıdır.
 Düzeltme **sunucuda** olduğu için her iki yüzey de aynı anda düzeldi.
 Mobil zaten doğru çalışıyordu; artık mobilde de bloğun içinden değil
 serbest metinle oluşturulsa bile kayıt tutarlı olur.
+
+---
+
+# AŞAMA 4 — FİNANSAL İŞLEMLER
+
+## Önce zorunlu ilke: merkezi belge numaralandırma
+
+Brief: *"Belge numaralandırma MERKEZİ olsun, her modül kendi numarasını
+üretmesin."* Sekiz sayfanın hepsi buna dayandığı için ilk iş buydu.
+
+**Bugünkü durum neydi:** `finansal_hareket.belge_no` **serbest metindi**.
+Aynı numara iki belgede olabiliyordu, boş bırakılabiliyordu, her modül
+kendi biçimini uyduruyordu.
+
+**Göç 0058** — `belge_sayaci (tenant_id, tip, yil, son_no)` +
+`finansal_hareket (tenant_id, belge_no)` üzerinde kısmi benzersizlik
+indeksi. **`app/belge_no.py`** tek üretim yeri; biçim `TAH-2026-000123`.
+
+Üç karar:
+
+- **Postgres `SEQUENCE` kullanılamazdı.** (a) Tenant başına ayrı sayması
+  gerek — global dizi A tesisinin fiş numarasını B'nin işlem hacmine
+  bağlardı; tenant başına sequence açmak ise her yeni tesiste DDL demek.
+  (b) Yılbaşında sıfırlanması gerek (TR'de fiş serileri yıllık) ve
+  `SEQUENCE`i elle sıfırlamak unutulabilir bir bakım işi. (c) **`SEQUENCE`
+  işlem dışıdır** — geri alınan bir işlemde tüketilen numara kaybolur ve
+  muhasebe serisinde **boşluk** kalır; denetimde açıklanması gereken bir
+  şeydir.
+- **Kilit yok:** artırma tek `INSERT ... ON CONFLICT DO UPDATE ...
+  RETURNING`. "Önce SELECT sonra UPDATE" iki eşzamanlı fişe aynı numarayı
+  verebilirdi ve bu ancak aylar sonra bir mutabakatta fark edilirdi.
+- **Altı hane sıfırla doldurulur:** metin sıralaması sayı sıralamasıyla
+  aynı olsun diye. `TAH-2026-9` ile `TAH-2026-10` alfabetik sırada ters
+  düşerdi ve ekstreler yanlış sırada çıkardı.
+
+**Özel durumlar:**
+- **Virmanın iki satırı belgesiz.** İkisi tek işlemdir; ayrı numara
+  ekstrede iki bağımsız fiş gibi gösterirdi, aynı numara benzersizlik
+  kısıtıyla çatışırdı. Eşleştirme `virman_grup_id` üzerinden.
+- **Toplu tahsilatta her satır kendi numarasını alır** — N ayrı makbuzdur;
+  fiş başına tek numara, sakinin kendi makbuzunu bulmasını imkânsız
+  kılardı.
+- **İptal kendi serisini kullanır** (`IPT-`); iptal edilen belgeyle aynı
+  numarayı taşısaydı "hangisi geçerli" sorusu numaradan cevaplanamazdı.
+- **Geçmiş tarihli fiş o yılın serisine düşer** (`tarih` verilirse onun
+  yılı) — yoksa 2026 defterine 2027 numaralı bir belge düşerdi.
+
+## Sekiz sayfa — ortak kabuk, ince sayfalar
+
+`components/finans/hareket-sayfasi.tsx` (liste + araç çubuğu + dışa
+aktarma + iptal) ve `satir-tablosu.tsx` (satır tabanlı giriş) ortak;
+sayfalar yalnızca kendi tipini, sütunlarını ve formunu veriyor.
+
+| § | Sayfa | Rota |
+|---|---|---|
+| 4.1 | Borçlandırmalar (+ toplu, önizlemeli) | `/finans/borclandirmalar` |
+| 4.2 | Tahsilatlar (+ toplu satır tablosu) | `/finans/tahsilatlar` |
+| 4.3 | Giderler | `/finans/giderler` |
+| 4.4 | Gelirler | `/finans/gelirler` |
+| 4.5 | Hesaplar arası virman | `/finans/virman` |
+| 4.6 | Ödeme iadesi | `/finans/iade` |
+| 4.7 | Açılış fişleri | `/finans/acilis` |
+| 4.8 | İcra dosyaları (oluşturma genişletildi) | `/icra` |
+
+`/finans` **kaldı**: bütün hareketlerin tek defteri hâlâ anlamlı ve eski
+yer imleri kırılmadı. Menüdeki `?tip=` süzgeçleri gerçek sayfalara döndü.
+
+**Denetçi bu sekizini görmüyor.** Hepsi "+ Yeni" düğmesi taşıyan yazma
+ekranı; ona basamayacağı düğmelerle dolu bir sayfa göstermek olurdu.
+Denetçinin mali okuma yolu (`/raporlar`, `/icra`) açık kaldı — ve bu
+testle **dengelendi**: "denetçi görmez" tek başına ölçülseydi, ona hiçbir
+mali ekran vermemek de geçerdi.
+
+**"Sil" düğmesi hiçbir sayfada yok.** Brief'in ilkesi: *"Finansal kayıtlar
+SİLİNMEZ; iptal/ters kayıt mekanizması kullanılır."* Uç zaten öyle (göç
+0047 DELETE yetkisini geri aldı). Çizilen şey "İptal et" ve onay metni ne
+olacağını söylüyor: kayıt kalır, deftere ters bir satır eklenir. Ters
+kaydın kendisinde düğme çizilmiyor — uç 422 döner, yapamayacağı bir eylemi
+göstermek olurdu.
+
+## Brief'ten bilinçli dört sapma
+
+**1. İade modalı "hangi tahsilat" soruyor** (Kişi + Bağımsız Bölüm + Kasa
+yerine). Uç `hareket_id` alıyor ve kişiyi/daireyi/kasayı **orijinal
+hareketten türetiyor**. Doğrusu bu: iade "birine para vermek" değil
+"alınmış bir parayı geri vermek"tir. Elle kasa seçtirmek, iadeyi orijinal
+tahsilattan bağımsız bir hareket yapar; "hangi tahsilat iade edildi"
+sorusu ancak açıklama metnine bakılarak cevaplanabilir ve yanlış kasadan
+iade iki kasayı birden bozardı. Brief'in istediği alanlar **ekranda
+görünüyor** — yalnızca hangisinin yazılabilir, hangisinin türetilmiş
+olduğu değişti.
+
+**2. Borçlandırmada "Kişi" yerine "Bağımsız Bölüm".** Tahakkuk daireye
+yazılır (`unit_id`), hedef kişi daireden türer. İkisini ayrı sordurmak,
+daireyle çelişen bir kişi seçimine kapı açardı. **"Dönem" alanı da
+sorulmuyor** — uç `YYYY-MM` istiyor ama brief'in modalinde yok; girilen
+tarihin ayından türetiliyor (bir Mart tahakkuku Mart dönemine yazılır).
+
+**3. Virman/Açılışta "Hesap Tipi" = kasa.** Sistemde ayrı bir "hesap tipi"
+varlığı yok; uydurmak, kullanıcıya doldurulamayan bir alan göstermek
+olurdu.
+
+**4. Tahsilat yöntemi tek seçenekli ve pasif.** Brief "varsayılan
+Otomatik" diyor; uç bugün bir `yontem` alanı **taşımıyor**. Seçenek
+uydurup sunucuya göndermemek sessiz bir yalan olurdu — alan görünür ama
+kilitli, eksik burada yazılı. Uç genişletildiğinde tek satırla açılır.
+
+## Aşama 4 — bilinçli eksikler
+
+- **Borçlandırmada "İptal et" yok.** Uç `DELETE /dues/assessments/{id}`
+  taşımıyor, yani bugün bir tahakkuku düzeltme yolu **yok**. Olmayan bir
+  yolu düğme olarak çizmek, kullanıcıyı çalışmayacak bir eyleme davet
+  etmek olurdu.
+- **"Düzenle" hiçbir finans sayfasında yok.** Uç `PATCH
+  /finans/hareketler/{id}` taşımıyor ve taşımamalı: bir muhasebe kaydını
+  yerinde değiştirmek, geçmiş raporları geriye dönük değiştirirdi.
+  Düzeltme yolu iptal + yeniden giriş.
+- **Makbuz kutusu** işaretlenince makbuz dökümü raporunu açıyor; ayrı bir
+  "makbuz" varlığı uydurulmadı — `makbuz_dokumu` raporu zaten o çıktı.
+
+## Aşama 4 — web/mobil eşitlik
+
+| Madde | Mobilde gerekli mi | Gerekçe |
+|---|---|---|
+| Merkezi belge no | **otomatik eşit** | Sunucuda; mobilin yazdığı her hareket de aynı seriden numara alıyor. Mobil tarafta kod değişikliği gerekmedi. |
+| 4.1–4.7 finans ekranları | **hayır** | Bunlar masa başı muhasebe işleri: çok satırlı giriş, Excel/PDF çıktısı, dönem seçimi. Telefonda satır tablosu doldurmak, aracı yanlış işe koşmaktır. Mobilin mali ihtiyacı (aidatım, borç görüntüleme) zaten karşılanıyor. |
+| 4.8 icra | **hayır** | Hukuki dosya takibi de masa başı işi. |
+| `finansal_hareket.durum` | **kısmi fark** | Alan mobil listelerde çizilmiyor. Küçük ekran işi; uç hazır. |
 ---
 
 ## Değişen dosyalar (Aşama 1)
@@ -539,8 +667,10 @@ Tam tablo `docs/web-mobil-esitlik.md` sonuna eklendi. Özet:
 
 - **Web:** `125 dosya / 1195 test — hepsi yeşil.` `tsc --noEmit` temiz,
   `next lint` temiz, `next build` geçti.
-- **Backend tam takım:** ilk koşumda `1703 geçti, 3 düştü`. Üçü de
-  aşağıda; ikisi bu turun kusuru, biri **önceden main'de kırıktı**.
+- **Backend tam takım (Aşama 4 sonunda, nihai): `1741 geçti, 0 düştü`.**
+- Aşama 1 ilk koşumunda `1703 geçti, 3 düştü`; Aşama 2 sonunda
+  `1720 geçti, 2 düştü`. Beşinin de nedeni ve düzeltmesi aşağıda —
+  dördü bu turun kusuru, biri **önceden main'de kırıktı**.
 - **Yetki matrisi kilidi güncellendi** (`backend/tests/yetki/rol-matrisi.txt`).
 
 ### Düşen üç test ve nedenleri
@@ -561,7 +691,17 @@ da** ya da hiçbirinde görünebilirdi. `id` kırıcı eklendi. Aynı düzeltme
 `/me/cihazlar`a da uygulandı (o sayfalamıyor ama liste her tazelemede yer
 değiştirirdi).
 
-**3. `test_yonetici::test_yonetici_aidat_raporu_okur_yazamaz` — ÖNCEDEN
+**3. `test_users_avatar::test_me_avatar_rbac_...` (Aşama 2 koşumunda) —
+bu turun kusuru.** `test_avatar.py`nin kardeşi; **aynı kuralı ikinci bir
+dosyada** ölçüyordu ve Aşama 1'de gözümden kaçmıştı. Adı gerçeği
+söyleyecek şekilde değişti; saha personelinin hâlâ 403 aldığı satır
+korundu — genişletilen yetkinin bilinçli sınırını kilitleyen ölçüm o.
+
+**4. `test_yetki_kapsam::test_rol_matrisi_kilidi` (Aşama 2 ve 4
+koşumlarında) — beklenen.** Yeni uçlar matrisi değiştirdi; kilit her
+seferinde güncellendi ve diff gözle doğrulandı.
+
+**5. `test_yonetici::test_yonetici_aidat_raporu_okur_yazamaz` — ÖNCEDEN
 KIRIKTI, bu turun değil.** Commit `3a71736f` (bir önceki P167 commit'i)
 `POST /dues/assessments`i yöneticiye **kasıtlı olarak** açtı ve
 `test_dues.py`, `rol-matrisi.txt`, `auth.md`, `openapi.yaml`ı güncelledi
