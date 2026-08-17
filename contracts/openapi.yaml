@@ -4819,6 +4819,176 @@ paths:
               schema: { $ref: "#/components/schemas/FinansOzet" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
+  # ================================================================= #
+  # (P167 Asama 2) OZET SAYFASI — takvim, kisisel hatirlatma, pano duzeni
+  # ================================================================= #
+  /hatirlatmalar:
+    get:
+      tags: [takvim]
+      summary: Kendi takvim hatirlatmalarim (admin + yonetici)
+      description: |
+        Kayit YALNIZ sahibinindir: ayni tesisteki baska bir yonetici bile
+        gormez. `Etkinlik` (site etkinligi) ile KARISTIRILMAMALI — o
+        sakinlere duyurulur ve RSVP alir; bu kimseye gorunmeyen kisisel
+        bir nottur (goc 0056).
+      responses:
+        "200":
+          description: Liste (yakin tarih ustte)
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/HatirlatmaOut" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [takvim]
+      summary: Hatirlatma ekle (admin + yonetici)
+      description: >
+        `user_id` ISTEKTEN ALINMAZ, token'dan gelir — alinsaydi bir yonetici
+        baskasinin takvimine not birakabilirdi.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/HatirlatmaCreate" }
+      responses:
+        "201":
+          description: Olusturuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HatirlatmaOut" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /hatirlatmalar/{hatirlatma_id}:
+    parameters:
+      - name: hatirlatma_id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    patch:
+      tags: [takvim]
+      summary: Hatirlatma guncelle (KISMI, yalniz kendi kaydi)
+      description: >
+        Baskasinin kaydi **404** — "senin degil" demek o kaydin VAR
+        OLDUGUNU dogrulamak olurdu. Ters aralik 422; kontrol BIRLESMIS
+        deger uzerinde yapilir (yalniz `bitis` gonderildiginde sema onu
+        tek basina gorur ve mevcut `baslangic` ile karsilastiramaz).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/HatirlatmaUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HatirlatmaOut" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+    delete:
+      tags: [takvim]
+      summary: Hatirlatma sil (yalniz kendi kaydi)
+      description: >
+        GERCEKTEN silinir — ters kayit yok. Finansal satirlardan farki:
+        hatirlatma bir DEFTER KAYDI degil kisisel bir nottur; izini tutmak
+        kullanicinin kendi ekranini temizleyememesi demekti. Islem yine de
+        `audit_log`a yazilir (yalniz KIMLIK, notun metni degil).
+      responses:
+        "204": { description: Silindi }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /takvim:
+    get:
+      tags: [takvim]
+      summary: Pencereye dusen TUM takvim ogeleri — tek yanitta (admin + yonetici)
+      description: |
+        ALTI KAYNAK BIRLESIK: etkinlik · devriye penceresi · aidat son odeme ·
+        gorev teslim · rezervasyon · kisisel hatirlatma.
+
+        NEDEN TEK UC: istemcinin alti listeyi ayri cekmesi, kullanici her ay
+        okunu tikladiginda ALTI gidis-donus demekti ve ucu gelip ucu
+        gelmediginde takvim yarim cizilirdi. Ayrica alti tablo alti farkli
+        kolon adi tasiyor (`tarih`, `pencere_baslangic`, `son_odeme_tarihi`,
+        `sonraki_planlanan`...); bu ceviriyi istemciye birakmak, cizim
+        kodunun alti veri seklini bilmesi demekti.
+
+        AIDAT SATIRLARI TARIHE GORE GRUPLANIR (daire basina degil): 200
+        daireli bir sitede ayni gun 200 kayit takvimi okunamaz kilardi.
+        `id` o gruplar icin tarihten turetilmis KARARLI bir uuid5'tir.
+
+        TEKRAR EDEN HATIRLATMA pencerede GENISLETILIR; kayit cogaltilmaz.
+        Ayni `id` birden fazla satirda gorunebilir.
+
+        IPTAL EDILEN REZERVASYON DISARIDA: iptal slotu bosaltir, takvimde
+        gostermek bos bir saati dolu gibi okuturdu.
+
+        PENCERE ZORUNLU ve en fazla **120 gun** — sinirsiz aralik, alti
+        tablonun tamamini tek istekte suzdurmek olurdu.
+      parameters:
+        - name: baslangic
+          in: query
+          required: true
+          schema: { type: string, format: date-time }
+        - name: bitis
+          in: query
+          required: true
+          schema: { type: string, format: date-time }
+      responses:
+        "200":
+          description: Takvim ogeleri (zamana gore sirali)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TakvimResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /me/pano-tercihi:
+    get:
+      tags: [takvim]
+      summary: Kendi Ozet sayfasi duzenim (TUM roller)
+      description: |
+        BOS NESNE = "varsayilani kullan". Sunucu bir varsayilan URETMEZ:
+        varsayilan kume role gore degisir (menude gorunen ilk alti sayfa) ve
+        onu burada hesaplamak, ayni karari menuden sonra IKINCI bir yerde
+        daha vermek olurdu.
+      responses:
+        "200":
+          description: Duzen
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PanoTercihi" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+    put:
+      tags: [takvim]
+      summary: Ozet sayfasi duzenini kaydet (TUM roller, yalniz kendi)
+      description: |
+        PUT cunku kayit bir BUTUNDUR. PATCH olsaydi "widget listesini
+        degistir ama bolum sirasina dokunma" gibi kismi bir sozlesme
+        gerekirdi; oysa istemci duzeni her zaman tam biliyor ve kismi
+        yazma, iki sekme acikken birinin otekinin duzenini yarim ezmesine
+        kapi acardi.
+
+        Tanimadigi anahtar ATILIR — JSONB serbestligi bir sozlesme
+        bosllugu degildir.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PanoTercihi" }
+      responses:
+        "200":
+          description: Kaydedildi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PanoTercihi" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422": { $ref: "#/components/responses/ValidationError" }
   /yetki-matrisi:
     get:
       tags: [yetki]
@@ -9892,6 +10062,125 @@ components:
             harfleri cizer. Buraya eklendi cunku sag ust kullanici menusu ile
             profil sayfasi AYNI kaydin iki gorunumu; avatari /me'den, gerisini
             /me/profile'dan cekmek iki istek ve iki onbellek demekti.
+    # ---- (P167 Asama 2) OZET SAYFASI --------------------------------
+    HatirlatmaBase:
+      type: object
+      required: [baslik, baslangic]
+      properties:
+        baslik: { type: string, minLength: 1, maxLength: 200 }
+        aciklama: { type: string, nullable: true, maxLength: 2000 }
+        baslangic: { type: string, format: date-time }
+        bitis:
+          type: string
+          format: date-time
+          nullable: true
+          description: >
+            NULL OLABILIR: "saat 14:00'te ara" gibi ANLIK bir hatirlatmanin
+            bitisi yoktur; zorunlu kilmak uydurma bir sure girdirirdi.
+        renk: { type: string, default: mavi, maxLength: 20 }
+        tekrar:
+          type: string
+          enum: [yok, gunluk, haftalik, aylik]
+          default: yok
+          description: >
+            Tekrar SAKLANIR, genisletilmez — "her hafta" bir KURALDIR ve her
+            ornegini satir olarak yazmak, kurali degistirmeyi yuzlerce satir
+            guncellemeye cevirirdi. Genisletme /takvim okumasinda, pencere
+            kadar yapilir.
+    HatirlatmaCreate:
+      allOf:
+        - $ref: "#/components/schemas/HatirlatmaBase"
+    HatirlatmaUpdate:
+      type: object
+      description: KISMI guncelleme — gonderilmeyen alan DEGISMEZ.
+      minProperties: 1
+      properties:
+        baslik: { type: string, minLength: 1, maxLength: 200 }
+        aciklama: { type: string, nullable: true, maxLength: 2000 }
+        baslangic: { type: string, format: date-time }
+        bitis: { type: string, format: date-time, nullable: true }
+        renk: { type: string, maxLength: 20 }
+        tekrar: { type: string, enum: [yok, gunluk, haftalik, aylik] }
+    HatirlatmaOut:
+      allOf:
+        - $ref: "#/components/schemas/HatirlatmaBase"
+        - type: object
+          required: [id, created_at]
+          properties:
+            id: { type: string, format: uuid }
+            created_at: { type: string, format: date-time }
+    TakvimOgesi:
+      type: object
+      description: >
+        Takvimde cizilen TEK olay. Alti kaynak (etkinlik, devriye, aidat,
+        gorev, rezervasyon, hatirlatma) BURADA tek dile cevrilir — her biri
+        kendi tablosunda baska kolon adlari tasiyor ve ceviriyi istemciye
+        birakmak, cizim kodunun alti veri seklini bilmesi demekti.
+      required: [tip, id, baslik, baslangic]
+      properties:
+        tip:
+          type: string
+          enum: [etkinlik, devriye, aidat, gorev, rezervasyon, hatirlatma]
+        id:
+          type: string
+          format: uuid
+          description: >
+            Kaynak kaydin kimligi. AIDAT satirlarinda tarihe gore gruplanmis
+            bir kumeyi temsil eder ve tarihten turetilmis KARARLI bir uuid5'tir.
+            TEKRAR EDEN hatirlatmada AYNI id birden fazla satirda gorunur.
+        baslik: { type: string }
+        baslangic: { type: string, format: date-time }
+        bitis: { type: string, format: date-time, nullable: true }
+        hedef:
+          type: string
+          nullable: true
+          description: >
+            Tiklaninca gidilecek panel rotasi. SUNUCU veriyor cunku hangi
+            kaydin hangi ekranda acildigini uc zaten biliyor; istemcide bir
+            `tip -> rota` tablosu tutmak ikinci bir dogruluk kaynagi olurdu.
+        renk: { type: string, nullable: true, description: Yalniz hatirlatma icin dolu }
+    TakvimResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/TakvimOgesi" }
+    PanoWidget:
+      type: object
+      required: [rota]
+      properties:
+        rota:
+          type: string
+          maxLength: 200
+          description: >
+            Menu ogesinin baglantisi. ROTA saklanir, "widget tipi" DEGIL:
+            ayri bir tip listesi acmak, menuye eklenen her sayfayi ikinci
+            bir yerde daha tanimlamak olurdu.
+    PanoBolum:
+      type: object
+      required: [id]
+      properties:
+        id: { type: string, maxLength: 40 }
+        gizli: { type: boolean, default: false }
+    PanoTercihi:
+      type: object
+      description: >
+        Kullanicinin Ozet sayfasi duzeni. JSONB'de duruyor ama SEMASIZ
+        DEGIL — uc bu modelle dogrular ve tanimadigi anahtari ATAR.
+        BOS NESNE = "varsayilani kullan".
+      properties:
+        widgetlar:
+          type: array
+          maxItems: 6
+          nullable: true
+          items: { $ref: "#/components/schemas/PanoWidget" }
+          description: En fazla ALTI — sinir sunucuda, cunku asan bir istek seridi tasiran bir pano uretirdi.
+        bolumler:
+          type: array
+          maxItems: 20
+          nullable: true
+          items: { $ref: "#/components/schemas/PanoBolum" }
     BildirimTercihleri:
       type: object
       description: >
@@ -13327,6 +13616,16 @@ components:
           description: >
             Iade edilen hareket — "hangi tahsilat iade edildi" sorusu
             aciklama metnine birakilamaz.
+        durum:
+          type: string
+          enum: [odendi, bekliyor, onay_bekliyor]
+          default: odendi
+          description: >
+            (P167 Asama 2, goc 0056) GERCEKLESME DURUMU. Varsayilan `odendi`
+            OLMAK ZORUNDA: tabloda duran her satir zaten gerceklesmis bir
+            para hareketidir (kasa bakiyesi onlardan hesaplaniyor) ve baska
+            bir varsayilan, gecmis butun defteri bir gecede "odenmemis"
+            gostermek olurdu.
         created_at: { type: string, format: date-time }
     FinansalHareketListe:
       type: object
@@ -13380,6 +13679,15 @@ components:
         tarih: { type: string, format: date, nullable: true }
         belge_no: { type: string, nullable: true, maxLength: 50 }
         aciklama: { type: string, nullable: true, maxLength: 500 }
+        durum:
+          type: string
+          enum: [odendi, bekliyor, onay_bekliyor]
+          default: odendi
+          description: >
+            (P167 Asama 2) SATIR BAZINDA durum: ayni fiste bir kalem
+            odenmis, oteki onay bekliyor olabilir. Fis basina tek durum,
+            kullaniciyi fisi bolmeye zorlardi. Varsayilan `odendi` cunku
+            mevcut istemcilerin ANLAMI degismemeli.
     HareketToplu:
       type: object
       required: [satirlar]
@@ -13538,8 +13846,35 @@ components:
       properties:
         borclandirilan_ay_kurus: { type: integer, format: int64 }
         tahsil_edilen_ay_kurus: { type: integer, format: int64 }
-        acik_borc_kurus: { type: integer, format: int64 }
+        acik_borc_kurus:
+          type: integer
+          format: int64
+          description: Sakinlerin siteye borcu (ALACAKLARIMIZ).
         kasa_toplam_kurus: { type: integer, format: int64 }
+        borc_kurus:
+          type: integer
+          format: int64
+          default: 0
+          description: >
+            (P167 §2.2) "BORCLARIM" — sitenin firmalara ODENMEMIS gideri.
+            `acik_borc_kurus`un aynasi DEGIL TERSI: o sakinin bize borcu,
+            bu bizim disariya borcumuz. Ikisini tek kartta toplamak kimin
+            kime borclu oldugunu okunamaz kilardi. Ters kayitla iptal
+            edilmis satirlar DISARIDA (iptal bir duzeltmedir, borc degil).
+        onay_bekleyen_adet:
+          type: integer
+          default: 0
+          description: >
+            Onay bekleyen hareket ADEDI — tutar degil. Yonetici burada "ne
+            kadar" degil "kac is bekliyor" sorusunu soruyor.
+        odenmis_fatura_ay_kurus:
+          type: integer
+          format: int64
+          default: 0
+          description: >
+            Bu ay odenmis gider toplami. HAREKET TARIHINE gore, kayit
+            zamanina gore DEGIL: gecen ayin faturasi bu ay girilmis
+            olabilir ve onu bu ayin gideri saymak defterle celisirdi.
         icra_acik_dosya: { type: integer }
     TopluBorcSuzgec:
       type: object

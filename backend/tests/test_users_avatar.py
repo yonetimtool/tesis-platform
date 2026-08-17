@@ -34,11 +34,28 @@ def _staff_id(client, world, role):
     return client.get("/me", headers=me).json()["id"]
 
 
-def test_me_avatar_rbac_yonetici_resident_evet_digerleri_403(client, world):
+def test_me_avatar_rbac_ofis_rolleri_EVET_saha_personeli_403(client, world):
+    """(P167 §1.7) Self-servis avatar: admin + yonetici + denetci + resident.
+
+    ESKI ADI `..._yonetici_resident_evet_digerleri_403`ti ve admin'in 403
+    aldigini bekliyordu. O kural bu turda DEGISTI: panelin sag ust kosesi
+    artik HER rol icin avatar ciziyor (kullanici menusu) ve profil sayfasi
+    hepsine acik. Dugmeyi gosterip 403 donmek kullaniciya sebebi olmayan
+    bir hata vermek, dugmeyi rolde gizlemek ise ayni kurali istemcide
+    ikinci kez yazmak olurdu.
+
+    AYRIM KORUNUYOR ve testin asil degeri artik burada: SAHA PERSONELI
+    (security / tesis_gorevlisi) hala 403. Onlarin fotografi bir sus degil
+    OPERASYONEL KIMLIK kaydidir (vardiya, devriye, ziyaretci karsilama) ve
+    yonetim `PATCH /users/{id}/avatar` ile yonetir; kendileri
+    degistirebilseydi "kim kimdir" kaydi denetlenemez hale gelirdi.
+    """
     yon = _headers(client, world["slug_a"], world["yonetici_a"])
     res = _headers(client, world["slug_a"], world["resident_a"])
     guard = _headers(client, world["slug_a"], world["guard_a"])
+    gorevli = _headers(client, world["slug_a"], world["gorevli_a"])
     admin = _headers(client, world["slug_a"], world["admin_a"])
+    denetci = _headers(client, world["slug_a"], world["denetci_a"])
 
     key_y = _upload_foto(client, yon)
     assert client.patch("/me/avatar", headers=yon,
@@ -46,8 +63,12 @@ def test_me_avatar_rbac_yonetici_resident_evet_digerleri_403(client, world):
     key_r = _upload_foto(client, res)
     assert client.patch("/me/avatar", headers=res,
                         json={"avatar_key": key_r}).status_code == 200
-    # saha rolleri + admin self-servis KAPALI
-    for h in (guard, admin):
+    # OFIS ROLLERI: kendi fotografini yonetir.
+    for h in (admin, denetci):
+        assert client.patch("/me/avatar", headers=h,
+                            json={"avatar_key": None}).status_code == 200
+    # SAHA PERSONELI: hala kapali.
+    for h in (guard, gorevli):
         assert client.patch("/me/avatar", headers=h,
                             json={"avatar_key": None}).status_code == 403
 

@@ -29,6 +29,18 @@ import pytest
 #: bir govde istemesidir. Kural "fiil GET olsun" degil "MUTASYON olmasin".
 MUTASYON_OLMAYAN_POSTLAR: frozenset[tuple[str, str]] = frozenset({
     ("POST", "/raporlar/{kod}"),
+    # (P167 §1.7) `PATCH /me/avatar`: KENDI profil fotografi. Tesisin
+    # kayitlarina degil KISININ KENDI kaydina yazar — `PATCH /me/password`
+    # ve `/me/pazarlama-tercihleri` ile AYNI SINIF (onlar rol kapisi
+    # tasimadigi icin `KAPISIZ_MUTASYONLAR`da duruyor; bu uc ise saha
+    # personelini disarida tutmak icin acik bir rol listesi tasiyor ve o
+    # yuzden buraya dusuyor).
+    #
+    # "Denetci salt-okur" ilkesi TESISIN DEFTERI icindir. Denetcinin kendi
+    # avatarini degistirmesi hicbir tesis verisine dokunmaz; yasaklamak,
+    # panelin sag ust kosesinde herkese avatar cizip yalnizca ona
+    # degistirtmemek olurdu.
+    ("PATCH", "/me/avatar"),
 })
 
 #: ROL KAPISI OLMAYAN mutasyon uclari — yani `denetci` DAHIL her kimlikli
@@ -130,6 +142,12 @@ KAPISIZ_MUTASYONLAR: frozenset[tuple[str, str]] = frozenset({
     # denetcinin kendi SMS anahtarini kapatmasi hicbir tesis verisine
     # dokunmaz.
     ("PATCH", "/me/bildirim-tercihleri"),
+    # (P167 Asama 2) KENDI PANO DUZENI. `/me/bildirim-tercihleri` ile ayni
+    # sinif: kimlik zorunlu, rol kapisi anlamsiz — hangi kisayollari
+    # gorecegi ve bolumleri nasil siralayacagi kisinin kendi karari.
+    # Tesisin kayitlarina DOKUNMAZ; yalniz `app_user.pano_tercihi` alanina
+    # yazar ve o alan yalniz sahibi tarafindan okunur.
+    ("PUT", "/me/pano-tercihi"),
     # --- kendi cihazinin push kaydi ---
     ("POST", "/devices"),
     ("DELETE", "/devices/{fcm_token}"),

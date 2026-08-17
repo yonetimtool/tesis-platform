@@ -191,6 +191,23 @@ HAREKET_TIP = ENUM(
     name="hareket_tip", create_type=False,
 )
 HAREKET_YON = ENUM("giris", "cikis", name="hareket_yon", create_type=False)
+# (P167 Asama 2, goc 0056) Hareketin GERCEKLESME durumu.
+#
+# `odendi` VARSAYILANDIR ve olmak zorunda: tabloda duran her satir zaten
+# gerceklesmis bir para hareketidir (kasa bakiyesi onlardan hesaplaniyor).
+# Baska bir varsayilan, gecmis butun defteri bir gecede "odenmemis"
+# gostermek olurdu.
+HAREKET_DURUM = ENUM(
+    "odendi", "bekliyor", "onay_bekliyor",
+    name="hareket_durum", create_type=False,
+)
+# (P167 Asama 2, goc 0056) Kisisel hatirlatmanin tekrar kurali. Tekrar
+# SAKLANIR, genisletilmez — "her hafta" bir KURALDIR ve her ornegini satir
+# olarak yazmak, kurali degistirmeyi yuzlerce satir guncellemeye cevirirdi.
+HATIRLATMA_TEKRAR = ENUM(
+    "yok", "gunluk", "haftalik", "aylik",
+    name="hatirlatma_tekrar", create_type=False,
+)
 TALEP_ONCELIK = ENUM(
     "dusuk", "normal", "yuksek", "acil",
     name="talep_oncelik", create_type=False,
@@ -466,6 +483,15 @@ class AppUser(Base):
     )
     bildirim_mobil: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("true")
+    )
+    #: (P167 Asama 2, goc 0056) OZET SAYFASININ KULLANICI BASINA DUZENI —
+    #: widget seridi + bolum sirasi/gizliligi. `localStorage` yerine burada
+    #: cunku tarayici deposu KULLANICI basina degil TARAYICI basina calisir:
+    #: ofisteki bilgisayardan duzenlenen pano, evdeki dizustunde varsayilana
+    #: donerdi. Sekil `PanoTercihi` semasiyla dogrulanir; tanimadigi anahtar
+    #: ATILIR (serbest JSONB bir sozlesme bosllugu degil).
+    pano_tercihi: Mapped[dict] = mapped_column(
+        JSONB, nullable=False, server_default=text("'{}'::jsonb")
     )
     aranabilir: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("false")
@@ -1984,6 +2010,44 @@ class DisHizmet(Base):
     updated_at = _created_at()
 
 
+class Hatirlatma(Base):
+    """(P167 Asama 2) Yoneticinin KENDI takvim notu — goc 0056.
+
+    `Event` (site etkinligi) ILE AYNI SEY DEGILDIR ve ayni tabloda
+    tutulmadi: etkinlik sakinlere DUYURULUR, RSVP alir, ortak alan
+    ayirtir; hatirlatma ise kimseye gorunmeyen kisisel bir nottur. Ikisini
+    tek tabloda tutup bir `gizli` bayragi koymak, "notu yanlislikla
+    herkese acmak" hatasini bir kutucuk mesafesine indirirdi.
+
+    GORUNURLUK KAPISI `user_id`DIR: `tenant_id` yalniz RLS ve tesis
+    silindiginde cascade icin var. Ayni tesisteki BASKA bir yonetici bu
+    satiri gormez.
+    """
+
+    __tablename__ = "hatirlatma"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_hatirlatma_id_tenant"),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    baslik: Mapped[str] = mapped_column(Text, nullable=False)
+    aciklama: Mapped[str | None] = mapped_column(Text, nullable=True)
+    baslangic = mapped_column(TIMESTAMP(timezone=True), nullable=False)
+    #: NULL OLABILIR: "saat 14:00'te ara" gibi ANLIK bir hatirlatmanin
+    #: bitisi yoktur; zorunlu kilmak uydurma bir sure girdirirdi.
+    bitis = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    renk: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'mavi'"))
+    tekrar: Mapped[str] = mapped_column(
+        HATIRLATMA_TEKRAR, nullable=False, server_default=text("'yok'")
+    )
+    created_at = _created_at()
+    updated_at = _created_at()
+
+
 class UserDevice(Base):
     __tablename__ = "user_device"
     __table_args__ = (
@@ -2871,6 +2935,13 @@ class FinansalHareket(Base):
     #: Vezne yazmalarinda CIFT KAYIT korumasi (P64). Bkz. sinif belgesi.
     idempotency_key: Mapped[str | None] = mapped_column(Text, nullable=True)
     idem_satir: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
+    #: (P167 Asama 2) GERCEKLESME DURUMU — `odendi` / `bekliyor` /
+    #: `onay_bekliyor`. Panonun "Borclarim" ve "Onay Bekleyen Hareketler"
+    #: kartlari bunu sayar; Asama 4'un gelir/gider satirlarindaki "Durumu"
+    #: alani da AYNI kolondur (goc 0056).
+    durum: Mapped[str] = mapped_column(
+        HAREKET_DURUM, nullable=False, server_default=text("'odendi'")
+    )
     created_at = _created_at()
 
 

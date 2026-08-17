@@ -39,6 +39,7 @@ from .routers import gurultu_uc as gurultu_router
 from .routers import anketler as anketler_router
 from .routers import ice_aktarim as ice_aktarim_router
 from .routers import kurulum as kurulum_router
+from .routers import takvim as takvim_router
 from .routers import oauth as oauth_router
 from .routers import yetki_matrisi as yetki_router
 from .routers import kvkk as kvkk_router
@@ -189,6 +190,8 @@ app.include_router(kvkk_router.router)
 app.include_router(gurultu_router.router)
 app.include_router(anketler_router.router)
 app.include_router(kurulum_router.router)
+# (P167 Asama 2) Takvim + kisisel hatirlatma + pano tercihi.
+app.include_router(takvim_router.router)
 app.include_router(ice_aktarim_router.router)
 # (P154 / Asama 4) Sosyal giris. `auth` router'indan AYRI dosyada ama
 # ayni `/auth` onekinde: auth.py zaten 831 satir ve OAuth kendi

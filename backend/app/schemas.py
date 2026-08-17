@@ -4655,6 +4655,8 @@ class HareketOut(BaseModel):
     aciklama: str | None = None
     virman_grup_id: uuid.UUID | None = None
     iade_edilen_id: uuid.UUID | None = None
+    #: (P167 Asama 2) `odendi` / `bekliyor` / `onay_bekliyor`.
+    durum: str = "odendi"
     created_at: datetime
 
 
@@ -4703,6 +4705,10 @@ class HareketSatir(BaseModel):
     tarih: date | None = None
     belge_no: str | None = Field(None, max_length=50)
     aciklama: str | None = Field(None, max_length=500)
+    #: (P167 Asama 2, goc 0056) GERCEKLESME DURUMU. Varsayilan `odendi`
+    #: cunku bugune kadar yazilan her satir gerceklesmis bir hareketti;
+    #: baska bir varsayilan, mevcut istemcilerin ANLAMINI degistirirdi.
+    durum: Literal["odendi", "bekliyor", "onay_bekliyor"] = "odendi"
 
 
 class HareketToplu(BaseModel):
@@ -4843,13 +4849,171 @@ class IcraDosyasiListResponse(BaseModel):
 
 
 class FinansOzet(BaseModel):
-    """Panel ozet kartlari (P29)."""
+    """Panel ozet kartlari (P29 · P167 Asama 2).
+
+    (P167 §2.2) UC ALAN EKLENDI. Brief'in alti kartindan dordu zaten
+    hesaplanabiliyordu; "Borclarim", "Onay Bekleyen Hareketler" ve
+    "Odenmis Faturalar" icin uc yeni toplam gerekti.
+
+    HEPSI DEFTERDEN OKUNUR, hicbiri saklanmaz — kartlarin bir gun defterle
+    celismesi ancak SAKLANAN bir ozetle mumkun olurdu.
+    """
 
     borclandirilan_ay_kurus: int
     tahsil_edilen_ay_kurus: int
+    #: Sakinlerin siteye BORCU (alacaklarimiz).
     acik_borc_kurus: int
     kasa_toplam_kurus: int
     icra_acik_dosya: int
+    #: (P167 §2.2) "BORCLARIM" — sitenin firmalara odenmemis gideri.
+    #: `acik_borc_kurus`un AYNASI degil TERSI: o sakinin bize borcu, bu
+    #: bizim disariya borcumuz. Ikisini tek kartta toplamak, kimin kime
+    #: borclu oldugunu okunamaz kilardi.
+    borc_kurus: int = 0
+    #: (P167 §2.2) Onay bekleyen hareket ADEDI — tutar degil. Yonetici
+    #: burada "ne kadar" degil "kac tane is bekliyor" sorusunu soruyor;
+    #: tutar, tiklayinca acilan listede.
+    onay_bekleyen_adet: int = 0
+    #: (P167 §2.2) Bu ay ODENMIS gider toplami ("Odenmis Faturalar").
+    odenmis_fatura_ay_kurus: int = 0
+
+
+# ================== (P167 Asama 2) OZET SAYFASI ============================= #
+#
+# Uc kavram, uc ayri sebep:
+#   * PANO TERCIHI — kullanicinin kendi ekran duzeni
+#   * HATIRLATMA   — kullanicinin kendi takvim notu
+#   * TAKVIM       — alti kaynagin BIRLESIK okumasi
+
+
+class PanoWidget(BaseModel):
+    """Widget seridindeki tek kisayol.
+
+    ROTA SAKLANIR, "widget tipi" DEGIL: kisayol zaten menudeki bir sayfaya
+    gidiyor. Ayri bir tip listesi acmak, menuye eklenen her sayfayi
+    ikinci bir yerde daha tanimlamak ve ikisi ayrisinca "widget yapilamayan
+    sayfa" uretmek olurdu.
+    """
+
+    #: Menu ogesinin baglantisi (`/dues`, `/finans?tip=gelir`...).
+    rota: str = Field(..., min_length=1, max_length=200)
+
+
+class PanoBolum(BaseModel):
+    """Ozet sayfasindaki bir bolumun sira/gorunurluk kaydi."""
+
+    #: Bolum kimligi (`widgetlar`, `finans`, `takvim`, `maket`, `alarmlar`).
+    id: str = Field(..., min_length=1, max_length=40)
+    gizli: bool = False
+
+
+class PanoTercihi(BaseModel):
+    """(P167 §2.1/§2.5) Kullanicinin Ozet sayfasi duzeni.
+
+    JSONB'de duruyor ama SEMASIZ DEGIL: uc bu modelle dogrular ve
+    tanimadigi anahtari ATAR. Serbest JSON, arayuz degistiginde
+    veritabaninda hangi seklin durdugunu bilinemez kilardi.
+
+    BOS NESNE = "varsayilani kullan". Istemci varsayilani kendi kurar
+    (rolde gorunen ilk alti sayfa); sunucuya yazmak, kullanici HIC
+    dokunmadan bir tercih kaydi uretmek olurdu ve varsayilan degistiginde
+    o kullanicilar eski varsayilanda kilitli kalirdi.
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    #: En fazla ALTI widget — brief'in sayisi. Sinir sunucuda cunku
+    #: istemci sinirini asan bir istek, seridi tasan bir pano uretirdi.
+    widgetlar: list[PanoWidget] | None = Field(None, max_length=6)
+    bolumler: list[PanoBolum] | None = Field(None, max_length=20)
+
+
+HATIRLATMA_TEKRARLARI = ("yok", "gunluk", "haftalik", "aylik")
+
+
+class HatirlatmaBase(BaseModel):
+    baslik: str = Field(..., min_length=1, max_length=200)
+    aciklama: str | None = Field(None, max_length=2000)
+    baslangic: datetime
+    bitis: datetime | None = None
+    renk: str = Field("mavi", min_length=1, max_length=20)
+    tekrar: Literal["yok", "gunluk", "haftalik", "aylik"] = "yok"
+
+    @field_validator("baslik")
+    @classmethod
+    def _baslik_bosluk(cls, v: str) -> str:
+        temiz = v.strip()
+        if not temiz:
+            raise ValueError("hatirlatma_baslik_bos")
+        return temiz
+
+    @model_validator(mode="after")
+    def _aralik(self) -> "HatirlatmaBase":
+        # Ters aralik VERITABANINDA da kisitli (goc 0056). Burada da
+        # denetleniyor cunku 422 + alan adi, 500 + kisit adindan cok daha
+        # anlasilir bir cevaptir.
+        if self.bitis is not None and self.bitis < self.baslangic:
+            raise ValueError("hatirlatma_ters_aralik")
+        return self
+
+
+class HatirlatmaCreate(HatirlatmaBase):
+    pass
+
+
+class HatirlatmaUpdate(BaseModel):
+    """KISMI guncelleme — gonderilmeyen alan DEGISMEZ."""
+
+    baslik: str | None = Field(None, min_length=1, max_length=200)
+    aciklama: str | None = Field(None, max_length=2000)
+    baslangic: datetime | None = None
+    bitis: datetime | None = None
+    renk: str | None = Field(None, min_length=1, max_length=20)
+    tekrar: Literal["yok", "gunluk", "haftalik", "aylik"] | None = None
+
+    @model_validator(mode="after")
+    def _en_az_bir(self) -> "HatirlatmaUpdate":
+        if not self.model_fields_set:
+            raise ValueError("en az bir alan gerekli")
+        return self
+
+
+class HatirlatmaOut(HatirlatmaBase):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    created_at: datetime
+
+
+class TakvimOgesi(BaseModel):
+    """(P167 §2.3) Takvimde cizilen TEK bir olay.
+
+    ALTI KAYNAK TEK SEKILDE: etkinlik, devriye penceresi, aidat son odeme,
+    gorev teslim, rezervasyon, hatirlatma. Her biri kendi tablosunda baska
+    alan adlari tasiyor; takvim onlari BURADA tek dile cevirir — aksi
+    hâlde cizim kodu alti farkli sekli bilmek zorunda kalirdi.
+    """
+
+    #: Kaynak tipi — renk ve ikon bundan secilir.
+    tip: Literal[
+        "etkinlik", "devriye", "aidat", "gorev", "rezervasyon", "hatirlatma"
+    ]
+    #: Kaynak kaydin kimligi. TEKRAR EDEN hatirlatmada AYNI id birden fazla
+    #: satirda gorunur (kural genisletiliyor, kayit cogaltilmiyor).
+    id: uuid.UUID
+    baslik: str
+    baslangic: datetime
+    bitis: datetime | None = None
+    #: Tiklaninca gidilecek panel rotasi. Sunucu veriyor cunku hangi
+    #: kaydin hangi ekranda acildigini uc zaten biliyor; istemcide bir
+    #: `tip -> rota` tablosu tutmak ikinci bir dogruluk kaynagi olurdu.
+    hedef: str | None = None
+    #: Yalniz `hatirlatma` icin dolu — kullanicinin sectigi renk.
+    renk: str | None = None
+
+
+class TakvimResponse(BaseModel):
+    items: list[TakvimOgesi]
 
 
 # ======================= P30 SAKIN ODEME AKISI ============================== #

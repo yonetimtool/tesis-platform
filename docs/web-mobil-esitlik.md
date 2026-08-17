@@ -178,3 +178,17 @@ Değerlendirme madde madde:
 açık fark bıraktı** ve üçü de aynı ekrana düşüyor — mobil profil sayfası:
 ad düzenleme, cihaz listesi, bildirim ayarları. Uçların hepsi açık ve rol
 bağımsız; iş yalnız ekran işi. Kapatılması Aşama 6'dan sonraya yazıldı.
+
+## P167 Aşama 2 — Özet sayfası (ölçüm)
+
+| Madde | Mobilde gerekli mi | Gerekçe |
+|---|---|---|
+| §2.1 widget şeridi | **hayır** | Mobil ana ekran P160'ta zaten kısayol ızgarası + "Tüm Modüller" olarak yeniden tasarlandı; ikinci bir şerit aynı işi iki kez yapardı. |
+| §2.2 finansal kartlar | **kısmi fark** | Mobilde özet kartlar var; `/finans/ozet`in üç yeni alanını (`borc_kurus`, `onay_bekleyen_adet`, `odenmis_fatura_ay_kurus`) henüz çizmiyor. Uç hazır — küçük ekran işi. |
+| §2.3 takvim + hatırlatma | **açık fark, öncelikli** | Yaklaşan olay ve kişisel hatırlatma telefonda en çok bakılan şey. `GET /takvim` ve `/hatirlatmalar` rol bağımsız ve hazır. |
+| §2.4 3D maket | **hayır** | Mobilde WebGL sahnesi taşımanın pil ve paket boyutu maliyeti var; mobilin karşılığı şematik plan. |
+| §2.5 panel düzenleme | **hayır** | Mobil ana ekran düzeni zaten sabit ve tek kolon; sıralama orada bir soruna çözüm değil. |
+
+**Sonuç:** bu aşama da mobilde kod değişikliği gerektirmedi. Açık kalan
+iki fark — takvim ekranı ve üç finansal kart alanı — Aşama 1'in bıraktığı
+üç farkla birlikte listede.

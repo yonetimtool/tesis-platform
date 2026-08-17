@@ -7,8 +7,8 @@ dürüstçe raporla") aynen uygulandı.
 | Aşama | Kapsam | Durum |
 |---|---|---|
 | 1 | Menü mimarisi (§1.1–§1.8) | **bitti** |
-| 2 | Özet sayfası (dashboard yeniden inşa) | başlanmadı |
-| 3 | Web toplu blok/daire hatası | başlanmadı |
+| 2 | Özet sayfası (dashboard yeniden inşa) | **bitti** |
+| 3 | Web toplu blok/daire hatası | **bitti** |
 | 4 | Finansal İşlemler (8 sayfa) | başlanmadı |
 | 5 | Rapor motoru | başlanmadı |
 | 6 | Yönetim başlığı (karar defteri, doküman) | başlanmadı |
@@ -217,6 +217,272 @@ Kurulum sihirbazı dar modda da (yalnız ikon) çiziliyor: sihirbaz bir
 **yoldur**, tema gibi bir kısayol değil — kaldırmak, kurulumunu
 bitirmemiş yöneticiyi yolsuz bırakırdı.
 
+
+---
+
+# AŞAMA 2 — ÖZET SAYFASI
+
+## Yapılan işin şekli: sayfa artık **bölümlerden** oluşuyor
+
+Eski pano sabit bir sıralamaydı (kahraman blok → KPI → alarmlar → harita →
+3D → kamera). §2.5 bunu tersine çeviriyor: her bölüm gizlenebilir ve
+sıralanabilir. Bölüm listesi `lib/pano-tercihi.ts`te **tek kaynak** — hem
+çizim, hem düzenleme modu, hem sunucuya yazılan gövde oradan okuyor.
+
+### Verilen karar: brief'in bölüm listesine iki bölüm **eklendi**
+
+§2.5 bölümleri *"widget şeridi, finansal kartlar, takvim, 3D, alarmlar"*
+diye sayıyor. Ama sayfada bunlardan başka şeyler de vardı: süren/sıradaki
+devriyeyi gösteren **kahraman blok**, dört **KPI halkası** ve **kamera
+şeridi**. Listeyi harfi harfine uygulamak onları silmek olurdu — ve
+GENEL KISITLAR'ın ilk maddesi *"Mevcut işlev kaybolmayacak"* diyor.
+
+Çözüm ikisini de tutuyor: işlev kaldı, ama artık öteki bölümlerle **aynı
+kurala tabi** — `devriye`, `kpi` ve `kameralar` da gizlenebilir ve
+sıralanabilir. Yani "sayfa özelleştirilebilir olacak" şartı onları da
+kapsıyor.
+
+**Varsayılan sıra:** kısayollar → [finansal özet | site maketi] →
+takvim → [devriye durumu | alarmlar] → günün sayıları → kameralar.
+Köşeli parantez içindekiler tek satırı paylaşan **yarım** bölümler.
+
+## 2.1 Widget şeridi
+
+Altı kısayol, tam genişlik, özelleştirilebilir. **Seçilebilir küme
+`menuGruplari(yuzey, rol)`ten geliyor** — brief'in *"erişemeyeceği bir
+sekmeyi widget yapamaz"* şartı böylece **menüyle aynı kaynaktan** doğuyor.
+İkinci bir yetki listesi yazsaydık, bir sayfanın rol kapısı değiştiğinde
+biri güncellenip öteki unutulurdu ve şerit kullanıcıyı 403'e götüren bir
+düğme taşırdı — sessizce, çünkü kimse tıklamadan fark etmez.
+
+Kayıtta duran ama artık yetkisi olmayan rota **çizimde elenir** (kayıt
+temizlenmeden eski hâlinde kalır). Rozet yalnız elimizde sayı varsa
+çizilir ve **sıfır çizilmez**: "0" bilgi değil gürültüdür.
+
+## 2.2 Finansal özet
+
+Altı kart + ayrı Kasalar paneli (liste + sağ üstte Genel Toplam).
+
+**Animasyonlu sayaç kullanılmadı** — brief'in açık şartı. Panonun `Kpi`
+bileşeninde sayma animasyonu var ve tam bu yüzden burada kullanılmadı:
+0'dan 84.320,50'ye sayan bir kart, yolun her karesinde ekranda duran ama
+**doğru olmayan** bir rakam gösterir.
+
+**Excel/PDF için yeni uç açılmadı.** Rapor motoru (P31) zaten
+`POST /raporlar/{kod}?bicim=excel|pdf` ile dosya üretiyor ve aynı
+`RaporSonuc`tan hem tablo hem dosya çıkıyor. Panoya özel bir dışa aktarma
+ucu açmak, aynı rakamları **ikinci bir yerden** hesaplamak olurdu — kartla
+dosyanın bir gün ayrışması ancak öyle mümkün olur. İkonlar renkli
+(Excel yeşil tablo, PDF kırmızı belge), düğmenin kendisi nötr.
+
+### Üç kart yeni bir alan gerektirdi
+
+| Kart | Kaynak |
+|---|---|
+| Borçlandırılan / Tahsil edilen / Alacaklarım | `/finans/ozet` — zaten vardı |
+| **Borçlarım** | ödenmemiş gider → `finansal_hareket.durum` |
+| **Onay bekleyen hareketler** | `durum = onay_bekliyor` |
+| **Ödenmiş faturalar (bu ay)** | `durum = odendi`, tip `gider`, bu ay |
+
+`durum` kolonu **göç 0056**'da açıldı. Aşama 4'ün "Durumu (varsayılan
+Ödendi)" alanı da aynı kolondur; iki turda iki kez açmak, arada kalan
+sürümde kartı besleyecek bir alan olmaması demekti.
+
+**Varsayılan `odendi` olmak zorunda:** tabloda duran her satır zaten
+gerçekleşmiş bir para hareketidir (kasa bakiyesi onlardan hesaplanıyor).
+Başka bir varsayılan geçmiş bütün defteri bir gecede "ödenmemiş" gösterir
+ve kasa mutabakatını bozardı. `Borçlarım` hesabında **ters kayıtla iptal
+edilmiş** satırlar dışarıda: iptal bir düzeltmedir, ödenmemiş borç değil.
+
+## 2.3 Takvim
+
+Gün / Hafta / Ay, ileri-geri gezinme, bugünün vurgulanması, tam ekran.
+Altı kaynak: etkinlik · devriye penceresi · aidat son ödeme · görev teslim
+· rezervasyon · **kişisel hatırlatma**.
+
+**Tek uç (`GET /takvim`), altı ayrı uç değil.** İstemcinin altı listeyi
+ayrı çekmesi, kullanıcı her ay okunu tıkladığında altı gidiş-dönüş demekti
+ve üçü gelip üçü gelmediğinde takvim yarım çizilirdi. Ayrıca altı tablo
+altı farklı kolon adı taşıyor (`tarih`, `pencere_baslangic`,
+`son_odeme_tarihi`, `sonraki_planlanan`…); bu çeviriyi istemciye bırakmak,
+çizim kodunun altı veri şeklini bilmesi demekti.
+
+Kararlar:
+- **Aidat satırları tarihe göre gruplanır**, daire başına değil: 200
+  daireli bir sitede aynı gün 200 kayıt takvimi okunamaz kılardı. Grup
+  satırının `id`'si tarihten türetilmiş kararlı bir `uuid5`.
+- **Tekrar saklanır, genişletilmez.** "Her hafta" bir kuraldır; her
+  örneğini satır olarak yazmak, kuralı değiştirmeyi yüzlerce satır
+  güncellemeye çevirirdi. Genişletme okuma anında, pencere kadar.
+- **Ay sonu kaydırılmaz, atlanmaz:** "her ayın 31'i" diyen bir hatırlatma
+  şubatta **ayın son gününe** çekilir. Atlamak onu şubatta hiç
+  göstermemek, ileri kaydırmak marta taşımak olurdu.
+- **Pencere zorunlu ve en fazla 120 gün** — sınırsız aralık, altı tablonun
+  tamamını tek istekte süzdürmek olurdu.
+- **İptal edilen rezervasyon dışarıda:** iptal slotu boşaltır; takvimde
+  göstermek boş bir saati dolu gibi okuturdu.
+- Tarihler **yerel saatte** hesaplanır (kullanıcının "bugün"ü
+  tarayıcısının saat dilimindedir); sunucuya giden pencere ISO/UTC.
+- Hafta **pazartesi** başlar; `getDay()` pazar=0 döndüğü için düzeltme
+  atlanırsa ay ızgarası bir gün kayar ve **her** hücre yanlış güne yazılır.
+
+**`hatirlatma` `event` tablosuna eklenmedi.** Etkinlik sakinlere duyurulur,
+RSVP alır, ortak alan ayırtır; hatırlatma kimseye görünmeyen kişisel bir
+nottur. Tek tabloda `gizli` bayrağıyla tutmak, "notu yanlışlıkla herkese
+açmak" hatasını bir kutucuk mesafesine indirirdi. Görünürlük kapısı
+`user_id`; aynı tesisteki başka bir yönetici bile görmez.
+
+## 2.4 Harita kaldırıldı, 3D sağ üstte
+
+`SiteHarita` bu sayfanın **tek** çağrı yeriydi; brief "Özet'te olmayacak"
+dediği için çağrı kalktı. 3D maket varsayılan sırada finansal özetin
+yanında, yani widget şeridinin hemen altında **sağ sütunda**.
+
+**Bileşen dosyası silinmedi** ve bu bilinçli: tesis konumu bir gün kendi
+ekranını bulacak, çalışan bir bileşeni silip yeniden yazmak kaldırılan şeyi
+geri getirmenin en pahalı yolu olurdu. **Bugün hiçbir yerden
+çağrılmıyor** — bu raporda açıkça yazıyor ki unutulmuş bir kalıntı
+sanılmasın. `haritaAdresi` birim testleri korundu (anahtarsız OSM'e düşme,
+marker parametresi hâlâ doğru olmalı).
+
+## 2.5 Sayfa özelleştirme
+
+"Paneli düzenle" modu: her bölümde yukarı/aşağı taşı + göster/gizle,
+üstte "Varsayılana dön". Kısayollar için ayrı bir seçim modalı.
+
+**Sürükle-bırak yerine yukarı/aşağı düğmeleri.** Brief sürükle-bırak
+istiyor; düğmelerle yapıldı ve gerekçesi erişilebilirlik: sürükle-bırak
+klavye ve ekran okuyucu kullanıcısı için ayrı bir mekanizma gerektirir
+(`aria-grabbed` terk edildi, HTML5 DnD mobilde çalışmaz). Aynı işi yapan
+düğmeler **her girdi yöntemiyle** çalışıyor. Sürükleme ileride bunun
+**üstüne** eklenebilir; tersi mümkün değil.
+
+**Düzen tek boyutlu bir liste.** Yan yana gelen iki `yarim` bölüm tek
+satırı paylaşıyor; iki eksenli bir ızgara olsaydı hem kod hem klavye
+erişimi kat kat karmaşıklaşırdı.
+
+Her değişiklik **anında** sunucuya yazılır (ayrı "Kaydet" yok): düğmeye
+basıp sayfadan çıkan kullanıcı değişikliği sessizce kaybederdi.
+Yazılamazsa toast ile söylenir.
+
+## Aşama 2 — yeni uçlar ve göç
+
+| Uç | Ne yapar |
+|---|---|
+| `GET/POST /hatirlatmalar` | Kişisel takvim notları (yalnız sahibinin) |
+| `PATCH/DELETE /hatirlatmalar/{id}` | Başkasınınki 404 |
+| `GET /takvim?baslangic=&bitis=` | Altı kaynağın birleşik okuması |
+| `GET/PUT /me/pano-tercihi` | Kullanıcı başına pano düzeni |
+| `GET /finans/ozet` | Üç yeni alan |
+
+**Göç 0056:** `app_user.pano_tercihi jsonb` · `hatirlatma` tablosu (RLS +
+sahiplik) · `finansal_hareket.durum` enum + kısmi indeks.
+
+`pano_tercihi` **sunucuda, `localStorage`ta değil**: tarayıcı deposu
+kullanıcı başına değil *tarayıcı* başına çalışır; ofisten düzenlenen pano
+evdeki dizüstünde varsayılana dönerdi. (Kabuk menüsünün açık/kapalı durumu
+bilerek `localStorage`ta kalıyor — o bir gezinme alışkanlığı ve cihaz
+başına farklı olması doğal.) JSONB **şemasız değil**: uç `PanoTercihi` ile
+doğrular ve tanımadığı anahtarı atar.
+
+## Aşama 2 — web/mobil eşitlik
+
+| Madde | Mobilde gerekli mi | Gerekçe |
+|---|---|---|
+| §2.1 widget şeridi | **hayır** | Mobil ana ekran P160'ta zaten kısayol ızgarası + "Tüm Modüller" olarak yeniden tasarlandı; ikinci bir şerit aynı işi iki kez yapardı. |
+| §2.2 finansal kartlar | **kısmen** | Mobilde özet kartlar var; üç yeni alan (`borc_kurus`, `onay_bekleyen_adet`, `odenmis_fatura_ay_kurus`) aynı uçtan geliyor, mobil onları henüz çizmiyor. Küçük ekran işi. |
+| §2.3 takvim | **evet — sonraki turda** | Yaklaşan olay ve hatırlatma, telefonda en çok bakılan şey. `GET /takvim` ve `/hatirlatmalar` rol bağımsız ve hazır. |
+| §2.4 3D maket | **hayır** | Mobilde WebGL sahnesi taşımak pil ve paket boyutu maliyeti; mobilin karşılığı şematik plan. |
+| §2.5 panel düzenleme | **hayır** | Mobil ana ekranın düzeni zaten sabit ve tek kolon; sıralama orada bir soruna çözüm değil. |
+
+---
+
+---
+
+# AŞAMA 3 — "KAYITSIZ BLOK" HATASI
+
+## Kök neden (ölçüldü, tahmin edilmedi)
+
+İki istemci **aynı ucu, aynı gövdeyle** çağırıyor (`POST /units/bulk`).
+Fark çağrının kendisinde değil **öncesinde**:
+
+- **Mobil:** toplu oluşturma diyaloğu bir bloğun **içinden** açılıyor
+  (`blok: widget.blok`). O blok daha önce `POST /blocks` ile kaydedilmiş —
+  `building_block` satırı **var**.
+- **Web:** diyalog blok adını **serbest metin** yazdırıyor (`oBlok`) ve
+  doğrudan `/units/bulk`a gönderiyor. `building_block` satırı **hiç
+  açılmıyor**.
+
+`unit.blok` **zayıf bir metin bağı** (hard FK yok — bilinçli: bloksuz ve
+blok tabanlı siteler birlikte destekleniyor, göç 0001'in notu). Blok kaydı
+olmayınca editör `registeredFor(label)` için false dönüyor:
+**"kayıtsız (yalnızca dairede)"** rozeti çiziliyor ve Düzenle/Sil düğmeleri
+hiç çizilmiyor — ikisi de `block.id` istiyor.
+
+## Düzeltme: istemcide değil **sunucuda**
+
+Web'i mobile benzetmek **örneği** düzeltirdi, **sınıfı** değil. Aynı deliğe
+içe aktarım, doğrudan API kullanan bir müşteri ve ileride yazılacak her
+yeni ekran düşerdi — ve düştüğünde yine sessiz olurdu: istek 201 döner,
+kayıt "çalışır" görünür, kusur ancak editör açılınca fark edilir.
+
+`_blok_kaydini_gerektir()` hem `POST /units` hem `POST /units/bulk`
+içinde: `blok` verilmiş ama kaydı yoksa `building_block` satırını açar.
+
+Üç detay:
+- **`ON CONFLICT DO NOTHING`, "önce bak sonra yaz" yerine.** İki eşzamanlı
+  toplu oluşturma arasında yarış olurdu; ikisi de "yok" görür, ikincisi
+  benzersiz kısıtı ihlal eder. O ihlali `except`te yutmak da yetmezdi —
+  SQLAlchemy oturumu o noktada kırılır ve toparlamak `rollback` ister;
+  oysa bu fonksiyon **çağıranın işlemi içinde** çalışıyor ve onun o ana
+  kadarki yazmalarını geri almaya hakkı yok.
+- **Denetime yalnızca gerçekten açılan kayıt yazılır** (`RETURNING id`
+  boşsa blok zaten vardı); yoksa her toplu oluşturma sahte bir "blok
+  oluşturuldu" satırı bırakırdı.
+- **Blok kaydı dairelerden ÖNCE açılır**: sonra açmak, arada düşen bir
+  istekte tam olarak "kayıtsız blok" durumunu yeniden üretirdi.
+
+Web tarafında **değişiklik gerekmedi**: editörün `refresh()`i zaten hem
+`/api/blocks` hem `/api/units`i tazeliyor, yani yeni blok anında görünür.
+
+## Onarım göçü 0057 — mevcut bozuk kayıtlar
+
+```sql
+INSERT INTO building_block (tenant_id, ad)
+SELECT DISTINCT u.tenant_id, btrim(u.blok) FROM unit u
+ WHERE u.blok IS NOT NULL AND btrim(u.blok) <> ''
+   AND NOT EXISTS (SELECT 1 FROM building_block b
+                    WHERE b.tenant_id = u.tenant_id AND b.ad = btrim(u.blok))
+ON CONFLICT (tenant_id, ad) DO NOTHING
+```
+
+**Veri kaybı riski YOK** ve bu somut bir iddia: tek işlem INSERT. Hiçbir
+satır silinmiyor, hiçbir sütun güncellenmiyor, `unit` tablosuna
+**dokunulmuyor** — daireler zaten doğruydu, eksik olan yalnızca bloğun
+kendi kaydıydı. Bu yüzden **durup sormaya gerek olmadı**.
+
+Üç karar:
+- **`kat_sayisi` bilerek NULL.** Dairelerden türetmek cazip (`max(kat)`)
+  ama yanlış olurdu: bodrumlu binada katlar −2'den başlar, yani en yüksek
+  kat numarası kat *sayısı* değildir. Uydurma bir sayı, kullanıcının
+  düzeltmesi gereken sessiz bir yanlış bırakırdı.
+- **Boş/NULL etiketler atlanıyor.** Bloksuz daireler bilinçli bir durum ve
+  editörde zaten kendi kovasında ("Blok atanmamış") görünüyor.
+- **`downgrade` boş ve bu bir karar.** Göç *eksik* bir kaydı tamamladı;
+  geri almak onarılanları yeniden kayıtsız yapmak olurdu. Ayrıca hangi
+  satırın göç, hangisinin kullanıcı tarafından açıldığını ayırt etmenin
+  yolu yok — silmeye kalkmak elle oluşturulmuş blokları da götürürdü.
+
+**Neden göç, neden tek seferlik betik değil:** kusur üründe oluşmuş veriyi
+etkiliyor ve her ortamda aynı. Betik, çalıştırılması **unutulabilen** bir
+adımdır; göç sürümle birlikte kendiliğinden gider ve `alembic_version`
+uygulandığının kaydıdır.
+
+## Aşama 3 — web/mobil eşitlik
+
+Düzeltme **sunucuda** olduğu için her iki yüzey de aynı anda düzeldi.
+Mobil zaten doğru çalışıyordu; artık mobilde de bloğun içinden değil
+serbest metinle oluşturulsa bile kayıt tutarlı olur.
 ---
 
 ## Değişen dosyalar (Aşama 1)

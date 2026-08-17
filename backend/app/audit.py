@@ -64,6 +64,14 @@ class Action:
     # neden almadim" sorusunun tek kanitidir.
     DEVICE_REMOVE = "device_remove"               # kendi cihazini pasiflestirdi
     NOTIFICATION_PREFS_UPDATE = "notification_prefs_update"
+    # (P167 Asama 2) Kisisel takvim notu. KISISEL bir kayit ama denetime
+    # YAZILIR: "Kendi hesap etkinligim" ekrani (§1.7) kullaniciya kendi
+    # yaptiklarinin listesini gosteriyor ve silinen bir hatirlatmanin
+    # oradan da yok olmasi, kullaniciyi "ben mi sildim?" sorusuyla
+    # birakirdi. Satir yalniz KIMLIK tutar, notun METNINI degil.
+    HATIRLATMA_CREATE = "hatirlatma_create"
+    HATIRLATMA_UPDATE = "hatirlatma_update"
+    HATIRLATMA_DELETE = "hatirlatma_delete"
     SHIFT_ASSIGN = "shift_assign"                 # vardiya personel atamasi (tam-liste)
     CAMERA_CREATE = "camera_create"
     CAMERA_UPDATE = "camera_update"

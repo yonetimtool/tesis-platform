@@ -308,6 +308,10 @@ async def hareket_ekle(
             firma_id=satir.firma_id,
             gelir_gider_tanim_id=satir.gelir_gider_tanim_id,
             belge_no=satir.belge_no, aciklama=satir.aciklama, tarih=satir.tarih,
+            # (P167 Asama 2) Satir bazinda durum: ayni fiste bir kalem
+            # odenmis, oteki onay bekliyor olabilir. Fis basina tek durum,
+            # kullaniciyi fisi bolmeye zorlardi.
+            durum=satir.durum,
         ))
     satirlar, tekrar = await _idem_yaz(
         db, response, _idem(idempotency_key), kayitlar
@@ -829,10 +833,52 @@ async def finans_ozet(
             .where(IcraDosyasi.durum.in_(["acik", "takipte"]))
         )
     ).scalar_one()
+
+    # ---------------------- (P167 §2.2) UC YENI KART ----------------------
+    #
+    # "BORCLARIM" — sitenin DISARIYA borcu. `acik_borc_kurus`un aynasi
+    # DEGIL TERSI: o sakinin bize, bu bizim firmaya. Ikisini tek kartta
+    # toplamak kimin kime borclu oldugunu okunamaz kilardi.
+    #
+    # `iptal` TIPI DISARIDA: ters kayit bir DUZELTMEDIR, odenmemis bir
+    # borc degil. Iceri alsaydik iptal edilen her gider "borcum var" diye
+    # sayilirdi.
+    borc = (
+        await db.execute(
+            select(func.coalesce(func.sum(FinansalHareket.tutar_kurus), 0))
+            .where(FinansalHareket.tip == "gider",
+                   FinansalHareket.durum != "odendi",
+                   FinansalHareket.ters_kayit_id.is_(None))
+        )
+    ).scalar_one()
+    # ADET, TUTAR DEGIL: yonetici burada "ne kadar" degil "kac is
+    # bekliyor" sorusunu soruyor; tutar tiklayinca acilan listede.
+    onay_bekleyen = (
+        await db.execute(
+            select(func.count()).select_from(FinansalHareket)
+            .where(FinansalHareket.durum == "onay_bekliyor")
+        )
+    ).scalar_one()
+    # "ODENMIS FATURALAR (bu ay)" — tarihe gore, kayit zamanina gore
+    # DEGIL: gecen ayin faturasi bu ay girilmis olabilir ve onu bu ayin
+    # gideri saymak defterle celisirdi.
+    odenmis_fatura_ay = (
+        await db.execute(
+            select(func.coalesce(func.sum(FinansalHareket.tutar_kurus), 0))
+            .where(FinansalHareket.tip == "gider",
+                   FinansalHareket.durum == "odendi",
+                   FinansalHareket.ters_kayit_id.is_(None),
+                   FinansalHareket.tarih >= ay_basi)
+        )
+    ).scalar_one()
+
     return FinansOzet(
         borclandirilan_ay_kurus=int(borclandirilan),
         tahsil_edilen_ay_kurus=int(tahsil_ay),
         acik_borc_kurus=max(int(toplam_borc) - int(toplam_tahsil), 0),
         kasa_toplam_kurus=bakiyeler.genel_toplam_kurus,
         icra_acik_dosya=int(icra_acik),
+        borc_kurus=int(borc),
+        onay_bekleyen_adet=int(onay_bekleyen),
+        odenmis_fatura_ay_kurus=int(odenmis_fatura_ay),
     )

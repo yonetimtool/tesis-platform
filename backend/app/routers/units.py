@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy import func, select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -20,6 +21,7 @@ from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..models import (
     AppUser,
+    BuildingBlock,
     DuesAssessment,
     DuesPayment,
     Rezervasyon,
@@ -264,6 +266,88 @@ async def list_unit_residents_by_no(
     return [UnitResidentBriefOut(user_id=r.id, ad=r.ad) for r in rows]
 
 
+async def _blok_kaydini_gerektir(
+    db: AsyncSession, user: AppUser, blok: str | None
+) -> None:
+    """(P167 Asama 3) Daire bir bloga baglaniyorsa BLOGUN KAYDI DA OLSUN.
+
+    ===================================================================
+    BILDIRILEN KUSUR
+    ===================================================================
+    Web'den toplu olusturulan daireler editorde "kayitsiz (yalnizca
+    dairede)" ibaresiyle geliyor, duzenlenemiyor ve silinemiyordu.
+    Mobilden ayni islem duzgun calisiyordu.
+
+    KOK NEDEN: iki istemci AYNI ucu AYNI govdeyle cagiriyor; fark
+    ONCESINDE. Mobil diyalogu bir blogun ICINDEN aciyor (blok kaydi
+    `POST /blocks` ile zaten acilmis), web ise blok adini SERBEST METIN
+    yazdirip dogrudan buraya gonderiyordu — `building_block` satiri hic
+    olusmuyordu.
+
+    `unit.blok` ZAYIF bir metin bagidir (hard FK YOK ve bu bilincli:
+    blok-suz ve blok-tabanli siteler birlikte desteklenir, bkz. goc
+    0001). Kaydi olmayan bir etiket bu yuzden "gecerli ama yonetilemez"
+    bir ara duruma dusuyordu: editor `block.id` olmadan Duzenle/Sil
+    dugmesi cizemez.
+
+    ===================================================================
+    NEDEN ISTEMCIDE DEGIL BURADA DUZELTILDI
+    ===================================================================
+    Web'i mobile benzetmek ORNEGI duzeltirdi, SINIFI degil. Ayni delige
+    ice aktarim, dogrudan API kullanan bir musteri ve ileride yazilacak
+    her yeni ekran duserdi — ve dustugunde yine sessiz olurdu: istek
+    201 doner, kayit "calisir" gorunur, kusur ancak editor acilinca
+    fark edilir.
+
+    KURAL SUNUCUDA: "bir daire bir bloga baglaniyorsa o blogun kaydi
+    vardir." Kurali veriyi yazan yerde tutmak, onu her istemci icin bir
+    kez saglar.
+
+    ===================================================================
+    NE YAPMAZ
+    ===================================================================
+    * Blok kaydi ZATEN varsa hicbir sey yapmaz (sorgu once bakar).
+    * `kat_sayisi` DOLDURMAZ. Dairelerden turetmek yanlis olurdu:
+      bodrumlu bir binada katlar -2'den baslar, yani en yuksek kat
+      numarasi kat SAYISI degildir. Alan opsiyonel; uydurma bir sayi,
+      kullanicinin duzeltmesi gereken sessiz bir yanlis olurdu.
+    * `blok` bos ya da NULL ise hicbir sey yapmaz — blok-suz daireler
+      editorde kendi kovasinda gorunur ve onlara blok UYDURMAK,
+      kullanicinin gormedigi bir yapi degisikligi olurdu.
+    """
+    etiket = (blok or "").strip()
+    if not etiket:
+        return
+    # `ON CONFLICT DO NOTHING`, "once bak sonra yaz" YERINE.
+    #
+    # Once SELECT edip sonra INSERT etmek, iki es zamanli toplu olusturma
+    # arasinda bir yaris birakirdi: ikisi de "yok" gorur, ikincisi benzersiz
+    # kisiti ihlal eder. O ihlali `except`te yakalayip yutmak da yetmezdi —
+    # SQLAlchemy oturumu o noktada kirilir ve toparlamak icin `rollback`
+    # gerekir; oysa bu fonksiyon CAGIRANIN islemi icinde calisiyor ve onun
+    # o ana kadarki yazmalarini geri almaya HAKKI YOK.
+    #
+    # Tek ifadelik upsert yarisi veritabanina birakir: catisma sessizce
+    # gecilir, islem KIRILMAZ.
+    yeni_id = (
+        await db.execute(
+            pg_insert(BuildingBlock)
+            .values(tenant_id=user.tenant_id, ad=etiket)
+            .on_conflict_do_nothing(constraint="uq_building_block_tenant_ad")
+            .returning(BuildingBlock.id)
+        )
+    ).scalar_one_or_none()
+    # `None` = blok ZATEN vardi. Denetime yalnizca GERCEKTEN acilan kayit
+    # yazilir; yoksa her toplu olusturma sahte bir "blok olusturuldu"
+    # satiri birakirdi.
+    if yeni_id is None:
+        return
+    await audit_user(
+        db, user, Action.BLOCK_CREATE, resource_type="building_block",
+        resource_id=yeni_id, meta={"otomatik": True, "kaynak": "unit"},
+    )
+
+
 @router.post("", response_model=UnitOut, status_code=201)
 async def create_unit(
     body: UnitCreate,
@@ -271,6 +355,7 @@ async def create_unit(
     user: AppUser = Depends(_LAYOUT_EDITOR),
 ) -> UnitOut:
     await _tanim_dogrula(db, body.unit_tip_id, body.unit_grup_id)
+    await _blok_kaydini_gerektir(db, user, body.blok)
     obj = Unit(tenant_id=user.tenant_id, **body.model_dump(exclude_unset=True))
     db.add(obj)
     try:
@@ -299,6 +384,10 @@ async def bulk_create_units(
     toplu olusturmada daire basina tip secmek anlamsizdir, bir blok genelde
     tek tiptir. Daire basi istisnalar sonradan PATCH ile duzeltilir."""
     await _tanim_dogrula(db, body.unit_tip_id, body.unit_grup_id)
+    # (P167 Asama 3) BLOK KAYDI ONCE: daireler yazildiktan sonra acmak,
+    # arada dusen bir istekte "kayitsiz blok" durumunu tam olarak yeniden
+    # uretirdi.
+    await _blok_kaydini_gerektir(db, user, body.blok)
     # Plani kur: (no, kat, sira) — kat kat, ardisik numaralandirma.
     plan: list[tuple[str, int, int]] = []
     n = body.baslangic_no

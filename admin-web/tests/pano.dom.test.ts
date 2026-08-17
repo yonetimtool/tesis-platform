@@ -91,17 +91,37 @@ function fetchTaklidi({
 afterEach(() => vi.restoreAllMocks());
 
 describe("(P133.2) pano bolumleri — SIRA", () => {
-  it("kahraman -> alarmlar -> tesis -> kameralar", async () => {
+  it("(P167 §2) VARSAYILAN SIRA: finans -> takvim -> devriye -> alarmlar", async () => {
+    // (P167 Asama 2) SIRA ARTIK SABIT DEGIL, VARSAYILAN. Kullanici
+    // bolumleri siralayip gizleyebiliyor (`/me/pano-tercihi`); olculen sey
+    // KAYIT YOKKEN cizilen duzen.
+    //
+    // "Tesis" (harita karti) LISTEDE YOK: brief §2.4 haritayi Ozet'ten
+    // TAMAMEN kaldirdi ve yerine 3D maket sag ust tarafa gecti.
     fetchTaklidi();
     ciz(DashboardPage);
-    // Ad IKI yerde gecer (kahraman blok + alarm grubu) — `findAllByText`.
     await screen.findAllByText("Gece turu");
     const metin = document.body.textContent ?? "";
-    const sira = ["Süren devriye", "Son Alarmlar", "Tesis", "Kameralar"].map((b) =>
-      metin.indexOf(b),
-    );
-    expect(sira.every((i) => i >= 0), metin.slice(0, 300)).toBe(true);
+    const sira = [
+      "Finansal özet",
+      "Site maketi",
+      "Takvim",
+      "Devriye durumu",
+      "Alarmlar",
+    ].map((b) => metin.indexOf(b));
+    expect(sira.every((i) => i >= 0), metin.slice(0, 400)).toBe(true);
     expect(sira).toEqual([...sira].sort((a, b) => a - b));
+  });
+
+  it("(P167 §2.4) HARITA ARTIK CIZILMIYOR", async () => {
+    // Brief: "HARITA BU SAYFADAN TAMAMEN KALDIRILACAK." Konum DOLU
+    // gonderiliyor — yine de ne `iframe` ne de konum metni olmali; yoksa
+    // "kaldirildi" iddiasi yalnizca bos durumda dogru olurdu.
+    fetchTaklidi();
+    ciz(DashboardPage);
+    await screen.findAllByText("Gece turu");
+    expect(document.querySelector("iframe")).toBeNull();
+    expect(screen.queryByText(/Konum henüz girilmedi/i)).toBeNull();
   });
 
   it("VERI YOKKEN bos durum cizilir (cıplak spinner ya da bos ekran DEGIL)", async () => {
@@ -187,12 +207,13 @@ describe("(P132.4a) tesis konumu haritasi", () => {
     expect(u).toContain("key=AIza-test");
   });
 
-  it("KONUM YOKSA harita cizilmez, NE YAPILACAGI yazilir", async () => {
-    fetchTaklidi({ tesis: { ad: "Acme" } });
-    ciz(DashboardPage);
-    expect(await screen.findByText(/Konum henüz girilmedi/i)).toBeInTheDocument();
-    expect(document.querySelector("iframe")).toBeNull();
-  });
+  // (P167 §2.4) "KONUM YOKSA harita cizilmez" TESTI KALDIRILDI cunku
+  // HARITANIN KENDISI panodan kalkti; olculecek bir cizim yok. Yerine
+  // yukaridaki "HARITA ARTIK CIZILMIYOR" testi kondu.
+  //
+  // `haritaAdresi` BIRIM TESTLERI KALDI ve bilerek: bilesen SILINMEDI
+  // (tesis konumu bir gun kendi ekranini bulacak) ve adres kurma mantigi
+  // — anahtarsiz OSM'e dusme, marker parametresi — hala dogru olmali.
 });
 
 describe("(P132.4b) kamera seridi", () => {
