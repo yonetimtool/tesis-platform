@@ -23,9 +23,9 @@
  * artik yururlukte degilse bunu ACIKCA soyler — aksi halde kullanici
  * okumadigi bir metni onaylamis sanirdi.
  *
- * METIN GOVDESI HTML OLABILIR AMA HTML OLARAK CIZILMEZ — `zenginMetniOku`
- * ile duz metne cevrilir. Gerekcesi o dosyanin basinda; ozeti: govde
- * `contenteditable`dan geliyor ve tesisteki HERKESE gosteriliyor.
+ * (P171) METIN GOVDESI ZENGIN METIN OLARAK CIZILIR. Guvenligi SUNUCU
+ * saglar: govde yazma aninda beyaz listeyle temizlenir
+ * (`backend/app/temizleme.py`). Ayrintili gerekce cizim yerinde.
  */
 import { useState } from "react";
 import useSWR from "swr";
@@ -40,7 +40,6 @@ import {
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
-import { zenginMetniOku } from "@/lib/zengin-metin-oku";
 
 type Tur = "aydinlatma" | "acik_riza" | "gizlilik" | "kullanim_kosullari" | "cerez";
 
@@ -130,20 +129,35 @@ export function YasalMetinler() {
               {t("kvkkSurum")} v{data.surum} · {formatDateTime(data.created_at)}
             </span>
           </div>
-          {/* GOVDE HTML OLABILIR AMA HTML OLARAK BASILMAZ.
-              `dangerouslySetInnerHTML` ilk yazimda buradaydi ve depoda IKI
-              YERDE yazili bir karari boziyordu (bkz. `ZenginMetin` dosya
-              basi ve mobil `yasal_metinler_screen.dart`). Govde
-              `contenteditable`dan geliyor, oraya HTML YAPISTIRILABILIR ve
-              bu metin TESISTEKI HERKESE gosteriliyor — `<img onerror>`
-              tek satiri, baska kullanicilarin oturumunda kod calistirirdi.
-              Ayrintili gerekce: `lib/zengin-metin-oku.ts`. */}
-          <p
-            className="whitespace-pre-wrap"
+          {/* (P171) ZENGIN METIN GERI GELDI — CUNKU SUNUCU TEMIZLIYOR.
+              =====================================================
+              P170'te bu govde duz metne cevriliyordu. Guvenliydi ama
+              bedeli agirdi: KVKK metinleri BASLIKLI VE MADDELI
+              belgelerdir ve duz metin okunabilirligi dusuruyordu.
+
+              Bugun kosul saglandi: govde YAZMA ANINDA sunucuda beyaz
+              listeyle temizleniyor (`backend/app/temizleme.py`, `nh3`) —
+              `on*`, `style`, `script`, `iframe`, `svg`, `img` ve
+              `javascript:`/`data:` semalari saklanmadan atiliyor. Mevcut
+              satirlar da onarim gocuyle temizlendi (0066), yani "dunden
+              kalan kirli satir" diye bir sey YOK.
+
+              NEDEN ISTEMCIDE IKINCI BIR TEMIZLIK YOK: temizlik ISTEMCI
+              KARARI OLSAYDI her istemci (web, mobil, e-posta, rapor) onu
+              ayri ayri dogru yapmak zorunda kalirdi ve birinin atlamasi
+              sessiz bir acik olurdu. Tek dogru yer, verinin GIRDIGI yer.
+              Istemcideki bir temizleyici burada yalniz ayni isi ikinci
+              kez yapar ve "asil koruma nerede" sorusunu bulaniklastirirdi.
+
+              SUNUCU KANITLANDI: `backend/tests/test_temizleme.py` hem
+              vektorlerin atildigini hem MESRU BICIMLENDIRMENIN korundugunu
+              olcuyor; sema tipi (`ZenginHtml`) envanterle kilitli, yani
+              yeni bir zengin metin alani temizlik olmadan eklenemiyor. */}
+          <div
+            className="yz-yasal-govde"
             style={{ fontSize: "var(--yz-fs-body)", color: "var(--yz-text)" }}
-          >
-            {zenginMetniOku(data.govde)}
-          </p>
+            dangerouslySetInnerHTML={{ __html: data.govde }}
+          />
         </Kart>
       ) : null}
 

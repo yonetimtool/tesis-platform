@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/i18n/l10n.dart';
 import '../data/kvkk_api.dart';
+import '../../../core/widgets/zengin_govde.dart';
 
 /// Aydinlatma metni SALT-OKUMA (P36).
 ///
@@ -35,8 +36,8 @@ class KvkkMetinScreen extends ConsumerWidget {
                   const SizedBox(height: 12),
                   // Tenant icerigi: ORIJINAL dilinde gosterilir (hukuki
                   // metnin makine cevirisi yanlis bir taahhut uretirdi).
-                  Text(metin.govde,
-                      style: Theme.of(context).textTheme.bodyMedium),
+                  // (P171) Zengin metin — sunucu yazma aninda temizliyor.
+                  ZenginGovde(metin.govde),
                 ],
               ),
             ),

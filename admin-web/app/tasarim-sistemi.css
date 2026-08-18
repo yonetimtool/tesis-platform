@@ -485,3 +485,71 @@
   }
 }
 
+
+/* ==========================================================================
+   (P171) YASAL METIN GOVDESI — sunucuda temizlenmis zengin metnin stili.
+   ==========================================================================
+   Tailwind'in `preflight` katmani `h1-h4`, `ul/ol`, `blockquote` gibi
+   ogelerin tarayici varsayilanlarini SIFIRLAR. Bu dogru bir karardir
+   (uygulama yuzeyi tutarli olsun diye) ama BURADA ters teper: sunucudan
+   gelen basliklar ve maddeler duz paragraf gibi gorunur ve P171'in butun
+   amaci — bicimlendirmeyi geri getirmek — bosa cikardi.
+
+   Kapsam DAR TUTULDU (`.yz-yasal-govde` altinda): genel bir "prose"
+   sinifi acmak, sifirlamayi uygulamanin her yerinde geri almak olurdu.
+
+   IZIN VERILEN ETIKET KUMESI SUNUCUYLA AYNI (`app/temizleme.py`): burada
+   stil verilen her sey beyaz listede var, beyaz listede olmayan hicbir
+   sey buraya girmez.
+   ========================================================================== */
+.yz-yasal-govde h1,
+.yz-yasal-govde h2,
+.yz-yasal-govde h3,
+.yz-yasal-govde h4 {
+  font-weight: 600;
+  color: var(--yz-text);
+  margin-block: 0.85em 0.35em;
+  line-height: 1.3;
+}
+.yz-yasal-govde h1 { font-size: var(--yz-fs-h2); }
+.yz-yasal-govde h2 { font-size: var(--yz-fs-h3); }
+.yz-yasal-govde h3,
+.yz-yasal-govde h4 { font-size: var(--yz-fs-body); }
+
+.yz-yasal-govde p { margin-block: 0.55em; }
+
+/* MADDE ISARETI GERI GELIR: `list-style` sifirlanmis durumda ve isaretsiz
+   bir liste, maddeleri ard arda paragraflardan AYIRT EDILEMEZ kilardi. */
+.yz-yasal-govde ul,
+.yz-yasal-govde ol {
+  margin-block: 0.55em;
+  padding-inline-start: 1.5em;
+}
+.yz-yasal-govde ul { list-style: disc; }
+.yz-yasal-govde ol { list-style: decimal; }
+.yz-yasal-govde li { margin-block: 0.2em; }
+
+.yz-yasal-govde strong { font-weight: 600; }
+.yz-yasal-govde em { font-style: italic; }
+.yz-yasal-govde u { text-decoration: underline; }
+.yz-yasal-govde s { text-decoration: line-through; }
+
+/* BAGLANTI GORUNUR OLMALI: yasal bir metinde "ilgili mevzuat" baglantisi
+   renksiz ve altsiz birakilirsa metnin icinde KAYBOLUR. */
+.yz-yasal-govde a {
+  color: var(--yz-accent-ink);
+  text-decoration: underline;
+}
+
+.yz-yasal-govde blockquote {
+  margin-block: 0.65em;
+  padding-inline-start: 0.9em;
+  border-inline-start: 3px solid var(--yz-border-strong);
+  color: var(--yz-text-2);
+}
+
+.yz-yasal-govde hr {
+  margin-block: 1em;
+  border: 0;
+  border-top: var(--yz-border-w) solid var(--yz-border);
+}

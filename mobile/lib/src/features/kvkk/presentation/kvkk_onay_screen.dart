@@ -6,6 +6,7 @@ import '../../../core/i18n/l10n.dart';
 import '../data/kvkk_api.dart';
 import '../domain/kaydirma_kapisi.dart';
 import '../domain/kvkk_models.dart';
+import '../../../core/widgets/zengin_govde.dart';
 
 /// Zorunlu aydinlatma kapisi (P36).
 ///
@@ -138,8 +139,11 @@ class _KvkkOnayScreenState extends ConsumerState<KvkkOnayScreen> {
                       // TENANT ICERIGI: metin orijinal dilinde gosterilir
                       // (cevrilmez — hukuki metnin makine cevirisi yanlis
                       // bir taahhut uretirdi).
-                      Text(metin.govde,
-                          style: Theme.of(context).textTheme.bodyMedium),
+                      // (P171) Zengin metin — sunucu yazma aninda temizliyor.
+                      // ONAY KAPISINDA bu ozellikle onemli: kullanicinin
+                      // ONAYLADIGI metni ham etiketlerle gostermek, neyi
+                      // onayladigini bulaniklastirirdi.
+                      ZenginGovde(metin.govde),
                       const SizedBox(height: 24),
                       const Divider(),
                       const SizedBox(height: 8),

@@ -12,6 +12,15 @@ celery==5.4.0
 # --- Kripto (NTAG424 SDM/SUN dogrulamasi: AES-CBC/CMAC/GCM) ---
 cryptography==42.0.8
 
+# --- HTML temizleme (P171) ---
+# Zengin metin kabul eden uclarda govde YAZMA ANINDA beyaz listeyle
+# temizlenir; veritabaninda TEMIZ veri durur. `nh3` Rust (`ammonia`)
+# tabanlidir ve `bleach`in yerini aldi — bleach 2023'te BAKIMDAN CIKTI ve
+# kendi belgesinde nh3'e yonlendiriyor. Elle yazilmis bir temizleyici
+# KESINLIKLE denenmedi: HTML ayristirma koseleri (mutasyon XSS, ic ice
+# yorumlar, eksik kapanis) tam olarak bu tur kutuphanelerin varlik sebebi.
+nh3==0.2.18
+
 # --- Auth ---
 PyJWT==2.8.0
 bcrypt==4.1.3

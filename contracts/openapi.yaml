@@ -12321,7 +12321,22 @@ components:
             unuttugunda kimseye sorulmaz ve bu SESSIZCE hukuki bir
             eksiklik olurdu. Yazim hatasi duzeltmeleri icin `false`.
         baslik: { type: string, minLength: 1, maxLength: 200 }
-        govde: { type: string, minLength: 1, maxLength: 100000 }
+        govde:
+          type: string
+          minLength: 1
+          maxLength: 100000
+          description: >
+            **(P171) SUNUCU YAZMA ANINDA TEMIZLER.** Govde zengin metindir
+            ve beyaz listeden gecirilir (`nh3`): izinli etiketler
+            `p br strong em u s h1-h4 ul ol li a blockquote hr`, izinli
+            oznitelikler yalniz `a[href]` ve `a[title]`, izinli semalar
+            `http https mailto`. `on*`, `style`, `script`, `iframe`,
+            `svg`, `img` ve `javascript:`/`data:` ATILIR.
+            Uzunluk siniri KULLANICININ yazdigi metne uygulanir —
+            temizlik SONRA calisir, yoksa siniri asan bir govde
+            kisaldigi icin sessizce kabul edilirdi.
+            Donen deger de temizdir; istemci govdeyi ZENGIN METIN olarak
+            cizebilir.
     KvkkMetin:
       type: object
       required: [id, surum, baslik, govde, created_at]
@@ -13710,7 +13725,15 @@ components:
         kanal: { type: string, enum: [sms, eposta] }
         ad: { type: string, minLength: 1, maxLength: 100 }
         konu: { type: string, nullable: true, maxLength: 200 }
-        govde: { type: string, minLength: 1, maxLength: 4000 }
+        govde:
+          type: string
+          minLength: 1
+          maxLength: 4000
+          description: >
+            **(P171) SUNUCU YAZMA ANINDA TEMIZLER** — `KvkkMetinCreate.govde`
+            ile AYNI beyaz liste. E-posta kanalinda govde zengin metindir
+            ve saklanan deger BASKASINA GONDERILIR; SMS'te bicimlendirme
+            zaten anlamsizdir ve duz metin beyaz listeden DEGISMEDEN gecer.
         amac: { type: string, enum: [pazarlama, operasyonel], default: operasyonel }
         aktif: { type: boolean, default: true }
     MesajSablonuUpdate:

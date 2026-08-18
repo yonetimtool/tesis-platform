@@ -6,6 +6,7 @@ import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
 import '../data/kvkk_api.dart';
 import '../domain/kvkk_models.dart';
+import '../../../core/widgets/zengin_govde.dart';
 
 /// (P168 §5) YASAL METINLER — sakinin okuma ve ONAY GECMISI ekrani.
 ///
@@ -129,11 +130,17 @@ class _Metin extends ConsumerWidget {
           ),
 
           const SizedBox(height: 12),
-          // METIN DUZ YAZI OLARAK CIZILIR: govde HTML olabilir (panelde
-          // zengin metin editoru var) ama mobilde HTML'i yorumlamak,
-          // yoneticinin yazdigi isaretlemeyi CALISTIRMAK olurdu. Duz
-          // metin guvenli ve okunur.
-          SelectableText(m.govde),
+          // (P171) ZENGIN METIN OLARAK CIZILIR.
+          //
+          // ONCEDEN duz yazi ciziliyordu ve gerekcesi dogruydu: govde
+          // temizlenmemisti, HTML'i yorumlamak yoneticinin yazdigi
+          // isaretlemeyi CALISTIRMAK olurdu. Ama bedeli, kullanicinin
+          // metnin ORTASINDA ham `<h2>`/`<li>` etiketleri gormesiydi.
+          //
+          // Kosul artik saglandi: sunucu govdeyi YAZMA ANINDA beyaz
+          // listeyle temizliyor (`backend/app/temizleme.py`) ve mevcut
+          // satirlar onarim gocuyle (0066) temizlendi.
+          ZenginGovde(m.govde),
         ],
       ),
     );

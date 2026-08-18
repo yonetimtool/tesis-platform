@@ -4,9 +4,10 @@ from __future__ import annotations
 import re
 import uuid
 from datetime import date, datetime, time, timezone
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import (
+    AfterValidator,
     BaseModel,
     ConfigDict,
     EmailStr,
@@ -16,6 +17,19 @@ from pydantic import (
 )
 
 from .security import normalize_phone
+from .temizleme import zengin_temizle
+
+#: (P171) ZENGIN METIN GOVDESI — YAZMA ANINDA TEMIZLENIR.
+#
+# TIP OLARAK yazildi, uc icinde bir cagri OLARAK degil. Gerekce: bir
+# temizleme cagrisi yeni bir ucta UNUTULABILIR ve unutuldugunda hicbir sey
+# hata vermez — yalnizca o uc korumasiz kalir. Tip, korumayi SEMANIN
+# KENDISINE tasir: `ZenginHtml` yazan her alan temizlenmis olur.
+#
+# `AfterValidator`: uzunluk/bosluk dogrulamalarindan SONRA calisir, yani
+# `max_length` KULLANICININ yazdigi metne uygulanir — temizlenmis (kisalmis)
+# haline degil.
+ZenginHtml = Annotated[str, AfterValidator(zengin_temizle)]
 
 GunTipi = Literal["her_gun", "hafta_ici", "hafta_sonu", "resmi_tatil"]
 
@@ -5201,7 +5215,11 @@ class MesajSablonuCreate(BaseModel):
     kanal: MesajKanal
     ad: str = Field(..., min_length=1, max_length=100)
     konu: str | None = Field(None, max_length=200)
-    govde: str = Field(..., min_length=1, max_length=4000)
+    #: (P171) E-POSTA kanalinda govde zengin metindir (`ZenginMetin`
+    #: editoru) ve saklanan deger baskasina GONDERILIR. SMS'te
+    #: bicimlendirme zaten anlamsiz; temizlik ona da zarar vermez cunku
+    #: duz metin beyaz listeden DEGISMEDEN gecer.
+    govde: ZenginHtml = Field(..., min_length=1, max_length=4000)
     amac: MesajAmac = "operasyonel"
     aktif: bool = True
 
@@ -5217,7 +5235,7 @@ class MesajSablonuCreate(BaseModel):
 class MesajSablonuUpdate(BaseModel):
     ad: str | None = Field(None, min_length=1, max_length=100)
     konu: str | None = Field(None, max_length=200)
-    govde: str | None = Field(None, min_length=1, max_length=4000)
+    govde: ZenginHtml | None = Field(None, min_length=1, max_length=4000)
     amac: MesajAmac | None = None
     aktif: bool | None = None
 
@@ -5263,7 +5281,12 @@ class SmsOlcumOut(BaseModel):
 
 
 class MesajOnizlemeIstek(BaseModel):
-    govde: str = Field(..., min_length=1, max_length=4000)
+    #: (P171) ONIZLEME DE TEMIZLENIR. Saklanmayan bir govde ama ONIZLEME
+    #: EKRANDA CIZILIR: temizlenmemis birakmak, "kaydetmeden once dene"
+    #: yoluyla acilmis bir enjeksiyon kapisi olurdu. Ayrica onizleme
+    #: KAYDEDILENLE AYNI SEYI gostermeli — temizlenmemis bir onizleme,
+    #: kullaniciya kaydedilmeyecek bir sonuc gosterirdi.
+    govde: ZenginHtml = Field(..., min_length=1, max_length=4000)
     konu: str | None = Field(None, max_length=200)
     #: Onizleme icin ornek kisi (verilmezse ornek degerler kullanilir).
     user_id: uuid.UUID | None = None
@@ -5602,7 +5625,9 @@ class KvkkMetinCreate(BaseModel):
     #: gondermiyor.
     tur: KvkkTur = "aydinlatma"
     baslik: str = Field(..., min_length=1, max_length=200)
-    govde: str = Field(..., min_length=1, max_length=100_000)
+    #: (P171) YAZMA ANINDA TEMIZLENIR — zengin metin editorunden geliyor ve
+    #: tesisteki HERKESE gosteriliyor.
+    govde: ZenginHtml = Field(..., min_length=1, max_length=100_000)
     #: (P168 §5) VARSAYILAN `True` ve bu bilincli: guvenli yon SORMAKTIR.
     #: `False` varsayilan olsaydi, esasli bir degisikligi yayinlayan
     #: yonetici kutuyu isaretlemeyi unuttugunda kimseye sorulmaz ve bu
