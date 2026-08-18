@@ -23,8 +23,9 @@
  * artik yururlukte degilse bunu ACIKCA soyler — aksi halde kullanici
  * okumadigi bir metni onaylamis sanirdi.
  *
- * METIN GOVDESI HTML: platform tarafinda zengin metin editoruyle
- * yaziliyor, mobilde de ayni govde HTML olarak ciziliyor.
+ * METIN GOVDESI HTML OLABILIR AMA HTML OLARAK CIZILMEZ — `zenginMetniOku`
+ * ile duz metne cevrilir. Gerekcesi o dosyanin basinda; ozeti: govde
+ * `contenteditable`dan geliyor ve tesisteki HERKESE gosteriliyor.
  */
 import { useState } from "react";
 import useSWR from "swr";
@@ -39,6 +40,7 @@ import {
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
+import { zenginMetniOku } from "@/lib/zengin-metin-oku";
 
 type Tur = "aydinlatma" | "acik_riza" | "gizlilik" | "kullanim_kosullari" | "cerez";
 
@@ -128,12 +130,20 @@ export function YasalMetinler() {
               {t("kvkkSurum")} v{data.surum} · {formatDateTime(data.created_at)}
             </span>
           </div>
-          {/* GOVDE PLATFORMDA zengin metin editoruyle yaziliyor; kaynak
-              guvenilir (yalniz platform yoneticisi yazabiliyor). */}
-          <div
+          {/* GOVDE HTML OLABILIR AMA HTML OLARAK BASILMAZ.
+              `dangerouslySetInnerHTML` ilk yazimda buradaydi ve depoda IKI
+              YERDE yazili bir karari boziyordu (bkz. `ZenginMetin` dosya
+              basi ve mobil `yasal_metinler_screen.dart`). Govde
+              `contenteditable`dan geliyor, oraya HTML YAPISTIRILABILIR ve
+              bu metin TESISTEKI HERKESE gosteriliyor — `<img onerror>`
+              tek satiri, baska kullanicilarin oturumunda kod calistirirdi.
+              Ayrintili gerekce: `lib/zengin-metin-oku.ts`. */}
+          <p
+            className="whitespace-pre-wrap"
             style={{ fontSize: "var(--yz-fs-body)", color: "var(--yz-text)" }}
-            dangerouslySetInnerHTML={{ __html: data.govde }}
-          />
+          >
+            {zenginMetniOku(data.govde)}
+          </p>
         </Kart>
       ) : null}
 

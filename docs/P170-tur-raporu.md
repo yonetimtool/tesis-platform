@@ -277,6 +277,51 @@ Bu turda **güncellenen dört kilit** var ve dördü de bilinçli:
 
 ---
 
+## 4.5 Sonradan yakalanan güvenlik regresyonu (düzeltildi)
+
+Commit sonrası otomatik güvenlik taraması, `Profil → Yasal Metinler`
+ekranında **saklı XSS** bildirdi. Bulgu **geçerliydi ve bu turun
+regresyonuydu**: govdeyi `dangerouslySetInnerHTML` ile basıyordum.
+
+Bu, depoda **iki yerde açıkça yazılmış** bir kararı bozuyordu:
+
+* `components/ZenginMetin.tsx` dosya başı: *"Panelde geri gösterilirken
+  `dangerouslySetInnerHTML` KULLANILMAZ."*
+* mobil `yasal_metinler_screen.dart`: *"HTML'i yorumlamak, yöneticinin
+  yazdığı işaretlemeyi ÇALIŞTIRMAK olurdu."*
+
+**Neden gerçekten sömürülebilir** (yayınlayan yetkili olsa bile): gövde
+`contenteditable` üzerinden üretiliyor ve oraya HTML **yapıştırılabilir**.
+`<script>` `innerHTML` ile çalışmaz ama `<img onerror>`, `<svg onload>`,
+`<iframe>` ve `javascript:` bağlantıları çalışır. Sunucu gövdeyi olduğu
+gibi saklıyor ve metin **tesisteki herkese** gösteriliyor. Yani yüksek
+yetkili bir hesabın (ya da o hesabı ele geçirenin) yazdığı tek satır,
+**başka kullanıcıların** oturumunda kod çalıştırırdı — yayıncı yetkili
+olsa da başkası adına iş yapmak onun yetkisi değildir.
+
+**Çözüm: metne çevirme, temizleyici değil.** `lib/zengin-metin-oku.ts`,
+`DOMParser` + `text/html` ile **atıl** bir belge üretiyor (betik çalışmaz,
+`onerror` tetiklenmez, ağ isteği gitmez) ve blok yapısını koruyarak düz
+metin döndürüyor. Enjeksiyon yüzeyi kalmıyor.
+
+DOMPurify **bilinçli olarak seçilmedi**: sorunun kökü sunucunun gövdeyi
+denetlemeden saklaması. İstemci temizleyicisi bunu düzeltmez, üstünü
+örter — ve mobil aynı gövdeyi bağımsız çizdiği için orada korumasız
+kalırdı. **Doğru kalıcı çözüm yazma anında**, denetlenmiş bir kütüphaneyle
+(`bleach` / `nh3`) beyaz liste uygulamaktır; bu bir arka uç kararı ve bu
+turun kapsamında değil — **adıyla sonraki tura bırakılıyor**.
+
+**Bedeli:** kalın/madde/başlık biçimlendirmesi web'de kayboluyor; metnin
+kendisi ve satır yapısı korunuyor. Mobil zaten düz metin çiziyordu, yani
+iki yüzey artık **aynı** şeyi gösteriyor.
+
+Kilit: `tests/zengin-metin-oku.dom.test.ts` (7) — `<img onerror>`,
+`<svg onload>`, `<iframe>`, `javascript:` ve `<script>` gövdesinin canlı
+kalmadığını **ve** metnin okunur kaldığını ölçüyor (yoksa "güvenli ama
+kullanılamaz" bir ekran olurdu).
+
+---
+
 ## 5. Test sunucusunda telefondan ne kontrol edeceksin
 
 1. **Üst bar** — 360 px genişlikte "yönetiyor" yazısı görünmemeli, yalnız
