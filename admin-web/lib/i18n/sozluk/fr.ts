@@ -900,6 +900,8 @@ export const fr: Sozluk = {
   listeKayitYok: "Aucun enregistrement.",
   aramaEtiket: "Rechercher",
   sahneWebglYok: "La vue 3D n\u2019est pas prise en charge par ce navigateur.",
+  sahneDokunAktif: "Touchez pour manipuler la scène",
+  sahneKaydirmayaDon: "Faire défiler la page",
   sahneSiteBaslik: "Maquette du site",
   sahneSecimIpucu: "Choisissez un bloc sur la maquette ; les étages et les logements apparaissent ici.",
   sahneBlokOzeti: "{kat} étages · {daire} logements",

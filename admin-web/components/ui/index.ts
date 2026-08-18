@@ -30,6 +30,7 @@ export {
   HataDurumu,
 } from "./durumlar";
 export { Modal, OnayDiyalogu, type ModalProps } from "./modal";
+export { DokunmaKapisi } from "./dokunma-kapisi";
 export { useOnay, type OnayIstegi, type OnayKancasi } from "./onay-kullan";
 export { KomutPaleti, PALET_HEDEF, type PaletVurusu } from "./komut-paleti";
 export { BildirimMerkezi } from "./bildirim-merkezi";

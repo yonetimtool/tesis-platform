@@ -40,7 +40,11 @@ vi.mock("next/navigation", () => ({
 function sahteUc() {
   // BAZI UCLAR DUZ DIZI DONER (`/ice-aktarim/turler` gibi). Ayni govdeyi
   // hem dizi hem nesne yapamayiz; sozlesmesi dizi olanlar ayrilir.
-  const DIZI_UCLARI = ["turler", "/checkpoints"];
+  // (P169) `kvkk-metinler` EKLENDI: sozlesmesi duz dizi ve yanlis sekil
+  // vermek `VeriTablosu`nu YAKALANMAMIS ISTISNAYLA cokertiyordu. Vitest
+  // bunu "bu, testleri yanlis GECIRIYOR olabilir" diye bildiriyordu —
+  // yani tarama sessizce eksik olcuyordu.
+  const DIZI_UCLARI = ["turler", "/checkpoints", "kvkk-metinler"];
   globalThis.fetch = (async (girdi: RequestInfo | URL) => {
     const url = String(girdi);
     if (DIZI_UCLARI.some((u) => url.includes(u))) {

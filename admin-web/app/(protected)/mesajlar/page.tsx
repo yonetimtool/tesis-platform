@@ -180,19 +180,19 @@ export default function MesajlarPage() {
   const gecmisKolonlari: Kolon<Gecmis>[] = useMemo(
     () => [
       {
-        id: "tarih",
+        id: "tarih", kartRolu: "ozet",
         baslik: t("mesajTarih"),
         gizlenebilir: false,
         hucre: (g) => <span className="whitespace-nowrap">{formatDateTime(g.created_at)}</span>,
       },
       {
-        id: "kanal",
+        id: "kanal", kartRolu: "ozet",
         baslik: t("mesajKanal"),
         hucre: (g) => t(`mesajKanal_${g.kanal}` as never),
       },
-      { id: "hedef", baslik: t("mesajHedef"), hucre: (g) => g.hedef },
+      { id: "hedef", kartRolu: "baslik", baslik: t("mesajHedef"), hucre: (g) => g.hedef },
       {
-        id: "durum",
+        id: "durum", kartRolu: "rozet",
         baslik: t("mesajDurum"),
         hucre: (g) => (
           <>
@@ -214,14 +214,14 @@ export default function MesajlarPage() {
   const sablonKolonlari: Kolon<Sablon>[] = useMemo(
     () => [
       {
-        id: "kanal",
+        id: "kanal", kartRolu: "ozet",
         baslik: t("mesajKanal"),
         gizlenebilir: false,
         hucre: (s) => t(`mesajKanal_${s.kanal}` as never),
       },
-      { id: "ad", baslik: t("mesajAd"), hucre: (s) => s.ad },
+      { id: "ad", kartRolu: "baslik", baslik: t("mesajAd"), hucre: (s) => s.ad },
       {
-        id: "amac",
+        id: "amac", kartRolu: "ozet",
         baslik: t("mesajAmac"),
         // AMAC SABLONDA (P32): ayni sablonun bir gun pazarlama bir gun
         // operasyonel gonderilmesi riza denetimini anlamsiz kilardi — bu
@@ -229,7 +229,7 @@ export default function MesajlarPage() {
         hucre: (s) => t(`mesajAmac_${s.amac}` as never),
       },
       {
-        id: "eylem",
+        id: "eylem", kartRolu: "eylem",
         baslik: "",
         gizlenebilir: false,
         hucre: (s) => (

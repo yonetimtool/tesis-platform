@@ -900,6 +900,8 @@ export const ru: Sozluk = {
   listeKayitYok: "Нет записей.",
   aramaEtiket: "Поиск",
   sahneWebglYok: "3D-просмотр не поддерживается в этом браузере.",
+  sahneDokunAktif: "Нажмите, чтобы управлять сценой",
+  sahneKaydirmayaDon: "Прокрутить страницу",
   sahneSiteBaslik: "Макет комплекса",
   sahneSecimIpucu: "Выберите блок на макете; этажи и квартиры появятся здесь.",
   sahneBlokOzeti: "{kat} этажей · {daire} квартир",

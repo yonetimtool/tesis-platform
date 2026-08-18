@@ -21,7 +21,9 @@ import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 
 import { useT } from "@/lib/i18n/kullan";
+import { useBantEnAz, useMedya } from "@/lib/kirilma-kullan";
 
+import { DokunmaKapisi } from "../ui/dokunma-kapisi";
 import { Iskelet } from "../ui/durumlar";
 import type { BinaSahnesiProps } from "./bina-sahnesi";
 import type { RotaSahnesiProps } from "./rota-sahnesi";
@@ -72,16 +74,26 @@ function useSahneOrtami() {
   const [hazir, setHazir] = useState(false);
   const [destek, setDestek] = useState(true);
   const [koyu, setKoyu] = useState(false);
-  const [hareket, setHareket] = useState(true);
-  const [mobil, setMobil] = useState(false);
+
+  // (P169 §4) OLCUMLER ARTIK CANLI VE TEK KAYNAKTAN.
+  //
+  // Eski surum ikisini de `useEffect` icinde BIR KEZ okuyordu: telefonu
+  // yatay cevirmek ya da pencereyi buyutmek sahneyi ESKI kararda
+  // birakiyordu — 380 px'te acilip masaustune buyutulen bir pencerede
+  // maket duragan kaliyor, tersinde ise dar ekranda tam sahne calisip
+  // pili yakiyordu. `useMedya` sorguyu DINLER.
+  //
+  // ESIK 768'DEN 1024'E TASINDI. 768 bu projede baska hicbir yerde
+  // gecmeyen bir sayiydi; `lib/kirilma-noktasi.ts` kirilma sinirlarinin
+  // TEK kaynagi ve 1024 = "tablet dikeyin ustu". Degisen aralik
+  // (768-1023) tanim geregi TABLET DIKEYDIR, masaustu degil; masaustu
+  // bandinda (>=1024) sahne oldugu gibi kaliyor.
+  const dar = !useBantEnAz("lg");
+  const hareket = !useMedya("(prefers-reduced-motion: reduce)");
 
   useEffect(() => {
     setDestek(webglVar());
     setKoyu(document.documentElement.classList.contains("dark"));
-    setHareket(!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
-    // MOBIL: sahne cizilir ama DURAGAN (brief). Dokunmatik cihazda
-    // surekli render pil tuketir ve kucuk ekranda maket zaten okunmaz.
-    setMobil(window.matchMedia?.("(max-width: 768px)").matches ?? false);
     setHazir(true);
   }, []);
 
@@ -99,7 +111,7 @@ function useSahneOrtami() {
 
   // `sade`: mobil VEYA hareket azaltma. Ikisinde de yumusak golge,
   // yansima ve isik seridi kapanir — biri pil, digeri rahatsizlik icin.
-  return { hazir, destek, koyu, hareketVar: hareket && !mobil, sade: mobil || !hareket };
+  return { hazir, destek, koyu, hareketVar: hareket && !dar, sade: dar || !hareket };
 }
 
 export function BinaSahnesiYukleyici(
@@ -140,18 +152,20 @@ export function BinaSahnesiYukleyici(
     );
   }
 
+  // SAHNE DEKORDUR, BILGI DEGIL: tasidigi her sey zaten sayfadaki KPI ve
+  // listelerde metin olarak var. Ekran okuyucuya bir tuval okutmanin
+  // faydasi yok; ozet metni `aria-label` ile veriliyor.
   return (
-    <div
-      style={{ height: yukseklik, borderRadius: "var(--yz-radius-card)" }}
-      className="overflow-hidden"
-      // SAHNE DEKORDUR, BILGI DEGIL: tasidigi her sey zaten sayfadaki
-      // KPI ve listelerde metin olarak var. Ekran okuyucuya bir tuval
-      // okutmanin faydasi yok; ozet metni `sr-only` olarak veriliyor.
-      role="img"
-      aria-label={t("sahneBlokSayisi", { n: String(sahneProps.bloklar.length) })}
-    >
-      <Sahne {...sahneProps} koyu={koyu} hareketVar={hareketVar} sade={sade} />
-    </div>
+    <DokunmaKapisi yukseklik={yukseklik}>
+      <div
+        className="h-full w-full overflow-hidden"
+        style={{ borderRadius: "var(--yz-radius-card)" }}
+        role="img"
+        aria-label={t("sahneBlokSayisi", { n: String(sahneProps.bloklar.length) })}
+      >
+        <Sahne {...sahneProps} koyu={koyu} hareketVar={hareketVar} sade={sade} />
+      </div>
+    </DokunmaKapisi>
   );
 }
 
@@ -200,17 +214,18 @@ export function RotaSahnesiYukleyici(
     );
   }
 
+  // SAHNE DEKORDUR: her noktanin adi ve durumu sayfadaki listede METIN
+  // olarak zaten var. Tuvale okunacak bir sey yok; ozet `aria-label`ta.
   return (
-    <div
-      style={{ height: yukseklik, borderRadius: "var(--yz-radius-card)" }}
-      className="overflow-hidden"
-      // SAHNE DEKORDUR: her noktanin adi ve durumu sayfadaki listede
-      // METIN olarak zaten var. Tuvale okunacak bir sey yok; ozet
-      // `aria-label` ile veriliyor.
-      role="img"
-      aria-label={ozet}
-    >
-      <RotaSahne {...sahneProps} koyu={koyu} hareketVar={hareketVar} />
-    </div>
+    <DokunmaKapisi yukseklik={yukseklik}>
+      <div
+        className="h-full w-full overflow-hidden"
+        style={{ borderRadius: "var(--yz-radius-card)" }}
+        role="img"
+        aria-label={ozet}
+      >
+        <RotaSahne {...sahneProps} koyu={koyu} hareketVar={hareketVar} />
+      </div>
+    </DokunmaKapisi>
   );
 }

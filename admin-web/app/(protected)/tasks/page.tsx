@@ -599,6 +599,8 @@ export default function TasksPage() {
                           <img
                             src={c.foto_url}
                             alt={t("gorevFotoVarRozet")}
+                            loading="lazy"
+                            decoding="async"
                             className="h-12 w-16 rounded object-cover"
                           />
                         </a>

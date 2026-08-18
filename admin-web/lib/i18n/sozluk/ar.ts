@@ -900,6 +900,8 @@ export const ar: Sozluk = {
   listeKayitYok: "لا توجد سجلات.",
   aramaEtiket: "بحث",
   sahneWebglYok: "العرض ثلاثي الأبعاد غير مدعوم في هذا المتصفح.",
+  sahneDokunAktif: "انقر للتفاعل مع المشهد",
+  sahneKaydirmayaDon: "تمرير الصفحة",
   sahneSiteBaslik: "مجسم المجمع",
   sahneSecimIpucu: "اختر مبنى من المجسم؛ تظهر الطوابق والشقق هنا.",
   sahneBlokOzeti: "{kat} طوابق · {daire} شقة",

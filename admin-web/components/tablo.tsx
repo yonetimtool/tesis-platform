@@ -1,3 +1,5 @@
+"use client";
+
 // (P138) ORTAK TABLO ILKELI — 23 sayfa ayni iskeleti elle yaziyordu.
 //
 // OLCUM: `form.tsx` kart/dugme/girdi icin ortak katman sagliyor ve P132.7
@@ -25,6 +27,7 @@
 // dolgusu. Degerlerin hepsi mevcut token'lardan; yeni renk/olcu ICAT
 // EDILMEDI.
 import type { ReactNode } from "react";
+import { useT } from "@/lib/i18n/kullan";
 
 // Tablo kabı — kart yuzeyi + yatay kaydirma.
 export function TabloKart({
@@ -34,12 +37,37 @@ export function TabloKart({
   children: ReactNode;
   className?: string;
 }) {
+  const t = useT();
   return (
     <div className={`kart-kenar overflow-hidden rounded-kart border bg-yuzey-card ${className}`}>
       {/* DAR EKRANDA YATAY KAYDIRMA: tabloyu kirpmak yerine kaydirmak,
           sutun gizlemekten durusttur — kullanici verinin var oldugunu
           gorur. Sayfa govdesi yatay kaymaz, yalniz bu kap kayar. */}
-      <div className="overflow-x-auto">{children}</div>
+      <div className="relative">
+        {/* (P169 §3.1) `role=region` + `tabIndex` EKLENDI. Kaydirilabilir
+            bir kutu bunlar olmadan KLAVYEYLE kaydirilamaz (WCAG 2.1.1):
+            faresi olmayan kullanici icin sagdaki kolonlar YOK demekti.
+            `VeriTablosu`da vardi, bu kapta YOKTU. */}
+        <div
+          role="region"
+          aria-label={t("tabloKolonlar")}
+          tabIndex={0}
+          className="odak-ic overflow-x-auto"
+        >
+          {children}
+        </div>
+        {/* Sag kenar gradyani — "daha var" isareti; gostergesiz bir
+            tabloda kullanici saga kaydirilabildigini BILMEZ ve veriyi
+            eksik sanir. Genis ekranda gerek yok, orada tablo zaten sigar. */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 end-0 w-6 sm:hidden"
+          style={{
+            background:
+              "linear-gradient(to left, var(--yz-surface-1), transparent)",
+          }}
+        />
+      </div>
     </div>
   );
 }

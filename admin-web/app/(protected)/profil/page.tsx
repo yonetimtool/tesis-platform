@@ -123,7 +123,16 @@ export default function ProfilPage() {
       <div className="grid gap-6 lg:grid-cols-[13rem_minmax(0,1fr)]">
         {/* SAYFA ICI SOL MENU — `nav` etiketi bilincli: ekran okuyucu
             kullanicisi bunu bir gezinme bolgesi olarak atlayabilmeli. */}
-        <nav aria-label={t("profilBolumMenusu")} className="space-y-1">
+        {/* (P169 §4) DAR EKRANDA YATAY SERIT, GENISTE DIKEY MENU.
+            Dikey menu dar ekranda icerigin USTUNE bes satirlik bir blok
+            koyuyor ve kullanici asil formu gormek icin her girisinde
+            asagi kaydiriyordu. Karar SALT CSS: `useBant` gerekmedi,
+            dolayisiyla sunucu/istemci farki ve hidrasyon riski de yok.
+            `lg` ve ustu HIC DEGISMEDI. */}
+        <nav
+          aria-label={t("profilBolumMenusu")}
+          className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1 lg:mx-0 lg:block lg:space-y-1 lg:overflow-visible lg:px-0 lg:pb-0"
+        >
           {PROFIL_BOLUMLERI.map((b) => {
             const aktif = b.id === bolum;
             return (
@@ -132,7 +141,9 @@ export default function ProfilPage() {
                 type="button"
                 onClick={() => setBolum(b.id)}
                 aria-current={aktif ? "page" : undefined}
-                className="odak-ic block w-full px-3 py-2 text-start transition"
+                // `shrink-0` + `whitespace-nowrap` seridin sikismasini
+                // onler; `lg:w-full` dikey kipte eski genisligi geri verir.
+                className="odak-ic block shrink-0 whitespace-nowrap px-3 py-2 text-start transition lg:w-full"
                 style={{
                   borderRadius: "var(--yz-radius-btn)",
                   fontSize: "var(--yz-fs-sm)",

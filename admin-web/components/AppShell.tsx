@@ -12,6 +12,7 @@ import { SayfaEylemYuvasi } from "@/components/SayfaEylemleri";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { BildirimMerkezi, KomutPaleti } from "@/components/ui";
 import { useT } from "@/lib/i18n/kullan";
+import { useKaydirmaKilidi } from "@/lib/kaydirma-kilidi";
 import { YonetioLogo } from "@/components/YonetioLogo";
 import { useRol } from "@/lib/rol-kullan";
 import { KullaniciMenusu } from "@/components/KullaniciMenusu";
@@ -763,32 +764,13 @@ export function AppShell({
       }
     }
 
-    // KAYDIRMA KILIDI: `overflow: hidden` YETMEZ — iOS Safari'de govde
-    // yine kayar. `position: fixed` + kaydirma konumunu geri koymak,
-    // kapaninca sayfanin BASA ATLAMASINI da engeller.
-    const kaydirma = window.scrollY;
-    const govde = document.body;
-    const eski = {
-      overflow: govde.style.overflow,
-      position: govde.style.position,
-      top: govde.style.top,
-      width: govde.style.width,
-    };
-    govde.style.overflow = "hidden";
-    govde.style.position = "fixed";
-    govde.style.top = `-${kaydirma}px`;
-    govde.style.width = "100%";
-
     document.addEventListener("keydown", tus);
-    return () => {
-      document.removeEventListener("keydown", tus);
-      govde.style.overflow = eski.overflow;
-      govde.style.position = eski.position;
-      govde.style.top = eski.top;
-      govde.style.width = eski.width;
-      window.scrollTo(0, kaydirma);
-    };
+    return () => document.removeEventListener("keydown", tus);
   }, [open]);
+
+  // KAYDIRMA KILIDI ortak kancada (`lib/kaydirma-kilidi.ts`): ayni is
+  // modalda ve cekmecede de yapiliyor ve orada YANLIS yapiliyordu.
+  useKaydirmaKilidi(open);
 
   return (
     <MotionConfig reducedMotion="user">

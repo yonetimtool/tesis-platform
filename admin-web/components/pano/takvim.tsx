@@ -26,6 +26,7 @@ import { useMemo, useState } from "react";
 import useSWR from "swr";
 
 import { useToast } from "@/components/Toast";
+import { useBant } from "@/lib/kirilma-kullan";
 import {
   Alan,
   AlanSarmal,
@@ -203,6 +204,15 @@ export function PanoTakvim() {
 
   const bugun = new Date();
 
+  // (P169 §4) DAR EKRANDA AJANDA. `grid-cols-7` KIRILAMAZ: yedi sutun
+  // haftanin yedi gunudur, altiya dusurulemez. 360 px'te bir hucre ~48 px
+  // olur; gun numarasi ile bir olay noktasi ayni kutuya sigmaz.
+  //
+  // Cozum sutun sayisini degil GORUNUMU degistirmek: ayni `gunlukKume`den
+  // beslenen, YALNIZ OLAYI OLAN gunlerin listesi. Iki gorunum tek
+  // kaynaktan cizildigi icin ayrisamazlar.
+  const ajanda = useBant() === "sm";
+
   /** Gun -> o gune dusen ogeler. Tek gecis; hucre basina filtre YOK
    *  (42 hucre x N oge, ay gorunumunde gereksiz kare hesaplamasi).
    *
@@ -218,6 +228,22 @@ export function PanoTakvim() {
     }
     return m;
   }, [data]);
+
+  /** Ajandada cizilecek gunler: OLAYI OLANLAR. Ay gorunumunde AY DISI
+   *  gunler ELENIR — izgarada tam hafta olsun diye cizilirler, duz bir
+   *  listede ise komsu ayin gunu, kullanicinin bakmadigi bir aya ait
+   *  satir olarak gorunurdu. */
+  const ajandaGunleri = useMemo(() => {
+    if (!ajanda || gorunum === GORUNUM_GUN) return [];
+    return Array.from(
+      { length: gorunum === GORUNUM_HAFTA ? 7 : 42 },
+      (_, i) => gunEkle(bas, i),
+    ).filter(
+      (g) =>
+        (gunlukKume.get(g.toDateString()) ?? []).length > 0 &&
+        (gorunum !== GORUNUM_AY || g.getMonth() === capa.getMonth()),
+    );
+  }, [ajanda, gorunum, bas, capa, gunlukKume]);
 
   function kaydir(yon: -1 | 1) {
     if (gorunum === GORUNUM_GUN) setCapa(gunEkle(capa, yon));
@@ -297,6 +323,48 @@ export function PanoTakvim() {
             }
           }}
         />
+      ) : ajanda ? (
+        // AJANDA: gun basligi TIKLANABILIR kalir — izgarada bir hucreye
+        // dokunmanin islevi o gunu SECMEKTIR ve "Hatirlatma ekle" secili
+        // gunu on-doldurur. Baslik duz metin olsaydi bu kisayol dar
+        // ekranda kaybolurdu.
+        ajandaGunleri.length === 0 ? (
+          <BosDurum baslik={t("takvimOlayYok")} />
+        ) : (
+          <ul className="space-y-3">
+            {ajandaGunleri.map((gun) => (
+              <li key={gun.toISOString()}>
+                <button
+                  type="button"
+                  onClick={() => setSecilenGun(gun)}
+                  aria-pressed={secilenGun ? ayniGun(gun, secilenGun) : false}
+                  className="odak-ic mb-1 block w-full text-start"
+                  style={{
+                    fontSize: "var(--yz-fs-sm)",
+                    color: ayniGun(gun, bugun)
+                      ? "var(--yz-accent-ink)"
+                      : "var(--yz-text)",
+                  }}
+                >
+                  {new Intl.DateTimeFormat(undefined, {
+                    weekday: "long",
+                    day: "numeric",
+                    month: "long",
+                  }).format(gun)}
+                </button>
+                <GunListesi
+                  ogeler={gunlukKume.get(gun.toDateString()) ?? []}
+                  onSecim={(o) => {
+                    if (o.tip === TIP_HATIRLATMA) {
+                      setDuzenlenen(o.id);
+                      setFormAcik(true);
+                    }
+                  }}
+                />
+              </li>
+            ))}
+          </ul>
+        )
       ) : (
         <div
           className="grid gap-1"
@@ -391,7 +459,9 @@ export function PanoTakvim() {
       )}
 
       {/* --- SECILEN GUNUN LISTESI ------------------------------------ */}
-      {secilenGun && gorunum !== GORUNUM_GUN && (
+      {/* Ajandada her gunun listesi ZATEN cizili; secilen gunu bir daha
+          cizmek ayni olaylari iki kez gostermek olurdu. */}
+      {secilenGun && gorunum !== GORUNUM_GUN && !ajanda && (
         <GunListesi
           ogeler={gunlukKume.get(secilenGun.toDateString()) ?? []}
           onSecim={(o) => {

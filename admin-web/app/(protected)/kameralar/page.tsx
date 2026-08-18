@@ -322,6 +322,11 @@ export default function KameralarPage() {
                       <img
                         src={`${k.snapshot_url}${k.snapshot_url.includes("?") ? "&" : "?"}_k=${nesil}`}
                         alt={k.ad}
+                        // (P169 §6) `KameraSeridi`de zaten vardi, izgarada
+                        // YOKTU: 20 kameralik bir sitede telefon acilista
+                        // 20 anlik goruntuyu birden cekiyordu.
+                        loading="lazy"
+                        decoding="async"
                         className="h-full w-full object-cover"
                       />
                     ) : (

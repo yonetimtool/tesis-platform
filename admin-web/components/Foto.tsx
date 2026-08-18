@@ -45,6 +45,11 @@ export function Foto({
     <img
       src={src}
       alt={alt}
+      // (P169 §6) TEMBEL + ESZAMANSIZ COZUM. Bu bilesen liste hucrelerinde
+      // kullaniliyor: yavas 4G'de ekranda GORUNMEYEN onlarca gorseli
+      // pesinen indirmek, ilk anlamli cizimi geciktiren en buyuk kalemdi.
+      loading="lazy"
+      decoding="async"
       className={className}
       onError={() => setHata(true)}
     />

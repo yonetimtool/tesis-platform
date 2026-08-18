@@ -953,6 +953,8 @@ export const tr = {
   listeKayitYok: "Kayıt yok.",
   aramaEtiket: "Ara",
   sahneWebglYok: "3B görünüm bu tarayıcıda desteklenmiyor.",
+  sahneDokunAktif: "Sahneyi kullanmak için dokunun",
+  sahneKaydirmayaDon: "Sayfayı kaydır",
   sahneSiteBaslik: "Site maketi",
   sahneSecimIpucu: "Maketten bir blok seçin; katlar ve daireler burada açılır.",
   sahneBlokOzeti: "{kat} kat · {daire} daire",

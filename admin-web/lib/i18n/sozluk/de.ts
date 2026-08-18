@@ -900,6 +900,8 @@ export const de: Sozluk = {
   listeKayitYok: "Keine Einträge.",
   aramaEtiket: "Suche",
   sahneWebglYok: "Die 3D-Ansicht wird in diesem Browser nicht unterstützt.",
+  sahneDokunAktif: "Tippen, um die Szene zu bedienen",
+  sahneKaydirmayaDon: "Seite scrollen",
   sahneSiteBaslik: "Anlagenmodell",
   sahneSecimIpucu: "Wählen Sie einen Block im Modell; Etagen und Wohnungen erscheinen hier.",
   sahneBlokOzeti: "{kat} Etagen · {daire} Wohnungen",

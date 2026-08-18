@@ -13,6 +13,7 @@
  */
 import dynamic from "next/dynamic";
 
+import { DokunmaKapisi } from "../ui/dokunma-kapisi";
 import { Iskelet } from "../ui/durumlar";
 import type { PlanHaritasiProps } from "./plan-haritasi";
 import type { KonumHaritasiProps } from "./konum-haritasi";
@@ -29,11 +30,24 @@ const Konum = dynamic(() => import("./konum-haritasi"), {
   loading: () => <Iskelet className="h-full w-full" />,
 });
 
+// (P169 §5) DOKUNMA KAPISI — 3D sahnelerdekiyle AYNI bilesen. Leaflet de
+// tek parmak surtmesini kendi jesti sayar ve sayfanin kaymasini engeller;
+// harita tam genislikte oldugu icin telefonda sayfanin alt yarisi
+// erisilemez hale geliyordu. Kapi acildiktan sonra pan/zoom TAM calisir —
+// yani "dokunmatik pan" kaldirilmadi, KASITLI hale getirildi.
 export function PlanHaritasiYukleyici(props: PlanHaritasiProps) {
-  return <Plan {...props} />;
+  return (
+    <DokunmaKapisi>
+      <Plan {...props} />
+    </DokunmaKapisi>
+  );
 }
 
 /** COGRAFI harita (OSM karolari) — bkz. `konum-haritasi.tsx` dosya basi. */
 export function KonumHaritasiYukleyici(props: KonumHaritasiProps) {
-  return <Konum {...props} />;
+  return (
+    <DokunmaKapisi>
+      <Konum {...props} />
+    </DokunmaKapisi>
+  );
 }

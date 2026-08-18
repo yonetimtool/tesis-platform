@@ -376,7 +376,11 @@ export default function DuesReportPage() {
             </div>
             <VeriTablosu<BorcRow>
               kolonlar={borcKolonlari}
-              satirlar={report.borclular}
+              // `?? []`: yanit bu alani hic tasimazsa tablo BOS cizilir.
+              // Eskiden `undefined` gecip bileseni COKERTIYORDU ve sayfanin
+              // tamami React hata siniriyla kayboluyordu (takim kosumunda
+              // yakalanmamis istisna olarak goruldu).
+              satirlar={report.borclular ?? []}
               satirId={(b) => b.unit_id}
               bosBaslik={t("raporBorcluYok")}
               bosAciklama={t("raporBorcluYokAlt")}
@@ -390,7 +394,7 @@ export default function DuesReportPage() {
             </h2>
             <VeriTablosu<OdemeRow>
               kolonlar={odemeKolonlari}
-              satirlar={report.odemeler}
+              satirlar={report.odemeler ?? []}
               satirId={(o) => o.id}
               bosBaslik={t("aidatOdemeYok")}
               bosAciklama={t("raporOdemeYok")}

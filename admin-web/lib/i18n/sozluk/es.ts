@@ -900,6 +900,8 @@ export const es: Sozluk = {
   listeKayitYok: "Sin registros.",
   aramaEtiket: "Buscar",
   sahneWebglYok: "La vista 3D no es compatible con este navegador.",
+  sahneDokunAktif: "Toque para interactuar con la escena",
+  sahneKaydirmayaDon: "Desplazar la página",
   sahneSiteBaslik: "Maqueta del conjunto",
   sahneSecimIpucu: "Elija un bloque en la maqueta; las plantas y viviendas aparecen aquí.",
   sahneBlokOzeti: "{kat} plantas · {daire} viviendas",

@@ -38,6 +38,7 @@ import { MotionConfig, motion } from "framer-motion";
 import { useCallback, useEffect, useId, useRef, type ReactNode } from "react";
 
 import { useT } from "@/lib/i18n/kullan";
+import { useKaydirmaKilidi } from "@/lib/kaydirma-kilidi";
 
 import { Dugme } from "./dugme";
 
@@ -155,14 +156,9 @@ export function Modal({
 
   // ARKA PLAN KAYDIRMASI KILITLENIR: modal acikken sayfanin arkada
   // kaymasi, kullanicinin nerede oldugunu kaybetmesine yol acar.
-  useEffect(() => {
-    if (!acik) return;
-    const eski = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = eski;
-    };
-  }, [acik]);
+  // (P169) Kilit `lib/kaydirma-kilidi.ts`e tasindi — buradaki eski surum
+  // yalniz `overflow: hidden` yaziyordu ve iOS Safari onu YOK SAYIYORDU.
+  useKaydirmaKilidi(acik);
 
   if (!acik) return null;
 

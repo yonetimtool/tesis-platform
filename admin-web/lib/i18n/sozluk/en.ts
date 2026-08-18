@@ -900,6 +900,8 @@ export const en: Sozluk = {
   listeKayitYok: "No records.",
   aramaEtiket: "Search",
   sahneWebglYok: "3D view is not supported in this browser.",
+  sahneDokunAktif: "Tap to interact with the scene",
+  sahneKaydirmayaDon: "Scroll the page",
   sahneSiteBaslik: "Site model",
   sahneSecimIpucu: "Pick a block on the model; floors and units open here.",
   sahneBlokOzeti: "{kat} floors · {daire} units",

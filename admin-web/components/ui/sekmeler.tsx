@@ -23,6 +23,7 @@ import {
 } from "react";
 
 import { useT } from "@/lib/i18n/kullan";
+import { useKaydirmaKilidi } from "@/lib/kaydirma-kilidi";
 
 // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
 const SEFFAF = "transparent";
@@ -180,6 +181,12 @@ export function Ipucu({
       onFocus={() => setAcik(true)}
       onBlur={() => setAcik(false)}
       onKeyDown={(e) => e.key === "Escape" && setAcik(false)}
+      // (P169 §5) DOKUNMAYLA DA ACILIR. Dokunmatikte hover YOKTUR ve
+      // ipucunun icerigi odaklanamayan bir isarete (ornegin bir simge)
+      // asilmissa, telefondan HIC gorulemiyordu. `onClick` her iki
+      // isaretcide de calisir; farede zaten acik oldugu icin davranis
+      // DEGISMEZ.
+      onClick={() => setAcik((x) => !x)}
     >
       <span aria-describedby={acik ? id : undefined}>{children}</span>
       {acik && (
@@ -253,9 +260,16 @@ export function Cekmece({
         return;
       }
       if (e.key !== "Tab") return;
-      const ogeler = [
+      // GORUNURLUK SUZGECINDE GERI CEKILME: `offsetParent` yerlesim
+      // gerektirir ve yerlesimi olmayan ortamlarda HER SEY icin `null`
+      // doner — suzgeci oldugu gibi uygulamak tuzagi BOS birakirdi.
+      // Hicbir sey gorunmuyorsa hepsi tuzaklanir: fazladan tuzaklamak,
+      // hic tuzaklamamaktan iyidir.
+      const hepsi = [
         ...(kutuRef.current?.querySelectorAll<HTMLElement>(ODAKLANABILIR) ?? []),
-      ].filter((o) => o.offsetParent !== null);
+      ];
+      const gorunur = hepsi.filter((o) => o.offsetParent !== null);
+      const ogeler = gorunur.length > 0 ? gorunur : hepsi;
       if (ogeler.length === 0) return;
       const ilk = ogeler[0];
       const son = ogeler[ogeler.length - 1];
@@ -270,6 +284,11 @@ export function Cekmece({
     document.addEventListener("keydown", tus, true);
     return () => document.removeEventListener("keydown", tus, true);
   }, [acik, onKapat]);
+
+  // (P169) ARKA PLAN KAYDIRMA KILIDI — burada HIC YOKTU. Yan panel
+  // aciken telefonda parmak arkadaki sayfayi kaydiriyor, panel kapaninca
+  // kullanici bambaska bir yerde buluyordu kendini.
+  useKaydirmaKilidi(acik);
 
   if (!acik) return null;
 
