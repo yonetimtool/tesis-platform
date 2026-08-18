@@ -215,9 +215,9 @@ export default function UnitsPage() {
 
   const kolonlar: Kolon<Unit>[] = useMemo(
     () => [
-      { id: "no", baslik: t("daireNoKisa"), hucre: (u) => u.no, gizlenebilir: false },
+      { id: "no", kartRolu: "baslik", baslik: t("daireNoKisa"), hucre: (u) => u.no, gizlenebilir: false },
       {
-        id: "blok",
+        id: "blok", kartRolu: "ozet",
         baslik: t("ortakBlok"),
         hucre: (u) => u.blok ?? t("daireBlokAtanmamis"),
       },
@@ -226,7 +226,7 @@ export default function UnitsPage() {
         // `unit_tip_ad` API'den ZATEN geliyordu — sayfa okumuyordu.
         // Tip ATANMAMISSA "-": bos hucre "veri gelmedi mi?" sorusunu
         // uretir, tire "atanmamis" der.
-        id: "tip",
+        id: "tip", kartRolu: "ozet",
         baslik: t("tanimAlanTip"),
         hucre: (u) => u.unit_tip_ad ?? "—",
         darEkrandaGizle: true,
@@ -249,7 +249,7 @@ export default function UnitsPage() {
         darEkrandaGizle: true,
       },
       {
-        id: "durum",
+        id: "durum", kartRolu: "rozet",
         baslik: t("ortakDurum"),
         hucre: (u) => (
           <Rozet durum={u.aktif ? DURUM_OLUMLU : DURUM_NOTR}>
@@ -258,7 +258,7 @@ export default function UnitsPage() {
         ),
       },
       {
-        id: "eylem",
+        id: "eylem", kartRolu: "eylem",
         baslik: "",
         gizlenebilir: false,
         hucre: (u) => (
@@ -342,7 +342,7 @@ export default function UnitsPage() {
         }
       >
         <form id="daire-form" onSubmit={save} className="space-y-4">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <AlanSarmal etiket={t("binaDaireNo")} ipucu={t("daireNoIpucu")}>
   {(b) => (
     <Alan {...b} value={form.no}

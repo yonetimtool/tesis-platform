@@ -57,31 +57,31 @@ export default function GurultuUyarilariPage() {
   const kolonlar: Kolon<Uyari>[] = useMemo(
     () => [
       {
-        id: "created_at",
+        id: "created_at", kartRolu: "ozet",
         baslik: t("yonUyariTarih"),
         hucre: (u) => formatDateTime(u.created_at),
         deger: (u) => u.created_at,
       },
       {
-        id: "unit_no",
+        id: "unit_no", kartRolu: "baslik",
         baslik: t("yonUyariDaire"),
         hucre: (u) => u.unit_no ?? t("ortakYok"),
         deger: (u) => u.unit_no,
       },
       {
-        id: "sayac",
+        id: "sayac", kartRolu: "ozet",
         baslik: t("yonUyariSayac"),
         sayisal: true,
         hucre: (u) => `${u.sayac}${SAYAC_AYIRACI}${u.esik}`,
         deger: (u) => u.sayac,
       },
       {
-        id: "durum",
+        id: "durum", kartRolu: "rozet",
         baslik: t("yonUyariDurum"),
         hucre: (u) => t(`yonUyariDurum_${u.durum}` as SozlukAnahtari),
       },
       {
-        id: "eylem",
+        id: "eylem", kartRolu: "eylem",
         baslik: t("listeIslemler"),
         hucre: (u) =>
           // DUGME YALNIZ BEKLEYENDE: kapanmis bir uyariya "yapildi"

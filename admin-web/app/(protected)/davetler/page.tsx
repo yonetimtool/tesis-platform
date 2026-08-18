@@ -87,7 +87,7 @@ export default function DavetlerSayfasi() {
   const kolonlar: Kolon<DavetSatiri>[] = useMemo(
     () => [
       {
-        id: "ad",
+        id: "ad", kartRolu: "baslik",
         baslik: t("tesisAdSoyad"),
         gizlenebilir: false,
         deger: (d) => d.ad,
@@ -106,7 +106,7 @@ export default function DavetlerSayfasi() {
         ),
       },
       {
-        id: "telefon",
+        id: "telefon", kartRolu: "ozet",
         baslik: t("davetTelefon"),
         hucre: (d) => (
           <span className="font-mono" style={{ fontSize: "var(--yz-fs-xs)" }}>
@@ -115,7 +115,7 @@ export default function DavetlerSayfasi() {
         ),
       },
       {
-        id: "durum",
+        id: "durum", kartRolu: "rozet",
         baslik: t("davetDurum"),
         hucre: (d) => {
           const durum = durumBilgisi(d);
@@ -145,7 +145,7 @@ export default function DavetlerSayfasi() {
         hucre: (d) => (d.son_gonderim_at ? formatDateTime(d.son_gonderim_at) : "—"),
       },
       {
-        id: "eylem",
+        id: "eylem", kartRolu: "eylem",
         baslik: "",
         gizlenebilir: false,
         hucre: (d) =>

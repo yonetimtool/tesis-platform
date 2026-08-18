@@ -9,6 +9,7 @@ import useSWR from "swr";
 import { BagimlilikUyarisi } from "@/components/BagimlilikUyarisi";
 import { Ekler } from "@/components/Ekler";
 import { useToast } from "@/components/Toast";
+import { useBant } from "@/lib/kirilma-kullan";
 import {
   IskeletMetin,
   BosDurum,
@@ -267,7 +268,7 @@ export default function TasksPage() {
   const kolonlar: Kolon<Task>[] = useMemo(
     () => [
       {
-        id: "ad",
+        id: "ad", kartRolu: "baslik",
         baslik: t("ortakBaslik"),
         gizlenebilir: false,
         hucre: (g) => (
@@ -280,12 +281,12 @@ export default function TasksPage() {
         ),
       },
       {
-        id: "kategori",
+        id: "kategori", kartRolu: "ozet",
         baslik: t("gorevKategoriAlan"),
         hucre: (g) => kategoriAd(g.kategori_id),
       },
       {
-        id: "atanan",
+        id: "atanan", kartRolu: "ozet",
         baslik: t("gorevAtanan"),
         hucre: (g) => userName(g.atanan_user_id),
         darEkrandaGizle: true,
@@ -298,7 +299,7 @@ export default function TasksPage() {
         darEkrandaGizle: true,
       },
       {
-        id: "aktif",
+        id: "aktif", kartRolu: "rozet",
         baslik: t("ortakDurum"),
         hucre: (g) => (
           <Rozet durum={g.aktif ? DURUM_OLUMLU : DURUM_NOTR}>
@@ -307,7 +308,7 @@ export default function TasksPage() {
         ),
       },
       {
-        id: "eylem",
+        id: "eylem", kartRolu: "eylem",
         baslik: "",
         gizlenebilir: false,
         hucre: (g) => (
@@ -801,6 +802,10 @@ function Takvim({
 }) {
   const t = useT();
   const { dil } = useI18n();
+  // (P169 §4) Dar ekranda AJANDA. Karar cizim aninda veriliyor cunku iki
+  // gorunum AYNI DOM'da duramaz; ikisini birden cizip `hidden` ile
+  // gizlemek, ayni gorev listesini IKI KEZ cizmek olurdu.
+  const ajanda = useBant() === "sm";
   const [ay, setAy] = useState(() => {
     const d = new Date();
     return new Date(d.getFullYear(), d.getMonth(), 1);
@@ -861,6 +866,65 @@ function Takvim({
         </Dugme>
       </div>
 
+      {/* (P169 §4) DAR EKRANDA AJANDA, GENIS EKRANDA AY IZGARASI.
+          ================================================================
+          `grid-cols-7` KIRILAMAZ: yedi sutun haftanin gunleridir ve
+          ucune indirmek takvimi takvim olmaktan cikarir. 360 px'te her
+          hucre ~45 px olur — gun numarasi bile sigmaz, gorev adlari hic
+          okunmaz.
+          ================================================================
+          Cozum SUTUN SAYISINI degil GORUNUMU degistirmek: dar ekranda
+          ay izgarasi yerine YALNIZ GOREVI OLAN gunlerin listesi (ajanda)
+          cizilir. Bos gunleri atlamak bilincli — telefonda otuz bos
+          kutuyu kaydirmak, aranan gunu bulmayi zorlastirir.
+
+          IKI GORUNUM DE AYNI VERIDEN besleniyor (`gunGorevleri`), yani
+          ayrisamazlar. */}
+      {ajanda ? (
+        <ul className="space-y-2">
+          {Array.from({ length: gunler.sonGun })
+            .map((_, i) => i + 1)
+            .filter((gun) => (gunGorevleri.get(gun) ?? []).length > 0)
+            .map((gun) => (
+              <li key={gun}>
+                <div
+                  className="mb-1"
+                  style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}
+                >
+                  {gun}
+                </div>
+                <div className="space-y-1">
+                  {(gunGorevleri.get(gun) ?? []).map((g) => (
+                    <button
+                      key={g.id}
+                      type="button"
+                      onClick={() => onSec(g)}
+                      className="odak-ic block w-full truncate px-2 py-2 text-start"
+                      style={{
+                        borderRadius: "var(--yz-radius-btn)",
+                        background: "var(--yz-metal-2)",
+                        boxShadow: "var(--yz-raised)",
+                        fontSize: "var(--yz-fs-sm)",
+                        color: "var(--yz-text)",
+                      }}
+                    >
+                      {g.ad}
+                    </button>
+                  ))}
+                </div>
+              </li>
+            ))}
+          {/* AJANDADA HIC GOREV YOKSA bunu SOYLE: bos bir liste,
+              "yuklenmedi mi" sorusunu dogururdu. */}
+          {Array.from({ length: gunler.sonGun }).every(
+            (_, i) => (gunGorevleri.get(i + 1) ?? []).length === 0,
+          ) && (
+            <li style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-3)" }}>
+              {t("gorevAyBos")}
+            </li>
+          )}
+        </ul>
+      ) : (
       <div className="grid grid-cols-7 gap-1">
         {Array.from({ length: gunler.bosluk }).map((_, i) => (
           <div key={`bos-${i}`} />
@@ -906,6 +970,7 @@ function Takvim({
           );
         })}
       </div>
+      )}
 
       {/* PLANSIZ GOREVLER GIZLENMEZ: takvimde yeri yok ama VARLAR.
           Gostermemek, kullaniciya "gorev kalmadi" demek olurdu. */}

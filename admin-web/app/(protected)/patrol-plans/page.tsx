@@ -297,10 +297,10 @@ export default function PatrolPlansPage() {
 
   const kolonlar: Kolon<PatrolPlan>[] = useMemo(
     () => [
-      { id: "ad", baslik: t("ortakAd"), hucre: (p) => p.ad, gizlenebilir: false },
-      { id: "vardiya", baslik: t("devriyeVardiya"), hucre: (p) => shiftName(p.shift_id) },
+      { id: "ad", kartRolu: "baslik", baslik: t("ortakAd"), hucre: (p) => p.ad, gizlenebilir: false },
+      { id: "vardiya", kartRolu: "ozet", baslik: t("devriyeVardiya"), hucre: (p) => shiftName(p.shift_id) },
       {
-        id: "saat",
+        id: "saat", kartRolu: "ozet",
         baslik: t("devriyeSaatPeriyot"),
         hucre: (p) =>
           `${p.baslangic_saat}–${p.bitis_saat} · ${t("devriyePeriyotN", {
@@ -308,7 +308,7 @@ export default function PatrolPlansPage() {
           })}`,
       },
       {
-        id: "durum",
+        id: "durum", kartRolu: "rozet",
         baslik: t("ortakDurum"),
         hucre: (p) => (
           <Rozet durum={p.aktif ? DURUM_OLUMLU : DURUM_NOTR}>
@@ -317,7 +317,7 @@ export default function PatrolPlansPage() {
         ),
       },
       {
-        id: "eylem",
+        id: "eylem", kartRolu: "eylem",
         baslik: "",
         gizlenebilir: false,
         hucre: (p) => (
@@ -399,7 +399,7 @@ export default function PatrolPlansPage() {
             )}
           </AlanSarmal>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <AlanSarmal etiket={t("ortakBaslangic")} ipucu={t("ortakSaatBicimi")} zorunlu>
               {(b) => (
                 <Alan

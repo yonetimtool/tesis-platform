@@ -334,7 +334,7 @@ export default function TenantDetailPage() {
 
             {y && !editing && (
               <div className="space-y-3">
-                <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm [&>*]:min-w-0 [&>dd]:break-words">
+                <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm [&>*]:min-w-0 [&>dd]:break-words">
                   <dt className="text-metin-muted">{t("ortakAd")}</dt>
                   <dd>{y.ad}</dd>
                   <dt className="text-metin-muted">{t("tesisTelefonGiris")}</dt>
@@ -386,7 +386,7 @@ export default function TenantDetailPage() {
               }
             >
               <form id="yonetici-duzenle" onSubmit={saveEdit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <AlanSarmal etiket={t("ortakAd")}>
   {(b) => (
     <Alan {...b} value={ad}
@@ -491,7 +491,7 @@ export default function TenantDetailPage() {
             >
               <form id="yonetici-ekle" onSubmit={yoneticiEkle} className="space-y-4">
                 <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>{t("tesisYoneticiEkleAciklama")}</p>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <AlanSarmal etiket={t("ortakAd")}>
   {(b) => (
     <Alan {...b} value={yeniAd}

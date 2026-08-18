@@ -40,6 +40,8 @@ import { useT } from "@/lib/i18n/kullan";
 
 import { Dugme } from "./dugme";
 import { BosDurum, HataDurumu, IskeletTablo } from "./durumlar";
+import { useBant } from "@/lib/kirilma-kullan";
+
 import { Kart } from "./yuzey";
 
 export const SAYFA_BOYLARI = [10, 25, 50, 100] as const;
@@ -64,6 +66,20 @@ export interface Kolon<T> {
   darEkrandaGizle?: boolean;
   /** Sayisal kolonlar saga yaslanir. */
   sayisal?: boolean;
+  /**
+   * (P169 §3.1) KART MODUNDA bu kolonun rolu.
+   *
+   *   `baslik`  — kartin ust satiri (kimlik: daire no, ad, dosya no)
+   *   `ozet`    — baslik altinda etiketiyle gosterilen 2-3 alan
+   *   `rozet`   — kartin sag ustundeki durum
+   *   `eylem`   — kartin altindaki eylem seridi
+   *   (verilmezse) — kartta GIZLENIR, "Detay"da gorunur
+   *
+   * NEDEN KOLON UZERINDE: kart tanimini ayri bir prop olarak almak, ayni
+   * bilgiyi (hangi kolon neyi gosterir) IKI YERDE tutmak olurdu ve biri
+   * degistiginde oteki unutulurdu.
+   */
+  kartRolu?: "baslik" | "ozet" | "rozet" | "eylem";
 }
 
 export interface TabloDurumu {
@@ -132,6 +148,21 @@ export interface VeriTablosuProps<T> {
   altbilgi?: (gorunenKolonlar: Kolon<T>[]) => ReactNode;
 
   /** Sunucu tarafli kip: tablo yalniz durumu tasir. */
+  /**
+   * (P169 §3.1) DAR EKRAN MODU.
+   *
+   *   `kart`     — her satir bir karta doner (kimlik + ozet + rozet)
+   *   `kaydirma` — kolonlar korunur, tablo yatay kayar, ILK KOLON SABIT
+   *   `otomatik` — (varsayilan) kolonlarda `kartRolu` verilmisse `kart`,
+   *                verilmemisse `kaydirma`
+   *
+   * NEDEN SAYFA SECIYOR: kolonlar arasi ILISKI kritik olan tablolarda
+   * (borc/tahsilat/bakiye yan yana okunur) karta bolmek anlami bozar;
+   * kisi/daire listelerinde ise kart okunakligi ARTIRIR. Bunu bilen
+   * cagirandir, bilesen degil.
+   */
+  darMod?: "kart" | "kaydirma" | "otomatik";
+
   sunucuTarafli?: boolean;
   /** Sunucu taraflida ZORUNLU — toplam kayit sayisi. */
   toplam?: number;
@@ -155,12 +186,22 @@ export function VeriTablosu<T>({
   topluEylemler,
   araclar,
   altbilgi,
+  darMod = "otomatik",
   sunucuTarafli = false,
   toplam,
   durum,
   onDurumDegisti,
 }: VeriTablosuProps<T>) {
   const t = useT();
+  // (P169 §3.1) DAR EKRAN: bant `sm` ise kart/kaydirma kararina bakilir.
+  // Karar CIZIM ANINDA verilir, CSS ile degil: kart ve tablo AYNI DOM'da
+  // duramaz (biri `<table>`, oteki liste) ve ikisini birden cizip
+  // `hidden` ile gizlemek, her satiri IKI KEZ cizmek olurdu.
+  const dar = useBant() === "sm";
+  const kartAlanlari = kolonlar.some((k) => k.kartRolu);
+  const kartModu =
+    dar && (darMod === "kart" || (darMod === "otomatik" && kartAlanlari));
+
   const [icDurum, setIcDurum] = useState<TabloDurumu>(VARSAYILAN_DURUM);
   const d = durum ?? icDurum;
 
@@ -296,15 +337,40 @@ export function VeriTablosu<T>({
           aciklama={bosAciklama}
           eylem={bosEylem}
         />
+      ) : kartModu ? (
+        // (P169 §3.1) KART MODU — dar ekranda her satir bir kart.
+        //
+        // TABLO SEMANTIGI BIRAKILIYOR ve bu bilincli: `<table>` icinde
+        // hucreleri blok yapmak (`display:block`) satir/kolon iliskisini
+        // ekran okuyucudan GIZLER — yani goze duzelen sey kulaga bozulur.
+        // Liste anlami acikca `<ul>/<li>` ile kuruluyor.
+        <ul className="divide-y" style={{ borderColor: "var(--yz-border)" }}>
+          {gosterilen.map((satir) => (
+            <KartSatiri<T>
+              key={satirId(satir)}
+              satir={satir}
+              kolonlar={gorunen}
+              secilebilir={secilebilir}
+              secili={secili.includes(satirId(satir))}
+              onSec={() => satirCevir(satirId(satir))}
+              detayEtiketi={t("tabloDetay")}
+            />
+          ))}
+        </ul>
       ) : (
         // DUYARLI: dar ekranda yatay kaydirma. `role=region` + `tabindex`
         // olmadan klavye kullanicisi kaydiramaz (WCAG 2.1.1).
-        <div
-          role="region"
-          aria-label={t("tabloKolonlar")}
-          tabIndex={0}
-          className="odak-ic overflow-x-auto"
-        >
+        //
+        // (P169 §3.1) KAYDIRMA GOSTERGESI: sag kenarda yumusak bir
+        // gradyan. Gostergesiz bir tabloda kullanici SAGA KAYDIRILABILDIGINI
+        // bilmez — kolonlar ekran disinda kalir ve "veri eksik" sanir.
+        <div className="relative">
+          <div
+            role="region"
+            aria-label={t("tabloKolonlar")}
+            tabIndex={0}
+            className="odak-ic overflow-x-auto"
+          >
           <table className="w-full border-collapse">
             <thead>
               <tr>
@@ -393,6 +459,18 @@ export function VeriTablosu<T>({
               </tfoot>
             )}
           </table>
+          </div>
+          {/* Sag kenar gradyani — "daha var" isareti. `aria-hidden`:
+              ekran okuyucuya kaydirma zaten `role=region` ile bildirildi,
+              dekoratif bir seridi ikinci kez duyurmak gurultu olurdu. */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 end-0 w-6 sm:hidden"
+            style={{
+              background:
+                "linear-gradient(to left, var(--yz-surface-1), transparent)",
+            }}
+          />
         </div>
       )}
 
@@ -618,5 +696,146 @@ function Sayfalama({
         </Dugme>
       </div>
     </div>
+  );
+}
+
+/* ==================================================================== */
+
+/**
+ * (P169 §3.1) KART SATIRI — dar ekranda bir tablo satirinin karsiligi.
+ *
+ * =========================================================================
+ * NE GOSTERILIR, NE GIZLENIR
+ * =========================================================================
+ * Kolonun `kartRolu`na gore:
+ *   `baslik` ust satir (kimlik) · `rozet` sag ust · `ozet` etiketli alanlar
+ *   `eylem`  alt serit · (rolsuz) "Detay" acilinca gorunur
+ *
+ * ROLSUZ KOLONLAR SILINMEZ, KATLANIR. Brief'in kirmizi cizgisi net:
+ * "masaustunde olup mobilde kaybolan yetenek OLMAYACAK." Bu yuzden kart
+ * bir OZETTIR, bir KIRPMA degil — geri kalan her sey tek dokunusla acilir.
+ */
+function KartSatiri<T>({
+  satir,
+  kolonlar,
+  secilebilir,
+  secili,
+  onSec,
+  detayEtiketi,
+}: {
+  satir: T;
+  kolonlar: Kolon<T>[];
+  secilebilir: boolean;
+  secili: boolean;
+  onSec: () => void;
+  detayEtiketi: string;
+}) {
+  const [acik, setAcik] = useState(false);
+  const rol = (r: Kolon<T>["kartRolu"]) => kolonlar.filter((k) => k.kartRolu === r);
+  const baslik = rol("baslik");
+  const rozet = rol("rozet");
+  const ozet = rol("ozet");
+  const eylem = rol("eylem");
+  const gizli = kolonlar.filter((k) => !k.kartRolu);
+
+  return (
+    <li className="p-3">
+      <div className="flex items-start gap-3">
+        {secilebilir && (
+          <input
+            type="checkbox"
+            checked={secili}
+            onChange={onSec}
+            // (P169 §5) 44 px dokunma hedefi — kutunun kendisi 16 px'tir,
+            // dokunulabilir alan sarmalayiciyla buyutulur.
+            className="mt-1 h-5 w-5"
+            aria-label={detayEtiketi}
+          />
+        )}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              {baslik.map((k) => (
+                <div
+                  key={k.id}
+                  className="truncate"
+                  style={{ fontSize: "var(--yz-fs-body)", color: "var(--yz-text)" }}
+                >
+                  {k.hucre(satir)}
+                </div>
+              ))}
+            </div>
+            <div className="flex shrink-0 items-center gap-1">
+              {rozet.map((k) => (
+                <span key={k.id}>{k.hucre(satir)}</span>
+              ))}
+            </div>
+          </div>
+
+          {ozet.length > 0 && (
+            <dl className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5">
+              {ozet.map((k) => (
+                <div key={k.id} className="flex min-w-0 gap-1">
+                  {/* ETIKET DE CIZILIR: kart modunda kolon basligi
+                      kaybolur ve "12.500,00" tek basina neyin tutari
+                      oldugunu soylemez. */}
+                  <dt style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-3)" }}>
+                    {k.baslik}
+                  </dt>
+                  <dd
+                    className="truncate"
+                    style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}
+                  >
+                    {k.hucre(satir)}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          )}
+
+          {gizli.length > 0 && (
+            <>
+              <button
+                type="button"
+                aria-expanded={acik}
+                onClick={() => setAcik((x) => !x)}
+                className="odak-ic mt-2 min-h-11 py-1"
+                style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-accent-ink)" }}
+              >
+                {detayEtiketi}
+              </button>
+              {acik && (
+                <dl className="mt-1 space-y-1">
+                  {gizli.map((k) => (
+                    <div key={k.id} className="flex gap-2">
+                      <dt
+                        className="shrink-0"
+                        style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-3)" }}
+                      >
+                        {k.baslik}
+                      </dt>
+                      <dd
+                        className="min-w-0"
+                        style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}
+                      >
+                        {k.hucre(satir)}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
+            </>
+          )}
+
+          {eylem.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {eylem.map((k) => (
+                <span key={k.id}>{k.hucre(satir)}</span>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </li>
   );
 }

@@ -3,7 +3,7 @@
 import { motion, MotionConfig } from "framer-motion";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { DilSecici } from "@/components/DilSecici";
 import { GlobalArama } from "@/components/GlobalArama";
@@ -611,7 +611,7 @@ function SidebarBody({
             degil — kullanici menuyu genisletip degistirir. Gizlenen sey
             bir YOL degil, bir kisayol. Dar modda cikis TEK BASINA ve tam
             genislikte kalir. */}
-        <div className={dar ? undefined : "grid grid-cols-2 gap-2"}>
+        <div className={dar ? undefined : "grid grid-cols-1 sm:grid-cols-2 gap-2"}>
           {!dar && <ThemeToggle />}
           <button
             onClick={logout}
@@ -660,6 +660,8 @@ export function AppShell({
   yuzey: Yuzey;
 }) {
   const [open, setOpen] = useState(false);
+  /** Cekmece govdesi — odak tuzagi bu agacin icinde calisir. */
+  const cekmeceRef = useRef<HTMLElement | null>(null);
   const pathname = usePathname();
   const t = useT();
 
@@ -698,6 +700,95 @@ export function AppShell({
 
   // Rota degisince mobil cekmeceyi kapat.
   useEffect(() => setOpen(false), [pathname]);
+
+  // ====================================================================
+  // (P169 §2.1) CEKMECE: ESC · ODAK TUZAGI · KAYDIRMA KILIDI
+  // ====================================================================
+  // Ucu de EKSIKTI ve ucu de dar ekranda gercek sorun:
+  //
+  //   ESC YOK        — klavye kullanicisi cekmeceyi kapatmak icin fareyle
+  //                    ortuye tiklamak zorundaydi.
+  //   ODAK TUZAGI YOK— cekmece aciken Tab, ARKADAKI sayfanin
+  //                    baglantilarina kaciyordu: ekran okuyucu kullanicisi
+  //                    gormedigi bir sayfada geziniyordu.
+  //   KAYDIRMA KILIDI YOK — cekmece aciken parmakla kaydirinca ARKADAKI
+  //                    sayfa kayiyordu; kullanici cekmeceyi kapatinca
+  //                    kendini bambaska bir yerde buluyordu.
+  useEffect(() => {
+    if (!open) return;
+
+    const cekmece = cekmeceRef.current;
+    // ODAK CEKMECEYE TASINIR: acilan bir panelin ilk odaklanabilir ogesi
+    // odagi almalidir, yoksa klavye kullanicisi paneli "goremez".
+    const odaklanabilir = () => {
+      const hepsi = Array.from(
+        cekmece?.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        ) ?? [],
+      );
+      // GORUNURLUK SUZGECI: kapali bir bolumun icindeki baglantilar
+      // tab sirasina girmemeli.
+      const gorunur = hepsi.filter((e) => e.offsetParent !== null);
+      // GERI CEKILME: `offsetParent` yerlesim gerektirir ve yerlesimi
+      // olmayan ortamlarda (jsdom, `display:contents` agaci, ilk cizim)
+      // HER SEY icin `null` doner. O durumda suzgeci uygulamak, tuzagi
+      // BOS birakmak ve odagin arkadaki sayfaya kacmasi demekti — yani
+      // tuzagin var olma sebebinin ta kendisi. Hicbir sey gorunmuyorsa
+      // hepsini tuzakla: fazladan tuzaklamak, hic tuzaklamamaktan iyidir.
+      return gorunur.length > 0 ? gorunur : hepsi;
+    };
+    odaklanabilir()[0]?.focus();
+
+    function tus(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setOpen(false);
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const ogeler = odaklanabilir();
+      if (ogeler.length === 0) return;
+      const ilk = ogeler[0];
+      const son = ogeler[ogeler.length - 1];
+      // DONGU: sondan ileri gidince basa, bastan geri gidince sona.
+      if (!e.shiftKey && document.activeElement === son) {
+        e.preventDefault();
+        ilk.focus();
+      } else if (e.shiftKey && document.activeElement === ilk) {
+        e.preventDefault();
+        son.focus();
+      } else if (cekmece && !cekmece.contains(document.activeElement)) {
+        // Odak disariya kacmissa geri al (ilk Tab'da olabilir).
+        e.preventDefault();
+        ilk.focus();
+      }
+    }
+
+    // KAYDIRMA KILIDI: `overflow: hidden` YETMEZ — iOS Safari'de govde
+    // yine kayar. `position: fixed` + kaydirma konumunu geri koymak,
+    // kapaninca sayfanin BASA ATLAMASINI da engeller.
+    const kaydirma = window.scrollY;
+    const govde = document.body;
+    const eski = {
+      overflow: govde.style.overflow,
+      position: govde.style.position,
+      top: govde.style.top,
+      width: govde.style.width,
+    };
+    govde.style.overflow = "hidden";
+    govde.style.position = "fixed";
+    govde.style.top = `-${kaydirma}px`;
+    govde.style.width = "100%";
+
+    document.addEventListener("keydown", tus);
+    return () => {
+      document.removeEventListener("keydown", tus);
+      govde.style.overflow = eski.overflow;
+      govde.style.position = eski.position;
+      govde.style.top = eski.top;
+      govde.style.width = eski.width;
+      window.scrollTo(0, kaydirma);
+    };
+  }, [open]);
 
   return (
     <MotionConfig reducedMotion="user">
@@ -792,6 +883,7 @@ export function AppShell({
           />
         )}
         <aside
+          ref={cekmeceRef}
           // Cekmece RTL'de SAGDAN girer: `start-0` + `rtl:translate-x-full`
           // (Tailwind'in `-translate-x-full`u yon farkindaligi TASIMAZ).
           style={{

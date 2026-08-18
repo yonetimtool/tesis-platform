@@ -215,7 +215,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
       <h2 className="text-lg font-medium">{t("daireBorcDurumu", { no: unit.no })}</h2>
 
       {/* Bakiye ozeti */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="rounded-lg bg-yuzey-bg p-3">
           <div className="text-xs text-metin-muted">{t("raporToplamTahakkuk")}</div>
           <div className="text-lg font-semibold">
@@ -256,7 +256,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
         }
       >
         <form id="tahsilat-form" onSubmit={pay} className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label={t("aidatTutarTl")} hint={t("daireTutarOrnek")}>
               <input
                 className={inputCls}
@@ -390,7 +390,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
         }
       >
         <form id="tahakkuk-form" onSubmit={addAssessment} className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field label={t("ortakDonem")} hint={t("daireDonemOrnek")}>
             <input
               className={inputCls}

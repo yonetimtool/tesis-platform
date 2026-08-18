@@ -174,7 +174,7 @@ export default function AuditPage() {
         durum={tabloDurumu}
         onDurumDegisti={setTabloDurumu}
         araclar={
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             <AlanSarmal etiket={t("denetimIslem")}>
               {(b) => (
                 <Secim {...b} value={action} onChange={(e) => reset(setAction)(e.target.value)}>

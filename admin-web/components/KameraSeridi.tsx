@@ -84,7 +84,7 @@ export function KameraSeridi({ kameralar }: { kameralar: Kamera[] }) {
           />
         </Kart>
       ) : null}
-      <div className="grid gap-izgara grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-izgara grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {gorunen.map((k) => {
           const oynar = k.oynatilabilir ?? oynatilabilirMi(k.tur, k.restream_url);
           return (

@@ -2040,4 +2040,8 @@ export const en: Sozluk = {
   kvkkYenidenOnayIste: "Ask users to consent again",
   kvkkYenidenOnayNotu: "Turn off for non-substantive changes such as typo fixes; when off, users who consented to the previous version are not asked again.",
   kvkkSurumNotu: "A published text cannot be edited; a change creates a new version and the old one stays on record.",
+  // ---- (P169 §3.1) DataTable kart modu
+  tabloDetay: "Details",
+  // ---- (P169 §4) Gorev takvimi: dar ekranda ajanda
+  gorevAyBos: "No tasks scheduled this month.",
 };

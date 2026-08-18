@@ -2102,4 +2102,8 @@ export const tr = {
   kvkkYenidenOnayIste: "Kullanıcılardan yeniden onay istensin",
   kvkkYenidenOnayNotu: "Yazım hatası düzeltmesi gibi esasa ilişkin olmayan değişikliklerde kapatın; kapalıysa önceki sürümü onaylamış kullanıcılara yeniden sorulmaz.",
   kvkkSurumNotu: "Yayınlanan metin düzenlenemez; değişiklik yeni bir sürüm oluşturur ve eski sürüm kayıtta kalır.",
+  // ---- (P169 §3.1) DataTable kart modu
+  tabloDetay: "Detay",
+  // ---- (P169 §4) Gorev takvimi: dar ekranda ajanda
+  gorevAyBos: "Bu ayda planlanmış görev yok.",
 } as const;

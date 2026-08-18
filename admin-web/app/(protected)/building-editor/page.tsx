@@ -776,7 +776,7 @@ export default function BuildingEditorPage() {
               ? t("daireBlokEki", { ad: unitForm.blok })
               : t("daireBloksuzEki")}
           </p>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <AlanSarmal etiket={t("binaDaireNo")} ipucu={t("binaDaireNoIpucu")}>
   {(b) => (
     <Alan {...b} value={unitForm.no}
@@ -1157,9 +1157,28 @@ function FloorRow({
                 {u.unit_tip_ad ? daireTipiKisa(u.unit_tip_ad) : "—"}
               </span>
             ) : null}
-            <div className="absolute inset-x-0 bottom-0 hidden justify-center gap-2 rounded-b-lg bg-black/40 py-0.5 text-[10px] group-hover:flex">
-              <button className="hover:underline" onClick={() => onEditUnit(u)}>{t("binaDuzenleKucuk")}</button>
-              <button className="hover:underline" onClick={() => onRemoveUnit(u)}>{t("ortakSil")}</button>
+            {/* (P169 §5) HOVER'A BAGLI TEK GERCEK ISLEV KAYBI BURADAYDI.
+                Serit `hidden ... group-hover:flex` idi: dokunmatikte
+                hover YOKTUR, yani daire duzenleme ve silme telefondan
+                HIC ULASILAMIYORDU. Ekran calisir gorunuyor, iki islev
+                sessizce erisilemez duruyordu.
+
+                COZUM: KABA ISARETCIDE HER ZAMAN GORUNUR (`coarse:flex`).
+                Fareyle gelen kullanicida davranis DEGISMEDI — serit yine
+                hover'da acilir ve masaustunde kart yuzeyi temiz kalir. */}
+            <div className="absolute inset-x-0 bottom-0 hidden justify-center gap-2 rounded-b-lg bg-black/40 py-0.5 text-[10px] group-hover:flex coarse:flex">
+              <button
+                className="px-2 hover:underline"
+                onClick={() => onEditUnit(u)}
+              >
+                {t("binaDuzenleKucuk")}
+              </button>
+              <button
+                className="px-2 hover:underline"
+                onClick={() => onRemoveUnit(u)}
+              >
+                {t("ortakSil")}
+              </button>
             </div>
           </div>
         ))}

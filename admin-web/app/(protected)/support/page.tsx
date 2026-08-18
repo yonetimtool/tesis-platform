@@ -121,18 +121,18 @@ export default function SupportPage() {
   const kolonlar: Kolon<SupportTicket>[] = useMemo(
     () => [
       {
-        id: "tarih",
+        id: "tarih", kartRolu: "ozet",
         baslik: t("ortakTarih"),
         gizlenebilir: false,
         hucre: (b) => <span className="whitespace-nowrap">{formatDateTime(b.created_at)}</span>,
       },
       {
-        id: "tesis",
+        id: "tesis", kartRolu: "ozet",
         baslik: t("ortakTesis"),
         hucre: (b) => b.tenant_ad ?? b.tenant_id.slice(0, 8),
       },
       {
-        id: "konu",
+        id: "konu", kartRolu: "baslik",
         baslik: t("destekKonu"),
         hucre: (b) => (
           <div className="max-w-[28rem]">
@@ -154,7 +154,7 @@ export default function SupportPage() {
         ),
       },
       {
-        id: "durum",
+        id: "durum", kartRolu: "rozet",
         baslik: t("ortakDurum"),
         hucre: (b) => (
           <Rozet durum={b.durum === "cozuldu" ? R_OLUMLU : R_UYARI}>
@@ -176,7 +176,7 @@ export default function SupportPage() {
         ),
       },
       {
-        id: "eylem",
+        id: "eylem", kartRolu: "eylem",
         baslik: "",
         gizlenebilir: false,
         hucre: (b) => (

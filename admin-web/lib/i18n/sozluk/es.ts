@@ -2040,4 +2040,8 @@ export const es: Sozluk = {
   kvkkYenidenOnayIste: "Pedir consentimiento de nuevo",
   kvkkYenidenOnayNotu: "Desactívelo para cambios no sustanciales como erratas; si está desactivado, no se vuelve a preguntar a quienes aceptaron la versión anterior.",
   kvkkSurumNotu: "Un texto publicado no se puede editar; un cambio crea una versión nueva y la anterior queda registrada.",
+  // ---- (P169 §3.1) DataTable kart modu
+  tabloDetay: "Detalles",
+  // ---- (P169 §4) Gorev takvimi: dar ekranda ajanda
+  gorevAyBos: "No hay tareas programadas este mes.",
 };

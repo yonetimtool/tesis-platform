@@ -312,9 +312,9 @@ export default function CheckpointsPage() {
 
   const kolonlar: Kolon<Checkpoint>[] = useMemo(
     () => [
-      { id: "ad", baslik: t("ortakAd"), hucre: (c) => c.ad, gizlenebilir: false },
+      { id: "ad", kartRolu: "baslik", baslik: t("ortakAd"), hucre: (c) => c.ad, gizlenebilir: false },
       {
-        id: "uid",
+        id: "uid", kartRolu: "ozet",
         baslik: t("noktaUid"),
         // TEK ARALIKLI: NFC UID'i gozle karsilastirilan bir dizedir;
         // oranti yazi tipinde 8 ile B ayirt edilemez.
@@ -330,7 +330,7 @@ export default function CheckpointsPage() {
           c.gps_lat != null && c.gps_lng != null ? `${c.gps_lat}, ${c.gps_lng}` : "—",
       },
       {
-        id: "durum",
+        id: "durum", kartRolu: "rozet",
         baslik: t("ortakDurum"),
         hucre: (c) => (
           <Rozet durum={c.aktif ? DURUM_OLUMLU : DURUM_NOTR}>
@@ -348,7 +348,7 @@ export default function CheckpointsPage() {
         },
       },
       {
-        id: "eylem",
+        id: "eylem", kartRolu: "eylem",
         baslik: "",
         gizlenebilir: false,
         hucre: (c) => (
@@ -422,7 +422,7 @@ export default function CheckpointsPage() {
             )}
           </AlanSarmal>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <AlanSarmal etiket={t("noktaGpsEnlem")}>
               {(b) => (
                 <Alan

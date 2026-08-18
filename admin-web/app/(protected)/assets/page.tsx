@@ -171,9 +171,9 @@ export default function AssetsPage() {
 
   const kolonlar: Kolon<Asset>[] = useMemo(
     () => [
-      { id: "ad", baslik: t("ortakAd"), gizlenebilir: false, hucre: (a) => a.ad },
+      { id: "ad", kartRolu: "baslik", baslik: t("ortakAd"), gizlenebilir: false, hucre: (a) => a.ad },
       {
-        id: "kategori",
+        id: "kategori", kartRolu: "ozet",
         baslik: t("gorevKategoriAlan"),
         hucre: (a) => enumAdi(t, DEMIRBAS_KATEGORI, a.kategori),
       },
@@ -184,7 +184,7 @@ export default function AssetsPage() {
         hucre: (a) => <span className="font-mono">{a.nfc_tag_uid ?? "—"}</span>,
       },
       {
-        id: "durum",
+        id: "durum", kartRolu: "rozet",
         baslik: t("ortakDurum"),
         hucre: (a) => (
           <Rozet durum={durumRengi(a.durum)}>{enumAdi(t, DEMIRBAS_DURUM, a.durum)}</Rozet>
@@ -197,7 +197,7 @@ export default function AssetsPage() {
         hucre: (a) => (a.aktif ? t("ortakEvet2") : t("ortakHayir2")),
       },
       {
-        id: "eylem",
+        id: "eylem", kartRolu: "eylem",
         baslik: "",
         gizlenebilir: false,
         hucre: (a) => (
@@ -314,7 +314,7 @@ export default function AssetsPage() {
         }
       >
         <form id="demirbas-form" onSubmit={save} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <AlanSarmal etiket={t("ortakAd")}>
   {(b) => (
     <Alan {...b} value={form.ad}

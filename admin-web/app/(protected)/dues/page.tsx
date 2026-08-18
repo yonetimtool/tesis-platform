@@ -243,7 +243,7 @@ export default function DuesPage() {
           {/* DAR EKRAN: 4 sutun 360 dp'ye sigmiyor — Rusca etiketlerle sayfa
               yana kayiyordu (tur 25 surusu +23 px olctu). Dar ekranda 2,
               sm'den itibaren 4 sutun. */}
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:grid-cols-4">
             <AlanSarmal etiket={t("ortakDonem")} ipucu={t("aidatDonemOrnek")} zorunlu>
               {(b) => (
                 <Alan

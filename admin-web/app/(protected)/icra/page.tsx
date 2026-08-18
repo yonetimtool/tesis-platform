@@ -256,17 +256,17 @@ export default function IcraPage() {
   const kolonlar: Kolon<IcraDosyasi>[] = useMemo(
     () => [
       {
-        id: "dosya_no",
+        id: "dosya_no", kartRolu: "baslik",
         baslik: t("icraDosyaNo"),
         gizlenebilir: false,
         hucre: (k) => k.dosya_no,
       },
-      { id: "user_ad", baslik: t("icraBorclu"), hucre: (k) => k.user_ad ?? "—" },
+      { id: "user_ad", kartRolu: "ozet", baslik: t("icraBorclu"), hucre: (k) => k.user_ad ?? "—" },
       {
         // (P168 §2) Brief'in kolon listesinde VAR ama tabloda YOKTU:
         // dosyanin ne zaman icraya verildigi, takip suresini okumanin
         // tek yolu.
-        id: "veris_tarihi",
+        id: "veris_tarihi", kartRolu: "ozet",
         baslik: t("icraVerisTarihi"),
         darEkrandaGizle: true,
         hucre: (k) => k.veris_tarihi ?? "—",
@@ -288,14 +288,14 @@ export default function IcraPage() {
         hucre: (k) => k.avukat ?? "—",
       },
       {
-        id: "durum",
+        id: "durum", kartRolu: "rozet",
         baslik: t("icraDurum"),
         hucre: (k) => (
           <Rozet durum={durumRengi(k.durum)}>{t(`icraDurum_${k.durum}` as never)}</Rozet>
         ),
       },
       {
-        id: "eylem",
+        id: "eylem", kartRolu: "eylem",
         baslik: "",
         gizlenebilir: false,
         hucre: (k) => (

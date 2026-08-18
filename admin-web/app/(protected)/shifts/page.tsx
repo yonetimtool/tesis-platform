@@ -128,20 +128,20 @@ export default function ShiftsPage() {
 
   const kolonlar: Kolon<Shift>[] = useMemo(
     () => [
-      { id: "ad", baslik: t("ortakAd"), hucre: (v) => v.ad, gizlenebilir: false },
+      { id: "ad", kartRolu: "baslik", baslik: t("ortakAd"), hucre: (v) => v.ad, gizlenebilir: false },
       {
-        id: "saat",
+        id: "saat", kartRolu: "ozet",
         baslik: t("ortakSaat"),
         sayisal: true,
         hucre: (v) => `${v.baslangic_saat} – ${v.bitis_saat}`,
       },
       {
-        id: "gun",
+        id: "gun", kartRolu: "ozet",
         baslik: t("vardiyaGunTipi"),
         hucre: (v) => gunTipiAdi(t, v.gun_tipi),
       },
       {
-        id: "eylem",
+        id: "eylem", kartRolu: "eylem",
         baslik: "",
         gizlenebilir: false,
         hucre: (v) => (
@@ -202,7 +202,7 @@ export default function ShiftsPage() {
               />
             )}
           </AlanSarmal>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <AlanSarmal etiket={t("ortakBaslangic")} ipucu={t("ortakSaat24")} zorunlu>
               {(b) => (
                 <Alan

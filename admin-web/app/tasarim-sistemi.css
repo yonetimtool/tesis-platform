@@ -258,6 +258,15 @@
   --yz-fs-h2: 18px;
   --yz-fs-h3: 15px;
   --yz-fs-body: 14px;
+  /* (P169 §3.3) GIRDI FONTU — govde metninden AYRI ve 16 px.
+     iOS Safari 16 px altindaki girdilere odaklaninca sayfayi
+     YAKINLASTIRIR ve geri cikmaz. Govde metnini 16'ya cikarmak butun
+     masaustu duzenini buyutecegi icin ayri bir token acildi. */
+  --yz-fs-input: 16px;
+  /* (P169 §3.2) MODAL KOSE YARICAPI — `sm`'de TAM EKRAN oldugu icin 0.
+     Tam ekran bir yuzeyde yuvarlak koseler, arkasinda bir sey varmis
+     izlenimi verir; oysa arkasinda ekranin kenari vardir. */
+  --yz-radius-modal: 0px;
   --yz-fs-sm: 13px;
   --yz-fs-xs: 12px;
   /* KPI sayisi: BUYUK ve INCE (brief). */
@@ -409,3 +418,57 @@
     transform: none;
   }
 }
+
+/* (P169 §3.2) `sm` USTUNDE modal yine ortalanmis bir KUTUDUR ve kart
+   yaricapini kullanir. Esik 640 px — `lib/kirilma-noktasi.ts` ile ayni
+   sayi (kilidi `tests/duyarli-kirilma.test.ts`). */
+@media (min-width: 640px) {
+  :root {
+    --yz-radius-modal: var(--yz-radius-card);
+  }
+}
+
+/* ====================================================================
+   (P169 §5) DOKUNMA HEDEFLERI — 44 px, YALNIZ PARMAKLA KULLANIRKEN
+   ====================================================================
+   Brief butun dokunma hedeflerinin en az 44x44 px olmasini istiyor.
+
+   NEDEN GENISLIGE DEGIL ISARETCIYE BAGLI:
+   "Dar ekran" ile "parmakla kullaniliyor" AYNI SEY DEGILDIR. 1280 px'lik
+   dokunmatik bir dizustu genistir ama fare yoktur; 600 px'e kucultulmus
+   bir masaustu penceresi dardir ama fare vardir. Kurali genislige
+   baglamak, fareyle calisan dar bir pencerede yogun tablolari gereksiz
+   yere sisirirdi — ve brief'in "masaustu gorunumu bozulmayacak" cizgisini
+   ihlal ederdi.
+
+   NEDEN `boy="kucuk"` BUYUTULMEDI:
+   36 px masaustunde DOGRU bir olcudur — yogun bir tabloda 44 px satiri
+   sisirir ve ekrana sigan kayit sayisini dusurur. Karar yanlis degildi,
+   YALNIZCA DOKUNMATIKTE yanlisti.
+
+   `min-height`/`min-width` KULLANILIYOR, `height` DEGIL: sabit yukseklik
+   iki satira inen bir etiketi kirpardi.
+
+   `:where()` SIFIR OZGULLUK tasir — bilesenlerin kendi siniflari bu
+   kurali her zaman ezebilir. */
+@media (pointer: coarse) {
+  :where(button, [role="button"], a[href], summary, input[type="checkbox"], input[type="radio"]) {
+    min-height: 44px;
+  }
+  /* Metin baglantilari SATIR ICI akar; 44 px yukseklik vermek paragrafi
+     bozardi. Onlarda yalniz dokunma alani buyutulur. */
+  :where(p, li, dd, td) :where(a[href]) {
+    min-height: 0;
+    padding-block: 0.5rem;
+  }
+  /* Onay kutulari ve radyolar GORSEL olarak buyumemeli (16 px dogru
+     olcu), yalniz DOKUNMA ALANI buyumeli. */
+  :where(input[type="checkbox"], input[type="radio"]) {
+    min-width: 44px;
+    /* Kutunun kendisi ortada kalir; buyuyen sey seffaf dokunma alani. */
+    background-clip: content-box;
+    padding: 14px;
+    margin: -14px;
+  }
+}
+

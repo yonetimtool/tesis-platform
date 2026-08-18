@@ -258,14 +258,14 @@ export default function DokumanlarPage() {
   const kolonlar: Kolon<Dokuman>[] = useMemo(
     () => [
       {
-        id: "created_at",
+        id: "created_at", kartRolu: "ozet",
         baslik: t("dokumanTarih"),
         hucre: (d) => formatDateTime(d.created_at),
         deger: (d) => d.created_at,
       },
-      { id: "ad", baslik: t("dokumanAd"), hucre: (d) => d.ad, deger: (d) => d.ad },
+      { id: "ad", kartRolu: "baslik", baslik: t("dokumanAd"), hucre: (d) => d.ad, deger: (d) => d.ad },
       {
-        id: "yukleyen",
+        id: "yukleyen", kartRolu: "ozet",
         baslik: t("dokumanYukleyen"),
         hucre: (d) => d.yukleyen_ad ?? t("ortakYok"),
       },
@@ -278,7 +278,7 @@ export default function DokumanlarPage() {
         deger: (d) => d.boyut_bayt,
       },
       {
-        id: "sakine_acik",
+        id: "sakine_acik", kartRolu: "rozet",
         baslik: t("dokumanSakinGorur"),
         hucre: (d) => (
           <Rozet durum={d.sakine_acik ? ROZET_ACIK : ROZET_KAPALI}>
@@ -288,7 +288,7 @@ export default function DokumanlarPage() {
         deger: (d) => String(d.sakine_acik),
       },
       {
-        id: "eylem",
+        id: "eylem", kartRolu: "eylem",
         baslik: t("listeIslemler"),
         hucre: (d) => (
           <span className="flex gap-2">

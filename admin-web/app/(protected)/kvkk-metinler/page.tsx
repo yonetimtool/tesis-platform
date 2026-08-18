@@ -126,15 +126,15 @@ export default function KvkkMetinlerPage() {
   }
 
   const kolonlar: Kolon<Metin>[] = [
-    { id: "surum", baslik: t("kvkkSurum"), sayisal: true, hucre: (m) => `v${m.surum}` },
-    { id: "baslik", baslik: t("yonKvkkBaslik"), hucre: (m) => m.baslik },
+    { id: "surum", kartRolu: "baslik", baslik: t("kvkkSurum"), sayisal: true, hucre: (m) => `v${m.surum}` },
+    { id: "baslik", kartRolu: "ozet", baslik: t("yonKvkkBaslik"), hucre: (m) => m.baslik },
     {
-      id: "created_at",
+      id: "created_at", kartRolu: "ozet",
       baslik: t("kvkkYayinTarihi"),
       hucre: (m) => formatDateTime(m.created_at),
     },
     {
-      id: "yururlukte",
+      id: "yururlukte", kartRolu: "rozet",
       baslik: t("kvkkYururluk"),
       hucre: (m) => (
         <Rozet durum={m.yururlukte ? ROZET_OLUMLU : ROZET_NOTR}>

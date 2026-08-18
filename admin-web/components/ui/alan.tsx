@@ -42,7 +42,17 @@ const TEMEL_KUTU: React.CSSProperties = {
   borderStyle: "solid",
   borderColor: "var(--yz-border)",
   color: "var(--yz-text)",
-  fontSize: "var(--yz-fs-body)",
+  // (P169 §3.3) GIRDI FONTU 16 px — DIGER METINLERDEN AYRI.
+  //
+  // iOS Safari, odaklanilan bir girdinin font boyutu 16 px'in ALTINDAYSA
+  // sayfayi otomatik YAKINLASTIRIR ve geri cikmaz: kullanici her alana
+  // dokundugunda sayfa ziplar, yatay kaydirma acilir ve duzen bozulur.
+  //
+  // `--yz-fs-body` 14 px ve BOYLE KALMALI — govde metni icin dogru olcu
+  // odur. Bu yuzden girdilere OZEL bir token acildi; `--yz-fs-body`yi
+  // 16'ya cikarmak, sitedeki butun metni buyutup masaustu duzenini
+  // bozardi (brief'in kirmizi cizgisi).
+  fontSize: "var(--yz-fs-input)",
 };
 
 function kutuStili(hatali: boolean): React.CSSProperties {

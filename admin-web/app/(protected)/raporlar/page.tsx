@@ -184,14 +184,14 @@ export default function RaporlarPage() {
   const isKolonlari: Kolon<RaporIsi>[] = useMemo(
     () => [
       {
-        id: "kod",
+        id: "kod", kartRolu: "baslik",
         baslik: t("raporIsAdi"),
         hucre: (i) =>
           (katalog?.items ?? []).find((r) => r.kod === i.kod)?.baslik ?? i.kod,
       },
-      { id: "bicim", baslik: t("raporIsBicim"), hucre: (i) => i.bicim },
+      { id: "bicim", kartRolu: "ozet", baslik: t("raporIsBicim"), hucre: (i) => i.bicim },
       {
-        id: "durum",
+        id: "durum", kartRolu: "rozet",
         baslik: t("ortakDurum"),
         hucre: (i) => (
           <Rozet
@@ -202,12 +202,12 @@ export default function RaporlarPage() {
         ),
       },
       {
-        id: "created_at",
+        id: "created_at", kartRolu: "ozet",
         baslik: t("raporIsZaman"),
         hucre: (i) => new Date(i.created_at).toLocaleString(),
       },
       {
-        id: "eylem",
+        id: "eylem", kartRolu: "eylem",
         baslik: t("listeIslemler"),
         hucre: (i) =>
           // "Indir" YALNIZ hazir iste cizilir: hazir olmayan bir isin

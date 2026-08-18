@@ -189,7 +189,7 @@ export default function TenantsPage() {
   const kolonlar: Kolon<TenantRow>[] = useMemo(
     () => [
       {
-        id: "ad",
+        id: "ad", kartRolu: "baslik",
         baslik: t("ayarTesisAdi"),
         gizlenebilir: false,
         deger: (x) => x.ad,
@@ -206,7 +206,7 @@ export default function TenantsPage() {
       {
         // (P155 §6) Yoneticinin ILETECEGI kod birincil; teknik UUID
         // `title` icinde erisilebilir kalir.
-        id: "kod",
+        id: "kod", kartRolu: "ozet",
         baslik: t("tesisKayitKodu"),
         hucre: (x) =>
           x.kayit_kodu ? (
@@ -230,13 +230,13 @@ export default function TenantsPage() {
         ),
       },
       {
-        id: "olusturma",
+        id: "olusturma", kartRolu: "ozet",
         baslik: t("tesisOlusturulma"),
         darEkrandaGizle: true,
         hucre: (x) => fmtDate(x.created_at),
       },
       {
-        id: "eylem",
+        id: "eylem", kartRolu: "eylem",
         baslik: "",
         gizlenebilir: false,
         hucre: (x) => (
@@ -312,7 +312,7 @@ export default function TenantsPage() {
         }
       >
         <form id="tesis-form" onSubmit={save} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <AlanSarmal etiket={t("tesisAdiOpsiyonel")} ipucu={t("tesisAdiBosIpucu")}>
               {(b) => (
                 <Alan {...b}
@@ -364,7 +364,7 @@ export default function TenantsPage() {
                     </button>
                   )}
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <AlanSarmal etiket={t("tesisAdSoyad")}>
   {(b) => (
     <Alan {...b} value={y.ad}

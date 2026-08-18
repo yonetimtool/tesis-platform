@@ -250,7 +250,7 @@ export default function SettingsPage() {
           <Kart>
           <form onSubmit={save} className="space-y-4">
             <div
-              className="grid grid-cols-2 gap-3"
+              className="grid grid-cols-1 sm:grid-cols-2 gap-3"
               style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}
             >
               <div>

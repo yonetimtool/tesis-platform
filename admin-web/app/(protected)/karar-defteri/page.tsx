@@ -153,18 +153,18 @@ export default function KararDefteriPage() {
   const kolonlar: Kolon<Karar>[] = useMemo(
     () => [
       {
-        id: "karar_no",
+        id: "karar_no", kartRolu: "baslik",
         baslik: t("kararNo"),
         hucre: (k) => k.karar_no,
         deger: (k) => k.karar_no,
       },
       {
-        id: "tarih",
+        id: "tarih", kartRolu: "ozet",
         baslik: t("kararTarih"),
         hucre: (k) => formatDateTime(k.tarih),
         deger: (k) => k.tarih,
       },
-      { id: "konu", baslik: t("kararKonu"), hucre: (k) => k.konu, deger: (k) => k.konu },
+      { id: "konu", kartRolu: "ozet", baslik: t("kararKonu"), hucre: (k) => k.konu, deger: (k) => k.konu },
       {
         id: "baskan",
         baslik: t("kararBaskan"),
@@ -176,7 +176,7 @@ export default function KararDefteriPage() {
         hucre: (k) => k.uyeler.map((u) => u.ad).join(UYE_AYIRACI) || t("ortakYok"),
       },
       {
-        id: "pdf",
+        id: "pdf", kartRolu: "eylem",
         baslik: t("listeIslemler"),
         hucre: (k) => (
           // PDF METIN SABLONUYLA uretilir (P33): karar bir YAZIDIR,

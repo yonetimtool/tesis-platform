@@ -334,7 +334,7 @@ export default function UsersPage() {
   const kolonlar: Kolon<UserRow>[] = useMemo(
     () => [
       {
-        id: "ad",
+        id: "ad", kartRolu: "baslik",
         baslik: t("ortakAd"),
         hucre: (u) => u.ad,
         // Siralama SUNUCU TARAFLI kipte istemcide yapilmaz; uc bugun
@@ -343,7 +343,7 @@ export default function UsersPage() {
         // gostermemek dogru.
         gizlenebilir: false,
       },
-      { id: "email", baslik: t("girisEposta"), hucre: (u) => u.email },
+      { id: "email", kartRolu: "ozet", baslik: t("girisEposta"), hucre: (u) => u.email },
       {
         id: "aranabilir",
         baslik: t("kullaniciAranabilir"),
@@ -351,7 +351,7 @@ export default function UsersPage() {
         darEkrandaGizle: true,
       },
       {
-        id: "rol",
+        id: "rol", kartRolu: "ozet",
         baslik: t("ortakRol"),
         hucre: (u) => (
           <Rozet durum={ROL_DURUMU[u.role] ?? DURUM_NOTR} nokta>
@@ -360,7 +360,7 @@ export default function UsersPage() {
         ),
       },
       {
-        id: "durum",
+        id: "durum", kartRolu: "rozet",
         baslik: t("ortakDurum"),
         hucre: (u) => (
           <Rozet durum={u.is_active ? DURUM_OLUMLU : DURUM_NOTR}>
@@ -369,7 +369,7 @@ export default function UsersPage() {
         ),
       },
       {
-        id: "eylem",
+        id: "eylem", kartRolu: "eylem",
         baslik: "",
         gizlenebilir: false,
         hucre: (u) => (

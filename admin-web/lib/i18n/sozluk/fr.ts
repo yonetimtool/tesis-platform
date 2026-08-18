@@ -2040,4 +2040,8 @@ export const fr: Sozluk = {
   kvkkYenidenOnayIste: "Redemander le consentement aux utilisateurs",
   kvkkYenidenOnayNotu: "Désactivez pour les changements non substantiels comme les fautes de frappe ; désactivé, les utilisateurs ayant consenti à la version précédente ne sont pas resollicités.",
   kvkkSurumNotu: "Un texte publié n'est pas modifiable ; une modification crée une nouvelle version et l'ancienne reste enregistrée.",
+  // ---- (P169 §3.1) DataTable kart modu
+  tabloDetay: "Détails",
+  // ---- (P169 §4) Gorev takvimi: dar ekranda ajanda
+  gorevAyBos: "Aucune tâche planifiée ce mois-ci.",
 };

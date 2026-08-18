@@ -2040,4 +2040,8 @@ export const ar: Sozluk = {
   kvkkYenidenOnayIste: "اطلب موافقة المستخدمين مجددًا",
   kvkkYenidenOnayNotu: "أوقفه للتغييرات غير الجوهرية مثل تصحيح الأخطاء المطبعية؛ عند إيقافه لا يُسأل من وافق على الإصدار السابق مرة أخرى.",
   kvkkSurumNotu: "لا يمكن تعديل نص منشور؛ أي تغيير ينشئ إصدارًا جديدًا ويبقى القديم مسجلًا.",
+  // ---- (P169 §3.1) DataTable kart modu
+  tabloDetay: "التفاصيل",
+  // ---- (P169 §4) Gorev takvimi: dar ekranda ajanda
+  gorevAyBos: "لا توجد مهام مجدولة هذا الشهر.",
 };

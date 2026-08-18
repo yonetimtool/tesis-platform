@@ -13,6 +13,40 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      // ====================================================================
+      // (P169 §1) KIRILMA NOKTALARI — TEK SISTEM
+      // ====================================================================
+      // Brief dort bant istiyor:
+      //   sm  <640      telefon
+      //   md  640-1023  tablet dikey
+      //   lg  1024-1439 tablet yatay / kucuk dizustu
+      //   xl  >=1440    masaustu
+      //
+      // OLCULDU: bu sinirlarin UCUNDEN IKISI Tailwind'de ZATEN DOGRU.
+      // `sm`=640 ve `lg`=1024 brief'in sinirlariyla BIREBIR ayni; yalniz
+      // `xl` 1280 ve brief 1440 istiyor.
+      //
+      // PARALEL BIR SISTEM KURULMADI (`tel/tabD/tabY/mas` gibi yeni adlar).
+      // Sebep olculebilir: kod tabaninda 84 `sm:`, 36 `lg:`, 10 `md:`
+      // kullanimi var. Ikinci bir sozluk eklemek, ayni ekranda iki farkli
+      // kirilma dilinin yan yana yasamasi ve her okuyanin "bu hangi
+      // sistem" diye durmasi olurdu.
+      //
+      // `md` (768) BRIEF'IN BIR SINIRI DEGIL — brief'in "md bandi"
+      // 640-1023'tur ve Tailwind'de bu zaten `sm:` ile baslayip `lg:`de
+      // biten banttir. 768 fazladan bir ara esik olarak KALIYOR: on
+      // kullanim yeri var ve hepsi tablo kolonu gizleme gibi ince
+      // ayarlar.
+      screens: {
+        // (P169 §5) `coarse:` — PARMAKLA kullanilirken. Genislikten AYRI
+        // bir soru: dokunmatik bir dizustu genistir ama fare yoktur.
+        // Hover'a bagli kalan seritleri dokunmatikte ACIK cizmek icin.
+        coarse: { raw: "(pointer: coarse)" },
+        // TEK DEGISIKLIK: 1280 -> 1440. Tek kullanim yeri var
+        // (`finans-ozeti` kart izgarasi) ve orada uc kolona GEC gecmek
+        // dogru: 1280'de uc para karti yan yana sikisiyordu.
+        xl: "1440px",
+      },
       colors: {
         ink: "#0f172a",
         // (P132.8) `muted` KALDIRILDI. Acik temada `metin.muted` ile AYNI

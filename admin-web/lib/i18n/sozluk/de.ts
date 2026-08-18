@@ -2040,4 +2040,8 @@ export const de: Sozluk = {
   kvkkYenidenOnayIste: "Nutzer erneut um Zustimmung bitten",
   kvkkYenidenOnayNotu: "Bei nicht wesentlichen Aenderungen wie Tippfehlern ausschalten; dann werden Nutzer der vorherigen Fassung nicht erneut gefragt.",
   kvkkSurumNotu: "Ein veroeffentlichter Text ist nicht aenderbar; eine Aenderung erzeugt eine neue Fassung und die alte bleibt erhalten.",
+  // ---- (P169 §3.1) DataTable kart modu
+  tabloDetay: "Details",
+  // ---- (P169 §4) Gorev takvimi: dar ekranda ajanda
+  gorevAyBos: "In diesem Monat sind keine Aufgaben geplant.",
 };

@@ -173,7 +173,11 @@ export function Modal({
     // demekti.
     <MotionConfig reducedMotion="user">
       <div
-        className="fixed inset-0 flex items-center justify-center p-4"
+        // (P169 §3.2) `sm`'DE TAM EKRAN: dis bosluk ve ortalama kalkar.
+        // Dar ekranda 328 px'lik ortalanmis bir kutu TASMAZ ama uzun
+        // formda dikey olarak ekrani asar ve klavye acilinca alt eylem
+        // cubugu gorunmez olur. Tam ekran, kaydirmayi kutunun ICINE alir.
+        className="fixed inset-0 flex items-stretch justify-center sm:items-center sm:p-4"
         style={{ zIndex: "var(--yz-z-modal)" as unknown as number }}
       >
         {/* ORTU — tiklama kapatir. `button` DEGIL `div`: ekran okuyucuya
@@ -200,9 +204,18 @@ export function Modal({
           aria-modal="true"
           aria-labelledby={baslikId}
           tabIndex={-1}
-          className={`relative flex max-h-[90vh] w-full flex-col ${genislikSinifi}`}
+          className={[
+            "relative flex w-full flex-col",
+            // `sm`: tam yukseklik, kose yuvarlamasi YOK (ekranin kendisi).
+            // `sm+`: eski davranis — %90 yukseklik, ortalanmis kutu.
+            "h-full sm:h-auto sm:max-h-[90vh]",
+            genislikSinifi,
+          ].join(" ")}
           style={{
-            borderRadius: "var(--yz-radius-card)",
+            // KOSE YUVARLAMASI YALNIZ `sm` USTUNDE: tam ekran bir
+            // yuzeyde yuvarlak koseler, arkasinda bir sey varmis
+            // izlenimi verir — oysa arkasinda ekranin kenari vardir.
+            borderRadius: "var(--yz-radius-modal)",
             background: "var(--yz-metal-1)",
             borderWidth: "var(--yz-border-w)",
             borderStyle: "solid",
@@ -254,7 +267,10 @@ export function Modal({
 
           {eylemler && (
             <div
-              className="flex shrink-0 items-center justify-end gap-2 border-t p-4"
+              // (P169 §3.2) GUVENLI ALAN PAYI: centikli telefonlarda alt
+              // kenarda bir "ana ekran cubugu" vardir ve tam ekran bir
+              // modalda Kaydet dugmesi tam onun altinda kalir — basilamaz.
+              className="flex shrink-0 items-center justify-end gap-2 border-t p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:pb-4"
               style={{
                 borderColor: "var(--yz-border)",
                 borderTopWidth: "var(--yz-border-w)",
