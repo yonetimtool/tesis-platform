@@ -44,5 +44,48 @@ if [ -f "$KOK/infra/caddy-onkontrol.sh" ]; then
   echo "  OK   Caddy on kontrolu gecti"
 fi
 
+# (P171 duzeltme) KISMI BUILD ZORLA TAMAMLANIR.
+#
+# NEDEN: kod tasiyan dort servis (migrate, api, admin-web, worker) AYNI
+# kaynaklardan beslenir. Bir alt kumesini kurmak imajla depoyu AYRISTIRIR:
+# `contracts/` CANLI MOUNT oldugu icin yeni goc dosyalari hemen gorunur,
+# `backend/app` ise IMAJDADIR ve eski kalir. Yeni bir goc, olmayan bir
+# modulu ya da kurulmamis bir bagimliligi arar ve DUSER.
+#
+# GERCEK OLAY (2026-08, P171): goc 0066 dagitildi, `ModuleNotFoundError`
+# verdi, sema geride kaldi; `api` migrate'e `service_completed_successfully`
+# ile bagli oldugu icin HIC BASLAMADI, `worker` de oyle. `docker ps` bos,
+# alan adi 502 — ortam sessizce yok oldu.
+#
+# REDDETMEK YERINE TAMAMLAMAK: acil bir mudahalede operatoru durdurmak
+# yerine dogru olani yapip NEDENINI soylemek daha iyi. Kod tasimayan
+# servisler (caddy, db, redis) tek basina dagitilabilir — kural yalniz
+# DORTLUYE dokunuldugunda devreye girer.
+KOD_SERVISLERI=(migrate api admin-web worker)
+
+if [ $# -gt 0 ]; then
+  dokunulan=0
+  for s in "$@"; do
+    for k in "${KOD_SERVISLERI[@]}"; do
+      [ "$s" = "$k" ] && dokunulan=1
+    done
+  done
+  if [ "$dokunulan" = 1 ]; then
+    eksik=()
+    for k in "${KOD_SERVISLERI[@]}"; do
+      var=0
+      for s in "$@"; do [ "$s" = "$k" ] && var=1; done
+      [ "$var" = 0 ] && eksik+=("$k")
+    done
+    if [ ${#eksik[@]} -gt 0 ]; then
+      echo "  ! KISMI BUILD TAMAMLANDI: eksik olan(lar) eklendi -> ${eksik[*]}"
+      echo "    Kod tasiyan dort servis birlikte kurulmali; biri eski"
+      echo "    kalirsa imaj ile depo ayrisir ve goc duser."
+      echo "    Gerekce: infra/RUNBOOK-PROD.md §6.1"
+      set -- "$@" "${eksik[@]}"
+    fi
+  fi
+fi
+
 echo "== Dagitiliyor: ${*:-<tum servisler>}"
 "${COMPOSE[@]}" up -d --build "$@"

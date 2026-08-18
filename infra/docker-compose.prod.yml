@@ -7,6 +7,12 @@
 # Kullanim (bkz. infra/RUNBOOK-PROD.md):
 #   cd infra && cp .env.prod.example .env.prod && $EDITOR .env.prod
 #   docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
+#
+# SERVIS ADI VERMEYIN: argumansiz komut kod tasiyan DORT servisi de kurar.
+# Bir alt kume kurmak imajla depoyu AYRISTIRIR (`contracts/` canli mount,
+# `backend/app` imajda) ve yeni bir goc olmayan bir modulu arar — 2026-08'de
+# ortami dusurdu (P171). Ad vermek zorundaysaniz dordunu birden yazin:
+#   docker compose build migrate api admin-web worker
 #   docker compose -f docker-compose.prod.yml --env-file .env.prod run --rm worker \
 #       python -m scripts.create_admin --email you@firma.com
 #   (worker, api DEGIL: OWNER_DSN yalniz worker/beat'te tanimli — api'ye
@@ -241,7 +247,9 @@ services:
           echo "   EN SIK NEDEN: imaj depodan ESKI. \`contracts/\` canli" >&2
           echo "   mount'tur, \`backend/\` ise imaja gomuludur — yeni goc" >&2
           echo "   dosyasi eski kodla/bagimliliklarla karsilasir." >&2
-          echo "   COZUM: docker compose build migrate api worker" >&2
+          echo "   COZUM — KANONIK KOMUT (dordunu de kurun, KISMI BUILD" >&2
+          echo "   tam olarak bu hataya yol acar):" >&2
+          echo "     docker compose build migrate api admin-web worker" >&2
           echo "" >&2
           echo "   Gunlukler: docker compose logs migrate" >&2
           exit 1

@@ -189,8 +189,12 @@ $C run --rm migrate
 # 2) Caddy — YENI KONAKLAR + TLS.  --force-recreate ZORUNLU, aciklamasi asagida.
 $C up -d --force-recreate caddy
 
-# 3) api — PORTAL_BASE_URL ve CORS normallestirmesi (imaj kodu BAKE eder)
-$C up -d --build api
+# 3) Kod tasiyan servisler — imaj kodu BAKE eder.
+#    KISMI BUILD YAPMAYIN: yalniz `api` kurmak imajla depoyu AYRISTIRIR
+#    (`contracts/` canli mount, `backend/app` imajda) ve bir sonraki goc
+#    olmayan bir modulu arar. 2026-08'de ortami dusurdu (P171).
+#    Kanonik komut RUNBOOK-PROD.md §6.1'de.
+$C up -d --build migrate api admin-web worker
 
 # 4) SEMA ILE KOD UYUSUYOR MU (P124) — `uyumlu: true` bekleniyor
 curl -s https://api.yonetio.site/health | python3 -m json.tool

@@ -168,7 +168,9 @@ services:
           echo "   EN SIK NEDEN: imaj depodan ESKI. \`contracts/\` canli" >&2
           echo "   mount'tur, \`backend/\` ise imaja gomuludur — yeni goc" >&2
           echo "   dosyasi eski kodla/bagimliliklarla karsilasir." >&2
-          echo "   COZUM: docker compose build migrate api worker" >&2
+          echo "   COZUM — KANONIK KOMUT (dordunu de kurun, KISMI BUILD" >&2
+          echo "   tam olarak bu hataya yol acar):" >&2
+          echo "     docker compose build migrate api admin-web worker" >&2
           echo "" >&2
           echo "   Gunlukler: docker compose logs migrate" >&2
           exit 1

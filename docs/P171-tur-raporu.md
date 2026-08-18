@@ -392,3 +392,110 @@ Kullanıcı parolasını defalarca dener, kilitlenir ve asıl sorunu hiç
 Testler gerçek yolu sürüyor (`fetch` → `jsonFetcher` → kod → ekran), sahte
 bir fetcher'la kısa devre yapmıyor: kısa devre yapsaydı `jsonFetcher` bir
 gün kodu iliştirmeyi bıraktığında test yine geçerdi.
+
+
+---
+
+# P171 düzeltmesi (3) — dağıtım komutu tek ve eksiksiz
+
+Banner doğru sebebi söyledi ama **çözüm satırı eksikti**: `build migrate api`
+diyordu, `worker` ve `admin-web` yoktu. Önceki turlarda benim verdiğim komut
+da (`build api admin-web worker`) `migrate`i saymıyordu. Yani hatanın
+kendisini anlatan metin, aynı hatayı tekrar üretebilecek bir komut
+öneriyordu.
+
+## Kanonik komut
+
+```
+docker compose build migrate api admin-web worker
+```
+
+Argümansız `up -d --build` de dördünü birden kurar; **servis adı vermemek**
+en güvenli yol.
+
+## Neden kısmi build bu sınıf hataya yol açıyor
+
+Kod taşıyan dört servis aynı kaynaklardan beslenir ve `migrate` ikisini
+birden taşır:
+
+| Servis | Kaynağı |
+|---|---|
+| `migrate` | `backend/` (imaja gömülü) + `contracts/` (**canlı mount**) |
+| `api` | `backend/` (imaja gömülü) + `contracts/` (**canlı mount**) |
+| `worker` | `backend/` (imaja gömülü) |
+| `admin-web` | `admin-web/` (imaja gömülü) |
+
+`contracts/` canlı mount olduğu için **yeni göç dosyaları anında görünür**;
+`backend/app` ise imajdadır ve kurulmazsa eski kalır. Yeni bir göç, olmayan
+bir modülü ya da kurulmamış bir bağımlılığı arar ve düşer. Ölçülen olay
+buydu.
+
+Ters yön de aynı derecede kötü: yalnız `migrate` kurmak şemayı ilerletir,
+`api`/`worker` eski kodda kalır — bu sefer 500'ler başlar.
+
+## Nerede düzeltildi
+
+* `infra/RUNBOOK-PROD.md` **§6.1** — kanonik komut, tablo ve olayın kaydı;
+  §6 ve §11'e "servis adı vermeyin" notu.
+* `infra/docker-compose.prod.yml` başlığı ve **her iki compose'un banner'ı**
+  (dev + prod) — artık dördünü de yazıyor.
+* `docs/alan-adi-gecisi.md` (`--build api` idi) ve
+  `docs/goc-plani-tesis-kodu.md` (`--build migrate` idi) — **ikisi de tam
+  olarak bu sınıfın örneğiydi**, dörtlüye çıkarıldı.
+* `docs/test-sunucusu-kurulum.md` — argümansız komuta uyarı notu.
+
+Tarihsel kayıtlara (`docs/superpowers/plans`, `OLCULMEYEN-DURUMLAR-*`)
+dokunulmadı: onlar o gün ne yapıldığının kaydı, bugünün talimatı değil.
+
+## Doküman yetmez — betik de zorluyor
+
+`infra/prod-dagit.sh`: dörtlüden birine dokunup ötekileri atlarsanız listeyi
+**tamamlıyor** ve nedenini yazıyor. Reddetmek yerine tamamlamak seçildi —
+acil bir müdahalede operatörü durdurmak yerine doğru olanı yapıp gerekçeyi
+söylemek daha iyi. Kod taşımayan servisler (`caddy`, `db`, `redis`) tek
+başına dağıtılabilir; kural yalnız dörtlüye dokunulduğunda devreye girer.
+
+Dört girdiyle sürüldü ve doğrulandı: `api` → dördü; `migrate api` → dördü;
+`caddy` → dokunulmadı; argümansız → dokunulmadı.
+
+
+## Değerlendirme: migrate api imajını kullansın mı — **evet, ayrı turda**
+
+### Ölçüm
+
+Beş servis (`api`, `migrate`, `worker`, `beat`, `seed`) **aynı Dockerfile** ve
+**aynı context**'ten (`../backend`) kuruluyor. Katmanları birebir aynı —
+üçünün de dördüncü katmanı `sha256:4a3a9232…`, yani **disk maliyeti zaten
+sıfır**, imajlar katman paylaşıyor.
+
+Sorun boyut değil **isim**: beş ayrı imaj adı var. `docker compose build api`
+yalnız `tesis-api`yi tazeliyor; `tesis-migrate` eski katmanlarda kalıyor.
+Sürüklenme sınıfı tam olarak buradan doğuyor.
+
+### Öneri
+
+Tek imaj adı (`tesis-backend`); servisler yalnız `command` ile ayrışsın.
+Bu, sınıfı **yapısal olarak** kapatır: bir imaj, bir ad, bir tazelik durumu.
+Kanonik komut kuralı da tek savunma olmaktan çıkıp emniyet kemerine döner.
+
+Kazanç yalnız `migrate`de değil: bugün `worker`/`beat` de eski kalabiliyor ve
+o durumda Celery tarafında `ModuleNotFoundError` çıkıyor — `api` taze
+göründüğü için fark edilmesi zor bir ayrışma.
+
+### Neden bu turda değil
+
+Kerem'in kararı ve gerekçesi doğru: **compose'da yapılan bir hata zaten
+ortamı düşüren şeydi.** Bir düzeltme turuna bunu bolamam.
+
+Kendi turunda yapılacaklar:
+
+1. `infra/docker-compose.yml` + `docker-compose.prod.yml`: beş servis tek
+   `image: tesis-backend`, tek `build:`; ötekiler yalnız `command`.
+2. `infra/docker-compose.push.yml` ve `prod-dagit.sh`: imaj adı varsayımları.
+3. `infra/goc-sifirdan.sh` yeniden koşulur (taze imaj kurup boş veritabanında
+   zincir).
+4. `docker compose build api` sonrası `migrate` imajının **gerçekten**
+   tazelendiğini ölçen bir kapı.
+5. Kaybedilen yetenek yazılır: bugün teorik olarak tek servisi ayrı sürümde
+   tutmak mümkün (kanarya); tek imajla bu gider. Kullanılmıyor, ama kararın
+   parçası olarak kayda geçmeli.

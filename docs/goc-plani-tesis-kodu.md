@@ -128,8 +128,12 @@ DC="docker compose -f docker-compose.prod.yml --env-file .env.test -p yonetio-te
 # 1) ÖNCE yedek (geri dönüş yolu)
 bash infra/backup.sh
 
-# 2) Göç
-$DC up -d --build migrate
+# 2) Göç — KOD TASIYAN DORT SERVIS BIRLIKTE.
+#    Yalniz `migrate` kurmak, gocun YENI ama `api`/`worker` imajinin ESKI
+#    kalmasi demektir; sema ilerler, kod geride kalir. Tersi de olur:
+#    yeni goc, eski imajda olmayan bir modulu/bagimliligi arar ve DUSER
+#    (P171, 2026-08 — ortam tamamen erisilemez oldu).
+$DC up -d --build migrate api admin-web worker
 $DC logs migrate | tail -20
 
 # 3) KANIT — varsayma

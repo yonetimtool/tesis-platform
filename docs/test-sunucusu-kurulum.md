@@ -386,6 +386,12 @@ docker compose -f docker-compose.prod.yml --env-file .env.test -p yonetio-test \
   up -d --build
 ```
 
+> **Servis adı vermeyin.** Argümansız komut kod taşıyan dört servisi de
+> (`migrate api admin-web worker`) kurar. Bir alt küme kurmak imajla depoyu
+> ayrıştırır ve göç düşer — 2026-08'de test ortamını tamamen erişilemez
+> yaptı (P171). Ad vermek zorundaysanız dördünü birden yazın; gerekçe
+> `infra/RUNBOOK-PROD.md` §6.1'de.
+
 İlk kalkış imaj derlemesi + libretranslate model indirmesi yüzünden uzun
 sürer. Takip:
 

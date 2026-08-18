@@ -115,6 +115,41 @@ cd /opt/yonetio/tesis-platform/infra
 docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
 ```
 
+> **Servis adı vermeyin.** Argümansız `up -d --build` kod taşıyan **bütün**
+> servisleri kurar. Bir alt küme yazmak, aşağıdaki §6.1'deki hata sınıfını
+> doğurur.
+
+### 6.1 ⚠️ KISMİ BUILD YAPMAYIN — kanonik komut
+
+Kod taşıyan servisler **dört tane** ve hepsi aynı kaynaklardan beslenir:
+
+| Servis | Kaynağı |
+|---|---|
+| `migrate` | `backend/` (imaja gömülü) + `contracts/` (**canlı mount**) |
+| `api` | `backend/` (imaja gömülü) + `contracts/` (**canlı mount**) |
+| `worker` | `backend/` (imaja gömülü) |
+| `admin-web` | `admin-web/` (imaja gömülü) |
+
+Yalnız bir kısmını kurarsanız **imaj ile depo ayrışır**. `contracts/` canlı
+mount olduğu için yeni göç dosyaları hemen görünür; `backend/app` ise
+imajdadır ve eski kalır. Yeni bir göç, olmayan bir modülü ya da kurulmamış
+bir bağımlılığı arar.
+
+**Bu bir kez gerçekten yaşandı (2026-08, P171):** göç 0066 dağıtıldı,
+`ModuleNotFoundError` verdi, şema geride kaldı; `api` migrate'e
+`service_completed_successfully` ile bağlı olduğu için **hiç başlamadı**,
+`worker` de öyle. `docker ps` boş, alan adı 502. Ortam sessizce yok oldu.
+
+Servis adı vermek **zorundaysanız** (acil, dar kapsamlı müdahale), dördünü
+birden yazın — bu tek ve eksiksiz komuttur:
+
+```bash
+docker compose build migrate api admin-web worker
+```
+
+`infra/prod-dagit.sh` bunu ayrıca **zorlar**: dördünden birini yazıp
+ötekileri atlarsanız listeyi tamamlar ve nedenini söyler.
+
 İlk açılışta Caddy sertifikaları alır (birkaç saniye–dakika). Durum:
 
 ```bash
@@ -214,6 +249,7 @@ gpg --batch --decrypt --passphrase "$BACKUP_GPG_PASSPHRASE" \
 cd /opt/yonetio/tesis-platform
 git pull
 cd infra
+# SERVIS ADI VERMEYIN — argümansız komut dördünü de kurar (bkz. §6.1).
 docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
 # migrate her açılışta idempotent çalışır (alembic upgrade head).
 
