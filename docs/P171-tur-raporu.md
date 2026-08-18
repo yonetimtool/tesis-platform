@@ -214,3 +214,90 @@ denetim, temizlik gerçekten çalışırken "çalışmıyor" diyordu) — deneti
 4. Editöre dışarıdan HTML **yapıştır** (ör. `<img src=x onerror=alert(1)>`
    içeren bir parça) ve yayınla — kaydedilen metinde o parça **olmamalı**,
    yazdığın normal metin yerinde durmalı.
+
+---
+
+# P171 düzeltmesi — dağıtım ortamı düştü
+
+> `34e4c0c4` dağıtıldı, göç 0066 `ModuleNotFoundError: app.temizleme` verdi,
+> şema 0064'te kaldı, `api`/`admin-web`/`worker` hiç başlamadı.
+> Ortam tamamen erişilemez oldu. **Bu benim hatamdı.**
+
+## 1. Kök neden
+
+Göç 0066 `from app.temizleme import zengin_temizle` yazıyordu; gerekçem
+"tek doğruluk kaynağı" idi. **Gerekçe yanlıştı.**
+
+`infra/docker-compose.yml` `contracts/` dizinini **canlı mount** eder,
+`backend/app/` ise **imaja gömülüdür**. Göç dosyası ile uygulama kodu
+**farklı kanallardan** gelir ve **farklı sürümlerde olabilir**. Depo
+güncellenip imaj yeniden kurulmadığında konteyner yeni göçü görür ama eski
+kodu taşır.
+
+Bunu daha önce not etmişim (`backend-contracts-canli-mount`) ve yine de
+aynı ayrımın içine düştüm.
+
+**Asıl ilke:** göçler tarihsel kayıttır. Bir göç yazıldığı andaki dünyayı
+tarif eder ve yıllar sonra aynı sonucu üretmelidir. Bugünün uygulama koduna
+bağlanan bir göç, o kod değiştiğinde geçmişi kırar. Beyaz liste artık göç
+dosyasının içinde **dondurulmuş**; `app/temizleme.py` ile ayrışabilir ve
+ayrışması bir kusur **değil**, doğru davranıştır.
+
+`nh3` ithali kaldı — o bir kütüphane bağımlılığıdır, `requirements.txt`
+üzerinden alembic'le **aynı kanaldan** imaja girer. Eksikse göç sessizce
+atlamak yerine **eyleme dönük** bir mesajla durur: bir güvenlik onarımını
+yapılmamış bırakıp yapılmış saymak, yapmamaktan kötüdür.
+
+**0065 kontrol edildi:** yalnız `from alembic import op` içeriyor, aynı
+sorun yok.
+
+## 2. API şema uyumsuzluğunda ne yapmalı
+
+Önce bir düzeltme: **API zaten uyarıyla açılıyor ve sağlık kontrolünde
+bildiriyor** (P124'te tam bu senaryo için tasarlanmış). Çökme sebebi API
+değildi.
+
+Gerçek mekanizma **compose bağımlılık kapısı**: `api` migrate'e
+`service_completed_successfully` ile bağlı, `admin-web` de `api`'nin
+sağlığına. Göç düşünce üçü de hiç başlamıyor ve `docker ps` boş görünüyor.
+
+**Bu kapıyı gevşetmeyi önermiyorum.** Yarı göç edilmiş bir şemaya karşı
+servis vermek, kapalı olmaktan kötüdür: kod beklemediği bir şemaya **yazar**.
+Asıl boşluk teşhisti, ve iki yerde kapatıldı:
+
+* **Migrate düşerse eyleme dönük banner** (dev + prod compose): ne olduğunu,
+  neden her şeyin kapalı göründüğünü ve ne yapılacağını yazıyor. Hata yolu
+  gerçekten sürüldü. (`trap ... ERR` denendi ve **çalışmadı** — konteynerin
+  kabuğu `sh`, ERR tuzağı bash'e özel; açık `|| hata` kullanıldı.)
+* **Açılışta şema günlüğü**: önceden yalnız `/health` raporluyordu, yani
+  *bakan biri* gerekiyordu. Ayrışma artık ilk istekten önce logda.
+
+**Öneri (uygulanmadı, kararı senin):** `admin-web`i `api: service_healthy`
+kapısından çıkarmak. Bugün API düşünce alan adı Caddy 502 veriyor; bağımsız
+başlarsa en azından bir sayfa gelir. Dağıtım topolojisi değişikliği olduğu
+için bir düzeltme turunda tek başıma yapmadım.
+
+## 3. Kapılar — ikisi tamamlayıcı
+
+**`backend/tests/test_goc_bagimsizligi.py` (statik).** Hiçbir göç `app.*`
+ithal edemez; fonksiyon içindeki ithaller de sayılır (ilk kusur tam orada,
+`upgrade()` içindeydi). Zincirin tek uçlu, kopuksuz ve tekrarsız olduğunu da
+ölçüyor. **Kilidin kusuru yakaladığı kanıtlandı**: eski ithal geri kondu,
+test kırıldı, geri alındı.
+
+**`infra/goc-sifirdan.sh` (uçtan uca).** Depodaki hâliyle **yeniden kurulan**
+migrate imajı, **boş** bir veritabanında zinciri baştan sona koşuyor ve
+varılan revizyon dosyalardan hesaplanan HEAD ile karşılaştırılıyor —
+"hata vermedi" yetmez, zincir ortada durmuş olabilir. `--deney` bayrağı
+geçici bir bozuk göç yazıp kapının **gerçekten kırıldığını** gösteriyor;
+kapı, kırılabildiğini kanıtlayana kadar kapı değildir. `infra/kapilar.sh`
+`goc` grubuna bağlandı.
+
+**Neden ikisi birden:** statik olan sınıfı ortamdan bağımsız kapatır ama
+"imajda gerçekten koşuyor mu" sorusunu yanıtlamaz (örneğin `nh3` eksikse
+orada görünmez). Uçtan uca olan çalışırlığı ölçer ama geliştiricinin imajı
+tazeyse — **bu turda tam olarak öyle oldu** — kusuru göremez.
+
+Mevcut `goc-tersinirlik.sh` bu kusuru neden kaçırdı: o da gerçek konteynerde
+koşuyor, ama **o an kurulu** imajla. İmajın depoyla uyumlu olup olmadığını
+hiç ölçmüyordu.

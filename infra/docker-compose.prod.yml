@@ -226,8 +226,31 @@ services:
       - -c
       - |
         set -e
+        # (P171 duzeltme) DUSERSE EYLEME DONUK BIR MESAJ BIRAK.
+        #
+        # Goc dustugunde `api`, `admin-web` ve `worker` HIC BASLAMAZ
+        # (ucu de buna `service_completed_successfully` ile bagli) ve
+        # operator `docker ps`te HICBIR SEY goremez. Ciplak bir alembic
+        # geri izlemesi bunun NEDEN oldugunu soylemez.
+        hata() {
+          echo "" >&2
+          echo "!! GOC ZINCIRI DUSTU — api/admin-web/worker BASLAMAYACAK." >&2
+          echo "   Ucu de bu servise 'service_completed_successfully' ile" >&2
+          echo "   baglidir; bu yuzden ortam tamamen erisilemez gorunur." >&2
+          echo "" >&2
+          echo "   EN SIK NEDEN: imaj depodan ESKI. \`contracts/\` canli" >&2
+          echo "   mount'tur, \`backend/\` ise imaja gomuludur — yeni goc" >&2
+          echo "   dosyasi eski kodla/bagimliliklarla karsilasir." >&2
+          echo "   COZUM: docker compose build migrate api worker" >&2
+          echo "" >&2
+          echo "   Gunlukler: docker compose logs migrate" >&2
+          exit 1
+        }
+        # `trap ... ERR` YOK: bu kabuk `sh` (busybox/dash) ve ERR tuzagi
+        # bash'e ozeldir — olculdu, "trap: ERR: bad trap" verdi. Acik
+        # `|| hata` hem tasinabilir hem okunur.
         echo ">> Migration'lar uygulaniyor (owner)..."
-        alembic -c /contracts/db/alembic.ini upgrade head
+        alembic -c /contracts/db/alembic.ini upgrade head || hata
         echo ">> app_rw rolu hazirlaniyor..."
         python /scripts/setup_app_role.py
     networks: [tesisnet]

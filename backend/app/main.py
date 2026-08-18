@@ -1,6 +1,7 @@
 """FastAPI uygulamasi — iskelet + /health."""
 from __future__ import annotations
 
+import logging
 from contextlib import asynccontextmanager
 
 import redis.asyncio as aioredis
@@ -127,6 +128,7 @@ async def lifespan(app: FastAPI):
     app.state.redis = aioredis.from_url(
         settings.redis_url, encoding="utf-8", decode_responses=True
     )
+    await _sema_gunlukle()
     try:
         yield
     finally:
@@ -284,6 +286,43 @@ async def health() -> JSONResponse:
             "schema": sema,
         },
     )
+
+
+async def _sema_gunlukle() -> None:
+    """(P171 duzeltme) SEMA DURUMUNU ACILISTA GUNLUGE YAZ.
+
+    ONCEDEN yalnizca `/health` raporluyordu ve bu bir olcum bosluguydu:
+    `/health`e BAKAN biri gerekiyordu. Ayrisma acilista, hicbir istek
+    gelmeden gorunmeli — operator once loga bakar.
+
+    UYGULAMA DURDURULMAZ ve bu bilincli (P124 karari): sema ileri/geri
+    gitmis olsa da uygulama bircok ucta calismaya devam eder; acilisi
+    reddetmek, teshis edilebilir bir bozuklugu ERISILEMEZ bir bosluga
+    cevirirdi. Ayrisma anlatilir, karar operatorundur.
+
+    HATA YUTULUR: veritabani henuz hazir degilse (acilis yarisi) burada
+    patlamak, calisabilecek bir uygulamayi bir gunluk satiri ugruna
+    dusurmek olurdu.
+    """
+    try:
+        sema = await _sema_surumu()
+    except Exception:  # pragma: no cover - acilis yarisi
+        return
+    if sema.get("uyumlu") is False:
+        logging.getLogger(__name__).error(
+            "SEMA AYRISMASI: veritabani=%s beklenen=%s — `migrate` "
+            "kosulmali. Uygulama ACILIYOR ama bazi uclar 500 verebilir.",
+            sema.get("database"), sema.get("beklenen"),
+        )
+    elif sema.get("uyumlu") is None:
+        logging.getLogger(__name__).info(
+            "Sema surumu OLCULEMEDI (goc dosyalari imajda yok ya da "
+            "veritabani okunamadi) — karar verilmiyor."
+        )
+    else:
+        logging.getLogger(__name__).info(
+            "Sema surumu uyumlu: %s", sema.get("database")
+        )
 
 
 async def _sema_surumu() -> dict[str, object]:

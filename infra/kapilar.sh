@@ -93,6 +93,12 @@ backend() {
 goc() {
   kapi goc-uyum       bash -c "cd '$KOK' && bash infra/goc-uyum-dogrula.sh"
   kapi goc-tersinir   bash -c "cd '$KOK' && bash infra/goc-tersinirlik.sh"
+  # (P171 duzeltme) SIFIRDAN KOSUM. Otekiler mevcut semayi ve mevcut imaji
+  # varsayar; bu kapi DEPODAKI haliyle kurulmus migrate imajinin BOS bir
+  # veritabaninda zinciri bastan sona kosabildigini olcer. Kapi olmadan
+  # "uc takim yesil" ortamda calistigi anlamina gelmiyor — P171'de
+  # kanitlandi.
+  kapi goc-sifirdan   bash -c "cd '$KOK' && bash infra/goc-sifirdan.sh"
 }
 
 # DEPO KAPISI — "yapi referans veriyor ama depoda yok".
