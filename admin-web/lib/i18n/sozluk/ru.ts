@@ -67,6 +67,8 @@ export const ru: Sozluk = {
   ortakVeriYuklenemedi: "Не удалось загрузить данные.",
   ortakOturumSuresiDoldu: "Срок действия сессии истёк.",
   ortakSunucuyaUlasilamadi: "Не удалось подключиться к серверу.",
+  sunucuKapaliBaslik: "Сервер недоступен",
+  sunucuKapaliAciklama: "Панель работает, но не может подключиться к серверу. Обычно это ненадолго — повторите попытку через некоторое время.",
   ortakGeriDon: "Назад",
   ortakDetay: "Подробности",
   ortakToplam: "Итого",

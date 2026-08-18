@@ -67,6 +67,8 @@ export const de: Sozluk = {
   ortakVeriYuklenemedi: "Daten konnten nicht geladen werden.",
   ortakOturumSuresiDoldu: "Ihre Sitzung ist abgelaufen.",
   ortakSunucuyaUlasilamadi: "Der Server ist nicht erreichbar.",
+  sunucuKapaliBaslik: "Server nicht erreichbar",
+  sunucuKapaliAciklama: "Das Panel läuft, kann den Server aber nicht erreichen. Das dauert meist nur kurz — bitte gleich erneut versuchen.",
   ortakGeriDon: "Zurück",
   ortakDetay: "Details",
   ortakToplam: "Gesamt",

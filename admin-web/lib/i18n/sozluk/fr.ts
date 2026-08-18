@@ -67,6 +67,8 @@ export const fr: Sozluk = {
   ortakVeriYuklenemedi: "Impossible de charger les données.",
   ortakOturumSuresiDoldu: "Votre session a expiré.",
   ortakSunucuyaUlasilamadi: "Le serveur est injoignable.",
+  sunucuKapaliBaslik: "Serveur injoignable",
+  sunucuKapaliAciklama: "Le panneau fonctionne mais ne parvient pas à joindre le serveur. C’est généralement bref — réessayez dans un instant.",
   ortakGeriDon: "Retour",
   ortakDetay: "Détails",
   ortakToplam: "Total",

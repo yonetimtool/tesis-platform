@@ -6,6 +6,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
+import { API_KAPALI_KODU } from "./backend-kodlari";
 import { API_BASE } from "./config";
 import { DIL_COOKIE, istekDili, type Dil } from "./i18n/diller";
 import { SOZLUKLER } from "./i18n/sozluk";
@@ -63,12 +64,42 @@ async function callBackend(
   };
   if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
   if (body !== undefined) headers["Content-Type"] = "application/json";
-  return fetch(`${API_BASE}${path}`, {
-    method,
-    headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-    cache: "no-store",
-  });
+  try {
+    return await fetch(`${API_BASE}${path}`, {
+      method,
+      headers,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+      cache: "no-store",
+    });
+  } catch {
+    // (P171 duzeltme) API'YE ULASILAMIYOR — TEK YERDE, TANIMLI BIR YANIT.
+    //
+    // `fetch` baglanti kurulamayinca ATAR (ECONNREFUSED/DNS). Onceden bu
+    // istisna route handler'a kadar cikiyor ve Next 500 uretiyordu:
+    // her sayfa kendi hatasini kendi metniyle gosteriyor, kullanici
+    // "bir hata olustu" goruyordu — sunucunun KAPALI oldugunu degil.
+    //
+    // Burada yakalamak MERKEZILIGIN kendisidir: `proxyJson`, `proxyBinary`
+    // ve tazeleme yolu HEPSI buradan geciyor, yani panelin tamami ayni
+    // kodu doner ve istemci tarafi TEK bir durum ekrani cizebilir.
+    //
+    // 503: gecici bir hizmet yoklugu. 500 "bizde bir kusur var" der ve
+    // kullaniciya tekrar denemenin ise yarayacagini SOYLEMEZ.
+    return apiKapaliYaniti(dil);
+  }
+}
+
+/** API'ye ulasilamadiginda uretilen SENTETIK yanit — tek bicim. */
+function apiKapaliYaniti(dil: Dil): Response {
+  return new Response(
+    JSON.stringify({
+      error: {
+        code: API_KAPALI_KODU,
+        message: SOZLUKLER[dil].ortakSunucuyaUlasilamadi,
+      },
+    }),
+    { status: 503, headers: { "Content-Type": "application/json" } },
+  );
 }
 
 // --- single-flight refresh ------------------------------------------------- #

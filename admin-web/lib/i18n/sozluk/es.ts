@@ -67,6 +67,8 @@ export const es: Sozluk = {
   ortakVeriYuklenemedi: "No se pudieron cargar los datos.",
   ortakOturumSuresiDoldu: "Su sesión ha caducado.",
   ortakSunucuyaUlasilamadi: "No se pudo conectar con el servidor.",
+  sunucuKapaliBaslik: "No se puede conectar con el servidor",
+  sunucuKapaliAciklama: "El panel funciona pero no puede conectar con el servidor. Suele ser breve; inténtelo de nuevo en un momento.",
   ortakGeriDon: "Volver",
   ortakDetay: "Detalles",
   ortakToplam: "Total",

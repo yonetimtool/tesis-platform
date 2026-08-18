@@ -1,3 +1,4 @@
+import { API_KAPALI_KODU } from "./backend-kodlari";
 import { metin } from "./i18n/metin";
 // Istemci mutasyon yardimcisi (POST/PATCH/DELETE -> BFF /api/*).
 // 401 => oturum bitti -> /login. Hata zarfindan ({error:{message}}) mesaj cikarir.
@@ -76,7 +77,10 @@ export async function agIstegi(
   try {
     res = await fetch(url, init);
   } catch {
-    throw new ApiHatasi(metin("ortakBaglantiYok"));
+    // (P171 duzeltme) KOD ILISTIRILIR: merkezi durum ekrani metne
+    // degil koda bakar. Tarayicinin hic ulasamamasi, BFF'in "API'ye
+    // ulasamiyorum" demesiyle kullanici acisindan AYNI durumdur.
+    throw new ApiHatasi(metin("ortakBaglantiYok"), API_KAPALI_KODU);
   }
   return oturumDustu(res) ? null : res;
 }
@@ -116,7 +120,10 @@ export async function apiSend<T = unknown>(
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
   } catch {
-    throw new ApiHatasi(metin("ortakBaglantiYok"));
+    // (P171 duzeltme) KOD ILISTIRILIR: merkezi durum ekrani metne
+    // degil koda bakar. Tarayicinin hic ulasamamasi, BFF'in "API'ye
+    // ulasamiyorum" demesiyle kullanici acisindan AYNI durumdur.
+    throw new ApiHatasi(metin("ortakBaglantiYok"), API_KAPALI_KODU);
   }
   if (res.status === 401) {
     if (typeof window !== "undefined") window.location.href = "/login";

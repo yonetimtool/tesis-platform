@@ -439,9 +439,24 @@ services:
   admin-web:
     build:
       context: ../admin-web
-    depends_on:
-      api:
-        condition: service_healthy
+    # (P171 duzeltme) `depends_on: api` KALDIRILDI — Kerem'in karari.
+    #
+    # NEDEN: iki servisin BASARISIZLIK MODU AYRI OLMALI. API'nin sema
+    # uyumsuzlugunda kapali kalmasi DOGRU (yanlis semaya yazmak veriyi
+    # bozar). Ama admin-web veriye YAZMAZ, API'yi CAGIRIR — API yoksa
+    # kullanici bir sayfa gorup anlamli bir hata almali, alan adi komple
+    # 502 vermemeli.
+    #
+    # OLCULEN OLAY: goc 0066 dustu -> api baslamadi -> admin-web de
+    # baslamadi -> `docker ps` bos, alan adi 502, teshis icin log bile
+    # yok. Ortam sessizce yok oldu.
+    #
+    # KARSILIGI ISTEMCIDE KURULDU: `components/SunucuDurumu.tsx` API'ye
+    # ulasilamadiginda MERKEZI bir durum ekrani cizer (tekrar dene
+    # dugmesiyle) ve `GET /api/saglik` API erisilebilirligini RAPOR eder.
+    #
+    # BASLAMA SIRASI KAYBI YOK: admin-web API'yi yalniz ISTEK ANINDA
+    # cagirir, acilista degil. Once kalkmasi bir sorun yaratmaz.
     environment:
       <<: *tz
       NODE_ENV: production

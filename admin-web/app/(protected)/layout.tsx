@@ -2,6 +2,7 @@ import { cookies, headers } from "next/headers";
 
 import { AppShell } from "@/components/AppShell";
 import { DonusCubugu } from "@/components/DonusCubugu";
+import { SunucuDurumu } from "@/components/SunucuDurumu";
 import { ToastProvider } from "@/components/Toast";
 import { ACCESS_COOKIE } from "@/lib/cookies";
 import { tokenRolu } from "@/lib/rol-token";
@@ -40,7 +41,11 @@ export default async function ProtectedLayout({
             Her hedef ekrana ayri bir "geri don" dugmesi koymak, ayni
             davranisi dokuz kez yazmak olurdu. */}
         <DonusCubugu />
-        {children}
+        {/* (P171 duzeltme) API'YE ULASILAMIYOR DURUMU — TEK YERDE.
+            Kabugun ICINDE: menu ve ust bar YERINDE kalir, yalniz sayfa
+            icerigi durum ekraniyla degisir. Kullanici nerede oldugunu
+            kaybetmemeli ve cikis yapabilmeli. */}
+        <SunucuDurumu>{children}</SunucuDurumu>
       </AppShell>
     </ToastProvider>
   );

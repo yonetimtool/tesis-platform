@@ -77,6 +77,8 @@ export const tr = {
   ortakVeriYuklenemedi: "Veriler yüklenemedi.",
   ortakOturumSuresiDoldu: "Oturum süresi doldu.",
   ortakSunucuyaUlasilamadi: "Sunucuya ulaşılamadı.",
+  sunucuKapaliBaslik: "Sunucuya ulaşılamıyor",
+  sunucuKapaliAciklama: "Panel çalışıyor ama sunucuya bağlanamıyor. Bu genellikle kısa sürer; birazdan tekrar deneyin.",
   ortakGeriDon: "Geri dön",
   ortakDetay: "Detay",
   ortakToplam: "Toplam",

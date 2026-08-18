@@ -67,6 +67,8 @@ export const en: Sozluk = {
   ortakVeriYuklenemedi: "Could not load data.",
   ortakOturumSuresiDoldu: "Your session has expired.",
   ortakSunucuyaUlasilamadi: "The server could not be reached.",
+  sunucuKapaliBaslik: "Can’t reach the server",
+  sunucuKapaliAciklama: "The panel is running but cannot connect to the server. This is usually brief — please try again shortly.",
   ortakGeriDon: "Go back",
   ortakDetay: "Details",
   ortakToplam: "Total",

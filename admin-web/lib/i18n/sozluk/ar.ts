@@ -67,6 +67,8 @@ export const ar: Sozluk = {
   ortakVeriYuklenemedi: "تعذّر تحميل البيانات.",
   ortakOturumSuresiDoldu: "انتهت صلاحية جلستك.",
   ortakSunucuyaUlasilamadi: "تعذّر الوصول إلى الخادم.",
+  sunucuKapaliBaslik: "تعذّر الوصول إلى الخادم",
+  sunucuKapaliAciklama: "لوحة التحكم تعمل لكنها لا تستطيع الاتصال بالخادم. عادةً ما يكون ذلك مؤقتًا — أعد المحاولة بعد قليل.",
   ortakGeriDon: "رجوع",
   ortakDetay: "التفاصيل",
   ortakToplam: "الإجمالي",

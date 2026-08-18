@@ -301,3 +301,94 @@ tazeyse — **bu turda tam olarak öyle oldu** — kusuru göremez.
 Mevcut `goc-tersinirlik.sh` bu kusuru neden kaçırdı: o da gerçek konteynerde
 koşuyor, ama **o an kurulu** imajla. İmajın depoyla uyumlu olup olmadığını
 hiç ölçmüyordu.
+
+
+---
+
+# P171 düzeltmesi (2) — admin-web API'den ayrıldı
+
+> Onay alındı: `admin-web`, `api: service_healthy` kapısından çıkarıldı.
+> Gerekçe Kerem'in: iki servisin başarısızlık modu ayrı olmalı. API'nin
+> şema uyumsuzluğunda kapalı kalması doğru (yanlış şemaya yazmak veri
+> bozar); admin-web veriye yazmaz, API'yi çağırır.
+
+## Ne değişti
+
+`infra/docker-compose.prod.yml` → `admin-web` artık **hiçbir servise
+bağlı değil**. Kendi `healthcheck`'i yerinde kaldı: bağımlılığı kaldırmak,
+servisin sağlıksız kalmasını görmezden gelmek demek değil.
+
+`api` **hâlâ** migrate'e `service_completed_successfully` ile bağlı ve bu
+kapı kasıtlı duruyor — testle de kilitli.
+
+## 1. API'ye ulaşılamayınca ne gösteriyor
+
+`components/SunucuDurumu.tsx` — **merkezî**, her sayfaya ayrı yazılmadı.
+
+Kanca noktası `SWRConfig.onError`: panelin bütün okumaları `jsonFetcher`
+üzerinden ve SWR ile yapılıyor, yani **yeni bir sayfa eklendiğinde hiçbir
+şey yapmadan kapsama giriyor**. Sayfa başına yazmak, bir gün birinin
+unutacağı ve o ekranın sessizce ham hata göstereceği anlamına gelirdi.
+
+Karar **metne değil koda** bakıyor (`sunucuya_ulasilamiyor`): metin yedi
+dilde değişir, kod değişmez. Sıradan bir 500 bu ekranı **açmıyor** —
+açsaydı gerçek kusurlar bu ekranın arkasında gizlenirdi.
+
+Ekran **içeriğin yerine** çiziliyor, üstüne değil: arkada yarı görünen boş
+tablolar kullanıcıya "veri yok" dedirtirdi, oysa gerçek "veri okunamadı".
+Kabuk (menü, üst bar) yerinde kalıyor — kullanıcı nerede olduğunu
+kaybetmemeli ve çıkış yapabilmeli.
+
+Toparlanma **otomatik**: başarılı her okuma durumu temizliyor. "Tekrar
+dene" düğmesi de var ama kullanıcı ona basmak zorunda değil.
+
+**Kaynağı tek yerde kurutuldu:** `lib/backend.ts` içindeki `callBackend`
+bağlantı hatasını yakalayıp **503 + tanımlı kod** döndürüyor. Önceden
+istisna route handler'a kadar çıkıyor ve Next 500 üretiyordu; her sayfa
+kendi metnini gösteriyor, kullanıcı sunucunun **kapalı** olduğunu
+öğrenemiyordu. `proxyJson`, `proxyBinary` ve giriş yolu hepsi buradan
+geçiyor.
+
+## 2. Sağlık kontrolü
+
+`GET /api/saglik` — **her zaman 200**. Bu uç admin-web'in *kendi*
+sağlığını bildirir; API'ye ulaşılamaması admin-web'in hasta olduğu anlamına
+gelmez. 503 dönseydi orkestratör konteyneri sağlıksız sayar, yeniden
+başlatır ve yük dengeleyiciden düşürürdü — yani API kapalı diye **paneli
+de** kapatırdık; bu turda düzelttiğimiz kusurun tam kendisi.
+
+Gövde API erişilebilirliğini **rapor ediyor** (`api: erisilebilir |
+erisilemiyor` + ayrıntı). Backend `/health`'indeki şema alanıyla aynı ilke
+(P124): **ölç, rapor et, karar verme**. 2 sn zaman aşımı var — API kapalıysa
+bağlantı denemesi asılı kalabilir ve teşhis aracının kendisi teşhis
+edilemez hale gelirdi.
+
+Compose sağlık kontrolü `/login`de bırakıldı: o, React çizim yolunu da
+sınıyor; `/api/saglik` yalnız route handler'ı sınardı.
+
+## 3. Giriş ekranı
+
+`/login` yalnız `Host` başlığını okuyor — API çağrısı yok, testle kilitli.
+
+Giriş denemesinde asıl kazanım: BFF artık 503 + kod döndürdüğü için form
+sunucudan gelen **"Sunucuya ulaşılamadı"** metnini gösteriyor. Önceden
+Next 500 HTML dönüyor, `res.json()` başarısız oluyor ve form yedek metne
+düşüp **"Giriş başarısız"** diyordu — ki o **yanlış parola** demektir.
+Kullanıcı parolasını defalarca dener, kilitlenir ve asıl sorunu hiç
+öğrenmezdi. Bu, testin açıkça ölçtüğü şey.
+
+## 4. Kilit
+
+`admin-web/tests/sunucu-kapali.dom.test.ts` (11):
+
+* compose'da `admin-web`in bağımlılığı yok **ve** `api`nin migrate kapısı
+  duruyor,
+* API'ye ulaşılamayınca merkezî ekran çiziliyor, sayfa içeriği değil,
+* **sıradan bir hata bu ekranı açmıyor**,
+* sunucu geri gelince içerik kendiliğinden dönüyor,
+* `/login` API çağırmıyor ve giriş denemesi "Giriş başarısız" **demiyor**,
+* `/api/saglik` API kapalıyken bile 200 dönüp durumu bildiriyor.
+
+Testler gerçek yolu sürüyor (`fetch` → `jsonFetcher` → kod → ekran), sahte
+bir fetcher'la kısa devre yapmıyor: kısa devre yapsaydı `jsonFetcher` bir
+gün kodu iliştirmeyi bıraktığında test yine geçerdi.
