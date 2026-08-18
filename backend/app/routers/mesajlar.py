@@ -22,7 +22,11 @@ from ..config import settings
 from ..crud_helpers import get_or_404, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
-from ..gonderim import kota_kontrol, saglayici as kanal_saglayicisi
+from ..gonderim import (
+    SaglayiciAyari,
+    kota_kontrol,
+    saglayici as kanal_saglayicisi,
+)
 from ..mesajlasma import (
     sms_saglayicisi,
     LogEpostaSaglayici,
@@ -39,6 +43,7 @@ from ..models import (
     FinansalHareket,
     MesajGonderim,
     MesajSablonu,
+    MesajYapilandirma,
     Tenant,
     Unit,
     UnitResident,
@@ -54,6 +59,10 @@ from ..schemas import (
     MesajSablonuListResponse,
     MesajSablonuOut,
     MesajSablonuUpdate,
+    MesajTestGonderim,
+    MesajTestSonuc,
+    MesajYapilandirmaOut,
+    MesajYapilandirmaUpdate,
     SmsOlcumOut,
 )
 
@@ -358,7 +367,12 @@ async def gonder(
     # zor bir durum birakirdi.
     await kota_kontrol(db, user.tenant_id, len(idler))
 
-    saglayici = kanal_saglayicisi(sablon.kanal)
+    # (P168 §4) GONDERIM YOLU DA TESIS AYARINI KULLANIR. ENV'e sabitli
+    # kalsaydi, "Ayarlar" sekmesine girilen saglayici hicbir sey
+    # degistirmez ve kullanici kaydettigi ayarin ise yaramadigini ancak
+    # mesaj gitmeyince anlardi.
+    ayar = await tenant_ayari(db, user.tenant_id)
+    saglayici = kanal_saglayicisi(sablon.kanal, ayar)
     gonderildi = basarisiz = riza_yok = adres_yok = 0
 
     for kid in idler:
@@ -421,6 +435,133 @@ async def gonder(
     return MesajGonderSonuc(
         gonderildi=gonderildi, basarisiz=basarisiz,
         riza_yok=riza_yok, adres_yok=adres_yok,
+    )
+
+
+# ============================ (P168 §4.4) AYARLAR =========================== #
+async def tenant_ayari(db: AsyncSession, tenant_id: uuid.UUID) -> SaglayiciAyari | None:
+    """Tesisin saglayici ayarini `SaglayiciAyari`ya cevirir.
+
+    Kayit yoksa `None` doner ve cagiran ENV'e duser — gonderim yolunun
+    TEK bilmesi gereken sey bu.
+    """
+    y = await db.get(MesajYapilandirma, tenant_id)
+    if y is None:
+        return None
+    return SaglayiciAyari(
+        sms_saglayici=y.sms_saglayici,
+        sms_kullanici=y.sms_kullanici,
+        sms_parola=y.sms_parola,
+        sms_baslik=y.sms_baslik,
+        smtp_host=y.smtp_host,
+        smtp_port=y.smtp_port,
+        smtp_kullanici=y.smtp_kullanici,
+        smtp_parola=y.smtp_parola,
+        smtp_gonderen=y.smtp_gonderen,
+    )
+
+
+async def _bugun_gonderilen(db: AsyncSession) -> int:
+    """Bugun GERCEKTEN gonderilmis mesaj sayisi.
+
+    `yapilandirilmadi` SAYILMAZ: hicbir sey gonderilmediyse kotadan da
+    dusmemeli — yoksa ayarlari doldurmamis bir tesis, hic mesaj
+    gondermeden kotasini tuketirdi.
+    """
+    return (
+        await db.execute(
+            select(func.count()).select_from(MesajGonderim).where(
+                MesajGonderim.durum.in_(["gonderildi", "iletildi", "okundu"]),
+                MesajGonderim.created_at >= func.current_date(),
+            )
+        )
+    ).scalar_one()
+
+
+@router.get("/mesaj-ayarlari", response_model=MesajYapilandirmaOut)
+async def mesaj_ayarlari(
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_YONETIM),
+) -> MesajYapilandirmaOut:
+    """Tesisin mesaj ayarlari — SIRLAR DONMEZ, yalnizca VARLIKLARI."""
+    y = await db.get(MesajYapilandirma, user.tenant_id)
+    ayar = await tenant_ayari(db, user.tenant_id)
+    # HAZIRLIK KANAL BAZINDA OLCULUR ve gercek secim fonksiyonuyla ayni
+    # yoldan gecer: "ayarlar dolu mu" diye ayrica kontrol etseydik, o
+    # kontrol bir gun gercek secimden ayrisirdi.
+    sms_hazir = not isinstance(kanal_saglayicisi("sms", ayar), LogSmsSaglayici)
+    eposta_hazir = not isinstance(kanal_saglayicisi("eposta", ayar), LogEpostaSaglayici)
+    return MesajYapilandirmaOut(
+        sms_saglayici=y.sms_saglayici if y else None,
+        sms_kullanici=y.sms_kullanici if y else None,
+        sms_baslik=y.sms_baslik if y else None,
+        sms_parola_var=bool(y and y.sms_parola),
+        smtp_host=y.smtp_host if y else None,
+        smtp_port=y.smtp_port if y else 587,
+        smtp_kullanici=y.smtp_kullanici if y else None,
+        smtp_parola_var=bool(y and y.smtp_parola),
+        smtp_gonderen=y.smtp_gonderen if y else None,
+        gunluk_kota=y.gunluk_kota if y else None,
+        bugun_gonderilen=await _bugun_gonderilen(db),
+        sms_hazir=sms_hazir,
+        eposta_hazir=eposta_hazir,
+    )
+
+
+@router.put("/mesaj-ayarlari", response_model=MesajYapilandirmaOut)
+async def mesaj_ayarlari_kaydet(
+    body: MesajYapilandirmaUpdate,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_YONETIM),
+) -> MesajYapilandirmaOut:
+    """Ayarlari kaydet.
+
+    BOS BIRAKILAN PAROLA MEVCUDU KORUR: arayuz parolayi hic gormedigi
+    icin (bkz. `MesajYapilandirmaOut`), formu her kaydedisde parolayi
+    yeniden yazmak zorunda kalmak kullaniciyi parolayi bir yere
+    kopyalayip yapistirmaya iterdi. Acikca BOS DIZGE gonderilirse
+    TEMIZLENIR — silmenin de bir yolu olmali.
+    """
+    y = await db.get(MesajYapilandirma, user.tenant_id)
+    if y is None:
+        y = MesajYapilandirma(tenant_id=user.tenant_id)
+        db.add(y)
+    veri = body.model_dump(exclude_unset=True)
+    for alan, deger in veri.items():
+        if alan in ("sms_parola", "smtp_parola") and deger is None:
+            continue  # "degistirme"
+        setattr(y, alan, deger)
+    await db.flush()
+    await audit_user(
+        db, user, Action.MESAJ_SABLON_UPSERT, resource_type="mesaj_yapilandirma",
+        resource_id=user.tenant_id,
+        # SIR DENETIME DE YAZILMAZ — yalnizca HANGI alanlarin degistigi.
+        meta={"alanlar": sorted(veri)},
+    )
+    return await mesaj_ayarlari(db=db, user=user)
+
+
+@router.post("/mesaj-ayarlari/test", response_model=MesajTestSonuc)
+async def mesaj_ayar_testi(
+    body: MesajTestGonderim,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_YONETIM),
+) -> MesajTestSonuc:
+    """(P168 §4.4) TEST GONDERIMI.
+
+    NEDEN GERCEKTEN GONDERIR: "ayarlar dolu mu" diye bakmak, yanlis
+    parolayi ya da yanlis basligi YAKALAMAZ — saglayici reddedene kadar
+    her sey dogru gorunur. Tek durust olcum gercek bir istektir.
+
+    GECMISE YAZILMAZ: test bir bildirim degildir; gonderim gecmisine
+    dusmesi, "kime ne gonderdik" defterini kirletirdi.
+    """
+    ayar = await tenant_ayari(db, user.tenant_id)
+    sonuc = kanal_saglayicisi(body.kanal, ayar).gonder(
+        body.hedef, "Test", "Yonetio test mesaji."
+    )
+    return MesajTestSonuc(
+        durum=sonuc.durum, saglayici=sonuc.saglayici, hata=sonuc.hata
     )
 
 

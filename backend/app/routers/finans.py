@@ -58,6 +58,18 @@ from ..schemas import (
 router = APIRouter(tags=["finans"])
 
 _ADMIN = require_role("admin")
+# (P168 §2) ICRA YAZMA YONETICIYE DE ACIK.
+#
+# Onceki hâl `require_role("admin")`di ve sonucu ekranda gorunuyordu:
+# yonetici sayfayi aciyor, "+ Yeni" dugmesi CIZILMIYOR (basilacak ama 403
+# alacak bir dugme cizmemek dogru karardi) — yani sayfa yonetici icin
+# SALT GORUNTULEMEYDI ve brief'in istedigi olusturma hic yapilamiyordu.
+#
+# Icra dosyasi acmak TESIS YONETIMI isidir, platform yoneticiligi degil:
+# borcu takip eden, avukatla konusan ve dosyayi acan kisi yoneticidir.
+# P167 §4'te finansal yazma zaten admin+yonetici'ye acilmisti; icrayi
+# disarida birakmak tutarsizdi.
+_YAZMA = require_role("admin", "yonetici")
 # (P128) `_OKUMA` YALNIZ GET uclarinda kullanilir (hareketler, kasa
 # bakiyeleri, ozet, icra dosyalari listesi); denetcinin mali gozetimi tam
 # olarak bu kayitlar uzerindedir. Yazan uclar `_ADMIN`dedir ve denetci
@@ -785,7 +797,7 @@ async def icra_listesi(
 async def icra_olustur(
     body: IcraDosyasiCreate,
     db: AsyncSession = Depends(get_tenant_db),
-    user: AppUser = Depends(_ADMIN),
+    user: AppUser = Depends(_YAZMA),
 ) -> IcraDosyasiOut:
     var = (
         await db.execute(select(AppUser.id).where(AppUser.id == body.user_id))
@@ -811,7 +823,7 @@ async def icra_guncelle(
     dosya_id: uuid.UUID,
     body: IcraDosyasiUpdate,
     db: AsyncSession = Depends(get_tenant_db),
-    user: AppUser = Depends(_ADMIN),
+    user: AppUser = Depends(_YAZMA),
 ) -> IcraDosyasiOut:
     obj = await get_or_404(db, IcraDosyasi, dosya_id)
     veri = body.model_dump(exclude_unset=True)
@@ -828,6 +840,44 @@ async def icra_guncelle(
         resource_id=obj.id, meta={"alanlar": sorted(veri)},
     )
     return (await _icra_zenginlestir(db, [obj]))[0]
+
+
+@router.delete(
+    "/finans/icra-dosyalari/{dosya_id}", status_code=204, response_model=None
+)
+async def icra_sil(
+    dosya_id: uuid.UUID,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_YAZMA),
+) -> None:
+    """(P168 §2) Icra dosyasini SIL.
+
+    ===========================================================================
+    NEDEN BURADA SILME VAR, OYSA FINANS SATIRLARI SILINMIYOR
+    ===========================================================================
+    "Finansal kayit silinmez" ilkesi DEFTER icindir: bir tahsilat ya da
+    gider satirini silmek gecmis raporlari geriye donuk degistirir.
+
+    Icra dosyasi DEFTER SATIRI DEGIL, bir SUREC KAYDIDIR. Borcun kendisi
+    `dues_assessment`ta durur ve buraya KOPYALANMAZ (P29 karari); acik
+    borc her satirda ANLIK okunur. Dosyayi silmek hicbir finansal tutari
+    yok etmez — yalnizca "bu borc icin icra sureci baslatilmisti" bilgisi
+    gider.
+
+    Yanlis acilmis bir dosyayi silememek, listeyi kalici copla yasamaya
+    mahkum ederdi; brief de satir menusunde "Sil" istiyor.
+
+    DENETIME YAZILIR: dosya no ve kisi meta'ya girer, cunku silinen
+    kaydin ne oldugu sonradan yalnizca denetimden okunabilir.
+    """
+    obj = await get_or_404(db, IcraDosyasi, dosya_id)
+    await audit_user(
+        db, user, Action.ICRA_DOSYA_UPDATE, resource_type="icra_dosyasi",
+        resource_id=obj.id,
+        meta={"silindi": True, "dosya_no": obj.dosya_no, "user_id": str(obj.user_id)},
+    )
+    await db.delete(obj)
+    await db.flush()
 
 
 # ================================ OZET ====================================== #
@@ -868,7 +918,11 @@ async def finans_ozet(
     icra_acik = (
         await db.execute(
             select(func.count()).select_from(IcraDosyasi)
-            .where(IcraDosyasi.durum.in_(["acik", "takipte"]))
+            # (P168 §2) "ACIK DOSYA" = KAPANMAMIS olan. Yeni sozlukte
+            # dort deger kapanmamis sayilir; tek tek saymak yerine
+            # "kapandi degil" demek, altinci bir durum eklendiginde bu
+            # sayacin SESSIZCE eskimesini engeller.
+            .where(IcraDosyasi.durum != "kapandi")
         )
     ).scalar_one()
 

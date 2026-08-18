@@ -284,6 +284,10 @@ void main() {
         HomeMenuEntry.etkinlik,
         HomeMenuEntry.anketler,
         HomeMenuEntry.siteKurallari,
+        // (P167 ek) SITE DOKUMANLARI — sakine acilmis dosyalar.
+        // Site kurallarinin YANINDA: ikisi de BASVURU icerigidir
+        // (duyuru gibi anlik degil, gerektiginde bakilan sey).
+        HomeMenuEntry.dokumanlar,
         HomeMenuEntry.disHizmet,
         HomeMenuEntry.sikayetHaritasi,
         // (P145) `complaints` KALKTI — izin degil UCUNCU KAPI kalkti.

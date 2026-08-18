@@ -5378,4 +5378,45 @@ class AppLocalizationsRu extends AppLocalizations {
   String dokumanBoyutKb(int kb) {
     return '$kb КБ';
   }
+
+  @override
+  String get kvkkYasalMetinler => 'Правовые тексты';
+
+  @override
+  String get kvkkTurAydinlatma => 'Уведомление';
+
+  @override
+  String get kvkkTurAcikRiza => 'Явное согласие';
+
+  @override
+  String get kvkkTurGizlilik => 'Политика конфиденциальности';
+
+  @override
+  String get kvkkTurKullanim => 'Условия использования';
+
+  @override
+  String get kvkkTurCerez => 'Политика cookie';
+
+  @override
+  String get kvkkMetinYayinlanmamis => 'Этот текст ещё не опубликован.';
+
+  @override
+  String get kvkkOnaylanmadi => 'Вы ещё не согласились с этим текстом.';
+
+  @override
+  String get kvkkYenidenOnayBekleniyor =>
+      'Ожидается ваше согласие с текущей версией.';
+
+  @override
+  String kvkkSurumEtiketi(int n) {
+    return 'Версия $n';
+  }
+
+  @override
+  String kvkkOnayladiginizSurum(int n) {
+    return 'Версия, с которой вы согласились: $n';
+  }
+
+  @override
+  String get kabukKisayollar => 'Ярлыки';
 }

@@ -95,14 +95,30 @@ describe("rapor alan sozlugu", () => {
   it("ONAY KUTULARI dogru varsayilanla baslar", () => {
     // KVKK anahtari `ismi_goster` ACIK baslar: kapali baslasaydi her
     // rapor adsiz cikardi ve kullanici her seferinde acmak zorunda kalirdi.
-    const d = baslangicDurumu(["ismi_goster", "grup_goster", "baslangic"]);
+    const d = baslangicDurumu(["ismi_goster", "grup_goster", "iletisim_goster"]);
     expect(d.ismi_goster).toBe(true);
     expect(d.grup_goster).toBe(false);
-    expect(d.baslangic).toBe("");
+    // (P168 §3) ILETISIM KAPALI baslar: telefon/e-posta kisisel veridir
+    // ve kapiya asilacak bir listede varsayilan olarak bulunmamali.
+    expect(d.iletisim_goster).toBe(false);
+  });
+
+  it("(P168 §3) TARIH VARSAYILANLARI: yilbasi -> bugun", () => {
+    // Brief'in acik istegi. Bos birakmak, kullaniciyi her rapor icin iki
+    // tarih doldurmaya ve zorunlu alan hatasi almaya zorlardi.
+    const d = baslangicDurumu(["baslangic", "bitis", "tazminat_tarihi"]);
+    const yil = new Date().getUTCFullYear();
+    expect(d.baslangic).toBe(`${yil}-01-01`);
+    expect(d.bitis).toBe(new Date().toISOString().slice(0, 10));
+    // TAZMINAT TARIHI DOLDURULMAZ ve bu bilincli: o "hangi tarihe gore
+    // gecikme hesaplansin" sorusudur. Yilbasi yapsaydik tazminati YILIN
+    // BASINA gore hesaplatirdik — sessizce yanlis rakam.
+    expect(d.tazminat_tarihi).toBe("");
   });
 
   it("BOS alan govdeye KONULMAZ", () => {
     // Bos dizgeyi tarih diye gondermek sunucuda dogrulama hatasi uretirdi.
+    // (Varsayilanlar doldurulmus gelse de kullanici alani BOSALTABILIR.)
     const govde = govdeyeCevir({ baslangic: "", bitis: "2026-01-31" });
     expect("baslangic" in govde).toBe(false);
     expect(govde.bitis).toBe("2026-01-31");

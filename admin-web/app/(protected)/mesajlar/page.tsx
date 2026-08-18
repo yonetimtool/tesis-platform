@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import useSWR from "swr";
 
 import {
@@ -22,6 +22,11 @@ import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
 import { BagimlilikUyarisi } from "@/components/BagimlilikUyarisi";
 import { useT } from "@/lib/i18n/kullan";
 import { useSorguSecimi } from "@/lib/sorgu-secimi";
+import { Sekmeler } from "@/components/ui";
+import { EtiketCipleri } from "@/components/mesaj/etiket-cipleri";
+import { MesajAyarlariSekmesi } from "@/components/mesaj/ayarlar-sekmesi";
+import { ZenginMetin } from "@/components/ZenginMetin";
+import { smsOlc } from "@/lib/sms-olcu";
 
 /** Sablon kanallari — veritabanindaki `mesaj_kanal` enum'uyla AYNI.
  *
@@ -32,6 +37,10 @@ import { useSorguSecimi } from "@/lib/sorgu-secimi";
  */
 type Kanal = "sms" | "eposta";
 const KANALLAR: readonly Kanal[] = ["sms", "eposta"];
+
+/** (P168 §4) Brief'in dort sekmesi. Sira brief'in sirasi. */
+type SekmeId = "gonderim" | "sms" | "eposta" | "ayarlar";
+const SEKMELER: readonly SekmeId[] = ["gonderim", "sms", "eposta", "ayarlar"];
 
 /**
  * P40 — MESAJ bolumu (P32 API'si).
@@ -96,6 +105,10 @@ export default function MesajlarPage() {
   // (P154 / Asama 7.1) Menudeki "SMS gonderimi / WhatsApp / E-posta
   // gonderimi" satirlari uc ayri sayfa DEGIL, bu secimin on ayarlari.
   const [kanal, setKanal] = useSorguSecimi<Kanal>("kanal", KANALLAR, "sms");
+  /** SMS govdesinin DOM dugumu — etiket cipleri imlec konumunu buradan alir. */
+  const govdeRef = useRef<HTMLTextAreaElement | null>(null);
+  /** Zengin metin editorunun "imlece ekle" kancasi. */
+  const zenginEkleRef = useRef<((metin: string) => void) | null>(null);
   const [ad, setAd] = useState("");
   const [konu, setKonu] = useState("");
   const [govde, setGovde] = useState("");
@@ -232,108 +245,54 @@ export default function MesajlarPage() {
     [t],
   );
 
-  return (
-    <div className="space-y-6">
-      <div>
-        <div className="flex flex-wrap items-end justify-between gap-3">
-        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-          {t("mesajBaslik")}
-        </h1>
-        <Dugme tur="birincil" boy="kucuk" onClick={() => {
-          // (P163 §2) ACILISTA ESKI HATA TEMIZLENIR: modal yeniden acildiginda
-          // onceki denemenin mesaji ekranda duruyordu ve kullanici hic
-          // denemeden hata gormus oluyordu.
-          setHata(null);
-          setModalAcik(true);
-        }}>
+  // (P168 §4) SEKMELI YAPI. Brief dort sekme istiyor; onceki hâl tek bir
+  // uzun sayfaydi ve "SMS sablonlari" ile "e-posta sablonlari" AYNI
+  // tabloda karisik duruyordu — iki farkli isin ayni listede olmasi,
+  // kullaniciyi her seferinde kanal sutununu okumaya zorluyordu.
+  //
+  // SEKME ADRESTE TUTULUR: yenilemede ya da paylasilan bir baglantida
+  // ayni sekme acilsin; yerel durumda tutmak, "sana gonderdigim linkte
+  // baska sey goruyorum" sinifini acardi.
+  const [sekme, setSekme] = useSorguSecimi<SekmeId>("sekme", SEKMELER, "gonderim");
+
+  const sablonListesi = (kanal: Kanal) => (
+    <section className="space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
+          {kanal === "sms" ? t("mesajSekmeSms") : t("mesajSekmeEposta")}
+        </h2>
+        <Dugme
+          tur="birincil"
+          boy="kucuk"
+          onClick={() => {
+            setHata(null);
+            setKanal(kanal);
+            setModalAcik(true);
+          }}
+        >
           {t("mesajYeniSablon")}
         </Dugme>
       </div>
-        <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>{t("mesajAlt")}</p>
-      </div>
-      {/* (P154 / Asama 7.4) Sablon yoksa gonderim YAPILAMAZ
-          (`POST /mesajlar/gonder`, envanter §0.4). */}
-      <BagimlilikUyarisi
-        kod="mesajSablonu"
-        eksik={(sablonlar?.items.length ?? 1) === 0}
+      <VeriTablosu<Sablon>
+        kolonlar={sablonKolonlari}
+        satirlar={(sablonlar?.items ?? []).filter((x) => x.kanal === kanal)}
+        satirId={(x) => x.id}
+        hata={sErr ? t("mesajSablonHata") : null}
+        onTekrar={() => void sablonTazele()}
+        yukleniyor={!sablonlar && !sErr}
+        bosBaslik={t("mesajSablonYok")}
+        bosAciklama={t("mesajSablonYokAlt")}
       />
-      <HataDurumu mesaj={hata ?? (sErr ? t("mesajSablonHata") : null)} />
+    </section>
+  );
 
-      {/* ----------------------------- sablonlar --------------------------- */}
-      <section className="space-y-3">
-        <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
-          {t("mesajSablonlar")}
-        </h2>
-        <VeriTablosu<Sablon>
-          kolonlar={sablonKolonlari}
-          satirlar={sablonlar?.items ?? []}
-          satirId={(s) => s.id}
-          hata={sErr ? t("mesajSablonHata") : null}
-          yukleniyor={!sablonlar && !sErr}
-          bosBaslik={t("mesajSablonYok")}
-          bosAciklama={t("mesajSablonYokAlt")}
-        />
-      </section>
+  // (P168 §4.1) Canli SMS olcumu — her tusa basista sunucuya sormak
+  // saniyede on istek atmak olurdu.
+  const olcum = smsOlc(govde);
 
-      {/* ---------------------------- yeni sablon -------------------------- */}
-      <Modal
-        acik={modalAcik}
-        onKapat={() => setModalAcik(false)}
-        baslik={t("mesajYeniSablon")}
-        eylemler={
-          <>
-            <Dugme tur="sessiz" onClick={() => setModalAcik(false)} disabled={mesgul}>
-              {t("ortakIptal")}
-            </Dugme>
-            <Dugme tur="birincil" disabled={mesgul} onClick={sablonEkle}>
-          {t("mesajSablonKaydet")}
-        </Dugme>
-          </>
-        }
-      >
-        <div className="space-y-4">
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <AlanSarmal etiket={t("mesajKanal")}>
-  {(b) => (
-    <Secim {...b} value={kanal} onChange={(e) => setKanal(e.target.value as Kanal)}>
-              <option value="sms">{t("mesajKanal_sms")}</option>
-              <option value="eposta">{t("mesajKanal_eposta")}</option></Secim>
-  )}
-</AlanSarmal>
-          <AlanSarmal etiket={t("mesajAd")}>
-  {(b) => (
-    <Alan {...b} value={ad} onChange={(e) => setAd(e.target.value)} />
-  )}
-</AlanSarmal>
-          <AlanSarmal etiket={t("mesajAmac")}>
-  {(b) => (
-    <Secim {...b} value={amac} onChange={(e) => setAmac(e.target.value)}>
-              <option value="operasyonel">{t("mesajAmac_operasyonel")}</option>
-              <option value="pazarlama">{t("mesajAmac_pazarlama")}</option></Secim>
-  )}
-</AlanSarmal>
-          {kanal === "eposta" ? (
-            <AlanSarmal etiket={t("mesajKonu")}>
-  {(b) => (
-    <Alan {...b} value={konu} onChange={(e) => setKonu(e.target.value)} />
-  )}
-</AlanSarmal>
-          ) : null}
-        </div>
-        <AlanSarmal etiket={t("mesajGovde")}>
-          {(b) => (
-            <CokSatir
-              {...b}
-              rows={4}
-              value={govde}
-              onChange={(e) => setGovde(e.target.value)}
-            />
-          )}
-        </AlanSarmal>
-        <p className="mt-1" style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>{t("mesajEtiketIpucu")}</p>
-        </div>
-      </Modal>
-
+  /** (P168 §4.3) GONDERIM sekmesinin icerigi — onizleme + gecmis. */
+  const gonderimIcerigi = (
+    <div className="space-y-4">
       {/* --------------------------- onizleme ------------------------------ */}
       <Kart>
         <h2 className="mb-3 text-sm font-semibold">{t("mesajOnizleme")}</h2>
@@ -408,6 +367,185 @@ export default function MesajlarPage() {
           bosAciklama={t("mesajGecmisYokAlt")}
         />
       </section>
+    </div>
+  );
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <div className="flex flex-wrap items-end justify-between gap-3">
+        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+          {t("mesajBaslik")}
+        </h1>
+        <Dugme tur="birincil" boy="kucuk" onClick={() => {
+          // (P163 §2) ACILISTA ESKI HATA TEMIZLENIR: modal yeniden acildiginda
+          // onceki denemenin mesaji ekranda duruyordu ve kullanici hic
+          // denemeden hata gormus oluyordu.
+          setHata(null);
+          setModalAcik(true);
+        }}>
+          {t("mesajYeniSablon")}
+        </Dugme>
+      </div>
+        <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>{t("mesajAlt")}</p>
+      </div>
+      {/* (P154 / Asama 7.4) Sablon yoksa gonderim YAPILAMAZ
+          (`POST /mesajlar/gonder`, envanter §0.4). */}
+      <BagimlilikUyarisi
+        kod="mesajSablonu"
+        eksik={(sablonlar?.items.length ?? 1) === 0}
+      />
+      <HataDurumu mesaj={hata ?? (sErr ? t("mesajSablonHata") : null)} />
+
+      <Sekmeler
+        aktifId={sekme}
+        onDegis={(id) => setSekme(id as SekmeId)}
+        sekmeler={[
+          { id: "gonderim", baslik: t("mesajSekmeGonderim"), icerik: gonderimIcerigi },
+          { id: "sms", baslik: t("mesajSekmeSms"), icerik: sablonListesi("sms") },
+          {
+            id: "eposta",
+            baslik: t("mesajSekmeEposta"),
+            icerik: sablonListesi("eposta"),
+          },
+          {
+            id: "ayarlar",
+            baslik: t("mesajSekmeAyarlar"),
+            icerik: <MesajAyarlariSekmesi />,
+          },
+        ]}
+      />
+
+      {/* MODAL SEKMELERIN DISINDA: hangi sekmeden acilirsa acilsin ayni
+          modal kullanilir ve sekme degisince kapanmamali. */}
+      {/* ---------------------------- yeni sablon -------------------------- */}
+      <Modal
+        acik={modalAcik}
+        onKapat={() => setModalAcik(false)}
+        baslik={t("mesajYeniSablon")}
+        eylemler={
+          <>
+            <Dugme tur="sessiz" onClick={() => setModalAcik(false)} disabled={mesgul}>
+              {t("ortakIptal")}
+            </Dugme>
+            <Dugme tur="birincil" disabled={mesgul} onClick={sablonEkle}>
+          {t("mesajSablonKaydet")}
+        </Dugme>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <AlanSarmal etiket={t("mesajKanal")}>
+  {(b) => (
+    <Secim {...b} value={kanal} onChange={(e) => setKanal(e.target.value as Kanal)}>
+              <option value="sms">{t("mesajKanal_sms")}</option>
+              <option value="eposta">{t("mesajKanal_eposta")}</option></Secim>
+  )}
+</AlanSarmal>
+          <AlanSarmal etiket={t("mesajAd")}>
+  {(b) => (
+    <Alan {...b} value={ad} onChange={(e) => setAd(e.target.value)} />
+  )}
+</AlanSarmal>
+          <AlanSarmal etiket={t("mesajAmac")}>
+  {(b) => (
+    <Secim {...b} value={amac} onChange={(e) => setAmac(e.target.value)}>
+              <option value="operasyonel">{t("mesajAmac_operasyonel")}</option>
+              <option value="pazarlama">{t("mesajAmac_pazarlama")}</option></Secim>
+  )}
+</AlanSarmal>
+          {kanal === "eposta" ? (
+            <AlanSarmal etiket={t("mesajKonu")}>
+  {(b) => (
+    <Alan {...b} value={konu} onChange={(e) => setKonu(e.target.value)} />
+  )}
+</AlanSarmal>
+          ) : null}
+        </div>
+        {/* (P168 §4.1/§4.2) ETIKET CIPLERI — yazim hatasi ihtimalini
+            sifira indirir. Onceki hâl tek satirlik bir IPUCUYDU ve
+            kullanicinin etiketi dogru yazmasini bekliyordu; tek harf
+            hatasi (`{bakiyee}`) mesajda oldugu gibi gorunuyordu. */}
+        <div className="space-y-1">
+          <span style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
+            {t("mesajEtiketler")}
+          </span>
+          <EtiketCipleri
+            onEkle={(metin) => {
+              if (kanal === "eposta") {
+                zenginEkleRef.current?.(metin);
+                return;
+              }
+              // SMS: imlecin oldugu yere ekle. Sona eklemek, cumlenin
+              // ortasina etiket koymak isteyen kullaniciyi metni elle
+              // tasimaya zorlardi.
+              const el = govdeRef.current;
+              if (!el) {
+                setGovde((g) => g + metin);
+                return;
+              }
+              const bas = el.selectionStart ?? govde.length;
+              const son = el.selectionEnd ?? bas;
+              setGovde(govde.slice(0, bas) + metin + govde.slice(son));
+              // Imleci eklenen metnin SONUNA tasi — yoksa bir sonraki
+              // cip ayni yere yazar ve etiketler ic ice girerdi.
+              queueMicrotask(() => {
+                el.focus();
+                el.setSelectionRange(bas + metin.length, bas + metin.length);
+              });
+            }}
+          />
+        </div>
+
+        {kanal === "eposta" ? (
+          // (P168 §4.2) E-POSTA GOVDESI ZENGIN METIN. SMS'te bicimlendirme
+          // ANLAMSIZDIR (duz metin gider) ve editor koymak, kullaniciya
+          // hicbir sey yapmayan dugmeler gostermek olurdu.
+          <AlanSarmal etiket={t("mesajGovde")}>
+            {() => (
+              <ZenginMetin
+                deger={govde}
+                onDegisti={setGovde}
+                etiket={t("mesajGovde")}
+                ekleRef={zenginEkleRef}
+              />
+            )}
+          </AlanSarmal>
+        ) : (
+          <>
+            <AlanSarmal etiket={t("mesajGovde")}>
+              {(b) => (
+                <CokSatir
+                  {...b}
+                  ref={govdeRef}
+                  rows={4}
+                  value={govde}
+                  onChange={(e) => setGovde(e.target.value)}
+                />
+              )}
+            </AlanSarmal>
+            {/* (P168 §4.1) CANLI SAYAC — yazarken. Kaydettikten sonra
+                gorulen sayi sunucunundur (onizleme ucu); bu, yazarken
+                gosterilen tahmindir. */}
+            <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
+              {t("mesajKalanKarakter")}:{" "}
+              <b className="tabular-nums">{olcum.kalan}</b> ·{" "}
+              <b className="tabular-nums">{t("mesajSmsAdet", { n: olcum.parca })}</b>
+              {olcum.unicodeMi ? (
+                <>
+                  {" · "}
+                  <span style={{ color: "var(--yz-danger-ink)" }}>
+                    {t("mesajUnicodeUyari")} {olcum.zorlayan.join(" ")}
+                  </span>
+                </>
+              ) : null}
+            </p>
+          </>
+        )}
+        </div>
+      </Modal>
+
     </div>
   );
 }

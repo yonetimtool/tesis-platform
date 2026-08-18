@@ -31,6 +31,37 @@ const GECMIS = {
 afterEach(() => vi.restoreAllMocks());
 
 describe("Mesaj sayfasi", () => {
+  it("(P168 §4) SEKMELER cizilir ve varsayilan GONDERIM", async () => {
+    // Brief dort sekme istiyor. Onceki hâl tek uzun sayfaydi ve SMS ile
+    // e-posta sablonlari AYNI tabloda karisik duruyordu.
+    fetchSahtele({
+      "/api/panel/mesaj-sablonlari": SABLONLAR,
+      "/api/panel/mesaj-gecmis": GECMIS,
+    });
+    ciz(MesajlarPage);
+    for (const ad of ["Gönderim", "SMS Şablonları", "E-posta Şablonları", "Ayarlar"]) {
+      expect(await screen.findByRole("tab", { name: ad })).toBeInTheDocument();
+    }
+    // Varsayilan sekme GONDERIM: kullanicinin en sik yaptigi is odur.
+    expect(screen.getByRole("tab", { name: "Gönderim" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+  });
+
+  it("(P168 §4) SMS sekmesi YALNIZ sms sablonlarini gosterir", async () => {
+    // Iki farkli isin ayni listede olmasi, kullaniciyi her seferinde
+    // kanal sutununu okumaya zorluyordu.
+    fetchSahtele({
+      "/api/panel/mesaj-sablonlari": SABLONLAR,
+      "/api/panel/mesaj-gecmis": GECMIS,
+    });
+    ciz(MesajlarPage);
+    await userEvent.click(await screen.findByRole("tab", { name: "SMS Şablonları" }));
+    expect(await screen.findByText("Bakiye Bildirimi")).toBeInTheDocument();
+    expect(screen.queryByText("Kampanya")).toBeNull();
+  });
+
   it("AMAC sablonda gorunur (gonderimde secilmez)", async () => {
     // P32: ayni sablonun bir gun pazarlama bir gun operasyonel
     // gonderilmesi riza denetimini anlamsiz kilardi.
@@ -39,11 +70,11 @@ describe("Mesaj sayfasi", () => {
       "/api/panel/mesaj-gecmis": GECMIS,
     });
     ciz(MesajlarPage);
-    await waitFor(() =>
-      expect(screen.getAllByText("Bakiye Bildirimi").length).toBeGreaterThan(0),
-    );
-    expect(screen.getAllByText("Operasyonel").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Pazarlama").length).toBeGreaterThan(0);
+    // (P168 §4) Sablonlar artik KANAL SEKMELERINDE; amac sutunu orada.
+    await userEvent.click(await screen.findByRole("tab", { name: "SMS Şablonları" }));
+    expect(await screen.findByText("Operasyonel")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("tab", { name: "E-posta Şablonları" }));
+    expect(await screen.findByText("Pazarlama")).toBeInTheDocument();
   });
 
   it("SMS SAYACI ve UCS-2 uyarisi cizilir", async () => {

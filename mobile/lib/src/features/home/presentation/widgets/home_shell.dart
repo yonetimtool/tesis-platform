@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/i18n/l10n.dart';
 import '../../../../core/theme/home_tokens.dart';
@@ -8,6 +9,7 @@ import '../../../notifications/data/notifications_controller.dart';
 import '../../../profile/data/avatar_api.dart';
 import '../../../push/domain/push_models.dart';
 import '../../../push/presentation/push_registrar.dart';
+import '../../../../routing/app_router.dart';
 import '../../domain/home_tabs.dart';
 import 'dil_modali.dart';
 import 'home_drawer.dart';
@@ -121,6 +123,13 @@ class HomeShell extends ConsumerWidget {
         titleSpacing: 0,
         title: const HomeMarka(),
         actions: [
+          // (P168 §6) KISAYOL IZGARASI — referans ust barin "izgara"
+          // dugmesi. Ana ekran karolarini duzenleme ekrani ZATEN VARDI
+          // (`/ana-ekran-duzenle`) ama ona yalnizca menuden ulasilabiliyordu;
+          // yani en cok kullanilan kisayollari duzenlemek icin once menuyu
+          // acmak gerekiyordu.
+          _IzgaraButonu(onTap: () => context.push(AppRoutes.izgaraDuzenle)),
+          const SizedBox(width: 4),
           _ZilButonu(
             unreadCount: unreadCount,
             onTap: () => onDestinationSelected(1),
@@ -205,6 +214,25 @@ class _ZilButonu extends StatelessWidget {
 }
 
 /// 40px yuvarlak avatar + sag altinda yesil online noktasi.
+/// (P168 §6) IZGARA/KISAYOL dugmesi — ana ekran karolarini duzenleme.
+class _IzgaraButonu extends StatelessWidget {
+  const _IzgaraButonu({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = HomeSurface.of(context);
+    return IconButton(
+      // ADSIZ IKON DUGMESI OLMAZ: ekran okuyucu yalnizca "dugme" der.
+      tooltip: context.l10n.kabukKisayollar,
+      icon: Icon(Icons.grid_view_outlined, color: s.heading),
+      onPressed: onTap,
+    );
+  }
+}
+
+
 class _AvatarButonu extends StatelessWidget {
   const _AvatarButonu({required this.onTap});
 

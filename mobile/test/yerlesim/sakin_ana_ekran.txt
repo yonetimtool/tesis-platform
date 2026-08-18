@@ -1,9 +1,10 @@
   20,  16  24x24  U+E3DC
+  20, 186  24x24  U+F0D7
   20, 238  24x24  U+F237
   21, 291  22x22  U+E67B
   21, 343  22x22  U+E497
-  21,  94  173x24  Yönetiyor
-  36,  94  222x11  GÜVENLİK & DANIŞMANLIK
+  26,  94  173x24  Yönetiyor
+  35,  94  222x11  GÜVENLİK & DANIŞMANLIK
   72,  16  394x30  Merhaba, Çiğdem
  103,  16  342x20  Daire 12  •  Site Sakini
  162, 232  19x19  U+E041

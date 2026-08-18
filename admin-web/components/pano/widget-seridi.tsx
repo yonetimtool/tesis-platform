@@ -11,7 +11,6 @@
 // tasirdi — sessiz, cunku kimse "widget'im calismiyor" demeden once
 // tiklamak zorunda.
 
-import Link from "next/link";
 import { useState } from "react";
 
 import { Dugme, Kart, Modal } from "@/components/ui";
@@ -21,7 +20,6 @@ import { WIDGET_SINIRI } from "@/lib/pano-tercihi";
 
 // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
 const ETIKET_DIV = "div" as const;
-const ETIKET_BAG = "a" as const;
 
 export interface WidgetAdayi {
   /** Menu ogesinin baglantisi — kayitta tutulan deger. */
@@ -94,15 +92,20 @@ export function WidgetSeridi({
         </Kart>
       ) : (
         // TAM GENISLIK, ESIT PAY: brief "sayfanin solundan sagina uzanan
-        // tam genislikte" diyor. `grid-cols-2` -> `sm:grid-cols-3` ->
-        // `lg:grid-cols-6`: dar ekranda alti kutu 60 px'e dusup okunmaz
-        // olurdu.
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        // tam genislikte" diyor. (P168 §1.2) Genis ekranda YEDI esit alan;
+        // dar ekranda 2 -> 3 -> 4 diye kirilir, cunku yedi kutu 60 px'e
+        // dusup okunmaz olurdu.
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
           {gosterilen.map((w) => (
             <div key={w.rota} className="relative">
               <Kart
-                as={duzenlemede ? ETIKET_DIV : ETIKET_BAG}
-                {...(duzenlemede ? {} : { href: w.rota })}
+                // (P168 §1.1) `href` ARTIK GERCEK BIR PROP. Onceki hâl
+                // `as="a"` + spread ile veriyordu ve `Kart` fazladan
+                // prop'lari yaymadigi icin href HIC ULASMIYORDU: kart
+                // gorunuyor, tiklaniyor gibi duruyor, hicbir sey
+                // olmuyordu. Duzenleme kipinde baglanti YOK — orada kart
+                // suruklenip gizlenen bir ogedir, gidilecek bir yer degil.
+                {...(duzenlemede ? { as: ETIKET_DIV } : { href: w.rota })}
                 className="flex h-full flex-col items-center gap-2 p-kart text-center"
               >
                 <span style={{ color: "var(--yz-accent-edge)" }}>{w.ikon}</span>

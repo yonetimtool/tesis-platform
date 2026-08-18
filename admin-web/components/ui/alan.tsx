@@ -24,7 +24,13 @@
  * kirmizi kenarlik tek basina renk korlugu olan kullaniciya bir sey
  * soylemez (WCAG 1.4.1).
  */
-import { useId, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes } from "react";
+import {
+  forwardRef,
+  useId,
+  type InputHTMLAttributes,
+  type ReactNode,
+  type SelectHTMLAttributes,
+} from "react";
 
 /* ------------------------------------------------------------------ */
 
@@ -134,20 +140,28 @@ export function Alan({
   );
 }
 
-export function CokSatir({
-  hatali = false,
-  className = "",
-  style,
-  ...rest
-}: React.TextareaHTMLAttributes<HTMLTextAreaElement> & { hatali?: boolean }) {
+/**
+ * (P168 §4.1) `forwardRef` EKLENDI.
+ *
+ * Etiket cipleri metni IMLECIN OLDUGU YERE ekliyor ve bunun icin
+ * `selectionStart` gerekiyor — yani cagiranin DOM dugumune erisimi
+ * olmali. Ref olmadan tek secenek metni SONA eklemekti; cumlenin
+ * ortasina etiket koymak isteyen kullanici, metni elle tasimak zorunda
+ * kalirdi.
+ */
+export const CokSatir = forwardRef<
+  HTMLTextAreaElement,
+  React.TextareaHTMLAttributes<HTMLTextAreaElement> & { hatali?: boolean }
+>(function CokSatir({ hatali = false, className = "", style, ...rest }, ref) {
   return (
     <textarea
       {...rest}
+      ref={ref}
       className={`odak-ic w-full px-3 py-2 outline-none ${className}`}
       style={{ ...kutuStili(hatali), ...style }}
     />
   );
-}
+});
 
 export function Secim({
   hatali = false,

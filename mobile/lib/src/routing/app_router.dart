@@ -64,6 +64,7 @@ import '../features/vehicle_pass/presentation/vehicle_pass_screen.dart';
 import '../features/violations/presentation/violations_screen.dart';
 import '../features/visitors/presentation/visitors_screen.dart';
 import '../features/dokumanlar/presentation/dokuman_screen.dart';
+import '../features/kvkk/presentation/yasal_metinler_screen.dart';
 import 'splash_screen.dart';
 
 class AppRoutes {
@@ -128,6 +129,8 @@ class AppRoutes {
   /// (P36) Aydinlatma metni SALT-OKUMA (onay kapisindan AYRI rota:
   /// kullanici NEYI onayladigini sonradan gorebilmeli).
   static const kvkkMetin = '/kvkk-metin';
+  /// (P168 §5) Bes yasal metnin tamami + onay gecmisi (SALT OKUMA).
+  static const yasalMetinler = '/yasal-metinler';
   /// (P38) Anketler — sakin oy verir; olusturma YONETIM/panel isidir.
   static const anketler = '/anketler';
   static const notifications = '/notifications';
@@ -418,6 +421,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.dokumanlar,
         builder: (context, state) => const DokumanScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.yasalMetinler,
+        builder: (context, state) => const YasalMetinlerScreen(),
       ),
       GoRoute(
         path: AppRoutes.disHizmet,

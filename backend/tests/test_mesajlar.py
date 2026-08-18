@@ -177,7 +177,12 @@ def test_gonderim_GECMISE_COZULMUS_metni_yazar(client, adm, world):
     if r.json()["gonderildi"]:
         kayit = gecmis[0]
         assert "{adi_soyadi}" not in kayit["govde"], "etiket cozulmemis"
-        assert kayit["durum"] in ("gonderildi", "basarisiz")
+        # (P168 §4) `yapilandirilmadi` EKLENDI ve testte de olmali:
+        # saglayici yapilandirilmamis bir ortamda (gelistirme, CI) artik
+        # "gonderildi" DENMIYOR. Eski hâl hicbir sey gondermeden
+        # "gonderildi" yaziyordu ve bu, olmayan bir bildirimi kanit gibi
+        # gosteriyordu.
+        assert kayit["durum"] in ("gonderildi", "basarisiz", "yapilandirilmadi")
         assert kayit["saglayici"]
 
         # SABLONU DEGISTIR -> gecmis DEGISMEMELI.
@@ -236,9 +241,19 @@ def test_varsayilan_sablon_seti():
     from app.mesajlasma import VARSAYILAN_SABLONLAR
 
     adlar = {ad for _, ad, _, _, _ in VARSAYILAN_SABLONLAR}
-    assert {"Bakiye Bildirimi", "Toplantı Çağrısı", "Davetiye",
-            "Borç Girişi", "Tahsilat Girişi", "Yeni Duyuru",
-            "Kiracı Bakiyesi"} <= adlar
+    # (P168 §4) Brief'in hazir sablon listesi KANAL BAZINDA olculur:
+    # "adlarin kumesi" olcumu, ayni adin YANLIS KANALDA olmasini
+    # kaciriyordu (e-postada "Toplantı Çağrısı" yoktu ama SMS'te oldugu
+    # icin test geciyordu).
+    kanal_ad = {(kanal, ad) for kanal, ad, _, _, _ in VARSAYILAN_SABLONLAR}
+    for ad in ("Bakiye Bildirimi", "Borç Girişi", "Davetiye",
+               "Tahsilat Girişi", "Toplantı Çağrısı", "Yeni Duyuru"):
+        assert ("sms", ad) in kanal_ad, f"SMS eksik: {ad}"
+    for ad in ("Bakiye Bildirimi", "Borç Girişi", "Davetiye",
+               "Kiracı Bakiyesi Bildirimi", "Tahsilat Girişi",
+               "Toplantı Çağrısı", "Yeni Duyuru"):
+        assert ("eposta", ad) in kanal_ad, f"E-posta eksik: {ad}"
+    assert adlar
     assert all(amac == "operasyonel" for *_, amac in VARSAYILAN_SABLONLAR)
     # SMS sablonlarinda KONU OLMAMALI (sema de zorlar).
     assert all(konu is None for kanal, _, konu, _, _ in VARSAYILAN_SABLONLAR

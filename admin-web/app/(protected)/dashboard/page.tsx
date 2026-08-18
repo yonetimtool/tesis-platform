@@ -40,6 +40,7 @@ import { Dugme, IskeletKpi, Kpi } from "@/components/ui";
 import { PanoFinansOzeti } from "@/components/pano/finans-ozeti";
 import { PanoTakvim } from "@/components/pano/takvim";
 import { WidgetSeridi, type WidgetAdayi } from "@/components/pano/widget-seridi";
+import { SayfaEylemleri } from "@/components/SayfaEylemleri";
 import { useToast } from "@/components/Toast";
 import { KameraSeridi } from "@/components/KameraSeridi";
 import {
@@ -661,23 +662,28 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-bolum">
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <SayfaBasligi baslik={t("kabukOzet")} />
-        <div className="flex flex-wrap gap-2">
-          {duzenlemede && (
-            <Dugme tur="ikincil" boy="kucuk" onClick={varsayilanaDon}>
-              {t("panoVarsayilanaDon")}
-            </Dugme>
-          )}
-          <Dugme
-            tur={duzenlemede ? SECILI_TUR : SECILMEMIS_TUR}
-            boy="kucuk"
-            onClick={() => setDuzenlemede((x) => !x)}
-          >
-            {duzenlemede ? t("panoDuzenlemeBitir") : t("panoDuzenle")}
+      <SayfaBasligi baslik={t("kabukOzet")} />
+
+      {/* (P168 §1.3) DUZENLEME EYLEMLERI UST BARDA — bildirim ikonunun
+          SOLUNDA. Kabuk bos bir yuva aciyor, sayfa kendi dugmesini oraya
+          portal'liyor: kabuk hangi dugmenin gelecegini bilmiyor.
+          "Varsayilana don" yalniz DUZENLEME KIPINDE cizilir; her zaman
+          durursa, kazara tiklanabilecek yikici bir dugme ust barda
+          surekli asili kalirdi. */}
+      <SayfaEylemleri>
+        {duzenlemede && (
+          <Dugme tur="ikincil" boy="kucuk" onClick={varsayilanaDon}>
+            {t("panoVarsayilanaDon")}
           </Dugme>
-        </div>
-      </div>
+        )}
+        <Dugme
+          tur={duzenlemede ? SECILI_TUR : SECILMEMIS_TUR}
+          boy="kucuk"
+          onClick={() => setDuzenlemede((x) => !x)}
+        >
+          {duzenlemede ? t("panoDuzenlemeBitir") : t("panoDuzenle")}
+        </Dugme>
+      </SayfaEylemleri>
 
       {/* Hata KUTUSU canli bolgedir: pano 15 sn'de bir yenilenir. */}
       {error ? <HataDurumu mesaj={error.message} /> : null}

@@ -100,6 +100,9 @@ export const ALAN_TANIMLARI: Record<string, AlanTanimi> = {
     varsayilanAcik: true,
   },
   grup_goster: { tur: "onay", etiket: "raporGrupla" },
+  /** (P168 §3) VARSAYILAN KAPALI: telefon ve e-posta kisisel veridir ve
+   *  kapiya asilacak bir listede varsayilan olarak bulunmamali. */
+  iletisim_goster: { tur: "onay", etiket: "raporIletisimGoster" },
   imza: { tur: "onay", etiket: "raporImza" },
   listeleme_tipi: {
     tur: "secim",
@@ -168,17 +171,34 @@ export const DURUM_ETIKETI: Record<string, SozlukAnahtari> = {
   hata: "raporIsHata",
 };
 
+/** `YYYY-AA-GG` — tarih girdisinin bekledigi bicim. */
+function gun(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
 /**
- * Bir alanin baslangic degeri.
+ * (P168 §3) TARIH VARSAYILANLARI: Ilk Tarih = YILBASI, Son Tarih = BUGUN.
  *
- * Onay kutulari DISINDA hepsi bos baslar ve bos alan govdeye KONULMAZ:
- * bos dizgeyi tarih diye gondermek sunucuda dogrulama hatasi uretirdi.
+ * Brief'in acik istegi. Gerekcesi de saglam: raporlarin ezici cogunlugu
+ * "bu yil ne oldu" sorusunu sorar. Bos birakmak, kullaniciyi her rapor
+ * icin iki tarih doldurmaya zorlar; daha kotusu, zorunlu alanlari bos
+ * birakip "Goster"e basinca dogrulama hatasi almasina yol acardi.
+ *
+ * YALNIZ DONEM ALANLARI: `tazminat_tarihi` DOLDURULMAZ — o "hangi
+ * tarihe gore gecikme hesaplansin" sorusudur ve sunucu bos birakildiginda
+ * `bitis`i, o da yoksa bugunu kullanir (P31). Onu da yilbasi yapsaydik,
+ * tazminati YILIN BASINA gore hesaplatmis olurduk: sessizce yanlis rakam.
  */
 export function baslangicDegeri(ad: string): string | boolean | string[] {
   const tanim = ALAN_TANIMLARI[ad];
   if (!tanim) return "";
   if (tanim.tur === "onay") return tanim.varsayilanAcik === true;
   if (tanim.tur === "tanimCoklu") return [];
+  if (ad === "baslangic") {
+    const simdi = new Date();
+    return gun(new Date(Date.UTC(simdi.getUTCFullYear(), 0, 1)));
+  }
+  if (ad === "bitis") return gun(new Date());
   return "";
 }
 

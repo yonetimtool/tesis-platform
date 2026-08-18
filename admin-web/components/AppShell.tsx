@@ -8,6 +8,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { DilSecici } from "@/components/DilSecici";
 import { GlobalArama } from "@/components/GlobalArama";
 import { KurulumHatirlatici } from "@/components/KurulumHatirlatici";
+import { SayfaEylemYuvasi } from "@/components/SayfaEylemleri";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { BildirimMerkezi, KomutPaleti } from "@/components/ui";
 import { useT } from "@/lib/i18n/kullan";
@@ -840,6 +841,9 @@ export function AppShell({
                 kosede aranir; dil secici brief'in dedigi gibi onun
                 solunda kalir. */}
             <div className="flex shrink-0 items-center gap-2">
+              {/* (P168 §1.3) SAYFA EYLEMLERI — bildirim ikonunun SOLUNDA.
+                  Kabuk yalniz BOS BIR YUVA acar; ne gelecegini bilmez. */}
+              <SayfaEylemYuvasi />
               <BildirimMerkezi />
               <DilSecici />
               <KullaniciMenusu />

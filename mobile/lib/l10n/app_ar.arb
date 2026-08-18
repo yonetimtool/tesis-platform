@@ -1650,5 +1650,31 @@
         "type": "int"
       }
     }
-  }
+  },
+  "kvkkYasalMetinler": "النصوص القانونية",
+  "kvkkTurAydinlatma": "نص الإفصاح",
+  "kvkkTurAcikRiza": "الموافقة الصريحة",
+  "kvkkTurGizlilik": "سياسة الخصوصية",
+  "kvkkTurKullanim": "شروط الاستخدام",
+  "kvkkTurCerez": "سياسة ملفات الارتباط",
+  "kvkkMetinYayinlanmamis": "لم يُنشر هذا النص بعد.",
+  "kvkkOnaylanmadi": "لم توافق على هذا النص بعد.",
+  "kvkkYenidenOnayBekleniyor": "في انتظار موافقتك على الإصدار الحالي.",
+  "kvkkSurumEtiketi": "الإصدار {n}",
+  "@kvkkSurumEtiketi": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "kvkkOnayladiginizSurum": "الإصدار الذي وافقت عليه: {n}",
+  "@kvkkOnayladiginizSurum": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "kabukKisayollar": "الاختصارات"
 }

@@ -147,7 +147,12 @@ KATALOG_KAYITLARI = {
     "site_sakinleri": KatalogKaydi(
         "Site Sakinleri Listesi", "Daire + sakin + ilişki tipi",
         "listeler",
-        ("listeleme_tipi", "blok", "ismi_goster", "imza"),
+        # (P168 §3) `iletisim_goster` EKLENDI — brief'in alan listesinde
+        # vardi, katalogda yoktu; yani modal o kutuyu HIC cizmiyordu.
+        # `ismi_goster` KORUNDU: brief onu saymiyor ama KVKK kontrolu
+        # (kapiya asilacak listede ad olmamali) ve kaldirmak bir islev
+        # kaybi olurdu.
+        ("listeleme_tipi", "blok", "iletisim_goster", "ismi_goster", "imza"),
     ),
     "donemsel_bakiye": KatalogKaydi(
         "Dönemsel Bakiye", "Dönem bazında borç/tahsilat/bakiye",
@@ -208,7 +213,9 @@ KATALOG_KAYITLARI = {
     "makbuz_dokumu": KatalogKaydi(
         "Makbuz Dökümü", "Tahsilat makbuzları listesi",
         "dokumler",
-        ("baslangic", "bitis", "listeleme_tipi", "user_id"),
+        # (P168 §3) Brief "Tur*" istiyor -> `evrak_tipi`. Eskiden yalniz
+        # `listeleme_tipi` vardi ve makbuzun TURU secilemiyordu.
+        ("baslangic", "bitis", "evrak_tipi", "listeleme_tipi", "user_id"),
     ),
     "gelir_gider_ozet": KatalogKaydi(
         "Gelir-Gider Özet", "Kalem bazında gelir/gider toplamı",
@@ -218,7 +225,9 @@ KATALOG_KAYITLARI = {
     "ihtar_yazisi": KatalogKaydi(
         "İhtar Yazısı", "Daire başına resmi uyarı (PDF)",
         "dokumler",
-        ("user_id", "unit_id", "tazminat_tarihi", "min_tutar_kurus"),
+        # (P168 §3) Brief "Tarih*" istiyor -> `bitis`. Ihtar bir TARIHE
+        # gore yazilir (o gune kadar birikmis borc) ve alan yoktu.
+        ("user_id", "unit_id", "bitis", "tazminat_tarihi", "min_tutar_kurus"),
     ),
     # --- BRIEF'IN LISTESINDE OLMAYAN AMA DURAN IKI RAPOR ------------------
     # GENEL KISITLAR: "Mevcut islev kaybolmayacak." Ikisi de P31'de
@@ -641,7 +650,10 @@ async def _uret(
     if kod == "site_sakinleri":
         rows = (
             await db.execute(
-                select(Unit.no, Unit.blok, AppUser.ad, UnitResident.rol_tipi)
+                select(
+                    Unit.no, Unit.blok, AppUser.ad, UnitResident.rol_tipi,
+                    AppUser.telefon, AppUser.email,
+                )
                 .join(UnitResident, UnitResident.unit_id == Unit.id)
                 .join(AppUser, AppUser.id == UnitResident.user_id)
                 .where(UnitResident.bitis.is_(None))
@@ -656,11 +668,23 @@ async def _uret(
         ]
         if not p.ismi_goster:
             sutunlar = [s for s in sutunlar if s.anahtar != "ad"]
+        # (P168 §3) ILETISIM SUTUNLARI ISTEGE BAGLI VE VARSAYILAN KAPALI.
+        #
+        # Kutu SUTUN ACAR, degeri bosaltmaz: bos bir "Telefon" sutunu
+        # "bu kisinin telefonu yok" demek olurdu — oysa gostermemeyi biz
+        # sectik. (Ayni gerekce `ismi_goster` icin P31'de de yazilmisti.)
+        if p.iletisim_goster:
+            sutunlar += [
+                Sutun("telefon", "Telefon", genislik=2),
+                Sutun("email", "E-posta", genislik=3),
+            ]
         satirlar = [
             {"unit_no": no, "blok": blok,
              **({"ad": ad} if p.ismi_goster else {}),
-             "rol_tipi": rol or "—"}
-            for no, blok, ad, rol in rows
+             "rol_tipi": rol or "—",
+             **({"telefon": tel or "—", "email": eposta or "—"}
+                if p.iletisim_goster else {})}
+            for no, blok, ad, rol, tel, eposta in rows
             if not p.blok or blok == p.blok
         ]
         return RaporSonuc(kod, KATALOG[kod][0], sutunlar,

@@ -5119,4 +5119,45 @@ class AppLocalizationsTr extends AppLocalizations {
   String dokumanBoyutKb(int kb) {
     return '$kb KB';
   }
+
+  @override
+  String get kvkkYasalMetinler => 'Yasal Metinler';
+
+  @override
+  String get kvkkTurAydinlatma => 'Aydınlatma Metni';
+
+  @override
+  String get kvkkTurAcikRiza => 'Açık Rıza';
+
+  @override
+  String get kvkkTurGizlilik => 'Gizlilik Politikası';
+
+  @override
+  String get kvkkTurKullanim => 'Kullanım Koşulları';
+
+  @override
+  String get kvkkTurCerez => 'Çerez Politikası';
+
+  @override
+  String get kvkkMetinYayinlanmamis => 'Bu metin henüz yayınlanmamış.';
+
+  @override
+  String get kvkkOnaylanmadi => 'Bu metni henüz onaylamadınız.';
+
+  @override
+  String get kvkkYenidenOnayBekleniyor =>
+      'Güncel sürüm için onayınız bekleniyor.';
+
+  @override
+  String kvkkSurumEtiketi(int n) {
+    return 'Sürüm $n';
+  }
+
+  @override
+  String kvkkOnayladiginizSurum(int n) {
+    return 'Onayladığınız sürüm: $n';
+  }
+
+  @override
+  String get kabukKisayollar => 'Kısayollar';
 }

@@ -4741,7 +4741,7 @@ paths:
         - $ref: "#/components/parameters/Offset"
         - name: durum
           in: query
-          schema: { type: string, enum: [acik, takipte, tahsil_edildi, kapandi] }
+          schema: { type: string, enum: [baginiz, beklemede, avukatta, mahkemede, kapandi] }
         - name: user_id
           in: query
           schema: { type: string, format: uuid }
@@ -4763,7 +4763,7 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
     post:
       tags: [finans]
-      summary: Icra dosyasi ac (admin)
+      summary: Icra dosyasi ac (admin+yonetici)
       requestBody:
         required: true
         content:
@@ -4787,7 +4787,7 @@ paths:
       - $ref: "#/components/parameters/PathId"
     patch:
       tags: [finans]
-      summary: Icra dosyasi guncelle (admin)
+      summary: Icra dosyasi guncelle (admin+yonetici)
       requestBody:
         required: true
         content:
@@ -4807,6 +4807,28 @@ paths:
           content:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
         "422": { $ref: "#/components/responses/ValidationError" }
+    delete:
+      tags: [finans]
+      summary: Icra dosyasini sil (admin+yonetici)
+      description: |
+        **(P168 §2)** "Finansal kayit SILINMEZ" ilkesi DEFTER icindir: bir
+        tahsilat ya da gider satirini silmek gecmis raporlari geriye donuk
+        degistirir.
+
+        Icra dosyasi defter satiri DEGIL, bir SUREC KAYDIDIR. Borcun
+        kendisi `dues_assessment`ta durur ve buraya KOPYALANMAZ (P29);
+        acik borc her satirda ANLIK okunur. Dosyayi silmek hicbir
+        finansal tutari yok etmez — yalnizca "bu borc icin icra sureci
+        baslatilmisti" bilgisi gider.
+
+        Yanlis acilmis bir dosyayi silememek, listeyi kalici copla
+        yasamaya mahkum ederdi. Denetime dosya no ve kisi yazilir; silinen
+        kaydin ne oldugu sonradan yalnizca oradan okunabilir.
+      responses:
+        "204": { description: Silindi }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
   /finans/ozet:
     get:
       tags: [finans]
@@ -6032,6 +6054,71 @@ paths:
             birakirdi — yarim gonderim YERINE hic.
           content:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /mesaj-ayarlari:
+    get:
+      tags: [mesajlar]
+      summary: Tesisin SMS/e-posta saglayici ayarlari (admin+yonetici)
+      description: |
+        **(P168 §4.4)** SIRLAR HIC DONMEZ — "maskeli" bile degil.
+
+        Brief "sirlar arayuzde maskeli gosterilsin" diyor. Bunu `****`
+        gibi bir metin dondurerek yapmak kolay ama YANLIS olurdu: maskeli
+        deger de bir DEGERDIR, forma girer ve kullanici "kaydet"e
+        bastiginda gercek parolanin uzerine `****` yazilirdi.
+
+        Bunun yerine `sms_parola_var` / `smtp_parola_var` bayraklari
+        doner. Arayuz bos bir alan cizer ve "kayitli bir parola var,
+        degistirmek icin yenisini yazin" der.
+
+        `sms_hazir` / `eposta_hazir`: kanal GERCEKTEN gonderebilir mi.
+        Bayrak, gonderim aninda kullanilan saglayici secim
+        fonksiyonundan turer — "ayarlar dolu mu" diye ayrica bakmak, o
+        kontrolun bir gun gercek secimden ayrismasi demekti.
+      responses:
+        "200": { description: Ayarlar }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    put:
+      tags: [mesajlar]
+      summary: Ayarlari kaydet (admin+yonetici)
+      description: |
+        **(P168 §4.4)** BOS BIRAKILAN PAROLA MEVCUDU KORUR: alan hic
+        gonderilmezse (`null`) degistirilmez; acikca BOS DIZGE
+        gonderilirse TEMIZLENIR. Ikisini ayirmasaydik, kayitli bir
+        parolayi silmenin hicbir yolu olmazdi.
+
+        Denetime yalnizca HANGI alanlarin degistigi yazilir; sirlar
+        denetim kaydina da girmez.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MesajYapilandirmaUpdate" }
+      responses:
+        "200": { description: Kaydedildi }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /mesaj-ayarlari/test:
+    post:
+      tags: [mesajlar]
+      summary: Test gonderimi (admin+yonetici)
+      description: |
+        **(P168 §4.4)** GERCEKTEN GONDERIR: "ayarlar dolu mu" diye bakmak
+        yanlis parolayi ya da yanlis basligi YAKALAMAZ — saglayici
+        reddedene kadar her sey dogru gorunur. Tek durust olcum gercek
+        bir istektir.
+
+        GECMISE YAZILMAZ: test bir bildirim degildir; gonderim gecmisine
+        dusmesi "kime ne gonderdik" defterini kirletirdi.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MesajTestGonderim" }
+      responses:
+        "200":
+          description: Sonuc (durum + saglayici + varsa hata)
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
   /mesajlar/gecmis:
     get:
       tags: [mesajlar]
@@ -12194,6 +12281,25 @@ components:
       type: object
       required: [baslik, govde]
       properties:
+        tur:
+          type: string
+          enum: [aydinlatma, acik_riza, gizlilik, kullanim_kosullari, cerez]
+          default: aydinlatma
+          description: >
+            **(P168 §5)** Hangi yasal metin. Surum TUR BASINA ilerler:
+            gizlilik politikasi yayinlamak aydinlatma metninin numarasini
+            ATLATMAMALI, yoksa "v3'u onayladim" cumlesi hangi metne ait
+            belirsiz kalirdi.
+        yeniden_onay_gerekir:
+          type: boolean
+          default: true
+          description: >
+            **(P168 §5)** Bu surum, onceki surumu onaylamis kullanicilardan
+            YENIDEN onay ister mi? VARSAYILAN `true` ve bu bilincli:
+            guvenli yon SORMAKTIR. `false` varsayilan olsaydi, esasli bir
+            degisikligi yayinlayan yonetici kutuyu isaretlemeyi
+            unuttugunda kimseye sorulmaz ve bu SESSIZCE hukuki bir
+            eksiklik olurdu. Yazim hatasi duzeltmeleri icin `false`.
         baslik: { type: string, minLength: 1, maxLength: 200 }
         govde: { type: string, minLength: 1, maxLength: 100000 }
     KvkkMetin:
@@ -13633,6 +13739,40 @@ components:
           allOf: [{ $ref: "#/components/schemas/SmsOlcum" }]
           nullable: true
           description: YALNIZ kanal=sms iken dolu
+    MesajYapilandirmaUpdate:
+      type: object
+      minProperties: 1
+      description: >
+        **(P168 §4.4)** Kismi guncelleme. Parola alani GONDERILMEZSE
+        mevcut deger korunur; BOS DIZGE gonderilirse temizlenir.
+      properties:
+        sms_saglayici: { type: string, nullable: true, maxLength: 40 }
+        sms_kullanici: { type: string, nullable: true, maxLength: 150 }
+        sms_parola: { type: string, nullable: true, maxLength: 200 }
+        sms_baslik: { type: string, nullable: true, maxLength: 40 }
+        smtp_host: { type: string, nullable: true, maxLength: 200 }
+        smtp_port: { type: integer, nullable: true, minimum: 1, maximum: 65535 }
+        smtp_kullanici: { type: string, nullable: true, maxLength: 200 }
+        smtp_parola: { type: string, nullable: true, maxLength: 200 }
+        smtp_gonderen: { type: string, nullable: true, maxLength: 200 }
+        gunluk_kota:
+          type: integer
+          nullable: true
+          minimum: 1
+          maximum: 100000
+          description: >
+            NULL = sinir yok. `0` KABUL EDILMEZ: "sinirsiz" mi "kapali"
+            mi belirsiz olurdu.
+    MesajTestGonderim:
+      type: object
+      required: [kanal, hedef]
+      properties:
+        kanal: { type: string, enum: [sms, eposta] }
+        hedef:
+          type: string
+          minLength: 3
+          maxLength: 200
+          description: Telefon ya da e-posta; hangisi oldugunu `kanal` soyler.
     MesajGonderIstek:
       type: object
       required: [sablon_id]
@@ -14121,7 +14261,7 @@ components:
         user_ad: { type: string, nullable: true }
         veris_tarihi: { type: string, format: date, nullable: true }
         avukat: { type: string, nullable: true }
-        durum: { type: string, enum: [acik, takipte, tahsil_edildi, kapandi] }
+        durum: { type: string, enum: [baginiz, beklemede, avukatta, mahkemede, kapandi] }
         aciklama: { type: string, nullable: true }
         acik_borc_kurus:
           type: integer
@@ -14137,7 +14277,7 @@ components:
         user_id: { type: string, format: uuid }
         veris_tarihi: { type: string, format: date, nullable: true }
         avukat: { type: string, nullable: true, maxLength: 150 }
-        durum: { type: string, enum: [acik, takipte, tahsil_edildi, kapandi], default: acik }
+        durum: { type: string, enum: [baginiz, beklemede, avukatta, mahkemede, kapandi], default: beklemede }
         aciklama: { type: string, nullable: true, maxLength: 1000 }
     IcraDosyasiUpdate:
       type: object
@@ -14146,7 +14286,7 @@ components:
         dosya_no: { type: string, minLength: 1, maxLength: 50 }
         veris_tarihi: { type: string, format: date, nullable: true }
         avukat: { type: string, nullable: true, maxLength: 150 }
-        durum: { type: string, enum: [acik, takipte, tahsil_edildi, kapandi] }
+        durum: { type: string, enum: [baginiz, beklemede, avukatta, mahkemede, kapandi] }
         aciklama: { type: string, nullable: true, maxLength: 1000 }
     FinansOzet:
       type: object

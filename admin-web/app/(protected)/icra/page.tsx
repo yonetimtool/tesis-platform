@@ -14,6 +14,7 @@ import {
   Rozet,
   Secim,
   VeriTablosu,
+  type RozetDurumu,
   type Kolon,
   type TabloDurumu,
   useOnay,
@@ -57,31 +58,52 @@ interface IcraDosyasi {
   created_at: string;
 }
 
-const DURUMLAR = ["acik", "takipte", "tahsil_edildi", "kapandi"] as const;
+// (P168 §2) Brief'in BES degeri — sunucu enum'uyla BIREBIR (goc 0062).
+// Etiketler sozlukten cozulur; burada yalniz KIMLIK durur.
+const DURUMLAR = [
+  "baginiz", "beklemede", "avukatta", "mahkemede", "kapandi",
+] as const;
 type Durum = (typeof DURUMLAR)[number];
 /** Suzgec: dort durumdan biri ya da "" (hepsi). */
 type DurumSecimi = "" | Durum;
 
-const BOS = {
-  dosya_no: "", user_id: "", veris_tarihi: "", avukat: "", aciklama: "",
-  // (P167 §4.8) Brief modalda "Dosya Durumu*" istiyor. Varsayilan `acik`:
-  // yeni acilan bir dosya tanimi geregi aciktir ve kullaniciyi her
-  // seferinde ayni secimi yapmaya zorlamak gereksiz bir adim olurdu.
-  durum: "acik",
-};
+/** Bugunun tarihi (`YYYY-AA-GG`) — tarih girdisi bu bicimi bekler. */
+function bugun(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+/** (P168 §2) Bos form. VERIS TARIHI VARSAYILAN BUGUN: brief oyle
+ *  istiyor ve dosyalarin ezici cogunlugu acildigi gun veriliyor. */
+function bosForm() {
+  return {
+    dosya_no: "", user_id: "", veris_tarihi: bugun(), avukat: "", aciklama: "",
+    // Yeni acilan dosya tanimi geregi bekliyordur; kullaniciyi her
+    // seferinde ayni secimi yapmaya zorlamak gereksiz bir adim olurdu.
+    durum: "beklemede",
+  };
+}
 
 // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
 const DURUM_UYARI = "uyari" as const;
-const DURUM_OLUMLU = "olumlu" as const;
 const DURUM_NOTR = "notr" as const;
 const DURUM_KRITIK = "kritik" as const;
+const DURUM_BILGI = "bilgi" as const;
 
-/** Dosya durumu -> rozet rengi. Kapanmis dosya notr, tahsil olumlu. */
+/** (P168 §2) Dosya durumu -> rozet rengi.
+ *
+ *  RENK SURECIN NEREDE OLDUGUNU anlatir, "iyi/kotu" demez: kapanmis
+ *  dosya NOTR (bitmis is), mahkeme KRITIK (en agir asama), avukatta ve
+ *  baginiz UYARI (aktif surec), beklemede notr-bilgi. */
+const DURUM_RENGI: Record<string, RozetDurumu> = {
+  kapandi: DURUM_NOTR,
+  mahkemede: DURUM_KRITIK,
+  avukatta: DURUM_UYARI,
+  baginiz: DURUM_UYARI,
+  beklemede: DURUM_BILGI,
+};
+
 function durumRengi(d: string) {
-  if (d === "tahsil_edildi") return DURUM_OLUMLU;
-  if (d === "kapandi") return DURUM_NOTR;
-  if (d === "takipte") return DURUM_UYARI;
-  return DURUM_KRITIK;
+  return DURUM_RENGI[d] ?? DURUM_NOTR;
 }
 
 export default function IcraPage() {
@@ -98,15 +120,24 @@ export default function IcraPage() {
   const offset = (tabloDurumu.sayfa - 1) * tabloDurumu.boy;
   const [durum, setDurum] = useSorguSecimi<DurumSecimi>("durum", DURUMLAR, "");
   const [acik, setAcik] = useState(false);
-  const [form, setForm] = useState(BOS);
+  const [form, setForm] = useState(bosForm());
   const [formHata, setFormHata] = useState<string | null>(null);
   const [kaydediliyor, setKaydediliyor] = useState(false);
   const [secili, setSecili] = useState<IcraDosyasi | null>(null);
+  // (P168 §2) DUZENLEME KIPI. `null` ise modal YENI dosya acar; dolu ise
+  // ayni modal mevcut dosyayi duzenler. Ikinci bir modal yazmak, ayni
+  // yedi alani ve ayni dogrulamayi iki yerde tutmak olurdu.
+  const [duzenlenen, setDuzenlenen] = useState<IcraDosyasi | null>(null);
 
   // Rol SUNUCUDAN: istemcide bir rol listesi tutmak, yetkinin ikinci bir
   // dogruluk kaynagi olurdu.
   const { data: ben } = useSWR<{ role?: string }>("/api/me", jsonFetcher);
-  const yazabilir = ben?.role === "admin";
+  // (P168 §2) YONETICI DE YAZABILIR. Onceki hâl yalniz `admin`di ve
+  // sonucu ekranda gorunuyordu: yonetici icin sayfa SALT GORUNTULEMEYDI,
+  // brief'in istedigi olusturma hic yapilamiyordu. Uc `require_role(
+  // "admin","yonetici")`e acildi; istemci onu YANSITIR, kendi kurali
+  // yoktur.
+  const yazabilir = ben?.role === "admin" || ben?.role === "yonetici";
 
   // (P160) BORCLU SECIMI. Form "Borçlu kimliği" adinda bir SERBEST METIN
   // alaniydi ve icine bir UUID yazilmasi bekleniyordu. Hicbir yonetici
@@ -134,22 +165,74 @@ export default function IcraPage() {
     setFormHata(null);
     setKaydediliyor(true);
     try {
-      await apiSend("/api/panel/icra-dosyalari", "POST", {
+      const govde = {
         dosya_no: form.dosya_no.trim(),
-        user_id: form.user_id.trim(),
         veris_tarihi: form.veris_tarihi || null,
         avukat: form.avukat.trim() || null,
         aciklama: form.aciklama.trim() || null,
         durum: form.durum,
-      });
+      };
+      if (duzenlenen) {
+        // KISI DEGISTIRILEMEZ: dosya bir KISININ borcu icin acilir;
+        // sahibini degistirmek, ayni dosyayi baska birine devretmek
+        // olurdu. Uc de `IcraDosyasiUpdate`te `user_id` tasimaz.
+        await apiSend(`/api/panel/icra-dosyalari/${duzenlenen.id}`, "PATCH", govde);
+      } else {
+        await apiSend("/api/panel/icra-dosyalari", "POST", {
+          ...govde,
+          user_id: form.user_id.trim(),
+        });
+      }
       setAcik(false);
-      setForm(BOS);
+      setDuzenlenen(null);
+      setForm(bosForm());
       await mutate();
-      toast.success(t("icraOlusturuldu"));
+      toast.success(duzenlenen ? t("icraGuncellendi") : t("icraOlusturuldu"));
     } catch (err) {
       setFormHata(err instanceof Error ? err.message : t("ortakHataOlustu"));
     } finally {
       setKaydediliyor(false);
+    }
+  }
+
+  /** (P168 §2) Dosyayi duzenlemek icin modali DOLU acar. */
+  function duzenlemeyeAc(d: IcraDosyasi) {
+    setDuzenlenen(d);
+    setForm({
+      dosya_no: d.dosya_no,
+      user_id: d.user_id,
+      veris_tarihi: d.veris_tarihi ?? bugun(),
+      avukat: d.avukat ?? "",
+      aciklama: d.aciklama ?? "",
+      durum: d.durum,
+    });
+    setFormHata(null);
+    setAcik(true);
+  }
+
+  /** (P168 §2) Dosyayi siler.
+   *
+   *  ONAY METNI NE SILINDIGINI SOYLER: "Silinsin mi?" diye sormak,
+   *  kullanicinin hangi dosyayi sildigini hatirlamasina guvenmek olurdu.
+   *  Metin ayrica BORCUN SILINMEDIGINI de soyler — dosya bir surec
+   *  kaydidir, borc `dues_assessment`ta durur. */
+  async function sil(d: IcraDosyasi) {
+    if (
+      !(await onayla({
+        baslik: t("ortakSilBaslik"),
+        mesaj: t("icraSilOnay", { no: d.dosya_no }),
+        onayMetni: t("ortakSil"),
+        tehlikeli: true,
+      }))
+    )
+      return;
+    try {
+      await apiSend(`/api/panel/icra-dosyalari/${d.id}`, "DELETE");
+      if (secili?.id === d.id) setSecili(null);
+      await mutate();
+      toast.success(t("icraSilindi"));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("ortakHataOlustu"));
     }
   }
 
@@ -179,6 +262,16 @@ export default function IcraPage() {
         hucre: (k) => k.dosya_no,
       },
       { id: "user_ad", baslik: t("icraBorclu"), hucre: (k) => k.user_ad ?? "—" },
+      {
+        // (P168 §2) Brief'in kolon listesinde VAR ama tabloda YOKTU:
+        // dosyanin ne zaman icraya verildigi, takip suresini okumanin
+        // tek yolu.
+        id: "veris_tarihi",
+        baslik: t("icraVerisTarihi"),
+        darEkrandaGizle: true,
+        hucre: (k) => k.veris_tarihi ?? "—",
+        deger: (k) => k.veris_tarihi,
+      },
       {
         id: "acik_borc_kurus",
         baslik: t("icraAcikBorc"),
@@ -219,6 +312,16 @@ export default function IcraPage() {
                 okuyucuda "acik / takipte / kapandi" diye baglamsiz
                 okunuyordu. Secim ADLIDIR ve ne yaptigini soyler. */}
             {yazabilir && (
+              <Dugme boy="kucuk" onClick={() => duzenlemeyeAc(k)}>
+                {t("ortakDuzenle")}
+              </Dugme>
+            )}
+            {yazabilir && (
+              <Dugme tur="tehlike" boy="kucuk" onClick={() => void sil(k)}>
+                {t("ortakSil")}
+              </Dugme>
+            )}
+            {yazabilir && (
               <Secim
                 aria-label={t("icraDurumDegistir", { no: k.dosya_no })}
                 value=""
@@ -252,7 +355,7 @@ export default function IcraPage() {
             tur="birincil"
             boy="kucuk"
             onClick={() => {
-              setForm(BOS);
+              setForm(bosForm());
               setFormHata(null);
               setAcik(true);
             }}
@@ -320,13 +423,16 @@ export default function IcraPage() {
       )}
 
       <Modal
-        baslik={t("icraYeni")}
+        baslik={duzenlenen ? t("icraDuzenle") : t("icraYeni")}
         acik={acik}
         // (P167 §4.8) IKI KOLON: brief "Modalin SAG tarafinda ilgili
         // kisinin acik evraklari listelenir" diyor. Dar bir modalda iki
         // kolon okunmaz olurdu.
         genislikSinifi="max-w-4xl"
-        onKapat={() => setAcik(false)}
+        onKapat={() => {
+          setAcik(false);
+          setDuzenlenen(null);
+        }}
         // Doldurulmus bir form kazara kapanmasin.
         kirliMi={form.dosya_no !== "" || form.user_id !== ""}
         onKirliKapat={() => {

@@ -101,6 +101,8 @@ export const SUZGECLER: Record<string, string[]> = {
   "mesaj-sablonlari": ["kanal", "aktif"],
   "mesaj-gecmis": ["kanal", "durum"],
   "unit-uyarilari": ["unit_id"],
+  // (P168 §5) Bes yasal metin turu ayri sekmelerde listeleniyor.
+  "kvkk-metinler": ["tur"],
   "karar-defteri": [],
   anketler: [],
   // Ikisi de ZORUNLU: backend bunlarsiz 422 doner. Beyaz listede

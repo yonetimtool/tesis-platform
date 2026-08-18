@@ -223,10 +223,18 @@ MESAJ_AMAC = ENUM(
 )
 MESAJ_DURUM = ENUM(
     "kuyrukta", "gonderildi", "iletildi", "okundu", "basarisiz",
+    # (P168 §4) SAGLAYICI YOK: hic denenmedi. `basarisiz` YANLIS olurdu —
+    # o "denedik, olmadi" der ve kullaniciyi "tekrar dene"ye iter; oysa
+    # tekrar denemek ayni sonucu verir, yapilmasi gereken AYARLARI
+    # doldurmaktir.
+    "yapilandirilmadi",
     name="mesaj_durum", create_type=False,
 )
+# (P168 §2) Brief'in BES degeri. Eski sozluk (`acik/takipte/
+# tahsil_edildi`) goc 0062'de eslenerek tasindi; iki sozlugu birden
+# tutmak, acilir listede karsiligi olmayan bir durum gostermek olurdu.
 ICRA_DURUM = ENUM(
-    "acik", "takipte", "tahsil_edildi", "kapandi",
+    "baginiz", "beklemede", "avukatta", "mahkemede", "kapandi",
     name="icra_durum", create_type=False,
 )
 BORCLANDIRMA_KAYNAK = ENUM(
@@ -3058,6 +3066,45 @@ class MesajSablonu(Base):
     updated_at = _created_at()
 
 
+class MesajYapilandirma(Base):
+    """(P168 §4) Tesis basina SMS/e-posta saglayici ayarlari.
+
+    ENV DEGIL TESIS: saglayici bilgisi bugune kadar ENV'deydi, yani BUTUN
+    TESISLER ICIN TEKTI. Coklu tesisli bir platformda bu yanlis — her
+    tesis kendi SMS bayiligini kullanir ve faturasi kendine cikar.
+
+    ENV YEDEK OLARAK KALIR: kayit yoksa mevcut ENV yapilandirmasi
+    kullanilir; boylece bugun calisan kurulumlar bozulmaz.
+
+    SIRLAR ACIK METIN: saglayiciya AYNEN gonderilmeleri gerekir, yani
+    geri donusu olmayan bir ozet ise yaramaz. Koruma katmani veritabani
+    erisimidir (RLS + `app_rw`); ARAYUZ degerleri HIC GORMEZ, yalnizca
+    "dolu mu" bayragini alir.
+    """
+
+    __tablename__ = "mesaj_yapilandirma"
+
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    sms_saglayici: Mapped[str | None] = mapped_column(Text, nullable=True)
+    sms_kullanici: Mapped[str | None] = mapped_column(Text, nullable=True)
+    sms_parola: Mapped[str | None] = mapped_column(Text, nullable=True)
+    sms_baslik: Mapped[str | None] = mapped_column(Text, nullable=True)
+    smtp_host: Mapped[str | None] = mapped_column(Text, nullable=True)
+    smtp_port: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default=text("587")
+    )
+    smtp_kullanici: Mapped[str | None] = mapped_column(Text, nullable=True)
+    smtp_parola: Mapped[str | None] = mapped_column(Text, nullable=True)
+    smtp_gonderen: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: NULL = sinir yok. `0` yazmak "kapali" anlamina gelirdi ve kisit da
+    #: bunu engelliyor (`> 0`).
+    gunluk_kota: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    updated_at = _created_at()
+
+
 class MesajGonderim(Base):
     """Gonderim GECMISI (P32).
 
@@ -3227,6 +3274,14 @@ class VarlikEki(Base):
     created_at = _created_at()
 
 
+#: (P168 §5) Brief'in bes metni. Tur BASINA surum ilerler; ayni sayaci
+#: paylassalardi "v3'u onayladim" cumlesi hangi metne ait belirsiz kalirdi.
+KVKK_METIN_TUR = ENUM(
+    "aydinlatma", "acik_riza", "gizlilik", "kullanim_kosullari", "cerez",
+    name="kvkk_metin_tur", create_type=False,
+)
+
+
 class KvkkMetin(Base):
     """(P36) Aydinlatma metni — TENANT ICERIGI, urun sabiti DEGIL.
 
@@ -3254,9 +3309,22 @@ class KvkkMetin(Base):
     tenant_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
     )
+    #: (P168 §5) Hangi yasal metin. Varsayilan `aydinlatma`: bugune kadar
+    #: yayinlanan tek metin oydu.
+    tur: Mapped[str] = mapped_column(
+        KVKK_METIN_TUR, nullable=False, server_default=text("'aydinlatma'")
+    )
     surum: Mapped[int] = mapped_column(Integer, nullable=False)
     baslik: Mapped[str] = mapped_column(Text, nullable=False)
     govde: Mapped[str] = mapped_column(Text, nullable=False)
+    #: (P168 §5) Bu surum, onceki surumu onaylamis kullanicilardan YENIDEN
+    #: onay ister mi? VARSAYILAN `True` ve bu bilincli: guvenli yon
+    #: sormaktir. `False` varsayilan olsaydi, esasli bir degisikligi
+    #: yayinlayan yonetici kutuyu isaretlemeyi unuttugunda kimseye
+    #: sorulmaz ve bu SESSIZCE hukuki bir eksiklik olurdu.
+    yeniden_onay_gerekir: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
     yayinlayan_user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), nullable=True
     )
@@ -3274,7 +3342,9 @@ class KvkkOnay(Base):
 
     __tablename__ = "kvkk_onay"
     __table_args__ = (
-        UniqueConstraint("tenant_id", "user_id", "surum", name="uq_kvkk_onay"),
+        UniqueConstraint(
+            "tenant_id", "user_id", "tur", "surum", name="uq_kvkk_onay"
+        ),
         ForeignKeyConstraint(
             ["user_id", "tenant_id"],
             ["app_user.id", "app_user.tenant_id"],
@@ -3295,6 +3365,13 @@ class KvkkOnay(Base):
     )
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     kvkk_metin_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    #: (P168 §5) Onay TUR BASINA tutulur. Kisit genislemeseydi, kullanici
+    #: gizlilik politikasinin 1. surumunu onayladiginda aydinlatma
+    #: metninin 1. surumu de onaylanmis SAYILIRDI — hukuken yanlis ve
+    #: sessiz.
+    tur: Mapped[str] = mapped_column(
+        KVKK_METIN_TUR, nullable=False, server_default=text("'aydinlatma'")
+    )
     #: Surum AYRICA kopyalanir: metin satiri bir gun silinse bile "hangi
     #: surumu onayladi" sorusu yanitlanabilir kalmali.
     surum: Mapped[int] = mapped_column(Integer, nullable=False)

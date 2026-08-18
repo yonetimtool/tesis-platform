@@ -2360,5 +2360,31 @@
         "type": "int"
       }
     }
-  }
+  },
+  "kvkkYasalMetinler": "Yasal Metinler",
+  "kvkkTurAydinlatma": "Aydınlatma Metni",
+  "kvkkTurAcikRiza": "Açık Rıza",
+  "kvkkTurGizlilik": "Gizlilik Politikası",
+  "kvkkTurKullanim": "Kullanım Koşulları",
+  "kvkkTurCerez": "Çerez Politikası",
+  "kvkkMetinYayinlanmamis": "Bu metin henüz yayınlanmamış.",
+  "kvkkOnaylanmadi": "Bu metni henüz onaylamadınız.",
+  "kvkkYenidenOnayBekleniyor": "Güncel sürüm için onayınız bekleniyor.",
+  "kvkkSurumEtiketi": "Sürüm {n}",
+  "@kvkkSurumEtiketi": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "kvkkOnayladiginizSurum": "Onayladığınız sürüm: {n}",
+  "@kvkkOnayladiginizSurum": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "kabukKisayollar": "Kısayollar"
 }

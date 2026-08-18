@@ -1650,5 +1650,31 @@
         "type": "int"
       }
     }
-  }
+  },
+  "kvkkYasalMetinler": "Правовые тексты",
+  "kvkkTurAydinlatma": "Уведомление",
+  "kvkkTurAcikRiza": "Явное согласие",
+  "kvkkTurGizlilik": "Политика конфиденциальности",
+  "kvkkTurKullanim": "Условия использования",
+  "kvkkTurCerez": "Политика cookie",
+  "kvkkMetinYayinlanmamis": "Этот текст ещё не опубликован.",
+  "kvkkOnaylanmadi": "Вы ещё не согласились с этим текстом.",
+  "kvkkYenidenOnayBekleniyor": "Ожидается ваше согласие с текущей версией.",
+  "kvkkSurumEtiketi": "Версия {n}",
+  "@kvkkSurumEtiketi": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "kvkkOnayladiginizSurum": "Версия, с которой вы согласились: {n}",
+  "@kvkkOnayladiginizSurum": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "kabukKisayollar": "Ярлыки"
 }

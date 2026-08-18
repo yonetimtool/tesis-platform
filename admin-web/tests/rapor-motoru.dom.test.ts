@@ -161,7 +161,11 @@ describe("ortak modal", () => {
     await userEvent.type(screen.getByLabelText("Başlangıç"), "2026-03-01");
     await userEvent.click(screen.getByRole("button", { name: "İptal" }));
     await userEvent.click(screen.getByRole("button", { name: /Borç\/Alacak/ }));
-    expect((screen.getByLabelText("Başlangıç") as HTMLInputElement).value).toBe("");
+    // (P168 §3) VARSAYILANA doner, BOSA degil: ilk tarih yilbasidir.
+    const yil = new Date().getUTCFullYear();
+    expect((screen.getByLabelText("Başlangıç") as HTMLInputElement).value).toBe(
+      `${yil}-01-01`,
+    );
   });
 });
 
@@ -214,7 +218,13 @@ describe("kuyruk yonlendirmesi", () => {
     await waitFor(() => expect(cagrilar.length).toBe(1));
     // `ismi_goster: false` KVKK'nin ta kendisi: "bos" sayilip dusurulseydi
     // kapiya asilacak listede adlar BASILI cikardi.
-    expect(cagrilar[0].govde).toEqual({ ismi_goster: false });
+    // (P168 §3) Tarihler artik VARSAYILAN DOLU gelir (yilbasi -> bugun).
+    const yil = new Date().getUTCFullYear();
+    expect(cagrilar[0].govde).toEqual({
+      ismi_goster: false,
+      baslangic: `${yil}-01-01`,
+      bitis: new Date().toISOString().slice(0, 10),
+    });
   });
 });
 

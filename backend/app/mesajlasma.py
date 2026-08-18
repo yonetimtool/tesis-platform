@@ -123,6 +123,10 @@ def sms_olc(metin: str) -> SmsOlcum:
 
 
 # ----------------------------- saglayicilar --------------------------------- #
+#: (P168 §4) HIC DENENMEDI durumu — "gonderildi" de "basarisiz" da degil.
+DURUM_YAPILANDIRILMADI = "yapilandirilmadi"
+
+
 @dataclass(frozen=True)
 class GonderimSonucu:
     durum: str
@@ -138,12 +142,27 @@ class MesajSaglayici(ABC):
 
 
 class LogSmsSaglayici(MesajSaglayici):
-    """VARSAYILAN SMS saglayicisi — GERCEKTEN GONDERMEZ, loglar.
+    """SAGLAYICI YOK — gercekten gondermez, loglar ve BUNU SOYLER.
 
-    Gercek bir SMS hesabi [DIŞ] bir istir. Mimari, saglayiciyi bir
-    YAPILANDIRMA DEGISIKLIGIYLE degistirebilmeli: bu yuzden gonderim yolu
-    bugun de sonuna kadar calisir (gecmis yazilir, durum isaretlenir) ve
-    yalnizca bu sinif degisir.
+    ===========================================================================
+    (P168 §4) BU SINIF "GONDERILDI" DIYORDU VE BU BIR KUSURDU
+    ===========================================================================
+    Onceki hâl hicbir sey gondermeden `"gonderildi"` donuyordu. Sonuc
+    ekranda gorunuyordu: yonetici "Gonderim" listesinde yesil bir
+    "Gonderildi" satiri goruyor, sakin ise hicbir sey almiyordu.
+
+    Bir SMS'in gidip gitmedigi HUKUKI bir sorudur (bildirim kaniti);
+    yanlis bir "gonderildi" kaydi, olmayan bir bildirimi ISPAT gibi
+    gosterirdi.
+
+    `basarisiz` da DOGRU DEGIL: o "denedik, olmadi" der ve kullaniciyi
+    "tekrar dene"ye iter — oysa tekrar denemek ayni sonucu verir ve
+    yapilmasi gereken sey AYARLARI DOLDURMAKTIR. Ayri bir durum,
+    arayuzun DOGRU EYLEMI onerebilmesini saglar.
+
+    Gonderim yolu yine SONUNA KADAR calisir (gecmis yazilir, alici
+    cozulur): saglayici bir yapilandirma degisikligiyle takildiginda
+    baska hicbir sey degismemeli.
     """
 
     ad = "log-sms"
@@ -157,10 +176,14 @@ class LogSmsSaglayici(MesajSaglayici):
         logger.info(
             "[SMS/log] %s <- %s", maskele_kimlik(hedef), govde_ozeti(govde)
         )
-        # "gonderildi" DENIR ama "iletildi" DENMEZ: iletim bilgisini yalnizca
-        # gercek saglayici verebilir ve uydurmak, panelde YANLIS bir teslim
-        # kaniti gosterirdi.
-        return GonderimSonucu("gonderildi", self.ad)
+        return GonderimSonucu(
+            DURUM_YAPILANDIRILMADI,
+            self.ad,
+            # HATA METNI KULLANICIYA GOSTERILIR ve NE YAPILACAGINI soyler.
+            # "saglayici yok" demek teshis, "Ayarlar sekmesinden gir"
+            # demek COZUMDUR.
+            "sms_saglayici_yapilandirilmadi",
+        )
 
 
 class NetgsmSmsSaglayici(MesajSaglayici):
@@ -236,7 +259,12 @@ class LogEpostaSaglayici(MesajSaglayici):
             konu,
             govde_ozeti(govde),
         )
-        return GonderimSonucu("gonderildi", self.ad)
+        # (P168 §4) SMS ile AYNI GEREKCE: gonderilmeyen bir e-postayi
+        # "gonderildi" diye kaydetmek, olmayan bir bildirimi kanit gibi
+        # gostermekti.
+        return GonderimSonucu(
+            DURUM_YAPILANDIRILMADI, self.ad, "smtp_yapilandirilmadi"
+        )
 
 
 class SmtpEpostaSaglayici(MesajSaglayici):
@@ -303,32 +331,114 @@ VARSAYILAN_SABLONLAR: tuple[tuple[str, str, str | None, str, str], ...] = (
      "Sayın {adi_soyadi},\n\n{site_adi} için yeni bir duyuru "
      "yayınlanmıştır. Uygulamadan görüntüleyebilirsiniz.\n\n"
      "Saygılarımızla,\n{site_adi} Yönetimi", "operasyonel"),
-    ("eposta", "Kiracı Bakiyesi", "{site_adi} — Kiracı Bakiye Bildirimi",
+    # (P168 §4.2) Brief'te adi "Kiracı Bakiyesi Bildirimi".
+    ("eposta", "Kiracı Bakiyesi Bildirimi", "{site_adi} — Kiracı Bakiye Bildirimi",
      "Sayın {adi_soyadi},\n\n{adres} bağımsız bölümünde oturan kiracının "
      "güncel bakiyesi {kiraci_bakiyesi} TL'dir.\n\n{borcu_detayli}\n\n"
+     "Saygılarımızla,\n{site_adi} Yönetimi", "operasyonel"),
+
+    # ---- (P168 §4) BRIEF'IN HAZIR SABLON LISTESINDEN EKSIK OLANLAR ----
+    # Olculdu: SMS'te "Davetiye" ve "Yeni Duyuru", e-postada "Borç
+    # Girişi", "Tahsilat Girişi" ve "Toplantı Çağrısı" YOKTU. Yeni bir
+    # tesis acildiginda kullanici bunlari sifirdan yazmak zorunda
+    # kaliyordu.
+    ("sms", "Davetiye", None,
+     "Sayın {adi_soyadi}, {site_adi} uygulamasına davet edildiniz. "
+     "Kurulum: {odeme_linki}", "operasyonel"),
+    ("sms", "Yeni Duyuru", None,
+     "{site_adi}: yeni bir duyuru yayınlandı. Uygulamadan "
+     "görüntüleyebilirsiniz.", "operasyonel"),
+    ("eposta", "Borç Girişi", "{site_adi} — Borç Bildirimi",
+     "Sayın {adi_soyadi},\n\n{tarih} tarihinde {adres} bağımsız bölümü "
+     "için {borc} TL borç kaydedilmiştir.\n\n{bakiye_detayli}\n\n"
+     "Saygılarımızla,\n{site_adi} Yönetimi", "operasyonel"),
+    ("eposta", "Tahsilat Girişi", "{site_adi} — Ödemeniz Alındı",
+     "Sayın {adi_soyadi},\n\nÖdemeniz alınmıştır. Güncel bakiyeniz "
+     "{bakiye} TL'dir.\n\nTeşekkür ederiz,\n{site_adi} Yönetimi",
+     "operasyonel"),
+    ("eposta", "Toplantı Çağrısı", "{site_adi} — Genel Kurul Çağrısı",
+     "Sayın {adi_soyadi},\n\n{site_adi} olağan genel kurul toplantısı "
+     "{tarih} tarihinde yapılacaktır. Katılımınızı rica ederiz.\n\n"
      "Saygılarımızla,\n{site_adi} Yönetimi", "operasyonel"),
 )
 
 
-def sms_saglayicisi() -> MesajSaglayici:
+@dataclass(frozen=True)
+class SaglayiciAyari:
+    """(P168 §4) Tek bir tesisin saglayici ayarlari.
+
+    Router bunu veritabanindan (`mesaj_yapilandirma`) okur ve buraya
+    verir. Cekirdek veritabanini TANIMAZ — bu dosyanin tamami saf
+    kalmali (modul basindaki not).
+    """
+
+    sms_saglayici: str | None = None
+    sms_kullanici: str | None = None
+    sms_parola: str | None = None
+    sms_baslik: str | None = None
+    smtp_host: str | None = None
+    smtp_port: int = 587
+    smtp_kullanici: str | None = None
+    smtp_parola: str | None = None
+    smtp_gonderen: str | None = None
+
+
+def _ayardan_veya_env(ayar: SaglayiciAyari | None) -> SaglayiciAyari:
+    """Tesis ayari VARSA o, yoksa ENV.
+
+    ENV YEDEK KALIR ve bu bilincli: saglayici bilgisi bugune kadar
+    ENV'deydi ve calisan kurulumlar var. Tesis kaydini zorunlu kilsaydik,
+    goc anindan itibaren HER TESISTE gonderim durur ve kimse sebebini
+    anlamazdi.
+    """
+    from .config import settings
+
+    if ayar is not None and (ayar.sms_saglayici or ayar.smtp_host):
+        return ayar
+    # `getattr` BILINCLI: testler `settings`i alanlarin yalnizca bir
+    # kismini tasiyan sahte bir nesneyle degistiriyor (SMS testinde SMTP
+    # alanlari yok). Dogrudan erisim, ilgisiz bir testi AttributeError ile
+    # dusururdu — `eposta_saglayicisi` de ayni gerekceyle `getattr`
+    # kullaniyordu.
+    def _al(ad: str, varsayilan=None):
+        return getattr(settings, ad, varsayilan)
+
+    return SaglayiciAyari(
+        sms_saglayici=_al("sms_saglayici"),
+        sms_kullanici=_al("sms_kullanici"),
+        sms_parola=_al("sms_parola"),
+        sms_baslik=_al("sms_baslik"),
+        smtp_host=_al("smtp_host"),
+        smtp_port=int(_al("smtp_port", 587) or 587),
+        smtp_kullanici=_al("smtp_user"),
+        smtp_parola=_al("smtp_password"),
+        smtp_gonderen=_al("smtp_from"),
+    )
+
+
+def sms_saglayicisi(ayar: SaglayiciAyari | None = None) -> MesajSaglayici:
     """(P150) YAPILANDIRMAYA gore SMS saglayicisi — TEK SECIM NOKTASI.
+
+    (P168 §4) Artik TESIS AYARINI da kabul eder; verilmezse ENV'e duser.
 
     Eksik/yarim yapilandirmada LOG saglayicisina duser ve bunu UYARIR.
     Yarim yapilandirmayi "calisiyor" saymak, kodlarin sessizce hicbir yere
     gitmemesi demekti — kullanici giris yapamaz, sebebi de gorunmezdi.
+    LOG saglayicisi artik `yapilandirilmadi` doner, "gonderildi" DEMEZ.
     """
     from .config import settings
 
-    ad = (settings.sms_saglayici or "").strip().lower()
+    a = _ayardan_veya_env(ayar)
+    ad = (a.sms_saglayici or "").strip().lower()
     if not ad:
         return LogSmsSaglayici()
     if ad == "netgsm":
         eksik = [
             k
             for k, v in (
-                ("SMS_KULLANICI", settings.sms_kullanici),
-                ("SMS_PAROLA", settings.sms_parola),
-                ("SMS_BASLIK", settings.sms_baslik),
+                ("SMS_KULLANICI", a.sms_kullanici),
+                ("SMS_PAROLA", a.sms_parola),
+                ("SMS_BASLIK", a.sms_baslik),
             )
             if not v
         ]
@@ -339,9 +449,9 @@ def sms_saglayicisi() -> MesajSaglayici:
             )
             return LogSmsSaglayici()
         return NetgsmSmsSaglayici(
-            settings.sms_kullanici,  # type: ignore[arg-type]
-            settings.sms_parola,  # type: ignore[arg-type]
-            settings.sms_baslik,  # type: ignore[arg-type]
+            a.sms_kullanici,  # type: ignore[arg-type]
+            a.sms_parola,  # type: ignore[arg-type]
+            a.sms_baslik,  # type: ignore[arg-type]
             settings.sms_url,
         )
     logger.error("[SMS] bilinmeyen saglayici '%s' — LOG'a dusuldu", ad)

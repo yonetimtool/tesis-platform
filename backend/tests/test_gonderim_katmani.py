@@ -42,15 +42,25 @@ def test_YAPILANDIRILMAMIS_kanal_sessizce_BASARILI_DONMEZ():
     s = saglayici("whatsapp")
     assert isinstance(s, YapilandirilmamisSaglayici)
     sonuc = s.gonder("+905321112203", None, "deneme")
-    assert sonuc.durum == "basarisiz"
+    # (P168 §4) DURUM ARTIK `yapilandirilmadi` — testin kendi amaci
+    # ("`gonderildi` DEMIYOR olmasi") DEGISMEDI, daha keskin karsilandi.
+    #
+    # `basarisiz` "denedik, olmadi" der ve kullaniciyi "tekrar dene"ye
+    # iter; oysa HIC DENENMEDI ve tekrar denemek ayni sonucu verir.
+    # Yapilmasi gereken AYARLARI DOLDURMAKTIR ve arayuz ancak ayri bir
+    # durumla DOGRU EYLEMI onerebilir.
+    assert sonuc.durum == "yapilandirilmadi"
+    assert sonuc.durum != "gonderildi"
     assert sonuc.hata == "saglayici_yok"
 
 
 def test_BILINMEYEN_kanal_istisna_FIRLATMAZ():
     """Cagiran genelde bir DONGU icindedir; tek bozuk satir kalan 200
-    aliciyi dusurmemeli. Kusur `basarisiz` olarak GECMISE yazilir."""
+    aliciyi dusurmemeli. Kusur GECMISE yazilir — (P168 §4) `basarisiz`
+    olarak degil `yapilandirilmadi` olarak, cunku HIC DENENMEDI."""
     sonuc = saglayici("faks").gonder("x", None, "y")
-    assert sonuc.durum == "basarisiz"
+    # (P168 §4) Bilinmeyen kanal da HIC DENENMEMIS sayilir.
+    assert sonuc.durum == "yapilandirilmadi"
 
 
 def test_ETKIN_KANALLAR_veritabani_enumuyla_AYNI(owner_conn):

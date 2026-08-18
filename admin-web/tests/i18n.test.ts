@@ -116,6 +116,13 @@ describe("sozluk butunlugu", () => {
     // Latin alfabesi kullanan dillerin hepsinde ", " — Arapca "، " ile
     // ayrildigi icin anahtar yine de sozlukte durur.
     ", ",
+    // (P168 §4) "Port" bir PROTOKOL TERIMIDIR ve SMTP ayar ekranlarinda
+    // Ingilizce/Almanca/Fransizca'da da "Port" yazilir. Cevirmek,
+    // sunucusunu kuran kisinin tanidigi kelimeyi degistirmek olurdu.
+    "Port",
+    // "{n} SMS" — icindeki tek kelime SMS bir KISALTMADIR (Short Message
+    // Service) ve yedi dilde de boyle gecer. Cumle degil, birim etiketi.
+    "{n} SMS",
   ]);
 
   // KALAN ACIK (durustce): ne bu olcum ne `TR_HARF`, ic/ig/is harfi
@@ -415,6 +422,17 @@ describe("kaynak taramasi — kabuk/giris yuzeyi", () => {
         // her dilde tum alanlarin dolu oldugunu ve TR metninin baska dile
         // KOPYALANMADIGINI olcer.
         if (göreli.includes("lib/tanitim/")) continue;
+        // (P168 §4.1) GSM-7 KARAKTER KUMESI — ARAYUZ METNI DEGIL, BIR
+        // ALFABE TANIMI. `lib/sms-olcu.ts` SMS'in hangi karakterleri
+        // 7 bitle kodlayabildigini tarif eder ve o kume standardin
+        // (GSM 03.38) kendisidir: `Ä Ö Ñ Ü à é ...` orada BIRER VERI
+        // NOKTASIDIR, kullaniciya gosterilen bir cumle degil.
+        //
+        // Cevrilmesi ANLAMSIZ olurdu — daha kotusu, cevrilse SAYAC
+        // BOZULURDU: kume degisirse hangi mesajin 160, hangisinin 70
+        // karakter oldugu yanlis hesaplanir ve kullanici faturayi
+        // gonderdikten sonra ogrenir.
+        if (göreli.includes("lib/sms-olcu")) continue;
         fs.readFileSync(tam, "utf8")
           .split("\n")
           .forEach((satir, i) => {

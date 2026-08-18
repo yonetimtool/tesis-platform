@@ -63,6 +63,9 @@ from .mesajlasma import (
     LogEpostaSaglayici,
     MesajSaglayici,
     SmtpEpostaSaglayici,
+    DURUM_YAPILANDIRILMADI,
+    SaglayiciAyari,
+    _ayardan_veya_env,
     sms_saglayicisi,
 )
 
@@ -105,10 +108,15 @@ class YapilandirilmamisSaglayici(MesajSaglayici):
         logger.warning(
             "[%s] saglayici yapilandirilmadi — gonderim YAPILMADI", self._kanal
         )
-        return GonderimSonucu("basarisiz", self.ad, hata="saglayici_yok")
+        # (P168 §4) `basarisiz` DEGIL `yapilandirilmadi`: basarisizlik
+        # "denedik, olmadi" der ve kullaniciyi "tekrar dene"ye iter.
+        # Burada HIC DENENMEDI; yapilmasi gereken AYARLARI doldurmaktir.
+        return GonderimSonucu(
+            DURUM_YAPILANDIRILMADI, self.ad, hata="saglayici_yok"
+        )
 
 
-def eposta_saglayicisi() -> MesajSaglayici:
+def eposta_saglayicisi(ayar: SaglayiciAyari | None = None) -> MesajSaglayici:
     """E-POSTA saglayicisi — TEK SECIM NOKTASI (SMS'teki desenin aynisi).
 
     Secim `routers/mesajlar.py` icinden BURAYA tasindi: orada kaldigi
@@ -116,19 +124,20 @@ def eposta_saglayicisi() -> MesajSaglayici:
     SMTP yapilandirmasini kopyalamak zorundaydi ve biri guncellenip oteki
     unutulurdu.
     """
-    sunucu = getattr(settings, "smtp_host", None)
-    if not sunucu:
+    # (P168 §4) TESIS AYARI ONCE, ENV YEDEK.
+    a = _ayardan_veya_env(ayar)
+    if not a.smtp_host:
         return LogEpostaSaglayici()
     return SmtpEpostaSaglayici(
-        sunucu,
-        int(getattr(settings, "smtp_port", 587) or 587),
-        getattr(settings, "smtp_user", None),
-        getattr(settings, "smtp_password", None),
-        getattr(settings, "smtp_from", None) or "no-reply@localhost",
+        a.smtp_host,
+        int(a.smtp_port or 587),
+        a.smtp_kullanici,
+        a.smtp_parola,
+        a.smtp_gonderen or "no-reply@localhost",
     )
 
 
-def saglayici(kanal: str) -> MesajSaglayici:
+def saglayici(kanal: str, ayar: SaglayiciAyari | None = None) -> MesajSaglayici:
     """Kanal -> saglayici. TEK giris noktasi.
 
     Bilinmeyen kanal da `YapilandirilmamisSaglayici` doner (istisna
@@ -137,9 +146,9 @@ def saglayici(kanal: str) -> MesajSaglayici:
     yazilir, yani kusur GECMISTE gorunur.
     """
     if kanal == "sms":
-        return sms_saglayicisi()
+        return sms_saglayicisi(ayar)
     if kanal == "eposta":
-        return eposta_saglayicisi()
+        return eposta_saglayicisi(ayar)
     if kanal == "push":
         return _PushAdaptor()
     return YapilandirilmamisSaglayici(kanal)
@@ -178,9 +187,25 @@ async def gunluk_kalan(session: AsyncSession, tenant_id: uuid.UUID) -> int:
     cozumlemesini buraya tasimak bu turun isi degil; bugunluk UTC gun
     basi kullaniliyor ve bu SINIR YAZILI (bkz. dosya sonu notu).
     """
-    from .models import MesajGonderim
+    from .models import MesajGonderim, MesajYapilandirma
+
+    # (P168 §4.4) KOTA ARTIK TESIS BASINA AYARLANABILIR. Kayit yoksa ya da
+    # bos birakilmissa ENV varsayilani gecerli — ayar sayfasi doldurulmamis
+    # bir tesiste kotanin SIFIRA dusmesi, hicbir mesaj gonderilememesi
+    # demekti.
+    ayarli = (
+        await session.execute(
+            select(MesajYapilandirma.gunluk_kota).where(
+                MesajYapilandirma.tenant_id == tenant_id
+            )
+        )
+    ).scalar_one_or_none()
+    sinir = ayarli or GUNLUK_KOTA
 
     gun_basi = datetime.combine(date.today(), time.min, tzinfo=timezone.utc)
+    # `yapilandirilmadi` SAYILMAZ: hicbir sey gonderilmediyse kotadan da
+    # dusmemeli — yoksa ayarlari doldurmamis bir tesis, hic mesaj
+    # gondermeden kotasini tuketirdi.
     sayi = (
         await session.execute(
             select(func.count())
@@ -188,10 +213,11 @@ async def gunluk_kalan(session: AsyncSession, tenant_id: uuid.UUID) -> int:
             .where(
                 MesajGonderim.tenant_id == tenant_id,
                 MesajGonderim.created_at >= gun_basi,
+                MesajGonderim.durum != "yapilandirilmadi",
             )
         )
     ).scalar_one()
-    return max(0, GUNLUK_KOTA - int(sayi))
+    return max(0, sinir - int(sayi))
 
 
 async def kota_kontrol(

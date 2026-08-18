@@ -99,8 +99,17 @@ def test_SURUM_ARTINCA_yeniden_onay_gerekir(client, rol):
     _yayinla(client, rol["yonetici"])  # surum 2
     d = client.get("/kvkk/durum", headers=rol["sakin"]).json()
     assert d["onay_gerekli"] is True
-    # ESKI onay SILINMEDI: hangi surume ne zaman onay verildigi durur.
-    assert d["onayladigi_surum"] is None  # GUNCEL surum icin onay yok
+    # (P168 §5) `onayladigi_surum` ARTIK KULLANICININ SON ONAYINI doner
+    # (burada 1); eskiden `None` donuyordu.
+    #
+    # ESKI DAVRANIS DAHA AZ DURUSTTU: alanin adi "onayladigi surum" ve
+    # kullanici GERCEKTEN 1. surumu onaylamisti — `None`, "hicbir sey
+    # onaylamadi" demekti ve bu YANLISTI.
+    #
+    # Yeni deger ayrica GEREKLI: "yeniden onay gerekmez" bayragi tam
+    # olarak "onayladigi surum < guncel surum" farkini kullaniyor.
+    assert d["onayladigi_surum"] == m1["surum"]
+    assert d["onayladigi_surum"] < d["guncel_surum"]
 
 
 def test_ESKI_SURUME_onay_409(client, rol):

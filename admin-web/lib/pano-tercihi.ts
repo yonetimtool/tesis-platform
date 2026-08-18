@@ -99,7 +99,10 @@ export interface CozulmusBolum extends PanoBolumTanimi {
 }
 
 /** Widget seridinde en fazla kac kisayol (brief: alti). */
-export const WIDGET_SINIRI = 6;
+// (P168 §1.2) ALTI DEGIL YEDI. Serit tam genislikte ve YEDI ESIT alan
+// tasiyor; sinir tek bir yerde durur ki serit, secim modali ve kayit
+// govdesi ayrisamasin.
+export const WIDGET_SINIRI = 7;
 
 /**
  * Kayitli tercihi VARSAYILANLA birlestir.

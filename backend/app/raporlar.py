@@ -91,6 +91,7 @@ class RaporParam:
     evrak_bilgisi_goster: bool = True
     #: Gelir-gider ozet: kalem GRUBUNA gore de kir.
     grup_goster: bool = False
+    iletisim_goster: bool = False
 
 
 @dataclass(frozen=True)

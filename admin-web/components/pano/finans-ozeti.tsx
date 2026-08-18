@@ -200,7 +200,8 @@ export function PanoFinansOzeti() {
     <div className="space-y-4">
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {KARTLAR.map((k) => (
-          <Kart key={k.anahtar} as="a" {...{ href: k.href }} className="p-kart">
+          // (P168 §1.1) BU KARTLAR DA OLU BAGLANTIYDI — ayni kusur.
+          <Kart key={k.anahtar} href={k.href} className="p-kart">
             <span className="flex items-start justify-between gap-2">
               <span className="min-w-0">
                 <span

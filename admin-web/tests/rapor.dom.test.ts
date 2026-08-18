@@ -70,9 +70,11 @@ describe("Rapor sayfasi", () => {
     await userEvent.click(screen.getByRole("button", { name: "Göster" }));
 
     await waitFor(() => expect(govdeler.length).toBe(1));
-    // Yalniz `ismi_goster` gitmeli; bos tarih/blok alanlari YOK.
-    expect(Object.keys(govdeler[0]).sort()).toEqual(["ismi_goster"]);
+    // (P168 §3) Tarih alanlari artik VARSAYILAN DOLU gelir (yilbasi ->
+    // bugun); `blok` bos oldugu icin govdeye GIRMEZ — olculen sey odur.
+    expect(Object.keys(govdeler[0]).sort()).toEqual(["baslangic", "ismi_goster"]);
     expect(govdeler[0].ismi_goster).toBe(true);
+    expect(govdeler[0].baslangic).toBe(`${new Date().getUTCFullYear()}-01-01`);
   });
 
   it("dolu parametreler govdeye GIRER", async () => {

@@ -252,9 +252,10 @@ def test_icra_durum_guncellenir(client, adm):
                          params={"limit": 5}).json()["items"][0]["id"]
     d = client.post("/finans/icra-dosyalari", headers=adm, json={
         "dosya_no": f"2029/{_sfx()}", "user_id": kisi_id}).json()
+    # (P168 §2) Durum sozlugu degisti (goc 0062): brief'in bes degeri.
     r = client.patch(f"/finans/icra-dosyalari/{d['id']}", headers=adm,
-                     json={"durum": "tahsil_edildi"})
-    assert r.status_code == 200 and r.json()["durum"] == "tahsil_edildi"
+                     json={"durum": "mahkemede"})
+    assert r.status_code == 200 and r.json()["durum"] == "mahkemede"
 
 
 # ================================ OZET ====================================== #

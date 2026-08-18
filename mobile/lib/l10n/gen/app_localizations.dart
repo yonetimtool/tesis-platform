@@ -9052,6 +9052,78 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'{kb} KB'**
   String dokumanBoyutKb(int kb);
+
+  /// No description provided for @kvkkYasalMetinler.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yasal Metinler'**
+  String get kvkkYasalMetinler;
+
+  /// No description provided for @kvkkTurAydinlatma.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aydınlatma Metni'**
+  String get kvkkTurAydinlatma;
+
+  /// No description provided for @kvkkTurAcikRiza.
+  ///
+  /// In tr, this message translates to:
+  /// **'Açık Rıza'**
+  String get kvkkTurAcikRiza;
+
+  /// No description provided for @kvkkTurGizlilik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gizlilik Politikası'**
+  String get kvkkTurGizlilik;
+
+  /// No description provided for @kvkkTurKullanim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kullanım Koşulları'**
+  String get kvkkTurKullanim;
+
+  /// No description provided for @kvkkTurCerez.
+  ///
+  /// In tr, this message translates to:
+  /// **'Çerez Politikası'**
+  String get kvkkTurCerez;
+
+  /// No description provided for @kvkkMetinYayinlanmamis.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu metin henüz yayınlanmamış.'**
+  String get kvkkMetinYayinlanmamis;
+
+  /// No description provided for @kvkkOnaylanmadi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu metni henüz onaylamadınız.'**
+  String get kvkkOnaylanmadi;
+
+  /// No description provided for @kvkkYenidenOnayBekleniyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Güncel sürüm için onayınız bekleniyor.'**
+  String get kvkkYenidenOnayBekleniyor;
+
+  /// No description provided for @kvkkSurumEtiketi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sürüm {n}'**
+  String kvkkSurumEtiketi(int n);
+
+  /// No description provided for @kvkkOnayladiginizSurum.
+  ///
+  /// In tr, this message translates to:
+  /// **'Onayladığınız sürüm: {n}'**
+  String kvkkOnayladiginizSurum(int n);
+
+  /// No description provided for @kabukKisayollar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kısayollar'**
+  String get kabukKisayollar;
 }
 
 class _AppLocalizationsDelegate

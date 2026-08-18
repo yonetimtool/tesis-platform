@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -38,14 +38,38 @@ router = APIRouter(tags=["kvkk"])
 _YAYINCI = require_role("admin", "yonetici")
 
 
-async def _guncel(db: AsyncSession) -> KvkkMetin | None:
+#: (P168 §5) Brief'in bes metni — SIRA brief'in sirasi.
+KVKK_TURLER: tuple[str, ...] = (
+    "aydinlatma", "acik_riza", "gizlilik", "kullanim_kosullari", "cerez",
+)
+VARSAYILAN_TUR = "aydinlatma"
+
+
+def _cikti(metin: KvkkMetin, *, yururlukte: bool) -> KvkkMetinOut:
+    """`KvkkMetinOut` + TURETILEN `yururlukte` bayragi."""
+    return KvkkMetinOut.model_validate(metin).model_copy(
+        update={"yururlukte": yururlukte}
+    )
+
+
+async def _guncel(db: AsyncSession, tur: str = VARSAYILAN_TUR) -> KvkkMetin | None:
+    """Bir TURUN yururlukteki metni.
+
+    (P168 §5) YURURLUKTE OLAN = O TURUN EN YUKSEK SURUMU. Ayri bir
+    `yururlukte` kolonu ACILMADI: iki satirin ayni anda yururlukte olmasi
+    ya da hicbirinin olmamasi mumkun hale gelirdi ve bu, "hangi metni
+    onayliyorum" sorusunu cevapsiz birakirdi. Turetilen bir deger
+    tutarsiz olamaz.
+    """
     return (
         await db.execute(
-            # (P108) KUYRUK GEREKMEZ: `(tenant_id, surum)` BENZERSIZDIR
-            # (`uq_kvkk_metin_surum`), yani tenant icinde iki satir ayni
-            # `surum`u tasiyamaz ve siralama zaten kararlidir. Buraya `id`
-            # eklemek, var olmayan bir esitligi cozmek olurdu.
-            select(KvkkMetin).order_by(KvkkMetin.surum.desc()).limit(1)
+            # (P108) KUYRUK GEREKMEZ: `(tenant_id, tur, surum)`
+            # BENZERSIZDIR (`uq_kvkk_metin_surum`), yani ayni tur icinde
+            # iki satir ayni `surum`u tasiyamaz ve siralama kararlidir.
+            select(KvkkMetin)
+            .where(KvkkMetin.tur == tur)
+            .order_by(KvkkMetin.surum.desc())
+            .limit(1)
         )
     ).scalar_one_or_none()
 
@@ -53,6 +77,7 @@ async def _guncel(db: AsyncSession) -> KvkkMetin | None:
 # ============================== METIN ======================================= #
 @router.get("/kvkk/metin", response_model=KvkkMetinOut)
 async def guncel_metin(
+    tur: str = Query(VARSAYILAN_TUR),
     db: AsyncSession = Depends(get_tenant_db),
     _: AppUser = Depends(get_current_user),
 ) -> KvkkMetinOut:
@@ -61,24 +86,34 @@ async def guncel_metin(
     Rol suzgeci YOK: metin kullanicinin KENDI verisi hakkindadir; okuyamamak
     aydinlatmanin kendisini imkansiz kilardi.
     """
-    metin = await _guncel(db)
+    if tur not in KVKK_TURLER:
+        raise APIError(422, "validation_error", "kvkk_turu_gecersiz")
+    metin = await _guncel(db, tur)
     if metin is None:
         raise APIError(404, "not_found", "kvkk_metni_yayinlanmamis")
-    return KvkkMetinOut.model_validate(metin)
+    return _cikti(metin, yururlukte=True)
 
 
 @router.get("/kvkk/metinler", response_model=list[KvkkMetinOut])
 async def surum_gecmisi(
+    tur: str | None = Query(None),
     db: AsyncSession = Depends(get_tenant_db),
     _: AppUser = Depends(_YAYINCI),
 ) -> list[KvkkMetinOut]:
     """Tum surumler (yonetim). Eski surumler SILINMEZ: onay kayitlari
     onlara referans verir ve "hangi metne onay verildi" sorusu
     yanitlanabilir kalmalidir."""
-    kayitlar = (
-        await db.execute(select(KvkkMetin).order_by(KvkkMetin.surum.desc()))
-    ).scalars().all()
-    return [KvkkMetinOut.model_validate(k) for k in kayitlar]
+    q = select(KvkkMetin).order_by(KvkkMetin.tur, KvkkMetin.surum.desc())
+    if tur is not None:
+        if tur not in KVKK_TURLER:
+            raise APIError(422, "validation_error", "kvkk_turu_gecersiz")
+        q = q.where(KvkkMetin.tur == tur)
+    kayitlar = (await db.execute(q)).scalars().all()
+    # YURURLUKTE olan TUR BASINA en yuksek surumdur ve TURETILIR.
+    en_yuksek: dict[str, int] = {}
+    for k in kayitlar:
+        en_yuksek[k.tur] = max(en_yuksek.get(k.tur, 0), k.surum)
+    return [_cikti(k, yururlukte=k.surum == en_yuksek[k.tur]) for k in kayitlar]
 
 
 @router.post("/kvkk/metin", response_model=KvkkMetinOut, status_code=201)
@@ -97,16 +132,20 @@ async def metin_yayinla(
     AYNI GOVDE YENIDEN YAYINLANMAZ (409): degismemis bir metin icin herkesi
     yeniden onaya zorlamak, onayi anlamsiz bir tikla dondururdu.
     """
-    mevcut = await _guncel(db)
+    # (P168 §5) SURUM TUR BASINA ilerler: gizlilik politikasi yayinlamak
+    # aydinlatma metninin surum numarasini ATLATMAMALI.
+    mevcut = await _guncel(db, body.tur)
     if mevcut is not None and mevcut.govde.strip() == body.govde.strip():
         raise APIError(409, "conflict", "kvkk_metni_degismedi")
 
     sonraki = ((mevcut.surum if mevcut else 0) or 0) + 1
     obj = KvkkMetin(
         tenant_id=user.tenant_id,
+        tur=body.tur,
         surum=sonraki,
         baslik=body.baslik,
         govde=body.govde,
+        yeniden_onay_gerekir=body.yeniden_onay_gerekir,
         yayinlayan_user_id=user.id,
     )
     db.add(obj)
@@ -117,37 +156,68 @@ async def metin_yayinla(
     await db.refresh(obj)
     await audit_user(
         db, user, Action.KVKK_YAYIN, resource_type="kvkk_metin",
-        resource_id=obj.id, meta={"surum": obj.surum},
+        resource_id=obj.id,
+        meta={"tur": obj.tur, "surum": obj.surum,
+              "yeniden_onay": obj.yeniden_onay_gerekir},
     )
-    return KvkkMetinOut.model_validate(obj)
+    return _cikti(obj, yururlukte=True)
 
 
 # ============================== DURUM + ONAY ================================ #
 @router.get("/kvkk/durum", response_model=KvkkDurumOut)
 async def durum(
+    tur: str = Query(VARSAYILAN_TUR),
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(get_current_user),
 ) -> KvkkDurumOut:
     """Istemcinin onay kapisini kurmasi icin gereken TEK cagri."""
-    metin = await _guncel(db)
+    if tur not in KVKK_TURLER:
+        raise APIError(422, "validation_error", "kvkk_turu_gecersiz")
+    metin = await _guncel(db, tur)
     if metin is None:
         # Tenant metin yayinlamadiysa kapi KURULMAZ. Metinsiz bir kapi,
         # kullaniciya okumadan onaylatmak olurdu.
         return KvkkDurumOut(metin_var=False, onay_gerekli=False)
 
+    # KULLANICININ BU TURDEKI EN SON ONAYI (guncel surum olmak zorunda
+    # degil): "yeniden onay gerekmez" bayragi tam olarak bu farki
+    # kullanir.
     onay = (
         await db.execute(
-            select(KvkkOnay).where(
-                KvkkOnay.user_id == user.id, KvkkOnay.surum == metin.surum
-            )
+            select(KvkkOnay)
+            .where(KvkkOnay.user_id == user.id, KvkkOnay.tur == tur)
+            # KIRICI OLARAK `id`: `uq_kvkk_onay` (tenant, user, tur, surum)
+            # zaten iki satirin ayni surumu tasimasini engelliyor, yani
+            # siralama kisit sayesinde kararli. Yine de `id` ekleniyor —
+            # kararliligin bir KISITA bagli olmasi, o kisit bir gun
+            # degistiginde SESSIZCE bozulmasi demekti ve
+            # `test_sayfalama_siralamasi` bu sinifi tam da bu yuzden
+            # tariyor. Bedeli yok.
+            .order_by(KvkkOnay.surum.desc(), KvkkOnay.id.desc())
+            .limit(1)
         )
     ).scalar_one_or_none()
+
+    # (P168 §5) YENIDEN ONAY KURALI.
+    #
+    # Guncel surumu onaylamis -> gerek yok.
+    # Hic onaylamamis -> GEREKLI (metni hic gormedi).
+    # Eski bir surumu onaylamis -> GUNCEL SURUMUN BAYRAGI karar verir:
+    #   bir yazim hatasi duzeltmesi 200 sakini yeniden onay ekranina
+    #   sokmamali; esasa iliskin bir degisiklik SOKMALI.
+    if onay is None:
+        gerekli = True
+    elif onay.surum >= metin.surum:
+        gerekli = False
+    else:
+        gerekli = metin.yeniden_onay_gerekir
+
     return KvkkDurumOut(
         metin_var=True,
         guncel_surum=metin.surum,
         onayladigi_surum=onay.surum if onay else None,
         onay_at=onay.onay_at if onay else None,
-        onay_gerekli=onay is None,
+        onay_gerekli=gerekli,
     )
 
 
@@ -166,7 +236,10 @@ async def onayla(
     IDEMPOTENT: ayni surum icin ikinci cagri yeni satir uretmez (cift
     dokunus/ag tekrari onayi cogaltmasin).
     """
-    metin = await _guncel(db)
+    tur = body.tur
+    if tur not in KVKK_TURLER:
+        raise APIError(422, "validation_error", "kvkk_turu_gecersiz")
+    metin = await _guncel(db, tur)
     if metin is None:
         raise APIError(404, "not_found", "kvkk_metni_yayinlanmamis")
     if body.surum != metin.surum:
@@ -175,21 +248,23 @@ async def onayla(
     var = (
         await db.execute(
             select(KvkkOnay.id).where(
-                KvkkOnay.user_id == user.id, KvkkOnay.surum == metin.surum
+                KvkkOnay.user_id == user.id,
+                KvkkOnay.tur == tur,
+                KvkkOnay.surum == metin.surum,
             )
         )
     ).scalar_one_or_none()
     if var is None:
         db.add(KvkkOnay(
             tenant_id=user.tenant_id, user_id=user.id,
-            kvkk_metin_id=metin.id, surum=metin.surum,
+            kvkk_metin_id=metin.id, tur=tur, surum=metin.surum,
         ))
         await db.flush()
         await audit_user(
             db, user, Action.KVKK_ONAY, resource_type="kvkk_metin",
-            resource_id=metin.id, meta={"surum": metin.surum},
+            resource_id=metin.id, meta={"tur": tur, "surum": metin.surum},
         )
-    return await durum(db=db, user=user)
+    return await durum(tur=tur, db=db, user=user)
 
 
 # ============================ PAZARLAMA IZINLERI ============================ #

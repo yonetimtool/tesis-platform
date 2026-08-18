@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 /**
  * (P160 / Asama 3) METALIK YUZEY PRIMITIFLERI — `Kart`, `Panel`, `Bolum`.
  *
@@ -50,6 +52,20 @@ export interface KartProps {
   /** Semantik etiket — kart bir `section`/`article` olabilmeli. */
   as?: ElementType;
   onClick?: () => void;
+  /**
+   * (P168 §1.1) BAGLANTI KARTI — `href` verilince kart bir Next `Link`
+   * olur ve istemci tarafi gezinme yapar.
+   *
+   * NEDEN PROP OLDU: cagiranlar `as="a"` + `{...{href}}` yaziyordu ve
+   * `href` BU BILESENE HIC ULASMIYORDU — `Kart` fazladan prop'lari
+   * yaymaz. JSX spread'i TypeScript'in fazla-ozellik denetiminden
+   * kactigi icin derleyici de susuyordu. Sonuc: `<a>` etiketi HREF'SIZ
+   * ciziliyor, yani ne tiklanabiliyor ne klavyeyle odaklanilabiliyordu
+   * (widget seridi + finansal ozet kartlari).
+   *
+   * Artik `href` TIPLI: yanlis kullanim derleme hatasi verir.
+   */
+  href?: string;
 }
 
 /**
@@ -65,25 +81,30 @@ export function Kart({
   style,
   as,
   onClick,
+  href,
 }: KartProps) {
   // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
-  const Etiket = (as ?? (onClick ? ETIKET_DUGME : ETIKET_KUTU)) as ElementType;
+  // HREF VARSA `Link` KAZANIR: `as="a"` yazan eski cagirilar da istemci
+  // tarafi gezinmeye tasinsin — ham `<a>` tam sayfa yenilemesi yapar ve
+  // panelde her tiklamada oturum kabugu bastan cizilirdi.
+  const Etiket = (href ? Link : (as ?? (onClick ? ETIKET_DUGME : ETIKET_KUTU))) as ElementType;
   // (P161) TIKLANABILIR KART VARSAYILAN OLARAK YUKSELIR.
   //
   // Brief "kart hover: 2 px yukselme + daha derin golge" der ama `kalkan`
   // opt-in'di ve cogu tiklanabilir kartta unutulmustu: tiklanabildigi
   // ekrandan anlasilmiyordu. Yukselme artik ETKILESIMDEN turer; kapatmak
   // isteyen `kalkan={false}` yazar (karar hala cagiranin).
-  const yukselsin = kalkan ?? Boolean(onClick);
+  const yukselsin = kalkan ?? Boolean(onClick || href);
   return (
     <Etiket
       onClick={onClick}
+      href={href}
       type={Etiket === "button" ? "button" : undefined}
       className={[
         TON_SINIFI[ton],
         yukselsin ? "yz-lift" : "",
         dolgu ? "p-4" : "",
-        onClick ? "text-start w-full" : "",
+        onClick || href ? "text-start w-full" : "",
         className,
       ]
         .filter(Boolean)

@@ -252,8 +252,27 @@ describe("(P160) Icra — borclu artik SECILIR, UUID yazilmaz", () => {
     );
   });
 
-  it("YONETICI yazamaz: 'Yeni dosya' CIZILMEZ (403 alacak dugme yok)", async () => {
+  it("(P168 §2) YONETICI ARTIK YAZAR: 'Yeni dosya' CIZILIR", async () => {
+    // ESKI OLCUM TERSINEYDI ve o gun DOGRUYDU: uc `require_role("admin")`
+    // idi, basilacak ama 403 alacak bir dugme cizmemek dogru karardi.
+    //
+    // P168'de olculdu ki bu, brief'in "icra olusturma yapilmamis"
+    // bildiriminin KOK NEDENIYDI: yonetici icin sayfa SALT
+    // GORUNTULEMEYDI. Uc admin+yonetici'ye acildi (icra dosyasi acmak
+    // TESIS YONETIMI isidir) ve dugme artik cizilmeli.
     icraSahtele("yonetici");
+    ciz(IcraPage);
+    await waitFor(() => expect(screen.getByText("2026/123")).toBeInTheDocument());
+    expect(
+      screen.getByRole("button", { name: "Yeni icra dosyası" }),
+    ).toBeInTheDocument();
+  });
+
+  it("(P168 §2) SAHA ROLU hala YAZAMAZ — genisleme SINIRLI", async () => {
+    // Karsilik olcumu: yetki YONETICIYE acildi, HERKESE degil. Bu satir
+    // olmasaydi "dugmeyi herkese cizelim" diyen bir regresyon testten
+    // gecerdi.
+    icraSahtele("security");
     ciz(IcraPage);
     await waitFor(() => expect(screen.getByText("2026/123")).toBeInTheDocument());
     expect(screen.queryByRole("button", { name: "Yeni icra dosyası" })).toBeNull();

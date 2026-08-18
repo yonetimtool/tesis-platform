@@ -4632,7 +4632,8 @@ class GecikmeAyarUpdate(BaseModel):
 # ile ayrilir. TUTAR HER ZAMAN POZITIF; isaret `yon`dadir.
 HareketTip = Literal["tahsilat", "gider", "gelir", "virman", "iade", "acilis"]
 HareketYon = Literal["giris", "cikis"]
-IcraDurum = Literal["acik", "takipte", "tahsil_edildi", "kapandi"]
+#: (P168 §2) Brief: Baginiz · Beklemede · Avukatta · Mahkeme Surecinde · Kapandi
+IcraDurum = Literal["baginiz", "beklemede", "avukatta", "mahkemede", "kapandi"]
 
 
 class HareketOut(BaseModel):
@@ -4808,7 +4809,7 @@ class IcraDosyasiCreate(BaseModel):
     user_id: uuid.UUID
     veris_tarihi: date | None = None
     avukat: str | None = Field(None, max_length=150)
-    durum: IcraDurum = "acik"
+    durum: IcraDurum = "beklemede"
     aciklama: str | None = Field(None, max_length=1000)
 
 
@@ -5098,6 +5099,11 @@ class RaporParametre(BaseModel):
     aciklamalari_goster: bool = True
     evrak_bilgisi_goster: bool = True
     grup_goster: bool = False
+    #: (P168 §3) Site Sakinleri Listesi'nde "Iletisim Bilgileri goster".
+    #: VARSAYILAN KAPALI: telefon ve e-posta kisisel veridir; kapiya
+    #: asilacak ya da toplantida dagitilacak bir listede varsayilan
+    #: olarak BULUNMAMALI (amac sinirliligi). Isteyen acar.
+    iletisim_goster: bool = False
 
     @model_validator(mode="after")
     def _aralik_tutarli(self) -> "RaporParametre":
@@ -5389,6 +5395,86 @@ class MesajGonderimListResponse(BaseModel):
     items: list[MesajGonderimOut]
 
 
+class MesajYapilandirmaOut(BaseModel):
+    """(P168 §4.4) Ayarlar ekranina donen yapilandirma.
+
+    ===========================================================================
+    SIRLAR HIC DONMEZ — "maskeli" bile degil
+    ===========================================================================
+    Brief "sirlar arayuzde maskeli gosterilsin" diyor. Bunu `****` gibi
+    bir metin dondurerek yapmak KOLAY ama YANLIS olurdu: maskeli deger de
+    bir DEGERDIR, forma girer ve kullanici "kaydet"e bastiginda gercek
+    parolanin uzerine `****` yazilirdi.
+
+    Bunun yerine deger HIC DONMEZ; yalnizca "dolu mu" bayragi doner.
+    Arayuz bos bir parola alani cizer ve altinda "kayitli bir parola var,
+    degistirmek icin yenisini yazin" der. Bos birakilirsa sunucu mevcut
+    degeri KORUR.
+    """
+
+    model_config = ConfigDict(from_attributes=True)
+
+    sms_saglayici: str | None = None
+    sms_kullanici: str | None = None
+    sms_baslik: str | None = None
+    #: Parolanin KENDISI degil, VARLIGI.
+    sms_parola_var: bool = False
+    smtp_host: str | None = None
+    smtp_port: int = 587
+    smtp_kullanici: str | None = None
+    smtp_parola_var: bool = False
+    smtp_gonderen: str | None = None
+    gunluk_kota: int | None = None
+    #: Bugun kac gonderim yapildi — kotanin ne kadarinin kullanildigini
+    #: gostermek, kullaniciyi "neden gonderilmiyor" sorusuyla bas basa
+    #: birakmamak icin.
+    bugun_gonderilen: int = 0
+    #: Kanal basina "gercekten gonderebilir miyim". Arayuz bunu okur ve
+    #: gonderim ekraninda ONCEDEN uyarir — gonderdikten SONRA degil.
+    sms_hazir: bool = False
+    eposta_hazir: bool = False
+
+
+class MesajYapilandirmaUpdate(BaseModel):
+    """Kismi guncelleme. BOS BIRAKILAN PAROLA MEVCUDU KORUR.
+
+    `None` "degistirme" demek, bos dizge ise "TEMIZLE" demektir — ikisini
+    ayirmasaydik kayitli bir parolayi silmenin hicbir yolu olmazdi.
+    """
+
+    sms_saglayici: str | None = Field(None, max_length=40)
+    sms_kullanici: str | None = Field(None, max_length=150)
+    sms_parola: str | None = Field(None, max_length=200)
+    sms_baslik: str | None = Field(None, max_length=40)
+    smtp_host: str | None = Field(None, max_length=200)
+    smtp_port: int | None = Field(None, ge=1, le=65535)
+    smtp_kullanici: str | None = Field(None, max_length=200)
+    smtp_parola: str | None = Field(None, max_length=200)
+    smtp_gonderen: str | None = Field(None, max_length=200)
+    #: NULL = sinir yok; 0 KABUL EDILMEZ ("kapali" demek olurdu).
+    gunluk_kota: int | None = Field(None, ge=1, le=100000)
+
+    @model_validator(mode="after")
+    def _en_az_bir(self) -> "MesajYapilandirmaUpdate":
+        if not self.model_fields_set:
+            raise ValueError("en az bir alan gerekli")
+        return self
+
+
+class MesajTestGonderim(BaseModel):
+    """(P168 §4.4) Test gonderimi — ayarlarin GERCEKTEN calistigini olcer."""
+
+    kanal: MesajKanal
+    #: Telefon ya da e-posta; hangisi oldugunu `kanal` soyler.
+    hedef: str = Field(..., min_length=3, max_length=200)
+
+
+class MesajTestSonuc(BaseModel):
+    durum: str
+    saglayici: str
+    hata: str | None = None
+
+
 class MesajGonderSonuc(BaseModel):
     gonderildi: int
     basarisiz: int
@@ -5500,21 +5586,43 @@ class DokumanListResponse(BaseModel):
     items: list[DokumanOut]
 
 
+#: (P168 §5) Brief'in bes yasal metni.
+KvkkTur = Literal[
+    "aydinlatma", "acik_riza", "gizlilik", "kullanim_kosullari", "cerez"
+]
+
+
 class KvkkMetinCreate(BaseModel):
     """Yeni SURUM yayinla. `surum` ISTEMCIDEN ALINMAZ — sunucu artirir:
     istemcinin surum secmesi, iki yoneticinin ayni numarayi vermesi ya da
     numara atlamasi demekti."""
 
+    #: (P168 §5) Hangi yasal metin. Varsayilan `aydinlatma` — bugune
+    #: kadar yayinlanan tek metin oydu ve mevcut istemciler `tur`
+    #: gondermiyor.
+    tur: KvkkTur = "aydinlatma"
     baslik: str = Field(..., min_length=1, max_length=200)
     govde: str = Field(..., min_length=1, max_length=100_000)
+    #: (P168 §5) VARSAYILAN `True` ve bu bilincli: guvenli yon SORMAKTIR.
+    #: `False` varsayilan olsaydi, esasli bir degisikligi yayinlayan
+    #: yonetici kutuyu isaretlemeyi unuttugunda kimseye sorulmaz ve bu
+    #: SESSIZCE hukuki bir eksiklik olurdu. Yazim hatasi duzeltmeleri
+    #: icin `False` gonderilir.
+    yeniden_onay_gerekir: bool = True
 
 
 class KvkkMetinOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: uuid.UUID
+    tur: KvkkTur = "aydinlatma"
     surum: int
     baslik: str
     govde: str
+    yeniden_onay_gerekir: bool = True
+    #: (P168 §5) TURETILIR, saklanmaz: yururlukte olan tur basina EN
+    #: YUKSEK surumdur. Kolon olsaydi iki metin ayni anda yururlukte
+    #: olabilir ya da hicbiri olmayabilirdi.
+    yururlukte: bool = False
     created_at: datetime
 
 
@@ -5535,6 +5643,9 @@ class KvkkOnayIstek(BaseModel):
     bildirir. Sunucu guncel surumle karsilastirir — arada metin
     degistiyse onay ESKI METNE ait olurdu ve 409 doner."""
 
+    #: (P168 §5) Hangi metnin onayi. Varsayilan, mevcut istemcileri
+    #: bozmamak icin `aydinlatma`.
+    tur: KvkkTur = "aydinlatma"
     surum: int = Field(..., ge=1)
 
 

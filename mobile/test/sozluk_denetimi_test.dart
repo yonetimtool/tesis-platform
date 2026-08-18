@@ -42,6 +42,11 @@ const _tumKopyaIstisnalari = {
   //   Kamera: tr == de ("Kamera"), fr "Caméra", ru "Камера" AYRI.
   //   Manuel: tr == fr ("Manuel"), de "Manuell", es "Manual" AYRI.
   'ihlalKaynakKamera', 'ihlalKaynakManuel',
+  // (P167 ek) "KB" bir BIRIM KISALTMASIDIR (kilobayt) ve tr/en/ar/ru/de/es
+  // hepsinde ayni yazilir; yalniz Fransizca "Ko" kullanir ve o ZATEN
+  // farkli. Cevirmek, dosya boyutunu tanimadigi bir birimle gostermek
+  // olurdu.
+  'dokumanBoyutKb',
 };
 
 Map<String, dynamic> _arb(String dil) => jsonDecode(

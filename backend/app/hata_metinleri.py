@@ -820,6 +820,16 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "Au moins un champ doit être fourni.",
         "es": "Debe enviarse al menos un campo.",
     },
+    # ---- (P168 §5) KVKK metin turleri
+    "kvkk_turu_gecersiz": {
+        "tr": "Geçersiz metin türü.",
+        "en": "Invalid text type.",
+        "ar": "نوع النص غير صالح.",
+        "ru": "Недопустимый тип текста.",
+        "de": "Ungueltiger Textart.",
+        "fr": "Type de texte invalide.",
+        "es": "Tipo de texto no válido.",
+    },
     # ---- (P167 Asama 6.3) Dokuman yonetimi
     "dokuman_bulunamadi": {
         "tr": "Doküman bulunamadı.",

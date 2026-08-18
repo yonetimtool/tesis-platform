@@ -443,6 +443,21 @@ class _IzinlerKarti extends ConsumerWidget {
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.push(AppRoutes.kvkkMetin),
               ),
+            // (P168 §5) YASAL METINLER — bes metnin tamami ve ONAY
+            // GECMISI. Yukaridaki satirdan AYRI ve KOSULSUZ:
+            //   * O satir yalniz AYDINLATMA metnini acar ve tesis onu
+            //     yayinlamadiysa gorunmez.
+            //   * Bu satir bes metni de kapsar; biri yayinlanmamissa o
+            //     sekme "henuz yayinlanmamis" der. Kosula baglasaydik,
+            //     aydinlatma metni olmayan bir tesiste kullanici
+            //     gizlilik politikasina HIC ulasamazdi.
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.gavel_outlined),
+              title: Text(l10n.kvkkYasalMetinler),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push(AppRoutes.yasalMetinler),
+            ),
           ],
         ),
       ),

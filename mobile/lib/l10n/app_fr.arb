@@ -1650,5 +1650,31 @@
         "type": "int"
       }
     }
-  }
+  },
+  "kvkkYasalMetinler": "Textes juridiques",
+  "kvkkTurAydinlatma": "Note d'information",
+  "kvkkTurAcikRiza": "Consentement explicite",
+  "kvkkTurGizlilik": "Politique de confidentialité",
+  "kvkkTurKullanim": "Conditions d'utilisation",
+  "kvkkTurCerez": "Politique de cookies",
+  "kvkkMetinYayinlanmamis": "Ce texte n'a pas encore été publié.",
+  "kvkkOnaylanmadi": "Vous n'avez pas encore consenti à ce texte.",
+  "kvkkYenidenOnayBekleniyor": "Votre consentement est attendu pour la version actuelle.",
+  "kvkkSurumEtiketi": "Version {n}",
+  "@kvkkSurumEtiketi": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "kvkkOnayladiginizSurum": "Version à laquelle vous avez consenti : {n}",
+  "@kvkkOnayladiginizSurum": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "kabukKisayollar": "Raccourcis"
 }
