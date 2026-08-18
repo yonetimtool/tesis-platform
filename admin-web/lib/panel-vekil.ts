@@ -37,8 +37,6 @@ export const OKUMA: Record<string, string> = {
   // --- yonetisim (P33) ---
   "karar-defteri": "/karar-defteri",
   dokumanlar: "/dokumanlar",
-  // --- KVKK (P36) ---
-  "kvkk-metinler": "/kvkk/metinler",
   // --- gurultu (P37) ---
   "unit-uyarilari": "/unit-uyarilari",
   // --- anket (P38) ---
@@ -79,7 +77,6 @@ export const YAZMA: Record<string, string> = {
   "mesaj-gonder": "/mesajlar/gonder",
   "karar-defteri": "/karar-defteri",
   dokumanlar: "/dokumanlar",
-  "kvkk-metin": "/kvkk/metin",
   anketler: "/anketler",
   ekler: "/ekler",
   // PATCH hedefi kaynak KOKUDUR — sihirbaz adim atlamayi boyle yazar.
@@ -101,8 +98,6 @@ export const SUZGECLER: Record<string, string[]> = {
   "mesaj-sablonlari": ["kanal", "aktif"],
   "mesaj-gecmis": ["kanal", "durum"],
   "unit-uyarilari": ["unit_id"],
-  // (P168 §5) Bes yasal metin turu ayri sekmelerde listeleniyor.
-  "kvkk-metinler": ["tur"],
   "karar-defteri": [],
   anketler: [],
   // Ikisi de ZORUNLU: backend bunlarsiz 422 doner. Beyaz listede

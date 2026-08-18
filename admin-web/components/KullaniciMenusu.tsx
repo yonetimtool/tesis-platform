@@ -25,6 +25,7 @@ import useSWR from "swr";
 
 import { Avatar } from "@/components/Avatar";
 import { jsonFetcher } from "@/lib/fetcher";
+import { kimligiUnut } from "@/lib/kimlik-deposu";
 import { useT } from "@/lib/i18n/kullan";
 import { PROFIL_BOLUMLERI, profilBaglantisi } from "@/lib/profil-bolumleri";
 
@@ -80,6 +81,16 @@ export function KullaniciMenusu() {
       setCikisHatasi(true);
       return;
     }
+    // (P170 §1) CIKIS SAKLANAN KIMLIGI DE TEMIZLER.
+    //
+    // Sunucu oturumunu kapatmak yetmez: on-doldurulmus telefon/e-posta
+    // ekranda kalir ve tarayici SESSIZ oturum acabilir. Ortak bir
+    // bilgisayarda "cikis yaptim" demek, bir sonraki kisinin tek tikla
+    // GIREMEMESI demektir. `preventSilentAccess` tarayicinin kayitli
+    // parolayi kendiliginden kullanmasini kapatir — parolayi SILMEZ,
+    // cunku o kullanicinin kendi anahtarligindadir ve orayi bizim
+    // temizlememiz gerekmez (ve edemeyiz de).
+    await kimligiUnut();
     router.replace("/login");
     router.refresh();
   }

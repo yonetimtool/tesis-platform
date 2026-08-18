@@ -16,6 +16,7 @@ export type ProfilBolumId =
   | "hesap"
   | "guvenlik"
   | "bildirim"
+  | "yasal"
   | "sifre"
   | "hesap-sil";
 
@@ -31,6 +32,11 @@ export const PROFIL_BOLUMLERI: readonly ProfilBolumu[] = [
   { id: "hesap", anahtar: "profilHesapBilgileri" },
   { id: "guvenlik", anahtar: "profilGuvenlikGiris" },
   { id: "bildirim", anahtar: "profilBildirimAyarlari" },
+  // (P170 §2) YASAL METINLER — OKUMA YUZEYI. Yonetim panele tasindi, ama
+  // metni OKUMAK ve KENDI onay gecmisini gormek her rolun hakki ve KVKK
+  // geregi. Profil dogru yer: kullanicinin kendisiyle ilgili her sey
+  // burada toplaniyor.
+  { id: "yasal", anahtar: "profilYasalMetinler" },
   { id: "sifre", anahtar: "profilSifreDegistir" },
   { id: "hesap-sil", anahtar: "profilHesabimiSil", tehlikeli: true },
 ];

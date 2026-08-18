@@ -32,6 +32,7 @@ import { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 
 import { Avatar } from "@/components/Avatar";
+import { YasalMetinler } from "@/components/profil/yasal-metinler";
 import { GirisYontemlerim } from "@/components/GirisYontemlerim";
 import { ParolaAlani } from "@/components/ParolaAlani";
 import { TelefonAlani, telefonHataMetni } from "@/components/TelefonAlani";
@@ -173,6 +174,8 @@ export default function ProfilPage() {
             <GuvenlikVeGiris />
           ) : bolum === "bildirim" ? (
             <BildirimAyarlari />
+          ) : bolum === "yasal" ? (
+            <YasalMetinler />
           ) : bolum === "sifre" ? (
             <SifreDegistir parolaVar={Boolean(data)} />
           ) : (

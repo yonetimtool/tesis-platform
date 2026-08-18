@@ -100,7 +100,7 @@ describe("Profilim", () => {
     expect(cagrilar.find((c) => c.method === "PATCH")).toBeUndefined();
   });
 
-  it("(P167 §1.7) SOL MENU bes bolum cizer ve secim degistirir", async () => {
+  it("(P167 §1.7 · P170 §2) SOL MENU ALTI bolum cizer ve secim degistirir", async () => {
     fetchTaklidi(PROFIL);
     ciz(ProfilPage);
     const gezinme = await screen.findByRole("navigation", {
@@ -109,10 +109,15 @@ describe("Profilim", () => {
     const bolumler = [...gezinme.querySelectorAll("button")].map(
       (b) => b.textContent,
     );
+    // (P170 §2) "Yasal Metinler" EKLENDI: KVKK metinlerinin YONETIMI
+    // panele tasindi, OKUMASI buraya. Yonetim tasindi diye kullanicinin
+    // kendi aydinlatma metnini okuyamamasi, aydinlatmanin kendisini
+    // imkansiz kilardi.
     expect(bolumler).toEqual([
       "Hesap bilgileri",
       "Güvenlik ve giriş",
       "Bildirim ayarları",
+      "Yasal Metinler",
       "Şifre değiştir",
       "Hesabımı sil",
     ]);

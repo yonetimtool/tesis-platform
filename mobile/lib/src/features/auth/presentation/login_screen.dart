@@ -37,8 +37,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     _prefillSavedCredentials();
   }
 
-  /// "Beni hatirla" ile saklanmis giris bilgileri varsa alanlari ON-DOLDURUR
-  /// (uygulama yeniden acilisinda VE cikis sonrasi). Yoksa alanlar bos kalir.
+  /// "Beni hatirla" ile saklanmis giris bilgileri varsa alanlari ON-DOLDURUR.
+  ///
+  /// (P170 §1) CIKIS SONRASI ARTIK ON-DOLU GELMEZ: `logout` saklanan
+  /// bilgileri de siliyor (bkz. `AuthRepositoryImpl.logout`). Bu yol
+  /// uygulamanin yeniden acilisinda ve oturum suresi dolunca calisir.
   Future<void> _prefillSavedCredentials() async {
     final saved = await ref.read(authRepositoryProvider).readSavedCredentials();
     if (saved == null || !mounted) return;

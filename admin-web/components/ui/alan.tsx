@@ -242,7 +242,7 @@ export function AramaAlani({
           type="button"
           onClick={() => onDegisim("")}
           aria-label={temizleEtiketi}
-          className="odak-ic absolute inset-y-0 end-2 my-auto flex h-7 w-7 items-center justify-center rounded-full"
+          className="odak-ic yz-dokunma-44 absolute inset-y-0 end-2 my-auto flex h-7 w-7 items-center justify-center rounded-full"
           style={{ color: "var(--yz-text-2)" }}
         >
           <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">

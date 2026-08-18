@@ -40,14 +40,33 @@ class TokenStorage {
   Future<bool> readRememberMe() async =>
       await _storage.read(key: _kRemember) == 'true';
 
+  /// (P170 §1) SAKLANAN KIMLIK BILGISI BU CIHAZI TERK ETMEZ.
+  ///
+  /// Varsayilan anahtarlik erisilebilirligi (`unlocked`) iCloud Anahtar
+  /// Zinciri ile YENI BIR CIHAZA TASINIR. Bir jeton icin bunun bedeli
+  /// sinirlidir (kisa omurlu, sunucudan iptal edilebilir); bir PAROLA icin
+  /// degildir — yedegi geri yuklenen baska bir telefonda kullanicinin
+  /// parolasi hazir beklerdi.
+  ///
+  /// `unlocked_this_device`: okunabilirlik ayni (yalniz cihaz kilidi
+  /// aciksa), ama oge CIHAZA BAGLI kalir. Android tarafinda karsiligi
+  /// zaten varsayilan: Keystore anahtari donanima bagli ve disari cikmaz.
+  static const _kimlikSecenekleri = IOSOptions(
+    accessibility: KeychainAccessibility.unlocked_this_device,
+  );
+
   /// "Beni hatirla" isaretliyken cagrilir: sonraki girislerde ON-DOLDURMA icin
-  /// telefon + parolayi saklar (ikisi de Keystore/secure storage'da).
+  /// telefon + parolayi saklar (ikisi de Keystore/Keychain destekli depoda).
   Future<void> saveCredentials({
     required String phone,
     required String password,
   }) async {
-    await _storage.write(key: _kSavedPhone, value: phone);
-    await _storage.write(key: _kSavedPassword, value: password);
+    await _storage.write(
+      key: _kSavedPhone, value: phone, iOptions: _kimlikSecenekleri,
+    );
+    await _storage.write(
+      key: _kSavedPassword, value: password, iOptions: _kimlikSecenekleri,
+    );
   }
 
   /// Saklanan giris bilgileri (telefon + parola) ya da yoksa null.

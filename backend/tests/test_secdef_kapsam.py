@@ -62,6 +62,14 @@ ENVANTER: dict[str, tuple[str, tuple[str, str] | None]] = {
         "admin",
         ("delete", "/tenants/{tid}/yoneticiler/{uid}"),
     ),
+    # (P170 §2) KVKK/YASAL METIN YONETIMI — metinleri PLATFORM yayinlar.
+    # Veri tenant'a bagli kaldi (her tesisin veri sorumlusu kendisidir);
+    # tasinan sey YETKI. Ucu de tenant sinirini GECER ve ucu de YALNIZ
+    # admin. `kvkk_onay_ozeti` ayri bir uc DEGIL: durum cagrisinin ikinci
+    # yarisi, o yuzden sondasi da ayni uctur.
+    "kvkk_metin_listele": ("admin", ("get", "/tenants/{tid}/kvkk")),
+    "kvkk_metin_yayinla": ("admin", ("post", "/tenants/{tid}/kvkk")),
+    "kvkk_onay_ozeti": ("admin", ("get", "/tenants/{tid}/kvkk")),
     # --- platform destek kanali: TUM tenant'larin biletleri ---
     "support_ticket_list": ("admin", ("get", "/support/all")),
     "support_ticket_answer": ("admin", ("patch", "/support/{tid}")),

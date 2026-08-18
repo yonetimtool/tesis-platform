@@ -153,8 +153,23 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
+  /// Cikis: oturum VE saklanan giris bilgileri silinir.
+  ///
+  /// (P170 §1) ONCEDEN on-doldurma bilgileri BIRAKILIYORDU ("cikis sonrasi
+  /// login ekrani yine on-dolu gelsin" diye). Karar degisti ve gerekce
+  /// guvenlik: cikis, ORTAK ya da odunc bir cihazda "benden sonrasi bana
+  /// ait degil" demenin tek yoludur. Parolayi cihazda birakan bir cikis,
+  /// bir sonraki kisiye tek dokunusluk giris birakirdi.
+  ///
+  /// BEDELI KABUL EDILDI: bilerek cikan kullanici bir dahaki sefere
+  /// parolasini yeniden yazar. "Beni hatirla" boylece asil isini yapmaya
+  /// devam eder — uygulama kapanip acildiginda ve oturum suresi
+  /// dolduğunda on-doldurma calisir; kaybolan yalniz CIKIS SONRASI hali.
   @override
-  Future<void> logout() => storage.clear();
+  Future<void> logout() async {
+    await storage.clear();
+    await storage.clearCredentials();
+  }
 }
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {

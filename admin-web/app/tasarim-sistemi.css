@@ -461,6 +461,19 @@
     min-height: 0;
     padding-block: 0.5rem;
   }
+  /* (P170 §4.3) SIMGE DUGMELERI KARE 44 px OLUR.
+     Yukaridaki kural yalniz `min-height` verir; `h-8 w-8` bir simge
+     dugmesinde YUKSEKLIK 44'e cikar ama GENISLIK 32 kalir — yani hedef
+     32x44'luk bir dilim olur.
+
+     GENEL BIR `min-width: 44px` DENENMEDI, OLCULDU VE ELENDI: 360 px'lik
+     bir ekranda takvimin ay izgarasinda bir gun hucresi ~40 px'e dusuyor
+     (304 px kullanilabilir alan, yedi hucre, alti bosluk). Her dugmeye
+     44 px genislik dayatmak o izgarayi TASIRDI. Bu yuzden kural, simge
+     dugmelerinin acikca istedigi bir sinif. */
+  :where(.yz-dokunma-44) {
+    min-width: 44px;
+  }
   /* Onay kutulari ve radyolar GORSEL olarak buyumemeli (16 px dogru
      olcu), yalniz DOKUNMA ALANI buyumeli. */
   :where(input[type="checkbox"], input[type="radio"]) {

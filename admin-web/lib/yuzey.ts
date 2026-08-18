@@ -36,6 +36,9 @@ export const PLATFORM_ROTALARI = [
   "/integrations",
   "/yetki",
   "/settings",
+  // (P170 §2) KVKK/yasal metin YONETIMI platforma tasindi. Veri tenant'a
+  // bagli kaldi (her tesisin veri sorumlusu kendisi); tasinan sey YETKI.
+  "/kvkk-metinler",
 ] as const;
 
 /**
@@ -100,7 +103,6 @@ export const TESIS_ROTALARI = [
   "/notifications",
   "/karar-defteri",
   "/dokumanlar",
-  "/kvkk-metinler",
   "/gurultu-uyarilari",
   // (P126.3) Tesis rollerinin KENDI kayitlari (sakin calisma alani).
   "/profil",
@@ -366,7 +368,6 @@ export const ROTA_ROLLERI: Record<string, readonly string[]> = {
   // (P167 §6.1) "/yonetisim" DORDE BOLUNDU; roller aynen tasindi.
   "/karar-defteri": ["admin", "yonetici"],
   "/dokumanlar": ["admin", "yonetici"],
-  "/kvkk-metinler": ["admin", "yonetici"],
   "/gurultu-uyarilari": ["admin", "yonetici"],
   "/kameralar": ["admin", "yonetici"],
   // Olaylar: guvenlik BILDIRIR (mobilde), yonetim OKUR (burada).

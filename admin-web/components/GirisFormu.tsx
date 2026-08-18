@@ -26,6 +26,13 @@ import {
 } from "@/components/giris/palet";
 import { CTA_GRADYANI } from "@/components/giris/stil";
 import { useHareket } from "@/lib/hareket";
+import { useBantEnAz } from "@/lib/kirilma-kullan";
+import {
+  kimligiSakla,
+  tanimlayiciOku,
+  tanimlayiciSil,
+  tanimlayiciYaz,
+} from "@/lib/kimlik-deposu";
 import { MAGAZA_ANDROID, MAGAZA_IOS } from "@/lib/config";
 import { ParolaAlani } from "@/components/ParolaAlani";
 import { SosyalGiris } from "@/components/SosyalGiris";
@@ -43,10 +50,6 @@ const EASE = [0.22, 1, 0.36, 1] as const;
 // isteği DIŞINDA hiçbir yere gönderilmez; çıkış (logout) bunları TEMİZLEMEZ
 // (yalnızca oturum çerezini siler). İleride sertleştirme: sunucu tarafı httpOnly +
 // Secure + SameSite opak "remember-me" token'ı (istemci sırrı hiç görmez).
-const RM_TENANT = "yonetio.rememberMe.tenant";
-const RM_EMAIL = "yonetio.rememberMe.email";
-// `app.*` telefonla giriyor; hatirlanan tanimlayici da numaradir.
-const RM_TELEFON = "yonetio.rememberMe.telefon";
 
 // BFF uclari MODUL DUZEYINDE sabit: ucluda satir-ici dizge yazmak
 // `sabit-metin` taramasini (hakli olarak) tetikliyor — o tarama ucludaki
@@ -85,54 +88,46 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
   // tekrar calissin diye anahtar olarak kullaniliyor.
   const [hataSayaci, setHataSayaci] = useState(0);
   const hareketVar = useHareket();
-  const [mobil, setMobil] = useState(false);
-  useEffect(() => {
-    setMobil(window.matchMedia?.("(max-width: 768px)").matches ?? false);
-  }, []);
+  // (P170 §3) OLCUM CANLI VE TEK KAYNAKTAN.
+  //
+  // Eski surum `useEffect` icinde BIR KEZ okuyordu: pencereyi buyutmek ya
+  // da telefonu cevirmek sahneyi eski kararda birakiyordu. Esik de 768'di —
+  // bu projede baska hicbir yerde gecmeyen bir sayi; giris duzeni zaten
+  // `lg`de tek sutundan iki sutuna geciyor, yani sahnenin "dar" tanimi
+  // duzenin tanimiyla ayni olmali.
+  const mobil = !useBantEnAz("lg");
 
   // Mount: saklanmış tesis+e-posta varsa ÖN-DOLDUR + kutuyu işaretle. Parola
   // saklanmaz; tarayıcı autofill (autocomplete) parolayı kendi keychain'inden
   // önerir. (Yalnız istemcide çalışır — SSR/hydration uyumsuzluğu yok.)
   useEffect(() => {
-    try {
-      if (telefonla) {
-        const tel = localStorage.getItem(RM_TELEFON);
-        if (tel !== null) {
-          setTelefon(telefonGiris(tel));
-          setRememberMe(true);
-        }
-        return;
-      }
-      const t = localStorage.getItem(RM_TENANT);
-      const e = localStorage.getItem(RM_EMAIL);
-      if (t !== null && e !== null) {
-        setTenantSlug(t);
-        setEmail(e);
-        setRememberMe(true);
-      }
-    } catch {
-      // localStorage erişilemezse (özel mod vb.) sessizce ön-doldurma yok.
-    }
+    const d = tanimlayiciOku(telefonla);
+    if (d === null) return;
+    if (d.telefon !== undefined) setTelefon(telefonGiris(d.telefon));
+    if (d.tenantSlug !== undefined) setTenantSlug(d.tenantSlug);
+    if (d.email !== undefined) setEmail(d.email);
+    setRememberMe(true);
+    // PAROLA BURADA DOLDURULMAZ ve doldurulmayacak: parolayi bizim
+    // okuyabildigimiz bir yerden getirmek, onu bizim yazmis olmamizi
+    // gerektirirdi. Parola alanini tarayicinin kendi kimlik deposu
+    // doldurur (bkz. `lib/kimlik-deposu.ts`).
   }, [telefonla]);
 
-  function persistRememberMe() {
-    try {
-      if (rememberMe) {
-        // YALNIZ gizli-olmayan tanımlayıcılar (parola değil).
-        if (telefonla) {
-          localStorage.setItem(RM_TELEFON, telefonNormalle(telefon));
-        } else {
-          localStorage.setItem(RM_TENANT, tenantSlug);
-          localStorage.setItem(RM_EMAIL, email);
-        }
-      } else {
-        localStorage.removeItem(RM_TELEFON);
-        localStorage.removeItem(RM_TENANT);
-        localStorage.removeItem(RM_EMAIL);
-      }
-    } catch {
-      // Depolama yoksa sessizce geç (giriş yine de başarılı).
+  /** Basarili giristen sonra: tanimlayicilari sakla (parola DEGIL) ve
+   *  tarayiciya parolayi kendi deposuna almasini teklif ettir. */
+  async function persistRememberMe() {
+    if (!rememberMe) {
+      // ISARETSIZ: hicbir sey saklanmaz ve ONCEDEN saklanmis olan da
+      // silinir — kutuyu kaldirmak bir GERI ALMA istegidir.
+      tanimlayiciSil();
+      return;
     }
+    tanimlayiciYaz(
+      telefonla
+        ? { telefon: telefonNormalle(telefon) }
+        : { tenantSlug, email },
+    );
+    await kimligiSakla(telefonla ? telefonNormalle(telefon) : email, password);
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -176,7 +171,7 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
         return;
       }
       // Başarılı giriş: işaretliyse bilgileri sakla, değilse temizle.
-      persistRememberMe();
+      await persistRememberMe();
       // BASARI: once onay durumu cizilir, sonra yonlendirilir. 520 ms
       // kartin soluklasmasina yeter ve kullaniciya "oldu" der; daha uzun
       // olsaydi bekleme hissi verirdi.
@@ -342,6 +337,13 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
                 </span>
                 <input
                   key={`tel-${hataSayaci}`}
+                  // (P170 §1) `name` + `id` EKLENDI. `autocomplete` tek
+                  // basina yetmiyor: tarayicilarin parola yoneticisi bir
+                  // alani "kullanici adi" diye KAYDEDEBILMEK icin kararli
+                  // bir ad arar; adsiz alanlar cogu tarayicida teklifin
+                  // disinda kalir.
+                  id="yz-telefon"
+                  name="telefon"
                   type="tel"
                   inputMode="numeric"
                   className={`${alanSinifi} giris-alan${error ? " giris-titre" : ""}`}
@@ -369,6 +371,8 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
                     style={alanStili}
                     value={tenantSlug}
                     onChange={(e) => setTenantSlug(e.target.value)}
+                    id="yz-tesis"
+                    name="tenant_slug"
                     placeholder="yonetio"
                     autoComplete="organization"
                     aria-label={t("girisTesisSlug")}
@@ -382,6 +386,8 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
                   </span>
                   <input
                     key={`eposta-${hataSayaci}`}
+                    id="yz-eposta"
+                    name="email"
                     type="email"
                     className={`${alanSinifi} giris-alan${error ? " giris-titre" : ""}`}
                     style={alanStili}
@@ -400,6 +406,8 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
                 {t("girisParola")}
               </span>
               <ParolaAlani
+                id="yz-parola"
+                name="password"
                 className={`${alanSinifi} giris-alan`}
                 style={alanStili}
                 value={password}

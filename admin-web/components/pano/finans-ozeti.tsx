@@ -167,7 +167,7 @@ function DisaAktar({ kod }: { kod: string }) {
       disabled={calisan !== null}
       aria-label={etiket}
       title={etiket}
-      className="odak-ic flex h-8 w-8 items-center justify-center rounded-lg transition disabled:opacity-50"
+      className="odak-ic yz-dokunma-44 flex h-8 w-8 items-center justify-center rounded-lg transition disabled:opacity-50"
       style={{ color: renk }}
     >
       {ikon}

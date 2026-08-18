@@ -13,6 +13,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { BildirimMerkezi, KomutPaleti } from "@/components/ui";
 import { useT } from "@/lib/i18n/kullan";
 import { useKaydirmaKilidi } from "@/lib/kaydirma-kilidi";
+import { useBantEnAz } from "@/lib/kirilma-kullan";
 import { YonetioLogo } from "@/components/YonetioLogo";
 import { useRol } from "@/lib/rol-kullan";
 import { KullaniciMenusu } from "@/components/KullaniciMenusu";
@@ -540,7 +541,7 @@ function SidebarBody({
             type="button"
             onClick={onDarCevir}
             aria-label={t("kabukMenuDaralt")}
-            className="odak-ic flex h-8 w-8 items-center justify-center rounded-lg"
+            className="odak-ic yz-dokunma-44 flex h-8 w-8 items-center justify-center rounded-lg"
             style={{ color: "var(--yz-text-3)" }}
           >
             <OkKatla yon="sol" />
@@ -555,7 +556,7 @@ function SidebarBody({
             type="button"
             onClick={onDarCevir}
             aria-label={t("kabukMenuGenislet")}
-            className="odak-ic flex h-8 w-8 items-center justify-center rounded-lg"
+            className="odak-ic yz-dokunma-44 flex h-8 w-8 items-center justify-center rounded-lg"
             style={{ color: "var(--yz-text-3)" }}
           >
             <OkKatla yon="sag" />
@@ -661,6 +662,9 @@ export function AppShell({
   yuzey: Yuzey;
 }) {
   const [open, setOpen] = useState(false);
+  // (P170 §4.3) Sayfa eylem yuvasi YALNIZ genis bantta monte edilir;
+  // gerekcesi yuvanin cizildigi yerde yazili.
+  const genisBant = useBantEnAz("lg");
   /** Cekmece govdesi — odak tuzagi bu agacin icinde calisir. */
   const cekmeceRef = useRef<HTMLElement | null>(null);
   const pathname = usePathname();
@@ -841,7 +845,9 @@ export function AppShell({
               <line x1="4" y1="7" x2="20" y2="7" /><line x1="4" y1="12" x2="20" y2="12" /><line x1="4" y1="17" x2="20" y2="17" />
             </svg>
           </button>
-          <YonetioLogo size={30} />
+          {/* (P170 §3) UST BARDA kelime isareti `sm` altinda gizli —
+              gerekcesi `YonetioLogo` dosya basinda. */}
+          <YonetioLogo size={30} kelimeDar={false} />
           {/* (P140.4) Dil secici SAG UST — eskiden burada yalnizca hizalama
               icin bos bir `span` duruyordu.
               (P160) Bildirim merkezi mobilde de gorunur: okunmamis sayisi
@@ -916,8 +922,11 @@ export function AppShell({
                 solunda kalir. */}
             <div className="flex shrink-0 items-center gap-2">
               {/* (P168 §1.3) SAYFA EYLEMLERI — bildirim ikonunun SOLUNDA.
-                  Kabuk yalniz BOS BIR YUVA acar; ne gelecegini bilmez. */}
-              <SayfaEylemYuvasi />
+                  Kabuk yalniz BOS BIR YUVA acar; ne gelecegini bilmez.
+                  (P170 §4.3) YALNIZ `lg` VE USTUNDE MONTE EDILIR: bu cubuk
+                  dar ekranda `display:none` ama DOM'da duruyordu, portal
+                  hedefi buluyor ve sayfa eylemleri GORUNMEZ kaliyordu. */}
+              {genisBant && <SayfaEylemYuvasi />}
               <BildirimMerkezi />
               <DilSecici />
               <KullaniciMenusu />

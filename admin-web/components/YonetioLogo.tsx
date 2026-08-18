@@ -39,10 +39,43 @@
 
 import Image from "next/image";
 
-/** Ikon + kelime isareti. Kelime navy (acik) / beyaz (koyu) — .dark uzerinden. */
-export function YonetioLogo({ size = 34 }: { size?: number }) {
+/**
+ * Ikon + kelime isareti. Kelime navy (acik) / beyaz (koyu) — .dark uzerinden.
+ *
+ * (P170 §3) DAR EKRANDA KELIME ISARETI GIZLENIR, KUCULTULMEZ.
+ *
+ * OLCUM: 360 px'lik ust barda satir su ogelerden olusuyor — menu dugmesi
+ * (~40) + logo blogu (~135: 30 px isaret + 8 bosluk + 20 px'lik "yönetiyor"
+ * ~95 px) + bildirim/dil/hesap ucusu (~130) + yan bosluklar (32). Toplam
+ * ~340 px'i asiyor ve `text-xl` kelime isaretinin sarma/kirpilma yeri YOK.
+ *
+ * IKI SECENEK VARDI:
+ *   (a) kelimeyi kucultmek — 328 px'e sigmasi icin ~12 px gerekirdi. O
+ *       boyutta kelime isareti okunmuyor ve marka olcegi baska her yerden
+ *       (cekmece, giris, davet) farkli cikiyor. Kucuk ve cirkin bir marka,
+ *       markasizliktan kotudur.
+ *   (b) kelimeyi gizlemek — KIMLIK isaretle zaten tasiniyor; ust bardaki
+ *       oteki uc oge ISLEVDIR (bildirim, dil, hesap) ve atilamaz.
+ *
+ * (b) SECILDI. Kayip da yok: cekmece acildiginda logo kelime isaretiyle
+ * TAM cizilir (`AppShell` 534), yani marka adi bir dokunus uzakta.
+ *
+ * `whitespace-nowrap`: kelime hicbir genislikte IKINCI SATIRA dusmez —
+ * dusseydi 56 px'lik ust bari tasirdi.
+ *
+ * ORAN KORUNUR: `width`/`height` esit veriliyor ve `Image` kaynak orani
+ * kare oldugu icin isaret hicbir bantta EZILMEZ.
+ */
+export function YonetioLogo({
+  size = 34,
+  /** `false` ise kelime isareti YALNIZ `sm` ustunde cizilir (ust bar). */
+  kelimeDar = true,
+}: {
+  size?: number;
+  kelimeDar?: boolean;
+}) {
   return (
-    <span className="flex items-center gap-2">
+    <span className="flex min-w-0 items-center gap-2">
       {/* ACIK TEMA: koyu lacivert isaret. */}
       <Image
         src="/yonetio-logo.png"
@@ -63,7 +96,11 @@ export function YonetioLogo({ size = 34 }: { size?: number }) {
         height={size}
         className="hidden shrink-0 dark:block"
       />
-      <span className="text-xl font-semibold tracking-tight text-[#0E3C91] dark:text-white">
+      <span
+        className={`whitespace-nowrap text-xl font-semibold tracking-tight text-[#0E3C91] dark:text-white${
+          kelimeDar ? "" : " hidden sm:inline"
+        }`}
+      >
         yönetiyor
       </span>
     </span>

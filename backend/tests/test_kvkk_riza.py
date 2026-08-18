@@ -23,8 +23,13 @@ def rol(client, world):
     }
 
 
-def _yayinla(client, h, govde=None):
-    return client.post("/kvkk/metin", headers=h, json={
+def _yayinla(client, h, govde=None, tenant=None):
+    """(P170 §2) YAYIN PLATFORM YOLUNDAN — hedef tenant YOLDA tasinir.
+
+    Tesis yuzeyindeki `POST /kvkk/metin` kaldirildi: metinleri platform
+    yonetiyor. `h` bir PLATFORM ADMIN basligi olmali.
+    """
+    return client.post(f"/tenants/{tenant}/kvkk", headers=h, json={
         "baslik": "Aydınlatma Metni",
         "govde": govde or f"Kişisel verileriniz... {uuid.uuid4().hex}"})
 
@@ -38,46 +43,47 @@ def test_metin_YOKKEN_kapi_KURULMAZ(client, rol):
     assert client.get("/kvkk/metin", headers=rol["sakin"]).status_code == 404
 
 
-def test_yayinla_ve_SURUM_BIRDEN_baslar(client, rol):
-    r = _yayinla(client, rol["yonetici"])
+def test_yayinla_ve_SURUM_BIRDEN_baslar(client, rol, world):
+    r = _yayinla(client, rol["admin"], tenant=world["a"])
     assert r.status_code == 201, r.text
     assert r.json()["surum"] == 1
     # Ikinci (FARKLI) metin -> surum 2
-    assert _yayinla(client, rol["yonetici"]).json()["surum"] == 2
+    assert _yayinla(client, rol["admin"], tenant=world["a"]).json()["surum"] == 2
 
 
-def test_AYNI_GOVDE_yeniden_yayinlanamaz(client, rol):
+def test_AYNI_GOVDE_yeniden_yayinlanamaz(client, rol, world):
     """Degismemis bir metin icin herkesi yeniden onaya zorlamak, onayi
     anlamsiz bir tikla dondururdu."""
     govde = f"Ayni metin {uuid.uuid4().hex}"
-    assert _yayinla(client, rol["yonetici"], govde).status_code == 201
-    r = _yayinla(client, rol["yonetici"], govde)
+    assert _yayinla(client, rol["admin"], govde, tenant=world["a"]).status_code == 201
+    r = _yayinla(client, rol["admin"], govde, tenant=world["a"])
     assert r.status_code == 409, r.text
     assert r.json()["error"]["code"] == "conflict"
 
 
-def test_metin_DUZENLEME_UCU_YOK(client, rol):
+def test_metin_DUZENLEME_UCU_YOK(client, rol, world):
     """Yerinde duzenleme, dun verilen onayi bugun BASKA BIR METNE ait
     gosterirdi — bu yuzden PATCH/PUT/DELETE hic tanimlanmadi."""
-    m = _yayinla(client, rol["yonetici"]).json()
+    m = _yayinla(client, rol["admin"], tenant=world["a"]).json()
     for metot in ("patch", "put", "delete"):
         r = getattr(client, metot)(f"/kvkk/metin/{m['id']}", headers=rol["yonetici"])
         assert r.status_code in (404, 405), (metot, r.status_code)
 
 
-def test_metni_HERKES_okur_ama_YAYINI_yonetim_yapar(client, rol):
-    _yayinla(client, rol["yonetici"])
+def test_metni_HERKES_okur_ama_YAYINI_yonetim_yapar(client, rol, world):
+    _yayinla(client, rol["admin"], tenant=world["a"])
     # Metin kullanicinin KENDI verisi hakkindadir: okuyamamak aydinlatmayi
     # imkansiz kilardi.
     for kim in ("sakin", "guard", "admin"):
         assert client.get("/kvkk/metin", headers=rol[kim]).status_code == 200
-    assert _yayinla(client, rol["sakin"]).status_code == 403
-    assert client.get("/kvkk/metinler", headers=rol["sakin"]).status_code == 403
+    # (P170 §2) YAYIN TESIS ROLLERINE KAPALI — YONETICI DAHIL.
+    assert _yayinla(client, rol["sakin"], tenant=world["a"]).status_code == 403
+    assert _yayinla(client, rol["yonetici"], tenant=world["a"]).status_code == 403
 
 
 # ============================== ONAY ======================================== #
-def test_onay_akisi(client, rol):
-    m = _yayinla(client, rol["yonetici"]).json()
+def test_onay_akisi(client, rol, world):
+    m = _yayinla(client, rol["admin"], tenant=world["a"]).json()
     d = client.get("/kvkk/durum", headers=rol["sakin"]).json()
     assert d["onay_gerekli"] is True and d["guncel_surum"] == m["surum"]
 
@@ -88,15 +94,15 @@ def test_onay_akisi(client, rol):
     assert r.json()["onay_at"]
 
 
-def test_SURUM_ARTINCA_yeniden_onay_gerekir(client, rol):
+def test_SURUM_ARTINCA_yeniden_onay_gerekir(client, rol, world):
     """Surum artmasi, METNIN DEGISTIGINI kullaniciya soylemenin tek durust
     yoludur."""
-    m1 = _yayinla(client, rol["yonetici"]).json()
+    m1 = _yayinla(client, rol["admin"], tenant=world["a"]).json()
     client.post("/kvkk/onay", headers=rol["sakin"], json={"surum": m1["surum"]})
     assert client.get("/kvkk/durum", headers=rol["sakin"]).json()[
         "onay_gerekli"] is False
 
-    _yayinla(client, rol["yonetici"])  # surum 2
+    _yayinla(client, rol["admin"], tenant=world["a"])  # surum 2
     d = client.get("/kvkk/durum", headers=rol["sakin"]).json()
     assert d["onay_gerekli"] is True
     # (P168 §5) `onayladigi_surum` ARTIK KULLANICININ SON ONAYINI doner
@@ -112,17 +118,17 @@ def test_SURUM_ARTINCA_yeniden_onay_gerekir(client, rol):
     assert d["onayladigi_surum"] < d["guncel_surum"]
 
 
-def test_ESKI_SURUME_onay_409(client, rol):
+def test_ESKI_SURUME_onay_409(client, rol, world):
     """Kullanici okurken yeni surum ciktiysa, onayi ESKI METNE aitti;
     sessizce yeni surume yazmak okumadigi metni onaylatmak olurdu."""
-    m1 = _yayinla(client, rol["yonetici"]).json()
-    _yayinla(client, rol["yonetici"])  # surum 2
+    m1 = _yayinla(client, rol["admin"], tenant=world["a"]).json()
+    _yayinla(client, rol["admin"], tenant=world["a"])  # surum 2
     r = client.post("/kvkk/onay", headers=rol["sakin"], json={"surum": m1["surum"]})
     assert r.status_code == 409, r.text
 
 
 def test_onay_IDEMPOTENT(client, rol, owner_conn, world):
-    m = _yayinla(client, rol["yonetici"]).json()
+    m = _yayinla(client, rol["admin"], tenant=world["a"]).json()
     for _ in range(3):
         assert client.post("/kvkk/onay", headers=rol["sakin"],
                            json={"surum": m["surum"]}).status_code == 201
@@ -132,8 +138,8 @@ def test_onay_IDEMPOTENT(client, rol, owner_conn, world):
     assert sayi == 1
 
 
-def test_onay_KISI_BAZLI(client, rol):
-    m = _yayinla(client, rol["yonetici"]).json()
+def test_onay_KISI_BAZLI(client, rol, world):
+    m = _yayinla(client, rol["admin"], tenant=world["a"]).json()
     client.post("/kvkk/onay", headers=rol["sakin"], json={"surum": m["surum"]})
     # Baskasinin onayi benim onayim degildir.
     assert client.get("/kvkk/durum", headers=rol["guard"]).json()[
@@ -141,11 +147,17 @@ def test_onay_KISI_BAZLI(client, rol):
 
 
 def test_tenant_izolasyonu(client, world):
-    a = _h(client, world["slug_a"], world["yonetici_a"])
+    """(P170 §2) YONETIM PLATFORMA GECTI AMA VERI TENANT'A BAGLI KALDI.
+
+    Platform yoneticisi A tesisine yayin yapiyor; B tesisi bunu GORMUYOR.
+    Yetkinin tasinmasi, metinlerin ortaklastigi anlamina GELMEZ — her
+    tesisin veri sorumlusu kendisidir.
+    """
+    a = _h(client, world["slug_a"], world["admin_a"])
     b = _h(client, world["slug_b"], world["yonetici_b"])
-    client.post("/kvkk/metin", headers=a, json={
+    r = client.post(f"/tenants/{world['a']}/kvkk", headers=a, json={
         "baslik": "A metni", "govde": "A tesisinin metni"})
-    # B tenant'i A'nin metnini GORMEZ (her tesisin veri sorumlusu kendisidir).
+    assert r.status_code == 201, r.text
     assert client.get("/kvkk/metin", headers=b).status_code == 404
 
 

@@ -95,9 +95,31 @@ export function WidgetSeridi({
         // tam genislikte" diyor. (P168 §1.2) Genis ekranda YEDI esit alan;
         // dar ekranda 2 -> 3 -> 4 diye kirilir, cunku yedi kutu 60 px'e
         // dusup okunmaz olurdu.
+        // (P170 §4.1) SUTUN SAYILARI ZATEN DOGRUYDU (olculdu): 2 -> 3 -> 4
+        // -> 7. Bozuk gorunen sey HIZAYDI, kirilma degil. Iki kusur vardi:
+        //
+        //   1. YEDI KUTU IKI SUTUNA SIGMAZ ve sonuncusu satirin SOL
+        //      YARISINDA tek basina kaliyordu. Sagdaki bosluk "eksik kart"
+        //      gibi okunuyordu — kullanici bir seyin yuklenmedigini
+        //      saniyordu.
+        //   2. Kart icerigi USTTEN hizaliydi; etiketler bir ya da iki
+        //      satir oldugu icin ikonlar ayni yatayda DURMUYORDU.
+        //
+        // TEK KALAN KART TAM GENISLIK ALIR, ORTALANMAZ: ortalamak iki
+        // ceyrek bosluk birakir ve kartin sol kenari sayfanin oteki
+        // bolumleriyle HIZASINI kaybederdi (brief'in "kenar bosluklari ayni
+        // hizada baslasin" maddesi tam bunu istiyor).
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
-          {gosterilen.map((w) => (
-            <div key={w.rota} className="relative">
+          {gosterilen.map((w, i) => (
+            <div
+              key={w.rota}
+              className={`relative${
+                // Yalniz IKI SUTUNLU bantta ve yalniz TEK sayida kart varsa.
+                gosterilen.length % 2 === 1 && i === gosterilen.length - 1
+                  ? " col-span-2 sm:col-span-1"
+                  : ""
+              }`}
+            >
               <Kart
                 // (P168 §1.1) `href` ARTIK GERCEK BIR PROP. Onceki hâl
                 // `as="a"` + spread ile veriyordu ve `Kart` fazladan
@@ -106,7 +128,11 @@ export function WidgetSeridi({
                 // olmuyordu. Duzenleme kipinde baglanti YOK — orada kart
                 // suruklenip gizlenen bir ogedir, gidilecek bir yer degil.
                 {...(duzenlemede ? { as: ETIKET_DIV } : { href: w.rota })}
-                className="flex h-full flex-col items-center gap-2 p-kart text-center"
+                // `justify-center` + `min-h`: kartlar izgarada zaten esit
+                // yukseklige uzuyor; icerigin DIKEY ORTALANMASI ikonlari
+                // ayni yataya oturtur. `min-h` tek satirlik etiketli bir
+                // kartin da dokunulabilir kalmasini garanti eder.
+                className="flex h-full min-h-24 flex-col items-center justify-center gap-2 p-kart text-center"
               >
                 <span style={{ color: "var(--yz-accent-edge)" }}>{w.ikon}</span>
                 <span
@@ -137,7 +163,7 @@ export function WidgetSeridi({
                     type="button"
                     onClick={() => tasi(w.rota, -1)}
                     aria-label={t("panoYukariTasi")}
-                    className="odak-ic rounded px-2"
+                    className="odak-ic yz-dokunma-44 rounded px-2"
                     style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-3)" }}
                   >
                     ‹
@@ -146,7 +172,7 @@ export function WidgetSeridi({
                     type="button"
                     onClick={() => cevir(w.rota)}
                     aria-label={t("panoBolumGizle")}
-                    className="odak-ic rounded px-2"
+                    className="odak-ic yz-dokunma-44 rounded px-2"
                     style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-danger-ink)" }}
                   >
                     ×
@@ -155,7 +181,7 @@ export function WidgetSeridi({
                     type="button"
                     onClick={() => tasi(w.rota, 1)}
                     aria-label={t("panoAsagiTasi")}
-                    className="odak-ic rounded px-2"
+                    className="odak-ic yz-dokunma-44 rounded px-2"
                     style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-3)" }}
                   >
                     ›

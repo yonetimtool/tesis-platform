@@ -103,7 +103,6 @@ const BIRINCIL_UC: Record<string, string> = {
   "/notifications": "GET /notifications",
   "/karar-defteri": "GET /karar-defteri",
   "/dokumanlar": "GET /dokumanlar",
-  "/kvkk-metinler": "GET /kvkk/metinler",
   "/gurultu-uyarilari": "GET /unit-uyarilari",
   "/profil": "GET /me/profile",
   "/aidatim": "GET /me/dues",

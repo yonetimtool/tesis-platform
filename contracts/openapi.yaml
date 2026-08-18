@@ -4185,6 +4185,48 @@ paths:
   # cogul yol kadroyu yonetir (ekleme/silme). Ikisi ayri durur cunku tekil
   # yola bir kimlik eklemek, eski cagiranlarin sessizce baska bir kaydi
   # guncellemesine yol acabilirdi.
+  /tenants/{tenant_id}/kvkk:
+    parameters:
+      - name: tenant_id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [tenant]
+      summary: Bir tesisin KVKK metinleri + onay ozeti (YALNIZ platform admin)
+      description: >
+        (P170 §2) Metinlerin YONETIMI tesis yuzeyinden buraya tasindi.
+        Tasinan sey YETKIDIR, veri degil: `kvkk_metin` tenant icerigi olarak
+        kaliyor — her tesisin veri sorumlusu kendisidir ve platforma gomulu
+        tek bir metin 200 tesise baskasinin metnini imzalatmak olurdu.
+        Capraz-tenant erisim dar `SECURITY DEFINER` islevlerle (goc 0065).
+        Onay ozeti KISI LISTESI DONDURMEZ.
+      responses:
+        "200": { description: metinler + onay ozeti }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [tenant]
+      summary: Tesise YENI SURUM yayinla (YALNIZ platform admin)
+      description: |
+        **Duzenleme ucu YOKTUR.** Yayinlanmis bir metnin govdesi
+        degistirilemez; yerinde duzenlemeye izin verilseydi dun onay vermis
+        bir kullanicinin onayi bugun **baska bir metne** ait gorunurdu.
+
+        Surum ISTEMCIDEN ALINMAZ, sunucu artirir (tur basina, ilk surum 1).
+
+        **Ayni govde yeniden yayinlanamaz (409 `kvkk_metni_degismedi`):**
+        degismemis bir metin icin herkesi yeniden onaya zorlamak, onayi
+        anlamsiz bir tikla dondururdu. Bilinmeyen tesis **404**.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/KvkkMetinCreate" }
+      responses:
+        "201": { description: yayinlandi }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
   /tenants/{tenant_id}/yoneticiler:
     parameters:
       - name: tenant_id
@@ -5561,40 +5603,6 @@ paths:
       responses:
         "200": { description: guncel surum }
         "404": { $ref: "#/components/responses/NotFound" }
-    post:
-      tags: [kvkk]
-      summary: YENI SURUM yayinla (admin + yonetici)
-      description: |
-        **Duzenleme ucu YOKTUR.** Yayinlanmis bir metnin govdesi
-        degistirilemez; yerinde duzenlemeye izin verilseydi dun onay vermis
-        bir kullanicinin onayi bugun **baska bir metne** ait gorunurdu.
-
-        Surum ISTEMCIDEN ALINMAZ, sunucu artirir (ilk surum 1): istemcinin
-        secmesi, iki yoneticinin ayni numarayi vermesi ya da numara atlamasi
-        demekti. Surum artmasi TUM kullanicilarda yeniden onay ister.
-
-        **Ayni govde yeniden yayinlanamaz (409 `kvkk_metni_degismedi`):**
-        degismemis bir metin icin herkesi yeniden onaya zorlamak, onayi
-        anlamsiz bir tikla dondururdu.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: "#/components/schemas/KvkkMetinCreate" }
-      responses:
-        "201": { description: yayinlandi }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "409": { $ref: "#/components/responses/Conflict" }
-  /kvkk/metinler:
-    get:
-      tags: [kvkk]
-      summary: Tum surumler (admin + yonetici)
-      description: >
-        Eski surumler SILINMEZ: onay kayitlari onlara referans verir ve
-        "hangi metne onay verildi" sorusu yanitlanabilir kalmalidir.
-      responses:
-        "200": { description: surum gecmisi }
-        "403": { $ref: "#/components/responses/Forbidden" }
   /kvkk/durum:
     get:
       tags: [kvkk]
@@ -5605,6 +5613,18 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/KvkkDurum" }
+  /kvkk/onaylarim:
+    get:
+      tags: [kvkk]
+      summary: KENDI onay gecmisim (bilinen tum roller)
+      description: >
+        (P170 §2) Yonetim panele tasindi, OKUMA yuzeyi yerinde kaldi.
+        "Hangi metni hangi surumde ne zaman onayladim" sorusu kullanicinin
+        KENDI verisidir; yanitlanamamasi onayin kendisini denetlenemez
+        kilardi. Sorgu `user_id` ile sinirli — yonetici bile buradan
+        baskasinin onayini goremez.
+      responses:
+        "200": { description: onay gecmisi }
   /kvkk/onay:
     post:
       tags: [kvkk]

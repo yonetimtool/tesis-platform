@@ -5638,6 +5638,56 @@ class KvkkDurumOut(BaseModel):
     onay_gerekli: bool
 
 
+class KvkkOnayGecmisiOgesi(BaseModel):
+    """(P170 §2) Kullanicinin KENDI onay gecmisinden bir satir.
+
+    OKUMA YUZEYI YERINDE KALIR: yonetim panele tasindi, ama "hangi metni
+    hangi surumde ne zaman onayladim" sorusu kullanicinin KENDI verisidir
+    ve profilinden gorulebilmeli. KVKK'nin kendisi bunu gerektiriyor.
+    """
+
+    model_config = ConfigDict(from_attributes=True)
+    tur: KvkkTur
+    surum: int
+    onay_at: datetime
+    #: Onaylanan surum HALA YURURLUKTE MI. Turetilir: tur basina en yuksek
+    #: surumle karsilastirilir. Istemcinin bunu kendi hesaplamasi, ayni
+    #: kurali ikinci kez (ve bir gun farkli) yazmasi olurdu.
+    guncel_mi: bool = False
+
+
+class KvkkPlatformMetin(BaseModel):
+    """(P170 §2) Platform panelinde bir tesisin metin surumu."""
+
+    id: uuid.UUID
+    tur: KvkkTur
+    surum: int
+    baslik: str
+    govde: str
+    yeniden_onay_gerekir: bool
+    yururlukte: bool
+    created_at: datetime
+
+
+class KvkkPlatformOnayOzeti(BaseModel):
+    """Tur basina YURURLUKTEKI surumu kac kisi onaylamis.
+
+    KISI LISTESI DONMEZ: capraz-tenant bir uctan kisi dokumu almak,
+    yonetim isi icin gereksiz bir kisisel veri akisi olurdu.
+    """
+
+    tur: KvkkTur
+    surum: int
+    onaylayan: int
+
+
+class KvkkPlatformDurum(BaseModel):
+    """Bir tesisin KVKK durumu — metinler + onay ozeti tek cagrida."""
+
+    metinler: list[KvkkPlatformMetin]
+    onaylar: list[KvkkPlatformOnayOzeti]
+
+
 class KvkkOnayIstek(BaseModel):
     """Onaylanan SURUM govdede TASINIR: istemci ekranda gordugu surumu
     bildirir. Sunucu guncel surumle karsilastirir — arada metin

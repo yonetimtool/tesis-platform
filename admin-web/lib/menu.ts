@@ -253,6 +253,16 @@ const OGELER: readonly MenuOgesi[] = [
   { href: "/tenants", anahtar: "kabukTesisler", icon: "building", grup: "platform" },
   { href: "/integrations", anahtar: "kabukEntegrasyonlar", icon: "hub", grup: "platform" },
   { href: "/settings", anahtar: "kabukAyarlar", icon: "gear", grup: "platform" },
+  // (P170 §2) KVKK VE YASAL METIN YONETIMI BURAYA TASINDI.
+  //
+  // Tesis menusunde "Yonetisim"in altindaydi ve `admin, yonetici`ye
+  // acikti. Metinleri PLATFORM yonetir: tesis yoneticisinin kendi
+  // aydinlatma metnini yazmasi, hukuki sorumlulugu yazma yetkisiyle
+  // karistirmakti.
+  //
+  // `/kvkk` (pazarlama tercihleri) TESIS TARAFINDA KALDI ve karistirilmasin:
+  // biri tesisin YAYINLADIGI yasal metin, oteki kullanicinin KENDI izni.
+  { href: "/kvkk-metinler", anahtar: "kabukKvkkMetinler", icon: "doc", grup: "platform" },
 
   // --- ILETISIM: siteye seslenme + sakinden gelen -----------------------
   { href: "/announcements", anahtar: "kabukDuyurular", icon: "megaphone", grup: "iletisim" },
@@ -343,10 +353,6 @@ const OGELER: readonly MenuOgesi[] = [
   // bir SOYUTLAMADIR; kullanici "karar defteri"ni arar.
   { href: "/karar-defteri", anahtar: "kabukKararDefteri", icon: "doc", grup: "yonetim" },
   { href: "/dokumanlar", anahtar: "kabukDokumanlar", icon: "doc", grup: "yonetim" },
-  // KVKK METNI ile `/kvkk` AYRI SEYLER: biri tesisin YAYINLADIGI
-  // aydinlatma metni, oteki kullanicinin KENDI pazarlama tercihi.
-  // Ayni satira koymak ikisini karistirmak olurdu.
-  { href: "/kvkk-metinler", anahtar: "kabukKvkkMetinler", icon: "doc", grup: "yonetim" },
   { href: "/gurultu-uyarilari", anahtar: "kabukGurultuUyarilari", icon: "bell", grup: "yonetim" },
   { href: "/audit", anahtar: "kabukDenetimKaydi", icon: "scan", grup: "yonetim" },
   // (P41) Yetki matrisi denetimin yaninda.

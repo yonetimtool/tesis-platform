@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import uuid
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, Response
 from sqlalchemy import text
@@ -20,6 +21,10 @@ from ..deps import require_role
 from ..errors import APIError
 from ..models import AppUser
 from ..schemas import (
+    KvkkMetinCreate,
+    KvkkPlatformDurum,
+    KvkkPlatformMetin,
+    KvkkPlatformOnayOzeti,
     TenantAdminCreate,
     TenantAdminCreatedOut,
     TenantAdminDetail,
@@ -436,6 +441,146 @@ async def remove_yonetici(
             if sonuc == "birincil":
                 raise APIError(409, "conflict", "birincil_yonetici_silinemez")
     return Response(status_code=204)
+
+
+# =========================================================================== #
+# (P170 §2) KVKK VE YASAL METINLER — YONETIM PLATFORMDA
+# =========================================================================== #
+# Metinlerin YONETIMI (olusturma, surumleme) tesis yuzeyinden BURAYA tasindi;
+# yetki yalniz platform yoneticisinde. Okuma ve onay tesis yuzeyinde KALDI
+# (bkz. `routers/kvkk.py`) — bir kullanicinin kendisi hakkindaki metni
+# okuyamamasi, aydinlatmanin kendisini imkansiz kilardi.
+#
+# VERI TENANT'A BAGLI KALIYOR: her tesisin veri sorumlusu kendisidir.
+# Capraz-tenant erisim, panelin oteki uclarindaki desenle — dar,
+# `SECURITY DEFINER` SQL islevleriyle (goc 0065).
+
+#: Gecerli metin turleri. `routers/kvkk.py` ile AYNI KUME; ikinci bir liste
+#: tutmamak icin oradan ithal ediliyor.
+def _tur_dogrula(tur: str) -> str:
+    from .kvkk import KVKK_TURLER
+
+    if tur not in KVKK_TURLER:
+        raise APIError(422, "validation_error", "kvkk_turu_gecersiz")
+    return tur
+
+
+@router.get("/{tenant_id}/kvkk", response_model=KvkkPlatformDurum)
+async def kvkk_durumu(
+    tenant_id: uuid.UUID,
+    _: AppUser = Depends(_ADMIN),
+) -> KvkkPlatformDurum:
+    """Bir tesisin TUM metin surumleri + tur basina onay sayisi.
+
+    TEK CAGRI: metinleri ve onay ozetini ayri uclara bolmek, panelin her
+    tesis secisinde iki gidis-donus yapmasi olurdu ve ikisi birbirsiz
+    anlamsiz (kac kisi onayladi sorusu HANGI SURUM bilinmeden okunmaz).
+    """
+    async with SessionLocal() as session:
+        async with session.begin():
+            metinler = (
+                await session.execute(
+                    text(
+                        "SELECT id, tur, surum, baslik, govde, "
+                        "yeniden_onay_gerekir, created_at "
+                        "FROM public.kvkk_metin_listele(:tid)"
+                    ),
+                    {"tid": tenant_id},
+                )
+            ).all()
+            onaylar = (
+                await session.execute(
+                    text(
+                        "SELECT tur, surum, onaylayan "
+                        "FROM public.kvkk_onay_ozeti(:tid)"
+                    ),
+                    {"tid": tenant_id},
+                )
+            ).all()
+
+    # YURURLUKTE TURETILIR (saklanmaz): tur basina en yuksek surum. Kolon
+    # olsaydi iki metin ayni anda yururlukte olabilir ya da hicbiri
+    # olmayabilirdi.
+    en_yuksek: dict[str, int] = {}
+    for m in metinler:
+        en_yuksek[m.tur] = max(en_yuksek.get(m.tur, 0), m.surum)
+    return KvkkPlatformDurum(
+        metinler=[
+            KvkkPlatformMetin(
+                id=m.id,
+                tur=m.tur,
+                surum=m.surum,
+                baslik=m.baslik,
+                govde=m.govde,
+                yeniden_onay_gerekir=m.yeniden_onay_gerekir,
+                yururlukte=m.surum == en_yuksek[m.tur],
+                created_at=m.created_at,
+            )
+            for m in metinler
+        ],
+        onaylar=[
+            KvkkPlatformOnayOzeti(tur=o.tur, surum=o.surum, onaylayan=o.onaylayan)
+            for o in onaylar
+        ],
+    )
+
+
+@router.post("/{tenant_id}/kvkk", response_model=KvkkPlatformMetin, status_code=201)
+async def kvkk_yayinla(
+    tenant_id: uuid.UUID,
+    body: KvkkMetinCreate,
+    _: AppUser = Depends(_ADMIN),
+) -> KvkkPlatformMetin:
+    """Bir tesise YENI SURUM yayinlar. Yerinde duzenleme UCU YOKTUR.
+
+    Duzenlemeye izin verilseydi, dun onay vermis bir kullanicinin onayi
+    bugun BASKA BIR METNE ait gorunurdu. Surum artmasi, metnin degistigini
+    kullaniciya soylemenin tek durust yoludur.
+
+    AYNI GOVDE YENIDEN YAYINLANMAZ (409): degismemis bir metin icin herkesi
+    yeniden onaya zorlamak, onayi anlamsiz bir tikla dondururdu.
+    """
+    tur = _tur_dogrula(body.tur)
+    async with SessionLocal() as session:
+        async with session.begin():
+            satir = (
+                await session.execute(
+                    text(
+                        "SELECT sonuc, id, surum FROM public.kvkk_metin_yayinla"
+                        "(:tid, :tur, :baslik, :govde, :yeniden)"
+                    ),
+                    {
+                        "tid": tenant_id,
+                        "tur": tur,
+                        "baslik": body.baslik,
+                        "govde": body.govde,
+                        "yeniden": body.yeniden_onay_gerekir,
+                    },
+                )
+            ).first()
+
+    # SONUC KODU ISLEVDEN GELIR. Ilk yazimda sebebi ikinci bir sorguyla
+    # ("tesis var mi") ariyorduk; O SORGU RLS'E TAKILIYORDU — platform
+    # baglaminda `app.current_tenant_id` bos ve `tenant` politikasi onu
+    # uuid'ye cevirmeye calisip 500 uretiyordu. Ayrimi `SECURITY DEFINER`
+    # islevin kendisi yapiyor: hem dogru hem tek gidis-donus.
+    if satir is None or satir.sonuc == "yok":
+        raise APIError(404, "not_found", "tenant_bulunamadi")
+    if satir.sonuc == "degismedi":
+        raise APIError(409, "conflict", "kvkk_metni_degismedi")
+
+    return KvkkPlatformMetin(
+        id=satir.id,
+        tur=tur,
+        surum=satir.surum,
+        baslik=body.baslik,
+        govde=body.govde,
+        yeniden_onay_gerekir=body.yeniden_onay_gerekir,
+        # YENI SURUM HER ZAMAN YURURLUKTEDIR: islev en yuksek surumu
+        # uretir, yani tanim geregi.
+        yururlukte=True,
+        created_at=datetime.now(timezone.utc),
+    )
 
 
 @router.delete("/{tenant_id}", status_code=204)

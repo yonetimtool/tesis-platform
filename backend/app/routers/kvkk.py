@@ -12,31 +12,24 @@ mesaji gondermez — kapi UX'tir, riza denetimi KODDADIR.
 """
 from __future__ import annotations
 
-import uuid
-
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..audit import Action, audit_user
-from ..crud_helpers import translate_integrity
-from ..deps import get_current_user, get_tenant_db, require_role
+from ..deps import get_current_user, get_tenant_db
 from ..errors import APIError
 from ..models import AppUser, KvkkMetin, KvkkOnay
 from ..schemas import (
     KvkkDurumOut,
-    KvkkMetinCreate,
     KvkkMetinOut,
+    KvkkOnayGecmisiOgesi,
     KvkkOnayIstek,
     PazarlamaTercihleri,
     PazarlamaTercihUpdate,
 )
 
 router = APIRouter(tags=["kvkk"])
-
-_YAYINCI = require_role("admin", "yonetici")
-
 
 #: (P168 §5) Brief'in bes metni — SIRA brief'in sirasi.
 KVKK_TURLER: tuple[str, ...] = (
@@ -94,76 +87,21 @@ async def guncel_metin(
     return _cikti(metin, yururlukte=True)
 
 
-@router.get("/kvkk/metinler", response_model=list[KvkkMetinOut])
-async def surum_gecmisi(
-    tur: str | None = Query(None),
-    db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_YAYINCI),
-) -> list[KvkkMetinOut]:
-    """Tum surumler (yonetim). Eski surumler SILINMEZ: onay kayitlari
-    onlara referans verir ve "hangi metne onay verildi" sorusu
-    yanitlanabilir kalmalidir."""
-    q = select(KvkkMetin).order_by(KvkkMetin.tur, KvkkMetin.surum.desc())
-    if tur is not None:
-        if tur not in KVKK_TURLER:
-            raise APIError(422, "validation_error", "kvkk_turu_gecersiz")
-        q = q.where(KvkkMetin.tur == tur)
-    kayitlar = (await db.execute(q)).scalars().all()
-    # YURURLUKTE olan TUR BASINA en yuksek surumdur ve TURETILIR.
-    en_yuksek: dict[str, int] = {}
-    for k in kayitlar:
-        en_yuksek[k.tur] = max(en_yuksek.get(k.tur, 0), k.surum)
-    return [_cikti(k, yururlukte=k.surum == en_yuksek[k.tur]) for k in kayitlar]
+# =========================================================================== #
+# (P170 §2) YONETIM UCLARI BURADAN KALKTI.
+# =========================================================================== #
+# `GET /kvkk/metinler` (surum gecmisi) ve `POST /kvkk/metin` (yeni surum)
+# tesis yuzeyindeydi ve `admin, yonetici`ye acikti. Artik metinleri PLATFORM
+# yonetiyor: uclar `/tenants/{tenant_id}/kvkk` altina tasindi ve yalniz
+# platform yoneticisine acik (bkz. `routers/tenants.py`).
+#
+# TASINAN SEY YETKIDIR, VERI DEGIL: `kvkk_metin` tenant icerigi olarak
+# KALIYOR — her tesisin veri sorumlusu kendisidir ve platforma gomulu tek
+# bir metin 200 tesise baskasinin metnini imzalatmak olurdu.
+#
+# ASAGIDAKI UCLAR YERINDE: guncel metni OKUMAK, onay DURUMU ve ONAY VERMEK
+# her rolun kendi hakkidir ve tesis yuzeyinde kalmalidir.
 
-
-@router.post("/kvkk/metin", response_model=KvkkMetinOut, status_code=201)
-async def metin_yayinla(
-    body: KvkkMetinCreate,
-    db: AsyncSession = Depends(get_tenant_db),
-    user: AppUser = Depends(_YAYINCI),
-) -> KvkkMetinOut:
-    """YENI SURUM yayinla — mevcut surumu DUZENLEME UCU YOKTUR.
-
-    Yerinde duzenlemeye izin verilseydi, dun onay vermis bir kullanicinin
-    onayi bugun BASKA BIR METNE ait gorunurdu. Surum artmasi TUM
-    kullanicilarda yeniden onay ister; bu METNIN DEGISTIGINI kullaniciya
-    soylemenin tek durust yoludur.
-
-    AYNI GOVDE YENIDEN YAYINLANMAZ (409): degismemis bir metin icin herkesi
-    yeniden onaya zorlamak, onayi anlamsiz bir tikla dondururdu.
-    """
-    # (P168 §5) SURUM TUR BASINA ilerler: gizlilik politikasi yayinlamak
-    # aydinlatma metninin surum numarasini ATLATMAMALI.
-    mevcut = await _guncel(db, body.tur)
-    if mevcut is not None and mevcut.govde.strip() == body.govde.strip():
-        raise APIError(409, "conflict", "kvkk_metni_degismedi")
-
-    sonraki = ((mevcut.surum if mevcut else 0) or 0) + 1
-    obj = KvkkMetin(
-        tenant_id=user.tenant_id,
-        tur=body.tur,
-        surum=sonraki,
-        baslik=body.baslik,
-        govde=body.govde,
-        yeniden_onay_gerekir=body.yeniden_onay_gerekir,
-        yayinlayan_user_id=user.id,
-    )
-    db.add(obj)
-    try:
-        await db.flush()
-    except IntegrityError as exc:
-        raise translate_integrity(exc)
-    await db.refresh(obj)
-    await audit_user(
-        db, user, Action.KVKK_YAYIN, resource_type="kvkk_metin",
-        resource_id=obj.id,
-        meta={"tur": obj.tur, "surum": obj.surum,
-              "yeniden_onay": obj.yeniden_onay_gerekir},
-    )
-    return _cikti(obj, yururlukte=True)
-
-
-# ============================== DURUM + ONAY ================================ #
 @router.get("/kvkk/durum", response_model=KvkkDurumOut)
 async def durum(
     tur: str = Query(VARSAYILAN_TUR),
@@ -268,6 +206,55 @@ async def onayla(
 
 
 # ============================ PAZARLAMA IZINLERI ============================ #
+@router.get("/kvkk/onaylarim", response_model=list[KvkkOnayGecmisiOgesi])
+async def onay_gecmisim(
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(get_current_user),
+) -> list[KvkkOnayGecmisiOgesi]:
+    """(P170 §2) KULLANICININ KENDI onay gecmisi — TUM roller.
+
+    Rol suzgeci YOK ve olmamali: bu kullanicinin KENDI kaydidir. "Hangi
+    metni hangi surumde ne zaman onayladim" sorusunu yanitlayamamak,
+    onayin kendisini denetlenemez kilardi.
+
+    BASKASININ GECMISI DONMEZ: sorgu `user.id` ile sinirli. Yonetici bile
+    buradan baskasinin onayini goremez — gorebilmesi gereken yer denetim
+    kaydidir, kisisel bir uc degil.
+    """
+    kayitlar = (
+        await db.execute(
+            select(KvkkOnay)
+            .where(KvkkOnay.user_id == user.id)
+            # `id` KIRICI: ayni tur+surum icin iki satir kisitla zaten
+            # engelli, ama siralamanin kararliligi bir KISITA bagli
+            # kalmamali.
+            .order_by(KvkkOnay.onay_at.desc(), KvkkOnay.id.desc())
+        )
+    ).scalars().all()
+
+    # YURURLUKTEKI SURUMLER TEK SORGUDA: onay basina bir sorgu, yirmi
+    # satirlik bir gecmiste yirmi gidis-donus olurdu.
+    guncel = {
+        tur: surum
+        for tur, surum in (
+            await db.execute(
+                select(KvkkMetin.tur, func.max(KvkkMetin.surum)).group_by(
+                    KvkkMetin.tur
+                )
+            )
+        ).all()
+    }
+    return [
+        KvkkOnayGecmisiOgesi(
+            tur=k.tur,
+            surum=k.surum,
+            onay_at=k.onay_at,
+            guncel_mi=guncel.get(k.tur) == k.surum,
+        )
+        for k in kayitlar
+    ]
+
+
 @router.get("/me/pazarlama-tercihleri", response_model=PazarlamaTercihleri)
 async def tercihler(
     user: AppUser = Depends(get_current_user),

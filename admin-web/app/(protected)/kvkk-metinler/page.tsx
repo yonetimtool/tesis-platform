@@ -12,6 +12,7 @@ import {
   HataDurumu,
   Kart,
   Rozet,
+  Secim,
   Sekmeler,
   VeriTablosu,
   type Kolon,
@@ -24,7 +25,22 @@ import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 import { useSorguSecimi } from "@/lib/sorgu-secimi";
 
 /**
- * (P168 §5) KVKK VE YASAL METINLER.
+ * (P168 §5 · P170 §2) KVKK VE YASAL METINLER — PLATFORM YONETIMI.
+ *
+ * =========================================================================
+ * (P170 §2) BU SAYFA ARTIK `panel.*` ALTINDA VE TESIS SECER
+ * =========================================================================
+ * Eskiden tesis yuzeyindeydi ve `yonetici` de yayin yapabiliyordu. Metinleri
+ * PLATFORM yonetir: tesis yoneticisinin kendi aydinlatma metnini yazmasi,
+ * hukuki sorumlulugu yazma yetkisiyle karistirmakti.
+ *
+ * VERI TENANT'A BAGLI KALDI — her tesisin veri sorumlusu kendisidir ve
+ * platforma gomulu TEK bir metin 200 tesise baskasinin metnini imzalatmak
+ * olurdu. Bu yuzden sayfa once TESIS sorar: hedef tenant yolda tasinir
+ * (`/api/tenants/{id}/kvkk`), oturumdan turetilmez.
+ *
+ * OKUMA YUZEYI TASINMADI: her rol kendi profilinden metinleri okumaya ve
+ * onay gecmisini gormeye devam ediyor (`/profil` -> Yasal Metinler).
  *
  * =========================================================================
  * BES METIN, HER BIRI KENDI SURUM SERISI
@@ -46,6 +62,16 @@ import { useSorguSecimi } from "@/lib/sorgu-secimi";
  * YURURLUKTE OLAN, TUR BASINA EN YUKSEK SURUMDUR ve sunucudan TURETILMIS
  * gelir — istemci kendi hesaplamaz.
  */
+
+interface TesisOgesi {
+  id: string;
+  ad: string;
+}
+
+interface PlatformDurum {
+  metinler: Metin[];
+  onaylar: { tur: string; surum: number; onaylayan: number }[];
+}
 
 interface Metin {
   id: string;
@@ -84,10 +110,25 @@ export default function KvkkMetinlerPage() {
   // SEKME ADRESTE: yenilemede ve paylasilan baglantida ayni metin acilsin.
   const [tur, setTur] = useSorguSecimi<Tur>("tur", TURLER, "aydinlatma");
 
-  const { data, error, mutate } = useSWR<Metin[]>(
-    `/api/panel/kvkk-metinler?tur=${tur}`,
+  // TESIS LISTESI: platform yoneticisi hangi tesise yayin yaptigini SECER.
+  const { data: tesisler } = useSWR<{ items: TesisOgesi[] }>(
+    "/api/tenants",
     jsonFetcher,
   );
+  // SECIM ADRESTE: yenilemede ve paylasilan baglantida ayni tesis acilir —
+  // "hangi tesise yayinladim" sorusu adres cubugundan okunabilmeli.
+  const [tesisId, setTesisId] = useState(BOS);
+
+  const { data, error, mutate } = useSWR<PlatformDurum>(
+    tesisId ? `/api/tenants/${tesisId}/kvkk` : null,
+    jsonFetcher,
+  );
+
+  // TUR SUZGECI ISTEMCIDE: uc bir tesisin TUM metinlerini tek cagrida
+  // veriyor (sunucu yorumu). Sekme basina yeni bir istek acmak, ayni
+  // yaniti bes kez cekmek olurdu.
+  const surumler = (data?.metinler ?? []).filter((m) => m.tur === tur);
+  const onayOzeti = (data?.onaylar ?? []).find((o) => o.tur === tur);
 
   const [baslik, setBaslik] = useState(BOS);
   const [govde, setGovde] = useState(BOS);
@@ -107,7 +148,7 @@ export default function KvkkMetinlerPage() {
     }
     setMesgul(true);
     try {
-      await apiSend("/api/panel/kvkk-metin", "POST", {
+      await apiSend(`/api/tenants/${tesisId}/kvkk`, "POST", {
         tur,
         baslik: baslik.trim(),
         govde,
@@ -162,6 +203,31 @@ export default function KvkkMetinlerPage() {
 
       {hata ? <HataDurumu mesaj={hata} /> : null}
 
+      {/* TESIS SECIMI ONCE GELIR: hangi tesise yayin yapildigi sayfanin en
+          kritik bilgisidir ve yanlisi geri alinamaz (yayinlanan surum
+          silinmez). Formdan SONRA sorulsaydi, kullanici metni yazip
+          hedefi en son secerdi. */}
+      <AlanSarmal etiket={t("kvkkTesisSec")} zorunlu>
+        {(b) => (
+          <Secim
+            {...b}
+            value={tesisId}
+            onChange={(e) => setTesisId(e.target.value)}
+          >
+            <option value={BOS}>{t("kvkkTesisSecYer")}</option>
+            {(tesisler?.items ?? []).map((x) => (
+              <option key={x.id} value={x.id}>
+                {x.ad}
+              </option>
+            ))}
+          </Secim>
+        )}
+      </AlanSarmal>
+
+      {tesisId === BOS ? (
+        <BosDurum baslik={t("kvkkTesisSecYer")} aciklama={t("kvkkTesisSecAlt")} />
+      ) : (
+      <>
       <Sekmeler
         aktifId={tur}
         onDegis={(id) => setTur(id as Tur)}
@@ -176,9 +242,20 @@ export default function KvkkMetinlerPage() {
         <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
           {t("kvkkMetinSurumler")}
         </h2>
+        {/* KAC KISI ONAYLADI: yayinlamanin tek olculebilir sonucu bu.
+            KISI LISTESI YOK ve uc de dondurmuyor — yonetim isi icin
+            gereksiz bir kisisel veri akisi olurdu. */}
+        {onayOzeti && (
+          <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+            {t("kvkkOnaylayanSayisi", {
+              n: String(onayOzeti.onaylayan),
+              surum: String(onayOzeti.surum),
+            })}
+          </p>
+        )}
         <VeriTablosu<Metin>
           kolonlar={kolonlar}
-          satirlar={data ?? []}
+          satirlar={surumler}
           satirId={(m) => m.id}
           yukleniyor={!data && !error}
           hata={error ? t("yonKvkkHata") : null}
@@ -232,10 +309,10 @@ export default function KvkkMetinlerPage() {
           {t("yonKvkkYayinla")}
         </Dugme>
       </Kart>
+      </>
+      )}
 
-      {(data?.length ?? 0) === 0 && !error ? (
-        <BosDurum baslik={t("yonKvkkYok")} aciklama={t("yonKvkkYokAlt")} />
-      ) : null}
+
     </div>
   );
 }

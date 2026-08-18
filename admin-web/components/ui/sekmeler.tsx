@@ -333,7 +333,7 @@ export function Cekmece({
             type="button"
             onClick={onKapat}
             aria-label={t("ortakKapat")}
-            className="odak-ic flex h-8 w-8 items-center justify-center rounded-lg"
+            className="odak-ic yz-dokunma-44 flex h-8 w-8 items-center justify-center rounded-lg"
             style={{ color: "var(--yz-text-2)" }}
           >
             <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">

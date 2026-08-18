@@ -22,7 +22,7 @@
 // `id` tekrar eder, `key` icin zaman da kullanilir.
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import useSWR from "swr";
 
 import { useToast } from "@/components/Toast";
@@ -58,7 +58,7 @@ interface TakvimOgesi {
   renk: string | null;
 }
 
-type Gorunum = "gun" | "hafta" | "ay";
+type Gorunum = "gun" | "hafta" | "ay" | "ajanda";
 
 /**
  * Silme geri cagrimi.
@@ -77,6 +77,15 @@ interface SilmeIslemi {
 const GORUNUM_GUN = "gun" as const;
 const GORUNUM_HAFTA = "hafta" as const;
 const GORUNUM_AY = "ay" as const;
+// (P170 §4.2) AJANDA ARTIK GERCEK BIR GORUNUM, dar ekranda ay izgarasinin
+// YERINE GECEN bir kip degil.
+//
+// P169'da ajanda `sm`de ay izgarasini SESSIZCE degistiriyordu: kullanici
+// arac cubugundan "Ay"i secebiliyor ama HICBIR SEY olmuyordu — dugme
+// basiliyor, gorunum ajanda kaliyordu. Yani bir anahtar vardi ve yalan
+// soyluyordu. Simdi dorduncu dugme; `sm`de VARSAYILAN, ama secim
+// kullanicinin.
+const GORUNUM_AJANDA = "ajanda" as const;
 const TIP_HATIRLATMA = "hatirlatma" as const;
 const TIP_AIDAT = "aidat" as const;
 const TUR_BIRINCIL = "birincil" as const;
@@ -87,10 +96,14 @@ const KENAR_BUGUN = "2px";
 const HATIRLATMA_YOLU = "/api/hatirlatmalar";
 
 const GORUNUMLER: { id: Gorunum; anahtar: SozlukAnahtari }[] = [
+  { id: GORUNUM_AJANDA, anahtar: "takvimAjanda" },
   { id: GORUNUM_GUN, anahtar: "takvimGun" },
   { id: GORUNUM_HAFTA, anahtar: "takvimHafta" },
   { id: GORUNUM_AY, anahtar: "takvimAy" },
 ];
+
+/** Ajanda kabinin sabit yuksekligi — bkz. `AjandaListesi` yorumu. */
+const AJANDA_YUKSEKLIGI = "22rem";
 
 const TIP_ANAHTARI: Record<TakvimTip, SozlukAnahtari> = {
   etkinlik: "takvimTipEtkinlik",
@@ -160,6 +173,15 @@ function ayniGun(a: Date, b: Date): boolean {
   );
 }
 
+/** Bir olayin nokta rengi: hatirlatmanin KENDI rengi varsa o, yoksa tipin
+ *  rengi. Uc yerde ayni ifade yazilmisti; ucu de burada. */
+function olayRengi(o: TakvimOgesi): string {
+  if (o.tip === TIP_HATIRLATMA && o.renk) {
+    return RENKLER.find((r) => r.id === o.renk)?.deger ?? TIP_RENGI[o.tip];
+  }
+  return TIP_RENGI[o.tip];
+}
+
 /** `datetime-local` girdisi icin yerel ISO (saniyesiz). */
 function yerelIso(d: Date): string {
   const p = (n: number) => String(n).padStart(2, "0");
@@ -169,6 +191,9 @@ function yerelIso(d: Date): string {
 /** Gorunume gore [baslangic, bitis) penceresi — YEREL. */
 function pencere(gorunum: Gorunum, capa: Date): [Date, Date] {
   if (gorunum === GORUNUM_GUN) return [gunBasi(capa), gunEkle(gunBasi(capa), 1)];
+  // AJANDA AYIN PENCERESINI KULLANIR: Ay <-> Ajanda gecisinde SWR anahtari
+  // degismez, yani anahtara basmak yeni bir istek ACMAZ. Ayri bir pencere
+  // vermek ayni veriyi iki kez cekmek olurdu.
   if (gorunum === GORUNUM_HAFTA) {
     const b = haftaBasi(capa);
     return [b, gunEkle(b, 7)];
@@ -187,6 +212,10 @@ export function PanoTakvim() {
   const { onayla, diyalog } = useOnay();
 
   const [gorunum, setGorunum] = useState<Gorunum>(GORUNUM_AY);
+  // KULLANICI BIR KEZ SECERSE OTOMATIK KARAR SUSAR. Bayrak olmasaydi
+  // pencereyi daraltan (ya da telefonu ceviren) kullanicinin secimi
+  // her seferinde ajandaya geri EZILIRDI.
+  const secildiRef = useRef(false);
   const [capa, setCapa] = useState<Date>(() => new Date());
   const [tamEkran, setTamEkran] = useState(false);
   const [secilenGun, setSecilenGun] = useState<Date | null>(null);
@@ -204,14 +233,20 @@ export function PanoTakvim() {
 
   const bugun = new Date();
 
-  // (P169 §4) DAR EKRANDA AJANDA. `grid-cols-7` KIRILAMAZ: yedi sutun
-  // haftanin yedi gunudur, altiya dusurulemez. 360 px'te bir hucre ~48 px
-  // olur; gun numarasi ile bir olay noktasi ayni kutuya sigmaz.
+  // (P170 §4.2) DAR EKRANDA AJANDA VARSAYILAN — ama ZORUNLU DEGIL.
   //
-  // Cozum sutun sayisini degil GORUNUMU degistirmek: ayni `gunlukKume`den
-  // beslenen, YALNIZ OLAYI OLAN gunlerin listesi. Iki gorunum tek
-  // kaynaktan cizildigi icin ayrisamazlar.
-  const ajanda = useBant() === "sm";
+  // `grid-cols-7` kirilamaz (yedi sutun haftanin yedi gunudur), o yuzden
+  // 360 px'te ay izgarasi ilk acilista dogru secim degil. Ama P169'daki
+  // gibi izgarayi ELINDEN ALMAK da dogru degildi: arac cubugundaki "Ay"
+  // dugmesi basiliyor ve hicbir sey olmuyordu.
+  //
+  // Simdi: dar ekranda ILK gorunum ajanda; kullanici Ay'a gecerse izgara
+  // GERCEKTEN cizilir (hucreler dar ekranda sadelesir — asagiya bak).
+  const dar = useBant() === "sm";
+  useEffect(() => {
+    if (dar && !secildiRef.current) setGorunum(GORUNUM_AJANDA);
+  }, [dar]);
+  const ajanda = gorunum === GORUNUM_AJANDA;
 
   /** Gun -> o gune dusen ogeler. Tek gecis; hucre basina filtre YOK
    *  (42 hucre x N oge, ay gorunumunde gereksiz kare hesaplamasi).
@@ -234,16 +269,13 @@ export function PanoTakvim() {
    *  listede ise komsu ayin gunu, kullanicinin bakmadigi bir aya ait
    *  satir olarak gorunurdu. */
   const ajandaGunleri = useMemo(() => {
-    if (!ajanda || gorunum === GORUNUM_GUN) return [];
-    return Array.from(
-      { length: gorunum === GORUNUM_HAFTA ? 7 : 42 },
-      (_, i) => gunEkle(bas, i),
-    ).filter(
+    if (!ajanda) return [];
+    return Array.from({ length: 42 }, (_, i) => gunEkle(bas, i)).filter(
       (g) =>
         (gunlukKume.get(g.toDateString()) ?? []).length > 0 &&
-        (gorunum !== GORUNUM_AY || g.getMonth() === capa.getMonth()),
+        g.getMonth() === capa.getMonth(),
     );
-  }, [ajanda, gorunum, bas, capa, gunlukKume]);
+  }, [ajanda, bas, capa, gunlukKume]);
 
   function kaydir(yon: -1 | 1) {
     if (gorunum === GORUNUM_GUN) setCapa(gunEkle(capa, yon));
@@ -282,7 +314,10 @@ export function PanoTakvim() {
               boy="kucuk"
               tur={g.id === gorunum ? TUR_BIRINCIL : TUR_IKINCIL}
               aria-pressed={g.id === gorunum}
-              onClick={() => setGorunum(g.id)}
+              onClick={() => {
+                secildiRef.current = true;
+                setGorunum(g.id);
+              }}
             >
               {t(g.anahtar)}
             </Dugme>
@@ -324,47 +359,19 @@ export function PanoTakvim() {
           }}
         />
       ) : ajanda ? (
-        // AJANDA: gun basligi TIKLANABILIR kalir — izgarada bir hucreye
-        // dokunmanin islevi o gunu SECMEKTIR ve "Hatirlatma ekle" secili
-        // gunu on-doldurur. Baslik duz metin olsaydi bu kisayol dar
-        // ekranda kaybolurdu.
-        ajandaGunleri.length === 0 ? (
-          <BosDurum baslik={t("takvimOlayYok")} />
-        ) : (
-          <ul className="space-y-3">
-            {ajandaGunleri.map((gun) => (
-              <li key={gun.toISOString()}>
-                <button
-                  type="button"
-                  onClick={() => setSecilenGun(gun)}
-                  aria-pressed={secilenGun ? ayniGun(gun, secilenGun) : false}
-                  className="odak-ic mb-1 block w-full text-start"
-                  style={{
-                    fontSize: "var(--yz-fs-sm)",
-                    color: ayniGun(gun, bugun)
-                      ? "var(--yz-accent-ink)"
-                      : "var(--yz-text)",
-                  }}
-                >
-                  {new Intl.DateTimeFormat(undefined, {
-                    weekday: "long",
-                    day: "numeric",
-                    month: "long",
-                  }).format(gun)}
-                </button>
-                <GunListesi
-                  ogeler={gunlukKume.get(gun.toDateString()) ?? []}
-                  onSecim={(o) => {
-                    if (o.tip === TIP_HATIRLATMA) {
-                      setDuzenlenen(o.id);
-                      setFormAcik(true);
-                    }
-                  }}
-                />
-              </li>
-            ))}
-          </ul>
-        )
+        <AjandaListesi
+          gunler={ajandaGunleri}
+          gunlukKume={gunlukKume}
+          bugun={bugun}
+          secilenGun={secilenGun}
+          onGunSec={setSecilenGun}
+          onSecim={(o) => {
+            if (o.tip === TIP_HATIRLATMA) {
+              setDuzenlenen(o.id);
+              setFormAcik(true);
+            }
+          }}
+        />
       ) : (
         <div
           className="grid gap-1"
@@ -398,7 +405,10 @@ export function PanoTakvim() {
                   setSecilenGun(gun);
                   setDuzenlenen(null);
                 }}
-                className="odak-ic min-h-20 rounded-lg border p-1 text-start align-top"
+                // (P170 §4.2) DAR EKRANDA ALCAK HUCRE: 360 px'te bir hucre
+                // ~45 px genisliktedir ve 80 px yukseklik BOS yer demekti —
+                // izgara ekrani doldurup ajandayi da asagi itiyordu.
+                className="odak-ic min-h-14 rounded-lg border p-1 text-start align-top sm:min-h-20"
                 style={{
                   borderColor: ayniGun(gun, bugun)
                     ? "var(--yz-accent-edge)"
@@ -418,7 +428,30 @@ export function PanoTakvim() {
                 >
                   {gun.getDate()}
                 </span>
-                <span className="mt-0.5 block space-y-0.5">
+                {/* DAR EKRAN: YALNIZ NOKTA. Olay adi 45 px'lik bir hucrede
+                    iki harfe dusuyor ve okunmuyordu; okunmayan bir metin
+                    bilgi tasimaz, yalniz yer kaplar. Nokta ise "bu gunde bir
+                    sey var" bilgisini TAM tasir ve sayisi da gorunur.
+                    Ayrinti bir dokunus uzakta: hucreye basmak gunu secer,
+                    listesi altta cizilir. */}
+                <span className="mt-0.5 flex flex-wrap gap-0.5 sm:hidden">
+                  {gunun.slice(0, 4).map((o, i) => (
+                    <span
+                      key={`n-${o.id}-${o.baslangic}-${i}`}
+                      aria-hidden
+                      className="inline-block h-1.5 w-1.5 rounded-full"
+                      style={{ background: olayRengi(o) }}
+                    />
+                  ))}
+                  {gunun.length > 4 && (
+                    <span
+                      style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-3)" }}
+                    >
+                      +{gunun.length - 4}
+                    </span>
+                  )}
+                </span>
+                <span className="mt-0.5 hidden space-y-0.5 sm:block">
                   {gunun.slice(0, 3).map((o, i) => (
                     <span
                       key={`${o.id}-${o.baslangic}-${i}`}
@@ -428,13 +461,7 @@ export function PanoTakvim() {
                       <span
                         aria-hidden
                         className="inline-block h-1.5 w-1.5 shrink-0 rounded-full"
-                        style={{
-                          background:
-                            o.tip === TIP_HATIRLATMA && o.renk
-                              ? (RENKLER.find((r) => r.id === o.renk)?.deger ??
-                                 TIP_RENGI[o.tip])
-                              : TIP_RENGI[o.tip],
-                        }}
+                        style={{ background: olayRengi(o) }}
                       />
                       <span className="truncate">
                         {o.tip === TIP_AIDAT
@@ -517,12 +544,128 @@ export function PanoTakvim() {
 }
 
 /** Bir gunun olaylari — okunur liste (izgara hucresi ozet gosterir). */
+/**
+ * (P170 §4.2) AJANDA — tarihe gore gruplanmis olay listesi.
+ *
+ * =========================================================================
+ * SABIT YUKSEKLIK, ICERIDE KAYDIRMA
+ * =========================================================================
+ * Brief: "takvimin yuksekligi sabit kalsin, icerik degisince sayfa
+ * ziplamasin". Ay degistirmek olay sayisini degistirir; kap serbest
+ * buyuseydi 20 olayli bir aydan 2 olayli aya gecmek sayfanin ALTINDAKI
+ * her seyi yukari cekerdi — kullanici parmagini kaldirmadan once baktigi
+ * yer kayardi. Sabit kap + ic kaydirma bunu kokunden keser.
+ *
+ * =========================================================================
+ * ACILISTA BUGUNE KAYDIRILIR — AMA SAYFA DEGIL, KAP
+ * =========================================================================
+ * `scrollIntoView` ATALARI da kaydirir: pano sayfasi takvimin bulundugu
+ * yere zipplardi. Bunun yerine kabin `scrollTop`u DOGRUDAN yaziliyor;
+ * etkisi kabin ICINDE kalir.
+ *
+ * BOS GUN CIZILMEZ: yalniz olayi olan gunler listelenir. Otuz satirlik bir
+ * "hicbir sey yok" listesi, gercek olaylari gorunmez kilardi.
+ */
+function AjandaListesi({
+  gunler,
+  gunlukKume,
+  bugun,
+  secilenGun,
+  onGunSec,
+  onSecim,
+}: {
+  gunler: Date[];
+  gunlukKume: Map<string, TakvimOgesi[]>;
+  bugun: Date;
+  secilenGun: Date | null;
+  onGunSec: (g: Date) => void;
+  onSecim: (o: TakvimOgesi) => void;
+}) {
+  const t = useT();
+  const kapRef = useRef<HTMLDivElement>(null);
+  const bugunRef = useRef<HTMLLIElement>(null);
+
+  useEffect(() => {
+    const kap = kapRef.current;
+    const hedef = bugunRef.current;
+    if (!kap || !hedef) return;
+    kap.scrollTop = hedef.offsetTop - kap.offsetTop;
+  }, [gunler]);
+
+  if (gunler.length === 0) return <BosDurum baslik={t("takvimOlayYok")} />;
+
+  return (
+    <div
+      ref={kapRef}
+      className="overflow-y-auto"
+      style={{ height: AJANDA_YUKSEKLIGI }}
+    >
+      <ul className="space-y-3">
+        {gunler.map((gun) => {
+          const bugunMu = ayniGun(gun, bugun);
+          return (
+            <li key={gun.toISOString()} ref={bugunMu ? bugunRef : undefined}>
+              {/* GUN BASLIGI TIKLANABILIR: izgarada bir hucreye dokunmanin
+                  islevi o gunu SECMEKTIR ve "Hatirlatma ekle" secili gunu
+                  on-doldurur. Duz metin olsaydi bu kisayol dar ekranda
+                  kaybolurdu. */}
+              <button
+                type="button"
+                onClick={() => onGunSec(gun)}
+                aria-pressed={secilenGun ? ayniGun(gun, secilenGun) : false}
+                className="odak-ic mb-1 flex w-full items-center gap-2 text-start"
+                style={{
+                  fontSize: "var(--yz-fs-sm)",
+                  color: bugunMu ? "var(--yz-accent-ink)" : "var(--yz-text)",
+                }}
+              >
+                <span>
+                  {new Intl.DateTimeFormat(undefined, {
+                    weekday: "long",
+                    day: "numeric",
+                    month: "long",
+                  }).format(gun)}
+                </span>
+                {/* BUGUN ROZETI: renk TEK BASINA yeterli bir isaret degil —
+                    renk korlugunde ve dusuk kontrastli ortamda kaybolur. */}
+                {bugunMu && (
+                  <span
+                    className="rounded-full px-2"
+                    style={{
+                      fontSize: "var(--yz-fs-xs)",
+                      background: "var(--yz-accent-edge)",
+                      color: "#fff",
+                    }}
+                  >
+                    {t("takvimBugun")}
+                  </span>
+                )}
+              </button>
+              <GunListesi
+                ogeler={gunlukKume.get(gun.toDateString()) ?? []}
+                onSecim={onSecim}
+                zamanOnde
+              />
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
 function GunListesi({
   ogeler,
   onSecim,
+  zamanOnde = false,
 }: {
   ogeler: TakvimOgesi[];
   onSecim: (o: TakvimOgesi) => void;
+  /** (P170 §4.2) AJANDADA SAAT BASA ALINIR — liste bir ZAMAN CIZGISI olarak
+   *  taranir ve goz tek bir sutunu takip eder. Gun/secili-gun listelerinde
+   *  KAPALI: orada zaten tek gunun icindesin ve saati basa almak masaustu
+   *  duzenini bu turun kapsami disinda degistirirdi. */
+  zamanOnde?: boolean;
 }) {
   const t = useT();
   if (ogeler.length === 0) return <BosDurum baslik={t("takvimOlayYok")} />;
@@ -535,10 +678,24 @@ function GunListesi({
           style={{ borderColor: "var(--yz-border)" }}
         >
           <span className="flex min-w-0 items-center gap-2">
+            {zamanOnde && (
+              // SABIT GENISLIK: saatler alt alta HIZALI dursun, yoksa
+              // "09:00" ile "14:30" arasindaki bir piksel farki listeyi
+              // titrek gosterirdi.
+              <span
+                className="w-11 shrink-0 tabular-nums"
+                style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}
+              >
+                {new Intl.DateTimeFormat(undefined, {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                }).format(new Date(o.baslangic))}
+              </span>
+            )}
             <span
               aria-hidden
               className="inline-block h-2 w-2 shrink-0 rounded-full"
-              style={{ background: TIP_RENGI[o.tip] }}
+              style={{ background: olayRengi(o) }}
             />
             <span className="min-w-0">
               <span
@@ -553,11 +710,14 @@ function GunListesi({
                 className="block"
                 style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-3)" }}
               >
-                {t(TIP_ANAHTARI[o.tip])} ·{" "}
-                {new Intl.DateTimeFormat(undefined, {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                }).format(new Date(o.baslangic))}
+                {/* Saat basa alindiysa BURADA TEKRARLANMAZ: ayni bilgiyi
+                    iki kez yazmak satiri uzatir, yeni bir sey soylemez. */}
+                {zamanOnde
+                  ? t(TIP_ANAHTARI[o.tip])
+                  : `${t(TIP_ANAHTARI[o.tip])} · ${new Intl.DateTimeFormat(
+                      undefined,
+                      { hour: "2-digit", minute: "2-digit" },
+                    ).format(new Date(o.baslangic))}`}
               </span>
             </span>
           </span>
