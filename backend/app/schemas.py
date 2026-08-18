@@ -5475,6 +5475,17 @@ class MesajYapilandirmaOut(BaseModel):
     #: gonderim ekraninda ONCEDEN uyarir — gonderdikten SONRA degil.
     sms_hazir: bool = False
     eposta_hazir: bool = False
+    #: (P173 §4) KANAL HANGI AYARDAN CALISIYOR.
+    #:
+    #: `hazir` bayragi tek basina YANILTICIYDI: alanlar BOS gorunurken
+    #: rozet "hazir" diyordu ve kullanici "ben bir sey girmedim, nasil
+    #: hazir?" diye sorup ayarlari yeniden girmeye kalkisiyordu. Sebep
+    #: dogru ama gorunmezdi — kanal ENV'deki GENEL ayardan calisiyor.
+    #:
+    #: `tesis`: bu tesisin kendi ayari · `genel`: ENV'deki ortak ayar ·
+    #: `yok`: hicbiri.
+    sms_kaynak: Literal["tesis", "genel", "yok"] = "yok"
+    eposta_kaynak: Literal["tesis", "genel", "yok"] = "yok"
 
 
 class MesajYapilandirmaUpdate(BaseModel):

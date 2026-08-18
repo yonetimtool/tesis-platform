@@ -457,6 +457,23 @@ async def _bugun_gonderilen(db: AsyncSession) -> int:
     ).scalar_one()
 
 
+def ayar_kaynagi(tesiste: bool, hazir: bool) -> str:
+    """(P173 §4) Kanal HANGI ayardan calisiyor: `tesis` | `genel` | `yok`.
+
+    MODUL DUZEYINDE ve SAF: kural bir kapanisin icinde saklandiginda
+    yalnizca HTTP uzerinden olculebiliyordu — ve testler CANLI SUNUCUYA
+    gittigi icin ENV dali test surecinden `monkeypatch` ile surulemiyordu
+    (olculdu). Saf bir islev, uc dali da dogrudan olcturur.
+
+    Olcut `_ayardan_veya_env` ile AYNI: tesisin o kanal icin kendi degeri
+    varsa "tesis". Farkli bir olcut yazmak, rozetle gercek saglayici
+    seciminin bir gun ayrismasi demekti.
+    """
+    if not hazir:
+        return "yok"
+    return "tesis" if tesiste else "genel"
+
+
 @router.get("/mesaj-ayarlari", response_model=MesajYapilandirmaOut)
 async def mesaj_ayarlari(
     db: AsyncSession = Depends(get_tenant_db),
@@ -470,6 +487,17 @@ async def mesaj_ayarlari(
     # kontrol bir gun gercek secimden ayrisirdi.
     sms_hazir = not isinstance(kanal_saglayicisi("sms", ayar), LogSmsSaglayici)
     eposta_hazir = not isinstance(kanal_saglayicisi("eposta", ayar), LogEpostaSaglayici)
+
+    # (P173 §4) KAYNAK DA BILDIRILIR — "hazir" tek basina YANILTICIYDI.
+    #
+    # Alanlar BOS gorunurken rozet "hazir" diyor ve kullanici "ben bir
+    # sey girmedim, nasil hazir?" diye soruyordu. Sebep dogru ama
+    # gorunmuyordu: kanal ENV'deki GENEL ayardan calisiyor.
+    #
+    # Karar KANAL BASINA ve `_ayardan_veya_env` ile AYNI olcutle:
+    # tesisin o kanal icin kendi degeri VARSA "tesis", yoksa calisan bir
+    # sey varsa "genel". Farkli bir olcut yazmak, rozetle gercek secimin
+    # bir gun ayrismasi demekti.
     return MesajYapilandirmaOut(
         sms_saglayici=y.sms_saglayici if y else None,
         sms_kullanici=y.sms_kullanici if y else None,
@@ -484,6 +512,8 @@ async def mesaj_ayarlari(
         bugun_gonderilen=await _bugun_gonderilen(db),
         sms_hazir=sms_hazir,
         eposta_hazir=eposta_hazir,
+        sms_kaynak=ayar_kaynagi(bool(y and y.sms_saglayici), sms_hazir),
+        eposta_kaynak=ayar_kaynagi(bool(y and y.smtp_host), eposta_hazir),
     )
 
 

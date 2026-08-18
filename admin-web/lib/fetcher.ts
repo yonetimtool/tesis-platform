@@ -27,7 +27,7 @@ export async function jsonFetcher<T>(url: string): Promise<T> {
   if (!res.ok) {
     const hata = (data as { error?: { message?: string; code?: string } } | null)
       ?.error;
-    throw kodluHata(hata?.message ?? metin("ortakHataOlustu"), hata?.code);
+    throw kodluHata(hata?.message ?? govdesizMesaj(res.status), hata?.code);
   }
   return data as T;
 }
@@ -39,6 +39,29 @@ export async function jsonFetcher<T>(url: string): Promise<T> {
  * sorusunu ancak metne bakarak yanitlayabilirdi — yedi dilde degisen bir
  * metne. Kod degismez; merkezi durum ekrani ona bakiyor.
  */
+/**
+ * (P173) GOVDESIZ YANITTA ANLAMLI MESAJ — "Bir hata olustu" DEGIL.
+ *
+ * =========================================================================
+ * OLCULEN OLAY
+ * =========================================================================
+ * `mesaj-ayarlari` ucu BFF beyaz listesinde yoktu: vekil kendi 404'unu
+ * donuyor, `PUT`/`POST` icin ise Next 405 uretiyordu. Ikisinin de GOVDESI
+ * YOK, yani `error.message` yok. Ekran genel "bir hata olustu" gosterip
+ * susuyordu ve kullanicinin elinde HICBIR ipucu kalmiyordu — sunucu
+ * log'unda da iz yoktu, cunku istek uc govdesine hic ulasmadi.
+ *
+ * 404 ve 405 GOVDESIZ geldiginde bu neredeyse her zaman AYNI ANLAMA
+ * gelir: istemci ile sunucu SURUMLERI ayrismis ya da bir uc henuz
+ * yayina alinmamis. Mesaj bunu soyluyor — "tekrar dene" demiyor, cunku
+ * tekrar denemek ISE YARAMAZ.
+ */
+function govdesizMesaj(durum: number): string {
+  if (durum === 404) return metin("ortakUcBulunamadi");
+  if (durum === 405) return metin("ortakYontemDesteklenmiyor");
+  return metin("ortakHataOlustu");
+}
+
 export function kodluHata(mesaj: string, kod?: string): Error {
   const e = new Error(mesaj) as Error & { kod?: string };
   if (kod) e.kod = kod;

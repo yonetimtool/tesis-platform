@@ -154,3 +154,45 @@ def test_DENETCI_ayarlari_DEGISTIREMEZ(client, world):
     d = _headers(client, world["slug_a"], world["denetci_a"])
     assert client.put("/mesaj-ayarlari", headers=d,
                       json={"sms_baslik": "X"}).status_code == 403
+
+
+# --------------------------------------------------------------------------- #
+# (P173 §4) ROZET KAYNAGI — "hazir" tek basina yaniltiyordu
+# --------------------------------------------------------------------------- #
+def test_KAYNAK_KURALI_UC_DALI_DA(client, world):
+    """`ayar_kaynagi` saf kuraldir; uc dali da dogrudan olculur.
+
+    HTTP UZERINDEN OLCULEMEZ: testler CANLI SUNUCUYA gidiyor, yani test
+    surecindeki `monkeypatch` API surecindeki `settings`i DEGISTIRMEZ
+    (olculdu). Kural bu yuzden modul duzeyinde ve saf.
+    """
+    from app.routers.mesajlar import ayar_kaynagi
+
+    # Tesisin kendi degeri var ve calisiyor.
+    assert ayar_kaynagi(True, True) == "tesis"
+    # Tesis bir sey girmemis ama ENV'den calisiyor — BIZIM KURULUMUMUZ.
+    # Ekranda alanlar BOS gorunur; rozetin "hazir (genel ayar)" demesi
+    # bu bosluğu ACIKLAR. Sebep dogruydu ama gorunmuyordu.
+    assert ayar_kaynagi(False, True) == "genel"
+    # Hicbir yerde yok.
+    assert ayar_kaynagi(False, False) == "yok"
+    # Tesiste deger var ama YARIM (saglayici secilmis, parola yok gibi):
+    # `hazir` false ise kaynak da yoktur — "tesis" demek, calismayan bir
+    # ayari calisiyor gibi gostermek olurdu.
+    assert ayar_kaynagi(True, False) == "yok"
+
+
+def test_YAPILANDIRMA_YOKKEN_kaynak_YOK(client, world):
+    """Test ortaminda ne tesis ayari ne ENV var."""
+    y = _headers(client, world["slug_a"], world["yonetici_a"])
+    d = client.get("/mesaj-ayarlari", headers=y).json()
+    assert d["eposta_kaynak"] == "yok"
+    assert d["sms_kaynak"] == "yok"
+
+
+def test_KAYNAK_TESIS_AYARI_ISE_TESIS_bildirilir(client, world):
+    y = _headers(client, world["slug_a"], world["yonetici_a"])
+    r = client.put("/mesaj-ayarlari", headers=y, json={
+        "smtp_host": "mail.tesis.example", "smtp_gonderen": "k@tesis.example"})
+    assert r.status_code == 200, r.text
+    assert r.json()["eposta_kaynak"] == "tesis"

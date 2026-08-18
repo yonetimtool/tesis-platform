@@ -34,6 +34,13 @@ export const OKUMA: Record<string, string> = {
   // --- mesaj (P32) ---
   "mesaj-sablonlari": "/mesaj-sablonlari",
   "mesaj-gecmis": "/mesajlar/gecmis",
+  // (P173) EKSIKTI VE EKRANI TAMAMEN OLU BIRAKIYORDU.
+  //
+  // Backend'de `GET /mesaj-ayarlari` P168'den beri VAR; eksik olan bu
+  // satirdi. Beyaz listede olmayan bir ad icin vekil kendi 404'unu
+  // doner — sunucuya HIC gitmez, bu yuzden backend log'unda iz de yok.
+  // Ekran cizili, alanlar bos, "Kaydet" kaydetmiyordu.
+  "mesaj-ayarlari": "/mesaj-ayarlari",
   // --- yonetisim (P33) ---
   "karar-defteri": "/karar-defteri",
   dokumanlar: "/dokumanlar",
@@ -75,6 +82,8 @@ export const YAZMA: Record<string, string> = {
   "mesaj-sablonlari": "/mesaj-sablonlari",
   "mesaj-onizleme": "/mesajlar/onizleme",
   "mesaj-gonder": "/mesajlar/gonder",
+  // (P173) Ayarlar TEKIL bir kaynak: PUT ile butun kayit yazilir.
+  "mesaj-ayarlari": "/mesaj-ayarlari",
   "karar-defteri": "/karar-defteri",
   dokumanlar: "/dokumanlar",
   anketler: "/anketler",

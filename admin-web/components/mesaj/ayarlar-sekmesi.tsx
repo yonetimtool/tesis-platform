@@ -20,6 +20,7 @@ import { Alan, AlanSarmal, Dugme, HataDurumu, Kart, Rozet, Secim } from "@/compo
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
+import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 
 interface Ayarlar {
   sms_saglayici: string | null;
@@ -35,6 +36,8 @@ interface Ayarlar {
   bugun_gonderilen: number;
   sms_hazir: boolean;
   eposta_hazir: boolean;
+  sms_kaynak: "tesis" | "genel" | "yok";
+  eposta_kaynak: "tesis" | "genel" | "yok";
 }
 
 const BOS = "";
@@ -51,6 +54,19 @@ const DURUM_GONDERILDI = "gonderildi";
 // kimlikleri, kullanici metni DEGIL.
 const ROZET_OLUMLU = "olumlu" as const;
 const ROZET_UYARI = "uyari" as const;
+
+/** Rozet metni: hazir mi + HANGI ayardan. */
+function durumMetni(
+  t: (a: SozlukAnahtari) => string,
+  hazir: boolean | undefined,
+  kaynak: "tesis" | "genel" | "yok" | undefined,
+): string {
+  if (!hazir) return t("mesajYapilandirilmadi");
+  // "genel" DENDIGINDE alanlarin bos olmasi ARTIK TUTARLI gorunur.
+  return kaynak === "genel"
+    ? `${t("mesajHazir")} (${t("mesajKaynakGenel")})`
+    : t("mesajHazir");
+}
 
 export function MesajAyarlariSekmesi() {
   const t = useT();
@@ -116,17 +132,29 @@ export function MesajAyarlariSekmesi() {
 
   return (
     <div className="space-y-4">
-      <HataDurumu mesaj={hata ?? (error ? t("mesajAyarHata") : null)} />
+      {/* (P173 §5) SUNUCUNUN METNI ONCE. `mesajAyarHata` genel bir
+          cumledir ("ayarlar okunamadi") ve 404/405 gibi govdesiz
+          yanitlarda kullaniciya HICBIR ipucu birakmiyordu. `jsonFetcher`
+          artik bu durumlar icin ne yapilacagini soyleyen bir metin
+          uretiyor; genel cumle yalnizca YEDEK. */}
+      <HataDurumu
+        mesaj={hata ?? (error ? (error as Error).message || t("mesajAyarHata") : null)}
+      />
 
       {/* HAZIRLIK DURUMU EN USTTE: kullanici "neden gitmiyor" sorusunu
           gonderdikten SONRA degil, buraya girdigi anda gormeli. */}
       <Kart className="flex flex-wrap items-center gap-3">
+        {/* (P173 §4) ROZET KAYNAGI DA SOYLER.
+            "Hazir" tek basina yaniltiyordu: alanlar BOS gorunurken rozet
+            hazir diyor, kullanici "ben bir sey girmedim, nasil hazir?"
+            diye sorup ayarlari yeniden girmeye kalkiyordu. Sebep dogru
+            ama gorunmuyordu — kanal genel (ENV) ayardan calisiyor. */}
         <Rozet durum={data?.sms_hazir ? ROZET_OLUMLU : ROZET_UYARI}>
-          {t("mesajSmsDurum")}: {data?.sms_hazir ? t("mesajHazir") : t("mesajYapilandirilmadi")}
+          {t("mesajSmsDurum")}: {durumMetni(t, data?.sms_hazir, data?.sms_kaynak)}
         </Rozet>
         <Rozet durum={data?.eposta_hazir ? ROZET_OLUMLU : ROZET_UYARI}>
           {t("mesajEpostaDurum")}:{" "}
-          {data?.eposta_hazir ? t("mesajHazir") : t("mesajYapilandirilmadi")}
+          {durumMetni(t, data?.eposta_hazir, data?.eposta_kaynak)}
         </Rozet>
         <span style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
           {t("mesajBugunGonderilen")}: {data?.bugun_gonderilen ?? 0}

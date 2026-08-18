@@ -41,6 +41,26 @@ export async function POST(
   return proxyJson(yol, "POST", body, idem ? { "Idempotency-Key": idem } : undefined);
 }
 
+// (P173) PUT ISLEYICISI EKLENDI.
+//
+// Onceden yalniz GET/POST/PATCH vardi; `PUT /api/panel/mesaj-ayarlari`
+// Next tarafindan 405 ile reddediliyordu — istek uc govdesine HIC
+// ulasmiyordu, bu yuzden backend log'unda iz de yoktu.
+//
+// PUT bir TEKIL KAYNAGIN TAMAMINI yazar (mesaj ayarlari boyle: tesis
+// basina tek satir). PATCH ile ayni yola dusmesi bilincli degil —
+// backend'de uc GERCEKTEN `PUT` olarak tanimli ve vekil, metodu
+// DEGISTIRMEMELI: degistirseydi sozlesme ile gerceklik ayrisirdi.
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: { kaynak: string } },
+): Promise<NextResponse> {
+  const yol = yazmaYolu(params.kaynak);
+  if (!yol) return YOK;
+  const body = await req.json().catch(() => ({}));
+  return proxyJson(yol, "PUT", body);
+}
+
 export async function PATCH(
   req: NextRequest,
   { params }: { params: { kaynak: string } },
