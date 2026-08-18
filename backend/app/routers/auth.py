@@ -21,14 +21,22 @@ from ..deps import get_redis, gorev_penceresi_disinda
 from ..errors import APIError
 from ..telefon_kodu import GECERSIZ as TK_GECERSIZ
 from ..hiz_siniri import kod_istegi_say
-from ..telefon_kodu import kod_uret_ve_gonder, kodu_dogrula
+from ..telefon_kodu import (
+    eposta_kodu_uret_ve_gonder,
+    eposta_kodunu_dogrula,
+    kod_uret_ve_gonder,
+    kodu_dogrula,
+)
 from ..models import (
     AppUser,
     Tenant,
     Unit,
     UnitResident,
 )
+from ..gonderim import tenant_ayari
 from ..schemas import (
+    EpostaKodDogrulaIstek,
+    EpostaKodIstek,
     TelefonIstek,
     TelefonKodIstek,
     KayitDurumResponse,
@@ -613,6 +621,95 @@ async def giris_kodu_iste(body: TelefonIstek) -> KayitDurumResponse:
                 session, tenant_id=tenant_id, telefon=phone, amac="giris"
             )
     return KayitDurumResponse(durum="onay_bekliyor")
+
+
+@router.post("/giris/eposta-kod-iste", response_model=KayitDurumResponse)
+async def eposta_giris_kodu_iste(
+    body: EpostaKodIstek,
+    redis: aioredis.Redis = Depends(get_redis),
+) -> KayitDurumResponse:
+    """(P172 §5) E-POSTAYA giris kodu gonderir.
+
+    =======================================================================
+    TELEFON YOLUYLA AYNI KURALLAR
+    =======================================================================
+    Sure, deneme siniri ve hiz siniri `telefon_kodu` modulunden gelir —
+    ikinci bir sistem YOK. Degisen tek sey kimlik ve teslimat kanali.
+
+    ADRES VARLIGINI SIZDIRMAZ: kayitli olmayan bir adres icin de AYNI
+    yanit doner. Aksi halde bu uc "hangi e-postalar kayitli" sorgusuna
+    donusurdu — telefon yolundaki kararin aynisi.
+
+    HIZ SINIRI KIMLIGE BAGLI: anahtar `tesis:eposta`. Yalniz e-posta
+    kullanmak, ayni adresi tasiyan iki tesisin sayacini birlestirirdi.
+    """
+    kimlik = f"{body.tenant_slug}:{str(body.eposta).lower()}"
+    await kod_istegi_say(redis, kimlik, kapsam="giris_eposta")
+
+    async with SessionLocal() as session:
+        async with session.begin():
+            tenant_id = (
+                await session.execute(
+                    text("SELECT public.tenant_id_by_slug(:slug)"),
+                    {"slug": body.tenant_slug},
+                )
+            ).scalar_one_or_none()
+            if tenant_id is None:
+                return KayitDurumResponse(durum="onay_bekliyor")
+            await set_tenant(session, tenant_id)
+            eposta = str(body.eposta).lower()
+            user = (
+                await session.execute(
+                    select(AppUser).where(func.lower(AppUser.email) == eposta)
+                )
+            ).scalar_one_or_none()
+            if user is None or not user.is_active:
+                return KayitDurumResponse(durum="onay_bekliyor")
+            ayar = await tenant_ayari(session, tenant_id)
+            await eposta_kodu_uret_ve_gonder(
+                session, tenant_id=tenant_id, eposta=eposta,
+                amac="giris", ayar=ayar,
+            )
+    return KayitDurumResponse(durum="onay_bekliyor")
+
+
+@router.post("/giris/eposta-kod-dogrula", response_model=TokenPair)
+async def eposta_giris_kodu_dogrula(
+    body: EpostaKodDogrulaIstek,
+    redis: aioredis.Redis = Depends(get_redis),
+) -> TokenPair:
+    """Kod dogru ise OTURUM ACAR — parola aranmaz (telefon yolunun esi)."""
+    async with SessionLocal() as session:
+        async with session.begin():
+            tenant_id = (
+                await session.execute(
+                    text("SELECT public.tenant_id_by_slug(:slug)"),
+                    {"slug": body.tenant_slug},
+                )
+            ).scalar_one_or_none()
+            if tenant_id is None:
+                raise TK_GECERSIZ
+            eposta = str(body.eposta).lower()
+            kayit = await eposta_kodunu_dogrula(
+                session, tenant_id=tenant_id, eposta=eposta,
+                kod=body.kod, amac="giris",
+            )
+            user = (
+                await session.execute(
+                    select(AppUser).where(func.lower(AppUser.email) == eposta)
+                )
+            ).scalar_one_or_none()
+            if user is None or not user.is_active:
+                raise TK_GECERSIZ
+            # (P128) Gorev suresi disindaki denetci token ALMAZ — parolali
+            # ve telefonlu yollarla AYNI kural; burada da olmali, yoksa
+            # ucuncu bir parolasiz yol kapiyi delerdi.
+            if gorev_penceresi_disinda(user):
+                raise _GOREV_SURESI_DISINDA
+            # Kod TUKETILIR: tekrar kullanilamaz.
+            kayit.durum = "onaylandi"
+            await session.flush()
+            return await _issue_token_pair(redis, user)
 
 
 @router.post("/giris/kod-dogrula", response_model=TokenPair)

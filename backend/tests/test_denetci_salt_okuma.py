@@ -108,6 +108,13 @@ KAPISIZ_MUTASYONLAR: frozenset[tuple[str, str]] = frozenset({
     ("POST", "/auth/kayit/rol-dogrula"),
     ("POST", "/auth/giris/kod-iste"),
     ("POST", "/auth/giris/kod-dogrula"),
+    # (P172 §5) E-POSTA KODU — telefon yolunun esi ve AYNI gerekce: kisi
+    # henuz oturum acmamistir, rol kapisi OLAMAZ. Kotuye kullanim yuzeyi
+    # hiz siniriyla kapatilir (`kod_istegi_say`, kapsam `giris_eposta`) ve
+    # uc adres varligini SIZDIRMAZ — kayitsiz adres icin de ayni yanit.
+    # Yazdigi tek sey bekleyen bir kod satiridir; hesap ACMAZ.
+    ("POST", "/auth/giris/eposta-kod-iste"),
+    ("POST", "/auth/giris/eposta-kod-dogrula"),
     # --- (P154 / Asama 4) SOSYAL GIRIS ---
     # KIMLIK ONCESI dordu: rol kapisi OLAMAZ, cunku istegi atanin henuz
     # oturumu yoktur — `/auth/login` ile ayni sinif. Tesisin kayitlarina

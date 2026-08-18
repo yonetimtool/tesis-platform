@@ -43,7 +43,7 @@ from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .config import settings
-from .gonderim import saglayici as kanal_saglayicisi
+from .gonderim import saglayici as kanal_saglayicisi, tenant_ayari
 from .mesajlasma import sms_olc
 from .models import AppUser, Davet, MesajGonderim
 
@@ -178,19 +178,30 @@ async def davet_gonder(
     govde = davet_mesaji(tenant_ad, bag, tesis_kodu)
     konu = f"{tenant_ad} sizi Yönetiyor'a davet etti"
 
-    # --- SMS (asil) ---
-    sms = kanal_saglayicisi("sms").gonder(user.telefon, None, govde)
-    session.add(MesajGonderim(
-        tenant_id=user.tenant_id, sablon_id=None, kanal="sms",
-        amac="operasyonel", user_id=user.id, hedef=user.telefon, konu=None,
-        govde=govde, durum=sms.durum, hata=sms.hata,
-        saglayici=sms.saglayici, gonderen_user_id=gonderen_id,
-        deneme=1,
-    ))
+    # (P172 §6) TESIS AYARI OKUNUYOR — ONCEDEN OKUNMUYORDU.
+    #
+    # Cagrilar `kanal_saglayicisi("sms")` seklindeydi, yani AYARSIZ: kendi
+    # SMTP/SMS'ini arayuzden girmis bir tesisin DAVETLERI ENV'deki GENEL
+    # saglayicidan gidiyordu. Tesis "ayarlarimi girdim" diyor, davetler
+    # baskasinin hesabindan cikiyordu — ve hicbir yerde gorunmuyordu.
+    ayar = await tenant_ayari(session, user.tenant_id)
 
-    # --- E-POSTA (varsa, ek) ---
+    # --- SMS (varsa) ---
+    sms = kanal_saglayicisi("sms", ayar).gonder(user.telefon, None, govde) \
+        if user.telefon else None
+    if sms is not None:
+        session.add(MesajGonderim(
+            tenant_id=user.tenant_id, sablon_id=None, kanal="sms",
+            amac="operasyonel", user_id=user.id, hedef=user.telefon, konu=None,
+            govde=govde, durum=sms.durum, hata=sms.hata,
+            saglayici=sms.saglayici, gonderen_user_id=gonderen_id,
+            deneme=1,
+        ))
+
+    # --- E-POSTA (varsa) ---
+    eposta = None
     if user.email:
-        eposta = kanal_saglayicisi("eposta").gonder(user.email, konu, govde)
+        eposta = kanal_saglayicisi("eposta", ayar).gonder(user.email, konu, govde)
         session.add(MesajGonderim(
             tenant_id=user.tenant_id, sablon_id=None, kanal="eposta",
             amac="operasyonel", user_id=user.id, hedef=user.email, konu=konu,
@@ -199,13 +210,28 @@ async def davet_gonder(
             deneme=1,
         ))
 
-    # --- Panel ozeti: SMS sonucu (asil kanal) ---
-    davet.son_kanal = "sms"
-    davet.son_durum = sms.durum
-    davet.son_hata = sms.hata
+    # --- Panel ozeti: GERCEKTEN ULASAN KANAL ---
+    #
+    # (P172 §6) ONCEDEN HER ZAMAN "sms" YAZILIYORDU. Bu, SMS asil kanal
+    # oldugu varsayimina dayaniyordu; bugun o varsayim YANLIS: SMS gecidi
+    # henuz yapilandirilmadi, e-posta ise (Resend) CALISIYOR. Eski kodla
+    # panel her daveti "gitmedi" gosterirdi — davet e-postayla ULASMISKEN.
+    #
+    # Kural: BASARILI olan kanal yazilir; ikisi de basarisizsa SMS'in
+    # (ya da tek denenen kanalin) sebebi yazilir ki teshis kaybolmasin.
+    ozet = next(
+        (s for s in (sms, eposta) if s is not None and s.durum == "gonderildi"),
+        None,
+    ) or sms or eposta
+    davet.son_kanal = "sms" if ozet is sms else "eposta"
+    davet.son_durum = ozet.durum if ozet else "basarisiz"
+    davet.son_hata = ozet.hata if ozet else "hedef_yok"
     davet.son_gonderim_at = datetime.now(timezone.utc)
     await session.flush()
-    return sms.durum != "basarisiz"
+    # DONUS: HERHANGI BIR kanaldan ulasti mi. Cagiranlar bunu "davet
+    # gitti mi" diye okuyor; SMS'e sabitlemek, e-postayla ulasan daveti
+    # basarisiz saymak olurdu.
+    return ozet is not None and ozet.durum == "gonderildi"
 
 
 async def davet_olustur_ve_gonder(

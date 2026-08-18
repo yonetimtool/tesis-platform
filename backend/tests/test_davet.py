@@ -150,9 +150,17 @@ def test_sakin_eklemede_DAVET_gonderilir(client, world):
     assert r.status_code == 201, r.text
     davet = r.json()["davet"]
     assert davet is not None
-    # LogSms saglayicisi "gonderildi" doner (gercek gecit yapilandirilirsa
-    # yalniz ortam degisir).
-    assert davet["gonderildi"] is True
+    # (P172 §7) YAPILANDIRMA YOKSA `gonderildi` FALSE'TUR.
+    #
+    # Eski iddia `True` idi ve o gunun kodu `sms.durum != "basarisiz"`
+    # diyordu — yani "yapilandirilmadi" da BASARI sayiliyordu. P168
+    # LogSms'i duzeltti (artik `yapilandirilmadi` doner) ama bu satir
+    # eski gercegi sabitlemeye devam ediyordu.
+    #
+    # Test ortaminda ne SMS ne SMTP yapilandirilmis; hicbir yere hicbir
+    # sey gitmedi. `True` demek, brief'in acikca yasakladigi sey:
+    # "sessizce gonderildi DEMESIN".
+    assert davet["gonderildi"] is False
     assert davet["kanal"] == "sms"
 
 

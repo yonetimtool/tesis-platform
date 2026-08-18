@@ -137,6 +137,43 @@ def eposta_saglayicisi(ayar: SaglayiciAyari | None = None) -> MesajSaglayici:
     )
 
 
+async def tenant_ayari(
+    db: AsyncSession, tenant_id: uuid.UUID
+) -> SaglayiciAyari | None:
+    """Tesisin saglayici ayarini `SaglayiciAyari`ya cevirir.
+
+    Kayit yoksa `None` doner ve cagiran ENV'e duser — gonderim yolunun
+    TEK bilmesi gereken sey bu.
+
+    =======================================================================
+    (P172 §1) BURAYA TASINDI — ONCEDEN `routers/mesajlar.py` ICINDEYDI
+    =======================================================================
+    Orada kaldigi surece gonderim yapan OTEKI yollar (davet, mesaj
+    kuyrugu, dogrulama kodu) onu cagiramiyordu: cekirdek bir modulun bir
+    router'i ithal etmesi ters bagimliliktir. Sonucu OLCULDU ve ciddiydi —
+    o uc yol `kanal_saglayicisi(...)`yi AYARSIZ cagiriyordu, yani kendi
+    SMTP/SMS'ini girmis bir tesisin davetleri ve yeniden denemeleri
+    ENV'deki GENEL saglayicidan gidiyordu. Tesis "ayarlarimi girdim"
+    diyor, mesajlar baskasinin hesabindan cikiyordu.
+    """
+    from .models import MesajYapilandirma
+
+    y = await db.get(MesajYapilandirma, tenant_id)
+    if y is None:
+        return None
+    return SaglayiciAyari(
+        sms_saglayici=y.sms_saglayici,
+        sms_kullanici=y.sms_kullanici,
+        sms_parola=y.sms_parola,
+        sms_baslik=y.sms_baslik,
+        smtp_host=y.smtp_host,
+        smtp_port=y.smtp_port,
+        smtp_kullanici=y.smtp_kullanici,
+        smtp_parola=y.smtp_parola,
+        smtp_gonderen=y.smtp_gonderen,
+    )
+
+
 def saglayici(kanal: str, ayar: SaglayiciAyari | None = None) -> MesajSaglayici:
     """Kanal -> saglayici. TEK giris noktasi.
 

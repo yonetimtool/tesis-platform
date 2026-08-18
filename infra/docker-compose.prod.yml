@@ -280,10 +280,31 @@ services:
       # (P150) SMS GECIDI. Verilmezse saglayici LOG'dur ve kodlar
       # KULLANICIYA GITMEZ — sakin giris yapamaz. Kapali teste
       # gercek kullanici sokmadan once doldurulmali.
+      # --- (P172 §2) MESAJ SAGLAYICILARI — GENEL (ENV) AYAR ---
+      #
+      # HEPSI OPSIYONEL (`:-` bos varsayilan): eksik degisken compose'u
+      # KIRMAZ. OAuth'ta bunu `:?` ile yapip yigin acilmamisti; ayni hata
+      # tekrarlanmasin. Verilmezse saglayici LOG'a duser ve gonderim
+      # "yapilandirilmadi" doner — sessizce "gonderildi" DEMEZ.
+      #
+      # BUNLAR GENEL AYARDIR. Bir tesis arayuzden kendi saglayicisini
+      # girerse O TESIS icin bunlarin yerine gecer — ve karar KANAL
+      # BASINADIR: tesis yalniz SMS'ini girdiyse e-posta yine buradan
+      # gider (bkz. `app/mesajlasma.py::_ayardan_veya_env`).
+      #
+      # E-POSTA (Resend): SMTP_HOST=smtp.resend.com, SMTP_PORT=587
+      # (STARTTLS), SMTP_USER=resend, SMTP_PASSWORD=<API anahtari>,
+      # SMTP_FROM=noreply@yonetio.site. Port 25 ISP'de kapali; 587
+      # uzerinden Resend'e verilir, disari iletmeyi Resend yapar.
       SMS_SAGLAYICI: ${SMS_SAGLAYICI:-}
       SMS_KULLANICI: ${SMS_KULLANICI:-}
       SMS_PAROLA: ${SMS_PAROLA:-}
       SMS_BASLIK: ${SMS_BASLIK:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-}
       <<: *tz
       # Uygulama app_rw (async asyncpg) ile baglanir — RLS'e TABI.
       DATABASE_URL: postgresql+asyncpg://${APP_DB_USER}:${APP_DB_PASSWORD:?APP_DB_PASSWORD gerekli}@db:5432/${POSTGRES_DB}
@@ -408,6 +429,25 @@ services:
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD gerekli}
       MINIO_BUCKET: ${MINIO_BUCKET:-tesis-foto}
+      # --- (P172 §2) MESAJ SAGLAYICILARI — ISCI DE GONDERIR ---
+      #
+      # OLCULDU: `worker` bu degiskenlerin HICBIRINI almiyordu, oysa
+      # `mesaj_kuyrugu` gorevi basarisiz gonderimleri YENIDEN DENER ve
+      # `kanal_saglayicisi(...)` cagirir. Yani toplu gonderimin yeniden
+      # deneme yolu saglayicisiz kaliyor, sessizce LOG'a dusuyordu:
+      # panelde "yeniden denendi" gorunur, kimseye bir sey gitmezdi.
+      #
+      # `api` ile AYNI kume olmali; biri eksik kalirsa ayni mesaj istek
+      # yolunda gidip kuyruk yolunda gitmezdi.
+      SMS_SAGLAYICI: ${SMS_SAGLAYICI:-}
+      SMS_KULLANICI: ${SMS_KULLANICI:-}
+      SMS_PAROLA: ${SMS_PAROLA:-}
+      SMS_BASLIK: ${SMS_BASLIK:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-}
       PUSH_PROVIDER: ${PUSH_PROVIDER:-noop}
       # Icerik cevirisi: prod'da GERCEK motor (ic ag). Kapatmak icin
       # TRANSLATE_PROVIDER=noop — icerik yine yazilir, ceviri uretilmez.

@@ -87,6 +87,18 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
   // Hata TITREMESI icin sayac: ayni hata iki kez gelirse de animasyon
   // tekrar calissin diye anahtar olarak kullaniliyor.
   const [hataSayaci, setHataSayaci] = useState(0);
+  // (P172 §5) KOD ILE GIRIS — parolasiz yol.
+  //
+  // YALNIZ E-POSTA YUZEYINDE: `app.*` telefonla girer ve orada kod yolu
+  // mobil uygulamada zaten var. `panel.*` kullanicisi e-postayla
+  // tanimlidir, yani kodun gidecegi adres bellidir.
+  //
+  // ADIM DURUMDA TUTULUYOR, AYRI ROTADA DEGIL: ayri bir sayfa acmak,
+  // kullanicinin yazdigi tesis kodu ve e-postayi ikinci kez sormak ya da
+  // adres cubugunda tasimak olurdu.
+  const [kodAdimi, setKodAdimi] = useState<"kapali" | "kod">("kapali");
+  const [kod, setKod] = useState("");
+  const [kodGonderildi, setKodGonderildi] = useState(false);
   const hareketVar = useHareket();
   // (P170 §3) OLCUM CANLI VE TEK KAYNAKTAN.
   //
@@ -130,8 +142,75 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
     await kimligiSakla(telefonla ? telefonNormalle(telefon) : email, password);
   }
 
+  /** Kod iste. Yanit HER DURUMDA aynidir (adres varligini sizdirmaz). */
+  async function kodIste() {
+    setError(null);
+    if (!tenantSlug.trim() || !email.trim()) {
+      setError(t("girisAlanZorunlu"));
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/eposta-kod?adim=iste", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tenant_slug: tenantSlug, eposta: email }),
+      });
+      if (!res.ok) {
+        const d = (await res.json().catch(() => null)) as ApiError | null;
+        setError(d?.error?.message ?? t("girisBasarisiz"));
+        setHataSayaci((n) => n + 1);
+        return;
+      }
+      // SUNUCU "GONDERDIM" DEMEZ, DEMEMELI: adres kayitli olmasa da yanit
+      // aynidir. Ekranda da AYNI cumleyi kuruyoruz — "gonderildi" demek,
+      // adresin kayitli oldugunu SIZDIRMAK olurdu.
+      setKodAdimi("kod");
+      setKodGonderildi(true);
+    } catch {
+      setError(t("ortakSunucuyaUlasilamadi"));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function kodlaGir() {
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/eposta-kod?adim=dogrula", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tenant_slug: tenantSlug, eposta: email, kod: kod.trim(),
+        }),
+      });
+      if (!res.ok) {
+        const d = (await res.json().catch(() => null)) as ApiError | null;
+        setError(d?.error?.message ?? t("girisBasarisiz"));
+        setHataSayaci((n) => n + 1);
+        return;
+      }
+      setBasarili(true);
+      await new Promise((c) => setTimeout(c, 520));
+      router.replace("/");
+      router.refresh();
+    } catch {
+      setError(t("ortakSunucuyaUlasilamadi"));
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    // KOD ADIMINDA form gonderimi KODU dogrular. Ayri bir dugmeye
+    // baglamak, Enter'a basan kullanicinin parolasiz akista hicbir sey
+    // olmadigini gormesi demekti.
+    if (kodAdimi === "kod") {
+      await kodlaGir();
+      return;
+    }
     setError(null);
     setMagazaGoster(false);
     // TELEFON DOGRULAMASI ISTEMCIDE (P123): eksik/hatali numarayla istek
@@ -401,6 +480,35 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
               </>
             )}
 
+            {kodAdimi === "kod" ? (
+              <label className="block">
+                <span className={etiketSinifi} style={etiketStili}>
+                  {t("girisKod")}
+                </span>
+                <input
+                  key={`kod-${hataSayaci}`}
+                  id="yz-kod"
+                  name="one-time-code"
+                  type="text"
+                  inputMode="numeric"
+                  // TARAYICI/ISLETIM SISTEMI OTOMATIK DOLDURMASI: iOS ve
+                  // Android gelen koddan okuyup onerir. `one-time-code`
+                  // olmadan bu HIC calismaz ve kullanici elle yazar.
+                  autoComplete="one-time-code"
+                  className={`${alanSinifi} giris-alan${error ? " giris-titre" : ""}`}
+                  style={alanStili}
+                  value={kod}
+                  onChange={(e) => setKod(e.target.value)}
+                  aria-label={t("girisKod")}
+                  required
+                />
+                {kodGonderildi && (
+                  <span className="mt-1.5 block text-xs" style={{ color: METIN_SOLUK }}>
+                    {t("girisKodGonderildi")}
+                  </span>
+                )}
+              </label>
+            ) : (
             <label className="block">
               <span className={etiketSinifi} style={etiketStili}>
                 {t("girisParola")}
@@ -417,6 +525,29 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
                 required
               />
             </label>
+            )}
+
+            {/* (P172 §5) KOD ILE GIRIS — parolasiz yol.
+                YALNIZ E-POSTA YUZEYINDE: `app.*` telefonla girer ve orada
+                kod yolu mobil uygulamada zaten var. */}
+            {!telefonla && (
+              <button
+                type="button"
+                className="odak-ters text-xs underline"
+                style={{ color: METIN_IKINCIL }}
+                onClick={() => {
+                  if (kodAdimi === "kod") {
+                    setKodAdimi("kapali");
+                    setKod("");
+                    setError(null);
+                    return;
+                  }
+                  void kodIste();
+                }}
+              >
+                {kodAdimi === "kod" ? t("girisParolaylaDon") : t("girisKodIle")}
+              </button>
+            )}
 
             <label className="flex cursor-pointer select-none items-center gap-2.5">
               <input

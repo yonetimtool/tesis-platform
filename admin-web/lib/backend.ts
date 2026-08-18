@@ -210,6 +210,38 @@ export function loginResponse(
   return res;
 }
 
+/**
+ * (P172 §5) KIMLIK ONCESI GIRIS CAGRISI — cerez TASIMAZ, gerekirse KURAR.
+ *
+ * `proxyJson` DEGIL: o, oturum cerezlerini okur ve 401'de jeton yeniler.
+ * Kullanicinin henuz oturumu yokken ikisi de anlamsiz, ustelik bayat bir
+ * cerez varsa yanlis kimlikle istek gonderilirdi.
+ *
+ * `jetonBekle` true ise basarili yanittaki jetonlar httpOnly cereze
+ * yazilir ve govdeye KONMAZ — parolali giris yolunun ayni kurali.
+ */
+export async function backendGiris(
+  yol: string,
+  govde: unknown,
+  jetonBekle: boolean,
+): Promise<NextResponse> {
+  const res = await callBackend(yol, "POST", undefined, govde);
+  const data = await res.json().catch(() => null);
+  if (!res.ok || !jetonBekle) {
+    return NextResponse.json(data, { status: res.status });
+  }
+  const t = data as { access_token?: string; refresh_token?: string } | null;
+  if (!t?.access_token || !t?.refresh_token) {
+    // Sunucu 200 dedi ama jeton yok: sessizce "giris oldu" saymak,
+    // kullaniciyi oturumsuz bir panele sokmak olurdu.
+    return NextResponse.json(
+      { error: { code: "error", message: SOZLUKLER[await panelDili()].girisBasarisiz } },
+      { status: 502 },
+    );
+  }
+  return loginResponse(t.access_token, t.refresh_token);
+}
+
 export function logoutResponse(): NextResponse {
   const res = NextResponse.json({ ok: true });
   clearAuthCookies(res);

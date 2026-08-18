@@ -876,7 +876,15 @@ class KayitDogrulama(Base):
     )
     #: YALNIZ `amac='kayit'`te dolu: giris/silme kodunun dairesi yoktur.
     unit_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
-    telefon: Mapped[str] = mapped_column(Text, nullable=False)
+    #: (P172 §5) NULL OLABILIR: kod e-postayla istenmisse telefon yoktur.
+    #: `ck_kayit_dogrulama_kimlik` ikisinden BIRININ dolu olmasini zorlar —
+    #: ikisi de bos bir kod satiri, kimseye gonderilemeyen ve kimsenin
+    #: dogrulayamayacagi bir kayittir.
+    telefon: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: (P172 §5) E-POSTA kimligi. Telefondan farkli olarak TENANT ICINDE
+    #: benzersizdir; bu yuzden arama (tenant_id, eposta, amac) ile yapilir
+    #: ve temizligi capraz-tenant bir fonksiyon GEREKTIRMEZ.
+    eposta: Mapped[str | None] = mapped_column(Text, nullable=True)
     #: Kod DUZ METIN tutulmaz (giris kodlariyla ayni kural).
     kod_hash: Mapped[str] = mapped_column(Text, nullable=False)
     son_gecerlilik = mapped_column(TIMESTAMP(timezone=True), nullable=False)

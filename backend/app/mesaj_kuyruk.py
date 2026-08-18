@@ -53,7 +53,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from .config import settings
 from .db import SessionLocal
-from .gonderim import saglayici as kanal_saglayicisi
+from .gonderim import (
+    SaglayiciAyari,
+    saglayici as kanal_saglayicisi,
+    tenant_ayari,
+)
 from .models import MesajGonderim
 from .yeniden_deneme import denenmeli
 
@@ -66,6 +70,28 @@ MAX_DENEME = 3
 TUR_BASINA_UST_SINIR = 200
 
 
+async def _tur_ayari(db: AsyncSession) -> SaglayiciAyari | None:
+    """Bu turun tenant'inin saglayici ayari.
+
+    TENANT KIMLIGI OTURUM AYARINDAN OKUNUR, parametreden degil: fonksiyon
+    zaten "cagiran `app.current_tenant_id`i ayarlamis olmali" sozlesmesine
+    dayaniyor ve ikinci bir kaynak, ikisinin ayrisabilecegi bir kapi acardi.
+
+    Okunamazsa `None` doner ve gonderim ENV'e duser — eski davranis.
+    """
+    ham = (
+        await db.execute(
+            text("SELECT current_setting('app.current_tenant_id', true)")
+        )
+    ).scalar_one_or_none()
+    if not ham:
+        return None
+    try:
+        return await tenant_ayari(db, uuid.UUID(ham))
+    except ValueError:
+        return None
+
+
 async def kuyrugu_isle(db: AsyncSession, *, simdi: datetime | None = None) -> int:
     """TEK TENANT baglaminda vadesi gelmis kuyruk satirlarini dener.
 
@@ -73,6 +99,19 @@ async def kuyrugu_isle(db: AsyncSession, *, simdi: datetime | None = None) -> in
     Doner: islenen satir sayisi.
     """
     an = simdi or datetime.now(tz=timezone.utc)
+
+    # (P172 §1) TESIS AYARI BIR KEZ OKUNUR, DONGU ICINDE DEGIL.
+    #
+    # ONCEDEN HIC OKUNMUYORDU: `kanal_saglayicisi(kayit.kanal)` ayarsiz
+    # cagriliyor ve yeniden denemeler ENV'deki GENEL saglayicidan
+    # gidiyordu. Yani kendi SMTP'sini giren bir tesiste ILK deneme dogru
+    # hesaptan, YENIDEN DENEME baska hesaptan cikardi — ve fark hicbir
+    # yerde gorunmezdi.
+    #
+    # Dongu icinde okumak 200 satir icin 200 sorgu olurdu; bu fonksiyon
+    # zaten TEK TENANT baglaminda calisiyor, yani ayar tur boyunca sabit.
+    ayar = await _tur_ayari(db)
+
     satirlar = (
         (await db.execute(
             select(MesajGonderim)
@@ -95,7 +134,7 @@ async def kuyrugu_isle(db: AsyncSession, *, simdi: datetime | None = None) -> in
         ):
             continue
 
-        sonuc = kanal_saglayicisi(kayit.kanal).gonder(
+        sonuc = kanal_saglayicisi(kayit.kanal, ayar).gonder(
             kayit.hedef, kayit.konu, kayit.govde
         )
         kayit.deneme += 1

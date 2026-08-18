@@ -519,6 +519,55 @@ paths:
 
   # ----------------------------------------------------------------- #
   # (P149) PAROLASIZ GIRIS — tek kod mekanizmasi.
+  /auth/giris/eposta-kod-iste:
+    post:
+      tags: [auth]
+      summary: E-POSTAYA giris kodu gonderir
+      security: []
+      description: |
+        **(P172 §5)** Telefon yoluyla AYNI mekanizma: sure, deneme siniri
+        ve hiz siniri `telefon_kodu` modulunden gelir — ikinci bir sistem
+        YOKTUR. Degisen tek sey kimlik ve teslimat kanali.
+
+        **TESIS KODU ZORUNLU** ve bu telefon yolundan FARKLI: telefon
+        platform genelinde benzersizdir (tesis ondan cozulur), e-posta ise
+        TENANT ICINDE benzersizdir. Tesis kodu olmadan ayni adresi
+        kullanan iki tesis birbirine karisirdi.
+
+        **ADRES VARLIGINI SIZDIRMAZ**: kayitli olmayan adres (ve
+        bilinmeyen tesis kodu) icin de AYNI yanit doner.
+
+        Hiz siniri anahtari `tesis:eposta` — yalniz e-posta kullanmak,
+        ayni adresi tasiyan iki tesisin sayacini birlestirirdi.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EpostaKodIstek" }
+      responses:
+        "200": { description: her durumda ayni yanit }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+  /auth/giris/eposta-kod-dogrula:
+    post:
+      tags: [auth]
+      summary: E-posta kodu ile PAROLASIZ oturum acar
+      security: []
+      description: |
+        **(P172 §5)** Kod dogruysa oturum acilir ve kod TUKETILIR (tekrar
+        kullanilamaz). Sure dolmus, deneme siniri asilmis ya da kod yanlis
+        ise ayrim yapmayan tek hata doner (`invalid_code`) — adimlari
+        ayirt ettirmek, kayitli adreslerin sizmasi demekti.
+
+        Gorev suresi disindaki denetci token ALMAZ; parolali ve telefonlu
+        yollarla AYNI kural.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EpostaKodDogrulaIstek" }
+      responses:
+        "200": { description: token cifti }
+        "422": { $ref: "#/components/responses/ValidationError" }
   /auth/giris/kod-iste:
     post:
       tags: [auth]
@@ -11370,6 +11419,19 @@ components:
         items:
           type: array
           items: { $ref: "#/components/schemas/AramaVurusu" }
+    EpostaKodIstek:
+      type: object
+      required: [tenant_slug, eposta]
+      properties:
+        tenant_slug: { type: string, minLength: 1, maxLength: 100 }
+        eposta: { type: string, format: email }
+    EpostaKodDogrulaIstek:
+      type: object
+      required: [tenant_slug, eposta, kod]
+      properties:
+        tenant_slug: { type: string, minLength: 1, maxLength: 100 }
+        eposta: { type: string, format: email }
+        kod: { type: string, minLength: 4, maxLength: 12 }
     TelefonIstek:
       type: object
       required: [telefon]

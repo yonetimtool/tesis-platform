@@ -31,6 +31,63 @@ MAX_DENEME = 5
 GECERSIZ = APIError(422, "invalid_code", "kod_gecersiz")
 
 
+async def eposta_kodu_uret_ve_gonder(
+    session: AsyncSession,
+    *,
+    tenant_id: uuid.UUID,
+    eposta: str,
+    amac: str,
+    ayar=None,
+) -> None:
+    """(P172 §5) AYNI KOD MEKANIZMASI, E-POSTA KIMLIGIYLE.
+
+    =======================================================================
+    NEDEN AYRI BIR SISTEM DEGIL
+    =======================================================================
+    Sure (`KOD_OMRU_DK`), deneme siniri (`MAX_DENEME`) ve kodun hash'lenip
+    duz metin tutulmamasi BU MODULDE tek yerde duruyor. E-posta icin
+    ikinci bir akis yazmak, bu ucunu ikinci kez — ve bir gun eksik —
+    yazmak olurdu. Degisen tek sey KIMLIK ve TESLIMAT KANALI.
+
+    =======================================================================
+    TEMIZLIK DUZ `DELETE` — CAPRAZ-TENANT FONKSIYON GEREKMEZ
+    =======================================================================
+    Telefon PLATFORM GENELINDE benzersiz oldugu icin oradaki ezme
+    `SECURITY DEFINER` bir fonksiyonla yapiliyor (baska tenant'in satiri
+    RLS altinda GORULEMEZ). E-posta ise TENANT ICINDE benzersizdir; ezme
+    kendi tenant'imizin satirlarina dokunur ve duz `DELETE` yeter.
+    Daha az yetki, daha az yuzey.
+    """
+    from .gonderim import saglayici as kanal_saglayicisi
+
+    kod = f"{secrets.randbelow(1_000_000):06d}"
+    await session.execute(
+        text(
+            "DELETE FROM kayit_dogrulama WHERE eposta = :e AND amac = :a "
+            "AND durum = 'telefon_bekliyor'"
+        ),
+        {"e": eposta, "a": amac},
+    )
+    session.add(
+        KayitDogrulama(
+            tenant_id=tenant_id,
+            eposta=eposta,
+            amac=amac,
+            kod_hash=hash_password(kod),
+            son_gecerlilik=datetime.now(timezone.utc)
+            + timedelta(minutes=KOD_OMRU_DK),
+        )
+    )
+    # GONDERIM HATASI KAYDI KIRMAZ: kod yazilmistir, kullanici "tekrar
+    # gonder" diyebilir. Yapilandirma yoksa saglayici `yapilandirilmadi`
+    # doner ve SESSIZCE "gonderildi" DEMEZ.
+    kanal_saglayicisi("eposta", ayar).gonder(
+        eposta,
+        "Yönetiyor doğrulama kodu",
+        f"Yönetiyor doğrulama kodunuz: {kod} ({KOD_OMRU_DK} dk)",
+    )
+
+
 async def kod_uret_ve_gonder(
     session: AsyncSession,
     *,
@@ -120,24 +177,43 @@ async def tenant_baglamini_kur(
     return cozulen
 
 
-async def kodu_dogrula(
-    session: AsyncSession, *, telefon: str, kod: str, amac: str
+async def eposta_kodunu_dogrula(
+    session: AsyncSession,
+    *,
+    tenant_id: uuid.UUID,
+    eposta: str,
+    kod: str,
+    amac: str,
 ) -> KayitDogrulama:
-    """Dogru ise kaydi doner; her basarisiz yolda `GECERSIZ` firlatir."""
+    """(P172 §5) E-posta kodunu dogrular — telefon yolunun AYNI kurallari.
+
+    TENANT CAGIRANDAN GELIR: e-posta global benzersiz DEGIL, tenant icinde
+    benzersizdir; kimden geldigini bilmeden dogrulamak, ayni adresi
+    kullanan iki tesisin kodlarini KARISTIRMAK olurdu.
+    """
     from sqlalchemy import select
 
-    if await tenant_baglamini_kur(session, telefon=telefon, amac=amac) is None:
-        raise GECERSIZ
-
+    await set_tenant(session, tenant_id)
     kayit = (
         await session.execute(
             select(KayitDogrulama).where(
-                KayitDogrulama.telefon == telefon,
+                KayitDogrulama.eposta == eposta,
                 KayitDogrulama.amac == amac,
                 KayitDogrulama.durum == "telefon_bekliyor",
             )
         )
     ).scalar_one_or_none()
+    return await _kodu_karsilastir(kayit, kod)
+
+
+async def _kodu_karsilastir(
+    kayit: KayitDogrulama | None, kod: str
+) -> KayitDogrulama:
+    """Sure / deneme / eslesme denetimi — IKI KIMLIK YOLU ICIN ORTAK.
+
+    Ayri ayri yazilsaydi, bir gun birinde deneme sayaci artirilir otekinde
+    unutulurdu ve o kanal kaba kuvvete acik kalirdi.
+    """
     if kayit is None:
         raise GECERSIZ
     if kayit.son_gecerlilik < datetime.now(timezone.utc):
@@ -157,3 +233,24 @@ async def kodu_dogrula(
                 )
         raise GECERSIZ
     return kayit
+
+
+async def kodu_dogrula(
+    session: AsyncSession, *, telefon: str, kod: str, amac: str
+) -> KayitDogrulama:
+    """Dogru ise kaydi doner; her basarisiz yolda `GECERSIZ` firlatir."""
+    from sqlalchemy import select
+
+    if await tenant_baglamini_kur(session, telefon=telefon, amac=amac) is None:
+        raise GECERSIZ
+
+    kayit = (
+        await session.execute(
+            select(KayitDogrulama).where(
+                KayitDogrulama.telefon == telefon,
+                KayitDogrulama.amac == amac,
+                KayitDogrulama.durum == "telefon_bekliyor",
+            )
+        )
+    ).scalar_one_or_none()
+    return await _kodu_karsilastir(kayit, kod)

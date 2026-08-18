@@ -198,6 +198,23 @@ services:
       # Uygulama app_rw (async asyncpg) ile baglanir — RLS'e TABI.
       DATABASE_URL: postgresql+asyncpg://${APP_DB_USER}:${APP_DB_PASSWORD}@db:5432/${POSTGRES_DB}
       REDIS_URL: redis://redis:6379/0
+      # --- (P172 §2) MESAJ SAGLAYICILARI ---
+      #
+      # HEPSI OPSIYONEL (`:-` bos varsayilan): eksik degisken compose'u
+      # KIRMAZ. Verilmezse saglayici LOG'a duser ve gonderim
+      # "yapilandirilmadi" doner — sessizce "gonderildi" DEMEZ.
+      #
+      # Dev'de normalde BOSTUR (gercek SMS/e-posta gitmesin). Gercek bir
+      # saglayiciyi denemek icin `infra/.env`e yazmak yeter.
+      SMS_SAGLAYICI: ${SMS_SAGLAYICI:-}
+      SMS_KULLANICI: ${SMS_KULLANICI:-}
+      SMS_PAROLA: ${SMS_PAROLA:-}
+      SMS_BASLIK: ${SMS_BASLIK:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-}
       JWT_SECRET: ${JWT_SECRET}
       # NTAG424 SDM anahtar sifreleme KEK'i (32+ karakter). Prod'da .env'den ver;
       # asagidaki varsayilan YALNIZ gelistirme icindir.
@@ -334,6 +351,23 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://${APP_DB_USER}:${APP_DB_PASSWORD}@db:5432/${POSTGRES_DB}
       REDIS_URL: redis://redis:6379/0
+      # --- (P172 §2) MESAJ SAGLAYICILARI ---
+      #
+      # HEPSI OPSIYONEL (`:-` bos varsayilan): eksik degisken compose'u
+      # KIRMAZ. Verilmezse saglayici LOG'a duser ve gonderim
+      # "yapilandirilmadi" doner — sessizce "gonderildi" DEMEZ.
+      #
+      # Dev'de normalde BOSTUR (gercek SMS/e-posta gitmesin). Gercek bir
+      # saglayiciyi denemek icin `infra/.env`e yazmak yeter.
+      SMS_SAGLAYICI: ${SMS_SAGLAYICI:-}
+      SMS_KULLANICI: ${SMS_KULLANICI:-}
+      SMS_PAROLA: ${SMS_PAROLA:-}
+      SMS_BASLIK: ${SMS_BASLIK:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-}
       JWT_SECRET: ${JWT_SECRET}
       # Scheduler: tenant enumerasyonu (owner) + tenant-scoped is (app_rw, sync).
       OWNER_DSN: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}

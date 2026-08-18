@@ -134,7 +134,12 @@ async def _isle_cok(tenant_id, anlar, *, saglayici=None):
     motor, SessionLocal = _taze_oturum()
     onceki = mesaj_kuyruk.kanal_saglayicisi
     if saglayici is not None:
-        mesaj_kuyruk.kanal_saglayicisi = lambda _kanal: saglayici
+        # (P172 §1) IKINCI ARGUMAN: kuyruk artik saglayiciyi TESIS AYARIYLA
+        # seciyor (`kanal_saglayicisi(kanal, ayar)`). Onceden ayarsiz
+        # cagriliyordu ve yeniden denemeler ENV'deki GENEL saglayicidan
+        # gidiyordu — kendi SMTP'sini giren tesiste ilk deneme dogru,
+        # yeniden deneme YANLIS hesaptan cikardi.
+        mesaj_kuyruk.kanal_saglayicisi = lambda _kanal, _ayar=None: saglayici
 
     toplam = 0
     try:

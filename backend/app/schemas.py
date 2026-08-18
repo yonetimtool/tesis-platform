@@ -1299,6 +1299,25 @@ class TelefonKodIstek(BaseModel):
     kod: str = Field(min_length=4, max_length=12)
 
 
+class EpostaKodIstek(BaseModel):
+    """(P172 §5) E-posta ile giris kodu istegi.
+
+    TESIS KODU ZORUNLU ve bu telefon yolundan FARKLI: telefon PLATFORM
+    GENELINDE benzersizdir (`tenant_id_by_phone` tesisi ondan cozer),
+    e-posta ise TENANT ICINDE benzersizdir. Tesis kodu olmadan ayni
+    adresi kullanan iki tesis birbirine karisirdi.
+    """
+
+    tenant_slug: str = Field(min_length=1, max_length=100)
+    eposta: EmailStr
+
+
+class EpostaKodDogrulaIstek(BaseModel):
+    tenant_slug: str = Field(min_length=1, max_length=100)
+    eposta: EmailStr
+    kod: str = Field(min_length=4, max_length=12)
+
+
 class KayitDurumResponse(BaseModel):
     """`POST /auth/giris/kod-iste`in KASTEN BILGISIZ yaniti.
 

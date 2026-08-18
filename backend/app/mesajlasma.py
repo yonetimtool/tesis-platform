@@ -384,17 +384,35 @@ class SaglayiciAyari:
 
 
 def _ayardan_veya_env(ayar: SaglayiciAyari | None) -> SaglayiciAyari:
-    """Tesis ayari VARSA o, yoksa ENV.
+    """Tesis ayari VARSA o, yoksa ENV — **KANAL BASINA**.
 
     ENV YEDEK KALIR ve bu bilincli: saglayici bilgisi bugune kadar
     ENV'deydi ve calisan kurulumlar var. Tesis kaydini zorunlu kilsaydik,
     goc anindan itibaren HER TESISTE gonderim durur ve kimse sebebini
     anlamazdi.
+
+    =======================================================================
+    (P172 §1) KARAR KANAL BASINA VERILIR — KAYIT BASINA DEGIL
+    =======================================================================
+    Ilk yazim su seklideydi:
+
+        if ayar is not None and (ayar.sms_saglayici or ayar.smtp_host):
+            return ayar          # <-- KAYDIN TAMAMI
+
+    Yani tesis YALNIZ SMS'ini girdiyse, ayni kayit e-posta icin de
+    "tesisin ayari" sayiliyor ve `smtp_host` bos oldugu icin e-posta
+    LOG'a dusuyordu — ENV'de calisan bir SMTP DURURKEN.
+
+    Bu, bu turun kurulumunda gercek bir arizaydi: Resend ENV'de genel
+    ayar olarak duruyor; kendi SMS bayiligini giren ilk tesis, e-posta
+    gonderimini SESSIZCE kaybederdi. "Sessizce" cunku LOG saglayicisi
+    `yapilandirilmadi` doner ve kimse ENV'de calisan bir SMTP oldugunu
+    bilmez.
+
+    Dogru kural: HER KANAL kendi ayarina bakar. Tesis SMS'ini girdiyse
+    SMS tesisin, SMTP'sini girmediyse e-posta ENV'in.
     """
     from .config import settings
-
-    if ayar is not None and (ayar.sms_saglayici or ayar.smtp_host):
-        return ayar
     # `getattr` BILINCLI: testler `settings`i alanlarin yalnizca bir
     # kismini tasiyan sahte bir nesneyle degistiriyor (SMS testinde SMTP
     # alanlari yok). Dogrudan erisim, ilgisiz bir testi AttributeError ile
@@ -403,16 +421,27 @@ def _ayardan_veya_env(ayar: SaglayiciAyari | None) -> SaglayiciAyari:
     def _al(ad: str, varsayilan=None):
         return getattr(settings, ad, varsayilan)
 
+    # SMS KANALI: tesis kendi saglayicisini SECMISSE tesisin, yoksa ENV'in.
+    sms_tesiste = ayar is not None and bool(ayar.sms_saglayici)
+    # E-POSTA KANALI: ayni soru, AYRI yanit.
+    smtp_tesiste = ayar is not None and bool(ayar.smtp_host)
+
     return SaglayiciAyari(
-        sms_saglayici=_al("sms_saglayici"),
-        sms_kullanici=_al("sms_kullanici"),
-        sms_parola=_al("sms_parola"),
-        sms_baslik=_al("sms_baslik"),
-        smtp_host=_al("smtp_host"),
-        smtp_port=int(_al("smtp_port", 587) or 587),
-        smtp_kullanici=_al("smtp_user"),
-        smtp_parola=_al("smtp_password"),
-        smtp_gonderen=_al("smtp_from"),
+        sms_saglayici=(ayar.sms_saglayici if sms_tesiste else _al("sms_saglayici")),
+        sms_kullanici=(ayar.sms_kullanici if sms_tesiste else _al("sms_kullanici")),
+        sms_parola=(ayar.sms_parola if sms_tesiste else _al("sms_parola")),
+        sms_baslik=(ayar.sms_baslik if sms_tesiste else _al("sms_baslik")),
+        smtp_host=(ayar.smtp_host if smtp_tesiste else _al("smtp_host")),
+        smtp_port=int(
+            (ayar.smtp_port if smtp_tesiste else _al("smtp_port", 587)) or 587
+        ),
+        smtp_kullanici=(
+            ayar.smtp_kullanici if smtp_tesiste else _al("smtp_user")
+        ),
+        smtp_parola=(ayar.smtp_parola if smtp_tesiste else _al("smtp_password")),
+        smtp_gonderen=(
+            ayar.smtp_gonderen if smtp_tesiste else _al("smtp_from")
+        ),
     )
 
 

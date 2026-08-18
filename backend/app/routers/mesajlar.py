@@ -26,6 +26,7 @@ from ..gonderim import (
     SaglayiciAyari,
     kota_kontrol,
     saglayici as kanal_saglayicisi,
+    tenant_ayari,
 )
 from ..mesajlasma import (
     sms_saglayicisi,
@@ -439,28 +440,6 @@ async def gonder(
 
 
 # ============================ (P168 §4.4) AYARLAR =========================== #
-async def tenant_ayari(db: AsyncSession, tenant_id: uuid.UUID) -> SaglayiciAyari | None:
-    """Tesisin saglayici ayarini `SaglayiciAyari`ya cevirir.
-
-    Kayit yoksa `None` doner ve cagiran ENV'e duser — gonderim yolunun
-    TEK bilmesi gereken sey bu.
-    """
-    y = await db.get(MesajYapilandirma, tenant_id)
-    if y is None:
-        return None
-    return SaglayiciAyari(
-        sms_saglayici=y.sms_saglayici,
-        sms_kullanici=y.sms_kullanici,
-        sms_parola=y.sms_parola,
-        sms_baslik=y.sms_baslik,
-        smtp_host=y.smtp_host,
-        smtp_port=y.smtp_port,
-        smtp_kullanici=y.smtp_kullanici,
-        smtp_parola=y.smtp_parola,
-        smtp_gonderen=y.smtp_gonderen,
-    )
-
-
 async def _bugun_gonderilen(db: AsyncSession) -> int:
     """Bugun GERCEKTEN gonderilmis mesaj sayisi.
 
