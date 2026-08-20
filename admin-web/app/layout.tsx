@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+
 import { cookies, headers } from "next/headers";
 
 import { I18nProvider } from "@/lib/i18n/kullan";
@@ -15,16 +15,19 @@ import "./globals.css";
 // dosyanin basliginda. Sirasi onemli: `--yz-*` degiskenleri sonra
 // gelmeli ki ayni sinifa (`.dark`) baglanan tanimlar catismasin.
 import "./tasarim-sistemi.css";
+// (P175) Yerel Inter tanimlari — tasarim sisteminden ONCE degil SONRA da
+// olabilirdi; ayri dosya olmasi tek sebep: font kurallari uzun ve tasarim
+// belirtecleriyle karismamali.
+import "./yazi-tipi.css";
 
-// Inter — brief'in saydigi iki secenekten biri. `next/font` ile SELF-HOST
-// edilir: Google'a calisma aninda istek GITMEZ (gizlilik + ag bagimsizligi)
-// ve FOUT yasanmaz. `--font-inter` degiskenini `tasarim-sistemi.css`teki
-// `--yz-font` okur; bilesenler font adini HIC yazmaz.
-const inter = Inter({
-  subsets: ["latin", "latin-ext"],
-  display: "swap",
-  variable: "--font-inter",
-});
+// (P175) INTER ARTIK DEPODAN — `next/font/google` KALDIRILDI.
+//
+// Eski hâl yazi tipini DERLEME ANINDA Google'dan indiriyordu; ag kesintisi
+// ya da DNS sorunu derlemeyi TAMAMEN dusuruyordu (test sunucusunda
+// yasandi). Calisma aninda zaten Google'a istek GITMIYORDU — bu
+// dogrulandi — yani degisen sey gizlilik degil AG BAGIMSIZLIGI.
+//
+// Tanimlar `app/yazi-tipi.css`te; gerekcesi ve alt kume ayrimi orada.
 
 // `icons` BILEREK yazilmaz: app/icon.svg'yi Next kendisi bulup
 // <link rel="icon" href="/icon.svg?<hash>"> olarak enjekte eder. Hash dosya
@@ -63,15 +66,20 @@ export default async function RootLayout({
   );
 
   return (
-    // `inter.variable` KOKE konuyor: `--font-inter` boylece tum agacta
-    // gorunur ve `tasarim-sistemi.css`teki `--yz-font` onu okur.
-    <html
-      lang={dil}
-      dir={yon(dil)}
-      className={inter.variable}
-      suppressHydrationWarning
-    >
+    <html lang={dil} dir={yon(dil)} suppressHydrationWarning>
       <head>
+        {/* (P175) LATIN DILIMI ON YUKLENIR.
+            `next/font` bunu kendiliginden yapiyordu; elle yazarken
+            atlamak, ilk boyamada yazi tipinin bir kare gec gelmesi
+            demekti. YALNIZ `latin`: yedi dilimin hepsini on yuklemek,
+            kullanicinin HIC ihtiyac duymayacagi 160 KB'i indirtirdi. */}
+        <link
+          rel="preload"
+          href="/fonts/inter-latin.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
         {/* Ilk boyamadan once tema sinifini ata (FOUC yok). Kayitli tercih
             yoksa/sistem ise OS temasini izle. */}
         <script

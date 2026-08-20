@@ -47,6 +47,14 @@ import { Dugme } from "@/components/ui";
 import { API_KAPALI_KODU } from "@/lib/backend-kodlari";
 import { useT } from "@/lib/i18n/kullan";
 
+/**
+ * (P175 §3) TEKRAR DENEMEKLE DEGISMEYECEK DURUMLAR.
+ *
+ * 401 BURADA YOK ve bilincli: onu `jsonFetcher` zaten karsiliyor
+ * (oturum bitti -> `/login`), yani SWR'ye hic ulasmiyor.
+ */
+const KALICI_DURUMLAR = new Set([400, 403, 404, 405, 409, 422]);
+
 function apiKapaliMi(e: unknown): boolean {
   return (e as { kod?: string; code?: string } | null)?.kod === API_KAPALI_KODU
     // `ApiHatasi` (yazma yolu) alani `code` diye tasiyor; `jsonFetcher`
@@ -60,6 +68,32 @@ export function SunucuDurumu({ children }: { children: ReactNode }) {
   return (
     <SWRConfig
       value={{
+        // (P175 §3) YENIDEN DENEME SINIRLI VE SECICI.
+        //
+        // SWR 2.x VARSAYILANI SINIRSIZDIR (`errorRetryCount` tanimsiz):
+        // ustel geri cekilme var ama HIC DURMAZ. Kurulum sihirbazinda
+        // olculdu — ayni istek onlarca kez tekrarlaniyor ve sunucuya
+        // bosuna yuk biniyordu.
+        errorRetryCount: 4,
+        onErrorRetry: (hata, _anahtar, ayar, tekrarla, { retryCount }) => {
+          // 1) KENDILIGINDEN DUZELMEYECEK YANITLAR HIC DENENMEZ.
+          //    404/405 surum ayrismasidir, 403 yetki, 422 gecersiz istek —
+          //    ucu de ayni girdiyle ayni sonucu verir. Denemek yalnizca
+          //    sunucuya yuk bindirir ve kullaniciyi bekletir.
+          const durum = (hata as { durum?: number } | null)?.durum;
+          if (durum !== undefined && KALICI_DURUMLAR.has(durum)) return;
+
+          // 2) UST SINIR.
+          if (retryCount >= (ayar.errorRetryCount ?? 4)) return;
+
+          // 3) USTEL GERI CEKILME + SEGIRME (jitter). Segirme SART:
+          //    sabit araliklarla, ayni anda hata alan yirmi bilesen
+          //    sunucuya SENKRON dalgalar halinde vururdu.
+          const taban = ayar.errorRetryInterval ?? 5000;
+          const gecikme =
+            taban * 2 ** retryCount * (0.5 + Math.random() * 0.5);
+          setTimeout(() => tekrarla({ retryCount: retryCount + 1 }), gecikme);
+        },
         onError: (e) => {
           if (apiKapaliMi(e)) setKapali(true);
         },

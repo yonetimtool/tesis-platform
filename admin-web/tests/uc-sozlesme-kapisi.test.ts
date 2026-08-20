@@ -33,6 +33,7 @@
 // kapsaminda degil — ama 404/405 sinifi tamamen kapanir.
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
+import { parse } from "yaml";
 
 import { OKUMA, YAZMA } from "@/lib/panel-vekil";
 
@@ -61,6 +62,11 @@ function sozlesmeYollari(): Map<string, Set<string>> {
 }
 
 const SOZLESME = sozlesmeYollari();
+
+/** (5) icin sozlesmenin TAM agaci — sema karsilastirmasi ozellik ister. */
+const SOZLESME_HAM = parse(
+  readFileSync("../contracts/openapi.yaml", "utf8"),
+) as { paths?: Record<string, unknown>; components?: { schemas?: Record<string, unknown> } };
 
 /** `/kargo/{id}` gibi degiskenli yollari kalipla esler. */
 function sozlesmedeVar(yol: string, metot: string): boolean {
@@ -259,6 +265,132 @@ describe("(3) arayuzun cagirdigi panel kaynaklari beyaz listede", () => {
       [...ihlal],
       "Arayuz beyaz listede OLMAYAN bir panel kaynagi cagiriyor — vekil " +
         `404 doner:\n${[...ihlal].join("\n")}`,
+    ).toEqual([]);
+  });
+});
+
+// =========================================================================
+// (5) YANIT SEMASI — arayuz, sozlesmenin VAAT ETMEDIGI bir alani okuyor mu
+// =========================================================================
+// P173'te kurulan kapi YALNIZ yol ve metot dogruluyordu. Bu bolum yanit
+// GOVDESINI ekliyor: arayuzun ZORUNLU ilan ettigi her alan, sozlesmenin o
+// ucun basarili yanitinda VAAT ETTIGI bir alan olmali.
+//
+// YON TEK TARAFLI ve bilincli: sozlesmede olup arayuzun okumadigi alan
+// SORUN DEGIL (uc daha fazla sey donebilir). Ters yon kusurdur: olmayan
+// bir alani okumak 'undefined' uretir ve ekranda sessiz bir bosluk ya da
+// bir istisna olur.
+//
+// KAPSAM DAR VE BU ACIKCA YAZILI: yalniz `useSWR<Tip>(...)` bicimindeki,
+// ayni dosyada `interface Tip` ile tanimlanmis cagrilar karsilastirilabilir
+// (satir ici tipler ve karmasik jenerikler statik olarak baglanamiyor).
+// Bugun ESLESEN SAYISI asagida bir alt sinirla kilitli — kapsam
+// dusurulurse test kirilir, yani kapi sessizce bosalmaz.
+describe("(5) yanit semasi — arayuz olmayan alani okumasin", () => {
+  const semalar: Record<string, unknown> = (SOZLESME_HAM.components ?? {})
+    .schemas ?? {};
+
+  function duz(s: unknown, derinlik = 0): Record<string, unknown> | null {
+    if (derinlik > 6 || !s || typeof s !== "object") return null;
+    const o = s as Record<string, unknown>;
+    if (typeof o.$ref === "string") {
+      const ad = o.$ref.split("/").pop() as string;
+      return duz(semalar[ad], derinlik + 1);
+    }
+    if (o.type === "array") return duz(o.items, derinlik + 1);
+    if (o.properties) return o;
+    for (const k of ["allOf", "oneOf", "anyOf"]) {
+      const alt = o[k];
+      if (Array.isArray(alt)) {
+        for (const a of alt) {
+          const r = duz(a, derinlik + 1);
+          if (r) return r;
+        }
+      }
+    }
+    return null;
+  }
+
+  function yanitSemasi(yol: string): Record<string, unknown> | null {
+    const p = (SOZLESME_HAM.paths ?? {})[yol] as
+      | Record<string, Record<string, unknown>>
+      | undefined;
+    const g = p?.get;
+    if (!g) return null;
+    for (const kod of ["200", "201"]) {
+      const r = (g.responses as Record<string, Record<string, unknown>>)?.[kod];
+      const icerik = r?.content as Record<string, { schema?: unknown }> | undefined;
+      if (icerik) return duz(Object.values(icerik)[0]?.schema);
+    }
+    return null;
+  }
+
+  it("arayuzun ZORUNLU alanlari sozlesmede VAAT EDILMIS", () => {
+    const sabitD = /const\s+([A-Za-z_$][\w$]*)\s*=\s*"(\/api\/panel\/[^"]*)"/g;
+    const swrD = /useSWR<([^>]+)>\(\s*([`"]?)([^,`")]*)/g;
+    const alanD = /^[ \t]*([a-zA-Z_][\w]*)(\??):/gm;
+
+    const ihlal: string[] = [];
+    let karsilastirilan = 0;
+
+    for (const [dosya, kaynak] of taranacakKaynaklar(["app", "components"], [
+      ".tsx",
+    ])) {
+      const sabitler = new Map<string, string>();
+      for (const m of kaynak.matchAll(sabitD)) sabitler.set(m[1], m[2]);
+
+      for (const m of kaynak.matchAll(swrD)) {
+        const tipIfade = m[1].trim();
+        let yol = m[3].trim();
+        if (!m[2] && sabitler.has(yol)) yol = sabitler.get(yol)!;
+        const ad = /\/api\/panel\/([a-z0-9-]+)/.exec(yol)?.[1];
+        if (!ad || !(ad in OKUMA)) continue;
+
+        let sema = yanitSemasi(OKUMA[ad]);
+        if (!sema) continue;
+
+        // `{ items: X[] }` sarmali: sozlesmede de `items` dizisine in.
+        const sarmal = /^\{\s*items:\s*([A-Za-z_$][\w$]*)\[\]\s*\}$/.exec(tipIfade);
+        let tip: string;
+        if (sarmal) {
+          tip = sarmal[1];
+          const ic = (sema.properties as Record<string, unknown>)?.items;
+          const icSema = ic ? duz(ic) : null;
+          if (!icSema) continue;
+          sema = icSema;
+        } else {
+          tip = tipIfade.replace("[]", "").trim();
+        }
+        if (!/^[A-Za-z_$][\w$]*$/.test(tip)) continue;
+
+        const govde = new RegExp(`interface ${tip} \\{([\\s\\S]*?)\\n\\}`).exec(
+          kaynak,
+        );
+        if (!govde) continue;
+
+        const zorunlu = [...govde[1].matchAll(alanD)]
+          .filter((a) => a[2] !== "?")
+          .map((a) => a[1]);
+        const vaat = new Set(Object.keys(sema.properties ?? {}));
+        karsilastirilan++;
+        const eksik = zorunlu.filter((a) => !vaat.has(a));
+        if (eksik.length) {
+          ihlal.push(`${dosya}: ${tip} <- GET ${OKUMA[ad]} — ${eksik.join(", ")}`);
+        }
+      }
+    }
+
+    // KAPSAM KILIDI: karsilastirma kumesi bosalirsa yokluk iddiasi her
+    // zaman dogru cikar ve kapi hicbir sey olcmeden yesil kalir.
+    expect(
+      karsilastirilan,
+      "sema karsilastirmasi bosaldi — kapi artik olcmuyor",
+    ).toBeGreaterThanOrEqual(7);
+
+    expect(
+      ihlal,
+      "Arayuz, sozlesmenin VAAT ETMEDIGI bir alani ZORUNLU okuyor — " +
+        `ekranda 'undefined' demektir:\n${ihlal.join("\n")}`,
     ).toEqual([]);
   });
 });

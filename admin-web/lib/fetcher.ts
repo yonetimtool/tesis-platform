@@ -27,7 +27,21 @@ export async function jsonFetcher<T>(url: string): Promise<T> {
   if (!res.ok) {
     const hata = (data as { error?: { message?: string; code?: string } } | null)
       ?.error;
-    throw kodluHata(hata?.message ?? govdesizMesaj(res.status), hata?.code);
+    // (P175 §4) HANGI CAGRI PATLADI — REFERANS METINDE.
+    //
+    // "Veriler yuklenemedi" hangi ucun neden basarisiz oldugunu
+    // SOYLEMIYORDU; bir ekran birden fazla uc cagirdiginda kullanici da
+    // destek de nereden baslayacagini bilemiyordu. Yazma yolu
+    // (`apiSend`) bunu P163'te cozmustu; okuma yolu cozmemisti.
+    //
+    // Referans = durum kodu + YOL. Istegi tek basina belirler ve sunucu
+    // gunlugunde aranabilir. Kimlik ya da govde ICERMEZ — hata metni bir
+    // sizinti yuzeyi degildir.
+    throw kodluHata(
+      hata?.message ?? govdesizMesaj(res.status, `GET ${url.split("?")[0]}`),
+      hata?.code,
+      res.status,
+    );
   }
   return data as T;
 }
@@ -56,15 +70,30 @@ export async function jsonFetcher<T>(url: string): Promise<T> {
  * yayina alinmamis. Mesaj bunu soyluyor — "tekrar dene" demiyor, cunku
  * tekrar denemek ISE YARAMAZ.
  */
-function govdesizMesaj(durum: number): string {
-  if (durum === 404) return metin("ortakUcBulunamadi");
-  if (durum === 405) return metin("ortakYontemDesteklenmiyor");
-  return metin("ortakHataOlustu");
+function govdesizMesaj(durum: number, referans: string): string {
+  // 404/405: SURUM AYRISMASI. Ozel metin korunuyor — "tekrar dene"
+  // demiyor, cunku tekrar denemek ISE YARAMAZ. Referans yine de
+  // ekleniyor: hangi cagri oldugunu soylemek her durumda gerekli.
+  if (durum === 404) return `${metin("ortakUcBulunamadi")} (${referans})`;
+  if (durum === 405) {
+    return `${metin("ortakYontemDesteklenmiyor")} (${referans})`;
+  }
+  // (P175 §4) Otekiler: durum kodu + referans. Istegi TEK BASINA
+  // belirler ve sunucu gunlugunde aranabilir.
+  return metin("ortakSunucuHatasi", { durum: String(durum), referans });
 }
 
-export function kodluHata(mesaj: string, kod?: string): Error {
-  const e = new Error(mesaj) as Error & { kod?: string };
+export function kodluHata(
+  mesaj: string,
+  kod?: string,
+  durum?: number,
+): Error {
+  const e = new Error(mesaj) as Error & { kod?: string; durum?: number };
   if (kod) e.kod = kod;
+  // (P175 §3) HTTP DURUMU DA TASINIR: yeniden deneme karari buna bakiyor.
+  // 404/405 gibi bir yanit TEKRAR DENEMEKLE degismez; onlari denemek
+  // sunucuya bosuna yuk bindirir.
+  if (durum !== undefined) e.durum = durum;
   return e;
 }
 

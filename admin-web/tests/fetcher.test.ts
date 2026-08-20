@@ -62,9 +62,24 @@ describe("jsonFetcher", () => {
     await expect(jsonFetcher("/api/x")).rejects.toThrow("Tarih gecersiz.");
   });
 
-  it("zarf yok / govde bozuk: genel mesaja duser (undefined gostermez)", async () => {
+  it("zarf yok / govde bozuk: DURUM + REFERANS yazar (undefined gostermez)",
+    async () => {
+    // (P175 §4) IDDIA YON DEGISTIRDI — ESKI HALI "Bir hata olustu." BEKLIYORDU.
+    //
+    // O cumle hicbir sey soylemiyordu: bir ekran birden fazla uc
+    // cagirdiginda kullanici da destek de HANGI cagrinin patladigini
+    // bilemiyordu. Kurulum sihirbazi ornegi tam buydu.
+    //
+    // Korunan sey AYNI: `undefined` GOSTERILMEZ, govde bozuk olsa bile
+    // anlamli bir cumle cikar. Eklenen sey teshis: durum kodu + referans.
+    // Referans yalniz METOT + YOL — sorgu dizesi ATILIR, cunku hata
+    // metni bir sizinti yuzeyi degildir.
     stubFetch(500, null);
-    await expect(jsonFetcher("/api/x")).rejects.toThrow("Bir hata oluştu.");
+    const h1 = await jsonFetcher("/api/x?gizli=deger").catch((e) => e as Error);
+    expect(h1.message).toContain("500");
+    expect(h1.message).toContain("GET /api/x");
+    expect(h1.message).not.toContain("undefined");
+    expect(h1.message).not.toContain("gizli");
 
     // json() patlarsa da ayni: catch(() => null) devreye girer.
     vi.stubGlobal(
@@ -77,7 +92,20 @@ describe("jsonFetcher", () => {
         },
       })),
     );
-    await expect(jsonFetcher("/api/x")).rejects.toThrow("Bir hata oluştu.");
+    const h2 = await jsonFetcher("/api/x").catch((e) => e as Error);
+    expect(h2.message).toContain("503");
+    expect(h2.message).not.toContain("undefined");
+  });
+
+  it("404/405 SURUM AYRISMASINI soyler ve 'tekrar dene' DEMEZ", async () => {
+    // (P173) Bu ikisi tekrar denemekle DEGISMEZ; kullaniciyi bekletmek
+    // yerine ne oldugunu soylemek gerekir. (P175) Referans da eklendi.
+    stubFetch(404, null);
+    const h = await jsonFetcher("/api/panel/yok").catch((e) => e as Error);
+    expect(h.message).toContain("/api/panel/yok");
+    expect(h.message.toLowerCase()).not.toContain("tekrar dene");
+    // HTTP DURUMU HATAYA ILISTIRILIR: yeniden deneme karari buna bakiyor.
+    expect((h as Error & { durum?: number }).durum).toBe(404);
   });
 });
 

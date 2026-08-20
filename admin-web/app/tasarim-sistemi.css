@@ -248,7 +248,7 @@
      Inter; `next/font` ile yuklenip `--yz-font` degiskenine baglanir
      (layout.tsx). Yedek yigin sistem fontlarina duser — ag yoksa ekran
      yine dogru olculerde cizilir. */
-  --yz-font: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+  --yz-font: Inter, "Inter Yedek", ui-sans-serif, system-ui, -apple-system,
     "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --yz-font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 

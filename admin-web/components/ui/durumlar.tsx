@@ -202,18 +202,51 @@ function VarsayilanIkon() {
  * `onTekrar` VERILMEZSE dugme CIZILMEZ: calismayan bir "tekrar dene"
  * dugmesi, kullaniciyi ayni duvara ikinci kez carptirmaktan baska bir
  * sey yapmaz.
+ *
+ * =========================================================================
+ * (P175) `mesaj === null` ISE HICBIR SEY CIZILMEZ
+ * =========================================================================
+ * OLCULEN OLAY: kurulum sihirbazi her acilista "Veriler yuklenemedi."
+ * gosteriyordu — VERI DOGRU GELDIGI HALDE. Ekran hem 3/8 ilerlemeyi hem
+ * de hata kartini birlikte ciziyordu (gercek govdeyle uretildi).
+ *
+ * SEBEP BU BILESENDEYDI: `mesaj` null olsa bile kart CIZILIYOR ve
+ * `{mesaj || t("ortakVeriYuklenemedi")}` genel metne dusuyordu. Yani
+ * "hata yok" demenin bir yolu YOKTU.
+ *
+ * Cagiranlarin cogu su kalibi kullaniyor ve bilesenden GORUNMEMESINI
+ * bekliyor:
+ *
+ *     <HataDurumu mesaj={hata ?? (error ? t("...") : null)} />
+ *
+ * Tarandi: 28 dosyada 39 yer boyle cagiriyordu, yani o ekranlarin hepsi
+ * KALICI bir sahte hata kartI tasiyordu (formlar, modallar, finans
+ * ekranlari dahil). Kusur P160'tan, yani bilesenin ilk gununden beri
+ * duruyordu.
+ *
+ * AYRIM `null` ile `undefined` ARASINDA ve bu bilincli:
+ *   * `mesaj={null}`   -> HATA YOK, hicbir sey cizme.
+ *   * `mesaj` VERILMEZ -> "hata var ama metni yok", genel metin cizilir.
+ * Uc cagri yeri ikinci bicimi kullaniyor ve onlar KORUNUYOR. Ikisini tek
+ * davranisa indirmek, "hata yok"u anlatmanin yolunu ya da genel metni
+ * yok ederdi.
  */
 export function HataDurumu({
   mesaj,
   onTekrar,
   yukleniyor = false,
 }: {
-  /** Sunucudan gelen metin varsa O gosterilir; yoksa genel i18n metni. */
+  /**
+   * Sunucudan gelen metin varsa O gosterilir; ALAN HIC VERILMEZSE genel
+   * i18n metni. `null` VERILIRSE bilesen HICBIR SEY CIZMEZ.
+   */
   mesaj?: string | null;
   onTekrar?: () => void;
   yukleniyor?: boolean;
 }) {
   const t = useT();
+  // ACIKCA `null`: cagiran "su an hata yok" diyor.
+  if (mesaj === null) return null;
   return (
     <Kart ton="girintili" className="flex flex-col items-center gap-3 py-10 text-center">
       <span
