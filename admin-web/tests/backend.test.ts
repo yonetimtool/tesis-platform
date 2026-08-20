@@ -358,9 +358,77 @@ describe("proxyJson — 401 sonrasi refresh + cookie rotasyonu", () => {
 });
 
 describe("proxyJson — TEK-UCUS (single-flight) refresh", () => {
-  it("es zamanli iki 401 icin /auth/refresh YALNIZ BIR KEZ cagrilir", async () => {
+  it("ARDISIK 401'de eski jetonla IKINCI refresh DENENMEZ", async () => {
+    // =====================================================================
+    // OLCULEN OLAY (P174)
+    // =====================================================================
+    // Sayfa acilisinda dort istek paralel gidiyor ve erisim jetonu dolmus:
+    //
+    //   GET /tenant/settings 401 · GET /me/profile 401 · GET /kurulum 401
+    //   GET /notifications 401 · POST /auth/refresh 200 · ...hepsi 200
+    //
+    // Istekler AYNI ANDA degil, ARDISIK olarak 401 aliyor. Mevcut
+    // `refreshSingleFlight` girdisini `finally` icinde — yani yenileme
+    // BITER BITMEZ — siliyordu. Yenileme cozuldukten SONRA 401 alan istek
+    // haritada bir sey bulamiyor ve ESKI (artik DONDURULMUS) jetonla
+    // IKINCI bir yenileme baslatiyordu.
+    //
+    // Backend rotation + reuse-revoke uyguluyor: o ikinci cagri REDDEDILIR
+    // ve `pair` null olur -> vekil 401 dondurur VE OTURUM CEREZLERINI
+    // SILER. Yani az once yenilenmis, GECERLI bir oturumu yok eder.
+    //
+    // Belirti tam da bildirilen sey: "bazi bilesenler ilk 401'i yukleme
+    // hatasi olarak gosteriyor ve toparlanmiyor".
     kavanoz.degerler[ACCESS_COOKIE] = "eski-at";
     kavanoz.degerler[REFRESH_COOKIE] = "paylasilan-rt";
+
+    let refreshSayisi = 0;
+    const cagrilar = stubFetch(async (url, init) => {
+      if (url.endsWith("/auth/refresh")) {
+        refreshSayisi++;
+        const govde = JSON.parse(String(init.body)) as { refresh_token: string };
+        // ROTATION + REUSE-REVOKE: eski jeton bir kez kullanilir; ikinci
+        // kullanim REDDEDILIR (gercek backend davranisi).
+        if (govde.refresh_token !== "paylasilan-rt" || refreshSayisi > 1) {
+          return { status: 401, body: { error: { code: "unauthorized" } } };
+        }
+        return { status: 200, body: OK_CIFT };
+      }
+      const yetki = (init.headers as Record<string, string>).Authorization;
+      return yetki === "Bearer eski-at"
+        ? { status: 401, body: null }
+        : { status: 200, body: { ok: true } };
+    });
+
+    // 1) Ilk istek: 401 -> yenile -> tekrar dene -> 200.
+    const r1 = await proxyJson("/tenant/settings", "GET");
+    expect(r1.status).toBe(200);
+
+    // 2) IKINCI istek yenilemeden SONRA basliyor ve hâlâ ESKI cerezi
+    //    okuyor — tarayici `Set-Cookie`yi henuz almadi. Gercek sayfa
+    //    acilisinda olan tam olarak budur.
+    const r2 = await proxyJson("/kurulum", "GET");
+
+    expect(r2.status, "ikinci istek 401 aldi — oturum bosuna dusuruldu").toBe(200);
+    // ESKI JETONLA IKINCI YENILEME DENENMEMELI: denenseydi backend bunu
+    // "reuse" sayar ve oturumun TAMAMINI iptal ederdi.
+    expect(refreshSayisi, "eski jetonla ikinci refresh denendi").toBe(1);
+    expect(
+      cagrilar.filter((c) => c[0].endsWith("/auth/refresh")),
+    ).toHaveLength(1);
+    // Ve cerezler SILINMEMELI.
+    expect(cookieOf(r2, ACCESS_COOKIE)?.value).not.toBe("");
+  });
+
+
+  it("es zamanli iki 401 icin /auth/refresh YALNIZ BIR KEZ cagrilir", async () => {
+    kavanoz.degerler[ACCESS_COOKIE] = "eski-at";
+    // (P174) JETON TESTE OZEL. Yenilenmis cift, ESKI jetonun anahtariyla
+    // 30 sn saklaniyor (bkz. `lib/backend.ts` sonuc penceresi). Ayni
+    // dizgeyi iki testte kullanmak, ikincisinin onbellekten donmesi ve
+    // `fetch`e HIC gitmemesi demekti — olculdu. Gercek jetonlar zaten
+    // benzersiz; ayni dizge testin sadelestirmesiydi.
+    kavanoz.degerler[REFRESH_COOKIE] = "rt-eszamanli";
 
     let refreshSayisi = 0;
     let salivver!: () => void;
@@ -401,24 +469,93 @@ describe("proxyJson — TEK-UCUS (single-flight) refresh", () => {
     expect(cookieOf(r2, REFRESH_COOKIE)?.value).toBe("yeni-rt");
   });
 
-  it("ucus BITTIKTEN sonra yeni bir 401 YENI refresh cagirir (harita temizlenir)",
+  it("SAYFA ACILISI DESENI: dort paralel + bir gecikmis istek, HATA YOK",
     async () => {
+      // Bildirilen log deseninin BIREBIR karsiligi:
+      //   GET /tenant/settings 401 · GET /me/profile 401 · GET /kurulum 401
+      //   GET /notifications 401 · POST /auth/refresh 200 · ...hepsi 200
+      //
+      // Kullanicinin gormesi gereken sey: HICBIR SEY. Tek yenileme,
+      // butun istekler otomatik tekrar, hicbir hata ekrani.
       kavanoz.degerler[ACCESS_COOKIE] = "eski-at";
-      kavanoz.degerler[REFRESH_COOKIE] = "rt-tekrar";
+      kavanoz.degerler[REFRESH_COOKIE] = "rt-sayfa-acilisi";
 
       let refreshSayisi = 0;
-      stubFetch((url, init) => {
+      stubFetch(async (url, init) => {
         if (url.endsWith("/auth/refresh")) {
           refreshSayisi++;
+          const govde = JSON.parse(String(init.body)) as { refresh_token: string };
+          // Rotation + reuse-revoke: eski jeton BIR KEZ.
+          if (govde.refresh_token !== "rt-sayfa-acilisi" || refreshSayisi > 1) {
+            return { status: 401, body: { error: { code: "unauthorized" } } };
+          }
           return { status: 200, body: OK_CIFT };
         }
         return (init.headers as Record<string, string>).Authorization === "Bearer eski-at"
           ? { status: 401, body: null }
-          : { status: 200, body: {} };
+          : { status: 200, body: { ok: true } };
       });
 
-      await proxyJson("/units", "GET");
-      await proxyJson("/units", "GET"); // ayni rt, ama onceki ucus bitti
-      expect(refreshSayisi).toBe(2);
+      const yanitlar = await Promise.all([
+        proxyJson("/tenant/settings", "GET"),
+        proxyJson("/me/profile", "GET"),
+        proxyJson("/kurulum", "GET"),
+        proxyJson("/notifications", "GET"),
+      ]);
+      // GECIKMIS ISTEK: demet bittikten sonra, hâlâ ESKI cerezle.
+      yanitlar.push(await proxyJson("/kurulum", "GET"));
+
+      for (const [i, r] of yanitlar.entries()) {
+        expect(r.status, `${i}. istek hata dondu`).toBe(200);
+      }
+      expect(refreshSayisi, "birden fazla yenileme yapildi").toBe(1);
+      // Hepsi YENI cifti tasir; tarayici tek bir tutarli duruma yakinsar.
+      for (const r of yanitlar) {
+        expect(cookieOf(r, REFRESH_COOKIE)?.value).toBe("yeni-rt");
+      }
+    });
+
+  it("SONUC PENCERESI DOLUNCA yeni bir 401 YENI refresh cagirir",
+    async () => {
+      // =====================================================================
+      // (P174) BU TESTIN YONU DEGISTI — ESKI HALI KUSURU KILITLIYORDU
+      // =====================================================================
+      // Eski iddia "ucus bitince ayni jetonla YENI refresh cagirilir" idi
+      // ve `toBe(2)` bekliyordu. Bu, tam olarak duzeltilen kusurdur:
+      // dondurulmus bir jetonla ikinci yenileme, backend'de "reuse"
+      // sayilip OTURUMU IPTAL ETTIRIYORDU.
+      //
+      // Korunmasi gereken sey ise ayni: pencere SONSUZ OLMAMALI. Aksi
+      // halde harita buyumeye devam eder ve cok eski bir jetona sonsuza
+      // dek gecerli bir cift dagitilirdi. Yani iddia kaldirilmadi,
+      // ZAMANA baglandi.
+      vi.useFakeTimers();
+      try {
+        kavanoz.degerler[ACCESS_COOKIE] = "eski-at";
+        kavanoz.degerler[REFRESH_COOKIE] = "rt-pencere";
+
+        let refreshSayisi = 0;
+        stubFetch((url, init) => {
+          if (url.endsWith("/auth/refresh")) {
+            refreshSayisi++;
+            return { status: 200, body: OK_CIFT };
+          }
+          return (init.headers as Record<string, string>).Authorization === "Bearer eski-at"
+            ? { status: 401, body: null }
+            : { status: 200, body: {} };
+        });
+
+        await proxyJson("/units", "GET");
+        // PENCERE ICINDE: yeni cagri YOK — yaris tam olarak burada kapaniyor.
+        await proxyJson("/units", "GET");
+        expect(refreshSayisi, "pencere icinde ikinci refresh denendi").toBe(1);
+
+        // PENCERE DOLDUKTAN SONRA: yeniden denenir.
+        vi.setSystemTime(Date.now() + 31_000);
+        await proxyJson("/units", "GET");
+        expect(refreshSayisi, "pencere dolunca yenileme yapilmadi").toBe(2);
+      } finally {
+        vi.useRealTimers();
+      }
     });
 });

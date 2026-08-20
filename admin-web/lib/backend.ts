@@ -105,9 +105,72 @@ function apiKapaliYaniti(dil: Dil): Response {
 // --- single-flight refresh ------------------------------------------------- #
 const inflight = new Map<string, Promise<TokenPair | null>>();
 
+/**
+ * (P174) YENILENMIS CIFT KISA BIR SURE SAKLANIR — "sonuc penceresi".
+ *
+ * =========================================================================
+ * NEDEN TEK-UCUS TEK BASINA YETMEDI
+ * =========================================================================
+ * Onceki hâl girdisini `finally` icinde, yani yenileme BITER BITMEZ
+ * siliyordu. Bu, YALNIZ AYNI ANDA bekleyen istekleri birlestirir.
+ *
+ * Gercek sayfa acilisinda istekler ayni anda degil ARDISIK olarak 401
+ * alir (olculen desen: dort 401, bir refresh, sonra hepsi 200). Yenileme
+ * cozuldukten SONRA 401 alan istek haritada bir sey bulamiyor ve ESKI —
+ * artik DONDURULMUS — jetonla IKINCI bir yenileme baslatiyordu.
+ *
+ * Backend rotation + reuse-revoke uyguluyor: o cagri REDDEDILIR, `pair`
+ * null olur ve vekil 401 dondurup OTURUM CEREZLERINI SILER. Yani az once
+ * yenilenmis, GECERLI bir oturumu yok eder. Belirti: "bazi bilesenler ilk
+ * 401'i yukleme hatasi olarak gosteriyor ve toparlanmiyor".
+ *
+ * =========================================================================
+ * NEDEN CEREZI BEKLEMEK ISE YARAMAZ
+ * =========================================================================
+ * Yenilenen cift `Set-Cookie` ile TARAYICIYA gider; ama ayni sayfa
+ * acilisindaki oteki istekler ZATEN YOLDADIR ve ESKI cerezi tasir. Sunucu
+ * tarafinda kisa sureli bir hafiza olmadan bu yaris kapanmaz.
+ *
+ * =========================================================================
+ * NEDEN 30 SANIYE, NEDEN YALNIZ BASARI
+ * =========================================================================
+ * Pencere bir sayfa acilisindaki istek demetini kapsayacak kadar uzun,
+ * dondurulmus bir jetonun anlamli sure kabul edilmeyecegi kadar kisa.
+ *
+ * YALNIZ BASARI saklanir: basarisiz bir yenileme gecici de olabilir (ag);
+ * `null`i saklamak, tek bir gecici hatayi otuz saniyelik bir oturum
+ * kaybina cevirirdi.
+ *
+ * GUVENLIK: pencere, ESKI jetonu ZATEN ELINDE TUTAN birine yeni cifti
+ * verir. Ama o kisi cerezi tasiyor demektir — yani zaten oturumun
+ * sahibidir. Yeni bir yuzey acilmiyor.
+ *
+ * SINIR: hafiza SUREC ICINDEDIR. Birden fazla `admin-web` ornegi
+ * calistirilirsa yaris ornekler arasinda yeniden mumkun olur. Bugunku
+ * dagitimda tek konteyner var; cok ornege gecilirse bu pencerenin
+ * paylasilan bir depoya (Redis) tasinmasi gerekir.
+ */
+const SONUC_PENCERESI_MS = 30_000;
+const sonYenileme = new Map<string, { cift: TokenPair; bitis: number }>();
+
+function pencereyiTemizle(): void {
+  const an = Date.now();
+  for (const [k, v] of sonYenileme) {
+    if (v.bitis <= an) sonYenileme.delete(k);
+  }
+}
+
 function refreshSingleFlight(rt: string): Promise<TokenPair | null> {
+  pencereyiTemizle();
+
+  // 1) BU JETONLA AZ ONCE YENILENDI Mi — ag istegi HIC yapilmaz.
+  const taze = sonYenileme.get(rt);
+  if (taze) return Promise.resolve(taze.cift);
+
+  // 2) SU AN YENILENIYOR MU — ayni cagriya katil.
   const existing = inflight.get(rt);
   if (existing) return existing;
+
   const p = (async (): Promise<TokenPair | null> => {
     try {
       const res = await fetch(`${API_BASE}/auth/refresh`, {
@@ -118,7 +181,17 @@ function refreshSingleFlight(rt: string): Promise<TokenPair | null> {
       });
       if (!res.ok) return null;
       const d = (await res.json()) as { access_token: string; refresh_token: string };
-      return { access: d.access_token, refresh: d.refresh_token };
+      const cift = { access: d.access_token, refresh: d.refresh_token };
+      // ESKI jetonun anahtariyla saklanir: gec kalan istek elinde ESKI
+      // cerezle gelir ve aradigi sey budur.
+      sonYenileme.set(rt, { cift, bitis: Date.now() + SONUC_PENCERESI_MS });
+      // YENI jeton da ayni sonuca baglanir: cerezi almis bir istek ikinci
+      // kez yenilemeye kalkmasin.
+      sonYenileme.set(cift.refresh, {
+        cift,
+        bitis: Date.now() + SONUC_PENCERESI_MS,
+      });
+      return cift;
     } catch {
       return null;
     } finally {
