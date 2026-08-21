@@ -26,7 +26,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import useSWR from "swr";
 
 import { useToast } from "@/components/Toast";
-import { useBant } from "@/lib/kirilma-kullan";
 import {
   Alan,
   AlanSarmal,
@@ -104,6 +103,36 @@ const GORUNUMLER: { id: Gorunum; anahtar: SozlukAnahtari }[] = [
 
 /** Ajanda kabinin sabit yuksekligi — bkz. `AjandaListesi` yorumu. */
 const AJANDA_YUKSEKLIGI = "22rem";
+
+/**
+ * (P176) SECILEN GORUNUM KALICI — `localStorage`.
+ *
+ * SUNUCUDA SAKLANMIYOR ve bu bilincli: gorunum tercihi bir CIHAZ
+ * aliskanligidir, hesap ayari degil. Telefonda ajanda, masaustunde ay
+ * isteyen bir kullanicinin ikisi de dogru; sunucuya yazmak bu ikisini
+ * birbirine ezdirirdi. Kabuk menusunun acik/kapali durumu da ayni
+ * gerekceyle `localStorage`ta (bkz. `AppShell`).
+ */
+const GORUNUM_ANAHTARI = "yonetio.takvim.gorunum";
+
+function kayitliGorunum(): Gorunum | null {
+  try {
+    const ham = localStorage.getItem(GORUNUM_ANAHTARI);
+    return GORUNUMLER.some((g) => g.id === ham) ? (ham as Gorunum) : null;
+  } catch {
+    // Depolama erisilemezse (ozel kip) tercih YOK sayilir — takvim
+    // varsayilanla acilir, kirilmaz.
+    return null;
+  }
+}
+
+function gorunumuYaz(g: Gorunum): void {
+  try {
+    localStorage.setItem(GORUNUM_ANAHTARI, g);
+  } catch {
+    // yoksay
+  }
+}
 
 const TIP_ANAHTARI: Record<TakvimTip, SozlukAnahtari> = {
   etkinlik: "takvimTipEtkinlik",
@@ -212,10 +241,6 @@ export function PanoTakvim() {
   const { onayla, diyalog } = useOnay();
 
   const [gorunum, setGorunum] = useState<Gorunum>(GORUNUM_AY);
-  // KULLANICI BIR KEZ SECERSE OTOMATIK KARAR SUSAR. Bayrak olmasaydi
-  // pencereyi daraltan (ya da telefonu ceviren) kullanicinin secimi
-  // her seferinde ajandaya geri EZILIRDI.
-  const secildiRef = useRef(false);
   const [capa, setCapa] = useState<Date>(() => new Date());
   const [tamEkran, setTamEkran] = useState(false);
   const [secilenGun, setSecilenGun] = useState<Date | null>(null);
@@ -233,20 +258,39 @@ export function PanoTakvim() {
 
   const bugun = new Date();
 
-  // (P170 §4.2) DAR EKRANDA AJANDA VARSAYILAN — ama ZORUNLU DEGIL.
+  // (P176) VARSAYILAN HER BANTTA "AY" — dar ekran otomatigi KALKTI.
   //
-  // `grid-cols-7` kirilamaz (yedi sutun haftanin yedi gunudur), o yuzden
-  // 360 px'te ay izgarasi ilk acilista dogru secim degil. Ama P169'daki
-  // gibi izgarayi ELINDEN ALMAK da dogru degildi: arac cubugundaki "Ay"
-  // dugmesi basiliyor ve hicbir sey olmuyordu.
+  // =====================================================================
+  // P169'UN GEREKCESI ARTIK GECERLI DEGIL
+  // =====================================================================
+  // O turda dar ekranda ajandaya geciliyordu; gerekce "ay izgarasi
+  // okunmuyor"du ve O GUN DOGRUYDU: hucreler 80 px yuksekligindeydi ve
+  // icine olay ADI yazilmaya calisiliyordu, ad 45 px'lik bir kutuda iki
+  // harfe dusuyordu.
   //
-  // Simdi: dar ekranda ILK gorunum ajanda; kullanici Ay'a gecerse izgara
-  // GERCEKTEN cizilir (hucreler dar ekranda sadelesir — asagiya bak).
-  const dar = useBant() === "sm";
-  useEffect(() => {
-    if (dar && !secildiRef.current) setGorunum(GORUNUM_AJANDA);
-  }, [dar]);
+  // P170 §4.2 bunu ZATEN duzeltti: dar ekranda hucre 56 px'e iniyor ve
+  // olay adi yerine NOKTA cizilyor. Yani okunmazligin sebebi kalmadi;
+  // kalan tek sey varsayilandi.
+  //
+  // 360 px'te olculdu (dar ekranin en dari):
+  //   360 − 32 (sayfa `px-4`) − 32 (kart `p-kart`) − 24 (alti `gap-1`)
+  //   = 272 / 7 = ~38,9 px hucre, ~30,9 px ic genislik.
+  // Dort nokta 4x6 + 3x2 = 30 px — sigar; sigmadigi durumda `flex-wrap`
+  // alt satira sarar. Izgara `minmax(0, 1fr)` kullandigi icin YATAY
+  // KAYDIRMA YAPISAL OLARAK IMKANSIZ.
+  //
+  // AJANDA KALDIRILMADI: arac cubugunda duruyor ve kullanici gecerse
+  // SECIMI HATIRLANIYOR (asagidaki etki).
   const ajanda = gorunum === GORUNUM_AJANDA;
+
+  // KAYITLI TERCIH ETKIDE UYGULANIR, BASLANGIC DEGERINDE DEGIL.
+  // Ilk kare SUNUCUDA cizilir ve orada `localStorage` YOKTUR; baslangic
+  // degerinde okumak hidrasyon uyusmazligi olurdu. Sunucu ve ilk istemci
+  // karesi AYNI seyi (ay) cizer, kullanicinin kaydi hemen ardindan gelir.
+  useEffect(() => {
+    const k = kayitliGorunum();
+    if (k) setGorunum(k);
+  }, []);
 
   /** Gun -> o gune dusen ogeler. Tek gecis; hucre basina filtre YOK
    *  (42 hucre x N oge, ay gorunumunde gereksiz kare hesaplamasi).
@@ -315,8 +359,11 @@ export function PanoTakvim() {
               tur={g.id === gorunum ? TUR_BIRINCIL : TUR_IKINCIL}
               aria-pressed={g.id === gorunum}
               onClick={() => {
-                secildiRef.current = true;
                 setGorunum(g.id);
+                // (P176) SECIM KALICI: her sayfa acilisinda ay'a donmek,
+                // ajandayi tercih eden kullaniciya her seferinde ayni
+                // tiklamayi yaptirirdi.
+                gorunumuYaz(g.id);
               }}
             >
               {t(g.anahtar)}

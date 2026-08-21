@@ -54,11 +54,27 @@ describe("(P170 §4.2) takvim", () => {
     expect(TAKVIM).toContain('"gun" | "hafta" | "ay" | "ajanda"');
   });
 
-  it("dar ekranda AJANDA VARSAYILAN ama KULLANICI SECIMI EZILMEZ", () => {
-    expect(TAKVIM).toContain("secildiRef");
-    expect(TAKVIM).toContain("if (dar && !secildiRef.current) setGorunum(GORUNUM_AJANDA)");
-    // Secim bayragi arac cubugundan set edilir.
-    expect(TAKVIM).toContain("secildiRef.current = true");
+  it("(P176) VARSAYILAN HER BANTTA AY — bant otomatigi KALKTI", () => {
+    // =====================================================================
+    // BU IDDIA YON DEGISTIRDI
+    // =====================================================================
+    // P170'te dar ekranda ajanda VARSAYILANDI; gerekce P169'dan
+    // devralinmisti ("ay izgarasi okunmuyor"). Ama okunmazligin sebebini
+    // P170'in KENDISI ortadan kaldirdi: dar ekranda hucre 56 px'e indi ve
+    // olay adi yerine NOKTA cizilir oldu (asagidaki iddialar bunu hâlâ
+    // olcuyor). Geriye yalniz varsayilan kalmisti.
+    //
+    // P176 varsayilani AY yapti. Bant otomatigi ve `secildiRef` bayragi
+    // GEREKSIZ kaldi: artik ezilecek bir otomatik karar yok, kullanicinin
+    // secimi `localStorage`ta duruyor.
+    //
+    // Ayrintili kilit: `takvim-gorunum.dom.test.ts`.
+    expect(TAKVIM).not.toContain("secildiRef");
+    expect(TAKVIM).not.toContain("setGorunum(GORUNUM_AJANDA)");
+    // AJANDA KALDIRILMADI — arac cubugunda duruyor.
+    expect(TAKVIM).toContain('{ id: GORUNUM_AJANDA, anahtar: "takvimAjanda" }');
+    // SECIM KALICI.
+    expect(TAKVIM).toContain("GORUNUM_ANAHTARI");
   });
 
   it("AY IZGARASI DAR EKRANDA OKUNUR KALIR: nokta var, metin gizli", () => {

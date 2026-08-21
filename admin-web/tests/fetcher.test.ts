@@ -75,7 +75,7 @@ describe("jsonFetcher", () => {
     // Referans yalniz METOT + YOL — sorgu dizesi ATILIR, cunku hata
     // metni bir sizinti yuzeyi degildir.
     stubFetch(500, null);
-    const h1 = await jsonFetcher("/api/x?gizli=deger").catch((e) => e as Error);
+    const h1 = (await jsonFetcher("/api/x?gizli=deger").catch((e) => e)) as Error;
     expect(h1.message).toContain("500");
     expect(h1.message).toContain("GET /api/x");
     expect(h1.message).not.toContain("undefined");
@@ -92,7 +92,7 @@ describe("jsonFetcher", () => {
         },
       })),
     );
-    const h2 = await jsonFetcher("/api/x").catch((e) => e as Error);
+    const h2 = (await jsonFetcher("/api/x").catch((e) => e)) as Error;
     expect(h2.message).toContain("503");
     expect(h2.message).not.toContain("undefined");
   });
@@ -101,11 +101,12 @@ describe("jsonFetcher", () => {
     // (P173) Bu ikisi tekrar denemekle DEGISMEZ; kullaniciyi bekletmek
     // yerine ne oldugunu soylemek gerekir. (P175) Referans da eklendi.
     stubFetch(404, null);
-    const h = await jsonFetcher("/api/panel/yok").catch((e) => e as Error);
+    const h = (await jsonFetcher("/api/panel/yok").catch((e) => e)) as Error &
+      { durum?: number };
     expect(h.message).toContain("/api/panel/yok");
     expect(h.message.toLowerCase()).not.toContain("tekrar dene");
     // HTTP DURUMU HATAYA ILISTIRILIR: yeniden deneme karari buna bakiyor.
-    expect((h as Error & { durum?: number }).durum).toBe(404);
+    expect(h.durum).toBe(404);
   });
 });
 
