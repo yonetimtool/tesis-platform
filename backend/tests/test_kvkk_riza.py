@@ -235,12 +235,29 @@ def test_pazarlama_gonderimi_RIZAYA_bagli(client, rol, world):
     assert r.status_code == 201, r.text
     assert r.json()["riza_yok"] == 1 and r.json()["gonderildi"] == 0
 
-    # SMS rizasi verilince gider.
+    # SMS rizasi verilince gider — AMA KANAL ACIKSA.
+    #
+    # (P177 §4) TICARI ILETI ANA SALTERI. `TICARI_ILETI_AKTIF=false`
+    # (varsayilan) iken pazarlama gonderimi RIZA OLSA BILE yapilmaz:
+    # sirket ve IYS kaydi yok, IYS'ye islenmemis bir rizayla ticari
+    # ileti gondermek idari para cezasi sebebidir.
+    #
+    # TEST IKI KIPI DE KABUL EDER cunku bayrak ORTAMDAN gelir ve testler
+    # ayri bir surecte kosan sunucuya vurur — `settings`i buradan okumak
+    # yaniltici olurdu. Yine de GEVSEK DEGIL: iki kipten TAM BIRI
+    # tutmali. Salterin kendisi (riza kontrolunden ONCE okundugu dahil)
+    # `test_p177_sms_ve_ileti.py`de ayrica olculuyor.
     client.patch("/me/pazarlama-tercihleri", headers=rol["sakin"],
                  json={"sms": True})
     r2 = client.post("/mesajlar/gonder", headers=rol["yonetici"], json={
         "sablon_id": sid, "user_ids": [sakin_id]})
-    assert r2.json()["gonderildi"] == 1 and r2.json()["riza_yok"] == 0
+    ozet = r2.json()
+    kanal_acik = ozet["gonderildi"] == 1 and ozet["riza_yok"] == 0
+    kanal_kapali = ozet["gonderildi"] == 0 and ozet["riza_yok"] == 1
+    assert kanal_acik != kanal_kapali, (
+        "pazarlama gonderimi ne 'gitti' ne 'kanal kapali' dedi: "
+        f"{ozet}"
+    )
 
 
 def test_riza_KANAL_BAZLI(client, rol):

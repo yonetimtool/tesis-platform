@@ -8,7 +8,25 @@ import app.mesajlasma as m
 
 
 class _Ayar:
+    """(P177) `sms_aktif` VARSAYILAN `True` — ve bu bilincli.
+
+    Bu dosyanin olctugu sey SAGLAYICI SECIMIDIR: yarim yapilandirma
+    "calisiyor" sayilmamali, bilinmeyen saglayici log'a dusmeli. O soru
+    ancak SMS KANALI ACIKKEN anlamlidir.
+
+    P177'de kanalin onune bir ANA SALTER kondu (`SMS_AKTIF`, varsayilan
+    kapali — onayli gonderici basligimiz yok). Salter kapaliyken
+    `sms_saglayicisi()` saglayici ne olursa olsun `KapaliSmsSaglayici`
+    doner; yani bu dosyadaki her test "sms-kapali" gorurdu ve secim
+    mantigi BIR DAHA HIC OLCULMEZDI.
+
+    Salterin KENDISI `test_p177_sms_ve_ileti.py`de olculuyor (tesis
+    ayarini bile ezdigi dahil). Burada acik birakiliyor ki iki soru
+    birbirini kormesin.
+    """
+
     def __init__(self, **kw):
+        self.sms_aktif = kw.get("aktif", True)
         self.sms_saglayici = kw.get("saglayici")
         self.sms_kullanici = kw.get("kullanici")
         self.sms_parola = kw.get("parola")

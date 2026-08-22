@@ -3795,3 +3795,86 @@ class Davet(Base):
     updated_at = mapped_column(
         TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
     )
+
+
+class KayitOnayKuyrugu(Base):
+    """(P177 §6) UC SARTTAN BIRI TUTMADI — deneme KAYBOLMASIN.
+
+    Kayit kurali uc sarti BIRLIKTE arar: gecerli Tesis ID, e-postanin
+    yoneticinin ekledigi listede olmasi, o adrese giden kodun
+    dogrulanmasi. Biri tutmazsa hesap ACILMAZ.
+
+    Ama denemenin SESSIZCE KAYBOLMASI da dogru degil: gercek bir sakin,
+    yoneticinin listeye baska bir adresle yazdigi icin de duser (en sik
+    durum bu). O kisi "kayit olamiyorum" diye yoneticiyi arar ve
+    yoneticinin elinde bakacagi hicbir sey olmaz.
+
+    Bu satir yoneticinin panelinde bir ONAY KUYRUGU olarak gorunur;
+    yonetici bakar, kisiyi taniyorsa listeye ekler.
+
+    `sebep` YAZILIR ve bilincli: "bir sey oldu" demek yoneticiyi tahmine
+    birakirdi. `liste_disi` ile `rol_uyusmuyor` FARKLI kararlar gerektirir.
+    """
+
+    __tablename__ = "kayit_onay_kuyrugu"
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    eposta: Mapped[str] = mapped_column(Text, nullable=False)
+    rol: Mapped[str] = mapped_column(Text, nullable=False)
+    ad: Mapped[str | None] = mapped_column(Text, nullable=True)
+    telefon: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: liste_disi | rol_uyusmuyor | hesap_kullanimda
+    sebep: Mapped[str] = mapped_column(Text, nullable=False)
+    #: bekliyor | onaylandi | reddedildi
+    durum: Mapped[str] = mapped_column(
+        Text, nullable=False, server_default=text("'bekliyor'")
+    )
+    karar_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    karar_veren_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    created_at = _created_at()
+
+
+class TesisUyelik(Base):
+    """(P177 §6) COK TESISLI UYELIK — BUGUN KULLANILMIYOR, BILEREK ACILDI.
+
+    Sartname: "Bir kisi birden cok tesise baglanabilecek sekilde modelle.
+    Bugun kullanilmayacak ama sonradan eklemek sema gocu gerektirir."
+
+    BUGUNKU MODEL: `app_user` bir tenant'a aittir ve `(tenant_id, email)`
+    benzersizdir. Yani ayni kisi iki tesiste IKI AYRI SATIRDIR ve o iki
+    satirin AYNI KISI oldugunu soyleyen hicbir sey yoktur.
+
+    BU TABLO O BAGI KURAR: kimlik anahtari E-POSTADIR (`user_id` tenant'a
+    bagli, e-posta kisiye). Goc 0068 mevcut her e-postali kullanici icin
+    bir satir yazdi, yani tablo BOS DEGIL — bugun de dogru veriyi tasiyor,
+    yalniz henuz kimse SORGULAMIYOR.
+
+    ACILDIGINDA yapilacak is: giris yolunun tek bir `app_user` yerine bu
+    tablodan uyelik listesi cikarmasi ve kullaniciya tesis sectirmesi.
+    Bugun yapilmadi cunku o, calisan giris akisini degistirmek demekti ve
+    §0 "MEVCUT KIMLIK SISTEMI BOZULMAYACAK" diyor.
+    """
+
+    __tablename__ = "tesis_uyelik"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "user_id", name="uq_tesis_uyelik"),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("app_user.id", ondelete="CASCADE"), nullable=False
+    )
+    eposta: Mapped[str] = mapped_column(Text, nullable=False)
+    rol: Mapped[str] = mapped_column(Text, nullable=False)
+    birincil: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
+    created_at = _created_at()

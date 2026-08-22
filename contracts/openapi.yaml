@@ -436,6 +436,249 @@ paths:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
 
   # ----------------------------------------------------------------- #
+  # (P177 §4-§6) YENI KAYIT AKISI — `YENI_KAYIT_AKISI` BAYRAGI ARKASINDA.
+  #
+  # BAYRAK KAPALIYKEN (VARSAYILAN) BU DORT UC DA 503 DONER ve mevcut
+  # kimlik sistemi birebir bugunku gibi calisir. Yukaridaki
+  # `/auth/kayit/tesis-olustur` ve asagidaki `/auth/kayit/rol-*` uclari
+  # bu bayragi OKUMAZ.
+  #
+  # HEPSI PUBLIC (`security: []`): kaydolan kisinin henuz hesabi yoktur.
+  # ----------------------------------------------------------------- #
+  /auth/kayit/yonetici-basvuru:
+    post:
+      tags: [auth]
+      summary: Yonetici kayit basvurusu — bilgiler + onaylar, e-postaya kod
+      security: []   # kimlik ONCESI: kullanicinin henuz hesabi yok
+      description: |
+        Tanitim sitesindeki kayit formunun 1. adimi. TESIS ACILMAZ:
+        tesis, e-posta dogrulandiktan sonra `/auth/kayit/yonetici-tesis`
+        ile acilir. Dogrulanmamis bir adresle acilan tesis, sahibine
+        ulasilamayan bir tesis olurdu.
+
+        ONAYLAR: `onay_sozlesme` ve `onay_kvkk` ZORUNLUDUR (422).
+        `onay_ticari` istege baglidir; SAKLANIR ama `TICARI_ILETI_AKTIF`
+        varsayilan `false` oldugu icin HICBIR ticari ileti gonderilmez
+        (sirket ve IYS kaydi yok).
+
+        IP ve tarayici bilgisi GOVDEDE ISTENMEZ, `X-Istemci-Ip` ve
+        `X-Istemci-Ajan` BASLIKLARINDAN okunur: tarayici kendi IP'sini
+        bilemez ve istemcinin beyan ettigi bir IP ispat degeri tasimaz.
+
+        AYNI ADRESLE IKINCI BASVURU DUVARA CARPMAZ: acik basvuru
+        TAZELENIR (yeni kod, yeni onay damgasi) — kodunu kaybeden
+        kullanici bastan deneyebilsin diye.
+
+        HIZ SINIRI e-posta basinadir ve DOGRULAMADAN ONCE sayar.
+      parameters:
+        - in: header
+          name: X-Istemci-Ip
+          required: false
+          schema: { type: string }
+          description: Onay kaydina yazilacak istemci IP'si (BFF ekler).
+        - in: header
+          name: X-Istemci-Ajan
+          required: false
+          schema: { type: string }
+          description: Onay kaydina yazilacak tarayici bilgisi (BFF ekler).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/YoneticiBasvuruRequest" }
+      responses:
+        "201":
+          description: |
+            Kod gonderildi. Yanit, adresin sistemde olup olmadigini
+            SIZDIRMAZ — her durumda ayni govde doner.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/YoneticiBasvuruResponse" }
+        "422":
+          description: Zorunlu onaylar isaretlenmemis ya da alanlar gecersiz
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "429":
+          description: Hiz siniri asildi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "503":
+          description: YENI_KAYIT_AKISI kapali
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  /auth/kayit/yonetici-dogrula:
+    post:
+      tags: [auth]
+      summary: E-posta kodunu dogrula -> tesis kurulum jetonu
+      security: []
+      description: |
+        Kod dogruysa KURULUM JETONU doner — OTURUM DEGIL. Ortada henuz
+        ne tesis ne kullanici var; verilecek bir oturum yok.
+
+        Sure, deneme siniri ve kodun bcrypt'lenmesi `telefon_kodu`
+        modulunden gelir; ikinci bir kural kumesi yazilmadi. Deneme
+        sayaci AYRI OTURUMDA artirilir (ayni oturumda tutmak sayaci geri
+        sardirirdi).
+
+        HATA AYIRT ETTIRMEZ: "kod yanlis", "basvuru yok", "suresi dolmus"
+        ve "deneme hakki bitti" AYNI 422'yi doner.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/YoneticiDogrulaRequest" }
+      responses:
+        "200":
+          description: Kod dogru — kurulum jetonu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/YoneticiDogrulaResponse" }
+        "422":
+          description: Kod/basvuru gecersiz (adimlar ayirt ettirilmez)
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "503":
+          description: YENI_KAYIT_AKISI kapali
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  /auth/kayit/yonetici-tesis:
+    post:
+      tags: [auth]
+      summary: Site adi -> tesis acilir (MEVCUT mekanizma), oturum acilir
+      security: []
+      description: |
+        `create_tenant_with_yoneticis` AYNEN kullanilir; tesis kodunu
+        yine veritabanindaki tetikleyici uretir. Yani tesis acma
+        mekanizmasi DEGISMEDI, yalniz onune e-posta dogrulamasi kondu.
+
+        Tesis ID hem yanitta doner hem e-postayla gonderilir: yalniz
+        ekranda gostermek, sekmeyi kapatan yoneticiyi destege yollardi.
+
+        Kurulum jetonu tek kullanimliktir (basvuru `tamamlandi` olur) ve
+        `type=tesis_kurulum` tasir — parola-kurulum jetonundan AYRI bir
+        tip, cunku tasidigi yetki farklidir.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/YoneticiTesisRequest" }
+      responses:
+        "201":
+          description: Tesis acildi ve oturum acildi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TesisOlusturResponse" }
+        "401":
+          description: Kurulum jetonu gecersiz, suresi dolmus ya da kullanilmis
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "409":
+          description: Telefon bu arada baska bir hesap tarafindan alinmis
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "503":
+          description: YENI_KAYIT_AKISI kapali
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  /auth/kayit/rol-eposta-basla:
+    post:
+      tags: [auth]
+      summary: Rol + Tesis ID + e-posta -> eslesirse e-postaya kod
+      security: []
+      description: |
+        (§6) SAKIN / GUVENLIK / TESIS GOREVLISI kaydinin 1. adimi.
+        Telefonlu kardesi (`/auth/kayit/rol-basla`) DURUYOR ve
+        degistirilmedi; bu yol E-POSTA kimligiyle calisir. SMS
+        GONDERILMEZ (`SMS_AKTIF=false`).
+
+        UC SART BIRLIKTE ARANIR: (a) Tesis ID gecerli, (b) e-posta
+        yoneticinin ekledigi listede (o tenant'ta, AKTIF, istenen rolde
+        ve parolasi HENUZ BELIRLENMEMIS bir kullanici), (c) o adrese
+        giden kod dogrulanir. Yalniz Tesis ID ile dogrulama yapilsaydi,
+        ID'yi ogrenen herkes o siteye sakin olarak girerdi.
+
+        ESLESME SONUCU YANITTAN OKUNAMAZ: eslessin ya da eslesmesin ayni
+        govde doner. (b) tutmazsa deneme SESSIZCE KAYBOLMAZ, tesisin
+        onay kuyruguna (`kayit_onay_kuyrugu`) duser.
+
+        TESIS KODU HATASI SOYLENIR (422): kod zaten kamuya aciktir ve en
+        sik yazim hatasi orada olur.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RolEpostaBaslaRequest" }
+      responses:
+        "200":
+          description: |
+            Islem alindi. `tesis_ad` doner (kullanici dogru siteye
+            kaydoldugunu gormeli; kod zaten kamuya acik). Eslesme
+            durumu HICBIR alandan okunamaz.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RolEpostaBaslaResponse" }
+        "422":
+          description: Tesis ID ya da rol gecersiz
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "429":
+          description: Hiz siniri asildi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "503":
+          description: YENI_KAYIT_AKISI kapali
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  /auth/kayit/rol-eposta-dogrula:
+    post:
+      tags: [auth]
+      summary: Kod + Tesis ID + e-posta -> parola belirleme jetonu ya da onay kuyrugu
+      security: []
+      description: |
+        Tesis ID, liste uyeligi ve kod YENIDEN kontrol edilir. Tekrar
+        degil GEREKLILIK: `basla` ile `dogrula` arasinda dakikalar gecer
+        ve o arada yonetici kisiyi listeden cikarmis ya da hesap baska
+        bir yoldan sahiplenilmis olabilir.
+
+        ROL BU ADIMDA ARANMAZ (govdede de yoktur): rol, listedeki
+        hesabin bir OZELLIGIDIR, kisinin ileri surdugu bir yetki iddiasi
+        degil. `basla` adiminda beyan edilen rol listeyle karsilastirilir
+        ve uymazsa kuyruga duser; burada yeniden aramak, yonetici rolu
+        iki adim arasinda DUZELTTIGINDE kisiyi dogru kodla birlikte
+        yeniden kuyruga dusururdu.
+
+        TEK YANIT TIPI, IKI SONUC: `durum='hazir'` (setup_token dolu) ya
+        da `durum='onay_bekliyor'` (kuyruga dustu). Ayri hata kodlari
+        dondurmek, hangi sartin tutmadigini sizdirirdi.
+
+        `setup_token` `POST /auth/set-password` icin kullanilir; kod
+        TUKETILIR ve tek-kullanimlilik `temp_code_hash` uzerinden
+        yurur — ikinci bir tek-kullanim mekanizmasi yazilmadi.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RolEpostaDogrulaRequest" }
+      responses:
+        "200":
+          description: Kod dogru — `hazir` ya da `onay_bekliyor`
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RolEpostaDogrulaResponse" }
+        "422":
+          description: Kod ya da Tesis ID gecersiz (adimlar ayirt ettirilmez)
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "503":
+          description: YENI_KAYIT_AKISI kapali
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  # ----------------------------------------------------------------- #
   # (P154 / Asama 3) ROL SECIMLI KAYIT.
   #
   # Hesap yonetici tarafindan ZATEN ACILMISTIR; kisi onu SAHIPLENIR ve
@@ -11107,6 +11350,121 @@ components:
         tesis_ad:   { type: string, example: "Oltu Sitesi" }
         tesis_kodu: { type: string, example: "OLTU-260715" }
         jetonlar:   { $ref: "#/components/schemas/TokenPair" }
+    # ------------------------------------------------------------------ #
+    # (P177 §4-§6) YENI KAYIT AKISI SEMALARI
+    # ------------------------------------------------------------------ #
+    YoneticiBasvuruRequest:
+      type: object
+      description: |
+        Yonetici kayit formunun govdesi. TESIS ADI BURADA ISTENMEZ —
+        tesis, e-posta dogrulandiktan sonra ayri bir ucta acilir.
+
+        `onay_sozlesme` ve `onay_kvkk` ZORUNLUDUR: `false` gonderilirse
+        422 doner. Kapi hem semada hem veritabani kisitindadir
+        (`ck_yonetici_basvuru_zorunlu_onay`) — ileride yazilacak bir uc
+        onayi atlayamasin diye.
+
+        IP ve tarayici bilgisi GOVDEDE YOK: basliktan okunur.
+      required: [ad, soyad, eposta, telefon, parola, onay_sozlesme, onay_kvkk]
+      properties:
+        ad:      { type: string, minLength: 2, maxLength: 80, example: "Ayse" }
+        soyad:   { type: string, minLength: 2, maxLength: 80, example: "Yilmaz" }
+        eposta:  { type: string, format: email, example: "ayse@ornek.com" }
+        telefon: { type: string, minLength: 5, maxLength: 32, example: "+905321112203" }
+        parola:  { type: string, minLength: 8, maxLength: 128 }
+        onay_sozlesme:
+          type: boolean
+          description: Kullanici Sozlesmesi onayi — ZORUNLU.
+        onay_kvkk:
+          type: boolean
+          description: KVKK Aydinlatma Metni onayi — ZORUNLU.
+        onay_ticari:
+          type: boolean
+          default: false
+          description: |
+            Ticari elektronik ileti onayi — ISTEGE BAGLI. SAKLANIR ama
+            `TICARI_ILETI_AKTIF=false` oldugu surece hicbir ileti
+            gonderilmez (sirket ve IYS kaydi yok).
+    YoneticiBasvuruResponse:
+      type: object
+      required: [durum]
+      properties:
+        durum:
+          type: string
+          enum: [kod_gonderildi]
+          description: |
+            HER ZAMAN `kod_gonderildi`. Adresin sistemde olup olmadigi
+            yanittan okunamaz.
+    YoneticiDogrulaRequest:
+      type: object
+      required: [eposta, kod]
+      properties:
+        eposta: { type: string, format: email }
+        kod:    { type: string, minLength: 4, maxLength: 8, example: "482913" }
+    YoneticiDogrulaResponse:
+      type: object
+      required: [kurulum_jetonu]
+      properties:
+        kurulum_jetonu:
+          type: string
+          description: |
+            `type=tesis_kurulum` tasiyan kisa omurlu jeton. OTURUM
+            DEGILDIR ve yalniz `/auth/kayit/yonetici-tesis` ucunu acar.
+    YoneticiTesisRequest:
+      type: object
+      required: [kurulum_jetonu, tesis_ad]
+      properties:
+        kurulum_jetonu: { type: string }
+        tesis_ad: { type: string, minLength: 2, maxLength: 120, example: "Oltu Sitesi" }
+    RolEpostaBaslaRequest:
+      type: object
+      description: |
+        `ad` ve `telefon` YALNIZ BILGI AMACLIDIR: kuyruga dusen bir
+        denemede yonetici kimin denedigini gorsun diye saklanir.
+        DOGRULAMADA KULLANILMAZ — dogrulama e-posta uzerinden yurur.
+      required: [tesis_kodu, eposta, rol]
+      properties:
+        tesis_kodu: { type: string, minLength: 3, maxLength: 40, example: "OLTU-260715" }
+        eposta:     { type: string, format: email }
+        rol:
+          type: string
+          enum: [resident, security, gorevli]
+          description: |
+            `yonetici`/`admin` BILEREK YOK: yonetici kendi yolundan
+            (basvuru) gelir, ek yoneticiyi mevcut yonetici ekler.
+        ad:      { type: string, maxLength: 120, nullable: true }
+        telefon: { type: string, maxLength: 32, nullable: true }
+    RolEpostaBaslaResponse:
+      type: object
+      required: [tesis_ad, durum]
+      properties:
+        tesis_ad: { type: string, example: "Oltu Sitesi" }
+        durum:
+          type: string
+          enum: [kod_gonderildi]
+          description: Eslesme sonucu bu alandan OKUNAMAZ.
+    RolEpostaDogrulaRequest:
+      type: object
+      required: [tesis_kodu, eposta, kod]
+      properties:
+        tesis_kodu: { type: string, minLength: 3, maxLength: 40 }
+        eposta:     { type: string, format: email }
+        kod:        { type: string, minLength: 4, maxLength: 8 }
+    RolEpostaDogrulaResponse:
+      type: object
+      description: |
+        TEK YANIT TIPI, IKI SONUC. `hazir` ise `setup_token` doludur ve
+        `POST /auth/set-password` ile parola belirlenir. `onay_bekliyor`
+        ise hesap ACILMAMISTIR ve deneme tesisin onay kuyruguna dusmustur.
+      required: [durum]
+      properties:
+        durum:
+          type: string
+          enum: [hazir, onay_bekliyor]
+        setup_token:
+          type: string
+          nullable: true
+          description: Yalniz `durum=hazir` iken dolu.
     # (P154 / Asama 3) Rol secimli kayit.
     RolKayitBaslaRequest:
       type: object

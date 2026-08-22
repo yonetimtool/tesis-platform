@@ -1,0 +1,131 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==========================================================================
+   (P177) TANITIM SITESI — TABAN
+   ==========================================================================
+   Bilesen siniflari BURADA, `@layer components` icinde. Tailwind
+   yardimcilariyla ayni ozgulluk katmaninda kalirlar; sayfa icinde bir
+   `mt-*` ya da `bg-*` ile ezilebilmeleri gerekiyor (aksi hâlde bolum
+   araliklarinin birbirini iptal ettigi klasik CSS kavgasi cikar).
+   ========================================================================== */
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    /* Yapiskan baslik capa hedeflerini ortmesin. */
+    scroll-padding-top: 5.5rem;
+  }
+
+  /* Hareketi azalt tercihini SISTEM DUZEYINDE onurlandir: yumusak
+     kaydirma ve giris animasyonlari tek yerden kapanir. */
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  body {
+    @apply bg-zemin text-govde antialiased;
+    font-family: Inter, "Inter Yedek", system-ui, sans-serif;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1, h2, h3, h4 { @apply text-baslik; text-wrap: balance; }
+  p { text-wrap: pretty; }
+
+  /* KLAVYE ODAGI HER YERDE GORUNUR. `:focus-visible` secildi ki fareyle
+     tiklayan kullanici halka gormesin — klavyeyle gezen daima gorsun. */
+  :where(a, button, input, select, textarea, summary):focus-visible {
+    outline: 3px solid theme(colors.mavi);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+@layer components {
+  .kapsayici { @apply mx-auto w-full max-w-icerik px-5 sm:px-8; }
+
+  /* Bolum ritmi TEK YERDE. Her sayfada elle `py-24` yazmak, bir gun
+     birinin 20 yazip ritmi bozmasi demekti. */
+  .bolum { @apply py-bolum; }
+
+  .etiket {
+    @apply text-etiket uppercase text-mavi;
+  }
+
+  /* --- Dugmeler ---------------------------------------------------- */
+  .dugme {
+    @apply inline-flex items-center justify-center gap-2 rounded-chip
+           px-6 py-3 text-[0.95rem] font-bold transition-colors
+           disabled:cursor-not-allowed;
+  }
+  .dugme-birincil {
+    @apply dugme bg-mavi text-white hover:bg-maviKoyu
+           disabled:bg-cizgiDenetim disabled:text-white;
+  }
+  .dugme-ikincil {
+    @apply dugme border-2 border-lacivert bg-transparent text-lacivert
+           hover:bg-lacivert hover:text-white;
+  }
+  .dugme-koyu {
+    @apply dugme bg-white text-lacivert hover:bg-maviAcik;
+  }
+
+  /* --- Kartlar ------------------------------------------------------ */
+  /* GOLGE YOK — panelin dili degil. Ayrim 1 px kenarlikla kurulur. */
+  .kart {
+    @apply rounded-kart border border-cizgi bg-kart p-6;
+  }
+
+  /* --- Form --------------------------------------------------------- */
+  .alan-etiket { @apply mb-1.5 block text-kucuk font-semibold text-baslik; }
+  .alan {
+    @apply block w-full rounded-[10px] border border-cizgiDenetim bg-white
+           px-3.5 py-2.5 text-govde placeholder:text-soluk/70
+           focus:border-mavi focus:outline-none;
+  }
+  .alan-hatali { @apply border-hata; }
+  .alan-yardim { @apply mt-1.5 text-kucuk text-soluk; }
+
+  /* --- Kahraman kapisi (imza ogesi) --------------------------------- */
+  /* Iki kapi masaustunde EGIK bir dikisle bulusur. `clip-path` yalniz
+     `lg` ustunde uygulanir: mobilde kapilar alt alta yigilir ve egik
+     kenar orada anlamsiz bir kirpma olurdu. */
+  @media (min-width: 1024px) {
+    .kapi-sol { clip-path: polygon(0 0, 100% 0, calc(100% - 3.5rem) 100%, 0 100%); }
+    .kapi-sag { margin-left: -3.5rem; clip-path: polygon(3.5rem 0, 100% 0, 100% 100%, 0 100%); }
+  }
+
+  /* --- Giris dizisi -------------------------------------------------- */
+  /* Sayfa acilisinda TEK bir sahne: kahraman ogeleri sirayla belirir.
+     Kaydirma tetikli tekrar tekrar animasyon YOK — bir kez, sonra sessiz. */
+  .beliren { animation: belir 520ms cubic-bezier(0.16, 0.84, 0.44, 1) both; }
+  .gecikme-1 { animation-delay: 90ms; }
+  .gecikme-2 { animation-delay: 180ms; }
+  .gecikme-3 { animation-delay: 270ms; }
+
+  @keyframes belir {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: none; }
+  }
+}
+
+/* Ekran okuyucuya gorunur, gozle gorunmez. */
+.gizli-erisilebilir {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}

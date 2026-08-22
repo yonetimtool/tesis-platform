@@ -229,6 +229,60 @@
 	reverse_proxy admin-web:3000
 }
 
+# --- (P177) TANITIM SITESI ------------------------------------------------ #
+# Ayri bir Next uygulamasi (`apps/tanitim-web`), ayri bir konak.
+#
+# =========================================================================
+# VARSAYILAN `tanitim.localhost` — PROD'A HICBIR YENI ISTEK GITMESIN DIYE
+# =========================================================================
+# Prod DONDURULMUS (bkz. infra/.prod-dondurma). Bu blogun varsayilan
+# konagi gercek bir alan adi DEGIL: Caddy `.localhost` adlarina ACME'ye
+# HIC GITMEDEN dahili sertifika verir. Yani `TANITIM_DOMAIN` verilmeyen
+# bir kurulumda blok VARDIR ama disariya acilmaz ve Let's Encrypt'e tek
+# bir istek bile gitmez. Blogu tumden silmek ise `docker compose config`
+# ile depoyu ayristirirdi.
+#
+# Test sunucusu `.env.prod`da ezer: TANITIM_DOMAIN=test.yonetio.site
+#
+# =========================================================================
+# ESKI YOLLAR KIRILMIYOR — 301 ILE CALISMA ALANINA
+# =========================================================================
+# `test.yonetio.site` bugun admin-web'i sunuyor ve UZERINDE CALISAN
+# YOLLAR VAR:
+#   /davet/<jeton>  -> davet e-postalarindaki bag (PORTAL_BASE_URL)
+#   /gizlilik /kosullar /hesap-silme -> hukuki belgeler
+# Bunlari tanitim-web'e vermek 404 uretirdi; admin-web'e YOL BAZLI
+# vekillemek ise `/_next/*` CAKISMASI demekti — iki Next uygulamasi da
+# varliklarini ayni onekten ister ve yanlis uygulamadan gelen bir parca
+# sayfayi bozar (sessizce: 200 doner, JS calismaz).
+#
+# Bu yuzden yol bazli bolme YAPILMADI, YONLENDIRME yapildi: dort yol
+# calisma alanina 301'lenir ve orada ZATEN calisan sayfalari acar.
+# `{uri}` korunur, yani jeton ve derin yollar kaybolmaz.
+#
+# `.well-known` DOSYALARI YONLENDIRILMEZ: iOS/Android dogrulayicilari 3xx
+# IZLEMEZ. Onlar `import wellknown` ile Caddy'nin kendi `file_server`indan
+# (portal mount'u) DOGRUDAN servis edilir — admin-web'e hic ugramaz.
+{$TANITIM_DOMAIN} {
+	{$CADDY_TLS}
+	import security_headers
+	header X-Frame-Options "DENY"
+	encode gzip zstd
+
+	# Derin baglanti dogrulama dosyalari — TERMINAL, yonlendirmesiz.
+	import wellknown
+
+	# Eski yollar calisma alanina (301, kalici).
+	@eskiYollar path /davet/* /gizlilik /gizlilik/* /kosullar /kosullar/* /hesap-silme /hesap-silme/*
+	handle @eskiYollar {
+		redir {$TANITIM_ESKI_HEDEF}{uri} permanent
+	}
+
+	handle {
+		reverse_proxy tanitim-web:3000
+	}
+}
+
 # --- Foto deposu (MinIO, presigned URL host'u) ---------------------------- #
 # ONEMLI: Caddy v2 reverse_proxy GELEN Host basligini KORUR (nginx'in aksine
 # upstream'e gore YENIDEN YAZMAZ). Presigned URL storage. host'u ile imzalandigi

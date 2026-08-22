@@ -137,6 +137,38 @@ ENVANTER: dict[str, tuple[str, tuple[str, str] | None]] = {
     # Okuma ve isaretleme YALNIZ platform admini (kayitlar kisisel veri).
     "tanitim_iletisim_listele": ("admin", ("get", "/tanitim-iletisim")),
     "tanitim_iletisim_okundu": ("admin", ("patch", "/tanitim-iletisim/{tid}")),
+    # --- (P177 §4) YONETICI KAYIT BASVURUSU ---
+    # `yonetici_basvuru` tablosu TENANT'SIZ: basvuru anininda tesis HENUZ
+    # YOKTUR (tesis, e-posta dogrulandiktan sonra aciliyor). Bu yuzden
+    # `app.current_tenant_id` uzerine politika YAZILAMAZ ve tabloda
+    # POLITIKA YOKTUR — `tanitim_iletisim` (goc 0033) ile AYNI desen.
+    # Erisimin TAMAMI bu alti fonksiyondan gecer.
+    #
+    # ALTISI DA PUBLIC ve bu bilincli: kaydolan kisinin henuz hesabi
+    # yoktur, dolayisiyla bir rol kapisi TANIMLANAMAZ. Kesif yuzeyi su
+    # dort kuralla dar tutuldu:
+    #
+    #   1. Hicbiri LISTE dondurmez. `bul` TEK satir doner ve YALNIZ
+    #      e-postayla; `getir` TEK satir doner ve YALNIZ kimlikle (uuid,
+    #      tahmin edilemez). Tabloyu tarayabilen bir fonksiyon YOK.
+    #   2. `bul` `parola_hash` DONDURMEZ — cagirani onu kullanmiyor.
+    #      `getir` donduruyor cunku tesis acilirken `app_user`a yazilacak
+    #      olan odur ve o cagri yalniz kimlikle yapilabilir.
+    #   3. Cagiran uclarin HEPSI "adimlari ayirt ETTIRMEYEN" tek bir yanit
+    #      veriyor (`_BASVURU_GECERSIZ`), yani NULL/degil ayrimi HTTP'de
+    #      GORUNMEZ. Ustelik hepsinin onunde hiz siniri var.
+    #   4. `ekle` yalniz yeni satirin id'sini doner — hicbir satir OKUTMAZ.
+    #
+    # `deneme_artir` AYRI bir fonksiyon cunku cagiran onu AYRI BIR
+    # OTURUMDA calistirir: dogrulama istegi hata ile bitecek ve cagiranin
+    # transaction'i geri sarilacak; ayni oturumda artirmak kaba kuvvet
+    # sayacini SIFIRLARDI (P148'de olculdu).
+    "yonetici_basvuru_ekle": ("public", None),
+    "yonetici_basvuru_bul": ("public", None),
+    "yonetici_basvuru_getir": ("public", None),
+    "yonetici_basvuru_dogrula": ("public", None),
+    "yonetici_basvuru_deneme_artir": ("public", None),
+    "yonetici_basvuru_tamamla": ("public", None),
 }
 
 

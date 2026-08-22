@@ -30,6 +30,7 @@ from ..gonderim import (
 )
 from ..mesajlasma import (
     sms_saglayicisi,
+    KapaliSmsSaglayici,
     LogEpostaSaglayici,
     LogSmsSaglayici,
     SmtpEpostaSaglayici,
@@ -380,6 +381,21 @@ async def gonder(
         kisi = kisiler.get(kid)
         if kisi is None:
             continue
+        # (P177 §4) TICARI ILETI KANALI KAPALIYSA RIZA BILE YETMEZ.
+        #
+        # `TICARI_ILETI_AKTIF=false` (varsayilan) iken pazarlama amacli
+        # hicbir gonderim yapilmaz — kisinin rizasi OLSA BILE. Sebep
+        # teknik degil hukuki: sirket ve IYS (Ileti Yonetim Sistemi)
+        # kaydi yok ve IYS'ye islenmemis bir rizayla ticari ileti
+        # gondermek idari para cezasi sebebidir.
+        #
+        # `riza_yok` SAYACINA YAZILIYOR ve bu bilincli: yoneticiye
+        # gorunen ozet "gonderilmedi" demeli. Ayri bir sayac eklemek
+        # ozeti ve arayuzu degistirmek olurdu; onemli olan mesajin
+        # GITMEDIGINI dogru raporlamak.
+        if sablon.amac == "pazarlama" and not settings.ticari_ileti_aktif:
+            riza_yok += 1
+            continue
         # PAZARLAMA -> RIZA ZORUNLU (P36 ile GERCEK riza kaydi baglandi).
         # Riza KANAL BAZLIDIR: e-postaya izin veren kisi SMS'e izin vermis
         # sayilmaz — tek bir "pazarlama" bayragi bunu kaybederdi.
@@ -485,7 +501,20 @@ async def mesaj_ayarlari(
     # HAZIRLIK KANAL BAZINDA OLCULUR ve gercek secim fonksiyonuyla ayni
     # yoldan gecer: "ayarlar dolu mu" diye ayrica kontrol etseydik, o
     # kontrol bir gun gercek secimden ayrisirdi.
-    sms_hazir = not isinstance(kanal_saglayicisi("sms", ayar), LogSmsSaglayici)
+    # (P177 §6) KANAL KAPALIYSA "HAZIR" DEGILDIR.
+    #
+    # OLCULEN KUSUR: ana salter (`SMS_AKTIF=false`) eklendiginde
+    # `sms_saglayicisi()` `KapaliSmsSaglayici` donmeye basladi — ve o,
+    # `LogSmsSaglayici` OLMADIGI icin bu satir "hazir" diyordu. Panel
+    # yarim yapilandirilmis bir tesise "SMS hazır" gosteriyor, rozet de
+    # "genel ayardan çalışıyor" diyordu; ikisi de yanlisti.
+    #
+    # P168'de kapatilan kusur sinifinin ta kendisi: gonderilmeyecek bir
+    # mesaji gonderilecekmis gibi gostermek. Iki sinif da "gonderemem"
+    # der; rozet ikisini de HAZIR DEGIL saymali.
+    sms_hazir = not isinstance(
+        kanal_saglayicisi("sms", ayar), (LogSmsSaglayici, KapaliSmsSaglayici)
+    )
     eposta_hazir = not isinstance(kanal_saglayicisi("eposta", ayar), LogEpostaSaglayici)
 
     # (P173 §4) KAYNAK DA BILDIRILIR — "hazir" tek basina YANILTICIYDI.

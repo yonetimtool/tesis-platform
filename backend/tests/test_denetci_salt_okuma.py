@@ -115,6 +115,33 @@ KAPISIZ_MUTASYONLAR: frozenset[tuple[str, str]] = frozenset({
     # Yazdigi tek sey bekleyen bir kod satiridir; hesap ACMAZ.
     ("POST", "/auth/giris/eposta-kod-iste"),
     ("POST", "/auth/giris/eposta-kod-dogrula"),
+    # --- (P177 §4-§6) YENI KAYIT AKISI ---
+    # Bes ucun de rol kapisi OLAMAZ: kisi henuz oturum acmamistir —
+    # `/auth/kayit/tesis-olustur` ve `/auth/kayit/rol-*` ile AYNI SINIF.
+    #
+    # BASKA BIR TESISIN VERISINE DOKUNMAZLAR:
+    #   * `yonetici-basvuru` / `yonetici-dogrula` yalniz tenant'siz
+    #     `yonetici_basvuru` tablosuna yazar; hicbir tesise degmez.
+    #   * `yonetici-tesis` YENI bir tenant yaratir ve yalniz onun icine
+    #     yazar (mevcut `tesis-olustur`un yaptiginin aynisi).
+    #   * `rol-eposta-basla` bekleyen bir kod satiri ya da onay kuyrugu
+    #     satiri yazar; hesap ACMAZ (hesap yonetici tarafindan onceden
+    #     acilmistir).
+    #   * `rol-eposta-dogrula` yalniz o kullanicinin `temp_code_hash`ini
+    #     kurar — parolayi `set-password` belirler.
+    #
+    # SIZDIRMAMA: hepsi "adimlari ayirt ETTIRMEYEN" tek bir yanit doner
+    # (listede olmayan e-posta ile listede olan AYNI cevabi alir) ve
+    # hepsinin onunde hiz siniri vardir.
+    #
+    # AYRICA `YENI_KAYIT_AKISI` BAYRAGI: kapaliyken (varsayilan) besi de
+    # 503 doner. Yani bu uclarin kapisiz olmasi, bugun ACIK bir yuzey
+    # bile degil.
+    ("POST", "/auth/kayit/yonetici-basvuru"),
+    ("POST", "/auth/kayit/yonetici-dogrula"),
+    ("POST", "/auth/kayit/yonetici-tesis"),
+    ("POST", "/auth/kayit/rol-eposta-basla"),
+    ("POST", "/auth/kayit/rol-eposta-dogrula"),
     # --- (P154 / Asama 4) SOSYAL GIRIS ---
     # KIMLIK ONCESI dordu: rol kapisi OLAMAZ, cunku istegi atanin henuz
     # oturumu yoktur — `/auth/login` ile ayni sinif. Tesisin kayitlarina

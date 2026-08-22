@@ -1,0 +1,68 @@
+# =========================================================================
+# (P177) TEST SUNUCUSU — ELLE YAPISTIRILACAK CADDY BLOGU
+# =========================================================================
+#
+# NEDEN AYRI BIR DOSYA:
+# Test sunucusundaki `infra/Caddyfile` ELLE DUZENLENMIS durumda (bloklar
+# `http://` ile yazili, kanonik yonlendirmeler silinmis) ve her `git pull`
+# oncesi `git stash` ile korunuyor. Yani depodaki Caddyfile'a yapilan bir
+# degisiklik SUNUCUYA UYGULANMAZ, ezilir. Bu blok o dosyaya ELLE girer.
+#
+# -------------------------------------------------------------------------
+# !!! ONCE OKUYUN — IKI ADRESLI BLOK HATASI SUNUCUYU DUSURUR !!!
+# -------------------------------------------------------------------------
+# `test.yonetio.site` sunucudaki Caddyfile'da BUYUK IHTIMALLE ZATEN VAR
+# (kok/portal blogu olarak, `reverse_proxy admin-web:3000` ile). Bu blogu
+# EKLEMEDEN ONCE onu BULUN ve DEGISTIRIN.
+#
+# Ayni konak adi IKI blokta gorunurse Caddy soyle der ve HIC ACILMAZ:
+#     ambiguous site definition: test.yonetio.site
+# Bu daha once yasandi (P149) ve ortami dusurdu.
+#
+# Bulmak icin:
+#     grep -n "test.yonetio.site" infra/Caddyfile
+# Cikan blogu bu blokla DEGISTIRIN (silip yerine yapistirin).
+#
+# -------------------------------------------------------------------------
+# YAPISTIRDIKTAN SONRA — DOGRULAMA (Caddy'yi yeniden yuklemeden ONCE)
+# -------------------------------------------------------------------------
+#     cd infra
+#     docker compose -f docker-compose.prod.yml --env-file .env.prod \
+#       exec caddy caddy validate --config /etc/caddy/Caddyfile
+# "Valid configuration" gormeden yeniden yuklemeyin.
+# =========================================================================
+
+http://test.yonetio.site {
+	encode gzip zstd
+	header X-Frame-Options "DENY"
+
+	# --- Derin baglanti dogrulama dosyalari -------------------------------
+	# YONLENDIRILMEZ: iOS/Android dogrulayicilari 3xx IZLEMEZ. Dosyalar
+	# Caddy'nin kendi file_server'indan gelir (`./portal` mount'u zaten
+	# tanimli), admin-web'e ugramaz.
+	@wellknown path /.well-known/apple-app-site-association /.well-known/assetlinks.json
+	handle @wellknown {
+		header Content-Type application/json
+		root * /srv/portal
+		file_server
+	}
+
+	# --- ESKI YOLLAR: calisma alanina 301 --------------------------------
+	# `/davet/<jeton>` davet e-postalarindaki bagdir ve BUGUN CALISIYOR;
+	# `/gizlilik`, `/kosullar`, `/hesap-silme` hukuki belgelerdir.
+	# Bunlari tanitim-web'e vermek 404 uretirdi. Yol bazli vekilleme de
+	# YAPILAMAZ: iki Next uygulamasi da varliklarini `/_next/*` onekinden
+	# ister ve yanlis uygulamadan gelen bir parca sayfayi SESSIZCE bozar
+	# (200 doner, JS calismaz).
+	#
+	# `{uri}` korunur — jeton ve derin yollar kaybolmaz.
+	@eskiYollar path /davet/* /gizlilik /gizlilik/* /kosullar /kosullar/* /hesap-silme /hesap-silme/*
+	handle @eskiYollar {
+		redir https://app-test.yonetio.site{uri} permanent
+	}
+
+	# --- Tanitim sitesi ---------------------------------------------------
+	handle {
+		reverse_proxy tanitim-web:3000
+	}
+}

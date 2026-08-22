@@ -186,6 +186,42 @@ class LogSmsSaglayici(MesajSaglayici):
         )
 
 
+class KapaliSmsSaglayici(MesajSaglayici):
+    """(P177 §6) SMS KANALI KAPALI — KARAR, EKSIKLIK DEGIL.
+
+    ===========================================================================
+    `LogSmsSaglayici`DAN NEDEN AYRI
+    ===========================================================================
+    Ikisi de gondermez ama SOYLEDIKLERI SEY farkli ve arayuz farkli
+    davranmali:
+
+      * `LogSmsSaglayici` "saglayici YAPILANDIRILMADI" der -> yapilacak sey
+        AYARLARI DOLDURMAKTIR ve panel kullaniciyi oraya yollar.
+      * Bu sinif "SMS KAPALI" der -> yapilacak bir sey YOK. Yonetici
+        ayarlar sayfasina gidip SMTP/SMS bilgilerini doldursa bile SMS
+        gitmeyecektir; onu oraya yollamak bosuna bir yolculuk olurdu.
+
+    Kapali olmasinin sebebi teknik degil: onayli bir GONDERICI BASLIGIMIZ
+    yok. Onaysiz baslikla gonderilen SMS operatorde reddedilir ya da spam
+    sayilir. Telefon bu urunde ILETISIM BILGISIDIR — dogrulama e-posta
+    koduyla yapilir.
+
+    `DURUM_YAPILANDIRILMADI` KULLANILIYOR, `basarisiz` DEGIL: "denedik,
+    olmadi" demek yanlis olurdu — HIC DENENMEDI. Ve en onemlisi
+    "gonderildi" DEMEZ: gonderilmemis bir bildirimi gonderilmis gostermek,
+    P168'de olculen kusurun ta kendisiydi.
+    """
+
+    ad = "sms-kapali"
+
+    def gonder(self, hedef: str, konu: str | None, govde: str) -> GonderimSonucu:
+        # ALICI MASKELI, GOVDE YAZILMAZ (P134 kurali).
+        logger.info("[SMS/kapali] %s — gonderim YAPILMADI", maskele_kimlik(hedef))
+        return GonderimSonucu(
+            DURUM_YAPILANDIRILMADI, self.ad, "sms_kanali_kapali"
+        )
+
+
 class NetgsmSmsSaglayici(MesajSaglayici):
     """(P150) Gercek SMS gecidi — Netgsm HTTP API.
 
@@ -456,6 +492,15 @@ def sms_saglayicisi(ayar: SaglayiciAyari | None = None) -> MesajSaglayici:
     LOG saglayicisi artik `yapilandirilmadi` doner, "gonderildi" DEMEZ.
     """
     from .config import settings
+
+    # (P177 §6) ANA SALTER — HER SEYDEN ONCE.
+    #
+    # Tesis kendi Netgsm bilgilerini arayuzden girmis olsa bile burasi
+    # kapiyi kapatir. Kontrol `_ayardan_veya_env`DEN ONCE cunku o, tesis
+    # ayarini env'in USTUNE koyar; sonra bakmak, tesis ayari olan bir
+    # kurulumda salterin ETKISIZ kalmasi demekti.
+    if not settings.sms_aktif:
+        return KapaliSmsSaglayici()
 
     a = _ayardan_veya_env(ayar)
     ad = (a.sms_saglayici or "").strip().lower()

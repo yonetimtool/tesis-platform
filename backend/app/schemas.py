@@ -6318,3 +6318,139 @@ class DavetGonderimSonucu(BaseModel):
 # ona atifta bulunan yanit semalari modul yuklendikten sonra yeniden kurulur.
 ResidentCreatedOut.model_rebuild()
 UserCreatedOut.model_rebuild()
+
+
+# ========================================================================== #
+# (P177 §4-§6) YENI KAYIT AKISI
+# ========================================================================== #
+# HEPSI `YENI_KAYIT_AKISI` BAYRAGI ARKASINDA. Bayrak kapaliyken bu
+# semalari kullanan uclar `503 kayit_akisi_kapali` doner ve mevcut kayit
+# yollari (`/auth/kayit/tesis-olustur`, `/auth/kayit/rol-basla`) HIC
+# ETKILENMEZ — o uclar bu bayragi OKUMAZ bile.
+
+
+class YoneticiBasvuruRequest(BaseModel):
+    """Tanitim sitesindeki yonetici kayit formunun 1. adimi.
+
+    TESIS ADI BURADA ISTENMEZ ve bu bilincli: tesis ancak e-posta
+    DOGRULANDIKTAN sonra acilir (§5). Adi bu adimda alsaydik, hicbir
+    zaman dogrulanmayan basvurular icin de bir tesis adi tasimak ve
+    kullaniciyi henuz karar vermedigi bir sey icin dusundurmek olurdu.
+
+    UC ONAY UC AYRI ALAN: "hepsini kabul ediyorum" seklinde tek bir
+    bayrak, hangi metnin onaylandigini ispat edemezdi. Ucuncusu ISTEGE
+    BAGLIDIR ve zorunlu ikisiyle ayni anlami TASIMAZ.
+
+    IP ve tarayici bilgisi GOVDEDE ISTENMEZ: tarayici kendi IP'sini
+    bilemez ve istemcinin beyan ettigi bir IP ispat degeri tasimaz.
+    Sunucu onlari BASLIKTAN okur (`X-Istemci-Ip`, BFF ekler).
+    """
+
+    ad: str = Field(min_length=2, max_length=80, examples=["Ayşe"])
+    soyad: str = Field(min_length=2, max_length=80, examples=["Yılmaz"])
+    eposta: EmailStr = Field(examples=["ayse@ornek.com"])
+    telefon: str = Field(min_length=5, max_length=32, examples=["+905321112203"])
+    #: AYNI POLITIKA — `validate_password_strength`. Kendi `min_length`i
+    #: ile yetinmek, YENI kayit yolundan girilen parolanin `set-password`
+    #: ucundan girilenden ZAYIF olabilmesi demekti (olculdu: "GucluParola123"
+    #: burada gecerdi, orada sembol eksikliginden 422 alirdi). Iki kapi,
+    #: iki farkli guc siniri.
+    parola: Annotated[str, AfterValidator(validate_password_strength)] = Field(
+        min_length=8, max_length=128
+    )
+    onay_sozlesme: bool
+    onay_kvkk: bool
+    onay_ticari: bool = False
+
+    @model_validator(mode="after")
+    def _zorunlu_onaylar(self) -> "YoneticiBasvuruRequest":
+        # KAPI SUNUCUDA. Arayuz de kontrol ediyor ama istemci
+        # dogrulamasi atlanabilir; onay bir HUKUKI kayittir.
+        if not (self.onay_sozlesme and self.onay_kvkk):
+            raise ValueError(
+                "Kullanıcı Sözleşmesi ve KVKK Aydınlatma Metni onayları zorunludur."
+            )
+        return self
+
+
+class YoneticiBasvuruResponse(BaseModel):
+    """E-postaya kod GONDERILDI — ama bunu YANITTAN OKUYAMAZSINIZ.
+
+    `durum` her zaman `kod_gonderildi`dir. Adresin kayitli olup olmadigi,
+    basvurunun tazelendigi ya da yeni acildigi SIZDIRILMAZ: aksi hâlde uc
+    bir "bu e-posta sistemde var mi" sorgusuna donusurdu.
+    """
+
+    durum: str = Field(default="kod_gonderildi", examples=["kod_gonderildi"])
+
+
+class YoneticiDogrulaRequest(BaseModel):
+    eposta: EmailStr
+    kod: str = Field(min_length=4, max_length=8, examples=["482913"])
+
+
+class YoneticiDogrulaResponse(BaseModel):
+    """OTURUM DEGIL, KURULUM JETONU.
+
+    Kod dogru olsa bile ortada bir TESIS ve bir KULLANICI henuz yok; ne
+    verilecek bir oturum var ne de girilecek bir yer. Jeton yalniz bir
+    sonraki adimi (`/auth/kayit/yonetici-tesis`) acar ve kisa omurludur.
+    """
+
+    kurulum_jetonu: str
+
+
+class YoneticiTesisRequest(BaseModel):
+    kurulum_jetonu: str
+    tesis_ad: str = Field(min_length=2, max_length=120, examples=["Oltu Sitesi"])
+
+
+class RolEpostaBaslaRequest(BaseModel):
+    """(§6) Sakin/guvenlik/gorevli kaydinin 1. adimi — E-POSTA ile.
+
+    TELEFONLU KARDESI (`RolKayitBaslaRequest`) DURUYOR ve degistirilmedi.
+    Bu ayri bir yol cunku kimlik farkli: orada telefon + SMS, burada
+    e-posta + e-posta kodu. SMS gonderilmiyor (bkz. `settings.sms_aktif`).
+    """
+
+    tesis_kodu: str = Field(min_length=3, max_length=40, examples=["OLTU-260715"])
+    eposta: EmailStr
+    rol: str = Field(examples=["resident"])
+    #: Yalniz bilgi amacli: kuyruga dusen bir denemede yonetici kimin
+    #: denedigini gorsun diye. Dogrulamada KULLANILMAZ.
+    ad: str | None = Field(default=None, max_length=120)
+    telefon: str | None = Field(default=None, max_length=32)
+
+
+class RolEpostaBaslaResponse(BaseModel):
+    """SONUC YANITTAN OKUNAMAZ — telefon yolundaki kuralin aynisi.
+
+    `tesis_ad` DONER cunku kullanicinin dogru siteye kaydoldugunu
+    gormesi gerekir ve tesis kodu ZATEN kamuya aciktir. Ama e-postanin
+    listede olup olmadigi HICBIR alandan anlasilmaz: uc, "bu sitede kim
+    var" sorgusuna donusmemeli.
+    """
+
+    tesis_ad: str
+    durum: str = Field(default="kod_gonderildi", examples=["kod_gonderildi"])
+
+
+class RolEpostaDogrulaRequest(BaseModel):
+    tesis_kodu: str = Field(min_length=3, max_length=40)
+    eposta: EmailStr
+    kod: str = Field(min_length=4, max_length=8)
+
+
+class RolEpostaDogrulaResponse(BaseModel):
+    """Uc sart da tuttuysa `setup_token`, tutmadiysa `onay_bekliyor`.
+
+    TEK YANIT TIPI, IKI SONUC: ayri hata kodlari dondurmek "e-postan
+    listede yok" ile "kod yanlis" arasindaki farki disariya sizdirirdi.
+    `durum` alani kullaniciya NE YAPACAGINI soyler, hangi sartin
+    tutmadigini DEGIL.
+    """
+
+    #: hazir | onay_bekliyor
+    durum: str = Field(examples=["hazir"])
+    #: Yalniz `durum='hazir'` iken dolu — parola belirleme jetonu.
+    setup_token: str | None = None

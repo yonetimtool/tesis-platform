@@ -180,6 +180,22 @@ class Settings(BaseSettings):
     # (P150) SMS GECIDI. Hicbiri verilmezse saglayici LOG'dur ve SMS
     # GERCEKTEN GITMEZ — bu, "yanlislikla gonderim" yerine "hic gonderim"
     # tarafinda hata yapmak icin bilincli bir varsayilan.
+    # (P177 §6) SMS ANA SALTERI — SAGLAYICIDAN AYRI VE ONUN USTUNDE.
+    #
+    # NEDEN AYRI BIR BAYRAK: `sms_saglayici` bos birakmak "yapilandirma
+    # eksik" demektir; bir gun biri gecidi baglar ve SMS ANINDA AKMAYA
+    # BASLAR. Oysa bugun SMS gonderilmemesi bir EKSIKLIK DEGIL, bir
+    # KARARDIR: Verimor/Netgsm baslik onayimiz yok ve onaysiz baslikla
+    # gonderilen SMS operator tarafindan reddedilir ya da spam sayilir.
+    # Telefon bu urunde yalniz ILETISIM BILGISIDIR, dogrulama araci
+    # degildir (dogrulama e-posta koduyla yapilir).
+    #
+    # `false` iken `sms_saglayicisi()` saglayici ne olursa olsun
+    # `KapaliSmsSaglayici` doner: gonderim DENENMEZ ve sonuc
+    # `yapilandirilmadi` olur — yani cagiran "gonderildi" SANMAZ.
+    #
+    # Kod yolu ILERIDE ACILABILIR halde birakildi: tek satir `SMS_AKTIF=true`.
+    sms_aktif: bool = False
     sms_saglayici: str | None = None        # "netgsm" | None
     sms_kullanici: str | None = None
     sms_parola: str | None = None
@@ -310,6 +326,48 @@ class Settings(BaseSettings):
     # baglama jetonunun omru: tesis kodu + telefon + SMS kodu girecek
     # kadar sure.
     oauth_baglama_ttl_seconds: int = 900
+
+
+    # ======================================================================
+    # (P177) YENI KAYIT AKISI + TICARI ILETI KAPILARI
+    # ======================================================================
+
+    #: (P177 §0) YENI KAYIT AKISI — VARSAYILAN KAPALI.
+    #:
+    #: Kapaliyken bu turda eklenen uclarin HEPSI `503 kayit_akisi_kapali`
+    #: doner ve mevcut kimlik sistemi BIREBIR bugunku gibi calisir:
+    #: `/auth/kayit/tesis-olustur`, `/auth/kayit/rol-basla`,
+    #: `/auth/login`, `/auth/login-phone`, sosyal giris — hicbiri bu
+    #: bayragi OKUMAZ.
+    #:
+    #: NEDEN VARSAYILAN KAPALI: Play kapali testi MEVCUT sistemle
+    #: yapilacak. Yeni bir kayit yolunu varsayilan acik birakmak, o testin
+    #: ortasinda ikinci bir kapi acmak olurdu.
+    #:
+    #: KAPI TEK YERDE: tanitim sitesinde ikinci bir istemci bayragi YOK.
+    #: Iki bayrak, ayrisabilecekleri bir durum uretirdi.
+    yeni_kayit_akisi: bool = False
+
+    #: (P177 §4) TICARI ELEKTRONIK ILETI GONDERIMI — VARSAYILAN KAPALI.
+    #:
+    #: Kayit formundaki ucuncu onay SAKLANIR (KVKK/6563: rizanin varligi
+    #: ve zamani ispatlanabilir olmali) ama HICBIR ticari ileti
+    #: GONDERILMEZ: sirket kaydi ve IYS (Ileti Yonetim Sistemi) kaydi
+    #: yok. IYS'ye islenmemis bir rizayla ticari ileti gondermek idari
+    #: para cezasi sebebidir.
+    #:
+    #: Yani bu bayrak "ozellik eksik" demiyor; "riza toplaniyor, gonderim
+    #: kapali" diyor. Acilmasi icin once IYS kaydi gerekir.
+    ticari_ileti_aktif: bool = False
+
+    #: (P177 §4) Yonetici basvurusunun (e-posta dogrulanana kadar) omru.
+    #: Kisa: dogrulanmamis bir basvuru, birinin e-posta adresini tutan
+    #: bir kayittir ve suresiz durmamalidir.
+    yonetici_basvuru_omru_saat: int = 24
+
+    #: (P177 §5) Dogrulanmis basvurunun tesis acma jetonunun omru.
+    #: Kullanici kodu girdikten sonra site adini yazacak kadar sure.
+    kurulum_jetonu_omru_dk: int = 30
 
 
 settings = Settings()

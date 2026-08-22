@@ -1249,6 +1249,25 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "Les informations d'inscription ne sont pas valides.",
         "es": "Los datos de registro no son válidos.",
     },
+    # --- (P177) YENI KAYIT AKISI ---------------------------------------- #
+    "kayit_akisi_kapali": {
+        "tr": "Yeni kayıt akışı şu anda kapalı. Lütfen daha sonra tekrar deneyin.",
+        "en": "The new sign-up flow is currently closed. Please try again later.",
+        "ar": "تدفق التسجيل الجديد مغلق حاليًا. يرجى المحاولة لاحقًا.",
+        "ru": "Новый процесс регистрации сейчас закрыт. Повторите попытку позже.",
+        "de": "Der neue Registrierungsablauf ist derzeit geschlossen. Bitte später erneut versuchen.",
+        "fr": "Le nouveau parcours d'inscription est actuellement fermé. Réessayez plus tard.",
+        "es": "El nuevo proceso de registro está cerrado por ahora. Inténtelo más tarde.",
+    },
+    "kurulum_jetonu_gecersiz": {
+        "tr": "Kurulum bağlantısının süresi dolmuş ya da daha önce kullanılmış. Kaydınızı baştan başlatın.",
+        "en": "The setup link has expired or was already used. Please start your registration again.",
+        "ar": "انتهت صلاحية رابط الإعداد أو تم استخدامه من قبل. ابدأ التسجيل من جديد.",
+        "ru": "Срок действия ссылки установки истёк или она уже использована. Начните регистрацию заново.",
+        "de": "Der Einrichtungslink ist abgelaufen oder wurde bereits verwendet. Bitte starten Sie die Registrierung erneut.",
+        "fr": "Le lien de configuration a expiré ou a déjà été utilisé. Recommencez votre inscription.",
+        "es": "El enlace de configuración caducó o ya se usó. Comience el registro de nuevo.",
+    },
     "kod_gecersiz": {
         "tr": "Kod geçersiz.",
         "en": "The code is not valid.",

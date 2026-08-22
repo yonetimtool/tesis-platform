@@ -35,6 +35,13 @@ services:
     depends_on:
       - api
       - admin-web
+      # (P177) Tanitim sitesi. `depends_on` yalniz BASLATMA SIRASIDIR,
+      # saglik beklemez — Caddy tanitim-web'den once kalkarsa ilk istek
+      # 502 alir ve saniyeler icinde duzelir. admin-web'de `depends_on`
+      # bilincli olarak KALDIRILMISTI (P171) cunku orada API'nin sema
+      # hatasi TUM alan adini dusuruyordu; burada oyle bir zincir yok:
+      # tanitim-web hicbir servise bagimli degil.
+      - tanitim-web
       - minio
     environment:
       <<: *tz
@@ -64,6 +71,19 @@ services:
       # (P154) TLS saglayicisi. BOS = otomatik HTTPS (prod davranisi).
       # Cloudflare Tunnel arkasinda `tls internal` verilir: ACME origin'e
       # ulasamadigi icin Let's Encrypt orada CALISMAZ (bkz. Caddyfile notu).
+      # (P177) TANITIM SITESI KONAGI — VARSAYILANI BILEREK YEREL.
+      #
+      # `tanitim.localhost` gercek bir alan adi DEGIL ve olmasi da
+      # gerekmiyor: Caddy `.localhost` adlarina ACME'ye HIC GITMEDEN
+      # dahili sertifika verir. Varsayilani `test.yonetio.site` yapmak,
+      # PROD Caddy'sinin test alan adi icin Let's Encrypt'e basvurmasi
+      # demekti — prod DONDURULMUS ve oraya hicbir yeni istek gitmemeli.
+      #
+      # Test sunucusu bunu `.env.prod`da ezer: TANITIM_DOMAIN=test.yonetio.site
+      TANITIM_DOMAIN: ${TANITIM_DOMAIN:-tanitim.localhost}
+      # Eski yollarin (davet/gizlilik/kosullar/hesap-silme) 301 ile
+      # gonderilecegi calisma alani. Bkz. Caddyfile tanitim blogu.
+      TANITIM_ESKI_HEDEF: ${TANITIM_ESKI_HEDEF:-https://app-test.yonetio.site}
       CADDY_TLS: ${CADDY_TLS:-}
     ports:
       - "80:80"
@@ -296,6 +316,15 @@ services:
       # (STARTTLS), SMTP_USER=resend, SMTP_PASSWORD=<API anahtari>,
       # SMTP_FROM=noreply@yonetio.site. Port 25 ISP'de kapali; 587
       # uzerinden Resend'e verilir, disari iletmeyi Resend yapar.
+      # (P177) YENI KAYIT AKISI + GONDERIM KAPILARI.
+      #
+      # UCU DE VARSAYILAN KAPALI ve compose'a YAZILDI ki `docker compose
+      # config` ciktisinda gorunsunler: pydantic-settings varsayilanina
+      # birakilan bir bayrak, ortamda "yok" gibi gorunur ve operator onu
+      # aramaya kalkinca hicbir yerde bulamaz.
+      YENI_KAYIT_AKISI: ${YENI_KAYIT_AKISI:-false}
+      SMS_AKTIF: ${SMS_AKTIF:-false}
+      TICARI_ILETI_AKTIF: ${TICARI_ILETI_AKTIF:-false}
       SMS_SAGLAYICI: ${SMS_SAGLAYICI:-}
       SMS_KULLANICI: ${SMS_KULLANICI:-}
       SMS_PAROLA: ${SMS_PAROLA:-}
@@ -439,6 +468,15 @@ services:
       #
       # `api` ile AYNI kume olmali; biri eksik kalirsa ayni mesaj istek
       # yolunda gidip kuyruk yolunda gitmezdi.
+      # (P177) YENI KAYIT AKISI + GONDERIM KAPILARI.
+      #
+      # UCU DE VARSAYILAN KAPALI ve compose'a YAZILDI ki `docker compose
+      # config` ciktisinda gorunsunler: pydantic-settings varsayilanina
+      # birakilan bir bayrak, ortamda "yok" gibi gorunur ve operator onu
+      # aramaya kalkinca hicbir yerde bulamaz.
+      YENI_KAYIT_AKISI: ${YENI_KAYIT_AKISI:-false}
+      SMS_AKTIF: ${SMS_AKTIF:-false}
+      TICARI_ILETI_AKTIF: ${TICARI_ILETI_AKTIF:-false}
       SMS_SAGLAYICI: ${SMS_SAGLAYICI:-}
       SMS_KULLANICI: ${SMS_KULLANICI:-}
       SMS_PAROLA: ${SMS_PAROLA:-}
@@ -515,6 +553,52 @@ services:
       # "Connection refused" false-negative. (api'nin python urllib probe'u
       # etkilenmez: getaddrinfo sonuclarini sirayla dener, IPv4'e duser.)
       test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000/login"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks: [tesisnet]
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------- #
+  # (P177) tanitim-web — YONETIYOR TANITIM SITESI (Next.js standalone).
+  #
+  # AYRI BIR UYGULAMA ve bu bilincli: panelin (admin-web) tasarim dili
+  # metalik/neumorphic bir CALISMA ALANI dilidir; tanitim sitesi acik
+  # zeminli, kurumsal mavi bir KARSILAMA yuzeyidir. Ayni pakete koymak,
+  # iki dilin ayni `tailwind.config.ts` icinde carpismasi demekti.
+  #
+  # `depends_on: api` YOK — admin-web'deki P171 karariyla ayni gerekce ve
+  # burada daha da net: bu site API'yi yalniz IKI ucta cagirir (kayit
+  # basvurusu ve iletisim formu). API dustugunde sitenin geri kalani
+  # (tanitim, fiyat hesaplayici, hukuki metinler) CALISMAYA DEVAM
+  # ETMELIDIR.
+  #
+  # NEXT_PUBLIC_* DERLEME ANINDA GOMULUR: bayrak degistirmek imaji
+  # yeniden derlemeyi gerektirir (`--build`). `API_BASE_URL` bunun
+  # DISINDADIR — sunucu tarafi onu calisma aninda okur.
+  tanitim-web:
+    build:
+      context: ../apps/tanitim-web
+      args:
+        NEXT_PUBLIC_APP_ADRESI: ${TANITIM_APP_ADRESI:-https://app-test.yonetio.site}
+        NEXT_PUBLIC_SITE_ADRESI: ${TANITIM_SITE_ADRESI:-https://test.yonetio.site}
+        NEXT_PUBLIC_PLAY_ADRESI: ${PLAY_STORE_URL:-https://play.google.com/store/apps/details?id=com.app.yonetiyor}
+        NEXT_PUBLIC_APP_STORE_ADRESI: ${APP_STORE_URL:-}
+        NEXT_PUBLIC_ILETISIM_EPOSTA: ${TANITIM_ILETISIM_EPOSTA:-destek@yonetio.site}
+        NEXT_PUBLIC_TANITIM_UCRETSIZ: ${TANITIM_UCRETSIZ:-1}
+        NEXT_PUBLIC_SSO_GOOGLE: ${TANITIM_SSO_GOOGLE:-1}
+        NEXT_PUBLIC_SSO_MICROSOFT: ${TANITIM_SSO_MICROSOFT:-0}
+        NEXT_PUBLIC_SSO_APPLE: ${TANITIM_SSO_APPLE:-0}
+    environment:
+      <<: *tz
+      NODE_ENV: production
+      API_BASE_URL: http://api:8000
+    healthcheck:
+      # 127.0.0.1 (localhost DEGIL): busybox wget localhost'u ::1'e cozer
+      # ve IPv4'e DUSMEZ; app ise HOSTNAME=0.0.0.0 ile yalniz IPv4 dinler
+      # -> sahte "Connection refused". admin-web'de olculen ayni tuzak.
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000/"]
       interval: 15s
       timeout: 5s
       retries: 5

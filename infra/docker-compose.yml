@@ -206,6 +206,15 @@ services:
       #
       # Dev'de normalde BOSTUR (gercek SMS/e-posta gitmesin). Gercek bir
       # saglayiciyi denemek icin `infra/.env`e yazmak yeter.
+      # (P177) YENI KAYIT AKISI + GONDERIM KAPILARI.
+      #
+      # UCU DE VARSAYILAN KAPALI ve compose'a YAZILDI ki `docker compose
+      # config` ciktisinda gorunsunler: pydantic-settings varsayilanina
+      # birakilan bir bayrak, ortamda "yok" gibi gorunur ve operator onu
+      # aramaya kalkinca hicbir yerde bulamaz.
+      YENI_KAYIT_AKISI: ${YENI_KAYIT_AKISI:-false}
+      SMS_AKTIF: ${SMS_AKTIF:-false}
+      TICARI_ILETI_AKTIF: ${TICARI_ILETI_AKTIF:-false}
       SMS_SAGLAYICI: ${SMS_SAGLAYICI:-}
       SMS_KULLANICI: ${SMS_KULLANICI:-}
       SMS_PAROLA: ${SMS_PAROLA:-}
@@ -359,6 +368,15 @@ services:
       #
       # Dev'de normalde BOSTUR (gercek SMS/e-posta gitmesin). Gercek bir
       # saglayiciyi denemek icin `infra/.env`e yazmak yeter.
+      # (P177) YENI KAYIT AKISI + GONDERIM KAPILARI.
+      #
+      # UCU DE VARSAYILAN KAPALI ve compose'a YAZILDI ki `docker compose
+      # config` ciktisinda gorunsunler: pydantic-settings varsayilanina
+      # birakilan bir bayrak, ortamda "yok" gibi gorunur ve operator onu
+      # aramaya kalkinca hicbir yerde bulamaz.
+      YENI_KAYIT_AKISI: ${YENI_KAYIT_AKISI:-false}
+      SMS_AKTIF: ${SMS_AKTIF:-false}
+      TICARI_ILETI_AKTIF: ${TICARI_ILETI_AKTIF:-false}
       SMS_SAGLAYICI: ${SMS_SAGLAYICI:-}
       SMS_KULLANICI: ${SMS_KULLANICI:-}
       SMS_PAROLA: ${SMS_PAROLA:-}

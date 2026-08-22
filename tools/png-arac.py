@@ -85,14 +85,23 @@ def oku(yol: str):
     return en, boy, kanal, cikti
 
 
+def _parca(tip: bytes, veri: bytes) -> bytes:
+    """PNG parcasi: uzunluk + tip + veri + CRC32."""
+    return (
+        struct.pack(">I", len(veri))
+        + tip
+        + veri
+        + struct.pack(">I", zlib.crc32(tip + veri) & 0xFFFFFFFF)
+    )
+
+
 def yaz(yol: str, en: int, boy: int, piksel: bytearray):
     """Her zaman RGBA + filtre 0 yazar (basit ve kayipsiz)."""
     satirlar = bytearray()
     for y in range(boy):
         satirlar.append(0)
         satirlar += piksel[y * en * 4 : (y + 1) * en * 4]
-    def parca(tip, veri):
-        return struct.pack(">I", len(veri)) + tip + veri + struct.pack(">I", zlib.crc32(tip + veri) & 0xFFFFFFFF)
+    parca = _parca
     ihdr = struct.pack(">IIBBBBB", en, boy, 8, 6, 0, 0, 0)
     with open(yol, "wb") as f:
         f.write(b"\x89PNG\r\n\x1a\n")
@@ -199,6 +208,235 @@ def olcekle(en, boy, piksel, hedefEn, hedefBoy):
                 cikti[k] = min(255, tr // ta); cikti[k + 1] = min(255, tg // ta); cikti[k + 2] = min(255, tb // ta)
             cikti[k + 3] = ta // n if n else 0
     return cikti
+
+
+def kutu_kirp(en, boy, piksel, sol, ust, sag, alt):
+    """ACIK kirpma kutusu — `sag`/`alt` DISLAYICI (Python dilim mantigi).
+
+    `kirp()`ten AYRI ve bilincli: o, saydam paylari OLCEREK atar; bu ise
+    kutuyu CAGIRANDAN alir. Ikon uretiminde kutu bir KARARDIR (bkz.
+    docs/P177-kararlar.md) ve olcumle yeniden turetilmemelidir — logo
+    dosyasi bir gun degisirse kutu da bilincli olarak yeniden secilmeli,
+    sessizce kaymamali.
+    """
+    if not (0 <= sol < sag <= en and 0 <= ust < alt <= boy):
+        raise SystemExit(f"gecersiz kirpma kutusu: {(sol, ust, sag, alt)} / {en}x{boy}")
+    yeniEn, yeniBoy = sag - sol, alt - ust
+    cikti = bytearray(yeniEn * yeniBoy * 4)
+    for y in range(yeniBoy):
+        k = ((ust + y) * en + sol) * 4
+        cikti[y * yeniEn * 4 : (y + 1) * yeniEn * 4] = piksel[k : k + yeniEn * 4]
+    return yeniEn, yeniBoy, cikti
+
+
+def buyut(en, boy, piksel, hedefEn, hedefBoy):
+    """Iki dogrusal (bilinear) BUYUTME — alfa ile ON CARPILMIS.
+
+    `olcekle()` KUTU ORTALAMASIDIR ve yalniz KUCULTMEDE dogru sonuc verir:
+    buyutmede kutu tek piksele duser, yani en-yakin-komsuya cokup blok
+    blok kenar birakir. Ikonlarin cogu BUYUTMEDIR (466 px'lik kirpma ->
+    1024 px'lik tuval), bu yuzden ayri bir yol gerekiyor.
+
+    ON CARPIM ZORUNLU: saydam pikselin RGB'si tanimsizdir (bu dosyada 0,
+    yani SIYAH). Ham RGB'yi harmanlamak, isaretin cevresine siyah bir
+    hale birakirdi — kenar yumusatmasinin klasik hatasi.
+    """
+    cikti = bytearray(hedefEn * hedefBoy * 4)
+    # Kenar hizalamasi: kaynak ve hedefin PIKSEL MERKEZLERI eslesir.
+    olcX = en / hedefEn
+    olcY = boy / hedefBoy
+    for hy in range(hedefBoy):
+        fy = (hy + 0.5) * olcY - 0.5
+        y0 = int(fy) if fy >= 0 else -1
+        wy = fy - y0
+        y0 = min(max(y0, 0), boy - 1)
+        y1 = min(y0 + 1, boy - 1)
+        for hx in range(hedefEn):
+            fx = (hx + 0.5) * olcX - 0.5
+            x0 = int(fx) if fx >= 0 else -1
+            wx = fx - x0
+            x0 = min(max(x0, 0), en - 1)
+            x1 = min(x0 + 1, en - 1)
+            tr = tg = tb = ta = 0.0
+            for (xx, yy, w) in (
+                (x0, y0, (1 - wx) * (1 - wy)),
+                (x1, y0, wx * (1 - wy)),
+                (x0, y1, (1 - wx) * wy),
+                (x1, y1, wx * wy),
+            ):
+                if w <= 0:
+                    continue
+                k = (yy * en + xx) * 4
+                a = piksel[k + 3]
+                tr += piksel[k] * a * w
+                tg += piksel[k + 1] * a * w
+                tb += piksel[k + 2] * a * w
+                ta += a * w
+            k = (hy * hedefEn + hx) * 4
+            if ta > 0:
+                cikti[k] = min(255, int(tr / ta + 0.5))
+                cikti[k + 1] = min(255, int(tg / ta + 0.5))
+                cikti[k + 2] = min(255, int(tb / ta + 0.5))
+            cikti[k + 3] = min(255, int(ta + 0.5))
+    return cikti
+
+
+def yeniden_boyutla(en, boy, piksel, hedefEn, hedefBoy):
+    """Yonu KENDI secer: kucultmede kutu ortalamasi, buyutmede bilinear.
+
+    Cagiranin hangi yonde oldugunu hatirlamasi gerekmesin diye tek kapi.
+    """
+    if hedefEn <= en and hedefBoy <= boy:
+        return olcekle(en, boy, piksel, hedefEn, hedefBoy)
+    return buyut(en, boy, piksel, hedefEn, hedefBoy)
+
+
+def bos_tuval(kenar, renk=None):
+    """`kenar` x `kenar` RGBA tuval. `renk=None` => TAMAMEN SAYDAM."""
+    if renk is None:
+        return bytearray(kenar * kenar * 4)
+    r, g, b = renk
+    return bytearray(bytes((r, g, b, 255)) * (kenar * kenar))
+
+
+def uzerine_ciz(tuvalKenar, tuval, en, boy, piksel, ox, oy):
+    """Kaynagi tuvale (ox, oy) noktasindan ALFA HARMANIYLA cizer.
+
+    KOPYALAMA DEGIL HARMAN: kopyalamak, isaretin saydam kenar
+    pikselleriyle birlikte zemini de silerdi (beyaz zeminli ikonlarda
+    isaretin cevresinde saydam bir hale).
+    """
+    for y in range(boy):
+        ty = oy + y
+        if not (0 <= ty < tuvalKenar):
+            continue
+        for x in range(en):
+            tx = ox + x
+            if not (0 <= tx < tuvalKenar):
+                continue
+            k = (y * en + x) * 4
+            a = piksel[k + 3]
+            if a == 0:
+                continue
+            h = (ty * tuvalKenar + tx) * 4
+            if a == 255:
+                tuval[h : h + 4] = piksel[k : k + 4]
+                continue
+            ta = tuval[h + 3]
+            # Standart "source-over", ON CARPILMAMIS hedef uzerinde.
+            ya = a + ta * (255 - a) // 255
+            for c in range(3):
+                tuval[h + c] = (
+                    (piksel[k + c] * a + tuval[h + c] * ta * (255 - a) // 255) // ya
+                    if ya
+                    else 0
+                )
+            tuval[h + 3] = ya
+    return tuval
+
+
+def beyaza_boya(en, boy, piksel):
+    """Tek renk (BEYAZ) siluet — alfa AYNEN korunur.
+
+    Android 13+ "temali ikon" katmani bir ALFA MASKESIDIR: sistem onu
+    kullanicinin temasindan gelen renkle boyar ve RGB'yi yok sayar. Yine
+    de beyaz yaziyoruz — maskelemeyen bir onizleyicide (ya da yanlislikla
+    duz PNG olarak acildiginda) isaret gorunur kalsin diye.
+    """
+    for i in range(en * boy):
+        if piksel[i * 4 + 3]:
+            piksel[i * 4] = piksel[i * 4 + 1] = piksel[i * 4 + 2] = 255
+    return piksel
+
+
+def yaz_opak(yol: str, en: int, boy: int, piksel: bytearray, zemin=(255, 255, 255)):
+    """ALFA KANALI OLMAYAN PNG yazar (renk tipi 2 — truecolor).
+
+    "Saydamligi 255'e cekmek" YETMEZ: dosya yine 4 kanalli olur ve
+    App Store yuklemesi (ITMS-90717) ALFA KANALININ VARLIGINA bakar,
+    degerlerine degil. Bu yuzden kanal GERCEKTEN dusurulur.
+
+    `tRNS` parcasi da YAZILMAZ — o, alfasiz bir PNG'ye saydamligi geri
+    getiren kacamak yoldur ve ayni denetimden gecmez.
+    """
+    duz = bytearray(en * boy * 3)
+    zr, zg, zb = zemin
+    for i in range(en * boy):
+        a = piksel[i * 4 + 3]
+        if a == 255:
+            duz[i * 3 : i * 3 + 3] = piksel[i * 4 : i * 4 + 3]
+        else:
+            for c in range(3):
+                duz[i * 3 + c] = (piksel[i * 4 + c] * a + (zr, zg, zb)[c] * (255 - a)) // 255
+    satirlar = bytearray()
+    for y in range(boy):
+        satirlar.append(0)
+        satirlar += duz[y * en * 3 : (y + 1) * en * 3]
+    ihdr = struct.pack(">IIBBBBB", en, boy, 8, 2, 0, 0, 0)
+    with open(yol, "wb") as f:
+        f.write(b"\x89PNG\r\n\x1a\n")
+        f.write(_parca(b"IHDR", ihdr))
+        f.write(_parca(b"IDAT", zlib.compress(bytes(satirlar), 9)))
+        f.write(_parca(b"IEND", b""))
+
+
+def alfa_var_mi(yol: str) -> bool:
+    """Dosyada ALFA KANALI VAR MI — degerlere DEGIL, IHDR'ye bakar.
+
+    Renk tipi 4 (gri+alfa) ve 6 (RGBA) alfa TASIR. `tRNS` parcasi ise
+    alfasiz bir tipe saydamlik ekler; o da alfa sayilir.
+    """
+    ham = open(yol, "rb").read()
+    for tip, veri in _parcalar(ham):
+        if tip == b"IHDR":
+            renk = veri[9]
+            if renk in (4, 6):
+                return True
+        elif tip == b"tRNS":
+            return True
+    return False
+
+
+def ico_yaz(yol: str, katmanlar):
+    """Cok boyutlu `.ico` — her katman GOMULU PNG olarak yazilir.
+
+    `katmanlar`: [(kenar, rgba_bytearray), ...]
+
+    PNG GOMME (BMP degil): Vista'dan beri desteklenir, kod BMP'nin ters
+    cevrilmis satir duzeni ve AND maskesi olmadan yazilir. 16/32/48 gibi
+    kucuk boyutlarda boyut farki onemsiz, hata payi cok daha dusuk.
+    """
+    import io as _io
+
+    govdeler = []
+    for kenar, px in katmanlar:
+        tampon = _io.BytesIO()
+        satirlar = bytearray()
+        for y in range(kenar):
+            satirlar.append(0)
+            satirlar += px[y * kenar * 4 : (y + 1) * kenar * 4]
+        tampon.write(b"\x89PNG\r\n\x1a\n")
+        tampon.write(_parca(b"IHDR", struct.pack(">IIBBBBB", kenar, kenar, 8, 6, 0, 0, 0)))
+        tampon.write(_parca(b"IDAT", zlib.compress(bytes(satirlar), 9)))
+        tampon.write(_parca(b"IEND", b""))
+        govdeler.append((kenar, tampon.getvalue()))
+
+    basliklar = bytearray(struct.pack("<HHH", 0, 1, len(govdeler)))
+    ofset = 6 + 16 * len(govdeler)
+    for kenar, govde in govdeler:
+        # 256 px `.ico` dizininde 0 ile kodlanir; bizim boyutlarimiz kucuk
+        # ama kural yine de uygulanir ki arac ileride 256 uretebilsin.
+        basliklar += struct.pack(
+            "<BBBBHHII",
+            kenar if kenar < 256 else 0,
+            kenar if kenar < 256 else 0,
+            0, 0, 1, 32, len(govde), ofset,
+        )
+        ofset += len(govde)
+    with open(yol, "wb") as f:
+        f.write(basliklar)
+        for _, govde in govdeler:
+            f.write(govde)
 
 
 def kareye_al(en, boy, piksel):

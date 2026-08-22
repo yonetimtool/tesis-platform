@@ -70,11 +70,14 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
 
-  # Launcher ikonlari (Yönetiyor markasi) — kaynak PNG'ler saglanan master
-  # logodan uretilir (test/tools/generate_branding_assets.dart).
-  # Varlik + ikon yeniden uretimi (SIRAYLA):
-  #   flutter test test/tools/generate_branding_assets.dart
-  #   dart run flutter_launcher_icons
+  # Launcher ikonlari (Yönetiyor markasi) — kaynak PNG'ler depo kokundeki
+  # `assets/marka/yonetiyor-logo.png`ten uretilir.
+  # Ikon yeniden uretimi (SIRAYLA, depo kokunden):
+  #   python3 scripts/ikon-uret.py
+  #   cd mobile && dart run flutter_launcher_icons
+  # (`test/tools/generate_branding_assets.dart` hâlâ CALISMA ZAMANI
+  #  varliklarini — icon_master/icon_background/ic_stat — uretir; launcher
+  #  girdileri artik ondan DEGIL, yukaridaki betikten gelir.)
   flutter_launcher_icons: ^0.14.3
 
 # Adaptive icon: master'dan orneklenen mavi→teal gradyan zemin katmani +
@@ -91,9 +94,23 @@ flutter_launcher_icons:
   # iOS SIMGESI SAYDAMLIK KABUL ETMEZ (App Store yuklemede reddeder).
   # Master saydam kenar tasiyor; alfa duzlestirilir.
   remove_alpha_ios: true
-  image_path: "assets/branding/icon_master.png"
-  adaptive_icon_background: "assets/branding/icon_background.png"
-  adaptive_icon_foreground: "assets/branding/icon_foreground.png"
+  # (P177 §8) KAYNAK ARTIK DEPO KOKUNDEKI `assets/marka/ikon/` — tek
+  # uretim yeri `scripts/ikon-uret.py`. Yollar `../` ile disari cikiyor
+  # ve bu bilincli: launcher ikonu URUNUN ikonudur, mobil paketin degil;
+  # ayni dosyalar Play/App Store yuklemesinde ve tanitim sitesinin
+  # faviconunda da kullaniliyor. Ikinci bir kopya tutmak, biri
+  # guncellenip oteki unutuldugunda magazada ESKI ikonla cikmak demekti
+  # (P166'da tam olarak bu yasandi).
+  #
+  # `icon_master.png` DOKUNULMADAN duruyor: o CALISMA ZAMANI varligidir
+  # (giris ekrani + splash, `yonetio_logo.dart`), launcher girdisi degil.
+  # Onu bu turda degistirmek, istenmeyen bir arayuz degisikligi olurdu.
+  image_path: "../assets/marka/ikon/ios-appstore-1024.png"
+  adaptive_icon_background: "../assets/marka/ikon/android-adaptive-background.png"
+  adaptive_icon_foreground: "../assets/marka/ikon/android-adaptive-foreground.png"
+  # Android 13+ TEMALI IKON. Sistem bunu bir ALFA MASKESI olarak kullanip
+  # kullanicinin duvar kagidindan turettigi renkle boyar.
+  adaptive_icon_monochrome: "../assets/marka/ikon/android-monochrome.png"
   # 0 ZORUNLU: varsayilan %16 iceri cekme, foreground'daki payin USTUNE binip
   # isareti ikonun ~1/3'une dusuruyordu. Pay zaten uretimde veriliyor —
   # isaretin sinir kutusu KOSEGENI dairesel maskenin icine sigacak sekilde

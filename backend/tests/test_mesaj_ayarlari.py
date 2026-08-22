@@ -103,7 +103,18 @@ def test_ACIKCA_BOS_DIZGE_PAROLAYI_TEMIZLER(client, world):
 # --------------------------------------------------------------------------- #
 def test_HAZIR_BAYRAGI_gercek_secimle_AYNI_yoldan(client, world):
     """"Ayarlar dolu mu" diye ayrica bakmak, o kontrolun bir gun gercek
-    saglayici seciminden ayrismasi demekti."""
+    saglayici seciminden ayrismasi demekti.
+
+    (P177 §6) ANA SALTER BU BAYRAGI DA BAGLAR. `SMS_AKTIF=false`
+    (varsayilan) iken TAM yapilandirilmis bir tesis de "hazir" DEGILDIR
+    ve bu dogrudur: o tesis bugun SMS gonderemez, "hazır" demek ona
+    calismayacak bir sey icin yesil isik yakmak olurdu — P168'de
+    kapatilan kusur sinifi.
+
+    Bayrak ORTAMDAN gelir ve testler ayri bir surecte kosan sunucuya
+    vurur; bu yuzden ikinci adim iki kipi de kabul eder. Birinci adim
+    ise HER KIPTE gecerlidir: yarim yapilandirma asla "hazir" olamaz.
+    """
     y = _headers(client, world["slug_a"], world["yonetici_a"])
     # Yarim yapilandirma: saglayici secili ama parola yok.
     client.put("/mesaj-ayarlari", headers=y, json={
@@ -113,7 +124,16 @@ def test_HAZIR_BAYRAGI_gercek_secimle_AYNI_yoldan(client, world):
 
     client.put("/mesaj-ayarlari", headers=y, json={
         "sms_parola": "p", "sms_baslik": "B"})
-    assert client.get("/mesaj-ayarlari", headers=y).json()["sms_hazir"] is True
+    tam = client.get("/mesaj-ayarlari", headers=y).json()
+    # Kanal ACIKSA hazir olmali; KAPALIYSA (varsayilan) hazir OLMAMALI.
+    # Ucuncu bir sonuc yok — bu yuzden `in` degil, acik iki dal.
+    assert tam["sms_hazir"] in (True, False)
+    if tam["sms_hazir"]:
+        assert tam["sms_kaynak"] == "tesis", tam
+    else:
+        # Kapali kanalda kaynak da "yok" olmali: "genel ayardan
+        # calisiyor" demek, calismayan bir yolu gostermek olurdu.
+        assert tam["sms_kaynak"] == "yok", tam
 
 
 # --------------------------------------------------------------------------- #

@@ -170,6 +170,38 @@ def create_setup_token(*, user_id: uuid.UUID | str, tenant_id: uuid.UUID | str) 
     return _encode(claims)
 
 
+def create_kurulum_token(*, basvuru_id: uuid.UUID | str) -> str:
+    """(P177 §5) TESIS KURULUM jetonu (type=tesis_kurulum).
+
+    ===========================================================================
+    `create_setup_token`DAN NEDEN AYRI
+    ===========================================================================
+    O jeton bir KULLANICIYA ve bir TESISE baglidir (`sub`, `tenant_id`) ve
+    tasidigi yetki "parola belirle"dir. Burada ikisi de HENUZ YOK: ortada
+    yalnizca e-postasi dogrulanmis bir BASVURU var.
+
+    Ayni jetonu bos/sahte bir `tenant_id` ile uretmek, tip sistemini
+    yalan soylemeye zorlamak olurdu — ve `pwd_setup` kabul eden ucun bir
+    gun bu jetonu de kabul etme riskini dogururdu. Ayri `type`, o kapiyi
+    yapisal olarak kapatir.
+
+    OMRU AYARDAN: kullanicinin kodu girdikten sonra site adini yazacak
+    kadar sure. Uzun tutmak, calinan bir jetonun penceresini bosuna
+    genisletirdi.
+    """
+    now = _now()
+    claims = {
+        "sub": str(basvuru_id),
+        "type": "tesis_kurulum",
+        "iat": int(now.timestamp()),
+        "exp": int(
+            (now + timedelta(minutes=settings.kurulum_jetonu_omru_dk)).timestamp()
+        ),
+        "jti": str(uuid.uuid4()),
+    }
+    return _encode(claims)
+
+
 def decode_token(token: str, *, expected_type: str) -> dict[str, Any]:
     """Token'i dogrula ve claim'leri don. Hatada jwt.PyJWTError firlatir.
 
