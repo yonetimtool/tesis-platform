@@ -6163,6 +6163,14 @@ class OauthBaslaRequest(BaseModel):
     #: `web` | `mobil`. Callback SONRASI nereye donulecegini belirler;
     #: adresin KENDISI ayarlardan gelir (acik yonlendirme).
     yuzey: str = "web"
+    #: (P180) `giris` (varsayilan — MEVCUT DAVRANIS) | `kayit` (yonetici kaydi).
+    #: Niyet state'e yazilir ve callback ISTEKTEN DEGIL state'ten okur.
+    niyet: str = "giris"
+    #: (P180) niyet=kayit icin iki onay ZORUNLU (backend de dogrular — istemci
+    #: kilidine guvenilmez); `onay_ticari` istege bagli.
+    onay_sozlesme: bool = False
+    onay_kvkk: bool = False
+    onay_ticari: bool = False
     model_config = ConfigDict(extra="forbid")
 
 

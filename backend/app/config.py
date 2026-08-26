@@ -317,6 +317,10 @@ class Settings(BaseSettings):
     # cozulup 404 verirdi. Bos birakildiginda `basla` 503 doner — hata,
     # kullanici siteden AYRILMADAN gorunur.
     oauth_web_donus: str = ""
+    # (P180) niyet=kayit donusu — yonetici kayit tamamlama sayfasi. BOS =
+    # SSO KAYIT KAPALI (basla'da 503; sessiz yanlis-yapilandirma yok). Giris
+    # akisi bundan ETKILENMEZ.
+    oauth_kayit_donus: str = ""
     # Mobil, tarayici oturumunu bir OZEL SEMA ile kapatir; adres
     # saglayiciya HIC bildirilmez (saglayici yalniz callback'i gorur),
     # bu yuzden Apple'in "https zorunlu" kurali ihlal edilmez.

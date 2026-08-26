@@ -259,7 +259,15 @@ async def tesis_olustur(
                         f"self_signup:oauth:{kimlik['saglayici']}"
                         if kimlik
                         else "self_signup:parola"
-                    )
+                    ),
+                    # (P180) SSO kaydinda onaylar BURADA kalici loglanir (parola
+                    # yolundaki `yonetici_basvuru` satirinin karsiligi): onay +
+                    # IP + zaman, append-only audit_log'da.
+                    **(
+                        {"onaylar": kimlik.get("onaylar")}
+                        if kimlik and kimlik.get("onaylar")
+                        else {}
+                    ),
                 },
             )
 
@@ -270,6 +278,11 @@ async def tesis_olustur(
             user = (
                 await session.execute(select(AppUser).where(AppUser.id == user_id))
             ).scalar_one()
+
+            # (P180) SSO kaydinda ticari-ileti onayi kullaniciya yazilir (parola
+            # yolunda `user.pazarlama_eposta = basvuru.onay_ticari` ile ayni sinif).
+            if kimlik and kimlik.get("onaylar"):
+                user.pazarlama_eposta = bool(kimlik["onaylar"].get("ticari"))
 
     # Jeton uretimi transaction DISINDA — depodaki oteki giris yollariyla
     # ayni desen (`_issue_token_pair` Redis'e yazar).

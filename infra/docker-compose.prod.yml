@@ -413,6 +413,8 @@ services:
       # BOS = O YUZEY KAPALI: `baslat` 503 doner ve hata kullanici siteden
       # AYRILMADAN gorunur (saglayicidan donunce 404 bulmasindan iyidir).
       OAUTH_WEB_DONUS: ${OAUTH_WEB_DONUS:-}
+      # (P180) niyet=kayit donusu — yonetici kayit tamamlama sayfasi.
+      OAUTH_KAYIT_DONUS: ${OAUTH_KAYIT_DONUS:-}
       OAUTH_MOBIL_DONUS: ${OAUTH_MOBIL_DONUS:-com.app.yonetiyor://oauth}
     volumes:
       # Klasor mount (dosya yoksa da baslar); FCM json yoksa push unconfigured.

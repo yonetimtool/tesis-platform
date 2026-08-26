@@ -292,6 +292,8 @@ services:
       OAUTH_APPLE_PRIVATE_KEY: ${OAUTH_APPLE_PRIVATE_KEY:-}
       OAUTH_CALLBACK_TABAN: ${OAUTH_CALLBACK_TABAN:-}
       OAUTH_WEB_DONUS: ${OAUTH_WEB_DONUS:-}
+      # (P180) niyet=kayit donusu — yonetici kayit tamamlama sayfasi.
+      OAUTH_KAYIT_DONUS: ${OAUTH_KAYIT_DONUS:-}
       OAUTH_MOBIL_DONUS: ${OAUTH_MOBIL_DONUS:-com.app.yonetiyor://oauth}
     ports:
       - "8000:8000"

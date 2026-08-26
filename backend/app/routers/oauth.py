@@ -70,7 +70,7 @@ from datetime import datetime, timedelta, timezone
 
 import jwt
 import redis.asyncio as aioredis
-from fastapi import APIRouter, Depends, Form, Request, Response
+from fastapi import APIRouter, Depends, Form, Header, Request, Response
 from fastapi.responses import RedirectResponse
 from sqlalchemy import func, select, text
 
@@ -129,8 +129,14 @@ _KOD_AMACI = "oauth"
 
 _YUZEYLER = ("web", "mobil")
 
+#: (P180) OAuth niyeti — kayit/giris ayrimi. Varsayilan giris (MEVCUT DAVRANIS).
+_NIYETLER = ("giris", "kayit")
 
-def _donus_adresi(yuzey: str) -> str:
+#: (P180) niyet=kayit iki zorunlu onay olmadan baslatilamaz (savunma derinligi).
+_ONAY_GEREKLI = APIError(422, "validation_error", "onay_gerekli")
+
+
+def _donus_adresi(yuzey: str, niyet: str = "giris") -> str:
     """Callback sonrasi tarayicinin gonderilecegi adres — AYARLARDAN.
 
     Istekten alinmaz (bkz. modul basligi: acik yonlendirme).
@@ -140,6 +146,8 @@ def _donus_adresi(yuzey: str) -> str:
     kalirdi: kullanici Google'a gider, doner ve 404 bulur — hata mesaji
     saglayicinin sayfasinda degil bizim tarafimizda olmali.
     """
+    if niyet == "kayit":
+        return settings.oauth_kayit_donus
     if yuzey == "mobil":
         return settings.oauth_mobil_donus
     return settings.oauth_web_donus
@@ -177,30 +185,47 @@ async def basla(
     saglayici: str,
     body: OauthBaslaRequest,
     istek: Request,
+    x_istemci_ip: str | None = Header(default=None, alias="X-Istemci-Ip"),
     redis: aioredis.Redis = Depends(get_redis),
 ) -> OauthBaslaResponse:
     """Saglayiciya gidilecek adresi uretir ve oturumu (state) saklar."""
     sag = saglayici_al(saglayici)
     yuzey = body.yuzey if body.yuzey in _YUZEYLER else "web"
-    if not _donus_adresi(yuzey):
+    niyet = body.niyet if body.niyet in _NIYETLER else "giris"
+    if not _donus_adresi(yuzey, niyet):
         raise SAGLAYICI_KAPALI
+    # (P180) niyet=kayit: iki zorunlu onay backend'de de dogrulanir — istemci
+    # kilidine guvenilmez; onay OLMADAN kayit baslamaz.
+    if niyet == "kayit" and not (body.onay_sozlesme and body.onay_kvkk):
+        raise _ONAY_GEREKLI
 
     state = secrets.token_urlsafe(32)
     nonce = secrets.token_urlsafe(16)
     dogrulayici, meydan = pkce_uret()
     redirect_uri = _callback_adresi(istek, sag.kod)
 
+    oturum = {
+        "saglayici": sag.kod,
+        "nonce": nonce,
+        "dogrulayici": dogrulayici,
+        "yuzey": yuzey,
+        "niyet": niyet,
+        "redirect_uri": redirect_uri,
+    }
+    if niyet == "kayit":
+        # Onaylar ONAY ANINDA (state) IP + zaman ile alinir; kayit tamamlaninca
+        # append-only audit'e yazilir (bkz. kayit.tesis_olustur).
+        _ip = (x_istemci_ip or (istek.client.host if istek.client else "")) or ""
+        oturum["onaylar"] = {
+            "sozlesme": bool(body.onay_sozlesme),
+            "kvkk": bool(body.onay_kvkk),
+            "ticari": bool(body.onay_ticari),
+            "ip": _ip[:64] or None,
+            "zaman": datetime.now(timezone.utc).isoformat(),
+        }
     await redis.set(
         f"oauth:state:{state}",
-        json.dumps(
-            {
-                "saglayici": sag.kod,
-                "nonce": nonce,
-                "dogrulayici": dogrulayici,
-                "yuzey": yuzey,
-                "redirect_uri": redirect_uri,
-            }
-        ),
+        json.dumps(oturum),
         ex=settings.oauth_state_ttl_seconds,
     )
 
@@ -270,6 +295,40 @@ async def _kimligi_coz(kimlik: Kimlik) -> dict:
             }
 
 
+async def _kayit_coz(kimlik: Kimlik) -> dict:
+    """(P180) niyet=kayit cozumu — kimlik/e-posta zaten var mi? (kriter 4)
+
+    1) Kimlik ZATEN BAGLI -> 'giris' (o hesaba oturum; yeni hesap ACILMAZ).
+    2) Kimlik bagli DEGIL ama e-posta TEK bir yonetici hesabiyla eslesiyor
+       -> 'mevcut_hesap' (yeni kimlik o hesaba baglanir + oturum).
+    3) Aksi halde -> 'kayit' (yeni tesis olusturulacak).
+
+    E-posta eslesmesi YALNIZ yonetici rolune ve TEK eslesmede (bkz.
+    P180-kararlar D5): e-posta tesis-kapsamli benzersizdir; farkli baglamdaki
+    (sakin) hesaba yanlis baglamayi ve coklu-tesis belirsizligini onler.
+    """
+    bagli = await _kimligi_coz(kimlik)
+    if bagli.get("tur") == "giris":
+        return bagli
+    if not kimlik.eposta:
+        return {"tur": "kayit"}
+    async with SessionLocal() as session:
+        async with session.begin():
+            satirlar = (
+                await session.execute(
+                    text("SELECT tenant_id, user_id FROM public.yonetici_by_email(:e)"),
+                    {"e": kimlik.eposta},
+                )
+            ).all()
+    if len(satirlar) == 1:
+        return {
+            "tur": "mevcut_hesap",
+            "tenant_id": str(satirlar[0].tenant_id),
+            "user_id": str(satirlar[0].user_id),
+        }
+    return {"tur": "kayit"}
+
+
 async def _callback_isle(
     istek: Request,
     saglayici: str,
@@ -292,8 +351,14 @@ async def _callback_isle(
     )
     kimlik = await kimlik_dogrula(saglayici, id_token, nonce=oturum["nonce"])
 
-    veri = await _kimligi_coz(kimlik)
+    niyet = oturum.get("niyet", "giris")
+    if niyet == "kayit":
+        veri = await _kayit_coz(kimlik)
+        veri["onaylar"] = oturum.get("onaylar")
+    else:
+        veri = await _kimligi_coz(kimlik)
     veri.update(
+        niyet=niyet,
         saglayici=kimlik.saglayici,
         subject=kimlik.subject,
         eposta=kimlik.eposta,
@@ -303,10 +368,9 @@ async def _callback_isle(
     )
     sonuc_id = await _sonucu_yaz(redis, veri)
 
-    ayirac = "&" if "?" in _donus_adresi(oturum["yuzey"]) else "?"
-    return RedirectResponse(
-        f"{_donus_adresi(oturum['yuzey'])}{ayirac}oauth={sonuc_id}", status_code=303
-    )
+    donus = _donus_adresi(oturum["yuzey"], niyet)
+    ayirac = "&" if "?" in donus else "?"
+    return RedirectResponse(f"{donus}{ayirac}oauth={sonuc_id}", status_code=303)
 
 
 @router.get("/callback/{saglayici}")
@@ -351,6 +415,10 @@ def _baglama_jetonu(kimlik: dict) -> str:
             # tuketilmis olur. Jeton kisa omurlu ve imzali; icindeki ad
             # yalniz on-doldurma icin okunur.
             "ad": kimlik.get("ad"),
+            # (P180) niyet=kayit'te onaylar jetona gomulur; tesis_olustur
+            # append-only audit'e yazar (parola yolundaki basvuru satirinin
+            # SSO karsiligi — onay + IP + zaman).
+            "onaylar": kimlik.get("onaylar"),
             "iat": int(simdi.timestamp()),
             "exp": int(
                 (
@@ -391,8 +459,23 @@ async def sonuc(
     if not ham:
         raise _OTURUM_GECERSIZ
     veri = json.loads(ham)
+    niyet = veri.get("niyet", "giris")
+    tur = veri.get("tur")
 
-    if veri.get("tur") != "giris":
+    # (P180) niyet=kayit + YENI kullanici -> kayit tamamlamaya baglama jetonu
+    # (onaylar jetonda; tesis_olustur denetime yazar).
+    if niyet == "kayit" and tur == "kayit":
+        return OauthSonucResponse(
+            durum="kayit",
+            saglayici=veri["saglayici"],
+            eposta=veri.get("eposta"),
+            relay=bool(veri.get("relay")),
+            ad=veri.get("ad"),
+            baglama_jetonu=_baglama_jetonu(veri),
+        )
+
+    # niyet=giris + kimlik bagli DEGIL -> mevcut baglama akisi (tesis kodu+SMS).
+    if niyet != "kayit" and tur != "giris":
         return OauthSonucResponse(
             durum="baglama_gerekli",
             saglayici=veri["saglayici"],
@@ -402,6 +485,9 @@ async def sonuc(
             baglama_jetonu=_baglama_jetonu(veri),
         )
 
+    # Kalanlar MEVCUT bir hesaba oturum acar:
+    #   giris+tur=giris -> normal giris · kayit+tur=giris -> kimlik zaten bagli
+    #   kayit+tur=mevcut_hesap -> e-posta eslesti, YENI kimlik BAGLANIR (kriter 4)
     async with SessionLocal() as session:
         async with session.begin():
             await set_tenant(session, veri["tenant_id"])
@@ -412,19 +498,28 @@ async def sonuc(
             ).scalar_one_or_none()
             if user is None or not user.is_active:
                 raise KIMLIK_GECERSIZ
-            # (P128) Gorev suresi disindaki denetci token ALMAZ — parolali
-            # ve kodlu yollarda oldugu gibi. Buraya konmasaydi sosyal
-            # giris o kapiyi delerdi.
+            # (P128) Gorev suresi disindaki denetci token ALMAZ.
             if gorev_penceresi_disinda(user):
                 raise _GOREV_SURESI_DISINDA
-            await session.execute(
-                OauthKimlik.__table__.update()
-                .where(
-                    OauthKimlik.saglayici == veri["saglayici"],
-                    OauthKimlik.subject == veri["subject"],
+            if tur == "mevcut_hesap":
+                session.add(
+                    OauthKimlik(
+                        tenant_id=user.tenant_id,
+                        user_id=user.id,
+                        saglayici=veri["saglayici"],
+                        subject=veri["subject"],
+                        eposta=veri.get("eposta"),
+                    )
                 )
-                .values(son_giris_at=func.now())
-            )
+            else:
+                await session.execute(
+                    OauthKimlik.__table__.update()
+                    .where(
+                        OauthKimlik.saglayici == veri["saglayici"],
+                        OauthKimlik.subject == veri["subject"],
+                    )
+                    .values(son_giris_at=func.now())
+                )
             await record_audit(
                 session,
                 action=Action.LOGIN_OK,
@@ -437,7 +532,10 @@ async def sonuc(
             )
             cift = await _issue_token_pair(redis, user)
 
-    return OauthSonucResponse(durum="giris", jetonlar=cift)
+    # (P180 / kriter 4) Kayit niyetinde MEVCUT hesaba dusulduyse kullaniciya
+    # soyle ("zaten hesabiniz var, giris yapildi").
+    durum = "mevcut_hesap" if niyet == "kayit" else "giris"
+    return OauthSonucResponse(durum=durum, jetonlar=cift)
 
 
 @router.post("/baglan/basla", response_model=OauthKayitBaslaResponse)
