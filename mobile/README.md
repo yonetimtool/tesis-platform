@@ -1055,10 +1055,17 @@ bildirimi göster**. Kod: `lib/src/features/push/`.
 
 ### google-services.json (repoya GİRMEZ)
 
-Firebase Android uygulaması kayıtlı: `com.tesisguvenlik.mobile`. Yapılandırma
-dosyası **`mobile/android/app/google-services.json`** — kök `.gitignore`'da,
-**commit edilmez**. Locale çeken herkes Firebase Console'dan
-(tesis-platform → Android app) kendi kopyasını indirip aynı yola koyar.
+Firebase Android uygulaması **`com.app.yonetiyor`** paket adına kayıtlı olmalıdır
+— bu, `android/app/build.gradle.kts` içindeki `applicationId` ile **birebir aynı**
+olmak zorundadır; `google-services` Gradle plugin'i indirdiğin dosyanın
+`package_name`'ini `applicationId` ile doğrular, uyuşmazsa build başarısız olur.
+(Eski `com.tesisguvenlik.mobile` kaydı P177 markalaşmasında `com.app.yonetiyor`'a
+geçti; Firebase Console'da bu paket için app + yeni `google-services.json` gerekir.)
+
+Yapılandırma dosyası **`mobile/android/app/google-services.json`** — kök
+`.gitignore`'da, **commit edilmez**. Locale çeken herkes Firebase Console'dan
+(tesis-platform → `com.app.yonetiyor` Android app) kendi kopyasını indirip aynı
+yola koyar.
 
 - **Dosya VARSA:** `google-services` Gradle plugin'i uygulanır (app
   `build.gradle.kts`'de koşullu `apply`), Firebase çalışır.

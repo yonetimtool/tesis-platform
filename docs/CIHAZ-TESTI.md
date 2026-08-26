@@ -76,8 +76,8 @@ kod değişikliği gerektirmez. Her adımı `[ ]` kutusunu işaretleyerek ilerle
 - [ ] **`google-services.json` dosyasını yerleştir** (push için; push denemeyecekseniz
   atlanabilir — dosya yokken build yine geçer, yalnız push sessizce devre dışı kalır):
   Firebase Console → `tesis-platform` projesi → Android uygulaması
-  (`com.tesisguvenlik.mobile`) → `google-services.json` indir →
-  **`mobile/android/app/google-services.json`** yoluna koy.
+  (`com.app.yonetiyor` — `applicationId` ile aynı olmalı) → `google-services.json`
+  indir → **`mobile/android/app/google-services.json`** yoluna koy.
   Bu dosya `.gitignore`'dadır ve **repoya girmez** (Firebase istemci kimliği içerir;
   herkes kendi kopyasını Console'dan indirir).
 
