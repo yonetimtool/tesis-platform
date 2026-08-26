@@ -16,13 +16,13 @@
 // paket) ayri bir istir ve kararlar belgesinde eksik olarak yazildi.
 //
 // -------------------------------------------------------------------------
-// DIKKAT — ICERIK CELISKISI (kararlar belgesinde de yazili)
+// (P179) ICERIK CELISKISI COZULDU — madde 2
 // -------------------------------------------------------------------------
-// Kullanim Kosullari 2. maddesi "Hesaplar tesis yonetimi tarafindan
-// acilir; herkese acik bir kayit formu yoktur." diyor. Bu turda acilan
-// yonetici self-signup formu bu cumleyle CELISIYOR. Metin BILEREK
-// duzeltilmedi: hukuki metin uydurmak yasak ve bu bir hukukcu
-// kararidir. Eksik olarak raporlandi.
+// Madde 2 eskiden "herkese acik bir kayit formu yoktur" diyordu ve yonetici
+// self-signup ile CELISIYORDU. Kullanici onayiyla yeniden yazildi: sakin/
+// personel hesabini yonetim acar, yonetici ise kaydolma ekranindan yeni tesis
+// olusturabilir. NOT: TR guncellendi; diger 6 dil (EN/AR/RU/DE/FR/ES) resmi
+// cevirisi kullanicidan gelecek — o gelene dek diller arasi GECICI tutarsizlik.
 
 export interface Bolum {
   baslik: string;
@@ -54,7 +54,7 @@ export const KULLANICI_SOZLESMESI: Belge =
         {
           baslik: "2. Hesaplar",
           paragraflar: [
-            "Hesaplar tesis yönetimi tarafından açılır; herkese açık bir kayıt formu yoktur.",
+            "Site sakini ve tesis personeli hesapları tesis yönetimi tarafından açılır. Bir tesisi yönetmek isteyen kişi ise kaydolma ekranından yeni bir tesis oluşturarak kendi yönetici hesabını açabilir.",
             "Hesabınızın güvenliğinden siz sorumlusunuz. Parolanızı paylaşmayın; şüpheli bir durumda tesis yönetimine bildirin.",
             "Bir hesabı yalnızca size verilen yetki kapsamında kullanabilirsiniz.",
           ],

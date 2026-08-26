@@ -26,7 +26,7 @@ export const KOSULLAR: BelgeSeti = {
       {
         baslik: "2. Hesaplar",
         paragraflar: [
-          "Hesaplar tesis yönetimi tarafından açılır; herkese açık bir kayıt formu yoktur.",
+          "Site sakini ve tesis personeli hesapları tesis yönetimi tarafından açılır. Bir tesisi yönetmek isteyen kişi ise kaydolma ekranından yeni bir tesis oluşturarak kendi yönetici hesabını açabilir.",
           "Hesabınızın güvenliğinden siz sorumlusunuz. Parolanızı paylaşmayın; şüpheli bir durumda tesis yönetimine bildirin.",
           "Bir hesabı yalnızca size verilen yetki kapsamında kullanabilirsiniz.",
         ],
