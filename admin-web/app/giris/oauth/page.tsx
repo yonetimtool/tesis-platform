@@ -320,6 +320,15 @@ function OauthDonus() {
             >
               {gonderiliyor ? t("ortakKaydediliyor") : t("sosyalKodGonder")}
             </button>
+            {/* (P181 Bölüm 0) Hesabı olmayan kullanıcı için kayıt yolu. Backend
+                giriş niyetinde SESSİZCE hesap AÇMAZ (P180); bu yalnız yönlendirme
+                afordansıdır. Kanonik tanıtım kayıt adresi (P179). */}
+            <p className="text-center text-sm text-metin-muted">
+              {t("sosyalHesabinYok")}{" "}
+              <a className="giris-bag" href="https://yonetiyor.com/yonetici/kayit">
+                {t("sosyalKayitOl")}
+              </a>
+            </p>
           </>
         ) : null}
 

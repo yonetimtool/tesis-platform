@@ -1721,6 +1721,8 @@ export const tr = {
   sosyalDogrula: "Doğrula ve giriş yap",
   sosyalGiriseDon: "Giriş ekranına dön",
   sosyalMevcutHesap: "Bu e-posta ile zaten bir hesabınız var, giriş yapıldı.",
+  sosyalHesabinYok: "Hesabınız yok mu?",
+  sosyalKayitOl: "Yönetici olarak kaydolun",
   sosyalOturumGecersiz: "Giriş oturumu geçersiz ya da süresi doldu.",
   sosyalYontemlerBaslik: "Giriş yöntemlerim",
   sosyalYontemYok: "Bağlı sosyal hesap yok.",

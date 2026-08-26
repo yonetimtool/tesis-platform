@@ -1659,6 +1659,8 @@ export const ru: Sozluk = {
   sosyalDogrula: "Подтвердить и войти",
   sosyalGiriseDon: "Назад ко входу",
   sosyalMevcutHesap: "У вас уже есть аккаунт с этой почтой — вход выполнен.",
+  sosyalHesabinYok: "Нет аккаунта?",
+  sosyalKayitOl: "Зарегистрироваться как управляющий",
   sosyalOturumGecersiz: "Сессия входа недействительна или истекла.",
   sosyalYontemlerBaslik: "Мои способы входа",
   sosyalYontemYok: "Привязанных аккаунтов нет.",

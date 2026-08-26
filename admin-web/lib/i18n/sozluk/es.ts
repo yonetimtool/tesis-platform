@@ -1659,6 +1659,8 @@ export const es: Sozluk = {
   sosyalDogrula: "Verificar y acceder",
   sosyalGiriseDon: "Volver al acceso",
   sosyalMevcutHesap: "Ya tiene una cuenta con este correo — ha iniciado sesión.",
+  sosyalHesabinYok: "¿No tiene una cuenta?",
+  sosyalKayitOl: "Regístrese como administrador",
   sosyalOturumGecersiz: "La sesión de inicio no es válida o ha caducado.",
   sosyalYontemlerBaslik: "Mis métodos de acceso",
   sosyalYontemYok: "No hay cuentas sociales vinculadas.",
