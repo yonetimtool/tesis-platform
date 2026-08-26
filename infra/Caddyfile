@@ -67,6 +67,9 @@
 # edilmeli:
 #   /.well-known/apple-app-site-association  (uzantisiz, application/json)
 #   /.well-known/assetlinks.json             (application/json)
+#   /.well-known/apple-developer-domain-association.txt  (text/plain, P179 —
+#     Sign in with Apple Services ID alan adi dogrulamasi; dosya deploy
+#     sonrasi elle konur)
 # Dosyalar `infra/portal/.well-known/` altinda; portal mount'u zaten var
 # (`./portal:/srv/portal`). Icerik tipi ELLE veriliyor cunku AASA'nin
 # uzantisi yok ve file_server onu `application/octet-stream` yapardi —
@@ -80,6 +83,15 @@
 	@wellknown path /.well-known/apple-app-site-association /.well-known/assetlinks.json
 	handle @wellknown {
 		header Content-Type application/json
+		root * /srv/portal
+		file_server
+	}
+	# (P179) Sign in with Apple — Services ID ALAN ADI DOGRULAMASI. Apple bu
+	# dosyayi ceker: DUZ METIN, YONLENDIRMESIZ. Dosya deploy sonrasi elle
+	# konur: infra/portal/.well-known/apple-developer-domain-association.txt
+	@apple_domain path /.well-known/apple-developer-domain-association.txt
+	handle @apple_domain {
+		header Content-Type text/plain
 		root * /srv/portal
 		file_server
 	}

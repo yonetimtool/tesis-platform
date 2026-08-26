@@ -117,10 +117,10 @@ OAUTH_MICROSOFT_TENANT=common
 Apple üç ayrı nesne ister; sırası önemli.
 
 1. **App ID** — Certificates, Identifiers & Profiles → Identifiers → **App IDs**
-   - Bundle ID: `com.app.yonetiyor` (mevcut, **değiştirmeyin**)
+   - Bundle ID: `site.yonetio.app` (iOS App Store bundle'ı, **değiştirmeyin**)
    - Capabilities: **Sign in with Apple** işaretli.
 2. **Services ID** — Identifiers → **Services IDs** → yeni
-   - Identifier: `com.app.yonetiyor.web` (web tarafının `client_id`'si)
+   - Identifier: `com.yonetiyor.web` (web tarafının `client_id`'si)
    - **Configure → Sign in with Apple**
      - Primary App ID: yukarıdaki App ID
      - **Domains and Subdomains:**
@@ -130,7 +130,7 @@ Apple üç ayrı nesne ister; sırası önemli.
      - **Return URLs:**
        - PROD → `https://api.yonetiyor.com/auth/oauth/callback/apple`
          **ve** `https://api.yonetio.site/auth/oauth/callback/apple`
-   - PROD için `com.app.yonetiyor.web` Services ID yeterlidir. (Apple TEST
+   - PROD için `com.yonetiyor.web` Services ID yeterlidir. (Apple TEST
      ayrı bir GERÇEK alan adı gerektirir — `localhost` desteklemez; ihtiyaç
      olursa ayrı bir test Services ID açılır.)
 3. **Key** — Keys → yeni anahtar
@@ -142,7 +142,7 @@ Apple üç ayrı nesne ister; sırası önemli.
 ```env
 # `client_id`: web için Services ID, mobilde de aynı akış kullanıldığı
 # için ek bir değer gerekmez.
-OAUTH_APPLE_CLIENT_ID=com.app.yonetiyor.web
+OAUTH_APPLE_CLIENT_ID=com.yonetiyor.web
 OAUTH_APPLE_TEAM_ID=<10-karakter>
 OAUTH_APPLE_KEY_ID=<10-karakter>
 # .p8 İÇERİĞİ tek satırda; satır sonları \n olarak yazılır.
