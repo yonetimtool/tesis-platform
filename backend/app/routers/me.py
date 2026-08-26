@@ -14,9 +14,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..audit import Action, record_audit
 from ..audit import audit_user
-from ..deps import get_current_user, get_tenant_db, require_role
+from ..deps import get_current_user, get_redis, get_tenant_db, require_role
 from ..errors import APIError
-from ..telefon_kodu import kod_uret_ve_gonder, kodu_dogrula
+from ..hiz_siniri import kod_istegi_say
+from ..telefon_kodu import (
+    eposta_kodu_uret_ve_gonder,
+    eposta_kodunu_dogrula,
+    kod_uret_ve_gonder,
+    kodu_dogrula,
+)
 from ..hesap_silme import hesabi_sil_veya_anonimlestir, son_admin_mi
 from ..models import AppUser, AuditLog, Checkpoint, UserDevice
 from ..schemas import (
@@ -29,6 +35,8 @@ from ..schemas import (
     HesapSilmeIstek,
     HesapSilmeSonuc,
     MeContactUpdate,
+    MeEpostaDogrulaRequest,
+    MeEpostaEkleRequest,
     MeProfileOut,
     PasswordChangeRequest,
     UserOut,
@@ -60,6 +68,7 @@ def _user_out(user: AppUser) -> UserOut:
     """AppUser -> UserOut; avatar_key varsa presigned GET URL doldurur."""
     return UserOut(
         id=user.id, tenant_id=user.tenant_id, ad=user.ad, email=user.email,
+        eposta_dogrulandi=bool(user.eposta_dogrulandi),
         role=user.role, is_active=user.is_active,
         avatar_url=presign_get(user.avatar_key) if user.avatar_key else None,
     )
@@ -177,6 +186,75 @@ async def hesap_silme_kodu_iste(
         db, tenant_id=user.tenant_id, telefon=user.telefon, amac="hesap_silme"
     )
     return {"durum": "gonderildi"}
+
+
+@router.post("/me/eposta/kod-iste", response_model=dict)
+async def eposta_dogrulama_kodu_iste(
+    body: MeEpostaEkleRequest,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(get_current_user),
+    redis=Depends(get_redis),
+) -> dict[str, str]:
+    """(P181 Bölüm 1) Mevcut kullanıcının e-postasını ekleme/doğrulama kodu.
+
+    E-postasız YA DA e-postalı-ama-doğrulanmamış kullanıcı bir adres verir; koda
+    gider. KİLİTLEME YOK — oturum sürer, bu yalnız "beklemede" durumu açar.
+    Hız sınırı e-posta başına (kaba kuvvete karşı).
+    """
+    eposta = str(body.eposta).strip().lower()
+    if "@" not in eposta or "." not in eposta.split("@")[-1]:
+        raise APIError(422, "validation_error", "eposta_gecersiz")
+    await kod_istegi_say(redis, eposta, kapsam="eposta_ekle")
+    # E-posta tenant içinde benzersiz: BAŞKA kullanıcıda kayıtlıysa reddet
+    # (uq_app_user_tenant_email zaten korur; net hata daha iyi).
+    baska = (
+        await db.execute(
+            select(AppUser.id).where(
+                AppUser.email == eposta, AppUser.id != user.id
+            )
+        )
+    ).scalar_one_or_none()
+    if baska is not None:
+        raise APIError(409, "conflict", "eposta_kullanimda")
+    await eposta_kodu_uret_ve_gonder(
+        db, tenant_id=user.tenant_id, eposta=eposta, amac="eposta_ekle"
+    )
+    return {"durum": "gonderildi"}
+
+
+@router.post("/me/eposta/dogrula", response_model=UserOut)
+async def eposta_dogrula_ekle(
+    body: MeEpostaDogrulaRequest,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(get_current_user),
+) -> UserOut:
+    """(P181 Bölüm 1) Kod doğru → e-posta yazılır ve eposta_dogrulandi=true.
+
+    Bundan sonra parola sıfırlama (Bölüm 2) ve OTP giriş (Bölüm 4) çalışır.
+    """
+    eposta = str(body.eposta).strip().lower()
+    kayit = await eposta_kodunu_dogrula(
+        db, tenant_id=user.tenant_id, eposta=eposta, kod=body.kod, amac="eposta_ekle"
+    )
+    # kod-iste ile dogrula arasında başka kullanıcı bu adresi doğrulamış olabilir:
+    # unique kısıt (uq_app_user_tenant_email) commit'te 500 verirdi; net 409 döndür.
+    baska = (
+        await db.execute(
+            select(AppUser.id).where(AppUser.email == eposta, AppUser.id != user.id)
+        )
+    ).scalar_one_or_none()
+    if baska is not None:
+        raise APIError(409, "conflict", "eposta_kullanimda")
+    kayit.durum = "onaylandi"  # tek kullanımlık: verify helper yalnız
+    kayit.karar_at = func.now()  # 'telefon_bekliyor' arar -> tekrar doğrulanamaz
+    user.email = eposta
+    user.eposta_dogrulandi = True
+    user.updated_at = func.now()
+    await audit_user(
+        db, user, Action.USER_CONTACT_UPDATE, resource_type="app_user",
+        resource_id=user.id, meta={"alan": "eposta_dogrulandi"},
+    )
+    return _user_out(user)
 
 
 @router.post("/me/hesap-sil", response_model=HesapSilmeSonuc)

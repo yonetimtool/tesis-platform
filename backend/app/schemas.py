@@ -132,10 +132,25 @@ class UserOut(BaseModel):
     tenant_id: uuid.UUID
     ad: str
     email: str | None = None  # resident'ta opsiyonel
+    # (P181 Bölüm 1) E-posta doğrulandı mı? Arayüz "beklemede" durumunu ve
+    # reset/OTP uygunluğunu buna göre gösterir.
+    eposta_dogrulandi: bool = False
     role: str
     is_active: bool
     # Profil fotografi (0005/WP-D) — kisa omurlu presigned GET URL (varsa).
     avatar_url: str | None = None
+
+
+class MeEpostaEkleRequest(BaseModel):
+    """(P181 Bölüm 1) Mevcut kullanıcının e-posta ekleme/doğrulama isteği."""
+    eposta: str = Field(min_length=3, max_length=254, examples=["ayse@ornek.com"])
+    model_config = ConfigDict(extra="forbid")
+
+
+class MeEpostaDogrulaRequest(BaseModel):
+    eposta: str = Field(min_length=3, max_length=254)
+    kod: str = Field(min_length=4, max_length=8)
+    model_config = ConfigDict(extra="forbid")
 
 
 class AvatarUpdate(BaseModel):
@@ -434,6 +449,7 @@ class MeProfileOut(BaseModel):
     id: uuid.UUID
     ad: str
     email: str | None = None  # resident'ta opsiyonel
+    eposta_dogrulandi: bool = False  # (P181 Bölüm 1)
     telefon: str | None = None
     aranabilir: bool = False
     role: str

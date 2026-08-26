@@ -107,6 +107,12 @@ ENVANTER: dict[str, tuple[str, tuple[str, str] | None]] = {
     # SINIF bir cozucu ve ayni kurallara tabi: YALNIZ uuid doner (satir,
     # e-posta, subject sizdirmaz).
     "tenant_id_by_oauth": ("public", None),
+    # (P180) SSO KAYIT'ta e-posta ile mevcut YONETICI hesabini bulur. Kimlik
+    # ONCESI: kullanicinin oturumu/tenant'i yok, cozum icin RLS bypass SART.
+    # `tenant_id_by_oauth`/`tenant_id_by_phone` ile AYNI SINIF — YALNIZ
+    # (tenant_id, user_id) doner; satir/e-posta/PII sizdirmaz. Eslesme yalniz
+    # `email_verified` saglayicilarda kullanilir (P180 guvenlik kurali).
+    "yonetici_by_email": ("public", None),
     # (P155 §7) Davet jetonunu cozer. Kimlik ONCESI: davetle gelen kisinin
     # henuz oturumu (tenant baglami) YOKTUR; cozum jeton_hash ile RLS'i
     # asar. YALNIZ jetonun ait oldugu satiri doner (tesis/rol/daire/telefon

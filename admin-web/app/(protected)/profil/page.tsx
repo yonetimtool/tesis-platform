@@ -34,6 +34,7 @@ import useSWR from "swr";
 import { Avatar } from "@/components/Avatar";
 import { YasalMetinler } from "@/components/profil/yasal-metinler";
 import { GirisYontemlerim } from "@/components/GirisYontemlerim";
+import { EpostaDogrulaKart } from "@/components/profil/eposta-dogrula-kart";
 import { ParolaAlani } from "@/components/ParolaAlani";
 import { TelefonAlani, telefonHataMetni } from "@/components/TelefonAlani";
 import { useToast } from "@/components/Toast";
@@ -65,6 +66,7 @@ type Profil = {
   id: string;
   ad: string;
   email: string | null;
+  eposta_dogrulandi: boolean;
   telefon: string | null;
   aranabilir: boolean;
   role: string;
@@ -120,6 +122,23 @@ export default function ProfilPage() {
       </h1>
 
       {error ? <HataDurumu mesaj={t("ortakHataOlustu")} /> : null}
+
+      {/* (P181 Bölüm 1) E-postasız/doğrulanmamış kullanıcıya beklemede kartı; kilitleme yok, yalnız davet. */}
+      {data && !data.eposta_dogrulandi ? (
+        <div
+          className="space-y-3 rounded-xl border p-4"
+          style={{
+            borderColor: "var(--yz-border)",
+            background: "var(--yz-surface-card)",
+          }}
+        >
+          <EpostaDogrulaKart
+            mevcutEposta={data.email}
+            dogrulandi={Boolean(data.eposta_dogrulandi)}
+            onDone={() => void mutate()}
+          />
+        </div>
+      ) : null}
 
       <div className="grid gap-6 lg:grid-cols-[13rem_minmax(0,1fr)]">
         {/* SAYFA ICI SOL MENU — `nav` etiketi bilincli: ekran okuyucu

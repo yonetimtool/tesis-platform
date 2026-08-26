@@ -464,6 +464,11 @@ class AppUser(Base):
     ad: Mapped[str] = mapped_column(Text, nullable=False)
     # personel icin zorunlu (login anahtari); resident icin opsiyonel.
     email: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: (P181 Bölüm 1) E-posta DOĞRULANDI mı? Reset (Bölüm 2) ve OTP (Bölüm 4)
+    #: bunu ZORUNLU tutar. Geriye dönük mevcut kullanıcılar false başlar.
+    eposta_dogrulandi: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
     telefon: Mapped[str | None] = mapped_column(Text, nullable=True)
     # Rol-bazli arama rizasi (C1a): numara YALNIZ riza=true iken ve yetkili
     # arayan role /call-target ile aciklanir (KVKK — amaç-sınırlı).

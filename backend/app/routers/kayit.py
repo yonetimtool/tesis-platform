@@ -283,6 +283,12 @@ async def tesis_olustur(
             # yolunda `user.pazarlama_eposta = basvuru.onay_ticari` ile ayni sinif).
             if kimlik and kimlik.get("onaylar"):
                 user.pazarlama_eposta = bool(kimlik["onaylar"].get("ticari"))
+            # (P181 Bölüm 1) SSO'da saglayici e-postasi app_user'a yazilir;
+            # saglayici DOGRULADIYSA dogrulanmis kabul edilir (reset/OTP calisir),
+            # aksi halde yazilir ama beklemede kalir. Yeni tenant -> cakisma yok.
+            if kimlik and kimlik.get("eposta"):
+                user.email = str(kimlik["eposta"]).strip().lower()
+                user.eposta_dogrulandi = bool(kimlik.get("email_verified"))
 
     # Jeton uretimi transaction DISINDA — depodaki oteki giris yollariyla
     # ayni desen (`_issue_token_pair` Redis'e yazar).
@@ -609,6 +615,7 @@ async def yonetici_tesis(
             # onu cagiran oteki yollari (admin `POST /tenants`, tohum
             # verisi) da degistirmek olurdu.
             user.email = satir.eposta
+            user.eposta_dogrulandi = True  # (P181 Bölüm 1) kod ile doğrulandı
             user.pazarlama_eposta = bool(satir.onay_ticari)
             user.pazarlama_guncelleme_at = func.now()
 
@@ -974,6 +981,7 @@ async def rol_eposta_dogrula(
             # tek-kullanim mekanizmasi yazmamak icin ayni kapi kullaniliyor
             # (`auth.rol_kayit_dogrula` ile birebir ayni desen).
             user.temp_code_hash = kayit.kod_hash
+            user.eposta_dogrulandi = True  # (P181 Bölüm 1) e-posta kodu doğrulandı
             kayit.durum = "onaylandi"
             kayit.karar_at = func.now()
 

@@ -32,7 +32,7 @@ açmaz** (P180 kuralı); bu yalnız yönlendirme afordansıdır — güvenlik de
 
 ---
 
-## Bölüm 1 — E-posta zorunlu (TASARIM; uygulama sıradaki commit'lerde)
+## Bölüm 1 — E-posta zorunlu + doğrulama beklemede (BİTTİ)
 
 **E-postasız kullanıcı raporu:** dev DB'de 73/73 aktif kullanıcı e-postasız
 (seed/test verisi — anlamlı değil). Prod sayısı için:
@@ -58,6 +58,41 @@ kullanıcının e-postasının doğrulanmış olup olmadığını tutan kalıcı
 - **Bağımlılık:** bu bayrak Bölüm 2 (reset) ve Bölüm 4 (OTP) için ÖN KOŞUL —
   "doğrulanmamış e-postaya kod/bağlantı gönderilmez" hepsi bu kolona bakar.
 
+**Uygulama:**
+- Göç `0070_eposta_dogrulandi`: `kod_amaci` enum'una `eposta_ekle` değeri +
+  `app_user.eposta_dogrulandi boolean NOT NULL DEFAULT false`. **DEFAULT korunur**
+  (ham-SQL `create_tenant_with_yoneticis` fonksiyonu kolonu adlandırmaz → NOT NULL
+  ihlali olmasın; ilk denemede default düşürülünce 225 test hata verdi).
+- Model/şema: `AppUser.eposta_dogrulandi`; `UserOut`/`MeProfileOut` alan olarak
+  döner. `MeEpostaEkleRequest`, `MeEpostaDogrulaRequest` (extra=forbid).
+- Uçlar (kimlik-doğrulamalı, hız-sınırlı, sızıntısız):
+  `POST /me/eposta/kod-iste` (adres geçerli mi → başkasında mı 409 → kod gönder),
+  `POST /me/eposta/dogrula` (kod doğru → `email` yaz + `eposta_dogrulandi=true` +
+  audit `USER_CONTACT_UPDATE`). openapi.yaml'a eklendi (sözleşme testi yeşil).
+- `eposta_dogrulandi=true` yazılan yollar: rol-eposta-doğrula, yönetici tesis
+  oluşturma, SSO (yalnız provider `email_verified=true` ise). Mevcut kullanıcı
+  false başlar → beklemede.
+- Web: `/api/me/eposta/{kod-iste,dogrula}` BFF; `EpostaDogrulaKart` bileşeni;
+  profil sayfasında doğrulanmamışsa "beklemede" kartı. 7 dile `profilEposta*`
+  anahtarları (parity yeşil).
+- Testler: `backend/tests/test_eposta_dogrula.py` (5, geçer).
+- **Kilit kayıtları** (yeni uç + kod → deterministik bekçiler): `hata_metinleri.py`
+  `METINLER`'e `eposta_gecersiz`, `eposta_kullanimda` (+ P180'den eksik kalan
+  `onay_gerekli`) 7 dilde; `test_denetci_salt_okuma` beklenen kümeye iki uç;
+  `test_secdef_kapsam` `ENVANTER`'e P180 `yonetici_by_email`; `tests/yetki/
+  rol-matrisi.txt` yeniden üretildi (iki satır, hepsi IZIN — kimlik zorunlu, rol
+  kapısı yok). Bunlar atlanınca tam suite 4 deterministik + kırmızı verdi.
+
+**Test durumu:** tam backend suite 1883 geçti / 12 atlandı; tek düşen
+`test_patrol_windows::test_range_status_order_and_counts` — izolasyonda geçer,
+sıra-bağımlı tenant pollution (filtresiz sorgu tenant-geneli sayı bekler), Böl.1 ile
+ilgisiz, kapsam dışı. admin-web: `npm run build` + i18n (33 test) yeşil.
+
+**Not (kabuk-yüzeyi yorum kuralı):** i18n tur-22 taraması `//` satır yorumlarını
+soyar (`split("//")[0]`) ama `/** */` blok ve ÇOK SATIRLI `{/* */}` JSX yorumunu
+SOYMAZ → içindeki Türkçe "sızıntı" sayılır. Bu bölümdeki yeni yorumlar `//` ya da
+TEK SATIR `{/* */}` yapıldı.
+
 ---
 
 ## Program notu (dürüstlük)
@@ -65,5 +100,5 @@ kullanıcının e-postasının doğrulanmış olup olmadığını tutan kalıcı
 P181 on bir bölümlük büyük bir programdır (auth altyapısı + göçler, 6 web düzeltme,
 özet yeniden tasarım, rapor grafikleri, rezervasyon, mobil push). Bölümler SIRAYLA,
 her biri yeşil + ayrı commit olarak ilerletilir; "kesintiye uğrarsan nerede
-kaldığın belli olsun" gereği bu belge + commit'ler durumu taşır. Bölüm 0 bitti;
-Bölüm 1 tasarımı yukarıda.
+kaldığın belli olsun" gereği bu belge + commit'ler durumu taşır. Bölüm 0 ve 1
+bitti; sıradaki Bölüm 2 (parola sıfırlama).

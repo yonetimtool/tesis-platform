@@ -187,6 +187,13 @@ KAPISIZ_MUTASYONLAR: frozenset[tuple[str, str]] = frozenset({
     # `get_current_user` kimligi zaten zorunlu kilar; eksik olan yalniz
     # ROL kapisidir ki burada anlamsizdir: her rol kendi hesabini siler.
     ("POST", "/me/hesap-sil/kod-iste"),
+    # (P181 Bölüm 1) KENDI e-postasini ekleme/dogrulama. `/me/contact` +
+    # `/me/hesap-sil/kod-iste` ile AYNI SINIF: kimlik zorunlu (get_current_user),
+    # rol kapisi anlamsiz — herkes kendi e-postasini dogrular. Kotuye kullanim
+    # hiz siniriyla kapatilir (`kod_istegi_say`, kapsam `eposta_ekle`), rol
+    # kapisiyla degil. Denetciye de acik; tesis KAYITLARINA dokunmaz.
+    ("POST", "/me/eposta/kod-iste"),
+    ("POST", "/me/eposta/dogrula"),
     ("POST", "/kvkk/onay"),
     # (P167 §1.7) KENDI BILDIRIM KANALI TERCIHI. `/me/pazarlama-tercihleri`
     # ile AYNI SINIF: kimlik zorunlu, rol kapisi anlamsiz — hangi kanaldan

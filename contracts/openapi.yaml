@@ -1201,6 +1201,71 @@ paths:
 
   # (P149) PAROLASIZ kullanici icin silme onay kodu. Parolali kullanici
   # bu ucu KULLANMAZ — silme dogrudan parolayla onaylanir.
+  /me/eposta/kod-iste:
+    post:
+      tags: [me]
+      summary: (P181) Mevcut kullanicinin e-postasini ekleme/dogrulama kodu gonderir
+      description: |
+        E-postasiz ya da dogrulanmamis kullanici bir adres verir, koda gider.
+        Kilitleme yok; oturum surer. Hiz siniri e-posta basina. Adres baska bir
+        kullanicida kayitliysa 409.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [eposta]
+              properties:
+                eposta: { type: string }
+      responses:
+        "200":
+          description: Kod gonderildi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [durum]
+                properties:
+                  durum: { type: string, enum: [gonderildi] }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "409":
+          description: E-posta baska bir kullanicida kayitli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422":
+          description: Gecersiz e-posta
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  /me/eposta/dogrula:
+    post:
+      tags: [me]
+      summary: (P181) E-posta kodunu dogrular; eposta_dogrulandi=true yapar
+      description: |
+        Kod dogruysa e-posta yazilir ve dogrulanmis isaretlenir; bundan sonra
+        parola sifirlama ve OTP giris calisir.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [eposta, kod]
+              properties:
+                eposta: { type: string }
+                kod: { type: string }
+      responses:
+        "200":
+          description: Dogrulandi (guncel kullanici)
+          content:
+            application/json: { schema: { type: object } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422":
+          description: Kod gecersiz / suresi dolmus
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
   /me/hesap-sil/kod-iste:
     post:
       tags: [me]

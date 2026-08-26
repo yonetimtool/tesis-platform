@@ -366,6 +366,9 @@ async def _callback_isle(
         subject=kimlik.subject,
         eposta=kimlik.eposta,
         relay=kimlik.relay,
+        # (P181 Bölüm 1) Saglayici e-postayi dogruladiysa app_user.email
+        # dogrulanmis yazilir (tesis_olustur) -> reset/OTP calisir.
+        email_verified=kimlik.email_verified,
         # (P155r2 / §2) Kayit formunun ad on-doldurmasi.
         ad=kimlik.ad,
     )
@@ -413,6 +416,8 @@ def _baglama_jetonu(kimlik: dict) -> str:
             "saglayici": kimlik["saglayici"],
             "subject": kimlik["subject"],
             "eposta": kimlik.get("eposta"),
+            # (P181 Bölüm 1) tesis_olustur bunu app_user.eposta_dogrulandi'ye yazar.
+            "email_verified": bool(kimlik.get("email_verified")),
             # Ad JETONA konuyor: `tesis-olustur` cagrisi callback'ten
             # DAKIKALAR sonra gelebilir ve Redis'teki sonuc o ana kadar
             # tuketilmis olur. Jeton kisa omurlu ve imzali; icindeki ad

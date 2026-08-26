@@ -173,6 +173,35 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "Ce fournisseur n'est pas lié à votre compte.",
         "es": "Este proveedor no está vinculado a su cuenta.",
     },
+    # (P180) niyet=kayit iki zorunlu onay (KVKK + kosullar) olmadan baslatilamaz.
+    "onay_gerekli": {
+        "tr": "Devam etmek için gerekli onayları verin.",
+        "en": "Please provide the required approvals to continue.",
+        "ar": "يرجى تقديم الموافقات المطلوبة للمتابعة.",
+        "ru": "Предоставьте необходимые согласия, чтобы продолжить.",
+        "de": "Bitte erteilen Sie die erforderlichen Zustimmungen, um fortzufahren.",
+        "fr": "Veuillez fournir les autorisations requises pour continuer.",
+        "es": "Proporcione las aprobaciones necesarias para continuar.",
+    },
+    # (P181 Bölüm 1) MEVCUT KULLANICI e-posta ekleme/doğrulama.
+    "eposta_gecersiz": {
+        "tr": "Geçerli bir e-posta adresi girin.",
+        "en": "Enter a valid email address.",
+        "ar": "أدخل عنوان بريد إلكتروني صالحاً.",
+        "ru": "Введите действительный адрес электронной почты.",
+        "de": "Geben Sie eine gültige E-Mail-Adresse ein.",
+        "fr": "Saisissez une adresse e-mail valide.",
+        "es": "Introduzca una dirección de correo electrónico válida.",
+    },
+    "eposta_kullanimda": {
+        "tr": "Bu e-posta adresi başka bir hesapta kullanılıyor.",
+        "en": "This email address is already used by another account.",
+        "ar": "عنوان البريد الإلكتروني هذا مستخدم بالفعل في حساب آخر.",
+        "ru": "Этот адрес электронной почты уже используется другой учётной записью.",
+        "de": "Diese E-Mail-Adresse wird bereits von einem anderen Konto verwendet.",
+        "fr": "Cette adresse e-mail est déjà utilisée par un autre compte.",
+        "es": "Esta dirección de correo electrónico ya la usa otra cuenta.",
+    },
     # SON YOL KALDIRILAMAZ: kullanicinin elinde parola, baska bir sosyal
     # kimlik ya da telefon (SMS ile giris) kalmali.
     "oauth_son_giris_yontemi": {
