@@ -49,6 +49,8 @@ from ..schemas import (
     PhoneLoginResponse,
     RefreshRequest,
     SetPasswordRequest,
+    SifreKodIstek,
+    SifreSifirlaIstek,
     TokenPair,
 )
 from ..security import (
@@ -710,6 +712,104 @@ async def eposta_giris_kodu_dogrula(
             kayit.durum = "onaylandi"
             await session.flush()
             return await _issue_token_pair(redis, user)
+
+
+@router.post("/sifre/kod-iste", response_model=KayitDurumResponse)
+async def sifre_sifirlama_kodu_iste(
+    body: SifreKodIstek,
+    redis: aioredis.Redis = Depends(get_redis),
+) -> KayitDurumResponse:
+    """(P181 Bölüm 2) "Şifremi unuttum" — E-POSTAYA sıfırlama kodu gönderir.
+
+    =======================================================================
+    E-POSTA TABANLI, SMS YOK. `giris/eposta-kod-iste` ile AYNI KURALLAR.
+    =======================================================================
+    ADRES/HESAP VARLIGINI SIZDIRMAZ: kayıtlı olmayan, pasif ya da e-postası
+    DOĞRULANMAMIŞ hesap için de AYNI yanıt döner. Aksi halde bu uç "hangi
+    adresler kayıtlı/doğrulanmış" sorgusuna dönüşürdü.
+
+    GATE `eposta_dogrulandi`: kod yalnız doğrulanmış e-postalı aktif
+    kullanıcıya gider (Bölüm 1 ön koşulu) — doğrulanmamış adrese parola
+    bağlantısı gönderilmez. Süre/deneme/hız sınırı `telefon_kodu`dan gelir.
+    """
+    kimlik = f"{body.tenant_slug}:{str(body.eposta).lower()}"
+    await kod_istegi_say(redis, kimlik, kapsam="sifre_sifirla")
+
+    async with SessionLocal() as session:
+        async with session.begin():
+            tenant_id = (
+                await session.execute(
+                    text("SELECT public.tenant_id_by_slug(:slug)"),
+                    {"slug": body.tenant_slug},
+                )
+            ).scalar_one_or_none()
+            if tenant_id is None:
+                return KayitDurumResponse(durum="onay_bekliyor")
+            await set_tenant(session, tenant_id)
+            eposta = str(body.eposta).lower()
+            user = (
+                await session.execute(
+                    select(AppUser).where(func.lower(AppUser.email) == eposta)
+                )
+            ).scalar_one_or_none()
+            # Yalnız DOĞRULANMIŞ e-postalı aktif kullanıcıya kod: doğrulanmamış
+            # adres reset yapamaz (Bölüm 1). Yanıt her durumda AYNI (sızıntısız).
+            if user is None or not user.is_active or not user.eposta_dogrulandi:
+                return KayitDurumResponse(durum="onay_bekliyor")
+            ayar = await tenant_ayari(session, tenant_id)
+            await eposta_kodu_uret_ve_gonder(
+                session, tenant_id=tenant_id, eposta=eposta,
+                amac="sifre_sifirla", ayar=ayar,
+            )
+    return KayitDurumResponse(durum="onay_bekliyor")
+
+
+@router.post("/sifre/dogrula-ve-ayarla", response_model=KayitDurumResponse)
+async def sifre_sifirla(
+    body: SifreSifirlaIstek,
+) -> KayitDurumResponse:
+    """(P181 Bölüm 2) Kod doğru ise YENİ PAROLAYI kurar.
+
+    OTURUM AÇMAZ: sıfırlama sonrası kullanıcı yeni parolasıyla taze giriş
+    yapar (görev-penceresi/denetçi kuralları giriş yolunda uygulanır; ikinci
+    bir parolasız token yolu açmayız). Geçersiz/süresi dolmuş kod net hata
+    verir; başarı yanıtı sızıntısızdır (geçerli kod zaten yalnız adres
+    sahibine gitmiştir).
+    """
+    async with SessionLocal() as session:
+        async with session.begin():
+            tenant_id = (
+                await session.execute(
+                    text("SELECT public.tenant_id_by_slug(:slug)"),
+                    {"slug": body.tenant_slug},
+                )
+            ).scalar_one_or_none()
+            if tenant_id is None:
+                raise TK_GECERSIZ
+            eposta = str(body.eposta).lower()
+            kayit = await eposta_kodunu_dogrula(
+                session, tenant_id=tenant_id, eposta=eposta,
+                kod=body.kod, amac="sifre_sifirla",
+            )
+            user = (
+                await session.execute(
+                    select(AppUser).where(func.lower(AppUser.email) == eposta)
+                )
+            ).scalar_one_or_none()
+            if user is None or not user.is_active or not user.eposta_dogrulandi:
+                raise TK_GECERSIZ
+            # Kod TUKETILIR: tekrar kullanilamaz.
+            kayit.durum = "onaylandi"
+            kayit.karar_at = func.now()
+            user.password_hash = hash_password(body.yeni_parola)
+            user.password_set = True
+            user.updated_at = func.now()
+            await record_audit(
+                session, action=Action.PASSWORD_RESET, tenant_id=tenant_id,
+                actor_user_id=user.id, actor_rol=user.role,
+                resource_type="app_user", resource_id=user.id,
+            )
+    return KayitDurumResponse(durum="onay_bekliyor")
 
 
 @router.post("/giris/kod-dogrula", response_model=TokenPair)

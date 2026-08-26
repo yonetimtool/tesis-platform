@@ -95,6 +95,45 @@ TEK SATIR `{/* */}` yapıldı.
 
 ---
 
+## Bölüm 2 — Parola sıfırlama ("şifremi unuttum") (BİTTİ)
+
+**Karar:** E-POSTA TABANLI, SMS YOK. İki uç, ikisi de public (kimlik öncesi),
+`/auth/giris/eposta-kod-*` ile birebir aynı sınıf:
+- `POST /auth/sifre/kod-iste` {tenant_slug, eposta} → **SIZINTISIZ**: hesap
+  var/yok/pasif/doğrulanmamış her durumda AYNI 200. Kod yalnız
+  `eposta_dogrulandi=true` aktif kullanıcıya gider (Bölüm 1 ön koşulu). Hız
+  sınırı ayrı kapsam `sifre_sifirla` (giriş kodu bütçesini paylaşmaz).
+- `POST /auth/sifre/dogrula-ve-ayarla` {tenant_slug, eposta, kod, yeni_parola} →
+  kod doğruysa yeni parola kurulur (güç: `validate_password_strength` — 8+,
+  büyük harf, rakam, sembol), kod tüketilir, audit `PASSWORD_RESET`.
+
+**Karar — OTURUM AÇMAZ:** Sıfırlama sonrası token DÖNMEZ; kullanıcı yeni
+parolayla taze giriş yapar. Gerekçe: ikinci bir parolasız token yolu açmamak +
+görev-penceresi/denetçi kurallarını tek yerde (giriş) tutmak.
+
+**Karar — amaç enum'u:** göç 0071 `kod_amaci`'ya `sifre_sifirla` ekler.
+
+**KRİTİK DÜZELTME (Bölüm 1 gizli hatası):** `kod_amaci` SQLAlchemy ENUM'u
+(`models.py`) `eposta_ekle`'yi (göç 0070) İÇERMİYORDU — DB enum'unda vardı ama
+Python tarafında yoktu. Bölüm 1 testleri `/me/eposta/dogrula` (kod OKUMA) yolunu
+hiç çalıştırmadığından hata GİZLİ kaldı; prod'da o uç 500 verirdi
+(`LookupError: 'eposta_ekle' is not among the defined enum values`). Bölüm 2'nin
+`sifre_sifirla` okuması bunu ortaya çıkardı. Düzeltme: modele iki değeri de ekle
++ `test_eposta_dogrula.py`'a dogrula (kod-okuma) regresyon testi eklendi.
+
+**Web:** `/giris/sifremi-unuttum` sayfası (2 adım, self-contained, public fetch);
+GirisFormu'da e-posta yüzeyinde "Şifremi unuttum" bağlantısı (tesis/e-posta
+prefill). BFF `/api/auth/sifre/{kod-iste,dogrula-ve-ayarla}` (token üretmez). 9
+i18n anahtarı × 7 dil (parity yeşil).
+
+**Kilit kayıtları:** `test_denetci_salt_okuma` (2 public uç), `rol-matrisi.txt`
+(regen), openapi.yaml (2 path + 2 şema). Yeni APIError kodu YOK (reset mevcut
+`invalid_code` + parola-güç hatasını kullanır).
+
+**Test:** `backend/tests/test_sifre_sifirla.py` (7) + eposta regresyon (1).
+
+---
+
 ## Program notu (dürüstlük)
 
 P181 on bir bölümlük büyük bir programdır (auth altyapısı + göçler, 6 web düzeltme,

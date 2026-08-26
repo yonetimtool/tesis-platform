@@ -549,6 +549,24 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
               </button>
             )}
 
+            {/* (P181 Bölüm 2) ŞİFREMİ UNUTTUM — yalnız e-posta yüzeyinde ve parola adımında; tesis/e-posta doluysa sıfırlama sayfasına taşınır. */}
+            {!telefonla && kodAdimi !== "kod" && (
+              <button
+                type="button"
+                className="odak-ters block text-xs underline"
+                style={{ color: METIN_IKINCIL }}
+                onClick={() => {
+                  const q = new URLSearchParams();
+                  if (tenantSlug) q.set("tesis", tenantSlug);
+                  if (email) q.set("eposta", email);
+                  const qs = q.toString();
+                  router.push(`/giris/sifremi-unuttum${qs ? `?${qs}` : ""}`);
+                }}
+              >
+                {t("girisSifremiUnuttum")}
+              </button>
+            )}
+
             <label className="flex cursor-pointer select-none items-center gap-2.5">
               <input
                 type="checkbox"

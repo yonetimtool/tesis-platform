@@ -1334,6 +1334,25 @@ class EpostaKodDogrulaIstek(BaseModel):
     kod: str = Field(min_length=4, max_length=12)
 
 
+# (P181 Bölüm 2) PAROLA SIFIRLAMA — "şifremi unuttum". E-POSTA TABANLI, SMS YOK.
+# `EpostaKodIstek` ile AYNI kimlik (tenant + e-posta); ayrı amaç/hız-sınırı.
+class SifreKodIstek(BaseModel):
+    tenant_slug: str = Field(min_length=1, max_length=100)
+    eposta: EmailStr
+
+
+class SifreSifirlaIstek(BaseModel):
+    tenant_slug: str = Field(min_length=1, max_length=100)
+    eposta: EmailStr
+    kod: str = Field(min_length=4, max_length=12)
+    yeni_parola: str = Field(..., min_length=8)
+
+    @field_validator("yeni_parola")
+    @classmethod
+    def _strong(cls, v: str) -> str:
+        return validate_password_strength(v)
+
+
 class KayitDurumResponse(BaseModel):
     """`POST /auth/giris/kod-iste`in KASTEN BILGISIZ yaniti.
 

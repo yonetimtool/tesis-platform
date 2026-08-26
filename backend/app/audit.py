@@ -33,6 +33,7 @@ class Action:
     LOGIN_FAIL = "login_fail"
     PASSWORD_SET = "password_set"          # ilk giris kalici parola belirleme
     PASSWORD_CHANGE = "password_change"    # oturumlu parola degistirme
+    PASSWORD_RESET = "password_reset"      # (P181) e-posta koduyla parola sifirlama
     TOKEN_REUSE = "token_reuse"            # refresh yeniden-kullanim (guvenlik)
 
     # --- kisisel veri kaynaklari (yazma) ---

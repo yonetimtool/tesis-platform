@@ -258,7 +258,10 @@ KOD_AMACI = ENUM(
     # sahipligini kanitlayan kod. GOCE EKLEYIP BURAYA EKLEMEMEK 500
     # verir — 0047'de ayni sinif hata olculdu ("'iptal' is not among the
     # defined enum values").
-    "kayit", "giris", "hesap_silme", "oauth",
+    # (P181) 'eposta_ekle': mevcut kullanıcının e-posta ekleme/doğrulama kodu
+    # (göç 0070). 'sifre_sifirla': "şifremi unuttum" kodu (göç 0071). İkisi de
+    # göçe eklenip BURAYA eklenmezse ORM okumada 500 verir (yukarıdaki uyarı).
+    "kayit", "giris", "hesap_silme", "oauth", "eposta_ekle", "sifre_sifirla",
     name="kod_amaci", create_type=False,
 )
 KAYIT_DURUM = ENUM(

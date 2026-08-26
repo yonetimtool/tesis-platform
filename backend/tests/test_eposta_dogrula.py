@@ -57,3 +57,32 @@ def test_eposta_kod_iste_BASKASININ_adresi_409(client, world):
     admin_eposta = world["admin_a"]["email"]
     r = client.post("/me/eposta/kod-iste", headers=guard, json={"eposta": admin_eposta})
     assert r.status_code == 409, r.text
+
+
+def test_eposta_dogrula_KOD_OKUR_ve_bayragi_ACAR(client, world, owner_conn):
+    """(P181) DOGRULAMA (kod okuma) yolu — 'eposta_ekle' ENUM'u ORM'de TANIMLI
+    olmali. Değilse okuma 500 verir (kod_amaci model listesi eksikti — bu test o
+    boşluğu kapatır). guard'ın login e-postası SHARED değil kendine ait olmalı;
+    guard için TAZE bir adres doğrulatıp `eposta_dogrulandi=true` bekliyoruz.
+    """
+    guard = _headers(client, world["slug_a"], world["guard_a"])
+    taze = f"p181d-{uuid.uuid4().hex[:10]}@ornek.test"
+    r = client.post("/me/eposta/kod-iste", headers=guard, json={"eposta": taze})
+    assert r.status_code == 200, r.text
+
+    # Kod HASH'li saklanir; bilinen bir kodla degistir (test_eposta_kanali deseni).
+    from app.security import hash_password
+
+    owner_conn.execute(
+        "UPDATE kayit_dogrulama SET kod_hash = %s WHERE tenant_id = %s "
+        "AND eposta = %s AND amac = 'eposta_ekle' AND durum = 'telefon_bekliyor'",
+        (hash_password("123456"), world["a"], taze),
+    )
+    owner_conn.commit()
+
+    r = client.post(
+        "/me/eposta/dogrula", headers=guard, json={"eposta": taze, "kod": "123456"}
+    )
+    assert r.status_code == 200, r.text          # 500 DEGIL (enum okuma)
+    assert r.json()["email"] == taze
+    assert r.json()["eposta_dogrulandi"] is True

@@ -811,6 +811,43 @@ paths:
       responses:
         "200": { description: token cifti }
         "422": { $ref: "#/components/responses/ValidationError" }
+  /auth/sifre/kod-iste:
+    post:
+      tags: [auth]
+      summary: "Şifremi unuttum — E-POSTAYA sıfırlama kodu gönderir"
+      security: []
+      description: |
+        **(P181 Bölüm 2)** E-POSTA TABANLI, SMS YOK. `giris/eposta-kod-iste`
+        ile AYNI mekanizma (süre/deneme/hız sınırı `telefon_kodu`dan).
+
+        **ADRES/HESAP VARLIGINI SIZDIRMAZ**: kayıtlı olmayan, pasif ya da
+        e-postası DOĞRULANMAMIŞ hesap için de AYNI yanıt döner. Kod yalnız
+        `eposta_dogrulandi=true` aktif kullanıcıya gider (Bölüm 1 ön koşulu).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SifreKodIstek" }
+      responses:
+        "200": { description: her durumda ayni yanit }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+  /auth/sifre/dogrula-ve-ayarla:
+    post:
+      tags: [auth]
+      summary: "Kod doğruysa yeni parolayı kurar"
+      security: []
+      description: |
+        **(P181 Bölüm 2)** Kod doğruysa yeni parola yazılır ve kod TÜKETİLİR.
+        OTURUM AÇMAZ — kullanıcı yeni parolasıyla taze giriş yapar. Süresi
+        dolmuş/yanlış kod ayrım yapmayan tek hata döner (`invalid_code`).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SifreSifirlaIstek" }
+      responses:
+        "200": { description: her durumda ayni yanit }
+        "422": { $ref: "#/components/responses/ValidationError" }
   /auth/giris/kod-iste:
     post:
       tags: [auth]
@@ -11855,6 +11892,20 @@ components:
         tenant_slug: { type: string, minLength: 1, maxLength: 100 }
         eposta: { type: string, format: email }
         kod: { type: string, minLength: 4, maxLength: 12 }
+    SifreKodIstek:
+      type: object
+      required: [tenant_slug, eposta]
+      properties:
+        tenant_slug: { type: string, minLength: 1, maxLength: 100 }
+        eposta: { type: string, format: email }
+    SifreSifirlaIstek:
+      type: object
+      required: [tenant_slug, eposta, kod, yeni_parola]
+      properties:
+        tenant_slug: { type: string, minLength: 1, maxLength: 100 }
+        eposta: { type: string, format: email }
+        kod: { type: string, minLength: 4, maxLength: 12 }
+        yeni_parola: { type: string, minLength: 8 }
     TelefonIstek:
       type: object
       required: [telefon]

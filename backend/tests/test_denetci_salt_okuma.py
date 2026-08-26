@@ -115,6 +115,14 @@ KAPISIZ_MUTASYONLAR: frozenset[tuple[str, str]] = frozenset({
     # Yazdigi tek sey bekleyen bir kod satiridir; hesap ACMAZ.
     ("POST", "/auth/giris/eposta-kod-iste"),
     ("POST", "/auth/giris/eposta-kod-dogrula"),
+    # (P181 Bölüm 2) PAROLA SIFIRLAMA ("şifremi unuttum"). `giris/eposta-kod-*`
+    # ile AYNI SINIF: kişi henüz oturum açmamıştır, rol kapısı OLAMAZ. Kötüye
+    # kullanım hız sınırıyla kapatılır (`kod_istegi_say`, kapsam `sifre_sifirla`)
+    # ve uç adres/hesap varlığını SIZDIRMAZ (kayıtsız/doğrulanmamış için de aynı
+    # yanıt). `dogrula-ve-ayarla` yalnız o kullanıcının KENDI parolasını kurar —
+    # başka tesise dokunmaz; kodu yalnız e-posta sahibi almıştır.
+    ("POST", "/auth/sifre/kod-iste"),
+    ("POST", "/auth/sifre/dogrula-ve-ayarla"),
     # --- (P177 §4-§6) YENI KAYIT AKISI ---
     # Bes ucun de rol kapisi OLAMAZ: kisi henuz oturum acmamistir —
     # `/auth/kayit/tesis-olustur` ve `/auth/kayit/rol-*` ile AYNI SINIF.
