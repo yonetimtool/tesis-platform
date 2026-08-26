@@ -213,6 +213,25 @@ flutter build apk --release \
 Mobil, foto presigned URL'lerini API'den alır ve doğrudan `storage.yonetio.site`'a
 PUT/GET yapar — ayrı yapılandırma gerekmez.
 
+### 9.1 ⚠️ YAYIN SONRASI — App Links için Play RELEASE SHA-256'yı `assetlinks.json`'a ekle
+
+AAB Play'e yüklenip **Play App Signing** devreye girdikten sonra, Play'in
+**ÜRETTİĞİ** imza anahtarının **SHA-256** parmak izini `assetlinks.json`'a eklemek
+ZORUNLUDUR — yoksa davet bağı (`https://<portal>/davet/...`) **yayınlanan
+uygulamada artık uygulamayı açmaz**, tarayıcıda kalır. (Yerel debug imzası ayrı;
+release anahtarını Google tutar.)
+
+- [ ] Play Console → **App integrity → App signing → SHA-256** parmak izini kopyala
+- [ ] `infra/portal/.well-known/assetlinks.json`'daki yer tutucuyu doldur — adım adım:
+      `docs/derin-baglanti-kurulum.md` §1b → Caddy'yi `--force-recreate` ile yenile
+- [ ] Doğrula: `curl -s https://<portal>/.well-known/assetlinks.json | jq .`
+
+> **NOT — Google girişi bu SHA'ya BAĞLI DEĞİL.** Uygulama Google girişini
+> *backend üzerinden tarayıcı akışıyla* (özel şema dönüşü) yapar; native Google
+> Sign-In / Firebase Auth **kullanmaz**. Bu yüzden Firebase'e RELEASE SHA-1
+> eklemek Google girişi için GEREKMEZ — tek gerçek gereklilik yukarıdaki App
+> Links SHA-256'sıdır. Ayrıntı: `docs/oauth-kurulum.md`.
+
 ## 10. Şifreli yedekleme cron'u
 
 ```bash

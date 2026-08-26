@@ -70,6 +70,7 @@ mobile/build/
 # Firebase kimlikleri (ASLA commit'lenmez)
 infra/secrets/
 mobile/android/app/google-services.json
+mobile/ios/Runner/GoogleService-Info.plist
 
 # Kapı koşum günlükleri (infra/kapilar.sh) — yerel, sürüm kontrolüne girmez.
 .kapilar/

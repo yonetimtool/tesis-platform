@@ -9,11 +9,32 @@ plugins {
 }
 
 // FCM: google-services.json .gitignore'da (repoya girmez; her gelistirici kendi
-// kopyasini koyar — bkz. mobile/README.md). Dosya yoksa plugin uygulanmaz ki
-// build kirilmasin; o build'de Firebase calisma zamaninda baslatilamaz ve
-// uygulama push'u sessizce devre disi birakir.
+// kopyasini koyar — bkz. mobile/README.md).
+//
+// DOSYA VARSA: google-services plugin'i uygulanir. Plugin, dosyadaki
+// `package_name`i `applicationId` (com.app.yonetiyor) ile DOGRULAR; uyusmazsa
+// "No matching client found for package name ..." ile ACIK HATA verir —
+// paket uyusmazligi SESSIZCE GECMEZ.
+//
+// DOSYA YOKSA: debug/dev build kirilmadan calisir (push sessizce devre disi).
+// AMA RELEASE build FCM'siz uretilemez: assemble/bundleRelease'de acik hata.
 if (file("google-services.json").exists()) {
     apply(plugin = "com.google.gms.google-services")
+} else {
+    gradle.taskGraph.whenReady {
+        val releaseYapim = allTasks.any { t ->
+            val ad = t.name
+            ad.contains("Release") &&
+                (ad.startsWith("assemble") || ad.startsWith("bundle") || ad.startsWith("package"))
+        }
+        if (releaseYapim) {
+            throw org.gradle.api.GradleException(
+                "google-services.json YOK: release build FCM'siz uretilemez " +
+                    "(paket com.app.yonetiyor). Firebase Console'dan indirip " +
+                    "mobile/android/app/ altina koyun."
+            )
+        }
+    }
 }
 
 // (P150) YUKLEME ANAHTARI — Play App Signing kullaniliyor.
