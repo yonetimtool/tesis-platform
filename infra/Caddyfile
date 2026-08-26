@@ -5,7 +5,9 @@
 # docker-compose.prod.yml ortam degiskenlerinden gelir ({$VAR}).
 #
 # Alt-alanlar:
-#   kok/www. -> admin-web:3000  (genel portal + /gizlilik, /kosullar)
+#   kok/www. -> tanitim-web:3000  (tanitim + /kullanici-sozlesmesi, /kvkk-aydinlatma,
+#               /cerez-politikasi; ESKI yollar /gizlilik,/kosullar,/hesap-silme,/davet
+#               -> app.'a 301)
 #   api.     -> api:8000        (FastAPI)
 #   panel.   -> admin-web:3000  (Next.js BFF)
 #   storage. -> minio:9000      (foto presigned PUT/GET; Host KORUNUR => s3v4 imza gecerli)
@@ -139,28 +141,25 @@
 	# GECMEZ (handle gruplari karsilikli dislayici).
 	import wellknown
 
-	# (P127) TANITIM SITESI ARTIK GERCEK: kok/www UYGULAMAYA gider.
+	# (P179) KOK ARTIK TANITIM-WEB (apps/tanitim-web). Yeni hukuki rotalar
+	# — /kullanici-sozlesmesi, /kvkk-aydinlatma, /cerez-politikasi — orada;
+	# Google OAuth izin ekrani + Apple bunlarin 200 donmesini ISTER.
 	#
-	# P120'de burasi STATIK bir yer tutucuydu ve gerekcesi suydu: "admin-web'in
-	# `/` rotasi `/dashboard`a, oradan `/login`e gider; markanin ana adresi bir
-	# YONETICI GIRIS EKRANI olamaz". O gerekce ARTIK GECERSIZ — uygulama
-	# KONAKTAN yuzeyi cozuyor (lib/yuzey.ts): kok/www `tanitim` yuzeyidir ve
-	# middleware orada oturum kapisini HIC calistirmaz.
+	# ESKI YOLLAR admin-web'de KALIR ve tanitim-web'de YOKTUR: yayindaki
+	# istemciler (App Store/Play, mobil yapim, Play veri-silme adresi)
+	# `yonetiyor.com/{gizlilik,kosullar,hesap-silme,davet/...}` kullaniyor.
+	# Bunlar calisma alanina (app.yonetiyor.com = admin-web) 301'lenir;
+	# `{uri}` KORUNUR, jeton/derin yollar kaybolmaz. YOL BAZLI BOLME YOK
+	# (iki Next app `/_next/*` onekini paylasir; P177'de olculup elendi).
 	#
-	# NEDEN ARTIK STATIK DEGIL: tanitim sitesi 7 DILDE ve hukuki sayfalarla
-	# ayni dil cozumunu (cerez > Accept-Language) kullanmali. Statik HTML'de
-	# bu, ayni sayfanin yedi kopyasi ve ikinci bir dil mantigi demekti.
-	#
-	# `handle` TEK BLOK: yer tutucu icin gereken `@uygulama` ayrimi (yalniz
-	# gizlilik/kosullar/_next uygulamaya gitsin) ARTIK GEREKSIZ — her sey
-	# uygulamanindir. Bilinmeyen yollarda Next'in kendi 404'u doner (statik
-	# `file_server`in 404'u ile ayni sonuc, dogru sayfa ile).
-	#
-	# (P155 §8) `handle` ile SARILDI: well-known `handle`si ile karsilikli
-	# dislayici olsun diye. Disarida bir `reverse_proxy`, well-known
-	# dosyalarini da uygulamaya proxy'lerdi.
+	# `.well-known` yukarida `import wellknown` ile TERMINAL — 301'lenmez
+	# (iOS/Android dogrulayicilari 3xx izlemez).
+	@eskiYollar path /davet/* /gizlilik /gizlilik/* /kosullar /kosullar/* /hesap-silme /hesap-silme/*
+	handle @eskiYollar {
+		redir {$TANITIM_ESKI_HEDEF}{uri} permanent
+	}
 	handle {
-		reverse_proxy admin-web:3000
+		reverse_proxy tanitim-web:3000
 	}
 }
 
