@@ -217,7 +217,22 @@ def test_APPLE_PRIVATE_RELAY_isaretlenir(rsa_cifti, monkeypatch):
     kimlik = _coz("apple", jeton)
     assert kimlik.relay is True
     assert kimlik.eposta == "abc123@privaterelay.appleid.com"
+    # (P180 guvenlik) Apple private relay Apple-kontrollu -> dogrulanmis sayilir.
+    assert kimlik.email_verified is True
     oauth_mod.jwks_onbellegi_temizle()
+
+
+def test_EMAIL_VERIFIED_saglayicidan_okunur(rsa_cifti, google_hazir):
+    """(P180 guvenlik) `email_verified` okunur — e-posta TABANLI hesap eslesmesi
+    (kayit->mevcut_hesap) bunun TRUE olmasini ister; hesap ele gecirme onlemi.
+    """
+    # Eksik -> False (dogrulanmamis sayilir).
+    assert _coz("google", _jeton(rsa_cifti)).email_verified is False
+    # Dizge "true" ve bool True -> True (saglayicilar iki bicimde de gonderebilir).
+    assert _coz("google", _jeton(rsa_cifti, email_verified="true")).email_verified is True
+    assert _coz("google", _jeton(rsa_cifti, email_verified=True)).email_verified is True
+    # "false" -> False.
+    assert _coz("google", _jeton(rsa_cifti, email_verified="false")).email_verified is False
 
 
 def test_MICROSOFT_common_kiracisinda_ISSUER_ONEKLE_dogrulanir(rsa_cifti, monkeypatch):

@@ -72,6 +72,13 @@ Sıralı çözüm (niyet=kayıt callback'inde):
      bu kişi zaten "kayıt" butonuna bastığına göre **yeni tesis** açması meşrudur.
 - Kullanıcıya durum açıkça bildirilir ("Bu e-posta ile zaten hesabınız var, giriş
   yapıldı") — callback sonucundaki `durum` alanıyla.
+- **GÜVENLİK (hesap ele geçirme önlemi):** e-posta tabanlı eşleşme YALNIZ
+  sağlayıcı e-postayı **doğruladıysa** (`id_token.email_verified` = true; Apple
+  private relay Apple-kontrollü → doğrulanmış) yapılır. Doğrulanmamışsa yeni kayıt
+  gibi devam edilir — aksi halde saldırgan kurbanın adresini iddia eden
+  doğrulanmamış bir hesapla mevcut yönetici hesabına bağlanabilirdi. Kimlik
+  eşleşmesi (sağlayıcı+subject) bu riskten etkilenmez. (Otomatik güvenlik
+  taraması bu açığı yakaladı; `Kimlik.email_verified` ile kapatıldı.)
 
 ## D6 — Apple özel durumu (Kriter 4, 5)
 

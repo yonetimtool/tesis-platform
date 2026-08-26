@@ -310,7 +310,10 @@ async def _kayit_coz(kimlik: Kimlik) -> dict:
     bagli = await _kimligi_coz(kimlik)
     if bagli.get("tur") == "giris":
         return bagli
-    if not kimlik.eposta:
+    # (P180 guvenlik) E-posta TABANLI eslesme YALNIZ saglayici e-postayi
+    # DOGRULADIYSA: dogrulanmamis e-posta ile mevcut bir yonetici hesabina
+    # baglamak hesap ele gecirme olurdu. Dogrulanmamissa yeni kayit gibi devam.
+    if not kimlik.eposta or not kimlik.email_verified:
         return {"tur": "kayit"}
     async with SessionLocal() as session:
         async with session.begin():

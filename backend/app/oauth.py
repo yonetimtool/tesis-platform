@@ -254,6 +254,12 @@ class Kimlik:
     subject: str
     #: YALNIZ GORUNTULEME. Eslesmede kullanilmaz (goc 0048).
     eposta: str | None
+    #: (P180 guvenlik) Saglayici e-postayi DOGRULADI mi? (`id_token.email_
+    #: verified`). E-POSTA TABANLI hesap eslesmesi (kayit->mevcut_hesap) icin
+    #: ZORUNLU: dogrulanmamis e-posta ile bir hesaba baglamak HESAP ELE
+    #: GECIRME olurdu (saldirgan kurbanin adresini iddia eden dogrulanmamis
+    #: bir hesap acar). Kimlik eslesmesi (saglayici+subject) bundan ETKILENMEZ.
+    email_verified: bool = False
     #: Apple'in private relay adresi mi? Arayuz bunu kullaniciya soyler.
     relay: bool = False
     #: (P155r2 / §2) Saglayicinin bildirdigi ad soyad — KAYIT FORMUNU
@@ -310,6 +316,12 @@ async def kimlik_dogrula(kod: str, id_token: str, *, nonce: str | None = None) -
     # bagladim" sorusunu yanitlar.
     relay = bool(eposta) and str(eposta).endswith("@privaterelay.appleid.com")
 
+    # (P180 guvenlik) `email_verified` bool ya da "true"/"false" dizgesi gelebilir
+    # (saglayiciya gore). Yalniz kesin TRUE dogrulanmis sayilir. Apple private
+    # relay adresi Apple'in kontrolundedir -> dogrulanmis kabul edilir.
+    ev = iddialar.get("email_verified")
+    email_verified = ev is True or str(ev).lower() == "true" or relay
+
     # AD: Google ve Microsoft `name` iddiasini `profile` kapsamiyla verir.
     # APPLE VERMEZ — Apple adi yalniz ILK yetkilendirmede, `id_token`da
     # DEGIL, `form_post` govdesindeki `user` alaninda gonderir ve bir daha
@@ -323,6 +335,7 @@ async def kimlik_dogrula(kod: str, id_token: str, *, nonce: str | None = None) -
         saglayici=sag.kod,
         subject=subject,
         eposta=str(eposta) if eposta else None,
+        email_verified=email_verified,
         relay=relay,
         ad=str(ad).strip() or None if ad else None,
     )
