@@ -31,6 +31,12 @@ için mutlaka yeniden derlenir.
   tanımlı); SMS yok. Prod'da gerçek kod e-postası için `SMTP_HOST/USER/PASSWORD/
   FROM` dolu olmalı (boşsa gönderim LOG'a düşer, sessizce "gönderildi" demez).
 
+## Bölüm 3 — Parola değiştirme (giriş sonrası)
+
+- **Göç:** YOK. **Yeniden derle:** YOK. **Yeni env:** YOK.
+- Zaten mevcuttu (`PATCH /me/password` + profil `SifreDegistir`), yalnız
+  doğrulandı — dağıtım gerektirmez.
+
 ---
 
 ## Göç sırası özet

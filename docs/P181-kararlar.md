@@ -134,10 +134,38 @@ i18n anahtarı × 7 dil (parity yeşil).
 
 ---
 
+## Bölüm 3 — Parola değiştirme (giriş sonrası) (ZATEN VARDI, DOĞRULANDI)
+
+**Bulgu:** Bu özellik P181'den ÖNCE tamamen mevcuttu ve testliydi — yeni kod
+gerekmedi (fabrikasyon YAPILMADI):
+- Backend `PATCH /me/password` (`change_my_password`): mevcut parola doğrulanır
+  (yanlışsa 400 `mevcut_parola_hatali`), yeni parola gücü şema düzeyinde ölçülür,
+  başarıda `PASSWORD_CHANGE` audit. Oturum (refresh) devam eder.
+- Frontend `SifreDegistir` bileşeni (profil sayfası): mevcut/yeni/yeni-tekrar,
+  tekrar-eşleşme istemcide, `apiSend PATCH /api/me/password`, toast.
+- Testler: `test_profile.py` 7/7 geçer (happy path, yanlış mevcut 400, kısa yeni
+  422, sakin kendi parolası).
+
+**Karar — parolasız kullanıcı dalı DOKUNULMADI (kapsam):** `change_my_password`,
+`password_hash IS NULL` kullanıcıda telefon KODU (`amac='hesap_silme'`, SMS)
+ister. Bu:
+1. Web profil arayüzünden ERİŞİLEMEZ (personel her zaman parolalıdır; UI'da kod
+   alanı yok) — yani Bölüm 3'ün web kapsamı dışında.
+2. Yalnız MOBİL sakin (P148) senaryosunda anlamlı; parolasız hesap silme kodu
+   yeniden kullanımıdır, P181 öncesinden gelir.
+3. P181 "SMS YOK" kuralı YENİ akışlara EK SMS koymamaktır; bu var olan mobil yol
+   sökülmedi. İleride mobilde e-posta-tabanlı eşdeğere taşınabilir (Bölüm 10
+   sonrası ayrı iş olarak NOT edildi) — web Bölüm 3 kapsamında değil.
+
+**Sonuç:** Bölüm 3 yeni kod olmadan DOĞRULANDI; bu bölüm belge-güncellemesi
+olarak işlenir.
+
+---
+
 ## Program notu (dürüstlük)
 
 P181 on bir bölümlük büyük bir programdır (auth altyapısı + göçler, 6 web düzeltme,
 özet yeniden tasarım, rapor grafikleri, rezervasyon, mobil push). Bölümler SIRAYLA,
 her biri yeşil + ayrı commit olarak ilerletilir; "kesintiye uğrarsan nerede
-kaldığın belli olsun" gereği bu belge + commit'ler durumu taşır. Bölüm 0 ve 1
-bitti; sıradaki Bölüm 2 (parola sıfırlama).
+kaldığın belli olsun" gereği bu belge + commit'ler durumu taşır. Bölüm 0-3 bitti
+(3 zaten vardı, doğrulandı); sıradaki Bölüm 4 (e-posta OTP ile giriş).
