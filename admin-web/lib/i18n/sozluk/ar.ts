@@ -1658,6 +1658,7 @@ export const ar: Sozluk = {
   sosyalKod: "رمز التحقق",
   sosyalDogrula: "تحقق وسجّل الدخول",
   sosyalGiriseDon: "العودة إلى تسجيل الدخول",
+  sosyalMevcutHesap: "لديك حساب بهذا البريد الإلكتروني بالفعل — تم تسجيل الدخول.",
   sosyalOturumGecersiz: "جلسة تسجيل الدخول غير صالحة أو منتهية.",
   sosyalYontemlerBaslik: "طرق تسجيل دخولي",
   sosyalYontemYok: "لا توجد حسابات مرتبطة.",

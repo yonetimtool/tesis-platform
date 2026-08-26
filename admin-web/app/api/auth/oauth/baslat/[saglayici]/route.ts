@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { anonimVekil } from "@/lib/backend";
+import { anonimVekil, istemciIp } from "@/lib/backend";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,8 +16,11 @@ export async function POST(
   ctx: { params: Promise<{ saglayici: string }> },
 ): Promise<NextResponse> {
   const { saglayici } = await ctx.params;
+  // (P180) niyet=kayit onaylarinin IP'si icin gercek istemci adresini gecir.
+  const ip = istemciIp(req.headers);
   return anonimVekil(
     `/auth/oauth/baslat/${encodeURIComponent(saglayici)}`,
     await req.json().catch(() => ({})),
+    ip ? { "x-istemci-ip": ip } : undefined,
   );
 }

@@ -384,7 +384,10 @@ export function KayitFormu() {
         <span className="h-px flex-1 bg-cizgi" />
       </div>
 
-      <SsoDugmeleri kilitli={!onaylarTamam} />
+      <SsoDugmeleri
+            kilitli={!onaylarTamam}
+            onaylar={{ sozlesme: onaySozlesme, kvkk: onayKvkk, ticari: onayTicari }}
+          />
 
       {/* KILIDIN SEBEBI YAZILIYOR. Tiklanamayan bir dugme, sebebi
           soylenmezse bozuk gorunur — kullanici onaylarla dugmeler

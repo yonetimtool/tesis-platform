@@ -160,9 +160,12 @@ const ETIKET: Record<string, string> = {
 const DUGME_ANAHTARI = {
   giris: "sosyalIleDevam",
   bagla: "sosyalYontemEkle",
+  // (P180) niyet=kayit'te butonlar tanitim tarafinda secildigi icin bu bileşen
+  // genelde gorunmez; yine de tur tam olsun diye "ile devam et" metnini kullanir.
+  kayit: "sosyalIleDevam",
 } as const;
 
-export function niyetiYaz(niyet: "giris" | "bagla") {
+export function niyetiYaz(niyet: "giris" | "bagla" | "kayit") {
   try {
     sessionStorage.setItem(OAUTH_NIYET, niyet);
   } catch {
@@ -170,13 +173,21 @@ export function niyetiYaz(niyet: "giris" | "bagla") {
   }
 }
 
+/** (P180) SSO kayit onaylari — saglayiciya gitmeden ONCE isaretlenmis olur. */
+export interface SosyalOnaylar {
+  sozlesme: boolean;
+  kvkk: boolean;
+  ticari: boolean;
+}
+
 export function SosyalGiris({
   niyet,
   yuzey = "web",
   kayitRolu,
   davetJetonu,
+  onaylar,
 }: {
-  niyet: "giris" | "bagla";
+  niyet: "giris" | "bagla" | "kayit";
   yuzey?: "web" | "mobil";
   /** (P155r2) Kayit akisindan gelindiyse: secilen rol. Donuste `/kayit`
    *  kaldigi yerden devam edebilsin diye saglayiciya gitmeden saklanir. */
@@ -184,6 +195,9 @@ export function SosyalGiris({
   /** (P155 §7) Davet web yedeginden gelindiyse: donuste `/davet/sosyal`
    *  ile tamamlanacak jeton. */
   davetJetonu?: string;
+  /** (P180) niyet="kayit" icin iki zorunlu onay + istege bagli ticari.
+   *  Backend de dogrular; burada gonderilmemeleri 422 verir. */
+  onaylar?: SosyalOnaylar;
 }) {
   const t = useT();
   const [saglayicilar, setSaglayicilar] = useState<string[]>([]);
@@ -213,12 +227,22 @@ export function SosyalGiris({
     setHata(null);
     setBekleyen(saglayici);
     try {
+      // (P180) niyet="kayit"te niyet + onaylar gonderilir; backend state'e
+      // yazar ve iki zorunlu onayi DOGRULAR (istemci kilidine guvenilmez).
+      // IP'yi BFF ekler (x-istemci-ip) — gercek istemci adresi sunucuda.
+      const govde: Record<string, unknown> = { yuzey };
+      if (niyet === "kayit") {
+        govde.niyet = "kayit";
+        govde.onay_sozlesme = !!onaylar?.sozlesme;
+        govde.onay_kvkk = !!onaylar?.kvkk;
+        govde.onay_ticari = !!onaylar?.ticari;
+      }
       const r = await fetch(
         `/api/auth/oauth/baslat/${encodeURIComponent(saglayici)}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ yuzey }),
+          body: JSON.stringify(govde),
         },
       );
       const d = (await r.json().catch(() => null)) as

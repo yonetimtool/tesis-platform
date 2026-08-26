@@ -241,11 +241,23 @@ export async function backendPhoneLogin(body: {
  * Yanit AYNEN gecer: sunucunun "adimlari ayirt ETTIRMEYEN" metni burada
  * yeniden yazilmamali.
  */
+/** (P180) Ters vekil arkasindaki GERCEK istemci adresi — onay IP'si icin. */
+export function istemciIp(basliklar: Headers): string | null {
+  const xff = basliklar.get("x-forwarded-for");
+  if (xff) {
+    // Ilk deger EN DIS istemcidir; sonrakiler vekil zinciridir.
+    const ilk = xff.split(",")[0]?.trim();
+    if (ilk) return ilk;
+  }
+  return basliklar.get("x-real-ip");
+}
+
 export async function anonimVekil(
   path: string,
   body: unknown,
+  extraHeaders?: Record<string, string>,
 ): Promise<NextResponse> {
-  const res = await callBackend(path, "POST", undefined, body);
+  const res = await callBackend(path, "POST", undefined, body, extraHeaders);
   const data = await res.json().catch(() => null);
   return NextResponse.json(data, { status: res.status });
 }

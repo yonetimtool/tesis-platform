@@ -1658,6 +1658,7 @@ export const fr: Sozluk = {
   sosyalKod: "Code de vérification",
   sosyalDogrula: "Vérifier et se connecter",
   sosyalGiriseDon: "Retour à la connexion",
+  sosyalMevcutHesap: "Vous avez déjà un compte avec cet e-mail — vous êtes connecté.",
   sosyalOturumGecersiz: "La session de connexion est invalide ou expirée.",
   sosyalYontemlerBaslik: "Mes méthodes de connexion",
   sosyalYontemYok: "Aucun compte social lié.",

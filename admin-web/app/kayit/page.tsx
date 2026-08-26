@@ -6,7 +6,12 @@ import { useEffect, useState } from "react";
 
 import { DilSecici } from "@/components/DilSecici";
 import { ErrorBox, btnGhost, btnPrimary, cardCls, inputCls } from "@/components/form";
-import { SosyalGiris, kayitSosyalSonucOku } from "@/components/SosyalGiris";
+import {
+  SosyalGiris,
+  kayitSosyalSonucOku,
+  kayitTaslagiYaz,
+  niyetiYaz,
+} from "@/components/SosyalGiris";
 import { YonetioLogo } from "@/components/YonetioLogo";
 import { ParolaAlani } from "@/components/ParolaAlani";
 import { useT } from "@/lib/i18n/kullan";
@@ -167,6 +172,48 @@ export default function KayitSayfasi() {
     // kullanici duzeltebilir. Apple ad vermez → alan bos kalir.
     if (s.ad) setAd(s.ad);
     setAdim("bilgiler");
+  }, []);
+
+  /**
+   * (P180) TANITIM'DAN GELINDI mi? `/kayit?saglayici=X&niyet=kayit&os=1&ok=1&ot=`
+   * -> OAuth'u niyet=kayit + onaylarla OTOMATIK baslat. Kullanici saglayiciyi
+   * tanitim sayfasinda ZATEN secti ve onaylari isaretledi; buradaki UI'yi
+   * gostermeden devret (kullanici giris ekranina DUSMEZ). window.location:
+   * useSearchParams Suspense ister; efekt zaten yalniz istemcide kosar.
+   *
+   * Donuste (/giris/oauth -> durum=kayit -> /kayit) URL TEMIZDIR (parametre yok)
+   * -> bu efekt erken doner, ustteki `kayitSosyalSonucOku` devrali r.
+   */
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    const saglayici = sp.get("saglayici");
+    if (sp.get("niyet") !== "kayit" || !saglayici) return;
+    void (async () => {
+      try {
+        const r = await fetch(
+          `/api/auth/oauth/baslat/${encodeURIComponent(saglayici)}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              yuzey: "web",
+              niyet: "kayit",
+              onay_sozlesme: sp.get("os") === "1",
+              onay_kvkk: sp.get("ok") === "1",
+              onay_ticari: sp.get("ot") === "1",
+            }),
+          },
+        );
+        const d = (await r.json().catch(() => null)) as { adres?: string } | null;
+        // Hata / SSO kayit kapali (503, adres yok) -> normal kayit ekrani gorunur.
+        if (!r.ok || !d?.adres) return;
+        niyetiYaz("kayit");
+        kayitTaslagiYaz({ rol: "yonetici" });
+        window.location.href = d.adres;
+      } catch {
+        // Sessiz: baslatilamazsa kullanici normal kayit ekranini gorur.
+      }
+    })();
   }, []);
 
   // ============================ ADIM 3 =================================== //

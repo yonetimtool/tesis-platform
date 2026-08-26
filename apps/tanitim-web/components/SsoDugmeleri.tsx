@@ -28,6 +28,11 @@ import { APP_ADRESI, SSO_APPLE, SSO_GOOGLE, SSO_MICROSOFT } from "@/config/site"
  * bugun de calisan akistir ve DEGISTIRILMEDI. Sartnamenin "MEVCUT KIMLIK
  * SISTEMI BOZULMAYACAK" maddesiyle dogrudan ilgili.
  *
+ * (P180) NIYET=KAYIT: dugmeler artik GIRIS ekranina degil KAYIT akisina gider
+ * (`/kayit?niyet=kayit`) ve onaylari tasir. app.yonetiyor.com o parametrelerle
+ * OAuth'u niyet=kayit baslatir; kullanici giris ekranina DUSMEZ. Onaylar backend
+ * `baslat`ta da dogrulanir (URL parametresi tek basina yeterli degildir).
+ *
  * ZORUNLU ONAYLAR BURADA DA GECERLI: iki kutu isaretlenmeden hicbir
  * dugme calismaz (`kilitli`). Parola yolunda onay arayip sosyal yolda
  * aramamak, onayi bir formalite hâline getirirdi.
@@ -40,7 +45,25 @@ const SAGLAYICILAR: Saglayici[] = [
   { kod: "apple", ad: "Apple", acik: SSO_APPLE },
 ];
 
-export function SsoDugmeleri({ kilitli }: { kilitli: boolean }) {
+export function SsoDugmeleri({
+  kilitli,
+  onaylar,
+}: {
+  kilitli: boolean;
+  /** (P180) Kayit akisina taşınacak onaylar (butonlar zaten kilitli olduğu
+   *  için os/ok tıklanabilirken 1'dir; ot kullanıcının seçimi). */
+  onaylar: { sozlesme: boolean; kvkk: boolean; ticari: boolean };
+}) {
+  const kayitUrl = (kod: string) => {
+    const p = new URLSearchParams({
+      saglayici: kod,
+      niyet: "kayit",
+      os: onaylar.sozlesme ? "1" : "0",
+      ok: onaylar.kvkk ? "1" : "0",
+      ot: onaylar.ticari ? "1" : "0",
+    });
+    return `${APP_ADRESI}/kayit?${p.toString()}`;
+  };
   return (
     <div className="space-y-2.5">
       {SAGLAYICILAR.map((s) => {
@@ -68,7 +91,7 @@ export function SsoDugmeleri({ kilitli }: { kilitli: boolean }) {
         return (
           <a
             key={s.kod}
-            href={`${APP_ADRESI}/login?saglayici=${s.kod}`}
+            href={kayitUrl(s.kod)}
             className={`${ortak} hover:border-mavi hover:text-mavi`}
           >
             {s.ad} ile devam et

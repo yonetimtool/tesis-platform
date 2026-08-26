@@ -1658,6 +1658,7 @@ export const de: Sozluk = {
   sosyalKod: "Bestätigungscode",
   sosyalDogrula: "Bestätigen und anmelden",
   sosyalGiriseDon: "Zurück zur Anmeldung",
+  sosyalMevcutHesap: "Sie haben bereits ein Konto mit dieser E-Mail — Sie sind angemeldet.",
   sosyalOturumGecersiz: "Die Anmeldesitzung ist ungültig oder abgelaufen.",
   sosyalYontemlerBaslik: "Meine Anmeldemethoden",
   sosyalYontemYok: "Keine verknüpften Social-Konten.",

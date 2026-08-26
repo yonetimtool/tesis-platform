@@ -44,13 +44,14 @@ type Sonuc = {
   error?: { message?: string };
 };
 
-type Adim = "yukleniyor" | "tesis" | "kod" | "hata";
+type Adim = "yukleniyor" | "tesis" | "kod" | "hata" | "mevcut";
 
 // BFF uclari ve niyet degerleri MODUL DUZEYINDE sabit: ucluda dizge
 // yazmak `sabit-metin` taramasini (hakli olarak) tetikliyor — o tarama
 // ucludeki her dizgeyi cevrilmemis metin adayi sayar.
 const NIYET_BAGLA = "bagla";
 const NIYET_GIRIS = "giris";
+const NIYET_KAYIT = "kayit";
 const UC_SONUC = "/api/auth/oauth/sonuc";
 const UC_BAGLANTILAR = "/api/auth/oauth/baglantilarim";
 const UC_BAGLAN_BASLA = "/api/auth/oauth/baglan/basla";
@@ -116,6 +117,28 @@ function OauthDonus() {
         }
         if (niyet === NIYET_BAGLA) {
           router.replace("/profil");
+          return;
+        }
+        if (niyet === NIYET_KAYIT) {
+          // (P180) Kayit niyeti. durum=kayit -> kayit tamamlama (/kayit);
+          // mevcut_hesap -> oturum acildi + "zaten hesabiniz var"; giris ->
+          // kimlik zaten bagliydi, oturum acildi.
+          if (d?.durum === "kayit" && d.baglama_jetonu) {
+            kayitSosyalSonucYaz({
+              rol: "yonetici",
+              baglamaJetonu: d.baglama_jetonu,
+              saglayici: d.saglayici ?? "",
+              ad: d.ad ?? undefined,
+            });
+            router.replace("/kayit");
+            return;
+          }
+          if (d?.durum === "mevcut_hesap") {
+            setAdim("mevcut");
+            return;
+          }
+          router.replace("/");
+          router.refresh();
           return;
         }
         if (d?.durum === "baglama_gerekli") {
@@ -321,6 +344,25 @@ function OauthDonus() {
               onClick={() => void kodGonder()}
             >
               {gonderiliyor ? t("ortakKaydediliyor") : t("sosyalDogrula")}
+            </button>
+          </>
+        ) : null}
+
+        {/* (P180 kriter 4) E-posta zaten kayitli: oturum ACILDI (cerez yazildi),
+            kullaniciya durum soylenir. Hesabin VARLIGI yalniz saglayici e-postayi
+            DOGRULADIYSA buraya duser (backend email_verified kapisi) -> var
+            olmayan/dogrulanmamis hesap bu mesaji GORMEZ, sizinti yok. */}
+        {adim === "mevcut" ? (
+          <>
+            <p className="text-sm text-metin-body">{t("sosyalMevcutHesap")}</p>
+            <button
+              className={btnPrimary}
+              onClick={() => {
+                router.replace("/");
+                router.refresh();
+              }}
+            >
+              {t("kayitDevam")}
             </button>
           </>
         ) : null}
