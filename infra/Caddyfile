@@ -43,7 +43,7 @@
 # Cloudflare Tunnel arkasinda TLS'i CLOUDFLARE sonlandirir ve ACME
 # dogrulamasi origin'e HIC ULASAMAZ — HTTP-01 istegi Cloudflare'in
 # "Always Use HTTPS" kurali yuzunden kenarda 308'leniyor:
-#   curl -D- http://app-test.../.well-known/acme-challenge/x
+#   curl -D- http://<tunel-konak>/.well-known/acme-challenge/x
 #   -> HTTP/1.1 308 ... Server: cloudflare
 # Yani o kurulumda Let's Encrypt sertifikasi ALINAMAZ; alinmis olanlar da
 # KASIMDA YENILENEMEZ. Ic sertifika bu bagimliligi tumden kaldirir:
@@ -175,23 +175,11 @@
 # `www.<IDN>` BILEREK YOK: Kerem'in DNS kaydinda IDN alan adi icin @, app ve
 # panel var, **www yok**. Cozulmeyen bir ada sertifika istemek ACME hatasi
 # uretir ve Caddy'nin acilisini bozar — DNS'te olmayan konak buraya yazilmaz.
-# (P154) KONAK ADI ARTIK DEGISKEN — `app.` oneki SABIT DEGIL.
-#
-# NEDEN: test sunucusu Cloudflare Tunnel arkasinda kuruldu ve ucretsiz
-# sertifika IKI SEVIYELI alt alani (`app.test.yonetio.site`) kapsamadigi
-# icin adlar TEK SEVIYEYE indi: `app-test.yonetio.site`. Bu blok
-# `app.{$PORTAL_DOMAIN}` yazdigi surece o ad icin HICBIR SITE ureTMIYOR,
-# dolayisiyla Caddy ona SERTIFIKA DA ALMIYOR.
-#
-# Kusur sinsi bicimde gizlendi: tunel origin'e SNI'siz baglanirken istek
-# varsayilan bloga dusup tanitim sayfasi donuyordu (yani "calisiyor" gibi
-# gorunuyordu). SNI acilinca eslesen sertifika bulunamadi -> 502.
-# Olculdu: /data/caddy/certificates altinda api-test, panel-test,
-# storage-test, test VAR; app-test YOK.
-#
-# `APP_DOMAIN` varsayilani compose'ta `app.${PORTAL_DOMAIN}` olarak
-# turetiliyor — yani PROD DAVRANISI DEGISMEZ; yalniz tek seviyeli ad
-# kullanan kurulumlar degiskeni ezer.
+# (P154) KONAK ADI DEGISKEN — `{$APP_DOMAIN}` (kanonik `app.yonetiyor.com`) ve
+# IDN bicimi `{$APP_DOMAIN_IDN}`. Varsayilan compose'ta `app.${PORTAL_DOMAIN}`
+# olarak turetilir; farkli bir konak kullanan kurulum degiskeni .env'de ezer.
+# DNS'te olmayan bir konagi buraya yazmayin: cozulmeyen ada sertifika istemek
+# ACME hatasi uretir ve Caddy'nin acilisini bozar.
 {$APP_DOMAIN}, {$APP_DOMAIN_IDN} {
 	{$CADDY_TLS}
 	@kanonikDisi not host {$APP_DOMAIN}
@@ -203,11 +191,12 @@
 }
 
 # --- API ------------------------------------------------------------------ #
-# YENI ALANDA API ALT-ALANI ACILMADI (api.yönetiyor.com YOK): mobil yapimin
-# icine gomulu adres `api.yonetio.site` ve bu tur o adres DEGISMIYOR. Iki
-# API adresi acmak, hangisinin kanonik oldugunu belirsizlestirir ve CORS/
-# cerez yuzeyini bedelsiz buyuturdu.
-{$API_DOMAIN} {
+# (goc) API IKI HOSTNAME'den servis edilir: kanonik `api.yonetiyor.com`
+# ({$API_DOMAIN}) VE eski `api.yonetio.site` ({$API_DOMAIN_ESKI}). YAYINDAKI
+# mobil surumler eski adrese derlenmis; ikisi de DOGRUDAN servis eder — 301 YOK,
+# cunku native istemci POST'u yonlendirmeyi izlemez. CORS izin listesi kanonik
+# WEB origin'leridir (panel./app.yonetiyor.com); API host'lari origin degildir.
+{$API_DOMAIN}, {$API_DOMAIN_ESKI} {
 	{$CADDY_TLS}
 	import security_headers
 	encode gzip zstd
@@ -242,13 +231,12 @@
 # bir istek bile gitmez. Blogu tumden silmek ise `docker compose config`
 # ile depoyu ayristirirdi.
 #
-# Test sunucusu `.env.prod`da ezer: TANITIM_DOMAIN=test.yonetio.site
+# Test sunucusu TANITIM_DOMAIN'i kendi degeriyle ezer (bkz. .env.test.example).
 #
 # =========================================================================
 # ESKI YOLLAR KIRILMIYOR — 301 ILE CALISMA ALANINA
 # =========================================================================
-# `test.yonetio.site` bugun admin-web'i sunuyor ve UZERINDE CALISAN
-# YOLLAR VAR:
+# `{$TANITIM_DOMAIN}` uzerinde admin-web'in sundugu, CALISAN YOLLAR VAR:
 #   /davet/<jeton>  -> davet e-postalarindaki bag (PORTAL_BASE_URL)
 #   /gizlilik /kosullar /hesap-silme -> hukuki belgeler
 # Bunlari tanitim-web'e vermek 404 uretirdi; admin-web'e YOL BAZLI

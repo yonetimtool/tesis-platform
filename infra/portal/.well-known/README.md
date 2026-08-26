@@ -29,8 +29,8 @@ snippet'i ve portal bloğundaki `handle @wellknown`).
 
 Caddy bu dosyaları **portal bloğunun tüm konaklarında** servis eder
 (`PORTAL_DOMAIN` + eski + IDN). Yani:
-- **Test:** `.env.test`'te `PORTAL_DOMAIN=test.yonetio.site` → dosyalar
-  `https://test.yonetio.site/.well-known/...` adresinde.
+- **Test:** test sunucusunun `PORTAL_DOMAIN` değeriyle (bkz.
+  `infra/.env.test.example`) o konağın `/.well-known/...` adresinde.
 - **Prod:** `PORTAL_DOMAIN=yonetiyor.com` (+ eski `yonetio.site`) → aynı
   dosyalar orada.
 

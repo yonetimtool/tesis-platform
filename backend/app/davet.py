@@ -68,8 +68,8 @@ def jeton_hashle(duz: str) -> str:
 def davet_bagi(duz_jeton: str) -> str:
     """`https://<portal>/davet/<jeton>` — taban ortam degiskeninden.
 
-    Test → `test.yonetio.site`, prod → `yonetiyor.com`; ikisi de
-    `PORTAL_BASE_URL` ile ayarlanir (kod degismez)."""
+    Taban `PORTAL_BASE_URL` ile ayarlanir (kod degismez); kanonik deger
+    `https://yonetiyor.com`."""
     taban = settings.portal_base_url.rstrip("/")
     return f"{taban}/davet/{duz_jeton}"
 

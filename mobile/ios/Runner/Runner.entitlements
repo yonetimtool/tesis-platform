@@ -18,7 +18,6 @@
 	<!-- (P155 §8) UNIVERSAL LINKS — davet bagi
 	     (https://<portal>/davet/<jeton>) uygulamayi dogrudan acsin.
 	     Alan adlari SABIT (Team ID BURADA DEGIL, sunucudaki AASA'da):
-	       test.yonetio.site  — test ortami
 	       yonetiyor.com      — prod (yeni birincil alan)
 	       yonetio.site       — prod (eski alan, hâlâ calisir)
 	     KONSOL ISI: Apple Developer'da App ID'ye "Associated Domains"
@@ -27,7 +26,6 @@
 	     baglanti ancak YENI surumle calisir. -->
 	<key>com.apple.developer.associated-domains</key>
 	<array>
-		<string>applinks:test.yonetio.site</string>
 		<string>applinks:yonetiyor.com</string>
 		<string>applinks:yonetio.site</string>
 	</array>

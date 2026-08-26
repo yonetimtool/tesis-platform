@@ -16,7 +16,7 @@ iOS/Android bağlantıyı uygulamaya yönlendirmez).
 
 > **UYARI (şartname §8):** App Store'daki **build 3** bu yetkilendirmelere
 > sahip değil. Derin bağlantı ancak **yeni bir sürümle** çalışır. Bu tur
-> test ortamında (`test.yonetio.site`) doğrulanacak.
+> prod alan adında (`yonetiyor.com`) doğrulanacak.
 
 ---
 
@@ -27,7 +27,7 @@ iOS/Android bağlantıyı uygulamaya yönlendirmez).
 | iOS bundle id | `site.yonetio.app` |
 | Android applicationId | `com.app.yonetiyor` |
 | Davet yolu öneki | `/davet/` |
-| Alan adları | `test.yonetio.site` (test) · `yonetiyor.com` + `yonetio.site` (prod) |
+| Alan adları | `yonetiyor.com` + `yonetio.site` (prod) |
 
 ---
 
@@ -56,9 +56,9 @@ adının kökünde `application/json` ile, **yönlendirmesiz** servis ediyor
 Dosyaları düzenledikten sonra sunucuda Caddy'yi yeniden başlatmaya gerek
 yok (salt-okunur mount, dosya değişince yansır); **doğrula:**
 ```bash
-curl -sI https://test.yonetio.site/.well-known/apple-app-site-association | grep -i content-type
+curl -sI https://yonetiyor.com/.well-known/apple-app-site-association | grep -i content-type
 # beklenen: application/json  ·  301/302 OLMAMALI
-curl -s  https://test.yonetio.site/.well-known/assetlinks.json | jq .
+curl -s  https://yonetiyor.com/.well-known/assetlinks.json | jq .
 ```
 
 ---
@@ -74,8 +74,8 @@ curl -s  https://test.yonetio.site/.well-known/assetlinks.json | jq .
    yeniden üretir ya da manuel profili yenile.)
 
 > Kod tarafı hazır: `ios/Runner/Runner.entitlements` içinde
-> `com.apple.developer.associated-domains` = `applinks:test.yonetio.site`,
-> `applinks:yonetiyor.com`, `applinks:yonetio.site`. Xcode'da **Signing &
+> `com.apple.developer.associated-domains` = `applinks:yonetiyor.com`,
+> `applinks:yonetio.site`. Xcode'da **Signing &
 > Capabilities**'te "Associated Domains" satırı görünmeli (entitlements
 > dosyasından okunur).
 

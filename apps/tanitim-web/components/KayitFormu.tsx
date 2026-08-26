@@ -24,12 +24,12 @@ import { SsoDugmeleri } from "./SsoDugmeleri";
  *   2) Kod                 -> basvuru dogrulanir, kurulum jetonu
  *   3) Site adi            -> MEVCUT tesis mekanizmasiyla tesis acilir
  *
- * TESIS ADI ADIMI NEDEN BURADA, app-test'te DEGIL: §0 "MEVCUT KIMLIK
+ * TESIS ADI ADIMI NEDEN BURADA, calisma alaninda DEGIL: §0 "MEVCUT KIMLIK
  * SISTEMI BOZULMAYACAK" diyor ve Play kapali testi mevcut sistemle
  * yapilacak. Panele yeni bir ilk-giris ekrani eklemek, bugun calisan
  * giris akisina dokunmak olurdu. Yolculuk ayni: yonetici siteyi
  * adlandirir, Tesis ID'sini ekranda gorur, e-postasina da alir ve
- * app-test'e HAZIR bir tesisle girer. Karar ve gerekcesi
+ * app.yonetiyor.com'a HAZIR bir tesisle girer. Karar ve gerekcesi
  * docs/P177-kararlar.md'de.
  *
  * =========================================================================

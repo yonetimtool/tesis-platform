@@ -15,8 +15,8 @@ import { describe, expect, it } from "vitest";
  * KULLANICININ TIKLADIGI bir baglantidir (kaynak yuklemesi degil).
  */
 const IZINLI = [
-  "https://app-test.yonetio.site",
-  "https://test.yonetio.site",
+  "https://app.yonetiyor.com",
+  "https://yonetiyor.com",
   "https://play.google.com/store/apps/details",
   "http://api:8000",
 ];

@@ -1,18 +1,17 @@
 // ==========================================================================
 // (P177) SITE SABITLERI — adresler, bayraklar, magaza baglantilari.
 // ==========================================================================
-// HEPSI ORTAM DEGISKENINDEN OKUNUR ve varsayilanlari TEST kurulumudur.
-// Sebep: bu tur YALNIZ test sunucusunda (192.168.1.25) yayina girecek;
-// prod (192.168.1.105) DONDURULMUS. Varsayilani prod adresleri yapmak,
-// yanlislikla prod'a isaret eden bir yapi uretme riski demekti.
+// HEPSI ORTAM DEGISKENINDEN OKUNUR; varsayilanlar KANONIK prod adresleridir.
+// Test sunucusu (192.168.1.25) bunlari kendi ortam degiskenleriyle ezer
+// (bkz. infra/.env.test.example). Prod (192.168.1.105) DONDURULMUS.
 
 /** Yoneticinin GIRIS yapacagi calisma alani. Sakine GONDERILMEZ (§6). */
 export const APP_ADRESI =
-  process.env.NEXT_PUBLIC_APP_ADRESI ?? "https://app-test.yonetio.site";
+  process.env.NEXT_PUBLIC_APP_ADRESI ?? "https://app.yonetiyor.com";
 
 /** Tanitim sitesinin kendi kanonik adresi (metadata/OG icin). */
 export const SITE_ADRESI =
-  process.env.NEXT_PUBLIC_SITE_ADRESI ?? "https://test.yonetio.site";
+  process.env.NEXT_PUBLIC_SITE_ADRESI ?? "https://yonetiyor.com";
 
 /**
  * MAGAZA BAGLANTILARI.

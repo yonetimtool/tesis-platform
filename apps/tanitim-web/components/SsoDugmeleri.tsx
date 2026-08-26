@@ -24,7 +24,7 @@ import { APP_ADRESI, SSO_APPLE, SSO_GOOGLE, SSO_MICROSOFT } from "@/config/site"
  * kaydetmek, yeni bir CORS kokeni acmak ve jetonlari bir PAZARLAMA
  * alan adinda saklamak. Uc yeni guvenlik yuzeyi, sifir kazanc.
  *
- * Bu yuzden dugmeler kimlik yuzeyine (app-test) DEVREDER; oradaki akis
+ * Bu yuzden dugmeler kimlik yuzeyine (app.yonetiyor.com) DEVREDER; oradaki akis
  * bugun de calisan akistir ve DEGISTIRILMEDI. Sartnamenin "MEVCUT KIMLIK
  * SISTEMI BOZULMAYACAK" maddesiyle dogrudan ilgili.
  *

@@ -118,7 +118,7 @@ def test_ticari_ileti_kapisi_GONDERIM_YOLUNDA():
 # =========================================================================== #
 def test_davet_metni_TESIS_ID_icerir_CALISMA_ALANI_BAGLANTISI_ICERMEZ():
     """Sartname §6: "Eklenen kisiye giden e-posta TESIS ID icerir;
-    app-test.yonetio.site baglantisi ICERMEZ. Bu kisiler web panele
+    app.yonetiyor.com baglantisi ICERMEZ. Bu kisiler web panele
     girmez, sadece mobil uygulamayi kullanir."
 
     METIN URETICISINDEN OLCULUYOR, gonderilmis bir e-postadan degil:
@@ -132,7 +132,7 @@ def test_davet_metni_TESIS_ID_icerir_CALISMA_ALANI_BAGLANTISI_ICERMEZ():
 
     govde = davet_mesaji(
         "Oltu Sitesi",
-        "https://test.yonetio.site/davet/ORNEKJETON",
+        "https://yonetiyor.com/davet/ORNEKJETON",
         "OLTU-260821",
     )
     # TESIS ID VAR.
@@ -141,8 +141,8 @@ def test_davet_metni_TESIS_ID_icerir_CALISMA_ALANI_BAGLANTISI_ICERMEZ():
     # NOT: 'app.'/'panel.' SEMA ONEKIYLE capali ('://app.'), bare DEGIL —
     # cunku Play Store paket id'si `com.app.yonetiyor` icinde 'app.' geciyor
     # ve bu bir calisma-alani LINKI degil (yanlis pozitif). Asil yasak, metne
-    # `https://app-test.yonetio.site` gibi bir web workspace HOST'unun sizmasi.
-    for yasak in ("app-test", "://app.", "panel-test", "://panel."):
+    # `https://app.yonetiyor.com` gibi bir web workspace HOST'unun sizmasi.
+    for yasak in ("://app.", "://panel."):
         assert yasak not in govde, f"davet metninde '{yasak}' gecmemeli: {govde}"
 
 

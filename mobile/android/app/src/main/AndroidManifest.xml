@@ -46,13 +46,13 @@
                  `/.well-known/assetlinks.json`i dogrular (Caddy servis
                  ediyor). Parmak izi Play App Signing anahtarininki olmali
                  (KONSOL ISI — bkz. docs/derin-baglanti-kurulum.md).
-                 UC ALAN: test + prod(yeni) + prod(eski). YOL ONEKI /davet:
-                 diger bag turleri (gizlilik/hesap-silme) tarayicida kalir. -->
+                 IKI ALAN: prod(yeni yonetiyor.com) + prod(eski yonetio.site).
+                 YOL ONEKI /davet: diger bag turleri (gizlilik/hesap-silme)
+                 tarayicida kalir. -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
-                <data android:scheme="https" android:host="test.yonetio.site" android:pathPrefix="/davet"/>
                 <data android:scheme="https" android:host="yonetiyor.com" android:pathPrefix="/davet"/>
                 <data android:scheme="https" android:host="yonetio.site" android:pathPrefix="/davet"/>
             </intent-filter>

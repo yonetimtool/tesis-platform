@@ -36,17 +36,18 @@ olur. Her ortam için **ayrı istemci** açılır.
 
 **3. İKİ ORTAMIN ALAN ADLARI (her adım bunlara bakar).**
 
-| | **TEST** | **CANLI (prod)** |
+| | **TEST/dev** | **CANLI (prod)** |
 |---|---|---|
-| API | `api-test.yonetio.site` | `api.yonetio.site` |
-| Panel (platform) | `panel-test.yonetio.site` | `panel.yonetio.site` |
-| Uygulama (tesis) | `app-test.yonetio.site` | `app.yonetio.site` |
-| Portal | `test.yonetio.site` | `yonetiyor.com` (IDN: `xn--ynetiyor-n4a.com`) |
+| API | `localhost:8000` | `api.yonetiyor.com` (+ eski `api.yonetio.site`) |
+| Panel (platform) | `localhost:3000` | `panel.yonetiyor.com` |
+| Uygulama (tesis) | `localhost:3000` | `app.yonetiyor.com` |
+| Portal | `localhost:3000` | `yonetiyor.com` (IDN: `xn--ynetiyor-n4a.com`) |
 
-> Canlı API neden `yonetio.site` (yeni alan `yonetiyor.com` değil):
-> App Store'daki mobil yapımın **içine gömülü** adres `api.yonetio.site`
-> ve o tur o adresi değiştirmiyor. İki API adresi açmak hangisinin
-> kanonik olduğunu belirsizleştirirdi (`infra/Caddyfile`).
+> Canlı API **İKİ hostname'den** servis edilir: kanonik `api.yonetiyor.com`
+> VE App Store/Play'de yayında olan sürümlerin gömülü adresi `api.yonetio.site`
+> (yaşamaya devam eder — `infra/Caddyfile` dual-serve). Her sağlayıcıya İKİ
+> redirect URI kaydedin (kanonik + eski). Google/Microsoft TEST için
+> `http://localhost` kabul eder; Apple ETMEZ (aşağıda).
 
 ---
 
@@ -64,8 +65,9 @@ olur. Her ortam için **ayrı istemci** açılır.
    - Application type: **Web application**
    - Name: `Yonetio TEST` (canlı için ayrı: `Yonetio PROD`)
    - **Authorized redirect URIs** — tam olarak (istemci başına BİR tane):
-     - `Yonetio TEST` → `https://api-test.yonetio.site/auth/oauth/callback/google`
-     - `Yonetio PROD` → `https://api.yonetio.site/auth/oauth/callback/google`
+     - `Yonetio TEST` → `http://localhost:8000/auth/oauth/callback/google`
+     - `Yonetio PROD` → `https://api.yonetiyor.com/auth/oauth/callback/google`
+       **ve** `https://api.yonetio.site/auth/oauth/callback/google` (ikisi de)
    - "Authorized JavaScript origins" **gerekmez** (kod akışı kullanıyoruz,
      tarayıcıda jeton işlemiyoruz).
 4. Çıkan **Client ID** ve **Client secret** değerlerini alın.
@@ -88,8 +90,9 @@ OAUTH_GOOGLE_CLIENT_SECRET=<...>
      kilitlemek, sakinlerin kişisel Microsoft hesaplarını dışarıda
      bırakırdı.
    - Redirect URI: platform **Web**, adres:
-     - TEST kaydı → `https://api-test.yonetio.site/auth/oauth/callback/microsoft`
-     - PROD kaydı → `https://api.yonetio.site/auth/oauth/callback/microsoft`
+     - TEST kaydı → `http://localhost:8000/auth/oauth/callback/microsoft`
+     - PROD kaydı → `https://api.yonetiyor.com/auth/oauth/callback/microsoft`
+       **ve** `https://api.yonetio.site/auth/oauth/callback/microsoft`
 2. **Certificates & secrets → New client secret** → değeri **hemen**
    kopyalayın (bir daha gösterilmez).
 3. **API permissions**: `openid`, `email`, `profile` (Microsoft Graph →
@@ -121,15 +124,15 @@ Apple üç ayrı nesne ister; sırası önemli.
    - **Configure → Sign in with Apple**
      - Primary App ID: yukarıdaki App ID
      - **Domains and Subdomains:**
-       - TEST Services ID → `api-test.yonetio.site`
-       - PROD Services ID → `api.yonetio.site`
+       - PROD Services ID → `api.yonetiyor.com` **ve** `api.yonetio.site`
+       - (Apple `localhost` KABUL ETMEZ → TEST için gerçek bir alan adı
+         gerekir; pratikte Apple'ı yalnız PROD'da doğrulayın.)
      - **Return URLs:**
-       - TEST → `https://api-test.yonetio.site/auth/oauth/callback/apple`
-       - PROD → `https://api.yonetio.site/auth/oauth/callback/apple`
-   - **İKİ AYRI Services ID açın** (`com.app.yonetiyor.web.test` ve
-     `com.app.yonetiyor.web`): Apple bir Services ID'de birden çok alan
-     adına izin verse de, canlı istemciyi test için düzenlemek yukarıdaki
-     2. kuralı çiğnerdi.
+       - PROD → `https://api.yonetiyor.com/auth/oauth/callback/apple`
+         **ve** `https://api.yonetio.site/auth/oauth/callback/apple`
+   - PROD için `com.app.yonetiyor.web` Services ID yeterlidir. (Apple TEST
+     ayrı bir GERÇEK alan adı gerektirir — `localhost` desteklemez; ihtiyaç
+     olursa ayrı bir test Services ID açılır.)
 3. **Key** — Keys → yeni anahtar
    - **Sign in with Apple** işaretle, Primary App ID'yi seç
    - `.p8` dosyasını indirin — **BİR KEZ indirilir**, kaybolursa yeni
@@ -155,15 +158,15 @@ OAUTH_APPLE_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\nMIGT...\n-----END PRIVATE K
 
 ## 4. ORTAK AYARLAR (her ortam için)
 
-**TEST** (`infra/.env`):
+**TEST/dev** (`infra/.env`):
 
 ```env
 # Sağlayıcıya bildirilen redirect_uri'nin tabanı. TERS VEKİL ARKASINDA
 # ZORUNLU: istekten türetilen adres (iç konak, http, farklı port) kayıtlı
 # adresle tutmaz ve giriş "redirect_uri mismatch" ile patlar.
-OAUTH_CALLBACK_TABAN=https://api-test.yonetio.site
+OAUTH_CALLBACK_TABAN=http://localhost:8000
 # Callback sonrası tarayıcının gönderileceği yerler. BOŞ = O YÜZEY KAPALI.
-OAUTH_WEB_DONUS=https://app-test.yonetio.site/giris/oauth
+OAUTH_WEB_DONUS=http://localhost:3000/giris/oauth
 OAUTH_MOBIL_DONUS=com.app.yonetiyor://oauth
 ```
 
@@ -225,11 +228,11 @@ değişkeni yok. Yani yapılandırma **tek yerde**: api servisi.
 
 ```bash
 # 1) Sağlayıcı açık mı?
-curl -s https://api-test.yonetio.site/auth/oauth/saglayicilar
+curl -s http://localhost:8000/auth/oauth/saglayicilar
 # {"saglayicilar":["google","microsoft","apple"]}
 
 # 2) Yetkilendirme adresi üretiliyor mu?
-curl -s -X POST https://api-test.yonetio.site/auth/oauth/baslat/google \
+curl -s -X POST http://localhost:8000/auth/oauth/baslat/google \
      -H 'Content-Type: application/json' -d '{"yuzey":"web"}'
 # {"adres":"https://accounts.google.com/o/oauth2/v2/auth?...","state":"..."}
 ```

@@ -46,7 +46,10 @@ services:
     environment:
       <<: *tz
       ACME_EMAIL: ${ACME_EMAIL:?ACME_EMAIL gerekli (Let's Encrypt bildirimleri)}
-      API_DOMAIN: ${API_DOMAIN:-api.yonetio.site}
+      API_DOMAIN: ${API_DOMAIN:-api.yonetiyor.com}
+      # (goc) YAYINDAKI mobil surumler api.yonetio.site'a derlenmis — o hostname
+      # YASIYOR; Caddy API'yi HER IKI hostname'den de servis eder (dual-serve).
+      API_DOMAIN_ESKI: ${API_DOMAIN_ESKI:-api.yonetio.site}
       PANEL_DOMAIN: ${PANEL_DOMAIN:-panel.yonetiyor.com}
       PANEL_DOMAIN_ESKI: ${PANEL_DOMAIN_ESKI:-panel.yonetio.site}
       PANEL_DOMAIN_IDN: ${PANEL_DOMAIN_IDN:-panel.xn--ynetiyor-n4a.com}
@@ -60,12 +63,9 @@ services:
       # ESKI kok alan — kapatilmadi. Mobil yapimin icindeki hukuki belge
       # adresleri (`https://yonetio.site/gizlilik`) buraya bakiyor.
       PORTAL_DOMAIN_ESKI: ${PORTAL_DOMAIN_ESKI:-yonetio.site}
-      # (P154) TESIS CALISMA ALANI KONAGI. Varsayilan `app.<portal>` —
-      # yani PROD DAVRANISI AYNEN KORUNUR. Tek seviyeli ad kullanan
-      # kurulumlar (orn. Cloudflare Tunnel + ucretsiz sertifika:
-      # `app-test.yonetio.site`) bunu .env'de ezer. Caddyfile'da `app.`
-      # oneki SABIT yazildigi surece o adlar icin site blogu — ve
-      # dolayisiyla SERTIFIKA — hic uretilmiyordu.
+      # (P154) TESIS CALISMA ALANI KONAGI. Varsayilan `app.<portal>` =
+      # kanonik `app.yonetiyor.com`; PROD DAVRANISI AYNEN KORUNUR. Farkli bir
+      # konak kullanan kurulum bunu .env'de ezer.
       APP_DOMAIN: ${APP_DOMAIN:-app.${PORTAL_DOMAIN:-yonetiyor.com}}
       APP_DOMAIN_IDN: ${APP_DOMAIN_IDN:-app.${PORTAL_DOMAIN_IDN:-xn--ynetiyor-n4a.com}}
       # (P154) TLS saglayicisi. BOS = otomatik HTTPS (prod davranisi).
@@ -75,15 +75,15 @@ services:
       #
       # `tanitim.localhost` gercek bir alan adi DEGIL ve olmasi da
       # gerekmiyor: Caddy `.localhost` adlarina ACME'ye HIC GITMEDEN
-      # dahili sertifika verir. Varsayilani `test.yonetio.site` yapmak,
-      # PROD Caddy'sinin test alan adi icin Let's Encrypt'e basvurmasi
-      # demekti — prod DONDURULMUS ve oraya hicbir yeni istek gitmemeli.
+      # dahili sertifika verir. Varsayilani gercek bir alan adi yapmak,
+      # PROD Caddy'sinin o ad icin Let's Encrypt'e basvurmasi demekti —
+      # prod DONDURULMUS ve oraya hicbir yeni istek gitmemeli.
       #
-      # Test sunucusu bunu `.env.prod`da ezer: TANITIM_DOMAIN=test.yonetio.site
+      # Test sunucusu bunu kendi degeriyle ezer (bkz. infra/.env.test.example).
       TANITIM_DOMAIN: ${TANITIM_DOMAIN:-tanitim.localhost}
       # Eski yollarin (davet/gizlilik/kosullar/hesap-silme) 301 ile
       # gonderilecegi calisma alani. Bkz. Caddyfile tanitim blogu.
-      TANITIM_ESKI_HEDEF: ${TANITIM_ESKI_HEDEF:-https://app-test.yonetio.site}
+      TANITIM_ESKI_HEDEF: ${TANITIM_ESKI_HEDEF:-https://app.yonetiyor.com}
       CADDY_TLS: ${CADDY_TLS:-}
     ports:
       - "80:80"
@@ -581,8 +581,8 @@ services:
     build:
       context: ../apps/tanitim-web
       args:
-        NEXT_PUBLIC_APP_ADRESI: ${TANITIM_APP_ADRESI:-https://app-test.yonetio.site}
-        NEXT_PUBLIC_SITE_ADRESI: ${TANITIM_SITE_ADRESI:-https://test.yonetio.site}
+        NEXT_PUBLIC_APP_ADRESI: ${TANITIM_APP_ADRESI:-https://app.yonetiyor.com}
+        NEXT_PUBLIC_SITE_ADRESI: ${TANITIM_SITE_ADRESI:-https://yonetiyor.com}
         NEXT_PUBLIC_PLAY_ADRESI: ${PLAY_STORE_URL:-https://play.google.com/store/apps/details?id=com.app.yonetiyor}
         NEXT_PUBLIC_APP_STORE_ADRESI: ${APP_STORE_URL:-}
         NEXT_PUBLIC_ILETISIM_EPOSTA: ${TANITIM_ILETISIM_EPOSTA:-destek@yonetio.site}

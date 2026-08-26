@@ -18,7 +18,7 @@ sunucuda "Test123!" gibi bir parola, herkesin bildigi bir hesap demekti
 KVKK — bu dosyada gercek kisi verisi YOKTUR
 ===========================================================================
 Adlar uydurma, telefonlar `+9055500000xx` (Turkiye'de tahsis edilmemis
-55x araligi), e-postalar `@test.yonetio.site`. Prod veritabanindan HICBIR
+55x araligi), e-postalar `@ornek.test`. Prod veritabanindan HICBIR
 satir kopyalanmaz; her sey burada, kodun icinde uretilir.
 
 ===========================================================================
@@ -206,7 +206,7 @@ def main() -> int:
                 "      gorev_baslangic = EXCLUDED.gorev_baslangic, "
                 "      gorev_bitis = EXCLUDED.gorev_bitis "
                 "RETURNING id",
-                (tid, ad, f"{yerel}@test.yonetio.site", telefon, pw_hash, rol,
+                (tid, ad, f"{yerel}@ornek.test", telefon, pw_hash, rol,
                  rol in ("yonetici", "security", "guvenlik_amiri"), birincil,
                  gorev[0], gorev[1]),
             )
@@ -234,7 +234,7 @@ def main() -> int:
                 "      temp_code_hash = NULL, ad = EXCLUDED.ad, "
                 "      telefon = EXCLUDED.telefon, is_active = true "
                 "RETURNING id",
-                (tid, ad, f"{yerel}@test.yonetio.site", telefon, rol,
+                (tid, ad, f"{yerel}@ornek.test", telefon, rol,
                  rol in ("yonetici", "security")),
             )
             uid[yerel] = cur.fetchone()[0]
@@ -363,7 +363,7 @@ def main() -> int:
     print(f"{'ROL':<18}{'AD':<24}{'E-POSTA':<34}{'TELEFON'}")
     print("-" * 96)
     for rol, ad, yerel, telefon in HESAPLAR:
-        print(f"{rol:<18}{ad:<24}{yerel + '@test.yonetio.site':<34}{telefon}")
+        print(f"{rol:<18}{ad:<24}{yerel + '@ornek.test':<34}{telefon}")
     print()
     print("SAHIPSIZ HESAPLAR — YENI KAYIT AKISINI BUNLARLA DENEYIN")
     print("-" * 96)
@@ -387,8 +387,8 @@ def main() -> int:
     print("  ile HIC KAYITLI OLMAYAN bir numara kullanin.")
     print()
     print("GIRIS YOLLARI:")
-    print("  panel-test.yonetio.site : e-posta + parola (yalniz `admin` rolu)")
-    print("  app-test.yonetio.site   : telefon + parola (yonetici, denetci)")
+    print("  panel.yonetiyor.com : e-posta + parola (yalniz `admin` rolu)")
+    print("  app.yonetiyor.com   : telefon + parola (yonetici, denetci)")
     print("  mobil                   : telefon + parola (tum tesis rolleri)")
     print()
     print("NOT: `admin` (platform) hesabi BU BETIKTE ACILMAZ — o tesise")
