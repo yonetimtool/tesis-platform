@@ -321,6 +321,90 @@ def test_access_token_cached_until_expiry(monkeypatch):
     assert len(fetches) == 2
 
 
+def _fcm_ok(monkeypatch):
+    """FcmProvider'i yapilandirilmis (send HTTP'ye gider) hale getirir."""
+    monkeypatch.setattr(push.settings, "fcm_service_account_path", "")
+    monkeypatch.setattr(push.settings, "fcm_project_id", "proj-123")
+    monkeypatch.setattr(push.settings, "fcm_service_account_json", '{"type":"service_account"}')
+    monkeypatch.setattr(push.settings, "fcm_base_url", "https://fcm.googleapis.com")
+    monkeypatch.setattr(push, "_fetch_access_token", lambda sa: "TKN")
+
+
+def test_fcm_send_unregistered_token_not_counted_and_flagged(monkeypatch):
+    """FCM UNREGISTERED (kayitsiz token) 'sent' SAYILMAZ; token budanmak uzere isaretlenir."""
+    _fcm_ok(monkeypatch)
+    monkeypatch.setattr(push, "_http_post_json", lambda url, h, b, timeout=20.0: {
+        "error": {"code": 404, "status": "NOT_FOUND", "details": [
+            {"@type": "type.googleapis.com/google.firebase.fcm.v1.FcmError",
+             "errorCode": "UNREGISTERED"}]}})
+    res = push.FcmProvider().send(["DEAD-TOKEN"], title="t", body="b")
+    assert res.sent == 0                    # FCM reddini 'sent' sayma (sessiz hata yok)
+    assert res.gecersiz == ["DEAD-TOKEN"]   # kalici gecersiz -> budanacak
+
+
+def test_fcm_send_transient_error_not_counted_not_flagged(monkeypatch):
+    """Gecici hata (UNAVAILABLE) 'sent' sayilmaz AMA token KORUNUR (budanmaz)."""
+    _fcm_ok(monkeypatch)
+    monkeypatch.setattr(push, "_http_post_json", lambda *a, **k: {
+        "error": {"code": 503, "status": "UNAVAILABLE", "details": [{"errorCode": "UNAVAILABLE"}]}})
+    res = push.FcmProvider().send(["TMP"], title="t", body="b")
+    assert res.sent == 0
+    assert res.gecersiz == []               # gecici -> token korunur
+    assert res.basarisiz == 1
+
+
+def test_fcm_send_mixed_success_and_invalid(monkeypatch):
+    """Karisik batch: gecerli token sent'e, gecersiz token gecersiz'e ayrilir."""
+    _fcm_ok(monkeypatch)
+
+    def fake_post(url, h, b, timeout=20.0):
+        if b["message"]["token"] == "GOOD":
+            return {"name": "projects/proj-123/messages/1"}
+        return {"error": {"code": 400, "status": "INVALID_ARGUMENT"}}
+
+    monkeypatch.setattr(push, "_http_post_json", fake_post)
+    res = push.FcmProvider().send(["GOOD", "BAD"], title="t", body="b")
+    assert res.sent == 1
+    assert res.gecersiz == ["BAD"]
+
+
+def test_fcm_send_request_exception_is_transient_not_flagged(monkeypatch):
+    """Tek token'in ag/parse hatasi batch'i durdurmaz; token korunur, digeri gider."""
+    _fcm_ok(monkeypatch)
+
+    def fake_post(url, h, b, timeout=20.0):
+        if b["message"]["token"] == "BOOM":
+            raise RuntimeError("network")
+        return {"name": "ok"}
+
+    monkeypatch.setattr(push, "_http_post_json", fake_post)
+    res = push.FcmProvider().send(["BOOM", "OK"], title="t", body="b")
+    assert res.sent == 1                     # digeri yine gonderildi
+    assert res.gecersiz == [] and res.basarisiz == 1
+
+
+def test_dispatch_prunes_invalid_tokens(monkeypatch):
+    """Dispatch, provider'in bildirdigi gecersiz token'lari cihaz tablosundan budar."""
+    tid = uuid.uuid4()
+    monkeypatch.setattr(notify, "_fetch_device_tokens", lambda t, r: [("GOOD", "tr"), ("BAD", "tr")])
+
+    class P:
+        def send(self, tokens, *, title, body, data=None):
+            return push.PushResult(provider="fcm", sent=1, status="sent", gecersiz=["BAD"])
+
+    monkeypatch.setattr(notify.push, "get_push_provider", lambda: P())
+    pruned = []
+    monkeypatch.setattr(
+        notify, "_prune_device_tokens",
+        lambda tenant_id, tokens: pruned.append((tenant_id, list(tokens))),
+        raising=False,
+    )
+    notify.dispatch_external(
+        "duyuru", tenant_id=tid, target_roles=("admin",), params={"baslik": "X"}, data={}
+    )
+    assert pruned == [(tid, ["BAD"])]
+
+
 def test_oauth_assertion_is_valid_rs256_jwt(monkeypatch):
     """_fetch_token_response: RS256 imzali JWT assertion + dogru claim'ler uretir."""
     import jwt as pyjwt

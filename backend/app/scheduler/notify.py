@@ -109,13 +109,19 @@ def _push_to_devices(
     gruplar: dict[str, list[str]] = {}
     for token, dil in cihazlar:
         gruplar.setdefault(dil_normalize(dil), []).append(token)
+    gecersiz: list[str] = []
     for dil, tokenlar in gruplar.items():
-        provider.send(
+        sonuc = provider.send(
             tokenlar,
             title=push_basligi(kimlik, dil),
             body=push_govdesi(kimlik, dil, params),
             data=dict(data or {}),
         )
+        # FCM'in KALICI gecersiz dedigi token'lar -> budanacak. `getattr`
+        # savunmasi: noop/eski saglayici None ya da alansiz sonuc dondurebilir.
+        gecersiz.extend(getattr(sonuc, "gecersiz", None) or [])
+    if gecersiz:
+        _prune_device_tokens(tenant_id, gecersiz)
 
 
 def _fetch_device_tokens(
@@ -161,6 +167,31 @@ def _fetch_device_tokens_for_users(
                 ([str(u) for u in user_ids],),
             )
             return [(r[0], r[1]) for r in cur.fetchall()]
+
+
+def _prune_device_tokens(tenant_id: uuid.UUID, tokens: Sequence[str]) -> None:
+    """FCM'in KALICI gecersiz dedigi cihaz token'larini pasiflestir (RLS-safe).
+
+    Silmek yerine `aktif = false`: /devices kaydinin gecmisi korunur ve ayni
+    token yeniden kaydedilirse upsert calisir (bkz. me.py). Budama, olu
+    cihazlara sonsuza dek push denemesini onler. Hata YUTULUR: budama
+    yan-istir, asil bildirim akisini (ve cagirani) dusurmemeli.
+    """
+    if not tokens:
+        return
+    try:
+        with psycopg.connect(settings.app_dsn, connect_timeout=10) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT set_config('app.current_tenant_id', %s, true)", (str(tenant_id),)
+                )
+                cur.execute(
+                    "UPDATE user_device SET aktif = false "
+                    "WHERE aktif = true AND fcm_token = ANY(%s)",
+                    (list(tokens),),
+                )
+    except Exception:
+        logger.exception("cihaz token budama basarisiz (push akisi etkilenmez)")
 
 
 def notify_missed_tour(

@@ -23,7 +23,7 @@ import logging
 import time
 from abc import ABC, abstractmethod
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import httpx
 import jwt
@@ -36,12 +36,30 @@ _TOKEN_SCOPE = "https://www.googleapis.com/auth/firebase.messaging"
 _DEFAULT_TOKEN_URI = "https://oauth2.googleapis.com/token"
 _TOKEN_YENILEME_MARJI_S = 60.0
 
+# FCM HTTP v1 hata kodlari: bu ikisi TOKEN'in KALICI olarak gecersiz oldugunu
+# soyler (kayitsiz cihaz / bicimsiz token) -> token budanmali. Digerleri
+# (UNAVAILABLE, INTERNAL, QUOTA_EXCEEDED, SENDER_ID_MISMATCH, ...) GECICI ya da
+# yapilandirma hatasidir; token KORUNUR.
+_FCM_KALICI_GECERSIZ = frozenset({"UNREGISTERED", "INVALID_ARGUMENT"})
+
 
 @dataclass
 class PushResult:
     provider: str
-    sent: int  # basariyla POST edilen token sayisi
-    status: str  # 'sent' | 'noop' | 'push_unconfigured'
+    sent: int  # FCM'in KABUL ettigi token sayisi (reddedilenler DAHIL DEGIL)
+    status: str  # 'sent' | 'noop' | 'push_unconfigured' | 'basarisiz'
+    # FCM'in KALICI reddettigi (UNREGISTERED/INVALID_ARGUMENT) token'lar — cagiran
+    # bunlari cihaz tablosundan budar. Gecici hatalar buraya GIRMEZ.
+    gecersiz: list[str] = field(default_factory=list)
+    basarisiz: int = 0  # gecici/diger hatalar (token korunur, budanmaz)
+
+
+def _fcm_hata_kodu(hata: Mapping) -> str:
+    """FCM hata govdesinden en ozgul kodu cikarir (details.errorCode > status)."""
+    for ayrinti in hata.get("details", []) or []:
+        if isinstance(ayrinti, Mapping) and ayrinti.get("errorCode"):
+            return str(ayrinti["errorCode"])
+    return str(hata.get("status") or hata.get("code") or "")
 
 
 # --------------------------------------------------------------------------- #
@@ -182,6 +200,8 @@ class FcmProvider(PushProvider):
         # FCM HTTP v1: her istek TEK token (message.token). data degerleri string olmali.
         str_data = {str(k): str(v) for k, v in (data or {}).items()}
         sent = 0
+        gecersiz: list[str] = []
+        basarisiz = 0
         for token in tokens:
             message = {
                 "message": {
@@ -190,10 +210,31 @@ class FcmProvider(PushProvider):
                     "data": str_data,
                 }
             }
-            _http_post_json(url, headers, message)
-            sent += 1
-        logger.info("PUSH fcm -> %d token gonderildi", sent)
-        return PushResult(provider="fcm", sent=sent, status="sent")
+            try:
+                resp = _http_post_json(url, headers, message)
+            except Exception as exc:  # ag/parse — GECICI; batch'i durdurma, token'i koru
+                basarisiz += 1
+                logger.warning("PUSH fcm istek hatasi (%s) -> token korunur", type(exc).__name__)
+                continue
+            hata = resp.get("error") if isinstance(resp, Mapping) else None
+            if hata:
+                kod = _fcm_hata_kodu(hata)
+                if kod in _FCM_KALICI_GECERSIZ:
+                    gecersiz.append(token)
+                    logger.warning("PUSH fcm token gecersiz (%s) -> budanacak", kod)
+                else:
+                    basarisiz += 1
+                    logger.warning("PUSH fcm gonderim hatasi (%s) -> token korunur", kod)
+            else:
+                sent += 1
+        logger.info(
+            "PUSH fcm -> %d gonderildi, %d gecersiz, %d basarisiz", sent, len(gecersiz), basarisiz
+        )
+        # Hic teslim yok ama hata varsa 'basarisiz'; aksi halde 'sent' (bos batch dahil).
+        status = "basarisiz" if (sent == 0 and (gecersiz or basarisiz)) else "sent"
+        return PushResult(
+            provider="fcm", sent=sent, status=status, gecersiz=gecersiz, basarisiz=basarisiz
+        )
 
 
 _PROVIDERS = {
