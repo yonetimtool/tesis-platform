@@ -1,5 +1,10 @@
 # TEST SUNUCUSU — sıfırdan kurulum rehberi (AŞAMA A)
 
+> **ADRES POLİTİKASI İSTİSNASI:** Bu belge YALNIZ test sunucusunu
+> (192.168.1.25, rollback noktası) belgeler; `test.yonetio.site` / `app-test`
+> adresleri burada (`infra/.env.test.example` gibi) meşru olarak durur.
+> Kanonik prod adresleri: `yonetiyor.com`, `app./panel./api.yonetiyor.com`.
+
 > **Bu belge canlı sunucuya (10.10.77.2) DOKUNMAZ.** Amacı, P142–P160
 > çalışmasının koşacağı **ayrı** bir sunucuyu sıfır Ubuntu'dan çalışır hale
 > getirmektir. Play kapalı testi mevcut canlı sistemle sürüyor; test
