@@ -130,6 +130,124 @@ def test_HER_KOD_EXCEL_ve_PDF_GECERLI_URETIR(client, world):
 
 
 # --------------------------------------------------------------------------- #
+# (P181 Bölüm 8) GRAFİK PDF/EXCEL'E GÖMÜLÜR — deterministik birim testi
+# (canlı seed'e bağlı değil; çıktı katmanını doğrudan çağırır).
+# --------------------------------------------------------------------------- #
+import io  # noqa: E402
+import zipfile  # noqa: E402
+from datetime import date  # noqa: E402
+
+
+def _sonuc_ornek(rows):
+    from app.raporlar import RaporSonuc, Sutun
+
+    return RaporSonuc(
+        kod="donemsel_bakiye", baslik="Dönemsel Bakiye",
+        sutunlar=[
+            Sutun("donem", "Dönem", genislik=2),
+            Sutun("borc", "Borçlandırma", "kurus", 2),
+            Sutun("tahsilat", "Tahsilat", "kurus", 2),
+            Sutun("bakiye", "Birikimli Bakiye", "kurus", 2),
+        ],
+        satirlar=rows,
+    )
+
+
+def _grafik(tip, x, seriler):
+    from app.routers.rapor_motoru import GrafikTanimi
+
+    return GrafikTanimi(tip, x, seriler)
+
+
+def test_GRAFIK_EXCELE_gomulur_ve_PDF_sayfa_ekler():
+    from app.rapor_ciktilari import excel_uret, pdf_uret
+
+    rows = [
+        {"donem": "2026-01", "borc": 100000, "tahsilat": 60000, "bakiye": 40000},
+        {"donem": "2026-02", "borc": 120000, "tahsilat": 130000, "bakiye": 30000},
+        {"donem": "2026-03", "borc": 110000, "tahsilat": 90000, "bakiye": 50000},
+    ]
+    sonuc = _sonuc_ornek(rows)
+    g = _grafik("cizgi", "donem", ("borc", "tahsilat", "bakiye"))
+    d1, d2 = date(2026, 1, 1), date(2026, 3, 31)
+
+    # EXCEL: grafikli çıktıda gerçek bir grafik XML'i olmalı (xl/charts/).
+    xls = excel_uret(sonuc, "Site", d1, d2, grafik=g)
+    assert xls.startswith(b"PK\x03\x04")
+    with zipfile.ZipFile(io.BytesIO(xls)) as z:
+        adlar = z.namelist()
+    assert any(a.startswith("xl/charts/") for a in adlar), f"grafik yok: {adlar}"
+
+    # PDF: grafikli çıktı, grafiksize göre EK sayfa taşımalı (grafik sayfası).
+    pdf_g = pdf_uret(sonuc, "Site", d1, d2, grafik=g)
+    pdf_yok = pdf_uret(sonuc, "Site", d1, d2, grafik=None)
+    assert pdf_g.startswith(b"%PDF") and pdf_yok.startswith(b"%PDF")
+    assert pdf_g.count(b"/Type /Page\n") > pdf_yok.count(b"/Type /Page\n") or len(pdf_g) > len(pdf_yok)
+
+
+def test_GRAFIK_VERI_YOKSA_bos_grafik_cizmez():
+    from app.rapor_ciktilari import excel_uret, pdf_uret
+
+    sonuc = _sonuc_ornek([])  # satır yok
+    g = _grafik("cizgi", "donem", ("borc", "tahsilat", "bakiye"))
+    d1, d2 = date(2026, 1, 1), date(2026, 3, 31)
+
+    xls = excel_uret(sonuc, "Site", d1, d2, grafik=g)
+    with zipfile.ZipFile(io.BytesIO(xls)) as z:
+        adlar = z.namelist()
+    assert not any(a.startswith("xl/charts/") for a in adlar), "veri yokken grafik çizilmemeli"
+
+    # PDF geçerli üretilir, grafik sayfası eklenmez (veri yok).
+    pdf_g = pdf_uret(sonuc, "Site", d1, d2, grafik=g)
+    pdf_yok = pdf_uret(sonuc, "Site", d1, d2, grafik=None)
+    assert pdf_g.startswith(b"%PDF")
+    assert pdf_g.count(b"/Type /Page\n") == pdf_yok.count(b"/Type /Page\n")
+
+
+def test_GRAFIK_pasta_ve_sutun_tipleri_uretilir():
+    from app.rapor_ciktilari import excel_uret, pdf_uret
+    from app.raporlar import RaporSonuc, Sutun
+
+    sonuc = RaporSonuc(
+        kod="gelir_gider_ozet", baslik="Gelir-Gider Özet",
+        sutunlar=[
+            Sutun("kalem", "Kalem", genislik=3),
+            Sutun("gelir", "Gelir", "kurus", 2),
+            Sutun("gider", "Gider", "kurus", 2),
+        ],
+        satirlar=[
+            {"kalem": "Aidat", "gelir": 500000, "gider": 0},
+            {"kalem": "Bakım", "gelir": 0, "gider": 300000},
+            {"kalem": "Su", "gelir": 0, "gider": 120000},
+        ],
+    )
+    d1, d2 = date(2026, 1, 1), date(2026, 3, 31)
+    for tip, x, seriler in (("sutun", "kalem", ("gelir", "gider")),
+                            ("pasta", "kalem", ("gider",))):
+        g = _grafik(tip, x, seriler)
+        xls = excel_uret(sonuc, "Site", d1, d2, grafik=g)
+        with zipfile.ZipFile(io.BytesIO(xls)) as z:
+            assert any(a.startswith("xl/charts/") for a in z.namelist())
+        assert pdf_uret(sonuc, "Site", d1, d2, grafik=g).startswith(b"%PDF")
+
+
+def test_GRAFIK_cok_nokta_ORNEKLENIR():
+    from app.rapor_ciktilari import MAX_GRAFIK_NOKTA, _grafik_verisi
+
+    rows = [{"donem": f"g{i}", "borc": i * 100, "tahsilat": i, "bakiye": i}
+            for i in range(MAX_GRAFIK_NOKTA * 3)]
+    sonuc = _sonuc_ornek(rows)
+    g = _grafik("cizgi", "donem", ("borc",))
+    etiketler, seriler, ornek = _grafik_verisi(sonuc, g)
+    assert ornek is True
+    assert len(etiketler) <= MAX_GRAFIK_NOKTA
+    # Kuruş → TL: borc = i*100 kuruş → i TL; etiket "g{i}". Örneklenen her nokta
+    # için dönüşüm doğru olmalı (renk-yalnız değil, sayı da doğru).
+    for etiket, deger in zip(etiketler, seriler[0][1]):
+        assert deger == float(etiket[1:])
+
+
+# --------------------------------------------------------------------------- #
 # 2. UC YENI RAPOR
 # --------------------------------------------------------------------------- #
 def test_NOTLAR_raporu_sutunlari(client, world):

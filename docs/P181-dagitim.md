@@ -81,11 +81,13 @@ için mutlaka yeniden derlenir.
 
 ---
 
-## Bölüm 8.0/8.1 — Rapor doğrulama + web grafikleri
+## Bölüm 8.0/8.1/8.2 — Rapor doğrulama + web + PDF/Excel grafikleri
 
 - **Göç:** YOK. **Yeni env:** YOK.
-- **Yeniden derle:** `api` (katalog grafik config + şema) + `admin-web`
-  (RaporGrafik). Geriye dönük uyumlu (grafik yoksa yalnız tablo).
+- **Yeniden derle:** `api` (katalog grafik config + şema + `rapor_ciktilari`
+  PDF/Excel grafik gömme) + `admin-web` (RaporGrafik). Geriye dönük uyumlu
+  (grafik yoksa yalnız tablo). Bağımlılık: `reportlab`/`openpyxl` ZATEN kurulu
+  (rapor hattı mevcut) — yeni paket YOK.
 
 ---
 

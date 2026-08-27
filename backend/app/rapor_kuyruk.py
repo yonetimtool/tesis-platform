@@ -93,7 +93,7 @@ async def isi_uret(is_id: uuid.UUID) -> dict:
 
         try:
             from .models import AppUser
-            from .routers.rapor_motoru import _param, _tenant, _uret
+            from .routers.rapor_motoru import KATALOG_KAYITLARI, _param, _tenant, _uret
 
             kullanici = (
                 await db.execute(select(AppUser).where(AppUser.id == isim.user_id))
@@ -102,14 +102,17 @@ async def isi_uret(is_id: uuid.UUID) -> dict:
             sonuc = await _uret(db, kullanici, isim.kod, p)
             tenant = await _tenant(db, kullanici)
 
+            # (P181 Bölüm 8) Katalogdaki grafik yapılandırması Excel/PDF'e gömülür.
+            _kayit = KATALOG_KAYITLARI.get(sonuc.kod)
+            grafik = _kayit.grafik if _kayit else None
             if isim.bicim == "excel":
-                icerik = excel_uret(sonuc, tenant.ad, p.baslangic, p.bitis)
+                icerik = excel_uret(sonuc, tenant.ad, p.baslangic, p.bitis, grafik=grafik)
                 tur, uzanti = EXCEL_TURU, "xlsx"
             else:
                 icerik = (
                     metin_pdf(sonuc.baslik, sonuc.metin or "", tenant.ad)
                     if not sonuc.sutunlar
-                    else pdf_uret(sonuc, tenant.ad, p.baslangic, p.bitis)
+                    else pdf_uret(sonuc, tenant.ad, p.baslangic, p.bitis, grafik=grafik)
                 )
                 tur, uzanti = PDF_TURU, "pdf"
 

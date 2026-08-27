@@ -261,6 +261,10 @@ KATALOG_KAYITLARI = {
         "Tahsilat Performansı", "Tahsilat oranı + yaşlandırma + eğilim",
         "dokumler",
         ("baslangic", "bitis"),
+        # (P181 8) EĞİLİM → çizgi: dönem ekseninde borçlandırılan vs tahsil
+        # edilen (ikisi de TL, aynı eksen). `oran` (%) FARKLI ölçek olduğundan
+        # seriye katılmaz — kuruş TL ekseniyle karıştırmak yanıltırdı.
+        grafik=GrafikTanimi("cizgi", "donem", ("borclandirilan", "tahsil")),
     ),
     "denetim_raporu": KatalogKaydi(
         "Denetim Raporu", "Denetçi biçimi: dönem gelir-gider + kasa mutabakatı",
@@ -1049,8 +1053,12 @@ async def rapor_uret(
             metin=sonuc.metin,
         )
 
+    # (P181 Bölüm 8) Grafik yapılandırması katalogda; Excel/PDF çıktısına
+    # gömülür (web/PDF/Excel aynı tek kaynağı okur).
+    kayit = KATALOG_KAYITLARI.get(sonuc.kod)
+    grafik = kayit.grafik if kayit else None
     if bicim == "excel":
-        icerik = excel_uret(sonuc, tenant.ad, p.baslangic, p.bitis)
+        icerik = excel_uret(sonuc, tenant.ad, p.baslangic, p.bitis, grafik=grafik)
         tur = ("application/vnd.openxmlformats-officedocument"
                ".spreadsheetml.sheet")
         uzanti = "xlsx"
@@ -1058,7 +1066,7 @@ async def rapor_uret(
         icerik = (
             metin_pdf(sonuc.baslik, sonuc.metin or "", tenant.ad)
             if not sonuc.sutunlar
-            else pdf_uret(sonuc, tenant.ad, p.baslangic, p.bitis)
+            else pdf_uret(sonuc, tenant.ad, p.baslangic, p.bitis, grafik=grafik)
         )
         tur = "application/pdf"
         uzanti = "pdf"

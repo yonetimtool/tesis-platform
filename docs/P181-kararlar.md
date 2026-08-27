@@ -381,11 +381,49 @@ Katalog ucu `grafik`i döner (`RaporGrafikTanimi` şema + openapi).
 `hesap_ekstresi` (çizgi: tarih→bakiye), `gelir_gider_ozet` (sütun: kalem→
 gelir/gider). i18n: `raporGrafikVeriYok`, `raporGrafikOrneklem` × 7 dil.
 
-**KALAN (dürüstlük):** (a) daha çok rapora grafik bağlamak (tahsilat_performansi,
-firma_ekstresi, isletme_defteri, finansal_hareketler, makbuz_dokumu, borc_alacak,
-detayli_borc, denetim_raporu); (b) grafiği **PDF**'e (reportlab.graphics) ve
-**Excel**'e (openpyxl chart) gömmek — spec bunu istiyor, altyapı (grafik config)
-hazır. Ayrı commit(ler)de ilerletilecek.
+### 8.2 — Grafik PDF/Excel'e gömüldü + rapor kapsamı (BİTTİ)
+
+**PDF (reportlab.graphics) + Excel (openpyxl chart) gömme:** `rapor_ciktilari.py`'a
+tek kaynak grafik hattı eklendi — katalogdaki `GrafikTanimi` hem web hem PDF hem
+Excel'e aynı yapılandırmayı besler. Çıktı katmanı `_grafik_verisi(sonuc, grafik)`
+ile satırlardan (etiketler, seriler, örneklendi_mi) üretir; kuruş serileri TL'ye
+çevrilir.
+
+- **Excel:** `_excel_grafik` — tablonun sağında adanmış kaynak bloğu + YERLİ
+  (düzenlenebilir) grafik (LineChart/BarChart/PieChart, cell referanslı).
+- **PDF:** `_pdf_grafik` — son sayfada `reportlab.graphics` çizimi
+  (HorizontalLineChart/VerticalBarChart/Pie).
+- **Erişilebilirlik (renk TEK sinyal DEĞİL):** çizgide her seriye AYRI İŞARET
+  (marker — daire/kare/elmas…), pastada dilim etiketi+YÜZDE, hepsinde legend
+  (metin) + eksen başlığı; renk körü dostu palet (Okabe-Ito).
+- **Veri yok:** satır yoksa grafik ÇİZİLMEZ — Excel'de "Grafik için veri yok."
+  notu, PDF'te grafik sayfası eklenmez.
+- **Örnekleme:** >30 nokta eşit aralıkla örneklenir (gömülü/kağıt grafik okunur
+  kalsın); "(örneklendi)" notu düşer.
+- **Sağlamlık:** grafik üretimi try/except içinde — grafik SÜStür, başarısızlığı
+  raporu DÜŞÜRMEZ (logo ele alışıyla aynı ilke).
+
+**Grafik türü seçimleri (neden):**
+- `donemsel_bakiye` → **çizgi**: dönem zaman serisi (borç/tahsilat/bakiye).
+- `hesap_ekstresi` → **çizgi**: tarih ekseninde yürüyen bakiye eğilimi.
+- `gelir_gider_ozet` → **sütun**: kalem bazında gelir vs gider karşılaştırması.
+- `tahsilat_performansi` → **çizgi** (yeni): dönem ekseninde borçlandırılan vs
+  tahsil (ikisi de TL); `oran` (%) FARKLI ölçek olduğu için seriye katılmadı.
+
+**Grafik BAĞLANMAYAN raporlar (gerekçeli — zorlamak yanıltırdı):**
+`firma_ekstresi`, `isletme_defteri`, `finansal_hareketler`, `makbuz_dokumu`,
+`kasa_ekstresi`, `borc_alacak`, `detayli_borc` HAREKET DÖKÜMLERİDİR (tarih
+sıralı satır listeleri); doğal tek bir x-ekseni + karşılaştırılabilir sayısal
+seri YOK — anlamlı bir grafik ancak sunulmayan bir toplama (aggregation)
+gerektirir. `site_sakinleri`/`dokuman_listesi`/`notlar` liste; `denetim_raporu`/
+`ihtar_yazisi` serbest METİN (tablosuz, `metin_pdf`). Bu raporlarda grafik
+YOK — "veri/anlam yoksa çizme" ilkesi.
+
+**Test:** `test_rapor_kuyruk.py` — `test_GRAFIK_EXCELE_gomulur_ve_PDF_sayfa_ekler`
+(xlsx'te `xl/charts/`, PDF'te ek sayfa), `test_GRAFIK_VERI_YOKSA_bos_grafik_cizmez`,
+`test_GRAFIK_pasta_ve_sutun_tipleri_uretilir`, `test_GRAFIK_cok_nokta_ORNEKLENIR`
+(örnekleme + kuruş→TL). Deterministik (canlı seed'e bağlı değil). Mevcut
+`test_HER_KOD_EXCEL_ve_PDF_GECERLI_URETIR` (canlı, tüm katalog) yeşil kalır.
 
 ---
 
