@@ -115,6 +115,28 @@ için mutlaka yeniden derlenir.
 
 ---
 
+## Bölüm 10 — Mobil (İNCELEME + iOS URL şeması düzeltmesi)
+
+- **Göç:** YOK (bu oturumda). **Yeni env:** YOK.
+- **iOS `Info.plist`:** `CFBundleURLTypes` (`com.app.yonetiyor`) EKLENDİ →
+  yeni iOS build gerekir (bu makinede Flutter yok, derlenmedi). Katkısal;
+  telefon/e-posta girişini etkilemez.
+- **KRİTİK — yayın APK'sı (kullanıcı):** Release paket MUTLAKA
+  `bash mobile/yayin-yap.sh apk` (ya da `appbundle`) ile üretilmeli — elle
+  `flutter build` `--dart-define=API_BASE_URL=https://api.yonetio.site`'ı
+  atlıyor ve APK emülatör-yerel adrese (`http://10.0.2.2:8000`) gidiyor →
+  API'ye ulaşamıyor. Script bu adresi geçer + şifresiz/yerel adresi reddeder.
+- **Google Cloud (kullanıcı, panele ekle):** Authorized redirect URIs'e
+  `https://api.yonetio.site/auth/oauth/callback/{google,microsoft,apple}`
+  (kanonik ise `https://api.yonetiyor.com/...`). Ayrı mobil redirect GEREKMEZ.
+- **Prod .env kontrolü:** OAuth sağlayıcı client id/secret + dönüş adresleri
+  dolu mu (`acik_saglayicilar()` `.hazir` → mobil butonlar buna bakar).
+- **YAPILMADI (plan, docs/P181-kararlar.md §10):** push/batching/rol-yönlendirme
+  (göç 0055) — backend+mobil; mobil test edilemezliği + oturum kapsamı nedeniyle
+  ayrı iş.
+
+---
+
 ## Göç sırası özet
 
 ```

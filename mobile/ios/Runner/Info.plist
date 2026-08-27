@@ -135,5 +135,25 @@
 	     verilir; ek paket (app_links/uni_links) GEREKMEZ. -->
 	<key>FlutterDeepLinkingEnabled</key>
 	<true/>
+	<!-- (P181 Bölüm 10.4) OAuth ÖZEL ŞEMA — flutter_web_auth_2 tarayıcı
+	     oturumunu kapatan geri-dönüş. Arka uçtaki `oauth_mobil_donus`
+	     (com.app.yonetiyor://oauth) ile AYNI olmalı. Android tarafı
+	     AndroidManifest.xml'de KAYITLIYDI, iOS'ta EKSİKTİ: bu olmadan
+	     Google/Microsoft/Apple akışı tarayıcıdan uygulamaya DÖNEMİYORDU
+	     (kullanıcı boş bir Safari sekmesinde kalırdı). Yalnız ŞEMA kaydı;
+	     mevcut telefon/e-posta girişini ETKİLEMEZ. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.app.yonetiyor.oauth</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.app.yonetiyor</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

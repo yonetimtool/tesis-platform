@@ -551,6 +551,98 @@ yönetim rezervasyon listesi/iptal); tsc + tam admin-web vitest yeşil.
 
 ---
 
+## Bölüm 10 — Mobil bildirimler / SSO / yoklama (İNCELEME + kısmi düzeltme)
+
+**Ortam kısıtı (dürüstlük):** Bu geliştirme makinesinde **Flutter YOK** (bkz.
+memory: göç 2026-08). Mobil Dart kodu YAZILABİLİR ama DERLENİP TEST EDİLEMEZ.
+SERT SINIR: "yayındaki App Store/Play sürümleri api.yonetio.site'a bağlı; mevcut
+giriş yollarını BOZMA." Bu yüzden mobil için YALNIZ test edilmeden GÜVENLİ
+(katkısal, mevcut girişi etkilemeyen) değişiklik yapıldı; gerisi TAM TEŞHİS +
+plan olarak bırakıldı (APK derleme/test KULLANICIDA).
+
+### 10.4 — SSO ÇALIŞMIYOR + APK API'ye ulaşamıyor (KÖK NEDEN BULUNDU)
+
+**Bulgu 1 — "POST /auth/login-phone prod loglarında HİÇ görünmüyor" (asıl kusur):**
+`mobile/lib/src/core/config/app_config.dart` → `apiBaseUrl =
+String.fromEnvironment("API_BASE_URL", defaultValue: "http://10.0.2.2:8000")`.
+Bu adres **yalnız Android emülatör loopback'i** (ve şifresiz http). Yani APK
+`--dart-define=API_BASE_URL=https://api.yonetio.site` OLMADAN derlendiyse prod'a
+DEĞİL emülatör-yerel adrese gider → gerçek cihazda API'ye HİÇ ulaşamaz → giriş
+isteği prod'a varmaz. **Doğru yol `mobile/yayin-yap.sh`** (dart-define'ı geçer
+VE yerel/şifresiz adresi reddeder) ya da `codemagic.yaml` (CI). Sorunlu APK bu
+scriptler YERİNE elle `flutter build` ile üretilmiş. → **Düzeltme: yayın APK'sı
+`bash mobile/yayin-yap.sh apk` (ya da appbundle) ile üretilmeli**; elle build
+YASAK. (Script başlığı zaten "önce bu unutulmuştu" diyor — regresyon.)
+
+**Bulgu 2 — SSO butonları görünmüyor:** `SosyalGirisDugmeleri`, sunucudan
+`GET /auth/oauth/saglayicilar` (`acik_saglayicilar()` → `.hazir` sağlayıcılar)
+listesini okur; liste boşsa `SizedBox.shrink()` (hiç buton). API'ye
+ulaşılamadığında (Bulgu 1) bu çağrı da düşer → boş liste → buton yok. Yani
+**#2, #1'in DOWNSTREAM'i**: APK doğru API'ye baktığında butonlar görünür —
+prod env'de sağlayıcı kimlikleri `.hazir` ise. `acik_saglayicilar` `TANITIM_SSO_*`
+bayraklarına BAKMAZ (yalnız sağlayıcı yapılandırmasına) → web bayrakları mobili
+ETKİLEMEZ (spec'in kaygısı karşılandı). **Prod kontrolü (kullanıcı):** Google/
+Microsoft/Apple client id/secret + dönüş adresleri prod .env'de dolu mu.
+
+**Bulgu 3 — iOS URL şeması EKSİKTİ (DÜZELTİLDİ):** `oauth_mobil_donus =
+com.app.yonetiyor://oauth`. Android'de `AndroidManifest.xml` intent-filter
+KAYITLI; iOS `Info.plist`'te `CFBundleURLTypes` HİÇ YOKTU → iOS'ta tarayıcı
+akışı uygulamaya GERİ DÖNEMİYORDU (Safari'de boş sekme). **Düzeltme:** iOS
+`Info.plist`'e `CFBundleURLTypes` (`com.app.yonetiyor`) eklendi (plist geçerli
+doğrulandı; katkısal, telefon/e-posta girişini ETKİLEMEZ). iOS build ile
+doğrulanmalı (bu makinede Flutter yok).
+
+**Bulgu 4 — Google Cloud redirect adresi (spec: "TAM adresi yaz"):** Mobil
+tarayıcı akışı (flutter_web_auth_2) WEB istemcisinden geçer; Google'ın gördüğü
+`redirect_uri` SUNUCU callback'idir: `_callback_adresi` =
+`{oauth_callback_taban}/auth/oauth/callback/{saglayici}`. Özel şema
+(`com.app.yonetiyor://oauth`) Google redirect'i DEĞİL, sunucunun tarayıcıyı
+uygulamaya geri yolladığı adrestir (uygulama tarafı — manifest/plist).
+**Panele eklenecek (Authorized redirect URIs), prod `oauth_callback_taban`'a
+göre:** `https://api.yonetio.site/auth/oauth/callback/google` (ve `/microsoft`,
+`/apple`) — kanonik kullanılıyorsa `https://api.yonetiyor.com/...`. AYRI bir
+"mobil redirect" GEREKMEZ; sunucu callback'i yeterli, özel şema app'te kayıtlı.
+
+**Site sakini mobilden kaydolma:** akış (yönetici ekler → Tesis ID'li mail →
+sakin mobilden tamamlar) SSO gerektirmez; #1 düzeltilince (doğru API) telefon/
+e-posta + kod yolu zaten çalışır. SSO tercih edenler için #1+#2+#3 yeterli.
+
+### 10.5 — Agresif yoklama (İNCELEME)
+
+Web (`admin-web`) tarafı MAKUL: dashboard `/api/dashboard/live` **15 sn**
+aralık (`refreshInterval:15000`), SWR varsayılanı `refreshWhenHidden:false`
+(sekme gizliyken durur); kameralar LİSTESİ `useSWR` ile TEK sefer (interval yok),
+kare tazeleme (`setNesil`) zaten `visibilitychange` ile duruyor. Prod'daki
+"saniyeler içinde onlarca `/dashboard/live` + `/cameras`" 15 sn aralıkla
+AÇIKLANMAZ → kaynak büyük olasılıkla **MOBİL istemci** (yönetici home / kameralar
+ekranı) ya da bir bileşenin hızlı yeniden-mount döngüsü. Mobil izleme Flutter
+ortamı ister (burada yok). **Öneri:** mobil `yonetici_home_screen` +
+`kameralar_screen` yoklama aralıklarını + sayfa-görünürlük durdurmasını denetle;
+web'de gerekiyorsa `/dashboard/live` için `revalidateOnFocus:false` (odak
+churn'ünü kes). SPECULATİF web değişikliği YAPILMADI (prod tekrar üretilemedi).
+
+### 10.1 / 10.2 / 10.3 — push / batching / rol-yönlendirme (PLAN — YAPILMADI)
+
+Bunlar HEM backend (göç 0055 kanal-tercihleri, vardiya-sonu toplama, rol-bazlı
+yönlendirme, çok-rollü dedup) HEM mobil (FCM arka-plan push, derin bağlantı, iOS/
+Android izin akışı) gerektirir. Backend dilimi pytest'le doğrulanabilir; mobil
+dilim bu makinede derlenemez. **Oturum kapsamı + mobil-test edilemezlik nedeniyle
+BU OTURUMDA YAPILMADI** — uydurma/yarım implementasyon riski yerine dürüst bırakıldı.
+Plan:
+- **Göç 0055:** `bildirim_kanal_tercihi(user_id, kanal, acik)` (ya da
+  `app_user.bildirim_tercihleri JSONB`) — kullanıcı kanal bazında kapatır.
+- **10.2 toplama:** devriye okutmaları TEK TEK push ÜRETMEZ; vardiya bazında
+  toplanıp vardiya SONUNDA tek özet ("12-08 vardiyası tamamlandı: 24/26 nokta").
+  Diğer yüksek hacim: toplu import/tahakkuk, çoklu okutma alarmı → topla.
+- **10.3 rol yönlendirme:** yönetici(şikayet/talep/arıza/onay/vardiya özeti/uzak
+  alarm), sakin(duyuru/kural/etkinlik/kendi talebi/aidat), güvenlik(görev/devriye/
+  vardiya başlangıcı), tesis görevlisi(görev/iş emri). Çok-rollü kullanıcıda
+  bildirim TEKRARLANMAZ (kişi bazında dedup, rol bazında değil).
+- **Mobil:** FCM background handler + bildirime dokununca derin bağlantı
+  (go_router; iOS `FlutterDeepLinkingEnabled` zaten açık) + izin akışı.
+
+---
+
 ## Program notu (dürüstlük)
 
 P181 on bir bölümlük büyük bir programdır (auth altyapısı + göçler, 6 web düzeltme,
