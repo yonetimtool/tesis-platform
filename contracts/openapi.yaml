@@ -10914,6 +10914,16 @@ components:
       properties:
         id: { type: string, maxLength: 40 }
         gizli: { type: boolean, default: false }
+    PanoSatir:
+      type: object
+      description: "(P181 7.1/7.2) Yerlesim satiri: 1-4 sutun + opsiyonel banner."
+      properties:
+        sutun: { type: integer, minimum: 1, maximum: 4, default: 1 }
+        idler:
+          type: array
+          maxItems: 8
+          items: { type: string, maxLength: 40 }
+        baslik: { type: string, maxLength: 60, nullable: true }
     PanoTercihi:
       type: object
       description: >
@@ -10932,6 +10942,12 @@ components:
           maxItems: 20
           nullable: true
           items: { $ref: "#/components/schemas/PanoBolum" }
+        satirlar:
+          type: array
+          maxItems: 20
+          nullable: true
+          items: { $ref: "#/components/schemas/PanoSatir" }
+          description: "(P181 7.1/7.2) Satir bazli yerlesim; yoksa tam/yarim eslesme."
     BildirimTercihleri:
       type: object
       description: >

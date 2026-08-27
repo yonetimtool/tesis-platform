@@ -87,15 +87,31 @@ export const PANO_BOLUMLERI: readonly PanoBolumTanimi[] = [
 
 const BOLUM_IDLERI = new Set<string>(PANO_BOLUMLERI.map((b) => b.id));
 
+/** (P181 7.1/7.2) Kayitli yerlesim satiri. */
+export interface PanoSatirKaydi {
+  sutun: number;
+  idler: string[];
+  baslik?: string | null;
+}
+
 /** Sunucudaki kaydin sekli (`PanoTercihi` semasi). */
 export interface PanoTercihi {
   widgetlar?: { rota: string }[];
   bolumler?: { id: string; gizli?: boolean }[];
+  // (P181 7.1/7.2) Satir bazli yerlesim; yoksa tam/yarim eslesme.
+  satirlar?: PanoSatirKaydi[];
 }
 
 /** Cizim icin cozulmus bolum satiri. */
 export interface CozulmusBolum extends PanoBolumTanimi {
   gizli: boolean;
+}
+
+/** (P181 7.1/7.2) Cizim icin cozulmus YERLESIM SATIRI: 1-4 sutun + banner. */
+export interface CozulmusSatir {
+  sutun: number;
+  baslik?: string | null;
+  bolumler: CozulmusBolum[];
 }
 
 /** Widget seridinde en fazla kac kisayol (brief: alti). */
@@ -159,15 +175,87 @@ export function widgetlariCoz(
   return varsayilan.filter((r) => izinli.has(r)).slice(0, WIDGET_SINIRI);
 }
 
+const SUTUN_ENAZ = 1;
+const SUTUN_ENCOK = 4;
+
+function sutunKis(n: number): number {
+  return Math.min(SUTUN_ENCOK, Math.max(SUTUN_ENAZ, Math.round(n) || 1));
+}
+
+/**
+ * (P181 7.1) VARSAYILAN SATIRLAR — mevcut tam/yarim eslesmeyi satira cevirir.
+ *
+ * Ardisik iki `yarim` bolum 2 sutunlu bir satir; `tam` bolum 1 sutunlu. Boylece
+ * hic tercihi olmayan kullanici bugunku duzenle acilir (derli toplu varsayilan).
+ */
+export function varsayilanSatirlar(bolumler: readonly CozulmusBolum[]): CozulmusSatir[] {
+  const satirlar: CozulmusSatir[] = [];
+  for (let i = 0; i < bolumler.length; i++) {
+    const b = bolumler[i];
+    const sonraki = bolumler[i + 1];
+    if (b.genislik === "yarim" && sonraki?.genislik === "yarim") {
+      satirlar.push({ sutun: 2, bolumler: [b, sonraki] });
+      i++;
+    } else {
+      satirlar.push({ sutun: 1, bolumler: [b] });
+    }
+  }
+  return satirlar;
+}
+
+/**
+ * (P181 7.1/7.2) Kayitli `satirlar`i cizilebilir satirlara cozer.
+ *
+ * KAYIT VARSA ondan kurulur: her kimlik cozulmus bolume eslenir, TANINMAYAN ve
+ * TEKRAR eden kimlik atilir; kayitta OLMAYAN bolum(ler) sona 1-sutunlu yeni
+ * satir olarak eklenir (yeni bir bolum eklendiginde kaybolmasin diye —
+ * `bolumleriCoz`teki ayni gerekce). Kayit yoksa VARSAYILAN.
+ */
+export function satirlariCoz(
+  tercih: PanoTercihi | undefined,
+  cozulmus: readonly CozulmusBolum[],
+): CozulmusSatir[] {
+  const kayit = tercih?.satirlar;
+  if (!kayit?.length) return varsayilanSatirlar(cozulmus);
+  const harita = new Map<string, CozulmusBolum>(cozulmus.map((b) => [b.id, b]));
+  const kullanildi = new Set<string>();
+  const satirlar: CozulmusSatir[] = [];
+  for (const s of kayit) {
+    const bolumler = (s.idler ?? [])
+      .map((id) => harita.get(id))
+      .filter((b): b is CozulmusBolum => b !== undefined && !kullanildi.has(b.id));
+    bolumler.forEach((b) => kullanildi.add(b.id));
+    if (bolumler.length) {
+      satirlar.push({ sutun: sutunKis(s.sutun), baslik: s.baslik ?? null, bolumler });
+    }
+  }
+  for (const b of cozulmus.filter((x) => !kullanildi.has(x.id))) {
+    satirlar.push({ sutun: 1, bolumler: [b] });
+  }
+  return satirlar.length ? satirlar : varsayilanSatirlar(cozulmus);
+}
+
+/** Cizilecek satirlari kayit sekline cevirir. */
+export function satirGovdesi(satirlar: readonly CozulmusSatir[]): PanoSatirKaydi[] {
+  return satirlar.map((s) => ({
+    sutun: sutunKis(s.sutun),
+    idler: s.bolumler.map((b) => b.id),
+    baslik: s.baslik ?? null,
+  }));
+}
+
 /** Sunucuya yazilacak govde. */
 export function tercihGovdesi(
   widgetlar: readonly string[],
   bolumler: readonly CozulmusBolum[],
+  satirlar?: readonly CozulmusSatir[],
 ): PanoTercihi {
-  return {
+  const govde: PanoTercihi = {
     widgetlar: widgetlar.slice(0, WIDGET_SINIRI).map((rota) => ({ rota })),
     bolumler: bolumler.map((b) => ({ id: b.id, gizli: b.gizli })),
   };
+  if (satirlar) govde.satirlar = satirGovdesi(satirlar);
+  return govde;
 }
 
 /** Bilinen bir bolum kimligi mi? (Testler ve tur daraltma icin.) */

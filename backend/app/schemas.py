@@ -4997,6 +4997,20 @@ class PanoBolum(BaseModel):
     gizli: bool = False
 
 
+class PanoSatir(BaseModel):
+    """(P181 7.1/7.2) Duzenlenebilir yerlesimde BIR SATIR.
+
+    `sutun` (1-4) o satirin kac esit hucreye bolunecegini; `idler` satirdaki
+    bolumleri; `baslik` (7.2) opsiyonel banner metnini tutar. `satirlar`
+    verildiginde yerlesim ondan kurulur; yoksa eski tam/yarim eslesme calisir
+    (geriye donuk uyumlu).
+    """
+
+    sutun: int = Field(1, ge=1, le=4)
+    idler: list[str] = Field(default_factory=list, max_length=8)
+    baslik: str | None = Field(None, max_length=60)
+
+
 class PanoTercihi(BaseModel):
     """(P167 §2.1/§2.5) Kullanicinin Ozet sayfasi duzeni.
 
@@ -5016,6 +5030,9 @@ class PanoTercihi(BaseModel):
     #: istemci sinirini asan bir istek, seridi tasan bir pano uretirdi.
     widgetlar: list[PanoWidget] | None = Field(None, max_length=6)
     bolumler: list[PanoBolum] | None = Field(None, max_length=20)
+    #: (P181 7.1/7.2) Satır bazlı yerleşim: her satır 1-4 sütun + opsiyonel
+    #: banner. Verilmezse eski tam/yarım eşleşme kullanılır.
+    satirlar: list[PanoSatir] | None = Field(None, max_length=20)
 
 
 HATIRLATMA_TEKRARLARI = ("yok", "gunluk", "haftalik", "aylik")

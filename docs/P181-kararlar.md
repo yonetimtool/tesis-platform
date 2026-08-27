@@ -282,6 +282,34 @@ derin bağlantısı (`useSorguSecimi` `?defter=` okur). 1 i18n anahtarı × 7 di
 
 ## Bölüm 7 — Özet (dashboard) sayfası
 
+### 7.1 — Düzenlenebilir yerleşim + 7.2 Banner'lar (BİTTİ)
+
+**Önce:** yerleşim TEK BOYUTLU bir listeydi; her bölümün `genişlik` (tam/yarım)
+SABİT ve satırlar otomatik eşleşiyordu. Satır başına sütun seçilemiyordu; banner
+yoktu.
+
+**Karar (mimari — KESİNTİSİZ MOD gerekçesi):** `PanoTercihi`ye opsiyonel
+`satirlar: [{sutun:1-4, idler:[], baslik?}]` eklendi. Verildiğinde yerleşimi O
+kurar (her satır kendi `sutun`uyla CSS ızgara); VERİLMEZSE eski tam/yarım eşleşme
+çalışır → **mevcut kullanıcılar geriye dönük uyumlu.** Kullanıcı başına
+`app_user.pano_tercihi` (JSONB) — göç YOK. Varsayılan `satirlar`, bugünkü
+tam/yarım düzenden türetilir (derli toplu).
+
+- **7.1:** her satırda 1/2/3/4 sütun (düzenleme modunda buton); bölümler satır
+  içi (←/→) ve satırlar arası (yukarı/aşağı) taşınır; "satır ekle" (boş satır);
+  gizle/göster korundu.
+- **7.2:** her satıra opsiyonel BANNER başlığı (7.2 "başlıklı bölümler").
+
+**Karar — sürükle-bırak yerine BUTON:** Mevcut kod sürükle-bırağı BİLEREK
+reddetmişti (iki-eksen erişilebilirlik/klavye maliyeti — `pano-tercihi.ts`
+gerekçesi). Aynı ilkeyle buton-tabanlı taşıma korundu (klavye erişilebilir); asıl
+istenen "satır bazında yerleşim değişir ve saklanır" (kabul 11) sağlanır.
+Sürükle-bırak ileride framer-motion ile eklenebilir.
+
+**Kapsam:** göç YOK. Backend `PanoSatir` şeması + openapi + `satirlariCoz`/
+`varsayilanSatirlar`/`satirGovdesi` (lib). 7 i18n anahtarı × 7 dil. Test:
+`test_takvim.py` satırlar round-trip + sütun 1-4 doğrulama.
+
 ### 7.3 — Devriye turu görsel bileşeni (BİTTİ)
 
 **Önce:** düz cümle ("X / Y checkpoint" + zaman) — `KahramanBlok`.

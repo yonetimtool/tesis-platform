@@ -67,6 +67,12 @@ için mutlaka yeniden derlenir.
 
 ---
 
+## Bölüm 7.1/7.2 — Düzenlenebilir yerleşim + banner
+
+- **Göç:** YOK (JSONB `pano_tercihi`ye yeni anahtar). **Yeni env:** YOK.
+- **Yeniden derle:** `api` (PanoSatir şeması) + `admin-web` (dashboard yerleşim).
+- Geriye dönük uyumlu: eski kayıtlar (satirlar yok) tam/yarım eşleşmeyle çalışır.
+
 ## Bölüm 7.3/7.4 — Devriye görseli + 3D kamera
 
 - **Göç:** YOK. **Yeni env:** YOK.

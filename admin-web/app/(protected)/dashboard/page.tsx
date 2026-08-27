@@ -38,6 +38,7 @@ import { BinaSahnesiYukleyici } from "@/components/3d/sahne-yukleyici";
 import { DevriyeGorunumu } from "@/components/DevriyeGorunumu";
 import type { SahneBlogu, SahneSecimi } from "@/components/3d/bina-sahnesi";
 import { Dugme, IskeletKpi, Kpi } from "@/components/ui";
+import { inputCls } from "@/components/form";
 import { PanoFinansOzeti } from "@/components/pano/finans-ozeti";
 import { PanoTakvim } from "@/components/pano/takvim";
 import { WidgetSeridi, type WidgetAdayi } from "@/components/pano/widget-seridi";
@@ -62,9 +63,12 @@ import { useI18n, useT } from "@/lib/i18n/kullan";
 import { menuGruplari, ogeBaglantisi } from "@/lib/menu";
 import {
   bolumleriCoz,
+  satirlariCoz,
   tercihGovdesi,
+  varsayilanSatirlar,
   widgetlariCoz,
   type CozulmusBolum,
+  type CozulmusSatir,
   type PanoTercihi,
 } from "@/lib/pano-tercihi";
 import { useRol } from "@/lib/rol-kullan";
@@ -114,6 +118,15 @@ const DAIRE_ALARM = "alarm" as const;
 const BOS_SECIM: SahneSecimi = { blokId: null, kat: null, daireId: null };
 const SECILI_TUR = "birincil" as const;
 const SECILMEMIS_TUR = "ikincil" as const;
+
+// (P181 7.1) Satır sütun sayısı → Tailwind ızgara sınıfı. Sınıflar SABİT
+// (JIT dinamik `grid-cols-${n}` üretemez); mobilde tek sütun, geniş ekranda açılır.
+const SUTUN_SINIF: Record<number, string> = {
+  1: "",
+  2: "grid gap-bolum lg:grid-cols-2",
+  3: "grid gap-bolum md:grid-cols-2 lg:grid-cols-3",
+  4: "grid gap-bolum md:grid-cols-2 lg:grid-cols-4",
+};
 /** Bolum gorunurlugunu cevirirken kart etiketi (duzenleme modu). */
 const ETIKET_DIV = "div" as const;
 // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
@@ -337,29 +350,31 @@ export default function DashboardPage() {
   );
 
   const [widgetlar, setWidgetlar] = useState<string[] | null>(null);
-  const [bolumler, setBolumler] = useState<CozulmusBolum[] | null>(null);
+  // (P181 7.1/7.2) YERLEŞİM SATIR BAZLI: her satır 1-4 sütun + opsiyonel banner.
+  const [satirlarState, setSatirlar] = useState<CozulmusSatir[] | null>(null);
 
   // SUNUCUDAN GELEN KAYIT DURUMA BIR KEZ yuklenir; kullanici duzenlerken
   // SWR tazelemesi yazdigini EZMESIN (profil formundaki desenin aynisi).
   useEffect(() => {
     if (tercih === undefined) return;
     setWidgetlar(widgetlariCoz(tercih, izinliRotalar, varsayilanWidget));
-    setBolumler(bolumleriCoz(tercih));
+    setSatirlar(satirlariCoz(tercih, bolumleriCoz(tercih)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tercih === undefined]);
 
   const seciliWidgetlar = widgetlar ?? [];
-  const cizilecekBolumler = bolumler ?? bolumleriCoz(tercih);
+  const cizilenSatirlar = satirlarState ?? satirlariCoz(tercih, bolumleriCoz(tercih));
+  const cizilecekBolumler = cizilenSatirlar.flatMap((s) => s.bolumler);
 
   async function duzeniKaydet(
     yeniWidget: readonly string[],
-    yeniBolum: readonly CozulmusBolum[],
+    yeniSatir: readonly CozulmusSatir[],
   ) {
     try {
       await apiSend(
         "/api/me/pano-tercihi",
         "PUT",
-        tercihGovdesi(yeniWidget, yeniBolum),
+        tercihGovdesi(yeniWidget, yeniSatir.flatMap((s) => s.bolumler), yeniSatir),
       );
       void tercihTazele();
     } catch {
@@ -369,34 +384,87 @@ export default function DashboardPage() {
     }
   }
 
+  function satirlariUygula(yeni: CozulmusSatir[]) {
+    setSatirlar(yeni);
+    void duzeniKaydet(seciliWidgetlar, yeni);
+  }
+
   function widgetDegisti(yeni: string[]) {
     setWidgetlar(yeni);
-    void duzeniKaydet(yeni, cizilecekBolumler);
+    void duzeniKaydet(yeni, cizilenSatirlar);
   }
 
-  function bolumTasi(i: number, yon: -1 | 1) {
-    const j = i + yon;
-    if (j < 0 || j >= cizilecekBolumler.length) return;
-    const yeni = [...cizilecekBolumler];
-    [yeni[i], yeni[j]] = [yeni[j], yeni[i]];
-    setBolumler(yeni);
-    void duzeniKaydet(seciliWidgetlar, yeni);
+  // (P181 7.1) Satırın sütun sayısı (1-4).
+  function sutunAyarla(si: number, sutun: number) {
+    satirlariUygula(cizilenSatirlar.map((s, k) => (k === si ? { ...s, sutun } : s)));
   }
-
-  function bolumCevir(i: number) {
-    const yeni = cizilecekBolumler.map((b, k) =>
-      k === i ? { ...b, gizli: !b.gizli } : b,
+  // (P181 7.2) Satır banner başlığı.
+  function bannerAyarla(si: number, baslik: string) {
+    satirlariUygula(
+      cizilenSatirlar.map((s, k) =>
+        k === si ? { ...s, baslik: baslik.trim() ? baslik : null } : s,
+      ),
     );
-    setBolumler(yeni);
-    void duzeniKaydet(seciliWidgetlar, yeni);
+  }
+  // Satırın tümünü yukarı/aşağı taşı.
+  function satirTasi(si: number, yon: -1 | 1) {
+    const sj = si + yon;
+    if (sj < 0 || sj >= cizilenSatirlar.length) return;
+    const yeni = [...cizilenSatirlar];
+    [yeni[si], yeni[sj]] = [yeni[sj], yeni[si]];
+    satirlariUygula(yeni);
+  }
+  // Bölümü SATIR İÇİNDE sola/sağa taşı.
+  function bolumIcTasi(si: number, bi: number, yon: -1 | 1) {
+    const satir = cizilenSatirlar[si];
+    const bj = bi + yon;
+    if (bj < 0 || bj >= satir.bolumler.length) return;
+    const yeniB = [...satir.bolumler];
+    [yeniB[bi], yeniB[bj]] = [yeniB[bj], yeniB[bi]];
+    satirlariUygula(
+      cizilenSatirlar.map((s, k) => (k === si ? { ...s, bolumler: yeniB } : s)),
+    );
+  }
+  // Bölümü BAŞKA satıra (üst/alt) taşı; boşalan satır silinir.
+  function bolumSatirTasi(si: number, bi: number, yon: -1 | 1) {
+    const sj = si + yon;
+    if (sj < 0 || sj >= cizilenSatirlar.length) return;
+    const bolum = cizilenSatirlar[si].bolumler[bi];
+    const yeni = cizilenSatirlar
+      .map((s, k) => {
+        if (k === si) return { ...s, bolumler: s.bolumler.filter((_, m) => m !== bi) };
+        if (k === sj) return { ...s, bolumler: [...s.bolumler, bolum] };
+        return s;
+      })
+      .filter((s) => s.bolumler.length > 0);
+    satirlariUygula(yeni);
+  }
+  // Bölümü gizle/göster (satır si, bölüm bi).
+  function bolumGizle(si: number, bi: number) {
+    satirlariUygula(
+      cizilenSatirlar.map((s, k) =>
+        k === si
+          ? {
+              ...s,
+              bolumler: s.bolumler.map((b, m) =>
+                m === bi ? { ...b, gizli: !b.gizli } : b,
+              ),
+            }
+          : s,
+      ),
+    );
+  }
+  // Yeni boş satır ekle (üstteki bölümler buraya taşınabilir).
+  function satirEkle() {
+    satirlariUygula([...cizilenSatirlar, { sutun: 1, bolumler: [] }]);
   }
 
   function varsayilanaDon() {
-    const yeniBolum = bolumleriCoz(undefined);
+    const yeniSatir = varsayilanSatirlar(bolumleriCoz(undefined));
     const yeniWidget = widgetlariCoz(undefined, izinliRotalar, varsayilanWidget);
-    setBolumler(yeniBolum);
+    setSatirlar(yeniSatir);
     setWidgetlar(yeniWidget);
-    void duzeniKaydet(yeniWidget, yeniBolum);
+    void duzeniKaydet(yeniWidget, yeniSatir);
     toast.success(t("panoKaydedildi"));
   }
 
@@ -595,7 +663,12 @@ export default function DashboardPage() {
   }
 
   /** Bolum baslik satiri + (duzenleme modunda) sira/gizle dugmeleri. */
-  function bolumBasligi(b: CozulmusBolum, i: number) {
+  function bolumBasligi(
+    b: CozulmusBolum,
+    si: number,
+    bi: number,
+    satirBolumSayisi: number,
+  ) {
     // KENDI BASLIGINI CIZEN BOLUM: cerceve baslik EKLEMEZ. Aksi halde
     // kamera seridi bos oldugunda geriye bos bir "Kameralar" basligi
     // kalirdi — P132.4b'nin kaldirdigi tam olarak o.
@@ -603,20 +676,30 @@ export default function DashboardPage() {
       return b.kendiBasligi ? null : <BolumBasligi baslik={t(b.anahtar)} />;
     }
     return (
-      <div className="mb-2 flex flex-wrap items-center gap-2">
+      <div className="mb-2 flex flex-wrap items-center gap-1.5">
         <span style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
           {t(b.anahtar)}
         </span>
-        <Dugme tur="ikincil" boy="kucuk" onClick={() => bolumTasi(i, -1)}>
+        {satirBolumSayisi > 1 && (
+          <>
+            <Dugme tur="ikincil" boy="kucuk" onClick={() => bolumIcTasi(si, bi, -1)} aria-label={t("panoSolaTasi")}>
+              ←
+            </Dugme>
+            <Dugme tur="ikincil" boy="kucuk" onClick={() => bolumIcTasi(si, bi, 1)} aria-label={t("panoSagaTasi")}>
+              →
+            </Dugme>
+          </>
+        )}
+        <Dugme tur="ikincil" boy="kucuk" onClick={() => bolumSatirTasi(si, bi, -1)}>
           {t("panoYukariTasi")}
         </Dugme>
-        <Dugme tur="ikincil" boy="kucuk" onClick={() => bolumTasi(i, 1)}>
+        <Dugme tur="ikincil" boy="kucuk" onClick={() => bolumSatirTasi(si, bi, 1)}>
           {t("panoAsagiTasi")}
         </Dugme>
         <Dugme
           tur={b.gizli ? SECILI_TUR : SECILMEMIS_TUR}
           boy="kucuk"
-          onClick={() => bolumCevir(i)}
+          onClick={() => bolumGizle(si, bi)}
         >
           {b.gizli ? t("panoBolumGoster") : t("panoBolumGizle")}
         </Dugme>
@@ -624,23 +707,48 @@ export default function DashboardPage() {
     );
   }
 
-  // YAN YANA CIZIM: ardisik iki YARIM bolum tek satiri paylasir. Duzen
-  // TEK BOYUTLU bir liste olarak kaliyor — surukle-birak iki eksende
-  // olsaydi hem kod hem klavye erisimi kat kat karmasiklasirdi.
-  const satirlar: CozulmusBolum[][] = [];
-  const gorunurler = duzenlemede
-    ? cizilecekBolumler
-    : cizilecekBolumler.filter((b) => !b.gizli);
-  for (let i = 0; i < gorunurler.length; i++) {
-    const b = gorunurler[i];
-    const sonraki = gorunurler[i + 1];
-    if (b.genislik === "yarim" && sonraki?.genislik === "yarim") {
-      satirlar.push([b, sonraki]);
-      i++;
-    } else {
-      satirlar.push([b]);
-    }
+  // (P181 7.1/7.2) Düzenleme modunda satır kontrol çubuğu: sütun sayısı +
+  // banner başlığı + satırı taşı.
+  function satirKontrol(satir: CozulmusSatir, si: number) {
+    return (
+      <div className="flex flex-wrap items-center gap-1.5 rounded-btn border p-2"
+        style={{ borderColor: "var(--yz-border)", background: "var(--yz-surface-1)" }}>
+        <span style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+          {t("panoSutun")}:
+        </span>
+        {[1, 2, 3, 4].map((n) => (
+          <Dugme
+            key={n}
+            tur={satir.sutun === n ? SECILI_TUR : SECILMEMIS_TUR}
+            boy="kucuk"
+            onClick={() => sutunAyarla(si, n)}
+          >
+            {String(n)}
+          </Dugme>
+        ))}
+        <input
+          className={inputCls}
+          style={{ width: 180 }}
+          placeholder={t("panoBannerBaslik")}
+          defaultValue={satir.baslik ?? ""}
+          onBlur={(e) => bannerAyarla(si, e.target.value)}
+        />
+        <Dugme tur="ikincil" boy="kucuk" onClick={() => satirTasi(si, -1)}>
+          {t("panoSatirYukari")}
+        </Dugme>
+        <Dugme tur="ikincil" boy="kucuk" onClick={() => satirTasi(si, 1)}>
+          {t("panoSatirAsagi")}
+        </Dugme>
+      </div>
+    );
   }
+
+  // (P181 7.1) SATIR BAZLI ÇİZİM: her satır kendi sütun sayısıyla ızgara olur.
+  const gorunurSatirlar = duzenlemede
+    ? cizilenSatirlar
+    : cizilenSatirlar
+        .map((s) => ({ ...s, bolumler: s.bolumler.filter((b) => !b.gizli) }))
+        .filter((s) => s.bolumler.length > 0);
 
   return (
     <div className="space-y-bolum">
@@ -670,37 +778,40 @@ export default function DashboardPage() {
       {/* Hata KUTUSU canli bolgedir: pano 15 sn'de bir yenilenir. */}
       {error ? <HataDurumu mesaj={error.message} /> : null}
 
-      {gorunurler.length === 0 ? (
+      {gorunurSatirlar.length === 0 ? (
         <BosDurum baslik={t("panoTumBolumlerGizli")} />
       ) : (
-        satirlar.map((satir, si) => (
-          <div
-            key={satir.map((b) => b.id).join("-")}
-            className={
-              satir.length === 2 ? "grid gap-bolum lg:grid-cols-2" : undefined
-            }
-          >
-            {satir.map((b) => (
-              <section
-                key={b.id}
-                // GIZLI BOLUM DUZENLEME MODUNDA SOLUK CIZILIR, DOM'dan
-                // silinmez: kullanici neyi geri acacagini gormeli.
-                style={{ opacity: b.gizli ? 0.45 : 1 }}
-              >
-                {bolumBasligi(
-                  b,
-                  cizilecekBolumler.findIndex((x) => x.id === b.id),
-                )}
-                {bolumGovdesi(b.id)}
-              </section>
-            ))}
-            {/* Tek yarim bolum kalirsa satirin ikinci hucresi bos kalir;
-                `si` yalniz `key` benzersizligi icin okunuyor. */}
-            {satir.length === 1 && si < 0 && <span />}
+        gorunurSatirlar.map((satir, si) => (
+          <div key={si} className="space-y-bolum">
+            {/* (P181 7.2) BANNER + (düzenlemede) satır kontrol çubuğu. */}
+            {duzenlemede
+              ? satirKontrol(satir, si)
+              : satir.baslik
+                ? <BolumBasligi baslik={satir.baslik} />
+                : null}
+            <div className={SUTUN_SINIF[satir.sutun] ?? SUTUN_SINIF[1]}>
+              {satir.bolumler.map((b, bi) => (
+                <section
+                  key={b.id}
+                  // GIZLI BOLUM DUZENLEME MODUNDA SOLUK CIZILIR, DOM'dan
+                  // silinmez: kullanici neyi geri acacagini gormeli.
+                  style={{ opacity: b.gizli ? 0.45 : 1 }}
+                >
+                  {bolumBasligi(b, si, bi, satir.bolumler.length)}
+                  {bolumGovdesi(b.id)}
+                </section>
+              ))}
+            </div>
           </div>
         ))
       )}
 
+      {/* (P181 7.1) Düzenlemede yeni boş satır: üstteki bölümler buraya taşınabilir. */}
+      {duzenlemede && (
+        <Dugme tur="ikincil" boy="kucuk" onClick={satirEkle}>
+          {t("panoSatirEkle")}
+        </Dugme>
+      )}
     </div>
   );
 }

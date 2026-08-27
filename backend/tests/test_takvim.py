@@ -252,6 +252,33 @@ def test_pano_tercihi_bos_baslar_ve_yazilir(client, world):
     assert client.get("/me/pano-tercihi", headers=y).json() == duzen
 
 
+def test_pano_tercihi_SATIRLAR_yazilir_ve_doner(client, world):
+    # (P181 7.1/7.2) Satır bazlı yerleşim: sütun (1-4) + idler + banner.
+    y = _headers(client, world["slug_a"], world["yonetici_a"])
+    duzen = {
+        "satirlar": [
+            {"sutun": 2, "idler": ["finans", "maket"], "baslik": "Genel Bakış"},
+            {"sutun": 1, "idler": ["takvim"]},
+        ],
+    }
+    r = client.put("/me/pano-tercihi", headers=y, json=duzen)
+    assert r.status_code == 200, r.text
+    donen = client.get("/me/pano-tercihi", headers=y).json()
+    assert donen["satirlar"][0]["sutun"] == 2
+    assert donen["satirlar"][0]["idler"] == ["finans", "maket"]
+    assert donen["satirlar"][0]["baslik"] == "Genel Bakış"
+    assert donen["satirlar"][1]["sutun"] == 1
+
+
+def test_pano_tercihi_SATIR_sutun_1_4_disi_422(client, world):
+    y = _headers(client, world["slug_a"], world["yonetici_a"])
+    r = client.put(
+        "/me/pano-tercihi", headers=y,
+        json={"satirlar": [{"sutun": 5, "idler": []}]},
+    )
+    assert r.status_code == 422
+
+
 def test_pano_tercihi_TANIMADIGI_anahtari_ATAR(client, world):
     # JSONB serbest gorunur; uc semayla dogrular. Aksi hâlde arayuz
     # degistiginde veritabaninda hangi seklin durdugu bilinemez olurdu.
