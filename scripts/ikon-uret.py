@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""(P177 §8) MOBIL IKON + FAVICON URETICISI — tek kaynak, tekrar kosulabilir.
+"""(P177 §8 / P184 ek) MOBIL IKON + FAVICON URETICISI — tek kaynak, tekrar kosulabilir.
 
 ===========================================================================
 NEDEN BETIK, NEDEN ELLE DEGIL
@@ -33,12 +33,33 @@ bilincli olarak yeniden secilmeli, sessizce kaymamali. Betik kaynagin
 boyutunu ve sinir kutusunu DOGRULAR ve uymuyorsa ACIKCA durur.
 
 ===========================================================================
+ZEMIN VARYANTLARI (P184) — KARSILASTIRMA + SECIM
+===========================================================================
+Eski karar duz BEYAZ zemindi; launcher'da isaret kirpilmis/zoom'lu
+gorunuyordu (asil sebep: flutter_launcher_icons kaynak degistikten sonra
+tekrar kosulmamis, gomulu mipmap'ler bayat kalmisti). Bu turda iki zemin
+varyanti URETILIR ki karsilastirilabilsin:
+
+  * "acik"     -> zemin #EAF1FA (acik mavi), isaret OLDUGU GIBI (lacivert)
+  * "lacivert" -> zemin #102060 (lacivert), isaret BEYAZ SILUET
+                  (lacivert logo koyu zeminde gorunmez; `beyaza_boya`)
+
+VARSAYILAN: "lacivert". Modern, ayirt edici, isaret one cikiyor. Magaza
+ikonu (iOS 1024 / Play 512 / apple-touch) da AYNI zemin+siluet ile
+uretilir ki magazalar arasi tutarli olsun. Alfasiz olmasi gerekenler
+`yaz_opak` ile GERCEKTEN alfasiz yazilir (ITMS-90717).
+
+===========================================================================
 KULLANIM
 ===========================================================================
-    python3 scripts/ikon-uret.py            # uret + dogrula
-    python3 scripts/ikon-uret.py --onizle   # ek olarak ASCII onizleme
+    python3 scripts/ikon-uret.py                 # her iki onizleme + VARSAYILANI ikon/'a yaz
+    python3 scripts/ikon-uret.py --varsayilan acik   # varsayilani "acik" yap
+    python3 scripts/ikon-uret.py --onizle        # ek olarak ASCII onizleme
 
-Cikti: assets/marka/ikon/
+Cikti:
+    assets/marka/ikon/                 (flutter_launcher_icons'un okudugu — VARSAYILAN varyant)
+    assets/marka/ikon-onizleme/acik/       (tam onizleme seti)
+    assets/marka/ikon-onizleme/lacivert/   (tam onizleme seti)
 """
 from __future__ import annotations
 
@@ -49,6 +70,7 @@ import sys
 KOK = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 KAYNAK = os.path.join(KOK, "assets", "marka", "yonetiyor-logo.png")
 CIKTI_DIZIN = os.path.join(KOK, "assets", "marka", "ikon")
+ONIZLEME_DIZIN = os.path.join(KOK, "assets", "marka", "ikon-onizleme")
 
 # --- olculen kaynak ozellikleri (dogrulama icin; uydurulmadi) -------------
 BEKLENEN_BOYUT = (1072, 992)
@@ -65,10 +87,17 @@ ORAN_MAGAZA = 0.72
 #: %66 Android'in kendi belgeledigi GUVENLI BOLGE oranidir.
 ORAN_ADAPTIF = 0.66
 
-#: Adaptif zemin katmani rengi — KARAR VERILDI: DUZ BEYAZ.
-#: Gerekce docs/P177-kararlar.md'de (olculmus L* farkiyla birlikte).
-ADAPTIF_ZEMIN = (0xFF, 0xFF, 0xFF)
 BEYAZ = (0xFF, 0xFF, 0xFF)
+
+# --- ZEMIN VARYANTLARI (P184) --------------------------------------------
+#: Her varyant: zemin rengi + isaretin BEYAZ SILUETE cevrilip cevrilmeyecegi.
+#: "acik"     -> acik mavi zemin, lacivert isaret oldugu gibi.
+#: "lacivert" -> lacivert zemin, isaret beyaz siluet (koyu zeminde gorunsun).
+VARYANTLAR = {
+    "acik": {"zemin": (0xEA, 0xF1, 0xFA), "beyaz_siluet": False},
+    "lacivert": {"zemin": (0x10, 0x20, 0x60), "beyaz_siluet": True},
+}
+VARSAYILAN_VARYANT = "lacivert"
 
 
 def _arac():
@@ -113,10 +142,16 @@ def _kaynagi_oku():
     return en, boy, px
 
 
-def _isaret():
-    """Kirpilmis isaret: (en, boy, rgba)."""
+def _isaret(beyaz_siluet=False):
+    """Kirpilmis isaret: (en, boy, rgba). `beyaz_siluet` ise beyaza boyanir."""
     en, boy, px = _kaynagi_oku()
-    return pa.kutu_kirp(en, boy, px, *KUTU)
+    en, boy, kirpik = pa.kutu_kirp(en, boy, px, *KUTU)
+    if beyaz_siluet:
+        # Kaynagi BOZMADAN kopya uzerinde: her varyant temiz isaret alsin.
+        kopya = bytearray(kirpik)
+        pa.beyaza_boya(en, boy, kopya)
+        return en, boy, kopya
+    return en, boy, kirpik
 
 
 def _tuvale_otur(kenar, oran, isaret, zemin=None):
@@ -136,90 +171,111 @@ def _tuvale_otur(kenar, oran, isaret, zemin=None):
     return tuval, (yEn, yBoy)
 
 
-def _yol(ad):
-    return os.path.join(CIKTI_DIZIN, ad)
+def uret(varyant, cikti_dizin, onizle=False):
+    """Bir zemin varyantinin TAM setini `cikti_dizin`e yazar.
 
+    `varyant`: VARYANTLAR anahtari ("acik" | "lacivert").
+    Doner: (olcumler dict, android on-katman isaret olcusu).
+    """
+    ayar = VARYANTLAR[varyant]
+    zemin = tuple(ayar["zemin"])
+    beyaz_siluet = ayar["beyaz_siluet"]
 
-def uret(onizle=False):
-    os.makedirs(CIKTI_DIZIN, exist_ok=True)
-    isaret = _isaret()
-    print(f"kirpma {KUTU} -> isaret {isaret[0]}x{isaret[1]}")
+    os.makedirs(cikti_dizin, exist_ok=True)
+
+    # Magaza/zemin ikonlari icin: siluet varyantinda isaret beyaz, degilse
+    # olcusundeki lacivert. Adaptif ON KATMAN ile TEMALI IKON ise HER
+    # varyantta beyaz siluettir (adaptif on katman saydam zemin uzerine
+    # cizilir; lacivert zeminde beyaz isaret istiyoruz, acik zeminde ise
+    # foreground yine lacivert isaret olabilir — asagida ayrica ele alinir).
+    isaret_zemin = _isaret(beyaz_siluet=beyaz_siluet)
+    isaret_koyu = _isaret(beyaz_siluet=False)  # her zaman orijinal (lacivert)
+    isaret_beyaz = _isaret(beyaz_siluet=True)   # her zaman beyaz siluet
+
+    print(f"[{varyant}] zemin #{zemin[0]:02X}{zemin[1]:02X}{zemin[2]:02X} "
+          f"beyaz_siluet={beyaz_siluet} -> {cikti_dizin}")
+    print(f"  kirpma {KUTU} -> isaret {isaret_zemin[0]}x{isaret_zemin[1]}")
     if onizle:
-        _onizle(*isaret)
+        _onizle(*isaret_zemin)
+
+    def _yol(ad):
+        return os.path.join(cikti_dizin, ad)
+
+    # Adaptif ON KATMAN isareti: zemin duz renk oldugundan, isaret zemine
+    # gore SECILIR — lacivert zeminde beyaz, acik zeminde lacivert.
+    on_isaret = isaret_beyaz if beyaz_siluet else isaret_koyu
 
     olcumler = {}
 
-    # --- 1) iOS App Store: 1024, ALFASIZ, duz beyaz, yuvarlak kose YOK ---
+    # --- 1) iOS App Store: 1024, ALFASIZ, varyant zemini, kose YOK -------
     # Yuvarlak kose CIZILMEZ: iOS maskeyi kendisi uygular; bizim cizdigimiz
     # kose, sistemin maskesiyle ust uste binip cift kenar birakirdi.
-    tuval, olcu = _tuvale_otur(1024, ORAN_MAGAZA, isaret, BEYAZ)
-    pa.yaz_opak(_yol("ios-appstore-1024.png"), 1024, 1024, tuval, BEYAZ)
+    tuval, olcu = _tuvale_otur(1024, ORAN_MAGAZA, on_isaret, zemin)
+    pa.yaz_opak(_yol("ios-appstore-1024.png"), 1024, 1024, tuval, zemin)
     olcumler["ios-appstore-1024.png"] = (1024, olcu)
 
-    # --- 2) Android adaptif ON KATMAN: saydam, %66 guvenli bolge ---------
-    on, olcu_on = _tuvale_otur(1024, ORAN_ADAPTIF, isaret, None)
+    # --- 2) Android adaptif ON KATMAN: saydam, %66 guvenli bolge --------
+    on, olcu_on = _tuvale_otur(1024, ORAN_ADAPTIF, on_isaret, None)
     pa.yaz(_yol("android-adaptive-foreground.png"), 1024, 1024, on)
     olcumler["android-adaptive-foreground.png"] = (1024, olcu_on)
 
-    # --- 3) Android adaptif ZEMIN: duz renk ------------------------------
+    # --- 3) Android adaptif ZEMIN: duz varyant rengi --------------------
     pa.yaz(
         _yol("android-adaptive-background.png"),
-        1024, 1024, pa.bos_tuval(1024, ADAPTIF_ZEMIN),
+        1024, 1024, pa.bos_tuval(1024, zemin),
     )
 
-    # --- 4) Android 13+ TEMALI IKON: tek renk beyaz siluet, saydam -------
-    mono, olcu_mono = _tuvale_otur(1024, ORAN_ADAPTIF, isaret, None)
-    pa.beyaza_boya(1024, 1024, mono)
+    # --- 4) Android 13+ TEMALI IKON: tek renk beyaz siluet, saydam ------
+    mono, olcu_mono = _tuvale_otur(1024, ORAN_ADAPTIF, isaret_beyaz, None)
     pa.yaz(_yol("android-monochrome.png"), 1024, 1024, mono)
     olcumler["android-monochrome.png"] = (1024, olcu_mono)
 
-    # --- 5) Play Store: 512, ALFASIZ, beyaz zemin ------------------------
-    tuval, olcu = _tuvale_otur(512, ORAN_MAGAZA, isaret, BEYAZ)
-    pa.yaz_opak(_yol("play-store-512.png"), 512, 512, tuval, BEYAZ)
+    # --- 5) Play Store: 512, ALFASIZ, varyant zemini --------------------
+    tuval, olcu = _tuvale_otur(512, ORAN_MAGAZA, on_isaret, zemin)
+    pa.yaz_opak(_yol("play-store-512.png"), 512, 512, tuval, zemin)
     olcumler["play-store-512.png"] = (512, olcu)
 
-    # --- 6) apple-touch-icon: 180, ALFASIZ -------------------------------
-    tuval, olcu = _tuvale_otur(180, ORAN_MAGAZA, isaret, BEYAZ)
-    pa.yaz_opak(_yol("apple-touch-icon.png"), 180, 180, tuval, BEYAZ)
+    # --- 6) apple-touch-icon: 180, ALFASIZ ------------------------------
+    tuval, olcu = _tuvale_otur(180, ORAN_MAGAZA, on_isaret, zemin)
+    pa.yaz_opak(_yol("apple-touch-icon.png"), 180, 180, tuval, zemin)
     olcumler["apple-touch-icon.png"] = (180, olcu)
 
-    # --- 7) PWA manifest ikonlari: 192 / 512 -----------------------------
-    # BEYAZ ZEMINLI ve bu bilincli: `purpose: "any"` ikonu bazi
-    # baslaticilarda DUZ cizilir; saydam zeminli koyu lacivert bir isaret
-    # koyu temada kaybolurdu.
+    # --- 7) PWA manifest ikonlari: 192 / 512 ----------------------------
+    # `purpose: "any"` ikonu bazi baslaticilarda DUZ cizilir; varyant
+    # zeminiyle alfasiz yazilir ki koyu/acik temada tutarli gorunsun.
     for kenar in (192, 512):
-        tuval, olcu = _tuvale_otur(kenar, ORAN_MAGAZA, isaret, BEYAZ)
-        pa.yaz_opak(_yol(f"icon-{kenar}.png"), kenar, kenar, tuval, BEYAZ)
+        tuval, olcu = _tuvale_otur(kenar, ORAN_MAGAZA, on_isaret, zemin)
+        pa.yaz_opak(_yol(f"icon-{kenar}.png"), kenar, kenar, tuval, zemin)
         olcumler[f"icon-{kenar}.png"] = (kenar, olcu)
 
-    # --- 8) TANITIM SITESI KILIDI: saydam, DOLGUSUZ kare -----------------
+    # --- 8) TANITIM SITESI KILIDI: saydam, DOLGUSUZ kare ----------------
     # Tuvale oturtma YOK (`oran=1.0`): baslik kilidinde isaret 36 px
-    # yuksekliginde cizilir ve ikon paylari orada isareti okunmaz kilardi.
-    # Iki varyant: koyu murekkep (acik zemin) ve beyaz siluet (koyu
-    # altbilgi). Ayni dosyayi iki yerde kullanmak, altbilgide lacivert
-    # bir lekeye bakmak demekti.
-    web, _ = _tuvale_otur(160, 1.0, isaret, None)
+    # yuksekliginde cizilir. Iki dosya: koyu murekkep (acik zemin) ve
+    # beyaz siluet (koyu altbilgi). Zemin varyantindan BAGIMSIZ — tanitim
+    # sitesinin iki kullanim yeri var ve ikisi de her zaman gerekir.
+    web, _ = _tuvale_otur(160, 1.0, isaret_koyu, None)
     pa.yaz(_yol("web-marka-160.png"), 160, 160, web)
-    webBeyaz, _ = _tuvale_otur(160, 1.0, isaret, None)
-    pa.beyaza_boya(160, 160, webBeyaz)
+    webBeyaz, _ = _tuvale_otur(160, 1.0, isaret_beyaz, None)
     pa.yaz(_yol("web-marka-beyaz-160.png"), 160, 160, webBeyaz)
 
-    # --- 9) favicon.ico: 16 / 32 / 48 ------------------------------------
-    # BEYAZ ZEMIN: marka murekkebi koyu lacivert; saydam favicon, koyu
-    # temali tarayici sekme seridinde neredeyse gorunmez olurdu.
+    # --- 9) favicon.ico: 16 / 32 / 48 -----------------------------------
+    # Varyant zeminli: saydam favicon koyu temali sekme seridinde gorunmez.
     katmanlar = []
     for kenar in (16, 32, 48):
-        tuval, _ = _tuvale_otur(kenar, ORAN_MAGAZA, isaret, BEYAZ)
+        tuval, _ = _tuvale_otur(kenar, ORAN_MAGAZA, on_isaret, zemin)
         katmanlar.append((kenar, tuval))
     pa.ico_yaz(_yol("favicon.ico"), katmanlar)
 
     return olcumler, olcu_on
 
 
-def dogrula(olcumler, olcu_on):
-    """ALFA KONTROLU + %66 guvenli bolge kontrolu. Basarisizsa cikis 1."""
+def dogrula(cikti_dizin, olcumler, olcu_on):
+    """ALFA KONTROLU + %66 guvenli bolge kontrolu. Basarisizsa (False, ...)."""
     hata = []
     rapor = []
+
+    def _yol(ad):
+        return os.path.join(cikti_dizin, ad)
 
     # --- ALFASIZ OLMASI GEREKENLER ---
     # (§8) iOS ve Play ikonlari alfa TASIYAMAZ; alfali bir iOS ikonu
@@ -274,7 +330,7 @@ def dogrula(olcumler, olcu_on):
         "(kose bosluklari; kural degil olcum)"
     )
 
-    print("\n=== DOGRULAMA ===")
+    print(f"\n=== DOGRULAMA ({cikti_dizin}) ===")
     for satir in rapor:
         print(satir)
     if hata:
@@ -300,9 +356,35 @@ def _onizle(en, boy, px, W=56, H=34):
         print(satir)
 
 
-if __name__ == "__main__":
-    olcumler, olcu_on = uret(onizle="--onizle" in sys.argv)
+def main(argv):
+    onizle = "--onizle" in argv
+    varsayilan = VARSAYILAN_VARYANT
+    if "--varsayilan" in argv:
+        varsayilan = argv[argv.index("--varsayilan") + 1]
+    if varsayilan not in VARYANTLAR:
+        raise SystemExit(f"bilinmeyen varyant: {varsayilan} / {list(VARYANTLAR)}")
+
+    tum_gecti = True
+
+    # 1) Her iki varyantin TAM onizleme setini uret + dogrula.
+    for varyant in VARYANTLAR:
+        dizin = os.path.join(ONIZLEME_DIZIN, varyant)
+        olcumler, olcu_on = uret(varyant, dizin, onizle=onizle)
+        for ad, (kenar, olcu) in olcumler.items():
+            print(f"  {ad:34s} {kenar}x{kenar}  isaret {olcu[0]}x{olcu[1]}")
+        tamam, _, _ = dogrula(dizin, olcumler, olcu_on)
+        tum_gecti = tum_gecti and tamam
+
+    # 2) VARSAYILAN varyanti gercek cikti dizinine (flutter kaynagi) yaz.
+    print(f"\n>>> VARSAYILAN varyant '{varsayilan}' -> {CIKTI_DIZIN}")
+    olcumler, olcu_on = uret(varsayilan, CIKTI_DIZIN, onizle=False)
     for ad, (kenar, olcu) in olcumler.items():
         print(f"  {ad:34s} {kenar}x{kenar}  isaret {olcu[0]}x{olcu[1]}")
-    tamam, _, _ = dogrula(olcumler, olcu_on)
-    sys.exit(0 if tamam else 1)
+    tamam, _, _ = dogrula(CIKTI_DIZIN, olcumler, olcu_on)
+    tum_gecti = tum_gecti and tamam
+
+    return 0 if tum_gecti else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))
