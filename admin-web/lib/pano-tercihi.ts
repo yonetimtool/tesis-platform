@@ -114,11 +114,13 @@ export interface CozulmusSatir {
   bolumler: CozulmusBolum[];
 }
 
-/** Widget seridinde en fazla kac kisayol (brief: alti). */
-// (P168 §1.2) ALTI DEGIL YEDI. Serit tam genislikte ve YEDI ESIT alan
-// tasiyor; sinir tek bir yerde durur ki serit, secim modali ve kayit
-// govdesi ayrisamasin.
-export const WIDGET_SINIRI = 7;
+/** Widget seridinde en fazla kac kisayol. Sinir TEK YERDE durur ki serit,
+ *  secim modali ve kayit govdesi ayrisamasin. */
+// (P182 §2) YEDI DEGIL ALTI. Sunucu semasi (`PanoTercihi.widgetlar
+// max_length=6`) hep 6'ydi; istemci 7'ye izin verip metinde "7" yaziyordu,
+// 7. widget eklenince sunucu 422 veriyor ve tutarsizlik "kaydedilmiyor" gibi
+// gorunuyordu. Karar: HER YERDE 6 (metin bu sabitten uretilir).
+export const WIDGET_SINIRI = 6;
 
 /**
  * Kayitli tercihi VARSAYILANLA birlestir.
@@ -261,4 +263,88 @@ export function tercihGovdesi(
 /** Bilinen bir bolum kimligi mi? (Testler ve tur daraltma icin.) */
 export function bolumTanimli(id: string): id is PanoBolumId {
   return BOLUM_IDLERI.has(id);
+}
+
+/* ---------------------------------------------------------------------------
+ * (P182 §4) YERLESIM YENIDEN SIRALAMA — SAF DONUSUMLER.
+ *
+ * Surukle-birak ve klavye ile bolum tasima ASIL ETKILESIM. Mantik burada saf
+ * fonksiyon olarak durur (bilesenin disinda) ki jsdom'da surukle olaylari
+ * uretmeden DAVRANIS test edilebilsin. Bilesen yalniz olayi bu fonksiyonlara
+ * baglar; index kaymasi/bos satir temizligi tek yerde tutulur.
+ * ------------------------------------------------------------------------- */
+
+/** Satirlarin derin kopyasi (bolum dizileri de kopyalanir). */
+function satirlariKopyala(satirlar: readonly CozulmusSatir[]): CozulmusSatir[] {
+  return satirlar.map((s) => ({ ...s, bolumler: [...s.bolumler] }));
+}
+
+/** Bir bolumu (kimlikle) diziden cikarir; cikarilani dondurur. */
+function bolumSok(satirlar: CozulmusSatir[], id: string): CozulmusBolum | null {
+  for (const s of satirlar) {
+    const i = s.bolumler.findIndex((b) => b.id === id);
+    if (i !== -1) return s.bolumler.splice(i, 1)[0];
+  }
+  return null;
+}
+
+/**
+ * SURUKLE-BIRAK: `kaynakId` bolumunu hedefe tasir. Hedef ya BASKA BIR BOLUMUN
+ * ONUNE (`{tip:"once", id}`) ya da BIR SATIRIN SONUNA (`{tip:"satirSonu", si}`,
+ * bos satira birakmak icin). Kimlikle calisir; kaynak silindikten sonra dizin
+ * kaymasi olmaz cunku bos satirlar YALNIZ en sonda temizlenir. `si` orijinal
+ * dizinle ayni kalir (bu ana kadar satir SILINMEZ). Kaynak==hedef ise degismez.
+ */
+export function bolumSurukleBirak(
+  satirlar: readonly CozulmusSatir[],
+  kaynakId: string,
+  hedef: { tip: "once"; id: string } | { tip: "satirSonu"; si: number },
+): CozulmusSatir[] {
+  if (hedef.tip === "once" && hedef.id === kaynakId) return satirlariKopyala(satirlar);
+  const kopya = satirlariKopyala(satirlar);
+  const bolum = bolumSok(kopya, kaynakId);
+  if (!bolum) return kopya;
+  if (hedef.tip === "once") {
+    for (const s of kopya) {
+      const i = s.bolumler.findIndex((b) => b.id === hedef.id);
+      if (i !== -1) {
+        s.bolumler.splice(i, 0, bolum);
+        break;
+      }
+    }
+  } else {
+    // Kaynak cikarilinca `si` hedef satirin dizini DEGISMEZ (henuz filtre yok).
+    (kopya[hedef.si] ?? kopya[kopya.length - 1])?.bolumler.push(bolum);
+  }
+  return kopya.filter((s) => s.bolumler.length > 0);
+}
+
+/** Klavye ok yonu: satir icinde sol/sag, satirlar arasi yukari/asagi. */
+export type BolumYon = "sol" | "sag" | "yukari" | "asagi";
+
+/**
+ * KLAVYE ile bolum tasima (surukle-birak'in erisilebilir esdegeri). Sol/sag
+ * bolumu SATIR ICINDE komsusuyla degistirir; yukari/asagi bolumu ONceki/SONraki
+ * satirin sonuna tasir (bosalan satir silinir). Sinirda (ilk/son) DEGISMEZ.
+ */
+export function bolumOkTasi(
+  satirlar: readonly CozulmusSatir[],
+  si: number,
+  bi: number,
+  yon: BolumYon,
+): CozulmusSatir[] {
+  const kopya = satirlariKopyala(satirlar);
+  const satir = kopya[si];
+  if (!satir || bi < 0 || bi >= satir.bolumler.length) return kopya;
+  if (yon === "sol" || yon === "sag") {
+    const bj = bi + (yon === "sol" ? -1 : 1);
+    if (bj < 0 || bj >= satir.bolumler.length) return kopya;
+    [satir.bolumler[bi], satir.bolumler[bj]] = [satir.bolumler[bj], satir.bolumler[bi]];
+    return kopya;
+  }
+  const sj = si + (yon === "yukari" ? -1 : 1);
+  if (sj < 0 || sj >= kopya.length) return kopya;
+  const [bolum] = satir.bolumler.splice(bi, 1);
+  kopya[sj].bolumler.push(bolum);
+  return kopya.filter((s) => s.bolumler.length > 0);
 }

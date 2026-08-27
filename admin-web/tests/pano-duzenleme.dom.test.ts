@@ -8,7 +8,7 @@
 // EN PAHALI SONUC: duzeni degistirip KAYDEDILDIGINI sanmak. Sessizdir —
 // kullanici ertesi gun eski panoyu bulur ve neden oldugunu bilemez. Bu
 // yuzden testin agirligi PUT govdesindedir, ekrandaki gorunumde degil.
-import { screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -70,25 +70,59 @@ function fetchTaklidi(tercih: unknown = {}) {
 afterEach(() => vi.restoreAllMocks());
 
 describe("(P167 §2.5) panel duzenleme modu", () => {
-  it("VARSAYILAN olarak KAPALI — sira dugmeleri gorunmez", async () => {
+  it("VARSAYILAN olarak KAPALI — surukle tutamaci gorunmez", async () => {
     fetchTaklidi();
     ciz(DashboardPage);
     await screen.findByText("Finansal özet");
-    expect(screen.queryByRole("button", { name: "Yukarı taşı" })).toBeNull();
+    // (P182 §4) Sira dugmeleri yerini SURUKLE tutamacina birakti; normal
+    // gorunumde hicbir duzenleme kontrolu cizilmez.
+    expect(
+      screen.queryByRole("button", { name: /sürükleyin ya da ok tuşlarını/ }),
+    ).toBeNull();
     expect(screen.getByRole("button", { name: "Paneli düzenle" })).toBeInTheDocument();
   });
 
-  it("ACILINCA her bolumun sira ve gizle dugmeleri cizilir", async () => {
+  it("ACILINCA her bolumun SURUKLE tutamaci ve gizle dugmesi cizilir", async () => {
     fetchTaklidi();
     ciz(DashboardPage);
     await screen.findByText("Finansal özet");
     await userEvent.setup().click(
       screen.getByRole("button", { name: "Paneli düzenle" }),
     );
-    expect(screen.getAllByRole("button", { name: "Yukarı taşı" }).length)
-      .toBeGreaterThan(1);
+    // (P182 §4) Her bolum basliginda tek surukle tutamaci (sol/sag/yukari/asagi
+    // dort dugme yerine) + gizle/goster. Tutamac klavye ile de tasir.
+    expect(
+      screen.getAllByRole("button", { name: /sürükleyin ya da ok tuşlarını/ }).length,
+    ).toBeGreaterThan(1);
     expect(screen.getAllByRole("button", { name: "Bölümü gizle" }).length)
       .toBeGreaterThan(1);
+  });
+
+  it("KLAVYE ile bolum tasima (ok tusu) SUNUCUYA YAZILIR", async () => {
+    // (P182 §4) Surukle-birak'in erisilebilir esi: tutamaca odaklan, sag ok
+    // ile satir icinde kaydir; yeni sira PUT govdesine dusmeli.
+    const cagrilar = fetchTaklidi({
+      bolumler: [{ id: "finans" }, { id: "takvim" }],
+      satirlar: [{ sutun: 2, idler: ["finans", "takvim"], baslik: null }],
+    });
+    ciz(DashboardPage);
+    await screen.findByText("Finansal özet");
+    const kullanici = userEvent.setup();
+    await kullanici.click(screen.getByRole("button", { name: "Paneli düzenle" }));
+    const tutamac = screen.getByRole("button", {
+      name: /Finansal özet bölümünü taşı/,
+    });
+    tutamac.focus();
+    fireEvent.keyDown(tutamac, { key: "ArrowRight" });
+
+    await waitFor(() => {
+      const put = cagrilar
+        .filter((c) => c.url.includes("/api/me/pano-tercihi") && c.method === "PUT")
+        .at(-1);
+      expect(put, "klavye tasima yazilmadi").toBeTruthy();
+      const govde = put!.body as { satirlar: { idler: string[] }[] };
+      expect(govde.satirlar[0].idler).toEqual(["takvim", "finans"]);
+    });
   });
 
   it("GIZLEME SUNUCUYA YAZILIR (sessizce kaybolmaz)", async () => {

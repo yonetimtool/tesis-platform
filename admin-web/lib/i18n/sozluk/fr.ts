@@ -1794,6 +1794,8 @@ export const fr: Sozluk = {
   panoSatirYukari: "Ligne vers le haut",
   panoSatirAsagi: "Ligne vers le bas",
   panoAsagiTasi: "Descendre",
+  panoTasiTut: "Déplacer {ad} — glissez ou utilisez les flèches",
+  panoBosSatir: "Déposez une section ici",
   panoKaydedildi: "Disposition du tableau de bord enregistrée.",
   panoKaydedilemedi: "La disposition du tableau de bord n'a pas pu être enregistrée.",
   panoKisayolSec: "Choisir les raccourcis",

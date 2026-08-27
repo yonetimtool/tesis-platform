@@ -645,7 +645,16 @@ function Blok({
 /*  ETIKETLER                                                             */
 /* ====================================================================== */
 
-/** Yuzen etiket: renkli nokta + metin kapsulu. Uzerine gelince belirir. */
+// CSS transform degerleri modul sabiti (bkz. Etiket icindeki `buyume`).
+const ISARET_BUYUME_ACIK = "scale(1.25)";
+const ISARET_BUYUME_KAPALI = "none";
+
+// (P182 §1) Yuzen ISARET — YALNIZ renkli nokta, METIN ETIKETI YOK.
+// Onceki surum kamera/bildirim adini nokta yaninda bir kapsulde ciziyordu;
+// sahne kalabalik gorunuyordu. Artik yalniz TIKLANABILIR nokta cizilir; ad
+// `aria-label` + `title` (uzerine gelince tarayici ipucu) ile erisilebilir
+// kalir ama sahnede kalici yazi GORUNMEZ. TIKLAMA davranisi DEGISMEDI:
+// `onSec` yine cagrilir (bilgi secim sonrasi mevcut yerde gosterilir).
 function Etiket({
   isaretci,
   konum,
@@ -657,41 +666,36 @@ function Etiket({
 }) {
   const [uzerinde, setUzerinde] = useState(false);
   const renk = TUR_RENGI[isaretci.tur];
+  // Uzerine gelince hafif buyume. Degerler modul sabiti (ISARET_BUYUME_*);
+  // ternary'de duz metin birakmak sabit-metin tarayicisini (tur 47) tetikler.
+  const buyume = uzerinde ? ISARET_BUYUME_ACIK : ISARET_BUYUME_KAPALI;
   return (
     <Html position={konum} center distanceFactor={12}>
       <button
         type="button"
+        title={isaretci.ad}
+        aria-label={isaretci.ad}
         onPointerEnter={() => setUzerinde(true)}
         onPointerLeave={() => setUzerinde(false)}
         onClick={() => onSec?.(isaretci.id)}
-        className="flex items-center gap-1.5"
+        className="odak-ters"
         style={{
-          background: "var(--yz-surface-1)",
-          color: "var(--yz-text)",
-          border: "1px solid var(--yz-border)",
-          borderRadius: "var(--yz-radius-chip)",
+          display: "block",
+          width: "14px",
+          height: "14px",
+          padding: 0,
+          borderRadius: "50%",
+          // İŞARET görünürlüğü: nokta + ince yüzey halkası (3B sahnede seçilsin).
+          background: isaretci.sonuk ? "var(--yz-text-3)" : renk,
+          border: "2px solid var(--yz-surface-1)",
           boxShadow: uzerinde ? "var(--yz-raised-hover)" : "var(--yz-raised)",
-          fontSize: "var(--yz-fs-xs)",
-          padding: "2px 8px",
-          whiteSpace: YATAY,
           opacity: isaretci.sonuk ? 0.6 : 1,
-          transform: uzerinde ? "translateY(-2px)" : "none",
+          transform: buyume,
           transitionProperty: "transform, box-shadow",
           transitionDuration: "var(--yz-dur-fast)",
+          cursor: "pointer",
         }}
-      >
-        <span
-          aria-hidden="true"
-          style={{
-            width: "7px",
-            height: "7px",
-            borderRadius: "50%",
-            background: isaretci.sonuk ? "var(--yz-text-3)" : renk,
-            flex: "0 0 auto",
-          }}
-        />
-        {isaretci.ad}
-      </button>
+      />
     </Html>
   );
 }

@@ -1794,6 +1794,8 @@ export const de: Sozluk = {
   panoSatirYukari: "Zeile hoch",
   panoSatirAsagi: "Zeile runter",
   panoAsagiTasi: "Nach unten",
+  panoTasiTut: "{ad} verschieben — ziehen oder Pfeiltasten benutzen",
+  panoBosSatir: "Bereich hier ablegen",
   panoKaydedildi: "Dashboard-Layout gespeichert.",
   panoKaydedilemedi: "Das Dashboard-Layout konnte nicht gespeichert werden.",
   panoKisayolSec: "Verknüpfungen wählen",

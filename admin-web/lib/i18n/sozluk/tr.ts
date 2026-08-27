@@ -1856,6 +1856,8 @@ export const tr = {
   panoSatirYukari: "Satırı yukarı",
   panoSatirAsagi: "Satırı aşağı",
   panoAsagiTasi: "Aşağı taşı",
+  panoTasiTut: "{ad} bölümünü taşı — sürükleyin ya da ok tuşlarını kullanın",
+  panoBosSatir: "Bölümü buraya bırakın",
   panoKaydedildi: "Panel düzeni kaydedildi.",
   panoKaydedilemedi: "Panel düzeni kaydedilemedi.",
   panoKisayolSec: "Kısayolları seç",

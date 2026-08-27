@@ -92,15 +92,18 @@ describe("(P168 §1.1) `Kart` href SOZLESMESI", () => {
   });
 });
 
-describe("(P168 §1.2) YEDI widget", () => {
-  it("sinir YEDI", () => {
-    expect(WIDGET_SINIRI).toBe(7);
+describe("(P182 §2) ALTI widget", () => {
+  it("sinir ALTI", () => {
+    // (P182 §2) 7 DEGIL 6: sunucu semasi (widgetlar max_length=6) hep 6'ydi;
+    // istemci 7'ye izin verince yedinci sessizce kaydedilmiyordu. Sinir 6'ya
+    // hizalandi (istemci + sunucu + izgara lg:grid-cols-6).
+    expect(WIDGET_SINIRI).toBe(6);
   });
 
-  it("yedi widget'in HEPSI cizilir", () => {
-    // Sinir 7 olup izgara 6 sutunda kalsaydi, yedinci kutu alt satira
-    // tek basina duser ve "tam genislikte yedi esit alan" bozulurdu.
-    const yedi = Array.from({ length: 7 }, (_, i) => ({
+  it("alti widget'in HEPSI cizilir", () => {
+    // Alti kutu masaustunde 6 sutunlu izgarayi tam doldurur; sagda bos
+    // sutun kalmaz.
+    const alti = Array.from({ length: 6 }, (_, i) => ({
       rota: `/r${i}`,
       etiket: `W${i}`,
       bolum: "B",
@@ -108,12 +111,12 @@ describe("(P168 §1.2) YEDI widget", () => {
     }));
     ciz(() =>
       React.createElement(WidgetSeridi, {
-        adaylar: yedi,
-        secili: yedi.map((w) => w.rota),
+        adaylar: alti,
+        secili: alti.map((w) => w.rota),
         duzenlemede: false,
         onDegisti: vi.fn(),
       }),
     );
-    expect(screen.getAllByRole("link")).toHaveLength(7);
+    expect(screen.getAllByRole("link")).toHaveLength(6);
   });
 });

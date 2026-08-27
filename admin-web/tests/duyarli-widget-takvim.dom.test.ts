@@ -19,12 +19,13 @@ const WIDGET = readFileSync("components/pano/widget-seridi.tsx", "utf8");
 const TAKVIM = readFileSync("components/pano/takvim.tsx", "utf8");
 
 describe("(P170 §4.1) widget izgarasi", () => {
-  it("kirilma noktalari 2 -> 3 -> 4 -> 7", () => {
-    // Brief: sm'de 2 sutun, md'de 3-4, lg+ tek satir 7.
+  it("kirilma noktalari 2 -> 3 -> 4 -> 6", () => {
+    // (P182 §3) Masaustu 6 sutun: sinir 6 iken 6 widget tam doldurur, sagda
+    // bos sutun kalmaz. Dokunma katmanlari (2/3/4) korunur.
     expect(WIDGET).toContain("grid-cols-2");
     expect(WIDGET).toContain("sm:grid-cols-3");
     expect(WIDGET).toContain("md:grid-cols-4");
-    expect(WIDGET).toContain("lg:grid-cols-7");
+    expect(WIDGET).toContain("lg:grid-cols-6");
   });
 
   it("TEK KALAN kart iki sutunlu bantta TAM GENISLIK alir", () => {

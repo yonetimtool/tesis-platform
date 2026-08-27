@@ -1794,6 +1794,8 @@ export const es: Sozluk = {
   panoSatirYukari: "Subir fila",
   panoSatirAsagi: "Bajar fila",
   panoAsagiTasi: "Bajar",
+  panoTasiTut: "Mover {ad} — arrastra o usa las flechas",
+  panoBosSatir: "Suelta una sección aquí",
   panoKaydedildi: "Diseño del panel guardado.",
   panoKaydedilemedi: "No se pudo guardar el diseño del panel.",
   panoKisayolSec: "Elegir accesos directos",

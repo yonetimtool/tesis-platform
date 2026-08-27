@@ -1794,6 +1794,8 @@ export const ru: Sozluk = {
   panoSatirYukari: "Строку вверх",
   panoSatirAsagi: "Строку вниз",
   panoAsagiTasi: "Переместить вниз",
+  panoTasiTut: "Переместить {ad} — перетащите или используйте стрелки",
+  panoBosSatir: "Перетащите раздел сюда",
   panoKaydedildi: "Макет панели сохранён.",
   panoKaydedilemedi: "Не удалось сохранить макет панели.",
   panoKisayolSec: "Выбрать ярлыки",

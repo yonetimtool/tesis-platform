@@ -91,25 +91,15 @@ export function WidgetSeridi({
           </p>
         </Kart>
       ) : (
-        // TAM GENISLIK, ESIT PAY: brief "sayfanin solundan sagina uzanan
-        // tam genislikte" diyor. (P168 §1.2) Genis ekranda YEDI esit alan;
-        // dar ekranda 2 -> 3 -> 4 diye kirilir, cunku yedi kutu 60 px'e
-        // dusup okunmaz olurdu.
-        // (P170 §4.1) SUTUN SAYILARI ZATEN DOGRUYDU (olculdu): 2 -> 3 -> 4
-        // -> 7. Bozuk gorunen sey HIZAYDI, kirilma degil. Iki kusur vardi:
-        //
-        //   1. YEDI KUTU IKI SUTUNA SIGMAZ ve sonuncusu satirin SOL
-        //      YARISINDA tek basina kaliyordu. Sagdaki bosluk "eksik kart"
-        //      gibi okunuyordu — kullanici bir seyin yuklenmedigini
-        //      saniyordu.
-        //   2. Kart icerigi USTTEN hizaliydi; etiketler bir ya da iki
-        //      satir oldugu icin ikonlar ayni yatayda DURMUYORDU.
-        //
-        // TEK KALAN KART TAM GENISLIK ALIR, ORTALANMAZ: ortalamak iki
-        // ceyrek bosluk birakir ve kartin sol kenari sayfanin oteki
-        // bolumleriyle HIZASINI kaybederdi (brief'in "kenar bosluklari ayni
-        // hizada baslasin" maddesi tam bunu istiyor).
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
+        // TAM GENISLIK, ESIT PAY: serit sayfanin solundan sagina uzanir ve
+        // masaustunde sag kenari 3D maketin/oteki bolumlerin sag keniyla AYNI
+        // hizada biter. Dar ekranda 2 -> 3 -> 4 diye kirilir.
+        // (P182 §3) MASAUSTU SUTUN SAYISI 7 -> 6: sinir 6 iken 7 sutunlu
+        // izgarada 6 widget SAGDA BIR SUTUN BOS birakiyordu ("eksik kart" gibi
+        // okunan sag bosluk). Alti sutun, alti widgeti tam doldurur ve sag kenar
+        // sayfanin sag keniyla hizalanir. Dokunma katmanlari (2/3/4) DEGISMEDI —
+        // orada mevcut mobil/tablet gorunumu korunur.
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
           {gosterilen.map((w, i) => (
             <div
               key={w.rota}

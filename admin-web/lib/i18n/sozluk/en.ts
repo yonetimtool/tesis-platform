@@ -1794,6 +1794,8 @@ export const en: Sozluk = {
   panoSatirYukari: "Row up",
   panoSatirAsagi: "Row down",
   panoAsagiTasi: "Move down",
+  panoTasiTut: "Move {ad} — drag or use the arrow keys",
+  panoBosSatir: "Drop a section here",
   panoKaydedildi: "Dashboard layout saved.",
   panoKaydedilemedi: "The dashboard layout could not be saved.",
   panoKisayolSec: "Choose shortcuts",

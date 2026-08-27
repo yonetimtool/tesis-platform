@@ -1794,6 +1794,8 @@ export const ar: Sozluk = {
   panoSatirYukari: "الصف لأعلى",
   panoSatirAsagi: "الصف لأسفل",
   panoAsagiTasi: "تحريك لأسفل",
+  panoTasiTut: "حرّك {ad} — اسحب أو استخدم مفاتيح الأسهم",
+  panoBosSatir: "أفلت قسمًا هنا",
   panoKaydedildi: "تم حفظ تخطيط اللوحة.",
   panoKaydedilemedi: "تعذّر حفظ تخطيط اللوحة.",
   panoKisayolSec: "اختيار الاختصارات",
