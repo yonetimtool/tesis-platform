@@ -38,7 +38,6 @@ import { BinaSahnesiYukleyici } from "@/components/3d/sahne-yukleyici";
 import { DevriyeGorunumu } from "@/components/DevriyeGorunumu";
 import type { SahneBlogu, SahneSecimi } from "@/components/3d/bina-sahnesi";
 import { Dugme, IskeletKpi, Kpi } from "@/components/ui";
-import { inputCls } from "@/components/form";
 import { PanoFinansOzeti } from "@/components/pano/finans-ozeti";
 import { PanoTakvim } from "@/components/pano/takvim";
 import { WidgetSeridi, type WidgetAdayi } from "@/components/pano/widget-seridi";
@@ -130,11 +129,13 @@ const SUTUN_SINIF: Record<number, string> = {
   3: "grid gap-bolum md:grid-cols-2 lg:grid-cols-3",
   4: "grid gap-bolum md:grid-cols-2 lg:grid-cols-4",
 };
-// (P182 §4) Surukle-birak hedefinin gorsel isareti. Modul sabiti: style icinde
-// ternary metin birakmak sabit-metin tarayicisini (tur 47) tetikler.
-const VURGU_STIL = {
-  outline: "2px dashed var(--yz-accent-edge)",
-  outlineOffset: "4px",
+// (P184 §11) SURUKLE-BIRAK hedef isareti. Onceki SOLUK KESIK cerceve yerine
+// bir bolumun ONUNE kalin accent EKLEME CIZGISI cizilir (nereye dusecegi net).
+// Modul sabiti: style icinde ternary metin birakmak sabit-metin tarayicisini
+// (tur 47) tetikler.
+const EKLEME_CIZGISI = {
+  outline: "0",
+  boxShadow: "-6px 0 0 -2px var(--yz-accent-edge)",
 } as const;
 // (P182 §4) Klavye ok tuslari -> bolum tasima yonu. Lookup tablosu (ternary
 // degil) ki BolumYon degerleri sabit-metin tarayicisina "gorunen metin" gibi
@@ -147,6 +148,10 @@ const OK_YON: Record<string, BolumYon | undefined> = {
 };
 /** Bolum gorunurlugunu cevirirken kart etiketi (duzenleme modu). */
 const ETIKET_DIV = "div" as const;
+// (P184 §11) OZEL BIRAK HEDEFLERI — bolum kimlikleriyle carpismaz ("bolum:"
+// onekli olmadiklari ve gercek bolum idlerinden ayri oldugu icin).
+const HEDEF_TEPSI = "__tepsi__" as const;
+const HEDEF_TUVAL = "__tuval__" as const;
 // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
 const VURGU_SUREN = "blue" as const;
 const VURGU_SIRADAKI = "purple" as const;
@@ -323,11 +328,16 @@ export default function DashboardPage() {
   // surer, biri digerinin kopyasini tutmaz.
   const [secim, setSecim] = useState<SahneSecimi>(BOS_SECIM);
   const [duzenlemede, setDuzenlemede] = useState(false);
-  // (P182 §4) SURUKLE-BIRAK: `surukleId` tutulan bolum; `birakVurgu` uzerine
-  // gelinen birakma hedefi (gorsel isaret). Kimlikle calisir (bolum id benzersiz),
-  // satir hedefi icin `satir:<i>`. Kayit yalniz BIRAKMADA olur (her dragover'da degil).
+  // (P182 §4 / P184 §11) SURUKLE-BIRAK: `surukleId` tutulan bolum; `birakVurgu`
+  // uzerine gelinen birakma hedefi (gorsel isaret). Kimlikle calisir (bolum id
+  // benzersiz); ozel hedefler: `TEPSI` (gizli tepsisi), `TUVAL` (gorunur alan).
+  // Kayit yalniz BIRAKMADA olur (her dragover'da degil).
   const [surukleId, setSurukleId] = useState<string | null>(null);
   const [birakVurgu, setBirakVurgu] = useState<string | null>(null);
+  // (P184 §11) ANLIK "Kaydedildi" isareti: kayit tuttugunda kisa sure gorunur,
+  // sonra kendiliginden solar. Ayri bir "Kaydet" adimi olmadigi icin kullanici
+  // degisikligin gittigini boyle gorur (hata yolu yine toast).
+  const [kaydedildiIsareti, setKaydedildiIsareti] = useState(false);
 
   // (P181 Bölüm 10.5) YOKLAMA: 15 sn aralık YETERLİ. `revalidateOnFocus`
   // KAPALI — her sekmeye dönüşte ek bir istek, 15 sn'lik tazeliğe hiçbir şey
@@ -405,6 +415,9 @@ export default function DashboardPage() {
         tercihGovdesi(yeniWidget, yeniSatir.flatMap((s) => s.bolumler), yeniSatir),
       );
       void tercihTazele();
+      // (P184 §11) ANLIK KAYIT ISARETI: kayit tuttu, kisa sure goster ve sol.
+      setKaydedildiIsareti(true);
+      window.setTimeout(() => setKaydedildiIsareti(false), 1800);
       return true;
     } catch {
       // KAYDEDILEMEDIGINI SOYLE: sessizce yutmak, kullanicinin duzeni
@@ -426,26 +439,6 @@ export default function DashboardPage() {
     void duzeniKaydet(yeni, cizilenSatirlar);
   }
 
-  // (P181 7.1) Satırın sütun sayısı (1-4).
-  function sutunAyarla(si: number, sutun: number) {
-    satirlariUygula(cizilenSatirlar.map((s, k) => (k === si ? { ...s, sutun } : s)));
-  }
-  // (P181 7.2) Satır banner başlığı.
-  function bannerAyarla(si: number, baslik: string) {
-    satirlariUygula(
-      cizilenSatirlar.map((s, k) =>
-        k === si ? { ...s, baslik: baslik.trim() ? baslik : null } : s,
-      ),
-    );
-  }
-  // Satırın tümünü yukarı/aşağı taşı.
-  function satirTasi(si: number, yon: -1 | 1) {
-    const sj = si + yon;
-    if (sj < 0 || sj >= cizilenSatirlar.length) return;
-    const yeni = [...cizilenSatirlar];
-    [yeni[si], yeni[sj]] = [yeni[sj], yeni[si]];
-    satirlariUygula(yeni);
-  }
   // (P182 §4) KLAVYE ile bölüm taşıma (sürükle-bırak'ın erişilebilir eşi).
   // Mantık `bolumOkTasi`de (saf, test edilmiş); burada yalnız ok tuşu -> yön.
   function bolumKlavye(si: number, bi: number, e: KeyboardEvent) {
@@ -454,32 +447,44 @@ export default function DashboardPage() {
     e.preventDefault();
     satirlariUygula(bolumOkTasi(cizilenSatirlar, si, bi, yon));
   }
-  // (P182 §4) SÜRÜKLE-BIRAK bırakma: tutulan bölümü hedefe taşı + durumu temizle.
-  function bolumBirak(hedef: { tip: "once"; id: string } | { tip: "satirSonu"; si: number }) {
+  // (P184 §11) Bir bolumun `gizli` bayragini kimlikle ayarlar. Bolum SATIRDA
+  // KALIR (sira/konum korunur, tercihGovdesi ayni idler listesini yazar); tuval
+  // gizli olmayanlari cizer, tepsi gizli olanlari. Boylece "gizle" tek yerde
+  // durumu cevirir, ayri bir liste tutulmaz.
+  function gizliAyarla(satirlar: readonly CozulmusSatir[], id: string, gizli: boolean) {
+    return satirlar.map((s) => ({
+      ...s,
+      bolumler: s.bolumler.map((b) => (b.id === id ? { ...b, gizli } : b)),
+    }));
+  }
+  // (P184 §11) SÜRÜKLE-BIRAK bırakma. TEK ETKILESIM: kullanici bir bolumu ya
+  // baska bir bolumun ONUNE (yeniden sirala) ya GIZLI TEPSISINE (gizle) ya da
+  // TUVALE (tepsiden geri getir) birakir. Tepsiden gelen bir bolum tuvale ya da
+  // bir bolumun onune birakildiginda gizliligi de KALKAR — tek surukleyle hem
+  // geri gelir hem yerine oturur.
+  function bolumBirak(
+    hedef:
+      | { tip: "once"; id: string }
+      | { tip: "tepsi" }
+      | { tip: "tuval" },
+  ) {
     const kaynak = surukleId;
     setSurukleId(null);
     setBirakVurgu(null);
     if (!kaynak) return;
-    satirlariUygula(bolumSurukleBirak(cizilenSatirlar, kaynak, hedef));
-  }
-  // Bölümü gizle/göster (satır si, bölüm bi).
-  function bolumGizle(si: number, bi: number) {
-    satirlariUygula(
-      cizilenSatirlar.map((s, k) =>
-        k === si
-          ? {
-              ...s,
-              bolumler: s.bolumler.map((b, m) =>
-                m === bi ? { ...b, gizli: !b.gizli } : b,
-              ),
-            }
-          : s,
-      ),
-    );
-  }
-  // Yeni boş satır ekle (üstteki bölümler buraya taşınabilir).
-  function satirEkle() {
-    satirlariUygula([...cizilenSatirlar, { sutun: 1, bolumler: [] }]);
+    if (hedef.tip === "tepsi") {
+      satirlariUygula(gizliAyarla(cizilenSatirlar, kaynak, true));
+      return;
+    }
+    // "once" ve "tuval": bolum GORUNUR olur; ardindan yeniden siralanir.
+    const gorunur = gizliAyarla(cizilenSatirlar, kaynak, false);
+    if (hedef.tip === "once") {
+      satirlariUygula(bolumSurukleBirak(gorunur, kaynak, hedef));
+    } else {
+      // Tuvale (bos alan/gorunur bolgeye) birakma = gizliligi kaldirmak yeterli;
+      // bolum kayitli sirasinda gorunur hale gelir.
+      satirlariUygula(gorunur);
+    }
   }
 
   async function varsayilanaDon() {
@@ -696,12 +701,13 @@ export default function DashboardPage() {
     if (!duzenlemede) {
       return b.kendiBasligi ? null : <BolumBasligi baslik={t(b.anahtar)} />;
     }
-    // (P182 §4) SIRALAMA ARTIK SURUKLE-BIRAK: onceki dort tasima dugmesi
-    // (sol/sag/yukari/asagi) yerini TEK tutamaca birakti. Tutamac hem surukle
-    // hem ok tuslariyla calisir (erisilebilirlik). Kart tutulan bolumse soluk.
+    // (P184 §11) SIRALAMA TEK ETKILESIM: SURUKLE tutamaci. Sutun/banner/tasima
+    // dugmeleri ve gizle dugmesi KALDIRILDI (gizleme artik tepsiye surukleyerek).
+    // Tutamac hem surukle hem ok tuslariyla calisir (erisilebilirlik). Baslik
+    // token agirliginda (text-bolum/700) — bolumler arasi hiyerarsi netlesir.
     const tutuluyor = surukleId === b.id;
     return (
-      <div className="mb-2 flex flex-wrap items-center gap-1.5">
+      <div className="mb-kart flex items-center gap-2">
         <button
           type="button"
           draggable
@@ -713,73 +719,38 @@ export default function DashboardPage() {
           onKeyDown={(e) => bolumKlavye(si, bi, e)}
           aria-label={t("panoTasiTut", { ad: t(b.anahtar) })}
           title={t("panoTasiTut", { ad: t(b.anahtar) })}
-          className="odak-ic yz-dokunma-44 rounded px-1.5"
+          className="odak-ic yz-dokunma-44 flex h-11 w-11 shrink-0 items-center justify-center rounded-btn border"
           style={{
             cursor: "grab",
-            fontSize: "var(--yz-fs-h3)",
-            color: "var(--yz-text-3)",
+            fontSize: "var(--yz-fs-h2)",
+            color: "var(--yz-text-2)",
+            borderColor: "var(--yz-border)",
+            background: "var(--yz-surface-1)",
             opacity: tutuluyor ? 0.4 : 1,
           }}
         >
           ⠿
         </button>
-        <span style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
-          {t(b.anahtar)}
-        </span>
-        <Dugme
-          tur={b.gizli ? SECILI_TUR : SECILMEMIS_TUR}
-          boy="kucuk"
-          onClick={() => bolumGizle(si, bi)}
-        >
-          {b.gizli ? t("panoBolumGoster") : t("panoBolumGizle")}
-        </Dugme>
+        <span className="text-bolum text-metin-heading">{t(b.anahtar)}</span>
       </div>
     );
   }
 
-  // (P181 7.1/7.2) Düzenleme modunda satır kontrol çubuğu: sütun sayısı +
-  // banner başlığı + satırı taşı.
-  function satirKontrol(satir: CozulmusSatir, si: number) {
-    return (
-      <div className="flex flex-wrap items-center gap-1.5 rounded-btn border p-2"
-        style={{ borderColor: "var(--yz-border)", background: "var(--yz-surface-1)" }}>
-        <span style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
-          {t("panoSutun")}:
-        </span>
-        {[1, 2, 3, 4].map((n) => (
-          <Dugme
-            key={n}
-            tur={satir.sutun === n ? SECILI_TUR : SECILMEMIS_TUR}
-            boy="kucuk"
-            onClick={() => sutunAyarla(si, n)}
-          >
-            {String(n)}
-          </Dugme>
-        ))}
-        <input
-          className={inputCls}
-          style={{ width: 180 }}
-          placeholder={t("panoBannerBaslik")}
-          aria-label={t("panoBannerBaslik")}
-          defaultValue={satir.baslik ?? ""}
-          onBlur={(e) => bannerAyarla(si, e.target.value)}
-        />
-        <Dugme tur="ikincil" boy="kucuk" onClick={() => satirTasi(si, -1)}>
-          {t("panoSatirYukari")}
-        </Dugme>
-        <Dugme tur="ikincil" boy="kucuk" onClick={() => satirTasi(si, 1)}>
-          {t("panoSatirAsagi")}
-        </Dugme>
-      </div>
-    );
-  }
-
-  // (P181 7.1) SATIR BAZLI ÇİZİM: her satır kendi sütun sayısıyla ızgara olur.
-  const gorunurSatirlar = duzenlemede
-    ? cizilenSatirlar
-    : cizilenSatirlar
-        .map((s) => ({ ...s, bolumler: s.bolumler.filter((b) => !b.gizli) }))
-        .filter((s) => s.bolumler.length > 0);
+  // (P184 §11) TUVAL = gorunur (gizli olmayan) bolumler. Duzenleme modunda da
+  // yalniz gorunurler cizilir; GIZLILER TEPSIDE durur (asagida). Sira/konum
+  // model icinde korunur — gizli bolum satirdan silinmez, yalniz tuvalden
+  // suzulur.
+  const gorunurSatirlar = cizilenSatirlar
+    .map((s) => ({ ...s, bolumler: s.bolumler.filter((b) => !b.gizli) }))
+    .filter((s) => s.bolumler.length > 0);
+  // (P184 §11) GIZLI bolumler duz liste — tepside cizilir, tekrar tuvale
+  // surukleyerek geri acilir. Satir icindeki orijinal (si,bi) konumu klavye
+  // tasima icin tasinir.
+  const gizliBolumler = cizilenSatirlar.flatMap((s, si) =>
+    s.bolumler
+      .map((b, bi) => ({ b, si, bi }))
+      .filter((x) => x.b.gizli),
+  );
 
   return (
     <div className="space-y-bolum">
@@ -792,6 +763,21 @@ export default function DashboardPage() {
           durursa, kazara tiklanabilecek yikici bir dugme ust barda
           surekli asili kalirdi. */}
       <SayfaEylemleri>
+        {/* (P184 §11) ANLIK "Kaydedildi" isareti — ayri bir Kaydet adimi YOK,
+            her degisiklik otomatik gider; bu cip kullaniciya gittigini soyler
+            ve kendiliginden solar. Hata yolu ayri (toast). */}
+        {kaydedildiIsareti && (
+          <span
+            aria-live="polite"
+            className="inline-flex items-center gap-1 rounded-chip px-2 py-0.5 text-chip"
+            style={{
+              background: "var(--yz-success-tint, var(--yz-surface-2))",
+              color: "var(--yz-success-ink)",
+            }}
+          >
+            {t("panoKaydedildiKisa")}
+          </span>
+        )}
         {duzenlemede && (
           <Dugme tur="ikincil" boy="kucuk" onClick={() => void varsayilanaDon()}>
             {t("panoVarsayilanaDon")}
@@ -809,91 +795,149 @@ export default function DashboardPage() {
       {/* Hata KUTUSU canli bolgedir: pano 15 sn'de bir yenilenir. */}
       {error ? <HataDurumu mesaj={error.message} /> : null}
 
-      {gorunurSatirlar.length === 0 ? (
-        <BosDurum baslik={t("panoTumBolumlerGizli")} />
-      ) : (
-        gorunurSatirlar.map((satir, si) => (
-          <div key={si} className="space-y-bolum">
-            {/* (P181 7.2) BANNER + (düzenlemede) satır kontrol çubuğu. */}
-            {duzenlemede
-              ? satirKontrol(satir, si)
-              : satir.baslik
-                ? <BolumBasligi baslik={satir.baslik} />
-                : null}
-            {duzenlemede && satir.bolumler.length === 0 ? (
-              // (P182 §4) BOŞ SATIR = bırakma bölgesi: bir bölüm buraya sürükle
-              // ile taşınabilir (klavyeyle ↑/↓ ile aynı yere gönderilir).
-              <div
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setBirakVurgu(`satir:${si}`);
-                }}
-                onDragLeave={() =>
-                  setBirakVurgu((v) => (v === `satir:${si}` ? null : v))
-                }
-                onDrop={(e) => {
-                  e.preventDefault();
-                  bolumBirak({ tip: "satirSonu", si });
-                }}
-                className="rounded-btn border-2 border-dashed p-6 text-center"
-                style={{
-                  borderColor:
-                    birakVurgu === `satir:${si}`
-                      ? "var(--yz-accent-edge)"
-                      : "var(--yz-border)",
-                  color: "var(--yz-text-3)",
-                  fontSize: "var(--yz-fs-sm)",
-                }}
-              >
-                {t("panoBosSatir")}
-              </div>
-            ) : (
-              <div className={SUTUN_SINIF[satir.sutun] ?? SUTUN_SINIF[1]}>
-                {satir.bolumler.map((b, bi) => {
-                  // Bu bölüm ŞU AN bırakma hedefi mi (ve tutulan bölümün kendisi
-                  // DEĞİL mi)? Öyleyse kesik çerçeveyle işaretlenir.
-                  const hedefte =
-                    duzenlemede && birakVurgu === b.id && surukleId !== b.id;
-                  return (
-                    <section
-                      key={b.id}
-                      // GIZLI BOLUM DUZENLEME MODUNDA SOLUK CIZILIR, DOM'dan
-                      // silinmez: kullanici neyi geri acacagini gormeli.
-                      {...(duzenlemede
-                        ? {
-                            onDragOver: (e: DragEvent) => {
-                              e.preventDefault();
-                              setBirakVurgu(b.id);
-                            },
-                            onDragLeave: () =>
-                              setBirakVurgu((v) => (v === b.id ? null : v)),
-                            onDrop: (e: DragEvent) => {
-                              e.preventDefault();
-                              bolumBirak({ tip: "once", id: b.id });
-                            },
-                          }
-                        : {})}
-                      style={{
-                        opacity: b.gizli ? 0.45 : 1,
-                        ...(hedefte ? VURGU_STIL : {}),
-                      }}
-                    >
-                      {bolumBasligi(b, si, bi)}
-                      {bolumGovdesi(b.id)}
-                    </section>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        ))
+      {/* (P184 §11) DUZENLEME IPUCU — tek etkilesim (surukle) acikca anlatilir;
+          onceki kalabalik kontrol cubugu yerine tek satirlik yonlendirme. */}
+      {duzenlemede && (
+        <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+          {t("panoDuzenleIpucu")}
+        </p>
       )}
 
-      {/* (P181 7.1) Düzenlemede yeni boş satır: üstteki bölümler buraya taşınabilir. */}
+      {/* (P184 §11) TUVAL = gorunur bolumler. Duzenleme modunda tuvalin BOSTA
+          KALAN alanina birakmak, tepsiden gelen bir bolumu geri getirir (gizli
+          bayragini kaldirir). Normal modda hicbir surukle davranisi baglanmaz. */}
+      {gorunurSatirlar.length === 0 && !duzenlemede ? (
+        <BosDurum baslik={t("panoTumBolumlerGizli")} />
+      ) : (
+        <div
+          className="space-y-bolum"
+          {...(duzenlemede
+            ? {
+                onDragOver: (e: DragEvent) => {
+                  e.preventDefault();
+                  // Yalniz TUVALIN kendi bos alani (bir bolum degil): hedefi
+                  // yalniz tuval hedefi degilse kaydirma, bolum onceligi kalsin.
+                  if (e.target === e.currentTarget) setBirakVurgu(HEDEF_TUVAL);
+                },
+                onDrop: (e: DragEvent) => {
+                  if (e.target !== e.currentTarget) return;
+                  e.preventDefault();
+                  bolumBirak({ tip: "tuval" });
+                },
+              }
+            : {})}
+        >
+          {gorunurSatirlar.map((satir, si) => (
+            <div key={si} className={SUTUN_SINIF[satir.sutun] ?? SUTUN_SINIF[1]}>
+              {satir.bolumler.map((b, bi) => {
+                // (P184 §11) Bu bolum SU AN birakma hedefi mi (ve tutulan
+                // bolumun kendisi DEGIL mi)? Oyleyse ONUNE kalin accent ekleme
+                // cizgisi cizilir — kesik soluk cerceve yerine net isaret.
+                const hedefte =
+                  duzenlemede && birakVurgu === b.id && surukleId !== b.id;
+                return (
+                  <section
+                    key={b.id}
+                    {...(duzenlemede
+                      ? {
+                          onDragOver: (e: DragEvent) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setBirakVurgu(b.id);
+                          },
+                          onDragLeave: () =>
+                            setBirakVurgu((v) => (v === b.id ? null : v)),
+                          onDrop: (e: DragEvent) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            bolumBirak({ tip: "once", id: b.id });
+                          },
+                        }
+                      : {})}
+                    style={hedefte ? EKLEME_CIZGISI : undefined}
+                  >
+                    {bolumBasligi(b, si, bi)}
+                    {bolumGovdesi(b.id)}
+                  </section>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* (P184 §11) GIZLI BOLUMLER TEPSISI — gizle/goster dugmelerinin yerine.
+          Bir bolumu buraya surukleyince gizlenir; tepsideki bir bolumu tuvale
+          geri surukleyince gorunur olur. YALNIZ duzenleme modunda cizilir. */}
       {duzenlemede && (
-        <Dugme tur="ikincil" boy="kucuk" onClick={satirEkle}>
-          {t("panoSatirEkle")}
-        </Dugme>
+        <div
+          onDragOver={(e) => {
+            e.preventDefault();
+            setBirakVurgu(HEDEF_TEPSI);
+          }}
+          onDragLeave={() =>
+            setBirakVurgu((v) => (v === HEDEF_TEPSI ? null : v))
+          }
+          onDrop={(e) => {
+            e.preventDefault();
+            bolumBirak({ tip: "tepsi" });
+          }}
+          className="rounded-kart border-2 border-dashed p-kart"
+          style={{
+            borderColor:
+              birakVurgu === HEDEF_TEPSI
+                ? "var(--yz-accent-edge)"
+                : "var(--yz-border)",
+            background:
+              birakVurgu === HEDEF_TEPSI
+                ? "var(--yz-surface-2)"
+                : "var(--yz-surface-1)",
+          }}
+        >
+          <div className="mb-kart flex items-center gap-2">
+            <span className="text-bolum text-metin-heading">
+              {t("panoGizliBolumler")}
+            </span>
+          </div>
+          {gizliBolumler.length === 0 ? (
+            <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-3)" }}>
+              {t("panoGizliBolumYok")}
+            </p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {gizliBolumler.map(({ b, si, bi }) => {
+                const tutuluyor = surukleId === b.id;
+                return (
+                  <button
+                    key={b.id}
+                    type="button"
+                    draggable
+                    onDragStart={() => setSurukleId(b.id)}
+                    onDragEnd={() => {
+                      setSurukleId(null);
+                      setBirakVurgu(null);
+                    }}
+                    onKeyDown={(e) => bolumKlavye(si, bi, e)}
+                    aria-label={t("panoTasiTut", { ad: t(b.anahtar) })}
+                    title={t("panoTasiTut", { ad: t(b.anahtar) })}
+                    className="odak-ic yz-dokunma-44 inline-flex items-center gap-2 rounded-btn border px-kart py-2"
+                    style={{
+                      cursor: "grab",
+                      borderColor: "var(--yz-border)",
+                      background: "var(--yz-surface-2)",
+                      color: "var(--yz-text-2)",
+                      fontSize: "var(--yz-fs-sm)",
+                      opacity: tutuluyor ? 0.4 : 1,
+                    }}
+                  >
+                    <span aria-hidden="true">⠿</span>
+                    {t(b.anahtar)}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

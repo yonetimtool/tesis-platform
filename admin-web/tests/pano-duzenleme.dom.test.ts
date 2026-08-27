@@ -69,38 +69,59 @@ function fetchTaklidi(tercih: unknown = {}) {
 
 afterEach(() => vi.restoreAllMocks());
 
-describe("(P167 §2.5) panel duzenleme modu", () => {
+// (P184 §11) DUZENLEME ARTIK TEK ETKILESIM: SURUKLE-BIRAK.
+//
+// Onceki kalabalik kontrol cubugu (sutun 1/2/3/4 dugmeleri + banner girdisi +
+// yukari/asagi + bolum basi gizle/goster) KALDIRILDI. Kalan tek gorsel kontrol
+// her bolumdeki SURUKLE tutamaci; gizleme "Gizli bolumler" TEPSISINE surukleyerek
+// yapilir, geri acma tepsiden tuvale surukleyerek. Klavye tasima (ok tuslari)
+// surukle-birak'in erisilebilir esi olarak DURUYOR.
+//
+// jsdom gercek HTML5 surukle-birak uretmez; dragStart/dragOver/drop olaylari
+// ELLE tetiklenir (uygulamanin dinledigi olaylar bunlar, veri aktarimi degil).
+function surukleBirak(kaynak: Element, hedef: Element) {
+  fireEvent.dragStart(kaynak);
+  fireEvent.dragOver(hedef);
+  fireEvent.drop(hedef);
+  fireEvent.dragEnd(kaynak);
+}
+
+describe("(P167 §2.5 · P184 §11) panel duzenleme modu", () => {
   it("VARSAYILAN olarak KAPALI — surukle tutamaci gorunmez", async () => {
     fetchTaklidi();
     ciz(DashboardPage);
     await screen.findByText("Finansal özet");
-    // (P182 §4) Sira dugmeleri yerini SURUKLE tutamacina birakti; normal
-    // gorunumde hicbir duzenleme kontrolu cizilmez.
+    // Normal gorunumde hicbir duzenleme kontrolu cizilmez.
     expect(
       screen.queryByRole("button", { name: /sürükleyin ya da ok tuşlarını/ }),
     ).toBeNull();
     expect(screen.getByRole("button", { name: "Paneli düzenle" })).toBeInTheDocument();
   });
 
-  it("ACILINCA her bolumun SURUKLE tutamaci ve gizle dugmesi cizilir", async () => {
+  it("ACILINCA her bolumun SURUKLE tutamaci cizilir; sutun/banner/gizle dugmeleri YOK", async () => {
     fetchTaklidi();
     ciz(DashboardPage);
     await screen.findByText("Finansal özet");
     await userEvent.setup().click(
       screen.getByRole("button", { name: "Paneli düzenle" }),
     );
-    // (P182 §4) Her bolum basliginda tek surukle tutamaci (sol/sag/yukari/asagi
-    // dort dugme yerine) + gizle/goster. Tutamac klavye ile de tasir.
+    // Her bolum basliginda tek surukle tutamaci (klavye ile de tasir).
     expect(
       screen.getAllByRole("button", { name: /sürükleyin ya da ok tuşlarını/ }).length,
     ).toBeGreaterThan(1);
-    expect(screen.getAllByRole("button", { name: "Bölümü gizle" }).length)
-      .toBeGreaterThan(1);
+    // (P184 §11) KALDIRILAN kontroller: per-bolum gizle/goster dugmesi, sutun
+    // sayisi dugmeleri, banner girdisi, satir tasima dugmeleri.
+    expect(screen.queryByRole("button", { name: "Bölümü gizle" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Bölümü göster" })).toBeNull();
+    expect(screen.queryByPlaceholderText("Başlık (isteğe bağlı)")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Satırı yukarı" })).toBeNull();
+    // Tepsi basligi cizilir.
+    expect(screen.getByText("Gizli bölümler")).toBeInTheDocument();
   });
 
   it("KLAVYE ile bolum tasima (ok tusu) SUNUCUYA YAZILIR", async () => {
-    // (P182 §4) Surukle-birak'in erisilebilir esi: tutamaca odaklan, sag ok
-    // ile satir icinde kaydir; yeni sira PUT govdesine dusmeli.
+    // (P182 §4 · P184 §11) Surukle-birak'in erisilebilir esi: tutamaca odaklan,
+    // sag ok ile satir icinde kaydir; yeni sira PUT govdesine dusmeli.
     const cagrilar = fetchTaklidi({
       bolumler: [{ id: "finans" }, { id: "takvim" }],
       satirlar: [{ sutun: 2, idler: ["finans", "takvim"], baslik: null }],
@@ -125,27 +146,60 @@ describe("(P167 §2.5) panel duzenleme modu", () => {
     });
   });
 
-  it("GIZLEME SUNUCUYA YAZILIR (sessizce kaybolmaz)", async () => {
+  it("SURUKLE-BIRAK ile YENIDEN SIRALAMA SUNUCUYA YAZILIR", async () => {
+    // (P184 §11) Tek etkilesim: finansi takvimin ONUNE surukle -> sira degisir.
+    const cagrilar = fetchTaklidi({
+      bolumler: [{ id: "takvim" }, { id: "finans" }],
+      satirlar: [{ sutun: 1, idler: ["takvim"], baslik: null },
+                 { sutun: 1, idler: ["finans"], baslik: null }],
+    });
+    ciz(DashboardPage);
+    await screen.findByText("Finansal özet");
+    const kullanici = userEvent.setup();
+    await kullanici.click(screen.getByRole("button", { name: "Paneli düzenle" }));
+    // Tutulan: FINANS tutamaci; hedef: TAKVIM bolumu (onune birakilir).
+    const finansTut = screen.getByRole("button", { name: /Finansal özet bölümünü taşı/ });
+    const takvimBolum = screen
+      .getByRole("button", { name: /Takvim bölümünü taşı/ })
+      .closest("section")!;
+    surukleBirak(finansTut, takvimBolum);
+
+    await waitFor(() => {
+      const put = cagrilar
+        .filter((c) => c.url.includes("/api/me/pano-tercihi") && c.method === "PUT")
+        .at(-1);
+      expect(put, "surukle siralama yazilmadi").toBeTruthy();
+      const govde = put!.body as { bolumler: { id: string }[] };
+      expect(govde.bolumler[0].id).toBe("finans");
+    });
+  });
+
+  it("TEPSIYE SURUKLEME gizli=true olarak SUNUCUYA YAZILIR", async () => {
+    // (P184 §11) Gizleme artik tepsiye surukleyerek: bolumu al, "Gizli bolumler"
+    // tepsisine birak; PUT govdesinde o bolum gizli=true olmali.
     const cagrilar = fetchTaklidi();
     ciz(DashboardPage);
     await screen.findByText("Finansal özet");
     const kullanici = userEvent.setup();
     await kullanici.click(screen.getByRole("button", { name: "Paneli düzenle" }));
-    await kullanici.click(screen.getAllByRole("button", { name: "Bölümü gizle" })[0]);
+    const finansTut = screen.getByRole("button", { name: /Finansal özet bölümünü taşı/ });
+    // Tepsi = "Gizli bolumler" basligini iceren border'li kutu.
+    const tepsi = screen.getByText("Gizli bölümler").closest("div")!.parentElement!;
+    surukleBirak(finansTut, tepsi);
 
     await waitFor(() => {
-      const put = cagrilar.find(
-        (c) => c.url.includes("/api/me/pano-tercihi") && c.method === "PUT",
-      );
-      expect(put, "duzen SUNUCUYA yazilmadi").toBeTruthy();
+      const put = cagrilar
+        .filter((c) => c.url.includes("/api/me/pano-tercihi") && c.method === "PUT")
+        .at(-1);
+      expect(put, "gizleme SUNUCUYA yazilmadi").toBeTruthy();
       const govde = put!.body as { bolumler: { id: string; gizli: boolean }[] };
-      expect(govde.bolumler[0].gizli).toBe(true);
+      expect(govde.bolumler.find((b) => b.id === "finans")?.gizli).toBe(true);
     });
   });
 
-  it("GIZLI BOLUM normal modda CIZILMEZ, duzenleme modunda GORUNUR", async () => {
-    // Kullanici neyi geri acacagini gormeli — duzenleme modunda satir
-    // DOM'da kalir (soluk cizilir).
+  it("GIZLI BOLUM normal modda CIZILMEZ, duzenleme modunda TEPSIDE GORUNUR", async () => {
+    // (P184 §11) Kullanici neyi geri acacagini tepside gormeli: gizli bolum
+    // duzenleme modunda tepside bir surukle tutamaci olarak durur.
     fetchTaklidi({ bolumler: [{ id: "takvim", gizli: true }] });
     ciz(DashboardPage);
     await screen.findByText("Finansal özet");
@@ -154,8 +208,11 @@ describe("(P167 §2.5) panel duzenleme modu", () => {
     await userEvent.setup().click(
       screen.getByRole("button", { name: "Paneli düzenle" }),
     );
-    expect(await screen.findByText("Takvim")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Bölümü göster" })).toBeInTheDocument();
+    // Tepside "Takvim" etiketli surukle tutamaci gorunur.
+    expect(
+      await screen.findByRole("button", { name: /Takvim bölümünü taşı/ }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Gizli bölümler")).toBeInTheDocument();
   });
 
   it("VARSAYILANA DON butun bolumleri geri acar ve YAZAR", async () => {
