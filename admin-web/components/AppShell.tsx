@@ -151,6 +151,82 @@ function Icon({ name }: { name: IconName }) {
     // gorunurdu.
     case "shield":
       return svg(<><path d="M12 3l7 3v5.5c0 4.4-3 7.6-7 9.5-4-1.9-7-5.1-7-9.5V6z" /><polyline points="9 12 11 14 15 10" /></>);
+    // (P184-ek §10) Dar kenar cubukta her satir yalniz ikon: her ikon
+    // grup-icinde AYIRT EDICI olmali. Asagidakiler ayni cizim diliyle
+    // (stroke, viewBox 24, ~18px) o ayrimi tasir.
+    // --- GUVENLIK ---
+    case "alert": // olay/uyari ucgeni
+      return svg(<><path d="M12 4 3 19h18L12 4Z" /><line x1="12" y1="10" x2="12" y2="14" /><line x1="12" y1="17" x2="12" y2="17" /></>);
+    case "camera": // kamera govdesi
+      return svg(<><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z" /><circle cx="12" cy="13" r="3" /></>);
+    case "nfc": // temassiz okuma dalgalari
+      return svg(<><path d="M6 4.5C4 6.5 3 9 3 12s1 5.5 3 7.5" /><path d="M9 7C7.7 8.3 7 10 7 12s.7 3.7 2 5" /><path d="M14 6.5c1.2.6 2 1.9 2 3.3v4.4c0 1.4-.8 2.7-2 3.3" /><line x1="14" y1="10" x2="14" y2="14" /></>);
+    case "visitor": // kisi + yaka karti
+      return svg(<><circle cx="12" cy="7" r="3" /><path d="M6 20a6 6 0 0 1 12 0" /><rect x="15" y="12" width="5" height="4" rx="1" /></>);
+    case "package": // koli + bant
+      return svg(<><path d="M4 8l8-4 8 4v8l-8 4-8-4z" /><path d="M12 4v16M4 8l8 4 8-4" /><line x1="8" y1="6" x2="16" y2="10" /></>);
+    case "car": // arac
+      return svg(<><path d="M4 15l1.5-5A2 2 0 0 1 7.4 8.6h9.2a2 2 0 0 1 1.9 1.4L20 15v3h-2v-2H6v2H4z" /><circle cx="7.5" cy="15.5" r="1.2" /><circle cx="16.5" cy="15.5" r="1.2" /></>);
+    // --- TESIS ---
+    case "task": // gorev listesi (pano + tikler)
+      return svg(<><rect x="5" y="4" width="14" height="17" rx="1.5" /><path d="M9 3.5h6v2H9z" /><path d="M8.5 10l1.2 1.2 2-2M8.5 15l1.2 1.2 2-2" /><line x1="13.5" y1="10" x2="16" y2="10" /><line x1="13.5" y1="15" x2="16" y2="15" /></>);
+    case "cube": // demirbas — dolu 3B kutu
+      return svg(<><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z" /><path d="M4 7.5l8 4.5 8-4.5M12 12v9" /></>);
+    case "calendar": // takvim
+      return svg(<><rect x="4" y="5" width="16" height="16" rx="1.5" /><path d="M4 9h16M8 3v4M16 3v4" /><line x1="9" y1="13" x2="9" y2="13" /><line x1="13" y1="13" x2="13" y2="13" /></>);
+    case "ticket": // bilet/rezervasyon
+      return svg(<><path d="M4 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2 2 2 0 0 0 0 4 2 2 0 0 1-2 2H6a2 2 0 0 1-2-2 2 2 0 0 0 0-4Z" /><line x1="14" y1="6" x2="14" y2="18" /></>);
+    case "gavel": // tokmak — kural/hukuk
+      return svg(<><path d="M13 8l3 3-6 6-3-3z" /><path d="M15 6l3 3M9.5 14.5l3 3" /><line x1="4" y1="21" x2="12" y2="21" /></>);
+    // --- FINANS ---
+    case "wallet": // cuzdan
+      return svg(<><rect x="3" y="6" width="18" height="13" rx="2" /><path d="M3 9h13a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2H3" /><line x1="16" y1="12.5" x2="16" y2="12.5" /></>);
+    case "ledger": // acik defter
+      return svg(<><path d="M12 6C10 4.5 6.5 4.5 4 5v13c2.5-.5 6-.5 8 1 2-1.5 5.5-1.5 8-1V5c-2.5-.5-6-.5-8 1Z" /><line x1="12" y1="6" x2="12" y2="20" /></>);
+    case "invoice": // borclandirma — fatura satirlari
+      return svg(<><path d="M6 3h12v18l-3-1.5L12 21l-3-1.5L6 21z" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="9" y1="12" x2="15" y2="12" /></>);
+    case "coins": // tahsilat — para
+      return svg(<><ellipse cx="9" cy="7" rx="5" ry="2.5" /><path d="M4 7v4c0 1.4 2.2 2.5 5 2.5s5-1.1 5-2.5V7" /><ellipse cx="15" cy="14" rx="5" ry="2.5" /><path d="M10 14v4c0 1.4 2.2 2.5 5 2.5s5-1.1 5-2.5v-4" /></>);
+    case "expense": // gider — disari ok
+      return svg(<><circle cx="12" cy="12" r="8.5" /><path d="M12 8v8M12 8l-3 3M12 8l3 3" /></>);
+    case "income": // gelir — iceri ok
+      return svg(<><circle cx="12" cy="12" r="8.5" /><path d="M12 16V8M12 16l-3-3M12 16l3-3" /></>);
+    case "transfer": // virman — takas oklari
+      return svg(<><path d="M5 9h12l-3-3M19 15H7l3 3" /></>);
+    case "refund": // iade — geri ok
+      return svg(<><path d="M4 9h9a5 5 0 0 1 0 10h-3" /><path d="M4 9l4-3M4 9l4 3" /></>);
+    case "receipt": // acilis fisi — makbuz
+      return svg(<><path d="M6 3h12v18l-2-1.5L14 21l-2-1.5L10 21l-2-1.5L6 21z" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="9" y1="12" x2="15" y2="12" /></>);
+    case "gauge": // sayac/olcer
+      return svg(<><path d="M4 15a8 8 0 0 1 16 0" /><path d="M12 15l4-4" /><line x1="12" y1="15" x2="12" y2="15" /></>);
+    case "report": // rapor — belge + cubuklar
+      return svg(<><path d="M7 3h7l4 4v14H7z" /><path d="M14 3v4h4" /><path d="M10 17v-3M12.5 17v-5M15 17v-2" /></>);
+    // --- ILETISIM ---
+    case "news": // gazete — duyurularim
+      return svg(<><path d="M4 6h13v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z" /><path d="M17 9h3v9a2 2 0 0 1-2 2h-1" /><line x1="7" y1="9" x2="11" y2="9" /><line x1="7" y1="12" x2="14" y2="12" /><line x1="7" y1="15" x2="14" y2="15" /></>);
+    case "inbox": // gelen kutusu — talepler
+      return svg(<><path d="M4 13l2.5-8h11L20 13v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z" /><path d="M4 13h5l1 2h4l1-2h5" /></>);
+    case "survey": // anket — secim listesi
+      return svg(<><rect x="4" y="4" width="16" height="16" rx="1.5" /><path d="M7.5 9l1 1 1.5-1.5M7.5 15l1 1 1.5-1.5" /><line x1="12.5" y1="9" x2="16.5" y2="9" /><line x1="12.5" y1="15" x2="16.5" y2="15" /></>);
+    case "handshake": // el sikisma — yonetimle iletisim
+      return svg(<><path d="M3 10l3-2 4 3 2-1 5 4" /><path d="M21 10l-3-2-3 2" /><path d="M12 12l2 2M14.5 11.5l1.5 1.5" /></>);
+    case "invite": // kisi + arti — davet
+      return svg(<><circle cx="9" cy="8" r="3" /><path d="M4 20a5 5 0 0 1 10 0" /><path d="M17 8v6M14 11h6" /></>);
+    case "help": // yardim/destek — soru
+      return svg(<><circle cx="12" cy="12" r="8.5" /><path d="M9.5 9.5a2.5 2.5 0 0 1 4 2c-.5 1-1.5 1.2-1.5 2.5" /><line x1="12" y1="17" x2="12" y2="17" /></>);
+    // --- TANIMLAR / YONETIM ortak ---
+    case "folder": // klasor — gruplar/dokumanlar
+      return svg(<><path d="M4 7a1 1 0 0 1 1-1h4l2 2h8a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z" /></>);
+    case "list": // liste — tanimlar
+      return svg(<><line x1="9" y1="7" x2="20" y2="7" /><line x1="9" y1="12" x2="20" y2="12" /><line x1="9" y1="17" x2="20" y2="17" /><line x1="4.5" y1="7" x2="4.5" y2="7" /><line x1="4.5" y1="12" x2="4.5" y2="12" /><line x1="4.5" y1="17" x2="4.5" y2="17" /></>);
+    case "tag": // etiket — gorev kategorileri
+      return svg(<><path d="M4 11.5V5a1 1 0 0 1 1-1h6.5l8 8-7.5 7.5-8-8Z" /><line x1="8" y1="8" x2="8" y2="8" /></>);
+    case "submeter": // alt sayac — cerceveli olcer
+      return svg(<><rect x="4" y="4" width="16" height="16" rx="1.5" /><circle cx="12" cy="12" r="4" /><path d="M12 12l2.5-2.5" /></>);
+    case "homes": // cok konut — daire gruplari
+      return svg(<><path d="M3 11l5-4 5 4" /><path d="M4.5 10v8h7v-8" /><path d="M13 11l4-3 4 3" /><path d="M14.5 10.5V18H21v-7" /></>);
+    case "eye": // seffaflik/goz
+      return svg(<><path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6Z" /><circle cx="12" cy="12" r="2.5" /></>);
   }
 }
 
@@ -532,7 +608,9 @@ function SidebarBody({
         }}
       >
         <Link href={kokHedef} aria-label="Yönetiyor" onClick={onNavigate}>
-          <YonetioLogo size={32} />
+          {/* (P184-ek §10) KUCULTULMUS (dar) modda kelime isareti GIZLENIR —
+              68px seride "yönetiyor" sigmaz; yalniz isaret kalir. */}
+          <YonetioLogo size={32} kelimeGoster={!dar} />
         </Link>
         {/* KATLAMA DUGMESI YALNIZ MASAUSTUNDE (`onDarCevir` verildiginde).
             Cekmecede cizilmez: mobilde daraltmanin karsiligi yok. */}

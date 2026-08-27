@@ -17,7 +17,16 @@ export type IconName =
   | "grid" | "building" | "clock" | "scan" | "route" | "check"
   | "box" | "home" | "edit" | "pin" | "money" | "chart"
   | "users" | "megaphone" | "chat" | "bell" | "hub" | "gear"
-  | "shield" | "doc";
+  | "shield" | "doc"
+  // (P184-ek §10) Dar kenar cubukta her oge YALNIZ ikonla cizilir; ayni grup
+  // icinde iki oge ayni ikonu paylasamaz. Asagidakiler o ayrimi saglamak icin
+  // eklendi — hepsi ayni cizim dilinde (stroke, viewBox 24, ~18px).
+  | "alert" | "camera" | "nfc" | "visitor" | "package" | "car"
+  | "task" | "cube" | "calendar" | "ticket" | "gavel"
+  | "wallet" | "ledger" | "invoice" | "coins" | "expense" | "income"
+  | "transfer" | "refund" | "receipt" | "gauge" | "report"
+  | "news" | "inbox" | "survey" | "handshake" | "invite" | "help"
+  | "folder" | "list" | "tag" | "submeter" | "homes" | "eye";
 
 /** Bolum kimlikleri. Sira BURADAKI siradir (menude de bu sirayla cizilir). */
 export type GrupId =
@@ -189,27 +198,27 @@ const OGELER: readonly MenuOgesi[] = [
   { href: "/dashboard", anahtar: "kabukOzet", icon: "grid", grup: "ozet" },
 
   // --- GUVENLIK: gunluk saha akisi --------------------------------------
-  { href: "/olaylar", anahtar: "kabukOlaylar", icon: "bell", grup: "guvenlik" },
+  { href: "/olaylar", anahtar: "kabukOlaylar", icon: "alert", grup: "guvenlik" },
   { href: "/notifications", anahtar: "kabukBildirimler", icon: "bell", grup: "guvenlik" },
-  { href: "/kameralar", anahtar: "kabukKameralar", icon: "scan", grup: "guvenlik" },
+  { href: "/kameralar", anahtar: "kabukKameralar", icon: "camera", grup: "guvenlik" },
   { href: "/shifts", anahtar: "kabukVardiyalar", icon: "clock", grup: "guvenlik" },
-  { href: "/checkpoints", anahtar: "kabukNfcNoktalari", icon: "scan", grup: "guvenlik" },
+  { href: "/checkpoints", anahtar: "kabukNfcNoktalari", icon: "nfc", grup: "guvenlik" },
   { href: "/patrol-plans", anahtar: "kabukDevriyePlanlari", icon: "route", grup: "guvenlik" },
-  { href: "/ziyaretciler", anahtar: "kabukZiyaretciler", icon: "users", grup: "guvenlik" },
-  { href: "/kargolar", anahtar: "kabukKargolar", icon: "box", grup: "guvenlik" },
-  { href: "/arac-gecisleri", anahtar: "kabukAracGecisleri", icon: "scan", grup: "guvenlik" },
+  { href: "/ziyaretciler", anahtar: "kabukZiyaretciler", icon: "visitor", grup: "guvenlik" },
+  { href: "/kargolar", anahtar: "kabukKargolar", icon: "package", grup: "guvenlik" },
+  { href: "/arac-gecisleri", anahtar: "kabukAracGecisleri", icon: "car", grup: "guvenlik" },
 
   // --- TESIS: binanin kendisi -------------------------------------------
   { href: "/units", anahtar: "kabukDaireler", icon: "home", grup: "tesis" },
-  { href: "/tasks", anahtar: "kabukGorevler", icon: "check", grup: "tesis" },
+  { href: "/tasks", anahtar: "kabukGorevler", icon: "task", grup: "tesis" },
   { href: "/gorevlerim", anahtar: "kabukGorevlerim", icon: "check", grup: "tesis" },
-  { href: "/assets", anahtar: "kabukDemirbas", icon: "box", grup: "tesis" },
+  { href: "/assets", anahtar: "kabukDemirbas", icon: "cube", grup: "tesis" },
   { href: "/schematic", anahtar: "kabukSikayetHaritasi", icon: "pin", grup: "tesis" },
   { href: "/dis-hizmetler", anahtar: "kabukDisHizmetler", icon: "hub", grup: "tesis" },
-  { href: "/etkinlikler", anahtar: "kabukEtkinlikler", icon: "clock", grup: "tesis" },
-  { href: "/rezervasyonlarim", anahtar: "kabukRezervasyon", icon: "clock", grup: "tesis" },
+  { href: "/etkinlikler", anahtar: "kabukEtkinlikler", icon: "calendar", grup: "tesis" },
+  { href: "/rezervasyonlarim", anahtar: "kabukRezervasyon", icon: "ticket", grup: "tesis" },
   { href: "/rezervasyon-yonetimi", anahtar: "kabukRezervasyonYonetimi", icon: "clock", grup: "tesis" },
-  { href: "/kurallar", anahtar: "kabukKurallar", icon: "check", grup: "tesis" },
+  { href: "/kurallar", anahtar: "kabukKurallar", icon: "gavel", grup: "tesis" },
 
   // --- FINANS: para -----------------------------------------------------
   // (P154 / Asama 7.1) Brief'in FINANS listesi: Borclandirmalar ·
@@ -220,8 +229,8 @@ const OGELER: readonly MenuOgesi[] = [
   // acmak ayni defter tablosunu yedi kez yazmak olurdu; sayfa zaten bu
   // alti tipi taniyor (`TIPLER` dizisi) ve suzgeci artik adresten okuyor.
   { href: "/dues", anahtar: "kabukAidat", icon: "money", grup: "finans" },
-  { href: "/aidatim", anahtar: "kabukAidatim", icon: "money", grup: "finans" },
-  { href: "/finans", anahtar: "kabukFinans", icon: "money", grup: "finans" },
+  { href: "/aidatim", anahtar: "kabukAidatim", icon: "wallet", grup: "finans" },
+  { href: "/finans", anahtar: "kabukFinans", icon: "ledger", grup: "finans" },
   // (P167 Asama 4) SORGU SUZGECLERI GERCEK SAYFALARA DONDU.
   //
   // P154'te bunlar `/finans`in `tip` suzgecleriydi ve o zaman dogruydu:
@@ -232,28 +241,29 @@ const OGELER: readonly MenuOgesi[] = [
   //
   // BORCLANDIRMALAR AYRI BIR TABLOYU (`dues_assessment`) listeler; oteki
   // yedisi `finansal_hareket` defterini.
-  { href: "/finans/borclandirmalar", anahtar: "finansBorclandirmalar", icon: "money", grup: "finans" },
-  { href: "/finans/tahsilatlar", anahtar: "kabukTahsilatlar", icon: "money", grup: "finans" },
-  { href: "/finans/giderler", anahtar: "kabukGiderler", icon: "money", grup: "finans" },
-  { href: "/finans/gelirler", anahtar: "kabukGelirler", icon: "money", grup: "finans" },
-  { href: "/finans/virman", anahtar: "kabukVirman", icon: "money", grup: "finans" },
-  { href: "/finans/iade", anahtar: "kabukIade", icon: "money", grup: "finans" },
-  { href: "/finans/acilis", anahtar: "kabukAcilisFisleri", icon: "money", grup: "finans" },
+  { href: "/finans/borclandirmalar", anahtar: "finansBorclandirmalar", icon: "invoice", grup: "finans" },
+  { href: "/finans/tahsilatlar", anahtar: "kabukTahsilatlar", icon: "coins", grup: "finans" },
+  { href: "/finans/giderler", anahtar: "kabukGiderler", icon: "expense", grup: "finans" },
+  { href: "/finans/gelirler", anahtar: "kabukGelirler", icon: "income", grup: "finans" },
+  { href: "/finans/virman", anahtar: "kabukVirman", icon: "transfer", grup: "finans" },
+  { href: "/finans/iade", anahtar: "kabukIade", icon: "refund", grup: "finans" },
+  { href: "/finans/acilis", anahtar: "kabukAcilisFisleri", icon: "receipt", grup: "finans" },
   // (P167 §1.4) ICRA DOSYALARI — bagimsiz ust sekme DEGIL, finansin ALTI.
   // Icra bir borcun son durumudur; kullanici onu "hukuk" basligi altinda
   // degil, borcu takip ettigi yerde arar.
-  { href: "/icra", anahtar: "kabukIcra", icon: "scan", grup: "finans" },
+  { href: "/icra", anahtar: "kabukIcra", icon: "gavel", grup: "finans" },
   // (P111) Sayac okuma tanimlardan beslenir, ciktisi bir tahakkuktur.
-  { href: "/sayac-okuma", anahtar: "kabukSayacOkuma", icon: "chart", grup: "finans" },
+  { href: "/sayac-okuma", anahtar: "kabukSayacOkuma", icon: "gauge", grup: "finans" },
   { href: "/reports/dues", anahtar: "kabukRaporlar", icon: "chart", grup: "finans" },
   // (P40) 12 raporluk katalog; `/reports/dues` tek raporluk eski sayfadir
   // ve ikisi YAN YANA durur ki eski baglantilar kirilmasin.
-  { href: "/raporlar", anahtar: "kabukRaporMotoru", icon: "chart", grup: "finans" },
+  { href: "/raporlar", anahtar: "kabukRaporMotoru", icon: "report", grup: "finans" },
 
   // --- PLATFORM: yalniz `panel.*` ---------------------------------------
   { href: "/tenants", anahtar: "kabukTesisler", icon: "building", grup: "platform" },
   { href: "/integrations", anahtar: "kabukEntegrasyonlar", icon: "hub", grup: "platform" },
   { href: "/settings", anahtar: "kabukAyarlar", icon: "gear", grup: "platform" },
+  // kvkk-metinler ikonu asagida (doc) — platform grubunda doc yalniz burada.
   // (P170 §2) KVKK VE YASAL METIN YONETIMI BURAYA TASINDI.
   //
   // Tesis menusunde "Yonetisim"in altindaydi ve `admin, yonetici`ye
@@ -267,6 +277,10 @@ const OGELER: readonly MenuOgesi[] = [
 
   // --- ILETISIM: siteye seslenme + sakinden gelen -----------------------
   { href: "/announcements", anahtar: "kabukDuyurular", icon: "megaphone", grup: "iletisim" },
+  // (P184-ek §10) iletisim grubunda ikonlar birbirinden ayri: duyuru=megafon,
+  // kural=tokmak, etkinlik=takvim, duyurularim=gazete, mesaj=sohbet,
+  // talep=gelen-kutusu, taleplerim=bilet, anket=anket, yonetim=el-sikisma,
+  // davet=davet, destek=yardim.
   // (P162) SITE KURALI ve ETKINLIK YONETIMI — `iletisim` grubunda, TESIS
   // grubunda DEGIL. Iki gerekce:
   //
@@ -276,9 +290,9 @@ const OGELER: readonly MenuOgesi[] = [
   //     eklemek acilistaki gorunur satiri 13'e cikariyordu ve
   //     `menu-gruplari` testi (P133.1: en cok 12) hakli olarak dustu.
   //     Bu bir bicim kurali degil, kaydirma cubugunu onleyen bir butce.
-  { href: "/site-kurallari", anahtar: "kabukKuralYonetimi", icon: "check", grup: "iletisim" },
-  { href: "/etkinlik-yonetimi", anahtar: "kabukEtkinlikYonetimi", icon: "clock", grup: "iletisim" },
-  { href: "/duyurular", anahtar: "kabukDuyurularim", icon: "megaphone", grup: "iletisim" },
+  { href: "/site-kurallari", anahtar: "kabukKuralYonetimi", icon: "gavel", grup: "iletisim" },
+  { href: "/etkinlik-yonetimi", anahtar: "kabukEtkinlikYonetimi", icon: "calendar", grup: "iletisim" },
+  { href: "/duyurular", anahtar: "kabukDuyurularim", icon: "news", grup: "iletisim" },
   // (P167 §1.5) UC SATIR TEKE INDI: "Mesajlar", "SMS gonderimi" ve
   // "E-posta gonderimi" UCU DE `/mesajlar`a gidiyordu — ikisi ayni sayfayi
   // bir sorguyla onceden suzuyordu (P154'un karari).
@@ -291,13 +305,13 @@ const OGELER: readonly MenuOgesi[] = [
   // ROTA OLMEDI: `/mesajlar?kanal=sms` hâlâ gecerli ve sayfa onu okuyor —
   // eski yer imleri ve `/kurulum` baglantilari kirilmadi.
   { href: "/mesajlar", anahtar: "kabukSmsEpostaYonetimi", icon: "chat", grup: "iletisim" },
-  { href: "/complaints", anahtar: "kabukTalepler", icon: "chat", grup: "iletisim" },
-  { href: "/taleplerim", anahtar: "kabukTaleplerim", icon: "chat", grup: "iletisim" },
-  { href: "/anketler", anahtar: "kabukAnketler", icon: "chat", grup: "iletisim" },
-  { href: "/yonetim-iletisim", anahtar: "kabukYonetimIletisim", icon: "chat", grup: "iletisim" },
+  { href: "/complaints", anahtar: "kabukTalepler", icon: "inbox", grup: "iletisim" },
+  { href: "/taleplerim", anahtar: "kabukTaleplerim", icon: "ticket", grup: "iletisim" },
+  { href: "/anketler", anahtar: "kabukAnketler", icon: "survey", grup: "iletisim" },
+  { href: "/yonetim-iletisim", anahtar: "kabukYonetimIletisim", icon: "handshake", grup: "iletisim" },
   // (P155 §7) Davet gonderim durumu — kisiye kayit bagi gonderildi mi.
-  { href: "/davetler", anahtar: "kabukDavetler", icon: "megaphone", grup: "iletisim" },
-  { href: "/support", anahtar: "kabukDestek", icon: "chat", grup: "iletisim" },
+  { href: "/davetler", anahtar: "kabukDavetler", icon: "invite", grup: "iletisim" },
+  { href: "/support", anahtar: "kabukDestek", icon: "help", grup: "iletisim" },
 
   // --- YONETIM: kurulum + hesap verebilirlik -----------------------------
   // --- TANIMLAR: kurulum kayitlari (brief 7.1) --------------------------
@@ -330,35 +344,35 @@ const OGELER: readonly MenuOgesi[] = [
   { href: "/building-editor", anahtar: "kabukBloklar", icon: "edit", grup: "tanimlar" },
   { href: "/ice-aktarim", anahtar: "iceAktarimBaslik", icon: "box", grup: "tanimlar" },
   { href: "/tanimlar", sorgu: "defter=kasalar", anahtar: "tanimKasalar", icon: "money", grup: "tanimlar" },
-  { href: "/tanimlar", sorgu: "defter=gelir-gider-gruplari", anahtar: "tanimGelirGiderGruplari", icon: "chart", grup: "tanimlar" },
-  { href: "/tanimlar", sorgu: "defter=gelir-gider-tanimlari", anahtar: "tanimGelirGiderTanimlari", icon: "chart", grup: "tanimlar" },
+  { href: "/tanimlar", sorgu: "defter=gelir-gider-gruplari", anahtar: "tanimGelirGiderGruplari", icon: "folder", grup: "tanimlar" },
+  { href: "/tanimlar", sorgu: "defter=gelir-gider-tanimlari", anahtar: "tanimGelirGiderTanimlari", icon: "list", grup: "tanimlar" },
   { href: "/tanimlar", sorgu: "defter=firmalar", anahtar: "tanimFirmalar", icon: "building", grup: "tanimlar" },
-  { href: "/tanimlar", sorgu: "defter=gorev-kategorileri", anahtar: "tanimGorevKategorileri", icon: "check", grup: "tanimlar" },
+  { href: "/tanimlar", sorgu: "defter=gorev-kategorileri", anahtar: "tanimGorevKategorileri", icon: "tag", grup: "tanimlar" },
   { href: "/tanimlar", sorgu: "defter=personel-kayitlari", anahtar: "tanimPersonel", icon: "users", grup: "tanimlar" },
-  { href: "/tanimlar", sorgu: "defter=arac-kayitlari", anahtar: "tanimAraclar", icon: "scan", grup: "tanimlar" },
-  { href: "/tanimlar", sorgu: "defter=sayaclar-ana", anahtar: "tanimSayaclar", icon: "chart", grup: "tanimlar" },
-  { href: "/tanimlar", sorgu: "defter=sayaclar-bolum", anahtar: "tanimSayaclarBolum", icon: "chart", grup: "tanimlar" },
+  { href: "/tanimlar", sorgu: "defter=arac-kayitlari", anahtar: "tanimAraclar", icon: "car", grup: "tanimlar" },
+  { href: "/tanimlar", sorgu: "defter=sayaclar-ana", anahtar: "tanimSayaclar", icon: "gauge", grup: "tanimlar" },
+  { href: "/tanimlar", sorgu: "defter=sayaclar-bolum", anahtar: "tanimSayaclarBolum", icon: "submeter", grup: "tanimlar" },
   { href: "/tanimlar", sorgu: "defter=unit-tipleri", anahtar: "tanimDaireTipleri", icon: "home", grup: "tanimlar" },
-  { href: "/tanimlar", sorgu: "defter=unit-gruplari", anahtar: "tanimDaireGruplari", icon: "home", grup: "tanimlar" },
+  { href: "/tanimlar", sorgu: "defter=unit-gruplari", anahtar: "tanimDaireGruplari", icon: "homes", grup: "tanimlar" },
   // "Ayarlar" sekmesi de bir BOLUMDUR ve menude yeri olmali; sayfada
   // yerel duruma bagliydi, bu turda o da adrese tasindi (bkz. tanimlar
   // sayfasi) — yoksa menuden acilamayan tek sekme olarak kalirdi.
   { href: "/tanimlar", sorgu: "defter=ayarlar", anahtar: "tanimAyarlar", icon: "gear", grup: "tanimlar" },
 
   { href: "/users", anahtar: "kabukKullanicilar", icon: "users", grup: "yonetim" },
-  { href: "/transparency", anahtar: "kabukSeffaflik", icon: "money", grup: "yonetim" },
+  { href: "/transparency", anahtar: "kabukSeffaflik", icon: "eye", grup: "yonetim" },
   // (P167 §6.1) "YONETISIM" BASLIGI KALDIRILDI ve icindeki dort bolum
   // KENDI SATIRLARINA cikti. Eski hâlde tek bir satirin arkasinda karar
   // defteri, dokuman arsivi, KVKK metni ve gurultu uyarilari duruyordu —
   // yani menude aranan hicbiri BULUNAMIYORDU. "Yonetisim" bir is degil
   // bir SOYUTLAMADIR; kullanici "karar defteri"ni arar.
-  { href: "/karar-defteri", anahtar: "kabukKararDefteri", icon: "doc", grup: "yonetim" },
-  { href: "/dokumanlar", anahtar: "kabukDokumanlar", icon: "doc", grup: "yonetim" },
+  { href: "/karar-defteri", anahtar: "kabukKararDefteri", icon: "gavel", grup: "yonetim" },
+  { href: "/dokumanlar", anahtar: "kabukDokumanlar", icon: "folder", grup: "yonetim" },
   { href: "/gurultu-uyarilari", anahtar: "kabukGurultuUyarilari", icon: "bell", grup: "yonetim" },
   { href: "/audit", anahtar: "kabukDenetimKaydi", icon: "scan", grup: "yonetim" },
   // (P41) Yetki matrisi denetimin yaninda.
-  { href: "/yetki", anahtar: "kabukYetki", icon: "users", grup: "yonetim" },
-  { href: "/kvkk", anahtar: "kabukKvkk", icon: "users", grup: "yonetim" },
+  { href: "/yetki", anahtar: "kabukYetki", icon: "shield", grup: "yonetim" },
+  { href: "/kvkk", anahtar: "kabukKvkk", icon: "doc", grup: "yonetim" },
 ];
 
 /**

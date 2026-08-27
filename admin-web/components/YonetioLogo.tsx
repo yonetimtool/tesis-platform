@@ -70,9 +70,17 @@ export function YonetioLogo({
   size = 34,
   /** `false` ise kelime isareti YALNIZ `sm` ustunde cizilir (ust bar). */
   kelimeDar = true,
+  /**
+   * (P184-ek §10) `false` ise kelime isareti HIC cizilmez — yalniz isaret
+   * kalir. Kenar cubugu KUCULTULDUGUNDE (68px) kullanilir: orada "yönetiyor"
+   * sozcugu sigmaz ve kirpilirdi. `sr-only` DEGIL tamamen kaldirilir cunku
+   * kucuk seritte logo linkinin erisilebilir adi zaten `aria-label`da.
+   */
+  kelimeGoster = true,
 }: {
   size?: number;
   kelimeDar?: boolean;
+  kelimeGoster?: boolean;
 }) {
   return (
     <span className="flex min-w-0 items-center gap-2">
@@ -96,13 +104,15 @@ export function YonetioLogo({
         height={size}
         className="hidden shrink-0 dark:block"
       />
-      <span
-        className={`whitespace-nowrap text-xl font-semibold tracking-tight text-[#0E3C91] dark:text-white${
-          kelimeDar ? "" : " hidden sm:inline"
-        }`}
-      >
-        yönetiyor
-      </span>
+      {kelimeGoster && (
+        <span
+          className={`whitespace-nowrap text-xl font-semibold tracking-tight text-[#0E3C91] dark:text-white${
+            kelimeDar ? "" : " hidden sm:inline"
+          }`}
+        >
+          yönetiyor
+        </span>
+      )}
     </span>
   );
 }
