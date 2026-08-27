@@ -14,17 +14,29 @@ P184 **backend + mobil (Flutter)**. Web'e dokunulmadı.
 - **Test:** `tests/test_p177_kayit_akisi.py`'ye 6 SSO tamamlama testi + 2 kapalı-bayrak
   (503) parametresi eklendi.
 
-### Bayrak — `YENI_KAYIT_AKISI`
+### Bayrak — `YENI_KAYIT_AKISI` (PROD'DA AÇIK)
 
-Yeni uçlar `YENI_KAYIT_AKISI` bayrağına tabidir (varsayılan **kapalı → 503**). Prod'da
-mobil kayıt/tamamlama çalışsın diye bu bayrak **açık** olmalı:
+Yeni uçlar (`rol-eposta-*`, `rol-tamamla*`, `yonetici-*`) bu bayrağa tabidir; **kapalı
+iken 503** döner ve mobil kayıt/tamamlama KULLANILAMAZ.
 
+**Artık `docker-compose.prod.yml` varsayılanı `true`** (api + worker):
+`YENI_KAYIT_AKISI: ${YENI_KAYIT_AKISI:-true}`. Yani `.env.prod`de bu değişken
+**tanımsızsa prod AÇIK** gelir. Operatör isterse `.env.prod`e `YENI_KAYIT_AKISI=false`
+yazarak kapatabilir (override kazanır). Dev (`docker-compose.yml`) varsayılanı
+**`false`** kaldı (P177 iki-kip testi için).
+
+**Prod'da doğrulama (operatör — bu makineden prod'a erişim yok):**
 ```
-YENI_KAYIT_AKISI=true docker compose up -d api worker beat
+# 1) .env.prod'da yanlışlıkla false BIRAKILMADIĞINI doğrula:
+grep YENI_KAYIT_AKISI .env.prod        # çıktı yoksa VEYA =true ise: AÇIK
+# 2) Yeni compose değerinin yüklenmesi için api+worker'ı yeniden yarat:
+docker compose -f docker-compose.prod.yml up -d api worker
+# 3) Teyit (uç 503 DÖNMEMELİ — 200/422 dönmeli):
+docker compose -f docker-compose.prod.yml exec api \
+  python -c "from app.config import settings; print('YENI_KAYIT_AKISI=', settings.yeni_kayit_akisi)"
 ```
-
-Kapalıyken mobil kayıt ekranı da (parola + SSO) çalışmaz (uçlar 503 döner). Test iki
-kipte de koşuldu (açık: happy-path'ler; kapalı: 503).
+`settings.yeni_kayit_akisi` **True** yazmalı. Test iki kipte de koşuldu (açık:
+happy-path; kapalı: 503).
 
 ### Backend derleme + test (dev, konteyner içi)
 

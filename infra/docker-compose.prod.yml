@@ -322,7 +322,11 @@ services:
       # config` ciktisinda gorunsunler: pydantic-settings varsayilanina
       # birakilan bir bayrak, ortamda "yok" gibi gorunur ve operator onu
       # aramaya kalkinca hicbir yerde bulamaz.
-      YENI_KAYIT_AKISI: ${YENI_KAYIT_AKISI:-false}
+      # (P184) PROD'DA ACIK VARSAYILAN: mobil kayit/tamamlama + SSO rol-tamamla
+      # uclari bu bayrak KAPALIYKEN 503 doner ve mobil kayit KULLANILAMAZ. Kayit
+      # akisi tamamlandi, prod'da acik olmali. `.env.prod`de YENI_KAYIT_AKISI
+      # tanimliysa o kazanir (operator hala kapatabilir); tanimsizsa ACIK.
+      YENI_KAYIT_AKISI: ${YENI_KAYIT_AKISI:-true}
       SMS_AKTIF: ${SMS_AKTIF:-false}
       TICARI_ILETI_AKTIF: ${TICARI_ILETI_AKTIF:-false}
       SMS_SAGLAYICI: ${SMS_SAGLAYICI:-}
@@ -476,7 +480,11 @@ services:
       # config` ciktisinda gorunsunler: pydantic-settings varsayilanina
       # birakilan bir bayrak, ortamda "yok" gibi gorunur ve operator onu
       # aramaya kalkinca hicbir yerde bulamaz.
-      YENI_KAYIT_AKISI: ${YENI_KAYIT_AKISI:-false}
+      # (P184) PROD'DA ACIK VARSAYILAN: mobil kayit/tamamlama + SSO rol-tamamla
+      # uclari bu bayrak KAPALIYKEN 503 doner ve mobil kayit KULLANILAMAZ. Kayit
+      # akisi tamamlandi, prod'da acik olmali. `.env.prod`de YENI_KAYIT_AKISI
+      # tanimliysa o kazanir (operator hala kapatabilir); tanimsizsa ACIK.
+      YENI_KAYIT_AKISI: ${YENI_KAYIT_AKISI:-true}
       SMS_AKTIF: ${SMS_AKTIF:-false}
       TICARI_ILETI_AKTIF: ${TICARI_ILETI_AKTIF:-false}
       SMS_SAGLAYICI: ${SMS_SAGLAYICI:-}
