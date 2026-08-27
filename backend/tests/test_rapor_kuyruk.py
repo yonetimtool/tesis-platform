@@ -103,6 +103,32 @@ def test_KATALOGDAKI_HER_KOD_GERCEKTEN_URETILEBILIYOR(client, world):
         assert r.status_code == 200, f"{oge['kod']}: {r.text}"
 
 
+def test_HER_KOD_EXCEL_ve_PDF_GECERLI_URETIR(client, world):
+    """(P181 Bölüm 8) 13+ raporun PDF/Excel çıktısı hiç doğrulanmamıştı.
+
+    Her kodu excel VE pdf üret, dosyanın GEÇERLİ (açılabilir) olduğunu magic-byte
+    ile doğrula: xlsx = ZIP imzası (PK\\x03\\x04), pdf = %PDF. Böylece "kartı var
+    ama çıktısı bozuk" rapor kalmaz.
+    """
+    y = _headers(client, world["slug_a"], world["yonetici_a"])
+    kodlar = [o["kod"] for o in client.get("/raporlar/katalog", headers=y).json()["items"]]
+    assert len(kodlar) >= 13, f"katalog eksik: {kodlar}"
+    hatalar = []
+    for kod in kodlar:
+        for bicim, sihir in (("excel", b"PK\x03\x04"), ("pdf", b"%PDF")):
+            r = client.post(
+                f"/raporlar/{kod}?bicim={bicim}", headers=y,
+                json={"baslangic": "2026-01-01", "bitis": "2026-12-31"},
+            )
+            if r.status_code != 200:
+                hatalar.append(f"{kod}/{bicim}: HTTP {r.status_code} {r.text[:80]}")
+            elif not r.content.startswith(sihir):
+                hatalar.append(f"{kod}/{bicim}: geçersiz imza {r.content[:8]!r}")
+            elif len(r.content) < 100:
+                hatalar.append(f"{kod}/{bicim}: çok küçük ({len(r.content)}b)")
+    assert not hatalar, "Açılamayan/üretilemeyen çıktılar:\n" + "\n".join(hatalar)
+
+
 # --------------------------------------------------------------------------- #
 # 2. UC YENI RAPOR
 # --------------------------------------------------------------------------- #

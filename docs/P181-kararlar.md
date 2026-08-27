@@ -345,6 +345,31 @@ davranışı — otomatik test yok, `npm run build` yeşil; el ile doğrulanacak
 
 ---
 
+## Bölüm 8 — Raporlar (grafik + PDF/Excel doğrulama)
+
+### 8.0 — PDF/Excel çıktı doğrulaması (BİTTİ)
+
+**Spec:** "13 raporun PDF/Excel çıktıları hiç doğrulanmadı — her birini üret,
+açılıp açılmadığını test et, sonucu raporla."
+
+**Sonuç:** `test_HER_KOD_EXCEL_ve_PDF_GECERLI_URETIR` katalogdaki **16 raporun
+HER BİRİ için** hem excel hem pdf üretir ve dosyanın GEÇERLİ (açılabilir)
+olduğunu magic-byte ile doğrular: xlsx = ZIP imzası `PK\x03\x04`, pdf = `%PDF`,
+boyut > 100B. **Hepsi geçti — bozuk/açılmayan çıktı YOK.** Senkron uç
+(`POST /raporlar/{kod}?bicim=excel|pdf`) her kod için çalışıyor (`agir` yalnız
+istemciye "kuyruğa yolla" ipucu; senkron üretim yine mümkün).
+
+Kod (`rapor_ciktilari.py` reportlab/openpyxl) SAĞLAM bulundu; değişiklik
+gerekmedi. Test-only, ekleme; üretim kodu değişmedi.
+
+### 8.1 — Grafikler (sıradaki)
+
+Web (recharts) + PDF (reportlab.graphics) + Excel (openpyxl chart); erişilebilir
+renk + etiket/desen; "veri yok" durumu; büyük veride örnekleme. Katalogdan tek
+kaynak `grafik` yapılandırması.
+
+---
+
 ## Program notu (dürüstlük)
 
 P181 on bir bölümlük büyük bir programdır (auth altyapısı + göçler, 6 web düzeltme,
