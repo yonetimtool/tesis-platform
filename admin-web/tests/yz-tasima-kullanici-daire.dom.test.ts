@@ -196,8 +196,9 @@ describe("(P160) Daireler — tasima sonrasi", () => {
     // (P165 §2) "YENI DAIRE" DE KALKTI: daire ekleme tek yerde (bina
     // duzenleme). Iki giris noktasi "hangisi dogru" sorusunu birakiyordu.
     expect(screen.queryByRole("button", { name: "Yeni daire" })).toBeNull();
-    // AMA CIKMAZ YOK: bina duzenlemeye goturen bag DURUYOR.
-    expect(screen.getByRole("link", { name: "Bina düzenleme" })).toBeInTheDocument();
+    // AMA CIKMAZ YOK: bina duzenlemeye goturen giris DURUYOR — (P181 6.2)
+    // artik duz-metin bag degil BIRINCIL DUGME (diger ekranlarla tutarli).
+    expect(screen.getByRole("button", { name: "Bina düzenleme" })).toBeInTheDocument();
     // DUZENLEME KORUNDU — kaldirilan sey OLUSTURMA girisi.
     expect(screen.getByRole("button", { name: "Düzenle" })).toBeInTheDocument();
   });

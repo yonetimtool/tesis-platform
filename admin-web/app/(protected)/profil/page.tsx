@@ -129,7 +129,7 @@ export default function ProfilPage() {
           className="space-y-3 rounded-xl border p-4"
           style={{
             borderColor: "var(--yz-border)",
-            background: "var(--yz-surface-card)",
+            background: "var(--yz-surface-1)",
           }}
         >
           <EpostaDogrulaKart

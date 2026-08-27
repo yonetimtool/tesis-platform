@@ -18,6 +18,14 @@ import TasksPage from "@/app/(protected)/tasks/page";
 
 import { ciz } from "./yardimci";
 
+// (P181) TasksPage artık useRouter kullanıyor (6.3 "kategorileri yönet"); DOM
+// testinde app-router yok — standart mock (bkz. pano-widget-tiklama).
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn() }),
+  usePathname: () => "/",
+  useSearchParams: () => new URLSearchParams(),
+}));
+
 const GOREV = {
   id: "g1",
   ad: "Su sızıntısı",

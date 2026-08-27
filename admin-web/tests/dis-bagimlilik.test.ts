@@ -128,7 +128,10 @@ describe("calisma ani dis kaynaklar", () => {
 
     const desen = /https:\/\/([a-z0-9.-]+\.[a-z]{2,})/g;
     // Kendi alan adlarimiz ve ornek/yer tutucu adresler sayilmaz.
-    const bizim = /yonetio|ynetiyor|example|ornek|localhost|w3\.org|schema\.org|github\.com|openstreetmap\.org\/copyright/;
+    // (P181 Böl.0) `yonetiyor` KENDI KANONIK adresimiz (tanitim/kayit —
+    // yonetiyor.com/yonetici/kayit). Ucuncu taraf degil; adres politikasinda
+    // kanonik alan adi. `yonetio` yalniz `.site` alt alanlarini eslestiriyordu.
+    const bizim = /yonetio|yonetiyor|ynetiyor|example|ornek|localhost|w3\.org|schema\.org|github\.com|openstreetmap\.org\/copyright/;
     const bulunan = new Set<string>();
     for (const [dosya, kaynak] of taranacakKaynaklar(
       ["app", "components", "lib"],

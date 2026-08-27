@@ -120,13 +120,18 @@ describe("(P133.2) SERT SINIR — 1 kahraman + 4 ikincil", () => {
   });
 
   it("KAHRAMAN blok bir SAYI degil DURUM anlatir", async () => {
-    // Kahraman blok "5" degil "Gece turu / 2 noktadan 5 tanesi okutuldu"
-    // demeli — yon burada bilgi hiyerarsisini degistiriyor.
+    // Kahraman blok "5" degil bir DURUM anlatmali. (P181 7.3) Artik duz cumle
+    // degil GORSEL bilesen: ilerleme halkasi (%40) + "Tamamlanan 2/5" + plan
+    // adi. Bilgi renk-yalniz degil, sayi/etiketle de tasinir.
     fetchTaklidi();
     ciz(DashboardPage);
     await waitFor(() =>
-      expect(screen.getByText(/noktadan .* okutuldu/i)).toBeInTheDocument(),
+      expect(screen.getByText("Gece turu")).toBeInTheDocument(),
     );
+    // İlerleme halkasının yüzde METNİ (renk-yalnız değil) + durum rozeti:
+    // "sayı değil durum" kanıtı. ("Tamamlanan" panoda sr-only KPI'da da
+    // geçtiği için yüzde+rozet üzerinden ölçülür.)
+    expect(screen.getByText("%40")).toBeInTheDocument();
     expect(screen.getByText(/Süren devriye/i)).toBeInTheDocument();
   });
 });

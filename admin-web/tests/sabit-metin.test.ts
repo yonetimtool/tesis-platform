@@ -88,7 +88,11 @@ const UCLU_TEKNIK =
   // (P154 / Asama 7.2) `password|text`: yine `type` degerleri —
   // `ParolaAlani` goster/gizle icin ikisi arasinda gecer. Gorunen metin
   // olmadiklari icin cevrilecek bir sey yok.
-  /^(rtl|ltr|asc|desc|GET|POST|PATCH|PUT|DELETE|button|submit|password|text|true|false|light|dark|auto|none|row|col|small|medium|large|default|platform|tenant|security|resident|yonetici|temizlik|kontrol|emerald|teal|amber|red|slate|indigo|blue|green|orange|purple|application[/]json|page|[a-z_]+_[a-z_]+)$/;
+  // (P181) `notr|bilgi|olumlu|uyari|kritik`: `RozetDurumu` KIMLIKLERI —
+  // renk adlari (blue/green...) gibi tasarim sisteminin durum jetonlari,
+  // ekranda gorunen metin degil. Rozet `durum` bir uclu ile secildiginde
+  // (`durum={suren ? "olumlu" : "bilgi"}`) bu jetonlar cevrilmez.
+  /^(rtl|ltr|asc|desc|GET|POST|PATCH|PUT|DELETE|button|submit|password|text|true|false|light|dark|auto|none|row|col|small|medium|large|default|platform|tenant|security|resident|yonetici|temizlik|kontrol|emerald|teal|amber|red|slate|indigo|blue|green|orange|purple|notr|bilgi|olumlu|uyari|kritik|application[/]json|page|[a-z_]+_[a-z_]+)$/;
 
 /** TAILWIND sinif dizgesi mi? Uclularin cogu `className` secimidir:
  * `kosul ? "bg-ink text-white" : "text-slate-600"`. Bunlar metin DEGIL. */

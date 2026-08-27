@@ -53,7 +53,7 @@ export function DevriyeGorunumu({
               cy="42"
               r={R}
               fill="none"
-              stroke={suren ? "var(--yz-olumlu, var(--yz-accent))" : "var(--yz-accent)"}
+              stroke={suren ? "var(--yz-success)" : "var(--yz-accent)"}
               strokeWidth="8"
               strokeLinecap="round"
               strokeDasharray={`${dolu} ${cevre - dolu}`}

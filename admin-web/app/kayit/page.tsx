@@ -190,19 +190,19 @@ export default function KayitSayfasi() {
     if (sp.get("niyet") !== "kayit" || !saglayici) return;
     void (async () => {
       try {
+        // Govde ONCE kurulur ki `fetch` cagrisi ile `r.ok` denetimi yakin
+        // dursun (ham-fetch denetim taramasi 12 satirlik pencereye bakar;
+        // uzun satir-ici govde denetimi pencere disina itmisti).
+        const govde = JSON.stringify({
+          yuzey: "web",
+          niyet: "kayit",
+          onay_sozlesme: sp.get("os") === "1",
+          onay_kvkk: sp.get("ok") === "1",
+          onay_ticari: sp.get("ot") === "1",
+        });
         const r = await fetch(
           `/api/auth/oauth/baslat/${encodeURIComponent(saglayici)}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              yuzey: "web",
-              niyet: "kayit",
-              onay_sozlesme: sp.get("os") === "1",
-              onay_kvkk: sp.get("ok") === "1",
-              onay_ticari: sp.get("ot") === "1",
-            }),
-          },
+          { method: "POST", headers: { "Content-Type": "application/json" }, body: govde },
         );
         const d = (await r.json().catch(() => null)) as { adres?: string } | null;
         // Hata / SSO kayit kapali (503, adres yok) -> normal kayit ekrani gorunur.

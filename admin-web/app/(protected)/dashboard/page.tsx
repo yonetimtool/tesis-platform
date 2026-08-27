@@ -730,6 +730,7 @@ export default function DashboardPage() {
           className={inputCls}
           style={{ width: 180 }}
           placeholder={t("panoBannerBaslik")}
+          aria-label={t("panoBannerBaslik")}
           defaultValue={satir.baslik ?? ""}
           onBlur={(e) => bannerAyarla(si, e.target.value)}
         />

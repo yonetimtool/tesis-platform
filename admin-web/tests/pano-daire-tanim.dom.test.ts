@@ -15,6 +15,14 @@ import UnitsPage from "@/app/(protected)/units/page";
 
 import { cagrilanUrller, ciz, fetchSahtele } from "./yardimci";
 
+// (P181) UnitsPage artık useRouter kullanıyor (6.2); DOM testinde app-router
+// yok — standart mock (bkz. pano-widget-tiklama).
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn() }),
+  usePathname: () => "/",
+  useSearchParams: () => new URLSearchParams(),
+}));
+
 afterEach(() => vi.restoreAllMocks());
 
 // ------------------------------- PANO --------------------------------- //

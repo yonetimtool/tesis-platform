@@ -15,6 +15,14 @@ import UnitsPage from "@/app/(protected)/units/page";
 
 import { ciz } from "./yardimci";
 
+// (P181) UnitsPage artık useRouter kullanıyor (6.2 "bina düzenleme" düğmesi);
+// DOM testinde app-router yok — standart mock (bkz. pano-widget-tiklama).
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn() }),
+  usePathname: () => "/",
+  useSearchParams: () => new URLSearchParams(),
+}));
+
 const DAIRE = {
   id: "u1",
   no: "A-12",

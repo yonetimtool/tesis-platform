@@ -31,7 +31,7 @@ export function EpostaDogrulaKart({
 
   if (dogrulandi) {
     return (
-      <p className="text-sm" style={{ color: "var(--yz-text-muted)" }}>
+      <p className="text-sm" style={{ color: "var(--yz-text-2)" }}>
         ✓ {t("profilEpostaDogrulandi")}
       </p>
     );
@@ -70,7 +70,7 @@ export function EpostaDogrulaKart({
 
   return (
     <div className="space-y-3">
-      <p className="text-sm" style={{ color: "var(--yz-text-muted)" }}>
+      <p className="text-sm" style={{ color: "var(--yz-text-2)" }}>
         {t("profilEpostaBeklemede")}
       </p>
       {adim === "adres" ? (
@@ -81,6 +81,7 @@ export function EpostaDogrulaKart({
             value={eposta}
             onChange={(e) => setEposta(e.target.value)}
             placeholder={t("profilEpostaAdres")}
+            aria-label={t("profilEpostaAdres")}
             autoComplete="email"
           />
           <button
@@ -100,6 +101,7 @@ export function EpostaDogrulaKart({
             value={kod}
             onChange={(e) => setKod(e.target.value)}
             placeholder={t("profilEpostaKod")}
+            aria-label={t("profilEpostaKod")}
           />
           <button
             className={btnPrimary}

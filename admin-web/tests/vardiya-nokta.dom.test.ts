@@ -115,7 +115,9 @@ describe("Bildirimler", () => {
     await waitFor(() =>
       expect(screen.getByText("Tur geç okutuldu.")).toBeInTheDocument(),
     );
-    await userEvent.click(screen.getByRole("button", { name: /Okundu/i }));
+    // (P181 6.5) TAM AD: toplu "…okundu işaretle" düğmeleri de eklendi;
+    // satır düğmesi tam olarak "Okundu"dur, regex üçünü birden yakalardı.
+    await userEvent.click(screen.getByRole("button", { name: "Okundu" }));
     await waitFor(() =>
       expect(screen.getByText("Sunucu hatası.")).toBeInTheDocument(),
     );

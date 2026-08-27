@@ -55,6 +55,10 @@ const PROFIL = {
   id: "u1",
   ad: "Ayşe Yılmaz",
   email: "ayse@ornek.com",
+  // (P181 Böl.1) DOĞRULANMIŞ: kimlik testleri e-posta ALANINA bakar; doğrulanmamış
+  // olsaydı EpostaDogrulaKart mevcut adresi ön-doldurup ikinci bir eşleşme üretirdi
+  // (kartın kendi testi ayrı). Bu testler doğrulama akışını ölçmüyor.
+  eposta_dogrulandi: true,
   telefon: "+905431992904",
   aranabilir: true,
   role: "resident",
