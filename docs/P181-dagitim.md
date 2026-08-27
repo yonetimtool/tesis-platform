@@ -37,6 +37,12 @@ için mutlaka yeniden derlenir.
 - Zaten mevcuttu (`PATCH /me/password` + profil `SifreDegistir`), yalnız
   doğrulandı — dağıtım gerektirmez.
 
+## Bölüm 4 — E-posta OTP ile giriş
+
+- **Göç:** YOK. **Yeni env:** YOK. **Yeniden derle:** yalnız `api`
+  (`eposta-kod-dogrula` başarısında `eposta_dogrulandi=true` yazan tek satır).
+- Frontend/BFF zaten mevcuttu (P172), değişmedi.
+
 ---
 
 ## Göç sırası özet

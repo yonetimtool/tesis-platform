@@ -708,6 +708,13 @@ async def eposta_giris_kodu_dogrula(
             # ucuncu bir parolasiz yol kapiyi delerdi.
             if gorev_penceresi_disinda(user):
                 raise _GOREV_SURESI_DISINDA
+            # (P181 Bölüm 4) E-POSTA KODUNU GIRMEK ADRESIN KONTROLUNU KANITLAR:
+            # bu, dogrulamanin ta kendisidir. Bayragi burada ACARIZ ki e-posta'li
+            # ama hic dogrulamamis MEVCUT kullanicilar OTP ile girerek otomatik
+            # dogrulansin ve parola sifirlama (Bölüm 2) onlar icin de calissin.
+            if not user.eposta_dogrulandi:
+                user.eposta_dogrulandi = True
+                user.updated_at = func.now()
             # Kod TUKETILIR: tekrar kullanilamaz.
             kayit.durum = "onaylandi"
             await session.flush()

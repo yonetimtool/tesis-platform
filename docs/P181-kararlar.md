@@ -162,10 +162,31 @@ olarak işlenir.
 
 ---
 
+## Bölüm 4 — E-posta OTP ile giriş (VARDI + P181 dokunuşu)
+
+**Bulgu:** E-posta kodu ile parolasız giriş P172 §5'ten mevcuttu:
+`POST /auth/giris/eposta-kod-iste` + `/auth/giris/eposta-kod-dogrula` (backend),
+GirisFormu'da e-posta yüzeyinde "Parola yerine e-postaya kod gönder" (frontend,
+BFF `/api/auth/eposta-kod?adim=iste|dogrula`). Sızıntısız, telefon yoluyla aynı
+mekanizma (süre/deneme/hız `telefon_kodu`dan).
+
+**P181 dokunuşu (yeni kod):** `eposta-kod-dogrula` başarısında
+`eposta_dogrulandi=true` yazılır. Gerekçe: **e-posta kodunu girmek adresin
+kontrolünü kanıtlar — doğrulamanın ta kendisidir.** Böylece e-posta'lı ama hiç
+doğrulamamış MEVCUT kullanıcılar (Bölüm 1'de false başlayanlar) OTP ile girip
+OTOMATİK doğrulanır; bu da parola sıfırlamayı (Bölüm 2, gate=`eposta_dogrulandi`)
+onlar için açar. GATE koymadık (döngü olurdu: doğrulamak için kod, kodu almak
+için doğrulama); kod her aktif e-postaya gider, başarı doğrular.
+
+**Kapsam:** yeni uç/enum/i18n/kilit YOK — yalnız bir bayrak set + test.
+**Test:** `test_eposta_kanali.py::test_EPOSTA_KODU_GIRISI_ADRESI_DOGRULAR` (16/16).
+
+---
+
 ## Program notu (dürüstlük)
 
 P181 on bir bölümlük büyük bir programdır (auth altyapısı + göçler, 6 web düzeltme,
 özet yeniden tasarım, rapor grafikleri, rezervasyon, mobil push). Bölümler SIRAYLA,
 her biri yeşil + ayrı commit olarak ilerletilir; "kesintiye uğrarsan nerede
-kaldığın belli olsun" gereği bu belge + commit'ler durumu taşır. Bölüm 0-3 bitti
-(3 zaten vardı, doğrulandı); sıradaki Bölüm 4 (e-posta OTP ile giriş).
+kaldığın belli olsun" gereği bu belge + commit'ler durumu taşır. Bölüm 0-4 bitti
+(3 zaten vardı; 4 vardı + P181 dokunuşu); sıradaki Bölüm 5 (e-posta şablonları).

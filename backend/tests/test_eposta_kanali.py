@@ -211,6 +211,42 @@ def test_EPOSTA_KODU_DOGRU_KOD_OTURUM_ACAR(client, world, owner_conn):
     assert r2.status_code == 422
 
 
+def test_EPOSTA_KODU_GIRISI_ADRESI_DOGRULAR(client, world, owner_conn):
+    """(P181 Bölüm 4) Kodu girmek adresin kontrolunu kanitlar -> eposta_dogrulandi
+    ACILIR. Boylece e-postali ama hic dogrulamamis MEVCUT kullanici OTP ile girip
+    otomatik dogrulanir (parola sifirlama onlar icin de calisir)."""
+    from app.security import hash_password
+
+    eposta = world["yonetici_a"]["email"].lower()
+    # ONCE: world kullanicisi dogrulanmamis baslar (Bölüm 1 varsayilani).
+    onceki = owner_conn.execute(
+        "SELECT eposta_dogrulandi FROM app_user WHERE tenant_id = %s "
+        "AND lower(email) = %s",
+        (world["a"], eposta),
+    ).fetchone()
+    assert onceki[0] is False
+
+    client.post("/auth/giris/eposta-kod-iste", json={
+        "tenant_slug": world["slug_a"], "eposta": eposta})
+    owner_conn.execute(
+        "UPDATE kayit_dogrulama SET kod_hash = %s WHERE tenant_id = %s "
+        "AND eposta = %s AND amac = 'giris' AND durum = 'telefon_bekliyor'",
+        (hash_password("123456"), world["a"], eposta),
+    )
+    owner_conn.commit()
+
+    r = client.post("/auth/giris/eposta-kod-dogrula", json={
+        "tenant_slug": world["slug_a"], "eposta": eposta, "kod": "123456"})
+    assert r.status_code == 200, r.text
+
+    sonraki = owner_conn.execute(
+        "SELECT eposta_dogrulandi FROM app_user WHERE tenant_id = %s "
+        "AND lower(email) = %s",
+        (world["a"], eposta),
+    ).fetchone()
+    assert sonraki[0] is True, "OTP giris eposta_dogrulandi bayragini acmadi"
+
+
 def test_EPOSTA_KODU_TESIS_SINIRINI_GECMEZ(client, world, owner_conn):
     """Ayni adres iki tesiste olabilir; kod BIRININ kodudur.
 
