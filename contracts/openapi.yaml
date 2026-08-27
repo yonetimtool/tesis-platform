@@ -1145,6 +1145,110 @@ paths:
           content:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
 
+  /auth/oauth/rol-tamamla:
+    post:
+      tags: [auth]
+      summary: (P184) SSO kimligini bir ROL hesabina baglar — SMS'siz
+      description: |
+        `baglan/*`nin E-POSTA esi. SSO kimligini sakin/guvenlik/tesis
+        gorevlisi hesabina baglar. UC SART (P177): (a) Tesis ID gecerli,
+        (b) e-posta yoneticinin listesinde, (c) saglayici
+        `email_verified=true` ise OTP ATLANIR (`durum='giris'`); degilse
+        e-posta OTP gonderilir (`durum='otp_gerekli'`, `-dogrula` ile devam).
+        Apple `privaterelay` dogrulanmis sayilir.
+
+        SIZDIRMAMA: GECERSIZ Tesis ID ile LISTE DISI e-posta AYNI yaniti
+        (`onay_bekliyor`) alir; hangi sartin tutmadigi disari SIZMAZ.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [baglama_jetonu, tesis_kodu, rol]
+              properties:
+                baglama_jetonu: { type: string }
+                tesis_kodu: { type: string }
+                rol: { type: string }
+      responses:
+        "200":
+          description: durum=giris|otp_gerekli|onay_bekliyor
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [durum]
+                properties:
+                  durum: { type: string, description: "giris|otp_gerekli|onay_bekliyor" }
+                  tesis_ad: { type: string, nullable: true }
+                  jetonlar: { $ref: "#/components/schemas/TokenPair" }
+        "400":
+          description: Baglama jetonu gecersiz/suresi dolmus
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "409":
+          description: Bu sosyal hesap BASKA bir kullaniciya bagli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422":
+          description: Rol gecersiz
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "503":
+          description: Yeni kayit akisi kapali
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  /auth/oauth/rol-tamamla-dogrula:
+    post:
+      tags: [auth]
+      summary: (P184) email_verified=false yolu — e-posta OTP + baglama
+      description: |
+        `rol-tamamla` `otp_gerekli` dondugunde 2. adim: e-posta OTP dogrulanir,
+        sonra kimlik baglanir VE oturum acilir. (a),(b) sartlari YENIDEN aranir.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [baglama_jetonu, tesis_kodu, rol, kod]
+              properties:
+                baglama_jetonu: { type: string }
+                tesis_kodu: { type: string }
+                rol: { type: string }
+                kod: { type: string }
+      responses:
+        "200":
+          description: durum=giris|onay_bekliyor
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [durum]
+                properties:
+                  durum: { type: string, description: "giris|otp_gerekli|onay_bekliyor" }
+                  tesis_ad: { type: string, nullable: true }
+                  jetonlar: { $ref: "#/components/schemas/TokenPair" }
+        "400":
+          description: Baglama jetonu gecersiz/suresi dolmus
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "409":
+          description: Bu sosyal hesap BASKA bir kullaniciya bagli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422":
+          description: Kod ya da rol gecersiz
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "503":
+          description: Yeni kayit akisi kapali
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
   /auth/oauth/baglantilarim:
     get:
       tags: [auth]

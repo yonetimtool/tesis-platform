@@ -155,6 +155,123 @@ class AuthApi {
     }
   }
 
+  // ================= (P184) E-POSTA DOGRULAMALI KAYIT ================= #
+  //
+  // SMS YERINE E-POSTA. Telefon yolundaki (`rolKayitBasla`/`oauthBaglan*`)
+  // kardesler DURUYOR ama mobil ARTIK CAGIRMIYOR: `SMS_AKTIF=false` ve
+  // dogrulama tek kanali e-posta. Telefon yalniz ILETISIM bilgisidir.
+
+  /// (P184) `POST /auth/kayit/rol-eposta-basla` — rol + Tesis ID + e-posta;
+  /// eslesirse E-POSTAYA kod gonderilir. Eslesme sonucu YANITTAN OKUNAMAZ
+  /// (`rolKayitBasla` ile ayni ilke) — istemci "adres yok" DEMEZ.
+  Future<String> rolEpostaBasla({
+    required String rol,
+    required String tesisKodu,
+    required String eposta,
+    String? ad,
+    String? telefon,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/auth/kayit/rol-eposta-basla',
+        data: {
+          'rol': rol,
+          'tesis_kodu': tesisKodu,
+          'eposta': eposta,
+          if (ad != null && ad.isNotEmpty) 'ad': ad,
+          if (telefon != null && telefon.isNotEmpty) 'telefon': telefon,
+        },
+      );
+      return res.data!['tesis_ad'] as String;
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// (P184) `POST /auth/kayit/rol-eposta-dogrula` — kod dogruysa PAROLA
+  /// belirleme jetonu (`durum='hazir'`); uc sart tutmazsa `onay_bekliyor`.
+  /// TEK YANIT TIPI, IKI SONUC — hangi sartin tutmadigi SIZDIRILMAZ.
+  Future<({String durum, String? setupToken})> rolEpostaDogrula({
+    required String tesisKodu,
+    required String eposta,
+    required String kod,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/auth/kayit/rol-eposta-dogrula',
+        data: {'tesis_kodu': tesisKodu, 'eposta': eposta, 'kod': kod},
+      );
+      return (
+        durum: res.data!['durum'] as String,
+        setupToken: res.data!['setup_token'] as String?,
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// (P184) `POST /auth/oauth/rol-tamamla` — SSO kimligini rol hesabina
+  /// baglar (SMS'siz). `durum`:
+  ///   * `giris`        — email_verified=true + listede -> oturum (`jetonlar`).
+  ///   * `otp_gerekli`  — saglayici e-postayi dogrulamamis -> e-posta OTP
+  ///                      gonderildi (`tesisAd` dolu); `oauthRolTamamlaDogrula`.
+  ///   * `onay_bekliyor`— liste disi VEYA gecersiz Tesis ID (AYNI yanit).
+  Future<({String durum, String? tesisAd, TokenPair? jetonlar})>
+      oauthRolTamamla({
+    required String baglamaJetonu,
+    required String tesisKodu,
+    required String rol,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/auth/oauth/rol-tamamla',
+        data: {
+          'baglama_jetonu': baglamaJetonu,
+          'tesis_kodu': tesisKodu,
+          'rol': rol,
+        },
+      );
+      final j = res.data!['jetonlar'];
+      return (
+        durum: res.data!['durum'] as String,
+        tesisAd: res.data!['tesis_ad'] as String?,
+        jetonlar:
+            j == null ? null : TokenPair.fromJson(j as Map<String, dynamic>),
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// (P184) `POST /auth/oauth/rol-tamamla-dogrula` — email_verified=false
+  /// yolunun 2. adimi: e-posta OTP + baglama. `durum`: giris | onay_bekliyor.
+  Future<({String durum, TokenPair? jetonlar})> oauthRolTamamlaDogrula({
+    required String baglamaJetonu,
+    required String tesisKodu,
+    required String rol,
+    required String kod,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/auth/oauth/rol-tamamla-dogrula',
+        data: {
+          'baglama_jetonu': baglamaJetonu,
+          'tesis_kodu': tesisKodu,
+          'rol': rol,
+          'kod': kod,
+        },
+      );
+      final j = res.data!['jetonlar'];
+      return (
+        durum: res.data!['durum'] as String,
+        jetonlar:
+            j == null ? null : TokenPair.fromJson(j as Map<String, dynamic>),
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
   /// (P154 / Asama 3) `POST /auth/kayit/rol-basla` — rol + tesis ID +
   /// telefon; eslesirse SMS kodu gonderilir.
   ///

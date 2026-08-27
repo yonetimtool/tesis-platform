@@ -4870,7 +4870,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get hesapSilKodGerekli => 'Enter the confirmation code';
 
   @override
-  String get kayitBaslik => 'Sign up';
+  String get kayitBaslik => 'Sign in with Facility ID';
 
   @override
   String get kayitAltBaslik => 'Choose what applies to you';
@@ -4996,7 +4996,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get kayitYontemEposta => 'Sign up with email/phone';
+  String get kayitYontemEposta => 'Continue with email';
 
   @override
   String get kayitYontemVeya => 'or';
@@ -5050,6 +5050,58 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get kayitSosyalAdNotu =>
       'Name taken from your account; you can change it.';
+
+  @override
+  String get kayitEposta => 'Email';
+
+  @override
+  String get kayitEpostaGerekli => 'Email address is required.';
+
+  @override
+  String get kayitEpostaGecersiz => 'Enter a valid email.';
+
+  @override
+  String get kayitTelefonIletisim => 'Phone (optional)';
+
+  @override
+  String get kayitTelefonNotu =>
+      'Phone is for contact only; verification is done by email.';
+
+  @override
+  String get kayitTesisKoduGir => 'Enter your Facility ID';
+
+  @override
+  String kayitKodAciklamaEposta(String tesis) {
+    return 'We sent a verification code to your email for $tesis. If your address isn\'t registered, no code will arrive.';
+  }
+
+  @override
+  String get kayitOnayBekliyorBaslik => 'Awaiting manager approval';
+
+  @override
+  String get kayitOnayBekliyorAciklama =>
+      'Your details could not be verified and were sent to your manager for approval. Check your Facility ID; if the problem persists, consult your manager. Once approved, you can sign in.';
+
+  @override
+  String get kayitGiriseDon => 'Back to sign in';
+
+  @override
+  String get sosyalTamamlaBaslik => 'Complete with Facility ID';
+
+  @override
+  String sosyalTamamlaAciklama(String saglayici) {
+    return 'Your $saglayici account is verified. To complete, enter your role and Facility ID.';
+  }
+
+  @override
+  String get sosyalRol => 'Your role';
+
+  @override
+  String get sosyalTamamla => 'Complete';
+
+  @override
+  String get sosyalOtpAciklama =>
+      'Enter the verification code sent to your email.';
 
   @override
   String get binaYapisalAraclar => 'Structural tools';

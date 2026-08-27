@@ -8288,7 +8288,7 @@ abstract class AppLocalizations {
   /// No description provided for @kayitBaslik.
   ///
   /// In tr, this message translates to:
-  /// **'Kayıt ol'**
+  /// **'Tesis ID ile giriş'**
   String get kayitBaslik;
 
   /// No description provided for @kayitAltBaslik.
@@ -8510,7 +8510,7 @@ abstract class AppLocalizations {
   /// No description provided for @kayitYontemEposta.
   ///
   /// In tr, this message translates to:
-  /// **'E-posta/telefon ile kaydol'**
+  /// **'E-posta ile devam et'**
   String get kayitYontemEposta;
 
   /// No description provided for @kayitYontemVeya.
@@ -8614,6 +8614,96 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Ad soyad hesabınızdan alındı; değiştirebilirsiniz.'**
   String get kayitSosyalAdNotu;
+
+  /// No description provided for @kayitEposta.
+  ///
+  /// In tr, this message translates to:
+  /// **'E-posta'**
+  String get kayitEposta;
+
+  /// No description provided for @kayitEpostaGerekli.
+  ///
+  /// In tr, this message translates to:
+  /// **'E-posta adresi gerekli.'**
+  String get kayitEpostaGerekli;
+
+  /// No description provided for @kayitEpostaGecersiz.
+  ///
+  /// In tr, this message translates to:
+  /// **'Geçerli bir e-posta girin.'**
+  String get kayitEpostaGecersiz;
+
+  /// No description provided for @kayitTelefonIletisim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Telefon (isteğe bağlı)'**
+  String get kayitTelefonIletisim;
+
+  /// No description provided for @kayitTelefonNotu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Telefon yalnızca iletişim içindir; doğrulama e-posta ile yapılır.'**
+  String get kayitTelefonNotu;
+
+  /// No description provided for @kayitTesisKoduGir.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tesis ID\'nizi girin'**
+  String get kayitTesisKoduGir;
+
+  /// E-postaya kod gonderildi; adres kayitli DEGILSE kod gelmez (sunucu sizdirmaz)
+  ///
+  /// In tr, this message translates to:
+  /// **'{tesis} için e-posta adresinize bir doğrulama kodu gönderdik. Adresiniz sistemde kayıtlı değilse kod gelmez.'**
+  String kayitKodAciklamaEposta(String tesis);
+
+  /// No description provided for @kayitOnayBekliyorBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yönetici onayı bekleniyor'**
+  String get kayitOnayBekliyorBaslik;
+
+  /// No description provided for @kayitOnayBekliyorAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bilgileriniz doğrulanamadı ve yöneticinizin onayına iletildi. Tesis ID\'nizi kontrol edin; sorun sürerse yöneticinize danışın. Onaylandığında giriş yapabilirsiniz.'**
+  String get kayitOnayBekliyorAciklama;
+
+  /// No description provided for @kayitGiriseDon.
+  ///
+  /// In tr, this message translates to:
+  /// **'Girişe dön'**
+  String get kayitGiriseDon;
+
+  /// No description provided for @sosyalTamamlaBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tesis ID ile tamamla'**
+  String get sosyalTamamlaBaslik;
+
+  /// No description provided for @sosyalTamamlaAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'{saglayici} hesabınız doğrulandı. Tamamlamak için rolünüzü ve Tesis ID\'nizi girin.'**
+  String sosyalTamamlaAciklama(String saglayici);
+
+  /// No description provided for @sosyalRol.
+  ///
+  /// In tr, this message translates to:
+  /// **'Rolünüz'**
+  String get sosyalRol;
+
+  /// No description provided for @sosyalTamamla.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tamamla'**
+  String get sosyalTamamla;
+
+  /// No description provided for @sosyalOtpAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'E-posta adresinize gönderilen doğrulama kodunu girin.'**
+  String get sosyalOtpAciklama;
 
   /// No description provided for @binaYapisalAraclar.
   ///

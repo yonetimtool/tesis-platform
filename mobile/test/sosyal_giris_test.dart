@@ -66,6 +66,27 @@ class _SahteOauth implements OauthRepository {
   }) async {
     dogrulananlar.add(kod);
   }
+
+  @override
+  Future<({String durum, String? tesisAd})> rolTamamla({
+    required String baglamaJetonu,
+    required String tesisKodu,
+    required String rol,
+  }) async {
+    baglananlar.add((tesis: tesisKodu, telefon: rol));
+    return (durum: 'giris', tesisAd: 'Oltu Sitesi');
+  }
+
+  @override
+  Future<({String durum})> rolTamamlaDogrula({
+    required String baglamaJetonu,
+    required String tesisKodu,
+    required String rol,
+    required String kod,
+  }) async {
+    dogrulananlar.add(kod);
+    return (durum: 'giris');
+  }
 }
 
 ProviderContainer _kap(_SahteOauth sahte) {

@@ -2066,7 +2066,7 @@
   "hesapSilKodlaOnayla": "Parolam yok, kodla onayla",
   "hesapSilKodAciklama": "Telefonunuza silme onayı için altı haneli bir kod göndereceğiz.",
   "hesapSilKodGerekli": "Onay kodunu girin",
-  "kayitBaslik": "Kayıt ol",
+  "kayitBaslik": "Tesis ID ile giriş",
   "kayitAltBaslik": "Size uygun olanı seçiniz",
   "kayitRolYonetici": "Yönetici",
   "kayitRolSakin": "Site sakini",
@@ -2159,7 +2159,7 @@
       }
     }
   },
-  "kayitYontemEposta": "E-posta/telefon ile kaydol",
+  "kayitYontemEposta": "E-posta ile devam et",
   "kayitYontemVeya": "veya",
   "kayitBilgilerBaslik": "Bilgileriniz",
   "kayitAdSoyad": "Ad soyad",
@@ -2177,6 +2177,36 @@
   "kayitKopyalandi": "Kopyalandı",
   "kayitTamamla": "Devam et",
   "kayitSosyalAdNotu": "Ad soyad hesabınızdan alındı; değiştirebilirsiniz.",
+  "kayitEposta": "E-posta",
+  "kayitEpostaGerekli": "E-posta adresi gerekli.",
+  "kayitEpostaGecersiz": "Geçerli bir e-posta girin.",
+  "kayitTelefonIletisim": "Telefon (isteğe bağlı)",
+  "kayitTelefonNotu": "Telefon yalnızca iletişim içindir; doğrulama e-posta ile yapılır.",
+  "kayitTesisKoduGir": "Tesis ID'nizi girin",
+  "kayitKodAciklamaEposta": "{tesis} için e-posta adresinize bir doğrulama kodu gönderdik. Adresiniz sistemde kayıtlı değilse kod gelmez.",
+  "@kayitKodAciklamaEposta": {
+    "description": "E-postaya kod gonderildi; adres kayitli DEGILSE kod gelmez (sunucu sizdirmaz)",
+    "placeholders": {
+      "tesis": {
+        "type": "String"
+      }
+    }
+  },
+  "kayitOnayBekliyorBaslik": "Yönetici onayı bekleniyor",
+  "kayitOnayBekliyorAciklama": "Bilgileriniz doğrulanamadı ve yöneticinizin onayına iletildi. Tesis ID'nizi kontrol edin; sorun sürerse yöneticinize danışın. Onaylandığında giriş yapabilirsiniz.",
+  "kayitGiriseDon": "Girişe dön",
+  "sosyalTamamlaBaslik": "Tesis ID ile tamamla",
+  "sosyalTamamlaAciklama": "{saglayici} hesabınız doğrulandı. Tamamlamak için rolünüzü ve Tesis ID'nizi girin.",
+  "@sosyalTamamlaAciklama": {
+    "placeholders": {
+      "saglayici": {
+        "type": "String"
+      }
+    }
+  },
+  "sosyalRol": "Rolünüz",
+  "sosyalTamamla": "Tamamla",
+  "sosyalOtpAciklama": "E-posta adresinize gönderilen doğrulama kodunu girin.",
   "binaYapisalAraclar": "Yapısal araçlar",
   "binaKatSil": "Katı sil",
   "binaTopluTip": "Toplu durum değiştir",

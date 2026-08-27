@@ -6312,6 +6312,56 @@ class OauthBaglaDogrulaRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
+# ---- (P184) SSO ROL TAMAMLAMA — e-posta ile (SMS'siz) ---- #
+#
+# `OauthBagla*`nin E-POSTA karsiligi: SSO kimligini bir ROL hesabina baglar,
+# ama telefon+SMS yerine ya saglayici `email_verified=true` (OTP atlanir) ya da
+# e-posta OTP ile. P177 uc sarti aynen (Tesis ID + liste + kanit). Terminoloji
+# "kayit" degil "girişte Tesis ID ile tamamlama".
+
+
+class OauthRolTamamlaRequest(BaseModel):
+    """Doğrulanmış SSO kimliği + Tesis ID + beyan edilen rol.
+
+    `baglama_jetonu` içinde saglayici + subject + eposta + email_verified imzalı
+    gelir (`/auth/oauth/sonuc`un dönüşü). `rol` beyandır; listedeki rolle
+    uyuşmazsa onay kuyruğuna düşer (`rol-eposta-basla` ile aynı ilke).
+    """
+
+    baglama_jetonu: str
+    tesis_kodu: str = Field(..., min_length=3, max_length=40, examples=["OLTU-260715"])
+    rol: str = Field(..., examples=["resident"])
+    model_config = ConfigDict(extra="forbid")
+
+
+class OauthRolTamamlaDogrulaRequest(BaseModel):
+    """`email_verified=false` yolunda ikinci adım: e-posta OTP + bağlama."""
+
+    baglama_jetonu: str
+    tesis_kodu: str = Field(..., min_length=3, max_length=40)
+    rol: str = Field(..., examples=["resident"])
+    kod: str = Field(..., min_length=4, max_length=8)
+    model_config = ConfigDict(extra="forbid")
+
+
+class OauthRolTamamlaResponse(BaseModel):
+    """TEK ŞEMA, ÜÇ SONUÇ — `durum` yönlendirir; hangi şartın tutmadığı SIZMAZ.
+
+    * `giris`        — kimlik bağlandı, oturum açıldı (`jetonlar` dolu).
+    * `otp_gerekli`  — sağlayıcı e-postayı doğrulamamış; e-posta OTP gönderildi
+                       (`tesis_ad` teyit için dolu). İstemci `-dogrula` çağırır.
+    * `onay_bekliyor`— liste dışı / rol uyuşmuyor / hesap kullanımda VEYA geçersiz
+                       Tesis ID. Kullanıcıya AYNI nötr mesaj (K4 sızdırmama).
+    """
+
+    #: giris | otp_gerekli | onay_bekliyor
+    durum: str = Field(examples=["giris"])
+    #: Yalnız `otp_gerekli` iken dolu — kullanıcı doğru siteyi seçtiğini görsün.
+    tesis_ad: str | None = None
+    #: Yalnız `durum='giris'` iken dolu.
+    jetonlar: TokenPair | None = None
+
+
 class OauthBaglantiOut(BaseModel):
     saglayici: str
     eposta: str | None = None

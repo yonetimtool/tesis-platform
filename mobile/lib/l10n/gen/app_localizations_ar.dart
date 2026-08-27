@@ -4950,7 +4950,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get hesapSilKodGerekli => 'أدخل رمز التأكيد';
 
   @override
-  String get kayitBaslik => 'إنشاء حساب';
+  String get kayitBaslik => 'تسجيل الدخول بمعرّف المنشأة';
 
   @override
   String get kayitAltBaslik => 'اختر ما ينطبق عليك';
@@ -5076,7 +5076,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get kayitYontemEposta => 'التسجيل بالبريد الإلكتروني/الهاتف';
+  String get kayitYontemEposta => 'المتابعة بالبريد الإلكتروني';
 
   @override
   String get kayitYontemVeya => 'أو';
@@ -5129,6 +5129,58 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get kayitSosyalAdNotu => 'تم أخذ الاسم من حسابك، ويمكنك تغييره.';
+
+  @override
+  String get kayitEposta => 'البريد الإلكتروني';
+
+  @override
+  String get kayitEpostaGerekli => 'عنوان البريد الإلكتروني مطلوب.';
+
+  @override
+  String get kayitEpostaGecersiz => 'أدخل بريدًا إلكترونيًا صالحًا.';
+
+  @override
+  String get kayitTelefonIletisim => 'الهاتف (اختياري)';
+
+  @override
+  String get kayitTelefonNotu =>
+      'الهاتف للتواصل فقط؛ يتم التحقق عبر البريد الإلكتروني.';
+
+  @override
+  String get kayitTesisKoduGir => 'أدخل معرّف المنشأة الخاص بك';
+
+  @override
+  String kayitKodAciklamaEposta(String tesis) {
+    return 'أرسلنا رمز تحقق إلى بريدك الإلكتروني للمنشأة $tesis. إذا لم يكن عنوانك مسجلًا، فلن يصل أي رمز.';
+  }
+
+  @override
+  String get kayitOnayBekliyorBaslik => 'في انتظار موافقة المدير';
+
+  @override
+  String get kayitOnayBekliyorAciklama =>
+      'تعذّر التحقق من بياناتك وتم إرسالها إلى مديرك للموافقة. تحقق من معرّف المنشأة الخاص بك؛ وإذا استمرت المشكلة، فاستشر مديرك. بعد الموافقة يمكنك تسجيل الدخول.';
+
+  @override
+  String get kayitGiriseDon => 'العودة إلى تسجيل الدخول';
+
+  @override
+  String get sosyalTamamlaBaslik => 'الإكمال بمعرّف المنشأة';
+
+  @override
+  String sosyalTamamlaAciklama(String saglayici) {
+    return 'تم التحقق من حساب $saglayici الخاص بك. للإكمال، أدخل دورك ومعرّف المنشأة الخاص بك.';
+  }
+
+  @override
+  String get sosyalRol => 'دورك';
+
+  @override
+  String get sosyalTamamla => 'إكمال';
+
+  @override
+  String get sosyalOtpAciklama =>
+      'أدخل رمز التحقق المُرسَل إلى بريدك الإلكتروني.';
 
   @override
   String get binaYapisalAraclar => 'أدوات هيكلية';

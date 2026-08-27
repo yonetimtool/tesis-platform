@@ -1453,7 +1453,7 @@
   "hesapSilKodlaOnayla": "لا كلمة مرور — أكّد برمز",
   "hesapSilKodAciklama": "سنرسل رمزًا من ستة أرقام إلى هاتفك لتأكيد الحذف.",
   "hesapSilKodGerekli": "أدخل رمز التأكيد",
-  "kayitBaslik": "إنشاء حساب",
+  "kayitBaslik": "تسجيل الدخول بمعرّف المنشأة",
   "kayitAltBaslik": "اختر ما ينطبق عليك",
   "kayitRolYonetici": "مدير",
   "kayitRolSakin": "ساكن",
@@ -1501,7 +1501,7 @@
       }
     }
   },
-  "kayitYontemEposta": "التسجيل بالبريد الإلكتروني/الهاتف",
+  "kayitYontemEposta": "المتابعة بالبريد الإلكتروني",
   "kayitYontemVeya": "أو",
   "kayitBilgilerBaslik": "بياناتك",
   "kayitAdSoyad": "الاسم الكامل",
@@ -1519,6 +1519,37 @@
   "kayitKopyalandi": "تم النسخ",
   "kayitTamamla": "متابعة",
   "kayitSosyalAdNotu": "تم أخذ الاسم من حسابك، ويمكنك تغييره.",
+  "kayitEposta": "البريد الإلكتروني",
+  "kayitEpostaGerekli": "عنوان البريد الإلكتروني مطلوب.",
+  "kayitEpostaGecersiz": "أدخل بريدًا إلكترونيًا صالحًا.",
+  "kayitTelefonIletisim": "الهاتف (اختياري)",
+  "kayitTelefonNotu": "الهاتف للتواصل فقط؛ يتم التحقق عبر البريد الإلكتروني.",
+  "kayitTesisKoduGir": "أدخل معرّف المنشأة الخاص بك",
+  "kayitKodAciklamaEposta": "أرسلنا رمز تحقق إلى بريدك الإلكتروني للمنشأة {tesis}. إذا لم يكن عنوانك مسجلًا، فلن يصل أي رمز.",
+  "@kayitKodAciklamaEposta": {
+    "description": "Message shown after sending an email verification code for a facility",
+    "placeholders": {
+      "tesis": {
+        "type": "String"
+      }
+    }
+  },
+  "kayitOnayBekliyorBaslik": "في انتظار موافقة المدير",
+  "kayitOnayBekliyorAciklama": "تعذّر التحقق من بياناتك وتم إرسالها إلى مديرك للموافقة. تحقق من معرّف المنشأة الخاص بك؛ وإذا استمرت المشكلة، فاستشر مديرك. بعد الموافقة يمكنك تسجيل الدخول.",
+  "kayitGiriseDon": "العودة إلى تسجيل الدخول",
+  "sosyalTamamlaBaslik": "الإكمال بمعرّف المنشأة",
+  "sosyalTamamlaAciklama": "تم التحقق من حساب {saglayici} الخاص بك. للإكمال، أدخل دورك ومعرّف المنشأة الخاص بك.",
+  "@sosyalTamamlaAciklama": {
+    "description": "Instruction to complete social sign-in by entering role and facility ID",
+    "placeholders": {
+      "saglayici": {
+        "type": "String"
+      }
+    }
+  },
+  "sosyalRol": "دورك",
+  "sosyalTamamla": "إكمال",
+  "sosyalOtpAciklama": "أدخل رمز التحقق المُرسَل إلى بريدك الإلكتروني.",
   "binaYapisalAraclar": "أدوات هيكلية",
   "binaKatSil": "حذف الطابق",
   "binaTopluTip": "تغيير الحالة دفعة واحدة",

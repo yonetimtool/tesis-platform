@@ -4682,7 +4682,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get hesapSilKodGerekli => 'Onay kodunu girin';
 
   @override
-  String get kayitBaslik => 'Kayıt ol';
+  String get kayitBaslik => 'Tesis ID ile giriş';
 
   @override
   String get kayitAltBaslik => 'Size uygun olanı seçiniz';
@@ -4808,7 +4808,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get kayitYontemEposta => 'E-posta/telefon ile kaydol';
+  String get kayitYontemEposta => 'E-posta ile devam et';
 
   @override
   String get kayitYontemVeya => 'veya';
@@ -4862,6 +4862,58 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get kayitSosyalAdNotu =>
       'Ad soyad hesabınızdan alındı; değiştirebilirsiniz.';
+
+  @override
+  String get kayitEposta => 'E-posta';
+
+  @override
+  String get kayitEpostaGerekli => 'E-posta adresi gerekli.';
+
+  @override
+  String get kayitEpostaGecersiz => 'Geçerli bir e-posta girin.';
+
+  @override
+  String get kayitTelefonIletisim => 'Telefon (isteğe bağlı)';
+
+  @override
+  String get kayitTelefonNotu =>
+      'Telefon yalnızca iletişim içindir; doğrulama e-posta ile yapılır.';
+
+  @override
+  String get kayitTesisKoduGir => 'Tesis ID\'nizi girin';
+
+  @override
+  String kayitKodAciklamaEposta(String tesis) {
+    return '$tesis için e-posta adresinize bir doğrulama kodu gönderdik. Adresiniz sistemde kayıtlı değilse kod gelmez.';
+  }
+
+  @override
+  String get kayitOnayBekliyorBaslik => 'Yönetici onayı bekleniyor';
+
+  @override
+  String get kayitOnayBekliyorAciklama =>
+      'Bilgileriniz doğrulanamadı ve yöneticinizin onayına iletildi. Tesis ID\'nizi kontrol edin; sorun sürerse yöneticinize danışın. Onaylandığında giriş yapabilirsiniz.';
+
+  @override
+  String get kayitGiriseDon => 'Girişe dön';
+
+  @override
+  String get sosyalTamamlaBaslik => 'Tesis ID ile tamamla';
+
+  @override
+  String sosyalTamamlaAciklama(String saglayici) {
+    return '$saglayici hesabınız doğrulandı. Tamamlamak için rolünüzü ve Tesis ID\'nizi girin.';
+  }
+
+  @override
+  String get sosyalRol => 'Rolünüz';
+
+  @override
+  String get sosyalTamamla => 'Tamamla';
+
+  @override
+  String get sosyalOtpAciklama =>
+      'E-posta adresinize gönderilen doğrulama kodunu girin.';
 
   @override
   String get binaYapisalAraclar => 'Yapısal araçlar';

@@ -4826,7 +4826,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get hesapSilKodGerekli => 'Introduzca el código de confirmación';
 
   @override
-  String get kayitBaslik => 'Registrarse';
+  String get kayitBaslik => 'Iniciar sesión con ID de instalación';
 
   @override
   String get kayitAltBaslik => 'Elija lo que le corresponde';
@@ -4952,7 +4952,7 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get kayitYontemEposta => 'Registrarse con correo/teléfono';
+  String get kayitYontemEposta => 'Continuar con correo';
 
   @override
   String get kayitYontemVeya => 'o';
@@ -5007,6 +5007,60 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get kayitSosyalAdNotu =>
       'Nombre obtenido de su cuenta; puede cambiarlo.';
+
+  @override
+  String get kayitEposta => 'Correo electrónico';
+
+  @override
+  String get kayitEpostaGerekli =>
+      'La dirección de correo electrónico es obligatoria.';
+
+  @override
+  String get kayitEpostaGecersiz => 'Introduzca un correo electrónico válido.';
+
+  @override
+  String get kayitTelefonIletisim => 'Teléfono (opcional)';
+
+  @override
+  String get kayitTelefonNotu =>
+      'El teléfono es solo para contacto; la verificación se realiza por correo electrónico.';
+
+  @override
+  String get kayitTesisKoduGir => 'Introduzca su ID de instalación';
+
+  @override
+  String kayitKodAciklamaEposta(String tesis) {
+    return 'Enviamos un código de verificación a su correo electrónico para $tesis. Si su dirección no está registrada, no llegará ningún código.';
+  }
+
+  @override
+  String get kayitOnayBekliyorBaslik =>
+      'Esperando la aprobación del administrador';
+
+  @override
+  String get kayitOnayBekliyorAciklama =>
+      'No se pudieron verificar sus datos y se enviaron a su administrador para su aprobación. Compruebe su ID de instalación; si el problema persiste, consulte a su administrador. Una vez aprobado, podrá iniciar sesión.';
+
+  @override
+  String get kayitGiriseDon => 'Volver al inicio de sesión';
+
+  @override
+  String get sosyalTamamlaBaslik => 'Completar con ID de instalación';
+
+  @override
+  String sosyalTamamlaAciklama(String saglayici) {
+    return 'Su cuenta de $saglayici está verificada. Para completar, introduzca su rol y su ID de instalación.';
+  }
+
+  @override
+  String get sosyalRol => 'Su rol';
+
+  @override
+  String get sosyalTamamla => 'Completar';
+
+  @override
+  String get sosyalOtpAciklama =>
+      'Introduzca el código de verificación enviado a su correo electrónico.';
 
   @override
   String get binaYapisalAraclar => 'Herramientas estructurales';

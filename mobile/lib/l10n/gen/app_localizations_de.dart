@@ -4850,7 +4850,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get hesapSilKodGerekli => 'Bestätigungscode eingeben';
 
   @override
-  String get kayitBaslik => 'Registrieren';
+  String get kayitBaslik => 'Mit Anlagen-ID anmelden';
 
   @override
   String get kayitAltBaslik => 'Wählen Sie, was auf Sie zutrifft';
@@ -4976,7 +4976,7 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get kayitYontemEposta => 'Mit E-Mail/Telefon registrieren';
+  String get kayitYontemEposta => 'Mit E-Mail fortfahren';
 
   @override
   String get kayitYontemVeya => 'oder';
@@ -5031,6 +5031,58 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get kayitSosyalAdNotu =>
       'Name aus Ihrem Konto übernommen; Sie können ihn ändern.';
+
+  @override
+  String get kayitEposta => 'E-Mail';
+
+  @override
+  String get kayitEpostaGerekli => 'E-Mail-Adresse ist erforderlich.';
+
+  @override
+  String get kayitEpostaGecersiz => 'Geben Sie eine gültige E-Mail ein.';
+
+  @override
+  String get kayitTelefonIletisim => 'Telefon (optional)';
+
+  @override
+  String get kayitTelefonNotu =>
+      'Das Telefon dient nur der Kontaktaufnahme; die Bestätigung erfolgt per E-Mail.';
+
+  @override
+  String get kayitTesisKoduGir => 'Geben Sie Ihre Anlagen-ID ein';
+
+  @override
+  String kayitKodAciklamaEposta(String tesis) {
+    return 'Wir haben einen Bestätigungscode an Ihre E-Mail für $tesis gesendet. Wenn Ihre Adresse nicht registriert ist, kommt kein Code an.';
+  }
+
+  @override
+  String get kayitOnayBekliyorBaslik => 'Warten auf Genehmigung des Managers';
+
+  @override
+  String get kayitOnayBekliyorAciklama =>
+      'Ihre Angaben konnten nicht überprüft werden und wurden Ihrem Manager zur Genehmigung vorgelegt. Überprüfen Sie Ihre Anlagen-ID; wenn das Problem weiterhin besteht, wenden Sie sich an Ihren Manager. Nach der Genehmigung können Sie sich anmelden.';
+
+  @override
+  String get kayitGiriseDon => 'Zurück zur Anmeldung';
+
+  @override
+  String get sosyalTamamlaBaslik => 'Mit Anlagen-ID abschließen';
+
+  @override
+  String sosyalTamamlaAciklama(String saglayici) {
+    return 'Ihr $saglayici-Konto ist bestätigt. Geben Sie zum Abschluss Ihre Rolle und Anlagen-ID ein.';
+  }
+
+  @override
+  String get sosyalRol => 'Ihre Rolle';
+
+  @override
+  String get sosyalTamamla => 'Abschließen';
+
+  @override
+  String get sosyalOtpAciklama =>
+      'Geben Sie den an Ihre E-Mail gesendeten Bestätigungscode ein.';
 
   @override
   String get binaYapisalAraclar => 'Strukturwerkzeuge';

@@ -1453,7 +1453,7 @@
   "hesapSilKodlaOnayla": "Pas de mot de passe – confirmer avec un code",
   "hesapSilKodAciklama": "Nous enverrons un code à six chiffres sur votre téléphone pour confirmer la suppression.",
   "hesapSilKodGerekli": "Saisissez le code de confirmation",
-  "kayitBaslik": "S'inscrire",
+  "kayitBaslik": "Se connecter avec l'ID de site",
   "kayitAltBaslik": "Choisissez ce qui vous correspond",
   "kayitRolYonetici": "Gestionnaire",
   "kayitRolSakin": "Résident",
@@ -1501,7 +1501,7 @@
       }
     }
   },
-  "kayitYontemEposta": "S'inscrire avec e-mail/téléphone",
+  "kayitYontemEposta": "Continuer avec l'e-mail",
   "kayitYontemVeya": "ou",
   "kayitBilgilerBaslik": "Vos informations",
   "kayitAdSoyad": "Nom et prénom",
@@ -1519,6 +1519,37 @@
   "kayitKopyalandi": "Copié",
   "kayitTamamla": "Continuer",
   "kayitSosyalAdNotu": "Nom repris de votre compte ; vous pouvez le modifier.",
+  "kayitEposta": "E-mail",
+  "kayitEpostaGerekli": "L'adresse e-mail est requise.",
+  "kayitEpostaGecersiz": "Saisissez une adresse e-mail valide.",
+  "kayitTelefonIletisim": "Téléphone (facultatif)",
+  "kayitTelefonNotu": "Le téléphone sert uniquement au contact ; la vérification se fait par e-mail.",
+  "kayitTesisKoduGir": "Saisissez votre ID de site",
+  "kayitKodAciklamaEposta": "Nous avons envoyé un code de vérification à votre e-mail pour {tesis}. Si votre adresse n'est pas enregistrée, aucun code n'arrivera.",
+  "@kayitKodAciklamaEposta": {
+    "description": "Message shown after sending an email verification code for a facility",
+    "placeholders": {
+      "tesis": {
+        "type": "String"
+      }
+    }
+  },
+  "kayitOnayBekliyorBaslik": "En attente de l'approbation du responsable",
+  "kayitOnayBekliyorAciklama": "Vos informations n'ont pas pu être vérifiées et ont été transmises à votre responsable pour approbation. Vérifiez votre ID de site ; si le problème persiste, consultez votre responsable. Une fois approuvé, vous pourrez vous connecter.",
+  "kayitGiriseDon": "Retour à la connexion",
+  "sosyalTamamlaBaslik": "Compléter avec l'ID de site",
+  "sosyalTamamlaAciklama": "Votre compte {saglayici} est vérifié. Pour terminer, saisissez votre rôle et votre ID de site.",
+  "@sosyalTamamlaAciklama": {
+    "description": "Instruction to complete social sign-in by entering role and facility ID",
+    "placeholders": {
+      "saglayici": {
+        "type": "String"
+      }
+    }
+  },
+  "sosyalRol": "Votre rôle",
+  "sosyalTamamla": "Terminer",
+  "sosyalOtpAciklama": "Saisissez le code de vérification envoyé à votre e-mail.",
   "binaYapisalAraclar": "Outils structurels",
   "binaKatSil": "Supprimer l'étage",
   "binaTopluTip": "Modifier le statut en lot",

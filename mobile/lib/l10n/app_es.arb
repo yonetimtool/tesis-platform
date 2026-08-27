@@ -1453,7 +1453,7 @@
   "hesapSilKodlaOnayla": "Sin contraseña: confirmar con un código",
   "hesapSilKodAciklama": "Enviaremos un código de seis dígitos a su teléfono para confirmar la eliminación.",
   "hesapSilKodGerekli": "Introduzca el código de confirmación",
-  "kayitBaslik": "Registrarse",
+  "kayitBaslik": "Iniciar sesión con ID de instalación",
   "kayitAltBaslik": "Elija lo que le corresponde",
   "kayitRolYonetici": "Administrador",
   "kayitRolSakin": "Residente",
@@ -1501,7 +1501,7 @@
       }
     }
   },
-  "kayitYontemEposta": "Registrarse con correo/teléfono",
+  "kayitYontemEposta": "Continuar con correo",
   "kayitYontemVeya": "o",
   "kayitBilgilerBaslik": "Sus datos",
   "kayitAdSoyad": "Nombre y apellidos",
@@ -1519,6 +1519,37 @@
   "kayitKopyalandi": "Copiado",
   "kayitTamamla": "Continuar",
   "kayitSosyalAdNotu": "Nombre obtenido de su cuenta; puede cambiarlo.",
+  "kayitEposta": "Correo electrónico",
+  "kayitEpostaGerekli": "La dirección de correo electrónico es obligatoria.",
+  "kayitEpostaGecersiz": "Introduzca un correo electrónico válido.",
+  "kayitTelefonIletisim": "Teléfono (opcional)",
+  "kayitTelefonNotu": "El teléfono es solo para contacto; la verificación se realiza por correo electrónico.",
+  "kayitTesisKoduGir": "Introduzca su ID de instalación",
+  "kayitKodAciklamaEposta": "Enviamos un código de verificación a su correo electrónico para {tesis}. Si su dirección no está registrada, no llegará ningún código.",
+  "@kayitKodAciklamaEposta": {
+    "description": "Message shown after sending an email verification code for a facility",
+    "placeholders": {
+      "tesis": {
+        "type": "String"
+      }
+    }
+  },
+  "kayitOnayBekliyorBaslik": "Esperando la aprobación del administrador",
+  "kayitOnayBekliyorAciklama": "No se pudieron verificar sus datos y se enviaron a su administrador para su aprobación. Compruebe su ID de instalación; si el problema persiste, consulte a su administrador. Una vez aprobado, podrá iniciar sesión.",
+  "kayitGiriseDon": "Volver al inicio de sesión",
+  "sosyalTamamlaBaslik": "Completar con ID de instalación",
+  "sosyalTamamlaAciklama": "Su cuenta de {saglayici} está verificada. Para completar, introduzca su rol y su ID de instalación.",
+  "@sosyalTamamlaAciklama": {
+    "description": "Instruction to complete social sign-in by entering role and facility ID",
+    "placeholders": {
+      "saglayici": {
+        "type": "String"
+      }
+    }
+  },
+  "sosyalRol": "Su rol",
+  "sosyalTamamla": "Completar",
+  "sosyalOtpAciklama": "Introduzca el código de verificación enviado a su correo electrónico.",
   "binaYapisalAraclar": "Herramientas estructurales",
   "binaKatSil": "Eliminar planta",
   "binaTopluTip": "Cambiar estado en lote",

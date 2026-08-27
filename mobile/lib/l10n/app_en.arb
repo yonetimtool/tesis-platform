@@ -1453,7 +1453,7 @@
   "hesapSilKodlaOnayla": "No password — confirm with a code",
   "hesapSilKodAciklama": "We'll send a six-digit code to your phone to confirm deletion.",
   "hesapSilKodGerekli": "Enter the confirmation code",
-  "kayitBaslik": "Sign up",
+  "kayitBaslik": "Sign in with Facility ID",
   "kayitAltBaslik": "Choose what applies to you",
   "kayitRolYonetici": "Manager",
   "kayitRolSakin": "Resident",
@@ -1501,7 +1501,7 @@
       }
     }
   },
-  "kayitYontemEposta": "Sign up with email/phone",
+  "kayitYontemEposta": "Continue with email",
   "kayitYontemVeya": "or",
   "kayitBilgilerBaslik": "Your details",
   "kayitAdSoyad": "Full name",
@@ -1519,6 +1519,37 @@
   "kayitKopyalandi": "Copied",
   "kayitTamamla": "Continue",
   "kayitSosyalAdNotu": "Name taken from your account; you can change it.",
+  "kayitEposta": "Email",
+  "kayitEpostaGerekli": "Email address is required.",
+  "kayitEpostaGecersiz": "Enter a valid email.",
+  "kayitTelefonIletisim": "Phone (optional)",
+  "kayitTelefonNotu": "Phone is for contact only; verification is done by email.",
+  "kayitTesisKoduGir": "Enter your Facility ID",
+  "kayitKodAciklamaEposta": "We sent a verification code to your email for {tesis}. If your address isn't registered, no code will arrive.",
+  "@kayitKodAciklamaEposta": {
+    "description": "Message shown after sending an email verification code for a facility",
+    "placeholders": {
+      "tesis": {
+        "type": "String"
+      }
+    }
+  },
+  "kayitOnayBekliyorBaslik": "Awaiting manager approval",
+  "kayitOnayBekliyorAciklama": "Your details could not be verified and were sent to your manager for approval. Check your Facility ID; if the problem persists, consult your manager. Once approved, you can sign in.",
+  "kayitGiriseDon": "Back to sign in",
+  "sosyalTamamlaBaslik": "Complete with Facility ID",
+  "sosyalTamamlaAciklama": "Your {saglayici} account is verified. To complete, enter your role and Facility ID.",
+  "@sosyalTamamlaAciklama": {
+    "description": "Instruction to complete social sign-in by entering role and facility ID",
+    "placeholders": {
+      "saglayici": {
+        "type": "String"
+      }
+    }
+  },
+  "sosyalRol": "Your role",
+  "sosyalTamamla": "Complete",
+  "sosyalOtpAciklama": "Enter the verification code sent to your email.",
   "binaYapisalAraclar": "Structural tools",
   "binaKatSil": "Delete floor",
   "binaTopluTip": "Bulk change status",

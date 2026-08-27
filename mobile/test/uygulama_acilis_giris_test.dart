@@ -200,8 +200,9 @@ void main() {
 
     expect(find.byType(KayitScreen), findsOneWidget);
     expect(find.byType(LoginScreen), findsNothing);
-    // Brief'in cumlesi EKRANDA: rol listesinin basligi budur.
-    expect(find.byKey(const Key('kayit-rol-yonetici')), findsOneWidget);
+    // (P184) Rol listesi EKRANDA — yonetici mobilde KAYDOLMAZ, sakin rolu
+    // listenin varligini temsil eder.
+    expect(find.byKey(const Key('kayit-rol-resident')), findsOneWidget);
   });
 
   testWidgets('IKINCI acilis girise duser (rol listesi bir kez gosterilir)',

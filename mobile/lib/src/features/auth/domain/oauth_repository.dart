@@ -46,4 +46,25 @@ abstract interface class OauthRepository {
     required String telefon,
     required String kod,
   });
+
+  /// (P184) SSO kimligini bir ROL hesabina baglar — SMS'siz.
+  ///
+  /// `durum='giris'` iken jetonlar SAKLANIR ve oturum acilir (email_verified
+  /// + listede). `otp_gerekli` iken e-postaya kod gitti (`tesisAd` dolu) ve
+  /// [rolTamamlaDogrula] ile devam edilir. `onay_bekliyor` iken hesap
+  /// ACILMAZ (liste disi ya da gecersiz Tesis ID — AYNI yanit).
+  Future<({String durum, String? tesisAd})> rolTamamla({
+    required String baglamaJetonu,
+    required String tesisKodu,
+    required String rol,
+  });
+
+  /// (P184) `email_verified=false` yolunun 2. adimi: e-posta OTP + baglama.
+  /// `durum='giris'` iken jetonlar saklanir; `onay_bekliyor` da olabilir.
+  Future<({String durum})> rolTamamlaDogrula({
+    required String baglamaJetonu,
+    required String tesisKodu,
+    required String rol,
+    required String kod,
+  });
 }

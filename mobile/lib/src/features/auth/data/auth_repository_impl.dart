@@ -232,6 +232,43 @@ class OauthRepositoryImpl implements OauthRepository {
     );
     await storage.save(tokens);
   }
+
+  @override
+  Future<({String durum, String? tesisAd})> rolTamamla({
+    required String baglamaJetonu,
+    required String tesisKodu,
+    required String rol,
+  }) async {
+    final r = await api.oauthRolTamamla(
+      baglamaJetonu: baglamaJetonu,
+      tesisKodu: tesisKodu,
+      rol: rol,
+    );
+    // `giris` -> jetonlar geldi; oturumu ac. Oteki durumlar oturum ACMAZ.
+    if (r.durum == 'giris' && r.jetonlar != null) {
+      await storage.save(r.jetonlar!);
+    }
+    return (durum: r.durum, tesisAd: r.tesisAd);
+  }
+
+  @override
+  Future<({String durum})> rolTamamlaDogrula({
+    required String baglamaJetonu,
+    required String tesisKodu,
+    required String rol,
+    required String kod,
+  }) async {
+    final r = await api.oauthRolTamamlaDogrula(
+      baglamaJetonu: baglamaJetonu,
+      tesisKodu: tesisKodu,
+      rol: rol,
+      kod: kod,
+    );
+    if (r.durum == 'giris' && r.jetonlar != null) {
+      await storage.save(r.jetonlar!);
+    }
+    return (durum: r.durum);
+  }
 }
 
 final oauthRepositoryProvider = Provider<OauthRepository>((ref) {

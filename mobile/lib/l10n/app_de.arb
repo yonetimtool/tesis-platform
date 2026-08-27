@@ -1453,7 +1453,7 @@
   "hesapSilKodlaOnayla": "Kein Passwort – mit Code bestätigen",
   "hesapSilKodAciklama": "Wir senden einen sechsstelligen Code zur Bestätigung der Löschung an Ihr Telefon.",
   "hesapSilKodGerekli": "Bestätigungscode eingeben",
-  "kayitBaslik": "Registrieren",
+  "kayitBaslik": "Mit Anlagen-ID anmelden",
   "kayitAltBaslik": "Wählen Sie, was auf Sie zutrifft",
   "kayitRolYonetici": "Verwalter",
   "kayitRolSakin": "Bewohner",
@@ -1501,7 +1501,7 @@
       }
     }
   },
-  "kayitYontemEposta": "Mit E-Mail/Telefon registrieren",
+  "kayitYontemEposta": "Mit E-Mail fortfahren",
   "kayitYontemVeya": "oder",
   "kayitBilgilerBaslik": "Ihre Angaben",
   "kayitAdSoyad": "Vor- und Nachname",
@@ -1519,6 +1519,37 @@
   "kayitKopyalandi": "Kopiert",
   "kayitTamamla": "Weiter",
   "kayitSosyalAdNotu": "Name aus Ihrem Konto übernommen; Sie können ihn ändern.",
+  "kayitEposta": "E-Mail",
+  "kayitEpostaGerekli": "E-Mail-Adresse ist erforderlich.",
+  "kayitEpostaGecersiz": "Geben Sie eine gültige E-Mail ein.",
+  "kayitTelefonIletisim": "Telefon (optional)",
+  "kayitTelefonNotu": "Das Telefon dient nur der Kontaktaufnahme; die Bestätigung erfolgt per E-Mail.",
+  "kayitTesisKoduGir": "Geben Sie Ihre Anlagen-ID ein",
+  "kayitKodAciklamaEposta": "Wir haben einen Bestätigungscode an Ihre E-Mail für {tesis} gesendet. Wenn Ihre Adresse nicht registriert ist, kommt kein Code an.",
+  "@kayitKodAciklamaEposta": {
+    "description": "Message shown after sending an email verification code for a facility",
+    "placeholders": {
+      "tesis": {
+        "type": "String"
+      }
+    }
+  },
+  "kayitOnayBekliyorBaslik": "Warten auf Genehmigung des Managers",
+  "kayitOnayBekliyorAciklama": "Ihre Angaben konnten nicht überprüft werden und wurden Ihrem Manager zur Genehmigung vorgelegt. Überprüfen Sie Ihre Anlagen-ID; wenn das Problem weiterhin besteht, wenden Sie sich an Ihren Manager. Nach der Genehmigung können Sie sich anmelden.",
+  "kayitGiriseDon": "Zurück zur Anmeldung",
+  "sosyalTamamlaBaslik": "Mit Anlagen-ID abschließen",
+  "sosyalTamamlaAciklama": "Ihr {saglayici}-Konto ist bestätigt. Geben Sie zum Abschluss Ihre Rolle und Anlagen-ID ein.",
+  "@sosyalTamamlaAciklama": {
+    "description": "Instruction to complete social sign-in by entering role and facility ID",
+    "placeholders": {
+      "saglayici": {
+        "type": "String"
+      }
+    }
+  },
+  "sosyalRol": "Ihre Rolle",
+  "sosyalTamamla": "Abschließen",
+  "sosyalOtpAciklama": "Geben Sie den an Ihre E-Mail gesendeten Bestätigungscode ein.",
   "binaYapisalAraclar": "Strukturwerkzeuge",
   "binaKatSil": "Etage löschen",
   "binaTopluTip": "Status gesammelt ändern",

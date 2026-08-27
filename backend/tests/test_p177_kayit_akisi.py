@@ -138,6 +138,20 @@ YENI_UCLAR = [
         "/auth/kayit/rol-eposta-dogrula",
         {"tesis_kodu": "KAPA-260101", "eposta": "kapali@p177ornek.com", "kod": "000000"},
     ),
+    # (P184) SSO tamamlama uclari da bayraga tabi (`_kapi()` ilk satir).
+    (
+        "/auth/oauth/rol-tamamla",
+        {"baglama_jetonu": "x.y.z", "tesis_kodu": "KAPA-260101", "rol": "resident"},
+    ),
+    (
+        "/auth/oauth/rol-tamamla-dogrula",
+        {
+            "baglama_jetonu": "x.y.z",
+            "tesis_kodu": "KAPA-260101",
+            "rol": "resident",
+            "kod": "000000",
+        },
+    ),
 ]
 
 
@@ -494,3 +508,234 @@ def test_ayni_adresten_bes_deneme_TEK_kuyruk_satiri(client, owner_conn, hazir_te
             "SELECT count(*) FROM kayit_onay_kuyrugu WHERE eposta = %s", (yabanci,)
         )
         assert cur.fetchone()[0] == 1
+
+
+# =========================================================================== #
+# 4) (P184) SSO ROL TAMAMLAMA — E-POSTA (SMS'SIZ)
+# =========================================================================== #
+#
+# `/auth/oauth/rol-tamamla` uc sartin SSO karsiligi: (a) Tesis ID, (b) liste,
+# (c) `email_verified=true` -> OTP ATLANIR / `false` -> e-posta OTP. Jeton
+# TEST SURECINDE uretilir: testler ayni konteynerde kosar, `jwt_secret` ayni,
+# yani burada imzalanan `baglama_jetonu` sunucuda dogrulanir.
+
+
+def _sso_jeton(eposta: str, *, email_verified: bool = True, subject: str | None = None):
+    """Callback'in urettigi `baglama_jetonu`nun aynisini test icin uretir."""
+    from app.routers.oauth import _baglama_jetonu
+
+    return _baglama_jetonu(
+        {
+            "saglayici": "google",
+            "subject": subject or f"sub-{uuid.uuid4().hex}",
+            "eposta": eposta,
+            "email_verified": email_verified,
+            "ad": "SSO Kişi",
+            "onaylar": None,
+        }
+    )
+
+
+def test_sso_email_verified_DOGRUDAN_baglar_ve_oturum(client, owner_conn, hazir_tesis):
+    """(c) email_verified=true -> OTP YOK: kimlik baglanir, oturum acilir."""
+    sakin = hazir_tesis["sakin"]
+    subject = f"sub-{uuid.uuid4().hex}"
+    r = client.post(
+        "/auth/oauth/rol-tamamla",
+        json={
+            "baglama_jetonu": _sso_jeton(sakin, email_verified=True, subject=subject),
+            "tesis_kodu": hazir_tesis["tesis_kodu"],
+            "rol": "resident",
+        },
+    )
+    assert r.status_code == 200, r.text
+    govde = r.json()
+    assert govde["durum"] == "giris", govde
+    assert govde["jetonlar"]["access_token"], govde
+
+    with owner_conn.cursor() as cur:
+        # KIMLIK BAGLANDI.
+        cur.execute(
+            "SELECT count(*) FROM oauth_kimlik WHERE saglayici='google' AND subject=%s",
+            (subject,),
+        )
+        assert cur.fetchone()[0] == 1
+        # E-POSTA DOGRULANMIS ISARETLENDI.
+        cur.execute(
+            "SELECT eposta_dogrulandi FROM app_user WHERE lower(email)=%s", (sakin,)
+        )
+        assert cur.fetchone()[0] is True
+
+
+def test_sso_liste_disi_eposta_ONAY_BEKLIYOR(client, owner_conn, hazir_tesis):
+    """(b) liste disi -> hesap ACMAZ, kuyruga duser, kimlik BAGLANMAZ."""
+    yabanci = f"sso-yabanci-{uuid.uuid4().hex[:10]}@{EPOSTA_ALANI}"
+    subject = f"sub-{uuid.uuid4().hex}"
+    r = client.post(
+        "/auth/oauth/rol-tamamla",
+        json={
+            "baglama_jetonu": _sso_jeton(yabanci, email_verified=True, subject=subject),
+            "tesis_kodu": hazir_tesis["tesis_kodu"],
+            "rol": "resident",
+        },
+    )
+    assert r.status_code == 200, r.text
+    assert r.json()["durum"] == "onay_bekliyor", r.text
+    assert r.json().get("jetonlar") is None
+
+    with owner_conn.cursor() as cur:
+        cur.execute(
+            "SELECT sebep, durum FROM kayit_onay_kuyrugu "
+            "WHERE tenant_id=%s AND eposta=%s",
+            (hazir_tesis["tenant_id"], yabanci),
+        )
+        assert cur.fetchone() == ("liste_disi", "bekliyor")
+        # KIMLIK ACILMADI.
+        cur.execute(
+            "SELECT count(*) FROM oauth_kimlik WHERE subject=%s", (subject,)
+        )
+        assert cur.fetchone()[0] == 0
+
+
+def test_sso_GECERSIZ_tesis_id_ayni_generic_yanit(client, owner_conn, hazir_tesis):
+    """(K4) Gecersiz Tesis ID, LISTE DISI ile AYNI: onay_bekliyor (422 DEGIL).
+
+    Listedeki gercek sakinin adresiyle ama YANLIS Tesis ID ile denenir:
+    yanit, adresin bir yerde kayitli oldugunu SIZDIRMAMALI — liste disi
+    denemeyle ayni `onay_bekliyor` gelmeli. Ve kuyruga da YAZILMAZ (tenant yok).
+    """
+    sakin = hazir_tesis["sakin"]
+    r = client.post(
+        "/auth/oauth/rol-tamamla",
+        json={
+            "baglama_jetonu": _sso_jeton(sakin, email_verified=True),
+            "tesis_kodu": "YOKK-990101",
+            "rol": "resident",
+        },
+    )
+    assert r.status_code == 200, r.text
+    assert r.json()["durum"] == "onay_bekliyor", r.text
+    with owner_conn.cursor() as cur:
+        # Tenant bilinmedigi icin kuyruga da yazilmadi.
+        cur.execute(
+            "SELECT count(*) FROM kayit_onay_kuyrugu WHERE eposta=%s AND durum='bekliyor'",
+            (sakin,),
+        )
+        assert cur.fetchone()[0] == 0
+
+
+def test_sso_email_verified_FALSE_once_OTP_sonra_baglar(client, owner_conn, hazir_tesis):
+    """(c/K3) Dogrulanmamis e-posta -> OTP zorunlu, sonra baglanir.
+
+    Iki adim: `rol-tamamla` `otp_gerekli` doner + kod satiri yazar;
+    `rol-tamamla-dogrula` dogru kodla kimligi baglar ve oturum acar.
+    """
+    sakin = hazir_tesis["sakin"]
+    subject = f"sub-{uuid.uuid4().hex}"
+    jeton = _sso_jeton(sakin, email_verified=False, subject=subject)
+    r = client.post(
+        "/auth/oauth/rol-tamamla",
+        json={
+            "baglama_jetonu": jeton,
+            "tesis_kodu": hazir_tesis["tesis_kodu"],
+            "rol": "resident",
+        },
+    )
+    assert r.status_code == 200, r.text
+    assert r.json()["durum"] == "otp_gerekli", r.text
+    # Kimlik HENUZ baglanmadi.
+    with owner_conn.cursor() as cur:
+        cur.execute("SELECT count(*) FROM oauth_kimlik WHERE subject=%s", (subject,))
+        assert cur.fetchone()[0] == 0
+
+    _kodu_ayarla(owner_conn, "kayit_dogrulama", "eposta", sakin)
+    r = client.post(
+        "/auth/oauth/rol-tamamla-dogrula",
+        json={
+            "baglama_jetonu": jeton,
+            "tesis_kodu": hazir_tesis["tesis_kodu"],
+            "rol": "resident",
+            "kod": KOD,
+        },
+    )
+    assert r.status_code == 200, r.text
+    assert r.json()["durum"] == "giris", r.text
+    assert r.json()["jetonlar"]["access_token"]
+    with owner_conn.cursor() as cur:
+        cur.execute("SELECT count(*) FROM oauth_kimlik WHERE subject=%s", (subject,))
+        assert cur.fetchone()[0] == 1
+
+
+def test_sso_kimlik_BASKA_hesaba_bagliysa_409(client, owner_conn, hazir_tesis):
+    """(K6) Ayni sosyal kimlik baska bir kullaniciya bagliysa DEVRALINMAZ."""
+    sakin = hazir_tesis["sakin"]
+    subject = f"sub-{uuid.uuid4().hex}"
+    with owner_conn.cursor() as cur:
+        # AYNI tenant'ta BASKA bir kullaniciya bagli oauth_kimlik.
+        baskasi = f"sso-baska-{uuid.uuid4().hex[:8]}@{EPOSTA_ALANI}"
+        cur.execute(
+            "INSERT INTO app_user (tenant_id, ad, email, role, is_active, password_set) "
+            "VALUES (%s, %s, %s, 'resident', true, true) RETURNING id",
+            (hazir_tesis["tenant_id"], "Baska Kisi", baskasi),
+        )
+        baska_id = cur.fetchone()[0]
+        cur.execute(
+            "INSERT INTO oauth_kimlik (tenant_id, user_id, saglayici, subject, eposta) "
+            "VALUES (%s, %s, 'google', %s, %s)",
+            (hazir_tesis["tenant_id"], baska_id, subject, baskasi),
+        )
+    owner_conn.commit()
+
+    r = client.post(
+        "/auth/oauth/rol-tamamla",
+        json={
+            "baglama_jetonu": _sso_jeton(sakin, email_verified=True, subject=subject),
+            "tesis_kodu": hazir_tesis["tesis_kodu"],
+            "rol": "resident",
+        },
+    )
+    assert r.status_code == 409, r.text
+    assert r.json()["error"]["code"] == "conflict", r.text
+
+
+def test_sso_TESIS_GOREVLISI_rolu_dogru_esler(client, owner_conn, akis_acik):
+    """(K7) `tesis_gorevlisi` e-posta/SSO ile TAMAMLANIR (eski 'gorevli' hatasi).
+
+    `_ROLLER` "gorevli" iken bir tesis gorevlisi HER ZAMAN `rol_uyusmuyor`
+    ile kuyruga duserdi. Duzeltmeden sonra `durum='giris'` gelmeli.
+    """
+    if not akis_acik:
+        pytest.skip("bayrak KAPALI")
+    # Yeni akisla tesis ac + icine bir TESIS GOREVLISI ekle.
+    eposta, telefon = _eposta(), _telefon()
+    assert _basvur(client, eposta, telefon).status_code == 201
+    _kodu_ayarla(owner_conn, "yonetici_basvuru", "eposta", eposta)
+    jeton = client.post(
+        "/auth/kayit/yonetici-dogrula", json={"eposta": eposta, "kod": KOD}
+    ).json()["kurulum_jetonu"]
+    tesis_kodu = client.post(
+        "/auth/kayit/yonetici-tesis",
+        json={"kurulum_jetonu": jeton, "tesis_ad": f"P184 Gör {uuid.uuid4().hex[:6]}"},
+    ).json()["tesis_kodu"]
+
+    gorevli = f"gorevli-{uuid.uuid4().hex[:10]}@{EPOSTA_ALANI}"
+    with owner_conn.cursor() as cur:
+        cur.execute("SELECT id FROM tenant WHERE kayit_kodu=%s", (tesis_kodu,))
+        tenant_id = cur.fetchone()[0]
+        cur.execute(
+            "INSERT INTO app_user (tenant_id, ad, email, role, is_active, password_set) "
+            "VALUES (%s, %s, %s, 'tesis_gorevlisi', true, false)",
+            (tenant_id, "Listedeki Görevli", gorevli),
+        )
+    owner_conn.commit()
+
+    r = client.post(
+        "/auth/oauth/rol-tamamla",
+        json={
+            "baglama_jetonu": _sso_jeton(gorevli, email_verified=True),
+            "tesis_kodu": tesis_kodu,
+            "rol": "tesis_gorevlisi",
+        },
+    )
+    assert r.status_code == 200, r.text
+    assert r.json()["durum"] == "giris", r.text

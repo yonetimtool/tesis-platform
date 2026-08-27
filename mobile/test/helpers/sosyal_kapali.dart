@@ -40,6 +40,23 @@ class SosyalKapaliRepository implements OauthRepository {
     required String telefon,
     required String kod,
   }) async {}
+
+  @override
+  Future<({String durum, String? tesisAd})> rolTamamla({
+    required String baglamaJetonu,
+    required String tesisKodu,
+    required String rol,
+  }) async =>
+      (durum: 'onay_bekliyor', tesisAd: null);
+
+  @override
+  Future<({String durum})> rolTamamlaDogrula({
+    required String baglamaJetonu,
+    required String tesisKodu,
+    required String rol,
+    required String kod,
+  }) async =>
+      (durum: 'onay_bekliyor');
 }
 
 /// `ProviderScope(overrides: [...sosyalKapali])` ile kullanilir.

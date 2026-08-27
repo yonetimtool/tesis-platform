@@ -4940,7 +4940,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get hesapSilKodGerekli => 'Введите код подтверждения';
 
   @override
-  String get kayitBaslik => 'Регистрация';
+  String get kayitBaslik => 'Вход по ID объекта';
 
   @override
   String get kayitAltBaslik => 'Выберите подходящий вариант';
@@ -5066,7 +5066,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get kayitYontemEposta => 'Регистрация по эл. почте/телефону';
+  String get kayitYontemEposta => 'Продолжить по эл. почте';
 
   @override
   String get kayitYontemVeya => 'или';
@@ -5121,6 +5121,59 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get kayitSosyalAdNotu =>
       'Имя взято из вашей учётной записи; его можно изменить.';
+
+  @override
+  String get kayitEposta => 'Эл. почта';
+
+  @override
+  String get kayitEpostaGerekli => 'Требуется адрес электронной почты.';
+
+  @override
+  String get kayitEpostaGecersiz =>
+      'Введите действительный адрес электронной почты.';
+
+  @override
+  String get kayitTelefonIletisim => 'Телефон (необязательно)';
+
+  @override
+  String get kayitTelefonNotu =>
+      'Телефон используется только для связи; проверка выполняется по электронной почте.';
+
+  @override
+  String get kayitTesisKoduGir => 'Введите ваш ID объекта';
+
+  @override
+  String kayitKodAciklamaEposta(String tesis) {
+    return 'Мы отправили код подтверждения на вашу электронную почту для $tesis. Если ваш адрес не зарегистрирован, код не придёт.';
+  }
+
+  @override
+  String get kayitOnayBekliyorBaslik => 'Ожидается одобрение руководителя';
+
+  @override
+  String get kayitOnayBekliyorAciklama =>
+      'Ваши данные не удалось проверить, и они были направлены вашему руководителю на одобрение. Проверьте ваш ID объекта; если проблема сохраняется, обратитесь к руководителю. После одобрения вы сможете войти.';
+
+  @override
+  String get kayitGiriseDon => 'Вернуться ко входу';
+
+  @override
+  String get sosyalTamamlaBaslik => 'Завершить с ID объекта';
+
+  @override
+  String sosyalTamamlaAciklama(String saglayici) {
+    return 'Ваша учётная запись $saglayici подтверждена. Чтобы завершить, введите вашу роль и ID объекта.';
+  }
+
+  @override
+  String get sosyalRol => 'Ваша роль';
+
+  @override
+  String get sosyalTamamla => 'Завершить';
+
+  @override
+  String get sosyalOtpAciklama =>
+      'Введите код подтверждения, отправленный на вашу электронную почту.';
 
   @override
   String get binaYapisalAraclar => 'Структурные инструменты';

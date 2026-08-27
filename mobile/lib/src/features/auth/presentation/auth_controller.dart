@@ -453,6 +453,72 @@ class AuthController extends Notifier<AuthState> {
     }
   }
 
+  /// (P184) SSO TAMAMLAMA — rol + Tesis ID (SMS'siz). Jeton state'ten alinir.
+  ///
+  /// Doner `durum`: `giris` (oturum acilir) · `otp_gerekli` (e-postaya kod
+  /// gitti, `tesisAd` dolu — jeton KORUNUR, 2. adim [oauthRolTamamlaDogrula])
+  /// · `onay_bekliyor` (hesap acilmaz, kullaniciya soylenir). Hata olursa
+  /// `null` doner ve mesaj state'e yazilir.
+  Future<({String durum, String? tesisAd})?> oauthRolTamamla({
+    required String tesisKodu,
+    required String rol,
+  }) async {
+    final jeton = state.oauthBaglamaJetonu;
+    if (jeton == null) return null;
+    state = state.copyWith(
+      submitting: true, errorMessage: null, hataKimligi: null);
+    try {
+      final r = await ref.read(oauthRepositoryProvider).rolTamamla(
+            baglamaJetonu: jeton, tesisKodu: tesisKodu, rol: rol);
+      if (r.durum == 'giris') {
+        state = state.copyWith(
+          status: AuthStatus.authenticated,
+          submitting: false,
+          oauthBaglamaJetonu: null,
+        );
+      } else {
+        // otp_gerekli/onay_bekliyor: jeton KORUNUR (2. adim gerekebilir).
+        state = state.copyWith(submitting: false);
+      }
+      return r;
+    } on ApiException catch (e) {
+      state = state.copyWith(
+        submitting: false, errorMessage: e.message, hataKimligi: e.code);
+      return null;
+    }
+  }
+
+  /// (P184) SSO tamamlama 2. adim — email_verified=false yolu: e-posta OTP.
+  /// Doner `durum`: `giris` (oturum) · `onay_bekliyor`. Hata -> `null`.
+  Future<String?> oauthRolTamamlaDogrula({
+    required String tesisKodu,
+    required String rol,
+    required String kod,
+  }) async {
+    final jeton = state.oauthBaglamaJetonu;
+    if (jeton == null) return null;
+    state = state.copyWith(
+      submitting: true, errorMessage: null, hataKimligi: null);
+    try {
+      final r = await ref.read(oauthRepositoryProvider).rolTamamlaDogrula(
+            baglamaJetonu: jeton, tesisKodu: tesisKodu, rol: rol, kod: kod);
+      if (r.durum == 'giris') {
+        state = state.copyWith(
+          status: AuthStatus.authenticated,
+          submitting: false,
+          oauthBaglamaJetonu: null,
+        );
+      } else {
+        state = state.copyWith(submitting: false);
+      }
+      return r.durum;
+    } on ApiException catch (e) {
+      state = state.copyWith(
+        submitting: false, errorMessage: e.message, hataKimligi: e.code);
+      return null;
+    }
+  }
+
   /// Baglama akisindan cikis — kullanici vazgecti.
   void oauthIptal() {
     state = state.copyWith(

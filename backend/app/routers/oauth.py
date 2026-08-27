@@ -99,6 +99,9 @@ from ..schemas import (
     OauthBaslaRequest,
     OauthBaslaResponse,
     OauthKayitBaslaResponse,
+    OauthRolTamamlaDogrulaRequest,
+    OauthRolTamamlaRequest,
+    OauthRolTamamlaResponse,
     OauthSaglayiciListesi,
     OauthSonucIstek,
     OauthSonucResponse,
@@ -715,6 +718,254 @@ async def baglan_dogrula(
             )
             await session.flush()
             return await _issue_token_pair(redis, user)
+
+
+# ==================== (P184) SSO ROL TAMAMLAMA — E-POSTA ==================== #
+#
+# `baglan/basla`+`baglan/dogrula`nin SMS'SIZ esi. SSO kimligini bir ROL
+# hesabina (sakin/guvenlik/tesis gorevlisi) baglar. Telefon+SMS yerine ya
+# saglayici `email_verified=true` (OTP ATLANIR) ya da e-posta OTP kanitlar.
+# Uc sart aynen (P177): (a) Tesis ID gecerli, (b) e-posta yoneticinin
+# listesinde, (c) e-posta sahipligi kanitli. Terminoloji "kayit" degil
+# "girişte Tesis ID ile tamamlama".
+
+
+async def _rol_tamamla_baglan(
+    session,
+    redis: aioredis.Redis,
+    *,
+    kimlik: dict,
+    user: AppUser,
+    tenant_id,
+    eposta: str,
+) -> TokenPair:
+    """UYGUN kisiyi baglar: kimlik + `eposta_dogrulandi` + uyelik + oturum.
+
+    `baglan/dogrula`nin YAZAN kismiyla ayni: bir `oauth_kimlik` satiri acar —
+    ama YALNIZ `email_verified` VEYA dogrulanan OTP'den SONRA cagirilir.
+    Kimlik baska bir hesaba bagliysa `_kimligi_bagla` `_BASKASINA_BAGLI` atar
+    (uzerine YAZMAZ — K6).
+    """
+    from ..models import TesisUyelik
+
+    await _kimligi_bagla(
+        session,
+        user=user,
+        saglayici=kimlik["saglayici"],
+        subject=kimlik["subject"],
+        eposta=kimlik.get("eposta"),
+    )
+    # (P181 Bölüm 1) SSO/OTP e-postayi dogruladi -> reset/OTP yollari calisir.
+    user.eposta_dogrulandi = True
+    # (§6) COK TESISLI UYELIK: yoksa birincil yaz (bugun okunmuyor, ileri icin).
+    mevcut_uyelik = (
+        await session.execute(
+            select(TesisUyelik).where(TesisUyelik.user_id == user.id)
+        )
+    ).scalar_one_or_none()
+    if mevcut_uyelik is None:
+        session.add(
+            TesisUyelik(
+                tenant_id=tenant_id,
+                user_id=user.id,
+                eposta=eposta,
+                rol=user.role,
+                birincil=True,
+            )
+        )
+    await record_audit(
+        session,
+        action=Action.LOGIN_OK,
+        tenant_id=user.tenant_id,
+        actor_user_id=user.id,
+        actor_rol=user.role,
+        resource_type="app_user",
+        resource_id=user.id,
+        meta={"method": f"oauth_tamamla:{kimlik['saglayici']}"},
+    )
+    await session.flush()
+    return await _issue_token_pair(redis, user)
+
+
+@router.post("/rol-tamamla", response_model=OauthRolTamamlaResponse)
+async def rol_tamamla(
+    body: OauthRolTamamlaRequest,
+    redis: aioredis.Redis = Depends(get_redis),
+) -> OauthRolTamamlaResponse:
+    """(P184) SSO kimligini bir ROL hesabina baglar — SMS'siz.
+
+    UC SART (P177): (a) Tesis ID gecerli, (b) e-posta yoneticinin listesinde,
+    (c) saglayici `email_verified=true` ise OTP ATLANIR (`durum='giris'`);
+    degilse e-posta OTP gonderilir (`durum='otp_gerekli'`, `-dogrula` ile
+    devam). Apple `privaterelay` adresleri dogrulanmis sayilir (jetondaki
+    `email_verified` bunu zaten icerir).
+
+    SIZDIRMAMA (K4): GECERSIZ Tesis ID ile LISTE DISI e-posta AYNI yaniti
+    (`onay_bekliyor`) alir; hangi sartin tutmadigi disariya sizmaz. Kimlik
+    zaten baska hesaba bagliysa `_BASKASINA_BAGLI` (K6).
+    """
+    from .kayit import (
+        _BASVURU_GECERSIZ,
+        _ROLLER,
+        _kapi,
+        _kod_uret,
+        _kuyruga_yaz,
+        _liste_kontrolu,
+        eposta_kodu_uret_ve_gonder_kodla,
+    )
+
+    _kapi()
+    if body.rol not in _ROLLER:
+        raise _BASVURU_GECERSIZ
+
+    kimlik = _baglama_coz(body.baglama_jetonu)
+    eposta = (kimlik.get("eposta") or "").lower()
+    email_verified = bool(kimlik.get("email_verified"))
+    if not eposta:
+        # Saglayici e-posta paylasmadi -> eslesme yapilamaz. Generic yanit.
+        return OauthRolTamamlaResponse(durum="onay_bekliyor")
+
+    kod = _kod_uret()
+    async with SessionLocal() as session:
+        async with session.begin():
+            tenant_id = (
+                await session.execute(
+                    text("SELECT public.tenant_id_by_kayit_kodu(:k)"),
+                    {"k": body.tesis_kodu.strip()},
+                )
+            ).scalar_one_or_none()
+            # (K4) Gecersiz Tesis ID -> liste disi ile AYNI: onay_bekliyor
+            # (kuyruga yazilmaz, tenant yok).
+            if tenant_id is None:
+                return OauthRolTamamlaResponse(durum="onay_bekliyor")
+
+            await set_tenant(session, tenant_id)
+            user = (
+                await session.execute(
+                    select(AppUser).where(func.lower(AppUser.email) == eposta)
+                )
+            ).scalar_one_or_none()
+            uygun, sebep = _liste_kontrolu(user, body.rol)
+
+            if not uygun or user is None:
+                # (§6) DENEME KAYBOLMAZ: yoneticinin onay kuyruguna duser.
+                await _kuyruga_yaz(
+                    session,
+                    tenant_id=tenant_id,
+                    eposta=eposta,
+                    rol=body.rol,
+                    ad=kimlik.get("ad"),
+                    telefon=None,
+                    sebep=sebep or "liste_disi",
+                )
+                return OauthRolTamamlaResponse(durum="onay_bekliyor")
+
+            if gorev_penceresi_disinda(user):
+                raise _GOREV_SURESI_DISINDA
+
+            if not email_verified:
+                # (c / K3) Saglayici e-postayi DOGRULAMADI -> baglamadan ONCE
+                # OTP zorunlu. Dogrulanmamis e-posta ile allowlist eslesmesi
+                # hesap ele gecirme olurdu (P180 dersi).
+                tenant_ad = (
+                    await session.execute(
+                        select(Tenant.ad).where(Tenant.id == tenant_id)
+                    )
+                ).scalar_one()
+                await eposta_kodu_uret_ve_gonder_kodla(
+                    session, tenant_id=tenant_id, eposta=eposta, kod=kod
+                )
+                return OauthRolTamamlaResponse(durum="otp_gerekli", tesis_ad=tenant_ad)
+
+            cift = await _rol_tamamla_baglan(
+                session,
+                redis,
+                kimlik=kimlik,
+                user=user,
+                tenant_id=tenant_id,
+                eposta=eposta,
+            )
+    return OauthRolTamamlaResponse(durum="giris", jetonlar=cift)
+
+
+@router.post("/rol-tamamla-dogrula", response_model=OauthRolTamamlaResponse)
+async def rol_tamamla_dogrula(
+    body: OauthRolTamamlaDogrulaRequest,
+    redis: aioredis.Redis = Depends(get_redis),
+) -> OauthRolTamamlaResponse:
+    """(P184) `email_verified=false` yolunun 2. adimi: e-posta OTP + baglama.
+
+    (c) sarti burada OTP ile tutar; (a),(b) YENIDEN aranir (`rol-eposta-dogrula`
+    ile ayni gerekce: `rol-tamamla` ile arasinda yonetici listeyi degistirmis
+    olabilir). Kod yanlissa `kod_gecersiz` (`eposta_kodunu_dogrula`).
+    """
+    from ..telefon_kodu import eposta_kodunu_dogrula
+    from .kayit import _BASVURU_GECERSIZ, _ROLLER, _kapi, _kuyruga_yaz, _liste_kontrolu
+
+    _kapi()
+    if body.rol not in _ROLLER:
+        raise _BASVURU_GECERSIZ
+
+    kimlik = _baglama_coz(body.baglama_jetonu)
+    eposta = (kimlik.get("eposta") or "").lower()
+    if not eposta:
+        return OauthRolTamamlaResponse(durum="onay_bekliyor")
+
+    async with SessionLocal() as session:
+        async with session.begin():
+            tenant_id = (
+                await session.execute(
+                    text("SELECT public.tenant_id_by_kayit_kodu(:k)"),
+                    {"k": body.tesis_kodu.strip()},
+                )
+            ).scalar_one_or_none()
+            if tenant_id is None:
+                return OauthRolTamamlaResponse(durum="onay_bekliyor")
+
+            # (c) KOD — `telefon_kodu` mekanizmasi, ikinci bir kural yok.
+            kayit = await eposta_kodunu_dogrula(
+                session,
+                tenant_id=tenant_id,
+                eposta=eposta,
+                kod=body.kod,
+                amac="kayit",
+            )
+
+            # (b) LISTE — YENIDEN. Beklenen rol KULLANICIDAN (rol-eposta-dogrula
+            # ile ayni: rol bu adimda iddia degil, hesabin ozelligi).
+            user = (
+                await session.execute(
+                    select(AppUser).where(func.lower(AppUser.email) == eposta)
+                )
+            ).scalar_one_or_none()
+            uygun, sebep = _liste_kontrolu(user, user.role if user else "")
+            if not uygun or user is None:
+                await _kuyruga_yaz(
+                    session,
+                    tenant_id=tenant_id,
+                    eposta=eposta,
+                    rol=(user.role if user else "resident"),
+                    ad=kimlik.get("ad"),
+                    telefon=None,
+                    sebep=sebep or "liste_disi",
+                )
+                return OauthRolTamamlaResponse(durum="onay_bekliyor")
+
+            if gorev_penceresi_disinda(user):
+                raise _GOREV_SURESI_DISINDA
+
+            # KOD TUKETILIR.
+            kayit.durum = "onaylandi"
+            kayit.karar_at = func.now()
+            cift = await _rol_tamamla_baglan(
+                session,
+                redis,
+                kimlik=kimlik,
+                user=user,
+                tenant_id=tenant_id,
+                eposta=eposta,
+            )
+    return OauthRolTamamlaResponse(durum="giris", jetonlar=cift)
 
 
 # ===================== OTURUM ACIKKEN YONTEM YONETIMI ====================== #

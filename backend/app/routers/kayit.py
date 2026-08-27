@@ -349,7 +349,14 @@ _KURULUM_GECERSIZ = APIError(401, "invalid_token", "kurulum_jetonu_gecersiz")
 #: §6'da kabul edilen roller. `yonetici` ve `admin` BILEREK YOK: yonetici
 #: kendi yolundan (basvuru) gelir, ek yoneticiyi ise mevcut yonetici
 #: ekler. Bu ucu, yoneticinin ONCEDEN EKLEDIGI kisilerdir.
-_ROLLER = ("resident", "security", "gorevli")
+#:
+#: (P184) KANONIK ROL: DB `user_role` enum'u `tesis_gorevlisi` kullanir (goc
+#: 0001). Onceki "gorevli" kisa bicimi BIR HATAYDI: `_liste_kontrolu`
+#: `user.role != rol` karsilastirdigi icin bir tesis gorevlisi e-posta/SSO ile
+#: kaydolmaya calistiginda `"tesis_gorevlisi" != "gorevli"` -> HER ZAMAN
+#: `rol_uyusmuyor` -> onay kuyruguna duserdi (latent; testlerde yalniz
+#: resident/security kullanilmis). Hicbir istemci kisa bicimi gondermiyor.
+_ROLLER = ("resident", "security", "tesis_gorevlisi")
 
 
 def _kapi() -> None:

@@ -1453,7 +1453,7 @@
   "hesapSilKodlaOnayla": "Нет пароля — подтвердить кодом",
   "hesapSilKodAciklama": "Мы отправим шестизначный код на ваш телефон для подтверждения удаления.",
   "hesapSilKodGerekli": "Введите код подтверждения",
-  "kayitBaslik": "Регистрация",
+  "kayitBaslik": "Вход по ID объекта",
   "kayitAltBaslik": "Выберите подходящий вариант",
   "kayitRolYonetici": "Управляющий",
   "kayitRolSakin": "Житель",
@@ -1501,7 +1501,7 @@
       }
     }
   },
-  "kayitYontemEposta": "Регистрация по эл. почте/телефону",
+  "kayitYontemEposta": "Продолжить по эл. почте",
   "kayitYontemVeya": "или",
   "kayitBilgilerBaslik": "Ваши данные",
   "kayitAdSoyad": "Имя и фамилия",
@@ -1519,6 +1519,37 @@
   "kayitKopyalandi": "Скопировано",
   "kayitTamamla": "Продолжить",
   "kayitSosyalAdNotu": "Имя взято из вашей учётной записи; его можно изменить.",
+  "kayitEposta": "Эл. почта",
+  "kayitEpostaGerekli": "Требуется адрес электронной почты.",
+  "kayitEpostaGecersiz": "Введите действительный адрес электронной почты.",
+  "kayitTelefonIletisim": "Телефон (необязательно)",
+  "kayitTelefonNotu": "Телефон используется только для связи; проверка выполняется по электронной почте.",
+  "kayitTesisKoduGir": "Введите ваш ID объекта",
+  "kayitKodAciklamaEposta": "Мы отправили код подтверждения на вашу электронную почту для {tesis}. Если ваш адрес не зарегистрирован, код не придёт.",
+  "@kayitKodAciklamaEposta": {
+    "description": "Message shown after sending an email verification code for a facility",
+    "placeholders": {
+      "tesis": {
+        "type": "String"
+      }
+    }
+  },
+  "kayitOnayBekliyorBaslik": "Ожидается одобрение руководителя",
+  "kayitOnayBekliyorAciklama": "Ваши данные не удалось проверить, и они были направлены вашему руководителю на одобрение. Проверьте ваш ID объекта; если проблема сохраняется, обратитесь к руководителю. После одобрения вы сможете войти.",
+  "kayitGiriseDon": "Вернуться ко входу",
+  "sosyalTamamlaBaslik": "Завершить с ID объекта",
+  "sosyalTamamlaAciklama": "Ваша учётная запись {saglayici} подтверждена. Чтобы завершить, введите вашу роль и ID объекта.",
+  "@sosyalTamamlaAciklama": {
+    "description": "Instruction to complete social sign-in by entering role and facility ID",
+    "placeholders": {
+      "saglayici": {
+        "type": "String"
+      }
+    }
+  },
+  "sosyalRol": "Ваша роль",
+  "sosyalTamamla": "Завершить",
+  "sosyalOtpAciklama": "Введите код подтверждения, отправленный на вашу электронную почту.",
   "binaYapisalAraclar": "Структурные инструменты",
   "binaKatSil": "Удалить этаж",
   "binaTopluTip": "Массово изменить статус",

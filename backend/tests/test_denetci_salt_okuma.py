@@ -165,6 +165,13 @@ KAPISIZ_MUTASYONLAR: frozenset[tuple[str, str]] = frozenset({
     ("POST", "/auth/oauth/sonuc"),
     ("POST", "/auth/oauth/baglan/basla"),
     ("POST", "/auth/oauth/baglan/dogrula"),
+    # (P184) SSO ROL TAMAMLAMA — E-POSTA. `baglan/*`nin SMS'siz esi ve AYNI
+    # sinif: kimlik oncesi, rol kapisi OLAMAZ. TEK YAZAN nokta bir
+    # `oauth_kimlik` satiridir ve YALNIZ `email_verified` VEYA dogrulanan
+    # e-posta OTP'sinden sonra acilir. SIZDIRMAMA: gecersiz Tesis ID ile liste
+    # disi e-posta AYNI yaniti (`onay_bekliyor`) alir.
+    ("POST", "/auth/oauth/rol-tamamla"),
+    ("POST", "/auth/oauth/rol-tamamla-dogrula"),
     # --- (P155 §7) DAVET (kimlik oncesi) ---
     # Rol kapisi OLAMAZ: davetle gelen kisinin henuz oturumu yoktur
     # (`/auth/kayit/rol-*` ile ayni sinif). Tesisin kayitlarina KEYFI

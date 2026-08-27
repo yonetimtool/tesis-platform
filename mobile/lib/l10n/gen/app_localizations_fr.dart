@@ -4841,7 +4841,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get hesapSilKodGerekli => 'Saisissez le code de confirmation';
 
   @override
-  String get kayitBaslik => 'S\'inscrire';
+  String get kayitBaslik => 'Se connecter avec l\'ID de site';
 
   @override
   String get kayitAltBaslik => 'Choisissez ce qui vous correspond';
@@ -4967,7 +4967,7 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get kayitYontemEposta => 'S\'inscrire avec e-mail/téléphone';
+  String get kayitYontemEposta => 'Continuer avec l\'e-mail';
 
   @override
   String get kayitYontemVeya => 'ou';
@@ -5022,6 +5022,59 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get kayitSosyalAdNotu =>
       'Nom repris de votre compte ; vous pouvez le modifier.';
+
+  @override
+  String get kayitEposta => 'E-mail';
+
+  @override
+  String get kayitEpostaGerekli => 'L\'adresse e-mail est requise.';
+
+  @override
+  String get kayitEpostaGecersiz => 'Saisissez une adresse e-mail valide.';
+
+  @override
+  String get kayitTelefonIletisim => 'Téléphone (facultatif)';
+
+  @override
+  String get kayitTelefonNotu =>
+      'Le téléphone sert uniquement au contact ; la vérification se fait par e-mail.';
+
+  @override
+  String get kayitTesisKoduGir => 'Saisissez votre ID de site';
+
+  @override
+  String kayitKodAciklamaEposta(String tesis) {
+    return 'Nous avons envoyé un code de vérification à votre e-mail pour $tesis. Si votre adresse n\'est pas enregistrée, aucun code n\'arrivera.';
+  }
+
+  @override
+  String get kayitOnayBekliyorBaslik =>
+      'En attente de l\'approbation du responsable';
+
+  @override
+  String get kayitOnayBekliyorAciklama =>
+      'Vos informations n\'ont pas pu être vérifiées et ont été transmises à votre responsable pour approbation. Vérifiez votre ID de site ; si le problème persiste, consultez votre responsable. Une fois approuvé, vous pourrez vous connecter.';
+
+  @override
+  String get kayitGiriseDon => 'Retour à la connexion';
+
+  @override
+  String get sosyalTamamlaBaslik => 'Compléter avec l\'ID de site';
+
+  @override
+  String sosyalTamamlaAciklama(String saglayici) {
+    return 'Votre compte $saglayici est vérifié. Pour terminer, saisissez votre rôle et votre ID de site.';
+  }
+
+  @override
+  String get sosyalRol => 'Votre rôle';
+
+  @override
+  String get sosyalTamamla => 'Terminer';
+
+  @override
+  String get sosyalOtpAciklama =>
+      'Saisissez le code de vérification envoyé à votre e-mail.';
 
   @override
   String get binaYapisalAraclar => 'Outils structurels';
