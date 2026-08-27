@@ -4934,7 +4934,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get hesapSilKodAciklama =>
-      'Мы отправим шестизначный код на ваш телефон для подтверждения удаления.';
+      'Мы отправим шестизначный код на вашу электронную почту для подтверждения удаления.';
 
   @override
   String get hesapSilKodGerekli => 'Введите код подтверждения';

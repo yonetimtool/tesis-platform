@@ -162,13 +162,16 @@ yolu bozmak" değildir: SMS zaten kapalıydı.
 — mevcut controller/oauth testleri bu metotları hâlâ ölçüyor, silmek gereksiz kırılma
 olurdu). "Kullanımdan kaldır ama silme" birebir uygulandı.
 
-## K13 — Kapsam-dışı SMS kalıntısı: Ayarlar → Hesabı sil (kodla)
+## K13 — Ayarlar → Hesabı sil (kodla): e-postaya geçirildi (ek iş, kullanıcı isteği)
 
-`settings_screen`'deki hesap-silme "kodla onayla" yolu backend'de `/me/hesap-sil/kod-iste`
-(SMS, `user.telefon`) kullanır ve e-posta karşılığı YOKTUR. P184 **kayıt/giriş** yüzeyini
-hedefler; bu ikincil akış kapsam dışı bırakıldı ve `P184-dagitim.md`'de açıkça not
-edildi. Dürüstlük: kabul 1 kayıt/giriş yüzeyi için sağlanır; hesap-silme kalıntısı ayrı
-bir backend ucu ister.
+Başta kapsam dışı bırakılmıştı; kullanıcı "e-posta kod ucunu da ekle" dedi → eklendi.
+Yeni uç `POST /me/hesap-sil/eposta-kod-iste` doğrulanmış e-postaya `amac='hesap_silme'`
+kodu gönderir (yoksa 422 `no_email`). `/me/hesap-sil` parolasız yolda **doğrulanmış
+e-posta varsa e-posta kodunu**, yoksa telefon kodunu doğrular — kanallar karışmaz
+(`kayit_dogrulama` vs telefon kod tablosu; ikisi de `amac='hesap_silme'`, göç YOK çünkü
+`hesap_silme` zaten geçerli e-posta kod amacı [göç 0068/models `KOD_AMACI`]).
+`PATCH /me/password`'ün parolasız-kod yolu (aynı `amac`) DOKUNULMADI — kullanıcı isteği
+yalnız silme yüzeyiydi. Böylece mobilde hiçbir SMS kalıntısı kalmadı (kabul 1 tam).
 
 ## K14 — SSO rol-tamamla: rol BEYANI istenir (her iki yüzeyde)
 

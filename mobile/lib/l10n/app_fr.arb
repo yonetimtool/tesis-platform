@@ -1451,7 +1451,7 @@
   "girisKoduGonder": "Envoyer le code",
   "girisKodAlani": "Code de vérification",
   "hesapSilKodlaOnayla": "Pas de mot de passe – confirmer avec un code",
-  "hesapSilKodAciklama": "Nous enverrons un code à six chiffres sur votre téléphone pour confirmer la suppression.",
+  "hesapSilKodAciklama": "Nous enverrons un code à six chiffres à votre adresse e-mail pour confirmer la suppression.",
   "hesapSilKodGerekli": "Saisissez le code de confirmation",
   "kayitBaslik": "Se connecter avec l'ID de site",
   "kayitAltBaslik": "Choisissez ce qui vous correspond",

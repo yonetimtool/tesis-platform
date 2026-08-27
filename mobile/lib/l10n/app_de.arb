@@ -1451,7 +1451,7 @@
   "girisKoduGonder": "Code senden",
   "girisKodAlani": "Bestätigungscode",
   "hesapSilKodlaOnayla": "Kein Passwort – mit Code bestätigen",
-  "hesapSilKodAciklama": "Wir senden einen sechsstelligen Code zur Bestätigung der Löschung an Ihr Telefon.",
+  "hesapSilKodAciklama": "Wir senden einen sechsstelligen Code zur Bestätigung der Löschung an Ihre E-Mail-Adresse.",
   "hesapSilKodGerekli": "Bestätigungscode eingeben",
   "kayitBaslik": "Mit Anlagen-ID anmelden",
   "kayitAltBaslik": "Wählen Sie, was auf Sie zutrifft",

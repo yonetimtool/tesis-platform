@@ -188,6 +188,28 @@ async def hesap_silme_kodu_iste(
     return {"durum": "gonderildi"}
 
 
+@router.post("/me/hesap-sil/eposta-kod-iste", response_model=dict)
+async def hesap_silme_eposta_kodu_iste(
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(get_current_user),
+    redis=Depends(get_redis),
+) -> dict[str, str]:
+    """(P184) Parolasiz kullanici icin silme onay kodu — E-POSTAYA.
+
+    SMS kardesinin (`/me/hesap-sil/kod-iste`) e-posta esidir. `SMS_AKTIF=false`
+    oldugundan bugun calisan yol budur; SSO ile kaydolan (parolasiz) kullanici
+    kendi hesabini boyle silebilir. Kod `amac='hesap_silme'` ile uretilir —
+    giris/parola/e-posta-ekleme kodu buraya YARAMAZ. Kilitleme YOK; oturum surer.
+    """
+    if not user.email or not user.eposta_dogrulandi:
+        raise APIError(422, "no_email", "eposta_yok")
+    await kod_istegi_say(redis, user.email, kapsam="hesap_silme_eposta")
+    await eposta_kodu_uret_ve_gonder(
+        db, tenant_id=user.tenant_id, eposta=user.email, amac="hesap_silme"
+    )
+    return {"durum": "gonderildi"}
+
+
 @router.post("/me/eposta/kod-iste", response_model=dict)
 async def eposta_dogrulama_kodu_iste(
     body: MeEpostaEkleRequest,
@@ -298,9 +320,22 @@ async def delete_my_account(
     if user.password_hash is None:
         if not body.kod:
             raise APIError(400, "code_required", "silme_kodu_gerekli")
-        await kodu_dogrula(
-            db, telefon=user.telefon or "", kod=body.kod, amac="hesap_silme"
-        )
+        # (P184) Dogrulama kanali kullanicinin SAHIP OLDUGUNA gore secilir:
+        # dogrulanmis e-posta varsa E-POSTA kodu (SMS kapali, bugun tek calisan
+        # yol), yoksa telefon kodu (SMS ileride acilirsa). Ikisi de
+        # `amac='hesap_silme'`; kanallar karismaz.
+        if user.email and user.eposta_dogrulandi:
+            kayit = await eposta_kodunu_dogrula(
+                db, tenant_id=user.tenant_id, eposta=user.email,
+                kod=body.kod, amac="hesap_silme",
+            )
+            # Tek kullanimlik: verify yalniz 'telefon_bekliyor' arar; tuket.
+            kayit.durum = "onaylandi"
+            kayit.karar_at = func.now()
+        else:
+            await kodu_dogrula(
+                db, telefon=user.telefon or "", kod=body.kod, amac="hesap_silme"
+            )
     elif not verify_password(body.current_password or "", user.password_hash):
         raise APIError(400, "invalid_credentials", "mevcut_parola_hatali")
     if await son_admin_mi(db, user):

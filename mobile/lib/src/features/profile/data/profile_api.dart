@@ -49,10 +49,14 @@ class ProfileApi {
   /// Doner: **tam silindi mi**. `false` BASARISIZLIK DEGILDIR — hesabin
   /// gecmisi (aidat/odeme) oldugu icin satir anonimlestirilerek korundu
   /// demektir; kullaniciya iki durumda da farkli ama OLUMLU metin gosterilir.
-  /// (P149) Silme onay KODU iste — parolasiz kullanici icin.
+  /// (P184) Silme onay KODU iste — parolasiz kullanici icin, E-POSTAYA.
+  ///
+  /// SMS kardesi (`/me/hesap-sil/kod-iste`) DURUYOR ama mobil ARTIK
+  /// cagirmiyor: `SMS_AKTIF=false` ve dogrulama kanali e-posta. Dogrulanmis
+  /// e-posta yoksa sunucu 422 `no_email` doner.
   Future<void> hesapSilmeKoduIste() async {
     try {
-      await _dio.post<Map<String, dynamic>>('/me/hesap-sil/kod-iste');
+      await _dio.post<Map<String, dynamic>>('/me/hesap-sil/eposta-kod-iste');
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }

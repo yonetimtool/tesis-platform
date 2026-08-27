@@ -1324,6 +1324,17 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "Aucun numéro de téléphone n'est enregistré sur votre compte.",
         "es": "No hay ningún número de teléfono registrado en su cuenta.",
     },
+    # (P184) Hesap silme onay kodu E-POSTAYA gider; doğrulanmış e-posta yoksa
+    # gönderilecek bir adres de yoktur.
+    "eposta_yok": {
+        "tr": "Hesabınızda doğrulanmış bir e-posta adresi yok.",
+        "en": "There is no verified email address on your account.",
+        "ar": "لا يوجد عنوان بريد إلكتروني مُوثَّق في حسابك.",
+        "ru": "К вашей учётной записи не привязан подтверждённый адрес электронной почты.",
+        "de": "In Ihrem Konto ist keine bestätigte E-Mail-Adresse hinterlegt.",
+        "fr": "Aucune adresse e-mail vérifiée n'est enregistrée sur votre compte.",
+        "es": "No hay ninguna dirección de correo electrónico verificada en su cuenta.",
+    },
     # (P154) Tesis basina COKLU yonetici. Ucu de 409 ama anlamlari FARKLI:
     # kullaniciya yalniz "silinemedi" demek, ne yapacagini soylememek olurdu.
     "yonetici_bulunamadi": {

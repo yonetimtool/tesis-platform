@@ -1451,7 +1451,7 @@
   "girisKoduGonder": "Enviar código",
   "girisKodAlani": "Código de verificación",
   "hesapSilKodlaOnayla": "Sin contraseña: confirmar con un código",
-  "hesapSilKodAciklama": "Enviaremos un código de seis dígitos a su teléfono para confirmar la eliminación.",
+  "hesapSilKodAciklama": "Enviaremos un código de seis dígitos a su dirección de correo electrónico para confirmar la eliminación.",
   "hesapSilKodGerekli": "Introduzca el código de confirmación",
   "kayitBaslik": "Iniciar sesión con ID de instalación",
   "kayitAltBaslik": "Elija lo que le corresponde",

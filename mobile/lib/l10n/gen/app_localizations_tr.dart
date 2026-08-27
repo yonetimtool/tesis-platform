@@ -4676,7 +4676,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get hesapSilKodAciklama =>
-      'Telefonunuza silme onayı için altı haneli bir kod göndereceğiz.';
+      'Silme onayı için e-posta adresinize altı haneli bir kod göndereceğiz.';
 
   @override
   String get hesapSilKodGerekli => 'Onay kodunu girin';

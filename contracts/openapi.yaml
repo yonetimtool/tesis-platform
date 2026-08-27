@@ -1430,6 +1430,30 @@ paths:
           content:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
 
+  /me/hesap-sil/eposta-kod-iste:
+    post:
+      tags: [me]
+      summary: (P184) Parolasiz kullanici icin hesap silme onay kodu — E-POSTAYA
+      description: |
+        `/me/hesap-sil/kod-iste`nin E-POSTA esi (SMS kapali oldugundan bugun
+        calisan yol). Dogrulanmis e-posta yoksa 422 `no_email`. Kod
+        `amac='hesap_silme'` ile uretilir; giris/parola kodu buraya YARAMAZ.
+      responses:
+        "200":
+          description: Kod gonderildi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [durum]
+                properties:
+                  durum: { type: string, enum: [gonderildi] }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422":
+          description: Hesapta dogrulanmis e-posta yok
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
   /me/hesap-sil:
     post:
       tags: [me]

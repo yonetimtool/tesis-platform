@@ -4820,7 +4820,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get hesapSilKodAciklama =>
-      'Enviaremos un código de seis dígitos a su teléfono para confirmar la eliminación.';
+      'Enviaremos un código de seis dígitos a su dirección de correo electrónico para confirmar la eliminación.';
 
   @override
   String get hesapSilKodGerekli => 'Introduzca el código de confirmación';

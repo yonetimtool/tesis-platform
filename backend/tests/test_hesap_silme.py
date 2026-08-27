@@ -200,3 +200,84 @@ def test_YONETIM_silmesi_kanitta_KENDI_ISTEGI_DEGIL(client, adm, owner_conn):
         satir = cur.fetchone()
     assert satir is not None, "yonetim silmesi de kanit birakmali"
     assert satir[0] is False
+
+
+# ================ (P184) PAROLASIZ SILME — E-POSTA KODU ==================== #
+
+
+def _parolasizlastir(owner_conn, user_id: str, *, eposta: str | None) -> None:
+    """Kullaniciyi parolasiz yapar; verilen e-postayi DOGRULANMIS yazar.
+
+    SSO ile kaydolan (parolasiz) kullanicinin durumunu taklit eder — silme
+    yolu onda parola degil, E-POSTASINA giden kodu ister.
+    """
+    with owner_conn.cursor() as cur:
+        if eposta is None:
+            cur.execute(
+                "UPDATE app_user SET password_hash=NULL, password_set=false, "
+                "email=NULL, eposta_dogrulandi=false WHERE id=%s",
+                (user_id,),
+            )
+        else:
+            cur.execute(
+                "UPDATE app_user SET password_hash=NULL, password_set=false, "
+                "email=%s, eposta_dogrulandi=true WHERE id=%s",
+                (eposta, user_id),
+            )
+    owner_conn.commit()
+
+
+def test_parolasiz_EPOSTA_koduyla_silinir(client, adm, owner_conn):
+    """(P184) SMS'siz: dogrulanmis e-postaya giden kodla hesap silinir."""
+    from app.security import hash_password
+
+    user_id, tel, parola = _sakin_ac(client, adm)
+    h = _oturum(client, tel, parola)  # token parolayi NULL'lamadan ONCE alinir.
+    eposta = f"sil-{uuid.uuid4().hex[:10]}@ornek.com"
+    _parolasizlastir(owner_conn, user_id, eposta=eposta)
+
+    # 1) E-POSTA kodu iste — kod satiri yazilir.
+    r = client.post("/me/hesap-sil/eposta-kod-iste", headers=h)
+    assert r.status_code == 200, r.text
+    assert r.json()["durum"] == "gonderildi"
+
+    # Kodu BILINEN degere cevir (dev'de SMTP yok; testin kodu ogrenmesinin
+    # baska yolu yok — deponun mevcut deseni).
+    with owner_conn.cursor() as cur:
+        cur.execute(
+            "UPDATE kayit_dogrulama SET kod_hash=%s "
+            "WHERE eposta=%s AND amac='hesap_silme' AND durum='telefon_bekliyor'",
+            (hash_password("424242"), eposta),
+        )
+        assert cur.rowcount == 1, "e-posta silme kodu satiri uretilmedi"
+    owner_conn.commit()
+
+    # 2) Kodla sil.
+    r = client.post("/me/hesap-sil", headers=h, json={"kod": "424242"})
+    assert r.status_code == 200, r.text
+    # Oturum artik gecersiz — hesap gitti/anonimlesti.
+    assert client.get("/me", headers=h).status_code == 401
+
+
+def test_parolasiz_YANLIS_eposta_kodu_silmez(client, adm, owner_conn):
+    """Yanlis kod silmez: e-posta kanali da 'sahiplik kaniti' esigini korur."""
+    user_id, tel, parola = _sakin_ac(client, adm)
+    h = _oturum(client, tel, parola)
+    eposta = f"sil-{uuid.uuid4().hex[:10]}@ornek.com"
+    _parolasizlastir(owner_conn, user_id, eposta=eposta)
+
+    assert client.post("/me/hesap-sil/eposta-kod-iste", headers=h).status_code == 200
+    r = client.post("/me/hesap-sil", headers=h, json={"kod": "000000"})
+    assert r.status_code == 422, r.text
+    assert client.get("/me", headers=h).status_code == 200  # hesap DURUYOR
+
+
+def test_dogrulanmis_eposta_YOKSA_422(client, adm, owner_conn):
+    """(a) Kanal yoksa akis baslamaz: dogrulanmis e-posta olmadan 422 no_email."""
+    user_id, tel, parola = _sakin_ac(client, adm)
+    h = _oturum(client, tel, parola)
+    _parolasizlastir(owner_conn, user_id, eposta=None)
+
+    r = client.post("/me/hesap-sil/eposta-kod-iste", headers=h)
+    assert r.status_code == 422, r.text
+    assert r.json()["error"]["code"] == "no_email", r.text

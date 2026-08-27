@@ -72,12 +72,26 @@ docker compose exec -T api python -m pytest -q -rs \
 - Parola yolu: rol + Tesis ID + e-posta OTP → parola → oturum.
 - Üç SSO butonunun kayıt + giriş ekranlarında görünmesi (P183 iOS URL şeması).
 
-## Bilinen kapsam-dışı (P184'te DEĞİŞMEDİ)
+## Ayarlar → Hesabı sil (kodla) — e-postaya geçirildi (ek)
 
-- **Ayarlar → Hesabı sil → "kodla onayla"** hâlâ **SMS** koduna dayanır
-  (`/me/hesap-sil/kod-iste`, `user.telefon` + SMS). Backend'de e-posta karşılığı YOK.
-  Bu ikincil akış P184 kapsamı dışıdır (kayıt/giriş yüzeyi hedeflendi). Parolasız
-  (SSO) kullanıcıların kendi hesabını silmesi için ileride bir **e-posta hesap-sil
-  ucu** gerekir — ayrı iş.
+- **Yeni uç:** `POST /me/hesap-sil/eposta-kod-iste` — parolasız kullanıcı için silme
+  onay kodu **e-postaya** gider (`amac='hesap_silme'`, doğrulanmış e-posta yoksa 422
+  `no_email`). `me.py`. Göç YOK (`hesap_silme` zaten geçerli e-posta kod amacı).
+- `POST /me/hesap-sil` artık parolasız yolda **doğrulanmış e-posta varsa e-posta
+  kodunu**, yoksa telefon kodunu doğrular (kanallar karışmaz).
+- **Registreler:** openapi (yeni yol), `test_denetci_salt_okuma` (yeni uç),
+  `rol-matrisi.txt` yeniden üretildi, `hata_metinleri.py`'ye `eposta_yok` (7 dil).
+- **Mobil:** `profile_api.hesapSilmeKoduIste()` artık `eposta-kod-iste`'yi çağırır;
+  `hesapSilKodAciklama` metni e-postaya göre (7 dil). SMS `/me/hesap-sil/kod-iste`
+  backend'de DURUYOR ama mobil çağırmıyor.
+- **Test:** `test_hesap_silme.py`'ye 3 test (e-posta koduyla sil, yanlış kod silmez,
+  doğrulanmış e-posta yoksa 422).
+
+Böylece **kabul 1 (hiçbir mobil ekran SMS vaat etmiyor)** kayıt/giriş + hesap-silme
+yüzeylerinin tümünde sağlanır. Kalan SMS remnant YOK (mobil UI hiçbir SMS ucu
+çağırmıyor).
+
+## Not
+
 - SMS uçları backend'de duruyor; `SMS_AKTIF` açılırsa telefon yolları yeniden
   kullanılabilir (mobil UI'ye geri bağlanması ayrı iş).

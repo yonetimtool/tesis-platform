@@ -4944,7 +4944,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get hesapSilKodAciklama =>
-      'سنرسل رمزًا من ستة أرقام إلى هاتفك لتأكيد الحذف.';
+      'سنرسل رمزًا مكوّنًا من ستة أرقام إلى بريدك الإلكتروني لتأكيد الحذف.';
 
   @override
   String get hesapSilKodGerekli => 'أدخل رمز التأكيد';

@@ -8276,7 +8276,7 @@ abstract class AppLocalizations {
   /// No description provided for @hesapSilKodAciklama.
   ///
   /// In tr, this message translates to:
-  /// **'Telefonunuza silme onayı için altı haneli bir kod göndereceğiz.'**
+  /// **'Silme onayı için e-posta adresinize altı haneli bir kod göndereceğiz.'**
   String get hesapSilKodAciklama;
 
   /// No description provided for @hesapSilKodGerekli.

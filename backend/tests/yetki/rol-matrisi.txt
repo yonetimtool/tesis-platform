@@ -212,6 +212,7 @@ POST   /me/eposta/dogrula                                   IZIN   IZIN   IZIN  
 POST   /me/eposta/kod-iste                                  IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
 GET    /me/etkinlik                                         IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
 POST   /me/hesap-sil                                        IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
+POST   /me/hesap-sil/eposta-kod-iste                        IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
 POST   /me/hesap-sil/kod-iste                               IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
 GET    /me/odeme-bilgileri                                  RED    RED    RED    RED    IZIN   RED    RED   
 POST   /me/odeme/kart                                       RED    RED    RED    RED    IZIN   RED    RED   

@@ -2064,7 +2064,7 @@
   "girisKoduGonder": "Kod gönder",
   "girisKodAlani": "Doğrulama kodu",
   "hesapSilKodlaOnayla": "Parolam yok, kodla onayla",
-  "hesapSilKodAciklama": "Telefonunuza silme onayı için altı haneli bir kod göndereceğiz.",
+  "hesapSilKodAciklama": "Silme onayı için e-posta adresinize altı haneli bir kod göndereceğiz.",
   "hesapSilKodGerekli": "Onay kodunu girin",
   "kayitBaslik": "Tesis ID ile giriş",
   "kayitAltBaslik": "Size uygun olanı seçiniz",

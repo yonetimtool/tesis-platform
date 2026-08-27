@@ -4864,7 +4864,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get hesapSilKodAciklama =>
-      'We\'ll send a six-digit code to your phone to confirm deletion.';
+      'We\'ll send a six-digit code to your email address to confirm deletion.';
 
   @override
   String get hesapSilKodGerekli => 'Enter the confirmation code';
