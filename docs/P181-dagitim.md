@@ -115,25 +115,39 @@ için mutlaka yeniden derlenir.
 
 ---
 
-## Bölüm 10 — Mobil (İNCELEME + iOS URL şeması düzeltmesi)
+## Bölüm 10 — Mobil bildirimler (BACKEND) + SSO/iOS
 
-- **Göç:** YOK (bu oturumda). **Yeni env:** YOK.
+### Backend (BİTTİ — bu oturum)
+
+- **Göç:** `0073_vardiya_ozeti_bildirim` — `ALTER TYPE notification_tip ADD
+  VALUE 'vardiya_ozeti'` (idempotent, geriye dönük güvenli). **Yeni env:** YOK.
+- **Yeniden derle:** `api` (FCM kanal kapısı + dedup + vardiya özeti scheduler +
+  push metni), **`worker`** ve **`beat`** (yeni celery task `scheduler.
+  summarize_shifts` + beat schedule). `migrate` göçü uygular.
+- **10.3 kanal tercihi:** MEVCUT göç 0055 (`bildirim_mobil`) kullanıldı — yeni
+  göç YOK. FCM artık `bildirim_mobil=false` kullanıcıya push atmaz.
+- **10.3 dedup:** çok-rollü/hem-kişi-hem-rol kullanıcı tek push (token dedup).
+- **10.2 batching:** vardiya sonu tek `vardiya_ozeti` özeti (beat).
+- **10.5 (web):** dashboard `/dashboard/live` `revalidateOnFocus:false` → yalnız
+  `admin-web` yeniden derlenir.
+
+### Mobil + SSO (KULLANICI — Flutter, Windows'ta)
+
 - **iOS `Info.plist`:** `CFBundleURLTypes` (`com.app.yonetiyor`) EKLENDİ →
-  yeni iOS build gerekir (bu makinede Flutter yok, derlenmedi). Katkısal;
-  telefon/e-posta girişini etkilemez.
-- **KRİTİK — yayın APK'sı (kullanıcı):** Release paket MUTLAKA
-  `bash mobile/yayin-yap.sh apk` (ya da `appbundle`) ile üretilmeli — elle
-  `flutter build` `--dart-define=API_BASE_URL=https://api.yonetio.site`'ı
-  atlıyor ve APK emülatör-yerel adrese (`http://10.0.2.2:8000`) gidiyor →
-  API'ye ulaşamıyor. Script bu adresi geçer + şifresiz/yerel adresi reddeder.
-- **Google Cloud (kullanıcı, panele ekle):** Authorized redirect URIs'e
-  `https://api.yonetio.site/auth/oauth/callback/{google,microsoft,apple}`
-  (kanonik ise `https://api.yonetiyor.com/...`). Ayrı mobil redirect GEREKMEZ.
-- **Prod .env kontrolü:** OAuth sağlayıcı client id/secret + dönüş adresleri
-  dolu mu (`acik_saglayicilar()` `.hazir` → mobil butonlar buna bakar).
-- **YAPILMADI (plan, docs/P181-kararlar.md §10):** push/batching/rol-yönlendirme
-  (göç 0055) — backend+mobil; mobil test edilemezliği + oturum kapsamı nedeniyle
-  ayrı iş.
+  yeni iOS build gerekir. Katkısal; telefon/e-posta girişini etkilemez.
+- **KRİTİK — yayın APK'sı:** MUTLAKA `bash mobile/yayin-yap.sh apk` (ya da
+  `appbundle`) ile üretilmeli — elle `flutter build` `--dart-define=API_BASE_URL=
+  https://api.yonetio.site`'ı atlıyor ve APK `http://10.0.2.2:8000`'e (emülatör)
+  gidiyor → API'ye ulaşamıyor. Script bu adresi geçer + şifresiz/yerel reddeder.
+- **Google Cloud (teyit edildi — çalışıyor):** `https://api.yonetio.site/auth/
+  oauth/callback/{google,microsoft,apple}` panelde ekli.
+- **Prod .env kontrolü:** OAuth client id/secret dolu mu (`acik_saglayicilar()`
+  `.hazir` → mobil butonlar buna bakar).
+- **10.1/10.4 mobil kodu (talimat, docs/P181-kararlar.md §10.1):** firebase_
+  messaging background handler + izin akışı (iOS requestPermission, Android 13+
+  POST_NOTIFICATIONS) + bildirim `data.tip`/`data.*` ile go_router derin bağlantı.
+  `data` alanları backend'te ZATEN gönderiliyor. Flutter kodu bu oturumda YAZILMADI
+  (kullanıcı uygular).
 
 ---
 
@@ -144,6 +158,7 @@ için mutlaka yeniden derlenir.
 0070_eposta_dogrulandi      (P181 Böl.1)
 0071_kod_amaci_sifre_sifirla (P181 Böl.2)
 0072_notification_silindi_at (P181 Böl.6.5)
+0073_vardiya_ozeti_bildirim  (P181 Böl.10.2)
 ```
 
 Göçler ileri-uyumlu ve geriye dönük güvenli (enum ADD VALUE + nullable-default

@@ -41,6 +41,13 @@ celery_app.conf.beat_schedule = {
         "task": "scheduler.detect_late_patrols",
         "schedule": float(settings.scheduler_gecikme_interval_seconds),
     },
+    # (P181 Bölüm 10.2) Vardiya sonu ozeti: biten vardiyalar icin TEK bildirim.
+    # Idempotent (vardiya+gun basina tek); dakikalik bakma yeterli — geciken bir
+    # ozet zararsizdir (alarm degil rapor). detect ile ayni periyot.
+    "summarize-shifts": {
+        "task": "scheduler.summarize_shifts",
+        "schedule": float(settings.scheduler_detect_interval_seconds),
+    },
     # (P37) Caydirici webhook yeniden deneme kuyrugu — geri cekilme
     # dakikalar mertebesinde oldugu icin dakikada bir bakmak yeterli.
     "gurultu-kuyrugu": {

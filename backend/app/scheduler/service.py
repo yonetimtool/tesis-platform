@@ -21,15 +21,155 @@ Plana atanmis aktif checkpoint yoksa (bos plan) => vacuously 'tamamlandi'.
 """
 from __future__ import annotations
 
+import json
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, time, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 import psycopg
 
 from ..config import settings
 from ..tur_alarm import gecen_dakika, vadesi_gelen_adim
-from .notify import notify_gecikmis_okutma, notify_missed_tour
-from .windows import plan_windows
+from ..ceviri import VARSAYILAN_DIL
+from ..push_metinleri import push_govdesi
+from .notify import dispatch_external, notify_gecikmis_okutma, notify_missed_tour
+from .windows import _local_dt, plan_windows
+
+# (P181 Bölüm 10.2) Vardiya özetini alacak roller — spec 10.3: "YÖNETİCİ ...
+# devriye vardiya özeti". Alarm (real-time) rollerinden AYRI: özet bir RAPORDUR.
+_VARDIYA_OZETI = "vardiya_ozeti"
+_VARDIYA_OZETI_ROLLERI: tuple[str, ...] = ("admin", "yonetici")
+
+
+def _gun_uyar(gun_tipi: str, d: date) -> bool:
+    """Vardiya `gun_tipi`'ne göre yerel tarih `d`'de vardiya KOŞAR mı.
+
+    `resmi_tatil`: resmi tatil takvimi YOK → özet üretilmez (yanlış "0/N okundu"
+    üretmemek için; sınırlama dökümante — bkz. docs/P181-kararlar.md §10.2).
+    """
+    if gun_tipi == "her_gun":
+        return True
+    if gun_tipi == "hafta_ici":
+        return d.weekday() < 5
+    if gun_tipi == "hafta_sonu":
+        return d.weekday() >= 5
+    return False  # resmi_tatil (takvim yok)
+
+
+def _son_biten_vardiya(
+    tzname: str, now: datetime, bas: time, bit: time
+) -> tuple[datetime, datetime, date] | None:
+    """BUGÜN yerel tarihinde BİTMİŞ vardiya oluşumu: (start_utc, end_utc,
+    baslama_gunu) — yoksa None.
+
+    Gündüz vardiyası (`bas <= bit`): bugün [bugün+bas, bugün+bit]. Gece vardiyası
+    (`bas > bit`): DÜN başlar, BUGÜN biter [dün+bas, bugün+bit]. Yalnız bugünkü
+    oluşuma bakılır (geçmiş geri-doldurulmaz); henüz bitmemişse None → erken/
+    süren vardiya özetlenmez. `baslama_gunu` özet gün anahtarıdır (dedup + etiket).
+    """
+    tz = ZoneInfo(tzname)
+    bugun = now.astimezone(tz).date()
+    if bas > bit:  # gece vardiyası: dün başladı, bugün biter
+        baslama_gunu = bugun - timedelta(days=1)
+        bitis_gunu = bugun
+    else:  # gündüz vardiyası: aynı gün
+        baslama_gunu = bugun
+        bitis_gunu = bugun
+    start_utc = _local_dt(tzname, baslama_gunu, bas).astimezone(timezone.utc)
+    end_utc = _local_dt(tzname, bitis_gunu, bit).astimezone(timezone.utc)
+    if end_utc <= now:
+        return (start_utc, end_utc, baslama_gunu)
+    return None
+
+
+def summarize_ended_shifts(
+    *,
+    now: datetime | None = None,
+    owner_dsn: str | None = None,
+    app_dsn: str | None = None,
+) -> int:
+    """(P181 Bölüm 10.2) Biten vardiyalar için TEK özet bildirim.
+
+    Devriye okutmaları TEK TEK push üretmez; vardiya BİTTİĞİNDE tek özet
+    ("X/Y nokta okutuldu") yönetime gider. Sayım: vardiyanın aktif planlarının
+    DISTINCT aktif checkpoint'leri (beklenen) ve bunlardan vardiya aralığında
+    en az bir kez okutulanlar (okutulan). IDEMPOTENT: (vardiya, başlama günü)
+    başına tek kayıt (`dedup_key`); beat sık koşsa da tekrar üretmez.
+
+    Dönüş: yeni yazılan özet sayısı.
+    """
+    now = _now(now)
+    owner_dsn = owner_dsn or settings.owner_dsn
+    app_dsn = app_dsn or settings.app_dsn
+
+    yazilan = 0
+    tenants = _list_tenants(owner_dsn)
+    with psycopg.connect(app_dsn, connect_timeout=10) as conn:
+        for tenant_id, tzname in tenants:
+            with conn.transaction():
+                conn.execute(
+                    "SELECT set_config('app.current_tenant_id', %s, true)", (str(tenant_id),)
+                )
+                shifts = conn.execute(
+                    "SELECT id, ad, baslangic_saat, bitis_saat, gun_tipi FROM shift"
+                ).fetchall()
+                for shift_id, ad, bas, bit, gun_tipi in shifts:
+                    oluşum = _son_biten_vardiya(tzname, now, bas, bit)
+                    if oluşum is None:
+                        continue  # henüz bitmiş oluşum yok
+                    start_utc, end_utc, baslama_gunu = oluşum
+                    if not _gun_uyar(gun_tipi, baslama_gunu):
+                        continue  # bu gün bu vardiya koşmaz (hafta içi/sonu/tatil)
+
+                    # Vardiyanın aktif planlarının DISTINCT aktif checkpoint'leri.
+                    beklenen_ids = [
+                        r[0]
+                        for r in conn.execute(
+                            "SELECT DISTINCT c.id "
+                            "FROM patrol_plan p "
+                            "JOIN patrol_plan_checkpoint ppc ON ppc.patrol_plan_id = p.id "
+                            "JOIN checkpoint c ON c.id = ppc.checkpoint_id AND c.aktif = true "
+                            "WHERE p.shift_id = %s AND p.aktif = true",
+                            (shift_id,),
+                        ).fetchall()
+                    ]
+                    beklenen = len(beklenen_ids)
+                    if beklenen == 0:
+                        continue  # vardiyaya bağlı okutulacak nokta yok → özet anlamsız
+
+                    okutulan = conn.execute(
+                        "SELECT count(DISTINCT se.checkpoint_id) FROM scan_event se "
+                        "WHERE se.checkpoint_id = ANY(%s) "
+                        "AND se.okutma_zamani >= %s AND se.okutma_zamani < %s",
+                        ([str(c) for c in beklenen_ids], start_utc, end_utc),
+                    ).fetchone()[0]
+
+                    veri = {
+                        "vardiya": ad,
+                        "gun": baslama_gunu.strftime("%d-%m"),
+                        "okutulan": int(okutulan),
+                        "beklenen": beklenen,
+                    }
+                    dedup = f"{_VARDIYA_OZETI}:{shift_id}:{baslama_gunu.isoformat()}"
+                    mesaj = push_govdesi(_VARDIYA_OZETI, VARSAYILAN_DIL, veri)
+                    cur = conn.execute(
+                        "INSERT INTO notification (tenant_id, tip, dedup_key, mesaj, "
+                        "mesaj_kimlik, mesaj_veri) "
+                        "VALUES (%s, 'vardiya_ozeti', %s, %s, %s, %s::jsonb) "
+                        "ON CONFLICT (tenant_id, dedup_key) DO NOTHING",
+                        (tenant_id, dedup, mesaj, _VARDIYA_OZETI, json.dumps(veri)),
+                    )
+                    if cur.rowcount == 0:
+                        continue  # bu vardiya-günü zaten özetlendi
+                    dispatch_external(
+                        _VARDIYA_OZETI,
+                        tenant_id=tenant_id,
+                        target_roles=_VARDIYA_OZETI_ROLLERI,
+                        params=veri,
+                        data={"tip": _VARDIYA_OZETI, "shift_id": str(shift_id)},
+                    )
+                    yazilan += 1
+    return yazilan
 
 
 def _now(now: datetime | None) -> datetime:

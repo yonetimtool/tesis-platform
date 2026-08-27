@@ -607,39 +607,85 @@ göre:** `https://api.yonetio.site/auth/oauth/callback/google` (ve `/microsoft`,
 sakin mobilden tamamlar) SSO gerektirmez; #1 düzeltilince (doğru API) telefon/
 e-posta + kod yolu zaten çalışır. SSO tercih edenler için #1+#2+#3 yeterli.
 
-### 10.5 — Agresif yoklama (İNCELEME)
+### 10.3 — Kanal tercihi + çok-rollü dedup (BACKEND BİTTİ)
 
-Web (`admin-web`) tarafı MAKUL: dashboard `/api/dashboard/live` **15 sn**
-aralık (`refreshInterval:15000`), SWR varsayılanı `refreshWhenHidden:false`
-(sekme gizliyken durur); kameralar LİSTESİ `useSWR` ile TEK sefer (interval yok),
-kare tazeleme (`setNesil`) zaten `visibilitychange` ile duruyor. Prod'daki
-"saniyeler içinde onlarca `/dashboard/live` + `/cameras`" 15 sn aralıkla
-AÇIKLANMAZ → kaynak büyük olasılıkla **MOBİL istemci** (yönetici home / kameralar
-ekranı) ya da bir bileşenin hızlı yeniden-mount döngüsü. Mobil izleme Flutter
-ortamı ister (burada yok). **Öneri:** mobil `yonetici_home_screen` +
-`kameralar_screen` yoklama aralıklarını + sayfa-görünürlük durdurmasını denetle;
-web'de gerekiyorsa `/dashboard/live` için `revalidateOnFocus:false` (odak
-churn'ünü kes). SPECULATİF web değişikliği YAPILMADI (prod tekrar üretilemedi).
+**Kanal tercihi = MEVCUT göç 0055 (yeni göç DEĞİL).** Spec "göç 0055" diyor;
+o zaten VAR: `app_user.bildirim_eposta/sms/mobil` + `GET/PATCH /me/bildirim-
+tercihleri`. EKSİK OLAN, FCM gönderiminin `bildirim_mobil`'e UYMASIYDI. Düzeltme:
+`_fetch_device_tokens*` SQL'ine `AND u.bildirim_mobil = true` (`_KANAL_KOSULU`) —
+`bildirim_mobil=false` diyen kullanıcı push ALMAZ (in-app bildirim yine yazılır;
+push EK gönderimdir). (İlk denemede topic-bazlı yeni bir JSONB kanal sistemi +
+göç 0073 yazıldı, sonra göç 0055'in DELIVERY-kanalı olduğu görülünce GERİ ALINDI —
+spec'in kastı buydu.)
 
-### 10.1 / 10.2 / 10.3 — push / batching / rol-yönlendirme (PLAN — YAPILMADI)
+**Çok-rollü dedup:** `_push_to_devices` artık `target_roles` VE `target_user_ids`'i
+BİRLİKTE çözer ve TOKEN bazında dedup eder. Eskiden `uzak_okutma` ve
+`gecikmis_okutma` İKİ ayrı `dispatch_external` çağrısı yapıyordu (biri görevliye
+kişi, biri yönetime rol); görevli AYNI ZAMANDA yönetici ise İKİ push duyardı.
+Artık TEK çağrı iki hedefi taşır, dedup tek push garanti eder. Görevli hâlâ KİŞİ
+olarak hedeflenir (rol yayınına bırakılmaz).
 
-Bunlar HEM backend (göç 0055 kanal-tercihleri, vardiya-sonu toplama, rol-bazlı
-yönlendirme, çok-rollü dedup) HEM mobil (FCM arka-plan push, derin bağlantı, iOS/
-Android izin akışı) gerektirir. Backend dilimi pytest'le doğrulanabilir; mobil
-dilim bu makinede derlenemez. **Oturum kapsamı + mobil-test edilemezlik nedeniyle
-BU OTURUMDA YAPILMADI** — uydurma/yarım implementasyon riski yerine dürüst bırakıldı.
-Plan:
-- **Göç 0055:** `bildirim_kanal_tercihi(user_id, kanal, acik)` (ya da
-  `app_user.bildirim_tercihleri JSONB`) — kullanıcı kanal bazında kapatır.
-- **10.2 toplama:** devriye okutmaları TEK TEK push ÜRETMEZ; vardiya bazında
-  toplanıp vardiya SONUNDA tek özet ("12-08 vardiyası tamamlandı: 24/26 nokta").
-  Diğer yüksek hacim: toplu import/tahakkuk, çoklu okutma alarmı → topla.
-- **10.3 rol yönlendirme:** yönetici(şikayet/talep/arıza/onay/vardiya özeti/uzak
-  alarm), sakin(duyuru/kural/etkinlik/kendi talebi/aidat), güvenlik(görev/devriye/
-  vardiya başlangıcı), tesis görevlisi(görev/iş emri). Çok-rollü kullanıcıda
-  bildirim TEKRARLANMAZ (kişi bazında dedup, rol bazında değil).
-- **Mobil:** FCM background handler + bildirime dokununca derin bağlantı
-  (go_router; iOS `FlutterDeepLinkingEnabled` zaten açık) + izin akışı.
+**Rol yönlendirme:** her çağrı yerinde ZATEN doğru rollere/kişilere gidiyor
+(dağıtık; announcements/complaints/reservations/kargo/unit_access/events/uzak_
+okutma/notify). Merkezi bir yeniden-yazım YAPILMADI (regresyon riski; mevcut
+yönlendirme çalışıyor). Vardiya özeti yeni olduğundan yönetici(admin/yönetici)
+rollerine yönlendirildi (spec 10.3).
+
+**Test:** `test_push.py` — `bildirim_mobil=false → hedeften çıkar` (canlı DB);
+`ROL+KİŞİ birlikte → TOKEN dedup`. `test_uzak_okutma_hedef.py` tek-çağrı+dedup'a
+güncellendi. Tümü yeşil.
+
+### 10.2 — Vardiya sonu özeti (batching) (BACKEND BİTTİ)
+
+Yeni bildirim tipi `vardiya_ozeti` (göç 0073 `ALTER TYPE ... ADD VALUE`; models.py
+enum aynası; `push_metinleri` 7 dil). Yeni scheduler işi `summarize_ended_shifts`
+(+ celery task `scheduler.summarize_shifts` + beat, `detect` periyoduyla): her
+tenant, her vardiya için BUGÜN yerel tarihinde BİTMİŞ oluşumu bulur
+(`_son_biten_vardiya`; gündüz=aynı gün, gece `bas>bit`=dün başlar bugün biter),
+`gun_tipi`'ne göre koşup koşmadığını denetler (`_gun_uyar`; `resmi_tatil` takvim
+yok → atlanır, DÖKÜMANTE sınırlama), vardiyanın aktif planlarının DISTINCT aktif
+checkpoint'lerini (beklenen) ve vardiya aralığında en az bir kez okutulanları
+(okutulan) sayar, TEK `vardiya_ozeti` bildirimi yazar (`dedup_key =
+vardiya_ozeti:{shift}:{başlama_günü}` → IDEMPOTENT; beat sık koşsa da tekrar yok)
+ve yönetime push atar. Okutmalar TEK TEK push üretmez; özet vardiya SONUNDA gider.
+
+**Karar — gerçek-zamanlı ALARMLAR toplanmadı:** `kacirilan_tur`/`gecikmis_okutma`/
+`uzak_okutma` bir PROBLEM anlatır ve GECİKTİRİLEMEZ (güvenlik); vardiya sonuna
+ertelemek alarmı işe yaramaz kılardı. Batching yalnız RUTİN ilerleme özetine
+uygulandı (spec örneği "24/26 okutuldu" = tamamlanma raporu). Diğer yüksek-hacim
+(toplu tahakkuk/import) tek işlemde tek bildirim üretiyor; per-satır spam YOK.
+
+**Test:** `test_scheduler_vardiya_ozeti.py` (okutulan/beklenen sayımı + yönetime
+tek push + idempotent + vardiya bitmeden özet yok + `hafta_ici` gün-tipi). Yeşil.
+
+### 10.5 — Agresif yoklama (WEB düzeltildi)
+
+Web (`admin-web`) dashboard `/api/dashboard/live` **15 sn** aralık; `revalidate
+OnFocus` **true→false** çevrildi — her sekmeye dönüşte ek istek 15 sn'lik tazeliğe
+bir şey katmadan gereksiz tekrar üretiyordu (odak/blur churn'ü). Aralık sekme
+GİZLİYKEN zaten durur (SWR `refreshWhenHidden:false` varsayılanı = "görünmezken
+yoklamayı durdur"). Kamera LİSTESİ tek sefer, kare tazeleme `visibilitychange` ile
+zaten duruyor. Prod'daki "saniyeler içinde onlarca" 15 sn aralıkla AÇIKLANMAZ →
+baskın kaynak büyük olasılıkla **MOBİL** (kullanıcının kapsamı: `yonetici_home_
+screen`/`kameralar_screen` yoklama aralığı + görünürlük durdurması denetlenmeli).
+
+### 10.1 / 10.4 — mobil push + derin bağlantı + SSO (KULLANICI — Flutter)
+
+FCM gönderim tarafı (yukarıda) hazır. Mobil taraf (kullanıcının Windows'ta
+derleyeceği) — TAM talimat aşağıda:
+
+- **10.1 arka-plan push + izin akışı:** `firebase_messaging` background handler
+  (`@pragma('vm:entry-point')` top-level fonksiyon; `FirebaseMessaging.
+  onBackgroundMessage`). İzin: iOS `requestPermission()` (provisional yerine tam);
+  Android 13+ `POST_NOTIFICATIONS` runtime izni (`permission_handler` ya da
+  firebase_messaging'in `requestPermission`'ı). Jeton `POST /devices`'a kaydedilir
+  (zaten var). Bildirime dokununca `data.tip` + `data.{patrol_window_id|
+  checkpoint_id|shift_id|...}` ile go_router derin bağlantısı — `data` alanları
+  backend'te ZATEN gönderiliyor (bkz. `notify.py`/`uzak_okutma.py`
+  `data={"tip":..., "...":...}`). iOS `FlutterDeepLinkingEnabled` + yeni
+  `CFBundleURLTypes` zaten eklendi (10.4).
+- **10.4 SSO:** iOS URL şeması EKLENDİ; APK `yayin-yap.sh` ile derlenmeli
+  (dart-define). Google callback zaten panelde (kullanıcı teyit etti).
 
 ---
 

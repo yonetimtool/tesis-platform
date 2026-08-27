@@ -46,6 +46,19 @@ def detect_late_patrols() -> dict:
     return {"alarm": detect_gecikmis()}
 
 
+@celery_app.task(name="scheduler.summarize_shifts")
+def summarize_shifts() -> dict:
+    """(P181 Bölüm 10.2) Beat: biten vardiyalar için TEK özet bildirim.
+
+    Devriye okutmaları tek tek push üretmez; vardiya bitince yönetime tek
+    "X/Y nokta okutuldu" özeti gider. Idempotent (vardiya+gün başına tek);
+    beat sık koşsa da tekrar üretmez — sıklık yalnız özet gecikmesini etkiler.
+    """
+    from .scheduler.service import summarize_ended_shifts
+
+    return {"ozet": summarize_ended_shifts()}
+
+
 @celery_app.task(name="scheduler.gurultu_kuyrugu")
 def gurultu_kuyrugu() -> dict:
     """(P37) Beat: basarisiz caydirici webhook'larini geri-cekilmeli dener.

@@ -150,20 +150,14 @@ async def uzak_okutma_alarmi(
     # icinde yutar) — in-app bildirim her halukarda yazilmistir.
     tenant = uuid.UUID(str(scan.tenant_id))
     data = {"tip": TIP, "checkpoint_id": str(checkpoint.id)}
-    # GOREVLIYE KISI OLARAK: okutmayi yapan kisi durumu OGRENMEZSE
-    # duzeltemez de. Once o, cunku eylemi duzeltebilecek tek kisi odur.
-    if scan.guard_id is not None:
-        dispatch_external(
-            TIP,
-            tenant_id=tenant,
-            target_user_ids=[uuid.UUID(str(scan.guard_id))],
-            params=veri,
-            data=data,
-        )
-    # YONETIME ROL OLARAK: esigi koyan taraf sonucu da gormeli.
+    # (P181 Bölüm 10.3) TEK CAGRI — kisi (okutmayi yapan gorevli, eylemi
+    # duzeltebilecek tek kisi) + rol (yonetim: esigi koyan sonucu gormeli)
+    # BIRLIKTE, token bazinda dedup. Gorevli ayni zamanda yonetici ise ARTIK
+    # TEK push (eskiden iki ayri cagri iki bildirim duyururdu).
     dispatch_external(
         TIP,
         tenant_id=tenant,
+        target_user_ids=[uuid.UUID(str(scan.guard_id))] if scan.guard_id is not None else None,
         target_roles=ALARM_ROLLERI,
         params=veri,
         data=data,

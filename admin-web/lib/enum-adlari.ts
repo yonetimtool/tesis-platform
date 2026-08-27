@@ -36,6 +36,8 @@ export const BILDIRIM_TIP: EnumHarita = {
   ziyaretci: "bildirimTipZiyaretci",
   rezervasyon: "bildirimTipRezervasyon",
   sikayet_cozuldu: "bildirimTipSikayetCozuldu",
+  // (P181 Bölüm 10.2) Vardiya sonu özeti (batching) — "X/Y nokta okutuldu".
+  vardiya_ozeti: "bildirimTipVardiyaOzeti",
 };
 
 /** `patrol_window_durum` (pano "Bugunun turlari" + tur raporu). */

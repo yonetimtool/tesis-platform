@@ -97,6 +97,29 @@ METINLER: dict[str, PushMetni] = {
         },
         params=('plan', 'eksik'),
     ),
+    # (P181 Bölüm 10.2) VARDIYA OZETI — vardiya sonu TEK bildirim (batching):
+    # o vardiyada kac noktanin okutuldugu. Okutmalar tek tek push URETMEZ.
+    "vardiya_ozeti": PushMetni(
+        baslik={
+            "tr": "Vardiya özeti",
+            "en": "Shift summary",
+            "ar": "ملخص الوردية",
+            "ru": "Итоги смены",
+            "de": "Schichtzusammenfassung",
+            "fr": "Résumé du service",
+            "es": "Resumen del turno",
+        },
+        govde={
+            "tr": "{vardiya} ({gun}) tamamlandı: {okutulan}/{beklenen} nokta okutuldu.",
+            "en": "{vardiya} ({gun}) completed: {okutulan}/{beklenen} points scanned.",
+            "ar": "اكتملت {vardiya} ({gun}): تم مسح {okutulan}/{beklenen} نقطة.",
+            "ru": "{vardiya} ({gun}) завершена: отмечено точек {okutulan}/{beklenen}.",
+            "de": "{vardiya} ({gun}) abgeschlossen: {okutulan}/{beklenen} Punkte erfasst.",
+            "fr": "{vardiya} ({gun}) terminé : {okutulan}/{beklenen} points scannés.",
+            "es": "{vardiya} ({gun}) completado: {okutulan}/{beklenen} puntos escaneados.",
+        },
+        params=('vardiya', 'gun', 'okutulan', 'beklenen'),
+    ),
     # (P34) Gecikmis okutma: pencere ACILDI ama tolerans suresi icinde
     # okutma GELMEDI. "Kacirildi"dan farki: tur HALA KURTARILABILIR —
     # bu yuzden metin gecmis zaman degil UYARI dilidir.

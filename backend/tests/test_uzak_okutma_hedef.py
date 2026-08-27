@@ -99,11 +99,21 @@ async def test_yonetime_ROL_olarak_gider(monkeypatch):
     assert set(rol[0]["target_roles"]) == {"admin", "yonetici", "guvenlik_amiri"}
 
 
-async def test_IKISI_AYRI_CAGRI(monkeypatch):
-    """Tek cagriya sikistirmak, gorevliyi rol yayinina birakmakti."""
+async def test_TEK_CAGRI_kisi_VE_rol_birlikte(monkeypatch):
+    """(P181 Bölüm 10.3) DEDUP: gorevli + yonetim TEK dispatch cagrisinda.
+
+    Eskiden IKI ayri cagriydi; gorevli AYNI ZAMANDA yonetici ise iki bildirim
+    duyardi. Artik tek cagri hem `target_user_ids` (gorevli — kisi olarak, rol
+    yayinina BIRAKILMADAN) hem `target_roles` (yonetim) tasir; token bazinda
+    dedup `_push_to_devices`te yapilir.
+    """
     cagrilar = _yakala(monkeypatch)
-    assert await uzak.uzak_okutma_alarmi(_SahteDb(), scan=_scan(), checkpoint=_checkpoint())
-    assert len(cagrilar) == 2, cagrilar
+    scan = _scan()
+    assert await uzak.uzak_okutma_alarmi(_SahteDb(), scan=scan, checkpoint=_checkpoint())
+    assert len(cagrilar) == 1, cagrilar
+    tek = cagrilar[0]
+    assert tek["target_user_ids"] == [scan.guard_id]  # gorevli hala KISI olarak
+    assert tek.get("target_roles")  # yonetim de ROL olarak ayni cagrida
 
 
 async def test_gorevli_YOKSA_yonetim_yine_bilgilendirilir(monkeypatch):

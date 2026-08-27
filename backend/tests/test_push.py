@@ -247,6 +247,63 @@ def test_fetch_tokens_role_and_tenant_isolation(client, world):
     assert f"ADM-B-{ta}" in toks_b and f"ADM-A-{ta}" not in toks_b
 
 
+def test_bildirim_mobil_KAPALI_push_hedefinden_cikar(client, world):
+    """(P181 Bölüm 10.3) `bildirim_mobil=false` (göç 0055) diyen kullanicinin
+    cihazi push hedefinden CIKAR — in-app bildirimi etkilemez, yalniz FCM.
+    """
+    guard = _headers(client, world["slug_a"], world["guard_a"])
+    tok = f"PREF-{uuid.uuid4().hex[:8]}"
+    _register(client, guard, tok, "android")
+
+    from app.scheduler.notify import _fetch_device_tokens
+
+    def _var() -> bool:
+        return tok in {t for t, _ in _fetch_device_tokens(world["a"], ("security",))}
+
+    try:
+        assert _var(), "acikken hedefte olmali"
+        # Mobil bildirimi KAPAT -> hedeften cikmali.
+        r = client.patch("/me/bildirim-tercihleri", headers=guard,
+                          json={"bildirim_mobil": False})
+        assert r.status_code == 200, r.text
+        assert not _var(), "kapaliyken hedefte OLMAMALI"
+    finally:
+        # Paylasilan world kullanicisi: tercihi geri ac (diger testleri etkilemesin).
+        client.patch("/me/bildirim-tercihleri", headers=guard,
+                     json={"bildirim_mobil": True})
+
+
+def test_dispatch_ROL_ve_KISI_birlikte_TOKEN_dedup(monkeypatch):
+    """(P181 Bölüm 10.3) Rol + kisi AYNI cagrida hedeflenince, iki fetch'te de
+    cikan token TEK kez gonderilir (cok-rollu / hem-kisi-hem-rol kullanici tek
+    push alir).
+    """
+    monkeypatch.setattr(
+        notify, "_fetch_device_tokens", lambda t, r: [("SHARED", "tr"), ("ROLONLY", "tr")]
+    )
+    monkeypatch.setattr(
+        notify, "_fetch_device_tokens_for_users",
+        lambda t, u: [("SHARED", "tr"), ("USERONLY", "tr")],
+    )
+    rec = []
+
+    class Recorder:
+        def send(self, tokens, *, title, body, data=None):
+            rec.append(list(tokens))
+
+    monkeypatch.setattr(notify.push, "get_push_provider", lambda: Recorder())
+    notify.dispatch_external(
+        "gecikmis_okutma",
+        tenant_id=uuid.uuid4(),
+        target_roles=("admin", "yonetici"),
+        target_user_ids=(uuid.uuid4(),),
+        params={"plan": "P", "dakika": 5},
+    )
+    # Tek batch (hepsi 'tr'); SHARED TEK KEZ.
+    assert len(rec) == 1
+    assert sorted(rec[0]) == ["ROLONLY", "SHARED", "USERONLY"]
+
+
 # ---------------- gercek kimlik baglama (path + OAuth2 + cache) ------------- #
 def _fake_sa(tmp_path, project="proj-dosya", email="svc@proj.iam.gserviceaccount.com"):
     """Diske SAHTE service account yaz (gercek kimlik testlerde KULLANILMAZ)."""

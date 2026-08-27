@@ -1404,6 +1404,7 @@ export const ar: Sozluk = {
   bildirimTipZiyaretci: "زائر",
   bildirimTipRezervasyon: "حجز",
   bildirimTipSikayetCozuldu: "تمت معالجة الشكوى",
+  bildirimTipVardiyaOzeti: "ملخص الوردية",
   bildirimTipEksikCheckpoint: "نقطة فائتة",
   bildirimTipGecikmisOkutma: "مسح متأخر",
   bildirimTipUzakOkutma: "مسح بعيد",

@@ -88,6 +88,8 @@ NOTIFICATION_TIP = ENUM(
     # SIRA SONDA: `ALTER TYPE ... ADD VALUE` degeri sona ekler ve bu
     # dosya gocun BIREBIR AYNASIDIR.
     "uzak_okutma",
+    # (P181 Bölüm 10.2, göç 0073) Vardiya SONU ozet bildirimi (batching).
+    "vardiya_ozeti",
     name="notification_tip", create_type=False,
 )
 ASSET_KATEGORI = ENUM(

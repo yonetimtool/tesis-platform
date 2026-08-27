@@ -1404,6 +1404,7 @@ export const de: Sozluk = {
   bildirimTipZiyaretci: "Besucher",
   bildirimTipRezervasyon: "Reservierung",
   bildirimTipSikayetCozuldu: "Beschwerde bearbeitet",
+  bildirimTipVardiyaOzeti: "Schichtzusammenfassung",
   bildirimTipEksikCheckpoint: "verpasster Punkt",
   bildirimTipGecikmisOkutma: "verspäteter Scan",
   bildirimTipUzakOkutma: "Entfernte Erfassung",

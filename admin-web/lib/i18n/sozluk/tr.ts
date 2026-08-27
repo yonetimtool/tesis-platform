@@ -1466,6 +1466,7 @@ export const tr = {
   bildirimTipZiyaretci: "ziyaretçi",
   bildirimTipRezervasyon: "rezervasyon",
   bildirimTipSikayetCozuldu: "şikayet sonuçlandı",
+  bildirimTipVardiyaOzeti: "vardiya özeti",
   bildirimTipEksikCheckpoint: "eksik nokta",
   bildirimTipGecikmisOkutma: "gecikmiş okutma",
   bildirimTipUzakOkutma: "Uzak okutma",

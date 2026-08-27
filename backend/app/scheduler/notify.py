@@ -98,16 +98,24 @@ def _push_to_devices(
     provider = push.get_push_provider()
     if tenant_id is None or not (target_roles or target_user_ids):
         return  # hedef bilgisi yok -> gonderim yapma (eski no-op)
+    # (P181 Bölüm 10.3) ROL + KISI hedefi BIRLIKTE cozulur ve TOKEN bazinda
+    # DEDUP edilir: cok-rollu / hem-kisi-hem-rol hedeflenen kullanici TEK push
+    # alir. Eskiden roller ve kisiler AYRI cagrilarla gonderiliyordu; ayni kisi
+    # hem gorevli hem yonetici ise iki bildirim duyardi. Kanal tercihi
+    # (`bildirim_mobil`, göç 0055) fetch SQL'inde uygulanir.
+    cihazlar: dict[str, str] = {}  # token -> dil (ilk goren dil kazanir)
+    if target_roles:
+        for token, dil in _fetch_device_tokens(tenant_id, target_roles):
+            cihazlar.setdefault(token, dil)
     if target_user_ids:
-        cihazlar = _fetch_device_tokens_for_users(tenant_id, target_user_ids)
-    else:
-        cihazlar = _fetch_device_tokens(tenant_id, target_roles or ())
+        for token, dil in _fetch_device_tokens_for_users(tenant_id, target_user_ids):
+            cihazlar.setdefault(token, dil)
     if not cihazlar:
         return
     # DILE GORE GRUPLA: tek bir metinle gondermek, cihazin dilini yok saymak
     # olurdu. Gruplama gonderim SAYISINI degil, metin SAYISINI artirir.
     gruplar: dict[str, list[str]] = {}
-    for token, dil in cihazlar:
+    for token, dil in cihazlar.items():
         gruplar.setdefault(dil_normalize(dil), []).append(token)
     gecersiz: list[str] = []
     for dil, tokenlar in gruplar.items():
@@ -124,10 +132,18 @@ def _push_to_devices(
         _prune_device_tokens(tenant_id, gecersiz)
 
 
+# (P181 Bölüm 10.3) KANAL TERCIHI (göç 0055): `bildirim_mobil = false` diyen
+# kullanici FCM push ALMAZ (in-app bildirim yine yazilir — push EK gonderimdir).
+# Tercih zaten `/me/bildirim-tercihleri` ile yonetiliyor; eksik olan gonderimin
+# ONA UYMASIYDI.
+_KANAL_KOSULU = " AND u.bildirim_mobil = true"
+
+
 def _fetch_device_tokens(
     tenant_id: uuid.UUID, roles: Sequence[str]
 ) -> list[tuple[str, str]]:
-    """Hedef rollerdeki AKTIF kullanicilarin aktif cihazlari: (token, DIL).
+    """Hedef rollerdeki, MOBIL BILDIRIMI ACIK, aktif kullanicilarin aktif
+    cihazlari: (token, DIL).
 
     Kendi kisa-omurlu app_rw baglantisini acar + tenant context set eder (RLS-safe);
     boylece hem sync (scheduler) hem async cagiran icin ayni kod calisir.
@@ -140,7 +156,8 @@ def _fetch_device_tokens(
             cur.execute(
                 "SELECT d.fcm_token, d.dil FROM user_device d "
                 "JOIN app_user u ON u.id = d.user_id "
-                "WHERE d.aktif = true AND u.is_active = true AND u.role::text = ANY(%s)",
+                "WHERE d.aktif = true AND u.is_active = true AND u.role::text = ANY(%s)"
+                + _KANAL_KOSULU,
                 (list(roles),),
             )
             return [(r[0], r[1]) for r in cur.fetchall()]
@@ -149,7 +166,8 @@ def _fetch_device_tokens(
 def _fetch_device_tokens_for_users(
     tenant_id: uuid.UUID, user_ids: Sequence[uuid.UUID]
 ) -> list[tuple[str, str]]:
-    """Belirli AKTIF kullanicilarin aktif cihazlari: (token, DIL) (RLS-safe).
+    """Belirli, MOBIL BILDIRIMI ACIK, aktif kullanicilarin aktif cihazlari:
+    (token, DIL) (RLS-safe).
 
     Rol yerine kisi hedefleme: orn. talep yaniti yalniz talebi acan sakine
     gider — tenant'taki diger sakinlere sizmaz.
@@ -163,7 +181,7 @@ def _fetch_device_tokens_for_users(
                 "SELECT d.fcm_token, d.dil FROM user_device d "
                 "JOIN app_user u ON u.id = d.user_id "
                 "WHERE d.aktif = true AND u.is_active = true "
-                "AND u.id = ANY(%s::uuid[])",
+                "AND u.id = ANY(%s::uuid[])" + _KANAL_KOSULU,
                 ([str(u) for u in user_ids],),
             )
             return [(r[0], r[1]) for r in cur.fetchall()]
@@ -275,20 +293,15 @@ def notify_gecikmis_okutma(
         tenant_id, plan_id, window_id, adim, dakika,
     )
     data = {"tip": _GECIKMIS_OKUTMA, "patrol_window_id": str(window_id)}
-    # GOREVLIYE KISI OLARAK: alarmin muhatabi turu yapacak kisidir.
-    if gorevli_ids:
-        dispatch_external(
-            _GECIKMIS_OKUTMA,
-            tenant_id=tenant_id,
-            target_user_ids=list(gorevli_ids),
-            params=veri,
-            data=data,
-        )
-    # YONETIME ROL OLARAK: gorevli telefonu duymuyorsa turu baskasi
-    # devralabilsin — tek kisiye bagli alarm SESSIZ BOSLUK uretirdi.
+    # (P181 Bölüm 10.3) TEK CAGRI — kisi + rol BIRLIKTE, token bazinda dedup.
+    # GOREVLI (kisi olarak): alarmin muhatabi turu yapacak kisidir. YONETIM
+    # (rol olarak): gorevli duymuyorsa devralabilsin. Gorevli AYNI ZAMANDA
+    # yonetici ise ARTIK TEK push alir (eskiden iki ayri cagri iki bildirim
+    # duyururdu).
     dispatch_external(
         _GECIKMIS_OKUTMA,
         tenant_id=tenant_id,
+        target_user_ids=list(gorevli_ids) if gorevli_ids else None,
         target_roles=_GECIKME_ROLLERI,
         params=veri,
         data=data,
