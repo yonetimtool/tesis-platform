@@ -688,23 +688,39 @@ zaten duruyor. Prod'daki "saniyeler içinde onlarca" 15 sn aralıkla AÇIKLANMAZ
 baskın kaynak büyük olasılıkla **MOBİL** (kullanıcının kapsamı: `yonetici_home_
 screen`/`kameralar_screen` yoklama aralığı + görünürlük durdurması denetlenmeli).
 
-### 10.1 / 10.4 — mobil push + derin bağlantı + SSO (KULLANICI — Flutter)
+### 10.1 — mobil push + izin + derin bağlantı (BİTTİ — dev makinesine Flutter kuruldu)
 
-FCM gönderim tarafı (yukarıda) hazır. Mobil taraf (kullanıcının Windows'ta
-derleyeceği) — TAM talimat aşağıda:
+**Bulgu (dürüstlük):** Mobil push altyapısının ÇOĞU ZATEN vardı
+(`lib/src/features/push/`): `Firebase.initializeApp`, token kaydı (`POST /devices`),
+`requestPermission` (Android 13+ POST_NOTIFICATIONS manifest'te + iOS istemi),
+ön-plan (`onMessage`→SnackBar), arka-plan DOKUNMA (`onMessageOpenedApp`), KAPALI
+DOKUNMA (`getInitialMessage`), `routeForPushData` derin bağlantı eşlemesi. EKSİK
+olan iki şey vardı:
 
-- **10.1 arka-plan push + izin akışı:** `firebase_messaging` background handler
-  (`@pragma('vm:entry-point')` top-level fonksiyon; `FirebaseMessaging.
-  onBackgroundMessage`). İzin: iOS `requestPermission()` (provisional yerine tam);
-  Android 13+ `POST_NOTIFICATIONS` runtime izni (`permission_handler` ya da
-  firebase_messaging'in `requestPermission`'ı). Jeton `POST /devices`'a kaydedilir
-  (zaten var). Bildirime dokununca `data.tip` + `data.{patrol_window_id|
-  checkpoint_id|shift_id|...}` ile go_router derin bağlantısı — `data` alanları
-  backend'te ZATEN gönderiliyor (bkz. `notify.py`/`uzak_okutma.py`
-  `data={"tip":..., "...":...}`). iOS `FlutterDeepLinkingEnabled` + yeni
-  `CFBundleURLTypes` zaten eklendi (10.4).
-- **10.4 SSO:** iOS URL şeması EKLENDİ; APK `yayin-yap.sh` ile derlenmeli
-  (dart-define). Google callback zaten panelde (kullanıcı teyit etti).
+- **Arka-plan mesaj HANDLER'ı (`onBackgroundMessage`) YOKTU** → eklendi:
+  top-level `@pragma('vm:entry-point') firebaseMessagingBackgroundHandler` +
+  `FirebasePushMessaging.initialize()` içinde `FirebaseMessaging.onBackgroundMessage(...)`
+  kaydı (ana izolasyonda bir kez → native KALICI; kapalıyken de çalışır).
+  Handler EK bildirim GÖSTERMEZ (backend `notification` gönderir, FCM tepsiyi
+  kendi düşürür → çift olurdu); yalnız Firebase'i izolasyonda yeniden başlatıp
+  loglar; data-only mesaj ileride buraya bağlanır.
+- **`routeForPushData` DEVRİYE/VARDİYA tiplerini eşlemiyordu** (bu bildirimler
+  güvenlik/yönetici cihazlarına gidiyor ama dokununca hiçbir yere gitmiyordu) →
+  eklendi: `gecikmis_okutma`/`uzak_okutma`→`/patrol`, `kacirilan_tur`→
+  `/patrol-plans`, `vardiya_ozeti`→`/vardiyalar`.
+
+**Doğrulama (dev makinesinde Flutter 3.47.1 kuruldu):** `flutter analyze` temiz,
+`flutter test` tüm mobil paket + yeni route-mapper testleri YEŞİL, `flutter build
+apk --debug` başarılı (Gradle 9.1/AGP 9/Kotlin 2.3.20/NDK r28c). KGP uyarısı
+(flutter_web_auth_2/nfc_manager) yalnız uyarı, mevcut Flutter'da derleniyor.
+
+**CİHAZDA test (kullanıcı):** gerçek push teslimi + kilitli-ekran dokunma +
+derin bağlantı ancak gerçek cihaz + prod FCM ile doğrulanır (izole ortamda
+push gönderilemez). Yayın APK'sı `bash mobile/yayin-yap.sh apk`.
+
+### 10.4 — SSO
+- iOS URL şeması EKLENDİ; APK `yayin-yap.sh` ile derlenmeli (dart-define).
+  Google callback zaten panelde (kullanıcı teyit etti).
 
 ---
 

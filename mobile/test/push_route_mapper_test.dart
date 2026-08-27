@@ -115,6 +115,33 @@ void main() {
       );
     });
 
+    test('(Böl.10.1) devriye alarmlari -> ilgili patrol ekrani', () {
+      // Gecikmis/uzak okutma gorevliye kisi olarak → aktif tur ekrani.
+      expect(
+        routeForPushData(
+            const {'tip': 'gecikmis_okutma', 'patrol_window_id': 'w-1'}),
+        '/patrol',
+      );
+      expect(
+        routeForPushData(
+            const {'tip': 'uzak_okutma', 'checkpoint_id': 'c-1'}),
+        '/patrol',
+      );
+      // Kacirilan tur yonetime → plan genel gorunumu.
+      expect(
+        routeForPushData(
+            const {'tip': 'kacirilan_tur', 'patrol_window_id': 'w-2'}),
+        '/patrol-plans',
+      );
+    });
+
+    test('(Böl.10.2) vardiya ozeti -> vardiyalar ekrani', () {
+      expect(
+        routeForPushData(const {'tip': 'vardiya_ozeti', 'shift_id': 's-1'}),
+        '/vardiyalar',
+      );
+    });
+
     test('bilinmeyen/eksik tip -> null (yonlendirme yok)', () {
       expect(routeForPushData(const {'tip': 'bilinmeyen_tip'}), isNull);
       expect(routeForPushData(const {}), isNull);

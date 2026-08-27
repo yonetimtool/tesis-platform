@@ -193,6 +193,17 @@ String? routeForPushData(Map<String, String> data) {
           : '${AppRoutes.etkinlik}?etkinlik_id=$id';
     case 'duyuru':
       return AppRoutes.announcements;
+    // (P181 Bölüm 10.1) DEVRİYE alarmları — görevliye KİŞİ olarak gider
+    // (uzak/gecikmiş okutmayı düzeltebilecek kişi odur) → aktif tur ekranı.
+    case 'gecikmis_okutma':
+    case 'uzak_okutma':
+      return AppRoutes.patrol;
+    // Kaçırılan tur → yönetime rol olarak gider; plan/pencere genel görünümü.
+    case 'kacirilan_tur':
+      return AppRoutes.patrolPlans;
+    // (P181 Bölüm 10.2) Vardiya sonu özeti → yönetime; vardiyalar ekranı.
+    case 'vardiya_ozeti':
+      return AppRoutes.vardiyalar;
     default:
       return null;
   }

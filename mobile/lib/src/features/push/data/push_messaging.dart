@@ -6,6 +6,29 @@ import 'package:flutter/foundation.dart';
 
 import '../domain/push_models.dart';
 
+/// (P181 Bölüm 10.1) ARKA PLAN mesaj handler'ı — uygulama ARKA PLANDA veya
+/// TAMAMEN KAPALIYKEN gelen FCM mesajı için çağrılır.
+///
+/// AYRI İZOLASYON: Bu fonksiyon uygulamanın ana izolasyonunda DEĞİL, plugin'in
+/// yeniden başlattığı bir arka-plan izolasyonunda koşar → Firebase burada
+/// TEKRAR başlatılmalı ve TOP-LEVEL + `@pragma('vm:entry-point')` olmalı
+/// (native taraf bu giriş noktasını çağırır; kapalıyken de çalışsın diye).
+///
+/// EK BİLDİRİM GÖSTERMEZ: backend `notification` (başlık+gövde) + `data`
+/// gönderir; FCM tepsi bildirimini KENDİSİ düşürür. Burada ikinci bir bildirim
+/// göstermek ÇİFT bildirim olurdu. Dokunma → yönlendirme ana izolasyonda
+/// `onMessageOpenedApp`/`getInitialMessage` ile yapılır (bkz. PushRegistrar).
+/// Data-ONLY mesaj ileride eklenirse işlenecek yer burasıdır.
+@pragma('vm:entry-point')
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  try {
+    await Firebase.initializeApp();
+    debugPrint('BG push: tip=${message.data['tip']}');
+  } catch (e) {
+    debugPrint('BG push handler hatası (yutuldu): $e');
+  }
+}
+
 /// Firebase katmanina acilan dar kapi. [PushRegistrar] yalniz bu arayuzu
 /// gorur; testlerde sahtelenir, gercekte [FirebasePushMessaging] calisir.
 abstract class PushMessaging {
@@ -46,6 +69,11 @@ class FirebasePushMessaging implements PushMessaging {
     if (_initialized) return true;
     try {
       await Firebase.initializeApp();
+      // (P181 Bölüm 10.1) ARKA PLAN handler'ını KAYDET — ana izolasyonda bir
+      // kez çağrılır, native tarafta KALICI olur (uygulama kapalıyken de gelen
+      // mesajda plugin bu giriş noktasını çağırır). Firebase yapılandırılmamış
+      // build'de buraya HİÇ ulaşılmaz (üstteki initializeApp fırlatır).
+      FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
       _initialized = true;
       return true;
     } catch (e) {
