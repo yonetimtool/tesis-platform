@@ -1676,5 +1676,16 @@
       }
     }
   },
-  "kabukKisayollar": "الاختصارات"
+  "kabukKisayollar": "الاختصارات",
+  "ayarlarBildirimlerBaslik": "الإشعارات",
+  "ayarlarBildirimTercih": "تفضيلات الإشعارات",
+  "ayarlarBildirimAciklama": "اختر القنوات التي تصلك منها الإشعارات التشغيلية. هذا منفصل عن موافقة التسويق.",
+  "ayarlarBildirimEposta": "إشعارات البريد الإلكتروني",
+  "ayarlarBildirimSms": "إشعارات الرسائل النصية",
+  "ayarlarBildirimMobil": "الإشعارات على الجوال",
+  "ayarlarBildirimKaydedildi": "تم تحديث تفضيل الإشعارات",
+  "ayarlarBildirimYuklenemedi": "تعذّر تحميل تفضيلات الإشعارات",
+  "ayarlarBildirimIzinKapali": "إذن الإشعارات على الجهاز مغلق. لن تظهر إشعارات الجوال على الهاتف؛ فعّله من إعدادات الجهاز.",
+  "ayarlarBildirimIzinBelirsiz": "يلزم إذن لعرض الإشعارات.",
+  "ayarlarBildirimIzinIste": "طلب الإذن"
 }

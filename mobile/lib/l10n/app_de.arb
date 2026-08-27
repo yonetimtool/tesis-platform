@@ -1676,5 +1676,16 @@
       }
     }
   },
-  "kabukKisayollar": "Verknuepfungen"
+  "kabukKisayollar": "Verknuepfungen",
+  "ayarlarBildirimlerBaslik": "Benachrichtigungen",
+  "ayarlarBildirimTercih": "Benachrichtigungseinstellungen",
+  "ayarlarBildirimAciklama": "Wählen Sie, über welche Kanäle Sie betriebliche Benachrichtigungen erhalten. Dies ist von der Marketingeinwilligung getrennt.",
+  "ayarlarBildirimEposta": "E-Mail-Benachrichtigungen",
+  "ayarlarBildirimSms": "SMS-Benachrichtigungen",
+  "ayarlarBildirimMobil": "Mobile Benachrichtigungen",
+  "ayarlarBildirimKaydedildi": "Benachrichtigungseinstellung aktualisiert",
+  "ayarlarBildirimYuklenemedi": "Benachrichtigungseinstellungen konnten nicht geladen werden",
+  "ayarlarBildirimIzinKapali": "Die Benachrichtigungsberechtigung des Geräts ist aus. Mobile Benachrichtigungen erscheinen nicht auf dem Telefon; aktivieren Sie sie in den Geräteeinstellungen.",
+  "ayarlarBildirimIzinBelirsiz": "Zum Anzeigen von Benachrichtigungen ist eine Berechtigung erforderlich.",
+  "ayarlarBildirimIzinIste": "Berechtigung anfordern"
 }

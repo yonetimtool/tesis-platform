@@ -5422,4 +5422,39 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get kabukKisayollar => 'الاختصارات';
+
+  @override
+  String get ayarlarBildirimlerBaslik => 'الإشعارات';
+
+  @override
+  String get ayarlarBildirimTercih => 'تفضيلات الإشعارات';
+
+  @override
+  String get ayarlarBildirimAciklama =>
+      'اختر القنوات التي تصلك منها الإشعارات التشغيلية. هذا منفصل عن موافقة التسويق.';
+
+  @override
+  String get ayarlarBildirimEposta => 'إشعارات البريد الإلكتروني';
+
+  @override
+  String get ayarlarBildirimSms => 'إشعارات الرسائل النصية';
+
+  @override
+  String get ayarlarBildirimMobil => 'الإشعارات على الجوال';
+
+  @override
+  String get ayarlarBildirimKaydedildi => 'تم تحديث تفضيل الإشعارات';
+
+  @override
+  String get ayarlarBildirimYuklenemedi => 'تعذّر تحميل تفضيلات الإشعارات';
+
+  @override
+  String get ayarlarBildirimIzinKapali =>
+      'إذن الإشعارات على الجهاز مغلق. لن تظهر إشعارات الجوال على الهاتف؛ فعّله من إعدادات الجهاز.';
+
+  @override
+  String get ayarlarBildirimIzinBelirsiz => 'يلزم إذن لعرض الإشعارات.';
+
+  @override
+  String get ayarlarBildirimIzinIste => 'طلب الإذن';
 }

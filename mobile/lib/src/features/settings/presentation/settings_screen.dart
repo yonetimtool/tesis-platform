@@ -22,6 +22,9 @@ import '../../../core/theme/home_tokens.dart';
 import '../../../core/ui/merkez_diyalog.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../../profile/data/profile_api.dart';
+import '../../push/domain/push_models.dart';
+import '../../push/presentation/push_registrar.dart';
+import '../data/bildirim_tercih_api.dart';
 
 /// Ayarlar — kullanici tercihleri (DIL + tema modu) + yonetici'ye ozel tesis
 /// adlandirmasi. Iki tercih de kalicidir (guvenli depo) ve ANINDA uygulanir;
@@ -145,6 +148,16 @@ class SettingsScreen extends ConsumerWidget {
               ),
             ),
           ),
+          const SizedBox(height: 24),
+          // ----------------------- BILDIRIMLER (P183 §5) ---------------- #
+          // Isleyis bildirimlerinin KANAL tercihleri (goc 0055) + cihaz
+          // bildirim izni durumu. KVKK pazarlama rizasindan AYRI kart:
+          // biri riza, oteki kullanim tercihi (ikisi karisirsa kullanici
+          // "hepsini kapattim" sanip aidat bildirimini de kaybeder).
+          Text(l10n.ayarlarBildirimlerBaslik,
+              style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 8),
+          const _BildirimKarti(),
           const SizedBox(height: 24),
           // -------------------- IZINLER + AYDINLATMA (P36) -------------- #
           // Listenin SONUNDA: gorunum/dil gunluk ayarlardir, izinler nadiren
@@ -741,5 +754,180 @@ class _YasalKarti extends StatelessWidget {
       mode: LaunchMode.externalApplication,
     ).catchError((_) => false);
     if (!acildi) messenger.showSnackBar(SnackBar(content: Text(mesaj)));
+  }
+}
+
+/// (P183 §5) BILDIRIM tercihleri karti — uc kanal (e-posta/SMS/mobil) sunucu
+/// tercihi + CIHAZ bildirim izni durumu. Mobil kanal ACIK ama cihaz izni
+/// KAPALIYSA kullanici uyarilir (yoksa "actim ama bildirim gelmiyor" kafa
+/// karisikligi olur). Kanal tercihi ile uygulama ici bildirim LISTESI
+/// birbirinden bagimsizdir — kapatmak yalniz PUSH'u durdurur.
+class _BildirimKarti extends ConsumerStatefulWidget {
+  const _BildirimKarti();
+
+  @override
+  ConsumerState<_BildirimKarti> createState() => _BildirimKartiState();
+}
+
+class _BildirimKartiState extends ConsumerState<_BildirimKarti> {
+  @override
+  void initState() {
+    super.initState();
+    // Cihaz izni kullanici cihaz ayarlarindan degismis olabilir → istem
+    // GOSTERMEDEN tazele (kart her acilista guncel durumu gostersin).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(pushRegistrarProvider.notifier).izinDurumunuTazele();
+      }
+    });
+  }
+
+  Future<void> _kaydet({bool? eposta, bool? sms, bool? mobil}) async {
+    final l10n = context.l10n;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await ref
+          .read(bildirimTercihApiProvider)
+          .guncelle(eposta: eposta, sms: sms, mobil: mobil);
+      ref.invalidate(bildirimTercihProvider);
+      if (mounted) {
+        messenger.showSnackBar(
+          SnackBar(content: Text(l10n.ayarlarBildirimKaydedildi)),
+        );
+      }
+    } on ApiException catch (e) {
+      if (mounted) {
+        messenger
+            .showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
+      }
+    } catch (_) {
+      if (mounted) {
+        messenger.showSnackBar(
+          SnackBar(content: Text(l10n.ortakBeklenmeyenHata)),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final tercihAsync = ref.watch(bildirimTercihProvider);
+    final tercih = tercihAsync.value;
+    final pushState = ref.watch(pushRegistrarProvider);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.ayarlarBildirimTercih,
+                style: const TextStyle(fontWeight: FontWeight.w600)),
+            const SizedBox(height: 4),
+            Text(
+              l10n.ayarlarBildirimAciklama,
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 8),
+            if (tercih == null)
+              tercihAsync.when(
+                loading: () => const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+                error: (_, _) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Text(l10n.ayarlarBildirimYuklenemedi,
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.error)),
+                ),
+                data: (_) => const SizedBox.shrink(),
+              )
+            else ...[
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(l10n.ayarlarBildirimEposta),
+                value: tercih.eposta,
+                onChanged: (v) => _kaydet(eposta: v),
+              ),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(l10n.ayarlarBildirimSms),
+                value: tercih.sms,
+                onChanged: (v) => _kaydet(sms: v),
+              ),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(l10n.ayarlarBildirimMobil),
+                value: tercih.mobil,
+                onChanged: (v) => _kaydet(mobil: v),
+              ),
+              // CIHAZ izni uyarisi: mobil kanal ACIK ama OS izni yoksa push
+              // telefona dusmez — bunu goster (aksi halde sessiz basarisizlik).
+              if (tercih.mobil)
+                _IzinUyarisi(durum: pushState.durum, izin: pushState.izinDurumu),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// (P183 §2) Cihaz bildirim izni uyarisi. Yalniz SORUN varken cizilir
+/// (reddedildi/belirsiz). Belirsizde "Izin iste" dugmesi sistem istemini
+/// acar; reddedildide (iOS'ta istem cikmaz) cihaz ayarlarina yonlendirir.
+class _IzinUyarisi extends ConsumerWidget {
+  const _IzinUyarisi({required this.durum, required this.izin});
+
+  final PushDurum durum;
+  final PushIzinDurumu izin;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Push devre disi (Firebase yok) ya da izin zaten var/okunamiyor → uyarma.
+    if (durum == PushDurum.devreDisi) return const SizedBox.shrink();
+    if (izin != PushIzinDurumu.reddedildi && izin != PushIzinDurumu.belirsiz) {
+      return const SizedBox.shrink();
+    }
+    final l10n = context.l10n;
+    final renk = Theme.of(context).colorScheme.error;
+    final belirsiz = izin == PushIzinDurumu.belirsiz;
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.notifications_off_outlined, size: 18, color: renk),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  belirsiz
+                      ? l10n.ayarlarBildirimIzinBelirsiz
+                      : l10n.ayarlarBildirimIzinKapali,
+                  style: TextStyle(fontSize: 12, color: renk),
+                ),
+                if (belirsiz)
+                  Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: TextButton(
+                      onPressed: () =>
+                          ref.read(pushRegistrarProvider.notifier).izinIste(),
+                      child: Text(l10n.ayarlarBildirimIzinIste),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

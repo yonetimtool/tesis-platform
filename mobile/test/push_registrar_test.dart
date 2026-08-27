@@ -25,6 +25,9 @@ class _FakeMessaging implements PushMessaging {
   int initCalls = 0;
   int permissionCalls = 0;
   int getTokenCalls = 0;
+  int izinDurumuCalls = 0;
+  // (P183 §2) requestPermission/izinDurumu'nun donecegi durum (test ayarlar).
+  PushIzinDurumu izinSonuc = PushIzinDurumu.verildi;
 
   final tokenRefresh = StreamController<String>.broadcast();
   final foreground = StreamController<PushMessageEvent>.broadcast();
@@ -40,7 +43,16 @@ class _FakeMessaging implements PushMessaging {
   }
 
   @override
-  Future<void> requestPermission() async => permissionCalls++;
+  Future<PushIzinDurumu> requestPermission() async {
+    permissionCalls++;
+    return izinSonuc;
+  }
+
+  @override
+  Future<PushIzinDurumu> izinDurumu() async {
+    izinDurumuCalls++;
+    return izinSonuc;
+  }
 
   @override
   Future<String?> getToken() async {
@@ -505,5 +517,60 @@ void main() {
     expect(const PushMessageEvent().displayText, isEmpty);
     expect(const PushMessageEvent(title: 'Baslik').displayText, 'Baslik');
     expect(const PushMessageEvent(body: 'Govde').displayText, 'Govde');
+  });
+
+  // ----------------------- (P183 §2) IZIN DURUMU -------------------------- #
+
+  test('login sonrasi IZIN DURUMU state\'e yansir (Ayarlar gorebilsin)',
+      () async {
+    messaging.izinSonuc = PushIzinDurumu.verildi;
+    final container = await loginAndRegister();
+    expect(container.read(pushRegistrarProvider).izinDurumu,
+        PushIzinDurumu.verildi);
+  });
+
+  test('IZIN REDDEDILSE de token yine kaydedilir (akis durmaz)', () async {
+    // Kullanici izni reddetse bile token alinir: sonra izin verirse hazir
+    // olsun + backend kanal kapisi zaten push'u ayrica denetler.
+    messaging.izinSonuc = PushIzinDurumu.reddedildi;
+    final container = await loginAndRegister();
+    expect(api.registered, hasLength(1));
+    expect(container.read(pushRegistrarProvider).izinDurumu,
+        PushIzinDurumu.reddedildi);
+  });
+
+  test('izinDurumunuTazele: istem GOSTERMEDEN durumu gunceller', () async {
+    final container = await loginAndRegister();
+    final oncekiIzinIstem = messaging.permissionCalls;
+    messaging.izinSonuc = PushIzinDurumu.reddedildi;
+    await container.read(pushRegistrarProvider.notifier).izinDurumunuTazele();
+    // requestPermission DEGIL izinDurumu cagrilir (istem cikmaz).
+    expect(messaging.permissionCalls, oncekiIzinIstem);
+    expect(messaging.izinDurumuCalls, greaterThan(0));
+    expect(container.read(pushRegistrarProvider).izinDurumu,
+        PushIzinDurumu.reddedildi);
+  });
+
+  test('izinIste: izin verilince token da kaydedilir', () async {
+    // Once belirsiz baslayip (izin reddedilmis gibi) sonra kullanici
+    // "Izin iste" ile verirse token backend'e gitsin.
+    final container = makeContainer();
+    container.read(pushSetupProvider);
+    messaging.izinSonuc = PushIzinDurumu.belirsiz;
+    await container.read(authControllerProvider.notifier).loginPhone(
+          phone: '+905321112203',
+          password: 'p',
+        );
+    await waitFor(() =>
+        container.read(pushRegistrarProvider).izinDurumu ==
+        PushIzinDurumu.belirsiz);
+    final oncekiKayit = api.registered.length;
+
+    messaging.izinSonuc = PushIzinDurumu.verildi;
+    await container.read(pushRegistrarProvider.notifier).izinIste();
+
+    expect(container.read(pushRegistrarProvider).izinDurumu,
+        PushIzinDurumu.verildi);
+    expect(api.registered.length, greaterThan(oncekiKayit));
   });
 }

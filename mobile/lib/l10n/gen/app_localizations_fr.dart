@@ -5323,4 +5323,42 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get kabukKisayollar => 'Raccourcis';
+
+  @override
+  String get ayarlarBildirimlerBaslik => 'Notifications';
+
+  @override
+  String get ayarlarBildirimTercih => 'Préférences de notification';
+
+  @override
+  String get ayarlarBildirimAciklama =>
+      'Choisissez les canaux par lesquels vous recevez les notifications opérationnelles. C\'est distinct du consentement marketing.';
+
+  @override
+  String get ayarlarBildirimEposta => 'Notifications par e-mail';
+
+  @override
+  String get ayarlarBildirimSms => 'Notifications par SMS';
+
+  @override
+  String get ayarlarBildirimMobil => 'Notifications mobiles';
+
+  @override
+  String get ayarlarBildirimKaydedildi =>
+      'Préférence de notification mise à jour';
+
+  @override
+  String get ayarlarBildirimYuklenemedi =>
+      'Impossible de charger les préférences de notification';
+
+  @override
+  String get ayarlarBildirimIzinKapali =>
+      'L\'autorisation de notification de l\'appareil est désactivée. Les notifications mobiles n\'apparaîtront pas sur le téléphone ; activez-la dans les réglages de l\'appareil.';
+
+  @override
+  String get ayarlarBildirimIzinBelirsiz =>
+      'Une autorisation est nécessaire pour afficher les notifications.';
+
+  @override
+  String get ayarlarBildirimIzinIste => 'Demander l\'autorisation';
 }

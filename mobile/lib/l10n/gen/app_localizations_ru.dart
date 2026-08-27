@@ -5419,4 +5419,41 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get kabukKisayollar => 'Ярлыки';
+
+  @override
+  String get ayarlarBildirimlerBaslik => 'Уведомления';
+
+  @override
+  String get ayarlarBildirimTercih => 'Настройки уведомлений';
+
+  @override
+  String get ayarlarBildirimAciklama =>
+      'Выберите, по каким каналам получать рабочие уведомления. Это отдельно от согласия на маркетинг.';
+
+  @override
+  String get ayarlarBildirimEposta => 'Уведомления по эл. почте';
+
+  @override
+  String get ayarlarBildirimSms => 'SMS-уведомления';
+
+  @override
+  String get ayarlarBildirimMobil => 'Мобильные уведомления';
+
+  @override
+  String get ayarlarBildirimKaydedildi => 'Настройка уведомлений обновлена';
+
+  @override
+  String get ayarlarBildirimYuklenemedi =>
+      'Не удалось загрузить настройки уведомлений';
+
+  @override
+  String get ayarlarBildirimIzinKapali =>
+      'Разрешение на уведомления на устройстве отключено. Мобильные уведомления не будут отображаться на телефоне; включите их в настройках устройства.';
+
+  @override
+  String get ayarlarBildirimIzinBelirsiz =>
+      'Для показа уведомлений нужно разрешение.';
+
+  @override
+  String get ayarlarBildirimIzinIste => 'Запросить разрешение';
 }

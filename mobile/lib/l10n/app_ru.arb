@@ -1676,5 +1676,16 @@
       }
     }
   },
-  "kabukKisayollar": "Ярлыки"
+  "kabukKisayollar": "Ярлыки",
+  "ayarlarBildirimlerBaslik": "Уведомления",
+  "ayarlarBildirimTercih": "Настройки уведомлений",
+  "ayarlarBildirimAciklama": "Выберите, по каким каналам получать рабочие уведомления. Это отдельно от согласия на маркетинг.",
+  "ayarlarBildirimEposta": "Уведомления по эл. почте",
+  "ayarlarBildirimSms": "SMS-уведомления",
+  "ayarlarBildirimMobil": "Мобильные уведомления",
+  "ayarlarBildirimKaydedildi": "Настройка уведомлений обновлена",
+  "ayarlarBildirimYuklenemedi": "Не удалось загрузить настройки уведомлений",
+  "ayarlarBildirimIzinKapali": "Разрешение на уведомления на устройстве отключено. Мобильные уведомления не будут отображаться на телефоне; включите их в настройках устройства.",
+  "ayarlarBildirimIzinBelirsiz": "Для показа уведомлений нужно разрешение.",
+  "ayarlarBildirimIzinIste": "Запросить разрешение"
 }

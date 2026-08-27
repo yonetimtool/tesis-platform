@@ -21,6 +21,9 @@ import 'package:mobile/src/core/error/api_exception.dart';
 import 'package:mobile/src/core/i18n/locale_controller.dart';
 import 'package:mobile/src/features/auth/data/current_user_provider.dart';
 import 'package:mobile/src/features/auth/domain/user_role.dart';
+import 'package:mobile/src/features/push/presentation/push_registrar.dart';
+import 'package:mobile/src/features/settings/data/bildirim_tercih_api.dart';
+import 'package:mobile/src/features/settings/domain/bildirim_tercihleri.dart';
 import 'package:mobile/src/features/settings/presentation/settings_screen.dart';
 import 'package:mobile/src/features/tasks/data/task_category_api.dart';
 import 'package:mobile/src/features/tasks/domain/task_category_models.dart';
@@ -29,6 +32,7 @@ import 'package:mobile/src/features/tenant/data/tenant_api.dart';
 import 'package:mobile/src/features/tenant/domain/tenant_models.dart';
 
 import 'helpers/l10n_test_app.dart';
+import 'helpers/push_test_fakes.dart';
 
 class _SahteTenantApi extends TenantApi {
   _SahteTenantApi({this.hata}) : super(Dio());
@@ -83,9 +87,36 @@ Widget _ayarlar({
   overrides: [
     currentUserRoleProvider.overrideWith((ref) async => rol),
     tenantApiProvider.overrideWithValue(tenant ?? _SahteTenantApi()),
+    ...bildirimTestOverrides(),
   ],
   child: l10nApp(const SettingsScreen(), locale: const Locale('tr')),
 );
+
+/// Bildirim kanal tercihi cagrilarini kaydeden sahte API.
+class _SahteBildirimApi extends BildirimTercihApi {
+  _SahteBildirimApi(this._t) : super(Dio());
+  BildirimTercihleri _t;
+  final cagrilar = <({bool? eposta, bool? sms, bool? mobil})>[];
+
+  @override
+  Future<BildirimTercihleri> getir() async => _t;
+
+  @override
+  Future<BildirimTercihleri> guncelle({bool? eposta, bool? sms, bool? mobil}) async {
+    cagrilar.add((eposta: eposta, sms: sms, mobil: mobil));
+    _t = _t.copyWith(eposta: eposta, sms: sms, mobil: mobil);
+    return _t;
+  }
+}
+
+Widget _bildirimAyarlar(_SahteBildirimApi api) => ProviderScope(
+      overrides: [
+        currentUserRoleProvider.overrideWith((ref) async => UserRole.resident),
+        pushMessagingProvider.overrideWithValue(SahtePushMessaging()),
+        bildirimTercihApiProvider.overrideWithValue(api),
+      ],
+      child: l10nApp(const SettingsScreen(), locale: const Locale('tr')),
+    );
 
 Widget _kategoriler(_SahteKategoriApi api) => ProviderScope(
   overrides: [taskCategoryApiProvider.overrideWithValue(api)],
@@ -220,6 +251,32 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(SnackBar), findsOneWidget);
       expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('Ayarlar — bildirim tercihleri (P183 §5)', () {
+    testWidgets('MOBIL kanali kapatinca PATCH mobil:false gonderilir', (
+      tester,
+    ) async {
+      // Uzun tuval: bildirim karti listenin ortasinda (tembel ListView).
+      tester.view.physicalSize = const Size(430, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      final api = _SahteBildirimApi(
+        const BildirimTercihleri(eposta: true, sms: true, mobil: true),
+      );
+      await tester.pumpWidget(_bildirimAyarlar(api));
+      await tester.pumpAndSettle();
+
+      // Mobil satirina dokun (SwitchListTile tile'i toggle eder).
+      await tester.tap(find.text('Mobil bildirimler'));
+      await tester.pumpAndSettle();
+
+      // KISMI PATCH: yalniz mobil kanali (oteki iki alan null).
+      expect(api.cagrilar, hasLength(1));
+      expect(api.cagrilar.single.mobil, false);
+      expect(api.cagrilar.single.eposta, isNull);
+      expect(api.cagrilar.single.sms, isNull);
     });
   });
 

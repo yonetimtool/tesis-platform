@@ -26,6 +26,7 @@ import 'package:mobile/src/features/tenant/data/tenant_api.dart';
 import 'package:mobile/src/features/tenant/domain/tenant_models.dart';
 
 import 'helpers/l10n_test_app.dart';
+import 'helpers/push_test_fakes.dart';
 
 class _SahteTenantApi extends TenantApi {
   _SahteTenantApi() : super(Dio());
@@ -67,6 +68,7 @@ Widget _ayarlar({
         currentUserRoleProvider.overrideWith((ref) async => rol),
         tenantApiProvider.overrideWithValue(_SahteTenantApi()),
         if (profil != null) profileApiProvider.overrideWithValue(profil),
+        ...bildirimTestOverrides(),
       ],
       child: l10nApp(const SettingsScreen(), locale: const Locale('tr')),
     );

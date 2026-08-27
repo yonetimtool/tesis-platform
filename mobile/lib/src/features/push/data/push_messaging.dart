@@ -37,9 +37,14 @@ abstract class PushMessaging {
   /// kalir, uygulama normal calisir.
   Future<bool> initialize();
 
-  /// Android 13+ bildirim izni istemi (POST_NOTIFICATIONS). Reddedilse de
-  /// akis durmaz — token yine alinir, yalniz bildirim gosterilmez.
-  Future<void> requestPermission();
+  /// Android 13+ bildirim izni istemi (POST_NOTIFICATIONS) + iOS istemi.
+  /// Reddedilse de akis durmaz — token yine alinir, yalniz bildirim
+  /// gosterilmez. Sonuc [PushIzinDurumu] olarak doner (UI'da gorunur).
+  Future<PushIzinDurumu> requestPermission();
+
+  /// (P183 §2) Mevcut izin durumunu ISTEM GOSTERMEDEN okur (Ayarlar ekrani
+  /// acilisinda tazelemek icin). Okunamazsa [PushIzinDurumu.bilinmiyor].
+  Future<PushIzinDurumu> izinDurumu();
 
   /// Cihazin guncel FCM kayit token'i (alinamazsa null).
   Future<String?> getToken();
@@ -85,11 +90,37 @@ class FirebasePushMessaging implements PushMessaging {
   }
 
   @override
-  Future<void> requestPermission() async {
+  Future<PushIzinDurumu> requestPermission() async {
     try {
-      await FirebaseMessaging.instance.requestPermission();
+      final ayarlar = await FirebaseMessaging.instance.requestPermission();
+      return _izne(ayarlar.authorizationStatus);
     } catch (e) {
       debugPrint('Bildirim izni istenemedi: $e');
+      return PushIzinDurumu.bilinmiyor;
+    }
+  }
+
+  @override
+  Future<PushIzinDurumu> izinDurumu() async {
+    try {
+      final ayarlar = await FirebaseMessaging.instance.getNotificationSettings();
+      return _izne(ayarlar.authorizationStatus);
+    } catch (e) {
+      debugPrint('Bildirim izni okunamadi: $e');
+      return PushIzinDurumu.bilinmiyor;
+    }
+  }
+
+  static PushIzinDurumu _izne(AuthorizationStatus s) {
+    switch (s) {
+      case AuthorizationStatus.authorized:
+        return PushIzinDurumu.verildi;
+      case AuthorizationStatus.denied:
+        return PushIzinDurumu.reddedildi;
+      case AuthorizationStatus.provisional:
+        return PushIzinDurumu.kismi;
+      case AuthorizationStatus.notDetermined:
+        return PushIzinDurumu.belirsiz;
     }
   }
 

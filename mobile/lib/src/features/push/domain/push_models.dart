@@ -15,6 +15,28 @@ enum PushDurum {
   hazir,
 }
 
+/// (P183 §2) CIHAZ bildirim izninin durumu (OS katmani; sunucu tercihi
+/// `bildirim_mobil`den AYRIDIR). Ayarlar ekraninda gorunur — izin kapaliysa
+/// sunucu tercihi acik olsa bile bildirim tepsiye DUSMEZ, kullanici bunu
+/// gorebilmeli. FCM `AuthorizationStatus`in sade karsiligidir.
+enum PushIzinDurumu {
+  /// Henuz sorulmadi (iOS notDetermined). Istem gosterilebilir.
+  belirsiz,
+
+  /// Verildi (authorized).
+  verildi,
+
+  /// Reddedildi (denied). iOS'ta yeniden istem CIKMAZ — cihaz ayarlarindan
+  /// acilir; UI kullaniciyi buna yonlendirir.
+  reddedildi,
+
+  /// Kismi / sessiz (iOS provisional): bildirim sessizce gelir.
+  kismi,
+
+  /// Durum okunamadi (Firebase devre disi / platform hatasi).
+  bilinmiyor,
+}
+
 /// On planda yakalanan tek bir push mesaji (FCM notification blogu + data).
 class PushMessageEvent {
   const PushMessageEvent({this.title, this.body, this.data = const {}});
@@ -38,6 +60,7 @@ class PushMessageEvent {
 class PushState {
   const PushState({
     this.durum = PushDurum.baslatilmadi,
+    this.izinDurumu = PushIzinDurumu.belirsiz,
     this.kayitliToken,
     this.kayitliDil,
     this.sonBildirim,
@@ -45,6 +68,10 @@ class PushState {
   });
 
   final PushDurum durum;
+
+  /// (P183 §2) CIHAZ bildirim izni — Ayarlar ekraninda gosterilir. Reddedilmis
+  /// veya belirsizse kullanici uyarilir/istem sunulur (bkz. PushRegistrar).
+  final PushIzinDurumu izinDurumu;
 
   /// Backend'e en son basariyla kaydedilen FCM token (yoksa null).
   final String? kayitliToken;
@@ -64,6 +91,7 @@ class PushState {
 
   PushState copyWith({
     PushDurum? durum,
+    PushIzinDurumu? izinDurumu,
     Object? kayitliToken = _sentinel,
     Object? kayitliDil = _sentinel,
     Object? sonBildirim = _sentinel,
@@ -71,6 +99,7 @@ class PushState {
   }) {
     return PushState(
       durum: durum ?? this.durum,
+      izinDurumu: izinDurumu ?? this.izinDurumu,
       kayitliToken: kayitliToken == _sentinel
           ? this.kayitliToken
           : kayitliToken as String?,

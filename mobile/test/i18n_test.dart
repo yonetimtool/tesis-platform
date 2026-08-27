@@ -16,6 +16,7 @@ import 'package:mobile/src/features/cameras/presentation/kamera_form_sheet.dart'
 import 'package:mobile/src/features/settings/presentation/settings_screen.dart';
 
 import 'helpers/l10n_test_app.dart';
+import 'helpers/push_test_fakes.dart';
 
 /// Bellekte kalan sahte guvenli depo — dil tercihinin KALICILIGINI test eder
 /// ("uygulama yeniden basladi" = yeni ProviderContainer, AYNI depo).
@@ -330,6 +331,7 @@ void main() {
       await tester.pumpWidget(ProviderScope(
         overrides: [
           secureStorageProvider.overrideWithValue(_BellekDepo()),
+          ...bildirimTestOverrides(),
         ],
         child: l10nApp(const SettingsScreen(), locale: const Locale('ar')),
       ));

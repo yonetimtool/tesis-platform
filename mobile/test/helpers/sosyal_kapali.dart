@@ -13,7 +13,6 @@
 /// bugunku gibi gorunmeli.
 library;
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/src/features/auth/data/auth_repository_impl.dart';
 import 'package:mobile/src/features/auth/domain/oauth_repository.dart';
 import 'package:mobile/src/features/auth/domain/oauth_sonuc.dart';

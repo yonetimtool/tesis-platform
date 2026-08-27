@@ -6,7 +6,6 @@ import 'package:mobile/src/core/error/api_exception.dart';
 import 'package:mobile/src/features/auth/data/auth_api.dart';
 import 'package:mobile/src/features/auth/data/auth_repository_impl.dart';
 import 'package:mobile/src/features/auth/domain/auth_repository.dart';
-import 'package:mobile/src/features/auth/presentation/auth_controller.dart';
 import 'package:mobile/src/features/auth/presentation/davet_screen.dart';
 
 import 'helpers/l10n_test_app.dart';

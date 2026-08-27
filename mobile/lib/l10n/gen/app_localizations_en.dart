@@ -5348,4 +5348,41 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get kabukKisayollar => 'Shortcuts';
+
+  @override
+  String get ayarlarBildirimlerBaslik => 'Notifications';
+
+  @override
+  String get ayarlarBildirimTercih => 'Notification preferences';
+
+  @override
+  String get ayarlarBildirimAciklama =>
+      'Choose which channels send you operational notifications. This is separate from marketing consent.';
+
+  @override
+  String get ayarlarBildirimEposta => 'Email notifications';
+
+  @override
+  String get ayarlarBildirimSms => 'SMS notifications';
+
+  @override
+  String get ayarlarBildirimMobil => 'Mobile notifications';
+
+  @override
+  String get ayarlarBildirimKaydedildi => 'Notification preference updated';
+
+  @override
+  String get ayarlarBildirimYuklenemedi =>
+      'Could not load notification preferences';
+
+  @override
+  String get ayarlarBildirimIzinKapali =>
+      'Device notification permission is off. Mobile notifications will not appear on the phone; enable it in device settings.';
+
+  @override
+  String get ayarlarBildirimIzinBelirsiz =>
+      'Permission is needed to show notifications.';
+
+  @override
+  String get ayarlarBildirimIzinIste => 'Request permission';
 }

@@ -9124,6 +9124,72 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Kısayollar'**
   String get kabukKisayollar;
+
+  /// No description provided for @ayarlarBildirimlerBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bildirimler'**
+  String get ayarlarBildirimlerBaslik;
+
+  /// No description provided for @ayarlarBildirimTercih.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bildirim tercihleri'**
+  String get ayarlarBildirimTercih;
+
+  /// No description provided for @ayarlarBildirimAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hangi kanallardan işleyiş bildirimi almak istediğinizi seçin. Bu, pazarlama izinlerinden ayrıdır.'**
+  String get ayarlarBildirimAciklama;
+
+  /// No description provided for @ayarlarBildirimEposta.
+  ///
+  /// In tr, this message translates to:
+  /// **'E-posta bildirimleri'**
+  String get ayarlarBildirimEposta;
+
+  /// No description provided for @ayarlarBildirimSms.
+  ///
+  /// In tr, this message translates to:
+  /// **'SMS bildirimleri'**
+  String get ayarlarBildirimSms;
+
+  /// No description provided for @ayarlarBildirimMobil.
+  ///
+  /// In tr, this message translates to:
+  /// **'Mobil bildirimler'**
+  String get ayarlarBildirimMobil;
+
+  /// No description provided for @ayarlarBildirimKaydedildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bildirim tercihi güncellendi'**
+  String get ayarlarBildirimKaydedildi;
+
+  /// No description provided for @ayarlarBildirimYuklenemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bildirim tercihleri yüklenemedi'**
+  String get ayarlarBildirimYuklenemedi;
+
+  /// No description provided for @ayarlarBildirimIzinKapali.
+  ///
+  /// In tr, this message translates to:
+  /// **'Cihaz bildirim izni kapalı. Mobil bildirimler telefonda görünmez; cihaz ayarlarından açın.'**
+  String get ayarlarBildirimIzinKapali;
+
+  /// No description provided for @ayarlarBildirimIzinBelirsiz.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bildirimleri görmek için izin gerekiyor.'**
+  String get ayarlarBildirimIzinBelirsiz;
+
+  /// No description provided for @ayarlarBildirimIzinIste.
+  ///
+  /// In tr, this message translates to:
+  /// **'İzin iste'**
+  String get ayarlarBildirimIzinIste;
 }
 
 class _AppLocalizationsDelegate

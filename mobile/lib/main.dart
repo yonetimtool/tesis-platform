@@ -76,13 +76,23 @@ class TesisGuvenlikApp extends ConsumerWidget {
     });
 
     // Tepsideki bildirime tiklama (arka plan/kapali) → ilgili ekran.
-    // Bilinmeyen tip'te yonlendirme yapilmaz. Oturum yoksa router redirect
+    // Bilinmeyen tip'te yonlendirme yapilmaz (uygulama oldugu yerde kalir;
+    // soguk baslatmada bu zaten ana ekrandir). Oturum yoksa router redirect
     // login'e dusurur (hedef korunmaz — bilinen kisit, giriste ana ekran).
     ref.listen(pushRegistrarProvider.select((s) => s.sonTiklanan),
         (prev, next) {
       if (next == null || identical(prev, next)) return;
       final route = routeForPushData(next.data);
-      if (route != null) router.push(route);
+      if (route == null) return;
+      // (P183 §3) HEDEF ACILAMAZSA COKME YOK → ana ekrana dus. routeForPushData
+      // bilinen AppRoutes uretir, ama bozuk/eksik id ile push nadiren
+      // firlatabilir; kullanici bildirime dokundu, en azindan ana ekran acilsin.
+      try {
+        router.push(route);
+      } catch (e) {
+        debugPrint('Push derin baglanti acilamadi ($route), ana ekrana dus: $e');
+        router.go(AppRoutes.home);
+      }
     });
     return MaterialApp.router(
       title: 'Yönetiyor',

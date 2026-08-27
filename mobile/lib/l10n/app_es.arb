@@ -1676,5 +1676,16 @@
       }
     }
   },
-  "kabukKisayollar": "Accesos directos"
+  "kabukKisayollar": "Accesos directos",
+  "ayarlarBildirimlerBaslik": "Notificaciones",
+  "ayarlarBildirimTercih": "Preferencias de notificación",
+  "ayarlarBildirimAciklama": "Elige por qué canales recibir notificaciones operativas. Es distinto del consentimiento de marketing.",
+  "ayarlarBildirimEposta": "Notificaciones por correo",
+  "ayarlarBildirimSms": "Notificaciones por SMS",
+  "ayarlarBildirimMobil": "Notificaciones móviles",
+  "ayarlarBildirimKaydedildi": "Preferencia de notificación actualizada",
+  "ayarlarBildirimYuklenemedi": "No se pudieron cargar las preferencias de notificación",
+  "ayarlarBildirimIzinKapali": "El permiso de notificaciones del dispositivo está desactivado. Las notificaciones móviles no aparecerán en el teléfono; actívalo en los ajustes del dispositivo.",
+  "ayarlarBildirimIzinBelirsiz": "Se necesita permiso para mostrar notificaciones.",
+  "ayarlarBildirimIzinIste": "Solicitar permiso"
 }

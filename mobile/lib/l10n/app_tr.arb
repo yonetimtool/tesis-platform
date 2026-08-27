@@ -2386,5 +2386,16 @@
       }
     }
   },
-  "kabukKisayollar": "Kısayollar"
+  "kabukKisayollar": "Kısayollar",
+  "ayarlarBildirimlerBaslik": "Bildirimler",
+  "ayarlarBildirimTercih": "Bildirim tercihleri",
+  "ayarlarBildirimAciklama": "Hangi kanallardan işleyiş bildirimi almak istediğinizi seçin. Bu, pazarlama izinlerinden ayrıdır.",
+  "ayarlarBildirimEposta": "E-posta bildirimleri",
+  "ayarlarBildirimSms": "SMS bildirimleri",
+  "ayarlarBildirimMobil": "Mobil bildirimler",
+  "ayarlarBildirimKaydedildi": "Bildirim tercihi güncellendi",
+  "ayarlarBildirimYuklenemedi": "Bildirim tercihleri yüklenemedi",
+  "ayarlarBildirimIzinKapali": "Cihaz bildirim izni kapalı. Mobil bildirimler telefonda görünmez; cihaz ayarlarından açın.",
+  "ayarlarBildirimIzinBelirsiz": "Bildirimleri görmek için izin gerekiyor.",
+  "ayarlarBildirimIzinIste": "İzin iste"
 }

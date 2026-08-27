@@ -23,10 +23,10 @@ import 'helpers/l10n_test_app.dart';
 /// Bunun testteki karsiligi: model `sakineAcik` alani TASIMAZ ve ekran
 /// yalnizca `/me/dokumanlar` ucunu cagirir.
 class _FakeDokumanApi extends DokumanApi {
-  _FakeDokumanApi(this._items, {this.url = 'https://depo/x.pdf'}) : super(Dio());
+  _FakeDokumanApi(this._items) : super(Dio());
 
   final List<SiteDokumani> _items;
-  final String url;
+  final String url = 'https://depo/x.pdf';
 
   /// Hangi uclarin cagrildigi KAYDEDILIR: yonetim ucuna dokunulmadigini
   /// ancak boyle olcebiliriz.

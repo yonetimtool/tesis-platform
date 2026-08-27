@@ -5160,4 +5160,40 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get kabukKisayollar => 'Kısayollar';
+
+  @override
+  String get ayarlarBildirimlerBaslik => 'Bildirimler';
+
+  @override
+  String get ayarlarBildirimTercih => 'Bildirim tercihleri';
+
+  @override
+  String get ayarlarBildirimAciklama =>
+      'Hangi kanallardan işleyiş bildirimi almak istediğinizi seçin. Bu, pazarlama izinlerinden ayrıdır.';
+
+  @override
+  String get ayarlarBildirimEposta => 'E-posta bildirimleri';
+
+  @override
+  String get ayarlarBildirimSms => 'SMS bildirimleri';
+
+  @override
+  String get ayarlarBildirimMobil => 'Mobil bildirimler';
+
+  @override
+  String get ayarlarBildirimKaydedildi => 'Bildirim tercihi güncellendi';
+
+  @override
+  String get ayarlarBildirimYuklenemedi => 'Bildirim tercihleri yüklenemedi';
+
+  @override
+  String get ayarlarBildirimIzinKapali =>
+      'Cihaz bildirim izni kapalı. Mobil bildirimler telefonda görünmez; cihaz ayarlarından açın.';
+
+  @override
+  String get ayarlarBildirimIzinBelirsiz =>
+      'Bildirimleri görmek için izin gerekiyor.';
+
+  @override
+  String get ayarlarBildirimIzinIste => 'İzin iste';
 }

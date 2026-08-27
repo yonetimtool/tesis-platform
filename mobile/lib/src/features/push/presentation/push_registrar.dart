@@ -86,12 +86,46 @@ class PushRegistrar extends Notifier<PushState> {
   Future<void> registerCurrentToken() async {
     try {
       if (!await _ensureReady()) return;
-      await _messaging.requestPermission();
+      // (P183 §2) IZIN ILK OTURUMDA istenir (uygulama ilk acilis/splash'te
+      // DEGIL) — kullanicinin hesabi/baglami olustuktan sonra. Sonuc durum
+      // olarak saklanir; Ayarlar ekrani gosterir. Reddedilse de token yine
+      // alinir (kullanici sonra izin verirse hazir olsun) ve akis durmaz.
+      final izin = await _messaging.requestPermission();
+      if (ref.mounted) state = state.copyWith(izinDurumu: izin);
       final token = await _messaging.getToken();
       if (token == null || !ref.mounted) return;
       await _register(token);
     } catch (e) {
       debugPrint('Push token kaydi basarisiz (sonraki acilista denenir): $e');
+    }
+  }
+
+  /// (P183 §2) Ayarlar ekrani acilisinda izin durumunu ISTEM GOSTERMEDEN
+  /// tazeler (kullanici cihaz ayarlarindan degistirmis olabilir).
+  Future<void> izinDurumunuTazele() async {
+    try {
+      if (!await _ensureReady()) return;
+      final izin = await _messaging.izinDurumu();
+      if (ref.mounted) state = state.copyWith(izinDurumu: izin);
+    } catch (e) {
+      debugPrint('Izin durumu tazelenemedi: $e');
+    }
+  }
+
+  /// (P183 §2) Ayarlar'daki "Izin iste" dugmesi: belirsiz durumda sistem
+  /// istemini gosterir. Reddedilmisse (iOS) istem CIKMAZ — durum degismez,
+  /// UI cihaz ayarlarina yonlendirir. Izin yeni verildiyse token'i de kaydet.
+  Future<void> izinIste() async {
+    try {
+      if (!await _ensureReady()) return;
+      final izin = await _messaging.requestPermission();
+      if (ref.mounted) state = state.copyWith(izinDurumu: izin);
+      if (izin == PushIzinDurumu.verildi || izin == PushIzinDurumu.kismi) {
+        final token = await _messaging.getToken();
+        if (token != null && ref.mounted) await _register(token);
+      }
+    } catch (e) {
+      debugPrint('Izin istenemedi: $e');
     }
   }
 

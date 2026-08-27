@@ -1676,5 +1676,16 @@
       }
     }
   },
-  "kabukKisayollar": "Shortcuts"
+  "kabukKisayollar": "Shortcuts",
+  "ayarlarBildirimlerBaslik": "Notifications",
+  "ayarlarBildirimTercih": "Notification preferences",
+  "ayarlarBildirimAciklama": "Choose which channels send you operational notifications. This is separate from marketing consent.",
+  "ayarlarBildirimEposta": "Email notifications",
+  "ayarlarBildirimSms": "SMS notifications",
+  "ayarlarBildirimMobil": "Mobile notifications",
+  "ayarlarBildirimKaydedildi": "Notification preference updated",
+  "ayarlarBildirimYuklenemedi": "Could not load notification preferences",
+  "ayarlarBildirimIzinKapali": "Device notification permission is off. Mobile notifications will not appear on the phone; enable it in device settings.",
+  "ayarlarBildirimIzinBelirsiz": "Permission is needed to show notifications.",
+  "ayarlarBildirimIzinIste": "Request permission"
 }

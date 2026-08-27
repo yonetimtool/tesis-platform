@@ -5332,4 +5332,42 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get kabukKisayollar => 'Verknuepfungen';
+
+  @override
+  String get ayarlarBildirimlerBaslik => 'Benachrichtigungen';
+
+  @override
+  String get ayarlarBildirimTercih => 'Benachrichtigungseinstellungen';
+
+  @override
+  String get ayarlarBildirimAciklama =>
+      'Wählen Sie, über welche Kanäle Sie betriebliche Benachrichtigungen erhalten. Dies ist von der Marketingeinwilligung getrennt.';
+
+  @override
+  String get ayarlarBildirimEposta => 'E-Mail-Benachrichtigungen';
+
+  @override
+  String get ayarlarBildirimSms => 'SMS-Benachrichtigungen';
+
+  @override
+  String get ayarlarBildirimMobil => 'Mobile Benachrichtigungen';
+
+  @override
+  String get ayarlarBildirimKaydedildi =>
+      'Benachrichtigungseinstellung aktualisiert';
+
+  @override
+  String get ayarlarBildirimYuklenemedi =>
+      'Benachrichtigungseinstellungen konnten nicht geladen werden';
+
+  @override
+  String get ayarlarBildirimIzinKapali =>
+      'Die Benachrichtigungsberechtigung des Geräts ist aus. Mobile Benachrichtigungen erscheinen nicht auf dem Telefon; aktivieren Sie sie in den Geräteeinstellungen.';
+
+  @override
+  String get ayarlarBildirimIzinBelirsiz =>
+      'Zum Anzeigen von Benachrichtigungen ist eine Berechtigung erforderlich.';
+
+  @override
+  String get ayarlarBildirimIzinIste => 'Berechtigung anfordern';
 }
