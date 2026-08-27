@@ -43,6 +43,14 @@ için mutlaka yeniden derlenir.
   (`eposta-kod-dogrula` başarısında `eposta_dogrulandi=true` yazan tek satır).
 - Frontend/BFF zaten mevcuttu (P172), değişmedi.
 
+## Bölüm 5 — E-posta şablonları (5 adet)
+
+- **Göç:** YOK. **Yeni env:** YOK. **Yeniden derle:** yalnız `api` (yeni
+  `app/eposta_sablonlari.py` + `telefon_kodu` şablonu çağırır).
+- Not: prod'da gerçek e-posta için `SMTP_*` dolu olmalı (Bölüm 2'deki not).
+  Gönderen adresi markası `noreply@yonetiyor.com` — tenant `smtp_gonderen` /
+  env `SMTP_FROM` ile örtüşmeli.
+
 ---
 
 ## Göç sırası özet

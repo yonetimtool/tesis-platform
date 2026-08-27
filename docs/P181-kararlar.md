@@ -183,10 +183,44 @@ için doğrulama); kod her aktif e-postaya gider, başarı doğrular.
 
 ---
 
+## Bölüm 5 — E-posta şablonları (5 adet) (BİTTİ)
+
+**Önce:** TÜM amaç için TEK sabit metin gidiyordu (`telefon_kodu.py`:
+"Yönetiyor doğrulama kodunuz: {kod} ({dk} dk)"). Amaç ayrımı YOK, markalama YOK,
+kimlik-avı savunması YOK.
+
+**Karar:** `app/eposta_sablonlari.py` — amaç başına konu+açıklama haritası +
+`eposta_kod_metni(amac, kod, dk) -> (konu, govde)`. 5 markalı şablon:
+`kayit`, `giris`, `eposta_ekle`, `sifre_sifirla`, `hesap_silme`. Her gövde: amaca
+özel açıklama + `Kod: NNNNNN` + `{dk} dakika geçerli` + kimlik-avı satırı ("siz
+istemediyseniz yok sayın") + imza (`— Yönetiyor` / `noreply@yonetiyor.com`).
+`telefon_kodu.eposta_kodu_uret_ve_gonder` artık bunu çağırır.
+
+**Kararlar (gerekçeli):**
+- **Düz metin, HTML değil:** mevcut `SmtpEpostaSaglayici.gonder` `set_content`
+  (text/plain) kullanıyor; HTML eklemek SMTP katmanını değiştirmek olurdu —
+  düşük risk için düz metinde kaldık, markalama başlık+imza satırıyla.
+- **Kod-içi harita, DB değil:** kimlik-doğrulama e-postaları PLATFORM düzeyidir,
+  tenant'a özel değil; ayrıca DB `MesajSablonu` FARKLI bir enum (`pazarlama/
+  operasyonel`) kullanır — `KOD_AMACI` ile uyuşmaz.
+- **i18n YOK (yalnız TR):** backend tek dilli; `app_user`/`tenant`'ta dil alanı
+  yok (yalnız `UserDevice.dil` push için). Mevcut davranışla tutarlı; çok-dilli
+  e-posta ayrı bir iş (NOT edildi).
+- **`hesap_silme` şablonu var ama e-posta yolu şu an telefon:** hesap silme kodu
+  bugün `kod_uret_ve_gonder` (telefon) ile gidiyor; e-posta şablonu haritada
+  hazır (e-posta silme yolu ileride bağlanırsa kullanılır). Backend Türkçe
+  metinler i18n taramasına TABİ DEĞİL (o tarama yalnız admin-web + APIError'lar).
+
+**Kapsam:** yeni uç/enum/göç/kilit YOK. **Test:** `test_eposta_sablonlari.py`
+(5 saf-fonksiyon testi) + `test_eposta_kanali`/`test_sifre_sifirla`/
+`test_eposta_dogrula` regresyonu yeşil.
+
+---
+
 ## Program notu (dürüstlük)
 
 P181 on bir bölümlük büyük bir programdır (auth altyapısı + göçler, 6 web düzeltme,
 özet yeniden tasarım, rapor grafikleri, rezervasyon, mobil push). Bölümler SIRAYLA,
 her biri yeşil + ayrı commit olarak ilerletilir; "kesintiye uğrarsan nerede
-kaldığın belli olsun" gereği bu belge + commit'ler durumu taşır. Bölüm 0-4 bitti
-(3 zaten vardı; 4 vardı + P181 dokunuşu); sıradaki Bölüm 5 (e-posta şablonları).
+kaldığın belli olsun" gereği bu belge + commit'ler durumu taşır. Bölüm 0-5 bitti;
+sıradaki Bölüm 6 (web arayüz düzeltmeleri — 6 alt madde).

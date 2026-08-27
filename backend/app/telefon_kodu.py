@@ -81,11 +81,12 @@ async def eposta_kodu_uret_ve_gonder(
     # GONDERIM HATASI KAYDI KIRMAZ: kod yazilmistir, kullanici "tekrar
     # gonder" diyebilir. Yapilandirma yoksa saglayici `yapilandirilmadi`
     # doner ve SESSIZCE "gonderildi" DEMEZ.
-    kanal_saglayicisi("eposta", ayar).gonder(
-        eposta,
-        "Yönetiyor doğrulama kodu",
-        f"Yönetiyor doğrulama kodunuz: {kod} ({KOD_OMRU_DK} dk)",
-    )
+    # (P181 Bölüm 5) Amaç başına markalı şablon: kullanıcı kodun NE İÇİN
+    # olduğunu görür ve kimlik-avı savunma satırı alır.
+    from .eposta_sablonlari import eposta_kod_metni
+
+    konu, govde = eposta_kod_metni(amac, kod, KOD_OMRU_DK)
+    kanal_saglayicisi("eposta", ayar).gonder(eposta, konu, govde)
 
 
 async def kod_uret_ve_gonder(
