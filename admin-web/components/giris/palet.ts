@@ -38,6 +38,8 @@ export const CAM_ZEMIN_KOYU = "rgba(255,255,255,0.06)";
 /** Mobil kart zemini — blur yerine OPAKLIK ile ayirir (bkz. GirisFormu). */
 export const CAM_ZEMIN_MOBIL = "rgba(9,26,44,0.82)";
 export const CAM_KENAR_ZAYIF = "rgba(255,255,255,0.18)";
+// (P181) Alan biçim hatası kenarı — kırmızı (sızıntısız istemci doğrulama).
+export const CAM_KENAR_HATA = "rgba(255,140,140,0.75)";
 
 /** Metin kademeleri. */
 export const METIN = "#F5FAFA";

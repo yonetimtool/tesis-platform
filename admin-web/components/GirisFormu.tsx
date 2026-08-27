@@ -549,8 +549,8 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
               </button>
             )}
 
-            {/* (P181 Bölüm 2) ŞİFREMİ UNUTTUM — yalnız e-posta yüzeyinde ve parola adımında; tesis/e-posta doluysa sıfırlama sayfasına taşınır. */}
-            {!telefonla && kodAdimi !== "kod" && (
+            {/* (P181 prod A) ŞİFREMİ UNUTTUM — her iki yüzeyde, parola adımında. */}
+            {kodAdimi !== "kod" && (
               <button
                 type="button"
                 className="odak-ters block text-xs underline"

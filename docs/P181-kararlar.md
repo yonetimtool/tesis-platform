@@ -389,6 +389,86 @@ hazır. Ayrı commit(ler)de ilerletilecek.
 
 ---
 
+## Ara iş — admin-web tam test paketi yeşillendirildi (Bölüm 0-8 borcu)
+
+**Bulgu (dürüstlük):** Bölüm 0-8 commit'leri push edilirken admin-web için
+YALNIZ `npm run build` + i18n parity koşulmuştu; TAM vitest DOM paketi hiç
+koşmamıştı. Sonuç: HEAD'de **22 kırmızı test / 15 dosya** birikmişti — hepsi
+Bölüm 0-8 UI değişikliklerinin kırdığı ama görülmeyen gerilemeler. A-D'den önce
+bunlar yeşillendirildi (yeni gerileme EKLENMEDİ; baseline=değişiklikli=22 idi,
+tespit stash karşılaştırmasıyla yapıldı).
+
+**Kök nedenler + düzeltmeler:**
+- **useRouter invariant (4 dosya):** Units/Tasks sayfaları 6.2/6.3'te `useRouter`
+  aldı; DOM testlerinde app-router yok → invariant. Standart `vi.mock("next/
+  navigation")` eklendi (mevcut `pano-widget-tiklama` kalıbı).
+- **link→button (yz-tasima):** 6.2 "Bina düzenleme"yi bağlantıdan düğmeye çevirdi;
+  test rolü `link`→`button` güncellendi (niyet aynı: afordans duruyor).
+- **DevriyeGorunumu tanımsız token (7.3):** `var(--yz-olumlu, var(--yz-accent))`
+  → `var(--yz-success)` (tanımlı pozitif jeton; ayrıca virgüllü string
+  sabit-metin taramasını tetikliyordu — düzeldi). Rozet `durum` kimlikleri
+  (`notr|bilgi|olumlu|uyari|kritik`) sabit-metin `UCLU_TEKNIK` beyaz listesine
+  eklendi (renk kimlikleri gibi — kullanıcıya görünen metin değil).
+- **profil EpostaDogrulaKart (Böl.1):** `--yz-text-muted`/`--yz-surface-card`
+  TANIMSIZ jetonlardı → `--yz-text-2`/`--yz-surface-1`. Kartın iki input'una
+  `aria-label` eklendi (erişilebilir ad — placeholder ad değildir). profil DOM
+  testi fixture'ına `eposta_dogrulandi:true` (kimlik testi doğrulama akışını
+  ölçmüyor; doğrulanmamışta kart mevcut e-postayı ön-doldurup çift eşleşme
+  üretiyordu).
+- **bildirim toplu (6.5):** vardiya-nokta testi satır "Okundu" düğmesini `/Okundu/i`
+  ile arıyordu; toplu "…okundu işaretle" düğmeleri eklendiğinden TAM ad `"Okundu"`.
+- **kayit ham-fetch (P180):** OAuth başlat gövdesi büyüyünce `r.ok` denetimi
+  12-satır penceresinin dışına itilmişti (sessiz-fetch taraması) → gövde
+  değişkene alınıp `fetch`+`.ok` yakınlaştırıldı (davranış aynı).
+- **dış bağımlılık allowlist:** `yonetiyor.com` (Böl.0 kanonik kayıt bağlantısı)
+  bizim alan adımız; `bizim` regex'ine eklendi (`yonetio` yalnız `.site`
+  alt-alanlarını eşliyordu).
+- **Caddy yüzey testi:** app.* blok başlığı P154/P179'da `{$APP_DOMAIN},
+  {$APP_DOMAIN_IDN} {`'e döndü; test eski `app.{$PORTAL_DOMAIN}` işaretini
+  arıyordu → güncel başlığa çevrildi (ölçülen: admin-web:3000'e proxy).
+
+**Sonuç:** 1405 test / 1403 geçer + 2 (bu düzeltmelerle) → **hepsi yeşil**;
+tsc temiz. Bunların çoğu TEST güncellemesi, birkaçı GERÇEK ürün kusuru (tanımsız
+CSS jetonu = kırık stil, adsız input = erişilebilirlik).
+
+---
+
+## Prod düzeltmeleri A-D — "şifremi unuttum" (BİTTİ, web)
+
+Prod doğrulamasında Bölüm 2 sıfırlama akışı için dört bulgu; hepsi WEB'de
+giderildi (mobil karşılığı Bölüm 10 ile — bu makinede Flutter YOK, derlenemez).
+
+- **(A) Her yüzeyde:** "Şifremi unuttum" bağlantısı yalnız `panel.*`
+  (e-posta) yüzeyindeydi. Artık `GirisFormu`'nda HER İKİ yüzeyde (app.* telefon +
+  panel.* e-posta), parola adımında görünür. Sıfırlama e-posta tabanlıdır ve
+  kendi sayfası tesis+e-posta sorar; e-posta yüzeyinde bilinenler ön-doldurulur,
+  telefon yüzeyinde sayfada girilir. Aynı akış, aynı güvenlik (sızıntısız).
+- **(B) Görsel dil:** Sayfa beyaz-zemin-tek-karttı. Yeni **`GirisKabuk`**
+  (`components/giris/kabuk.tsx`) — giriş ekranının vitrini (orbital sahne +
+  marka + sol tanıtım + cam kart) tek yerde toplanıp sıfırlama sayfasına verildi.
+  `GirisFormu`'nun kendi iç yerleşimi (başarı animasyonu forma bağlı)
+  DEĞİŞMEDİ — düşük gerileme riski; palet aynı kaynaktan (`giris/palet`).
+- **(C) Doğrulama (sızıntısız):** Tesis (slug) BİÇİMİ (`^[a-z0-9]+(?:-[a-z0-9]+)*$`
+  — `slugify_tenant` ile aynı) ve e-posta biçimi İSTEMCİDE denetlenir; hatalı
+  alan KIRMIZI kenar + anlaşılır metin, gönderim engellenir. Bu yalnız BİÇİM
+  denetimidir; hesabın var olup olmadığını SIZDIRMAZ (o denetim sunucuda ve
+  sessiz — kod yalnız doğrulanmış e-postalı aktif hesaba gider). Kırmızı kenar
+  rengi palet sabiti `CAM_KENAR_HATA` (ternary'de satır-içi string sabit-metin
+  taramasını tetiklerdi).
+- **(D) İlk kullanım açıklaması:** `sifreSifirlaAciklama` netleştirildi (7 dil):
+  "Kod yalnızca doğrulanmış e-postalı hesaplara gönderilir; birkaç dakikada bir
+  e-posta almazsanız e-postanız henüz doğrulanmamış olabilir. Güvenlik gereği
+  bir hesabın bulunup bulunmadığını belirtmeyiz." — hesap varlığını sızdırmadan
+  "hiçbir şey gelmedi = bozuk" yanılgısını giderir.
+
+**Kapsam:** göç YOK, yeni env YOK, yeni backend uç YOK (Bölüm 2 uçları kullanılır).
+Yeni i18n: `girisSlugGecersiz`, `girisEpostaGecersiz` × 7 dil + `sifreSifirlaAciklama`
+yeniden yazıldı (parity yeşil). **Mobil (A):** giriş telefonla; e-posta tabanlı
+sıfırlama için ayrı ekran gerekir — Bölüm 10 mobil işiyle birlikte, Flutter'sız
+derlenemediğinden dağıtımda işaretli.
+
+---
+
 ## Program notu (dürüstlük)
 
 P181 on bir bölümlük büyük bir programdır (auth altyapısı + göçler, 6 web düzeltme,

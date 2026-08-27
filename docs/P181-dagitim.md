@@ -89,6 +89,21 @@ için mutlaka yeniden derlenir.
 
 ---
 
+## Ara iş — admin-web test paketi + Prod düzeltmeleri A-D
+
+- **Test paketi greening:** yalnız `admin-web` (test + birkaç bileşen/sayfa
+  düzeltmesi). **Göç YOK, yeni env YOK.** Ürün etkisi olan düzeltmeler:
+  DevriyeGorunumu/profil/eposta-dogrula-kart tanımsız CSS jetonları (kırık stil)
+  ve adsız input'lar (erişilebilirlik) — `admin-web` yeniden derlenince gelir.
+- **A-D "şifremi unuttum" (web):** **Göç YOK, yeni env YOK, yeni backend uç YOK.**
+  **Yeniden derle:** yalnız `admin-web` (`GirisKabuk` + sıfırlama sayfası + link +
+  2 i18n anahtarı). Bölüm 2 uçları (`/auth/sifre/*`) değişmedi.
+- **A (mobil) — BEKLİYOR:** mobil giriş telefonla; e-posta tabanlı sıfırlama için
+  ayrı ekran gerekir. Bu makinede **Flutter YOK** → derlenip test edilemedi;
+  Bölüm 10 mobil işiyle birlikte ele alınacak ve APK derleme/test KULLANICIDA.
+
+---
+
 ## Göç sırası özet
 
 ```
