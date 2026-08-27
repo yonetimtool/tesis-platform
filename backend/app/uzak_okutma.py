@@ -89,6 +89,13 @@ TIP = "uzak_okutma"
 #: personelini de titretirdi — `gecikmis_okutma`daki ayni ayrim.
 ALARM_ROLLERI: tuple[str, ...] = ("admin", "yonetici", "guvenlik_amiri")
 
+#: (P181 Bölüm 10.2) YÖNETİM push kısması penceresi (dakika). Aynı görevlinin
+#: bu süre içindeki TEKRAR uzak-okutmalarında yönetime PUSH atılmaz (in-app
+#: kaydı her zaman yazılır; görevliye her seferinde push gider). GPS'i bozuk /
+#: hile denen bir görevli 26 noktada 26 push yerine ilk olayda 1 push üretir;
+#: toplam sayı vardiya özetinden okunur. İlk olay her zaman gerçek-zamanlı.
+_YONETIM_THROTTLE_DK = 30
+
 
 async def uzak_okutma_alarmi(
     db: AsyncSession,
@@ -123,6 +130,10 @@ async def uzak_okutma_alarmi(
     veri = {"nokta": checkpoint.ad, "mesafe": mesafe, "esik": int(esik)}
     # Eski kolon: guncellenmemis istemciler icin Turkce ozet (bkz. 0008).
     mesaj = push_govdesi(TIP, VARSAYILAN_DIL, veri)
+    # (P181 Bölüm 10.2) `guard`: YALNIZ in-app mesaj_veri'ye yazılır (push
+    # params'ına DEĞİL) → yönetim push kısması aşağıda bu görevliyi sorgular.
+    # Push metni/params görüntü verisidir; kimlik oraya sızmaz.
+    mesaj_veri = {**veri, "guard": str(scan.guard_id) if scan.guard_id is not None else None}
     # DEDUP OKUTMA BASINA: bir okutma TEK bir olaydir. `gecikmis_okutma`
     # tekrar eder cunku orada olculen sey SUREN bir eksikliktir; burada
     # olay anlik ve tekrarlamak ayni seyi iki kez bildirmekti.
@@ -136,7 +147,7 @@ async def uzak_okutma_alarmi(
         ),
         {
             "t": str(scan.tenant_id), "cp": str(checkpoint.id), "dk": dedup,
-            "m": mesaj, "mk": TIP, "mv": json.dumps(veri),
+            "m": mesaj, "mk": TIP, "mv": json.dumps(mesaj_veri),
         },
     )
     if sonuc.rowcount == 0:
@@ -146,19 +157,41 @@ async def uzak_okutma_alarmi(
         "FAR_SCAN tenant=%s checkpoint=%s scan=%s mesafe=%s esik=%s",
         scan.tenant_id, checkpoint.id, scan.id, mesafe, esik,
     )
+    # (P181 Bölüm 10.2) YÖNETİM PUSH KISMASI (batching): aynı görevli son
+    # `_YONETIM_THROTTLE_DK` dk içinde zaten uzak-okutma alarmı ürettiyse
+    # yönetime TEKRAR push atma — in-app kaydı yukarıda YAZILDI, görevliye push
+    # aşağıda HER ZAMAN gider, toplam sayı vardiya özetinden okunur. Böylece
+    # GPS'i bozuk bir görevli yönetimi 26 push'la sel altında bırakmaz; İLK
+    # olay yine gerçek-zamanlı gider (yeni bir bütünlük sorununu geç bildirmeyiz).
+    yonetim_push = True
+    if scan.guard_id is not None:
+        onceki = (
+            await db.execute(
+                text(
+                    "SELECT 1 FROM notification "
+                    "WHERE tenant_id = :t AND tip = 'uzak_okutma' AND dedup_key <> :dk "
+                    "AND mesaj_veri->>'guard' = :g "
+                    "AND created_at >= now() - make_interval(mins => :w) LIMIT 1"
+                ),
+                {"t": str(scan.tenant_id), "dk": dedup,
+                 "g": str(scan.guard_id), "w": _YONETIM_THROTTLE_DK},
+            )
+        ).first()
+        yonetim_push = onceki is None
+
     # PUSH EK GONDERIMDIR: hatasi kaydi kirmaz (dispatch_external kendi
     # icinde yutar) — in-app bildirim her halukarda yazilmistir.
     tenant = uuid.UUID(str(scan.tenant_id))
     data = {"tip": TIP, "checkpoint_id": str(checkpoint.id)}
-    # (P181 Bölüm 10.3) TEK CAGRI — kisi (okutmayi yapan gorevli, eylemi
-    # duzeltebilecek tek kisi) + rol (yonetim: esigi koyan sonucu gormeli)
-    # BIRLIKTE, token bazinda dedup. Gorevli ayni zamanda yonetici ise ARTIK
-    # TEK push (eskiden iki ayri cagri iki bildirim duyururdu).
+    # (P181 Bölüm 10.3) TEK CAGRI — kisi (gorevli, eylemi duzeltebilecek kisi)
+    # + rol (yonetim) BIRLIKTE, token bazinda dedup: gorevli ayni zamanda
+    # yonetici ise TEK push. (P181 10.2) Yonetim rolu YALNIZ kisilmadiginda
+    # gonderilir; gorevli her seferinde hedeflenir.
     dispatch_external(
         TIP,
         tenant_id=tenant,
         target_user_ids=[uuid.UUID(str(scan.guard_id))] if scan.guard_id is not None else None,
-        target_roles=ALARM_ROLLERI,
+        target_roles=ALARM_ROLLERI if yonetim_push else None,
         params=veri,
         data=data,
     )

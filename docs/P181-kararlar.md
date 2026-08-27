@@ -677,6 +677,42 @@ tek push + idempotent + vardiya bitmeden özet yok + `hafta_ici` gün-tipi + GEC
 vardiyası: gece-yarısını aşan pencere, önce/sonra okutma sayılır). `test_beat_
 schedule.py` (çizelge kilidi, iki yön + on-demand doğrulama). Yeşil.
 
+### 10.2 (devam) — Diğer yüksek hacimli olayların TARANMASI + toplanması
+
+Spec "diğer yüksek hacimli olay türlerini de tara, toplanması gerekenleri belirle
+ve gerekçelendir" diyor. TÜM bildirim kaynakları tarandı; ayrım **çok-olay→tek-alıcı**
+(toplanabilir) vs **tek-olay→çok-alıcı** (doğal yayılım, toplanamaz):
+
+| Kaynak | Şekil | Karar |
+|---|---|---|
+| Rutin (yakın) okutma | bildirim ÜRETMEZ (yalnız `uzak_okutma` alarmı, o da uzak taramada) | ✓ zaten yok |
+| Duyuru / etkinlik / kural | 1 olay → TÜM sakinlere (kişi başı 1 push), tek `dispatch` yayını | doğal yayılım — TOPLANAMAZ (her kişi kendi bildirimini almalı) |
+| Kargo / ziyaretçi / talep / şikayet / rezervasyon / erişim | olay başına 1 bildirim, ilgili kişiye | ayrık olaylar — yüksek-hacim-tek-alıcı DEĞİL |
+| Toplu borçlandırma / toplu-sil / içe-aktarım | HİÇ bildirim üretmez (doğrulandı) | ✓ spam yok |
+| Gürültü uyarısı | gürültü ŞİKAYETİ eşiği aşınca 1 kez (sürekli monitör değil) | düşük hacim |
+| `gecikmis_okutma` | tenant `tur_alarm_tekrar_sayisi` ile SINIRLI, pencere/adım başına | zaten sınırlı |
+| `kacirilan_tur` | pencere başına 1 (dedup) | düşük hacim |
+| Devriye TAMAMLANMA ilerlemesi | çok-olay→yönetim | ✓ `vardiya_ozeti` özeti (yukarıda) |
+| **`uzak_okutma` yönetim push'u** | GPS bozuk/hile görevlisi → vardiya boyunca N far-scan → yönetime N push | **TOPLANDI (aşağıda)** |
+
+**Bulunan tek gerçek yüksek-hacim-tek-alıcı: `uzak_okutma` yönetim push'u.**
+Normalde uzak okutma NADİRDİR (bir anomali); ama bozuk GPS'li ya da konum hilesi
+yapan bir görevli 26 noktada 26 push üretebilir. **Kısma (`uzak_okutma.py`):** aynı
+görevli son **30 dk** içinde zaten uzak-okutma alarmı ürettiyse yönetime TEKRAR
+push GİTMEZ. Korunanlar: (a) GÖREVLİ her okutmada anında uyarılır (düzelten o);
+(b) in-app kaydı her seferinde yazılır (denetim + liste); (c) İLK olay yine
+gerçek-zamanlı yönetime gider (yeni bütünlük sorununu geciktirmeyiz); (d) toplam
+sayı `vardiya_ozeti`nden okunur. `guard` YALNIZ `mesaj_veri`ye yazılır (push
+params'ına değil → kimlik push metnine sızmaz); kısma sorgusu `mesaj_veri->>'guard'`.
+10.3 token-dedup KORUNDU: tek `dispatch` çağrısı, yönetim rolü yalnız kısılmadığında.
+
+**Neden alarmların GERİ KALANI toplanmadı:** `gecikmis`/`kacirilan` güvenlik
+uyarısıdır ve GECİKTİRİLEMEZ; ayrıca zaten sınırlı. Yüksek-hacim uzak_okutma'nın
+İLK'i de gider — yalnız aynı görevlinin TEKRARLARI kısılır (özet toplamı verir).
+
+**Test:** `test_uzak_okutma_hedef.py::test_YONETIM_PUSH_KISILIR_tekrarda_gorevli_kalir`
+(tekrar → yönetim rolü düşer, görevli kalır) + mevcut ilk-olay testi (yönetim gider).
+
 ### 10.5 — Agresif yoklama (WEB düzeltildi)
 
 Web (`admin-web`) dashboard `/api/dashboard/live` **15 sn** aralık; `revalidate

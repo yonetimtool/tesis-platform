@@ -20,19 +20,31 @@ import app.uzak_okutma as uzak
 class _Sonuc:
     """`db.execute(...)` donusu — hem skaler hem rowcount tasiyabilir."""
 
-    def __init__(self, skaler=None, rowcount=1):
+    def __init__(self, skaler=None, rowcount=1, first_val=None):
         self._skaler = skaler
         self.rowcount = rowcount
+        self._first = first_val
 
     def scalar_one_or_none(self):
         return self._skaler
 
+    def first(self):
+        return self._first
+
 
 class _SahteDb:
-    """Iki cagri bekler: esik SELECT'i, sonra notification INSERT'i."""
+    """Uc cagri bekler: esik SELECT + notification INSERT + (P181 10.2) yonetim
+    throttle SELECT. `onceki_var=True` → ayni gorevli icin son alarm VAR (yonetim
+    push'u kisilir)."""
 
-    def __init__(self, esik: int | None = 50, insert_rowcount: int = 1):
-        self._sira = [_Sonuc(skaler=esik), _Sonuc(rowcount=insert_rowcount)]
+    def __init__(
+        self, esik: int | None = 50, insert_rowcount: int = 1, onceki_var: bool = False
+    ):
+        self._sira = [
+            _Sonuc(skaler=esik),
+            _Sonuc(rowcount=insert_rowcount),
+            _Sonuc(first_val=1 if onceki_var else None),  # throttle SELECT
+        ]
         self.cagrilar = 0
 
     async def execute(self, *_a, **_k):
@@ -113,7 +125,23 @@ async def test_TEK_CAGRI_kisi_VE_rol_birlikte(monkeypatch):
     assert len(cagrilar) == 1, cagrilar
     tek = cagrilar[0]
     assert tek["target_user_ids"] == [scan.guard_id]  # gorevli hala KISI olarak
-    assert tek.get("target_roles")  # yonetim de ROL olarak ayni cagrida
+    assert tek.get("target_roles")  # yonetim de ROL olarak ayni cagrida (ILK olay)
+
+
+async def test_YONETIM_PUSH_KISILIR_tekrarda_gorevli_kalir(monkeypatch):
+    """(P181 Bölüm 10.2) Aynı görevli pencere içinde TEKRAR uzak okutunca yönetime
+    push GİTMEZ (throttle); görevli push'u + in-app kaydı KALIR. Batching: 26
+    uzak okutma → yönetime 1 push, toplam sayı vardiya özetinden okunur."""
+    cagrilar = _yakala(monkeypatch)
+    scan = _scan()
+    # onceki_var=True → throttle SELECT bir satır döner (bu görevli için son alarm var).
+    assert await uzak.uzak_okutma_alarmi(
+        _SahteDb(onceki_var=True), scan=scan, checkpoint=_checkpoint()
+    )
+    assert len(cagrilar) == 1, cagrilar
+    tek = cagrilar[0]
+    assert tek["target_user_ids"] == [scan.guard_id]  # görevli HÂLÂ hedeflenir
+    assert tek.get("target_roles") is None            # yönetim rolü KISILDI
 
 
 async def test_gorevli_YOKSA_yonetim_yine_bilgilendirilir(monkeypatch):

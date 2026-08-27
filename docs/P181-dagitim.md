@@ -135,7 +135,9 @@ uygular; `api`/`admin-web` kod gömülü olduğu için mutlaka yeniden derlenir.
 - **10.3 kanal tercihi:** MEVCUT göç 0055 (`bildirim_mobil`) kullanıldı — yeni
   göç YOK. FCM artık `bildirim_mobil=false` kullanıcıya push atmaz.
 - **10.3 dedup:** çok-rollü/hem-kişi-hem-rol kullanıcı tek push (token dedup).
-- **10.2 batching:** vardiya sonu tek `vardiya_ozeti` özeti (beat).
+- **10.2 batching:** vardiya sonu tek `vardiya_ozeti` özeti (beat) + `uzak_okutma`
+  yönetim push kısması (aynı görevli 30 dk tekrarında yönetime tek push; `api`).
+  **Göç/env YOK** — yalnız `api` yeniden derlenir.
 - **10.5 (web):** dashboard `/dashboard/live` `revalidateOnFocus:false` → yalnız
   `admin-web` yeniden derlenir.
 
