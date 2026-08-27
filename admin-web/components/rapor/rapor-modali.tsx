@@ -51,6 +51,13 @@ import {
   type AlanTanimi,
 } from "@/lib/rapor-alanlari";
 
+// (P181 8) Grafik yapılandırması — web/PDF/Excel tek kaynak (katalogdan gelir).
+export interface RaporGrafikTanimi {
+  tip: "cizgi" | "sutun" | "pasta";
+  x: string;
+  seriler: string[];
+}
+
 export interface RaporKatalogOgesi {
   kod: string;
   baslik: string;
@@ -58,6 +65,7 @@ export interface RaporKatalogOgesi {
   kategori: string;
   alanlar: string[];
   agir: boolean;
+  grafik?: RaporGrafikTanimi | null;
 }
 
 export interface RaporSutun {

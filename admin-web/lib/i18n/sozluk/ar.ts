@@ -1497,6 +1497,8 @@ export const ar: Sozluk = {
   raporPdf: "PDF",
   raporIndirildi: "تم تنزيل التقرير.",
   raporSatirYok: "لا توجد صفوف",
+  raporGrafikVeriYok: "لا توجد بيانات للرسم البياني",
+  raporGrafikOrneklem: "تم أخذ عينة من الرسم إلى {n} نقطة",
   raporSatirYokAlt: "لا يوجد سجل يطابق المعايير المحددة.",
   kabukRaporMotoru: "محرك التقارير",
   mesajBaslik: "الرسائل",

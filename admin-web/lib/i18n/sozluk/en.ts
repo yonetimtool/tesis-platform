@@ -1497,6 +1497,8 @@ export const en: Sozluk = {
   raporPdf: "PDF",
   raporIndirildi: "Report downloaded.",
   raporSatirYok: "No rows",
+  raporGrafikVeriYok: "No data for chart",
+  raporGrafikOrneklem: "Chart sampled to {n} points",
   raporSatirYokAlt: "No record matches the selected criteria.",
   kabukRaporMotoru: "Report engine",
   mesajBaslik: "Messages",

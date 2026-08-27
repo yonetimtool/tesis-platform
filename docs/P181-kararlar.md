@@ -362,11 +362,30 @@ istemciye "kuyruğa yolla" ipucu; senkron üretim yine mümkün).
 Kod (`rapor_ciktilari.py` reportlab/openpyxl) SAĞLAM bulundu; değişiklik
 gerekmedi. Test-only, ekleme; üretim kodu değişmedi.
 
-### 8.1 — Grafikler (sıradaki)
+### 8.1 — Web grafikleri (KISMİ — altyapı + 3 rapor)
 
-Web (recharts) + PDF (reportlab.graphics) + Excel (openpyxl chart); erişilebilir
-renk + etiket/desen; "veri yok" durumu; büyük veride örnekleme. Katalogdan tek
-kaynak `grafik` yapılandırması.
+**Altyapı (tek kaynak):** Katalog `KatalogKaydi.grafik = GrafikTanimi(tip, x,
+seriler)` — web/PDF/Excel aynı yapılandırmayı okur (kod SÜTUN kimlikleri).
+Katalog ucu `grafik`i döner (`RaporGrafikTanimi` şema + openapi).
+
+**Web:** `RaporGrafik` bileşeni (recharts) rapor tablosunun ÜSTÜNDE:
+- `cizgi` (zaman serisi), `sutun` (karşılaştırma), `pasta` (dağılım).
+- Erişilebilirlik: renk TEK sinyal DEĞİL — legend + eksen etiketi + tooltip
+  değeri; ayırt edilebilir palet.
+- **Veri yoksa** "veri yok" durumu (boş grafik değil).
+- **Örnekleme:** >60 nokta eşit aralıkla örneklenir (tarayıcı kilitlenmesin),
+  kullanıcıya "N noktaya örneklendi" notu.
+- kuruş serileri TL'ye çevrilir (okunur eksen).
+
+**Bağlanan 3 rapor:** `donemsel_bakiye` (çizgi: dönem→borç/tahsilat/bakiye),
+`hesap_ekstresi` (çizgi: tarih→bakiye), `gelir_gider_ozet` (sütun: kalem→
+gelir/gider). i18n: `raporGrafikVeriYok`, `raporGrafikOrneklem` × 7 dil.
+
+**KALAN (dürüstlük):** (a) daha çok rapora grafik bağlamak (tahsilat_performansi,
+firma_ekstresi, isletme_defteri, finansal_hareketler, makbuz_dokumu, borc_alacak,
+detayli_borc, denetim_raporu); (b) grafiği **PDF**'e (reportlab.graphics) ve
+**Excel**'e (openpyxl chart) gömmek — spec bunu istiyor, altyapı (grafik config)
+hazır. Ayrı commit(ler)de ilerletilecek.
 
 ---
 

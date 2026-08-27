@@ -1497,6 +1497,8 @@ export const es: Sozluk = {
   raporPdf: "PDF",
   raporIndirildi: "Informe descargado.",
   raporSatirYok: "Sin filas",
+  raporGrafikVeriYok: "Sin datos para el gráfico",
+  raporGrafikOrneklem: "Gráfico muestreado a {n} puntos",
   raporSatirYokAlt: "Ningún registro coincide con los criterios.",
   kabukRaporMotoru: "Motor de informes",
   mesajBaslik: "Mensajes",

@@ -1497,6 +1497,8 @@ export const de: Sozluk = {
   raporPdf: "PDF",
   raporIndirildi: "Bericht heruntergeladen.",
   raporSatirYok: "Keine Zeilen",
+  raporGrafikVeriYok: "Keine Daten für Diagramm",
+  raporGrafikOrneklem: "Diagramm auf {n} Punkte reduziert",
   raporSatirYokAlt: "Kein Eintrag entspricht den Kriterien.",
   kabukRaporMotoru: "Berichtsmodul",
   mesajBaslik: "Nachrichten",

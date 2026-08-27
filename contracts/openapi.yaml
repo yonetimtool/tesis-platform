@@ -14624,6 +14624,20 @@ components:
             `/raporlar/{kod}/kuyruk`a yollar. OLCUYU SUNUCU BILIR: istemcide
             olsaydi, yeni bir agir rapor eklendiginde arayuz onu senkron
             cagirmaya devam ederdi.
+        grafik:
+          nullable: true
+          description: "(P181 8) Grafik yapilandirmasi (web/PDF/Excel tek kaynak); yoksa yalniz tablo."
+          allOf: [{ $ref: "#/components/schemas/RaporGrafikTanimi" }]
+    RaporGrafikTanimi:
+      type: object
+      required: [tip, x, seriler]
+      properties:
+        tip: { type: string, enum: [cizgi, sutun, pasta] }
+        x: { type: string, description: "x ekseni sutun kimligi" }
+        seriler:
+          type: array
+          items: { type: string }
+          description: "y serileri (sutun kimlikleri)"
     RaporKatalog:
       type: object
       required: [items, kategoriler]

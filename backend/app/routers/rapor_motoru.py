@@ -55,6 +55,7 @@ from ..raporlar import (
     tahsilat_performansi,
 )
 from ..schemas import (
+    RaporGrafikTanimi,
     RaporIsOut,
     RaporKatalogOgesi,
     RaporKatalogResponse,
@@ -106,6 +107,21 @@ _DONEM_IFADESI = literal_column("to_char(finansal_hareket.tarih, 'YYYY-MM')")
 
 
 @dataclass(frozen=True)
+class GrafikTanimi:
+    """(P181 Bölüm 8) Bir raporun GRAFİK yapılandırması — TEK KAYNAK.
+
+    Web (recharts), PDF (reportlab.graphics) ve Excel (openpyxl chart) aynı
+    tanımı okur; grafik tipi/eksenleri iki yerde yaşamasın. `x` ve `seriler`
+    rapor SÜTUN kimlikleridir (satırdaki alanlar). `tip`: cizgi (zaman serisi),
+    sutun (karşılaştırma), pasta (dağılım).
+    """
+
+    tip: str  # "cizgi" | "sutun" | "pasta"
+    x: str
+    seriler: tuple[str, ...]
+
+
+@dataclass(frozen=True)
 class KatalogKaydi:
     baslik: str
     aciklama: str
@@ -115,6 +131,8 @@ class KatalogKaydi:
     alanlar: tuple[str, ...]
     #: Tum defteri tarayan rapor mu? Istemci bunlari KUYRUGA yollar.
     agir: bool = False
+    #: (P181 Bölüm 8) Grafik yapılandırması (yoksa yalnız tablo).
+    grafik: GrafikTanimi | None = None
 
 
 KATALOG_KAYITLARI: dict[str, KatalogKaydi] = {}
@@ -160,6 +178,8 @@ KATALOG_KAYITLARI = {
         ("blok", "unit_id", "gelir_gider_tanim_id",
          "baslangic_ay", "baslangic_yil", "bitis_ay", "bitis_yil",
          "tazminat_tarihi"),
+        # (P181 8) ZAMAN SERİSİ → çizgi: dönem ekseninde borç/tahsilat/bakiye.
+        grafik=GrafikTanimi("cizgi", "donem", ("borc", "tahsilat", "bakiye")),
     ),
     "notlar": KatalogKaydi(
         "Notlar", "Kayıtlara düşülen notlar (tarih + oluşturan + bölüm)",
@@ -182,6 +202,8 @@ KATALOG_KAYITLARI = {
         "ekstreler",
         ("user_id", "blok", "unit_id", "baslangic", "bitis",
          "tazminat_tarihi", "listeleme_tipi"),
+        # (P181 8) BAKİYE EĞİLİMİ → çizgi: tarih ekseninde yürüyen bakiye.
+        grafik=GrafikTanimi("cizgi", "tarih", ("bakiye_kurus",)),
     ),
     # ---------------------------- DOKUMLER --------------------------------
     # (P167 §6.3) Brief, Dokuman Yonetimi ekraninda bir Excel disari-aktarim
@@ -221,6 +243,8 @@ KATALOG_KAYITLARI = {
         "Gelir-Gider Özet", "Kalem bazında gelir/gider toplamı",
         "dokumler",
         ("baslangic", "bitis", "calisma_sekli", "grup_goster"),
+        # (P181 8) KARŞILAŞTIRMA → sütun: kalem ekseninde gelir vs gider.
+        grafik=GrafikTanimi("sutun", "kalem", ("gelir", "gider")),
     ),
     "ihtar_yazisi": KatalogKaydi(
         "İhtar Yazısı", "Daire başına resmi uyarı (PDF)",
@@ -271,6 +295,13 @@ async def katalog(_: AppUser = Depends(_RAPOR_OKUR)) -> RaporKatalogResponse:
             RaporKatalogOgesi(
                 kod=k, baslik=v.baslik, aciklama=v.aciklama,
                 kategori=v.kategori, alanlar=list(v.alanlar), agir=v.agir,
+                grafik=(
+                    RaporGrafikTanimi(
+                        tip=v.grafik.tip, x=v.grafik.x, seriler=list(v.grafik.seriler)
+                    )
+                    if v.grafik
+                    else None
+                ),
             )
             for k, v in KATALOG_KAYITLARI.items()
         ],
@@ -757,7 +788,7 @@ async def _uret(
             Sutun("kalem", "Kalem", genislik=3),
             Sutun("gelir", "Gelir", "kurus", 2),
             Sutun("gider", "Gider", "kurus", 2),
-            Sutun("fark", "Fark", "kurus", 2),
+            Sutun("fark", "Fark", "kurus", 2),  # grafik: kalem→gelir/gider (sütun)
         ]
         return RaporSonuc(kod, KATALOG[kod][0], sutunlar, satirlar, {
             a: sum(s[a] for s in satirlar) for a in ("gelir", "gider", "fark")

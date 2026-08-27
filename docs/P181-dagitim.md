@@ -81,6 +81,14 @@ için mutlaka yeniden derlenir.
 
 ---
 
+## Bölüm 8.0/8.1 — Rapor doğrulama + web grafikleri
+
+- **Göç:** YOK. **Yeni env:** YOK.
+- **Yeniden derle:** `api` (katalog grafik config + şema) + `admin-web`
+  (RaporGrafik). Geriye dönük uyumlu (grafik yoksa yalnız tablo).
+
+---
+
 ## Göç sırası özet
 
 ```

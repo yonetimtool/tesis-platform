@@ -1497,6 +1497,8 @@ export const ru: Sozluk = {
   raporPdf: "PDF",
   raporIndirildi: "Отчёт скачан.",
   raporSatirYok: "Нет строк",
+  raporGrafikVeriYok: "Нет данных для графика",
+  raporGrafikOrneklem: "График сокращён до {n} точек",
   raporSatirYokAlt: "Нет записей по выбранным условиям.",
   kabukRaporMotoru: "Движок отчётов",
   mesajBaslik: "Сообщения",

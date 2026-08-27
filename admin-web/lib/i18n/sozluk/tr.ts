@@ -1559,6 +1559,8 @@ export const tr = {
   raporPdf: "PDF",
   raporIndirildi: "Rapor indirildi.",
   raporSatirYok: "Satır yok",
+  raporGrafikVeriYok: "Grafik için veri yok",
+  raporGrafikOrneklem: "Grafik {n} noktaya örneklendi",
   raporSatirYokAlt: "Seçilen ölçütlere uyan kayıt bulunmuyor.",
   kabukRaporMotoru: "Rapor motoru",
   mesajBaslik: "Mesajlar",

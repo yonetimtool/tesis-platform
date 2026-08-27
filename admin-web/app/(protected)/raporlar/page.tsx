@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import useSWR from "swr";
 
 import { RaporModali, type RaporKatalogOgesi, type RaporSutun, type RaporTablosu } from "@/components/rapor/rapor-modali";
+import { RaporGrafik } from "@/components/rapor/rapor-grafik";
 import { IkonKutu } from "@/components/tasarim";
 import { useToast } from "@/components/Toast";
 import {
@@ -326,6 +327,12 @@ export default function RaporlarPage() {
       {tablo ? (
         <div className="space-y-3">
           <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{tablo.baslik}</h2>
+          {/* (P181 8) GRAFİK: raporun katalog grafik yapılandırması varsa tablonun üstünde; veri yoksa bileşen kendi durumunu çizer. */}
+          {secili?.grafik ? (
+            <Kart>
+              <RaporGrafik grafik={secili.grafik} tablo={tablo} />
+            </Kart>
+          ) : null}
           {tablo.metin ? (
             // Serbest metin bolumu (ihtar govdesi, denetim notu): duz metin
             // olarak cizilir — HTML kabul etmek XSS yuzeyi acardi.

@@ -5270,6 +5270,14 @@ class RaporIsOut(BaseModel):
     biten_at: datetime | None = None
 
 
+class RaporGrafikTanimi(BaseModel):
+    """(P181 Bölüm 8) Raporun grafik yapılandırması — web/PDF/Excel tek kaynak."""
+
+    tip: str  # "cizgi" | "sutun" | "pasta"
+    x: str
+    seriler: list[str]
+
+
 class RaporKatalogOgesi(BaseModel):
     kod: str
     baslik: str
@@ -5285,6 +5293,8 @@ class RaporKatalogOgesi(BaseModel):
     #: Tum defteri tarayan rapor mu? Istemci bunlari senkron uc yerine
     #: KUYRUGA yollar. Olcuyu sunucu bilir; istemci bilemez.
     agir: bool = False
+    #: (P181 Bölüm 8) Grafik yapılandırması (yoksa yalnız tablo).
+    grafik: RaporGrafikTanimi | None = None
 
 
 class RaporKatalogResponse(BaseModel):
