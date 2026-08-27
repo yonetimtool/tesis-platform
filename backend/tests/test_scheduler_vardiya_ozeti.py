@@ -24,6 +24,15 @@ NOW = datetime(2026, 1, 15, 15, 0, tzinfo=UTC)
 ICINDE = datetime(2026, 1, 15, 10, 0, tzinfo=UTC)   # vardiya aralığında
 DISINDA = datetime(2026, 1, 15, 3, 0, tzinfo=UTC)   # vardiya öncesi (sayılmaz)
 
+# GECE vardiyası: İstanbul (+03) 22:00–06:00 → dün başlar bugün biter.
+# 14-01 22:00 yerel = 14-01 19:00Z; 15-01 06:00 yerel = 15-01 03:00Z.
+# Pencere UTC'de [14-01 19:00Z, 15-01 03:00Z) — GECE YARISINI (00:00Z) AŞAR.
+GECE_NOW = datetime(2026, 1, 15, 5, 0, tzinfo=UTC)      # yerel 08:00 → bitmiş
+GECE_ONCE = datetime(2026, 1, 14, 20, 0, tzinfo=UTC)    # yerel 23:00 (gece yarısı ÖNCESİ) — içeride
+GECE_SONRA = datetime(2026, 1, 15, 0, 0, tzinfo=UTC)    # yerel 03:00 (gece yarısı SONRASI) — içeride
+GECE_DISI = datetime(2026, 1, 15, 4, 0, tzinfo=UTC)     # yerel 07:00 (bitiş sonrası) — dışarıda
+GECE_SURUYOR = datetime(2026, 1, 15, 1, 0, tzinfo=UTC)  # yerel 04:00 — vardiya SÜRÜYOR
+
 
 def _tenant(conn, tzname="Europe/Istanbul") -> uuid.UUID:
     tid = uuid.uuid4()
@@ -156,6 +165,54 @@ def test_vardiya_BITMEDIYSE_ozet_yok(sched, push_spy):
     erken = datetime(2026, 1, 15, 9, 0, tzinfo=UTC)  # yerel 12:00
     assert summarize_ended_shifts(now=erken) == 0
     assert _ozetler(sched.conn, sched.tid) == []
+
+
+def test_vardiya_ozeti_GECE_vardiyasi_GECE_YARISI_asan_okutma_sayar(sched, push_spy):
+    """GECE vardiyası (22:00–06:00): pencere gece yarısını aşar. Gece yarısı
+    ÖNCESİ ve SONRASI okutmalar sayılır; bitiş sonrası sayılmaz. Özet gün
+    anahtarı BAŞLAMA günü (14-01)."""
+    sid = _shift(sched.conn, sched.tid, bas=time(22, 0), bit=time(6, 0))
+    pid = _plan(sched.conn, sched.tid, sid)
+    c1 = _checkpoint(sched.conn, sched.tid)
+    c2 = _checkpoint(sched.conn, sched.tid)
+    c3 = _checkpoint(sched.conn, sched.tid)
+    _assign(sched.conn, sched.tid, pid, c1, 0)
+    _assign(sched.conn, sched.tid, pid, c2, 1)
+    _assign(sched.conn, sched.tid, pid, c3, 2)
+    _scan(sched.conn, sched.tid, sched.gid, c1, GECE_ONCE)    # gece yarısı öncesi → sayılır
+    _scan(sched.conn, sched.tid, sched.gid, c2, GECE_SONRA)   # gece yarısı sonrası → sayılır
+    _scan(sched.conn, sched.tid, sched.gid, c3, GECE_DISI)    # bitiş sonrası → sayılmaz
+
+    assert summarize_ended_shifts(now=GECE_NOW) == 1
+    ozet = _ozetler(sched.conn, sched.tid)
+    assert len(ozet) == 1
+    veri = ozet[0][0]
+    assert veri["beklenen"] == 3 and veri["okutulan"] == 2   # gece yarısını aşan iki okutma
+    assert veri["gun"] == "14-01"                            # başlama günü
+    assert len(push_spy) == 1 and push_spy[0]["k"] == "vardiya_ozeti"
+
+
+def test_vardiya_ozeti_GECE_vardiyasi_SURERKEN_ozet_yok(sched, push_spy):
+    """GECE vardiyası daha bitmeden (yerel 04:00, bitiş 06:00) özet üretilmez."""
+    sid = _shift(sched.conn, sched.tid, bas=time(22, 0), bit=time(6, 0))
+    pid = _plan(sched.conn, sched.tid, sid)
+    c1 = _checkpoint(sched.conn, sched.tid)
+    _assign(sched.conn, sched.tid, pid, c1, 0)
+    _scan(sched.conn, sched.tid, sched.gid, c1, GECE_SONRA)   # okutma var ama vardiya sürüyor
+    assert summarize_ended_shifts(now=GECE_SURUYOR) == 0
+    assert _ozetler(sched.conn, sched.tid) == []
+
+
+def test_vardiya_ozeti_GECE_vardiyasi_IDEMPOTENT(sched, push_spy):
+    """Gece vardiyası da (başlama günü anahtarıyla) tek kez özetlenir."""
+    sid = _shift(sched.conn, sched.tid, bas=time(22, 0), bit=time(6, 0))
+    pid = _plan(sched.conn, sched.tid, sid)
+    c1 = _checkpoint(sched.conn, sched.tid)
+    _assign(sched.conn, sched.tid, pid, c1, 0)
+    _scan(sched.conn, sched.tid, sched.gid, c1, GECE_SONRA)
+    assert summarize_ended_shifts(now=GECE_NOW) == 1
+    assert summarize_ended_shifts(now=GECE_NOW) == 0
+    assert len(_ozetler(sched.conn, sched.tid)) == 1
 
 
 def test_vardiya_gun_tipi_HAFTA_ICI_hafta_sonu_kosmaz(sched, push_spy):
