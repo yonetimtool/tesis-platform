@@ -111,6 +111,10 @@ const BIRINCIL_UC: Record<string, string> = {
   "/kurallar": "GET /site-rules",
   "/etkinlikler": "GET /events",
   "/rezervasyonlarim": "GET /reservations",
+  // (P181 Bölüm 9) Yönetim rezervasyon/alan sayfası — birincil okuma
+  // `GET /reservations` (yönetim=tümü). Rolleri (admin/yönetici) o ucun
+  // izinli kümesinin ALT KÜMESİ; yeni backend ucu YOK, kilit değişmez.
+  "/rezervasyon-yonetimi": "GET /reservations",
   "/kvkk": "GET /me/pazarlama-tercihleri",
   "/ziyaretciler": "GET /visitors",
   "/kargolar": "GET /kargo",

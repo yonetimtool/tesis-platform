@@ -507,6 +507,50 @@ derlenemediğinden dağıtımda işaretli.
 
 ---
 
+## Bölüm 9 — Web rezervasyon (yönetim + alan yönetimi) (BİTTİ, web)
+
+**Bulgu:** Web'de `/rezervasyonlarim` ZATEN vardı — SAKİN self-servis
+(oluşturma + listeleme + iptal). "Web'de yok" olan, mobildeki **yönetim**
+tarafıydı: mobil rezervasyon ekranının "Alanlar" sekmesi (rezerve edilebilir
+alanların yönetimi) + yönetim rezervasyon listesi web'de HİÇ yoktu (BFF
+`/api/common-areas` yalnız GET'ti, yönetim sayfası yoktu).
+
+**Karar:** Yeni yönetim sayfası **`/rezervasyon-yonetimi`** (admin/yönetici),
+mobil ile birebir iki sekme:
+- **Alanlar:** liste (pasifler dahil) + yeni alan + düzenle + pasifleştir/
+  aktifleştir (soft-delete `aktif=false`; rezervasyon geçmişi korunur).
+- **Rezervasyonlar:** yönetim TÜMÜ + süzgeç (alan / tarih / aktif-geçmiş) +
+  herhangi birini iptal.
+
+**Aynı veri modeli / aynı uçlar — YENİ TABLO YOK:** `GET/POST /common-areas`,
+`PATCH /common-areas/{id}`, `GET /reservations` (yönetim=tümü, süzgeçli),
+`POST /reservations/{id}/cancel`. Backend DEĞİŞMEDİ.
+
+**İş kuralları SUNUCUDA (mobil ile birebir):** çakışma kontrolü + zamanlama
+(`reservations_timing.py`) + saklama süresi (göç 0054, `tenant.rezervasyon_
+gecmis_ay`) + alan adı benzersizliği (409) + saat tutarlılığı (kapanış>açılış,
+422). İstemci KOPYALAMAZ — hata metni tenant dilinde sunucudan gelir.
+
+**Karar — rezervasyon OLUŞTURMA yönetimde YOK (RBAC):** backend `POST
+/reservations` YALNIZ resident'tir (`_REQUESTER`); yönetim rezervasyon üretmez
+(403 olurdu). Sakin `/rezervasyonlarim`'dan oluşturur (zaten var). Yeni bir
+"yönetim adına rezerve et" ucu AÇILMADI — spec "mobil modeli birebir, yeni
+tablo/uç yok" diyor ve mobilde de yönetim rezerve etmez.
+
+**Karar — "düzenleme" = ALAN düzenleme:** Rezervasyonun KENDİSİ düzenlenebilir
+değil (backend'de `PATCH /reservations` YOK; mobilde de yok — düzeltme = iptal
++ yeniden). Dolayısıyla Böl.9'un "düzenleme"si rezerve edilebilir ALANLARA
+uygulanır (mobil "Alanlar" sekmesiyle aynı).
+
+**Kapsam:** yalnız `admin-web`. BFF: `common-areas` POST + `[id]` PATCH,
+`reservations` GET süzgeç iletimi. Rol: `ROTA_ROLLERI["/rezervasyon-yonetimi"]
+= ["admin","yonetici"]` + menü (tesis grubu). i18n: `kabukRezervasyonYonetimi`
++ 20 `rezYon*` × 7 dil (parity yeşil). **Göç/env/backend YOK.**
+**Test:** `rezervasyon-yonetimi.dom.test.ts` (alan listesi + pasifleştir PATCH +
+yönetim rezervasyon listesi/iptal); tsc + tam admin-web vitest yeşil.
+
+---
+
 ## Program notu (dürüstlük)
 
 P181 on bir bölümlük büyük bir programdır (auth altyapısı + göçler, 6 web düzeltme,

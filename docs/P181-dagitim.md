@@ -106,6 +106,15 @@ için mutlaka yeniden derlenir.
 
 ---
 
+## Bölüm 9 — Web rezervasyon (yönetim + alan yönetimi)
+
+- **Göç:** YOK. **Yeni env:** YOK. **Backend:** DEĞİŞMEDİ (mevcut
+  `/common-areas` + `/reservations` uçları kullanıldı).
+- **Yeniden derle:** yalnız `admin-web` (yeni `/rezervasyon-yonetimi` sayfası +
+  BFF `common-areas` POST/PATCH + menü/rol + i18n).
+
+---
+
 ## Göç sırası özet
 
 ```

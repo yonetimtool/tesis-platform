@@ -180,6 +180,7 @@ export const config = {
     "/kurallar/:path*",
     "/etkinlikler/:path*",
     "/rezervasyonlarim/:path*",
+    "/rezervasyon-yonetimi/:path*",
     "/kvkk/:path*",
     "/ziyaretciler/:path*",
     "/kargolar/:path*",

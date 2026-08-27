@@ -112,6 +112,7 @@ export const TESIS_ROTALARI = [
   "/kurallar",
   "/etkinlikler",
   "/rezervasyonlarim",
+  "/rezervasyon-yonetimi",
   "/kvkk",
   // (P126.4) Guvenligin kapi ekranlari.
   "/ziyaretciler",
@@ -301,6 +302,7 @@ export const ROTA_ROLLERI: Record<string, readonly string[]> = {
   "/tasks": ["admin", "yonetici"],
   "/assets": ["admin", "yonetici"],
   "/units": ["admin", "yonetici"],
+  "/rezervasyon-yonetimi": ["admin", "yonetici"],
   "/building-editor": ["admin", "yonetici"],
   "/schematic": ["admin", "yonetici"],
   "/tanimlar": ["admin", "yonetici"],

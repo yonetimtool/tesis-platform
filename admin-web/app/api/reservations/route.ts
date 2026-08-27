@@ -18,6 +18,12 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     limit: sp.get("limit") ?? "50",
     offset: sp.get("offset") ?? "0",
   });
+  // (P181 Bölüm 9) YÖNETİM SÜZGEÇLERİ — sunucu KAPSAMI zorlar (yönetim tümü,
+  // sakin kendi); bunlar yalnız DARALTIR. İstemci kapsam kuralı KOYMAZ.
+  for (const k of ["gecmis", "alan_id", "tarih", "durum"]) {
+    const v = sp.get(k);
+    if (v !== null && v !== "") qs.set(k, v);
+  }
   return proxyJson(`/reservations?${qs.toString()}`, "GET");
 }
 

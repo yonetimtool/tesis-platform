@@ -208,6 +208,7 @@ const OGELER: readonly MenuOgesi[] = [
   { href: "/dis-hizmetler", anahtar: "kabukDisHizmetler", icon: "hub", grup: "tesis" },
   { href: "/etkinlikler", anahtar: "kabukEtkinlikler", icon: "clock", grup: "tesis" },
   { href: "/rezervasyonlarim", anahtar: "kabukRezervasyon", icon: "clock", grup: "tesis" },
+  { href: "/rezervasyon-yonetimi", anahtar: "kabukRezervasyonYonetimi", icon: "clock", grup: "tesis" },
   { href: "/kurallar", anahtar: "kabukKurallar", icon: "check", grup: "tesis" },
 
   // --- FINANS: para -----------------------------------------------------
