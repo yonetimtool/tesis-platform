@@ -281,3 +281,39 @@ def test_dogrulanmis_eposta_YOKSA_422(client, adm, owner_conn):
     r = client.post("/me/hesap-sil/eposta-kod-iste", headers=h)
     assert r.status_code == 422, r.text
     assert r.json()["error"]["code"] == "no_email", r.text
+
+
+def test_parolasiz_EPOSTA_koduyla_PAROLA_kurar(client, adm, owner_conn):
+    """(P184) `PATCH /me/password` parolasiz yolu da E-POSTA koduyla calisir.
+
+    Silme ile AYNI tek-kullanimlik kanal (`amac='hesap_silme'`); kod
+    `/me/hesap-sil/eposta-kod-iste` ile istenir ve parola KURMAK icin de gecerli.
+    """
+    from app.security import hash_password
+
+    user_id, tel, parola = _sakin_ac(client, adm)
+    h = _oturum(client, tel, parola)
+    eposta = f"pw-{uuid.uuid4().hex[:10]}@ornek.com"
+    _parolasizlastir(owner_conn, user_id, eposta=eposta)
+
+    assert client.post("/me/hesap-sil/eposta-kod-iste", headers=h).status_code == 200
+    with owner_conn.cursor() as cur:
+        cur.execute(
+            "UPDATE kayit_dogrulama SET kod_hash=%s "
+            "WHERE eposta=%s AND amac='hesap_silme' AND durum='telefon_bekliyor'",
+            (hash_password("424242"), eposta),
+        )
+        assert cur.rowcount == 1
+    owner_conn.commit()
+
+    yeni = f"YeniPw{_sfx()}A1!"
+    r = client.patch(
+        "/me/password", headers=h, json={"kod": "424242", "new_password": yeni}
+    )
+    assert r.status_code == 204, r.text
+    # Artik parola ile giris yapilabilir.
+    assert (
+        client.post("/auth/login-phone", json={"phone": tel, "password": yeni})
+        .status_code
+        == 200
+    )

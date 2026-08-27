@@ -106,7 +106,19 @@ class SetPasswordRequest(BaseModel):
 # Self-servis parola degisimi (PATCH /me/password) — kullanici KENDI parolasini
 # gunceller; mevcut parola zorunlu (auth.md self-servis profil).
 class PasswordChangeRequest(BaseModel):
-    current_password: str = Field(..., min_length=1)
+    """Parolasi OLAN: `current_password` · PAROLASIZ: `kod` (HesapSilmeIstek deseni).
+
+    (P184) Parolasiz kullanici mevcut parola YERINE bir sahiplik kaniti kodu
+    gonderir; kod `amac='hesap_silme'` ile uretilir ve doğrulanmış e-posta
+    varsa E-POSTAYA gider (`/me/hesap-sil/eposta-kod-iste`). Hangisinin
+    isteneceğini SUNUCU secer (`password_hash is None`). `current_password`
+    ZORUNLU DEGIL: zorunlu birakmak, kendi kaydolan (parolasiz) kullanicinin
+    parola KURAMAMASI demekti.
+    """
+
+    current_password: str | None = Field(None, min_length=1, max_length=200)
+    #: (P184) Parolasiz kullanici icin sahiplik kaniti kodu. Parolasi olanda bos.
+    kod: str | None = None
     new_password: str = Field(..., min_length=8)
 
     @field_validator("new_password")

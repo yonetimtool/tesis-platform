@@ -170,8 +170,16 @@ kodu gönderir (yoksa 422 `no_email`). `/me/hesap-sil` parolasız yolda **doğru
 e-posta varsa e-posta kodunu**, yoksa telefon kodunu doğrular — kanallar karışmaz
 (`kayit_dogrulama` vs telefon kod tablosu; ikisi de `amac='hesap_silme'`, göç YOK çünkü
 `hesap_silme` zaten geçerli e-posta kod amacı [göç 0068/models `KOD_AMACI`]).
-`PATCH /me/password`'ün parolasız-kod yolu (aynı `amac`) DOKUNULMADI — kullanıcı isteği
-yalnız silme yüzeyiydi. Böylece mobilde hiçbir SMS kalıntısı kalmadı (kabul 1 tam).
+**Ek (kullanıcı isteği):** `PATCH /me/password`'ün parolasız yolu da e-postaya
+geçirildi (aynı `amac='hesap_silme'` kanalı; doğrulanmış e-posta varsa e-posta,
+yoksa telefon kodu). **Bulgu:** bu yol aslında **ölü koddu** — `PasswordChangeRequest`
+şeması `current_password`'ı ZORUNLU tutuyor ve `kod` alanı YOKTU, yani parolasız dal
+hiç erişilemiyordu. Şema `HesapSilmeIstek` desenine getirildi (`current_password`
+opsiyonel + `kod` eklendi); böylece parolasız (SSO) kullanıcı **e-posta koduyla parola
+KURABİLİR**. Parola sahibi kullanıcı hâlâ mevcut parolasını doğrular (zayıflama yok:
+`password_hash is not None` dalında `current_password` yanlış/boşsa 400). Mobil UI yok
+(backend yeteneği); `changePassword` yalnız parola yolunu gönderir. Böylece mobilde
+hiçbir SMS kalıntısı kalmadı (kabul 1 tam).
 
 ## K14 — SSO rol-tamamla: rol BEYANI istenir (her iki yüzeyde)
 

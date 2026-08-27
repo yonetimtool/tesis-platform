@@ -141,22 +141,30 @@ async def change_my_password(
     login'deki gizlilik ilkesi burada gerekmez — kullanici zaten kimlikli).
     Basarida yeni bcrypt hash yazilir; oturum (refresh) devam eder.
     """
-    # (P149) PAROLASIZ KULLANICI DA HESABINI SILEBILMELI.
+    # (P149) PAROLASIZ KULLANICI DA PAROLA BELIRLEYEBILMELI.
     #
-    # P148 sakinleri `password_hash=NULL` ile aciyor; burasi kosulsuz parola
-    # ariyordu, yani kendi kaydolan sakin hesabini SILEMIYORDU. Play'in
-    # "silme yolu calismali" sarti dogrudan ihlal ediliyordu.
+    # P148 sakinleri `password_hash=NULL` ile aciliyor; parolasi olmayan kisi
+    # bu uctan bir parola KURAR. Dogrulama ARACI degisir, GUCU degismez:
+    # parolasi olanda mevcut parola, olmayanda KOD ile sahiplik kaniti.
     #
-    # Dogrulama ARACI degisir, GUCU degismez: parolasi olanda parola,
-    # olmayanda telefonuna gonderilen KOD. Ikisi de "hesabin sahibi
-    # oldugunu kanitla" ayni esigi tasir; kod `amac='hesap_silme'` ile
-    # uretilir, giris kodu buraya YARAMAZ.
+    # (P184) KANAL E-POSTA: kod `amac='hesap_silme'` ile uretilir (hesap-sil
+    # ile ayni tek-kullanimlik kanal) ve dogrulanmis e-posta varsa E-POSTA
+    # kodu, yoksa telefon kodu dogrulanir — SMS kapali oldugundan bugun
+    # calisan yol e-postadir. Giris/e-posta-ekleme kodu buraya YARAMAZ.
     if user.password_hash is None:
         if not body.kod:
             raise APIError(400, "code_required", "silme_kodu_gerekli")
-        await kodu_dogrula(
-            db, telefon=user.telefon or "", kod=body.kod, amac="hesap_silme"
-        )
+        if user.email and user.eposta_dogrulandi:
+            kayit = await eposta_kodunu_dogrula(
+                db, tenant_id=user.tenant_id, eposta=user.email,
+                kod=body.kod, amac="hesap_silme",
+            )
+            kayit.durum = "onaylandi"  # tek kullanimlik: tuket.
+            kayit.karar_at = func.now()
+        else:
+            await kodu_dogrula(
+                db, telefon=user.telefon or "", kod=body.kod, amac="hesap_silme"
+            )
     elif not verify_password(body.current_password or "", user.password_hash):
         raise APIError(400, "invalid_credentials", "mevcut_parola_hatali")
     user.password_hash = hash_password(body.new_password)
