@@ -46,6 +46,24 @@ _VARSAYILAN: tuple[str, str] = (
 )
 
 
+def eposta_degistirme_bildirimi_metni() -> tuple[str, str]:
+    """(P184-ek §9) ESKİ adrese giden değiştirme BİLDİRİMİ — kod DEĞİL.
+
+    Kullanıcı e-postasını değiştirmek istediğinde ESKİ (doğrulanmış) adrese
+    gider: hesap ele geçirilmişse sahibi fark etsin. YENİ adres burada YAZILMAZ
+    (o adres bir sırdır ve eski gelen kutusuna yazmak gereksiz bilgi sızdırırdı).
+    """
+    konu = f"{MARKA} — E-posta değiştirme talebi"
+    govde = (
+        "Hesabınızın e-posta adresini değiştirme talebi aldık. Yeni adres "
+        "doğrulanana kadar BU adres geçerli kalır ve hesabınız kilitlenmez.\n\n"
+        "Bu talebi SİZ yapmadıysanız hesabınız tehlikede olabilir: "
+        "parolanızı hemen değiştirin ve yöneticinize başvurun.\n\n"
+        f"— {MARKA}\n{GONDEREN}"
+    )
+    return konu, govde
+
+
 def eposta_kod_metni(amac: str, kod: str, dk: int) -> tuple[str, str]:
     """Amaca göre markalı e-posta (konu, gövde) döndürür — düz metin.
 

@@ -74,19 +74,23 @@ describe("Profilim", () => {
     fetchTaklidi(PROFIL);
     ciz(ProfilPage);
     expect(await screen.findByDisplayValue("Ayşe Yılmaz")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("ayse@ornek.com")).toBeInTheDocument();
+    // (P184-ek §9) E-posta artık düzenlenebilir: input değil, METİN gösterilir.
+    expect(screen.getByText("ayse@ornek.com")).toBeInTheDocument();
   });
 
-  it("(P167 §1.7) E-POSTA ALANI SALT OKUNUR — giris anahtaridir", async () => {
-    // Dogrulama akisi olmadan degistirilebilseydi: odunc alinmis bir
-    // oturum adresi degistirip hesabin sahibini kalici olarak disarida
-    // birakabilir, yanlis yazilan bir adres parola sifirlamayi SESSIZCE
-    // calismaz kilardi. Alan GOSTERILIR (gizlemek "neden yok?" sorusu
-    // uretirdi) ama kilitlidir.
+  it("(P184-ek §9) E-POSTA DÜZENLENEBİLİR — değiştir akışı açılır", async () => {
+    // (P167 §1.7'de salt-okunurdu) Artık DOĞRULAMA AKISI VAR: yeni adrese kod
+    // gider, eski adres doğrulanana kadar geçerli kalır (kilitleme yok). Alan
+    // metin olarak görünür + "E-postayı değiştir" ile yeni adres istenir.
     fetchTaklidi(PROFIL);
     ciz(ProfilPage);
-    const eposta = await screen.findByDisplayValue("ayse@ornek.com");
-    expect(eposta).toBeDisabled();
+    // Mevcut adres METİN olarak görünür (salt-okunur input DEĞİL).
+    expect(await screen.findByText("ayse@ornek.com")).toBeInTheDocument();
+    // "E-postayı değiştir" düğmesi tıklanınca yeni adres alanı açılır.
+    await userEvent.click(
+      screen.getByRole("button", { name: "E-postayı değiştir" }),
+    );
+    expect(screen.getByLabelText("E-posta adresi")).toBeInTheDocument();
   });
 
   it("(P167 §1.7) BOS AD kaydettirmez", async () => {

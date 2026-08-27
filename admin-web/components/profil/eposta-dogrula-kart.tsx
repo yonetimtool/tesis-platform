@@ -1,11 +1,16 @@
 "use client";
 
-// (P181 Bölüm 1) E-POSTA EKLE/DOĞRULA KARTI.
+// (P181 Bölüm 1 · P184-ek §9) E-POSTA GÖRÜNTÜLE / DEĞİŞTİR / DOĞRULA.
 //
-// E-postasız ya da e-postalı-ama-doğrulanmamış kullanıcıya gösterilir. KİLİTLEME
-// YOK: oturum sürer, bu yalnız "beklemede" durumunu açan bir davettir. İki adım:
-// adres -> kod. Backend `/me/eposta/kod-iste` + `/me/eposta/dogrula` (hız sınırlı,
-// sızıntısız). Doğrulanınca reset (Bölüm 2) ve OTP giriş (Bölüm 4) çalışır.
+// TEK BİLEŞEN, ÜÇ DURUM:
+//   * dogrulandi=true  → mevcut adres + "E-postayı değiştir" (YENİ adrese kod).
+//   * dogrulandi=false + adres var → "Doğrula" (mevcut adrese kod).
+//   * adres yok        → "E-posta ekle".
+// Akış her durumda adres → kod. Backend `/me/eposta/kod-iste` + `/me/eposta/
+// dogrula` (hız sınırlı, SIZDIRMAZ: adres başkasındaysa aynı yanıt döner ama
+// kod gelmez; eski adres yeni adres doğrulanana kadar GEÇERLİ kalır — kilitleme
+// yok; eski adrese "değiştirme talebi" bildirimi gider). SSO bağı e-postaya
+// DEĞİL user_id'ye bağlı, o yüzden e-posta değişimi kimlik bağını bozmaz.
 import { useState } from "react";
 
 import { btnPrimary, inputCls } from "@/components/form";
@@ -24,17 +29,17 @@ export function EpostaDogrulaKart({
 }) {
   const t = useT();
   const toast = useToast();
-  const [eposta, setEposta] = useState(mevcutEposta ?? "");
+  const [adim, setAdim] = useState<"goster" | "adres" | "kod">("goster");
+  const [eposta, setEposta] = useState("");
   const [kod, setKod] = useState("");
-  const [adim, setAdim] = useState<"adres" | "kod">("adres");
   const [bekliyor, setBekliyor] = useState(false);
 
-  if (dogrulandi) {
-    return (
-      <p className="text-sm" style={{ color: "var(--yz-text-2)" }}>
-        ✓ {t("profilEpostaDogrulandi")}
-      </p>
-    );
+  function duzenlemeyeGec() {
+    // DEĞİŞTİRME (doğrulanmış) → YENİ adres için alan BOŞ başlar.
+    // EKLEME/DOĞRULAMA (doğrulanmamış) → mevcut adres ön-dolu gelir.
+    setEposta(dogrulandi ? "" : (mevcutEposta ?? ""));
+    setKod("");
+    setAdim("adres");
   }
 
   async function kodIste() {
@@ -60,6 +65,7 @@ export function EpostaDogrulaKart({
         kod: kod.trim(),
       });
       toast.success(t("profilEpostaDogrulandi"));
+      setAdim("goster");
       onDone();
     } catch (e) {
       toast.error((e as Error).message);
@@ -68,13 +74,41 @@ export function EpostaDogrulaKart({
     }
   }
 
+  if (adim === "goster") {
+    return (
+      <div className="space-y-1.5">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm" style={{ color: "var(--yz-text)" }}>
+            {mevcutEposta || "—"}
+          </span>
+          {mevcutEposta ? (
+            <span
+              className="text-xs"
+              style={{ color: dogrulandi ? "var(--yz-text-2)" : "var(--yz-text-3)" }}
+            >
+              {dogrulandi ? "✓" : t("profilEpostaRozetBekliyor")}
+            </span>
+          ) : null}
+        </div>
+        <button
+          type="button"
+          className="text-sm underline underline-offset-2"
+          style={{ color: "var(--yz-accent)" }}
+          onClick={duzenlemeyeGec}
+        >
+          {mevcutEposta ? t("profilEpostaDegistir") : t("profilEpostaEkle")}
+        </button>
+        <p className="text-xs" style={{ color: "var(--yz-text-3)" }}>
+          {dogrulandi ? t("profilEpostaDegistirIpucu") : t("profilEpostaBeklemede")}
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-3">
-      <p className="text-sm" style={{ color: "var(--yz-text-2)" }}>
-        {t("profilEpostaBeklemede")}
-      </p>
+    <div className="space-y-2">
       {adim === "adres" ? (
-        <div className="space-y-2">
+        <>
           <input
             className={inputCls}
             type="email"
@@ -84,16 +118,26 @@ export function EpostaDogrulaKart({
             aria-label={t("profilEpostaAdres")}
             autoComplete="email"
           />
-          <button
-            className={btnPrimary}
-            disabled={bekliyor || !eposta.includes("@")}
-            onClick={() => void kodIste()}
-          >
-            {bekliyor ? t("ortakKaydediliyor") : t("profilEpostaKodGonder")}
-          </button>
-        </div>
+          <div className="flex gap-2">
+            <button
+              className={btnPrimary}
+              disabled={bekliyor || !eposta.includes("@")}
+              onClick={() => void kodIste()}
+            >
+              {bekliyor ? t("ortakKaydediliyor") : t("profilEpostaKodGonder")}
+            </button>
+            <button
+              type="button"
+              className="text-sm"
+              style={{ color: "var(--yz-text-2)" }}
+              onClick={() => setAdim("goster")}
+            >
+              {t("ortakVazgec")}
+            </button>
+          </div>
+        </>
       ) : (
-        <div className="space-y-2">
+        <>
           <input
             className={inputCls}
             inputMode="numeric"
@@ -103,14 +147,24 @@ export function EpostaDogrulaKart({
             placeholder={t("profilEpostaKod")}
             aria-label={t("profilEpostaKod")}
           />
-          <button
-            className={btnPrimary}
-            disabled={bekliyor || kod.trim().length < 4}
-            onClick={() => void dogrula()}
-          >
-            {bekliyor ? t("ortakKaydediliyor") : t("profilEpostaDogrula")}
-          </button>
-        </div>
+          <div className="flex gap-2">
+            <button
+              className={btnPrimary}
+              disabled={bekliyor || kod.trim().length < 4}
+              onClick={() => void dogrula()}
+            >
+              {bekliyor ? t("ortakKaydediliyor") : t("profilEpostaDogrula")}
+            </button>
+            <button
+              type="button"
+              className="text-sm"
+              style={{ color: "var(--yz-text-2)" }}
+              onClick={() => setAdim("goster")}
+            >
+              {t("ortakVazgec")}
+            </button>
+          </div>
+        </>
       )}
     </div>
   );

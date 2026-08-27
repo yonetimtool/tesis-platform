@@ -393,16 +393,18 @@ function HesapBilgileri({
             )}
           </AlanSarmal>
 
-          {/* E-POSTA SALT OKUNUR ve bu bilincli bir karar.
-              Bu sistemde e-posta LOGIN ANAHTARIDIR ve dogrulama akisi
-              yoktur. Dogrulamasiz degistirilebilseydi (a) odunc alinmis
-              bir oturum adresi degistirip hesabin sahibini kalici olarak
-              disarida birakabilir, (b) yanlis yazilan bir adres parola
-              sifirlamayi SESSIZCE calismaz kilardi. Alan gosterilir —
-              gizlemek "neden yok?" sorusu uretirdi — ama nedeni yazili. */}
-          <AlanSarmal etiket={t("profilEposta")} ipucu={t("profilEpostaKilitli")}>
-            {(baglar) => (
-              <Alan {...baglar} value={profil?.email ?? ""} readOnly disabled />
+          {/* (P184-ek §9) E-POSTA ARTIK DUZENLENEBILIR. Degisiklik YENI adrese
+              giden dogrulama koduyla onaylanir; kod dogrulanana kadar ESKI adres
+              gecerli kalir (kilitlenme yok) ve eski adrese bildirim gider.
+              Backend SIZDIRMAZ (adres baskasindaysa ayni yanit). SSO bagi
+              user_id'ye bagli oldugundan e-posta degisimi kimligi bozmaz. */}
+          <AlanSarmal etiket={t("profilEposta")}>
+            {() => (
+              <EpostaDogrulaKart
+                mevcutEposta={profil?.email}
+                dogrulandi={Boolean(profil?.eposta_dogrulandi)}
+                onDone={tazele}
+              />
             )}
           </AlanSarmal>
 

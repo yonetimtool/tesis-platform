@@ -1778,6 +1778,11 @@ export const tr = {
   profilEpostaKod: "Doğrulama kodu",
   profilEpostaDogrula: "Doğrula",
   profilEpostaGonderildi: "Kod gönderildi, e-postanızı kontrol edin.",
+  profilEpostaDegistir: "E-postayı değiştir",
+  profilEpostaEkle: "E-posta ekle",
+  profilEpostaRozetBekliyor: "doğrulanmadı",
+  profilEpostaDegistirIpucu:
+    "Yeni adrese bir doğrulama kodu gönderilir; eski adresiniz doğrulanana kadar geçerli kalır.",
   sosyalOturumGecersiz: "Giriş oturumu geçersiz ya da süresi doldu.",
   sosyalYontemlerBaslik: "Giriş yöntemlerim",
   sosyalYontemYok: "Bağlı sosyal hesap yok.",

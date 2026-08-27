@@ -48,15 +48,58 @@ def test_eposta_kod_iste_TAZE_adres_gonderir(client, world):
     assert r.json()["durum"] == "gonderildi"
 
 
-def test_eposta_kod_iste_BASKASININ_adresi_409(client, world):
-    # admin_a'nin e-postasi (varsa) baska bir kullanicida sayilir -> 409.
-    admin = _headers(client, world["slug_a"], world["admin_a"])
+def test_eposta_kod_iste_BASKASININ_adresi_SIZDIRMAZ(client, world, owner_conn):
+    """(P184-ek §9) Adres BAŞKA kullanıcıda kayıtlıysa uç SIZDIRMAZ.
+
+    Eskiden 409 `eposta_kullanimda` idi — bir "bu adres kimde" sorgusuydu.
+    Artık geçerli durumla AYNI yanıt (`gonderildi`) döner ama KOD ÜRETİLMEZ:
+    isteyen, başkasının adresine ait doğrulanabilir bir kod alamaz.
+    """
     guard = _headers(client, world["slug_a"], world["guard_a"])
-    # admin'e taze bir adres dogrulat DEGIL; guard admin'in login e-postasini
-    # isterse 409 almali (o adres admin_a'da). admin_a login e-postasi:
     admin_eposta = world["admin_a"]["email"]
     r = client.post("/me/eposta/kod-iste", headers=guard, json={"eposta": admin_eposta})
-    assert r.status_code == 409, r.text
+    assert r.status_code == 200, r.text          # 409 DEĞİL — sızdırmama
+    assert r.json()["durum"] == "gonderildi"
+    with owner_conn.cursor() as cur:
+        cur.execute(
+            "SELECT count(*) FROM kayit_dogrulama WHERE eposta = %s "
+            "AND amac = 'eposta_ekle' AND durum = 'telefon_bekliyor'",
+            (admin_eposta,),
+        )
+        assert cur.fetchone()[0] == 0, "başkasının adresine kod YAZILMAMALI"
+
+
+def test_dogrulanmis_epostayi_DEGISTIR_gonderildi_doner(client, world, owner_conn):
+    """(P184-ek §9) Doğrulanmış e-postası olan kullanıcı YENİ adres isteyince
+    akış çalışır (eski adrese bildirim gider; yanıt generic `gonderildi`)."""
+    from app.security import hash_password
+
+    guard = _headers(client, world["slug_a"], world["guard_a"])
+    ilk = f"p184a-{uuid.uuid4().hex[:8]}@ornek.test"
+    assert (
+        client.post("/me/eposta/kod-iste", headers=guard, json={"eposta": ilk})
+        .status_code
+        == 200
+    )
+    with owner_conn.cursor() as cur:
+        cur.execute(
+            "UPDATE kayit_dogrulama SET kod_hash = %s WHERE eposta = %s "
+            "AND amac = 'eposta_ekle' AND durum = 'telefon_bekliyor'",
+            (hash_password("123456"), ilk),
+        )
+    owner_conn.commit()
+    assert (
+        client.post(
+            "/me/eposta/dogrula", headers=guard, json={"eposta": ilk, "kod": "123456"}
+        ).status_code
+        == 200
+    )
+    # DEĞİŞTİR: yeni adres iste -> eski (doğrulanmış) adrese bildirim branch'i
+    # çalışır; yanıt generic `gonderildi`.
+    yeni = f"p184b-{uuid.uuid4().hex[:8]}@ornek.test"
+    r = client.post("/me/eposta/kod-iste", headers=guard, json={"eposta": yeni})
+    assert r.status_code == 200, r.text
+    assert r.json()["durum"] == "gonderildi"
 
 
 def test_eposta_dogrula_KOD_OKUR_ve_bayragi_ACAR(client, world, owner_conn):

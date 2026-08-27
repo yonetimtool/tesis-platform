@@ -235,21 +235,54 @@ async def eposta_dogrulama_kodu_iste(
     if "@" not in eposta or "." not in eposta.split("@")[-1]:
         raise APIError(422, "validation_error", "eposta_gecersiz")
     await kod_istegi_say(redis, eposta, kapsam="eposta_ekle")
-    # E-posta tenant içinde benzersiz: BAŞKA kullanıcıda kayıtlıysa reddet
-    # (uq_app_user_tenant_email zaten korur; net hata daha iyi).
+    # (P184-ek §9) SIZDIRMAMA: adres BAŞKA kullanıcıda kayıtlıysa uç, adresin
+    # kayıtlı olduğunu DIŞARI VERMEZ — geçerli durumla AYNI yanıtı döndürür
+    # (`gonderildi`) ama KOD ÜRETMEZ. Eskiden 409 `eposta_kullanimda` idi; o
+    # bir "bu adres kimde" sorgusuydu. Artık `giris/eposta-kod-iste` ile aynı
+    # sızdırmama ilkesi: yanıt tek biçim, gerçek eşleşme okunamaz.
     baska = (
         await db.execute(
             select(AppUser.id).where(
-                AppUser.email == eposta, AppUser.id != user.id
+                func.lower(AppUser.email) == eposta, AppUser.id != user.id
             )
         )
     ).scalar_one_or_none()
     if baska is not None:
-        raise APIError(409, "conflict", "eposta_kullanimda")
+        return {"durum": "gonderildi"}
+    # (P184-ek §9) DEĞİŞTİRME BİLDİRİMİ: kullanıcının DOĞRULANMIŞ eski adresi
+    # varsa ve yeni adres farklıysa, ESKİ adrese "değiştirme talebi alındı"
+    # bildirimi gider (hesap ele geçirilmişse sahibi fark etsin). Eski adres
+    # doğrulanana kadar GEÇERLİ kalır (`user.email` yalnız `dogrula`da değişir)
+    # — kullanıcı arada kilitlenmez.
+    if (
+        user.email
+        and user.eposta_dogrulandi
+        and user.email.strip().lower() != eposta
+    ):
+        await _eposta_degistirme_bildirimi(db, user.tenant_id, user.email)
     await eposta_kodu_uret_ve_gonder(
         db, tenant_id=user.tenant_id, eposta=eposta, amac="eposta_ekle"
     )
     return {"durum": "gonderildi"}
+
+
+async def _eposta_degistirme_bildirimi(db, tenant_id, eski_adres: str) -> None:
+    """(P184-ek §9) ESKİ adrese değiştirme bildirimi (kod DEĞİL) gönderir.
+
+    Hata YUTULUR: bildirim gönderilemese de (SMTP kapalı/hatalı) e-posta
+    değiştirme akışı engellenmemeli — bildirim bir güvenlik uyarısıdır, akışın
+    ön koşulu değil.
+    """
+    from ..eposta_sablonlari import eposta_degistirme_bildirimi_metni
+    from ..gonderim import saglayici as kanal_saglayicisi
+    from ..gonderim import tenant_ayari
+
+    try:
+        ayar = await tenant_ayari(db, tenant_id)
+        konu, govde = eposta_degistirme_bildirimi_metni()
+        kanal_saglayicisi("eposta", ayar).gonder(eski_adres, konu, govde)
+    except Exception:  # noqa: BLE001 — bildirim akışı engellemez
+        pass
 
 
 @router.post("/me/eposta/dogrula", response_model=UserOut)
