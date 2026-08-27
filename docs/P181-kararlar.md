@@ -655,8 +655,27 @@ ertelemek alarmı işe yaramaz kılardı. Batching yalnız RUTİN ilerleme özet
 uygulandı (spec örneği "24/26 okutuldu" = tamamlanma raporu). Diğer yüksek-hacim
 (toplu tahakkuk/import) tek işlemde tek bildirim üretiyor; per-satır spam YOK.
 
+**Sıklık kararı (beat):** 5 dk (300 s), SABİT (detect'ten AYRI). Gerekçe: özet
+bir RAPOR (alarm değil) + IDEMPOTENT → sık koşmak zararsız/hafif; ama bir
+vardiyanın "özetlenebilir penceresi" `[bitiş, ertesi yerel gece-yarısı]`dır
+(gece-yarısında `bugün` dönünce oluşum değişir), gece-yarısına yakın biten
+vardiyada bu pencere kısadır → 5 dk kaçırma penceresini <5 dk'ya indirir.
+`detect_interval`e BAĞLANMADI: operatör onu (büyük kampus için) uzatınca özetin
+sessizce gece-yarısı vardiyalarını kaçırması demekti.
+
+**PROD OLAYI — beat konteyneri eski imajla kaldı:** İlk turda `beat` yeniden
+derlenmedi (kanonik kısmi liste `beat`'i atlıyordu) → `beat_schedule`'daki yeni
+`summarize-shifts` girdisi prod'a HİÇ ulaşmadı, özet çalışmadı. Kod DOĞRUYDU;
+eksik olan DAĞITIMDI. Düzeltmeler: (a) `docs/P181-dagitim.md` kanonik komutuna
+`beat` eklendi + uyarı; (b) **beat_schedule kilidi** `test_beat_schedule.py`:
+her zamanlanan görev kayıtlı bir task + her `scheduler.*` periyodik task
+zamanlanmış (tanımlanıp ZAMANLANMAYAN görevi yakalar — bu hatanın tam kendisi).
+Mevcut testler fonksiyonu DOĞRUDAN çağırdığı için çizelge kaydını görmüyordu.
+
 **Test:** `test_scheduler_vardiya_ozeti.py` (okutulan/beklenen sayımı + yönetime
-tek push + idempotent + vardiya bitmeden özet yok + `hafta_ici` gün-tipi). Yeşil.
+tek push + idempotent + vardiya bitmeden özet yok + `hafta_ici` gün-tipi + GECE
+vardiyası: gece-yarısını aşan pencere, önce/sonra okutma sayılır). `test_beat_
+schedule.py` (çizelge kilidi, iki yön + on-demand doğrulama). Yeşil.
 
 ### 10.5 — Agresif yoklama (WEB düzeltildi)
 

@@ -42,11 +42,20 @@ celery_app.conf.beat_schedule = {
         "schedule": float(settings.scheduler_gecikme_interval_seconds),
     },
     # (P181 Bölüm 10.2) Vardiya sonu ozeti: biten vardiyalar icin TEK bildirim.
-    # Idempotent (vardiya+gun basina tek); dakikalik bakma yeterli — geciken bir
-    # ozet zararsizdir (alarm degil rapor). detect ile ayni periyot.
+    # SIKLIK = 5 dk (300 s), GEREKCE:
+    #  * Fonksiyon IDEMPOTENT (vardiya+gun basina tek, dedup_key) — sik kosmak
+    #    tekrar bildirim URETMEZ, yalnizca hafif bir sorgudur.
+    #  * Ozet bir RAPOR (alarm degil); birkac dakikalik gecikme zararsiz.
+    #  * Ama COK seyrek de olamaz: bir vardiyanin ozetlenebilir penceresi
+    #    [bitis, ertesi yerel gece-yarisi] arasidir (gece-yarisinda `bugun`
+    #    donunce olusum degisir). Gece-yarisina YAKIN biten bir vardiyada bu
+    #    pencere kisadir; 5 dk kacirma penceresini <5 dk'ya indirir.
+    # DETECT'ten AYRI/SABIT: `detect_interval`e baglamak, operator onu (or.
+    # buyuk kampus icin) uzatinca ozetin sessizce gec-yarisi vardiyalarini
+    # kacirmasi demekti.
     "summarize-shifts": {
         "task": "scheduler.summarize_shifts",
-        "schedule": float(settings.scheduler_detect_interval_seconds),
+        "schedule": 300.0,
     },
     # (P37) Caydirici webhook yeniden deneme kuyrugu — geri cekilme
     # dakikalar mertebesinde oldugu icin dakikada bir bakmak yeterli.

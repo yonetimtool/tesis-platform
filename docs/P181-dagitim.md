@@ -5,9 +5,17 @@ belge her bölümün prod'a taşınması için GEREKENLERİ toplar: göçler, ye
 derlenecek servisler, yeni env değişkenleri.
 
 **Kanonik dağıtım komutu** (kısmi derleme YAPMA — bkz. RUNBOOK §6.1):
-`docker compose build migrate api admin-web worker` (ya da argümansız
-`up -d --build`). `migrate` göçleri uygular; `api`/`admin-web` kod gömülü olduğu
-için mutlaka yeniden derlenir.
+`docker compose build migrate api admin-web worker beat` (ya da argümansız
+`up -d --build` — TÜM kod-taşıyan servisleri kapsar, ÖNERİLEN). `migrate` göçleri
+uygular; `api`/`admin-web` kod gömülü olduğu için mutlaka yeniden derlenir.
+
+> ⚠️ **`beat`'i UNUTMA (P181 10.2 gerçek olayı):** Eski kanonik liste `beat`'i
+> ATLIYORDU. Celery `beat_schedule` (zamanlanmış görevler) `celery_app.py`'de kod
+> olarak gömülüdür ve **yalnız `beat` imajında** yaşar. `beat` yeniden
+> derlenmezse yeni bir zamanlanmış görev (vardiya özeti gibi) prod'da HİÇ
+> koşmaz — `api`/`worker` güncel görünürken `beat` eski çizelgeyle döner. Zamanlama
+> değişikliğinde ya `beat`'i listeye ekle ya argümansız `up -d --build` kullan.
+> (`infra/RUNBOOK-PROD.md` §6.1'deki kısmi liste de aynı boşluğu taşıyor.)
 
 ---
 
