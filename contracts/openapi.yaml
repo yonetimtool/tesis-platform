@@ -2231,6 +2231,56 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "422": { $ref: "#/components/responses/ValidationError" }
 
+  # (P181 Bölüm 6.5) TOPLU İŞLEMLER — kapsam sunucuda zorlanır.
+  /notifications/toplu-okundu:
+    post:
+      tags: [notifications]
+      summary: Seçili bildirimleri okundu/okunmadi isaretle (toplu)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/NotificationTopluOkundu" }
+      responses:
+        "200":
+          description: Etkilenen satir sayisi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/NotificationTopluSonuc" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /notifications/tumunu-okundu:
+    post:
+      tags: [notifications]
+      summary: Kapsamdaki tum okunmamislari okundu isaretle
+      responses:
+        "200":
+          description: Etkilenen satir sayisi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/NotificationTopluSonuc" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /notifications/toplu-sil:
+    post:
+      tags: [notifications]
+      summary: Secili bildirimleri yumusak sil (toplu) + denetim
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/NotificationTopluSil" }
+      responses:
+        "200":
+          description: Etkilenen satir sayisi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/NotificationTopluSonuc" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
   # ================================================================= #
   # ANNOUNCEMENTS (duyuru) — gonderme admin+yonetici, okuma tum roller
   # ================================================================= #
@@ -13669,6 +13719,30 @@ components:
       required: [okundu]
       properties:
         okundu: { type: boolean }
+    NotificationTopluOkundu:
+      type: object
+      required: [ids]
+      properties:
+        ids:
+          type: array
+          items: { type: string, format: uuid }
+          minItems: 1
+          maxItems: 500
+        okundu: { type: boolean, default: true }
+    NotificationTopluSil:
+      type: object
+      required: [ids]
+      properties:
+        ids:
+          type: array
+          items: { type: string, format: uuid }
+          minItems: 1
+          maxItems: 500
+    NotificationTopluSonuc:
+      type: object
+      required: [etkilenen]
+      properties:
+        etkilenen: { type: integer }
 
     # ----------------------------- tasks --------------------------- #
     # Gorev tipi = yonetici-tanimli kategori (task_category); kategori_id null =

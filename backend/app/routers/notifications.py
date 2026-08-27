@@ -7,15 +7,23 @@ from __future__ import annotations
 import uuid
 
 from fastapi import APIRouter, Depends, Header, Query
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..audit import Action, audit_user
 from ..errors import APIError
 from ..deps import get_tenant_db, require_role
 from ..hata_metinleri import istek_dili
 from ..models import AppUser, Notification
 from ..push_metinleri import push_govdesi
-from ..schemas import NotificationListResponse, NotificationOut, NotificationUpdate
+from ..schemas import (
+    NotificationListResponse,
+    NotificationOut,
+    NotificationTopluOkundu,
+    NotificationTopluSil,
+    NotificationTopluSonuc,
+    NotificationUpdate,
+)
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
 
@@ -48,6 +56,11 @@ def _kapsam(user: AppUser):
     return Notification.user_id == user.id
 
 
+#: (P181 Bölüm 6.5) YUMUŞAK silinen satır listede/işlemde YOK sayılır.
+def _canli():
+    return Notification.silindi_at.is_(None)
+
+
 def _out(row: Notification, dil: str) -> NotificationOut:
     """Kayit -> yanit; metin ISTEGIN dilinde uretilir.
 
@@ -69,7 +82,7 @@ async def list_notifications(
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_VIEWER),
 ) -> NotificationListResponse:
-    where = [_kapsam(user)]
+    where = [_kapsam(user), _canli()]
     if okundu is not None:
         where.append(Notification.okundu == okundu)
     total = (
@@ -106,7 +119,7 @@ async def update_notification(
     obj = (
         await db.execute(
             select(Notification).where(
-                Notification.id == notification_id, _kapsam(user)
+                Notification.id == notification_id, _kapsam(user), _canli()
             )
         )
     ).scalar_one_or_none()
@@ -116,3 +129,58 @@ async def update_notification(
     await db.flush()
     await db.refresh(obj)
     return _out(obj, istek_dili(accept_language))
+
+
+# --------------------------------------------------------------------------- #
+# (P181 Bölüm 6.5) TOPLU İŞLEMLER — kapsam `_kapsam` ile zorlanır (başkasının
+# ya da yönetim alarmını sakin işleyemez); yumuşak silinen satır atlanır.
+# --------------------------------------------------------------------------- #
+@router.post("/toplu-okundu", response_model=NotificationTopluSonuc)
+async def toplu_okundu(
+    body: NotificationTopluOkundu,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_VIEWER),
+) -> NotificationTopluSonuc:
+    """Seçili bildirimleri okundu/okunmadı işaretle (yalnız kendi kapsamı)."""
+    res = await db.execute(
+        update(Notification)
+        .where(Notification.id.in_(body.ids), _kapsam(user), _canli())
+        .values(okundu=body.okundu)
+    )
+    return NotificationTopluSonuc(etkilenen=res.rowcount or 0)
+
+
+@router.post("/tumunu-okundu", response_model=NotificationTopluSonuc)
+async def tumunu_okundu(
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_VIEWER),
+) -> NotificationTopluSonuc:
+    """Kapsamdaki TÜM okunmamışları okundu işaretle."""
+    res = await db.execute(
+        update(Notification)
+        .where(_kapsam(user), _canli(), Notification.okundu.is_(False))
+        .values(okundu=True)
+    )
+    return NotificationTopluSonuc(etkilenen=res.rowcount or 0)
+
+
+@router.post("/toplu-sil", response_model=NotificationTopluSonuc)
+async def toplu_sil(
+    body: NotificationTopluSil,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_VIEWER),
+) -> NotificationTopluSonuc:
+    """Seçili bildirimleri YUMUŞAK sil (silindi_at=now) + denetim kaydı."""
+    res = await db.execute(
+        update(Notification)
+        .where(Notification.id.in_(body.ids), _kapsam(user), _canli())
+        .values(silindi_at=func.now())
+    )
+    etkilenen = res.rowcount or 0
+    if etkilenen:
+        # "Bu bildirim neden kayboldu" sorusunun kanıtı — adet + aktör yeter.
+        await audit_user(
+            db, user, Action.NOTIFICATION_DELETE,
+            resource_type="notification", meta={"adet": etkilenen},
+        )
+    return NotificationTopluSonuc(etkilenen=etkilenen)

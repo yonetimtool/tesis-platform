@@ -972,6 +972,9 @@ class Notification(Base):
     okundu: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("false")
     )
+    #: (P181 Bölüm 6.5) YUMUŞAK silme: dolu = listede gizli. Satır kalır
+    #: (denetim + kurtarma); silme ayrıca audit_log'a yazılır.
+    silindi_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     created_at = _created_at()
 
 

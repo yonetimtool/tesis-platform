@@ -217,6 +217,32 @@ istemediyseniz yok sayın") + imza (`— Yönetiyor` / `noreply@yonetiyor.com`).
 
 ---
 
+## Bölüm 6 — Web arayüz düzeltmeleri (5 alt madde)
+
+Sıra: 6.5 → 6.1 → 6.2 → 6.4 → 6.3 (kullanıcı belirledi).
+
+### 6.5 — Bildirimler: toplu işlem (BİTTİ)
+
+**Önce:** yalnız tekil "okundu" (PATCH /notifications/{id}). Toplu YOK, silme YOK.
+
+**Uygulama:**
+- Göç 0072: `notification.silindi_at` (nullable) — YUMUŞAK silme (satır kalır,
+  listede gizli, kurtarma+denetim mümkün). Model + `_canli()` süzgeci list/patch
+  ve toplu uçlarda uygulanır.
+- 3 uç (kapsam `_kapsam` ile zorlanır — başkasının/yönetim alarmını sakin
+  işleyemez; RLS + rol kapısı `_VIEWER`, denetçi RED):
+  `POST /notifications/toplu-okundu` {ids[], okundu}, `/tumunu-okundu` (kapsamdaki
+  tüm okunmamışlar), `/toplu-sil` {ids[]} → silindi_at=now + audit
+  `NOTIFICATION_DELETE` (adet meta'da).
+- Web: bildirimler sayfası — tekil onay kutusu + "tümünü seç" + "seçilenleri
+  okundu" + "seçilenleri sil" (tehlike) + "tümünü okundu". 3 BFF uç. 7 i18n
+  anahtarı × 7 dil (parity yeşil).
+- Kilit: openapi (3 path+3 şema), rol-matrisi regen (denetçi/gorevli RED).
+  denetci_salt_okuma DEĞİŞMEZ (uçlar rol-kapılı, kapısız-küme dışı).
+- Test: `test_notifications_toplu.py` (6: okundu/sil/tekrar/tümü/kapsam/denetim).
+
+---
+
 ## Program notu (dürüstlük)
 
 P181 on bir bölümlük büyük bir programdır (auth altyapısı + göçler, 6 web düzeltme,

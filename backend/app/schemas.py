@@ -2216,6 +2216,22 @@ class NotificationUpdate(BaseModel):
     okundu: bool
 
 
+# (P181 Bölüm 6.5) TOPLU İŞLEM. `ids` en az 1, en çok 500 (tek istekte makul üst
+# sınır — UI sayfa başına ~20-50 gösterir). Kapsam sunucuda `_kapsam` ile zorlanır.
+class NotificationTopluOkundu(BaseModel):
+    ids: list[uuid.UUID] = Field(min_length=1, max_length=500)
+    okundu: bool = True
+
+
+class NotificationTopluSil(BaseModel):
+    ids: list[uuid.UUID] = Field(min_length=1, max_length=500)
+
+
+class NotificationTopluSonuc(BaseModel):
+    """Kaç satır etkilendi — istemci sayacı/tazelemesi için."""
+    etkilenen: int
+
+
 # -------------------------------- tasks ------------------------------------ #
 class TaskCategoryOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)

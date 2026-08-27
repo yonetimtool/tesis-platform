@@ -29,12 +29,16 @@ const LIMIT = 20;
 // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
 const TUR_BIRINCIL = "birincil" as const;
 const TUR_IKINCIL = "ikincil" as const;
+const TUR_TEHLIKE = "tehlike" as const;
 
 export default function NotificationsPage() {
   const t = useT();
   const toast = useToast();
   const [okundu, setOkundu] = useState<OkunduFiltre>("");
   const [offset, setOffset] = useState(0);
+  // (P181 Bölüm 6.5) TOPLU İŞLEM seçimi — sayfa içindeki id'ler.
+  const [secili, setSecili] = useState<Set<string>>(new Set());
+  const [topluCalisiyor, setTopluCalisiyor] = useState(false);
 
   const key = `/api/notifications?limit=${LIMIT}&offset=${offset}${
     okundu ? `&okundu=${okundu}` : ""
@@ -58,9 +62,46 @@ export default function NotificationsPage() {
   function setFilter(v: OkunduFiltre) {
     setOkundu(v);
     setOffset(0);
+    setSecili(new Set());
   }
 
+  const items = data?.items ?? [];
   const total = data?.meta?.total ?? 0;
+  const tumuSecili = items.length > 0 && items.every((n) => secili.has(n.id));
+
+  function tekiliDegistir(id: string) {
+    setSecili((onceki) => {
+      const yeni = new Set(onceki);
+      if (yeni.has(id)) yeni.delete(id);
+      else yeni.add(id);
+      return yeni;
+    });
+  }
+
+  function tumunuDegistir() {
+    setSecili(tumuSecili ? new Set() : new Set(items.map((n) => n.id)));
+  }
+
+  // Ortak toplu-işlem sarmalı: çağır, seçimi temizle, listeyi tazele.
+  async function topluCalistir(
+    url: string,
+    govde: unknown,
+    basariAnahtari: SozlukAnahtari,
+  ) {
+    setTopluCalisiyor(true);
+    try {
+      await apiSend(url, "POST", govde);
+      setSecili(new Set());
+      await mutate();
+      toast.success(t(basariAnahtari));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("ortakIslemBasarisiz"));
+    } finally {
+      setTopluCalisiyor(false);
+    }
+  }
+
+  const seciliListe = () => Array.from(secili);
 
   return (
     <div className="space-y-5">
@@ -93,6 +134,76 @@ export default function NotificationsPage() {
         ))}
       </div>
 
+      {/* (P181 Bölüm 6.5) TOPLU İŞLEM ŞERİDİ: tümünü seç + seçilenlere okundu/sil + tümünü okundu. */}
+      {total > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <label
+            className="flex cursor-pointer select-none items-center gap-2"
+            style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}
+          >
+            <input
+              type="checkbox"
+              checked={tumuSecili}
+              onChange={tumunuDegistir}
+              className="h-4 w-4 rounded"
+              style={{ accentColor: "var(--yz-accent)" }}
+              aria-label={t("bildirimTumunuSec")}
+            />
+            {t("bildirimTumunuSec")}
+          </label>
+          {secili.size > 0 && (
+            <>
+              <span
+                style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}
+              >
+                {secili.size} {t("bildirimSecili")}
+              </span>
+              <Dugme
+                boy="kucuk"
+                disabled={topluCalisiyor}
+                onClick={() =>
+                  void topluCalistir(
+                    "/api/notifications/toplu-okundu",
+                    { ids: seciliListe(), okundu: true },
+                    "bildirimOkunduIsaretlendi",
+                  )
+                }
+              >
+                {t("bildirimSeciliOkundu")}
+              </Dugme>
+              <Dugme
+                boy="kucuk"
+                tur={TUR_TEHLIKE}
+                disabled={topluCalisiyor}
+                onClick={() =>
+                  void topluCalistir(
+                    "/api/notifications/toplu-sil",
+                    { ids: seciliListe() },
+                    "bildirimSilindi",
+                  )
+                }
+              >
+                {t("bildirimSeciliSil")}
+              </Dugme>
+            </>
+          )}
+          <Dugme
+            boy="kucuk"
+            tur={TUR_IKINCIL}
+            disabled={topluCalisiyor}
+            onClick={() =>
+              void topluCalistir(
+                "/api/notifications/tumunu-okundu",
+                {},
+                "bildirimOkunduIsaretlendi",
+              )
+            }
+          >
+            {t("bildirimTumunuOkundu")}
+          </Dugme>
+        </div>
+      )}
+
       {/* HATA VARSA LISTE HIC CIZILMEZ. Bunu ayri bir dal yapmak sart:
           uc dustugunde `data` undefined kaliyor ve liste dali "0 kayit"
           gorup BOS DURUM ciziyordu — yani "bildirim yok" diyordu, oysa
@@ -107,15 +218,23 @@ export default function NotificationsPage() {
         <Kart>
           <IskeletMetin satir={5} />
         </Kart>
-      ) : (data?.items ?? []).length === 0 ? (
+      ) : items.length === 0 ? (
         <Kart>
           <BosDurum baslik={t("bildirimYok")} />
         </Kart>
       ) : (
         <ul className="space-y-2">
-          {(data?.items ?? []).map((n: AppNotification) => (
+          {items.map((n: AppNotification) => (
             <li key={n.id}>
-              <Kart className="flex flex-wrap items-start justify-between gap-3">
+              <Kart className="flex flex-wrap items-start gap-3">
+                <input
+                  type="checkbox"
+                  checked={secili.has(n.id)}
+                  onChange={() => tekiliDegistir(n.id)}
+                  className="mt-1 h-4 w-4 rounded"
+                  style={{ accentColor: "var(--yz-accent)" }}
+                  aria-label={t("bildirimSec")}
+                />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span

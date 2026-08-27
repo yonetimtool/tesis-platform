@@ -51,6 +51,12 @@ için mutlaka yeniden derlenir.
   Gönderen adresi markası `noreply@yonetiyor.com` — tenant `smtp_gonderen` /
   env `SMTP_FROM` ile örtüşmeli.
 
+## Bölüm 6.5 — Bildirimler: toplu işlem
+
+- **Göç:** `0072_notification_silindi_at` (nullable kolon, geriye dönük güvenli).
+- **Yeniden derle:** `api` (3 yeni uç + model) + `admin-web` (toplu UI + 3 BFF).
+- **Yeni env:** YOK.
+
 ---
 
 ## Göç sırası özet
@@ -59,6 +65,7 @@ için mutlaka yeniden derlenir.
 0069_yonetici_by_email      (P180)
 0070_eposta_dogrulandi      (P181 Böl.1)
 0071_kod_amaci_sifre_sifirla (P181 Böl.2)
+0072_notification_silindi_at (P181 Böl.6.5)
 ```
 
 Göçler ileri-uyumlu ve geriye dönük güvenli (enum ADD VALUE + nullable-default

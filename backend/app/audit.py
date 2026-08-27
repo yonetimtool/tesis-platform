@@ -65,6 +65,9 @@ class Action:
     # neden almadim" sorusunun tek kanitidir.
     DEVICE_REMOVE = "device_remove"               # kendi cihazini pasiflestirdi
     NOTIFICATION_PREFS_UPDATE = "notification_prefs_update"
+    # (P181 Bölüm 6.5) Bildirim YUMUŞAK silme (toplu). Denetime yazilir:
+    # "bu bildirim neden kayboldu" sorusunun kaniti.
+    NOTIFICATION_DELETE = "notification_delete"
     # (P167 Asama 2) Kisisel takvim notu. KISISEL bir kayit ama denetime
     # YAZILIR: "Kendi hesap etkinligim" ekrani (§1.7) kullaniciya kendi
     # yaptiklarinin listesini gosteriyor ve silinen bir hatirlatmanin
