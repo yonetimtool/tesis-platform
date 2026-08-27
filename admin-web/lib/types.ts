@@ -203,6 +203,8 @@ export interface UnitResident {
   id: string;
   unit_id: string;
   user_id: string;
+  // (P181 6.1) Sakin ad-soyad — arayüz UUID yerine bunu gösterir (backend join).
+  user_ad?: string | null;
   rol_tipi?: string | null;
   baslangic?: string | null;
   bitis?: string | null;

@@ -3133,6 +3133,9 @@ class UnitResidentOut(BaseModel):
     id: uuid.UUID
     unit_id: uuid.UUID
     user_id: uuid.UUID
+    # (P181 Bölüm 6.1) Sakinin ad-soyadı — arayüz UUID yerine ADI göstersin.
+    # Endpoint AppUser join'iyle doldurur; kayıt silinmişse null.
+    user_ad: str | None = None
     rol_tipi: str | None = None
     baslangic: datetime | None = None
     bitis: datetime | None = None

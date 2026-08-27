@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import useSWR from "swr";
 
 import { useToast } from "@/components/Toast";
@@ -64,6 +65,7 @@ const DURUM_OLUMLU = "olumlu" as const;
 const DURUM_NOTR = "notr" as const;
 
 export default function UnitsPage() {
+  const router = useRouter();
   const t = useT();
   // (P161) Yikici onaylar yerel `confirm()` degil, tema/dil taniyan diyalog.
   const { onayla, diyalog } = useOnay();
@@ -294,13 +296,14 @@ export default function UnitsPage() {
             noktasi, kullaniciyi "hangisi dogru" sorusuyla birakiyordu.
             Ekran YINE DE cikmaza sokmuyor: bosken ve baslikta oraya
             goturen bir bag var. */}
-        <Link
-          href="/building-editor"
-          className="odak-ic rounded-btn px-2 py-1 text-satiralt underline"
-          style={{ color: "var(--yz-accent-ink)" }}
+        {/* (P181 6.2) Düz metin bağlantı yerine birincil düğme; diğer ekranlarla tutarlı. */}
+        <Dugme
+          tur="birincil"
+          boy="kucuk"
+          onClick={() => router.push("/building-editor")}
         >
           {t("daireBinaDuzenlemeGit")}
-        </Link>
+        </Dugme>
       </div>
 
       <BagimlilikUyarisi

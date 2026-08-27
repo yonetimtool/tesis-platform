@@ -15692,6 +15692,7 @@ components:
         id: { type: string, format: uuid }
         unit_id: { type: string, format: uuid }
         user_id: { type: string, format: uuid }
+        user_ad: { type: string, nullable: true, description: "(P181 6.1) sakin ad-soyad; UI UUID yerine bunu gosterir" }
         rol_tipi: { $ref: "#/components/schemas/ResidentRol" }
         baslangic: { type: string, format: date-time, nullable: true }
         bitis: { type: string, format: date-time, nullable: true }

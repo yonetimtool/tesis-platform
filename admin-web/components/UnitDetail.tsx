@@ -9,6 +9,7 @@ import { useToast } from "@/components/Toast";
 import { ODEME_DURUM, ODEME_YONTEM, enumAdi } from "@/lib/enum-adlari";
 import { apiSend, genIdempotencyKey } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
+import { kisaKimlik } from "@/lib/kimlik";
 import { kurusToTL, tlToKurus } from "@/lib/money";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
@@ -433,8 +434,9 @@ export function UnitDetail({ unit }: { unit: Unit }) {
         <ul className="space-y-1 text-sm">
           {aktifSakinler.map((r) => (
             <li key={r.id} className="flex items-center justify-between rounded border border-yuzey-divider px-2 py-1">
-              <span className="font-mono">
-                {r.user_id.slice(0, 8)} · {r.rol_tipi ?? "—"}
+              {/* (P181 6.1) SAKİN ADI — yoksa (kullanıcı silinmiş) kısa kimliğe düş. */}
+              <span className={r.user_ad ? "" : "font-mono"}>
+                {r.user_ad ?? kisaKimlik(r.user_id)} · {r.rol_tipi ?? "—"}
               </span>
               <button className={btnDanger} onClick={() => removeResident(r.user_id)}>
                 {t("kullaniciCikar")}

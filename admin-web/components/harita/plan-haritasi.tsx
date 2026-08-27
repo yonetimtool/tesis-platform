@@ -76,7 +76,9 @@ function SinirlaraSigdir({ sinir }: { sinir: LatLngBoundsExpression }) {
   useMemo(() => {
     // `fitBounds` cizimden sonra cagrilmali; `useMemo` ilk cizimde bir
     // kez calisir ve `sinir` degisince tekrarlar.
-    harita.fitBounds(sinir, { padding: [16, 16] });
+    // (P181 6.4) `maxZoom: 6` — kucuk planlarda varsayilan acilis DAHA YAKIN
+    // olsun (eski tavan 4 cok uzakti); kullanici tekerlekle 8'e kadar yakinlasir.
+    harita.fitBounds(sinir, { padding: [16, 16], maxZoom: 6 });
   }, [harita, sinir]);
   return null;
 }
@@ -127,7 +129,12 @@ export default function PlanHaritasi({
         // hucrelerin okunabilir kaldigi araliga gore.
         crs={CRS.Simple}
         minZoom={-2}
-        maxZoom={4}
+        // (P181 6.4) Azami yakınlaştırma 4 -> 8: plan çözünürlüğü elverdiğince
+        // yakınlaşılabilsin. Fare tekerleği + çift tıklama + dokunmatik açık.
+        maxZoom={8}
+        scrollWheelZoom
+        doubleClickZoom
+        touchZoom
         center={[0, 0]}
         zoom={0}
         // Karo katmani YOK — attribution da yok. Bos bir "Leaflet"

@@ -804,6 +804,7 @@ export const es: Sozluk = {
   gorevSilindi: "Tarea eliminada.",
   gorevDuzenle: "Editar tarea",
   gorevYeni: "Nueva tarea",
+  gorevKategoriYonet: "Gestionar categorías",
   gorevKategoriAlan: "Categoría",
   gorevKategoriIpucu: "Categorías definidas por el administrador",
   gorevPeriyodikIpucu: "Para tareas periódicas",

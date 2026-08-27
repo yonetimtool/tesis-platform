@@ -30,6 +30,22 @@ def _add(client, yon, telefon, ad="Sakin", unit="R-1"):
     return r.json()
 
 
+def test_units_residents_SAKIN_ADINI_dondurur(client, world):
+    """(P181 6.1) GET /units/{id}/residents `user_ad` (ad-soyad) döner — arayüz
+    UUID yerine adı göstersin diye."""
+    yon = _headers(client, world["slug_a"], world["yonetici_a"])
+    res = _add(client, yon, _uphone(), ad="Ahmet Yılmaz", unit="R-1")
+    uid = res["user_id"]
+
+    liste = client.get("/units", headers=yon).json()
+    items = liste["items"] if isinstance(liste, dict) else liste
+    unit = next(u for u in items if u["no"] == "R-1")
+
+    sakinler = client.get(f"/units/{unit['id']}/residents", headers=yon).json()
+    benim = next(s for s in sakinler if s["user_id"] == uid)
+    assert benim["user_ad"] == "Ahmet Yılmaz", "sakin adı user_ad'de dönmedi"
+
+
 # ------------------------------ ekle / listele ---------------------------- #
 def test_add_and_list_resident(client, world):
     yon = _headers(client, world["slug_a"], world["yonetici_a"])

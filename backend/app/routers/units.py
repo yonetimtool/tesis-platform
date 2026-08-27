@@ -620,16 +620,24 @@ async def list_residents(
     unit_id: uuid.UUID,
     db: AsyncSession = Depends(get_tenant_db),
     _: AppUser = Depends(_BAG_YONETICI),
-) -> list[UnitResident]:
+) -> list[UnitResidentOut]:
     await get_or_404(db, Unit, unit_id)
+    # (P181 Bölüm 6.1) Sakinin ADINI da getir (AppUser join) — arayüz UUID
+    # yerine ad-soyad göstersin. LEFT JOIN: kullanıcı silinmişse satır düşmesin.
     rows = (
         await db.execute(
-            select(UnitResident)
+            select(UnitResident, AppUser.ad)
+            .join(AppUser, AppUser.id == UnitResident.user_id, isouter=True)
             .where(UnitResident.unit_id == unit_id)
             .order_by(UnitResident.created_at)
         )
-    ).scalars().all()
-    return list(rows)
+    ).all()
+    out: list[UnitResidentOut] = []
+    for ur, ad in rows:
+        o = UnitResidentOut.model_validate(ur)
+        o.user_ad = ad
+        out.append(o)
+    return out
 
 
 async def daire_rolu_dolu_mu(

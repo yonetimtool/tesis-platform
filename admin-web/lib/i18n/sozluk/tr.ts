@@ -853,6 +853,7 @@ export const tr = {
   gorevSilindi: "Görev silindi.",
   gorevDuzenle: "Görev düzenle",
   gorevYeni: "Yeni görev",
+  gorevKategoriYonet: "Kategorileri yönet",
   gorevKategoriAlan: "Kategori",
   gorevKategoriIpucu: "Yönetici tanımlı kategoriler",
   gorevPeriyodikIpucu: "Periyodik/peyzaj görevi için",

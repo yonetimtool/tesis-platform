@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
 import { EksikVeriUyarisi } from "@/components/form";
@@ -114,6 +115,7 @@ const DURUM_OLUMLU = "olumlu" as const;
 const DURUM_NOTR = "notr" as const;
 
 export default function TasksPage() {
+  const router = useRouter();
   const t = useT();
   // (P161) Yikici onaylar yerel `confirm()` degil, tema/dil taniyan diyalog.
   const { onayla, diyalog } = useOnay();
@@ -339,9 +341,19 @@ export default function TasksPage() {
         <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
           {t("kabukGorevler")}
         </h1>
-        <Dugme tur="birincil" boy="kucuk" onClick={openNew}>
-          {t("gorevYeni")}
-        </Dugme>
+        <div className="flex flex-wrap items-center gap-2">
+          {/* (P181 6.3) Kategori yönetimine doğrudan erişim: /tanimlar görev-kategorileri defterine derin bağlantı. */}
+          <Dugme
+            tur="ikincil"
+            boy="kucuk"
+            onClick={() => router.push("/tanimlar?defter=gorev-kategorileri")}
+          >
+            {t("gorevKategoriYonet")}
+          </Dugme>
+          <Dugme tur="birincil" boy="kucuk" onClick={openNew}>
+            {t("gorevYeni")}
+          </Dugme>
+        </div>
       </div>
 
       <EksikVeriUyarisi

@@ -804,6 +804,7 @@ export const fr: Sozluk = {
   gorevSilindi: "Tâche supprimée.",
   gorevDuzenle: "Modifier la tâche",
   gorevYeni: "Nouvelle tâche",
+  gorevKategoriYonet: "Gérer les catégories",
   gorevKategoriAlan: "Catégorie",
   gorevKategoriIpucu: "Catégories définies par le gestionnaire",
   gorevPeriyodikIpucu: "Pour les tâches récurrentes",

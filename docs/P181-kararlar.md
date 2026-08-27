@@ -241,6 +241,43 @@ Sıra: 6.5 → 6.1 → 6.2 → 6.4 → 6.3 (kullanıcı belirledi).
   denetci_salt_okuma DEĞİŞMEZ (uçlar rol-kapılı, kapısız-küme dışı).
 - Test: `test_notifications_toplu.py` (6: okundu/sil/tekrar/tümü/kapsam/denetim).
 
+### 6.1 — Daireler: sakin adı (UUID yerine) (BİTTİ)
+
+**Hata:** `UnitDetail.tsx` daire sakinlerini `user_id.slice(0,8)` (UUID) ile
+gösteriyordu — ad-soyad değil. Kök neden: `GET /units/{id}/residents`
+(`UnitResidentOut`) sakinin ADINI döndürmüyordu, yalnız `user_id`.
+
+**Çözüm:** `UnitResidentOut`'a `user_ad` eklendi; endpoint `AppUser` LEFT JOIN'iyle
+adı doldurur (kullanıcı silinmişse null). Frontend `r.user_ad ?? kisaKimlik(...)`
+gösterir (ad varsa düz, yoksa mono kısa-kimlik). openapi `UnitResident.user_ad`.
+
+**TÜM ekran taraması (kural gereği):** yalnız `UnitDetail.tsx:437` ham UUID
+gösteriyordu. Diğer ekranlar kişiyi zaten çözümlü adla gösteriyor: şikayet
+`acan_ad`, görev/rezervasyon/ziyaretçi/kargo `userName()`/kullanıcı-listesi
+yardımcılarıyla. Başka çözümlenmemiş-kimlik gösterimi YOK.
+Test: `test_residents.py::test_units_residents_SAKIN_ADINI_dondurur`.
+
+### 6.2 — Daireler: "bina düzenleme" düğmeye çevrildi (BİTTİ)
+
+`units/page.tsx` sağ üstteki düz-metin `<Link>` (altı çizili) → `Dugme
+tur="birincil"` (router.push /building-editor). Salt görünüm; "Blok Ekle"ye
+dokunulmadı. i18n yeni anahtar yok (mevcut `daireBinaDuzenlemeGit`).
+
+### 6.4 — Şikayet haritası: yakınlaştırma (BİTTİ)
+
+`plan-haritasi.tsx`: `maxZoom` 4→8 (plan çözünürlüğünce yakınlaşma); `fitBounds`
+varsayılan açılışı `maxZoom: 6` ile DAHA YAKIN başlatır (eski tavan 4 uzaktı);
+`scrollWheelZoom`/`doubleClickZoom`/`touchZoom` açıkça etkin (tekerlek + çift
+tıklama + dokunmatik sıkıştırma).
+
+### 6.3 — Görevler: kategori yönetimine erişim (BİTTİ)
+
+**Doğrulama:** `/tanimlar` `gorev-kategorileri` defteri CRUD'u ZATEN çalışıyor
+(ad alanı + soft-delete `aktif`; wizard "Görev alanları" adımı buraya bakar).
+Eksik olan KEŞFEDİLEBİLİRLİKTİ. **Çözüm:** Görevler sayfası başlığına
+"Kategorileri yönet" (ikincil) düğmesi — `/tanimlar?defter=gorev-kategorileri`
+derin bağlantısı (`useSorguSecimi` `?defter=` okur). 1 i18n anahtarı × 7 dil.
+
 ---
 
 ## Program notu (dürüstlük)

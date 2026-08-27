@@ -804,6 +804,7 @@ export const ru: Sozluk = {
   gorevSilindi: "Задача удалена.",
   gorevDuzenle: "Изменить задачу",
   gorevYeni: "Новая задача",
+  gorevKategoriYonet: "Управление категориями",
   gorevKategoriAlan: "Категория",
   gorevKategoriIpucu: "Категории, заданные управляющим",
   gorevPeriyodikIpucu: "Для периодических задач",

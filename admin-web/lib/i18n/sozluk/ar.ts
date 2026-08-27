@@ -804,6 +804,7 @@ export const ar: Sozluk = {
   gorevSilindi: "تم حذف المهمة.",
   gorevDuzenle: "تعديل المهمة",
   gorevYeni: "مهمة جديدة",
+  gorevKategoriYonet: "إدارة الفئات",
   gorevKategoriAlan: "الفئة",
   gorevKategoriIpucu: "فئات يحددها المدير",
   gorevPeriyodikIpucu: "للمهام الدورية/الحدائق",

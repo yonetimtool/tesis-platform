@@ -804,6 +804,7 @@ export const en: Sozluk = {
   gorevSilindi: "Task deleted.",
   gorevDuzenle: "Edit task",
   gorevYeni: "New task",
+  gorevKategoriYonet: "Manage categories",
   gorevKategoriAlan: "Category",
   gorevKategoriIpucu: "Categories defined by the manager",
   gorevPeriyodikIpucu: "For recurring/landscaping tasks",

@@ -804,6 +804,7 @@ export const de: Sozluk = {
   gorevSilindi: "Aufgabe gelöscht.",
   gorevDuzenle: "Aufgabe bearbeiten",
   gorevYeni: "Neue Aufgabe",
+  gorevKategoriYonet: "Kategorien verwalten",
   gorevKategoriAlan: "Kategorie",
   gorevKategoriIpucu: "Vom Verwalter definierte Kategorien",
   gorevPeriyodikIpucu: "Für wiederkehrende Aufgaben",

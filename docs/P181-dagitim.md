@@ -59,6 +59,14 @@ için mutlaka yeniden derlenir.
 
 ---
 
+## Bölüm 6.1–6.4 — Daire/görev/harita düzeltmeleri
+
+- **Göç:** YOK. **Yeni env:** YOK.
+- **Yeniden derle:** 6.1 `api` (residents endpoint sakin adı) + `admin-web`
+  (UnitDetail, units, plan-haritasi, tasks). 6.2/6.3/6.4 yalnız `admin-web`.
+
+---
+
 ## Göç sırası özet
 
 ```
