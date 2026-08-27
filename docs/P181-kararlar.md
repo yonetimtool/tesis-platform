@@ -280,6 +280,29 @@ derin bağlantısı (`useSorguSecimi` `?defter=` okur). 1 i18n anahtarı × 7 di
 
 ---
 
+## Bölüm 7 — Özet (dashboard) sayfası
+
+### 7.4 — 3D maket kamera hatası (BİTTİ)
+
+**Kök neden (teşhis):** `autoRotate` zaten kapalıydı; sorun `KameraSurucusu`ydu —
+`useFrame` HER KARE kamerayı hesaplanmış hedefe (`easing.damp3`) çekiyordu.
+`damp3` hedefe asimptotik yaklaşır, asla "bitmez"; kullanıcı fareyle döndürünce
+bir sonraki kare kamerayı hedefe geri çekiyor → **bırakınca başa dönüyordu.**
+
+**Çözüm:** Sürüş artık yalnız "uçuş" sırasında çalışır:
+- `ucusAktifRef` — seçim (dolayısıyla hedef) değişince `true` (yeni bloğa/kata/
+  daireye uç); hedefe varınca (`distance < 0.05`) kendini `false` yapar.
+- `useFrame` uçuş aktif değilken kameraya DOKUNMAZ → OrbitControls (kullanıcı)
+  sahibidir; bırakılan açı + yakınlık KORUNUR (kabul 12).
+- `OrbitControls onStart` → kullanıcı kamerayı tuttuğu an `ucusAktifRef=false`
+  (uçuşla kullanıcı çekişmesin).
+- Hareket-azaltmada (reduced-motion) anında oturur, uçuş yok.
+
+Frontend-only (bina-sahnesi.tsx); göç/i18n/backend YOK. Görsel/etkileşim
+davranışı — otomatik test yok, `npm run build` yeşil; el ile doğrulanacak.
+
+---
+
 ## Program notu (dürüstlük)
 
 P181 on bir bölümlük büyük bir programdır (auth altyapısı + göçler, 6 web düzeltme,

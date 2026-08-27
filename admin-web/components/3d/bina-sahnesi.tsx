@@ -136,11 +136,16 @@ function KameraSurucusu({
   hedefBakis,
   kontrolRef,
   hareketVar,
+  ucusAktifRef,
 }: {
   hedefKonum: Vector3;
   hedefBakis: Vector3;
   kontrolRef: React.MutableRefObject<{ target: Vector3; update: () => void } | null>;
   hareketVar: boolean;
+  // (P181 7.4) SÜRÜŞ YALNIZ UÇUŞ SIRASINDA: yeni bir seçime UÇARKEN true;
+  // hedefe varınca ya da kullanıcı kamerayı tutunca false olur. Aksi halde
+  // her kare kamerayı hedefe geri çeker ve kullanıcı bırakınca BAŞA DÖNERDİ.
+  ucusAktifRef: React.MutableRefObject<boolean>;
 }) {
   const { camera, invalidate } = useThree();
 
@@ -151,16 +156,26 @@ function KameraSurucusu({
     camera.position.copy(hedefKonum);
     kontrolRef.current?.target.copy(hedefBakis);
     kontrolRef.current?.update();
+    ucusAktifRef.current = false;
     invalidate();
-  }, [hareketVar, hedefKonum, hedefBakis, camera, kontrolRef, invalidate]);
+  }, [hareketVar, hedefKonum, hedefBakis, camera, kontrolRef, invalidate, ucusAktifRef]);
 
   useFrame((_, dt) => {
-    if (!hareketVar) return;
+    // Uçuş bitmişse kameraya DOKUNMA — OrbitControls (kullanıcı) sahibidir.
+    if (!hareketVar || !ucusAktifRef.current) return;
     easing.damp3(camera.position, hedefKonum, GECIS_SABITI, dt);
     const k = kontrolRef.current;
     if (k) {
       easing.damp3(k.target, hedefBakis, GECIS_SABITI, dt);
       k.update();
+    }
+    // VARDI MI: hedefe yaklaşınca sürüşü bırak — kullanıcı artık serbestçe
+    // döndürür ve BIRAKTIĞI AÇIDA + YAKINLIKTA kalır (kabul kriteri 12).
+    if (
+      camera.position.distanceTo(hedefKonum) < 0.05 &&
+      (!k || k.target.distanceTo(hedefBakis) < 0.05)
+    ) {
+      ucusAktifRef.current = false;
     }
   });
   return null;
@@ -713,6 +728,9 @@ export default function BinaSahnesi({
 }: BinaSahnesiProps) {
   const p = sahnePaleti(koyu);
   const kontrolRef = useRef<{ target: Vector3; update: () => void } | null>(null);
+  // (P181 7.4) Kamera "uçuşu" yalnız seçim değişince aktif; varınca/kullanıcı
+  // tutunca kapanır. Böylece bırakılan açı KORUNUR (render'lar arası sıfırlanmaz).
+  const ucusAktifRef = useRef(false);
   const [icSecim, setIcSecim] = useState<SahneSecimi>(BOS_SECIM);
   const secim = disSecim ?? icSecim;
 
@@ -763,6 +781,14 @@ export default function BinaSahnesi({
       hedefBakis: merkez,
     };
   }, [seciliOlcu, secim.kat, secim.daireId, yerlesim.enYuksek, genelUzaklik]);
+
+  // (P181 7.4) Seçim değişince (hedef değişir) UÇUŞU başlat: driver kamerayı
+  // götürür, varınca kendini kapatır. İlk mount'ta hedef = başlangıç konumu,
+  // uçuş anında biter (görünür etki yok). Kullanıcı serbest döndürmesi bundan
+  // ETKİLENMEZ — o sırada uçuş aktif değildir.
+  useEffect(() => {
+    ucusAktifRef.current = true;
+  }, [hedefKonum, hedefBakis]);
 
   function uygula(yeni: SahneSecimi) {
     if (!disSecim) setIcSecim(yeni);
@@ -882,10 +908,16 @@ export default function BinaSahnesi({
         hedefBakis={hedefBakis}
         kontrolRef={kontrolRef}
         hareketVar={hareketVar}
+        ucusAktifRef={ucusAktifRef}
       />
       <OrbitControls
         ref={kontrolRef as never}
         enablePan={false}
+        // (P181 7.4) Kullanıcı kamerayı tuttuğu an sürüşü İPTAL et: bu olmadan
+        // driver ile kullanıcı çekişir ve bırakınca kamera hedefe geri kayardı.
+        onStart={() => {
+          ucusAktifRef.current = false;
+        }}
         // Kamera yere GOMULMEZ.
         maxPolarAngle={Math.PI / 2.15}
         minDistance={2}
