@@ -306,10 +306,15 @@ export default function DashboardPage() {
   const [secim, setSecim] = useState<SahneSecimi>(BOS_SECIM);
   const [duzenlemede, setDuzenlemede] = useState(false);
 
+  // (P181 Bölüm 10.5) YOKLAMA: 15 sn aralık YETERLİ. `revalidateOnFocus`
+  // KAPALI — her sekmeye dönüşte ek bir istek, 15 sn'lik tazeliğe hiçbir şey
+  // katmadan gereksiz tekrar üretir (odak/blur hızlı değişince patlama olur).
+  // `refreshInterval` sekme GİZLİYKEN zaten durur (SWR varsayılanı
+  // `refreshWhenHidden:false`) — "sayfa görünmezken yoklamayı durdur" sağlanır.
   const { data, error, isLoading } = useSWR<DashboardLive>(
     "/api/dashboard/live",
     jsonFetcher,
-    { refreshInterval: 15000, revalidateOnFocus: true },
+    { refreshInterval: 15000, revalidateOnFocus: false },
   );
   const { data: kameraYanit } = useSWR<KameraListResponse>(
     "/api/cameras?limit=50&offset=0",
