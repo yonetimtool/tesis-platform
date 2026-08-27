@@ -67,6 +67,14 @@ için mutlaka yeniden derlenir.
 
 ---
 
+## Bölüm 7.3/7.4 — Devriye görseli + 3D kamera
+
+- **Göç:** YOK. **Yeni env:** YOK.
+- **Yeniden derle:** 7.3 `api` (dashboard son_okutma) + `admin-web`. 7.4 yalnız
+  `admin-web` (bina-sahnesi).
+
+---
+
 ## Göç sırası özet
 
 ```

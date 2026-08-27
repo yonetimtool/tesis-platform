@@ -85,6 +85,8 @@ def test_dashboard_shows_today_windows_with_counts(client, world, owner_conn):
     assert tur["durum"] == "bekliyor"
     assert tur["beklenen_checkpoint_sayisi"] == 2
     assert tur["okutulan_checkpoint_sayisi"] == 1
+    # (P181 7.3) SON OKUTMA zamanı — görsel devriye bileşeni için (okutma varsa dolu).
+    assert tur["son_okutma"] is not None
 
 
 def test_dashboard_tenant_isolation(client, world, owner_conn):

@@ -20,6 +20,8 @@ export interface AktifTur {
   durum: PatrolWindowDurum;
   beklenen_checkpoint_sayisi?: number | null;
   okutulan_checkpoint_sayisi?: number | null;
+  // (P181 7.3) Son okutma zamanı (ISO); hiç okutma yoksa null.
+  son_okutma?: string | null;
 }
 
 export interface Alarm {

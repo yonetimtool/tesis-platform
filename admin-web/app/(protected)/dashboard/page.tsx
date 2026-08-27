@@ -35,6 +35,7 @@ import Link from "next/link";
 import useSWR from "swr";
 
 import { BinaSahnesiYukleyici } from "@/components/3d/sahne-yukleyici";
+import { DevriyeGorunumu } from "@/components/DevriyeGorunumu";
 import type { SahneBlogu, SahneSecimi } from "@/components/3d/bina-sahnesi";
 import { Dugme, IskeletKpi, Kpi } from "@/components/ui";
 import { PanoFinansOzeti } from "@/components/pano/finans-ozeti";
@@ -523,28 +524,9 @@ export default function DashboardPage() {
         return isLoading && !data ? (
           <Yukleniyor satir={3} />
         ) : siradaki ? (
-          <KahramanBlok
-            vurgu={suren ? VURGU_SUREN : VURGU_SIRADAKI}
-            ikon={<Ikon d={YOL.tur} />}
-            ustBaslik={suren ? t("pano2HeroUst") : t("pano2HeroSiradakiUst")}
-            baslik={siradaki.patrol_plan_ad ?? siradaki.patrol_plan_id.slice(0, 8)}
-            altSatirlar={[
-              t("pano2HeroIlerleme", {
-                okutulan: siradaki.okutulan_checkpoint_sayisi ?? 0,
-                beklenen: siradaki.beklenen_checkpoint_sayisi ?? 0,
-              }),
-              suren
-                ? t("pano2HeroSonAn", { zaman: formatDateTime(siradaki.pencere_bitis) })
-                : t("pano2HeroBaslangic", {
-                    zaman: formatDateTime(siradaki.pencere_baslangic),
-                  }),
-            ]}
-            ilerleme={{
-              simdi: siradaki.okutulan_checkpoint_sayisi ?? 0,
-              toplam: siradaki.beklenen_checkpoint_sayisi ?? 0,
-            }}
-            href="/patrol-plans"
-          />
+          // (P181 7.3) Düz cümle yerine GÖRSEL devriye bileşeni: ilerleme
+          // halkası + tamamlanan/kalan nokta + son okutma zamanı.
+          <DevriyeGorunumu tur={siradaki} suren={Boolean(suren)} />
         ) : (
           <BosDurum
             baslik={t("pano2HeroBosBaslik")}

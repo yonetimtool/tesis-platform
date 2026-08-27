@@ -1081,6 +1081,8 @@ class AktifTurOut(BaseModel):
     durum: str
     beklenen_checkpoint_sayisi: int | None = None
     okutulan_checkpoint_sayisi: int | None = None
+    # (P181 7.3) Görsel devriye bileşeni için son okutma zamanı (hiç yoksa null).
+    son_okutma: datetime | None = None
 
 
 class AlarmOut(BaseModel):

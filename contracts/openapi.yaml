@@ -12479,6 +12479,7 @@ components:
         durum: { $ref: "#/components/schemas/PatrolWindowDurum" }
         beklenen_checkpoint_sayisi: { type: integer }
         okutulan_checkpoint_sayisi: { type: integer }
+        son_okutma: { type: string, format: date-time, nullable: true, description: "(P181 7.3) son okutma zamani" }
     # Tur penceresi gecmisi (GET /patrol-windows ogesi).
     PatrolWindowHistory:
       type: object

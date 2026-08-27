@@ -59,7 +59,8 @@ _AKTIF_TURLAR_SQL = text(
            w.pencere_bitis,
            w.durum,
            count(DISTINCT c.id)           AS beklenen,
-           count(DISTINCT s.checkpoint_id) AS okutulan
+           count(DISTINCT s.checkpoint_id) AS okutulan,
+           max(s.okutma_zamani)           AS son_okutma
     FROM patrol_window w
     JOIN patrol_plan p ON p.id = w.patrol_plan_id
     LEFT JOIN patrol_plan_checkpoint ppc ON ppc.patrol_plan_id = w.patrol_plan_id
@@ -135,6 +136,7 @@ async def dashboard_live(
             durum=r["durum"],
             beklenen_checkpoint_sayisi=int(r["beklenen"]),
             okutulan_checkpoint_sayisi=int(r["okutulan"]),
+            son_okutma=r["son_okutma"],  # (P181 7.3) son okutma zamanı (yoksa null)
         )
         for r in tur_rows
     ]

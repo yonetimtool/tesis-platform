@@ -282,6 +282,20 @@ derin bağlantısı (`useSorguSecimi` `?defter=` okur). 1 i18n anahtarı × 7 di
 
 ## Bölüm 7 — Özet (dashboard) sayfası
 
+### 7.3 — Devriye turu görsel bileşeni (BİTTİ)
+
+**Önce:** düz cümle ("X / Y checkpoint" + zaman) — `KahramanBlok`.
+
+**Çözüm:** `DevriyeGorunumu` bileşeni: ilerleme HALKASI (SVG; merkezde yüzde
+METNİ — bilgi renk-yalnız değil), tamamlanan/beklenen + KALAN nokta sayısı, ve
+**son okutma zamanı**. Durum rozeti (sürüyor=olumlu/sıradaki=bilgi), plan adı,
+/patrol-plans bağlantısı korundu.
+
+**Backend (son okutma yoktu):** `_AKTIF_TURLAR_SQL`'e `max(s.okutma_zamani) AS
+son_okutma`; `AktifTurOut.son_okutma` + openapi `AktifTur.son_okutma`; frontend
+`AktifTur.son_okutma` tipi. Test: `test_dashboard.py` son_okutma dolu.
+i18n: `devriyeTamamlanan/Kalan/SonOkutma/OkutmaYok` × 7 dil.
+
 ### 7.4 — 3D maket kamera hatası (BİTTİ)
 
 **Kök neden (teşhis):** `autoRotate` zaten kapalıydı; sorun `KameraSurucusu`ydu —
