@@ -238,12 +238,13 @@ class AcilabilirRollerOut(BaseModel):
 
 
 class UserCreate(BaseModel):
-    # Telefon global benzersiz LOGIN anahtaridir (E.164 normalize). email
-    # opsiyoneldir (girise girmez; yalniz bildirim/yedek). password verilmezse
-    # tek seferlik gecici kod uretilir (temp_code yanitta bir kez doner).
+    # Telefon global benzersiz iletisim anahtaridir (E.164 normalize). email
+    # (P185) artik ZORUNLUDUR: dogrulama/bildirim kanalidir (yine de giris
+    # anahtari DEGIL — giris telefonla). password verilmezse tek seferlik
+    # gecici kod uretilir (temp_code yanitta bir kez doner).
     ad: str = Field(..., min_length=1)
     telefon: str = Field(..., min_length=1, examples=["+905321112203"])
-    email: EmailStr | None = None
+    email: EmailStr
     aranabilir: bool = False
     role: UserRoleLiteral
     password: str | None = Field(None, min_length=8)

@@ -109,7 +109,7 @@ def test_yonetici_creates_field_staff(client, world):
     r = client.post(
         "/users",
         headers=yon,
-        json={"ad": "Yeni Guard", "telefon": _uphone(), "role": "security"},
+        json={"ad": "Yeni Guard", "email": f"guard-{uuid.uuid4().hex[:8]}@acme.com", "telefon": _uphone(), "role": "security"},
     )
     assert r.status_code == 201, r.text
     assert r.json()["temp_code"]
@@ -117,18 +117,70 @@ def test_yonetici_creates_field_staff(client, world):
     r2 = client.post(
         "/users",
         headers=yon,
-        json={"ad": "Yeni Temizlik", "telefon": _uphone(), "role": "tesis_gorevlisi"},
+        json={"ad": "Yeni Temizlik", "email": f"temizlik-{uuid.uuid4().hex[:8]}@acme.com", "telefon": _uphone(), "role": "tesis_gorevlisi"},
     )
     assert r2.status_code == 201, r2.text
 
 
-def test_yonetici_cannot_create_admin_or_yonetici(client, world):
-    """(Duzeltme turu) `resident` BU LISTEDEN CIKTI.
+# (P185) email artik ZORUNLU — eksik email -> 422 (login degil, dogrulama kanali).
+def test_create_user_email_required(client, world):
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    r = client.post(
+        "/users",
+        headers=admin,
+        json={"ad": "Epostasiz", "telefon": _uphone(), "role": "security", "password": "Parola123!"},
+    )
+    assert r.status_code == 422, r.text
 
-    Yonetici kendi tesisinin sakinini YONETIR (acar/duzenler/pasiflestirir);
-    onu disarida birakan eski kural, yoneticinin `/residents` ile actigi
-    kaydin adini bile duzeltememesine yol aciyordu. Yasak kalan kume yetki
-    YUKSELTMESI olanlardir: platform admini, kendi rolu ve dis sirket amiri.
+
+# (P185) yonetici artik BASKA bir yonetici acabilir (es-yonetici ekleme).
+def test_yonetici_creates_co_manager(client, world):
+    from app.roller import yonetilebilir
+
+    assert "yonetici" in yonetilebilir("yonetici")
+    yon = _headers(client, world["slug_a"], world["yonetici_a"])
+    r = client.post(
+        "/users",
+        headers=yon,
+        json={
+            "ad": "Es Yonetici",
+            "email": f"esyon-{uuid.uuid4().hex[:8]}@acme.com",
+            "telefon": _uphone(),
+            "role": "yonetici",
+            "password": "Parola123!",
+        },
+    )
+    assert r.status_code == 201, r.text
+    assert r.json()["role"] == "yonetici"
+
+
+# (P185) bir yonetici bir daireye ATANABILIR (yonetici ayni zamanda malik/sakin
+# olabilir). Onceden yalniz `resident` atanabiliyordu.
+def test_yonetici_can_be_assigned_to_unit(client, world):
+    admin = _headers(client, world["slug_a"], world["admin_a"])
+    yon_h = _headers(client, world["slug_a"], world["yonetici_a"])
+    yon_id = client.get("/me", headers=yon_h).json()["id"]
+
+    unit = client.post(
+        "/units", headers=admin, json={"no": f"Y-{uuid.uuid4().hex[:6]}", "blok": "A"}
+    )
+    assert unit.status_code == 201, unit.text
+    uid = unit.json()["id"]
+
+    asg = client.post(
+        f"/units/{uid}/residents",
+        headers=admin,
+        json={"user_id": yon_id, "rol_tipi": "malik"},
+    )
+    assert asg.status_code == 201, asg.text
+
+
+def test_yonetici_cannot_create_yetki_yukseltmesi(client, world):
+    """(Duzeltme turu) `resident` BU LISTEDEN CIKTI; (P185) `yonetici` DE CIKTI.
+
+    Yonetici kendi tesisinin sakinini YONETIR (acar/duzenler/pasiflestirir) ve
+    (P185) es-yonetici EKLER. Yasak kalan kume yetki YUKSELTMESI olanlardir:
+    platform admini ve dis sirket amiri.
 
     Liste ELLE tutulmaz — kaynak `app/roller.py`. Boylece tablo degisince
     bu test de kendiliginde dogru kalir (matrisin TAMAMI ayrica
@@ -137,13 +189,13 @@ def test_yonetici_cannot_create_admin_or_yonetici(client, world):
     from app.roller import yonetilebilir
 
     yon = _headers(client, world["slug_a"], world["yonetici_a"])
-    yasak = sorted(set(("admin", "yonetici", "guvenlik_amiri")) - yonetilebilir("yonetici"))
+    yasak = sorted(set(("admin", "guvenlik_amiri")) - yonetilebilir("yonetici"))
     assert yasak, "yasak kume bosaldi — kural gevsemis olabilir"
     for role in yasak:
         r = client.post(
             "/users",
             headers=yon,
-            json={"ad": "x", "telefon": _uphone(), "role": role, "password": "Parola123!"},
+            json={"ad": "x", "email": f"y-{uuid.uuid4().hex[:8]}@acme.com", "telefon": _uphone(), "role": role, "password": "Parola123!"},
         )
         assert r.status_code == 403, (role, r.text)
         assert r.json()["error"]["code"] == "forbidden"
@@ -226,7 +278,7 @@ def test_yonetici_updates_and_resets_field_staff(client, world):
     phone = _uphone()
     created = client.post(
         "/users", headers=yon,
-        json={"ad": "Saha X", "telefon": phone, "role": "security"},
+        json={"ad": "Saha X", "email": f"sahax-{uuid.uuid4().hex[:8]}@acme.com", "telefon": phone, "role": "security"},
     ).json()
     uid = created["id"]
 
@@ -239,9 +291,10 @@ def test_yonetici_updates_and_resets_field_staff(client, world):
     assert pr.status_code == 200, pr.text
     assert pr.json()["ad"] == "Saha Y" and pr.json()["role"] == "tesis_gorevlisi"
 
-    # rolu saha disina cekemez -> 403 (yetki yukseltme yok)
+    # rolu `admin`e cekemez -> 403 (yetki yukseltme yok). (P185: `yonetici`ye
+    # cekmek ARTIK serbest — es-yonetici; `admin` hâlâ kapali.)
     assert client.patch(
-        f"/users/{uid}", headers=yon, json={"role": "yonetici"}
+        f"/users/{uid}", headers=yon, json={"role": "admin"}
     ).status_code == 403
 
     # parola sifirla -> temp_code; personel telefon + kod ile ilk-giris akisi
@@ -262,12 +315,13 @@ def test_yonetici_updates_and_resets_field_staff(client, world):
 
 def test_yonetici_cannot_manage_yonetilemeyen_rolleri(client, world):
     """(Duzeltme turu) `resident_a` BU LISTEDEN CIKTI — artik yonetilebilir.
+    (P185) `yonetici_a` DA CIKTI — es-yonetici yonetimi acildi.
 
-    Kalanlar gercekten disaridadir: platform admini ve baska bir yonetici.
-    Ikisine dokunmak yetki yukseltmesi olurdu.
+    Kalan gercekten disaridadir: platform admini. Ona dokunmak yetki
+    yukseltmesi olurdu.
     """
     yon = _headers(client, world["slug_a"], world["yonetici_a"])
-    for cred in ("admin_a", "yonetici_a"):
+    for cred in ("admin_a",):
         h = _headers(client, world["slug_a"], world[cred])
         uid = _me_id(client, h)
         assert client.patch(
@@ -282,7 +336,7 @@ def test_reset_password_rbac_yonetim_only(client, world):
     admin = _headers(client, world["slug_a"], world["admin_a"])
     created = client.post(
         "/users", headers=admin,
-        json={"ad": "R", "telefon": _uphone(), "role": "security"},
+        json={"ad": "R", "email": f"r-{uuid.uuid4().hex[:8]}@acme.com", "telefon": _uphone(), "role": "security"},
     ).json()
     # admin herhangi personeli sifirlar
     assert client.post(

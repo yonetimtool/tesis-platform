@@ -200,6 +200,7 @@ def test_BLOK_TOPLU_SILME_satir_satir_raporlar(client, yon):
 def test_KULLANICI_SILINIR(client, yon):
     yeni = client.post("/users", headers=yon, json={
         "ad": "Silinecek Kisi", "role": "security",
+        "email": f"sil-{uuid.uuid4().hex[:8]}@acme.com",
         "telefon": f"+9053{uuid.uuid4().int % 10**8:08d}",
     })
     assert yeni.status_code == 201, yeni.text
@@ -244,6 +245,7 @@ def test_SAKIN_kullanici_SILEMEZ(client, world):
 def _sakin(client, yon, ad="Yeni Sakin"):
     r = client.post("/users", headers=yon, json={
         "ad": ad, "role": "resident",
+        "email": f"sakin-{uuid.uuid4().hex[:8]}@acme.com",
         "telefon": f"+9053{uuid.uuid4().int % 10**8:08d}",
     })
     assert r.status_code == 201, r.text

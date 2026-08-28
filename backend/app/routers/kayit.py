@@ -356,7 +356,7 @@ _KURULUM_GECERSIZ = APIError(401, "invalid_token", "kurulum_jetonu_gecersiz")
 #: kaydolmaya calistiginda `"tesis_gorevlisi" != "gorevli"` -> HER ZAMAN
 #: `rol_uyusmuyor` -> onay kuyruguna duserdi (latent; testlerde yalniz
 #: resident/security kullanilmis). Hicbir istemci kisa bicimi gondermiyor.
-_ROLLER = ("resident", "security", "tesis_gorevlisi")
+_ROLLER = ("resident", "security", "tesis_gorevlisi", "yonetici")
 
 
 def _kapi() -> None:

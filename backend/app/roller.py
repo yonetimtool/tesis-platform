@@ -64,7 +64,7 @@ YONETILEBILIR_ROLLER: dict[str, frozenset[str]] = {
     # secer; uygulamada onu tanimlayan kisi yonetici olur). Platform
     # operatorune baglamak, her denetci degisikligi icin bizi arayan bir
     # tesis demekti.
-    "yonetici": frozenset({"resident", "security", "tesis_gorevlisi", "denetci"}),
+    "yonetici": frozenset({"resident", "security", "tesis_gorevlisi", "denetci", "yonetici"}),
     # (P35) Dis guvenlik sirketinin amiri YALNIZ kendi ekibini acar;
     # `tesis_gorevlisi` bile degil (o site isidir, dis sirketin degil) ve
     # kendi rolunu de acamaz.

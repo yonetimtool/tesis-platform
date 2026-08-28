@@ -396,6 +396,7 @@ def _denetci_ac(client, world, **pencere):
         headers=yonetici,
         json={
             "ad": "Gorevli Denetci",
+            "email": f"denetci-{_uuid.uuid4().hex[:8]}@acme.com",
             "telefon": tel,
             "role": "denetci",
             "password": "GecerliParola1!",

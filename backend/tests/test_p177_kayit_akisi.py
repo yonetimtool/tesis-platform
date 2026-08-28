@@ -491,6 +491,67 @@ def test_rol_uyusmuyorsa_kuyruga_duser(client, owner_conn, hazir_tesis):
         assert cur.fetchone() == ("rol_uyusmuyor",)
 
 
+# (P185) MANAGER-JOIN: ikinci yonetici de rol-eposta ile katilir. `_ROLLER`
+# artik "yonetici"yi kabul eder; kural degismez (once eklenmis olmali).
+def test_yonetici_listedekiyse_rol_eposta_ile_TAMAMLANIR(
+    client, owner_conn, hazir_tesis
+):
+    """(P185) Onceden EKLENMIS bir yonetici, rol='yonetici' ile katilir."""
+    eposta = f"esyon-{uuid.uuid4().hex[:10]}@{EPOSTA_ALANI}"
+    with owner_conn.cursor() as cur:
+        cur.execute(
+            "INSERT INTO app_user (tenant_id, ad, email, role, is_active, "
+            "password_set) VALUES (%s, %s, %s, 'yonetici', true, false)",
+            (hazir_tesis["tenant_id"], "Es Yonetici", eposta),
+        )
+    owner_conn.commit()
+
+    r = client.post(
+        "/auth/kayit/rol-eposta-basla",
+        json={
+            "tesis_kodu": hazir_tesis["tesis_kodu"],
+            "eposta": eposta,
+            "rol": "yonetici",
+        },
+    )
+    assert r.status_code == 200, r.text
+
+    _kodu_ayarla(owner_conn, "kayit_dogrulama", "eposta", eposta)
+    r = client.post(
+        "/auth/kayit/rol-eposta-dogrula",
+        json={"tesis_kodu": hazir_tesis["tesis_kodu"], "eposta": eposta, "kod": KOD},
+    )
+    assert r.status_code == 200, r.text
+    assert r.json()["durum"] == "hazir", r.text
+    assert r.json()["setup_token"]
+
+
+def test_yonetici_listede_YOKSA_kuyruga_duser(client, owner_conn, hazir_tesis):
+    """(P185) rol='yonetici' kabul edilir AMA kural degismez: listede
+    olmayan adres hesap ACMAZ, `liste_disi` sebebiyle kuyruga duser."""
+    yabanci = f"yabanci-yon-{uuid.uuid4().hex[:10]}@{EPOSTA_ALANI}"
+    r = client.post(
+        "/auth/kayit/rol-eposta-basla",
+        json={
+            "tesis_kodu": hazir_tesis["tesis_kodu"],
+            "eposta": yabanci,
+            "rol": "yonetici",
+            "ad": "Yabanci Yonetici",
+        },
+    )
+    assert r.status_code == 200, r.text
+    assert r.json()["durum"] == "kod_gonderildi"
+    with owner_conn.cursor() as cur:
+        cur.execute(
+            "SELECT sebep, durum FROM kayit_onay_kuyrugu "
+            "WHERE tenant_id = %s AND eposta = %s",
+            (hazir_tesis["tenant_id"], yabanci),
+        )
+        assert cur.fetchone() == ("liste_disi", "bekliyor")
+        cur.execute("SELECT count(*) FROM app_user WHERE lower(email) = %s", (yabanci,))
+        assert cur.fetchone()[0] == 0
+
+
 def test_ayni_adresten_bes_deneme_TEK_kuyruk_satiri(client, owner_conn, hazir_tesis):
     """Kuyruk SISMEZ: `uq_kayit_onay_acik` ve tazeleme birlikte."""
     yabanci = f"israrci-{uuid.uuid4().hex[:10]}@{EPOSTA_ALANI}"

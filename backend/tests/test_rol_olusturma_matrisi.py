@@ -39,12 +39,17 @@ TUM_ROLLER = (
 #: acilir"); ama ayni tablo DUZENLEMEYI de yonettigi icin yan etkisi
 #: yoneticinin kendi tesisindeki sakinin adini bile duzeltememesiydi
 #: (canli olculdu: 403 "yalniz saha personelini duzenleyebilirsiniz").
+#:
+#: (P185) `yonetici` icin `yonetici` EKLENDI — es-yonetici ekleme. Bu bir
+#: yetki YUKSELTMESI degil, ayni yetki duzeyinin cogaltilmasidir; site
+#: yonetimi birden fazla yonetici tanimlar (manager-join).
 YONETILEN = {
     "admin": {"admin", "yonetici", "security", "tesis_gorevlisi", "resident",
               "guvenlik_amiri", "denetci"},
     # (P128/P130b) Denetciyi ATAYAN denetlenen tesisin kendi yonetimidir.
     # `resident`: yonetici kendi tesisinin sakinini yonetir.
-    "yonetici": {"resident", "security", "tesis_gorevlisi", "denetci"},
+    # (P185) `yonetici`: es-yonetici ekleme.
+    "yonetici": {"resident", "security", "tesis_gorevlisi", "denetci", "yonetici"},
     "guvenlik_amiri": {"security"},
     "security": set(),
     "tesis_gorevlisi": set(),
@@ -138,6 +143,7 @@ def test_kim_kimi_acar(client, world, acan_rol, hedef_rol):
         headers=h,
         json={
             "ad": f"{acan_rol}->{hedef_rol}",
+            "email": f"m-{uuid.uuid4().hex[:8]}@acme.com",
             "telefon": _uphone(),
             "role": hedef_rol,
             "password": "GecerliParola1!",
@@ -163,7 +169,8 @@ def _kayit_ac(client, admin, rol: str) -> str:
     r = client.post(
         "/users",
         headers=admin,
-        json={"ad": f"Hedef {rol}", "telefon": _uphone(), "role": rol,
+        json={"ad": f"Hedef {rol}", "email": f"m-{uuid.uuid4().hex[:8]}@acme.com",
+              "telefon": _uphone(), "role": rol,
               "password": "GecerliParola1!"},
     )
     assert r.status_code == 201, r.text
@@ -256,7 +263,8 @@ def test_rol_yukseltme_patch_ile_de_olmaz(client, world, hedef_rol):
     r = client.post(
         "/users",
         headers=admin,
-        json={"ad": "Hedef", "telefon": _uphone(), "role": "security",
+        json={"ad": "Hedef", "email": f"m-{uuid.uuid4().hex[:8]}@acme.com",
+              "telefon": _uphone(), "role": "security",
               "password": "GecerliParola1!"},
     )
     assert r.status_code == 201, r.text
@@ -280,7 +288,8 @@ def test_olusturma_audit_kaydinda_ACANIN_rolu_var(client, world):
     r = client.post(
         "/users",
         headers=yonetici,
-        json={"ad": "Denetimli", "telefon": _uphone(), "role": "security",
+        json={"ad": "Denetimli", "email": f"m-{uuid.uuid4().hex[:8]}@acme.com",
+              "telefon": _uphone(), "role": "security",
               "password": "GecerliParola1!"},
     )
     assert r.status_code == 201, r.text

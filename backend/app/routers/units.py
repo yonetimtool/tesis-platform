@@ -700,7 +700,7 @@ async def assign_resident(
     ).scalar_one_or_none()
     if target is None:
         raise APIError(422, "invalid_reference", "user_id_bulunamadi")
-    if target.role != "resident":
+    if target.role not in ("resident", "yonetici"):
         raise APIError(422, "invalid_reference", "atanacak_kullanici_resident_olmali")
     if await daire_rolu_dolu_mu(db, unit_id, body.rol_tipi):
         raise APIError(409, "conflict", "daire_zaten_dolu")

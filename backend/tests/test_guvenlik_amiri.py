@@ -156,15 +156,15 @@ def test_AYNI_deger_denetim_satiri_URETMEZ(client, roller, owner_conn, world):
 def test_amir_YALNIZ_GUVENLIK_personeli_acar(client, roller, world):
     tel = world["bos_telefonlar"]
     r = client.post("/users", headers=roller["amir"], json={
-        "ad": "Yeni Guvenlik", "role": "security", "telefon": tel[0]})
+        "ad": "Yeni Guvenlik", "email": f"g-{uuid.uuid4().hex[:8]}@acme.com", "role": "security", "telefon": tel[0]})
     assert r.status_code == 201, r.text
     # tesis_gorevlisi SITE isidir, dis guvenlik sirketinin personeli degil.
     assert client.post("/users", headers=roller["amir"], json={
-        "ad": "Tesisci", "role": "tesis_gorevlisi",
+        "ad": "Tesisci", "email": f"g-{uuid.uuid4().hex[:8]}@acme.com", "role": "tesis_gorevlisi",
         "telefon": tel[1]}).status_code == 403
     # Kendi rolunu cogaltamaz (yetki cogaltma yok).
     assert client.post("/users", headers=roller["amir"], json={
-        "ad": "Ikinci Amir", "role": "guvenlik_amiri",
+        "ad": "Ikinci Amir", "email": f"g-{uuid.uuid4().hex[:8]}@acme.com", "role": "guvenlik_amiri",
         "telefon": tel[2]}).status_code == 403
 
 
@@ -186,7 +186,7 @@ def test_amir_YETKI_YUKSELTEMEZ(client, roller, world):
 def test_amir_kendi_ekibini_duzenler(client, roller, world):
     tel = world["bos_telefonlar"]
     yeni = client.post("/users", headers=roller["amir"], json={
-        "ad": "Ekip Uyesi", "role": "security", "telefon": tel[3]})
+        "ad": "Ekip Uyesi", "email": f"g-{uuid.uuid4().hex[:8]}@acme.com", "role": "security", "telefon": tel[3]})
     assert yeni.status_code == 201, yeni.text
     uid = yeni.json()["id"]
     assert client.patch(f"/users/{uid}", headers=roller["amir"],
