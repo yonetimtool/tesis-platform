@@ -1716,6 +1716,8 @@ export const en: Sozluk = {
   profilEpostaKod: "Verification code",
   profilEpostaDogrula: "Verify",
   profilEpostaGonderildi: "Code sent — check your email.",
+  profilEpostaGecersiz: "Enter a valid email.",
+  profilEpostaBekliyorRozet: "verification pending",
   profilEpostaDegistir: "Change email",
   profilEpostaEkle: "Add email",
   profilEpostaRozetBekliyor: "not verified",

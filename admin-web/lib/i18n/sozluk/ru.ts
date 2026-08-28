@@ -1716,6 +1716,8 @@ export const ru: Sozluk = {
   profilEpostaKod: "Код подтверждения",
   profilEpostaDogrula: "Подтвердить",
   profilEpostaGonderildi: "Код отправлен — проверьте почту.",
+  profilEpostaGecersiz: "Введите действительный адрес электронной почты.",
+  profilEpostaBekliyorRozet: "ожидает подтверждения",
   profilEpostaDegistir: "Изменить e-mail",
   profilEpostaEkle: "Добавить e-mail",
   profilEpostaRozetBekliyor: "не подтверждён",

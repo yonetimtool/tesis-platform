@@ -34,7 +34,6 @@ import useSWR from "swr";
 import { Avatar } from "@/components/Avatar";
 import { YasalMetinler } from "@/components/profil/yasal-metinler";
 import { GirisYontemlerim } from "@/components/GirisYontemlerim";
-import { EpostaDogrulaKart } from "@/components/profil/eposta-dogrula-kart";
 import { ParolaAlani } from "@/components/ParolaAlani";
 import { TelefonAlani, telefonHataMetni } from "@/components/TelefonAlani";
 import { useToast } from "@/components/Toast";
@@ -123,23 +122,10 @@ export default function ProfilPage() {
 
       {error ? <HataDurumu mesaj={t("ortakHataOlustu")} /> : null}
 
-      {/* (P181 Bölüm 1) E-postasız/doğrulanmamış kullanıcıya beklemede kartı; kilitleme yok, yalnız davet. */}
-      {data && !data.eposta_dogrulandi ? (
-        <div
-          className="space-y-3 rounded-xl border p-4"
-          style={{
-            borderColor: "var(--yz-border)",
-            background: "var(--yz-surface-1)",
-          }}
-        >
-          <EpostaDogrulaKart
-            mevcutEposta={data.email}
-            dogrulandi={Boolean(data.eposta_dogrulandi)}
-            onDone={() => void mutate()}
-          />
-        </div>
-      ) : null}
-
+      {/* (P184-ek duzeltme §1) AYRI "beklemede" KARTI KALDIRILDI: e-posta
+          dogrulama artik Hesap Bilgileri formundaki e-posta kutusunun kendi
+          icinde (kutu + Kaydet + "dogrulama bekliyor"). Ikinci bir akis, tam
+          da kullanicinin sikayet ettigi ayriligi uretiyordu. */}
       <div className="grid gap-6 lg:grid-cols-[13rem_minmax(0,1fr)]">
         {/* SAYFA ICI SOL MENU — `nav` etiketi bilincli: ekran okuyucu
             kullanicisi bunu bir gezinme bolgesi olarak atlayabilmeli. */}
@@ -226,6 +212,14 @@ function HesapBilgileri({
   const [adHatasi, setAdHatasi] = useState<string | null>(null);
   const [telefon, setTelefon] = useState("");
   const [telefonHatasiMetni, setTelefonHatasiMetni] = useState<string | null>(null);
+  // (P184-ek duzeltme §1) E-POSTA ARTIK AD/TELEFONLA AYNI KALIP: dogrudan
+  // duzenlenebilir kutu + ortak "Kaydet". Kaydet'te adres degistiyse (ya da
+  // dogrulanmamissa) YENI adrese kod gider; `kodBekleniyor` iken alanin altinda
+  // kod kutusu belirir. Eski adres kod dogrulanana kadar gecerli kalir.
+  const [eposta, setEposta] = useState("");
+  const [epostaHatasi, setEpostaHatasi] = useState<string | null>(null);
+  const [kodBekleniyor, setKodBekleniyor] = useState(false);
+  const [kod, setKod] = useState("");
   const [aranabilir, setAranabilir] = useState(false);
   const [hata, setHata] = useState<string | null>(null);
   const [kaydediyor, setKaydediyor] = useState(false);
@@ -237,6 +231,10 @@ function HesapBilgileri({
     if (!profil) return;
     setAd(profil.ad);
     setTelefon(telefonGiris(profil.telefon ?? ""));
+    setEposta(profil.email ?? "");
+    setKodBekleniyor(false);
+    setKod("");
+    setEpostaHatasi(null);
     // `?? false` SART: onay kutusu DENETIMLIDIR ve `undefined` gormesi
     // React'te denetimliden denetimsize gecis demek.
     setAranabilir(profil.aranabilir ?? false);
@@ -255,8 +253,15 @@ function HesapBilgileri({
       setTelefonHatasiMetni(telHata);
       return;
     }
+    // (P184-ek duzeltme §1) E-posta bicimi — degistiyse dogrula.
+    const yeniEposta = eposta.trim().toLowerCase();
+    if (yeniEposta !== "" && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(yeniEposta)) {
+      setEpostaHatasi(t("profilEpostaGecersiz"));
+      return;
+    }
     setAdHatasi(null);
     setTelefonHatasiMetni(null);
+    setEpostaHatasi(null);
     setHata(null);
     setKaydediyor(true);
     try {
@@ -266,11 +271,44 @@ function HesapBilgileri({
         telefon: telefonNormalle(telefon) || null,
         aranabilir,
       });
-      toast.success(t("profilKaydedildi"));
+      // (P184-ek duzeltme §1) E-POSTA: adres degistiyse ya da henuz
+      // dogrulanmamissa YENI adrese kod gonder (eski adres gecerli kalir).
+      // Backend SIZDIRMAZ (baskasindaysa ayni yanit); eski dogrulanmis adrese
+      // bildirim gider. Ayri bir "degistir" akisi YOK — kutu + Kaydet.
+      const mevcut = (profil?.email ?? "").toLowerCase();
+      const dogrulanmali =
+        yeniEposta !== "" &&
+        !(yeniEposta === mevcut && Boolean(profil?.eposta_dogrulandi));
+      if (dogrulanmali) {
+        await apiSend("/api/me/eposta/kod-iste", "POST", { eposta: yeniEposta });
+        setKodBekleniyor(true);
+        toast.success(t("profilEpostaGonderildi"));
+      } else {
+        toast.success(t("profilKaydedildi"));
+      }
       tazele();
     } catch (e) {
       // SUNUCU metni aynen gosterilir (tur 14: istegin dilinde gelir).
       setHata(e instanceof Error ? e.message : t("ortakHataOlustu"));
+    } finally {
+      setKaydediyor(false);
+    }
+  }
+
+  // (P184-ek duzeltme §1) Kod dogrula → yeni adres yazilir, ✓ olur.
+  async function epostaDogrula() {
+    setKaydediyor(true);
+    try {
+      await apiSend("/api/me/eposta/dogrula", "POST", {
+        eposta: eposta.trim().toLowerCase(),
+        kod: kod.trim(),
+      });
+      toast.success(t("profilEpostaDogrulandi"));
+      setKodBekleniyor(false);
+      setKod("");
+      tazele();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : t("ortakHataOlustu"));
     } finally {
       setKaydediyor(false);
     }
@@ -393,18 +431,80 @@ function HesapBilgileri({
             )}
           </AlanSarmal>
 
-          {/* (P184-ek §9) E-POSTA ARTIK DUZENLENEBILIR. Degisiklik YENI adrese
-              giden dogrulama koduyla onaylanir; kod dogrulanana kadar ESKI adres
-              gecerli kalir (kilitlenme yok) ve eski adrese bildirim gider.
-              Backend SIZDIRMAZ (adres baskasindaysa ayni yanit). SSO bagi
-              user_id'ye bagli oldugundan e-posta degisimi kimligi bozmaz. */}
-          <AlanSarmal etiket={t("profilEposta")}>
-            {() => (
-              <EpostaDogrulaKart
-                mevcutEposta={profil?.email}
-                dogrulandi={Boolean(profil?.eposta_dogrulandi)}
-                onDone={tazele}
-              />
+          {/* (P184-ek duzeltme §1) E-POSTA = AD/TELEFONLA AYNI KALIP: dogrudan
+              duzenlenebilir kutu + ortak Kaydet. Ayri "degistir" bagi/ekrani/
+              akisi YOK. Kaydet'te adres degistiyse yeni adrese kod gider, kod
+              dogrulanana kadar eski adres gecerli kalir ("dogrulama bekliyor"
+              durumu yaninda gorunur). Dogrulanmis + degismemis adres yaninda ✓. */}
+          <AlanSarmal etiket={t("profilEposta")} hata={epostaHatasi}>
+            {(baglar) => (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="flex-1">
+                    <Alan
+                      {...baglar}
+                      type="email"
+                      value={eposta}
+                      hatali={Boolean(epostaHatasi)}
+                      autoComplete="email"
+                      onChange={(e) => {
+                        setEposta(e.target.value);
+                        setEpostaHatasi(null);
+                      }}
+                    />
+                  </div>
+                  {kodBekleniyor ? (
+                    <span
+                      className="whitespace-nowrap text-xs"
+                      style={{ color: "var(--yz-text-3)" }}
+                    >
+                      {t("profilEpostaBekliyorRozet")}
+                    </span>
+                  ) : eposta.trim().toLowerCase() ===
+                        (profil?.email ?? "").toLowerCase() &&
+                    Boolean(profil?.eposta_dogrulandi) ? (
+                    <span
+                      className="text-sm"
+                      style={{ color: "var(--yz-accent-edge)" }}
+                      title={t("profilEpostaDogrulandi")}
+                      aria-label={t("profilEpostaDogrulandi")}
+                    >
+                      ✓
+                    </span>
+                  ) : eposta.trim() !== "" &&
+                    eposta.trim().toLowerCase() ===
+                      (profil?.email ?? "").toLowerCase() ? (
+                    <span
+                      className="whitespace-nowrap text-xs"
+                      style={{ color: "var(--yz-text-3)" }}
+                    >
+                      {t("profilEpostaRozetBekliyor")}
+                    </span>
+                  ) : null}
+                </div>
+                {kodBekleniyor && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="max-w-[10rem]">
+                      <Alan
+                        inputMode="numeric"
+                        autoComplete="one-time-code"
+                        value={kod}
+                        onChange={(e) => setKod(e.target.value)}
+                        placeholder={t("profilEpostaKod")}
+                        aria-label={t("profilEpostaKod")}
+                      />
+                    </div>
+                    <Dugme
+                      tur="ikincil"
+                      boy="kucuk"
+                      disabled={kaydediyor || kod.trim().length < 4}
+                      onClick={() => void epostaDogrula()}
+                    >
+                      {t("profilEpostaDogrula")}
+                    </Dugme>
+                  </div>
+                )}
+              </div>
             )}
           </AlanSarmal>
 

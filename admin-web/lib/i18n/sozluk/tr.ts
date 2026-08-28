@@ -1778,6 +1778,8 @@ export const tr = {
   profilEpostaKod: "Doğrulama kodu",
   profilEpostaDogrula: "Doğrula",
   profilEpostaGonderildi: "Kod gönderildi, e-postanızı kontrol edin.",
+  profilEpostaGecersiz: "Geçerli bir e-posta girin.",
+  profilEpostaBekliyorRozet: "doğrulama bekliyor",
   profilEpostaDegistir: "E-postayı değiştir",
   profilEpostaEkle: "E-posta ekle",
   profilEpostaRozetBekliyor: "doğrulanmadı",

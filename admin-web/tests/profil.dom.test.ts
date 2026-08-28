@@ -74,23 +74,31 @@ describe("Profilim", () => {
     fetchTaklidi(PROFIL);
     ciz(ProfilPage);
     expect(await screen.findByDisplayValue("Ayşe Yılmaz")).toBeInTheDocument();
-    // (P184-ek §9) E-posta artık düzenlenebilir: input değil, METİN gösterilir.
-    expect(screen.getByText("ayse@ornek.com")).toBeInTheDocument();
+    // (P184-ek düzeltme §1) E-posta ad/telefonla AYNI: düzenlenebilir INPUT.
+    expect(screen.getByDisplayValue("ayse@ornek.com")).toBeInTheDocument();
   });
 
-  it("(P184-ek §9) E-POSTA DÜZENLENEBİLİR — değiştir akışı açılır", async () => {
-    // (P167 §1.7'de salt-okunurdu) Artık DOĞRULAMA AKISI VAR: yeni adrese kod
-    // gider, eski adres doğrulanana kadar geçerli kalır (kilitleme yok). Alan
-    // metin olarak görünür + "E-postayı değiştir" ile yeni adres istenir.
-    fetchTaklidi(PROFIL);
+  it("(P184-ek düzeltme §1) E-POSTA ad/telefonla AYNI: kutu + Kaydet ile doğrulama", async () => {
+    // E-posta AYRI bir "değiştir" bağlantısı/ekranı/akışı DEĞİL: ad/telefon gibi
+    // doğrudan düzenlenebilir bir kutu. Kaydet'e basınca YENİ adrese kod gider,
+    // "doğrulama bekliyor" durumu görünür; eski adres doğrulanana kadar geçerli.
+    const cagrilar = fetchTaklidi(PROFIL);
     ciz(ProfilPage);
-    // Mevcut adres METİN olarak görünür (salt-okunur input DEĞİL).
-    expect(await screen.findByText("ayse@ornek.com")).toBeInTheDocument();
-    // "E-postayı değiştir" düğmesi tıklanınca yeni adres alanı açılır.
-    await userEvent.click(
-      screen.getByRole("button", { name: "E-postayı değiştir" }),
+    const epostaAlani = await screen.findByDisplayValue("ayse@ornek.com");
+    expect(epostaAlani).not.toBeDisabled();
+    await userEvent.clear(epostaAlani);
+    await userEvent.type(epostaAlani, "yeni@ornek.com");
+    await userEvent.click(screen.getByRole("button", { name: /Kaydet/i }));
+    // Yeni adrese doğrulama kodu istendi (eski adres henüz değişmedi).
+    await waitFor(() =>
+      expect(
+        cagrilar.find((c) => c.url.includes("/me/eposta/kod-iste")),
+      ).toBeTruthy(),
     );
-    expect(screen.getByLabelText("E-posta adresi")).toBeInTheDocument();
+    expect(
+      cagrilar.find((c) => c.url.includes("/me/eposta/kod-iste"))?.body,
+    ).toMatchObject({ eposta: "yeni@ornek.com" });
+    expect(await screen.findByText("doğrulama bekliyor")).toBeInTheDocument();
   });
 
   it("(P167 §1.7) BOS AD kaydettirmez", async () => {

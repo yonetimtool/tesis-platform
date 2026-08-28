@@ -1716,6 +1716,8 @@ export const de: Sozluk = {
   profilEpostaKod: "Bestätigungscode",
   profilEpostaDogrula: "Bestätigen",
   profilEpostaGonderildi: "Code gesendet — prüfen Sie Ihre E-Mail.",
+  profilEpostaGecersiz: "Geben Sie eine gültige E-Mail-Adresse ein.",
+  profilEpostaBekliyorRozet: "Bestätigung ausstehend",
   profilEpostaDegistir: "E-Mail ändern",
   profilEpostaEkle: "E-Mail hinzufügen",
   profilEpostaRozetBekliyor: "nicht bestätigt",

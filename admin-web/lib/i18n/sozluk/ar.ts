@@ -1716,6 +1716,8 @@ export const ar: Sozluk = {
   profilEpostaKod: "رمز التحقق",
   profilEpostaDogrula: "تحقق",
   profilEpostaGonderildi: "تم إرسال الرمز — تحقّق من بريدك.",
+  profilEpostaGecersiz: "أدخل بريدًا إلكترونيًا صالحًا.",
+  profilEpostaBekliyorRozet: "بانتظار التحقق",
   profilEpostaDegistir: "تغيير البريد الإلكتروني",
   profilEpostaEkle: "إضافة بريد إلكتروني",
   profilEpostaRozetBekliyor: "غير مُوثَّق",
