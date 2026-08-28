@@ -3018,7 +3018,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get ortakTelefonZorunlu => 'الهاتف إلزامي';
 
   @override
-  String get sakinGirisAnahtari => 'مفتاح تسجيل الدخول (فريد عالمياً).';
+  String get sakinGirisAnahtari => 'لأغراض التواصل فقط (اختياري).';
 
   @override
   String get ortakDaireNoIpucu => 'مثال: A-12';

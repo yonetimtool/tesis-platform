@@ -1159,7 +1159,7 @@
   "ortakCepTelefonu": "Cep telefonu",
   "ortakTelefonIpucu": "örn. 0532 111 22 03",
   "ortakTelefonZorunlu": "Telefon zorunludur",
-  "sakinGirisAnahtari": "Giriş anahtarı (global benzersiz).",
+  "sakinGirisAnahtari": "Yalnızca iletişim için (isteğe bağlı).",
   "ortakDaireNoIpucu": "örn. A-12",
   "sakinDaireNoZorunlu": "Daire no zorunludur",
   "sakinParolaOpsiyonel": "Parola (opsiyonel)",

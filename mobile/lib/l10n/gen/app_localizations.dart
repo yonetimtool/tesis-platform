@@ -4922,7 +4922,7 @@ abstract class AppLocalizations {
   /// No description provided for @sakinGirisAnahtari.
   ///
   /// In tr, this message translates to:
-  /// **'Giriş anahtarı (global benzersiz).'**
+  /// **'Yalnızca iletişim için (isteğe bağlı).'**
   String get sakinGirisAnahtari;
 
   /// No description provided for @ortakDaireNoIpucu.

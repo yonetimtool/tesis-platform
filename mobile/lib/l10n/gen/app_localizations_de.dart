@@ -2900,7 +2900,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get ortakTelefonZorunlu => 'Telefon ist Pflicht';
 
   @override
-  String get sakinGirisAnahtari => 'Anmeldeschlüssel (global eindeutig).';
+  String get sakinGirisAnahtari => 'Nur für die Kontaktaufnahme (optional).';
 
   @override
   String get ortakDaireNoIpucu => 'z. B. A-12';

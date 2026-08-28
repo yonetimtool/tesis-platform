@@ -2798,7 +2798,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get ortakTelefonZorunlu => 'Telefon zorunludur';
 
   @override
-  String get sakinGirisAnahtari => 'Giriş anahtarı (global benzersiz).';
+  String get sakinGirisAnahtari => 'Yalnızca iletişim için (isteğe bağlı).';
 
   @override
   String get ortakDaireNoIpucu => 'örn. A-12';

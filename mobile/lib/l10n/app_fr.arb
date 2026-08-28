@@ -801,7 +801,7 @@
   "ortakCepTelefonu": "Numéro de mobile",
   "ortakTelefonIpucu": "ex. 0532 111 22 03",
   "ortakTelefonZorunlu": "Le téléphone est obligatoire",
-  "sakinGirisAnahtari": "Clé de connexion (unique globalement).",
+  "sakinGirisAnahtari": "Uniquement pour le contact (facultatif).",
   "ortakDaireNoIpucu": "ex. A-12",
   "sakinDaireNoZorunlu": "Le numéro de logement est obligatoire",
   "sakinParolaOpsiyonel": "Mot de passe (facultatif)",

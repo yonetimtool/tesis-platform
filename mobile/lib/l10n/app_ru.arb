@@ -801,7 +801,7 @@
   "ortakCepTelefonu": "Мобильный номер",
   "ortakTelefonIpucu": "напр. 0532 111 22 03",
   "ortakTelefonZorunlu": "Телефон обязателен",
-  "sakinGirisAnahtari": "Ключ входа (глобально уникальный).",
+  "sakinGirisAnahtari": "Только для связи (необязательно).",
   "ortakDaireNoIpucu": "напр. A-12",
   "sakinDaireNoZorunlu": "Номер квартиры обязателен",
   "sakinParolaOpsiyonel": "Пароль (необязательно)",

@@ -2941,7 +2941,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ortakTelefonZorunlu => 'Phone number is required';
 
   @override
-  String get sakinGirisAnahtari => 'Sign-in key (globally unique).';
+  String get sakinGirisAnahtari => 'For contact only (optional).';
 
   @override
   String get ortakDaireNoIpucu => 'e.g. A-12';

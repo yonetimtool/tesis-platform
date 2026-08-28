@@ -2884,7 +2884,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get ortakTelefonZorunlu => 'El teléfono es obligatorio';
 
   @override
-  String get sakinGirisAnahtari => 'Clave de acceso (única globalmente).';
+  String get sakinGirisAnahtari => 'Solo para contacto (opcional).';
 
   @override
   String get ortakDaireNoIpucu => 'ej. A-12';

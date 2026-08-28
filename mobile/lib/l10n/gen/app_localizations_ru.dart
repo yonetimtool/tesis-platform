@@ -2997,7 +2997,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get ortakTelefonZorunlu => 'Телефон обязателен';
 
   @override
-  String get sakinGirisAnahtari => 'Ключ входа (глобально уникальный).';
+  String get sakinGirisAnahtari => 'Только для связи (необязательно).';
 
   @override
   String get ortakDaireNoIpucu => 'напр. A-12';

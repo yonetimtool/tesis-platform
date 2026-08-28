@@ -801,7 +801,7 @@
   "ortakCepTelefonu": "Móvil",
   "ortakTelefonIpucu": "ej. 0532 111 22 03",
   "ortakTelefonZorunlu": "El teléfono es obligatorio",
-  "sakinGirisAnahtari": "Clave de acceso (única globalmente).",
+  "sakinGirisAnahtari": "Solo para contacto (opcional).",
   "ortakDaireNoIpucu": "ej. A-12",
   "sakinDaireNoZorunlu": "El número de unidad es obligatorio",
   "sakinParolaOpsiyonel": "Contraseña (opcional)",

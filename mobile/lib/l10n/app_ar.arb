@@ -801,7 +801,7 @@
   "ortakCepTelefonu": "رقم الجوال",
   "ortakTelefonIpucu": "مثال: 0532 111 22 03",
   "ortakTelefonZorunlu": "الهاتف إلزامي",
-  "sakinGirisAnahtari": "مفتاح تسجيل الدخول (فريد عالمياً).",
+  "sakinGirisAnahtari": "لأغراض التواصل فقط (اختياري).",
   "ortakDaireNoIpucu": "مثال: A-12",
   "sakinDaireNoZorunlu": "رقم الوحدة إلزامي",
   "sakinParolaOpsiyonel": "كلمة المرور (اختياري)",

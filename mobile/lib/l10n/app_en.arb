@@ -801,7 +801,7 @@
   "ortakCepTelefonu": "Mobile number",
   "ortakTelefonIpucu": "e.g. 0532 111 22 03",
   "ortakTelefonZorunlu": "Phone number is required",
-  "sakinGirisAnahtari": "Sign-in key (globally unique).",
+  "sakinGirisAnahtari": "For contact only (optional).",
   "ortakDaireNoIpucu": "e.g. A-12",
   "sakinDaireNoZorunlu": "Unit number is required",
   "sakinParolaOpsiyonel": "Password (optional)",
