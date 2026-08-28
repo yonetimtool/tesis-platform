@@ -835,6 +835,7 @@ export const tr = {
   kullaniciDaireAtanamadi: "Hesap açıldı ancak daire ataması yapılamadı. Daireler ekranından atayabilirsiniz.",
   kullaniciDaireAta: "Daire ata (isteğe bağlı)",
   kullaniciDaireYok: "Daire atama",
+  kullaniciBlokSec: "Blok seçin",
   kullaniciDuzenle: "Kullanıcı düzenle",
   kullaniciYeni: "Yeni kullanıcı",
   kullaniciEpostaIpucu: "Doğrulama ve bildirim için; zorunlu.",
@@ -1396,7 +1397,6 @@ export const tr = {
   tesisYoneticiDuzenle: "Yöneticiyi düzenle",
   seffafOncekiAyNet: "Önceki ay net: {tutar}",
   seffafOdeyenDaire: "Ödeyen daire: {odeyen}/{toplam}",
-  kullaniciGeciciKod: "Kullanıcı oluşturuldu.\nGeçici giriş kodu: {kod}\n\nBu kod yalnızca bir kez gösterilir; kullanıcıya iletin. Kullanıcı cep telefonu + bu kod ile girip kalıcı parolasını belirler.",
   daireBorcDurumu: "Daire {no} — borç durumu",
   // tur 22 — demirbas zimmet basligi
   demirbasZimmetBaslik: "Zimmet — {ad}",
@@ -1545,7 +1545,6 @@ export const tr = {
   entegTest: "Test",
   entegTestEdiliyor: "Test ediliyor...",
   daireDetayAidat: "Detay / Aidat",
-  kullaniciParolaOpsiyonel: "Parola (opsiyonel)",
   kullaniciEnAz8: "En az 8 karakter",
   daireTahsilEt: "Tahsil et",
   ortakEkleniyor: "Ekleniyor...",

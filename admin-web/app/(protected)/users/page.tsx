@@ -103,6 +103,9 @@ const ROL_SAKIN = "resident" as const;
 // ona da daire atanabilir. Form daire alanini sakin VE yonetici rolunde gosterir.
 const ROL_YONETICI = "yonetici" as const;
 const DAIRE_ROLLERI: readonly string[] = [ROL_SAKIN, ROL_YONETICI];
+// (P186) Blok-atanmamis daireler icin acilir-liste NObet degeri (bos "" =
+// "blok secilmedi"den ayirt edilmeli). Kullaniciya "Blok atanmamis" gorunur.
+const BLOKSUZ = "__bloksuz__";
 
 export default function UsersPage() {
   const t = useT();
@@ -119,10 +122,28 @@ export default function UsersPage() {
   // residents`. Ikisi ARDISIK cagriliyor; sunucuya birlesik bir uc
   // eklemek sozlesmeyi degistirmek olurdu (kilitli kural).
   const [atanacakDaire, setAtanacakDaire] = useState("");
+  // (P186) BLOK -> DAIRE iki asamali secim: cok daireli sitede tek liste
+  // kullanissizdir; once blok secilir, daire listesi ona gore filtrelenir.
+  const [secilenBlok, setSecilenBlok] = useState("");
   const { data: daireListesi } = useSWR<UnitList>(
-    "/api/units?limit=200&offset=0",
+    "/api/units?limit=1000&offset=0",
     jsonFetcher,
     { revalidateOnFocus: false },
+  );
+  // Benzersiz bloklar (blok-atanmamis daireler BLOKSUZ altinda toplanir).
+  const bloklar = useMemo(() => {
+    const s = new Set<string>();
+    for (const u of daireListesi?.items ?? []) s.add(u.blok || BLOKSUZ);
+    return Array.from(s).sort();
+  }, [daireListesi]);
+  // Adlandirilmis blok var mi? Yoksa (tek bina) blok secici gosterilmez.
+  const blokSecici = bloklar.some((b) => b !== BLOKSUZ);
+  const filtreliDaireler = useMemo(
+    () =>
+      (daireListesi?.items ?? []).filter(
+        (u) => (u.blok || BLOKSUZ) === secilenBlok,
+      ),
+    [daireListesi, secilenBlok],
   );
   const toast = useToast();
 
@@ -202,6 +223,7 @@ export default function UsersPage() {
     setDuzenlenenTamam(false);
     setAtanacakDaire("");
     setIlkDaire("");
+    setSecilenBlok("");
     setOpen(true);
   }
 
@@ -224,6 +246,7 @@ export default function UsersPage() {
     setDuzenlenenTamam(true);
     setAtanacakDaire("");
     setIlkDaire("");
+    setSecilenBlok("");
     setOpen(true);
     try {
       const d = await jsonFetcher<UserDetail>(`/api/users/${u.id}`);
@@ -235,6 +258,9 @@ export default function UsersPage() {
       setDuzenlenenTamam(d.kayit_tamamlandi ?? false);
       setAtanacakDaire(d.daire_id ?? "");
       setIlkDaire(d.daire_id ?? "");
+      // Mevcut atamanin blogunu turet ki blok->daire secici on-dolsun.
+      const birim = (daireListesi?.items ?? []).find((x) => x.id === d.daire_id);
+      setSecilenBlok(birim ? birim.blok || BLOKSUZ : "");
     } catch {
       // Detay cekilemezse form yine acik kalir (telefon bos); kaydetmeye engel yok.
     }
@@ -281,9 +307,9 @@ export default function UsersPage() {
           }
         }
       } else {
-        // (P185 §3/§4) E-POSTA ZORUNLU (dogrulama/bildirim kanali). TELEFON
-        // istege bagli (yalniz iletisim, giris anahtari DEGIL). Parola bossa
-        // backend TEK SEFERLIK gecici kod uretir (temp_code).
+        // (P185 §3/§4 · P186) E-POSTA ZORUNLU (dogrulama/bildirim + DAVET
+        // kanali). Parola YOK: hesap parolasiz acilir, kisi davet (Tesis ID)
+        // ile mobilden KENDI kimligini kurar. Yonetici parola atamaz.
         if (!form.email.trim()) {
           setFormErr(t("kullaniciEpostaZorunluHata"));
           setSaving(false);
@@ -301,15 +327,11 @@ export default function UsersPage() {
         };
         if (form.gorevBaslangic) body.gorev_baslangic = form.gorevBaslangic;
         if (form.gorevBitis) body.gorev_bitis = form.gorevBitis;
-        if (form.password) body.password = form.password;
-        const created = await apiSend<{ temp_code?: string | null; id?: string }>(
+        const created = await apiSend<{ id?: string }>(
           "/api/users",
           "POST",
           body,
         );
-        if (created?.temp_code) {
-          window.alert(t("kullaniciGeciciKod", { kod: created.temp_code }));
-        }
         // DAIRE ATAMASI — kullanici olustuktan SONRA.
         //
         // HATASI KULLANICI KAYDINI GERI ALMAZ ve bu bilincli: hesap
@@ -557,6 +579,31 @@ export default function UsersPage() {
               oturur), yoneticide istege bagli. DUZENLEMEDE DE gosterilir
               (P186 kabul 4): acilista mevcut atama on-dolar, degisirse
               ata/kaldir. */}
+          {DAIRE_ROLLERI.includes(form.role) && blokSecici && (
+            <AlanSarmal etiket={t("ortakBlok")} zorunlu={form.role === ROL_SAKIN}>
+              {(b) => (
+                <Secim
+                  {...b}
+                  value={secilenBlok}
+                  onChange={(e) => {
+                    // Blok degisince daire secimi SIFIRLANIR (eski daire yeni
+                    // bloga ait olmayabilir).
+                    setSecilenBlok(e.target.value);
+                    setAtanacakDaire("");
+                  }}
+                  required={form.role === ROL_SAKIN}
+                >
+                  <option value="">{t("kullaniciBlokSec")}</option>
+                  {bloklar.map((bl) => (
+                    <option key={bl} value={bl}>
+                      {bl === BLOKSUZ ? t("daireBlokAtanmamis") : bl}
+                    </option>
+                  ))}
+                </Secim>
+              )}
+            </AlanSarmal>
+          )}
+
           {DAIRE_ROLLERI.includes(form.role) && (
             <AlanSarmal
               etiket={
@@ -572,13 +619,18 @@ export default function UsersPage() {
                   value={atanacakDaire}
                   onChange={(e) => setAtanacakDaire(e.target.value)}
                   required={form.role === ROL_SAKIN}
+                  // Blok secici varken once blok secilmeli (daire ona gore
+                  // filtreli). Tek binada (blok yok) tum daireler listelenir.
+                  disabled={blokSecici && !secilenBlok}
                 >
                   <option value="">{t("kullaniciDaireYok")}</option>
-                  {(daireListesi?.items ?? []).map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.blok ? `${u.blok}/${u.no}` : u.no}
-                    </option>
-                  ))}
+                  {(blokSecici ? filtreliDaireler : daireListesi?.items ?? []).map(
+                    (u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.blok ? `${u.blok}/${u.no}` : u.no}
+                      </option>
+                    ),
+                  )}
                 </Secim>
               )}
             </AlanSarmal>
@@ -700,32 +752,33 @@ export default function UsersPage() {
             </>
           ) : null}
 
-          <AlanSarmal
-            etiket={editingId ? t("kullaniciYeniParola") : t("kullaniciParolaOpsiyonel")}
-            ipucu={editingId ? t("kullaniciEnAz8") : t("kullaniciParolaBosYeni")}
-          >
-            {(b) => (
-              // `ParolaAlani` ORTAK ILKEL ve `style` KABUL ETMIYOR
-              // (bilincli: gorunumu cagirandan almiyor). Yeni yuzeye
-              // uydurmak icin GIRINTILI kapsayiciya konuyor; girdi
-              // saydam kaliyor. Bilesenin kendisine dokunulmadi —
-              // alti sayfa daha onu kullaniyor.
-              <Girinti className="flex items-center px-1">
-                <ParolaAlani
-                  {...b}
-                  className="h-11 w-full bg-transparent px-2 outline-none"
+          {/* (P186) PAROLA ALANI YALNIZ DUZENLEMEDE. Yeni kullanici acarken
+              yonetici PAROLA ATAMAZ (kisi kendi kimligini davetle/Tesis ID ile
+              mobilden kurar); alan yalniz mevcut bir hesabin parolasini
+              yoneticinin DEGISTIRMEK istemesi durumunda gorunur. */}
+          {editingId && (
+            <AlanSarmal
+              etiket={t("kullaniciYeniParola")}
+              ipucu={t("kullaniciEnAz8")}
+            >
+              {(b) => (
+                // `ParolaAlani` ORTAK ILKEL ve `style` KABUL ETMIYOR
+                // (bilincli: gorunumu cagirandan almiyor). Yeni yuzeye
+                // uydurmak icin GIRINTILI kapsayiciya konuyor; girdi
+                // saydam kaliyor.
+                <Girinti className="flex items-center px-1">
+                  <ParolaAlani
+                    {...b}
+                    className="h-11 w-full bg-transparent px-2 outline-none"
                     value={form.password}
-                  onChange={(v) => setForm({ ...form, password: v })}
-                  minLength={8}
-                  placeholder={
-                    editingId
-                      ? t("kullaniciParolaBosDuzenle")
-                      : t("kullaniciParolaBosKisa")
-                  }
-                />
-              </Girinti>
-            )}
-          </AlanSarmal>
+                    onChange={(v) => setForm({ ...form, password: v })}
+                    minLength={8}
+                    placeholder={t("kullaniciParolaBosDuzenle")}
+                  />
+                </Girinti>
+              )}
+            </AlanSarmal>
+          )}
 
           {formErr && (
             <p

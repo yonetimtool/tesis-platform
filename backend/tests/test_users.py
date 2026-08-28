@@ -64,30 +64,30 @@ def test_list_users_rbac_and_isolation(client, world):
 
 
 # ------------------------------ olustur ------------------------------------ #
-def test_create_user_can_login_and_email_conflict(client, world):
+def test_create_user_credentialless_and_email_conflict(client, world):
+    """(P186) Yonetici PAROLA ATAMAZ: olusturulan hesap PAROLASIZDIR, dogrudan
+    GIREMEZ (sahiplenme davet/Tesis ID yoluyladir). Ayni e-posta tekrar -> 409."""
     admin = _headers(client, world["slug_a"], world["admin_a"])
     email = f"yeni-{uuid.uuid4().hex[:8]}@acme.com"
-    pw = "YeniParola1!"
 
     r = client.post(
         "/users",
         headers=admin,
-        json={"ad": "Yeni Personel", "email": email, "telefon": _uphone(), "role": "security", "password": pw},
+        json={"ad": "Yeni Personel", "email": email, "telefon": _uphone(), "role": "security"},
     )
     assert r.status_code == 201, r.text
     assert r.json()["role"] == "security" and r.json()["is_active"] is True
     assert "password_hash" not in r.json()
+    assert "temp_code" not in r.json()  # (P186) gecici kod da URETILMEZ
 
-    # olusturulan kullanici GERCEKTEN login olabiliyor (parola hash'lendi)
-    assert _login_status(client, world["slug_a"], email, pw) == 200
-    # yanlis parola -> 401
-    assert _login_status(client, world["slug_a"], email, "yanlis123") == 401
+    # PAROLASIZ hesap DOGRUDAN GIREMEZ (herhangi bir parola -> 401)
+    assert _login_status(client, world["slug_a"], email, "HerhangiParola1!") == 401
 
     # ayni email tekrar -> 409
     dup = client.post(
         "/users",
         headers=admin,
-        json={"ad": "x", "email": email, "telefon": _uphone(), "role": "tesis_gorevlisi", "password": "Baska1234!"},
+        json={"ad": "x", "email": email, "telefon": _uphone(), "role": "tesis_gorevlisi"},
     )
     assert dup.status_code == 409 and dup.json()["error"]["code"] == "conflict"
 
@@ -105,14 +105,15 @@ def test_create_user_rbac(client, world):
 # ------------------- yonetici saha personeli acar (Ozellik 3) -------------- #
 def test_yonetici_creates_field_staff(client, world):
     yon = _headers(client, world["slug_a"], world["yonetici_a"])
-    # parola verilmezse -> gecici kod doner (temp password first)
+    # (P186) parola/gecici kod YOK: hesap parolasiz acilir, DAVET gonderilir.
     r = client.post(
         "/users",
         headers=yon,
         json={"ad": "Yeni Guard", "email": f"guard-{uuid.uuid4().hex[:8]}@acme.com", "telefon": _uphone(), "role": "security"},
     )
     assert r.status_code == 201, r.text
-    assert r.json()["temp_code"]
+    assert "temp_code" not in r.json()
+    assert r.json()["davet"] is not None  # davet ozeti doner
     # tesis_gorevlisi de acilabilir
     r2 = client.post(
         "/users",
@@ -377,24 +378,21 @@ def test_p186_email_change_before_completion_ok(client, world):
 
 
 def test_p186_email_change_after_completion_blocked(client, world):
-    """(P186 §2.2) TAMAMLANMIS hesabin e-postasini yonetici DEGISTIREMEZ (409)."""
+    """(P186 §2.2) TAMAMLANMIS hesabin e-postasini yonetici DEGISTIREMEZ (409).
+    (P186: POST /users artik parola almadigindan tamamlanmis hesap uretmez;
+    seed'deki `guard_a` password_set=true'dur ve yonetici onu yonetir.)"""
     yon = _headers(client, world["slug_a"], world["yonetici_a"])
-    eski = f"tam-{uuid.uuid4().hex[:8]}@acme.com"
-    # parola VERILDI -> password_set True (tamamlanmis)
-    created = client.post(
-        "/users", headers=yon,
-        json={"ad": "Tamam", "email": eski, "telefon": _tel186(),
-              "role": "security", "password": "GucluParola1!"},
-    ).json()
-    uid = created["id"]
+    guard = _headers(client, world["slug_a"], world["guard_a"])
+    uid = client.get("/me", headers=guard).json()["id"]
     assert client.get(f"/users/{uid}", headers=yon).json()["kayit_tamamlandi"] is True
 
     yeni = f"yeni-{uuid.uuid4().hex[:8]}@acme.com"
     r = client.patch(f"/users/{uid}", headers=yon, json={"email": yeni})
     assert r.status_code == 409, r.text
     # AYNI e-postayi (degisiklik yok) gondermek reddedilmez:
+    mevcut = world["guard_a"]["email"]
     assert client.patch(
-        f"/users/{uid}", headers=yon, json={"email": eski, "ad": "Tamam2"}
+        f"/users/{uid}", headers=yon, json={"email": mevcut, "aranabilir": True}
     ).status_code == 200
 
 

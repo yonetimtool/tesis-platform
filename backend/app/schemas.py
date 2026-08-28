@@ -245,14 +245,17 @@ class AcilabilirRollerOut(BaseModel):
 class UserCreate(BaseModel):
     # Telefon global benzersiz iletisim anahtaridir (E.164 normalize). email
     # (P185) artik ZORUNLUDUR: dogrulama/bildirim kanalidir (yine de giris
-    # anahtari DEGIL — giris telefonla). password verilmezse tek seferlik
-    # gecici kod uretilir (temp_code yanitta bir kez doner).
+    # anahtari DEGIL — giris telefonla).
+    #
+    # (P186) PAROLA ALANI KALDIRILDI. Yonetici parola atamaz: hesap parolasiz
+    # acilir ve kisi davet (Tesis ID) ile mobilden KENDI kimligini kurar
+    # (SSO ya da e-posta + kendi parolasi). Yoneticinin parola bilmesi
+    # guvenlik acigiydi.
     ad: str = Field(..., min_length=1)
     telefon: str = Field(..., min_length=1, examples=["+905321112203"])
     email: EmailStr
     aranabilir: bool = False
     role: UserRoleLiteral
-    password: str | None = Field(None, min_length=8)
     # (P128) GOREV PENCERESI — bugun yalniz `denetci` icin anlamli, ikisi de
     # opsiyonel (suresiz gorev gecerli bir durumdur). Rolle KISITLAMIYORUZ
     # ki yarin baska bir gecici rol icin ayni alan yeniden turetilmesin;
@@ -281,15 +284,11 @@ class UserCreate(BaseModel):
         except ValueError as exc:
             raise ValueError(str(exc)) from exc
 
-    @field_validator("password")
-    @classmethod
-    def _strong(cls, v: str | None) -> str | None:
-        return v if v is None else validate_password_strength(v)
-
 
 class UserCreatedOut(BaseModel):
-    """Kullanici olusturma yaniti — `temp_code` YALNIZ parola verilmeyip gecici
-    kod uretildiginde ve bir kez duz metin doner (yonetim kullaniciya iletir)."""
+    """Kullanici olusturma yaniti. (P186) `temp_code` KALDIRILDI — hesap
+    parolasiz acilir ve sahiplenme yalniz DAVET yoluyladir; gosterilecek bir
+    tek-seferlik kod yoktur."""
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -307,8 +306,8 @@ class UserCreatedOut(BaseModel):
     gorev_baslangic: date | None = None
     gorev_bitis: date | None = None
     created_at: datetime
-    temp_code: str | None = None
-    # (P155 §7) Davet gonderim ozeti (parolasiz acilan hesap).
+    # (P155 §7 · P186) Davet gonderim ozeti — hesap DAIMA parolasiz acilir,
+    # davet her zaman gonderilir (eski `temp_code` kaldirildi).
     davet: "DavetGonderimSonucu | None" = None
 
 

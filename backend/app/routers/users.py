@@ -213,29 +213,21 @@ async def create_user(
         raise APIError(
             403, "forbidden", _ACMA_HATASI.get(user.role, "rol_olusturulamaz")
         )
-    # password verilirse admin parolayi dogrudan belirler (password_set=true);
-    # verilmezse TEK SEFERLIK gecici kod uretilir (temp password first) —
-    # kod yanitta bir kez doner, kullanici telefonla girip parola belirler.
-    temp_code: str | None = None
-    if body.password is not None:
-        password_hash = hash_password(body.password)
-        password_set = True
-        temp_code_hash = None
-    else:
-        temp_code = generate_temp_code()
-        password_hash = None
-        password_set = False
-        temp_code_hash = hash_password(temp_code)
-
+    # (P186) YONETICI ARTIK PAROLA ATAMAZ, GECICI KOD DA URETILMEZ.
+    # Yeni akista kisi kendi kimligini kendisi kurar: davet e-postasindaki
+    # Tesis ID ile mobil "Kayit ol" -> SSO ya da e-posta + KENDI parolasi.
+    # Yoneticinin parola belirlemesi hem gereksiz hem guvenlik acigiydi (o
+    # parolayla hesaba girebilirdi). Hesap DAIMA parolasiz acilir; sahiplenme
+    # yalniz DAVET yoluyladir (asagida her zaman gonderilir).
     obj = AppUser(
         tenant_id=user.tenant_id,
         ad=body.ad,
         email=str(body.email) if body.email else None,
         telefon=body.telefon,
         aranabilir=body.aranabilir,
-        password_hash=password_hash,
-        password_set=password_set,
-        temp_code_hash=temp_code_hash,
+        password_hash=None,
+        password_set=False,
+        temp_code_hash=None,
         role=body.role,
         is_active=True,
         # (P128) Gorev penceresi (denetci); diger rollerde None gelir.
@@ -261,25 +253,19 @@ async def create_user(
             "gorev_penceresi": bool(obj.gorev_baslangic or obj.gorev_bitis),
         },
     )
-    # (P155 §7) DAVET: parolasiz acilan personel/denetci hesabina jetonlu
-    # kayit bagi gonderilir. Eskiden yalniz E-POSTASI OLANA tek-seferlik kod
-    # gidiyordu; davet SMS'i ASIL kanal yapar (telefon her zaman var) ve
-    # e-postayi EK yapar — sartname §7'nin kanal onceligi. Gonderim katmani
+    # (P155 §7 · P186) DAVET: hesap DAIMA parolasiz oldugundan HER ZAMAN jetonlu
+    # kayit bagi gonderilir (SMS + varsa HTML e-posta). Kisi bu Tesis ID ile
+    # mobilden "Kayit ol" der ve kendi kimligini kurar. Gonderim katmani
     # (`gonderim.saglayici`) ayni: SMTP/SMS yoksa saglayici LOG'dur ve
     # `gonderildi=false` doner; yonetici panelden gitmeyeni gorur.
-    #
-    # AD OPSIYONEL DEGIL (personelde): `UserCreate.ad` zorunlu; davet ad
-    # on-doldurmasi burada gerekmiyor.
-    davet_ozeti = None
-    if not password_set:
-        tenant_adi = (
-            await db.execute(select(Tenant.ad).where(Tenant.id == user.tenant_id))
-        ).scalar_one_or_none() or ""
-        gonderildi = await davet_olustur_ve_gonder(
-            db, user=obj, tenant_ad=tenant_adi, gonderen_id=user.id,
-            dil=istek_dili(accept_language),
-        )
-        davet_ozeti = DavetGonderimSonucu(gonderildi=gonderildi, kanal="sms")
+    tenant_adi = (
+        await db.execute(select(Tenant.ad).where(Tenant.id == user.tenant_id))
+    ).scalar_one_or_none() or ""
+    gonderildi = await davet_olustur_ve_gonder(
+        db, user=obj, tenant_ad=tenant_adi, gonderen_id=user.id,
+        dil=istek_dili(accept_language),
+    )
+    davet_ozeti = DavetGonderimSonucu(gonderildi=gonderildi, kanal="sms")
 
     return UserCreatedOut(
         id=obj.id,
@@ -292,7 +278,6 @@ async def create_user(
         gorev_baslangic=obj.gorev_baslangic,
         gorev_bitis=obj.gorev_bitis,
         created_at=obj.created_at,
-        temp_code=temp_code,
         davet=davet_ozeti,
     )
 

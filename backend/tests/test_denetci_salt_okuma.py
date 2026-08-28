@@ -399,10 +399,17 @@ def _denetci_ac(client, world, **pencere):
             "email": f"denetci-{_uuid.uuid4().hex[:8]}@acme.com",
             "telefon": tel,
             "role": "denetci",
-            "password": "GecerliParola1!",
             **pencere,
         },
     )
+    # (P186) POST /users artik PAROLA ALMAZ (hesap parolasiz acilir, davet yolu).
+    # Testin login-phone yapabilmesi icin parolayi DUZENLEME ile belirle
+    # (edit-mode parola korundu).
+    if r.status_code == 201:
+        client.patch(
+            f"/users/{r.json()['id']}", headers=yonetici,
+            json={"password": "GecerliParola1!"},
+        )
     return r, tel
 
 

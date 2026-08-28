@@ -48,9 +48,14 @@ def _second_resident(client, world):
         headers=admin,
         json={"ad": "Etkinlik Sakini", "email": email,
               "telefon": "+90" + str(uuid.uuid4().int)[:10],
-              "role": "resident", "password": pw},
+              "role": "resident"},
     )
     assert r.status_code == 201, r.text
+    # (P186) POST /users parola almaz; giris yapabilmesi icin parolayi
+    # DUZENLEME ile belirle (edit-mode parola korundu).
+    assert client.patch(
+        f"/users/{r.json()['id']}", headers=admin, json={"password": pw}
+    ).status_code == 200
     return _headers(client, world["slug_a"], {"email": email, "password": pw})
 
 

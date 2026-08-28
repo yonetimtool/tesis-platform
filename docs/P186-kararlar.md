@@ -253,3 +253,87 @@ notu ve oturum sonu sorusu.
 | 13 | Gmail/Outlook/Apple Mail'de render | tablo+mso+karanlık mod+plain ✓ (cihazda doğrulanır) |
 
 Cihazda/gerçek istemcide doğrulanacaklar dağıtım notunda listelenir.
+
+---
+
+# P186-ek — Parola alanının kaldırılması + Blok/Daire ayrımı
+
+Kullanıcı isteği (aynı tur): yeni-kullanıcı formundaki "Parola (opsiyonel)"
+alanı ve backend'deki parola/geçici-kod üretimi kaldırılsın; kişi kimliğini
+kendisi kursun (davet → SSO ya da e-posta + kendi parolası). Yöneticinin parola
+bilmesi güvenlik açığı.
+
+## Kaldırılanlar (tam liste)
+
+**Web (admin-web/app/(protected)/users/page.tsx):**
+- Yeni-kullanıcı formundaki **parola alanı** kaldırıldı. Parola alanı artık
+  **yalnız DÜZENLEMEDE** görünür (mevcut bir hesabın parolasını yöneticinin
+  değiştirmesi — reset-password'e paralel, bilinçli yönetici eylemi). Yeni
+  kayıtta parola YOK.
+- "tek seferlik geçici kod" `window.alert` mantığı ve `temp_code` yanıt tipi
+  save() create dalından kaldırıldı.
+- Ölü i18n anahtarları silindi (7 dil): `kullaniciParolaOpsiyonel`,
+  `kullaniciGeciciKod`. (`kullaniciParolaBosYeni`/`kullaniciParolaBosKisa`
+  tenants sayfasında kullanıldığından KALDI.)
+
+**Backend:**
+- `POST /users` (`create_user`): parola dalı + `generate_temp_code()` üretimi
+  kaldırıldı. Hesap **daima parolasız** açılır (`password_hash=None`,
+  `password_set=False`, `temp_code_hash=None`) ve **her zaman davet** gönderilir.
+- `schemas.py`: `UserCreate.password` alanı + `_strong` doğrulayıcısı kaldırıldı;
+  `UserCreatedOut.temp_code` kaldırıldı.
+- `generate_temp_code`/`hash_password` importları KALDI — `reset-password` ucu
+  (kapsam dışı, kişi kendi parolasını belirler; yönetici bilmez) ve düzenleme
+  parolası bunları hâlâ kullanır.
+
+## Tarandı — dokunulmayanlar (gerekçesiyle)
+
+- **Excel içe aktarım (`_uygula_kisi`):** ZATEN parolasız (`password_hash="!"`
+  nöbetçi, `password_set=False`, davet gönderiliyor). Parola sütunu/mantığı YOK.
+  Değişiklik gerekmedi (kabul 4 ✓).
+- **Seed (`scripts/seed.py`, `scripts/test_seed.py`):** kullanıcıları
+  **doğrudan SQL** ile (yönetici formu ucu DEĞİL) yazar; admin/yönetici/güvenlik
+  gibi hesaplar web'de e-posta+parola ile girer, parolaları meşrudur ve KALIR.
+  test_seed zaten bir kısmını parolasız (yeni akış) kuruyor. Etkilenmedi.
+- **`POST /residents`, platform `tenants.py`:** AYRI uçlar (kullanıcı formu
+  bunları kullanmıyor; residents'ı UI çağırmıyor, tenants platform-admin'in
+  tenant yöneticisi sağlamasıdır). İstek "kullanıcı oluşturma ucu"na özeldi;
+  bu uçlar kapsam dışı bırakıldı — ama ikisinin de aynı geçici-kod deseni var
+  (kişi kendi kalıcı parolasını belirler; yönetici bilmez), yani güvenlik niyeti
+  zaten korunuyor.
+- **Testler:** `POST /users`+parola ile giriş yapan/`temp_code` bekleyen testler
+  yeni modele göre güncellendi (`UserCreate` fazladan alanı yok saydığı için
+  yalnız o kullanıcıyla GİRİŞ yapan ya da `temp_code` OKUYAN testler kırıldı;
+  onlar düzeltildi).
+
+## Düzenleme-modu parolası KALDI (bilinçli — kullanıcıya flag)
+
+İstek "yeni kullanıcı formu"na özeldi. Mevcut bir hesabın parolasını yöneticinin
+DEĞİŞTİRMESİ (düzenleme) ayrı bir eylemdir ve reset-password ucuna paraleldir;
+bu turda kaldırılmadı. Aynı güvenlik gerekçesiyle bunu da kaldırmamı istersen
+(edit + `PATCH password` + `UserUpdate.password`) tek turda yaparım.
+
+## Blok/Daire — AYRILDI (P185'e dönüş)
+
+**Teyit:** Form önceden tek birleşik "Daire" açılır listesi gösteriyordu
+("B/B-45" biçimi). Bu, P185'in "blok ve daire AYRI alanlar" isteğinden bir
+sapmaydı ve çok-daireli sitede kullanışsızdı (tek uzun liste).
+
+**Karar (kabul 5):** Blok ve daire **ayrıldı** — önce **Blok** seçilir, **Daire**
+listesi ona göre **filtrelenir**. Tek binalı sitede (adlandırılmış blok yoksa)
+blok seçici gizlenir, tüm daireler tek listede kalır. Native `<select>`
+type-ahead araması blok içi seçimi de kolaylaştırır. Liste limiti 200→1000
+çıkarıldı (büyük siteler tam yüklensin).
+
+**Veri modeli teyidi:** `Unit.no` ve `Unit.blok` backend'de **AYRI sütunlar**
+(`blok` nullable; zayıf metin bağ, FK yok). Arayüzde ayrı göstermek veriyle
+tutarlı; birleşik saklama YOK.
+
+## Daire zorunluluğu (kabul 3) — yorum + flag
+
+Daire alanı **sakin + yönetici** rollerinde görünür (P185); **sakinde ZORUNLU**
+(sakin bir dairede oturur), **yöneticide opsiyonel** (bir yönetici binada
+oturmayabilir — P185 gerekçesi). Güvenlik/tesis görevlisi/denetçi rollerinde
+**görünmez**. Kabul 3'ün "yönetici rolünde de zorunlu" okunuşunu, yöneticiyi
+daireye zorlamanın mantıksızlığı ve P185 nedeniyle **opsiyonel** bıraktım;
+gerçekten zorunlu istersen tek satır değişir.

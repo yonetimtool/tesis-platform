@@ -325,11 +325,11 @@ def test_DAVET_MESAJI_TESIS_KODUNU_TASIR(client, world, owner_conn):
     assert kod in govde
 
 
-def test_DAVET_SABLONU_SMS_VE_EPOSTADA_AYNI(client, world, owner_conn):
-    """Sablon ORTAK: SMS kanali acildiginda ayni metin oradan gidecek.
-
-    Iki ayri metin tutmak, birinin guncellenip otekinin unutulmasi ve iki
-    kanaldan FARKLI seyler gitmesi demekti.
+def test_DAVET_KANALLARI_AYNI_DAVET_BAGINI_TASIR(client, world, owner_conn):
+    """(P186) SMS ve e-posta davet sablonlari ARTIK AYRI: e-posta ZENGIN HTML
+    (davet_eposta, 7 dil), SMS ise KISA metin (uzunluk). Eskiden byte-byte AYNI
+    olmalari beklenirdi; artik degil. Anti-drift olcusu su: HER IKI kanal da
+    ayni daveti tasir — kanonik davet BAGI (`/davet/<jeton>`) ikisinde de bulunur.
     """
     y = _headers(client, world["slug_a"], world["yonetici_a"])
     tel = f"+9053{uuid.uuid4().int % 10**8:08d}"
@@ -344,5 +344,6 @@ def test_DAVET_SABLONU_SMS_VE_EPOSTADA_AYNI(client, world, owner_conn):
         (world["a"], tel, r.json().get("email") or ""),
     ).fetchall()
     govdeler = {k: g for k, g in satirlar}
-    if len(govdeler) == 2:
-        assert govdeler["sms"] == govdeler["eposta"]
+    # Kaydedilen her kanal davet BAGINI icermeli (ikisi ayni icerigi tasir).
+    for kanal, govde in govdeler.items():
+        assert "/davet/" in govde, f"{kanal}: davet bagi tasinmiyor"
