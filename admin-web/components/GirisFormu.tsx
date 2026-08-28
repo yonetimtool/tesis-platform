@@ -673,10 +673,14 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
               )}
             </motion.button>
 
-            {/* SOSYAL GIRIS — parola formunun ALTINDA (ek yol, ana yol degil). */}
-            <div>
-              <SosyalGiris niyet="giris" />
-            </div>
+            {/* (P185 §5) SOSYAL GIRIS YALNIZ `app.*` (tesis) — `panel.*`
+                PLATFORM ADMININDIR ve bu kayit/giris sisteminin PARCASI
+                DEGILDIR. Panelde yalniz tesis kodu + e-posta + parola kalir. */}
+            {yuzey === "tesis" && (
+              <div>
+                <SosyalGiris niyet="giris" />
+              </div>
+            )}
           </motion.form>
         </section>
       </main>

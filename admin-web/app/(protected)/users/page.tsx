@@ -99,6 +99,10 @@ const DURUM_OLUMLU = "olumlu" as const;
 const DURUM_NOTR = "notr" as const;
 
 const ROL_SAKIN = "resident" as const;
+// (P185 §4) Daire ROLE BAGLI DEGIL: bir yonetici AYNI ZAMANDA sakin olabilir,
+// ona da daire atanabilir. Form daire alanini sakin VE yonetici rolunde gosterir.
+const ROL_YONETICI = "yonetici" as const;
+const DAIRE_ROLLERI: readonly string[] = [ROL_SAKIN, ROL_YONETICI];
 
 export default function UsersPage() {
   const t = useT();
@@ -241,17 +245,26 @@ export default function UsersPage() {
         if (form.password) body.password = form.password;
         await apiSend(`/api/users/${editingId}`, "PATCH", body);
       } else {
-        // Telefon = global benzersiz giris anahtari (zorunlu). E-posta opsiyonel.
-        // Parola bossa backend TEK SEFERLIK gecici kod uretir (temp_code).
+        // (P185 §3/§4) E-POSTA ZORUNLU (dogrulama/bildirim kanali). TELEFON
+        // istege bagli (yalniz iletisim, giris anahtari DEGIL). Parola bossa
+        // backend TEK SEFERLIK gecici kod uretir (temp_code).
+        if (!form.email.trim()) {
+          setFormErr(t("kullaniciEpostaZorunluHata"));
+          setSaving(false);
+          return;
+        }
         const body: Record<string, unknown> = {
           ad: form.ad,
+          // (P185 NOT) Telefon şimdilik ZORUNLU kalıyor: backend'de global
+          // benzersiz anahtardı; opsiyonele çevirmek bir göç işi (dagitim'de
+          // belirtildi). Etiketi "giriş anahtarı"ndan arındırıldı (§5).
           telefon: telefonNormalle(form.telefon),
           aranabilir: form.aranabilir,
           role: form.role,
+          email: form.email.trim(),
         };
         if (form.gorevBaslangic) body.gorev_baslangic = form.gorevBaslangic;
         if (form.gorevBitis) body.gorev_bitis = form.gorevBitis;
-        if (form.email) body.email = form.email;
         if (form.password) body.password = form.password;
         const created = await apiSend<{ temp_code?: string | null; id?: string }>(
           "/api/users",
@@ -502,17 +515,26 @@ export default function UsersPage() {
         {/* `form` ID ile alttaki dugmeye baglandi: eylemler modalin
             SABIT altinda duruyor ve govdeyle birlikte kaymiyor. */}
         <form id="kullanici-form" onSubmit={save} className="grid gap-4 sm:grid-cols-2">
-          {/* (P162 §6) DAIRE ATAMASI — YALNIZ YENI SAKINDE.
-              Duzenlemede gosterilmiyor: mevcut bir sakinin dairesi
-              Daireler ekranindan yonetiliyor ve ayni isi iki yerden
-              yapmak, hangisinin gecerli oldugunu belirsizlestirirdi. */}
-          {!editingId && form.role === ROL_SAKIN && (
-            <AlanSarmal etiket={t("kullaniciDaireAta")}>
+          {/* (P162 §6 · P185 §4) DAIRE ATAMASI — YENI SAKIN VE YENI YONETICIDE.
+              Daire ROLE BAGLI DEGIL (yonetici de sakin olabilir); form yalniz
+              gosterme kararini rolden verir. SAKINDE ZORUNLU (sakin bir dairede
+              oturur), yoneticide istege bagli. Duzenlemede gosterilmiyor:
+              mevcut daire Daireler ekranindan yonetiliyor. */}
+          {!editingId && DAIRE_ROLLERI.includes(form.role) && (
+            <AlanSarmal
+              etiket={
+                form.role === ROL_SAKIN
+                  ? t("kullaniciDaire")
+                  : t("kullaniciDaireAta")
+              }
+              zorunlu={form.role === ROL_SAKIN}
+            >
               {(b) => (
                 <Secim
                   {...b}
                   value={atanacakDaire}
                   onChange={(e) => setAtanacakDaire(e.target.value)}
+                  required={form.role === ROL_SAKIN}
                 >
                   <option value="">{t("kullaniciDaireYok")}</option>
                   {(daireListesi?.items ?? []).map((u) => (
@@ -536,9 +558,12 @@ export default function UsersPage() {
             )}
           </AlanSarmal>
 
+          {/* (P185 §3/§4) E-POSTA ZORUNLU: dogrulama + bildirim kanali (giris
+              anahtari DEGIL ama artik zorunlu). */}
           <AlanSarmal
-            etiket={t("kullaniciEpostaOpsiyonel")}
+            etiket={t("kullaniciEposta")}
             ipucu={t("kullaniciEpostaIpucu")}
+            zorunlu
           >
             {(b) => (
               <Alan
@@ -546,13 +571,13 @@ export default function UsersPage() {
                 type="email"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
+                required
               />
             )}
           </AlanSarmal>
 
-          {/* (P166 §9) ORTAK TELEFON ALANI. Once yalniz BICIMLENIYORDU;
-              dogrulama yoktu, yani "0212 …" ya da yarim bir numara
-              sessizce kaydediliyordu. */}
+          {/* (P185 §3) TELEFON YALNIZ ILETISIM — "giris anahtari" DEGIL.
+              (Simdilik zorunlu; opsiyonele cevirmek backend goc isi.) */}
           <TelefonAlani
             etiket={t("kullaniciTelefon")}
             ipucu={t("kullaniciTelefonIpucu")}

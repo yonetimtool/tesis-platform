@@ -559,8 +559,9 @@ export interface TenantSettings {
 }
 
 // ------------------------ tenant olusturma (admin) ------------------------- #
-/** `POST /tenants` govdesindeki tek yonetici satiri. Telefon = giris anahtari
- *  (global benzersiz). Parola bos ise backend tek seferlik gecici kod uretir. */
+/** `POST /tenants` govdesindeki tek yonetici satiri. (P185: telefon yalniz
+ *  iletisim; giris/dogrulama e-posta ile.) Parola bos ise backend tek
+ *  seferlik gecici kod uretir. */
 export type YoneticiCreate = { ad: string; phone: string; password?: string };
 
 /** ILK yonetici BIRINCIL'dir (tesisi ilk giriste adlandirir). `ad` verilmezse
