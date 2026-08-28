@@ -60,16 +60,12 @@ import {
 
 export type { DaireDurumu, SahneBlogu } from "./site-yerlesim";
 
-/** Etiket turleri — renkli nokta + metin kapsulu (brief). */
-export type IsaretciTuru = "yonetici" | "sakin" | "nfc" | "kamera" | "alarm";
-
-export interface SahneIsaretcisi {
-  id: string;
-  ad: string;
-  tur: IsaretciTuru;
-  /** Cevrimdisi/pasif mi — nokta soluklasir. */
-  sonuk?: boolean;
-}
+// (P184-ek duzeltme §2) KAMERA + BILDIRIM ISARETCILERI KALDIRILDI.
+// Maket artik YALNIZ binalari ve zemini gosterir; uzerinde renkli nokta
+// (kamera/kacirilan devriye) yok. Bu bilgi zaten kamera listesi, bildirimler
+// ve devriye gorunumu ekranlarinda var. `IsaretciTuru`, `SahneIsaretcisi`,
+// `TUR_RENGI`, `Etiket` bileseni ve `isaretciler`/`onIsaretciSec` plumbing'i
+// tamamen silindi (olu kod). Bina secimi (`SahneSecimi`) DURUYOR.
 
 export interface SahneSecimi {
   blokId: string | null;
@@ -81,23 +77,6 @@ export interface SahneSecimi {
 const DONGU_SUREKLI = "always" as const;
 const DONGU_TALEP = "demand" as const;
 const YATAY = "nowrap" as const;
-
-/**
- * ETIKET NOKTASI RENKLERI — TOKEN'DAN, hex'ten DEGIL.
- *
- * Etiketler `Html` ile DOM'da cizilir; yani WebGL'in aksine CSS
- * degiskenlerini OKUYABILIRLER. Onceki surumde burada sabit hexler vardi
- * ve olculdugunde yonetici/sakin/kamera noktalari acik temada 3.0
- * esigini gecmiyordu (2.63 / 2.93 / 2.69). Token ailesi her iki tema
- * icin AYRI olculmus degerleri tasiyor.
- */
-const TUR_RENGI: Record<IsaretciTuru, string> = {
-  yonetici: "var(--yz-accent-edge)",
-  sakin: "var(--yz-success-edge)",
-  nfc: "var(--yz-nfc-edge)",
-  kamera: "var(--yz-kamera-edge)",
-  alarm: "var(--yz-danger-edge)",
-};
 
 /**
  * KAMERA GECIS SURESI. Brief 400-600 ms ister; `damp3` bir SONLANMA
@@ -642,74 +621,13 @@ function Blok({
 }
 
 /* ====================================================================== */
-/*  ETIKETLER                                                             */
-/* ====================================================================== */
-
-// CSS transform degerleri modul sabiti (bkz. Etiket icindeki `buyume`).
-const ISARET_BUYUME_ACIK = "scale(1.25)";
-const ISARET_BUYUME_KAPALI = "none";
-
-// (P182 §1) Yuzen ISARET — YALNIZ renkli nokta, METIN ETIKETI YOK.
-// Onceki surum kamera/bildirim adini nokta yaninda bir kapsulde ciziyordu;
-// sahne kalabalik gorunuyordu. Artik yalniz TIKLANABILIR nokta cizilir; ad
-// `aria-label` + `title` (uzerine gelince tarayici ipucu) ile erisilebilir
-// kalir ama sahnede kalici yazi GORUNMEZ. TIKLAMA davranisi DEGISMEDI:
-// `onSec` yine cagrilir (bilgi secim sonrasi mevcut yerde gosterilir).
-function Etiket({
-  isaretci,
-  konum,
-  onSec,
-}: {
-  isaretci: SahneIsaretcisi;
-  konum: [number, number, number];
-  onSec?: (id: string) => void;
-}) {
-  const [uzerinde, setUzerinde] = useState(false);
-  const renk = TUR_RENGI[isaretci.tur];
-  // Uzerine gelince hafif buyume. Degerler modul sabiti (ISARET_BUYUME_*);
-  // ternary'de duz metin birakmak sabit-metin tarayicisini (tur 47) tetikler.
-  const buyume = uzerinde ? ISARET_BUYUME_ACIK : ISARET_BUYUME_KAPALI;
-  return (
-    <Html position={konum} center distanceFactor={12}>
-      <button
-        type="button"
-        title={isaretci.ad}
-        aria-label={isaretci.ad}
-        onPointerEnter={() => setUzerinde(true)}
-        onPointerLeave={() => setUzerinde(false)}
-        onClick={() => onSec?.(isaretci.id)}
-        className="odak-ters"
-        style={{
-          display: "block",
-          width: "14px",
-          height: "14px",
-          padding: 0,
-          borderRadius: "50%",
-          // İŞARET görünürlüğü: nokta + ince yüzey halkası (3B sahnede seçilsin).
-          background: isaretci.sonuk ? "var(--yz-text-3)" : renk,
-          border: "2px solid var(--yz-surface-1)",
-          boxShadow: uzerinde ? "var(--yz-raised-hover)" : "var(--yz-raised)",
-          opacity: isaretci.sonuk ? 0.6 : 1,
-          transform: buyume,
-          transitionProperty: "transform, box-shadow",
-          transitionDuration: "var(--yz-dur-fast)",
-          cursor: "pointer",
-        }}
-      />
-    </Html>
-  );
-}
-
-/* ====================================================================== */
 /*  SAHNE                                                                 */
 /* ====================================================================== */
 
 export interface BinaSahnesiProps {
   bloklar: SahneBlogu[];
-  isaretciler?: SahneIsaretcisi[];
   /** Secim degisince — cagiran yan paneli acar. */
   onSecim?: (secim: SahneSecimi) => void;
-  onIsaretciSec?: (id: string) => void;
   /** Disaridan surulen secim (yan panel kapatilinca sifirlanir). */
   secim?: SahneSecimi;
   koyu?: boolean;
@@ -722,9 +640,7 @@ const BOS_SECIM: SahneSecimi = { blokId: null, kat: null, daireId: null };
 
 export default function BinaSahnesi({
   bloklar,
-  isaretciler = [],
   onSecim,
-  onIsaretciSec,
   secim: disSecim,
   koyu = false,
   hareketVar = true,
@@ -821,18 +737,6 @@ export default function BinaSahnesi({
     uygula({ blokId, kat, daireId: secim.daireId === daireId ? null : daireId });
   }
 
-  // Isaretciler platformun cevresine kararli olarak dagitilir; konum
-  // verisi API'de yok, uydurma koordinat yerine duzenli bir halka.
-  const isaretciYerleri = useMemo(
-    () =>
-      isaretciler.map((m, i) => {
-        const a = (i / Math.max(1, isaretciler.length)) * Math.PI * 2 + Math.PI / 7;
-        const r = yerlesim.yaricap * 0.92;
-        return { isaretci: m, konum: [Math.cos(a) * r, 0.5, Math.sin(a) * r] as [number, number, number] };
-      }),
-    [isaretciler, yerlesim.yaricap],
-  );
-
   return (
     <Canvas
       shadows={!sade}
@@ -901,10 +805,6 @@ export default function BinaSahnesi({
           onBlokSec={blokSec}
           onDaireSec={daireSec}
         />
-      ))}
-
-      {isaretciYerleri.map(({ isaretci, konum }) => (
-        <Etiket key={isaretci.id} isaretci={isaretci} konum={konum} onSec={onIsaretciSec} />
       ))}
 
       <KameraSurucusu

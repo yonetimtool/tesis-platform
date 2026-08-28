@@ -128,9 +128,9 @@ export function BinaSahnesiYukleyici(
     return <Iskelet className="w-full" {...{ style: { height: yukseklik } }} />;
   }
 
-  // WEBGL YOKSA EKRAN BOS KALMAZ: sahnenin tasidigi bilgi (kac blok,
-  // kac isaretci ve durumlari) METIN olarak verilir. Bu, ayni zamanda
-  // sahnenin ekran okuyucu karsiligidir.
+  // WEBGL YOKSA EKRAN BOS KALMAZ: sahnenin tasidigi bilgi (kac blok)
+  // METIN olarak verilir. Bu, ayni zamanda sahnenin ekran okuyucu
+  // karsiligidir. (P184-ek §2: isaretci sayisi artik yok — maket sade.)
   if (!destek) {
     return (
       <div

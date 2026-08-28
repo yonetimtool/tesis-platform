@@ -113,8 +113,6 @@ const ONEM_VURGU: Record<string, Vurgu> = {
 };
 
 // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
-const TUR_KAMERA = "kamera" as const;
-const TUR_ALARM = "alarm" as const;
 const DAIRE_NORMAL = "normal" as const;
 const DAIRE_ALARM = "alarm" as const;
 const BOS_SECIM: SahneSecimi = { blokId: null, kat: null, daireId: null };
@@ -546,22 +544,10 @@ export default function DashboardPage() {
     return [...resmi, ...artiklar];
   }, [blokYanit, binaHaritasi]);
 
-  const sahneIsaretcileri = useMemo(
-    () => [
-      ...gruplar.slice(0, 4).map((g) => ({
-        id: `alarm-${g.tip}-${g.patrol_plan_id ?? "-"}`,
-        ad: enumAdi(t, BILDIRIM_TIP, g.tip),
-        tur: TUR_ALARM,
-      })),
-      ...kameralar.slice(0, 8).map((k) => ({
-        id: k.id,
-        ad: k.ad,
-        tur: TUR_KAMERA,
-        sonuk: k.aktif === false,
-      })),
-    ],
-    [gruplar, kameralar, t],
-  );
+  // (P184-ek duzeltme §2) 3D MAKET ISARETCILERI KALDIRILDI: kamera + kacirilan
+  // devriye noktalari maketten cikarildi. Bilgi zaten kamera seridi, alarmlar
+  // bolumu ve devriye gorunumunde var. `kameralar`/`gruplar` DURUYOR (o
+  // widget'lar kullaniyor); yalniz maket ustundeki isaretci kumesi silindi.
 
   const tamamlanan = (data?.aktif_turlar ?? []).filter(
     (x) => x.durum === "tamamlandi",
@@ -600,7 +586,6 @@ export default function DashboardPage() {
             <Kart className="overflow-hidden">
               <BinaSahnesiYukleyici
                 bloklar={sahneBloklari}
-                isaretciler={sahneIsaretcileri}
                 secim={secim}
                 onSecim={setSecim}
                 yukseklik="clamp(280px, 38vh, 440px)"
@@ -771,7 +756,9 @@ export default function DashboardPage() {
             aria-live="polite"
             className="inline-flex items-center gap-1 rounded-chip px-2 py-0.5 text-chip"
             style={{
-              background: "var(--yz-success-tint, var(--yz-surface-2))",
+              // (§11 düzeltme) `--yz-success-tint` tanımsızdı (tasarım-token
+              // kilidi). Tanımlı yüzey + başarı-mürekkebi ile aynı his.
+              background: "var(--yz-surface-2)",
               color: "var(--yz-success-ink)",
             }}
           >
