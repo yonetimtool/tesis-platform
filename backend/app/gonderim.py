@@ -104,7 +104,7 @@ class YapilandirilmamisSaglayici(MesajSaglayici):
         self.ad = f"{kanal}-yapilandirilmadi"
         self._kanal = kanal
 
-    def gonder(self, hedef: str, konu: str | None, govde: str) -> GonderimSonucu:
+    def gonder(self, hedef: str, konu: str | None, govde: str, html: str | None = None) -> GonderimSonucu:
         logger.warning(
             "[%s] saglayici yapilandirilmadi — gonderim YAPILMADI", self._kanal
         )
@@ -205,7 +205,7 @@ class _PushAdaptor(MesajSaglayici):
 
     ad = "push"
 
-    def gonder(self, hedef: str, konu: str | None, govde: str) -> GonderimSonucu:
+    def gonder(self, hedef: str, konu: str | None, govde: str, html: str | None = None) -> GonderimSonucu:
         # Senkron arayuz, asenkron push: `mesajlasma.MesajSaglayici`
         # senkrondur (SMS/SMTP oyle). Push'u buradan senkron cagirmak
         # olay dongusunu bloklardi. Bu yuzden ADAPTOR BUGUN KUYRUGA

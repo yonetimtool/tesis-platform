@@ -53,6 +53,7 @@ kaldirir — kullanici tereddutsuz yeniden dener.
 """
 from __future__ import annotations
 
+import re
 import uuid
 from dataclasses import dataclass, field as dc_field
 from datetime import date
@@ -68,6 +69,7 @@ from ..crud_helpers import get_or_404, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..hata_metinleri import hata_metni, istek_dili
+from ..davet import davet_olustur_ve_gonder
 from ..models import (
     AppUser,
     AracKayit,
@@ -75,6 +77,7 @@ from ..models import (
     FinansalHareket,
     IceAktarim,
     IceAktarimKayit,
+    Tenant,
     Unit,
     UnitResident,
 )
@@ -115,6 +118,9 @@ class _Bag:
     dil: str
     yalniz_dogrula: bool
     sonuc: IceAktarimSonuc
+    # (P186 §3.1) Kisi aktariminda davet e-postasi/SMS'i icin tesis adi —
+    # kosum basinda BIR KEZ okunur (satir basina sorgu olmasin).
+    tenant_ad: str = ""
     iz: list[tuple[str, uuid.UUID]] = dc_field(default_factory=list)
 
     def hata(self, satir_no: int, alan: str | None, kimlik: str) -> None:
@@ -125,6 +131,12 @@ class _Bag:
 
     def yarat(self, tablo: str, kayit_id: uuid.UUID) -> None:
         self.iz.append((tablo, kayit_id))
+
+
+#: Excel e-posta sutunu icin HAFIF bicim kontrolu (import kapisi). Tam
+#: dogrulama (EmailStr) davet/DB katmaninda; burada amac bariz bozuk adresi
+#: satir hatasi olarak raporlamak.
+_EPOSTA_KALIBI = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
 def _metin(degerler: dict, kod: str) -> str:
@@ -209,6 +221,13 @@ async def _uygula_kisi(b: _Bag, satir_no: int, d: dict) -> None:
         b.hata(satir_no, "rol_tipi", "gecersiz_rol_tipi")
         return
 
+    # (P186 §3.1) E-posta OPSIYONEL; verilirse bicimi dogrulanir (bozuk adres
+    # sessizce yutulmaz — kullanici davetin gitmedigini bilmeli).
+    eposta = _metin(d, "eposta") or None
+    if eposta is not None and not _EPOSTA_KALIBI.match(eposta):
+        b.hata(satir_no, "eposta", "eposta_gecersiz")
+        return
+
     var = (
         await b.db.execute(select(AppUser.id).where(AppUser.telefon == telefon))
     ).first()
@@ -250,7 +269,7 @@ async def _uygula_kisi(b: _Bag, satir_no: int, d: dict) -> None:
         return
 
     kisi = AppUser(
-        tenant_id=b.user.tenant_id, ad=ad, telefon=telefon,
+        tenant_id=b.user.tenant_id, ad=ad, telefon=telefon, email=eposta,
         role="resident", password_set=False,
         password_hash="!",  # parola BELIRLENMEMIS (gecici kod akisi)
     )
@@ -268,6 +287,15 @@ async def _uygula_kisi(b: _Bag, satir_no: int, d: dict) -> None:
         b.db.add(ur)
         await b.db.flush()
         b.yarat("unit_resident", ur.id)
+    # (P186 §3.1) DAVET: tekil eklemeyle AYNI akis — parolasiz acilan kisiye
+    # jetonlu kayit bagi (SMS + varsa HTML e-posta) gonderilir. Eskiden Excel
+    # ile eklenenlere HIC davet gitmiyordu (kabul 9). Gonderim hatasi kisiyi
+    # olusturmayi geri ALMAZ: hesap acildi, yonetici gitmeyen daveti panelden
+    # yeniden gonderebilir.
+    await davet_olustur_ve_gonder(
+        b.db, user=kisi, tenant_ad=b.tenant_ad, gonderen_id=b.user.id,
+        dil=b.dil,
+    )
     b.sonuc.olusan += 1
 
 
@@ -387,6 +415,9 @@ TURLER: dict[str, _Tur] = {
         (
             _Alan("ad", zorunlu=True, ornek="Ali Veli"),
             _Alan("telefon", zorunlu=True, ornek="+905321112233"),
+            # (P186 §3.1) E-POSTA OPSIYONEL: verilirse davet HTML e-postasi da
+            # gider (yoksa yalniz SMS). Tekil eklemedeki davetle ayni akis.
+            _Alan("eposta", ornek="ali@ornek.com"),
             _Alan("daire_no", ornek="A-1"),
             _Alan("rol_tipi", ornek="malik"),
         ),
@@ -483,10 +514,14 @@ async def aktar(
     if t is None:
         raise APIError(422, "validation_error", "ice_aktarim_turu_gecersiz")
 
+    tenant_ad = (
+        await db.execute(select(Tenant.ad).where(Tenant.id == user.tenant_id))
+    ).scalar_one_or_none() or ""
     b = _Bag(
         db=db, user=user, dil=istek_dili(accept_language),
         yalniz_dogrula=body.yalniz_dogrula,
         sonuc=IceAktarimSonuc(),
+        tenant_ad=tenant_ad,
     )
     for satir in body.satirlar:
         await t.uygula(b, satir.satir_no, satir.degerler)

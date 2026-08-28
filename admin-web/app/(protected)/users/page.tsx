@@ -169,6 +169,11 @@ export default function UsersPage() {
   const [form, setForm] = useState<FormState>(EMPTY);
   const [formErr, setFormErr] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  // (P186 §2) Duzenlemede: kayit tamamlandiysa e-posta salt-okunur (giris
+  // kimligi). `ilkDaire` acilistaki atamayi tutar; kaydette DEGISTIYSE
+  // ata/kaldir yapilir (degismediyse dokunma).
+  const [duzenlenenTamam, setDuzenlenenTamam] = useState(false);
+  const [ilkDaire, setIlkDaire] = useState("");
 
   // DUZENLENEN KAYDIN ROLU LISTEDE YOKSA YINE GORUNUR. Aksi halde select
   // sessizce ilk secenege duser ve kaydet, kullanicinin DOKUNMADIGI bir
@@ -194,6 +199,9 @@ export default function UsersPage() {
     // vermek olurdu.
     setForm({ ...EMPTY, role: formRolleri[0]?.value ?? EMPTY.role });
     setFormErr(null);
+    setDuzenlenenTamam(false);
+    setAtanacakDaire("");
+    setIlkDaire("");
     setOpen(true);
   }
 
@@ -211,6 +219,11 @@ export default function UsersPage() {
       gorevBitis: u.gorev_bitis ?? "",
     });
     setFormErr(null);
+    // Detay gelene kadar guvenli varsayilan: tamamlanmis KABUL et (e-posta
+    // kilitli baslar), atama bilinmiyor.
+    setDuzenlenenTamam(true);
+    setAtanacakDaire("");
+    setIlkDaire("");
     setOpen(true);
     try {
       const d = await jsonFetcher<UserDetail>(`/api/users/${u.id}`);
@@ -219,6 +232,9 @@ export default function UsersPage() {
         telefon: d.telefon ?? "",
         aranabilir: d.aranabilir ?? false,
       }));
+      setDuzenlenenTamam(d.kayit_tamamlandi ?? false);
+      setAtanacakDaire(d.daire_id ?? "");
+      setIlkDaire(d.daire_id ?? "");
     } catch {
       // Detay cekilemezse form yine acik kalir (telefon bos); kaydetmeye engel yok.
     }
@@ -244,6 +260,26 @@ export default function UsersPage() {
         };
         if (form.password) body.password = form.password;
         await apiSend(`/api/users/${editingId}`, "PATCH", body);
+        // (P186 §2.1) DAIRE ATAMASI DUZENLEMEDE: yalniz daire-tutan rolde
+        // (sakin/yonetici) ve secim DEGISTIYSE ata/kaldir. Rol daire-tutan
+        // kumeden CIKTIYSA backend bagi zaten kaldirdi — burada dokunma.
+        if (DAIRE_ROLLERI.includes(form.role) && atanacakDaire !== ilkDaire) {
+          try {
+            if (ilkDaire) {
+              await apiSend(
+                `/api/units/${ilkDaire}/residents/${editingId}`,
+                "DELETE",
+              );
+            }
+            if (atanacakDaire) {
+              await apiSend(`/api/units/${atanacakDaire}/residents`, "POST", {
+                user_id: editingId,
+              });
+            }
+          } catch {
+            toast.error(t("kullaniciDaireAtanamadi"));
+          }
+        }
       } else {
         // (P185 §3/§4) E-POSTA ZORUNLU (dogrulama/bildirim kanali). TELEFON
         // istege bagli (yalniz iletisim, giris anahtari DEGIL). Parola bossa
@@ -515,12 +551,13 @@ export default function UsersPage() {
         {/* `form` ID ile alttaki dugmeye baglandi: eylemler modalin
             SABIT altinda duruyor ve govdeyle birlikte kaymiyor. */}
         <form id="kullanici-form" onSubmit={save} className="grid gap-4 sm:grid-cols-2">
-          {/* (P162 §6 · P185 §4) DAIRE ATAMASI — YENI SAKIN VE YENI YONETICIDE.
+          {/* (P162 §6 · P185 §4 · P186 §2.1) DAIRE ATAMASI — SAKIN VE YONETICIDE.
               Daire ROLE BAGLI DEGIL (yonetici de sakin olabilir); form yalniz
               gosterme kararini rolden verir. SAKINDE ZORUNLU (sakin bir dairede
-              oturur), yoneticide istege bagli. Duzenlemede gosterilmiyor:
-              mevcut daire Daireler ekranindan yonetiliyor. */}
-          {!editingId && DAIRE_ROLLERI.includes(form.role) && (
+              oturur), yoneticide istege bagli. DUZENLEMEDE DE gosterilir
+              (P186 kabul 4): acilista mevcut atama on-dolar, degisirse
+              ata/kaldir. */}
+          {DAIRE_ROLLERI.includes(form.role) && (
             <AlanSarmal
               etiket={
                 form.role === ROL_SAKIN
@@ -558,11 +595,17 @@ export default function UsersPage() {
             )}
           </AlanSarmal>
 
-          {/* (P185 §3/§4) E-POSTA ZORUNLU: dogrulama + bildirim kanali (giris
-              anahtari DEGIL ama artik zorunlu). */}
+          {/* (P185 §3/§4 · P186 §2.2) E-POSTA ZORUNLU: dogrulama + bildirim
+              kanali. TAMAMLANMIS hesapta SALT-OKUNUR: e-posta giris kimligidir,
+              panelden ezmek hesap-ele-gecirme olurdu (backend de 409 verir).
+              Tamamlanmamis hesapta degistirilirse davet yeni adrese gider. */}
           <AlanSarmal
             etiket={t("kullaniciEposta")}
-            ipucu={t("kullaniciEpostaIpucu")}
+            ipucu={
+              editingId && duzenlenenTamam
+                ? t("kullaniciEpostaKilitli")
+                : t("kullaniciEpostaIpucu")
+            }
             zorunlu
           >
             {(b) => (
@@ -572,6 +615,7 @@ export default function UsersPage() {
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 required
+                readOnly={Boolean(editingId) && duzenlenenTamam}
               />
             )}
           </AlanSarmal>

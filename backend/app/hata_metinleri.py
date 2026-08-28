@@ -1227,6 +1227,15 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "Ce numéro de téléphone ou cet e-mail est déjà enregistré.",
         "es": "Este teléfono o correo electrónico ya está registrado.",
     },
+    "eposta_tamamlanan_hesapta_degistirilemez": {
+        "tr": "Kaydını tamamlamış bir hesabın e-postasını yönetici değiştiremez; kişi kendi e-posta değiştirme akışını kullanmalıdır.",
+        "en": "A manager cannot change the e-mail of an account that has completed registration; the person must use their own e-mail change flow.",
+        "ar": "لا يمكن للمدير تغيير البريد الإلكتروني لحساب أكمل التسجيل؛ يجب أن يستخدم الشخص تدفق تغيير البريد الإلكتروني الخاص به.",
+        "ru": "Администратор не может изменить адрес электронной почты учётной записи, завершившей регистрацию; человек должен использовать собственный процесс смены электронной почты.",
+        "de": "Ein Verwalter kann die E-Mail-Adresse eines bereits registrierten Kontos nicht ändern; die Person muss ihren eigenen E-Mail-Änderungsvorgang nutzen.",
+        "fr": "Un gestionnaire ne peut pas modifier l'e-mail d'un compte dont l'inscription est terminée ; la personne doit utiliser son propre processus de changement d'e-mail.",
+        "es": "Un administrador no puede cambiar el correo de una cuenta que completó el registro; la persona debe usar su propio flujo de cambio de correo.",
+    },
     "telefon_zaten_kayitli": {
         "tr": "Bu telefon zaten kayıtlı.",
         "en": "This phone number is already registered.",

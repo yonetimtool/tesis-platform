@@ -8,8 +8,9 @@ is_active=false (PATCH).
 from __future__ import annotations
 
 import uuid
+from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, Query, Response
+from fastapi import APIRouter, Depends, Header, Query, Response
 from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,7 +19,8 @@ from ..audit import Action, audit_user
 from ..crud_helpers import get_or_404, is_unique_violation, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
-from ..models import AppUser, Tenant
+from ..hata_metinleri import istek_dili
+from ..models import AppUser, Tenant, UnitResident
 from ..roller import yonetilebilir
 from ..schemas import (
     AcilabilirRollerOut,
@@ -85,6 +87,35 @@ _CONTACT_MANAGER = require_role("admin", "yonetici")
 # ayirt edilmeden tek mesaj.
 
 _CONTACT_CONFLICT = APIError(409, "conflict", "telefon_veya_email_zaten_kayitli")
+# (P186 §2.2) Tamamlanmis (sahiplenilmis) hesabin e-postasi = giris kimligi;
+# yoneticinin panelden ezmesi hesap-ele-gecirme vektorudur. Kisi kendi
+# dogrulanmali `PATCH /me/eposta` akisini kullanir (kod yeniye, bildirim eskiye).
+_EPOSTA_TAMAMLANAN = APIError(
+    409, "conflict", "eposta_tamamlanan_hesapta_degistirilemez"
+)
+# (P185/P186) Daire (unit_resident) atamasi YALNIZ bu roller icin anlamli.
+# Rol bu kumeden cikarsa ( or. resident -> security) aktif daire baglari
+# kaldirilir (bkz. update_user); kume icinde kalirsa (resident <-> yonetici)
+# korunur.
+DAIRE_ROLLERI: frozenset[str] = frozenset({"resident", "yonetici"})
+
+
+async def _aktif_daire_baglari(
+    db: AsyncSession, user_id: uuid.UUID
+) -> list[UnitResident]:
+    """Kullanicinin AKTIF (bitmemis) daire baglari — bos olabilir."""
+    return list(
+        (
+            await db.execute(
+                select(UnitResident).where(
+                    UnitResident.user_id == user_id,
+                    UnitResident.bitis.is_(None),
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
 # Saha personeli fotosu YALNIZ yonetici yonetir (spec P3); hedef saha personeli.
 _AVATAR_MANAGER = require_role("yonetici")
 _AVATAR_HEDEF_ROLLER = {"security", "tesis_gorevlisi"}
@@ -94,6 +125,7 @@ def _admin_out(obj: AppUser) -> UserAdminOut:
     """AppUser -> UserAdminOut; avatar_key varsa presigned GET URL doldurur."""
     out = UserAdminOut.model_validate(obj)
     out.avatar_url = presign_get(obj.avatar_key) if obj.avatar_key else None
+    out.kayit_tamamlandi = obj.password_set
     return out
 
 
@@ -159,7 +191,12 @@ async def get_user(
     db: AsyncSession = Depends(get_tenant_db),
     _: AppUser = Depends(_READER),
 ) -> UserAdminOut:
-    return _admin_out(await get_or_404(db, AppUser, user_id))
+    obj = await get_or_404(db, AppUser, user_id)
+    out = _admin_out(obj)
+    # (P186 §2.1) Duzenleme formu mevcut daire atamasini on-doldurur.
+    baglar = await _aktif_daire_baglari(db, obj.id)
+    out.daire_id = baglar[0].unit_id if baglar else None
+    return out
 
 
 @router.post("", response_model=UserCreatedOut, status_code=201)
@@ -167,6 +204,7 @@ async def create_user(
     body: UserCreate,
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_USER_CREATOR),
+    accept_language: str | None = Header(None),
 ) -> UserCreatedOut:
     # (P130) TEK kural, TEK tablo: yonetilen kume disi -> 403.
     # Eskiden rol basina IF vardi; yeni bir rol eklenince (P128 `denetci`)
@@ -239,6 +277,7 @@ async def create_user(
         ).scalar_one_or_none() or ""
         gonderildi = await davet_olustur_ve_gonder(
             db, user=obj, tenant_ad=tenant_adi, gonderen_id=user.id,
+            dil=istek_dili(accept_language),
         )
         davet_ozeti = DavetGonderimSonucu(gonderildi=gonderildi, kanal="sms")
 
@@ -264,6 +303,7 @@ async def update_user(
     body: UserUpdate,
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_USER_CREATOR),
+    accept_language: str | None = Header(None),
 ) -> UserAdminOut:
     obj = await get_or_404(db, AppUser, user_id)
     # IKI YONLU KONTROL, ikisi de sart:
@@ -281,6 +321,20 @@ async def update_user(
     new_password = data.pop("password", None)
     if "email" in data and data["email"] is not None:
         data["email"] = str(data["email"])
+
+    # --- Degisiklik oncesi durum (karar icin) ---
+    eski_rol = obj.role
+    eski_email = obj.email
+    # E-postanin GERCEKTEN degistigi (ayni deger gonderilmesi degisim degil).
+    eposta_yeni = data.get("email") if "email" in data else None
+    eposta_degisti = "email" in data and eposta_yeni != eski_email
+
+    # (P186 §2.2) TAMAMLANMIS HESABIN E-POSTASI DEGISTIRILEMEZ (bosaltma dahil).
+    # Sahiplenilmis hesabin e-postasi giris kimligidir; panelden ezmek
+    # hesap-ele-gecirme olurdu. Kisi kendi dogrulamali akisini kullanir.
+    if eposta_degisti and obj.password_set:
+        raise _EPOSTA_TAMAMLANAN
+
     for key, value in data.items():
         setattr(obj, key, value)
     if new_password is not None:
@@ -293,16 +347,53 @@ async def update_user(
         if is_unique_violation(exc):
             raise _CONTACT_CONFLICT
         raise translate_integrity(exc)
+
+    # (P186 §2.3) ROL, DAIRE-TUTAN KUMEDEN CIKTIYSA aktif daire baglarini
+    # kaldir: bir guvenlikci/gorevli daireyi isgal edip gercek sakini
+    # engellememeli ve daire listesinde yanlis rolde gorunmemeli. Kume
+    # icinde kalirsa (resident <-> yonetici) bag KORUNUR.
+    kaldirilan_bag = 0
+    if "role" in data and eski_rol != obj.role and obj.role not in DAIRE_ROLLERI:
+        for bag in await _aktif_daire_baglari(db, obj.id):
+            bag.bitis = datetime.now(tz=timezone.utc)
+            kaldirilan_bag += 1
+        if kaldirilan_bag:
+            await db.flush()
+
     await db.refresh(obj)
+
+    # (P186 §2.2) TAMAMLANMAMIS HESAPTA E-POSTA DEGISIMI -> DAVETI YENIDEN
+    # GONDER. `davet_olustur_veya_tazele` yeni jeton uretip eski `jeton_hash`i
+    # ezer (ESKI DAVET BAGI OLUR) ve davet YENI adrese gider.
+    davet_yeniden = False
+    if eposta_degisti and not obj.password_set and obj.email:
+        tenant_adi = (
+            await db.execute(select(Tenant.ad).where(Tenant.id == user.tenant_id))
+        ).scalar_one_or_none() or ""
+        await davet_olustur_ve_gonder(
+            db, user=obj, tenant_ad=tenant_adi, gonderen_id=user.id,
+            dil=istek_dili(accept_language),
+        )
+        davet_yeniden = True
+
     await audit_user(
         db, user, Action.USER_UPDATE, resource_type="app_user",
         # HEDEFIN ROLU de yazilir: "kim, HANGI ROLDEKI kaydi, hangi
         # alanlarda degistirdi" sorusu aylar sonra da cevaplanabilsin.
-        # (Aktoru ve rolunu `audit_user` zaten yaziyor.)
+        # (Aktoru ve rolunu `audit_user` zaten yaziyor.) HASSAS DEGER YOK:
+        # yalniz alan ADLARI + hangi yan etkiler tetiklendi.
         resource_id=obj.id,
-        meta={"fields": list(data.keys()), "hedef_rol": obj.role},
+        meta={
+            "fields": list(data.keys()),
+            "hedef_rol": obj.role,
+            **({"davet_yeniden": True} if davet_yeniden else {}),
+            **({"daire_baglari_kaldirildi": kaldirilan_bag} if kaldirilan_bag else {}),
+        },
     )
-    return _admin_out(obj)
+    out = _admin_out(obj)
+    baglar = await _aktif_daire_baglari(db, obj.id)
+    out.daire_id = baglar[0].unit_id if baglar else None
+    return out
 
 
 @router.delete("/{user_id}", status_code=204)

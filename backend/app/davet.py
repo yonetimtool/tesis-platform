@@ -43,6 +43,7 @@ from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .config import settings
+from .davet_eposta import davet_eposta
 from .gonderim import saglayici as kanal_saglayicisi, tenant_ayari
 from .mesajlasma import sms_olc
 from .models import AppUser, Davet, MesajGonderim
@@ -156,6 +157,7 @@ async def davet_gonder(
     user: AppUser,
     tenant_ad: str,
     gonderen_id: uuid.UUID | None,
+    dil: str = "tr",
 ) -> bool:
     """Bagi SMS (+varsa e-posta) ile gonderir; kayitlari yazar.
 
@@ -175,8 +177,19 @@ async def davet_gonder(
             {"t": str(user.tenant_id)},
         )
     ).scalar_one_or_none()
-    govde = davet_mesaji(tenant_ad, bag, tesis_kodu)
-    konu = f"{tenant_ad} sizi Yönetiyor'a davet etti"
+    # SMS: KISA duz metin (SMS uzunlugu onemli). E-posta: ZENGIN HTML + duz
+    # metin cifti (davet_eposta, 7 dil). Ikisi ayri govde uretir; kanal basina
+    # dogru bicim gider.
+    sms_govde = davet_mesaji(tenant_ad, bag, tesis_kodu)
+    eposta_konu, eposta_metin, eposta_html = davet_eposta(
+        dil=dil,
+        tenant_ad=tenant_ad,
+        tesis_kodu=tesis_kodu,
+        bag=bag,
+        play_store_url=settings.play_store_url,
+        app_store_url=settings.app_store_url,
+        yil=datetime.now(timezone.utc).year,
+    )
 
     # (P172 §6) TESIS AYARI OKUNUYOR — ONCEDEN OKUNMUYORDU.
     #
@@ -187,25 +200,31 @@ async def davet_gonder(
     ayar = await tenant_ayari(session, user.tenant_id)
 
     # --- SMS (varsa) ---
-    sms = kanal_saglayicisi("sms", ayar).gonder(user.telefon, None, govde) \
+    sms = kanal_saglayicisi("sms", ayar).gonder(user.telefon, None, sms_govde) \
         if user.telefon else None
     if sms is not None:
         session.add(MesajGonderim(
             tenant_id=user.tenant_id, sablon_id=None, kanal="sms",
             amac="operasyonel", user_id=user.id, hedef=user.telefon, konu=None,
-            govde=govde, durum=sms.durum, hata=sms.hata,
+            govde=sms_govde, durum=sms.durum, hata=sms.hata,
             saglayici=sms.saglayici, gonderen_user_id=gonderen_id,
             deneme=1,
         ))
 
     # --- E-POSTA (varsa) ---
+    #
+    # HTML govde ALTERNATIF olarak gecer; `eposta_metin` text/plain kokudur.
+    # Gecmise (MesajGonderim) DUZ METIN yazilir: panel ozeti okunabilir kalsin
+    # ve HTML iskeleti gecmis tablosunu sismesin.
     eposta = None
     if user.email:
-        eposta = kanal_saglayicisi("eposta", ayar).gonder(user.email, konu, govde)
+        eposta = kanal_saglayicisi("eposta", ayar).gonder(
+            user.email, eposta_konu, eposta_metin, html=eposta_html
+        )
         session.add(MesajGonderim(
             tenant_id=user.tenant_id, sablon_id=None, kanal="eposta",
-            amac="operasyonel", user_id=user.id, hedef=user.email, konu=konu,
-            govde=govde, durum=eposta.durum, hata=eposta.hata,
+            amac="operasyonel", user_id=user.id, hedef=user.email, konu=eposta_konu,
+            govde=eposta_metin, durum=eposta.durum, hata=eposta.hata,
             saglayici=eposta.saglayici, gonderen_user_id=gonderen_id,
             deneme=1,
         ))
@@ -240,17 +259,22 @@ async def davet_olustur_ve_gonder(
     user: AppUser,
     tenant_ad: str,
     gonderen_id: uuid.UUID | None,
+    dil: str = "tr",
 ) -> bool:
     """Kolaylik: olustur/tazele + gonder. Donus: SMS gonderildi mi.
 
     HESAP PAROLASIZ OLMALI: davet, hesabi SAHIPLENDIRME bagidir. Parolasi
     olan hesaba davet gondermek anlamsiz (zaten girebiliyor); cagiran bu
     kosulu saglar.
+
+    `dil`: davet E-POSTASININ dili (alicinin secilmis dili yok; ekleyen
+    yoneticinin istek dili en iyi sinyal, varsayilan tr). SMS her zaman kisa
+    Turkce metindir (uzunluk).
     """
     davet, duz = await davet_olustur_veya_tazele(
         session, user=user, olusturan_id=gonderen_id
     )
     return await davet_gonder(
         session, davet=davet, duz_jeton=duz, user=user,
-        tenant_ad=tenant_ad, gonderen_id=gonderen_id,
+        tenant_ad=tenant_ad, gonderen_id=gonderen_id, dil=dil,
     )

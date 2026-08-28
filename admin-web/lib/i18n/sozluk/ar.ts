@@ -792,6 +792,8 @@ export const ar: Sozluk = {
   kullaniciDuzenle: "تعديل المستخدم",
   kullaniciYeni: "مستخدم جديد",
   kullaniciEpostaIpucu: "للتحقق والإشعارات؛ مطلوب.",
+  kullaniciEpostaKilitli:
+    "اكتمل التسجيل؛ البريد الإلكتروني هو هوية تسجيل الدخول ولا يمكن تغييره من هنا. يجب على الشخص استخدام تدفق تغيير البريد الإلكتروني الخاص به.",
   kullaniciTelefon: "الهاتف المحمول",
   kullaniciTelefonIpucu: "لأغراض التواصل فقط.",
   kullaniciEposta: "البريد الإلكتروني",

@@ -792,6 +792,8 @@ export const de: Sozluk = {
   kullaniciDuzenle: "Benutzer bearbeiten",
   kullaniciYeni: "Neuer Benutzer",
   kullaniciEpostaIpucu: "Für Bestätigung und Benachrichtigungen; erforderlich.",
+  kullaniciEpostaKilitli:
+    "Registrierung abgeschlossen; die E-Mail ist die Anmeldeidentität und kann hier nicht geändert werden. Die Person muss ihren eigenen E-Mail-Änderungsvorgang nutzen.",
   kullaniciTelefon: "Mobiltelefon",
   kullaniciTelefonIpucu: "Nur für die Kontaktaufnahme.",
   kullaniciEposta: "E-Mail",

@@ -838,6 +838,8 @@ export const tr = {
   kullaniciDuzenle: "Kullanıcı düzenle",
   kullaniciYeni: "Yeni kullanıcı",
   kullaniciEpostaIpucu: "Doğrulama ve bildirim için; zorunlu.",
+  kullaniciEpostaKilitli:
+    "Kayıt tamamlanmış; e-posta giriş kimliğidir ve buradan değiştirilemez. Kişi kendi e-posta değiştirme akışını kullanmalıdır.",
   kullaniciTelefon: "Cep telefonu",
   kullaniciTelefonIpucu: "Yalnızca iletişim için.",
   kullaniciEposta: "E-posta",

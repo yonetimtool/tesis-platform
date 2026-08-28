@@ -224,13 +224,17 @@ def test_update_user_role_active_password(client, world):
 
 
 def test_update_user_email_and_conflict(client, world):
+    """(P186 §2.2/§2.4) TAMAMLANMAMIS hesapta e-posta guncellenir; BASKA
+    kullanicinin e-postasina cakisma JENERIK 409 doner (hangi alan/hesap
+    sizmaz). Tamamlanmis hesabin e-postasi ayri testte bloklanir
+    (test_p186_email_change_after_completion_blocked)."""
     admin = _headers(client, world["slug_a"], world["admin_a"])
-    pw = "MailParola1!"
     eski = f"mail-eski-{uuid.uuid4().hex[:8]}@acme.com"
+    # parola YOK -> tamamlanmamis (davet akisi); e-posta SERBEST degisir
     uid = client.post(
         "/users",
         headers=admin,
-        json={"ad": "Mail Sahibi", "email": eski, "telefon": _uphone(), "role": "security", "password": pw},
+        json={"ad": "Mail Sahibi", "email": eski, "telefon": _uphone(), "role": "security"},
     ).json()["id"]
 
     # email guncelle -> 200, yanit yeni email'i tasir
@@ -239,16 +243,12 @@ def test_update_user_email_and_conflict(client, world):
     assert r.status_code == 200, r.text
     assert r.json()["email"] == yeni
 
-    # yeni email ile login olur, eski email artik taninmaz
-    assert _login_status(client, world["slug_a"], yeni, pw) == 200
-    assert _login_status(client, world["slug_a"], eski, pw) == 401
-
     # baska kullanicinin email'ine guncelleme -> 409 conflict (anlasilir hata)
     digeri = f"mail-diger-{uuid.uuid4().hex[:8]}@acme.com"
     client.post(
         "/users",
         headers=admin,
-        json={"ad": "Diger", "email": digeri, "telefon": _uphone(), "role": "tesis_gorevlisi", "password": "Parola123!"},
+        json={"ad": "Diger", "email": digeri, "telefon": _uphone(), "role": "tesis_gorevlisi"},
     )
     dup = client.patch(f"/users/{uid}", headers=admin, json={"email": digeri})
     assert dup.status_code == 409 and dup.json()["error"]["code"] == "conflict"
@@ -348,3 +348,89 @@ def test_reset_password_rbac_yonetim_only(client, world):
         assert client.post(
             f"/users/{created['id']}/reset-password", headers=h
         ).status_code == 403, role
+
+
+# ============================ P186 — duzenleme ============================== #
+def _tel186() -> str:
+    return "+90" + str(uuid.uuid4().int)[:10]
+
+
+def test_p186_email_change_before_completion_ok(client, world):
+    """(P186 §2.2) TAMAMLANMAMIS hesapta e-posta degisimi SERBEST; davet yeniden
+    gonderilir (yan etki). Burada 200 + e-posta guncellendigi + kayit_tamamlandi
+    False dogrulanir."""
+    yon = _headers(client, world["slug_a"], world["yonetici_a"])
+    eski = f"once-{uuid.uuid4().hex[:8]}@acme.com"
+    # parola YOK -> password_set False (davet akisi)
+    created = client.post(
+        "/users", headers=yon,
+        json={"ad": "Davetli", "email": eski, "telefon": _tel186(), "role": "security"},
+    ).json()
+    uid = created["id"]
+    detay = client.get(f"/users/{uid}", headers=yon).json()
+    assert detay["kayit_tamamlandi"] is False
+
+    yeni = f"sonra-{uuid.uuid4().hex[:8]}@acme.com"
+    r = client.patch(f"/users/{uid}", headers=yon, json={"email": yeni})
+    assert r.status_code == 200, r.text
+    assert r.json()["email"] == yeni
+
+
+def test_p186_email_change_after_completion_blocked(client, world):
+    """(P186 §2.2) TAMAMLANMIS hesabin e-postasini yonetici DEGISTIREMEZ (409)."""
+    yon = _headers(client, world["slug_a"], world["yonetici_a"])
+    eski = f"tam-{uuid.uuid4().hex[:8]}@acme.com"
+    # parola VERILDI -> password_set True (tamamlanmis)
+    created = client.post(
+        "/users", headers=yon,
+        json={"ad": "Tamam", "email": eski, "telefon": _tel186(),
+              "role": "security", "password": "GucluParola1!"},
+    ).json()
+    uid = created["id"]
+    assert client.get(f"/users/{uid}", headers=yon).json()["kayit_tamamlandi"] is True
+
+    yeni = f"yeni-{uuid.uuid4().hex[:8]}@acme.com"
+    r = client.patch(f"/users/{uid}", headers=yon, json={"email": yeni})
+    assert r.status_code == 409, r.text
+    # AYNI e-postayi (degisiklik yok) gondermek reddedilmez:
+    assert client.patch(
+        f"/users/{uid}", headers=yon, json={"email": eski, "ad": "Tamam2"}
+    ).status_code == 200
+
+
+def test_p186_role_change_clears_unit_binding(client, world):
+    """(P186 §2.3) Rol daire-tutan kumeden CIKINCA (resident->security) aktif
+    daire bagi kaldirilir; detayda daire_id null olur."""
+    yon = _headers(client, world["slug_a"], world["yonetici_a"])
+    created = client.post(
+        "/residents", headers=yon,
+        json={"telefon": _tel186(), "unit_no": f"P186-{uuid.uuid4().hex[:4]}"},
+    ).json()
+    uid = created["user_id"]
+    detay = client.get(f"/users/{uid}", headers=yon).json()
+    assert detay["role"] == "resident"
+    assert detay["daire_id"] == created["unit_id"]
+
+    r = client.patch(f"/users/{uid}", headers=yon, json={"role": "security"})
+    assert r.status_code == 200, r.text
+    son = client.get(f"/users/{uid}", headers=yon).json()
+    assert son["role"] == "security"
+    assert son["daire_id"] is None  # bag kaldirildi
+
+    # resident <-> yonetici gecisinde bag KORUNUR (ayri senaryo, ayni kume)
+
+
+def test_p186_other_tenant_manager_cannot_edit(client, world):
+    """(P186 §2.6) Baska tesisin yoneticisi/admini bu kullaniciyi duzenleyemez —
+    RLS satiri hic gormez -> 404 (sunucu tarafi)."""
+    yon_a = _headers(client, world["slug_a"], world["yonetici_a"])
+    created = client.post(
+        "/users", headers=yon_a,
+        json={"ad": "A-Kisi", "email": f"a-{uuid.uuid4().hex[:8]}@acme.com",
+              "telefon": _tel186(), "role": "security"},
+    ).json()
+    uid = created["id"]
+    admin_b = _headers(client, world["slug_b"], world["admin_b"])
+    assert client.patch(
+        f"/users/{uid}", headers=admin_b, json={"ad": "Sizma"}
+    ).status_code == 404

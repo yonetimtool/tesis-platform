@@ -383,6 +383,11 @@ export interface UserRow {
 // Tek-kayit yonetim gorunumu (GET /users/{id}) — telefon + aranabilir burada.
 export interface UserDetail extends UserRow {
   telefon?: string | null;
+  // (P186) Kayit tamamlandi mi (password_set): tamamlanmis hesabin e-postasi
+  // giris kimligidir -> formda salt-okunur. daire_id aktif daire atamasini
+  // on-doldurur (yalniz detay GET doldurur).
+  kayit_tamamlandi?: boolean;
+  daire_id?: string | null;
 }
 
 export interface UserListResponse {

@@ -202,6 +202,11 @@ class UserAdminOut(BaseModel):
     # (P128) Gorev penceresi — denetci disi rollerde NULL.
     gorev_baslangic: date | None = None
     gorev_bitis: date | None = None
+    # (P186 §2) Kayit tamamlandi mi (password_set): tamamlanmis hesabin
+    # e-postasi giris kimligidir -> panelde salt-okunur. Aktif daire atamasi
+    # duzenleme formunu on-doldurur (yalniz DETAY GET doldurur; listede NULL).
+    kayit_tamamlandi: bool = False
+    daire_id: uuid.UUID | None = None
     created_at: datetime
 
 

@@ -249,3 +249,39 @@ def test_BASKA_TESISIN_aktarimi_GERI_ALINAMAZ(client, world):
     assert client.post(
         f"/ice-aktarim/{sonuc['aktarim_id']}/geri-al", headers=b
     ).status_code == 404
+
+
+# ==================== P186 — Excel ile eklenene DAVET ======================= #
+def _davet_sayisi(owner_conn, slug):
+    with owner_conn.cursor() as cur:
+        cur.execute(
+            "SELECT count(*) FROM davet d JOIN tenant t ON t.id = d.tenant_id "
+            "WHERE t.slug = %s",
+            (slug,),
+        )
+        return cur.fetchone()[0]
+
+
+def test_P186_kisi_ice_aktariminda_DAVET_olusur(client, world, owner_conn):
+    """(P186 §3.1 / kabul 9) Excel ile eklenen parolasiz kisiye tekil eklemeyle
+    AYNI davet gonderilir — eskiden HIC gitmiyordu."""
+    h = _giris(client, world["slug_a"], world["yonetici_a"])
+    once = _davet_sayisi(owner_conn, world["slug_a"])
+    tel = "+90" + str(uuid.uuid4().int)[:10]
+    r = _aktar(client, h, "kisi", [
+        _satir(1, ad="Excel Kisi", telefon=tel,
+               eposta=f"excel-{uuid.uuid4().hex[:8]}@acme.com"),
+    ])
+    assert r["olusan"] == 1, r
+    assert _davet_sayisi(owner_conn, world["slug_a"]) == once + 1
+
+
+def test_P186_kisi_BOZUK_eposta_satir_hatasi(client, world):
+    """(P186 §3.1) Bozuk e-posta sessizce yutulmaz: satir hatasi raporlanir."""
+    h = _giris(client, world["slug_a"], world["yonetici_a"])
+    tel = "+90" + str(uuid.uuid4().int)[:10]
+    r = _aktar(client, h, "kisi", [
+        _satir(1, ad="Bozuk", telefon=tel, eposta="bu-bir-eposta-degil"),
+    ])
+    assert r["hatali"] == 1, r
+    assert r["hatalar"][0]["satir_no"] == 1

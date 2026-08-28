@@ -792,6 +792,8 @@ export const en: Sozluk = {
   kullaniciDuzenle: "Edit user",
   kullaniciYeni: "New user",
   kullaniciEpostaIpucu: "For verification and notifications; required.",
+  kullaniciEpostaKilitli:
+    "Registration complete; e-mail is the login identity and cannot be changed here. The person must use their own e-mail change flow.",
   kullaniciTelefon: "Mobile phone",
   kullaniciTelefonIpucu: "For contact only.",
   kullaniciEposta: "Email",

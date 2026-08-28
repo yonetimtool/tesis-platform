@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Header, Response
 from sqlalchemy import and_, func, select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -23,6 +23,7 @@ from ..crud_helpers import is_unique_violation, translate_integrity
 from ..davet import davet_olustur_ve_gonder
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
+from ..hata_metinleri import istek_dili
 from ..hesap_silme import hesabi_sil_veya_anonimlestir
 from ..models import AppUser, Unit, UnitResident
 from ..schemas import (
@@ -51,6 +52,7 @@ async def create_resident(
     body: ResidentCreate,
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_YONETIM),
+    accept_language: str | None = Header(None),
 ) -> ResidentCreatedOut:
     # 1) unit: ayni no varsa mevcut kullanilir (ayni daireye malik VE
     #    kiraci baglanabilir — sinir 1b'de), yoksa ortulu olusturulur.
@@ -146,6 +148,7 @@ async def create_resident(
         ).scalar_one()
         gonderildi = await davet_olustur_ve_gonder(
             db, user=resident, tenant_ad=tenant_ad, gonderen_id=user.id,
+            dil=istek_dili(accept_language),
         )
         davet_ozeti = DavetGonderimSonucu(gonderildi=gonderildi, kanal="sms")
 
