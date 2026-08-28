@@ -9,28 +9,30 @@
  * vardir; jeton `POST /api/auth/oauth/sonuc` ile httpOnly cereze yazilir
  * ve JS onu HIC gormez.
  *
- * UC OLASI SONUC:
- *   1. niyet="bagla"       -> acik oturuma yontem eklenir, profile donulur,
- *   2. durum="giris"       -> oturum acildi, koke gidilir,
- *   3. durum="baglama_gerekli" -> tesis kodu + telefon + SMS adimi.
+ * OLASI SONUCLAR:
+ *   1. niyet="bagla"           -> acik oturuma yontem eklenir, profile donulur,
+ *   2. durum="giris"           -> oturum acildi, koke gidilir,
+ *   3. durum="mevcut_hesap"    -> e-posta zaten kayitli; oturum acildi,
+ *   4. durum="baglama_gerekli" -> kimlik bir hesaba bagli DEGIL.
  *
- * (3) BRIEF'IN MERKEZ KURALI: "sosyal hesap kimlik dogrulama YONTEMI,
- * eslesme anahtari degil". Google hesabi kim oldugunu soylemez; onu tesis
- * ID + telefon soyler ve SMS kanitlar.
+ * (P185) (4) ARTIK SMS ISTEMEZ. Eskiden burada "Tesis ID + telefon + SMS"
+ * baglama formu vardi; o form ve `oauth/baglan/*` cagrilari "Baglama istegi
+ * gecersiz" hatasinin KAYNAGIYDI ve kaldirildi. Davetten ya da kayit
+ * taslagindan gelindiyse akis onceki gibi surer; bunlarin disindaki
+ * "bagli degil" durumunda kullanici KAYDA (`/kayit`) yonlendirilir —
+ * kimlik dogrulama YONTEMI kaydolmayi degistirmez.
  */
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 
-import { ErrorBox, Field, btnPrimary, cardCls, inputCls } from "@/components/form";
+import { ErrorBox, btnPrimary, cardCls } from "@/components/form";
 import {
   OAUTH_NIYET,
   davetJetonuOku,
   kayitSosyalSonucYaz,
   kayitTaslagiOku,
-  saglayiciEtiketi,
 } from "@/components/SosyalGiris";
 import { useT } from "@/lib/i18n/kullan";
-import { telefonGiris, telefonHatasi, telefonNormalle } from "@/lib/telefon";
 
 type Sonuc = {
   durum?: string;
@@ -44,7 +46,7 @@ type Sonuc = {
   error?: { message?: string };
 };
 
-type Adim = "yukleniyor" | "tesis" | "kod" | "hata" | "mevcut";
+type Adim = "yukleniyor" | "kayit_gerekli" | "hata" | "mevcut";
 
 // BFF uclari ve niyet degerleri MODUL DUZEYINDE sabit: ucluda dizge
 // yazmak `sabit-metin` taramasini (hakli olarak) tetikliyor — o tarama
@@ -54,15 +56,7 @@ const NIYET_GIRIS = "giris";
 const NIYET_KAYIT = "kayit";
 const UC_SONUC = "/api/auth/oauth/sonuc";
 const UC_BAGLANTILAR = "/api/auth/oauth/baglantilarim";
-const UC_BAGLAN_BASLA = "/api/auth/oauth/baglan/basla";
-const UC_BAGLAN_DOGRULA = "/api/auth/oauth/baglan/dogrula";
 const UC_DAVET_SOSYAL = "/api/auth/davet/sosyal";
-
-type BaslaYanit = {
-  tesis_ad?: string;
-  telefon_maskeli?: string;
-  error?: { message?: string };
-};
 
 function OauthDonus() {
   const t = useT();
@@ -72,13 +66,6 @@ function OauthDonus() {
 
   const [adim, setAdim] = useState<Adim>("yukleniyor");
   const [hata, setHata] = useState<string | null>(null);
-  const [sonuc, setSonuc] = useState<Sonuc | null>(null);
-  const [tesisKodu, setTesisKodu] = useState("");
-  const [telefon, setTelefon] = useState("");
-  const [tesisAd, setTesisAd] = useState("");
-  const [maskeli, setMaskeli] = useState("");
-  const [kod, setKod] = useState("");
-  const [gonderiliyor, setGonderiliyor] = useState(false);
 
   // SONUC TEK KULLANIMLIKTIR: sunucu onu `getdel` ile tuketir. React 18
   // gelistirme modunda efektler IKI KEZ kosar ve ikinci cagri "gecersiz
@@ -143,8 +130,7 @@ function OauthDonus() {
         }
         if (d?.durum === "baglama_gerekli") {
           // (P155 §7) DAVETTEN GELINDIYSE: jeton tesis/rol/daire/telefonu
-          // biliyor. Tesis+telefon formunu ATLA, dogrudan `/davet/sosyal`
-          // ile bagla ve oturum ac.
+          // biliyor. Dogrudan `/davet/sosyal` ile bagla ve oturum ac.
           const davetJetonu = davetJetonuOku();
           if (davetJetonu && d.baglama_jetonu) {
             void (async () => {
@@ -167,14 +153,8 @@ function OauthDonus() {
             })();
             return;
           }
-          // (P155r2) KAYIT AKISINDAN GELINDIYSE forma BURADA devam
-          // EDILMEZ: yeni sirada (rol -> yontem -> bilgiler -> role ozel)
-          // kullanici saglayiciya tesis/telefon girmeden ONCE gidiyor ve
-          // geriye ad soyad + telefon + tesis adimlari kaliyor. Onlari
-          // burada da cizmek, kayit formunun IKINCI bir kopyasini
-          // uretirdi (iki ekran zamanla ayrisirdi). Bunun yerine sonucu
-          // birakip `/kayit`a donuyoruz; o sayfa kaldigi yerden devam
-          // ediyor ve adi saglayicidan gelen degerle on-dolduruyor.
+          // (P155r2) KAYIT AKISINDAN GELINDIYSE `/kayit`a devret ve kaldigi
+          // yerden surdur (ad soyad saglayicidan on-dolar).
           const taslak = kayitTaslagiOku();
           if (taslak && d.baglama_jetonu) {
             kayitSosyalSonucYaz({
@@ -186,10 +166,13 @@ function OauthDonus() {
             router.replace("/kayit");
             return;
           }
-          // GIRIS ekranindan gelen sosyal akis: kimlik bir hesaba bagli
-          // degil. Burasi o durumun yeri — tesis ID + telefon + SMS.
-          setSonuc(d);
-          setAdim("tesis");
+          // (P185) GIRIS ekranindan gelen ve HICBIR hesaba bagli olmayan
+          // sosyal kimlik. ESKIDEN burada "Tesis ID + telefon + SMS" formu
+          // vardi ve "Baglama istegi gecersiz" hatasini uretiyordu. Artik
+          // SMS istemiyoruz: kullaniciya kimliginin hentiz bir hesaba bagli
+          // olmadigini soyleyip KAYDA yonlendiriyoruz. Kaydolurken sosyal
+          // yolu tekrar secerse `/kayit` ayni saglayiciyla devam eder.
+          setAdim("kayit_gerekli");
           return;
         }
         // `durum=giris`: cerez yazildi. KOKE gidilir, sabit bir sayfaya
@@ -203,77 +186,6 @@ function OauthDonus() {
     })();
   }, [sonucId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /**
-   * `acik` VERILEBILIR cunku bu islev iki yerden cagriliyor: kullanicinin
-   * dugmesinden (durum okunur) ve kayit akisindan otomatik (durum HENUZ
-   * yazilmadi — `setState` senkron degildir, ayni karede okunamaz).
-   */
-  async function tesisGonder(acik?: {
-    tesisKodu: string;
-    telefon: string;
-    jeton?: string;
-  }) {
-    const kullanilanKod = (acik?.tesisKodu ?? tesisKodu).trim();
-    const kullanilanTel = acik?.telefon ?? telefon;
-    const th = telefonHatasi(kullanilanTel);
-    if (th) {
-      setHata(th === "gecersizOnEk" ? t("telefonHataOnEk") : t("telefonHataEksik"));
-      return;
-    }
-    setHata(null);
-    setGonderiliyor(true);
-    try {
-      const r = await fetch(UC_BAGLAN_BASLA, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          baglama_jetonu: acik?.jeton ?? sonuc?.baglama_jetonu,
-          tesis_kodu: kullanilanKod,
-          telefon: telefonNormalle(kullanilanTel),
-        }),
-      });
-      const d = (await r.json().catch(() => null)) as BaslaYanit | null;
-      if (!r.ok) {
-        setHata(d?.error?.message ?? t("ortakHataOlustu"));
-        return;
-      }
-      setTesisAd(d?.tesis_ad ?? "");
-      setMaskeli(d?.telefon_maskeli ?? "");
-      setAdim("kod");
-    } catch {
-      setHata(t("ortakSunucuyaUlasilamadi"));
-    } finally {
-      setGonderiliyor(false);
-    }
-  }
-
-  async function kodGonder() {
-    setHata(null);
-    setGonderiliyor(true);
-    try {
-      const r = await fetch(UC_BAGLAN_DOGRULA, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          baglama_jetonu: sonuc?.baglama_jetonu,
-          telefon: telefonNormalle(telefon),
-          kod: kod.trim(),
-        }),
-      });
-      const d = (await r.json().catch(() => null)) as Sonuc | null;
-      if (!r.ok) {
-        setHata(d?.error?.message ?? t("ortakHataOlustu"));
-        return;
-      }
-      router.replace("/");
-      router.refresh();
-    } catch {
-      setHata(t("ortakSunucuyaUlasilamadi"));
-    } finally {
-      setGonderiliyor(false);
-    }
-  }
-
   return (
     <main className="mx-auto flex min-h-screen max-w-md items-center p-6">
       <div className={`${cardCls} w-full space-y-4 p-6`}>
@@ -283,74 +195,13 @@ function OauthDonus() {
           <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>
         ) : null}
 
-        {adim === "tesis" ? (
+        {/* (P185) BAGLI DEGIL -> KAYDA YONLENDIR. Tesis ID + telefon + SMS
+            YOK: kimlik dogrulama yontemi kaydolmayi degistirmez. */}
+        {adim === "kayit_gerekli" ? (
           <>
-            <p className="text-sm text-metin-body">
-              {t("sosyalEslesmeAciklama", {
-                saglayici: saglayiciEtiketi(sonuc?.saglayici ?? ""),
-              })}
-            </p>
-            {/* APPLE PRIVATE RELAY: kullaniciya SOYLENIR, cunku o adrese
-                posta gonderilemeyecegini bilmeli. */}
-            {sonuc?.relay ? (
-              <p className="text-sm text-metin-muted">{t("sosyalRelayUyari")}</p>
-            ) : null}
-            <Field label={t("kayitTesisKodu")}>
-              <input
-                className={inputCls}
-                value={tesisKodu}
-                onChange={(e) => setTesisKodu(e.target.value)}
-                autoComplete="off"
-              />
-            </Field>
-            <Field label={t("kullaniciTelefon")}>
-              <input
-                className={inputCls}
-                value={telefonGiris(telefon)}
-                onChange={(e) => setTelefon(telefonGiris(e.target.value))}
-                placeholder={t("kullaniciTelefonOrnek")}
-                inputMode="tel"
-              />
-            </Field>
-            <ErrorBox message={hata} />
-            <button
-              className={btnPrimary}
-              disabled={gonderiliyor || !tesisKodu.trim()}
-              onClick={() => void tesisGonder(undefined)}
-            >
-              {gonderiliyor ? t("ortakKaydediliyor") : t("sosyalKodGonder")}
-            </button>
-            {/* (P181 Bölüm 0) Hesabı olmayan kullanıcı için kayıt yolu; backend sessizce hesap açmaz (P180), yalnız yönlendirme (P179). */}
-            <p className="text-center text-sm text-metin-muted">
-              {t("sosyalHesabinYok")}{" "}
-              <a className="giris-bag" href="https://yonetiyor.com/yonetici/kayit">
-                {t("sosyalKayitOl")}
-              </a>
-            </p>
-          </>
-        ) : null}
-
-        {adim === "kod" ? (
-          <>
-            <p className="text-sm text-metin-body">
-              {t("sosyalKodAciklama", { tesis: tesisAd, telefon: maskeli })}
-            </p>
-            <Field label={t("sosyalKod")}>
-              <input
-                className={inputCls}
-                value={kod}
-                onChange={(e) => setKod(e.target.value)}
-                inputMode="numeric"
-                autoComplete="one-time-code"
-              />
-            </Field>
-            <ErrorBox message={hata} />
-            <button
-              className={btnPrimary}
-              disabled={gonderiliyor || kod.trim().length < 4}
-              onClick={() => void kodGonder()}
-            >
-              {gonderiliyor ? t("ortakKaydediliyor") : t("sosyalDogrula")}
+            <p className="text-sm text-metin-body">{t("sosyalBagliDegil")}</p>
+            <button className={btnPrimary} onClick={() => router.replace("/kayit")}>
+              {t("sosyalKaydolDevam")}
             </button>
           </>
         ) : null}
