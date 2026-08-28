@@ -79,20 +79,19 @@ class Settings(BaseSettings):
     # 404 verir; yabancinin alaninda calisan bir sayfadan iyidir.
     portal_base_url: str = "https://yönetiyor.com"
 
-    # --- (P155r2 / §4) MAGAZA BAGLANTILARI — davet SMS'ine girer ---
+    # --- (P155r2 / §4 · P186) MAGAZA BAGLANTILARI — davet SMS'i + e-postasi ---
     #
-    # Play paketi BILINIYOR (`android/app/build.gradle.kts`), bu yuzden
-    # varsayilani dolu. App Store numeric id'si Apple Developer'dan gelir
-    # ve HENUZ YOK; BOS BIRAKILDI ve bos oldugunda mesaja EKLENMEZ.
-    # Uydurma bir id yazmak, SMS'in her alicisina KIRIK bir baglanti
-    # gondermek olurdu — hicbir baglanti gondermemekten kotudur.
+    # Play paketi `com.app.yonetiyor`; App Store id'si (P186) TAHSIS EDILDI:
+    # `id6797316863`. Ikisi de varsayilan olarak DOLU. Bos birakilan bir magaza
+    # icin ( or. bir platformdan cekilirse) dugme CIZILMEZ — uydurma/kirik bir
+    # baglanti hic baglanti gondermemekten kotudur; bu koruma korunur.
     #
-    # `admin-web/lib/magaza.ts` ayni kurali web tarafinda uyguluyor
-    # (id yoksa dugme cizilmez); iki yuzey ayni davranisi gosterir.
+    # `admin-web/lib/magaza.ts` ve `davet_eposta.py` ayni kurali uygular
+    # (url yoksa dugme cizilmez); tum yuzeyler ayni davranisi gosterir.
     play_store_url: str = (
         "https://play.google.com/store/apps/details?id=com.app.yonetiyor"
     )
-    app_store_url: str = ""
+    app_store_url: str = "https://apps.apple.com/tr/app/id6797316863"
 
     # --- CORS (uretim) ---
     # Virgulle ayrilmis izinli tarayici kaynaklari (orn.

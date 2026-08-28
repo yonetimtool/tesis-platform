@@ -45,19 +45,15 @@ mevcut testler). Prod dağıtımı + cihaz testi kullanıcıda. Kararların gere
   (bağlı SSO kimliği → oturum; telefon+parola → oturum); mobil kayıtta yönetici
   rolü zaten yok. Mevcut testler kapsıyor (bkz. kararlar Böl 1).
 
-## Mağaza bağlantıları — KULLANICIDAN İSTENEN DEĞER
+## Mağaza bağlantıları — DEĞERLER ALINDI (P186)
 
-`.env.prod.example` içinde **zaten** tanımlı (backend ile ortak):
-```
-# PLAY_STORE_URL=https://play.google.com/store/apps/details?id=com.app.yonetiyor
-# APP_STORE_URL=
-```
-- **PLAY_STORE_URL** biliniyor (paket `com.app.yonetiyor`); config varsayılanı
-  dolu, prod'da ayrıca vermeye gerek yok.
-- **APP_STORE_URL boş** (Apple App Store id'si henüz tahsis edilmedi). App Store
-  yayınına çıkınca **gerçek adresi** (uydurma değil) `.env.prod`e girilir; kod
-  değişmez, davet e-postası App Store düğmesini otomatik çizmeye başlar. Boşken
-  düğme çizilmez. **→ App Store adresi kullanıcıdan istenir (oturum sonu soru).**
+Her iki mağaza da yayında; **config varsayılanları artık dolu**, prod'da ayrıca
+env vermeye gerek yok (override istenirse `.env.prod.example`'da örnek var):
+- **PLAY_STORE_URL** = `https://play.google.com/store/apps/details?id=com.app.yonetiyor`
+- **APP_STORE_URL** = `https://apps.apple.com/tr/app/id6797316863`
+
+Davet e-postası ve SMS'i her iki mağaza düğmesini de gösterir. Bir mağaza
+ileride çekilirse ilgili env'i boşaltmak düğmeyi otomatik gizler (kod değişmez).
 
 ## Prod'da doğrulanacaklar (burada üretilemez)
 - E-posta SMTP: davet HTML e-postasının gerçekten gitmesi; **Gmail / Outlook /
