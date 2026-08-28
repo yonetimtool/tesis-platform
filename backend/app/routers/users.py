@@ -26,7 +26,6 @@ from ..schemas import (
     AcilabilirRollerOut,
     AvatarUpdate,
     DavetGonderimSonucu,
-    ResidentResetPasswordOut,
     UserAdminListItem,
     UserAdminListResponse,
     UserAdminOut,
@@ -37,7 +36,6 @@ from ..schemas import (
     UserUpdate,
 )
 from ..davet import davet_olustur_ve_gonder
-from ..security import generate_temp_code, hash_password
 from ..storage import delete_objects, presign_get
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -303,7 +301,6 @@ async def update_user(
             _ROL_DEGISTIRME_HATASI.get(user.role, "rol_degistirilemez"),
         )
     data = body.model_dump(exclude_unset=True)
-    new_password = data.pop("password", None)
     if "email" in data and data["email"] is not None:
         data["email"] = str(data["email"])
 
@@ -322,9 +319,6 @@ async def update_user(
 
     for key, value in data.items():
         setattr(obj, key, value)
-    if new_password is not None:
-        obj.password_hash = hash_password(new_password)
-        obj.password_set = True
     obj.updated_at = func.now()
     try:
         await db.flush()
@@ -427,31 +421,13 @@ async def delete_user(
     return Response(status_code=204)
 
 
-@router.post("/{user_id}/reset-password", response_model=ResidentResetPasswordOut)
-async def reset_user_password(
-    user_id: uuid.UUID,
-    db: AsyncSession = Depends(get_tenant_db),
-    user: AppUser = Depends(_USER_CREATOR),
-) -> "ResidentResetPasswordOut":
-    """Personel parolasini sifirla (admin + yonetici): yeni TEK SEFERLIK gecici
-    kod uretir; personel telefon + bu kodla girip yeni parolasini belirler. Kod
-    yalniz bu yanitta doner. yonetici YALNIZ saha personeli (guvenlik/tesis
-    gorevlisi) icin sifirlar."""
-    obj = await get_or_404(db, AppUser, user_id)
-    # Parola sifirlama da AYNI kapidan: kaydina dokunamadigin kisinin
-    # parolasini da sifirlayamazsin.
-    _yonetim_kapisi(user, obj.role)
-    temp_code = generate_temp_code()
-    obj.password_hash = None
-    obj.password_set = False
-    obj.temp_code_hash = hash_password(temp_code)
-    obj.updated_at = func.now()
-    await db.flush()
-    await audit_user(
-        db, user, Action.USER_RESET_PASSWORD, resource_type="app_user",
-        resource_id=obj.id,
-    )
-    return ResidentResetPasswordOut(temp_code=temp_code)
+# (P186-ek2) POST /users/{id}/reset-password KALDIRILDI. Yonetici bir
+# kullanicinin parolasini SIFIRLAYAMAZ: sifirlanan tek-seferlik kod, yoneticinin
+# o hesaba (kullanicidan once) girip parola belirlemesine izin verirdi —
+# hesap-ele-gecirme. Kurtarma yollari: (a) tamamlanmamis hesap icin DAVETI
+# yeniden gonder (`POST /davet/{id}/yeniden`); (b) kullanici kendisi
+# "sifremi unuttum" (e-posta OTP, `POST /auth/sifre-sifirla`) ya da
+# `PATCH /me/password` (mevcut parola/kod). Bkz docs/P186-kararlar.md.
 
 
 @router.patch("/{user_id}/contact", response_model=UserAdminOut)

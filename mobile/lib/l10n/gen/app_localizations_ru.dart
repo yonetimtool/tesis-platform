@@ -2928,25 +2928,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get sakinIslemleri => 'Действия с жителем';
 
   @override
-  String get sakinParolaSifirla => 'Сбросить пароль';
-
-  @override
-  String get sakinParolaSifirlaOnay => 'Сбросить пароль?';
-
-  @override
-  String sakinParolaSifirlaGovde(Object ad) {
-    return 'Для \"$ad\" будет создан новый временный код; старый пароль перестанет работать. Пользователь входит по телефону + новому коду и задаёт пароль.';
-  }
-
-  @override
-  String get sakinSifirla => 'Сбросить';
-
-  @override
-  String sakinYeniKodMesaji(Object ad) {
-    return 'Новый временный код для \"$ad\". Передайте его жителю: он входит по телефону + этому коду и задаёт пароль.';
-  }
-
-  @override
   String get sakinSilOnay => 'Удалить жителя?';
 
   @override
@@ -3006,29 +2987,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get sakinDaireNoZorunlu => 'Номер квартиры обязателен';
 
   @override
-  String get sakinParolaOpsiyonel => 'Пароль (необязательно)';
-
-  @override
-  String get sakinBosBirakKod => 'Оставьте пустым — будет создан временный код';
-
-  @override
-  String get sakinEklendiKod =>
-      'Житель добавлен. Передайте ему этот код: он входит по телефону + этому коду и задаёт пароль.';
-
-  @override
   String get sakinEklendi => 'Житель добавлен ✓';
 
   @override
   String get sakinYok => 'Жителей пока нет.\nДобавьте кнопкой справа снизу.';
-
-  @override
-  String get ortakGeciciKodBaslik => 'Временный код входа';
-
-  @override
-  String get ortakKopyala => 'Копировать';
-
-  @override
-  String get ortakKopyalandi => 'Скопировано';
 
   @override
   String get girisParolaVeyaKod => 'Пароль или временный код';
@@ -3166,23 +3128,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get personelAktiflestirildi => 'Активирован ✓';
 
   @override
-  String personelSifirlaGovde(Object ad) {
-    return 'Для $ad будет создан новый временный код; старый пароль перестанет работать.';
-  }
-
-  @override
-  String get personelYeniKodMesaji =>
-      'Новый временный код. Передайте его сотруднику: он входит по телефону + этому коду и задаёт пароль.';
-
-  @override
   String get personelGuncellendi => 'Сотрудник обновлён ✓';
 
   @override
   String get personelEklendi => 'Сотрудник добавлен ✓';
-
-  @override
-  String get personelEklendiKod =>
-      'Сотрудник добавлен. Передайте ему этот код: он входит по телефону + этому коду и задаёт пароль.';
 
   @override
   String get personelFoto => 'Фото';

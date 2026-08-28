@@ -334,25 +334,9 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
-  /residents/{id}/reset-password:
-    parameters:
-      - $ref: "#/components/parameters/PathId"
-    post:
-      tags: [auth]
-      summary: Sakin parolasini sifirla (yonetici/admin) — yeni gecici kod
-      description: |
-        Yeni TEK SEFERLIK gecici kod uretir (password_set=false); sakin telefon +
-        bu kodla girip yeni parola belirler. Kod YALNIZ bu yanitta doner.
-        role=resident degilse 404.
-      responses:
-        "200":
-          description: Yeni gecici kod
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ResidentResetPasswordOut" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "404": { $ref: "#/components/responses/NotFound" }
+  # (P186-ek2) /residents/{id}/reset-password KALDIRILDI — yonetici parola
+  # sifirlayamaz (hesap-ele-gecirme). Kurtarma: davet yeniden ya da kullanicinin
+  # kendi "sifremi unuttum"/PATCH /me/password yolu.
 
   /auth/refresh:
     post:
@@ -8999,26 +8983,9 @@ paths:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
         "422": { $ref: "#/components/responses/ValidationError" }
 
-  /users/{id}/reset-password:
-    parameters:
-      - $ref: "#/components/parameters/PathId"
-    post:
-      tags: [users]
-      summary: "Personel parolasini sifirla (admin: her; yonetici: saha) — gecici kod"
-      description: |
-        Yeni TEK SEFERLIK gecici kod uretir (password_set=false); personel telefon
-        + bu kodla girip yeni parola belirler. Kod YALNIZ bu yanitta doner. RBAC:
-        admin herkesi; yonetici YALNIZ saha personelini (security/tesis_gorevlisi)
-        sifirlar (aksi 403).
-      responses:
-        "200":
-          description: Yeni gecici kod
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ResidentResetPasswordOut" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "404": { $ref: "#/components/responses/NotFound" }
+  # (P186-ek2) /users/{id}/reset-password KALDIRILDI — yonetici parola
+  # sifirlayamaz (hesap-ele-gecirme). Kurtarma: davet yeniden ya da kullanicinin
+  # kendi "sifremi unuttum"/PATCH /me/password yolu.
 
   /users/{id}/contact:
     parameters:
@@ -10795,24 +10762,18 @@ components:
       type: object
       description: |
         telefon GLOBAL benzersiz LOGIN anahtaridir (zorunlu; E.164 normalize).
-        email opsiyonel (girise girmez). password verilmezse TEK SEFERLIK gecici
-        kod uretilir (yanitta `temp_code` bir kez doner — UserCreatedOut).
-      required: [ad, telefon, role]
+        email ZORUNLU (dogrulama/bildirim + DAVET kanali). (P186) `password` YOK:
+        hesap parolasiz acilir ve kisi DAVET (Tesis ID) ile kendi kimligini kurar.
+      required: [ad, telefon, email, role]
       properties:
         ad: { type: string }
         telefon:
           type: string
           description: GLOBAL benzersiz giris anahtari (E.164 normalize)
           example: "+905321112204"
-        email: { type: string, format: email, nullable: true }
+        email: { type: string, format: email }
         aranabilir: { type: boolean, default: false }
         role: { $ref: "#/components/schemas/UserRole" }
-        password:
-          type: string
-          format: password
-          minLength: 8
-          nullable: true
-          description: Verilmezse gecici kod uretilir (temp password first)
         gorev_baslangic:
           type: string
           format: date
@@ -10831,8 +10792,8 @@ components:
     UserCreatedOut:
       type: object
       description: >
-        Kullanici olusturma yaniti — `temp_code` YALNIZ parola verilmeyip gecici
-        kod uretildiginde ve bir kez duz metin doner.
+        Kullanici olusturma yaniti. (P186) `temp_code` KALDIRILDI — hesap
+        parolasiz acilir ve sahiplenme yalniz DAVET yoluyladir (`davet` ozeti).
       required: [id, ad, role, is_active, aranabilir, created_at]
       properties:
         id: { type: string, format: uuid }
@@ -10843,10 +10804,12 @@ components:
         role: { $ref: "#/components/schemas/UserRole" }
         is_active: { type: boolean }
         created_at: { type: string, format: date-time }
-        temp_code: { type: string, nullable: true, example: "K7MR-2QWX" }
     UserUpdate:
       type: object
       minProperties: 1
+      description: >
+        (P186) `password` YOK — yonetici bir kullanicinin parolasini
+        degistiremez; kullanici kendi `PATCH /me/password` yolunu kullanir.
       properties:
         ad: { type: string }
         email: { type: string, format: email }
@@ -10854,7 +10817,6 @@ components:
         aranabilir: { type: boolean }
         role: { $ref: "#/components/schemas/UserRole" }
         is_active: { type: boolean }
-        password: { type: string, format: password, minLength: 8 }
         # (P128) Gorev penceresi GUNCELLENEBILIR: uzatma ya da bitis
         # tarihini gecmise cekerek FIILEN IPTAL. `null` gondermek pencereyi
         # KALDIRIR (suresiz gorev) — alani hic gondermemekten farklidir.
@@ -12170,17 +12132,13 @@ components:
           nullable: true
           description: OPSIYONEL (giris anahtari degildir; bildirim/yedek)
         rol_tipi: { $ref: "#/components/schemas/ResidentRol" }
-        password:
-          type: string
-          format: password
-          minLength: 8
-          nullable: true
-          description: >
-            VERILIRSE dogrudan belirlenir (gecici kod URETILMEZ, temp_code null);
-            verilmezse gecici kod uretilir. Parola politikasi: 8+ karakter,
-            buyuk harf + rakam + sembol (ihlal 422).
+        # (P186) `password` YOK: hesap parolasiz acilir ve kisi DAVET (Tesis ID)
+        # ile kendi kimligini kurar; yonetici parola atamaz.
     ResidentCreated:
       type: object
+      description: >
+        (P186) `temp_code` KALDIRILDI — hesap parolasiz acilir, sahiplenme yalniz
+        DAVET yoluyladir (`davet` ozeti gonderim durumunu tasir).
       required: [user_id, unit_id, unit_no, ad]
       properties:
         user_id: { type: string, format: uuid }
@@ -12188,14 +12146,6 @@ components:
         unit_no: { type: string, example: "A-12" }
         ad: { type: string }
         email: { type: string, nullable: true }
-        temp_code:
-          type: string
-          nullable: true
-          example: "K7MR-2QWX"
-          description: |
-            TEK SEFERLIK gecici giris kodu — parola VERILMEDIYSE bir kez doner
-            (parola verildiyse null). Sunucuda bcrypt hash'i saklanir; sakin
-            kalici parolasini belirleyince silinir.
     ResidentListItem:
       type: object
       description: Site sakin listesi ogesi — telefon KVKK geregi YOK.
@@ -12248,11 +12198,6 @@ components:
             AKTIF daire baglarina uygulanir. Bir dairede hem malik hem kiraci
             olabilir (ayri kayitlar); muhasebede aidat KIRACI ONCELIKLI,
             yatirim/demirbas MALIK hedeflidir (P28).
-    ResidentResetPasswordOut:
-      type: object
-      required: [temp_code]
-      properties:
-        temp_code: { type: string, example: "K7MR-2QWX" }
     ResidentDeleteOut:
       type: object
       required: [deleted]

@@ -2729,25 +2729,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get sakinIslemleri => 'Sakin işlemleri';
 
   @override
-  String get sakinParolaSifirla => 'Parola sıfırla';
-
-  @override
-  String get sakinParolaSifirlaOnay => 'Parola sıfırlansın mı?';
-
-  @override
-  String sakinParolaSifirlaGovde(Object ad) {
-    return '\"$ad\" için yeni geçici kod üretilir; eski parolası geçersiz olur. Kullanıcı telefon + yeni kod ile girip parolasını belirler.';
-  }
-
-  @override
-  String get sakinSifirla => 'Sıfırla';
-
-  @override
-  String sakinYeniKodMesaji(Object ad) {
-    return '\"$ad\" için yeni geçici kod. Sakine iletin; telefon + bu kod ile girip parolasını belirler.';
-  }
-
-  @override
   String get sakinSilOnay => 'Sakini sil?';
 
   @override
@@ -2807,29 +2788,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get sakinDaireNoZorunlu => 'Daire no zorunludur';
 
   @override
-  String get sakinParolaOpsiyonel => 'Parola (opsiyonel)';
-
-  @override
-  String get sakinBosBirakKod => 'Boş bırakırsanız geçici kod üretilir';
-
-  @override
-  String get sakinEklendiKod =>
-      'Sakin eklendi. Bu kodu sakine iletin; telefon + bu kod ile girip parolasını belirler.';
-
-  @override
   String get sakinEklendi => 'Sakin eklendi ✓';
 
   @override
   String get sakinYok => 'Henüz site sakini yok.\nSağ alttan ekleyebilirsiniz.';
-
-  @override
-  String get ortakGeciciKodBaslik => 'Geçici giriş kodu';
-
-  @override
-  String get ortakKopyala => 'Kopyala';
-
-  @override
-  String get ortakKopyalandi => 'Kopyalandı';
 
   @override
   String get girisParolaVeyaKod => 'Parola veya geçici kod';
@@ -2965,23 +2927,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get personelAktiflestirildi => 'Aktifleştirildi ✓';
 
   @override
-  String personelSifirlaGovde(Object ad) {
-    return '$ad için yeni geçici kod üretilecek; eski parola geçersiz olur.';
-  }
-
-  @override
-  String get personelYeniKodMesaji =>
-      'Yeni geçici kod. Personele iletin; telefon + bu kod ile girip parolasını belirler.';
-
-  @override
   String get personelGuncellendi => 'Personel güncellendi ✓';
 
   @override
   String get personelEklendi => 'Personel eklendi ✓';
-
-  @override
-  String get personelEklendiKod =>
-      'Personel eklendi. Bu kodu personele iletin; telefon + bu kod ile girip parolasını belirler.';
 
   @override
   String get personelFoto => 'Fotoğraf';

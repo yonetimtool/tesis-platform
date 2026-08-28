@@ -2822,25 +2822,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get sakinIslemleri => 'Actions du résident';
 
   @override
-  String get sakinParolaSifirla => 'Réinitialiser le mot de passe';
-
-  @override
-  String get sakinParolaSifirlaOnay => 'Réinitialiser le mot de passe ?';
-
-  @override
-  String sakinParolaSifirlaGovde(Object ad) {
-    return 'Un nouveau code temporaire est généré pour \"$ad\" ; l’ancien mot de passe devient invalide. L’utilisateur se connecte avec le téléphone + le nouveau code puis définit un mot de passe.';
-  }
-
-  @override
-  String get sakinSifirla => 'Réinitialiser';
-
-  @override
-  String sakinYeniKodMesaji(Object ad) {
-    return 'Nouveau code temporaire pour \"$ad\". Transmettez-le au résident : il se connecte avec le téléphone + ce code puis définit un mot de passe.';
-  }
-
-  @override
   String get sakinSilOnay => 'Supprimer le résident ?';
 
   @override
@@ -2900,30 +2881,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get sakinDaireNoZorunlu => 'Le numéro de logement est obligatoire';
 
   @override
-  String get sakinParolaOpsiyonel => 'Mot de passe (facultatif)';
-
-  @override
-  String get sakinBosBirakKod => 'Laissez vide pour générer un code temporaire';
-
-  @override
-  String get sakinEklendiKod =>
-      'Résident ajouté. Transmettez-lui ce code : il se connecte avec le téléphone + ce code puis définit un mot de passe.';
-
-  @override
   String get sakinEklendi => 'Résident ajouté ✓';
 
   @override
   String get sakinYok =>
       'Aucun résident pour l’instant.\nAjoutez-en depuis le bas à droite.';
-
-  @override
-  String get ortakGeciciKodBaslik => 'Code de connexion temporaire';
-
-  @override
-  String get ortakKopyala => 'Copier';
-
-  @override
-  String get ortakKopyalandi => 'Copié';
 
   @override
   String get girisParolaVeyaKod => 'Mot de passe ou code temporaire';
@@ -3063,23 +3025,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get personelAktiflestirildi => 'Activé ✓';
 
   @override
-  String personelSifirlaGovde(Object ad) {
-    return 'Un nouveau code temporaire sera généré pour $ad ; l\'ancien mot de passe devient invalide.';
-  }
-
-  @override
-  String get personelYeniKodMesaji =>
-      'Nouveau code temporaire. Transmettez-le à l\'employé : il se connecte avec le téléphone + ce code puis définit un mot de passe.';
-
-  @override
   String get personelGuncellendi => 'Employé mis à jour ✓';
 
   @override
   String get personelEklendi => 'Employé ajouté ✓';
-
-  @override
-  String get personelEklendiKod =>
-      'Employé ajouté. Transmettez-lui ce code : il se connecte avec le téléphone + ce code puis définit un mot de passe.';
 
   @override
   String get personelFoto => 'Photo';

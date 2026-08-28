@@ -39,9 +39,11 @@ def _new_category(client, mgr, ad="Elektrik"):
     return r.json()
 
 
-def _second_resident(client, world):
+def _second_resident(client, world, owner_conn):
     """Ayni tenant'ta IKINCI bir sakin (admin uzerinden) — 'kendi kaydi'
     ayrimini test etmek icin."""
+    from app.security import hash_password
+
     admin = _headers(client, world["slug_a"], world["admin_a"])
     email = f"sakin2-{uuid.uuid4().hex[:8]}@acme.com"
     pw = "Sakin1234!"
@@ -53,11 +55,13 @@ def _second_resident(client, world):
               "role": "resident"},
     )
     assert r.status_code == 201, r.text
-    # (P186) POST /users parola almaz; giris yapabilmesi icin parolayi
-    # DUZENLEME ile belirle (edit-mode parola korundu).
-    assert client.patch(
-        f"/users/{r.json()['id']}", headers=admin, json={"password": pw}
-    ).status_code == 200
+    # (P186) POST /users parola almaz ve yonetici parola atayamaz; giris
+    # yapabilmesi icin parolayi DB'ye dogrudan yaz (world fixture'i gibi).
+    with owner_conn.cursor() as cur:
+        cur.execute(
+            "UPDATE app_user SET password_hash=%s, password_set=true WHERE id=%s",
+            (hash_password(pw), r.json()["id"]),
+        )
     return _headers(client, world["slug_a"], {"email": email, "password": pw})
 
 
@@ -133,11 +137,11 @@ def test_validation(client, world):
 
 
 # --------------------------- kendi / yonetim gorunumu ----------------------- #
-def test_acan_roller_yalniz_kendini_gorur_yonetim_tumunu(client, world):
+def test_acan_roller_yalniz_kendini_gorur_yonetim_tumunu(client, world, owner_conn):
     """Kesin kural: her acan rol (saha + sakin) YALNIZ kendi actigini gorur —
     baska acanin kaydini listede goremez, detayda 404; yonetim tumunu gorur."""
     resident1 = _headers(client, world["slug_a"], world["resident_a"])
-    resident2 = _second_resident(client, world)
+    resident2 = _second_resident(client, world, owner_conn)
     guard = _headers(client, world["slug_a"], world["guard_a"])
     gorevli = _headers(client, world["slug_a"], world["gorevli_a"])
 
@@ -306,11 +310,11 @@ def test_acan_kendi_talebini_geri_alir(client, world):
     assert g.json()["durum"] == "geri_alindi"
 
 
-def test_baskasinin_talebi_geri_alinamaz_404(client, world):
+def test_baskasinin_talebi_geri_alinamaz_404(client, world, owner_conn):
     """Varligi da sizdirilmaz: 403 degil 404."""
     sakin = _headers(client, world["slug_a"], world["resident_a"])
     t = _new(client, sakin)
-    digeri = _second_resident(client, world)
+    digeri = _second_resident(client, world, owner_conn)
     r = client.post(f"/complaints/{t['id']}/withdraw", headers=digeri)
     assert r.status_code == 404, r.text
 

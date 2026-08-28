@@ -6,8 +6,6 @@
 ///     KIMLIGI dondurur (`AkisHatasi`) — sunucu metni ayri kanaldir.
 ///   * Kullanici verisi (kural basligi, sakin adi) cevrilmez ama cumleye
 ///     PLACEHOLDER olarak girer; tirnaklar korunur.
-///   * Ortak `showTempCodeDialog` kendi metinlerini `l10n`'dan alir; ACIKLAMA
-///     satirini CAGIRAN yerellestirir (baglama gore degisir).
 ///   * Cok-parametreli `duyuruMeta` MESAJ sirasinda uretilir (tur 5 bulgusu).
 library;
 
@@ -167,9 +165,6 @@ class _FakeSakinApi extends ResidentsApi {
 
   @override
   Future<List<ResidentMember>> getResidents() async => _items;
-
-  @override
-  Future<String> resetPassword(String userId) async => '571304';
 
   @override
   Future<bool> removeResident(String userId) async => true;
@@ -393,24 +388,20 @@ void main() {
     expect(tr.sakinSilindi('Ayse'), '"Ayse" silindi (numara serbest)');
   });
 
-  test('gecici kod dialogu + sakin metinleri 7 dilde var', () async {
+  test('sakin + kural metinleri 7 dilde var', () async {
+    // P186: yonetici parola sifirlama + gecici kod diyalogu KALDIRILDI;
+    // ilgili anahtarlar (ortakGeciciKodBaslik, sakinParolaSifirla,
+    // sakinYeniKodMesaji, ...) silindi. Kalan sakin/kural metinleri 7 dilde.
     for (final kod in ['tr', 'en', 'ar', 'ru', 'de', 'fr', 'es']) {
       final l10n = await AppLocalizations.delegate.load(Locale(kod));
       for (final metin in [
-        l10n.ortakGeciciKodBaslik,
-        l10n.ortakKopyala,
-        l10n.ortakKopyalandi,
         l10n.sakinEkle,
-        l10n.sakinParolaSifirla,
+        l10n.sakinEklendi,
         l10n.kuralYeni,
         l10n.duyuruYayinla,
       ]) {
         expect(metin.trim(), isNotEmpty, reason: kod);
       }
-      // Placeholder tasiyan metinler ADI GERCEKTEN yerlestirmeli.
-      expect(l10n.sakinYeniKodMesaji('Ayse'), contains('Ayse'), reason: kod);
-      expect(l10n.sakinParolaSifirlaGovde('Ayse'), contains('Ayse'),
-          reason: kod);
     }
   });
 
@@ -750,14 +741,11 @@ void main() {
     await tumEksenlerSurusu(tester, (dil) => _sakinEkrani(Locale(dil)),
         veri: surusVerisi, hazirla: menuEylemi(0));
   });
-  testWidgets('ZINCIR: sakin PAROLA SIFIRLAMA onayi (bes eksen)',
-      (tester) async {
+  testWidgets('ZINCIR: sakin SILME onayi (bes eksen)', (tester) async {
+    // Menu artik iki oge: DUZENLE(0) + SIL(1) — parola sifirlama (eski
+    // index 1) P186'da kaldirildi.
     await tumEksenlerSurusu(tester, (dil) => _sakinEkrani(Locale(dil)),
         veri: surusVerisi, hazirla: menuEylemi(1));
-  });
-  testWidgets('ZINCIR: sakin SILME onayi (bes eksen)', (tester) async {
-    await tumEksenlerSurusu(tester, (dil) => _sakinEkrani(Locale(dil)),
-        veri: surusVerisi, hazirla: menuEylemi(2));
   });
 
   // ---- TUR 53: FOTO SECIMINDEN VAZGECME ----

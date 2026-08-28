@@ -164,14 +164,9 @@ def test_sakin_eklemede_DAVET_gonderilir(client, world):
     assert davet["kanal"] == "sms"
 
 
-def test_parola_ILE_acilan_sakine_davet_YOK(client, world):
-    """Parola verilirse hesap zaten girebilir; davet anlamsiz."""
-    yon = _headers(client, world["slug_a"], world["yonetici_a"])
-    r = client.post("/residents", headers=yon, json={
-        "telefon": _tel(), "unit_no": f"DV-{uuid.uuid4().hex[:4]}",
-        "password": "DogrudanParola1!"})
-    assert r.status_code == 201, r.text
-    assert r.json()["davet"] is None
+# (P186-ek2) test_parola_ILE_acilan_sakine_davet_YOK KALDIRILDI: POST /residents
+# artik PAROLA ALMAZ (yonetici parola atayamaz), hesap DAIMA parolasiz acilir ve
+# davet HER ZAMAN gonderilir — "parola verilirse davet yok" senaryosu kalmadi.
 
 
 # ======================= YONETICI: DAVET PANELI ========================== #
@@ -194,12 +189,20 @@ def test_yonetici_davet_LISTELER_ve_yeniden_gonderir(client, world, owner_conn):
 
 def test_davet_paneli_ROL_KAPISI(client, world, owner_conn):
     """Sakin davet panelini goremez (yalniz admin/yonetici)."""
-    # Once bir sakin acalim ve onunla girelim.
+    from app.security import hash_password
+
+    # Once bir sakin acalim ve onunla girelim. (P186-ek2) POST /residents parola
+    # ALMAZ; login-phone yapabilmesi icin parolayi DOGRUDAN DB'ye yaziyoruz.
     yon = _headers(client, world["slug_a"], world["yonetici_a"])
     tel = _tel()
-    client.post("/residents", headers=yon, json={
-        "telefon": tel, "unit_no": f"DV-{uuid.uuid4().hex[:4]}",
-        "password": "SakinParola1!"})
+    created = client.post("/residents", headers=yon, json={
+        "telefon": tel, "unit_no": f"DV-{uuid.uuid4().hex[:4]}"})
+    assert created.status_code == 201, created.text
+    with owner_conn.cursor() as cur:
+        cur.execute(
+            "UPDATE app_user SET password_hash=%s, password_set=true WHERE id=%s",
+            (hash_password("SakinParola1!"), created.json()["user_id"]),
+        )
     sakin = client.post("/auth/login-phone", json={"phone": tel, "password": "SakinParola1!"})
     assert sakin.status_code == 200, sakin.text
     h = {"Authorization": f"Bearer {sakin.json()['access_token']}"}

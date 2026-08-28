@@ -33,10 +33,8 @@ from ..schemas import (
     ResidentDeleteOut,
     ResidentListItem,
     ResidentListResponse,
-    ResidentResetPasswordOut,
     ResidentUpdate,
 )
-from ..security import generate_temp_code, hash_password
 
 router = APIRouter(prefix="/residents", tags=["auth"])
 
@@ -82,18 +80,9 @@ async def create_resident(
     if await daire_rolu_dolu_mu(db, unit.id, body.rol_tipi):
         raise APIError(409, "conflict", "daire_zaten_dolu")
 
-    # 2) sakin hesabi. Parola VERILDIYSE dogrudan belirlenir (gecici kod YOK);
-    #    verilmediyse tek seferlik gecici kod uretilir.
-    if body.password is not None:
-        temp_code = None
-        password_hash = hash_password(body.password)
-        password_set = True
-        temp_code_hash = None
-    else:
-        temp_code = generate_temp_code()
-        password_hash = None
-        password_set = False
-        temp_code_hash = hash_password(temp_code)
+    # 2) sakin hesabi. (P186-ek2) YONETICI PAROLA ATAMAZ, GECICI KOD URETILMEZ:
+    #    hesap DAIMA parolasiz acilir ve DAVET (Tesis ID) ile kisi kendi
+    #    kimligini kurar. Yoneticinin parola/kod bilmesi hesap-ele-gecirmeydi.
     resident = AppUser(
         tenant_id=user.tenant_id,
         # Ad verilmediyse DAIREDEN turetilen gecici ad — gerekcesi
@@ -103,9 +92,9 @@ async def create_resident(
         email=str(body.email) if body.email else None,
         telefon=body.telefon,
         role="resident",
-        password_hash=password_hash,
-        temp_code_hash=temp_code_hash,
-        password_set=password_set,
+        password_hash=None,
+        temp_code_hash=None,
+        password_set=False,
     )
     db.add(resident)
     try:
@@ -136,21 +125,19 @@ async def create_resident(
         resource_id=resident.id, meta={"unit_id": str(unit.id)},
     )
 
-    # (P155 §7) DAVET: parolasiz acilan hesaba jetonlu kayit bagi gonder.
-    # Parola VERILDIYSE davet anlamsizdir (hesap zaten girebilir).
-    davet_ozeti = None
-    if not password_set:
-        tenant_ad = (
-            await db.execute(
-                text("SELECT ad FROM tenant WHERE id = :t"),
-                {"t": str(user.tenant_id)},
-            )
-        ).scalar_one()
-        gonderildi = await davet_olustur_ve_gonder(
-            db, user=resident, tenant_ad=tenant_ad, gonderen_id=user.id,
-            dil=istek_dili(accept_language),
+    # (P155 §7 · P186-ek2) DAVET: hesap DAIMA parolasiz acildigindan HER ZAMAN
+    # jetonlu kayit bagi gonderilir (SMS + varsa HTML e-posta).
+    tenant_ad = (
+        await db.execute(
+            text("SELECT ad FROM tenant WHERE id = :t"),
+            {"t": str(user.tenant_id)},
         )
-        davet_ozeti = DavetGonderimSonucu(gonderildi=gonderildi, kanal="sms")
+    ).scalar_one()
+    gonderildi = await davet_olustur_ve_gonder(
+        db, user=resident, tenant_ad=tenant_ad, gonderen_id=user.id,
+        dil=istek_dili(accept_language),
+    )
+    davet_ozeti = DavetGonderimSonucu(gonderildi=gonderildi, kanal="sms")
 
     return ResidentCreatedOut(
         user_id=resident.id,
@@ -158,7 +145,6 @@ async def create_resident(
         unit_no=unit.no,
         ad=resident.ad,
         email=resident.email,
-        temp_code=temp_code,
         davet=davet_ozeti,
     )
 
@@ -268,27 +254,9 @@ async def update_resident(
     return Response(status_code=204)
 
 
-@router.post("/{user_id}/reset-password", response_model=ResidentResetPasswordOut)
-async def reset_resident_password(
-    user_id: uuid.UUID,
-    db: AsyncSession = Depends(get_tenant_db),
-    user: AppUser = Depends(_YONETIM),
-) -> ResidentResetPasswordOut:
-    """Sakin parolasini sifirla (yonetici/admin): yeni TEK SEFERLIK gecici kod
-    uretir. Sakin telefon + bu kodla girip yeni parolasini belirler (§1.3).
-    Kod YALNIZ bu yanitta duz metin doner."""
-    resident = await _resident_or_404(db, user_id)
-    temp_code = generate_temp_code()
-    resident.password_hash = None
-    resident.password_set = False
-    resident.temp_code_hash = hash_password(temp_code)
-    resident.updated_at = func.now()
-    await db.flush()
-    await audit_user(
-        db, user, Action.RESIDENT_RESET_PASSWORD, resource_type="app_user",
-        resource_id=user_id,
-    )
-    return ResidentResetPasswordOut(temp_code=temp_code)
+# (P186-ek2) POST /residents/{id}/reset-password KALDIRILDI — bkz users.py'deki
+# ayni gerekce. Yonetici sakin parolasini sifirlayamaz; kurtarma DAVET yeniden
+# ya da kullanicinin kendi "sifremi unuttum"/`/me/password` yoludur.
 
 
 @router.delete("/{user_id}", response_model=ResidentDeleteOut)

@@ -203,13 +203,19 @@ def test_yonetici_cannot_create_yetki_yukseltmesi(client, world):
 
 
 # ------------------------------ guncelle ----------------------------------- #
-def test_update_user_role_active_password(client, world):
+def test_update_user_role_active_password(client, world, owner_conn):
+    """(P186) Yonetici PAROLA ATAYAMAZ — PATCH `password` YOKSAYILIR. Bu test
+    yalnizca rol + is_active guncellemesini olculur. Login'in gercekten parolaya
+    ve is_active'e baglandigini dogrulamak icin parola DB'ye dogrudan yazilir
+    (world fixture'inin yaptigi gibi), cunku olusturma/patch parolasizdir."""
+    from app.security import hash_password
+
     admin = _headers(client, world["slug_a"], world["admin_a"])
     email = f"upd-{uuid.uuid4().hex[:8]}@acme.com"
     created = client.post(
         "/users",
         headers=admin,
-        json={"ad": "Guncellenecek", "email": email, "telefon": _uphone(), "role": "tesis_gorevlisi", "password": "IlkParola1!"},
+        json={"ad": "Guncellenecek", "email": email, "telefon": _uphone(), "role": "tesis_gorevlisi"},
     ).json()
     uid = created["id"]
 
@@ -218,10 +224,18 @@ def test_update_user_role_active_password(client, world):
     assert pr.status_code == 200
     assert pr.json()["role"] == "security" and pr.json()["is_active"] is False
 
-    # parola degistir -> yeni parola ile login olur (ama is_active False -> login reddedilir)
-    client.patch(f"/users/{uid}", headers=admin, json={"is_active": True, "password": "YeniParola9!"})
+    # parola DB'ye dogrudan yazilir (yonetici arayuzunden atanamaz)
+    with owner_conn.cursor() as cur:
+        cur.execute(
+            "UPDATE app_user SET password_hash=%s, password_set=true WHERE id=%s",
+            (hash_password("YeniParola9!"), uid),
+        )
+
+    # is_active False iken login reddedilir; True yapinca parola ile login olur
+    assert _login_status(client, world["slug_a"], email, "YeniParola9!") == 401
+    client.patch(f"/users/{uid}", headers=admin, json={"is_active": True})
     assert _login_status(client, world["slug_a"], email, "YeniParola9!") == 200
-    assert _login_status(client, world["slug_a"], email, "IlkParola1!") == 401
+    assert _login_status(client, world["slug_a"], email, "YanlisParola1!") == 401
 
 
 def test_update_user_email_and_conflict(client, world):
@@ -274,7 +288,12 @@ def _me_id(client, h):
     return client.get("/me", headers=h).json()["id"]
 
 
-def test_yonetici_updates_and_resets_field_staff(client, world):
+def test_yonetici_updates_field_staff(client, world, owner_conn):
+    """(P186) Parola sifirlama ucu KALDIRILDI — yonetici saha personelinin
+    yalnizca ad/telefon/rol/is_active bilgilerini duzenler. Login'in is_active'e
+    baglandigi, parola DB'ye dogrudan yazilarak dogrulanir."""
+    from app.security import hash_password
+
     yon = _headers(client, world["slug_a"], world["yonetici_a"])
     phone = _uphone()
     created = client.post(
@@ -298,18 +317,21 @@ def test_yonetici_updates_and_resets_field_staff(client, world):
         f"/users/{uid}", headers=yon, json={"role": "admin"}
     ).status_code == 403
 
-    # parola sifirla -> temp_code; personel telefon + kod ile ilk-giris akisi
-    rr = client.post(f"/users/{uid}/reset-password", headers=yon)
-    assert rr.status_code == 200 and rr.json()["temp_code"]
+    # parola DB'ye yazilir (yonetici atayamaz); telefon + parola ile login olur
+    with owner_conn.cursor() as cur:
+        cur.execute(
+            "UPDATE app_user SET password_hash=%s, password_set=true WHERE id=%s",
+            (hash_password("SahaParola1!"), uid),
+        )
     lp = client.post(
-        "/auth/login-phone", json={"phone": newphone, "password": rr.json()["temp_code"]}
+        "/auth/login-phone", json={"phone": newphone, "password": "SahaParola1!"}
     )
-    assert lp.status_code == 200 and lp.json()["password_setup_required"] is True
+    assert lp.status_code == 200, lp.text
 
     # pasiflestir -> login reddedilir (is_active False)
     client.patch(f"/users/{uid}", headers=yon, json={"is_active": False})
     lp2 = client.post(
-        "/auth/login-phone", json={"phone": newphone, "password": rr.json()["temp_code"]}
+        "/auth/login-phone", json={"phone": newphone, "password": "SahaParola1!"}
     )
     assert lp2.status_code == 401
 
@@ -328,27 +350,6 @@ def test_yonetici_cannot_manage_yonetilemeyen_rolleri(client, world):
         assert client.patch(
             f"/users/{uid}", headers=yon, json={"ad": "X"}
         ).status_code == 403, cred
-        assert client.post(
-            f"/users/{uid}/reset-password", headers=yon
-        ).status_code == 403, cred
-
-
-def test_reset_password_rbac_yonetim_only(client, world):
-    admin = _headers(client, world["slug_a"], world["admin_a"])
-    created = client.post(
-        "/users", headers=admin,
-        json={"ad": "R", "email": f"r-{uuid.uuid4().hex[:8]}@acme.com", "telefon": _uphone(), "role": "security"},
-    ).json()
-    # admin herhangi personeli sifirlar
-    assert client.post(
-        f"/users/{created['id']}/reset-password", headers=admin
-    ).status_code == 200
-    # saha/resident sifirlayamaz -> 403
-    for role in ("guard_a", "gorevli_a", "resident_a"):
-        h = _headers(client, world["slug_a"], world[role])
-        assert client.post(
-            f"/users/{created['id']}/reset-password", headers=h
-        ).status_code == 403, role
 
 
 # ============================ P186 — duzenleme ============================== #

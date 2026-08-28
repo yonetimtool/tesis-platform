@@ -38,8 +38,10 @@ def _mk_event(client, headers, **over):
     return r.json()
 
 
-def _second_resident(client, world):
+def _second_resident(client, world, owner_conn):
     """Ayni tenant'ta IKINCI bir sakin — sayac/upsert testleri icin."""
+    from app.security import hash_password
+
     admin = _headers(client, world["slug_a"], world["admin_a"])
     email = f"etk-sakin-{uuid.uuid4().hex[:8]}@acme.com"
     pw = "Sakin1234!"
@@ -51,11 +53,13 @@ def _second_resident(client, world):
               "role": "resident"},
     )
     assert r.status_code == 201, r.text
-    # (P186) POST /users parola almaz; giris yapabilmesi icin parolayi
-    # DUZENLEME ile belirle (edit-mode parola korundu).
-    assert client.patch(
-        f"/users/{r.json()['id']}", headers=admin, json={"password": pw}
-    ).status_code == 200
+    # (P186) POST /users parola almaz ve yonetici parola atayamaz; giris
+    # yapabilmesi icin parolayi DB'ye dogrudan yaz (world fixture'i gibi).
+    with owner_conn.cursor() as cur:
+        cur.execute(
+            "UPDATE app_user SET password_hash=%s, password_set=true WHERE id=%s",
+            (hash_password(pw), r.json()["id"]),
+        )
     return _headers(client, world["slug_a"], {"email": email, "password": pw})
 
 
@@ -145,13 +149,13 @@ def test_tum_roller_okur_ve_sayilari_gorur(client, world):
 
 
 # --------------------------------- RSVP ------------------------------------- #
-def test_rsvp_sayaci_yansitir_ve_beyan_kilitli_cift_kayit_yok(client, world):
+def test_rsvp_sayaci_yansitir_ve_beyan_kilitli_cift_kayit_yok(client, world, owner_conn):
     """ANA AKIS: katiliyorum -> sayi 1; ikinci sakin -> 2. Beyan KILITLI:
     ilk beyandan sonra tekrar PUT (farkli VEYA ayni durum) 409 doner; sayilar
     degismez, cift kayit olusmaz (secim kesin)."""
     yonetici = _headers(client, world["slug_a"], world["yonetici_a"])
     resident1 = _headers(client, world["slug_a"], world["resident_a"])
-    resident2 = _second_resident(client, world)
+    resident2 = _second_resident(client, world, owner_conn)
     e = _mk_event(client, yonetici, baslik="RSVP akisi")
 
     r1 = client.put(f"/events/{e['id']}/rsvp", headers=resident1,

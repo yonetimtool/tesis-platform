@@ -319,7 +319,10 @@ class UserUpdate(BaseModel):
     aranabilir: bool | None = None
     role: UserRoleLiteral | None = None
     is_active: bool | None = None
-    password: str | None = Field(None, min_length=8)
+    # (P186-ek2) `password` KALDIRILDI: yonetici bir kullanicinin parolasini
+    # DEGISTIREMEZ (o parolayla hesaba girebilirdi). Kullanici kendi parolasini
+    # `PATCH /me/password` (mevcut parola/kod) ile degistirir; unutursa
+    # "sifremi unuttum" (e-posta OTP).
     # (P128) Gorev penceresi GUNCELLENEBILIR: yonetici gorevi uzatir ya da
     # bitis tarihini bugune cekerek FIILEN IPTAL eder. `is_active=false` ile
     # kapatmak da mumkundur; ikisi farkli seylerdir — biri "gorevi bitti",
@@ -355,11 +358,6 @@ class UserUpdate(BaseModel):
             return normalize_phone(v)
         except ValueError as exc:
             raise ValueError(str(exc)) from exc
-
-    @field_validator("password")
-    @classmethod
-    def _strong(cls, v: str | None) -> str | None:
-        return v if v is None else validate_password_strength(v)
 
     @model_validator(mode="after")
     def _at_least_one(self) -> "UserUpdate":
@@ -3192,9 +3190,8 @@ class ResidentCreate(BaseModel):
     telefon: str = Field(..., min_length=1, examples=["+905321112203"])
     email: EmailStr | None = None  # sakinde opsiyonel
     rol_tipi: ResidentRol | None = None
-    # Parola VERILIRSE dogrudan belirlenir (gecici kod URETILMEZ); verilmezse
-    # tek seferlik gecici kod uretilir.
-    password: str | None = Field(None, min_length=8)
+    # (P186-ek2) `password` KALDIRILDI: yonetici parola atamaz; hesap parolasiz
+    # acilir ve DAVET (Tesis ID) ile kisi kendi kimligini kurar.
 
     @field_validator("telefon")
     @classmethod
@@ -3204,23 +3201,16 @@ class ResidentCreate(BaseModel):
         except ValueError as exc:
             raise ValueError(str(exc)) from exc
 
-    @field_validator("password")
-    @classmethod
-    def _strong(cls, v: str | None) -> str | None:
-        return v if v is None else validate_password_strength(v)
-
 
 class ResidentCreatedOut(BaseModel):
-    """`temp_code` YALNIZ bu yanitta bir kez duz metin doner (yonetici sakine
-    iletir); sunucuda hash'i saklanir ve parola belirlenince gecersizlesir."""
+    """(P186-ek2) `temp_code` KALDIRILDI — hesap parolasiz acilir ve sahiplenme
+    yalniz DAVET yoluyladir; gosterilecek tek-seferlik kod yoktur."""
 
     user_id: uuid.UUID
     unit_id: uuid.UUID
     unit_no: str
     ad: str
     email: str | None = None
-    # Parola verilmediyse gecici kod doner; parola verildiyse null.
-    temp_code: str | None = None
     # (P155 §7) Davet gonderim ozeti — parolasiz acilan hesaba jetonlu bag
     # gonderildi mi. Saglayici yapilandirilmamissa gonderildi=false gelir ve
     # panel yoneticiye "gitmeyeni" gosterir.
@@ -3275,12 +3265,6 @@ class ResidentUpdate(BaseModel):
         if not self.model_fields_set:
             raise ValueError("en az bir alan gerekli")
         return self
-
-
-class ResidentResetPasswordOut(BaseModel):
-    """Parola sifirlama — yeni gecici kod YALNIZ burada bir kez doner."""
-
-    temp_code: str
 
 
 class ResidentDeleteOut(BaseModel):

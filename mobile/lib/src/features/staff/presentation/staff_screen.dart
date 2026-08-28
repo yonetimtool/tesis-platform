@@ -7,8 +7,6 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
 import '../../../core/ui/bos_durum.dart';
-import '../../../core/ui/temp_code_dialog.dart';
-import '../../../core/validators/password_rule.dart';
 import '../../auth/domain/user_role.dart';
 import '../../auth/presentation/rol_adi.dart';
 import '../../tasks/presentation/task_complete_controller.dart'
@@ -22,7 +20,7 @@ import '../../../core/ui/telefon_hata_metni.dart';
 
 /// Saha Personeli (Ozellik 3) — yonetici/admin: guvenlik + tesis gorevlisi
 /// hesaplarini listeler ve ekler. yonetici backend'de YALNIZ saha personeli
-/// acabilir; parola bossa donen gecici kod gosterilir.
+/// acabilir; parola bossa hesap PAROLASIZ acilir ve otomatik davet gonderilir.
 class StaffScreen extends ConsumerWidget {
   const StaffScreen({super.key});
 
@@ -119,15 +117,10 @@ class _StaffTile extends ConsumerWidget {
             PopupMenuButton<String>(
               onSelected: (v) {
                 if (v == 'edit') _edit(context, ref);
-                if (v == 'reset') _reset(context, ref);
                 if (v == 'toggle') _toggle(context, ref);
               },
               itemBuilder: (_) => [
                 PopupMenuItem(value: 'edit', child: Text(l10n.ortakDuzenle)),
-                PopupMenuItem(
-                  value: 'reset',
-                  child: Text(l10n.sakinParolaSifirla),
-                ),
                 PopupMenuItem(
                   value: 'toggle',
                   child: Text(member.isActive
@@ -148,40 +141,6 @@ class _StaffTile extends ConsumerWidget {
       builder: (_) => _AddStaffSheet(existing: member),
     );
     if (saved != null) ref.invalidate(fieldStaffProvider);
-  }
-
-  Future<void> _reset(BuildContext context, WidgetRef ref) async {
-    // Async bosluklardan ONCE yakala.
-    final l10n = context.l10n;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (dctx) => AlertDialog(
-        title: Text(l10n.sakinParolaSifirlaOnay),
-        content: Text(l10n.personelSifirlaGovde(member.ad)),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.of(dctx).pop(false),
-              child: Text(l10n.ortakVazgec)),
-          FilledButton(
-              onPressed: () => Navigator.of(dctx).pop(true),
-              child: Text(l10n.sakinSifirla)),
-        ],
-      ),
-    );
-    if (ok != true || !context.mounted) return;
-    final messenger = ScaffoldMessenger.of(context);
-    final ctx = context;
-    try {
-      final code = await ref.read(staffApiProvider).resetPassword(member.id);
-      if (!ctx.mounted) return;
-      await showTempCodeDialog(
-        ctx,
-        code: code,
-        message: l10n.personelYeniKodMesaji,
-      );
-    } on ApiException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
-    }
   }
 
   Future<void> _toggle(BuildContext context, WidgetRef ref) async {
@@ -205,8 +164,8 @@ class _AddStaffSheet extends ConsumerStatefulWidget {
   const _AddStaffSheet({this.existing});
 
   /// null → yeni personel; dolu → o personeli DUZENLE (ad/rol; telefon
-  /// opsiyonel — bos ise degismez). Parola alani duzenlemede yok (ayri
-  /// "Parola sıfırla" akisi var).
+  /// opsiyonel — bos ise degismez). Parola alani HIC yok (ne eklemede ne
+  /// duzenlemede); parolayi kisi kendi kayit akisinda belirler.
   final StaffMember? existing;
 
   @override
@@ -217,7 +176,6 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
   final _formKey = GlobalKey<FormState>();
   final _adCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
-  final _passwordCtrl = TextEditingController();
   String _role = 'security';
   bool _submitting = false;
 
@@ -315,7 +273,6 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
   void dispose() {
     _adCtrl.dispose();
     _phoneCtrl.dispose();
-    _passwordCtrl.dispose();
     super.dispose();
   }
 
@@ -346,30 +303,20 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
         );
         return;
       }
-      final created = await api.addStaff(
+      final createdId = await api.addStaff(
             ad: _adCtrl.text.trim(),
             telefon: telefonNormalle(_phoneCtrl.text),
             role: _role,
-            password: _passwordCtrl.text,
           );
       // Personel olustuktan sonra foto secildiyse avatarini ata.
       if (_fotoKey != null) {
-        await api.setStaffAvatar(created.id, _fotoKey);
+        await api.setStaffAvatar(createdId, _fotoKey);
       }
-      final tempCode = created.tempCode;
       if (!mounted) return;
       navigator.pop('ok');
-      if (tempCode != null && tempCode.isNotEmpty) {
-        await showTempCodeDialog(
-          navigator.context,
-          code: tempCode,
-          message: l10n.personelEklendiKod,
-        );
-      } else {
-        messenger.showSnackBar(
-          SnackBar(content: Text(l10n.personelEklendi)),
-        );
-      }
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.personelEklendi)),
+      );
     } on ApiException catch (e) {
       if (!mounted) return;
       messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
@@ -481,24 +428,9 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
               validator: (v) =>
                   telefonHataMetni(l10n, v ?? '', zorunlu: !_isEdit),
             ),
-            const SizedBox(height: 12),
-            // Parola alani YALNIZ eklemede; duzenlemede ayri "Parola sıfırla".
-            if (!_isEdit) ...[
-              TextFormField(
-                controller: _passwordCtrl,
-                enabled: !_submitting,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: l10n.sakinParolaOpsiyonel,
-                  helperText: l10n.sakinBosBirakKod,
-                  prefixIcon: const Icon(Icons.lock_outline),
-                  border: const OutlineInputBorder(),
-                ),
-                validator: (v) =>
-                    (v ?? '').isEmpty ? null : parolaHataMetni(l10n, v),
-              ),
-              const SizedBox(height: 16),
-            ],
+            // Parola alani KALDIRILDI (P186-ek2): hesap parolasiz acilir ve
+            // davet gonderilir; parolayi kisi kendi kayit akisinda belirler.
+            const SizedBox(height: 16),
             FilledButton(
               onPressed: _submitting ? null : _submit,
               style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),

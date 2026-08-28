@@ -4805,36 +4805,6 @@ abstract class AppLocalizations {
   /// **'Sakin işlemleri'**
   String get sakinIslemleri;
 
-  /// No description provided for @sakinParolaSifirla.
-  ///
-  /// In tr, this message translates to:
-  /// **'Parola sıfırla'**
-  String get sakinParolaSifirla;
-
-  /// No description provided for @sakinParolaSifirlaOnay.
-  ///
-  /// In tr, this message translates to:
-  /// **'Parola sıfırlansın mı?'**
-  String get sakinParolaSifirlaOnay;
-
-  /// No description provided for @sakinParolaSifirlaGovde.
-  ///
-  /// In tr, this message translates to:
-  /// **'\"{ad}\" için yeni geçici kod üretilir; eski parolası geçersiz olur. Kullanıcı telefon + yeni kod ile girip parolasını belirler.'**
-  String sakinParolaSifirlaGovde(Object ad);
-
-  /// No description provided for @sakinSifirla.
-  ///
-  /// In tr, this message translates to:
-  /// **'Sıfırla'**
-  String get sakinSifirla;
-
-  /// No description provided for @sakinYeniKodMesaji.
-  ///
-  /// In tr, this message translates to:
-  /// **'\"{ad}\" için yeni geçici kod. Sakine iletin; telefon + bu kod ile girip parolasını belirler.'**
-  String sakinYeniKodMesaji(Object ad);
-
   /// No description provided for @sakinSilOnay.
   ///
   /// In tr, this message translates to:
@@ -4937,24 +4907,6 @@ abstract class AppLocalizations {
   /// **'Daire no zorunludur'**
   String get sakinDaireNoZorunlu;
 
-  /// No description provided for @sakinParolaOpsiyonel.
-  ///
-  /// In tr, this message translates to:
-  /// **'Parola (opsiyonel)'**
-  String get sakinParolaOpsiyonel;
-
-  /// No description provided for @sakinBosBirakKod.
-  ///
-  /// In tr, this message translates to:
-  /// **'Boş bırakırsanız geçici kod üretilir'**
-  String get sakinBosBirakKod;
-
-  /// No description provided for @sakinEklendiKod.
-  ///
-  /// In tr, this message translates to:
-  /// **'Sakin eklendi. Bu kodu sakine iletin; telefon + bu kod ile girip parolasını belirler.'**
-  String get sakinEklendiKod;
-
   /// No description provided for @sakinEklendi.
   ///
   /// In tr, this message translates to:
@@ -4966,24 +4918,6 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Henüz site sakini yok.\nSağ alttan ekleyebilirsiniz.'**
   String get sakinYok;
-
-  /// No description provided for @ortakGeciciKodBaslik.
-  ///
-  /// In tr, this message translates to:
-  /// **'Geçici giriş kodu'**
-  String get ortakGeciciKodBaslik;
-
-  /// No description provided for @ortakKopyala.
-  ///
-  /// In tr, this message translates to:
-  /// **'Kopyala'**
-  String get ortakKopyala;
-
-  /// No description provided for @ortakKopyalandi.
-  ///
-  /// In tr, this message translates to:
-  /// **'Kopyalandı'**
-  String get ortakKopyalandi;
 
   /// No description provided for @girisParolaVeyaKod.
   ///
@@ -5243,18 +5177,6 @@ abstract class AppLocalizations {
   /// **'Aktifleştirildi ✓'**
   String get personelAktiflestirildi;
 
-  /// Onay dialogu govdesi — {ad} personelin adi
-  ///
-  /// In tr, this message translates to:
-  /// **'{ad} için yeni geçici kod üretilecek; eski parola geçersiz olur.'**
-  String personelSifirlaGovde(Object ad);
-
-  /// No description provided for @personelYeniKodMesaji.
-  ///
-  /// In tr, this message translates to:
-  /// **'Yeni geçici kod. Personele iletin; telefon + bu kod ile girip parolasını belirler.'**
-  String get personelYeniKodMesaji;
-
   /// No description provided for @personelGuncellendi.
   ///
   /// In tr, this message translates to:
@@ -5266,12 +5188,6 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Personel eklendi ✓'**
   String get personelEklendi;
-
-  /// No description provided for @personelEklendiKod.
-  ///
-  /// In tr, this message translates to:
-  /// **'Personel eklendi. Bu kodu personele iletin; telefon + bu kod ile girip parolasını belirler.'**
-  String get personelEklendiKod;
 
   /// No description provided for @personelFoto.
   ///

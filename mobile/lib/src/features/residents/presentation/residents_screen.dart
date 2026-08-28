@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
 import '../../../core/ui/bos_durum.dart';
-import '../../../core/ui/temp_code_dialog.dart';
 import '../data/residents_api.dart';
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/ui/merkez_diyalog.dart';
@@ -12,7 +11,8 @@ import '../../../core/ui/telefon_alani.dart';
 import '../../../core/ui/telefon_hata_metni.dart';
 
 /// Site Sakinleri — yonetici/admin: sakinleri listeler, yeni tasinani ekler
-/// (gecici kod), ayrilani cikarir (pasiflestir). Sakin KENDI kayit olamaz.
+/// (parolasiz hesap + otomatik davet), ayrilani cikarir (pasiflestir). Sakin
+/// daveti (Tesis ID) ile kendi kaydini tamamlar.
 class ResidentsScreen extends ConsumerWidget {
   const ResidentsScreen({super.key});
 
@@ -108,15 +108,10 @@ class _ResidentTile extends StatelessWidget {
               tooltip: l10n.sakinIslemleri,
               onSelected: (v) {
                 if (v == 'edit') _edit(context);
-                if (v == 'reset') _resetPassword(context);
                 if (v == 'delete') _confirmRemove(context);
               },
               itemBuilder: (_) => [
                 PopupMenuItem(value: 'edit', child: Text(l10n.ortakDuzenle)),
-                PopupMenuItem(
-                  value: 'reset',
-                  child: Text(l10n.sakinParolaSifirla),
-                ),
                 PopupMenuItem(value: 'delete', child: Text(l10n.ortakSil)),
               ],
             ),
@@ -132,43 +127,6 @@ class _ResidentTile extends StatelessWidget {
       builder: (_) => _EditResidentSheet(member: member),
     );
     if (changed == true) ref.invalidate(residentsProvider);
-  }
-
-  Future<void> _resetPassword(BuildContext context) async {
-    final messenger = ScaffoldMessenger.of(context);
-    // Async bosluklardan ONCE yakala.
-    final l10n = context.l10n;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text(l10n.sakinParolaSifirlaOnay),
-        content: Text(l10n.sakinParolaSifirlaGovde(member.ad)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(l10n.ortakVazgec),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(l10n.sakinSifirla),
-          ),
-        ],
-      ),
-    );
-    if (ok != true) return;
-    try {
-      final code = await ref
-          .read(residentsApiProvider)
-          .resetPassword(member.userId);
-      if (!context.mounted) return;
-      await showTempCodeDialog(
-        context,
-        code: code,
-        message: l10n.sakinYeniKodMesaji(member.ad),
-      );
-    } on ApiException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
-    }
   }
 
   Future<void> _confirmRemove(BuildContext context) async {
@@ -448,7 +406,7 @@ class _AddResidentSheetState extends ConsumerState<_AddResidentSheet> {
     final l10n = context.l10n;
     setState(() => _submitting = true);
     try {
-      final tempCode = await ref
+      await ref
           .read(residentsApiProvider)
           .addResident(
             telefon: telefonNormalle(_phoneCtrl.text),
@@ -456,15 +414,7 @@ class _AddResidentSheetState extends ConsumerState<_AddResidentSheet> {
           );
       if (!mounted) return;
       navigator.pop('ok');
-      if (tempCode != null && tempCode.isNotEmpty) {
-        await showTempCodeDialog(
-          navigator.context,
-          code: tempCode,
-          message: l10n.sakinEklendiKod,
-        );
-      } else {
-        messenger.showSnackBar(SnackBar(content: Text(l10n.sakinEklendi)));
-      }
+      messenger.showSnackBar(SnackBar(content: Text(l10n.sakinEklendi)));
     } on ApiException catch (e) {
       if (!mounted) return;
       messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));

@@ -74,16 +74,33 @@ def test_phone_login_garbage_phone_401_not_422(client, world):
 
 
 # ------------------------- ilk giriş (geçici kod) ------------------------- #
-def test_first_login_temp_code_then_set_password(client, world):
+def test_first_login_temp_code_then_set_password(client, world, owner_conn):
+    """(P186) POST /residents artik PAROLASIZ acar ve `temp_code` DONDURMEZ
+    (davet linki gonderilir). Bu test yine de telefon-login'in tek-seferlik
+    kod (temp_code_hash) -> set-password -> kalici parola akisini olcer; kod
+    DB'ye dogrudan yazilarak (onboarding kodunun verilmis oldugunu taklit
+    ederek) uretilir — davranis (backend) degismedi, yalniz kodun uretim yolu
+    davet akisina tasindi."""
+    from app.security import hash_password
+
     yon = _yon_headers(client, world)
-    # Yönetici sakin açar -> geçici kod döner.
+    # Yönetici sakin açar -> PAROLASIZ hesap (temp_code DONMEZ).
     r = client.post(
         "/residents",
         headers=yon,
         json={"unit_no": "P-1", "ad": "Telefon Sakin", "telefon": world["bos_telefonlar"][0]},
     )
     assert r.status_code == 201, r.text
-    temp_code = r.json()["temp_code"]
+    assert "temp_code" not in r.json()  # (P186) gecici kod URETILMEZ
+    uid = r.json()["user_id"]
+
+    # Tek-seferlik kodu DB'ye yaz (onboarding kodunun verildigini taklit et).
+    temp_code = "AB23CD45"
+    with owner_conn.cursor() as cur:
+        cur.execute(
+            "UPDATE app_user SET temp_code_hash=%s, password_set=false WHERE id=%s",
+            (hash_password(temp_code), uid),
+        )
 
     # Geçici kod ile telefon-login -> oturum YOK, setup_token döner.
     r = client.post(

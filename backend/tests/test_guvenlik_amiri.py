@@ -179,8 +179,6 @@ def test_amir_YETKI_YUKSELTEMEZ(client, roller, world):
     yonetici_id = client.get("/me", headers=roller["yonetici"]).json()["id"]
     assert client.patch(f"/users/{yonetici_id}", headers=roller["amir"],
                         json={"ad": "Ele Gecirildi"}).status_code == 403
-    assert client.post(f"/users/{yonetici_id}/reset-password",
-                       headers=roller["amir"]).status_code == 403
 
 
 def test_amir_kendi_ekibini_duzenler(client, roller, world):
@@ -191,8 +189,6 @@ def test_amir_kendi_ekibini_duzenler(client, roller, world):
     uid = yeni.json()["id"]
     assert client.patch(f"/users/{uid}", headers=roller["amir"],
                         json={"ad": "Ekip Uyesi 2"}).status_code == 200
-    assert client.post(f"/users/{uid}/reset-password",
-                       headers=roller["amir"]).status_code == 200
 
 
 # ============================== KAPALI ALANLAR ============================== #

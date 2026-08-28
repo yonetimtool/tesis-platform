@@ -2830,25 +2830,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get sakinIslemleri => 'Bewohner-Aktionen';
 
   @override
-  String get sakinParolaSifirla => 'Passwort zurücksetzen';
-
-  @override
-  String get sakinParolaSifirlaOnay => 'Passwort zurücksetzen?';
-
-  @override
-  String sakinParolaSifirlaGovde(Object ad) {
-    return 'Für \"$ad\" wird ein neuer temporärer Code erzeugt; das alte Passwort wird ungültig. Der Nutzer meldet sich mit Telefon + neuem Code an und legt dann ein Passwort fest.';
-  }
-
-  @override
-  String get sakinSifirla => 'Zurücksetzen';
-
-  @override
-  String sakinYeniKodMesaji(Object ad) {
-    return 'Neuer temporärer Code für \"$ad\". Geben Sie ihn dem Bewohner; er meldet sich mit Telefon + diesem Code an und legt ein Passwort fest.';
-  }
-
-  @override
   String get sakinSilOnay => 'Bewohner löschen?';
 
   @override
@@ -2909,30 +2890,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get sakinDaireNoZorunlu => 'Wohnungsnummer ist Pflicht';
 
   @override
-  String get sakinParolaOpsiyonel => 'Passwort (optional)';
-
-  @override
-  String get sakinBosBirakKod =>
-      'Leer lassen, um einen temporären Code zu erzeugen';
-
-  @override
-  String get sakinEklendiKod =>
-      'Bewohner hinzugefügt. Geben Sie ihm diesen Code; er meldet sich mit Telefon + diesem Code an und legt dann ein Passwort fest.';
-
-  @override
   String get sakinEklendi => 'Bewohner hinzugefügt ✓';
 
   @override
   String get sakinYok => 'Noch keine Bewohner.\nUnten rechts hinzufügen.';
-
-  @override
-  String get ortakGeciciKodBaslik => 'Temporärer Anmeldecode';
-
-  @override
-  String get ortakKopyala => 'Kopieren';
-
-  @override
-  String get ortakKopyalandi => 'Kopiert';
 
   @override
   String get girisParolaVeyaKod => 'Passwort oder temporärer Code';
@@ -3071,23 +3032,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get personelAktiflestirildi => 'Aktiviert ✓';
 
   @override
-  String personelSifirlaGovde(Object ad) {
-    return 'Für $ad wird ein neuer temporärer Code erzeugt; das alte Passwort wird ungültig.';
-  }
-
-  @override
-  String get personelYeniKodMesaji =>
-      'Neuer temporärer Code. Geben Sie ihn dem Mitarbeiter; er meldet sich mit Telefon + diesem Code an und legt dann ein Passwort fest.';
-
-  @override
   String get personelGuncellendi => 'Mitarbeiter aktualisiert ✓';
 
   @override
   String get personelEklendi => 'Mitarbeiter hinzugefügt ✓';
-
-  @override
-  String get personelEklendiKod =>
-      'Mitarbeiter hinzugefügt. Geben Sie ihm diesen Code; er meldet sich mit Telefon + diesem Code an und legt dann ein Passwort fest.';
 
   @override
   String get personelFoto => 'Foto';

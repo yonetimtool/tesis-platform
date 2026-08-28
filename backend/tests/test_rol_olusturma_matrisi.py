@@ -204,15 +204,9 @@ def test_yonetici_PASIFLESTIRME_ayni_kurala_tabi(client, world, hedef_rol):
     assert r.status_code == bekleniyor, f"{hedef_rol}: {r.status_code} · {r.text}"
 
 
-@pytest.mark.parametrize("hedef_rol", TUM_ROLLER)
-def test_PAROLA_SIFIRLAMA_ayni_kurala_tabi(client, world, hedef_rol):
-    """Kaydina dokunamadigin kisinin parolasini da sifirlayamazsin."""
-    admin = _headers(client, world["slug_a"], world["admin_a"])
-    uid = _kayit_ac(client, admin, hedef_rol)
-    yonetici = _headers(client, world["slug_a"], world["yonetici_a"])
-    r = client.post(f"/users/{uid}/reset-password", headers=yonetici)
-    bekleniyor = 200 if hedef_rol in YONETILEN["yonetici"] else 403
-    assert r.status_code == bekleniyor, f"{hedef_rol}: {r.status_code} · {r.text}"
+# (P186) parola-sifirlama ucu KALDIRILDI — yonetici parola atayamaz/sifirlayamaz.
+# "Kaydina dokunamadigin kisinin parolasini da sifirlayamazsin" testi artik
+# konusuz (uc yok); duzenleme/pasiflestirme kurali yukaridaki testlerde olculur.
 
 
 def test_SAKIN_DUZENLEME_bu_turun_kusuru(client, world):

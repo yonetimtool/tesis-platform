@@ -42,14 +42,15 @@ class ResidentsApi {
     }
   }
 
-  /// Yeni sakin: daire + hesap + gecici kod (password bossa temp_code doner).
-  /// (P154 / Asama 5) TELEFON + DAIRE NO — govdede baska alan YOK.
+  /// Yeni sakin: daire + PAROLASIZ hesap. Sunucu otomatik bir davet gonderir;
+  /// kisi daveti (Tesis ID) ile kendi kaydini tamamlar — yonetici hicbir kod
+  /// iletmez. (P154 / Asama 5) TELEFON + DAIRE NO — govdede baska alan YOK.
   ///
   /// `ad` ve `password` GONDERILMIYOR (parametreleri de kaldirildi):
   /// sunucu ad verilmediginde daireden turetilen gecici bir ad yazar ve
   /// parolayi kullanicinin KENDI kayit akisi belirler. Gerekce
   /// `_AddResidentSheetState` basliginda.
-  Future<String?> addResident({
+  Future<void> addResident({
     required String telefon,
     required String unitNo,
   }) async {
@@ -58,11 +59,7 @@ class ResidentsApi {
       'unit_no': unitNo,
     };
     try {
-      final res = await _dio.post<Map<String, dynamic>>(
-        '/residents',
-        data: data,
-      );
-      return res.data!['temp_code'] as String?;
+      await _dio.post<Map<String, dynamic>>('/residents', data: data);
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }
@@ -94,18 +91,6 @@ class ResidentsApi {
     if (rolTipi != null && rolTipi.isNotEmpty) data['rol_tipi'] = rolTipi;
     try {
       await _dio.patch<void>('/residents/$userId', data: data);
-    } on DioException catch (e) {
-      throw ApiException.fromDio(e);
-    }
-  }
-
-  /// Sakin parolasini sifirla — yeni gecici kod doner (bir kez).
-  Future<String> resetPassword(String userId) async {
-    try {
-      final res = await _dio.post<Map<String, dynamic>>(
-        '/residents/$userId/reset-password',
-      );
-      return res.data!['temp_code'] as String;
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }

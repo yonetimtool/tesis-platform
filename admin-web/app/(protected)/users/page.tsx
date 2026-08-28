@@ -10,7 +10,6 @@ import {
   AlanSarmal,
   AramaAlani,
   Dugme,
-  Girinti,
   HataDurumu,
   Modal,
   Rozet,
@@ -22,7 +21,6 @@ import {
   type TabloDurumu,
   useOnay,
 } from "@/components/ui";
-import { ParolaAlani } from "@/components/ParolaAlani";
 import { alanliHataMetni, apiSend } from "@/lib/client";
 import type { UnitList } from "@/lib/types";
 import { jsonFetcher } from "@/lib/fetcher";
@@ -78,7 +76,6 @@ interface FormState {
   telefon: string;
   aranabilir: boolean;
   role: UserRole;
-  password: string;
   // (P128) Gorev penceresi — YALNIZ `denetci` rolunde gosterilir.
   gorevBaslangic: string;
   gorevBitis: string;
@@ -89,7 +86,6 @@ const EMPTY: FormState = {
   telefon: "",
   aranabilir: false,
   role: VARSAYILAN_ROL,
-  password: "",
   gorevBaslangic: "",
   gorevBitis: "",
 };
@@ -236,7 +232,6 @@ export default function UsersPage() {
       telefon: "",
       aranabilir: u.aranabilir ?? false,
       role: (u.role as UserRole) ?? VARSAYILAN_ROL,
-      password: "",
       gorevBaslangic: u.gorev_baslangic ?? "",
       gorevBitis: u.gorev_bitis ?? "",
     });
@@ -272,7 +267,8 @@ export default function UsersPage() {
     setFormErr(null);
     try {
       if (editingId) {
-        // PATCH: parola yalniz doluysa gonderilir (bossa degismez).
+        // (P186-ek2) PAROLA YOK: yonetici bir kullanicinin parolasini
+        // degistiremez. Kullanici kendi parolasini kendi degistirir.
         const body: Record<string, unknown> = {
           ad: form.ad,
           email: form.email || null,
@@ -284,7 +280,6 @@ export default function UsersPage() {
           gorev_baslangic: form.gorevBaslangic || null,
           gorev_bitis: form.gorevBitis || null,
         };
-        if (form.password) body.password = form.password;
         await apiSend(`/api/users/${editingId}`, "PATCH", body);
         // (P186 §2.1) DAIRE ATAMASI DUZENLEMEDE: yalniz daire-tutan rolde
         // (sakin/yonetici) ve secim DEGISTIYSE ata/kaldir. Rol daire-tutan
@@ -752,33 +747,11 @@ export default function UsersPage() {
             </>
           ) : null}
 
-          {/* (P186) PAROLA ALANI YALNIZ DUZENLEMEDE. Yeni kullanici acarken
-              yonetici PAROLA ATAMAZ (kisi kendi kimligini davetle/Tesis ID ile
-              mobilden kurar); alan yalniz mevcut bir hesabin parolasini
-              yoneticinin DEGISTIRMEK istemesi durumunda gorunur. */}
-          {editingId && (
-            <AlanSarmal
-              etiket={t("kullaniciYeniParola")}
-              ipucu={t("kullaniciEnAz8")}
-            >
-              {(b) => (
-                // `ParolaAlani` ORTAK ILKEL ve `style` KABUL ETMIYOR
-                // (bilincli: gorunumu cagirandan almiyor). Yeni yuzeye
-                // uydurmak icin GIRINTILI kapsayiciya konuyor; girdi
-                // saydam kaliyor.
-                <Girinti className="flex items-center px-1">
-                  <ParolaAlani
-                    {...b}
-                    className="h-11 w-full bg-transparent px-2 outline-none"
-                    value={form.password}
-                    onChange={(v) => setForm({ ...form, password: v })}
-                    minLength={8}
-                    placeholder={t("kullaniciParolaBosDuzenle")}
-                  />
-                </Girinti>
-              )}
-            </AlanSarmal>
-          )}
+          {/* (P186-ek2) PAROLA ALANI TAMAMEN KALDIRILDI. Yonetici bir
+              kullanicinin parolasini ne olustururken ne de duzenlerken
+              belirleyemez (o parolayla hesaba girebilirdi). Kullanici kendi
+              parolasini kurar/degistirir: davet (Tesis ID) ile ilk kayit,
+              sonrasinda "sifremi unuttum" (e-posta) ya da kendi parola ayari. */}
 
           {formErr && (
             <p

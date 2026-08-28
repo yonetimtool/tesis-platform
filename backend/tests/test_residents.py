@@ -1,6 +1,8 @@
-"""Site sakini yonetimi — POST/GET/PATCH/DELETE /residents + reset-password.
+"""Site sakini yonetimi — POST/GET/PATCH/DELETE /residents.
 
-Sakin KENDI kayit olamaz; yonetici ekler/listeler/duzenler/siler/parola-sifirlar.
+Sakin KENDI kayit olamaz; yonetici ekler/listeler/duzenler/siler.
+(P186) Yonetici PAROLA ATAYAMAZ/SIFIRLAYAMAZ: yeni sakin PAROLASIZ acilir ve
+DAVET gonderilir; parola sakinin kendi self-servis akisiyla belirlenir.
 DELETE AKILLI: gecmissiz sakin tamamen silinir; gecmisi olan pasiflestirilir;
 telefon HER DURUMDA serbest kalir (yeniden kayit mumkun). Canli API'ye vurur.
 """
@@ -62,26 +64,39 @@ def test_add_and_list_resident(client, world):
     assert "telefon" not in mine  # KVKK
 
 
-def test_add_resident_with_password_skips_temp_code(client, world):
+def test_add_resident_passwordless_and_davet(client, world, owner_conn):
+    """(P186) Yonetici sakine PAROLA ATAYAMAZ: hesap PAROLASIZ acilir, yanit
+    `davet` ozeti tasir ve `temp_code` URETILMEZ. Parolasiz hesap dogrudan
+    (herhangi parola ile) GIREMEZ. Parola self-servis kurulunca (burada DB'ye
+    dogrudan yazilarak taklit edilir) telefon-login calisir."""
+    from app.security import hash_password
+
     yon = _headers(client, world["slug_a"], world["yonetici_a"])
     phone = _uphone()
     r = client.post(
         "/residents",
         headers=yon,
-        json={"ad": "Parolali", "telefon": phone, "unit_no": "P-9", "password": "Sakin1234!"},
+        json={"ad": "Parolasiz", "telefon": phone, "unit_no": "P-9"},
     )
     assert r.status_code == 201, r.text
-    assert r.json()["temp_code"] is None  # parola verildi -> gecici kod YOK
-    # dogrudan parola ile telefon-login (kurulum gerekmez)
+    body = r.json()
+    assert "temp_code" not in body  # (P186) gecici kod URETILMEZ
+    assert body.get("davet") is not None  # davet ozeti doner
+    uid = body["user_id"]
+
+    # parolasiz hesap dogrudan giremez
+    assert client.post(
+        "/auth/login-phone", json={"phone": phone, "password": "HerhangiParola1!"}
+    ).status_code == 401
+
+    # parola self-servis belirlenince (DB'de) telefon-login calisir
+    with owner_conn.cursor() as cur:
+        cur.execute(
+            "UPDATE app_user SET password_hash=%s, password_set=true WHERE id=%s",
+            (hash_password("Sakin1234!"), uid),
+        )
     lp = client.post("/auth/login-phone", json={"phone": phone, "password": "Sakin1234!"})
     assert lp.status_code == 200 and lp.json()["password_setup_required"] is False
-    # zayif parola -> 422
-    weak = client.post(
-        "/residents",
-        headers=yon,
-        json={"ad": "x", "telefon": _uphone(), "unit_no": "P-7", "password": "zayifparola"},
-    )
-    assert weak.status_code == 422
 
 
 # --------------------------------- duzenle -------------------------------- #
@@ -107,21 +122,9 @@ def test_edit_resident_and_phone_freed(client, world):
     assert client.patch(f"/residents/{uuid.uuid4()}", headers=yon, json={"ad": "z"}).status_code == 404
 
 
-# ----------------------------- parola sifirla ----------------------------- #
-def test_reset_password(client, world):
-    yon = _headers(client, world["slug_a"], world["yonetici_a"])
-    phone = _uphone()
-    uid = _add(client, yon, phone)["user_id"]
-
-    r = client.post(f"/residents/{uid}/reset-password", headers=yon)
-    assert r.status_code == 200, r.text
-    code = r.json()["temp_code"]
-
-    # yeni kod ile telefon-login -> parola kurulumu gerekli
-    lp = client.post("/auth/login-phone", json={"phone": phone, "password": code})
-    assert lp.status_code == 200 and lp.json()["password_setup_required"] is True
-
-    assert client.post(f"/residents/{uuid.uuid4()}/reset-password", headers=yon).status_code == 404
+# (P186) parola-sifirlama ucu (/residents/{id}/reset-password) KALDIRILDI —
+# yonetici parola atayamaz/sifirlayamaz; parola self-servistir. Ilgili test
+# kaldirildi.
 
 
 # ------------------------------- akilli sil ------------------------------- #
@@ -170,7 +173,6 @@ def test_residents_rbac(client, world):
         assert client.get("/residents", headers=h).status_code == 403, role
         assert client.delete(f"/residents/{rid}", headers=h).status_code == 403, role
         assert client.patch(f"/residents/{rid}", headers=h, json={"ad": "x"}).status_code == 403, role
-        assert client.post(f"/residents/{rid}/reset-password", headers=h).status_code == 403, role
 
 
 # --------------------------------------------------------------------------- #

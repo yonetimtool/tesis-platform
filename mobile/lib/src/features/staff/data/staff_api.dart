@@ -64,23 +64,19 @@ class StaffApi {
     }
   }
 
-  /// Yeni saha personeli. password bossa backend TEK SEFERLIK gecici kod
-  /// uretir ve doner (kullaniciya iletilir). Donus: (id, tempCode) — id foto
-  /// yukleme icin (`setStaffAvatar`) kullanilir.
-  Future<({String id, String? tempCode})> addStaff({
+  /// Yeni saha personeli. Backend hesabi PAROLASIZ acar ve otomatik bir davet
+  /// gonderir; kisi daveti (Tesis ID) ile kendi kaydini tamamlar — yonetici
+  /// parola belirlemez, kod iletmez. Donus: id (foto yukleme icin
+  /// `setStaffAvatar` kullanir).
+  Future<String> addStaff({
     required String ad,
     required String telefon,
     required String role,
-    String? password,
   }) async {
     final data = <String, dynamic>{'ad': ad, 'telefon': telefon, 'role': role};
-    if (password != null && password.isNotEmpty) data['password'] = password;
     try {
       final res = await _dio.post<Map<String, dynamic>>('/users', data: data);
-      return (
-        id: res.data!['id'] as String,
-        tempCode: res.data!['temp_code'] as String?,
-      );
+      return res.data!['id'] as String;
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }
@@ -152,18 +148,6 @@ class StaffApi {
         '/users/$id',
         data: {'is_active': active},
       );
-    } on DioException catch (e) {
-      throw ApiException.fromDio(e);
-    }
-  }
-
-  /// `POST /users/{id}/reset-password` — parolayi sifirla, yeni TEK SEFERLIK
-  /// gecici kod doner (bir kez).
-  Future<String> resetPassword(String id) async {
-    try {
-      final res =
-          await _dio.post<Map<String, dynamic>>('/users/$id/reset-password');
-      return res.data!['temp_code'] as String;
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }

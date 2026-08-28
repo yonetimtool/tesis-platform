@@ -386,10 +386,11 @@ def test_ayni_uclarda_YONETICI_yazabiliyor(client, world):
 
 
 # ------------------------------ gorev penceresi ---------------------------- #
-def _denetci_ac(client, world, **pencere):
-    yonetici = _headers(client, world["slug_a"], world["yonetici_a"])
+def _denetci_ac(client, world, owner_conn, **pencere):
+    from app.security import hash_password
     import uuid as _uuid
 
+    yonetici = _headers(client, world["slug_a"], world["yonetici_a"])
     tel = "+90" + str(_uuid.uuid4().int)[:10]
     r = client.post(
         "/users",
@@ -402,28 +403,29 @@ def _denetci_ac(client, world, **pencere):
             **pencere,
         },
     )
-    # (P186) POST /users artik PAROLA ALMAZ (hesap parolasiz acilir, davet yolu).
-    # Testin login-phone yapabilmesi icin parolayi DUZENLEME ile belirle
-    # (edit-mode parola korundu).
+    # (P186) POST /users artik PAROLA ALMAZ (hesap parolasiz acilir, davet yolu)
+    # ve yonetici parola atayamaz. Testin login-phone yapabilmesi icin parolayi
+    # DB'ye dogrudan yaz (world fixture'i gibi).
     if r.status_code == 201:
-        client.patch(
-            f"/users/{r.json()['id']}", headers=yonetici,
-            json={"password": "GecerliParola1!"},
-        )
+        with owner_conn.cursor() as cur:
+            cur.execute(
+                "UPDATE app_user SET password_hash=%s, password_set=true WHERE id=%s",
+                (hash_password("GecerliParola1!"), r.json()["id"]),
+            )
     return r, tel
 
 
-def test_yonetici_denetci_ACAR(client, world):
-    r, _tel = _denetci_ac(client, world)
+def test_yonetici_denetci_ACAR(client, world, owner_conn):
+    r, _tel = _denetci_ac(client, world, owner_conn)
     assert r.status_code == 201, r.text
     assert r.json()["role"] == "denetci"
 
 
-def test_gorev_suresi_dolmus_denetci_GIREMEZ(client, world):
+def test_gorev_suresi_dolmus_denetci_GIREMEZ(client, world, owner_conn):
     dun = date.today() - timedelta(days=1)
     onceki = dun - timedelta(days=30)
     r, tel = _denetci_ac(
-        client, world,
+        client, world, owner_conn,
         gorev_baslangic=onceki.isoformat(), gorev_bitis=dun.isoformat(),
     )
     assert r.status_code == 201, r.text
@@ -434,9 +436,9 @@ def test_gorev_suresi_dolmus_denetci_GIREMEZ(client, world):
     assert giris.json()["error"]["code"] == "forbidden"
 
 
-def test_gorevi_BASLAMAMIS_denetci_GIREMEZ(client, world):
+def test_gorevi_BASLAMAMIS_denetci_GIREMEZ(client, world, owner_conn):
     yarin = date.today() + timedelta(days=1)
-    r, tel = _denetci_ac(client, world, gorev_baslangic=yarin.isoformat())
+    r, tel = _denetci_ac(client, world, owner_conn, gorev_baslangic=yarin.isoformat())
     assert r.status_code == 201, r.text
     giris = client.post(
         "/auth/login-phone", json={"phone": tel, "password": "GecerliParola1!"}
@@ -444,12 +446,12 @@ def test_gorevi_BASLAMAMIS_denetci_GIREMEZ(client, world):
     assert giris.status_code == 403, giris.text
 
 
-def test_gorevi_SUREN_denetci_GIRER(client, world):
+def test_gorevi_SUREN_denetci_GIRER(client, world, owner_conn):
     """Kontrol grubu: pencere kapiyi HERKESE kapatmiyor."""
     dun = date.today() - timedelta(days=1)
     yarin = date.today() + timedelta(days=1)
     r, tel = _denetci_ac(
-        client, world,
+        client, world, owner_conn,
         gorev_baslangic=dun.isoformat(), gorev_bitis=yarin.isoformat(),
     )
     assert r.status_code == 201, r.text
@@ -459,18 +461,18 @@ def test_gorevi_SUREN_denetci_GIRER(client, world):
     assert giris.status_code == 200, giris.text
 
 
-def test_ters_pencere_REDDEDILIR(client, world):
+def test_ters_pencere_REDDEDILIR(client, world, owner_conn):
     dun = (date.today() - timedelta(days=1)).isoformat()
     bugun = date.today().isoformat()
-    r, _tel = _denetci_ac(client, world, gorev_baslangic=bugun, gorev_bitis=dun)
+    r, _tel = _denetci_ac(client, world, owner_conn, gorev_baslangic=bugun, gorev_bitis=dun)
     assert r.status_code == 422, r.text
 
 
-def test_gorev_bitisi_bugune_cekilince_ERISIM_KESILIR(client, world):
+def test_gorev_bitisi_bugune_cekilince_ERISIM_KESILIR(client, world, owner_conn):
     """(P128) IPTAL YOLU: yonetici bitis tarihini gecmise ceker; ACIK oturum
     da kapanir — pencere HER istekte olculur, yalniz giriste degil."""
     yarin = (date.today() + timedelta(days=1)).isoformat()
-    r, tel = _denetci_ac(client, world, gorev_bitis=yarin)
+    r, tel = _denetci_ac(client, world, owner_conn, gorev_bitis=yarin)
     assert r.status_code == 201, r.text
     uid = r.json()["id"]
 

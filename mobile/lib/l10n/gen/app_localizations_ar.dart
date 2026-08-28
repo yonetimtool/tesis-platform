@@ -2949,25 +2949,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get sakinIslemleri => 'إجراءات الساكن';
 
   @override
-  String get sakinParolaSifirla => 'إعادة تعيين كلمة المرور';
-
-  @override
-  String get sakinParolaSifirlaOnay => 'إعادة تعيين كلمة المرور؟';
-
-  @override
-  String sakinParolaSifirlaGovde(Object ad) {
-    return 'سيتم إنشاء رمز مؤقت جديد لـ \"$ad\"؛ وتصبح كلمة المرور القديمة غير صالحة. يسجّل المستخدم الدخول بالهاتف + الرمز الجديد ثم يحدّد كلمة المرور.';
-  }
-
-  @override
-  String get sakinSifirla => 'إعادة تعيين';
-
-  @override
-  String sakinYeniKodMesaji(Object ad) {
-    return 'رمز مؤقت جديد لـ \"$ad\". سلّمه للساكن؛ يسجّل الدخول بالهاتف + هذا الرمز ثم يحدّد كلمة المرور.';
-  }
-
-  @override
   String get sakinSilOnay => 'حذف الساكن؟';
 
   @override
@@ -3027,29 +3008,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get sakinDaireNoZorunlu => 'رقم الوحدة إلزامي';
 
   @override
-  String get sakinParolaOpsiyonel => 'كلمة المرور (اختياري)';
-
-  @override
-  String get sakinBosBirakKod => 'اتركه فارغاً ليتم إنشاء رمز مؤقت';
-
-  @override
-  String get sakinEklendiKod =>
-      'تمت إضافة الساكن. سلّمه هذا الرمز؛ يسجّل الدخول بالهاتف + هذا الرمز ثم يحدّد كلمة المرور.';
-
-  @override
   String get sakinEklendi => 'تمت إضافة الساكن ✓';
 
   @override
   String get sakinYok => 'لا يوجد سكان بعد.\nيمكنك الإضافة من أسفل اليمين.';
-
-  @override
-  String get ortakGeciciKodBaslik => 'رمز الدخول المؤقت';
-
-  @override
-  String get ortakKopyala => 'نسخ';
-
-  @override
-  String get ortakKopyalandi => 'تم النسخ';
 
   @override
   String get girisParolaVeyaKod => 'كلمة المرور أو الرمز المؤقت';
@@ -3187,23 +3149,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get personelAktiflestirildi => 'تم التنشيط ✓';
 
   @override
-  String personelSifirlaGovde(Object ad) {
-    return 'سيتم إنشاء رمز مؤقت جديد لـ $ad؛ وتصبح كلمة المرور القديمة غير صالحة.';
-  }
-
-  @override
-  String get personelYeniKodMesaji =>
-      'رمز مؤقت جديد. سلّمه للموظف؛ يسجّل الدخول بالهاتف + هذا الرمز ثم يحدّد كلمة المرور.';
-
-  @override
   String get personelGuncellendi => 'تم تحديث الموظف ✓';
 
   @override
   String get personelEklendi => 'تمت إضافة الموظف ✓';
-
-  @override
-  String get personelEklendiKod =>
-      'تمت إضافة الموظف. سلّمه هذا الرمز؛ يسجّل الدخول بالهاتف + هذا الرمز ثم يحدّد كلمة المرور.';
 
   @override
   String get personelFoto => 'صورة';

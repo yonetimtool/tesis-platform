@@ -2872,25 +2872,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sakinIslemleri => 'Resident actions';
 
   @override
-  String get sakinParolaSifirla => 'Reset password';
-
-  @override
-  String get sakinParolaSifirlaOnay => 'Reset the password?';
-
-  @override
-  String sakinParolaSifirlaGovde(Object ad) {
-    return 'A new temporary code is generated for \"$ad\"; the old password stops working. The user signs in with phone + the new code and then sets a password.';
-  }
-
-  @override
-  String get sakinSifirla => 'Reset';
-
-  @override
-  String sakinYeniKodMesaji(Object ad) {
-    return 'New temporary code for \"$ad\". Share it with the resident; they sign in with phone + this code and then set a password.';
-  }
-
-  @override
   String get sakinSilOnay => 'Delete resident?';
 
   @override
@@ -2950,29 +2931,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sakinDaireNoZorunlu => 'Unit number is required';
 
   @override
-  String get sakinParolaOpsiyonel => 'Password (optional)';
-
-  @override
-  String get sakinBosBirakKod => 'Leave empty to generate a temporary code';
-
-  @override
-  String get sakinEklendiKod =>
-      'Resident added. Share this code with them; they sign in with phone + this code and then set a password.';
-
-  @override
   String get sakinEklendi => 'Resident added ✓';
 
   @override
   String get sakinYok => 'No residents yet.\nAdd one from the bottom right.';
-
-  @override
-  String get ortakGeciciKodBaslik => 'Temporary sign-in code';
-
-  @override
-  String get ortakKopyala => 'Copy';
-
-  @override
-  String get ortakKopyalandi => 'Copied';
 
   @override
   String get girisParolaVeyaKod => 'Password or temporary code';
@@ -3110,23 +3072,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get personelAktiflestirildi => 'Activated ✓';
 
   @override
-  String personelSifirlaGovde(Object ad) {
-    return 'A new temporary code will be generated for $ad; the old password stops working.';
-  }
-
-  @override
-  String get personelYeniKodMesaji =>
-      'New temporary code. Share it with the staff member; they sign in with phone + this code and then set a password.';
-
-  @override
   String get personelGuncellendi => 'Staff member updated ✓';
 
   @override
   String get personelEklendi => 'Staff member added ✓';
-
-  @override
-  String get personelEklendiKod =>
-      'Staff member added. Share this code with them; they sign in with phone + this code and then set a password.';
 
   @override
   String get personelFoto => 'Photo';

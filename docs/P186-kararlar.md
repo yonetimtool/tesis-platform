@@ -337,3 +337,65 @@ oturmayabilir — P185 gerekçesi). Güvenlik/tesis görevlisi/denetçi rollerin
 **görünmez**. Kabul 3'ün "yönetici rolünde de zorunlu" okunuşunu, yöneticiyi
 daireye zorlamanın mantıksızlığı ve P185 nedeniyle **opsiyonel** bıraktım;
 gerçekten zorunlu istersen tek satır değişir.
+
+---
+
+# P186-ek2 — Yönetici parola/sıfırlama yollarının TAMAMEN kapatılması
+
+Kullanıcı kararı: yönetici bir kullanıcının parolasını **hiçbir yerde**
+belirleyemesin/sıfırlayamasın (o parolayla hesaba girebilir). Kullanıcının kendi
+parola sıfırlama yolu zaten var (e-posta "şifremi unuttum"); yöneticiye gerek yok.
+
+## Kaldırılanlar (tam liste — ölü kod bırakılmadı)
+
+**Backend uçları (SİLİNDİ):**
+- `POST /users/{id}/reset-password` (personel parola sıfırlama).
+- `POST /residents/{id}/reset-password` (sakin parola sıfırlama).
+
+**Backend şema alanları (SİLİNDİ):**
+- `UserUpdate.password` + `_strong` doğrulayıcı → `PATCH /users/{id}` artık
+  parola almaz (güncelleme handler'ındaki parola dalı da kaldırıldı).
+- `ResidentCreate.password` + doğrulayıcı → `POST /residents` parolasız açar.
+- `ResidentCreatedOut.temp_code` → yanıtta geçici kod yok (davet var).
+- `ResidentResetPasswordOut` şeması tamamen silindi.
+- `create_resident`: parola/geçici-kod dalı kaldırıldı; hesap DAİMA parolasız,
+  davet HER ZAMAN gönderilir.
+- İmport temizliği: `users.py` ve `residents.py`'den `generate_temp_code`,
+  `hash_password`, `ResidentResetPasswordOut` (artık kullanılmıyor).
+
+**Kilit kayıtları:**
+- `contracts/openapi.yaml`: iki reset-password yolu + `ResidentResetPasswordOut`
+  şeması silindi; `UserCreate`/`UserUpdate`/`UserCreatedOut`/`ResidentCreate`/
+  `ResidentCreated` şemalarından `password`/`temp_code` alanları temizlendi.
+- `tests/yetki/rol-matrisi.txt`: reset-password satırları REGEN ile düştü.
+
+**Web (admin-web/users/page.tsx):**
+- Düzenleme-modu parola alanı ("Yeni parola") TAMAMEN kaldırıldı; `FormState.
+  password`, save PATCH parola gönderimi, `ParolaAlani`+`Girinti` importları ve
+  ölü i18n anahtarları (`kullaniciYeniParola`, `kullaniciEnAz8`,
+  `kullaniciParolaBosDuzenle`) silindi.
+
+**Mobil (staff + residents yönetim ekranları):**
+- Yönetici "Parola sıfırla" akışı (staff_api/residents_api `resetPassword` +
+  ekranlardaki düğme/onay + geçici-kod diyaloğu) kaldırıldı; create akışındaki
+  ölü `temp_code` gösterimi de temizlendi. i18n 7 dil eşitliği korundu.
+
+## Etkilenmeyen (bilerek):
+- **`PATCH /me/password`** (kullanıcı KENDİ parolasını mevcut parola/kod ile
+  değiştirir) — KORUNDU.
+- **`POST /auth/sifre-sifirla`** ("şifremi unuttum", e-posta OTP) — KORUNDU.
+- **`POST /davet/{id}/yeniden`** (yönetici DAVETİ yeniden gönderir — parola
+  DEĞİL, jetonlu bağ) — tamamlanmamış hesabın güvenli kurtarma yolu, KORUNDU.
+- **Platform `tenants.py`** yönetici sağlama/reset (panel, platform-admin;
+  temp-code ile kullanıcı kendi parolasını kurar) — KAPSAM DIŞI, dokunulmadı.
+
+## AÇIK MADDE (bu turda kod YAZILMADI — ayrı turda ele alınacak)
+
+**Kullanıcı hem parolasını hem e-posta hesabına erişimini kaybederse ÇIKIŞ YOLU
+YOK.** Bugün kurtarma yolları: (a) hatırlıyorsa giriş; (b) parolayı unuttuysa ama
+e-postası varsa "şifremi unuttum"; (c) hesabı henüz sahiplenmediyse yönetici
+daveti yeniden gönderir. Ama **tamamlanmış** bir hesapta parola + e-posta
+erişiminin İKİSİ de kaybolursa hiçbir self-servis yol çalışmaz ve yönetici de
+(artık) parola sıfırlayamaz. Bu bilinçli bir boşluktur; çözümü (ör. yöneticinin
+tetiklediği ama SAHİBİN doğruladığı bir kurtarma, ya da telefon-tabanlı ikinci
+kanal) ayrı bir turda tasarlanacak.

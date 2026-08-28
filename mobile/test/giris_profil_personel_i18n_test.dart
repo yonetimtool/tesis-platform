@@ -67,9 +67,6 @@ class _FakeStaffApi extends StaffApi {
 
   @override
   Future<void> setActive(String id, bool active) async {}
-
-  @override
-  Future<String> resetPassword(String id) async => '482913';
 }
 
 Widget _personelEkrani(Locale locale, {List<StaffMember>? items}) =>
@@ -308,7 +305,8 @@ void main() {
     await tester.tap(find.byType(PopupMenuButton<String>));
     await tester.pumpAndSettle();
     expect(find.text('Activate'), findsOneWidget);
-    expect(find.text('Reset password'), findsOneWidget);
+    // Yonetici parola sifirlama KALDIRILDI (P186): menude olmamali.
+    expect(find.text('Reset password'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -486,16 +484,13 @@ void main() {
     await tumEksenlerSurusu(tester, (dil) => _personelEkrani(Locale(dil)),
         veri: surusVerisi, hazirla: menuEylemi(0));
   });
-  testWidgets('ZINCIR: personel PAROLA SIFIRLAMA onayi (bes eksen)',
-      (tester) async {
-    await tumEksenlerSurusu(tester, (dil) => _personelEkrani(Locale(dil)),
-        veri: surusVerisi, hazirla: menuEylemi(1));
-  });
   testWidgets('ZINCIR: personel PASIFLESTIRME sonucu (bes eksen)',
       (tester) async {
     // Sonuc bir SnackBar'dir (diyalog degil): eylem dogrudan uca gider.
+    // Menu artik iki oge: DUZENLE(0) + PASIFLES/AKTIFLES(1) — parola
+    // sifirlama (eski index 1) P186'da kaldirildi.
     await tumEksenlerSurusu(tester, (dil) => _personelEkrani(Locale(dil)),
-        veri: surusVerisi, hazirla: menuEylemi(2), bekleyen: true);
+        veri: surusVerisi, hazirla: menuEylemi(1), bekleyen: true);
   });
 
   // ---- TUR 60: YERLESIM KILIDI ----

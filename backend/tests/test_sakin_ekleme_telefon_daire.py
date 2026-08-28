@@ -57,8 +57,9 @@ def test_YALNIZ_telefon_ve_daire_ile_sakin_acilir(client, world):
     assert r.status_code == 201, r.text
     govde = r.json()
     assert govde["unit_no"] == daire
-    # Parola VERILMEDIGI icin tek seferlik gecici kod uretildi.
-    assert govde["temp_code"]
+    # (P186) Hesap PAROLASIZ acilir; gecici kod URETILMEZ, davet gonderilir.
+    assert "temp_code" not in govde
+    assert govde.get("davet") is not None
 
 
 def test_ad_verilmezse_DAIREDEN_turetilir(client, world):

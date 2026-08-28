@@ -2815,25 +2815,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get sakinIslemleri => 'Acciones del residente';
 
   @override
-  String get sakinParolaSifirla => 'Restablecer contraseña';
-
-  @override
-  String get sakinParolaSifirlaOnay => '¿Restablecer la contraseña?';
-
-  @override
-  String sakinParolaSifirlaGovde(Object ad) {
-    return 'Se genera un nuevo código temporal para \"$ad\"; la contraseña anterior deja de ser válida. La persona entra con teléfono + el nuevo código y luego define su contraseña.';
-  }
-
-  @override
-  String get sakinSifirla => 'Restablecer';
-
-  @override
-  String sakinYeniKodMesaji(Object ad) {
-    return 'Nuevo código temporal para \"$ad\". Entrégueselo al residente; entra con teléfono + este código y luego define su contraseña.';
-  }
-
-  @override
   String get sakinSilOnay => '¿Eliminar al residente?';
 
   @override
@@ -2893,30 +2874,11 @@ class AppLocalizationsEs extends AppLocalizations {
   String get sakinDaireNoZorunlu => 'El número de unidad es obligatorio';
 
   @override
-  String get sakinParolaOpsiyonel => 'Contraseña (opcional)';
-
-  @override
-  String get sakinBosBirakKod => 'Déjelo vacío para generar un código temporal';
-
-  @override
-  String get sakinEklendiKod =>
-      'Residente añadido. Entréguele este código; entra con teléfono + este código y luego define su contraseña.';
-
-  @override
   String get sakinEklendi => 'Residente añadido ✓';
 
   @override
   String get sakinYok =>
       'Aún no hay residentes.\nAñada uno desde abajo a la derecha.';
-
-  @override
-  String get ortakGeciciKodBaslik => 'Código de acceso temporal';
-
-  @override
-  String get ortakKopyala => 'Copiar';
-
-  @override
-  String get ortakKopyalandi => 'Copiado';
 
   @override
   String get girisParolaVeyaKod => 'Contraseña o código temporal';
@@ -3053,23 +3015,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get personelAktiflestirildi => 'Activado ✓';
 
   @override
-  String personelSifirlaGovde(Object ad) {
-    return 'Se generará un nuevo código temporal para $ad; la contraseña anterior deja de ser válida.';
-  }
-
-  @override
-  String get personelYeniKodMesaji =>
-      'Nuevo código temporal. Entrégueselo al empleado; entra con teléfono + este código y luego define su contraseña.';
-
-  @override
   String get personelGuncellendi => 'Personal actualizado ✓';
 
   @override
   String get personelEklendi => 'Personal añadido ✓';
-
-  @override
-  String get personelEklendiKod =>
-      'Personal añadido. Entréguele este código; entra con teléfono + este código y luego define su contraseña.';
 
   @override
   String get personelFoto => 'Foto';

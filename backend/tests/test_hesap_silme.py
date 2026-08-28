@@ -36,23 +36,31 @@ def adm(client, world):
     return _headers(client, world["slug_a"], world["admin_a"])
 
 
-def _sakin_ac(client, adm) -> tuple[str, str, str]:
+def _sakin_ac(client, adm, owner_conn) -> tuple[str, str, str]:
     """Yeni sakin + KALICI parola. Doner: (user_id, telefon, parola).
 
-    Parola dogrudan verilir (`ResidentCreate.password`): gecici kod ->
-    set-password dansini kurmak testin OLCTUGU seyle ilgisiz bir kurulum
-    yuku olurdu ve kirilinca bu dosyayi yaniltici sekilde kirmizi yapardi.
+    (P186-ek2) POST /residents artik PAROLA ALMAZ ve yonetici parola atayamaz;
+    ama bu dosyanin OLCTUGU sey hesap-SILMEDIR, hesap kurulumu degil. Testin
+    parolayla giris yapabilen bir sakine ihtiyaci var, o yuzden parolayi
+    DOGRUDAN DB'ye yaziyoruz (`world` fixture'i ile ayni yol).
     """
+    from app.security import hash_password
+
     tel = f"+9053{uuid.uuid4().int % 100000000:08d}"
     parola = f"Sk{_sfx()}aA1!"
     r = client.post("/residents", headers=adm, json={
         "ad": "Silinecek Sakin",
         "unit_no": f"D-{_sfx()}",
         "telefon": tel,
-        "password": parola,
     })
     assert r.status_code == 201, r.text
-    return r.json()["user_id"], tel, parola
+    user_id = r.json()["user_id"]
+    with owner_conn.cursor() as cur:
+        cur.execute(
+            "UPDATE app_user SET password_hash=%s, password_set=true WHERE id=%s",
+            (hash_password(parola), user_id),
+        )
+    return user_id, tel, parola
 
 
 def _oturum(client, tel, parola) -> dict:
@@ -62,9 +70,9 @@ def _oturum(client, tel, parola) -> dict:
 
 
 # =========================== TEMEL AKIS ===================================== #
-def test_gecmissiz_hesap_TAMAMEN_silinir(client, adm):
+def test_gecmissiz_hesap_TAMAMEN_silinir(client, adm, owner_conn):
     """Hicbir islemi olmayan hesap satirdan KALKAR (deleted=true)."""
-    user_id, tel, parola = _sakin_ac(client, adm)
+    user_id, tel, parola = _sakin_ac(client, adm, owner_conn)
     h = _oturum(client, tel, parola)
 
     r = client.post("/me/hesap-sil", headers=h, json={"current_password": parola})
@@ -78,9 +86,9 @@ def test_gecmissiz_hesap_TAMAMEN_silinir(client, adm):
     assert user_id not in [k["user_id"] for k in liste]
 
 
-def test_GECMISI_OLAN_hesap_ANONIMLESTIRILIR_defter_KALIR(client, adm):
+def test_GECMISI_OLAN_hesap_ANONIMLESTIRILIR_defter_KALIR(client, adm, owner_conn):
     """KVKK ayriminin asil testi: kisisel veri gider, DEFTER kalir."""
-    user_id, tel, parola = _sakin_ac(client, adm)
+    user_id, tel, parola = _sakin_ac(client, adm, owner_conn)
     h = _oturum(client, tel, parola)
 
     # Gecmis uret: sakinin actigi bir talep (FK RESTRICT).
@@ -116,9 +124,9 @@ def test_GECMISI_OLAN_hesap_ANONIMLESTIRILIR_defter_KALIR(client, adm):
 
 
 # ========================= YENIDEN KIMLIK DOGRULAMA ========================= #
-def test_YANLIS_parola_ile_silinmez(client, adm):
+def test_YANLIS_parola_ile_silinmez(client, adm, owner_conn):
     """Odunc alinmis bir telefonla tek dokunusta hesap silinememeli."""
-    user_id, tel, parola = _sakin_ac(client, adm)
+    user_id, tel, parola = _sakin_ac(client, adm, owner_conn)
     h = _oturum(client, tel, parola)
 
     r = client.post("/me/hesap-sil", headers=h, json={"current_password": "YanlisParola1!"})
@@ -127,8 +135,8 @@ def test_YANLIS_parola_ile_silinmez(client, adm):
     assert client.get("/me", headers=h).status_code == 200
 
 
-def test_parola_ALANI_bos_gonderilemez(client, adm):
-    _uid, tel, parola = _sakin_ac(client, adm)
+def test_parola_ALANI_bos_gonderilemez(client, adm, owner_conn):
+    _uid, tel, parola = _sakin_ac(client, adm, owner_conn)
     h = _oturum(client, tel, parola)
     r = client.post("/me/hesap-sil", headers=h, json={"current_password": ""})
     assert r.status_code == 422, r.text
@@ -168,7 +176,7 @@ def test_KALICI_kanit_satiri_yazilir_ve_TEK_olur(client, adm, owner_conn):
 
     Ayrica ayni hesap icin IKI kanit satiri olusmamali — sayim bozulurdu.
     """
-    user_id, tel, parola = _sakin_ac(client, adm)
+    user_id, tel, parola = _sakin_ac(client, adm, owner_conn)
     h = _oturum(client, tel, parola)
     assert client.post("/me/hesap-sil", headers=h,
                        json={"current_password": parola}).status_code == 200
@@ -189,7 +197,7 @@ def test_KALICI_kanit_satiri_yazilir_ve_TEK_olur(client, adm, owner_conn):
 
 def test_YONETIM_silmesi_kanitta_KENDI_ISTEGI_DEGIL(client, adm, owner_conn):
     """Ayni cekirdek, farkli aktor: ayrim kanit satirinda gorunmeli."""
-    user_id, _tel, _parola = _sakin_ac(client, adm)
+    user_id, _tel, _parola = _sakin_ac(client, adm, owner_conn)
     r = client.delete(f"/residents/{user_id}", headers=adm)
     assert r.status_code == 200, r.text
 
@@ -231,7 +239,7 @@ def test_parolasiz_EPOSTA_koduyla_silinir(client, adm, owner_conn):
     """(P184) SMS'siz: dogrulanmis e-postaya giden kodla hesap silinir."""
     from app.security import hash_password
 
-    user_id, tel, parola = _sakin_ac(client, adm)
+    user_id, tel, parola = _sakin_ac(client, adm, owner_conn)
     h = _oturum(client, tel, parola)  # token parolayi NULL'lamadan ONCE alinir.
     eposta = f"sil-{uuid.uuid4().hex[:10]}@ornek.com"
     _parolasizlastir(owner_conn, user_id, eposta=eposta)
@@ -261,7 +269,7 @@ def test_parolasiz_EPOSTA_koduyla_silinir(client, adm, owner_conn):
 
 def test_parolasiz_YANLIS_eposta_kodu_silmez(client, adm, owner_conn):
     """Yanlis kod silmez: e-posta kanali da 'sahiplik kaniti' esigini korur."""
-    user_id, tel, parola = _sakin_ac(client, adm)
+    user_id, tel, parola = _sakin_ac(client, adm, owner_conn)
     h = _oturum(client, tel, parola)
     eposta = f"sil-{uuid.uuid4().hex[:10]}@ornek.com"
     _parolasizlastir(owner_conn, user_id, eposta=eposta)
@@ -274,7 +282,7 @@ def test_parolasiz_YANLIS_eposta_kodu_silmez(client, adm, owner_conn):
 
 def test_dogrulanmis_eposta_YOKSA_422(client, adm, owner_conn):
     """(a) Kanal yoksa akis baslamaz: dogrulanmis e-posta olmadan 422 no_email."""
-    user_id, tel, parola = _sakin_ac(client, adm)
+    user_id, tel, parola = _sakin_ac(client, adm, owner_conn)
     h = _oturum(client, tel, parola)
     _parolasizlastir(owner_conn, user_id, eposta=None)
 
@@ -291,7 +299,7 @@ def test_parolasiz_EPOSTA_koduyla_PAROLA_kurar(client, adm, owner_conn):
     """
     from app.security import hash_password
 
-    user_id, tel, parola = _sakin_ac(client, adm)
+    user_id, tel, parola = _sakin_ac(client, adm, owner_conn)
     h = _oturum(client, tel, parola)
     eposta = f"pw-{uuid.uuid4().hex[:10]}@ornek.com"
     _parolasizlastir(owner_conn, user_id, eposta=eposta)
