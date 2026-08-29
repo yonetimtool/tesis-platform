@@ -786,6 +786,7 @@ export const de: Sozluk = {
   kullaniciPasiflestirildi: "Benutzer deaktiviert.",
   kullaniciSilOnay: "Das Konto {ad} wird dauerhaft gelöscht. Dies kann nicht rückgängig gemacht werden; verwenden Sie stattdessen \"Deaktivieren\".",
   kullaniciSilindi: "Benutzer gelöscht.",
+  kullaniciAnonimlestirildi: "Der Benutzer hatte Verlaufsdaten, daher wurde die Identität anonymisiert (Datensätze bleiben erhalten).",
   kullaniciDaireAtanamadi: "Das Konto wurde erstellt, die Wohnung konnte aber nicht zugewiesen werden. Sie können sie im Bereich Wohnungen zuweisen.",
   kullaniciDaireAta: "Wohnung zuweisen (optional)",
   kullaniciDaireYok: "Keine Wohnung",

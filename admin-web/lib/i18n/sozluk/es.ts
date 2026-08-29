@@ -786,6 +786,7 @@ export const es: Sozluk = {
   kullaniciPasiflestirildi: "Usuario desactivado.",
   kullaniciSilOnay: "La cuenta {ad} se eliminará permanentemente. No se puede deshacer; use \"Desactivar\" en su lugar.",
   kullaniciSilindi: "Usuario eliminado.",
+  kullaniciAnonimlestirildi: "El usuario tenía registros, por lo que su identidad fue anonimizada (registros conservados).",
   kullaniciDaireAtanamadi: "La cuenta se creó pero no se pudo asignar la vivienda. Puede asignarla desde la pantalla Viviendas.",
   kullaniciDaireAta: "Asignar vivienda (opcional)",
   kullaniciDaireYok: "Sin vivienda",

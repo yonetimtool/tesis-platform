@@ -5668,19 +5668,25 @@ paths:
       tags: [users]
       summary: Kullaniciyi sil (admin + yonetici + guvenlik_amiri)
       description: >
-        (P154 / Asama 5) SERT SILME — `is_active=false` DEGIL. Yumusak
-        silme zaten `PATCH /users/{user_id}` ile yapilabiliyor; iki
-        dugmenin ayni isi yapmasi kullaniciyi yaniltirdi. Ayni yetki
-        kapisindan gecer: cagiran, kendi yonetebildigi rollerdeki bir
-        kaydi silebilir. KENDI hesabini silemez (409) — kendi hesabi icin
-        onayli ayri yol var (`POST /me/hesap-sil`).
+        (P189) AKILLI SILME — gecmisi YOKSA sert siler (deleted=true), VARSA
+        (sikayet/talep/devriye okutma/finans — FK RESTRICT) kimlik alanlarini
+        temizler, aktif daire baglarini kapatir, cihaz/push kayitlarini siler,
+        is_active=false yapar; defter/denetim satirlari KALIR (deleted=false;
+        KVKK). Bekleyen davet gecersiz kilinir. Ayni yetki kapisindan gecer:
+        cagiran, kendi yonetebildigi rollerdeki bir kaydi silebilir. KENDI
+        hesabini silemez (409) — kendi hesabi icin onayli ayri yol var
+        (`POST /me/hesap-sil`).
       parameters:
         - name: user_id
           in: path
           required: true
           schema: { type: string, format: uuid }
       responses:
-        "204": { description: Silindi }
+        "200":
+          description: "Silindi (deleted=true) ya da anonimlestirildi (deleted=false)"
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ResidentDeleteOut" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
         "409":

@@ -832,6 +832,7 @@ export const tr = {
   kullaniciPasiflestirildi: "Kullanıcı pasifleştirildi.",
   kullaniciSilOnay: "{ad} hesabı KALICI olarak silinecek. Bu işlem geri alınamaz; hesabı kapatmak için \"Pasifleştir\" kullanın.",
   kullaniciSilindi: "Kullanıcı silindi.",
+  kullaniciAnonimlestirildi: "Kullanıcının geçmiş kayıtları olduğu için kimliği anonimleştirildi (kayıtlar korundu).",
   kullaniciDaireAtanamadi: "Hesap açıldı ancak daire ataması yapılamadı. Daireler ekranından atayabilirsiniz.",
   kullaniciDaireAta: "Daire ata (isteğe bağlı)",
   kullaniciDaireYok: "Daire atama",

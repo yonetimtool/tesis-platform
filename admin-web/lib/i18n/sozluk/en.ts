@@ -786,6 +786,7 @@ export const en: Sozluk = {
   kullaniciPasiflestirildi: "User deactivated.",
   kullaniciSilOnay: "The account {ad} will be permanently deleted. This cannot be undone; use \"Deactivate\" to close the account instead.",
   kullaniciSilindi: "User deleted.",
+  kullaniciAnonimlestirildi: "The user had historical records, so their identity was anonymized (records preserved).",
   kullaniciDaireAtanamadi: "The account was created but the unit could not be assigned. You can assign it from the Units screen.",
   kullaniciDaireAta: "Assign a unit (optional)",
   kullaniciDaireYok: "No unit",

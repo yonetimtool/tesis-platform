@@ -10,8 +10,8 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, Header, Query, Response
-from sqlalchemy import func, or_, select
+from fastapi import APIRouter, Depends, Header, Query
+from sqlalchemy import delete as sa_delete, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -20,12 +20,14 @@ from ..crud_helpers import get_or_404, is_unique_violation, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..hata_metinleri import istek_dili
-from ..models import AppUser, Tenant, UnitResident
+from ..hesap_silme import hesabi_sil_veya_anonimlestir
+from ..models import AppUser, Davet, Tenant, UnitResident
 from ..roller import yonetilebilir
 from ..schemas import (
     AcilabilirRollerOut,
     AvatarUpdate,
     DavetGonderimSonucu,
+    ResidentDeleteOut,
     UserAdminListItem,
     UserAdminListResponse,
     UserAdminOut,
@@ -376,50 +378,66 @@ async def update_user(
     return out
 
 
-@router.delete("/{user_id}", status_code=204)
+@router.delete("/{user_id}", response_model=ResidentDeleteOut)
 async def delete_user(
     user_id: uuid.UUID,
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_USER_CREATOR),
-) -> Response:
-    """(P154 / Asama 5) Kullaniciyi SILER.
+) -> ResidentDeleteOut:
+    """Kullaniciyi siler — GECMISI YOKSA SERT, VARSA ANONIMLESTIRIR (KVKK).
 
-    Brief: "Yonetici; sakin, guvenlik, tesis gorevlisi ve denetci
-    hesaplarinin telefonunu guncelleyebilir, KULLANICIYI SILEBILIR."
+    (P189) DAVRANIS DEGISTI. Onceden HAM `db.delete` idi: gecmisi olan
+    (sikayet/talep/devriye okutma/finans — FK RESTRICT) bir kullanici
+    silinmek istendiginde IntegrityError firlatiyor, yonetici "sil" deyince
+    veri butunlugunu bozan sifreli bir hata aliyordu. Artik SELF-SERVIS
+    hesap-silme ve SAKIN-CIKARMA ile AYNI akilli silme kullanilir
+    (`hesabi_sil_veya_anonimlestir`):
+      * gecmis YOK  -> satir GERCEKTEN gider (deleted=true),
+      * gecmis VAR  -> kimlik alanlari temizlenir, aktif DAIRE baglari
+        kapatilir, CIHAZ/push kayitlari silinir, is_active=false; defter ve
+        denetim satirlari KALIR (deleted=false). KVKK: kisisel veri gider,
+        yasal saklama gereken kayitlar durur.
 
-    SERT SILME, `is_active=false` DEGIL — ve bu Asama 1'deki yonetici
-    silmeyle AYNI gerekce: yumusak silme ZATEN `PATCH is_active` ile
-    yapilabiliyor; iki dugmenin ayni isi yapmasi kullaniciyi yaniltirdi.
-    "Sil" dendiginde kayit gitmelidir.
+    KARARIN GEREKCESI (kullanicinin sorusu): sert silme, gecmisi olan
+    kullanicida ya veri butunlugunu bozar ya da (FK RESTRICT) hic calismaz;
+    akilli silme ikisini de cozer ve platformun geri kalaniyla tutarlidir.
 
-    AYNI KAPIDAN GECER: `_yonetim_kapisi` — yonetici kendi kumesi disindaki
-    (orn. admin) bir kaydi silemez. Kapiyi burada tekrar yazmak, biri
-    guncellenip otekinin unutulmasi demekti.
+    #4 (davet/daire/oturum):
+      * DAVET: bekleyen davet GECERSIZ kilinir (satir silinir) — hesap
+        gidince/anonimlesince davet bagi anlamsizdir.
+      * DAIRE: aktif `unit_resident` baglari kapatilir (anonimlestirmede);
+        sert silmede satir zaten hesapla gider.
+      * OTURUM: `is_active=false` sonraki giris/yenilemeyi reddeder;
+        cihaz/push kayitlari silinir. Access jetonu durum-suz ve kisa
+        omurludur, dogal olarak suresi dolar.
 
-    KENDINI SILEMEZ: oturumu acik olan kisinin kendi kaydini silmesi,
-    tesisi yoneticisiz birakabilir ve geri alinamaz. Kendi hesabini silmek
-    isteyen icin AYRI ve onayli bir yol var (`POST /me/hesap-sil`, KVKK).
+    KENDINI SILEMEZ (409). YETKI: `_yonetim_kapisi` (sunucu tarafi) —
+    yonetici yalnizca YONETTIGI rolleri siler; kendi kumesi disini (orn.
+    admin) silemez.
     """
     obj = await get_or_404(db, AppUser, user_id)
-    # KENDI HESABI KONTROLU KAPIDAN ONCE: sirasi ters olsaydi kendi
-    # kaydini silmeye calisan bir yonetici "bu hesap turunu duzenleme
-    # yetkiniz yok" mesajini alirdi — dogru ama YANILTICI; asil sebep
-    # yetki degil, kendini silemiyor olmasi.
+    # KENDI HESABI KONTROLU KAPIDAN ONCE: sirasi ters olsaydi kendi kaydini
+    # silmeye calisan bir yonetici "yetkiniz yok" mesajini alirdi — dogru ama
+    # YANILTICI; asil sebep yetki degil, kendini silemiyor olmasi.
     if obj.id == user.id:
         raise APIError(409, "conflict", "kendi_hesabini_silemez")
     _yonetim_kapisi(user, obj.role)
+    rol = obj.role  # sert silme sonrasi `obj` erisilemez olabilir; simdi oku.
+
+    # (P189) Bekleyen daveti GECERSIZ kil (FK yok; ayri statement). Hesap
+    # silinince/anonimlesince davet bagi tuketilemez olmali.
+    await db.execute(sa_delete(Davet).where(Davet.user_id == obj.id))
+
+    # Akilli silme: gecmis yoksa hard delete, varsa anonimlestir.
+    silindi = await hesabi_sil_veya_anonimlestir(db, obj, kendi_istegi=False)
 
     await audit_user(
         db, user, Action.USER_DELETE, resource_type="app_user",
-        resource_id=obj.id,
-        meta={"rol": obj.role, "ad": obj.ad},
+        resource_id=user_id,
+        # HASSAS DEGER YOK: yalniz rol + hangi mod (hard/anonymize).
+        meta={"rol": rol, "mod": "hard_delete" if silindi else "anonymize"},
     )
-    await db.delete(obj)
-    try:
-        await db.flush()
-    except IntegrityError as exc:
-        raise translate_integrity(exc)
-    return Response(status_code=204)
+    return ResidentDeleteOut(deleted=silindi)
 
 
 # (P186-ek2) POST /users/{id}/reset-password KALDIRILDI. Yonetici bir

@@ -379,9 +379,18 @@ export default function UsersPage() {
     });
     if (!ok) return;
     try {
-      await apiSend(`/api/users/${u.id}`, "DELETE");
+      // (P189) Backend akilli siler: {deleted:false} => gecmisi oldugu icin
+      // ANONIMLESTIRILDI (kayitlar korundu), true => satir tamamen gitti.
+      const r = await apiSend<{ deleted?: boolean }>(
+        `/api/users/${u.id}`,
+        "DELETE",
+      );
       mutate();
-      toast.success(t("kullaniciSilindi"));
+      toast.success(
+        r?.deleted === false
+          ? t("kullaniciAnonimlestirildi")
+          : t("kullaniciSilindi"),
+      );
     } catch (err) {
       toast.error(alanliHataMetni(err, t("ortakSilinemedi")));
     }

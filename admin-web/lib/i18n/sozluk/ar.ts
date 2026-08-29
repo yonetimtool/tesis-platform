@@ -786,6 +786,7 @@ export const ar: Sozluk = {
   kullaniciPasiflestirildi: "تم تعطيل المستخدم.",
   kullaniciSilOnay: "سيتم حذف حساب {ad} نهائيًا. لا يمكن التراجع؛ استخدم \"إلغاء التنشيط\" بدلاً من ذلك.",
   kullaniciSilindi: "تم حذف المستخدم.",
+  kullaniciAnonimlestirildi: "كان لدى المستخدم سجلات، لذا تم إخفاء هويته (مع الحفاظ على السجلات).",
   kullaniciDaireAtanamadi: "تم إنشاء الحساب لكن تعذّر تعيين الشقة. يمكنك تعيينها من شاشة الشقق.",
   kullaniciDaireAta: "تعيين شقة (اختياري)",
   kullaniciDaireYok: "بدون شقة",

@@ -786,6 +786,7 @@ export const fr: Sozluk = {
   kullaniciPasiflestirildi: "Utilisateur désactivé.",
   kullaniciSilOnay: "Le compte {ad} sera définitivement supprimé. Action irréversible ; utilisez plutôt \"Désactiver\".",
   kullaniciSilindi: "Utilisateur supprimé.",
+  kullaniciAnonimlestirildi: "L'utilisateur avait des enregistrements ; son identité a été anonymisée (enregistrements conservés).",
   kullaniciDaireAtanamadi: "Le compte a été créé mais le logement n'a pas pu être attribué. Vous pouvez l'attribuer depuis l'écran Logements.",
   kullaniciDaireAta: "Attribuer un logement (facultatif)",
   kullaniciDaireYok: "Aucun logement",

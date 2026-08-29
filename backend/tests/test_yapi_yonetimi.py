@@ -206,9 +206,27 @@ def test_KULLANICI_SILINIR(client, yon):
     assert yeni.status_code == 201, yeni.text
     uid = yeni.json()["id"]
 
-    assert client.delete(f"/users/{uid}", headers=yon).status_code == 204
+    # (P189) Akilli silme: gecmisi YOK -> sert silme (deleted=true), 200 doner.
+    r = client.delete(f"/users/{uid}", headers=yon)
+    assert r.status_code == 200, r.text
+    assert r.json()["deleted"] is True
     kalan = client.get("/users?limit=200", headers=yon).json()["items"]
     assert uid not in [u["id"] for u in kalan]
+
+
+def test_KULLANICI_baglantili_silme_500_VERMEZ(client, yon):
+    """(P189) Daire baglantisi/gecmisi olan kullanicida eski HAM `db.delete`
+    IntegrityError firlatiyordu; akilli silme 200 doner (sert ya da anonim —
+    hangisi olursa olsun 405/500 DEGIL)."""
+    created = client.post("/residents", headers=yon, json={
+        "telefon": f"+9053{uuid.uuid4().int % 10**8:08d}",
+        "unit_no": f"SIL-{uuid.uuid4().hex[:4]}",
+        "email": f"sil2-{uuid.uuid4().hex[:8]}@acme.com",
+    }).json()
+    uid = created["user_id"]
+    r = client.delete(f"/users/{uid}", headers=yon)
+    assert r.status_code == 200, r.text
+    assert isinstance(r.json()["deleted"], bool)
 
 
 def test_KENDI_hesabini_SILEMEZ(client, world, yon):
