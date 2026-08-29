@@ -6,9 +6,24 @@ import {
   konakYuzeyi,
   kokRota,
   kokRotaRol,
+  rolYuzeyeGirebilir,
   rotaRoldeGorunur,
   rotaYuzeyi,
 } from "./lib/yuzey";
+
+/**
+ * (P190 §1) `panel.<alan>` konagindan `app.<alan>` esdegerini uret.
+ *
+ * YALNIZ ilk DNS etiketi tam `panel` ise doner — localhost/127.0.0.1 gibi
+ * yerel gelistirme konaklarinda (yuzey "platform" sayilir ama `app.` esdegeri
+ * YOKTUR) null doner ve cagiran konak-otesi yonlendirme YAPMAZ.
+ */
+function appKonagi(host: string | null | undefined): string | null {
+  const h = (host ?? "").toLowerCase();
+  const [etiket, ...kalan] = h.split(".");
+  if (etiket !== "panel" || kalan.length === 0) return null;
+  return ["app", ...kalan].join(".");
+}
 
 // Korumali route'lar: oturum (refresh cookie) yoksa /login'e yonlendir.
 // Token GECERLILIGI BFF route handler'larinda (401 -> refresh) dogrulanir;
@@ -46,6 +61,21 @@ export function middleware(req: NextRequest): NextResponse {
   // dogrudan sunulur (davetin web yedegi tanitim alan adinda public
   // olmali). Buraya bir istisna yazmak GEREKMEZ; matcher zaten disliyor.
 
+  // (P190 §1) /kayit PUBLIC'tir ama YUZEYI VARDIR: yonetici kaydi `app.*`in
+  // isidir. Panelde de sunulmasi OLCULEN bir kusurdu — panel.*'da kaydolan
+  // yonetici cerezleri PANEL konaginda alip icine dusuyor ve her ekranda
+  // "yetkiniz yok" goruyordu. Panel konagindaysa app.* esdegerine tasinir;
+  // oturum kapisina GIRMEZ (kayit oturumsuz bir sayfadir).
+  if (pathname === "/kayit" || pathname.startsWith("/kayit/")) {
+    const app = appKonagi(req.headers.get("host") ?? req.nextUrl.host);
+    if (konakYuzey === "platform" && app) {
+      const url = req.nextUrl.clone();
+      url.host = app;
+      return NextResponse.redirect(url);
+    }
+    return NextResponse.next();
+  }
+
   if (!hasSession) {
     const url = req.nextUrl.clone();
     url.pathname = "/login";
@@ -62,6 +92,32 @@ export function middleware(req: NextRequest): NextResponse {
   // kalir ve rol kapisi UYGULANMAZ — kullaniciyi yenileme akisi calismadan
   // once disari atmak, oturumu acik birine "yetkin yok" demek olurdu.
   const rol = tokenRolu(req.cookies.get(ACCESS_COOKIE)?.value);
+
+  // (P190 §1) YANLIS KONAKTAKI TESIS ROLU -> `app.*`A KONAK-OTESI YONLENDIRME.
+  //
+  // OLCULEN KUSUR: panel.*'a dusen bir `yonetici` icin asagidaki rol kapisi
+  // `/tenants`a yonlendiriyordu — ama `kokRotaRol("platform", ...)` rolden
+  // bagimsiz `/tenants` dondurur, kullanici ZATEN oradaysa kosul saglanmaz,
+  // sayfa cizilir ve her BFF cagrisi 403 doner: iki ayri "yetkiniz yok"
+  // kutusu, bos ekran. Ayni konak icinde dogru bir hedef YOKTUR — dogru
+  // hedef baska konaktir (`app.*`). Yerel gelistirmede (`localhost` platform
+  // sayilir, `app.` esdegeri yok) `appKonagi` null doner ve eski davranis
+  // korunur.
+  if (
+    rol &&
+    yuzey === "platform" &&
+    !rolYuzeyeGirebilir(rol, "platform") &&
+    rolYuzeyeGirebilir(rol, "tesis")
+  ) {
+    const app = appKonagi(req.headers.get("host") ?? req.nextUrl.host);
+    if (app) {
+      const url = req.nextUrl.clone();
+      url.host = app;
+      url.pathname = "/";
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
+  }
 
   // Kok (`/`) yuzeyin kendi baslangicina gider: panelde tesis panosu YOKTUR.
   // Hedef ROLE GORE secilir: sakini `/dashboard`a yollamak, goremedigi bir
@@ -121,6 +177,9 @@ export const config = {
   // /login ve /api/* haric korunan sayfalar:
   matcher: [
     "/",
+    // (P190 §1) /kayit PUBLIC ama yuzeyli: panel konagindan app.*'a tasinir
+    // (oturum kapisina girmez — middleware icinde erken cikar).
+    "/kayit/:path*",
     "/dashboard/:path*",
     "/notifications/:path*",
     "/shifts/:path*",

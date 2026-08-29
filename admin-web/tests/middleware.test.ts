@@ -111,9 +111,15 @@ describe("matcher kapsami (yapisal)", () => {
 
   it("matcher'da OLMAYAN bir rotaya isaret eden GEREKSIZ giris yok", () => {
     // Silinmis bir sayfanin girisi kalirsa liste yaniltici olur.
+    //
+    // (P190 §1) /kayit BILINCLI ISTISNA: sayfa app/(protected) altinda DEGIL
+    // (public kayit akisi) ama matcher'da olmali — middleware onu panel
+    // konagindan app.*'a tasir (oturum kapisina girmeden erken cikar).
+    const bilincli = new Set(["/kayit"]);
     const fazla = config.matcher
       .filter((m) => m !== "/")
       .map((m) => m.replace("/:path*", ""))
+      .filter((taban) => !bilincli.has(taban))
       .filter((taban) => !rotalar.some((r) => r === taban || r.startsWith(`${taban}/`)));
     expect(fazla, `matcher'da KARSILIGI OLMAYAN girisler: ${fazla.join(", ")}`)
       .toEqual([]);
@@ -308,5 +314,59 @@ describe("yuzey kapisi (P126.2)", () => {
     const res = middleware(yuzeyIstegi("panel.yonetio.site", "/dues"));
     expect(res.status).toBe(307);
     expect(new URL(res.headers.get("location") ?? "").pathname).toBe("/tenants");
+  });
+});
+
+// --------------------------------------------------------------------------- #
+// (P190 §1) YANLIS KONAKTAKI TESIS ROLU — panel.* -> app.* KONAK-OTESI.
+//
+// OLCULEN KUSUR: panel.*'a dusen yonetici icin rol kapisinin hedefi
+// `/tenants`ti (kokRotaRol platformda rolden bagimsiz) ve kullanici zaten
+// oradaysa YONLENDIRME OLMUYORDU: sayfa ciziliyor, BFF'ler 403 donuyor,
+// ekranda iki ayri "yetkiniz yok" kutusu kaliyordu. Dogru hedef ayni
+// konakta DEGIL baska konakta (`app.*`).
+describe("konak-otesi yuzey yonlendirmesi (P190 §1)", () => {
+  const PANEL = "panel.test";
+
+  it("YONETICI panel.*'da: app.* koku'ne 307 (bos ekran/403 yok)", () => {
+    for (const yol of ["/tenants", "/audit", "/settings"]) {
+      const res = middleware(rolIstegi(PANEL, yol, "yonetici"));
+      expect(res.status, yol).toBe(307);
+      const loc = new URL(res.headers.get("location") ?? "");
+      expect(loc.host, yol).toBe("app.test");
+      expect(loc.pathname, yol).toBe("/");
+    }
+  });
+
+  it("DENETCI panel.*'da: ayni sekilde app.*'a gider", () => {
+    const res = middleware(rolIstegi(PANEL, "/tenants", "denetci"));
+    expect(res.status).toBe(307);
+    expect(new URL(res.headers.get("location") ?? "").host).toBe("app.test");
+  });
+
+  it("ADMIN panel.*'da: dokunulmaz (200)", () => {
+    expect(middleware(rolIstegi(PANEL, "/tenants", "admin")).status).toBe(200);
+  });
+
+  it("YEREL gelistirme (localhost, app esdegeri yok): eski davranis korunur", () => {
+    // localhost "platform" sayilir ama panel etiketi yok -> konak-otesi
+    // yonlendirme YAPILMAZ; rol kapisi /tenants'ta kendine yonlendirmez (200).
+    expect(middleware(rolIstegi("localhost", "/tenants", "yonetici")).status).toBe(200);
+  });
+
+  it("/kayit panel.*'da: app.*'a tasinir (oturumsuz, 307)", () => {
+    const res = middleware(istek("/kayit"));
+    expect(res.status).toBe(307);
+    const loc = new URL(res.headers.get("location") ?? "");
+    expect(loc.host).toBe("app.test");
+    expect(loc.pathname).toBe("/kayit");
+  });
+
+  it("/kayit app.*'da: PUBLIC gecer (login'e YONLENDIRILMEZ)", () => {
+    const res = middleware(
+      new NextRequest(new URL("http://app.test/kayit")),
+    );
+    expect(res.status).toBe(200);
+    expect(res.headers.get("location")).toBeNull();
   });
 });
