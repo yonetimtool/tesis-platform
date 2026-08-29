@@ -101,6 +101,7 @@ GET    /davet                                               IZIN   IZIN   RED   
 POST   /davet/coz                                           IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
 POST   /davet/parola                                        IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
 POST   /davet/sosyal                                        IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
+POST   /davet/vazgec/{jeton}                                IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
 POST   /davet/{user_id}/yeniden                             IZIN   IZIN   RED    RED    RED    RED    RED   
 GET    /devices                                             IZIN   RED    RED    RED    RED    RED    RED   
 POST   /devices                                             IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  

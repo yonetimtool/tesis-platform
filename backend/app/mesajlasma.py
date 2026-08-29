@@ -138,7 +138,7 @@ class MesajSaglayici(ABC):
     ad: str
 
     @abstractmethod
-    def gonder(self, hedef: str, konu: str | None, govde: str, html: str | None = None) -> GonderimSonucu: ...
+    def gonder(self, hedef: str, konu: str | None, govde: str, html: str | None = None, headers: dict[str, str] | None = None) -> GonderimSonucu: ...
 
 
 class LogSmsSaglayici(MesajSaglayici):
@@ -167,7 +167,7 @@ class LogSmsSaglayici(MesajSaglayici):
 
     ad = "log-sms"
 
-    def gonder(self, hedef: str, konu: str | None, govde: str, html: str | None = None) -> GonderimSonucu:
+    def gonder(self, hedef: str, konu: str | None, govde: str, html: str | None = None, headers: dict[str, str] | None = None) -> GonderimSonucu:
         # (P134) ALICI MASKELI, GOVDE YAZILMAZ. Bu satir INFO'dur ve
         # P134'e kadar hic gorunmuyordu; gorunur olurken telefon
         # numaralarini ve mesaj metnini konteyner gunluguune tasimasin
@@ -214,7 +214,7 @@ class KapaliSmsSaglayici(MesajSaglayici):
 
     ad = "sms-kapali"
 
-    def gonder(self, hedef: str, konu: str | None, govde: str, html: str | None = None) -> GonderimSonucu:
+    def gonder(self, hedef: str, konu: str | None, govde: str, html: str | None = None, headers: dict[str, str] | None = None) -> GonderimSonucu:
         # ALICI MASKELI, GOVDE YAZILMAZ (P134 kurali).
         logger.info("[SMS/kapali] %s — gonderim YAPILMADI", maskele_kimlik(hedef))
         return GonderimSonucu(
@@ -249,7 +249,7 @@ class NetgsmSmsSaglayici(MesajSaglayici):
         self._baslik = baslik
         self._url = url
 
-    def gonder(self, hedef: str, konu: str | None, govde: str, html: str | None = None) -> GonderimSonucu:
+    def gonder(self, hedef: str, konu: str | None, govde: str, html: str | None = None, headers: dict[str, str] | None = None) -> GonderimSonucu:
         import httpx
 
         try:
@@ -285,7 +285,7 @@ class LogEpostaSaglayici(MesajSaglayici):
 
     ad = "log-eposta"
 
-    def gonder(self, hedef: str, konu: str | None, govde: str, html: str | None = None) -> GonderimSonucu:
+    def gonder(self, hedef: str, konu: str | None, govde: str, html: str | None = None, headers: dict[str, str] | None = None) -> GonderimSonucu:
         # (P134) Alici maskeli, govde yazilmaz — bkz. LogSmsSaglayici.
         # KONU yazilir: kisisel veri tasimaz ve "hangi bildirim" sorusunu
         # yanitlar.
@@ -318,14 +318,26 @@ class SmtpEpostaSaglayici(MesajSaglayici):
         self._kullanici, self._parola = kullanici, parola
         self._gonderen = gonderen
 
-    def gonder(self, hedef: str, konu: str | None, govde: str, html: str | None = None) -> GonderimSonucu:
+    def gonder(self, hedef: str, konu: str | None, govde: str, html: str | None = None, headers: dict[str, str] | None = None) -> GonderimSonucu:
         import smtplib
         from email.message import EmailMessage
+        from email.utils import formatdate, make_msgid
 
         mesaj = EmailMessage()
         mesaj["From"] = self._gonderen
         mesaj["To"] = hedef
         mesaj["Subject"] = konu or ""
+        # (P190) DATE + MESSAGE-ID: smtplib/EmailMessage bunlari OTOMATIK
+        # EKLEMEZ ve eksikligi bir SPAM SINYALIDIR. Message-ID alan adi gonderen
+        # adresinden turetilir (ornek: no-reply@yonetiyor.com -> yonetiyor.com).
+        mesaj["Date"] = formatdate(localtime=True)
+        alan = self._gonderen.rsplit("@", 1)[-1].strip(" <>") or "yonetiyor.com"
+        mesaj["Message-ID"] = make_msgid(domain=alan)
+        # (P190) Ek basliklar (orn. List-Unsubscribe / -Post). Zaten koydugumuz
+        # sabit basliklarin (From/Date/Message-ID...) uzerine YAZILMAZ.
+        for ad, deger in (headers or {}).items():
+            if ad not in mesaj:
+                mesaj[ad] = deger
         # (P186 §3.3) COK-PARCALI: `govde` her zaman text/plain koku;
         # `html` verilirse text/html ALTERNATIF eklenir. Istemci HTML'i
         # cizemezse (ya da metin tercih ederse) duz metne duser — davet

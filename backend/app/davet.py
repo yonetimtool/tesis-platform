@@ -35,6 +35,7 @@ govdesinde yazili.
 from __future__ import annotations
 
 import hashlib
+import hmac
 import logging
 import secrets
 import uuid
@@ -67,6 +68,46 @@ def _jeton_uret() -> tuple[str, str]:
 def jeton_hashle(duz: str) -> str:
     """Cozme yolunda: gelen duz jetonu ayni bicimde hash'ler."""
     return hashlib.sha256(duz.encode()).hexdigest()
+
+
+#: (P190) List-Unsubscribe mailto adresi (RFC 8058'in ikinci secenegi).
+VAZGEC_MAILTO = "vazgec@yonetiyor.com"
+
+
+def _vazgec_imza(uid: str) -> str:
+    """HMAC-SHA256(jwt_secret, user_id) -> 32 hex. DB'de saklanmaz; jeton
+    imzadan DOGRULANIR (davet jetonundan farkli: bu kalicidir, iptal bagi
+    suresiz calismali)."""
+    return hmac.new(
+        settings.jwt_secret.encode(), uid.encode(), hashlib.sha256
+    ).hexdigest()[:32]
+
+
+def davet_vazgec_jetonu(user_id: uuid.UUID | str, tenant_id: uuid.UUID | str) -> str:
+    """Davet e-postasi List-Unsubscribe tek-tik jetonu — `{user}.{tenant}.{imza}`.
+
+    TENANT DE GOMULUR: iptal ucu KIMLIK ONCESIDIR (oturum yok); RLS altinda
+    guncelleme yapabilmek icin tenant baglamini jetondan cozer (SECURITY
+    DEFINER'a gerek kalmaz). UUID'ler nokta icermez, ayrac guvenli."""
+    yuk = f"{user_id}.{tenant_id}"
+    return f"{yuk}.{_vazgec_imza(yuk)}"
+
+
+def davet_vazgec_coz(jeton: str) -> tuple[uuid.UUID, uuid.UUID] | None:
+    """Iptal jetonunu cozup (user_id, tenant_id) doner; imza/biçim bozuksa None.
+
+    Baskasini iptal ettirmeye kapali: imza jwt_secret ile HMAC'lidir."""
+    try:
+        yuk, imza = jeton.rsplit(".", 1)
+    except ValueError:
+        return None
+    if not hmac.compare_digest(imza, _vazgec_imza(yuk)):
+        return None
+    try:
+        uid_s, tid_s = yuk.split(".")
+        return uuid.UUID(uid_s), uuid.UUID(tid_s)
+    except ValueError:
+        return None
 
 
 def davet_bagi(duz_jeton: str) -> str:
@@ -219,10 +260,29 @@ async def davet_gonder(
     # HTML govde ALTERNATIF olarak gecer; `eposta_metin` text/plain kokudur.
     # Gecmise (MesajGonderim) DUZ METIN yazilir: panel ozeti okunabilir kalsin
     # ve HTML iskeleti gecmis tablosunu sismesin.
+    #
+    # (P190) IPTAL (List-Unsubscribe): kisi tek-tik iptal ettiyse davet
+    # E-POSTASI GONDERILMEZ (yonetici yeniden gonderse bile). RFC 8058 tek-tik
+    # basligini onurlandirmak budur.
+    vazgecildi = bool(user.email) and user.davet_vazgecti
     eposta = None
-    if user.email:
+    if user.email and not user.davet_vazgecti:
+        # (P190) List-Unsubscribe (RFC 8058) — Gmail'de olumlu sinyal. HTTPS
+        # tek-tik bagi backend'e DOGRUDAN POST'lanir (api_public_url); mailto
+        # ikinci secenek. `List-Unsubscribe-Post` tek-tigi ilan eder.
+        vazgec_url = (
+            f"{settings.api_public_url.rstrip('/')}"
+            f"/davet/vazgec/{davet_vazgec_jetonu(user.id, user.tenant_id)}"
+        )
         eposta = kanal_saglayicisi("eposta", ayar).gonder(
-            user.email, eposta_konu, eposta_metin, html=eposta_html
+            user.email, eposta_konu, eposta_metin, html=eposta_html,
+            headers={
+                "List-Unsubscribe": (
+                    f"<{vazgec_url}>, "
+                    f"<mailto:{VAZGEC_MAILTO}?subject=davet-vazgec>"
+                ),
+                "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+            },
         )
         session.add(MesajGonderim(
             tenant_id=user.tenant_id, sablon_id=None, kanal="eposta",
@@ -260,7 +320,11 @@ async def davet_gonder(
     ) or eposta or sms
     davet.son_kanal = "eposta" if ozet is eposta else "sms"
     davet.son_durum = ozet.durum if ozet else "basarisiz"
-    davet.son_hata = ozet.hata if ozet else "hedef_yok"
+    # (P190) Iptal edilmis e-postada sebep "hedef_yok" DEGIL "davet_vazgecildi":
+    # yonetici panelde neden gitmedigini dogru gorsun.
+    davet.son_hata = (
+        ozet.hata if ozet else ("davet_vazgecildi" if vazgecildi else "hedef_yok")
+    )
     davet.son_gonderim_at = datetime.now(timezone.utc)
 
     # (P188) YAPILANDIRILMAMIS/BASARISIZ BIRINCIL KANAL SESSIZ KAYBOLMASIN.
@@ -272,6 +336,11 @@ async def davet_gonder(
             "[davet] E-POSTA ULASMADI tenant=%s user=%s durum=%s hata=%s "
             "— SMTP yapilandirmasini kontrol edin (davet gitmedi)",
             user.tenant_id, user.id, eposta.durum, eposta.hata,
+        )
+    elif vazgecildi:
+        logger.info(
+            "[davet] E-POSTA ATLANDI (List-Unsubscribe) tenant=%s user=%s — "
+            "kisi davet e-postasindan vazgecmis", user.tenant_id, user.id,
         )
     elif eposta is None and sms is None:
         logger.warning(

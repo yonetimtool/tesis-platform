@@ -475,6 +475,12 @@ class AppUser(Base):
         Boolean, nullable=False, server_default=text("false")
     )
     telefon: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: (P190) Davet e-postasi List-Unsubscribe tek-tik iptali (RFC 8058). True
+    #: ise bu kisiye davet E-POSTASI GONDERILMEZ (yonetici yeniden gonderse
+    #: bile atlanir; panelde "vazgecildi" gorunur).
+    davet_vazgecti: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
     # Rol-bazli arama rizasi (C1a): numara YALNIZ riza=true iken ve yetkili
     # arayan role /call-target ile aciklanir (KVKK — amaç-sınırlı).
     #: (P36) Pazarlama izinleri — UC AYRI KANAL, tek bayrak DEGIL: kisi

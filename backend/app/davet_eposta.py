@@ -35,7 +35,7 @@ _CIP_BG = "#eef2fb"    # tesis kodu çipi arka planı
 #: dil -> tüm metin parçaları. Marka sözcüğü "Yönetiyor" çevrilmez.
 _METINLER: dict[str, dict[str, str]] = {
     "tr": {
-        "konu": "{tenant} sizi Yönetiyor'a davet etti",
+        "konu": "{tenant} — tesis erişim bilgileriniz",
         "selam": "Merhaba,",
         "paragraf": (
             "<b>{tenant}</b> sizi Yönetiyor tesis yönetim hesabına ekledi. "
@@ -62,7 +62,7 @@ _METINLER: dict[str, dict[str, str]] = {
                      "kodu girin ve e-postanızı doğrulayın.",
     },
     "en": {
-        "konu": "{tenant} invited you to Yönetiyor",
+        "konu": "{tenant} — your facility access details",
         "selam": "Hello,",
         "paragraf": (
             "<b>{tenant}</b> has added you to their Yönetiyor facility "
@@ -90,7 +90,7 @@ _METINLER: dict[str, dict[str, str]] = {
                      "enter the code and verify your email.",
     },
     "ar": {
-        "konu": "دعاك {tenant} إلى Yönetiyor",
+        "konu": "{tenant} — تفاصيل الوصول إلى المنشأة",
         "selam": "مرحباً،",
         "paragraf": (
             "أضافك <b>{tenant}</b> إلى حساب إدارة المنشأة على Yönetiyor. "
@@ -116,7 +116,7 @@ _METINLER: dict[str, dict[str, str]] = {
                      "أدخل الرمز وتحقق من بريدك الإلكتروني.",
     },
     "ru": {
-        "konu": "{tenant} приглашает вас в Yönetiyor",
+        "konu": "{tenant} — данные доступа к объекту",
         "selam": "Здравствуйте,",
         "paragraf": (
             "<b>{tenant}</b> добавил вас в свою учётную запись управления "
@@ -144,7 +144,7 @@ _METINLER: dict[str, dict[str, str]] = {
                      "«Регистрация», введите код и подтвердите почту.",
     },
     "de": {
-        "konu": "{tenant} hat Sie zu Yönetiyor eingeladen",
+        "konu": "{tenant} — Ihre Zugangsdaten für die Anlage",
         "selam": "Hallo,",
         "paragraf": (
             "<b>{tenant}</b> hat Sie zu seinem Yönetiyor-Konto für die "
@@ -172,7 +172,7 @@ _METINLER: dict[str, dict[str, str]] = {
                      "wählen, Code eingeben und E-Mail bestätigen.",
     },
     "fr": {
-        "konu": "{tenant} vous a invité sur Yönetiyor",
+        "konu": "{tenant} — vos identifiants d'accès à l'établissement",
         "selam": "Bonjour,",
         "paragraf": (
             "<b>{tenant}</b> vous a ajouté à son compte de gestion "
@@ -200,7 +200,7 @@ _METINLER: dict[str, dict[str, str]] = {
                      "« S'inscrire », saisissez le code et vérifiez votre e-mail.",
     },
     "es": {
-        "konu": "{tenant} te invitó a Yönetiyor",
+        "konu": "{tenant} — sus datos de acceso a la instalación",
         "selam": "Hola,",
         "paragraf": (
             "<b>{tenant}</b> te ha añadido a su cuenta de gestión de "

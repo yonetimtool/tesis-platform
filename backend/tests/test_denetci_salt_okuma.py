@@ -247,6 +247,12 @@ KAPISIZ_MUTASYONLAR: frozenset[tuple[str, str]] = frozenset({
     # kayitlarina DOKUNMAZ: satir tenant'siz bir tabloya gider ve
     # fonksiyon hicbir satir okutmaz (bkz. test_secdef_kapsam ENVANTER).
     ("POST", "/public/tanitim-iletisim"),
+    # --- (P190) Davet e-postasi List-Unsubscribe tek-tik (RFC 8058): PUBLIC,
+    # oturum YOK. Rol kapisi olamaz cunku posta istemcisi/ilgili kisi
+    # kimliksiz POST atar; yetki jetonun HMAC imzasidir. Yalnizca jetonun
+    # ait oldugu kisinin `davet_vazgecti` bayragini yazar; baska tesise
+    # dokunmaz (tenant jetondan cozulur, RLS o baglamla saglanir).
+    ("POST", "/davet/vazgec/{jeton}"),
 })
 
 #: Denetcinin OKUYABILDIGI uclardan ornekler (davranissal olcum).

@@ -112,6 +112,30 @@ paths:
           description: Davet gecersiz
           content:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  /davet/vazgec/{jeton}:
+    post:
+      tags: [davet]
+      summary: "Davet e-postasi List-Unsubscribe tek-tik (RFC 8058) — PUBLIC"
+      description: >
+        (P190) Posta istemcisinin tek-tik iptali. Kimlik ONCESI (oturum yok);
+        yetki jetonun HMAC imzasidir, tenant jetondan cozulur (RLS o baglamla).
+        Kisi davet e-postalarindan cikarilir (`app_user.davet_vazgecti=true`);
+        yeniden gonderimde bile atlanir. Gecersiz jetonda da 200 (sizdirmama);
+        govde metni farklidir. Yanit HTML (RFC 8058 SHOULD onay sayfasi).
+      security: []   # jeton (imzali) yolda; oturum yok
+      parameters:
+        - name: jeton
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: HTML onay sayfasi (cikarildi ya da gecersiz bag)
+          content:
+            text/html:
+              schema: { type: string }
+
   /davet:
     get:
       tags: [davet]

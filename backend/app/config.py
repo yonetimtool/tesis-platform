@@ -79,6 +79,11 @@ class Settings(BaseSettings):
     # 404 verir; yabancinin alaninda calisan bir sayfadan iyidir.
     portal_base_url: str = "https://yönetiyor.com"
 
+    # (P190) API'nin PUBLIC tabani — e-postadaki List-Unsubscribe (RFC 8058)
+    # tek-tik bagi buraya POST'lanir; backend ucu dogrudan cevaplamali (web
+    # aracisiz). Kanonik `api.yonetiyor.com` (api.yonetio.site de yasar).
+    api_public_url: str = "https://api.yonetiyor.com"
+
     # --- (P155r2 / §4 · P186) MAGAZA BAGLANTILARI — davet SMS'i + e-postasi ---
     #
     # Play paketi `com.app.yonetiyor`; App Store id'si (P186) TAHSIS EDILDI:

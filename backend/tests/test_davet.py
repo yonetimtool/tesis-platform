@@ -232,3 +232,47 @@ def test_davet_paneli_ROL_KAPISI(client, world, owner_conn):
     assert sakin.status_code == 200, sakin.text
     h = {"Authorization": f"Bearer {sakin.json()['access_token']}"}
     assert client.get("/davet", headers=h).status_code == 403
+
+
+# ===================== P190 — List-Unsubscribe (RFC 8058) =================== #
+def test_P190_davet_vazgec_jetonu_roundtrip():
+    """(P190) Iptal jetonu user+tenant tasir, HMAC imzali; dogru cozulur,
+    bozuk imza/bicim None doner (baskasini iptal ettirmeye kapali)."""
+    from app.davet import davet_vazgec_coz, davet_vazgec_jetonu
+
+    uid = uuid.uuid4()
+    tid = uuid.uuid4()
+    jet = davet_vazgec_jetonu(uid, tid)
+    assert davet_vazgec_coz(jet) == (uid, tid)
+    assert davet_vazgec_coz(jet + "x") is None                 # imza bozuk
+    assert davet_vazgec_coz("bozuk") is None                    # bicim bozuk
+    assert davet_vazgec_coz(f"{uid}.{tid}.deadbeefdeadbeef") is None  # yanlis imza
+
+
+def test_P190_gecersiz_jeton_200_SIZDIRMAZ(client):
+    """Gecersiz jetonda da 200 (varlik/gecerlilik sizdirmama)."""
+    assert client.post("/davet/vazgec/bozuk-jeton").status_code == 200
+
+
+def test_P190_list_unsubscribe_tek_tik_davet_epostasini_DURDURUR(client, world, owner_conn):
+    """(P190) POST /davet/vazgec/{jeton} kisiyi davet e-postalarindan cikarir;
+    yonetici YENIDEN gonderse bile e-posta ATLANIR (son_hata=davet_vazgecildi)."""
+    from app.davet import davet_vazgec_jetonu
+
+    yon = _headers(client, world["slug_a"], world["yonetici_a"])
+    created = client.post("/residents", headers=yon, json={
+        "telefon": _tel(), "unit_no": f"VZ-{uuid.uuid4().hex[:4]}",
+        "email": f"vz-{uuid.uuid4().hex[:8]}@example.com"}).json()
+    uid = created["user_id"]
+
+    # Tek-tik iptal (public, jeton imzali).
+    assert client.post(f"/davet/vazgec/{davet_vazgec_jetonu(uid, world['a'])}").status_code == 200
+
+    with owner_conn.cursor() as cur:
+        cur.execute("SELECT davet_vazgecti FROM app_user WHERE id = %s", (str(uid),))
+        assert cur.fetchone()[0] is True
+
+    # Yeniden gonder -> e-posta ATLANIR; ozet "davet_vazgecildi" der.
+    yeniden = client.post(f"/davet/{uid}/yeniden", headers=yon)
+    assert yeniden.status_code == 200, yeniden.text
+    assert yeniden.json()["son_hata"] == "davet_vazgecildi"

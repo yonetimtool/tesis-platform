@@ -19,11 +19,17 @@ from datetime import datetime, timezone
 
 import redis.asyncio as aioredis
 from fastapi import APIRouter, Depends
-from sqlalchemy import select, text
+from fastapi.responses import HTMLResponse
+from sqlalchemy import select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..audit import Action, audit_user, record_audit
-from ..davet import davet_gonder, davet_olustur_veya_tazele, jeton_hashle
+from ..davet import (
+    davet_gonder,
+    davet_olustur_veya_tazele,
+    davet_vazgec_coz,
+    jeton_hashle,
+)
 from ..db import SessionLocal, set_tenant
 from ..deps import get_redis, get_tenant_db, require_role
 from ..errors import APIError
@@ -52,6 +58,50 @@ _DAVET_KULLANILMIS = APIError(410, "gone", "davet_kullanilmis")
 _DAVET_GECERSIZ = APIError(410, "gone", "davet_gecersiz")
 
 _YONETIM = require_role("admin", "yonetici")
+
+#: (P190) List-Unsubscribe tek-tik onay sayfasi (minimal; RFC 8058 SHOULD).
+_VAZGEC_SAYFA = (
+    "<!doctype html><html lang='tr'><head><meta charset='utf-8'>"
+    "<meta name='viewport' content='width=device-width,initial-scale=1'>"
+    "<title>Yönetiyor</title></head>"
+    "<body style='font-family:Arial,Helvetica,sans-serif;max-width:520px;"
+    "margin:48px auto;padding:0 20px;color:#102060'>"
+    "<h2 style='color:#102060'>Yönetiyor</h2>{govde}</body></html>"
+)
+
+
+@router.post("/vazgec/{jeton}", response_class=HTMLResponse)
+async def davet_eposta_vazgec(jeton: str) -> HTMLResponse:
+    """(P190) List-Unsubscribe TEK-TIK (RFC 8058). Posta istemcisi bu uca body
+    `List-Unsubscribe=One-Click` ile POST atar; kisi davet E-POSTALARINDAN
+    cikarilir (app_user.davet_vazgecti=true), yeniden gonderimde bile atlanir.
+
+    KIMLIK ONCESIDIR (oturum yok): yetki, jetonun jwt_secret ile HMAC imzasidir
+    (baskasini iptal ettirmeye kapali). Tenant baglami JETONDAN cozulur ve RLS
+    o baglamla saglanir — SECURITY DEFINER gerekmez. Gecersiz jetonda da 200
+    (varlik/gecerlilik sizdirmamak icin), gorunur sayfa metni farklidir."""
+    coz = davet_vazgec_coz(jeton)
+    if coz is None:
+        return HTMLResponse(
+            _VAZGEC_SAYFA.format(govde="<p>Bağlantı geçersiz.</p>"),
+            status_code=200,
+        )
+    user_id, tenant_id = coz
+    async with SessionLocal() as session:
+        async with session.begin():
+            # Tenant baglami jetondan; RLS UPDATE'i bu tenant'in satirina siner.
+            await set_tenant(session, tenant_id)
+            await session.execute(
+                update(AppUser)
+                .where(AppUser.id == user_id)
+                .values(davet_vazgecti=True)
+            )
+    return HTMLResponse(
+        _VAZGEC_SAYFA.format(
+            govde="<p>Davet e-postalarından çıkarıldınız.</p>"
+        ),
+        status_code=200,
+    )
 
 
 def _maskele(telefon: str) -> str:
