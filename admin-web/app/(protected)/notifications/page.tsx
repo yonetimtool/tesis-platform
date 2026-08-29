@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import useSWR from "swr";
+import useSWR, { mutate as globalMutate } from "swr";
 
 import {
   BosDurum,
@@ -11,6 +11,7 @@ import {
   Kart,
   Rozet,
 } from "@/components/ui";
+import { BILDIRIM_SAYAC_UC } from "@/components/ui/bildirim-merkezi";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { BILDIRIM_TIP, enumAdi } from "@/lib/enum-adlari";
@@ -52,6 +53,10 @@ export default function NotificationsPage() {
   async function markRead(id: string) {
     try {
       await apiSend(`/api/notifications/${id}`, "PATCH", { okundu: true });
+      // (P190 §4) ROZET DE TAZELENIR: ust bardaki sayac ayri bir SWR
+      // anahtari kullanir; yalniz `mutate()` cagirmak rozeti 60 sn'lik
+      // poll'a kadar bayat birakiyordu.
+      void globalMutate(BILDIRIM_SAYAC_UC);
       mutate();
       toast.success(t("bildirimOkunduIsaretlendi"));
     } catch (err) {
@@ -92,6 +97,9 @@ export default function NotificationsPage() {
     try {
       await apiSend(url, "POST", govde);
       setSecili(new Set());
+      // (P190 §4) Toplu okundu / toplu sil / tumunu okundu — HEPSINDE rozet
+      // aninda tazelenir (markRead'deki gerekce).
+      void globalMutate(BILDIRIM_SAYAC_UC);
       await mutate();
       toast.success(t(basariAnahtari));
     } catch (err) {

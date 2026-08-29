@@ -45,7 +45,14 @@ import type { NotificationList } from "@/lib/types";
 
 import { Dugme } from "./dugme";
 
-const SAYAC_UC = "/api/notifications?okundu=false&limit=1&offset=0";
+// (P190 §4) SAYAC ANAHTARI DISA ACIK: bildirimler SAYFASI okundu/sil
+// mutasyonlarindan sonra global `mutate(BILDIRIM_SAYAC_UC)` cagirir ki ust
+// bardaki rozet ANINDA dussun. Onceden sayfa yalniz KENDI listesini
+// tazeliyordu; rozet 60 sn'lik poll'a (ya da sayfa yenilemeye) kadar bayat
+// kaliyordu.
+export const BILDIRIM_SAYAC_UC =
+  "/api/notifications?okundu=false&limit=1&offset=0";
+const SAYAC_UC = BILDIRIM_SAYAC_UC;
 const LISTE_UC = "/api/notifications?okundu=false&limit=8&offset=0";
 const TUM_ROTA = "/notifications";
 const TAZELEME_MS = 60_000;
