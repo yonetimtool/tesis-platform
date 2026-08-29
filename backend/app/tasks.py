@@ -6,8 +6,44 @@ sonraki prompt'larda eklenecek.
 from __future__ import annotations
 
 import uuid
+from collections.abc import Awaitable, Callable
+from typing import TypeVar
 
 from .celery_app import celery_app
+
+_T = TypeVar("_T")
+
+
+def _async_calistir(coro_fabrika: Callable[[], Awaitable[_T]]) -> _T:
+    """(P187) BAGLANTI SIZINTISI DUZELTMESI — async Celery gorevini kendi event
+    loop'unda kosar VE BITISTE async engine'i dispose eder.
+
+    NEDEN: `asyncio.run` her gorevde YENI bir event loop acip kapatir. asyncpg
+    baglantilari olusturuldugu loop'a BAGLIDIR; loop kapaninca havuzda kalan
+    baglantilar OLU loop'a bagli olur, temiz kapatilamaz ve PG'de
+    'idle in transaction' olarak BIRIKIR (beat `gurultu`/`mesaj` kuyrugunu 60
+    sn'de bir tetikledigi icin saatler icinde `max_connections` dolar). Loop
+    KAPANMADAN `engine.dispose()` cagirmak tum havuz baglantilarini duzgun
+    kapatir; sonraki gorev taze acar. Ayrica goc 0071 rol-seviyesinde
+    `idle_in_transaction_session_timeout` koydu (ikinci savunma).
+
+    `coro_fabrika` bir CALLABLE'dir (coroutine'i loop ICINDE uretir); coroutine'i
+    disarida uretip beklemeye birakmak "coroutine was never awaited" uyarisi ve
+    yanlis-loop baglama riski dogururdu.
+    """
+    import asyncio
+
+    from .db import engine
+
+    async def _sar() -> _T:
+        try:
+            return await coro_fabrika()
+        finally:
+            # Loop HALA acikken dispose et: baglantilar bu loop'a bagli, temiz
+            # kapanmalari icin loop yasarken kapatilmalari sart.
+            await engine.dispose()
+
+    return asyncio.run(_sar())
 
 
 @celery_app.task(name="ping")
@@ -67,11 +103,9 @@ def gurultu_kuyrugu() -> dict:
     yavasligina baglamak olurdu. Tenant enumerasyonu OWNER ile (RLS
     bootstrap), asil is her tenant icin app_rw + tenant baglami altinda.
     """
-    import asyncio
-
     from .gurultu_kuyruk import tum_tenantlar_icin
 
-    return {"islenen": asyncio.run(tum_tenantlar_icin())}
+    return {"islenen": _async_calistir(tum_tenantlar_icin)}
 
 
 @celery_app.task(name="ceviri.translate_entity", bind=True, max_retries=3)
@@ -113,11 +147,9 @@ def mesaj_kuyrugu() -> dict:
     bekletirdi. Tenant enumerasyonu OWNER ile (RLS bootstrap), asil is her
     tenant icin `app.current_tenant_id` baglami altinda.
     """
-    import asyncio
-
     from .mesaj_kuyruk import tum_tenantlar_icin
 
-    return {"islenen": asyncio.run(tum_tenantlar_icin())}
+    return {"islenen": _async_calistir(tum_tenantlar_icin)}
 
 
 @celery_app.task(name="rapor.uret", bind=True, max_retries=2)
@@ -133,8 +165,6 @@ def rapor_uret_gorevi(self, is_id: str) -> dict:
     pahali sorguyu sonsuza kadar tekrarlamak olurdu. Kalici hata zaten
     satira YAZILIYOR — kullanici sebebini goruyor.
     """
-    import asyncio
-
     from .rapor_kuyruk import isi_uret
 
-    return asyncio.run(isi_uret(uuid.UUID(is_id)))
+    return _async_calistir(lambda: isi_uret(uuid.UUID(is_id)))

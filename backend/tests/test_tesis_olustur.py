@@ -42,6 +42,17 @@ def _olustur(client, **ek):
     return client.post("/auth/kayit/tesis-olustur", json=govde)
 
 
+def test_P187_telefon_OPSIYONEL_tesis_acilir(client):
+    """(P187) TELEFON OPSIYONEL: SSO 'yeni tesis' yolunda telefon toplanmaz;
+    sema zorunlu birakilinca kayit 422 ile kilitleniyordu. Telefonsuz istek
+    artik tesisi acar (201)."""
+    r = client.post("/auth/kayit/tesis-olustur", json={
+        "tesis_ad": _ad(), "ad": "Telefonsuz Yonetici",
+        "parola": "CokGizliParola1",
+    })
+    assert r.status_code == 201, r.text
+
+
 # ===================== 1) MUTLU YOL — UCTAN UCA ============================ #
 
 

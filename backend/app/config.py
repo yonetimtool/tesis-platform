@@ -159,6 +159,17 @@ class Settings(BaseSettings):
     #: Havuz doluyken bir istegin baglanti icin bekleyecegi sure. Sinirsiz
     #: bekleme, yuk altinda istegi sessizce ASILI birakirdi.
     db_pool_timeout: int = 10
+    #: (P187) Havuzdaki baglantiyi bu sure (sn) sonra GERI DONUSTUR. Sonsuz
+    #: yasayan bir baglanti, agdaki sessiz bir kopmayi ya da sunucu-tarafi
+    #: sonlandirmayi pool_pre_ping'e kadar fark etmez; periyodik tazeleme
+    #: bayat baglantilarin havuzda birikmesini onler.
+    db_pool_recycle: int = 1800
+    #: (P187) BAGLANTI SIZINTISI SAVUNMASI (engine seviyesi; goc 0071 rol
+    #: seviyesinde de koyar). Bir transaction bu kadar ms BOSTA (idle in
+    #: transaction) kalirsa PG oturumu oldurur ve slotu geri verir. 60 sn:
+    #: normal istek ms surer; en uzun mesru bosluk davetin senkron SMTP/SMS
+    #: cagrisidir (~18 sn) ve bunun rahatca altinda kalir.
+    db_idle_tx_timeout_ms: int = 60000
 
     # --- MinIO (S3-uyumlu foto kanit deposu) ---
     # PUBLIC endpoint: presigned URL host'u (istemci buraya PUT'lar). dev: localhost.

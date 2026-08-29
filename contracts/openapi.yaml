@@ -8012,7 +8012,9 @@ paths:
       tags: [aidat]
       summary: Daire listesi
       parameters:
-        - $ref: "#/components/parameters/Limit"
+        # (P187) Ortak Limit (max 200) yerine ic parametre: BLOK->DAIRE secici
+        # tum daireleri tek cagrida ister (limit=1000).
+        - { name: limit, in: query, required: false, description: "Sayfa boyutu (varsayilan 50, max 1000)", schema: { type: integer, minimum: 1, maximum: 1000, default: 50 } }
         - $ref: "#/components/parameters/Offset"
         - name: blok
           in: query
@@ -11583,11 +11585,13 @@ components:
       description: |
         `tesis_kodu` ISTENMEZ ve GONDERILEMEZ — kodu sunucu uretir.
         `parola` VEYA `baglama_jetonu` verilmeli, ikisi birden DEGIL.
-      required: [tesis_ad, ad, telefon]
+        (P187) `telefon` OPSIYONEL — bu uc SSO "yeni tesis" yolu icindir; SSO
+        kimligi telefon vermez ve yonetici SSO ile girer.
+      required: [tesis_ad, ad]
       properties:
         tesis_ad: { type: string, minLength: 2, maxLength: 120, example: "Oltu Sitesi" }
         ad:       { type: string, minLength: 2, maxLength: 120, example: "Ayse Yilmaz" }
-        telefon:  { type: string, minLength: 5, maxLength: 32, example: "+905321112203" }
+        telefon:  { type: string, minLength: 5, maxLength: 32, nullable: true, example: "+905321112203" }
         parola:
           type: string
           minLength: 8

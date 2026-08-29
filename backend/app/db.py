@@ -36,6 +36,19 @@ engine = create_async_engine(
     pool_size=settings.db_pool_size,
     max_overflow=settings.db_max_overflow,
     pool_timeout=settings.db_pool_timeout,
+    # (P187) Bayat baglantiyi periyodik tazele.
+    pool_recycle=settings.db_pool_recycle,
+    # (P187) BAGLANTI SIZINTISI SAVUNMASI: her baglanti icin
+    # `idle_in_transaction_session_timeout` kurulur — bir transaction bu kadar
+    # ms bosta kalirsa PG oturumu oldurur ve slot geri doner. Celery'nin
+    # `asyncio.run`-per-gorev deseni (dispose ile duzeltildi) ya da baska bir
+    # yol bir islemi acik birakirsa bile havuz KENDINI IYILESTIRIR. asyncpg
+    # `server_settings` her baglantiya uygular; deger STRING (ms).
+    connect_args={
+        "server_settings": {
+            "idle_in_transaction_session_timeout": str(settings.db_idle_tx_timeout_ms),
+        }
+    },
 )
 
 SessionLocal = async_sessionmaker(

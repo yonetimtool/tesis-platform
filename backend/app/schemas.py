@@ -1412,7 +1412,12 @@ class TesisOlusturRequest(BaseModel):
 
     tesis_ad: str = Field(min_length=2, max_length=120, examples=["Oltu Sitesi"])
     ad: str = Field(min_length=2, max_length=120, examples=["Ayse Yilmaz"])
-    telefon: str = Field(min_length=5, max_length=32, examples=["+905321112203"])
+    #: (P187) TELEFON OPSIYONEL. Bu uc pratikte SOSYAL (SSO) "yeni tesis" yolu
+    #: icindir; SSO kimligi telefon vermez ve yonetici zaten SSO ile girer —
+    #: telefon giris anahtari DEGILDIR. P185'te akis yeniden kurulurken telefon
+    #: formdan cikti (sema zorunlu kalmisti -> 422, kayit kilitlenmisti).
+    #: Verilirse iletisim olarak saklanir ve benzersizligi kontrol edilir.
+    telefon: str | None = Field(default=None, min_length=5, max_length=32, examples=["+905321112203"])
     #: Elle kayit yolu. Sosyal yolda BOS birakilir.
     parola: str | None = Field(default=None, min_length=8, max_length=128)
     #: Sosyal yol: `POST /auth/oauth/sonuc`tan gelen kisa omurlu jeton.

@@ -150,26 +150,37 @@ async def tesis_olustur(
     Kurulum SIHIRBAZI (blok/daire/sakin/...) bundan AYRIDIR ve
     dokunulmadi; o zaten veriden sayiliyor, bayraktan degil.
     """
-    try:
-        telefon = normalize_phone(body.telefon)
-    except ValueError:
-        raise APIError(422, "validation_error", "telefon_gecersiz")
-
-    # HIZ SINIRI DOGRULAMADAN ONCE — depodaki oteki kayit uclariyla ayni
-    # sira. Sonra saymak, "bu numara kayitli mi" sorusunu sinirsiz
-    # sordurup 409/201 farkindan yanit okumaya izin verirdi.
-    await kod_istegi_say(redis, telefon, kapsam=_HIZ_KAPSAMI)
+    # (P187) TELEFON OPSIYONEL: verilirse normalize + benzersizlik; verilmezse
+    # (SSO yolu) yonetici telefonsuz acilir ve SSO ile girer.
+    telefon: str | None = None
+    if body.telefon:
+        try:
+            telefon = normalize_phone(body.telefon)
+        except ValueError:
+            raise APIError(422, "validation_error", "telefon_gecersiz")
 
     # Sosyal yolda kimlik ONCE cozulur: gecersiz bir jeton yuzunden tesis
-    # acip sonra geri almak yerine, hic acmamak.
+    # acip sonra geri almak yerine, hic acmamak. (Ayrica asagidaki hiz siniri
+    # telefon yoksa kimlik subject'ine dayanir.)
     kimlik: dict | None = None
     if body.baglama_jetonu:
         kimlik = _baglama_coz(body.baglama_jetonu)
 
+    # HIZ SINIRI DOGRULAMADAN ONCE — depodaki oteki kayit uclariyla ayni sira.
+    # Anahtar: telefon varsa telefon, yoksa (SSO) sosyal kimligin subject'i;
+    # boylece telefonsuz akis da hizsiz kalmaz.
+    hiz_anahtari = telefon or (
+        f"oauth:{kimlik['saglayici']}:{kimlik['subject']}" if kimlik else None
+    )
+    if hiz_anahtari:
+        await kod_istegi_say(redis, hiz_anahtari, kapsam=_HIZ_KAPSAMI)
+
     async with SessionLocal() as session:
         async with session.begin():
             # --- 1) Numara bos mu? (RLS bootstrap: SECURITY DEFINER) ---
-            if (
+            # (P187) Telefon opsiyonel: verilmediyse benzersizlik kontrolu YOK
+            # (telefonsuz yonetici SSO ile girer; numara cakismasi imkansiz).
+            if telefon is not None and (
                 await session.execute(
                     text("SELECT public.tenant_id_by_phone(:p)"), {"p": telefon}
                 )

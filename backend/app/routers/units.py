@@ -128,7 +128,11 @@ _RESIDENT_LISTER = require_role("security", "admin", "yonetici")
 
 @router.get("", response_model=UnitListResponse)
 async def list_units(
-    limit: int = Query(50, ge=1, le=200),
+    # (P187) le 200 -> 1000: yeni kullanici formundaki BLOK->DAIRE secici TUM
+    # daireleri tek cagrida ister (limit=1000). 200 tavani, 200'den cok daireli
+    # sitede listeyi bos dondurup (422) sakin eklemeyi kilitliyordu. Istemci ve
+    # tavan artik uyumlu; 1000 pratikte her konut sitesini kapsar.
+    limit: int = Query(50, ge=1, le=1000),
     offset: int = Query(0, ge=0),
     blok: str | None = Query(None),
     aktif: bool | None = Query(None),
