@@ -263,7 +263,8 @@ async def create_user(
         db, user=obj, tenant_ad=tenant_adi, gonderen_id=user.id,
         dil=istek_dili(accept_language),
     )
-    davet_ozeti = DavetGonderimSonucu(gonderildi=gonderildi, kanal="sms")
+    # (P188) BIRINCIL kanal E-POSTA (SMS kapali). Ozet kanali da e-posta.
+    davet_ozeti = DavetGonderimSonucu(gonderildi=gonderildi, kanal="eposta")
 
     return UserCreatedOut(
         id=obj.id,

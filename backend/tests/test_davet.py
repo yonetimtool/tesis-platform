@@ -143,7 +143,8 @@ def test_zayif_parola_422(client, world, owner_conn):
 # ===================== SAKIN EKLEME -> DAVET GONDER ======================= #
 
 def test_sakin_eklemede_DAVET_gonderilir(client, world):
-    """POST /residents parolasiz hesap acar VE davet gonderir (LogSms)."""
+    """POST /residents parolasiz hesap acar VE davet gonderir. (P188) BIRINCIL
+    kanal E-POSTA; SMS kapali oldugu icin denenmez."""
     yon = _headers(client, world["slug_a"], world["yonetici_a"])
     r = client.post("/residents", headers=yon, json={
         "telefon": _tel(), "unit_no": f"DV-{uuid.uuid4().hex[:4]}"})
@@ -161,7 +162,31 @@ def test_sakin_eklemede_DAVET_gonderilir(client, world):
     # sey gitmedi. `True` demek, brief'in acikca yasakladigi sey:
     # "sessizce gonderildi DEMESIN".
     assert davet["gonderildi"] is False
-    assert davet["kanal"] == "sms"
+    # (P188) BIRINCIL kanal E-POSTA (SMS kapali, hic denenmez).
+    assert davet["kanal"] == "eposta"
+
+
+def test_P188_davet_EPOSTA_birincil_SMS_kapaliyken_DENENMEZ(client, world, owner_conn):
+    """(P188) PROD HATASI: davet SMS kanalindan deneniyor, SMS kapali (sms_aktif
+    =false) oldugu icin basarisiz oluyor ve E-POSTAYA HIC DUSMUYORDU. Artik
+    e-posta BIRINCIL; SMS hic denenmez. E-postali sakinde YALNIZ eposta gonderim
+    kaydi olusur, SMS kaydi OLUSMAZ."""
+    yon = _headers(client, world["slug_a"], world["yonetici_a"])
+    eposta = f"davet-{uuid.uuid4().hex[:8]}@example.com"
+    r = client.post("/residents", headers=yon, json={
+        "telefon": _tel(), "unit_no": f"DV-{uuid.uuid4().hex[:4]}", "email": eposta})
+    assert r.status_code == 201, r.text
+    assert r.json()["davet"]["kanal"] == "eposta"
+    user_id = r.json()["user_id"]
+
+    with owner_conn.cursor() as cur:
+        cur.execute(
+            "SELECT kanal FROM mesaj_gonderim WHERE tenant_id = %s AND user_id = %s",
+            (world["a"], user_id),
+        )
+        kanallar = {k for (k,) in cur.fetchall()}
+    assert "eposta" in kanallar, f"e-posta davet kaydi yok: {kanallar}"
+    assert "sms" not in kanallar, "SMS kapaliyken davet SMS DENEMEMELI"
 
 
 # (P186-ek2) test_parola_ILE_acilan_sakine_davet_YOK KALDIRILDI: POST /residents
@@ -181,10 +206,10 @@ def test_yonetici_davet_LISTELER_ve_yeniden_gonderir(client, world, owner_conn):
     kayitlar = liste.json()["items"]
     assert any(str(k["user_id"]) == str(uid) for k in kayitlar)
 
-    # Yeniden gonder: taze jeton + gonderim.
+    # Yeniden gonder: taze jeton + gonderim. (P188) BIRINCIL kanal E-POSTA.
     yeniden = client.post(f"/davet/{uid}/yeniden", headers=yon)
     assert yeniden.status_code == 200, yeniden.text
-    assert yeniden.json()["son_kanal"] == "sms"
+    assert yeniden.json()["son_kanal"] == "eposta"
 
 
 def test_davet_paneli_ROL_KAPISI(client, world, owner_conn):

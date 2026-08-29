@@ -309,17 +309,19 @@ def test_DAVET_YAPILANDIRMA_YOKKEN_GONDERILDI_DEMEZ(client, world):
 
 
 def test_DAVET_MESAJI_TESIS_KODUNU_TASIR(client, world, owner_conn):
-    """Bag tek basina yetmez: kullanici tesis kodunu da bilmeli."""
+    """Bag tek basina yetmez: kullanici tesis kodunu da bilmeli. (P188) Davet
+    BIRINCIL kanal E-POSTA (SMS kapali); e-posta govdesi tesis kodunu tasir."""
     y = _headers(client, world["slug_a"], world["yonetici_a"])
     client.post("/residents", headers=y, json={
         "telefon": f"+9053{uuid.uuid4().int % 10**8:08d}",
-        "unit_no": f"DV-{uuid.uuid4().hex[:4]}"})
+        "unit_no": f"DV-{uuid.uuid4().hex[:4]}",
+        "email": f"kod-{uuid.uuid4().hex[:8]}@example.com"})
 
     kod = owner_conn.execute(
         "SELECT kayit_kodu FROM tenant WHERE id = %s", (world["a"],)
     ).fetchone()[0]
     govde = owner_conn.execute(
-        "SELECT govde FROM mesaj_gonderim WHERE tenant_id = %s "
+        "SELECT govde FROM mesaj_gonderim WHERE tenant_id = %s AND kanal = 'eposta' "
         "ORDER BY created_at DESC LIMIT 1", (world["a"],)
     ).fetchone()[0]
     assert kod in govde

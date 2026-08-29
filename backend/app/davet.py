@@ -35,6 +35,7 @@ govdesinde yazili.
 from __future__ import annotations
 
 import hashlib
+import logging
 import secrets
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -47,6 +48,8 @@ from .davet_eposta import davet_eposta
 from .gonderim import saglayici as kanal_saglayicisi, tenant_ayari
 from .mesajlasma import sms_olc
 from .models import AppUser, Davet, MesajGonderim
+
+logger = logging.getLogger(__name__)
 
 #: Jeton omru. 30 gun: ilk SMS'i haftalarca goz ardi eden bir sakinin bagi
 #: hâlâ calissin diye uzun; sizmis bir bag sonsuza kadar yasamasin diye
@@ -159,16 +162,28 @@ async def davet_gonder(
     gonderen_id: uuid.UUID | None,
     dil: str = "tr",
 ) -> bool:
-    """Bagi SMS (+varsa e-posta) ile gonderir; kayitlari yazar.
+    """Daveti E-POSTA (BIRINCIL) ile gonderir; SMS yalniz ETKINSE ek kanaldir.
 
-    SMS ASIL KANAL (telefon her zaman var); e-posta VARSA ek olarak gider.
-    Donus: SMS gonderildi mi (panel "gitmeyen davetler" bunu kullanir —
-    e-posta bonustur, SMS asildir).
+    (P188) KANAL SIRASI DUZELTILDI. Kayit akisi E-POSTA TABANLIDIR: kisi Tesis
+    ID'yi davet E-POSTASINDAN ogrenir. Onceden bu fonksiyon "SMS asil kanal"
+    varsayiyor, SMS'i ONCE deniyor ve panel ozetini SMS sonucundan yaziyordu.
+    `settings.sms_aktif=false` (prod) iken SMS saglayicisi `KapaliSms`tir ve
+    "sms_kanali_kapali" doner; ozet SMS'e sabitlendigi icin davet e-postayla
+    ULASMISKEN bile "basarisiz/kapali" gorunuyor, e-posta ise —bu kod HER ZAMAN
+    e-posta da denese de— panelde GORUNMUYORDU. Sonuc: Tesis ID kimseye
+    ulasmiyor, kimse kaydolamiyordu.
+
+    Yeni kural:
+      * E-POSTA BIRINCIL: hedef e-posta varsa DAIMA denenir; ozet ondan yazilir.
+      * SMS yalniz `settings.sms_aktif` ISE denenir — kapaliyken HIC denenmez
+        (kapali kanaldan denemek daveti yaniltici sekilde 'basarisiz' gosterir).
+      * Birincil kanal (e-posta) yapilandirilmamis/basarisizsa ACIK WARNING
+        loglanir (sessizce kaybolmasin) — davet ozeti zaten kaydedilir.
 
     (P155r2) TESIS KODU BURADA OKUNUYOR, cagirandan ISTENMIYOR: uc ayri
     cagiran (residents / users / davet-yeniden) var ve her birine bir
-    parametre daha eklemek, birinde unutuldugunda SESSIZCE kodsuz SMS
-    gonderirdi. Tek okuma, tek kural.
+    parametre daha eklemek, birinde unutuldugunda SESSIZCE kodsuz gonderim
+    yapardi. Tek okuma, tek kural.
     """
     bag = davet_bagi(duz_jeton)
     tesis_kodu = (
@@ -199,19 +214,7 @@ async def davet_gonder(
     # baskasinin hesabindan cikiyordu — ve hicbir yerde gorunmuyordu.
     ayar = await tenant_ayari(session, user.tenant_id)
 
-    # --- SMS (varsa) ---
-    sms = kanal_saglayicisi("sms", ayar).gonder(user.telefon, None, sms_govde) \
-        if user.telefon else None
-    if sms is not None:
-        session.add(MesajGonderim(
-            tenant_id=user.tenant_id, sablon_id=None, kanal="sms",
-            amac="operasyonel", user_id=user.id, hedef=user.telefon, konu=None,
-            govde=sms_govde, durum=sms.durum, hata=sms.hata,
-            saglayici=sms.saglayici, gonderen_user_id=gonderen_id,
-            deneme=1,
-        ))
-
-    # --- E-POSTA (varsa) ---
+    # --- E-POSTA (BIRINCIL — hedef varsa DAIMA) ---
     #
     # HTML govde ALTERNATIF olarak gecer; `eposta_metin` text/plain kokudur.
     # Gecmise (MesajGonderim) DUZ METIN yazilir: panel ozeti okunabilir kalsin
@@ -229,23 +232,52 @@ async def davet_gonder(
             deneme=1,
         ))
 
-    # --- Panel ozeti: GERCEKTEN ULASAN KANAL ---
+    # --- SMS (YALNIZ SMS ETKINSE) ---
     #
-    # (P172 §6) ONCEDEN HER ZAMAN "sms" YAZILIYORDU. Bu, SMS asil kanal
-    # oldugu varsayimina dayaniyordu; bugun o varsayim YANLIS: SMS gecidi
-    # henuz yapilandirilmadi, e-posta ise (Resend) CALISIYOR. Eski kodla
-    # panel her daveti "gitmedi" gosterirdi — davet e-postayla ULASMISKEN.
+    # `settings.sms_aktif=false` iken HIC DENENMEZ: kapali kanaldan denemek
+    # yalnizca "sms_kanali_kapali" gurultusu uretir ve (eski kodda) daveti
+    # basarisiz gosterirdi. SMS acilinca (tek satir SMS_AKTIF=true) burasi
+    # ek kanal olarak devreye girer.
+    sms = None
+    if user.telefon and settings.sms_aktif:
+        sms = kanal_saglayicisi("sms", ayar).gonder(user.telefon, None, sms_govde)
+        session.add(MesajGonderim(
+            tenant_id=user.tenant_id, sablon_id=None, kanal="sms",
+            amac="operasyonel", user_id=user.id, hedef=user.telefon, konu=None,
+            govde=sms_govde, durum=sms.durum, hata=sms.hata,
+            saglayici=sms.saglayici, gonderen_user_id=gonderen_id,
+            deneme=1,
+        ))
+
+    # --- Panel ozeti: BIRINCIL kanal E-POSTA ---
     #
-    # Kural: BASARILI olan kanal yazilir; ikisi de basarisizsa SMS'in
-    # (ya da tek denenen kanalin) sebebi yazilir ki teshis kaybolmasin.
+    # BASARILI olan kanal yazilir; hicbiri basarili degilse BIRINCIL (e-posta)
+    # sebebi yazilir ki "neden ulasmadi" panelde dogru kanaldan gorunsun —
+    # e-posta hedefi yoksa (yalniz SMS'li eski kayit) SMS'e duser.
     ozet = next(
-        (s for s in (sms, eposta) if s is not None and s.durum == "gonderildi"),
+        (s for s in (eposta, sms) if s is not None and s.durum == "gonderildi"),
         None,
-    ) or sms or eposta
-    davet.son_kanal = "sms" if ozet is sms else "eposta"
+    ) or eposta or sms
+    davet.son_kanal = "eposta" if ozet is eposta else "sms"
     davet.son_durum = ozet.durum if ozet else "basarisiz"
     davet.son_hata = ozet.hata if ozet else "hedef_yok"
     davet.son_gonderim_at = datetime.now(timezone.utc)
+
+    # (P188) YAPILANDIRILMAMIS/BASARISIZ BIRINCIL KANAL SESSIZ KAYBOLMASIN.
+    # Davet ozeti tabloya yaziliyor ama "kimse bakmiyordu"; birincil kanal
+    # (e-posta) ulasmadiginda ACIK bir WARNING de duser (INFO log gorunur,
+    # P134) — operator SMTP yapilandirmasini kontrol etsin.
+    if eposta is not None and eposta.durum != "gonderildi":
+        logger.warning(
+            "[davet] E-POSTA ULASMADI tenant=%s user=%s durum=%s hata=%s "
+            "— SMTP yapilandirmasini kontrol edin (davet gitmedi)",
+            user.tenant_id, user.id, eposta.durum, eposta.hata,
+        )
+    elif eposta is None and sms is None:
+        logger.warning(
+            "[davet] HEDEF KANAL YOK tenant=%s user=%s — e-posta bos ve SMS "
+            "kapali; davet gonderilemedi", user.tenant_id, user.id,
+        )
     await session.flush()
     # DONUS: HERHANGI BIR kanaldan ulasti mi. Cagiranlar bunu "davet
     # gitti mi" diye okuyor; SMS'e sabitlemek, e-postayla ulasan daveti
@@ -261,7 +293,8 @@ async def davet_olustur_ve_gonder(
     gonderen_id: uuid.UUID | None,
     dil: str = "tr",
 ) -> bool:
-    """Kolaylik: olustur/tazele + gonder. Donus: SMS gonderildi mi.
+    """Kolaylik: olustur/tazele + gonder. Donus: davet ULASTI mi (birincil
+    kanal E-POSTA; SMS yalniz etkinse ek kanal — bkz. davet_gonder).
 
     HESAP PAROLASIZ OLMALI: davet, hesabi SAHIPLENDIRME bagidir. Parolasi
     olan hesaba davet gondermek anlamsiz (zaten girebiliyor); cagiran bu

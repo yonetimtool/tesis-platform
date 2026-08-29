@@ -137,7 +137,8 @@ async def create_resident(
         db, user=resident, tenant_ad=tenant_ad, gonderen_id=user.id,
         dil=istek_dili(accept_language),
     )
-    davet_ozeti = DavetGonderimSonucu(gonderildi=gonderildi, kanal="sms")
+    # (P188) BIRINCIL kanal E-POSTA (SMS kapali). Ozet kanali da e-posta.
+    davet_ozeti = DavetGonderimSonucu(gonderildi=gonderildi, kanal="eposta")
 
     return ResidentCreatedOut(
         user_id=resident.id,
