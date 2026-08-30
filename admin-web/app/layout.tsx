@@ -64,9 +64,19 @@ export default async function RootLayout({
     cookieDeposu.get(DIL_COOKIE)?.value,
     baslikDeposu.get("accept-language"),
   );
+  // (P190 §5) TEMA SUNUCUDA COZULUR: `tema` cerezi acik/koyu diyorsa sinif
+  // ILK HTML'de basilir — titreme (once acik, sonra koyu) SIFIR ve JS
+  // engellense bile tercih uygulanir. `system`/cerezsiz durumda karari
+  // asagidaki satir-ici script verir (OS tercihi yalniz istemcide bilinir).
+  const temaCerezi = cookieDeposu.get("tema")?.value;
 
   return (
-    <html lang={dil} dir={yon(dil)} suppressHydrationWarning>
+    <html
+      lang={dil}
+      dir={yon(dil)}
+      className={temaCerezi === "dark" ? "dark" : undefined}
+      suppressHydrationWarning
+    >
       <head>
         {/* (P175) LATIN DILIMI ON YUKLENIR.
             `next/font` bunu kendiliginden yapiyordu; elle yazarken
@@ -80,11 +90,12 @@ export default async function RootLayout({
           type="font/woff2"
           crossOrigin="anonymous"
         />
-        {/* Ilk boyamadan once tema sinifini ata (FOUC yok). Kayitli tercih
-            yoksa/sistem ise OS temasini izle. */}
+        {/* Ilk boyamadan once tema sinifini ata (FOUC yok). (P190 §5) SIRA:
+            once CEREZ (SSR ile ayni kaynak; alan-genelinde app/panel ortak),
+            yoksa localStorage; `system`/bos ise OS temasini izle. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('theme');var d=t==='dark'||((!t||t==='system')&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',d);}catch(e){}})();`,
+            __html: `(function(){try{var m=document.cookie.match(/(?:^|;\\s*)tema=(dark|light|system)/);var t=m?m[1]:null;if(!t){try{t=localStorage.getItem('theme');}catch(e){}}var d=t==='dark'||((!t||t==='system')&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',d);}catch(e){}})();`,
           }}
         />
       </head>

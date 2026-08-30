@@ -24,6 +24,11 @@
 export type TemaModu = "system" | "light" | "dark";
 
 export const TEMA_ANAHTARI = "theme";
+/** (P190 §5) SSR'nin ilk karede okudugu cerez — `app/layout.tsx` bunu okuyup
+ *  `.dark` sinifini SUNUCUDA basar (acik/koyu icin titreme SIFIR, JS
+ *  engellense bile). Alan-genelinde yazilir (`.yönetiyor.com`): app.* ve
+ *  panel.* AYNI tercihi gorur. */
+export const TEMA_CEREZI = "tema";
 const KOYU_SINIF = "dark";
 const GECIS_SINIFI = "yz-tema-gecisi";
 /** CSS'teki 200 ms + kucuk bir pay (gecis bitmeden sinif kalkmasin). */
@@ -72,10 +77,44 @@ export function kayitliMod(): TemaModu | null {
   }
 }
 
+/**
+ * (P190 §5) Cerez alani: `app.x.y`/`panel.x.y` konagindan `x.y` (kayitli
+ * alan) — cerez `.x.y` icin yazilir ki iki yuzey AYNI tercihi gorsun.
+ * Etiketsiz konakta (localhost) bos doner => konak-yerel cerez.
+ */
+function cerezAlani(): string {
+  const p = location.hostname.split(".");
+  if ((p[0] === "app" || p[0] === "panel") && p.length > 1) {
+    return p.slice(1).join(".");
+  }
+  return "";
+}
+
+/** Cerezdeki tercih (SSR ile ayni kaynak); yoksa/bozuksa null. */
+export function cerezMod(): TemaModu | null {
+  try {
+    const m = document.cookie.match(/(?:^|;\s*)tema=(dark|light|system)/);
+    return (m?.[1] as TemaModu | undefined) ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export function moduKaydet(mod: TemaModu): void {
   try {
     localStorage.setItem(TEMA_ANAHTARI, mod);
   } catch {
     // Yazilamazsa tercih bu oturumda gecerli olur, kalici olmaz.
+  }
+  // (P190 §5) CEREZ DE YAZILIR: SSR ilk karede okur (titreme yok) ve alan-
+  // genelinde oldugu icin app.*/panel.* ayni tercihi paylasir.
+  try {
+    const alan = cerezAlani();
+    document.cookie =
+      `${TEMA_CEREZI}=${mod}; path=/; max-age=31536000; SameSite=Lax` +
+      (alan ? `; domain=.${alan}` : "") +
+      (location.protocol === "https:" ? "; secure" : "");
+  } catch {
+    // Cerez yazilamazsa localStorage hala calisir (ayni tarayici icin).
   }
 }

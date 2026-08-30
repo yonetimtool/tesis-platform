@@ -151,6 +151,15 @@ class UserOut(BaseModel):
     is_active: bool
     # Profil fotografi (0005/WP-D) — kisa omurlu presigned GET URL (varsa).
     avatar_url: str | None = None
+    # (P190 §5) Tema tercihi — hesapta saklanır; web açılışta senkronlar.
+    ui_tema: str = "system"
+
+
+class MeTemaRequest(BaseModel):
+    """(P190 §5) Tema tercihini güncelle — hesapta saklanır."""
+
+    tema: Literal["system", "light", "dark"]
+    model_config = ConfigDict(extra="forbid")
 
 
 class MeEpostaEkleRequest(BaseModel):
@@ -832,6 +841,11 @@ class CameraOut(BaseModel):
     # TURETILMIS (saklanmaz): istemci bu kamerayi oynatabilir mi. `rtsp` bile
     # `restream_url` doluysa TRUE olur.
     oynatilabilir: bool = True
+    # (P190 §6) TURETILMIS: RTSP kamera icin YONETILEN canli izleme yolu
+    # (backend HLS vekili, `/cameras/{id}/canli/index.m3u8`). MediaMTX
+    # yapilandirilmamissa None. Istemci doluysa BUNU oynatir (kimlik-kapili;
+    # RTSP adresi/kimlik bilgisi istemciye gitmez).
+    canli_yol: str | None = None
     created_at: datetime
     updated_at: datetime
 

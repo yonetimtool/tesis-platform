@@ -261,3 +261,29 @@ def test_profil_yanitinda_avatar_url_alani_var(client, world):
     sakin = _headers(client, world["slug_a"], world["resident_a"])
     govde = client.get("/me/profile", headers=sakin).json()
     assert "avatar_url" in govde
+
+
+# ========================= P190 §5 — TEMA TERCIHI =========================== #
+def test_P190_tema_tercihi_hesapta_saklanir(client, world):
+    """PATCH /me/tema hesapta kalici; GET /me ayni degeri doner (baska
+    tarayici/cihaz da ayni temayi gorur)."""
+    h = _headers(client, world["slug_a"], world["yonetici_a"])
+    # Varsayilan system.
+    assert client.get("/me", headers=h).json()["ui_tema"] == "system"
+
+    r = client.patch("/me/tema", headers=h, json={"tema": "dark"})
+    assert r.status_code == 200, r.text
+    assert r.json()["ui_tema"] == "dark"
+    # Kalici: yeni istekte de dark.
+    assert client.get("/me", headers=h).json()["ui_tema"] == "dark"
+
+    # Gecersiz deger 422 (Literal + DB CHECK).
+    assert client.patch(
+        "/me/tema", headers=h, json={"tema": "mor"}
+    ).status_code == 422
+
+    # Her rol kendi temasini secebilir (kapisiz mutasyon sinifi).
+    d = _headers(client, world["slug_a"], world["denetci_a"])
+    assert client.patch(
+        "/me/tema", headers=d, json={"tema": "light"}
+    ).status_code == 200

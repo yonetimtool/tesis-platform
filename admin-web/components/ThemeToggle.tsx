@@ -1,19 +1,40 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import useSWR from "swr";
 
+import { apiSend } from "@/lib/client";
+import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
-import { kayitliMod, moduKaydet, temayiUygula, type TemaModu } from "@/lib/tema";
+import {
+  cerezMod,
+  kayitliMod,
+  moduKaydet,
+  temayiUygula,
+  type TemaModu,
+} from "@/lib/tema";
 
-// Tema modu: sistem (OS'i izle), acik veya koyu. Secim localStorage'da kalici.
-// Ilk boyama oncesi `.dark` sinifi layout'taki satir-ici script ile atanir
-// (FOUC yok); bu bilesen calisma-zamani degisimini ve senkronu yonetir.
+// Tema modu: sistem (OS'i izle), acik veya koyu.
+//
+// (P190 §5) TERCIH ARTIK HESAPTA: secim `PATCH /me/tema` ile sunucuya da
+// yazilir; acilista `GET /me`nin dondugu `ui_tema` yerel tercihle senkronlanir
+// (HESAP KAZANIR — baska tarayicida da ayni tema gelsin). Yerel katman iki
+// parca: cerez (SSR ilk kare; alan-genelinde app/panel ortak) + localStorage
+// (eski yol, yedek).
+//
+// Ilk boyama oncesi `.dark` sinifi SSR (cerez) + layout'taki satir-ici script
+// ile atanir (FOUC yok); bu bilesen calisma-zamani degisimini ve senkronu
+// yonetir.
 //
 // (P161) UYGULAMA MANTIGI `lib/tema.ts`e TASINDI: modun hangi sinifi
-// verdigi ve 200 ms'lik renk gecisi artik tek kaynakta. Bu bilesen
-// yalnizca DUGME.
+// verdigi ve 200 ms'lik renk gecisi artik tek kaynakta.
 type Mode = TemaModu;
+
+const GECERLI: readonly string[] = ["system", "light", "dark"];
+// Ucluda/`??`da dize sabiti sabit-metin taramasina takilir; adlandirilmis
+// sabit hem o kurali saglar hem niyeti soyler.
+const VARSAYILAN_MOD: Mode = "system";
 
 const ORDER: Mode[] = ["system", "light", "dark"];
 // Etiket METIN degil ANAHTAR (tur 17) — cizim aninda aktif dilde cozulur.
@@ -28,13 +49,38 @@ export function ThemeToggle() {
   const t = useT();
   const [mode, setMode] = useState<Mode>("system");
   const [mounted, setMounted] = useState(false);
+  // (P190 §5) Hesap senkronu YALNIZ BIR KEZ uygulanir: kullanici oturum
+  // icinde temayi degistirdiyse /me'nin sonraki tazelenmesi onu geri ezmesin.
+  const hesapUygulandi = useRef(false);
+  // KullaniciMenusu ile AYNI SWR anahtari — istek TEKILLESIR, ek cagri yok.
+  const { data: kimlik } = useSWR<{ ui_tema?: string }>("/api/me", jsonFetcher);
 
   useEffect(() => {
-    // Korumali okuma `lib/tema.ts`te; erisilemez depolamada `system`.
-    const stored = kayitliMod();
+    // Cerez (SSR ile ayni kaynak) once, localStorage yedek.
+    const stored = cerezMod() ?? kayitliMod();
     if (stored) setMode(stored);
+    // (P190 §5) MOUNT'TA YENIDEN UYGULA: satir-ici script bir sebeple
+    // kosamadiysa (CSP vb.) tema yine dogru sinifa oturur. Idempotent —
+    // sinif zaten dogruysa hicbir sey degismez.
+    temayiUygula(stored ?? VARSAYILAN_MOD);
     setMounted(true);
   }, []);
+
+  // (P190 §5) HESAPTAKI TERCIH KAZANIR: /me gelince yereldekiyle ayrisirsa
+  // hesap degeri uygulanir ve yerel katmanlar guncellenir. Boylece baska
+  // tarayicida secilen tema burada da acilista gelir.
+  useEffect(() => {
+    const hesap = kimlik?.ui_tema;
+    if (!hesap || hesapUygulandi.current) return;
+    if (!GECERLI.includes(hesap)) return;
+    hesapUygulandi.current = true;
+    const yerel = cerezMod() ?? kayitliMod();
+    if (hesap !== yerel) {
+      setMode(hesap as Mode);
+      moduKaydet(hesap as Mode);
+      temayiUygula(hesap as Mode, true);
+    }
+  }, [kimlik]);
 
   // Sistem modundayken OS tema degisimini canli izle.
   useEffect(() => {
@@ -49,9 +95,15 @@ export function ThemeToggle() {
 
   function cycle() {
     const next = ORDER[(ORDER.indexOf(mode) + 1) % ORDER.length];
+    // Kullanici acikca secti: hesap senkronu artik ezmesin.
+    hesapUygulandi.current = true;
     setMode(next);
     moduKaydet(next);
     temayiUygula(next, true);
+    // (P190 §5) HESABA DA YAZ — sessiz (fire-and-forget): tema aninda yerelde
+    // uygulandi; sunucu hatasi kullanicinin secimini geri almaz, yalnizca
+    // capraz-tarayici senkronu o seferlik gecikir.
+    void apiSend("/api/me/tema", "PATCH", { tema: next }).catch(() => {});
   }
 
   // Hydration uyumu: sunucu modu bilmez; ilk render'da notr etiket goster.

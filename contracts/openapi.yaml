@@ -9992,6 +9992,29 @@ paths:
       responses:
         '200': { description: kullanici }
         '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /me/tema:
+    patch:
+      tags: [me]
+      summary: "(P190 §5) Tema tercihi — hesapta saklanir (system|light|dark)"
+      description: >
+        Web tema tercihi kullanici HESABINDA durur (cihaz/tarayici degil):
+        baska tarayicida da ayni tema gelir. Kozmetik tercih — denetime
+        yazilmaz. Deger kumesi sema + DB CHECK (goc 0076) ile sinirli.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tema]
+              properties:
+                tema: { type: string, enum: [system, light, dark] }
+      responses:
+        '200': { description: guncellenmis kullanici }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+
   /me/avatar:
     patch:
       tags: [me]

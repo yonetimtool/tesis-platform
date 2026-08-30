@@ -38,6 +38,7 @@ from ..schemas import (
     MeEpostaDogrulaRequest,
     MeEpostaEkleRequest,
     MeProfileOut,
+    MeTemaRequest,
     PasswordChangeRequest,
     UserOut,
 )
@@ -71,6 +72,7 @@ def _user_out(user: AppUser) -> UserOut:
         eposta_dogrulandi=bool(user.eposta_dogrulandi),
         role=user.role, is_active=user.is_active,
         avatar_url=presign_get(user.avatar_key) if user.avatar_key else None,
+        ui_tema=user.ui_tema,
     )
 
 
@@ -90,6 +92,24 @@ def _profile_out(user: AppUser) -> MeProfileOut:
 @router.get("/me", response_model=UserOut)
 async def me(user: AppUser = Depends(get_current_user)) -> UserOut:
     """Access token'daki kullaniciyi doner (tenant context token'dan)."""
+    return _user_out(user)
+
+
+@router.patch("/me/tema", response_model=UserOut)
+async def tema_guncelle(
+    body: MeTemaRequest,
+    user: AppUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_tenant_db),
+) -> UserOut:
+    """(P190 §5) Tema tercihi — HESAPTA saklanir (cihaz degil).
+
+    Kozmetik bir tercihtir: denetime YAZILMAZ (bildirim/pazarlama
+    tercihlerinin aksine hukuki bir sonucu yok). Deger `MeTemaRequest`in
+    Literal'iyla sinirli; semadaki CHECK (goc 0076) ikinci savunma.
+    """
+    user.ui_tema = body.tema
+    user.updated_at = func.now()
+    await db.flush()
     return _user_out(user)
 
 

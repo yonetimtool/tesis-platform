@@ -253,6 +253,10 @@ KAPISIZ_MUTASYONLAR: frozenset[tuple[str, str]] = frozenset({
     # ait oldugu kisinin `davet_vazgecti` bayragini yazar; baska tesise
     # dokunmaz (tenant jetondan cozulur, RLS o baglamla saglanir).
     ("POST", "/davet/vazgec/{jeton}"),
+    # --- (P190 §5) Tema tercihi — `/me/password` ile AYNI SINIF: kisinin
+    # KENDI kaydina yazar, tesisin defterine dokunmaz. Rol kapisi yok;
+    # denetci dahil herkes kendi temasini secebilmeli (kozmetik tercih).
+    ("PATCH", "/me/tema"),
 })
 
 #: Denetcinin OKUYABILDIGI uclardan ornekler (davranissal olcum).
