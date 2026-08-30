@@ -14,6 +14,15 @@ WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# (P191 §1) KONAK-OTESI YONLENDIRME HEDEFI DERLEME ANINDA GOMULUR.
+#
+# `middleware.ts` edge calisma zamaninda kosar; orada `process.env` derleme
+# aninda degistirilir, calisma zamaninda okunmaz. Bu yuzden kanonik `app.*`
+# kok adresi build arg olarak gecilir. VERILMEZSE davranis bozulmaz:
+# middleware iletilmis basliklardan (`x-forwarded-host`) turetir — yine
+# portsuz ve https. Bkz. lib/konak-adres.ts.
+ARG NEXT_PUBLIC_APP_ADRESI=""
+ENV NEXT_PUBLIC_APP_ADRESI=$NEXT_PUBLIC_APP_ADRESI
 RUN npm run build
 
 # --- runner: minimal calisma-zamani (yalniz standalone server + statik varliklar)

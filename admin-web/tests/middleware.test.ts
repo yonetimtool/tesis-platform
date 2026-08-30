@@ -370,3 +370,64 @@ describe("konak-otesi yuzey yonlendirmesi (P190 §1)", () => {
     expect(res.headers.get("location")).toBeNull();
   });
 });
+
+// --------------------------------------------------------------------------- #
+// (P191 §1) IC PORT SIZINTISI — prod'da olculen kusurun regresyon kapisi.
+//
+// `panel.yonetiyor.com/kayit` -> `http://app.yonetiyor.com:3000/kayit`
+// uretiliyordu ve tarayici ERR_CONNECTION_TIMED_OUT aliyordu: 3000 yalnizca
+// konteynerin ic portu, disari kapali. Iki neden: (1) `req.nextUrl` vekilin
+// ARKASINDAKI dinleme adresidir, (2) `URL.host` atamasi portu SIFIRLAMAZ.
+//
+// Test istegi gercek dagitimi taklit eder: ic URL portludur, gercek konak
+// yalniz iletilmis basliklarda vardir.
+describe("konak-otesi yonlendirme: PORT SIZMAZ", () => {
+  function vekilIstegi(yol: string, cookie?: string, rol?: string): NextRequest {
+    const bas: Record<string, string> = {
+      // Next'in gordugu ic konak (Caddy -> admin-web:3000).
+      host: "admin-web:3000",
+      "x-forwarded-host": "panel.yonetiyor.com",
+      "x-forwarded-proto": "https",
+    };
+    if (cookie) bas.cookie = cookie;
+    // nextUrl'in kendisi de PORTLU — sizintinin kaynagi buydu.
+    void rol;
+    return new NextRequest(new URL(`http://localhost:3000${yol}`), { headers: bas });
+  }
+
+  it("/kayit: https, portsuz, app.* konagi", () => {
+    const res = middleware(vekilIstegi("/kayit"));
+    expect(res.status).toBe(307);
+    const loc = res.headers.get("location") ?? "";
+    expect(loc).toBe("https://app.yonetiyor.com/kayit");
+    expect(new URL(loc).port).toBe("");
+  });
+
+  it("/kayit sorgu dizesi korunur", () => {
+    const res = middleware(vekilIstegi("/kayit?niyet=kayit&rol=yonetici"));
+    expect(res.headers.get("location")).toBe(
+      "https://app.yonetiyor.com/kayit?niyet=kayit&rol=yonetici",
+    );
+  });
+
+  it("panel.*'a dusen TESIS rolu app.* koküne: portsuz", () => {
+    const res = middleware(
+      vekilIstegi("/tenants", `${REFRESH_COOKIE}=rt; ${ACCESS_COOKIE}=sahte.${Buffer.from(JSON.stringify({ role: "yonetici" })).toString("base64url")}.imza`),
+    );
+    expect(res.status).toBe(307);
+    expect(res.headers.get("location")).toBe("https://app.yonetiyor.com/");
+  });
+
+  it("URETILEN HICBIR YONLENDIRMEDE PORT YOK (genel tarama)", () => {
+    const yollar = ["/kayit", "/kayit/adim", "/tenants", "/dashboard", "/", "/finans"];
+    const oturumlar = [undefined, `${REFRESH_COOKIE}=rt`, `${REFRESH_COOKIE}=rt; ${ACCESS_COOKIE}=sahte.${Buffer.from(JSON.stringify({ role: "yonetici" })).toString("base64url")}.imza`];
+    for (const yol of yollar) {
+      for (const c of oturumlar) {
+        const loc = middleware(vekilIstegi(yol, c)).headers.get("location");
+        if (!loc) continue;
+        // Goreli adres (ayni konak) zaten portsuzdur.
+        expect(loc, `${yol} / ${c ?? "oturumsuz"}`).not.toMatch(/:\d{2,5}(\/|$)/);
+      }
+    }
+  });
+});

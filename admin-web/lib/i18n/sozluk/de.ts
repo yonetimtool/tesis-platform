@@ -1731,6 +1731,10 @@ export const de: Sozluk = {
   sosyalKayitOl: "Als Verwalter registrieren",
   sosyalBagliDegil: "Dieses Konto ist noch keiner Anlage zugeordnet. Fahren Sie mit der Registrierung fort.",
   sosyalKaydolDevam: "Registrieren",
+  sosyalTamamlaBaslik: "Konto vervollständigen",
+  sosyalTamamlaAciklama: "Wenn Ihre Verwaltung Sie hinzugefügt hat, geben Sie die Anlagen-ID aus Ihrer Einladungs-E-Mail ein — Ihr Konto wird zugeordnet und die Anmeldung abgeschlossen.",
+  sosyalTamamlaGonder: "Mit Anlagen-ID fortfahren",
+  sosyalTamamlaYeniKayit: "Ich habe keine Anlage, neu registrieren",
   profilEpostaDogrulandi: "Ihre E-Mail-Adresse ist bestätigt.",
   profilEpostaBeklemede:
     "Ihre E-Mail ist nicht bestätigt. Bestätigen Sie sie für Passwort-Reset und Code-Anmeldung.",

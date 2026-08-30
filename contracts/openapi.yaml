@@ -1174,11 +1174,15 @@ paths:
           application/json:
             schema:
               type: object
-              required: [baglama_jetonu, tesis_kodu, rol]
+              required: [baglama_jetonu, tesis_kodu]
               properties:
                 baglama_jetonu: { type: string }
                 tesis_kodu: { type: string }
-                rol: { type: string }
+                # (P191 §1) OPSIYONEL. Verilirse rol BEYANIDIR (kayit akisi).
+                # Verilmezse GIRISTE TAMAMLAMA modudur: rol hesaptan okunur ve
+                # `password_set=true` hesap da baglanabilir (mevcut hesaba SSO
+                # yontemi eklemek, kayit degil).
+                rol: { type: string, nullable: true }
       responses:
         "200":
           description: durum=giris|otp_gerekli|onay_bekliyor
@@ -1222,11 +1226,12 @@ paths:
           application/json:
             schema:
               type: object
-              required: [baglama_jetonu, tesis_kodu, rol, kod]
+              required: [baglama_jetonu, tesis_kodu, kod]
               properties:
                 baglama_jetonu: { type: string }
                 tesis_kodu: { type: string }
-                rol: { type: string }
+                # (P191 §1) `rol-tamamla` ile ayni kural: opsiyonel.
+                rol: { type: string, nullable: true }
                 kod: { type: string }
       responses:
         "200":

@@ -1731,6 +1731,10 @@ export const ar: Sozluk = {
   sosyalKayitOl: "سجّل كمدير",
   sosyalBagliDegil: "هذا الحساب غير مرتبط بأي منشأة بعد. تابع عبر التسجيل.",
   sosyalKaydolDevam: "تسجيل",
+  sosyalTamamlaBaslik: "أكمل حسابك",
+  sosyalTamamlaAciklama: "إذا أضافك المدير، فأدخل معرّف المنشأة الوارد في رسالة الدعوة — سيتم ربط حسابك وإكمال تسجيل الدخول.",
+  sosyalTamamlaGonder: "المتابعة بمعرّف المنشأة",
+  sosyalTamamlaYeniKayit: "ليس لديّ منشأة، إنشاء تسجيل جديد",
   profilEpostaDogrulandi: "تم التحقق من بريدك الإلكتروني.",
   profilEpostaBeklemede:
     "بريدك الإلكتروني غير مُتحقَّق منه. تحقَّق منه لإعادة تعيين كلمة المرور وتسجيل الدخول بالرمز.",

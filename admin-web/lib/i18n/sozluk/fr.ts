@@ -1731,6 +1731,10 @@ export const fr: Sozluk = {
   sosyalKayitOl: "S'inscrire en tant que gestionnaire",
   sosyalBagliDegil: "Ce compte n'est pas encore lié à un établissement. Continuez en vous inscrivant.",
   sosyalKaydolDevam: "S'inscrire",
+  sosyalTamamlaBaslik: "Complétez votre compte",
+  sosyalTamamlaAciklama: "Si votre gestionnaire vous a ajouté, saisissez l'ID d'établissement figurant dans votre e-mail d'invitation — votre compte sera associé et votre connexion finalisée.",
+  sosyalTamamlaGonder: "Continuer avec l'ID d'établissement",
+  sosyalTamamlaYeniKayit: "Je n'ai pas d'établissement, créer une inscription",
   profilEpostaDogrulandi: "Votre adresse e-mail est vérifiée.",
   profilEpostaBeklemede:
     "Votre e-mail n'est pas vérifié. Vérifiez-le pour la réinitialisation du mot de passe et la connexion par code.",

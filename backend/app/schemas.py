@@ -6346,11 +6346,23 @@ class OauthRolTamamlaRequest(BaseModel):
     `baglama_jetonu` içinde saglayici + subject + eposta + email_verified imzalı
     gelir (`/auth/oauth/sonuc`un dönüşü). `rol` beyandır; listedeki rolle
     uyuşmazsa onay kuyruğuna düşer (`rol-eposta-basla` ile aynı ilke).
+
+    (P191 §1) `rol` ARTIK OPSİYONEL — iki ayrı niyet vardır:
+
+    * `rol` VERİLİR (kayıt akışı, mobil): "ben şu rolde kaydoluyorum" beyanı.
+      Beyan listedeki rolle uyuşmazsa onay kuyruğuna düşer.
+    * `rol` YOK (**girişte tamamlama**, web SSO): kullanıcı zaten yöneticinin
+      davet ettiği kişidir; rol HESAPTAN okunur. Kullanıcıya rolünü sormak,
+      bilmediği bir soruyu sormak ve yanlış cevapta onu çıkmaza atmaktı —
+      ölçülen kusur tam buydu ("davet edildim ama SSO 'tesise bağlı değil'
+      diyor"). Bu modda `password_set=true` hesap da bağlanabilir: sağlayıcı
+      e-postayı DOĞRULADIYSA kanıt, üründe zaten oturum açan e-posta kodu
+      (`/auth/giris/eposta-kod-iste`) ile aynı sınıftadır.
     """
 
     baglama_jetonu: str
     tesis_kodu: str = Field(..., min_length=3, max_length=40, examples=["OLTU-260715"])
-    rol: str = Field(..., examples=["resident"])
+    rol: str | None = Field(default=None, examples=["resident"])
     model_config = ConfigDict(extra="forbid")
 
 
@@ -6359,7 +6371,8 @@ class OauthRolTamamlaDogrulaRequest(BaseModel):
 
     baglama_jetonu: str
     tesis_kodu: str = Field(..., min_length=3, max_length=40)
-    rol: str = Field(..., examples=["resident"])
+    #: (P191 §1) `rol-tamamla` ile AYNI kural: yoksa rol hesaptan okunur.
+    rol: str | None = Field(default=None, examples=["resident"])
     kod: str = Field(..., min_length=4, max_length=8)
     model_config = ConfigDict(extra="forbid")
 

@@ -114,6 +114,11 @@ from .auth import _issue_token_pair
 
 router = APIRouter(prefix="/auth/oauth", tags=["auth"])
 
+# (P191 §1) GIRISTE TAMAMLAMA ile baglanabilecek roller. `kayit._ROLLER`in
+# uzerine `denetci` eklenir: denetci web yuzeyinde calisir ve yonetici onu
+# da listeye ekler; disarida kalan tek rol platform `admin`idir.
+_TAMAMLA_ROLLERI = ("resident", "security", "tesis_gorevlisi", "yonetici", "denetci")
+
 _OTURUM_GECERSIZ = APIError(400, "bad_request", "oauth_oturum_gecersiz")
 _BAGLAMA_GECERSIZ = APIError(400, "bad_request", "oauth_baglama_gecersiz")
 _BASKASINA_BAGLI = APIError(409, "conflict", "oauth_baska_hesaba_bagli")
@@ -730,6 +735,36 @@ async def baglan_dogrula(
 # "girişte Tesis ID ile tamamlama".
 
 
+def _tamamla_uygunluk(user: AppUser | None, rol_beyani: str | None) -> tuple[bool, str]:
+    """(P191 §1) `rol-tamamla` uygunluk kapisi — IKI MOD.
+
+    `rol_beyani` VARSA (kayit akisi, mobil) kural degismedi: `_liste_kontrolu`.
+    Beyan yoksa **GIRISTE TAMAMLAMA** modudur ve iki fark vardir:
+
+    1. ROL SORULMAZ, hesaptan okunur. Davet edilmis kisi kendi rolunu
+       bilmek zorunda degil; yanlis secim onu "onay_bekliyor" cikmazina
+       atiyordu (olculen kusur).
+    2. `password_set=true` ENGEL DEGILDIR. Bu bir KAYIT degil, MEVCUT hesaba
+       SSO yontemi eklemektir; e-posta sahipligi saglayici tarafindan
+       dogrulanmis ya da OTP ile kanitlanmistir ve bu kanit, uründe zaten
+       tek basina oturum acan e-posta kodu (`/auth/giris/eposta-kod-iste`)
+       ile AYNI siniftadir. P180'de yonetici icin (mevcut_hesap) verilen
+       karar; burada diger tesis rollerine genisletiliyor.
+
+    Platform `admin` rolu DISARIDADIR: platform sahibi tesis koduyla
+    "katilmaz".
+    """
+    from .kayit import _liste_kontrolu
+
+    if rol_beyani is not None:
+        return _liste_kontrolu(user, rol_beyani)
+    if user is None or not user.is_active:
+        return False, "liste_disi"
+    if user.role not in _TAMAMLA_ROLLERI:
+        return False, "rol_uyusmuyor"
+    return True, ""
+
+
 async def _rol_tamamla_baglan(
     session,
     redis: aioredis.Redis,
@@ -810,12 +845,12 @@ async def rol_tamamla(
         _kapi,
         _kod_uret,
         _kuyruga_yaz,
-        _liste_kontrolu,
         eposta_kodu_uret_ve_gonder_kodla,
     )
 
     _kapi()
-    if body.rol not in _ROLLER:
+    # (P191 §1) `rol` OPSIYONEL: yoksa girişte-tamamlama modu (rol hesaptan).
+    if body.rol is not None and body.rol not in _ROLLER:
         raise _BASVURU_GECERSIZ
 
     kimlik = _baglama_coz(body.baglama_jetonu)
@@ -845,7 +880,7 @@ async def rol_tamamla(
                     select(AppUser).where(func.lower(AppUser.email) == eposta)
                 )
             ).scalar_one_or_none()
-            uygun, sebep = _liste_kontrolu(user, body.rol)
+            uygun, sebep = _tamamla_uygunluk(user, body.rol)
 
             if not uygun or user is None:
                 # (§6) DENEME KAYBOLMAZ: yoneticinin onay kuyruguna duser.
@@ -853,7 +888,7 @@ async def rol_tamamla(
                     session,
                     tenant_id=tenant_id,
                     eposta=eposta,
-                    rol=body.rol,
+                    rol=body.rol or (user.role if user else "resident"),
                     ad=kimlik.get("ad"),
                     telefon=None,
                     sebep=sebep or "liste_disi",
@@ -900,10 +935,10 @@ async def rol_tamamla_dogrula(
     olabilir). Kod yanlissa `kod_gecersiz` (`eposta_kodunu_dogrula`).
     """
     from ..telefon_kodu import eposta_kodunu_dogrula
-    from .kayit import _BASVURU_GECERSIZ, _ROLLER, _kapi, _kuyruga_yaz, _liste_kontrolu
+    from .kayit import _BASVURU_GECERSIZ, _ROLLER, _kapi, _kuyruga_yaz
 
     _kapi()
-    if body.rol not in _ROLLER:
+    if body.rol is not None and body.rol not in _ROLLER:
         raise _BASVURU_GECERSIZ
 
     kimlik = _baglama_coz(body.baglama_jetonu)
@@ -938,7 +973,10 @@ async def rol_tamamla_dogrula(
                     select(AppUser).where(func.lower(AppUser.email) == eposta)
                 )
             ).scalar_one_or_none()
-            uygun, sebep = _liste_kontrolu(user, user.role if user else "")
+            # (P191 §1) `rol` beyani varsa eski kural; yoksa girişte-tamamlama.
+            uygun, sebep = _tamamla_uygunluk(
+                user, (user.role if user else "") if body.rol is not None else None
+            )
             if not uygun or user is None:
                 await _kuyruga_yaz(
                     session,

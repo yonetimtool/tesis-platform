@@ -1793,6 +1793,10 @@ export const tr = {
   sosyalKayitOl: "Yönetici olarak kaydolun",
   sosyalBagliDegil: "Bu hesap henüz bir tesise bağlı değil. Kaydolarak devam edin.",
   sosyalKaydolDevam: "Kaydol",
+  sosyalTamamlaBaslik: "Hesabınızı tamamlayın",
+  sosyalTamamlaAciklama: "Yöneticiniz sizi eklediyse, davet e-postanızdaki Tesis ID'yi girin — hesabınız bu kimlikle eşleştirilip girişiniz tamamlanır.",
+  sosyalTamamlaGonder: "Tesis ID ile devam et",
+  sosyalTamamlaYeniKayit: "Tesisim yok, yeni kayıt oluştur",
   profilEpostaDogrulandi: "E-posta adresiniz doğrulandı.",
   profilEpostaBeklemede:
     "E-posta adresiniz doğrulanmadı. Parola sıfırlama ve kodla giriş için doğrulayın.",

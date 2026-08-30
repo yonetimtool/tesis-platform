@@ -559,6 +559,11 @@ services:
   admin-web:
     build:
       context: ../admin-web
+      args:
+        # (P191 §1) Konak-otesi yonlendirmenin (panel.* -> app.*) hedef kok
+        # adresi. PORTSUZ ve SEMALI verin. Bos birakilirsa middleware
+        # iletilmis basliklardan turetir (yine portsuz/https).
+        NEXT_PUBLIC_APP_ADRESI: ${ADMIN_WEB_APP_ADRESI:-https://app.yonetiyor.com}
     # (P171 duzeltme) `depends_on: api` KALDIRILDI — Kerem'in karari.
     #
     # NEDEN: iki servisin BASARISIZLIK MODU AYRI OLMALI. API'nin sema
@@ -581,6 +586,11 @@ services:
       <<: *tz
       NODE_ENV: production
       API_BASE_URL: http://api:8000
+      # (P191 §1) Oturum cerezi ALAN ADI — panel.* ve app.* tek oturum olsun.
+      # Bos birakilirsa cerez konak-ozeldir ve konak-otesi yonlendirme
+      # kullaniciyi her seferinde `/login`e dusurur. Calisma zamani degiskeni:
+      # degistirmek imaj derlemesi GEREKTIRMEZ.
+      COOKIE_DOMAIN: ${COOKIE_DOMAIN:-}
     healthcheck:
       # 127.0.0.1 (localhost DEGIL): busybox wget localhost'u ::1'e cozer ve
       # IPv4'e DUSMEZ; app ise HOSTNAME=0.0.0.0 ile yalniz IPv4 dinler →

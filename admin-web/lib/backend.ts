@@ -15,6 +15,7 @@ import {
   ACCESS_MAX_AGE,
   REFRESH_COOKIE,
   REFRESH_MAX_AGE,
+  cookieDomain,
   cookieOptions,
 } from "./cookies";
 
@@ -29,8 +30,17 @@ function setAuthCookies(res: NextResponse, access: string, refresh: string): voi
 }
 
 function clearAuthCookies(res: NextResponse): void {
+  // (P191 §1) IKI VARYANT DA SILINIR. `COOKIE_DOMAIN` acildiginda tarayicida
+  // hem eski KONAK-OZEL hem yeni ALAN-ADI cerezi bulunabilir ve ikisi ayni
+  // adla gonderilir; yalniz birini silmek "cikis yaptim ama hala icerideyim"
+  // demekti. Silme, yazarken kullanilan alan adiyla ESLESMELIDIR.
+  const domain = cookieDomain();
   res.cookies.delete(ACCESS_COOKIE);
   res.cookies.delete(REFRESH_COOKIE);
+  if (domain) {
+    res.cookies.set(ACCESS_COOKIE, "", { ...cookieOptions(0), maxAge: 0 });
+    res.cookies.set(REFRESH_COOKIE, "", { ...cookieOptions(0), maxAge: 0 });
+  }
 }
 
 /// BFF'in ileteceği dil: kullanicinin cookie secimi, yoksa tarayici dili.

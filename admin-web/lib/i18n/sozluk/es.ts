@@ -1731,6 +1731,10 @@ export const es: Sozluk = {
   sosyalKayitOl: "Regístrese como administrador",
   sosyalBagliDegil: "Esta cuenta aún no está vinculada a una instalación. Continúe registrándose.",
   sosyalKaydolDevam: "Registrarse",
+  sosyalTamamlaBaslik: "Complete su cuenta",
+  sosyalTamamlaAciklama: "Si su administrador le añadió, introduzca el ID de instalación de su correo de invitación: su cuenta se vinculará y se completará el acceso.",
+  sosyalTamamlaGonder: "Continuar con el ID de instalación",
+  sosyalTamamlaYeniKayit: "No tengo instalación, crear un registro nuevo",
   profilEpostaDogrulandi: "Su correo electrónico está verificado.",
   profilEpostaBeklemede:
     "Su correo no está verificado. Verifíquelo para restablecer la contraseña e iniciar sesión con código.",

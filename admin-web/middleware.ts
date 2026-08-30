@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { ACCESS_COOKIE, REFRESH_COOKIE } from "./lib/cookies";
+import {
+  appKonagi,
+  ayniKonakAdresi,
+  istekKonagi,
+  konakOtesiAdres,
+} from "./lib/konak-adres";
 import { tokenRolu } from "./lib/rol-token";
 import {
   konakYuzeyi,
@@ -11,18 +17,41 @@ import {
   rotaYuzeyi,
 } from "./lib/yuzey";
 
+// (P191 §1) KONAK-OTESI HEDEF ADRESI — kanonik `app.*` kok adresi ORTAM
+// DEGISKENINDEN gelir. `req.nextUrl`den kurmak, Next'in ic dinleme portunu
+// (`:3000`) yonlendirmeye sizdiriyordu; gerekce ve kanit lib/konak-adres.ts
+// basinda. Degisken derleme aninda gomulur (edge runtime).
+const APP_KOK_ADRESI = process.env.NEXT_PUBLIC_APP_ADRESI ?? null;
+
 /**
- * (P190 §1) `panel.<alan>` konagindan `app.<alan>` esdegerini uret.
- *
- * YALNIZ ilk DNS etiketi tam `panel` ise doner — localhost/127.0.0.1 gibi
- * yerel gelistirme konaklarinda (yuzey "platform" sayilir ama `app.` esdegeri
- * YOKTUR) null doner ve cagiran konak-otesi yonlendirme YAPMAZ.
+ * `pathname`+`search` icin `app.*` konagindaki MUTLAK adres; uretilemezse
+ * null (yerel gelistirme: `localhost` "platform" sayilir ama `app.`
+ * esdegeri YOKTUR — konak-otesi yonlendirme YAPILMAZ).
  */
-function appKonagi(host: string | null | undefined): string | null {
-  const h = (host ?? "").toLowerCase();
-  const [etiket, ...kalan] = h.split(".");
-  if (etiket !== "panel" || kalan.length === 0) return null;
-  return ["app", ...kalan].join(".");
+function appAdresi(req: NextRequest, yol: string, arama: string): string | null {
+  return konakOtesiAdres(yol, arama, {
+    ortamKok: APP_KOK_ADRESI,
+    yedekKonak: appKonagi(istekKonagi(req.headers) ?? req.nextUrl.host),
+    basliklar: req.headers,
+  });
+}
+
+/**
+ * AYNI konaktaki yonlendirme. Adres iletilmis basliklardan kurulur; baslik
+ * yoksa (URL'den kurulmus istek) `req.nextUrl` yedege duser.
+ */
+function yerelYonlendir(req: NextRequest, yol: string, arama?: string): NextResponse {
+  const adres = ayniKonakAdresi(
+    req.headers,
+    yol,
+    arama ?? req.nextUrl.search,
+    req.nextUrl.protocol,
+  );
+  if (adres) return NextResponse.redirect(adres);
+  const url = req.nextUrl.clone();
+  url.pathname = yol;
+  if (arama !== undefined) url.search = arama;
+  return NextResponse.redirect(url);
 }
 
 // Korumali route'lar: oturum (refresh cookie) yoksa /login'e yonlendir.
@@ -49,12 +78,15 @@ export function middleware(req: NextRequest): NextResponse {
   // elle yazilirsa (orn. yönetiyor.com/dues) kullanici KOKE dondurulur,
   // `/login`e DEGIL: giris o alan adinin isi degildir (panel.* ve app.*
   // vardir) ve orada bir giris formu gostermek yuzey ayrimini bozardi.
-  const konakYuzey = konakYuzeyi(req.headers.get("host") ?? req.nextUrl.host);
+  // (P191 §1) KONAK: once iletilmis basliklar (`x-forwarded-host` > `host`),
+  // en son `req.nextUrl` — cunku `nextUrl` vekilin ARKASINDAKI dinleme
+  // adresidir (`localhost:3000`) ve tek basina her istegi "platform"
+  // sayardi. Yedek yine de duruyor: `NextRequest` bir URL'den kuruldugunda
+  // (testler) hic baslik olmaz.
+  const konakYuzey = konakYuzeyi(istekKonagi(req.headers) ?? req.nextUrl.host);
   if (konakYuzey === "tanitim") {
     if (pathname === "/") return NextResponse.next();
-    const url = req.nextUrl.clone();
-    url.pathname = "/";
-    return NextResponse.redirect(url);
+    return yerelYonlendir(req, "/", "");
   }
   // NOT (P155 §7/§8): `/davet/‹jeton›` bilincli olarak `config.matcher`DE
   // YOK — yani middleware ona HIC dokunmaz ve sayfa oturum kapisi olmadan
@@ -67,19 +99,15 @@ export function middleware(req: NextRequest): NextResponse {
   // "yetkiniz yok" goruyordu. Panel konagindaysa app.* esdegerine tasinir;
   // oturum kapisina GIRMEZ (kayit oturumsuz bir sayfadir).
   if (pathname === "/kayit" || pathname.startsWith("/kayit/")) {
-    const app = appKonagi(req.headers.get("host") ?? req.nextUrl.host);
-    if (konakYuzey === "platform" && app) {
-      const url = req.nextUrl.clone();
-      url.host = app;
-      return NextResponse.redirect(url);
+    if (konakYuzey === "platform") {
+      const hedef = appAdresi(req, pathname, req.nextUrl.search);
+      if (hedef) return NextResponse.redirect(hedef);
     }
     return NextResponse.next();
   }
 
   if (!hasSession) {
-    const url = req.nextUrl.clone();
-    url.pathname = "/login";
-    return NextResponse.redirect(url);
+    return yerelYonlendir(req, "/login");
   }
 
   // KONAK: `Host` basligi (Caddy iletir) yoksa istegin kendi URL'i.
@@ -109,23 +137,16 @@ export function middleware(req: NextRequest): NextResponse {
     !rolYuzeyeGirebilir(rol, "platform") &&
     rolYuzeyeGirebilir(rol, "tesis")
   ) {
-    const app = appKonagi(req.headers.get("host") ?? req.nextUrl.host);
-    if (app) {
-      const url = req.nextUrl.clone();
-      url.host = app;
-      url.pathname = "/";
-      url.search = "";
-      return NextResponse.redirect(url);
-    }
+    // Kok (`/`) hedeflenir: rolun kendi baslangici app.* tarafinda cozulur.
+    const hedef = appAdresi(req, "/", "");
+    if (hedef) return NextResponse.redirect(hedef);
   }
 
   // Kok (`/`) yuzeyin kendi baslangicina gider: panelde tesis panosu YOKTUR.
   // Hedef ROLE GORE secilir: sakini `/dashboard`a yollamak, goremedigi bir
   // sayfaya atip hemen geri yonlendirmek (dongu) demekti.
   if (pathname === "/") {
-    const url = req.nextUrl.clone();
-    url.pathname = rol ? kokRotaRol(yuzey, rol) : kokRota(yuzey);
-    return NextResponse.redirect(url);
+    return yerelYonlendir(req, rol ? kokRotaRol(yuzey, rol) : kokRota(yuzey));
   }
 
   // Rotanin yuzeyi — alt yollar dahil (`/reports/dues` -> `/reports/dues`,
@@ -141,9 +162,7 @@ export function middleware(req: NextRequest): NextResponse {
   // TAM olmasini `tests/yuzey-ayrimi.test.ts` zorunlu tutuyor; kapinin isi
   // BILINEN yanlis yerlesimi kesmek.
   if (rota && rota !== yuzey) {
-    const url = req.nextUrl.clone();
-    url.pathname = rol ? kokRotaRol(yuzey, rol) : kokRota(yuzey);
-    return NextResponse.redirect(url);
+    return yerelYonlendir(req, rol ? kokRotaRol(yuzey, rol) : kokRota(yuzey), "");
   }
 
   // (P126.7) ROL KAPISI — dogru yuzey ama YANLIS ROL.
@@ -159,9 +178,7 @@ export function middleware(req: NextRequest): NextResponse {
   if (rol && rota === yuzey && !rotaRoldeGorunur(rotaAdi, rol)) {
     const kok = kokRotaRol(yuzey, rol);
     if (pathname !== kok) {
-      const url = req.nextUrl.clone();
-      url.pathname = kok;
-      return NextResponse.redirect(url);
+      return yerelYonlendir(req, kok, "");
     }
   }
   return NextResponse.next();

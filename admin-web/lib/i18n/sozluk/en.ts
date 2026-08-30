@@ -1731,6 +1731,10 @@ export const en: Sozluk = {
   sosyalKayitOl: "Register as a manager",
   sosyalBagliDegil: "This account is not linked to a facility yet. Continue by signing up.",
   sosyalKaydolDevam: "Sign up",
+  sosyalTamamlaBaslik: "Complete your account",
+  sosyalTamamlaAciklama: "If your manager added you, enter the Facility ID from your invitation e-mail — your account will be matched and your sign-in completed.",
+  sosyalTamamlaGonder: "Continue with Facility ID",
+  sosyalTamamlaYeniKayit: "I have no facility, create a new registration",
   profilEpostaDogrulandi: "Your email address is verified.",
   profilEpostaBeklemede:
     "Your email isn't verified. Verify it to use password reset and code sign-in.",
