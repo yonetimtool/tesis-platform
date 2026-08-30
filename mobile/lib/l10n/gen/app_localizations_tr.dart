@@ -605,6 +605,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get kameraKareYok => 'Görüntü alınamıyor';
 
   @override
+  String get kameraBaglantiYok => 'Bağlantı yok';
+
+  @override
   String get kameraUrlWebSayfasi =>
       'Bu bir web sayfası adresi. Uygulama yalnız doğrudan yayın adreslerini oynatır: .m3u8 (HLS) veya .mp4.';
 

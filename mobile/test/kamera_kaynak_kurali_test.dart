@@ -157,5 +157,28 @@ void main() {
       expect(c.snapshotUrl, isNull);
       expect(c.kareCekilebilir, isFalse);
     });
+
+    test('(P190 §6) canli_yol okunur; RTSP sunucudan kare cekebilir', () {
+      // stream_url yonetici-disi rollere MASKELI gelir (`rtsp://***`) —
+      // oynatma artik canli_yol uzerinden, kare sunucu ucundan.
+      final c = Camera.fromJson({
+        'id': '1', 'ad': 'K', 'stream_url': 'rtsp://***', 'tur': 'rtsp',
+        'canli_yol': '/cameras/1/canli/index.m3u8',
+      });
+      expect(c.canliYol, '/cameras/1/canli/index.m3u8');
+      // snapshot_url yok ama RTSP → sunucu karesi (`GET /cameras/{id}/kare`).
+      expect(c.kareCekilebilir, isTrue);
+      // Sunucu alani gondermese de YEREL geri dusus: canli yol varsa oynar.
+      expect(c.oynatilabilir, isTrue);
+    });
+
+    test('(P190 §6) canli_yol YOKSA null — eski sunucuya karsi davranis ayni',
+        () {
+      final c = Camera.fromJson({
+        'id': '1', 'ad': 'K', 'stream_url': 'https://o/x.m3u8',
+      });
+      expect(c.canliYol, isNull);
+      expect(c.oynatilabilir, isTrue); // hls zaten oynar
+    });
   });
 }

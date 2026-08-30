@@ -609,6 +609,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get kameraKareYok => 'Image indisponible';
 
   @override
+  String get kameraBaglantiYok => 'Pas de connexion';
+
+  @override
   String get kameraUrlWebSayfasi =>
       'Il s’agit d’une adresse de page web. L’application ne lit que les URL de flux directes : .m3u8 (HLS) ou .mp4.';
 

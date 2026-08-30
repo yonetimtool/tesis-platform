@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 
+import '../../../core/config/app_config.dart';
 import '../../../core/i18n/l10n.dart';
+import '../data/cameras_api.dart' show canliYayinBasliklari;
 import '../domain/camera_models.dart';
 import '../domain/yayin_hatasi.dart';
 import '../../../core/teshis/teshis.dart';
@@ -28,10 +30,19 @@ class CameraPlayerScreen extends StatefulWidget {
   const CameraPlayerScreen({
     super.key,
     required this.kamera,
+    this.tokenOkuyucu,
     @visibleForTesting this.controllerYapici,
   });
 
   final Camera kamera;
+
+  /// (P190 §6) `canli_yol` oynatilirken `Authorization: Bearer` basligi icin
+  /// access token'i okur (router `TokenStorage.readAccessToken` baglar).
+  ///
+  /// Sunucu HLS ucu (`<api>/cameras/{id}/canli/index.m3u8`) NORMAL API
+  /// yetkisi ister; parca istekleri listeye goreli oldugundan ayni baslikla
+  /// gider. null ise (ya da canli yol yoksa) baslik eklenmez.
+  final Future<String?> Function()? tokenOkuyucu;
 
   /// Controller uretimi TESTTE degistirilebilir: widget testinde platform
   /// oynaticisi (ExoPlayer/AVPlayer) yoktur, `initialize()` yanit vermez.
@@ -70,6 +81,11 @@ class _CameraPlayerScreenState extends State<CameraPlayerScreen> {
   String? _hamHata;
 
   bool _hazirlaniyor = true;
+
+  /// Su an denenen/oynayan adres — hata cozumlemesi (yayinHatasiCoz) BUNU
+  /// okur: canli yol oynarken hatayi kameranin rtsp adresine gore yorumlamak
+  /// yanlis teshis olurdu.
+  String _oynananAdres = '';
 
   /// AYNI ANDA TEK OYNATICI. "Yeniden dene" arka arkaya basildiginda
   /// birden cok `initialize()` ucusta olabilir; kusak numarasi, GECIKMIS
@@ -113,12 +129,20 @@ class _CameraPlayerScreenState extends State<CameraPlayerScreen> {
     eski?.removeListener(_controllerDegisti);
     await eski?.dispose();
 
-    // RESTREAM ONCELIKLI (P17): gecit varsa oynatici ONU calar; kameranin
-    // kendi rtsp adresi oynatilamaz ama kayitta KORUNUR.
+    // (P190 §6) CANLI YOL EN ONCELIKLI: sunucunun RTSP→HLS gecidi varsa
+    // oynatici ONU calar (`<apiBase>/cameras/{id}/canli/index.m3u8`,
+    // Authorization basligiyla). rtsp `stream_url` yonetici-disi rollere
+    // artik MASKELI (`rtsp://***`) gelir — oynatmada ona guvenilemez.
+    // Sonra RESTREAM (P17), en son kameranin kendi adresi.
     // ADRES ONCE COZULUR (P25b): eskiden `Uri.parse` `try` blogunun DISINDA
     // cagriliyordu ve bosluk/satir sonu tasiyan bir adres, ekrana hic
     // ulasmadan YAKALANMAMIS bir `FormatException` firlatiyordu.
-    final adres = widget.kamera.oynatilacakUrl.trim();
+    final canliYol = widget.kamera.canliYol;
+    final canli = canliYol != null && canliYol.isNotEmpty;
+    final adres = canli
+        ? AppConfig.apiBaseUrl + canliYol
+        : widget.kamera.oynatilacakUrl.trim();
+    _oynananAdres = adres;
     // TESHIS (P119): iki tur korlemesine gecti cunku CIHAZDA hangi adresin
     // denendigi hic gorulmedi. Yayin yapiminda da yazar.
     YayinTeshis.acildi(
@@ -138,9 +162,19 @@ class _CameraPlayerScreenState extends State<CameraPlayerScreen> {
       return;
     }
 
+    // (P190 §6) Canli yolda access token OYNATICIYA baslik olarak verilir:
+    // ucu koruyan yetki, playlist'i de goreli parca isteklerini de kapsar.
+    String? token;
+    if (canli && widget.controllerYapici == null) {
+      token = await widget.tokenOkuyucu?.call();
+    }
+    if (!mounted || kusak != _kusak) return;
     final c =
         widget.controllerYapici?.call(widget.kamera) ??
-        VideoPlayerController.networkUrl(Uri.parse(adres));
+        VideoPlayerController.networkUrl(
+          Uri.parse(adres),
+          httpHeaders: canliYayinBasliklari(token),
+        );
     final saat = Stopwatch()..start();
     try {
       // UST SINIR: bkz. [_hazirlanmaSiniri]. iOS'ta yanit vermeyen bir
@@ -220,7 +254,7 @@ class _CameraPlayerScreenState extends State<CameraPlayerScreen> {
       c.dispose();
       setState(() {
         _hazirlaniyor = false;
-        _hataNedeni = yayinHatasiCoz(widget.kamera.oynatilacakUrl.trim(), mesaj);
+        _hataNedeni = yayinHatasiCoz(_oynananAdres, mesaj);
         _hamHata = mesaj;
       });
       return;

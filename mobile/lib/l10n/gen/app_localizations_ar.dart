@@ -735,6 +735,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get kameraKareYok => 'تعذّر الحصول على الصورة';
 
   @override
+  String get kameraBaglantiYok => 'لا يوجد اتصال';
+
+  @override
   String get kameraUrlWebSayfasi =>
       'هذا عنوان صفحة ويب. يشغّل التطبيق روابط البث المباشرة فقط: ‎.m3u8‎ (HLS) أو ‎.mp4‎.';
 

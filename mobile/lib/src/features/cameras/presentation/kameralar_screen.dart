@@ -99,6 +99,10 @@ class KameralarScreen extends ConsumerWidget {
                       child: KameraKarti(
                         kamera: k,
                         nesil: k.kareCekilebilir ? nesil : null,
+                        // (P190 §6) RTSP sunucu karesi YETKILI Dio ile —
+                        // Image.network olsaydi Authorization'siz 401 yerdi.
+                        kareYukleyici: (id) =>
+                            ref.read(camerasApiProvider).kare(id),
                         onTap: () => kameraAc(context, k),
                       ),
                     ),

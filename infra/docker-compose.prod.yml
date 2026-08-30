@@ -286,6 +286,23 @@ services:
 
   # --------------------------------------------------------------------- #
   # API (FastAPI). Host'a ACILMAZ; Caddy api. alt-alanindan proxy'ler.
+  # (P190 §6) RTSP -> HLS gecidi. PUBLIC PORT ACILMAZ: yalniz backend vekili
+  # erisir. `sourceOnDemand` yol kaydinda: kimse izlemezken RTSP cekilmez.
+  # Es-zamanli donusum siniri backend'de (KAMERA_CANLI_SINIR, 429).
+  mediamtx:
+    image: bluenviron/mediamtx:1.9.3
+    restart: unless-stopped
+    environment:
+      MTX_API: "yes"
+      MTX_APIADDRESS: :9997
+      MTX_HLS: "yes"
+      MTX_HLSADDRESS: :8888
+      MTX_HLSVARIANT: mpegts
+      MTX_RTSP: "no"
+      MTX_RTMP: "no"
+      MTX_WEBRTC: "no"
+      MTX_SRT: "no"
+
   api:
     build:
       context: ../backend
@@ -326,6 +343,13 @@ services:
       # uclari bu bayrak KAPALIYKEN 503 doner ve mobil kayit KULLANILAMAZ. Kayit
       # akisi tamamlandi, prod'da acik olmali. `.env.prod`de YENI_KAYIT_AKISI
       # tanimliysa o kazanir (operator hala kapatabilir); tanimsizsa ACIK.
+      # --- (P190 §6) RTSP -> HLS gecidi (MediaMTX) ---
+      # Ic ag adresi; gecit PUBLIC ACILMAZ — istemci yalniz backend vekilini
+      # gorur (RTSP kimlik bilgisi sizmaz). Bos verilirse canli izleme kapali
+      # kalir (kare gorunumu calisir).
+      MEDIAMTX_URL: ${MEDIAMTX_URL:-http://mediamtx:8888}
+      MEDIAMTX_API_URL: ${MEDIAMTX_API_URL:-http://mediamtx:9997}
+      KAMERA_CANLI_SINIR: ${KAMERA_CANLI_SINIR:-3}
       YENI_KAYIT_AKISI: ${YENI_KAYIT_AKISI:-true}
       SMS_AKTIF: ${SMS_AKTIF:-false}
       TICARI_ILETI_AKTIF: ${TICARI_ILETI_AKTIF:-false}

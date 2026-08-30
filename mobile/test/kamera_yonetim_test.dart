@@ -9,6 +9,9 @@
 /// katmani YOKTUR.
 library;
 
+import 'dart:typed_data';
+
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -49,10 +52,23 @@ const _gizli = Camera(
   sakinGorebilir: false,
 );
 
+/// (P190 §6) `kare` ucunu HEMEN dusuren sahte API: widget testinde ag yok,
+/// gercek Dio cagrisi hic donmez ve karodaki yukleniyor gostergesi
+/// `pumpAndSettle`i sonsuza kadar bekletirdi. Dusen cekim karoyu acik
+/// "Bağlantı yok" durumuna oturtur — bu testlerin konusu degil.
+class _SahteKareApi extends CamerasApi {
+  _SahteKareApi() : super(Dio());
+
+  @override
+  Future<Uint8List> kare(String id) async =>
+      throw Exception('test: kare ucu yok');
+}
+
 Widget _app(UserRole role, List<Camera> sunucuYaniti) => ProviderScope(
       overrides: [
         currentUserRoleProvider.overrideWith((ref) async => role),
         camerasProvider.overrideWith((ref) async => sunucuYaniti),
+        camerasApiProvider.overrideWithValue(_SahteKareApi()),
       ],
       child: l10nApp(KameralarScreen()),
     );

@@ -712,6 +712,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get kameraKareYok => 'Изображение недоступно';
 
   @override
+  String get kameraBaglantiYok => 'Нет соединения';
+
+  @override
   String get kameraUrlWebSayfasi =>
       'Это адрес веб-страницы. Приложение воспроизводит только прямые адреса потока: .m3u8 (HLS) или .mp4.';
 

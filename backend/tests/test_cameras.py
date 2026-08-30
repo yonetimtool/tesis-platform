@@ -600,3 +600,93 @@ def test_p25_veritabani_kisiti_UYGULAMAYI_ATLAYANI_da_durdurur(
         else:
             owner_conn.rollback()
             raise AssertionError("2049 karakterlik adres CHECK'e takilmadi")
+
+
+# ==================== P190 §6 — KARE + CANLI (RTSP) ========================= #
+def _rtsp_kamera(client, yon, *, sakin_gorebilir=False):
+    r = client.post("/cameras", headers=yon, json={
+        "ad": f"RTSP-{uuid.uuid4().hex[:6]}",
+        "stream_url": "rtsp://kullanici:gizli@10.255.255.1:554/akis",
+        "tur": "rtsp",
+        "sakin_gorebilir": sakin_gorebilir,
+    })
+    assert r.status_code == 201, r.text
+    return r.json()
+
+
+def test_P190_rtsp_stream_url_yonetim_disina_MASKELENIR(client, world):
+    """RTSP adresi kullanici adi/parola tasiyabilir; izleyici roller ham
+    adresi GORMEZ (yonetici duzenleme icin gorur)."""
+    yon = _headers(client, world["slug_a"], world["yonetici_a"])
+    kam = _rtsp_kamera(client, yon, sakin_gorebilir=True)
+    assert kam["stream_url"].startswith("rtsp://kullanici")  # yonetici gorur
+
+    guard = _headers(client, world["slug_a"], world["guard_a"])
+    liste = client.get("/cameras", headers=guard).json()["items"]
+    benim = next(k for k in liste if k["id"] == kam["id"])
+    assert benim["stream_url"] == "rtsp://***"
+    assert "gizli" not in str(benim)
+
+
+def test_P190_kare_BAGLANTI_YOK_acik_hata(client, world):
+    """Ulasilaamayan RTSP kamera: bos kutu degil ACIK 502 `kamera_baglanti_yok`
+    (istemci karoda 'baglanti yok' cizer). ffmpeg sunucuda kosar; kimlik
+    bilgili adres istemciye hic gitmez."""
+    yon = _headers(client, world["slug_a"], world["yonetici_a"])
+    kam = _rtsp_kamera(client, yon)
+    r = client.get(f"/cameras/{kam['id']}/kare", headers=yon)
+    assert r.status_code == 502, r.text
+    assert r.json()["error"]["code"] == "bad_gateway"
+
+
+def test_P190_kare_yalniz_rtsp_422(client, world):
+    yon = _headers(client, world["slug_a"], world["yonetici_a"])
+    r = client.post("/cameras", headers=yon, json={
+        "ad": f"HLS-{uuid.uuid4().hex[:6]}",
+        "stream_url": "https://cam.example.com/hls/1/index.m3u8",
+        "tur": "hls",
+    })
+    assert r.status_code == 201, r.text
+    kare = client.get(f"/cameras/{r.json()['id']}/kare", headers=yon)
+    assert kare.status_code == 422
+
+
+def test_P190_kare_gorunurluk_sakinden_gizli_404(client, world):
+    """sakin_gorebilir=false kamera: sakin KARE ucundan da varligini ogrenemez."""
+    yon = _headers(client, world["slug_a"], world["yonetici_a"])
+    kam = _rtsp_kamera(client, yon, sakin_gorebilir=False)
+    sakin = _headers(client, world["slug_a"], world["resident_a"])
+    assert client.get(f"/cameras/{kam['id']}/kare", headers=sakin).status_code == 404
+
+
+def test_P190_canli_yapilandirilmamissa_503_ve_canli_yol_null(client, world):
+    """MediaMTX env bos (test ortami): canli 503 `kamera_canli_kapali`; CameraOut
+    `canli_yol` null ve rtsp restream'siz kamera `oynatilabilir=false` kalir."""
+    yon = _headers(client, world["slug_a"], world["yonetici_a"])
+    kam = _rtsp_kamera(client, yon)
+    assert kam["canli_yol"] is None
+    assert kam["oynatilabilir"] is False
+    r = client.get(f"/cameras/{kam['id']}/canli/index.m3u8", headers=yon)
+    assert r.status_code == 503, r.text
+
+
+def test_P190_canli_dosya_GEZINTIYE_kapali(client, world):
+    """(Guvenlik) `dosya` gecit URL'ine eklenir; '..'/egik cizgi ile baska
+    kameranin (cam<id>) yayinina gecis DENENEMEZ — tek-bilesen deseni + rota
+    (path-param degil) reddeder. MediaMTX yapilandirilmamis ortamda bile
+    desen kontrolu 503'ten ONCE... calismaz cunku 503 en basta doner; bu test
+    yapilandirilmis-varsayimli dallari degil GIRIS dogrulamasini olcer: 503
+    donmesi de 'gezinti yapilamadi' demektir (asla 200/502 yayin donmez)."""
+    yon = _headers(client, world["slug_a"], world["yonetici_a"])
+    kam = _rtsp_kamera(client, yon)
+    for kotu in (
+        "../camdeadbeef/index.m3u8",
+        "..%2Fcamdeadbeef%2Findex.m3u8",
+        "alt/dizin.m3u8",
+        "index.m3u8.exe",
+        "index",
+    ):
+        r = client.get(f"/cameras/{kam['id']}/canli/{kotu}", headers=yon)
+        assert r.status_code in (404, 503), f"{kotu}: {r.status_code}"
+        # Hicbir kosulda yayin/govde donmez (m3u8/mp2t icerik yok).
+        assert "mpegurl" not in (r.headers.get("content-type") or "")

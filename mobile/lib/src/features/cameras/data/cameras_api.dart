@@ -1,9 +1,21 @@
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/api_exception.dart';
 import '../../../core/network/dio_provider.dart';
 import '../domain/camera_models.dart';
+
+/// (P190 §6) Canli yayin (`canli_yol`) icin OYNATICIYA verilecek HTTP
+/// basliklari. Sunucu HLS ucu normal API yetkisi ister; parca istekleri
+/// listeye goreli oldugundan ayni baslik hepsini kapsar.
+///
+/// BURADA (data katmani), oynatici ekranda DEGIL: `Authorization` bir
+/// protokol sabitidir ve cizim katmanindaki sabit-metin taramasi
+/// (sabit_metin_denetimi_test) hakli olarak orada dizge sabiti istemez.
+Map<String, String> canliYayinBasliklari(String? token) =>
+    {if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token'};
 
 /// `/cameras` istemcisi.
 ///
@@ -26,6 +38,26 @@ class CamerasApi {
         for (final item in (res.data?['items'] as List?) ?? const [])
           if (item is Map) Camera.fromJson(Map<String, dynamic>.from(item)),
       ];
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// (P190 §6) `GET /cameras/{id}/kare` — RTSP kameradan SUNUCUNUN yakaladigi
+  /// TEK JPEG kare.
+  ///
+  /// Yetkili Dio ile BAYT olarak cekilir; `Image.network` KULLANILAMAZ
+  /// (Authorization basligi olmadan 401 yerdi). Hatalar: 502
+  /// `kamera_baglanti_yok` (kamera erisilemez), 422 (RTSP degil), 404
+  /// (role gorunmez) — hepsi [ApiException] olarak yukari cikar; karo
+  /// "baglanti yok" durumunu cizer.
+  Future<Uint8List> kare(String id) async {
+    try {
+      final res = await _dio.get<List<int>>(
+        '/cameras/$id/kare',
+        options: Options(responseType: ResponseType.bytes),
+      );
+      return Uint8List.fromList(res.data ?? const []);
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }

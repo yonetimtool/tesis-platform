@@ -23,6 +23,7 @@ class KameraKarti extends StatefulWidget {
     required this.onTap,
     this.width,
     this.nesil,
+    this.kareYukleyici,
     this.gorselYapici,
   });
 
@@ -37,6 +38,10 @@ class KameraKarti extends StatefulWidget {
   /// orada periyodik istek atmak, ana ekrani her acan kullaniciya bedel
   /// yuklerdi. Kare YALNIZ Kameralar izgarasinda tazelenir.
   final int? nesil;
+
+  /// (P190 §6) RTSP icin sunucu karesi yukleyicisi (bkz. [KameraKaresi]);
+  /// yalniz izgara verir, serit vermez (`nesil` gibi).
+  final KareYukleyici? kareYukleyici;
 
   /// TESTTE gorsel uretimini degistirir (bkz. [KameraKaresi]).
   @visibleForTesting
@@ -82,6 +87,7 @@ class _KameraKartiState extends State<KameraKarti> {
                       kamera: kamera,
                       nesil: nesil,
                       yerTutucu: yerTutucu,
+                      kareYukleyici: widget.kareYukleyici,
                       gorselYapici: widget.gorselYapici,
                       onKareDurumu: (akiyor) {
                         if (mounted && akiyor != _kareAkiyor) {
@@ -119,7 +125,17 @@ class _KameraKartiState extends State<KameraKarti> {
           //  * kare adresi YOK (bugunku durum; Frigate P17'de dolduracak)
           //    -> DAVRANIS DEGISMEZ: eskisi gibi yesil "Canlı", cunku burada
           //    "canlı" YAYININ canliligini anlatir, karonun degil.
-          if (kamera.kareCekilebilir && nesil != null)
+          // (P190 §6) "OYNATILAMIYOR" EN ONCE: kare cekilebilen ama
+          // oynatilamayan RTSP'de (canli gecit kapali) karoda goruntu olsa
+          // da dokununca oynatici ACILMAZ — beklentiyi durum satiri kurar.
+          if (!oynar)
+            Text(
+              context.l10n.kameraOynatilamiyor,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: HomeText.rowSub.copyWith(color: s.muted),
+            )
+          else if (kamera.kareCekilebilir && nesil != null)
             _DurumSatiri(
               metin: _kareAkiyor
                   ? context.l10n.kameraCanli
@@ -127,7 +143,7 @@ class _KameraKartiState extends State<KameraKarti> {
               renk: _kareAkiyor ? HomeTokens.green : s.muted,
               nokta: _kareAkiyor,
             )
-          else if (oynar)
+          else
             Row(
               children: [
                 const HomeDot(color: HomeTokens.online, size: 7),
@@ -145,15 +161,6 @@ class _KameraKartiState extends State<KameraKarti> {
                   ),
                 ),
               ],
-            )
-          else
-            // Sunucu RTSP'yi oynatilamaz isaretledi — kart LISTEDE KALIR,
-            // yalniz beklenti dogru kurulur (sessizce kaybolmaz).
-            Text(
-              context.l10n.kameraOynatilamiyor,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: HomeText.rowSub.copyWith(color: s.muted),
             ),
         ],
       ),

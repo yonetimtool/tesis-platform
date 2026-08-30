@@ -184,6 +184,7 @@
   "kameraListeHata": "Impossible de charger les caméras.",
   "kameraCanli": "En direct",
   "kameraKareYok": "Image indisponible",
+  "kameraBaglantiYok": "Pas de connexion",
   "kameraUrlWebSayfasi": "Il s’agit d’une adresse de page web. L’application ne lit que les URL de flux directes : .m3u8 (HLS) ou .mp4.",
   "kameraKaynakYardim": "Seules les URL média directes sont lues : HLS (.m3u8) et MP4. Les pages web (YouTube, Vimeo, pages de visualisation municipales) ne peuvent pas être lues. Le RTSP est enregistré mais nécessite une passerelle HLS pour être lu.",
   "kameraSnapshot": "Adresse de l’instantané",

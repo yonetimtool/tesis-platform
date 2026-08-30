@@ -97,7 +97,15 @@ export default function KameralarPage() {
   );
   const kameralar = data?.items ?? [];
   const gorunen = kameralar.filter((k) => k.aktif);
-  const kareCekilebilir = gorunen.some((k) => !!k.snapshot_url);
+  // (P190 §6) Karo kaynagi: yoneticinin girdigi snapshot_url varsa o; yoksa
+  // RTSP kameralarda SUNUCUNUN cektigi kare (`/api/cameras/{id}/kare`) —
+  // kimlik bilgili RTSP adresi istemciye inmeden izgara dolar.
+  const kareKaynagi = (k: Kamera): string | null =>
+    k.snapshot_url || (k.tur === "rtsp" ? `/api/cameras/${k.id}/kare` : null);
+  const kareCekilebilir = gorunen.some((k) => !!kareKaynagi(k));
+  // Kare cekilemeyen (baglanti yok) kameralar — karo acik durum cizer,
+  // bos kutu birakmaz. Her tazeleme turunda yeniden denenir.
+  const [kareHatalari, setKareHatalari] = useState<Set<string>>(new Set());
 
   // NESİL SAYACI: adrese eklenerek önbelleği kırar. Zaman damgası yerine
   // sayaç — testte deterministik olsun diye (mobildeki gerekçenin aynısı).
@@ -111,7 +119,10 @@ export default function KameralarPage() {
 
     function baslat() {
       if (zamanlayici) return;
-      zamanlayici = setInterval(() => setNesil((n) => n + 1), KARE_ARALIGI_MS);
+      zamanlayici = setInterval(() => {
+        setKareHatalari(new Set());
+        setNesil((n) => n + 1);
+      }, KARE_ARALIGI_MS);
     }
     function durdur() {
       if (!zamanlayici) return;
@@ -275,8 +286,18 @@ export default function KameralarPage() {
           <KameraOynatici
             // RESTREAM VARSA O OYNATILIR (P17): `stream_url` kameranin KENDI
             // adresidir ve rtsp olabilir; gecit HLS yayinlar.
-            url={oynatilan.restream_url || oynatilan.stream_url}
-            mp4={oynatilan.tur === "mp4" && !oynatilan.restream_url}
+            // (P190 §6) YONETILEN canli yol oncelikli: BFF vekili (kimlik
+            // cerezle) -> backend -> MediaMTX; RTSP adresi istemciye inmez.
+            url={
+              oynatilan.canli_yol
+                ? `/api${oynatilan.canli_yol}`
+                : oynatilan.restream_url || oynatilan.stream_url
+            }
+            mp4={
+              oynatilan.tur === "mp4" &&
+              !oynatilan.restream_url &&
+              !oynatilan.canli_yol
+            }
             poster={oynatilan.snapshot_url}
           />
         </Kart>
@@ -317,10 +338,18 @@ export default function KameralarPage() {
                     className="relative aspect-video"
                     style={{ background: "var(--yz-metal-2)" }}
                   >
-                    {k.snapshot_url ? (
+                    {kareHatalari.has(k.id) ? (
+                      // (P190 §6) BAGLANTI YOK — bos/kirik kutu degil ACIK durum.
+                      <div
+                        className="flex h-full items-center justify-center"
+                        style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-3)" }}
+                      >
+                        {t("kameraBaglantiYokWeb")}
+                      </div>
+                    ) : kareKaynagi(k) ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={`${k.snapshot_url}${k.snapshot_url.includes("?") ? "&" : "?"}_k=${nesil}`}
+                        src={`${kareKaynagi(k)}${kareKaynagi(k)!.includes("?") ? "&" : "?"}_k=${nesil}`}
                         alt={k.ad}
                         // (P169 §6) `KameraSeridi`de zaten vardi, izgarada
                         // YOKTU: 20 kameralik bir sitede telefon acilista
@@ -328,6 +357,9 @@ export default function KameralarPage() {
                         loading="lazy"
                         decoding="async"
                         className="h-full w-full object-cover"
+                        onError={() =>
+                          setKareHatalari((o) => new Set(o).add(k.id))
+                        }
                       />
                     ) : (
                       <div
@@ -354,7 +386,7 @@ export default function KameralarPage() {
                     </p>
                   ) : null}
                   <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-3)" }}>
-                    {k.snapshot_url ? t("kameraCanliWeb") : t("kameraGoruntuYokWeb")}
+                    {kareKaynagi(k) ? t("kameraCanliWeb") : t("kameraGoruntuYokWeb")}
                   </p>
                   <div className="flex gap-2 pt-2">
                     <Dugme boy="kucuk" onClick={() => duzenle(k)}>

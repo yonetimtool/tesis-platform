@@ -461,6 +461,7 @@ export const tr = {
   kameraUrlHttpSemasi: "Adres http:// veya https:// ile başlamalı.",
   kameraUrlRtspSemasi: "RTSP için adres rtsp:// ile başlamalı.",
   kameraKareYokWeb: "Görüntü adresi tanımlı değil",
+  kameraBaglantiYokWeb: "Bağlantı yok",
   kameraCanliWeb: "Canlı",
   kameraGoruntuYokWeb: "Görüntü yok",
   disHizmetBaslik: "Dış hizmetler",

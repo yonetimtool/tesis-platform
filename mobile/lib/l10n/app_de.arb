@@ -184,6 +184,7 @@
   "kameraListeHata": "Kameras konnten nicht geladen werden.",
   "kameraCanli": "Live",
   "kameraKareYok": "Kein Bild verfügbar",
+  "kameraBaglantiYok": "Keine Verbindung",
   "kameraUrlWebSayfasi": "Das ist eine Webseiten-Adresse. Die App spielt nur direkte Stream-URLs ab: .m3u8 (HLS) oder .mp4.",
   "kameraKaynakYardim": "Es werden nur direkte Medien-URLs abgespielt: HLS (.m3u8) und MP4. Webseiten (YouTube, Vimeo, städtische Viewer-Seiten) lassen sich nicht abspielen. RTSP wird gespeichert, benötigt zum Abspielen aber ein HLS-Gateway.",
   "kameraSnapshot": "Standbild-Adresse",

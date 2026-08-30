@@ -6,6 +6,13 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
+# (P190 §6) ffmpeg: RTSP kameradan SUNUCU tarafinda tek kare (JPEG) cekmek
+# icin (`GET /cameras/{id}/kare`). Kimlik bilgili RTSP adresi istemciye
+# gitmez; kareyi sunucu ceker. Imaj buyur (~+250 MB) — bilincli takas.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
 # Bagimliliklar (asyncpg + psycopg[binary] wheel'leri ile gelir; ek apt gerekmez).
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt

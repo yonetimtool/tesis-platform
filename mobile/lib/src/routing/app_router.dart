@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../core/startup/acilis_tercihleri.dart';
 import '../features/announcements/presentation/announcements_screen.dart';
+import '../features/auth/data/token_storage.dart';
 import '../features/cameras/domain/camera_models.dart';
 import '../features/cameras/presentation/camera_player_screen.dart';
 import '../features/cameras/presentation/kameralar_screen.dart';
@@ -321,8 +322,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.kameraIzle,
-        builder: (context, state) =>
-            CameraPlayerScreen(kamera: state.extra as Camera),
+        builder: (context, state) => CameraPlayerScreen(
+          kamera: state.extra as Camera,
+          // (P190 §6) canli_yol oynatilirken Authorization basligi icin.
+          tokenOkuyucu: () =>
+              ref.read(tokenStorageProvider).readAccessToken(),
+        ),
       ),
       GoRoute(
         path: AppRoutes.budget,

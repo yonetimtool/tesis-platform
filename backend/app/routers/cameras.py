@@ -26,8 +26,14 @@ Backend yayini HIC cekmez (istemci oynatir) => SSRF yuzeyi yok.
 """
 from __future__ import annotations
 
+import asyncio
+import base64
+import logging
+import re
 import uuid
 
+import httpx
+import redis.asyncio as aioredis
 from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
@@ -35,7 +41,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..audit import Action, audit_user
 from ..crud_helpers import get_or_404, translate_integrity
-from ..deps import get_tenant_db, require_role
+from ..config import settings
+from ..deps import get_redis, get_tenant_db, require_role
 from ..errors import APIError
 from ..models import AppUser, Camera
 from ..schemas import (
@@ -68,9 +75,21 @@ _TAM_GORUS: frozenset[str] = frozenset(
 )
 
 
-def _out(obj: Camera) -> CameraOut:
+def _out(obj: Camera, rol: str | None = None) -> CameraOut:
     out = CameraOut.model_validate(obj)
-    out.oynatilabilir = oynatilabilir_mi(obj.tur, obj.restream_url)
+    # (P190 §6) YONETILEN CANLI YOL: RTSP kamera, MediaMTX yapilandirildiysa
+    # backend vekili uzerinden izlenebilir (kimlik-kapili; RTSP adresi
+    # istemciye gitmez). `oynatilabilir` buna gore genisler.
+    if obj.tur == "rtsp" and settings.mediamtx_url:
+        out.canli_yol = f"/cameras/{obj.id}/canli/index.m3u8"
+    out.oynatilabilir = (
+        oynatilabilir_mi(obj.tur, obj.restream_url) or out.canli_yol is not None
+    )
+    # (P190 §6) KIMLIK BILGISI SIZINTISI: RTSP `stream_url` kullanici adi/
+    # parola tasiyabilir ve istemci onu ZATEN oynatamaz. Yonetim disi rollere
+    # (izleyiciler) MASKELENIR; yonetici/admin duzenleme formu icin gorur.
+    if obj.tur == "rtsp" and rol not in ("admin", "yonetici"):
+        out.stream_url = "rtsp://***"
     return out
 
 
@@ -171,7 +190,7 @@ async def list_cameras(
     ).scalars().all()
     return CameraListResponse(
         meta={"limit": limit, "offset": offset, "total": total},
-        items=[_out(r) for r in rows],
+        items=[_out(r, user.role) for r in rows],
     )
 
 
@@ -197,7 +216,7 @@ async def create_camera(
                      meta={"ad": obj.ad, "tur": obj.tur,
                            "sakin_gorebilir": obj.sakin_gorebilir})
     await db.refresh(obj)
-    return _out(obj)
+    return _out(obj, user.role)
 
 
 @router.patch("/{camera_id}", response_model=CameraOut)
@@ -229,7 +248,7 @@ async def update_camera(
     await audit_user(db, user, Action.CAMERA_UPDATE, resource_type="camera",
                      resource_id=obj.id, meta={"alanlar": sorted(alanlar)})
     await db.refresh(obj)
-    return _out(obj)
+    return _out(obj, user.role)
 
 
 @router.delete("/{camera_id}", status_code=204)
@@ -244,3 +263,219 @@ async def delete_camera(
     await audit_user(db, user, Action.CAMERA_DELETE, resource_type="camera",
                      resource_id=camera_id)
     return Response(status_code=204)
+
+
+# =========================================================================== #
+# (P190 §6) RTSP GORUNTULEME — SUNUCU TARAFI KARE + CANLI (HLS) VEKILI
+#
+# ESKI KARAR ("backend yayini HIC cekmez => SSRF yok") BILINCLI DEGISTI:
+# RTSP tarayicida/moblide DOGRUDAN oynatilamaz ve kameralarin cogu RTSP.
+# Kimlik bilgileri `stream_url` icinde olabilir — istemciye SIZDIRILMAZ:
+# baglantiyi SUNUCU kurar, istemci yalniz bizim kimlik-kapili ucumuzu gorur.
+#
+# SSRF SINIRI: sunucu YALNIZ `rtsp://` kaynaklara baglanir (tur=rtsp yazim
+# aninda dogrulaniyor; asagida ikinci kontrol). http(s) kaynaklar icin
+# sunucu-tarafi cekim YOK — onlar zaten istemcide oynar.
+#
+#   * KARE  (`GET /cameras/{id}/kare`): ffmpeg tek kare (JPEG). Izgara karolari
+#     icin. Redis'te 10 sn onbellek (cok izleyici tek cekim), basarisiz deneme
+#     5 sn negatif-onbellek (olu kameraya cekic yok), surec basina en cok
+#     3 es-zamanli ffmpeg (semafor).
+#   * CANLI (`GET /cameras/{id}/canli/{dosya}`): MediaMTX gecidine HLS vekili.
+#     Gecit `sourceOnDemand` ile YALNIZ izleyici varken RTSP ceker; okuyucu
+#     kalmayinca kaynak KAPANIR. Ayni anda en cok `kamera_canli_sinir` kamera
+#     donusturulur (Redis sayaci, 429). MediaMTX yapilandirilmamissa canli
+#     kapali kalir (kare calismaya devam eder).
+# =========================================================================== #
+
+logger = logging.getLogger(__name__)
+
+_KARE_SEMAFOR = asyncio.Semaphore(3)
+_KARE_TTL_SN = 10
+_KARE_NEG_TTL_SN = 5
+_KARE_ZAMAN_ASIMI_SN = 8
+_KARE_YOK = "YOK"
+
+_CANLI_TTL_SN = 30  # aktif-izleyici kaydinin omru (playlist istegiyle tazelenir)
+
+
+async def _gorunur_kamera(
+    db: AsyncSession, user: AppUser, camera_id: uuid.UUID
+) -> Camera:
+    """Kamerayi ROL GORUNURLUGUYLE getirir — liste ile AYNI kural: sakin/
+    tesis gorevlisi yalniz aktif+sakin_gorebilir kamerayi gorur (aksi 404;
+    varligi da sizdirilmaz)."""
+    obj = await get_or_404(db, Camera, camera_id)
+    if user.role not in _TAM_GORUS and not (obj.aktif and obj.sakin_gorebilir):
+        raise APIError(404, "not_found", "kayit_bulunamadi")
+    return obj
+
+
+def _rtsp_dogrula(obj: Camera) -> None:
+    """Sunucu-tarafi cekim YALNIZ rtsp:// — SSRF siniri (yukaridaki blok)."""
+    if obj.tur != "rtsp" or not obj.stream_url.lower().startswith("rtsp"):
+        raise APIError(422, "validation_error", "kamera_kare_yalniz_rtsp")
+
+
+@router.get("/{camera_id}/kare")
+async def kamera_kare(
+    camera_id: uuid.UUID,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_READER),
+    redis: aioredis.Redis = Depends(get_redis),
+) -> Response:
+    """(P190 §6) RTSP kameradan TEK KARE (JPEG) — izgara karosu icin.
+
+    Kimlik bilgisi iceren `stream_url` istemciye HIC gitmez; ffmpeg'i sunucu
+    calistirir. Basarisizlik "bos kutu" DEGIL acik hatadir: 502
+    `kamera_baglanti_yok` — istemci karoda "baglanti yok" cizer.
+    """
+    obj = await _gorunur_kamera(db, user, camera_id)
+    _rtsp_dogrula(obj)
+
+    anahtar = f"kamera:kare:{obj.id}"
+    onbellek = await redis.get(anahtar)
+    if onbellek == _KARE_YOK:
+        raise APIError(502, "bad_gateway", "kamera_baglanti_yok")
+    if onbellek:
+        return Response(
+            base64.b64decode(onbellek),
+            media_type="image/jpeg",
+            headers={"Cache-Control": "private, max-age=5"},
+        )
+
+    async with _KARE_SEMAFOR:
+        # Semafor beklerken baska istek doldurmus olabilir — yeniden bak.
+        onbellek = await redis.get(anahtar)
+        if onbellek == _KARE_YOK:
+            raise APIError(502, "bad_gateway", "kamera_baglanti_yok")
+        if onbellek:
+            return Response(
+                base64.b64decode(onbellek),
+                media_type="image/jpeg",
+                headers={"Cache-Control": "private, max-age=5"},
+            )
+        proc = await asyncio.create_subprocess_exec(
+            "ffmpeg", "-nostdin", "-loglevel", "error",
+            "-rtsp_transport", "tcp",
+            "-i", obj.stream_url,
+            "-frames:v", "1", "-q:v", "5", "-f", "image2", "pipe:1",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.DEVNULL,
+        )
+        try:
+            veri, _ = await asyncio.wait_for(
+                proc.communicate(), timeout=_KARE_ZAMAN_ASIMI_SN
+            )
+        except (TimeoutError, asyncio.TimeoutError):
+            proc.kill()
+            await proc.wait()
+            veri = b""
+        except FileNotFoundError:
+            # ffmpeg imajda yok — yapilandirma kusuru; operatore acik log.
+            logger.error("[kamera] ffmpeg bulunamadi — imaj guncellenmeli")
+            veri = b""
+
+    if not veri:
+        # Olu/ulasilaamayan kamera: kisa negatif-onbellek (cekic yok) + panel
+        # icin ACIK durum. Sessiz bos kutu YOK (P190 §6 sart).
+        await redis.set(anahtar, _KARE_YOK, ex=_KARE_NEG_TTL_SN)
+        raise APIError(502, "bad_gateway", "kamera_baglanti_yok")
+
+    await redis.set(anahtar, base64.b64encode(veri).decode(), ex=_KARE_TTL_SN)
+    return Response(
+        veri, media_type="image/jpeg",
+        headers={"Cache-Control": "private, max-age=5"},
+    )
+
+
+async def _canli_yolu_kaydet(obj: Camera) -> None:
+    """MediaMTX'e `cam<id>` yolunu (idempotent) kaydeder.
+
+    `sourceOnDemand=true`: gecit RTSP'yi YALNIZ okuyucu varken ceker ve
+    okuyucu kalmayinca kapatir — kimse izlemezken kamera baglantisi ACIK
+    TUTULMAZ (kaynak karari, §6). Yol zaten varsa MediaMTX hata doner ve
+    bu BASARI sayilir.
+    """
+    api = settings.mediamtx_api_url.rstrip("/")
+    async with httpx.AsyncClient(timeout=5) as istemci:
+        yanit = await istemci.post(
+            f"{api}/v3/config/paths/add/cam{obj.id.hex}",
+            json={"source": obj.stream_url, "sourceOnDemand": True},
+        )
+        # 200 = eklendi; MediaMTX var olan yol icin 4xx doner — idempotent
+        # kabul: kaynak URL degistiyse guncelle (patch) dene.
+        if yanit.status_code >= 400:
+            await istemci.patch(
+                f"{api}/v3/config/paths/patch/cam{obj.id.hex}",
+                json={"source": obj.stream_url, "sourceOnDemand": True},
+            )
+
+
+#: (P190 §6 guvenlik) HLS dosya adi TEK bilesendir: harf/rakam/._- + uzanti.
+#: `:path` KULLANILMAZ (egik cizgiyi router reddeder) ve desen ".." gibi
+#: gezinti parcalarini da eler — `dosya` dogrudan gecit URL'ine eklendigi
+#: icin serbest birakmak, izleyicinin BASKA kameranin (cam<id> yolunun)
+#: yayinini cekmesine izin verirdi (IDOR/path traversal).
+_CANLI_DOSYA = re.compile(r"^[A-Za-z0-9._-]+\.(m3u8|ts|mp4)$")
+
+
+@router.get("/{camera_id}/canli/{dosya}")
+async def kamera_canli(
+    camera_id: uuid.UUID,
+    dosya: str,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_READER),
+    redis: aioredis.Redis = Depends(get_redis),
+) -> Response:
+    """(P190 §6) CANLI izleme — MediaMTX HLS vekili (playlist + segmentler).
+
+    Istemci hicbir zaman MediaMTX'i ya da RTSP adresini gormez; bu uc rol
+    gorunurlugunu uygular ve gecide vekillik eder. Es-zamanlilik SINIRLI:
+    ayni anda en cok `kamera_canli_sinir` FARKLI kamera donusturulur
+    (asimda 429 `kamera_canli_sinir` — kullanici acik mesaj gorur).
+    """
+    if not settings.mediamtx_url:
+        raise APIError(503, "service_unavailable", "kamera_canli_kapali")
+    obj = await _gorunur_kamera(db, user, camera_id)
+    _rtsp_dogrula(obj)
+
+    # Yol dogrulama: TEK bilesenli HLS dosyasi (playlist/segment). Egik cizgi,
+    # ters egik cizgi ve ".." REDDEDILIR — `dosya` gecit URL'ine dogrudan
+    # eklendigi icin gezinti, baska kameranin yolunu cekmek olurdu.
+    if (
+        "/" in dosya
+        or "\\" in dosya
+        or ".." in dosya
+        or not _CANLI_DOSYA.match(dosya)
+    ):
+        raise APIError(404, "not_found", "kayit_bulunamadi")
+
+    # Es-zamanlilik: aktif kume Redis'te; playlist istekleri kaydi tazeler.
+    if dosya.endswith(".m3u8"):
+        aktifler = await redis.keys("kamera:canli:*")
+        benim = f"kamera:canli:{obj.id}"
+        if benim not in aktifler and len(aktifler) >= settings.kamera_canli_sinir:
+            raise APIError(429, "rate_limited", "kamera_canli_sinir")
+        await redis.set(benim, "1", ex=_CANLI_TTL_SN)
+        try:
+            await _canli_yolu_kaydet(obj)
+        except httpx.HTTPError:
+            raise APIError(502, "bad_gateway", "kamera_baglanti_yok")
+
+    hedef = f"{settings.mediamtx_url.rstrip('/')}/cam{obj.id.hex}/{dosya}"
+    try:
+        async with httpx.AsyncClient(timeout=15) as istemci:
+            yanit = await istemci.get(hedef)
+    except httpx.HTTPError:
+        raise APIError(502, "bad_gateway", "kamera_baglanti_yok")
+    if yanit.status_code >= 400:
+        raise APIError(502, "bad_gateway", "kamera_baglanti_yok")
+    icerik_turu = yanit.headers.get(
+        "content-type",
+        "application/vnd.apple.mpegurl" if dosya.endswith(".m3u8") else "video/mp2t",
+    )
+    return Response(
+        yanit.content, media_type=icerik_turu,
+        headers={"Cache-Control": "no-store"},
+    )

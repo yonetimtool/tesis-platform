@@ -443,6 +443,7 @@ export const de: Sozluk = {
   kameraUrlHttpSemasi: "Die Adresse muss mit http:// oder https:// beginnen.",
   kameraUrlRtspSemasi: "Für RTSP muss die Adresse mit rtsp:// beginnen.",
   kameraKareYokWeb: "Keine Standbild-Adresse",
+  kameraBaglantiYokWeb: "Keine Verbindung",
   kameraCanliWeb: "Live",
   kameraGoruntuYokWeb: "Kein Bild",
   disHizmetBaslik: "Externe Dienste",

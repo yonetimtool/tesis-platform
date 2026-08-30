@@ -685,6 +685,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get kameraKareYok => 'No image available';
 
   @override
+  String get kameraBaglantiYok => 'No connection';
+
+  @override
   String get kameraUrlWebSayfasi =>
       'This is a web page address. The app only plays direct stream URLs: .m3u8 (HLS) or .mp4.';
 

@@ -16,8 +16,10 @@
 ///      birleştirilir ve `RepaintBoundary.toImage()` ile **yakalanamaz**
 ///      (paket bir `toImage`/anlık görüntü API'si de sunmuyor — arandı,
 ///      yok). Yani yol yalnız pahalı değil, kapalı.
-/// Bu yüzden kare kaynağı sırası: (a) `snapshot_url`, (c) yer tutucu.
-/// Ortadaki (b) şıkkı ölçüm sonucu düştü.
+/// Bu yüzden kare kaynağı sırası: (a) `snapshot_url`, (b) RTSP için
+/// SUNUCU karesi (`GET /cameras/{id}/kare`, P190 §6 — kareyi sunucu
+/// yakalar, RTSP kimlik bilgisi istemciye inmez), (c) yer tutucu.
+/// "HLS'ten istemcide kare yakalama" şıkkı ölçüm sonucu düştü (yukarıda).
 ///
 /// ÖNBELLEK BÜYÜMESİ ELE ALINDI: her tazelemede adres değişir (`?_k=nesil`),
 /// yani her kare Flutter'ın `ImageCache`inde YENİ bir girdidir. Önlem
@@ -25,10 +27,20 @@
 /// biriktirirdi. Yeni kare yüklenince ÖNCEKİ sağlayıcı `evict` edilir.
 library;
 
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 
+import '../../../core/i18n/l10n.dart';
+import '../../../core/theme/home_tokens.dart';
 import '../../../core/ui/gorsel_cozme.dart';
 import '../domain/camera_models.dart';
+
+/// (P190 §6) `GET /cameras/{id}/kare` çağrısı — YETKİLİ Dio ile bayt döner.
+///
+/// Fonksiyon tipi olarak enjekte edilir: karo ağ katmanını bilmez ve testte
+/// ağ olmadan sahtelenir. Üretimde ızgara `CamerasApi.kare`yi bağlar.
+typedef KareYukleyici = Future<Uint8List> Function(String kameraId);
 
 /// Kameranın anlık kare adresine tazeleme damgası ekler.
 ///
@@ -50,6 +62,7 @@ class KameraKaresi extends StatefulWidget {
     required this.nesil,
     required this.yerTutucu,
     this.onKareDurumu,
+    this.kareYukleyici,
     this.gorselYapici,
   });
 
@@ -68,6 +81,11 @@ class KameraKaresi extends StatefulWidget {
   /// sızıntı bırakır ve aynı kartın iki yerde çizilmesini imkânsız kılardı
   /// (kart hem ana ekran şeridinde hem ızgarada kullanılıyor).
   final ValueChanged<bool>? onKareDurumu;
+
+  /// (P190 §6) `snapshot_url` YOKKEN RTSP kamera için sunucu karesi çeker
+  /// (`GET /cameras/{id}/kare`, yetkili Dio, bayt). null ise bu yol kapalı
+  /// (örn. ana ekran şeridi — orada `nesil` de null'dır).
+  final KareYukleyici? kareYukleyici;
 
   /// TESTTE değiştirilebilir: widget testinde ağ yoktur, `Image.network`
   /// asla yüklenmez. Üretimde null → [Image.network].
@@ -96,6 +114,64 @@ class KameraKaresiState extends State<KameraKaresi> {
   @visibleForTesting
   void kareGeldiTest() => _kareGeldi(_saglayici(64));
 
+  // ---- (P190 §6) sunucu karesi (`GET /cameras/{id}/kare`) durumu ----
+
+  /// En son gelen JPEG baytları; null = henüz kare yok.
+  Uint8List? _sunucuKaresi;
+
+  /// Son çekim düştü mü ("bağlantı yok" durumu; önceki kare varsa o kalır).
+  bool _sunucuHatasi = false;
+
+  /// Ekrandaki sunucu karesinin sağlayıcısı — yeni kare gelince evict edilir
+  /// (P121'deki önbellek-büyümesi önlemiyle aynı sözleşme).
+  ImageProvider<Object>? _sunucuSaglayici;
+
+  /// Hangi nesil için çekim yapıldı (aynı nesil iki kez çekilmez).
+  int _cekilenNesil = -1;
+
+  /// Geciken yanıtın yenisini EZMEMESİ için istek kuşağı.
+  int _istek = 0;
+
+  /// Bu karo sunucu karesi yolunda mı? Sıra: `snapshot_url` ÖNCE (bugünkü
+  /// davranış aynen), yoksa RTSP + yükleyici varsa sunucu karesi.
+  bool get _sunucudanCekilir =>
+      !(widget.kamera.snapshotUrl != null &&
+          widget.kamera.snapshotUrl!.isNotEmpty) &&
+      widget.kamera.tur == CameraTur.rtsp &&
+      widget.kareYukleyici != null;
+
+  Future<void> _sunucuKaresiCek() async {
+    if (!_sunucudanCekilir || _cekilenNesil == widget.nesil) return;
+    _cekilenNesil = widget.nesil;
+    final kusak = ++_istek;
+    try {
+      final baytlar = await widget.kareYukleyici!(widget.kamera.id);
+      if (!mounted || kusak != _istek) return;
+      // ÖNCEKİ karenin önbellek girdisini bırak (her fetch YENİ baytlar =
+      // ImageCache'te yeni girdi; temizlenmezse ızgara sürekli büyür).
+      _sunucuSaglayici?.evict();
+      _sunucuSaglayici = null;
+      setState(() {
+        _sunucuKaresi = baytlar;
+        _sunucuHatasi = false;
+      });
+      widget.onKareDurumu?.call(true);
+    } catch (_) {
+      if (!mounted || kusak != _istek) return;
+      // SON KARE KORUNUR (varsa): boşalan bir karo "bozuk" görünür; rozet
+      // zaten "Görüntü alınamıyor"a düşer. Hiç kare gelmediyse karo açık
+      // "Bağlantı yok" durumunu çizer (boş/kırık kutu YASAK).
+      setState(() => _sunucuHatasi = true);
+      widget.onKareDurumu?.call(false);
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _sunucuKaresiCek();
+  }
+
   @override
   void didUpdateWidget(covariant KameraKaresi oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -106,7 +182,15 @@ class KameraKaresiState extends State<KameraKaresi> {
       _onceki?.evict();
       _onceki = null;
       _sonKare = null;
+      _sunucuSaglayici?.evict();
+      _sunucuSaglayici = null;
+      _sunucuKaresi = null;
+      _sunucuHatasi = false;
+      _cekilenNesil = -1;
+      _istek++; // uçuştaki eski kameranın yanıtı yok sayılır
     }
+    // Nesil ilerledi (ya da kamera değişti) → yeni sunucu karesi.
+    _sunucuKaresiCek();
   }
 
   @override
@@ -115,6 +199,7 @@ class KameraKaresiState extends State<KameraKaresi> {
     // olarak birkaç megabayt bırakırdı.
     _onceki?.evict();
     _sonKare?.evict();
+    _sunucuSaglayici?.evict();
     super.dispose();
   }
 
@@ -151,10 +236,78 @@ class KameraKaresiState extends State<KameraKaresi> {
         allowUpscaling: false,
       );
 
+  /// (P190 §6) Sunucu karesi görseli: kare → görüntü, hata → "Bağlantı yok",
+  /// beklerken küçük gösterge. Boş/kırık kutu HİÇBİR dalda yok.
+  Widget _sunucuKaresiGorseli(BuildContext context) {
+    final s = HomeSurface.of(context);
+    final baytlar = _sunucuKaresi;
+    if (baytlar != null) {
+      return LayoutBuilder(builder: (context, kisit) {
+        final saglayici = ResizeImage(
+          MemoryImage(baytlar),
+          // YALNIZ GENİŞLİK — snapshot yolundaki `_saglayici` ile aynı kural.
+          width: cozmeSiniri(
+            context,
+            kisit.maxWidth.isFinite && kisit.maxWidth > 0
+                ? kisit.maxWidth
+                : 200,
+          ),
+          allowUpscaling: false,
+        );
+        _sunucuSaglayici = saglayici;
+        return Image(
+          key: const Key('kamera-sunucu-karesi'),
+          image: saglayici,
+          fit: BoxFit.cover,
+          // Yeni kare çözülürken önceki ekranda kalır (yanıp sönme yok).
+          gaplessPlayback: true,
+        );
+      });
+    }
+    if (_sunucuHatasi) {
+      // AÇIK "bağlantı yok" durumu: kamera erişilemez (502) / yetki yok.
+      return Container(
+        key: const Key('kamera-baglanti-yok'),
+        color: s.placeholder,
+        alignment: Alignment.center,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.videocam_off_outlined, color: s.muted, size: 22),
+            const SizedBox(height: 4),
+            Text(
+              context.l10n.kameraBaglantiYok,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: HomeText.rowSub.copyWith(color: s.muted),
+            ),
+          ],
+        ),
+      );
+    }
+    // İlk kare yolda — küçük gösterge (boş gri kutu "kırık" okunurdu).
+    return Container(
+      key: const Key('kamera-kare-yukleniyor'),
+      color: s.placeholder,
+      alignment: Alignment.center,
+      child: const SizedBox(
+        width: 18,
+        height: 18,
+        child: CircularProgressIndicator(strokeWidth: 2),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final k = widget.kamera;
-    if (!k.kareCekilebilir) return widget.yerTutucu;
+    // (P190 §6) Kaynak sırası: `snapshot_url` ÖNCE (bugünkü yol aynen);
+    // yoksa RTSP için sunucu karesi; o da yoksa yer tutucu.
+    if (k.snapshotUrl == null || k.snapshotUrl!.isEmpty) {
+      return _sunucudanCekilir
+          ? _sunucuKaresiGorseli(context)
+          : widget.yerTutucu;
+    }
 
     final adres = kareAdresi(k.snapshotUrl!, widget.nesil);
     if (widget.gorselYapici != null) {

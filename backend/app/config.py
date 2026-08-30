@@ -84,6 +84,16 @@ class Settings(BaseSettings):
     # aracisiz). Kanonik `api.yonetiyor.com` (api.yonetio.site de yasar).
     api_public_url: str = "https://api.yonetiyor.com"
 
+    # --- (P190 §6) RTSP -> HLS gecidi (MediaMTX) ---
+    # BOS => canli izleme KAPALI (kare gorunumu calismaya devam eder; istemci
+    # "canli kapali" mesaji alir). Compose'ta ic ag adresi verilir; gecit
+    # PUBLIC ACILMAZ — istemci yalniz backend vekilini gorur (kimlik bilgisi
+    # sizmaz). `sourceOnDemand` gecitte: kimse izlemezken RTSP cekilmez.
+    mediamtx_url: str = ""            # orn. http://mediamtx:8888  (HLS)
+    mediamtx_api_url: str = ""        # orn. http://mediamtx:9997  (yol kayit API)
+    #: Ayni anda en cok kac FARKLI kamera donusturulur (CPU siniri; asimda 429).
+    kamera_canli_sinir: int = 3
+
     # --- (P155r2 / §4 · P186) MAGAZA BAGLANTILARI — davet SMS'i + e-postasi ---
     #
     # Play paketi `com.app.yonetiyor`; App Store id'si (P186) TAHSIS EDILDI:

@@ -9955,6 +9955,74 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /cameras/{id}/kare:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    get:
+      tags: [cameras]
+      summary: "(P190 §6) RTSP kameradan tek kare (JPEG) — izgara karosu"
+      description: >
+        Kareyi SUNUCU ceker (ffmpeg): kimlik bilgili RTSP adresi istemciye
+        gitmez. Redis'te 10 sn onbellek + surec basina 3 es-zamanli cekim;
+        olu kamera 5 sn negatif-onbellek. Rol gorunurlugu liste ile ayni
+        (sakin/gorevli yalniz aktif+sakin_gorebilir). Yalniz `tur=rtsp`
+        (SSRF siniri; http(s) kaynaklar istemcide oynar).
+      responses:
+        "200":
+          description: JPEG kare
+          content:
+            image/jpeg:
+              schema: { type: string, format: binary }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "502":
+          description: Kameraya baglanilamadi (`kamera_baglanti_yok`)
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  /cameras/{id}/canli/{dosya}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+      - name: dosya
+        in: path
+        required: true
+        description: "HLS dosyasi (index.m3u8 / segment .ts|.mp4)"
+        schema: { type: string }
+    get:
+      tags: [cameras]
+      summary: "(P190 §6) Canli izleme — MediaMTX HLS vekili"
+      description: >
+        RTSP kamerayi MediaMTX gecidi HLS'e cevirir; bu uc gecide kimlik-
+        kapili vekildir (istemci gecidi/RTSP adresini gormez). Gecit
+        `sourceOnDemand` calisir: kimse izlemezken RTSP cekilmez. Ayni anda
+        en cok `KAMERA_CANLI_SINIR` (varsayilan 3) farkli kamera donusturulur
+        (asimda 429). MediaMTX yapilandirilmamissa 503 `kamera_canli_kapali`.
+      responses:
+        "200":
+          description: HLS playlist ya da segment
+          content:
+            application/vnd.apple.mpegurl:
+              schema: { type: string }
+            video/mp2t:
+              schema: { type: string, format: binary }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "429":
+          description: Es-zamanli canli izleme siniri (`kamera_canli_sinir`)
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "502":
+          description: Gecide/kameraya ulasilamadi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "503":
+          description: Canli izleme yapilandirilmamis (`kamera_canli_kapali`)
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
 
   # ------------------------------------------------------------------------
   # TUR 68 — BELGELENMEMIS UCLAR.
@@ -16565,11 +16633,13 @@ components:
           maxLength: 2048
           example: "https://cam.example.com/hls/1/index.m3u8"
           description: >
-            Istemcinin oynattigi yayin. Backend bu URL'i HIC cekmez (SSRF
-            yuzeyi yok). Sema `tur` ile tutarlidir: hls/mp4 -> http(s)://,
-            rtsp -> rtsp://. **(P25) EN FAZLA 2048 karakter** — asilirsa 422
-            `invalid_stream_url` (`kamera_url_cok_uzun`). Sinir 0015
-            revizyonunda CHECK kisiti olarak da vardir.
+            Istemcinin oynattigi yayin (hls/mp4). Sema `tur` ile tutarlidir:
+            hls/mp4 -> http(s)://, rtsp -> rtsp://. **(P25) EN FAZLA 2048
+            karakter** — asilirsa 422 `invalid_stream_url`
+            (`kamera_url_cok_uzun`). (P190 §6) `tur=rtsp` kayitlarda bu alan
+            YONETIM DISI rollere maskelenir ("rtsp://***"): RTSP adresi
+            kimlik bilgisi tasiyabilir ve istemci onu zaten oynatamaz;
+            sunucu-tarafi cekim yalniz rtsp:// kaynaklara yapilir.
         restream_url:
           type: string
           nullable: true
@@ -16619,8 +16689,17 @@ components:
           description: >
             TURETILMIS (saklanmaz): istemci bu kamerayi oynatabilir mi.
             hls/mp4 -> true; rtsp -> false **AMA `restream_url` doluysa
-            rtsp de true olur** (0012 / P17). Istemci false ise oynat
-            dugmesini pasifler.
+            rtsp de true olur** (0012 / P17) ve (P190 §6) `canli_yol`
+            doluysa da true olur. Istemci false ise oynat dugmesini pasifler.
+        canli_yol:
+          type: string
+          nullable: true
+          example: "/cameras/9f.../canli/index.m3u8"
+          description: >
+            (P190 §6) TURETILMIS: RTSP kamera icin YONETILEN canli izleme
+            yolu (backend HLS vekili, kimlik-kapili). MediaMTX
+            yapilandirilmamissa null. Doluysa istemci restream yerine BUNU
+            oynatir; RTSP adresi/kimlik bilgisi istemciye gitmez.
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
     CameraCreate:

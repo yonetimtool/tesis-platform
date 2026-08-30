@@ -13,11 +13,16 @@
 ///    siler — bu ekranın tek işi o fark.
 library;
 
+import 'dart:async';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/src/features/cameras/domain/camera_models.dart';
 import 'package:mobile/src/features/cameras/presentation/kamera_karesi.dart';
 import 'package:mobile/src/features/cameras/presentation/kare_tazeleme.dart';
+
+import 'helpers/l10n_test_app.dart';
 
 const _kare = 'http://frigate.local:5000/api/kapi/latest.jpg';
 
@@ -267,6 +272,57 @@ void main() {
       await t.pump();
       expect(durum.kareVar, isFalse,
           reason: 'kamera degisti — YENI kare gelene kadar "kare var" DEMEZ');
+    });
+  });
+
+  group('(P190 §6) SUNUCU karesi — RTSP + snapshot_url YOK', () {
+    // Sunucu, rtsp `stream_url`i yonetici-disi rollere MASKELI gonderir;
+    // kare `GET /cameras/{id}/kare` ucundan YETKILI Dio ile bayt gelir.
+    Camera rtsp() => Camera.fromJson(const {
+          'id': 'r1', 'ad': 'Kapı', 'stream_url': 'rtsp://***', 'tur': 'rtsp',
+        });
+
+    Widget kur({KareYukleyici? yukleyici}) => l10nApp(Scaffold(
+          body: SizedBox(
+            height: 80,
+            width: 120,
+            child: KameraKaresi(
+              kamera: rtsp(),
+              nesil: 0,
+              yerTutucu: const Text('YER-TUTUCU'),
+              kareYukleyici: yukleyici,
+            ),
+          ),
+        ));
+
+    testWidgets('cekim DUSUNCE acik "Bağlantı yok" durumu cizilir', (t) async {
+      // 502 kamera_baglanti_yok / 404 — hangi hata olursa olsun karo BOS ya
+      // da KIRIK kutu gostermez, acikca "Bağlantı yok" der.
+      await t.pumpWidget(kur(
+        yukleyici: (_) async => throw Exception('502 kamera_baglanti_yok'),
+      ));
+      await t.pump();
+      expect(find.byKey(const Key('kamera-baglanti-yok')), findsOneWidget);
+      expect(find.text('Bağlantı yok'), findsOneWidget);
+      expect(find.text('YER-TUTUCU'), findsNothing);
+    });
+
+    testWidgets('kare YOLDAYKEN kucuk gosterge gorunur', (t) async {
+      final bekleyen = Completer<Uint8List>();
+      await t.pumpWidget(kur(yukleyici: (_) => bekleyen.future));
+      expect(find.byKey(const Key('kamera-kare-yukleniyor')), findsOneWidget);
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      // Temiz kapanis: future'i sonuclandir ve karta yansit.
+      bekleyen.completeError(Exception('iptal'));
+      await t.pump();
+      expect(find.byKey(const Key('kamera-baglanti-yok')), findsOneWidget);
+    });
+
+    testWidgets('yukleyici VERILMEMISSE yer tutucu (ana ekran seridi yolu)',
+        (t) async {
+      await t.pumpWidget(kur());
+      await t.pump();
+      expect(find.text('YER-TUTUCU'), findsOneWidget);
     });
   });
 }

@@ -116,6 +116,7 @@ class Camera {
     this.sakinGorebilir = false,
     this.restreamUrl,
     this.snapshotUrl,
+    this.canliYol,
     bool? oynatilabilir,
   }) : _oynatilabilir = oynatilabilir; // ignore: prefer_initializing_formals
 
@@ -139,9 +140,23 @@ class Camera {
   /// tutarsizlik olurdu, bu yuzden iki kavram ayri tutulur.
   final String? snapshotUrl;
 
+  /// (P190 §6) RTSP→HLS gecidinin GORELI API yolu
+  /// (`/cameras/{id}/canli/index.m3u8`); gecit yapilandirilmamissa null.
+  ///
+  /// Adres API'ye GORELIDIR ve oynatilirken `Authorization: Bearer` baslik
+  /// GEREKTIRIR (parca istekleri listeye goreli, ayni yetki). `restreamUrl`
+  /// gibi kamera-basina elle girilen bir gecit DEGIL, sunucunun kendi
+  /// yayin ucudur.
+  final String? canliYol;
+
   /// Karo periyodik kare cekebilir mi?
+  ///
+  /// (P190 §6) `snapshot_url` yoksa RTSP kameralar da cekebilir: sunucu
+  /// `GET /cameras/{id}/kare` ile kareyi KENDI yakalar (RTSP kimlik
+  /// bilgileri istemciye HIC inmez).
   bool get kareCekilebilir =>
-      snapshotUrl != null && snapshotUrl!.isNotEmpty;
+      (snapshotUrl != null && snapshotUrl!.isNotEmpty) ||
+      tur == CameraTur.rtsp;
 
   final CameraTur tur;
 
@@ -154,9 +169,11 @@ class Camera {
   final bool? _oynatilabilir;
 
   /// Sunucunun `oynatilabilir` alani; yoksa YERELDE ayni kural uygulanir
-  /// (restream varsa true, yoksa ture bak) — eski sunucuya karsi geri dusus.
+  /// (canli yol/restream varsa true, yoksa ture bak) — eski sunucuya karsi
+  /// geri dusus. (P190 §6) Sunucu `canli_yol` doluyken zaten true gonderir.
   bool get oynatilabilir =>
-      _oynatilabilir ?? (restreamUrl != null ? true : tur.oynatilabilir);
+      _oynatilabilir ??
+      ((canliYol != null || restreamUrl != null) ? true : tur.oynatilabilir);
 
   /// OYNATICIYA verilecek adres: restream varsa ONU, yoksa kameranin kendi
   /// adresini. Oynatici bu ayrimi bilmez — tek alan okur.
@@ -178,6 +195,7 @@ class Camera {
     sakinGorebilir: json['sakin_gorebilir'] as bool? ?? false,
     restreamUrl: json['restream_url'] as String?,
     snapshotUrl: json['snapshot_url'] as String?,
+    canliYol: json['canli_yol'] as String?,
     oynatilabilir: json['oynatilabilir'] as bool?,
   );
 }

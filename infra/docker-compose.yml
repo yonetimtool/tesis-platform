@@ -184,6 +184,24 @@ services:
         python /scripts/setup_app_role.py
     restart: "no"
 
+  # (P190 §6) RTSP -> HLS gecidi. PUBLIC PORT ACILMAZ: yalniz backend vekili
+  # erisir (kimlik-kapili /cameras/{id}/canli/...). `sourceOnDemand` yol
+  # kaydinda verilir: kimse izlemezken RTSP baglantisi ACIK TUTULMAZ.
+  mediamtx:
+    image: bluenviron/mediamtx:1.9.3
+    restart: unless-stopped
+    environment:
+      MTX_API: "yes"
+      MTX_APIADDRESS: :9997
+      MTX_HLS: "yes"
+      MTX_HLSADDRESS: :8888
+      # Dusuk gecikmeli kucuk parcalar; tek izleyicili site kamerasi icin yeterli.
+      MTX_HLSVARIANT: mpegts
+      MTX_RTSP: "no"
+      MTX_RTMP: "no"
+      MTX_WEBRTC: "no"
+      MTX_SRT: "no"
+
   api:
     build:
       context: ../backend
@@ -212,6 +230,15 @@ services:
       # config` ciktisinda gorunsunler: pydantic-settings varsayilanina
       # birakilan bir bayrak, ortamda "yok" gibi gorunur ve operator onu
       # aramaya kalkinca hicbir yerde bulamaz.
+      # --- (P190 §6) RTSP -> HLS gecidi (MediaMTX) ---
+      # DEV'DE VARSAYILAN BOS (canli KAPALI): test takimi "yapilandirilmamis"
+      # dali olcer (503 + canli_yol=null + rtsp oynatilamaz). Denemek icin
+      # `infra/.env`e MEDIAMTX_URL=http://mediamtx:8888 ve
+      # MEDIAMTX_API_URL=http://mediamtx:9997 yaz — servis zaten ayakta.
+      # Prod'da varsayilan DOLU (docker-compose.prod.yml).
+      MEDIAMTX_URL: ${MEDIAMTX_URL:-}
+      MEDIAMTX_API_URL: ${MEDIAMTX_API_URL:-}
+      KAMERA_CANLI_SINIR: ${KAMERA_CANLI_SINIR:-3}
       YENI_KAYIT_AKISI: ${YENI_KAYIT_AKISI:-false}
       SMS_AKTIF: ${SMS_AKTIF:-false}
       TICARI_ILETI_AKTIF: ${TICARI_ILETI_AKTIF:-false}
