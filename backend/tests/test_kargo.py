@@ -224,10 +224,11 @@ def test_kayit_push_tum_daire_sakinlerine_denenir(client, kworld):
 
     from app.scheduler.notify import _fetch_device_tokens_for_users
 
-    # TUR 16: (token, dil) uclusu doner — yalniz token'lari karsilastir.
+    # (P191 §2) `Cihaz` doner (token + dil + sahibi) — yalniz token'lari
+    # karsilastir.
     toks = {
-        t
-        for t, _ in _fetch_device_tokens_for_users(
+        c.token
+        for c in _fetch_device_tokens_for_users(
             kworld["a"], [kworld["resident_a_id"], kworld["es_id"]]
         )
     }

@@ -52,6 +52,14 @@ class PushResult:
     # bunlari cihaz tablosundan budar. Gecici hatalar buraya GIRMEZ.
     gecersiz: list[str] = field(default_factory=list)
     basarisiz: int = 0  # gecici/diger hatalar (token korunur, budanmaz)
+    # (P191 §2) TOKEN BASINA SONUC — `{token: (durum, hata_kodu)}`.
+    #
+    # Toplam sayilar "bir sey gitmedi" der, "AHMET'E gitmedi" DEMEZ. Teshisin
+    # butun degeri o ikinci cumlede: `push_gonderim` tablosuna satir basina
+    # bir alici yazilabilmesi icin sonuc token duzeyinde gerekiyor.
+    # durum: 'gonderildi' | 'gecersiz_token' | 'basarisiz'
+    #        | 'noop' | 'yapilandirilmadi'
+    token_sonuc: dict[str, tuple[str, str | None]] = field(default_factory=dict)
 
 
 def _fcm_hata_kodu(hata: Mapping) -> str:
@@ -175,8 +183,22 @@ class NoopPushProvider(PushProvider):
     name = "noop"
 
     def send(self, tokens, *, title, body, data=None) -> PushResult:
-        logger.info("PUSH noop -> %d token (title=%r)", len(list(tokens)), title)
-        return PushResult(provider="noop", sent=0, status="noop")
+        tokenlar = list(tokens)
+        # (P191 §2) TESHIS: "noop" bir HATA DEGIL, bir YAPILANDIRMADIR — ama
+        # bildirim beklerken bunu bilmeyen operator saatlerce cihaz/izin
+        # arar. Bu yuzden hem log hem satir bunu ACIKCA soyler.
+        logger.info(
+            "PUSH noop -> %d token (title=%r) | PUSH_PROVIDER=noop: HICBIR "
+            "BILDIRIM GONDERILMEZ (gercek gonderim icin PUSH_PROVIDER=fcm)",
+            len(tokenlar),
+            title,
+        )
+        return PushResult(
+            provider="noop",
+            sent=0,
+            status="noop",
+            token_sonuc={t: ("noop", None) for t in tokenlar},
+        )
 
 
 # -------------------------------- fcm -------------------------------------- #
@@ -188,8 +210,19 @@ class FcmProvider(PushProvider):
         # project_id oncelik: env override > service account dosyasindaki deger.
         project_id = settings.fcm_project_id or (sa or {}).get("project_id") or None
         if sa is None or not project_id:
-            logger.warning("PUSH fcm unconfigured (kimlik/proje yok) -> no-op")
-            return PushResult(provider="fcm", sent=0, status="push_unconfigured")
+            logger.warning(
+                "PUSH fcm unconfigured (kimlik/proje yok) -> no-op | "
+                "beklenen dosya: %s",
+                settings.fcm_service_account_path or "(FCM_SERVICE_ACCOUNT_JSON)",
+            )
+            return PushResult(
+                provider="fcm",
+                sent=0,
+                status="push_unconfigured",
+                token_sonuc={
+                    t: ("yapilandirilmadi", "kimlik_yok") for t in tokens
+                },
+            )
 
         access_token = _fetch_access_token(sa)
         url = f"{settings.fcm_base_url}/v1/projects/{project_id}/messages:send"
@@ -202,6 +235,7 @@ class FcmProvider(PushProvider):
         sent = 0
         gecersiz: list[str] = []
         basarisiz = 0
+        token_sonuc: dict[str, tuple[str, str | None]] = {}
         for token in tokens:
             message = {
                 "message": {
@@ -214,6 +248,7 @@ class FcmProvider(PushProvider):
                 resp = _http_post_json(url, headers, message)
             except Exception as exc:  # ag/parse — GECICI; batch'i durdurma, token'i koru
                 basarisiz += 1
+                token_sonuc[token] = ("basarisiz", type(exc).__name__)
                 logger.warning("PUSH fcm istek hatasi (%s) -> token korunur", type(exc).__name__)
                 continue
             hata = resp.get("error") if isinstance(resp, Mapping) else None
@@ -221,19 +256,27 @@ class FcmProvider(PushProvider):
                 kod = _fcm_hata_kodu(hata)
                 if kod in _FCM_KALICI_GECERSIZ:
                     gecersiz.append(token)
+                    token_sonuc[token] = ("gecersiz_token", kod or None)
                     logger.warning("PUSH fcm token gecersiz (%s) -> budanacak", kod)
                 else:
                     basarisiz += 1
+                    token_sonuc[token] = ("basarisiz", kod or None)
                     logger.warning("PUSH fcm gonderim hatasi (%s) -> token korunur", kod)
             else:
                 sent += 1
+                token_sonuc[token] = ("gonderildi", None)
         logger.info(
             "PUSH fcm -> %d gonderildi, %d gecersiz, %d basarisiz", sent, len(gecersiz), basarisiz
         )
         # Hic teslim yok ama hata varsa 'basarisiz'; aksi halde 'sent' (bos batch dahil).
         status = "basarisiz" if (sent == 0 and (gecersiz or basarisiz)) else "sent"
         return PushResult(
-            provider="fcm", sent=sent, status=status, gecersiz=gecersiz, basarisiz=basarisiz
+            provider="fcm",
+            sent=sent,
+            status=status,
+            gecersiz=gecersiz,
+            basarisiz=basarisiz,
+            token_sonuc=token_sonuc,
         )
 
 

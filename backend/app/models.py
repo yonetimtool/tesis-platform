@@ -90,6 +90,9 @@ NOTIFICATION_TIP = ENUM(
     "uzak_okutma",
     # (P181 Bölüm 10.2, göç 0073) Vardiya SONU ozet bildirimi (batching).
     "vardiya_ozeti",
+    # (P191 §2, göç 0078) GOREV ATAMA ve AIDAT BORCU — ikisinin de push
+    # cagrisi HIC YOKTU; "gorev olusturdum, bildirim gelmedi"nin nedeni buydu.
+    "gorev_atandi", "aidat_borc",
     name="notification_tip", create_type=False,
 )
 ASSET_KATEGORI = ENUM(
@@ -2161,6 +2164,32 @@ class UserDevice(Base):
     aktif: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))
     created_at = _created_at()
     updated_at = _created_at()
+
+
+class PushGonderim(Base):
+    """(P191 §2) HER push denemesinin izi — "kime, ne zaman, sonuc ne".
+
+    Gerekce ve tasarim kararlari gocte (0077_push_gonderim). Ozet: bildirim
+    gelmediginde bakilacak TEK YER; toplam sayilar degil ALICI BAZINDA satir.
+    Metin ve tam token SAKLANMAZ (metin `notification`da, token maskeli).
+    """
+
+    __tablename__ = "push_gonderim"
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    kimlik: Mapped[str] = mapped_column(Text, nullable=False)
+    user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("app_user.id", ondelete="SET NULL"), nullable=True
+    )
+    token_son6: Mapped[str | None] = mapped_column(Text, nullable=True)
+    platform: Mapped[str | None] = mapped_column(Text, nullable=True)
+    saglayici: Mapped[str] = mapped_column(Text, nullable=False)
+    durum: Mapped[str] = mapped_column(Text, nullable=False)
+    hata_kodu: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at = _created_at()
 
 
 class Integration(Base):

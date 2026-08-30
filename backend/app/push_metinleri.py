@@ -513,4 +513,75 @@ METINLER: dict[str, PushMetni] = {
         },
         params=('alan', 'tarih', 'baslangic', 'bitis'),
     ),
+    # ---------------------------------------------------------------- #
+    # (P191 §2) EKSIK OLAN UC BILDIRIM.
+    #
+    # `gorev_atandi` ve `aidat_borc` icin push cagrisi HIC YOKTU — "gorev
+    # olusturdum, telefona bildirim gelmedi" sikayetinin kok nedeni buydu.
+    # `test` ise yoneticinin zinciri KENDI cihazinda denemesi icin
+    # (`POST /push/test`): "calisiyor mu?" sorusu tahminle degil deneyerek
+    # cevaplanmali.
+    # ---------------------------------------------------------------- #
+    "gorev_atandi": PushMetni(
+        baslik={
+            "tr": "Yeni görev",
+            "en": "New task",
+            "ar": "مهمة جديدة",
+            "ru": "Новая задача",
+            "de": "Neue Aufgabe",
+            "fr": "Nouvelle tâche",
+            "es": "Nueva tarea",
+        },
+        govde={
+            "tr": "Size bir görev atandı: {baslik}",
+            "en": "A task was assigned to you: {baslik}",
+            "ar": "تم تعيين مهمة لك: {baslik}",
+            "ru": "Вам назначена задача: {baslik}",
+            "de": "Ihnen wurde eine Aufgabe zugewiesen: {baslik}",
+            "fr": "Une tâche vous a été attribuée : {baslik}",
+            "es": "Se le ha asignado una tarea: {baslik}",
+        },
+        params=('baslik',),
+    ),
+    "aidat_borc": PushMetni(
+        baslik={
+            "tr": "Yeni borç",
+            "en": "New charge",
+            "ar": "مستحق جديد",
+            "ru": "Новое начисление",
+            "de": "Neue Forderung",
+            "fr": "Nouvelle charge",
+            "es": "Nuevo cargo",
+        },
+        govde={
+            "tr": "{donem} dönemi için {tutar} tutarında borç tanımlandı.",
+            "en": "A charge of {tutar} was created for the {donem} period.",
+            "ar": "تم إنشاء مستحق بقيمة {tutar} لفترة {donem}.",
+            "ru": "За период {donem} начислено {tutar}.",
+            "de": "Für den Zeitraum {donem} wurde eine Forderung über {tutar} erstellt.",
+            "fr": "Une charge de {tutar} a été créée pour la période {donem}.",
+            "es": "Se creó un cargo de {tutar} para el período {donem}.",
+        },
+        params=('donem', 'tutar'),
+    ),
+    "test": PushMetni(
+        baslik={
+            "tr": "Test bildirimi",
+            "en": "Test notification",
+            "ar": "إشعار تجريبي",
+            "ru": "Тестовое уведомление",
+            "de": "Testbenachrichtigung",
+            "fr": "Notification de test",
+            "es": "Notificación de prueba",
+        },
+        govde={
+            "tr": "Bu bir test bildirimidir. Bunu gördüyseniz bildirimler çalışıyor.",
+            "en": "This is a test notification. If you can see it, notifications work.",
+            "ar": "هذا إشعار تجريبي. إذا رأيته فالإشعارات تعمل.",
+            "ru": "Это тестовое уведомление. Если вы его видите, уведомления работают.",
+            "de": "Dies ist eine Testbenachrichtigung. Wenn Sie sie sehen, funktionieren Benachrichtigungen.",
+            "fr": "Ceci est une notification de test. Si vous la voyez, les notifications fonctionnent.",
+            "es": "Esta es una notificación de prueba. Si la ve, las notificaciones funcionan.",
+        },
+    ),
 }

@@ -43,6 +43,8 @@ from ..schemas import (
     TicketSummaryOut,
 )
 from ..storage import presign_get
+from ..sakin_bildirimi import sakin_bildirimi_yaz
+from ..scheduler.notify import dispatch_external
 from ..ticketing import add_history, notify_opener
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
@@ -230,6 +232,34 @@ async def get_task(
     return (await _serialize_tasks(db, [task]))[0]
 
 
+def _gorev_bildir(db, task: Task, user: AppUser) -> None:
+    """(P191 §2) Goreve ATANAN kisiye push + kalici in-app bildirim.
+
+    Push EK gonderimdir: hatasi kaydi kirmaz (`dispatch_external` kendi
+    try/except'i icinde yutar). In-app satir da yazilir ki bildirimi o an
+    kaciran kisi olayi listede bulsun (P147 ilkesi).
+    """
+    if task.atanan_user_id is None:
+        return
+    # `Task.ad` gorevi adlandiran alandir; push sablonunun alani `baslik`.
+    veri = {"baslik": task.ad}
+    dispatch_external(
+        "gorev_atandi",
+        tenant_id=user.tenant_id,
+        target_user_ids=(task.atanan_user_id,),
+        params=veri,
+        data={"tip": "gorev_atandi", "task_id": str(task.id)},
+    )
+    sakin_bildirimi_yaz(
+        db,
+        tenant_id=user.tenant_id,
+        tip="gorev_atandi",
+        user_ids=(task.atanan_user_id,),
+        veri=veri,
+        task_id=task.id,
+    )
+
+
 @router.post("", response_model=TaskOut, status_code=201)
 async def create_task(
     body: TaskCreate,
@@ -245,6 +275,11 @@ async def create_task(
         await db.flush()
     except IntegrityError as exc:
         raise translate_integrity(exc)
+    # (P191 §2) ATANAN KISIYE BILDIRIM. Bu cagri BUGUNE KADAR YOKTU: gorev
+    # olusturuluyor, atanan kisinin telefonuna hicbir sey dusmuyordu — "gorev
+    # olusturdum, bildirim gelmedi" sikayetinin kok nedeni. Atama YOKSA
+    # (havuz gorevi) bildirim de yoktur; kime gonderilecegi belli degil.
+    _gorev_bildir(db, obj, user)
     await db.refresh(obj)
     return (await _serialize_tasks(db, [obj]))[0]
 
@@ -258,6 +293,10 @@ async def update_task(
 ) -> TaskOut:
     obj = await get_or_404(db, Task, task_id)
     data = body.model_dump(exclude_unset=True)
+    # (P191 §2) ATAMA DEGISTIYSE yeni kisi bildirilmeli — gorevin ona
+    # gectigini yalnizca listeye bakarak ogrenmesi beklenemez. Ayni kisiye
+    # yeniden atama (deger degismedi) bildirim URETMEZ.
+    eski_atanan = obj.atanan_user_id
     if "atanan_user_id" in data:
         await _ensure_user_in_tenant(db, data["atanan_user_id"], user)
     if "checkpoint_id" in data:
@@ -271,6 +310,8 @@ async def update_task(
         await db.flush()
     except IntegrityError as exc:
         raise translate_integrity(exc)
+    if obj.atanan_user_id is not None and obj.atanan_user_id != eski_atanan:
+        _gorev_bildir(db, obj, user)
     await db.refresh(obj)
     return (await _serialize_tasks(db, [obj]))[0]
 

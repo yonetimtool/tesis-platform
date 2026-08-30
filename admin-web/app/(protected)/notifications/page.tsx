@@ -12,8 +12,10 @@ import {
   Rozet,
 } from "@/components/ui";
 import { BILDIRIM_SAYAC_UC } from "@/components/ui/bildirim-merkezi";
+import { PushTeshis } from "@/components/PushTeshis";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
+import { useRol } from "@/lib/rol-kullan";
 import { BILDIRIM_TIP, enumAdi } from "@/lib/enum-adlari";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
 import type { AppNotification, NotificationList } from "@/lib/types";
@@ -31,6 +33,8 @@ const LIMIT = 20;
 const TUR_BIRINCIL = "birincil" as const;
 const TUR_IKINCIL = "ikincil" as const;
 const TUR_TEHLIKE = "tehlike" as const;
+const ROL_ADMIN = "admin" as const;
+const ROL_YONETICI = "yonetici" as const;
 
 export default function NotificationsPage() {
   const t = useT();
@@ -40,6 +44,10 @@ export default function NotificationsPage() {
   // (P181 Bölüm 6.5) TOPLU İŞLEM seçimi — sayfa içindeki id'ler.
   const [secili, setSecili] = useState<Set<string>>(new Set());
   const [topluCalisiyor, setTopluCalisiyor] = useState(false);
+  // (P191 §2) PUSH TESHISI YALNIZ YONETIME. Sakin/guvenlik icin cihaz
+  // sayilari ve baskalarinin gonderim sonuclari ne isine yarar ne de
+  // gormeli; uc zaten 403 doner, kabuk da onu ISTEMEZ.
+  const rol = useRol(null);
 
   const key = `/api/notifications?limit=${LIMIT}&offset=${offset}${
     okundu ? `&okundu=${okundu}` : ""
@@ -116,6 +124,10 @@ export default function NotificationsPage() {
       <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
         {t("kabukBildirimler")}
       </h1>
+
+      {/* (P191 §2) "Bildirim gelmiyor" sorusunun cevabi listenin USTUNDE:
+          kullanici zaten bu sayfaya "bildirimlerim nerede?" diye gelir. */}
+      {rol === ROL_ADMIN || rol === ROL_YONETICI ? <PushTeshis /> : null}
 
       {/* SARILABILIR: uc filtre dugmesi 360 dp + buyuk kok yazi boyunda tek
           satira sigmiyordu (tur 28 surusu: tr +9 px, ru +79 px). Sekme

@@ -38,6 +38,10 @@ export const BILDIRIM_TIP: EnumHarita = {
   sikayet_cozuldu: "bildirimTipSikayetCozuldu",
   // (P181 Bölüm 10.2) Vardiya sonu özeti (batching) — "X/Y nokta okutuldu".
   vardiya_ozeti: "bildirimTipVardiyaOzeti",
+  // (P191 §2, göç 0078) Görev atama ve aidat borcu — ikisinin de bildirimi
+  // HIC YOKTU; "görev oluşturdum, telefona hiçbir şey gelmedi" bundandı.
+  gorev_atandi: "bildirimTipGorevAtandi",
+  aidat_borc: "bildirimTipAidatBorc",
 };
 
 /** `patrol_window_durum` (pano "Bugunun turlari" + tur raporu). */

@@ -82,6 +82,7 @@ from .routers import anpr as anpr_router
 from .routers import vehicle_passes as vehicle_passes_router
 from .routers import violations as violations_router
 from .routers import visitors as visitors_router
+from .routers import push_teshis as push_teshis_router
 from .routers import weather as weather_router
 from .routers import webhooks as webhooks_router
 
@@ -231,6 +232,8 @@ app.include_router(support_router.router)
 app.include_router(tanitim_router.router)
 app.include_router(transparency_router.router)
 app.include_router(weather_router.router)
+# (P191 §2) Push teshisi — "bildirim gelmedi" sorusunun tek adresi.
+app.include_router(push_teshis_router.router)
 app.include_router(cameras_router.router)
 # G1+G4: arac gecisi + otopark dolulugu (ayni modul, iki prefix).
 app.include_router(vehicle_passes_router.router)

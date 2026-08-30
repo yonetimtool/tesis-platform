@@ -32,6 +32,7 @@ from ..crud_helpers import get_or_404, is_unique_violation, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..hata_metinleri import hata_metni, istek_dili
+from ..sakin_bildirimi import aidat_bildir
 from ..models import (
     AppUser,
     DuesAssessment,
@@ -266,6 +267,8 @@ async def toplu_borclandir(
     satirlar = await _toplu_plan(db, body, tanim)
     olusan = 0
     atlanan = 0
+    # (P191 §2) Bildirim kalemleri: YAZILAN satirlar (atlananlar degil).
+    kalemler: list[tuple[uuid.UUID, uuid.UUID | None, str, int]] = []
     for s in satirlar:
         if s.atlama_nedeni is not None or not s.tutar_kurus:
             atlanan += 1
@@ -280,6 +283,8 @@ async def toplu_borclandir(
         )
         olusan += 1 if yazildi else 0
         atlanan += 0 if yazildi else 1
+        if yazildi:
+            kalemler.append((s.unit_id, s.hedef_user_id, body.donem, s.tutar_kurus))
     if olusan:
         await audit_user(
             db, user, Action.DUES_ASSESSMENT_CREATE,
@@ -287,6 +292,8 @@ async def toplu_borclandir(
             meta={"kaynak": "toplu", "count": olusan, "skipped": atlanan,
                   "tanim": str(tanim.id)},
         )
+    # (P191 §2) Sakine bildirim — KISI BASINA TEK (tutarlar toplanir).
+    await aidat_bildir(db, tenant_id=user.tenant_id, kalemler=kalemler)
     # `created` BOS doner: 500 satirlik bir yanit istemciyi bogar ve onizleme
     # zaten ayrintiyi verdi. Sayilar tek dogruluk kaynagidir.
     return DuesAssessmentResult(created=[], atlanan=atlanan)
@@ -336,6 +343,7 @@ async def sayac_ile_borclandir(
     baglar = await _daire_baglari(db, unit_idler)
     olusan = 0
     atlanan = 0
+    kalemler: list[tuple[uuid.UUID, uuid.UUID | None, str, int]] = []
     for sayac, borc in zip(sayaclar, borclar):
         if borc <= 0:
             # SIFIR tuketim SIFIR borc: `tutar_kurus > 0` kisiti zaten
@@ -354,12 +362,18 @@ async def sayac_ile_borclandir(
         )
         olusan += 1 if yazildi else 0
         atlanan += 0 if yazildi else 1
+        if yazildi:
+            kalemler.append(
+                (sayac.unit_id, uuid.UUID(hedef) if hedef else None, body.donem, borc)
+            )
     if olusan:
         await audit_user(
             db, user, Action.DUES_ASSESSMENT_CREATE,
             resource_type="dues_assessment",
             meta={"kaynak": "sayac", "count": olusan, "ana_sayac": str(ana.id)},
         )
+    # (P191 §2) Sayac borclandirmasi da sakine bildirilir.
+    await aidat_bildir(db, tenant_id=user.tenant_id, kalemler=kalemler)
     return DuesAssessmentResult(created=[], atlanan=atlanan)
 
 

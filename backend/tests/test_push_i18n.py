@@ -113,8 +113,18 @@ def test_dil_normalize():
 # --------------------------------------------------------------------------- #
 # 2. Gonderim dile gore GRUPLANIR
 # --------------------------------------------------------------------------- #
+def _cihaz(token: str, dil: str):
+    """(P191 §2) `_fetch_device_tokens` artik `Cihaz` dondurur — teshis satiri
+    "kime" sorusunu cevaplayabilsin diye `user_id`/`platform` de tasiniyor."""
+    from app.scheduler.notify import Cihaz
+
+    return Cihaz(token, dil, uuid.uuid4(), "android")
+
+
 class _SahteSaglayici:
     """Gonderilen (token kumesi, baslik, govde) uclulerini kaydeder."""
+
+    name = "sahte"
 
     def __init__(self) -> None:
         self.cagrilar: list[tuple[tuple[str, ...], str, str]] = []
@@ -132,7 +142,11 @@ def test_farkli_dildeki_cihazlara_farkli_metin(monkeypatch):
     monkeypatch.setattr(
         notify,
         "_fetch_device_tokens",
-        lambda tenant_id, roles: [("tok-tr", "tr"), ("tok-ar", "ar"), ("tok2-ar", "ar")],
+        lambda tenant_id, roles: [
+            _cihaz("tok-tr", "tr"),
+            _cihaz("tok-ar", "ar"),
+            _cihaz("tok2-ar", "ar"),
+        ],
     )
 
     notify.dispatch_external(
@@ -160,7 +174,7 @@ def test_bilinmeyen_dil_turkceye_duser(monkeypatch):
     saglayici = _SahteSaglayici()
     monkeypatch.setattr(notify.push, "get_push_provider", lambda: saglayici)
     monkeypatch.setattr(
-        notify, "_fetch_device_tokens", lambda tenant_id, roles: [("t", "zz")]
+        notify, "_fetch_device_tokens", lambda tenant_id, roles: [_cihaz("t", "zz")]
     )
     notify.dispatch_external(
         "duyuru", tenant_id=uuid.uuid4(), target_roles=("resident",),
@@ -174,12 +188,14 @@ def test_push_hatasi_akisi_kirmaz(monkeypatch):
     from app.scheduler import notify
 
     class _Patlayan:
+        name = "patlayan"
+
         def send(self, *a, **kw):
             raise RuntimeError("fcm down")
 
     monkeypatch.setattr(notify.push, "get_push_provider", lambda: _Patlayan())
     monkeypatch.setattr(
-        notify, "_fetch_device_tokens", lambda tenant_id, roles: [("t", "tr")]
+        notify, "_fetch_device_tokens", lambda tenant_id, roles: [_cihaz("t", "tr")]
     )
     notify.dispatch_external(
         "duyuru", tenant_id=uuid.uuid4(), target_roles=("resident",),

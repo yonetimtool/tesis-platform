@@ -55,6 +55,8 @@ import type { CameraTur, Kamera, KameraListResponse } from "@/lib/types";
 const KARE_ARALIGI_MS = 8000;
 
 const TURLER: CameraTur[] = ["hls", "mp4", "rtsp"];
+// UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`): tur kimligi cumle degil.
+const TUR_RTSP = "rtsp" as const;
 // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
 const ROZET_UYARI = "uyari" as const;
 // Tur adlari TEKNIK KIMLIKTIR (HLS/MP4/RTSP) — cevrilmez, sozluge girmez.
@@ -154,6 +156,10 @@ export default function KameralarPage() {
   const [form, setForm] = useState<Form>(BOS_FORM);
   const [formHata, setFormHata] = useState<string | null>(null);
   const [kaydediliyor, setKaydediliyor] = useState(false);
+  // (P191 §3) BAGLANTI TESTI — kaydetmeden once adresin CALISTIGINI gormek.
+  // Olculen kusur: yonetici kaydediyor, izgarada "Goruntu yok" goruyor ve
+  // adresin mi agin mi parolanin mi yanlis oldugunu bilmiyordu.
+  const [testEdiliyor, setTestEdiliyor] = useState(false);
 
   // Hata KİMLİĞİ -> aktif dildeki cümle (metin değil kimlik taşınır).
   const hataMetni = useMemo(
@@ -196,6 +202,35 @@ export default function KameralarPage() {
     });
     setFormHata(null);
     setAcik(true);
+  }
+
+  /** RTSP adresini SUNUCUYA denettir; sonucu (tanili) formda goster. */
+  async function baglantiyiTestEt() {
+    if (form.tur !== TUR_RTSP) {
+      setFormHata(t("kameraTestRtspGerekli"));
+      return;
+    }
+    const hata = yayinUrlHatasi(form.stream_url, form.tur);
+    if (hata) {
+      setFormHata(hataMetni(hata));
+      return;
+    }
+    setFormHata(null);
+    setTestEdiliyor(true);
+    try {
+      const d = (await apiSend("/api/cameras/test-baglanti", "POST", {
+        stream_url: form.stream_url.trim(),
+        tur: form.tur,
+      })) as { kare_bayt?: number };
+      toast.success(t("kameraTestBasarili", { bayt: String(d.kare_bayt ?? 0) }));
+    } catch (err) {
+      // Sunucu TANILI mesaj doner ("parola kabul edilmedi", "ffmpeg yok",
+      // "yol bulunamadi"...). Genel bir cumleye indirgemek, teshisin butun
+      // degerini yok ederdi.
+      setFormHata(err instanceof Error ? err.message : t("ortakIslemBasarisiz"));
+    } finally {
+      setTestEdiliyor(false);
+    }
   }
 
   async function kaydet(e: React.FormEvent) {
@@ -460,6 +495,22 @@ export default function KameralarPage() {
                 />
               )}
             </AlanSarmal>
+            {/* (P191 §3) ORNEK ADRES + TEST. Ornek metin ipucunun ALTINDA
+                ayri duruyor: kullanicinin kopyalayip degistirecegi sey bu. */}
+            <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
+              {t("kameraAdresOrnek")}
+            </p>
+            {form.tur === TUR_RTSP ? (
+              <Dugme
+                tur="ikincil"
+                boy="kucuk"
+                disabled={testEdiliyor || !form.stream_url.trim()}
+                onClick={() => void baglantiyiTestEt()}
+                data-test="kamera-test-baglanti"
+              >
+                {t("kameraTestEt")}
+              </Dugme>
+            ) : null}
             <AlanSarmal etiket={t("kameraRestream")} ipucu={t("kameraRestreamIpucu")}>
               {(b) => (
                 <Alan

@@ -241,6 +241,18 @@ def run_retention() -> dict:
     # 2) audit_log purge (24 ay) + sistem erasure_run kaydi — OWNER ile.
     #    (app_rw audit_log'da DELETE yapamaz; tenant-siz kayit RLS bypass ister.)
     with psycopg.connect(owner_dsn, autocommit=True, connect_timeout=10) as conn:
+        # (P191 §2) push_gonderim — ISLETIM TELEMETRISI, 30 gun.
+        #
+        # Denetim kaydi DEGILDIR: "bildirim gelmedi" sorusu gunler icinde
+        # sorulur, aylar sonra degil; sinirsiz buyumek, toplu duyuru basina
+        # yuzlerce satir yazan bir tabloyu kalici yuke cevirirdi.
+        #
+        # OWNER BAGLANTISI: tablo RLS FORCE tasiyor ve tenant baglami
+        # OLMAYAN bir app_rw silmesi HICBIR SATIR silmez (politika NULL'a
+        # duser) — sessizce hicbir sey yapmayan bir temizlik olurdu.
+        totals["push_gonderim"] = conn.execute(
+            "DELETE FROM push_gonderim WHERE created_at < now() - interval '30 days'"
+        ).rowcount
         totals["audit_purged"] = conn.execute(
             "DELETE FROM audit_log WHERE ts < now() - make_interval(months => %s)",
             (m.retention_audit_months,),

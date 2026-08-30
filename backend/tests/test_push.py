@@ -65,15 +65,30 @@ def test_noop_provider(monkeypatch):
     assert res.status == "noop" and res.sent == 0
 
 
+# (P191 §2) `_fetch_device_tokens` artik `Cihaz` dondurur (token + dil +
+# SAHIBI): `push_gonderim` teshis satiri "kime gitti" sorusunu
+# cevaplayabilmeli, token tek basina bir insani gostermez.
+def _cihaz(token: str, dil: str = "tr"):
+    from app.scheduler.notify import Cihaz
+
+    return Cihaz(token, dil, uuid.uuid4(), "android")
+
+
+def _tokenlar(cihazlar) -> set:
+    return {c.token for c in cihazlar}
+
+
 # ------------------------ dispatch_external wiring -------------------------- #
 def test_dispatch_calls_provider_with_tokens(monkeypatch):
     # TUR 16: fetch (token, DIL) doner; cagiran cumle degil KIMLIK + params verir.
     monkeypatch.setattr(
-        notify, "_fetch_device_tokens", lambda t, r: [("TOKX", "tr"), ("TOKY", "tr")]
+        notify, "_fetch_device_tokens", lambda t, r: [_cihaz("TOKX"), _cihaz("TOKY")]
     )
     rec = []
 
     class Recorder:
+        name = "recorder"
+
         def send(self, tokens, *, title, body, data=None):
             rec.append((list(tokens), title, body, data))
 
@@ -104,7 +119,7 @@ def test_dispatch_user_targeted_uses_user_fetch(monkeypatch):
 
     def fake_users_fetch(t, user_ids):
         fetched.append(list(user_ids))
-        return [("TOK-RESIDENT", "en")]  # (token, DIL)
+        return [_cihaz("TOK-RESIDENT", "en")]  # (P191) Cihaz
 
     monkeypatch.setattr(notify, "_fetch_device_tokens_for_users", fake_users_fetch)
     # rol bazli fetch CAGRILMAMALI
@@ -115,6 +130,8 @@ def test_dispatch_user_targeted_uses_user_fetch(monkeypatch):
     rec = []
 
     class Recorder:
+        name = "recorder"
+
         def send(self, tokens, *, title, body, data=None):
             rec.append((list(tokens), title, body, data))
 
@@ -152,7 +169,7 @@ def test_dispatch_without_target_is_noop(monkeypatch):
 
 
 def test_dispatch_push_error_does_not_raise(monkeypatch):
-    monkeypatch.setattr(notify, "_fetch_device_tokens", lambda t, r: [("T", "tr")])
+    monkeypatch.setattr(notify, "_fetch_device_tokens", lambda t, r: [_cihaz("T")])
 
     class Boom:
         def send(self, *a, **k):
@@ -207,9 +224,7 @@ def test_unregister_deactivates(client, world):
 
     from app.scheduler.notify import _fetch_device_tokens
 
-    assert tok not in {
-        t for t, _ in _fetch_device_tokens(world["a"], ("admin", "security"))
-    }
+    assert tok not in _tokenlar(_fetch_device_tokens(world["a"], ("admin", "security")))
     # tekrar -> 404 (pasif/yok)
     assert client.delete(f"/devices/{tok}", headers=guard).status_code == 404
 
@@ -237,13 +252,13 @@ def test_fetch_tokens_role_and_tenant_isolation(client, world):
     from app.scheduler.notify import _fetch_device_tokens
 
     # (token, dil) uclusu doner -> yalniz token'lari karsilastir.
-    toks = {t for t, _ in _fetch_device_tokens(world["a"], ("admin", "security"))}
+    toks = _tokenlar(_fetch_device_tokens(world["a"], ("admin", "security")))
     # admin + security (guard) A -> VAR; gorevli A ve B tenant -> YOK
     assert f"ADM-A-{ta}" in toks and f"GRD-A-{ta}" in toks
     assert f"CLN-A-{ta}" not in toks
     assert f"ADM-B-{ta}" not in toks
     # B tarafi kendi token'ini gorur, A'ninkini gormez (tenant izolasyon)
-    toks_b = {t for t, _ in _fetch_device_tokens(world["b"], ("admin", "security"))}
+    toks_b = _tokenlar(_fetch_device_tokens(world["b"], ("admin", "security")))
     assert f"ADM-B-{ta}" in toks_b and f"ADM-A-{ta}" not in toks_b
 
 
@@ -258,7 +273,7 @@ def test_bildirim_mobil_KAPALI_push_hedefinden_cikar(client, world):
     from app.scheduler.notify import _fetch_device_tokens
 
     def _var() -> bool:
-        return tok in {t for t, _ in _fetch_device_tokens(world["a"], ("security",))}
+        return tok in _tokenlar(_fetch_device_tokens(world["a"], ("security",)))
 
     try:
         assert _var(), "acikken hedefte olmali"
@@ -279,15 +294,17 @@ def test_dispatch_ROL_ve_KISI_birlikte_TOKEN_dedup(monkeypatch):
     push alir).
     """
     monkeypatch.setattr(
-        notify, "_fetch_device_tokens", lambda t, r: [("SHARED", "tr"), ("ROLONLY", "tr")]
+        notify, "_fetch_device_tokens", lambda t, r: [_cihaz("SHARED"), _cihaz("ROLONLY")]
     )
     monkeypatch.setattr(
         notify, "_fetch_device_tokens_for_users",
-        lambda t, u: [("SHARED", "tr"), ("USERONLY", "tr")],
+        lambda t, u: [_cihaz("SHARED"), _cihaz("USERONLY")],
     )
     rec = []
 
     class Recorder:
+        name = "recorder"
+
         def send(self, tokens, *, title, body, data=None):
             rec.append(list(tokens))
 
@@ -443,9 +460,11 @@ def test_fcm_send_request_exception_is_transient_not_flagged(monkeypatch):
 def test_dispatch_prunes_invalid_tokens(monkeypatch):
     """Dispatch, provider'in bildirdigi gecersiz token'lari cihaz tablosundan budar."""
     tid = uuid.uuid4()
-    monkeypatch.setattr(notify, "_fetch_device_tokens", lambda t, r: [("GOOD", "tr"), ("BAD", "tr")])
+    monkeypatch.setattr(notify, "_fetch_device_tokens", lambda t, r: [_cihaz("GOOD"), _cihaz("BAD")])
 
     class P:
+        name = "fcm"
+
         def send(self, tokens, *, title, body, data=None):
             return push.PushResult(provider="fcm", sent=1, status="sent", gecersiz=["BAD"])
 

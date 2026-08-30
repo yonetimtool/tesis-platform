@@ -20,6 +20,7 @@ from ..audit import Action, audit_user
 from ..crud_helpers import get_or_404, is_unique_violation, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
+from ..sakin_bildirimi import aidat_bildir
 from ..borclandirma import Bag, gecikme_kurus, hedef_sec
 from ..models import (
     AppUser,
@@ -244,6 +245,12 @@ async def create_assessments(
             db, user, Action.DUES_ASSESSMENT_CREATE, resource_type="dues_assessment",
             resource_id=obj.id, meta={"unit_id": str(body.unit_id)},
         )
+        # (P191 §2) Borç yazıldı -> hedefe bildirim (push + in-app).
+        await aidat_bildir(
+            db,
+            tenant_id=user.tenant_id,
+            kalemler=[(obj.unit_id, obj.hedef_user_id, obj.donem, obj.tutar_kurus)],
+        )
         return DuesAssessmentResult(
             created=await _zenginlestir(db, [obj]), atlanan=0
         )
@@ -293,6 +300,14 @@ async def create_assessments(
         await audit_user(
             db, user, Action.DUES_ASSESSMENT_CREATE, resource_type="dues_assessment",
             meta={"count": len(created), "skipped": atlanan},
+        )
+        # (P191 §2) KISI BASINA TEK bildirim (tutarlar toplanir).
+        await aidat_bildir(
+            db,
+            tenant_id=user.tenant_id,
+            kalemler=[
+                (c.unit_id, c.hedef_user_id, c.donem, c.tutar_kurus) for c in created
+            ],
         )
     return DuesAssessmentResult(created=created, atlanan=atlanan)
 

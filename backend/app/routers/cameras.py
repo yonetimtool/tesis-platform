@@ -46,6 +46,8 @@ from ..deps import get_redis, get_tenant_db, require_role
 from ..errors import APIError
 from ..models import AppUser, Camera
 from ..schemas import (
+    KameraTestIstek,
+    KameraTestSonuc,
     CameraCreate,
     CameraListResponse,
     CameraOut,
@@ -290,6 +292,63 @@ async def delete_camera(
 
 logger = logging.getLogger(__name__)
 
+# --------------------------------------------------------------------------- #
+# (P191 §3) HATA TESHISI — "Yayın açılamadı" TEK BASINA ISE YARAMAZ.
+#
+# OLCULEN KUSUR: panelde her arizanin karsiligi ayni cumleydi ("Yayın
+# açılamadı. Adresi ve ağ erişimini kontrol edin") ve izgarada "Görüntü yok".
+# Yoneticinin elinde EYLEM yoktu: adres mi yanlis, parola mi, kamera mi
+# kapali, sunucudaki ffmpeg mi eksik — hepsi ayni gorunuyordu.
+#
+# ffmpeg'in stderr'i bunlarin hepsini SOYLUYOR; tek yapmamiz gereken onu
+# yutmayi birakmak (`stderr=DEVNULL` idi) ve sinifa cevirmek. Ham cikti
+# ISTEMCIYE VERILMEZ: icinde `stream_url` (yani kamera parolasi) gecebilir.
+# Istemci bir HATA KIMLIGI alir, operator loglarda ayrintiyi gorur.
+# --------------------------------------------------------------------------- #
+#: (desen, hata kimligi) — SIRA ONEMLI: ilk eslesen kazanir, ozelden genele.
+_FFMPEG_TESHIS: tuple[tuple[str, str], ...] = (
+    ("401 unauthorized", "kamera_kimlik_hatali"),
+    ("authentication", "kamera_kimlik_hatali"),
+    ("unauthorized", "kamera_kimlik_hatali"),
+    ("404 not found", "kamera_yol_bulunamadi"),
+    ("stream not found", "kamera_yol_bulunamadi"),
+    ("connection refused", "kamera_ulasilamiyor"),
+    ("no route to host", "kamera_ulasilamiyor"),
+    ("network is unreachable", "kamera_ulasilamiyor"),
+    ("name or service not known", "kamera_adres_cozulemedi"),
+    ("failed to resolve", "kamera_adres_cozulemedi"),
+    ("connection timed out", "kamera_zaman_asimi"),
+    ("timed out", "kamera_zaman_asimi"),
+    ("invalid data found", "kamera_yayin_okunamadi"),
+    ("immediate exit requested", "kamera_zaman_asimi"),
+)
+
+
+def _ffmpeg_teshis(stderr: bytes | None, zaman_asimi: bool) -> str:
+    """ffmpeg ciktisindan HATA KIMLIGI. Bilinmeyen cikti -> genel kimlik."""
+    if zaman_asimi:
+        return "kamera_zaman_asimi"
+    metin = (stderr or b"").decode("utf-8", "replace").lower()
+    for desen, kimlik in _FFMPEG_TESHIS:
+        if desen in metin:
+            return kimlik
+    return "kamera_baglanti_yok"
+
+
+def _kare_hatasi(kimlik: str) -> APIError:
+    """Teshis kimligini HTTP hatasina cevirir.
+
+    Kimlik/yapilandirma hatalari 502 DEGIL: 502 "karsi taraf bozuk" der ve
+    yoneticiyi ag aramaya gonderir; oysa parola yanlissa duzeltilecek yer
+    KAYITTIR, sunucudaki ffmpeg eksikse duzeltilecek yer DAGITIMDIR.
+    """
+    if kimlik == "kamera_kimlik_hatali":
+        return APIError(502, "bad_gateway", kimlik)
+    if kimlik == "kamera_ffmpeg_yok":
+        return APIError(503, "service_unavailable", kimlik)
+    return APIError(502, "bad_gateway", kimlik)
+
+
 _KARE_SEMAFOR = asyncio.Semaphore(3)
 _KARE_TTL_SN = 10
 _KARE_NEG_TTL_SN = 5
@@ -317,6 +376,49 @@ def _rtsp_dogrula(obj: Camera) -> None:
         raise APIError(422, "validation_error", "kamera_kare_yalniz_rtsp")
 
 
+# --------------------------------------------------------------------------- #
+# (P191 §3) BAGLANTI TESTI — kaydetmeden once dene.
+#
+# YOL SIRASI ONEMLI: `/test-baglanti` `/{camera_id}`den ONCE tanimlanir,
+# yoksa FastAPI onu bir kamera kimligi sanip 422 verirdi.
+#
+# SSRF: yalniz `rtsp://` (kayit yolundaki kuralin AYNISI) ve YALNIZ yonetim
+# rolleri. Hiz siniri var: aksi halde uc, ic agi taramak icin kullanilabilecek
+# bir arac olurdu.
+# --------------------------------------------------------------------------- #
+_TEST_SINIR = 20  # tesis basina / dakika
+
+
+@router.post("/test-baglanti", response_model=KameraTestSonuc)
+async def kamera_test(
+    body: KameraTestIstek,
+    user: AppUser = Depends(_WRITER),
+    redis: aioredis.Redis = Depends(get_redis),
+) -> KameraTestSonuc:
+    """Verilen RTSP adresinden tek kare cekmeyi dener; KAYIT YAPMAZ.
+
+    Basarisizlikta hata TANILIDIR (`kamera_kimlik_hatali`,
+    `kamera_ulasilamiyor`, `kamera_yol_bulunamadi`, ...) — yonetici ne
+    duzeltecegini bilir.
+    """
+    _url_tur_dogrula(body.stream_url, body.tur)
+    if body.tur != "rtsp" or not body.stream_url.lower().startswith("rtsp"):
+        raise APIError(422, "validation_error", "kamera_kare_yalniz_rtsp")
+
+    anahtar = f"kamera:test:{user.tenant_id}"
+    sayi = await redis.incr(anahtar)
+    if sayi == 1:
+        await redis.expire(anahtar, 60)
+    if sayi > _TEST_SINIR:
+        raise APIError(429, "rate_limited", "kamera_test_sinir")
+
+    async with _KARE_SEMAFOR:
+        veri, kimlik = await _kare_cek(body.stream_url)
+    if not veri:
+        raise _kare_hatasi(kimlik or "kamera_baglanti_yok")
+    return KameraTestSonuc(basarili=True, kare_bayt=len(veri))
+
+
 @router.get("/{camera_id}/kare")
 async def kamera_kare(
     camera_id: uuid.UUID,
@@ -335,8 +437,12 @@ async def kamera_kare(
 
     anahtar = f"kamera:kare:{obj.id}"
     onbellek = await redis.get(anahtar)
-    if onbellek == _KARE_YOK:
-        raise APIError(502, "bad_gateway", "kamera_baglanti_yok")
+    if onbellek and onbellek.startswith(_KARE_YOK):
+        # (P191 §3) NEGATIF ONBELLEK TESHISI TASIR: `YOK:<kimlik>`. Eskiden
+        # yalniz "YOK" yaziliyordu ve 5 saniyelik pencere icindeki her istek
+        # sebebini KAYBEDIYORDU — kullanici "parola yanlis" yerine yine genel
+        # hatayi goruyordu.
+        raise _kare_hatasi(onbellek.partition(":")[2] or "kamera_baglanti_yok")
     if onbellek:
         return Response(
             base64.b64decode(onbellek),
@@ -347,46 +453,80 @@ async def kamera_kare(
     async with _KARE_SEMAFOR:
         # Semafor beklerken baska istek doldurmus olabilir — yeniden bak.
         onbellek = await redis.get(anahtar)
-        if onbellek == _KARE_YOK:
-            raise APIError(502, "bad_gateway", "kamera_baglanti_yok")
+        if onbellek and onbellek.startswith(_KARE_YOK):
+            raise _kare_hatasi(onbellek.partition(":")[2] or "kamera_baglanti_yok")
         if onbellek:
             return Response(
                 base64.b64decode(onbellek),
                 media_type="image/jpeg",
                 headers={"Cache-Control": "private, max-age=5"},
             )
-        proc = await asyncio.create_subprocess_exec(
-            "ffmpeg", "-nostdin", "-loglevel", "error",
-            "-rtsp_transport", "tcp",
-            "-i", obj.stream_url,
-            "-frames:v", "1", "-q:v", "5", "-f", "image2", "pipe:1",
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.DEVNULL,
-        )
-        try:
-            veri, _ = await asyncio.wait_for(
-                proc.communicate(), timeout=_KARE_ZAMAN_ASIMI_SN
-            )
-        except (TimeoutError, asyncio.TimeoutError):
-            proc.kill()
-            await proc.wait()
-            veri = b""
-        except FileNotFoundError:
-            # ffmpeg imajda yok — yapilandirma kusuru; operatore acik log.
-            logger.error("[kamera] ffmpeg bulunamadi — imaj guncellenmeli")
-            veri = b""
+        veri, kimlik = await _kare_cek(obj.stream_url)
 
     if not veri:
-        # Olu/ulasilaamayan kamera: kisa negatif-onbellek (cekic yok) + panel
-        # icin ACIK durum. Sessiz bos kutu YOK (P190 §6 sart).
-        await redis.set(anahtar, _KARE_YOK, ex=_KARE_NEG_TTL_SN)
-        raise APIError(502, "bad_gateway", "kamera_baglanti_yok")
+        # Olu/ulasilamayan kamera: kisa negatif-onbellek (cekic yok) + panel
+        # icin ACIK durum. Sessiz bos kutu YOK (P190 §6 sart) ve artik
+        # SEBEBI de tasiyor (P191 §3).
+        await redis.set(anahtar, f"{_KARE_YOK}:{kimlik}", ex=_KARE_NEG_TTL_SN)
+        raise _kare_hatasi(kimlik or "kamera_baglanti_yok")
 
     await redis.set(anahtar, base64.b64encode(veri).decode(), ex=_KARE_TTL_SN)
     return Response(
         veri, media_type="image/jpeg",
         headers={"Cache-Control": "private, max-age=5"},
     )
+
+
+async def _kare_cek(stream_url: str) -> tuple[bytes, str]:
+    """RTSP'den tek kare + TESHIS KIMLIGI. Basarida `(veri, "")`.
+
+    `stderr` ARTIK YUTULMUYOR (`DEVNULL` idi): arizanin adini yalnizca o
+    soyluyor. Ham cikti loglara gider, istemciye GITMEZ — icinde
+    `stream_url` (yani kamera parolasi) gecebilir.
+    """
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            "ffmpeg", "-nostdin", "-loglevel", "error",
+            "-rtsp_transport", "tcp",
+            "-i", stream_url,
+            "-frames:v", "1", "-q:v", "5", "-f", "image2", "pipe:1",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+    except FileNotFoundError:
+        # ffmpeg imajda yok — DAGITIM kusuru; operatore acik log + AYRI kimlik.
+        # Eskiden bu da "kameraya baglanilamadi" diyordu ve yonetici olmayan
+        # bir ag sorununu arardi.
+        logger.error(
+            "[kamera] ffmpeg BULUNAMADI — api imajinda ffmpeg yok. "
+            "Dagitim: infra/RUNBOOK-PROD.md kamera bolumu."
+        )
+        return b"", "kamera_ffmpeg_yok"
+    zaman_asimi = False
+    try:
+        veri, hata = await asyncio.wait_for(
+            proc.communicate(), timeout=_KARE_ZAMAN_ASIMI_SN
+        )
+    except (TimeoutError, asyncio.TimeoutError):
+        proc.kill()
+        await proc.wait()
+        veri, hata, zaman_asimi = b"", b"", True
+    if veri:
+        return veri, ""
+    kimlik = _ffmpeg_teshis(hata, zaman_asimi)
+    # HAM CIKTI YALNIZ LOGDA (ve kirpilmis): teshisin ayrintisi operatorun,
+    # kimlik bilgisi kimsenin isi degil.
+    logger.warning(
+        "[kamera] kare alinamadi: teshis=%s ffmpeg=%r",
+        kimlik,
+        (hata or b"").decode("utf-8", "replace")[:300],
+    )
+    return b"", kimlik
+
+
+def api_adresi() -> str:
+    """MediaMTX API adresi — LOG icin. Sir icermez (ic ag adresi)."""
+    return settings.mediamtx_api_url or "(tanimsiz)"
 
 
 async def _canli_yolu_kaydet(obj: Camera) -> None:
@@ -461,16 +601,28 @@ async def kamera_canli(
         try:
             await _canli_yolu_kaydet(obj)
         except httpx.HTTPError:
-            raise APIError(502, "bad_gateway", "kamera_baglanti_yok")
+            # (P191 §3) GECIT ULASILAMIYOR — kamera degil MEDIAMTX sorunu.
+            # Ikisini ayni mesajla anlatmak, yoneticiyi kamerayi kontrol
+            # etmeye gonderiyordu; oysa duzeltilecek yer SUNUCUDUR.
+            logger.error("[kamera] MediaMTX API'sine ulasilamadi (%s)", api_adresi())
+            raise APIError(502, "bad_gateway", "kamera_gecit_yok")
 
     hedef = f"{settings.mediamtx_url.rstrip('/')}/cam{obj.id.hex}/{dosya}"
     try:
         async with httpx.AsyncClient(timeout=15) as istemci:
             yanit = await istemci.get(hedef)
     except httpx.HTTPError:
-        raise APIError(502, "bad_gateway", "kamera_baglanti_yok")
+        logger.error("[kamera] MediaMTX HLS gecidine ulasilamadi (%s)", api_adresi())
+        raise APIError(502, "bad_gateway", "kamera_gecit_yok")
     if yanit.status_code >= 400:
-        raise APIError(502, "bad_gateway", "kamera_baglanti_yok")
+        # Gecit AYAKTA ama yayin yok: kaynak RTSP'ye baglanamamis demektir.
+        # 404 bu durumda "yol henuz hazir degil" anlamina da gelir; ikisini
+        # ayirmak icin ilk deneme icin KARE cekimi bir teshis verir — panel
+        # zaten karo cekimini de yapiyor ve oradaki kimlik gosterilir.
+        logger.warning(
+            "[kamera] gecit %s icin %s dondu", obj.id, yanit.status_code
+        )
+        raise APIError(502, "bad_gateway", "kamera_yayin_hazir_degil")
     icerik_turu = yanit.headers.get(
         "content-type",
         "application/vnd.apple.mpegurl" if dosya.endswith(".m3u8") else "video/mp2t",

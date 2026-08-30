@@ -4418,6 +4418,81 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
+  # ------------------------- (P191 §2) PUSH TESHISI ------------------------- #
+  # "Bildirim gelmedi" sorusunun tek adresi. Zincirin alti halkasi (jeton,
+  # kayit, tetikleme, saglayici yaniti, tercih, servis hesabi) TEK yanitta
+  # gorunur; `POST /push/test` yonetici KENDI cihazinda gercek bir gonderim
+  # dener. Tam FCM jetonu HICBIR yanitta donmez (yalniz son 6 karakter).
+  /push/teshis:
+    get:
+      tags: [push]
+      summary: (P191) Push zincirinin durum tablosu + son denemeler
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+      responses:
+        "200":
+          description: Durum + son denemeler
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [saglayici, yapilandirildi, cihaz_aktif, cihaz_kullanici, bildirim_kapali, ozet_24s, denemeler]
+                properties:
+                  saglayici: { type: string, description: "noop ise hicbir bildirim gonderilmez" }
+                  yapilandirildi: { type: boolean }
+                  cihaz_aktif: { type: integer }
+                  cihaz_kullanici: { type: integer }
+                  bildirim_kapali: { type: integer }
+                  ozet_24s:
+                    type: object
+                    additionalProperties: { type: integer }
+                  denemeler:
+                    type: array
+                    items:
+                      type: object
+                      required: [id, kimlik, saglayici, durum, created_at]
+                      properties:
+                        id: { type: string, format: uuid }
+                        kimlik: { type: string }
+                        user_id: { type: string, format: uuid, nullable: true }
+                        ad: { type: string, nullable: true }
+                        rol: { type: string, nullable: true }
+                        token_son6: { type: string, nullable: true }
+                        platform: { type: string, nullable: true }
+                        saglayici: { type: string }
+                        durum: { type: string }
+                        hata_kodu: { type: string, nullable: true }
+                        created_at: { type: string, format: date-time }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /push/test:
+    post:
+      tags: [push]
+      summary: (P191) KENDI cihazlarina test bildirimi gonder
+      description: |
+        Yalniz cagiranin kendi cihazlarina gider — "test" adi altinda tum
+        tesise bildirim atabilen bir dugme, ilk yanlis tiklamada gercek bir
+        olay gibi gorunen gurultu uretirdi.
+      responses:
+        "200":
+          description: Sonuc
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [saglayici, cihaz, gonderildi, durum]
+                properties:
+                  saglayici: { type: string }
+                  cihaz: { type: integer }
+                  gonderildi: { type: integer }
+                  durum: { type: string }
+                  hata_kodu: { type: string, nullable: true }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /devices/{fcm_token}:
     delete:
       tags: [devices]
@@ -9960,6 +10035,59 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  # ---------------------- (P191 §3) BAGLANTI TESTI ------------------------- #
+  # Yonetici kamerayi KAYDETMEDEN once adresin calistigini gorur. Basarisizlik
+  # TANILI doner: kimlik hatasi / ulasilamiyor / yol bulunamadi / ffmpeg yok...
+  /cameras/test-baglanti:
+    post:
+      tags: [cameras]
+      summary: "(P191 §3) RTSP adresini kaydetmeden dene"
+      description: >
+        Verilen `rtsp://` adresinden tek kare cekmeyi dener; HICBIR KAYIT
+        YAPMAZ. Yalniz admin/yonetici. Tesis basina dakikada 20 deneme
+        (asimda 429 `kamera_test_sinir`) — uc bir ic-ag tarayicisina
+        donusmesin. Basarisizlikta hata kimligi ARIZAYI ADLANDIRIR.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [stream_url]
+              properties:
+                stream_url: { type: string }
+                tur: { type: string, enum: [rtsp] }
+      responses:
+        "200":
+          description: Kare alindi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [basarili, kare_bayt]
+                properties:
+                  basarili: { type: boolean }
+                  kare_bayt: { type: integer }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "429":
+          description: Cok fazla deneme (`kamera_test_sinir`)
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "502":
+          description: >
+            Baglanti kurulamadi — TANILI kimlik: `kamera_kimlik_hatali`,
+            `kamera_ulasilamiyor`, `kamera_adres_cozulemedi`,
+            `kamera_zaman_asimi`, `kamera_yol_bulunamadi`,
+            `kamera_yayin_okunamadi`, `kamera_baglanti_yok`
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "503":
+          description: Sunucuda ffmpeg yok (`kamera_ffmpeg_yok`)
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
   /cameras/{id}/kare:
     parameters:
       - $ref: "#/components/parameters/PathId"
@@ -9983,7 +10111,15 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "422": { $ref: "#/components/responses/ValidationError" }
         "502":
-          description: Kameraya baglanilamadi (`kamera_baglanti_yok`)
+          description: >
+            (P191 §3) TANILI hata: `kamera_kimlik_hatali`,
+            `kamera_ulasilamiyor`, `kamera_adres_cozulemedi`,
+            `kamera_zaman_asimi`, `kamera_yol_bulunamadi`,
+            `kamera_yayin_okunamadi` ya da genel `kamera_baglanti_yok`
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "503":
+          description: Sunucuda ffmpeg yok (`kamera_ffmpeg_yok`)
           content:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
 
@@ -10020,7 +10156,10 @@ paths:
           content:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
         "502":
-          description: Gecide/kameraya ulasilamadi
+          description: >
+            (P191 §3) `kamera_gecit_yok` (MediaMTX'e ulasilamadi — SUNUCU
+            sorunu) ya da `kamera_yayin_hazir_degil` (gecit ayakta, kaynaktan
+            goruntu gelmedi)
           content:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
         "503":

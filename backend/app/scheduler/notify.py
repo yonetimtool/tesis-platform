@@ -16,6 +16,7 @@ import json
 import logging
 import uuid
 from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 from datetime import datetime
 
 import psycopg
@@ -86,6 +87,29 @@ def dispatch_external(
         logger.exception("push gonderimi basarisiz (in-app bildirimi etkilenmez)")
 
 
+@dataclass(frozen=True)
+class Cihaz:
+    """Hedef cihaz — token + dil + SAHIBI.
+
+    (P191 §2) `user_id` eklendi: teshis satiri "kime" sorusunu cevaplamali;
+    token tek basina bir insani gostermez.
+    """
+
+    token: str
+    dil: str
+    user_id: uuid.UUID
+    platform: str | None
+
+
+#: Saglayici TOPLAM durumu -> teshis durumu (token bazinda sonuc yoksa yedek).
+_TOPLAM_DURUM = {
+    "sent": "gonderildi",
+    "noop": "noop",
+    "push_unconfigured": "yapilandirilmadi",
+    "basarisiz": "basarisiz",
+}
+
+
 def _push_to_devices(
     *,
     tenant_id: uuid.UUID | None,
@@ -103,21 +127,39 @@ def _push_to_devices(
     # alir. Eskiden roller ve kisiler AYRI cagrilarla gonderiliyordu; ayni kisi
     # hem gorevli hem yonetici ise iki bildirim duyardi. Kanal tercihi
     # (`bildirim_mobil`, göç 0055) fetch SQL'inde uygulanir.
-    cihazlar: dict[str, str] = {}  # token -> dil (ilk goren dil kazanir)
+    cihazlar: dict[str, Cihaz] = {}  # token -> cihaz (ilk goren kazanir)
     if target_roles:
-        for token, dil in _fetch_device_tokens(tenant_id, target_roles):
-            cihazlar.setdefault(token, dil)
+        for c in _fetch_device_tokens(tenant_id, target_roles):
+            cihazlar.setdefault(c.token, c)
     if target_user_ids:
-        for token, dil in _fetch_device_tokens_for_users(tenant_id, target_user_ids):
-            cihazlar.setdefault(token, dil)
+        for c in _fetch_device_tokens_for_users(tenant_id, target_user_ids):
+            cihazlar.setdefault(c.token, c)
     if not cihazlar:
+        # (P191 §2) SESSIZ KALMA. "Push hic tetiklenmedi" ile "tetiklendi ama
+        # gonderilecek cihaz yok" TAMAMEN farkli iki arizadir ve teshis eden
+        # kisi ikisini ayirt edebilmelidir. Neden ayrica sayilir: cihaz kaydi
+        # mi yok, yoksa herkes mobil bildirimi mi kapatmis?
+        kapali, cihazsiz = _hedef_yok_nedeni(tenant_id, target_roles, target_user_ids)
+        logger.warning(
+            "PUSH hedef yok: kimlik=%s tenant=%s roller=%s kisi=%s | "
+            "aktif cihazi olan ama bildirim_mobil KAPALI: %d, hic aktif cihazi "
+            "olmayan: %d",
+            kimlik, tenant_id, list(target_roles or ()), len(list(target_user_ids or ())),
+            kapali, cihazsiz,
+        )
+        _teshis_yaz(
+            tenant_id,
+            [(kimlik, None, None, None, provider.name, "hedef_yok",
+              "tercih_kapali" if kapali else "cihaz_yok")],
+        )
         return
     # DILE GORE GRUPLA: tek bir metinle gondermek, cihazin dilini yok saymak
     # olurdu. Gruplama gonderim SAYISINI degil, metin SAYISINI artirir.
     gruplar: dict[str, list[str]] = {}
-    for token, dil in cihazlar.items():
-        gruplar.setdefault(dil_normalize(dil), []).append(token)
+    for token, c in cihazlar.items():
+        gruplar.setdefault(dil_normalize(c.dil), []).append(token)
     gecersiz: list[str] = []
+    satirlar: list[tuple] = []
     for dil, tokenlar in gruplar.items():
         sonuc = provider.send(
             tokenlar,
@@ -128,6 +170,23 @@ def _push_to_devices(
         # FCM'in KALICI gecersiz dedigi token'lar -> budanacak. `getattr`
         # savunmasi: noop/eski saglayici None ya da alansiz sonuc dondurebilir.
         gecersiz.extend(getattr(sonuc, "gecersiz", None) or [])
+        # (P191 §2) TOKEN BASINA IZ. `token_sonuc` yoksa (eski saglayici)
+        # toplam durumdan tek bir degere duseriz — satir KAYBOLMAZ.
+        token_sonuc = getattr(sonuc, "token_sonuc", None) or {}
+        for token in tokenlar:
+            durum, hata = token_sonuc.get(
+                token, (_TOPLAM_DURUM.get(getattr(sonuc, "status", ""), "basarisiz"), None)
+            )
+            c = cihazlar[token]
+            satirlar.append(
+                (kimlik, c.user_id, token[-6:], c.platform, provider.name, durum, hata)
+            )
+    logger.info(
+        "PUSH sonuc: kimlik=%s tenant=%s saglayici=%s cihaz=%d | %s",
+        kimlik, tenant_id, provider.name, len(cihazlar),
+        {d: sum(1 for r in satirlar if r[5] == d) for d in {r[5] for r in satirlar}},
+    )
+    _teshis_yaz(tenant_id, satirlar)
     if gecersiz:
         _prune_device_tokens(tenant_id, gecersiz)
 
@@ -141,7 +200,7 @@ _KANAL_KOSULU = " AND u.bildirim_mobil = true"
 
 def _fetch_device_tokens(
     tenant_id: uuid.UUID, roles: Sequence[str]
-) -> list[tuple[str, str]]:
+) -> list[Cihaz]:
     """Hedef rollerdeki, MOBIL BILDIRIMI ACIK, aktif kullanicilarin aktif
     cihazlari: (token, DIL).
 
@@ -154,18 +213,18 @@ def _fetch_device_tokens(
                 "SELECT set_config('app.current_tenant_id', %s, true)", (str(tenant_id),)
             )
             cur.execute(
-                "SELECT d.fcm_token, d.dil FROM user_device d "
+                "SELECT d.fcm_token, d.dil, d.user_id, d.platform FROM user_device d "
                 "JOIN app_user u ON u.id = d.user_id "
                 "WHERE d.aktif = true AND u.is_active = true AND u.role::text = ANY(%s)"
                 + _KANAL_KOSULU,
                 (list(roles),),
             )
-            return [(r[0], r[1]) for r in cur.fetchall()]
+            return [Cihaz(r[0], r[1], r[2], r[3]) for r in cur.fetchall()]
 
 
 def _fetch_device_tokens_for_users(
     tenant_id: uuid.UUID, user_ids: Sequence[uuid.UUID]
-) -> list[tuple[str, str]]:
+) -> list[Cihaz]:
     """Belirli, MOBIL BILDIRIMI ACIK, aktif kullanicilarin aktif cihazlari:
     (token, DIL) (RLS-safe).
 
@@ -178,13 +237,86 @@ def _fetch_device_tokens_for_users(
                 "SELECT set_config('app.current_tenant_id', %s, true)", (str(tenant_id),)
             )
             cur.execute(
-                "SELECT d.fcm_token, d.dil FROM user_device d "
+                "SELECT d.fcm_token, d.dil, d.user_id, d.platform FROM user_device d "
                 "JOIN app_user u ON u.id = d.user_id "
                 "WHERE d.aktif = true AND u.is_active = true "
                 "AND u.id = ANY(%s::uuid[])" + _KANAL_KOSULU,
                 ([str(u) for u in user_ids],),
             )
-            return [(r[0], r[1]) for r in cur.fetchall()]
+            return [Cihaz(r[0], r[1], r[2], r[3]) for r in cur.fetchall()]
+
+
+def _teshis_yaz(tenant_id: uuid.UUID, satirlar: Sequence[tuple]) -> None:
+    """(P191 §2) `push_gonderim`e deneme izini yazar.
+
+    HATA YUTULUR: teshis kaydi yan-istir. Teshisin kendisi bildirimi
+    dusurseydi, tesahis eklemek yeni bir ariza sinifi acmis olurdu.
+
+    Satir bicimi: (kimlik, user_id, token_son6, platform, saglayici, durum,
+    hata_kodu).
+    """
+    if not satirlar:
+        return
+    try:
+        with psycopg.connect(settings.app_dsn, connect_timeout=10) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT set_config('app.current_tenant_id', %s, true)",
+                    (str(tenant_id),),
+                )
+                cur.executemany(
+                    "INSERT INTO push_gonderim (tenant_id, kimlik, user_id, "
+                    "token_son6, platform, saglayici, durum, hata_kodu) "
+                    "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+                    [(str(tenant_id), *r) for r in satirlar],
+                )
+    except Exception:
+        logger.exception("push teshis kaydi yazilamadi (gonderimi etkilemez)")
+
+
+def _hedef_yok_nedeni(
+    tenant_id: uuid.UUID,
+    roles: Sequence[str] | None,
+    user_ids: Sequence[uuid.UUID] | None,
+) -> tuple[int, int]:
+    """Hedef bulunamadi — NEDEN? (bildirim_mobil KAPALI kisi, cihazsiz kisi).
+
+    Operatorun ilk sorusu budur ve iki cevabin eylemi FARKLIDIR: tercih
+    kapaliysa kullanici acar; cihaz yoksa uygulamaya giris/izin gerekir.
+    """
+    try:
+        with psycopg.connect(settings.app_dsn, connect_timeout=10) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT set_config('app.current_tenant_id', %s, true)",
+                    (str(tenant_id),),
+                )
+                kosul = []
+                params: list[object] = []
+                if roles:
+                    kosul.append("u.role::text = ANY(%s)")
+                    params.append(list(roles))
+                if user_ids:
+                    kosul.append("u.id = ANY(%s::uuid[])")
+                    params.append([str(u) for u in user_ids])
+                if not kosul:
+                    return (0, 0)
+                cur.execute(
+                    "SELECT "
+                    " count(*) FILTER (WHERE u.bildirim_mobil = false AND EXISTS ("
+                    "   SELECT 1 FROM user_device d WHERE d.user_id = u.id AND d.aktif)), "
+                    " count(*) FILTER (WHERE NOT EXISTS ("
+                    "   SELECT 1 FROM user_device d WHERE d.user_id = u.id AND d.aktif)) "
+                    "FROM app_user u WHERE u.is_active = true AND ("
+                    + " OR ".join(kosul)
+                    + ")",
+                    params,
+                )
+                r = cur.fetchone()
+                return (int(r[0] or 0), int(r[1] or 0))
+    except Exception:
+        logger.exception("push hedef teshisi okunamadi")
+        return (0, 0)
 
 
 def _prune_device_tokens(tenant_id: uuid.UUID, tokens: Sequence[str]) -> None:

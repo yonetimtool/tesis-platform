@@ -768,6 +768,28 @@ def dogrula_url_tur(stream_url: str, tur: str) -> None:
         raise UrlTurUyusmazligi(tur, tuple(izinli))
 
 
+class KameraTestIstek(BaseModel):
+    """(P191 §3) "Bağlantıyı test et" — KAYDETMEDEN önce dene.
+
+    Ölçülen kusur: yönetici kamerayı kaydediyor, ızgarada "Görüntü yok"
+    görüyor ve adresin mi ağın mı yanlış olduğunu bilmiyordu. Adres
+    doğruluğu KAYIT ANINDA ölçülebilir olmalı.
+    """
+
+    stream_url: str
+    #: Yalnız `rtsp` desteklenir (sunucu-taraflı çekimin SSRF sınırı).
+    tur: CameraTur = "rtsp"
+    model_config = ConfigDict(extra="forbid")
+
+
+class KameraTestSonuc(BaseModel):
+    """Başarı yanıtı. BAŞARISIZLIK bir APIError'dır (tanılı mesajla)."""
+
+    basarili: bool
+    #: Alınan karenin bayt boyu — "gerçekten görüntü geldi" kanıtı.
+    kare_bayt: int
+
+
 class CameraCreate(BaseModel):
     ad: str = Field(..., min_length=1, max_length=100)
     # Serbest konum metni (orn. "Ana Kapı - Giriş").
@@ -2477,6 +2499,55 @@ class DeviceOut(BaseModel):
 class DeviceListResponse(BaseModel):
     meta: PageMetaOut
     items: list[DeviceOut]
+
+
+# ------------------------- (P191 §2) push teşhisi --------------------------- #
+class PushDenemeOut(BaseModel):
+    """Tek bir push denemesi — "kime, ne zaman, sonuç ne"."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    #: Olay tipi (push_metinleri kimliği): gorev_atandi, duyuru, test, ...
+    kimlik: str
+    user_id: uuid.UUID | None = None
+    ad: str | None = None
+    rol: str | None = None
+    #: FCM jetonunun SON 6 karakteri — tam jeton HİÇBİR yanıtta dönmez.
+    token_son6: str | None = None
+    platform: str | None = None
+    saglayici: str
+    #: gonderildi | gecersiz_token | basarisiz | noop | yapilandirilmadi | hedef_yok
+    durum: str
+    hata_kodu: str | None = None
+    created_at: datetime
+
+
+class PushTeshisResponse(BaseModel):
+    """Push zincirinin durum tablosu (bkz. routers/push_teshis.py)."""
+
+    #: Aktif sağlayıcı: `noop` ise HİÇBİR bildirim gönderilmez.
+    saglayici: str
+    #: `fcm` için servis hesabı + proje kimliği var mı.
+    yapilandirildi: bool
+    cihaz_aktif: int
+    cihaz_kullanici: int
+    #: `bildirim_mobil = false` diyen aktif kullanıcı sayısı (bunlara gitmez).
+    bildirim_kapali: int
+    #: Son 24 saatin sonuç dağılımı: {durum: adet}.
+    ozet_24s: dict[str, int]
+    denemeler: list[PushDenemeOut]
+
+
+class PushTestResponse(BaseModel):
+    """`POST /push/test` sonucu — zincirin NEREDE koptuğunu söyler."""
+
+    saglayici: str
+    #: Kendi aktif cihaz sayınız (0 ise gönderilecek yer yok).
+    cihaz: int
+    gonderildi: int
+    durum: str
+    hata_kodu: str | None = None
 
 
 # ------------------------------- uploads ----------------------------------- #
