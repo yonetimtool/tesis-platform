@@ -768,6 +768,123 @@ def dogrula_url_tur(stream_url: str, tur: str) -> None:
         raise UrlTurUyusmazligi(tur, tuple(izinli))
 
 
+# --------------------------- (P191 §4) BANKA -------------------------------- #
+class BankaEkstreSatiri(BaseModel):
+    """Panelin ayrıştırdığı bir ekstre satırı.
+
+    XLSX SUNUCUDA AYRIŞTIRILMAZ (P28/P29 kararı, saldırı yüzeyi): panel
+    dosyayı zaten önizleme için okuyor ve sunucuya YAPILANDIRILMIŞ satır
+    gönderiyor. Sunucu her satırı yine doğrular.
+    """
+
+    #: `YYYY-MM-DD`, `DD.MM.YYYY`, `DD/MM/YYYY` kabul edilir.
+    tarih: str
+    #: Kuruş (tam sayı) ya da metin (`1.234,56` / `1,234.56`).
+    tutar: str | int
+    aciklama: str = ""
+    #: Verilmezse tutarın İŞARETİNDEN türetilir.
+    yon: str | None = None
+    #: Bankanın referans numarası. YOKSA kararlı bir kimlik türetilir.
+    referans: str | None = None
+    karsi_ad: str | None = None
+    karsi_iban: str | None = None
+    para_birimi: str | None = None
+    model_config = ConfigDict(extra="forbid")
+
+
+class BankaIceAktarIstek(BaseModel):
+    """Ekstre içe aktarma. `satirlar` VEYA `mt940` — ikisi birden değil."""
+
+    kaynak: str = Field(default="ekstre", examples=["ekstre"])
+    satirlar: list[BankaEkstreSatiri] | None = None
+    #: MT940 düz metni (sunucuda ayrıştırılır — zip/XML değil, güvenli).
+    mt940: str | None = None
+    model_config = ConfigDict(extra="forbid")
+
+
+class BankaIceAktarSonuc(BaseModel):
+    eklenen: int
+    #: Aynı ekstre ikinci kez yüklendiğinde atlanan satır sayısı.
+    yinelenen: int
+    toplam: int
+
+
+class BankaEslesmeOut(BaseModel):
+    id: uuid.UUID
+    user_id: uuid.UUID | None = None
+    unit_id: uuid.UUID | None = None
+    #: NULL = daire alacağına yazılan FAZLA ödeme.
+    assessment_id: uuid.UUID | None = None
+    tutar_kurus: int
+    confidence_score: int
+    match_type: str
+    durum: str
+    receipt_id: uuid.UUID | None = None
+
+
+class BankaHareketOut(BaseModel):
+    """Banka hareketi — IBAN MASKELİ (tam değer hiçbir yanıtta dönmez)."""
+
+    id: uuid.UUID
+    kaynak: str
+    external_transaction_id: str
+    islem_tarihi: date
+    tutar_kurus: int
+    yon: str
+    para_birimi: str
+    aciklama: str | None = None
+    karsi_ad: str | None = None
+    karsi_iban_maskeli: str | None = None
+    durum: str
+    not_metni: str | None = None
+    created_at: datetime
+    eslesmeler: list[BankaEslesmeOut] = []
+
+
+class BankaHareketListesi(BaseModel):
+    meta: PageMetaOut
+    items: list[BankaHareketOut]
+
+
+class BankaKosumSonuc(BaseModel):
+    """(P191 §4) Eşleştirme KOŞUMUNUN özeti.
+
+    Ad `BankaEslestirSonuc` DEĞİL: o ad P29'un öneri üreticisinde ZATEN
+    kullanılıyor ve iki şemayı aynı adla tutmak, hangisinin döndüğünü
+    sessizce değiştiren bir tuzaktı (ölçüldü: uç 500 verdi).
+    """
+
+    incelenen: int
+    #: Güven eşiğini geçip UYGULANAN (borç kapandı + defter + makbuz).
+    otomatik: int
+    #: Yöneticinin önüne düşen.
+    manuel: int
+
+
+class BankaManuelEslestirIstek(BaseModel):
+    user_id: uuid.UUID
+    #: Kişi çok daireye bağlıysa hangi daire (verilmezse ilk bağ).
+    unit_id: uuid.UUID | None = None
+    model_config = ConfigDict(extra="forbid")
+
+
+class BankaIsaretIstek(BaseModel):
+    durum: str | None = Field(default=None, examples=["ilgisiz_gelir"])
+    not_metni: str | None = Field(default=None, max_length=500)
+    model_config = ConfigDict(extra="forbid")
+
+
+class BankaMakbuzOut(BaseModel):
+    id: uuid.UUID
+    belge_no: str
+    tutar_kurus: int
+    user_id: uuid.UUID | None = None
+    unit_id: uuid.UUID | None = None
+    created_at: datetime
+    #: Kısa ömürlü presigned indirme adresi (depo erişilemezse None).
+    pdf_url: str | None = None
+
+
 class KameraTestIstek(BaseModel):
     """(P191 §3) "Bağlantıyı test et" — KAYDETMEDEN önce dene.
 

@@ -93,6 +93,9 @@ NOTIFICATION_TIP = ENUM(
     # (P191 §2, göç 0078) GOREV ATAMA ve AIDAT BORCU — ikisinin de push
     # cagrisi HIC YOKTU; "gorev olusturdum, bildirim gelmedi"nin nedeni buydu.
     "gorev_atandi", "aidat_borc",
+    # (P191 §4, göç 0080) Banka eşleştirmesi bir ödemeyi işlediğinde sakine
+    # "ödemeniz alındı + makbuz hazır" bildirimi.
+    "aidat_odendi",
     name="notification_tip", create_type=False,
 )
 ASSET_KATEGORI = ENUM(
@@ -3059,6 +3062,107 @@ class FinansalHareket(Base):
     durum: Mapped[str] = mapped_column(
         HAREKET_DURUM, nullable=False, server_default=text("'odendi'")
     )
+    created_at = _created_at()
+
+
+# --------------------------------------------------------------------------- #
+# (P191 §4) BANKA ENTEGRASYONU v1 — üç tablo, YENİ BİR SİSTEM DEĞİL.
+#
+# Gerekçe ve tasarım kararları göçte (0079_banka_entegrasyonu). Özet:
+# ham hareket (değiştirilemez) -> eşleşme kaydı -> borç kapanışı
+# (`dues_payment`) + defter (`finansal_hareket`) + makbuz.
+# --------------------------------------------------------------------------- #
+class BankTransaction(Base):
+    """Ham banka hareketi. `raw_data`/tutar/yön/tarih DEĞİŞTİRİLEMEZ (tetikleyici).
+
+    `external_transaction_id` tenant içinde benzersiz: aynı ekstre iki kez
+    yüklenirse ikinci yükleme yeni satır AÇMAZ.
+    """
+
+    __tablename__ = "bank_transaction"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_bank_tx_id_tenant"),
+        UniqueConstraint(
+            "tenant_id", "external_transaction_id", name="uq_bank_tx_tenant_external"
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    kaynak: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'ekstre'"))
+    external_transaction_id: Mapped[str] = mapped_column(Text, nullable=False)
+    islem_tarihi = mapped_column(Date, nullable=False)
+    tutar_kurus: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    yon: Mapped[str] = mapped_column(Text, nullable=False)
+    para_birimi: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'TRY'"))
+    aciklama: Mapped[str | None] = mapped_column(Text, nullable=True)
+    karsi_ad: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: TAM saklanir (eslestirme "bu IBAN daha once kiminle eslesti" diye
+    #: sorar); OKUMA yolu maskeler (bkz. `schemas.BankaHareketOut`).
+    karsi_iban: Mapped[str | None] = mapped_column(Text, nullable=True)
+    raw_data: Mapped[dict] = mapped_column(JSONB, nullable=False, server_default=text("'{}'::jsonb"))
+    durum: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'yeni'"))
+    not_metni: Mapped[str | None] = mapped_column(Text, nullable=True)
+    karar_veren_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    created_at = _created_at()
+    updated_at = _created_at()
+
+
+class PaymentMatch(Base):
+    """Bir banka hareketinin bir borca (ya da daire alacağına) eşleşmesi.
+
+    Hareket başına DEĞİL (hareket, hedef) başına bir satır: tek transferle
+    üç ay kapanabilir (FIFO) ve her ayın payı ayrı görünmelidir.
+    """
+
+    __tablename__ = "payment_match"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_payment_match_id_tenant"),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    bank_transaction_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    unit_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    #: NULL = daire ALACAĞINA yazılan fazla ödeme.
+    assessment_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    tutar_kurus: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    confidence_score: Mapped[int] = mapped_column(SmallInteger, nullable=False, server_default=text("0"))
+    match_type: Mapped[str] = mapped_column(Text, nullable=False)
+    durum: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'onerildi'"))
+    finansal_hareket_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    dues_payment_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    receipt_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    karar_veren_user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    created_at = _created_at()
+
+
+class Receipt(Base):
+    """Makbuz — PDF MinIO'da, tabloda anahtar + belge no + tutar."""
+
+    __tablename__ = "receipt"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_receipt_id_tenant"),
+        UniqueConstraint("tenant_id", "belge_no", name="uq_receipt_tenant_belge"),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    unit_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    bank_transaction_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    belge_no: Mapped[str] = mapped_column(Text, nullable=False)
+    tutar_kurus: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    pdf_key: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at = _created_at()
 
 

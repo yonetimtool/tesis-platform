@@ -584,4 +584,24 @@ METINLER: dict[str, PushMetni] = {
             "es": "Esta es una notificación de prueba. Si la ve, las notificaciones funcionan.",
         },
     ),
+    "aidat_odendi": PushMetni(
+        baslik={
+            "tr": "Ödemeniz alındı",
+            "en": "Payment received",
+            "ar": "تم استلام دفعتك",
+            "ru": "Платёж получен",
+            "de": "Zahlung erhalten",
+            "fr": "Paiement reçu",
+            "es": "Pago recibido",
+        },
+        govde={
+            "tr": "Banka ödemeniz hesabınıza işlendi. Makbuzunuz hazır.",
+            "en": "Your bank payment has been applied to your account. Your receipt is ready.",
+            "ar": "تمت معالجة دفعتك البنكية في حسابك. الإيصال جاهز.",
+            "ru": "Ваш банковский платёж зачислен. Квитанция готова.",
+            "de": "Ihre Banküberweisung wurde verbucht. Ihre Quittung ist bereit.",
+            "fr": "Votre virement a été enregistré. Votre reçu est prêt.",
+            "es": "Su pago bancario se ha registrado. Su recibo está listo.",
+        },
+    ),
 }

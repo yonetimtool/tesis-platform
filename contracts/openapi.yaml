@@ -4423,6 +4423,257 @@ paths:
   # kayit, tetikleme, saglayici yaniti, tercih, servis hesabi) TEK yanitta
   # gorunur; `POST /push/test` yonetici KENDI cihazinda gercek bir gonderim
   # dener. Tam FCM jetonu HICBIR yanitta donmez (yalniz son 6 karakter).
+  # ====================== (P191 §4) BANKA ENTEGRASYONU ====================== #
+  # Ekstre -> eslestirme -> borc kapanisi + defter + makbuz. YENI BIR SISTEM
+  # DEGIL: borc `dues_payment` ile kapanir, muhasebe kaydi `finansal_hareket`e
+  # yazilir, referans `app_user.odeme_kodu`dur. Uclarin HEPSI admin/yonetici.
+  # IBAN yanitlarda MASKELIDIR (son 4 hane); tam IBAN hicbir yanitta DONMEZ.
+  /banka/ice-aktar:
+    post:
+      tags: [banka]
+      summary: "(P191) Ekstre ice aktar (yapilandirilmis satirlar veya MT940)"
+      description: |
+        MUKERRER KORUMASI: `external_transaction_id` tenant icinde
+        BENZERSIZDIR. Banka referans vermiyorsa (tarih|tutar|yon|aciklama|sira)
+        besinden KARARLI bir kimlik turetilir — ayni ekstre iki kez
+        yuklenirse ikinci yukleme yeni satir ACMAZ ve `yinelenen` sayisi
+        doner.
+
+        CSV/XLSX PANELDE ayristirilir (saldiri yuzeyi karari, P28/P29);
+        MT940 duz metin oldugu icin SUNUCUDA ayristirilir.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                kaynak: { type: string, enum: [ekstre, acik_bankacilik] }
+                satirlar:
+                  type: array
+                  items:
+                    type: object
+                    required: [tarih, tutar]
+                    properties:
+                      tarih: { type: string }
+                      tutar: { oneOf: [{ type: string }, { type: integer }] }
+                      aciklama: { type: string }
+                      yon: { type: string, enum: [giris, cikis], nullable: true }
+                      referans: { type: string, nullable: true }
+                      karsi_ad: { type: string, nullable: true }
+                      karsi_iban: { type: string, nullable: true }
+                      para_birimi: { type: string, nullable: true }
+                mt940: { type: string, nullable: true }
+      responses:
+        "201":
+          description: Ice aktarildi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [eklenen, yinelenen, toplam]
+                properties:
+                  eklenen: { type: integer }
+                  yinelenen: { type: integer }
+                  toplam: { type: integer }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /banka/eslestir:
+    post:
+      tags: [banka]
+      summary: "(P191) Bekleyen hareketleri eslestir (esigi gecenleri UYGULAR)"
+      description: |
+        Oncelik: (1) odeme referansi, (2) gonderen IBAN gecmisi,
+        (3) ad + tutar + acik borc. Guven puani ESIK_OTOMATIK (80) altinda
+        kalan her sey `manuel_inceleme`dir. Ad eslesmesi TEK BASINA asla
+        yeterli degildir. Referans ile IBAN gecmisi CELISIYORSA sonuc
+        otomatik DEGIL manueldir.
+
+        Uygulanan karar: FIFO borc kapanisi (`dues_payment`), TEK defter
+        satiri (`finansal_hareket`), makbuz (`receipt` + MinIO PDF) ve
+        sakine bildirim.
+      responses:
+        "200":
+          description: Kosum ozeti
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [incelenen, otomatik, manuel]
+                properties:
+                  incelenen: { type: integer }
+                  otomatik: { type: integer }
+                  manuel: { type: integer }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /banka/hareketler:
+    get:
+      tags: [banka]
+      summary: "(P191) Banka hareketleri (eslesmeyenler ekrani)"
+      parameters:
+        - name: durum
+          in: query
+          schema:
+            type: string
+            enum: [yeni, eslesti, manuel_inceleme, ilgisiz_gelir, masraf, ters_kayit]
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Liste (IBAN MASKELI)
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/BankaHareket" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /banka/hareketler/{hareket_id}/manuel-eslestir:
+    parameters:
+      - name: hareket_id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [banka]
+      summary: "(P191) Yonetici hareketi elle bir kisiye atar"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_id]
+              properties:
+                user_id: { type: string, format: uuid }
+                unit_id: { type: string, format: uuid, nullable: true }
+      responses:
+        "200":
+          description: Eslesti
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BankaHareket" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Zaten eslesmis (`banka_zaten_eslesti`)
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /banka/hareketler/{hareket_id}/isaretle:
+    parameters:
+      - name: hareket_id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [banka]
+      summary: "(P191) Ilgisiz gelir / banka masrafi / ters kayit isaretle"
+      description: >
+        BANKA MASRAFI OTOMATIK GIDER YAZMAZ — yalniz isaretlenir; gideri
+        deftere yazmak yoneticinin ayri ve bilincli kararidir.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [durum]
+              properties:
+                durum: { type: string, enum: [ilgisiz_gelir, masraf, ters_kayit] }
+                not_metni: { type: string, nullable: true }
+      responses:
+        "200":
+          description: Isaretlendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BankaHareket" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Zaten eslesmis
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /banka/hareketler/{hareket_id}/geri-al:
+    parameters:
+      - name: hareket_id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [banka]
+      summary: "(P191) Yanlis eslesmeyi geri al — SILMEZ, ters kayit yazar"
+      description: >
+        `dues_payment.durum='iptal'` (borc YENIDEN ACILIR), deftere
+        `tip='iptal'` cikis satiri (`ters_kayit_id` ile asil satiri
+        gosterir), `payment_match.durum='geri_alindi'`.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                not_metni: { type: string, nullable: true }
+      responses:
+        "200":
+          description: Geri alindi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BankaHareket" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: Geri alinacak onaylanmis eslesme yok
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  /banka/makbuz/{receipt_id}:
+    parameters:
+      - name: receipt_id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [banka]
+      summary: "(P191) Makbuz kaydi + kisa omurlu PDF adresi"
+      responses:
+        "200":
+          description: Makbuz
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id, belge_no, tutar_kurus, created_at]
+                properties:
+                  id: { type: string, format: uuid }
+                  belge_no: { type: string }
+                  tutar_kurus: { type: integer }
+                  user_id: { type: string, format: uuid, nullable: true }
+                  unit_id: { type: string, format: uuid, nullable: true }
+                  created_at: { type: string, format: date-time }
+                  pdf_url: { type: string, nullable: true }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /push/teshis:
     get:
       tags: [push]
@@ -10953,6 +11204,48 @@ components:
             YOKTUR. Istemci uygulama dilini degistirdiginde cihazi YENIDEN
             kaydeder (ayni token -> idempotent upsert, dil guncellenir).
             Gonderilmezse `tr`.
+    BankaHareket:
+      type: object
+      description: >
+        (P191 §4) Banka hareketi. `karsi_iban_maskeli` YALNIZ son 4 haneyi
+        gosterir; tam IBAN hicbir yanitta DONMEZ (guvenlik maddesi).
+      required: [id, kaynak, external_transaction_id, islem_tarihi, tutar_kurus, yon, durum, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        kaynak: { type: string }
+        external_transaction_id: { type: string }
+        islem_tarihi: { type: string, format: date }
+        tutar_kurus: { type: integer, description: "HER ZAMAN POZITIF; isaret `yon`da" }
+        yon: { type: string, enum: [giris, cikis] }
+        para_birimi: { type: string }
+        aciklama: { type: string, nullable: true }
+        karsi_ad: { type: string, nullable: true }
+        karsi_iban_maskeli: { type: string, nullable: true }
+        durum:
+          type: string
+          enum: [yeni, eslesti, manuel_inceleme, ilgisiz_gelir, masraf, ters_kayit]
+        not_metni: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+        eslesmeler:
+          type: array
+          items:
+            type: object
+            required: [id, tutar_kurus, confidence_score, match_type, durum]
+            properties:
+              id: { type: string, format: uuid }
+              user_id: { type: string, format: uuid, nullable: true }
+              unit_id: { type: string, format: uuid, nullable: true }
+              assessment_id:
+                type: string
+                format: uuid
+                nullable: true
+                description: "NULL = daire alacagina yazilan FAZLA odeme"
+              tutar_kurus: { type: integer }
+              confidence_score: { type: integer }
+              match_type: { type: string, enum: [odeme_kodu, iban, ad_tutar, manuel] }
+              durum: { type: string, enum: [onerildi, onaylandi, geri_alindi, reddedildi] }
+              receipt_id: { type: string, format: uuid, nullable: true }
+
     Device:
       type: object
       required: [id, user_id, fcm_token, platform, dil, aktif, created_at, updated_at]
