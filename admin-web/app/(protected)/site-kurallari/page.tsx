@@ -24,9 +24,10 @@
  * yonetimin verdigi sira anlamlidir. Otomatik siralamak (or. olusturma
  * zamani) o anlami sessizce silerdi.
  */
-import { useState } from "react";
+import { useRef, useState } from "react";
 import useSWR from "swr";
 
+import { Foto } from "@/components/Foto";
 import { useToast } from "@/components/Toast";
 import {
   Alan,
@@ -36,6 +37,7 @@ import {
   Dugme,
   HataDurumu,
   Iskelet,
+  IskeletMetin,
   Kart,
   Modal,
   useOnay,
@@ -43,16 +45,39 @@ import {
 import { alanliHataMetni, apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
+import type { PresignTicket } from "@/lib/types";
 
 interface Kural {
   id: string;
   baslik: string;
   icerik: string;
   sira: number;
+  // (P190 §3) Opsiyonel gorsel — backend zaten destekliyordu (mobil kullanir);
+  // web formu/listesi de gosterir.
+  foto_key?: string | null;
+  foto_url?: string | null;
 }
 
 const UC = "/api/site-rules?limit=100&offset=0";
 const BOS_FORM = { baslik: "", icerik: "", sira: "" };
+
+/** (P190 §3) Gorselin form yasam dongusu — duyuru sayfasindaki desenle AYNI:
+ * dosya secilince presign + dogrudan MinIO'ya PUT; kaydet'te yalniz
+ * `foto_key`. `removed` mevcut gorselin acikca kaldirilmasi (PATCH null). */
+interface FotoDurumu {
+  uploading: boolean;
+  error: string | null;
+  fotoKey: string | null;
+  previewUrl: string | null;
+  removed: boolean;
+}
+const FOTO_BOS: FotoDurumu = {
+  uploading: false,
+  error: null,
+  fotoKey: null,
+  previewUrl: null,
+  removed: false,
+};
 
 export default function SiteKurallariYonetimPage() {
   const t = useT();
@@ -66,6 +91,16 @@ export default function SiteKurallariYonetimPage() {
   const [form, setForm] = useState(BOS_FORM);
   const [formHata, setFormHata] = useState<string | null>(null);
   const [mesgul, setMesgul] = useState(false);
+  const [foto, setFoto] = useState<FotoDurumu>(FOTO_BOS);
+  const dosyaRef = useRef<HTMLInputElement>(null);
+
+  function fotoSifirla() {
+    setFoto((p) => {
+      if (p.previewUrl) URL.revokeObjectURL(p.previewUrl);
+      return FOTO_BOS;
+    });
+    if (dosyaRef.current) dosyaRef.current.value = "";
+  }
 
   function yeniAc() {
     setDuzenlenen(null);
@@ -74,6 +109,7 @@ export default function SiteKurallariYonetimPage() {
     const enBuyuk = kurallar.reduce((n, k) => Math.max(n, k.sira), 0);
     setForm({ ...BOS_FORM, sira: String(enBuyuk + 1) });
     setFormHata(null);
+    fotoSifirla();
     setAcik(true);
   }
 
@@ -81,23 +117,67 @@ export default function SiteKurallariYonetimPage() {
     setDuzenlenen(k);
     setForm({ baslik: k.baslik, icerik: k.icerik, sira: String(k.sira) });
     setFormHata(null);
+    fotoSifirla();
     setAcik(true);
+  }
+
+  // (P190 §3) Dosya secilir secilmez yukle: presign -> dogrudan MinIO'ya PUT.
+  // Kaydet'e kadar yalniz foto_key bekletilir (duyuru/mobil akisla ayni).
+  async function fotoSec(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setFoto((p) => {
+      if (p.previewUrl) URL.revokeObjectURL(p.previewUrl);
+      return { ...FOTO_BOS, uploading: true, previewUrl: URL.createObjectURL(file) };
+    });
+    try {
+      const ticket = await apiSend<PresignTicket>("/api/uploads/presign", "POST", {
+        content_type: file.type || "image/jpeg",
+        dosya_adi: file.name,
+      });
+      const put = await fetch(ticket.upload_url, {
+        method: "PUT",
+        headers: { "Content-Type": file.type || "image/jpeg" },
+        body: file,
+      });
+      if (!put.ok) throw new Error(t("yuklemeBasarisiz", { kod: put.status }));
+      setFoto((p) => ({ ...p, uploading: false, fotoKey: ticket.foto_key }));
+    } catch (err) {
+      setFoto((p) => ({
+        ...p,
+        uploading: false,
+        error: err instanceof Error ? err.message : t("duyuruGorselYuklenemedi"),
+      }));
+    }
   }
 
   async function kaydet(e: React.FormEvent) {
     e.preventDefault();
+    if (foto.uploading) {
+      setFormHata(t("duyuruGorselBekleyin"));
+      return;
+    }
+    if (foto.previewUrl && !foto.fotoKey) {
+      setFormHata(t("duyuruGorselTekrarSecin"));
+      return;
+    }
     setMesgul(true);
     setFormHata(null);
     try {
       const sira = Number(form.sira);
-      const govde = {
+      const govde: Record<string, unknown> = {
         baslik: form.baslik,
         icerik: form.icerik,
         sira: Number.isFinite(sira) && sira >= 0 ? sira : 0,
       };
+      // foto_key yalniz degistiginde govdeye girer: yeni yukleme -> anahtar;
+      // "kaldir" -> null; dokunulmadi -> alan yok (backend mevcut korur).
+      if (foto.fotoKey) govde.foto_key = foto.fotoKey;
+      else if (foto.removed) govde.foto_key = null;
       if (duzenlenen) await apiSend(`/api/site-rules/${duzenlenen.id}`, "PATCH", govde);
       else await apiSend("/api/site-rules", "POST", govde);
       setAcik(false);
+      fotoSifirla();
       mutate();
       toast.success(t("ortakKaydedildi"));
     } catch (err) {
@@ -191,6 +271,57 @@ export default function SiteKurallariYonetimPage() {
               />
             )}
           </AlanSarmal>
+          {/* (P190 §3) GORSEL — duyuru formundaki desenle ayni (tek gorsel;
+              tur/boyut siniri sunucuda: jpeg/png/webp/heic, ~8 MB). */}
+          <div className="space-y-2">
+            <span style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}>
+              {t("duyuruGorselOpsiyonel")}
+            </span>
+            <div className="space-y-2">
+              {(foto.previewUrl ||
+                (duzenlenen?.foto_url && !foto.removed && !foto.fotoKey)) && (
+                <div
+                  className="overflow-hidden"
+                  style={{
+                    borderRadius: "var(--yz-radius-btn)",
+                    border: "1px solid var(--yz-border)",
+                  }}
+                >
+                  <Foto
+                    src={foto.previewUrl ?? duzenlenen?.foto_url ?? ""}
+                    alt={t("duyuruGorselOpsiyonel")}
+                    className="h-40 w-full object-cover"
+                  />
+                </div>
+              )}
+              {foto.uploading && <IskeletMetin satir={3} />}
+              {foto.error && <HataDurumu mesaj={foto.error} />}
+              <div className="flex items-center gap-2">
+                <input
+                  ref={dosyaRef}
+                  aria-label={t("duyuruGorselOpsiyonel")}
+                  type="file"
+                  accept="image/*"
+                  onChange={fotoSec}
+                  style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}
+                  disabled={foto.uploading || mesgul}
+                />
+                {(foto.fotoKey || (duzenlenen?.foto_key && !foto.removed)) && (
+                  <Dugme
+                    type="button"
+                    boy="kucuk"
+                    disabled={foto.uploading || mesgul}
+                    onClick={() => {
+                      fotoSifirla();
+                      setFoto((p) => ({ ...p, removed: true }));
+                    }}
+                  >
+                    {t("duyuruGorseliKaldir")}
+                  </Dugme>
+                )}
+              </div>
+            </div>
+          </div>
           <HataDurumu mesaj={formHata} />
         </form>
       </Modal>
@@ -227,6 +358,22 @@ export default function SiteKurallariYonetimPage() {
                   </Dugme>
                 </div>
               </div>
+              {/* (P190 §3) Kural gorseli — mobil ekranla ayni icerik. */}
+              {k.foto_url && (
+                <div
+                  className="overflow-hidden"
+                  style={{
+                    borderRadius: "var(--yz-radius-btn)",
+                    border: "1px solid var(--yz-border)",
+                  }}
+                >
+                  <Foto
+                    src={k.foto_url}
+                    alt={k.baslik}
+                    className="max-h-56 w-full object-cover"
+                  />
+                </div>
+              )}
               <p
                 className="whitespace-pre-line"
                 style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}

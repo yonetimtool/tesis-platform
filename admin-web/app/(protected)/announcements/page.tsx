@@ -97,6 +97,17 @@ export default function AnnouncementsPage() {
     setOpen(true);
   }
 
+  // (P190 §3) WEB'DEN OLUSTURMA: "yalniz mobil" kisiti kaldirildi. Ayni
+  // form/modal kullanilir; backend POST zaten yonetici+admin'e acik.
+  function openNew() {
+    setEditingId(null);
+    setEditing(null);
+    setForm(EMPTY);
+    setFormErr(null);
+    resetPhoto();
+    setOpen(true);
+  }
+
   // Dosya secilir secilmez yukle: presign -> dogrudan MinIO'ya PUT.
   // Kaydet'e kadar yalniz foto_key bekletilir (mobil akisla ayni).
   async function pickPhoto(e: React.ChangeEvent<HTMLInputElement>) {
@@ -149,13 +160,17 @@ export default function AnnouncementsPage() {
     if (photo.fotoKey) body.foto_key = photo.fotoKey;
     else if (photo.removed) body.foto_key = null;
     try {
-      // Panelde yalniz DUZENLEME var: olusturma site yoneticisine ait
-      // (mobil; auth.md §4 — POST /announcements admin'e 403).
-      await apiSend(`/api/announcements/${editingId}`, "PATCH", body);
+      // (P190 §3) OLUSTURMA + DUZENLEME ayni formdan: editingId varsa PATCH,
+      // yoksa POST. Iki yuzey (web+mobil) ayni tabloyu kullanir.
+      if (editingId) {
+        await apiSend(`/api/announcements/${editingId}`, "PATCH", body);
+      } else {
+        await apiSend("/api/announcements", "POST", body);
+      }
       setOpen(false);
       resetPhoto();
       mutate();
-      toast.success(t("duyuruGuncellendi"));
+      toast.success(editingId ? t("duyuruGuncellendi") : t("duyuruOlusturuldu"));
     } catch (err) {
       setFormErr(err instanceof Error ? err.message : t("ortakKaydedilemedi"));
     } finally {
@@ -176,9 +191,15 @@ export default function AnnouncementsPage() {
 
   return (
     <div className="space-y-5">
-      <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
-        {t("kabukDuyurular")}
-      </h1>
+      <div className="flex items-center justify-between gap-3">
+        <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
+          {t("kabukDuyurular")}
+        </h1>
+        {/* (P190 §3) Web'den olusturma acildi. */}
+        <Dugme tur="birincil" onClick={openNew}>
+          {t("duyuruYeni")}
+        </Dugme>
+      </div>
 
       <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
         {t("duyuruPanelNotu")}
@@ -190,7 +211,7 @@ export default function AnnouncementsPage() {
       <Modal
         acik={open}
         onKapat={() => setOpen(false)}
-        baslik={t("duyuruDuzenle")}
+        baslik={editingId ? t("duyuruDuzenle") : t("duyuruYeni")}
         eylemler={
           <>
             <Dugme tur="sessiz" onClick={() => setOpen(false)} disabled={saving}>

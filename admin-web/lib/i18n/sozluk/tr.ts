@@ -657,6 +657,8 @@ export const tr = {
   duyuruGorselTekrarSecin: "Görsel yüklenemedi. Tekrar seçin veya kaldırın.",
   duyuruGuncellendi: "Duyuru güncellendi.",
   duyuruDuzenle: "Duyuru düzenle",
+  duyuruYeni: "Yeni duyuru",
+  duyuruOlusturuldu: "Duyuru oluşturuldu.",
   duyuranRol: "Yönetici",
   duyuruDetayAc: "{baslik} duyurusunu aç",
   duyuruEnFazla200: "En fazla 200 karakter",
@@ -1337,7 +1339,7 @@ export const tr = {
   // tur 20 — yukleme BFF hatalari
   yuklemeDosyaYok: "Dosya bulunamadı.",
   // tur 21 — gozle surus: cok satirli JSX metinleri
-  duyuruPanelNotu: "Duyuruyu SİTE YÖNETİCİSİ mobil uygulamadan oluşturur; panel yalnız düzenleme/silme (moderasyon) içindir. Duyurular tüm rollere görünür; yayınlandığında tesisin kayıtlı tüm cihazlarına bildirim denenir.",
+  duyuruPanelNotu: "Duyurular web'den ve mobilden oluşturulabilir; tüm rollere görünür ve yayınlandığında tesisin kayıtlı tüm cihazlarına bildirim denenir.",
   talepPanelNotu: "Sakinlerin ve saha ekibinin ilettiği talep/arızalar. Açık talebi {coz} ya da {reddet} ile sonuçlandırın; iş emrine dönüştürme (atama) mobil uygulamadan yapılır.",
   talepReddet: "Reddet",
   // tur 21 — ciplak JSX metinleri
