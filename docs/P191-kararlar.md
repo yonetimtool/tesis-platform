@@ -143,3 +143,131 @@ yolun markaya göre değiştiği notuyla) + **Bağlantıyı test et** düğmesi
 `backend/Dockerfile` **ffmpeg kuruyor** — yani eksik olan kod değil,
 büyük olasılıkla **dağıtımın uygulanmamış olması**. Doğrulama komutları
 `docs/P191-dagitim.md` §3'te.
+
+---
+
+## §4 — Banka entegrasyonu v1
+
+### Mimari sınır (kullanıcının koyduğu kural, aynen uygulandı)
+
+| Kural | Ne yapıldı |
+|---|---|
+| Yeni site/apartman/sakin tablosu AÇMA | Açılmadı: `tenant`, `unit`, `app_user`, `unit_resident` kullanılıyor |
+| Daireye özel referans `app_user.odeme_kodu` | Aynen; kod açıklamadan `odeme_kodu.ayikla` ile çıkarılıyor (P30) |
+| Muhasebe kaydı `finansal_hareket`e | Evet — tahsilat satırı oraya yazılıyor, DELETE yok, iptal ters kayıt |
+| Kuyruk Celery, depo MinIO, DB PostgreSQL | Yeni altyapı eklenmedi; makbuz PDF'i MinIO'da |
+| Yalnız üç yeni tablo | `bank_transaction`, `payment_match`, `receipt` (göç 0079) |
+
+**Borç kapanışı `dues_payment` üzerinden gider** ve bu bir tercih değil
+zorunluluk: daire bakiyesi (`/units/{id}/dues`) o tablodan hesaplanıyor.
+İkinci bir "ödeme" tablosu açmak, biri güncellenip diğeri unutulduğunda
+hangi bakiyenin doğru olduğunu belirsiz bırakırdı.
+
+### K4.1 — Mükerrer koruması
+
+`external_transaction_id` tenant içinde **benzersiz**. Banka referans
+veriyorsa o; vermiyorsa `(tarih|tutar|yön|açıklama|satır sırası)` beşlisinden
+kararlı bir kimlik türetilir. Sıra numarası **şart**: aynı gün, aynı tutarda,
+aynı açıklamayla iki gerçek havale olabilir ve onları tek satıra indirmek
+gerçek bir ödemeyi yok saymak olurdu. Aynı ekstre ikinci kez yüklenince
+`eklenen=0, yinelenen=N` döner — sessiz başarı değil.
+
+`raw_data`, `tutar_kurus`, `yon`, `islem_tarihi` ve
+`external_transaction_id` bir **tetikleyiciyle değiştirilemez**: ham kayıt
+delilin kendisidir.
+
+### K4.2 — Kaynak katmanı takılabilir
+
+`banka_kaynak.py` her kaynağı tek bir `HamHareket`e çevirir; motor ve
+uygulama katmanı kaynağı **bilmez**. Bugün iki kaynak var:
+
+* **ekstre** — CSV/Excel **panelde** ayrıştırılır (XLSX ayrıştırma sunucuda
+  bir saldırı yüzeyidir: zip bombası, XXE, formül enjeksiyonu — P28/P29
+  kararı), sunucuya yapılandırılmış satır gelir ve **yeniden doğrulanır**.
+* **MT940** — düz metin olduğu için **sunucuda** ayrıştırılır (`:61:`/`:86:`).
+  Çelişki değil: zip/XML yok ve dosya panelin okuyamayacağı uzantılarla
+  (`.sta`, `.940`) iner.
+
+Açık bankacılık **v1'de yok**. İkinci kaynak olarak eklendiğinde
+`HamHareket` üretmesi yeter; motor değişmez.
+
+### K4.3 — Eşleştirme önceliği ve güven puanı
+
+1. **Ödeme referansı** (`odeme_kodu`) → 100
+2. **Gönderen IBAN**, daha önce *onaylanmış* bir eşleşmede görülmüşse → 85
+3. **Ad + tutar + açık borç** → ad tam 60 / soyad 30, tutar tam 25 / altında 10
+
+**Otomatik uygulama eşiği 80.** Altındaki her şey `manuel_inceleme`.
+Değiştirilebilir: `banka.ESIK_OTOMATIK`.
+
+Manuel incelemeye düşüren özel durumlar:
+
+| Durum | Neden |
+|---|---|
+| Referans A'yı, IBAN geçmişi B'yi gösteriyor | **Çelişki.** Kirasını başkasının hesabından gönderen ya da eski referans kopyalayan kullanıcıda sessizce yanlış kişiye yazardık |
+| Aynı IBAN iki kişiye bağlı (ortak hesap, eşler) | Seçim insanın |
+| İki aday **eşit puan** | Boş bırakmak yanlış eşleştirmekten iyidir |
+| Ad tutuyor ama tutar/borç tutmuyor | Ad eşleşmesi **tek başına yeterli değil** (kullanıcının kuralı) |
+| Ad tutmuyor, yalnız tutar tutuyor | Aday bile sayılmaz: aynı aidatı ödeyen 200 kişilik sitede kura çekmek olurdu |
+| **Çıkış** hareketi (banka masrafı/komisyon) | Otomatik gider **yazılmaz** |
+
+### K4.4 — Varsayılan kurallar (değiştirilebilir)
+
+| Kural | Varsayılan | Nerede |
+|---|---|---|
+| Kısmi ödeme | **FIFO** — en eski vadeden kapat (vade yoksa dönem) | `banka.fifo_dagit` |
+| Fazla ödeme | Daire **alacağında** bekler (`assessment_id=NULL` ödeme satırı); sonraki borçtan kendiliğinden mahsup olur | `banka_servis.karari_uygula` |
+| Banka masrafı/komisyon | **Yönetici onayına** düşer; otomatik gider yazılmaz — yalnız `masraf` işaretlenir | `routers/banka.isaretle` |
+| Referans yoksa ad eşleşmesi | Denenir ama **tek başına yeterli değil** | `banka.eslestir` |
+| Eşleşmeyenler | Yönetici paneline düşer, elle atanır | `/finans/banka` |
+| Otomatik eşik | 80 | `banka.ESIK_OTOMATIK` |
+
+### K4.5 — Senaryolar ve nerede ölçüldüğü
+
+| Senaryo | Test |
+|---|---|
+| Referans doğru + tam / eksik / fazla | motor: `test_REFERANS_*` |
+| Çok açık borç (FIFO) · tek transferle birkaç ay | motor + uç: `test_TEK_TRANSFER_IKI_AYI_KAPATIR_FIFO` |
+| Referanssız + IBAN tanıdık | motor: `test_REFERANSSIZ_ama_IBAN_TANIDIK` |
+| Referanssız + ad eşleşmesi | motor: `test_AD_*` |
+| Hiç eşleşmeyen | motor + uç: `test_ESLESMEYEN_hareket_MANUEL_INCELEMEYE_duser` |
+| **Yanlış referans** (IBAN geçmişiyle çelişiyor) | motor: `test_YANLIS_REFERANS_IBAN_GECMISIYLE_CELISIYORSA_MANUEL` |
+| Bir kişi çok daire | motor: `test_BIR_KISI_COK_DAIRE_her_daire_ayri_aday` |
+| Bir daire çok kişi (eşler/kiracı) | motor: `test_AYNI_IBAN_IKI_KISIYE_BAGLIYSA_MANUEL` |
+| Borç öncesi peşin ödeme | motor: `test_BORC_YOKKEN_pesin_odeme_tamami_alacaga` |
+| Açıklama boş/kesik | motor: `test_ACIKLAMA_BOS_ya_da_KESIK` |
+| Aynı hareket iki kez (idempotent) | uç: `test_AYNI_EKSTRE_IKI_KEZ_yuklenince_MUKERRER_YOK` |
+| İade / ters kayıt (borç yeniden açılır) | uç: `test_YANLIS_ESLESMEYI_GERI_ALMA_borcu_YENIDEN_ACAR` |
+| Banka masrafı | motor + uç: `test_BANKA_MASRAFI_isaretlemesi_GIDER_YAZMAZ` |
+| Eşleşme sonrası borç düzenlemesi | Geri alma + yeniden eşleştirme: `test_GERI_ALINAN_hareket_YENIDEN_eslestirilebilir` |
+| Yanlış tesisin hesabı | **Tesisler arası taşıma YOK** — RLS engeller; hareket `ilgisiz_gelir` işaretlenir ve doğru tesiste yeniden yüklenir (`test_TESIS_IZOLASYONU`) |
+| Elden/nakit | Banka akışının dışında: mevcut `/finans/tahsilat` yolu (değişmedi) |
+| Manuel eşleştirme | uç: `test_MANUEL_ESLESTIRME_borcu_kapatir` |
+| Yanlış eşleşmeyi geri alma | uç: yukarıdaki |
+| "İlgisiz gelir" işaretleme | uç: `test_ILGISIZ_GELIR_isaretlenir` |
+| Gecikme faizi | Mevcut `gecikme_uygula` alanı ve `borclandirma.gecikme_kurus` yolu — banka eşleştirmesi faizi **yeniden hesaplamaz**, açık borcun kalanını kapatır |
+
+### K4.6 — Güvenlik
+
+* **IBAN maskeli** (`TR***...4567`) her yanıtta; tam IBAN yalnız veritabanında
+  ve yalnız "bu IBAN kiminle eşleşti" sorgusunda.
+* **Her finansal işlem idempotent**: anahtar hareketten türer
+  (`banka:<tx>:<deneme>:<sıra>`). `deneme` sayacı, geri alınmış bir hareketin
+  yeniden eşleştirilebilmesi için gerekli (ölçüldü: tek anahtar
+  `uq_payment_tenant_idempotency`e takılıyordu).
+* **Silme yok, ters kayıt var**: `dues_payment='iptal'`, defterde
+  `tip='iptal'` + `ters_kayit_id`, `payment_match='geri_alindi'`.
+* **Her değişiklik denetim kaydına** (`audit_user`).
+* **Tesis izolasyonu RLS** — üç tabloda da `FORCE ROW LEVEL SECURITY`.
+* Uçların hepsi `admin`/`yonetici`; rol matrisi kilidi güncellendi.
+
+### K4.7 — Bitenler / bitmeyenler
+
+**Biten (v1 kapsamı):** ekstre içe aktarma (CSV/Excel/MT940, takılabilir
+kaynak), eşleştirme motoru, borç kapatma + defter kaydı, makbuz üretimi +
+bildirim, eşleşmeyenler ekranı (elle atama, işaretleme, geri alma).
+
+**Bilinçli olarak YOK:** açık bankacılık API'si (ikinci aşama; sözleşme,
+kimlik saklama ve banka seçimi kararları önce verilmeli — `docs/banka-entegrasyonu-notu.md`),
+gecikme faizinin banka akışında yeniden hesaplanması, tesisler arası hareket
+taşıma.

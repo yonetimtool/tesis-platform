@@ -80,6 +80,10 @@ export const TESIS_ROTALARI = [
   "/finans/virman",
   "/finans/iade",
   "/finans/acilis",
+  // (P191 §4) BANKA ENTEGRASYONU — finansin ALTI. Ekstre yukleme, eslestirme
+  // ve eslesmeyenler ekrani; ayri bir ust bolum DEGIL, cunku yoneticinin
+  // burada yaptigi is tahsilattir ve onu tahsilatin yaninda arar.
+  "/finans/banka",
   "/icra",
   "/reports/dues",
   "/reports/patrols",
@@ -323,6 +327,7 @@ export const ROTA_ROLLERI: Record<string, readonly string[]> = {
   "/finans/virman": ["admin", "yonetici"],
   "/finans/iade": ["admin", "yonetici"],
   "/finans/acilis": ["admin", "yonetici"],
+  "/finans/banka": ["admin", "yonetici"],
   // (P154 / Asama 7.1) ICRA — brief "ayri ust sekme" istiyor. Rol kumesi
   // `/finans` ile AYNI degil: uc (`/finans/icra-dosyalari`) okumayi
   // admin+yonetici+DENETCI'ye aciyor. Denetci burayi gorur ama sayfa ona

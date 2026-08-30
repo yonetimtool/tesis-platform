@@ -42,6 +42,8 @@ export const BILDIRIM_TIP: EnumHarita = {
   // HIC YOKTU; "görev oluşturdum, telefona hiçbir şey gelmedi" bundandı.
   gorev_atandi: "bildirimTipGorevAtandi",
   aidat_borc: "bildirimTipAidatBorc",
+  // (P191 §4) Banka eslestirmesi odemeyi isledi -> "odemeniz alindi".
+  aidat_odendi: "bildirimTipAidatOdendi",
 };
 
 /** `patrol_window_durum` (pano "Bugunun turlari" + tur raporu). */

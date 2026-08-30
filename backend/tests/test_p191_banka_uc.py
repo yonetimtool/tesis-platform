@@ -188,6 +188,9 @@ def test_REFERANSLI_odeme_BORCU_KAPATIR_DEFTERE_YAZILIR_MAKBUZ_URETIR(
     assert m.status_code == 200, m.text
     assert m.json()["tutar_kurus"] == 50000
     assert m.json()["belge_no"]
+    # PDF GERÇEKTEN ÜRETİLDİ VE DEPOYA YAZILDI. Makbuzu "kayıt var" diye
+    # doğru saymak, sakinin indiremediği bir belgeyi başarı saymak olurdu.
+    assert m.json()["pdf_url"], m.json()
 
 
 def test_TEK_TRANSFER_IKI_AYI_KAPATIR_FIFO(client, banka_dunya):

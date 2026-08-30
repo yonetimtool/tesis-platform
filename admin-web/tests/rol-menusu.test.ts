@@ -78,6 +78,10 @@ const BIRINCIL_UC: Record<string, string> = {
   "/finans/virman": "GET /finans/hareketler",
   "/finans/iade": "GET /finans/hareketler",
   "/finans/acilis": "GET /finans/hareketler",
+  // (P191 §4) Banka entegrasyonu — sayfanin listesini `/banka/hareketler`
+  // doldurur; ice aktarma ve eslestirme YAZMA ucudur ve sayfa acilirken
+  // cagrilmaz.
+  "/finans/banka": "GET /banka/hareketler",
   // (P154 / Asama 7.2) `/portal` KALDIRILDI; anket yonetimi kendi
   // sayfasina tasindi ve UCU DEGISMEDI.
   "/anketler": "GET /anketler",

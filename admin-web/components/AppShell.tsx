@@ -197,6 +197,8 @@ function Icon({ name }: { name: IconName }) {
       return svg(<><path d="M4 9h9a5 5 0 0 1 0 10h-3" /><path d="M4 9l4-3M4 9l4 3" /></>);
     case "receipt": // acilis fisi — makbuz
       return svg(<><path d="M6 3h12v18l-2-1.5L14 21l-2-1.5L10 21l-2-1.5L6 21z" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="9" y1="12" x2="15" y2="12" /></>);
+    case "bank": // banka — kolonlu bina cephesi (P191 §4)
+      return svg(<><path d="M4 10h16M5 10L12 5l7 5" /><path d="M7 10v7M11 10v7M15 10v7" /><path d="M4 20h16" /></>);
     case "gauge": // sayac/olcer
       return svg(<><path d="M4 15a8 8 0 0 1 16 0" /><path d="M12 15l4-4" /><line x1="12" y1="15" x2="12" y2="15" /></>);
     case "report": // rapor — belge + cubuklar

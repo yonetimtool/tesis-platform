@@ -26,7 +26,9 @@ export type IconName =
   | "wallet" | "ledger" | "invoice" | "coins" | "expense" | "income"
   | "transfer" | "refund" | "receipt" | "gauge" | "report"
   | "news" | "inbox" | "survey" | "handshake" | "invite" | "help"
-  | "folder" | "list" | "tag" | "submeter" | "homes" | "eye";
+  | "folder" | "list" | "tag" | "submeter" | "homes" | "eye"
+  // (P191 §4) Banka entegrasyonu — finans grubunda benzersiz ikon.
+  | "bank";
 
 /** Bolum kimlikleri. Sira BURADAKI siradir (menude de bu sirayla cizilir). */
 export type GrupId =
@@ -248,6 +250,8 @@ const OGELER: readonly MenuOgesi[] = [
   { href: "/finans/virman", anahtar: "kabukVirman", icon: "transfer", grup: "finans" },
   { href: "/finans/iade", anahtar: "kabukIade", icon: "refund", grup: "finans" },
   { href: "/finans/acilis", anahtar: "kabukAcilisFisleri", icon: "receipt", grup: "finans" },
+  // (P191 §4) Banka entegrasyonu — ekstre -> eslestirme -> tahsilat.
+  { href: "/finans/banka", anahtar: "kabukBankaEntegrasyonu", icon: "bank", grup: "finans" },
   // (P167 §1.4) ICRA DOSYALARI — bagimsiz ust sekme DEGIL, finansin ALTI.
   // Icra bir borcun son durumudur; kullanici onu "hukuk" basligi altinda
   // degil, borcu takip ettigi yerde arar.

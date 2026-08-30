@@ -148,4 +148,53 @@ Canlı izleme MediaMTX gerektirir: `MEDIAMTX_URL` boşsa canlı **kapalıdır**
 
 ## §4 — Banka entegrasyonu
 
-Göçler ve doğrulama adımları §4 tamamlandığında bu bölüme eklenecektir.
+### Göçler
+
+`0079_banka_entegrasyonu` (üç tablo + RLS + değiştirilemezlik tetikleyicisi)
+ve `0080_aidat_odendi_bildirim`. Argümansız `up -d --build` ikisini de
+uygular; şema sürümü `/health` yanıtında görünür.
+
+### Ortam değişkeni GEREKMEZ
+
+Bu bölüm yeni bir sır ya da dış servis istemez: ekstre elle yüklenir, açık
+bankacılık **v1 kapsamında yok**. MinIO ve Celery zaten kurulu.
+
+### Doğrulama
+
+```bash
+# 1) Şema:
+curl -s https://api.yonetiyor.com/health | grep -o '"database":"[^"]*"'
+#    beklenen: 0080_aidat_odendi_bildirim
+
+# 2) Tablolar ve RLS:
+docker compose -f docker-compose.prod.yml --env-file .env.prod exec -T db \
+  psql -U tesis_owner -d tesis -c \
+  "SELECT relname, relrowsecurity, relforcerowsecurity FROM pg_class
+   WHERE relname IN ('bank_transaction','payment_match','receipt');"
+#    üçünde de t | t olmalı
+
+# 3) raw_data DEĞİŞTİRİLEMEZ (tetikleyici çalışıyor mu):
+docker compose -f docker-compose.prod.yml --env-file .env.prod exec -T db \
+  psql -U tesis_owner -d tesis -c \
+  "UPDATE bank_transaction SET raw_data = '{}'::jsonb WHERE false;"
+#    (satır yoksa hata vermez; gerçek bir satırda denenirse EXCEPTION verir)
+```
+
+### Panelden uçtan uca
+
+1. **Finans → Banka Entegrasyonu**.
+2. Ekstreyi seçin (CSV/Excel) → sütun eşlemesini doğrulayın → **İçe aktar**.
+   MT940 dosyasında sütun eşlemesi çıkmaz; dosya olduğu gibi gönderilir.
+3. **Eşleştirmeyi çalıştır** → özet: kaç otomatik, kaç manuel.
+4. **Eşleşmeyenler** sekmesinde kalanları kişiye atayın ya da *İlgisiz gelir* /
+   *Banka masrafı* olarak işaretleyin.
+5. Eşleşen satırda **Makbuz** bağlantısı PDF'i verir; **Eşleşmeyi geri al**
+   borcu yeniden açar (silme yok, defterde ters kayıt oluşur).
+
+### Beklenen yan etkiler
+
+* Eşleşen her ödeme için: `dues_payment` satır(lar)ı (borç kapanır), **tek**
+  `finansal_hareket` tahsilat satırı, `receipt` + MinIO'da PDF, sakine
+  `aidat_odendi` bildirimi.
+* Banka masrafı **gider yazmaz** — yalnız işaretlenir; gideri Finans →
+  Giderler ekranından siz girersiniz.
