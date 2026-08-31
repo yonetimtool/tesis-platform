@@ -34,7 +34,9 @@ class DeviceApi {
           'fcm_token': fcmToken,
           'platform': platform,
           'dil': dil,
-          if (cihazKimligi != null) 'cihaz_kimligi': cihazKimligi,
+          // Null ise anahtar HIC gonderilmez (sunucu 'kimlik yok' der,
+          // bos dize DEMEZ): `?` isaretci null-aware oge sozdizimi.
+          'cihaz_kimligi': ?cihazKimligi,
         },
       );
     } on DioException catch (e) {

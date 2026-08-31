@@ -217,18 +217,23 @@ olmayan kaç kişi). `NoopPushProvider` logu artık açıkça "PUSH_PROVIDER=noo
 hiçbir bildirim gönderilmez" der; `push_unconfigured` logu beklenen dosya
 yolunu yazar. Değerler değil **alan adları** loglanır (P134 kuralı).
 
-### Açık madde — mobil tıklama yönlendirmesi
+### K2.5 — Mobil tıklama yönlendirmesi
 
-`routeForPushData` (mobile/lib/src/routing/app_router.dart) bilinmeyen `tip`
-için `null` döner: bildirim **düşer ve görünür**, ama tıklanınca uygulama
-olduğu yerde kalır. Bu turda eklenen üç tip (`gorev_atandi`, `aidat_borc`,
-`aidat_odendi`) o durumda — doğal hedefleri `/tasks` ve aidat ekranıdır.
+`routeForPushData` bilinmeyen `tip` için `null` döner: bildirim düşer ve
+görünür, ama tıklanınca uygulama olduğu yerde kalır. Bu turda eklenen üç tip
+için hedefler tanımlandı:
 
-**Neden bu turda yapılmadı:** mobil değişiklik ancak `flutter test`
-TAMAMIYLA doğrulanabilir (yerleşim/menü/sözlük kilitleri yalnız tam koşumda
-kırılır) ve bu makinede Flutter kurulu değil. Körlemesine düzenlemek,
-doğrulanmamış bir mobil sürüm bırakmak olurdu. Tek satırlık iş: üç `case` +
-mevcut rotalar.
+| Tip | Hedef | Neden |
+|---|---|---|
+| `gorev_atandi` | `/tasks` | `taskDetail` rotası `Task` **nesnesini** `extra` ile bekler (listeden seçilir) ve nesnesiz gelindiğinde zaten listeye yönlendirir; push'tan nesne taşınamaz. Parametresiz `/tasks` "bana atananlar" görünümüdür — bildirimin muhatabı zaten odur. |
+| `aidat_borc` | `/my-dues` | Borç doğdu. |
+| `aidat_odendi` | `/my-dues` | Ödeme işlendi. İkisi de aynı ekrana gider: kullanıcının bakacağı şey aynı — kendi bakiyesi ve hareketleri. |
+
+**Not (süreç):** bu madde iki tur boyunca "Flutter bu makinede kurulu değil"
+gerekçesiyle açık bırakılmıştı. Gerekçe **yanlıştı**: Flutter P183'te bu
+makineye kurulmuş (stable 3.47.1) ve o günden beri APK/AAB üretildi. Hatanın
+kaynağı hafıza indeksindeki eski bir satırdı; dosyanın kendisi doğruydu ve
+ben yalnız indeksi okumuştum. İndeks düzeltildi.
 
 ### Değiştirilebilir varsayılanlar (§2)
 
@@ -506,14 +511,17 @@ Prod'da `PUSH_PROVIDER=fcm` olduğu için **düğme onları temizler**
 (doğrulama gerçek FCM'e gider). Alternatif olarak bir kez push gönderilmesi
 de yeter: artık her yol buduyor.
 
-### Mobil — bu makinede KOŞULAMADI
+### Mobil — DOĞRULANDI
 
 `mobile/` değişiklikleri (kurulum kimliği üretimi + `/devices` gövdesine
-eklenmesi + test sahtesinin güncellenmesi) yazıldı, ama **`flutter test`
-bu makinede çalıştırılamıyor** (Flutter kurulu değil, bkz. göç notu).
-Mobil tarafın doğrulanması Windows makinede `flutter test` ile
-yapılmalıdır. Sunucu tarafı mobil olmadan da güvenlidir: kimlik
-gönderilmezse eski davranış sürer, budama yine çalışır.
+eklenmesi + test sahtesinin güncellenmesi) bu makinede `flutter analyze` ve
+`flutter test` ile doğrulandı (Flutter stable 3.47.1). Sunucu tarafı mobil
+olmadan da güvenlidir: kimlik gönderilmezse eski davranış sürer, budama yine
+çalışır — yani eski sürümdeki kullanıcılar etkilenmez.
+
+`device_api.dart` gövdesinde `'cihaz_kimligi': ?cihazKimligi` (null-aware
+öge) kullanılıyor: kimlik yoksa anahtar **hiç gönderilmez** — boş dize
+göndermek, sunucuya "kimliği bu" demek olurdu.
 
 ---
 

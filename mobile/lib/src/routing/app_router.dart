@@ -205,6 +205,21 @@ String? routeForPushData(Map<String, String> data) {
     // (P181 Bölüm 10.2) Vardiya sonu özeti → yönetime; vardiyalar ekranı.
     case 'vardiya_ozeti':
       return AppRoutes.vardiyalar;
+    // (P191 §2) GÖREV ATAMA → "Görevlerim".
+    //
+    // `taskDetail` KULLANILMAZ ve bu bilinçli: o rota Task NESNESİNİ
+    // `extra` ile bekler (listeden seçilir) ve nesnesiz gelindiğinde zaten
+    // listeye yönlendirir. Push'tan nesne taşınamaz; doğrudan listeye
+    // gitmek aynı yere BİR ADIM ERKEN varmaktır. Parametresiz `/tasks`
+    // "bana atananlar" görünümüdür — bildirimin muhatabı zaten odur.
+    case 'gorev_atandi':
+      return AppRoutes.tasks;
+    // (P191 §2/§4) AİDAT: borç doğdu ya da ödeme işlendi → "Aidatım".
+    // İkisi de aynı ekrana gider çünkü kullanıcının bakacağı şey aynı:
+    // kendi bakiyesi ve hareketleri.
+    case 'aidat_borc':
+    case 'aidat_odendi':
+      return AppRoutes.myDues;
     default:
       return null;
   }

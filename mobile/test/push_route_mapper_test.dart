@@ -142,6 +142,25 @@ void main() {
       );
     });
 
+    test('(P191 §2) gorev atama -> Gorevlerim listesi', () {
+      // `taskDetail` DEGIL: o rota Task nesnesini `extra` ile bekler ve
+      // nesnesiz gelindiginde zaten listeye yonlendirir. Push'tan nesne
+      // tasinamaz.
+      expect(
+        routeForPushData(const {'tip': 'gorev_atandi', 'task_id': 't-1'}),
+        '/tasks',
+      );
+      expect(routeForPushData(const {'tip': 'gorev_atandi'}), '/tasks');
+    });
+
+    test('(P191 §2/§4) aidat borcu ve odeme -> Aidatim', () {
+      expect(routeForPushData(const {'tip': 'aidat_borc'}), '/my-dues');
+      expect(
+        routeForPushData(const {'tip': 'aidat_odendi', 'receipt_id': 'r-1'}),
+        '/my-dues',
+      );
+    });
+
     test('bilinmeyen/eksik tip -> null (yonlendirme yok)', () {
       expect(routeForPushData(const {'tip': 'bilinmeyen_tip'}), isNull);
       expect(routeForPushData(const {}), isNull);

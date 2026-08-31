@@ -116,8 +116,10 @@ jetonları temizle"**. Düğme FCM `validate_only` ile doğrular, **hiçbir
 telefon çalmaz**. Sağlayıcı `noop` ise düğme "doğrulama yapamıyor" der ve
 hiçbir şeyi budamaz — önce `PUSH_PROVIDER=fcm`.
 
-Mobil tarafın (kurulum kimliği) etkili olması için yeni mobil sürümün
-dağıtılması gerekir; sunucu eski sürümlerle çalışmaya devam eder.
+Mobil tarafın (kurulum kimliği + bildirime dokununca doğru ekranın açılması)
+etkili olması için **yeni mobil sürümün dağıtılması** gerekir; sunucu eski
+sürümlerle çalışmaya devam eder (kimlik gelmezse eski davranış, budama yine
+çalışır).
 
 ---
 
