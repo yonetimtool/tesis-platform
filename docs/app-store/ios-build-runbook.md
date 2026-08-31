@@ -95,6 +95,37 @@ sunucuya bağlanamaz** ve denetçi "çalışmıyor" der.
 > tamamlanabilir; eksiklik **çalışma anında** ortaya çıkar. Bu yüzden
 > "derleme başarılı" bu hatayı elemez.
 
+## 2.5 Yapı numarası — iOS AYRI SAYAÇ TUTAR
+
+`pubspec.yaml`'daki `version: <ad>+<numara>` **iki platformu birden**
+besler: Android `versionCode`, iOS `CFBundleVersion`
+(`Info.plist` ikisini de `$(FLUTTER_BUILD_NAME)`/`$(FLUTTER_BUILD_NUMBER)`
+üzerinden okur). Ama iki mağaza aynı numarayı **aynı şekilde saymaz**:
+
+* **App Store Connect** bir yapı numarasını **bir kez** kabul eder ve
+  numara **uygulama kaydına** aittir — o numarayla daha önce bir yapım
+  yüklendiyse (TestFlight'a düşmüş, hatta sonradan silinmiş olsa bile)
+  aynı numara **bir daha kullanılamaz**. Sürüm adı (`1.0.0` → `1.1.0`)
+  değişse de sayaç **sıfırlanmaz**.
+* **Play Console** yalnız "artıyor mu" diye bakar; aradaki boşluklar
+  sorun değildir.
+
+**Ölçülen olay (2026-08-31):** `1.1.0+3` yüklemesi *"build number 3 has
+already been used"* ile reddedildi — `1.0.0 (3)` 3 Ağustos'ta yüklenmişti;
+`4` de kullanılmıştı. Sürüm **1.1.0+5**'e çıkarıldı.
+
+**Kural:** yapı numarası **iOS'un ihtiyacına göre** ilerler ve
+**asla geri gitmez**. Android bundan zarar görmez: `versionCode` 3 → 5
+atlaması Play için geçerlidir (yalnız artması gerekir). İki platformu ayrı
+numaralarda tutmak da mümkündür (`flutter build ipa --build-number=N`) ama
+**yapılmıyor**: tek kaynak, "hangi ikili hangi numarayı taşıyor" sorusunu
+tek yerden cevaplar; iki sayaç, birini yükseltip diğerini unutmanın
+sessizce yanlış sürüm yüklemeye dönüştüğü bir tuzaktır.
+
+**Yükleme öncesi kontrol:** App Store Connect → uygulama → TestFlight →
+"Tüm Yapımlar" listesinde bu numara var mı? Varsa `pubspec.yaml`'daki
+numarayı artırın; arşivi yeniden almak gerekir (numara ikiliye gömülüdür).
+
 ## 3. Arşiv + yükleme (Xcode)
 
 1. Cihaz seçici → **Any iOS Device (arm64)**
@@ -103,7 +134,8 @@ sunucuya bağlanamaz** ve denetçi "çalışmıyor" der.
 4. Yükleme sonrası App Store Connect → TestFlight → işlemenin bitmesini
    bekle (10–30 dk)
 
-**Yükleme adımında reddedilirse** en olası iki sebep: eksik
+**Yükleme adımında reddedilirse** en olası üç sebep: **yapı numarası zaten
+kullanılmış** (bkz. §2.5 — 2026-08-31'de yaşandı), eksik
 `PrivacyInfo.xcprivacy` (P114'te eklendi — §1'deki Copy Bundle Resources
 maddesini doğrulayın) ve **simgede alfa kanalı** (P114'te kaldırıldı).
 
