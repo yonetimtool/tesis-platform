@@ -242,7 +242,7 @@ services:
       <<: *tz
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD gerekli}@db:5432/${POSTGRES_DB}
       OWNER_DSN: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD gerekli}@db:5432/${POSTGRES_DB}
-      APP_DB_USER: ${APP_DB_USER}
+      APP_DB_USER: ${APP_DB_USER:?APP_DB_USER gerekli (bos birakilirsa baglanti kimligi belirsizlesir)}
       APP_DB_PASSWORD: ${APP_DB_PASSWORD:?APP_DB_PASSWORD gerekli}
     volumes:
       - ../contracts:/contracts:ro
@@ -364,7 +364,7 @@ services:
       SMTP_FROM: ${SMTP_FROM:-}
       <<: *tz
       # Uygulama app_rw (async asyncpg) ile baglanir — RLS'e TABI.
-      DATABASE_URL: postgresql+asyncpg://${APP_DB_USER}:${APP_DB_PASSWORD:?APP_DB_PASSWORD gerekli}@db:5432/${POSTGRES_DB}
+      DATABASE_URL: postgresql+asyncpg://${APP_DB_USER:?APP_DB_USER gerekli (bos birakilirsa baglanti kimligi belirsizlesir)}:${APP_DB_PASSWORD:?APP_DB_PASSWORD gerekli}@db:5432/${POSTGRES_DB}
       REDIS_URL: redis://redis:6379/0
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET gerekli (bos birakilirsa token BOS anahtarla imzalanir)}
       SDM_KEK: ${SDM_KEK}
@@ -479,11 +479,11 @@ services:
         condition: service_completed_successfully
     environment:
       <<: *tz
-      DATABASE_URL: postgresql+asyncpg://${APP_DB_USER}:${APP_DB_PASSWORD:?APP_DB_PASSWORD gerekli}@db:5432/${POSTGRES_DB}
+      DATABASE_URL: postgresql+asyncpg://${APP_DB_USER:?APP_DB_USER gerekli (bos birakilirsa baglanti kimligi belirsizlesir)}:${APP_DB_PASSWORD:?APP_DB_PASSWORD gerekli}@db:5432/${POSTGRES_DB}
       REDIS_URL: redis://redis:6379/0
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET gerekli (bos birakilirsa token BOS anahtarla imzalanir)}
       OWNER_DSN: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD gerekli}@db:5432/${POSTGRES_DB}
-      APP_DSN: postgresql://${APP_DB_USER}:${APP_DB_PASSWORD:?APP_DB_PASSWORD gerekli}@db:5432/${POSTGRES_DB}
+      APP_DSN: postgresql://${APP_DB_USER:?APP_DB_USER gerekli (bos birakilirsa baglanti kimligi belirsizlesir)}:${APP_DB_PASSWORD:?APP_DB_PASSWORD gerekli}@db:5432/${POSTGRES_DB}
       MINIO_ENDPOINT: ${MINIO_PUBLIC_URL}
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD gerekli}
@@ -544,11 +544,11 @@ services:
         condition: service_completed_successfully
     environment:
       <<: *tz
-      DATABASE_URL: postgresql+asyncpg://${APP_DB_USER}:${APP_DB_PASSWORD:?APP_DB_PASSWORD gerekli}@db:5432/${POSTGRES_DB}
+      DATABASE_URL: postgresql+asyncpg://${APP_DB_USER:?APP_DB_USER gerekli (bos birakilirsa baglanti kimligi belirsizlesir)}:${APP_DB_PASSWORD:?APP_DB_PASSWORD gerekli}@db:5432/${POSTGRES_DB}
       REDIS_URL: redis://redis:6379/0
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET gerekli (bos birakilirsa token BOS anahtarla imzalanir)}
       OWNER_DSN: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD gerekli}@db:5432/${POSTGRES_DB}
-      APP_DSN: postgresql://${APP_DB_USER}:${APP_DB_PASSWORD:?APP_DB_PASSWORD gerekli}@db:5432/${POSTGRES_DB}
+      APP_DSN: postgresql://${APP_DB_USER:?APP_DB_USER gerekli (bos birakilirsa baglanti kimligi belirsizlesir)}:${APP_DB_PASSWORD:?APP_DB_PASSWORD gerekli}@db:5432/${POSTGRES_DB}
     command: ["celery", "-A", "app.celery_app", "beat", "--loglevel=info"]
     networks: [tesisnet]
     restart: unless-stopped
