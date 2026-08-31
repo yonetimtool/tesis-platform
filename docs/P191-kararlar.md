@@ -1,3 +1,136 @@
+# P191 — kararlar
+
+Kapsam: (1) kayıt yönlendirmesi + davetli SSO girişi, (2) bildirim teslimi,
+(3) kamera teşhisi, (4) banka entegrasyonu v1.
+
+---
+
+## §1 — Kayıt yönlendirmesi bozuk (acil)
+
+### K1.1 — Kök neden: iç port yönlendirmeye sızıyordu
+
+**Belirti:** `panel.yonetiyor.com` → Google ile giriş → "Bu hesap henüz bir
+tesise bağlı değil" → *Kaydol* → `app.yonetiyor.com:3000/kayit` →
+`ERR_CONNECTION_TIMED_OUT`.
+
+**Ölçüm (varsayım değil).** admin-web canlı olarak 3111 portunda çalıştırıldı
+ve gerçek dağıtım taklit edildi:
+
+```
+curl -H 'Host: panel.yonetiyor.com' http://127.0.0.1:3111/kayit
+→ location: http://app.yonetiyor.com:3111/kayit      # İÇ PORT SIZDI
+```
+
+İki tuzak üst üste binmişti:
+
+1. **`req.nextUrl` ters vekilin ARKASINDAKİ adrestir.** Next onu dinlediği
+   konak/porttan kurar, `Host` başlığından değil. Aynı konak içinde bu
+   görünmez, çünkü Next aynı-origin yönlendirmeyi **göreli** yazar
+   (`location: /login`) — bu yüzden `/login` akışı yıllardır sağlamdı ve kusur
+   yalnız **konak değiştiğinde** ortaya çıktı.
+2. **`URL.prototype.host` ataması portu SIFIRLAMAZ.** WHATWG kuralına göre
+   `u.host = "app.yonetiyor.com"` (portsuz dize) mevcut portu olduğu gibi
+   bırakır; `hostname` ataması da öyle. P190 §1'deki `url.host = app` satırı
+   "konağı değiştirdim" diyordu ama portu temizlemiyordu.
+
+`.env.prod` **doğruydu** (`OAUTH_KAYIT_DONUS=https://app.yonetiyor.com/kayit`,
+portsuz). Port oradan gelmiyordu — middleware üretiyordu.
+
+### K1.2 — Karar: konak-ötesi adresler ORTAM DEĞİŞKENİNDEN kurulur
+
+Yeni tek kaynak: `admin-web/lib/konak-adres.ts`.
+
+* Kanonik `app.*` kök adresi `NEXT_PUBLIC_APP_ADRESI`'den gelir (compose build
+  arg `ADMIN_WEB_APP_ADRESI`, varsayılan `https://app.yonetiyor.com`).
+  **Derleme argümanıdır**: middleware edge çalışma zamanında koşar,
+  `process.env` orada derleme anında gömülür.
+* Değişken verilmezse adres **iletilmiş başlıklardan** türetilir
+  (`x-forwarded-host` > `host`, şema `x-forwarded-proto`, yoksa `https`) —
+  `req.nextUrl`den **asla**.
+* Her iki yolda da **port atılır**.
+* Aynı-konak yönlendirmeleri de artık başlıklardan kurulur
+  (`ayniKonakAdresi`): Next'in iç normalizasyonuna dayanan bir şansı
+  bağımlılık olmaktan çıkardık. Portu burada **korur** — yerel geliştirmede
+  `localhost:3000` istemcinin gerçekten kullandığı adrestir.
+
+**Kilit test:** `tests/konak-adres.test.ts` + `tests/middleware.test.ts`
+içindeki "konak-ötesi yönlendirme: PORT SIZMAZ" bloğu; sonuncusu üretilen
+**her** yönlendirmeyi tarar ve port içeren adreste düşer.
+
+Düzeltmeden sonra, aynı canlı sunucuda:
+
+```
+/kayit      → location: https://app.yonetiyor.com/kayit
+/dashboard  → location: https://panel.yonetiyor.com/login
+```
+
+### K1.3 — İkinci kusur: oturum çerezi konak-özeldi
+
+P190 §1 tesis rollerini `panel.*`tan `app.*`a taşımaya başladı; çerezlerde
+`Domain` yoktu, yani **konak-özeldi**. Zincir: `panel.*`ta giriş → çerez
+`panel.` konağına yazılır → middleware `app.*`a taşır → orada çerez YOK →
+`/login`. Yani "yanlış konağa düşeni doğru konağa taşı" düzeltmesi oturumu her
+seferinde düşürüyordu. SSO dönüşünde de aynısı: `OAUTH_WEB_DONUS` tek konaktır.
+
+**Karar:** `COOKIE_DOMAIN` (çalışma zamanı; imaj derlemesi gerektirmez).
+Prod'da `.yonetiyor.com` → iki yüzey tek oturum. **Boş bırakılırsa davranış
+bugünküyle aynıdır** (konak-özel). Çıkışta iki varyant da silinir (alan-adlı +
+konak-özel), aksi halde "çıkış yaptım ama hâlâ içerideyim" olurdu.
+
+*Değiştirilebilir:* çerezi paylaşmak istemeyen bir kurulum `COOKIE_DOMAIN`u
+boş bırakıp SSO dönüşünü yüzey başına ayrı yapılandırmalıdır.
+
+### K1.4 — Davet edilmiş kişi SSO ile giremiyordu
+
+**İz:** Giriş akışı (`niyet=giris`) yalnız `_kimligi_coz`e bakar: kimlik
+`oauth_kimlik`te bağlı değilse `baglama_gerekli` döner ve web arayüzü bunu
+doğrudan "Kaydol"a çeviriyordu (P185). Oysa kişinin **hesabı var** — yönetici
+panelden eklemiş, tesis kodlu davet e-postası gitmiş.
+
+P184'te tam bu iş için yazılmış uç zaten vardı: `POST /auth/oauth/rol-tamamla`
+(Tesis ID + e-posta sahipliği, SMS yok). Kullanılmıyordu ve iki yerde
+tıkanıyordu:
+
+* **`rol` zorunluydu.** Davet edilen kişi kendi rol kodunu bilmek zorunda
+  değil; yanlış seçim `onay_bekliyor` çıkmazıydı.
+* **`password_set=true` reddediliyordu** (`hesap_kullanimda`). Ama bu bir
+  *kayıt* değil, **mevcut hesaba SSO yöntemi eklemek**tir.
+
+**Karar:** `rol` **opsiyonel** oldu (`_tamamla_uygunluk`):
+
+| `rol` beyanı | Mod | Kural |
+|---|---|---|
+| var | kayıt akışı (mobil, değişmedi) | `_liste_kontrolu` aynen: rol uyuşmalı, `password_set=false` olmalı |
+| yok | **girişte tamamlama** (web SSO) | rol hesaptan okunur; `password_set=true` engel değil |
+
+Gerekçe: sağlayıcı e-postayı doğruladıysa kanıt, üründe **zaten tek başına
+oturum açan** e-posta kodu (`/auth/giris/eposta-kod-iste`) ile aynı sınıftadır.
+P180'de yönetici için verilen `mevcut_hesap` kararının diğer tesis rollerine
+genişletilmesidir. Platform `admin` rolü dışarıdadır. Sızdırmama (K4) aynen
+durur: geçersiz Tesis ID ile liste dışı e-posta **aynı** `onay_bekliyor`
+yanıtını alır.
+
+**Web akışı (yeni):** `/giris/oauth` → "bağlı değil" → *Tesis ID* formu →
+`giris` (oturum) | `otp_gerekli` (e-posta kodu) | `onay_bekliyor`. "Tesisim
+yok, yeni kayıt oluştur" bağlantısı duruyor.
+
+### K1.5 — Yönlendirme kalıbının taranması
+
+| Yer | Adres nereden | Durum |
+|---|---|---|
+| middleware `panel.*→app.*` (`/kayit`, rol kapısı) | `NEXT_PUBLIC_APP_ADRESI` → yoksa `x-forwarded-*` | **düzeltildi** |
+| middleware aynı-konak (`/login`, kök, yüzey/rol kapısı) | `x-forwarded-*` → yoksa `nextUrl` | **düzeltildi** (portu korur) |
+| OAuth dönüşleri (`OAUTH_WEB_DONUS`/`KAYIT_DONUS`/`MOBIL_DONUS`) | backend ayarları, **istekten alınmaz** (açık yönlendirme koruması) | zaten doğruydu |
+| Sağlayıcıya bildirilen `redirect_uri` | `OAUTH_CALLBACK_TABAN` | zaten doğruydu |
+| Davet / parola sıfırlama / e-posta bağlantıları | `PORTAL_BASE_URL` (ayar) | zaten doğruydu |
+| Caddy 301'leri (eski yollar, IDN, kanonik dışı) | Caddyfile'da sabit `https://…` | zaten doğruydu |
+
+Kural: **kullanıcıya gösterilecek hiçbir adres istek URL'sinden kurulmaz.**
+
+### Dağıtım (§1)
+
+`ADMIN_WEB_APP_ADRESI` bir **build arg**'tır → `docker compose build admin-web`
+gerekir. `COOKIE_DOMAIN` çalışma zamanıdır → `up -d` yeter.
 
 ---
 
