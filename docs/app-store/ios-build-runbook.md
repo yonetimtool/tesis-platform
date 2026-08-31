@@ -134,6 +134,14 @@ numarayı artırın; arşivi yeniden almak gerekir (numara ikiliye gömülüdür
 4. Yükleme sonrası App Store Connect → TestFlight → işlemenin bitmesini
    bekle (10–30 dk)
 
+**"Missing Compliance" sorulmaz** (P194): `Info.plist` içinde
+`ITSAppUsesNonExemptEncryption = false` var. Uygulama kendi şifrelemesini
+yapmıyor — ağ trafiği yalnız HTTPS/TLS (işletim sistemi), yerel depo
+Keychain, NFC etiket doğrulaması **sunucuda**. Bir gün kripto kitaplığı
+eklenirse hem bu değer hem App Store Connect cevabı gözden geçirilmeli;
+`ios_yapilandirma_test.dart` anahtarın kaybolmasını ve bilinen kripto
+paketlerinin eklenmesini yakalar.
+
 **Yükleme adımında reddedilirse** en olası üç sebep: **yapı numarası zaten
 kullanılmış** (bkz. §2.5 — 2026-08-31'de yaşandı), eksik
 `PrivacyInfo.xcprivacy` (P114'te eklendi — §1'deki Copy Bundle Resources

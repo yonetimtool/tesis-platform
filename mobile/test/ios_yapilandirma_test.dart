@@ -130,6 +130,42 @@ void main() {
       }
     });
 
+    test('(P194) IHRACAT UYUMLULUGU BEYANI Info.plist icinde', () {
+      // Anahtar YOKSA App Store Connect her yuklemede "Missing
+      // Compliance" sorar ve yapim ELLE cevaplanana kadar bekler —
+      // otomatiklestirilebilir bir adimi her surumde tekrarlamak olurdu.
+      //
+      // Deger `false`: uygulama kendi sifrelemesini YAPMIYOR (yalniz
+      // HTTPS + OS Keychain). Gerekcesi Info.plist icindeki yorumda.
+      final plist = _oku('ios/Runner/Info.plist');
+      expect(plist, contains('ITSAppUsesNonExemptEncryption'));
+      expect(
+        RegExp(r'<key>ITSAppUsesNonExemptEncryption</key>\s*<false/>')
+            .hasMatch(plist),
+        isTrue,
+        reason: 'beyan true olmus — ihracat uyumlulugu yeniden degerlendirilmeli',
+      );
+    });
+
+    test('(P194) UYGULAMADA KENDI SIFRELEMESI YOK (beyanla tutarli)', () {
+      // "non-exempt sifreleme yok" iddiasi ancak bagimlilik listesi bunu
+      // dogruluyorsa gecerlidir. Bir kripto kitapligi eklenirse bu test
+      // duser ve beyanin gozden gecirilmesi gerektigini soyler.
+      final pubspec = _oku('pubspec.yaml');
+      for (final yasak in [
+        'pointycastle',
+        'encrypt',
+        'cryptography',
+        'webcrypto',
+      ]) {
+        expect(
+          pubspec.contains('\n  $yasak:'),
+          isFalse,
+          reason: '$yasak eklenmis — ITSAppUsesNonExemptEncryption gozden gecirilmeli',
+        );
+      }
+    });
+
     test('(P193) PUSH ACIKSA CIHAZ KIMLIGI BEYAN EDILMIS', () {
       // Push bildirimi acildiginda uygulama iki tanimlayici gonderir: FCM
       // kayit jetonu ve kurulum kimligi. Ikisi de Apple'in "Device ID"

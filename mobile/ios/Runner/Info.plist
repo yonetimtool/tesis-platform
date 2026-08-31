@@ -95,6 +95,27 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<!-- (P194) IHRACAT UYUMLULUGU — her yuklemede sorulan "Missing
+	     Compliance" sorusunun cevabi. Anahtar YOKSA App Store Connect
+	     yuklemeyi bekletir ve soruyu ELLE cevaplatir; her yapimda
+	     tekrarlanan bir adim olur.
+
+	     `false` DOGRU CEVAP: uygulama KENDI sifrelemesini yapmiyor.
+	       * Ag trafigi: yalniz HTTPS/TLS — isletim sisteminin sagladigi
+	         standart sifreleme (muafiyet kapsaminda).
+	       * Yerel depo: `flutter_secure_storage` -> iOS Keychain, yine
+	         isletim sistemi sifrelemesi.
+	       * NFC etiket dogrulamasi (NTAG424 SDM/CMAC) SUNUCUDA yapilir;
+	         uygulama etiketin yukunu yalnizca ILETIR, cozmez.
+	       * Bagimliliklarda kripto kitapligi YOK (pointycastle/encrypt vb.).
+
+	     Bu yuzden ihracat kisitina tabi "non-exempt" sifreleme yoktur.
+	     Uygulamaya bir gun kendi sifrelemesi eklenirse BU DEGER ve
+	     App Store Connect cevabi birlikte gozden gecirilmelidir;
+	     `ios_yapilandirma_test.dart` anahtarin sessizce kaybolmasini
+	     yakalar ama YENI bir kripto kullanimini yakalayamaz. -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIApplicationSceneManifest</key>
