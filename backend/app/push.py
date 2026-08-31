@@ -62,6 +62,20 @@ class PushResult:
     token_sonuc: dict[str, tuple[str, str | None]] = field(default_factory=dict)
 
 
+@dataclass
+class DogrulamaSonucu:
+    """(P191-ek §1) `validate_only` dogrulamasinin sonucu."""
+
+    provider: str
+    #: Saglayici dogrulama YAPAMIYOR (orn. noop) — "hepsi saglam" DEMEK DEGIL.
+    desteklenmiyor: bool
+    #: FCM'in KALICI gecersiz dedigi jetonlar -> budanacak.
+    gecersiz: list[str]
+    denenen: int
+    #: Gecici hata (ag/kota): jeton KORUNUR, karar ertelenir.
+    belirsiz: int = 0
+
+
 def _fcm_hata_kodu(hata: Mapping) -> str:
     """FCM hata govdesinden en ozgul kodu cikarir (details.errorCode > status)."""
     for ayrinti in hata.get("details", []) or []:
@@ -177,6 +191,18 @@ class PushProvider(ABC):
         data: Mapping[str, str] | None = None,
     ) -> PushResult: ...
 
+    def dogrula(self, tokens: Sequence[str]) -> DogrulamaSonucu:
+        """(P191-ek §1) Jetonlari GONDERMEDEN dogrula.
+
+        Varsayilan: DOGRULAYAMAM (`desteklenmiyor=True`). Bir saglayicinin
+        "hicbiri gecersiz" demesi ile "bakamadim" demesi AYNI SEY DEGILDIR;
+        ikisini tek yanitla anlatmak, noop kurulumda "18 jetonun hepsi
+        saglam" gibi YANLIS bir guven verirdi.
+        """
+        return DogrulamaSonucu(
+            provider=self.name, desteklenmiyor=True, gecersiz=[], denenen=0
+        )
+
 
 # ------------------------------- noop -------------------------------------- #
 class NoopPushProvider(PushProvider):
@@ -277,6 +303,67 @@ class FcmProvider(PushProvider):
             gecersiz=gecersiz,
             basarisiz=basarisiz,
             token_sonuc=token_sonuc,
+        )
+
+
+    def dogrula(self, tokens: Sequence[str]) -> DogrulamaSonucu:
+        """FCM `validate_only=true` ile jeton dogrulama — BILDIRIM GITMEZ.
+
+        NEDEN GERCEK GONDERIM DEGIL: "geçersizleri temizle" dugmesi
+        yoneticinin elinde bir bakim aracidir; her tikladiginda tesisteki
+        herkesin telefonunu caldirmasi kabul edilemez. FCM'in `validate_only`
+        bayragi mesaji ISLER ama TESLIM ETMEZ ve kayitsiz jeton icin yine
+        `UNREGISTERED` doner — aradigimiz cevap tam olarak budur.
+        """
+        sa = _load_service_account()
+        project_id = settings.fcm_project_id or (sa or {}).get("project_id") or None
+        tokenlar = list(tokens)
+        if sa is None or not project_id:
+            logger.warning("PUSH fcm dogrulama: kimlik/proje yok -> desteklenmiyor")
+            return DogrulamaSonucu(
+                provider="fcm", desteklenmiyor=True, gecersiz=[], denenen=0
+            )
+        access_token = _fetch_access_token(sa)
+        url = f"{settings.fcm_base_url}/v1/projects/{project_id}/messages:send"
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json",
+        }
+        gecersiz: list[str] = []
+        belirsiz = 0
+        for token in tokenlar:
+            # `notification` YOK: dogrulama icin en yalin mesaj yeter ve
+            # veri-only govde, bayrak bir gun kalksa bile sessiz bir tepsi
+            # bildirimi URETMEZ.
+            govde = {"validate_only": True, "message": {"token": token}}
+            try:
+                resp = _http_post_json(url, headers, govde)
+            except Exception as exc:  # noqa: BLE001 — ag hatasi KARAR DEGILDIR
+                belirsiz += 1
+                logger.warning(
+                    "PUSH fcm dogrulama istegi basarisiz (%s) -> jeton korunur",
+                    type(exc).__name__,
+                )
+                continue
+            hata = resp.get("error") if isinstance(resp, Mapping) else None
+            if hata:
+                kod = _fcm_hata_kodu(hata)
+                if kod in _FCM_KALICI_GECERSIZ:
+                    gecersiz.append(token)
+                else:
+                    # Kota/gecici hata: jetonu OLU ILAN ETMEYIZ.
+                    belirsiz += 1
+                    logger.warning("PUSH fcm dogrulama hatasi (%s) -> belirsiz", kod)
+        logger.info(
+            "PUSH fcm dogrulama -> %d jeton, %d gecersiz, %d belirsiz",
+            len(tokenlar), len(gecersiz), belirsiz,
+        )
+        return DogrulamaSonucu(
+            provider="fcm",
+            desteklenmiyor=False,
+            gecersiz=gecersiz,
+            denenen=len(tokenlar),
+            belirsiz=belirsiz,
         )
 
 

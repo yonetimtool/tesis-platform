@@ -9,7 +9,7 @@ tenant token'dan; RLS ile izole. UNIQUE(tenant_id, fcm_token) -> ayni token tek 
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Query, Response
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -29,6 +29,29 @@ async def register_device(
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(get_current_user),
 ) -> UserDevice:
+    # (P191-ek §1) AYNI CIHAZ ICIN TEK SATIR.
+    #
+    # OLCULEN KUSUR: bir tesiste 18 kayitli cihaz vardi ve HEPSI tek
+    # kullaniciya aitti. Uygulama her yeniden kurulumda FCM'den YENI jeton
+    # alir; tekillik `(tenant, fcm_token)` oldugu icin her yeni jeton YENI
+    # SATIR aciyor, eskisi "aktif" kaliyor ve her gonderimde bosuna
+    # deneniyordu (FCM `UNREGISTERED`).
+    #
+    # Jeton bir CIHAZ KIMLIGI DEGILDIR — cihazin o anki adresidir. Istemci
+    # kararli bir kurulum kimligi gonderiyorsa, AYNI cihazin onceki
+    # jetonlari once pasiflestirilir. Kimlik gondermeyen eski surumlerde
+    # eski davranis aynen surer (alan NULLABLE).
+    if body.cihaz_kimligi:
+        await db.execute(
+            update(UserDevice)
+            .where(
+                UserDevice.user_id == user.id,
+                UserDevice.cihaz_kimligi == body.cihaz_kimligi,
+                UserDevice.fcm_token != body.fcm_token,
+                UserDevice.aktif.is_(True),
+            )
+            .values(aktif=False, updated_at=func.now())
+        )
     # Idempotent upsert: ayni (tenant, token) -> sahibi/platform guncellenir + aktiflesir.
     stmt = pg_insert(UserDevice).values(
         tenant_id=user.tenant_id,
@@ -38,6 +61,7 @@ async def register_device(
         # Dil GONDERILMEZSE `tr` (kolon varsayilani ile ayni): eski istemciler
         # bugunku davranisi korur. Istemci dili degistirince YENIDEN kaydeder.
         dil=body.dil or "tr",
+        cihaz_kimligi=body.cihaz_kimligi,
         aktif=True,
     )
     stmt = stmt.on_conflict_do_update(
@@ -46,6 +70,12 @@ async def register_device(
             "user_id": stmt.excluded.user_id,
             "platform": stmt.excluded.platform,
             "dil": stmt.excluded.dil,
+            # Kimlik GONDERILMEDIYSE mevcut deger KORUNUR: bir surum
+            # yukseltmesinde alanin gecici olarak bos gelmesi, daha once
+            # ogrenilmis kimligi silmemeli.
+            "cihaz_kimligi": func.coalesce(
+                stmt.excluded.cihaz_kimligi, UserDevice.cihaz_kimligi
+            ),
             "aktif": True,
             "updated_at": func.now(),
         },

@@ -2598,6 +2598,11 @@ class DeviceRegister(BaseModel):
     # `tr` (eski istemciler bugunku davranisi korur). Dil uygulama icinden
     # degistiginde istemci cihazi YENIDEN kaydeder (upsert).
     dil: Dil | None = None
+    #: (P191-ek §1) Uygulamanın ilk açılışta üretip sakladığı KARARLI kurulum
+    #: kimliği (donanım kimliği DEĞİL — o kalıcı bir izleyicidir ve KVKK
+    #: açısından gereksizdir; kurulum kimliği uygulama silinince yok olur).
+    #: Verilirse aynı cihazın ESKİ jetonu pasifleştirilir ve kayıt ÇOĞALMAZ.
+    cihaz_kimligi: str | None = Field(default=None, max_length=128)
 
 
 class DeviceOut(BaseModel):
@@ -2608,6 +2613,7 @@ class DeviceOut(BaseModel):
     fcm_token: str
     platform: str
     dil: str
+    cihaz_kimligi: str | None = None
     aktif: bool
     created_at: datetime
     updated_at: datetime
@@ -2665,6 +2671,26 @@ class PushTestResponse(BaseModel):
     gonderildi: int
     durum: str
     hata_kodu: str | None = None
+    #: (P191-ek §1) FCM "kayıtlı değil" dediği için PASİFLEŞTİRİLEN jeton
+    #: sayısı. Ölü jeton bir daha denenmez.
+    budanan: int = 0
+
+
+class PushTemizlikResponse(BaseModel):
+    """`POST /push/cihaz-temizle` — geçersiz jetonları toplu temizleme.
+
+    `desteklenmiyor=true` "hepsi sağlam" DEMEK DEĞİLDİR: sağlayıcı (noop ya
+    da kimliksiz fcm) doğrulama yapamamıştır. İkisini tek yanıtla anlatmak,
+    ölü jetonları sağlam ilan etmek olurdu.
+    """
+
+    saglayici: str
+    denenen: int
+    budanan: int
+    desteklenmiyor: bool
+    #: Geçici hata (ağ/kota) yüzünden KARAR VERİLEMEYEN jeton sayısı —
+    #: bunlar korunur, bir sonraki temizlikte yeniden bakılır.
+    belirsiz: int = 0
 
 
 # ------------------------------- uploads ----------------------------------- #

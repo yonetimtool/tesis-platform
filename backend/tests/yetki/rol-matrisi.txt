@@ -266,6 +266,7 @@ POST   /personel-kayitlari                                  IZIN   IZIN   RED   
 DELETE /personel-kayitlari/{id}                             IZIN   IZIN   RED    RED    RED    RED    RED   
 PATCH  /personel-kayitlari/{id}                             IZIN   IZIN   RED    RED    RED    RED    RED   
 POST   /public/tanitim-iletisim                             IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
+POST   /push/cihaz-temizle                                  IZIN   IZIN   RED    RED    RED    RED    RED   
 GET    /push/teshis                                         IZIN   IZIN   RED    RED    RED    RED    RED   
 POST   /push/test                                           IZIN   IZIN   RED    RED    RED    RED    RED   
 GET    /raporlar/isler                                      IZIN   IZIN   RED    RED    RED    RED    IZIN  

@@ -152,12 +152,22 @@ class PushRegistrar extends Notifier<PushState> {
   Future<void> _register(String token) async {
     try {
       final dil = ref.read(aktifDilKoduProvider);
+      // (P191-ek §1) CIHAZ KIMLIGI: sunucu ayni cihazin eski jetonlarini
+      // pasiflestirsin diye. Okunamazsa (depo hatasi) kayit YINE yapilir —
+      // kimliksiz kayit eski davranistir, bildirimi kesmez.
+      String? kurulum;
+      try {
+        kurulum = await _store.kurulumKimligi();
+      } catch (e) {
+        debugPrint('Kurulum kimligi okunamadi (kimliksiz kaydedilecek): $e');
+      }
       await _api.register(
         fcmToken: token,
         platform: defaultTargetPlatform == TargetPlatform.iOS
             ? 'ios'
             : 'android',
         dil: dil,
+        cihazKimligi: kurulum,
       );
       await _store.save(token);
       if (ref.mounted) {

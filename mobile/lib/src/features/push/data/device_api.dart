@@ -17,15 +17,25 @@ class DeviceApi {
   /// [dil] CIHAZIN UI dilidir: push metni sunucuda GONDERIM aninda bu dilde
   /// uretilir (tur 16). Push asenkron oldugu icin `Accept-Language` basligi
   /// o anda YOKTUR — dil cihaz kaydinda saklanmak zorundadir.
+  /// [cihazKimligi] (P191-ek §1) KARARLI KURULUM KIMLIGI. Verilirse sunucu
+  /// AYNI cihazin onceki jetonlarini pasiflestirir ve kayit COGALMAZ.
+  /// OPSIYONEL: alani gondermeyen eski surumler calismaya devam eder
+  /// (sunucuda kolon nullable).
   Future<void> register({
     required String fcmToken,
     required String platform,
     required String dil,
+    String? cihazKimligi,
   }) async {
     try {
       await _dio.post<Map<String, dynamic>>(
         '/devices',
-        data: {'fcm_token': fcmToken, 'platform': platform, 'dil': dil},
+        data: {
+          'fcm_token': fcmToken,
+          'platform': platform,
+          'dil': dil,
+          if (cihazKimligi != null) 'cihaz_kimligi': cihazKimligi,
+        },
       );
     } on DioException catch (e) {
       throw ApiException.fromDio(e);

@@ -77,7 +77,8 @@ class _FakeMessaging implements PushMessaging {
 class _FakeDeviceApi extends DeviceApi {
   _FakeDeviceApi() : super(Dio());
 
-  final registered = <({String token, String platform, String dil})>[];
+  final registered =
+      <({String token, String platform, String dil, String? cihaz})>[];
   final unregistered = <String>[];
   ApiException? registerError;
   ApiException? unregisterError;
@@ -87,9 +88,17 @@ class _FakeDeviceApi extends DeviceApi {
     required String fcmToken,
     required String platform,
     required String dil,
+    // (P191-ek §1) Kararli kurulum kimligi — sunucu ayni cihazin eski
+    // jetonlarini pasiflestirmek icin kullanir.
+    String? cihazKimligi,
   }) async {
     if (registerError != null) throw registerError!;
-    registered.add((token: fcmToken, platform: platform, dil: dil));
+    registered.add((
+      token: fcmToken,
+      platform: platform,
+      dil: dil,
+      cihaz: cihazKimligi,
+    ));
   }
 
   @override
@@ -113,6 +122,13 @@ class _MemTokenStore extends PushTokenStore {
 
   @override
   Future<void> clear() async => value = null;
+
+  // (P191-ek §1) Bellek-ici kurulum kimligi: gercek depo platform kanali
+  // ister; testte kararliligi olculen sey "ayni degeri dondurmesi".
+  String? kurulum;
+
+  @override
+  Future<String> kurulumKimligi() async => kurulum ??= 'test-kurulum-1';
 }
 
 /// Oturum durumu ayarlanabilen sahte auth deposu (secure storage'a inmez).
@@ -268,6 +284,9 @@ void main() {
     expect(messaging.permissionCalls, greaterThanOrEqualTo(1));
     expect(api.registered.single.token, 'tok-1');
     expect(api.registered.single.platform, 'android');
+    // (P191-ek §1) KURULUM KIMLIGI DE GIDER: sunucu ayni cihazin eski
+    // jetonlarini pasiflestirebilsin diye (18 olu jeton kusurunun onlemi).
+    expect(api.registered.single.cihaz, 'test-kurulum-1');
     expect(store.value, 'tok-1');
 
     final state = container.read(pushRegistrarProvider);
@@ -350,6 +369,8 @@ void main() {
 
     expect(api.unregistered, ['tok-1']);
     expect(api.registered.last.token, 'tok-2');
+    // Jeton degisti ama CIHAZ ayni: kimlik KARARLI kalir.
+    expect(api.registered.last.cihaz, 'test-kurulum-1');
     expect(store.value, 'tok-2');
   });
 

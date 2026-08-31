@@ -4382,6 +4382,11 @@ paths:
         Giris yapmis kullanici kendi cihaz FCM token'ini kaydeder. Ayni token
         (tenant icinde UNIQUE) tekrar gonderilirse guncellenir + aktiflesir
         (idempotent upsert). user_id token'dan turetilir.
+
+        (P191-ek §1) `cihaz_kimligi` OPSIYONEL kararli kurulum kimligidir.
+        Verilirse AYNI cihazin onceki jetonlari pasiflestirilir ve kayit
+        COGALMAZ — jeton bir cihaz kimligi degil, cihazin o anki ADRESIDIR.
+        Gondermeyen eski surumlerde eski davranis aynen surer.
       requestBody:
         required: true
         content:
@@ -4674,6 +4679,36 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /push/cihaz-temizle:
+    post:
+      tags: [push]
+      summary: "(P191-ek) Gecersiz cihaz jetonlarini temizle (bildirim GONDERMEDEN)"
+      description: |
+        FCM `validate_only=true` ile her AKTIF jeton dogrulanir; `UNREGISTERED`
+        / `INVALID_ARGUMENT` donenler pasiflestirilir. Hicbir telefon CALMAZ —
+        bu bir bakim aracidir.
+
+        `desteklenmiyor=true` "hepsi saglam" DEMEK DEGILDIR: saglayici (noop ya
+        da kimliksiz fcm) dogrulama YAPAMAMISTIR ve hicbir jeton budanmaz.
+        `belirsiz` gecici hata (ag/kota) yuzunden karar verilemeyen jeton
+        sayisidir; onlar KORUNUR.
+      responses:
+        "200":
+          description: Temizlik sonucu
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [saglayici, denenen, budanan, desteklenmiyor]
+                properties:
+                  saglayici: { type: string }
+                  denenen: { type: integer }
+                  budanan: { type: integer }
+                  desteklenmiyor: { type: boolean }
+                  belirsiz: { type: integer }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /push/teshis:
     get:
       tags: [push]
@@ -4741,6 +4776,11 @@ paths:
                   gonderildi: { type: integer }
                   durum: { type: string }
                   hata_kodu: { type: string, nullable: true }
+                  budanan:
+                    type: integer
+                    description: >
+                      (P191-ek) FCM "kayitli degil" dedigi icin PASIFLESTIRILEN
+                      jeton sayisi — olu jeton bir daha denenmez.
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
@@ -11204,6 +11244,14 @@ components:
             YOKTUR. Istemci uygulama dilini degistirdiginde cihazi YENIDEN
             kaydeder (ayni token -> idempotent upsert, dil guncellenir).
             Gonderilmezse `tr`.
+        cihaz_kimligi:
+          type: string
+          nullable: true
+          maxLength: 128
+          description: >
+            (P191-ek §1) Kararli KURULUM kimligi (donanim kimligi DEGIL).
+            Verilirse ayni cihazin onceki jetonlari pasiflestirilir.
+
     BankaHareket:
       type: object
       description: >

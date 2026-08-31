@@ -2164,6 +2164,10 @@ class UserDevice(Base):
     # CIHAZIN dili — push metni GONDERIM aninda buradan cozulur (tur 16).
     # Kullanici degil cihaz bazli: ayni kisinin iki cihazi farkli dilde olabilir.
     dil: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'tr'"))
+    #: (P191-ek §1, goc 0082) CIHAZIN KENDISI — jeton DEGIL. Jeton cihazin o
+    #: anki ADRESIDIR ve degisince kayit COGALMAMALI, GUNCELLENMELIDIR.
+    #: NULLABLE: alani gondermeyen eski surumler sahada calisiyor.
+    cihaz_kimligi: Mapped[str | None] = mapped_column(Text, nullable=True)
     aktif: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))
     created_at = _created_at()
     updated_at = _created_at()

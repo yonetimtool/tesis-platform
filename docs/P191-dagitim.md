@@ -108,6 +108,17 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod exec -T db \
 3. Panelden o kişiye bir **görev ata** → telefona "Yeni görev" düşmeli.
 4. Düşmediyse aynı karttaki son deneme satırının **sonucu** nedeni söyler.
 
+### Bayat jetonlar (P191-ek)
+
+Göç `0082_cihaz_kimligi` uygulanır (argümansız `up -d --build` kapsar).
+Mevcut ölü jetonlar için: **Bildirimler → Push teşhisi → "Geçersiz
+jetonları temizle"**. Düğme FCM `validate_only` ile doğrular, **hiçbir
+telefon çalmaz**. Sağlayıcı `noop` ise düğme "doğrulama yapamıyor" der ve
+hiçbir şeyi budamaz — önce `PUSH_PROVIDER=fcm`.
+
+Mobil tarafın (kurulum kimliği) etkili olması için yeni mobil sürümün
+dağıtılması gerekir; sunucu eski sürümlerle çalışmaya devam eder.
+
 ---
 
 ## §3 — Kamera
@@ -137,7 +148,11 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod \
 
 ### Panelden
 
-**Kameralar → kamera ekle/düzenle → Bağlantıyı test et.** Sonuç artık
+**Kameralar → kamera ekle/düzenle → Bağlantıyı test et.** (P191-ek: düğme
+artık formda HER ZAMAN görünür; rtsp dışı adreste pasiftir ve nedenini
+yanındaki not söyler. Form tek adres ister; restream/anlık kare alanları
+"Gelişmiş ayarlar" altındadır ve boş bırakılmalıdır — sistem ızgara
+karesini ve canlı yayını tek RTSP adresinden kendisi üretir.) Sonuç artık
 arızayı adlandırır: parola mı, adres mi, yol mu, ağ mı, sunucu mu.
 Adres biçimi örneği formda yazılı.
 

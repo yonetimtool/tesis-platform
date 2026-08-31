@@ -39,6 +39,7 @@ import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 
 const UC = "/api/push/teshis?limit=50";
 const UC_TEST = "/api/push/test";
+const UC_TEMIZLE = "/api/push/cihaz-temizle";
 // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
 const SAGLAYICI_NOOP = "noop";
 const ROZET_OLUMLU = "olumlu" as const;
@@ -92,6 +93,41 @@ export function PushTeshis() {
     // BILINMEYEN DURUM HAM GOSTERILIR: sessizce "bilinmiyor" yazmak, yeni
     // bir sonuc kodunu gorunmez kilardi.
     return kayit ? [t(kayit[0]), kayit[1]] : [durum, ROZET_NOTR];
+  }
+
+  /**
+   * (P191-ek §1) GECERSIZ JETONLARI TEMIZLE.
+   *
+   * Sunucu FCM `validate_only` ile dogrular: hicbir telefon CALMAZ. Bu bir
+   * bakim aracidir; her tiklamada tesisteki herkese bildirim gitmesi kabul
+   * edilemezdi.
+   */
+  async function temizle() {
+    setBekliyor(true);
+    try {
+      const d = (await apiSend(UC_TEMIZLE, "POST", {})) as {
+        denenen?: number;
+        budanan?: number;
+        desteklenmiyor?: boolean;
+      };
+      if (d.desteklenmiyor) {
+        // "Bakamadim" ile "hepsi saglam" AYNI SEY DEGIL — basari toast'u
+        // gostermek, olu jetonlari saglam ilan etmekti.
+        toast.error(t("pushTemizlikDesteklenmiyor"));
+      } else {
+        toast.success(
+          t("pushTemizlikSonuc", {
+            denenen: String(d.denenen ?? 0),
+            budanan: String(d.budanan ?? 0),
+          }),
+        );
+      }
+      await mutate();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("ortakIslemBasarisiz"));
+    } finally {
+      setBekliyor(false);
+    }
   }
 
   async function testGonder() {
@@ -243,15 +279,26 @@ export function PushTeshis() {
           ))}
         </dl>
 
-        <Dugme
-          boy="kucuk"
-          tur={TUR_IKINCIL}
-          disabled={bekliyor}
-          onClick={() => void testGonder()}
-          data-test="push-test-gonder"
-        >
-          {t("pushTeshisTestGonder")}
-        </Dugme>
+        <div className="flex flex-wrap gap-2">
+          <Dugme
+            boy="kucuk"
+            tur={TUR_IKINCIL}
+            disabled={bekliyor}
+            onClick={() => void testGonder()}
+            data-test="push-test-gonder"
+          >
+            {t("pushTeshisTestGonder")}
+          </Dugme>
+          <Dugme
+            boy="kucuk"
+            tur={TUR_IKINCIL}
+            disabled={bekliyor || data.cihaz_aktif === 0}
+            onClick={() => void temizle()}
+            data-test="push-temizle"
+          >
+            {t("pushTemizle")}
+          </Dugme>
+        </div>
 
         {/* ORTAK TABLO ILKELI (P138): ham `<table>` yazmak, dar ekran
             davranisini ve bos/hata durumlarini yeniden icat etmek olurdu —

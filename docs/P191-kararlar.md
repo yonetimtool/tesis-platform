@@ -429,3 +429,117 @@ bildirim, eşleşmeyenler ekranı (elle atama, işaretleme, geri alma).
 kimlik saklama ve banka seçimi kararları önce verilmeli — `docs/banka-entegrasyonu-notu.md`),
 gecikme faizinin banka akışında yeniden hesaplanması, tesisler arası hareket
 taşıma.
+
+---
+
+## §1-ek — Cihaz jetonu hijyeni (UNREGISTERED birikmesi)
+
+**Belirti:** push nihayet FCM'e ulaştı ve **7/7 deneme `UNREGISTERED`**
+döndü. 18 kayıtlı cihaz vardı, **hepsi tek kullanıcıya ait** bayat jetonlar.
+
+### KE1 — Budama yolu eksikti (asıl kusur)
+
+`dispatch_external` UNREGISTERED jetonları zaten pasifleştiriyordu —
+ama **`POST /push/test` yapmıyordu.** Yöneticinin elindeki tek araç test
+düğmesiydi; her basışta ölü jetonlar tabloda kalıyor ve bir sonraki
+gönderimde yeniden deneniyordu. Artık test yolu da buduyor
+(`_jetonlari_buda`, ortak yardımcı) ve budanan sayısı yanıtta döner.
+
+**Silme değil pasifleştirme:** `/devices` kaydının geçmişi korunur ve aynı
+jeton yeniden kaydedilirse upsert onu geri açar.
+
+### KE2 — Tekillik yanlış anahtardaydı
+
+`UNIQUE (tenant_id, fcm_token)`. **Jeton bir cihaz kimliği değildir**,
+cihazın o anki *adresidir*: yeniden kurulumda / veri temizliğinde / uzun
+aradan sonra FCM yeni bir jeton verir ve her yeni jeton **yeni satır**
+açıyordu. 18 kaydın hikâyesi budur.
+
+**Karar:** `user_device.cihaz_kimligi` (göç 0082) + kısmi UNIQUE indeks
+`(tenant_id, user_id, cihaz_kimligi) WHERE cihaz_kimligi IS NOT NULL AND aktif`.
+Kayıtta aynı cihazın önceki jetonları pasifleştirilir.
+
+* **Kurulum kimliği, donanım kimliği DEĞİL.** Donanım kimliği (androidId /
+  IDFV) kalıcı bir izleyicidir, uygulama silinse bile kalır ve KVKK
+  açısından gereksiz bir veridir. Kurulum kimliği ilk açılışta üretilir,
+  güvenli depoda yaşar, uygulama silinince kaybolur — "aynı kurulum mu?"
+  sorusuna cevap vermeye yeter. (Yeni paket eklenmedi: 16 rastgele bayt.)
+* **Alan NULLABLE ve öyle kalmalı:** göndermeyen eski sürümler sahada
+  çalışıyor. Zorunlu kılmak, güncellemeyen kullanıcının bildirimlerini
+  tamamen kesmek olurdu.
+* Kimlik **gönderilmeyen** bir istek, daha önce öğrenilmiş kimliği
+  **silmez** (sürüm yükseltmesinde alan geçici boş gelirse tekilleştirme
+  sessizce kapanırdı).
+
+### KE3 — "Geçersiz jetonları temizle" düğmesi
+
+`POST /push/cihaz-temizle` (admin/yönetici) — panelde **Bildirimler → Push
+teşhisi** kartında.
+
+* **Bildirim GÖNDERMEZ.** FCM `validate_only=true` ile doğrular: mesaj
+  işlenir, teslim edilmez, kayıtsız jeton için yine `UNREGISTERED` döner.
+  Bu bir bakım aracıdır; her tıklamada tesisteki herkesin telefonunun
+  çalması kabul edilemezdi.
+* **"Bakamadım" ile "hepsi sağlam" ayrı yanıtlardır** (`desteklenmiyor`).
+  Sağlayıcı `noop` ya da kimliksiz `fcm` ise hiçbir jeton budanmaz ve
+  arayüz bunu hata tonuyla söyler — ikisini karıştırmak ölü jetonları
+  sağlam ilan etmekti.
+* **Geçici hata jetonu öldürmez:** ağ/kota hatası `belirsiz` sayılır,
+  jeton korunur ve bir sonraki temizlikte yeniden bakılır.
+* Budanan her jeton `push_gonderim`e `kimlik='temizlik'` satırı olarak
+  yazılır: "jetonlar neden azaldı" sorusu panelde cevaplanabilmeli.
+
+### Mevcut 18 bayat jeton ne olacak
+
+Prod'da `PUSH_PROVIDER=fcm` olduğu için **düğme onları temizler**
+(doğrulama gerçek FCM'e gider). Alternatif olarak bir kez push gönderilmesi
+de yeter: artık her yol buduyor.
+
+### Mobil — bu makinede KOŞULAMADI
+
+`mobile/` değişiklikleri (kurulum kimliği üretimi + `/devices` gövdesine
+eklenmesi + test sahtesinin güncellenmesi) yazıldı, ama **`flutter test`
+bu makinede çalıştırılamıyor** (Flutter kurulu değil, bkz. göç notu).
+Mobil tarafın doğrulanması Windows makinede `flutter test` ile
+yapılmalıdır. Sunucu tarafı mobil olmadan da güvenlidir: kimlik
+gönderilmezse eski davranış sürer, budama yine çalışır.
+
+---
+
+## §3-ek — Kamera formu (görünüm + tasarım)
+
+### KE4 — Görünüm bozuktu: ÖLÇÜLEN NEDEN
+
+Form gövdesi `grid gap-3 sm:grid-cols-2`. P191 §3'te eklediğim **örnek
+adres paragrafı ve test düğmesi doğrudan grid'in çocuğuydu** — her biri
+BİR HÜCRE kapladı, sonraki alanlar yanlış sütuna kaydı ve ipuçları üst üste
+bindi. Adres bloğu artık tek bir `sm:col-span-2` kutusudur.
+
+### KE5 — "Bağlantıyı test et" neden görünmüyordu
+
+Düğmeyi `form.tur === "rtsp"` koşuluna bağlamıştım; **yeni kamera formunda
+tür varsayılanı `hls`** olduğu için düğme hiç çizilmiyordu. "Ekledim"
+dediğim şey kullanıcıya görünmüyordu — özür değil, kilit: artık her zaman
+çizilir, rtsp dışı adreste **pasiftir** ve yanındaki not nedenini söyler.
+Gizlemek, kullanıcıyı "hani nerede?" diye aratmaktı.
+`tests/kamera-oynatici.dom.test.ts` bunu kilitliyor.
+
+### KE6 — Üç adres yerine TEK adres
+
+P190'ın mimarisi zaten şuydu: **ızgarada ffmpeg karesi, tıklayınca MediaMTX
+HLS** — yani sistem ikisini de **tek RTSP adresinden kendisi üretir**.
+Yöneticiden ayrıca "yeniden yayın adresi" ve "anlık kare adresi" istemek,
+cevabını bilemeyeceği iki soru sormaktı.
+
+* Form artık **yalnız kamera adresi** ister.
+* **Tür adresten türetilir** (`adrestenTur`): `rtsp://` → RTSP, `.mp4` →
+  MP4, diğer http(s) → HLS. Kullanıcıya zaten yazdığı şeyi ikinci kez
+  sormak, yanlış cevaplanabilecek bir soru eklemekti (ve yanlış tür
+  sunucuda 422 üretiyordu). Türetilemeyen (yarım yazılmış) adreste mevcut
+  seçim **korunur** — her tuş vuruşunda türü sıfırlamak, kullanıcının
+  yazdığını altından çekmek olurdu.
+* **Alanlar SİLİNMEDİ**, "Gelişmiş ayarlar" altına indi (varsayılan
+  kapalı): kendi geçidini (Frigate/go2rtc) çalıştıran kurulumlar onları
+  kullanıyor ve silmek çalışan bir kurulumu kırardı. Düzenlemede dolu bir
+  gelişmiş alan varsa bölüm **açılır** — kaydettiği değeri göremeyen
+  kullanıcı onu "silinmiş" sanır.

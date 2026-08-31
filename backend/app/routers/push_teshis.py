@@ -26,14 +26,16 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import func, select, text
+from sqlalchemy import func, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .. import push
+from ..audit import Action, audit_user
 from ..deps import get_current_user, get_tenant_db, require_role
 from ..models import AppUser, PushGonderim, UserDevice
 from ..schemas import (
     PushDenemeOut,
+    PushTemizlikResponse,
     PushTeshisResponse,
     PushTestResponse,
 )
@@ -41,6 +43,29 @@ from ..schemas import (
 router = APIRouter(prefix="/push", tags=["push"])
 
 _YONETIM = require_role("admin", "yonetici")
+
+
+async def _jetonlari_buda(db: AsyncSession, tokenlar: list[str]) -> int:
+    """(P191-ek §1) FCM'in KALICI gecersiz dedigi jetonlari pasiflestirir.
+
+    OLCULEN KUSUR: `dispatch_external` yolu budama yapiyordu ama `POST
+    /push/test` YAPMIYORDU. Yonetici "kendime test gonder" dedikce 7/7
+    `UNREGISTERED` aliyor, olu jetonlar tabloda KALIYOR ve her gonderimde
+    yeniden deneniyordu. FCM bu cevabi verdiginde jeton bir daha
+    KULLANILMAMALIDIR.
+
+    SILME DEGIL PASIFLESTIRME: `/devices` kaydinin gecmisi korunur ve ayni
+    jeton yeniden kaydedilirse upsert onu geri acar.
+    """
+    if not tokenlar:
+        return 0
+    sonuc = await db.execute(
+        update(UserDevice)
+        .where(UserDevice.fcm_token.in_(tokenlar), UserDevice.aktif.is_(True))
+        .values(aktif=False, updated_at=func.now())
+    )
+    await db.flush()
+    return int(sonuc.rowcount or 0)
 
 
 @router.get("/teshis", response_model=PushTeshisResponse)
@@ -175,6 +200,7 @@ async def test_gonder(
     gonderildi = 0
     durumlar: list[str] = []
     hata: str | None = None
+    gecersizler: list[str] = []
     for cihaz in cihazlar:
         dil = dil_normalize(cihaz.dil)
         sonuc = saglayici.send(
@@ -189,6 +215,8 @@ async def test_gonder(
         )
         durumlar.append(durum)
         hata = hata or kod
+        # (P191-ek §1) FCM "bu jeton kayitli degil" dediyse jeton OLUDUR.
+        gecersizler.extend(getattr(sonuc, "gecersiz", None) or [])
         await db.execute(
             text(
                 "INSERT INTO push_gonderim (tenant_id, kimlik, user_id, token_son6, "
@@ -205,16 +233,84 @@ async def test_gonder(
                 "h": kod,
             },
         )
+    budanan = await _jetonlari_buda(db, gecersizler)
     return PushTestResponse(
         saglayici=saglayici.name,
         cihaz=len(cihazlar),
         gonderildi=gonderildi,
+        budanan=budanan,
         # Karisik sonucta EN KOTUSU raporlanir: "kismen gitti" bir basari degil.
         durum=next(
             (d for d in ("yapilandirilmadi", "gecersiz_token", "basarisiz", "noop") if d in durumlar),
             "gonderildi",
         ),
         hata_kodu=hata,
+    )
+
+
+@router.post("/cihaz-temizle", response_model=PushTemizlikResponse)
+async def cihaz_temizle(
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_YONETIM),
+) -> PushTemizlikResponse:
+    """(P191-ek §1) Gecersiz jetonlari TOPLU temizler — bildirim GONDERMEDEN.
+
+    FCM `validate_only=true` ile her aktif jeton dogrulanir; `UNREGISTERED`
+    / `INVALID_ARGUMENT` donenler pasiflestirilir.
+
+    NEDEN GERCEK GONDERIM DEGIL: bu bir BAKIM aracidir. Her tiklamada
+    tesisteki herkesin telefonunun calmasi kabul edilemez.
+
+    SAGLAYICI DOGRULAYAMIYORSA (noop / kimlik yok) HICBIR SEY BUDANMAZ ve
+    yanit bunu ACIKCA soyler: "bakamadim" ile "hepsi saglam" ayni sey
+    degildir; ikisini karistirmak, olu jetonlari saglam ilan etmekti.
+    """
+    saglayici = push.get_push_provider()
+    cihazlar = (
+        await db.execute(select(UserDevice).where(UserDevice.aktif.is_(True)))
+    ).scalars().all()
+    if not cihazlar:
+        return PushTemizlikResponse(
+            saglayici=saglayici.name, denenen=0, budanan=0, desteklenmiyor=False
+        )
+    sonuc = saglayici.dogrula([c.fcm_token for c in cihazlar])
+    if sonuc.desteklenmiyor:
+        return PushTemizlikResponse(
+            saglayici=saglayici.name,
+            denenen=len(cihazlar),
+            budanan=0,
+            desteklenmiyor=True,
+        )
+    budanan = await _jetonlari_buda(db, list(sonuc.gecersiz))
+    # Budama TESHISE de yazilir: "jetonlar neden azaldi" sorusu panelde
+    # cevaplanabilmeli.
+    for cihaz in cihazlar:
+        if cihaz.fcm_token in set(sonuc.gecersiz):
+            await db.execute(
+                text(
+                    "INSERT INTO push_gonderim (tenant_id, kimlik, user_id, "
+                    "token_son6, platform, saglayici, durum, hata_kodu) "
+                    "VALUES (:t, 'temizlik', :u, :k, :p, :s, 'gecersiz_token', "
+                    "'UNREGISTERED')"
+                ),
+                {
+                    "t": str(user.tenant_id),
+                    "u": str(cihaz.user_id),
+                    "k": cihaz.fcm_token[-6:],
+                    "p": cihaz.platform,
+                    "s": saglayici.name,
+                },
+            )
+    await audit_user(
+        db, user, Action.USER_UPDATE, resource_type="user_device",
+        meta={"islem": "jeton_temizlik", "denenen": len(cihazlar), "budanan": budanan},
+    )
+    return PushTemizlikResponse(
+        saglayici=saglayici.name,
+        denenen=len(cihazlar),
+        budanan=budanan,
+        desteklenmiyor=False,
+        belirsiz=sonuc.belirsiz,
     )
 
 
