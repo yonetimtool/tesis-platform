@@ -43,6 +43,7 @@ import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import {
+  adrestenTur,
   anlikKareHatasi,
   oynatilabilirMi,
   restreamHatasi,
@@ -160,6 +161,9 @@ export default function KameralarPage() {
   // Olculen kusur: yonetici kaydediyor, izgarada "Goruntu yok" goruyor ve
   // adresin mi agin mi parolanin mi yanlis oldugunu bilmiyordu.
   const [testEdiliyor, setTestEdiliyor] = useState(false);
+  // (P191-ek §3) Gelismis ayarlar VARSAYILAN KAPALI; duzenlemede dolu bir
+  // alan varsa acilir (asagida `duzenle`).
+  const [gelismis, setGelismis] = useState(false);
 
   // Hata KİMLİĞİ -> aktif dildeki cümle (metin değil kimlik taşınır).
   const hataMetni = useMemo(
@@ -181,10 +185,28 @@ export default function KameralarPage() {
     [t],
   );
 
+  /**
+   * (P191-ek §3) ADRES YAZILDIKCA TUR TURETILIR.
+   *
+   * Yonetici "yayin turu"nu artik secmiyor: bilgi zaten adresin icinde.
+   * Turetilemeyen (yarim yazilmis) adreste MEVCUT tur korunur — her tus
+   * vurusunda turu sifirlamak, kullanicinin yazdigi seyi altindan cekmek
+   * olurdu. Gelismis ayarlardan elle degistirilebilir.
+   */
+  function adresYaz(deger: string) {
+    const tur = adrestenTur(deger);
+    setForm((onceki) => ({
+      ...onceki,
+      stream_url: deger,
+      tur: tur ?? onceki.tur,
+    }));
+  }
+
   function yeni() {
     setDuzenlenen(null);
     setForm(BOS_FORM);
     setFormHata(null);
+    setGelismis(false);
     setAcik(true);
   }
 
@@ -474,61 +496,118 @@ export default function KameralarPage() {
                 />
               )}
             </AlanSarmal>
-            <AlanSarmal etiket={t("kameraTur")}>
-              {(b) => (
-                <Secim
-                  {...b}
-                  value={form.tur}
-                  onChange={(e) => setForm({ ...form, tur: e.target.value as CameraTur })}
-                >
-                  {TUR_SECENEKLERI}
-                </Secim>
-              )}
-            </AlanSarmal>
-            <AlanSarmal etiket={t("kameraYayinAdresi")} ipucu={t("kameraYayinIpucu")} zorunlu>
-              {(b) => (
-                <Alan
-                  {...b}
-                  value={form.stream_url}
-                  onChange={(e) => setForm({ ...form, stream_url: e.target.value })}
-                  required
-                />
-              )}
-            </AlanSarmal>
-            {/* (P191 §3) ORNEK ADRES + TEST. Ornek metin ipucunun ALTINDA
-                ayri duruyor: kullanicinin kopyalayip degistirecegi sey bu. */}
-            <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
-              {t("kameraAdresOrnek")}
-            </p>
-            {form.tur === TUR_RTSP ? (
-              <Dugme
-                tur="ikincil"
-                boy="kucuk"
-                disabled={testEdiliyor || !form.stream_url.trim()}
-                onClick={() => void baglantiyiTestEt()}
-                data-test="kamera-test-baglanti"
+            {/* (P191-ek §3) TEK ADRES — GRID ICINDE TAM GENISLIK.
+                OLCULEN KUSUR: ornek metni ve test dugmesi dogrudan
+                `grid`in cocuguydu; her biri BIR HUCRE kapladi ve sonraki
+                alanlar yanlis sutuna kayip ipuclariyla ust uste bindi.
+                Adres blogu artik TEK bir `sm:col-span-2` kutusudur. */}
+            <div className="sm:col-span-2 space-y-2">
+              <AlanSarmal
+                etiket={t("kameraAdresi")}
+                ipucu={t("kameraAdresIpucu")}
+                zorunlu
               >
-                {t("kameraTestEt")}
+                {(b) => (
+                  <Alan
+                    {...b}
+                    value={form.stream_url}
+                    onChange={(e) => adresYaz(e.target.value)}
+                    required
+                    data-test="kamera-adres"
+                  />
+                )}
+              </AlanSarmal>
+              <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
+                {t("kameraAdresOrnek")}
+              </p>
+              <div className="flex flex-wrap items-center gap-3">
+                {/* (P191-ek §3) TEST DUGMESI ARTIK HEP GORUNUR.
+                    Onceki surumde `form.tur === "rtsp"` kosuluna baglanmisti
+                    ve YENI KAMERA formunda tur varsayilani "hls" oldugu icin
+                    dugme HIC cikmiyordu — "ekledim" dedigim sey kullaniciya
+                    gorunmuyordu. Artik cizilir; rtsp disi adreste PASIF ve
+                    yanindaki not nedenini soyler (gizlemek, kullaniciyi
+                    "hani nerede?" diye aratmakti). */}
+                <Dugme
+                  tur="ikincil"
+                  boy="kucuk"
+                  disabled={
+                    testEdiliyor || !form.stream_url.trim() || form.tur !== TUR_RTSP
+                  }
+                  onClick={() => void baglantiyiTestEt()}
+                  data-test="kamera-test-baglanti"
+                >
+                  {t("kameraTestEt")}
+                </Dugme>
+                <span style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
+                  {form.stream_url.trim() && form.tur !== TUR_RTSP
+                    ? t("kameraTestRtspNotu")
+                    : t("kameraTurAlgilandi", { tur: form.tur.toUpperCase() })}
+                </span>
+              </div>
+            </div>
+
+            {/* GELISMIS AYARLAR — VARSAYILAN KAPALI.
+                P190'in mimarisi: izgarada ffmpeg karesi, tiklayinca MediaMTX
+                HLS. Yani sistem TEK RTSP adresinden ikisini de KENDI uretir
+                ve yoneticinin restream/anlik-kare adresi girmesine gerek
+                YOKTUR. Alanlar SILINMEDI: kendi gecidini (Frigate/go2rtc)
+                calistiran kurulumlar onlari kullaniyor ve silmek calisan bir
+                kurulumu kirardi. */}
+            <div className="sm:col-span-2 space-y-3">
+              <Dugme
+                tur="sessiz"
+                boy="kucuk"
+                aria-expanded={gelismis}
+                onClick={() => setGelismis(!gelismis)}
+                data-test="kamera-gelismis"
+              >
+                {t("kameraGelismis")}
               </Dugme>
-            ) : null}
-            <AlanSarmal etiket={t("kameraRestream")} ipucu={t("kameraRestreamIpucu")}>
-              {(b) => (
-                <Alan
-                  {...b}
-                  value={form.restream_url}
-                  onChange={(e) => setForm({ ...form, restream_url: e.target.value })}
-                />
-              )}
-            </AlanSarmal>
-            <AlanSarmal etiket={t("kameraSnapshot")} ipucu={t("kameraSnapshotIpucu")}>
-              {(b) => (
-                <Alan
-                  {...b}
-                  value={form.snapshot_url}
-                  onChange={(e) => setForm({ ...form, snapshot_url: e.target.value })}
-                />
-              )}
-            </AlanSarmal>
+              {gelismis ? (
+                <div className="space-y-3">
+                  <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
+                    {t("kameraGelismisAciklama")}
+                  </p>
+                  <AlanSarmal etiket={t("kameraTur")}>
+                    {(b) => (
+                      <Secim
+                        {...b}
+                        value={form.tur}
+                        onChange={(e) =>
+                          setForm({ ...form, tur: e.target.value as CameraTur })
+                        }
+                      >
+                        {TUR_SECENEKLERI}
+                      </Secim>
+                    )}
+                  </AlanSarmal>
+                  <AlanSarmal etiket={t("kameraRestream")} ipucu={t("kameraRestreamIpucu")}>
+                    {(b) => (
+                      <Alan
+                        {...b}
+                        value={form.restream_url}
+                        onChange={(e) =>
+                          setForm({ ...form, restream_url: e.target.value })
+                        }
+                      />
+                    )}
+                  </AlanSarmal>
+                  <AlanSarmal etiket={t("kameraSnapshot")} ipucu={t("kameraSnapshotIpucu")}>
+                    {(b) => (
+                      <Alan
+                        {...b}
+                        value={form.snapshot_url}
+                        onChange={(e) =>
+                          setForm({ ...form, snapshot_url: e.target.value })
+                        }
+                      />
+                    )}
+                  </AlanSarmal>
+                </div>
+              ) : null}
+            </div>
+
             <label
               className="flex items-center gap-2"
               style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}

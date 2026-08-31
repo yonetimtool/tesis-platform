@@ -15,6 +15,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import {
+  adrestenTur,
   KAMERA_URL_UST_SINIR,
   anlikKareHatasi,
   oynatilabilirMi,
@@ -88,6 +89,30 @@ describe("(P131) sozlesme vakalari — RESTREAM", () => {
       expect(karar(restreamHatasi(adres(v)))).toBe(v.beklenen);
     });
   }
+});
+
+// (P191-ek §3) TUR ADRESTEN TURETILIR — yoneticiye "yayin turu" sorulmaz.
+describe("(P191-ek) adrestenTur", () => {
+  it("sema ve uzanti kurala gore cozulur", () => {
+    expect(adrestenTur("rtsp://10.0.0.5:554/Streaming/Channels/101")).toBe("rtsp");
+    expect(adrestenTur("RTSP://BUYUK/HARF")).toBe("rtsp");
+    expect(adrestenTur("https://ornek/yayin.m3u8")).toBe("hls");
+    expect(adrestenTur("https://ornek/kayit.mp4")).toBe("mp4");
+    // Sorgu dizesi uzantiyi bozmaz.
+    expect(adrestenTur("https://ornek/kayit.mp4?token=abc")).toBe("mp4");
+    // Belirsiz http(s) -> hls (sahadaki en yaygin durum; gelismis ayardan
+    // degistirilebilir).
+    expect(adrestenTur("https://ornek/canli")).toBe("hls");
+  });
+
+  it("BOS ya da TANINMAYAN girdide null (mevcut secim KORUNUR)", () => {
+    // Her tus vurusunda turu sifirlamak, kullanicinin yazdigi seyi
+    // altindan cekmek olurdu.
+    expect(adrestenTur("")).toBeNull();
+    expect(adrestenTur("   ")).toBeNull();
+    expect(adrestenTur("rts")).toBeNull();
+    expect(adrestenTur("10.0.0.5")).toBeNull();
+  });
 });
 
 describe("(P131) tekil kurallar", () => {

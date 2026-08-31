@@ -111,3 +111,34 @@ export function oynatilabilirMi(tur: CameraTur, restreamUrl?: string | null): bo
   if (restreamUrl && restreamUrl.trim()) return true;
   return tur === "hls" || tur === "mp4";
 }
+
+/**
+ * (P191-ek §3) ADRESTEN TUR TURET — yonetici "tur" secmek zorunda kalmasin.
+ *
+ * OLCULEN KUSUR: form UC ayri adres (yayin/restream/anlik kare) VE bir de
+ * "yayin turu" istiyordu. Yonetici hangisini dolduracagini bilemez; oysa
+ * bilgi ADRESIN KENDISINDE duruyor — `rtsp://` bir RTSP kamerasidir,
+ * `.m3u8` bir HLS yayinidir. Kullaniciya zaten yazdigi seyi ikinci kez
+ * sormak, yanlis cevaplanabilecek bir soru eklemekti (ve yanlis tur
+ * sunucuda 422 uretiyordu).
+ *
+ * TAHMIN DEGIL, KURAL: sema ve uzanti bakilir. Belirsiz http(s) adresi
+ * `hls` sayilir — sahada http(s) ile verilen kamera adreslerinin
+ * neredeyse tamami HLS'tir ve kullanici gelismis ayarlardan degistirebilir.
+ * Bos/taninmayan girdide `null` doner (cagiran mevcut secimi KORUR;
+ * kullanici yazarken turu sifirlamak, yazdigi seyi altindan cekmek olurdu).
+ */
+export function adrestenTur(url: string): CameraTur | null {
+  const u = url.trim().toLowerCase();
+  if (!u) return null;
+  if (u.startsWith("rtsp://")) return "rtsp";
+  if (!u.startsWith("http://") && !u.startsWith("https://")) return null;
+  let yol = u;
+  try {
+    yol = new URL(u).pathname;
+  } catch {
+    // Yarim yazilmis adres — uzantiya ham metinden bakilir.
+  }
+  if (yol.endsWith(".mp4")) return "mp4";
+  return "hls";
+}

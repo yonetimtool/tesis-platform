@@ -103,7 +103,7 @@ describe("(P131) yonetim formu — ORTAK kural uygulanir", () => {
     const kullanici = await formuAc();
     await kullanici.type(screen.getByRole("textbox", { name: "Ad" }), "Kapı");
     await kullanici.type(
-      screen.getByLabelText(/Yayın adresi/i),
+      screen.getByLabelText(/Kamera adresi/i),
       "https://www.youtube.com/watch?v=abc",
     );
     await kullanici.click(screen.getByRole("button", { name: /Kaydet/i }));
@@ -119,7 +119,7 @@ describe("(P131) yonetim formu — ORTAK kural uygulanir", () => {
     const kullanici = await formuAc();
     await kullanici.type(screen.getByRole("textbox", { name: "Ad" }), "Kapı");
     await kullanici.type(
-      screen.getByLabelText(/Yayın adresi/i),
+      screen.getByLabelText(/Kamera adresi/i),
       "https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_fmp4/master.m3u8",
     );
     await kullanici.click(screen.getByRole("button", { name: /Kaydet/i }));
@@ -138,12 +138,63 @@ describe("(P131) yonetim formu — ORTAK kural uygulanir", () => {
     ciz(KameralarPage);
     const kullanici = await formuAc();
     await kullanici.type(screen.getByRole("textbox", { name: "Ad" }), "Otopark");
+    // (P191-ek §3) TUR ARTIK ADRESTEN TURETILIR; elle secim GELISMIS
+    // AYARLAR altindadir. Bu olcum "kullanici turu elle bozarsa yine
+    // kesiliyor mu" sorusudur — yani gelismis yol da korunuyor.
+    await kullanici.type(screen.getByLabelText(/Kamera adresi/i), "https://ornek/1");
+    await kullanici.click(screen.getByRole("button", { name: /Gelişmiş ayarlar/i }));
+    // SIRA ONEMLI: adres yazilirken tur yeniden turetilir, bu yuzden elle
+    // secim EN SON yapilir (kullanicinin gercek sirasi da budur).
     await kullanici.selectOptions(screen.getByLabelText(/Yayın türü/i), "rtsp");
-    await kullanici.type(screen.getByLabelText(/Yayın adresi/i), "https://ornek/1");
     await kullanici.click(screen.getByRole("button", { name: /Kaydet/i }));
     // IKI EŞLEŞME BEKLENIR: alan ipucu ("RTSP için rtsp:// ile başlamalı")
     // ve hata kutusu. Olculen sey HATA KUTUSU — `role="alert"` ile ayrilir.
     expect(await screen.findByRole("alert")).toHaveTextContent(/rtsp:\/\//i);
     expect(cagrilar.filter((c) => c.method === "POST")).toHaveLength(0);
+  });
+
+  // ======================================================================
+  // (P191-ek §3) FORM SADELESTIRME — uc olculen kusurun kilidi
+  // ======================================================================
+  it("TEST DUGMESI YENI KAMERA FORMUNDA GORUNUR", async () => {
+    // OLCULEN KUSUR: dugme `form.tur === "rtsp"` kosuluna baglanmisti ve
+    // yeni kamera formunda tur varsayilani "hls" oldugu icin HIC
+    // cizilmiyordu — "ekledim" denen ozellik kullaniciya gorunmuyordu.
+    fetchTaklidi([]);
+    ciz(KameralarPage);
+    await formuAc();
+    expect(
+      screen.getByRole("button", { name: /Bağlantıyı test et/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("TUR ADRESTEN TURETILIR (kullaniciya sorulmaz)", async () => {
+    const cagrilar = fetchTaklidi([]);
+    ciz(KameralarPage);
+    const kullanici = await formuAc();
+    await kullanici.type(screen.getByRole("textbox", { name: "Ad" }), "Giriş");
+    await kullanici.type(
+      screen.getByLabelText(/Kamera adresi/i),
+      "rtsp://kullanici:parola@10.0.0.5:554/Streaming/Channels/101",
+    );
+    // Tur secilmedi; sistem RTSP'yi adresten anladi.
+    await kullanici.click(screen.getByRole("button", { name: /Kaydet/i }));
+    await waitFor(() =>
+      expect(cagrilar.filter((c) => c.method === "POST")).toHaveLength(1),
+    );
+    const govde = cagrilar.find((c) => c.method === "POST")?.body as Record<string, unknown>;
+    expect(govde.tur).toBe("rtsp");
+  });
+
+  it("RESTREAM/ANLIK KARE alanlari VARSAYILAN GIZLI (gelismis)", async () => {
+    // P190 mimarisi: izgarada ffmpeg karesi, tiklayinca MediaMTX HLS —
+    // sistem ikisini de TEK RTSP adresinden uretir. Yoneticiye ucuncu bir
+    // adres sormak, hangisini dolduracagini bilemedigi bir soru sormakti.
+    fetchTaklidi([]);
+    ciz(KameralarPage);
+    const kullanici = await formuAc();
+    expect(screen.queryByLabelText(/Yeniden yayın \(restream\) adresi/i)).toBeNull();
+    await kullanici.click(screen.getByRole("button", { name: /Gelişmiş ayarlar/i }));
+    expect(screen.getByLabelText(/Yeniden yayın \(restream\) adresi/i)).toBeInTheDocument();
   });
 });
