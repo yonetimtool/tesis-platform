@@ -3,6 +3,14 @@
 > **Bildirim:** "Bir tesisin yöneticisi BAŞKA tesislerin kullanıcılarını
 > görebiliyor; Kullanıcılar ekranında tüm tesislerin kayıtları listeleniyor."
 
+## Prod verisi ne diyor (2026-08-31, kullanıcı raporu)
+
+Kullanıcılar **5 tesise dağılmış**; şikâyete konu yönetici hesabı yalnız
+**Oltu Sitesi**'nde (26 kullanıcı) ve gördüğü liste kendi tesisinin
+kullanıcıları. Yani gözlem **2. nedene** (veri düzeni / algı) uyuyor,
+sızıntıya değil. Aşağıdaki ölçümler de bunu destekliyor. Kalan tek adım,
+prod'da RLS ve bağlantı kimliğinin teyididir (teşhis betiği 1-3).
+
 ## Sonuç (özet)
 
 **Backend'de çapraz-tesis sızıntısı bulunamadı.** Sızıntı iddiası dört ayrı
@@ -104,7 +112,28 @@ değiştirmez**.
 * **`infra/docker-compose.prod.yml`** — `APP_DB_USER` artık `:?` ile
   zorunlu. Boş kalırsa bağlantı kimliği belirsizleşiyordu; yapılandırma
   hatası **sessiz** kalmamalı, yığın açılmamalı.
-* **`infra/tesis-izolasyon-teshis.sh` (YENİ)** — prod teşhisi.
+* **`infra/tesis-izolasyon-teshis.sh` (YENİ)** — prod teşhisi. Altı adım:
+  bağlantı kimliği, `app_rw` bayrakları, RLS kapsamı (açık sayıyla),
+  platform rolündeki hesaplar, kullanıcıların tesislere dağılımı ve
+  **canlı çapraz-tesis ölçümü**.
+
+  Son adım talimat değil ÖLÇÜMDÜR: kimlik verilirse betik gerçekten giriş
+  yapar, `/users` çağırır ve dönen kullanıcıların **kaç farklı tesise**
+  ait olduğunu veritabanından sayar. 1'den büyükse sızıntı kanıtlanmış
+  olur.
+
+  ```bash
+  # prod sunucusunda, infra/ içinde:
+  ./tesis-izolasyon-teshis.sh                       # 1-5. adımlar
+  SLUG=<slug> EPOSTA=<eposta> PAROLA=<parola> \
+    ./tesis-izolasyon-teshis.sh                     # + canlı ölçüm
+  ```
+
+  **Betik geliştirme yığınında çalıştırılarak doğrulandı** (altı adımın
+  hepsi, canlı ölçüm dâhil): koşulmamış bir teşhis betiği, en çok
+  ihtiyaç duyulan anda elde araç bırakmamak demektir. Dosya adları
+  değişkenleştirildi ki dev'de de aynen denenebilsin:
+  `COMPOSE_DOSYA=docker-compose.yml ENV_DOSYA= ./tesis-izolasyon-teshis.sh`
 
 ## 4) Ölçüm aracının kendi hatası (kayda değer)
 
