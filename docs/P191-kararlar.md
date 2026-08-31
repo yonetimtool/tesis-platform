@@ -261,7 +261,19 @@ Manuel incelemeye düşüren özel durumlar:
 * **Tesis izolasyonu RLS** — üç tabloda da `FORCE ROW LEVEL SECURITY`.
 * Uçların hepsi `admin`/`yonetici`; rol matrisi kilidi güncellendi.
 
-### K4.7 — Bitenler / bitmeyenler
+### K4.7 — Bilinen davranışlar (kusur değil, karar)
+
+* **Geri alınan eşleşmenin makbuzu SİLİNMEZ.** Belge iptal edilmez, defterde
+  ters kayıt görünür; yeniden eşleştirme YENİ bir belge numarasıyla yeni bir
+  makbuz üretir. Makbuzu silmek "bu belge hiç olmadı" demek olurdu.
+* **Eş zamanlı iki "Eşleştir" tıklaması** para iki kez yazmaz
+  (`uq_payment_tenant_idempotency`); ikinci istek 500 değil, hareketi
+  `manuel_inceleme` bırakır (`not_metni='es_zamanli_islem'`).
+* **Eşleştirme koşumu hareket başına adayları yeniden toplar.** 500 satırlık
+  bir ekstrede bu yavaştır ama DOĞRUDUR: bayat aday listesiyle çalışmak aynı
+  borcu iki kez kapatmaya çalışmak olurdu.
+
+### K4.8 — Bitenler / bitmeyenler
 
 **Biten (v1 kapsamı):** ekstre içe aktarma (CSV/Excel/MT940, takılabilir
 kaynak), eşleştirme motoru, borç kapatma + defter kaydı, makbuz üretimi +

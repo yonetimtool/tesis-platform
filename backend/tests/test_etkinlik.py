@@ -222,8 +222,8 @@ def test_olusturma_pushu_sakin_cihazlarina_denenir(client, world):
 
     from app.scheduler.notify import _fetch_device_tokens
 
-    # TUR 16: (token, dil) uclusu doner — yalniz token'lari karsilastir.
-    toks = {t for t, _ in _fetch_device_tokens(world["a"], ("resident",))}
+    # (P191 §2) `Cihaz` doner (token + dil + SAHIBI) — yalniz token'lar.
+    toks = {c.token for c in _fetch_device_tokens(world["a"], ("resident",))}
     assert f"ETK-RES-{tag}" in toks
     assert f"ETK-GRD-{tag}" not in toks
 

@@ -281,8 +281,8 @@ def test_kayit_bilgilendirme_push_yalniz_hedef_sakine(client, vworld):
     from app.scheduler.notify import _fetch_device_tokens_for_users
 
     hedef_toks = {
-        t
-        for t, _ in _fetch_device_tokens_for_users(
+        c.token
+        for c in _fetch_device_tokens_for_users(
             vworld["a"], [vworld["resident_a_id"]]
         )
     }

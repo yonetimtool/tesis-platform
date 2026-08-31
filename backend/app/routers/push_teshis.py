@@ -96,7 +96,9 @@ async def teshis(
         await db.execute(
             select(PushGonderim, AppUser.ad, AppUser.role)
             .join(AppUser, AppUser.id == PushGonderim.user_id, isouter=True)
-            .order_by(PushGonderim.created_at.desc())
+            # KARARLI SIRALAMA (depo kuralı): aynı milisaniyede yazılan iki
+            # deneme sayfadan sayfaya yer değiştirmesin.
+            .order_by(PushGonderim.created_at.desc(), PushGonderim.id)
             .limit(limit)
         )
     ).all()

@@ -149,8 +149,8 @@ def test_talep_push_daire_sakinlerine(client, uaworld):
     from app.scheduler.notify import _fetch_device_tokens_for_users
 
     toks = {
-        t
-        for t, _ in _fetch_device_tokens_for_users(
+        c.token
+        for c in _fetch_device_tokens_for_users(
             uaworld["a"], [uaworld["resident_a_id"]]
         )
     }
@@ -205,7 +205,7 @@ def test_karar_push_yoneticiye(client, uaworld):
     yon_id = client.get("/me", headers=yonetici).json()["id"]
     from app.scheduler.notify import _fetch_device_tokens_for_users
 
-    toks = {t for t, _ in _fetch_device_tokens_for_users(uaworld["a"], [yon_id])}
+    toks = {c.token for c in _fetch_device_tokens_for_users(uaworld["a"], [yon_id])}
     assert f"YON-{tag}" in toks
 
 

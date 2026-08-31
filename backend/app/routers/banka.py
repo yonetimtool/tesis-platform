@@ -29,6 +29,7 @@ GÜVENLİK
 """
 from __future__ import annotations
 
+import logging
 import uuid
 from datetime import date
 
@@ -69,6 +70,8 @@ from ..schemas import (
     BankaEslesmeOut,
     PageMetaOut,
 )
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/banka", tags=["banka"])
 
@@ -247,7 +250,27 @@ async def _bildir_ve_makbuz(
 async def _uygula(
     db: AsyncSession, user: AppUser, hareket: BankTransaction, karar: Karar
 ) -> list[PaymentMatch]:
-    eslesmeler = await karari_uygula(db, yonetici=user, hareket=hareket, karar=karar)
+    """Kararı yazar. EŞ ZAMANLI İKİNCİ UYGULAMA 500 DEĞİL, sessizce boştur.
+
+    İki yönetici aynı anda "Eşleştir" derse ikisi de hareketi `yeni`
+    görür; ikinci yazma `uq_payment_tenant_idempotency`e takılır. Bu bir
+    KORUMADIR (para iki kez yazılmadı) ama kullanıcıya 500 göstermek onu
+    "kayıt bozuldu mu?" diye düşündürürdü. SAVEPOINT içinde denenir;
+    çakışmada hareket manuel incelemeye bırakılır.
+    """
+    try:
+        async with db.begin_nested():
+            eslesmeler = await karari_uygula(
+                db, yonetici=user, hareket=hareket, karar=karar
+            )
+    except IntegrityError:
+        logger.warning(
+            "[banka] es zamanli uygulama cakismasi (hareket=%s) -> manuel", hareket.id
+        )
+        hareket.durum = "manuel_inceleme"
+        hareket.not_metni = "es_zamanli_islem"
+        await db.flush()
+        return []
     if eslesmeler:
         await _bildir_ve_makbuz(db, user=user, hareket=hareket, eslesmeler=eslesmeler)
         await audit_user(
@@ -325,7 +348,14 @@ async def hareketler(
         await db.execute(
             select(BankTransaction)
             .where(*where)
-            .order_by(BankTransaction.islem_tarihi.desc(), BankTransaction.created_at.desc())
+            # KARARLI SIRALAMA: eşit tarih/saatte satır sırası sayfadan
+            # sayfaya değişirse bir kayıt İKİ KEZ görünür, bir başkası HİÇ
+            # görünmez. `id` son kırıcıdır (depo kuralı, test_sayfalama).
+            .order_by(
+                BankTransaction.islem_tarihi.desc(),
+                BankTransaction.created_at.desc(),
+                BankTransaction.id,
+            )
             .limit(limit)
             .offset(offset)
         )
