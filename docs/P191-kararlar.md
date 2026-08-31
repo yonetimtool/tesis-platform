@@ -488,6 +488,17 @@ teşhisi** kartında.
   jeton korunur ve bir sonraki temizlikte yeniden bakılır.
 * Budanan her jeton `push_gonderim`e `kimlik='temizlik'` satırı olarak
   yazılır: "jetonlar neden azaldı" sorusu panelde cevaplanabilmeli.
+* **Doğrulama yolu gönderim yolundan DAHA DAR: yalnız `UNREGISTERED`
+  budar.** Gönderimde `INVALID_ARGUMENT` "jeton biçimsiz" sayılabilir çünkü
+  gövde bilinen-iyidir; doğrulamada aynı kod gövde hakkında da olabilir ve
+  toplu bir temizlik aracının belirsiz bir kodla sağlam jeton budaması kabul
+  edilemez. Aynı gerekçeyle doğrulama mesajı **boş değildir** (küçük bir
+  `data` taşır): yüksüz mesaj FCM'de `INVALID_ARGUMENT` üretebilirdi.
+* **Tek çağrıda en çok 200 jeton** doğrulanır (jeton başına bir HTTP
+  isteği). En eski güncellenenden başlanır — bayat olma olasılığı en yüksek
+  olanlar; tekrar tıklamak kaldığı yerden sürdürür. Sınırsız bırakmak,
+  500 cihazlı bir tesiste zaman aşımına uğrayan ve kullanıcıya "düğme
+  çalışmadı" gibi görünen bir istek demekti.
 
 ### Mevcut 18 bayat jeton ne olacak
 

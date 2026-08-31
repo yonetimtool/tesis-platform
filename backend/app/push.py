@@ -332,10 +332,18 @@ class FcmProvider(PushProvider):
         gecersiz: list[str] = []
         belirsiz = 0
         for token in tokenlar:
-            # `notification` YOK: dogrulama icin en yalin mesaj yeter ve
-            # veri-only govde, bayrak bir gun kalksa bile sessiz bir tepsi
-            # bildirimi URETMEZ.
-            govde = {"validate_only": True, "message": {"token": token}}
+            # `notification` YOK, kucuk bir `data` VAR — ikisi de bilincli:
+            #
+            # * BILDIRIM YOK: bayrak bir gun kalkarsa bile sessiz bir tepsi
+            #   bildirimi uretilmesin.
+            # * BOS GOVDE DE YOK: yuksuz bir mesaj FCM'de `INVALID_ARGUMENT`
+            #   uretebilir ve o kodu "jeton olu" diye okumak SAGLAM bir
+            #   jetonu budamak olurdu. Gecerli bir govde ile donen hata
+            #   yalnizca JETON hakkindadir.
+            govde = {
+                "validate_only": True,
+                "message": {"token": token, "data": {"tip": "dogrulama"}},
+            }
             try:
                 resp = _http_post_json(url, headers, govde)
             except Exception as exc:  # noqa: BLE001 — ag hatasi KARAR DEGILDIR
@@ -348,10 +356,17 @@ class FcmProvider(PushProvider):
             hata = resp.get("error") if isinstance(resp, Mapping) else None
             if hata:
                 kod = _fcm_hata_kodu(hata)
-                if kod in _FCM_KALICI_GECERSIZ:
+                # YALNIZ `UNREGISTERED` BUDAR — gonderim yolundan DAHA DAR.
+                #
+                # Gonderim yolunda `INVALID_ARGUMENT` "jeton bicimsiz" demek
+                # sayilabilir, cunku govde bilinen-iyidir. Dogrulama yolunda
+                # ayni kod govde hakkinda da olabilir; toplu bir temizlik
+                # aracinin belirsiz bir kodla saglam jeton budamasi kabul
+                # edilemez. Supheli olan KORUNUR.
+                if kod == "UNREGISTERED":
                     gecersiz.append(token)
                 else:
-                    # Kota/gecici hata: jetonu OLU ILAN ETMEYIZ.
+                    # Kota/gecici/belirsiz hata: jetonu OLU ILAN ETMEYIZ.
                     belirsiz += 1
                     logger.warning("PUSH fcm dogrulama hatasi (%s) -> belirsiz", kod)
         logger.info(

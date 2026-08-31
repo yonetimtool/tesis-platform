@@ -24,6 +24,7 @@ from __future__ import annotations
 import uuid
 
 import pytest
+from sqlalchemy.pool import NullPool
 
 from app import push
 from app.push import DogrulamaSonucu, PushResult
@@ -123,12 +124,21 @@ def test_TEST_UCU_UNREGISTERED_JETONU_PASIFLESTIRIR(
 
 
 def test_UNREGISTERED_BUDAMA_SQL_YOLU(client, world, owner_conn):
-    """Budama gerçekten `aktif=false` yazıyor mu (uçtan uca, canlı DB)."""
+    """Budama gerçekten `aktif=false` yazıyor mu (canlı DB, gerçek SQL).
+
+    KENDİ MOTORUNU KURAR, `app.db.engine`i KULLANMAZ. Gerekçe ölçüldü:
+    paylaşılan motor ilk kullanıldığı olay döngüsüne bağlanır (asyncpg) ve
+    `asyncio.run` her çağrıda YENİ bir döngü açar — tam takımda
+    "attached to a different loop" hatası verir. Bu, P187'de Celery
+    tarafında düzeltilen tuzağın aynısıdır; testte de aynı kural geçerli:
+    kendi döngünü açıyorsan kendi motorunu da aç ve KAPAT.
+    """
     import asyncio
 
-    from sqlalchemy import text as sa_text
+    from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-    from app.db import SessionLocal, set_tenant
+    from app.config import settings
+    from app.db import set_tenant
     from app.routers.push_teshis import _jetonlari_buda
 
     guard = _headers(client, world["slug_a"], world["guard_a"])
@@ -136,12 +146,15 @@ def test_UNREGISTERED_BUDAMA_SQL_YOLU(client, world, owner_conn):
     assert _kaydet(client, guard, tok).status_code == 201
 
     async def _koş():
-        async with SessionLocal() as session:
-            async with session.begin():
-                await set_tenant(session, world["a"])
-                sayi = await _jetonlari_buda(session, [tok])
-                await session.execute(sa_text("SELECT 1"))
-                return sayi
+        motor = create_async_engine(settings.database_url, poolclass=NullPool)
+        try:
+            oturum_fabrikasi = async_sessionmaker(bind=motor, expire_on_commit=False)
+            async with oturum_fabrikasi() as session:
+                async with session.begin():
+                    await set_tenant(session, world["a"])
+                    return await _jetonlari_buda(session, [tok])
+        finally:
+            await motor.dispose()
 
     assert asyncio.run(_koş()) == 1
     assert tok not in _aktif_jetonlar(owner_conn, world["guard_a"]["email"])
@@ -227,6 +240,32 @@ def test_FCM_DOGRULAMA_VALIDATE_ONLY_KULLANIR(monkeypatch):
     assert sonuc.gecersiz == ["OLU"] and sonuc.denenen == 2
     assert all(g["validate_only"] is True for g in govdeler)
     assert all("notification" not in g["message"] for g in govdeler)
+    # BOS GOVDE GONDERILMEZ: yuksuz mesaj FCM'de `INVALID_ARGUMENT`
+    # uretebilir ve o kodu "jeton olu" diye okumak SAGLAM jeton budamakti.
+    assert all(g["message"].get("data") for g in govdeler)
+
+
+def test_DOGRULAMA_INVALID_ARGUMENT_BUDAMAZ(monkeypatch):
+    """Doğrulama yolu gönderim yolundan DAHA DAR: yalnız `UNREGISTERED`.
+
+    `INVALID_ARGUMENT` doğrulamada gövde hakkında da olabilir; toplu bir
+    temizlik aracının belirsiz bir kodla sağlam jeton budaması kabul
+    edilemez. Şüpheli olan KORUNUR.
+    """
+    monkeypatch.setattr(push.settings, "fcm_service_account_path", "")
+    monkeypatch.setattr(push.settings, "fcm_project_id", "proj")
+    monkeypatch.setattr(push.settings, "fcm_service_account_json", '{"type":"x"}')
+    monkeypatch.setattr(push, "_fetch_access_token", lambda sa: "T")
+    monkeypatch.setattr(
+        push,
+        "_http_post_json",
+        lambda *a, **k: {"error": {"details": [{"errorCode": "INVALID_ARGUMENT"}]}},
+    )
+    sonuc = push.FcmProvider().dogrula(["SAGLAM-OLABILIR"])
+    assert sonuc.gecersiz == [] and sonuc.belirsiz == 1
+    # GONDERIM yolunda ayni kod hala budar (govde bilinen-iyidir).
+    gonderim = push.FcmProvider().send(["X"], title="t", body="b")
+    assert gonderim.gecersiz == ["X"]
 
 
 def test_FCM_DOGRULAMA_GECICI_HATA_JETONU_OLDURMEZ(monkeypatch):

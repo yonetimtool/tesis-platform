@@ -45,6 +45,10 @@ router = APIRouter(prefix="/push", tags=["push"])
 _YONETIM = require_role("admin", "yonetici")
 
 
+#: Tek cagrida dogrulanacak EN COK jeton (bkz. `cihaz_temizle`).
+_TEMIZLIK_UST_SINIR = 200
+
+
 async def _jetonlari_buda(db: AsyncSession, tokenlar: list[str]) -> int:
     """(P191-ek §1) FCM'in KALICI gecersiz dedigi jetonlari pasiflestirir.
 
@@ -266,8 +270,18 @@ async def cihaz_temizle(
     degildir; ikisini karistirmak, olu jetonlari saglam ilan etmekti.
     """
     saglayici = push.get_push_provider()
+    # (P191-ek §1) TEK COZUMDE UST SINIR: dogrulama jeton BASINA bir HTTP
+    # istegidir. 500 cihazli bir tesiste tek tiklama 500 istek demekti ve
+    # istek zaman asimina ugrardi — kullanicinin gordugu sey "dugme calismadi"
+    # olurdu. En ESKI guncellenen jetonlar once bakilir (bayat olma olasiligi
+    # en yuksek olanlar) ve tekrar tiklamak kaldigi yerden surdurur.
     cihazlar = (
-        await db.execute(select(UserDevice).where(UserDevice.aktif.is_(True)))
+        await db.execute(
+            select(UserDevice)
+            .where(UserDevice.aktif.is_(True))
+            .order_by(UserDevice.updated_at.asc(), UserDevice.id)
+            .limit(_TEMIZLIK_UST_SINIR)
+        )
     ).scalars().all()
     if not cihazlar:
         return PushTemizlikResponse(
