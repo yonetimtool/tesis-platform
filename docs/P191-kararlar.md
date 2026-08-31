@@ -217,6 +217,19 @@ olmayan kaç kişi). `NoopPushProvider` logu artık açıkça "PUSH_PROVIDER=noo
 hiçbir bildirim gönderilmez" der; `push_unconfigured` logu beklenen dosya
 yolunu yazar. Değerler değil **alan adları** loglanır (P134 kuralı).
 
+### Açık madde — mobil tıklama yönlendirmesi
+
+`routeForPushData` (mobile/lib/src/routing/app_router.dart) bilinmeyen `tip`
+için `null` döner: bildirim **düşer ve görünür**, ama tıklanınca uygulama
+olduğu yerde kalır. Bu turda eklenen üç tip (`gorev_atandi`, `aidat_borc`,
+`aidat_odendi`) o durumda — doğal hedefleri `/tasks` ve aidat ekranıdır.
+
+**Neden bu turda yapılmadı:** mobil değişiklik ancak `flutter test`
+TAMAMIYLA doğrulanabilir (yerleşim/menü/sözlük kilitleri yalnız tam koşumda
+kırılır) ve bu makinede Flutter kurulu değil. Körlemesine düzenlemek,
+doğrulanmamış bir mobil sürüm bırakmak olurdu. Tek satırlık iş: üç `case` +
+mevcut rotalar.
+
 ### Değiştirilebilir varsayılanlar (§2)
 
 * `push_gonderim` saklama süresi 30 gün.
