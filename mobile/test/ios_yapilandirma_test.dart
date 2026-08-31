@@ -130,6 +130,43 @@ void main() {
       }
     });
 
+    test('(P193) PUSH ACIKSA CIHAZ KIMLIGI BEYAN EDILMIS', () {
+      // Push bildirimi acildiginda uygulama iki tanimlayici gonderir: FCM
+      // kayit jetonu ve kurulum kimligi. Ikisi de Apple'in "Device ID"
+      // kategorisine girer. Ozelligi acip beyani unutmak, denetimde en
+      // sik yakalanan tutarsizliktir — bu yuzden BAGIMLILIKTAN olculur:
+      // firebase_messaging pubspec'te varsa beyan da olmak ZORUNDA.
+      final pubspec = _oku('pubspec.yaml');
+      if (pubspec.contains('firebase_messaging:')) {
+        expect(
+          p,
+          contains('NSPrivacyCollectedDataTypeDeviceID'),
+          reason: 'push acik ama Device ID beyan edilmemis',
+        );
+      }
+    });
+
+    test('(P193) ANALITIK/REKLAM SDK YOK — beyanla tutarli', () {
+      // "Tracking: No" ve "analitik SDK yok" iddiasi ancak bagimlilik
+      // listesi bunu dogruluyorsa gecerlidir. Biri eklenirse bu test
+      // duser ve beyanin gozden gecirilmesi gerektigini soyler.
+      final pubspec = _oku('pubspec.yaml');
+      for (final yasak in [
+        'firebase_analytics',
+        'firebase_crashlytics',
+        'google_mobile_ads',
+        'sentry_flutter',
+        'appsflyer',
+        'facebook_app_events',
+      ]) {
+        expect(
+          pubspec.contains('$yasak:'),
+          isFalse,
+          reason: '$yasak eklenmis — App Privacy beyani guncellenmeli',
+        );
+      }
+    });
+
     test('TOPLANAN VERI tipleri kullandigimiz izinlerle TUTARLI', () {
       // Kamera/galeri izni istiyorsak fotograf toplandigini, konum izni
       // istiyorsak konum toplandigini beyan etmeliyiz. Izin isteyip

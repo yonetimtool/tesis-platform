@@ -98,11 +98,50 @@
 				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
 			</array>
 		</dict>
-		<!-- Odeme bilgisi — aidat TAHAKKUKU ve tahsilat KAYDI. Kart verisi
-		     TOPLANMIYOR (kart ile odeme su an etkin degil, P13). -->
+		<!-- (P193) "Payment Info" DEGIL "Other Financial Info".
+		     Apple'in tanimi: Payment Info = odeme YONTEMI, kart numarasi,
+		     BANKA HESABI. Bunlarin hicbirini toplamiyoruz: kullaniciya
+		     gosterilen IBAN TESISIN kasasidir, kullanicinin degil; bizde
+		     duran sey aidat BAKIYESI ve tahsilat kaydidir. Yanlis kategori
+		     beyan etmek, olmayan bir veriyi topladigini soylemektir ve
+		     gizlilik politikasiyla da celisirdi. -->
 		<dict>
 			<key>NSPrivacyCollectedDataType</key>
-			<string>NSPrivacyCollectedDataTypePaymentInfo</string>
+			<string>NSPrivacyCollectedDataTypeOtherFinancialInfo</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+		<!-- (P193) CIHAZ KIMLIGI — PUSH ACILDIGI ICIN EKLENDI.
+		     Iki deger: FCM kayit jetonu (Google'a gider; bildirimi cihaza
+		     ulastiran adres) ve uygulamanin ilk acilista urettigi KURULUM
+		     kimligi (ayni cihaz icin tek kayit tutmaya yarar; DONANIM
+		     kimligi DEGIL, uygulama silinince kaybolur). Ikisi de hesaba
+		     BAGLI saklanir, izleme icin KULLANILMAZ. -->
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeDeviceID</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+		<!-- (P193) DESTEK TALEBI — kullanici uygulamadan konu+aciklama
+		     (+istege bagli fotograf) gonderir. Apple bunun icin AYRI bir
+		     tur tanimliyor; "Other User Content" altinda birakmak, destek
+		     yazismalarini gorunmez kilardi. -->
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeCustomerSupport</string>
 			<key>NSPrivacyCollectedDataTypeLinked</key>
 			<true/>
 			<key>NSPrivacyCollectedDataTypeTracking</key>

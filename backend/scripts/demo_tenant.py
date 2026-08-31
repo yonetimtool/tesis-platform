@@ -59,6 +59,18 @@ PAROLA = os.getenv("DEMO_PAROLA", "")
 #: tek hesap vermek "yonetici ekranlarini gosteremedik" demek olurdu.
 HESAPLAR = [
     ("Demo Yönetici", "yonetici@demo.yonetio.site", "yonetici", "+905000000101"),
+    # (P193) IKINCI YONETICI — App Store 5.1.1(v) TUZAGI.
+    #
+    # `POST /me/hesap-sil` tesisin SON yoneticisini 409 ile reddeder
+    # ("once devret"): tesisi sahipsiz birakmamak icin dogru bir kural.
+    # Ama demo tesiste TEK yonetici vardi ve inceleme ekibi hesap silmeyi
+    # O HESAPLA denerse "silme calismiyor" sonucuna varirdi — bu, silme
+    # ozelligi CALISIRKEN alinan bir REDDIR.
+    #
+    # Ikinci yonetici, kuralin kendisini degistirmeden tuzagi kaldirir:
+    # artik hangi hesapla denenirse denensin silme TAMAMLANIR.
+    ("Demo Yönetici 2", "yonetici2@demo.yonetio.site", "yonetici",
+     "+905000000106"),
     ("Demo Güvenlik", "guvenlik@demo.yonetio.site", "security", "+905000000102"),
     ("Demo Görevli", "gorevli@demo.yonetio.site", "tesis_gorevlisi", "+905000000103"),
     ("Demo Sakin", "sakin@demo.yonetio.site", "resident", "+905000000104"),

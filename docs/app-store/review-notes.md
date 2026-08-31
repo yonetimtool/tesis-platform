@@ -47,6 +47,7 @@ docker compose -f infra/docker-compose.yml \
 | Rol | Telefon (giriş) | E-posta (yalnız kayıt) | Ne görür |
 |---|---|---|---|
 | Yönetici | `05000000101` | `yonetici@demo.yonetio.site` | Tam yönetim: aidat, talepler, duyurular, tur planları, tanımlar |
+| Yönetici 2 | `05000000106` | `yonetici2@demo.yonetio.site` | (P193) İkinci yönetici — **hesap silme testinin 409'a takılmaması için**: son yönetici kendini silemez, bkz. §8 |
 | Güvenlik | `05000000102` | `guvenlik@demo.yonetio.site` | Devriye turları, ziyaretçi, olay bildirimi |
 | Tesis görevlisi | `05000000103` | `gorevli@demo.yonetio.site` | Görevler, iş emirleri |
 | Sakin | `05000000104` | `sakin@demo.yonetio.site` | Aidatım, talep aç, duyurular, rezervasyon |
@@ -141,15 +142,99 @@ yalnızca üçüncü taraf giriş **sunan** uygulamaları bağlar.
 
 ## 8. Hesap silme — 5.1.1(v)
 
-**Ayarlar → Hesabımı sil.** Onay + parola doğrulaması ister; hesabı
-uygulama içinde siler. Kişisel veriler silinir/anonimleştirilir; yasal
-saklama yükümlülüğü olan aidat ve denetim kayıtları **kimlikle bağlantısı
-kesilerek** kalır. Ayrıntı: `docs/hesap-silme-kvkk.md` ve `/gizlilik`.
+**Menü yolu:** Ana ekran → alt sekme **Ayarlar** → **Hesap** bölümü →
+**Hesabımı sil** → onay ekranı → parola **veya** e-posta kodu → *Hesabımı
+kalıcı olarak sil*.
+
+**TUZAK — inceleme hesabı seçimi.** `POST /me/hesap-sil`, tesisin **son
+yöneticisini** 409 ile reddeder ("önce devret"): tesisi sahipsiz
+bırakmamak için doğru bir kural, ama incelemeci silmeyi o hesapla
+denerse **çalışan bir özellik yüzünden ret** alırız. İki önlem:
+
+1. Demo tesise **ikinci bir yönetici** eklendi (`05000000106`) — artık
+   hangi hesapla denenirse denensin silme tamamlanır.
+2. Aşağıdaki İngilizce notta incelemeciye **sakin hesabıyla** denemesi
+   söyleniyor (yan etkisi en küçük olan).
+
+**Silme sonrası demo veriyi geri getirmek:** `demo_tenant.py` yeniden
+çalıştırılır (idempotent) — bkz. §1.
+
+### App Store Connect → App Review Information → Notes (İNGİLİZCE)
+
+Aşağıdaki metin doğrudan forma yapıştırılabilir:
+
+```text
+ACCOUNT DELETION (Guideline 5.1.1(v))
+
+Account deletion is available inside the app, in three taps:
+
+  1. Open the app and sign in (please use the RESIDENT demo account:
+     phone 05000000104).
+  2. Bottom navigation bar -> "Settings" (last tab).
+  3. Scroll to the "Account" section -> tap "Delete my account".
+  4. A confirmation sheet explains exactly what is deleted and what is
+     kept. Confirm your identity:
+       - if the account has a password: re-enter the password;
+       - if it does not (residents can sign in without one): tap
+         "No password - confirm with a code". We e-mail a six-digit,
+         single-use code to the address on the account; enter it.
+  5. Tap "Permanently delete my account". The session ends immediately
+     and the credentials no longer work.
+
+Re-authentication is required by design: an unlocked, borrowed phone
+must not be enough to delete somebody's account with one tap.
+
+WHAT IS DELETED
+  Name, e-mail address, phone number, profile photo, password and
+  one-time-code hashes, and all push/device records are deleted. Active
+  unit-resident links are closed and the account is deactivated. The
+  person can no longer sign in by any method.
+
+WHAT IS KEPT, AND WHY
+  If the account has financial or audit history, the underlying rows
+  (dues assessments, payments, ledger entries, audit log) are NOT
+  deleted - Turkish law (TTK art. 82 and tax legislation) requires the
+  building's books to be retained, and deleting a payment would silently
+  change the shared cash balance that OTHER residents rely on. Those
+  rows are ANONYMISED instead: the identity fields are cleared and the
+  record no longer points to a named person.
+
+  If the account has no such history, the row is deleted outright. The
+  app does not guess which case applies: it attempts a full delete first
+  and falls back to anonymisation only when a foreign-key constraint
+  proves history exists. The confirmation screen tells the user which of
+  the two happened.
+
+NOTE FOR THE REVIEWER
+  A facility must always have at least one manager, so the LAST manager
+  of a facility is asked to transfer management before deleting their own
+  account (the app shows this message). This does not block deletion:
+  the demo facility contains two manager accounts, and the resident
+  account suggested above deletes without any precondition.
+
+  Deleting the demo account is safe - we can restore the demo data at any
+  time.
+
+Details of the deletion/anonymisation rule are also published in our
+privacy policy: https://app.yonetiyor.com/gizlilik
+```
 
 ## 9. Bağlantılar
 
-* Gizlilik politikası: **https://yonetio.site/gizlilik**
-* Kullanım koşulları: **https://yonetio.site/kosullar**
+Formlara **doğrudan 200 dönen** adresler yazılır. Eski adresler çalışmaya
+devam ediyor ama **iki 301 üzerinden** gidiyor
+(`yonetio.site/gizlilik` → `yonetiyor.com/gizlilik` → `app.yonetiyor.com/gizlilik`);
+bir doğrulayıcı yönlendirme zincirini izlemezse gereksiz yere "erişilemiyor"
+der. Ölçüldü (2026-08-31):
+
+| Adres | Yanıt |
+|---|---|
+| `https://app.yonetiyor.com/gizlilik` | **200** ← forma bunu yazın |
+| `https://yonetiyor.com/gizlilik` | 301 |
+| `https://yonetio.site/gizlilik` | 301 |
+
+* Gizlilik politikası: **https://app.yonetiyor.com/gizlilik**
+* Kullanım koşulları: **https://app.yonetiyor.com/kosullar**
 * Destek: **destek@yonetio.site**
 
 ## 10. Bilinen sınır — düz HTTP medya istisnası
@@ -225,12 +310,15 @@ The app offers no third-party social login (no Google/Facebook/X sign-in),
 so Guideline 4.8 does not apply.
 
 ACCOUNT DELETION - 5.1.1(v)
-Settings -> Delete my account. Requires confirmation and re-entering the
-password. Personal data is deleted or anonymised; dues and audit records
-we are legally required to keep remain stored with the link to the
-person's identity removed. Details: https://yonetio.site/gizlilik
+Settings (last tab) -> "Account" -> "Delete my account". Confirm with the
+account password, or - for accounts without one - with a single-use code
+we e-mail to the address on file. Personal data (name, e-mail, phone,
+photo, credentials, device/push records) is deleted; dues and audit
+records we are legally required to keep remain stored with the link to
+the person's identity removed. Please test with the RESIDENT demo account
+(05000000104). Full text in the App Review Notes above.
 
-Privacy policy: https://yonetio.site/gizlilik
-Terms of use:   https://yonetio.site/kosullar
+Privacy policy: https://app.yonetiyor.com/gizlilik
+Terms of use:   https://app.yonetiyor.com/kosullar
 Support:        destek@yonetio.site
 ```
