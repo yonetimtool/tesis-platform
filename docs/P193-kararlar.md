@@ -662,3 +662,56 @@ indi ve rehberin minimum listesiyle **aynı** oldu.
 Ayrıca rehberdeki bir **hata** düzeltildi: "görev kategorisi sihirbazda
 yok" yazıyordu; sihirbazın *Görev alanları* adımı zaten görev
 kategorilerini sayıyor.
+
+---
+
+# Kapanış — 14 eksiğin durumu
+
+| # | Eksik | Bölüm | Durum |
+|---|---|---|---|
+| 1 | Site adresi alanı yok | §4 | Kapandı |
+| 2 | Yönetici tesis ayarlarına ulaşamıyor | §5 | Kapandı |
+| 3 | Tesis adı yalnız mobilden | §5 | Kapandı |
+| 4 | Excel'de e-posta zorunlu değil | §1 | Kapandı |
+| 5 | Sakinin bildirim kanalları görünmüyor | §7 | Kapandı |
+| 6 | Arsa payı yalnız tek tek | §6 | Kapandı |
+| 7 | Onay bekleyen gider onaylanamıyor | §3 | Kapandı |
+| 8 | Yanlış tahakkuk düzeltilemiyor | §3 | Kapandı |
+| 9 | Ekstrede hesap seçilemiyor | §3 | Kapandı |
+| 10 | Ödeme kodları görünmüyor | §7 | Kapandı |
+| 11 | Sihirbazda kasa adımı yok | §2 | Kapandı |
+| 12 | Sihirbazda rezervasyon/sayaç/kategori yok | §2 | Kapandı (kategori zaten vardı — rehber yanlıştı) |
+| 13 | Sihirbazda e-posta adımı yok | §2 | Kapandı |
+| 14 | Hatırlatıcı geri getirilemiyor | §2 | Kapandı |
+
+## Brief dışında bulunup düzeltilenler
+
+1. **Borçlandırmalar sayfası tamamen çöküyordu** gecikme önizleme yanıtı
+   `items` taşımazsa (`undefined.length`). §3'te test yazarken ölçüldü.
+2. **Sihirbaz "daire tipi"ni zorunlu sayıyordu**, rehber ise sabit tutarla
+   tahakkuk yazılabileceğini söylüyor — ikisi çelişiyordu. Zorunlu küme
+   altıya indi (§8).
+3. **İki BFF rotası eksikti** (`/api/units/arsa-payi`,
+   `/api/units/arsa-payi-ozeti`): `[id]` dinamik segmenti yolu yakalar,
+   UUID doğrulamasına takılır ve panel isteği sunucuya hiç ulaşmazdı.
+   DOM testleri bunu **göremez** (fetch sahte); gerçek BFF üzerinden
+   çağırınca yakalandı.
+4. **Rehberde bir olgu hatası**: "görev kategorisi sihirbazda yok"
+   yazıyordu; vardı.
+
+## Panel BFF'i üzerinden uçtan uca ölçüm
+
+Yeni ekranların çağırdığı yolları, panelin kendi sunucusunu (`next dev`)
+ayağa kaldırıp gerçek oturumla ölçtüm:
+
+```
+POST /api/auth/login                 -> 200
+GET  /api/units/arsa-payi-ozeti      -> 200  toplam=0.3699
+PATCH /api/units/arsa-payi           -> 422  (boş liste; istek BACKEND'e ULAŞTI)
+POST /api/users/odeme-kodlari        -> 200  5 satır (uretilen=0)
+GET  /api/panel/kurulum              -> 200  toplam=13 calisir=False eksik=['eposta']
+GET  /api/tenant/settings            -> 200  adres='Örnek Mah. 1. Sk. No:5' il='İstanbul'
+```
+
+422, burada **iyi haberdir**: boş `satirlar` şema kuralını çiğniyor,
+yani istek 404/405 ile panelde ölmedi, sunucuya gitti ve doğrulandı.
