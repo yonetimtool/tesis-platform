@@ -4,4 +4,7 @@
 "NFCReaderUsageDescription" = "Used to read the NFC tags at patrol checkpoints so a scan can be recorded as proof that the round was walked.";
 "NSCameraUsageDescription" = "Used to take photos you attach to tasks, maintenance requests, events, parcels and site rules.";
 "NSPhotoLibraryUsageDescription" = "Used to pick existing photos to attach to tasks, maintenance requests, events and announcements.";
-"NSLocationWhenInUseUsageDescription" = "Used while you are scanning a patrol checkpoint or sending an emergency alert, to record where it happened. The app never tracks your location in the background.";
+"NSLocationWhenInUseUsageDescription" = "Used while you are scanning a patrol checkpoint, to record where the scan happened as proof the round was walked. The app never tracks your location in the background.";
+/* (P195) Required for Apple 90683; behaviour is UNCHANGED — the app always
+   requests "when in use" only (see the note in Info.plist). */
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "The app does not track your location in the background. Location is read only while you are actively scanning a patrol checkpoint, to record where the scan happened.";

@@ -44,9 +44,35 @@
 	<string>Used to take photos you attach to tasks, maintenance requests, events, parcels and site rules.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Used to pick existing photos to attach to tasks, maintenance requests, events and announcements.</string>
-	<!-- geolocator: acil durum alarmina konum eklemek icin (best-effort). -->
+	<!-- KONUM — TEK KULLANIM YERI: devriye noktasi okutmasi.
+	     `lib/src/features/scan/data/konum_servisi.dart` tek atis
+	     `Geolocator.getCurrentPosition` cagirir; konum AKISI
+	     (`getPositionStream`) ve `UIBackgroundModes` YOKTUR.
+	     Tek cagiran `nfc_screen.dart` (okutma ekrani) — olculdu.
+
+	     (P195) ESKI METIN "acil durum bildirimi"nden de soz ediyordu;
+	     KOD BUNU YAPMIYOR (konum yalniz okutmada aliniyor). Apple
+	     yaniltici amac metnini reddediyor ve bu metin yanilticiydi. -->
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Used while you are scanning a patrol checkpoint or sending an emergency alert, to record where it happened. The app never tracks your location in the background.</string>
+	<string>Used while you are scanning a patrol checkpoint, to record where the scan happened as proof the round was walked. The app never tracks your location in the background.</string>
+	<!-- (P195) APPLE 90683 ICIN GEREKLI — DAVRANIS DEGISMIYOR.
+	     Yukleme "Missing purpose string ... NSLocationAlwaysAndWhenInUse
+	     UsageDescription" ile reddedildi. Sebep bizim kodumuz DEGIL:
+	     geolocator_apple ikilisi `requestAlwaysAuthorization` API'sine
+	     referans veriyor ve App Store Connect'in STATIK taramasi anahtari
+	     zorunlu kiliyor.
+
+	     ANAHTARIN VARLIGI IZNI DEGISTIRMEZ — olculdu: eklentinin iOS
+	     kodu (PermissionHandler.m) su sirayla bakiyor:
+	         if  (NSLocationWhenInUseUsageDescription varsa)
+	                 -> requestWhenInUseAuthorization
+	         else if (Always aciklamasi varsa)
+	                 -> requestAlwaysAuthorization
+	     WhenInUse anahtarimiz VAR, yani `else if` dalina HIC girilmiyor:
+	     uygulama her durumda YALNIZ "kullanirken" izni ister. Metin de
+	     bunu soyler; arka plan takibi IMA ETMEZ. -->
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>The app does not track your location in the background. Location is read only while you are actively scanning a patrol checkpoint, to record where the scan happened.</string>
 	<!-- url_launcher: tel: linkiyle yonetim numarasini arama. -->
 	<key>LSApplicationQueriesSchemes</key>
 	<array>

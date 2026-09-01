@@ -5,4 +5,7 @@
 "NFCReaderUsageDescription" = "Devriye noktalarındaki NFC etiketlerini okumak için kullanılır; okutma, turun gerçekten yapıldığının kanıtı olarak kaydedilir.";
 "NSCameraUsageDescription" = "Görev, talep/arıza, etkinlik, kargo ve site kuralı kayıtlarına eklediğiniz fotoğrafları çekmek için kullanılır.";
 "NSPhotoLibraryUsageDescription" = "Görev, talep/arıza, etkinlik ve duyuru kayıtlarına eklemek üzere galerinizden fotoğraf seçmek için kullanılır.";
-"NSLocationWhenInUseUsageDescription" = "Devriye noktası okuttuğunuzda veya acil durum bildirimi gönderdiğinizde olayın nerede gerçekleştiğini kaydetmek için kullanılır. Uygulama arka planda konumunuzu izlemez.";
+"NSLocationWhenInUseUsageDescription" = "Devriye noktası okuttuğunuzda, okutmanın nerede yapıldığını turun gerçekten yapıldığının kanıtı olarak kaydetmek için kullanılır. Uygulama arka planda konumunuzu izlemez.";
+/* (P195) Apple 90683 icin GEREKLI anahtar; davranis DEGISMIYOR — uygulama
+   her durumda yalniz "kullanirken" izni ister (bkz. Info.plist notu). */
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "Uygulama arka planda konumunuzu izlemez. Konum yalnızca siz devriye noktası okuturken, okutmanın nerede yapıldığını kaydetmek için alınır.";
