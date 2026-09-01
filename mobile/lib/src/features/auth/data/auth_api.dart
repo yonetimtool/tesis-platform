@@ -220,15 +220,26 @@ class AuthApi {
       oauthRolTamamla({
     required String baglamaJetonu,
     required String tesisKodu,
-    required String rol,
+    String? rol,
   }) async {
     try {
+      // (P194) `rol` OPSIYONEL ve GIRISTE HIC GONDERILMEZ.
+      //
+      // Sunucu (P191 §1) rol beyani YOKSA rolu HESAPTAN okur. Beyan
+      // gonderildiginde ise `_liste_kontrolu` calisir ve rol tutmuyorsa
+      // `onay_bekliyor` doner — yonetici tam olarak buraya dusuyordu:
+      // giris ekranindaki rol listesinde yonetici YOK, kullanici "Sakin"
+      // seciyor, sunucu "rol_uyusmuyor" deyip onay kuyruguna yaziyordu.
+      //
+      // ANAHTAR HIC KONULMAZ (null GONDERILMEZ): sema `rol`u opsiyonel
+      // tanimliyor; acik `null` gondermek de calisirdi ama "gonderilmedi"
+      // ile "bos gonderildi" ayrimini gereksizce sunucuya tasirdi.
       final res = await _dio.post<Map<String, dynamic>>(
         '/auth/oauth/rol-tamamla',
         data: {
           'baglama_jetonu': baglamaJetonu,
           'tesis_kodu': tesisKodu,
-          'rol': rol,
+          'rol': ?rol,
         },
       );
       final j = res.data!['jetonlar'];
@@ -248,16 +259,19 @@ class AuthApi {
   Future<({String durum, TokenPair? jetonlar})> oauthRolTamamlaDogrula({
     required String baglamaJetonu,
     required String tesisKodu,
-    required String rol,
+    String? rol,
     required String kod,
   }) async {
     try {
+      // (P194) `rol` OPSIYONEL — bkz. `oauthRolTamamla`. Iki adim AYNI
+      // kuralla calismali: birinci adimda beyansiz gecip ikincide rol
+      // gondermek, OTP yolundaki yoneticiyi yine cikmaza atardi.
       final res = await _dio.post<Map<String, dynamic>>(
         '/auth/oauth/rol-tamamla-dogrula',
         data: {
           'baglama_jetonu': baglamaJetonu,
           'tesis_kodu': tesisKodu,
-          'rol': rol,
+          'rol': ?rol,
           'kod': kod,
         },
       );

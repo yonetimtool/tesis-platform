@@ -71,9 +71,10 @@ class _SahteOauth implements OauthRepository {
   Future<({String durum, String? tesisAd})> rolTamamla({
     required String baglamaJetonu,
     required String tesisKodu,
-    required String rol,
+    String? rol,
   }) async {
-    baglananlar.add((tesis: tesisKodu, telefon: rol));
+    // (P194) GIRIS akisi rol GONDERMEZ; kayit alani '<yok>' olur.
+    baglananlar.add((tesis: tesisKodu, telefon: rol ?? '<yok>'));
     return (durum: 'giris', tesisAd: 'Oltu Sitesi');
   }
 
@@ -81,7 +82,7 @@ class _SahteOauth implements OauthRepository {
   Future<({String durum})> rolTamamlaDogrula({
     required String baglamaJetonu,
     required String tesisKodu,
-    required String rol,
+    String? rol,
     required String kod,
   }) async {
     dogrulananlar.add(kod);

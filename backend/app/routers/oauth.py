@@ -303,6 +303,39 @@ async def _kimligi_coz(kimlik: Kimlik) -> dict:
             }
 
 
+async def _yoneticiyi_epostayla_bul(kimlik: Kimlik) -> dict | None:
+    """(P194) DOGRULANMIS e-posta TEK bir yonetici hesabiyla esliyor mu?
+
+    `_kayit_coz`un 2. maddesinden CIKARILDI cunku artik IKI cagirani var:
+    kayit niyeti ve (P194) GIRIS niyeti. Kuralin kopyalanmasi, birinde
+    yapilan bir sikilastirmanin otekinde unutulmasi demekti.
+
+    KURALLAR AYNEN KORUNDU (P180-kararlar D5):
+      * saglayici e-postayi DOGRULAMIS olmali — dogrulanmamis bir adresle
+        mevcut hesaba baglanmak hesap ele gecirmedir,
+      * eslesme TEK olmali — e-posta TESIS KAPSAMLI benzersizdir, ayni
+        adres iki tesiste bulunabilir ve hangisi oldugu belirsiz kalirdi,
+      * YALNIZ yonetici — `yonetici_by_email` baska rolu zaten dondurmez.
+    """
+    if not kimlik.eposta or not kimlik.email_verified:
+        return None
+    async with SessionLocal() as session:
+        async with session.begin():
+            satirlar = (
+                await session.execute(
+                    text("SELECT tenant_id, user_id FROM public.yonetici_by_email(:e)"),
+                    {"e": kimlik.eposta},
+                )
+            ).all()
+    if len(satirlar) != 1:
+        return None
+    return {
+        "tur": "mevcut_hesap",
+        "tenant_id": str(satirlar[0].tenant_id),
+        "user_id": str(satirlar[0].user_id),
+    }
+
+
 async def _kayit_coz(kimlik: Kimlik) -> dict:
     """(P180) niyet=kayit cozumu — kimlik/e-posta zaten var mi? (kriter 4)
 
@@ -319,25 +352,8 @@ async def _kayit_coz(kimlik: Kimlik) -> dict:
     if bagli.get("tur") == "giris":
         return bagli
     # (P180 guvenlik) E-posta TABANLI eslesme YALNIZ saglayici e-postayi
-    # DOGRULADIYSA: dogrulanmamis e-posta ile mevcut bir yonetici hesabina
-    # baglamak hesap ele gecirme olurdu. Dogrulanmamissa yeni kayit gibi devam.
-    if not kimlik.eposta or not kimlik.email_verified:
-        return {"tur": "kayit"}
-    async with SessionLocal() as session:
-        async with session.begin():
-            satirlar = (
-                await session.execute(
-                    text("SELECT tenant_id, user_id FROM public.yonetici_by_email(:e)"),
-                    {"e": kimlik.eposta},
-                )
-            ).all()
-    if len(satirlar) == 1:
-        return {
-            "tur": "mevcut_hesap",
-            "tenant_id": str(satirlar[0].tenant_id),
-            "user_id": str(satirlar[0].user_id),
-        }
-    return {"tur": "kayit"}
+    # DOGRULADIYSA — kural artik `_yoneticiyi_epostayla_bul`da, TEK yerde.
+    return await _yoneticiyi_epostayla_bul(kimlik) or {"tur": "kayit"}
 
 
 async def _callback_isle(
@@ -368,6 +384,25 @@ async def _callback_isle(
         veri["onaylar"] = oturum.get("onaylar")
     else:
         veri = await _kimligi_coz(kimlik)
+        # (P194) GIRISTE DE E-POSTA ESLESMESI — web ile SIMETRI.
+        #
+        # OLCULEN KUSUR: web'de e-posta+parola ile kaydolmus bir YONETICI
+        # mobilde "Google ile devam" dediginde kimligi bagli olmadigi icin
+        # `baglama` donuyordu; ekran onu Tesis ID + ROL soran bir forma
+        # sokuyor, roluyse listede olmadigi icin cikmaza dusuyordu.
+        #
+        # AYNI kimlik `niyet=kayit` ile gelseydi (web kayit ekrani)
+        # `mevcut_hesap` donup GIRIS YAPTIRIYORDU — yani kural zaten VARDI,
+        # yalnizca giris yolunda uygulanmiyordu. Olcum:
+        #     niyet=kayit -> 'mevcut_hesap'   niyet=giris -> 'baglama'
+        #
+        # Ayni gecerlilik sartlariyla (dogrulanmis e-posta + TEK yonetici
+        # eslesmesi) burada da uygulanir; kimlik `sonuc` icinde baglanir
+        # (tur='mevcut_hesap' dali).
+        if veri.get("tur") != "giris":
+            eslesme = await _yoneticiyi_epostayla_bul(kimlik)
+            if eslesme is not None:
+                veri = eslesme
     veri.update(
         niyet=niyet,
         saglayici=kimlik.saglayici,
@@ -490,8 +525,13 @@ async def sonuc(
             baglama_jetonu=_baglama_jetonu(veri),
         )
 
-    # niyet=giris + kimlik bagli DEGIL -> mevcut baglama akisi (tesis kodu+SMS).
-    if niyet != "kayit" and tur != "giris":
+    # niyet=giris + kimlik bagli DEGIL -> mevcut baglama akisi (Tesis ID).
+    #
+    # (P194) `mevcut_hesap` BU DALDAN MUAF: giris niyetinde de dogrulanmis
+    # e-posta TEK bir yonetici hesabiyla esleseblir (bkz. `_callback_isle`).
+    # O durumda kimlik asagida BAGLANIR ve oturum acilir — kullaniciya Tesis
+    # ID sorulmaz, cunku hangi tesis oldugu ZATEN bilinmektedir.
+    if niyet != "kayit" and tur not in ("giris", "mevcut_hesap"):
         return OauthSonucResponse(
             durum="baglama_gerekli",
             saglayici=veri["saglayici"],
@@ -518,14 +558,24 @@ async def sonuc(
             if gorev_penceresi_disinda(user):
                 raise _GOREV_SURESI_DISINDA
             if tur == "mevcut_hesap":
-                session.add(
-                    OauthKimlik(
-                        tenant_id=user.tenant_id,
-                        user_id=user.id,
-                        saglayici=veri["saglayici"],
-                        subject=veri["subject"],
-                        eposta=veri.get("eposta"),
-                    )
+                # (P194) CIPLAK INSERT DEGIL, `_kimligi_bagla`.
+                #
+                # OLCULEN KUSUR: `uq_oauth_kimlik_user_saglayici` bir
+                # kullaniciya SAGLAYICI BASINA TEK kimlik birakir. Kisi ayni
+                # saglayicidan IKINCI bir hesapla gelirse (is -> kisisel
+                # Google, ayni dogrulanmis e-posta) ciplak INSERT
+                # `UniqueViolationError` atiyordu — kullanici 500 goruyordu.
+                # Olculdu: `duplicate key ... uq_oauth_kimlik_user_saglayici`.
+                #
+                # `_kimligi_bagla` bu durumu ZATEN dogru cozuyor (eskisini
+                # yenisiyle degistirir) ve baskasina bagli kimligi devralmayi
+                # da reddeder — iki kural, tek yer.
+                await _kimligi_bagla(
+                    session,
+                    user=user,
+                    saglayici=veri["saglayici"],
+                    subject=veri["subject"],
+                    eposta=veri.get("eposta"),
                 )
             else:
                 await session.execute(

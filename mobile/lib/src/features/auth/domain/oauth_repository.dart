@@ -53,10 +53,12 @@ abstract interface class OauthRepository {
   /// + listede). `otp_gerekli` iken e-postaya kod gitti (`tesisAd` dolu) ve
   /// [rolTamamlaDogrula] ile devam edilir. `onay_bekliyor` iken hesap
   /// ACILMAZ (liste disi ya da gecersiz Tesis ID — AYNI yanit).
+  /// (P194) `rol` OPSIYONEL: GIRIS akisinda GONDERILMEZ — sunucu rolu
+  /// hesaptan okur (P191 §1). Yalniz KAYIT akisi rol beyan eder.
   Future<({String durum, String? tesisAd})> rolTamamla({
     required String baglamaJetonu,
     required String tesisKodu,
-    required String rol,
+    String? rol,
   });
 
   /// (P184) `email_verified=false` yolunun 2. adimi: e-posta OTP + baglama.
@@ -64,7 +66,7 @@ abstract interface class OauthRepository {
   Future<({String durum})> rolTamamlaDogrula({
     required String baglamaJetonu,
     required String tesisKodu,
-    required String rol,
+    String? rol,
     required String kod,
   });
 }

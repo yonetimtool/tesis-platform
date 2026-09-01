@@ -459,9 +459,11 @@ class AuthController extends Notifier<AuthState> {
   /// gitti, `tesisAd` dolu — jeton KORUNUR, 2. adim [oauthRolTamamlaDogrula])
   /// · `onay_bekliyor` (hesap acilmaz, kullaniciya soylenir). Hata olursa
   /// `null` doner ve mesaj state'e yazilir.
+  /// (P194) `rol` OPSIYONEL: GIRIS akisi rol BEYAN ETMEZ (sunucu rolu
+  /// hesaptan okur). Yalniz KAYIT akisi beyan eder.
   Future<({String durum, String? tesisAd})?> oauthRolTamamla({
     required String tesisKodu,
-    required String rol,
+    String? rol,
   }) async {
     final jeton = state.oauthBaglamaJetonu;
     if (jeton == null) return null;
@@ -492,7 +494,7 @@ class AuthController extends Notifier<AuthState> {
   /// Doner `durum`: `giris` (oturum) · `onay_bekliyor`. Hata -> `null`.
   Future<String?> oauthRolTamamlaDogrula({
     required String tesisKodu,
-    required String rol,
+    String? rol,
     required String kod,
   }) async {
     final jeton = state.oauthBaglamaJetonu;

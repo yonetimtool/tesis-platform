@@ -45,7 +45,7 @@ class SosyalKapaliRepository implements OauthRepository {
   Future<({String durum, String? tesisAd})> rolTamamla({
     required String baglamaJetonu,
     required String tesisKodu,
-    required String rol,
+    String? rol,
   }) async =>
       (durum: 'onay_bekliyor', tesisAd: null);
 
@@ -53,7 +53,7 @@ class SosyalKapaliRepository implements OauthRepository {
   Future<({String durum})> rolTamamlaDogrula({
     required String baglamaJetonu,
     required String tesisKodu,
-    required String rol,
+    String? rol,
     required String kod,
   }) async =>
       (durum: 'onay_bekliyor');

@@ -237,7 +237,7 @@ class OauthRepositoryImpl implements OauthRepository {
   Future<({String durum, String? tesisAd})> rolTamamla({
     required String baglamaJetonu,
     required String tesisKodu,
-    required String rol,
+    String? rol,
   }) async {
     final r = await api.oauthRolTamamla(
       baglamaJetonu: baglamaJetonu,
@@ -255,7 +255,7 @@ class OauthRepositoryImpl implements OauthRepository {
   Future<({String durum})> rolTamamlaDogrula({
     required String baglamaJetonu,
     required String tesisKodu,
-    required String rol,
+    String? rol,
     required String kod,
   }) async {
     final r = await api.oauthRolTamamlaDogrula(

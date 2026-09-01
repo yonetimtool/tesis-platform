@@ -114,9 +114,10 @@ class _SahteOauthDepo implements OauthRepository {
   Future<({String durum, String? tesisAd})> rolTamamla({
     required String baglamaJetonu,
     required String tesisKodu,
-    required String rol,
+    String? rol,
   }) async {
-    tamamlaCagrilari.add({'tesis_kodu': tesisKodu, 'rol': rol});
+    // (P194) `rol` artik OPSIYONEL: giris akisi HIC gondermez.
+    tamamlaCagrilari.add({'tesis_kodu': tesisKodu, 'rol': rol ?? '<yok>'});
     return (
       durum: tamamlaDurum,
       tesisAd: tamamlaDurum == 'otp_gerekli' ? 'Oltu Sitesi' : null,
@@ -127,10 +128,11 @@ class _SahteOauthDepo implements OauthRepository {
   Future<({String durum})> rolTamamlaDogrula({
     required String baglamaJetonu,
     required String tesisKodu,
-    required String rol,
+    String? rol,
     required String kod,
   }) async {
-    dogrulaCagrilari.add({'tesis_kodu': tesisKodu, 'rol': rol, 'kod': kod});
+    dogrulaCagrilari.add(
+        {'tesis_kodu': tesisKodu, 'rol': rol ?? '<yok>', 'kod': kod});
     return (durum: 'giris');
   }
 }

@@ -4,14 +4,34 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/i18n/l10n.dart';
 import 'auth_controller.dart';
 import 'giris_hata_metni.dart';
-import 'kayit_screen.dart' show KayitRolu;
 import 'sosyal_giris.dart';
 
 /// (P184) SSO TAMAMLAMA FORMU — girişte "Tesis ID ile tamamlama".
 ///
-/// Saglayici "bu Google hesabinin sahibisin" der; hangi tesiste kim oldugunu
-/// SOYLEMEZ. Onu ROL + Tesis ID soyler; e-posta sahipligini saglayicinin
+/// Saglayici "bu Google hesabinin sahibisin" der; hangi TESISTE oldugunu
+/// SOYLEMEZ. Onu Tesis ID soyler; e-posta sahipligini saglayicinin
 /// `email_verified` bayragi (OTP atlanir) ya da e-posta OTP kanitlar. SMS YOK.
+///
+/// ===========================================================================
+/// (P194) ROL SORULMAZ — BURASI BIR GIRIS EKRANI
+/// ===========================================================================
+/// Bu form ROL ACILIR LISTESI iceriyordu ve liste `KayitRolu`ydan
+/// besleniyordu — yani KAYIT ekraninin listesinden. Yonetici mobilden
+/// KAYDOLAMADIGI icin o listede yonetici YOK; sonucta web'de kaydolmus bir
+/// yonetici Google ile giris denedigi anda kendi rolunu SECEMIYOR, "Sakin"
+/// secmek zorunda kaliyor ve sunucu hakli olarak reddediyordu.
+///
+/// OLCULDU (dev API, gercek yonetici hesabi + dogrulanmis Google kimligi,
+/// ayni Tesis ID):
+///     rol="resident" gonderildi -> durum="onay_bekliyor", jeton YOK
+///     rol GONDERILMEDI          -> durum="giris",         jeton VAR
+///
+/// Sunucu P191 §1'den beri hazirdi: rol beyani yoksa rol HESAPTAN okunur ve
+/// `_TAMAMLA_ROLLERI` yoneticiyi de kapsar. Eksik olan tek sey, istemcinin
+/// beyani birakmasiydi.
+///
+/// KURAL: GIRIS kimlik sorar, rol SORMAZ. Kim oldugunu sistem bilir.
+/// Rol secimi YALNIZ kayit ekraninda anlamlidir ve orada DURUYOR.
 ///
 /// AYRI BIR ROTA DEGIL, GIRIS EKRANININ BIR MODU: akis giristen ayrilmaz.
 /// `oauthIptal()` durumu temizler.
@@ -29,7 +49,6 @@ class _SosyalBaglamaFormuState extends ConsumerState<SosyalBaglamaFormu> {
   final _formKey = GlobalKey<FormState>();
   final _tesisCtrl = TextEditingController();
   final _kodCtrl = TextEditingController();
-  KayitRolu _rol = KayitRolu.sakin;
   _Asama _asama = _Asama.form;
 
   @override
@@ -39,17 +58,11 @@ class _SosyalBaglamaFormuState extends ConsumerState<SosyalBaglamaFormu> {
     super.dispose();
   }
 
-  String _rolEtiketi(AppLocalizations l10n, KayitRolu rol) => switch (rol) {
-        KayitRolu.sakin => l10n.kayitRolSakin,
-        KayitRolu.guvenlik => l10n.kayitRolGuvenlik,
-        KayitRolu.tesisGorevlisi => l10n.kayitRolTesisGorevlisi,
-      };
-
   Future<void> _tamamla() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    // ROL GONDERILMEZ: sunucu rolu hesaptan okur (bkz. sinif basligi).
     final sonuc = await ref.read(authControllerProvider.notifier).oauthRolTamamla(
           tesisKodu: _tesisCtrl.text.trim(),
-          rol: _rol.kimlik,
         );
     if (sonuc == null || !mounted) return;
     // `giris` -> state authenticated; router devralir.
@@ -64,8 +77,10 @@ class _SosyalBaglamaFormuState extends ConsumerState<SosyalBaglamaFormu> {
     final durum = await ref
         .read(authControllerProvider.notifier)
         .oauthRolTamamlaDogrula(
+          // ROL YOK — 1. adimla AYNI kural (bkz. sinif basligi). Ikinci
+          // adimda rol beyan etmek, OTP yolundaki yoneticiyi yine
+          // "onay_bekliyor" cikmazina atardi.
           tesisKodu: _tesisCtrl.text.trim(),
-          rol: _rol.kimlik,
           kod: _kodCtrl.text.trim(),
         );
     if (!mounted) return;
@@ -130,21 +145,7 @@ class _SosyalBaglamaFormuState extends ConsumerState<SosyalBaglamaFormu> {
           ],
           const SizedBox(height: 16),
           if (_asama == _Asama.form) ...[
-            DropdownButtonFormField<KayitRolu>(
-              key: const Key('sosyal-rol'),
-              initialValue: _rol,
-              decoration: InputDecoration(
-                labelText: l10n.sosyalRol,
-                border: const OutlineInputBorder(),
-              ),
-              items: [
-                for (final r in KayitRolu.values)
-                  DropdownMenuItem(value: r, child: Text(_rolEtiketi(l10n, r))),
-              ],
-              onChanged:
-                  submitting ? null : (r) => setState(() => _rol = r ?? _rol),
-            ),
-            const SizedBox(height: 16),
+            // (P194) ROL SECIMI KALDIRILDI — bkz. sinif basligi.
             TextFormField(
               key: const Key('sosyal-tesis-kodu'),
               controller: _tesisCtrl,
