@@ -755,4 +755,16 @@ değişiklikleri" başlığında yazılı).
 **Flake (3):** `test_scheduler_vardiya_ozeti` (2) ve `test_rapor_kuyruk`
 (1, `psycopg.OperationalError`). Üçü de **izolasyonda geçiyor**
 (29 passed) — depoda kayıtlı "uzun oturumda PG bağlantı tükenmesi"
-sınıfı; koda bağlı değil.
+sınıfı; koda bağlı değil. **Doğrulandı:** `db api worker beat` yeniden
+başlatılıp takım baştan koşuldu → **2234 passed, 31 skipped, 0 failed**
+(22 dk).
+
+## Üç takımın son durumu
+
+| Takım | Sonuç |
+|---|---|
+| backend | **2234 geçti**, 31 atlandı, 0 düşük |
+| admin-web | **1507 geçti** (159 dosya), 0 düşük |
+| Flutter (mobil) | **1937 geçti**, 0 düşük |
+
+P193 öncesine göre: backend +17, panel +26 test.
