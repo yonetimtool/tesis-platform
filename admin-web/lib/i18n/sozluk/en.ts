@@ -2357,4 +2357,9 @@ export const en: Sozluk = {
   butYil: "Year",
   butHedefYaz: "Set target",
   butKarsilastirmaAciklama: "Without a monthly target, one twelfth of the yearly target is used.",
+  otoHatirlatmaGecmisi: "Reminders sent",
+  otoGonderilenOkunan: "{gonderilen} sent · {okunan} opened",
+  otoOkundu: "Opened",
+  otoOkunmadi: "Not opened",
+  otoAlici: "Recipient",
 };

@@ -2420,4 +2420,9 @@ export const tr = {
   butYil: "Yıl",
   butHedefYaz: "Hedef belirle",
   butKarsilastirmaAciklama: "Aylık hedef yoksa yıllık hedefin aya düşen payı kullanılır.",
+  otoHatirlatmaGecmisi: "Gönderilen hatırlatmalar",
+  otoGonderilenOkunan: "{gonderilen} gönderildi · {okunan} açıldı",
+  otoOkundu: "Açıldı",
+  otoOkunmadi: "Açılmadı",
+  otoAlici: "Alıcı",
 } as const;

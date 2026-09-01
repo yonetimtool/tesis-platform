@@ -66,10 +66,19 @@ def _out(row: Notification, dil: str) -> NotificationOut:
 
     Kimlik yoksa (tur 16 oncesi satir) kayittaki `mesaj` aynen doner —
     geri uyumluluk; o metin donmus Turkce'dir ve cevrilemez.
+
+    (P192 §4.2) `mesaj_veri.metin` DOLUYSA O KULLANILIR ve CEVRILMEZ:
+    yoneticinin kendi yazdigi hatirlatma cumlesidir ve push'ta da aynen
+    gonderilmistir. Ikisinin ayrismasi, sakinin telefonunda bir cumle,
+    uygulamada baska bir cumle gormesi olurdu.
     """
     out = NotificationOut.model_validate(row)
-    if row.mesaj_kimlik:
-        out.mesaj = push_govdesi(row.mesaj_kimlik, dil, row.mesaj_veri or {})
+    veri = row.mesaj_veri or {}
+    ozel = veri.get("metin") if isinstance(veri, dict) else None
+    if ozel:
+        out.mesaj = str(ozel)
+    elif row.mesaj_kimlik:
+        out.mesaj = push_govdesi(row.mesaj_kimlik, dil, veri)
     return out
 
 

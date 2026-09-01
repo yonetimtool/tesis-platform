@@ -53,6 +53,7 @@ def dispatch_external(
     target_user_ids: Sequence[uuid.UUID] | None = None,
     params: Mapping[str, object] | None = None,
     data: Mapping[str, str] | None = None,
+    govde: str | None = None,
 ) -> None:
     """Gercek-gonderim kancasi (FCM push) — EK gonderim, in-app'i etkilemez.
 
@@ -66,6 +67,11 @@ def dispatch_external(
     (orn. talep yaniti -> talebi acan sakin); yoksa `target_roles`. Ikisi de
     yoksa (veya tenant_id yoksa) eski no-op davranisi (yalniz log). Push
     hatasi bildirim akisini KIRMAZ (try/except + log).
+
+    (P192 §4.2) `govde` — YONETICININ YAZDIGI METIN. Verilirse sablonun
+    YERINE gecer ve DILE GORE DEGISMEZ: yoneticinin kurdugu cumleyi
+    makineyle cevirmek, onun soylemedigi bir seyi ona soyletmek olurdu.
+    Baslik yine sablondan gelir (bildirim listesinde tur okunabilsin).
     """
     # Log OPERATORE hitap eder: kimlik + parametre ADLARI, cumle degil.
     #
@@ -82,6 +88,7 @@ def dispatch_external(
             kimlik=kimlik,
             params=params,
             data=data,
+            govde=govde,
         )
     except Exception:  # savunma: push cokerse in-app bildirim akisi devam eder
         logger.exception("push gonderimi basarisiz (in-app bildirimi etkilenmez)")
@@ -118,6 +125,8 @@ def _push_to_devices(
     kimlik: str,
     params: Mapping[str, object] | None,
     data: Mapping[str, str] | None,
+    #: (P192 §4.2) Yoneticinin yazdigi metin — sablonun YERINE gecer.
+    govde: str | None = None,
 ) -> None:
     provider = push.get_push_provider()
     if tenant_id is None or not (target_roles or target_user_ids):
@@ -164,7 +173,7 @@ def _push_to_devices(
         sonuc = provider.send(
             tokenlar,
             title=push_basligi(kimlik, dil),
-            body=push_govdesi(kimlik, dil, params),
+            body=govde or push_govdesi(kimlik, dil, params),
             data=dict(data or {}),
         )
         # FCM'in KALICI gecersiz dedigi token'lar -> budanacak. `getattr`

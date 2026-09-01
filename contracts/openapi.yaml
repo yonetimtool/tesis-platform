@@ -5792,6 +5792,51 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/TahsilatGostergesi" }
+  /finans/hatirlatma-gecmisi:
+    get:
+      tags: [finans]
+      summary: "(P192 §4.2) Kaç hatırlatma gitti, kim açtı"
+      description: |
+        Sayilar `otomasyon_gunlugu`nda da var ama orasi "gorev ne yapti"
+        sorusunu yanitlar; burasi "kime ulasti"yi.
+
+        OKUNDU BILGISI ALICIYA AITTIR: her alici icin ayri `notification`
+        satiri yazilir, yoksa bir kullanicinin okumasi otekininkini de
+        "okundu" yapardi.
+
+        ELLE ve OTOMATIK hatirlatmalar AYNI listede — sakin acisindan
+        ikisi de ayni bildirimdir.
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+        - name: offset
+          in: query
+          schema: { type: integer, minimum: 0, default: 0 }
+      responses:
+        "200":
+          description: Hatırlatma geçmişi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [meta, gonderilen, okunan, items]
+                properties:
+                  meta: { $ref: "#/components/schemas/PageMeta" }
+                  gonderilen: { type: integer }
+                  okunan: { type: integer }
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      required: [id, gonderim_zamani, okundu]
+                      properties:
+                        id: { type: string, format: uuid }
+                        user_id: { type: string, format: uuid, nullable: true }
+                        ad: { type: string, nullable: true }
+                        gonderim_zamani: { type: string, format: date-time }
+                        okundu: { type: boolean }
+                        tutar: { type: string, nullable: true }
   /finans/borclulara/hatirlat:
     post:
       tags: [finans]
@@ -16262,7 +16307,10 @@ components:
           description: >-
             NULL = urun varsayilani (cok dilli). Metin girilirse O KULLANILIR
             ve CEVRILMEZ: yoneticinin yazdigi cumleyi makineyle degistirmek,
-            onun soylemedigi bir seyi ona soyletmek olurdu.
+            onun soylemedigi bir seyi ona soyletmek olurdu. `{tutar}` ve
+            `{vade}` alanlari doldurulur; bilinmeyen bir alan yazilmissa
+            metin OLDUGU GIBI gonderilir (bicimlendirme hatasi yuzunden
+            hic gondermemek en kotu sonuc olurdu).
         son_calisma: { type: string, format: date, nullable: true }
     HatirlatmaAyariUpdate:
       type: object

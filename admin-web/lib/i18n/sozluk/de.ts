@@ -2357,4 +2357,9 @@ export const de: Sozluk = {
   butYil: "Jahr",
   butHedefYaz: "Ziel festlegen",
   butKarsilastirmaAciklama: "Ohne Monatsziel wird ein Zwölftel des Jahresziels verwendet.",
+  otoHatirlatmaGecmisi: "Gesendete Erinnerungen",
+  otoGonderilenOkunan: "{gonderilen} gesendet · {okunan} geöffnet",
+  otoOkundu: "Geöffnet",
+  otoOkunmadi: "Nicht geöffnet",
+  otoAlici: "Empfänger",
 };

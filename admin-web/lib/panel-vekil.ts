@@ -73,6 +73,7 @@ export const OKUMA: Record<string, string> = {
   "tahsilat-gostergesi": "/finans/tahsilat-gostergesi",
   "butce-hedefleri": "/budget/hedefler",
   "butce-karsilastirma": "/budget/karsilastirma",
+  "hatirlatma-gecmisi": "/finans/hatirlatma-gecmisi",
   "butce-kategorileri": "/budget/categories",
 };
 

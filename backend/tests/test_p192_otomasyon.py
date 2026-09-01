@@ -406,3 +406,60 @@ def test_makbuz_arsivi_sakine_acik_ve_kendi_makbuzlari(client, adm, world):
     assert "items" in govde and "meta" in govde
     # Yonetici SAKIN ucunu kullanamaz (rol kapisi).
     assert client.get("/me/makbuzlar", headers=adm).status_code == 403
+
+
+# =============== 4.2 YONETICININ METNI + GORUNUR IZ ======================== #
+async def test_yoneticinin_METNI_kullanilir_ve_cevrilmez(
+    client, adm, world, db_session, owner_conn
+):
+    """Yoneticinin yazdigi cumleyi makineyle degistirmek, onun
+    soylemedigi bir seyi ona soyletmek olurdu — metin CEVRILMEZ."""
+    from app import otomasyon
+
+    resident = _headers(client, world["slug_a"], world["resident_a"])
+    resident_id = client.get("/me", headers=resident).json()["id"]
+    daire = _daire(client, adm)
+    client.post(f"/units/{daire['id']}/residents", headers=adm,
+                json={"user_id": resident_id, "rol_tipi": "malik"})
+    vade = date.today() - timedelta(days=3)
+    client.post("/dues/assessments", headers=adm, json={
+        "unit_id": daire["id"], "donem": "2033-12", "tutar_kurus": 12300,
+        "son_odeme_tarihi": vade.isoformat()})
+
+    client.patch("/hatirlatma-ayari", headers=adm, json={
+        "aktif": True, "vade_oncesi_gun": 0, "kademeler": [3],
+        "metin": "Sayin komsumuz, {tutar} borcunuz var. Site Yonetimi"})
+
+    sonuc = await otomasyon.borc_hatirlatmalari(db_session, world["a"], date.today())
+    await db_session.commit()
+    assert sonuc["durum"] == "gonderildi"
+
+    # KALICI SATIRDA da ozel metin var — push ile in-app ayni cumleyi
+    # gostermeli.
+    veri = owner_conn.execute(
+        "SELECT mesaj_veri FROM notification WHERE tenant_id=%s "
+        "AND tip='aidat_hatirlatma' AND user_id=%s "
+        "ORDER BY created_at DESC LIMIT 1",
+        (str(world["a"]), resident_id),
+    ).fetchone()[0]
+    assert veri["metin"].startswith("Sayin komsumuz")
+    assert "123" in veri["metin"]  # {tutar} dolduruldu
+
+    # Sakin bildirim listesinde de AYNI cumleyi gorur.
+    liste = client.get("/notifications", headers=resident).json()["items"]
+    hedef = next(n for n in liste if n["tip"] == "aidat_hatirlatma")
+    assert hedef["mesaj"].startswith("Sayin komsumuz")
+
+    client.patch("/hatirlatma-ayari", headers=adm, json={"metin": None})
+
+
+def test_hatirlatma_gecmisi_gonderilen_ve_OKUNAN_gosterir(client, adm, world):
+    """Sayilar `otomasyon_gunlugu`nda da var ama orasi "gorev ne yapti"
+    sorusunu yanitlar; burasi "kime ulasti"yi."""
+    r = client.get("/finans/hatirlatma-gecmisi", headers=adm)
+    assert r.status_code == 200, r.text
+    govde = r.json()
+    assert "gonderilen" in govde and "okunan" in govde
+    assert govde["okunan"] <= govde["gonderilen"]
+    for satir in govde["items"]:
+        assert "okundu" in satir and "gonderim_zamani" in satir

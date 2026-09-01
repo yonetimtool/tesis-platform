@@ -2357,4 +2357,9 @@ export const ru: Sozluk = {
   butYil: "Год",
   butHedefYaz: "Задать план",
   butKarsilastirmaAciklama: "Если месячного плана нет, берётся одна двенадцатая годового.",
+  otoHatirlatmaGecmisi: "Отправленные напоминания",
+  otoGonderilenOkunan: "Отправлено {gonderilen} · открыто {okunan}",
+  otoOkundu: "Открыто",
+  otoOkunmadi: "Не открыто",
+  otoAlici: "Получатель",
 };

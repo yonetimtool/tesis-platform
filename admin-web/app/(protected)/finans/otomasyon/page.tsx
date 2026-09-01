@@ -546,6 +546,75 @@ function GiderlerKarti() {
   );
 }
 
+/** Okundu durumunun sozluk anahtari.
+ *
+ * Uclu ifade DEGIL: sabit-metin taramasi JSX icindeki her uclu dizeyi
+ * cevrilmemis metin sayiyor ve buradakiler SOZLUK ANAHTARIDIR. */
+function okunduEtiketi(okundu: boolean): SozlukAnahtari {
+  if (okundu) return "otoOkundu";
+  return "otoOkunmadi";
+}
+
+// -------------------- HATIRLATMA GECMISI (gorunur iz) ---------------------- #
+/** (P192 §4.2) "Kac hatirlatma gitti, kim acti".
+ *
+ * Otomasyon gunlugu "gorev ne yapti" sorusunu yanitlar; bu kart "kime
+ * ulasti"yi. Ikisi ayni sayfada cunku yonetici once hatirlatmayi acar,
+ * sonra ise yarayip yaramadigina bakar.
+ */
+function HatirlatmaGecmisiKarti() {
+  const t = useT();
+  const { data, error, isLoading, mutate } = useSWR<{
+    gonderilen: number;
+    okunan: number;
+    items: {
+      id: string;
+      ad: string | null;
+      gonderim_zamani: string;
+      okundu: boolean;
+      tutar: string | null;
+    }[];
+  }>("/api/panel/hatirlatma-gecmisi?limit=20", jsonFetcher);
+
+  const kolonlar: Kolon<{
+    id: string;
+    ad: string | null;
+    gonderim_zamani: string;
+    okundu: boolean;
+    tutar: string | null;
+  }>[] = [
+    { id: "zaman", baslik: t("otoCalismaZamani"),
+      hucre: (h) => h.gonderim_zamani.slice(0, 16).replace("T", " ") },
+    { id: "alici", baslik: t("otoAlici"), hucre: (h) => h.ad ?? YOK },
+    { id: "tutar", baslik: t("finansSutunTutar"), hucre: (h) => h.tutar ?? YOK },
+    { id: "okundu", baslik: t("otoOkundu"),
+      hucre: (h) => t(okunduEtiketi(h.okundu)) },
+  ];
+
+  return (
+    <Kart>
+      <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
+        {t("otoHatirlatmaGecmisi")}
+      </h2>
+      <p className="mb-3" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+        {t("otoGonderilenOkunan", {
+          gonderilen: data?.gonderilen ?? 0,
+          okunan: data?.okunan ?? 0,
+        })}
+      </p>
+      <VeriTablosu
+        kolonlar={kolonlar}
+        satirlar={data?.items ?? []}
+        satirId={(h) => h.id}
+        yukleniyor={isLoading}
+        bosBaslik={t("otoKayitYok")}
+        hata={error ? t("ortakHataOlustu") : null}
+        onTekrar={() => void mutate()}
+      />
+    </Kart>
+  );
+}
+
 // ------------------------------- GUNLUK ----------------------------------- #
 function GunlukKarti() {
   const t = useT();
@@ -597,6 +666,7 @@ export default function OtomasyonPage() {
       </h1>
       <PlanlarKarti />
       <HatirlatmaKarti />
+      <HatirlatmaGecmisiKarti />
       <GiderlerKarti />
       <GunlukKarti />
     </div>

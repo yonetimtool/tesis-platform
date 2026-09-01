@@ -126,12 +126,22 @@ async def _gunluk_yaz(
     await db.flush()
 
 
-def _bildir(tip: str, *, tenant_id: uuid.UUID, aliciler, params: dict) -> None:
+def _bildir(
+    tip: str,
+    *,
+    tenant_id: uuid.UUID,
+    aliciler,
+    params: dict,
+    govde: str | None = None,
+) -> None:
     """Push GONDER (kalici satiri cagiran yazar).
 
     Import ICERIDE: `scheduler.notify` Celery'ye baglidir ve modulu
     ic-halkaya tasimak, testlerin bu modulu iceri almasini kuyruk
     altyapisina bagimli kilardi.
+
+    `govde` verilirse (yoneticinin yazdigi hatirlatma metni) sablonun
+    yerine gecer ve CEVRILMEZ.
     """
     from .scheduler.notify import dispatch_external
 
@@ -143,6 +153,7 @@ def _bildir(tip: str, *, tenant_id: uuid.UUID, aliciler, params: dict) -> None:
         target_user_ids=tuple(aliciler),
         params=params,
         data={"tip": tip},
+        govde=govde,
     )
 
 
@@ -397,13 +408,26 @@ async def borc_hatirlatmalari(
 
     for user_id, (kalan, vade) in kisi.items():
         params = {"tutar": _tl(kalan), "vade": vade.isoformat()}
+        # (P192 §4.2) YONETICININ METNI VARSA O GIDER. `{tutar}`/`{vade}`
+        # alanlari doldurulur; bilinmeyen bir alan yazilmissa metin OLDUGU
+        # GIBI gonderilir — yoneticinin cumlesini bir bicimlendirme hatasi
+        # yuzunden hic gondermemek, en kotu sonuc olurdu.
+        ozel = None
+        if ayar.metin:
+            try:
+                ozel = ayar.metin.format(**params)
+            except (KeyError, IndexError, ValueError):
+                ozel = ayar.metin
         _bildir(
             "aidat_hatirlatma", tenant_id=tenant_id, aliciler=[user_id],
-            params=params,
+            params=params, govde=ozel,
         )
         sakin_bildirimi_yaz(
             db, tenant_id=tenant_id, tip="aidat_hatirlatma",
-            user_ids=[user_id], veri=params,
+            user_ids=[user_id],
+            # Kalici satirda da ozel metin TASINIR: in-app liste ile push
+            # ayni cumleyi gostermeli.
+            veri={**params, **({"metin": ozel} if ozel else {})},
         )
     ayar.son_calisma = bugun
     await _gunluk_yaz(

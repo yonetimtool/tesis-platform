@@ -2357,4 +2357,9 @@ export const ar: Sozluk = {
   butYil: "السنة",
   butHedefYaz: "تحديد المستهدف",
   butKarsilastirmaAciklama: "في غياب هدف شهري يُستخدم جزء من اثني عشر من الهدف السنوي.",
+  otoHatirlatmaGecmisi: "التذكيرات المُرسلة",
+  otoGonderilenOkunan: "أُرسل {gonderilen} · فُتح {okunan}",
+  otoOkundu: "فُتح",
+  otoOkunmadi: "لم يُفتح",
+  otoAlici: "المستلم",
 };

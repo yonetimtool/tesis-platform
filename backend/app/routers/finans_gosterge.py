@@ -16,17 +16,19 @@ import uuid
 from datetime import date
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .. import defter, yaslandirma
 from ..akis_metinleri import _tl
 from ..audit import Action, audit_user
 from ..deps import get_tenant_db, require_role
-from ..models import AppUser, DuesAssessment
+from ..models import AppUser, DuesAssessment, Notification
 from ..sakin_bildirimi import sakin_bildirimi_yaz
 from ..schemas import (
     BorcluTopluIstek,
+    HatirlatmaGecmisi,
+    HatirlatmaGecmisiSatiri,
     OdemePlaniIstek,
     OdemePlaniSonuc,
     TahsilatGostergesi,
@@ -125,6 +127,67 @@ async def tahsilat_gostergesi(
             if oran is not None and onceki_oran is not None
             else None
         ),
+    )
+
+
+# ==================== 4.2 HATIRLATMA GECMISI (gorunur iz) =================== #
+@router.get("/finans/hatirlatma-gecmisi", response_model=HatirlatmaGecmisi)
+async def hatirlatma_gecmisi(
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_tenant_db),
+    _: AppUser = Depends(_OKUR),
+) -> HatirlatmaGecmisi:
+    """(P192 §4.2) Kac hatirlatma gitti, KIM ACTI.
+
+    Sayilar `otomasyon_gunlugu`nda da var ama orasi "gorev ne yapti"
+    sorusunu yanitlar; burasi "kime ulasti"yi. Okundu bilgisi ALICIYA
+    aittir (alici basina ayri `notification` satiri), yoksa bir
+    kullanicinin okumasi otekininkini de okundu yapardi.
+
+    ELLE ve OTOMATIK hatirlatmalar AYNI listede: sakin acisindan ikisi de
+    ayni bildirimdir ve ayirmak, "bu kisiye kac kez yazdik" sorusunu iki
+    ekrana bolerdi.
+    """
+    where = [
+        Notification.tip == "aidat_hatirlatma",
+        Notification.silindi_at.is_(None),
+    ]
+    total = (
+        await db.execute(
+            select(func.count()).select_from(Notification).where(*where)
+        )
+    ).scalar_one()
+    okunan = (
+        await db.execute(
+            select(func.count()).select_from(Notification)
+            .where(*where, Notification.okundu.is_(True))
+        )
+    ).scalar_one()
+    rows = (
+        await db.execute(
+            select(Notification, AppUser.ad)
+            .outerjoin(AppUser, AppUser.id == Notification.user_id)
+            .where(*where)
+            .order_by(Notification.created_at.desc(), Notification.id.desc())
+            .limit(limit).offset(offset)
+        )
+    ).all()
+    return HatirlatmaGecmisi(
+        meta={"limit": limit, "offset": offset, "total": total},
+        gonderilen=int(total),
+        okunan=int(okunan),
+        items=[
+            HatirlatmaGecmisiSatiri(
+                id=n.id,
+                user_id=n.user_id,
+                ad=ad,
+                gonderim_zamani=n.created_at,
+                okundu=n.okundu,
+                tutar=(n.mesaj_veri or {}).get("tutar"),
+            )
+            for n, ad in rows
+        ],
     )
 
 

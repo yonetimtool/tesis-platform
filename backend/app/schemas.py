@@ -5146,6 +5146,29 @@ class TahsilatGostergesi(BaseModel):
     degisim_puan: int | None = None
 
 
+class HatirlatmaGecmisiSatiri(BaseModel):
+    """(P192 §4.2) "Kac hatirlatma gitti, kim acti" — gorunur iz.
+
+    OKUNDU BILGISI ALICIYA AITTIR: her alici icin ayri `notification`
+    satiri yazilir (bkz. `sakin_bildirimi_yaz`), yoksa bir kullanicinin
+    okumasi otekininkini de "okundu" yapardi.
+    """
+
+    id: uuid.UUID
+    user_id: uuid.UUID | None = None
+    ad: str | None = None
+    gonderim_zamani: datetime
+    okundu: bool
+    tutar: str | None = None
+
+
+class HatirlatmaGecmisi(BaseModel):
+    meta: PageMetaOut
+    gonderilen: int
+    okunan: int
+    items: list[HatirlatmaGecmisiSatiri]
+
+
 class BorcluTopluIstek(BaseModel):
     """Secilen borclulara toplu islem.
 

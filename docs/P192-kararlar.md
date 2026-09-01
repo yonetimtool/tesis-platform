@@ -345,6 +345,30 @@ aynı güne iki kural denk gelirse sakine iki bildirim gitmemeli.
 Yöneticinin yazdığı metin **çevrilmez**: onun cümlesini makineyle
 değiştirmek, söylemediği bir şeyi ona söyletmek olurdu.
 
+#### Yöneticinin yazdığı metin gerçekten gidiyor
+
+`hatirlatma_ayari.metin` alanı vardı ama gönderimde **kullanılmıyordu** —
+düzenlenebilir ama etkisiz bir alan, hiç olmamasından kötüdür.
+`dispatch_external` artık `govde` parametresi alıyor: metin verilirse
+şablonun yerine geçer ve **çevrilmez**. `{tutar}` / `{vade}` alanları
+doldurulur; bilinmeyen bir alan yazılmışsa metin **olduğu gibi**
+gönderilir — yöneticinin cümlesini bir biçimlendirme hatası yüzünden hiç
+göndermemek en kötü sonuç olurdu.
+
+Aynı metin kalıcı `notification` satırına da yazılıyor ve okuma yolu onu
+tercih ediyor: sakinin telefonunda bir cümle, uygulamada başka bir cümle
+görmesi olurdu.
+
+#### "Kaç hatırlatma gitti, kim açtı"
+
+`GET /finans/hatirlatma-gecmisi`. Sayılar `otomasyon_gunlugu`nda da var
+ama orası "görev ne yaptı" sorusunu yanıtlar; bu uç "kime ulaştı"yı.
+Okundu bilgisi **alıcıya aittir** (alıcı başına ayrı `notification`
+satırı), yoksa bir kullanıcının okuması ötekininkini de okundu yapardı.
+Elle ve otomatik hatırlatmalar aynı listede — sakin açısından ikisi de
+aynı bildirimdir ve ayırmak "bu kişiye kaç kez yazdık" sorusunu iki ekrana
+bölerdi.
+
 ### 4.3 Banka hareketlerinin kasaya yansıması
 
 Bankadan **çıkan** para artık gider olarak deftere giriyor. Önceden

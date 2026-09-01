@@ -165,6 +165,7 @@ POST   /finans/hareketler                                   IZIN   RED    RED   
 POST   /finans/hareketler/{hareket_id}/iptal                IZIN   RED    RED    RED    RED    RED    RED   
 POST   /finans/hareketler/{hareket_id}/onayla               IZIN   RED    RED    RED    RED    RED    RED   
 POST   /finans/hareketler/{hareket_id}/reddet               IZIN   RED    RED    RED    RED    RED    RED   
+GET    /finans/hatirlatma-gecmisi                           IZIN   IZIN   RED    RED    RED    RED    IZIN  
 POST   /finans/iade                                         IZIN   RED    RED    RED    RED    RED    RED   
 GET    /finans/icra-dosyalari                               IZIN   IZIN   RED    RED    RED    RED    IZIN  
 POST   /finans/icra-dosyalari                               IZIN   IZIN   RED    RED    RED    RED    RED   
