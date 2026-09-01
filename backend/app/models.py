@@ -3123,6 +3123,10 @@ class BankTransaction(Base):
         UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
     )
     kaynak: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'ekstre'"))
+    #: (P192 §2.1, goc 0084) Ekstrenin ait oldugu BANKA HESABI. Bir tesisin
+    #: birden cok hesabi olabilir; ikisinin ekstresini ayni kasaya yazmak
+    #: iki hesabin bakiyesini tek sayiya karistirmak olurdu.
+    kasa_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     external_transaction_id: Mapped[str] = mapped_column(Text, nullable=False)
     islem_tarihi = mapped_column(Date, nullable=False)
     tutar_kurus: Mapped[int] = mapped_column(BigInteger, nullable=False)

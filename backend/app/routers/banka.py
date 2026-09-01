@@ -44,6 +44,7 @@ from ..banka import ESIK_OTOMATIK, Karar, iban_maskele
 from ..banka_kaynak import KaynakHatasi, ekstre_satirlarindan, mt940_ayristir
 from ..banka_servis import adaylari_topla, geri_al, karari_uygula, kararlari_uret
 from ..crud_helpers import get_or_404
+from .. import defter
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..makbuz import makbuz_pdf
@@ -51,6 +52,7 @@ from ..models import (
     AppUser,
     BankTransaction,
     DuesAssessment,
+    Kasa,
     PaymentMatch,
     Receipt,
     Tenant,
@@ -136,6 +138,15 @@ async def ice_aktar(
     if not hareketler:
         raise APIError(422, "validation_error", "banka_ekstre_bos")
 
+    # (P192 §2.1) Hedef banka hesabi BIR KEZ cozulur: satir basina cozmek
+    # ayni ekstre icin N kez ayni sorguyu calistirmak olurdu.
+    if body.kasa_id is not None:
+        if (await db.execute(
+            select(Kasa.id).where(Kasa.id == body.kasa_id)
+        )).scalar_one_or_none() is None:
+            raise APIError(422, "invalid_reference", "kasa_bulunamadi")
+    hedef_kasa = await defter.kasa_coz(db, user.tenant_id, body.kasa_id, banka=True)
+
     eklenen = 0
     yinelenen = 0
     for ham in hareketler:
@@ -151,6 +162,7 @@ async def ice_aktar(
             karsi_ad=ham.karsi_ad,
             karsi_iban=ham.karsi_iban,
             raw_data=dict(ham.raw),
+            kasa_id=hedef_kasa,
         )
         try:
             async with db.begin_nested():
@@ -261,7 +273,9 @@ async def _uygula(
     try:
         async with db.begin_nested():
             eslesmeler = await karari_uygula(
-                db, yonetici=user, hareket=hareket, karar=karar
+                db, yonetici=user, hareket=hareket, karar=karar,
+                # (P192 §2.1) Para EKSTRENIN AIT OLDUGU hesaba girer.
+                kasa_id=hareket.kasa_id,
             )
     except IntegrityError:
         logger.warning(

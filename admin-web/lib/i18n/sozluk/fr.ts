@@ -1563,6 +1563,8 @@ export const fr: Sozluk = {
   finansKasaKod: "Code",
   finansKasaAd: "Caisse",
   finansBakiye: "Solde",
+  finansKasaBekleyen: "En attente",
+  finansKasaBekleyenIpucu: "Sortie en attente d'approbation — non incluse dans le solde",
   finansGenelToplam: "Total général",
   finansYeniHareket: "Nouveau mouvement",
   finansTip: "Type",

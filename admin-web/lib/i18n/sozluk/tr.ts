@@ -1625,6 +1625,8 @@ export const tr = {
   finansKasaKod: "Kod",
   finansKasaAd: "Kasa",
   finansBakiye: "Bakiye",
+  finansKasaBekleyen: "Bekleyen",
+  finansKasaBekleyenIpucu: "Onay bekleyen çıkış — bakiyeye dahil değil",
   finansGenelToplam: "Genel toplam",
   finansYeniHareket: "Yeni hareket",
   finansTip: "Tür",

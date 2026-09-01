@@ -1563,6 +1563,8 @@ export const ru: Sozluk = {
   finansKasaKod: "Код",
   finansKasaAd: "Касса",
   finansBakiye: "Остаток",
+  finansKasaBekleyen: "В ожидании",
+  finansKasaBekleyenIpucu: "Ожидающий утверждения расход — не входит в баланс",
   finansGenelToplam: "Общий итог",
   finansYeniHareket: "Новое движение",
   finansTip: "Тип",

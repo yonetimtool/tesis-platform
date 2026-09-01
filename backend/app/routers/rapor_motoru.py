@@ -24,6 +24,7 @@ from sqlalchemy import func, literal_column, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..borclandirma import gecikme_kurus
+from .. import defter
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..models import (
@@ -919,17 +920,19 @@ async def _denetim(db: AsyncSession, p: RaporParam) -> RaporSonuc:
     mutabakat degil beyandir.
     """
     kasalar = (await db.execute(select(Kasa).order_by(Kasa.kod))).scalars().all()
-    hareket = dict(
-        (await db.execute(
-            select(FinansalHareket.kasa_id, FinansalHareket.yon,
-                   func.sum(FinansalHareket.tutar_kurus))
-            .group_by(FinansalHareket.kasa_id, FinansalHareket.yon)
-        )).all() and []
-    )
+    # (P192 §2.2) YALNIZ GERCEKLESMIS hareketler. Suzgec yokken onay
+    # bekleyen bir gider mutabakat tablosunda cikis olarak gorunuyor ve
+    # "acilis + hareket = bakiye" esitligi kasa bakiyeleri ekraniyla
+    # ayrisiyordu.
+    #
+    # (Burada daha once bir OLU SATIR vardi: sorgu calistirilip sonucu
+    # `and []` ile atiliyordu; `docs/finans-analiz.md` raporladi.)
+    hareket: dict = {}
     ham = (
         await db.execute(
             select(FinansalHareket.kasa_id, FinansalHareket.yon,
                    func.sum(FinansalHareket.tutar_kurus))
+            .where(FinansalHareket.durum == defter.GERCEKLESEN)
             .group_by(FinansalHareket.kasa_id, FinansalHareket.yon)
         )
     ).all()

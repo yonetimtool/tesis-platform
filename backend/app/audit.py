@@ -89,6 +89,11 @@ class Action:
     MESAJ_SABLON_SIL = "mesaj_sablon_sil"
     MESAJ_GONDER = "mesaj_gonder"
     FINANS_HAREKET_CREATE = "finans_hareket_create"
+    # (P192 §2.3) Harcama onay akisi. CREATE'ten AYRI bir eylem: "kim
+    # girdi" ile "kim onayladi" ayni kayitta toplanirsa, onayi verenin
+    # kim oldugu sorusu denetimde cevapsiz kalirdi.
+    FINANS_HAREKET_ONAY = "finans_hareket_onay"
+    FINANS_HAREKET_RED = "finans_hareket_red"
     ICRA_DOSYA_CREATE = "icra_dosya_create"
     ICRA_DOSYA_UPDATE = "icra_dosya_update"
     MUHASEBE_TANIM_CREATE = "muhasebe_tanim_create"

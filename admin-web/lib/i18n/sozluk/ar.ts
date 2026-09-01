@@ -1563,6 +1563,8 @@ export const ar: Sozluk = {
   finansKasaKod: "الرمز",
   finansKasaAd: "الصندوق",
   finansBakiye: "الرصيد",
+  finansKasaBekleyen: "قيد الانتظار",
+  finansKasaBekleyenIpucu: "مصروف بانتظار الموافقة — غير مُدرج في الرصيد",
   finansGenelToplam: "الإجمالي العام",
   finansYeniHareket: "حركة جديدة",
   finansTip: "النوع",

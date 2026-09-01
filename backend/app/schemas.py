@@ -799,6 +799,10 @@ class BankaIceAktarIstek(BaseModel):
     satirlar: list[BankaEkstreSatiri] | None = None
     #: MT940 düz metni (sunucuda ayrıştırılır — zip/XML değil, güvenli).
     mt940: str | None = None
+    #: (P192 §2.1) Ekstrenin ait olduğu BANKA HESABI. Verilmezse varsayılan
+    #: banka hesabı kullanılır. Bir tesisin iki hesabı varsa ikisinin
+    #: ekstresini aynı kasaya yazmak, bakiyeleri karıştırmak olurdu.
+    kasa_id: uuid.UUID | None = None
     model_config = ConfigDict(extra="forbid")
 
 
@@ -5115,6 +5119,17 @@ class AcilisFisi(BaseModel):
     aciklama: str | None = Field(None, max_length=500)
 
 
+class HareketOnayIstek(BaseModel):
+    """(P192 §2.3) Harcama onayi/reddi.
+
+    `aciklama` REDDE anlamlidir ("neden reddedildi") ama onayda da
+    serbesttir; ayri iki sema yazmak, ayni akisi iki yerde tanimlamak
+    olurdu.
+    """
+
+    aciklama: str | None = Field(None, max_length=500)
+
+
 class KasaBakiye(BaseModel):
     kasa_id: uuid.UUID
     kod: str
@@ -5122,11 +5137,22 @@ class KasaBakiye(BaseModel):
     acilis_bakiye_kurus: int
     hareket_kurus: int
     bakiye_kurus: int
+    #: (P192 §2.1) Kasa mi banka hesabi mi. Ayrim GORUNUR olmali: "kasada
+    #: 50.000 var" ile "bankada 50.000 var" ayni sey degildir.
+    banka_mi: bool = False
+    iban: str | None = None
+    #: (P192 §2.2) HENUZ GERCEKLESMEMIS hareketler. Bakiyeye DAHIL DEGIL:
+    #: onay bekleyen bir gider bakiyeyi simdiden dusuruyordu ve yonetici
+    #: elinde olmayan bir parayi yokmus gibi goruyordu.
+    bekleyen_cikis_kurus: int = 0
+    bekleyen_giris_kurus: int = 0
 
 
 class KasaBakiyeResponse(BaseModel):
     items: list[KasaBakiye]
     genel_toplam_kurus: int
+    #: Tum kasalarin bekleyen cikisi — "bakiye X, bekleyen Y" gosterimi.
+    bekleyen_cikis_toplam_kurus: int = 0
 
 
 class BankaSatirIn(BaseModel):

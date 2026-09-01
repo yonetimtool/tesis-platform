@@ -4469,6 +4469,15 @@ paths:
                       karsi_iban: { type: string, nullable: true }
                       para_birimi: { type: string, nullable: true }
                 mt940: { type: string, nullable: true }
+                kasa_id:
+                  type: string
+                  format: uuid
+                  nullable: true
+                  description: >-
+                    (P192 §2.1) Ekstrenin ait oldugu BANKA HESABI.
+                    Verilmezse varsayilan banka hesabi kullanilir/acilir.
+                    Bir tesisin iki hesabi varsa ikisinin ekstresini ayni
+                    kasaya yazmak bakiyeleri karistirmak olurdu.
       responses:
         "201":
           description: Ice aktarildi
@@ -5573,6 +5582,64 @@ paths:
         "422": { $ref: "#/components/responses/ValidationError" }
         "409":
           description: Ayni Idempotency-Key FARKLI bir para hareketiyle gonderildi
+  /finans/hareketler/{hareket_id}/onayla:
+    post:
+      tags: [finans]
+      summary: Onay bekleyen hareketi ONAYLA (admin)
+      description: |
+        (P192 §2.3) `durum='onay_bekliyor'` P167'de eklendi ve panel
+        sayiyordu ama ONAYLAYAN UC YOKTU: onaya dusen bir gider sonsuza
+        kadar bekliyordu.
+
+        Onay `odendi` yazar ve hareket O AN kasa bakiyesine girer —
+        bakiye yalniz gerceklesmis satirlari sayar (§2.2).
+
+        Hareket `onay_bekliyor` degilse 409.
+      parameters:
+        - name: hareket_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/HareketOnayIstek" }
+      responses:
+        "200":
+          description: Onaylanmis hareket
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Hareket" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /finans/hareketler/{hareket_id}/reddet:
+    post:
+      tags: [finans]
+      summary: Onay bekleyen hareketi REDDET (admin)
+      description: |
+        (P192 §2.3) Red `iptal` yazar — TERS KAYIT DEGIL: ters kayit
+        GERCEKLESMIS bir hareketi duzeltir, reddedilen gider ise hic
+        gerceklesmedi ve kasadan hic cikmadi. Satir SILINMEZ: "bu harcama
+        reddedildi" bilgisi denetimin konusudur.
+
+        Hareket `onay_bekliyor` degilse 409.
+      parameters:
+        - name: hareket_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/HareketOnayIstek" }
+      responses:
+        "200":
+          description: Reddedilmis hareket
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Hareket" }
+        "409": { $ref: "#/components/responses/Conflict" }
   /finans/hareketler/{hareket_id}/iptal:
     post:
       tags: [finans]
@@ -15450,6 +15517,13 @@ components:
         items:
           type: array
           items: { $ref: "#/components/schemas/FinansalHareket" }
+    HareketOnayIstek:
+      # (P192 §2.3) Onay/red govdesi. `aciklama` redde anlamlidir ("neden
+      # reddedildi") ama onayda da serbesttir; ayri iki sema yazmak ayni
+      # akisi iki yerde tanimlamak olurdu.
+      type: object
+      properties:
+        aciklama: { type: string, nullable: true, maxLength: 500 }
     TahsilatCreate:
       type: object
       required: [kasa_id, tutar_kurus]
@@ -15574,6 +15648,17 @@ components:
         acilis_bakiye_kurus: { type: integer, format: int64 }
         hareket_kurus: { type: integer, format: int64 }
         bakiye_kurus: { type: integer, format: int64 }
+        banka_mi:
+          type: boolean
+          description: "(P192 §2.1) Kasa mi banka hesabi mi — ayrim gorunur olmali"
+        iban: { type: string, nullable: true }
+        bekleyen_cikis_kurus:
+          type: integer
+          format: int64
+          description: >-
+            (P192 §2.2) Onay bekleyen/gerceklesmemis CIKIS. Bakiyeye DAHIL
+            DEGIL: onceden bakiyeyi simdiden dusuruyordu.
+        bekleyen_giris_kurus: { type: integer, format: int64 }
     KasaBakiyeResponse:
       type: object
       required: [items, genel_toplam_kurus]

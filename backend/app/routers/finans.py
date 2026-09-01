@@ -49,6 +49,7 @@ from ..schemas import (
     IcraDosyasiListResponse,
     IcraDosyasiOut,
     IcraDosyasiUpdate,
+    HareketOnayIstek,
     KasaBakiye,
     KasaBakiyeResponse,
     TahsilatCreate,
@@ -591,6 +592,88 @@ async def hareket_iptal(
     return (await _adlarla(db, satirlar))[0]
 
 
+# ========================= (P192 §2.3) HARCAMA ONAYI ======================== #
+#
+# ================================================================
+# NEDEN ACILDI
+# ================================================================
+# `durum='onay_bekliyor'` P167'de eklendi, panel "Onay Bekleyen Hareketler"
+# kartinda sayiyordu ama ONAYLAYAN UC YOKTU: onaya dusen bir gider
+# sonsuza kadar bekliyordu. `docs/finans-analiz.md` bunu "yarim kalmis
+# ozellik" olarak raporladi.
+#
+# ================================================================
+# ONAY = GERCEKLESTI, RED = HIC OLMADI
+# ================================================================
+# Onay `odendi` yazar ve hareket O AN kasa bakiyesine girer (bakiye
+# yalniz gerceklesmis satirlari sayar, bkz. §2.2). Red `iptal` yazar:
+# TERS KAYIT DEGIL, cunku ters kayit GERCEKLESMIS bir hareketi duzeltir;
+# reddedilen gider ise hic gerceklesmedi ve kasadan hic cikmadi. Ters
+# kayit yazsaydik defterde birbirini goturen iki sahte satir olurdu.
+#
+# ================================================================
+# SILME YOK
+# ================================================================
+# Reddedilen satir SILINMEZ: "bu harcama talebi reddedildi" bilgisi
+# denetimin konusudur ve silinirse bir daha sorulamaz.
+
+
+def _onaylanabilir(hareket: FinansalHareket) -> None:
+    if hareket.durum != "onay_bekliyor":
+        raise APIError(409, "conflict", "hareket_onay_beklemiyor")
+
+
+@router.post(
+    "/finans/hareketler/{hareket_id}/onayla",
+    response_model=HareketOut,
+)
+async def hareket_onayla(
+    hareket_id: uuid.UUID,
+    body: HareketOnayIstek,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_ADMIN),
+) -> HareketOut:
+    """Onay bekleyen hareketi ONAYLA — o an gerceklesmis sayilir."""
+    obj = await get_or_404(db, FinansalHareket, hareket_id)
+    _onaylanabilir(obj)
+    obj.durum = "odendi"
+    if body.aciklama:
+        obj.aciklama = body.aciklama
+    await db.flush()
+    await audit_user(
+        db, user, Action.FINANS_HAREKET_ONAY, resource_type="finansal_hareket",
+        resource_id=obj.id,
+        meta={"tip": obj.tip, "tutar_kurus": obj.tutar_kurus},
+    )
+    return (await _adlarla(db, [obj]))[0]
+
+
+@router.post(
+    "/finans/hareketler/{hareket_id}/reddet",
+    response_model=HareketOut,
+)
+async def hareket_reddet(
+    hareket_id: uuid.UUID,
+    body: HareketOnayIstek,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_ADMIN),
+) -> HareketOut:
+    """Onay bekleyen hareketi REDDET — hic gerceklesmemis sayilir."""
+    obj = await get_or_404(db, FinansalHareket, hareket_id)
+    _onaylanabilir(obj)
+    obj.durum = "iptal"
+    if body.aciklama:
+        obj.aciklama = body.aciklama
+    await db.flush()
+    await audit_user(
+        db, user, Action.FINANS_HAREKET_RED, resource_type="finansal_hareket",
+        resource_id=obj.id,
+        meta={"tip": obj.tip, "tutar_kurus": obj.tutar_kurus,
+              "sebep": body.aciklama},
+    )
+    return (await _adlarla(db, [obj]))[0]
+
+
 # ============================== ACILIS FISI ================================= #
 @router.post("/finans/acilis", response_model=HareketOut, status_code=201)
 async def acilis_fisi(
@@ -629,34 +712,63 @@ async def kasa_bakiyeleri(
     db: AsyncSession = Depends(get_tenant_db),
     _: AppUser = Depends(_OKUMA),
 ) -> KasaBakiyeResponse:
-    """Kasa bakiyeleri — SAKLANMAZ, defterden TURETILIR."""
+    """Kasa bakiyeleri — SAKLANMAZ, defterden TURETILIR.
+
+    (P192 §2.2) BAKIYE YALNIZ GERCEKLESMIS hareketleri sayar. Onceden
+    `durum` suzgeci YOKTU: onay bekleyen bir gider ve saglayicidan
+    donmemis bir kart odemesi bakiyeye ANINDA yansiyordu. Yonetici
+    onaylamadigi bir odemeyi kasadan dusulmus goruyordu.
+
+    Bekleyen tutarlar KAYBOLMAZ, AYRI dondurulur: "bakiye X, bekleyen Y"
+    tek rakamdan daha dogru bir tablodur.
+    """
     kasalar = (await db.execute(select(Kasa).order_by(Kasa.kod))).scalars().all()
     hareketler = (
         await db.execute(
             select(
                 FinansalHareket.kasa_id,
                 FinansalHareket.yon,
+                FinansalHareket.durum,
                 func.sum(FinansalHareket.tutar_kurus),
-            ).group_by(FinansalHareket.kasa_id, FinansalHareket.yon)
+            ).group_by(
+                FinansalHareket.kasa_id, FinansalHareket.yon,
+                FinansalHareket.durum,
+            )
         )
     ).all()
-    gruplu: dict[uuid.UUID, list[tuple[str, int]]] = {}
-    for kid, yon, toplam in hareketler:
-        if kid is not None:
-            gruplu.setdefault(kid, []).append((yon, int(toplam)))
+    gerceklesen: dict[uuid.UUID, list[tuple[str, int]]] = {}
+    bekleyen: dict[uuid.UUID, dict[str, int]] = {}
+    for kid, yon, durum, toplam in hareketler:
+        if kid is None:
+            continue
+        if durum == defter.GERCEKLESEN:
+            gerceklesen.setdefault(kid, []).append((yon, int(toplam)))
+        elif durum != "iptal":
+            # `iptal` DISARIDA: gerceklesmeyecegi belli olmus bir hareket
+            # "bekleyen" degildir; bekleyende birakmak, hicbir zaman
+            # gelmeyecek parayi yoneticiye beklenti olarak gosterirdi.
+            kova = bekleyen.setdefault(kid, {"giris": 0, "cikis": 0})
+            kova[yon] += int(toplam)
 
     items = []
     for k in kasalar:
-        satirlar = gruplu.get(k.id, [])
+        satirlar = gerceklesen.get(k.id, [])
         bakiye = kasa_bakiye(k.acilis_bakiye_kurus, satirlar)
+        bek = bekleyen.get(k.id, {"giris": 0, "cikis": 0})
         items.append(KasaBakiye(
             kasa_id=k.id, kod=k.kod, ad=k.ad,
             acilis_bakiye_kurus=k.acilis_bakiye_kurus,
             hareket_kurus=bakiye - k.acilis_bakiye_kurus,
             bakiye_kurus=bakiye,
+            banka_mi=k.banka_mi,
+            iban=k.iban,
+            bekleyen_cikis_kurus=bek["cikis"],
+            bekleyen_giris_kurus=bek["giris"],
         ))
     return KasaBakiyeResponse(
-        items=items, genel_toplam_kurus=sum(i.bakiye_kurus for i in items)
+        items=items,
+        genel_toplam_kurus=sum(i.bakiye_kurus for i in items),
+        bekleyen_cikis_toplam_kurus=sum(i.bekleyen_cikis_kurus for i in items),
     )
 
 
@@ -945,7 +1057,10 @@ async def finans_ozet(
         await db.execute(
             select(func.coalesce(func.sum(FinansalHareket.tutar_kurus), 0))
             .where(FinansalHareket.tip == "gider",
-                   FinansalHareket.durum != "odendi",
+                   # (P192 §2.3) `!= 'odendi'` YETMEZ: `iptal` de o kumeye
+                   # girerdi ve REDDEDILMIS bir harcama "borcum var" diye
+                   # sayilirdi.
+                   FinansalHareket.durum.in_(("bekliyor", "onay_bekliyor")),
                    FinansalHareket.ters_kayit_id.is_(None))
         )
     ).scalar_one()

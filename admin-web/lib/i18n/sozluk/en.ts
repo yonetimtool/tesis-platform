@@ -1563,6 +1563,8 @@ export const en: Sozluk = {
   finansKasaKod: "Code",
   finansKasaAd: "Account",
   finansBakiye: "Balance",
+  finansKasaBekleyen: "Pending",
+  finansKasaBekleyenIpucu: "Pending outgoing awaiting approval — not included in the balance",
   finansGenelToplam: "Grand total",
   finansYeniHareket: "New movement",
   finansTip: "Type",

@@ -42,6 +42,9 @@ interface KasaBakiye {
   kod: string;
   ad: string;
   bakiye_kurus: number;
+  /** (P192 §2.2) Onay bekleyen cikis — bakiyeye DAHIL DEGIL. */
+  bekleyen_cikis_kurus: number;
+  banka_mi: boolean;
 }
 interface Hareket {
   id: string;
@@ -94,7 +97,11 @@ export default function FinansPage() {
     data: kasalar,
     error: kasaErr,
     mutate: kasalariTazele,
-  } = useSWR<{ items: KasaBakiye[]; genel_toplam_kurus: number }>(
+  } = useSWR<{
+    items: KasaBakiye[];
+    genel_toplam_kurus: number;
+    bekleyen_cikis_toplam_kurus: number;
+  }>(
     "/api/panel/kasa-bakiyeleri",
     jsonFetcher,
   );
@@ -271,6 +278,11 @@ export default function FinansPage() {
                 <Th sik>{t("finansKasaKod")}</Th>
                 <Th sik>{t("finansKasaAd")}</Th>
                 <Th sik hizala="end">{t("finansBakiye")}</Th>
+                {/* (P192 §2.2) BEKLEYEN AYRI SUTUN: onay bekleyen gider
+                    bakiyeye dahil DEGIL. Onceden bakiyeye karisiyordu ve
+                    yonetici elinde olmayan parayi yokmus gibi goruyordu.
+                    Tek rakam yerine "bakiye X, bekleyen Y". */}
+                <Th sik hizala="end">{t("finansKasaBekleyen")}</Th>
               </TabloBasligi>
               <tbody>
                 {kasalar.items.map((k) => (
@@ -278,6 +290,16 @@ export default function FinansPage() {
                     <Td sik className="font-mono text-xs">{k.kod}</Td>
                     <Td sik>{k.ad}</Td>
                     <Td sik hizala="end" sayi>{kurusToTL(k.bakiye_kurus)}</Td>
+                    <Td sik hizala="end" sayi>
+                      <span
+                        title={t("finansKasaBekleyenIpucu")}
+                        style={{ color: "var(--yz-text-2)" }}
+                      >
+                        {k.bekleyen_cikis_kurus > 0
+                          ? kurusToTL(k.bekleyen_cikis_kurus)
+                          : "—"}
+                      </span>
+                    </Td>
                   </tr>
                 ))}
                 <tr
@@ -287,6 +309,13 @@ export default function FinansPage() {
                   <Td sik colSpan={2}>{t("finansGenelToplam")}</Td>
                   <Td sik hizala="end" sayi>
                     {kurusToTL(kasalar.genel_toplam_kurus)}
+                  </Td>
+                  <Td sik hizala="end" sayi>
+                    <span style={{ color: "var(--yz-text-2)" }}>
+                      {kasalar.bekleyen_cikis_toplam_kurus > 0
+                        ? kurusToTL(kasalar.bekleyen_cikis_toplam_kurus)
+                        : "—"}
+                    </span>
                   </Td>
                 </tr>
               </tbody>
