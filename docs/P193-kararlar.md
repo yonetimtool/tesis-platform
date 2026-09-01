@@ -217,3 +217,97 @@ kırmaması. 5 test. `test_kurulum.py` 10 test geçti.
 - Tarayıcıda gerçek tıklama akışı (adım → hedef ekran → geri dön →
   adımın tamamlandığını gör). Ölçüm uç ve render seviyesinde.
 - Gerçek SMTP'li bir tesiste `eposta` adımının `tamam=True` olması.
+
+---
+
+## Bölüm 3 — P192'nin üç ekran boşluğu (14 eksik · maddeler 7, 8, 9)
+
+P192 üç yeteneği **sunucuya** ekledi ama panelde düğmeleri yoktu. Bu
+bölümde önce uçların gerçekten çalıştığını ölçtüm, sonra ekranı yazdım.
+
+### Kararlar
+
+**K3.1 — Onay bekleyen giderde İPTAL değil, ONAYLA/REDDET çizilir.**
+Henüz gerçekleşmemiş bir kaydı "ters kayıtla iptal etmek" anlamsızdır;
+orada verilecek karar onaylanıp onaylanmayacağıdır. Satır
+`onay_bekliyor` ise iki düğme, değilse eskisi gibi "İptal et".
+
+**K3.2 — Yapılamayacak eylem çizilmez.**
+Ters kaydın kendisi ters kayıtlanamaz (422), zaten düzeltilmiş tahakkuk
+ikinci kez düzeltilemez (409). İkisinde de düğme yerine durum yazısı
+çıkıyor ("Düzeltme satırı" / "Düzeltildi"). Düğmeyi çizip sunucuya
+reddettirmek, kullanıcıya "sistem bozuk" dedirtir — P167'de kapatılan
+kusur sınıfının aynısı.
+
+**K3.3 — `iptal_edildi` yanıt şemasına eklendi.**
+Panel "düzeltilebilir mi" sorusunu ancak böyle yanıtlayabilir. Alan
+modelde vardı, dışarı verilmiyordu.
+
+**K3.4 — Onay metinleri ne olacağını söyler.**
+"Sil" demiyor ve silmiyor: *"Kayıt silinmez: listede ters bir satır daha
+görünür."* Aksi hâlde kullanıcı listede iki satır görünce yanlışlık
+sanardı.
+
+**K3.5 — Ekstre hedef hesabı seçilebiliyor, ama zorunlu değil.**
+Uç `kasa_id`yi P192'den beri kabul ediyordu; panel hiç göndermiyordu,
+yani iki hesaplı bir tesiste ikinci hesabın ekstresi **sessizce**
+varsayılan hesaba yazılıyor ve iki bakiye birden yanlış çıkıyordu.
+Seçim dosya seçiminin **üstünde** duruyor (yanlış hesaba yazılan bir
+ekstreyi geri almak satır satır iptal demek). Yalnız banka kasaları
+listeleniyor; "Varsayılan banka hesabı" seçeneği duruyor çünkü tek
+hesaplı bir tesisin her yüklemede seçim yapması gereksiz.
+
+**K3.6 — Rol değiştirilmedi.** Bu üç uç `admin` rolünde. Yönetici zaten
+gider **oluşturamıyor** (`POST /finans/hareketler` de admin); onay
+yetkisini tek başına açmak, "giremediği bir kaydı onaylayan yönetici"
+gibi tutarsız bir durum yaratırdı. Finans yazma rolünü genişletmek
+P193'ün kapsamı değil, ayrı bir karar — **açık madde olarak bırakıldı**.
+
+**K3.7 — Bir çökme düzeltildi (yan bulgu).** Borçlandırmalar sayfasının
+üstündeki gecikme faizi kartı, önizleme yanıtında `items` alanı yoksa
+`undefined.length` ile **tüm sayfayı** düşürüyordu. Test yazarken
+ölçüldü, `items?` ile korundu.
+
+### NE ÖLÇTÜM
+
+**Uçlar (dev API'ye gerçek çağrı, `admin@acme.com`):**
+
+```
+=== A) GIDER ONAY/RET ===
+  POST /finans/hareketler (durum=onay_bekliyor) -> 201  durum=onay_bekliyor
+  POST .../onayla   -> 200  durum=odendi
+  POST .../onayla (ikinci kez) -> 409 "Bu hareket onay beklemiyor."
+  POST .../reddet   -> 200  durum=iptal
+=== B) TAHAKKUK TERS KAYIT ===
+  POST /dues/assessments/{id}/ters-kayit -> 201  tutar=75000
+  POST (ikinci kez) -> 409 "Bu tahakkuk zaten düzeltilmiş."
+=== C) EKSTRE HESAP SECIMI ===
+  kasa_id VERILDI          -> 201 {"eklenen":1,"yinelenen":0}
+  AYNI SATIR TEKRAR        -> 201 {"eklenen":0,"yinelenen":1}
+  GECERSIZ kasa_id         -> 422 "Kasa bulunamadı."
+  kasa_id YOK (varsayılana)-> 201 {"eklenen":1,"yinelenen":0}
+```
+
+Üçü de çalışıyor; hem geçen hem düşen durum denendi.
+
+**Ekranlar** (`admin-web/tests/p193-finans-eylemleri.dom.test.ts`, 7 test,
+sayfalar gerçekten render edilerek):
+- Bekleyen satırda Onayla/Reddet **var**, ödenmiş satırda **yok** (orada
+  İptal et var).
+- Onayla → onay diyaloğu ("kasadan düşülecek") → `POST
+  /api/panel/finans-hareketler/{id}/onayla`; Reddet → `.../reddet`.
+- Düzelt → diyalogda "ters bir satır" uyarısı → `POST
+  /api/panel/dues-assessments/{id}/ters-kayit`.
+- Düzeltilmiş ve düzeltme satırında düğme **çizilmiyor**.
+- Ekstre hesap seçiminde **yalnız banka** kasaları; nakit kasa listede
+  yok; seçilen hesap gövdede `kasa_id` olarak gidiyor (MT940 yüklemesi
+  ile uçtan uca).
+
+Backend: `test_dues.py` + `test_finans.py` + `test_p191_banka_uc.py` +
+`test_p192_tahakkuk.py` — **71 test geçti**.
+
+### Ölçemediklerim
+- Tarayıcıda gerçek bir `.xlsx` ekstre dosyasıyla yükleme (DOM testi
+  MT940 metin yolundan geçiyor; XLSX ayrıştırma katmanı ayrı).
+- Yöneticinin (admin değil) bu ekranlardaki davranışı — uçlar admin'e
+  kapalı olduğu için değişmedi; K3.6'daki açık madde.

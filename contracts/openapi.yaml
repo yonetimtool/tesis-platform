@@ -17523,6 +17523,14 @@ components:
           format: uuid
           nullable: true
           description: "(P192 §6.3) Doluysa bu satir bir DUZELTMEDIR"
+        iptal_edildi:
+          type: boolean
+          default: false
+          description: >
+            (P193 §3) Bu tahakkuk ters kayitla DUZELTILDI mi. Ekran
+            "Düzelt" dugmesini yalnizca duzeltilebilir satirda cizebilsin
+            diye doner; alan olmadan dugme her satirda cizilir ve kullanici
+            tiklayinca 409 alirdi.
         kaynak_assessment_id:
           type: string
           format: uuid

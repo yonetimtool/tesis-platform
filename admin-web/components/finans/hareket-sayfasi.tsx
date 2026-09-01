@@ -194,6 +194,41 @@ export function HareketSayfasi({
     items: Hareket[];
   }>(anahtar, jsonFetcher);
 
+  // (P193 §3 / rehber eksik 7) ONAY BEKLEYEN GIDERI ONAYLA / REDDET.
+  //
+  // Uc P192'den beri VAR (`/onayla`, `/reddet`) ve calisiyor — olculdu.
+  // Eksik olan tek sey dugmeydi: yonetici gideri "Onay bekliyor" olarak
+  // giriyor, "Bekleyen" sutununda goruyor ve orada KILITLI kaliyordu.
+  async function onayDurumu(h: Hareket, eylem: "onayla" | "reddet") {
+    // RET GERI ALINAMAZ (kayit `iptal` olur), onay ise defteri hemen
+    // etkiler: ikisi de onay ister. Metin NE OLACAGINI soyler.
+    const ok = await onayla({
+      baslik: eylem === "onayla" ? t("finansOnaylaBaslik") : t("finansReddetBaslik"),
+      mesaj:
+        eylem === "onayla"
+          ? t("finansOnaylaOnay", { tutar: kurusToTL(h.tutar_kurus) })
+          : t("finansReddetOnay", { tutar: kurusToTL(h.tutar_kurus) }),
+      onayMetni: eylem === "onayla" ? t("finansOnayla") : t("finansReddet"),
+      tehlikeli: eylem === "reddet",
+    });
+    if (!ok) return;
+    try {
+      // YOL ICINDE DEGISKEN EYLEM YOK: `uc-sozlesme-kapisi` testi
+      // `${eylem}` gordugunde yolu cozemez ve "backend bu metodu
+      // tanimlamiyor" der. Iki cagri yazmak, kapinin gercekten
+      // dogrulayabilecegi iki SOMUT yol birakir.
+      if (eylem === "onayla") {
+        await apiSend(`/api/panel/finans-hareketler/${h.id}/onayla`, "POST", {});
+      } else {
+        await apiSend(`/api/panel/finans-hareketler/${h.id}/reddet`, "POST", {});
+      }
+      toast.success(eylem === "onayla" ? t("finansOnaylandi") : t("finansReddedildi"));
+      void mutate();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : t("ortakHataOlustu"));
+    }
+  }
+
   async function iptalEt(h: Hareket) {
     // ONAY METNI NE OLACAGINI SOYLER: "sil" demek yanlis olurdu, kayit
     // kalir ve TERS bir satir eklenir. Kullanici defterde iki satir
@@ -260,18 +295,35 @@ export function HareketSayfasi({
     {
       id: "eylem",
       baslik: t("finansSutunEylem"),
-      hucre: (h) =>
+      hucre: (h) => {
         // TERS KAYDIN KENDISI IPTAL EDILEMEZ (uc 422 doner) ve zaten
         // iptal edilmis bir kayit da ikinci kez iptal edilemez (409).
         // Dugmeyi cizip sunucuya reddettirmek, kullaniciya
         // yapamayacagi bir eylem gostermek olurdu.
-        h.tip === TIP_IPTAL ? (
-          <span style={{ color: "var(--yz-text-3)" }}>{YOK_ISARETI}</span>
-        ) : (
+        if (h.tip === TIP_IPTAL) {
+          return <span style={{ color: "var(--yz-text-3)" }}>{YOK_ISARETI}</span>;
+        }
+        // (P193 §3) ONAY BEKLEYENDE IPTAL DEGIL, ONAY/RET cizilir:
+        // henuz gerceklesmemis bir kaydi "ters kayitla iptal etmek"
+        // anlamsizdir — karar verilecek sey onaylanip onaylanmayacagidir.
+        if (h.durum === DURUM_ONAY_BEKLIYOR) {
+          return (
+            <span className="flex flex-wrap gap-1">
+              <Dugme tur="sessiz" boy="kucuk" onClick={() => void onayDurumu(h, "onayla")}>
+                {t("finansOnayla")}
+              </Dugme>
+              <Dugme tur="sessiz" boy="kucuk" onClick={() => void onayDurumu(h, "reddet")}>
+                {t("finansReddet")}
+              </Dugme>
+            </span>
+          );
+        }
+        return (
           <Dugme tur="sessiz" boy="kucuk" onClick={() => void iptalEt(h)}>
             {t("finansIptalEt")}
           </Dugme>
-        ),
+        );
+      },
     },
   ];
 
@@ -313,6 +365,7 @@ export function HareketSayfasi({
 
 // UCLUDE DIZE YAZILMAZ.
 const TIP_IPTAL = "iptal";
+const DURUM_ONAY_BEKLIYOR = "onay_bekliyor";
 
 /** Hareket durumu -> sozluk anahtari. */
 const DURUM_ANAHTARI: Record<string, SozlukAnahtari> = {

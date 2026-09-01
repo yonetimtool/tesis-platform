@@ -3543,6 +3543,13 @@ class DuesAssessmentOut(BaseModel):
     kalem_tipi: str = "aidat"
     #: Doluysa bu satir bir DUZELTMEDIR ve gosterdigi tahakkuku goturur.
     ters_kayit_id: uuid.UUID | None = None
+    #: (P193 §3) Bu tahakkuk ters kayitla DUZELTILDI mi.
+    #:
+    #: EKRAN ICIN SART: panel "Düzelt" dugmesini yalnizca duzeltilebilir
+    #: satirda cizebilmeli. Alan olmadan dugme her satirda cizilir ve
+    #: kullanici tiklayinca 409 alirdi — yapamayacagi bir eylemi
+    #: gostermek, P167'de kapatilan kusur sinifi.
+    iptal_edildi: bool = False
     #: Faiz kaleminin dogdugu borc.
     kaynak_assessment_id: uuid.UUID | None = None
     created_at: datetime

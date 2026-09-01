@@ -138,6 +138,13 @@ function sadeBaslik(metin: string): string {
     .trim();
 }
 
+/** Kasa listesinden ekstre icin gereken alanlar. */
+interface Kasa {
+  id: string;
+  ad: string;
+  banka_mi: boolean;
+}
+
 function hucreler(satir: string): string[] {
   // Ayirici sezgisi: `;` (Excel TR), sekme, sonra `,`.
   const sayac = (c: string) => satir.split(c).length;
@@ -155,6 +162,14 @@ export default function BankaSayfasi() {
   const [hata, setHata] = useState<string | null>(null);
   const [bekliyor, setBekliyor] = useState(false);
   const [secilenKisi, setSecilenKisi] = useState<Record<string, string>>({});
+  // (P193 §3 / rehber eksik 9) EKSTRENIN AIT OLDUGU BANKA HESABI.
+  //
+  // Uc `kasa_id`yi P192'den beri kabul ediyor; panel HIC gondermiyordu,
+  // yani iki banka hesabi olan bir tesiste ikinci hesabin ekstresi
+  // SESSIZCE varsayilan hesaba yaziliyor ve iki bakiye birden yanlis
+  // cikiyordu. Bos birakmak hâlâ mumkun (tek hesapli tesisin fazladan bir
+  // secim yapmasi gereksizdir) ama artik BILINCLI bir tercih.
+  const [kasaId, setKasaId] = useState<string>(BOS);
 
   const { data, error, isLoading, mutate } = useSWR<Liste>(
     `${UC_LISTE}?durum=${sekme}&limit=100`,
@@ -166,6 +181,12 @@ export default function BankaSayfasi() {
     "/api/users?limit=200&role=resident",
     jsonFetcher,
   );
+  // Yalniz BANKA kasalari: nakit kasaya ekstre yazmak anlamsiz olurdu.
+  const { data: kasalar } = useSWR<{ items: Kasa[] }>(
+    "/api/panel/kasalar?limit=100",
+    jsonFetcher,
+  );
+  const bankaKasalari = (kasalar?.items ?? []).filter((k) => k.banka_mi);
 
   const basliklar = satirlar[0] ?? [];
 
@@ -216,8 +237,11 @@ export default function BankaSayfasi() {
     setHata(null);
     try {
       let govde: Record<string, unknown>;
+      // Secilmemisse ALAN HIC GONDERILMEZ: `null` gondermek "varsayilani
+      // kullan" ile "hesap yok" arasindaki farki silerdi.
+      const hedef = kasaId === BOS ? {} : { kasa_id: kasaId };
       if (mt940) {
-        govde = { kaynak: "ekstre", mt940 };
+        govde = { kaynak: "ekstre", mt940, ...hedef };
       } else {
         if (esleme.tarih === undefined || esleme.tutar === undefined) {
           setHata(t("bankaZorunluSutun"));
@@ -227,6 +251,7 @@ export default function BankaSayfasi() {
           esleme[alan] === undefined ? undefined : satir[Number(esleme[alan])];
         govde = {
           kaynak: "ekstre",
+          ...hedef,
           satirlar: satirlar.slice(1).map((satir) => ({
             tarih: al(satir, "tarih") ?? "",
             tutar: al(satir, "tutar") ?? "",
@@ -477,6 +502,28 @@ export default function BankaSayfasi() {
             onChange={(e) => void dosyaSec(e.target.files?.[0] ?? null)}
             style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}
           />
+          {/* HESAP SECIMI DOSYADAN ONCE: hangi hesaba yazilacagi
+              kararlastirilmadan yuklenen bir ekstre, yanlis bakiye
+              uretir ve geri almak icin satir satir iptal gerekir. */}
+          {bankaKasalari.length > 0 ? (
+            <AlanSarmal etiket={t("bankaHedefHesap")} ipucu={t("bankaHedefHesapIpucu")}>
+              {(b) => (
+                <Secim
+                  {...b}
+                  value={kasaId}
+                  data-test="banka-kasa"
+                  onChange={(e) => setKasaId(e.target.value)}
+                >
+                  <option value={BOS}>{t("bankaHedefHesapVarsayilan")}</option>
+                  {bankaKasalari.map((k) => (
+                    <option key={k.id} value={k.id}>
+                      {k.ad}
+                    </option>
+                  ))}
+                </Secim>
+              )}
+            </AlanSarmal>
+          ) : null}
           {hata ? <HataDurumu mesaj={hata} /> : null}
 
           {satirlar.length > 0 ? (

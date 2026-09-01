@@ -33,6 +33,9 @@ const EYLEMLER = new Set([
   "reddet",
   // (P192 §4.1) Aidat planinin bir donemini atla.
   "ertele",
+  // (P193 §3) Yanlis yazilmis tahakkuku ters kayitla duzelt. Uc P192'den
+  // beri var; panelde dugmesi yoktu.
+  "ters-kayit",
 ]);
 
 export async function POST(

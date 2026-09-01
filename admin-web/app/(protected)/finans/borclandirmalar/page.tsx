@@ -30,6 +30,7 @@ import {
   Secim,
   HataDurumu,
   VeriTablosu,
+  useOnay,
   type Kolon,
   type TabloDurumu,
 } from "@/components/ui";
@@ -57,6 +58,10 @@ interface Tahakkuk {
   hedef_ad: string | null;
   tarih: string | null;
   gecikme_kurus: number;
+  /** Doluysa bu satirin KENDISI bir duzeltmedir. */
+  ters_kayit_id: string | null;
+  /** (P193 §3) Bu tahakkuk ters kayitla duzeltildi mi. */
+  iptal_edildi: boolean;
 }
 
 const YOK_ISARETI = "—";
@@ -167,7 +172,10 @@ function GecikmeFaiziKarti() {
     }
   }
 
-  const adet = onizleme?.items.length ?? 0;
+  // (P193 §3) `items?` — eksik bir alan TUM SAYFAYI dusurmemeli. Bu
+  // kart sayfanin ustunde; burada atilan bir hata borclandirma
+  // listesini de goturuyordu (test yazarken olculdu).
+  const adet = onizleme?.items?.length ?? 0;
   return (
     <div
       className="rounded-lg p-3"
@@ -221,6 +229,8 @@ function GecikmeFaiziKarti() {
 
 export default function BorclandirmalarPage() {
   const t = useT();
+  const toast = useToast();
+  const { onayla, diyalog } = useOnay();
   const [tekil, setTekil] = useState(false);
   const [toplu, setToplu] = useState(false);
   const [yenile, setYenile] = useState(0);
@@ -236,6 +246,40 @@ export default function BorclandirmalarPage() {
       `&offset=${(durum.sayfa - 1) * durum.boy}&_=${yenile}`,
     jsonFetcher,
   );
+
+  // (P193 §3 / rehber eksik 8) TAHAKKUKU DUZELT — TERS KAYIT.
+  //
+  // Uc P192'den beri var (`POST /dues/assessments/{id}/ters-kayit`) ve
+  // calisiyor — olculdu. Eksik olan dugmeydi: yanlis yazilmis bir borcu
+  // yonetici panelden duzeltemiyordu.
+  //
+  // "SIL" DEMEZ ve silmez: finansal kayit silinmez, ters bir satir
+  // yazilir ve ikisi de defterde durur. Onay metni bunu soyler — aksi
+  // hâlde kullanici listede iki satir gorunce yanlislik sanirdi.
+  async function tersKayit(a: Tahakkuk) {
+    const ok = await onayla({
+      baslik: t("finansTersKayitBaslik"),
+      mesaj: t("finansTersKayitOnay", {
+        donem: a.donem,
+        tutar: kurusToTL(a.tutar_kurus),
+      }),
+      onayMetni: t("finansTersKayitEt"),
+      tehlikeli: true,
+    });
+    if (!ok) return;
+    try {
+      await apiSend(
+        `/api/panel/dues-assessments/${a.id}/ters-kayit`,
+        "POST",
+        {},
+      );
+      toast.success(t("finansTersKayitYapildi"));
+      setYenile((n) => n + 1);
+      void mutate();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : t("ortakHataOlustu"));
+    }
+  }
 
   const sutunlar: Kolon<Tahakkuk>[] = [
     { id: "tarih", baslik: t("finansSutunTarih"),
@@ -253,10 +297,32 @@ export default function BorclandirmalarPage() {
       deger: (a) => a.tutar_kurus },
     { id: "aciklama", baslik: t("finansSutunAciklama"),
       hucre: (a) => a.aciklama ?? YOK_ISARETI },
+    {
+      id: "eylem",
+      baslik: t("finansSutunEylem"),
+      hucre: (a) => {
+        // UC IKISINI DE REDDEDER: ters kaydin kendisi ters kayitlanamaz
+        // (422), zaten duzeltilmis tahakkuk ikinci kez duzeltilemez
+        // (409). Ikisinde de dugme CIZILMEZ; basilamayacak bir dugme
+        // gostermek kullaniciya "sistem bozuk" dedirtir.
+        if (a.ters_kayit_id !== null) {
+          return <span style={{ color: "var(--yz-text-3)" }}>{t("finansTersKayitSatiri")}</span>;
+        }
+        if (a.iptal_edildi) {
+          return <span style={{ color: "var(--yz-text-3)" }}>{t("finansTersKayitli")}</span>;
+        }
+        return (
+          <Dugme tur="sessiz" boy="kucuk" onClick={() => void tersKayit(a)}>
+            {t("finansTersKayitEt")}
+          </Dugme>
+        );
+      },
+    },
   ];
 
   return (
     <div className="space-y-4">
+      {diyalog}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
           {t("finansBorclandirmalar")}
