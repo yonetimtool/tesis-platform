@@ -113,6 +113,22 @@ TESIS_UCLARI: tuple[str, ...] = (
     # (GUVENLIK) COK KAYNAKLI ARAMA: tek uc, sekiz tabloyu tarar — bir
     # kaynagi suzgecsiz birakmak butun tesisleri aramaya acardi.
     "/arama",
+    # --- (P192) FINANS TUTARLILIGI VE OTOMASYONU -------------------------- #
+    #
+    # Hepsi TESISE AIT okuma yollari. Yaslandirma ve hatirlatma gecmisi
+    # ozellikle onemli: ikisi de KISI ADI dondurur, yani bir suzgec
+    # bosluğu dogrudan kisisel veri sizintisi olurdu.
+    "/aidat-planlari",
+    "/duzenli-giderler",
+    "/otomasyon-gunlugu",
+    "/hatirlatma-ayari",
+    "/finans/yaslandirma",
+    "/finans/tahsilat-gostergesi",
+    "/finans/hatirlatma-gecmisi",
+    "/budget/hedefler",
+    "/budget/karsilastirma",
+    "/borclandirma/gecikme-ayari",
+    "/borclandirma/gecikme-faizi/onizleme",
 )
 
 #: PLATFORM uçları — tesisler arası olmak ZORUNDA (panel konsolu).
@@ -136,6 +152,8 @@ _PARAMETRELER: dict[str, dict] = {
     # Arama: B tesisine yazdigimiz kayitlarin ISARETI aranir — sizinti
     # varsa dogrudan gorunur.
     "/arama": {"q": "__IZ__"},
+    # (P192 §5.4) Butce karsilastirmasi yil ZORUNLU ister.
+    "/budget/karsilastirma": {"yil": 2026},
 }
 
 

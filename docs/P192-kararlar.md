@@ -617,6 +617,28 @@ Kalan taramada para hesabında başka float bulunmadı.
 | 16 | Para hesaplarında float kalmadı | ✅ | `test_p192_kalanlar.py` (3 test) |
 | 17 | Tam test paketi yeşil | ✅ | backend + admin-web + flutter |
 
+## Kilit kayıtları (bu turda güncellenenler)
+
+Yeni bir uç / hata kodu eklerken güncellenmesi gereken kayıtlar — tam
+paket bunların hepsini kapı olarak tutuyor:
+
+| Kayıt | Ne eklendi |
+|---|---|
+| `contracts/openapi.yaml` | 24 yeni operasyon + şemalar |
+| `backend/tests/yetki/rol-matrisi.txt` | 24 satır (438'e çıktı) |
+| `backend/app/hata_metinleri.py` | 9 yeni hata kodu × 7 dil |
+| `backend/tests/test_tesis_izolasyonu_tarama.py` | 11 yeni okuma ucu tarama kapsamına |
+| `admin-web/lib/panel-vekil.ts` | BFF beyaz listesi |
+| `admin-web/lib/i18n/sozluk/*.ts` | ~60 anahtar × 7 dil |
+| `admin-web/lib/menu.ts` + `yuzey.ts` | üç yeni sayfa + rol kapıları |
+| `admin-web/lib/enum-adlari.ts` | 4 yeni bildirim tipi |
+
+Son ikisi (hata metinleri ve izolasyon taraması) tam paketin **son
+turunda** kırmızı verdi ve düzeltildi: ikisi de yeni uç eklerken
+atlanması kolay, atlandığında sessizce yanlış davranan kayıtlar —
+yaşlandırma ve hatırlatma geçmişi **kişi adı** döndürüyor, yani tarama
+kapsamı dışında kalmaları doğrudan bir sızıntı yüzeyi bırakırdı.
+
 ## Bu turda açılan yeni tablolar
 
 Yedi: `aidat_plani`, `hatirlatma_ayari`, `duzenli_gider`,
