@@ -1,7 +1,7 @@
-"""(P154 / Asama 7.3) KURULUM SIHIRBAZI — sekiz adimin durumu.
+"""(P154 / Asama 7.3) KURULUM SIHIRBAZI — adimlarin durumu.
 
 ===========================================================================
-TEK UC, SEKIZ SAYIM — istemcide sekiz istek DEGIL
+TEK UC, TEK SAYIM TURU — istemcide adim basina istek DEGIL
 ===========================================================================
 Brief: "Adim adim kurulum sihirbazi: Blok → Kat/daire → Daire tipleri →
 Sakinler → Personel → Gorev alanlari → NFC noktalari → Aidat tanimi.
@@ -51,10 +51,14 @@ from ..errors import APIError
 from ..gonderim import saglayici as kanal_saglayicisi, tenant_ayari
 from ..mesajlasma import LogEpostaSaglayici
 from ..models import (
+    AidatPlani,
     AppUser,
+    BudgetCategory,
     BuildingBlock,
     Checkpoint,
     DuesAssessment,
+    DuzenliGider,
+    GelirGiderTanim,
     Kasa,
     OrtakAlan,
     PersonelKayit,
@@ -106,6 +110,21 @@ async def _adres_var(db: AsyncSession, tenant: Tenant) -> int:
     makbuzda "Kadikoy, Istanbul" yazmak sakine hicbir sey soylemez.
     """
     return 1 if (tenant.adres or "").strip() else 0
+
+
+async def _otomasyon_karari(db: AsyncSession, tenant: Tenant) -> int:
+    """(P199) Yonetici otomasyon tercihlerini bir kez KAYDETTI mi.
+
+    Bu adim SAYILAMAZ. Otekiler "satir var mi" diye sorar; burada dogru
+    cevap "hicbirini acma" OLABILIR (P192: otomasyonlar varsayilan
+    kapali) ve kapali bir ayar satiri, hic sorulmamis olmakla ayni
+    gorunur. Ustelik `routers/otomasyon.py::_ayar` get-or-create'tir:
+    finans ekranini acan herkes satiri yaratir.
+
+    Bu yuzden olculen sey KARARIN KENDISI (goc 0090): bayrak yalniz
+    hatirlatma/gecikme PATCH uclarindan, yani KAYDETME aninda yazilir.
+    """
+    return 1 if tenant.kurulum_otomasyon_karari else 0
 
 
 async def _eposta_hazir(db: AsyncSession, tenant: Tenant) -> int:
@@ -162,10 +181,37 @@ ADIMLAR: tuple[_Adim, ...] = (
     # calisinca ogreniyordu. Adim, ogrenmenin ilk tahsilattan ONCE
     # olmasi icin buraya kondu.
     _Adim("kasa", _say(Kasa), zorunlu=True),
+    # (P199) GELIR/GIDER TANIMI — AIDATTAN ONCE ve ZORUNLU.
+    #
+    # OLCULDU (P193 §6): `POST /borclandirma/toplu/onizleme`
+    # `gelir_gider_tanim_id` ISTER; tanim yokken toplu borclandirma 422
+    # "Field required" doner. Yani "Aidat" turu yazilmadan aylik aidat
+    # TOPLUCA yazilamaz — tesisin finans modulu calismaz.
+    #
+    # `docs/P192-test-yolharitasi.md` §2'de olculen sira da budur:
+    # kasa -> gelir/gider tanimi -> tahakkuk.
+    _Adim("gelir_gider_tanimi", _say(GelirGiderTanim), zorunlu=True),
     # "Aidat tanimi": tahakkuk URETILMIS mi. Daire tipindeki varsayilan
     # tutar TEK BASINA yetmez — tanimli ama hic isletilmemis bir aidat,
     # kimseye borc yazmaz.
     _Adim("aidat", _say(DuesAssessment), zorunlu=True),
+    # (P199) BURADAN SONRASI FINANSIN ISTEGE BAGLI KATMANI.
+    #
+    # Hepsi ZORUNLU DEGIL ve bu bilincli: aidatini her ay ELIYLE yazan
+    # bir tesis de calisan bir tesistir. Ama SORULUYORLAR — yonetici
+    # bugune kadar bu ekranlarin varligini kendi kesfetmek zorundaydi.
+    #
+    # P192 karari geciyor: OTOMASYONLAR VARSAYILAN KAPALI. Sihirbaz
+    # SORAR, acmayi kullanici secer; hicbir adim arka planda bir
+    # otomasyon ACMAZ.
+    #
+    # Aidat plani = "her ay kendiliginden tahakkuk". Plan satiri
+    # `aktif=true` dogar, yani PLANI OLUSTURMAK otomasyonu acmaktir —
+    # tam da bu yuzden adim atlanabilir olmali.
+    _Adim("aidat_plani", _say(AidatPlani)),
+    _Adim("otomasyon", olcu=_otomasyon_karari),
+    _Adim("butce_kategorisi", _say(BudgetCategory)),
+    _Adim("duzenli_gider", _say(DuzenliGider)),
     # (P193 §2) ISTEGE BAGLI MODUL TANIMLARI (rehber, eksik 12).
     #
     # Bu iki modul tanim yapilmadan SESSIZCE BOS gorunuyor: rezervasyon
@@ -234,7 +280,7 @@ async def durum(
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_YONETIM),
 ) -> KurulumDurumOut:
-    """Sekiz adimin durumu — sayim + atlanma."""
+    """Butun adimlarin durumu — sayim + atlanma."""
     tenant = (
         await db.execute(select(Tenant).where(Tenant.id == user.tenant_id))
     ).scalar_one()

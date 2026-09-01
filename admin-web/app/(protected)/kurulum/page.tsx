@@ -100,6 +100,19 @@ export default function KurulumPage() {
   const zorunluTamam = zorunluToplam - eksikZorunlular.length;
   const ozetVar = zorunluToplam > 0;
   const calisir = data?.calisir ?? true;
+  // (P199) SONRAYA BIRAKILANLAR — ozetin ikinci yarisi.
+  //
+  // Zorunlu eksikler "tesis calismiyor" der. Atlanan ISTEGE BAGLI
+  // adimlar bundan farklidir: tesis calisir, ama yonetici NEYI
+  // KAYBETTIGINI bilmeden calisir. Bugune kadar atlanan adim listeden
+  // sessizce dusuyordu; sihirbazin sonunda hicbir izi kalmiyordu.
+  //
+  // ZORUNLU olan atlansa bile buraya GIRMEZ: o zaten yukaridaki
+  // "eksikler" listesinde ve atlanmis olmasi gercegi degistirmiyor
+  // (P193 §2 karari).
+  const atlananlar = (data?.adimlar ?? []).filter(
+    (a) => a.atlandi && !a.tamam && !a.zorunlu,
+  );
 
   return (
     <div className="space-y-4">
@@ -180,6 +193,30 @@ export default function KurulumPage() {
                 );
               })}
             </ul>
+          )}
+          {atlananlar.length > 0 && (
+            <div className="mt-3 border-t border-yuzey-divider pt-3" data-test="kurulum-atlananlar">
+              <p className="text-sm font-medium text-metin-body">
+                {t("kurulumAtlanan")}
+              </p>
+              <p className="mt-1" style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
+                {t("kurulumAtlananAlt")}
+              </p>
+              <ul className="mt-2 space-y-1">
+                {atlananlar.map((a) => {
+                  const h = KURULUM_HEDEFLERI[a.kod];
+                  if (!h) return null;
+                  return (
+                    <li key={a.kod} style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}>
+                      <Link href={h.rota} className="odak-ic underline">
+                        {t(h.etiket)}
+                      </Link>{" "}
+                      <span style={{ color: "var(--yz-text-2)" }}>{t(h.engel)}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
           )}
           <p className="mt-2" style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
             {t("kurulumDevamBilgi")}

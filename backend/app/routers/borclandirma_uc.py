@@ -360,6 +360,11 @@ async def gecikme_ayari_guncelle(
     if body.gecikme_uygula is not None:
         obj.gecikme_uygula = body.gecikme_uygula
         degisen["gecikme_uygula"] = body.gecikme_uygula
+    # (P199) KURULUM SIHIRBAZI: otomasyon tercihi KAYDEDILDI.
+    #
+    # Bayrak PATCH'te yazilir, GET'te degil: sihirbazin sordugu sey
+    # "yonetici bir karar verdi mi", "ekrani acti mi" degil.
+    obj.kurulum_otomasyon_karari = True
     await db.flush()
     await db.refresh(obj)
     await audit_user(

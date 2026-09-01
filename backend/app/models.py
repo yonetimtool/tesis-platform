@@ -434,6 +434,14 @@ class Tenant(Base):
     gecikme_aylik_yuzde = mapped_column(
         Numeric(5, 2), nullable=False, server_default=text("0")
     )
+    #: (P199, goc 0090) Yonetici OTOMASYON TERCIHLERINI bir kez
+    #: KAYDETTI mi. Kurulum sihirbazinin otomasyon adimi bunu olcer;
+    #: veriden turetilemez cunku dogru cevap "kapali birak" olabilir ve
+    #: kapali satir, hic sorulmamisla ayni gorunur. Yalniz PATCH
+    #: uclarindan yazilir (GET satiri yaratir, karar yaratmaz).
+    kurulum_otomasyon_karari: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
     #: (P37) Gurultu caydiricisi: daire basina ACIK gurultu sikayeti bu
     #: sayiya ULASINCA (sinir DAHIL) uyari tetiklenir ve sayac SIFIRLANIR.
     gurultu_esigi: Mapped[int] = mapped_column(

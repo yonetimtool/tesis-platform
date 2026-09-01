@@ -26,9 +26,9 @@ Uygulama bağlantıları:
 
 ---
 
-## MİNİMUM ÇALIŞIR KURULUM — 6 adım
+## MİNİMUM ÇALIŞIR KURULUM — 7 adım
 
-Aşağıdaki altı adım tamamlandığında sistem gerçekten çalışır durumdadır:
+Aşağıdaki yedi adım tamamlandığında sistem gerçekten çalışır durumdadır:
 sakinler uygulamaya girer, borçlarını görür, siz tahsilat işlersiniz.
 **Toplam süre: yaklaşık 2 saat** (daire sayısına göre değişir).
 
@@ -39,10 +39,16 @@ sakinler uygulamaya girer, borçlarını görür, siz tahsilat işlersiniz.
 | 3 | **E-posta gönderiminin çalıştığını doğrulama** | **7.3** | 5 dk |
 | 4 | Sakinleri ekleme ve davet gönderme | **4** | 30–60 dk |
 | 5 | En az bir kasa açma | **5.1** | 5 dk |
-| 6 | İlk aidat tahakkuku | **5.3** | 10 dk |
+| 6 | **En az bir gelir/gider türü ("Aidat")** | **5.2** | 5 dk |
+| 7 | İlk aidat tahakkuku | **5.3** | 10 dk |
 
-Kurulum sihirbazı da tam olarak bu altısını **Zorunlu** işaretler ve
+Kurulum sihirbazı da tam olarak bu yedisini **Zorunlu** işaretler ve
 eksik olanı "neyi engellediği" ile birlikte yazar.
+
+**Gelir/gider türü neden zorunlu listede (P199):** ölçtük — toplu aidat
+yazma ekranı "hangi tür?" diye sorar ve tür seçilmeden **devam etmez**.
+Kasa açıp doğrudan aidata geçen yönetici burada duvara çarpıyordu. Bu
+yüzden sıra **kasa → gelir/gider türü → aidat**.
 
 **E-posta neden bu kadar erken:** davetler yalnızca e-postayla gider.
 Önce yüz sakini ekleyip sonra "e-postam çalışmıyormuş" demek, yüz daveti
@@ -66,8 +72,8 @@ Sihirbaz sizi tek tek ilgili ekranlara götürür."* İki düğmesi vardır:
 **Sihirbazı aç** ve **Daha sonra**.
 
 Sihirbaza her zaman **sol menünün en altındaki "Kurulum sihirbazı"**
-satırından da ulaşabilirsiniz. Sayfa on üç adımı sırayla gösterir; her
-adımın yanında **Git** düğmesi ilgili ekrana götürür.
+satırından da ulaşabilirsiniz. Sayfa on sekiz adımı sırayla gösterir;
+her adımın yanında **Git** düğmesi ilgili ekrana götürür.
 
 > Hatırlatma kutusu **kurulum bitince kendiliğinden kaybolur** ve
 > **Daha sonra** dediğinizde bir daha çıkmaz (tercih tarayıcınızda
@@ -78,8 +84,16 @@ adımın yanında **Git** düğmesi ilgili ekrana götürür.
 
 Sihirbazın adımları: Bloklar · Kat ve daireler · Daire tipleri ·
 Sakinler · **E-posta gönderimi** · Personel · Görev alanları ·
-NFC noktaları · **Kasa** · Aidat tanımı · **Tesis adresi** ·
-**Rezervasyon alanları** · **Sayaçlar**.
+NFC noktaları · **Kasa** · **Gelir ve gider türleri** · Aidat tanımı ·
+**Aidat planı** · **Otomasyon tercihleri** · **Bütçe başlıkları** ·
+**Düzenli giderler** · **Tesis adresi** · **Rezervasyon alanları** ·
+**Sayaçlar**.
+
+> **P199 — finans adımları neden eklendi:** sihirbaz bitiyordu ama
+> finans modülü hâlâ kullanılamaz kalıyordu. Aidat türü yoktu, plan
+> yoktu, bütçe başlığı yoktu; yönetici bunları kendi keşfetmek
+> zorundaydı. Beşi de artık **soruluyor** — ama yalnızca *gelir ve gider
+> türleri* zorunlu; diğer dördü "sonra yaparım" denebilir.
 
 Sayfanın üstünde bir **özet kartı** durur:
 
@@ -96,6 +110,11 @@ Sayfanın üstünde bir **özet kartı** durur:
   **Atlamak ilerleme çubuğunu rahatlatır ama gerçeği değiştirmez:**
   zorunlu bir adımı atlarsanız özet kartı onu eksik saymaya devam eder
   (kasası olmayan tesis, adım atlandı diye tahsilat yapamaz).
+
+* **"Sonraya bıraktıklarınız"** — atladığınız isteğe bağlı adımlar
+  özetin altında, **her birinin neyi engellediğiyle** birlikte kalır
+  (örnek: *"Plan yoksa aidatı her ay elle yazarsınız; unuttuğunuz ay
+  kimseye borç düşmez."*). Atlanan adım listeden sessizce kaybolmaz.
 
 Sihirbaz **"yapıldı mı"yı kendisi ölçer** — bir adımı işaretlemenize gerek
 yoktur, ilgili kayıt oluştuğunda kendiliğinden yeşile döner.
@@ -495,7 +514,7 @@ görünür.
 **Atlanırsa:** tahsilat, gider, virman, açılış fişi — hiçbiri
 girilemez.
 
-## 5.2 Gelir/gider kalemlerini tanımlayın
+## 5.2 Gelir/gider kalemlerini tanımlayın — ZORUNLU
 
 > **Tanımlar → Gelir/Gider Grupları → Yeni kayıt** (üst kırılım, örn.
 > `Aidat Gelirleri`, `Bakım Giderleri`) — sonra
@@ -511,6 +530,11 @@ Kalem alanları:
 
 **En az bir GİDER kalemi (`Aidat`) tanımlayın** — toplu borçlandırma bir
 kalem seçmenizi ister.
+
+> **Bu adım P199'da sihirbaza ZORUNLU olarak eklendi.** Ölçüm: kalem
+> seçilmeden gönderilen toplu borçlandırma isteği **reddediliyor**.
+> Yani kalem tanımlamadan aylık aidatı topluca yazamazsınız — sihirbaz
+> bunu artık aidattan **önce** sorar.
 
 > Bir **gelir** kalemi borçlandırılamaz; tahsil edilir. Sistem gelir
 > kalemiyle borç yazmanızı reddeder.
@@ -563,6 +587,17 @@ listesi, tahsilat oranı — hepsi boş kalır. Kurulum sihirbazının son adım
 da tamamlanmaz.
 
 ## 5.4 Aidat otomasyonu (isteğe bağlı ama çok değerli)
+
+> **P199:** bu bölüm ve 5.5–5.8 artık kurulum sihirbazında da birer
+> adım olarak **soruluyor** (Aidat planı · Otomasyon tercihleri ·
+> Bütçe başlıkları · Düzenli giderler). Dördü de **atlanabilir**;
+> atladıklarınız sihirbazın sonundaki **"Sonraya bıraktıklarınız"**
+> listesinde, neyi engellediğiyle birlikte durur.
+>
+> **Hiçbiri kendiliğinden açılmaz.** Otomasyonlar varsayılan olarak
+> **kapalıdır**; sihirbaz yalnızca sorar, açma kararı sizindir. Bir
+> aidat planı oluşturmak, "her ay kendiliğinden tahakkuk" demektir —
+> bu yüzden plan oluşturmak da isteğe bağlıdır.
 
 > **Finansal İşlemler → Otomasyon**
 

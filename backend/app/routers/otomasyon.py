@@ -28,6 +28,7 @@ from ..models import (
     HatirlatmaAyari,
     Kasa,
     OtomasyonGunlugu,
+    Tenant,
 )
 from ..schemas import (
     AidatPlaniCreate,
@@ -226,6 +227,13 @@ async def hatirlatma_ayari_guncelle(
     for k, v in veri.items():
         setattr(obj, k, v)
     obj.updated_at = func.now()
+    # (P199) KURULUM SIHIRBAZI: otomasyon tercihi KAYDEDILDI.
+    #
+    # `_ayar` get-or-create oldugu icin SATIRIN VARLIGI karar sayilamaz
+    # (GET de yaratir). Karar yalniz burada, KAYDETME aninda olusur.
+    tenant = await db.get(Tenant, user.tenant_id)
+    if tenant is not None:
+        tenant.kurulum_otomasyon_karari = True
     await db.flush()
     await db.refresh(obj)
     await audit_user(

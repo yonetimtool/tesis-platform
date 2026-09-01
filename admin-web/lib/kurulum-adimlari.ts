@@ -115,6 +115,18 @@ export const KURULUM_HEDEFLERI: Record<string, KurulumHedefi> = {
     rota: "/tanimlar?defter=kasalar",
     engel: "kurulumEngelKasa",
   },
+  // (P199) GELIR/GIDER TANIMI — AIDATTAN ONCE, ZORUNLU.
+  //
+  // Toplu borclandirma bu tanimi ISTER (olculdu: tanimsiz istek 422).
+  // Hedef ekran, tanimlarin YARATILDIGI defter — `gorev_alani` adiminda
+  // ogrenilen ders (P166 §8.3): adim, olculen seyin uretildigi ekrana
+  // bakmali, yalnizca okundugu ekrana degil.
+  gelir_gider_tanimi: {
+    etiket: "kurulumGelirGiderTanimi",
+    aciklama: "kurulumGelirGiderTanimiAlt",
+    rota: "/tanimlar?defter=gelir-gider-tanimlari",
+    engel: "kurulumEngelGelirGiderTanimi",
+  },
   aidat: {
     etiket: "kurulumAidat",
     aciklama: "kurulumAidatAlt",
@@ -124,6 +136,38 @@ export const KURULUM_HEDEFLERI: Record<string, KurulumHedefi> = {
     // acildi, yani adim artik yoneticinin KENDI hesabiyla tamamlanabilir.
     // Alan mekanizma olarak DURUYOR (asagidaki nota bak) — yarin baska bir
     // adim ayni duruma duserse tek satirla isaretlenir.
+  },
+  // (P199) FINANSIN ISTEGE BAGLI KATMANI — hicbiri ZORUNLU DEGIL.
+  //
+  // Aidatini her ay eliyle yazan tesis de calisir. Ama sorulmazsa
+  // yonetici bu ekranlarin varligini kendi kesfetmek zorunda kaliyordu.
+  //
+  // P192 karari geciyor: sihirbaz hicbir otomasyonu ACMAZ, yalnizca
+  // SORAR. Aidat plani `aktif=true` dogar — yani plani olusturmak
+  // otomasyonu acmaktir ve bu yuzden adim atlanabilir olmali.
+  aidat_plani: {
+    etiket: "kurulumAidatPlani",
+    aciklama: "kurulumAidatPlaniAlt",
+    rota: "/finans/otomasyon",
+    engel: "kurulumEngelAidatPlani",
+  },
+  otomasyon: {
+    etiket: "kurulumOtomasyon",
+    aciklama: "kurulumOtomasyonAlt",
+    rota: "/finans/otomasyon",
+    engel: "kurulumEngelOtomasyon",
+  },
+  butce_kategorisi: {
+    etiket: "kurulumButceKategorisi",
+    aciklama: "kurulumButceKategorisiAlt",
+    rota: "/finans/butce",
+    engel: "kurulumEngelButceKategorisi",
+  },
+  duzenli_gider: {
+    etiket: "kurulumDuzenliGider",
+    aciklama: "kurulumDuzenliGiderAlt",
+    rota: "/finans/otomasyon",
+    engel: "kurulumEngelDuzenliGider",
   },
   // (P193 §2) ISTEGE BAGLI IKI MODUL — tanim yapilmadan SESSIZCE bos
   // gorunuyorlardi; kullanici modulu bozuk saniyordu.

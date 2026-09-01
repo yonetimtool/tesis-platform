@@ -59,6 +59,18 @@ def test_ADIM_KODLARI_SABIT(client, world):
     """Kod kumesi istemcinin etiket sozlugunun anahtaridir; sessizce
     degisirse sihirbaz cevrilmemis satir cizer.
 
+    (P199) FINANS ADIMLARI EKLENDI (13 -> 18). Sihirbaz bitiyordu ama
+    finans modulu hâlâ kullanilamaz kaliyordu: aidat turu yok, plan yok,
+    butce yok. Eklenenler ve gerekceleri:
+      * `gelir_gider_tanimi` — ZORUNLU. OLCULDU (P193 §6):
+        `POST /borclandirma/toplu/onizleme` `gelir_gider_tanim_id`
+        ISTER; tanim yokken toplu borclandirma 422 doner. SIRASI
+        kasa ile aidat ARASINDA (`docs/P192-test-yolharitasi.md` §2).
+      * `aidat_plani`, `otomasyon`, `butce_kategorisi`,
+        `duzenli_gider` — ZORUNLU DEGIL: aidatini her ay eliyle yazan
+        tesis de calisir. Ama SORULUYORLAR (P192 karari: otomasyonlar
+        varsayilan KAPALI; sihirbaz sorar, acmayi kullanici secer).
+
     (P193 §2) SEKIZ ADIM ON IKI OLDU. Eklenenler ve gerekceleri:
       * `eposta`  — davetlerin gittigi TEK kanal; calismiyorsa acilan
         hesaplarin HICBIRINE girilemez ve bu ancak sikayet gelince
@@ -76,10 +88,12 @@ def test_ADIM_KODLARI_SABIT(client, world):
     """
     yon = _giris(client, world["slug_a"], world["yonetici_a"])
     _, govde = _durum(client, yon)
-    assert govde["toplam"] == 13
+    assert govde["toplam"] == 18
     assert [a["kod"] for a in govde["adimlar"]] == [
         "blok", "daire", "daire_tipi", "sakin", "eposta",
-        "personel", "gorev_alani", "nfc_noktasi", "kasa", "aidat",
+        "personel", "gorev_alani", "nfc_noktasi", "kasa",
+        "gelir_gider_tanimi", "aidat", "aidat_plani", "otomasyon",
+        "butce_kategorisi", "duzenli_gider",
         "adres", "rezervasyon_alani", "sayac",
     ]
 
@@ -98,8 +112,9 @@ def test_P193_ZORUNLU_ADIMLAR_ve_EKSIK_OZETI(client, world):
     zorunlular = {a["kod"] for a in govde["adimlar"] if a["zorunlu"]}
     # DAIRE TIPI ZORUNLU DEGIL: tahakkuk sabit tutarla da yazilabilir.
     # Tip yalnizca her daireye FARKLI tutar yazilacaksa gerekir.
-    assert zorunlular == {"blok", "daire", "sakin", "eposta", "kasa", "aidat"}
-    assert govde["zorunlu_toplam"] == 6
+    assert zorunlular == {"blok", "daire", "sakin", "eposta", "kasa",
+                          "gelir_gider_tanimi", "aidat"}
+    assert govde["zorunlu_toplam"] == 7
     eksik = set(govde["eksik_zorunlular"])
     assert eksik == {a["kod"] for a in govde["adimlar"]
                      if a["zorunlu"] and not a["tamam"]}

@@ -6734,7 +6734,7 @@ paths:
       summary: Kurulum adimlarinin durumu (admin + yonetici)
       responses:
         "200":
-          description: Sekiz adim + ilerleme
+          description: Adimlar + ilerleme
           content:
             application/json:
               schema: { $ref: "#/components/schemas/KurulumDurumu" }
@@ -13452,15 +13452,23 @@ components:
             Adim kodu — METIN DEGIL KIMLIK. Etiket istemcide aktif dilde
             cozulur. Kume SABIT ve `routers/kurulum.py::ADIMLAR` ile ayni.
           enum: [blok, daire, daire_tipi, sakin, eposta, personel,
-                 gorev_alani, nfc_noktasi, kasa, aidat, adres,
-                 rezervasyon_alani, sayac]
+                 gorev_alani, nfc_noktasi, kasa, gelir_gider_tanimi,
+                 aidat, aidat_plani, otomasyon, butce_kategorisi,
+                 duzenli_gider, adres, rezervasyon_alani, sayac]
         sayi:
           type: integer
           description: >
             Adimin uretmis oldugu kayit sayisi. `tamam` ile birlikte doner
             cunku "3 blok var" ile "blok var" kullaniciya ayni seyi
             soylemez.
-        tamam: { type: boolean, description: "sayi > 0 — VERIDEN sayilir" }
+        tamam:
+          type: boolean
+          description: >
+            `sayi > 0`. Kural olarak VERIDEN sayilir; tek istisna (P199)
+            `otomasyon` adimidir — orada olculen sey yoneticinin
+            KAYDETTIGI karardir (`tenant.kurulum_otomasyon_karari`,
+            goc 0090), cunku "hicbirini acma" da gecerli bir cevaptir ve
+            kapali bir ayar satiri hic sorulmamisla ayni gorunur.
         atlandi: { type: boolean, description: "BILINCLI atlandi" }
         zorunlu:
           type: boolean
