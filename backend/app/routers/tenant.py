@@ -56,6 +56,10 @@ _YONETICI_YAZABILIR = {
     # (P165) Rezervasyon gecmisi saklama penceresi SITE ISLETMESIDIR:
     # ortak alan kullanimini yoneten kisi ayarlamali.
     "rezervasyon_gecmis_ay",
+    # (P193 §4) TESIS ADRESI — site yonetiminin isi. Adresi bilen kisi
+    # yoneticidir; platform operatorune birakmak, her tabela degisikligini
+    # destek talebine cevirirdi.
+    "adres", "ilce", "il", "posta_kodu",
 }
 
 
@@ -64,6 +68,10 @@ def _to_settings(t: Tenant) -> TenantSettings:
         tenant_id=t.id, ad=t.ad, slug=t.slug, timezone=t.timezone,
         kurulum_tamamlandi=t.kurulum_tamamlandi,
         yonetim_email=t.yonetim_email,
+        adres=t.adres,
+        ilce=t.ilce,
+        il=t.il,
+        posta_kodu=t.posta_kodu,
         konum_ad=t.konum_ad,
         konum_lat=float(t.konum_lat),
         konum_lon=float(t.konum_lon),

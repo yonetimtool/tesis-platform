@@ -543,6 +543,12 @@ export interface TenantSettings {
   kurulum_tamamlandi: boolean;
   // Tesis yonetim maili (tenant seviyesi) — yonetici iletisim kartinda gorunur.
   yonetim_email?: string | null;
+  // --- (P193 §4) TESIS POSTA ADRESI. Makbuzda ve rapor PDF basliginda
+  // yazilir. Dort ayri alan: il/ilce sonradan suzulebilir olmali.
+  adres?: string | null;
+  ilce?: string | null;
+  il?: string | null;
+  posta_kodu?: string | null;
   // --- (P40) operasyon ayarlari: P34 tur alarmi, P35 guvenlik modu,
   // P37 gurultu caydiricisi. Hepsi OPSIYONEL isaretli cunku eski bir
   // backend surumu bunlari donmez ve panel yine acilmalidir.
@@ -563,6 +569,10 @@ export interface TenantSettings {
   konum_ad?: string | null;
   konum_lat?: number | null;
   konum_lon?: number | null;
+  /** (G4) Otopark kapasitesi. `null` = tanimsiz (doluluk orani da null). */
+  otopark_kapasite?: number | null;
+  anpr_guven_esigi?: number;
+  anpr_otomatik_cikis?: boolean;
 }
 
 // ------------------------ tenant olusturma (admin) ------------------------- #

@@ -13272,7 +13272,7 @@ components:
             Adim kodu — METIN DEGIL KIMLIK. Etiket istemcide aktif dilde
             cozulur. Kume SABIT ve `routers/kurulum.py::ADIMLAR` ile ayni.
           enum: [blok, daire, daire_tipi, sakin, eposta, personel,
-                 gorev_alani, nfc_noktasi, kasa, aidat,
+                 gorev_alani, nfc_noktasi, kasa, aidat, adres,
                  rezervasyon_alani, sayac]
         sayi:
           type: integer
@@ -15456,6 +15456,17 @@ components:
           type: string
           nullable: true
           description: "Tesisin yonetim maili (tenant seviyesi) — yonetici iletisim kartinda gosterilir"
+        adres:
+          type: string
+          nullable: true
+          description: "(P193 §4) Tesis acik adresi — makbuzda ve rapor PDF basliginda yazilir"
+        ilce: { type: string, nullable: true }
+        il: { type: string, nullable: true }
+        posta_kodu:
+          type: string
+          nullable: true
+          pattern: "^[0-9]{5}$"
+          description: "Bes hane. DB CHECK ile AYNI kural."
         konum_ad:
           type: string
           default: "İstanbul"
@@ -15576,8 +15587,10 @@ components:
       description: >
         En az bir alan gerekli. admin TUM alanlari gonderebilir; `yonetici`
         YALNIZ `ad`, `konum_ad`, `konum_lat`, `konum_lon`, `otopark_kapasite`,
-        `anpr_guven_esigi` ve `anpr_otomatik_cikis` gonderebilir (baska alan
-        gonderirse 403). ANPR ayarlari yoneticidedir cunku bunlar SAHA
+        `anpr_guven_esigi`, `anpr_otomatik_cikis`, tur/gurultu/okutma
+        ayarlari ve (P193 §4) ADRES alanlarini gonderebilir (baska alan
+        gonderirse 403). Adres site yonetiminin isidir: adresi bilen kisi
+        yoneticidir. ANPR ayarlari yoneticidedir cunku bunlar SAHA
         kararidir — kameranin nerede durdugunu ve yanlis okumanin ne siklikta
         oldugunu site bilir. `slug` ve tenant `id` bu uctan ASLA degismez.
       minProperties: 1
@@ -15585,6 +15598,10 @@ components:
         timezone: { type: string }
         ad: { type: string }
         yonetim_email: { type: string, nullable: true }
+        adres: { type: string, nullable: true, maxLength: 500 }
+        ilce: { type: string, nullable: true, maxLength: 100 }
+        il: { type: string, nullable: true, maxLength: 100 }
+        posta_kodu: { type: string, nullable: true, pattern: "^[0-9]{5}$" }
         konum_ad: { type: string, minLength: 1 }
         konum_lat: { type: number, format: double, minimum: -90, maximum: 90 }
         konum_lon: { type: number, format: double, minimum: -180, maximum: 180 }

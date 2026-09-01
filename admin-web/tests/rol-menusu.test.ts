@@ -61,6 +61,10 @@ const BIRINCIL_UC: Record<string, string> = {
   "/tasks": "GET /tasks",
   "/assets": "GET /assets",
   "/units": "GET /units",
+  // (P193 §5) Tesis ayarlari ekrani. YAZMA ucu `PATCH /tenant/settings`
+  // (admin + yonetici); okuma daha genis (denetci de gorur) ama ekran bir
+  // YAZMA ekranidir — birincil uc yazma ucudur.
+  "/tesis-ayarlari": "PATCH /tenant/settings",
   "/building-editor": "GET /blocks",
   "/schematic": "GET /unit-complaints/building-map",
   "/tanimlar": "GET /sayaclar/ana",

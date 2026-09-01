@@ -42,6 +42,7 @@ from ..models import (
     UnitResident,
     VarlikEki,
 )
+from ..makbuz import adres_satiri
 from ..rapor_ciktilari import excel_uret, metin_pdf, pdf_uret
 from ..storage import presign_get
 from ..raporlar import (
@@ -1168,7 +1169,12 @@ async def rapor_uret(
         icerik = (
             metin_pdf(sonuc.baslik, sonuc.metin or "", tenant.ad)
             if not sonuc.sutunlar
-            else pdf_uret(sonuc, tenant.ad, p.baslangic, p.bitis, grafik=grafik)
+            else pdf_uret(
+                sonuc, tenant.ad, p.baslangic, p.bitis, grafik=grafik,
+                site_adres=adres_satiri(
+                    tenant.adres, tenant.ilce, tenant.il, tenant.posta_kodu
+                ),
+            )
         )
         tur = "application/pdf"
         uzanti = "pdf"

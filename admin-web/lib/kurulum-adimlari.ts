@@ -127,6 +127,13 @@ export const KURULUM_HEDEFLERI: Record<string, KurulumHedefi> = {
   },
   // (P193 §2) ISTEGE BAGLI IKI MODUL — tanim yapilmadan SESSIZCE bos
   // gorunuyorlardi; kullanici modulu bozuk saniyordu.
+  // (P193 §4) Adres, tesis ayarlari ekraninda girilir.
+  adres: {
+    etiket: "kurulumAdres",
+    aciklama: "kurulumAdresAlt",
+    rota: "/tesis-ayarlari",
+    engel: "kurulumEngelAdres",
+  },
   rezervasyon_alani: {
     etiket: "kurulumRezervasyonAlani",
     aciklama: "kurulumRezervasyonAlaniAlt",

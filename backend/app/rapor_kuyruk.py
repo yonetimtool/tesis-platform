@@ -37,6 +37,7 @@ from sqlalchemy import select
 from .config import settings
 from .db import tenant_session
 from .models import RaporIsi
+from .makbuz import adres_satiri
 from .rapor_ciktilari import excel_uret, metin_pdf, pdf_uret
 from .schemas import RaporParametre
 from .storage import sunucudan_yukle
@@ -112,7 +113,12 @@ async def isi_uret(is_id: uuid.UUID) -> dict:
                 icerik = (
                     metin_pdf(sonuc.baslik, sonuc.metin or "", tenant.ad)
                     if not sonuc.sutunlar
-                    else pdf_uret(sonuc, tenant.ad, p.baslangic, p.bitis, grafik=grafik)
+                    else pdf_uret(
+                        sonuc, tenant.ad, p.baslangic, p.bitis, grafik=grafik,
+                        site_adres=adres_satiri(
+                            tenant.adres, tenant.ilce, tenant.il, tenant.posta_kodu
+                        ),
+                    )
                 )
                 tur, uzanti = PDF_TURU, "pdf"
 

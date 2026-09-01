@@ -18,6 +18,7 @@ import { kurulumHatirlaticiyiAc } from "@/components/KurulumHatirlatici";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
+import { OPERASYON, GIRDI_TIPI } from "@/lib/tesis-ayar-alanlari";
 import type { TenantSettings } from "@/lib/types";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
@@ -34,97 +35,6 @@ import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
  * dogrulama kalibini on kez kopyalamak olurdu (P27 "Tanimlar" ile ayni
  * gerekce).
  */
-
-/** Operasyon ayari alan tanimi. `anahtar` backend alan adidir. */
-interface Ayar {
-  anahtar: keyof TenantSettings & string;
-  etiket: SozlukAnahtari;
-  ipucu?: SozlukAnahtari;
-  tip: "sayi" | "bool" | "metin" | "secim";
-  secenekler?: { deger: string; etiket: SozlukAnahtari }[];
-  min?: number;
-  max?: number;
-  /** YALNIZ admin degistirebilir (sunucu de zorlar; burada gorunurluk). */
-  adminOnly?: boolean;
-}
-
-/** Alan tipi -> HTML input tipi. Ucluda ("sayi" ? "number" : "text")
- *  yazmak, sabit-metin taramasini cevrilmemis metin sanip uyarmaya iterdi;
- *  bunlar KULLANICI METNI DEGIL teknik jetondur. */
-const GIRDI_TIPI: Record<string, string> = { sayi: "number", metin: "text" };
-
-const OPERASYON: Ayar[] = [
-  // --- P34 tur butunlugu ---
-  {
-    anahtar: "tur_gecikme_toleransi_dk",
-    etiket: "ayarTurTolerans",
-    ipucu: "ayarTurToleransIpucu",
-    tip: "sayi",
-    min: 1,
-    max: 240,
-  },
-  {
-    anahtar: "tur_alarm_tekrar_sayisi",
-    etiket: "ayarTurTekrar",
-    ipucu: "ayarTurTekrarIpucu",
-    tip: "sayi",
-    min: 0,
-    max: 10,
-  },
-  {
-    anahtar: "tur_baslangic_foto_zorunlu",
-    etiket: "ayarTurFoto",
-    ipucu: "ayarTurFotoIpucu",
-    tip: "bool",
-  },
-  // --- P35 guvenlik modu ---
-  {
-    anahtar: "guvenlik_modu",
-    etiket: "ayarGuvenlikModu",
-    ipucu: "ayarGuvenlikModuIpucu",
-    tip: "secim",
-    secenekler: [
-      { deger: "yonetim_ici", etiket: "ayarGuvenlikYonetimIci" },
-      { deger: "dis_sirket", etiket: "ayarGuvenlikDisSirket" },
-    ],
-    adminOnly: true,
-  },
-  // --- (P160) okutma mesafe esigi ---
-  {
-    anahtar: "okutma_mesafe_esigi_m",
-    etiket: "ayarOkutmaMesafe",
-    ipucu: "ayarOkutmaMesafeIpucu",
-    tip: "sayi",
-    // Sinirlar SUNUCUYLA AYNI (sema CHECK + API Field): burada dar bir
-    // aralik yazmak, sunucunun kabul ettigi bir degeri panelde
-    // reddetmek olurdu.
-    min: 1,
-    max: 5000,
-  },
-  // --- (P165) rezervasyon gecmisi saklama penceresi ---
-  {
-    anahtar: "rezervasyon_gecmis_ay",
-    etiket: "ayarRezervasyonGecmis",
-    ipucu: "ayarRezervasyonGecmisIpucu",
-    tip: "sayi",
-    // `0 = SINIRSIZ` ve alt sinir bu yuzden 0: ayar bir saklama
-    // politikasini ZORLAMAMALI. Ust sinir 120 ay (10 yil) — daha uzugu
-    // bir politika degil, yanlis girilmis bir deger olurdu. Sinirlar
-    // sunucudaki `Field(ge=0, le=120)` ve DDL `CHECK` ile AYNI.
-    min: 0,
-    max: 120,
-  },
-  // --- P37 gurultu caydirici ---
-  {
-    anahtar: "gurultu_esigi",
-    etiket: "ayarGurultuEsigi",
-    ipucu: "ayarGurultuEsigiIpucu",
-    tip: "sayi",
-    min: 1,
-    max: 50,
-  },
-  { anahtar: "gurultu_uyari_metni", etiket: "ayarGurultuMetni", ipucu: "ayarGurultuMetniIpucu", tip: "metin" },
-];
 
 export default function SettingsPage() {
   const t = useT();

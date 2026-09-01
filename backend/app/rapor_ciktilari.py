@@ -251,6 +251,7 @@ def pdf_uret(
     bitis: date | None,
     logo_png: bytes | None = None,
     grafik=None,
+    site_adres: str | None = None,
 ) -> bytes:
     """Kurumsal sablonlu PDF.
 
@@ -267,14 +268,15 @@ def pdf_uret(
     veri = _grafik_verisi(sonuc, grafik) if grafik is not None else None
 
     # 1. GECIS: sayfa sayisini ogren.
-    toplam_sayfa = _ciz(sonuc, site_ad, baslangic, bitis, sayfa, logo_png, None, None, veri, grafik)
+    toplam_sayfa = _ciz(sonuc, site_ad, baslangic, bitis, sayfa, logo_png, None, None, veri, grafik, site_adres)
     # 2. GECIS: altbilgide gercek sayiyi yaz.
     tampon = io.BytesIO()
-    _ciz(sonuc, site_ad, baslangic, bitis, sayfa, logo_png, tampon, toplam_sayfa, veri, grafik)
+    _ciz(sonuc, site_ad, baslangic, bitis, sayfa, logo_png, tampon, toplam_sayfa, veri, grafik, site_adres)
     return tampon.getvalue()
 
 
-def _ciz(sonuc, site_ad, baslangic, bitis, sayfa, logo_png, tampon, toplam=None, veri=None, grafik=None):
+def _ciz(sonuc, site_ad, baslangic, bitis, sayfa, logo_png, tampon, toplam=None,
+         veri=None, grafik=None, site_adres=None):
     hedef = tampon or io.BytesIO()
     c = pdf_canvas.Canvas(hedef, pagesize=sayfa)
     genislik, yukseklik = sayfa
@@ -318,6 +320,14 @@ def _ciz(sonuc, site_ad, baslangic, bitis, sayfa, logo_png, tampon, toplam=None,
         c.drawString(sol, y - 16 * mm, f"Dönem: {_aralik_metni(baslangic, bitis)}")
         c.drawRightString(genislik - kenar, y - 16 * mm, f"Oluşturma: {_damga()}")
         y -= 22 * mm
+        # (P193 §4) TESIS ADRESI — resmi bir ciktinin ait oldugu tesisi
+        # adiyla degil adresiyle de gostermesi gerekir. Adres YOKSA satir
+        # HIC acilmaz ve yerlesim aynen eskisi gibi kalir.
+        if site_adres:
+            c.setFont("Helvetica", 7)
+            c.setFillColor(colors.grey)
+            c.drawString(kenar, y + 4 * mm, site_adres[:150])
+            c.setFillColor(colors.black)
         c.setFont("Helvetica-Bold", 8)
         for s, sx in zip(sutunlar, xler):
             c.drawString(sx, y, s.baslik[:28])

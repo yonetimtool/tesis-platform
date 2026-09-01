@@ -2839,6 +2839,11 @@ class TenantSettings(BaseModel):
     kurulum_tamamlandi: bool = True
     # Tesisin yonetim maili — yonetici iletisim kartinda gosterilir.
     yonetim_email: str | None = None
+    #: (P193 §4) Tesis posta adresi — makbuzda ve resmi ciktida yazilir.
+    adres: str | None = None
+    ilce: str | None = None
+    il: str | None = None
+    posta_kodu: str | None = None
     # Hava durumu konumu (0005) — baslik + /weather sorgusu.
     konum_ad: str = "İstanbul"
     konum_lat: float = 41.0082
@@ -2886,6 +2891,15 @@ class TenantSettingsUpdate(BaseModel):
     timezone: str | None = None
     ad: str | None = None
     yonetim_email: str | None = None
+    #: (P193 §4) Adres alanlari. Bos dizge `None`a cevrilir (asagidaki
+    #: dogrulayici): `" "` TRUTHY oldugu icin "adres var" sayilir ve
+    #: makbuzda bos bir satir birakirdi.
+    adres: str | None = Field(None, max_length=500)
+    ilce: str | None = Field(None, max_length=100)
+    il: str | None = Field(None, max_length=100)
+    #: DB CHECK ile AYNI kural: bes hane. Iki yerde iki farkli sinir,
+    #: API'den gecen degerin veritabaninda reddedilmesi demekti.
+    posta_kodu: str | None = Field(None, pattern=r"^[0-9]{5}$")
     konum_ad: str | None = Field(None, min_length=1)
     konum_lat: float | None = Field(None, ge=-90, le=90)
     konum_lon: float | None = Field(None, ge=-180, le=180)
@@ -2924,7 +2938,7 @@ class TenantSettingsUpdate(BaseModel):
     # oldugu icin "yonetim e-postasi var" sayilir ve bildirim yolu bos bir
     # adrese gitmeye calisirdi. (P97'nin telefonda bulunan asimetrisinin
     # aynisi: ayni alan, iki yazma yolu, tek dogrulayici.)
-    @field_validator("yonetim_email")
+    @field_validator("yonetim_email", "adres", "ilce", "il")
     @classmethod
     def _bos_ise_none_upd(cls, v: str | None) -> str | None:
         return (v.strip() or None) if v is not None else None

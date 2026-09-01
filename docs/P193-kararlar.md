@@ -311,3 +311,124 @@ Backend: `test_dues.py` + `test_finans.py` + `test_p191_banka_uc.py` +
   MT940 metin yolundan geçiyor; XLSX ayrıştırma katmanı ayrı).
 - Yöneticinin (admin değil) bu ekranlardaki davranışı — uçlar admin'e
   kapalı olduğu için değişmedi; K3.6'daki açık madde.
+
+---
+
+## Bölüm 4 — Tesis adresi (14 eksik · madde 1)
+
+### Kararlar
+
+**K4.1 — Dört ayrı alan, tek serbest metin değil.**
+`adres` / `ilce` / `il` / `posta_kodu` (göç **0088**, geri alınabilir —
+downgrade→upgrade koşuldu). Tek metin daha az iş olurdu ama il/ilçe
+sonradan **süzülebilir** alanlardır (bölgeye göre tesis listesi, resmî
+entegrasyon); serbest metinden il çıkarmak bir ayrıştırıcının işi olur ve
+"İstanbul" ile "ISTANBUL" aynı sayılmazdı.
+
+**K4.2 — Hepsi boş bırakılabilir.** Zorunlu yapmak bugün çalışan her
+tesisi bir anda "eksik" hâle getirir, göç de `NOT NULL`da patlardı.
+
+**K4.3 — Posta kodu beş hane, kural İKİ YERDE DE AYNI.** DB `CHECK` +
+Pydantic `pattern`. İki farklı sınır yazmak, API'den geçen bir değerin
+veritabanında reddedilmesi demekti.
+
+**K4.4 — Makbuzda ve rapor PDF başlığında görünür; adres yoksa satır hiç
+açılmaz.** Boş bir satır bırakmak, "adres girilmemiş" mesajını yöneticiye
+değil sakine göstermek olurdu. Birleştirme `adres_satiri()` tek yerde:
+`"Örnek Mah. No:5, Kadıköy, 34710 İstanbul"`, boş alan sarkan virgül
+bırakmaz.
+
+**K4.5 — Adresi YÖNETİCİ yazar.** `_YONETICI_YAZABILIR` kümesine eklendi:
+adresi bilen kişi yöneticidir; platform operatörüne bırakmak her tabela
+değişikliğini destek talebine çevirirdi.
+
+**K4.6 — Sihirbazda sorulur ama zorunlu değil.** Adressiz tesis çalışır,
+yalnız çıktıları eksik görünür. Ama sorulmazsa yönetici böyle bir alan
+olduğunu hiç öğrenmiyordu.
+
+### NE ÖLÇTÜM
+
+```
+PATCH /tenant/settings (YONETICI ile) -> 200
+  {'adres': 'Örnek Mah. 1. Sk. No:5', 'ilce': 'Kadıköy',
+   'il': 'İstanbul', 'posta_kodu': '34710'}
+posta_kodu "34 71"      -> 422 İstek gövdesi geçersiz.
+guvenlik_modu (platform)-> 403 Yönetici yalnız tesis adını ... değiştirebilir.
+timezone      (platform)-> 403 (aynı)
+GET /kurulum · adres adımı -> {'sayi':1,'tamam':True,'zorunlu':False}, toplam 13
+```
+
+Makbuzun adresi gerçekten yazdığını, PDF'e çizilen metinleri kaydederek
+ölçtüm (`Canvas.drawString` izlendi):
+
+```
+ADRESLI makbuzda çizilen ilk 3 metin:
+  ['Acme Plaza', 'Örnek Mah. No:5, Kadıköy, 34710 İstanbul', 'TAHSİLAT MAKBUZU']
+ADRESSIZ makbuzda çizilen ilk 3 metin:
+  ['Acme Plaza', 'TAHSİLAT MAKBUZU', 'Ödeyen:']
+```
+
+Göç geri alınabilir: `downgrade -1` → `upgrade head` temiz koştu.
+Testler: yeni `test_p193_tesis_adresi.py` **6 test**;
+`test_kurulum.py` + `test_tenants.py` + `test_tenant_ad.py` **42 test**.
+
+### Ölçemediklerim
+- Rapor PDF'inin başlığındaki adres satırı (kod yolu makbuzla aynı
+  `adres_satiri()`, ama rapor çıktısını render edip görmedim).
+- Mobil tarafta adresin gösterimi — mobilde adres ekranı **yok**, bu
+  turda eklenmedi (§7'de açık madde).
+
+---
+
+## Bölüm 5 — Yöneticinin tesis ayarları ekranı (14 eksik · maddeler 2, 3)
+
+### Sorun
+Sunucu `PATCH /tenant/settings`in bir kısmını yöneticiye zaten açıyordu
+(`_YONETICI_YAZABILIR`: tesis adı, konum, otopark kapasitesi, tur alarmı,
+gürültü eşiği, okutma mesafesi, rezervasyon geçmişi). Panelde bu alanları
+gösteren tek ekran `/settings`ti ve o **platform yüzeyinde** — yani yalnız
+Yönetiyor ekibi görüyordu. Yönetici tesis adını bile web'den
+değiştiremiyordu (yalnız mobilden).
+
+### Kararlar
+
+**K5.1 — Yeni ekran: `/tesis-ayarlari` (tesis yüzeyi, admin + yönetici).**
+`/settings` platformda **kaldı**: orada saat dilimi, tesis kodu ve
+güvenlik modu gibi kimlik/sahiplik değerleri var.
+
+**K5.2 — Alan tablosu kopyalanmadı, `lib/tesis-ayar-alanlari.ts`e taşındı.**
+İki liste tutmak, yeni bir ayar eklendiğinde ekranlardan birinin
+**sessizce** eksik kalması demekti (ekranda alan yok, sunucu alanı kabul
+ediyor). `/settings` de artık aynı tablodan besleniyor.
+
+**K5.3 — Platformda kalanlar ve gerekçeleri** (ekranda da yazılı):
+| Ayar | Neden yönetici değil |
+|---|---|
+| Güvenlik modu | Sahipliği devreder (P35). Yöneticinin kendi yetkisini kendine geri verebilmesi, dış şirkete devri anlamsızlaştırırdı. |
+| Saat dilimi | Oturumların ve geçmiş kayıtların **yorumunu** değiştirir; yanlış bir değer tüm zaman damgalarını kaydırır. |
+| Tesis kodu (slug) | Giriş anahtarı. Değişmesi, kayıtlı her kullanıcının giriş bilgisini geçersiz kılardı. |
+| Yönetim e-postası | Bugün admin'de. **Açık madde**: site iletişim adresidir ve yöneticiye açılması savunulabilir; rol kümesini bu turda değiştirmedim çünkü bildirim yollarının hangi adresi kullandığını ayrıca ölçmek gerekir. |
+
+Sunucu bunları zaten reddediyor (403); ekrandaki gizleme yalnızca
+kullanıcıya 403 aldırmamak için — karar tek yerde, sunucuda.
+
+**K5.4 — Yalnız değişen alan gönderilir; boş ile boş aynıdır.**
+Sunucu boş metni `null` döner, form `""` tutar. İkisini farklı saymak,
+kullanıcı hiçbir şeye dokunmadan "Kaydet"e bastığında boş alanları
+yeniden yazan bir istek üretiyordu — ölçüldü (`gurultu_uyari_metni: null`
+sızıyordu), düzeltildi.
+
+### NE ÖLÇTÜM
+- Uç tarafı yukarıdaki §4 çıktısında: yönetici **yazabildiklerini**
+  yazdı, **yazamadıklarında 403** aldı.
+- Ekran: `admin-web/tests/tesis-ayarlari.dom.test.ts` (5 test) sayfayı
+  render ediyor — tesis adı + dört adres alanı çiziliyor; güvenlik modu
+  ve saat dilimi **çizilmiyor** ve nedeni ekranda yazılı; işletme ayarları
+  (gürültü, okutma) çiziliyor; tek alan değişince gövdede **yalnız o**
+  gidiyor; hiçbir şey değişmediyse istek **atılmıyor**.
+- Menü/rol kilidi: `rol-menusu.test.ts` 19 test (yeni rota birincil
+  ucuyla `PATCH /tenant/settings` olarak kaydedildi).
+
+### Ölçemediklerim
+- Ekranın gerçek tarayıcıda yöneticinin menüsünde göründüğü (kilit testi
+  kuralı doğruluyor, gözle görmedim).

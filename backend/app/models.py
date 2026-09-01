@@ -377,6 +377,14 @@ class Tenant(Base):
     # Tesisin yonetim maili (tenant seviyesi; kisisel veya ortak olabilir —
     # anlamsal kisit yok). Yonetici iletisim kartinda tum uyelere gorunur.
     yonetim_email: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: (P193 §4, goc 0088) TESIS POSTA ADRESI. Makbuzda ve resmi ciktida
+    #: gorunur. Dort ayri alan cunku il/ilce sonradan SUZULEBILIR olmali;
+    #: serbest metinden il cikarmak bir ayristiricinin isi olurdu.
+    adres: Mapped[str | None] = mapped_column(Text, nullable=True)
+    ilce: Mapped[str | None] = mapped_column(Text, nullable=True)
+    il: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: Bes hane; DB CHECK zorlar (NULL serbest).
+    posta_kodu: Mapped[str | None] = mapped_column(Text, nullable=True)
     # Dis Hizmetler bolumu notu (yonetici serbest metni; tum roller okur).
     dis_hizmet_notu: Mapped[str | None] = mapped_column(Text, nullable=True)
     # Otopark kapasitesi (G4). NULL = tanimsiz -> /parking/occupancy kapasite +

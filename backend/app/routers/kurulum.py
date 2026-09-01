@@ -99,6 +99,15 @@ def _say(model, *kosullar) -> Callable[[], Select]:
     return lambda: select(func.count()).select_from(model).where(*kosullar)
 
 
+async def _adres_var(db: AsyncSession, tenant: Tenant) -> int:
+    """(P193 §4) Tesisin POSTA ADRESI girilmis mi.
+
+    OLCUT `adres` alani: il/ilce tek basina bir adres degildir ve
+    makbuzda "Kadikoy, Istanbul" yazmak sakine hicbir sey soylemez.
+    """
+    return 1 if (tenant.adres or "").strip() else 0
+
+
 async def _eposta_hazir(db: AsyncSession, tenant: Tenant) -> int:
     """E-posta gonderimi CALISIR durumda mi (1) degil mi (0).
 
@@ -158,6 +167,11 @@ ADIMLAR: tuple[_Adim, ...] = (
     # modulun bozuk oldugunu sanir. Zorunlu DEGILLER (havuzu olmayan bir
     # site de calisan bir tesistir) ama gorunur olmalilar — atlama
     # dugmesi zaten burada.
+    # (P193 §4 / rehber eksik 1) TESIS ADRESI — makbuzda ve rapor
+    # basliginda yazilir. ZORUNLU DEGIL: adressiz bir tesis de calisir,
+    # yalnizca ciktilari eksik gorunur. Ama SORULUR: kimse sormazsa
+    # yonetici boyle bir alan oldugunu hic ogrenmiyordu.
+    _Adim("adres", olcu=_adres_var),
     _Adim("rezervasyon_alani", _say(OrtakAlan, OrtakAlan.aktif.is_(True))),
     _Adim("sayac", _say(SayacAna)),
 )

@@ -67,17 +67,20 @@ def test_ADIM_KODLARI_SABIT(client, world):
         ilk tahsilatta duvara carpiyordu (eksik 11).
       * `rezervasyon_alani`, `sayac` — tanimsizken modul SESSIZCE bos
         gorunuyor, kullanici bozuk saniyordu (eksik 12).
+      * `adres` (P193 §4) — makbuzda ve rapor basliginda yazilan tesis
+        adresi. Zorunlu degil ama SORULUR: kimse sormazsa yonetici boyle
+        bir alan oldugunu hic ogrenmiyordu (eksik 1).
 
     SIRA da kilitli: e-posta SAKINDEN HEMEN SONRA (ilk toplu davet oradan
     cikar), kasa AIDATTAN ONCE (once para kutusu, sonra borc).
     """
     yon = _giris(client, world["slug_a"], world["yonetici_a"])
     _, govde = _durum(client, yon)
-    assert govde["toplam"] == 12
+    assert govde["toplam"] == 13
     assert [a["kod"] for a in govde["adimlar"]] == [
         "blok", "daire", "daire_tipi", "sakin", "eposta",
         "personel", "gorev_alani", "nfc_noktasi", "kasa", "aidat",
-        "rezervasyon_alani", "sayac",
+        "adres", "rezervasyon_alani", "sayac",
     ]
 
 

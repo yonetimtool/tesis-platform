@@ -56,6 +56,11 @@ export const TESIS_ROTALARI = [
   "/tasks",
   "/assets",
   "/units",
+  // (P193 §5) Tesis ayarlari TESIS yuzeyindedir: bir sitenin adi, adresi
+  // ve gunluk isleyis esikleri o sitenin isidir. `/settings` PLATFORMDA
+  // KALDI — orada saat dilimi, tesis kodu ve guvenlik modu gibi
+  // kimlik/sahiplik degerleri var.
+  "/tesis-ayarlari",
   "/building-editor",
   "/schematic",
   "/tanimlar",
@@ -309,6 +314,9 @@ export const ROTA_ROLLERI: Record<string, readonly string[]> = {
   "/tasks": ["admin", "yonetici"],
   "/assets": ["admin", "yonetici"],
   "/units": ["admin", "yonetici"],
+  // (P193 §5) Sunucu `PATCH /tenant/settings`i yoneticiye zaten aciyordu
+  // (`_YONETICI_YAZABILIR`); eksik olan EKRANDI.
+  "/tesis-ayarlari": ["admin", "yonetici"],
   "/rezervasyon-yonetimi": ["admin", "yonetici"],
   "/building-editor": ["admin", "yonetici"],
   "/schematic": ["admin", "yonetici"],

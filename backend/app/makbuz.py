@@ -49,9 +49,28 @@ def _tl(kurus: int) -> str:
     return f"{tam:,}".replace(",", ".") + f",{kalan:02d} ₺"
 
 
+def adres_satiri(
+    adres: str | None, ilce: str | None, il: str | None, posta_kodu: str | None
+) -> str:
+    """(P193 §4) Adres alanlarindan TEK SATIR — bos alanlar atlanir.
+
+    Bicim: "Ornek Mah. 1. Sk. No:5, Kadikoy, 34710 Istanbul". Bos alan
+    bos bir virgul ya da sarkan bir bosluk birakmaz; yarim girilmis bir
+    adres, hic girilmemis gibi cirkin gorunmemeli.
+    """
+    ilce_il = " ".join(p for p in ((posta_kodu or "").strip(), (il or "").strip()) if p)
+    parcalar = [
+        (adres or "").strip(),
+        (ilce or "").strip(),
+        ilce_il,
+    ]
+    return ", ".join(p for p in parcalar if p)
+
+
 def makbuz_pdf(
     *,
     site_ad: str,
+    site_adres: str | None = None,
     belge_no: str,
     tarih: date,
     odeyen_ad: str,
@@ -77,6 +96,13 @@ def makbuz_pdf(
     c.setFont(kalin, 16)
     c.drawString(kenar, y, site_ad)
     y -= 8 * mm
+    # (P193 §4) ADRES VARSA yazilir. Yoksa SATIR HIC ACILMAZ: bos bir
+    # satir birakmak, makbuzda "adres girilmemis" mesajini kullaniciya
+    # degil sakine gostermek olurdu.
+    if site_adres:
+        c.setFont(normal, 9)
+        c.drawString(kenar, y, site_adres[:120])
+        y -= 7 * mm
     c.setFont(kalin, 13)
     c.drawString(kenar, y, "TAHSİLAT MAKBUZU")
     c.setFont(normal, 10)

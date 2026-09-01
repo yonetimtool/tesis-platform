@@ -48,7 +48,7 @@ from ..crud_helpers import get_or_404
 from .. import defter
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
-from ..makbuz import makbuz_pdf
+from ..makbuz import adres_satiri, makbuz_pdf
 from ..models import (
     AppUser,
     BankTransaction,
@@ -209,9 +209,16 @@ async def _bildir_ve_makbuz(
     odeyen = (
         await db.execute(select(AppUser).where(AppUser.id == makbuz.user_id))
     ).scalar_one_or_none()
-    site_ad = (
-        await db.execute(select(Tenant.ad).where(Tenant.id == user.tenant_id))
-    ).scalar_one_or_none() or ""
+    tesis = (
+        await db.execute(select(Tenant).where(Tenant.id == user.tenant_id))
+    ).scalar_one_or_none()
+    site_ad = (tesis.ad if tesis else "") or ""
+    # (P193 §4) Makbuz TESISIN belgesidir: adi kadar adresi de tasimali.
+    site_adres = (
+        adres_satiri(tesis.adres, tesis.ilce, tesis.il, tesis.posta_kodu)
+        if tesis
+        else ""
+    )
     daire_no = None
     if makbuz.unit_id:
         daire_no = (
@@ -231,6 +238,7 @@ async def _bildir_ve_makbuz(
     try:
         pdf = makbuz_pdf(
             site_ad=site_ad,
+            site_adres=site_adres,
             belge_no=makbuz.belge_no,
             tarih=hareket.islem_tarihi,
             odeyen_ad=(odeyen.ad if odeyen else "") or "",
