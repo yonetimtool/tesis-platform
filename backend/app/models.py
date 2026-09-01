@@ -4364,3 +4364,32 @@ class TesisUyelik(Base):
         Boolean, nullable=False, server_default=text("true")
     )
     created_at = _created_at()
+
+
+class SurumPolitikasi(Base):
+    """(P202) Zorunlu guncelleme politikasi — PLATFORM BASINA TEK SATIR.
+
+    `platform` BIRINCIL ANAHTAR ('ios' | 'android'): politika bir
+    magazaya aittir, listesi yoktur.
+
+    TENANT YOK ve bu bilincli: magazadaki paket tektir, tesise gore
+    degismez. `tenant_id` koymak ayni gercegin tesis sayisi kadar
+    kopyasini uretirdi. Tabloda RLS de yoktur (goc 0091 basligi).
+
+    Iki esik de NULL olabilir; NULL = O SEVIYE KAPALI.
+    """
+
+    __tablename__ = "surum_politikasi"
+
+    platform: Mapped[str] = mapped_column(Text, primary_key=True)
+    #: Bunun ALTI kullanilamaz (ZORUNLU guncelleme).
+    asgari_surum: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: Bunun ALTI uyarilir ama kullanmaya DEVAM EDER.
+    onerilen_surum: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: dil kodu -> metin. BOS BIRAKILABILIR: o zaman uygulama KENDI
+    #: yerellestirilmis metnini kullanir. Operatoru yedi dili doldurmaya
+    #: zorlamak, ozelligi kullanilmaz yapardi.
+    mesaj: Mapped[dict] = mapped_column(
+        JSONB, nullable=False, server_default=text("'{}'::jsonb")
+    )
+    updated_at = _created_at()

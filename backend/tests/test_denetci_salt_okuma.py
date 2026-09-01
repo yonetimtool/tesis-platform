@@ -84,6 +84,19 @@ KAPISIZ_MUTASYONLAR: frozenset[tuple[str, str]] = frozenset({
     # (P154 / Asama 7.2) `/public/{slug}/iletisim` KALDIRILDI — portal
     # iletisim formu, portalla birlikte silindi.
     ("POST", "/webhooks/payments/{provider}"),
+    # (P202) ZORUNLU GUNCELLEME KONTROLU. Rol kapisi OLAMAZ ve bu
+    # ozelligin VARLIK SEBEBIYLE ayni: kontrol GIRISTEN ONCE calisir,
+    # cunku kirici bir API degisikligi yapildiysa eski istemci GIRIS
+    # BILE YAPAMAYABILIR. Kimlik arkasina koymak, ekrani tam ihtiyac
+    # duyulan durumda gosterilemez yapardi.
+    #
+    # Hicbir tesise ait veriye DOKUNMAZ (ne okur ne yazar): tenant-disi
+    # tek bir politika satirini OKUR ve sizdirdigi sey magazadaki surum
+    # numaralaridir — zaten herkese acik sayilar.
+    #
+    # POST'tur cunku yanit politikaya baglidir ve bir vekilin onu
+    # onbelleklemesi, esik degistiginde ESKI karari servis etmek olurdu.
+    ("POST", "/surum/kontrol"),
     # --- (P149) KIMLIK ONCESI parolasiz giris ---
     # Rol kapisi OLAMAZ: istegi atan kisinin henuz oturumu yoktur.
     # Tesisin kayitlarina yazmaz: yalniz kod uretir/dogrular.

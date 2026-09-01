@@ -33,6 +33,7 @@ from .routers import unit_tanimlari as unit_tanimlari_router
 from .routers import muhasebe_tanimlari as muhasebe_tanimlari_router
 from .routers import borclandirma_uc as borclandirma_router
 from .routers import otomasyon as otomasyon_router
+from .routers import surum as surum_router
 from .routers import finans_gosterge as finans_gosterge_router
 from .routers import finans as finans_router
 from .routers import sakin_odeme as sakin_odeme_router
@@ -190,6 +191,9 @@ app.include_router(borclandirma_router.router)
 app.include_router(finans_router.router)
 # (P192 §4) Finans otomasyonu: plan / hatirlatma / duzenli gider / gunluk.
 app.include_router(otomasyon_router.router)
+# (P202) Zorunlu/onerilen guncelleme. `/surum/kontrol` PUBLIC'tir (giristen
+# ONCE calisir; gerekce router basliginda), panel uclari admin kapisinda.
+app.include_router(surum_router.router)
 # (P192 §5) Yaslandirma, tahsilat gostergesi, borclulara toplu islem.
 app.include_router(finans_gosterge_router.router)
 app.include_router(sakin_odeme_router.router)

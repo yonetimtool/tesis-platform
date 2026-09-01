@@ -7517,3 +7517,88 @@ class RolEpostaDogrulaResponse(BaseModel):
     durum: str = Field(examples=["hazir"])
     #: Yalniz `durum='hazir'` iken dolu — parola belirleme jetonu.
     setup_token: str | None = None
+
+
+# ======================= (P202) SURUM POLITIKASI ============================ #
+class SurumKontrolIstek(BaseModel):
+    """Uygulamanin acilista bildirdigi iki sey: KIM ve HANGI SURUM."""
+
+    #: 'ios' | 'android'. Bilinmeyen deger HATA DEGIL — uc "guncel" doner
+    #: (gerekce `routers/surum.py`).
+    platform: str = Field(max_length=32)
+    #: Pakette yazan surum ("1.1.1"). `+yapim` eki kabul edilir, karsilastirmaya
+    #: girmez.
+    surum: str = Field(max_length=64)
+
+
+class SurumKontrolYanit(BaseModel):
+    """`guncel` | `onerilen` | `zorunlu` + gosterilecekler.
+
+    `mesaj` ve `magaza_url` YALNIZ guncelleme gerektiginde doludur:
+    guncel istemciye gonderilen her alan, onun yanlislikla ekran
+    cizmesine zemin hazirlar.
+    """
+
+    durum: str
+    mesaj: str | None = None
+    magaza_url: str | None = None
+    asgari_surum: str | None = None
+    onerilen_surum: str | None = None
+
+
+def _surum_dogrula(v: str | None) -> str | None:
+    """Panelden gelen esik BURADA dogrulanir.
+
+    Gecersiz metni sessizce kabul edip `surum.py`nin "gecersiz esik =
+    yok say" davranisina birakmak, operatore "kaydedildi" deyip
+    politikayi HIC calistirmamak olurdu — en kotu tur sessiz kusur.
+    BOSALTMA serbesttir (bos = o seviye kapali).
+    """
+    from .surum import ayristir
+
+    if v is None:
+        return None
+    metin = v.strip()
+    if not metin:
+        return None
+    if ayristir(metin) is None:
+        raise ValueError("Surum bicimi gecersiz (ornek: 1.2.0).")
+    return metin
+
+
+class SurumPolitikasiUpdate(BaseModel):
+    asgari_surum: str | None = None
+    onerilen_surum: str | None = None
+    #: dil kodu -> metin. Bos birakilabilir; uygulama kendi metnini kullanir.
+    mesaj: dict[str, str] | None = None
+
+    @field_validator("asgari_surum", "onerilen_surum")
+    @classmethod
+    def _bicim(cls, v: str | None) -> str | None:
+        return _surum_dogrula(v)
+
+    @field_validator("mesaj")
+    @classmethod
+    def _diller(cls, v: dict[str, str] | None) -> dict[str, str] | None:
+        if v is None:
+            return None
+        from .ceviri import DESTEKLENEN_DILLER
+
+        bilinmeyen = sorted(set(v) - set(DESTEKLENEN_DILLER))
+        if bilinmeyen:
+            raise ValueError(f"Desteklenmeyen dil: {', '.join(bilinmeyen)}")
+        # Bos metinler SAKLANMAZ: "girilmedi" ile "bos girildi" ayni sey.
+        return {k: m.strip() for k, m in v.items() if m and m.strip()}
+
+
+class SurumPolitikasiOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    platform: str
+    asgari_surum: str | None = None
+    onerilen_surum: str | None = None
+    mesaj: dict[str, str] = {}
+
+
+class SurumPolitikasiListesi(BaseModel):
+    ogeler: list[SurumPolitikasiOut]

@@ -100,6 +100,10 @@ class Action:
     MUHASEBE_TANIM_UPDATE = "muhasebe_tanim_update"
     MUHASEBE_TANIM_DELETE = "muhasebe_tanim_delete"
     MUHASEBE_AYAR_UPDATE = "muhasebe_ayar_update"
+    #: (P202) Platform geneli ayar (surum politikasi). Tenant-disi bir
+    #: kaydi denetime yazmak SART: zorunlu guncelleme TUM kullanicilari
+    #: etkiler ve "bunu kim, ne zaman acti" sorusu yanitlanabilmeli.
+    PLATFORM_AYAR_UPDATE = "platform_ayar_update"
     UNIT_TIP_CREATE = "unit_tip_create"
     UNIT_TIP_UPDATE = "unit_tip_update"
     UNIT_TIP_DELETE = "unit_tip_delete"

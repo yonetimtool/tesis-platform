@@ -6728,6 +6728,74 @@ paths:
   # TURETILEMEZ: "bu sitede NFC yok" ile "henuz eklemedim" verisel olarak
   # aynidir, kullanici icin degil.
   # ================================================================= #
+  # ================================================================= #
+  # (P202) ZORUNLU / ONERILEN GUNCELLEME
+  # ================================================================= #
+  # Karari SUNUCU verir: politika, yeni surum YAYINLAMADAN
+  # degistirilebilmeli. Uygulama verseydi "1.2.0'in altini kilitle"
+  # demek icin once 1.2.0'i yayinlamak ve kullanicilarin ONU almasini
+  # beklemek gerekirdi — yani tam da ulasamadigimiz kullanicilar icin
+  # ise yaramazdi.
+  # ================================================================= #
+  /surum/kontrol:
+    post:
+      tags: [surum]
+      summary: Guncelleme gerekli mi (PUBLIC — kimlik gerektirmez)
+      security: []   # giristen ONCE calisir; gerekce asagida
+      description: >
+        KIMLIK GEREKTIRMEZ ve bu ozelligin varlik sebebiyle aynidir:
+        kirici bir API degisikligi yapildiysa eski istemci GIRIS BILE
+        YAPAMAYABILIR; kimlik arkasina koymak, ekrani tam ihtiyac
+        duyulan durumda gosterilemez yapardi. Sizdirdigi tek sey
+        magazadaki surum numaralaridir. POST'tur cunku yanit politikaya
+        baglidir ve bir vekilin onu onbelleklemesi, esik degistiginde
+        ESKI karari servis etmek olurdu.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SurumKontrolIstek" }
+      responses:
+        "200":
+          description: Karar
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SurumKontrolYanit" }
+  /surum-politikasi:
+    get:
+      tags: [surum]
+      summary: Surum politikasi — PLATFORM ADMINI
+      responses:
+        "200":
+          description: Iki platformun politikasi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SurumPolitikasiListesi" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /surum-politikasi/{platform}:
+    put:
+      tags: [surum]
+      summary: Esikleri ve mesaji guncelle — PLATFORM ADMINI
+      parameters:
+        - name: platform
+          in: path
+          required: true
+          schema: { type: string, enum: [ios, android] }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SurumPolitikasiUpdate" }
+      responses:
+        "200":
+          description: Guncel politika
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SurumPolitikasiOut" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
   /kurulum:
     get:
       tags: [kurulum]
@@ -13442,6 +13510,82 @@ components:
         created_at: { type: string, format: date-time }
         geri_alma_at: { type: string, format: date-time, nullable: true }
     # ---------- (P154 / Asama 7.3) KURULUM SIHIRBAZI ---------- #
+    SurumKontrolIstek:
+      type: object
+      required: [platform, surum]
+      properties:
+        platform:
+          type: string
+          description: >
+            'ios' | 'android'. Bilinmeyen deger HATA DEGIL — uc "guncel"
+            doner. Hata dondurmek, istemcinin hata dalina duserek hicbir
+            sey yapmamasina yol acardi: ayni sonuc, ama gurultulu.
+        surum:
+          type: string
+          description: >
+            Pakette yazan surum ("1.1.1"). `+yapim` eki kabul edilir ama
+            KARSILASTIRMAYA GIRMEZ: ayni surumun ikinci yuklemesi yapim
+            numarasini artirir, kullanici icin hicbir sey degismez.
+    SurumKontrolYanit:
+      type: object
+      required: [durum]
+      properties:
+        durum:
+          type: string
+          enum: [guncel, onerilen, zorunlu]
+          description: >
+            KIMLIK, metin degil: istemci buna gore dallanir, cevirmez.
+            `zorunlu` = uygulama kullanilamaz · `onerilen` = kapatilabilir
+            uyari · `guncel` = hicbir sey gosterilmez.
+        mesaj:
+          type: string
+          nullable: true
+          description: >
+            Operatorun yazdigi metin, `Accept-Language`e gore secilmis.
+            BOS olabilir; o zaman uygulama KENDI yerellestirilmis metnini
+            kullanir — operatoru yedi dili doldurmaya zorlamak ozelligi
+            kullanilmaz yapardi.
+        magaza_url:
+          type: string
+          nullable: true
+          description: >
+            Platforma gore magaza adresi. Istemcide SABITLENMEZ: adres
+            degistiginde eski istemciler tam "guncelle" demeye
+            calisirken KIRIK bir dugmeye basardi.
+        asgari_surum: { type: string, nullable: true }
+        onerilen_surum: { type: string, nullable: true }
+    SurumPolitikasiOut:
+      type: object
+      required: [platform]
+      properties:
+        platform: { type: string, enum: [ios, android] }
+        asgari_surum:
+          type: string
+          nullable: true
+          description: "Bunun ALTI kullanilamaz. BOS = ZORUNLU seviye KAPALI."
+        onerilen_surum:
+          type: string
+          nullable: true
+          description: "Bunun ALTI uyarilir. BOS = ONERILEN seviye KAPALI."
+        mesaj:
+          type: object
+          additionalProperties: { type: string }
+          description: "dil kodu -> metin (7 dil). Bos birakilabilir."
+    SurumPolitikasiUpdate:
+      type: object
+      properties:
+        asgari_surum: { type: string, nullable: true }
+        onerilen_surum: { type: string, nullable: true }
+        mesaj:
+          type: object
+          additionalProperties: { type: string }
+    SurumPolitikasiListesi:
+      type: object
+      required: [ogeler]
+      properties:
+        ogeler:
+          type: array
+          items: { $ref: "#/components/schemas/SurumPolitikasiOut" }
     KurulumAdimi:
       type: object
       required: [kod, sayi, tamam, atlandi]
