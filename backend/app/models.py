@@ -249,6 +249,14 @@ ICRA_DURUM = ENUM(
     "baginiz", "beklemede", "avukatta", "mahkemede", "kapandi",
     name="icra_durum", create_type=False,
 )
+#: (P192 §3.2, goc 0085) Borc NEYIN borcu. Ayni aya birden cok kalem
+#: yazilabildigi icin kalemlerin ayirt edilmesi gerekir; `aciklama`
+#: serbest metindir ve "bu ay ne kadar FAIZ tahakkuk etti" sorusunu
+#: cevaplayamazdi.
+DUES_KALEM_TIPI = ENUM(
+    "aidat", "demirbas", "olaganustu", "faiz", "sayac", "diger",
+    name="dues_kalem_tipi", create_type=False,
+)
 BORCLANDIRMA_KAYNAK = ENUM(
     "tekil", "toplu", "sayac", "ice_aktarim",
     name="borclandirma_kaynak", create_type=False,
@@ -403,6 +411,12 @@ class Tenant(Base):
     #: (P28) Aylik gecikme tazminati orani (%). Tazminat TUTARI SAKLANMAZ,
     #: raporlama/tahsilat aninda hesaplanir — saklansaydi oran degistiginde
     #: gecmis kayitlar tutarsiz kalirdi.
+    #: (P192 §3.1, goc 0085) Site GECIKME FAIZI UYGULUYOR MU. Orani 0
+    #: yapmak "hic uygulama" demenin dolayli yoluydu ama "oran henuz
+    #: girilmedi" ile ayni gorunurdu; ayri anahtar karari ACIKCA kaydeder.
+    gecikme_uygula: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
     gecikme_aylik_yuzde = mapped_column(
         Numeric(5, 2), nullable=False, server_default=text("0")
     )
@@ -1210,6 +1224,11 @@ class Unit(Base):
     kat: Mapped[int | None] = mapped_column(Integer, nullable=True)  # kat (0=zemin)
     sira: Mapped[int | None] = mapped_column(Integer, nullable=True)  # kattaki sira/konum
     metrekare = mapped_column(Numeric(8, 2), nullable=True)
+    #: (P192 §3.3, goc 0085) Kat Mulkiyeti Kanunu md. 20 gider paylasimini
+    #: ARSA PAYINA gore tanimlar. NULLABLE: girilmemis daire dagitimin
+    #: disinda kalir ve bu kullaniciya SOYLENIR — sessizce sifir
+    #: borclandirmak, fark edilmeyen eksik tahakkuk uretirdi.
+    arsa_payi = mapped_column(Numeric(12, 4), nullable=True)
     # SINIFLANDIRMA (P26) — ikisi de NULLABLE: tip/grup TANIM'dir, dairenin
     # varligi onlara bagli degildir. Tanim silinirse daire silinmez, yalniz
     # siniflandirmasiz kalir (ON DELETE SET NULL).
@@ -1347,9 +1366,21 @@ class DuesAssessment(Base):
             ondelete="CASCADE",
             name="fk_assessment_unit",
         ),
-        UniqueConstraint(
-            "tenant_id", "unit_id", "donem", name="uq_assessment_tenant_unit_donem"
-        ),
+        # TEKILLIK BURADA DEGIL, KISMI INDEKSTE (goc 0018 -> 0085):
+        #   uq_assessment_unit_donem_kalem
+        #     (tenant_id, unit_id, donem,
+        #      COALESCE(gelir_gider_tanim_id, nobetci),
+        #      kalem_tipi,
+        #      COALESCE(kaynak_assessment_id, nobetci))
+        #
+        # NULL'lar Postgres'te benzersizlikte FARKLI sayildigi icin
+        # nobetci degere cekilir; duz bir UNIQUE(..., tanim_id) mukerrer
+        # korumasini SESSIZCE kaldirirdi.
+        #
+        # (P192 §3.2) `kalem_tipi` ve `kaynak_assessment_id` indekse
+        # EKLENDI: tanimsiz akista "Mart aidati + Mart cati onarimi"
+        # mumkun olsun ve bir dairenin ayni ayda birden cok gecikmis
+        # borcu icin AYRI faiz kalemleri acilabilsin.
     )
 
     id: Mapped[uuid.UUID] = _pk()
@@ -1378,6 +1409,31 @@ class DuesAssessment(Base):
     )
     kaynak: Mapped[str] = mapped_column(
         BORCLANDIRMA_KAYNAK, nullable=False, server_default=text("'tekil'")
+    )
+    # --- (P192 §3, goc 0085) --------------------------------------------- #
+    #: Borc NEYIN borcu. Varsayilan `aidat`: bugune kadar yazilmis her satir
+    #: bir aidat kalemidir.
+    kalem_tipi: Mapped[str] = mapped_column(
+        DUES_KALEM_TIPI, nullable=False, server_default=text("'aidat'")
+    )
+    #: (§6.3) TAHAKKUK DUZELTME. Satir SILINMEZ, ters kayit yazilir. Ters
+    #: kayit da POZITIF tutar tasir; isaret BURADAN gelir (bkz.
+    #: `defter.tahakkuk_etkisi`). Negatif tutar saklamak "iade" ile "eksi
+    #: borc"u ayirt edilemez kilardi.
+    ters_kayit_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    #: (§3.1) Gecikme faizi HANGI BORCTAN dogdu. Faiz artik hesaplanip
+    #: atilan bir sayi degil, AYRI BIR BORC KALEMIDIR.
+    kaynak_assessment_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    #: (§6.3) Bu satir ters kayitla DUZELTILDI mi. DENORMALIZE ve olmak
+    #: zorunda: kismi indeks predikatinda alt sorgu kullanilamaz ve
+    #: duzeltilmis cift tekillik indeksinin DISINDA olmali. Ters kayit ucu
+    #: iki satiri AYNI islemde yazdigi icin bayrak defterle ayrisamaz.
+    iptal_edildi: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
     )
     created_at = _created_at()
 
@@ -2514,6 +2570,7 @@ __all__ = [
     "ASSET_KATEGORI",
     "ASSET_DURUM",
     "RESIDENT_ROL",
+    "DUES_KALEM_TIPI",
     "DUES_YONTEM",
     "DUES_DURUM",
     "DEVICE_PLATFORM",

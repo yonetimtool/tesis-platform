@@ -42,9 +42,16 @@ interface FormState {
   kat: string;
   sira: string;
   metrekare: string;
+  /** (P192 §3.3) Kat Mulkiyeti Kanunu md. 20 gider paylasimini ARSA
+   *  PAYINA gore tanimlar; toplu borclandirmanin "arsa payina gore"
+   *  dagitimi bu alani okur. Girilmemis daire dagitimin DISINDA kalir ve
+   *  bu kullaniciya soylenir (sessizce sifir borclandirilmaz). */
+  arsa_payi: string;
   aktif: boolean;
 }
-const EMPTY: FormState = { no: "", blok: "", kat: "", sira: "", metrekare: "", aktif: true };
+const EMPTY: FormState = {
+  no: "", blok: "", kat: "", sira: "", metrekare: "", arsa_payi: "", aktif: true,
+};
 
 // (P55) `numOrNull` KALDIRILDI. `Number("120,5")` NaN doner ve eski
 // surum bunu `null`a cevirip sunucuya "alani temizle" diye gonderiyordu:
@@ -155,6 +162,7 @@ export default function UnitsPage() {
       // kullanici duzenlemeye acinca tablodakinden FARKLI bir metin
       // gorurdu (P49/P50'nin ayni bulgusu).
       metrekare: u.metrekare != null ? sayiBicimi(u.metrekare, "") : "",
+      arsa_payi: u.arsa_payi != null ? sayiBicimi(u.arsa_payi, "") : "",
       aktif: u.aktif,
     });
     setFormErr(null);
@@ -173,7 +181,8 @@ export default function UnitsPage() {
       return;
     }
     const m2 = sayiCoz(form.metrekare);
-    if (m2.tur === "gecersiz") {
+    const pay = sayiCoz(form.arsa_payi);
+    if (m2.tur === "gecersiz" || pay.tur === "gecersiz") {
       setFormErr(t("daireMetrekareGecersiz"));
       setSaving(false);
       return;
@@ -184,6 +193,7 @@ export default function UnitsPage() {
       kat: kat.tur === "sayi" ? kat.deger : null,
       sira: sira.tur === "sayi" ? sira.deger : null,
       metrekare: m2.tur === "sayi" ? m2.deger : null,
+      arsa_payi: pay.tur === "sayi" ? pay.deger : null,
       aktif: form.aktif,
     };
     try {
@@ -372,6 +382,13 @@ export default function UnitsPage() {
     <Alan {...b} inputMode="decimal"
                 value={form.metrekare}
                 onChange={(e) => setForm({ ...form, metrekare: e.target.value })} />
+  )}
+</AlanSarmal>
+            <AlanSarmal etiket={t("unitsArsaPayi")}>
+  {(b) => (
+    <Alan {...b} inputMode="decimal"
+                value={form.arsa_payi}
+                onChange={(e) => setForm({ ...form, arsa_payi: e.target.value })} />
   )}
 </AlanSarmal>
             <AlanSarmal etiket={t("daireKatOpsiyonel")} ipucu={t("katIpucu")}>

@@ -58,6 +58,8 @@ from ..schemas import (
     DuesPaymentListResponse,
     DuesPaymentOut,
     MeDuesResponse,
+    TahakkukAtlanan,
+    TahakkukTersKayitIstek,
     UnitDuesStatus,
 )
 
@@ -160,10 +162,36 @@ async def _zenginlestir(
     """
     if not kayitlar:
         return []
-    oran = (
-        await db.execute(select(Tenant.gecikme_aylik_yuzde))
-    ).scalar_one_or_none() or 0
+    # (P192 §3.1) Tesis faiz UYGULAMIYORSA oran ne olursa olsun 0 gosterilir.
+    ayar = (
+        await db.execute(select(Tenant.gecikme_uygula, Tenant.gecikme_aylik_yuzde))
+    ).first()
+    uygula = bool(ayar[0]) if ayar else False
+    oran = (ayar[1] if ayar else 0) or 0
     bugun = datetime.now(timezone.utc).date()
+
+    # (P192 §3.1) YAZILMIS faiz kalemleri gosterilen "gecikme"den DUSULUR:
+    # yoksa ayni faiz hem bu alanda hem ayri bir borc kalemi olarak IKI KEZ
+    # gorunur ve sakin borcunu iki kat sanardi.
+    yazilmis_faiz: dict[uuid.UUID, int] = {}
+    if uygula:
+        kaynaklar = [k.id for k in kayitlar]
+        yazilmis_faiz = dict(
+            (
+                await db.execute(
+                    select(
+                        DuesAssessment.kaynak_assessment_id,
+                        func.coalesce(func.sum(DuesAssessment.tutar_kurus), 0),
+                    )
+                    .where(
+                        DuesAssessment.kalem_tipi == "faiz",
+                        DuesAssessment.kaynak_assessment_id.in_(kaynaklar),
+                        DuesAssessment.ters_kayit_id.is_(None),
+                    )
+                    .group_by(DuesAssessment.kaynak_assessment_id)
+                )
+            ).all()
+        )
 
     t_idler = {k.gelir_gider_tanim_id for k in kayitlar if k.gelir_gider_tanim_id}
     h_idler = {k.hedef_user_id for k in kayitlar if k.hedef_user_id}
@@ -183,9 +211,12 @@ async def _zenginlestir(
         DuesAssessmentOut.model_validate(k).model_copy(update={
             "gelir_gider_tanim_ad": t_ad.get(k.gelir_gider_tanim_id),
             "hedef_ad": h_ad.get(k.hedef_user_id),
-            "gecikme_kurus": gecikme_kurus(
-                k.tutar_kurus, k.son_odeme_tarihi, bugun, oran,
-                uygula=k.gecikme_uygula,
+            "gecikme_kurus": max(
+                gecikme_kurus(
+                    k.tutar_kurus, k.son_odeme_tarihi, bugun, oran,
+                    uygula=uygula and k.gecikme_uygula,
+                ) - int(yazilmis_faiz.get(k.id, 0)),
+                0,
             ),
         })
         for k in kayitlar
@@ -271,11 +302,13 @@ async def _unit_status(db: AsyncSession, unit: Unit) -> UnitDuesStatus:
     assessments = (
         await db.execute(
             select(DuesAssessment)
-            .where(DuesAssessment.unit_id == unit.id)
+            .where(DuesAssessment.unit_id == unit.id, *defter.gecerli_tahakkuk())
             .order_by(DuesAssessment.donem)
         )
     ).scalars().all()
     satirlar = await _daire_tahsilatlari(db, unit.id)
+    # (P192 §6.3) Ters kayit CIFTI zaten sorguda disarida (bkz.
+    # `defter.gecerli_tahakkuk`); toplam listedeki satirlarla TUTAR.
     toplam_tahakkuk = sum(a.tutar_kurus for a in assessments)
     # TEK TANIM: "odenen" hesabi `defter.py`de; burada TEKRARLANMAZ.
     toplam_odenen = (await defter.daire_odenen(db, [unit.id])).get(unit.id, 0)
@@ -306,6 +339,9 @@ async def create_assessments(
         # (P28) Hepsi OPSIYONEL — verilmezse eski davranis.
         gelir_gider_tanim_id=body.gelir_gider_tanim_id,
         gecikme_uygula=body.gecikme_uygula,
+        # (P192 §3.2) Borc NEYIN borcu. Ayni aya birden cok kalem
+        # yazilabildigi icin tip olmadan kalemler ayirt edilemezdi.
+        kalem_tipi=body.kalem_tipi,
     )
     if body.tarih is not None:
         common["tarih"] = body.tarih
@@ -361,7 +397,7 @@ async def create_assessments(
         )
 
     created: list[DuesAssessmentOut] = []
-    atlanan = 0
+    atlananlar: list[TahakkukAtlanan] = []
     for uid in targets:
         obj = DuesAssessment(
             tenant_id=user.tenant_id, unit_id=uid,
@@ -377,7 +413,12 @@ async def create_assessments(
             except Exception:
                 pass
             if is_unique_violation(exc):
-                atlanan += 1
+                # (P192 §3.2) `UNIQUE (tenant, unit, donem)` KALKTI; buraya
+                # dusmek artik beklenmez. Yine de sessizce gecilmez:
+                # atlanan daire DOKUMLU dondurulur.
+                atlananlar.append(TahakkukAtlanan(
+                    unit_id=uid, neden="benzersizlik_carpismasi"
+                ))
                 continue
             raise translate_integrity(exc)
         await db.refresh(obj)
@@ -385,7 +426,7 @@ async def create_assessments(
     if created:
         await audit_user(
             db, user, Action.DUES_ASSESSMENT_CREATE, resource_type="dues_assessment",
-            meta={"count": len(created), "skipped": atlanan},
+            meta={"count": len(created), "skipped": len(atlananlar)},
         )
         # (P191 §2) KISI BASINA TEK bildirim (tutarlar toplanir).
         await aidat_bildir(
@@ -395,7 +436,9 @@ async def create_assessments(
                 (c.unit_id, c.hedef_user_id, c.donem, c.tutar_kurus) for c in created
             ],
         )
-    return DuesAssessmentResult(created=created, atlanan=atlanan)
+    return DuesAssessmentResult(
+        created=created, atlanan=len(atlananlar), atlananlar=atlananlar
+    )
 
 
 @router.get("/dues/assessments", response_model=DuesAssessmentListResponse)
@@ -413,7 +456,10 @@ async def list_assessments(
     db: AsyncSession = Depends(get_tenant_db),
     _: AppUser = Depends(_REPORT),
 ) -> DuesAssessmentListResponse:
-    where = []
+    # (P192 §6.3) Ters kayitlanmis borclar ve duzeltme satirlari LISTEDE
+    # GORUNMEZ: toplamdan dustukleri halde listede durmalari, "toplam
+    # neden satirlari tutmuyor" sorusunu dogururdu.
+    where = list(defter.gecerli_tahakkuk())
     if unit_id is not None:
         where.append(DuesAssessment.unit_id == unit_id)
     if donem is not None:
@@ -432,6 +478,94 @@ async def list_assessments(
         meta={"limit": limit, "offset": offset, "total": total},
         items=await _zenginlestir(db, list(rows)),
     )
+
+
+# --------------------- (P192 §6.3) TAHAKKUK DUZELTME ----------------------- #
+#
+# ================================================================
+# NEDEN ACILDI
+# ================================================================
+# `docs/finans-analiz.md`: yanlis tahakkuk edilirse ne olacagi
+# BELIRSIZDI. Silme ucu yoktu (ve olmamali) ama duzeltme yolu da yoktu;
+# yonetici yanlis bir borcu ancak veritabanindan elle silerek
+# duzeltebilirdi.
+#
+# ================================================================
+# COZUM DEFTERDEKININ AYNISI: TERS KAYIT
+# ================================================================
+# Satir SILINMEZ. `ters_kayit_id` tasiyan yeni bir satir yazilir; bakiye
+# onu EKSI sayar (bkz. `defter.tahakkuk_etkisi`). Ikisinin toplami
+# sifirdir — borc "hic yazilmamis" hale gelmez, DUZELTILMIS olur ve
+# duzeltmenin kendisi gorunur.
+#
+# ================================================================
+# ODENMIS BORC TERS KAYITLANAMAZ
+# ================================================================
+# Uzerine tahsilat yazilmis bir borcu ters kayitlamak, alinmis parayi
+# karsiliksiz birakirdi (daire alacakli gorunurdu). Once tahsilat iade
+# edilir/iptal edilir, sonra borc duzeltilir. 409 ile reddedilir.
+
+
+@router.post(
+    "/dues/assessments/{assessment_id}/ters-kayit",
+    response_model=DuesAssessmentOut,
+    status_code=201,
+)
+async def tahakkuk_ters_kayit(
+    assessment_id: uuid.UUID,
+    body: TahakkukTersKayitIstek,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_TAHAKKUK),
+) -> DuesAssessmentOut:
+    """Yanlis tahakkuku TERS KAYITLA duzelt (silme YOK)."""
+    asil = await get_or_404(db, DuesAssessment, assessment_id)
+    if asil.ters_kayit_id is not None:
+        raise APIError(422, "validation_error", "ters_kayit_ters_kayitlanamaz")
+    zaten = (
+        await db.execute(
+            select(DuesAssessment.id)
+            .where(DuesAssessment.ters_kayit_id == asil.id)
+        )
+    ).first()
+    if zaten is not None:
+        raise APIError(409, "conflict", "tahakkuk_zaten_ters_kayitli")
+    odenen = (await defter.tahakkuk_odenen(db, [asil.id])).get(asil.id, 0)
+    if odenen > 0:
+        raise APIError(409, "conflict", "tahakkuk_odenmis_ters_kayitlanamaz")
+
+    ters = DuesAssessment(
+        tenant_id=user.tenant_id,
+        unit_id=asil.unit_id,
+        donem=asil.donem,
+        tutar_kurus=asil.tutar_kurus,
+        kalem_tipi=asil.kalem_tipi,
+        gelir_gider_tanim_id=asil.gelir_gider_tanim_id,
+        hedef_user_id=asil.hedef_user_id,
+        ters_kayit_id=asil.id,
+        # Ters kayda FAIZ ISLEMEZ: bir duzeltme gecikmez.
+        gecikme_uygula=False,
+        aciklama=body.aciklama or f"Duzeltme: {asil.donem}",
+        kaynak=asil.kaynak,
+    )
+    db.add(ters)
+    # Orijinal ARTIK BORC DEGIL. Bayrak AYNI ISLEMDE yazilir; ayri bir
+    # islemde yazilsaydi defter ile bayrak arasinda bir an icin fark
+    # olusabilirdi.
+    asil.iptal_edildi = True
+    try:
+        await db.flush()
+    except IntegrityError as exc:
+        if is_unique_violation(exc):
+            raise APIError(409, "conflict", "tahakkuk_zaten_ters_kayitli")
+        raise translate_integrity(exc)
+    await db.refresh(ters)
+    await audit_user(
+        db, user, Action.DUES_ASSESSMENT_CREATE, resource_type="dues_assessment",
+        resource_id=ters.id,
+        meta={"islem": "ters_kayit", "duzeltilen": str(asil.id),
+              "tutar_kurus": asil.tutar_kurus, "sebep": body.aciklama},
+    )
+    return (await _zenginlestir(db, [ters]))[0]
 
 
 # ------------------------------- odeme ------------------------------------- #

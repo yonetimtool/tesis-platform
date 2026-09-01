@@ -1017,20 +1017,12 @@ async def finans_ozet(
     bugun = datetime.now(timezone.utc).date()
     ay_basi = date(bugun.year, bugun.month, 1)
 
-    borclandirilan = (
-        await db.execute(
-            select(func.coalesce(func.sum(DuesAssessment.tutar_kurus), 0))
-            .where(DuesAssessment.tarih >= ay_basi)
-        )
-    ).scalar_one()
+    # (P192 §6.3) Ters kayit cifti borc DEGILDIR.
+    borclandirilan = await defter.tahakkuk_toplami(db, baslangic=ay_basi)
     # (P192 §1) TEK KAYNAK: rapor, seffaflik ve mobil ana ekran da bunu
     # cagirir; iade/iptal dusulur ve yalniz gerceklesmis satirlar sayilir.
     tahsil_ay = await defter.tahsilat_toplami(db, baslangic=ay_basi)
-    toplam_borc = (
-        await db.execute(
-            select(func.coalesce(func.sum(DuesAssessment.tutar_kurus), 0))
-        )
-    ).scalar_one()
+    toplam_borc = await defter.tahakkuk_toplami(db)
     toplam_tahsil = await defter.tahsilat_toplami(db)
     bakiyeler = await kasa_bakiyeleri(db=db, _=None)  # type: ignore[arg-type]
     icra_acik = (

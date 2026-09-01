@@ -90,7 +90,8 @@ async def _borc_kurus(db: AsyncSession, user: AppUser) -> int:
     borc = (
         await db.execute(
             select(func.coalesce(func.sum(DuesAssessment.tutar_kurus), 0))
-            .where(kosul)
+            # (P192 §6.3) Ters kayit cifti borc DEGILDIR.
+            .where(kosul, *defter.gecerli_tahakkuk())
         )
     ).scalar_one()
     # (P192 §1) TEK TANIM: iade/iptal dusulur, yalniz gerceklesmis

@@ -79,7 +79,8 @@ async def _month_gelir_gider(db: AsyncSession, ay: str) -> tuple[int, int]:
 
 
 async def _aidat(db: AsyncSession, ay: str) -> TransparencyAidat:
-    a_where = [DuesAssessment.donem == ay]
+    # (P192 §6.3) Ters kayit cifti borc DEGILDIR.
+    a_where = [DuesAssessment.donem == ay, *defter.gecerli_tahakkuk()]
     tahakkuk = int(
         (await db.execute(
             select(func.coalesce(func.sum(DuesAssessment.tutar_kurus), 0)).where(*a_where)

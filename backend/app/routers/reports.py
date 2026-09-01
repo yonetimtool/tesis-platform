@@ -44,7 +44,10 @@ TOP_GIDER_LIMIT = 5
 
 
 async def _tahsilat_ozet(db: AsyncSession, donem: str | None) -> TahsilatOzet:
-    a_where = [] if donem is None else [DuesAssessment.donem == donem]
+    # (P192 §6.3) Ters kayit cifti borc DEGILDIR.
+    a_where = list(defter.gecerli_tahakkuk())
+    if donem is not None:
+        a_where.append(DuesAssessment.donem == donem)
 
     tahakkuk = (
         await db.execute(

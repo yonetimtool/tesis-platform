@@ -7508,6 +7508,41 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "422": { $ref: "#/components/responses/ValidationError" }
+  /borclandirma/gecikme-faizi/onizleme:
+    get:
+      tags: [aidat]
+      summary: "(P192 §3.1) Islenecek gecikme faizi ONIZLEMESI"
+      description: |
+        Bu kosumda NE YAZILACAGINI gosterir, hicbir sey yazmaz. Onizleme
+        ile isleme AYNI hesabi cagirir; ayri iki hesap, yoneticiye
+        gosterilen ile yazilani ayirabilirdi.
+
+        Faiz artik EKRANDA HESAPLANAN bir sayi degil, YAZILAN bir borc
+        kalemidir: onceden hesaplaniyor ama hicbir yere yazilmiyordu ve
+        sakin ana borcunu odeyince buharlasiyordu.
+      responses:
+        "200":
+          description: Onizleme
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GecikmeFaizOnizleme" }
+  /borclandirma/gecikme-faizi/isle:
+    post:
+      tags: [aidat]
+      summary: "(P192 §3.1) Birikmis faizi BORC KALEMI olarak yaz"
+      description: |
+        IDEMPOTENT: her kosum FARKI yazar (birikmis toplam eksi daha once
+        yazilmis faiz). Ikinci kez calistirildiginda fark 0 olur ve hicbir
+        satir acilmaz; ayrica `uq_assessment_unit_donem_kalem` ayni borca
+        ayni donemde ikinci kalemi veritabani duzeyinde engeller.
+
+        Yazilan kalem `gecikme_uygula=false` tasir: FAIZE FAIZ ISLEMEZ.
+      responses:
+        "201":
+          description: Yazilan faiz kalemleri
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GecikmeFaizSonuc" }
   /borclandirma/gecikme-ayari:
     get:
       tags: [aidat]
@@ -8762,6 +8797,38 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /dues/assessments/{assessment_id}/ters-kayit:
+    post:
+      tags: [aidat]
+      summary: "(P192 §6.3) Yanlis tahakkuku TERS KAYITLA duzelt"
+      description: |
+        Yanlis tahakkuk edilirse ne olacagi BELIRSIZDI: silme ucu yok (ve
+        olmamali) ama duzeltme yolu da yoktu.
+
+        Cozum defterdekinin AYNISI: satir SILINMEZ, ters kayit yazilir.
+        Ikisi de borc hesabinin disinda kalir (`iptal_edildi` bayragi),
+        toplamlari sifirdir ve duzeltmenin izi denetimde durur.
+
+        ODENMIS BORC TERS KAYITLANAMAZ (409): alinmis parayi karsiliksiz
+        birakmak daireyi ALACAKLI gosterirdi. Once tahsilat iade/iptal
+        edilir.
+      parameters:
+        - name: assessment_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TahakkukTersKayitIstek" }
+      responses:
+        "201":
+          description: Ters kayit satiri
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DuesAssessment" }
+        "409": { $ref: "#/components/responses/Conflict" }
   /dues/assessments:
     get:
       tags: [aidat]
@@ -15517,6 +15584,68 @@ components:
         items:
           type: array
           items: { $ref: "#/components/schemas/FinansalHareket" }
+    GecikmeFaizSatiri:
+      type: object
+      required: [assessment_id, unit_id, unit_no, donem, kalan_kurus,
+                 toplam_faiz_kurus, yazilmis_kurus, fark_kurus]
+      properties:
+        assessment_id: { type: string, format: uuid }
+        unit_id: { type: string, format: uuid }
+        unit_no: { type: string }
+        donem: { type: string, example: "2026-03" }
+        son_odeme_tarihi: { type: string, format: date, nullable: true }
+        kalan_kurus: { type: integer, format: int64 }
+        toplam_faiz_kurus:
+          type: integer
+          format: int64
+          description: "O ana kadar BIRIKMIS toplam faiz"
+        yazilmis_kurus:
+          type: integer
+          format: int64
+          description: "Daha once faiz kalemi olarak yazilmis tutar"
+        fark_kurus:
+          type: integer
+          format: int64
+          description: "Bu kosumda YAZILACAK tutar (toplam - yazilmis)"
+    GecikmeFaizOnizleme:
+      type: object
+      required: [donem, uygulaniyor, aylik_yuzde, toplam_fark_kurus, items]
+      properties:
+        donem: { type: string }
+        uygulaniyor:
+          type: boolean
+          description: "Tesis gecikme faizi uyguluyor mu (tenant ayari)"
+        aylik_yuzde: { type: number }
+        toplam_fark_kurus: { type: integer, format: int64 }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/GecikmeFaizSatiri" }
+    GecikmeFaizSonuc:
+      type: object
+      required: [donem, yazilan, toplam_kurus, items]
+      properties:
+        donem: { type: string }
+        yazilan: { type: integer }
+        toplam_kurus: { type: integer, format: int64 }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/GecikmeFaizSatiri" }
+    TahakkukTersKayitIstek:
+      type: object
+      properties:
+        aciklama: { type: string, nullable: true, maxLength: 500 }
+    TahakkukAtlanan:
+      # (P192 §3.2) Onceden yalnizca bir SAYI donuyordu ve atlanan satir
+      # sessizce kayboluyordu; yonetici eksik tahakkuk yaptigini fark
+      # etmiyordu.
+      type: object
+      required: [unit_id, neden]
+      properties:
+        unit_id: { type: string, format: uuid }
+        unit_no: { type: string, nullable: true }
+        neden:
+          type: string
+          example: "arsa_payi_girilmemis"
     HareketOnayIstek:
       # (P192 §2.3) Onay/red govdesi. `aciklama` redde anlamlidir ("neden
       # reddedildi") ama onayda da serbesttir; ayri iki sema yazmak ayni
@@ -16529,6 +16658,20 @@ components:
       type: object
       required: [id, unit_id, donem, tutar_kurus, created_at]
       properties:
+        kalem_tipi:
+          type: string
+          enum: [aidat, demirbas, olaganustu, faiz, sayac, diger]
+          description: "(P192 §3.2) Borc NEYIN borcu"
+        ters_kayit_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: "(P192 §6.3) Doluysa bu satir bir DUZELTMEDIR"
+        kaynak_assessment_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: "(P192 §3.1) Faiz kaleminin dogdugu borc"
         id: { type: string, format: uuid }
         unit_id: { type: string, format: uuid }
         donem: { type: string, example: "2026-06" }
@@ -16613,6 +16756,20 @@ components:
             durur (donem basina tek kayit) — Postgres'te NULL'lar
             benzersizlikte farkli sayildigi icin bu, `COALESCE`li bir
             benzersiz indeksle saglanir.
+
+            **(P192 §3.2)** Benzersizlige `kalem_tipi` ve
+            `kaynak_assessment_id` de EKLENDI: tanimsiz akista "Mart
+            aidati + Mart cati onarimi" mumkun oldu ve bir dairenin ayni
+            ayda birden cok gecikmis borcu icin ayri faiz kalemleri
+            acilabiliyor. Duzeltilmis (ters kayitli) cift indeksin
+            disindadir.
+        atlananlar:
+          type: array
+          description: >-
+            (P192 §3.2) Atlananlarin DOKUMU — hangi daire, NIYE atlandi.
+            Sadece bir SAYI dondurmek, eksik tahakkukun fark edilmemesine
+            yol aciyordu.
+          items: { $ref: "#/components/schemas/TahakkukAtlanan" }
 
     DuesPayment:
       # (P192 §1) Kaynak tablo `dues_payment` DEGIL `finansal_hareket`.

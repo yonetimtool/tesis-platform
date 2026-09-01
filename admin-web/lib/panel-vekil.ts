@@ -60,6 +60,9 @@ export const OKUMA: Record<string, string> = {
   // --- ice aktarim catisi (P154 / Asama 8) ---
   "ice-aktarim-turler": "/ice-aktarim/turler",
   "ice-aktarim": "/ice-aktarim",
+  // --- (P192 §3.1) gecikme faizi ---
+  "gecikme-ayari": "/borclandirma/gecikme-ayari",
+  "gecikme-faizi-onizleme": "/borclandirma/gecikme-faizi/onizleme",
 };
 
 /** POST ile YAZILAN kaynaklar (okumadan AYRI: bir ucu yanlislikla yazmaya
@@ -97,6 +100,10 @@ export const YAZMA: Record<string, string> = {
   "ice-aktarim-kisi": "/ice-aktarim/kisi",
   "ice-aktarim-acilis_bakiye": "/ice-aktarim/acilis_bakiye",
   "ice-aktarim-arac": "/ice-aktarim/arac",
+  // --- (P192 §3.1) gecikme faizi. PATCH kok kaynaga gider (`ayari`),
+  // POST ise faizi ISLER.
+  "gecikme-ayari": "/borclandirma/gecikme-ayari",
+  "gecikme-faizi-isle": "/borclandirma/gecikme-faizi/isle",
 };
 
 /** Kaynak basina ILETILEBILEN sorgu parametreleri (yine beyaz liste:

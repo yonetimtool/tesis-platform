@@ -341,7 +341,8 @@ async def _kisi_borclari(
         DuesAssessment.gecikme_uygula,
         DuesAssessment.tarih,
         DuesAssessment.gelir_gider_tanim_id,
-    ).join(Unit, Unit.id == DuesAssessment.unit_id)
+    # (P192 §6.3) Ters kayit cifti borc DEGILDIR.
+    ).join(Unit, Unit.id == DuesAssessment.unit_id).where(*defter.gecerli_tahakkuk())
     if p.blok:
         q = q.where(Unit.blok == p.blok)
     if p.gelir_gider_tanim_id:
@@ -621,7 +622,7 @@ async def _uret(
                 select(DuesAssessment.tarih, DuesAssessment.donem,
                        DuesAssessment.tutar_kurus, Unit.no, Unit.blok)
                 .join(Unit, Unit.id == DuesAssessment.unit_id, isouter=True)
-                .where(*borc_kosul)
+                .where(*borc_kosul, *defter.gecerli_tahakkuk())
             )
         ).all()
         tahsilatlar = (
@@ -730,6 +731,7 @@ async def _uret(
         borc = dict(
             (await db.execute(
                 select(DuesAssessment.donem, func.sum(DuesAssessment.tutar_kurus))
+                .where(*defter.gecerli_tahakkuk())
                 .group_by(DuesAssessment.donem)
             )).all()
         )
@@ -865,6 +867,7 @@ async def _tahsilat_performansi(
     borc = dict(
         (await db.execute(
             select(DuesAssessment.donem, func.sum(DuesAssessment.tutar_kurus))
+            .where(*defter.gecerli_tahakkuk())
             .group_by(DuesAssessment.donem)
         )).all()
     )
@@ -874,7 +877,8 @@ async def _tahsilat_performansi(
                 _DONEM_IFADESI,
                 func.sum(FinansalHareket.tutar_kurus),
             )
-            .where(FinansalHareket.tip == "tahsilat")
+            .where(FinansalHareket.tip == "tahsilat",
+                   FinansalHareket.durum == defter.GERCEKLESEN)
             .group_by(_DONEM_IFADESI)
         )).all()
     )
@@ -889,7 +893,8 @@ async def _tahsilat_performansi(
     vadeli = (
         await db.execute(
             select(DuesAssessment.son_odeme_tarihi, DuesAssessment.tutar_kurus)
-            .where(DuesAssessment.son_odeme_tarihi.is_not(None))
+            .where(DuesAssessment.son_odeme_tarihi.is_not(None),
+                   *defter.gecerli_tahakkuk())
         )
     ).all()
     kovalar = {"0-30 gün": 0, "31-60 gün": 0, "61-90 gün": 0, "90+ gün": 0}

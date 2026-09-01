@@ -10,7 +10,7 @@ from __future__ import annotations
 import calendar
 from dataclasses import dataclass
 from datetime import date
-from decimal import ROUND_HALF_UP, Decimal
+from decimal import ROUND_DOWN, ROUND_HALF_UP, Decimal
 
 #: `unit_resident.rol_tipi` degerleri (P23).
 MALIK = "malik"
@@ -118,6 +118,61 @@ def esit_dagit(toplam_kurus: int, adet: int) -> list[int]:
     return [taban + (1 if i < kalan else 0) for i in range(adet)]
 
 
+def oransal_dagit(
+    toplam_kurus: int, agirliklar: list[Decimal | float | int | None]
+) -> list[int | None]:
+    """Tutari AGIRLIGA gore dagit — KURUS KAYBI OLMADAN (P192 §3.3).
+
+    Arsa payi (KMK md. 20) ve metrekare dagitimlarinin ORTAK cekirdegi:
+    ikisi de "toplami agirliklara oranla bol" demektir; iki ayri fonksiyon
+    yazmak ayni yuvarlama kuralini iki yerde tutmak olurdu.
+
+    AGIRLIGI OLMAYAN (`None`) ya da SIFIR/NEGATIF olan daire `None` alir ve
+    ATLANIR — sessizce sifir borclandirmak, yonetimin fark etmedigi eksik
+    tahakkuk uretirdi (`tipe_gore_dagit` ile ayni ilke).
+
+    YUVARLAMA: EN BUYUK KALAN yontemi. Once taban paylar (asagi yuvarlama)
+    verilir, artan kurus en buyuk kesirli kalana sahip dairelere BIRER BIRER
+    dagitilir. Boylece dagitilan toplam HER ZAMAN girdiye esittir; her
+    payi tek tek yuvarlamak toplamda kurusler kaybettirirdi.
+
+    Hesap DECIMAL: float ile 1/3 payi 0.3333333333333333 olur ve buyuk
+    tutarlarda kurus kayar. Para hesabinda float YOK (proje kurali).
+    """
+    temiz: list[Decimal | None] = []
+    for a in agirliklar:
+        if a is None:
+            temiz.append(None)
+            continue
+        d = Decimal(str(a))
+        temiz.append(d if d > 0 else None)
+
+    toplam_agirlik = sum((d for d in temiz if d is not None), Decimal(0))
+    if toplam_agirlik <= 0:
+        return [None] * len(temiz)
+
+    paylar: list[int | None] = [None] * len(temiz)
+    kalanlar: list[tuple[Decimal, int]] = []
+    dagitilan = 0
+    for i, d in enumerate(temiz):
+        if d is None:
+            continue
+        ham = Decimal(toplam_kurus) * d / toplam_agirlik
+        taban = int(ham.to_integral_value(rounding=ROUND_DOWN))
+        paylar[i] = taban
+        dagitilan += taban
+        kalanlar.append((ham - taban, i))
+
+    # Artan kurus: en buyuk kesirli kalandan basla. Beraberlikte KUCUK
+    # INDEKS once — sonuc deterministik olmali, yoksa ayni girdi iki farkli
+    # dagitim uretirdi.
+    kalanlar.sort(key=lambda t: (-t[0], t[1]))
+    artan = toplam_kurus - dagitilan
+    for _, i in kalanlar[:artan]:
+        paylar[i] = (paylar[i] or 0) + 1
+    return paylar
+
+
 def tipe_gore_dagit(
     varsayilan_kuruslar: list[int | None], yedek_kurus: int | None
 ) -> list[int | None]:
@@ -151,14 +206,22 @@ def sayac_tuketim_dagitimi(
     NEGATIF FARK (daire toplami anadan buyuk — olcum hatasi) SIFIRLANIR:
     dairelere NEGATIF borc yazmak alacak uretirdi.
     """
+    # (P192 §6.4) ARA HESAP DA DECIMAL. Once `fark` float olarak
+    # hesaplaniyordu: `ana - sum(bolumler)` ve ardindan `* yuzde / 100.0`.
+    # Ikili gosterimde 12.3 - 12.0 = 0.2999999999999989 gibi degerler cikar
+    # ve birim fiyatla carpilinca kurus kayardi. Para hesabinda float YOK.
     kendi = [
         int(Decimal(str(t)) * birim_fiyat_kurus) for t in bolum_tuketimleri
     ]
-    fark = ana_tuketim - sum(bolum_tuketimleri)
+    fark = Decimal(str(ana_tuketim)) - sum(
+        (Decimal(str(t)) for t in bolum_tuketimleri), Decimal(0)
+    )
     if fark < 0:
-        fark = 0.0
+        fark = Decimal(0)
     if ortak_alan_yuzde is not None:
-        fark = fark * float(ortak_alan_yuzde) / 100.0
-    ortak_kurus = int(Decimal(str(fark)) * birim_fiyat_kurus)
+        fark = fark * Decimal(str(ortak_alan_yuzde)) / Decimal(100)
+    # Yuvarlama KURALI degismedi (asagi kesme, `kendi` ile ayni); degisen
+    # tek sey ara degerin ikili float yerine Decimal olmasi.
+    ortak_kurus = int(fark * birim_fiyat_kurus)
     paylar = esit_dagit(ortak_kurus, len(bolum_tuketimleri))
     return [k + p for k, p in zip(kendi, paylar)], ortak_kurus

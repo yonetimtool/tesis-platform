@@ -173,6 +173,8 @@ export interface Unit {
   kat?: number | null;
   sira?: number | null;
   metrekare?: number | null;
+  /** (P192 §3.3) Arsa payi — KMK md. 20 gider paylasiminin olcusu. */
+  arsa_payi?: number | null;
   // (P26/P122) Siniflandirma. AD da tasinir: hucre ayri istek yapmadan
   // etiketi cizebilsin. Tanim silinmisse null — uydurma etiket YOK.
   unit_tip_id?: string | null;

@@ -188,3 +188,85 @@ cevapsız kalırdı.
 Ayrıca özet kartındaki "Borçlarım" sorgusu `durum != 'odendi'` diyordu;
 `iptal` eklenince reddedilmiş bir harcama "borcum var" diye sayılacaktı.
 `in ('bekliyor','onay_bekliyor')` olarak düzeltildi.
+
+---
+
+## Bölüm 3 — Kayıp para ve eksik tahakkuk
+
+### 3.1 Gecikme faizi artık yazılan bir borç
+
+**Ölçülen kusur:** faiz iki yerde hesaplanıyordu (`dues.py` liste
+zenginleştirmesi, `rapor_motoru`) ama **hiçbir yere yazılmıyordu**. Sakin
+ana borcunu ödeyince faiz buharlaşıyordu; tahsil edilebilir bir kalem
+değil, ekranda görünen bir sayıydı.
+
+**Karar:** faiz `dues_assessment`e `kalem_tipi='faiz'` bir satır olarak
+yazılır ve hangi borçtan doğduğunu `kaynak_assessment_id` ile taşır.
+Alternatif "ana borcun tutarını artırmak"tı; o zaman ana para ile faiz
+ayırt edilemez, kısmi ödeme hangisine sayıldı belirsiz kalır ve faiz affı
+imkânsızlaşırdı.
+
+Üç kural:
+
+* **Her koşum farkı yazar** — o ana kadar birikmiş toplam eksi daha önce
+  yazılmış faiz. Aylık koşum faizi artırarak ilerler; tekrarlı koşum 0
+  fark bulur ve hiçbir şey yazmaz. Veritabanı da aynı borca aynı dönemde
+  ikinci kalemi engelliyor.
+* **Faize faiz işlemez** — yazılan kalem `gecikme_uygula=false` taşır;
+  aksi halde basit faiz kuralı sessizce bileşiğe dönerdi.
+* **Kapanmış borca faiz işlemez**, ama geçmişte birikmiş faiz **ayakta
+  kalır**: borcun kapanması faizi silmez.
+
+Ekranda gösterilen `gecikme_kurus` artık **henüz yazılmamış** faizdir
+(yazılmış kalemler düşülür); yoksa aynı faiz hem orada hem ayrı bir borç
+kalemi olarak iki kez görünürdü.
+
+**Faiz affı** = faiz kaleminin ters kayıtlanması (§6.3 ile aynı yol),
+denetim kaydıyla. Affedilmiş faiz "yazılmış" sayılmaz — af geri
+alınabilir olsun diye.
+
+**Ayar:** `tenant.gecikme_uygula` eklendi. Oranı 0 yapmak "hiç uygulama"
+demenin dolaylı yoluydu ama "oran henüz girilmedi" ile aynı görünürdü;
+bazı siteler faiz **almaz** ve bu bir karardır, eksik veri değil.
+
+### 3.2 Kısıt kaldırılmadı — kalem-farkındalı yapıldı
+
+**Analiz raporumu ölçüm düzeltti.** `finans-analiz.md` "UNIQUE (tenant,
+unit, donem) aynı aya ikinci kalemi engelliyor" diyordu; kaynağı
+`models.py`deki eski `__table_args__`tı. Veritabanında 0018'den beri
+**tür-farkındalı** bir kısmi indeks var:
+`(tenant, unit, donem, COALESCE(tanim_id, nöbetçi))`. Yani "Mart aidatı +
+Mart elektriği" zaten mümkündü. Gerçek boşluk **tanımsız** kalemlerdeydi.
+
+Kısıtı tamamen kaldırmak yanlış olurdu ve bu ölçüldü: dört mevcut test tam
+da bu korumayı kilitliyor. Kaldırmak, aylık toplu tahakkuku yanlışlıkla
+iki kez çalıştıran yöneticinin bütün siteyi **iki kat** borçlandırması
+demekti.
+
+İndeks bu yüzden **genişletildi**: `kalem_tipi` ve `kaynak_assessment_id`
+eklendi; düzeltilmiş çift (`iptal_edildi` / `ters_kayit_id`) indeksin
+dışında bırakıldı. Böylece:
+
+* tanımsız akışta "Mart aidatı + Mart çatı onarımı" mümkün,
+* bir dairenin aynı ayda birden çok gecikmiş borcu için ayrı faiz
+  kalemleri açılabiliyor,
+* "yanlış tutarı düzelt, doğrusunu yaz" akışı ikinci adımda 409 almıyor,
+* mükerrer koruması **duruyor**.
+
+**Asıl şikâyet — sessiz atlama — kaldırıldı:** atlananlar artık dökümlü
+dönüyor (`atlananlar[]`, `unit_no` + neden) ve panel hem önizlemede hem
+işlemeden sonra gösteriyor.
+
+### 3.3 Arsa payı ve metrekare dağıtımı
+
+`unit.arsa_payi` eklendi (KMK md. 20). Toplu borçlandırmaya `dagitim`
+alanı geldi: `daire_basina` (eski davranış, varsayılan) · `esit` ·
+`arsa_payi` · `metrekare`. Son üçü **toplamı** dairelere böler.
+
+Dağıtım çekirdeği `borclandirma.oransal_dagit`: **en büyük kalan**
+yöntemi, hesap `Decimal`. Her payı tek tek yuvarlamak toplamda kuruş
+kaybettirirdi; dağıtılan toplam her zaman girdiye eşit (testle kilitli:
+100.001 kuruş / 3 daire → 33.333 + 33.334 + 33.334).
+
+Ağırlığı olmayan daire `None` alır ve **atlanır** — sessizce sıfır
+borçlandırmak, yönetimin fark etmediği eksik tahakkuk üretirdi.

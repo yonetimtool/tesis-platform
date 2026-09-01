@@ -187,6 +187,90 @@ def tahsilat_etkisi() -> Select:
     )
 
 
+def gecerli_tahakkuk() -> list:
+    """GECERLI borc kosullari — ters kayit CIFTI disarida (P192 §6.3).
+
+    TEK KURAL, TEK YER: "ters kayitlanmis bir tahakkuk da, onu goturen
+    ters kayit satiri da BORC DEGILDIR". Ikisi de listelerden ve
+    toplamlardan cikar; toplamlari zaten sifir oldugu icin sonuc, iki
+    satiri isaretli toplamakla AYNIDIR — ama listelerde de dogru davranir
+    (isaretli toplam, listede birbirini goturen iki satir birakirdi ve
+    "toplam neden satirlari tutmuyor" sorusu dogardi).
+
+    Duzeltmenin izi KAYBOLMAZ: satirlar tabloda durur ve denetim kaydi
+    (`audit_log`) hangi tahakkukun neden duzeltildigini tasir.
+
+    `iptal_edildi` bayragi ALT SORGU YERINE kullaniliyor: ayni kosul kismi
+    tekillik indeksinde de gerekiyor ve orada alt sorgu YAZILAMAZ. Iki
+    yerde iki farkli tanim olmasin diye tek bayrak.
+    """
+    return [
+        DuesAssessment.ters_kayit_id.is_(None),
+        DuesAssessment.iptal_edildi.is_(False),
+    ]
+
+
+def tahakkuk_etkisi() -> Select:
+    """Gecerli tahakkuklar: (unit_id, donem, kalem_tipi, hedef_user_id,
+    tarih, etki)."""
+    return select(
+        DuesAssessment.unit_id.label("unit_id"),
+        DuesAssessment.donem.label("donem"),
+        DuesAssessment.kalem_tipi.label("kalem_tipi"),
+        DuesAssessment.hedef_user_id.label("hedef_user_id"),
+        DuesAssessment.tarih.label("tarih"),
+        DuesAssessment.tutar_kurus.label("etki"),
+    ).where(*gecerli_tahakkuk())
+
+
+async def tahakkuk_toplami(
+    db: AsyncSession,
+    *,
+    donem: str | None = None,
+    unit_ids: list[uuid.UUID] | None = None,
+    baslangic: date | None = None,
+    bitis: date | None = None,
+) -> int:
+    """Tahakkuk toplami (kurus) — ters kayitlar DUSULMUS."""
+    alt = tahakkuk_etkisi().subquery()
+    where = []
+    if donem is not None:
+        where.append(alt.c.donem == donem)
+    if unit_ids is not None:
+        if not unit_ids:
+            return 0
+        where.append(alt.c.unit_id.in_(unit_ids))
+    if baslangic is not None:
+        where.append(alt.c.tarih >= baslangic)
+    if bitis is not None:
+        where.append(alt.c.tarih <= bitis)
+    toplam = (
+        await db.execute(
+            select(func.coalesce(func.sum(alt.c.etki), 0)).where(*where)
+        )
+    ).scalar_one()
+    return int(toplam)
+
+
+async def daire_tahakkuk(
+    db: AsyncSession,
+    unit_ids: list[uuid.UUID] | None = None,
+    *,
+    donem: str | None = None,
+) -> dict[uuid.UUID, int]:
+    """Daire basina tahakkuk (kurus). Tahakkuku olmayan daire SOZLUKTE YOK."""
+    alt = tahakkuk_etkisi().subquery()
+    stmt = select(alt.c.unit_id, func.sum(alt.c.etki))
+    if unit_ids is not None:
+        if not unit_ids:
+            return {}
+        stmt = stmt.where(alt.c.unit_id.in_(unit_ids))
+    if donem is not None:
+        stmt = stmt.where(alt.c.donem == donem)
+    rows = (await db.execute(stmt.group_by(alt.c.unit_id))).all()
+    return {uid: int(t) for uid, t in rows}
+
+
 async def daire_odenen(
     db: AsyncSession,
     unit_ids: list[uuid.UUID] | None = None,
@@ -273,17 +357,7 @@ async def daire_bakiye(
     """
     if not unit_ids:
         return {}
-    tahakkuk_rows = (
-        await db.execute(
-            select(
-                DuesAssessment.unit_id,
-                func.coalesce(func.sum(DuesAssessment.tutar_kurus), 0),
-            )
-            .where(DuesAssessment.unit_id.in_(unit_ids))
-            .group_by(DuesAssessment.unit_id)
-        )
-    ).all()
-    tahakkuk = {uid: int(t) for uid, t in tahakkuk_rows}
+    tahakkuk = await daire_tahakkuk(db, unit_ids)
     odenen = await daire_odenen(db, unit_ids)
     return {
         uid: (tahakkuk.get(uid, 0), odenen.get(uid, 0)) for uid in unit_ids

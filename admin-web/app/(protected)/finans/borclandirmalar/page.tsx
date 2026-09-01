@@ -11,11 +11,12 @@
 // bakiyesine dokunmaz. Ortak kabugu zorlamak, iki farkli varligi tek
 // sutun kumesine sikistirmak olurdu.
 //
-// "IPTAL ET" DE YOK ve bu bilincli: bir tahakkuk ters kayitla degil
-// SILINEREK duzeltilir (uc `DELETE /dues/assessments/{id}` tasimiyor,
-// yani bugun duzeltme yolu YOK). Olmayan bir yolu dugme olarak cizmek,
-// kullaniciyi calismayacak bir eyleme davet etmek olurdu; eksik raporda
-// yazili.
+// (P192 §6.3) DUZELTME ARTIK VAR: `POST /dues/assessments/{id}/ters-kayit`.
+// Satir SILINMEZ — ters kayit yazilir ve cift, borc hesabinin disinda
+// kalir. Onceden hicbir duzeltme yolu yoktu ve bu, eksik raporda yaziliydi.
+//
+// (P192 §3.1) GECIKME FAIZI de burada: hesaplanan bir sayi degil, YAZILAN
+// bir borc kalemi.
 
 import { useState } from "react";
 import useSWR from "swr";
@@ -42,6 +43,7 @@ import {
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
+import type { SozlukAnahtari } from "@/lib/i18n/sozluk/tipler";
 import { kurusToTL, tlToKurus } from "@/lib/money";
 
 interface Tahakkuk {
@@ -59,9 +61,161 @@ interface Tahakkuk {
 
 const YOK_ISARETI = "—";
 
+// (P192 §3.3) Dagitim yontemleri. HAM ENUM EKRANA CIKMAZ: her deger bir
+// sozluk anahtarina eslenir.
+const DAGITIMLAR = ["daire_basina", "esit", "arsa_payi", "metrekare"] as const;
+type Dagitim = (typeof DAGITIMLAR)[number];
+const DAGITIM_ETIKET: Record<Dagitim, SozlukAnahtari> = {
+  daire_basina: "finansDagitimDaireBasina",
+  esit: "finansDagitimEsit",
+  arsa_payi: "finansDagitimArsaPayi",
+  metrekare: "finansDagitimMetrekare",
+};
+
+// (P192 §3.2) Kalem tipleri. `faiz` LISTEDE YOK ve olmamali: faiz elle
+// yazilmaz, `gecikme-faizi/isle` ucundan dogar — elle yazilabilseydi
+// kaynak borcla bagi kurulmaz ve idempotency kirilirdi.
+const KALEM_TIPLERI = ["aidat", "demirbas", "olaganustu", "sayac", "diger"] as const;
+type KalemTipi = (typeof KALEM_TIPLERI)[number];
+const KALEM_ETIKET: Record<KalemTipi, SozlukAnahtari> = {
+  aidat: "finansKalemAidat",
+  demirbas: "finansKalemDemirbas",
+  olaganustu: "finansKalemOlaganustu",
+  sayac: "finansKalemSayac",
+  diger: "finansKalemDiger",
+};
+
+// Atlama nedenleri sunucudan KOD olarak gelir; ekranda METNE cevrilir.
+const ATLAMA_ETIKET: Record<string, SozlukAnahtari> = {
+  arsa_payi_girilmemis: "finansAtlamaArsaPayiYok",
+  metrekare_girilmemis: "finansAtlamaMetrekareYok",
+  tip_varsayilani_yok: "finansAtlamaTipVarsayilaniYok",
+  tutar_cozulemedi: "finansAtlamaTutarYok",
+  benzersizlik_carpismasi: "finansAtlamaCarpisma",
+};
+
+function atlamaMetni(t: (a: SozlukAnahtari) => string, neden: string): string {
+  // Bilinmeyen bir kod icin GENEL metin doner; ham kodu ekrana basmak
+  // kullaniciya anlamsiz bir dize gostermek olurdu.
+  return t(ATLAMA_ETIKET[neden] ?? "finansAtlamaTutarYok");
+}
+
+interface TopluSatir {
+  unit_id: string;
+  unit_no: string;
+  tutar_kurus: number | null;
+  atlama_nedeni: string | null;
+}
+
+interface Atlanan {
+  unit_id: string;
+  unit_no: string | null;
+  neden: string;
+}
+
 /** `YYYY-MM-DD` -> `YYYY-MM`. Donem tarihten TURETILIR (bkz. modal). */
 function donemden(tarih: string): string {
   return tarih.slice(0, 7);
+}
+
+/** (P192 §3.1) GECIKME FAIZI KARTI.
+ *
+ * Faiz artik ekranda hesaplanan bir sayi degil, YAZILAN bir borc kalemi.
+ * Kart uc soruyu yanitlar: uygulaniyor mu, oran ne, bu kosumda ne
+ * yazilacak. "Isle" ONIZLEMEDEKI tutari yazar — onizleme ile isleme
+ * sunucuda AYNI hesabi cagirir.
+ */
+function GecikmeFaiziKarti() {
+  const t = useT();
+  const toast = useToast();
+  const [mesgul, setMesgul] = useState(false);
+  const [yenile, setYenile] = useState(0);
+
+  const { data: ayar, mutate: ayarTazele } = useSWR<{
+    gecikme_aylik_yuzde: number; gecikme_uygula: boolean;
+  }>(`/api/panel/gecikme-ayari?_=${yenile}`, jsonFetcher);
+  const { data: onizleme, mutate: onizlemeTazele } = useSWR<{
+    uygulaniyor: boolean; toplam_fark_kurus: number;
+    items: { assessment_id: string }[];
+  }>(`/api/panel/gecikme-faizi-onizleme?_=${yenile}`, jsonFetcher);
+
+  async function ayarYaz(govde: Record<string, unknown>) {
+    setMesgul(true);
+    try {
+      await apiSend("/api/panel/gecikme-ayari", "PATCH", govde);
+      setYenile((n) => n + 1);
+      await Promise.all([ayarTazele(), onizlemeTazele()]);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : t("ortakHataOlustu"));
+    } finally {
+      setMesgul(false);
+    }
+  }
+
+  async function isle() {
+    setMesgul(true);
+    try {
+      const s = await apiSend<{ yazilan: number }>(
+        "/api/panel/gecikme-faizi-isle", "POST", {});
+      toast.success(t("finansGecikmeIslendi", { n: s.yazilan }));
+      setYenile((n) => n + 1);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : t("ortakHataOlustu"));
+    } finally {
+      setMesgul(false);
+    }
+  }
+
+  const adet = onizleme?.items.length ?? 0;
+  return (
+    <div
+      className="rounded-lg p-3"
+      style={{ background: "var(--yz-metal-2)", fontSize: "var(--yz-fs-sm)" }}
+    >
+      <div className="flex flex-wrap items-center gap-3">
+        <strong>{t("finansGecikmeFaizi")}</strong>
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={ayar?.gecikme_uygula ?? false}
+            disabled={mesgul}
+            onChange={(e) => void ayarYaz({ gecikme_uygula: e.target.checked })}
+          />
+          {t("finansGecikmeUygula")}
+        </label>
+        <label className="flex items-center gap-2">
+          {t("finansGecikmeOran")}
+          <Alan
+            type="number"
+            className="w-20"
+            defaultValue={ayar?.gecikme_aylik_yuzde ?? 0}
+            disabled={mesgul}
+            onBlur={(e) =>
+              void ayarYaz({ gecikme_aylik_yuzde: Number(e.target.value) })
+            }
+          />
+        </label>
+        <Dugme
+          tur="ikincil"
+          boy="kucuk"
+          disabled={mesgul || adet === 0}
+          onClick={() => void isle()}
+        >
+          {t("finansGecikmeIsle")}
+        </Dugme>
+      </div>
+      <p className="mt-2" style={{ color: "var(--yz-text-2)" }}>
+        {!onizleme?.uygulaniyor
+          ? t("finansGecikmeKapali")
+          : adet === 0
+            ? t("finansGecikmeYok")
+            : t("finansGecikmeIslenecek", {
+                n: adet,
+                tutar: kurusToTL(onizleme.toplam_fark_kurus),
+              })}
+      </p>
+    </div>
+  );
 }
 
 export default function BorclandirmalarPage() {
@@ -116,6 +270,8 @@ export default function BorclandirmalarPage() {
           <DisaAktar kod="detayli_borc" />
         </div>
       </div>
+
+      <GecikmeFaiziKarti />
 
       <VeriTablosu
         kolonlar={sutunlar}
@@ -277,24 +433,41 @@ function TopluModal({
   const [sonOdeme, setSonOdeme] = useState("");
   const [tutar, setTutar] = useState("");
   const [aciklama, setAciklama] = useState("");
+  // (P192 §3.3) Dagitim yontemi. `daire_basina` ESKI DAVRANIS ve
+  // varsayilan; digerleri TOPLAMI dairelere boler (KMK md. 20 arsa payi).
+  const [dagitim, setDagitim] = useState<Dagitim>("daire_basina");
+  const [kalemTipi, setKalemTipi] = useState<KalemTipi>("aidat");
   const [onizleme, setOnizleme] = useState<{
     islenecek: number; atlanacak: number; toplam_kurus: number;
+    satirlar?: TopluSatir[];
   } | null>(null);
   const [hata, setHata] = useState<string | null>(null);
   const [mesgul, setMesgul] = useState(false);
 
   function govde() {
     const kurus = tlToKurus(tutar);
-    return {
+    const ortak = {
       donem: donemden(tarih),
       gelir_gider_tanim_id: tanimId,
-      // TUTAR BOS BIRAKILABILIR: uc o zaman DAIRE TIPININ varsayilan
-      // tutarini kullanir (P26). Sifir gondermek bunu bozardi.
-      tutar_kurus: kurus && kurus > 0 ? kurus : null,
       son_odeme_tarihi: sonOdeme || null,
       tarih: tarih || null,
       aciklama: aciklama.trim() || null,
+      kalem_tipi: kalemTipi,
+      dagitim,
     };
+    // AYNI ALAN IKI ANLAM TASIMAZ: `daire_basina` modunda girilen tutar
+    // HER DAIREYE yazilir, oteki modlarda ise DAGITILACAK TOPLAMDIR. Tek
+    // bir alan iki uca da gonderilseydi, mod degisince ayni sayi sessizce
+    // baska bir sey ifade ederdi.
+    if (dagitim === "daire_basina") {
+      return {
+        ...ortak,
+        // TUTAR BOS BIRAKILABILIR: uc o zaman DAIRE TIPININ varsayilan
+        // tutarini kullanir (P26). Sifir gondermek bunu bozardi.
+        tutar_kurus: kurus && kurus > 0 ? kurus : null,
+      };
+    }
+    return { ...ortak, toplam_tutar_kurus: kurus && kurus > 0 ? kurus : null };
   }
 
   // ONIZLEME ONCE, ISLEME SONRA — ve ikisi AYNI govdeyi kullanir (uc de
@@ -306,6 +479,7 @@ function TopluModal({
     try {
       const s = await apiSend<{
         islenecek: number; atlanacak: number; toplam_kurus: number;
+        satirlar?: TopluSatir[];
       }>("/api/panel/borclandirma-toplu-onizleme", "POST", govde());
       setOnizleme(s);
     } catch (e) {
@@ -318,7 +492,18 @@ function TopluModal({
   async function isle() {
     setHata(null); setMesgul(true);
     try {
-      await apiSend("/api/panel/borclandirma-toplu", "POST", govde());
+      const sonuc = await apiSend<{ atlananlar?: Atlanan[] }>(
+        "/api/panel/borclandirma-toplu", "POST", govde());
+      // (P192 §3.2) SESSIZ ATLAMA YOK: atlanan varsa kullaniciya SOYLENIR.
+      // Onceden yalnizca bir sayi donuyordu ve kimse bakmiyordu; yonetici
+      // eksik tahakkuk yaptigini fark etmiyordu.
+      if (sonuc?.atlananlar?.length) {
+        toast.error(
+          `${t("finansAtlananlar")}: ${sonuc.atlananlar
+            .map((a) => `${a.unit_no ?? ""} (${atlamaMetni(t, a.neden)})`)
+            .join(", ")}`,
+        );
+      }
       toast.success(t("finansKaydedildi"));
       setOnizleme(null); setTutar(""); setAciklama("");
       onKaydedildi();
@@ -370,7 +555,37 @@ function TopluModal({
               onChange={(e) => { setSonOdeme(e.target.value); setOnizleme(null); }} />}
           </AlanSarmal>
         </div>
-        <AlanSarmal etiket={t("finansAlanTutar")}>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <AlanSarmal etiket={t("finansDagitim")}>
+            {(b) => (
+              <Secim {...b} value={dagitim}
+                onChange={(e) => {
+                  setDagitim(e.target.value as Dagitim); setOnizleme(null);
+                }}>
+                {DAGITIMLAR.map((d) => (
+                  <option key={d} value={d}>{t(DAGITIM_ETIKET[d])}</option>
+                ))}
+              </Secim>
+            )}
+          </AlanSarmal>
+          <AlanSarmal etiket={t("finansKalemTipi")}>
+            {(b) => (
+              <Secim {...b} value={kalemTipi}
+                onChange={(e) => {
+                  setKalemTipi(e.target.value as KalemTipi); setOnizleme(null);
+                }}>
+                {KALEM_TIPLERI.map((k) => (
+                  <option key={k} value={k}>{t(KALEM_ETIKET[k])}</option>
+                ))}
+              </Secim>
+            )}
+          </AlanSarmal>
+        </div>
+        <AlanSarmal
+          etiket={dagitim === "daire_basina"
+            ? t("finansAlanTutar")
+            : t("finansDagitilacakToplam")}
+        >
           {(b) => <Alan {...b} value={tutar} inputMode="decimal"
             onChange={(e) => { setTutar(e.target.value); setOnizleme(null); }} />}
         </AlanSarmal>
@@ -387,6 +602,20 @@ function TopluModal({
             <p className="tabular-nums">
               {t("finansToplamTutar", { tutar: kurusToTL(onizleme.toplam_kurus) })}
             </p>
+            {/* (P192 §3.2) ATLANANLAR ISLEMEDEN ONCE GORUNUR. "500
+                daireden 3'u atlanacak" bilgisi sonradan fark edilirse
+                eksik tahakkuk sessizce yayilir. */}
+            {(onizleme.satirlar ?? []).some((r) => r.atlama_nedeni) && (
+              <ul className="mt-2 list-disc pl-4">
+                {(onizleme.satirlar ?? [])
+                  .filter((r) => r.atlama_nedeni)
+                  .map((r) => (
+                    <li key={r.unit_id}>
+                      {r.unit_no} — {atlamaMetni(t, r.atlama_nedeni as string)}
+                    </li>
+                  ))}
+              </ul>
+            )}
           </div>
         )}
         <HataDurumu mesaj={hata} />

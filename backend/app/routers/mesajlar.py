@@ -20,6 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..audit import Action, audit_user
 from ..config import settings
 from ..crud_helpers import get_or_404, translate_integrity
+from .. import defter
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..gonderim import (
@@ -217,19 +218,16 @@ async def _degerler(
             ).limit(1)
         )
     ).scalar_one_or_none()
+    # (P192 §6.3) Ters kayit cifti borc DEGILDIR.
     borc = int((
         await db.execute(
             select(func.coalesce(func.sum(DuesAssessment.tutar_kurus), 0))
-            .where(DuesAssessment.hedef_user_id == user_id)
+            .where(DuesAssessment.hedef_user_id == user_id,
+                   *defter.gecerli_tahakkuk())
         )
     ).scalar_one())
-    odenen = int((
-        await db.execute(
-            select(func.coalesce(func.sum(FinansalHareket.tutar_kurus), 0))
-            .where(FinansalHareket.tip == "tahsilat",
-                   FinansalHareket.user_id == user_id)
-        )
-    ).scalar_one())
+    # (P192 §1) TEK TANIM: iade/iptal dusulur, yalniz gerceklesmis satirlar.
+    odenen = await defter.tahsilat_toplami(db, user_id=user_id)
     from ..raporlar import kurus_metin
 
     bakiye = max(borc - odenen, 0)
@@ -326,7 +324,8 @@ async def _alicilar(
         borclu = set(
             (await db.execute(
                 select(DuesAssessment.hedef_user_id)
-                .where(DuesAssessment.hedef_user_id.is_not(None))
+                .where(DuesAssessment.hedef_user_id.is_not(None),
+                       *defter.gecerli_tahakkuk())
                 .group_by(DuesAssessment.hedef_user_id)
                 .having(func.sum(DuesAssessment.tutar_kurus) > 0)
             )).scalars().all()

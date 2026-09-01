@@ -3208,6 +3208,10 @@ class UnitOut(BaseModel):
     kat: int | None = None
     sira: int | None = None
     metrekare: float | None = None
+    #: (P192 §3.3) Kat Mulkiyeti Kanunu md. 20 gider paylasimini ARSA
+    #: PAYINA gore tanimlar. Girilmemis daire arsa payi dagitiminin
+    #: DISINDA kalir ve bu kullaniciya soylenir.
+    arsa_payi: float | None = None
     aktif: bool
     # SINIFLANDIRMA (P26). Ad da doner: istemci ayri bir istek yapmadan
     # listeyi cizebilsin (daire listesi tip/grup adini gosterir).
@@ -3237,6 +3241,7 @@ class UnitCreate(BaseModel):
     kat: int | None = Field(None, ge=_KAT_MIN, le=_KAT_MAX)
     sira: int | None = Field(None, ge=_SIRA_MIN, le=_SIRA_MAX)
     metrekare: float | None = None
+    arsa_payi: float | None = Field(None, ge=0)
     aktif: bool = True
     unit_tip_id: uuid.UUID | None = None
     unit_grup_id: uuid.UUID | None = None
@@ -3310,6 +3315,7 @@ class UnitUpdate(BaseModel):
     kat: int | None = Field(None, ge=_KAT_MIN, le=_KAT_MAX)
     sira: int | None = Field(None, ge=_SIRA_MIN, le=_SIRA_MAX)
     metrekare: float | None = None
+    arsa_payi: float | None = Field(None, ge=0)
     aktif: bool | None = None
     # `None` GONDERILEBILIR: siniflandirmayi KALDIRMAK icin (bkz. router —
     # `exclude_unset` ile "gonderilmedi" ile "null gonderildi" ayrilir).
@@ -3528,8 +3534,17 @@ class DuesAssessmentOut(BaseModel):
     tarih: date | None = None
     gecikme_uygula: bool = True
     kaynak: str = "tekil"
-    #: ANLIK hesaplanir, SAKLANMAZ — oran degistiginde gecmis tutarsiz kalirdi.
+    #: HENUZ YAZILMAMIS gecikme faizi (P192 §3.1). Yazilmis faiz kalemleri
+    #: DUSULUR: yoksa ayni faiz hem burada hem ayri bir borc kalemi olarak
+    #: iki kez gorunurdu.
     gecikme_kurus: int = 0
+    # --- (P192 §3) --------------------------------------------------------- #
+    #: Borc NEYIN borcu: aidat | demirbas | olaganustu | faiz | sayac | diger.
+    kalem_tipi: str = "aidat"
+    #: Doluysa bu satir bir DUZELTMEDIR ve gosterdigi tahakkuku goturur.
+    ters_kayit_id: uuid.UUID | None = None
+    #: Faiz kaleminin dogdugu borc.
+    kaynak_assessment_id: uuid.UUID | None = None
     created_at: datetime
 
 
@@ -3544,11 +3559,31 @@ class DuesAssessmentCreate(BaseModel):
     gelir_gider_tanim_id: uuid.UUID | None = None
     tarih: date | None = None
     gecikme_uygula: bool = True
+    # --- (P192 §3.2) ------------------------------------------------------- #
+    #: Kalem tipi. `faiz` DISARIDA: faiz elle yazilmaz, `gecikme-faizi/isle`
+    #: ucundan dogar — elle yazilabilseydi kaynak borcla bagi kurulmaz ve
+    #: idempotency kirilirdi.
+    kalem_tipi: Literal["aidat", "demirbas", "olaganustu", "sayac", "diger"] = "aidat"
+
+
+class TahakkukAtlanan(BaseModel):
+    """(P192 §3.2) Yazilamayan daire ve NEDENI.
+
+    Onceden yalnizca bir SAYI donuyordu ve toplu tahakkukta atlanan satir
+    sessizce kayboluyordu; yonetici eksik tahakkuk yaptigini fark
+    etmiyordu.
+    """
+
+    unit_id: uuid.UUID
+    unit_no: str | None = None
+    neden: str
 
 
 class DuesAssessmentResult(BaseModel):
     created: list[DuesAssessmentOut]
     atlanan: int
+    #: Atlananlarin DOKUMU. Bos liste, atlanan olmadigi anlamina gelir.
+    atlananlar: list[TahakkukAtlanan] = []
 
 
 class DuesAssessmentListResponse(BaseModel):
@@ -4415,9 +4450,11 @@ class AnprApiKeyCreated(AnprApiKeyOut):
 # AYRI yon tasir: "-500" bir firmada "biz mi borcluyuz, o mu" sorusunu
 # yanitlamaz.
 GelirGiderTip = Literal["gelir", "gider", "her_ikisi"]
-#: SIMDILIK IKI DEGER — "arsa_payi"/"kisi_sayisi" BILEREK yok: secilebilir ama
-#: P28'de uygulanmayan bir secenek YANLIS BORCLANDIRIRDI. Genisleme tek
-#: `ALTER TYPE ... ADD VALUE` satiridir.
+#: TANIMIN varsayilan dagitim SEKLI (bir ipucudur). Gercek dagitim
+#: yontemi P192 §3.3'ten beri `TopluBorcIstek.dagitim` alanindadir
+#: (`esit` / `arsa_payi` / `metrekare` / `daire_basina`); burasi enum
+#: oldugu icin genisletmek ALTER TYPE gerektirir ve iki yerde iki ayri
+#: dogruluk uretirdi.
 GelirGiderDagitim = Literal["bagimsiz_bolumlere_esit", "tipe_gore"]
 #: (P28) Borcun KIME yazilacagi — kural TANIMDA durur (bkz. models).
 BorcHedefKurali = Literal["kiraci_oncelikli", "malik"]
@@ -4876,6 +4913,26 @@ class TopluBorcIstek(BaseModel):
     tarih: date | None = None
     aciklama: str | None = Field(None, max_length=500)
     gecikme_uygula: bool = True
+    kalem_tipi: Literal[
+        "aidat", "demirbas", "olaganustu", "sayac", "diger"
+    ] = "aidat"
+    # --- (P192 §3.3) DAGITIM YONTEMI --------------------------------------- #
+    #: `daire_basina` (varsayilan, ESKI DAVRANIS) — `tutar_kurus` her
+    #: daireye ayni ayni yazilir, yoksa tip varsayilani kullanilir.
+    #: `esit` / `arsa_payi` / `metrekare` — `toplam_tutar_kurus` DAIRELERE
+    #: BOLUNUR. Kat Mulkiyeti Kanunu md. 20 arsa payini sart kosar;
+    #: uründe yalniz esit ve daire tipi vardi.
+    dagitim: Literal[
+        "daire_basina", "esit", "arsa_payi", "metrekare"
+    ] = "daire_basina"
+    #: `dagitim` `daire_basina` DISINDA ise ZORUNLU: dagitilacak TOPLAM.
+    toplam_tutar_kurus: int | None = Field(None, ge=1)
+
+    @model_validator(mode="after")
+    def _dagitim_tutari(self) -> "TopluBorcIstek":
+        if self.dagitim != "daire_basina" and self.toplam_tutar_kurus is None:
+            raise ValueError("dagitim icin toplam_tutar_kurus gerekli")
+        return self
 
 
 class TopluBorcSatir(BaseModel):
@@ -4966,10 +5023,61 @@ class GecikmeAyarOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     gecikme_aylik_yuzde: float
+    #: (P192 §3.1) Site gecikme faizi UYGULUYOR MU. Orani 0 yapmak "hic
+    #: uygulama" demenin dolayli yoluydu ama "oran henuz girilmedi" ile
+    #: ayni gorunurdu.
+    gecikme_uygula: bool = True
 
 
 class GecikmeAyarUpdate(BaseModel):
-    gecikme_aylik_yuzde: float = Field(..., ge=0, le=100)
+    gecikme_aylik_yuzde: float | None = Field(None, ge=0, le=100)
+    gecikme_uygula: bool | None = None
+
+    @model_validator(mode="after")
+    def _en_az_bir(self) -> "GecikmeAyarUpdate":
+        if self.gecikme_aylik_yuzde is None and self.gecikme_uygula is None:
+            raise ValueError("en az bir alan gerekli")
+        return self
+
+
+class GecikmeFaizSatiri(BaseModel):
+    """(P192 §3.1) Bir borc icin faiz durumu."""
+
+    assessment_id: uuid.UUID
+    unit_id: uuid.UUID
+    unit_no: str
+    donem: str
+    son_odeme_tarihi: date | None = None
+    kalan_kurus: int
+    #: O ana kadar BIRIKMIS toplam faiz.
+    toplam_faiz_kurus: int
+    #: Daha once yazilmis faiz kalemleri.
+    yazilmis_kurus: int
+    #: Bu kosumda YAZILACAK tutar (toplam - yazilmis).
+    fark_kurus: int
+
+
+class GecikmeFaizOnizleme(BaseModel):
+    donem: str
+    uygulaniyor: bool
+    aylik_yuzde: float
+    toplam_fark_kurus: int
+    items: list[GecikmeFaizSatiri]
+
+
+class GecikmeFaizSonuc(BaseModel):
+    donem: str
+    yazilan: int
+    toplam_kurus: int
+    #: Faiz uygulanmiyorsa ya da fark yoksa BOS doner ve `yazilan=0` olur —
+    #: sessiz basari degil, ACIK bir "hicbir sey yapilmadi".
+    items: list[GecikmeFaizSatiri]
+
+
+class TahakkukTersKayitIstek(BaseModel):
+    """(P192 §6.3) Yanlis tahakkukun DUZELTILMESI."""
+
+    aciklama: str | None = Field(None, max_length=500)
 
 
 # ==================== P29 FINANSAL HAREKET / TAHSILAT ======================= #
