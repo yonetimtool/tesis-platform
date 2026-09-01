@@ -161,6 +161,25 @@ def _donus_adresi(yuzey: str, niyet: str = "giris") -> str:
     return settings.oauth_web_donus
 
 
+def _donus_url(donus: str, sonuc_id: str) -> str:
+    """Tarayicinin gonderilecegi TAM adres: `<donus>?oauth=<sonuc_id>`.
+
+    (P201) AYRI FONKSIYON, cunku prod'da kirilan sey tam olarak BU
+    ADRESTI ve olculebilir olmasi gerekiyordu. Kayit akisi donguye
+    giriyordu; iz `303`ten sonra `POST /auth/oauth/sonuc` OLMADIGINI
+    gosteriyordu, yani 303 sonuc kimligini COZEN bir sayfaya
+    birakmiyordu. Kok neden yapilandirmadaydi (`OAUTH_KAYIT_DONUS`
+    `/kayit`i gosteriyordu; o sayfa `?oauth=`i okumaz) — ama adresi
+    uretilen yer test edilebilir DEGILDI.
+
+    Ayirac KORUNUR: donus adresinde zaten sorgu varsa `&` kullanilir.
+    Bunu satir arasinda yapmak, sorgu tasiyan bir donus adresinde
+    ikinci bir `?` uretir ve parametre SESSIZCE kaybolurdu.
+    """
+    ayirac = "&" if "?" in donus else "?"
+    return f"{donus}{ayirac}oauth={sonuc_id}"
+
+
 def _callback_adresi(istek: Request, saglayici: str) -> str:
     """Saglayiciya bildirilen `redirect_uri`.
 
@@ -417,9 +436,10 @@ async def _callback_isle(
     )
     sonuc_id = await _sonucu_yaz(redis, veri)
 
-    donus = _donus_adresi(oturum["yuzey"], niyet)
-    ayirac = "&" if "?" in donus else "?"
-    return RedirectResponse(f"{donus}{ayirac}oauth={sonuc_id}", status_code=303)
+    return RedirectResponse(
+        _donus_url(_donus_adresi(oturum["yuzey"], niyet), sonuc_id),
+        status_code=303,
+    )
 
 
 @router.get("/callback/{saglayici}")

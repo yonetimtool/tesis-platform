@@ -109,6 +109,19 @@ function OauthDonus() {
     } catch {
       // Depolama yoksa varsayilan giris.
     }
+    // (P201) NIYET SUNUCUDAN DA OKUNUR — sessionStorage TEK KAYNAK DEGIL.
+    //
+    // OLCULEN KUSUR: niyet yalniz `sessionStorage`da tutuluyordu ve
+    // `sessionStorage` KOKEN BASINADIR. Akis `app.*`ta baslayip donus
+    // `panel.*`a dusuyorsa (ya da kullanici arada sekme degistirdiyse)
+    // deger KAYBOLUYOR, kayit niyeti giris sanilip kullaniciya TESIS ID
+    // soruluyordu — kayit akisinin cikmazi tam olarak buydu.
+    //
+    // Sunucu niyeti ZATEN biliyor: `basla`da redis oturumuna yazildi ve
+    // `sonuc` yanitinda `durum` olarak geri geliyor (`kayit` /
+    // `mevcut_hesap`). Istemci tarafi kopya artik yalnizca HANGI UCUN
+    // cagrilacagini (`baglantilarim` vs `sonuc`) secer; KARAR yanittan
+    // verilir.
     void (async () => {
       const uc = niyet === NIYET_BAGLA ? UC_BAGLANTILAR : UC_SONUC;
       try {
@@ -127,7 +140,9 @@ function OauthDonus() {
           router.replace("/profil");
           return;
         }
-        if (niyet === NIYET_KAYIT) {
+        // (P201) Yanit "kayit niyetiydi" diyorsa dal BUDUR — yerel
+        // kopya ne derse desin.
+        if (niyet === NIYET_KAYIT || d?.durum === "kayit" || d?.durum === "mevcut_hesap") {
           // (P180) Kayit niyeti. durum=kayit -> kayit tamamlama (/kayit);
           // mevcut_hesap -> oturum acildi + "zaten hesabiniz var"; giris ->
           // kimlik zaten bagliydi, oturum acildi.

@@ -167,6 +167,7 @@ OAUTH_APPLE_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\nMIGT...\n-----END PRIVATE K
 OAUTH_CALLBACK_TABAN=http://localhost:8000
 # Callback sonrası tarayıcının gönderileceği yerler. BOŞ = O YÜZEY KAPALI.
 OAUTH_WEB_DONUS=http://localhost:3000/giris/oauth
+OAUTH_KAYIT_DONUS=http://localhost:3000/giris/oauth
 OAUTH_MOBIL_DONUS=com.app.yonetiyor://oauth
 ```
 
@@ -175,6 +176,7 @@ OAUTH_MOBIL_DONUS=com.app.yonetiyor://oauth
 ```env
 OAUTH_CALLBACK_TABAN=https://api.yonetio.site
 OAUTH_WEB_DONUS=https://app.yonetio.site/giris/oauth
+OAUTH_KAYIT_DONUS=https://app.yonetio.site/giris/oauth
 OAUTH_MOBIL_DONUS=com.app.yonetiyor://oauth
 ```
 
@@ -182,6 +184,20 @@ OAUTH_MOBIL_DONUS=com.app.yonetiyor://oauth
 > **tesis yüzeyindedir**; `panel.` yalnız platform admin'e açıktır
 > (bkz. hafıza notu "app.* vs panel.*"). Yöneticiyi panel'e döndürmek
 > onu göremeyeceği bir yüzeye düşürürdü.
+
+> **(P201) `OAUTH_KAYIT_DONUS` yolu da `/giris/oauth` olmalı — `/kayit`
+> değil.** Callback `<adres>?oauth=<sonuc_id>` ile döner ve bu kimliği
+> çözen **tek** sayfa `/giris/oauth`tur (`POST /auth/oauth/sonuc`'u o
+> çağırır); çözdükten sonra kullanıcıyı zaten `/kayit`a bırakır.
+> `/kayit` adresi verilirse sonuç kimliği **hiçbir yerde tüketilmez**:
+> sayfa bomboş açılır ve kullanıcı kayda baştan başlar — prod'da ölçülen
+> kayıt döngüsü buydu. `.env.prod.example` bir süre yanlış değeri
+> önerdi; düzeltildi. Kod artık yanlış yola karşı da dayanıklı (`/kayit`
+> gelen `?oauth=`i devreder), ama doğru değer yukarıdakidir.
+>
+> **İki değişken de boş bırakılamaz:** `OAUTH_WEB_DONUS` giriş akışını,
+> `OAUTH_KAYIT_DONUS` yönetici kayıt akışını açar. Biri boşsa o akış
+> `503` döner.
 
 `OAUTH_WEB_DONUS` boş bırakılırsa `POST /auth/oauth/baslat/{saglayici}`
 **503** döner — hata kullanıcı siteden ayrılmadan görünür. Bu bilinçli:

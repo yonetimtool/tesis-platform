@@ -249,6 +249,39 @@ export default function KayitSayfasi() {
   }
 
   /**
+   * (P201) SAGLAYICI DOGRUDAN BURAYA DONDUYSE (`/kayit?oauth=<id>`).
+   *
+   * =======================================================================
+   * PROD'DA OLCULEN CIKMAZ
+   * =======================================================================
+   * Callback 303 ile `OAUTH_KAYIT_DONUS` adresine gider. Bu sayfa sonucu
+   * `sessionStorage`dan okur — `?oauth=` parametresini OKUMAZ; onu cozen
+   * TEK sayfa `/giris/oauth`tur. `OAUTH_KAYIT_DONUS` bu sayfaya
+   * (`.../kayit`) ayarlanirsa sonuc kimligi HICBIR YERDE tuketilmez:
+   * sayfa bombos acilir, kullanici kayda BASTAN baslar ve DONGUYE girer.
+   *
+   * Prod izinde tam olarak bu gorunuyordu: `callback -> 303` ve hemen
+   * ardindan `GET /auth/oauth/saglayicilar` (yani sayfa yeniden
+   * yuklenmis) — arada `POST /auth/oauth/sonuc` YOK.
+   *
+   * Depodaki `.env.prod.example` de operatore bu YANLIS adresi
+   * onermisti; ornek duzeltildi. Ama kod artik yapilandirmaya BAGIMLI
+   * DEGIL: iki adres de calisir. Yanlis yapilandirmanin cezasi
+   * "kullanici kaydolamaz" olmamali.
+   *
+   * Sonucu burada COZMEK yerine `/giris/oauth`a DEVREDIYORUZ: o sayfa
+   * dort durumu (kayit / mevcut_hesap / baglama_gerekli / giris) zaten
+   * dogru ele aliyor ve mantigi ikinci kez yazmak, biri degistiginde
+   * otekinin eskimesi demekti.
+   */
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    const sonucId = sp.get("oauth");
+    if (!sonucId) return;
+    window.location.replace(`/giris/oauth?oauth=${encodeURIComponent(sonucId)}`);
+  }, []);
+
+  /**
    * SAGLAYICIDAN DONULDU MU? `/giris/oauth` sonucu birakip buraya
    * yonlendirdiyse 3. adimdan devam edilir ve ad soyad ON-DOLDURULUR.
    */
