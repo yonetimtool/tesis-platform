@@ -167,8 +167,17 @@ describe("(P160) Daireler — tasima sonrasi", () => {
     await userEvent.click(screen.getByRole("checkbox", { name: "Satırı seç" }));
     expect(screen.getByText("1 kayıt seçili")).toBeInTheDocument();
     // Toplu degistirme dugmesi ancak SECIM VARKEN cikar.
+    //
+    // (P193 §6) DESEN DARALTILDI: eski desen (`/Seçilenleri değiştir|1/`)
+    // "1" iceren HER dugmeyi esliyordu ve serite ikinci bir toplu eylem
+    // ("Arsa payı gir (1)") eklenince coklu eslesme verdi. Olculen sey
+    // seritteki DEGISTIR dugmesidir; adiyla aranir.
     expect(
-      screen.getByRole("button", { name: /Seçilenleri değiştir|1/ }),
+      screen.getByRole("button", { name: /Seçilenleri değiştir/ }),
+    ).toBeInTheDocument();
+    // Ikinci toplu eylem de seritte: arsa payi girisi (P193 §6).
+    expect(
+      screen.getByRole("button", { name: /Arsa payı gir/ }),
     ).toBeInTheDocument();
   });
 

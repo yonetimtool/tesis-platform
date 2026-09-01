@@ -18,10 +18,18 @@ import { describe, expect, it } from "vitest";
 
 const KOK = join(__dirname, "..");
 
-/** `settings/page.tsx` icindeki `anahtar: "..."` degerleri. */
+/**
+ * `lib/tesis-ayar-alanlari.ts` icindeki `anahtar: "..."` degerleri.
+ *
+ * (P193 §5) TABLO TASINDI: eskiden `settings/page.tsx` icindeydi. Yonetici
+ * kendi ayar ekranini alinca (`/tesis-ayarlari`) tablo ORTAK bir module
+ * cikti — iki liste tutmak, yeni bir ayar eklendiginde ekranlardan
+ * birinin sessizce eksik kalmasi demekti. Bu bag da kaynagi TEK YERDEN
+ * okur; iki sayfa da o listeden ciziyor.
+ */
 function panelAnahtarlari(): string[] {
   const kaynak = readFileSync(
-    join(KOK, "app", "(protected)", "settings", "page.tsx"),
+    join(KOK, "lib", "tesis-ayar-alanlari.ts"),
     "utf8",
   );
   return [...kaynak.matchAll(/anahtar:\s*"([a-z_]+)"/g)].map((m) => m[1]);

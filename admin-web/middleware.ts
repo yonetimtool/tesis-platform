@@ -216,6 +216,10 @@ export const config = {
     "/site-kurallari/:path*",
     "/etkinlik-yonetimi/:path*",
     "/settings/:path*",
+    // (P193 §5) Yoneticinin tesis ayarlari ekrani. `/settings` PLATFORM
+    // yuzeyinde kaldi; bu TESIS yuzeyindedir ve ayrica korunmali —
+    // `middleware.test.ts` eksigi yakaladi.
+    "/tesis-ayarlari/:path*",
     "/reports/:path*",
     // Sonradan eklenen sayfalar — bunlar bir sure KAPI DISINDA kalmisti
     // (oturumsuz kullanici panel kabugunu goruyordu; veri sizmiyordu cunku
