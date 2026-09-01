@@ -35,6 +35,44 @@ from .test_p177_kayit_akisi import (  # noqa: F401 — fixture'lar
 )
 
 
+def _kendi_dongusunde(coro_fabrika):
+    """(P187 dersi) PAYLASILAN MOTORU KENDI DONGUNDE GUVENLE KULLAN.
+
+    Olculen kusur: bu iki test IZOLASYONDA geciyor, TAM TAKIMDA duyuyordu:
+
+        RuntimeError: ... got Future ... attached to a different loop
+
+    Sebep P187'de Celery tarafinda duzeltilen tuzagin AYNISI: asyncpg
+    baglantilari OLUSTURULDUKLARI event loop'a baglidir. Daha once kosan
+    bir test `asyncio.run` ile bir dongu acip kapatmis ve `app.db.engine`
+    havuzunda O OLU DONGUYE bagli baglantilar birakmistir; bizim yeni
+    dongumuz onlardan birini alinca patlar.
+
+    IKI ADIM, IKISI DE GEREKLI:
+      * BASTA `dispose(close=False)` — olu donguye bagli havuzu ELLEMEDEN
+        birakir. `close=True` olsaydi SQLAlchemy o baglantilari kapatmaya
+        calisir ve kapali dongude "Event loop is closed" atardi.
+      * SONDA `dispose()` — bizim actigimiz baglantilari, dongu KAPANMADAN
+        duzgun kapatir; yoksa ayni tuzagi bir sonraki teste biz kurardik.
+
+    `test_p191ek_cihaz_hijyeni` ayni dersi kendi motorunu kurarak cozer; o
+    yol burada YOK, cunku olculen fonksiyon `SessionLocal`i kendi icinde
+    kullaniyor ve disaridan oturum almiyor.
+    """
+    import asyncio
+
+    from app.db import engine
+
+    async def _kos():
+        await engine.dispose(close=False)
+        try:
+            return await coro_fabrika()
+        finally:
+            await engine.dispose()
+
+    return asyncio.run(_kos())
+
+
 def _yonetici_ekle(owner_conn, tenant_id) -> str:
     """Web'de kaydolmus bir yonetici: parolasi VAR, SSO kimligi YOK."""
     eposta = f"p194-{uuid.uuid4().hex[:10]}@{EPOSTA_ALANI}"
@@ -112,8 +150,6 @@ def test_GIRISTE_dogrulanmis_eposta_TEK_yoneticiyle_eslesirse_GIRIS(
     yaptiriyordu. Artik giris niyetinde de yapiyor ve kullaniciya Tesis ID
     SORULMUYOR — hangi tesis oldugu zaten biliniyor.
     """
-    import asyncio
-
     from app.oauth import Kimlik
     from app.routers.oauth import _yoneticiyi_epostayla_bul
 
@@ -122,9 +158,7 @@ def test_GIRISTE_dogrulanmis_eposta_TEK_yoneticiyle_eslesirse_GIRIS(
         saglayici="google", subject=f"sub-{uuid.uuid4().hex}",
         eposta=eposta, email_verified=True, ad="P194", relay=False,
     )
-    # `asyncio.run` (get_event_loop DEGIL): 3.12'de dongusuz baglamda
-    # `get_event_loop` DeprecationWarning verir ve 3.14'te KALKIYOR.
-    sonuc = asyncio.run(_yoneticiyi_epostayla_bul(kimlik))
+    sonuc = _kendi_dongusunde(lambda: _yoneticiyi_epostayla_bul(kimlik))
     assert sonuc is not None, "dogrulanmis e-posta yoneticiyle eslesmedi"
     assert sonuc["tur"] == "mevcut_hesap"
     assert str(sonuc["tenant_id"]) == str(hazir_tesis["tenant_id"])
@@ -135,8 +169,6 @@ def test_DOGRULANMAMIS_eposta_ESLESMEZ_guvenlik_kapisi(
 ):
     """Dogrulanmamis bir adresle mevcut hesaba baglanmak HESAP ELE
     GECIRMEDIR (P180 dersi). Kapi giris yolunda da AYNEN durur."""
-    import asyncio
-
     from app.oauth import Kimlik
     from app.routers.oauth import _yoneticiyi_epostayla_bul
 
@@ -145,5 +177,5 @@ def test_DOGRULANMAMIS_eposta_ESLESMEZ_guvenlik_kapisi(
         saglayici="google", subject=f"sub-{uuid.uuid4().hex}",
         eposta=eposta, email_verified=False, ad="P194", relay=False,
     )
-    sonuc = asyncio.run(_yoneticiyi_epostayla_bul(kimlik))
+    sonuc = _kendi_dongusunde(lambda: _yoneticiyi_epostayla_bul(kimlik))
     assert sonuc is None, "dogrulanmamis e-posta ESLESMEMELI"

@@ -118,6 +118,31 @@ bağlı kimliği devralmayı reddeder.
 (sakin arayüzü değil). Jetondaki rolün `yonetici` geldiği yukarıda üç
 ayrı ölçümde görüldü (C, E, F).
 
+## Testte çıkan bir tuzak (P187'nin aynısı)
+
+Yeni testlerden ikisi **izolasyonda geçip tam takımda düşüyordu**:
+
+```
+RuntimeError: ... got Future ... attached to a different loop
+```
+
+Sebep, P187'de Celery tarafında düzeltilen tuzağın aynısı: asyncpg
+bağlantıları **oluşturuldukları event loop'a bağlıdır**. Daha önce koşan
+bir test `asyncio.run` ile bir döngü açıp kapatmış ve `app.db.engine`
+havuzunda o **ölü döngüye** bağlı bağlantılar bırakmıştı; benim yeni
+döngüm onlardan birini alınca patlıyordu.
+
+Çözüm testte `_kendi_dongusunde()` yardımcısı:
+* **başta** `dispose(close=False)` — ölü döngüye bağlı havuzu *ellemeden*
+  bırakır (`close=True` olsaydı SQLAlchemy onları kapatmaya çalışır ve
+  "Event loop is closed" atardı),
+* **sonda** `dispose()` — kendi açtıklarımızı döngü kapanmadan düzgün
+  kapatır; yoksa aynı tuzağı bir sonraki teste biz kurardık.
+
+`test_p191ek_cihaz_hijyeni` aynı dersi kendi motorunu kurarak çözüyor; o
+yol burada yok çünkü ölçülen fonksiyon `SessionLocal`i kendi içinde
+kullanıyor ve dışarıdan oturum almıyor.
+
 ## Ölçemediklerim
 
 - **Gerçek Google/Microsoft/Apple oturumu.** Sağlayıcıya çıkan gerçek ağ
