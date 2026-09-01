@@ -15,6 +15,7 @@ import {
 import { YonetioLogo } from "@/components/YonetioLogo";
 import { ParolaAlani } from "@/components/ParolaAlani";
 import { useT } from "@/lib/i18n/kullan";
+import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 import { telefonGiris, telefonHatasi, telefonNormalle } from "@/lib/telefon";
 
 /**
@@ -111,6 +112,62 @@ async function gonder(uc: string, govde: unknown): Promise<unknown> {
   return veri;
 }
 
+/**
+ * (P198) IKI ZORUNLU ONAY + ISTEGE BAGLI TICARI — TEK YERDE.
+ *
+ * NEDEN BILESEN OLDU: onaylar `bilgiler` adiminda toplaniyordu, ama
+ * SOSYAL yol `bilgiler`e HIC UGRAMADAN saglayiciya gidiyor ve backend
+ * `niyet=kayit` icin onaylari `baslat` cagrisinda ISTIYOR. Iki adimda
+ * iki kopya cizmek, birinin `data-test` kancasini ya da metnini
+ * otekinden ayirmasi demekti.
+ */
+function OnayKutulari({
+  sozlesme, kvkk, ticari, setSozlesme, setKvkk, setTicari, t,
+}: {
+  sozlesme: boolean;
+  kvkk: boolean;
+  ticari: boolean;
+  setSozlesme: (v: boolean) => void;
+  setKvkk: (v: boolean) => void;
+  setTicari: (v: boolean) => void;
+  t: (a: SozlukAnahtari) => string;
+}) {
+  return (
+    <>
+      <label className="flex items-start gap-2 text-sm">
+        <input
+          type="checkbox"
+          className="mt-1"
+          checked={sozlesme}
+          onChange={(e) => setSozlesme(e.target.checked)}
+          data-test="kayit-onay-sozlesme"
+        />
+        <span>{t("kayitOnaySozlesme")}</span>
+      </label>
+      <label className="flex items-start gap-2 text-sm">
+        <input
+          type="checkbox"
+          className="mt-1"
+          checked={kvkk}
+          onChange={(e) => setKvkk(e.target.checked)}
+          data-test="kayit-onay-kvkk"
+        />
+        <span>{t("kayitOnayKvkk")}</span>
+      </label>
+      <label className="flex items-start gap-2 text-sm">
+        <input
+          type="checkbox"
+          className="mt-1"
+          checked={ticari}
+          onChange={(e) => setTicari(e.target.checked)}
+          data-test="kayit-onay-ticari"
+        />
+        <span>{t("kayitOnayTicari")}</span>
+      </label>
+    </>
+  );
+}
+
 export default function KayitSayfasi() {
   const t = useT();
   const router = useRouter();
@@ -147,6 +204,17 @@ export default function KayitSayfasi() {
   const tesisAcar = rol === "yonetici" && secim === "yeni";
   /** Denetci SECIM adimini atlar: tesis ID yolunu her zaman izler. */
   const secimGoster = rol === "yonetici";
+  // (P198) SOSYAL NIYET ROL'E BAGLI — bkz. `yontem` adimindaki uzun not.
+  // Uclu ifade YOK: `sabit-metin` taramasi ucludaki dize sabitlerini
+  // cevrilmemis metin adayi sayiyor (P193'te olculdu).
+  const yoneticiKaydi = rol === "yonetici";
+  let sosyalNiyet: "giris" | "kayit" = "giris";
+  if (yoneticiKaydi) sosyalNiyet = "kayit";
+  const onaylarTam = onaySozlesme && onayKvkk;
+  // Yonetici kaydinda onaylar ALINMADAN saglayiciya gidilmez: backend
+  // `niyet=kayit`i onaysiz 422 ile reddeder ve kullanici sebebini
+  // goremeden geri donerdi.
+  const sosyalNiyetiHazir = !yoneticiKaydi || onaylarTam;
 
   const toplamAdim = tesisAcar ? 5 : secimGoster ? 6 : 5;
   const adimNo = {
@@ -460,7 +528,58 @@ export default function KayitSayfasi() {
           <h2 className="font-medium">{t("kayitYontemBaslik")}</h2>
           {/* Sosyal ONCE geliyor; SosyalGiris saglayici yoksa kendini
               cizmez ve geriye yalniz elle kayit kalir. */}
-          <SosyalGiris niyet="giris" kayitRolu={rol} />
+          {/* ===================================================
+              (P198) YONETICIDE NIYET "kayit" — "giris" DEGIL.
+              ===================================================
+              OLCULEN KUSUR: burasi `niyet="giris"` gonderiyordu.
+              Sunucuda o niyet "bu kimlik hangi hesaba BAGLI?" sorusudur;
+              yeni bir yonetici hicbir hesaba bagli olmadigi icin yanit
+              `baglama_gerekli` oluyor ve `/giris/oauth` kullaniciyi
+              TESIS ID formuna dusuruyordu. P185'in kabul kriteri ise
+              "yeni tesis / katil" ayrimiydi — o ekran HIC gorunmuyordu.
+
+              OLCULDU (ayni bagli-olmayan kimlik, dev API):
+                  niyet=kayit -> durum='kayit'            (baglama jetonu VAR)
+                  niyet=giris -> durum='baglama_gerekli'  (Tesis ID formu)
+
+              `durum='kayit'` donunce `/giris/oauth` sonucu saklayip
+              `/kayit`a geri yolluyor; sayfa `bilgiler` adimindan devam
+              ediyor ve YONETICIDE `secim` (yeni/katil) adimi cikiyor.
+
+              ROL DUYARLI: yalniz YONETICI yeni tesis acabilir. Sakin ve
+              saha rolleri VAR OLAN bir tesise katilir; onlarin dogru yolu
+              baglama akisidir (Tesis ID) ve `niyet="giris"` KALIR.
+
+              ONAYLAR BURADA ALINIYOR: backend `niyet=kayit` icin iki
+              zorunlu onayi `baslat` cagrisinda dogrular ve saglayiciya
+              GITMEDEN once verilmis olmalari gerekir (tanitim sitesinden
+              gelen akis da onlari sorgu dizesinde tasiyor). Bu yuzden
+              onay kutulari bu adimda da cizilir. */}
+          {yoneticiKaydi ? (
+            <div className="space-y-2">
+              <OnayKutulari
+                sozlesme={onaySozlesme} kvkk={onayKvkk} ticari={onayTicari}
+                setSozlesme={setOnaySozlesme} setKvkk={setOnayKvkk}
+                setTicari={setOnayTicari} t={t}
+              />
+              {!onaylarTam && (
+                <p className="text-sm text-metin-muted" data-test="kayit-sosyal-onay-uyari">
+                  {t("kayitOnayZorunlu")}
+                </p>
+              )}
+            </div>
+          ) : null}
+          {sosyalNiyetiHazir ? (
+            <SosyalGiris
+              niyet={sosyalNiyet}
+              kayitRolu={rol}
+              onaylar={{
+                sozlesme: onaySozlesme,
+                kvkk: onayKvkk,
+                ticari: onayTicari,
+              }}
+            />
+          ) : null}
           <button
             type="button"
             disabled={bekliyor}
@@ -574,37 +693,14 @@ export default function KayitSayfasi() {
             </>
           ) : null}
           {/* IKI ZORUNLU ONAY + ISTEGE BAGLI TICARI. Arka uc de dogrular
-              (istemci kilidine guvenilmez); burada UX icin engelleriz. */}
-          <label className="flex items-start gap-2 text-sm">
-            <input
-              type="checkbox"
-              className="mt-1"
-              checked={onaySozlesme}
-              onChange={(e) => setOnaySozlesme(e.target.checked)}
-              data-test="kayit-onay-sozlesme"
-            />
-            <span>{t("kayitOnaySozlesme")}</span>
-          </label>
-          <label className="flex items-start gap-2 text-sm">
-            <input
-              type="checkbox"
-              className="mt-1"
-              checked={onayKvkk}
-              onChange={(e) => setOnayKvkk(e.target.checked)}
-              data-test="kayit-onay-kvkk"
-            />
-            <span>{t("kayitOnayKvkk")}</span>
-          </label>
-          <label className="flex items-start gap-2 text-sm">
-            <input
-              type="checkbox"
-              className="mt-1"
-              checked={onayTicari}
-              onChange={(e) => setOnayTicari(e.target.checked)}
-              data-test="kayit-onay-ticari"
-            />
-            <span>{t("kayitOnayTicari")}</span>
-          </label>
+              (istemci kilidine guvenilmez); burada UX icin engelleriz.
+              (P198) Sosyal yolda AYNI kutular `yontem` adiminda cikar —
+              onaylar saglayiciya gitmeden ONCE alinmali. */}
+          <OnayKutulari
+            sozlesme={onaySozlesme} kvkk={onayKvkk} ticari={onayTicari}
+            setSozlesme={setOnaySozlesme} setKvkk={setOnayKvkk}
+            setTicari={setOnayTicari} t={t}
+          />
           <div className="flex gap-2">
             <button
               type="submit"
