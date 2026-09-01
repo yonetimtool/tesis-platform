@@ -79,6 +79,7 @@ from ..config import settings
 from ..db import SessionLocal, set_tenant
 from ..deps import get_redis
 from ..errors import APIError
+from ..gunlukleme import maskele_kimlik
 from ..gonderim import saglayici as kanal_saglayicisi, tenant_ayari
 from ..hiz_siniri import kod_istegi_say
 from ..models import AppUser, KayitOnayKuyrugu, OauthKimlik, Tenant, TesisUyelik
@@ -380,17 +381,30 @@ def _kod_uret() -> str:
     return f"{secrets.randbelow(1_000_000):06d}"
 
 
-def _eposta_gonder(ayar, hedef: str, konu: str, govde: str) -> None:
+def _eposta_gonder(ayar, hedef: str, konu: str, govde: str):
     """Gonderim hatasi KAYDI KIRMAZ — telefon_kodu ile ayni ilke.
 
     Kod/basvuru zaten yazildi; kullanici "tekrar gonder" diyebilir.
-    Saglayici yapilandirilmamissa `yapilandirilmadi` doner ve SESSIZCE
-    "gonderildi" DEMEZ.
+
+    (P196) SONUC ARTIK DONUYOR ve BASARISIZLIK LOGLANIYOR. Docstring
+    "SESSIZCE 'gonderildi' DEMEZ" diyordu ama donus atildigi icin
+    cagiranlar tam olarak bunu yapiyordu — `/me/eposta/kod-iste`de
+    olculen kusurun ayni sinifi. Karar cagiranin: kullaniciya "kod
+    gonderildi" diyen bir uc, bu sonucu OKUMAK zorunda.
     """
+    from ..mesajlasma import GonderimSonucu
+
     try:
-        kanal_saglayicisi("eposta", ayar).gonder(hedef, konu, govde)
-    except Exception:  # noqa: BLE001 — gonderim, kaydi geri sardirmaz
+        sonuc = kanal_saglayicisi("eposta", ayar).gonder(hedef, konu, govde)
+    except Exception as exc:  # noqa: BLE001 — gonderim, kaydi geri sardirmaz
         log.warning("kayit e-postasi gonderilemedi", exc_info=True)
+        return GonderimSonucu("basarisiz", "bilinmiyor", str(exc)[:300])
+    if sonuc.durum != "gonderildi":
+        log.error(
+            "kayit e-postasi GONDERILEMEDI hedef=%s saglayici=%s hata=%s",
+            maskele_kimlik(hedef), sonuc.saglayici, sonuc.hata,
+        )
+    return sonuc
 
 
 # -------------------------------------------------------------------------- #
@@ -879,7 +893,7 @@ async def _kuyruga_yaz(
 
 async def eposta_kodu_uret_ve_gonder_kodla(
     session, *, tenant_id: uuid.UUID, eposta: str, kod: str
-) -> None:
+):
     """`telefon_kodu.eposta_kodu_uret_ve_gonder`in KOD DISARIDAN verilen esi.
 
     NEDEN AYRI: o fonksiyon kodu KENDI uretir ve dondurmez — dogru bir
@@ -911,7 +925,8 @@ async def eposta_kodu_uret_ve_gonder_kodla(
         )
     )
     ayar = await tenant_ayari(session, tenant_id)
-    _eposta_gonder(
+    # (P196) SONUC DONUYOR: cagiran "otp_gerekli" demeden once bakmali.
+    return _eposta_gonder(
         ayar,
         eposta,
         "Yönetiyor doğrulama kodu",

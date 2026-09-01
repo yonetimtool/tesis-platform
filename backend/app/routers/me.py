@@ -210,9 +210,13 @@ async def hesap_silme_kodu_iste(
     """
     if not user.telefon:
         raise APIError(422, "no_phone", "telefon_yok")
-    await kod_uret_ve_gonder(
+    # (P196) SMS varsayilan KAPALI: sonuc okunmadan "gonderildi" demek,
+    # kullaniciyi hic gelmeyecek bir kodu beklemeye birakirdi.
+    sms_sonuc = await kod_uret_ve_gonder(
         db, tenant_id=user.tenant_id, telefon=user.telefon, amac="hesap_silme"
     )
+    if sms_sonuc.durum != "gonderildi":
+        raise APIError(502, "bad_gateway", "kod_gonderilemedi")
     return {"durum": "gonderildi"}
 
 
@@ -232,7 +236,7 @@ async def hesap_silme_eposta_kodu_iste(
     if not user.email or not user.eposta_dogrulandi:
         raise APIError(422, "no_email", "eposta_yok")
     await kod_istegi_say(redis, user.email, kapsam="hesap_silme_eposta")
-    await eposta_kodu_uret_ve_gonder(
+    await _kod_gonder_ve_dogrula(
         db, tenant_id=user.tenant_id, eposta=user.email, amac="hesap_silme"
     )
     return {"durum": "gonderildi"}
@@ -280,10 +284,60 @@ async def eposta_dogrulama_kodu_iste(
         and user.email.strip().lower() != eposta
     ):
         await _eposta_degistirme_bildirimi(db, user.tenant_id, user.email)
-    await eposta_kodu_uret_ve_gonder(
+    await _kod_gonder_ve_dogrula(
         db, tenant_id=user.tenant_id, eposta=eposta, amac="eposta_ekle"
     )
     return {"durum": "gonderildi"}
+
+
+async def _kod_gonder_ve_dogrula(
+    db, *, tenant_id, eposta: str, amac: str
+) -> None:
+    """(P196) Kodu gonderir ve GERCEKTEN GITTIGINI dogrular.
+
+    =======================================================================
+    OLCULEN KUSUR — IKI AYRI HATA, TEK SONUC
+    =======================================================================
+    Kullanici profilden e-postasini degistiriyor, ekran "kod gonderildi"
+    diyor, posta kutusuna HICBIR SEY gelmiyordu. Iki sebep vardi:
+
+    1. `ayar` GECILMIYORDU. `eposta_kodu_uret_ve_gonder`in `ayar`
+       parametresi opsiyonel ve verilmezse saglayici ENV'den secilir.
+       Tesis KENDI SMTP'sini `mesaj_yapilandirma`ya girmisse ve ENV bos
+       ise sonuc `LogEpostaSaglayici` olur: hicbir sey gonderilmez.
+       OLCULDU — ayni dosyadaki oteki akislar (`auth.py` giris kodu ve
+       parola sifirlama, `davet.py`) `ayar=ayar` GECIYOR ve calisiyor;
+       yalniz bu iki cagri geciyordu. Kullanicinin gozlemi birebir
+       bunu gosteriyordu: "davet ve OTP calisiyor, profil e-postasi
+       gitmiyor". Bu, P172 §1'de kapatilan kusur sinifinin ta kendisi.
+
+    2. GONDERIM SONUCU ATILIYORDU. Saglayici
+       `durum='yapilandirilmadi'` donuyor, uc bunu okumadan
+       `{"durum": "gonderildi"}` yaziyordu.
+
+    =======================================================================
+    NEDEN BURADA HATA DONUYORUZ (ama `auth.py`de DONMUYORUZ)
+    =======================================================================
+    Bu uclar KIMLIK DOGRULANMIS kullanicinin KENDI adresi icindir; hata
+    donmek hicbir sey sizdirmaz. `auth.py`deki giris-kodu ve parola
+    sifirlama uclari ise SIZDIRMAMA icin tek bicimli yanit verir: orada
+    gonderim hatasini kullaniciya yansitmak "bu adres kayitli" demek
+    olurdu (hata = adres var). O yuzden orada YALNIZ LOG var, burada
+    log + HATA.
+    """
+    from ..gonderim import tenant_ayari
+
+    ayar = await tenant_ayari(db, tenant_id)
+    sonuc = await eposta_kodu_uret_ve_gonder(
+        db, tenant_id=tenant_id, eposta=eposta, amac=amac, ayar=ayar
+    )
+    if sonuc.durum != "gonderildi":
+        # HATA DONUNCA istek transaction'i geri alinir; uretilen kod
+        # satiri da gider. BU DOGRUDUR: gonderilmemis bir kodu
+        # veritabaninda birakmak, kullanicinin asla ogrenemeyecegi bir
+        # sirri saklamak olurdu. Teshis kaydi (`mesaj_gonderim`) AYRI
+        # oturumda yazildigi icin geri alinmaz — bkz. `telefon_kodu`.
+        raise APIError(502, "bad_gateway", "kod_gonderilemedi")
 
 
 async def _eposta_degistirme_bildirimi(db, tenant_id, eski_adres: str) -> None:

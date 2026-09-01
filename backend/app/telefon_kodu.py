@@ -10,6 +10,7 @@ alir:
 """
 from __future__ import annotations
 
+import logging
 import secrets
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -19,9 +20,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from .db import SessionLocal, set_tenant
 from .errors import APIError
-from .mesajlasma import sms_saglayicisi
-from .models import KayitDogrulama
+from .gunlukleme import maskele_kimlik
+from .mesajlasma import GonderimSonucu, sms_saglayicisi
+from .models import KayitDogrulama, MesajGonderim
 from .security import hash_password, verify_password
+
+logger = logging.getLogger(__name__)
 
 KOD_OMRU_DK = 10
 MAX_DENEME = 5
@@ -38,7 +42,7 @@ async def eposta_kodu_uret_ve_gonder(
     eposta: str,
     amac: str,
     ayar=None,
-) -> None:
+) -> GonderimSonucu:
     """(P172 §5) AYNI KOD MEKANIZMASI, E-POSTA KIMLIGIYLE.
 
     =======================================================================
@@ -86,7 +90,73 @@ async def eposta_kodu_uret_ve_gonder(
     from .eposta_sablonlari import eposta_kod_metni
 
     konu, govde = eposta_kod_metni(amac, kod, KOD_OMRU_DK)
-    kanal_saglayicisi("eposta", ayar).gonder(eposta, konu, govde)
+    sonuc = kanal_saglayicisi("eposta", ayar).gonder(eposta, konu, govde)
+
+    # =====================================================================
+    # (P196) SONUC ARTIK DONUYOR — VE BASARISIZLIK LOGLANIYOR
+    # =====================================================================
+    # OLCULEN KUSUR: bu satirin donus degeri ATILIYORDU. Yukaridaki not
+    # "SESSIZCE 'gonderildi' DEMEZ" diyor ama pratikte tam olarak o
+    # oluyordu: saglayici `durum='yapilandirilmadi'` donuyor, fonksiyon
+    # `None` donuyor, uc kullaniciya `{"durum": "gonderildi"}` yaziyordu.
+    # Kullanici "kod gonderildi" ekranini goruyor, posta kutusuna hicbir
+    # sey gelmiyordu — ve hicbir yerde iz yoktu.
+    #
+    # LOG BURADA, cagirida DEGIL: her cagiran ayni satiri yazmak zorunda
+    # kalsaydi biri unuturdu. Alici adresi MASKELI (KVKK; `gunlukleme`
+    # kuralinin aynisi).
+    if sonuc.durum != "gonderildi":
+        logger.error(
+            "e-posta kodu GONDERILEMEDI amac=%s hedef=%s saglayici=%s hata=%s",
+            amac, maskele_kimlik(eposta), sonuc.saglayici, sonuc.hata,
+        )
+
+    # =====================================================================
+    # (P196) GONDERIM GECMISINE DE YAZ — AYRI OTURUMDA
+    # =====================================================================
+    # Bu akislar `mesaj_gonderim`e HIC yazmiyordu; tablo yalniz mesajlasma
+    # modulunun kaydiydi. Sonuc: operator "kod gitti mi" sorusunu
+    # YANITLAYAMIYORDU — kusur ancak kullanicinin sikayetiyle ve tablodaki
+    # BOSLUGU yorumlayarak bulundu.
+    #
+    # NEDEN AYRI OTURUM (`SessionLocal`), cagiranin `session`i DEGIL:
+    # OLCULDU. Gonderim basarisiz oldugunda cagiran `APIError` firlatiyor,
+    # istek transaction'i GERI ALINIYOR ve ayni transaction'a yazilan
+    # teshis kaydi da siliniyordu — kayit tam da EN GEREKLI oldugu anda
+    # kayboluyordu. Ilk yazimda tam olarak bu oldu: 502 dondu,
+    # `mesaj_gonderim` BOS kaldi.
+    #
+    # KOD GOVDEYE YAZILMAZ. Tablonun sozlesmesi "gonderilen metin
+    # kopyalanir" der ama bir DOGRULAMA KODU sirdir: veritabaninda duz
+    # metin tutmak, kodun `kod_hash` olarak saklanmasini anlamsiz
+    # kilardi. Govdeye yer tutucu yazilir; olculen sey METIN degil
+    # "gonderildi mi" sorusudur.
+    try:
+        async with SessionLocal() as kayit_oturumu:
+            async with kayit_oturumu.begin():
+                await set_tenant(kayit_oturumu, tenant_id)
+                kayit_oturumu.add(
+                    MesajGonderim(
+                        tenant_id=tenant_id,
+                        kanal="eposta",
+                        amac="operasyonel",
+                        hedef=eposta,
+                        konu=konu,
+                        govde=f"[dogrulama kodu: {amac}]",
+                        durum=(
+                            "gonderildi"
+                            if sonuc.durum == "gonderildi"
+                            else "basarisiz"
+                        ),
+                        hata=sonuc.hata,
+                    )
+                )
+    except Exception:  # noqa: BLE001
+        # TESHIS KAYDI ASIL ISI DUSURMEZ: yazilamazsa bile gonderim sonucu
+        # cagirana dogru doner. Log yukarida zaten atildi.
+        logger.exception("gonderim gecmisi yazilamadi amac=%s", amac)
+
+    return sonuc
 
 
 async def kod_uret_ve_gonder(
@@ -97,7 +167,7 @@ async def kod_uret_ve_gonder(
     amac: str,
     unit_id: uuid.UUID | None = None,
     user_id: uuid.UUID | None = None,
-) -> None:
+) -> GonderimSonucu:
     """Ayni amac icin bekleyen kodu EZER ve yenisini gonderir.
 
     Ezme bilincli: art arda istenen kodlarin HEPSININ gecerli kalmasi,
@@ -137,9 +207,19 @@ async def kod_uret_ve_gonder(
     # (P150) Saglayici YAPILANDIRMADAN gelir: `SMS_SAGLAYICI` verilmemisse
     # LOG'dur ve kod kullaniciya ULASMAZ. Gonderim hatasi kaydi KIRMAZ —
     # kod yazilmistir, kullanici "tekrar gonder" diyebilir.
-    sms_saglayicisi().gonder(
+    #
+    # (P196) SONUC DONUYOR ve basarisizlik LOGLANIYOR: SMS varsayilan
+    # olarak KAPALI oldugu icin bu yol pratikte hep `yapilandirilmadi`
+    # doner — ve cagiran kullaniciya "kod gonderildi" diyordu.
+    sonuc = sms_saglayicisi().gonder(
         telefon, None, f"Yönetiyor doğrulama kodunuz: {kod} ({KOD_OMRU_DK} dk)"
     )
+    if sonuc.durum != "gonderildi":
+        logger.error(
+            "SMS kodu GONDERILEMEDI amac=%s hedef=%s saglayici=%s hata=%s",
+            amac, maskele_kimlik(telefon), sonuc.saglayici, sonuc.hata,
+        )
+    return sonuc
 
 
 async def tenant_baglamini_kur(

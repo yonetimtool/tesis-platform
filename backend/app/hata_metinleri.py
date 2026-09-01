@@ -430,6 +430,15 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "Un champ obligatoire est manquant.",
         "es": "Falta un campo obligatorio.",
     },
+    "kod_gonderilemedi": {
+        "tr": "Doğrulama kodu gönderilemedi. E-posta ayarları çalışmıyor olabilir; lütfen yöneticinize bildirin.",
+        "en": "The verification code could not be sent. E-mail delivery may not be working; please tell your administrator.",
+        "ar": "تعذّر إرسال رمز التحقق. قد لا يعمل إرسال البريد الإلكتروني؛ يرجى إبلاغ المسؤول.",
+        "ru": "Не удалось отправить код подтверждения. Возможно, отправка почты не работает; сообщите администратору.",
+        "de": "Der Bestätigungscode konnte nicht gesendet werden. Der E-Mail-Versand funktioniert möglicherweise nicht; bitte informieren Sie Ihre Verwaltung.",
+        "fr": "Le code de vérification n'a pas pu être envoyé. L'envoi d'e-mails ne fonctionne peut-être pas ; prévenez votre gestionnaire.",
+        "es": "No se pudo enviar el código de verificación. Es posible que el envío de correo no funcione; avise a su administrador.",
+    },
     "istek_govdesi_gecersiz": {
         "tr": "İstek gövdesi geçersiz.",
         "en": "The request body is invalid.",

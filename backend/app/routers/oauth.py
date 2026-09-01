@@ -957,9 +957,16 @@ async def rol_tamamla(
                         select(Tenant.ad).where(Tenant.id == tenant_id)
                     )
                 ).scalar_one()
-                await eposta_kodu_uret_ve_gonder_kodla(
+                # (P196) "otp_gerekli" DEMEDEN ONCE GONDERIMI DOGRULA.
+                # Bu dala YALNIZ hesap eslesince girilir; hata donmek
+                # sizdirma yuzeyi ACMAZ (eslesmeyen istek zaten yukarida
+                # `onay_bekliyor` ile ayrildi). Eskiden gonderim
+                # basarisiz olsa da kullaniciya "kod gitti" deniyordu.
+                gonderim = await eposta_kodu_uret_ve_gonder_kodla(
                     session, tenant_id=tenant_id, eposta=eposta, kod=kod
                 )
+                if gonderim is not None and gonderim.durum != "gonderildi":
+                    raise APIError(502, "bad_gateway", "kod_gonderilemedi")
                 return OauthRolTamamlaResponse(durum="otp_gerekli", tesis_ad=tenant_ad)
 
             cift = await _rol_tamamla_baglan(

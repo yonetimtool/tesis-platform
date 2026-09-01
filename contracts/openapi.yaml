@@ -1375,8 +1375,18 @@ paths:
       summary: (P181) Mevcut kullanicinin e-postasini ekleme/dogrulama kodu gonderir
       description: |
         E-postasiz ya da dogrulanmamis kullanici bir adres verir, koda gider.
-        Kilitleme yok; oturum surer. Hiz siniri e-posta basina. Adres baska bir
-        kullanicida kayitliysa 409.
+        Kilitleme yok; oturum surer. Hiz siniri e-posta basina.
+
+        (P184-ek §9) Adres BASKA bir kullanicida kayitliysa uc bunu
+        SIZDIRMAZ: gecerli durumla AYNI yaniti (`gonderildi`) doner ama kod
+        URETMEZ. (Aciklama guncellendi: eskiden burada "409" yaziyordu;
+        davranis P184-ek'te degismis, sozlesme metni eskimisti.)
+
+        (P196) GONDERIM DOGRULANIR: saglayici mesaji gercekten kabul
+        etmediyse uc **502** doner ve `{"durum": "gonderildi"}` YAZMAZ.
+        Eskiden gonderim sessizce basarisiz olabiliyor, kullanici hic
+        gelmeyecek bir kodu bekliyordu. Deneme her durumda
+        `mesaj_gonderim` tablosuna yazilir (kod GOVDEYE yazilmaz).
       requestBody:
         required: true
         content:
@@ -1396,6 +1406,13 @@ paths:
                 required: [durum]
                 properties:
                   durum: { type: string, enum: [gonderildi] }
+        "502":
+          description: >
+            (P196) Kod URETILDI ama GONDERILEMEDI (e-posta saglayicisi
+            yapilandirilmamis ya da hata verdi). Istek geri alinir; deneme
+            `mesaj_gonderim`de gorunur.
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "409":
           description: E-posta baska bir kullanicida kayitli
