@@ -244,7 +244,13 @@ def test_resident_erasure_anonimlestirir_defteri_korur(world, client, owner_conn
         (str(resident_id),),
     ).fetchone()
     assert ad == "Silinmiş Kullanıcı"
-    assert email is None and telefon is None
+    # (P197) E-POSTA "NULL" DEGIL, SENTETIK: `app_user.email` NOT NULL
+    # (goc 0089). KVKK'nin istedigi, adresin SILINMESI degil KISISEL VERI
+    # TASIMAMASIDIR — `.invalid` (RFC 2606) DNS'te asla cozulmez, yani
+    # kimseye ulasmaz ve kimseyi tanimlamaz. Telefon NULL kalmaya devam
+    # ediyor (o sutun nullable).
+    assert email.endswith("@yonetiyor.invalid"), email
+    assert telefon is None
     assert aktif is False and pset is False
 
     # Ledger/ticket KORUNDU (yazar anonim kullaniciya isaret eder).

@@ -13,7 +13,10 @@ import pytest
 
 def _cagir(owner_conn, slug, telefon, yoneticiler=None):
     y = yoneticiler or [{
+        # (P197) `eposta` ZORUNLU — `app_user.email` NOT NULL (goc 0089)
+        # ve fonksiyon artik bu alani yaziyor.
         "ad": "Yonetici Bir", "telefon": telefon,
+        "eposta": f"p197-{uuid.uuid4().hex[:10]}@ornek.com",
         "password_hash": None, "temp_code_hash": "x", "password_set": False,
     }]
     with owner_conn.cursor() as cur:
@@ -54,9 +57,13 @@ def test_cok_yonetici_ILKI_birincil(owner_conn):
     t1 = "+9059" + str(uuid.uuid4().int)[:8]
     t2 = "+9059" + str(uuid.uuid4().int)[:8]
     y = [
-        {"ad": "Ilk", "telefon": t1, "password_hash": None,
+        {"ad": "Ilk", "telefon": t1,
+         "eposta": f"p197-{uuid.uuid4().hex[:10]}@ornek.com",
+         "password_hash": None,
          "temp_code_hash": "x", "password_set": False},
-        {"ad": "Ikinci", "telefon": t2, "password_hash": None,
+        {"ad": "Ikinci", "telefon": t2,
+         "eposta": f"p197-{uuid.uuid4().hex[:10]}@ornek.com",
+         "password_hash": None,
          "temp_code_hash": "y", "password_set": False},
     ]
     satirlar = _cagir(owner_conn, slug, t1, y)

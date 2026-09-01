@@ -16,10 +16,13 @@ def _parolasiz_sakin(client, world, owner_conn):
     tel = "+9059" + str(uuid.uuid4().int)[:8]
     with owner_conn.cursor() as cur:
         cur.execute(
-            "INSERT INTO app_user (tenant_id, ad, telefon, role, password_set) "
-            "SELECT id, 'Parolasiz Sakin', %s, 'resident', false "
+            # (P197) E-POSTA ZORUNLU: `app_user.email` NOT NULL (goc 0089).
+            # "Parolasiz" olan PAROLADIR; e-postasiz hesap artik yok.
+            "INSERT INTO app_user (tenant_id, ad, telefon, email, role, "
+            "password_set) "
+            "SELECT id, 'Parolasiz Sakin', %s, %s, 'resident', false "
             "FROM tenant WHERE slug = %s RETURNING id",
-            (tel, world["slug_a"]),
+            (tel, f"p197-{uuid.uuid4().hex[:10]}@ornek.com", world["slug_a"]),
         )
         uid = cur.fetchone()[0]
     return tel, uid
@@ -34,6 +37,17 @@ def _kodu_ayarla(owner_conn, tel, amac, kod="123456"):
             (hash_password(kod), tel, amac),
         )
         assert cur.rowcount == 1, "kod satiri uretilmemis"
+
+
+def _eposta_kodunu_ayarla(owner_conn, eposta, amac, kod="123456"):
+    """(P197) E-POSTA kanalinin esi — silme kodu artik oradan gidiyor."""
+    with owner_conn.cursor() as cur:
+        cur.execute(
+            "UPDATE kayit_dogrulama SET kod_hash = %s "
+            "WHERE eposta = %s AND amac = %s AND durum = 'telefon_bekliyor'",
+            (hash_password(kod), eposta, amac),
+        )
+        assert cur.rowcount == 1, "e-posta kod satiri uretilmemis"
 
 
 def test_parolasiz_kullanici_KODLA_GIRIS_YAPAR(client, world, owner_conn):
@@ -68,16 +82,35 @@ def test_giris_kodu_HESAP_SILMEYI_onaylayamaz(client, world, owner_conn):
 
 
 def test_parolasiz_kullanici_HESABINI_SILEBILIR(client, world, owner_conn):
-    """Once silemiyordu: uc kosulsuz parola ariyordu (Play sarti ihlali)."""
-    tel, _ = _parolasiz_sakin(client, world, owner_conn)
+    """Once silemiyordu: uc kosulsuz parola ariyordu (Play sarti ihlali).
+
+    (P197) KANAL DEGISTI, KURAL DEGISMEDI. Silme kodunun SMS ucu
+    (`/me/hesap-sil/kod-iste`) KALDIRILDI: `app_user.email` NOT NULL oldu
+    (goc 0089), yani "telefonu var ama e-postasi yok" kullanici KALMADI ve
+    SMS urun genelinde kapali oldugu icin o uc zaten kod gonderemiyordu —
+    yalnizca "gonderildi" diyordu.
+
+    OLCULEN SART AYNI: parolasiz kullanici hesabini SILEBILMELI (magaza
+    sarti). Yalniz kod artik E-POSTASINA gidiyor.
+    """
+    tel, uid = _parolasiz_sakin(client, world, owner_conn)
+    with owner_conn.cursor() as cur:
+        # E-posta DOGRULANMIS olmali: silme kodu yalniz dogrulanmis
+        # adrese gider (kanal sahipligi kaniti).
+        cur.execute(
+            "UPDATE app_user SET eposta_dogrulandi = true WHERE id = %s "
+            "RETURNING email", (uid,)
+        )
+        eposta = cur.fetchone()[0]
     client.post("/auth/giris/kod-iste", json={"telefon": tel})
     _kodu_ayarla(owner_conn, tel, "giris")
     giris = client.post("/auth/giris/kod-dogrula",
                         json={"telefon": tel, "kod": "123456"})
     h = {"Authorization": f"Bearer {giris.json()['access_token']}"}
 
-    assert client.post("/me/hesap-sil/kod-iste", headers=h).status_code == 200
-    _kodu_ayarla(owner_conn, tel, "hesap_silme")
+    assert client.post(
+        "/me/hesap-sil/eposta-kod-iste", headers=h).status_code == 200
+    _eposta_kodunu_ayarla(owner_conn, eposta, "hesap_silme")
     r = client.post("/me/hesap-sil", headers=h, json={"kod": "123456"})
     assert r.status_code == 200, r.text
 
