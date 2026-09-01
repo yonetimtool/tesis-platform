@@ -228,15 +228,28 @@ def test_PASIF_sablon_gonderilemez(client, adm):
     assert r.status_code == 422
 
 
-def test_ADRESI_OLMAYAN_alici_AYRI_sayilir(client, adm):
-    """E-postasi olmayan sakine e-posta gonderilemez — sessizce dusmez."""
+def test_ADRESI_OLMAYAN_alici_AYRI_sayilir(client, adm, owner_conn):
+    """Adressiz aliciya gonderilemez — sessizce DUSMEZ, ayri sayilir.
+
+    (P197) SENARYO ARTIK UCTAN KURULAMIYOR: e-postasiz sakin
+    OLUSTURULAMAZ (`app_user.email` NOT NULL, goc 0089). Sayacin kendisi
+    ise HALA GECERLI bir garantidir — telefonu olmayan SMS alicisi ya da
+    gecmisten kalan bir satir icin. Bu yuzden durum, sutun seviyesinde
+    hala mumkun olan SMS kanaliyla olculuyor: telefonu OLMAYAN bir
+    aliciya SMS gonderimi.
+    """
     sablon = client.post("/mesaj-sablonlari", headers=adm, json={
-        "kanal": "eposta", "ad": f"A-{_sfx()}", "govde": "x"}).json()
+        "kanal": "sms", "ad": f"A-{_sfx()}", "govde": "x"}).json()
     u = client.post("/units", headers=adm,
                     json={"no": f"M-{_sfx()}", "blok": "A"}).json()
     kisi = client.post("/residents", headers=adm, json={
-        "ad": "Epostasiz Sakin", "unit_no": u["no"],
-        "telefon": f"+9054{uuid.uuid4().int % 10**8:08d}", "email": _p197_mail()}).json()
+        "ad": "Telefonsuz Sakin", "unit_no": u["no"],
+        "telefon": f"+9054{uuid.uuid4().int % 10**8:08d}",
+        "email": _p197_mail()}).json()
+    # Telefon sutunu NULL EDILEBILIR — adressizligi orada kuruyoruz.
+    with owner_conn.cursor() as cur:
+        cur.execute("UPDATE app_user SET telefon = NULL WHERE id = %s",
+                    (kisi["user_id"],))
     r = client.post("/mesajlar/gonder", headers=adm, json={
         "sablon_id": sablon["id"], "user_ids": [kisi["user_id"]]}).json()
     assert r["adres_yok"] == 1 and r["gonderildi"] == 0

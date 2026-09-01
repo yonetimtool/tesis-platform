@@ -52,11 +52,15 @@ def _davet_yaz(owner_conn, slug, *, rol="resident", telefon=None, daire=None,
     telefon = telefon or _tel()
     with owner_conn.cursor() as cur:
         cur.execute(
-            "INSERT INTO app_user (tenant_id, ad, telefon, password_hash, "
-            "  password_set, role, is_active) "
-            "SELECT id, %s, %s, NULL, false, %s::user_role, true "
+            # (P197) E-POSTA ZORUNLU: `app_user.email` NOT NULL (goc 0089).
+            # Davet ZATEN e-postaya gider; adressiz davetli kaydi urunde
+            # de olusamaz.
+            "INSERT INTO app_user (tenant_id, ad, telefon, email, "
+            "  password_hash, password_set, role, is_active) "
+            "SELECT id, %s, %s, %s, NULL, false, %s::user_role, true "
             "FROM tenant WHERE slug = %s RETURNING id, tenant_id",
-            (f"Davetli {rol}", telefon, rol, slug),
+            (f"Davetli {rol}", telefon,
+             f"p197-{uuid.uuid4().hex[:10]}@ornek.com", rol, slug),
         )
         uid, tid = cur.fetchone()
         if daire is not None:

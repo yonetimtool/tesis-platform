@@ -201,13 +201,14 @@ KAPISIZ_MUTASYONLAR: frozenset[tuple[str, str]] = frozenset({
     # AYNI hakka aittir — kisi kendi hesabini silebilmelidir — ve
     # `get_current_user` kimligi zaten zorunlu kilar; eksik olan yalniz
     # ROL kapisidir ki burada anlamsizdir: her rol kendi hesabini siler.
-    ("POST", "/me/hesap-sil/kod-iste"),
-    # (P184) Ayni silme onay kodunun E-POSTA esi. `/me/hesap-sil/kod-iste` ile
+    # (P184) Silme onay kodu — E-POSTA kanali. (P197) SMS kardesi
+    # (`/me/hesap-sil/kod-iste`) KALDIRILDI: e-postasiz hesap artik
+    # olusamiyor, o yuzden calismayan o uca gerek kalmadi.
     # AYNI SINIF: kimlik zorunlu (get_current_user), rol kapisi anlamsiz (herkes
     # kendi hesabini siler), hiz siniriyla korunur (`hesap_silme_eposta`).
     ("POST", "/me/hesap-sil/eposta-kod-iste"),
     # (P181 Bölüm 1) KENDI e-postasini ekleme/dogrulama. `/me/contact` +
-    # `/me/hesap-sil/kod-iste` ile AYNI SINIF: kimlik zorunlu (get_current_user),
+    # Silme onay koduyla AYNI SINIF: kimlik zorunlu (get_current_user),
     # rol kapisi anlamsiz — herkes kendi e-postasini dogrular. Kotuye kullanim
     # hiz siniriyla kapatilir (`kod_istegi_say`, kapsam `eposta_ekle`), rol
     # kapisiyla degil. Denetciye de acik; tesis KAYITLARINA dokunmaz.

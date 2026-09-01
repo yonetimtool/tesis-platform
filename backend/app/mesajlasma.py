@@ -298,11 +298,16 @@ class KonsolEpostaSaglayici(MesajSaglayici):
     kod, konteyner gunlugunde okunabilir; akis uctan uca calisir.
 
     =======================================================================
-    NEDEN PRODA SIZMAZ
+    NASIL SECILIR (ve neden GLOBAL BIR ANAHTAR DEGIL)
     =======================================================================
-    ACIKCA secilmeden devreye GIRMEZ (`EPOSTA_SAGLAYICI=konsol`).
-    Varsayilan hala `LogEpostaSaglayici`dir ve o "gonderilmedi" der.
-    Yanlislikla acilirsa gorunur olsun diye:
+    SMTP SUNUCU ADI `konsol` yazilarak — tesis ayarindan ya da ENV'den.
+    Ilk yazim global bir ortam degiskeniydi ve TESIS/ENV AYARINDAN ONCE
+    geliyordu; OLCULDU: "hicbir yapilandirma yok" durumunu ortadan
+    kaldirdigi icin urunun cekirdek garantisini olcen 14 test dustu
+    ("yapilandirma yokken 'gonderildi' DEME", P168 §4). Yapilandirma
+    DEGERI olarak secilince o garanti dokunulmadan kalir.
+
+    Yanlislikla secilirse gorunur olsun diye:
       * her gonderimde WARNING loglanir (INFO degil),
       * `mesaj_gonderim` govdesine tasiyici adi yazilir.
     Yani "gonderildi" yazan bir satirin gercekte nereye gittigi

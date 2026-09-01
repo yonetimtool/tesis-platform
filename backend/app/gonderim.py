@@ -124,19 +124,29 @@ def eposta_saglayicisi(ayar: SaglayiciAyari | None = None) -> MesajSaglayici:
     SMTP yapilandirmasini kopyalamak zorundaydi ve biri guncellenip oteki
     unutulurdu.
     """
-    # (P196) ACIK SECIM: gelistirme/test tasiyicisi. Tesis ayarindan da
-    # ENV'den de ONCE bakilir cunku bu bir ORTAM karari — "bu makinede
-    # posta konsola gider" demektir.
-    from .config import settings as _st
-
-    if (getattr(_st, "eposta_saglayici", "") or "").lower() == "konsol":
-        from .mesajlasma import KonsolEpostaSaglayici
-
-        return KonsolEpostaSaglayici()
     # (P168 §4) TESIS AYARI ONCE, ENV YEDEK.
     a = _ayardan_veya_env(ayar)
     if not a.smtp_host:
         return LogEpostaSaglayici()
+    # (P196/P197) KONSOL TASIYICISI — SUNUCU ADI OLARAK secilir.
+    #
+    # ILK YAZIM GLOBAL BIR ORTAM DEGISKENIYDI (`EPOSTA_SAGLAYICI=konsol`)
+    # ve dev'de varsayilan aciktdi. OLCULDU VE GERI ALINDI: o secim TESIS
+    # VE ENV AYARINDAN ONCE geliyordu, yani "hicbir yapilandirma yok"
+    # durumunu ORTADAN KALDIRIYORDU. Sonuc: urunun cekirdek garantisini
+    # olcen 14 test dustu — "yapilandirma yokken 'gonderildi' DEME"
+    # (P168 §4) kurali dev'de artik SINANAMIYORDU.
+    #
+    # Simdi konsol bir YAPILANDIRMA DEGERIDIR: tesisin (ya da ENV'in)
+    # SMTP sunucu adi `konsol` ise posta konsola teslim edilir. Boylece:
+    #   * yapilandirma YOKKEN davranis DEGISMEZ (Log -> 'yapilandirilmadi'),
+    #   * ihtiyaci olan akis/test kendi TESISINE konsolu secer,
+    #   * prod'da kimse "konsol" yazmaz; yazarsa da her gonderim WARNING
+    #     loglar ve gecmiste `tasiyici=konsol-eposta` gorunur.
+    if a.smtp_host.strip().lower() == "konsol":
+        from .mesajlasma import KonsolEpostaSaglayici
+
+        return KonsolEpostaSaglayici()
     return SmtpEpostaSaglayici(
         a.smtp_host,
         int(a.smtp_port or 587),

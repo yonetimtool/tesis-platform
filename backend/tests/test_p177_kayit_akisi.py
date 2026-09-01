@@ -182,6 +182,13 @@ def test_bayrak_kapaliyken_mevcut_kayit_yolu_CALISIYOR(client, akis_acik):
     Olculen sey `tesis-olustur`un HALA CALISMASI: bayragi okumadigi icin
     kapali kipte de tesis acabilmeli. Bu, "yeni akis eklerken eskisini
     kirdik mi" sorusunun tek dogrudan olcumu.
+
+    (P197) KIMLIK YONTEMI PAROLADAN SSO'YA CEVRILDI. Ucun e-posta kaynagi
+    saglayicidir; parola yolunda hicbir adres yok ve `app_user.email` NOT
+    NULL oldu (goc 0089), yani o yol 422 doner. URUNDE DE KULLANILMIYORDU:
+    web kayit sayfasi bu ucu YALNIZ sosyal yolda cagiriyor, mobilde
+    hicbir ekran cagirmiyor. Olculen sey (bayrak kapaliyken uc CALISIR)
+    aynen duruyor.
     """
     if akis_acik:
         pytest.skip("bayrak ACIK — kapali kip olcumu")
@@ -191,7 +198,8 @@ def test_bayrak_kapaliyken_mevcut_kayit_yolu_CALISIYOR(client, akis_acik):
             "tesis_ad": f"P177 Kapali {uuid.uuid4().hex[:6]}",
             "ad": "Mevcut Yol",
             "telefon": _telefon(),
-            "parola": "GucluParola123!",
+            "baglama_jetonu": _sso_jeton(
+                f"p197-p177-{uuid.uuid4().hex[:10]}@{EPOSTA_ALANI}"),
         },
     )
     assert r.status_code == 201, r.text

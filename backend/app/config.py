@@ -226,10 +226,6 @@ class Settings(BaseSettings):
     sms_parola: str | None = None
     sms_baslik: str | None = None           # onayli gonderici basligi
     sms_url: str = "https://api.netgsm.com.tr/sms/send/get"
-    #: (P196) `konsol` = e-posta KONSOLA teslim edilir (gelistirme/test).
-    #: Bos/verilmemis = normal secim (tesis ayari -> ENV -> log).
-    #: URETIMDE ASLA `konsol` OLMAMALI; acikken her gonderim WARNING loglar.
-    eposta_saglayici: str = ""
     smtp_host: str | None = None
     smtp_port: int = 587
     smtp_user: str | None = None
