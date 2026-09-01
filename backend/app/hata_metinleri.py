@@ -2231,6 +2231,15 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "Cette période a déjà été traitée et ne peut pas être ignorée. Corrigez l'appel de charges par une contre-passation.",
         "es": "Este período ya se procesó y no puede omitirse. Corrija el cargo con un asiento inverso.",
     },
+    "davet_gonderilemedi": {
+        "tr": "Davet e-postası gönderilemedi. Hesap açıldı; daveti Davetler sayfasından yeniden gönderebilirsiniz.",
+        "en": "The invitation e-mail could not be sent. The account was created; you can resend the invitation from the Invitations page.",
+        "ar": "تعذّر إرسال بريد الدعوة. تم إنشاء الحساب؛ يمكنك إعادة الإرسال من صفحة الدعوات.",
+        "ru": "Не удалось отправить приглашение по эл. почте. Учётная запись создана; повторите отправку на странице приглашений.",
+        "de": "Die Einladungs-E-Mail konnte nicht gesendet werden. Das Konto wurde erstellt; Sie können die Einladung auf der Seite „Einladungen“ erneut senden.",
+        "fr": "L'e-mail d'invitation n'a pas pu être envoyé. Le compte a été créé ; vous pouvez renvoyer l'invitation depuis la page Invitations.",
+        "es": "No se pudo enviar el correo de invitación. La cuenta se creó; puede reenviar la invitación desde la página Invitaciones.",
+    },
     "tahakkuk_zaten_var": {
         "tr": "Bu daire için bu dönem tahakkuk zaten var.",
         "en": "An assessment already exists for this unit and period.",

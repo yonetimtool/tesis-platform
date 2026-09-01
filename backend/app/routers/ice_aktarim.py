@@ -221,10 +221,12 @@ async def _uygula_kisi(b: _Bag, satir_no: int, d: dict) -> None:
         b.hata(satir_no, "rol_tipi", "gecersiz_rol_tipi")
         return
 
-    # (P186 §3.1) E-posta OPSIYONEL; verilirse bicimi dogrulanir (bozuk adres
-    # sessizce yutulmaz — kullanici davetin gitmedigini bilmeli).
+    # (P193 §1) E-POSTA ZORUNLU — gerekce tur tanimindaki notta.
     eposta = _metin(d, "eposta") or None
-    if eposta is not None and not _EPOSTA_KALIBI.match(eposta):
+    if eposta is None:
+        b.hata(satir_no, "eposta", "zorunlu_alan_eksik")
+        return
+    if not _EPOSTA_KALIBI.match(eposta):
         b.hata(satir_no, "eposta", "eposta_gecersiz")
         return
 
@@ -292,10 +294,21 @@ async def _uygula_kisi(b: _Bag, satir_no: int, d: dict) -> None:
     # ile eklenenlere HIC davet gitmiyordu (kabul 9). Gonderim hatasi kisiyi
     # olusturmayi geri ALMAZ: hesap acildi, yonetici gitmeyen daveti panelden
     # yeniden gonderebilir.
-    await davet_olustur_ve_gonder(
+    # (P193 §1) DAVET SONUCU SAYILIYOR. Onceden donus degeri atiliyordu:
+    # yonetici "50 kisi eklendi" goruyor ama kacina davet ULASTIGINI
+    # bilmiyordu. Gonderim hatasi kisiyi olusturmayi geri ALMAZ — hesap
+    # acildi, davet panelden yeniden gonderilebilir.
+    if await davet_olustur_ve_gonder(
         b.db, user=kisi, tenant_ad=b.tenant_ad, gonderen_id=b.user.id,
         dil=b.dil,
-    )
+    ):
+        b.sonuc.davet_gonderildi += 1
+    else:
+        b.sonuc.davet_basarisiz += 1
+        b.sonuc.davet_hatalari.append({
+            "satir_no": satir_no, "alan": "eposta",
+            "hata": hata_metni("davet_gonderilemedi", b.dil),
+        })
     b.sonuc.olusan += 1
 
 
@@ -415,9 +428,17 @@ TURLER: dict[str, _Tur] = {
         (
             _Alan("ad", zorunlu=True, ornek="Ali Veli"),
             _Alan("telefon", zorunlu=True, ornek="+905321112233"),
-            # (P186 §3.1) E-POSTA OPSIYONEL: verilirse davet HTML e-postasi da
-            # gider (yoksa yalniz SMS). Tekil eklemedeki davetle ayni akis.
-            _Alan("eposta", ornek="ali@ornek.com"),
+            # (P193 §1) E-POSTA ZORUNLU OLDU.
+            #
+            # P186'da opsiyoneldi ve gerekcesi "verilirse HTML e-posta da
+            # gider, yoksa yalniz SMS"ti. O gerekce SMS acikken gecerliydi;
+            # SMS varsayilan olarak KAPALI (`settings.sms_aktif=False`) ve
+            # kapaliyken HIC denenmiyor. Yani e-postasiz eklenen kisiye
+            # davet HICBIR KANALDAN gitmiyor ve Tesis ID'yi asla
+            # ogrenemiyor — hesap acilmis ama sahiplenilemez durumda
+            # kaliyor. Tekil ekleme (`UserCreate.email`) zaten zorunlu
+            # tutuyordu; ayni veri iki farkli kuralla giriliyordu.
+            _Alan("eposta", zorunlu=True, ornek="ali@ornek.com"),
             _Alan("daire_no", ornek="A-1"),
             _Alan("rol_tipi", ornek="malik"),
         ),
@@ -517,18 +538,35 @@ async def aktar(
     tenant_ad = (
         await db.execute(select(Tenant.ad).where(Tenant.id == user.tenant_id))
     ).scalar_one_or_none() or ""
-    b = _Bag(
-        db=db, user=user, dil=istek_dili(accept_language),
-        yalniz_dogrula=body.yalniz_dogrula,
-        sonuc=IceAktarimSonuc(),
-        tenant_ad=tenant_ad,
-    )
-    for satir in body.satirlar:
-        await t.uygula(b, satir.satir_no, satir.degerler)
+    dil = istek_dili(accept_language)
 
-    b.sonuc.satir_sayisi = len(body.satirlar)
+    async def _kosum(yalniz_dogrula: bool) -> tuple[_Bag, IceAktarimSonuc]:
+        bag = _Bag(
+            db=db, user=user, dil=dil, yalniz_dogrula=yalniz_dogrula,
+            sonuc=IceAktarimSonuc(), tenant_ad=tenant_ad,
+        )
+        for satir in body.satirlar:
+            await t.uygula(bag, satir.satir_no, satir.degerler)
+        bag.sonuc.satir_sayisi = len(body.satirlar)
+        return bag, bag.sonuc
+
     if body.yalniz_dogrula:
-        return b.sonuc
+        _, sonuc = await _kosum(True)
+        return sonuc
+
+    # (P193 §1) ONCE KURU KOSUM, SONRA YAZMA.
+    #
+    # Sorunlu satir varken aktarimi durdurmak icin hatalari YAZMADAN ONCE
+    # bilmek gerekiyor. Tek gecisi SAVEPOINT'e alip geri sarmak
+    # yetmezdi: kisi aktariminda satir basina DAVET E-POSTASI gidiyor ve
+    # veritabanini geri almak gonderilmis bir e-postayi geri getirmez.
+    # Kuru kosum hicbir yan etki uretmez.
+    _, kuru = await _kosum(True)
+    if kuru.hatali > 0 and not body.sorunlulari_atla:
+        kuru.uygulanmadi = True
+        return kuru
+
+    b, _ = await _kosum(False)
 
     kosum = IceAktarim(
         tenant_id=user.tenant_id, tur=tur, dosya_adi=body.dosya_adi,
@@ -547,7 +585,9 @@ async def aktar(
     await audit_user(
         db, user, Action.SITE_AKTAR, resource_type="ice_aktarim",
         resource_id=kosum.id,
-        meta={"tur": tur, "olusan": b.sonuc.olusan, "hatali": b.sonuc.hatali},
+        meta={"tur": tur, "olusan": b.sonuc.olusan, "hatali": b.sonuc.hatali,
+              "davet_gonderildi": b.sonuc.davet_gonderildi,
+              "davet_basarisiz": b.sonuc.davet_basarisiz},
     )
     b.sonuc.aktarim_id = kosum.id
     return b.sonuc

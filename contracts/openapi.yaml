@@ -13190,6 +13190,13 @@ components:
           type: boolean
           default: false
           description: "True ise HICBIR SEY yazilmaz, yalnizca rapor doner."
+        sorunlulari_atla:
+          type: boolean
+          default: false
+          description: >
+            (P193) VARSAYILAN HAYIR: sorunlu satir varsa HICBIR SEY yazilmaz
+            (uygulanmadi=true doner). Kullanici bilerek isaretlerse gecerli
+            satirlar yazilir, sorunlular atlanir.
         dosya_adi:
           type: string
           nullable: true
@@ -13220,6 +13227,26 @@ components:
           format: uuid
           nullable: true
           description: "Yalniz UYGULANDIGINDA doner; onizlemede null."
+        uygulanmadi:
+          type: boolean
+          default: false
+          description: >
+            (P193) Sorunlu satir vardi ve `sorunlulari_atla` isaretli degildi;
+            HICBIR SATIR YAZILMADI. Rapor yine de doner.
+        davet_gonderildi:
+          type: integer
+          default: 0
+          description: "(P193) Kaci gercekten e-posta ile davet edildi."
+        davet_basarisiz:
+          type: integer
+          default: 0
+          description: >
+            (P193) Hesap acildi ama davet gitmedi. Bu kisiler GIRIS YAPAMAZ;
+            yonetici Davetler sayfasindan yeniden gonderir.
+        davet_hatalari:
+          type: array
+          default: []
+          items: { $ref: "#/components/schemas/IceAktarimHata" }
     IceAktarimKosum:
       type: object
       required: [id, tur, satir_sayisi, olusan, atlanan, hatali, durum, created_at]

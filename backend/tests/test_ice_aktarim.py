@@ -25,12 +25,14 @@ def _satir(no, **degerler):
     return {"satir_no": no, "degerler": degerler}
 
 
-def _aktar(client, h, tur, satirlar, dogrula=False, dosya="test.xlsx"):
-    r = client.post(
-        f"/ice-aktarim/{tur}",
-        headers=h,
-        json={"satirlar": satirlar, "yalniz_dogrula": dogrula, "dosya_adi": dosya},
-    )
+def _aktar(client, h, tur, satirlar, dogrula=False, dosya="test.xlsx",
+           atla=False):
+    govde = {"satirlar": satirlar, "yalniz_dogrula": dogrula, "dosya_adi": dosya}
+    # (P193 §1) Sorunlu satir varsa aktarim VARSAYILAN OLARAK YAPILMAZ;
+    # kismi basari artik bir KARARDIR ve acikca istenir.
+    if atla:
+        govde["sorunlulari_atla"] = True
+    r = client.post(f"/ice-aktarim/{tur}", headers=h, json=govde)
     assert r.status_code == 201, r.text
     return r.json()
 
@@ -105,9 +107,12 @@ def test_ONIZLEME_hicbir_sey_YAZMAZ(client, world, owner_conn):
 
 # ===================== 3) KISMI BASARI TANIMI ============================== #
 
-def test_GECERLI_yazilir_HATALI_raporlanir(client, world, owner_conn):
-    """300 satirlik bir dosyada 4 hatali satir yuzunden 296 dogru satiri
-    reddetmek, kullaniciyi dosyayi elle ayiklamaya zorlardi."""
+def test_SORUNLU_SATIR_VARSA_VARSAYILAN_OLARAK_HICBIR_SEY_YAZILMAZ(
+    client, world, owner_conn
+):
+    """(P193 §1) Kismi basari SESSIZ oldugu icin kusurluydu: yonetici 50
+    kisi yukluyor, 10'u atlaniyor, kimse fark etmiyor. Artik atlama bir
+    KARARDIR — istenmediyse aktarim DURUR."""
     h = _giris(client, world["slug_a"], world["yonetici_a"])
     iyi = f"OK-{uuid.uuid4().hex[:6]}"
     once = _daire_sayisi(owner_conn, world["slug_a"])
@@ -117,12 +122,37 @@ def test_GECERLI_yazilir_HATALI_raporlanir(client, world, owner_conn):
         _satir(2, blok="", daire_no="X"),        # blok eksik
         _satir(3, blok="YY", daire_no=""),       # daire eksik
     ])
+    assert sonuc["uygulanmadi"] is True
     assert sonuc["hatali"] == 2
     assert {x["satir_no"] for x in sonuc["hatalar"]} == {2, 3}
     # HATA ALANI da doner: kullanici hangi hucreyi duzeltecegini bilsin.
     assert {x["alan"] for x in sonuc["hatalar"]} == {"blok", "daire_no"}
-    # GECERLI satir YAZILDI.
+    # HICBIR SEY YAZILMADI — gecerli satir bile.
+    assert _daire_sayisi(owner_conn, world["slug_a"]) == once
+    # Kosum KAYDI da acilmadi: geri alinacak bir sey yok.
+    assert sonuc["aktarim_id"] is None
+
+
+def test_SORUNLULARI_ATLA_denince_GECERLI_satirlar_yazilir(
+    client, world, owner_conn
+):
+    """Eski kismi-basari davranisi KAYBOLMADI, ACIK BIR SECIME donustu.
+
+    300 satirlik bir dosyada 4 hatali satir yuzunden 296 dogru satiri
+    reddetmek, kullaniciyi dosyayi elle ayiklamaya zorlardi — o gerekce
+    hâlâ gecerli, degisen tek sey kararin kime ait oldugu."""
+    h = _giris(client, world["slug_a"], world["yonetici_a"])
+    iyi = f"OK-{uuid.uuid4().hex[:6]}"
+    once = _daire_sayisi(owner_conn, world["slug_a"])
+
+    sonuc = _aktar(client, h, "daire", [
+        _satir(1, blok="YY", daire_no=iyi),
+        _satir(2, blok="", daire_no="X"),
+    ], atla=True)
+    assert sonuc["uygulanmadi"] is False
+    assert sonuc["hatali"] == 1
     assert _daire_sayisi(owner_conn, world["slug_a"]) > once
+    assert sonuc["aktarim_id"] is not None
 
 
 # ========================= 4) IDEMPOTENT =================================== #
@@ -285,3 +315,49 @@ def test_P186_kisi_BOZUK_eposta_satir_hatasi(client, world):
     ])
     assert r["hatali"] == 1, r
     assert r["hatalar"][0]["satir_no"] == 1
+
+
+# =============== (P193 §1) KISI AKTARIMINDA E-POSTA ZORUNLU ================ #
+
+def test_P193_kisi_EPOSTASIZ_satir_HATA(client, world, owner_conn):
+    """SMS varsayilan olarak KAPALI; e-postasiz eklenen kisiye davet
+    HICBIR KANALDAN gitmiyor ve Tesis ID'yi asla ogrenemiyor. Hesap
+    acilmis ama sahiplenilemez durumda kaliyordu."""
+    h = _giris(client, world["slug_a"], world["yonetici_a"])
+    tel = "+90" + str(uuid.uuid4().int)[:10]
+    once = _davet_sayisi(owner_conn, world["slug_a"])
+
+    r = _aktar(client, h, "kisi", [_satir(1, ad="Epostasiz", telefon=tel)])
+
+    assert r["uygulanmadi"] is True
+    assert r["hatali"] == 1
+    assert r["hatalar"][0]["alan"] == "eposta"
+    # HESAP ACILMADI: e-postasiz kisi artik hic yaratilmiyor.
+    assert _davet_sayisi(owner_conn, world["slug_a"]) == once
+
+
+def test_P193_kisi_EPOSTA_zorunlu_alan_olarak_BILDIRILIYOR(client, world):
+    """Arayuz kolon eslemesinde "eposta" alanini ZORUNLU cizmeli; sunucu
+    ile arayuzun zorunlu kumesi ayrisirsa kullanici satir satir hata
+    alirdi."""
+    h = _giris(client, world["slug_a"], world["yonetici_a"])
+    turler = {t["kod"]: t for t in client.get("/ice-aktarim/turler", headers=h).json()}
+    zorunlular = {a["kod"] for a in turler["kisi"]["alanlar"] if a["zorunlu"]}
+    assert zorunlular == {"ad", "telefon", "eposta"}
+
+
+def test_P193_kisi_aktariminda_DAVET_SAYILIYOR(client, world):
+    """"Kac kisi eklendi" ile "kac kisiye ULASILDI" ayri sorulardir:
+    hesabi acilmis ama daveti gitmemis kisi sisteme HIC giremez."""
+    h = _giris(client, world["slug_a"], world["yonetici_a"])
+    tel = "+90" + str(uuid.uuid4().int)[:10]
+    r = _aktar(client, h, "kisi", [
+        _satir(1, ad="Davetli", telefon=tel,
+               eposta=f"davet-{uuid.uuid4().hex[:8]}@acme.com"),
+    ])
+    assert r["olusan"] == 1, r
+    # Gonderim yapilandirmasina gore biri dolar; ikisinin TOPLAMI olusan
+    # kisi sayisina esit olmali — hicbir kisi sayilmadan gecmemeli.
+    assert r["davet_gonderildi"] + r["davet_basarisiz"] == 1, r
+    if r["davet_basarisiz"]:
+        assert r["davet_hatalari"][0]["satir_no"] == 1

@@ -58,6 +58,11 @@ interface Sonuc {
   atlanan: number;
   hatali: number;
   hatalar: Hata[];
+  /** (P193 §1) Sorunlu satir var ve "atla" denmedi -> HICBIR SEY yazilmadi. */
+  uygulanmadi: boolean;
+  davet_gonderildi: number;
+  davet_basarisiz: number;
+  davet_hatalari: Hata[];
   aktarim_id: string | null;
 }
 interface Kosum {
@@ -113,6 +118,15 @@ export default function IceAktarimPage() {
   const [sonuc, setSonuc] = useState<Sonuc | null>(null);
   const [hata, setHata] = useState<string | null>(null);
   const [mesgul, setMesgul] = useState(false);
+  /**
+   * (P193 §1) SORUNLU SATIRLARI ATLA — VARSAYILAN KAPALI.
+   *
+   * Eskiden kismi basari varsayilandi ve SESSIZDI: yonetici 50 kisi
+   * yukluyor, 10'u atlaniyor, kimse fark etmiyor. Kutu kapali kaldigi
+   * surece sunucu hicbir sey yazmaz; atlama artik kullanicinin ACIK
+   * kararidir.
+   */
+  const [sorunlulariAtla, setSorunlulariAtla] = useState(false);
 
   const { data: turler } = useSWR<Tur[]>("/api/panel/ice-aktarim-turler", jsonFetcher);
   const { data: gecmis, mutate: gecmisTazele } = useSWR<{ items: Kosum[] }>(
@@ -145,6 +159,7 @@ export default function IceAktarimPage() {
     if (!dosya) return;
     setHata(null);
     setSonuc(null);
+    setSorunlulariAtla(false);
     setEsleme({});
     try {
       const satirlar = /\.xlsx$/i.test(dosya.name)
@@ -226,7 +241,12 @@ export default function IceAktarimPage() {
       const r = await apiSend<Sonuc>(
         `/api/panel/ice-aktarim-${turKod}`,
         "POST",
-        { satirlar: govde, yalniz_dogrula: yalnizDogrula, dosya_adi: null },
+        {
+          satirlar: govde,
+          yalniz_dogrula: yalnizDogrula,
+          dosya_adi: null,
+          sorunlulari_atla: sorunlulariAtla,
+        },
       );
       setSonuc(r);
       if (!yalnizDogrula) {
@@ -235,6 +255,7 @@ export default function IceAktarimPage() {
       }
     } catch (e) {
       setSonuc(null);
+      setSorunlulariAtla(false);
       setHata(e instanceof Error ? e.message : t("ortakHataOlustu"));
     } finally {
       setMesgul(false);
@@ -276,6 +297,7 @@ export default function IceAktarimPage() {
               // baska bir turun alanlarina isaret ediyordu.
               setEsleme({});
               setSonuc(null);
+              setSorunlulariAtla(false);
             }}
           >
             {(turler ?? []).map((x) => (
@@ -295,6 +317,14 @@ export default function IceAktarimPage() {
             {t("iceAktarimOrnekSatiri")}:{" "}
             <code className="break-all">
               {tur.alanlar.map((a) => a.ornek).join(";")}
+            </code>
+            <br />
+            {/* (P193 §1) ZORUNLU SUTUNLAR ACIKCA YAZILIR: kullanici hangi
+                sutunu bos birakamayacagini sablonu doldururken bilmeli,
+                yukledikten sonra degil. */}
+            {t("iceAktarimZorunluAlanlar")}:{" "}
+            <code className="break-all">
+              {tur.alanlar.filter((a) => a.zorunlu).map((a) => a.kod).join(";")}
             </code>
           </p>
         )}
@@ -328,6 +358,7 @@ export default function IceAktarimPage() {
             onChange={(e) => {
               setHam(e.target.value);
               setSonuc(null);
+              setSorunlulariAtla(false);
             }} />
             )}
           </AlanSarmal>
@@ -370,6 +401,25 @@ export default function IceAktarimPage() {
               </AlanSarmal>
             ))}
           </div>
+          {/* (P193 §1) SORUNLU SATIR VARSA ACIK KARAR ISTENIR.
+              Kutu, yalnizca onizlemede sorun GORULDUYSE cizilir: sorunsuz
+              bir dosyada kullaniciya cevap veremeyecegi bir soru sormak
+              gurultu olurdu. */}
+          {sonuc && sonuc.hatali > 0 && (
+            <div className="space-y-1">
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={sorunlulariAtla}
+                  onChange={(e) => setSorunlulariAtla(e.target.checked)}
+                />
+                {t("iceAktarimSorunlulariAtla")}
+              </label>
+              <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
+                {t("iceAktarimSorunluUyari", { n: sonuc.hatali })}
+              </p>
+            </div>
+          )}
           <div className="flex flex-wrap gap-2">
             {/* ONIZLEME ONCE: hicbir sey yazmadan ayni raporu verir. */}
             <Dugme
@@ -383,7 +433,10 @@ export default function IceAktarimPage() {
             <Dugme
               type="button"
               tur="birincil"
-              disabled={mesgul}
+              // AKTAR, SORUN VARKEN VE KUTU ISARETLI DEGILKEN KAPALI.
+              // Sunucu zaten reddediyor; dugmeyi acik birakmak kullaniciya
+              // hicbir sey yapmayan bir dugme bastirmak olurdu.
+              disabled={mesgul || (!!sonuc && sonuc.hatali > 0 && !sorunlulariAtla)}
               onClick={() => void calistir(false)}
             >
               {t("iceAktarimUygula")}
@@ -395,16 +448,49 @@ export default function IceAktarimPage() {
       {/* ---------------------------- 4) SONUC --------------------------- */}
       {sonuc && (
         <section className="space-y-2 p-kart" aria-live="polite">
-          <p className="text-sm text-metin-body">
-            {t("iceAktarimOzet", {
-              satir: sonuc.satir_sayisi,
-              olusan: sonuc.olusan,
-              atlanan: sonuc.atlanan,
-              hatali: sonuc.hatali,
-            })}
-          </p>
+          {/* (P193 §1) SAYILAR ETIKETLI: "okunan/gecerli/sorunlu" tek bir
+              cumleye sikistirilinca kullanici hangi sayinin ne oldugunu
+              ayirt edemiyordu ve sorunlu satirlari fark etmeden Aktar'a
+              basiyordu. */}
+          <dl className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
+            <span>
+              <dt className="inline">{t("iceAktarimOkunan")}: </dt>
+              <dd className="inline font-semibold tabular-nums">
+                {sonuc.satir_sayisi}
+              </dd>
+            </span>
+            <span>
+              <dt className="inline">{t("iceAktarimGecerli")}: </dt>
+              <dd className="inline font-semibold tabular-nums">{sonuc.olusan}</dd>
+            </span>
+            <span>
+              <dt className="inline">{t("iceAktarimZatenVar")}: </dt>
+              <dd className="inline font-semibold tabular-nums">{sonuc.atlanan}</dd>
+            </span>
+            <span>
+              <dt className="inline">{t("iceAktarimSorunlu")}: </dt>
+              <dd
+                className="inline font-semibold tabular-nums"
+                style={sonuc.hatali > 0 ? { color: "var(--yz-danger)" } : undefined}
+              >
+                {sonuc.hatali}
+              </dd>
+            </span>
+          </dl>
+
+          {/* AKTARIM DURDUYSA EN USTTE SOYLENIR: kullanici sayilara bakip
+              "oldu" sanmamali. */}
+          {sonuc.uygulanmadi && (
+            <p
+              className="font-semibold"
+              style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-danger)" }}
+            >
+              {t("iceAktarimUygulanmadi")}
+            </p>
+          )}
+
           {sonuc.hatalar.length > 0 && (
-            <ul className="space-y-1 text-xs text-vurguInk-red">
+            <ul className="space-y-1 text-xs" style={{ color: "var(--yz-danger)" }}>
               {sonuc.hatalar.map((h, i) => (
                 <li key={i}>
                   {t("iceAktarimSatir", { no: h.satir_no })}
@@ -412,6 +498,24 @@ export default function IceAktarimPage() {
                 </li>
               ))}
             </ul>
+          )}
+
+          {/* DAVET OZETI — "kac kisi eklendi" ile "kac kisiye ULASILDI"
+              ayri sorulardir; daveti gitmeyen kisi sisteme hic giremez. */}
+          {(sonuc.davet_gonderildi > 0 || sonuc.davet_basarisiz > 0) && (
+            <div className="space-y-1">
+              <p style={{ fontSize: "var(--yz-fs-sm)" }}>
+                {t("iceAktarimDavetOzeti", {
+                  gonderilen: sonuc.davet_gonderildi,
+                  basarisiz: sonuc.davet_basarisiz,
+                })}
+              </p>
+              {sonuc.davet_basarisiz > 0 && (
+                <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-danger)" }}>
+                  {t("iceAktarimDavetUyari")}
+                </p>
+              )}
+            </div>
           )}
         </section>
       )}

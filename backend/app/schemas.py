@@ -6824,6 +6824,15 @@ class IceAktarimIstek(BaseModel):
     satirlar: list[IceAktarimSatir] = Field(..., min_length=1, max_length=2000)
     #: True ise HICBIR SEY YAZILMAZ, yalnizca dogrulama raporu doner.
     yalniz_dogrula: bool = False
+    #: (P193 §1) SORUNLU SATIR VARSA NE OLACAK.
+    #:
+    #: VARSAYILAN `false` = AKTARIM YAPILMAZ. P154'te kismi basari
+    #: varsayilandi ("300 satirda 4 hata yuzunden 296'yi reddetmek
+    #: kullaniciyi elle ayiklamaya zorlar") ve o gerekce hâlâ gecerli —
+    #: ama SESSIZ oldugu icin kusurluydu: yonetici 50 kisi yukluyor,
+    #: 10'u atlaniyor, kimse fark etmiyor. Artik atlama bir KARARDIR:
+    #: kullanici onizlemede sorunlari gorur ve acikca "atla" der.
+    sorunlulari_atla: bool = False
     #: Yalniz gecmis listesinde gosterilir. DOSYANIN KENDISI SAKLANMAZ —
     #: icinde kisisel veri olabilir (KVKK: veri en az).
     dosya_adi: str | None = Field(None, max_length=255)
@@ -6845,6 +6854,18 @@ class IceAktarimSonuc(BaseModel):
     #: Yalniz UYGULANDIGINDA doner; onizlemede `null`. Geri alma bunu
     #: kullanir.
     aktarim_id: uuid.UUID | None = None
+    # --- (P193 §1) ------------------------------------------------------- #
+    #: HICBIR SEY YAZILMADI: sorunlu satir var ve kullanici "sorunlulari
+    #: atla" DEMEDI. Onizlemede daima `false` doner (onizleme zaten
+    #: yazmaz); yalnizca gercek aktarim isteginde anlamlidir.
+    uygulanmadi: bool = False
+    #: Davet ULASAN kisi sayisi. "Kac kisi eklendi" ile "kac kisiye
+    #: ulasildi" AYRI sorulardir: hesap acilmis ama daveti gitmemis bir
+    #: kisi sisteme HIC giremez ve yoneticinin bunu bilmesi gerekir.
+    davet_gonderildi: int = 0
+    davet_basarisiz: int = 0
+    #: Daveti gitmeyen satirlar — satir numarasiyla.
+    davet_hatalari: list[IceAktarimHata] = Field(default_factory=list)
 
 
 class IceAktarimOut(BaseModel):
