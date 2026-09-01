@@ -210,13 +210,27 @@ async def hesap_silme_kodu_iste(
     """
     if not user.telefon:
         raise APIError(422, "no_phone", "telefon_yok")
-    # (P196) SMS varsayilan KAPALI: sonuc okunmadan "gonderildi" demek,
-    # kullaniciyi hic gelmeyecek bir kodu beklemeye birakirdi.
-    sms_sonuc = await kod_uret_ve_gonder(
+    # (P196) SMS YOLUNDA HATA DONULMUYOR — VE BU BILINCLI BIR ISTISNA.
+    #
+    # Ilk yazimda buraya da 502 konuldu (e-posta yollariyla simetrik
+    # olsun diye). SONUCU OLCULDU VE GERI ALINDI: SMS urun genelinde
+    # KAPALI (`SMS_AKTIF=false`), yani bu uc her zaman 502 donerdi. O
+    # zaman TELEFON-ONLY bir kullanicinin hesabini silmesinin HICBIR yolu
+    # kalmiyor — e-posta yolu (`/me/hesap-sil/eposta-kod-iste`) onun
+    # e-postasi olmadigi icin calismaz. Hesap silmeyi imkansiz kilmak bir
+    # MAGAZA SARTI ihlalidir (`test_parolasiz_kullanici_HESABINI_SILEBILIR`
+    # tam da bunu kilitliyor).
+    #
+    # Yani burada "dogru" olan iki sey catisiyor: kullaniciya yalan
+    # soylememek ve hesap silme yolunu acik tutmak. Ikincisi agir basiyor.
+    # Sessizlik yine de KALDIRILDI: `kod_uret_ve_gonder` basarisizligi
+    # ERROR olarak logluyor, yani operator gorebiliyor.
+    #
+    # ASIL COZUM URUN KARARI: ya SMS acilir ya da telefon-only kullaniciya
+    # e-postasiz bir silme yolu verilir. Ikisi de bu turun kapsami disinda.
+    await kod_uret_ve_gonder(
         db, tenant_id=user.tenant_id, telefon=user.telefon, amac="hesap_silme"
     )
-    if sms_sonuc.durum != "gonderildi":
-        raise APIError(502, "bad_gateway", "kod_gonderilemedi")
     return {"durum": "gonderildi"}
 
 

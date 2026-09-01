@@ -280,6 +280,48 @@ class NetgsmSmsSaglayici(MesajSaglayici):
         return GonderimSonucu("hata", self.ad, hata=kod or "bos_yanit")
 
 
+class KonsolEpostaSaglayici(MesajSaglayici):
+    """(P196) GELISTIRME/TEST TASIYICISI — teslimat KONSOLA yapilir.
+
+    =======================================================================
+    NEDEN VAR
+    =======================================================================
+    P196'da kod gonderimi "sessizce basarisiz olamaz" kuralina baglandi:
+    saglayici mesaji kabul etmezse uc 502 doner. DOGRU davranis, ama bir
+    yan etkisi vardi — dev ortaminda hic SMTP YOK, dolayisiyla e-posta
+    kodu isteyen HER akis (hesap silme, profil e-postasi) artik 502
+    doner ve o akislar dev'de HIC calistirilamaz hale gelir. Yedi test
+    bu yuzden dustu; testleri zayiflatmak, kaybedilen seyin ta kendisini
+    (uctan uca kapsam) atmak olurdu.
+
+    Bu tasiyici mesaji GERCEKTEN teslim eder — hedefi konsoldur. Dev'de
+    kod, konteyner gunlugunde okunabilir; akis uctan uca calisir.
+
+    =======================================================================
+    NEDEN PRODA SIZMAZ
+    =======================================================================
+    ACIKCA secilmeden devreye GIRMEZ (`EPOSTA_SAGLAYICI=konsol`).
+    Varsayilan hala `LogEpostaSaglayici`dir ve o "gonderilmedi" der.
+    Yanlislikla acilirsa gorunur olsun diye:
+      * her gonderimde WARNING loglanir (INFO degil),
+      * `mesaj_gonderim` govdesine tasiyici adi yazilir.
+    Yani "gonderildi" yazan bir satirin gercekte nereye gittigi
+    gecmisten okunabilir.
+    """
+
+    ad = "konsol-eposta"
+
+    def gonder(self, hedef: str, konu: str | None, govde: str, html: str | None = None, headers: dict[str, str] | None = None) -> GonderimSonucu:
+        # GOVDE TAM YAZILIR — bu tasiyicinin BUTUN AMACI kodu okunabilir
+        # kilmak. Uretimde asla acilmamali; WARNING seviyesi bunu
+        # operatorun gozune sokar.
+        logger.warning(
+            "[E-POSTA/konsol] TESLIMAT KONSOLA: %s <- %s\n%s",
+            maskele_kimlik(hedef), konu, govde,
+        )
+        return GonderimSonucu("gonderildi", self.ad)
+
+
 class LogEpostaSaglayici(MesajSaglayici):
     """VARSAYILAN e-posta saglayicisi — SMTP yapilandirilmamissa loglar."""
 

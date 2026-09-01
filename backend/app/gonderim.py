@@ -124,6 +124,15 @@ def eposta_saglayicisi(ayar: SaglayiciAyari | None = None) -> MesajSaglayici:
     SMTP yapilandirmasini kopyalamak zorundaydi ve biri guncellenip oteki
     unutulurdu.
     """
+    # (P196) ACIK SECIM: gelistirme/test tasiyicisi. Tesis ayarindan da
+    # ENV'den de ONCE bakilir cunku bu bir ORTAM karari — "bu makinede
+    # posta konsola gider" demektir.
+    from .config import settings as _st
+
+    if (getattr(_st, "eposta_saglayici", "") or "").lower() == "konsol":
+        from .mesajlasma import KonsolEpostaSaglayici
+
+        return KonsolEpostaSaglayici()
     # (P168 §4) TESIS AYARI ONCE, ENV YEDEK.
     a = _ayardan_veya_env(ayar)
     if not a.smtp_host:

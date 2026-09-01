@@ -89,6 +89,37 @@ saklanmasının anlamı, düz metnini başka bir tabloya yazmamaktır. Gövdeye
 | `banka.py` makbuz e-postası | Hayır (yan iş) | değişmedi, bilinçli |
 | `tanitim.py` iletişim formu | Hayır (kayıt zaten atıldı) | değişmedi, bilinçli |
 
+**K7 — Dev'e çalışan bir posta hedefi verildi (`EPOSTA_SAGLAYICI=konsol`).**
+K2'nin bir yan etkisi ölçüldü: dev'de hiç SMTP olmadığı için e-posta kodu
+isteyen **her** akış 502 dönmeye başladı ve **7 test düştü** (hesap silme
+akışları dev'de çalıştırılamaz oldu). Testleri zayıflatmak, kaybedilen
+şeyin ta kendisini — uçtan uca kapsamı — atmak olurdu.
+
+Çözüm: mesajı **gerçekten teslim eden** bir geliştirme taşıyıcısı; hedefi
+konsol. Dev'de kod `docker compose logs api` içinde okunur, akış uçtan uca
+çalışır. **Prod'a sızmaz:** `docker-compose.prod.yml` bu değişkeni
+taşımaz, varsayılan boştur ve gerçek SMTP seçilir. Yanlışlıkla açılırsa
+görünür olsun diye her gönderim **WARNING** loglar ve taşıyıcı adı
+`mesaj_gonderim` gövdesine yazılır (`tasiyici=konsol-eposta`).
+
+**K8 — SMS yolunda hata DÖNÜLMEDİ; bilinçli istisna.**
+Simetri olsun diye `/me/hesap-sil/kod-iste` (SMS) da 502 yapılmıştı.
+**Ölçüldü ve geri alındı:** SMS ürün genelinde kapalı (`SMS_AKTIF=false`),
+yani o uç her zaman 502 dönerdi — ve o zaman **telefon-only bir
+kullanıcının hesabını silmesinin hiçbir yolu kalmıyor** (e-posta yolu
+onun e-postası olmadığı için çalışmaz). Hesap silmeyi imkânsız kılmak bir
+mağaza şartı ihlalidir; `test_parolasiz_kullanici_HESABINI_SILEBILIR` tam
+bunu kilitliyor.
+
+Burada iki doğru çatışıyor: kullanıcıya yalan söylememek ve hesap silme
+yolunu açık tutmak. İkincisi ağır bastı. Sessizlik yine de kaldırıldı —
+başarısızlık ERROR olarak loglanıyor.
+
+> **Açık madde (ürün kararı sizde):** telefon-only kullanıcı için ya SMS
+> açılmalı ya da e-postasız bir hesap silme yolu verilmeli. Bugün o
+> kullanıcıya "kod gönderildi" deniyor ama SMS kapalı olduğu için kod
+> gitmiyor.
+
 ## NE ÖLÇTÜM
 
 **Kök nedenin kanıtı** (dev API, gerçek yönetici oturumu):
@@ -124,8 +155,26 @@ hata: smtp_yapilandirilmadi   ->   hata: STARTTLS extension not supported
 Hata metninin değişmesi, artık **tesisin kendi sunucusuna gerçekten
 bağlanıldığını** gösteriyor; eskiden o ayar hiç okunmuyordu.
 
-**Testler:** `test_p196_gonderim_sessiz_basarisizlik.py` — 6 test.
-İlgili suite'lerle birlikte 91 test yeşil.
+**Düzeltmeden sonra, konsol taşıyıcısıyla (dev):**
+
+```
+POST /me/eposta/kod-iste -> HTTP 200 {"durum": "gonderildi"}
+mesaj_gonderim: 01 Sep 14:03 eposta gonderildi | ... | hata: None
+
+api günlüğü:
+  WARNING [E-POSTA/konsol] TESLIMAT KONSOLA: p****@ornek.com
+  E-posta adresinizi doğrulamak için kodunuz aşağıdadır.
+  Kod: 324053
+```
+
+Tablo geçmişi düzeltmenin üç adımını da gösteriyor:
+`smtp_yapilandirilmadi` → `STARTTLS not supported` (tesis ayarı artık
+okunuyor) → `gonderildi`.
+
+**Testler:** `test_p196_gonderim_sessiz_basarisizlik.py` — 7 test.
+Başarısızlık yolu **ortamdan bağımsız** ölçülüyor (sağlayıcı süreç içinde
+değiştirilerek); ortamın sağlayıcısına bağlı bir "502 bekle" testi,
+yarın dev'e gerçek SMTP girildiğinde sessizce anlamsızlaşırdı.
 
 ## Ölçemediklerim
 
@@ -152,3 +201,28 @@ SELECT created_at, durum, konu, hata FROM mesaj_gonderim
 Dağıtımdan sonra profil e-postasını bir kez değiştirin: satır
 `gonderildi` ise iş tamam; `basarisiz` ise `hata` sütunu **nedenini**
 yazıyor olacak — artık sessiz değil.
+
+---
+
+## Dağıtım notu
+
+**Göç yok.** Yalnız `api` (+ aynı imajı paylaşan `worker`) kurulmalı.
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml build api worker
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d api worker
+```
+
+**`EPOSTA_SAGLAYICI` prod'a KONULMAZ.** `docker-compose.prod.yml` bu
+değişkeni taşımıyor; varsayılan boş kalır ve gerçek SMTP seçilir.
+`.env.prod`a da eklemeyin. Yanlışlıkla `konsol` yazılırsa: her gönderim
+WARNING loglar ve `mesaj_gonderim` gövdesinde `tasiyici=konsol-eposta`
+görünür — yani sessiz kalmaz.
+
+### Davranış değişiklikleri
+1. `/me/eposta/kod-iste` ve `/me/hesap-sil/eposta-kod-iste` gönderim
+   başarısızsa artık **502** döner (eskiden 200 + "gonderildi").
+2. `POST /auth/oauth/rol-tamamla` OTP dalında aynı kural.
+3. Kod gönderimleri artık `mesaj_gonderim` tablosunda **görünür**.
+4. Giriş kodu ve parola sıfırlama uçları **değişmedi** (sızdırmama).
+5. SMS yolu **değişmedi** — gerekçe K8.

@@ -240,6 +240,18 @@ services:
       MEDIAMTX_API_URL: ${MEDIAMTX_API_URL:-}
       KAMERA_CANLI_SINIR: ${KAMERA_CANLI_SINIR:-3}
       YENI_KAYIT_AKISI: ${YENI_KAYIT_AKISI:-false}
+      # (P196) DEV VARSAYILANI `konsol`: e-posta konsola teslim edilir.
+      #
+      # NEDEN: P196 kod gonderimini "sessizce basarisiz olamaz" kuralina
+      # bagladi — saglayici mesaji kabul etmezse uc 502 doner. Dev'de hic
+      # SMTP olmadigi icin bu, e-posta kodu isteyen HER akisi (hesap
+      # silme, profil e-postasi degistirme) dev'de calistirilamaz hale
+      # getirirdi. Konsol tasiyicisi akisi uctan uca calistirir; kod
+      # `docker compose logs api` icinde okunur.
+      #
+      # PRODDA ASLA `konsol` OLMAZ: `docker-compose.prod.yml` bu degiskeni
+      # TASIMAZ, yani orada varsayilan bos kalir ve gercek SMTP secilir.
+      EPOSTA_SAGLAYICI: ${EPOSTA_SAGLAYICI:-konsol}
       SMS_AKTIF: ${SMS_AKTIF:-false}
       TICARI_ILETI_AKTIF: ${TICARI_ILETI_AKTIF:-false}
       SMS_SAGLAYICI: ${SMS_SAGLAYICI:-}
@@ -404,6 +416,18 @@ services:
       # birakilan bir bayrak, ortamda "yok" gibi gorunur ve operator onu
       # aramaya kalkinca hicbir yerde bulamaz.
       YENI_KAYIT_AKISI: ${YENI_KAYIT_AKISI:-false}
+      # (P196) DEV VARSAYILANI `konsol`: e-posta konsola teslim edilir.
+      #
+      # NEDEN: P196 kod gonderimini "sessizce basarisiz olamaz" kuralina
+      # bagladi — saglayici mesaji kabul etmezse uc 502 doner. Dev'de hic
+      # SMTP olmadigi icin bu, e-posta kodu isteyen HER akisi (hesap
+      # silme, profil e-postasi degistirme) dev'de calistirilamaz hale
+      # getirirdi. Konsol tasiyicisi akisi uctan uca calistirir; kod
+      # `docker compose logs api` icinde okunur.
+      #
+      # PRODDA ASLA `konsol` OLMAZ: `docker-compose.prod.yml` bu degiskeni
+      # TASIMAZ, yani orada varsayilan bos kalir ve gercek SMTP secilir.
+      EPOSTA_SAGLAYICI: ${EPOSTA_SAGLAYICI:-konsol}
       SMS_AKTIF: ${SMS_AKTIF:-false}
       TICARI_ILETI_AKTIF: ${TICARI_ILETI_AKTIF:-false}
       SMS_SAGLAYICI: ${SMS_SAGLAYICI:-}

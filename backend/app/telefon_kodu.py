@@ -142,7 +142,10 @@ async def eposta_kodu_uret_ve_gonder(
                         amac="operasyonel",
                         hedef=eposta,
                         konu=konu,
-                        govde=f"[dogrulama kodu: {amac}]",
+                        # TASIYICI ADI GOVDEDE: "gonderildi" yazan bir
+                        # satirin gercekte nereye gittigi gecmisten
+                        # okunabilmeli (orn. dev'de `konsol-eposta`).
+                        govde=f"[dogrulama kodu: {amac} · tasiyici={sonuc.saglayici}]",
                         durum=(
                             "gonderildi"
                             if sonuc.durum == "gonderildi"

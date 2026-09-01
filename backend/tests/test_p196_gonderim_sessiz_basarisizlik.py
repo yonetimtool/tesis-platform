@@ -66,35 +66,26 @@ def _son_gonderim(owner_conn, tenant_id):
         return cur.fetchone()
 
 
-# ==================== A) BASARISIZLIKTA 200 DONMEZ ==================== #
+# ==================== A) HTTP: BASARIDA IZ KALIR, KOD SIZMAZ ========== #
+#
+# NOT — NEDEN BURADA "502" OLCULMUYOR: dev/test ortami P196'da KONSOL
+# tasiyicisina baglandi (`EPOSTA_SAGLAYICI=konsol`), yani gonderim burada
+# BASARILI olur. Basarisizlik yolu ortamdan bagimsiz olsun diye SUREC
+# ICINDE, saglayici degistirilerek olculuyor (B bolumu). Ortamin
+# saglayicisina bagli bir "502 bekle" testi, yarin dev'e gercek SMTP
+# girildiginde sessizce anlamsizlasirdi.
 
-def test_KOD_GONDERILEMEZSE_UC_200_DONMEZ(client, world, owner_conn):
-    """Dev'de SMTP yok -> saglayici LOG -> gonderim YOK -> 502.
-
-    Eskiden bu istek 200 + {"durum": "gonderildi"} donuyordu; kullanici
-    hic gelmeyecek bir kodu bekliyordu.
-    """
+def test_HTTP_akisi_CALISIR_ve_IZ_BIRAKIR(client, world, owner_conn):
+    """Uctan uca: kod iste -> 200 -> `mesaj_gonderim`de satir."""
     h = _giris(client, world["slug_a"], world["yonetici_a"])
     yeni = f"p196-{uuid.uuid4().hex[:10]}@ornek.com"
     r = client.post("/me/eposta/kod-iste", headers=h, json={"eposta": yeni})
-    assert r.status_code == 502, r.text
-    assert r.json()["error"]["code"] == "bad_gateway"
-
-
-def test_BASARISIZ_DENEMENIN_IZI_KALIR(client, world, owner_conn):
-    """`mesaj_gonderim`e satir DUSER — hata donup transaction geri
-    alinsa bile. Kayit AYRI oturumda yazilir; ilk yazimda ayni
-    transaction'a yazilmis ve 502 ile birlikte SILINMISTI (olculdu)."""
-    h = _giris(client, world["slug_a"], world["yonetici_a"])
-    yeni = f"p196-{uuid.uuid4().hex[:10]}@ornek.com"
-    r = client.post("/me/eposta/kod-iste", headers=h, json={"eposta": yeni})
-    assert r.status_code == 502, r.text
+    assert r.status_code == 200, r.text
 
     satir = _son_gonderim(owner_conn, world["a"])
     assert satir is not None, "gonderim denemesi HIC iz birakmadi"
     durum, konu, govde, hata = satir
-    assert durum == "basarisiz", f"durum {durum!r} — basarisiz olmaliydi"
-    assert hata, "hata metni bos: operator NEDEN sorusunu yanitlayamaz"
+    assert durum == "gonderildi", f"durum {durum!r}"
 
 
 def test_KOD_GOVDEYE_YAZILMAZ(client, world, owner_conn):
@@ -111,6 +102,9 @@ def test_KOD_GOVDEYE_YAZILMAZ(client, world, owner_conn):
         f"gonderim gecmisine DUZ KOD yazilmis: {govde!r}"
     )
     assert "dogrulama kodu" in (govde or "").lower()
+    # TASIYICI ADI da yazili olmali: "gonderildi" diyen bir satirin
+    # gercekte nereye gittigi gecmisten okunabilmeli.
+    assert "tasiyici=" in (govde or "")
 
 
 # ==================== B) BASARI YOLU (surec ici) ==================== #
@@ -212,6 +206,81 @@ def test_BASARIDA_gecmis_satiri_gonderildi(world, owner_conn):
         satir = cur.fetchone()
     assert satir is not None, "basarili gonderim de IZ BIRAKMALI"
     assert satir[0] == "gonderildi", satir
+
+
+def test_BASARISIZLIKTA_satir_basarisiz_ve_HATA_METNI_var(world, owner_conn):
+    """GONDERIM BASARISIZKEN: satir `basarisiz` + `hata` DOLU.
+
+    Ortamdan BAGIMSIZ: saglayici surec icinde degistirilir. Bu testin
+    olctugu sey, kullanicinin sikayetindeki ASIL durumdur — saglayici
+    "gonderemedim" diyor ve bunun bir IZI kalmali.
+    """
+    import asyncio
+
+    from app import telefon_kodu
+    from app.db import SessionLocal, set_tenant
+    from app.mesajlasma import GonderimSonucu, MesajSaglayici
+
+    class _KirikSaglayici(MesajSaglayici):
+        ad = "kirik-test"
+
+        def gonder(self, hedef, konu, govde, html=None, headers=None):
+            return GonderimSonucu(
+                "yapilandirilmadi", self.ad, "smtp_yapilandirilmadi"
+            )
+
+    eposta = f"p196-kirik-{uuid.uuid4().hex[:8]}@ornek.com"
+
+    async def _kos():
+        from app.db import engine
+
+        await engine.dispose(close=False)
+        try:
+            import app.gonderim as gonderim_modulu
+
+            eski = gonderim_modulu.saglayici
+            gonderim_modulu.saglayici = lambda kanal, ayar=None: _KirikSaglayici()
+            try:
+                async with SessionLocal() as s:
+                    async with s.begin():
+                        await set_tenant(s, world["a"])
+                        return await telefon_kodu.eposta_kodu_uret_ve_gonder(
+                            s, tenant_id=world["a"], eposta=eposta,
+                            amac="eposta_ekle",
+                        )
+            finally:
+                gonderim_modulu.saglayici = eski
+        finally:
+            await engine.dispose()
+
+    sonuc = asyncio.run(_kos())
+    assert sonuc.durum != "gonderildi", "kirik saglayici 'gonderildi' DEMEMELI"
+
+    with owner_conn.cursor() as cur:
+        cur.execute(
+            "SELECT durum, hata FROM mesaj_gonderim WHERE hedef = %s", (eposta,)
+        )
+        satir = cur.fetchone()
+    assert satir is not None, "BASARISIZ deneme de IZ BIRAKMALI"
+    assert satir[0] == "basarisiz", satir
+    assert satir[1], "hata metni bos: operator NEDEN sorusunu yanitlayamaz"
+
+
+def test_UC_SONUCU_OKUYOR_kaynak_kilidi():
+    """Uc, gonderim sonucunu OKUYUP hata donuyor mu (kaynak uzerinden).
+
+    Davranis testi ortamin saglayicisina baglidir (dev'de konsol tasiyici
+    var, gonderim basarili olur). Bu kilit ortamdan bagimsizdir: kod
+    yolunda `durum != "gonderildi"` kontrolu ve 502 DURUYOR mu?
+    """
+    from pathlib import Path
+
+    kok = Path(__file__).resolve().parent.parent
+    me = (kok / "app" / "routers" / "me.py").read_text(encoding="utf-8")
+    assert 'sonuc.durum != "gonderildi"' in me, (
+        "uc gonderim sonucunu OKUMUYOR — sessiz basarisizlik geri geldi"
+    )
+    assert '"kod_gonderilemedi"' in me, "hata kodu kayboldu"
 
 
 # ==================== C) AYAR GECILIYOR MU (kaynak kilidi) ============ #
