@@ -740,3 +740,19 @@ test düştü; ikisi gerçek kusurdu:
 
 Birincisi bu turun en değerli bulgusudur: **yeni bir korumalı sayfa
 eklerken `middleware.ts` matcher'ı da güncellenmeli.**
+
+## Backend tam takım: iki gerçek düşüş, üç flake
+
+`4 failed, 2230 passed, 31 skipped, 1 error` çıktı. Ayrıştırdım:
+
+**Gerçek (2):** `test_yapi_yonetimi.py`nin iki Excel testi e-postasız
+satır gönderiyordu ve §1'den sonra bu **hata** veriyor. Testlerin ölçtüğü
+şey e-posta değil, *aynı daireye iki satır* kuralıydı; satırlara e-posta
+eklendi ve kural yeniden görünür oldu. Bu, §1'in bilinçli davranış
+değişikliğinin beklenen yansımasıdır (dağıtım notlarında "Davranış
+değişiklikleri" başlığında yazılı).
+
+**Flake (3):** `test_scheduler_vardiya_ozeti` (2) ve `test_rapor_kuyruk`
+(1, `psycopg.OperationalError`). Üçü de **izolasyonda geçiyor**
+(29 passed) — depoda kayıtlı "uzun oturumda PG bağlantı tükenmesi"
+sınıfı; koda bağlı değil.

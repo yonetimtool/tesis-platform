@@ -312,10 +312,16 @@ def test_EXCELDE_AYNI_DAIREYE_IKI_SATIR_ILKI_KAZANIR(client, yon):
     u = _daire(client, yon)
     t1, t2 = (f"+9053{uuid.uuid4().int % 10**8:08d}" for _ in range(2))
 
+    # (P193 §1) EPOSTA ZORUNLU OLDU: e-postasiz satir artik HATA verir
+    # (SMS kapali oldugu icin o kisiye davet HIC gitmiyordu). Bu testin
+    # olctugu sey AYNI DAIREYE IKI SATIR kurali; e-posta eklenerek o kural
+    # yeniden gorunur kilindi.
     r = client.post("/ice-aktarim/kisi", headers=yon, json={"satirlar": [
         {"satir_no": 1, "degerler": {"ad": "Birinci", "telefon": t1,
+                                     "eposta": f"b{t1[-8:]}@ornek.com",
                                      "daire_no": u["no"]}},
         {"satir_no": 2, "degerler": {"ad": "Ikinci", "telefon": t2,
+                                     "eposta": f"i{t2[-8:]}@ornek.com",
                                      "daire_no": u["no"]}},
     ]})
     assert r.status_code == 201, r.text
@@ -488,10 +494,13 @@ def test_EXCELDE_FARKLI_ROL_IKI_SATIR_IKISI_de_gecer(client, yon):
     u = _daire(client, yon)
     t1, t2 = (f"+9053{uuid.uuid4().int % 10**8:08d}" for _ in range(2))
 
+    # (P193 §1) EPOSTA ZORUNLU — bkz. yukaridaki not.
     r = client.post("/ice-aktarim/kisi", headers=yon, json={"satirlar": [
         {"satir_no": 1, "degerler": {"ad": "Malik", "telefon": t1,
+                                     "eposta": f"m{t1[-8:]}@ornek.com",
                                      "daire_no": u["no"], "rol_tipi": "malik"}},
         {"satir_no": 2, "degerler": {"ad": "Kiraci", "telefon": t2,
+                                     "eposta": f"k{t2[-8:]}@ornek.com",
                                      "daire_no": u["no"], "rol_tipi": "kiraci"}},
     ]})
     assert r.status_code == 201, r.text
