@@ -17,6 +17,36 @@ import re
 import uuid
 
 
+def _sso_jeton(eposta: str) -> str:
+    """(P197) SSO baglama jetonu — callback'in urettiginin AYNISI.
+
+    NEDEN GEREKLI: bu dosya `/auth/kayit/tesis-olustur`u PAROLA yoluyla
+    suruyordu. P197'de e-posta ZORUNLU oldu (`app_user.email` NOT NULL,
+    goc 0089) ve bu ucun e-posta kaynagi SAGLAYICIDIR — parola yolunda
+    hicbir adres yok, dolayisiyla uc 422 `eposta_gerekli` doner.
+
+    OLCULEN DAVRANISLAR DEGISMEDI (kod uretimi, Turkce harf, telefon
+    normalizasyonu, hiz siniri, ayni numara ikinci tesis acamaz); yalnizca
+    KIMLIK YONTEMI, urunde gercekten kullanilan yola cevrildi: web'in
+    kayit sayfasi bu ucu YALNIZ sosyal yolda cagiriyor (parola yolu
+    `yonetici-basvuru` -> `yonetici-dogrula` -> `yonetici-tesis`),
+    mobilde ise hicbir ekran cagirmiyor.
+    """
+    from app.routers.oauth import _baglama_jetonu
+
+    return _baglama_jetonu({
+        "saglayici": "google",
+        "subject": f"sub-{uuid.uuid4().hex}",
+        "eposta": eposta,
+        "email_verified": True,
+        "ad": "SSO Yonetici",
+    })
+
+
+def _eposta() -> str:
+    return f"p197-tesis-{uuid.uuid4().hex[:10]}@ornek.com"
+
+
 def _tel() -> str:
     return "+9059" + str(uuid.uuid4().int)[:8]
 
@@ -36,7 +66,8 @@ def _olustur(client, **ek):
         "tesis_ad": _ad(),
         "ad": "Ayse Yonetici",
         "telefon": _tel(),
-        "parola": "CokGizliParola1",
+        # (P197) PAROLA yerine SSO: bkz. `_sso_jeton`.
+        "baglama_jetonu": _sso_jeton(_eposta()),
     }
     govde.update(ek)
     return client.post("/auth/kayit/tesis-olustur", json=govde)
@@ -48,7 +79,7 @@ def test_P187_telefon_OPSIYONEL_tesis_acilir(client):
     artik tesisi acar (201)."""
     r = client.post("/auth/kayit/tesis-olustur", json={
         "tesis_ad": _ad(), "ad": "Telefonsuz Yonetici",
-        "parola": "CokGizliParola1",
+        "baglama_jetonu": _sso_jeton(_eposta()),
     })
     assert r.status_code == 201, r.text
 
@@ -63,7 +94,7 @@ def test_tesis_ACILIR_kod_uretilir_ve_OTURUM_acilir(client, owner_conn):
         "tesis_ad": "Oltu Sitesi Sinama",
         "ad": "Ayse Yonetici",
         "telefon": tel,
-        "parola": "CokGizliParola1",
+        "baglama_jetonu": _sso_jeton(_eposta()),
     })
     assert r.status_code == 201, r.text
     veri = r.json()
@@ -89,22 +120,31 @@ def test_tesis_ACILIR_kod_uretilir_ve_OTURUM_acilir(client, owner_conn):
             "WHERE u.telefon = %s", (tel,)
         )
         rol, birincil, parola_var, kurulum = cur.fetchone()
-    assert (rol, birincil, parola_var) == ("yonetici", True, True)
+    # (P197) `password_set` artik FALSE: bu uc SOSYAL yoldur ve sosyal
+    # yolda parola HIC YOKTUR — kimlik saglayicidadir. Eskiden test
+    # parola yolunu suruyordu (bkz. `_sso_jeton` notu).
+    assert (rol, birincil, parola_var) == ("yonetici", True, False)
     # Ad BU ISTEKTE verildi; kullaniciyi tekrar adlandirma ekranina
     # dusurmek sartname ADIM 4'e ("Ana ekran") aykiri olurdu.
     assert kurulum is True, "kurulum_tamamlandi=false — adlandirma ekrani tekrar cikar"
 
 
-def test_ayni_parolayla_NORMAL_GIRIS_yapilabilir(client):
-    """Kayittan sonra kullanici KAYDOLDUGU yontemle girer (sartname §3)."""
+def test_SOSYAL_acilan_yoneticinin_PAROLASI_YOKTUR(client):
+    """Kayittan sonra kullanici KAYDOLDUGU yontemle girer (sartname §3).
+
+    (P197) TEST YENIDEN YAZILDI. Eskiden bu dosya ucu PAROLA yoluyla
+    suruyordu ve "ayni parolayla giris" olculuyordu. O yol artik yok:
+    ucun e-posta kaynagi saglayicidir (bkz. `_sso_jeton`). Kural
+    degismedi, YONTEM degisti — sosyal yolla acilan yonetici parolasiz
+    olur ve telefon+parola ile GIREMEZ; SSO ile girer.
+    """
     tel = _tel()
-    r = _olustur(client, telefon=tel, parola="CokGizliParola1")
+    r = _olustur(client, telefon=tel)
     assert r.status_code == 201, r.text
 
     g = client.post("/auth/login-phone",
                     json={"phone": tel, "password": "CokGizliParola1"})
-    assert g.status_code == 200, g.text
-    assert g.json()["password_setup_required"] is False
+    assert g.status_code == 401, g.text
 
 
 # ============ 2) KOD URETIMI — KENAR DURUMLAR (sartname §2) ================ #
@@ -205,14 +245,14 @@ def test_0532_532_ve_90532_AYNI_numaraya_coker(client):
     yerel = "5" + govde[:8]
     ilk = client.post("/auth/kayit/tesis-olustur", json={
         "tesis_ad": _ad(), "ad": "Ayse", "telefon": f"+90{yerel}",
-        "parola": "CokGizliParola1",
+        "baglama_jetonu": _sso_jeton(_eposta()),
     })
     assert ilk.status_code == 201, ilk.text
 
     for bicim in (f"0{yerel}", yerel):
         r = client.post("/auth/kayit/tesis-olustur", json={
             "tesis_ad": _ad(), "ad": "Ayse", "telefon": bicim,
-            "parola": "CokGizliParola1",
+            "baglama_jetonu": _sso_jeton(_eposta()),
         })
         assert r.status_code == 409, (
             f"{bicim!r} AYRI bir hesap acti ({r.status_code}) — "
@@ -230,13 +270,13 @@ def test_0090_oneki_de_AYNI_numaraya_coker(client):
     yerel = "5" + govde[:8]
     ilk = client.post("/auth/kayit/tesis-olustur", json={
         "tesis_ad": _ad(), "ad": "Ayse", "telefon": f"+90{yerel}",
-        "parola": "CokGizliParola1",
+        "baglama_jetonu": _sso_jeton(_eposta()),
     })
     assert ilk.status_code == 201, ilk.text
 
     r = client.post("/auth/kayit/tesis-olustur", json={
         "tesis_ad": _ad(), "ad": "Ayse", "telefon": f"0090{yerel}",
-        "parola": "CokGizliParola1",
+        "baglama_jetonu": _sso_jeton(_eposta()),
     })
     assert r.status_code == 409, r.text
 
@@ -259,8 +299,14 @@ def test_AYNI_NUMARA_ikinci_tesis_acamaz(client):
 
 
 def test_PAROLA_VE_SOSYAL_ikisi_birden_verilemez(client):
-    """Sema kurali: yontem TEK olmali."""
-    r = _olustur(client, baglama_jetonu="herhangi")
+    """Sema kurali: yontem TEK olmali.
+
+    (P197) IKISI DE ACIKCA VERILIYOR: `_olustur` artik varsayilan olarak
+    SSO jetonu koyuyor, yani "parola ekle" demek yetmiyordu — istegin
+    IKI yontemi birden tasidigini gostermek icin ikisi de yaziliyor.
+    """
+    r = _olustur(client, parola="CokGizliParola1",
+                 baglama_jetonu=_sso_jeton(_eposta()))
     assert r.status_code == 422, r.text
 
 
