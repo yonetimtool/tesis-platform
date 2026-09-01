@@ -169,6 +169,7 @@ bu kasıtlıdır (ödeme yanlış hesaba yönlenmesin).
 | 8.3 | Tekrar tetikleyin | Bakiyeler **değişmiyor** (idempotent) |
 | 8.4 | Otomasyon günlüğü kartı | "Otomatik tahakkuk", dönem, adet, tutar satırı var |
 | 8.5 | Plan satırında *Bu ayı atla* → görevi tetikleyin | Tahakkuk yazılmadı; günlükte `durum: ertelendi` |
+| 8.5b | Bir ayı hiç tetiklemeyin, sonraki ayın başında tetikleyin | **Atlanan ay** yazılır (telafi), tahakkuk tarihi kendi ayından; ikinci tetiklemede sıradaki ay |
 | 8.6 | **Hatırlatma** kartı: *Etkin*, vade öncesi **3**, kademeler `3, 10, 30` | Kaydediliyor |
 | 8.7 | Görevi tetikleyin | Ödemeyen sakinlere bildirim; **ödeyene gitmiyor** |
 | 8.8 | Aynı gün tekrar tetikleyin | İkinci bildirim **yok** |
@@ -190,7 +191,7 @@ bu kasıtlıdır (ödeme yanlış hesaba yönlenmesin).
 | 9.5 | Aynı ekstreyi **tekrar** yükleyin | "0 eklendi, 1 yinelenen" |
 | 9.6 | Ekstreye **çıkış** yönlü bir satır ekleyin (örn. `BANKA MASRAFI`, 25 ₺) ve eşleştirin | Kasalarda **Bekleyen çıkış** 25 ₺; bakiye değişmedi |
 | 9.7 | O gideri onaylayın | Banka bakiyesi 25 ₺ düştü |
-| 9.8 | **Sakin olarak** giriş yapın → Makbuzlarım | Eşleşen ödemenin makbuzu listede; PDF bağlantısı açılıyor |
+| 9.8 | **Sakin olarak** giriş yapın → **Aidatım** sayfasının altındaki *Makbuzlarım* bölümü | Eşleşen ödemenin makbuzu listede; PDF bağlantısı açılıyor |
 
 ---
 
@@ -224,7 +225,7 @@ bu kasıtlıdır (ödeme yanlış hesaba yönlenmesin).
 | 12.1 | Şeffaflık → bu ay → *Yayınla* | Yayınlandı |
 | 12.2 | **Sakin olarak**: Şeffaflık | Ay özeti görünüyor; ad/daire **yok** |
 | 12.3 | **Sakin olarak**: Aidatım | Borcu, ödemeleri ve (varsa) faiz kalemi görünüyor |
-| 12.4 | **Sakin olarak**: Makbuzlarım | Yalnız **kendi** makbuzları |
+| 12.4 | **Sakin olarak**: Aidatım → *Makbuzlarım* | Yalnız **kendi** makbuzları |
 
 ---
 
