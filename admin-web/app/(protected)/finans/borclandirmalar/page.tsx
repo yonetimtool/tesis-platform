@@ -97,7 +97,8 @@ const ATLAMA_ETIKET: Record<string, SozlukAnahtari> = {
 function atlamaMetni(t: (a: SozlukAnahtari) => string, neden: string): string {
   // Bilinmeyen bir kod icin GENEL metin doner; ham kodu ekrana basmak
   // kullaniciya anlamsiz bir dize gostermek olurdu.
-  return t(ATLAMA_ETIKET[neden] ?? "finansAtlamaTutarYok");
+  const anahtar = ATLAMA_ETIKET[neden];
+  return anahtar ? t(anahtar) : t("finansAtlamaTutarYok");
 }
 
 interface TopluSatir {
@@ -606,7 +607,7 @@ function TopluModal({
                 daireden 3'u atlanacak" bilgisi sonradan fark edilirse
                 eksik tahakkuk sessizce yayilir. */}
             {(onizleme.satirlar ?? []).some((r) => r.atlama_nedeni) && (
-              <ul className="mt-2 list-disc pl-4">
+              <ul className="mt-2 list-disc ps-4">
                 {(onizleme.satirlar ?? [])
                   .filter((r) => r.atlama_nedeni)
                   .map((r) => (
