@@ -1,7 +1,11 @@
 # P193 — dağıtım notları
 
 Bu tur `docs/yonetici-kurulum-rehberi.md` sonundaki **14 eksik**
-listesini kapatıyor. Sekiz bölüm, sekiz commit, hepsi `main`de.
+listesini kapatıyor. Sekiz bölüm, on iki commit, hepsi `main`de.
+
+> **Panel de dağıtılmalı.** Bu turda `admin-web` içinde `middleware.ts`
+> değişti (yeni korumalı sayfa) ve üç yeni BFF rotası eklendi. Yalnız
+> `api` kurmak, panelin yeni ekranlarını 404'e düşürür.
 
 ---
 
