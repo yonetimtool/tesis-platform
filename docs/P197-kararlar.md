@@ -104,6 +104,38 @@ birincil anahtarı içerir ve DNS'te çözülmez.
 | Excel aktarımı e-postasız satırı hata sayıyor |
 | Anonimleştirme e-postayı NULL yapmıyor |
 
+## 6. NOT NULL'ın ortaya çıkardığı üç şey daha
+
+Kısıtı koyunca üç yer daha düştü — üçü de **kısıtın doğru çalıştığının
+kanıtı**, hata değil:
+
+**a) `/auth/kayit/tesis-olustur`un parola yolu.** Bu ucun e-posta kaynağı
+sağlayıcıdır; parola yolunda hiçbir adres yok. Yolu kapatmadan önce
+kullanılıyor mu diye baktım: **web kayıt sayfası bu ucu yalnız sosyal
+yolda çağırıyor** (parola yolu `yonetici-basvuru → yonetici-dogrula →
+yonetici-tesis`), **mobilde hiçbir ekran çağırmıyor**. Yani ölü koddu.
+17 test SSO yoluna çevrildi; ölçtükleri şeyler (kod üretimi, Türkçe harf,
+telefon normalizasyonu, hız sınırı) aynen duruyor.
+
+**b) Doğrudan `create_tenant_with_yoneticis` çağıran testler.** Fonksiyon
+artık `eposta` yazıyor; vermeyen çağrı `NotNullViolation` alıyor. Testler
+güncellendi — **kural tam da bu**.
+
+**c) `test_retention` anonimleştirme beklentisi.** `email is None`
+bekliyordu; artık sentetik adres. Beklenti düzeltildi ve **neden**i
+yazıldı: KVKK'nın istediği adresin silinmesi değil, kişisel veri
+taşımamasıdır.
+
+**Bir de kendi hatam:** test dosyalarını düzenleyip imajı yeniden kurmadan
+koştum; backend imajı kodu **gömüyor**, dolayısıyla ilk sonuçlar eski
+dosyalarla çıktı. Yeniden kurunca dosya 17/17 geçti.
+
+## 7. Hesap silme: mağaza şartı korundu
+
+`test_parolasiz_kullanici_HESABINI_SILEBILIR` bu turda da **yeşil** —
+kanal değişti, kural değişmedi: parolasız kullanıcı hesabını hâlâ
+silebiliyor, kod artık e-postasına gidiyor.
+
 ## NE ÖLÇTÜM
 
 ```
