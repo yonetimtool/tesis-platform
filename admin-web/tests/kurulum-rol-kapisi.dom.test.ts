@@ -110,6 +110,7 @@ describe("(P167) rol kapisi MEKANIZMASI duruyor", () => {
       etiket: "kurulumAidat",
       aciklama: "kurulumAidatAlt",
       rota: "/dues",
+      engel: "kurulumEngelAidat",
       rolGerekli: ["admin"],
     };
     expect(ornek.rolGerekli).toEqual(["admin"]);

@@ -13271,8 +13271,9 @@ components:
           description: |
             Adim kodu — METIN DEGIL KIMLIK. Etiket istemcide aktif dilde
             cozulur. Kume SABIT ve `routers/kurulum.py::ADIMLAR` ile ayni.
-          enum: [blok, daire, daire_tipi, sakin, personel, gorev_alani,
-                 nfc_noktasi, aidat]
+          enum: [blok, daire, daire_tipi, sakin, eposta, personel,
+                 gorev_alani, nfc_noktasi, kasa, aidat,
+                 rezervasyon_alani, sayac]
         sayi:
           type: integer
           description: >
@@ -13281,6 +13282,12 @@ components:
             soylemez.
         tamam: { type: boolean, description: "sayi > 0 — VERIDEN sayilir" }
         atlandi: { type: boolean, description: "BILINCLI atlandi" }
+        zorunlu:
+          type: boolean
+          default: false
+          description: >
+            (P193) Adim MINIMUM CALISIR KURULUMUN parcasi mi. Karar
+            sunucuda tek yerde durur; istemci yalnizca cizer.
     KurulumDurumu:
       type: object
       required: [adimlar, toplam, gecilen]
@@ -13295,6 +13302,22 @@ components:
             Tamamlanan + BILINCLI ATLANAN. Atlanani saymasaydik, bilincli
             atlayan bir tesis %100'e asla ulasamaz ve gosterge kalici bir
             sitem olurdu.
+        zorunlu_toplam:
+          type: integer
+          default: 0
+          description: "(P193) Minimum calisir kurulumdaki adim sayisi."
+        eksik_zorunlular:
+          type: array
+          default: []
+          items: { type: string }
+          description: >
+            (P193) Tamamlanmamis ZORUNLU adim kodlari. ATLAMA burada
+            SAYILMAZ: atlamak gostergeyi rahatlatir, gercegi degistirmez —
+            kasasi olmayan tesis, adim atlandi diye tahsilat yapamaz.
+        calisir:
+          type: boolean
+          default: true
+          description: "(P193) Eksik zorunlu adim yok."
     KurulumAtla:
       type: object
       required: [kod]

@@ -15,6 +15,16 @@ export interface KurulumHedefi {
   aciklama: SozlukAnahtari;
   rota: string;
   /**
+   * (P193 §2) Adim EKSIKKEN NE CALISMAZ.
+   *
+   * Sihirbaz bugune kadar "sunu yap" diyordu ama "yapmazsan ne olur"u
+   * hic soylemiyordu. Rehberi yazarken gorulen kusur buydu: yonetici
+   * kasa adimini atliyor, sonucu ilk tahsilati girmeye calisirken
+   * ogreniyordu. Metin ADIM BASINA burada durur cunku bir CIZIM
+   * karari degil, urun bilgisidir ve tek yerde olmali.
+   */
+  engel: SozlukAnahtari;
+  /**
    * Adimi TAMAMLAMAK icin gereken roller. Verilmezse adim, sihirbazi
    * gorebilen her rolde tamamlanabilir.
    */
@@ -44,26 +54,40 @@ export const KURULUM_HEDEFLERI: Record<string, KurulumHedefi> = {
     etiket: "kurulumBlok",
     aciklama: "kurulumBlokAlt",
     rota: "/building-editor",
+    engel: "kurulumEngelBlok",
   },
   daire: {
     etiket: "kurulumDaire",
     aciklama: "kurulumDaireAlt",
     rota: "/building-editor",
+    engel: "kurulumEngelDaire",
   },
   daire_tipi: {
     etiket: "kurulumDaireTipi",
     aciklama: "kurulumDaireTipiAlt",
     rota: "/tanimlar?defter=unit-tipleri",
+    engel: "kurulumEngelDaireTipi",
   },
   sakin: {
     etiket: "kurulumSakin",
     aciklama: "kurulumSakinAlt",
     rota: "/users",
+    engel: "kurulumEngelSakin",
+  },
+  // (P193 §2) E-POSTA — davetlerin gittigi TEK kanal (SMS varsayilan
+  // kapali). Hedef ekran "Mesajlar": ayarlarin girildigi ve TEST
+  // GONDERIMININ yapildigi yer orasi.
+  eposta: {
+    etiket: "kurulumEposta",
+    aciklama: "kurulumEpostaAlt",
+    rota: "/mesajlar",
+    engel: "kurulumEngelEposta",
   },
   personel: {
     etiket: "kurulumPersonel",
     aciklama: "kurulumPersonelAlt",
     rota: "/tanimlar?defter=personel-kayitlari",
+    engel: "kurulumEngelPersonel",
   },
   gorev_alani: {
     etiket: "kurulumGorevAlani",
@@ -75,20 +99,45 @@ export const KURULUM_HEDEFLERI: Record<string, KurulumHedefi> = {
     // kategorileri yalniz OKUYOR; kullanici oraya gidip adimi
     // tamamlayamiyordu. Adim, olculen seyin YARATILDIGI ekrana bakmali.
     rota: "/tanimlar?defter=gorev-kategorileri",
+    engel: "kurulumEngelGorevAlani",
   },
   nfc_noktasi: {
     etiket: "kurulumNfc",
     aciklama: "kurulumNfcAlt",
     rota: "/checkpoints",
+    engel: "kurulumEngelNfc",
+  },
+  // (P193 §2) KASA — tahsilat bir kasaya yazilir; kasasiz tesiste
+  // tahakkuk yazilabilir ama TAHSIL EDILEMEZ.
+  kasa: {
+    etiket: "kurulumKasa",
+    aciklama: "kurulumKasaAlt",
+    rota: "/tanimlar?defter=kasalar",
+    engel: "kurulumEngelKasa",
   },
   aidat: {
     etiket: "kurulumAidat",
     aciklama: "kurulumAidatAlt",
     rota: "/dues",
+    engel: "kurulumEngelAidat",
     // (P167) `rolGerekli` KALKTI: `POST /dues/assessments` yoneticiye
     // acildi, yani adim artik yoneticinin KENDI hesabiyla tamamlanabilir.
     // Alan mekanizma olarak DURUYOR (asagidaki nota bak) — yarin baska bir
     // adim ayni duruma duserse tek satirla isaretlenir.
+  },
+  // (P193 §2) ISTEGE BAGLI IKI MODUL — tanim yapilmadan SESSIZCE bos
+  // gorunuyorlardi; kullanici modulu bozuk saniyordu.
+  rezervasyon_alani: {
+    etiket: "kurulumRezervasyonAlani",
+    aciklama: "kurulumRezervasyonAlaniAlt",
+    rota: "/rezervasyon-yonetimi",
+    engel: "kurulumEngelRezervasyonAlani",
+  },
+  sayac: {
+    etiket: "kurulumSayac",
+    aciklama: "kurulumSayacAlt",
+    rota: "/tanimlar?defter=sayaclar-ana",
+    engel: "kurulumEngelSayac",
   },
 };
 

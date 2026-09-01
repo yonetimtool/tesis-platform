@@ -101,3 +101,119 @@ Backend: `backend/tests/test_ice_aktarim.py` **18 test geçti**.
 - Gerçek bir `.xlsx` dosyasıyla tarayıcıdan yükleme (dosyayı panel
   ayrıştırıyor; testler yapıştırılan metinle ölçüyor — ayrıştırma yolu
   aynı, dosya okuma katmanı değil).
+
+---
+
+## Bölüm 2 — Kurulum sihirbazı (14 eksik · maddeler 11, 12, 13, 14)
+
+### Sorun
+Sihirbaz sekiz adımdı ve kurulumun **en kritik iki bağımlılığını** hiç
+sormuyordu: e-posta gönderimi (davetlerin gittiği tek kanal) ve kasa
+(tahsilatın yazıldığı yer). Ayrıca hiçbir adım "yapmazsan ne olmaz"
+demiyordu; yönetici kasayı atlıyor, sonucu ilk tahsilatı girmeye
+çalışırken öğreniyordu.
+
+### Kararlar
+
+**K2.1 — Dört yeni adım. Sekiz → on iki.**
+
+| Adım | Neden | Zorunlu mu |
+|---|---|---|
+| **E-posta gönderimi** (sakinden hemen sonra) | Davetler e-postayla gidiyor; çalışmıyorsa açılan hesapların hiçbirine girilemez ve bu ancak şikâyet gelince anlaşılır. | Evet |
+| **Kasa** (aidattan önce) | Tahsilat bir kasaya yazılır. Kasasız tesiste borç yazılabilir, para giremez. | Evet |
+| **Rezervasyon alanları** | Tanımsızken modül sessizce boş görünüyor; kullanıcı bozuk sanıyor. | Hayır |
+| **Sayaçlar** | Aynı sebep. | Hayır |
+
+Sıra tesadüf değil ve testle kilitli: e-posta **sakinden hemen sonra**
+(ilk toplu davet oradan çıkar; önce yüzlerce hesap açıp sonra
+"e-postam çalışmıyormuş" demek, davetleri tek tek yeniden göndermek
+demektir), kasa **aidattan önce** (önce para kutusu, sonra borç).
+
+*Görev kategorisi* rehberde eksik sayılmıştı (madde 12) ama sihirbazda
+**zaten var**: `gorev_alani` adımının sunucudaki ölçüsü `task_category`
+sayısıdır. Rehberdeki bu satır yanlıştı; §8'de düzeltiliyor.
+
+**K2.2 — E-posta adımı sayılamaz, ölçülür.**
+Öteki adımlar bir tablo satırını sayar; e-posta gönderimi sayılamaz —
+tesis kendi SMTP'sini girmemiş olabilir ama **genel (ENV) ayardan**
+çalışıyor olabilir. Adımın cevabı ancak sağlayıcı seçimi çalıştırılarak
+bulunur, ve ölçüt **Mesajlar ekranındaki rozetle birebir aynı**
+(`kanal_saglayicisi("eposta", ayar)` LOG sağlayıcısı mı döndürüyor).
+Ayrı bir ölçüt yazmak ("smtp_host dolu mu"), ENV'de çalışan bir SMTP
+varken sihirbazı yanlış uyarmak olurdu — P172 §1'de kapatılan kusurun
+aynısı.
+
+**K2.3 — "Zorunlu" kararı sunucuda, tek yerde.**
+Her adım artık `zorunlu` bayrağıyla dönüyor ve sunucu ayrıca
+`eksik_zorunlular[]` + `calisir` özetini veriyor. İstemci bunu kendi
+listesinden türetseydi, yeni bir adım eklendiğinde iki liste ayrışırdı.
+
+**K2.4 — İlerleme yüzdesi ile "çalışır mı" AYRI iki sayaç.**
+Atlanan adım ilerlemeyi rahatlatır (bilinçli atlayan tesis %100'e
+ulaşabilmeli) ama **özeti değiştirmez**: kasası olmayan tesis, adım
+atlandı diye tahsilat yapamaz. Bu ayrım hem backend hem panel testinde
+kilitli.
+
+**K2.5 — Her adım "ne engelliyor"u yazıyor.**
+12 adım için 7 dilde engel metni. Biten adımda çizilmez — olmayan bir
+sorunu anlatmak gürültüdür.
+
+**K2.6 — Hatırlatıcıyı geri açma düğmesi sihirbaza taşındı (madde 14).**
+Düğme yalnız `/settings`teydi, yani **yalnız admin** görüyordu; "Daha
+sonra" diyen bir yöneticiye hatırlatma bir daha çıkmıyordu. Artık
+sihirbaz sayfasının özet kartında — kullanıcı hatırlatmayı arıyorsa
+sihirbaza bakar, platform ayarlarına değil. `/settings`teki düğme
+duruyor (admin'in alışkanlığını bozmanın bir faydası yok).
+
+**K2.7 — Özet alanları istemcide OPSİYONEL.**
+Panel ve sunucu ayrı dağıtılıyor; yeni panel bir an eski sunucudan yanıt
+alabilir. Alanları zorunlu saymak sayfayı tamamen boş bırakırdı — bu
+ölçüldü (`undefined.length` ile çizim çöktü, test yazılırken görüldü).
+Özet yoksa yalnız özet çizilmez; adım listesi çalışır.
+
+**Yarım bırakıp devam etme** için kod yazılmadı ve bu bilinçli: durum
+zaten saklanmıyor, **sayılıyor** (`routers/kurulum.py`). Yeni oturumda
+aynı yerden devam edilir; ölçüldü (aşağıda). Sihirbaza yalnız bunu
+söyleyen bir satır eklendi.
+
+### NE ÖLÇTÜM
+
+`acme-plaza` tesisinde, gerçek uca (`GET/PATCH /kurulum`) çağrı yaparak:
+
+```
+BASLANGIC: calisir=False eksik=['daire_tipi','eposta'] zorunlu=7 gecilen=10/12
+  POST /unit-tipleri  -> 201
+TIP EKLENDIKTEN SONRA: calisir=False eksik=['eposta'] gecilen=11/12
+  eposta ATLANDI  -> eksik=['eposta'] calisir=False  gecilen=12/12   ← ayrım
+  atlama GERI ALINDI -> gecilen=11/12
+  YENI OTURUM ayni durumu goruyor: True (11/12)
+```
+
+Üç şey bu çıktıda görünüyor: (a) gerçek bir kayıt yaratınca adım kendi
+kendine tamamlanıyor, (b) **atlamak ilerlemeyi 12/12 yapıyor ama
+`calisir` yine `False`** — istenen ayrım tam olarak bu, (c) yeni bir
+oturum aynı ilerlemeyi görüyor, yani "yarım bırakıp devam etme"
+çalışıyor.
+
+E-posta adımının ölçütünün Mesajlar ekranıyla aynı olduğunu da ayrıca
+doğruladım:
+
+```
+GET  /mesaj-ayarlari       -> eposta_hazir=False  kaynak="yok"
+POST /mesaj-ayarlari/test  -> {"durum":"yapilandirilmadi","hata":"smtp_yapilandirilmadi"}
+```
+
+Sihirbazın `eposta` adımı da `tamam=False` diyor — iki ekran aynı şeyi
+söylüyor. (Dev ortamında SMTP yok; §1'deki davet bulgusuyla aynı kök.)
+
+Ekran tarafı: yeni `admin-web/tests/kurulum-ozet.dom.test.ts` sayfayı
+render ederek ölçüyor — Kasa ve E-posta adımlarının listede olması,
+"Zorunlu adımlar: 5/7" ve engel cümleleri, hepsi tamamken "Tesis çalışır
+durumda", **yöneticinin** hatırlatıcıyı geri açması (`localStorage`
+kaydının gerçekten silindiği), ve eski sunucu yanıtının sayfayı
+kırmaması. 5 test. `test_kurulum.py` 10 test geçti.
+
+### Ölçemediklerim
+- Tarayıcıda gerçek tıklama akışı (adım → hedef ekran → geri dön →
+  adımın tamamlandığını gör). Ölçüm uç ve render seviyesinde.
+- Gerçek SMTP'li bir tesiste `eposta` adımının `tamam=True` olması.

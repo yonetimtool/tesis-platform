@@ -8,9 +8,11 @@ import {
   Dugme,
   HataDurumu,
 } from "@/components/ui";
+import { kurulumHatirlaticiyiAc } from "@/components/KurulumHatirlatici";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
+import { useToast } from "@/components/Toast";
 import { KURULUM_HEDEFLERI } from "@/lib/kurulum-adimlari";
 import { useRol } from "@/lib/rol-kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
@@ -45,17 +47,32 @@ interface Adim {
   sayi: number;
   tamam: boolean;
   atlandi: boolean;
+  /** Ayni dagitim gerekcesiyle OPSIYONEL (bkz. `Durum`). */
+  zorunlu?: boolean;
 }
 interface Durum {
   adimlar: Adim[];
   toplam: number;
   gecilen: number;
+  /**
+   * (P193 §2) Ozet alanlari OPSIYONEL YAZILDI.
+   *
+   * Panel ve sunucu AYRI dagitiliyor: yeni panel bir an eski sunucudan
+   * yanit alabilir. Alanlari zorunlu saymak, o anda sayfayi tamamen
+   * bos birakirdi (olculdu: `undefined.length` ile cizim coktu).
+   * Ozet yoksa yalnizca OZET cizilmez; adim listesi calismaya devam eder.
+   */
+  zorunlu_toplam?: number;
+  /** Tamamlanmamis ZORUNLU adim kodlari — ATLAMA burada sayilmaz. */
+  eksik_zorunlular?: string[];
+  calisir?: boolean;
 }
 
 const UC = "/api/panel/kurulum";
 
 export default function KurulumPage() {
   const t = useT();
+  const toast = useToast();
   const [hata, setHata] = useState<string | null>(null);
   const { data, error, mutate } = useSWR<Durum>(UC, jsonFetcher);
   // (P166 §8.3) ROL — hangi adimlarin bu kullaniciyla tamamlanabilecegini
@@ -75,6 +92,14 @@ export default function KurulumPage() {
 
   const yuzde = data ? Math.round((data.gecilen / data.toplam) * 100) : 0;
   const bitti = data ? data.gecilen === data.toplam : false;
+  // (P193 §2) ZORUNLU SAYACI ilerleme cubugundan AYRI: "10/12" bir tesisin
+  // calisip calismadigini soylemez. Eksik olan tek adim kasaysa tesis
+  // %83 degil, KULLANILAMAZ durumdadir.
+  const eksikZorunlular = data?.eksik_zorunlular ?? [];
+  const zorunluToplam = data?.zorunlu_toplam ?? 0;
+  const zorunluTamam = zorunluToplam - eksikZorunlular.length;
+  const ozetVar = zorunluToplam > 0;
+  const calisir = data?.calisir ?? true;
 
   return (
     <div className="space-y-4">
@@ -117,6 +142,69 @@ export default function KurulumPage() {
         </section>
       )}
 
+      {/* (P193 §2) SIHIRBAZ OZETI — "ne eksik ve NEYI ENGELLIYOR".
+          Adim listesi "sunu yap" der; ozet "yapmazsan su calismaz" der.
+          Rehberi yazarken gorulen kusur buydu: yonetici kasa adimini
+          atliyor, sonucunu ilk tahsilatta ogreniyordu. */}
+      {ozetVar && (
+        <section
+          className="p-kart"
+          aria-label={calisir ? t("kurulumOzetHazir") : t("kurulumOzetEksik")}
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm font-medium text-metin-body">
+              {calisir ? t("kurulumOzetHazir") : t("kurulumOzetEksik")}
+            </p>
+            <span className="text-sm tabular-nums text-metin-muted">
+              {t("kurulumZorunluSayac", {
+                tamam: zorunluTamam,
+                toplam: zorunluToplam,
+              })}
+            </span>
+          </div>
+          <p className="mt-1" style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
+            {calisir ? t("kurulumOzetHazirAlt") : t("kurulumOzetEksikAlt")}
+          </p>
+          {eksikZorunlular.length > 0 && (
+            <ul className="mt-2 space-y-1">
+              {eksikZorunlular.map((kod) => {
+                const h = KURULUM_HEDEFLERI[kod];
+                if (!h) return null;
+                return (
+                  <li key={kod} style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}>
+                    <Link href={h.rota} className="odak-ic underline">
+                      {t(h.etiket)}
+                    </Link>{" "}
+                    <span style={{ color: "var(--yz-text-2)" }}>{t(h.engel)}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+          <p className="mt-2" style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
+            {t("kurulumDevamBilgi")}
+          </p>
+          {/* (P193 §2 / eksik 14) HATIRLATICIYI GERI GETIR — BURADA.
+              Dugme bugune kadar YALNIZ `/settings`teydi, yani yalniz
+              admin goruyordu: "Daha sonra" diyen bir YONETICI icin
+              hatirlatma bir daha CIKMIYORDU. Yeri de burasi: kullanici
+              hatirlatmayi ariyorsa sihirbaza bakar, platform ayarlarina
+              degil. */}
+          <div className="mt-3">
+            <Dugme
+              type="button"
+              boy="kucuk"
+              onClick={() => {
+                kurulumHatirlaticiyiAc();
+                toast.success(t("kurulumTekrarGoster"));
+              }}
+            >
+              {t("kurulumTekrarGoster")}
+            </Dugme>
+          </div>
+        </section>
+      )}
+
       <ol className="space-y-2">
         {(data?.adimlar ?? []).map((a, i) => {
           const h = KURULUM_HEDEFLERI[a.kod];
@@ -154,6 +242,24 @@ export default function KurulumPage() {
                     </span>
                   </p>
                   <p className="mt-1" style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>{t(h.aciklama)}</p>
+                  {/* (P193 §2) ZORUNLU/ISTEGE BAGLI ROZETI ve — bitmemis
+                      adimda — NEYI ENGELLEDIGI. Biten adimda engel metni
+                      cizilmez: olmayan bir sorunu anlatmak gurultudur. */}
+                  {/* Sunucu zorunluluk bilgisi vermiyorsa (eski surum)
+                      ROZET DE CIZILMEZ: "istege bagli" demek, zorunlu bir
+                      adimi yanlis etiketlemek olurdu. */}
+                  <p className="mt-1" hidden={!ozetVar} style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
+                    <span
+                      className="me-2 inline-flex items-center rounded-full px-2 py-0.5"
+                      style={{
+                        background: "var(--yz-metal-1)",
+                        border: "var(--yz-border-w) solid var(--yz-border)",
+                      }}
+                    >
+                      {a.zorunlu ? t("kurulumZorunlu") : t("kurulumIstegeBagli")}
+                    </span>
+                    {a.tamam ? null : t(h.engel)}
+                  </p>
                 </div>
                 <div className="flex shrink-0 flex-wrap gap-2">
                   {/* (P166 §8.3) YETKISIZ ADIMDA ONCE ACIKLAMA: kullanici

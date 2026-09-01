@@ -55,16 +55,62 @@ def test_ADIM_verisi_SILININCE_geri_acilir(client, world, owner_conn):
     assert adimlar["blok"]["tamam"] is False, "veri silindi ama adim tamam kaldi"
 
 
-def test_SEKIZ_adim_ve_kodlari_SABIT(client, world):
+def test_ADIM_KODLARI_SABIT(client, world):
     """Kod kumesi istemcinin etiket sozlugunun anahtaridir; sessizce
-    degisirse sihirbaz cevrilmemis satir cizer."""
+    degisirse sihirbaz cevrilmemis satir cizer.
+
+    (P193 §2) SEKIZ ADIM ON IKI OLDU. Eklenenler ve gerekceleri:
+      * `eposta`  — davetlerin gittigi TEK kanal; calismiyorsa acilan
+        hesaplarin HICBIRINE girilemez ve bu ancak sikayet gelince
+        anlasilirdi (rehber, eksik 13).
+      * `kasa`    — tahsilat bir kasaya yazilir; kasasiz tesiste yonetici
+        ilk tahsilatta duvara carpiyordu (eksik 11).
+      * `rezervasyon_alani`, `sayac` — tanimsizken modul SESSIZCE bos
+        gorunuyor, kullanici bozuk saniyordu (eksik 12).
+
+    SIRA da kilitli: e-posta SAKINDEN HEMEN SONRA (ilk toplu davet oradan
+    cikar), kasa AIDATTAN ONCE (once para kutusu, sonra borc).
+    """
     yon = _giris(client, world["slug_a"], world["yonetici_a"])
     _, govde = _durum(client, yon)
-    assert govde["toplam"] == 8
+    assert govde["toplam"] == 12
     assert [a["kod"] for a in govde["adimlar"]] == [
-        "blok", "daire", "daire_tipi", "sakin",
-        "personel", "gorev_alani", "nfc_noktasi", "aidat",
+        "blok", "daire", "daire_tipi", "sakin", "eposta",
+        "personel", "gorev_alani", "nfc_noktasi", "kasa", "aidat",
+        "rezervasyon_alani", "sayac",
     ]
+
+
+def test_P193_ZORUNLU_ADIMLAR_ve_EKSIK_OZETI(client, world):
+    """"Calisir mi" sorusu ILERLEMEDEN AYRI olculur.
+
+    Yuzde, atlanan adimi da "gecilmis" sayar (bilincli atlayan tesis
+    %100'e ulasabilmeli). Ama atlamak gercegi degistirmez: kasasi olmayan
+    tesis, adim atlandi diye tahsilat yapamaz. Bu test iki sayacin
+    AYRISTIGINI kilitler.
+    """
+    yon = _giris(client, world["slug_a"], world["yonetici_a"])
+    _, govde = _durum(client, yon)
+
+    zorunlular = {a["kod"] for a in govde["adimlar"] if a["zorunlu"]}
+    assert zorunlular == {
+        "blok", "daire", "daire_tipi", "sakin", "eposta", "kasa", "aidat"
+    }
+    assert govde["zorunlu_toplam"] == 7
+    eksik = set(govde["eksik_zorunlular"])
+    assert eksik == {a["kod"] for a in govde["adimlar"]
+                     if a["zorunlu"] and not a["tamam"]}
+    assert govde["calisir"] is (not eksik)
+
+    # ATLAMA OZETI DEGISTIRMEZ — yalnizca ilerlemeyi rahatlatir.
+    hedef = next(iter(eksik)) if eksik else None
+    if hedef:
+        r = client.patch("/kurulum", headers=yon, json={"kod": hedef, "atla": True})
+        assert r.status_code == 200, r.text
+        y = r.json()
+        assert hedef in y["eksik_zorunlular"], "atlanan zorunlu adim ozetten DUSMEMELI"
+        assert y["calisir"] is False
+        client.patch("/kurulum", headers=yon, json={"kod": hedef, "atla": False})
 
 
 # ==================== 2) ATLAMA saklanir ve GERI ALINIR ==================== #

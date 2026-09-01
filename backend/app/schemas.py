@@ -6776,6 +6776,9 @@ class KurulumAdimOut(BaseModel):
     sayi: int
     tamam: bool
     atlandi: bool
+    #: (P193 §2) Adim MINIMUM CALISIR KURULUMUN parcasi mi. Karar sunucuda
+    #: (bkz. `routers/kurulum.py::ADIMLAR`); istemci yalnizca cizer.
+    zorunlu: bool = False
 
 
 class KurulumDurumOut(BaseModel):
@@ -6785,6 +6788,13 @@ class KurulumDurumOut(BaseModel):
     #: yok" diyen bir tesis %100'e asla ulasamaz ve gosterge kalici bir
     #: sitem olurdu.
     gecilen: int
+    #: (P193 §2) Kac adim MINIMUM calisir kurulumun parcasi.
+    zorunlu_toplam: int = 0
+    #: (P193 §2) Tamamlanmamis zorunlu adimlarin KODLARI. ATLAMA burada
+    #: sayilmaz: atlamak gostergeyi rahatlatir, gercegi degistirmez.
+    eksik_zorunlular: list[str] = Field(default_factory=list)
+    #: (P193 §2) Tesis calisir hâlde mi (eksik zorunlu yok).
+    calisir: bool = True
 
 
 class KurulumAtlaIstek(BaseModel):
