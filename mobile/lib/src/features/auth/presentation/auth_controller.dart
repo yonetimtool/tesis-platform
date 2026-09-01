@@ -64,6 +64,18 @@ class AuthState {
   /// ON-DOLDURUR ve kullanici duzeltebilir. Apple'da BOS gelir.
   final String? oauthAd;
 
+  /// (P200 §2) `hataKimligi` OBJECT ALIR ama YALNIZ [GirisAkisHatasi]
+  /// KABUL EDER — String verilirse asagidaki cast CALISMA ANINDA patlar.
+  ///
+  /// OLCULDU: on cagri yerinde `e.code` (String) geciliyordu. Sonuc bir
+  /// "hata mesaji yanlis" degil, YAKALANMAMIS BIR ISTISNA idi: `catch`
+  /// blogunun ICINDE atiliyor, metottan disari sizip ekranin bekleme
+  /// bayragini acik birakiyordu — kullanici sonsuza kadar donen bir
+  /// dugme goruyor, hicbir hata metni gormuyordu. Yani sunucu bir hata
+  /// dondurdugunde akis SESSIZCE KILITLENIYORDU.
+  ///
+  /// Dogru donusturucu (`girisAgHatasi`) tur 13'te yazilmisti ama yalniz
+  /// iki cagri yerinde kullaniliyordu.
   AuthState copyWith({
     bool? kodBekleniyor,
     Object? oauthBaglamaJetonu = _sentinel,
@@ -135,7 +147,7 @@ class AuthController extends Notifier<AuthState> {
       state = state.copyWith(submitting: false, kodBekleniyor: true);
     } on ApiException catch (e) {
       state = state.copyWith(
-        submitting: false, errorMessage: e.message, hataKimligi: e.code);
+        submitting: false, errorMessage: e.message, hataKimligi: girisAgHatasi(e));
     }
   }
 
@@ -154,7 +166,7 @@ class AuthController extends Notifier<AuthState> {
         status: AuthStatus.authenticated, submitting: false);
     } on ApiException catch (e) {
       state = state.copyWith(
-        submitting: false, errorMessage: e.message, hataKimligi: e.code);
+        submitting: false, errorMessage: e.message, hataKimligi: girisAgHatasi(e));
     }
   }
 
@@ -175,7 +187,7 @@ class AuthController extends Notifier<AuthState> {
         status: AuthStatus.authenticated, submitting: false);
     } on ApiException catch (e) {
       state = state.copyWith(
-        submitting: false, errorMessage: e.message, hataKimligi: e.code);
+        submitting: false, errorMessage: e.message, hataKimligi: girisAgHatasi(e));
     }
   }
 
@@ -201,7 +213,7 @@ class AuthController extends Notifier<AuthState> {
       );
     } on ApiException catch (e) {
       state = state.copyWith(
-        submitting: false, errorMessage: e.message, hataKimligi: e.code);
+        submitting: false, errorMessage: e.message, hataKimligi: girisAgHatasi(e));
     }
   }
 
@@ -242,7 +254,7 @@ class AuthController extends Notifier<AuthState> {
       return sonuc;
     } on ApiException catch (e) {
       state = state.copyWith(
-        submitting: false, errorMessage: e.message, hataKimligi: e.code);
+        submitting: false, errorMessage: e.message, hataKimligi: girisAgHatasi(e));
       return null;
     }
   }
@@ -402,7 +414,7 @@ class AuthController extends Notifier<AuthState> {
       );
     } on ApiException catch (e) {
       state = state.copyWith(
-        submitting: false, errorMessage: e.message, hataKimligi: e.code);
+        submitting: false, errorMessage: e.message, hataKimligi: girisAgHatasi(e));
     }
   }
 
@@ -424,7 +436,7 @@ class AuthController extends Notifier<AuthState> {
       return r;
     } on ApiException catch (e) {
       state = state.copyWith(
-        submitting: false, errorMessage: e.message, hataKimligi: e.code);
+        submitting: false, errorMessage: e.message, hataKimligi: girisAgHatasi(e));
       return null;
     }
   }
@@ -449,7 +461,7 @@ class AuthController extends Notifier<AuthState> {
       );
     } on ApiException catch (e) {
       state = state.copyWith(
-        submitting: false, errorMessage: e.message, hataKimligi: e.code);
+        submitting: false, errorMessage: e.message, hataKimligi: girisAgHatasi(e));
     }
   }
 
@@ -485,7 +497,7 @@ class AuthController extends Notifier<AuthState> {
       return r;
     } on ApiException catch (e) {
       state = state.copyWith(
-        submitting: false, errorMessage: e.message, hataKimligi: e.code);
+        submitting: false, errorMessage: e.message, hataKimligi: girisAgHatasi(e));
       return null;
     }
   }
@@ -516,7 +528,7 @@ class AuthController extends Notifier<AuthState> {
       return r.durum;
     } on ApiException catch (e) {
       state = state.copyWith(
-        submitting: false, errorMessage: e.message, hataKimligi: e.code);
+        submitting: false, errorMessage: e.message, hataKimligi: girisAgHatasi(e));
       return null;
     }
   }
