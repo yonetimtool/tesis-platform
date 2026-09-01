@@ -191,6 +191,59 @@ def _plan_istegi(plan: AidatPlani, donem: str, vade: date) -> TopluBorcIstek:
     )
 
 
+def onceki_donem(donem: str) -> str:
+    yil, ay = int(donem[:4]), int(donem[5:7])
+    return f"{yil - 1}-12" if ay == 1 else f"{yil}-{ay - 1:02d}"
+
+
+def sonraki_donem(donem: str) -> str:
+    yil, ay = int(donem[:4]), int(donem[5:7])
+    return f"{yil + 1}-01" if ay == 12 else f"{yil}-{ay + 1:02d}"
+
+
+def islenecek_donem(plan: AidatPlani, bugun: date) -> str | None:
+    """Bu kosumda islenecek DONEM — yoksa `None`.
+
+    ===================================================================
+    GECMIS DONEM TELAFISI
+    ===================================================================
+    Gorev bir gun kosmazsa (bakim, kesinti, kuyruk tikanikligi) o ayin
+    tahakkuku SESSIZCE KAYBOLURDU: ertesi ay `bugun.day` yeni ayin
+    tahakkuk gununden kucuk olur ve gecmis ay bir daha hic bakilmaz.
+    Oysa bu bolumun tum amaci "yonetici unutursa borc olusmasin"i
+    ortadan kaldirmakti; sistemin unutmasi da ayni sonucu verirdi.
+
+    Bu yuzden atlanmis donem TELAFI EDILIR — ama KOSUM BASINA BIR TANE.
+    Uc aylik bir kesintiden sonra butun tahakkuklari tek seferde yazmak,
+    yoneticiye aciklanamayan bir borc yiginini bir sabah gostermek
+    olurdu; gunluk kosum uc gunde toparlar ve her adim gunlukte gorunur.
+
+    YENI PLAN GECMISI BORCLANDIRMAZ (`son_donem is None`): bir plan
+    tanimlamak, gecmis aylarin aidatini bir anda yazmak anlamina
+    gelmemeli.
+    """
+    su_an = donem_metni(bugun)
+    if plan.son_donem is None:
+        return su_an if bugun.day >= plan.tahakkuk_gunu else None
+    if plan.son_donem >= su_an:
+        return None
+    sonraki = sonraki_donem(plan.son_donem)
+    if sonraki == su_an:
+        return su_an if bugun.day >= plan.tahakkuk_gunu else None
+    return sonraki
+
+
+def tahakkuk_tarihi(donem: str, gun: int) -> date:
+    """Donemin tahakkuk gunu. Telafi edilen donemde de DOGRU tarih.
+
+    `date.today()` kullanmak, gecmis bir donemin tahakkukunu bugunun
+    tarihiyle yazmak olurdu; o zaman "Mart tahakkuku" Haziran'da
+    gorunur ve donemsel raporlar yanlis cikardi.
+    """
+    yil, ay = int(donem[:4]), int(donem[5:7])
+    return date(yil, ay, min(gun, calendar.monthrange(yil, ay)[1]))
+
+
 async def _plan_tanimi(db: AsyncSession, plan: AidatPlani) -> GelirGiderTanim | None:
     if plan.gelir_gider_tanim_id is None:
         return None
@@ -220,15 +273,19 @@ async def aidat_planlari_isle(
     if not planlar:
         return {"plan": 0, "tahakkuk": 0, "onizleme": 0}
 
-    donem = donem_metni(bugun)
+    su_an = donem_metni(bugun)
     yonetim = await _yonetim_idleri(db)
     yazilan = 0
     onizlenen = 0
 
     for plan in planlar:
         tanim = await _plan_tanimi(db, plan)
-        vade = bugun + timedelta(days=plan.vade_gun)
-        istek = _plan_istegi(plan, donem, vade)
+        # ONIZLEME her zaman ICINDE BULUNULAN ay icindir; tahakkuk ise
+        # telafi ediliyorsa GECMIS bir ay olabilir.
+        onizleme_vadesi = tahakkuk_tarihi(su_an, plan.tahakkuk_gunu) + timedelta(
+            days=plan.vade_gun
+        )
+        istek = _plan_istegi(plan, su_an, onizleme_vadesi)
 
         # --- ONIZLEME: tahakkuktan `onizleme_gun` gun once ---------------- #
         onizleme_gunu = plan.tahakkuk_gunu - plan.onizleme_gun
@@ -237,8 +294,8 @@ async def aidat_planlari_isle(
             and onizleme_gunu >= 1
             and bugun.day >= onizleme_gunu
             and bugun.day < plan.tahakkuk_gunu
-            and plan.onizleme_donem != donem
-            and plan.son_donem != donem
+            and plan.onizleme_donem != su_an
+            and plan.son_donem != su_an
         ):
             satirlar = await toplu_plan(db, istek, tanim)
             islenecek = [s for s in satirlar if s.tutar_kurus and not s.atlama_nedeni]
@@ -257,19 +314,21 @@ async def aidat_planlari_isle(
                     user_ids=yonetim, veri=params,
                 )
                 await _gunluk_yaz(
-                    db, tenant_id=tenant_id, tur="aidat_onizleme", donem=donem,
+                    db, tenant_id=tenant_id, tur="aidat_onizleme", donem=su_an,
                     adet=len(islenecek),
                     tutar_kurus=sum(s.tutar_kurus or 0 for s in islenecek),
                     sonuc={"plan": str(plan.id)},
                 )
                 onizlenen += 1
-            plan.onizleme_donem = donem
+            plan.onizleme_donem = su_an
 
         # --- TAHAKKUK ----------------------------------------------------- #
-        if bugun.day < plan.tahakkuk_gunu:
+        #
+        # Hangi donem islenecek: bu ay ya da ATLANMIS bir gecmis ay
+        # (kosum basina bir tane; gerekce `islenecek_donem`de).
+        donem = islenecek_donem(plan, bugun)
+        if donem is None:
             continue
-        if plan.son_donem == donem:
-            continue  # IDEMPOTENCY: bu donem zaten islendi
         if plan.ertelenen_donem == donem:
             # ERTELEME PLANI KAPATMAZ: yalniz bu donemi atlar ve damga
             # yazilir ki gorev her kosumda tekrar bakmasin.
@@ -280,7 +339,9 @@ async def aidat_planlari_isle(
             )
             continue
 
-        satirlar = await toplu_plan(db, istek, tanim)
+        tarih = tahakkuk_tarihi(donem, plan.tahakkuk_gunu)
+        vade = tarih + timedelta(days=plan.vade_gun)
+        satirlar = await toplu_plan(db, _plan_istegi(plan, donem, vade), tanim)
         kalemler: list[tuple[uuid.UUID, uuid.UUID | None, str, int]] = []
         atlanan = 0
         toplam = 0
@@ -294,7 +355,7 @@ async def aidat_planlari_isle(
                 tutar_kurus=satir.tutar_kurus,
                 tanim_id=plan.gelir_gider_tanim_id,
                 hedef_user_id=satir.hedef_user_id,
-                son_odeme_tarihi=vade, tarih=bugun,
+                son_odeme_tarihi=vade, tarih=tarih,
                 aciklama=plan.aciklama, gecikme_uygula=True,
                 kaynak="toplu", kalem_tipi=plan.kalem_tipi,
                 tenant_id=tenant_id,

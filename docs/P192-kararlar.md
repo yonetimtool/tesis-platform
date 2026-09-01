@@ -312,6 +312,24 @@ kuralı Şubat'ta **sessizce hiç çalışmazdı**.
 **Önizleme ile tahakkuk tek görevde**: ikisi aynı planı okur. Ayrı
 görevler olsaydı biri planın değişen tutarını görüp diğeri görmeyebilirdi.
 
+**Atlanmış dönem telafi edilir.** Görev bir gün koşmazsa (bakım, kesinti,
+kuyruk tıkanıklığı) o ayın tahakkuku **sessizce kaybolurdu**: ertesi ay
+`bugün.gün` yeni ayın tahakkuk gününden küçük olur ve geçmiş ay bir daha
+hiç bakılmazdı. Oysa bu bölümün tüm amacı "yönetici unutursa borç
+oluşmasın"dı; **sistemin** unutması da aynı sonucu verirdi.
+
+Telafi **koşum başına bir dönem**: üç aylık bir kesintiden sonra bütün
+tahakkukları tek seferde yazmak, yöneticiye açıklanamayan bir borç yığınını
+bir sabah göstermek olurdu. Günlük koşum üç günde toparlar ve her adım
+otomasyon günlüğünde görünür.
+
+Telafi edilen dönemin tahakkuk **tarihi kendi ayındandır** (`date.today()`
+değil): yoksa "Mart tahakkuku" Haziran'da görünür ve dönemsel raporlar
+yanlış çıkardı.
+
+**Yeni plan geçmişi borçlandırmaz** (`son_donem is None`): bir plan
+tanımlamak, geçmiş ayların aidatını bir anda yazmak anlamına gelmemeli.
+
 **Erteleme planı kapatmaz** (`ertelenen_donem`): pasife almak gelecek
 ayları da kapatırdı; yönetici genelde "bu ay olmasın" der. İşlenmiş bir
 dönem ertelenemez (409) — borç yazıldı, geri almak ters kayıtla olur.

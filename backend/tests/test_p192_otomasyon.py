@@ -463,3 +463,93 @@ def test_hatirlatma_gecmisi_gonderilen_ve_OKUNAN_gosterir(client, adm, world):
     assert govde["okunan"] <= govde["gonderilen"]
     for satir in govde["items"]:
         assert "okundu" in satir and "gonderim_zamani" in satir
+
+
+# ================= 4.1 ATLANMIS DONEM TELAFISI ============================= #
+def test_islenecek_donem_YENI_PLAN_gecmisi_borclandirmaz():
+    """Bir plan tanimlamak, gecmis aylarin aidatini bir anda yazmak
+    anlamina gelmemeli."""
+    from app.otomasyon import islenecek_donem
+
+    class _Plan:
+        son_donem = None
+        tahakkuk_gunu = 5
+
+    plan = _Plan()
+    assert islenecek_donem(plan, date(2035, 6, 4)) is None   # gun gelmedi
+    assert islenecek_donem(plan, date(2035, 6, 5)) == "2035-06"
+
+
+def test_islenecek_donem_ATLANMIS_ayi_telafi_eder():
+    """Gorev bir gun kosmazsa o ayin tahakkuku SESSIZCE KAYBOLURDU:
+    ertesi ay `bugun.day` yeni ayin tahakkuk gununden kucuk olur ve
+    gecmis ay bir daha hic bakilmaz."""
+    from app.otomasyon import islenecek_donem
+
+    class _Plan:
+        son_donem = "2035-04"
+        tahakkuk_gunu = 25
+
+    plan = _Plan()
+    # Mayis atlandi; Haziran'in 3'undeyiz. Once MAYIS islenir.
+    assert islenecek_donem(plan, date(2035, 6, 3)) == "2035-05"
+    # Mayis islendikten sonra Haziran'in gunu henuz gelmedi.
+    plan.son_donem = "2035-05"
+    assert islenecek_donem(plan, date(2035, 6, 3)) is None
+    # Gun gelince Haziran.
+    assert islenecek_donem(plan, date(2035, 6, 25)) == "2035-06"
+
+
+def test_islenecek_donem_KOSUM_BASINA_BIR_DONEM():
+    """Uc aylik bir kesintiden sonra butun tahakkuklari tek seferde
+    yazmak, yoneticiye aciklanamayan bir borc yigini gostermek olurdu."""
+    from app.otomasyon import islenecek_donem
+
+    class _Plan:
+        son_donem = "2035-01"
+        tahakkuk_gunu = 1
+
+    plan = _Plan()
+    assert islenecek_donem(plan, date(2035, 5, 10)) == "2035-02"
+    plan.son_donem = "2035-02"
+    assert islenecek_donem(plan, date(2035, 5, 10)) == "2035-03"
+
+
+def test_tahakkuk_tarihi_donemin_gununu_kullanir():
+    """`date.today()` kullanmak, gecmis bir donemin tahakkukunu bugunun
+    tarihiyle yazmak olurdu; "Mart tahakkuku" Haziran'da gorunurdu."""
+    from app.otomasyon import tahakkuk_tarihi
+
+    assert tahakkuk_tarihi("2035-03", 25) == date(2035, 3, 25)
+    # Subat'ta olmayan gun ay sonuna cekilir (28/29).
+    assert tahakkuk_tarihi("2035-02", 30) == date(2035, 2, 28)
+
+
+async def test_atlanan_ay_gercekten_yazilir(client, adm, world, tanim, db_session):
+    from app import otomasyon
+
+    daire = _daire(client, adm)
+    plan = client.post("/aidat-planlari", headers=adm, json={
+        "ad": f"Plan-{_sfx()}", "gelir_gider_tanim_id": tanim["id"],
+        "tutar_kurus": 60000, "tahakkuk_gunu": 25, "onizleme_gun": 0,
+    }).json()
+
+    # Nisan islendi, Mayis ATLANDI (gorev kosmadi), Haziran'in 3'undeyiz.
+    await otomasyon.aidat_planlari_isle(db_session, world["a"], date(2035, 4, 25))
+    await db_session.commit()
+    await otomasyon.aidat_planlari_isle(db_session, world["a"], date(2035, 6, 3))
+    await db_session.commit()
+
+    durum = client.get(f"/units/{daire['id']}/dues", headers=adm).json()
+    donemler = sorted(a["donem"] for a in durum["assessments"])
+    assert donemler == ["2035-04", "2035-05"], donemler
+    # TELAFI EDILEN AYIN TARIHI KENDI AYINDAN: "Mayis tahakkuku" Haziran'da
+    # gorunmemeli.
+    mayis = next(a for a in durum["assessments"] if a["donem"] == "2035-05")
+    assert mayis["tarih"] == "2035-05-25"
+
+    guncel = next(
+        p for p in client.get("/aidat-planlari", headers=adm).json()["items"]
+        if p["id"] == plan["id"]
+    )
+    assert guncel["son_donem"] == "2035-05"
