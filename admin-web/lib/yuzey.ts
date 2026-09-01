@@ -39,6 +39,10 @@ export const PLATFORM_ROTALARI = [
   // (P170 §2) KVKK/yasal metin YONETIMI platforma tasindi. Veri tenant'a
   // bagli kaldi (her tesisin veri sorumlusu kendisi); tasinan sey YETKI.
   "/kvkk-metinler",
+  // (P202) Surum politikasi PLATFORM isidir: magazadaki paket tektir,
+  // tesise gore degismez. Bir tesis yoneticisinin butun kullanicilari
+  // kilitleyebilmesi dogru olmazdi.
+  "/surum-politikasi",
 ] as const;
 
 /**

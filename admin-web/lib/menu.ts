@@ -28,7 +28,9 @@ export type IconName =
   | "news" | "inbox" | "survey" | "handshake" | "invite" | "help"
   | "folder" | "list" | "tag" | "submeter" | "homes" | "eye"
   // (P191 §4) Banka entegrasyonu — finans grubunda benzersiz ikon.
-  | "bank";
+  | "bank"
+  // (P202) Surum politikasi — platform grubunda benzersiz ikon.
+  | "phone";
 
 /** Bolum kimlikleri. Sira BURADAKI siradir (menude de bu sirayla cizilir). */
 export type GrupId =
@@ -277,6 +279,10 @@ const OGELER: readonly MenuOgesi[] = [
   { href: "/tenants", anahtar: "kabukTesisler", icon: "building", grup: "platform" },
   { href: "/integrations", anahtar: "kabukEntegrasyonlar", icon: "hub", grup: "platform" },
   { href: "/settings", anahtar: "kabukAyarlar", icon: "gear", grup: "platform" },
+  // (P202) Zorunlu/onerilen guncelleme esikleri. PLATFORM grubunda cunku
+  // magazadaki paket tektir: bir tesis yoneticisinin butun kullanicilari
+  // kilitleyebilmesi dogru olmazdi.
+  { href: "/surum-politikasi", anahtar: "kabukSurumPolitikasi", icon: "phone", grup: "platform" },
   // kvkk-metinler ikonu asagida (doc) — platform grubunda doc yalniz burada.
   // (P170 §2) KVKK VE YASAL METIN YONETIMI BURAYA TASINDI.
   //

@@ -123,6 +123,13 @@ describe("sozluk butunlugu", () => {
     // "{n} SMS" — icindeki tek kelime SMS bir KISALTMADIR (Short Message
     // Service) ve yedi dilde de boyle gecer. Cumle degil, birim etiketi.
     "{n} SMS",
+    // (P202) MAGAZA ADLARI MARKADIR ve cevrilmez: Apple ile Google bu
+    // adlari yedi dilde de Latin harfleriyle boyle yazar (Arapca
+    // arayuzlerinde bile). Cevirmek, kullanicinin telefonunda GORDUGU
+    // simgeyle ekrandaki adi ayirmak olurdu — tam da "hangi magazaya
+    // gidecegim" sorusunu bulaniklastirir.
+    "iPhone (App Store)",
+    "Android (Google Play)",
   ]);
 
   // KALAN ACIK (durustce): ne bu olcum ne `TR_HARF`, ic/ig/is harfi

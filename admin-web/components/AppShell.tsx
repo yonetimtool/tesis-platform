@@ -199,6 +199,8 @@ function Icon({ name }: { name: IconName }) {
       return svg(<><path d="M6 3h12v18l-2-1.5L14 21l-2-1.5L10 21l-2-1.5L6 21z" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="9" y1="12" x2="15" y2="12" /></>);
     case "bank": // banka — kolonlu bina cephesi (P191 §4)
       return svg(<><path d="M4 10h16M5 10L12 5l7 5" /><path d="M7 10v7M11 10v7M15 10v7" /><path d="M4 20h16" /></>);
+    case "phone": // mobil uygulama surumu (P202)
+      return svg(<><rect x="7" y="2.5" width="10" height="19" rx="2" /><line x1="10.5" y1="18.5" x2="13.5" y2="18.5" /></>);
     case "gauge": // sayac/olcer
       return svg(<><path d="M4 15a8 8 0 0 1 16 0" /><path d="M12 15l4-4" /><line x1="12" y1="15" x2="12" y2="15" /></>);
     case "report": // rapor — belge + cubuklar

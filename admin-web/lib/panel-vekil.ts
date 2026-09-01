@@ -75,6 +75,8 @@ export const OKUMA: Record<string, string> = {
   "butce-karsilastirma": "/budget/karsilastirma",
   "hatirlatma-gecmisi": "/finans/hatirlatma-gecmisi",
   "butce-kategorileri": "/budget/categories",
+  // --- (P202) surum politikasi (PLATFORM admini) ---
+  "surum-politikasi": "/surum-politikasi",
 };
 
 /** POST ile YAZILAN kaynaklar (okumadan AYRI: bir ucu yanlislikla yazmaya
@@ -127,6 +129,15 @@ export const YAZMA: Record<string, string> = {
   "borclulara-faiz-affi": "/finans/borclulara/faiz-affi",
   "borclulara-odeme-plani": "/finans/borclulara/odeme-plani",
   "butce-hedefleri": "/budget/hedefler",
+  // --- (P202) SURUM POLITIKASI — PLATFORM BASINA AYRI KAYIT.
+  //
+  // Genel `[kaynak]/[id]` vekili KULLANILAMAZ: `id`yi UUID sanip
+  // "ios"/"android"i reddediyor (P189'da olculen 405/404 sinifinin
+  // aynisi). Platform kumesi ZATEN KAPALI ve iki elemanli — beyaz
+  // listeye acikca yazmak, hem dogru hem de vekilin varlik sebebine
+  // (gelisiguzel yol uretilememesi) uygun.
+  "surum-politikasi-ios": "/surum-politikasi/ios",
+  "surum-politikasi-android": "/surum-politikasi/android",
 };
 
 /** Kaynak basina ILETILEBILEN sorgu parametreleri (yine beyaz liste:
