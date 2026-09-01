@@ -715,3 +715,28 @@ GET  /api/tenant/settings            -> 200  adres='Örnek Mah. 1. Sk. No:5' il=
 
 422, burada **iyi haberdir**: boş `satirlar` şema kuralını çiğniyor,
 yani istek 404/405 ile panelde ölmedi, sunucuya gitti ve doğrulandı.
+
+---
+
+## Tam takım koşumunda çıkan üç kusur (ve biri ciddiydi)
+
+Bölümler bittikten sonra üç takımın tamamı koşuldu. Panel tarafında üç
+test düştü; ikisi gerçek kusurdu:
+
+1. **`/tesis-ayarlari` middleware matcher'ında yoktu.** Yeni korumalı
+   sayfa `middleware.ts`in `config.matcher` listesine eklenmemişti —
+   yani o sayfada **oturum kapısı hiç çalışmıyordu**. `middleware.test.ts`
+   ("HER korumalı sayfanın matcher girişi VAR") yakaladı. Bu, bölüm
+   testlerinin göremeyeceği bir sınıf: sayfa render testi middleware'den
+   geçmez.
+2. **`ayar-bag.test.ts` tabloyu eski yerinde arıyordu.** Ayar alanları
+   `settings/page.tsx`ten `lib/tesis-ayar-alanlari.ts`e taşındığı için
+   bağ "liste boş okundu" dedi. Test kaynağı yeni yere çevrildi — bağın
+   kendisi doğru çalıştı, taşınmayı fark etti.
+3. **Toplu işlem şeridi testinin deseni gevşekti** (`/Seçilenleri
+   değiştir|1/` — içinde "1" geçen her düğmeyi eşliyordu) ve şeride
+   ikinci düğme ("Arsa payı gir (1)") eklenince çoklu eşleşme verdi.
+   Desen daraltıldı, ikinci düğme de ayrıca kilitlendi.
+
+Birincisi bu turun en değerli bulgusudur: **yeni bir korumalı sayfa
+eklerken `middleware.ts` matcher'ı da güncellenmeli.**
