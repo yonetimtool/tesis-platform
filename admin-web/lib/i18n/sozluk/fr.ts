@@ -2435,4 +2435,13 @@ export const fr: Sozluk = {
   kurulumAdresAlt: "Saisissez l'adresse postale figurant sur les reçus et les exports de rapports.",
   kurulumEngelAdres: "Sans adresse, les reçus et rapports n'affichent que le nom de la résidence.",
   kabukTesisAyarlari: "Paramètres de l'établissement",
+  daireArsaPayi: "Quote-part",
+  daireArsaPayiToplu: "Saisir les quotes-parts ({adet})",
+  daireArsaPayiBaslik: "Saisie des quotes-parts",
+  daireArsaPayiAciklama: "Saisissez la quote-part propre à chaque logement. Un logement laissé vide reste exclu de toute répartition par quote-part.",
+  daireArsaPayiGecersiz: "La quote-part doit être un nombre. Exemple : 0,0125",
+  daireArsaPayiOzet: "Total des quotes-parts : {toplam} (saisi pour {girilmis} logements sur {daire})",
+  daireArsaPayiEksik: "{adet} logements n'ont pas de quote-part ; ils restent exclus des répartitions par quote-part.",
+  iceAktarimGuncellenen: "Mis à jour",
+  daireArsaPayiPartiIpucu: "Appliqué à tous les logements de ce lot. Vous pourrez corriger les exceptions depuis l'écran Logements.",
 };

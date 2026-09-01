@@ -164,6 +164,28 @@ def _kurus(ham: str) -> int | None:
         return None
 
 
+def _ondalik(ham: str) -> float | None:
+    """(P193 §6) Arsa payi / metrekare metnini sayiya cevirir.
+
+    `_kurus` YENIDEN KULLANILMADI: o para icindir ve 100 ile carpar. Arsa
+    payi bir PAY'dir (0,0125 gibi) ve kurusa cevirmek anlamsiz olurdu.
+    Bicim yine serbest: `0,0125` de `0.0125` de kabul edilir — Excel'in
+    ondalik ayiraci ulkeye gore degisir.
+    """
+    t = ham.replace(" ", "")
+    if not t:
+        return None
+    son_nokta, son_virgul = t.rfind("."), t.rfind(",")
+    if son_virgul > son_nokta:
+        t = t.replace(".", "").replace(",", ".")
+    else:
+        t = t.replace(",", "")
+    try:
+        return float(t)
+    except ValueError:
+        return None
+
+
 # --------------------------------- daire ----------------------------------- #
 async def _uygula_daire(b: _Bag, satir_no: int, d: dict) -> None:
     blok = _metin(d, "blok")
@@ -171,6 +193,24 @@ async def _uygula_daire(b: _Bag, satir_no: int, d: dict) -> None:
     if not blok or not daire:
         b.hata(satir_no, "blok" if not blok else "daire_no", "zorunlu_alan_eksik")
         return
+
+    # (P193 §6) ARSA PAYI ve METREKARE — opsiyonel sutunlar.
+    #
+    # Rehberde eksik 6: arsa payi ne toplu olusturmada ne aktarimda
+    # vardi; 100 daireli bir sitede 100 ayri form demekti. Deger
+    # OKUNAMIYORSA satir HATALIDIR: sessizce `None` yazmak, kullanicinin
+    # girdigi sayiyi yok saymak ve arsa payi dagitimini fark edilmeden
+    # eksik birakmak olurdu.
+    sayilar: dict[str, float | None] = {}
+    for alan in ("arsa_payi", "metrekare"):
+        ham = _metin(d, alan)
+        if not ham:
+            continue
+        deger = _ondalik(ham)
+        if deger is None or deger < 0:
+            b.hata(satir_no, alan, "sayi_gecersiz")
+            return
+        sayilar[alan] = deger
 
     var_blok = (
         await b.db.execute(select(BuildingBlock.id).where(BuildingBlock.ad == blok))
@@ -183,17 +223,33 @@ async def _uygula_daire(b: _Bag, satir_no: int, d: dict) -> None:
             b.yarat("building_block", obj.id)
         b.sonuc.olusan += 1
 
-    var_daire = (
-        await b.db.execute(select(Unit.id).where(Unit.no == daire))
-    ).first()
-    if var_daire is not None:
-        # IDEMPOTENT: var olan daire ATLANIR (dosya yeniden yuklenebilir).
-        b.sonuc.atlanan += 1
+    mevcut = (
+        await b.db.execute(select(Unit).where(Unit.no == daire))
+    ).scalar_one_or_none()
+    if mevcut is not None:
+        # (P193 §6) VAR OLAN DAIREDE ARSA PAYI/METREKARE GUNCELLENIR.
+        #
+        # Eskiden var olan daire kosulsuz ATLANIYORDU. Gercek akis tam da
+        # bunu kiriyordu: yonetici once 100 daireyi TOPLU OLUSTURUYOR,
+        # sonra arsa paylarini iceren dosyayi yukluyor — ve dosyanin
+        # tamami "zaten kayitli" diye atlanip hicbir arsa payi
+        # yazilmiyordu. Kimlik alanlari (no, blok) DEGISMEZ; yalnizca
+        # verilen sayisal alanlar yazilir.
+        if sayilar and not b.yalniz_dogrula:
+            for alan, deger in sayilar.items():
+                setattr(mevcut, alan, deger)
+            await b.db.flush()
+        if sayilar:
+            b.sonuc.guncellenen += 1
+        else:
+            # IDEMPOTENT: yeni bilgi tasimayan satir ATLANIR (dosya
+            # yeniden yuklenebilir).
+            b.sonuc.atlanan += 1
         return
     if b.yalniz_dogrula:
         b.sonuc.olusan += 1
         return
-    u = Unit(tenant_id=b.user.tenant_id, no=daire, blok=blok)
+    u = Unit(tenant_id=b.user.tenant_id, no=daire, blok=blok, **sayilar)
     b.db.add(u)
     try:
         await b.db.flush()
@@ -419,6 +475,11 @@ TURLER: dict[str, _Tur] = {
         (
             _Alan("blok", zorunlu=True, ornek="A"),
             _Alan("daire_no", zorunlu=True, ornek="A-1"),
+            # (P193 §6) Arsa payi ve metrekare OPSIYONEL sutunlar. Var
+            # olan daireye de yazilir (bkz. `_uygula_daire`): asil akis
+            # "once toplu olustur, sonra paylari yukle"dir.
+            _Alan("arsa_payi", ornek="0,0125"),
+            _Alan("metrekare", ornek="120"),
         ),
         _uygula_daire,
         "iceAktarimDaireAciklama",

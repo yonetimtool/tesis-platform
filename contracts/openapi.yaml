@@ -6433,6 +6433,50 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "422": { $ref: "#/components/responses/ValidationError" }
 
+  /units/arsa-payi:
+    patch:
+      tags: [units]
+      summary: DAIRE BASINA FARKLI arsa payini toplu yaz (admin + yonetici)
+      description: >
+        (P193 §6) `/units/toplu` ile ayni sey DEGIL: o secili dairelerin
+        HEPSINE ayni degeri yazar. Arsa payi dogasi geregi daire basina
+        farklidir (100 daireli sitede 100 sayi); tek tek PATCH atmak 100
+        istek, 100 denetim kaydi ve yarim kalabilen bir yazma demekti.
+        `arsa_payi: null` degeri KALDIRIR (ticari birim/ortak alan
+        dagitim disinda kalabilmeli).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ArsaPayiToplu" }
+      responses:
+        "200":
+          description: Etkilenen + atlanan
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TopluIslemSonuc" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /units/arsa-payi-ozeti:
+    get:
+      tags: [units]
+      summary: Arsa payi TOPLAMI + eksik giris sayisi (admin + yonetici)
+      description: >
+        (P193 §6) Arsa payi bir PAYDIR: toplami beklenen degeri (1 ya da
+        binde/yuzde olarak 1000/100) tutmayan bir dagilim, gider
+        paylasimini SESSIZCE yanlis hesaplar. Toplam AYRI BIR UCTAN gelir
+        cunku daire listesi SAYFALIDIR — gorunen 25 satirin toplami
+        "toplam arsa payi" degildir ve yanlis bir toplam, dogru gorunen
+        bir hatadir.
+      responses:
+        "200":
+          description: Ozet
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ArsaPayiOzet" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /units/siralama:
     patch:
       tags: [units]
@@ -13093,6 +13137,39 @@ components:
           description: >
             Bulunamayan kimlikler. RLS baska tenant'in satirini zaten
             gostermez; kimlik SESSIZCE dusmez, burada gorunur.
+    ArsaPayiSatiri:
+      type: object
+      required: [id]
+      properties:
+        id: { type: string, format: uuid }
+        arsa_payi:
+          type: number
+          format: double
+          nullable: true
+          minimum: 0
+          description: "null = arsa payini KALDIR"
+    ArsaPayiToplu:
+      type: object
+      required: [satirlar]
+      properties:
+        satirlar:
+          type: array
+          minItems: 1
+          maxItems: 500
+          items: { $ref: "#/components/schemas/ArsaPayiSatiri" }
+      additionalProperties: false
+    ArsaPayiOzet:
+      type: object
+      required: [daire_sayisi, girilmis, girilmemis, toplam]
+      properties:
+        daire_sayisi: { type: integer, description: "AKTIF daire sayisi" }
+        girilmis: { type: integer }
+        girilmemis:
+          type: integer
+          description: >
+            Arsa payi girilmemis daire arsa payina gore dagitimin DISINDA
+            kalir; bu sayi kullaniciya gosterilmeli.
+        toplam: { type: number, format: double }
     UnitTopluGuncelle:
       type: object
       required: [unit_ids]
@@ -13105,6 +13182,15 @@ components:
         unit_tip_id: { type: string, format: uuid, nullable: true }
         unit_grup_id: { type: string, format: uuid, nullable: true }
         aktif: { type: boolean, nullable: true }
+        arsa_payi:
+          type: number
+          format: double
+          nullable: true
+          minimum: 0
+          description: >
+            (P193 §6) AYNI degeri hepsine yazar — tip daireler icin.
+            Daire basina FARKLI deger `PATCH /units/arsa-payi` ile.
+        metrekare: { type: number, format: double, nullable: true, minimum: 0 }
     UnitSiralamaSatiri:
       type: object
       required: [id, kat, sira]
@@ -13218,6 +13304,12 @@ components:
         satir_sayisi: { type: integer }
         olusan: { type: integer }
         atlanan: { type: integer, description: "Zaten var olan kayit (IDEMPOTENT)." }
+        guncellenen:
+          type: integer
+          default: 0
+          description: >
+            (P193 §6) VAR OLAN kayda yeni bilgi yazildi (bugun yalniz
+            daire arsa payi/metrekare). "Atlandi" ile ayni sey DEGIL.
         hatali: { type: integer }
         hatalar:
           type: array
@@ -17453,6 +17545,15 @@ components:
           format: uuid
           nullable: true
           description: "(P26) Bagimsiz bolum GRUBU (Daire / Villa / Dukkan)"
+        arsa_payi:
+          type: number
+          format: double
+          nullable: true
+          minimum: 0
+          description: >
+            (P193 §6) PARTI BASINA arsa payi — tip dairelerde (ayni kat
+            plani) hepsi aynidir. Istisnalar `PATCH /units/arsa-payi` ile.
+        metrekare: { type: number, format: double, nullable: true, minimum: 0 }
     UnitBulkResult:
       type: object
       required: [olusturulan, atlanan, bitis_no]

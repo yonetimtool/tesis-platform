@@ -32,6 +32,8 @@ from ..models import (
     UnitTip,
 )
 from ..schemas import (
+    ArsaPayiOzet,
+    ArsaPayiToplu,
     KatSilOnizleme,
     ResidentAssign,
     UnitBulkCreate,
@@ -236,6 +238,83 @@ async def kat_onizleme(
     )
 
 
+# NOT: BU IKI YOL `/{unit_id}` YAKALAYICISINDAN ONCE TANIMLANIR.
+# FastAPI yollari SIRAYLA dener; asagida tanimlansaydi "arsa-payi-ozeti"
+# bir `unit_id` sanilir ve uc 422 "gecersiz UUID" donerdi (olculdu).
+# ==================== (P193 §6) ARSA PAYI — TOPLU GIRIS ==================== #
+#
+# Rehberde eksik 6: arsa payi YALNIZ tek tek girilebiliyordu. 100 daireli
+# bir sitede bu 100 ayri form demekti ve arsa payi girilmemis daire, arsa
+# payina gore dagitimin DISINDA kaliyordu — yani eksik giris sessiz bir
+# yanlis paylasima donusuyordu.
+@router.get("/arsa-payi-ozeti", response_model=ArsaPayiOzet)
+async def arsa_payi_ozeti(
+    db: AsyncSession = Depends(get_tenant_db),
+    _: AppUser = Depends(_BAG_YONETICI),
+) -> ArsaPayiOzet:
+    """Arsa payi TOPLAMI + kac dairede girilmis/girilmemis.
+
+    TOPLAM AYRI BIR UCTAN GELIR, ekranda toplanmaz: daire listesi
+    SAYFALIDIR ve gorunen 25 satirin toplami "toplam arsa payi" DEGILDIR.
+    Yanlis bir toplam, dogru gorunen bir hatadir.
+    """
+    satir = (
+        await db.execute(
+            select(
+                func.count(Unit.id),
+                func.count(Unit.arsa_payi),
+                func.coalesce(func.sum(Unit.arsa_payi), 0),
+            ).where(Unit.aktif.is_(True))
+        )
+    ).one()
+    return ArsaPayiOzet(
+        daire_sayisi=int(satir[0]),
+        girilmis=int(satir[1]),
+        girilmemis=int(satir[0]) - int(satir[1]),
+        toplam=float(satir[2]),
+    )
+
+
+@router.patch("/arsa-payi", response_model=TopluIslemSonuc)
+async def arsa_payi_toplu(
+    body: ArsaPayiToplu,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_LAYOUT_EDITOR),
+) -> TopluIslemSonuc:
+    """DAIRE BASINA FARKLI arsa payini TEK ISTEKTE yazar.
+
+    `PATCH /units/toplu` ile ayni sey DEGIL: o secili dairelerin HEPSINE
+    ayni degeri yazar. Arsa payi ise dogasi geregi daire basina
+    farklidir; tek tek PATCH atmak 100 istek, 100 denetim kaydi ve
+    yarim kalabilen bir yazma demekti.
+
+    `arsa_payi: null` degeri KALDIRIR — ticari birim ya da ortak alan
+    dagitim disinda birakilabilmeli.
+    """
+    kimlikler = [s.id for s in body.satirlar]
+    kayitlar = {
+        k.id: k
+        for k in (
+            await db.execute(select(Unit).where(Unit.id.in_(kimlikler)))
+        ).scalars().all()
+    }
+    for satir in body.satirlar:
+        k = kayitlar.get(satir.id)
+        if k is None:
+            continue
+        k.arsa_payi = satir.arsa_payi
+        k.updated_at = func.now()
+    await db.flush()
+    await audit_user(
+        db, user, Action.UNIT_UPDATE, resource_type="unit",
+        meta={"adet": len(kayitlar), "alanlar": ["arsa_payi"]},
+    )
+    return TopluIslemSonuc(
+        etkilenen=len(kayitlar),
+        atlanan=[str(i) for i in kimlikler if i not in kayitlar],
+    )
+
+
 @router.get("/{unit_id}", response_model=UnitOut)
 async def get_unit(
     unit_id: uuid.UUID,
@@ -424,6 +503,11 @@ async def bulk_create_units(
         obj = Unit(
             tenant_id=user.tenant_id, no=no, blok=body.blok, kat=kat, sira=sira,
             unit_tip_id=body.unit_tip_id, unit_grup_id=body.unit_grup_id,
+            # (P193 §6) PARTI BASINA arsa payi/metrekare: tip dairelerde
+            # (ayni kat plani) hepsi aynidir ve 100 daireyi tek tek
+            # dolasmak gereksiz. Istisnalar sonradan
+            # `PATCH /units/arsa-payi` ile duzeltilir.
+            arsa_payi=body.arsa_payi, metrekare=body.metrekare,
         )
         db.add(obj)
         olusturulan.append(obj)

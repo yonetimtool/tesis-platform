@@ -19,7 +19,7 @@ import { alanliHataMetni, apiSend } from "@/lib/client";
 import { aralikCoz } from "@/lib/aralik";
 import { jsonFetcher } from "@/lib/fetcher";
 import type { Block, BlockList, KatOnizleme, Unit, UnitList } from "@/lib/types";
-import { tamsayiCoz } from "@/lib/sayi";
+import { sayiCoz, tamsayiCoz } from "@/lib/sayi";
 import { useT } from "@/lib/i18n/kullan";
 
 // Bloksuz kova (implicit tek blok) icin sentinel — gercek blok etiketi
@@ -130,6 +130,11 @@ export default function BuildingEditorPage() {
   const [oBaslangicNo, setOBaslangicNo] = useState("1");
   const [oBaslangicKat, setOBaslangicKat] = useState("1");
   const [oTip, setOTip] = useState("");
+  // (P193 §6) PARTI BASINA arsa payi / metrekare. Tip dairelerde (ayni
+  // kat plani) hepsi aynidir; 100 daireyi tek tek dolasmak gereksiz.
+  // Daire basi istisnalar Daireler ekranindaki toplu girisle duzeltilir.
+  const [oArsaPayi, setOArsaPayi] = useState("");
+  const [oMetrekare, setOMetrekare] = useState("");
   const [oHata, setOHata] = useState<string | null>(null);
 
   const [katSilAcik, setKatSilAcik] = useState(false);
@@ -182,6 +187,14 @@ export default function BuildingEditorPage() {
       setOHata(t("daireTopluOlusturAlanlar"));
       return;
     }
+    // OPSIYONEL SAYILAR: bos GECERLI, bozuk DEGIL. Bozuk bir degeri
+    // sessizce atlamak, kullanicinin yazdigi sayiyi yok saymak olurdu.
+    const pay = sayiCoz(oArsaPayi);
+    const m2 = sayiCoz(oMetrekare);
+    if (pay.tur === "gecersiz" || m2.tur === "gecersiz") {
+      setOHata(t("daireArsaPayiGecersiz"));
+      return;
+    }
     try {
       await apiSend("/api/units/bulk", "POST", {
         blok: oBlok.trim(),
@@ -190,6 +203,8 @@ export default function BuildingEditorPage() {
         baslangic_no: (sayilar.baslangic_no as { deger: number }).deger,
         baslangic_kat: (sayilar.baslangic_kat as { deger: number }).deger,
         unit_tip_id: oTip || null,
+        arsa_payi: pay.tur === "sayi" ? pay.deger : null,
+        metrekare: m2.tur === "sayi" ? m2.deger : null,
       });
       setTopluAcik(false);
       refresh();
@@ -517,6 +532,21 @@ export default function BuildingEditorPage() {
             <AlanSarmal etiket={t("daireBaslangicKat")} ipucu={t("daireBaslangicKatIpucu")}>
               {(b) => (
                 <Alan {...b} value={oBaslangicKat} onChange={(e) => setOBaslangicKat(e.target.value)} />
+              )}
+            </AlanSarmal>
+            {/* (P193 §6) Parti geneli arsa payi ve metrekare. */}
+            <AlanSarmal etiket={t("daireArsaPayi")} ipucu={t("daireArsaPayiPartiIpucu")}>
+              {(b) => (
+                <Alan {...b} inputMode="decimal" value={oArsaPayi}
+                      onChange={(e) => setOArsaPayi(e.target.value)}
+                      placeholder="0,0125" />
+              )}
+            </AlanSarmal>
+            <AlanSarmal etiket={t("daireMetrekareOpsiyonel")}>
+              {(b) => (
+                <Alan {...b} inputMode="decimal" value={oMetrekare}
+                      onChange={(e) => setOMetrekare(e.target.value)}
+                      placeholder="120" />
               )}
             </AlanSarmal>
             <AlanSarmal etiket={t("tanimAlanTip")}>

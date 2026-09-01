@@ -432,3 +432,101 @@ sızıyordu), düzeltildi.
 ### Ölçemediklerim
 - Ekranın gerçek tarayıcıda yöneticinin menüsünde göründüğü (kilit testi
   kuralı doğruluyor, gözle görmedim).
+
+---
+
+## Bölüm 6 — Toplu arsa payı (14 eksik · madde 6)
+
+### Sorun
+Arsa payı **yalnız tek tek** girilebiliyordu: ne toplu daire
+oluşturmada, ne Excel aktarımında sütunu, ne de listede bir sütunu vardı.
+100 daireli bir sitede bu 100 ayrı form demekti — ve arsa payı girilmemiş
+daire, arsa payına göre dağıtımın **dışında kalıyor**, yani eksik giriş
+sessiz bir yanlış paylaşıma dönüşüyordu.
+
+### Kararlar
+
+**K6.1 — Üç ayrı giriş yolu, çünkü üç ayrı iş var.**
+
+| Yol | Ne zaman | Uç |
+|---|---|---|
+| Parti başına (toplu oluşturma) | Tip daireler; aynı kat planı, aynı pay | `POST /units/bulk` (`arsa_payi`, `metrekare`) |
+| Daire başına (Daireler ekranı) | Her dairenin kendi payı | **YENİ** `PATCH /units/arsa-payi` |
+| Excel | Elde hazır liste varsa | `POST /ice-aktarim/daire` (yeni sütunlar) |
+
+"Hepsine aynı değeri yaz" ile "her daireye kendi değerini yaz" **ayrı
+düğmeler**; tek formda birleştirmek ikisini de belirsizleştirirdi.
+
+**K6.2 — Aktarım artık VAR OLAN daireyi de günceller.**
+En önemli karar bu. Gerçek akış şudur: yönetici önce 100 daireyi toplu
+oluşturur, sonra arsa paylarını içeren dosyayı yükler. Eski davranışta
+var olan daire koşulsuz **atlanıyordu** — yani dosyanın tamamı "zaten
+kayıtlı" diye geçiliyor ve **hiçbir arsa payı yazılmıyordu**. Artık
+kimlik alanları (no, blok) değişmez, yalnız verilen sayısal alanlar
+yazılır ve sonuçta ayrı bir `guncellenen` sayacı döner — "atlandı" ile
+aynı şey değil: atlanan satır hiçbir şeyi değiştirmez.
+
+**K6.3 — Okunamayan sayı satırı HATALI yapar.**
+Sessizce `None` yazmak, kullanıcının girdiği sayıyı yok saymak ve
+dağıtımı fark edilmeden eksik bırakmak olurdu. Hata metni örneği de
+veriyor: *"Sayı okunamadı. Örnek: 0,0125 veya 120"*.
+
+**K6.4 — Toplam ayrı bir uçtan gelir (`GET /units/arsa-payi-ozeti`).**
+Arsa payı bir **paydır**: toplamı beklenen değeri tutmayan bir dağılım
+gider paylaşımını sessizce yanlış hesaplar. Toplamı ekranda toplamak
+yanlış olurdu — liste **sayfalı** ve görünen 25 satırın toplamı "toplam
+arsa payı" değildir. Yanlış bir toplam, doğru görünen bir hatadır.
+Özet ayrıca **kaç dairede giriş olmadığını** söyler.
+
+**K6.5 — `null` payı kaldırır.** Ticari birim ya da ortak alan dağıtımın
+dışında bırakılabilmeli.
+
+**K6.6 — Yol sırası.** `/units/arsa-payi-ozeti`, `/units/{unit_id}`
+yakalayıcısından **önce** tanımlandı; sonra tanımlansaydı "arsa-payi-ozeti"
+bir `unit_id` sanılır ve uç 422 "geçersiz UUID" dönerdi — ölçüldü, ilk
+koşumda tam olarak bu oldu.
+
+### NE ÖLÇTÜM
+
+Dev API'de, 10 daire yaratıp uçtan uca:
+
+```
+1) 10 DAIRE, PARTI ARSA PAYIYLA
+   POST /units/bulk -> 201, olusan=10, arsa_payi=0.01, m2=100
+2) DAIRE BASINA FARKLI DEGER (TEK ISTEK)
+   PATCH /units/arsa-payi -> 200 {'etkilenen': 10, 'atlanan': []}
+   4. dairenin degeri = 0.02  (beklenen 0.02)
+3) OZET
+   GET /units/arsa-payi-ozeti -> {'daire_sayisi': 15, 'girilmis': 10,
+                                  'girilmemis': 5, 'toplam': 0.275}
+4) EXCEL AKTARIMI (MEVCUT daireye)
+   daire sutunlari: blok*, daire_no*, arsa_payi, metrekare
+   -> guncellenen=1  atlanan=0  sorunlu=1
+      SATIR 3 arsa_payi -> "Sayı okunamadı. Örnek: 0,0125 veya 120"
+   1. daire artik: arsa_payi=0.0999  metrekare=133.5
+5) ARSA PAYINA GORE TAHAKKUK (asıl kullanım)
+   POST /borclandirma/toplu/onizleme (dagitim=arsa_payi, 1.000.000 kuruş)
+   -> 15 daire | payı GİRİLİ 10'una dağıtıldı | 5'i atlandı
+      (atlama_nedeni: "arsa_payi_girilmemis")
+      dağıtılan toplam: 1000000 kuruş (tam eşit, kuruş kaybı yok)
+      Q9F5-1: 270073 · Q9F5-10: 135172 · Q9F5-2: 27034 · Q9F5-3: 40551
+```
+
+Beşinci adım işin asıl kanıtı: girilen paylar **gerçekten** dağıtımda
+kullanılıyor, toplam kuruşu kuruşuna dağıtılıyor ve payı olmayan daire
+görünür bir nedenle atlanıyor.
+
+Ekran: `admin-web/tests/p193-arsa-payi.dom.test.ts` (3 test) — toplam ve
+eksik giriş uyarısı görünüyor; seçili dairelere daire başına farklı değer
+tek istekte gidiyor (mevcut değerler ön dolu); bozuk sayı **sunucuya
+gitmiyor**, sebebi ekranda yazıyor.
+
+Backend: `test_p193_arsa_payi.py` **6 test**; `test_units_bulk.py` +
+`test_unit_access.py` + `test_unit_tanimlari.py` ile birlikte **45 test**.
+Kilit kayıtları güncellendi: rol matrisine iki yeni satır,
+`test_yetki_kapsam` + `test_tesis_izolasyonu_tarama` + `test_hata_i18n`
+birlikte **117 test** yeşil.
+
+### Ölçemediklerim
+- Gerçek bir `.xlsx` dosyasıyla arsa payı sütununun tarayıcıdan
+  yüklenmesi (ayrıştırma panelde; ölçüm yapılandırılmış satırlarla).

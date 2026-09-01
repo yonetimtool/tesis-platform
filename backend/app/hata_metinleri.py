@@ -653,6 +653,15 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "Un champ obligatoire est vide.",
         "es": "Un campo obligatorio está vacío.",
     },
+    "sayi_gecersiz": {
+        "tr": "Sayı okunamadı. Örnek: 0,0125 veya 120",
+        "en": "The number could not be read. Example: 0.0125 or 120",
+        "ar": "تعذّرت قراءة الرقم. مثال: 0.0125 أو 120",
+        "ru": "Не удалось прочитать число. Пример: 0,0125 или 120",
+        "de": "Die Zahl konnte nicht gelesen werden. Beispiel: 0,0125 oder 120",
+        "fr": "Le nombre n'a pas pu être lu. Exemple : 0,0125 ou 120",
+        "es": "No se pudo leer el número. Ejemplo: 0,0125 o 120",
+    },
     "telefon_bicimi": {
         "tr": "Telefon numarası geçersiz.",
         "en": "The phone number is invalid.",

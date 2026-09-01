@@ -2435,4 +2435,13 @@ export const ar: Sozluk = {
   kurulumAdresAlt: "أدخل العنوان البريدي الذي يظهر على الإيصالات والتقارير.",
   kurulumEngelAdres: "بدون عنوان تظهر الإيصالات والتقارير باسم المجمّع فقط.",
   kabukTesisAyarlari: "إعدادات المرفق",
+  daireArsaPayi: "حصة الأرض",
+  daireArsaPayiToplu: "إدخال حصص الأرض ({adet})",
+  daireArsaPayiBaslik: "إدخال حصص الأرض",
+  daireArsaPayiAciklama: "أدخل حصة كل وحدة. الوحدة التي تتركها فارغة تبقى خارج أي توزيع حسب حصة الأرض.",
+  daireArsaPayiGecersiz: "يجب أن تكون حصة الأرض رقمًا. مثال: 0.0125",
+  daireArsaPayiOzet: "مجموع حصص الأرض: {toplam} (مُدخل في {girilmis} من {daire} وحدة)",
+  daireArsaPayiEksik: "{adet} وحدة بلا حصة أرض؛ وتبقى خارج التوزيعات حسب حصة الأرض.",
+  iceAktarimGuncellenen: "مُحدَّث",
+  daireArsaPayiPartiIpucu: "يُطبَّق على جميع وحدات هذه الدفعة. يمكنك تصحيح الاستثناءات لاحقًا من شاشة الوحدات.",
 };

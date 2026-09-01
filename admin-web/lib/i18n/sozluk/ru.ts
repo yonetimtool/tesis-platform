@@ -2435,4 +2435,13 @@ export const ru: Sozluk = {
   kurulumAdresAlt: "Укажите почтовый адрес, который появится на квитанциях и в отчётах.",
   kurulumEngelAdres: "Без адреса на квитанциях и в отчётах будет только название объекта.",
   kabukTesisAyarlari: "Настройки объекта",
+  daireArsaPayi: "Доля в общем имуществе",
+  daireArsaPayiToplu: "Ввести доли ({adet})",
+  daireArsaPayiBaslik: "Ввод долей",
+  daireArsaPayiAciklama: "Укажите долю каждого помещения. Оставленное пустым помещение не участвует в распределении по долям.",
+  daireArsaPayiGecersiz: "Доля должна быть числом. Пример: 0,0125",
+  daireArsaPayiOzet: "Сумма долей: {toplam} (заполнено для {girilmis} из {daire} помещений)",
+  daireArsaPayiEksik: "У {adet} помещений нет доли; они не участвуют в распределении по долям.",
+  iceAktarimGuncellenen: "Обновлено",
+  daireArsaPayiPartiIpucu: "Применяется ко всем помещениям этой партии. Исключения можно поправить позже на экране «Помещения».",
 };

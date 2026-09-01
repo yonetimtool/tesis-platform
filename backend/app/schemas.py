@@ -3298,6 +3298,11 @@ class UnitBulkCreate(BaseModel):
     # istisnalar sonradan PATCH ile duzeltilir.
     unit_tip_id: uuid.UUID | None = None
     unit_grup_id: uuid.UUID | None = None
+    #: (P193 §6) PARTI BASINA arsa payi / metrekare. Tip dairelerde
+    #: (ayni kat plani) hepsi aynidir; 100 daireyi tek tek dolasmak
+    #: gereksiz bir istir. Istisnalar `PATCH /units/arsa-payi` ile.
+    arsa_payi: float | None = Field(None, ge=0)
+    metrekare: float | None = Field(None, ge=0)
 
     @model_validator(mode="after")
     def _cap(self) -> "UnitBulkCreate":
@@ -6880,6 +6885,10 @@ class IceAktarimSonuc(BaseModel):
     satir_sayisi: int = 0
     olusan: int = 0
     atlanan: int = 0
+    #: (P193 §6) VAR OLAN kayda yeni bilgi yazildi (bugun yalniz daire
+    #: arsa payi/metrekare). "Atlandi" ile ayni sey DEGIL: atlanan satir
+    #: hicbir sey degistirmez, bu satir degistirir.
+    guncellenen: int = 0
     hatali: int = 0
     hatalar: list[IceAktarimHata] = Field(default_factory=list)
     #: Yalniz UYGULANDIGINDA doner; onizlemede `null`. Geri alma bunu
@@ -6947,7 +6956,47 @@ class UnitTopluGuncelle(BaseModel):
     unit_tip_id: uuid.UUID | None = None
     unit_grup_id: uuid.UUID | None = None
     aktif: bool | None = None
+    #: (P193 §6) AYNI degeri hepsine yazar — tip daireler icin dogru arac
+    #: (ayni katta ayni metrekare). Daire basina FARKLI deger icin
+    #: `PATCH /units/arsa-payi` vardir.
+    arsa_payi: float | None = Field(None, ge=0)
+    metrekare: float | None = Field(None, ge=0)
     model_config = ConfigDict(extra="forbid")
+
+
+class ArsaPayiSatiri(BaseModel):
+    id: uuid.UUID
+    #: `None` = arsa payini KALDIR. Bir daire arsa payi dagitiminin
+    #: disinda birakilabilmeli (ticari birim, ortak alan).
+    arsa_payi: float | None = Field(None, ge=0)
+
+
+class ArsaPayiToplu(BaseModel):
+    """(P193 §6) DAIRE BASINA FARKLI arsa payi — TEK ISTEKTE.
+
+    `UnitTopluGuncelle` ile ayni sey DEGIL: o, secili dairelerin hepsine
+    AYNI degeri yazar. Arsa payi ise dogasi geregi daire basina farklidir
+    (100 daireli bir sitede 100 farkli sayi). Tek tek PATCH atmak 100
+    istek, 100 denetim kaydi ve yarim kalabilen bir yazma demekti.
+    """
+
+    satirlar: list[ArsaPayiSatiri] = Field(..., min_length=1, max_length=500)
+    model_config = ConfigDict(extra="forbid")
+
+
+class ArsaPayiOzet(BaseModel):
+    """Arsa payi TOPLAMI ve eksik girisler.
+
+    TOPLAM GOSTERILIR cunku arsa payi bir PAYDIR: toplami 1 (ya da
+    binde/yuzde olarak 1000/100) etmeyen bir dagilim, gider paylasimini
+    sessizce yanlis hesaplar. Kullanici toplami gormeden bunu fark
+    edemez.
+    """
+
+    daire_sayisi: int
+    girilmis: int
+    girilmemis: int
+    toplam: float
 
 
 class UnitSiralamaSatiri(BaseModel):

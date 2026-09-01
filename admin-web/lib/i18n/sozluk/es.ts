@@ -2435,4 +2435,13 @@ export const es: Sozluk = {
   kurulumAdresAlt: "Introduzca la dirección postal que aparece en recibos e informes.",
   kurulumEngelAdres: "Sin dirección, los recibos e informes solo muestran el nombre de la finca.",
   kabukTesisAyarlari: "Ajustes de las instalaciones",
+  daireArsaPayi: "Cuota de participación",
+  daireArsaPayiToplu: "Introducir cuotas ({adet})",
+  daireArsaPayiBaslik: "Introducción de cuotas",
+  daireArsaPayiAciklama: "Introduzca la cuota propia de cada vivienda. La que deje vacía queda fuera del reparto por cuota de participación.",
+  daireArsaPayiGecersiz: "La cuota debe ser un número. Ejemplo: 0,0125",
+  daireArsaPayiOzet: "Total de cuotas: {toplam} (introducido en {girilmis} de {daire} viviendas)",
+  daireArsaPayiEksik: "{adet} viviendas no tienen cuota; quedan fuera de los repartos por cuota de participación.",
+  iceAktarimGuncellenen: "Actualizados",
+  daireArsaPayiPartiIpucu: "Se aplica a todas las viviendas de este lote. Las excepciones puede corregirlas luego en la pantalla Viviendas.",
 };

@@ -2435,4 +2435,13 @@ export const de: Sozluk = {
   kurulumAdresAlt: "Geben Sie die Anschrift ein, die auf Belegen und Berichtsexporten erscheint.",
   kurulumEngelAdres: "Ohne Anschrift erscheinen auf Belegen und Berichten nur der Objektname.",
   kabukTesisAyarlari: "Anlageneinstellungen",
+  daireArsaPayi: "Miteigentumsanteil",
+  daireArsaPayiToplu: "Anteile eingeben ({adet})",
+  daireArsaPayiBaslik: "Eingabe der Anteile",
+  daireArsaPayiAciklama: "Tragen Sie für jede Einheit ihren eigenen Anteil ein. Eine leer gelassene Einheit bleibt bei der Verteilung nach Anteilen außen vor.",
+  daireArsaPayiGecersiz: "Der Anteil muss eine Zahl sein. Beispiel: 0,0125",
+  daireArsaPayiOzet: "Summe der Anteile: {toplam} (für {girilmis} von {daire} Einheiten erfasst)",
+  daireArsaPayiEksik: "{adet} Einheiten haben keinen Anteil; sie bleiben bei Verteilungen nach Anteilen außen vor.",
+  iceAktarimGuncellenen: "Aktualisiert",
+  daireArsaPayiPartiIpucu: "Wird auf alle Einheiten dieser Charge angewendet. Abweichungen können Sie später im Einheiten-Bildschirm korrigieren.",
 };

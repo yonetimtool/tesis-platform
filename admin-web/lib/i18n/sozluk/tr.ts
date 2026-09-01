@@ -2498,4 +2498,13 @@ export const tr = {
   kurulumAdresAlt: "Makbuz ve rapor çıktılarında görünecek posta adresini girin.",
   kurulumEngelAdres: "Adres yoksa makbuz ve raporlarda yalnız site adı görünür.",
   kabukTesisAyarlari: "Tesis ayarları",
+  daireArsaPayi: "Arsa payı",
+  daireArsaPayiToplu: "Arsa payı gir ({adet})",
+  daireArsaPayiBaslik: "Arsa payı girişi",
+  daireArsaPayiAciklama: "Her daire için kendi arsa payını yazın. Boş bıraktığınız daire, arsa payına göre yapılan dağıtımın dışında kalır.",
+  daireArsaPayiGecersiz: "Arsa payı sayı olmalı. Örnek: 0,0125",
+  daireArsaPayiOzet: "Arsa payı toplamı: {toplam} ({girilmis}/{daire} dairede girili)",
+  daireArsaPayiEksik: "{adet} dairede arsa payı yok; bu daireler arsa payına göre dağıtımın dışında kalır.",
+  iceAktarimGuncellenen: "Güncellenen",
+  daireArsaPayiPartiIpucu: "Bu partideki dairelerin hepsine yazılır. Farklı olanları sonradan Daireler ekranından düzeltebilirsiniz.",
 } as const;

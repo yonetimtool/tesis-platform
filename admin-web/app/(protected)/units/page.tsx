@@ -105,6 +105,10 @@ export default function UnitsPage() {
   const [topluHata, setTopluHata] = useState<string | null>(null);
   const [topluAktif, setTopluAktif] = useState("");
   const [topluTip, setTopluTip] = useState("");
+  // (P193 §6) ARSA PAYI TOPLU GIRIS — daire basina FARKLI deger.
+  const [payAcik, setPayAcik] = useState(false);
+  const [paylar, setPaylar] = useState<Record<string, string>>({});
+  const [payHata, setPayHata] = useState<string | null>(null);
 
   // (P154 / Asama 5) TOPLU DAIRE OLUSTURMA — uc ZATEN VARDI
   // (`POST /units/bulk`), eksik olan yalnizca web yuzeyiydi (mobilde
@@ -114,6 +118,13 @@ export default function UnitsPage() {
     "/api/tanimlar/unit-tipleri?limit=100",
     jsonFetcher,
   );
+
+  // (P193 §6) TOPLAM AYRI UCTAN GELIR, ekranda toplanmaz: liste SAYFALI
+  // ve gorunen 25 satirin toplami "toplam arsa payi" DEGILDIR. Yanlis
+  // bir toplam, dogru gorunen bir hatadir.
+  const { data: payOzet, mutate: payOzetTazele } = useSWR<{
+    daire_sayisi: number; girilmis: number; girilmemis: number; toplam: number;
+  }>("/api/units/arsa-payi-ozeti", jsonFetcher);
 
 
 
@@ -134,6 +145,36 @@ export default function UnitsPage() {
       toast.success(t("daireTopluGuncellendi"));
     } catch (e) {
       setTopluHata(e instanceof Error ? e.message : t("ortakHataOlustu"));
+    }
+  }
+
+  async function arsaPayiKaydet(): Promise<void> {
+    setPayHata(null);
+    const satirlar: { id: string; arsa_payi: number | null }[] = [];
+    for (const id of secili) {
+      const ham = (paylar[id] ?? "").trim();
+      if (ham === "") {
+        // BOS = KALDIR. "Dokunmadim" ile "temizledim" ayrimi burada
+        // gerekmiyor: modal yalniz SECILI daireleri gosterir ve
+        // kullanici hepsini gormus olur.
+        satirlar.push({ id, arsa_payi: null });
+        continue;
+      }
+      const coz = sayiCoz(ham);
+      if (coz.tur !== "sayi" || coz.deger < 0) {
+        setPayHata(t("daireArsaPayiGecersiz"));
+        return;
+      }
+      satirlar.push({ id, arsa_payi: coz.deger });
+    }
+    try {
+      await apiSend("/api/units/arsa-payi", "PATCH", { satirlar });
+      setPayAcik(false);
+      setSecili([]);
+      await Promise.all([mutate(), payOzetTazele()]);
+      toast.success(t("daireTopluGuncellendi"));
+    } catch (e) {
+      setPayHata(e instanceof Error ? e.message : t("ortakHataOlustu"));
     }
   }
 
@@ -258,6 +299,17 @@ export default function UnitsPage() {
         baslik: BIRIM_M2,
         sayisal: true,
         hucre: (u) => sayiBicimi(u.metrekare),
+        darEkrandaGizle: true,
+      },
+      {
+        // (P193 §6) ARSA PAYI SUTUNU. Listede gorunmedigi surece "hangi
+        // dairede eksik" sorusu ancak daire daire acilarak yanitlanirdi
+        // — ve eksik arsa payi, arsa payina gore dagitimi SESSIZCE
+        // eksik birakir.
+        id: "arsa_payi",
+        baslik: t("daireArsaPayi"),
+        sayisal: true,
+        hucre: (u) => sayiBicimi(u.arsa_payi),
         darEkrandaGizle: true,
       },
       {
@@ -466,17 +518,102 @@ export default function UnitsPage() {
         durum={tabloDurumu}
         onDurumDegisti={setTabloDurumu}
         topluEylemler={() => (
-          <Dugme
-            boy="kucuk"
-            tur="birincil"
-            onClick={() => setTopluAcik(true)}
-          >
-            {t("daireTopluDegistir", { adet: secili.length })}
-          </Dugme>
+          <>
+            <Dugme
+              boy="kucuk"
+              tur="birincil"
+              onClick={() => setTopluAcik(true)}
+            >
+              {t("daireTopluDegistir", { adet: secili.length })}
+            </Dugme>
+            {/* (P193 §6) AYRI DUGME, ayni modalin bir alani DEGIL:
+                "hepsine ayni degeri yaz" ile "her daireye kendi
+                degerini yaz" iki farkli istir ve tek formda
+                birlestirmek ikisini de belirsizlestirirdi. */}
+            <Dugme
+              boy="kucuk"
+              onClick={() => {
+                const baslangic: Record<string, string> = {};
+                for (const u of data?.items ?? []) {
+                  if (!secili.includes(u.id)) continue;
+                  baslangic[u.id] =
+                    u.arsa_payi != null ? sayiBicimi(u.arsa_payi, "") : "";
+                }
+                setPaylar(baslangic);
+                setPayHata(null);
+                setPayAcik(true);
+              }}
+            >
+              {t("daireArsaPayiToplu", { adet: secili.length })}
+            </Dugme>
+          </>
         )}
       />
 
+      {/* (P193 §6) ARSA PAYI OZETI — toplam ve EKSIK GIRIS sayisi.
+          Arsa payi bir PAYDIR: toplami beklenen degeri tutmayan bir
+          dagilim gider paylasimini sessizce yanlis hesaplar, ve
+          girilmemis daire dagitimin DISINDA kalir. Ikisi de burada
+          gorunur. */}
+      {payOzet && (
+        <p
+          role="status"
+          style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}
+        >
+          {t("daireArsaPayiOzet", {
+            toplam: sayiBicimi(payOzet.toplam, "0"),
+            girilmis: String(payOzet.girilmis),
+            daire: String(payOzet.daire_sayisi),
+          })}
+          {payOzet.girilmemis > 0 ? ` ${t("daireArsaPayiEksik", { adet: String(payOzet.girilmemis) })}` : null}
+        </p>
+      )}
+
       <div ref={detayRef}>{detail && <UnitDetail unit={detail} />}</div>
+
+      <Modal
+        baslik={t("daireArsaPayiBaslik")}
+        acik={payAcik}
+        onKapat={() => setPayAcik(false)}
+        eylemler={
+          <>
+            <Dugme tur="sessiz" onClick={() => setPayAcik(false)}>
+              {t("ortakIptal")}
+            </Dugme>
+            <Dugme tur="birincil" onClick={() => void arsaPayiKaydet()}>
+              {t("ortakKaydet")}
+            </Dugme>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+            {t("daireArsaPayiAciklama")}
+          </p>
+          {payHata && (
+            <p role="alert" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-danger-ink)" }}>
+              {payHata}
+            </p>
+          )}
+          {(data?.items ?? [])
+            .filter((u) => secili.includes(u.id))
+            .map((u) => (
+              <AlanSarmal key={u.id} etiket={u.no}>
+                {(b) => (
+                  <Alan
+                    {...b}
+                    inputMode="decimal"
+                    value={paylar[u.id] ?? ""}
+                    onChange={(e) =>
+                      setPaylar({ ...paylar, [u.id]: e.target.value })
+                    }
+                    placeholder="0,0125"
+                  />
+                )}
+              </AlanSarmal>
+            ))}
+        </div>
+      </Modal>
 
 
       <Modal

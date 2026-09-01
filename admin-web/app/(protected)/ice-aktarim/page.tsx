@@ -56,6 +56,8 @@ interface Sonuc {
   satir_sayisi: number;
   olusan: number;
   atlanan: number;
+  /** (P193 §6) Var olan kayda YENI BILGI yazildi (daire arsa payi/m²). */
+  guncellenen?: number;
   hatali: number;
   hatalar: Hata[];
   /** (P193 §1) Sorunlu satir var ve "atla" denmedi -> HICBIR SEY yazilmadi. */
@@ -467,6 +469,18 @@ export default function IceAktarimPage() {
               <dt className="inline">{t("iceAktarimZatenVar")}: </dt>
               <dd className="inline font-semibold tabular-nums">{sonuc.atlanan}</dd>
             </span>
+            {/* (P193 §6) GUNCELLENEN — "atlandi" ile ayni sey degil:
+                atlanan satir hicbir sey degistirmez, bu satir var olan
+                daireye arsa payi/m² yazar. Sayi sifirken satir
+                cizilmez: her aktarim turunde anlamli degil. */}
+            {(sonuc.guncellenen ?? 0) > 0 && (
+              <span>
+                <dt className="inline">{t("iceAktarimGuncellenen")}: </dt>
+                <dd className="inline font-semibold tabular-nums">
+                  {sonuc.guncellenen}
+                </dd>
+              </span>
+            )}
             <span>
               <dt className="inline">{t("iceAktarimSorunlu")}: </dt>
               <dd

@@ -2435,4 +2435,13 @@ export const en: Sozluk = {
   kurulumAdresAlt: "Enter the postal address that appears on receipts and report exports.",
   kurulumEngelAdres: "Without an address, receipts and reports show only the site name.",
   kabukTesisAyarlari: "Facility settings",
+  daireArsaPayi: "Land share",
+  daireArsaPayiToplu: "Enter land shares ({adet})",
+  daireArsaPayiBaslik: "Land share entry",
+  daireArsaPayiAciklama: "Enter each unit's own land share. A unit you leave blank stays out of any distribution made by land share.",
+  daireArsaPayiGecersiz: "The land share must be a number. Example: 0.0125",
+  daireArsaPayiOzet: "Land share total: {toplam} (entered for {girilmis} of {daire} units)",
+  daireArsaPayiEksik: "{adet} units have no land share; they stay out of distributions made by land share.",
+  iceAktarimGuncellenen: "Updated",
+  daireArsaPayiPartiIpucu: "Applied to every unit in this batch. You can correct the exceptions later from the Units screen.",
 };
