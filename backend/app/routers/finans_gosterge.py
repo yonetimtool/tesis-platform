@@ -23,7 +23,7 @@ from .. import defter, yaslandirma
 from ..akis_metinleri import _tl
 from ..audit import Action, audit_user
 from ..deps import get_tenant_db, require_role
-from ..models import AppUser, DuesAssessment, Notification
+from ..models import AppUser, DuesAssessment, HatirlatmaAyari, Notification
 from ..sakin_bildirimi import sakin_bildirimi_yaz
 from ..schemas import (
     BorcluTopluIstek,
@@ -224,22 +224,36 @@ async def toplu_hatirlat(
     """
     from ..scheduler.notify import dispatch_external
 
+    # (P192 §4.2) YONETICININ METNI BURADA DA GECERLI: elle gonderilen
+    # hatirlatma, otomatik olanla ayni cumleyi tasimali. Iki yolda iki
+    # farkli metin, sakine "hangisi resmi" sorusunu sordururdu.
+    ayar = (await db.execute(select(HatirlatmaAyari))).scalar_one_or_none()
+    sablon = ayar.metin if ayar else None
+
     hedefler = await _secili_borclular(db, body.unit_ids)
     gonderilen = 0
     for daire in hedefler:
         if daire.borclu_user_id is None:
             continue
         params = {"tutar": _tl(daire.kalan_kurus), "vade": str(daire.en_eski_gun)}
+        ozel = None
+        if sablon:
+            try:
+                ozel = sablon.format(**params)
+            except (KeyError, IndexError, ValueError):
+                ozel = sablon
         dispatch_external(
             "aidat_hatirlatma",
             tenant_id=user.tenant_id,
             target_user_ids=(daire.borclu_user_id,),
             params=params,
             data={"tip": "aidat_hatirlatma"},
+            govde=ozel,
         )
         sakin_bildirimi_yaz(
             db, tenant_id=user.tenant_id, tip="aidat_hatirlatma",
-            user_ids=(daire.borclu_user_id,), veri=params,
+            user_ids=(daire.borclu_user_id,),
+            veri={**params, **({"metin": ozel} if ozel else {})},
         )
         gonderilen += 1
     await audit_user(

@@ -2362,4 +2362,8 @@ export const ru: Sozluk = {
   otoOkundu: "Открыто",
   otoOkunmadi: "Не открыто",
   otoAlici: "Получатель",
+  aidatimMakbuzlar: "Мои квитанции",
+  aidatimMakbuzYok: "Квитанций пока нет",
+  aidatimMakbuzNo: "Номер квитанции",
+  aidatimMakbuzIndir: "Скачать PDF",
 };

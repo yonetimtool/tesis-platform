@@ -2362,4 +2362,8 @@ export const de: Sozluk = {
   otoOkundu: "Geöffnet",
   otoOkunmadi: "Nicht geöffnet",
   otoAlici: "Empfänger",
+  aidatimMakbuzlar: "Meine Belege",
+  aidatimMakbuzYok: "Noch keine Belege",
+  aidatimMakbuzNo: "Belegnummer",
+  aidatimMakbuzIndir: "PDF herunterladen",
 };

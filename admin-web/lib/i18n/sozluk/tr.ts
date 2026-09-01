@@ -2425,4 +2425,8 @@ export const tr = {
   otoOkundu: "Açıldı",
   otoOkunmadi: "Açılmadı",
   otoAlici: "Alıcı",
+  aidatimMakbuzlar: "Makbuzlarım",
+  aidatimMakbuzYok: "Henüz makbuz yok",
+  aidatimMakbuzNo: "Makbuz no",
+  aidatimMakbuzIndir: "PDF indir",
 } as const;

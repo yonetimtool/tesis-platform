@@ -2362,4 +2362,8 @@ export const en: Sozluk = {
   otoOkundu: "Opened",
   otoOkunmadi: "Not opened",
   otoAlici: "Recipient",
+  aidatimMakbuzlar: "My receipts",
+  aidatimMakbuzYok: "No receipts yet",
+  aidatimMakbuzNo: "Receipt no",
+  aidatimMakbuzIndir: "Download PDF",
 };

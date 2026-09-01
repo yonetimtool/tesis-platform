@@ -398,6 +398,9 @@ boyut sınırlarına ve spam süzgeçlerine takılır; ayrıca bağlantı kısa
 ömürlüdür (presign) ve posta kutusu ele geçse bile süresiz erişim vermez.
 E-posta bir **yan iştir**: gönderilemezse tahsilat düşmez.
 
+Panelde de görünür: **Aidatım** sayfasına makbuz arşivi tablosu eklendi
+(sakinin kendi makbuzları, kısa ömürlü PDF bağlantısıyla).
+
 ### 4.5 Düzenli giderler
 
 Tekrar **saklanır, genişletilmez**: "her ay" bir kuraldır ve her örneğini
@@ -417,6 +420,12 @@ kimseye sormadan kasadan para çıkarması olurdu.
 Ayın 1'inde **değil**, "1'inde ya da sonra ve bu dönem gönderilmediyse":
 görev bir gün hiç koşmazsa (bakım, kesinti) özet tamamen kaybolurdu. Damga
 `otomasyon_gunlugu`nda — ayrı bir sütun açmaya gerek yok.
+
+**Sakinlere şeffaflık özeti** aynı görevde ama bir koşulla: o ayın
+şeffaflık panosu **yayınlanmışsa**. Otomasyonun kendi kendine yayınlaması,
+yöneticinin gözden geçirmediği mali veriyi bütün siteye açmak olurdu —
+yayın bir karardır ve yöneticinindir. Görevin yaptığı şey yalnızca
+"yayınlanmış olanı duyurmak".
 
 ### Beat: günde bir, 06:00 (Europe/Istanbul)
 

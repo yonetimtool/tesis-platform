@@ -61,7 +61,7 @@ from .models import (
     GelirGiderTanim,
     HatirlatmaAyari,
     OtomasyonGunlugu,
-    Unit,
+    TransparencyPublication,
     UnitResident,
 )
 from .sakin_bildirimi import sakin_bildirimi_yaz
@@ -568,12 +568,54 @@ async def aylik_ozet(db: AsyncSession, tenant_id: uuid.UUID, bugun: date) -> dic
     sakin_bildirimi_yaz(
         db, tenant_id=tenant_id, tip="aylik_ozet", user_ids=yonetim, veri=params,
     )
+
+    # --- SAKINLERE SEFFAFLIK OZETI ------------------------------------- #
+    #
+    # YALNIZ O AY YAYINLANMISSA. Otomasyonun kendi kendine yayinlamasi,
+    # yoneticinin gozden gecirmedigi mali veriyi butun siteye acmak
+    # olurdu — yayin bir KARARDIR ve yoneticinindir. Burada yapilan sey
+    # yalnizca "yayinlanmis olani duyurmak".
+    yayinlandi = (
+        await db.execute(
+            select(TransparencyPublication.yayin).where(
+                TransparencyPublication.ay == donem
+            )
+        )
+    ).scalar_one_or_none()
+    sakinler: list[uuid.UUID] = []
+    if yayinlandi:
+        sakinler = list(
+            (
+                await db.execute(
+                    select(AppUser.id).where(
+                        AppUser.role == "resident", AppUser.is_active.is_(True)
+                    )
+                )
+            ).scalars().all()
+        )
+        if sakinler:
+            _bildir(
+                "aylik_ozet", tenant_id=tenant_id, aliciler=sakinler,
+                params=params,
+            )
+            sakin_bildirimi_yaz(
+                db, tenant_id=tenant_id, tip="aylik_ozet",
+                user_ids=sakinler, veri=params,
+            )
     await _gunluk_yaz(
         db, tenant_id=tenant_id, tur="aylik_ozet", donem=donem,
-        adet=len(yonetim), tutar_kurus=tahsilat,
-        sonuc={"tahakkuk_kurus": tahakkuk, "gider_kurus": gider, "oran": oran},
+        adet=len(yonetim) + len(sakinler), tutar_kurus=tahsilat,
+        sonuc={
+            "tahakkuk_kurus": tahakkuk, "gider_kurus": gider, "oran": oran,
+            "yonetim": len(yonetim), "sakin": len(sakinler),
+            "seffaflik_yayinda": bool(yayinlandi),
+        },
     )
-    return {"gonderildi": len(yonetim), "donem": donem}
+    return {
+        "gonderildi": len(yonetim) + len(sakinler),
+        "donem": donem,
+        "sakin": len(sakinler),
+    }
 
 
 # --------------------------------------------------------------------------- #

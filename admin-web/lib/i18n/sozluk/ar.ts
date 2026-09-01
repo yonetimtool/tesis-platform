@@ -2362,4 +2362,8 @@ export const ar: Sozluk = {
   otoOkundu: "فُتح",
   otoOkunmadi: "لم يُفتح",
   otoAlici: "المستلم",
+  aidatimMakbuzlar: "إيصالاتي",
+  aidatimMakbuzYok: "لا توجد إيصالات بعد",
+  aidatimMakbuzNo: "رقم الإيصال",
+  aidatimMakbuzIndir: "تنزيل PDF",
 };

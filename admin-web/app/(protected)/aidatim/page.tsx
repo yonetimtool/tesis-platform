@@ -43,6 +43,75 @@ type DaireDurum = {
 // (P61) HATA VARKEN "YOK" DENMEZ: liste `data?.items ?? []`den turer, yani
 // istek dustugunde de BOS gorunur ve sayfa hem hatayi hem "kayit yok"u
 // gosterirdi. Bos-durum kosulu bu yuzden `!error` de arar.
+/** (P192 §4.4) SAKININ MAKBUZ ARSIVI.
+ *
+ * Makbuz uretiliyordu ama sakin ONA ULASAMIYORDU: makbuz ucu yalniz
+ * yonetime acikti. Odedigi paranin belgesine erisemeyen sakin, her
+ * seferinde yonetime sormak zorunda kalirdi.
+ *
+ * PDF baglantisi KISA OMURLUDUR (sunucu her istekte yeniden uretir) ve
+ * SAKLANMAZ: kalici bir baglanti, kimlik dogrulamasi olmadan erisilebilen
+ * bir mali belge demekti.
+ */
+function Makbuzlar() {
+  const t = useT();
+  const { data, error } = useSWR<{
+    items: {
+      id: string;
+      belge_no: string;
+      tutar_kurus: number;
+      created_at: string;
+      pdf_url: string | null;
+    }[];
+  }>("/api/me/makbuzlar?limit=20", jsonFetcher);
+  const makbuzlar = data?.items ?? [];
+
+  return (
+    <section className="space-y-3">
+      <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
+        {t("aidatimMakbuzlar")}
+      </h2>
+      {error ? <HataDurumu mesaj={t("ortakHataOlustu")} /> : null}
+      {!error && makbuzlar.length === 0 ? (
+        <BosDurum baslik={t("aidatimMakbuzYok")} />
+      ) : null}
+      {makbuzlar.length > 0 ? (
+        <div className="overflow-x-auto">
+          <Tablo>
+            <caption className="sr-only">{t("aidatimMakbuzlar")}</caption>
+            <TabloBasligi zeminsiz className="text-xs">
+              <Th dolgusuz className="py-1.5">{t("aidatimMakbuzNo")}</Th>
+              <Th dolgusuz className="py-1.5">{t("aidatimTutar")}</Th>
+              <Th dolgusuz className="py-1.5">{t("aidatimSonOdeme")}</Th>
+              <Th dolgusuz className="py-1.5">{t("aidatimMakbuzIndir")}</Th>
+            </TabloBasligi>
+            <tbody>
+              {makbuzlar.map((m) => (
+                <tr key={m.id} className="border-t border-yuzey-divider">
+                  <Td dolgusuz className="py-2 font-mono text-xs">{m.belge_no}</Td>
+                  <Td dolgusuz className="py-2 tabular-nums">
+                    {kurusToTL(m.tutar_kurus)}
+                  </Td>
+                  <Td dolgusuz className="py-2">{tarihBicimi(m.created_at)}</Td>
+                  <Td dolgusuz className="py-2">
+                    {m.pdf_url ? (
+                      <a href={m.pdf_url} target="_blank" rel="noreferrer">
+                        {t("aidatimMakbuzIndir")}
+                      </a>
+                    ) : (
+                      "—"
+                    )}
+                  </Td>
+                </tr>
+              ))}
+            </tbody>
+          </Tablo>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
 export default function AidatimPage() {
   const t = useT();
   const { data, error, isLoading } = useSWR<{ items: DaireDurum[] }>(
@@ -123,6 +192,8 @@ export default function AidatimPage() {
           ) : null}
         </section>
       ))}
+
+      <Makbuzlar />
     </div>
   );
 }
