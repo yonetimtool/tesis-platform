@@ -28,6 +28,7 @@ import { TelefonAlani } from "@/components/TelefonAlani";
 import { useT } from "@/lib/i18n/kullan";
 import { ROLE_OPTIONS as ROLES, rolAdi } from "@/lib/roles";
 import { telefonNormalle } from "@/lib/telefon";
+import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 import type { UserDetail, UserListResponse, UserRole, UserRow } from "@/lib/types";
 
 /**
@@ -182,6 +183,14 @@ export default function UsersPage() {
   );
 
   const [open, setOpen] = useState(false);
+  // (P193 §7) BILDIRIM TESHISI (eksik 5) + ODEME KODLARI (eksik 10).
+  const [teshis, setTeshis] = useState<UserDetail | null>(null);
+  const [kodAcik, setKodAcik] = useState(false);
+  const [kodHata, setKodHata] = useState<string | null>(null);
+  const [kodlar, setKodlar] = useState<{
+    uretilen: number;
+    items: { user_id: string; ad: string; daire_no: string | null; odeme_kodu: string }[];
+  } | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY);
   const [formErr, setFormErr] = useState<string | null>(null);
@@ -239,12 +248,14 @@ export default function UsersPage() {
     // Detay gelene kadar guvenli varsayilan: tamamlanmis KABUL et (e-posta
     // kilitli baslar), atama bilinmiyor.
     setDuzenlenenTamam(true);
+    setTeshis(null);
     setAtanacakDaire("");
     setIlkDaire("");
     setSecilenBlok("");
     setOpen(true);
     try {
       const d = await jsonFetcher<UserDetail>(`/api/users/${u.id}`);
+      setTeshis(d);
       setForm((f) => ({
         ...f,
         telefon: d.telefon ?? "",
@@ -258,6 +269,24 @@ export default function UsersPage() {
       setSecilenBlok(birim ? birim.blok || BLOKSUZ : "");
     } catch {
       // Detay cekilemezse form yine acik kalir (telefon bos); kaydetmeye engel yok.
+    }
+  }
+
+  async function odemeKodlariniAc(): Promise<void> {
+    setKodHata(null);
+    setKodAcik(true);
+    setKodlar(null);
+    try {
+      // POST cunku uc YAZAR: eksik kodlari uretir (tembel uretim, bkz.
+      // `routers/users.py`). Yonetici "kodlari duyuracagim" dedigi anda
+      // kodlarin VAR OLMASI gerekir.
+      const d = await apiSend<{
+        uretilen: number;
+        items: { user_id: string; ad: string; daire_no: string | null; odeme_kodu: string }[];
+      }>("/api/users/odeme-kodlari", "POST", {});
+      setKodlar(d);
+    } catch (e) {
+      setKodHata(e instanceof Error ? e.message : t("ortakHataOlustu"));
     }
   }
 
@@ -485,6 +514,13 @@ export default function UsersPage() {
           <Link href="/ice-aktarim?tur=kisi">
             <Dugme boy="kucuk">{t("kullaniciTopluYukle")}</Dugme>
           </Link>
+          {/* (P193 §7 / eksik 10) ODEME KODLARI. Banka eslestirmesinin
+              kesin calismasi sakinin havale aciklamasina kendi kodunu
+              yazmasina bagli; kod sakinin uygulamasinda gorunuyordu ama
+              yonetici goremiyor, dolayisiyla DUYURAMIYORDU. */}
+          <Dugme boy="kucuk" onClick={() => void odemeKodlariniAc()}>
+            {t("kullaniciOdemeKodlari")}
+          </Dugme>
           <Dugme tur="birincil" boy="kucuk" onClick={openNew}>
             {t("kullaniciYeni")}
           </Dugme>
@@ -771,7 +807,98 @@ export default function UsersPage() {
               {formErr}
             </p>
           )}
+          {/* (P193 §7 / eksik 5) BILDIRIM TANILAMA — SALT OKUNUR.
+              "Sakine bildirim gitmiyor" sikayetinin uc olasi cevabi var:
+              kanal tercihi kapali, e-posta dogrulanmamis, ya da kayitli
+              cihaz yok. Ucu de burada gorunur. DEGISTIRILEMEZ: tercihi
+              baskasi adina degistirmek rizayi anlamsizlastirir. */}
+          {editingId && teshis && (
+            <div className="sm:col-span-2 space-y-1">
+              <h3 style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}>
+                {t("kullaniciTanilama")}
+              </h3>
+              <dl
+                className="flex flex-wrap gap-x-5 gap-y-1"
+                style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}
+              >
+                {(
+                  [
+                    ["kullaniciTanilamaEposta", teshis.bildirim_eposta],
+                    ["kullaniciTanilamaSms", teshis.bildirim_sms],
+                    ["kullaniciTanilamaMobil", teshis.bildirim_mobil],
+                    ["kullaniciTanilamaDogrulandi", teshis.eposta_dogrulandi],
+                  ] as [SozlukAnahtari, boolean | null | undefined][]
+                ).map(([anahtar, deger]) => (
+                  <span key={anahtar}>
+                    <dt className="inline">{t(anahtar)}: </dt>
+                    <dd className="inline font-semibold">
+                      {deger ? t("ortakAcik") : t("ortakKapali")}
+                    </dd>
+                  </span>
+                ))}
+                <span>
+                  <dt className="inline">{t("kullaniciTanilamaCihaz")}: </dt>
+                  <dd className="inline font-semibold tabular-nums">
+                    {teshis.mobil_cihaz_sayisi ?? 0}
+                  </dd>
+                </span>
+                {teshis.odeme_kodu && (
+                  <span>
+                    <dt className="inline">{t("kullaniciOdemeKodu")}: </dt>
+                    <dd className="inline font-mono font-semibold">{teshis.odeme_kodu}</dd>
+                  </span>
+                )}
+              </dl>
+              {/* Cihaz YOKKEN "mobil bildirim acik" YANILTICIDIR: tercih
+                  acik olsa da bildirim gitmez. Sebep acikca yazilir. */}
+              {teshis.bildirim_mobil && (teshis.mobil_cihaz_sayisi ?? 0) === 0 && (
+                <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
+                  {t("kullaniciTanilamaCihazYok")}
+                </p>
+              )}
+            </div>
+          )}
         </form>
+      </Modal>
+
+      {/* (P193 §7) ODEME KODLARI LISTESI */}
+      <Modal
+        acik={kodAcik}
+        onKapat={() => setKodAcik(false)}
+        baslik={t("kullaniciOdemeKodlari")}
+        genislikSinifi="max-w-2xl"
+        eylemler={
+          <Dugme tur="sessiz" onClick={() => setKodAcik(false)}>
+            {t("ortakKapat")}
+          </Dugme>
+        }
+      >
+        <div className="space-y-2">
+          <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+            {t("kullaniciOdemeKodlariAciklama")}
+          </p>
+          {kodHata && (
+            <p role="alert" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-danger-ink)" }}>
+              {kodHata}
+            </p>
+          )}
+          {kodlar && (
+            <ul className="space-y-1">
+              {kodlar.items.map((k) => (
+                <li
+                  key={k.user_id}
+                  className="flex flex-wrap items-center gap-2"
+                  style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}
+                >
+                  <span className="font-mono font-semibold">{k.odeme_kodu}</span>
+                  <span style={{ color: "var(--yz-text-2)" }}>
+                    {k.daire_no ?? "—"} · {k.ad}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </Modal>
       {diyalog}
     </div>

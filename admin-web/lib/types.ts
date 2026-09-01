@@ -390,6 +390,17 @@ export interface UserDetail extends UserRow {
   // on-doldurur (yalniz detay GET doldurur).
   kayit_tamamlandi?: boolean;
   daire_id?: string | null;
+  // (P193 §7) BILDIRIM TESHISI — SALT OKUNUR. "Sakine bildirim gitmiyor"
+  // sikayetinde yoneticinin bakabilecegi hicbir ekran yoktu; kanal
+  // tercihini kisi kendi degistirir, yonetici yalnizca GORUR.
+  eposta_dogrulandi?: boolean;
+  bildirim_eposta?: boolean | null;
+  bildirim_sms?: boolean | null;
+  bildirim_mobil?: boolean | null;
+  /** Kayitli AKTIF cihaz sayisi: "push acik" ile "push GIDEBILIR" ayri. */
+  mobil_cihaz_sayisi?: number | null;
+  /** (P193 §7) Havale aciklamasina yazilacak kod. */
+  odeme_kodu?: string | null;
 }
 
 export interface UserListResponse {

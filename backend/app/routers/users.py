@@ -21,9 +21,11 @@ from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..hata_metinleri import istek_dili
 from ..hesap_silme import hesabi_sil_veya_anonimlestir
-from ..models import AppUser, Davet, Tenant, UnitResident
+from ..models import AppUser, Davet, Tenant, Unit, UnitResident, UserDevice
 from ..roller import yonetilebilir
 from ..schemas import (
+    OdemeKoduListe,
+    OdemeKoduSatiri,
     AcilabilirRollerOut,
     AvatarUpdate,
     DavetGonderimSonucu,
@@ -46,6 +48,9 @@ _ADMIN = require_role("admin")
 # yonetici gorev atamak icin kullanici listesini OKUR; CRUD admin-only (auth.md §4).
 # (P35) Amir de okur: kendi ekibini yonetebilmesi icin listeyi gormeli.
 _READER = require_role("admin", "yonetici", "guvenlik_amiri")
+# (P193 §7) Odeme kodlari TESIS YONETIMI isidir; guvenlik amiri disarida
+# kalir — kod bir FINANS verisidir ve amirin isi saha ekibidir.
+_YONETIM = require_role("admin", "yonetici")
 # Kullanici OLUSTURMA: admin (her rol) + yonetici (YALNIZ saha personeli)
 # + (P35) guvenlik amiri (YALNIZ guvenlik personeli — kendi ekibi).
 _USER_CREATOR = require_role("admin", "yonetici", "guvenlik_amiri")
@@ -196,7 +201,100 @@ async def get_user(
     # (P186 §2.1) Duzenleme formu mevcut daire atamasini on-doldurur.
     baglar = await _aktif_daire_baglari(db, obj.id)
     out.daire_id = baglar[0].unit_id if baglar else None
+    # (P193 §7 / eksik 5) BILDIRIM TESHISI — YALNIZ DETAYDA.
+    #
+    # "Sakine bildirim gitmiyor" sikayetinin uc olasi cevabi var: kanal
+    # tercihi kapali, e-posta dogrulanmamis, ya da kayitli mobil cihaz
+    # yok. Ucu de burada gorunur. LISTEDE DEGIL: bu alanlar teshis
+    # icindir ve toplu listede gostermek, ihtiyac olmadan herkesin
+    # tercihini dokmek olurdu (veri en az).
+    out.bildirim_eposta = obj.bildirim_eposta
+    out.bildirim_sms = obj.bildirim_sms
+    out.bildirim_mobil = obj.bildirim_mobil
+    out.mobil_cihaz_sayisi = (
+        await db.execute(
+            select(func.count())
+            .select_from(UserDevice)
+            .where(UserDevice.user_id == obj.id, UserDevice.aktif.is_(True))
+        )
+    ).scalar_one()
+    # (eksik 10) Odeme kodu — VARSA gosterilir, BURADA URETILMEZ.
+    # Uretim `POST /users/odeme-kodlari` ile BILINCLI bir eylemdir.
+    out.odeme_kodu = obj.odeme_kodu
     return out
+
+
+# ============== (P193 §7 / eksik 10) ODEME KODLARI — LISTE ================= #
+#
+# Banka eslestirmesinin KESIN calismasi, sakinin havale aciklamasina kendi
+# kodunu yazmasina bagli. Kod sakinin uygulamasinda gorunuyordu ama
+# yonetici goremiyordu — yani "aciklamaya kodunuzu yazin" diye duyurmasi
+# mumkun degildi; her sakine tek tek sormasi gerekirdi.
+@router.post("/odeme-kodlari", response_model=OdemeKoduListe)
+async def odeme_kodlari(
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_YONETIM),
+) -> OdemeKoduListe:
+    """Sakinlerin odeme kodlarini listeler; EKSIK OLANLARI URETIR.
+
+    NEDEN POST: uc YAZAR. Kodlar tembel uretiliyordu (sakin ilk kez
+    odeme ekranini acinca) ve bugune kadar cogu sakinin kodu HIC YOKTU —
+    yani salt okuyan bir uc bos bir liste dondururdu. Yonetici "kodlari
+    duyuracagim" dedigi anda kodlarin VAR OLMASI gerekir.
+
+    TEMBEL URETIM GEREKCESI KORUNDU: kod, hicbir zaman havale
+    yapmayacak yuz binlerce kayit icin PESIN uretilmiyor; yalnizca
+    yonetici bu ekrani acinca ve YALNIZ KENDI TESISININ sakinleri icin
+    uretilir.
+    """
+    from .. import odeme_kodu as kod_modulu
+
+    sakinler = (
+        (await db.execute(
+            select(AppUser)
+            .where(AppUser.role == "resident", AppUser.is_active.is_(True))
+            .order_by(AppUser.ad)
+        )).scalars().all()
+    )
+    uretilen = 0
+    for k in sakinler:
+        if k.odeme_kodu:
+            continue
+        for _ in range(5):
+            k.odeme_kodu = kod_modulu.uret()
+            try:
+                async with db.begin_nested():
+                    await db.flush()
+                uretilen += 1
+                break
+            except IntegrityError:
+                # Cakisma pratikte imkansiz ama SIFIR degil; benzersizlik
+                # kisitina guvenip yeniden denenir (sakin tarafindaki
+                # `_kod_ver` ile AYNI desen).
+                k.odeme_kodu = None
+
+    # Daire numarasi da doner: duyuru "A-12 -> ABC123" seklinde yazilir;
+    # yalniz ad ile ayni isimli iki sakin ayirt edilemezdi.
+    daireler = dict(
+        (
+            await db.execute(
+                select(UnitResident.user_id, Unit.no)
+                .join(Unit, Unit.id == UnitResident.unit_id)
+                .where(UnitResident.bitis.is_(None))
+            )
+        ).all()
+    )
+    return OdemeKoduListe(
+        uretilen=uretilen,
+        items=[
+            OdemeKoduSatiri(
+                user_id=k.id, ad=k.ad, daire_no=daireler.get(k.id),
+                odeme_kodu=k.odeme_kodu or "",
+            )
+            for k in sakinler
+            if k.odeme_kodu
+        ],
+    )
 
 
 @router.post("", response_model=UserCreatedOut, status_code=201)

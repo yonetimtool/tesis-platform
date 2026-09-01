@@ -417,6 +417,7 @@ POST   /uploads/presign                                     IZIN   IZIN   IZIN  
 GET    /users                                               IZIN   IZIN   RED    RED    RED    IZIN   RED   
 POST   /users                                               IZIN   IZIN   RED    RED    RED    IZIN   RED   
 GET    /users/acilabilir-roller                             IZIN   IZIN   RED    RED    RED    IZIN   RED   
+POST   /users/odeme-kodlari                                 IZIN   IZIN   RED    RED    RED    RED    RED   
 GET    /users/{id}                                          IZIN   IZIN   RED    RED    RED    IZIN   RED   
 PATCH  /users/{id}                                          IZIN   IZIN   RED    RED    RED    IZIN   RED   
 PATCH  /users/{id}/contact                                  IZIN   IZIN   RED    RED    RED    RED    RED   

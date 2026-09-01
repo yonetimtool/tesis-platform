@@ -216,7 +216,50 @@ class UserAdminOut(BaseModel):
     # duzenleme formunu on-doldurur (yalniz DETAY GET doldurur; listede NULL).
     kayit_tamamlandi: bool = False
     daire_id: uuid.UUID | None = None
+    # --- (P193 §7) BILDIRIM TESHISI — YALNIZ DETAY GET doldurur --------- #
+    #
+    # Rehberde eksik 5: "sakine bildirim gitmiyor" sikayetinde yoneticinin
+    # bakabilecegi HICBIR ekran yoktu; kisinin kendi ayarina bakmasi
+    # gerekiyordu. Bu alanlar SALT OKUNUR: kanal tercihi kisinin kendi
+    # tercihidir, yonetici GOREBILMELI ama DEGISTIREMEMELI (KVKK: tercihi
+    # baskasi adina degistirmek rizayi anlamsizlastirir).
+    #: E-postasi DOGRULANMAMIS kullaniciya bildirim gonderilse de
+    #: kullanici giris yapamaz; teshisin ilk sorusu budur.
+    eposta_dogrulandi: bool = False
+    bildirim_eposta: bool | None = None
+    bildirim_sms: bool | None = None
+    bildirim_mobil: bool | None = None
+    #: Kayitli mobil cihaz sayisi. "Push acik" ile "push GIDEBILIR" ayri
+    #: seylerdir: cihaz kaydi yoksa tercih acik olsa da bildirim gitmez ve
+    #: teshisin cevabi tam olarak budur.
+    mobil_cihaz_sayisi: int | None = None
+    #: (P193 §7 / eksik 10) Havale aciklamasina yazilacak kod. Banka
+    #: eslestirmesinin kesin calismasi buna bagli; sakinin uygulamasinda
+    #: gorunuyordu ama yonetici goremiyordu — yani "kodunu yaz" diye
+    #: soyleyemiyordu.
+    odeme_kodu: str | None = None
     created_at: datetime
+
+
+class OdemeKoduSatiri(BaseModel):
+    user_id: uuid.UUID
+    ad: str
+    #: Aktif daire baglantisi. Duyuru "A-12 -> ABC123" seklinde yazilir;
+    #: yalniz ad ile ayni isimli iki sakin ayirt edilemezdi.
+    daire_no: str | None = None
+    odeme_kodu: str
+
+
+class OdemeKoduListe(BaseModel):
+    """(P193 §7) Sakinlerin havale kodlari.
+
+    `uretilen` AYRI DONER: yonetici ekrani ilk actiginda cogu kod HENUZ
+    YOKTUR (tembel uretim) ve "bu cagri veriyi degistirdi mi" sorusunun
+    gorunur bir yaniti olmali.
+    """
+
+    uretilen: int = 0
+    items: list[OdemeKoduSatiri] = Field(default_factory=list)
 
 
 # Liste ogesi — telefon YOK (data-minimization: numaralar toplu listelenmez).
@@ -514,6 +557,9 @@ class BildirimTercihUpdate(BaseModel):
     acik olan kullanicida bu, digerinin degisikligini SESSIZCE geri alirdi.
     """
 
+    #: E-postasi DOGRULANMAMIS kullaniciya bildirim gonderilse de
+    #: kullanici giris yapamaz; teshisin ilk sorusu budur.
+    eposta_dogrulandi: bool = False
     bildirim_eposta: bool | None = None
     bildirim_sms: bool | None = None
     bildirim_mobil: bool | None = None

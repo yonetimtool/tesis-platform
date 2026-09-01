@@ -10026,6 +10026,28 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
+  /users/odeme-kodlari:
+    post:
+      tags: [users]
+      summary: Sakinlerin havale kodlari — eksikleri URETIR (admin + yonetici)
+      description: >
+        (P193 §7) Banka eslestirmesinin kesin calismasi, sakinin havale
+        aciklamasina kendi kodunu yazmasina bagli. Kod sakinin
+        uygulamasinda gorunuyordu ama YONETICI GOREMIYORDU — yani
+        "aciklamaya kodunuzu yazin" diye duyurmasi mumkun degildi.
+        NEDEN POST: uc YAZAR. Kodlar tembel uretiliyor ve cogu sakinin
+        kodu HIC YOKTUR; salt okuyan bir uc bos liste dondururdu. Tembel
+        uretim gerekcesi korundu: kod yalnizca yonetici bu ekrani acinca
+        ve YALNIZ KENDI TESISININ sakinleri icin uretilir.
+      responses:
+        "200":
+          description: Kodlar
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OdemeKoduListe" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /users/{id}:
     parameters:
       - $ref: "#/components/parameters/PathId"
@@ -12025,7 +12047,60 @@ components:
           format: date
           nullable: true
           description: (P128) Gorev penceresi sonu — denetci disi rollerde null.
+        # --- (P193 §7) BILDIRIM TESHISI — YALNIZ DETAY GET doldurur ------ #
+        eposta_dogrulandi:
+          type: boolean
+          default: false
+          description: >
+            (P193) E-postasi dogrulanmamis kullanici giris yapamaz; "bildirim
+            gitmiyor" teshisinin ilk sorusu budur.
+        bildirim_eposta:
+          type: boolean
+          nullable: true
+          description: >
+            (P193 §7) Kanal tercihi — SALT OKUNUR. Yonetici gorebilmeli ama
+            DEGISTIREMEMELI: tercihi baskasi adina degistirmek rizayi
+            anlamsizlastirir.
+        bildirim_sms: { type: boolean, nullable: true }
+        bildirim_mobil: { type: boolean, nullable: true }
+        mobil_cihaz_sayisi:
+          type: integer
+          nullable: true
+          description: >
+            (P193 §7) Kayitli AKTIF cihaz sayisi. "Push acik" ile "push
+            GIDEBILIR" ayri seylerdir: cihaz kaydi yoksa tercih acik olsa
+            da bildirim gitmez.
+        odeme_kodu:
+          type: string
+          nullable: true
+          description: >
+            (P193 §7) Havale aciklamasina yazilacak kod. Detayda GOSTERILIR,
+            burada URETILMEZ — uretim `POST /users/odeme-kodlari` ile
+            bilincli bir eylemdir.
         created_at: { type: string, format: date-time }
+    OdemeKoduSatiri:
+      type: object
+      required: [user_id, ad, odeme_kodu]
+      properties:
+        user_id: { type: string, format: uuid }
+        ad: { type: string }
+        daire_no: { type: string, nullable: true }
+        odeme_kodu: { type: string }
+    OdemeKoduListe:
+      type: object
+      required: [items]
+      properties:
+        uretilen:
+          type: integer
+          default: 0
+          description: >
+            Bu cagrida URETILEN kod sayisi. Ayri doner cunku yonetici
+            ekrani ilk actiginda cogu kod HENUZ YOKTUR (tembel uretim) ve
+            "bu cagri veriyi degistirdi mi" sorusunun gorunur bir yaniti
+            olmali.
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/OdemeKoduSatiri" }
     UserListItem:
       type: object
       description: >

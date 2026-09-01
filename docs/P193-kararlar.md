@@ -530,3 +530,95 @@ birlikte **117 test** yeşil.
 ### Ölçemediklerim
 - Gerçek bir `.xlsx` dosyasıyla arsa payı sütununun tarayıcıdan
   yüklenmesi (ayrıştırma panelde; ölçüm yapılandırılmış satırlarla).
+
+---
+
+## Bölüm 7 — Kalan maddeler (14 eksik · maddeler 3, 5, 10, 12, 14)
+
+Bu bölümde listenin geri kalanını tek tek geçtim. Hiçbirini sessizce
+atlamadım; yapılmayanın nedeni yazılı.
+
+| # | Madde | Durum |
+|---|---|---|
+| 3 | Tesis adı yalnız mobilden değiştirilebiliyor | **Kapandı** (§5, `/tesis-ayarlari`) |
+| 5 | Yönetici sakinin bildirim kanallarını göremiyor | **Kapandı** (aşağıda) |
+| 10 | Sakinin ödeme kodunu yönetici göremiyor | **Kapandı** (aşağıda) |
+| 12 | Rezervasyon alanı / görev kategorisi / sayaç sihirbazda yok | **Kısmen düzeltme**: rezervasyon alanı ve sayaç eklendi (§2); *görev kategorisi zaten vardı* — rehberdeki bu satır yanlıştı, `gorev_alani` adımının sunucudaki ölçüsü `task_category` sayısıdır. §8'de düzeltiliyor. |
+| 14 | Hatırlatıcıyı geri getirme yolu yönetici için yok | **Kapandı** (§2, düğme sihirbaza taşındı) |
+
+### Kararlar
+
+**K7.1 — Bildirim tanılama, kullanıcı detayında ve SALT OKUNUR (madde 5).**
+"Sakine bildirim gitmiyor" şikâyetinin üç olası cevabı var ve üçü de artık
+tek yerde: kanal tercihi (e-posta/SMS/mobil), e-posta doğrulanmış mı,
+**kayıtlı aktif cihaz sayısı**. Üçüncüsü kritik: "push açık" ile "push
+GİDEBİLİR" ayrı şeylerdir — cihaz kaydı yoksa tercih açık olsa da bildirim
+gitmez, ve ekran tam olarak bunu yazıyor ("Mobil bildirim açık ama kayıtlı
+cihaz yok: kişi uygulamaya hiç giriş yapmamış").
+
+**Değiştirilemez, yalnız görünür.** Kanal tercihi kişinin kendi tercihidir;
+başkası adına değiştirmek rızayı anlamsızlaştırır. Yönetici görebilmeli,
+dokunamamalı.
+
+**Listede değil, detayda.** Bu alanlar teşhis içindir; toplu listede
+göstermek, ihtiyaç olmadan herkesin tercihini dökmek olurdu (veri en az).
+
+**K7.2 — Ödeme kodları listesi (madde 10). `POST /users/odeme-kodlari`.**
+Banka eşleştirmesinin kesin çalışması sakinin havale açıklamasına kendi
+kodunu yazmasına bağlı. Kod sakinin uygulamasında görünüyordu ama
+yönetici göremiyordu — yani "açıklamaya kodunuzu yazın" diye duyurması
+mümkün değildi.
+
+*Neden POST:* uç **yazar**. Kodlar tembel üretiliyordu (sakin ilk kez
+ödeme ekranını açınca) ve bugüne kadar çoğu sakinin kodu **hiç yoktu**;
+salt okuyan bir uç boş liste döndürürdü. Yönetici "kodları duyuracağım"
+dediği anda kodların var olması gerekir. Tembel üretimin gerekçesi
+korundu: kod, hiç havale yapmayacak yüz binlerce kayıt için peşin
+üretilmiyor — yalnız yönetici bu ekranı açınca ve yalnız kendi tesisinin
+sakinleri için.
+
+Liste **daire numarasını da** verir: duyuru "A-12 → TS-ABC123" diye
+yazılır; yalnız adla aynı isimli iki sakin ayırt edilemezdi. `uretilen`
+ayrı döner — "bu çağrı veriyi değiştirdi mi" sorusunun görünür yanıtı.
+
+**K7.3 — Ayrı BFF dosyası.** `app/api/users/odeme-kodlari/route.ts`
+yazıldı; `[id]` dinamik segmenti bu yolu `id="odeme-kodlari"` sanardı.
+(Depodaki "BFF eksik-rota 405" kusur sınıfı.)
+
+### NE ÖLÇTÜM
+
+```
+BILDIRIM TESHISI (yönetici ile GET /users/{id}):
+  Acme Kiraci: eposta=True sms=True mobil=True cihaz=0 eposta_dogrulandi=False
+  odeme_kodu: TS-M6GFB8
+
+ODEME KODLARI (POST /users/odeme-kodlari):
+  1. cagri -> HTTP 200  uretilen=5  satir=5
+     A-12 -> TS-M6GFB8 | Acme Kiraci
+     A-12 -> TS-T6WR6Z | Acme Sakin
+  2. cagri -> uretilen=0, kodlar AYNI  ← kodlar kalıcı, her açılışta değişmiyor
+```
+
+İkinci çağrının `uretilen=0` dönmesi önemli: kod bir kez üretilir ve
+kalıcıdır — sakinin uygulamasında gördüğü kodla yöneticinin duyurduğu kod
+aynı olmalı.
+
+Ekran: `admin-web/tests/p193-kullanici-tanilama.dom.test.ts` (2 test) —
+düzenleme modalinde kanal tercihleri, cihaz sayısı, ödeme kodu ve
+"kayıtlı cihaz yok" uyarısı görünüyor; Ödeme kodları düğmesi **POST**
+atıyor ve liste daire numarasıyla çiziliyor.
+
+Backend: `test_users.py` + `test_sozlesme_sapmasi.py` + `test_sakin_odeme.py`
+**35 test** (1 skip, mevcut). Rol matrisine `POST /users/odeme-kodlari`
+satırı eklendi.
+
+### Ölçemediklerim / bilinçli olarak yapılmayanlar
+- **Mobilde adres gösterimi** (§4'ün mobil ayağı): mobil tarafta tesis
+  bilgisi ekranı bu turda değişmedi.
+- **Kanal tercihini yöneticinin değiştirmesi**: bilinçli olarak
+  yapılmadı (K7.1).
+- **Yönetim e-postasının yöneticiye açılması**: §5'te açık madde olarak
+  bırakıldı; bildirim yollarının hangi adresi kullandığını ölçmeden rol
+  kümesini değiştirmek doğru değil.
+- **Finans yazma rolünün genişletilmesi** (§3, K3.6): yönetici gider
+  oluşturamıyor, dolayısıyla onaylayamıyor da. Ayrı bir karar.
