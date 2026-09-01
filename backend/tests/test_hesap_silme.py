@@ -250,7 +250,7 @@ def _parolasizlastir(owner_conn, user_id: str, *, eposta: str | None) -> None:
     owner_conn.commit()
 
 
-def test_parolasiz_EPOSTA_koduyla_silinir(client, adm, owner_conn):
+def test_parolasiz_EPOSTA_koduyla_silinir(client, adm, owner_conn, konsol_eposta):
     """(P184) SMS'siz: dogrulanmis e-postaya giden kodla hesap silinir."""
     from app.security import hash_password
 
@@ -282,7 +282,7 @@ def test_parolasiz_EPOSTA_koduyla_silinir(client, adm, owner_conn):
     assert client.get("/me", headers=h).status_code == 401
 
 
-def test_parolasiz_YANLIS_eposta_kodu_silmez(client, adm, owner_conn):
+def test_parolasiz_YANLIS_eposta_kodu_silmez(client, adm, owner_conn, konsol_eposta):
     """Yanlis kod silmez: e-posta kanali da 'sahiplik kaniti' esigini korur."""
     user_id, tel, parola = _sakin_ac(client, adm, owner_conn)
     h = _oturum(client, tel, parola)
@@ -295,7 +295,7 @@ def test_parolasiz_YANLIS_eposta_kodu_silmez(client, adm, owner_conn):
     assert client.get("/me", headers=h).status_code == 200  # hesap DURUYOR
 
 
-def test_dogrulanmis_eposta_YOKSA_422(client, adm, owner_conn):
+def test_dogrulanmis_eposta_YOKSA_422(client, adm, owner_conn, konsol_eposta):
     """(a) Kanal yoksa akis baslamaz: DOGRULANMAMIS e-posta -> 422 no_email.
 
     (P197) Eskiden bu test e-posta sutununu NULL yapiyordu; sutun artik
@@ -311,7 +311,7 @@ def test_dogrulanmis_eposta_YOKSA_422(client, adm, owner_conn):
     assert r.json()["error"]["code"] == "no_email", r.text
 
 
-def test_parolasiz_EPOSTA_koduyla_PAROLA_kurar(client, adm, owner_conn):
+def test_parolasiz_EPOSTA_koduyla_PAROLA_kurar(client, adm, owner_conn, konsol_eposta):
     """(P184) `PATCH /me/password` parolasiz yolu da E-POSTA koduyla calisir.
 
     Silme ile AYNI tek-kullanimlik kanal (`amac='hesap_silme'`); kod

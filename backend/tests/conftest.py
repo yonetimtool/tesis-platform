@@ -283,6 +283,57 @@ def _hash(parola: str) -> str:
 
 
 @pytest.fixture
+def konsol_eposta(world, owner_conn):
+    """(P197) Test tenant'ina CALISAN bir e-posta tasiyicisi verir.
+
+    =======================================================================
+    NEDEN GEREKLI — IKI GARANTI CAKISIYORDU
+    =======================================================================
+    P196 kod gonderimini "sessizce basarisiz olamaz" kuralina bagladi:
+    saglayici mesaji kabul etmezse uc 502 doner. Dev'de hic SMTP yok,
+    dolayisiyla e-posta kodu isteyen HER akis (hesap silme, profil
+    e-postasi, e-posta dogrulama) dev'de calistirilamaz hale geldi.
+
+    Ilk cozum GLOBAL bir ortam degiskeniydi (`EPOSTA_SAGLAYICI=konsol`) ve
+    OLCULDU: tesis/ENV ayarindan ONCE geldigi icin "hicbir yapilandirma
+    yok" durumunu ORTADAN KALDIRDI — urunun cekirdek garantisini olcen 14
+    test dustu ("yapilandirma yokken 'gonderildi' DEME", P168 §4).
+
+    Simdi konsol bir YAPILANDIRMA DEGERI: SMTP sunucu adi `konsol`.
+    Boylece iki garanti de ayakta kalir:
+      * yapilandirmasi OLMAYAN tenant'ta davranis degismez,
+      * bu fixture'i isteyen test KENDI tenant'ina tasiyici verir.
+
+    TEMIZLIK SART: ayni tenant'i (A) "yapilandirma yok" varsayan testler
+    de kullaniyor. Fixture fonksiyon kapsamlidir ve satiri geri alir.
+    """
+    tid = world["a"]
+    with owner_conn.cursor() as cur:
+        cur.execute(
+            "SELECT smtp_host FROM mesaj_yapilandirma WHERE tenant_id = %s",
+            (tid,),
+        )
+        onceki = cur.fetchone()
+        cur.execute(
+            "INSERT INTO mesaj_yapilandirma (tenant_id, smtp_host) "
+            "VALUES (%s, 'konsol') "
+            "ON CONFLICT (tenant_id) DO UPDATE SET smtp_host = 'konsol'",
+            (tid,),
+        )
+    yield tid
+    with owner_conn.cursor() as cur:
+        if onceki is None:
+            cur.execute(
+                "DELETE FROM mesaj_yapilandirma WHERE tenant_id = %s", (tid,)
+            )
+        else:
+            cur.execute(
+                "UPDATE mesaj_yapilandirma SET smtp_host = %s "
+                "WHERE tenant_id = %s",
+                (onceki[0], tid),
+            )
+
+@pytest.fixture
 def world(owner_conn, request):
     """A ve B tenant'lari + admin/security kullanicilar (CRUD/RBAC testleri icin)."""
     a = uuid.uuid4()

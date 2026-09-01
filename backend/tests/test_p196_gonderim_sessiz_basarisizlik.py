@@ -75,7 +75,7 @@ def _son_gonderim(owner_conn, tenant_id):
 # saglayicisina bagli bir "502 bekle" testi, yarin dev'e gercek SMTP
 # girildiginde sessizce anlamsizlasirdi.
 
-def test_HTTP_akisi_CALISIR_ve_IZ_BIRAKIR(client, world, owner_conn):
+def test_HTTP_akisi_CALISIR_ve_IZ_BIRAKIR(client, world, owner_conn, konsol_eposta):
     """Uctan uca: kod iste -> 200 -> `mesaj_gonderim`de satir."""
     h = _giris(client, world["slug_a"], world["yonetici_a"])
     yeni = f"p196-{uuid.uuid4().hex[:10]}@ornek.com"
@@ -88,7 +88,7 @@ def test_HTTP_akisi_CALISIR_ve_IZ_BIRAKIR(client, world, owner_conn):
     assert durum == "gonderildi", f"durum {durum!r}"
 
 
-def test_KOD_GOVDEYE_YAZILMAZ(client, world, owner_conn):
+def test_KOD_GOVDEYE_YAZILMAZ(client, world, owner_conn, konsol_eposta):
     """Dogrulama kodu bir SIRDIR: `kod_hash` olarak saklanmasinin anlami,
     duz metnini gecmis tablosuna yazmamaktir."""
     h = _giris(client, world["slug_a"], world["yonetici_a"])

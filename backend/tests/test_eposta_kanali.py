@@ -152,7 +152,7 @@ def test_TEST_GONDERIMI_GECMISE_YAZILMAZ(client, world):
 # --------------------------------------------------------------------------- #
 # 3. E-POSTA OTP
 # --------------------------------------------------------------------------- #
-def test_EPOSTA_KODU_ISTEGI_ADRES_VARLIGINI_SIZDIRMAZ(client, world):
+def test_EPOSTA_KODU_ISTEGI_ADRES_VARLIGINI_SIZDIRMAZ(client, world, konsol_eposta):
     kayitli = client.post("/auth/giris/eposta-kod-iste", json={
         "tenant_slug": world["slug_a"], "eposta": world["yonetici_a"]["email"]})
     yok = client.post("/auth/giris/eposta-kod-iste", json={

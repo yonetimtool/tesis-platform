@@ -40,7 +40,7 @@ def test_eposta_kod_iste_GECERSIZ_adres_422(client, world):
     assert r.status_code == 422
 
 
-def test_eposta_kod_iste_TAZE_adres_gonderir(client, world):
+def test_eposta_kod_iste_TAZE_adres_gonderir(client, world, konsol_eposta):
     admin = _headers(client, world["slug_a"], world["admin_a"])
     taze = f"p181-{uuid.uuid4().hex[:10]}@ornek.test"
     r = client.post("/me/eposta/kod-iste", headers=admin, json={"eposta": taze})
@@ -69,7 +69,7 @@ def test_eposta_kod_iste_BASKASININ_adresi_SIZDIRMAZ(client, world, owner_conn):
         assert cur.fetchone()[0] == 0, "başkasının adresine kod YAZILMAMALI"
 
 
-def test_dogrulanmis_epostayi_DEGISTIR_gonderildi_doner(client, world, owner_conn):
+def test_dogrulanmis_epostayi_DEGISTIR_gonderildi_doner(client, world, owner_conn, konsol_eposta):
     """(P184-ek §9) Doğrulanmış e-postası olan kullanıcı YENİ adres isteyince
     akış çalışır (eski adrese bildirim gider; yanıt generic `gonderildi`)."""
     from app.security import hash_password
@@ -102,7 +102,7 @@ def test_dogrulanmis_epostayi_DEGISTIR_gonderildi_doner(client, world, owner_con
     assert r.json()["durum"] == "gonderildi"
 
 
-def test_eposta_dogrula_KOD_OKUR_ve_bayragi_ACAR(client, world, owner_conn):
+def test_eposta_dogrula_KOD_OKUR_ve_bayragi_ACAR(client, world, owner_conn, konsol_eposta):
     """(P181) DOGRULAMA (kod okuma) yolu — 'eposta_ekle' ENUM'u ORM'de TANIMLI
     olmali. Değilse okuma 500 verir (kod_amaci model listesi eksikti — bu test o
     boşluğu kapatır). guard'ın login e-postası SHARED değil kendine ait olmalı;

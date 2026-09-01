@@ -81,7 +81,7 @@ def test_giris_kodu_HESAP_SILMEYI_onaylayamaz(client, world, owner_conn):
     assert r.status_code == 422, r.text
 
 
-def test_parolasiz_kullanici_HESABINI_SILEBILIR(client, world, owner_conn):
+def test_parolasiz_kullanici_HESABINI_SILEBILIR(client, world, owner_conn, konsol_eposta):
     """Once silemiyordu: uc kosulsuz parola ariyordu (Play sarti ihlali).
 
     (P197) KANAL DEGISTI, KURAL DEGISMEDI. Silme kodunun SMS ucu
