@@ -58,8 +58,12 @@ void main() {
     // (P143) DORT -> BES: `guvenlik_amiri` hesabi eklendi. Rol enum'da
     // vardi ama PROD'DA TEK KULLANICISI YOKTU — yani hic denenmemisti.
     // (P154) BES -> ALTI: `denetci` hesabi eklendi.
-    expect(numaralar.length, 6,
-        reason: 'tohumlama betiginde alti demo numarasi bekleniyor');
+    // (P193) ALTI -> YEDI: IKINCI YONETICI eklendi. Gerekce belgede
+    // (§8): `POST /me/hesap-sil` tesisin SON yoneticisini 409 ile
+    // reddediyor — dogru bir kural, ama denetci silmeyi tek yonetici
+    // hesabiyla denerse CALISAN bir ozellik yuzunden ret alirdik.
+    expect(numaralar.length, 7,
+        reason: 'tohumlama betiginde yedi demo numarasi bekleniyor');
 
     final n = _oku(_notlar);
     for (final e164 in numaralar) {

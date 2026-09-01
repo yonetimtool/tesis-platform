@@ -85,9 +85,10 @@ _SUMMARY_READER = require_role(
     "denetci",
 )
 
-# Otomatik aidat gelirlerinin toplandigi varsayilan kategori adi (seed'de de
-# olusturulur; yoksa ilk odemede get-or-create ile acilir).
-AIDAT_KATEGORI_AD = "Aidat"
+# (P192 §1) `AIDAT_KATEGORI_AD` buradan `app/defter.py`ye TASINDI: aidat
+# tahsilati artik ayri bir butce satiri uretmiyor, TAHSILAT SATIRININ
+# KENDISI o kategoriye ait. Sabiti burada birakmak, kimsenin okumadigi
+# ikinci bir dogruluk kaynagi olurdu.
 
 _CAT_CONFLICT = APIError(409, "conflict", "butce_kategori_ad_tip_var")
 

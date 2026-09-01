@@ -43,7 +43,6 @@ from ..mesajlasma import (
 from ..models import (
     AppUser,
     DuesAssessment,
-    FinansalHareket,
     MesajGonderim,
     MesajSablonu,
     MesajYapilandirma,

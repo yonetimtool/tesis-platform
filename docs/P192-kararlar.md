@@ -582,3 +582,14 @@ olarak ertelendi — geri dönüş penceresi kapanana kadar veri yerinde
 dursun. İleride `DROP TABLE` yazılacaksa önce
 `SELECT count(*) FROM dues_payment WHERE created_at > '<göç tarihi>'`
 sıfır olmalı.
+
+---
+
+## Ek: bu turda düzeltilen, P192 kapsamı dışı bir kırmızı
+
+`mobile/test/denetim_notlari_test.dart` demo tohumlama betiğindeki telefon
+sayısını **6** olarak kilitliyordu. P193'te App Store hesap-silme testi
+için demo tesise **ikinci yönetici** eklenmişti (`05000000106`) ve o turda
+mobil paketi koşulmadığı için kilit kırmızı kalmıştı. Sayı 7'ye çekildi ve
+gerekçe teste yazıldı — belge (`review-notes.md`) numarayı zaten
+listeliyordu, ayrışan yalnız kilit sayısıydı.

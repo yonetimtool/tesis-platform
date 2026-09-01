@@ -16,29 +16,19 @@ import uuid
 from datetime import date
 
 from fastapi import APIRouter, Depends, Header
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..audit import Action, audit_user
-from ..borclandirma import (
-    Bag,
-    esit_dagit,
-    oransal_dagit,
-    hedef_sec,
-    sayac_tuketim_dagitimi,
-    tipe_gore_dagit,
-)
+from ..borclandirma import hedef_sec, sayac_tuketim_dagitimi
 from ..crud_helpers import get_or_404, is_unique_violation, translate_integrity
 # (P192 §4.1) Toplu tahakkuk cekirdegi AYRI MODULE tasindi: otomatik aylik
 # tahakkuk ayni yolu kullanmak zorunda. Ikinci bir kopya, "elle" ile
 # "otomatik" tahakkukun gunun birinde FARKLI davranmasi demekti.
 from ..toplu_tahakkuk import (
     daire_baglari as _daire_baglari,
-    hedef_adlari as _hedef_adlari,
-    hedef_daireler as _hedef_daireler,
     tahakkuk_yaz as _yaz,
-    tip_varsayilanlari as _tip_varsayilanlari,
     toplu_plan as _toplu_plan,
 )
 from .. import gecikme
@@ -54,8 +44,6 @@ from ..models import (
     SayacBolum,
     Tenant,
     Unit,
-    UnitResident,
-    UnitTip,
 )
 from ..schemas import (
     BorcIceAktarimIstek,
@@ -66,7 +54,6 @@ from ..schemas import (
     SayacBorcIstek,
     TopluBorcIstek,
     TopluBorcOnizleme,
-    TopluBorcSatir,
     GecikmeFaizOnizleme,
     GecikmeFaizSatiri,
     GecikmeFaizSonuc,

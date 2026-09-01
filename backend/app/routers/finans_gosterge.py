@@ -23,7 +23,7 @@ from .. import defter, yaslandirma
 from ..akis_metinleri import _tl
 from ..audit import Action, audit_user
 from ..deps import get_tenant_db, require_role
-from ..models import AppUser, DuesAssessment, Unit
+from ..models import AppUser, DuesAssessment
 from ..sakin_bildirimi import sakin_bildirimi_yaz
 from ..schemas import (
     BorcluTopluIstek,
