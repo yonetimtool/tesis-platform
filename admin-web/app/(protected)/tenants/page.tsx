@@ -56,7 +56,7 @@ interface YoneticiForm {
   anahtar: string;
   ad: string;
   phone: string;
-  /** (P197) ZORUNLU — davetin gideceği tek kanal. */
+  /** (P197) ZORUNLU — davetin gidecegi TEK kanal. */
   email: string;
   password: string;
 }
@@ -387,9 +387,9 @@ export default function TenantsPage() {
                     onDegisti={(v) => setYonetici(i, { phone: v })}
                   />
                   {/* (P197) E-POSTA ZORUNLU. Davet YALNIZ buradan gider
-                      (SMS ürün genelinde kapalı); adres olmadan açılan
-                      hesap Tesis ID'yi hiç öğrenemez ve giriş yapamaz.
-                      Sunucu da e-postasız gövdeyi 422 ile reddeder. */}
+                      (SMS urun genelinde kapali); adressiz acilan hesap
+                      Tesis ID'yi HIC ogrenemez ve giris yapamaz. Sunucu
+                      da e-postasiz govdeyi 422 ile reddeder. */}
                   <AlanSarmal
                     etiket={t("kullaniciEposta")}
                     ipucu={t("tesisYoneticiEpostaIpucu")}

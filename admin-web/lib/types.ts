@@ -590,9 +590,10 @@ export interface TenantSettings {
 /** `POST /tenants` govdesindeki tek yonetici satiri. (P185: telefon yalniz
  *  iletisim; giris/dogrulama e-posta ile.) Parola bos ise backend tek
  *  seferlik gecici kod uretir. */
-/** (P197) `email` ZORUNLU: davet ve doğrulama kodu yalnız e-postadan gider
- *  (SMS ürün genelinde kapalı) ve `app_user.email` NOT NULL (göç 0089).
- *  E-postasız açılan yönetici hesabı daveti alamaz, yani sahiplenilemez. */
+/** (P197) `email` ZORUNLU: davet ve dogrulama kodu YALNIZ e-postadan
+ *  gider (SMS urun genelinde kapali) ve `app_user.email` NOT NULL
+ *  (goc 0089). E-postasiz acilan yonetici hesabi daveti alamaz, yani
+ *  ACILDIGI ANDA sahiplenilemez. */
 export type YoneticiCreate = {
   ad: string;
   phone: string;
