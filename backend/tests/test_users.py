@@ -4,6 +4,17 @@ from __future__ import annotations
 import uuid
 
 
+
+def _p197_mail() -> str:
+    """(P197) Kullanici/sakin olusturmada e-posta ZORUNLU oldu.
+
+    `app_user.email` NOT NULL (goc 0089): davet, dogrulama kodu ve parola
+    sifirlama YALNIZ e-postadan gidiyor, yani e-postasiz acilan hesap
+    sahiplenilemez. Test govdelerine BENZERSIZ adres verilir —
+    `uq_app_user_tenant_email` ayni tesiste tekrari reddeder.
+    """
+    return f"p197-{uuid.uuid4().hex[:12]}@ornek.com"
+
 def _headers(client, slug, cred):
     r = client.post(
         "/auth/login",
@@ -129,7 +140,9 @@ def test_create_user_email_required(client, world):
     r = client.post(
         "/users",
         headers=admin,
-        json={"ad": "Epostasiz", "telefon": _uphone(), "role": "security", "password": "Parola123!"},
+        # E-POSTA BILEREK YOK: bu testin OLCTUGU sey tam olarak reddedilmesi.
+        json={"ad": "Epostasiz", "telefon": _uphone(), "role": "security",
+              "password": "Parola123!"},
     )
     assert r.status_code == 422, r.text
 
@@ -403,7 +416,7 @@ def test_p186_role_change_clears_unit_binding(client, world):
     yon = _headers(client, world["slug_a"], world["yonetici_a"])
     created = client.post(
         "/residents", headers=yon,
-        json={"telefon": _tel186(), "unit_no": f"P186-{uuid.uuid4().hex[:4]}"},
+        json={"telefon": _tel186(), "unit_no": f"P186-{uuid.uuid4().hex[:4]}", "email": _p197_mail()},
     ).json()
     uid = created["user_id"]
     detay = client.get(f"/users/{uid}", headers=yon).json()

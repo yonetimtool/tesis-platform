@@ -430,6 +430,15 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "Un champ obligatoire est manquant.",
         "es": "Falta un campo obligatorio.",
     },
+    "eposta_gerekli": {
+        "tr": "E-posta adresi gerekli. Sağlayıcınız adresinizi paylaşmadı; lütfen e-posta ile kayıt yolunu kullanın.",
+        "en": "An e-mail address is required. Your provider did not share one; please use the e-mail sign-up route.",
+        "ar": "عنوان البريد الإلكتروني مطلوب. لم يشاركه مزوّدك؛ يرجى استخدام التسجيل بالبريد الإلكتروني.",
+        "ru": "Требуется адрес электронной почты. Провайдер его не передал; воспользуйтесь регистрацией по e-mail.",
+        "de": "Eine E-Mail-Adresse ist erforderlich. Ihr Anbieter hat keine übermittelt; bitte nutzen Sie die Registrierung per E-Mail.",
+        "fr": "Une adresse e-mail est requise. Votre fournisseur n'en a pas transmis ; utilisez l'inscription par e-mail.",
+        "es": "Se requiere una dirección de correo. Su proveedor no la ha compartido; use el registro por correo.",
+    },
     "kod_gonderilemedi": {
         "tr": "Doğrulama kodu gönderilemedi. E-posta ayarları çalışmıyor olabilir; lütfen yöneticinize bildirin.",
         "en": "The verification code could not be sent. E-mail delivery may not be working; please tell your administrator.",

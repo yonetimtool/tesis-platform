@@ -22,6 +22,17 @@ import uuid
 from app.mesajlasma import SaglayiciAyari, _ayardan_veya_env
 
 
+
+def _p197_mail() -> str:
+    """(P197) Kullanici/sakin olusturmada e-posta ZORUNLU oldu.
+
+    `app_user.email` NOT NULL (goc 0089): davet, dogrulama kodu ve parola
+    sifirlama YALNIZ e-postadan gidiyor, yani e-postasiz acilan hesap
+    sahiplenilemez. Test govdelerine BENZERSIZ adres verilir —
+    `uq_app_user_tenant_email` ayni tesiste tekrari reddeder.
+    """
+    return f"p197-{uuid.uuid4().hex[:12]}@ornek.com"
+
 def _headers(client, slug, cred):
     r = client.post(
         "/auth/login",
@@ -278,7 +289,7 @@ def test_DAVET_JETONU_TEK_KULLANIMLIK_VE_SURELI(client, world, owner_conn):
     y = _headers(client, world["slug_a"], world["yonetici_a"])
     tel = f"+9053{uuid.uuid4().int % 10**8:08d}"
     r = client.post("/residents", headers=y, json={
-        "telefon": tel, "unit_no": f"DV-{uuid.uuid4().hex[:4]}"})
+        "telefon": tel, "unit_no": f"DV-{uuid.uuid4().hex[:4]}", "email": _p197_mail()})
     assert r.status_code == 201, r.text
 
     satir = owner_conn.execute(
@@ -303,7 +314,7 @@ def test_DAVET_YAPILANDIRMA_YOKKEN_GONDERILDI_DEMEZ(client, world):
     y = _headers(client, world["slug_a"], world["yonetici_a"])
     r = client.post("/residents", headers=y, json={
         "telefon": f"+9053{uuid.uuid4().int % 10**8:08d}",
-        "unit_no": f"DV-{uuid.uuid4().hex[:4]}"})
+        "unit_no": f"DV-{uuid.uuid4().hex[:4]}", "email": _p197_mail()})
     assert r.status_code == 201, r.text
     assert r.json()["davet"]["gonderildi"] is False
 

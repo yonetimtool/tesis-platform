@@ -56,12 +56,14 @@ interface YoneticiForm {
   anahtar: string;
   ad: string;
   phone: string;
+  /** (P197) ZORUNLU — davetin gideceği tek kanal. */
+  email: string;
   password: string;
 }
 let _sayac = 0;
 function bosYonetici(): YoneticiForm {
   _sayac += 1;
-  return { anahtar: `y${_sayac}`, ad: "", phone: "", password: "" };
+  return { anahtar: `y${_sayac}`, ad: "", phone: "", email: "", password: "" };
 }
 interface FormState {
   ad: string;
@@ -142,6 +144,10 @@ export default function TenantsPage() {
           ad: y.ad,
           // Sunucuya NORMALLESTIRILMIS gider (telefon GLOBAL BENZERSIZ).
           phone: telefonNormalle(y.phone),
+          // (P197) E-POSTA ZORUNLU: sunucu e-postasiz yonetici KABUL ETMEZ
+          // (422). Davet bu adrese gider; adres yoksa hesap acilir ama
+          // sahiplenilemez.
+          email: y.email.trim(),
           ...(y.password ? { password: y.password } : {}),
         })),
       };
@@ -380,6 +386,24 @@ export default function TenantsPage() {
                     deger={y.phone}
                     onDegisti={(v) => setYonetici(i, { phone: v })}
                   />
+                  {/* (P197) E-POSTA ZORUNLU. Davet YALNIZ buradan gider
+                      (SMS ürün genelinde kapalı); adres olmadan açılan
+                      hesap Tesis ID'yi hiç öğrenemez ve giriş yapamaz.
+                      Sunucu da e-postasız gövdeyi 422 ile reddeder. */}
+                  <AlanSarmal
+                    etiket={t("kullaniciEposta")}
+                    ipucu={t("tesisYoneticiEpostaIpucu")}
+                  >
+                    {(b) => (
+                      <Alan
+                        {...b}
+                        type="email"
+                        value={y.email}
+                        onChange={(e) => setYonetici(i, { email: e.target.value })}
+                        required
+                      />
+                    )}
+                  </AlanSarmal>
                   <AlanSarmal
                     etiket={t("tesisParolaOpsiyonel")}
                     ipucu={t("kullaniciParolaBosYeni")}

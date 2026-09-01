@@ -12,6 +12,17 @@ import uuid
 import pytest
 
 
+
+def _p197_mail() -> str:
+    """(P197) Kullanici/sakin olusturmada e-posta ZORUNLU oldu.
+
+    `app_user.email` NOT NULL (goc 0089): davet, dogrulama kodu ve parola
+    sifirlama YALNIZ e-postadan gidiyor, yani e-postasiz acilan hesap
+    sahiplenilemez. Test govdelerine BENZERSIZ adres verilir —
+    `uq_app_user_tenant_email` ayni tesiste tekrari reddeder.
+    """
+    return f"p197-{uuid.uuid4().hex[:12]}@ornek.com"
+
 def _headers(client, slug, cred):
     r = client.post(
         "/auth/login",
@@ -118,7 +129,7 @@ def test_daire_referansi(client, world, owner_conn):
     assert obj["unit_no"] == no
     # Olmayan daire -> 422 (sessizce ziyaretci araci yapilmaz).
     r = client.post(
-        "/vehicle-passes", headers=h, json={"plaka": _plaka(), "unit_no": "YOK-999"}
+        "/vehicle-passes", headers=h, json={"plaka": _plaka(), "unit_no": "YOK-999", "email": _p197_mail()}
     )
     assert r.status_code == 422, r.text
 

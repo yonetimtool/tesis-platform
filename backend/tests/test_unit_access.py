@@ -12,6 +12,17 @@ import uuid
 import pytest
 
 
+
+def _p197_mail() -> str:
+    """(P197) Kullanici/sakin olusturmada e-posta ZORUNLU oldu.
+
+    `app_user.email` NOT NULL (goc 0089): davet, dogrulama kodu ve parola
+    sifirlama YALNIZ e-postadan gidiyor, yani e-postasiz acilan hesap
+    sahiplenilemez. Test govdelerine BENZERSIZ adres verilir —
+    `uq_app_user_tenant_email` ayni tesiste tekrari reddeder.
+    """
+    return f"p197-{uuid.uuid4().hex[:12]}@ornek.com"
+
 def _headers(client, slug, cred):
     r = client.post(
         "/auth/login",
@@ -90,15 +101,14 @@ def _register_visitor(client, guard, target, unit_no):
         json={
             "ziyaretci_ad": f"Z {uuid.uuid4().hex[:6]}",
             "unit_no": unit_no,
-            "target_resident_user_id": target,
-        },
+            "target_resident_user_id": target, "email": _p197_mail()},
     )
     assert r.status_code == 201, r.text
     return r.json()
 
 
 def _open_request(client, yonetici, unit_no):
-    r = client.post("/unit-access-request", headers=yonetici, json={"unit_no": unit_no})
+    r = client.post("/unit-access-request", headers=yonetici, json={"unit_no": unit_no, "email": _p197_mail()})
     assert r.status_code == 201, r.text
     return r.json()
 
@@ -116,7 +126,7 @@ def test_talep_yonetici_ve_admin(client, uaworld):
     for role in ("guard_a", "gorevli_a", "resident_a"):
         h = _headers(client, uaworld["slug_a"], uaworld[role])
         assert client.post(
-            "/unit-access-request", headers=h, json={"unit_no": uaworld["unit1_no"]}
+            "/unit-access-request", headers=h, json={"unit_no": uaworld["unit1_no"], "email": _p197_mail()}
         ).status_code == 403, role
     # hem yonetici hem admin talep acabilir (201)
     for role in ("yonetici_a", "admin_a"):
@@ -129,7 +139,7 @@ def test_talep_yonetici_ve_admin(client, uaworld):
 def test_talep_gecersiz_daire_422(client, uaworld):
     yonetici = _headers(client, uaworld["slug_a"], uaworld["yonetici_a"])
     r = client.post(
-        "/unit-access-request", headers=yonetici, json={"unit_no": "YOK-000"}
+        "/unit-access-request", headers=yonetici, json={"unit_no": "YOK-000", "email": _p197_mail()}
     )
     assert r.status_code == 422 and r.json()["error"]["code"] == "invalid_reference"
 
@@ -246,7 +256,7 @@ def test_onay_sonrasi_yonetici_kargo_gorur_sonra_tukenir(client, uaworld):
     resident = _headers(client, uaworld["slug_a"], uaworld["resident_a"])
     k = client.post(
         "/kargo", headers=guard,
-        json={"firma": "Yurtici", "unit_no": uaworld["unit1_no"]},
+        json={"firma": "Yurtici", "unit_no": uaworld["unit1_no"], "email": _p197_mail()},
     ).json()
 
     req = _open_request(client, yonetici, uaworld["unit1_no"])
@@ -348,7 +358,7 @@ def test_tenant_izolasyonu(client, uaworld):
 
     yonetici_b = _headers(client, uaworld["slug_b"], uaworld["yonetici_b"])
     assert client.post(
-        "/unit-access-request", headers=yonetici_b, json={"unit_no": uaworld["unit1_no"]}
+        "/unit-access-request", headers=yonetici_b, json={"unit_no": uaworld["unit1_no"], "email": _p197_mail()}
     ).status_code == 422  # daire B tenant'inda yok
     b_ids = [it["id"] for it in client.get(
         "/unit-access-request", headers=yonetici_b, params={"limit": 200}

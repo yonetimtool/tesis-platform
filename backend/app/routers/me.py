@@ -20,7 +20,6 @@ from ..hiz_siniri import kod_istegi_say
 from ..telefon_kodu import (
     eposta_kodu_uret_ve_gonder,
     eposta_kodunu_dogrula,
-    kod_uret_ve_gonder,
     kodu_dogrula,
 )
 from ..hesap_silme import hesabi_sil_veya_anonimlestir, son_admin_mi
@@ -198,40 +197,30 @@ async def change_my_password(
     return Response(status_code=204)
 
 
-@router.post("/me/hesap-sil/kod-iste", response_model=dict)
-async def hesap_silme_kodu_iste(
-    db: AsyncSession = Depends(get_tenant_db),
-    user: AppUser = Depends(get_current_user),
-) -> dict[str, str]:
-    """(P149) Parolasiz kullanici icin silme onay kodu.
-
-    Parolasi olan kullanici bu ucu cagirmaz; cagirirsa da zarari yok —
-    kod uretilir ama silme yolu ondan parola ister.
-    """
-    if not user.telefon:
-        raise APIError(422, "no_phone", "telefon_yok")
-    # (P196) SMS YOLUNDA HATA DONULMUYOR — VE BU BILINCLI BIR ISTISNA.
-    #
-    # Ilk yazimda buraya da 502 konuldu (e-posta yollariyla simetrik
-    # olsun diye). SONUCU OLCULDU VE GERI ALINDI: SMS urun genelinde
-    # KAPALI (`SMS_AKTIF=false`), yani bu uc her zaman 502 donerdi. O
-    # zaman TELEFON-ONLY bir kullanicinin hesabini silmesinin HICBIR yolu
-    # kalmiyor — e-posta yolu (`/me/hesap-sil/eposta-kod-iste`) onun
-    # e-postasi olmadigi icin calismaz. Hesap silmeyi imkansiz kilmak bir
-    # MAGAZA SARTI ihlalidir (`test_parolasiz_kullanici_HESABINI_SILEBILIR`
-    # tam da bunu kilitliyor).
-    #
-    # Yani burada "dogru" olan iki sey catisiyor: kullaniciya yalan
-    # soylememek ve hesap silme yolunu acik tutmak. Ikincisi agir basiyor.
-    # Sessizlik yine de KALDIRILDI: `kod_uret_ve_gonder` basarisizligi
-    # ERROR olarak logluyor, yani operator gorebiliyor.
-    #
-    # ASIL COZUM URUN KARARI: ya SMS acilir ya da telefon-only kullaniciya
-    # e-postasiz bir silme yolu verilir. Ikisi de bu turun kapsami disinda.
-    await kod_uret_ve_gonder(
-        db, tenant_id=user.tenant_id, telefon=user.telefon, amac="hesap_silme"
-    )
-    return {"durum": "gonderildi"}
+# =========================================================================== #
+# (P197) TELEFON (SMS) ILE SILME KODU UCU KALDIRILDI
+# =========================================================================== #
+# `POST /me/hesap-sil/kod-iste` SILINDI. Gerekcesi P196'da yazilan istisnanin
+# ortadan kalkmasidir:
+#
+#   P196'da o ucta 502 donmemeyi SECMISTIK, cunku SMS urun genelinde kapali
+#   olmasina ragmen uc kaldirilirsa TELEFON-ONLY bir kullanicinin hesabini
+#   silmesinin hicbir yolu kalmiyordu (magaza sarti). Yani uc, calismadigi
+#   hâlde "tek yol" oldugu icin duruyordu.
+#
+#   (P197) ARTIK TELEFON-ONLY KULLANICI YOK: `app_user.email` NOT NULL
+#   (goc 0089) ve e-postasiz hesap acan tum yollar kapatildi. Herkesin bir
+#   e-postasi var, dolayisiyla herkes `/me/hesap-sil/eposta-kod-iste`
+#   kullanabilir. Calismayan bir ucu "tek yol" diye tutmanin gerekcesi
+#   kalmadi ve calismayan bir uc, kullaniciya "kod gonderildi" diyen bir
+#   yalandan ibaretti.
+#
+# MEVCUT E-POSTASIZ HESAPLAR (goc 0089'da sentetik adres alanlar) bu ucu
+# zaten kullanamiyordu: SMS kapali oldugu icin kod hicbir zaman gitmiyordu.
+# Onlar icin degisen bir sey YOK.
+#
+# `POST /me/hesap-sil` (asil silme) DEGISMEDI: kodu `amac='hesap_silme'`
+# ile dogrular ve kodun hangi kanaldan gittigini bilmez.
 
 
 @router.post("/me/hesap-sil/eposta-kod-iste", response_model=dict)
@@ -242,7 +231,8 @@ async def hesap_silme_eposta_kodu_iste(
 ) -> dict[str, str]:
     """(P184) Parolasiz kullanici icin silme onay kodu — E-POSTAYA.
 
-    SMS kardesinin (`/me/hesap-sil/kod-iste`) e-posta esidir. `SMS_AKTIF=false`
+    (P197) ARTIK TEK YOL. SMS kardesi (`/me/hesap-sil/kod-iste`) kaldirildi;
+    e-postasiz hesap kalmadigi icin (goc 0089) ona ihtiyac yok. `SMS_AKTIF=false`
     oldugundan bugun calisan yol budur; SSO ile kaydolan (parolasiz) kullanici
     kendi hesabini boyle silebilir. Kod `amac='hesap_silme'` ile uretilir —
     giris/parola/e-posta-ekleme kodu buraya YARAMAZ. Kilitleme YOK; oturum surer.

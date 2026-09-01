@@ -15,6 +15,17 @@ import uuid
 import pytest
 
 
+
+def _p197_mail() -> str:
+    """(P197) Kullanici/sakin olusturmada e-posta ZORUNLU oldu.
+
+    `app_user.email` NOT NULL (goc 0089): davet, dogrulama kodu ve parola
+    sifirlama YALNIZ e-postadan gidiyor, yani e-postasiz acilan hesap
+    sahiplenilemez. Test govdelerine BENZERSIZ adres verilir —
+    `uq_app_user_tenant_email` ayni tesiste tekrari reddeder.
+    """
+    return f"p197-{uuid.uuid4().hex[:12]}@ornek.com"
+
 def _headers(client, slug, cred):
     r = client.post(
         "/auth/login",
@@ -183,7 +194,7 @@ def test_banka_eslestirme_ONERI_uretir_belirsizde_URETMEZ(client, adm, world):
         r = client.post("/residents", headers=adm, json={
             "ad": ad, "unit_no": u["no"],
             "telefon": f"+9054{uuid.uuid4().int % 10**8:08d}",
-            "rol_tipi": "malik"})
+            "rol_tipi": "malik", "email": _p197_mail()})
         assert r.status_code in (200, 201), r.text
         kisiler.append(r.json())
         client.post("/dues/assessments", headers=adm, json={
@@ -214,8 +225,7 @@ def test_icra_dosyasi_borcu_KOPYALAMAZ_anlik_okur(client, adm):
                     json={"no": f"I-{_sfx()}", "blok": "A"}).json()
     kisi = client.post("/residents", headers=adm, json={
         "ad": "Borclu Kisi", "unit_no": u["no"],
-        "telefon": f"+9054{uuid.uuid4().int % 10**8:08d}", "rol_tipi": "malik",
-    }).json()
+        "telefon": f"+9054{uuid.uuid4().int % 10**8:08d}", "rol_tipi": "malik", "email": _p197_mail()}).json()
     client.post("/dues/assessments", headers=adm, json={
         "donem": "2029-11", "unit_id": u["id"], "tutar_kurus": 50000,
         "gelir_gider_tanim_id": tanim["id"]})

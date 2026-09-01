@@ -15,6 +15,16 @@ import uuid
 from app.hata_metinleri import METINLER
 
 
+
+def _umail() -> str:
+    """(P197) Her yonetici satiri BENZERSIZ bir e-posta tasimali.
+
+    `app_user.email` NOT NULL oldu (goc 0089) ve `uq_app_user_tenant_email`
+    ayni tesiste iki ayni adrese izin vermez — coklu yonetici acan
+    testlerde sabit bir adres catisirdi.
+    """
+    return f"p197-{uuid.uuid4().hex[:12]}@ornek.com"
+
 def _headers(client, slug, cred):
     r = client.post(
         "/auth/login",
@@ -149,7 +159,7 @@ def test_yonetici_EKLE_LISTELE_SIL_tam_tur(client, world):
     r = client.post(
         "/tenants", headers=admin,
         json={"ad": "Coklu Yonetici Sitesi",
-              "yoneticiler": [{"ad": "Birincil Yonetici", "phone": ilk}]},
+              "yoneticiler": [{"ad": "Birincil Yonetici", "phone": ilk, "email": _umail()}]},
     )
     assert r.status_code == 201, r.text
     tid = r.json()["tenant_id"]
@@ -164,7 +174,7 @@ def test_yonetici_EKLE_LISTELE_SIL_tam_tur(client, world):
     ikinci = _uphone()
     r = client.post(
         f"/tenants/{tid}/yoneticiler", headers=admin,
-        json={"ad": "Ikinci Yonetici", "phone": ikinci},
+        json={"ad": "Ikinci Yonetici", "phone": ikinci, "email": _umail()},
     )
     assert r.status_code == 201, r.text
     yeni_id = r.json()["user_id"]
@@ -194,7 +204,7 @@ def test_SON_yonetici_silinemez(client, world):
     admin = _headers(client, world["slug_a"], world["admin_a"])
     r = client.post(
         "/tenants", headers=admin,
-        json={"yoneticiler": [{"ad": "Tek Yonetici", "phone": _uphone()}]},
+        json={"yoneticiler": [{"ad": "Tek Yonetici", "phone": _uphone(), "email": _umail()}]},
     )
     tid = r.json()["tenant_id"]
     uid = client.get(f"/tenants/{tid}/yoneticiler",
@@ -214,12 +224,12 @@ def test_BIRINCIL_yonetici_silinemez(client, world):
     admin = _headers(client, world["slug_a"], world["admin_a"])
     r = client.post(
         "/tenants", headers=admin,
-        json={"yoneticiler": [{"ad": "Birincil", "phone": _uphone()}]},
+        json={"yoneticiler": [{"ad": "Birincil", "phone": _uphone(), "email": _umail()}]},
     )
     tid = r.json()["tenant_id"]
     # ikinci yonetici ekle ki "son yonetici" kapisina takilmayalim
     client.post(f"/tenants/{tid}/yoneticiler", headers=admin,
-                json={"ad": "Ikinci", "phone": _uphone()})
+                json={"ad": "Ikinci", "phone": _uphone(), "email": _umail()})
     birincil_id = [y for y in client.get(f"/tenants/{tid}/yoneticiler",
                                         headers=admin).json()["items"]
                    if y["birincil"]][0]["id"]
@@ -234,14 +244,14 @@ def test_ayni_telefon_ikinci_kez_EKLENEMEZ(client, world):
     admin = _headers(client, world["slug_a"], world["admin_a"])
     r = client.post(
         "/tenants", headers=admin,
-        json={"yoneticiler": [{"ad": "Birincil", "phone": _uphone()}]},
+        json={"yoneticiler": [{"ad": "Birincil", "phone": _uphone(), "email": _umail()}]},
     )
     tid = r.json()["tenant_id"]
     tel = _uphone()
     assert client.post(f"/tenants/{tid}/yoneticiler", headers=admin,
-                       json={"ad": "Ali Bir", "phone": tel}).status_code == 201
+                       json={"ad": "Ali Bir", "phone": tel, "email": _umail()}).status_code == 201
     r = client.post(f"/tenants/{tid}/yoneticiler", headers=admin,
-                    json={"ad": "Bes Iki", "phone": tel})
+                    json={"ad": "Bes Iki", "phone": tel, "email": _umail()})
     assert r.status_code == 409, r.text
 
 
@@ -249,7 +259,7 @@ def test_bilinmeyen_tesise_yonetici_EKLENEMEZ(client, world):
     admin = _headers(client, world["slug_a"], world["admin_a"])
     r = client.post(
         f"/tenants/{uuid.uuid4()}/yoneticiler", headers=admin,
-        json={"ad": "Hayalet", "phone": _uphone()},
+        json={"ad": "Hayalet", "phone": _uphone(), "email": _umail()},
     )
     assert r.status_code == 404, r.text
 
@@ -260,6 +270,6 @@ def test_yonetici_uclari_YALNIZ_admin(client, world):
     tid = uuid.uuid4()
     assert client.get(f"/tenants/{tid}/yoneticiler", headers=yon).status_code == 403
     assert client.post(f"/tenants/{tid}/yoneticiler", headers=yon,
-                       json={"ad": "Iks Kisi", "phone": _uphone()}).status_code == 403
+                       json={"ad": "Iks Kisi", "phone": _uphone(), "email": _umail()}).status_code == 403
     assert client.delete(f"/tenants/{tid}/yoneticiler/{uuid.uuid4()}",
                          headers=yon).status_code == 403

@@ -11,6 +11,17 @@ from __future__ import annotations
 import uuid
 
 
+
+def _p197_mail() -> str:
+    """(P197) Kullanici/sakin olusturmada e-posta ZORUNLU oldu.
+
+    `app_user.email` NOT NULL (goc 0089): davet, dogrulama kodu ve parola
+    sifirlama YALNIZ e-postadan gidiyor, yani e-postasiz acilan hesap
+    sahiplenilemez. Test govdelerine BENZERSIZ adres verilir —
+    `uq_app_user_tenant_email` ayni tesiste tekrari reddeder.
+    """
+    return f"p197-{uuid.uuid4().hex[:12]}@ornek.com"
+
 def _headers(client, slug, cred):
     r = client.post(
         "/auth/login",
@@ -26,7 +37,7 @@ def _uphone() -> str:
 
 def _add(client, yon, telefon, ad="Sakin", unit="R-1"):
     r = client.post(
-        "/residents", headers=yon, json={"ad": ad, "telefon": telefon, "unit_no": unit}
+        "/residents", headers=yon, json={"ad": ad, "telefon": telefon, "unit_no": unit, "email": _p197_mail()}
     )
     assert r.status_code == 201, r.text
     return r.json()
@@ -76,7 +87,7 @@ def test_add_resident_passwordless_and_davet(client, world, owner_conn):
     r = client.post(
         "/residents",
         headers=yon,
-        json={"ad": "Parolasiz", "telefon": phone, "unit_no": "P-9"},
+        json={"ad": "Parolasiz", "telefon": phone, "unit_no": "P-9", "email": _p197_mail()},
     )
     assert r.status_code == 201, r.text
     body = r.json()
@@ -114,7 +125,7 @@ def test_edit_resident_and_phone_freed(client, world):
 
     # eski numara serbest -> yeni sakin acilir; yeni numara dolu -> cakisma 409
     assert _add(client, yon, phone_a, unit="R-2")  # 201
-    dup = client.post("/residents", headers=yon, json={"ad": "x", "telefon": phone_b, "unit_no": "R-3"})
+    dup = client.post("/residents", headers=yon, json={"ad": "x", "telefon": phone_b, "unit_no": "R-3", "email": _p197_mail()})
     assert dup.status_code == 409
 
     # bos govde 422; olmayan sakin 404
@@ -187,8 +198,7 @@ def _yeni_sakin(client, yonetim, unit_no):
     _TEL_SAYAC[0] += 1
     r = client.post("/residents", headers=yonetim, json={
         "unit_no": unit_no, "ad": "P23 Sakin",
-        "telefon": f"+90532{_TEL_SAYAC[0]}", "rol_tipi": "kiraci",
-    })
+        "telefon": f"+90532{_TEL_SAYAC[0]}", "rol_tipi": "kiraci", "email": _p197_mail()})
     assert r.status_code == 201, r.text
     return r.json()
 
@@ -226,12 +236,17 @@ def test_p23_olustur_sonradan_ata_duzenle_E2E(client, world, owner_conn):
     assert epostalar[0] == "P23 Yeni Ad"
     assert epostalar[1] == f"p23-{ek}@ornek.com"
 
-    # e-posta ACIKCA null ile TEMIZLENEBILIR (sakinde opsiyonel).
+    # (P197) E-POSTA ARTIK TEMIZLENEMEZ: `null` "dokunma" demektir.
+    #
+    # Eskiden bu cagri adresi BOSALTIYORDU ve geriye sahiplenilemez bir
+    # hesap birakiyordu (davet/dogrulama kodu yalniz e-postadan gider).
+    # `app_user.email` NOT NULL oldu (goc 0089); istek REDDEDILMEZ ama
+    # adres DEGISMEZ — gonderilmemis sayilir.
     assert client.patch(f"/residents/{uid}", headers=yonetim,
                         json={"email": None}).status_code == 204
     assert owner_conn.execute(
         "SELECT email FROM app_user WHERE id = %s", (uid,)
-    ).fetchone()[0] is None
+    ).fetchone()[0] == f"p23-{ek}@ornek.com", "e-posta SILINMEMELI"
 
     # --- (c) rol_tipi AKTIF baglarin HEPSINE uygulanir ---
     assert client.patch(f"/residents/{uid}", headers=yonetim,

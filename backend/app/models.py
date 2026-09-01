@@ -505,8 +505,11 @@ class AppUser(Base):
         nullable=False,
     )
     ad: Mapped[str] = mapped_column(Text, nullable=False)
-    # personel icin zorunlu (login anahtari); resident icin opsiyonel.
-    email: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: (P197, goc 0089) ZORUNLU — HER ROLDE. Eski not "resident icin
+    #: opsiyonel" diyordu; o kural SAHIPLENILEMEZ hesap uretiyordu: davet,
+    #: dogrulama kodu ve parola sifirlama YALNIZ e-postadan gidiyor (SMS
+    #: urun genelinde kapali). DB'de NOT NULL + `btrim(email) <> ''`.
+    email: Mapped[str] = mapped_column(Text, nullable=False)
     #: (P181 Bölüm 1) E-posta DOĞRULANDI mı? Reset (Bölüm 2) ve OTP (Bölüm 4)
     #: bunu ZORUNLU tutar. Geriye dönük mevcut kullanıcılar false başlar.
     eposta_dogrulandi: Mapped[bool] = mapped_column(

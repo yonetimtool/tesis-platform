@@ -2454,4 +2454,5 @@ export const fr: Sozluk = {
   kullaniciTanilamaDogrulandi: "E-mail vérifié",
   kullaniciTanilamaCihaz: "Appareils enregistrés",
   kullaniciTanilamaCihazYok: "Les notifications mobiles sont activées mais aucun appareil n'est enregistré : la personne ne s'est jamais connectée à l'application, rien n'est donc envoyé.",
+  tesisYoneticiEpostaIpucu: "L'invitation part à cette adresse ; sans elle, le gestionnaire ne peut pas activer son compte.",
 };

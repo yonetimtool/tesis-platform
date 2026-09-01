@@ -2454,4 +2454,5 @@ export const ar: Sozluk = {
   kullaniciTanilamaDogrulandi: "البريد مُوثَّق",
   kullaniciTanilamaCihaz: "الأجهزة المسجّلة",
   kullaniciTanilamaCihazYok: "إشعارات الجوال مفعّلة لكن لا يوجد جهاز مسجّل: لم يسجّل الشخص الدخول إلى التطبيق قط، لذا لا يصله شيء.",
+  tesisYoneticiEpostaIpucu: "تُرسل الدعوة إلى هذا العنوان؛ وبدونه لا يستطيع المدير تفعيل حسابه.",
 };

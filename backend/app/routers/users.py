@@ -320,7 +320,8 @@ async def create_user(
     obj = AppUser(
         tenant_id=user.tenant_id,
         ad=body.ad,
-        email=str(body.email) if body.email else None,
+        # (P197) ZORUNLU: sema `EmailStr` (P186'dan beri) — kosul kalintiydi.
+        email=str(body.email),
         telefon=body.telefon,
         aranabilir=body.aranabilir,
         password_hash=None,

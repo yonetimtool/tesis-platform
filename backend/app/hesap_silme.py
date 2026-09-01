@@ -121,7 +121,19 @@ async def _anonimlestir(db: AsyncSession, hedef: AppUser) -> None:
     await db.execute(sa_delete(UserDevice).where(UserDevice.user_id == hedef.id))
 
     hedef.ad = ANONYMIZED_NAME
-    hedef.email = None
+    # (P197) E-POSTA "NULL" YERINE SENTETIK ADRES.
+    #
+    # `app_user.email` NOT NULL oldu (goc 0089) — `None` yazmak
+    # anonimlestirmeyi 500'e dusuruyordu (olculdu). KVKK'nin istedigi
+    # sey adresin SILINMESI degil, KISISEL VERI TASIMAMASIDIR: bu adres
+    # yalnizca satirin ZATEN tasidigi birincil anahtari icerir ve
+    # `.invalid` (RFC 2606) TLD'si sayesinde DNS'te ASLA cozulmez —
+    # yani kimseye ulasmaz ve kimseyi tanimlamaz.
+    #
+    # Goc 0089'un geri doldurma deseniyle AYNI: gecmisteki ve gelecekteki
+    # "adressiz" satirlar tek bir desende toplanir, tanimak kolay olur.
+    hedef.email = f"gecersiz+{hedef.id}@yonetiyor.invalid"
+    hedef.eposta_dogrulandi = False
     hedef.telefon = None
     hedef.password_hash = None
     hedef.temp_code_hash = None

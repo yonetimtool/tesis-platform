@@ -14,6 +14,17 @@ import uuid
 import pytest
 
 
+
+def _p197_mail() -> str:
+    """(P197) Kullanici/sakin olusturmada e-posta ZORUNLU oldu.
+
+    `app_user.email` NOT NULL (goc 0089): davet, dogrulama kodu ve parola
+    sifirlama YALNIZ e-postadan gidiyor, yani e-postasiz acilan hesap
+    sahiplenilemez. Test govdelerine BENZERSIZ adres verilir —
+    `uq_app_user_tenant_email` ayni tesiste tekrari reddeder.
+    """
+    return f"p197-{uuid.uuid4().hex[:12]}@ornek.com"
+
 def _headers(client, slug, cred):
     r = client.post(
         "/auth/login",
@@ -153,14 +164,14 @@ def test_kayit_dogrulama(client, kworld):
         assert client.post("/kargo", headers=guard, json=body).status_code == 422, body
     # olmayan daire -> 422 invalid_reference
     r = client.post(
-        "/kargo", headers=guard, json={"firma": "X", "unit_no": "YOK-999"}
+        "/kargo", headers=guard, json={"firma": "X", "unit_no": "YOK-999", "email": _p197_mail()}
     )
     assert r.status_code == 422
     assert r.json()["error"]["code"] == "invalid_reference"
     # bos firma -> 422
     assert client.post(
         "/kargo", headers=guard,
-        json={"firma": "", "unit_no": kworld["unit1_no"]},
+        json={"firma": "", "unit_no": kworld["unit1_no"], "email": _p197_mail()},
     ).status_code == 422
 
 
@@ -170,7 +181,7 @@ def test_kayit_rbac_yalniz_guvenlik(client, kworld):
         h = _headers(client, kworld["slug_a"], kworld[role])
         assert client.post(
             "/kargo", headers=h,
-            json={"firma": "X", "unit_no": kworld["unit1_no"]},
+            json={"firma": "X", "unit_no": kworld["unit1_no"], "email": _p197_mail()},
         ).status_code == 403, role
 
 
@@ -202,7 +213,7 @@ def test_foto_key_tenant_namespace_disina_cikamaz(client, kworld):
     for foto_key in (f"{kworld['b']}/tasks/victim.jpg", "serbest/anahtar.jpg"):
         r = client.post(
             "/kargo", headers=guard,
-            json={"firma": "X", "unit_no": kworld["unit1_no"], "foto_key": foto_key},
+            json={"firma": "X", "unit_no": kworld["unit1_no"], "foto_key": foto_key, "email": _p197_mail()},
         )
         assert r.status_code == 422, foto_key
 

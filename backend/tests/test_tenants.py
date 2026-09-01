@@ -10,6 +10,16 @@ from __future__ import annotations
 import uuid
 
 
+
+def _umail() -> str:
+    """(P197) Her yonetici satiri BENZERSIZ bir e-posta tasimali.
+
+    `app_user.email` NOT NULL oldu (goc 0089) ve `uq_app_user_tenant_email`
+    ayni tesiste iki ayni adrese izin vermez — coklu yonetici acan
+    testlerde sabit bir adres catisirdi.
+    """
+    return f"p197-{uuid.uuid4().hex[:12]}@ornek.com"
+
 def _headers(client, slug, cred):
     r = client.post(
         "/auth/login",
@@ -31,7 +41,7 @@ def test_admin_creates_tenant_yonetici_then_first_login_setup(client, world):
     r = client.post(
         "/tenants",
         headers=admin,
-        json={"yoneticiler": [{"ad": "Yeni Yonetici", "phone": phone}]},
+        json={"yoneticiler": [{"ad": "Yeni Yonetici", "phone": phone, "email": _umail()}]},
     )
     assert r.status_code == 201, r.text
     body = r.json()
@@ -71,7 +81,7 @@ def test_admin_creates_tenant_with_password_skips_temp_code(client, world):
         headers=admin,
         json={
             "yoneticiler": [
-                {"ad": "Parolali", "phone": phone, "password": "YonParola1!"}
+                {"ad": "Parolali", "phone": phone, "password": "YonParola1!", "email": _umail()}
             ]
         },
     )
@@ -99,7 +109,7 @@ def test_tenants_admin_only(client, world):
         assert client.post(
             "/tenants",
             headers=h,
-            json={"yoneticiler": [{"ad": "xy", "phone": _uphone()}]},
+            json={"yoneticiler": [{"ad": "xy", "phone": _uphone(), "email": _umail()}]},
         ).status_code == 403, role
 
 
@@ -133,7 +143,7 @@ def _create_tenant(client, admin, password=None, ad=None, yonetim_email=None):
     donen sozluge duz `temp_code`/`yonetici_user_id` eklenir ki mevcut testler
     coklu-yonetici yanitini elle acmasin."""
     phone = _uphone()
-    yon = {"ad": "Detay Yon", "phone": phone}
+    yon = {"ad": "Detay Yon", "phone": phone, "email": _umail()}
     if password:
         yon["password"] = password
     body: dict = {"yoneticiler": [yon]}
@@ -230,7 +240,7 @@ def test_update_yonetici_and_phone_conflict(client, world):
     r = client.patch(
         f"/tenants/{tid}/yonetici",
         headers=admin,
-        json={"ad": "Yeni Ad", "phone": newphone, "is_active": True},
+        json={"ad": "Yeni Ad", "phone": newphone, "is_active": True, "email": _umail()},
     )
     assert r.status_code == 200, r.text
     assert r.json()["yonetici"]["ad"] == "Yeni Ad"
@@ -320,9 +330,9 @@ def test_coklu_yonetici_olusturma_birincil_isaretlenir(client, world, owner_conn
             "ad": "Coklu Sitesi",
             "yonetim_email": "yonetim@coklu.com",
             "yoneticiler": [
-                {"ad": "Birinci Yonetici", "phone": p1},
-                {"ad": "Ikinci Yonetici", "phone": p2, "password": "Yonetici123!"},
-                {"ad": "Ucuncu Yonetici", "phone": p3},
+                {"ad": "Birinci Yonetici", "phone": p1, "email": _umail()},
+                {"ad": "Ikinci Yonetici", "phone": p2, "password": "Yonetici123!", "email": _umail()},
+                {"ad": "Ucuncu Yonetici", "phone": p3, "email": _umail()},
             ],
         },
     )
@@ -378,7 +388,7 @@ def test_ad_verilmezse_placeholder(client, world, owner_conn):
     r = client.post(
         "/tenants",
         headers=admin,
-        json={"yoneticiler": [{"ad": "Tek Yonetici", "phone": _uphone()}]},
+        json={"yoneticiler": [{"ad": "Tek Yonetici", "phone": _uphone(), "email": _umail()}]},
     )
     assert r.status_code == 201, r.text
     tid = r.json()["tenant_id"]
@@ -399,7 +409,7 @@ def test_yonetim_email_opsiyonel(client, world, owner_conn):
     r = client.post(
         "/tenants",
         headers=admin,
-        json={"yoneticiler": [{"ad": "Mailsiz Yon", "phone": _uphone()}]},
+        json={"yoneticiler": [{"ad": "Mailsiz Yon", "phone": _uphone(), "email": _umail()}]},
     )
     assert r.status_code == 201, r.text
     tid = r.json()["tenant_id"]
@@ -417,7 +427,7 @@ def test_payload_ici_telefon_tekrari_422(client, world):
     r = client.post(
         "/tenants",
         headers=admin,
-        json={"yoneticiler": [{"ad": "Aaa", "phone": p}, {"ad": "Bbb", "phone": p}]},
+        json={"yoneticiler": [{"ad": "Aaa", "phone": p, "email": _umail()}, {"ad": "Bbb", "phone": p, "email": _umail()}]},
     )
     assert r.status_code == 422, r.text
 
@@ -444,7 +454,7 @@ def test_mevcut_telefon_409_ve_tenant_olusmaz(client, world, owner_conn):
         headers=admin,
         json={
             "ad": "Catisan Tesis",
-            "yoneticiler": [{"ad": "Catisan", "phone": world["yonetici_a"]["phone"]}],
+            "yoneticiler": [{"ad": "Catisan", "phone": world["yonetici_a"]["phone"], "email": _umail()}],
         },
     )
     assert r.status_code == 409, r.text
@@ -466,8 +476,8 @@ def test_ikinci_yonetici_telefon_cakismasi_409_tenant_olusmaz(client, world, own
         headers=admin,
         json={
             "yoneticiler": [
-                {"ad": "Saglam Yon", "phone": _uphone()},
-                {"ad": "Catisan Yon", "phone": world["guard_a"]["phone"]},
+                {"ad": "Saglam Yon", "phone": _uphone(), "email": _umail()},
+                {"ad": "Catisan Yon", "phone": world["guard_a"]["phone"], "email": _umail()},
             ]
         },
     )

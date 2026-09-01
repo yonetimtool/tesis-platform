@@ -11,6 +11,17 @@ from datetime import date
 import pytest
 
 
+
+def _p197_mail() -> str:
+    """(P197) Kullanici/sakin olusturmada e-posta ZORUNLU oldu.
+
+    `app_user.email` NOT NULL (goc 0089): davet, dogrulama kodu ve parola
+    sifirlama YALNIZ e-postadan gidiyor, yani e-postasiz acilan hesap
+    sahiplenilemez. Test govdelerine BENZERSIZ adres verilir —
+    `uq_app_user_tenant_email` ayni tesiste tekrari reddeder.
+    """
+    return f"p197-{uuid.uuid4().hex[:12]}@ornek.com"
+
 def _headers(client, slug, cred):
     r = client.post(
         "/auth/login",
@@ -57,8 +68,7 @@ def _sakin(client, adm, unit_no, rol_tipi):
     _TEL[0] += 1
     r = client.post("/residents", headers=adm, json={
         "ad": f"Sakin {_sfx()}", "unit_no": unit_no,
-        "telefon": f"+9055{_TEL[0]:08d}", "rol_tipi": rol_tipi,
-    })
+        "telefon": f"+9055{_TEL[0]:08d}", "rol_tipi": rol_tipi, "email": _p197_mail()})
     assert r.status_code in (200, 201), r.text
     return r.json()
 
@@ -303,8 +313,7 @@ def test_ice_aktarim_BOZUK_SATIR_tum_islemi_DUSURMEZ(client, adm, gider):
             {"satir_no": 3, "unit_no": "OLMAYAN-DAIRE", "tutar_kurus": 10000},
             {"satir_no": 4, "unit_no": u2["no"], "tutar_kurus": 0},
             {"satir_no": 5, "unit_no": u2["no"], "tutar_kurus": 20000},
-        ],
-    })
+        ], "email": _p197_mail()})
     assert r.status_code == 201, r.text
     sonuc = r.json()
     assert sonuc["olusturulan"] == 2

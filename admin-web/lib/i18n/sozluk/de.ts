@@ -2454,4 +2454,5 @@ export const de: Sozluk = {
   kullaniciTanilamaDogrulandi: "E-Mail bestätigt",
   kullaniciTanilamaCihaz: "Registrierte Geräte",
   kullaniciTanilamaCihazYok: "Mobile Benachrichtigungen sind aktiviert, aber kein Gerät ist registriert: Die Person hat sich nie in der App angemeldet, daher wird nichts zugestellt.",
+  tesisYoneticiEpostaIpucu: "Die Einladung geht an diese Adresse; ohne sie kann die Verwaltung das Konto nicht übernehmen.",
 };

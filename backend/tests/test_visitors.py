@@ -18,6 +18,17 @@ import uuid
 import pytest
 
 
+
+def _p197_mail() -> str:
+    """(P197) Kullanici/sakin olusturmada e-posta ZORUNLU oldu.
+
+    `app_user.email` NOT NULL (goc 0089): davet, dogrulama kodu ve parola
+    sifirlama YALNIZ e-postadan gidiyor, yani e-postasiz acilan hesap
+    sahiplenilemez. Test govdelerine BENZERSIZ adres verilir —
+    `uq_app_user_tenant_email` ayni tesiste tekrari reddeder.
+    """
+    return f"p197-{uuid.uuid4().hex[:12]}@ornek.com"
+
 def _headers(client, slug, cred):
     r = client.post(
         "/auth/login",
@@ -206,16 +217,14 @@ def test_kayit_hedef_daire_sakini_degilse_422(client, vworld):
         "/visitors", headers=guard,
         json={
             "ziyaretci_ad": "X", "unit_no": vworld["unit1_no"],
-            "target_resident_user_id": vworld["diger_id"],
-        },
+            "target_resident_user_id": vworld["diger_id"], "email": _p197_mail()},
     )
     assert r.status_code == 422 and r.json()["error"]["code"] == "invalid_reference"
     assert client.post(
         "/visitors", headers=guard,
         json={
             "ziyaretci_ad": "X", "unit_no": vworld["unit1_no"],
-            "target_resident_user_id": str(uuid.uuid4()),
-        },
+            "target_resident_user_id": str(uuid.uuid4()), "email": _p197_mail()},
     ).status_code == 422
 
 
@@ -231,12 +240,12 @@ def test_kayit_dogrulama(client, vworld):
     # hedef sakin eksik -> 422
     assert client.post(
         "/visitors", headers=guard,
-        json={"ziyaretci_ad": "X", "unit_no": vworld["unit1_no"]},
+        json={"ziyaretci_ad": "X", "unit_no": vworld["unit1_no"], "email": _p197_mail()},
     ).status_code == 422
     # olmayan daire -> 422 invalid_reference
     r = client.post(
         "/visitors", headers=guard,
-        json={"ziyaretci_ad": "X", "unit_no": "YOK-999", "target_resident_user_id": tgt},
+        json={"ziyaretci_ad": "X", "unit_no": "YOK-999", "target_resident_user_id": tgt, "email": _p197_mail()},
     )
     assert r.status_code == 422 and r.json()["error"]["code"] == "invalid_reference"
     assert client.post(
@@ -248,7 +257,7 @@ def test_kayit_dogrulama(client, vworld):
     assert client.post(
         "/visitors", headers=guard,
         json={"ziyaretci_ad": "", "unit_no": vworld["unit1_no"],
-              "target_resident_user_id": tgt},
+              "target_resident_user_id": tgt, "email": _p197_mail()},
     ).status_code == 422
 
 
@@ -259,7 +268,7 @@ def test_kayit_rbac_yalniz_guvenlik(client, vworld):
         assert client.post(
             "/visitors", headers=h,
             json={"ziyaretci_ad": "X", "unit_no": vworld["unit1_no"],
-                  "target_resident_user_id": vworld["resident_a_id"]},
+                  "target_resident_user_id": vworld["resident_a_id"], "email": _p197_mail()},
         ).status_code == 403, role
 
 

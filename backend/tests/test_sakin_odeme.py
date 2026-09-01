@@ -8,6 +8,17 @@ import pytest
 from app.odeme_kodu import ayikla, uret
 
 
+
+def _p197_mail() -> str:
+    """(P197) Kullanici/sakin olusturmada e-posta ZORUNLU oldu.
+
+    `app_user.email` NOT NULL (goc 0089): davet, dogrulama kodu ve parola
+    sifirlama YALNIZ e-postadan gidiyor, yani e-postasiz acilan hesap
+    sahiplenilemez. Test govdelerine BENZERSIZ adres verilir —
+    `uq_app_user_tenant_email` ayni tesiste tekrari reddeder.
+    """
+    return f"p197-{uuid.uuid4().hex[:12]}@ornek.com"
+
 def _headers(client, slug, cred):
     r = client.post(
         "/auth/login",
@@ -144,8 +155,7 @@ def test_KOD_eslestirmeyi_KESINLESTIRIR(client, adm, sakin):
                     json={"no": f"OD-{_sfx()}", "blok": "A"}).json()
     kisi = client.post("/residents", headers=adm, json={
         "ad": "Kod Testi", "unit_no": u["no"],
-        "telefon": f"+9054{uuid.uuid4().int % 10**8:08d}", "rol_tipi": "malik",
-    }).json()
+        "telefon": f"+9054{uuid.uuid4().int % 10**8:08d}", "rol_tipi": "malik", "email": _p197_mail()}).json()
     client.post("/dues/assessments", headers=adm, json={
         "donem": "2031-05", "unit_id": u["id"], "tutar_kurus": 88888,
         "gelir_gider_tanim_id": tanim["id"]})

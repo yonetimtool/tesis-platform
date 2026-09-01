@@ -2454,4 +2454,5 @@ export const es: Sozluk = {
   kullaniciTanilamaDogrulandi: "Correo verificado",
   kullaniciTanilamaCihaz: "Dispositivos registrados",
   kullaniciTanilamaCihazYok: "Los avisos móviles están activados pero no hay ningún dispositivo registrado: la persona nunca ha entrado en la aplicación, así que no se entrega nada.",
+  tesisYoneticiEpostaIpucu: "La invitación se envía a esta dirección; sin ella el administrador no puede activar su cuenta.",
 };

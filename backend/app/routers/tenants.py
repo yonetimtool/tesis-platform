@@ -75,14 +75,15 @@ async def create_tenant(
             raise APIError(422, "validation_error", "telefon_gecersiz")
         if y.password is not None:
             hazir.append({
-                "ad": y.ad, "telefon": phone,
+                "ad": y.ad, "telefon": phone, "eposta": str(y.email),
                 "password_hash": hash_password(y.password),
                 "temp_code_hash": None, "password_set": True, "temp_code": None,
             })
         else:
             code = generate_temp_code()
             hazir.append({
-                "ad": y.ad, "telefon": phone, "password_hash": None,
+                "ad": y.ad, "telefon": phone, "eposta": str(y.email),
+                "password_hash": None,
                 "temp_code_hash": hash_password(code), "password_set": False,
                 "temp_code": code,
             })
@@ -95,8 +96,11 @@ async def create_tenant(
 
     ad = body.ad or _PLACEHOLDER_AD
     payload = [
+        # (P197) `eposta` DA GIDIYOR: fonksiyon artik `app_user.email`i
+        # yaziyor ve sutun NOT NULL (goc 0089).
         {k: h[k] for k in
-         ("ad", "telefon", "password_hash", "temp_code_hash", "password_set")}
+         ("ad", "telefon", "eposta", "password_hash", "temp_code_hash",
+          "password_set")}
         for h in hazir
     ]
 
@@ -390,13 +394,15 @@ async def add_yonetici(
                     await session.execute(
                         text(
                             "SELECT public.add_tenant_yonetici"
-                            "(:tid, :ad, :tel, :tch)"
+                            "(:tid, :ad, :tel, :tch, :eposta)"
                         ),
                         {
                             "tid": tenant_id,
                             "ad": body.ad,
                             "tel": phone,
                             "tch": hash_password(temp_code),
+                            # (P197) E-POSTA ZORUNLU — bkz. `YoneticiCreate`.
+                            "eposta": str(body.email),
                         },
                     )
                 ).scalar()

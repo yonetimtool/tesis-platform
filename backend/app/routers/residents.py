@@ -89,7 +89,8 @@ async def create_resident(
         # `ResidentCreate` docstring'inde (sutunu global nullable yapmak
         # brief'in dokunmadigi her ekrani ilgilendirirdi).
         ad=body.ad or f"{unit.no} sakini",
-        email=str(body.email) if body.email else None,
+        # (P197) ZORUNLU: sema `EmailStr` (opsiyonel degil).
+        email=str(body.email),
         telefon=body.telefon,
         role="resident",
         password_hash=None,
@@ -213,8 +214,13 @@ async def update_resident(
 ) -> Response:
     """Sakini duzenle (yonetici/admin) — P23b: olusturmadaki TUM alanlar.
 
-    `ad`, `telefon` (global benzersiz; cakisma 409), `email` (acikca null =
-    temizle) ve `rol_tipi` (malik/kiraci). `rol_tipi` kullanicinin AKTIF
+    `ad`, `telefon` (global benzersiz; cakisma 409), `email` ve `rol_tipi`
+    (malik/kiraci).
+
+    (P197) E-POSTA TEMIZLENEMEZ: acikca `null` gondermek eskiden adresi
+    BOSALTIYORDU. Bu, NOT NULL sutunu (goc 0089) ihlal etmesinin yani
+    sira sahiplenilemez bir hesap uretirdi — davet ve dogrulama kodu
+    yalniz e-postadan gider. `null` artik "degistirme" demektir. `rol_tipi` kullanicinin AKTIF
     daire baglarina uygulanir; aktif bagi yoksa **422** — once daire
     atanmalidir (`POST /units/{id}/residents`).
 
@@ -224,6 +230,10 @@ async def update_resident(
     alanlar = body.model_dump(exclude_unset=True)
     fields = list(alanlar.keys())
     # rol_tipi kullanicinin kendi satirinda DEGIL, daire BAGINDA durur.
+    # (P197) `email: null` TEMIZLEME DEGIL, "dokunma" anlamina gelir.
+    # Sutun NOT NULL; `None` yazmak istegi 500'e dusururdu.
+    if alanlar.get("email", _ATLA) is None:
+        alanlar.pop("email")
     rol_tipi = alanlar.pop("rol_tipi", _ATLA)
     if rol_tipi is not _ATLA:
         baglar = (

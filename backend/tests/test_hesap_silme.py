@@ -18,6 +18,17 @@ import uuid
 import pytest
 
 
+
+def _p197_mail() -> str:
+    """(P197) Kullanici/sakin olusturmada e-posta ZORUNLU oldu.
+
+    `app_user.email` NOT NULL (goc 0089): davet, dogrulama kodu ve parola
+    sifirlama YALNIZ e-postadan gidiyor, yani e-postasiz acilan hesap
+    sahiplenilemez. Test govdelerine BENZERSIZ adres verilir —
+    `uq_app_user_tenant_email` ayni tesiste tekrari reddeder.
+    """
+    return f"p197-{uuid.uuid4().hex[:12]}@ornek.com"
+
 def _headers(client, slug, cred):
     r = client.post(
         "/auth/login",
@@ -51,8 +62,7 @@ def _sakin_ac(client, adm, owner_conn) -> tuple[str, str, str]:
     r = client.post("/residents", headers=adm, json={
         "ad": "Silinecek Sakin",
         "unit_no": f"D-{_sfx()}",
-        "telefon": tel,
-    })
+        "telefon": tel, "email": _p197_mail()})
     assert r.status_code == 201, r.text
     user_id = r.json()["user_id"]
     with owner_conn.cursor() as cur:
@@ -218,12 +228,17 @@ def _parolasizlastir(owner_conn, user_id: str, *, eposta: str | None) -> None:
 
     SSO ile kaydolan (parolasiz) kullanicinin durumunu taklit eder — silme
     yolu onda parola degil, E-POSTASINA giden kodu ister.
+
+    (P197) `eposta=None` ARTIK "e-posta SUTUNU NULL" DEMEK DEGIL: sutun
+    NOT NULL oldu (goc 0089) ve e-postasiz hesap ACILAMIYOR. Taklit
+    edilen durum artik "adres var ama DOGRULANMAMIS" — silme akisinin
+    gercekte baktigi sart budur (`eposta_dogrulandi`).
     """
     with owner_conn.cursor() as cur:
         if eposta is None:
             cur.execute(
                 "UPDATE app_user SET password_hash=NULL, password_set=false, "
-                "email=NULL, eposta_dogrulandi=false WHERE id=%s",
+                "eposta_dogrulandi=false WHERE id=%s",
                 (user_id,),
             )
         else:
@@ -281,7 +296,12 @@ def test_parolasiz_YANLIS_eposta_kodu_silmez(client, adm, owner_conn):
 
 
 def test_dogrulanmis_eposta_YOKSA_422(client, adm, owner_conn):
-    """(a) Kanal yoksa akis baslamaz: dogrulanmis e-posta olmadan 422 no_email."""
+    """(a) Kanal yoksa akis baslamaz: DOGRULANMAMIS e-posta -> 422 no_email.
+
+    (P197) Eskiden bu test e-posta sutununu NULL yapiyordu; sutun artik
+    NOT NULL. Olculen sart degismedi: silme kodu YALNIZ dogrulanmis
+    adrese gider.
+    """
     user_id, tel, parola = _sakin_ac(client, adm, owner_conn)
     h = _oturum(client, tel, parola)
     _parolasizlastir(owner_conn, user_id, eposta=None)

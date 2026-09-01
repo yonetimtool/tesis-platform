@@ -12,6 +12,17 @@ import psycopg
 import pytest
 
 
+
+def _p197_mail() -> str:
+    """(P197) Kullanici/sakin olusturmada e-posta ZORUNLU oldu.
+
+    `app_user.email` NOT NULL (goc 0089): davet, dogrulama kodu ve parola
+    sifirlama YALNIZ e-postadan gidiyor, yani e-postasiz acilan hesap
+    sahiplenilemez. Test govdelerine BENZERSIZ adres verilir —
+    `uq_app_user_tenant_email` ayni tesiste tekrari reddeder.
+    """
+    return f"p197-{uuid.uuid4().hex[:12]}@ornek.com"
+
 def _headers(client, slug, cred):
     r = client.post(
         "/auth/login",
@@ -60,7 +71,7 @@ def test_resident_create_yazilir(world, client, owner_conn):
     r = client.post(
         "/residents", headers=admin,
         json={"ad": "Denetim Sakini", "unit_no": f"AUD-{uuid.uuid4().hex[:5]}",
-              "blok": "A", "telefon": f"+90555{uuid.uuid4().int % 10000000:07d}"},
+              "blok": "A", "telefon": f"+90555{uuid.uuid4().int % 10000000:07d}", "email": _p197_mail()},
     )
     assert r.status_code == 201, r.text
     assert _count(owner_conn, tid, "resident_create", resource_id=r.json()["user_id"]) == 1
@@ -98,7 +109,7 @@ def test_meta_kisisel_veri_tasimaz(world, client, owner_conn):
     r = client.post(
         "/residents", headers=admin,
         json={"ad": "Meta Test", "unit_no": f"MT-{uuid.uuid4().hex[:5]}",
-              "blok": "A", "telefon": tel},
+              "blok": "A", "telefon": tel, "email": _p197_mail()},
     )
     assert r.status_code == 201, r.text
     rows = owner_conn.execute(

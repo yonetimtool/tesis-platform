@@ -1451,37 +1451,19 @@ paths:
           content:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
 
-  /me/hesap-sil/kod-iste:
-    post:
-      tags: [me]
-      summary: Parolasiz kullanici icin hesap silme onay kodu gonderir
-      description: |
-        Hesabinda kayitli telefon yoksa 422 `no_phone` — kod gonderilecek
-        bir kanal olmadigi icin silme akisi baslatilamaz.
-      responses:
-        "200":
-          description: Kod gonderildi
-          content:
-            application/json:
-              schema:
-                type: object
-                required: [durum]
-                properties:
-                  durum: { type: string, enum: [gonderildi] }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "422":
-          description: Hesapta kayitli telefon numarasi yok
-          content:
-            application/json: { schema: { $ref: "#/components/schemas/Error" } }
-
   /me/hesap-sil/eposta-kod-iste:
     post:
       tags: [me]
       summary: (P184) Parolasiz kullanici icin hesap silme onay kodu — E-POSTAYA
       description: |
-        `/me/hesap-sil/kod-iste`nin E-POSTA esi (SMS kapali oldugundan bugun
-        calisan yol). Dogrulanmis e-posta yoksa 422 `no_email`. Kod
-        `amac='hesap_silme'` ile uretilir; giris/parola kodu buraya YARAMAZ.
+        Dogrulanmis e-posta yoksa 422 `no_email`. Kod `amac='hesap_silme'`
+        ile uretilir; giris/parola kodu buraya YARAMAZ.
+
+        (P197) TEK YOL. SMS kardesi `/me/hesap-sil/kod-iste` KALDIRILDI:
+        `app_user.email` NOT NULL oldu (goc 0089) ve e-postasiz hesap acan
+        butun yollar kapatildi, yani "telefonu var ama e-postasi yok"
+        kullanici KALMADI. SMS urun genelinde kapali oldugu icin o uc zaten
+        kod gonderemiyor, yalnizca "gonderildi" diyordu.
       responses:
         "200":
           description: Kod gonderildi

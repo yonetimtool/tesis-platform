@@ -15,6 +15,17 @@ import uuid
 from datetime import datetime, timedelta, timezone
 
 
+
+def _p197_mail() -> str:
+    """(P197) Kullanici/sakin olusturmada e-posta ZORUNLU oldu.
+
+    `app_user.email` NOT NULL (goc 0089): davet, dogrulama kodu ve parola
+    sifirlama YALNIZ e-postadan gidiyor, yani e-postasiz acilan hesap
+    sahiplenilemez. Test govdelerine BENZERSIZ adres verilir —
+    `uq_app_user_tenant_email` ayni tesiste tekrari reddeder.
+    """
+    return f"p197-{uuid.uuid4().hex[:12]}@ornek.com"
+
 def _headers(client, slug, cred):
     r = client.post(
         "/auth/login",
@@ -147,7 +158,7 @@ def test_sakin_eklemede_DAVET_gonderilir(client, world):
     kanal E-POSTA; SMS kapali oldugu icin denenmez."""
     yon = _headers(client, world["slug_a"], world["yonetici_a"])
     r = client.post("/residents", headers=yon, json={
-        "telefon": _tel(), "unit_no": f"DV-{uuid.uuid4().hex[:4]}"})
+        "telefon": _tel(), "unit_no": f"DV-{uuid.uuid4().hex[:4]}", "email": _p197_mail()})
     assert r.status_code == 201, r.text
     davet = r.json()["davet"]
     assert davet is not None
@@ -221,7 +232,7 @@ def test_davet_paneli_ROL_KAPISI(client, world, owner_conn):
     yon = _headers(client, world["slug_a"], world["yonetici_a"])
     tel = _tel()
     created = client.post("/residents", headers=yon, json={
-        "telefon": tel, "unit_no": f"DV-{uuid.uuid4().hex[:4]}"})
+        "telefon": tel, "unit_no": f"DV-{uuid.uuid4().hex[:4]}", "email": _p197_mail()})
     assert created.status_code == 201, created.text
     with owner_conn.cursor() as cur:
         cur.execute(

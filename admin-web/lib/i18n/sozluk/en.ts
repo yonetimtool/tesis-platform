@@ -2454,4 +2454,5 @@ export const en: Sozluk = {
   kullaniciTanilamaDogrulandi: "E-mail verified",
   kullaniciTanilamaCihaz: "Registered devices",
   kullaniciTanilamaCihazYok: "Mobile notifications are on but no device is registered: the person has never signed in to the app, so nothing is delivered.",
+  tesisYoneticiEpostaIpucu: "The invitation goes to this address; without it the manager cannot claim the account.",
 };

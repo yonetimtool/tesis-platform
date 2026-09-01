@@ -13,6 +13,17 @@ from app.mesajlasma import (
 )
 
 
+
+def _p197_mail() -> str:
+    """(P197) Kullanici/sakin olusturmada e-posta ZORUNLU oldu.
+
+    `app_user.email` NOT NULL (goc 0089): davet, dogrulama kodu ve parola
+    sifirlama YALNIZ e-postadan gidiyor, yani e-postasiz acilan hesap
+    sahiplenilemez. Test govdelerine BENZERSIZ adres verilir —
+    `uq_app_user_tenant_email` ayni tesiste tekrari reddeder.
+    """
+    return f"p197-{uuid.uuid4().hex[:12]}@ornek.com"
+
 def _headers(client, slug, cred):
     r = client.post(
         "/auth/login",
@@ -225,7 +236,7 @@ def test_ADRESI_OLMAYAN_alici_AYRI_sayilir(client, adm):
                     json={"no": f"M-{_sfx()}", "blok": "A"}).json()
     kisi = client.post("/residents", headers=adm, json={
         "ad": "Epostasiz Sakin", "unit_no": u["no"],
-        "telefon": f"+9054{uuid.uuid4().int % 10**8:08d}"}).json()
+        "telefon": f"+9054{uuid.uuid4().int % 10**8:08d}", "email": _p197_mail()}).json()
     r = client.post("/mesajlar/gonder", headers=adm, json={
         "sablon_id": sablon["id"], "user_ids": [kisi["user_id"]]}).json()
     assert r["adres_yok"] == 1 and r["gonderildi"] == 0

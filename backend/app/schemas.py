@@ -3025,13 +3025,21 @@ class YoneticiIletisimOut(BaseModel):
 class YoneticiCreate(BaseModel):
     """Tenant olusturmada TEK bir yonetici satiri.
 
-    E-posta ALINMAZ: mobil giris TELEFONLADIR (email login anahtari degil) ve
-    yonetici e-postasini hicbir uc okumaz. Tenant seviyesindeki `yonetim_email`
-    ayridir (iletisim kartinda gosterilir).
+    (P197) E-POSTA ARTIK ZORUNLU. Eski not "e-posta alinmaz, mobil giris
+    telefonladir" diyordu; o kural degisti ve degismesi gerekiyordu:
+    davet, dogrulama kodu ve parola sifirlama YALNIZ e-postadan gidiyor
+    (SMS urun genelinde kapali). E-postasiz acilan bir yonetici hesabi
+    daveti alamaz, parolasini sifirlayamaz, hesabini silemez — yani
+    ACILDIGI ANDA SAHIPLENILEMEZ. `app_user.email` goc 0089'da NOT NULL
+    oldu; bu alan onun uc yuzundeki karsiligidir.
+
+    Tenant seviyesindeki `yonetim_email` AYRIDIR (iletisim kartinda
+    gosterilir, giris/davet ile ilgisi yok).
     """
 
     ad: str = Field(..., min_length=2, max_length=120, examples=["Ayse Yilmaz"])
     phone: str = Field(..., min_length=1, examples=["+905321112203"])
+    email: EmailStr = Field(..., examples=["ayse@ornek.com"])
     password: str | None = Field(None, min_length=8)
 
     @field_validator("password")
@@ -3165,6 +3173,10 @@ class TenantYoneticiAdd(BaseModel):
 
     ad: str = Field(..., min_length=2, max_length=120, examples=["Ayse Yilmaz"])
     phone: str = Field(..., min_length=1, examples=["+905321112203"])
+    #: (P197) ZORUNLU — gecici kod bu adrese gider ve `app_user.email`
+    #: NOT NULL (goc 0089). E-postasiz eklenen yonetici, kodunu hicbir
+    #: kanaldan alamazdi (SMS urun genelinde kapali).
+    email: EmailStr = Field(..., examples=["ayse@ornek.com"])
 
 
 class TenantYoneticiAddedOut(BaseModel):
@@ -3496,7 +3508,12 @@ class ResidentCreate(BaseModel):
     blok: str | None = None  # yalniz YENI acilan unit'e islenir
     ad: str | None = Field(None, min_length=1)
     telefon: str = Field(..., min_length=1, examples=["+905321112203"])
-    email: EmailStr | None = None  # sakinde opsiyonel
+    #: (P197) ZORUNLU OLDU. Eski not "sakinde opsiyonel" diyordu; o kural
+    #: sahiplenilemez hesap uretiyordu: davet YALNIZ e-postadan gider
+    #: (SMS urun genelinde kapali), yani e-postasiz acilan sakin Tesis
+    #: ID'yi hicbir zaman ogrenemez ve hesabina hic giremez.
+    #: `app_user.email` goc 0089'da NOT NULL oldu.
+    email: EmailStr
     rol_tipi: ResidentRol | None = None
     # (P186-ek2) `password` KALDIRILDI: yonetici parola atamaz; hesap parolasiz
     # acilir ve DAVET (Tesis ID) ile kisi kendi kimligini kurar.
@@ -3550,11 +3567,17 @@ class ResidentUpdate(BaseModel):
 
     `rol_tipi` kullanicinin AKTIF daire baglarina (bitis IS NULL) uygulanir;
     aktif bagi yoksa 422 (once daire atanmali).
-    `email` acikca `null` gonderilerek TEMIZLENEBILIR — sakinde opsiyoneldir.
+    (P197) `email` ARTIK TEMIZLENEMEZ. Eskiden acikca `null` gonderilerek
+    bosaltilabiliyordu ("sakinde opsiyonel" kuralinin kalintisi); bu, NOT
+    NULL sutunu (goc 0089) ihlal etmesinin yani sira SAHIPLENILEMEZ bir
+    hesap uretirdi — davet ve dogrulama kodu yalniz e-postadan gider.
+    Alan gonderilmezse DEGISMEZ; gonderilirse GECERLI bir adres olmali.
     """
 
     ad: str | None = Field(None, min_length=1)
     telefon: str | None = Field(None, min_length=1)
+    #: `None` = "gonderilmedi" (degistirme). ACIKCA `null` gondermek de
+    #: ayni anlama gelir — TEMIZLEME ARTIK YOK (bkz. docstring).
     email: EmailStr | None = None
     rol_tipi: ResidentRol | None = None
 

@@ -202,9 +202,24 @@ async def tesis_olustur(
             # PAROLA DURUMU YONTEME GORE: elle kayitta kullanici parolayi
             # ZATEN girdi (`password_set=true`, gecici kod YOK). Sosyal
             # yolda parola HIC YOK ve olmamali — kimlik saglayicidadir.
+            #
+            # (P197) E-POSTA ZORUNLU — KAYNAGI SAGLAYICIDIR.
+            #
+            # `app_user.email` NOT NULL (goc 0089). Bu uc SOSYAL yoldur ve
+            # adres, saglayicinin DOGRULADIGI adrestir; ayrica sorulmasi
+            # gereksiz olurdu. Saglayici e-posta PAYLASMADIYSA hesap
+            # acilmaz: e-postasiz bir yonetici hesabi daveti alamaz,
+            # parolasini sifirlayamaz, hesabini silemez — acildigi anda
+            # sahiplenilemez olurdu. Kullanici e-posta DOGRULAMALI yola
+            # (`yonetici-basvuru` -> `yonetici-dogrula` -> `yonetici-tesis`)
+            # yonlendirilir.
+            eposta = (kimlik or {}).get("eposta")
+            if not eposta:
+                raise APIError(422, "validation_error", "eposta_gerekli")
             yonetici = {
                 "ad": body.ad.strip(),
                 "telefon": telefon,
+                "eposta": eposta,
                 "password_hash": hash_password(body.parola) if body.parola else None,
                 "temp_code_hash": None,
                 "password_set": bool(body.parola),

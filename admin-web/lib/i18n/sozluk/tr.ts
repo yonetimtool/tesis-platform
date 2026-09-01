@@ -2517,4 +2517,5 @@ export const tr = {
   kullaniciTanilamaDogrulandi: "E-posta doğrulandı",
   kullaniciTanilamaCihaz: "Kayıtlı cihaz",
   kullaniciTanilamaCihazYok: "Mobil bildirim açık ama kayıtlı cihaz yok: kişi uygulamaya hiç giriş yapmamış, bu yüzden bildirim gitmez.",
+  tesisYoneticiEpostaIpucu: "Davet bu adrese gider; adres olmadan yönetici hesabını sahiplenemez.",
 } as const;
