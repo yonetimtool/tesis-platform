@@ -1042,14 +1042,28 @@ paths:
         "200":
           description: |
             `durum=giris` ise `jetonlar` dolu; `durum=baglama_gerekli` ise
-            `baglama_jetonu` ile tesis kodu + telefon adimina gecilir.
+            `baglama_jetonu` ile Tesis ID adimina gecilir.
+
+            (P180) `kayit` — niyet=kayit + YENI kullanici; `mevcut_hesap` —
+            niyet=kayit ama e-posta zaten bir yonetici hesabiyla esliyor
+            (oturum ACILIR, yeni tesis acilmaz). Bu iki deger listede
+            EKSIKTI ve sema uc ile ayrismisti.
+
+            (P194) NIYET=GIRIS'te de e-posta eslesmesi uygulanir: kimlik
+            bagli degilse ama DOGRULANMIS e-posta TEK bir yonetici
+            hesabiyla esliyorsa kimlik BAGLANIR ve `durum=giris` doner —
+            kullaniciya Tesis ID sorulmaz. Web'de kaydolmus bir yonetici
+            mobilde SSO ile boyle girer. Dogrulanmamis e-postada kapi
+            AYNEN durur (`baglama_gerekli`).
           content:
             application/json:
               schema:
                 type: object
                 required: [durum]
                 properties:
-                  durum: { type: string, enum: [giris, baglama_gerekli] }
+                  durum:
+                    type: string
+                    enum: [giris, baglama_gerekli, kayit, mevcut_hesap]
                   jetonlar: { $ref: "#/components/schemas/TokenPair" }
                   saglayici: { type: string, nullable: true }
                   eposta:
