@@ -16,7 +16,7 @@ import { useToast } from "@/components/Toast";
 import { Alan, AlanSarmal, Dugme, HataDurumu, Modal, Secim } from "@/components/ui";
 import { bugun, useKasalar } from "@/components/finans/ortak";
 import { HareketSayfasi } from "@/components/finans/hareket-sayfasi";
-import { apiSend } from "@/lib/client";
+import { apiSend, genIdempotencyKey } from "@/lib/client";
 import { useT } from "@/lib/i18n/kullan";
 import { tlToKurus } from "@/lib/money";
 
@@ -63,6 +63,11 @@ function VirmanModal({
   const [hedef, setHedef] = useState("");
   const [hata, setHata] = useState<string | null>(null);
   const [kaydediyor, setKaydediyor] = useState(false);
+  // (P192 §6.2) IDEMPOTENCY ANAHTARI — uc basligi ANLIYOR ama bu ekran
+  // GONDERMIYORDU: zaman asimi sonrasi tekrar (kullanici "kaydedilmedi"
+  // sanip yeniden basar) kasada IKI hareket olusturabilirdi. Anahtar
+  // FORM ORNEGI BASINA uretilir; basarili kayittan sonra yenilenir.
+  const [anahtar, setAnahtar] = useState(() => genIdempotencyKey());
 
   async function kaydet() {
     const kurus = tlToKurus(tutar);
@@ -82,9 +87,10 @@ function VirmanModal({
         tutar_kurus: kurus,
         tarih: tarih || null,
         aciklama: aciklama.trim() || null,
-      });
+      }, { "Idempotency-Key": anahtar });
       toast.success(t("finansKaydedildi"));
       setTutar(""); setAciklama("");
+      setAnahtar(genIdempotencyKey());
       onKaydedildi();
       onKapat();
     } catch (e) {

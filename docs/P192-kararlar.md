@@ -496,3 +496,48 @@ giren (terminoloji **kasa** açısından).
 
 Onay bekleyen ve iptal satırları dışarıda: muhasebeciye giden döküm
 **gerçekleşmiş** hareketlerin dökümüdür.
+
+---
+
+## Bölüm 6 — Sorunlu yerler
+
+### 6.1 `budget.py` denetim izi — Bölüm 1'de kapandı
+
+Modülde tek bir `audit_user` çağrısı yoktu; şeffaflık yayınını besleyen
+defter denetim izi olmadan yazılıyordu. Defter `finansal_hareket`e
+taşınırken üç yazma yolunun üçü de denetime işleniyor (oluşturma,
+düzenleme — eski/yeni değerle — ve iptal).
+
+### 6.2 Çift tıklama koruması ekranlarda kullanılmıyordu
+
+Uç `Idempotency-Key` başlığını **anlıyor** ama ekranlar
+**göndermiyordu**. Analiz raporu bunu Tahsilatlar sayfasında ölçmüştü;
+tarama beş ekranda daha aynı boşluğu gösterdi: tahsilat (tekil + toplu),
+açılış fişi, iade, virman ve gelir/gider modalı.
+
+Anahtar **form örneği başına** üretiliyor ve başarılı kayıttan sonra
+yenileniyor: aynı gönderimin tekrarı aynı anahtarı taşır (koruma), ama
+aynı formdan bilinçli ikinci bir kayıt yeni anahtar alır — aksi halde
+ikinci kayıt hiç oluşmazdı.
+
+Korunan risk hızlı çift tıklama değil (buton zaten uçuş sırasında kilitli);
+**zaman aşımı sonrası tekrar**: istek sunucuya ulaşıp yanıt dönmezse
+kullanıcı "kaydedilmedi" sanıp yeniden basar ve kasada iki hareket
+oluşurdu. Yönetici bunu ancak mutabakatta fark ederdi.
+
+### 6.3 Tahakkuk düzeltme — Bölüm 3'te kapandı
+
+`POST /dues/assessments/{id}/ters-kayit`. Gerekçe §3.2'de.
+
+### 6.4 Sayaç dağıtımındaki float
+
+`sayac_tuketim_dagitimi` ara hesabı float'tı: `ana - sum(bölümler)` ve
+ardından `* yüzde / 100.0`. İkili gösterimde `12.3 - 12.0 =
+0.2999999999999989` çıkar ve birim fiyatla çarpılınca kuruş kayar. Ara
+hesap `Decimal`e çevrildi; **yuvarlama kuralı değişmedi** (aşağı kesme,
+diğer kalemlerle aynı) — değişen tek şey ara değerin gösterimi.
+
+Yeni `oransal_dagit` de `Decimal` + en büyük kalan; float ile 1/3 payı
+`0.3333333333333333` olur ve büyük tutarlarda kuruş kayardı.
+
+Kalan taramada para hesabında başka float bulunmadı.

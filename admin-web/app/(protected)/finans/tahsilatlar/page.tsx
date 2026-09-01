@@ -33,7 +33,7 @@ import {
   yeniSatirAnahtari,
   type SatirTabani,
 } from "@/components/finans/satir-tablosu";
-import { apiSend } from "@/lib/client";
+import { apiSend, genIdempotencyKey } from "@/lib/client";
 import { useT } from "@/lib/i18n/kullan";
 import { tlToKurus } from "@/lib/money";
 
@@ -107,6 +107,11 @@ function TekilModal({
   const [aciklama, setAciklama] = useState("");
   const [hata, setHata] = useState<string | null>(null);
   const [kaydediyor, setKaydediyor] = useState(false);
+  // (P192 §6.2) IDEMPOTENCY ANAHTARI — uc basligi ANLIYOR ama bu ekran
+  // GONDERMIYORDU: zaman asimi sonrasi tekrar (kullanici "kaydedilmedi"
+  // sanip yeniden basar) kasada IKI hareket olusturabilirdi. Anahtar
+  // FORM ORNEGI BASINA uretilir; basarili kayittan sonra yenilenir.
+  const [anahtarTekil, setAnahtarTekil] = useState(() => genIdempotencyKey());
 
   const secKasa = kasaId || kasalar[0]?.id || "";
 
@@ -125,9 +130,10 @@ function TekilModal({
         tutar_kurus: kurus,
         tarih: tarih || null,
         aciklama: aciklama.trim() || null,
-      });
+      }, { "Idempotency-Key": anahtarTekil });
       toast.success(t("finansKaydedildi"));
       setKisiId(""); setDaireId(""); setTutar(""); setAciklama("");
+      setAnahtarTekil(genIdempotencyKey());
       onKaydedildi();
       onKapat();
     } catch (e) {
@@ -232,6 +238,11 @@ function TopluModal({
   const [tarih, setTarih] = useState(bugun());
   const [hata, setHata] = useState<string | null>(null);
   const [kaydediyor, setKaydediyor] = useState(false);
+  // (P192 §6.2) IDEMPOTENCY ANAHTARI — uc basligi ANLIYOR ama bu ekran
+  // GONDERMIYORDU: zaman asimi sonrasi tekrar (kullanici "kaydedilmedi"
+  // sanip yeniden basar) kasada IKI hareket olusturabilirdi. Anahtar
+  // FORM ORNEGI BASINA uretilir; basarili kayittan sonra yenilenir.
+  const [anahtarToplu, setAnahtarToplu] = useState(() => genIdempotencyKey());
 
   const secKasa = kasaId || kasalar[0]?.id || "";
 
@@ -254,9 +265,10 @@ function TopluModal({
           tutar_kurus: tlToKurus(s.tutar),
           aciklama: s.aciklama.trim() || null,
         })),
-      });
+      }, { "Idempotency-Key": anahtarToplu });
       toast.success(t("finansKaydedildi"));
       setSatirlar([bosSatir()]);
+      setAnahtarToplu(genIdempotencyKey());
       onKaydedildi();
       onKapat();
     } catch (e) {

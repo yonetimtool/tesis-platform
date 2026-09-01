@@ -31,7 +31,7 @@ import {
   HareketSayfasi,
   type Hareket,
 } from "@/components/finans/hareket-sayfasi";
-import { apiSend } from "@/lib/client";
+import { apiSend, genIdempotencyKey } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
 import { kurusToTL, tlToKurus } from "@/lib/money";
@@ -79,6 +79,11 @@ function IadeModal({
   const [aciklama, setAciklama] = useState("");
   const [hata, setHata] = useState<string | null>(null);
   const [kaydediyor, setKaydediyor] = useState(false);
+  // (P192 §6.2) IDEMPOTENCY ANAHTARI — uc basligi ANLIYOR ama bu ekran
+  // GONDERMIYORDU: zaman asimi sonrasi tekrar (kullanici "kaydedilmedi"
+  // sanip yeniden basar) kasada IKI hareket olusturabilirdi. Anahtar
+  // FORM ORNEGI BASINA uretilir; basarili kayittan sonra yenilenir.
+  const [anahtar, setAnahtar] = useState(() => genIdempotencyKey());
 
   // KISI SECILENE KADAR ISTEK ATILMAZ (`null` anahtar): tum tahsilatlari
   // cekip istemcide suzmek, buyuk bir listeyi tarayiciya tasimak olurdu.
@@ -104,9 +109,10 @@ function IadeModal({
         tutar_kurus: kurus && kurus > 0 ? kurus : null,
         tarih: tarih || null,
         aciklama: aciklama.trim() || null,
-      });
+      }, { "Idempotency-Key": anahtar });
       toast.success(t("finansKaydedildi"));
       setHareketId(""); setTutar(""); setAciklama("");
+      setAnahtar(genIdempotencyKey());
       onKaydedildi();
       onKapat();
     } catch (e) {

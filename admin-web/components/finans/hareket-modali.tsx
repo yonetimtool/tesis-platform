@@ -21,7 +21,7 @@ import {
   Modal,
   Secim,
 } from "@/components/ui";
-import { apiSend } from "@/lib/client";
+import { apiSend, genIdempotencyKey } from "@/lib/client";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 import { tlToKurus } from "@/lib/money";
@@ -131,6 +131,11 @@ export function HareketModali({
   const [satirlar, setSatirlar] = useState<Satir[]>([bosSatir()]);
   const [hata, setHata] = useState<string | null>(null);
   const [kaydediyor, setKaydediyor] = useState(false);
+  // (P192 §6.2) IDEMPOTENCY ANAHTARI — uc basligi ANLIYOR ama bu ekran
+  // GONDERMIYORDU: zaman asimi sonrasi tekrar (kullanici "kaydedilmedi"
+  // sanip yeniden basar) kasada IKI hareket olusturabilirdi. Anahtar
+  // FORM ORNEGI BASINA uretilir; basarili kayittan sonra yenilenir.
+  const [anahtar, setAnahtar] = useState(() => genIdempotencyKey());
 
   function sifirla() {
     setSatirlar([bosSatir()]);
@@ -168,9 +173,10 @@ export function HareketModali({
           aciklama: s.aciklama.trim() || null,
           durum: s.durum,
         })),
-      });
+      }, { "Idempotency-Key": anahtar });
       toast.success(t("finansKaydedildi"));
       sifirla();
+      setAnahtar(genIdempotencyKey());
       onKaydedildi();
       onKapat();
     } catch (e) {
