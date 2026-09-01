@@ -541,3 +541,44 @@ Yeni `oransal_dagit` de `Decimal` + en büyük kalan; float ile 1/3 payı
 `0.3333333333333333` olur ve büyük tutarlarda kuruş kayardı.
 
 Kalan taramada para hesabında başka float bulunmadı.
+
+---
+
+## Kapanış: kabul ölçütleri
+
+| # | Ölçüt | Durum | Kilit |
+|---|---|---|---|
+| 1 | Para tek defterde; vezneden tahsilat borcu kapatıyor | ✅ | `test_p192_tek_defter.py::test_vezneden_tahsilat_sakinin_borcunu_kapatir` |
+| 2 | `/dues/payments` kasa bakiyesini artırıyor | ✅ | `..::test_dues_payments_kasa_bakiyesini_artirir` |
+| 3 | Tahsilat oranı her ekranda aynı | ✅ | `..::test_tahsilat_orani_her_ekranda_ayni`, `test_p192_gosterge.py::test_gosterge_rapordaki_rakamla_AYNI` |
+| 4 | Banka tahsilatı bir hesaba yazılıyor, toplamlar tutuyor | ✅ | `test_p192_kasa.py::test_banka_tahsilati_secilen_hesaba_yazilir` |
+| 5 | Onay bekleyen gider bakiyeyi düşürmüyor; onaylanabiliyor/reddedilebiliyor | ✅ | `test_p192_kasa.py` (4 test) |
+| 6 | Gecikme faizi borç olarak yazılıyor ve tahsil edilebiliyor | ✅ | `test_p192_tahakkuk.py::test_faiz_BORC_olarak_yazilir_ve_tahsil_edilebilir` |
+| 7 | Aynı döneme birden çok kalem; atlanan sessizce kaybolmuyor | ✅ | `..::test_ayni_doneme_ikinci_kalem_yazilabilir`, `..::test_atlanan_daire_SESSIZCE_kaybolmaz` |
+| 8 | Arsa payına ve metrekareye göre dağıtım | ✅ | `..::test_oransal_dagitim_kurus_kaybetmez` |
+| 9 | Aylık tahakkuk otomatik, idempotent, önizleme bildirimi | ✅ | `test_p192_otomasyon.py` (4 test) |
+| 10 | Borç hatırlatmaları otomatik, ödeyene gitmiyor | ✅ | `..::test_hatirlatma_odeyene_GITMEZ` |
+| 11 | Borç yaşlandırma ekranı | ✅ | `test_p192_gosterge.py` (5 test) |
+| 12 | Muhasebeciye dışa aktarım | ✅ | `..::test_muhasebe_aktarimi_*` (3 test) |
+| 13 | `budget.py` denetim izi | ✅ | `test_p192_kalanlar.py::test_butce_defterine_yazma_DENETIME_islenir` |
+| 14 | Çift tıklama iki tahsilat yazmıyor | ✅ | `..::test_ayni_idempotency_anahtari_IKINCI_tahsilat_yazmaz` + beş ekranda başlık |
+| 15 | Tahakkuk düzeltilebiliyor (ters kayıt) | ✅ | `test_p192_tahakkuk.py` (3 test) |
+| 16 | Para hesaplarında float kalmadı | ✅ | `test_p192_kalanlar.py` (3 test) |
+| 17 | Tam test paketi yeşil | ✅ | backend + admin-web + flutter |
+
+## Bu turda açılan yeni tablolar
+
+Yedi: `aidat_plani`, `hatirlatma_ayari`, `duzenli_gider`,
+`otomasyon_gunlugu`, `butce_hedefi` — ve **hiç** yeni site/daire/sakin
+tablosu. Para ve borç için de yeni tablo açılmadı: bu turun asıl işi zaten
+var olan üç deftere **birini** seçmekti.
+
+## Bu turda kapatılmayan şey
+
+`dues_payment` ve `budget_entry` tabloları **silinmedi**. Yazılmıyorlar ve
+hiçbir okuma yolu onlara bakmıyor (tarama `app/` altında sıfır sonuç
+veriyor: yalnız yorumlarda ve göç dosyalarında geçiyorlar). Silme bilinçli
+olarak ertelendi — geri dönüş penceresi kapanana kadar veri yerinde
+dursun. İleride `DROP TABLE` yazılacaksa önce
+`SELECT count(*) FROM dues_payment WHERE created_at > '<göç tarihi>'`
+sıfır olmalı.
