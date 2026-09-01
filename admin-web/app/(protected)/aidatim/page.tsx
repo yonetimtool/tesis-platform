@@ -71,7 +71,11 @@ function Makbuzlar() {
       <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
         {t("aidatimMakbuzlar")}
       </h2>
-      {error ? <HataDurumu mesaj={t("ortakHataOlustu")} /> : null}
+      {/* HATA METNI BOLUME OZEL: sayfanin ustunde zaten genel bir uyari
+          olabilir ve iki ayni cumle, sakine ayni sorunu iki kez soylemek
+          olurdu. Ozel metin hem hangi bolumun dustugunu soyler hem de
+          ekranda ayirt edilebilir kalir. */}
+      {error ? <HataDurumu mesaj={t("aidatimMakbuzHata")} /> : null}
       {!error && makbuzlar.length === 0 ? (
         <BosDurum baslik={t("aidatimMakbuzYok")} />
       ) : null}

@@ -2366,4 +2366,5 @@ export const fr: Sozluk = {
   aidatimMakbuzYok: "Aucun reçu",
   aidatimMakbuzNo: "N° de reçu",
   aidatimMakbuzIndir: "Télécharger le PDF",
+  aidatimMakbuzHata: "Impossible de charger les reçus",
 };

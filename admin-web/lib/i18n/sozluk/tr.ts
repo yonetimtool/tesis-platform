@@ -2429,4 +2429,5 @@ export const tr = {
   aidatimMakbuzYok: "Henüz makbuz yok",
   aidatimMakbuzNo: "Makbuz no",
   aidatimMakbuzIndir: "PDF indir",
+  aidatimMakbuzHata: "Makbuzlar yüklenemedi",
 } as const;

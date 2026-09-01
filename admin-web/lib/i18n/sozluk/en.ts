@@ -2366,4 +2366,5 @@ export const en: Sozluk = {
   aidatimMakbuzYok: "No receipts yet",
   aidatimMakbuzNo: "Receipt no",
   aidatimMakbuzIndir: "Download PDF",
+  aidatimMakbuzHata: "Receipts could not be loaded",
 };

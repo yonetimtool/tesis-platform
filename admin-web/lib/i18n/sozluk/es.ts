@@ -2366,4 +2366,5 @@ export const es: Sozluk = {
   aidatimMakbuzYok: "Aún no hay recibos",
   aidatimMakbuzNo: "N.º de recibo",
   aidatimMakbuzIndir: "Descargar PDF",
+  aidatimMakbuzHata: "No se pudieron cargar los recibos",
 };

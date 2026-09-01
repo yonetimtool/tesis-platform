@@ -2366,4 +2366,5 @@ export const de: Sozluk = {
   aidatimMakbuzYok: "Noch keine Belege",
   aidatimMakbuzNo: "Belegnummer",
   aidatimMakbuzIndir: "PDF herunterladen",
+  aidatimMakbuzHata: "Belege konnten nicht geladen werden",
 };

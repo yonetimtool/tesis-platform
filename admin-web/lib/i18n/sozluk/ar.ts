@@ -2366,4 +2366,5 @@ export const ar: Sozluk = {
   aidatimMakbuzYok: "لا توجد إيصالات بعد",
   aidatimMakbuzNo: "رقم الإيصال",
   aidatimMakbuzIndir: "تنزيل PDF",
+  aidatimMakbuzHata: "تعذّر تحميل الإيصالات",
 };

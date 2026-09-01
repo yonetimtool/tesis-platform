@@ -2366,4 +2366,5 @@ export const ru: Sozluk = {
   aidatimMakbuzYok: "Квитанций пока нет",
   aidatimMakbuzNo: "Номер квитанции",
   aidatimMakbuzIndir: "Скачать PDF",
+  aidatimMakbuzHata: "Не удалось загрузить квитанции",
 };
