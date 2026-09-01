@@ -29,8 +29,10 @@ App Store id) eski istemciler KIRIK bir dugmeye basardi — hem de tam
 """
 from __future__ import annotations
 
+import json
+
 from fastapi import APIRouter, Depends, Header
-from sqlalchemy import select
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..audit import Action, audit_user
@@ -39,7 +41,7 @@ from ..config import settings
 from ..db import SessionLocal
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
-from ..models import AppUser, SurumPolitikasi
+from ..models import AppUser
 from ..schemas import (
     SurumKontrolIstek,
     SurumKontrolYanit,
@@ -85,17 +87,21 @@ async def kontrol(
         # ayni sonuc, ama gurultulu.
         return SurumKontrolYanit(durum="guncel")
 
+    # SECURITY DEFINER: tablo RLS ACIK ve POLITIKASIZ (goc 0091), yani
+    # `app_rw` onu DOGRUDAN goremez. Fonksiyon TEK satir dondurur.
     async with SessionLocal() as session:
         satir = (
             await session.execute(
-                select(SurumPolitikasi).where(
-                    SurumPolitikasi.platform == platform
-                )
+                text(
+                    "SELECT asgari_surum, onerilen_surum, mesaj "
+                    "FROM public.surum_politikasi_oku(:p)"
+                ),
+                {"p": platform},
             )
-        ).scalar_one_or_none()
+        ).mappings().first()
 
-    asgari = satir.asgari_surum if satir else None
-    onerilen = satir.onerilen_surum if satir else None
+    asgari = satir["asgari_surum"] if satir else None
+    onerilen = satir["onerilen_surum"] if satir else None
     sonuc = karar(body.surum, asgari, onerilen)
     if sonuc == "guncel":
         # Guncel istemciye mesaj/adres GONDERILMEZ: gereksiz veri, ve
@@ -103,14 +109,14 @@ async def kontrol(
         return SurumKontrolYanit(durum="guncel")
 
     mesaj = None
-    if satir and satir.mesaj:
+    if satir and satir["mesaj"]:
         dil = dil_sec(
             accept_language=accept_language,
             kaynak_dil="tr",
         )
         # Secilen dil yoksa TR'ye, o da yoksa NONE'a duser: metin
         # zorunlu degil (uygulamanin kendi yerellestirilmis metni var).
-        metin = satir.mesaj.get(dil) or satir.mesaj.get("tr")
+        metin = satir["mesaj"].get(dil) or satir["mesaj"].get("tr")
         mesaj = (metin or "").strip() or None
 
     return SurumKontrolYanit(
@@ -129,14 +135,26 @@ async def politika_listesi(
     user: AppUser = Depends(_ADMIN),
 ) -> SurumPolitikasiListesi:
     """Iki platformun politikasi — PLATFORM ADMINI (panel.*)."""
-    satirlar = (
-        await db.execute(
-            select(SurumPolitikasi).order_by(SurumPolitikasi.platform)
+    ogeler = []
+    for platform in PLATFORMLAR:
+        satir = (
+            await db.execute(
+                text(
+                    "SELECT asgari_surum, onerilen_surum, mesaj "
+                    "FROM public.surum_politikasi_oku(:p)"
+                ),
+                {"p": platform},
+            )
+        ).mappings().first()
+        ogeler.append(
+            SurumPolitikasiOut(
+                platform=platform,
+                asgari_surum=satir["asgari_surum"] if satir else None,
+                onerilen_surum=satir["onerilen_surum"] if satir else None,
+                mesaj=(satir["mesaj"] if satir else None) or {},
+            )
         )
-    ).scalars().all()
-    return SurumPolitikasiListesi(
-        ogeler=[SurumPolitikasiOut.model_validate(s) for s in satirlar]
-    )
+    return SurumPolitikasiListesi(ogeler=ogeler)
 
 
 @router.put("/surum-politikasi/{platform}", response_model=SurumPolitikasiOut)
@@ -155,24 +173,52 @@ async def politika_guncelle(
     """
     if platform not in PLATFORMLAR:
         raise APIError(422, "validation_error", "platform_gecersiz")
+    mevcut = (
+        await db.execute(
+            text(
+                "SELECT asgari_surum, onerilen_surum, mesaj "
+                "FROM public.surum_politikasi_oku(:p)"
+            ),
+            {"p": platform},
+        )
+    ).mappings().first()
+    veri = body.model_dump(exclude_unset=True)
+    # KISMI GUNCELLEME: verilmeyen alan DEGISMEZ. Fonksiyon tam satir
+    # yazar, o yuzden birlestirme burada yapilir.
+    yeni = {
+        "asgari_surum": veri.get(
+            "asgari_surum", mevcut["asgari_surum"] if mevcut else None
+        ),
+        "onerilen_surum": veri.get(
+            "onerilen_surum", mevcut["onerilen_surum"] if mevcut else None
+        ),
+        "mesaj": veri.get("mesaj", (mevcut["mesaj"] if mevcut else None) or {}),
+    }
     satir = (
         await db.execute(
-            select(SurumPolitikasi).where(SurumPolitikasi.platform == platform)
+            text(
+                "SELECT asgari_surum, onerilen_surum, mesaj "
+                "FROM public.surum_politikasi_yaz("
+                "  :p, :asgari, :onerilen, CAST(:mesaj AS jsonb))"
+            ),
+            {
+                "p": platform,
+                "asgari": yeni["asgari_surum"],
+                "onerilen": yeni["onerilen_surum"],
+                "mesaj": json.dumps(yeni["mesaj"] or {}),
+            },
         )
-    ).scalar_one_or_none()
-    if satir is None:
-        satir = SurumPolitikasi(platform=platform)
-        db.add(satir)
-    veri = body.model_dump(exclude_unset=True)
-    for k, v in veri.items():
-        setattr(satir, k, v)
-    await db.flush()
-    await db.refresh(satir)
+    ).mappings().first()
     await audit_user(
         db, user, Action.PLATFORM_AYAR_UPDATE, resource_type="surum_politikasi",
         resource_id=None, meta={"platform": platform, "degisen": sorted(veri)},
     )
-    return SurumPolitikasiOut.model_validate(satir)
+    return SurumPolitikasiOut(
+        platform=platform,
+        asgari_surum=satir["asgari_surum"] if satir else None,
+        onerilen_surum=satir["onerilen_surum"] if satir else None,
+        mesaj=(satir["mesaj"] if satir else None) or {},
+    )
 
 
 #: Panelin dil secicisiyle AYNI kume — mesaj alani bu dilleri kabul eder.

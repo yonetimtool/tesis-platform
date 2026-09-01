@@ -5461,4 +5461,31 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get ayarlarBildirimIzinIste => 'Запросить разрешение';
+
+  @override
+  String get surumZorunluBaslik => 'Требуется обновление';
+
+  @override
+  String get surumZorunluMetin =>
+      'Эта версия больше не работает. Обновите приложение, чтобы продолжить.';
+
+  @override
+  String get surumOnerilenBaslik => 'Доступна новая версия';
+
+  @override
+  String get surumOnerilenMetin =>
+      'Обновите приложение, чтобы работать удобнее.';
+
+  @override
+  String get surumGuncelle => 'Обновить';
+
+  @override
+  String get surumSimdiGuncelle => 'Обновить сейчас';
+
+  @override
+  String get surumSonra => 'Позже';
+
+  @override
+  String get surumMagazaAcilamadi =>
+      'Не удалось открыть магазин. Обновите приложение вручную в магазине приложений на телефоне.';
 }

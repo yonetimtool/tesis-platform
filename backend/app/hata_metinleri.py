@@ -376,6 +376,16 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "Cette étape de configuration n'existe pas.",
         "es": "No existe ese paso de configuración.",
     },
+    # (P202) Surum politikasi platformu 'ios' | 'android' ile SINIRLI.
+    "platform_gecersiz": {
+        "tr": "Geçersiz platform. Yalnızca iOS ve Android desteklenir.",
+        "en": "Invalid platform. Only iOS and Android are supported.",
+        "ar": "منصّة غير صالحة. المدعوم هو iOS و Android فقط.",
+        "ru": "Недопустимая платформа. Поддерживаются только iOS и Android.",
+        "de": "Ungültige Plattform. Nur iOS und Android werden unterstützt.",
+        "fr": "Plateforme invalide. Seuls iOS et Android sont pris en charge.",
+        "es": "Plataforma no válida. Solo se admiten iOS y Android.",
+    },
     "varlik_tipi_gecersiz": {
         "tr": "Bu kayıt türüne ek eklenemez.",
         "en": "Attachments are not supported for this record type.",

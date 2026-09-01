@@ -1705,5 +1705,13 @@
   "ayarlarBildirimYuklenemedi": "تعذّر تحميل تفضيلات الإشعارات",
   "ayarlarBildirimIzinKapali": "إذن الإشعارات على الجهاز مغلق. لن تظهر إشعارات الجوال على الهاتف؛ فعّله من إعدادات الجهاز.",
   "ayarlarBildirimIzinBelirsiz": "يلزم إذن لعرض الإشعارات.",
-  "ayarlarBildirimIzinIste": "طلب الإذن"
+  "ayarlarBildirimIzinIste": "طلب الإذن",
+  "surumZorunluBaslik": "التحديث مطلوب",
+  "surumZorunluMetin": "لم يعد بالإمكان استخدام هذا الإصدار. حدِّث التطبيق للمتابعة.",
+  "surumOnerilenBaslik": "يتوفر إصدار جديد",
+  "surumOnerilenMetin": "حدِّث التطبيق للحصول على تجربة أفضل.",
+  "surumGuncelle": "تحديث",
+  "surumSimdiGuncelle": "حدِّث الآن",
+  "surumSonra": "لاحقًا",
+  "surumMagazaAcilamadi": "تعذّر فتح المتجر. يمكنك تحديث التطبيق يدويًا من متجر التطبيقات على هاتفك."
 }

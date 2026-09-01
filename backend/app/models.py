@@ -4374,7 +4374,13 @@ class SurumPolitikasi(Base):
 
     TENANT YOK ve bu bilincli: magazadaki paket tektir, tesise gore
     degismez. `tenant_id` koymak ayni gercegin tesis sayisi kadar
-    kopyasini uretirdi. Tabloda RLS de yoktur (goc 0091 basligi).
+    kopyasini uretirdi.
+
+    TABLO RLS ACIK ve POLITIKASIZDIR (goc 0091): `app_rw` onu DOGRUDAN
+    goremez. Bu sinif ORM uzerinden SORGULANMAZ; erisim
+    `surum_politikasi_oku` / `surum_politikasi_yaz` SECURITY DEFINER
+    fonksiyonlarindan gecer. Sinif yine de DURUYOR cunku semanin tek
+    kaynagi burasi (alembic autogenerate ve sema okumasi buna bakar).
 
     Iki esik de NULL olabilir; NULL = O SEVIYE KAPALI.
     """

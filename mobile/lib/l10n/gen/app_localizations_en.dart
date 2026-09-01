@@ -5389,4 +5389,30 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ayarlarBildirimIzinIste => 'Request permission';
+
+  @override
+  String get surumZorunluBaslik => 'Update required';
+
+  @override
+  String get surumZorunluMetin =>
+      'This version can no longer be used. Update the app to continue.';
+
+  @override
+  String get surumOnerilenBaslik => 'A new version is available';
+
+  @override
+  String get surumOnerilenMetin => 'Update the app for a better experience.';
+
+  @override
+  String get surumGuncelle => 'Update';
+
+  @override
+  String get surumSimdiGuncelle => 'Update now';
+
+  @override
+  String get surumSonra => 'Later';
+
+  @override
+  String get surumMagazaAcilamadi =>
+      'Could not open the store. You can update the app manually from your phone\'s app store.';
 }

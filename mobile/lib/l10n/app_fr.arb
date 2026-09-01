@@ -1705,5 +1705,13 @@
   "ayarlarBildirimYuklenemedi": "Impossible de charger les préférences de notification",
   "ayarlarBildirimIzinKapali": "L'autorisation de notification de l'appareil est désactivée. Les notifications mobiles n'apparaîtront pas sur le téléphone ; activez-la dans les réglages de l'appareil.",
   "ayarlarBildirimIzinBelirsiz": "Une autorisation est nécessaire pour afficher les notifications.",
-  "ayarlarBildirimIzinIste": "Demander l'autorisation"
+  "ayarlarBildirimIzinIste": "Demander l'autorisation",
+  "surumZorunluBaslik": "Mise à jour requise",
+  "surumZorunluMetin": "Cette version n'est plus utilisable. Mettez l'application à jour pour continuer.",
+  "surumOnerilenBaslik": "Une nouvelle version est disponible",
+  "surumOnerilenMetin": "Mettez l'application à jour pour une meilleure expérience.",
+  "surumGuncelle": "Mettre à jour",
+  "surumSimdiGuncelle": "Mettre à jour maintenant",
+  "surumSonra": "Plus tard",
+  "surumMagazaAcilamadi": "Impossible d'ouvrir la boutique. Vous pouvez mettre l'application à jour manuellement depuis la boutique de votre téléphone."
 }

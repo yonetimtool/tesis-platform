@@ -66,7 +66,21 @@ TENANT_DEGISKENI = "app.current_tenant_id"
 #: Platform (tenant'siz) tablolarin UST SINIRI. Sinif katalogdan turetilir;
 #: bu tavan, "politikasi unutulmus" bir tablonun sinifa sessizce katilmasini
 #: gurultulu hale getirir. Bilincli olarak dar.
-PLATFORM_TABLO_TAVANI = int(os.getenv("RLS_PLATFORM_TAVAN", "2"))
+#:
+#: SINIFIN UYELERI ve NEDEN TENANT'SIZ OLDUKLARI:
+#:   * `tanitim_iletisim` (0033) — tanitim sitesinden gelen iletisim
+#:     formu; gonderen henuz hicbir tesise ait DEGIL.
+#:   * `yonetici_basvuru` (0068) — yonetici kayit basvurusu; tesis HENUZ
+#:     YOK, basvuru onu yaratacak.
+#:   * `surum_politikasi` (0091, P202) — magazadaki paket TEKTIR ve
+#:     tesise gore degismez; `tenant_id` koymak ayni gercegin tesis
+#:     sayisi kadar kopyasini uretirdi.
+#:
+#: Ucu de AYNI DESENI tasir: RLS ACIK + FORCE, POLITIKA YOK, erisim
+#: yalniz SECURITY DEFINER fonksiyonlarindan. Yani `app_rw` bu
+#: tablolarin HICBIR satirini dogrudan goremez (asagidaki davranissal
+#: test bunu olcer). Tavan 2 -> 3 BILINCLI yukseltildi.
+PLATFORM_TABLO_TAVANI = int(os.getenv("RLS_PLATFORM_TAVAN", "3"))
 
 
 def _platform_tablolari(katalog) -> set[str]:

@@ -1705,5 +1705,13 @@
   "ayarlarBildirimYuklenemedi": "No se pudieron cargar las preferencias de notificación",
   "ayarlarBildirimIzinKapali": "El permiso de notificaciones del dispositivo está desactivado. Las notificaciones móviles no aparecerán en el teléfono; actívalo en los ajustes del dispositivo.",
   "ayarlarBildirimIzinBelirsiz": "Se necesita permiso para mostrar notificaciones.",
-  "ayarlarBildirimIzinIste": "Solicitar permiso"
+  "ayarlarBildirimIzinIste": "Solicitar permiso",
+  "surumZorunluBaslik": "Actualización necesaria",
+  "surumZorunluMetin": "Esta versión ya no se puede usar. Actualice la aplicación para continuar.",
+  "surumOnerilenBaslik": "Hay una versión nueva",
+  "surumOnerilenMetin": "Actualice la aplicación para una mejor experiencia.",
+  "surumGuncelle": "Actualizar",
+  "surumSimdiGuncelle": "Actualizar ahora",
+  "surumSonra": "Más tarde",
+  "surumMagazaAcilamadi": "No se pudo abrir la tienda. Puede actualizar la aplicación manualmente desde la tienda de su teléfono."
 }

@@ -2411,5 +2411,37 @@
   "ayarlarBildirimYuklenemedi": "Bildirim tercihleri yüklenemedi",
   "ayarlarBildirimIzinKapali": "Cihaz bildirim izni kapalı. Mobil bildirimler telefonda görünmez; cihaz ayarlarından açın.",
   "ayarlarBildirimIzinBelirsiz": "Bildirimleri görmek için izin gerekiyor.",
-  "ayarlarBildirimIzinIste": "İzin iste"
+  "ayarlarBildirimIzinIste": "İzin iste",
+  "surumZorunluBaslik": "Güncelleme gerekli",
+  "@surumZorunluBaslik": {
+    "description": "(P202) Kapatilamayan zorunlu guncelleme ekraninin basligi."
+  },
+  "surumZorunluMetin": "Bu sürüm artık kullanılamıyor. Devam etmek için uygulamayı güncelleyin.",
+  "@surumZorunluMetin": {
+    "description": "(P202) Zorunlu guncelleme aciklamasi. Operator mesaj yazmadiysa BU gosterilir."
+  },
+  "surumOnerilenBaslik": "Yeni sürüm var",
+  "@surumOnerilenBaslik": {
+    "description": "(P202) Kapatilabilir onerilen guncelleme uyarisinin basligi."
+  },
+  "surumOnerilenMetin": "Daha iyi bir deneyim için uygulamayı güncelleyin.",
+  "@surumOnerilenMetin": {
+    "description": "(P202) Onerilen guncelleme aciklamasi (operator mesaji yoksa)."
+  },
+  "surumGuncelle": "Güncelle",
+  "@surumGuncelle": {
+    "description": "(P202) Zorunlu ekrandaki TEK dugme."
+  },
+  "surumSimdiGuncelle": "Şimdi güncelle",
+  "@surumSimdiGuncelle": {
+    "description": "(P202) Onerilen uyarisinda magazaya giden dugme."
+  },
+  "surumSonra": "Sonra",
+  "@surumSonra": {
+    "description": "(P202) Onerilen uyarisini 24 saat susturan dugme."
+  },
+  "surumMagazaAcilamadi": "Mağaza açılamadı. Uygulamayı telefonunuzun uygulama mağazasından elle güncelleyebilirsiniz.",
+  "@surumMagazaAcilamadi": {
+    "description": "(P202) Magaza acilamadiginda kullaniciya ne oldugu soylenir."
+  }
 }

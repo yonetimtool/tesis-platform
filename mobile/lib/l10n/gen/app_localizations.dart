@@ -9202,6 +9202,54 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'İzin iste'**
   String get ayarlarBildirimIzinIste;
+
+  /// (P202) Kapatilamayan zorunlu guncelleme ekraninin basligi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Güncelleme gerekli'**
+  String get surumZorunluBaslik;
+
+  /// (P202) Zorunlu guncelleme aciklamasi. Operator mesaj yazmadiysa BU gosterilir.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu sürüm artık kullanılamıyor. Devam etmek için uygulamayı güncelleyin.'**
+  String get surumZorunluMetin;
+
+  /// (P202) Kapatilabilir onerilen guncelleme uyarisinin basligi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni sürüm var'**
+  String get surumOnerilenBaslik;
+
+  /// (P202) Onerilen guncelleme aciklamasi (operator mesaji yoksa).
+  ///
+  /// In tr, this message translates to:
+  /// **'Daha iyi bir deneyim için uygulamayı güncelleyin.'**
+  String get surumOnerilenMetin;
+
+  /// (P202) Zorunlu ekrandaki TEK dugme.
+  ///
+  /// In tr, this message translates to:
+  /// **'Güncelle'**
+  String get surumGuncelle;
+
+  /// (P202) Onerilen uyarisinda magazaya giden dugme.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şimdi güncelle'**
+  String get surumSimdiGuncelle;
+
+  /// (P202) Onerilen uyarisini 24 saat susturan dugme.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sonra'**
+  String get surumSonra;
+
+  /// (P202) Magaza acilamadiginda kullaniciya ne oldugu soylenir.
+  ///
+  /// In tr, this message translates to:
+  /// **'Mağaza açılamadı. Uygulamayı telefonunuzun uygulama mağazasından elle güncelleyebilirsiniz.'**
+  String get surumMagazaAcilamadi;
 }
 
 class _AppLocalizationsDelegate

@@ -1705,5 +1705,13 @@
   "ayarlarBildirimYuklenemedi": "Benachrichtigungseinstellungen konnten nicht geladen werden",
   "ayarlarBildirimIzinKapali": "Die Benachrichtigungsberechtigung des Geräts ist aus. Mobile Benachrichtigungen erscheinen nicht auf dem Telefon; aktivieren Sie sie in den Geräteeinstellungen.",
   "ayarlarBildirimIzinBelirsiz": "Zum Anzeigen von Benachrichtigungen ist eine Berechtigung erforderlich.",
-  "ayarlarBildirimIzinIste": "Berechtigung anfordern"
+  "ayarlarBildirimIzinIste": "Berechtigung anfordern",
+  "surumZorunluBaslik": "Update erforderlich",
+  "surumZorunluMetin": "Diese Version kann nicht mehr verwendet werden. Aktualisieren Sie die App, um fortzufahren.",
+  "surumOnerilenBaslik": "Neue Version verfügbar",
+  "surumOnerilenMetin": "Aktualisieren Sie die App für ein besseres Erlebnis.",
+  "surumGuncelle": "Aktualisieren",
+  "surumSimdiGuncelle": "Jetzt aktualisieren",
+  "surumSonra": "Später",
+  "surumMagazaAcilamadi": "Der Store konnte nicht geöffnet werden. Sie können die App manuell im App-Store Ihres Telefons aktualisieren."
 }

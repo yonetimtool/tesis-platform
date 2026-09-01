@@ -5366,4 +5366,31 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get ayarlarBildirimIzinIste => 'Demander l\'autorisation';
+
+  @override
+  String get surumZorunluBaslik => 'Mise à jour requise';
+
+  @override
+  String get surumZorunluMetin =>
+      'Cette version n\'est plus utilisable. Mettez l\'application à jour pour continuer.';
+
+  @override
+  String get surumOnerilenBaslik => 'Une nouvelle version est disponible';
+
+  @override
+  String get surumOnerilenMetin =>
+      'Mettez l\'application à jour pour une meilleure expérience.';
+
+  @override
+  String get surumGuncelle => 'Mettre à jour';
+
+  @override
+  String get surumSimdiGuncelle => 'Mettre à jour maintenant';
+
+  @override
+  String get surumSonra => 'Plus tard';
+
+  @override
+  String get surumMagazaAcilamadi =>
+      'Impossible d\'ouvrir la boutique. Vous pouvez mettre l\'application à jour manuellement depuis la boutique de votre téléphone.';
 }

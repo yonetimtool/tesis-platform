@@ -13,6 +13,8 @@ import 'src/core/theme/theme_controller.dart';
 import 'src/features/push/presentation/push_registrar.dart';
 import 'src/features/push/presentation/push_setup.dart';
 import 'src/features/scan/data/scan_outbox.dart';
+import 'src/features/surum/presentation/surum_denetleyici.dart';
+import 'src/features/surum/presentation/surum_kapisi.dart';
 import 'src/routing/app_router.dart';
 
 Future<void> main() async {
@@ -113,6 +115,20 @@ class TesisGuvenlikApp extends ConsumerWidget {
       localeResolutionCallback: (cihaz, desteklenen) =>
           localeCozumle(cihaz, desteklenen),
       routerConfig: router,
+      // (P202) ZORUNLU GUNCELLEME KAPISI — YONLENDIRICININ USTUNDE.
+      //
+      // `builder` KULLANILIYOR, bir ROTA DEGIL. Rota olsaydi derin
+      // baglanti, bildirime tiklama ya da router yonlendirmesi onun
+      // USTUNDEN atlayabilirdi; burada ise cizilen HER ekranin ustune
+      // gecer ve zorunlu durumda alttaki agac HIC CIZILMEZ.
+      //
+      // `SurumGozcusu` icte: acilista bir kez, sonra uygulama her ON
+      // PLANA GELDIGINDE kontrol eder — kullanici uygulamayi gunlerce
+      // acik birakabilir ve tam o cihazlar en uzun sure guncellenmemis
+      // olanlardir.
+      builder: (context, cocuk) => SurumGozcusu(
+        child: SurumKapisi(child: cocuk ?? const SizedBox.shrink()),
+      ),
     );
   }
 }

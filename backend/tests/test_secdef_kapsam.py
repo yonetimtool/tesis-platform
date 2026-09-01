@@ -70,6 +70,18 @@ ENVANTER: dict[str, tuple[str, tuple[str, str] | None]] = {
     "kvkk_metin_listele": ("admin", ("get", "/tenants/{tid}/kvkk")),
     "kvkk_metin_yayinla": ("admin", ("post", "/tenants/{tid}/kvkk")),
     "kvkk_onay_ozeti": ("admin", ("get", "/tenants/{tid}/kvkk")),
+    # (P202) SURUM POLITIKASI — tablo tenant'siz, RLS ACIK ve POLITIKASIZ
+    # (goc 0091), yani `app_rw` onu dogrudan goremez. Iki fonksiyon da
+    # TENANT SINIRINI GECMEZ: tablonun tenant'i YOKTUR.
+    #
+    # OKUMA fonksiyonu KIMLIKSIZ cagrilir ve bu bilincli: kontrol ucu
+    # giristen ONCE calisir (kirici bir API degisikliginde eski istemci
+    # giris bile yapamayabilir). Verdigi tek sey magazadaki surum
+    # numaralari ve operatorun yazdigi mesaj — kisisel/tesis verisi YOK.
+    # TEK SATIR doner (`platform` parametresi).
+    "surum_politikasi_oku": (None, ("post", "/surum/kontrol")),
+    # YAZMA yalniz platform admininde (uc `require_role("admin")`).
+    "surum_politikasi_yaz": ("admin", ("put", "/surum-politikasi/{platform}")),
     # --- platform destek kanali: TUM tenant'larin biletleri ---
     "support_ticket_list": ("admin", ("get", "/support/all")),
     "support_ticket_answer": ("admin", ("patch", "/support/{tid}")),

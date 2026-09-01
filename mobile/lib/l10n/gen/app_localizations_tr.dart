@@ -5200,4 +5200,31 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get ayarlarBildirimIzinIste => 'İzin iste';
+
+  @override
+  String get surumZorunluBaslik => 'Güncelleme gerekli';
+
+  @override
+  String get surumZorunluMetin =>
+      'Bu sürüm artık kullanılamıyor. Devam etmek için uygulamayı güncelleyin.';
+
+  @override
+  String get surumOnerilenBaslik => 'Yeni sürüm var';
+
+  @override
+  String get surumOnerilenMetin =>
+      'Daha iyi bir deneyim için uygulamayı güncelleyin.';
+
+  @override
+  String get surumGuncelle => 'Güncelle';
+
+  @override
+  String get surumSimdiGuncelle => 'Şimdi güncelle';
+
+  @override
+  String get surumSonra => 'Sonra';
+
+  @override
+  String get surumMagazaAcilamadi =>
+      'Mağaza açılamadı. Uygulamayı telefonunuzun uygulama mağazasından elle güncelleyebilirsiniz.';
 }

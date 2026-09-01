@@ -9,19 +9,22 @@ ister ve platform yoneticisinin elinde bir dugme olmaz. Tablo, panel
 uzerinden duzenlenebilir.
 
 ===========================================================================
-NEDEN `tenant_id` YOK — ve bu neden GUVENLI
+NEDEN `tenant_id` YOK — ve ERISIM NASIL KAPATILIYOR
 ===========================================================================
 Surum politikasi PLATFORM GENELIDIR: magazadaki paket tektir, tesise
 gore degismez. `tenant_id` koymak, ayni gercegin tesis sayisi kadar
 kopyasini uretirdi.
 
-Bu yuzden tabloda RLS YOKTUR. Sizinti riski de yoktur: satirlar hicbir
-tesise ait olmayan, zaten magazada herkese acik olan sayilardir
-(en son surum numarasi). Okuma ucu de bilincli olarak PUBLIC'tir —
-gerekce `routers/surum.py` basliginda.
+`tanitim_iletisim` (0033) ve `yonetici_basvuru` (0068) ile AYNI DESEN:
+RLS ACIK + FORCE, POLITIKA YOK, erisim yalniz SECURITY DEFINER
+fonksiyonlarindan. Yani `app_rw` tabloyu DOGRUDAN goremez.
 
-`tenant_id` tasimadigi icin `test_tesis_izolasyonu_tarama.py`nin sema
-kapisina da GIRMEZ (o kapi yalniz `tenant_id` tasiyan tablolari sorar).
+ILK YAZIMDA RLS HIC ACILMAMISTI ve gerekce "satirlar zaten herkese
+acik sayilar" idi. `test_rls_kapsam.py` bunu dusurdu ve HAKLIYDI:
+kural "her tablo RLS+FORCE"dur ve istisnasi, sinifin GORUNUR ve
+SAYILI kalmasidir. Sizintinin olmamasi, kapiyi acik birakmanin
+gerekcesi degildir — bir gun bu tabloya hassas bir alan eklendiginde
+(orn. hedefli dagitim listesi) korumayi hatirlayacak kimse olmazdi.
 
 ===========================================================================
 IKI ESIK, TEK SATIR
@@ -82,9 +85,89 @@ def upgrade() -> None:
     op.execute(
         "INSERT INTO surum_politikasi (platform) VALUES ('ios'), ('android')"
     )
-    # Uygulama rolu OKUR; YAZMA da ayni rolden gecer (uc admin kapisinda).
-    op.execute(f"GRANT SELECT, INSERT, UPDATE ON surum_politikasi TO {APP_ROLE};")
+    # RLS ACIK + FORCE, POLITIKA YOK: `app_rw` tabloyu DOGRUDAN goremez.
+    # FORCE olmadan tablo SAHIBI politikalari atlardi.
+    op.execute("ALTER TABLE surum_politikasi ENABLE ROW LEVEL SECURITY;")
+    op.execute("ALTER TABLE surum_politikasi FORCE ROW LEVEL SECURITY;")
+
+    # --- ERISIM: iki SECURITY DEFINER fonksiyonu -------------------------- #
+    #
+    # OKUMA fonksiyonu KIMLIKSIZ cagrilir (kontrol ucu public; gerekce
+    # `routers/surum.py` basliginda). Verdigi tek sey iki esik ve mesaj —
+    # yani magazadaki surum numaralari. TEK SATIR doner: `platform`
+    # parametresi disindaki hicbir satiri gostermez.
+    op.execute(
+        """
+        CREATE OR REPLACE FUNCTION public.surum_politikasi_oku(p_platform text)
+        RETURNS TABLE (asgari_surum text, onerilen_surum text, mesaj jsonb)
+        LANGUAGE sql
+        SECURITY DEFINER
+        SET search_path = public, pg_temp
+        AS $$
+            SELECT s.asgari_surum, s.onerilen_surum, s.mesaj
+            FROM surum_politikasi s
+            WHERE s.platform = p_platform;
+        $$;
+        """
+    )
+    # YAZMA fonksiyonu: rol kapisi UYGULAMA KATMANINDA (`require_role
+    # ("admin")`). Fonksiyon yalniz BILINEN iki platformu kabul eder ve
+    # yeni satir YARATMAZ — kume kapalidir.
+    op.execute(
+        """
+        CREATE OR REPLACE FUNCTION public.surum_politikasi_yaz(
+            p_platform  text,
+            p_asgari    text,
+            p_onerilen  text,
+            p_mesaj     jsonb
+        )
+        RETURNS TABLE (asgari_surum text, onerilen_surum text, mesaj jsonb)
+        LANGUAGE plpgsql
+        SECURITY DEFINER
+        SET search_path = public, pg_temp
+        AS $$
+        BEGIN
+            IF p_platform NOT IN ('ios', 'android') THEN
+                RAISE EXCEPTION 'gecersiz platform: %', p_platform;
+            END IF;
+            UPDATE surum_politikasi s SET
+                asgari_surum   = p_asgari,
+                onerilen_surum = p_onerilen,
+                mesaj          = COALESCE(p_mesaj, '{}'::jsonb),
+                updated_at     = now()
+            WHERE s.platform = p_platform;
+            RETURN QUERY
+                SELECT s.asgari_surum, s.onerilen_surum, s.mesaj
+                FROM surum_politikasi s WHERE s.platform = p_platform;
+        END;
+        $$;
+        """
+    )
+    # REVOKE PUBLIC ONCE: Postgres yeni fonksiyonlara VARSAYILAN olarak
+    # PUBLIC EXECUTE verir. Yalniz GRANT yazmak, fonksiyonu veritabanina
+    # baglanabilen HERKESE acik birakirdi (`test_secdef_kapsam` bunu
+    # olcuyor ve ilk yazimda YAKALADI).
+    op.execute(
+        "REVOKE ALL ON FUNCTION public.surum_politikasi_oku(text) FROM PUBLIC;"
+    )
+    op.execute(
+        "REVOKE ALL ON FUNCTION "
+        "public.surum_politikasi_yaz(text, text, text, jsonb) FROM PUBLIC;"
+    )
+    op.execute(
+        f"GRANT EXECUTE ON FUNCTION public.surum_politikasi_oku(text) "
+        f"TO {APP_ROLE};"
+    )
+    op.execute(
+        f"GRANT EXECUTE ON FUNCTION "
+        f"public.surum_politikasi_yaz(text, text, text, jsonb) TO {APP_ROLE};"
+    )
 
 
 def downgrade() -> None:
+    op.execute("DROP FUNCTION IF EXISTS public.surum_politikasi_oku(text);")
+    op.execute(
+        "DROP FUNCTION IF EXISTS "
+        "public.surum_politikasi_yaz(text, text, text, jsonb);"
+    )
     op.drop_table("surum_politikasi")

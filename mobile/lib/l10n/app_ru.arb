@@ -1705,5 +1705,13 @@
   "ayarlarBildirimYuklenemedi": "Не удалось загрузить настройки уведомлений",
   "ayarlarBildirimIzinKapali": "Разрешение на уведомления на устройстве отключено. Мобильные уведомления не будут отображаться на телефоне; включите их в настройках устройства.",
   "ayarlarBildirimIzinBelirsiz": "Для показа уведомлений нужно разрешение.",
-  "ayarlarBildirimIzinIste": "Запросить разрешение"
+  "ayarlarBildirimIzinIste": "Запросить разрешение",
+  "surumZorunluBaslik": "Требуется обновление",
+  "surumZorunluMetin": "Эта версия больше не работает. Обновите приложение, чтобы продолжить.",
+  "surumOnerilenBaslik": "Доступна новая версия",
+  "surumOnerilenMetin": "Обновите приложение, чтобы работать удобнее.",
+  "surumGuncelle": "Обновить",
+  "surumSimdiGuncelle": "Обновить сейчас",
+  "surumSonra": "Позже",
+  "surumMagazaAcilamadi": "Не удалось открыть магазин. Обновите приложение вручную в магазине приложений на телефоне."
 }
