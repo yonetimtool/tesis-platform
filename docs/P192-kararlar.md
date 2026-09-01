@@ -615,7 +615,7 @@ Kalan taramada para hesabında başka float bulunmadı.
 | 14 | Çift tıklama iki tahsilat yazmıyor | ✅ | `..::test_ayni_idempotency_anahtari_IKINCI_tahsilat_yazmaz` + beş ekranda başlık |
 | 15 | Tahakkuk düzeltilebiliyor (ters kayıt) | ✅ | `test_p192_tahakkuk.py` (3 test) |
 | 16 | Para hesaplarında float kalmadı | ✅ | `test_p192_kalanlar.py` (3 test) |
-| 17 | Tam test paketi yeşil | ✅ | backend + admin-web + flutter |
+| 17 | Tam test paketi yeşil | ✅ | backend **2217**, admin-web **1481**, flutter **1937** — üçü de 0 kırmızı |
 
 ## Kilit kayıtları (bu turda güncellenenler)
 
