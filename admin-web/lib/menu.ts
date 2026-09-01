@@ -256,6 +256,12 @@ const OGELER: readonly MenuOgesi[] = [
   // otomasyon gunlugu. Dordu de "yoneticinin her ay elle yaptigi is"i
   // yanitladigi icin tek sayfada.
   { href: "/finans/otomasyon", anahtar: "finansOtomasyon", icon: "clock", grup: "finans" },
+  // (P192 §5) BORCLULAR: yaslandirma + tahsilat gostergesi + toplu islem.
+  // Ucu ayni sayfada cunku yaslandirma bir SORU sorar, toplu islem
+  // onun CEVABINI uygular.
+  { href: "/finans/borclular", anahtar: "finansBorclular", icon: "gavel", grup: "finans" },
+  // (P192 §5.4) BUTCE: hedef ile gerceklesen yan yana + sapma.
+  { href: "/finans/butce", anahtar: "finansButce", icon: "chart", grup: "finans" },
   // (P167 §1.4) ICRA DOSYALARI — bagimsiz ust sekme DEGIL, finansin ALTI.
   // Icra bir borcun son durumudur; kullanici onu "hukuk" basligi altinda
   // degil, borcu takip ettigi yerde arar.

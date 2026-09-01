@@ -5744,6 +5744,214 @@ paths:
         "422": { $ref: "#/components/responses/ValidationError" }
         "409":
           description: Ayni Idempotency-Key FARKLI bir para hareketiyle gonderildi
+  /finans/yaslandirma:
+    get:
+      tags: [finans]
+      summary: "(P192 §5.1) Borç yaşlandırma — 0-30 / 31-60 / 61-90 / 90+"
+      description: |
+        DAIRE BASINA TEK KOVA: bir dairenin uc gecikmis borcu varsa uc
+        kovaya birden dagitmak, "kac daire 90+ gundur borclu" sorusunu
+        toplami daire sayisini asan bir sayiyla yanitlardi. Daire EN ESKI
+        borcunun kovasina girer ve TUM kalan borcu orada sayilir.
+
+        Kova tutarlari KALAN borctur (tahakkuk - odenen): kismi odenmis
+        bir borcu tam tutariyla yaslandirmak, tahsil edilmis parayi
+        "90 gundur odenmiyor" diye gostermek olurdu.
+
+        Vadesi GELMEMIS ve VADESIZ borclar yaslandirmaya GIRMEZ.
+      parameters:
+        - name: ozet
+          in: query
+          schema: { type: boolean, default: false }
+          description: "true = daire listeleri BOS doner (kart gorunumu)"
+        - name: kova
+          in: query
+          schema: { type: string, enum: ["0-30", "31-60", "61-90", "90+"] }
+      responses:
+        "200":
+          description: Yaşlandırma
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Yaslandirma" }
+  /finans/tahsilat-gostergesi:
+    get:
+      tags: [finans]
+      summary: "(P192 §5.2) Tahsilat oranı + geçen aya göre değişim"
+      description: |
+        TEK KAYNAK (P192 §1): tahakkuk ve tahsilat toplamlari `defter`
+        modulunden gelir. Rapor, seffaflik ve mobil ana ekran da ayni
+        fonksiyonlari cagirir; ayni metrik iki ekranda iki farkli rakam
+        veremez.
+      parameters:
+        - name: donem
+          in: query
+          schema: { type: string, example: "2026-09" }
+      responses:
+        "200":
+          description: Gösterge
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TahsilatGostergesi" }
+  /finans/borclulara/hatirlat:
+    post:
+      tags: [finans]
+      summary: "(P192 §5.3) Seçilen borçlulara toplu hatırlatma"
+      description: |
+        Otomatik hatirlatmadan (§4.2) AYRIDIR ve onun gunluk damgasina
+        DOKUNMAZ. Borcu KAPANMIS daireler atlanir ve sayisi doner.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BorcluTopluIstek" }
+      responses:
+        "200":
+          description: Sonuç
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [gonderilen, atlanan]
+                properties:
+                  gonderilen: { type: integer }
+                  atlanan: { type: integer }
+  /finans/borclulara/faiz-affi:
+    post:
+      tags: [finans]
+      summary: "(P192 §5.3) Seçilen dairelerin faizini TERS KAYITLA affet"
+      description: |
+        SILME YOK: af bir KARARDIR ve izi kalmali. ODENMIS FAIZ
+        AFFEDILEMEZ — alinmis parayi karsiliksiz birakmak daireyi
+        ALACAKLI gosterirdi.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BorcluTopluIstek" }
+      responses:
+        "200":
+          description: Sonuç
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [affedilen_kalem, toplam_kurus]
+                properties:
+                  affedilen_kalem: { type: integer }
+                  toplam_kurus: { type: integer, format: int64 }
+  /finans/borclulara/odeme-plani:
+    post:
+      tags: [finans]
+      summary: "(P192 §5.3) Vade yapılandırması — açık borçları aya yay"
+      description: |
+        YENI BORC URETMEZ. "Odeme plani" denince borcu N taksite BOLMEK
+        akla gelir; uründe bu, eski borclari ters kayitlayip N yeni kalem
+        yazmak demekti — ve KISMI ODENMIS bir borcu ters kayitlamak
+        alinmis parayi karsiliksiz birakirdi.
+
+        Plan borcun KENDISINE degil VADESINE dokunur. Yan etki
+        (bilincli): vade ileri atildigi icin gecikme faizi de azalir —
+        bir odeme planinin zaten beklenen davranisi budur.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/BorcluTopluIstek"
+                - type: object
+                  required: [taksit_sayisi, ilk_vade]
+                  properties:
+                    taksit_sayisi: { type: integer, minimum: 2, maximum: 36 }
+                    ilk_vade: { type: string, format: date }
+      responses:
+        "200":
+          description: Sonuç
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [daire, guncellenen_borc]
+                properties:
+                  daire: { type: integer }
+                  guncellenen_borc: { type: integer }
+  /budget/hedefler:
+    get:
+      tags: [budget]
+      summary: "(P192 §5.4) Bütçe hedefleri (planlanan)"
+      parameters:
+        - name: yil
+          in: query
+          schema: { type: integer, minimum: 2000, maximum: 2100 }
+      responses:
+        "200":
+          description: Hedefler
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/ButceHedefi" }
+    post:
+      tags: [budget]
+      summary: "(P192 §5.4) Hedef yaz (aynı hedef ikinci kez = GÜNCELLEME)"
+      description: |
+        Butce revize edilen bir seydir; kullaniciyi "once sil, sonra
+        ekle" akisina sokmak, arada hedefsiz kalan bir an birakirdi.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ButceHedefiCreate" }
+      responses:
+        "201":
+          description: Yazıldı
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ButceHedefi" }
+  /budget/hedefler/{hedef_id}:
+    delete:
+      tags: [budget]
+      summary: "(P192 §5.4) Hedefi sil"
+      description: |
+        GERCEK DELETE: bir hedef para degil, bir NIYETTIR; silinmesi
+        hicbir muhasebe kaydini degistirmez.
+      parameters:
+        - name: hedef_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "204": { description: Silindi }
+  /budget/karsilastirma:
+    get:
+      tags: [budget]
+      summary: "(P192 §5.4) Bütçe ile gerçekleşen yan yana + sapma"
+      description: |
+        AYLIK SORULDUYSA AYLIK HEDEF, yoksa YILLIK HEDEFIN AYA DUSEN
+        PAYI (yillik/12). Aylik hedefi olmayan bir kategoriyi "hedefsiz"
+        saymak, yillik butcesi onaylanmis bir kalemi sifir hedefle
+        gostermek olurdu.
+
+        Hedefi olup HIC HAREKETI OLMAYAN kategori de tablodadir:
+        "butcelendim ama hic harcamadim" bir SAPMADIR.
+      parameters:
+        - name: yil
+          in: query
+          required: true
+          schema: { type: integer, minimum: 2000, maximum: 2100 }
+        - name: donem
+          in: query
+          schema: { type: string, example: "2026-03" }
+      responses:
+        "200":
+          description: Karşılaştırma
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ButceKarsilastirma" }
   /finans/kasa-bakiyeleri:
     get:
       tags: [finans]
@@ -15837,6 +16045,114 @@ components:
         items:
           type: array
           items: { $ref: "#/components/schemas/FinansalHareket" }
+    YaslandirmaDaire:
+      type: object
+      required: [unit_id, unit_no, en_eski_gun, kova, kalan_kurus]
+      properties:
+        unit_id: { type: string, format: uuid }
+        unit_no: { type: string }
+        en_eski_gun: { type: integer }
+        kova: { type: string }
+        kalan_kurus: { type: integer, format: int64 }
+        borclu_ad: { type: string, nullable: true }
+        borclu_user_id: { type: string, format: uuid, nullable: true }
+    Yaslandirma:
+      type: object
+      required: [kovalar, toplam_kalan_kurus, toplam_daire]
+      properties:
+        kovalar:
+          type: array
+          items:
+            type: object
+            required: [kova, daire, kalan_kurus]
+            properties:
+              kova: { type: string }
+              daire: { type: integer }
+              kalan_kurus: { type: integer, format: int64 }
+              daireler:
+                type: array
+                items: { $ref: "#/components/schemas/YaslandirmaDaire" }
+        toplam_kalan_kurus: { type: integer, format: int64 }
+        toplam_daire: { type: integer }
+    TahsilatGostergesi:
+      type: object
+      required: [donem, tahakkuk_kurus, tahsilat_kurus, onceki_donem]
+      properties:
+        donem: { type: string }
+        tahakkuk_kurus: { type: integer, format: int64 }
+        tahsilat_kurus: { type: integer, format: int64 }
+        oran_yuzde: { type: integer, nullable: true }
+        onceki_donem: { type: string }
+        onceki_oran_yuzde: { type: integer, nullable: true }
+        degisim_puan:
+          type: integer
+          nullable: true
+          description: "Yuzde PUANI farki; null = onceki ayda tahakkuk yok"
+    BorcluTopluIstek:
+      type: object
+      required: [unit_ids]
+      properties:
+        unit_ids:
+          type: array
+          minItems: 1
+          maxItems: 500
+          items: { type: string, format: uuid }
+          description: >-
+            BOS BIRAKILAMAZ: "hepsi" anlamina gelen bos bir liste,
+            yanlislikla butun siteye islem yapmayi bir tikla mumkun
+            kilardi.
+    ButceHedefiCreate:
+      type: object
+      required: [yil, kategori_id, tutar_kurus]
+      properties:
+        yil: { type: integer, minimum: 2000, maximum: 2100 }
+        donem:
+          type: string
+          nullable: true
+          description: "NULL = YILLIK hedef; dolu ('YYYY-MM') = o ayin hedefi"
+        kategori_id: { type: string, format: uuid }
+        tutar_kurus: { type: integer, format: int64, minimum: 0 }
+        aciklama: { type: string, nullable: true, maxLength: 500 }
+    ButceHedefi:
+      type: object
+      required: [id, yil, kategori_id, tutar_kurus, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        yil: { type: integer }
+        donem: { type: string, nullable: true }
+        kategori_id: { type: string, format: uuid }
+        tutar_kurus: { type: integer, format: int64 }
+        aciklama: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+    ButceKarsilastirma:
+      type: object
+      required: [yil, items, hedef_gelir_kurus, hedef_gider_kurus,
+                 gerceklesen_gelir_kurus, gerceklesen_gider_kurus]
+      properties:
+        yil: { type: integer }
+        donem: { type: string, nullable: true }
+        items:
+          type: array
+          items:
+            type: object
+            required: [ad, tip, hedef_kurus, gerceklesen_kurus, sapma_kurus]
+            properties:
+              kategori_id: { type: string, format: uuid, nullable: true }
+              ad: { type: string }
+              tip: { type: string, enum: [gelir, gider] }
+              hedef_kurus: { type: integer, format: int64 }
+              gerceklesen_kurus: { type: integer, format: int64 }
+              sapma_kurus:
+                type: integer
+                format: int64
+                description: >-
+                  gerceklesen - hedef. GIDERDE POZITIF = butce asildi;
+                  GELIRDE POZITIF = hedefin uzerinde gelir.
+              sapma_yuzde: { type: integer, nullable: true }
+        hedef_gelir_kurus: { type: integer, format: int64 }
+        hedef_gider_kurus: { type: integer, format: int64 }
+        gerceklesen_gelir_kurus: { type: integer, format: int64 }
+        gerceklesen_gider_kurus: { type: integer, format: int64 }
     Makbuz:
       type: object
       required: [id, belge_no, tutar_kurus, created_at]

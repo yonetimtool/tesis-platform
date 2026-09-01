@@ -3444,6 +3444,38 @@ class OtomasyonGunlugu(Base):
     )
 
 
+class ButceHedefi(Base):
+    """(P192 §5.4) PLANLANAN butce — gerceklesenle karsilastirilacak sayi.
+
+    Uründe "butce" diye bir sey vardi ama o GERCEKLESEN defterdi; planlanan
+    tutari tutan hicbir yer yoktu ve "sapma" sorusu cevaplanamiyordu.
+
+    Defterde TUTULMAZ: bir plan para degildir. `finansal_hareket`e
+    yazilan bir hedef, kasa bakiyesine karisma riski tasirdi (yalniz
+    `durum` suzgeciyle ayrilirdi ve o suzgeci bir gun unutan bir sorgu,
+    harcanmamis parayi harcanmis gosterirdi).
+
+    `donem` NULL = YILLIK hedef; dolu = o ayin hedefi.
+    """
+
+    __tablename__ = "butce_hedefi"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_butce_hedefi_id_tenant"),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    yil: Mapped[int] = mapped_column(SmallInteger, nullable=False)
+    donem: Mapped[str | None] = mapped_column(Text, nullable=True)
+    kategori_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    tutar_kurus: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    aciklama: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at = _created_at()
+    updated_at = _created_at()
+
+
 class IcraDosyasi(Base):
     """Icra dosyasi (P29) — PARA HAREKETI DEGIL, hukuki surec kaydi.
 

@@ -405,3 +405,94 @@ Saat seçimi: tahakkuk ve hatırlatma bildirimleri **sabah** gitmeli — gece
 yarısı gönderilen bir "borcunuz var" bildirimi kimseyi harekete geçirmez,
 yalnızca uyandırır. Retention 01:00'de koşuyor; ondan **sonra** olması da
 bilinçli: silinmiş/anonimleştirilmiş kayıtlara bildirim gitmesin.
+
+---
+
+## Bölüm 5 — Yöneticinin görmesi gerekenler
+
+### 5.1 Borç yaşlandırma
+
+**Daire başına tek kova.** Bir dairenin üç gecikmiş borcu varsa üç kovaya
+birden dağıtmak, "kaç daire 90+ gündür borçlu" sorusunu toplamı daire
+sayısını aşan bir sayıyla yanıtlardı. Daire **en eski** borcunun kovasına
+girer ve **tüm** kalan borcu orada sayılır — yönetici için anlamlı olan
+"bu daire ne kadar süredir borçlu"dur.
+
+**Kalan, tahakkuk değil:** kısmi ödenmiş bir borcu tam tutarıyla
+yaşlandırmak, tahsil edilmiş parayı "90 gündür ödenmiyor" diye göstermek
+olurdu.
+
+Vadesi **gelmemiş** ve **vadesiz** borçlar yaşlandırmaya girmez: ilki bir
+gecikme değil, ikincisinde gecikme tanımsız.
+
+Hesap `app/yaslandirma.py`de, üç yerden çağrılıyor (panel kartı, toplu
+işlem aday listesi, rapor). Üçünde ayrı yazmak, üç farklı "90+ gün"
+tanımı demekti.
+
+### 5.2 Tahsilat oranı — tek kaynaktan
+
+Gösterge `defter.tahakkuk_toplami` + `defter.tahsilat_toplami` çağırıyor;
+rapor ve şeffaflık da aynı fonksiyonları. Test bunu doğrudan kilitliyor:
+gösterge ile `/reports/financial-summary` **aynı** rakamı vermek zorunda.
+
+### 5.3 Borçlulara toplu işlem
+
+* **Toplu hatırlatma** otomatik hatırlatmadan ayrıdır ve onun günlük
+  damgasına dokunmaz: yönetici bilinçli olarak "şimdi gönder" diyor.
+  Borcu kapanmış daireler atlanır ve sayısı döner.
+* **Toplu faiz affı** = faiz kalemlerinin ters kayıtlanması. Silme yok: af
+  bir karardır, izi kalmalı. Ödenmiş faiz affedilemez (§6.3 ile aynı
+  kural).
+* **Ödeme planı yeni borç üretmez.** "Borcu N taksite bölmek" akla gelen
+  ilk yol ama üründe bu, eski borçları ters kayıtlayıp N yeni kalem yazmak
+  demekti — ve **kısmi ödenmiş** bir borcu ters kayıtlamak alınmış parayı
+  karşılıksız bırakırdı (daire alacaklı görünürdü). Plan borcun kendisine
+  değil **vadesine** dokunur: açık borçlar en eskiden yeniye sıralanır ve
+  vadeleri `ilk_vade`den başlayarak aylık dağıtılır. Bilinçli yan etki:
+  vade ileri atıldığı için gecikme faizi de azalır — bir ödeme planının
+  zaten beklenen davranışı.
+
+Boş `unit_ids` reddedilir (422): "hepsi" anlamına gelen boş bir liste,
+yanlışlıkla bütün siteye işlem yapmayı bir tıkla mümkün kılardı.
+
+### 5.4 Bütçe ile gerçekleşen
+
+Üründe "bütçe" vardı ama o **gerçekleşen** defterdi. Planlanan tutarı
+tutan hiçbir yer yoktu; karşılaştırılacak ikinci sayı olmadığı için
+"sapma" sorusu cevaplanamıyordu.
+
+`butce_hedefi` **ayrı tablo** (göç 0087). Deftere "plan" satırı yazmak
+düşünüldü ve elendi: bir plan para değildir ve kasa bakiyesine karışma
+riski taşırdı (yalnız `durum` süzgeciyle ayrılırdı, ve o süzgeci bir gün
+unutan bir sorgu harcanmamış parayı harcanmış gösterirdi).
+
+Yıllık hedef + isteğe bağlı aylık hedef. Aylık sorulduysa aylık hedef,
+yoksa **yıllık hedefin aya düşen payı** (yıllık/12): aylık hedefi olmayan
+bir kategoriyi "hedefsiz" saymak, yıllık bütçesi genel kurulda onaylanmış
+bir kalemi sıfır hedefle göstermek olurdu.
+
+Hedefi olup hiç hareketi olmayan kategori de tabloda: "bütçelendim ama hiç
+harcamadım" bir sapmadır.
+
+Aynı hedef ikinci kez yazılırsa **güncellenir** (upsert): bütçe revize
+edilen bir şeydir ve "önce sil, sonra ekle" akışı arada hedefsiz kalan bir
+an bırakırdı.
+
+Sapmanın işaretinin anlamı **tipe bağlıdır** (giderde pozitif = bütçe
+aşıldı, gelirde pozitif = hedefin üzerinde) ve bu yorum sunucuda
+belgelenip panelde tek yerde renklendiriliyor.
+
+### 5.5 Muhasebeciye dışa aktarım
+
+Ayrı bir uç açılmadı: rapor motoru zaten Excel/PDF üretiyor, site başlığı
+ve para/tarih biçimleri orada tek yerde. İkinci bir yazıcı, aynı
+biçimlendirmenin iki yerde yaşaması demekti. Yeni katalog kaydı:
+**Muhasebeye Aktarım**.
+
+**Borç ve alacak ayrı sütun**: tek sütunda işaretli tutar vermek, muhasebe
+programlarına aktarmayı zorlaştırır (çoğu iki sütun bekler) ve işaretin
+yönünü okuyanın yorumuna bırakırdı. Borç = kasadan çıkan, alacak = kasaya
+giren (terminoloji **kasa** açısından).
+
+Onay bekleyen ve iptal satırları dışarıda: muhasebeciye giden döküm
+**gerçekleşmiş** hareketlerin dökümüdür.

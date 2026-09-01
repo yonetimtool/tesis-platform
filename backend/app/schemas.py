@@ -5101,6 +5101,133 @@ class MakbuzListResponse(BaseModel):
     items: list[MakbuzOut]
 
 
+
+# ============== (P192 §5) YONETICININ GORMESI GEREKENLER ==================== #
+class YaslandirmaDaire(BaseModel):
+    unit_id: uuid.UUID
+    unit_no: str
+    #: Dairenin EN ESKI acik borcunun gecikme gunu — kovasi budur.
+    en_eski_gun: int
+    kova: str
+    kalan_kurus: int
+    borclu_ad: str | None = None
+    borclu_user_id: uuid.UUID | None = None
+
+
+class YaslandirmaKovasi(BaseModel):
+    kova: str
+    daire: int
+    kalan_kurus: int
+    #: Tiklaninca listelenecek daireler. `ozet=true` ile BOS doner —
+    #: kart yalnizca sayilari cizerken yuzlerce satir tasimasin.
+    daireler: list[YaslandirmaDaire] = []
+
+
+class YaslandirmaResponse(BaseModel):
+    kovalar: list[YaslandirmaKovasi]
+    toplam_kalan_kurus: int
+    toplam_daire: int
+
+
+class TahsilatGostergesi(BaseModel):
+    """(P192 §5.2) Bu ay ne kadari tahsil edildi, gecen aya gore nasil.
+
+    TEK KAYNAK: `defter.tahsilat_toplami` (P192 §1). Ayni metrik iki
+    ekranda iki farkli rakam veriyordu; artik veremez.
+    """
+
+    donem: str
+    tahakkuk_kurus: int
+    tahsilat_kurus: int
+    oran_yuzde: int | None = None
+    onceki_donem: str
+    onceki_oran_yuzde: int | None = None
+    #: Puan farki (yuzde puani). `None` = onceki ayda tahakkuk yok.
+    degisim_puan: int | None = None
+
+
+class BorcluTopluIstek(BaseModel):
+    """Secilen borclulara toplu islem.
+
+    `unit_ids` BOS BIRAKILAMAZ: "hepsi" anlamina gelen bos bir liste,
+    yanlislikla butun siteye islem yapmayi bir tikla mumkun kilardi.
+    """
+
+    unit_ids: list[uuid.UUID] = Field(..., min_length=1, max_length=500)
+
+
+class TopluHatirlatmaSonuc(BaseModel):
+    gonderilen: int
+    #: Borcu KAPANMIS olduğu icin atlanan daireler.
+    atlanan: int
+
+
+class TopluFaizAffiSonuc(BaseModel):
+    affedilen_kalem: int
+    toplam_kurus: int
+
+
+class OdemePlaniIstek(BorcluTopluIstek):
+    """Vade YAPILANDIRMASI — yeni borc URETMEZ.
+
+    Acik borclarin `son_odeme_tarihi` degerleri `taksit_sayisi` aya
+    yayilir. Yeni tahakkuk yazmak, ayni borcu iki kez gostermek
+    olurdu (eskisi ters kayitlanmadikca) ve ters kayitlamak da odenmis
+    kismi karsiliksiz birakirdi.
+    """
+
+    taksit_sayisi: int = Field(..., ge=2, le=36)
+    ilk_vade: date
+
+
+class OdemePlaniSonuc(BaseModel):
+    daire: int
+    guncellenen_borc: int
+
+
+class ButceHedefiCreate(BaseModel):
+    yil: int = Field(..., ge=2000, le=2100)
+    #: NULL = YILLIK hedef; dolu ('YYYY-MM') = o ayin hedefi.
+    donem: str | None = Field(None, min_length=7, max_length=7)
+    kategori_id: uuid.UUID
+    tutar_kurus: int = Field(..., ge=0)
+    aciklama: str | None = Field(None, max_length=500)
+
+
+class ButceHedefiOut(ButceHedefiCreate):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    created_at: datetime
+
+
+class ButceHedefiListResponse(BaseModel):
+    items: list[ButceHedefiOut]
+
+
+class ButceKarsilastirmaSatiri(BaseModel):
+    kategori_id: uuid.UUID | None = None
+    ad: str
+    tip: str
+    hedef_kurus: int
+    gerceklesen_kurus: int
+    #: gerceklesen - hedef. GIDERDE POZITIF = butce asildi; GELIRDE
+    #: POZITIF = hedefin uzerinde gelir. Isaretin anlami TIPE baglidir ve
+    #: bunu istemciye birakmak, iki ekranda iki yorum demekti.
+    sapma_kurus: int
+    sapma_yuzde: int | None = None
+
+
+class ButceKarsilastirma(BaseModel):
+    donem: str | None = None
+    yil: int
+    items: list[ButceKarsilastirmaSatiri]
+    hedef_gelir_kurus: int
+    hedef_gider_kurus: int
+    gerceklesen_gelir_kurus: int
+    gerceklesen_gider_kurus: int
+
+
 # ==================== (P192 §4) FINANS OTOMASYONU =========================== #
 # Dort kayit: aidat plani, hatirlatma ayari, duzenli gider, otomasyon
 # gunlugu. Ortak ilke: her otomasyon ACILIP KAPATILABILIR ve IZ BIRAKIR.

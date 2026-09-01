@@ -48,7 +48,7 @@ from ..crud_helpers import get_or_404, is_unique_violation, translate_integrity
 from .. import defter
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
-from ..models import AppUser, BudgetCategory, FinansalHareket
+from ..models import AppUser, BudgetCategory, ButceHedefi, FinansalHareket
 from ..schemas import (
     BudgetCategoryCreate,
     BudgetCategoryListResponse,
@@ -62,6 +62,11 @@ from ..schemas import (
     BudgetKaynak,
     BudgetSummary,
     BudgetTip,
+    ButceHedefiCreate,
+    ButceHedefiListResponse,
+    ButceHedefiOut,
+    ButceKarsilastirma,
+    ButceKarsilastirmaSatiri,
 )
 
 log = logging.getLogger(__name__)
@@ -495,4 +500,217 @@ async def budget_summary(
             )
             for kid, ad, tip, toplam in cat_rows
         ],
+    )
+
+
+# =============== (P192 §5.4) BUTCE HEDEFI + KARSILASTIRMA =================== #
+#
+# ================================================================
+# NEDEN YENI BIR KAVRAM
+# ================================================================
+# Uründe "butce" diye bir sey vardi ama o GERCEKLESEN defterdi.
+# PLANLANAN tutari tutan hicbir yer yoktu; "butce ile gerceklesen yan
+# yana, sapma gorunsun" sorusu cevaplanamiyordu cunku karsilastirilacak
+# ikinci sayi YOKTU.
+#
+# Hedef DEFTERE yazilmadi (`butce_hedefi` ayri tablo): bir plan para
+# degildir ve deftere yazilan bir hedef, kasa bakiyesine karisma riski
+# tasirdi.
+
+
+@router.get("/hedefler", response_model=ButceHedefiListResponse)
+async def hedef_listesi(
+    yil: int | None = Query(None, ge=2000, le=2100),
+    db: AsyncSession = Depends(get_tenant_db),
+    _: AppUser = Depends(_DEFTER_OKUR),
+) -> ButceHedefiListResponse:
+    where = [] if yil is None else [ButceHedefi.yil == yil]
+    rows = (
+        await db.execute(
+            select(ButceHedefi).where(*where)
+            .order_by(ButceHedefi.yil.desc(), ButceHedefi.donem, ButceHedefi.id)
+        )
+    ).scalars().all()
+    return ButceHedefiListResponse(items=list(rows))
+
+
+@router.post("/hedefler", response_model=ButceHedefiOut, status_code=201)
+async def hedef_yaz(
+    body: ButceHedefiCreate,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_MANAGER),
+) -> ButceHedefi:
+    """Bir kategori icin YILLIK ya da AYLIK hedef.
+
+    AYNI HEDEF IKINCI KEZ YAZILIRSA GUNCELLENIR (upsert): butce revize
+    edilen bir seydir ve kullaniciyi "once sil, sonra ekle" akisina
+    sokmak, arada hedefsiz kalan bir an birakirdi.
+    """
+    cat = (
+        await db.execute(
+            select(BudgetCategory).where(BudgetCategory.id == body.kategori_id)
+        )
+    ).scalar_one_or_none()
+    if cat is None:
+        raise APIError(422, "invalid_reference", "butce_kategori_bulunamadi")
+
+    mevcut = (
+        await db.execute(
+            select(ButceHedefi).where(
+                ButceHedefi.yil == body.yil,
+                ButceHedefi.kategori_id == body.kategori_id,
+                ButceHedefi.donem.is_(None) if body.donem is None
+                else ButceHedefi.donem == body.donem,
+            )
+        )
+    ).scalar_one_or_none()
+    if mevcut is not None:
+        mevcut.tutar_kurus = body.tutar_kurus
+        mevcut.aciklama = body.aciklama
+        mevcut.updated_at = func.now()
+        obj = mevcut
+    else:
+        obj = ButceHedefi(tenant_id=user.tenant_id, **body.model_dump())
+        db.add(obj)
+    try:
+        await db.flush()
+    except IntegrityError as exc:
+        raise translate_integrity(exc)
+    await db.refresh(obj)
+    await audit_user(
+        db, user, Action.FINANS_HAREKET_CREATE, resource_type="butce_hedefi",
+        resource_id=obj.id,
+        meta={"yil": obj.yil, "donem": obj.donem, "tutar_kurus": obj.tutar_kurus},
+    )
+    return obj
+
+
+@router.delete("/hedefler/{hedef_id}", status_code=204, response_model=None)
+async def hedef_sil(
+    hedef_id: uuid.UUID,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_MANAGER),
+) -> Response:
+    """Hedefi sil. GERCEK DELETE: bir hedef para degil, bir NIYETTIR;
+    silinmesi hicbir muhasebe kaydini degistirmez."""
+    obj = await get_or_404(db, ButceHedefi, hedef_id)
+    await db.delete(obj)
+    await db.flush()
+    await audit_user(
+        db, user, Action.FINANS_HAREKET_CREATE, resource_type="butce_hedefi",
+        resource_id=hedef_id, meta={"islem": "sil"},
+    )
+    return Response(status_code=204)
+
+
+@router.get("/karsilastirma", response_model=ButceKarsilastirma)
+async def butce_karsilastirma(
+    yil: int = Query(..., ge=2000, le=2100),
+    donem: str | None = Query(None, description="'YYYY-MM'; bos = TUM YIL"),
+    db: AsyncSession = Depends(get_tenant_db),
+    _: AppUser = Depends(_DEFTER_OKUR),
+) -> ButceKarsilastirma:
+    """Butce ile gerceklesen YAN YANA + sapma.
+
+    AYLIK SORULDUYSA AYLIK HEDEF, yoksa YILLIK HEDEFIN AYA DUSEN PAYI
+    kullanilir (yillik/12). Aylik hedefi olmayan bir kategoriyi "hedefsiz"
+    saymak, yillik butcesi onaylanmis bir kalemi sapma tablosunda sifir
+    hedefle gostermek olurdu.
+    """
+    if donem is not None:
+        ilk, son = defter.donem_araligi(donem)
+    else:
+        ilk, son = date(yil, 1, 1), date(yil, 12, 31)
+
+    hedefler = (
+        await db.execute(
+            select(ButceHedefi).where(ButceHedefi.yil == yil)
+        )
+    ).scalars().all()
+    hedef_kurus: dict[uuid.UUID, int] = {}
+    for h in hedefler:
+        if donem is None:
+            # YIL TOPLAMI: yillik hedef varsa o, yoksa aylik hedeflerin
+            # toplami. Ikisini toplamak, ayni parayi iki kez saymak olurdu.
+            if h.donem is None:
+                hedef_kurus[h.kategori_id] = int(h.tutar_kurus)
+            else:
+                hedef_kurus.setdefault(h.kategori_id, 0)
+                hedef_kurus[h.kategori_id] += int(h.tutar_kurus)
+        elif h.donem == donem:
+            hedef_kurus[h.kategori_id] = int(h.tutar_kurus)
+    if donem is not None:
+        for h in hedefler:
+            if h.donem is None and h.kategori_id not in hedef_kurus:
+                hedef_kurus[h.kategori_id] = int(h.tutar_kurus) // 12
+
+    # GERCEKLESEN: kategori bazinda, TEK DEFTERDEN.
+    rows = (
+        await db.execute(
+            select(
+                FinansalHareket.budget_category_id,
+                BudgetCategory.ad,
+                BudgetCategory.tip,
+                func.sum(FinansalHareket.tutar_kurus),
+            )
+            .join(
+                BudgetCategory,
+                BudgetCategory.id == FinansalHareket.budget_category_id,
+            )
+            .where(
+                FinansalHareket.tarih >= ilk,
+                FinansalHareket.tarih <= son,
+                FinansalHareket.durum == defter.GERCEKLESEN,
+                FinansalHareket.tip.in_(_DEFTER_TIPLERI),
+                FinansalHareket.id.notin_(defter.iptal_edilmis()),
+            )
+            .group_by(
+                FinansalHareket.budget_category_id, BudgetCategory.ad,
+                BudgetCategory.tip,
+            )
+        )
+    ).all()
+    gerceklesen = {kid: int(toplam) for kid, _, _, toplam in rows}
+    adlar = {kid: (ad, tip) for kid, ad, tip, _ in rows}
+
+    # Hedefi olup HIC HAREKETI OLMAYAN kategori de tabloda olmali:
+    # "butcelendim ama hic harcamadim" bir sapmadir ve gorunmelidir.
+    eksik = [k for k in hedef_kurus if k not in adlar]
+    if eksik:
+        for kid, ad, tip in (
+            await db.execute(
+                select(BudgetCategory.id, BudgetCategory.ad, BudgetCategory.tip)
+                .where(BudgetCategory.id.in_(eksik))
+            )
+        ).all():
+            adlar[kid] = (ad, tip)
+
+    items: list[ButceKarsilastirmaSatiri] = []
+    for kid, (ad, tip) in sorted(adlar.items(), key=lambda kv: kv[1][0]):
+        hedef = hedef_kurus.get(kid, 0)
+        gercek = gerceklesen.get(kid, 0)
+        items.append(
+            ButceKarsilastirmaSatiri(
+                kategori_id=kid, ad=ad, tip=tip,
+                hedef_kurus=hedef, gerceklesen_kurus=gercek,
+                sapma_kurus=gercek - hedef,
+                sapma_yuzde=(
+                    round(100 * (gercek - hedef) / hedef) if hedef else None
+                ),
+            )
+        )
+    return ButceKarsilastirma(
+        donem=donem, yil=yil, items=items,
+        hedef_gelir_kurus=sum(
+            i.hedef_kurus for i in items if i.tip == "gelir"
+        ),
+        hedef_gider_kurus=sum(
+            i.hedef_kurus for i in items if i.tip == "gider"
+        ),
+        gerceklesen_gelir_kurus=sum(
+            i.gerceklesen_kurus for i in items if i.tip == "gelir"
+        ),
+        gerceklesen_gider_kurus=sum(
+            i.gerceklesen_kurus for i in items if i.tip == "gider"
+        ),
     )

@@ -68,6 +68,12 @@ export const OKUMA: Record<string, string> = {
   "hatirlatma-ayari": "/hatirlatma-ayari",
   "duzenli-giderler": "/duzenli-giderler",
   "otomasyon-gunlugu": "/otomasyon-gunlugu",
+  // --- (P192 §5) yonetici gostergeleri ---
+  yaslandirma: "/finans/yaslandirma",
+  "tahsilat-gostergesi": "/finans/tahsilat-gostergesi",
+  "butce-hedefleri": "/budget/hedefler",
+  "butce-karsilastirma": "/budget/karsilastirma",
+  "butce-kategorileri": "/budget/categories",
 };
 
 /** POST ile YAZILAN kaynaklar (okumadan AYRI: bir ucu yanlislikla yazmaya
@@ -115,6 +121,11 @@ export const YAZMA: Record<string, string> = {
   "aidat-planlari": "/aidat-planlari",
   "hatirlatma-ayari": "/hatirlatma-ayari",
   "duzenli-giderler": "/duzenli-giderler",
+  // --- (P192 §5.3) borclulara toplu islem ---
+  "borclulara-hatirlat": "/finans/borclulara/hatirlat",
+  "borclulara-faiz-affi": "/finans/borclulara/faiz-affi",
+  "borclulara-odeme-plani": "/finans/borclulara/odeme-plani",
+  "butce-hedefleri": "/budget/hedefler",
 };
 
 /** Kaynak basina ILETILEBILEN sorgu parametreleri (yine beyaz liste:
@@ -131,6 +142,10 @@ export const SUZGECLER: Record<string, string[]> = {
   // olmasalardi vekil onlari duserdi ve her ek listesi hata verirdi.
   ekler: ["varlik_tipi", "varlik_id"],
   "otomasyon-gunlugu": ["tur"],
+  yaslandirma: ["ozet", "kova"],
+  "tahsilat-gostergesi": ["donem"],
+  "butce-hedefleri": ["yil"],
+  "butce-karsilastirma": ["yil", "donem"],
 };
 
 export function okumaYolu(kaynak: string): string | null {

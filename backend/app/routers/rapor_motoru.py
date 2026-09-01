@@ -272,6 +272,22 @@ KATALOG_KAYITLARI = {
         "dokumler",
         ("baslangic", "bitis"),
     ),
+    # (P192 §5.5) MUHASEBECIYE DISA AKTARIM.
+    #
+    # AYRI BIR UC ACILMADI: rapor motoru zaten Excel/PDF uretiyor, site
+    # basligi ve para/tarih bicimleri orada tek yerde. Ikinci bir yazici,
+    # ayni bicimlendirmenin iki yerde yasamasi demekti.
+    #
+    # SUTUNLAR MUHASEBECININ ISTEDIKLERI: tarih, belge no, tur, aciklama,
+    # borc/alacak (isaretli DEGIL — iki AYRI sutun; tek sutunda isaretli
+    # tutar, muhasebe programlarina aktarmayi zorlastirir), kasa, daire,
+    # donem, durum.
+    "muhasebe_aktarim": KatalogKaydi(
+        "Muhasebeye Aktarım", "Defter dökümü: tarih, belge, borç/alacak, kasa",
+        "dokumler",
+        ("baslangic", "bitis"),
+        agir=True,
+    ),
 }
 
 #: Kategori SIRASI — brief §5'in sirasi. Istemci bunu kullanir; alfabetik
@@ -807,6 +823,9 @@ async def _uret(
     if kod == "denetim_raporu":
         return await _denetim(db, p)
 
+    if kod == "muhasebe_aktarim":
+        return await _muhasebe_aktarim(db, p)
+
     if kod == "ihtar_yazisi":
         return await _ihtar(db, user, p)
 
@@ -913,6 +932,81 @@ async def _tahsilat_performansi(
     _ = oran
     return tahsilat_performansi(
         donemler, [{"kova": k, "tutar_kurus": v} for k, v in kovalar.items()]
+    )
+
+
+async def _muhasebe_aktarim(db: AsyncSession, p: RaporParam) -> RaporSonuc:
+    """(P192 §5.5) MUHASEBECIYE DEFTER DOKUMU.
+
+    BORC ve ALACAK AYRI SUTUN: tek sutunda isaretli tutar vermek,
+    muhasebe programlarina aktarmayi zorlastirir (cogu iki sutun bekler)
+    ve isaretin yonunu okuyanin yorumuna birakirdi.
+
+    ONAY BEKLEYEN ve IPTAL SATIRLARI DISARIDA: muhasebeciye giden dokum
+    GERCEKLESMIS hareketlerin dokumudur; onaylanmamis bir gideri
+    aktarmak, defterde olmayan bir kaydi muhasebeye sokmak olurdu.
+    """
+    where = [FinansalHareket.durum == defter.GERCEKLESEN]
+    if p.baslangic:
+        where.append(FinansalHareket.tarih >= p.baslangic)
+    if p.bitis:
+        where.append(FinansalHareket.tarih <= p.bitis)
+
+    rows = (
+        await db.execute(
+            select(
+                FinansalHareket.tarih,
+                FinansalHareket.belge_no,
+                FinansalHareket.tip,
+                FinansalHareket.yon,
+                FinansalHareket.tutar_kurus,
+                FinansalHareket.aciklama,
+                FinansalHareket.donem,
+                Kasa.kod,
+                Unit.no,
+            )
+            .outerjoin(Kasa, Kasa.id == FinansalHareket.kasa_id)
+            .outerjoin(Unit, Unit.id == FinansalHareket.unit_id)
+            .where(*where)
+            .order_by(FinansalHareket.tarih, FinansalHareket.belge_no,
+                      FinansalHareket.id)
+        )
+    ).all()
+
+    satirlar = [
+        {
+            "tarih": tarih.isoformat() if tarih else "",
+            "belge_no": belge or "",
+            "tur": tip,
+            "aciklama": aciklama or "",
+            # BORC = kasadan CIKAN, ALACAK = kasaya GIREN. Muhasebe
+            # terminolojisi KASA acisindandir.
+            "borc": int(tutar) if yon == "cikis" else 0,
+            "alacak": int(tutar) if yon == "giris" else 0,
+            "kasa": kasa_kod or "",
+            "daire": daire_no or "",
+            "donem": donem or "",
+        }
+        for tarih, belge, tip, yon, tutar, aciklama, donem, kasa_kod, daire_no
+        in rows
+    ]
+    sutunlar = [
+        Sutun("tarih", "Tarih", genislik=2),
+        Sutun("belge_no", "Belge No", genislik=2),
+        Sutun("tur", "Tür", genislik=2),
+        Sutun("aciklama", "Açıklama", genislik=4),
+        Sutun("borc", "Borç", "kurus", 2),
+        Sutun("alacak", "Alacak", "kurus", 2),
+        Sutun("kasa", "Kasa", genislik=2),
+        Sutun("daire", "Daire", genislik=2),
+        Sutun("donem", "Dönem", genislik=2),
+    ]
+    return RaporSonuc(
+        "muhasebe_aktarim", KATALOG["muhasebe_aktarim"][0], sutunlar, satirlar,
+        {
+            "borc": sum(s["borc"] for s in satirlar),
+            "alacak": sum(s["alacak"] for s in satirlar),
+        },
     )
 
 
