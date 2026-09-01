@@ -36,13 +36,21 @@ sakinler uygulamaya girer, borçlarını görür, siz tahsilat işlersiniz.
 |---|---|---|---|
 | 1 | Yönetici kaydı + tesis oluşturma | **1** | 10 dk |
 | 2 | Blok ve daireleri oluşturma | **3.1–3.2** | 20–40 dk |
-| 3 | Sakinleri ekleme ve davet gönderme | **4** | 30–60 dk |
-| 4 | En az bir kasa açma | **5.1** | 5 dk |
-| 5 | İlk aidat tahakkuku | **5.3** | 10 dk |
-| 6 | Site kurallarını ve ilk duyuruyu yazma | **7.1–7.2** | 10 dk |
+| 3 | **E-posta gönderiminin çalıştığını doğrulama** | **7.3** | 5 dk |
+| 4 | Sakinleri ekleme ve davet gönderme | **4** | 30–60 dk |
+| 5 | En az bir kasa açma | **5.1** | 5 dk |
+| 6 | İlk aidat tahakkuku | **5.3** | 10 dk |
 
-Geri kalan her şey (otomasyon, devriye, kamera, bütçe, banka) **sonra**
-yapılabilir ve sistemi bekletmez.
+Kurulum sihirbazı da tam olarak bu altısını **Zorunlu** işaretler ve
+eksik olanı "neyi engellediği" ile birlikte yazar.
+
+**E-posta neden bu kadar erken:** davetler yalnızca e-postayla gider.
+Önce yüz sakini ekleyip sonra "e-postam çalışmıyormuş" demek, yüz daveti
+tek tek yeniden göndermek demektir.
+
+Site kurallarını ve ilk duyuruyu yazmak (7.1–7.2) **önerilir** ama
+sistemi bekletmez. Geri kalan her şey (otomasyon, devriye, kamera,
+bütçe, banka) **sonra** yapılabilir.
 
 > **Daire tipleri** bu altı adımda yok çünkü tahakkuku sabit tutarla da
 > yazabilirsiniz. Ama her daireye farklı aidat yazacaksanız (dükkân,
@@ -58,21 +66,36 @@ Sihirbaz sizi tek tek ilgili ekranlara götürür."* İki düğmesi vardır:
 **Sihirbazı aç** ve **Daha sonra**.
 
 Sihirbaza her zaman **sol menünün en altındaki "Kurulum sihirbazı"**
-satırından da ulaşabilirsiniz. Sayfa sekiz adımı sırayla gösterir; her
+satırından da ulaşabilirsiniz. Sayfa on üç adımı sırayla gösterir; her
 adımın yanında **Git** düğmesi ilgili ekrana götürür.
 
 > Hatırlatma kutusu **kurulum bitince kendiliğinden kaybolur** ve
 > **Daha sonra** dediğinizde bir daha çıkmaz (tercih tarayıcınızda
 > saklanır — başka bir bilgisayardan girerseniz yeniden görürsünüz).
+> Geri getirmek isterseniz: **Kurulum sihirbazı** sayfasındaki
+> **"Kurulum sihirbazını tekrar göster"** düğmesi.
 > İlerlemeniz kaybolmaz: sunucu adımları sayar, bayrak tutmaz.
 
 Sihirbazın adımları: Bloklar · Kat ve daireler · Daire tipleri ·
-Sakinler · Personel · Görev alanları · NFC noktaları · Aidat tanımı.
+Sakinler · **E-posta gönderimi** · Personel · Görev alanları ·
+NFC noktaları · **Kasa** · Aidat tanımı · **Tesis adresi** ·
+**Rezervasyon alanları** · **Sayaçlar**.
+
+Sayfanın üstünde bir **özet kartı** durur:
+
+* **"Çalışır kurulum için eksikler"** — hangi zorunlu adım eksik ve
+  **neyi engellediği** yazılıdır (örnek: *"Kasa yoksa tahsilat ve gider
+  kaydedilemez; borç yazsanız bile para giremez."*).
+* Hepsi tamamlandığında **"Tesis çalışır durumda"** yazar.
+* Her adımın yanında **Zorunlu** ya da **İsteğe bağlı** etiketi vardır.
 
 * Adımlar **kilitli değildir**: istediğinize atlayabilir, yarım bırakıp
   devam edebilirsiniz.
 * Bir adımı yapmayacaksanız **Atla** diyin; ilerleme çubuğu onu geçilmiş
   sayar. Sonradan **Atlamayı geri al** ile döndürebilirsiniz.
+  **Atlamak ilerleme çubuğunu rahatlatır ama gerçeği değiştirmez:**
+  zorunlu bir adımı atlarsanız özet kartı onu eksik saymaya devam eder
+  (kasası olmayan tesis, adım atlandı diye tahsilat yapamaz).
 
 Sihirbaz **"yapıldı mı"yı kendisi ölçer** — bir adımı işaretlemenize gerek
 yoktur, ilgili kayıt oluştuğunda kendiliğinden yeşile döner.
@@ -136,27 +159,56 @@ Tanımlar, Yönetim başlıkları görünür.
 
 **Süre: 5 dakika · Kısmen mümkün**
 
-## 2.1 Tesis adını değiştirme
+## 2.1 Tesis ayarları ekranı
 
-Tesis adını kayıt sırasında girdiniz. Değiştirmek isterseniz:
+**Yönetim → Tesis ayarları** (`/tesis-ayarlari`). Tesisin adı, adresi ve
+günlük işleyişe ait ayarların tamamı burada.
 
-> **Mobil uygulama → Ayarlar → Tesis adı** kartından değiştirilir.
+**Nasıl doğrularsınız:** bir alanı değiştirip **Kaydet**e basın;
+"Ayar kaydedildi" yazısını görmelisiniz. Hiçbir şeyi değiştirmeden
+kaydederseniz "Değişiklik yok" der ve istek göndermez.
 
-**Web panelinde tesis adını değiştirebileceğiniz bir ekran yoktur.**
-Paneldeki **Platform → Ayarlar** sayfası yalnızca Yönetiyor'un kendi
-ekibine açıktır; sizin hesabınızda görünmez.
+Buradan değiştirebilecekleriniz:
 
-## 2.2 Yapılamayan şeyler (bugün)
+* **Tesis adı**
+* **Açık adres, ilçe, il, posta kodu** — bkz. 2.2
+* Hava durumu konumu, otopark kapasitesi
+* Tur gecikme alarmı ve tekrar sayısı, tur başlangıç fotoğrafı zorunluluğu
+* Gürültü eşiği ve uyarı metni
+* Okutma mesafe eşiği (NFC noktasına azami uzaklık)
+* Rezervasyon geçmişi saklama süresi
 
-Aşağıdakiler için **hiçbir ekran yoktur** — ne web ne mobil:
+> Tesis adı **mobil uygulamadan da** değiştirilebilir
+> (Ayarlar → Tesis adı). İkisi aynı bilgiyi yazar.
 
-* Site **adresi** (mahalle, sokak, no) — sistemde böyle bir alan yok.
-* **Saat dilimi** (varsayılan Türkiye saati olarak çalışır).
-* **Hava durumu konumu** (varsayılan İstanbul).
-* **Otopark kapasitesi**.
-* Güvenlik modu, gürültü eşiği gibi operasyon ayarları.
+## 2.2 Tesis adresi — makbuzda ve raporlarda görünür
 
-Bunlar gerekiyorsa Yönetiyor destek ekibine yazmanız gerekir:
+**Yönetim → Tesis ayarları → Açık adres / İlçe / İl / Posta kodu.**
+
+**Neden önemli:** girdiğiniz adres **tahsilat makbuzunun** üst kısmına ve
+**rapor çıktılarının başlığına** yazılır. Boş bırakırsanız makbuzda
+yalnız site adı görünür — makbuz elden verildiğinde ya da bir
+anlaşmazlıkta hangi tesise ait olduğu belirsiz kalır.
+
+* Posta kodu **beş hane** olmalı; değilse kaydetmez.
+* Zorunlu değildir; adres girmeden de sistem çalışır.
+
+**Nasıl doğrularsınız:** adresi kaydettikten sonra bir tahsilat makbuzu
+açın; site adının hemen altında adres satırını görmelisiniz.
+
+## 2.3 Yapılamayan şeyler (bugün)
+
+Aşağıdakiler **Yönetiyor ekibinde kalır** ve Tesis ayarları ekranında
+görünmez (ekranın altında bu not yazılıdır):
+
+* **Saat dilimi** (varsayılan Türkiye saati) — değişmesi geçmiş
+  kayıtların saatlerini kaydırır.
+* **Tesis kodu** — giriş anahtarıdır; değişse kimse giriş yapamaz.
+* **Güvenlik modu** — güvenliği kimin yönettiğini belirler
+  (yönetim içi / dış şirket).
+* **Yönetim e-postası** — sakinlere görünen iletişim adresi.
+
+Bunlar gerekiyorsa Yönetiyor destek ekibine yazın:
 **İletişim → Destek**.
 
 ---
@@ -250,29 +302,61 @@ Akış:
 6. **Aktar**.
 
 **Daireler için zorunlu sütunlar:** `blok`, `daire_no`.
-**Kişiler için zorunlu sütunlar:** `ad`, `telefon`.
-İsteğe bağlı: `eposta`, `daire_no`, `rol_tipi` (`malik` / `kiraci`).
+İsteğe bağlı: `arsa_payi`, `metrekare` (bkz. 3.5).
+**Kişiler için zorunlu sütunlar:** `ad`, `telefon`, **`eposta`**.
+İsteğe bağlı: `daire_no`, `rol_tipi` (`malik` / `kiraci`).
 
-> **DİKKAT — kişileri Excel'den aktarırken e-posta sütununu mutlaka
-> doldurun.** E-postası olmayan kişiye davet **gönderilemez** (SMS kanalı
-> kapalıdır) ve o kişi Tesis ID'yi hiçbir zaman öğrenemez. Ayrıntı:
-> *Sık karşılaşılan sorunlar → "Davet e-postası gitmedi"*.
+> **E-posta artık zorunludur.** E-postası olmayan kişiye davet
+> gönderilemez (SMS kanalı kapalıdır) ve o kişi Tesis ID'yi hiçbir zaman
+> öğrenemez — yani hesap açılır ama sahiplenilemez. Önizleme e-postasız
+> satırı **hata** olarak gösterir.
+
+**Sorunlu satır varsa ne olur:** Önizleme size kaç satırın **okunduğunu**,
+kaçının **geçerli**, kaçının **zaten kayıtlı**, kaçının **sorunlu**
+olduğunu ayrı ayrı söyler ve sorunlu satırları numarasıyla listeler.
+Sorunlu satır varken **Aktar düğmesi kapalıdır**: varsayılan davranış
+"hiçbir şey yazma"dır. Yine de devam etmek isterseniz **"Sorunlu
+satırları atla"** kutusunu işaretleyin — o zaman yalnız geçerli satırlar
+yazılır.
+
+**Aktarımdan sonra davet özeti:** kaç kişiye davet **gönderildiği** ve
+kaçına **gönderilemediği** yazılır. Gitmeyen davetler satır numarasıyla
+listelenir; o kişiler giriş yapamaz, daveti **Davetler** sayfasından
+yeniden gönderin.
 
 ## 3.5 Arsa payları (isteğe bağlı — Kat Mülkiyeti Kanunu'na göre paylaşım yapacaksanız)
 
-> **Tesis → Daireler → (bir daire) → Düzenle → Arsa payı**
+Gideri arsa payına göre paylaştıracaksanız her dairenin arsa payını
+girmeniz gerekir. **Dört ayrı yol** var; hangisinin işinize geldiğine
+daire sayınıza bakarak karar verin.
 
-Gideri arsa payına göre paylaştırmak istiyorsanız her dairenin arsa
-payını buraya girin. **Metrekare** alanı da aynı formdadır.
+| Yol | Ne zaman | Nerede |
+|---|---|---|
+| **Toplu oluştururken** | Bütün daireler aynı payda (tip proje) | Tanımlar → Bloklar → Toplu daire oluştur → **Arsa payı** |
+| **Toplu giriş** | Her dairenin payı farklı (en sık durum) | Tesis → Daireler → daireleri seç → **Arsa payı gir** |
+| **Excel** | Elinizde hazır bir liste varsa | Tanımlar → İçe aktarım → Daireler → `arsa_payi` sütunu |
+| **Tek tek** | Bir iki düzeltme | Tesis → Daireler → (bir daire) → Düzenle |
+
+**Toplu giriş nasıl çalışır:** Daireler listesinde soldaki kutulardan
+daireleri seçin, **Arsa payı gir** düğmesine basın. Açılan pencerede her
+dairenin karşısına kendi payını yazın (mevcut değerler dolu gelir).
+Boş bıraktığınız daire, arsa payına göre dağıtımın **dışında** kalır.
+
+**Excel yolu — dikkat:** daireleri zaten oluşturduysanız, `arsa_payi`
+sütunlu dosya **var olan daireleri günceller** (yeniden oluşturmaz).
+Sonuçta "Güncellenen" sayısı görünür. Sayı okunamazsa satır **hata**
+verir, sessizce boş bırakılmaz.
+
+**Toplamı kontrol edin:** Daireler listesinin altında
+*"Arsa payı toplamı: … (… / … dairede girili)"* yazar. Arsa payı bir
+**paydır** — toplamı beklediğiniz değeri (1 ya da binde olarak 1000)
+tutmuyorsa paylaşım yanlış hesaplanır. Girilmemiş daire varsa ayrıca
+uyarı çıkar.
 
 **Atlanırsa:** toplu borçlandırmada "Arsa payına göre" dağıtımı
 seçtiğinizde arsa payı girilmemiş daireler **atlanır** ve size *"Arsa
 payı girilmemiş"* diye tek tek listelenir. Sessizce sıfır borç
 yazılmaz.
-
-**Not:** arsa payı yalnızca daire **düzenleme** ekranındadır; blok
-düzenleme ekranındaki toplu daire oluşturmada ve Excel aktarımında bu
-alan **yoktur**.
 
 ---
 
@@ -342,6 +426,25 @@ görünür; Davetler sayfasında durumu takip edebilirsiniz.
 
 **Atlanırsa:** sakinler uygulamaya giremez; borçlarını göremez,
 bildirim alamaz.
+
+## 4.5 "Bildirim gitmiyor" derlerse — bildirim tanılama
+
+> **Yönetim → Kullanıcılar → (kişi) → Düzenle → Bildirim tanılama**
+
+Düzenleme penceresinin altında, o kişiye ait dört bilgi görünür:
+
+* **E-posta bildirimi / SMS bildirimi / Mobil bildirim** — kişinin kendi
+  tercihi (Açık / Kapalı).
+* **E-posta doğrulandı** — doğrulanmamışsa kişi giriş bile yapamaz.
+* **Kayıtlı cihaz** — kaç telefondan giriş yapmış.
+
+**En sık karşılaşılan durum:** mobil bildirim **açık** ama kayıtlı cihaz
+**0**. Bu, kişinin uygulamaya hiç girmediği anlamına gelir; tercih açık
+olsa da bildirim gitmez. Ekran bunu ayrıca yazar.
+
+**Bu değerleri siz değiştiremezsiniz** ve bu bilinçlidir: kanal tercihi
+kişinin kendi tercihidir, kişi uygulamasından değiştirir. Siz yalnızca
+**görürsünüz** — sorunu tarif edebilmeniz için.
 
 ## 4.5 Personel kayıtları — kullanıcı hesabından AYRIDIR
 
@@ -558,17 +661,43 @@ deyin. Tablo hedefi, gerçekleşeni ve **sapmayı** yan yana gösterir.
 *"Banka ekstresini yükleyin; sistem ödemeleri açık borçlarla eşleştirsin.
 Eşleşmeyenler aşağıda listelenir ve elle atanabilir."*
 
-1. **Ekstre yükle (CSV, Excel veya MT940)** → **Dosya seç**.
-2. **Sütun eşlemesi**: Tarih, Tutar, Açıklama, Gönderen adı, Gönderen
+1. **"Bu ekstre hangi hesaba ait?"** — birden çok banka hesabınız varsa
+   doğru hesabı seçin. Seçmezseniz varsayılan banka hesabına yazılır.
+   *Yanlış hesaba yazılan bir ekstreyi geri almak satır satır iptal
+   demektir; bu yüzden seçim dosya seçiminin üstündedir.*
+2. **Ekstre yükle (CSV, Excel veya MT940)** → **Dosya seç**.
+3. **Sütun eşlemesi**: Tarih, Tutar, Açıklama, Gönderen adı, Gönderen
    IBAN, Banka referansı.
-3. **Önizleme (ilk 5 satır)** → **İçe aktar**.
-4. **Eşleştirmeyi çalıştır**.
+4. **Önizleme (ilk 5 satır)** → **İçe aktar**.
+5. **Eşleştirmeyi çalıştır**.
 
 Aynı ekstreyi iki kez yüklerseniz ikinci yükleme yeni satır açmaz.
 
 **Eşleşmenin kesin olması için:** sakinlerin ödeme açıklamasına kendi
-**ödeme kodlarını** yazması gerekir. Sakin bu kodu uygulamada **Öde**
-ekranında görür.
+**ödeme kodlarını** yazması gerekir.
+
+> **Kodları nereden görürsünüz:** **Yönetim → Kullanıcılar → Ödeme
+> kodları**. Liste her sakinin dairesini ve kodunu verir
+> (*"A-12 → TS-ABC123"*); bir duyuruda paylaşabilirsiniz. Kod bir kez
+> üretilir ve **değişmez** — sakinin uygulamasında gördüğü kodla aynıdır.
+
+## 5.9b Onay bekleyen giderler ve yanlış tahakkuklar
+
+**Onay bekleyen gider:** gideri kaydederken durumunu *"Onay bekliyor"*
+seçerseniz kasadan düşmez, bekler. **Finansal İşlemler → Giderler**
+listesinde o satırın sonunda **Onayla** ve **Reddet** düğmeleri vardır.
+
+* **Onayla** — gider gerçekleşmiş sayılır ve kasadan düşülür.
+* **Reddet** — kayıt **silinmez**, iptal olarak kalır.
+
+**Yanlış yazılmış tahakkuk:** **Finansal İşlemler → Borçlandırmalar**
+listesinde ilgili satırın sonundaki **Düzelt** düğmesi borcu geri alır.
+
+> Kayıt **silinmez**: listede ters bir satır daha görünür ve ikisi de
+> defterde durur. Bu, muhasebenin doğru davranışıdır — silinen bir kayıt
+> geçmişi değiştirir.
+> Üzerine tahsilat yapılmış bir borç düzeltilemez; önce tahsilatı iade
+> edin. Düzeltilmiş bir satırda düğme **çıkmaz**.
 
 ## 5.10 Açılış bakiyeleri (isteğe bağlı — devir varsa)
 
@@ -913,71 +1042,48 @@ Onaylandıklarında bakiyeden düşerler.
 
 ---
 
-# C) Kurulum sırasında olması gereken ama olmayan şeyler
+# C) Bilinen sınırlar
 
-Bu rehberi yazarken bulunan eksikler. Hiçbiri kurulumu **durdurmaz** ama
-her biri yöneticiyi bir noktada zorlar.
+Bu rehberin ilk sürümünde **14 eksik** listelenmişti. P193 turunda
+bunların tamamı ele alındı; aşağıda ne olduğu ve **bugün hâlâ neyin
+yapılamadığı** yazılı.
 
-## Tesis bilgileri
+## Kapatılanlar
 
-1. **Site adresi diye bir alan yok.** Ne web ne mobil — sistemde tesisin
-   posta adresi hiçbir yerde tutulmuyor. Makbuz ve resmi çıktılarda
-   adres gerekiyorsa bugün yazılamıyor.
-2. **Yönetici tesis ayarlarına ulaşamıyor.** Saat dilimi, hava durumu
-   konumu, otopark kapasitesi, güvenlik modu, gürültü eşiği — hepsi
-   yalnız Yönetiyor ekibinin gördüğü **Platform → Ayarlar** ekranında.
-   Sunucu bunların bir kısmını yöneticiye açıyor ama **ekran yok**.
-3. **Tesis adı yalnız mobilden değiştirilebiliyor.** Web'de yönetici için
-   böyle bir alan yok.
+| Eskiden | Bugün |
+|---|---|
+| Site adresi diye bir alan yoktu | **Yönetim → Tesis ayarları**'nda dört alan; makbuzda ve rapor başlığında yazılır (2.2) |
+| Yönetici tesis ayarlarına ulaşamıyordu | **Yönetim → Tesis ayarları** ekranı açıldı (2.1) |
+| Tesis adı yalnız mobilden değişiyordu | Aynı ekrandan web'den de değişir |
+| Excel'de e-posta zorunlu değildi | Zorunlu; sorunlu satır varken aktarım **durur** (3.4) |
+| Sakinin bildirim kanalları görünmüyordu | **Kullanıcılar → Düzenle → Bildirim tanılama** (4.5) |
+| Arsa payı yalnız tek tek girilebiliyordu | Toplu oluşturma, toplu giriş ve Excel — üç yol (3.5) |
+| Onay bekleyen gider onaylanamıyordu | **Giderler** listesinde Onayla / Reddet (5.9b) |
+| Yanlış tahakkuk düzeltilemiyordu | **Borçlandırmalar** listesinde Düzelt (5.9b) |
+| Ekstrede hesap seçilemiyordu | Yükleme ekranının başında hesap seçimi (5.9) |
+| Ödeme kodları görünmüyordu | **Kullanıcılar → Ödeme kodları** (5.9) |
+| Sihirbazda kasa adımı yoktu | Kasa adımı eklendi, **zorunlu** işaretli |
+| Sihirbazda rezervasyon alanı / sayaç yoktu | İkisi de eklendi (isteğe bağlı) |
+| Sihirbazda e-posta adımı yoktu | Sakinlerden hemen sonra, **zorunlu** |
+| Hatırlatıcı geri getirilemiyordu | **Kurulum sihirbazı** sayfasındaki düğme |
 
-## Kullanıcılar
+> **Düzeltme:** eski listede "görev kategorisi sihirbazda yok" yazıyordu.
+> Yanlıştı: sihirbazın **Görev alanları** adımı zaten görev
+> kategorilerini sayıyor.
 
-4. **Tek tek eklemede e-posta zorunlu, Excel aktarımında değil.** Aynı
-   veri iki farklı kuralla giriliyor ve Excel yolu, davet alamayacak
-   kullanıcılar üretebiliyor. Aktarım da e-postayı zorunlu tutmalı —
-   ya da en azından e-postasız satırlar için açık bir uyarı vermeli.
-5. **Yönetici, sakinin bildirim kanallarını göremiyor.** "Sakine bildirim
-   gitmiyor" sorununda yöneticinin bakabileceği bir ekran yok; kişinin
-   kendi ayarına bakması gerekiyor.
+## Bugün hâlâ yapılamayanlar
 
-## Yapı
-
-6. **Arsa payı yalnız tek tek girilebiliyor.** Ne toplu daire
-   oluşturmada ne Excel aktarımında arsa payı sütunu var. 100 daireli bir
-   sitede tek tek girmek gerekiyor. Metrekare için de aynı durum
-   (Excel'de yok).
-
-## Finans
-
-7. **Onay bekleyen gideri panelden onaylayamıyorsunuz.** Gider
-   oluştururken "Onay bekliyor" seçilebiliyor, **Finans → Kasalar**'da
-   "Bekleyen" olarak görünüyor, ama panelde **onaylama/reddetme düğmesi
-   yok**. Sunucu tarafı hazır, ekran eksik.
-8. **Yanlış tahakkuku panelden düzeltemiyorsunuz.** Ters kayıt yolu
-   sunucuda var ama **Borçlandırmalar** ekranında düğmesi yok.
-9. **Banka ekstresi yüklerken hangi hesaba ait olduğunu
-   seçemiyorsunuz.** Birden çok banka hesabı olan bir sitede ekstre
-   varsayılan hesaba yazılıyor. Sunucu hesap seçimini destekliyor, ekran
-   desteklemiyor.
-10. **Sakinin ödeme kodunu yönetici göremiyor.** Banka eşleştirmesinin
-    kesin çalışması için sakinin açıklamaya kendi kodunu yazması
-    gerekiyor; kod sakinin uygulamasında görünüyor ama yönetici onu
-    listeleyip topluca duyuramıyor.
-
-## Kurulum akışı
-
-11. **Sihirbazda kasa adımı yok.** Sekiz adım blok → daire → tip →
-    sakin → personel → görev alanı → NFC → aidat diye gidiyor; ama aidat
-    tahsil edebilmek için **kasa** şart ve sihirbaz bunu hiç
-    söylemiyor. Yönetici ilk tahsilatı girmeye çalışınca öğreniyor.
-12. **Rezervasyon alanı, görev kategorisi ve sayaç tanımları sihirbazda
-    yok.** İlgili modüller kurulum yapılmadan sessizce boş görünüyor.
-13. **E-posta gönderim ayarı sihirbazda yok.** Kurulumun en kritik
-    bağımlılığı (davetler e-postayla gidiyor) sihirbazın hiçbir adımında
-    geçmiyor.
-14. **Kurulum hatırlatıcısını geri getirmenin yolu yönetici için yok.**
-    Kutuyu "Daha sonra" ile kapattıysanız onu yeniden açan düğme
-    (*Kurulum sihirbazını tekrar göster*) yalnızca Yönetiyor ekibinin
-    gördüğü **Platform → Ayarlar** sayfasında. Sihirbazın kendisine sol
-    menüden ulaşılabildiği için işiniz durmaz, ama hatırlatma bir daha
-    çıkmaz.
+1. **Yönetim e-postası** (sakinlere görünen iletişim adresi) yalnız
+   Yönetiyor ekibinde. Tesis ayarları ekranında görünmez.
+2. **Saat dilimi, tesis kodu ve güvenlik modu** yönetici tarafından
+   değiştirilemez — gerekçeleri 2.3'te.
+3. **Gideri yönetici oluşturamaz** (dolayısıyla onaylayamaz da): finans
+   kayıt girişi platform yöneticisindedir. Onay/ret düğmeleri o yetkiye
+   sahip hesapta görünür.
+4. **Tesis adresi mobilde görünmez** — yalnız web panelinde girilir ve
+   makbuz/rapor çıktılarında kullanılır.
+5. **Sakinin bildirim tercihini yönetici değiştiremez** (yalnız görür).
+   Bu bilinçli: tercih kişinin kendisinindir.
+6. **Kurulum sihirbazı kendi formlarını çizmez**, var olan ekranlara
+   yönlendirir. Yani sihirbazı baştan sona takip ederken sekmeler arası
+   gidip gelirsiniz.

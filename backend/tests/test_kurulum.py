@@ -96,10 +96,10 @@ def test_P193_ZORUNLU_ADIMLAR_ve_EKSIK_OZETI(client, world):
     _, govde = _durum(client, yon)
 
     zorunlular = {a["kod"] for a in govde["adimlar"] if a["zorunlu"]}
-    assert zorunlular == {
-        "blok", "daire", "daire_tipi", "sakin", "eposta", "kasa", "aidat"
-    }
-    assert govde["zorunlu_toplam"] == 7
+    # DAIRE TIPI ZORUNLU DEGIL: tahakkuk sabit tutarla da yazilabilir.
+    # Tip yalnizca her daireye FARKLI tutar yazilacaksa gerekir.
+    assert zorunlular == {"blok", "daire", "sakin", "eposta", "kasa", "aidat"}
+    assert govde["zorunlu_toplam"] == 6
     eksik = set(govde["eksik_zorunlular"])
     assert eksik == {a["kod"] for a in govde["adimlar"]
                      if a["zorunlu"] and not a["tamam"]}

@@ -30,7 +30,7 @@ const KAPATILDI_ANAHTARI = "yonetio.kurulum.kapatildi";
 function durum() {
   const kodlar = Object.keys(KURULUM_HEDEFLERI);
   const zorunlu = new Set([
-    "blok", "daire", "daire_tipi", "sakin", "eposta", "kasa", "aidat",
+    "blok", "daire", "sakin", "eposta", "kasa", "aidat",
   ]);
   const eksik = ["kasa", "eposta"];
   return {
@@ -72,7 +72,7 @@ describe("(P193 §2) sihirbaz ozeti", () => {
     kur();
     ciz(KurulumPage);
     await screen.findByText(/Çalışır kurulum için eksikler/);
-    expect(screen.getByText(/Zorunlu adımlar: 5\/7/)).toBeInTheDocument();
+    expect(screen.getByText(/Zorunlu adımlar: 4\/6/)).toBeInTheDocument();
     // "Sunu yap" degil, "yapmazsan su olmaz".
     // Engel metni hem ozette hem adim satirinda gecer (ikisi de eksik
     // adimlar); olculen sey METNIN GORUNMESI.

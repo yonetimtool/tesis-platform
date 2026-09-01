@@ -622,3 +622,43 @@ satırı eklendi.
   kümesini değiştirmek doğru değil.
 - **Finans yazma rolünün genişletilmesi** (§3, K3.6): yönetici gider
   oluşturamıyor, dolayısıyla onaylayamıyor da. Ayrı bir karar.
+
+---
+
+## Bölüm 8 — Rehberin güncellenmesi
+
+`docs/yonetici-kurulum-rehberi.md` bu turda kapanan her boşluğa göre
+yeniden yazıldı. Değişenler:
+
+- **Minimum çalışır kurulum** listesine **e-posta doğrulaması** eklendi ve
+  3. sıraya kondu — davetler yalnız e-postayla gidiyor; yüz sakini
+  ekleyip sonra "e-postam çalışmıyormuş" demek yüz daveti yeniden
+  göndermek demektir. Liste artık sihirbazın "Zorunlu" işaretlediği altı
+  adımla **birebir** aynı.
+- **Sihirbaz bölümü**: sekiz adım → on üç adım, özet kartı, Zorunlu /
+  İsteğe bağlı etiketleri, "atlamak gerçeği değiştirmez" notu,
+  hatırlatıcıyı geri getirme.
+- **Bölüm 2 baştan yazıldı**: "yapılamıyor" listesi yerine *Tesis
+  ayarları* ekranı, adres alanı (ve nerede göründüğü), platformda kalan
+  dört ayar ve **gerekçeleri**.
+- **3.4 Excel**: e-posta zorunlu; sorunlu satırda aktarımın durması;
+  "sorunlu satırları atla" kutusu; davet özeti; daire sütunlarına
+  `arsa_payi` / `metrekare`.
+- **3.5 Arsa payı** dört yollu bir tabloya dönüştü + toplam kontrolü.
+- **4.5 (yeni)**: "bildirim gitmiyor" derlerse — bildirim tanılama.
+- **5.9**: ekstre hesap seçimi; ödeme kodlarının nereden görüleceği.
+- **5.9b (yeni)**: onay bekleyen giderler ve yanlış tahakkukların
+  düzeltilmesi.
+- **Sonundaki "14 eksik" bölümü** "Bilinen sınırlar"a dönüştü: kapananlar
+  tablo hâlinde, **bugün hâlâ yapılamayan altı madde** ayrı başlıkta.
+
+### Bir tutarsızlık düzeltildi (kod tarafında)
+Sihirbaz **daire tipini** başta `zorunlu` işaretlemişti; rehber ise
+"tahakkuku sabit tutarla da yazabilirsiniz" diyor — ve rehber haklıydı.
+Tip yalnız her daireye farklı tutar yazılacaksa gerekir. Zorunlu
+bırakmak, çalışan bir tesise "eksiksin" demek olurdu. Zorunlu küme altıya
+indi ve rehberin minimum listesiyle **aynı** oldu.
+
+Ayrıca rehberdeki bir **hata** düzeltildi: "görev kategorisi sihirbazda
+yok" yazıyordu; sihirbazın *Görev alanları* adımı zaten görev
+kategorilerini sayıyor.

@@ -128,7 +128,13 @@ async def _eposta_hazir(db: AsyncSession, tenant: Tenant) -> int:
 ADIMLAR: tuple[_Adim, ...] = (
     _Adim("blok", _say(BuildingBlock), zorunlu=True),
     _Adim("daire", _say(Unit), zorunlu=True),
-    _Adim("daire_tipi", _say(UnitTip), zorunlu=True),
+    # (P193 §8) DAIRE TIPI ZORUNLU DEGIL — rehberle uyum.
+    #
+    # Ilk yazimda zorunlu isaretlenmisti; rehber ise "tahakkuku SABIT
+    # TUTARLA da yazabilirsiniz" diyor ve bu dogru. Tip yalnizca her
+    # daireye FARKLI tutar yazacaksaniz gerekir. Zorunlu birakmak,
+    # calisan bir tesise "eksiksin" demek olurdu.
+    _Adim("daire_tipi", _say(UnitTip)),
     # SAKIN ve PERSONEL ayni tabloda ama AYRI adimlar: brief ikisini ayri
     # sayiyor ve gercekten ayri isler (biri tasinanlari girer, oteki
     # calisanlari).
