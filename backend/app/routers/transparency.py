@@ -7,8 +7,10 @@
 STRICT ANONIMLIK: yanit YALNIZ agregat tutar/sayi/yuzde ve KATEGORI ADLARI icerir.
 Ad, daire etiketi, bireysel tutar ASLA donmez. `geciken_daire_sayisi` yalniz SAYI.
 
-Hesap: budget_entry (gelir/gider, tarih->ay) + dues (donem == ay). Bos ay = sifir
-(cokme yok). Butce matematigi budget.date_filters ile paylasilir.
+(P192 §1) Hesap TEK DEFTERDEN: `finansal_hareket` (gelir/gider/tahsilat,
+tarih->ay) + `dues_assessment` (donem == ay). Onceden gelir/gider
+`budget_entry`ten, tahsilat `dues_payment`ten okunuyordu ve ayni aya ait
+"tahsilat" panelde farkli cikabiliyordu. Bos ay = sifir (cokme yok).
 """
 from __future__ import annotations
 
@@ -20,14 +22,13 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..audit import Action, audit_user
+from .. import defter
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..models import (
     AppUser,
-    BudgetCategory,
-    BudgetEntry,
     DuesAssessment,
-    DuesPayment,
+    FinansalHareket,
     TransparencyPublication,
 )
 from ..schemas import (
@@ -38,7 +39,6 @@ from ..schemas import (
     TransparencyListResponse,
     TransparencyPublishRequest,
 )
-from .budget import date_filters
 
 router = APIRouter(prefix="/transparency", tags=["transparency"])
 
@@ -71,54 +71,39 @@ def _pct(part: int, whole: int) -> int | None:
 
 
 async def _month_gelir_gider(db: AsyncSession, ay: str) -> tuple[int, int]:
-    rows = (
-        await db.execute(
-            select(BudgetEntry.tip, func.coalesce(func.sum(BudgetEntry.tutar_kurus), 0))
-            .where(*date_filters(ay, None, None))
-            .group_by(BudgetEntry.tip)
-        )
-    ).all()
-    t = {tip: int(v) for tip, v in rows}
-    return t.get("gelir", 0), t.get("gider", 0)
+    ilk, son = defter.donem_araligi(ay)
+    return (
+        await defter.gelir_toplami(db, baslangic=ilk, bitis=son),
+        await defter.gider_toplami(db, baslangic=ilk, bitis=son),
+    )
 
 
 async def _aidat(db: AsyncSession, ay: str) -> TransparencyAidat:
     a_where = [DuesAssessment.donem == ay]
-    p_where = [DuesPayment.durum == "basarili", DuesPayment.donem == ay]
     tahakkuk = int(
         (await db.execute(
             select(func.coalesce(func.sum(DuesAssessment.tutar_kurus), 0)).where(*a_where)
         )).scalar_one()
     )
-    tahsilat = int(
-        (await db.execute(
-            select(func.coalesce(func.sum(DuesPayment.tutar_kurus), 0)).where(*p_where)
-        )).scalar_one()
-    )
-    toplam_daire = int(
-        (await db.execute(
-            select(func.count(func.distinct(DuesAssessment.unit_id))).where(*a_where)
-        )).scalar_one()
-    )
+    # TEK KAYNAK (P192 §1): rapor ve panel ozeti de bunu cagirir.
+    tahsilat = await defter.tahsilat_toplami(db, donem=ay)
     # Geciken (tam odenmemis) daire: SAYI ONLY (hangi daire ASLA cekilmez).
-    geciken_sq = (
-        select(DuesAssessment.unit_id)
-        .where(*a_where)
-        .group_by(DuesAssessment.unit_id)
-        .having(
-            func.sum(DuesAssessment.tutar_kurus)
-            > func.coalesce(
-                select(func.sum(DuesPayment.tutar_kurus))
-                .where(DuesPayment.unit_id == DuesAssessment.unit_id, *p_where)
-                .correlate(DuesAssessment)
-                .scalar_subquery(),
-                0,
+    tahakkuk_daire = (
+        await db.execute(
+            select(
+                DuesAssessment.unit_id,
+                func.coalesce(func.sum(DuesAssessment.tutar_kurus), 0),
             )
+            .where(*a_where)
+            .group_by(DuesAssessment.unit_id)
         )
-        .subquery()
+    ).all()
+    toplam_daire = len(tahakkuk_daire)
+    odenen = await defter.daire_odenen(
+        db, [uid for uid, _ in tahakkuk_daire], donem=ay
     )
-    geciken = int(
-        (await db.execute(select(func.count()).select_from(geciken_sq))).scalar_one()
+    geciken = sum(
+        1 for uid, toplam in tahakkuk_daire if int(toplam) > odenen.get(uid, 0)
     )
     odeyen = toplam_daire - geciken
     return TransparencyAidat(
@@ -135,22 +120,14 @@ async def _aidat(db: AsyncSession, ay: str) -> TransparencyAidat:
 async def _board(db: AsyncSession, ay: str, yayinlandi: bool) -> TransparencyBoardOut:
     gelir, gider = await _month_gelir_gider(db, ay)
 
-    top = (
-        await db.execute(
-            select(BudgetCategory.ad, func.sum(BudgetEntry.tutar_kurus))
-            .join(BudgetCategory, BudgetCategory.id == BudgetEntry.kategori_id)
-            .where(BudgetEntry.tip == "gider", *date_filters(ay, None, None))
-            .group_by(BudgetCategory.ad)
-            # (P108) `reports.py` ile ayni: toplulastirmada `id` GROUP
-            # BY'da olmadigi icin eklenemez; kararli kuyruk GRUPLAMA
-            # ANAHTARIDIR. Bu pano SAKINE aciktir — esit tutarli iki
-            # kategorinin sirasi her yenilemede degisseydi, degismeyen bir
-            # veri degisiyormus gibi gorunurdu.
-            .order_by(func.sum(BudgetEntry.tutar_kurus).desc(),
-                      BudgetCategory.ad)
-            .limit(_TOP_N)
-        )
-    ).all()
+    ilk, son = defter.donem_araligi(ay)
+    # (P108) Kararli kuyruk: `defter.gider_kategori_kirilimi` toplam sonra
+    # ada gore siralar — bu pano SAKINE aciktir ve esit tutarli iki
+    # kategorinin sirasi her yenilemede degisseydi, degismeyen bir veri
+    # degisiyormus gibi gorunurdu.
+    top = await defter.gider_kategori_kirilimi(
+        db, baslangic=ilk, bitis=son, limit=_TOP_N
+    )
     dagilim: list[TransparencyKategoriKalemi] = []
     top_sum = 0
     for ad, toplam in top:
@@ -161,9 +138,19 @@ async def _board(db: AsyncSession, ay: str, yayinlandi: bool) -> TransparencyBoa
         )
     diger = gider - top_sum
     if diger > 0:
-        dagilim.append(
-            TransparencyKategoriKalemi(ad="Diğer", toplam_kurus=diger, yuzde=_pct(diger, gider) or 0)
-        )
+        # Kategorisiz hareketler zaten "Diğer" adiyla gelebilir; ikinci bir
+        # "Diğer" satiri yazmak, ayni etiketi iki kez gostermek olurdu.
+        mevcut = next((k for k in dagilim if k.ad == defter.KATEGORISIZ), None)
+        if mevcut is not None:
+            mevcut.toplam_kurus += diger
+            mevcut.yuzde = _pct(mevcut.toplam_kurus, gider) or 0
+        else:
+            dagilim.append(
+                TransparencyKategoriKalemi(
+                    ad=defter.KATEGORISIZ, toplam_kurus=diger,
+                    yuzde=_pct(diger, gider) or 0,
+                )
+            )
 
     prev = _prev_month(ay)
     pg, pgd = await _month_gelir_gider(db, prev)
@@ -213,7 +200,7 @@ async def list_months(
     # Aday aylar: butce (tarih->ay) + aidat (donem) + yayin kayitlari.
     # NOT: to_char format'i literal_column ile INLINE verilir; bind-param olsaydi
     # SELECT ($1) ve GROUP BY ($2) ayni gorunmez -> GroupingError.
-    ay_col = func.to_char(BudgetEntry.tarih, literal_column("'YYYY-MM'"))
+    ay_col = func.to_char(FinansalHareket.tarih, literal_column("'YYYY-MM'"))
     b_months = set(
         (await db.execute(select(func.distinct(ay_col)))).scalars().all()
     )
@@ -226,21 +213,26 @@ async def list_months(
     ordered = sorted((m for m in months if m), reverse=True)[:_LIST_LIMIT]
 
     # Net (agregat) toplu hesap — tek gruplu sorgu (N+1 yok).
+    #: Liste NET degeri icin ay bazli tek gruplu sorgu (N+1 yok). Ayrinti
+    #: sayfasindan farkli olarak iptal/iade satirlari da `yon` isaretiyle
+    #: dogru yonde toplanir.
     net_rows = (
         await db.execute(
-            select(ay_col, BudgetEntry.tip, func.sum(BudgetEntry.tutar_kurus))
-            .group_by(ay_col, BudgetEntry.tip)
+            select(
+                ay_col,
+                func.sum(defter.isaret() * FinansalHareket.tutar_kurus),
+            )
+            .where(FinansalHareket.durum == defter.GERCEKLESEN)
+            .group_by(ay_col)
         )
     ).all()
-    net_by: dict[str, dict[str, int]] = {}
-    for m, tip, toplam in net_rows:
-        net_by.setdefault(m, {})[tip] = int(toplam)
+    net_by = {m: int(toplam) for m, toplam in net_rows}
 
     items = [
         TransparencyAyOzet(
             ay=m,
             yayinlandi=pubs.get(m, False),
-            net_kurus=net_by.get(m, {}).get("gelir", 0) - net_by.get(m, {}).get("gider", 0),
+            net_kurus=net_by.get(m, 0),
         )
         for m in ordered
     ]

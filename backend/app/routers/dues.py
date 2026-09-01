@@ -1,14 +1,29 @@
 """Aidat — tahakkuk + odeme + bakiye — /contracts/openapi.yaml.
 
 RBAC: tahakkuk/odeme YAZMA admin; rapor okuma (GET) admin/yonetici; resident yalniz GET /me/dues (kendi).
-Bakiye = SUM(tahakkuk.tutar_kurus) - SUM(odeme.tutar_kurus WHERE durum='basarili').
-Tutarlar KURUS (integer). Odeme idempotent (scan SAVEPOINT deseni). Gercek tahsilat
-yok — soyut PaymentProvider (app/payments.py).
+Tutarlar KURUS (integer). Odeme idempotent. Gercek tahsilat yok — soyut
+PaymentProvider (app/payments.py).
+
+===========================================================================
+(P192 §1) ODEME ARTIK `dues_payment`E YAZILMAZ
+===========================================================================
+Bu ucun yazdigi ve okudugu TEK defter `finansal_hareket`tir (bkz.
+`app/defter.py`). Onceden `dues_payment`e yazilirdi ve o tablonun kasa
+bagi yoktu: `/dues/payments` ile girilen bir odeme sakinin borcunu
+kapatiyor ama KASA BAKIYESINI ARTIRMIYORDU. Ayni sebeple vezneden
+(`/finans/tahsilat`) girilen tahsilat kasayi artirip BORCU KAPATMIYORDU.
+
+Yanit BICIMI degismedi (`DuesPaymentOut`): mobil ve panel istemcileri
+kirilmasin diye defter satiri bu bicime CEVRILIR (`_odeme_out`).
+`dues_payment` tablosu YERINDE durur (gecmis kayitlar goc 0083'te
+deftere tasindi) ama ARTIK YAZILMAZ.
+
+Bakiye = SUM(tahakkuk) - SUM(defterdeki tahsilat etkisi).
 """
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, time, timezone
 
 from fastapi import APIRouter, Depends, Header, Query
 from fastapi.responses import JSONResponse
@@ -17,7 +32,9 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..audit import Action, audit_user
+from ..belge_no import belge_no_ata
 from ..crud_helpers import get_or_404, is_unique_violation, translate_integrity
+from .. import defter
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..sakin_bildirimi import aidat_bildir
@@ -25,14 +42,13 @@ from ..borclandirma import Bag, gecikme_kurus, hedef_sec
 from ..models import (
     AppUser,
     DuesAssessment,
-    DuesPayment,
+    FinansalHareket,
     GelirGiderTanim,
     Tenant,
     Unit,
     UnitResident,
 )
 from ..payments import get_payment_provider
-from .budget import ensure_dues_income_entry
 from ..schemas import (
     DuesAssessmentCreate,
     DuesAssessmentListResponse,
@@ -176,6 +192,81 @@ async def _zenginlestir(
     ]
 
 
+# --------------------------------------------------------------------------- #
+#            (P192 §1) DEFTER SATIRI -> ESKI ODEME BICIMI                      #
+# --------------------------------------------------------------------------- #
+#
+# Yanit bicimi KORUNDU: mobil `DuesPayment` modeli ve panelin tablosu bu
+# alanlari bekliyor. Defteri tek kaynak yapmak bir IC karardir; istemciyi
+# ayni turda kirmak, degisimi gereksizce riskli kilardi.
+_DURUM_ESLEME = {
+    "odendi": "basarili",
+    "bekliyor": "bekliyor",
+    # Onay bekleyen bir hareket sakin acisindan "henuz gerceklesmedi"dir.
+    "onay_bekliyor": "bekliyor",
+    "iptal": "iptal",
+}
+
+
+def _odeme_zamani(h: FinansalHareket) -> datetime:
+    """Odemenin ANI.
+
+    `finansal_hareket.tarih` bir GUNDUR (fis tarihi), `created_at` ise
+    kaydin yazildigi andir. Ayni gunse tam an bilinir ve o dondurulur;
+    GERIYE TARIHLI bir fiste ise kayit ani yanlis olurdu — o gunun
+    baslangici dondurulur.
+    """
+    if h.created_at is not None and h.created_at.date() == h.tarih:
+        return h.created_at
+    return datetime.combine(h.tarih, time.min, tzinfo=timezone.utc)
+
+
+def _odeme_out(h: FinansalHareket) -> DuesPaymentOut:
+    return DuesPaymentOut(
+        id=h.id,
+        unit_id=h.unit_id,
+        assessment_id=h.assessment_id,
+        tutar_kurus=h.tutar_kurus,
+        odeme_zamani=_odeme_zamani(h),
+        donem=h.donem,
+        # Defterde `yontem` NULL olabilir (vezne kaydi yontem sormuyor);
+        # sozlesme bos birakmiyor, en genel deger dondurulur.
+        yontem=h.yontem or "diger",
+        durum=_DURUM_ESLEME.get(h.durum, "bekliyor"),
+        # MAKBUZ NO = BELGE NO. Iki ayri numara tutmak, "hangisi gecerli"
+        # sorusunu dogururdu (bkz. `app/belge_no.py`).
+        makbuz_no=h.belge_no,
+        provider=h.provider,
+        provider_ref=h.provider_ref,
+        kaydeden_user_id=h.kaydeden_user_id,
+        idempotency_key=h.idempotency_key,
+        created_at=h.created_at,
+    )
+
+
+async def _daire_tahsilatlari(
+    db: AsyncSession, unit_id: uuid.UUID
+) -> list[FinansalHareket]:
+    """Dairenin defterdeki tahsilat satirlari (iade/iptal DAHIL).
+
+    Iade ve iptal satirlari da listelenir: sakinin gecmisinde "odendi sonra
+    iade edildi" gorunmezse, bakiye ile liste birbirini tutmaz.
+    """
+    return list(
+        (
+            await db.execute(
+                select(FinansalHareket)
+                .where(
+                    FinansalHareket.unit_id == unit_id,
+                    FinansalHareket.tip.in_(("tahsilat", "iade", "iptal")),
+                )
+                .order_by(FinansalHareket.tarih, FinansalHareket.created_at,
+                          FinansalHareket.id)
+            )
+        ).scalars().all()
+    )
+
+
 async def _unit_status(db: AsyncSession, unit: Unit) -> UnitDuesStatus:
     assessments = (
         await db.execute(
@@ -184,15 +275,10 @@ async def _unit_status(db: AsyncSession, unit: Unit) -> UnitDuesStatus:
             .order_by(DuesAssessment.donem)
         )
     ).scalars().all()
-    payments = (
-        await db.execute(
-            select(DuesPayment)
-            .where(DuesPayment.unit_id == unit.id)
-            .order_by(DuesPayment.odeme_zamani)
-        )
-    ).scalars().all()
+    satirlar = await _daire_tahsilatlari(db, unit.id)
     toplam_tahakkuk = sum(a.tutar_kurus for a in assessments)
-    toplam_odenen = sum(p.tutar_kurus for p in payments if p.durum == "basarili")
+    # TEK TANIM: "odenen" hesabi `defter.py`de; burada TEKRARLANMAZ.
+    toplam_odenen = (await defter.daire_odenen(db, [unit.id])).get(unit.id, 0)
     return UnitDuesStatus(
         unit_id=unit.id,
         no=unit.no,
@@ -200,7 +286,7 @@ async def _unit_status(db: AsyncSession, unit: Unit) -> UnitDuesStatus:
         toplam_odenen_kurus=toplam_odenen,
         bakiye_kurus=toplam_tahakkuk - toplam_odenen,
         assessments=[DuesAssessmentOut.model_validate(a) for a in assessments],
-        payments=[DuesPaymentOut.model_validate(p) for p in payments],
+        payments=[_odeme_out(h) for h in satirlar],
     )
 
 
@@ -349,16 +435,35 @@ async def list_assessments(
 
 
 # ------------------------------- odeme ------------------------------------- #
-def _same_payment(existing: DuesPayment, *, unit_id, assessment_id, tutar_kurus, yontem, makbuz_no, kaydeden, donem) -> bool:
+def _ayni_odeme(
+    mevcut: FinansalHareket, *, unit_id, assessment_id, tutar_kurus, yontem,
+    kaydeden, donem,
+) -> bool:
+    """Tekrar gelen istek AYNI isi mi istiyor?
+
+    Serbest metinler (belge/aciklama) DISARIDA: kullanici tekrar denerken
+    makbuz numarasini duzeltmis olabilir; para hareketinin kendisi aynıysa
+    bu AYNI islemdir (vezne ucundaki `_imza` ile ayni ilke).
+    """
     return (
-        existing.unit_id == unit_id
-        and existing.assessment_id == assessment_id
-        and existing.tutar_kurus == tutar_kurus
-        and existing.yontem == yontem
-        and existing.makbuz_no == makbuz_no
-        and existing.kaydeden_user_id == kaydeden
-        and existing.donem == donem
+        mevcut.unit_id == unit_id
+        and mevcut.assessment_id == assessment_id
+        and mevcut.tutar_kurus == tutar_kurus
+        and (mevcut.yontem or "diger") == yontem
+        and mevcut.kaydeden_user_id == kaydeden
+        and mevcut.donem == donem
     )
+
+
+async def _idem_bul(db: AsyncSession, anahtar: str) -> FinansalHareket | None:
+    return (
+        await db.execute(
+            select(FinansalHareket).where(
+                FinansalHareket.idempotency_key == anahtar,
+                FinansalHareket.tip == "tahsilat",
+            )
+        )
+    ).scalar_one_or_none()
 
 
 @router.post("/dues/payments")
@@ -368,56 +473,93 @@ async def create_payment(
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_ADMIN),
 ) -> JSONResponse:
+    """Aidat tahsilati — DEFTERE yazar (P192 §1).
+
+    ATOMIK: borc kapanisi (`assessment_id` bagi), defter kaydi ve kasa
+    hareketi TEK satirdir ve TEK islemde yazilir. Uc ayri tabloya uc ayri
+    yazma yapildiginda biri basarisiz olursa defter ile bakiye sessizce
+    ayrilirdi; artik ayrilamaz cunku ucu de AYNI satirdan turetiliyor.
+    """
     if not idempotency_key or not idempotency_key.strip():
         raise APIError(400, "bad_request", "idempotency_key_zorunlu")
+    anahtar = idempotency_key.strip()
     if (await db.execute(select(Unit.id).where(Unit.id == body.unit_id))).scalar_one_or_none() is None:
         raise APIError(422, "invalid_reference", "daire_bulunamadi")
     assessment_donem: str | None = None
+    hedef_user_id = None
     if body.assessment_id is not None:
-        assessment_donem = (
-            await db.execute(select(DuesAssessment.donem).where(DuesAssessment.id == body.assessment_id))
-        ).scalar_one_or_none()
-        if assessment_donem is None:
+        satir = (
+            await db.execute(
+                select(DuesAssessment.donem, DuesAssessment.hedef_user_id)
+                .where(DuesAssessment.id == body.assessment_id)
+            )
+        ).first()
+        if satir is None:
             raise APIError(422, "invalid_reference", "tahakkuk_bulunamadi")
+        assessment_donem, hedef_user_id = satir
 
-    # donem: acikca verilen > assessment'tan tureyen > NULL (serbest odeme; rapor atfi).
+    # donem: acikca verilen > assessment'tan tureyen > NULL (serbest odeme).
     donem = body.donem if body.donem is not None else assessment_donem
 
     cmp = dict(
-        unit_id=body.unit_id, assessment_id=body.assessment_id, tutar_kurus=body.tutar_kurus,
-        yontem=body.yontem, makbuz_no=body.makbuz_no, kaydeden=user.id, donem=donem,
+        unit_id=body.unit_id, assessment_id=body.assessment_id,
+        tutar_kurus=body.tutar_kurus, yontem=body.yontem, kaydeden=user.id,
+        donem=donem,
     )
-    existing = (
-        await db.execute(select(DuesPayment).where(DuesPayment.idempotency_key == idempotency_key))
-    ).scalar_one_or_none()
-    if existing is not None:
-        if _same_payment(existing, **cmp):
-            return JSONResponse(status_code=200, content=DuesPaymentOut.model_validate(existing).model_dump(mode="json"))
+    mevcut = await _idem_bul(db, anahtar)
+    if mevcut is not None:
+        if _ayni_odeme(mevcut, **cmp):
+            return JSONResponse(
+                status_code=200,
+                content=_odeme_out(mevcut).model_dump(mode="json"),
+            )
         raise APIError(409, "conflict", "idempotency_key_govde_farkli")
 
-    # Odeme baslat: aktif saglayici (env). Manuel -> anlik 'basarili'; kart -> 'bekliyor'
-    # + provider_ref + odeme URL (kullanici saglayiciya yonlenir, otorite WEBHOOK'tan gelir).
+    # Odeme baslat: aktif saglayici (env). Manuel -> anlik 'basarili'; kart ->
+    # 'bekliyor' + provider_ref + odeme URL (otorite WEBHOOK'tan gelir).
     provider = get_payment_provider(body.yontem)
     init = provider.init_payment(
-        tutar_kurus=body.tutar_kurus, unit_id=body.unit_id, idempotency_key=idempotency_key
+        tutar_kurus=body.tutar_kurus, unit_id=body.unit_id,
+        idempotency_key=anahtar,
     )
 
-    obj = DuesPayment(
+    # KASA ZORUNLU DEGIL, ama NULL DA BIRAKILMAZ: kasasiz bir tahsilat
+    # defterde gorunur, hicbir kasa bakiyesinde gorunmezdi (P192 §2.1'in
+    # duzelttigi kusur). Verilmediyse havale/kart BANKA hesabina, elden
+    # odeme MERKEZ KASAYA yazilir; hicbiri yoksa acilir.
+    kasa_id = await defter.kasa_coz(
+        db, user.tenant_id, body.kasa_id,
+        banka=body.yontem in ("havale", "kart"),
+    )
+
+    obj = FinansalHareket(
         tenant_id=user.tenant_id,
-        unit_id=body.unit_id,
-        assessment_id=body.assessment_id,
+        tip="tahsilat",
+        yon="giris",
         tutar_kurus=body.tutar_kurus,
+        kasa_id=kasa_id,
+        unit_id=body.unit_id,
+        user_id=hedef_user_id,
+        assessment_id=body.assessment_id,
         donem=donem,
         yontem=body.yontem,
-        durum=init.durum,
-        makbuz_no=body.makbuz_no,
+        durum="odendi" if init.durum == "basarili" else "bekliyor",
         provider=provider.name,
         provider_ref=init.provider_ref,
         kaydeden_user_id=user.id,
-        idempotency_key=idempotency_key,
+        idempotency_key=anahtar,
+        idem_satir=0,
+        # Butce kiriliminda "Aidat" basligi altinda gorunsun (eskiden
+        # `ensure_dues_income_entry` ayni kategoriye ayri bir satir
+        # yazardi; artik satirin KENDISI o kategoriye ait).
+        budget_category_id=await defter.aidat_kategori_id(db, user.tenant_id),
+        belge_no=await belge_no_ata(
+            db, user.tenant_id, "tahsilat", body.makbuz_no,
+            body.odeme_zamani.date() if body.odeme_zamani else None,
+        ),
     )
     if body.odeme_zamani is not None:
-        obj.odeme_zamani = body.odeme_zamani
+        obj.tarih = body.odeme_zamani.date()
     try:
         async with db.begin_nested():
             db.add(obj)
@@ -428,23 +570,23 @@ async def create_payment(
         except Exception:
             pass
         if is_unique_violation(exc):
-            again = (
-                await db.execute(select(DuesPayment).where(DuesPayment.idempotency_key == idempotency_key))
-            ).scalar_one()
-            if _same_payment(again, **cmp):
-                return JSONResponse(status_code=200, content=DuesPaymentOut.model_validate(again).model_dump(mode="json"))
+            # YARIS: ayni anahtarla ikinci istek arada yazdi.
+            again = await _idem_bul(db, anahtar)
+            if again is not None and _ayni_odeme(again, **cmp):
+                return JSONResponse(
+                    status_code=200,
+                    content=_odeme_out(again).model_dump(mode="json"),
+                )
             raise APIError(409, "conflict", "idempotency_key_govde_farkli")
         raise translate_integrity(exc)
     await db.refresh(obj)
-    # OTOMATIK butce entegrasyonu: basarili odeme 'Aidat' gelir kaydi uretir
-    # (ayni transaction; idempotent; butce aksakligi odemeyi DUSURMEZ).
-    # Kartli odeme 'bekliyor' baslar — geliri webhook 'basarili' yapinca yazilir.
-    await ensure_dues_income_entry(db, obj)
     await audit_user(
-        db, user, Action.DUES_PAYMENT_RECORD, resource_type="dues_payment",
-        resource_id=obj.id, meta={"unit_id": str(obj.unit_id), "yontem": obj.yontem},
+        db, user, Action.DUES_PAYMENT_RECORD, resource_type="finansal_hareket",
+        resource_id=obj.id,
+        meta={"unit_id": str(obj.unit_id), "yontem": body.yontem,
+              "tutar_kurus": obj.tutar_kurus},
     )
-    content = DuesPaymentOut.model_validate(obj).model_dump(mode="json")
+    content = _odeme_out(obj).model_dump(mode="json")
     if init.redirect_url:  # kart: saglayici odeme sayfasi URL'i
         content["odeme_url"] = init.redirect_url
     return JSONResponse(status_code=201, content=content)
@@ -459,16 +601,35 @@ async def list_payments(
     db: AsyncSession = Depends(get_tenant_db),
     _: AppUser = Depends(_REPORT),
 ) -> DuesPaymentListResponse:
-    where = [] if unit_id is None else [DuesPayment.unit_id == unit_id]
+    """Tahsilat listesi — DEFTERDEN.
+
+    Vezneden (`/finans/tahsilat`) girilen tahsilatlar da BURADA gorunur:
+    ayni defterden okundugu icin "aidat tahsilati" ile "vezne tahsilati"
+    diye iki ayri gercek kalmadi.
+    """
+    where = [FinansalHareket.tip == "tahsilat"]
+    if unit_id is not None:
+        where.append(FinansalHareket.unit_id == unit_id)
     if donem is not None:
-        where.append(DuesPayment.donem == donem)
-    total = (await db.execute(select(func.count()).select_from(DuesPayment).where(*where))).scalar_one()
+        where.append(FinansalHareket.donem == donem)
+    total = (
+        await db.execute(
+            select(func.count()).select_from(FinansalHareket).where(*where)
+        )
+    ).scalar_one()
     rows = (
         await db.execute(
-            select(DuesPayment).where(*where).order_by(DuesPayment.odeme_zamani.desc(), DuesPayment.id.desc()).limit(limit).offset(offset)
+            select(FinansalHareket).where(*where)
+            .order_by(FinansalHareket.tarih.desc(),
+                      FinansalHareket.created_at.desc(),
+                      FinansalHareket.id.desc())
+            .limit(limit).offset(offset)
         )
     ).scalars().all()
-    return DuesPaymentListResponse(meta={"limit": limit, "offset": offset, "total": total}, items=list(rows))
+    return DuesPaymentListResponse(
+        meta={"limit": limit, "offset": offset, "total": total},
+        items=[_odeme_out(h) for h in rows],
+    )
 
 
 # ------------------------------ borc durumu -------------------------------- #

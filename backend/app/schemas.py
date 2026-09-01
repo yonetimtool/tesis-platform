@@ -3553,10 +3553,19 @@ class DuesAssessmentListResponse(BaseModel):
 
 
 class DuesPaymentOut(BaseModel):
+    """Bir tahsilatin sakin/panel gorunumu.
+
+    (P192 §1) Kaynak artik `dues_payment` DEGIL `finansal_hareket`tir;
+    bicim korundu (bkz. `routers/dues.py::_odeme_out`). Uc alan
+    OPSIYONELLESTI cunku defterde de opsiyoneller: vezneden girilen bir
+    tahsilat daireye bagli olmayabilir, idempotency basligi gonderilmemis
+    olabilir ve kaydeden kullanici silinmis olabilir.
+    """
+
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
-    unit_id: uuid.UUID
+    unit_id: uuid.UUID | None = None
     assessment_id: uuid.UUID | None = None
     tutar_kurus: int
     odeme_zamani: datetime
@@ -3566,8 +3575,8 @@ class DuesPaymentOut(BaseModel):
     makbuz_no: str | None = None
     provider: str | None = None
     provider_ref: str | None = None
-    kaydeden_user_id: uuid.UUID
-    idempotency_key: str
+    kaydeden_user_id: uuid.UUID | None = None
+    idempotency_key: str | None = None
     created_at: datetime
 
 
@@ -3580,6 +3589,11 @@ class DuesPaymentCreate(BaseModel):
     odeme_zamani: datetime | None = None
     # 'YYYY-MM'; verilmezse assessment'tan turer, o da yoksa NULL kalir.
     donem: str | None = Field(None, min_length=1)
+    #: (P192 §1) Paranin girdigi kasa/banka hesabi. Verilmezse yontemden
+    #: turetilir (havale/kart -> banka hesabi, elden -> merkez kasa) ve
+    #: hicbiri yoksa acilir — NULL BIRAKILMAZ, cunku kasasiz bir tahsilat
+    #: hicbir kasa bakiyesinde gorunmezdi.
+    kasa_id: uuid.UUID | None = None
 
 
 class DuesPaymentListResponse(BaseModel):
@@ -3685,7 +3699,11 @@ class BudgetEntryOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
-    kategori_id: uuid.UUID
+    # (P192 §1) Defter satirinin butce kategorisi. OPSIYONEL: vezneden ya da
+    # aidattan gelen bir satirin butce kategorisi olmayabilir; uydurma bir
+    # kategori atamak, butce kirilimini gercek olmayan bir kalemle
+    # doldururdu.
+    kategori_id: uuid.UUID | None = None
     # Liste/rapor icin kategori adi (join ile doldurulur).
     kategori_ad: str | None = None
     tip: str
@@ -3694,7 +3712,7 @@ class BudgetEntryOut(BaseModel):
     aciklama: str | None = None
     kaynak: str
     ilgili_payment_id: uuid.UUID | None = None
-    created_by: uuid.UUID
+    created_by: uuid.UUID | None = None
     created_at: datetime
 
 
@@ -5000,6 +5018,12 @@ class TahsilatCreate(BaseModel):
     tarih: date | None = None
     belge_no: str | None = Field(None, max_length=50)
     aciklama: str | None = Field(None, max_length=500)
+    #: (P192 §1) MUHASEBE DONEMI. Verilmezse `assessment_id`den turer.
+    #: Vezneden girilen tahsilatin donemi bilinmezse "bu ayin tahsilat
+    #: orani" hesabina giremezdi.
+    donem: str | None = Field(None, min_length=1, max_length=7)
+    #: Paranin nasil alindigi. Vezne varsayilani elden.
+    yontem: DuesYontem | None = None
 
 
 class TopluTahsilatSatir(BaseModel):
@@ -5008,6 +5032,7 @@ class TopluTahsilatSatir(BaseModel):
     assessment_id: uuid.UUID | None = None
     tutar_kurus: int = Field(..., ge=1)
     aciklama: str | None = None
+    donem: str | None = Field(None, min_length=1, max_length=7)
 
 
 class TopluTahsilatIstek(BaseModel):

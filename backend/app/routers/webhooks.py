@@ -18,9 +18,8 @@ from sqlalchemy.exc import IntegrityError
 
 from ..db import SessionLocal, set_tenant
 from ..errors import APIError
-from ..models import DuesPayment
+from ..models import FinansalHareket
 from ..payments import get_named_provider
-from .budget import ensure_dues_income_entry
 
 router = APIRouter(prefix="/webhooks/payments", tags=["webhooks"])
 
@@ -64,23 +63,28 @@ async def payment_webhook(provider: str, request: Request) -> dict:
                 return {"status": "already_processed"}
 
             # 4) odemeyi bul + TUTAR kontrolu + durum guncelle.
-            payment = (
+            #
+            # (P192 §1) Kaynak DEFTERDIR. Odeme `dues_payment`e degil
+            # `finansal_hareket`e yaziliyor; kartli odeme 'bekliyor'
+            # baslar ve burada 'odendi' olur — o an kasa bakiyesine de
+            # girer, cunku bakiye YALNIZ gerceklesmis satirlari sayar.
+            hareket = (
                 await session.execute(
-                    select(DuesPayment).where(
-                        DuesPayment.provider == provider,
-                        DuesPayment.provider_ref == event.provider_ref,
+                    select(FinansalHareket).where(
+                        FinansalHareket.provider == provider,
+                        FinansalHareket.provider_ref == event.provider_ref,
                     )
                 )
             ).scalar_one_or_none()
-            if payment is None:
+            if hareket is None:
                 raise APIError(404, "not_found", "odeme_bulunamadi")
-            if event.tutar_kurus != payment.tutar_kurus:
+            if event.tutar_kurus != hareket.tutar_kurus:
                 # manipulasyon engeli -> rollback (event isaretlenmez), durum degismez
                 raise APIError(400, "amount_mismatch", "webhook_tutar_uyusmuyor")
 
-            payment.durum = event.durum
-            # Kartli odeme webhook'la 'basarili' oldugunda otomatik butce
-            # gelir kaydi (idempotent; hata webhook islemesini dusurmez).
-            await ensure_dues_income_entry(session, payment)
+            # AYRI BIR BUTCE KAYDI YAZILMAZ: gelir yansimasi ayni satirdan
+            # okunuyor (tek defter). Onceden burada `budget_entry` de
+            # yazilirdi ve ayni para iki deftere girerdi.
+            hareket.durum = "odendi" if event.durum == "basarili" else "iptal"
 
     return {"status": "ok", "durum": event.durum}

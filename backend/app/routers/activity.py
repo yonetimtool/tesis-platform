@@ -87,13 +87,16 @@ JOIN task t ON t.id = tc.task_id
 # Yalniz BASARILI odemeler akisa girer (bekleyen/iptal finansal olay degildir).
 # Tutar BICIMLENMEZ: kurus tam sayi olarak gider, para bicimi istemcinin
 # (dile duyarli) isidir — sunucu "₺1.234,50" uretmez.
+# (P192 §1) KAYNAK TEK DEFTER: odeme artik `dues_payment`e yazilmiyor.
+# Eski tabloya bakan bu sorgu, gecise ragmen calisir gorunur ama AKISI
+# BOSALTIRDI — yeni hicbir odeme akista cikmazdi.
 _AIDAT = """
 SELECT p.id, 'aidat_odeme', 'aidat_odeme',
        jsonb_build_object('daire', u.no, 'tutar_kurus', p.tutar_kurus),
-       p.odeme_zamani, 'olumlu'
-FROM dues_payment p
+       p.created_at, 'olumlu'
+FROM finansal_hareket p
 JOIN unit u ON u.id = p.unit_id
-WHERE p.durum = 'basarili'
+WHERE p.tip = 'tahsilat' AND p.durum = 'odendi'
 """
 # resident: YALNIZ AKTIF olarak oturdugu dairelerin odemeleri.
 _AIDAT_OWN = _AIDAT + """

@@ -118,14 +118,18 @@ def _headers(client, slug, cred):
 
 
 def _seed_pending(owner_conn, client, world, cred, ref, tutar=50000):
-    """Bir unit + 'bekliyor' paytr odeme (provider_ref=ref) olusturur; (unit_id) doner."""
+    """Bir unit + 'bekliyor' paytr odeme (provider_ref=ref) olusturur; (unit_id) doner.
+
+    (P192 §1) Odeme artik `dues_payment`e degil TEK DEFTERE yaziliyor;
+    tohum da oraya atiliyor.
+    """
     admin = _headers(client, world["slug_a"] if cred is world["admin_a"] else world["slug_b"], cred)
     admin_id = client.get("/me", headers=admin).json()["id"]
     u = client.post("/units", headers=admin, json={"no": f"P-{uuid.uuid4().hex[:6]}", "blok": "A"}).json()
     tenant_id = world["a"] if cred is world["admin_a"] else world["b"]
     owner_conn.execute(
-        "INSERT INTO dues_payment (tenant_id, unit_id, tutar_kurus, yontem, durum, provider, provider_ref, kaydeden_user_id, idempotency_key) "
-        "VALUES (%s,%s,%s,'kart'::dues_yontem,'bekliyor'::dues_durum,'paytr',%s,%s,%s)",
+        "INSERT INTO finansal_hareket (tenant_id, tip, yon, unit_id, tutar_kurus, yontem, durum, provider, provider_ref, kaydeden_user_id, idempotency_key, idem_satir) "
+        "VALUES (%s,'tahsilat','giris',%s,%s,'kart'::dues_yontem,'bekliyor'::hareket_durum,'paytr',%s,%s,%s,0)",
         (tenant_id, u["id"], tutar, ref, admin_id, uuid.uuid4().hex),
     )
     return u["id"], admin
@@ -136,10 +140,16 @@ def _paytr_form(ref, status, amount):
     return {"merchant_oid": ref, "status": status, "total_amount": str(amount), "hash": h}
 
 
+#: Defter durumu -> testlerin bekledigi odeme sozlugu (bkz. dues.py).
+_DEFTER_DURUM = {"odendi": "basarili", "bekliyor": "bekliyor", "iptal": "iptal"}
+
+
 def _durum(owner_conn, ref):
-    return owner_conn.execute(
-        "SELECT durum FROM dues_payment WHERE provider='paytr' AND provider_ref=%s", (ref,)
+    ham = owner_conn.execute(
+        "SELECT durum FROM finansal_hareket WHERE provider='paytr' AND provider_ref=%s",
+        (ref,),
     ).fetchone()[0]
+    return _DEFTER_DURUM[ham]
 
 
 def test_webhook_valid_marks_paid_and_balance(client, world, owner_conn):

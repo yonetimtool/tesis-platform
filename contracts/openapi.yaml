@@ -15462,6 +15462,16 @@ components:
         tarih: { type: string, format: date, nullable: true }
         belge_no: { type: string, nullable: true, maxLength: 50 }
         aciklama: { type: string, nullable: true, maxLength: 500 }
+        donem:
+          type: string
+          nullable: true
+          maxLength: 7
+          example: "2026-06"
+          description: "(P192) Muhasebe donemi; verilmezse assessment'tan turer"
+        yontem:
+          allOf: [{ $ref: "#/components/schemas/DuesYontem" }]
+          nullable: true
+          description: "(P192) Paranin nasil alindigi; varsayilan 'elden'"
     TopluTahsilatSatir:
       type: object
       required: [tutar_kurus]
@@ -15471,6 +15481,7 @@ components:
         assessment_id: { type: string, format: uuid, nullable: true }
         tutar_kurus: { type: integer, format: int64, minimum: 1 }
         aciklama: { type: string, nullable: true }
+        donem: { type: string, nullable: true, maxLength: 7 }
     TopluTahsilatIstek:
       type: object
       required: [kasa_id, satirlar]
@@ -16519,11 +16530,15 @@ components:
             benzersiz indeksle saglanir.
 
     DuesPayment:
+      # (P192 §1) Kaynak tablo `dues_payment` DEGIL `finansal_hareket`.
+      # Bicim korundu; unit_id / kaydeden_user_id / idempotency_key
+      # OPSIYONELLESTI cunku defterde de opsiyoneller (vezneden girilen
+      # tahsilat daireye bagli olmayabilir).
       type: object
-      required: [id, unit_id, tutar_kurus, odeme_zamani, yontem, durum, kaydeden_user_id, idempotency_key, created_at]
+      required: [id, tutar_kurus, odeme_zamani, yontem, durum, created_at]
       properties:
         id: { type: string, format: uuid }
-        unit_id: { type: string, format: uuid }
+        unit_id: { type: string, format: uuid, nullable: true }
         assessment_id: { type: string, format: uuid, nullable: true }
         tutar_kurus: { type: integer, minimum: 1 }
         odeme_zamani: { type: string, format: date-time }
@@ -16541,8 +16556,8 @@ components:
           type: string
           nullable: true
           description: "Yalniz kart akisi init yanitinda: saglayici odeme sayfasi URL'i (kalici degil)"
-        kaydeden_user_id: { type: string, format: uuid }
-        idempotency_key: { type: string }
+        kaydeden_user_id: { type: string, format: uuid, nullable: true }
+        idempotency_key: { type: string, nullable: true }
         created_at: { type: string, format: date-time }
     DuesPaymentCreate:
       type: object
@@ -16563,6 +16578,14 @@ components:
           nullable: true
           example: "2026-06"
           description: "Verilmezse assessment'tan turer; o da yoksa NULL kalir"
+        kasa_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: >-
+            (P192 §1) Paranin girdigi kasa/banka hesabi. Verilmezse
+            yontemden turetilir (havale/kart -> banka hesabi, elden ->
+            merkez kasa) ve hicbiri yoksa acilir; NULL BIRAKILMAZ.
 
     UnitDuesStatus:
       type: object

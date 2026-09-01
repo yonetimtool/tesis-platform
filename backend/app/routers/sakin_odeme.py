@@ -23,6 +23,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..audit import Action, audit_user
 from ..config import settings
+from .. import defter
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from .. import odeme_kodu as kod_modulu
@@ -92,16 +93,11 @@ async def _borc_kurus(db: AsyncSession, user: AppUser) -> int:
             .where(kosul)
         )
     ).scalar_one()
-    odenen = (
-        await db.execute(
-            select(func.coalesce(func.sum(FinansalHareket.tutar_kurus), 0))
-            .where(
-                FinansalHareket.tip == "tahsilat",
-                FinansalHareket.user_id == user.id,
-            )
-        )
-    ).scalar_one()
-    return max(int(borc) - int(odenen), 0)
+    # (P192 §1) TEK TANIM: iade/iptal dusulur, yalniz gerceklesmis
+    # satirlar sayilir. Burada ayri bir toplam yazmak, sakine panelden
+    # farkli bir borc gostermek olurdu.
+    odenen = await defter.tahsilat_toplami(db, user_id=user.id)
+    return max(int(borc) - odenen, 0)
 
 
 async def _banka_kasasi(db: AsyncSession) -> Kasa | None:
@@ -171,8 +167,16 @@ async def kart_odemesi(
         kasa = await _banka_kasasi(db)
         hareket = FinansalHareket(
             tenant_id=user.tenant_id, tip="tahsilat", yon="giris",
-            tutar_kurus=body.tutar_kurus, kasa_id=kasa.id if kasa else None,
+            tutar_kurus=body.tutar_kurus,
+            # (P192 §2.1) Kasasiz birakilmaz: IBAN'li banka kasasi yoksa
+            # varsayilan banka hesabi acilir — aksi halde para defterde
+            # gorunur, hicbir kasa bakiyesinde gorunmezdi.
+            kasa_id=kasa.id if kasa else await defter.kasa_coz(
+                db, user.tenant_id, banka=True
+            ),
             user_id=user.id, unit_id=daire, kaydeden_user_id=user.id,
+            yontem="kart", provider=saglayici.name,
+            provider_ref=sonuc.provider_ref,
             aciklama=f"Kart odemesi ({saglayici.name})",
         )
         db.add(hareket)

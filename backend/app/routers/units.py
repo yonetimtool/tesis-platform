@@ -23,7 +23,7 @@ from ..models import (
     AppUser,
     BuildingBlock,
     DuesAssessment,
-    DuesPayment,
+    FinansalHareket,
     Rezervasyon,
     Unit,
     UnitComplaint,
@@ -204,16 +204,20 @@ async def kat_onizleme(
             odeme=0, talep=0, rezervasyon=0, mali_kayit=False,
         )
 
-    async def _say(model, alan) -> int:
+    async def _say(model, alan, *ek) -> int:
         return int(
             (await db.execute(
-                select(func.count()).select_from(model).where(alan.in_(daire_idler))
+                select(func.count()).select_from(model)
+                .where(alan.in_(daire_idler), *ek)
             )).scalar_one()
         )
 
     sakin = await _say(UnitResident, UnitResident.unit_id)
     tahakkuk = await _say(DuesAssessment, DuesAssessment.unit_id)
-    odeme = await _say(DuesPayment, DuesPayment.unit_id)
+    # (P192 §1) Tahsilat artik `dues_payment`te degil defterde.
+    odeme = await _say(
+        FinansalHareket, FinansalHareket.unit_id, FinansalHareket.tip == "tahsilat"
+    )
     talep = await _say(UnitComplaint, UnitComplaint.target_unit_id)
     rezervasyon = await _say(Rezervasyon, Rezervasyon.unit_id)
 

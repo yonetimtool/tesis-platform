@@ -6,9 +6,13 @@ Rol-duyarli tek uc:
   * Yalniz YONETIM (admin+yonetici): ek `tahsilat` blogu — donem tahakkuku,
     tahsilat, tahsilat orani ve geciken (tam odememis) daire sayisi.
 
-Butce toplamlari budget modulundeki ozet matematigini yeniden kullanir
-(date_filters). Aidat tarafi 'YYYY-MM' donem alanlari uzerinden hesaplanir
-(dues_assessment.donem / dues_payment.donem); parametresiz cagri tum
+(P192 §1) TUM rakamlar TEK DEFTERDEN (`app/defter.py`). Onceden gelir/gider
+`budget_entry`ten, tahsilat `dues_payment`ten okunuyordu; ayni "tahsilat
+orani" panelde `finansal_hareket`ten hesaplandigi icin IKI EKRAN IKI RAKAM
+gosteriyordu. Artik ikisi de `defter.tahsilat_toplami()` cagiriyor.
+
+Aidat tarafi 'YYYY-MM' donem alanlari uzerinden hesaplanir
+(dues_assessment.donem / finansal_hareket.donem); parametresiz cagri tum
 zamanlari kapsar. Salt okuma; para integer KURUS.
 """
 from __future__ import annotations
@@ -17,11 +21,11 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .. import defter
 from ..deps import get_tenant_db, require_role
-from ..models import AppUser, BudgetCategory, BudgetEntry, DuesAssessment, DuesPayment
+from ..models import AppUser, DuesAssessment
 from ..roller import MALI_GORUNURLUK
 from ..schemas import FinancialSummary, GiderKalemi, TahsilatOzet
-from .budget import date_filters
 
 router = APIRouter(prefix="/reports", tags=["reports"])
 
@@ -41,42 +45,36 @@ TOP_GIDER_LIMIT = 5
 
 async def _tahsilat_ozet(db: AsyncSession, donem: str | None) -> TahsilatOzet:
     a_where = [] if donem is None else [DuesAssessment.donem == donem]
-    p_where = [DuesPayment.durum == "basarili"]
-    if donem is not None:
-        p_where.append(DuesPayment.donem == donem)
 
     tahakkuk = (
         await db.execute(
             select(func.coalesce(func.sum(DuesAssessment.tutar_kurus), 0)).where(*a_where)
         )
     ).scalar_one()
-    tahsilat = (
-        await db.execute(
-            select(func.coalesce(func.sum(DuesPayment.tutar_kurus), 0)).where(*p_where)
-        )
-    ).scalar_one()
+    # TEK KAYNAK: panel ozeti, seffaflik ve mobil ana ekran da bunu cagirir.
+    tahsilat = await defter.tahsilat_toplami(db, donem=donem)
 
-    # Geciken daire: donem tahakkuk toplami, basarili odeme toplamini asan
-    # daireler (daire bazinda GROUP BY + correlated HAVING; satirlar cekilmez).
-    geciken_sq = (
-        select(DuesAssessment.unit_id)
-        .where(*a_where)
-        .group_by(DuesAssessment.unit_id)
-        .having(
-            func.sum(DuesAssessment.tutar_kurus)
-            > func.coalesce(
-                select(func.sum(DuesPayment.tutar_kurus))
-                .where(DuesPayment.unit_id == DuesAssessment.unit_id, *p_where)
-                .correlate(DuesAssessment)
-                .scalar_subquery(),
-                0,
+    # Geciken daire: donem tahakkuk toplami, tahsilat toplamini asan
+    # daireler. Karsilastirma PYTHON'da yapiliyor cunku "odenen" tanimi
+    # (iade/iptal dusulmus, yalniz gerceklesmis satirlar) tek yerde
+    # yasiyor; SQL'e ikinci bir kopyasini yazmak, bu turun duzelttigi
+    # kusuru geri getirirdi.
+    tahakkuk_daire = (
+        await db.execute(
+            select(
+                DuesAssessment.unit_id,
+                func.coalesce(func.sum(DuesAssessment.tutar_kurus), 0),
             )
+            .where(*a_where)
+            .group_by(DuesAssessment.unit_id)
         )
-        .subquery()
+    ).all()
+    odenen = await defter.daire_odenen(
+        db, [uid for uid, _ in tahakkuk_daire], donem=donem
     )
-    geciken = (
-        await db.execute(select(func.count()).select_from(geciken_sq))
-    ).scalar_one()
+    geciken = sum(
+        1 for uid, toplam in tahakkuk_daire if int(toplam) > odenen.get(uid, 0)
+    )
 
     orani = None
     if tahakkuk > 0:
@@ -96,33 +94,13 @@ async def financial_summary(
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_READER),
 ) -> FinancialSummary:
-    where = date_filters(donem, None, None)
+    ilk, son = defter.donem_araligi(donem) if donem else (None, None)
 
-    rows = (
-        await db.execute(
-            select(BudgetEntry.tip, func.coalesce(func.sum(BudgetEntry.tutar_kurus), 0))
-            .where(*where)
-            .group_by(BudgetEntry.tip)
-        )
-    ).all()
-    totals = {tip: int(toplam) for tip, toplam in rows}
-    gelir = totals.get("gelir", 0)
-    gider = totals.get("gider", 0)
-
-    top_giderler = (
-        await db.execute(
-            select(BudgetCategory.ad, func.sum(BudgetEntry.tutar_kurus))
-            .join(BudgetCategory, BudgetCategory.id == BudgetEntry.kategori_id)
-            .where(BudgetEntry.tip == "gider", *where)
-            .group_by(BudgetCategory.ad)
-            # (P108) TOPLULASTIRMADA `id` EKLENEMEZ (GROUP BY'da yok).
-            # Kararli kuyruk GRUPLAMA ANAHTARIDIR: esit tutarli iki
-            # kategori her koşumda ayni sirada gelir.
-            .order_by(func.sum(BudgetEntry.tutar_kurus).desc(),
-                      BudgetCategory.ad)
-            .limit(TOP_GIDER_LIMIT)
-        )
-    ).all()
+    gelir = await defter.gelir_toplami(db, baslangic=ilk, bitis=son)
+    gider = await defter.gider_toplami(db, baslangic=ilk, bitis=son)
+    top_giderler = await defter.gider_kategori_kirilimi(
+        db, baslangic=ilk, bitis=son, limit=TOP_GIDER_LIMIT
+    )
 
     # Tahsilat blogu yalniz yonetimde dolar (sakin/saha: null — daire/kisi
     # duzeyinde bilgi sizdirilmaz, agregat seffaflik yeterli).

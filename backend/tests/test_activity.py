@@ -89,11 +89,13 @@ def aworld(client, world, owner_conn):
         )
 
         # aidat_odeme — sakinin dairesi + BASKA daire (kapsam testi).
+        # (P192 §1) Tahsilat TEK DEFTERDE: `dues_payment` artik yazilmiyor.
         for unit, key in ((unit_mine, f"mine-{sfx}"), (unit_other, f"other-{sfx}")):
             cur.execute(
-                "INSERT INTO dues_payment (tenant_id, unit_id, tutar_kurus, yontem, "
-                "durum, kaydeden_user_id, idempotency_key) "
-                "VALUES (%s,%s,75000,'havale','basarili',%s,%s)",
+                "INSERT INTO finansal_hareket (tenant_id, tip, yon, unit_id, "
+                "tutar_kurus, yontem, durum, kaydeden_user_id, idempotency_key, "
+                "idem_satir) "
+                "VALUES (%s,'tahsilat','giris',%s,75000,'havale','odendi',%s,%s,0)",
                 (a, unit, admin_id, key),
             )
         # talep — sakinin ACTIGI + baskasinin (admin'in) actigi.

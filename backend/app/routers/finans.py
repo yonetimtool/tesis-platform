@@ -23,6 +23,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..audit import Action, audit_user
 from ..belge_no import belge_no_ata
 from ..crud_helpers import get_or_404, is_unique_violation, translate_integrity
+from .. import defter
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..finans import BankaSatiri, BorcAdayi, banka_eslestir, kasa_bakiye
@@ -232,18 +233,26 @@ async def tahsilat(
 ) -> HareketOut:
     """Tekil tahsilat — kasaya GIRIS.
 
-    `dues_payment` tablosuyla YARISMAZ: o tablo cevrimici odeme saglayicisi
-    (idempotency, provider referansi) icindir; buradaki hareket VEZNE
-    kaydidir ve kasayi etkiler. Ikisini birlestirmek, saglayici alanlarini
-    her nakit tahsilatta bos birakmak demekti.
+    (P192 §1) `POST /dues/payments` ILE AYNI DEFTERE yazar. Onceden bu iki
+    uc iki ayri tabloya yaziyordu: vezneden girilen tahsilat kasayi
+    artirip SAKININ BORCUNU KAPATMIYOR, aidat ucundan girilen odeme borcu
+    kapatip KASAYI ARTIRMIYORDU. Artik ikisi de ayni satiri uretir;
+    `assessment_id` verildiginde borc da kapanir.
     """
     await _kasa_var(db, body.kasa_id)
+    donem = body.donem
     if body.assessment_id is not None:
-        await get_or_404(db, DuesAssessment, body.assessment_id)
+        tahakkuk = await get_or_404(db, DuesAssessment, body.assessment_id)
+        # (P192 §1) DONEM TAHAKKUKTAN TURER: vezneden girilen tahsilat
+        # donemsiz kalirsa "bu ayin tahsilat orani" hesabina giremez ve
+        # ayni para panelde gorunup raporda gorunmezdi.
+        if donem is None:
+            donem = tahakkuk.donem
     obj = _hareket(
         user, tip="tahsilat", yon="giris", tutar_kurus=body.tutar_kurus,
         kasa_id=body.kasa_id, user_id=body.user_id, unit_id=body.unit_id,
-        assessment_id=body.assessment_id,
+        assessment_id=body.assessment_id, donem=donem,
+        yontem=body.yontem or "elden",
         # (P167 Asama 4) BELGE NO MERKEZDEN. Kullanici yazdiysa o korunur
         # (elindeki gercek makbuz numarasi olabilir); bos biraktiysa seri
         # `belge_no.py`den gelir. Benzersizligi `uq_hareket_belge_no`
@@ -287,7 +296,7 @@ async def toplu_tahsilat(
             user, tip="tahsilat", yon="giris", tutar_kurus=satir.tutar_kurus,
             kasa_id=body.kasa_id, user_id=satir.user_id, unit_id=satir.unit_id,
             assessment_id=satir.assessment_id, aciklama=satir.aciklama,
-            tarih=body.tarih,
+            tarih=body.tarih, donem=satir.donem, yontem="elden",
             # HER SATIR KENDI NUMARASINI ALIR: toplu tahsilat N ayri
             # makbuzdur, tek belge degil. Fis basina tek numara vermek,
             # sakinin kendi makbuzunu bulmasini imkansiz kilardi.
@@ -484,6 +493,10 @@ async def iade(
         yon="cikis" if orijinal.yon == "giris" else "giris",
         tutar_kurus=tutar, kasa_id=orijinal.kasa_id, user_id=orijinal.user_id,
         unit_id=orijinal.unit_id, iade_edilen_id=orijinal.id,
+        # (P192 §1) BORC ATFI TASINIR: iade edilen tahsilat hangi borca
+        # sayildiysa, iade de o borcu YENIDEN ACAR. Tasinmasaydi para
+        # kasadan cikar ama borc kapali kalirdi.
+        assessment_id=orijinal.assessment_id, donem=orijinal.donem,
         belge_no=await belge_no_ata(db, user.tenant_id, "iade", None, body.tarih),
         aciklama=body.aciklama, tarih=body.tarih,
     )
@@ -547,6 +560,8 @@ async def hareket_iptal(
         user_id=orijinal.user_id, unit_id=orijinal.unit_id,
         firma_id=orijinal.firma_id,
         gelir_gider_tanim_id=orijinal.gelir_gider_tanim_id,
+        budget_category_id=orijinal.budget_category_id,
+        assessment_id=orijinal.assessment_id, donem=orijinal.donem,
         ters_kayit_id=orijinal.id,
         # IPTAL KENDI SERISINI kullanir (`IPT-...`). Iptal edilen belgeyle
         # AYNI numarayi tasisaydi defterde iki satir ayni belgeye isaret
@@ -896,24 +911,15 @@ async def finans_ozet(
             .where(DuesAssessment.tarih >= ay_basi)
         )
     ).scalar_one()
-    tahsil_ay = (
-        await db.execute(
-            select(func.coalesce(func.sum(FinansalHareket.tutar_kurus), 0))
-            .where(FinansalHareket.tip == "tahsilat",
-                   FinansalHareket.tarih >= ay_basi)
-        )
-    ).scalar_one()
+    # (P192 §1) TEK KAYNAK: rapor, seffaflik ve mobil ana ekran da bunu
+    # cagirir; iade/iptal dusulur ve yalniz gerceklesmis satirlar sayilir.
+    tahsil_ay = await defter.tahsilat_toplami(db, baslangic=ay_basi)
     toplam_borc = (
         await db.execute(
             select(func.coalesce(func.sum(DuesAssessment.tutar_kurus), 0))
         )
     ).scalar_one()
-    toplam_tahsil = (
-        await db.execute(
-            select(func.coalesce(func.sum(FinansalHareket.tutar_kurus), 0))
-            .where(FinansalHareket.tip == "tahsilat")
-        )
-    ).scalar_one()
+    toplam_tahsil = await defter.tahsilat_toplami(db)
     bakiyeler = await kasa_bakiyeleri(db=db, _=None)  # type: ignore[arg-type]
     icra_acik = (
         await db.execute(

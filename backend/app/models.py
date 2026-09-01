@@ -207,6 +207,10 @@ HAREKET_YON = ENUM("giris", "cikis", name="hareket_yon", create_type=False)
 # gostermek olurdu.
 HAREKET_DURUM = ENUM(
     "odendi", "bekliyor", "onay_bekliyor",
+    # (P192 §1, goc 0083) Kartli odemenin saglayicidan BASARISIZ donmesi.
+    # `bekliyor`da birakmak, hicbir zaman gelmeyecek parayi sonsuza kadar
+    # "bekleyen tahsilat" gostermek olurdu.
+    "iptal",
     name="hareket_durum", create_type=False,
 )
 # (P167 Asama 2, goc 0056) Kisisel hatirlatmanin tekrar kurali. Tekrar
@@ -3065,6 +3069,29 @@ class FinansalHareket(Base):
     #: alani da AYNI kolondur (goc 0056).
     durum: Mapped[str] = mapped_column(
         HAREKET_DURUM, nullable=False, server_default=text("'odendi'")
+    )
+    # --- (P192 §1, goc 0083) TEK DEFTER alanlari -------------------------- #
+    #
+    # Bunlar `dues_payment`in TASIDIGI ama defterin tasimadigi bilgilerdi;
+    # eklenmeden tek deftere gecmek VERI KAYBI olurdu.
+    #
+    #: Paranin NASIL alindigi/verildigi (elden/havale/kart/diger).
+    yontem: Mapped[str | None] = mapped_column(DUES_YONTEM, nullable=True)
+    #: MUHASEBE DONEMI (YYYY-MM) — tahsilatin atfedildigi ay. `tarih`ten
+    #: AYRIDIR: Ocak aidatinin tahsilati Subat'ta yapilabilir.
+    donem: Mapped[str | None] = mapped_column(Text, nullable=True)
+    provider: Mapped[str | None] = mapped_column(Text, nullable=True)
+    provider_ref: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: Butce siniflandirmasi (Wave 2A taksonomisi) — `budget_entry` deftere
+    #: tasinirken kategorisi kaybolmasin diye.
+    budget_category_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    #: Goc izi: satir hangi eski tablodan tasindi. `downgrade()` tam olarak
+    #: bunlari siler; goc bu sayede GERI ALINABILIR.
+    goc_kaynak: Mapped[str | None] = mapped_column(Text, nullable=True)
+    kaynak_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
     )
     created_at = _created_at()
 

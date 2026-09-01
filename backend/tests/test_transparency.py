@@ -29,24 +29,32 @@ def _uid(owner_conn, tid, role):
 
 def _seed_month(owner_conn, tid, creator_id, ay=AY):
     """AY icin: gider 2000TL + gelir 3000TL + 1 daire tahakkuk 750 tam odenmis,
-    1 daire tahakkuk 750 ODENMEMIS (geciken=1). Daire no'lari test icin doner."""
+    1 daire tahakkuk 750 ODENMEMIS (geciken=1). Daire no'lari test icin doner.
+
+    (P192 §1) Tohum TEK DEFTERE (`finansal_hareket`) atiliyor; `budget_entry`
+    ve `dues_payment` artik yazilmiyor. TOPLAM GELIR bu yuzden 3000 degil
+    3750 TL: aidat tahsilati DA gelirdir ve eskiden `budget_entry`e
+    otomatik gelir satiri olarak yazilirdi — bu tohum o otomatigi
+    atladigi icin rakam yapay olarak dusuktu."""
     kg = owner_conn.execute(
         "INSERT INTO budget_category (tenant_id, ad, tip) VALUES (%s,%s,'gider') RETURNING id",
         (str(tid), f"Elektrik-{uuid.uuid4().hex[:4]}"),
     ).fetchone()[0]
     owner_conn.execute(
-        "INSERT INTO budget_entry (tenant_id, kategori_id, tip, tutar_kurus, tarih, created_by) "
-        "VALUES (%s,%s,'gider',200000,%s,%s)",
-        (str(tid), kg, f"{ay}-15", str(creator_id)),
+        "INSERT INTO finansal_hareket (tenant_id, tip, yon, tutar_kurus, tarih, "
+        "budget_category_id, kaydeden_user_id) "
+        "VALUES (%s,'gider','cikis',200000,%s,%s,%s)",
+        (str(tid), f"{ay}-15", kg, str(creator_id)),
     )
     kgel = owner_conn.execute(
         "INSERT INTO budget_category (tenant_id, ad, tip) VALUES (%s,%s,'gelir') RETURNING id",
         (str(tid), f"Aidat-{uuid.uuid4().hex[:4]}"),
     ).fetchone()[0]
     owner_conn.execute(
-        "INSERT INTO budget_entry (tenant_id, kategori_id, tip, tutar_kurus, tarih, created_by) "
-        "VALUES (%s,%s,'gelir',300000,%s,%s)",
-        (str(tid), kgel, f"{ay}-16", str(creator_id)),
+        "INSERT INTO finansal_hareket (tenant_id, tip, yon, tutar_kurus, tarih, "
+        "budget_category_id, kaydeden_user_id) "
+        "VALUES (%s,'gelir','giris',300000,%s,%s,%s)",
+        (str(tid), f"{ay}-16", kgel, str(creator_id)),
     )
     # iki daire
     u_paid = owner_conn.execute(
@@ -65,10 +73,11 @@ def _seed_month(owner_conn, tid, creator_id, ay=AY):
         )
     # yalniz u_paid tam oder
     owner_conn.execute(
-        "INSERT INTO dues_payment (tenant_id, unit_id, tutar_kurus, donem, yontem, durum, "
-        "kaydeden_user_id, idempotency_key) "
-        "VALUES (%s,%s,75000,%s,'elden'::dues_yontem,'basarili'::dues_durum,%s,%s)",
-        (str(tid), str(u_paid[1]), ay, str(creator_id), uuid.uuid4().hex),
+        "INSERT INTO finansal_hareket (tenant_id, tip, yon, unit_id, tutar_kurus, tarih, "
+        "donem, yontem, durum, kaydeden_user_id, idempotency_key, idem_satir) "
+        "VALUES (%s,'tahsilat','giris',%s,75000,%s,%s,'elden'::dues_yontem,"
+        "'odendi'::hareket_durum,%s,%s,0)",
+        (str(tid), str(u_paid[1]), f"{ay}-20", ay, str(creator_id), uuid.uuid4().hex),
     )
     return u_paid[0], u_owe[0]  # no'lar
 
@@ -98,9 +107,11 @@ def test_resident_yayinlanmis_gorur_yayinlanmamis_404(world, client, owner_conn)
     assert r.status_code == 200
     b = r.json()
     assert b["yayinlandi"] is True
-    assert b["toplam_gelir_kurus"] == 300000
+    # 3000 TL butce geliri + 750 TL aidat tahsilati (tek deftere gecisle
+    # birlikte tahsilat da gelirdir — bir kez sayilir).
+    assert b["toplam_gelir_kurus"] == 375000
     assert b["toplam_gider_kurus"] == 200000
-    assert b["net_kurus"] == 100000
+    assert b["net_kurus"] == 175000
     # aidat: 2 daire, 1 tam odeyen -> daire orani %50, geciken 1
     assert b["aidat"]["toplam_daire"] == 2
     assert b["aidat"]["odeyen_daire"] == 1

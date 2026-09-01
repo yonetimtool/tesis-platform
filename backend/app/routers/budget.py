@@ -10,13 +10,29 @@ Kategori silme stratejisi: SOFT-DELETE (PATCH aktif=false). Hard DELETE ucu
 bilincli olarak YOK; hareketi olan kategori DB'de de FK RESTRICT ile korunur.
 Pasif kategoriye YENI kayit yazilamaz; eski kayitlar kategorisini korur.
 
-Otomatik aidat→gelir: basarili aidat odemesi 'Aidat' gelir kategorisine
-kaynak='aidat_odeme' kaydi uretir (bkz. ensure_dues_income_entry) —
-UNIQUE (tenant_id, ilgili_payment_id) ile idempotent.
+===========================================================================
+(P192 §1) DEFTER ARTIK `budget_entry` DEGIL `finansal_hareket`
+===========================================================================
+`budget_entry` uçüncü bir para defteriydi: kasa bagi yoktu, DELETE
+edilebiliyordu ve aidat odemesinden OTOMATIK bir kopya uretiyordu
+(`ensure_dues_income_entry`). Ayni para hem orada hem `finansal_hareket`te
+duruyor, seffaflik raporu ile finans ozeti ayni ayda farkli gider
+gosterebiliyordu.
+
+Bu modulun UCLARI ve YANIT BICIMI aynen durur; altlarindaki tablo
+`finansal_hareket` oldu (goc 0083 manuel satirlari tasidi). Kategori
+taksonomisi (`budget_category`) KORUNDU ve defter satirinda
+`budget_category_id` olarak yasiyor.
+
+IKI DAVRANIS DEGISTI ve ikisi de bilincli:
+  * DELETE artik SATIR SILMEZ, TERS KAYIT yazar (defterde DELETE yetkisi
+    goc 0047'de geri alindi). Yanit yine 204.
+  * Her yazma DENETIME islenir (P192 §6.1): bu modulde tek bir
+    `audit_user` cagrisi YOKTU ve seffaflik yayinini besleyen defter
+    denetim izi olmadan yaziliyordu.
 """
 from __future__ import annotations
 
-import calendar
 import logging
 import uuid
 from datetime import date
@@ -26,10 +42,13 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..audit import Action, audit_user
+from ..belge_no import belge_no_ata
 from ..crud_helpers import get_or_404, is_unique_violation, translate_integrity
+from .. import defter
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
-from ..models import AppUser, BudgetCategory, BudgetEntry, DuesPayment
+from ..models import AppUser, BudgetCategory, FinansalHareket
 from ..schemas import (
     BudgetCategoryCreate,
     BudgetCategoryListResponse,
@@ -68,30 +87,18 @@ AIDAT_KATEGORI_AD = "Aidat"
 _CAT_CONFLICT = APIError(409, "conflict", "butce_kategori_ad_tip_var")
 
 
-def _donem_range(donem: str) -> tuple[date, date]:
-    """'YYYY-MM' -> (ayin ilk gunu, ayin son gunu). Bicim hatasi -> 422."""
-    try:
-        y, m = donem.split("-")
-        year, month = int(y), int(m)
-        first = date(year, month, 1)
-    except (ValueError, TypeError):
-        raise APIError(422, "validation_error", "donem_bicimi")
-    last = date(year, month, calendar.monthrange(year, month)[1])
-    return first, last
-
-
 def date_filters(
     donem: str | None, baslangic: date | None, bitis: date | None
 ) -> list:
     """donem VEYA (baslangic/bitis) → tarih kosullari. donem oncelikli."""
     if donem is not None:
-        first, last = _donem_range(donem)
-        return [BudgetEntry.tarih >= first, BudgetEntry.tarih <= last]
+        first, last = defter.donem_araligi(donem)
+        return [FinansalHareket.tarih >= first, FinansalHareket.tarih <= last]
     where = []
     if baslangic is not None:
-        where.append(BudgetEntry.tarih >= baslangic)
+        where.append(FinansalHareket.tarih >= baslangic)
     if bitis is not None:
-        where.append(BudgetEntry.tarih <= bitis)
+        where.append(FinansalHareket.tarih <= bitis)
     return where
 
 
@@ -163,10 +170,59 @@ async def update_category(
 
 
 # ------------------------------- defter ------------------------------------ #
-def _entry_out(obj: BudgetEntry, kategori_ad: str | None) -> BudgetEntryOut:
-    out = BudgetEntryOut.model_validate(obj)
-    out.kategori_ad = kategori_ad
-    return out
+#: Defterdeki hangi tipler butce defterinde gorunur. `tahsilat` GELIR
+#: sayilir: eskiden aidat odemesi `budget_entry`e kaynak='aidat_odeme'
+#: gelir satiri olarak yaziliyordu ve butce ozeti onu iceriyordu. Disarida
+#: biraksaydik sitenin geliri bir gecede aidat kadar dusuk gorunurdu.
+_DEFTER_TIPLERI = ("gelir", "gider", "tahsilat")
+
+
+def _tip(h: FinansalHareket) -> str:
+    return "gelir" if h.tip in ("gelir", "tahsilat") else "gider"
+
+
+def _kaynak(h: FinansalHareket) -> str:
+    """Satir elle mi girildi, aidat odemesinden mi geldi.
+
+    `kaynak` bir SUTUN degil, TIPTEN TURETILIR: tek defterde aidat
+    tahsilatinin kendisi zaten `tip='tahsilat'`tir ve ayrica bir kaynak
+    etiketi tutmak, iki alanin gunun birinde ayrisma riskini acardi.
+    """
+    return "aidat_odeme" if h.tip == "tahsilat" else "manuel"
+
+
+def _entry_out(h: FinansalHareket, kategori_ad: str | None) -> BudgetEntryOut:
+    return BudgetEntryOut(
+        id=h.id,
+        kategori_id=h.budget_category_id,
+        kategori_ad=kategori_ad,
+        tip=_tip(h),
+        tutar_kurus=h.tutar_kurus,
+        tarih=h.tarih,
+        aciklama=h.aciklama,
+        kaynak=_kaynak(h),
+        # Aidat satirinda "ilgili odeme" SATIRIN KENDISIDIR: odeme ile
+        # gelir kaydi artik ayri iki satir degil.
+        ilgili_payment_id=h.id if h.tip == "tahsilat" else None,
+        created_by=h.kaydeden_user_id,
+        created_at=h.created_at,
+    )
+
+
+async def _kategori_adlari(
+    db: AsyncSession, satirlar: list[FinansalHareket]
+) -> dict[uuid.UUID, str]:
+    idler = {h.budget_category_id for h in satirlar if h.budget_category_id}
+    if not idler:
+        return {}
+    return dict(
+        (
+            await db.execute(
+                select(BudgetCategory.id, BudgetCategory.ad)
+                .where(BudgetCategory.id.in_(idler))
+            )
+        ).all()
+    )
 
 
 @router.post("/entries", response_model=BudgetEntryOut, status_code=201)
@@ -183,15 +239,22 @@ async def create_entry(
     if not cat.aktif:
         raise APIError(422, "invalid_reference", "butce_pasif_kategoriye_yazilamaz")
 
-    obj = BudgetEntry(
+    obj = FinansalHareket(
         tenant_id=user.tenant_id,
-        kategori_id=cat.id,
         tip=cat.tip,  # kategoriden turetilir — uyusmazlik imkansiz
+        # GELIR kasaya GIRER, GIDER kasadan CIKAR — yon istemciden alinmaz.
+        yon="giris" if cat.tip == "gelir" else "cikis",
         tutar_kurus=body.tutar_kurus,
         tarih=body.tarih,
+        # Kasasiz bir defter satiri hicbir kasa bakiyesinde gorunmezdi
+        # (P192 §2.1); verilmediyse merkez kasa cozulur/acilir.
+        kasa_id=await defter.kasa_coz(db, user.tenant_id),
         aciklama=body.aciklama,
-        kaynak="manuel",
-        created_by=user.id,
+        budget_category_id=cat.id,
+        kaydeden_user_id=user.id,
+        belge_no=await belge_no_ata(
+            db, user.tenant_id, cat.tip, None, body.tarih
+        ),
     )
     db.add(obj)
     try:
@@ -199,6 +262,13 @@ async def create_entry(
     except IntegrityError as exc:
         raise translate_integrity(exc)
     await db.refresh(obj)
+    # (P192 §6.1) Bu modulde denetim izi YOKTU.
+    await audit_user(
+        db, user, Action.FINANS_HAREKET_CREATE, resource_type="finansal_hareket",
+        resource_id=obj.id,
+        meta={"kaynak": "butce", "tip": cat.tip, "tutar_kurus": obj.tutar_kurus,
+              "kategori_id": str(cat.id)},
+    )
     return _entry_out(obj, cat.ad)
 
 
@@ -216,36 +286,52 @@ async def list_entries(
     _: AppUser = Depends(_DEFTER_OKUR),
 ) -> BudgetEntryListResponse:
     where = date_filters(donem, baslangic, bitis)
+    where.append(FinansalHareket.tip.in_(_DEFTER_TIPLERI))
+    # Iptal edilmis satirlar ve iptal satirlarinin kendisi defterde
+    # GORUNMEZ: butce defteri "gerceklesen" listesidir.
+    where.append(FinansalHareket.durum == defter.GERCEKLESEN)
+    where.append(FinansalHareket.id.notin_(defter.iptal_edilmis()))
     if tip is not None:
-        where.append(BudgetEntry.tip == tip)
+        where.append(
+            FinansalHareket.tip.in_(("gelir", "tahsilat")) if tip == "gelir"
+            else FinansalHareket.tip == "gider"
+        )
     if kategori_id is not None:
-        where.append(BudgetEntry.kategori_id == kategori_id)
+        where.append(FinansalHareket.budget_category_id == kategori_id)
     if kaynak is not None:
-        where.append(BudgetEntry.kaynak == kaynak)
+        where.append(
+            FinansalHareket.tip == "tahsilat" if kaynak == "aidat_odeme"
+            else FinansalHareket.tip.in_(("gelir", "gider"))
+        )
 
     total = (
-        await db.execute(select(func.count()).select_from(BudgetEntry).where(*where))
+        await db.execute(select(func.count()).select_from(FinansalHareket).where(*where))
     ).scalar_one()
-    rows = (
-        await db.execute(
-            select(BudgetEntry, BudgetCategory.ad)
-            .join(BudgetCategory, BudgetCategory.id == BudgetEntry.kategori_id)
-            .where(*where)
-            .order_by(BudgetEntry.tarih.desc(), BudgetEntry.created_at.desc(),
-                      BudgetEntry.id.desc())
-            .limit(limit)
-            .offset(offset)
-        )
-    ).all()
+    rows = list(
+        (
+            await db.execute(
+                select(FinansalHareket)
+                .where(*where)
+                .order_by(FinansalHareket.tarih.desc(),
+                          FinansalHareket.created_at.desc(),
+                          FinansalHareket.id.desc())
+                .limit(limit)
+                .offset(offset)
+            )
+        ).scalars().all()
+    )
+    adlar = await _kategori_adlari(db, rows)
     return BudgetEntryListResponse(
         meta={"limit": limit, "offset": offset, "total": total},
-        items=[_entry_out(e, ad) for e, ad in rows],
+        items=[_entry_out(h, adlar.get(h.budget_category_id)) for h in rows],
     )
 
 
-async def _manual_entry_or_error(db: AsyncSession, entry_id: uuid.UUID) -> BudgetEntry:
-    obj = await get_or_404(db, BudgetEntry, entry_id)
-    if obj.kaynak != "manuel":
+async def _manual_entry_or_error(
+    db: AsyncSession, entry_id: uuid.UUID
+) -> FinansalHareket:
+    obj = await get_or_404(db, FinansalHareket, entry_id)
+    if obj.tip not in ("gelir", "gider"):
         # Otomatik aidat kaydi defterden elle oynanamaz — aidat mutabakati
         # bozulmasin (odeme iptali/duzeltmesi aidat modulunun isi).
         raise APIError(422, "invalid_reference", "butce_otomatik_aidat_kaydi")
@@ -257,10 +343,12 @@ async def update_entry(
     entry_id: uuid.UUID,
     body: BudgetEntryUpdate,
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_MANAGER),
+    user: AppUser = Depends(_MANAGER),
 ) -> BudgetEntryOut:
     obj = await _manual_entry_or_error(db, entry_id)
     data = body.model_dump(exclude_unset=True)
+    eski = {"tutar_kurus": obj.tutar_kurus, "tarih": str(obj.tarih),
+            "kategori_id": str(obj.budget_category_id)}
 
     if "kategori_id" in data:
         cat = (
@@ -273,17 +361,32 @@ async def update_entry(
         if not cat.aktif:
             raise APIError(422, "invalid_reference", "butce_pasif_kategoriye_tasinamaz")
         obj.tip = cat.tip  # tip kategoriyle birlikte guncellenir
+        obj.yon = "giris" if cat.tip == "gelir" else "cikis"
+        obj.budget_category_id = cat.id
 
     for key, value in data.items():
+        if key == "kategori_id":
+            continue
         setattr(obj, key, value)
-    obj.updated_at = func.now()
     try:
         await db.flush()
     except IntegrityError as exc:
         raise translate_integrity(exc)
     await db.refresh(obj)
+    # (P192 §6.1) ESKI/YENI deger denetime yazilir: defter satirinin tutari
+    # degistiyse bunun izi kalmali.
+    await audit_user(
+        db, user, Action.FINANS_HAREKET_CREATE, resource_type="finansal_hareket",
+        resource_id=obj.id,
+        meta={"kaynak": "butce_duzenleme", "eski": eski,
+              "yeni": {"tutar_kurus": obj.tutar_kurus, "tarih": str(obj.tarih),
+                       "kategori_id": str(obj.budget_category_id)}},
+    )
     kategori_ad = (
-        await db.execute(select(BudgetCategory.ad).where(BudgetCategory.id == obj.kategori_id))
+        await db.execute(
+            select(BudgetCategory.ad)
+            .where(BudgetCategory.id == obj.budget_category_id)
+        )
     ).scalar_one_or_none()
     return _entry_out(obj, kategori_ad)
 
@@ -292,11 +395,45 @@ async def update_entry(
 async def delete_entry(
     entry_id: uuid.UUID,
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_MANAGER),
+    user: AppUser = Depends(_MANAGER),
 ) -> Response:
+    """Defter satirini KALDIR — ters kayitla (P192 §1).
+
+    SATIR SILINMEZ: `finansal_hareket` uzerinde app_rw'nin DELETE yetkisi
+    goc 0047'de geri alindi ve bu bilincli. Silme, "bu para nereye gitti"
+    sorusunu cevapsiz birakirdi. Yerine TAM TUTARLI ters kayit yazilir;
+    listeler iki satiri da gostermez cunku ikisi birbirini goturur.
+    """
     obj = await _manual_entry_or_error(db, entry_id)
-    await db.delete(obj)
+    zaten = (
+        await db.execute(
+            select(FinansalHareket.id)
+            .where(FinansalHareket.ters_kayit_id == obj.id)
+        )
+    ).first()
+    if zaten is not None:
+        raise APIError(409, "conflict", "hareket_zaten_iptal")
+    ters = FinansalHareket(
+        tenant_id=obj.tenant_id,
+        tip="iptal",
+        yon="cikis" if obj.yon == "giris" else "giris",
+        tutar_kurus=obj.tutar_kurus,
+        tarih=obj.tarih,
+        kasa_id=obj.kasa_id,
+        budget_category_id=obj.budget_category_id,
+        ters_kayit_id=obj.id,
+        aciklama=obj.aciklama,
+        kaydeden_user_id=user.id,
+        belge_no=await belge_no_ata(db, obj.tenant_id, "iptal", None, obj.tarih),
+    )
+    db.add(ters)
     await db.flush()
+    await audit_user(
+        db, user, Action.FINANS_HAREKET_CREATE, resource_type="finansal_hareket",
+        resource_id=ters.id,
+        meta={"kaynak": "butce_iptal", "iptal_edilen": str(obj.id),
+              "tutar_kurus": obj.tutar_kurus},
+    )
     return Response(status_code=204)
 
 
@@ -310,32 +447,40 @@ async def budget_summary(
     # Seffaflik (Wave 2B): agregat ozet TUM rollere acik.
     _: AppUser = Depends(_SUMMARY_READER),
 ) -> BudgetSummary:
+    if donem is not None:
+        ilk, son = defter.donem_araligi(donem)
+    else:
+        ilk, son = baslangic, bitis
+
+    # TEK KAYNAK (P192 §1): rapor, seffaflik ve panel ozeti de bunlari cagirir.
+    gelir = await defter.gelir_toplami(db, baslangic=ilk, bitis=son)
+    gider = await defter.gider_toplami(db, baslangic=ilk, bitis=son)
+
+    # Kategori kirilimi — YALNIZ `budget_category` tasiyan satirlar.
+    # Kategorisiz defter satirlarini uydurma bir kategoriye koymak, butce
+    # kirilimini gercek olmayan bir kalemle doldururdu.
     where = date_filters(donem, baslangic, bitis)
-
-    # tip toplamlari (KURUS; SUM SQL'de — satirlar cekilmez).
-    rows = (
-        await db.execute(
-            select(BudgetEntry.tip, func.coalesce(func.sum(BudgetEntry.tutar_kurus), 0))
-            .where(*where)
-            .group_by(BudgetEntry.tip)
-        )
-    ).all()
-    totals = {tip: int(toplam) for tip, toplam in rows}
-    gelir = totals.get("gelir", 0)
-    gider = totals.get("gider", 0)
-
-    # kategori kirilimi
+    where += [
+        FinansalHareket.budget_category_id.isnot(None),
+        FinansalHareket.durum == defter.GERCEKLESEN,
+        FinansalHareket.tip.in_(_DEFTER_TIPLERI),
+        FinansalHareket.id.notin_(defter.iptal_edilmis()),
+    ]
     cat_rows = (
         await db.execute(
             select(
-                BudgetEntry.kategori_id,
+                FinansalHareket.budget_category_id,
                 BudgetCategory.ad,
-                BudgetEntry.tip,
-                func.sum(BudgetEntry.tutar_kurus),
+                BudgetCategory.tip,
+                func.sum(FinansalHareket.tutar_kurus),
             )
-            .join(BudgetCategory, BudgetCategory.id == BudgetEntry.kategori_id)
+            .join(
+                BudgetCategory,
+                BudgetCategory.id == FinansalHareket.budget_category_id,
+            )
             .where(*where)
-            .group_by(BudgetEntry.kategori_id, BudgetCategory.ad, BudgetEntry.tip)
+            .group_by(FinansalHareket.budget_category_id, BudgetCategory.ad,
+                      BudgetCategory.tip)
             .order_by(BudgetCategory.ad)
         )
     ).all()
@@ -351,61 +496,3 @@ async def budget_summary(
             for kid, ad, tip, toplam in cat_rows
         ],
     )
-
-
-# ---------------------- OTOMATIK aidat -> gelir ----------------------------- #
-async def ensure_dues_income_entry(db: AsyncSession, payment: DuesPayment) -> None:
-    """Basarili aidat odemesi icin TEK otomatik gelir kaydini garanti et.
-
-    * IDEMPOTENT: UNIQUE (tenant_id, ilgili_payment_id) — ayni odeme ikinci
-      kaydi URETEMEZ; cakisma sessizce yutulur.
-    * Kategori: '{AIDAT_KATEGORI_AD}' (gelir) — yoksa olusturulur (get-or-create).
-    * Odeme kaydini ASLA dusurmez: butce tarafindaki her aksaklik loglanip
-      yutulur (normalde basarilidir; kacan kayit sonradan mutabakatla gorulur).
-    * Tarih = odemenin gerceklestigi gun (nakit esasi), tahakkuk donemi degil.
-    * Cagiran, odeme ile AYNI transaction icindedir (get_tenant_db /webhook
-      session'i) — odeme commit'lenirse kayit da commit'lenir.
-    """
-    if payment.durum != "basarili":
-        return
-    try:
-        async with db.begin_nested():
-            cat = (
-                await db.execute(
-                    select(BudgetCategory).where(
-                        BudgetCategory.ad == AIDAT_KATEGORI_AD,
-                        BudgetCategory.tip == "gelir",
-                    )
-                )
-            ).scalar_one_or_none()
-            if cat is None:
-                cat = BudgetCategory(
-                    tenant_id=payment.tenant_id, ad=AIDAT_KATEGORI_AD, tip="gelir"
-                )
-                db.add(cat)
-                await db.flush()
-
-            aciklama = "Aidat odemesi (otomatik)"
-            if payment.donem:
-                aciklama = f"Aidat odemesi {payment.donem} (otomatik)"
-            db.add(
-                BudgetEntry(
-                    tenant_id=payment.tenant_id,
-                    kategori_id=cat.id,
-                    tip="gelir",
-                    tutar_kurus=payment.tutar_kurus,  # odemeyle BIREBIR
-                    tarih=payment.odeme_zamani.date(),
-                    aciklama=aciklama,
-                    kaynak="aidat_odeme",
-                    ilgili_payment_id=payment.id,
-                    created_by=payment.kaydeden_user_id,
-                )
-            )
-            await db.flush()
-    except IntegrityError as exc:
-        if is_unique_violation(exc):
-            # Ayni odemenin kaydi zaten var (yaris/tekrar) — idempotent, sorun yok.
-            return
-        log.warning("aidat->butce gelir kaydi yazilamadi (payment=%s): %s", payment.id, exc)
-    except Exception as exc:  # noqa: BLE001 — odeme butce hatasina kurban edilmez
-        log.warning("aidat->butce gelir kaydi yazilamadi (payment=%s): %s", payment.id, exc)
