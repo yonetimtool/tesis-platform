@@ -79,3 +79,40 @@ def eposta_kod_metni(amac: str, kod: str, dk: int) -> tuple[str, str]:
         f"— {MARKA}\n{GONDEREN}"
     )
     return konu, govde
+
+
+# --------------------------------------------------------------------------- #
+# (P192 §4.4) MAKBUZ E-POSTASI
+#
+# Push ANLIK, e-posta KALICIDIR: sakin telefonunu degistirse, uygulamayi
+# silse ya da bildirimi kacirsa bile makbuzun bir kopyasi posta kutusunda
+# durur. Ikisi birlikte gonderilir; biri otekinin yerine gecmez.
+#
+# PDF EKLENMEZ, BAGLANTI VERILIR: ek olarak gonderilen bir PDF, e-posta
+# saglayicilarinin boyut sinirlarina ve spam suzgeclerine takilir; ayrica
+# baglanti KISA OMURLUDUR (presign) ve posta kutusu ele gecse bile
+# suresiz erisim vermez.
+# --------------------------------------------------------------------------- #
+def makbuz_metni(
+    *, site_ad: str, belge_no: str, tutar: str, baglanti: str | None
+) -> tuple[str, str]:
+    """(konu, govde) — sade metin.
+
+    HTML YOK: makbuz bildirimi bicimlendirmeye ihtiyac duymayan uc
+    satirlik bir bilgidir ve HTML surumu ikinci bir bakim yuku olurdu.
+    """
+    konu = f"{site_ad} — Ödeme makbuzunuz ({belge_no})"
+    satirlar = [
+        f"Sayın site sakini,",
+        "",
+        f"{tutar} tutarındaki ödemeniz alınmıştır.",
+        f"Makbuz no: {belge_no}",
+    ]
+    if baglanti:
+        satirlar += [
+            "",
+            "Makbuzun PDF kopyası (bağlantı kısa ömürlüdür):",
+            baglanti,
+        ]
+    satirlar += ["", f"{site_ad}"]
+    return konu, "\n".join(satirlar)

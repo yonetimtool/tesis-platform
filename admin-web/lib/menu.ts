@@ -252,6 +252,10 @@ const OGELER: readonly MenuOgesi[] = [
   { href: "/finans/acilis", anahtar: "kabukAcilisFisleri", icon: "receipt", grup: "finans" },
   // (P191 §4) Banka entegrasyonu — ekstre -> eslestirme -> tahsilat.
   { href: "/finans/banka", anahtar: "kabukBankaEntegrasyonu", icon: "bank", grup: "finans" },
+  // (P192 §4) OTOMASYON — aidat plani, borc hatirlatma, duzenli gider,
+  // otomasyon gunlugu. Dordu de "yoneticinin her ay elle yaptigi is"i
+  // yanitladigi icin tek sayfada.
+  { href: "/finans/otomasyon", anahtar: "finansOtomasyon", icon: "clock", grup: "finans" },
   // (P167 §1.4) ICRA DOSYALARI — bagimsiz ust sekme DEGIL, finansin ALTI.
   // Icra bir borcun son durumudur; kullanici onu "hukuk" basligi altinda
   // degil, borcu takip ettigi yerde arar.

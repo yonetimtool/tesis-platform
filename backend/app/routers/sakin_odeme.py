@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -27,15 +27,23 @@ from .. import defter
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from .. import odeme_kodu as kod_modulu
+from .. import storage
 from ..models import (
     AppUser,
     DuesAssessment,
     FinansalHareket,
     Kasa,
+    Receipt,
     UnitResident,
 )
 from ..payments import get_payment_provider
-from ..schemas import KartOdemeBaslat, KartOdemeSonuc, OdemeBilgileri
+from ..schemas import (
+    KartOdemeBaslat,
+    KartOdemeSonuc,
+    MakbuzListResponse,
+    MakbuzOut,
+    OdemeBilgileri,
+)
 
 router = APIRouter(tags=["aidat"])
 
@@ -134,6 +142,54 @@ async def odeme_bilgileri(
         # Manuel saglayici "kart" degildir: kart secenegini acmak, sakini
         # calismayan bir akisa sokardi.
         kart_aktif=settings.payment_provider != "manual",
+    )
+
+
+@router.get("/me/makbuzlar", response_model=MakbuzListResponse)
+async def makbuzlarim(
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_RESIDENT),
+) -> MakbuzListResponse:
+    """(P192 §4.4) SAKININ MAKBUZ ARSIVI.
+
+    Makbuz uretiliyordu ama sakin ONA ULASAMIYORDU: makbuz ucu
+    (`/banka/makbuz/{id}`) yalniz yonetime acikti ve arsiv ekrani yoktu.
+    Odedigi paranin belgesine erisemeyen sakin, her seferinde yonetime
+    sormak zorunda kalirdi.
+
+    KAPSAM KENDI MAKBUZLARI: `user_id` suzgeci ZORUNLU — daire uzerinden
+    suzmek, ayni dairede oturmus ESKI sakinin makbuzlarini yeni sakine
+    gostermek olurdu.
+    """
+    where = [Receipt.user_id == user.id]
+    total = (
+        await db.execute(select(func.count()).select_from(Receipt).where(*where))
+    ).scalar_one()
+    rows = (
+        await db.execute(
+            select(Receipt).where(*where)
+            .order_by(Receipt.created_at.desc(), Receipt.id.desc())
+            .limit(limit).offset(offset)
+        )
+    ).scalars().all()
+    items = []
+    for m in rows:
+        url = None
+        if m.pdf_key:
+            try:
+                url = storage.presign_get(m.pdf_key)
+            except Exception:  # noqa: BLE001 — depo erisilemezse kayit yine donsun
+                url = None
+        items.append(
+            MakbuzOut(
+                id=m.id, belge_no=m.belge_no, tutar_kurus=int(m.tutar_kurus),
+                unit_id=m.unit_id, created_at=m.created_at, pdf_url=url,
+            )
+        )
+    return MakbuzListResponse(
+        meta={"limit": limit, "offset": offset, "total": total}, items=items
     )
 
 

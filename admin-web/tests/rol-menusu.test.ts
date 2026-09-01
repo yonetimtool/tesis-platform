@@ -78,6 +78,9 @@ const BIRINCIL_UC: Record<string, string> = {
   "/finans/virman": "GET /finans/hareketler",
   "/finans/iade": "GET /finans/hareketler",
   "/finans/acilis": "GET /finans/hareketler",
+  // (P192 §4) Otomasyon sayfasinin BIRINCIL ucu plan listesidir; oteki
+  // uc kart ayni rol kapisinin arkasinda.
+  "/finans/otomasyon": "GET /aidat-planlari",
   // (P191 §4) Banka entegrasyonu — sayfanin listesini `/banka/hareketler`
   // doldurur; ice aktarma ve eslestirme YAZMA ucudur ve sayfa acilirken
   // cagrilmaz.

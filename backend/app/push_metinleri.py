@@ -564,6 +564,94 @@ METINLER: dict[str, PushMetni] = {
         },
         params=('donem', 'tutar'),
     ),
+    # ----------------------- (P192 §4) OTOMASYON ------------------------- #
+    #
+    # Dordu de OTOMATIK gorevlerden dogar. Metinler burada cunku push
+    # asenkrondur: dil istekten degil CIHAZ KAYDINDAN okunur.
+    "aidat_hatirlatma": PushMetni(
+        baslik={
+            "tr": "Aidat hatırlatması",
+            "en": "Payment reminder",
+            "ar": "تذكير بالدفع",
+            "ru": "Напоминание об оплате",
+            "de": "Zahlungserinnerung",
+            "fr": "Rappel de paiement",
+            "es": "Recordatorio de pago",
+        },
+        govde={
+            "tr": "{tutar} tutarında ödenmemiş borcunuz var (son ödeme: {vade}).",
+            "en": "You have an unpaid balance of {tutar} (due: {vade}).",
+            "ar": "لديك رصيد غير مدفوع بقيمة {tutar} (الاستحقاق: {vade}).",
+            "ru": "У вас есть неоплаченная задолженность {tutar} (срок: {vade}).",
+            "de": "Sie haben einen offenen Betrag von {tutar} (fällig: {vade}).",
+            "fr": "Vous avez un solde impayé de {tutar} (échéance : {vade}).",
+            "es": "Tiene un saldo pendiente de {tutar} (vencimiento: {vade}).",
+        },
+        params=("tutar", "vade"),
+    ),
+    "aidat_onizleme": PushMetni(
+        baslik={
+            "tr": "Yaklaşan tahakkuk",
+            "en": "Upcoming charge run",
+            "ar": "استحقاق قادم",
+            "ru": "Предстоящее начисление",
+            "de": "Bevorstehende Sollstellung",
+            "fr": "Prochaine facturation",
+            "es": "Próximo cargo",
+        },
+        govde={
+            "tr": "{gun} gün sonra {daire} daireye toplam {tutar} tahakkuk edilecek.",
+            "en": "In {gun} days, {tutar} will be charged to {daire} units.",
+            "ar": "بعد {gun} أيام سيتم تحميل {tutar} على {daire} وحدة.",
+            "ru": "Через {gun} дн. будет начислено {tutar} на {daire} квартир.",
+            "de": "In {gun} Tagen werden {tutar} auf {daire} Einheiten gebucht.",
+            "fr": "Dans {gun} jours, {tutar} seront imputés à {daire} lots.",
+            "es": "En {gun} días se cargarán {tutar} a {daire} unidades.",
+        },
+        params=("gun", "daire", "tutar"),
+    ),
+    "aylik_ozet": PushMetni(
+        baslik={
+            "tr": "Aylık özet",
+            "en": "Monthly summary",
+            "ar": "الملخص الشهري",
+            "ru": "Месячная сводка",
+            "de": "Monatsübersicht",
+            "fr": "Résumé mensuel",
+            "es": "Resumen mensual",
+        },
+        govde={
+            "tr": "{donem}: tahsilat {tahsilat}, gider {gider}, tahsilat oranı %{oran}.",
+            "en": "{donem}: collected {tahsilat}, spent {gider}, collection rate {oran}%.",
+            "ar": "{donem}: التحصيل {tahsilat}، المصروف {gider}، نسبة التحصيل {oran}%.",
+            "ru": "{donem}: собрано {tahsilat}, расходы {gider}, собираемость {oran}%.",
+            "de": "{donem}: Einnahmen {tahsilat}, Ausgaben {gider}, Inkassoquote {oran}%.",
+            "fr": "{donem} : encaissé {tahsilat}, dépensé {gider}, taux {oran} %.",
+            "es": "{donem}: cobrado {tahsilat}, gastado {gider}, tasa {oran}%.",
+        },
+        params=("donem", "tahsilat", "gider", "oran"),
+    ),
+    "gider_onay": PushMetni(
+        baslik={
+            "tr": "Onay bekleyen gider",
+            "en": "Expense awaiting approval",
+            "ar": "مصروف بانتظار الموافقة",
+            "ru": "Расход ожидает утверждения",
+            "de": "Ausgabe zur Genehmigung",
+            "fr": "Dépense en attente d'approbation",
+            "es": "Gasto pendiente de aprobación",
+        },
+        govde={
+            "tr": "{ad} için {tutar} tutarında gider onayınızı bekliyor.",
+            "en": "An expense of {tutar} for {ad} is awaiting your approval.",
+            "ar": "مصروف بقيمة {tutar} لـ {ad} بانتظار موافقتك.",
+            "ru": "Расход {tutar} по «{ad}» ожидает вашего утверждения.",
+            "de": "Eine Ausgabe über {tutar} für {ad} wartet auf Ihre Genehmigung.",
+            "fr": "Une dépense de {tutar} pour {ad} attend votre approbation.",
+            "es": "Un gasto de {tutar} para {ad} espera su aprobación.",
+        },
+        params=("ad", "tutar"),
+    ),
     "test": PushMetni(
         baslik={
             "tr": "Test bildirimi",

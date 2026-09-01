@@ -44,6 +44,12 @@ export const BILDIRIM_TIP: EnumHarita = {
   aidat_borc: "bildirimTipAidatBorc",
   // (P191 §4) Banka eslestirmesi odemeyi isledi -> "odemeniz alindi".
   aidat_odendi: "bildirimTipAidatOdendi",
+  // (P192 §4, göç 0086) OTOMASYON bildirimleri: hatırlatma (sakine),
+  // tahakkuk önizlemesi / aylık özet / gider onayı (yöneticiye).
+  aidat_hatirlatma: "bildirimTipAidatHatirlatma",
+  aidat_onizleme: "bildirimTipAidatOnizleme",
+  aylik_ozet: "bildirimTipAylikOzet",
+  gider_onay: "bildirimTipGiderOnay",
 };
 
 /** `patrol_window_durum` (pano "Bugunun turlari" + tur raporu). */

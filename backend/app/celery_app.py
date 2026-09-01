@@ -75,4 +75,20 @@ celery_app.conf.beat_schedule = {
         "task": "scheduler.run_retention",
         "schedule": crontab(hour=1, minute=0),
     },
+    # (P192 §4) FINANS OTOMASYONU — her gun 06:00 Europe/Istanbul
+    # (03:00 UTC; TR yil boyu UTC+3, DST yok).
+    #
+    # SAAT SECIMI: tahakkuk ve hatirlatma bildirimleri SABAH gitmeli —
+    # gece yarisi gonderilen bir "borcunuz var" bildirimi kimseyi
+    # harekete gecirmez, yalnizca uyandirir. Retention 01:00'de kosuyor;
+    # ondan SONRA olmasi da bilincli: silinmis/anonimlestirilmis
+    # kayitlara bildirim gitmesin.
+    #
+    # GUNDE BIR: gorev idempotenttir (her is kendi damgasina bakar), yani
+    # daha sik kosmak zarar vermez — ama gerek de yok: hepsi GUNLUK
+    # kararlardir.
+    "finans-otomasyonu": {
+        "task": "scheduler.finans_otomasyonu",
+        "schedule": crontab(hour=3, minute=0),
+    },
 }

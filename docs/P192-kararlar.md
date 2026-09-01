@@ -270,3 +270,138 @@ kaybettirirdi; dağıtılan toplam her zaman girdiye eşit (testle kilitli:
 
 Ağırlığı olmayan daire `None` alır ve **atlanır** — sessizce sıfır
 borçlandırmak, yönetimin fark etmediği eksik tahakkuk üretirdi.
+
+---
+
+## Bölüm 4 — Otomasyon
+
+### Üç ortak kural
+
+Dört tablo (`aidat_plani`, `hatirlatma_ayari`, `duzenli_gider`,
+`otomasyon_gunlugu`) ve beş görev aynı üç kuralı paylaşıyor:
+
+1. **Açılıp kapatılabilir** (`aktif`). Bir hatayı durdurmanın tek yolu
+   kaydı silmek olmamalı.
+2. **İz bırakır** (`otomasyon_gunlugu`, append-only). Bir görevin
+   çalıştığı ancak ürettiği kayda bakılarak anlaşılabilseydi, **hiçbir şey
+   üretmediği** durum — ki asıl merak edilen odur — görünmez kalırdı.
+3. **İdempotent.** Beat sıklığı bir **dağıtım detayıdır**, iş kuralı
+   değil; ikinci koşum aynı işi tekrar yapmamalı.
+
+İdempotency her yerde aynı desenle: yapılan iş bir **damga** bırakır
+(`aidat_plani.son_donem`, `duzenli_gider.sonraki_tarih`,
+`hatirlatma_ayari.son_calisma`, `otomasyon_gunlugu` satırı) ve görev
+damgaya bakar. Tarihe bakıp "bugün ayın 5'i mi" demek yetmezdi: görev gün
+içinde birden çok kez koşar ve saatlik bir pencere uydurmak, kaçırılan bir
+koşumu telafi edilemez kılardı.
+
+**Tenant bağlamı:** görevler tek tesis için çalışır, RLS bağlamı çağıran
+tarafından kurulur. Owner bağlantısıyla tüm tesisleri tek sorguda işlemek
+daha hızlı olurdu ama RLS'i bypass ederdi — otomasyonun bir tesisin
+verisini diğerine yazma ihtimali, kazandığı hızdan pahalı.
+
+**Bir tesisin hatası diğerlerini düşürmez:** her tesis kendi işlemi ve
+kendi `try/except`i içinde. Aksi halde tek bir bozuk plan bütün
+müşterilerin tahakkukunu durdururdu.
+
+### 4.1 Otomatik aylık tahakkuk
+
+`tahakkuk_gunu` 1–28 ile sınırlı: 29/30/31 her ayda yoktur ve "ayın 31'i"
+kuralı Şubat'ta **sessizce hiç çalışmazdı**.
+
+**Önizleme ile tahakkuk tek görevde**: ikisi aynı planı okur. Ayrı
+görevler olsaydı biri planın değişen tutarını görüp diğeri görmeyebilirdi.
+
+**Erteleme planı kapatmaz** (`ertelenen_donem`): pasife almak gelecek
+ayları da kapatırdı; yönetici genelde "bu ay olmasın" der. İşlenmiş bir
+dönem ertelenemez (409) — borç yazıldı, geri almak ters kayıtla olur.
+
+**Elle ve otomatik tahakkuk aynı çekirdeği kullanır.** `borclandirma_uc.py`
+içindeki plan üretimi ve satır yazımı `app/toplu_tahakkuk.py`ye taşındı.
+İkinci bir kopya, "elle" ile "otomatik" tahakkukun günün birinde farklı
+davranması demekti — ve fark ancak rakamlar tutmayınca fark edilirdi.
+
+`tahakkuk_yaz`'ın `user` parametresi opsiyonelleşti: otomatik tahakkukun
+bir kullanıcısı yoktur ve uydurma bir kullanıcı atamak, denetim kaydında o
+kişiye yapmadığı bir işin altına imza attırmak olurdu.
+
+### 4.2 Otomatik borç hatırlatma
+
+**Ödeyene gitmez:** aday kümesi tahakkuk listesi değil, **kalan > 0** olan
+borçlar. Kalan defterdeki tahsilat etkisinden hesaplanır (§1'in tek
+tanımı).
+
+**Kişi başına tek bildirim:** üç ayrı borcu olan sakine üç push gitmez;
+tutarlar toplanır, en erken vade gösterilir.
+
+**Günde bir kez:** `son_calisma` damgası. Görev günde on kez koşsa da
+sakinin telefonu on kez ötmez.
+
+Kademeler bir **INT dizisi** (3, 10, 30): kademe sayısını sütunlara
+sabitlemek (gun1/gun2/gun3), dördüncü kademeyi şema değişikliğine
+bağlardı. Vade öncesi ve sonrası kurallar tek bir **küme**de birleşir —
+aynı güne iki kural denk gelirse sakine iki bildirim gitmemeli.
+
+Yöneticinin yazdığı metin **çevrilmez**: onun cümlesini makineyle
+değiştirmek, söylemediği bir şeyi ona söyletmek olurdu.
+
+### 4.3 Banka hareketlerinin kasaya yansıması
+
+Bankadan **çıkan** para artık gider olarak deftere giriyor. Önceden
+`cikis` yönlü satırlar sonsuza kadar `manuel_inceleme`de bekliyordu:
+eşleştirme motoru yalnızca borç kapatmayı bilir ve bir çıkış hiçbir borcu
+kapatmaz. Karşılığının defterde olmaması, banka bakiyesi ile kasa
+bakiyesinin ayrışması demekti.
+
+**Otomatik "ödendi" yazılmaz** — kullanıcının açık kuralı: banka masrafı
+da, bilinmeyen bir havale de yöneticinin onayına düşer
+(`durum='onay_bekliyor'`, onay/red uçları §2.3).
+
+Gelen para tarafı §2.1'de çözülmüştü: ekstre hangi hesabınsa tahsilat o
+hesaba yazılır.
+
+### 4.4 Otomatik makbuz ve bildirim
+
+Makbuz zaten üretiliyordu ama **sakin ona ulaşamıyordu**: makbuz ucu yalnız
+yönetime açıktı. `GET /me/makbuzlar` eklendi — kapsam **kendi**
+makbuzları; daire üzerinden süzmek, aynı dairede oturmuş eski sakinin
+makbuzlarını yeni sakine göstermek olurdu.
+
+**E-posta push'un kalıcı ikizi**: sakin bildirimi kaçırsa, telefonunu
+değiştirse ya da uygulamayı silse bile makbuzun kopyası posta kutusunda
+durur. **PDF eklenmez, bağlantı verilir**: ek olarak gönderilen bir PDF
+boyut sınırlarına ve spam süzgeçlerine takılır; ayrıca bağlantı kısa
+ömürlüdür (presign) ve posta kutusu ele geçse bile süresiz erişim vermez.
+E-posta bir **yan iştir**: gönderilemezse tahsilat düşmez.
+
+### 4.5 Düzenli giderler
+
+Tekrar **saklanır, genişletilmez**: "her ay" bir kuraldır ve her örneğini
+satır olarak yazmak, kuralı değiştirmeyi yüzlerce satır güncellemeye
+çevirirdi.
+
+`otomatik_onay=false` **varsayılan**: vadesi gelen gider onay bekleyen
+yazılır ve yöneticinin önüne düşer. Otomatik "ödendi" yazmak, sistemin
+kimseye sormadan kasadan para çıkarması olurdu.
+
+`ay_ekle` ayın son gününü aşmaz (31 Ocak + 1 ay = 28/29 Şubat).
+`timedelta(days=30)` her tekrarda tarihi kaydırır ve bir yıl sonra gider
+"ayın 20'si" olmaktan çıkardı.
+
+### 4.6 Aylık özet raporu
+
+Ayın 1'inde **değil**, "1'inde ya da sonra ve bu dönem gönderilmediyse":
+görev bir gün hiç koşmazsa (bakım, kesinti) özet tamamen kaybolurdu. Damga
+`otomasyon_gunlugu`nda — ayrı bir sütun açmaya gerek yok.
+
+### Beat: günde bir, 06:00 (Europe/Istanbul)
+
+Tek görev, beş iş: hepsi aynı günlük pencerede ve aynı tesis bağlamında.
+Beş ayrı görev, beş ayrı tenant döngüsü ve beş ayrı bağlantı demekti;
+ayrıca sıralama garantisi kalmazdı (faiz, tahakkuk yazıldıktan **sonra**
+hesaplanmalı).
+
+Saat seçimi: tahakkuk ve hatırlatma bildirimleri **sabah** gitmeli — gece
+yarısı gönderilen bir "borcunuz var" bildirimi kimseyi harekete geçirmez,
+yalnızca uyandırır. Retention 01:00'de koşuyor; ondan **sonra** olması da
+bilinçli: silinmiş/anonimleştirilmiş kayıtlara bildirim gitmesin.

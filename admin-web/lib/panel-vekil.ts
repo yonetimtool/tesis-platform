@@ -63,6 +63,11 @@ export const OKUMA: Record<string, string> = {
   // --- (P192 §3.1) gecikme faizi ---
   "gecikme-ayari": "/borclandirma/gecikme-ayari",
   "gecikme-faizi-onizleme": "/borclandirma/gecikme-faizi/onizleme",
+  // --- (P192 §4) otomasyon ---
+  "aidat-planlari": "/aidat-planlari",
+  "hatirlatma-ayari": "/hatirlatma-ayari",
+  "duzenli-giderler": "/duzenli-giderler",
+  "otomasyon-gunlugu": "/otomasyon-gunlugu",
 };
 
 /** POST ile YAZILAN kaynaklar (okumadan AYRI: bir ucu yanlislikla yazmaya
@@ -104,6 +109,12 @@ export const YAZMA: Record<string, string> = {
   // POST ise faizi ISLER.
   "gecikme-ayari": "/borclandirma/gecikme-ayari",
   "gecikme-faizi-isle": "/borclandirma/gecikme-faizi/isle",
+  // --- (P192 §4) otomasyon. PATCH/DELETE alt kaynak yolundan
+  // (`[kaynak]/[id]`) gecer; kok PATCH yalniz `hatirlatma-ayari` icin
+  // anlamlidir (tesis basina TEK kayit).
+  "aidat-planlari": "/aidat-planlari",
+  "hatirlatma-ayari": "/hatirlatma-ayari",
+  "duzenli-giderler": "/duzenli-giderler",
 };
 
 /** Kaynak basina ILETILEBILEN sorgu parametreleri (yine beyaz liste:
@@ -119,6 +130,7 @@ export const SUZGECLER: Record<string, string[]> = {
   // Ikisi de ZORUNLU: backend bunlarsiz 422 doner. Beyaz listede
   // olmasalardi vekil onlari duserdi ve her ek listesi hata verirdi.
   ekler: ["varlik_tipi", "varlik_id"],
+  "otomasyon-gunlugu": ["tur"],
 };
 
 export function okumaYolu(kaynak: string): string | null {

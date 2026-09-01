@@ -7353,6 +7353,39 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
         "409": { $ref: "#/components/responses/Conflict" }
+  /me/makbuzlar:
+    get:
+      tags: [aidat]
+      summary: "(P192 §4.4) Sakinin MAKBUZ ARSIVI"
+      description: |
+        Makbuz uretiliyordu ama sakin ONA ULASAMIYORDU: makbuz ucu yalniz
+        yonetime acikti ve arsiv ekrani yoktu.
+
+        KAPSAM KENDI MAKBUZLARI: `user_id` suzgeci ZORUNLU — daire
+        uzerinden suzmek, ayni dairede oturmus ESKI sakinin makbuzlarini
+        yeni sakine gostermek olurdu.
+
+        `pdf_url` KISA OMURLUDUR (presign) ve saklanmaz.
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+        - name: offset
+          in: query
+          schema: { type: integer, minimum: 0, default: 0 }
+      responses:
+        "200":
+          description: Makbuz listesi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [meta, items]
+                properties:
+                  meta: { $ref: "#/components/schemas/PageMeta" }
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/Makbuz" }
   /me/odeme-bilgileri:
     get:
       tags: [aidat]
@@ -7508,6 +7541,226 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "422": { $ref: "#/components/responses/ValidationError" }
+  /aidat-planlari:
+    get:
+      tags: [otomasyon]
+      summary: "(P192 §4.1) Otomatik aylik tahakkuk planlari"
+      responses:
+        "200":
+          description: Plan listesi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/AidatPlani" }
+    post:
+      tags: [otomasyon]
+      summary: "(P192 §4.1) Aidat plani olustur"
+      description: |
+        Yonetici BIR KEZ tanimlar: tutar/dagitim, ayin kacinda tahakkuk,
+        vade kac gun sonra, onizleme kac gun once. Sistem her ay otomatik
+        tahakkuk eder.
+
+        Onceden `beat_schedule`da aidat gorevi YOKTU; yonetici her ay elle
+        calistiriyordu ve unutursa o ay borc olusmuyordu.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AidatPlaniCreate" }
+      responses:
+        "201":
+          description: Olusturuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AidatPlani" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /aidat-planlari/{plan_id}:
+    parameters:
+      - name: plan_id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    patch:
+      tags: [otomasyon]
+      summary: "(P192 §4.1) Plani guncelle (tutar, gun, aktiflik)"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AidatPlaniUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AidatPlani" }
+    delete:
+      tags: [otomasyon]
+      summary: "(P192 §4.1) Plani sil — YAZILMIS tahakkuklar etkilenmez"
+      description: |
+        Plan bir KURALDIR, para degil: silinmesi gecmis borclari geri
+        almaz (onun yolu ters kayit, §6.3).
+      responses:
+        "204": { description: Silindi }
+  /aidat-planlari/{plan_id}/ertele:
+    post:
+      tags: [otomasyon]
+      summary: "(P192 §4.1) Bir donemi ATLA (plani kapatmadan)"
+      description: |
+        Plani pasife almak GELECEK aylari da kapatirdi; yonetici genelde
+        "bu ay olmasin" demek ister. Zaten islenmis bir donem ertelenemez
+        (409): borc yazildi, geri almak ters kayitla olur.
+      parameters:
+        - name: plan_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [donem]
+              properties:
+                donem: { type: string, example: "2026-09" }
+      responses:
+        "200":
+          description: Ertelendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AidatPlani" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /hatirlatma-ayari:
+    get:
+      tags: [otomasyon]
+      summary: "(P192 §4.2) Borc hatirlatma ayari"
+      description: |
+        Ayar tesise aittir ve TEKTIR; yoksa VARSAYILANLA acilir. "Yok"
+        dondurmek, istemciyi once POST sonra PATCH yapmaya zorlardi.
+      responses:
+        "200":
+          description: Ayar
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HatirlatmaAyari" }
+    patch:
+      tags: [otomasyon]
+      summary: "(P192 §4.2) Hatirlatma ayarini guncelle"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/HatirlatmaAyariUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HatirlatmaAyari" }
+  /duzenli-giderler:
+    get:
+      tags: [otomasyon]
+      summary: "(P192 §4.5) Tekrar eden giderler"
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/DuzenliGider" }
+    post:
+      tags: [otomasyon]
+      summary: "(P192 §4.5) Tekrar eden gider tanimla"
+      description: |
+        Tekrar SAKLANIR, GENISLETILMEZ: "her ay" bir KURALDIR ve her
+        ornegini satir olarak yazmak, kurali degistirmeyi yuzlerce satir
+        guncellemeye cevirirdi.
+
+        `otomatik_onay=false` (VARSAYILAN) ise vadesi gelen gider ONAY
+        BEKLEYEN yazilir: otomatik "odendi" yazmak, sistemin kimseye
+        sormadan kasadan para cikarmasi olurdu.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DuzenliGiderCreate" }
+      responses:
+        "201":
+          description: Olusturuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DuzenliGider" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /duzenli-giderler/{gider_id}:
+    parameters:
+      - name: gider_id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    patch:
+      tags: [otomasyon]
+      summary: "(P192 §4.5) Duzenli gideri guncelle"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DuzenliGiderUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DuzenliGider" }
+    delete:
+      tags: [otomasyon]
+      summary: "(P192 §4.5) Tekrar KURALINI sil — yazilmis giderler kalir"
+      responses:
+        "204": { description: Silindi }
+  /otomasyon-gunlugu:
+    get:
+      tags: [otomasyon]
+      summary: "(P192 §4) Otomasyon NE ZAMAN NE YAPTI"
+      description: |
+        Bu liste olmadan "gorev calisti ama hicbir sey uretmedi" durumu —
+        ki asil merak edilen odur — gorunmez kalirdi. APPEND-ONLY: bir
+        otomasyonun ne yaptigi sonradan duzeltilemez.
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+        - name: offset
+          in: query
+          schema: { type: integer, minimum: 0, default: 0 }
+        - name: tur
+          in: query
+          schema:
+            type: string
+            enum: [aidat_tahakkuk, aidat_onizleme, borc_hatirlatma,
+                   duzenli_gider, gecikme_faizi, aylik_ozet]
+      responses:
+        "200":
+          description: Gunluk
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [meta, items]
+                properties:
+                  meta: { $ref: "#/components/schemas/PageMeta" }
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/OtomasyonGunluk" }
   /borclandirma/gecikme-faizi/onizleme:
     get:
       tags: [aidat]
@@ -15584,6 +15837,195 @@ components:
         items:
           type: array
           items: { $ref: "#/components/schemas/FinansalHareket" }
+    Makbuz:
+      type: object
+      required: [id, belge_no, tutar_kurus, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        belge_no: { type: string }
+        tutar_kurus: { type: integer, format: int64 }
+        unit_id: { type: string, format: uuid, nullable: true }
+        created_at: { type: string, format: date-time }
+        pdf_url:
+          type: string
+          nullable: true
+          description: "Kisa omurlu indirme adresi (presign); SAKLANMAZ"
+    AidatPlaniCreate:
+      type: object
+      required: [ad, gelir_gider_tanim_id]
+      properties:
+        ad: { type: string, maxLength: 100 }
+        gelir_gider_tanim_id:
+          type: string
+          format: uuid
+          description: >-
+            ZORUNLU: dagitim hedefi ve borcun KIME yazilacagi
+            (kiraci/malik) tanimdan gelir.
+        kalem_tipi:
+          type: string
+          enum: [aidat, demirbas, olaganustu, sayac, diger]
+        dagitim:
+          type: string
+          enum: [daire_basina, esit, arsa_payi, metrekare]
+        tutar_kurus: { type: integer, format: int64, nullable: true, minimum: 1 }
+        toplam_tutar_kurus: { type: integer, format: int64, nullable: true, minimum: 1 }
+        tahakkuk_gunu:
+          type: integer
+          minimum: 1
+          maximum: 28
+          description: >-
+            1..28 — 29/30/31 her ayda YOKTUR ve "ayin 31'i" kurali
+            Subat'ta sessizce hic calismazdi.
+        vade_gun: { type: integer, minimum: 0, maximum: 90 }
+        onizleme_gun: { type: integer, minimum: 0, maximum: 28 }
+        aktif: { type: boolean }
+        aciklama: { type: string, nullable: true, maxLength: 500 }
+    AidatPlaniUpdate:
+      type: object
+      properties:
+        ad: { type: string, maxLength: 100 }
+        kalem_tipi: { type: string, enum: [aidat, demirbas, olaganustu, sayac, diger] }
+        dagitim: { type: string, enum: [daire_basina, esit, arsa_payi, metrekare] }
+        tutar_kurus: { type: integer, format: int64, nullable: true, minimum: 1 }
+        toplam_tutar_kurus: { type: integer, format: int64, nullable: true, minimum: 1 }
+        tahakkuk_gunu: { type: integer, minimum: 1, maximum: 28 }
+        vade_gun: { type: integer, minimum: 0, maximum: 90 }
+        onizleme_gun: { type: integer, minimum: 0, maximum: 28 }
+        aktif: { type: boolean }
+        aciklama: { type: string, nullable: true, maxLength: 500 }
+    AidatPlani:
+      # `allOf` KULLANILMADI ve bu bilincli: sozlesme kapisi (panel testi)
+      # bilesik semalarin ZORUNLU alanlarini goremiyor ve arayuzun
+      # okudugu `id`/`son_donem` gibi alanlari "vaat edilmemis" sayiyor.
+      # Duz sema, sozlesmeyi okuyan ARACLAR icin de daha durustur.
+      type: object
+      required: [id, ad, gelir_gider_tanim_id, tahakkuk_gunu, aktif, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        ad: { type: string, maxLength: 100 }
+        gelir_gider_tanim_id: { type: string, format: uuid }
+        kalem_tipi:
+          type: string
+          enum: [aidat, demirbas, olaganustu, sayac, diger]
+        dagitim:
+          type: string
+          enum: [daire_basina, esit, arsa_payi, metrekare]
+        tutar_kurus: { type: integer, format: int64, nullable: true }
+        toplam_tutar_kurus: { type: integer, format: int64, nullable: true }
+        tahakkuk_gunu: { type: integer, minimum: 1, maximum: 28 }
+        vade_gun: { type: integer, minimum: 0, maximum: 90 }
+        onizleme_gun: { type: integer, minimum: 0, maximum: 28 }
+        aktif: { type: boolean }
+        aciklama: { type: string, nullable: true }
+        son_donem:
+          type: string
+          nullable: true
+          description: >-
+            Islenen SON donem — IDEMPOTENCY DAMGASI. Gorev gunde on kez
+            kossa da ayni donemi ikinci kez islemez.
+        onizleme_donem: { type: string, nullable: true }
+        ertelenen_donem: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+    HatirlatmaAyari:
+      type: object
+      required: [aktif, vade_oncesi_gun, kademeler]
+      properties:
+        aktif: { type: boolean }
+        vade_oncesi_gun:
+          type: integer
+          minimum: 0
+          maximum: 30
+          description: "0 = vade oncesi hatirlatma yok"
+        kademeler:
+          type: array
+          description: "Vade GECTIKTEN sonra kac gun sonra hatirlatilacagi"
+          items: { type: integer }
+        metin:
+          type: string
+          nullable: true
+          description: >-
+            NULL = urun varsayilani (cok dilli). Metin girilirse O KULLANILIR
+            ve CEVRILMEZ: yoneticinin yazdigi cumleyi makineyle degistirmek,
+            onun soylemedigi bir seyi ona soyletmek olurdu.
+        son_calisma: { type: string, format: date, nullable: true }
+    HatirlatmaAyariUpdate:
+      type: object
+      properties:
+        aktif: { type: boolean }
+        vade_oncesi_gun: { type: integer, minimum: 0, maximum: 30 }
+        kademeler:
+          type: array
+          maxItems: 6
+          items: { type: integer, minimum: 0, maximum: 365 }
+        metin: { type: string, nullable: true, maxLength: 1000 }
+    DuzenliGiderCreate:
+      type: object
+      required: [ad, tutar_kurus, sonraki_tarih]
+      properties:
+        ad: { type: string, maxLength: 100 }
+        tutar_kurus: { type: integer, format: int64, minimum: 1 }
+        periyot: { type: string, enum: [aylik, uc_aylik, alti_aylik, yillik] }
+        sonraki_tarih: { type: string, format: date }
+        kasa_id: { type: string, format: uuid, nullable: true }
+        firma_id: { type: string, format: uuid, nullable: true }
+        gelir_gider_tanim_id: { type: string, format: uuid, nullable: true }
+        otomatik_onay:
+          type: boolean
+          description: >-
+            VARSAYILAN false: vadesi gelen gider ONAY BEKLEYEN yazilir.
+            Otomatik "odendi" yazmak, sistemin kimseye sormadan kasadan
+            para cikarmasi olurdu.
+        aktif: { type: boolean }
+        aciklama: { type: string, nullable: true, maxLength: 500 }
+    DuzenliGiderUpdate:
+      type: object
+      properties:
+        ad: { type: string, maxLength: 100 }
+        tutar_kurus: { type: integer, format: int64, minimum: 1 }
+        periyot: { type: string, enum: [aylik, uc_aylik, alti_aylik, yillik] }
+        sonraki_tarih: { type: string, format: date }
+        kasa_id: { type: string, format: uuid, nullable: true }
+        firma_id: { type: string, format: uuid, nullable: true }
+        gelir_gider_tanim_id: { type: string, format: uuid, nullable: true }
+        otomatik_onay: { type: boolean }
+        aktif: { type: boolean }
+        aciklama: { type: string, nullable: true, maxLength: 500 }
+    DuzenliGider:
+      # `allOf` KULLANILMADI — gerekce `AidatPlani`de.
+      type: object
+      required: [id, ad, tutar_kurus, periyot, sonraki_tarih, aktif, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        ad: { type: string, maxLength: 100 }
+        tutar_kurus: { type: integer, format: int64 }
+        periyot: { type: string, enum: [aylik, uc_aylik, alti_aylik, yillik] }
+        sonraki_tarih: { type: string, format: date }
+        kasa_id: { type: string, format: uuid, nullable: true }
+        firma_id: { type: string, format: uuid, nullable: true }
+        gelir_gider_tanim_id: { type: string, format: uuid, nullable: true }
+        otomatik_onay: { type: boolean }
+        aktif: { type: boolean }
+        aciklama: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+    OtomasyonGunluk:
+      type: object
+      required: [id, tur, calisma_zamani, adet, tutar_kurus]
+      properties:
+        id: { type: string, format: uuid }
+        tur:
+          type: string
+          enum: [aidat_tahakkuk, aidat_onizleme, borc_hatirlatma,
+                 duzenli_gider, gecikme_faizi, aylik_ozet]
+        calisma_zamani: { type: string, format: date-time }
+        donem: { type: string, nullable: true }
+        adet: { type: integer }
+        tutar_kurus: { type: integer, format: int64 }
+        sonuc:
+          type: object
+          additionalProperties: true
+          description: >-
+            Her otomasyonun ozeti farklidir; ture ozel sutunlar acmak,
+            besinci otomasyonda tabloyu yeniden sekillendirmek demekti.
     GecikmeFaizSatiri:
       type: object
       required: [assessment_id, unit_id, unit_no, donem, kalan_kurus,

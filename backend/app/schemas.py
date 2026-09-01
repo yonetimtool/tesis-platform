@@ -5080,6 +5080,202 @@ class TahakkukTersKayitIstek(BaseModel):
     aciklama: str | None = Field(None, max_length=500)
 
 
+
+class MakbuzOut(BaseModel):
+    """(P192 §4.4) Sakinin makbuz arsivi satiri.
+
+    `pdf_url` KISA OMURLUDUR (presign) ve saklanmaz: kalici bir baglanti,
+    kimlik dogrulamasi olmadan erisilebilen bir mali belge demekti.
+    """
+
+    id: uuid.UUID
+    belge_no: str
+    tutar_kurus: int
+    unit_id: uuid.UUID | None = None
+    created_at: datetime
+    pdf_url: str | None = None
+
+
+class MakbuzListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[MakbuzOut]
+
+
+# ==================== (P192 §4) FINANS OTOMASYONU =========================== #
+# Dort kayit: aidat plani, hatirlatma ayari, duzenli gider, otomasyon
+# gunlugu. Ortak ilke: her otomasyon ACILIP KAPATILABILIR ve IZ BIRAKIR.
+GiderPeriyot = Literal["aylik", "uc_aylik", "alti_aylik", "yillik"]
+OtomasyonTuru = Literal[
+    "aidat_tahakkuk", "aidat_onizleme", "borc_hatirlatma",
+    "duzenli_gider", "gecikme_faizi", "aylik_ozet",
+]
+
+
+class AidatPlaniBase(BaseModel):
+    ad: str = Field(..., min_length=1, max_length=100)
+    #: ZORUNLU: dagitim hedefi ve borcun KIME yazilacagi (kiraci/malik)
+    #: tanimdan gelir. Tanimsiz bir plan hedefi cozemezdi.
+    gelir_gider_tanim_id: uuid.UUID
+    kalem_tipi: Literal[
+        "aidat", "demirbas", "olaganustu", "sayac", "diger"
+    ] = "aidat"
+    dagitim: Literal["daire_basina", "esit", "arsa_payi", "metrekare"] = "daire_basina"
+    tutar_kurus: int | None = Field(None, ge=1)
+    toplam_tutar_kurus: int | None = Field(None, ge=1)
+    #: 1..28 — 29/30/31 her ayda YOKTUR ve "ayin 31'i" kurali Subat'ta
+    #: sessizce hic calismazdi.
+    tahakkuk_gunu: int = Field(1, ge=1, le=28)
+    vade_gun: int = Field(15, ge=0, le=90)
+    onizleme_gun: int = Field(3, ge=0, le=28)
+    aktif: bool = True
+    aciklama: str | None = Field(None, max_length=500)
+
+    @model_validator(mode="after")
+    def _tutar_dagitima_uysun(self) -> "AidatPlaniBase":
+        if self.dagitim == "daire_basina" and self.tutar_kurus is None:
+            raise ValueError("daire_basina dagitim icin tutar_kurus gerekli")
+        if self.dagitim != "daire_basina" and self.toplam_tutar_kurus is None:
+            raise ValueError("bu dagitim icin toplam_tutar_kurus gerekli")
+        return self
+
+
+class AidatPlaniCreate(AidatPlaniBase):
+    pass
+
+
+class AidatPlaniUpdate(BaseModel):
+    """Kismi guncelleme. Tutar/dagitim tutarliligi SUNUCUDA yeniden
+    dogrulanir (CHECK kisiti da ayni kurali zorluyor)."""
+
+    ad: str | None = Field(None, min_length=1, max_length=100)
+    kalem_tipi: Literal[
+        "aidat", "demirbas", "olaganustu", "sayac", "diger"
+    ] | None = None
+    dagitim: Literal[
+        "daire_basina", "esit", "arsa_payi", "metrekare"
+    ] | None = None
+    tutar_kurus: int | None = Field(None, ge=1)
+    toplam_tutar_kurus: int | None = Field(None, ge=1)
+    tahakkuk_gunu: int | None = Field(None, ge=1, le=28)
+    vade_gun: int | None = Field(None, ge=0, le=90)
+    onizleme_gun: int | None = Field(None, ge=0, le=28)
+    aktif: bool | None = None
+    aciklama: str | None = Field(None, max_length=500)
+
+
+class AidatPlaniErtele(BaseModel):
+    """Bir donemi ATLA. Plani pasife almak gelecek aylari da kapatirdi."""
+
+    donem: str = Field(..., min_length=7, max_length=7)
+
+
+class AidatPlaniOut(AidatPlaniBase):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    #: Islenen SON donem — idempotency damgasi. Gorev gunde on kez kossa
+    #: da ayni donemi ikinci kez islemez.
+    son_donem: str | None = None
+    onizleme_donem: str | None = None
+    ertelenen_donem: str | None = None
+    created_at: datetime
+
+
+class AidatPlaniListResponse(BaseModel):
+    items: list[AidatPlaniOut]
+
+
+class HatirlatmaAyariOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    aktif: bool = False
+    vade_oncesi_gun: int = 3
+    #: Vade GECTIKTEN sonra kac gun sonra hatirlatilacagi (kademeler).
+    kademeler: list[int] = []
+    metin: str | None = None
+    son_calisma: date | None = None
+
+
+class HatirlatmaAyariUpdate(BaseModel):
+    aktif: bool | None = None
+    vade_oncesi_gun: int | None = Field(None, ge=0, le=30)
+    kademeler: list[int] | None = Field(None, max_length=6)
+    metin: str | None = Field(None, max_length=1000)
+
+    @field_validator("kademeler")
+    @classmethod
+    def _kademe_araligi(cls, v: list[int] | None) -> list[int] | None:
+        if v is None:
+            return v
+        for gun in v:
+            if gun < 0 or gun > 365:
+                raise ValueError("kademe gunu 0-365 araliginda olmali")
+        # Siralanmis ve TEKIL: ayni gune iki kademe koymak, sakine ayni
+        # gun iki hatirlatma gonderme riski demekti.
+        return sorted(set(v))
+
+
+class DuzenliGiderBase(BaseModel):
+    ad: str = Field(..., min_length=1, max_length=100)
+    tutar_kurus: int = Field(..., ge=1)
+    periyot: GiderPeriyot = "aylik"
+    sonraki_tarih: date
+    kasa_id: uuid.UUID | None = None
+    firma_id: uuid.UUID | None = None
+    gelir_gider_tanim_id: uuid.UUID | None = None
+    #: VARSAYILAN false: vadesi gelen gider ONAY BEKLEYEN yazilir.
+    otomatik_onay: bool = False
+    aktif: bool = True
+    aciklama: str | None = Field(None, max_length=500)
+
+
+class DuzenliGiderCreate(DuzenliGiderBase):
+    pass
+
+
+class DuzenliGiderUpdate(BaseModel):
+    ad: str | None = Field(None, min_length=1, max_length=100)
+    tutar_kurus: int | None = Field(None, ge=1)
+    periyot: GiderPeriyot | None = None
+    sonraki_tarih: date | None = None
+    kasa_id: uuid.UUID | None = None
+    firma_id: uuid.UUID | None = None
+    gelir_gider_tanim_id: uuid.UUID | None = None
+    otomatik_onay: bool | None = None
+    aktif: bool | None = None
+    aciklama: str | None = Field(None, max_length=500)
+
+
+class DuzenliGiderOut(DuzenliGiderBase):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    created_at: datetime
+
+
+class DuzenliGiderListResponse(BaseModel):
+    items: list[DuzenliGiderOut]
+
+
+class OtomasyonGunlukOut(BaseModel):
+    """Otomasyonun NE ZAMAN NE YAPTIGI — kullaniciya gorunur iz."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    tur: str
+    calisma_zamani: datetime
+    donem: str | None = None
+    adet: int
+    tutar_kurus: int
+    sonuc: dict = {}
+
+
+class OtomasyonGunlukListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[OtomasyonGunlukOut]
+
+
 # ==================== P29 FINANSAL HAREKET / TAHSILAT ======================= #
 # TEK DEFTER: tahsilat, gider, gelir, virman, iade, acilis ayni kayitta `tip`
 # ile ayrilir. TUTAR HER ZAMAN POZITIF; isaret `yon`dadir.

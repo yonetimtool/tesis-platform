@@ -129,6 +129,25 @@ def translate_entity(self, tip_ad: str, entity_id: str, tenant_id: str) -> dict:
     return ozet
 
 
+@celery_app.task(name="scheduler.finans_otomasyonu")
+def finans_otomasyonu() -> dict:
+    """(P192 §4) Beat (gunluk): aidat plani, borc hatirlatmasi, duzenli
+    gider, gecikme faizi ve aylik ozet.
+
+    TEK GOREV, BES IS: hepsi ayni gunluk pencerede ve ayni tesis
+    baglaminda kosar. Bes ayri gorev, bes ayri tenant dongusu ve bes ayri
+    baglanti demekti; ayrica siralama garantisi kalmazdi (faiz, tahakkuk
+    yazildiktan SONRA hesaplanmali).
+
+    IDEMPOTENT: her is kendi damgasina bakar (bkz. `app/otomasyon.py`),
+    yani gorev gunde birden cok kez kossa da tekrar etmez. Bu sayede
+    siklik bir IS KURALI degil, DAGITIM detayidir.
+    """
+    from .otomasyon import tum_tenantlar_icin
+
+    return _async_calistir(tum_tenantlar_icin)
+
+
 @celery_app.task(name="scheduler.run_retention")
 def run_retention() -> dict:
     """Beat (gecelik): KVKK saklama sinirini gecen kisisel veriyi siler/

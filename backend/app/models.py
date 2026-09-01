@@ -30,7 +30,7 @@ from sqlalchemy import (
     UniqueConstraint,
     text,
 )
-from sqlalchemy.dialects.postgresql import ENUM, JSONB, TIMESTAMP, UUID
+from sqlalchemy.dialects.postgresql import ARRAY, ENUM, JSONB, TIMESTAMP, UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -96,6 +96,12 @@ NOTIFICATION_TIP = ENUM(
     # (P191 §4, göç 0080) Banka eşleştirmesi bir ödemeyi işlediğinde sakine
     # "ödemeniz alındı + makbuz hazır" bildirimi.
     "aidat_odendi",
+    # (P192 §4, göç 0086) OTOMASYON bildirimleri.
+    #   * `aidat_hatirlatma` — vade yaklasti/gecti (sakine, kademeli).
+    #   * `aidat_onizleme`   — "3 gun sonra 26 daireye X TL" (yoneticiye).
+    #   * `aylik_ozet`       — ay basi ozeti (yoneticiye).
+    #   * `gider_onay`       — vadesi gelen duzenli gider (yoneticiye).
+    "aidat_hatirlatma", "aidat_onizleme", "aylik_ozet", "gider_onay",
     name="notification_tip", create_type=False,
 )
 ASSET_KATEGORI = ENUM(
@@ -3256,6 +3262,186 @@ class Receipt(Base):
     tutar_kurus: Mapped[int] = mapped_column(BigInteger, nullable=False)
     pdf_key: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at = _created_at()
+
+
+# =================== (P192 §4) OTOMASYON — dort tablo ====================== #
+#
+# Gerekce ve tasarim kararlari gocte (0086_otomasyon). Ortak ilke: her
+# otomasyon ACILIP KAPATILABILIR (`aktif`) ve IZ BIRAKIR
+# (`otomasyon_gunlugu`). Iz olmadan "gorev calisti ama hicbir sey
+# uretmedi" durumu — ki asil merak edilen odur — gorunmez kalirdi.
+GIDER_PERIYOT = ENUM(
+    "aylik", "uc_aylik", "alti_aylik", "yillik",
+    name="gider_periyot", create_type=False,
+)
+OTOMASYON_TURU = ENUM(
+    "aidat_tahakkuk", "aidat_onizleme", "borc_hatirlatma",
+    "duzenli_gider", "gecikme_faizi", "aylik_ozet",
+    name="otomasyon_turu", create_type=False,
+)
+
+
+class AidatPlani(Base):
+    """Otomatik aylik tahakkuk plani.
+
+    `son_donem` IDEMPOTENCY'NIN KENDISIDIR: bir plan bir donemi BIR KEZ
+    isler. Gorev gunde on kez kossa da ikinci kosum ayni donemi gorur ve
+    durur. Tarihe bakip "bugun ayin 5'i mi" demek yetmezdi — gorev gun
+    icinde birden cok kez kosar ve saatlik bir pencere uydurmak,
+    kacirilan bir kosumu telafi edilemez kilardi.
+    """
+
+    __tablename__ = "aidat_plani"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_aidat_plani_id_tenant"),
+        UniqueConstraint("tenant_id", "ad", name="uq_aidat_plani_ad"),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    ad: Mapped[str] = mapped_column(Text, nullable=False)
+    gelir_gider_tanim_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    kalem_tipi: Mapped[str] = mapped_column(
+        DUES_KALEM_TIPI, nullable=False, server_default=text("'aidat'")
+    )
+    dagitim: Mapped[str] = mapped_column(
+        Text, nullable=False, server_default=text("'daire_basina'")
+    )
+    tutar_kurus: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    toplam_tutar_kurus: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    #: 1..28 — 29/30/31 her ayda YOKTUR ve "ayin 31'i" kurali Subat'ta
+    #: sessizce hic calismazdi.
+    tahakkuk_gunu: Mapped[int] = mapped_column(
+        SmallInteger, nullable=False, server_default=text("1")
+    )
+    vade_gun: Mapped[int] = mapped_column(
+        SmallInteger, nullable=False, server_default=text("15")
+    )
+    onizleme_gun: Mapped[int] = mapped_column(
+        SmallInteger, nullable=False, server_default=text("3")
+    )
+    aktif: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
+    son_donem: Mapped[str | None] = mapped_column(Text, nullable=True)
+    onizleme_donem: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: Yoneticinin "bu ay atla" demesi. Plani pasife almak gelecek aylari
+    #: da kapatirdi; bu alan YALNIZ bir donemi atlar.
+    ertelenen_donem: Mapped[str | None] = mapped_column(Text, nullable=True)
+    aciklama: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at = _created_at()
+    updated_at = _created_at()
+
+
+class HatirlatmaAyari(Base):
+    """Borc hatirlatma ayari — TESIS BASINA TEK SATIR.
+
+    `tenant_id` BIRINCIL ANAHTAR: ayar tesise aittir, listesi yoktur.
+    Ayri bir `id` sutunu "hangi ayar gecerli" sorusunu dogururdu.
+    """
+
+    __tablename__ = "hatirlatma_ayari"
+
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    aktif: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
+    vade_oncesi_gun: Mapped[int] = mapped_column(
+        SmallInteger, nullable=False, server_default=text("3")
+    )
+    #: Kademe sayisini sutunlara sabitlemek (gun1/gun2/gun3), dorduncu
+    #: kademeyi sema degisikligine baglardi.
+    kademeler: Mapped[list[int]] = mapped_column(
+        ARRAY(SmallInteger), nullable=False,
+        server_default=text("ARRAY[3, 10, 30]::smallint[]"),
+    )
+    #: NULL = urun varsayilani (cok dilli). Metin girilirse O KULLANILIR ve
+    #: CEVRILMEZ: yoneticinin yazdigi cumleyi makineyle degistirmek, onun
+    #: soylemedigi bir seyi ona soyletmek olurdu.
+    metin: Mapped[str | None] = mapped_column(Text, nullable=True)
+    son_calisma = mapped_column(Date, nullable=True)
+    created_at = _created_at()
+    updated_at = _created_at()
+
+
+class DuzenliGider(Base):
+    """Tekrar eden gider (kapici maasi, asansor bakimi, sigorta).
+
+    Tekrar SAKLANIR, GENISLETILMEZ: "her ay" bir KURALDIR ve her ornegini
+    satir olarak yazmak, kurali degistirmeyi yuzlerce satir guncellemeye
+    cevirirdi.
+    """
+
+    __tablename__ = "duzenli_gider"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_duzenli_gider_id_tenant"),
+        UniqueConstraint("tenant_id", "ad", name="uq_duzenli_gider_ad"),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    ad: Mapped[str] = mapped_column(Text, nullable=False)
+    tutar_kurus: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    periyot: Mapped[str] = mapped_column(
+        GIDER_PERIYOT, nullable=False, server_default=text("'aylik'")
+    )
+    sonraki_tarih = mapped_column(Date, nullable=False)
+    kasa_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    firma_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    gelir_gider_tanim_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    #: VARSAYILAN false: vadesi gelen gider ONAY BEKLEYEN yazilir ve
+    #: yoneticinin onune duser. Otomatik "odendi" yazmak, sistemin kimseye
+    #: sormadan kasadan para cikarmasi olurdu.
+    otomatik_onay: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
+    aktif: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
+    aciklama: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at = _created_at()
+    updated_at = _created_at()
+
+
+class OtomasyonGunlugu(Base):
+    """Otomasyonun NE ZAMAN NE YAPTIGI — APPEND-ONLY.
+
+    `sonuc` JSONB cunku her otomasyonun ozeti farklidir; ture ozel sutunlar
+    acmak, besinci otomasyonda tabloyu yeniden sekillendirmek demekti.
+    """
+
+    __tablename__ = "otomasyon_gunlugu"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_otomasyon_gunlugu_id_tenant"),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    tur: Mapped[str] = mapped_column(OTOMASYON_TURU, nullable=False)
+    calisma_zamani = mapped_column(
+        TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
+    )
+    donem: Mapped[str | None] = mapped_column(Text, nullable=True)
+    adet: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
+    tutar_kurus: Mapped[int] = mapped_column(
+        BigInteger, nullable=False, server_default=text("0")
+    )
+    sonuc: Mapped[dict] = mapped_column(
+        JSONB, nullable=False, server_default=text("'{}'::jsonb")
+    )
 
 
 class IcraDosyasi(Base):

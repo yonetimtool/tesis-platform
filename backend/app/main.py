@@ -32,6 +32,7 @@ from .routers import unit_complaints as unit_complaints_router
 from .routers import unit_tanimlari as unit_tanimlari_router
 from .routers import muhasebe_tanimlari as muhasebe_tanimlari_router
 from .routers import borclandirma_uc as borclandirma_router
+from .routers import otomasyon as otomasyon_router
 from .routers import finans as finans_router
 from .routers import sakin_odeme as sakin_odeme_router
 from .routers import rapor_motoru as rapor_motoru_router
@@ -186,6 +187,8 @@ app.include_router(unit_tanimlari_router.router)
 app.include_router(muhasebe_tanimlari_router.router)
 app.include_router(borclandirma_router.router)
 app.include_router(finans_router.router)
+# (P192 §4) Finans otomasyonu: plan / hatirlatma / duzenli gider / gunluk.
+app.include_router(otomasyon_router.router)
 app.include_router(sakin_odeme_router.router)
 app.include_router(rapor_motoru_router.router)
 app.include_router(mesajlar_router.router)

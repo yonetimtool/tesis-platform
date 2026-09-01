@@ -41,6 +41,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from .. import storage
 from ..audit import Action, audit_user
 from ..banka import ESIK_OTOMATIK, Karar, iban_maskele
+from ..belge_no import belge_no_ata
 from ..banka_kaynak import KaynakHatasi, ekstre_satirlarindan, mt940_ayristir
 from ..banka_servis import adaylari_topla, geri_al, karari_uygula, kararlari_uret
 from ..crud_helpers import get_or_404
@@ -52,6 +53,7 @@ from ..models import (
     AppUser,
     BankTransaction,
     DuesAssessment,
+    FinansalHareket,
     Kasa,
     PaymentMatch,
     Receipt,
@@ -244,6 +246,29 @@ async def _bildir_ve_makbuz(
     except Exception:  # noqa: BLE001 — makbuz YAN İŞ; tahsilatı düşürmez
         pass
 
+    # (P192 §4.4) E-POSTA — push'un KALICI ikizi. Sakin bildirimi kacirsa
+    # ya da telefonunu degistirse bile makbuzun kopyasi posta kutusunda
+    # durur. YAN IS: gonderilemezse tahsilat DUSMEZ.
+    if odeyen is not None and odeyen.email:
+        try:
+            from ..eposta_sablonlari import makbuz_metni
+            from ..gonderim import saglayici as kanal_saglayicisi, tenant_ayari
+            from ..raporlar import kurus_metin
+
+            baglanti = (
+                storage.presign_get(makbuz.pdf_key) if makbuz.pdf_key else None
+            )
+            konu, govde = makbuz_metni(
+                site_ad=site_ad,
+                belge_no=makbuz.belge_no,
+                tutar=kurus_metin(int(makbuz.tutar_kurus)),
+                baglanti=baglanti,
+            )
+            ayar = await tenant_ayari(db, user.tenant_id)
+            kanal_saglayicisi("eposta", ayar).gonder(odeyen.email, konu, govde)
+        except Exception:  # noqa: BLE001 — e-posta YAN IS
+            logger.warning("[banka] makbuz e-postasi gonderilemedi (makbuz=%s)", makbuz.id)
+
     if makbuz.user_id:
         veri = {"donem": kalemler[0][0] if kalemler else "-", "tutar": ""}
         dispatch_external(
@@ -299,6 +324,48 @@ async def _uygula(
     return eslesmeler
 
 
+async def _cikis_gideri_yaz(
+    db: AsyncSession, user: AppUser, hareket: BankTransaction
+) -> None:
+    """(P192 §4.3) Bankadan cikan parayi ONAY BEKLEYEN gider olarak yazar.
+
+    IDEMPOTENT: `idempotency_key` harekete dayanir; ayni ekstre satiri
+    ikinci kez islenirse ikinci gider olusmaz.
+    """
+    kasa_id = await defter.kasa_coz(db, user.tenant_id, hareket.kasa_id, banka=True)
+    obj = FinansalHareket(
+        tenant_id=user.tenant_id,
+        tip="gider",
+        yon="cikis",
+        tutar_kurus=hareket.tutar_kurus,
+        tarih=hareket.islem_tarihi,
+        kasa_id=kasa_id,
+        # ONAY BEKLIYOR: banka masrafi otomatik defterlenmez.
+        durum="onay_bekliyor",
+        aciklama=(hareket.aciklama or "")[:500] or None,
+        kaydeden_user_id=user.id,
+        provider="banka",
+        provider_ref=f"cikis:{hareket.external_transaction_id}",
+        idempotency_key=f"banka-cikis:{hareket.id}",
+        idem_satir=0,
+        belge_no=await belge_no_ata(
+            db, user.tenant_id, "gider", None, hareket.islem_tarihi
+        ),
+    )
+    try:
+        async with db.begin_nested():
+            db.add(obj)
+            await db.flush()
+    except IntegrityError:
+        try:
+            db.expunge(obj)
+        except Exception:  # noqa: BLE001
+            pass
+    hareket.durum = "eslesti"
+    hareket.karar_veren_user_id = user.id
+    await db.flush()
+
+
 @router.post("/eslestir", response_model=BankaKosumSonuc)
 async def eslestir_uc(
     db: AsyncSession = Depends(get_tenant_db),
@@ -327,6 +394,21 @@ async def eslestir_uc(
         # borcu kapatmış olabilir ve bayat listeyle çalışmak AYNI borcu
         # iki kez kapatmaya çalışmak olurdu.
         adaylar = await adaylari_topla(db)
+        # (P192 §4.3) BANKADAN CIKAN PARA GIDERDIR.
+        #
+        # Onceden `cikis` yonlu satirlar sonsuza kadar "manuel_inceleme"de
+        # bekliyordu: eslestirme motoru yalnizca BORC kapatmayi biliyor ve
+        # bir cikis hicbir borcu kapatmaz. Oysa defterde karsiliginin
+        # olmamasi, banka bakiyesi ile kasa bakiyesinin ayrismasi demekti.
+        #
+        # OTOMATIK "ODENDI" YAZILMAZ: banka masrafi da, bilinmeyen bir
+        # havale de yoneticinin ONAYINA duser (kullanicinin acik kurali:
+        # "banka masrafi -> gider, yonetici onayina dussun, otomatik
+        # yazma"). Onay/red uclari §2.3'te.
+        if hareket.yon == "cikis":
+            await _cikis_gideri_yaz(db, user, hareket)
+            otomatik += 1
+            continue
         karar = kararlari_uret([hareket], adaylar)[hareket.id]
         if karar.sonuc == "otomatik" and karar.confidence >= ESIK_OTOMATIK:
             await _uygula(db, user, hareket, karar)
