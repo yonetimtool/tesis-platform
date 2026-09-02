@@ -1744,6 +1744,80 @@
   "@vardiyaCakisanGunler": {
     "placeholders": { "n": { "type": "int" } }
   },
+  "finansTahsilatBaslik": "Collection",
+  "finansKisiGerekli": "Select a person.",
+  "finansKasaGerekli": "Select a cash account.",
+  "finansTutarGerekli": "Enter a valid amount.",
+  "finansTahsilatKaydedildi": "Payment recorded.",
+  "finansBorcluYok": "There are no debtors right now.",
+  "finansAlanTutar": "Amount",
+  "finansSutunKasa": "Cash account",
+  "finansAlanAciklama": "Description",
+  "finansMakbuzNotu": "The receipt number and the resident notification are produced on the server — same as on the web.",
+  "finansGecikmeGun": "{n} days overdue",
+  "@finansGecikmeGun": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "finansGiderBaslik": "Expense entry",
+  "finansGiderKaydedildi": "Expense recorded.",
+  "finansGiderTuru": "Expense type",
+  "finansOnayBekliyor": "Send for approval",
+  "finansOnayBekliyorNotu": "An expense awaiting approval does NOT reduce the balance; it does once approved.",
+  "finansFisEkle": "Add receipt photo",
+  "finansFisEklendi": "Receipt added",
+  "finansFisYuklenemedi": "The expense was recorded but the receipt could not be uploaded. You can add it from the web.",
+  "finansBorclularBaslik": "Debtors",
+  "finansTahsilatOrani": "Collection rate",
+  "finansOranYok": "No assessments for this period.",
+  "finansOranDegeri": "{oran}% · {donem}",
+  "@finansOranDegeri": {
+    "placeholders": { "oran": { "type": "int" }, "donem": { "type": "String" } }
+  },
+  "finansKovaDaire": "{n} units",
+  "@finansKovaDaire": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "finansHatirlat": "Remind {n} people",
+  "@finansHatirlat": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "finansHatirlatmaGonderildi": "{n} reminders sent.",
+  "@finansHatirlatmaGonderildi": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "personelEposta": "E-mail",
+  "personelEpostaYardim": "The invitation and password link are sent to this address.",
+  "personelEpostaGerekli": "E-mail is required.",
+  "personelEpostaGecersiz": "Enter a valid e-mail address.",
+  "sayacOkumaBaslik": "Meter reading",
+  "sayacKalem": "Billing item",
+  "sayacAnaSayac": "Main meter",
+  "sayacDonem": "Period (YYYY-MM)",
+  "sayacAnaTuketim": "Main meter consumption",
+  "sayacBirimFiyat": "Unit price",
+  "sayacBorclandir": "Create charges",
+  "sayacFotoEkle": "Meter photo",
+  "sayacBolumYok": "No unit meters are linked to this main meter.",
+  "sayacKalemGerekli": "Select an item and a main meter.",
+  "sayacAnaTuketimGerekli": "Enter the main meter consumption.",
+  "sayacBirimFiyatGerekli": "Enter the unit price.",
+  "sayacDegerYok": "Enter a reading for at least one unit.",
+  "sayacDegerGecersiz": "The value entered for {daire} is invalid.",
+  "@sayacDegerGecersiz": {
+    "placeholders": { "daire": { "type": "String" } }
+  },
+  "sayacGeriSayiyor": "{daire}: the new reading cannot be lower than the previous one.",
+  "@sayacGeriSayiyor": {
+    "placeholders": { "daire": { "type": "String" } }
+  },
+  "sayacOncekiOkuma": "Previous: {deger}",
+  "@sayacOncekiOkuma": {
+    "placeholders": { "deger": { "type": "String" } }
+  },
+  "sayacBorclandirildi": "Charges created. Units skipped: {n}",
+  "@sayacBorclandirildi": {
+    "placeholders": { "n": { "type": "int" } }
+  },
   "vardiyaCikar": "Remove",
   "vardiyaCikarSebep": "Reason for removal (illness, leave, emergency)"
 }

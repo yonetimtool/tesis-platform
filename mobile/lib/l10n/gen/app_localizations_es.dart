@@ -5467,6 +5467,174 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String get finansTahsilatBaslik => 'Cobro';
+
+  @override
+  String get finansKisiGerekli => 'Seleccione una persona.';
+
+  @override
+  String get finansKasaGerekli => 'Seleccione una caja.';
+
+  @override
+  String get finansTutarGerekli => 'Introduzca un importe válido.';
+
+  @override
+  String get finansTahsilatKaydedildi => 'Cobro registrado.';
+
+  @override
+  String get finansBorcluYok => 'Ahora mismo no hay deudores.';
+
+  @override
+  String get finansAlanTutar => 'Importe';
+
+  @override
+  String get finansSutunKasa => 'Caja';
+
+  @override
+  String get finansAlanAciklama => 'Descripción';
+
+  @override
+  String get finansMakbuzNotu =>
+      'El número de recibo y el aviso al residente se generan en el servidor, igual que en la web.';
+
+  @override
+  String finansGecikmeGun(int n) {
+    return '$n días de retraso';
+  }
+
+  @override
+  String get finansGiderBaslik => 'Registro de gasto';
+
+  @override
+  String get finansGiderKaydedildi => 'Gasto registrado.';
+
+  @override
+  String get finansGiderTuru => 'Tipo de gasto';
+
+  @override
+  String get finansOnayBekliyor => 'Enviar a aprobación';
+
+  @override
+  String get finansOnayBekliyorNotu =>
+      'Un gasto pendiente de aprobación NO reduce el saldo; lo hace al aprobarse.';
+
+  @override
+  String get finansFisEkle => 'Añadir foto del recibo';
+
+  @override
+  String get finansFisEklendi => 'Recibo añadido';
+
+  @override
+  String get finansFisYuklenemedi =>
+      'El gasto se registró pero no se pudo subir el recibo. Puede añadirlo desde la web.';
+
+  @override
+  String get finansBorclularBaslik => 'Deudores';
+
+  @override
+  String get finansTahsilatOrani => 'Tasa de cobro';
+
+  @override
+  String get finansOranYok => 'No hay cargos para este periodo.';
+
+  @override
+  String finansOranDegeri(int oran, String donem) {
+    return '$oran % · $donem';
+  }
+
+  @override
+  String finansKovaDaire(int n) {
+    return '$n unidades';
+  }
+
+  @override
+  String finansHatirlat(int n) {
+    return 'Recordar a $n personas';
+  }
+
+  @override
+  String finansHatirlatmaGonderildi(int n) {
+    return '$n recordatorios enviados.';
+  }
+
+  @override
+  String get personelEposta => 'Correo electrónico';
+
+  @override
+  String get personelEpostaYardim =>
+      'La invitación y el enlace de contraseña se envían a esta dirección.';
+
+  @override
+  String get personelEpostaGerekli => 'El correo electrónico es obligatorio.';
+
+  @override
+  String get personelEpostaGecersiz =>
+      'Escriba una dirección de correo válida.';
+
+  @override
+  String get sayacOkumaBaslik => 'Lectura de contador';
+
+  @override
+  String get sayacKalem => 'Concepto de cargo';
+
+  @override
+  String get sayacAnaSayac => 'Contador principal';
+
+  @override
+  String get sayacDonem => 'Periodo (AAAA-MM)';
+
+  @override
+  String get sayacAnaTuketim => 'Consumo del contador principal';
+
+  @override
+  String get sayacBirimFiyat => 'Precio unitario';
+
+  @override
+  String get sayacBorclandir => 'Generar cargos';
+
+  @override
+  String get sayacFotoEkle => 'Foto del contador';
+
+  @override
+  String get sayacBolumYok =>
+      'No hay contadores de unidad vinculados a este contador principal.';
+
+  @override
+  String get sayacKalemGerekli =>
+      'Seleccione un concepto y un contador principal.';
+
+  @override
+  String get sayacAnaTuketimGerekli =>
+      'Introduzca el consumo del contador principal.';
+
+  @override
+  String get sayacBirimFiyatGerekli => 'Introduzca el precio unitario.';
+
+  @override
+  String get sayacDegerYok =>
+      'Introduzca una lectura para al menos una unidad.';
+
+  @override
+  String sayacDegerGecersiz(String daire) {
+    return 'El valor introducido para $daire no es válido.';
+  }
+
+  @override
+  String sayacGeriSayiyor(String daire) {
+    return '$daire: la nueva lectura no puede ser menor que la anterior.';
+  }
+
+  @override
+  String sayacOncekiOkuma(String deger) {
+    return 'Anterior: $deger';
+  }
+
+  @override
+  String sayacBorclandirildi(int n) {
+    return 'Cargos creados. Unidades omitidas: $n';
+  }
+
+  @override
   String get vardiyaCikar => 'Quitar';
 
   @override

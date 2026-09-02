@@ -90,12 +90,29 @@ class StaffApi {
   /// gonderir; kisi daveti (Tesis ID) ile kendi kaydini tamamlar — yonetici
   /// parola belirlemez, kod iletmez. Donus: id (foto yukleme icin
   /// `setStaffAvatar` kullanir).
+  ///
+  /// (P206 §4.2) E-POSTA ZORUNLU OLDU — VE BU BIR DUZELTMEDIR.
+  ///
+  /// OLCULDU (dev API): mobilin gonderdigi eski govde
+  /// (`ad`+`telefon`+`role`) **422** aliyordu:
+  ///     {"field":"email","message":"Field required"}
+  /// P197'den beri `app_user.email` NOT NULL (goc 0089) — davet,
+  /// dogrulama kodu ve parola sifirlama YALNIZ e-postadan gidiyor, yani
+  /// e-postasiz acilan hesap sahiplenilemiyor. Yani mobilde personel
+  /// ekleme P197'den bu yana KIRIKTI ve P204 paritesinde "tam" diye
+  /// isaretlenmisti.
   Future<String> addStaff({
     required String ad,
     required String telefon,
+    required String email,
     required String role,
   }) async {
-    final data = <String, dynamic>{'ad': ad, 'telefon': telefon, 'role': role};
+    final data = <String, dynamic>{
+      'ad': ad,
+      'telefon': telefon,
+      'email': email,
+      'role': role,
+    };
     try {
       final res = await _dio.post<Map<String, dynamic>>('/users', data: data);
       return res.data!['id'] as String;

@@ -1744,6 +1744,80 @@
   "@vardiyaCakisanGunler": {
     "placeholders": { "n": { "type": "int" } }
   },
+  "finansTahsilatBaslik": "Приём оплаты",
+  "finansKisiGerekli": "Выберите человека.",
+  "finansKasaGerekli": "Выберите кассу.",
+  "finansTutarGerekli": "Введите корректную сумму.",
+  "finansTahsilatKaydedildi": "Оплата записана.",
+  "finansBorcluYok": "Сейчас должников нет.",
+  "finansAlanTutar": "Сумма",
+  "finansSutunKasa": "Касса",
+  "finansAlanAciklama": "Описание",
+  "finansMakbuzNotu": "Номер квитанции и уведомление жильцу формируются на сервере — как и в веб-версии.",
+  "finansGecikmeGun": "просрочка {n} дн.",
+  "@finansGecikmeGun": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "finansGiderBaslik": "Запись расхода",
+  "finansGiderKaydedildi": "Расход записан.",
+  "finansGiderTuru": "Тип расхода",
+  "finansOnayBekliyor": "Отправить на утверждение",
+  "finansOnayBekliyorNotu": "Расход, ожидающий утверждения, НЕ уменьшает остаток; уменьшит после утверждения.",
+  "finansFisEkle": "Добавить фото чека",
+  "finansFisEklendi": "Чек добавлен",
+  "finansFisYuklenemedi": "Расход записан, но чек не удалось загрузить. Его можно добавить в веб-версии.",
+  "finansBorclularBaslik": "Должники",
+  "finansTahsilatOrani": "Собираемость",
+  "finansOranYok": "За этот период начислений нет.",
+  "finansOranDegeri": "{oran}% · {donem}",
+  "@finansOranDegeri": {
+    "placeholders": { "oran": { "type": "int" }, "donem": { "type": "String" } }
+  },
+  "finansKovaDaire": "{n} помещ.",
+  "@finansKovaDaire": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "finansHatirlat": "Напомнить {n}",
+  "@finansHatirlat": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "finansHatirlatmaGonderildi": "Отправлено напоминаний: {n}.",
+  "@finansHatirlatmaGonderildi": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "personelEposta": "Эл. почта",
+  "personelEpostaYardim": "Приглашение и ссылка для пароля отправляются на этот адрес.",
+  "personelEpostaGerekli": "Эл. почта обязательна.",
+  "personelEpostaGecersiz": "Введите корректный адрес эл. почты.",
+  "sayacOkumaBaslik": "Показания счётчиков",
+  "sayacKalem": "Статья начисления",
+  "sayacAnaSayac": "Главный счётчик",
+  "sayacDonem": "Период (ГГГГ-ММ)",
+  "sayacAnaTuketim": "Расход по главному счётчику",
+  "sayacBirimFiyat": "Цена за единицу",
+  "sayacBorclandir": "Начислить",
+  "sayacFotoEkle": "Фото счётчика",
+  "sayacBolumYok": "К этому главному счётчику не привязаны счётчики помещений.",
+  "sayacKalemGerekli": "Выберите статью и главный счётчик.",
+  "sayacAnaTuketimGerekli": "Введите расход по главному счётчику.",
+  "sayacBirimFiyatGerekli": "Введите цену за единицу.",
+  "sayacDegerYok": "Введите показание хотя бы для одного помещения.",
+  "sayacDegerGecersiz": "Значение для {daire} некорректно.",
+  "@sayacDegerGecersiz": {
+    "placeholders": { "daire": { "type": "String" } }
+  },
+  "sayacGeriSayiyor": "{daire}: новое показание не может быть меньше предыдущего.",
+  "@sayacGeriSayiyor": {
+    "placeholders": { "daire": { "type": "String" } }
+  },
+  "sayacOncekiOkuma": "Предыдущее: {deger}",
+  "@sayacOncekiOkuma": {
+    "placeholders": { "deger": { "type": "String" } }
+  },
+  "sayacBorclandirildi": "Начисление выполнено. Пропущено помещений: {n}",
+  "@sayacBorclandirildi": {
+    "placeholders": { "n": { "type": "int" } }
+  },
   "vardiyaCikar": "Убрать",
   "vardiyaCikarSebep": "Причина снятия (болезнь, отпуск, срочность)"
 }

@@ -5573,6 +5573,170 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String get finansTahsilatBaslik => 'التحصيل';
+
+  @override
+  String get finansKisiGerekli => 'اختر شخصًا.';
+
+  @override
+  String get finansKasaGerekli => 'اختر الصندوق.';
+
+  @override
+  String get finansTutarGerekli => 'أدخل مبلغًا صحيحًا.';
+
+  @override
+  String get finansTahsilatKaydedildi => 'تم تسجيل التحصيل.';
+
+  @override
+  String get finansBorcluYok => 'لا يوجد مدينون حاليًا.';
+
+  @override
+  String get finansAlanTutar => 'المبلغ';
+
+  @override
+  String get finansSutunKasa => 'الصندوق';
+
+  @override
+  String get finansAlanAciklama => 'الوصف';
+
+  @override
+  String get finansMakbuzNotu =>
+      'يتم إنشاء رقم الإيصال وإشعار الساكن على الخادم — كما في الويب.';
+
+  @override
+  String finansGecikmeGun(int n) {
+    return 'متأخر $n يومًا';
+  }
+
+  @override
+  String get finansGiderBaslik => 'تسجيل مصروف';
+
+  @override
+  String get finansGiderKaydedildi => 'تم تسجيل المصروف.';
+
+  @override
+  String get finansGiderTuru => 'نوع المصروف';
+
+  @override
+  String get finansOnayBekliyor => 'إرسال للاعتماد';
+
+  @override
+  String get finansOnayBekliyorNotu =>
+      'المصروف بانتظار الاعتماد لا يخفض الرصيد؛ يخفضه بعد الاعتماد.';
+
+  @override
+  String get finansFisEkle => 'إضافة صورة الإيصال';
+
+  @override
+  String get finansFisEklendi => 'تمت إضافة الإيصال';
+
+  @override
+  String get finansFisYuklenemedi =>
+      'تم تسجيل المصروف لكن تعذّر رفع الإيصال. يمكنك إضافته من الويب.';
+
+  @override
+  String get finansBorclularBaslik => 'المدينون';
+
+  @override
+  String get finansTahsilatOrani => 'نسبة التحصيل';
+
+  @override
+  String get finansOranYok => 'لا توجد استحقاقات لهذه الفترة.';
+
+  @override
+  String finansOranDegeri(int oran, String donem) {
+    return '$oran٪ · $donem';
+  }
+
+  @override
+  String finansKovaDaire(int n) {
+    return '$n وحدة';
+  }
+
+  @override
+  String finansHatirlat(int n) {
+    return 'تذكير $n أشخاص';
+  }
+
+  @override
+  String finansHatirlatmaGonderildi(int n) {
+    return 'تم إرسال $n تذكيرًا.';
+  }
+
+  @override
+  String get personelEposta => 'البريد الإلكتروني';
+
+  @override
+  String get personelEpostaYardim =>
+      'تُرسل الدعوة ورابط كلمة المرور إلى هذا العنوان.';
+
+  @override
+  String get personelEpostaGerekli => 'البريد الإلكتروني مطلوب.';
+
+  @override
+  String get personelEpostaGecersiz => 'أدخل عنوان بريد إلكتروني صحيحًا.';
+
+  @override
+  String get sayacOkumaBaslik => 'قراءة العدادات';
+
+  @override
+  String get sayacKalem => 'بند المحاسبة';
+
+  @override
+  String get sayacAnaSayac => 'العداد الرئيسي';
+
+  @override
+  String get sayacDonem => 'الفترة (سنة-شهر)';
+
+  @override
+  String get sayacAnaTuketim => 'استهلاك العداد الرئيسي';
+
+  @override
+  String get sayacBirimFiyat => 'سعر الوحدة';
+
+  @override
+  String get sayacBorclandir => 'إنشاء الاستحقاقات';
+
+  @override
+  String get sayacFotoEkle => 'صورة العداد';
+
+  @override
+  String get sayacBolumYok =>
+      'لا توجد عدادات وحدات مرتبطة بهذا العداد الرئيسي.';
+
+  @override
+  String get sayacKalemGerekli => 'اختر البند والعداد الرئيسي.';
+
+  @override
+  String get sayacAnaTuketimGerekli => 'أدخل استهلاك العداد الرئيسي.';
+
+  @override
+  String get sayacBirimFiyatGerekli => 'أدخل سعر الوحدة.';
+
+  @override
+  String get sayacDegerYok => 'أدخل قراءة لوحدة واحدة على الأقل.';
+
+  @override
+  String sayacDegerGecersiz(String daire) {
+    return 'القيمة المُدخلة لـ $daire غير صالحة.';
+  }
+
+  @override
+  String sayacGeriSayiyor(String daire) {
+    return '$daire: لا يمكن أن تكون القراءة الجديدة أقل من السابقة.';
+  }
+
+  @override
+  String sayacOncekiOkuma(String deger) {
+    return 'السابقة: $deger';
+  }
+
+  @override
+  String sayacBorclandirildi(int n) {
+    return 'تم إنشاء الاستحقاقات. الوحدات المتخطاة: $n';
+  }
+
+  @override
   String get vardiyaCikar => 'إزالة';
 
   @override

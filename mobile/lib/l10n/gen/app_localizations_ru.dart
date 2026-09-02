@@ -5575,6 +5575,170 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get finansTahsilatBaslik => 'Приём оплаты';
+
+  @override
+  String get finansKisiGerekli => 'Выберите человека.';
+
+  @override
+  String get finansKasaGerekli => 'Выберите кассу.';
+
+  @override
+  String get finansTutarGerekli => 'Введите корректную сумму.';
+
+  @override
+  String get finansTahsilatKaydedildi => 'Оплата записана.';
+
+  @override
+  String get finansBorcluYok => 'Сейчас должников нет.';
+
+  @override
+  String get finansAlanTutar => 'Сумма';
+
+  @override
+  String get finansSutunKasa => 'Касса';
+
+  @override
+  String get finansAlanAciklama => 'Описание';
+
+  @override
+  String get finansMakbuzNotu =>
+      'Номер квитанции и уведомление жильцу формируются на сервере — как и в веб-версии.';
+
+  @override
+  String finansGecikmeGun(int n) {
+    return 'просрочка $n дн.';
+  }
+
+  @override
+  String get finansGiderBaslik => 'Запись расхода';
+
+  @override
+  String get finansGiderKaydedildi => 'Расход записан.';
+
+  @override
+  String get finansGiderTuru => 'Тип расхода';
+
+  @override
+  String get finansOnayBekliyor => 'Отправить на утверждение';
+
+  @override
+  String get finansOnayBekliyorNotu =>
+      'Расход, ожидающий утверждения, НЕ уменьшает остаток; уменьшит после утверждения.';
+
+  @override
+  String get finansFisEkle => 'Добавить фото чека';
+
+  @override
+  String get finansFisEklendi => 'Чек добавлен';
+
+  @override
+  String get finansFisYuklenemedi =>
+      'Расход записан, но чек не удалось загрузить. Его можно добавить в веб-версии.';
+
+  @override
+  String get finansBorclularBaslik => 'Должники';
+
+  @override
+  String get finansTahsilatOrani => 'Собираемость';
+
+  @override
+  String get finansOranYok => 'За этот период начислений нет.';
+
+  @override
+  String finansOranDegeri(int oran, String donem) {
+    return '$oran% · $donem';
+  }
+
+  @override
+  String finansKovaDaire(int n) {
+    return '$n помещ.';
+  }
+
+  @override
+  String finansHatirlat(int n) {
+    return 'Напомнить $n';
+  }
+
+  @override
+  String finansHatirlatmaGonderildi(int n) {
+    return 'Отправлено напоминаний: $n.';
+  }
+
+  @override
+  String get personelEposta => 'Эл. почта';
+
+  @override
+  String get personelEpostaYardim =>
+      'Приглашение и ссылка для пароля отправляются на этот адрес.';
+
+  @override
+  String get personelEpostaGerekli => 'Эл. почта обязательна.';
+
+  @override
+  String get personelEpostaGecersiz => 'Введите корректный адрес эл. почты.';
+
+  @override
+  String get sayacOkumaBaslik => 'Показания счётчиков';
+
+  @override
+  String get sayacKalem => 'Статья начисления';
+
+  @override
+  String get sayacAnaSayac => 'Главный счётчик';
+
+  @override
+  String get sayacDonem => 'Период (ГГГГ-ММ)';
+
+  @override
+  String get sayacAnaTuketim => 'Расход по главному счётчику';
+
+  @override
+  String get sayacBirimFiyat => 'Цена за единицу';
+
+  @override
+  String get sayacBorclandir => 'Начислить';
+
+  @override
+  String get sayacFotoEkle => 'Фото счётчика';
+
+  @override
+  String get sayacBolumYok =>
+      'К этому главному счётчику не привязаны счётчики помещений.';
+
+  @override
+  String get sayacKalemGerekli => 'Выберите статью и главный счётчик.';
+
+  @override
+  String get sayacAnaTuketimGerekli => 'Введите расход по главному счётчику.';
+
+  @override
+  String get sayacBirimFiyatGerekli => 'Введите цену за единицу.';
+
+  @override
+  String get sayacDegerYok => 'Введите показание хотя бы для одного помещения.';
+
+  @override
+  String sayacDegerGecersiz(String daire) {
+    return 'Значение для $daire некорректно.';
+  }
+
+  @override
+  String sayacGeriSayiyor(String daire) {
+    return '$daire: новое показание не может быть меньше предыдущего.';
+  }
+
+  @override
+  String sayacOncekiOkuma(String deger) {
+    return 'Предыдущее: $deger';
+  }
+
+  @override
+  String sayacBorclandirildi(int n) {
+    return 'Начисление выполнено. Пропущено помещений: $n';
+  }
+
+  @override
   String get vardiyaCikar => 'Убрать';
 
   @override

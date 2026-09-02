@@ -1744,6 +1744,80 @@
   "@vardiyaCakisanGunler": {
     "placeholders": { "n": { "type": "int" } }
   },
+  "finansTahsilatBaslik": "التحصيل",
+  "finansKisiGerekli": "اختر شخصًا.",
+  "finansKasaGerekli": "اختر الصندوق.",
+  "finansTutarGerekli": "أدخل مبلغًا صحيحًا.",
+  "finansTahsilatKaydedildi": "تم تسجيل التحصيل.",
+  "finansBorcluYok": "لا يوجد مدينون حاليًا.",
+  "finansAlanTutar": "المبلغ",
+  "finansSutunKasa": "الصندوق",
+  "finansAlanAciklama": "الوصف",
+  "finansMakbuzNotu": "يتم إنشاء رقم الإيصال وإشعار الساكن على الخادم — كما في الويب.",
+  "finansGecikmeGun": "متأخر {n} يومًا",
+  "@finansGecikmeGun": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "finansGiderBaslik": "تسجيل مصروف",
+  "finansGiderKaydedildi": "تم تسجيل المصروف.",
+  "finansGiderTuru": "نوع المصروف",
+  "finansOnayBekliyor": "إرسال للاعتماد",
+  "finansOnayBekliyorNotu": "المصروف بانتظار الاعتماد لا يخفض الرصيد؛ يخفضه بعد الاعتماد.",
+  "finansFisEkle": "إضافة صورة الإيصال",
+  "finansFisEklendi": "تمت إضافة الإيصال",
+  "finansFisYuklenemedi": "تم تسجيل المصروف لكن تعذّر رفع الإيصال. يمكنك إضافته من الويب.",
+  "finansBorclularBaslik": "المدينون",
+  "finansTahsilatOrani": "نسبة التحصيل",
+  "finansOranYok": "لا توجد استحقاقات لهذه الفترة.",
+  "finansOranDegeri": "{oran}٪ · {donem}",
+  "@finansOranDegeri": {
+    "placeholders": { "oran": { "type": "int" }, "donem": { "type": "String" } }
+  },
+  "finansKovaDaire": "{n} وحدة",
+  "@finansKovaDaire": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "finansHatirlat": "تذكير {n} أشخاص",
+  "@finansHatirlat": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "finansHatirlatmaGonderildi": "تم إرسال {n} تذكيرًا.",
+  "@finansHatirlatmaGonderildi": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "personelEposta": "البريد الإلكتروني",
+  "personelEpostaYardim": "تُرسل الدعوة ورابط كلمة المرور إلى هذا العنوان.",
+  "personelEpostaGerekli": "البريد الإلكتروني مطلوب.",
+  "personelEpostaGecersiz": "أدخل عنوان بريد إلكتروني صحيحًا.",
+  "sayacOkumaBaslik": "قراءة العدادات",
+  "sayacKalem": "بند المحاسبة",
+  "sayacAnaSayac": "العداد الرئيسي",
+  "sayacDonem": "الفترة (سنة-شهر)",
+  "sayacAnaTuketim": "استهلاك العداد الرئيسي",
+  "sayacBirimFiyat": "سعر الوحدة",
+  "sayacBorclandir": "إنشاء الاستحقاقات",
+  "sayacFotoEkle": "صورة العداد",
+  "sayacBolumYok": "لا توجد عدادات وحدات مرتبطة بهذا العداد الرئيسي.",
+  "sayacKalemGerekli": "اختر البند والعداد الرئيسي.",
+  "sayacAnaTuketimGerekli": "أدخل استهلاك العداد الرئيسي.",
+  "sayacBirimFiyatGerekli": "أدخل سعر الوحدة.",
+  "sayacDegerYok": "أدخل قراءة لوحدة واحدة على الأقل.",
+  "sayacDegerGecersiz": "القيمة المُدخلة لـ {daire} غير صالحة.",
+  "@sayacDegerGecersiz": {
+    "placeholders": { "daire": { "type": "String" } }
+  },
+  "sayacGeriSayiyor": "{daire}: لا يمكن أن تكون القراءة الجديدة أقل من السابقة.",
+  "@sayacGeriSayiyor": {
+    "placeholders": { "daire": { "type": "String" } }
+  },
+  "sayacOncekiOkuma": "السابقة: {deger}",
+  "@sayacOncekiOkuma": {
+    "placeholders": { "deger": { "type": "String" } }
+  },
+  "sayacBorclandirildi": "تم إنشاء الاستحقاقات. الوحدات المتخطاة: {n}",
+  "@sayacBorclandirildi": {
+    "placeholders": { "n": { "type": "int" } }
+  },
   "vardiyaCikar": "إزالة",
   "vardiyaCikarSebep": "سبب الإزالة (مرض، إجازة، طارئ)"
 }

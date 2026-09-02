@@ -5502,6 +5502,169 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get finansTahsilatBaslik => 'Collection';
+
+  @override
+  String get finansKisiGerekli => 'Select a person.';
+
+  @override
+  String get finansKasaGerekli => 'Select a cash account.';
+
+  @override
+  String get finansTutarGerekli => 'Enter a valid amount.';
+
+  @override
+  String get finansTahsilatKaydedildi => 'Payment recorded.';
+
+  @override
+  String get finansBorcluYok => 'There are no debtors right now.';
+
+  @override
+  String get finansAlanTutar => 'Amount';
+
+  @override
+  String get finansSutunKasa => 'Cash account';
+
+  @override
+  String get finansAlanAciklama => 'Description';
+
+  @override
+  String get finansMakbuzNotu =>
+      'The receipt number and the resident notification are produced on the server — same as on the web.';
+
+  @override
+  String finansGecikmeGun(int n) {
+    return '$n days overdue';
+  }
+
+  @override
+  String get finansGiderBaslik => 'Expense entry';
+
+  @override
+  String get finansGiderKaydedildi => 'Expense recorded.';
+
+  @override
+  String get finansGiderTuru => 'Expense type';
+
+  @override
+  String get finansOnayBekliyor => 'Send for approval';
+
+  @override
+  String get finansOnayBekliyorNotu =>
+      'An expense awaiting approval does NOT reduce the balance; it does once approved.';
+
+  @override
+  String get finansFisEkle => 'Add receipt photo';
+
+  @override
+  String get finansFisEklendi => 'Receipt added';
+
+  @override
+  String get finansFisYuklenemedi =>
+      'The expense was recorded but the receipt could not be uploaded. You can add it from the web.';
+
+  @override
+  String get finansBorclularBaslik => 'Debtors';
+
+  @override
+  String get finansTahsilatOrani => 'Collection rate';
+
+  @override
+  String get finansOranYok => 'No assessments for this period.';
+
+  @override
+  String finansOranDegeri(int oran, String donem) {
+    return '$oran% · $donem';
+  }
+
+  @override
+  String finansKovaDaire(int n) {
+    return '$n units';
+  }
+
+  @override
+  String finansHatirlat(int n) {
+    return 'Remind $n people';
+  }
+
+  @override
+  String finansHatirlatmaGonderildi(int n) {
+    return '$n reminders sent.';
+  }
+
+  @override
+  String get personelEposta => 'E-mail';
+
+  @override
+  String get personelEpostaYardim =>
+      'The invitation and password link are sent to this address.';
+
+  @override
+  String get personelEpostaGerekli => 'E-mail is required.';
+
+  @override
+  String get personelEpostaGecersiz => 'Enter a valid e-mail address.';
+
+  @override
+  String get sayacOkumaBaslik => 'Meter reading';
+
+  @override
+  String get sayacKalem => 'Billing item';
+
+  @override
+  String get sayacAnaSayac => 'Main meter';
+
+  @override
+  String get sayacDonem => 'Period (YYYY-MM)';
+
+  @override
+  String get sayacAnaTuketim => 'Main meter consumption';
+
+  @override
+  String get sayacBirimFiyat => 'Unit price';
+
+  @override
+  String get sayacBorclandir => 'Create charges';
+
+  @override
+  String get sayacFotoEkle => 'Meter photo';
+
+  @override
+  String get sayacBolumYok => 'No unit meters are linked to this main meter.';
+
+  @override
+  String get sayacKalemGerekli => 'Select an item and a main meter.';
+
+  @override
+  String get sayacAnaTuketimGerekli => 'Enter the main meter consumption.';
+
+  @override
+  String get sayacBirimFiyatGerekli => 'Enter the unit price.';
+
+  @override
+  String get sayacDegerYok => 'Enter a reading for at least one unit.';
+
+  @override
+  String sayacDegerGecersiz(String daire) {
+    return 'The value entered for $daire is invalid.';
+  }
+
+  @override
+  String sayacGeriSayiyor(String daire) {
+    return '$daire: the new reading cannot be lower than the previous one.';
+  }
+
+  @override
+  String sayacOncekiOkuma(String deger) {
+    return 'Previous: $deger';
+  }
+
+  @override
+  String sayacBorclandirildi(int n) {
+    return 'Charges created. Units skipped: $n';
+  }
+
+  @override
   String get vardiyaCikar => 'Remove';
 
   @override

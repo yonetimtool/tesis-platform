@@ -2504,6 +2504,80 @@
   "@vardiyaCakisanGunler": {
     "placeholders": { "n": { "type": "int" } }
   },
+  "finansTahsilatBaslik": "Tahsilat",
+  "finansKisiGerekli": "Kişi seçin.",
+  "finansKasaGerekli": "Kasa seçin.",
+  "finansTutarGerekli": "Geçerli bir tutar girin.",
+  "finansTahsilatKaydedildi": "Tahsilat kaydedildi.",
+  "finansBorcluYok": "Şu anda borçlu kayıt yok.",
+  "finansAlanTutar": "Tutar",
+  "finansSutunKasa": "Kasa",
+  "finansAlanAciklama": "Açıklama",
+  "finansMakbuzNotu": "Makbuz numarası ve sakine giden bildirim sunucuda üretilir — web ile aynı.",
+  "finansGecikmeGun": "{n} gün gecikme",
+  "@finansGecikmeGun": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "finansGiderBaslik": "Gider kaydı",
+  "finansGiderKaydedildi": "Gider kaydedildi.",
+  "finansGiderTuru": "Gider türü",
+  "finansOnayBekliyor": "Onaya gönder",
+  "finansOnayBekliyorNotu": "Onay bekleyen gider kasa bakiyesini DÜŞÜRMEZ; onaylanınca düşer.",
+  "finansFisEkle": "Fiş fotoğrafı ekle",
+  "finansFisEklendi": "Fiş eklendi",
+  "finansFisYuklenemedi": "Gider kaydedildi ama fiş yüklenemedi. Fişi web'den ekleyebilirsiniz.",
+  "finansBorclularBaslik": "Borçlular",
+  "finansTahsilatOrani": "Tahsilat oranı",
+  "finansOranYok": "Bu dönem için tahakkuk yok.",
+  "finansOranDegeri": "%{oran} · {donem}",
+  "@finansOranDegeri": {
+    "placeholders": { "oran": { "type": "int" }, "donem": { "type": "String" } }
+  },
+  "finansKovaDaire": "{n} daire",
+  "@finansKovaDaire": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "finansHatirlat": "{n} kişiye hatırlat",
+  "@finansHatirlat": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "finansHatirlatmaGonderildi": "{n} hatırlatma gönderildi.",
+  "@finansHatirlatmaGonderildi": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "personelEposta": "E-posta",
+  "personelEpostaYardim": "Davet ve parola belirleme bağlantısı bu adrese gider.",
+  "personelEpostaGerekli": "E-posta zorunludur.",
+  "personelEpostaGecersiz": "Geçerli bir e-posta adresi yazın.",
+  "sayacOkumaBaslik": "Sayaç okuma",
+  "sayacKalem": "Borçlandırma kalemi",
+  "sayacAnaSayac": "Ana sayaç",
+  "sayacDonem": "Dönem (YYYY-AA)",
+  "sayacAnaTuketim": "Ana sayaç tüketimi",
+  "sayacBirimFiyat": "Birim fiyat",
+  "sayacBorclandir": "Borçlandır",
+  "sayacFotoEkle": "Sayaç fotoğrafı",
+  "sayacBolumYok": "Bu ana sayaca bağlı daire sayacı yok.",
+  "sayacKalemGerekli": "Kalem ve ana sayaç seçin.",
+  "sayacAnaTuketimGerekli": "Ana sayaç tüketimini girin.",
+  "sayacBirimFiyatGerekli": "Birim fiyatı girin.",
+  "sayacDegerYok": "En az bir daire için okuma girin.",
+  "sayacDegerGecersiz": "{daire} için girilen değer geçersiz.",
+  "@sayacDegerGecersiz": {
+    "placeholders": { "daire": { "type": "String" } }
+  },
+  "sayacGeriSayiyor": "{daire}: yeni okuma önceki okumadan küçük olamaz.",
+  "@sayacGeriSayiyor": {
+    "placeholders": { "daire": { "type": "String" } }
+  },
+  "sayacOncekiOkuma": "Önceki: {deger}",
+  "@sayacOncekiOkuma": {
+    "placeholders": { "deger": { "type": "String" } }
+  },
+  "sayacBorclandirildi": "Borçlandırma tamam. Atlanan daire: {n}",
+  "@sayacBorclandirildi": {
+    "placeholders": { "n": { "type": "int" } }
+  },
   "vardiyaCikar": "Çıkar",
   "@vardiyaCikar": {
     "description": "(P203 §4) Vardiya plani ekrani — vardiyaCikar."

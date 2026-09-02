@@ -8,6 +8,10 @@ import '../features/auth/data/token_storage.dart';
 import '../features/cameras/domain/camera_models.dart';
 import '../features/cameras/presentation/camera_player_screen.dart';
 import '../features/cameras/presentation/kameralar_screen.dart';
+import '../features/finans/presentation/borclular_screen.dart';
+import '../features/finans/presentation/gider_screen.dart';
+import '../features/finans/presentation/sayac_okuma_screen.dart';
+import '../features/finans/presentation/tahsilat_screen.dart';
 import '../features/shifts/presentation/vardiya_plani_screen.dart';
 import '../features/shifts/presentation/vardiyalar_screen.dart';
 import '../features/assets/presentation/assets_screen.dart';
@@ -128,6 +132,13 @@ class AppRoutes {
   // (P203 §4) Vardiya PLANI — sablon ekranindan (`/vardiyalar`) AYRI:
   // biri saatleri tanimlar, oteki kim hangi gun calisir.
   static const vardiyaPlani = '/vardiya-plani';
+
+  // (P206 §4) MOBIL FINANS — tahsilat, gider, borclular. Ucu de
+  // yoneticinin sahada yaptigi isler; web'de vardi, mobilde YOKTU.
+  static const tahsilat = '/tahsilat';
+  static const gider = '/gider';
+  static const borclular = '/borclular';
+  static const sayacOkuma = '/sayac-okuma';
   static const kameralar = '/kameralar';
   static const kameraIzle = '/kamera-izle';
   static const settings = '/settings';
@@ -338,6 +349,22 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.vardiyaPlani,
         builder: (context, state) => const VardiyaPlaniScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.tahsilat,
+        builder: (context, state) => const TahsilatScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.gider,
+        builder: (context, state) => const GiderScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.borclular,
+        builder: (context, state) => const BorclularScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.sayacOkuma,
+        builder: (context, state) => const SayacOkumaScreen(),
       ),
       GoRoute(
         path: AppRoutes.kameralar,

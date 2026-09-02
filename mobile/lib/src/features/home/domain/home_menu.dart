@@ -214,6 +214,18 @@ enum HomeMenuEntry {
   /// `_gorevliErisim` + `_tesisGorevlisiErisim` + `_yoneticiErisim`.
   vardiyalar,
 
+  /// (P206 §4.1) Tahsilat — kapida elden alinan aidat (yonetici).
+  tahsilat,
+
+  /// (P206 §4.3) Gider kaydi — fis fotografiyla (yonetici).
+  gider,
+
+  /// (P206 §4.4) Borclular — yaslandirma + toplu hatirlatma (yonetici).
+  borclular,
+
+  /// (P206 §4.5) Sayac okuma — sahada oku, oracikta borclandir (yonetici).
+  sayacOkuma,
+
   /// Yonetici Iletisim — tenant'in yoneticileri (ad + telefon + arama) +
   /// yonetim maili. Saha rolleri + sakin gorur; YONETICI kendisi GORMEZ.
   yoneticiIletisim,
@@ -332,6 +344,13 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.patrolPlans,
         HomeMenuEntry.checkpoints,
         HomeMenuEntry.taskTracking,
+        // (P206 §4) FINANS ISLERI EN USTE YAKIN: yoneticinin sahada
+        // en sik yaptigi is tahsilat; menunun dibinde durmasi,
+        // "telefonda yapilamiyor" hissini surdururdu.
+        HomeMenuEntry.tahsilat,
+        HomeMenuEntry.borclular,
+        HomeMenuEntry.gider,
+        HomeMenuEntry.sayacOkuma,
         HomeMenuEntry.budget,
         HomeMenuEntry.financialSummary,
         HomeMenuEntry.transparency,
@@ -416,6 +435,10 @@ String moduleBaslik(AppLocalizations l10n, HomeMenuEntry entry) =>
       HomeMenuEntry.nfc => l10n.modulNfcOkutma,
       HomeMenuEntry.outbox => l10n.modulGonderimKuyrugu,
       HomeMenuEntry.reports => l10n.raporBaslik,
+      HomeMenuEntry.tahsilat => l10n.finansTahsilatBaslik,
+      HomeMenuEntry.gider => l10n.finansGiderBaslik,
+      HomeMenuEntry.borclular => l10n.finansBorclularBaslik,
+      HomeMenuEntry.sayacOkuma => l10n.sayacOkumaBaslik,
       HomeMenuEntry.budget => l10n.modulButce,
       HomeMenuEntry.financialSummary => l10n.butFinansalOzet,
       HomeMenuEntry.transparency => l10n.modulSeffaflik,
@@ -505,6 +528,10 @@ HomeMenuGrup homeMenuGrubu(HomeMenuEntry e) => switch (e) {
   HomeMenuEntry.disHizmet ||
   HomeMenuEntry.sikayetHaritasi ||
   HomeMenuEntry.sikayetlerim => HomeMenuGrup.tesis,
+  HomeMenuEntry.tahsilat ||
+  HomeMenuEntry.gider ||
+  HomeMenuEntry.borclular ||
+  HomeMenuEntry.sayacOkuma ||
   HomeMenuEntry.reports ||
   HomeMenuEntry.budget ||
   HomeMenuEntry.financialSummary ||

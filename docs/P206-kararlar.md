@@ -232,3 +232,138 @@ diyen test), geri alındı. Göç 0097 downgrade→upgrade ile doğrulandı.
 **Ölçemediğim:** banka kodu listesinin güncelliği — kodlar TCMB/BKM
 yayınından elle alındı; yeni lisans alan bir bankanın kodu listede
 olmaz (serbest giriş bu yüzden korundu).
+
+---
+
+## §4 — MOBİL PARİTE (P204 öncelik listesi 2–6)
+
+### ÖNCE ÖLÇÜM: beşinin gerçek durumu
+
+P204'te "mobil ekranların yazma kapsamını ekran ekran açmadım" demiştim.
+Açtım — ve **tablo yanlıştı**:
+
+| Madde | P204'te | GERÇEK (ölçüldü) |
+|---|---|---|
+| 4.1 Tahsilat girişi | "yok" | **Doğru: yok.** Mobilde `/finans/tahsilat`'a giden hiçbir çağrı yok (`odeme_api.dart` sakinin KENDİ online ödemesi) |
+| 4.2 Davet / kullanıcı ekleme | "tam" | **YANLIŞ — KIRIK.** `addStaff` gövdesi `ad`+`telefon`+`role`; uç **422** veriyor: `{"field":"email","message":"Field required"}`. P197'den (e-posta zorunlu, göç 0089) beri mobilde personel eklenemiyordu |
+| 4.3 Gider kaydı | "yok" | **Doğru: yok** |
+| 4.4 Borçlular | "yok" | **Doğru: yok** (`/finans/yaslandirma` mobilde hiç çağrılmıyor) |
+| 4.5 Sayaç okuma | "yok" | **Doğru: yok** |
+
+Yani beş maddeden biri "var" sanılıyordu ve aslında **bozuktu**.
+
+### K4.1 — Tahsilat: dört karar, sekiz alan değil
+
+Bu ekranın kullanıldığı an, yöneticinin kapıda biriyle **konuştuğu**
+andır. Web formunu (kişi, daire, yöntem, kasa, tutar, tarih, açıklama,
+belge no) telefona kopyalamak o konuşmayı form doldurmaya çevirirdi.
+Ekran dörde indi: **kim** (borçlu listesinden, tutarıyla) → **ne kadar**
+(varsayılan: kalan borcun tamamı) → **hangi kasa** (tek kasa varsa
+sorulmaz) → kaydet. Tarih bugün, yöntem elden — mobil tahsilatın tanımı
+bu.
+
+**Çift tıklama koruması mobilde de var**: `Idempotency-Key` form örneği
+başına üretilir, başarılı kayıttan sonra yenilenir. Sahada bağlantı
+kopar, kullanıcı "gitmedi" sanıp yeniden basar; anahtar olmasa kasada iki
+hareket olurdu ve bu ancak ay sonu mutabakatında görülürdü.
+
+**Makbuz ve bildirim sunucuda**: web ile aynı uç (`/finans/tahsilat`),
+yani makbuz numarası ve sakine giden bildirim aynı kodda üretiliyor.
+Mobil için ikinci bir yol açmak, ikisinin ayrışma riskini bedavaya
+eklerdi. Ekran bunu kullanıcıya da yazıyor.
+
+### K4.2 — Davet: e-posta eklendi (kırık akış onarıldı)
+
+E-posta alanı **zorunlu** ve düzenlemede **kapalı**: e-posta değişikliği
+ayrı bir akıştır (doğrulama + eski adrese bildirim, P184) ve buradan
+sessizce yapmak, hesabı başkasına devretmenin kolay yolu olurdu.
+
+Biçim denetimi kaba; son sözü sunucu söyler (`EmailStr`). İstemcideki
+amaç, açık bir yazım hatasını **istek atmadan** yakalamak.
+
+Excel toplu aktarım **yok** (P204 kararı korundu). Blok/daire seçimi:
+mobil personel ekranı yalnız **saha personeli** açıyor ve saha personeli
+daireye bağlanmaz — sakin ekleme mobilde zaten yok, dolayısıyla dar
+ekranda blok/daire seçicisi gerekmedi. **Sakin ekleme mobile
+taşınmadı** ve bu bilinçli: sakin kaydı daire bağı, malik/kiracı ayrımı
+ve KVKK onayı ister; telefonda yarım bir sakin kaydı, web'de düzeltilmesi
+gereken bir kayıt üretirdi.
+
+### K4.3 — Gider: onay durumu görünür, fiş fotoğrafı VAR
+
+`durum` sessiz bir varsayılan değil, ekranda **anahtar**: "Onaya gönder"
+açıkken kayıt `onay_bekliyor` gider ve ekran "onay bekleyen gider kasa
+bakiyesini DÜŞÜRMEZ" diye yazar (P192). Sessiz bir varsayılan,
+yöneticinin bakiyeyi yanlış okumasına yol açardı.
+
+**Fiş fotoğrafı: evet.** Nakit gider en çok tartışılan kalemdir ve fiş
+sahada, telefondadır. Mevcut ek mekanizması kullanıldı — göç 0098 ile
+`finansal_hareket` ek varlık tiplerine eklendi (yeni tablo yok, yetki
+kümesi finans router'ından okunuyor). Fotoğraf **zorunlu değil**:
+zorunlu kılmak, fişi olmayan meşru gideri (kapıcı avansı, banka masrafı)
+kaydedilemez yapardı. Yükleme başarısız olursa **kayıt geri alınmaz** —
+para hareketi gerçek, fotoğraf onun kanıtı.
+
+### K4.4 — Borçlular: kova ŞERİDİ (dar ekran kararı)
+
+Web'de dört kova yan yana kart. Telefonda dördünü yan yana koymak her
+birini ~80 px'e sıkıştırır (başlık kırılır, tutar okunmaz); alt alta
+koymak ise ekranın tamamını özete verip **asıl listeyi** katlar.
+
+**Seçilen**: kovalar yatay kaydırılan bir şerit (her biri 140 px, tek
+bakışta ikisi görünür), altında seçili kovanın listesi. Sahada sorulan
+soru "en eski borçlular kim" — tek dokunuşla yanıtlanıyor.
+
+Toplu hatırlatma var; buton **yalnız seçim varken** görünür (boş seçimle
+basılabilen bir buton, hiçbir şey yapmayıp kullanıcıyı "gitti mi?" diye
+bırakırdı). Tahsilat oranı **tek kaynaktan**: `/finans/tahsilat-gostergesi`
+(P192 §5.2) — aynı sayıyı mobilde yeniden hesaplamak, iki ekranda iki
+farklı oran demekti.
+
+### K4.5 — Sayaç okuma: tek liste + fotoğraf
+
+Web dört adımlı sihirbaz (masabaşı için doğru). Sahada kişi bodrumda,
+tek elle çalışıyor: ekran **tek liste** — üstte kalem/ana sayaç/dönem,
+altında daire daire değer alanları. Adımlara bölmek, her sayaçta
+ileri-geri gitmek demekti.
+
+**Önceki okuma her satırda yazar** ve **geri sayan okuma istek atmadan
+reddedilir**: sahada en sık yapılan hata değeri öncekinin altına
+yazmaktır; sunucuya gönderip 422 beklemek, sayacın başında duran kişiyi
+bir gidiş-dönüş daha bekletirdi.
+
+**Fotoğraf: evet — ama DAİREYE bağlı.** "Benim sayacım 145
+göstermiyordu" itirazı her dönem çıkar ve bugün yanıtlanamıyor. Fotoğraf
+`varlik_tipi=unit` ekine yazılır (metninde dönem + okunan değer), çünkü
+itiraz daire üzerinden gelir ve okuma kalıcı bir varlık değil, bir
+borçlandırma girdisidir. Borçlandırmadan **sonra** yüklenir: önce
+fotoğraf yükleyip sonra borçlandırsaydık, yarım kalan akış daireye
+"sahipsiz" ek bırakırdı.
+
+Borçlandırma **web ile aynı uca** gider (`POST /borclandirma/sayac`) —
+dağıtım kuralının iki yerde ayrışma riski yok.
+
+### Yetkiler ve izolasyon
+
+Mobil istemci **hiçbir rol kontrolü yapmaz**; kural sunucuda (§1: admin +
+yönetici) ve ekran yalnız "reddedilecek düğmeyi çizmeme" kararını verir.
+Menü girişleri yalnız yöneticide (`home_menu.dart`), yazma uçlarının
+kapısı `test_p206_yonetici_finans.py` ile kilitli. Tesis izolasyonu
+sunucuda (RLS + `tenant_id=user.tenant_id`), mobil için ek bir yol yok.
+
+### Ölçüm
+
+Mobil: `p206_mobil_finans_test.dart` **10 test**,
+`p206_mobil_sayac_personel_test.dart` **5 test** — hepsi taklidi HTTP
+adapter'ında kuruyor (P200 dersi), yani gövdeyi kuran katman da testin
+içinden geçiyor. Ölçülenler: giden uç + gövde + `Idempotency-Key`
+başlığı, tek kasada seçici çizilmemesi, borçlu yoksa mesaj, onay
+durumunun gövdeye gitmesi, geri sayan okumanın istek atmadan
+reddedilmesi.
+
+**Kilit kanıtı:** `addStaff` gövdesinden `email` çıkarıldı → ilgili test
+düştü; geri alındı. Mobil tam takım **2029 yeşil**.
+
+**Ölçemediğim:** gerçek cihazda kamera akışı (fotoğraf çekme ve yükleme
+uçtan uca sürülmedi — `image_picker` testte taklit); MinIO'ya gerçek
+presigned PUT; sahada tek elle kullanım hissi.

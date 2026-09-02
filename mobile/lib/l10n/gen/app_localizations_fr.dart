@@ -5482,6 +5482,172 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get finansTahsilatBaslik => 'Encaissement';
+
+  @override
+  String get finansKisiGerekli => 'Sélectionnez une personne.';
+
+  @override
+  String get finansKasaGerekli => 'Sélectionnez une caisse.';
+
+  @override
+  String get finansTutarGerekli => 'Saisissez un montant valide.';
+
+  @override
+  String get finansTahsilatKaydedildi => 'Paiement enregistré.';
+
+  @override
+  String get finansBorcluYok => 'Il n\'y a aucun débiteur pour le moment.';
+
+  @override
+  String get finansAlanTutar => 'Montant';
+
+  @override
+  String get finansSutunKasa => 'Caisse';
+
+  @override
+  String get finansAlanAciklama => 'Description';
+
+  @override
+  String get finansMakbuzNotu =>
+      'Le numéro de reçu et la notification au résident sont générés sur le serveur — comme sur le web.';
+
+  @override
+  String finansGecikmeGun(int n) {
+    return '$n jours de retard';
+  }
+
+  @override
+  String get finansGiderBaslik => 'Saisie de dépense';
+
+  @override
+  String get finansGiderKaydedildi => 'Dépense enregistrée.';
+
+  @override
+  String get finansGiderTuru => 'Type de dépense';
+
+  @override
+  String get finansOnayBekliyor => 'Envoyer pour validation';
+
+  @override
+  String get finansOnayBekliyorNotu =>
+      'Une dépense en attente de validation ne réduit PAS le solde ; elle le fait une fois validée.';
+
+  @override
+  String get finansFisEkle => 'Ajouter une photo du reçu';
+
+  @override
+  String get finansFisEklendi => 'Reçu ajouté';
+
+  @override
+  String get finansFisYuklenemedi =>
+      'La dépense a été enregistrée mais le reçu n\'a pas pu être téléversé. Vous pouvez l\'ajouter depuis le web.';
+
+  @override
+  String get finansBorclularBaslik => 'Débiteurs';
+
+  @override
+  String get finansTahsilatOrani => 'Taux de recouvrement';
+
+  @override
+  String get finansOranYok => 'Aucune imputation pour cette période.';
+
+  @override
+  String finansOranDegeri(int oran, String donem) {
+    return '$oran % · $donem';
+  }
+
+  @override
+  String finansKovaDaire(int n) {
+    return '$n lots';
+  }
+
+  @override
+  String finansHatirlat(int n) {
+    return 'Rappeler à $n personnes';
+  }
+
+  @override
+  String finansHatirlatmaGonderildi(int n) {
+    return '$n rappels envoyés.';
+  }
+
+  @override
+  String get personelEposta => 'E-mail';
+
+  @override
+  String get personelEpostaYardim =>
+      'L\'invitation et le lien de mot de passe sont envoyés à cette adresse.';
+
+  @override
+  String get personelEpostaGerekli => 'L\'e-mail est obligatoire.';
+
+  @override
+  String get personelEpostaGecersiz => 'Saisissez une adresse e-mail valide.';
+
+  @override
+  String get sayacOkumaBaslik => 'Relevé de compteur';
+
+  @override
+  String get sayacKalem => 'Poste de facturation';
+
+  @override
+  String get sayacAnaSayac => 'Compteur principal';
+
+  @override
+  String get sayacDonem => 'Période (AAAA-MM)';
+
+  @override
+  String get sayacAnaTuketim => 'Consommation du compteur principal';
+
+  @override
+  String get sayacBirimFiyat => 'Prix unitaire';
+
+  @override
+  String get sayacBorclandir => 'Facturer';
+
+  @override
+  String get sayacFotoEkle => 'Photo du compteur';
+
+  @override
+  String get sayacBolumYok =>
+      'Aucun compteur de lot n\'est rattaché à ce compteur principal.';
+
+  @override
+  String get sayacKalemGerekli =>
+      'Sélectionnez un poste et un compteur principal.';
+
+  @override
+  String get sayacAnaTuketimGerekli =>
+      'Saisissez la consommation du compteur principal.';
+
+  @override
+  String get sayacBirimFiyatGerekli => 'Saisissez le prix unitaire.';
+
+  @override
+  String get sayacDegerYok => 'Saisissez un relevé pour au moins un lot.';
+
+  @override
+  String sayacDegerGecersiz(String daire) {
+    return 'La valeur saisie pour $daire est invalide.';
+  }
+
+  @override
+  String sayacGeriSayiyor(String daire) {
+    return '$daire : le nouveau relevé ne peut pas être inférieur au précédent.';
+  }
+
+  @override
+  String sayacOncekiOkuma(String deger) {
+    return 'Précédent : $deger';
+  }
+
+  @override
+  String sayacBorclandirildi(int n) {
+    return 'Facturation effectuée. Lots ignorés : $n';
+  }
+
+  @override
   String get vardiyaCikar => 'Retirer';
 
   @override

@@ -1744,6 +1744,80 @@
   "@vardiyaCakisanGunler": {
     "placeholders": { "n": { "type": "int" } }
   },
+  "finansTahsilatBaslik": "Kassierung",
+  "finansKisiGerekli": "Wählen Sie eine Person.",
+  "finansKasaGerekli": "Wählen Sie ein Konto.",
+  "finansTutarGerekli": "Geben Sie einen gültigen Betrag ein.",
+  "finansTahsilatKaydedildi": "Zahlung erfasst.",
+  "finansBorcluYok": "Derzeit gibt es keine Schuldner.",
+  "finansAlanTutar": "Betrag",
+  "finansSutunKasa": "Konto",
+  "finansAlanAciklama": "Beschreibung",
+  "finansMakbuzNotu": "Belegnummer und Bewohnerbenachrichtigung werden auf dem Server erzeugt — wie im Web.",
+  "finansGecikmeGun": "{n} Tage überfällig",
+  "@finansGecikmeGun": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "finansGiderBaslik": "Ausgabe erfassen",
+  "finansGiderKaydedildi": "Ausgabe erfasst.",
+  "finansGiderTuru": "Ausgabenart",
+  "finansOnayBekliyor": "Zur Genehmigung senden",
+  "finansOnayBekliyorNotu": "Eine Ausgabe in Genehmigung mindert den Saldo NICHT; erst nach Genehmigung.",
+  "finansFisEkle": "Belegfoto hinzufügen",
+  "finansFisEklendi": "Beleg hinzugefügt",
+  "finansFisYuklenemedi": "Die Ausgabe wurde erfasst, der Beleg konnte aber nicht hochgeladen werden. Sie können ihn im Web hinzufügen.",
+  "finansBorclularBaslik": "Schuldner",
+  "finansTahsilatOrani": "Inkassoquote",
+  "finansOranYok": "Keine Sollstellungen für diesen Zeitraum.",
+  "finansOranDegeri": "{oran} % · {donem}",
+  "@finansOranDegeri": {
+    "placeholders": { "oran": { "type": "int" }, "donem": { "type": "String" } }
+  },
+  "finansKovaDaire": "{n} Einheiten",
+  "@finansKovaDaire": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "finansHatirlat": "{n} Personen erinnern",
+  "@finansHatirlat": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "finansHatirlatmaGonderildi": "{n} Erinnerungen gesendet.",
+  "@finansHatirlatmaGonderildi": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "personelEposta": "E-Mail",
+  "personelEpostaYardim": "Einladung und Passwort-Link gehen an diese Adresse.",
+  "personelEpostaGerekli": "E-Mail ist erforderlich.",
+  "personelEpostaGecersiz": "Geben Sie eine gültige E-Mail-Adresse ein.",
+  "sayacOkumaBaslik": "Zählerablesung",
+  "sayacKalem": "Abrechnungsposten",
+  "sayacAnaSayac": "Hauptzähler",
+  "sayacDonem": "Zeitraum (JJJJ-MM)",
+  "sayacAnaTuketim": "Verbrauch Hauptzähler",
+  "sayacBirimFiyat": "Einzelpreis",
+  "sayacBorclandir": "Belasten",
+  "sayacFotoEkle": "Zählerfoto",
+  "sayacBolumYok": "Diesem Hauptzähler sind keine Wohnungszähler zugeordnet.",
+  "sayacKalemGerekli": "Wählen Sie Posten und Hauptzähler.",
+  "sayacAnaTuketimGerekli": "Geben Sie den Verbrauch des Hauptzählers ein.",
+  "sayacBirimFiyatGerekli": "Geben Sie den Einzelpreis ein.",
+  "sayacDegerYok": "Geben Sie mindestens für eine Einheit einen Zählerstand ein.",
+  "sayacDegerGecersiz": "Der für {daire} eingegebene Wert ist ungültig.",
+  "@sayacDegerGecersiz": {
+    "placeholders": { "daire": { "type": "String" } }
+  },
+  "sayacGeriSayiyor": "{daire}: Der neue Zählerstand darf nicht unter dem vorherigen liegen.",
+  "@sayacGeriSayiyor": {
+    "placeholders": { "daire": { "type": "String" } }
+  },
+  "sayacOncekiOkuma": "Vorher: {deger}",
+  "@sayacOncekiOkuma": {
+    "placeholders": { "deger": { "type": "String" } }
+  },
+  "sayacBorclandirildi": "Belastung erstellt. Übersprungene Einheiten: {n}",
+  "@sayacBorclandirildi": {
+    "placeholders": { "n": { "type": "int" } }
+  },
   "vardiyaCikar": "Entfernen",
   "vardiyaCikarSebep": "Grund für die Entfernung (Krankheit, Urlaub, Notfall)"
 }

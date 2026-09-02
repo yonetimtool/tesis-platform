@@ -5314,6 +5314,169 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String get finansTahsilatBaslik => 'Tahsilat';
+
+  @override
+  String get finansKisiGerekli => 'Kişi seçin.';
+
+  @override
+  String get finansKasaGerekli => 'Kasa seçin.';
+
+  @override
+  String get finansTutarGerekli => 'Geçerli bir tutar girin.';
+
+  @override
+  String get finansTahsilatKaydedildi => 'Tahsilat kaydedildi.';
+
+  @override
+  String get finansBorcluYok => 'Şu anda borçlu kayıt yok.';
+
+  @override
+  String get finansAlanTutar => 'Tutar';
+
+  @override
+  String get finansSutunKasa => 'Kasa';
+
+  @override
+  String get finansAlanAciklama => 'Açıklama';
+
+  @override
+  String get finansMakbuzNotu =>
+      'Makbuz numarası ve sakine giden bildirim sunucuda üretilir — web ile aynı.';
+
+  @override
+  String finansGecikmeGun(int n) {
+    return '$n gün gecikme';
+  }
+
+  @override
+  String get finansGiderBaslik => 'Gider kaydı';
+
+  @override
+  String get finansGiderKaydedildi => 'Gider kaydedildi.';
+
+  @override
+  String get finansGiderTuru => 'Gider türü';
+
+  @override
+  String get finansOnayBekliyor => 'Onaya gönder';
+
+  @override
+  String get finansOnayBekliyorNotu =>
+      'Onay bekleyen gider kasa bakiyesini DÜŞÜRMEZ; onaylanınca düşer.';
+
+  @override
+  String get finansFisEkle => 'Fiş fotoğrafı ekle';
+
+  @override
+  String get finansFisEklendi => 'Fiş eklendi';
+
+  @override
+  String get finansFisYuklenemedi =>
+      'Gider kaydedildi ama fiş yüklenemedi. Fişi web\'den ekleyebilirsiniz.';
+
+  @override
+  String get finansBorclularBaslik => 'Borçlular';
+
+  @override
+  String get finansTahsilatOrani => 'Tahsilat oranı';
+
+  @override
+  String get finansOranYok => 'Bu dönem için tahakkuk yok.';
+
+  @override
+  String finansOranDegeri(int oran, String donem) {
+    return '%$oran · $donem';
+  }
+
+  @override
+  String finansKovaDaire(int n) {
+    return '$n daire';
+  }
+
+  @override
+  String finansHatirlat(int n) {
+    return '$n kişiye hatırlat';
+  }
+
+  @override
+  String finansHatirlatmaGonderildi(int n) {
+    return '$n hatırlatma gönderildi.';
+  }
+
+  @override
+  String get personelEposta => 'E-posta';
+
+  @override
+  String get personelEpostaYardim =>
+      'Davet ve parola belirleme bağlantısı bu adrese gider.';
+
+  @override
+  String get personelEpostaGerekli => 'E-posta zorunludur.';
+
+  @override
+  String get personelEpostaGecersiz => 'Geçerli bir e-posta adresi yazın.';
+
+  @override
+  String get sayacOkumaBaslik => 'Sayaç okuma';
+
+  @override
+  String get sayacKalem => 'Borçlandırma kalemi';
+
+  @override
+  String get sayacAnaSayac => 'Ana sayaç';
+
+  @override
+  String get sayacDonem => 'Dönem (YYYY-AA)';
+
+  @override
+  String get sayacAnaTuketim => 'Ana sayaç tüketimi';
+
+  @override
+  String get sayacBirimFiyat => 'Birim fiyat';
+
+  @override
+  String get sayacBorclandir => 'Borçlandır';
+
+  @override
+  String get sayacFotoEkle => 'Sayaç fotoğrafı';
+
+  @override
+  String get sayacBolumYok => 'Bu ana sayaca bağlı daire sayacı yok.';
+
+  @override
+  String get sayacKalemGerekli => 'Kalem ve ana sayaç seçin.';
+
+  @override
+  String get sayacAnaTuketimGerekli => 'Ana sayaç tüketimini girin.';
+
+  @override
+  String get sayacBirimFiyatGerekli => 'Birim fiyatı girin.';
+
+  @override
+  String get sayacDegerYok => 'En az bir daire için okuma girin.';
+
+  @override
+  String sayacDegerGecersiz(String daire) {
+    return '$daire için girilen değer geçersiz.';
+  }
+
+  @override
+  String sayacGeriSayiyor(String daire) {
+    return '$daire: yeni okuma önceki okumadan küçük olamaz.';
+  }
+
+  @override
+  String sayacOncekiOkuma(String deger) {
+    return 'Önceki: $deger';
+  }
+
+  @override
+  String sayacBorclandirildi(int n) {
+    return 'Borçlandırma tamam. Atlanan daire: $n';
+  }
+
+  @override
   String get vardiyaCikar => 'Çıkar';
 
   @override

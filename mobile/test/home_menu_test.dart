@@ -148,6 +148,14 @@ void main() {
           HomeMenuEntry.patrolPlans,
           HomeMenuEntry.checkpoints,
           HomeMenuEntry.taskTracking,
+          // (P206 §4) Mobil finans isleri: tahsilat/borclular/gider.
+          // Yoneticinin sahada en sik yaptigi is bunlar; menunun
+          // dibinde durmalari "telefonda yapilamiyor" hissini
+          // surdururdu.
+          HomeMenuEntry.tahsilat,
+          HomeMenuEntry.borclular,
+          HomeMenuEntry.gider,
+          HomeMenuEntry.sayacOkuma,
           HomeMenuEntry.budget,
           HomeMenuEntry.financialSummary,
           HomeMenuEntry.transparency,

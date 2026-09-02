@@ -1744,6 +1744,80 @@
   "@vardiyaCakisanGunler": {
     "placeholders": { "n": { "type": "int" } }
   },
+  "finansTahsilatBaslik": "Encaissement",
+  "finansKisiGerekli": "Sélectionnez une personne.",
+  "finansKasaGerekli": "Sélectionnez une caisse.",
+  "finansTutarGerekli": "Saisissez un montant valide.",
+  "finansTahsilatKaydedildi": "Paiement enregistré.",
+  "finansBorcluYok": "Il n'y a aucun débiteur pour le moment.",
+  "finansAlanTutar": "Montant",
+  "finansSutunKasa": "Caisse",
+  "finansAlanAciklama": "Description",
+  "finansMakbuzNotu": "Le numéro de reçu et la notification au résident sont générés sur le serveur — comme sur le web.",
+  "finansGecikmeGun": "{n} jours de retard",
+  "@finansGecikmeGun": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "finansGiderBaslik": "Saisie de dépense",
+  "finansGiderKaydedildi": "Dépense enregistrée.",
+  "finansGiderTuru": "Type de dépense",
+  "finansOnayBekliyor": "Envoyer pour validation",
+  "finansOnayBekliyorNotu": "Une dépense en attente de validation ne réduit PAS le solde ; elle le fait une fois validée.",
+  "finansFisEkle": "Ajouter une photo du reçu",
+  "finansFisEklendi": "Reçu ajouté",
+  "finansFisYuklenemedi": "La dépense a été enregistrée mais le reçu n'a pas pu être téléversé. Vous pouvez l'ajouter depuis le web.",
+  "finansBorclularBaslik": "Débiteurs",
+  "finansTahsilatOrani": "Taux de recouvrement",
+  "finansOranYok": "Aucune imputation pour cette période.",
+  "finansOranDegeri": "{oran} % · {donem}",
+  "@finansOranDegeri": {
+    "placeholders": { "oran": { "type": "int" }, "donem": { "type": "String" } }
+  },
+  "finansKovaDaire": "{n} lots",
+  "@finansKovaDaire": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "finansHatirlat": "Rappeler à {n} personnes",
+  "@finansHatirlat": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "finansHatirlatmaGonderildi": "{n} rappels envoyés.",
+  "@finansHatirlatmaGonderildi": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "personelEposta": "E-mail",
+  "personelEpostaYardim": "L'invitation et le lien de mot de passe sont envoyés à cette adresse.",
+  "personelEpostaGerekli": "L'e-mail est obligatoire.",
+  "personelEpostaGecersiz": "Saisissez une adresse e-mail valide.",
+  "sayacOkumaBaslik": "Relevé de compteur",
+  "sayacKalem": "Poste de facturation",
+  "sayacAnaSayac": "Compteur principal",
+  "sayacDonem": "Période (AAAA-MM)",
+  "sayacAnaTuketim": "Consommation du compteur principal",
+  "sayacBirimFiyat": "Prix unitaire",
+  "sayacBorclandir": "Facturer",
+  "sayacFotoEkle": "Photo du compteur",
+  "sayacBolumYok": "Aucun compteur de lot n'est rattaché à ce compteur principal.",
+  "sayacKalemGerekli": "Sélectionnez un poste et un compteur principal.",
+  "sayacAnaTuketimGerekli": "Saisissez la consommation du compteur principal.",
+  "sayacBirimFiyatGerekli": "Saisissez le prix unitaire.",
+  "sayacDegerYok": "Saisissez un relevé pour au moins un lot.",
+  "sayacDegerGecersiz": "La valeur saisie pour {daire} est invalide.",
+  "@sayacDegerGecersiz": {
+    "placeholders": { "daire": { "type": "String" } }
+  },
+  "sayacGeriSayiyor": "{daire} : le nouveau relevé ne peut pas être inférieur au précédent.",
+  "@sayacGeriSayiyor": {
+    "placeholders": { "daire": { "type": "String" } }
+  },
+  "sayacOncekiOkuma": "Précédent : {deger}",
+  "@sayacOncekiOkuma": {
+    "placeholders": { "deger": { "type": "String" } }
+  },
+  "sayacBorclandirildi": "Facturation effectuée. Lots ignorés : {n}",
+  "@sayacBorclandirildi": {
+    "placeholders": { "n": { "type": "int" } }
+  },
   "vardiyaCikar": "Retirer",
   "vardiyaCikarSebep": "Motif du retrait (maladie, congé, urgence)"
 }

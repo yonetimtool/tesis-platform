@@ -5489,6 +5489,173 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get finansTahsilatBaslik => 'Kassierung';
+
+  @override
+  String get finansKisiGerekli => 'Wählen Sie eine Person.';
+
+  @override
+  String get finansKasaGerekli => 'Wählen Sie ein Konto.';
+
+  @override
+  String get finansTutarGerekli => 'Geben Sie einen gültigen Betrag ein.';
+
+  @override
+  String get finansTahsilatKaydedildi => 'Zahlung erfasst.';
+
+  @override
+  String get finansBorcluYok => 'Derzeit gibt es keine Schuldner.';
+
+  @override
+  String get finansAlanTutar => 'Betrag';
+
+  @override
+  String get finansSutunKasa => 'Konto';
+
+  @override
+  String get finansAlanAciklama => 'Beschreibung';
+
+  @override
+  String get finansMakbuzNotu =>
+      'Belegnummer und Bewohnerbenachrichtigung werden auf dem Server erzeugt — wie im Web.';
+
+  @override
+  String finansGecikmeGun(int n) {
+    return '$n Tage überfällig';
+  }
+
+  @override
+  String get finansGiderBaslik => 'Ausgabe erfassen';
+
+  @override
+  String get finansGiderKaydedildi => 'Ausgabe erfasst.';
+
+  @override
+  String get finansGiderTuru => 'Ausgabenart';
+
+  @override
+  String get finansOnayBekliyor => 'Zur Genehmigung senden';
+
+  @override
+  String get finansOnayBekliyorNotu =>
+      'Eine Ausgabe in Genehmigung mindert den Saldo NICHT; erst nach Genehmigung.';
+
+  @override
+  String get finansFisEkle => 'Belegfoto hinzufügen';
+
+  @override
+  String get finansFisEklendi => 'Beleg hinzugefügt';
+
+  @override
+  String get finansFisYuklenemedi =>
+      'Die Ausgabe wurde erfasst, der Beleg konnte aber nicht hochgeladen werden. Sie können ihn im Web hinzufügen.';
+
+  @override
+  String get finansBorclularBaslik => 'Schuldner';
+
+  @override
+  String get finansTahsilatOrani => 'Inkassoquote';
+
+  @override
+  String get finansOranYok => 'Keine Sollstellungen für diesen Zeitraum.';
+
+  @override
+  String finansOranDegeri(int oran, String donem) {
+    return '$oran % · $donem';
+  }
+
+  @override
+  String finansKovaDaire(int n) {
+    return '$n Einheiten';
+  }
+
+  @override
+  String finansHatirlat(int n) {
+    return '$n Personen erinnern';
+  }
+
+  @override
+  String finansHatirlatmaGonderildi(int n) {
+    return '$n Erinnerungen gesendet.';
+  }
+
+  @override
+  String get personelEposta => 'E-Mail';
+
+  @override
+  String get personelEpostaYardim =>
+      'Einladung und Passwort-Link gehen an diese Adresse.';
+
+  @override
+  String get personelEpostaGerekli => 'E-Mail ist erforderlich.';
+
+  @override
+  String get personelEpostaGecersiz =>
+      'Geben Sie eine gültige E-Mail-Adresse ein.';
+
+  @override
+  String get sayacOkumaBaslik => 'Zählerablesung';
+
+  @override
+  String get sayacKalem => 'Abrechnungsposten';
+
+  @override
+  String get sayacAnaSayac => 'Hauptzähler';
+
+  @override
+  String get sayacDonem => 'Zeitraum (JJJJ-MM)';
+
+  @override
+  String get sayacAnaTuketim => 'Verbrauch Hauptzähler';
+
+  @override
+  String get sayacBirimFiyat => 'Einzelpreis';
+
+  @override
+  String get sayacBorclandir => 'Belasten';
+
+  @override
+  String get sayacFotoEkle => 'Zählerfoto';
+
+  @override
+  String get sayacBolumYok =>
+      'Diesem Hauptzähler sind keine Wohnungszähler zugeordnet.';
+
+  @override
+  String get sayacKalemGerekli => 'Wählen Sie Posten und Hauptzähler.';
+
+  @override
+  String get sayacAnaTuketimGerekli =>
+      'Geben Sie den Verbrauch des Hauptzählers ein.';
+
+  @override
+  String get sayacBirimFiyatGerekli => 'Geben Sie den Einzelpreis ein.';
+
+  @override
+  String get sayacDegerYok =>
+      'Geben Sie mindestens für eine Einheit einen Zählerstand ein.';
+
+  @override
+  String sayacDegerGecersiz(String daire) {
+    return 'Der für $daire eingegebene Wert ist ungültig.';
+  }
+
+  @override
+  String sayacGeriSayiyor(String daire) {
+    return '$daire: Der neue Zählerstand darf nicht unter dem vorherigen liegen.';
+  }
+
+  @override
+  String sayacOncekiOkuma(String deger) {
+    return 'Vorher: $deger';
+  }
+
+  @override
+  String sayacBorclandirildi(int n) {
+    return 'Belastung erstellt. Übersprungene Einheiten: $n';
+  }
+
+  @override
   String get vardiyaCikar => 'Entfernen';
 
   @override

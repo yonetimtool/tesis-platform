@@ -9413,6 +9413,288 @@ abstract class AppLocalizations {
   /// **'{n} günde çakışma var'**
   String vardiyaCakisanGunler(int n);
 
+  /// No description provided for @finansTahsilatBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tahsilat'**
+  String get finansTahsilatBaslik;
+
+  /// No description provided for @finansKisiGerekli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kişi seçin.'**
+  String get finansKisiGerekli;
+
+  /// No description provided for @finansKasaGerekli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kasa seçin.'**
+  String get finansKasaGerekli;
+
+  /// No description provided for @finansTutarGerekli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Geçerli bir tutar girin.'**
+  String get finansTutarGerekli;
+
+  /// No description provided for @finansTahsilatKaydedildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tahsilat kaydedildi.'**
+  String get finansTahsilatKaydedildi;
+
+  /// No description provided for @finansBorcluYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şu anda borçlu kayıt yok.'**
+  String get finansBorcluYok;
+
+  /// No description provided for @finansAlanTutar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tutar'**
+  String get finansAlanTutar;
+
+  /// No description provided for @finansSutunKasa.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kasa'**
+  String get finansSutunKasa;
+
+  /// No description provided for @finansAlanAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Açıklama'**
+  String get finansAlanAciklama;
+
+  /// No description provided for @finansMakbuzNotu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Makbuz numarası ve sakine giden bildirim sunucuda üretilir — web ile aynı.'**
+  String get finansMakbuzNotu;
+
+  /// No description provided for @finansGecikmeGun.
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} gün gecikme'**
+  String finansGecikmeGun(int n);
+
+  /// No description provided for @finansGiderBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gider kaydı'**
+  String get finansGiderBaslik;
+
+  /// No description provided for @finansGiderKaydedildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gider kaydedildi.'**
+  String get finansGiderKaydedildi;
+
+  /// No description provided for @finansGiderTuru.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gider türü'**
+  String get finansGiderTuru;
+
+  /// No description provided for @finansOnayBekliyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Onaya gönder'**
+  String get finansOnayBekliyor;
+
+  /// No description provided for @finansOnayBekliyorNotu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Onay bekleyen gider kasa bakiyesini DÜŞÜRMEZ; onaylanınca düşer.'**
+  String get finansOnayBekliyorNotu;
+
+  /// No description provided for @finansFisEkle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Fiş fotoğrafı ekle'**
+  String get finansFisEkle;
+
+  /// No description provided for @finansFisEklendi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Fiş eklendi'**
+  String get finansFisEklendi;
+
+  /// No description provided for @finansFisYuklenemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gider kaydedildi ama fiş yüklenemedi. Fişi web\'den ekleyebilirsiniz.'**
+  String get finansFisYuklenemedi;
+
+  /// No description provided for @finansBorclularBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Borçlular'**
+  String get finansBorclularBaslik;
+
+  /// No description provided for @finansTahsilatOrani.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tahsilat oranı'**
+  String get finansTahsilatOrani;
+
+  /// No description provided for @finansOranYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu dönem için tahakkuk yok.'**
+  String get finansOranYok;
+
+  /// No description provided for @finansOranDegeri.
+  ///
+  /// In tr, this message translates to:
+  /// **'%{oran} · {donem}'**
+  String finansOranDegeri(int oran, String donem);
+
+  /// No description provided for @finansKovaDaire.
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} daire'**
+  String finansKovaDaire(int n);
+
+  /// No description provided for @finansHatirlat.
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} kişiye hatırlat'**
+  String finansHatirlat(int n);
+
+  /// No description provided for @finansHatirlatmaGonderildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} hatırlatma gönderildi.'**
+  String finansHatirlatmaGonderildi(int n);
+
+  /// No description provided for @personelEposta.
+  ///
+  /// In tr, this message translates to:
+  /// **'E-posta'**
+  String get personelEposta;
+
+  /// No description provided for @personelEpostaYardim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Davet ve parola belirleme bağlantısı bu adrese gider.'**
+  String get personelEpostaYardim;
+
+  /// No description provided for @personelEpostaGerekli.
+  ///
+  /// In tr, this message translates to:
+  /// **'E-posta zorunludur.'**
+  String get personelEpostaGerekli;
+
+  /// No description provided for @personelEpostaGecersiz.
+  ///
+  /// In tr, this message translates to:
+  /// **'Geçerli bir e-posta adresi yazın.'**
+  String get personelEpostaGecersiz;
+
+  /// No description provided for @sayacOkumaBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sayaç okuma'**
+  String get sayacOkumaBaslik;
+
+  /// No description provided for @sayacKalem.
+  ///
+  /// In tr, this message translates to:
+  /// **'Borçlandırma kalemi'**
+  String get sayacKalem;
+
+  /// No description provided for @sayacAnaSayac.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ana sayaç'**
+  String get sayacAnaSayac;
+
+  /// No description provided for @sayacDonem.
+  ///
+  /// In tr, this message translates to:
+  /// **'Dönem (YYYY-AA)'**
+  String get sayacDonem;
+
+  /// No description provided for @sayacAnaTuketim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ana sayaç tüketimi'**
+  String get sayacAnaTuketim;
+
+  /// No description provided for @sayacBirimFiyat.
+  ///
+  /// In tr, this message translates to:
+  /// **'Birim fiyat'**
+  String get sayacBirimFiyat;
+
+  /// No description provided for @sayacBorclandir.
+  ///
+  /// In tr, this message translates to:
+  /// **'Borçlandır'**
+  String get sayacBorclandir;
+
+  /// No description provided for @sayacFotoEkle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sayaç fotoğrafı'**
+  String get sayacFotoEkle;
+
+  /// No description provided for @sayacBolumYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu ana sayaca bağlı daire sayacı yok.'**
+  String get sayacBolumYok;
+
+  /// No description provided for @sayacKalemGerekli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kalem ve ana sayaç seçin.'**
+  String get sayacKalemGerekli;
+
+  /// No description provided for @sayacAnaTuketimGerekli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ana sayaç tüketimini girin.'**
+  String get sayacAnaTuketimGerekli;
+
+  /// No description provided for @sayacBirimFiyatGerekli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Birim fiyatı girin.'**
+  String get sayacBirimFiyatGerekli;
+
+  /// No description provided for @sayacDegerYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'En az bir daire için okuma girin.'**
+  String get sayacDegerYok;
+
+  /// No description provided for @sayacDegerGecersiz.
+  ///
+  /// In tr, this message translates to:
+  /// **'{daire} için girilen değer geçersiz.'**
+  String sayacDegerGecersiz(String daire);
+
+  /// No description provided for @sayacGeriSayiyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'{daire}: yeni okuma önceki okumadan küçük olamaz.'**
+  String sayacGeriSayiyor(String daire);
+
+  /// No description provided for @sayacOncekiOkuma.
+  ///
+  /// In tr, this message translates to:
+  /// **'Önceki: {deger}'**
+  String sayacOncekiOkuma(String deger);
+
+  /// No description provided for @sayacBorclandirildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Borçlandırma tamam. Atlanan daire: {n}'**
+  String sayacBorclandirildi(int n);
+
   /// (P203 §4) Vardiya plani ekrani — vardiyaCikar.
   ///
   /// In tr, this message translates to:

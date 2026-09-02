@@ -176,6 +176,11 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
   final _formKey = GlobalKey<FormState>();
   final _adCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
+  // (P206 §4.2) E-POSTA ZORUNLU (P197): davet, dogrulama kodu ve parola
+  // sifirlama YALNIZ buradan gidiyor — e-postasiz acilan hesap
+  // sahiplenilemez. Alan YOKKEN sunucu 422 doruyordu ve mobil personel
+  // ekleme FIILEN CALISMIYORDU.
+  final _epostaCtrl = TextEditingController();
   String _role = 'security';
   bool _submitting = false;
 
@@ -273,6 +278,7 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
   void dispose() {
     _adCtrl.dispose();
     _phoneCtrl.dispose();
+    _epostaCtrl.dispose();
     super.dispose();
   }
 
@@ -306,6 +312,7 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
       final createdId = await api.addStaff(
             ad: _adCtrl.text.trim(),
             telefon: telefonNormalle(_phoneCtrl.text),
+            email: _epostaCtrl.text.trim(),
             role: _role,
           );
       // Personel olustuktan sonra foto secildiyse avatarini ata.
@@ -427,6 +434,37 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
               // Duzenlemede telefon opsiyonel (bos = degismez).
               validator: (v) =>
                   telefonHataMetni(l10n, v ?? '', zorunlu: !_isEdit),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              key: const Key('personel-eposta'),
+              controller: _epostaCtrl,
+              enabled: !_submitting && !_isEdit,
+              keyboardType: TextInputType.emailAddress,
+              autocorrect: false,
+              decoration: InputDecoration(
+                labelText: l10n.personelEposta,
+                helperText: l10n.personelEpostaYardim,
+                helperMaxLines: 2,
+                prefixIcon: const Icon(Icons.alternate_email),
+                border: const OutlineInputBorder(),
+              ),
+              // DUZENLEMEDE DEGISTIRILMEZ: e-posta degisikligi ayri bir
+              // akistir (dogrulama + eski adrese bildirim, P184) ve onu
+              // buradan sessizce yapmak, hesabi baska birine
+              // devretmenin kolay yolu olurdu.
+              validator: (v) {
+                if (_isEdit) return null;
+                final t = (v ?? '').trim();
+                if (t.isEmpty) return l10n.personelEpostaGerekli;
+                // BICIM DENETIMI KABA: son sozu sunucu soyler
+                // (`EmailStr`). Buradaki amac, acik bir yazim hatasini
+                // istek atmadan yakalamak.
+                if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(t)) {
+                  return l10n.personelEpostaGecersiz;
+                }
+                return null;
+              },
             ),
             // Parola alani KALDIRILDI (P186-ek2): hesap parolasiz acilir ve
             // davet gonderilir; parolayi kisi kendi kayit akisinda belirler.

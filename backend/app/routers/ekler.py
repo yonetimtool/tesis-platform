@@ -37,6 +37,7 @@ from ..models import (
     AppUser,
     BuildingBlock,
     Complaint,
+    FinansalHareket,
     Firma,
     IcraDosyasi,
     Task,
@@ -93,6 +94,15 @@ VARLIKLAR: dict[str, _Varlik] = {
     "complaint": _Varlik(Complaint, _TALEP_OKUR, _TALEP_YAZAR),
     "firma": _Varlik(Firma, _FIRMA_OKUR, _FIRMA_YAZAR),
     "building_block": _Varlik(BuildingBlock, _BLOK_OKUR, _BLOK_YAZAR),
+    # (P206 §4.3) FINANSAL HAREKET — GIDER FISI/FOTOGRAFI.
+    #
+    # Mobil gider kaydinda fisin fotografini eklemek, sahada olan tek
+    # kanit parcasini kaydin YANINA koyar: nakit gider, site
+    # muhasebesinde en cok tartisilan kalemdir ve "fis nerede" sorusu
+    # her denetimde sorulur. Ayri bir tablo acmak yerine var olan ek
+    # mekanizmasi kullanildi — yetki kumesi FINANS routerindan okunur
+    # (kopyalanmaz): okuma denetciye de acik, yazma admin+yonetici.
+    "finansal_hareket": _Varlik(FinansalHareket, _ICRA_OKUR, _ICRA_YAZAR),
 }
 
 

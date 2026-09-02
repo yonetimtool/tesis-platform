@@ -119,6 +119,26 @@ ModuleCardSpec moduleCardSpec(HomeMenuEntry entry) {
           icon: Icons.insights_outlined,
           accent: _teal,
           route: AppRoutes.reports);
+    case HomeMenuEntry.tahsilat:
+      return const ModuleCardSpec(
+          icon: Icons.payments_outlined,
+          accent: _teal,
+          route: AppRoutes.tahsilat);
+    case HomeMenuEntry.gider:
+      return const ModuleCardSpec(
+          icon: Icons.receipt_long_outlined,
+          accent: _teal,
+          route: AppRoutes.gider);
+    case HomeMenuEntry.borclular:
+      return const ModuleCardSpec(
+          icon: Icons.gavel_outlined,
+          accent: _amber,
+          route: AppRoutes.borclular);
+    case HomeMenuEntry.sayacOkuma:
+      return const ModuleCardSpec(
+          icon: Icons.speed_outlined,
+          accent: _teal,
+          route: AppRoutes.sayacOkuma);
     case HomeMenuEntry.budget:
       return const ModuleCardSpec(
           icon: Icons.savings_outlined,

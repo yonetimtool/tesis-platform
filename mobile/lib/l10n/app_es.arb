@@ -1744,6 +1744,80 @@
   "@vardiyaCakisanGunler": {
     "placeholders": { "n": { "type": "int" } }
   },
+  "finansTahsilatBaslik": "Cobro",
+  "finansKisiGerekli": "Seleccione una persona.",
+  "finansKasaGerekli": "Seleccione una caja.",
+  "finansTutarGerekli": "Introduzca un importe válido.",
+  "finansTahsilatKaydedildi": "Cobro registrado.",
+  "finansBorcluYok": "Ahora mismo no hay deudores.",
+  "finansAlanTutar": "Importe",
+  "finansSutunKasa": "Caja",
+  "finansAlanAciklama": "Descripción",
+  "finansMakbuzNotu": "El número de recibo y el aviso al residente se generan en el servidor, igual que en la web.",
+  "finansGecikmeGun": "{n} días de retraso",
+  "@finansGecikmeGun": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "finansGiderBaslik": "Registro de gasto",
+  "finansGiderKaydedildi": "Gasto registrado.",
+  "finansGiderTuru": "Tipo de gasto",
+  "finansOnayBekliyor": "Enviar a aprobación",
+  "finansOnayBekliyorNotu": "Un gasto pendiente de aprobación NO reduce el saldo; lo hace al aprobarse.",
+  "finansFisEkle": "Añadir foto del recibo",
+  "finansFisEklendi": "Recibo añadido",
+  "finansFisYuklenemedi": "El gasto se registró pero no se pudo subir el recibo. Puede añadirlo desde la web.",
+  "finansBorclularBaslik": "Deudores",
+  "finansTahsilatOrani": "Tasa de cobro",
+  "finansOranYok": "No hay cargos para este periodo.",
+  "finansOranDegeri": "{oran} % · {donem}",
+  "@finansOranDegeri": {
+    "placeholders": { "oran": { "type": "int" }, "donem": { "type": "String" } }
+  },
+  "finansKovaDaire": "{n} unidades",
+  "@finansKovaDaire": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "finansHatirlat": "Recordar a {n} personas",
+  "@finansHatirlat": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "finansHatirlatmaGonderildi": "{n} recordatorios enviados.",
+  "@finansHatirlatmaGonderildi": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "personelEposta": "Correo electrónico",
+  "personelEpostaYardim": "La invitación y el enlace de contraseña se envían a esta dirección.",
+  "personelEpostaGerekli": "El correo electrónico es obligatorio.",
+  "personelEpostaGecersiz": "Escriba una dirección de correo válida.",
+  "sayacOkumaBaslik": "Lectura de contador",
+  "sayacKalem": "Concepto de cargo",
+  "sayacAnaSayac": "Contador principal",
+  "sayacDonem": "Periodo (AAAA-MM)",
+  "sayacAnaTuketim": "Consumo del contador principal",
+  "sayacBirimFiyat": "Precio unitario",
+  "sayacBorclandir": "Generar cargos",
+  "sayacFotoEkle": "Foto del contador",
+  "sayacBolumYok": "No hay contadores de unidad vinculados a este contador principal.",
+  "sayacKalemGerekli": "Seleccione un concepto y un contador principal.",
+  "sayacAnaTuketimGerekli": "Introduzca el consumo del contador principal.",
+  "sayacBirimFiyatGerekli": "Introduzca el precio unitario.",
+  "sayacDegerYok": "Introduzca una lectura para al menos una unidad.",
+  "sayacDegerGecersiz": "El valor introducido para {daire} no es válido.",
+  "@sayacDegerGecersiz": {
+    "placeholders": { "daire": { "type": "String" } }
+  },
+  "sayacGeriSayiyor": "{daire}: la nueva lectura no puede ser menor que la anterior.",
+  "@sayacGeriSayiyor": {
+    "placeholders": { "daire": { "type": "String" } }
+  },
+  "sayacOncekiOkuma": "Anterior: {deger}",
+  "@sayacOncekiOkuma": {
+    "placeholders": { "deger": { "type": "String" } }
+  },
+  "sayacBorclandirildi": "Cargos creados. Unidades omitidas: {n}",
+  "@sayacBorclandirildi": {
+    "placeholders": { "n": { "type": "int" } }
+  },
   "vardiyaCikar": "Quitar",
   "vardiyaCikarSebep": "Motivo de la retirada (enfermedad, permiso, emergencia)"
 }
