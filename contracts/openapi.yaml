@@ -13109,16 +13109,37 @@ components:
     LoginRequest:
       type: object
       description: |
-        PANEL girisi (admin — e-posta + tenant_slug). Mobil roller telefon ile
-        `POST /auth/login-phone` kullanir.
-      required: [tenant_slug, email, password]
+        (P205 §1) TEK KIMLIK ALANI — e-posta VEYA telefon.
+
+        Kullaniciya "hangisini yaziyorsun" diye SORULMAZ: `@` varsa
+        e-postadir (hicbir telefon `@` icermez), yoksa telefon olarak
+        E.164'e normalize edilir.
+
+        `tenant_slug` ARTIK OPSIYONEL:
+          * TEK uyelik -> dogrudan giris,
+          * BIRDEN COK -> 409 `tesis_secimi_gerekli` (jeton URETILMEZ;
+            rastgele birini secmek kullaniciyi bilmedigi bir tesise
+            sokmak olurdu),
+          * slug verilmisse yalniz o tesis denenir.
+
+        SIZDIRMAMA: cozulemeyen kimlik, bilinmeyen kimlik, yanlis
+        parola, pasif hesap ve uye-olunmayan-slug HEPSI ayni 401'i
+        alir — gecersiz e-posta ile gecersiz telefon AYNI yanit.
+
+        `login-phone` DURUYOR (eski istemciler).
+      required: [password]
       properties:
         tenant_slug:
           type: string
+          nullable: true
           description: |
-            Tenant kisa adi (slug). email tenant-ici benzersiz oldugu icin login
-            tenant'i bu alanla belirler. Sadece kucuk harf/rakam/tire.
+            Tenant kisa adi (slug). OPSIYONEL — bkz. aciklama.
           example: "acme-plaza"
+        kimlik:
+          type: string
+          maxLength: 254
+          description: "E-posta ya da telefon. `email` ile birlikte gonderilirse bu kazanir."
+          example: "kerem@ornek.com"
         email: { type: string, format: email }
         password: { type: string, format: password, minLength: 8 }
     YoneticiCreate:
@@ -13924,10 +13945,21 @@ components:
           items: { $ref: "#/components/schemas/UnitResidentBrief" }
     TesislerimIstek:
       type: object
-      required: [email, password]
+      required: [kimlik, password]
       properties:
-        email: { type: string, format: email }
-        password: { type: string, minLength: 8 }
+        kimlik:
+          type: string
+          maxLength: 254
+          description: >
+            (P205 §1) E-posta VEYA telefon. Cozulemeyen girdi HATA
+            DEGIL, BOS LISTE doner: "bu bir e-posta degil" demek,
+            girdinin hangi dala girdigini soylerdi.
+        password:
+          type: string
+          description: >
+            `minLength` YOK: bu bir DOGRULAMA ucu degil ARAMA ucudur;
+            "parolan cok kisa" demek, hesabin varligindan BAGIMSIZ bir
+            sinyal vermek olurdu.
     TesisUyeligi:
       type: object
       required: [tenant_id, slug, ad, rol]

@@ -651,6 +651,31 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "Le lien d'installation n'est plus valide.",
         "es": "El enlace de configuración ya no es válido.",
     },
+    # (P205 §1) TEK ALAN — girdinin e-posta mi telefon mu oldugunu
+    # SOYLEMEYEN metin. "E-posta hatali" demek, saldirgana girdisinin
+    # hangi dala girdigini soylerdi; gecersiz e-posta ile gecersiz
+    # telefon AYNI yaniti almali.
+    "giris_bilgileri_hatali": {
+        "tr": "Giriş bilgileri hatalı.",
+        "en": "Incorrect sign-in details.",
+        "ar": "بيانات تسجيل الدخول غير صحيحة.",
+        "ru": "Неверные данные для входа.",
+        "de": "Anmeldedaten sind falsch.",
+        "fr": "Identifiants de connexion incorrects.",
+        "es": "Los datos de inicio de sesión son incorrectos.",
+    },
+    # (P205 §1) Ayni kimlik birden cok tesiste gecerli — istemci SECIM
+    # gosterir. Rastgele birini secmek, kullaniciyi bilmedigi bir
+    # tesise sokmak olurdu.
+    "tesis_secimi_gerekli": {
+        "tr": "Bu bilgiler birden çok tesiste geçerli. Hangisine gireceğinizi seçin.",
+        "en": "These details are valid at more than one facility. Choose which one to enter.",
+        "ar": "هذه البيانات صالحة في أكثر من مجمع. اختر الذي تريد الدخول إليه.",
+        "ru": "Эти данные подходят к нескольким объектам. Выберите, куда войти.",
+        "de": "Diese Daten gelten für mehrere Anlagen. Wählen Sie aus, welche Sie betreten möchten.",
+        "fr": "Ces informations sont valables pour plusieurs résidences. Choisissez laquelle ouvrir.",
+        "es": "Estos datos son válidos en varias comunidades. Elija en cuál desea entrar.",
+    },
     "giris_bilgileri_hatali_email": {
         "tr": "E-posta, parola veya tesis hatalı.",
         "en": "Incorrect e-mail, password or facility.",

@@ -21,6 +21,7 @@ from ..deps import get_redis, gorev_penceresi_disinda
 from ..errors import APIError
 from ..telefon_kodu import GECERSIZ as TK_GECERSIZ
 from ..hiz_siniri import DENEME_ASILDI, DENEME_SINIRI, kod_istegi_say
+from ..kimlik import kimligi_coz
 from ..telefon_kodu import (
     eposta_kodu_uret_ve_gonder,
     eposta_kodunu_dogrula,
@@ -70,7 +71,11 @@ from ..security import (
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-_INVALID_CREDS = APIError(401, "invalid_credentials", "giris_bilgileri_hatali_email")
+# (P205 §1) TEK ALAN icin TURSUZ metin: "e-posta hatali" demek,
+# saldirgana girdisinin hangi dala girdigini soylerdi. Eski
+# `..._email` / `..._telefon` metinleri KALDI — telefon-ozel
+# `login-phone` ucu onlari kullanmaya devam ediyor.
+_INVALID_CREDS = APIError(401, "invalid_credentials", "giris_bilgileri_hatali")
 # Telefon girisinde de hangi adimin patladigi sizdirilmaz (numara var mi, kod mu
 # parola mi yanlis vb. ayirt ettirilmez) — personel akisiyla ayni ilke.
 _INVALID_PHONE_CREDS = APIError(401, "invalid_credentials", "giris_bilgileri_hatali_telefon")
@@ -125,8 +130,12 @@ async def _audit_login_fail(tenant_id, *, method: str, user: AppUser | None = No
 # JETON `tenant_id` TASIR ve RLS onu kullanir. Tesis degistirmek =
 # HEDEF TESIS ICIN YENI JETON almak. Izolasyon bu yuzden yapisal olarak
 # korunur: degisen tek sey jetondaki tenant, veri yolu ayni.
-async def _uyelikler(session, eposta: str) -> list[dict]:
-    """E-postanin TUM tesis uyelikleri (SECURITY DEFINER, goc 0092)."""
+async def _uyelikler(session, kimlik: str) -> list[dict]:
+    """Kimligin TUM tesis uyelikleri (SECURITY DEFINER, goc 0092/0095).
+
+    (P205 §1) `kimlik` E-POSTA ya da NORMALIZE TELEFON olabilir;
+    fonksiyon ikisini de esler.
+    """
     satirlar = (
         await session.execute(
             text(
@@ -134,7 +143,7 @@ async def _uyelikler(session, eposta: str) -> list[dict]:
                 "password_hash, eposta_dogrulandi "
                 "FROM public.tenant_uyelikleri(:e)"
             ),
-            {"e": eposta},
+            {"e": kimlik},
         )
     ).mappings().all()
     return [dict(r) for r in satirlar]
@@ -158,12 +167,20 @@ async def tesislerim(
 
     BOS LISTE ile YANLIS PAROLA AYIRT EDILMEZ — ikisi de bos doner.
     """
+    # (P205 §1) TEK ALAN: e-posta da olabilir telefon da.
+    kimlik = kimligi_coz(body.kimlik)
+    if kimlik is None:
+        # COZULEMEYEN GIRDI DE BOS LISTE DONER — hata DEGIL.
+        # "Bu bir e-posta degil" demek, saldirgana girdisinin hangi
+        # dala girdigini soylerdi; gecersiz e-posta ile gecersiz
+        # telefon AYNI yaniti almali (istegin acik sarti).
+        return TesislerimYanit(tesisler=[])
     await kod_istegi_say(
-        redis, body.email.lower(), kapsam="tesislerim",
+        redis, kimlik.deger, kapsam="tesislerim",
         sinir=DENEME_SINIRI, hata=DENEME_ASILDI,
     )
     async with SessionLocal() as session:
-        satirlar = await _uyelikler(session, body.email)
+        satirlar = await _uyelikler(session, kimlik.deger)
     tesisler = [
         TesisUyeligi(
             tenant_id=r["tenant_id"], slug=r["slug"], ad=r["tenant_ad"], rol=r["rol"]
@@ -172,69 +189,6 @@ async def tesislerim(
         if r["is_active"] and verify_password(body.password, r["password_hash"])
     ]
     return TesislerimYanit(tesisler=tesisler)
-
-
-@router.post("/login", response_model=TokenPair)
-async def login(
-    body: LoginRequest,
-    redis: aioredis.Redis = Depends(get_redis),
-) -> TokenPair:
-    async with SessionLocal() as session:
-        async with session.begin():
-            # 1) slug -> tenant_id (RLS bootstrap: SECURITY DEFINER fonksiyon).
-            tenant_id = (
-                await session.execute(
-                    text("SELECT public.tenant_id_by_slug(:slug)"),
-                    {"slug": body.tenant_slug},
-                )
-            ).scalar_one_or_none()
-            if tenant_id is None:
-                raise _INVALID_CREDS
-
-            # 2) tenant baglami + kullaniciyi RLS altinda yukle.
-            await set_tenant(session, tenant_id)
-            # email tenant-ici benzersiz (lower(email)); case-insensitive tam eslesme.
-            user: AppUser | None = (
-                await session.execute(
-                    select(AppUser).where(
-                        func.lower(AppUser.email) == body.email.lower()
-                    )
-                )
-            ).scalar_one_or_none()
-
-            # 3) dogrulama — basarisiz adimlari ayirt ettirmeden 401.
-            if user is None or not verify_password(body.password, user.password_hash):
-                await _audit_login_fail(tenant_id, method="email", user=user)
-                raise _INVALID_CREDS
-            if not user.is_active:
-                await _audit_login_fail(tenant_id, method="email", user=user)
-                raise _INVALID_CREDS
-            # (P128) Gorev suresi disindaki denetci token ALMAZ. Kapiyi
-            # yalniz `get_current_user`a birakmak, kullaniciya "giris
-            # basarili" deyip ardindan her ekranda 403 gostermek olurdu.
-            if gorev_penceresi_disinda(user):
-                await _audit_login_fail(tenant_id, method="email", user=user)
-                raise _GOREV_SURESI_DISINDA
-
-            await record_audit(
-                session, action=Action.LOGIN_OK, tenant_id=tenant_id,
-                actor_user_id=user.id, actor_rol=user.role,
-                resource_type="app_user", resource_id=user.id,
-            )
-            access = create_access_token(
-                user_id=user.id, tenant_id=user.tenant_id, role=user.role
-            )
-            refresh, jti, fam = create_refresh_token(
-                user_id=user.id, tenant_id=user.tenant_id
-            )
-
-    await _store_refresh(redis, jti, fam)
-    return TokenPair(
-        access_token=access,
-        refresh_token=refresh,
-        token_type="Bearer",
-        expires_in=access_token_ttl_seconds(),
-    )
 
 
 async def _issue_token_pair(redis: aioredis.Redis, user: AppUser) -> TokenPair:
@@ -253,6 +207,76 @@ async def _issue_token_pair(redis: aioredis.Redis, user: AppUser) -> TokenPair:
         expires_in=access_token_ttl_seconds(),
     )
 
+
+@router.post("/login", response_model=TokenPair)
+async def login(
+    body: LoginRequest,
+    redis: aioredis.Redis = Depends(get_redis),
+) -> TokenPair:
+    """(P205 §1) E-POSTA VEYA TELEFONLA giris; slug OPSIYONEL.
+
+    =======================================================================
+    NEDEN TEK UC
+    =======================================================================
+    `login-phone` DURUYOR (eski istemciler kullaniyor) ama yeni tek alan
+    BURAYA gelir. Ikinci bir uc yazmak, ayni kararin (kimlik turu) iki
+    yerde verilmesi demekti.
+
+    =======================================================================
+    SIZDIRMAMA
+    =======================================================================
+    Cozulemeyen kimlik, bilinmeyen kimlik, yanlis parola, pasif hesap ve
+    uyelik-yok — HEPSI ayni 401. Gecersiz e-posta ile gecersiz telefon
+    AYNI yaniti alir (istegin acik sarti).
+    """
+    kimlik = kimligi_coz(body.kimlik)
+    if kimlik is None:
+        raise _INVALID_CREDS
+
+    async with SessionLocal() as session:
+        satirlar = await _uyelikler(session, kimlik.deger)
+
+    # PAROLASI TUTAN uyelikler. Parola tutmayan bir tesisi "var ama
+    # giremezsin" diye ayirmak, hesabin varligini sizdirmakti.
+    uygun = [
+        r for r in satirlar
+        if r["is_active"] and verify_password(body.password, r["password_hash"])
+    ]
+    if body.tenant_slug:
+        uygun = [r for r in uygun if r["slug"] == body.tenant_slug]
+    if not uygun:
+        raise _INVALID_CREDS
+    if len(uygun) > 1:
+        # SECIM GEREKLI: jeton URETILMEZ. Rastgele birini secmek,
+        # kullaniciyi bilmedigi bir tesise sokmak olurdu.
+        raise APIError(409, "tesis_secimi_gerekli", "tesis_secimi_gerekli")
+
+    hedef = uygun[0]
+    async with SessionLocal() as session:
+        async with session.begin():
+            await set_tenant(session, hedef["tenant_id"])
+            user = (
+                await session.execute(
+                    select(AppUser).where(AppUser.id == hedef["user_id"])
+                )
+            ).scalar_one_or_none()
+            if user is None or not user.is_active:
+                await _audit_login_fail(hedef["tenant_id"], method="kimlik", user=user)
+                raise _INVALID_CREDS
+            # (P128) Gorev suresi disindaki denetci token ALMAZ.
+            if gorev_penceresi_disinda(user):
+                await _audit_login_fail(hedef["tenant_id"], method="kimlik", user=user)
+                raise _GOREV_SURESI_DISINDA
+            await record_audit(
+                session, action=Action.LOGIN_OK, tenant_id=hedef["tenant_id"],
+                actor_user_id=user.id, actor_rol=user.role,
+                resource_type="app_user", resource_id=user.id,
+            )
+            hedef_user = user
+
+    # JETON URETIMI TEK YERDE (`_issue_token_pair`): ikinci bir kopya
+    # yazmak, refresh kaydini bir gun birinde unutmak demekti.
+    return await _issue_token_pair(redis, hedef_user)
 
 @router.post("/login-phone", response_model=PhoneLoginResponse)
 async def login_phone(

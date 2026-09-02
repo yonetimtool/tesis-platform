@@ -89,23 +89,62 @@ def _hhmm(v: object) -> object:
 
 # ------------------------------- auth -------------------------------------- #
 class LoginRequest(BaseModel):
-    tenant_slug: str = Field(..., examples=["acme-plaza"])
-    email: EmailStr
-    password: str = Field(..., min_length=8)
+    """(P205 §1) TEK KIMLIK ALANI — e-posta VEYA telefon.
+
+    `tenant_slug` ARTIK OPSIYONEL. Uc, kimlik + parolayla eslesen
+    uyelikleri bulur:
+      * TEK uyelik -> dogrudan giris (slug'a gerek yok),
+      * BIRDEN COK -> `tesis_secimi_gerekli` (istemci secim gosterir),
+      * slug VERILMISSE -> yalniz o tesis denenir (eski davranis).
+
+    Slug'i zorunlu birakmak, kullaniciya ezberlemesi gerekmeyen bir kodu
+    ezberletmekti — P203 §2'de web'de duzeltilen sikayetin ta kendisi.
+    """
+
+    tenant_slug: str | None = Field(None, examples=["acme-plaza"])
+    #: E-posta ya da telefon. Eski istemciler `email` gonderiyordu;
+    #: dogrulayici ikisini de kabul eder (bkz. `_kimlik_birlestir`).
+    kimlik: str | None = Field(None, min_length=1, max_length=254)
+    email: EmailStr | None = None
+    password: str = Field(..., min_length=1)
+
+    @model_validator(mode="after")
+    def _kimlik_birlestir(self) -> "LoginRequest":
+        """`kimlik` yoksa `email`den doldur — ESKI ISTEMCILER KIRILMASIN.
+
+        Mobil uygulama magazadadir ve eski surumler bir sure daha
+        `email` gonderecek. Alani zorunlu kilmak, guncellemeyen
+        kullanicilarin girisini KIRMAK olurdu (P202'de eklenen zorunlu
+        guncelleme bile aninda yayilmaz).
+        """
+        if not self.kimlik and self.email:
+            object.__setattr__(self, "kimlik", str(self.email))
+        if not self.kimlik:
+            raise ValueError("kimlik zorunlu")
+        return self
 
 
 # ===================== (P203 §2) COKLU TESIS ================================ #
 class TesislerimIstek(BaseModel):
     """Giris ekraninda "hangi tesislerdeyim" sorusu.
 
+    (P205 §1) TEK ALAN: `kimlik` E-POSTA DA OLABILIR TELEFON DA.
+    Kullaniciya "hangisini yaziyorsun" diye sormak, bilgisayarin
+    kolayca yapabilecegi bir ayrimi insana yaptirmakti.
+
     PAROLA ZORUNLU. Uyelik listesi bir SIZINTI YUZEYIDIR: parolasiz
-    sorulabilseydi uc, "bu e-posta hangi sitelerde oturuyor" sorgusuna
+    sorulabilseydi uc, "bu kimlik hangi sitelerde oturuyor" sorgusuna
     donusurdu. Parolayla birlikte sorulunca, cagirinin ZATEN sahip
     oldugu bir bilgiden fazlasi verilmez.
+
+    `min_length` PAROLADA 8 DEGIL 1: bu uc bir DOGRULAMA ucu degil,
+    ARAMA ucudur ve kisa bir parola girildiginde "parolan cok kisa"
+    demek, hesabin var olup olmadigindan BAGIMSIZ bir sinyal vermek
+    olurdu. Kisa parola da sessizce bos liste doner.
     """
 
-    email: EmailStr
-    password: str = Field(..., min_length=8)
+    kimlik: str = Field(..., min_length=1, max_length=254)
+    password: str = Field(..., min_length=1)
 
 
 class TesisUyeligi(BaseModel):
