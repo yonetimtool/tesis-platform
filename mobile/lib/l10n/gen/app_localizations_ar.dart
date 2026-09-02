@@ -5499,4 +5499,28 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get ziyaretDaireAraIpucu => 'اكتب رقم الشقة أو اسم أحد السكان';
+
+  @override
+  String get vardiyaPlaniBaslik => 'خطة الورديات';
+
+  @override
+  String get vardiyaSuAnGorevde => 'في الخدمة الآن';
+
+  @override
+  String get vardiyaSuAnKimseYok => 'لا يوجد أحد مجدول الآن.';
+
+  @override
+  String get vardiyaSiradaki => 'الوردية التالية';
+
+  @override
+  String get vardiyaSiradakiYok => 'لا توجد وردية تالية مخططة.';
+
+  @override
+  String get vardiyaBos => 'شاغرة';
+
+  @override
+  String get vardiyaCikar => 'إزالة';
+
+  @override
+  String get vardiyaCikarSebep => 'سبب الإزالة (مرض، إجازة، طارئ)';
 }

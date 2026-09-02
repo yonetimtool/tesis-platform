@@ -5500,4 +5500,28 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get ziyaretDaireAraIpucu => 'Введите номер квартиры или имя жильца';
+
+  @override
+  String get vardiyaPlaniBaslik => 'План смен';
+
+  @override
+  String get vardiyaSuAnGorevde => 'Сейчас на смене';
+
+  @override
+  String get vardiyaSuAnKimseYok => 'Сейчас никто не запланирован.';
+
+  @override
+  String get vardiyaSiradaki => 'Следующая смена';
+
+  @override
+  String get vardiyaSiradakiYok => 'Следующая смена не запланирована.';
+
+  @override
+  String get vardiyaBos => 'Не закрыта';
+
+  @override
+  String get vardiyaCikar => 'Убрать';
+
+  @override
+  String get vardiyaCikarSebep => 'Причина снятия (болезнь, отпуск, срочность)';
 }

@@ -182,16 +182,28 @@ void main() {
     });
   });
 
-  testWidgets('guvenlik formu acar: ad + daire no + sakin secici + not',
-      (tester) async {
+  testWidgets('guvenlik formu acar: ad + DAIRE ARAMA + not', (tester) async {
+    // (P203 §3) DAIRE ALANI DEGISTI ve bu bilincli bir davranis
+    // degisimidir, gerileme DEGIL:
+    //   eski: "Daire no * (örn. A-12)" serbest metin + "Sakinleri
+    //         getir" dugmesi,
+    //   yeni: aranabilir alan (numara VEYA sakin adi) — secim yapilinca
+    //         sakinler AYNI yanittan dolar, ayri dugme gerekmez.
+    //
+    // Sebep: kapidaki gorevli cogu zaman daire numarasini DEGIL ISMI
+    // biliyor; numarayi tahmin etmek SESSIZ bir kusur uretiyordu
+    // (yanlis daire -> bildirim BASKA sakine). Akis
+    // `p203_ziyaretci_daire_secimi_test.dart`ta olculuyor.
     final (_, app) = _app(UserRole.security);
     await tester.pumpWidget(app);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Yeni ziyaretçi'));
     await tester.pumpAndSettle();
     expect(find.text('Ziyaretçi adı *'), findsOneWidget);
-    expect(find.text('Daire no * (örn. A-12)'), findsOneWidget);
-    expect(find.text('Sakinleri getir'), findsOneWidget);
+    expect(find.byKey(const Key('ziyaret-daire-ara')), findsOneWidget);
+    expect(find.text('Daire numarası ya da sakin adı yazın'), findsOneWidget);
+    // Ayri "Sakinleri getir" dugmesi ARTIK YOK.
+    expect(find.text('Sakinleri getir'), findsNothing);
     expect(find.text('Not (opsiyonel)'), findsOneWidget);
     expect(find.text('Kaydet ve sakine bildir'), findsOneWidget);
   });

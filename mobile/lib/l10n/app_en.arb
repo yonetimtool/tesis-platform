@@ -1717,5 +1717,13 @@
   "tesisDegistirBaslik": "Switch facility",
   "tesisDegistirSecili": "You are here",
   "ziyaretDaireAra": "Unit",
-  "ziyaretDaireAraIpucu": "Type a unit number or a resident's name"
+  "ziyaretDaireAraIpucu": "Type a unit number or a resident's name",
+  "vardiyaPlaniBaslik": "Shift plan",
+  "vardiyaSuAnGorevde": "On duty now",
+  "vardiyaSuAnKimseYok": "Nobody is scheduled right now.",
+  "vardiyaSiradaki": "Next shift",
+  "vardiyaSiradakiYok": "No upcoming shift is planned.",
+  "vardiyaBos": "Unstaffed",
+  "vardiyaCikar": "Remove",
+  "vardiyaCikarSebep": "Reason for removal (illness, leave, emergency)"
 }

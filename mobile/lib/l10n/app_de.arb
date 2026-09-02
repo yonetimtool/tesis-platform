@@ -1717,5 +1717,13 @@
   "tesisDegistirBaslik": "Anlage wechseln",
   "tesisDegistirSecili": "Sie sind hier",
   "ziyaretDaireAra": "Wohnung",
-  "ziyaretDaireAraIpucu": "Wohnungsnummer oder Name eines Bewohners eingeben"
+  "ziyaretDaireAraIpucu": "Wohnungsnummer oder Name eines Bewohners eingeben",
+  "vardiyaPlaniBaslik": "Schichtplan",
+  "vardiyaSuAnGorevde": "Jetzt im Dienst",
+  "vardiyaSuAnKimseYok": "Derzeit ist niemand eingeplant.",
+  "vardiyaSiradaki": "Nächste Schicht",
+  "vardiyaSiradakiYok": "Keine nächste Schicht geplant.",
+  "vardiyaBos": "Unbesetzt",
+  "vardiyaCikar": "Entfernen",
+  "vardiyaCikarSebep": "Grund für die Entfernung (Krankheit, Urlaub, Notfall)"
 }

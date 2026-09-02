@@ -206,6 +206,11 @@ const OGELER: readonly MenuOgesi[] = [
   { href: "/notifications", anahtar: "kabukBildirimler", icon: "bell", grup: "guvenlik" },
   { href: "/kameralar", anahtar: "kabukKameralar", icon: "camera", grup: "guvenlik" },
   { href: "/shifts", anahtar: "kabukVardiyalar", icon: "clock", grup: "guvenlik" },
+  // (P203 §4) PLAN, sablonlarin YANINDA: "vardiya" iki farkli sey —
+  // biri SABLON (saatler), oteki PLAN (kim, hangi gun). Ayni bolumde
+  // ama ayri satir: birlestirmek, gunluk kullanilan plani haftada bir
+  // dokunulan sablon ekraninin icine gommekti.
+  { href: "/vardiya-plani", anahtar: "kabukVardiyaPlani", icon: "calendar", grup: "guvenlik" },
   { href: "/checkpoints", anahtar: "kabukNfcNoktalari", icon: "nfc", grup: "guvenlik" },
   { href: "/patrol-plans", anahtar: "kabukDevriyePlanlari", icon: "route", grup: "guvenlik" },
   { href: "/ziyaretciler", anahtar: "kabukZiyaretciler", icon: "visitor", grup: "guvenlik" },

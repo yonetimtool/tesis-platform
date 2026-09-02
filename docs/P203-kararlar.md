@@ -457,3 +457,61 @@ göstergesi **§4 arayüzünde** ele alınacak ve adı `okutma_var` olacak —
 | Geceyi aşma göz ardı edildi (naif çıkarma) | 6 test |
 
 Testler: kurallar 7, uç davranışı 20.
+
+## K4.6 — Arayüz
+
+**Web (`/vardiya-plani`, admin + yönetici).** Gün × vardiya ızgarası;
+yöneticinin sorusu *"bu hafta kim ne zaman çalışıyor"* ve bu soru **iki
+boyutludur**. Liste hâlinde göstermek, boş kalan vardiyayı görmeyi
+imkânsızlaştırırdı: **boş slot, listede hiç görünmeyen şeydir.**
+
+Boş slot **sarı çerçeve + rozet** ile işaretli, ayrıca üstte "N vardiya
+boş" sayacı: yönetici tabloyu taramadan önce "eksik var mı" sorusunu
+yanıtlayabilmeli.
+
+Uyarılar **sessiz geçmiyor**: 45 saat aşımı bir **maliyettir** (§5 onu
+gidere yazıyor) ve yönetici atamayı **yaparken** görmeli.
+
+**Web'de saha rolleri yok — ve bu bir kilidin bulduğu şey.** İlk yazımda
+`/vardiya-plani`yi security'ye de açmıştım; `rol-menusu` testi düşürdü:
+**P129 kararı — saha rollerinin ürünü mobil uygulamadır, `app.*`ta
+hiçbir sayfa görmezler.** Doğrusu: web'de yalnız yönetim, saha **mobilde
+görür**.
+
+**Mobil.** Günlük **liste**, haftalık tablo değil: yedi gün × vardiya
+ızgarası telefona sığmaz ve yatay kaydırma en çok gereken bilgiyi
+(bugün) görünmez yapardı. Boş vardiya ikon + renkle ayrı.
+
+**Mobilde "basit değişiklik" = yalnız ÇIKARMA, atama yok.** Atama;
+personel listesi, çakışma geri bildirimi ve uyarı akışı ister —
+telefonda yarım bir atama akışı, yöneticiyi yanlış atama yapıp web'de
+düzeltmeye zorlardı. Çıkarma ise **acil durumun ta kendisi**
+(hastalık/izin) ve sahada gerekir. Her iki yüzeyde de **sebep sorulur**.
+
+## §4 kilit kanıtı (arayüz)
+
+| Bozma | Düşen test |
+|---|---|
+| Boş slot görsel olarak ayrılmasa | HAFTALIK IZGARA / BOŞ VARDİYA |
+| Uyarılar sessiz geçilse | HAFTALIK SINIR UYARISI |
+| Saha rolüne çıkarma düğmesi gösterilse | SAHA ROLÜ DÜĞMEYİ GÖRMEZ |
+| Sebep sorguda taşınmasa | YÖNETİCİ ÇIKARABİLİR + SEBEP |
+
+Ayrıca üç tasarım-sistemi kilidi düştü ve hepsi haklıydı: elle `<table>`
+yazılamaz (P138 — ortak ilkel var), ham `<th>/<td>` yazılamaz, ve
+`--yz-warn` diye bir token **yok** (doğrusu `--yz-warning`). Izgara
+`<div>`lerle yeniden kuruldu — bu ızgara zaten bir **veri tablosu
+değil**: sabit sütunları yok ve hücreleri tıklanabilir kartlar.
+
+## §4 ölçemediğim
+
+* **"Şu an görevde" alanını gerçek zamanla doğrulayamadım**: sunucu
+  saati testte sabitlenemiyor, bu yüzden testler **geleceğe** vardiya
+  koyup `sonraki` alanını ölçüyor. `gorevdekiler` alanı canlı ölçümde
+  (`[9]`) doğru davrandı ama zamana bağlı olduğu için teste
+  bağlanmadı.
+* **Gerçek cihazda** mobil ekran denenmedi.
+* **"Görevli gelmedi mi" göstergesi YOK** — sistemde gerçek varış kaydı
+  (turnike/QR) bulunmuyor; uydurmak, gelmiş bir görevliyi "gelmedi" diye
+  işaretlemek olurdu. §4.2'nin bu maddesi **karşılanmadı** ve nedeni
+  budur.

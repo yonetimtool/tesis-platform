@@ -200,6 +200,8 @@ export const config = {
     "/dashboard/:path*",
     "/notifications/:path*",
     "/shifts/:path*",
+    // (P203 §4) Vardiya planlama — oturum kapisi.
+    "/vardiya-plani/:path*",
     "/checkpoints/:path*",
     "/patrol-plans/:path*",
     "/units/:path*",

@@ -9274,6 +9274,54 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Daire numarası ya da sakin adı yazın'**
   String get ziyaretDaireAraIpucu;
+
+  /// (P203 §4) Vardiya plani ekrani — vardiyaPlaniBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Vardiya planı'**
+  String get vardiyaPlaniBaslik;
+
+  /// (P203 §4) Vardiya plani ekrani — vardiyaSuAnGorevde.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şu an görevde'**
+  String get vardiyaSuAnGorevde;
+
+  /// (P203 §4) Vardiya plani ekrani — vardiyaSuAnKimseYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şu anda planlı görevli yok.'**
+  String get vardiyaSuAnKimseYok;
+
+  /// (P203 §4) Vardiya plani ekrani — vardiyaSiradaki.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sıradaki vardiya'**
+  String get vardiyaSiradaki;
+
+  /// (P203 §4) Vardiya plani ekrani — vardiyaSiradakiYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Planlanmış bir sonraki vardiya yok.'**
+  String get vardiyaSiradakiYok;
+
+  /// (P203 §4) Vardiya plani ekrani — vardiyaBos.
+  ///
+  /// In tr, this message translates to:
+  /// **'Boş'**
+  String get vardiyaBos;
+
+  /// (P203 §4) Vardiya plani ekrani — vardiyaCikar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Çıkar'**
+  String get vardiyaCikar;
+
+  /// (P203 §4) Vardiya plani ekrani — vardiyaCikarSebep.
+  ///
+  /// In tr, this message translates to:
+  /// **'Çıkarma sebebi (hastalık, izin, acil durum)'**
+  String get vardiyaCikarSebep;
 }
 
 class _AppLocalizationsDelegate

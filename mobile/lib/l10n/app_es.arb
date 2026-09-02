@@ -1717,5 +1717,13 @@
   "tesisDegistirBaslik": "Cambiar de comunidad",
   "tesisDegistirSecili": "Está aquí",
   "ziyaretDaireAra": "Vivienda",
-  "ziyaretDaireAraIpucu": "Escriba el número de vivienda o el nombre de un residente"
+  "ziyaretDaireAraIpucu": "Escriba el número de vivienda o el nombre de un residente",
+  "vardiyaPlaniBaslik": "Plan de turnos",
+  "vardiyaSuAnGorevde": "De servicio ahora",
+  "vardiyaSuAnKimseYok": "Ahora mismo no hay nadie programado.",
+  "vardiyaSiradaki": "Próximo turno",
+  "vardiyaSiradakiYok": "No hay un próximo turno planificado.",
+  "vardiyaBos": "Sin cubrir",
+  "vardiyaCikar": "Quitar",
+  "vardiyaCikarSebep": "Motivo de la retirada (enfermedad, permiso, emergencia)"
 }

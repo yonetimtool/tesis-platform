@@ -5427,4 +5427,29 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ziyaretDaireAraIpucu => 'Type a unit number or a resident\'s name';
+
+  @override
+  String get vardiyaPlaniBaslik => 'Shift plan';
+
+  @override
+  String get vardiyaSuAnGorevde => 'On duty now';
+
+  @override
+  String get vardiyaSuAnKimseYok => 'Nobody is scheduled right now.';
+
+  @override
+  String get vardiyaSiradaki => 'Next shift';
+
+  @override
+  String get vardiyaSiradakiYok => 'No upcoming shift is planned.';
+
+  @override
+  String get vardiyaBos => 'Unstaffed';
+
+  @override
+  String get vardiyaCikar => 'Remove';
+
+  @override
+  String get vardiyaCikarSebep =>
+      'Reason for removal (illness, leave, emergency)';
 }

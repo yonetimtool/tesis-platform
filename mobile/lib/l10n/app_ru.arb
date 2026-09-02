@@ -1717,5 +1717,13 @@
   "tesisDegistirBaslik": "Сменить объект",
   "tesisDegistirSecili": "Вы здесь",
   "ziyaretDaireAra": "Квартира",
-  "ziyaretDaireAraIpucu": "Введите номер квартиры или имя жильца"
+  "ziyaretDaireAraIpucu": "Введите номер квартиры или имя жильца",
+  "vardiyaPlaniBaslik": "План смен",
+  "vardiyaSuAnGorevde": "Сейчас на смене",
+  "vardiyaSuAnKimseYok": "Сейчас никто не запланирован.",
+  "vardiyaSiradaki": "Следующая смена",
+  "vardiyaSiradakiYok": "Следующая смена не запланирована.",
+  "vardiyaBos": "Не закрыта",
+  "vardiyaCikar": "Убрать",
+  "vardiyaCikarSebep": "Причина снятия (болезнь, отпуск, срочность)"
 }

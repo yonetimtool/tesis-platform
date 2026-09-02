@@ -8,6 +8,7 @@ import '../features/auth/data/token_storage.dart';
 import '../features/cameras/domain/camera_models.dart';
 import '../features/cameras/presentation/camera_player_screen.dart';
 import '../features/cameras/presentation/kameralar_screen.dart';
+import '../features/shifts/presentation/vardiya_plani_screen.dart';
 import '../features/shifts/presentation/vardiyalar_screen.dart';
 import '../features/assets/presentation/assets_screen.dart';
 import '../features/auth/presentation/auth_controller.dart';
@@ -124,6 +125,9 @@ class AppRoutes {
   static const sikayetKuyrugu = '/sikayet-kuyrugu';
   static const daireTanimlari = '/daire-tanimlari';
   static const vardiyalar = '/vardiyalar';
+  // (P203 §4) Vardiya PLANI — sablon ekranindan (`/vardiyalar`) AYRI:
+  // biri saatleri tanimlar, oteki kim hangi gun calisir.
+  static const vardiyaPlani = '/vardiya-plani';
   static const kameralar = '/kameralar';
   static const kameraIzle = '/kamera-izle';
   static const settings = '/settings';
@@ -330,6 +334,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.vardiyalar,
         builder: (context, state) => const VardiyalarScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.vardiyaPlani,
+        builder: (context, state) => const VardiyaPlaniScreen(),
       ),
       GoRoute(
         path: AppRoutes.kameralar,

@@ -5239,4 +5239,28 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get ziyaretDaireAraIpucu => 'Daire numarası ya da sakin adı yazın';
+
+  @override
+  String get vardiyaPlaniBaslik => 'Vardiya planı';
+
+  @override
+  String get vardiyaSuAnGorevde => 'Şu an görevde';
+
+  @override
+  String get vardiyaSuAnKimseYok => 'Şu anda planlı görevli yok.';
+
+  @override
+  String get vardiyaSiradaki => 'Sıradaki vardiya';
+
+  @override
+  String get vardiyaSiradakiYok => 'Planlanmış bir sonraki vardiya yok.';
+
+  @override
+  String get vardiyaBos => 'Boş';
+
+  @override
+  String get vardiyaCikar => 'Çıkar';
+
+  @override
+  String get vardiyaCikarSebep => 'Çıkarma sebebi (hastalık, izin, acil durum)';
 }

@@ -1717,5 +1717,13 @@
   "tesisDegistirBaslik": "Changer de résidence",
   "tesisDegistirSecili": "Vous êtes ici",
   "ziyaretDaireAra": "Logement",
-  "ziyaretDaireAraIpucu": "Saisissez un numéro de logement ou le nom d'un résident"
+  "ziyaretDaireAraIpucu": "Saisissez un numéro de logement ou le nom d'un résident",
+  "vardiyaPlaniBaslik": "Planning des postes",
+  "vardiyaSuAnGorevde": "En poste maintenant",
+  "vardiyaSuAnKimseYok": "Personne n'est planifié en ce moment.",
+  "vardiyaSiradaki": "Poste suivant",
+  "vardiyaSiradakiYok": "Aucun poste à venir n'est planifié.",
+  "vardiyaBos": "Non pourvu",
+  "vardiyaCikar": "Retirer",
+  "vardiyaCikarSebep": "Motif du retrait (maladie, congé, urgence)"
 }

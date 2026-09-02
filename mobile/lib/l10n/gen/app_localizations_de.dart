@@ -5413,4 +5413,29 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get ziyaretDaireAraIpucu =>
       'Wohnungsnummer oder Name eines Bewohners eingeben';
+
+  @override
+  String get vardiyaPlaniBaslik => 'Schichtplan';
+
+  @override
+  String get vardiyaSuAnGorevde => 'Jetzt im Dienst';
+
+  @override
+  String get vardiyaSuAnKimseYok => 'Derzeit ist niemand eingeplant.';
+
+  @override
+  String get vardiyaSiradaki => 'Nächste Schicht';
+
+  @override
+  String get vardiyaSiradakiYok => 'Keine nächste Schicht geplant.';
+
+  @override
+  String get vardiyaBos => 'Unbesetzt';
+
+  @override
+  String get vardiyaCikar => 'Entfernen';
+
+  @override
+  String get vardiyaCikarSebep =>
+      'Grund für die Entfernung (Krankheit, Urlaub, Notfall)';
 }

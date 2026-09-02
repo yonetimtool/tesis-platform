@@ -56,6 +56,10 @@ const BIRINCIL_UC: Record<string, string> = {
   "/etkinlik-yonetimi": "GET /events",
   "/dashboard": "GET /dashboard/live",
   "/shifts": "GET /shifts",
+  // (P203 §4) Plan ekrani YAZMA ekranidir (atama/cikarma); okuma ucu
+  // daha genis (saha da gorur) ama birincil uc yazma ucudur —
+  // `/tesis-ayarlari` icin verilen kararin aynisi.
+  "/vardiya-plani": "POST /vardiya-plani",
   "/checkpoints": "GET /checkpoints",
   "/patrol-plans": "GET /patrol-plans",
   "/tasks": "GET /tasks",

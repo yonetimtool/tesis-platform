@@ -1717,5 +1717,13 @@
   "tesisDegistirBaslik": "تغيير المجمع",
   "tesisDegistirSecili": "أنت هنا",
   "ziyaretDaireAra": "الشقة",
-  "ziyaretDaireAraIpucu": "اكتب رقم الشقة أو اسم أحد السكان"
+  "ziyaretDaireAraIpucu": "اكتب رقم الشقة أو اسم أحد السكان",
+  "vardiyaPlaniBaslik": "خطة الورديات",
+  "vardiyaSuAnGorevde": "في الخدمة الآن",
+  "vardiyaSuAnKimseYok": "لا يوجد أحد مجدول الآن.",
+  "vardiyaSiradaki": "الوردية التالية",
+  "vardiyaSiradakiYok": "لا توجد وردية تالية مخططة.",
+  "vardiyaBos": "شاغرة",
+  "vardiyaCikar": "إزالة",
+  "vardiyaCikarSebep": "سبب الإزالة (مرض، إجازة، طارئ)"
 }

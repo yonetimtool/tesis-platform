@@ -5406,4 +5406,28 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get ziyaretDaireAraIpucu =>
       'Saisissez un numéro de logement ou le nom d\'un résident';
+
+  @override
+  String get vardiyaPlaniBaslik => 'Planning des postes';
+
+  @override
+  String get vardiyaSuAnGorevde => 'En poste maintenant';
+
+  @override
+  String get vardiyaSuAnKimseYok => 'Personne n\'est planifié en ce moment.';
+
+  @override
+  String get vardiyaSiradaki => 'Poste suivant';
+
+  @override
+  String get vardiyaSiradakiYok => 'Aucun poste à venir n\'est planifié.';
+
+  @override
+  String get vardiyaBos => 'Non pourvu';
+
+  @override
+  String get vardiyaCikar => 'Retirer';
+
+  @override
+  String get vardiyaCikarSebep => 'Motif du retrait (maladie, congé, urgence)';
 }

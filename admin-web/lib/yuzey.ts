@@ -55,6 +55,8 @@ export const PLATFORM_ROTALARI = [
 export const TESIS_ROTALARI = [
   "/dashboard",
   "/shifts",
+  // (P203 §4) Vardiya PLANLAMA — sablon tanimlarindan ayri bir ekran.
+  "/vardiya-plani",
   "/checkpoints",
   "/patrol-plans",
   "/tasks",
@@ -313,6 +315,17 @@ export const ROTA_ROLLERI: Record<string, readonly string[]> = {
   // --- YONETIM EKRANLARI: yonetici + admin -------------------------------
   "/dashboard": ["admin", "yonetici"],
   "/shifts": ["admin", "yonetici"],
+  // (P203 §4) WEB'DE YALNIZ YONETIM.
+  //
+  // Sunucu okumayi saha rollerine de aciyor ("bir sonraki vardiyada kim
+  // var" sahanin sorusudur) AMA WEB YUZEYI ONLARA KAPALIDIR: P129
+  // karari — saha rollerinin urunu MOBIL UYGULAMADIR ve `app.*`ta
+  // hicbir sayfa gormezler. `rol-menusu` testi bunu kilitliyor ve ilk
+  // yazimda HAKLI OLARAK dustu.
+  //
+  // Saha, plani MOBILDEN gorur (istegin "mobilde en azindan
+  // goruntuleme" sarti).
+  "/vardiya-plani": ["admin", "yonetici"],
   "/checkpoints": ["admin", "yonetici"],
   "/patrol-plans": ["admin", "yonetici"],
   "/tasks": ["admin", "yonetici"],

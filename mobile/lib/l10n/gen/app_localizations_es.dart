@@ -5391,4 +5391,29 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get ziyaretDaireAraIpucu =>
       'Escriba el número de vivienda o el nombre de un residente';
+
+  @override
+  String get vardiyaPlaniBaslik => 'Plan de turnos';
+
+  @override
+  String get vardiyaSuAnGorevde => 'De servicio ahora';
+
+  @override
+  String get vardiyaSuAnKimseYok => 'Ahora mismo no hay nadie programado.';
+
+  @override
+  String get vardiyaSiradaki => 'Próximo turno';
+
+  @override
+  String get vardiyaSiradakiYok => 'No hay un próximo turno planificado.';
+
+  @override
+  String get vardiyaBos => 'Sin cubrir';
+
+  @override
+  String get vardiyaCikar => 'Quitar';
+
+  @override
+  String get vardiyaCikarSebep =>
+      'Motivo de la retirada (enfermedad, permiso, emergencia)';
 }

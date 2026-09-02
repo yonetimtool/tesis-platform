@@ -2459,5 +2459,37 @@
   "ziyaretDaireAraIpucu": "Daire numarası ya da sakin adı yazın",
   "@ziyaretDaireAraIpucu": {
     "description": "(P203 §3) Gorevli numarayi bilmeyebilir; adla da aranabildigi soylenir."
+  },
+  "vardiyaPlaniBaslik": "Vardiya planı",
+  "@vardiyaPlaniBaslik": {
+    "description": "(P203 §4) Vardiya plani ekrani — vardiyaPlaniBaslik."
+  },
+  "vardiyaSuAnGorevde": "Şu an görevde",
+  "@vardiyaSuAnGorevde": {
+    "description": "(P203 §4) Vardiya plani ekrani — vardiyaSuAnGorevde."
+  },
+  "vardiyaSuAnKimseYok": "Şu anda planlı görevli yok.",
+  "@vardiyaSuAnKimseYok": {
+    "description": "(P203 §4) Vardiya plani ekrani — vardiyaSuAnKimseYok."
+  },
+  "vardiyaSiradaki": "Sıradaki vardiya",
+  "@vardiyaSiradaki": {
+    "description": "(P203 §4) Vardiya plani ekrani — vardiyaSiradaki."
+  },
+  "vardiyaSiradakiYok": "Planlanmış bir sonraki vardiya yok.",
+  "@vardiyaSiradakiYok": {
+    "description": "(P203 §4) Vardiya plani ekrani — vardiyaSiradakiYok."
+  },
+  "vardiyaBos": "Boş",
+  "@vardiyaBos": {
+    "description": "(P203 §4) Vardiya plani ekrani — vardiyaBos."
+  },
+  "vardiyaCikar": "Çıkar",
+  "@vardiyaCikar": {
+    "description": "(P203 §4) Vardiya plani ekrani — vardiyaCikar."
+  },
+  "vardiyaCikarSebep": "Çıkarma sebebi (hastalık, izin, acil durum)",
+  "@vardiyaCikarSebep": {
+    "description": "(P203 §4) Vardiya plani ekrani — vardiyaCikarSebep."
   }
 }
