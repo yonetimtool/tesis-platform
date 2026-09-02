@@ -31,6 +31,31 @@ from .temizleme import zengin_temizle
 # haline degil.
 ZenginHtml = Annotated[str, AfterValidator(zengin_temizle)]
 
+# ======================= (P203 §1) KOORDINAT TIPLERI ======================== #
+#
+# OLCULEN KUSUR: `PATCH /checkpoints/{id}` koordinat girilince **500**
+# donuyordu. Zincir:
+#   1. Panel `sayiCoz` ile ayristiriyordu — o bir PARA ayristiricisidir ve
+#      noktadan sonra 2'den fazla basamak varsa noktayi BINLIK AYRACI
+#      sayip SILER: "41.008238" -> 41008238 (olculdu).
+#   2. Sunucu bu sayiyi DOGRULAMADAN kabul ediyordu (`float`, sinir yok).
+#   3. Sutun `Numeric(9, 6)`: uc tam basamak sigar. 41008238 TASTI ve
+#      psycopg `NumericValueOutOfRange` atti -> yakalanmamis istisna -> 500.
+#
+# Panel tarafi ayrica duzeltildi (koordinat para degildir), AMA SUNUCU
+# KENDI BASINA DA DAYANIKLI OLMALI: istemciye guvenmek, ayni 500'u bir
+# sonraki istemcide (mobil, entegrasyon, curl) yeniden uretmek olurdu.
+#
+# ARALIK DOGRULAMASI SUTUN GENISLIGINDEN DAHA DAR ve bu bilincli:
+# `Numeric(9,6)` 999.999999'a kadar izin verir ama 200 enlemi diye bir
+# sey YOKTUR. Fiziksel olarak imkansiz bir koordinati sessizce saklamak,
+# haritada bir noktayi okyanusa koymak demektir.
+#
+# `konum_lat` (TenantSettingsUpdate) bu dogrulamayi ZATEN tasiyordu —
+# yani kural depoda vardi, GPS alanlarinda UYGULANMAMISTI.
+Enlem = Annotated[float, Field(ge=-90, le=90)]
+Boylam = Annotated[float, Field(ge=-180, le=180)]
+
 GunTipi = Literal["her_gun", "hafta_ici", "hafta_sonu", "resmi_tatil"]
 
 
@@ -1051,8 +1076,8 @@ class CheckpointOut(BaseModel):
     id: uuid.UUID
     ad: str
     nfc_tag_uid: str
-    gps_lat: float | None = None
-    gps_lng: float | None = None
+    gps_lat: Enlem | None = None
+    gps_lng: Boylam | None = None
     aktif: bool
     # NTAG424 SDM provision edildi mi (anahtar HICBIR response'ta donmez).
     sdm_aktif: bool = False
@@ -1083,16 +1108,16 @@ class SdmKeyUpdate(BaseModel):
 class CheckpointCreate(BaseModel):
     ad: str = Field(..., min_length=1)
     nfc_tag_uid: str = Field(..., min_length=1)
-    gps_lat: float | None = None
-    gps_lng: float | None = None
+    gps_lat: Enlem | None = None
+    gps_lng: Boylam | None = None
     aktif: bool = True
 
 
 class CheckpointUpdate(BaseModel):
     ad: str | None = Field(None, min_length=1)
     nfc_tag_uid: str | None = Field(None, min_length=1)
-    gps_lat: float | None = None
-    gps_lng: float | None = None
+    gps_lat: Enlem | None = None
+    gps_lng: Boylam | None = None
     aktif: bool | None = None
 
     @model_validator(mode="after")
@@ -1201,8 +1226,8 @@ class SimuleScanCreate(BaseModel):
     checkpoint_id: uuid.UUID
     patrol_window_id: uuid.UUID | None = None
     okutma_zamani: datetime | None = None
-    gps_lat: float | None = None
-    gps_lng: float | None = None
+    gps_lat: Enlem | None = None
+    gps_lng: Boylam | None = None
 
 
 class ScanCreate(BaseModel):
@@ -1211,8 +1236,8 @@ class ScanCreate(BaseModel):
     checkpoint_id: uuid.UUID | None = None
     patrol_window_id: uuid.UUID | None = None
     okutma_zamani: datetime
-    gps_lat: float | None = None
-    gps_lng: float | None = None
+    gps_lat: Enlem | None = None
+    gps_lng: Boylam | None = None
     # (P34) Verilmezse SUNUCU TURETIR: koordinat varsa 'var', yoksa
     # 'bilinmiyor'. Eski istemciler bu alani hic gondermez ve kirilmaz.
     konum_durumu: KonumDurumu | None = None
@@ -1244,8 +1269,8 @@ class ScanEventOut(BaseModel):
     patrol_window_id: uuid.UUID | None = None
     nfc_tag_uid: str
     okutma_zamani: datetime
-    gps_lat: float | None = None
-    gps_lng: float | None = None
+    gps_lat: Enlem | None = None
+    gps_lng: Boylam | None = None
     konum_durumu: KonumDurumu = "bilinmiyor"
     gps_dogruluk_m: float | None = None
     foto_url: str | None = None
@@ -1264,8 +1289,8 @@ class ScanReportItem(BaseModel):
     guard_id: uuid.UUID
     guard_ad: str
     okutma_zamani: datetime
-    gps_lat: float | None = None
-    gps_lng: float | None = None
+    gps_lat: Enlem | None = None
+    gps_lng: Boylam | None = None
     # (P34) Konum raporda GORUNUR: amir "kac okutma konumsuz" sorusunu
     # satirlari tek tek acmadan yanitlayabilmeli.
     konum_durumu: KonumDurumu = "bilinmiyor"
@@ -2572,8 +2597,8 @@ class TaskListResponse(BaseModel):
 class TaskCompletionCreate(BaseModel):
     tamamlanma_zamani: datetime
     nfc_tag_uid: str | None = None
-    gps_lat: float | None = None
-    gps_lng: float | None = None
+    gps_lat: Enlem | None = None
+    gps_lng: Boylam | None = None
     foto_key: str | None = None
     notlar: str | None = None
 
@@ -2586,8 +2611,8 @@ class TaskCompletionOut(BaseModel):
     tamamlayan_user_id: uuid.UUID
     tamamlanma_zamani: datetime
     nfc_tag_uid: str | None = None
-    gps_lat: float | None = None
-    gps_lng: float | None = None
+    gps_lat: Enlem | None = None
+    gps_lng: Boylam | None = None
     foto_key: str | None = None
     foto_url: str | None = None
     notlar: str | None = None
@@ -2845,10 +2870,10 @@ class AssetCheckoutOut(BaseModel):
     birakma_zamani: datetime | None = None
     alma_nfc_tag_uid: str | None = None
     birakma_nfc_tag_uid: str | None = None
-    alma_gps_lat: float | None = None
-    alma_gps_lng: float | None = None
-    birakma_gps_lat: float | None = None
-    birakma_gps_lng: float | None = None
+    alma_gps_lat: Enlem | None = None
+    alma_gps_lng: Boylam | None = None
+    birakma_gps_lat: Enlem | None = None
+    birakma_gps_lng: Boylam | None = None
     notlar: str | None = None
     idempotency_key: str
     created_at: datetime
@@ -2861,15 +2886,15 @@ class AssetCheckoutListResponse(BaseModel):
 
 class CheckoutRequest(BaseModel):
     nfc_tag_uid: str | None = None
-    gps_lat: float | None = None
-    gps_lng: float | None = None
+    gps_lat: Enlem | None = None
+    gps_lng: Boylam | None = None
     notlar: str | None = None
 
 
 class CheckinRequest(BaseModel):
     nfc_tag_uid: str | None = None
-    gps_lat: float | None = None
-    gps_lng: float | None = None
+    gps_lat: Enlem | None = None
+    gps_lng: Boylam | None = None
     notlar: str | None = None
 
 
@@ -2892,8 +2917,12 @@ class TenantSettings(BaseModel):
     posta_kodu: str | None = None
     # Hava durumu konumu (0005) — baslik + /weather sorgusu.
     konum_ad: str = "İstanbul"
-    konum_lat: float = 41.0082
-    konum_lon: float = 28.9784
+    # (P203 §1) OKUMA semasi ama ARALIK YINE DE TASIR: sema sozlesmenin
+    # kendisidir ve istemciye "buraya 1000 gelebilir" demek, istemciyi
+    # gelmeyecek bir degere hazirlanmaya zorlar. Yazma esi
+    # (`TenantSettingsUpdate`) ayni araligi zaten tasiyordu.
+    konum_lat: Enlem = 41.0082
+    konum_lon: Boylam = 28.9784
     # Otopark kapasitesi (G4). null = tanimsiz -> /parking/occupancy kapasite
     # ve oran alanlarini null doner (ana ekran "—" gosterir).
     otopark_kapasite: int | None = None

@@ -13897,8 +13897,8 @@ components:
         id: { type: string, format: uuid }
         ad: { type: string, example: "A Blok Giris" }
         nfc_tag_uid: { type: string, example: "04:A3:B2:C1:90:00" }
-        gps_lat: { type: number, format: double, nullable: true, example: 41.015137 }
-        gps_lng: { type: number, format: double, nullable: true, example: 28.979530 }
+        gps_lat: { type: number, format: double, nullable: true, example: 41.015137, minimum: -90, maximum: 90 }
+        gps_lng: { type: number, format: double, nullable: true, example: 28.979530, minimum: -180, maximum: 180 }
         aktif: { type: boolean }
         sdm_aktif:
           type: boolean
@@ -13911,8 +13911,8 @@ components:
       properties:
         ad: { type: string }
         nfc_tag_uid: { type: string }
-        gps_lat: { type: number, format: double, nullable: true }
-        gps_lng: { type: number, format: double, nullable: true }
+        gps_lat: { type: number, format: double, nullable: true, minimum: -90, maximum: 90 }
+        gps_lng: { type: number, format: double, nullable: true, minimum: -180, maximum: 180 }
         aktif: { type: boolean, default: true }
     CheckpointUpdate:
       type: object
@@ -13920,8 +13920,8 @@ components:
       properties:
         ad: { type: string }
         nfc_tag_uid: { type: string }
-        gps_lat: { type: number, format: double, nullable: true }
-        gps_lng: { type: number, format: double, nullable: true }
+        gps_lat: { type: number, format: double, nullable: true, minimum: -90, maximum: 90 }
+        gps_lng: { type: number, format: double, nullable: true, minimum: -180, maximum: 180 }
         aktif: { type: boolean }
 
     # -------------------------- patrol plan ------------------------ #
@@ -14015,8 +14015,8 @@ components:
         guard_id: { type: string, format: uuid }
         guard_ad: { type: string }
         okutma_zamani: { type: string, format: date-time }
-        gps_lat: { type: number, format: double, nullable: true }
-        gps_lng: { type: number, format: double, nullable: true }
+        gps_lat: { type: number, format: double, nullable: true, minimum: -90, maximum: 90 }
+        gps_lng: { type: number, format: double, nullable: true, minimum: -180, maximum: 180 }
         konum_durumu:
           type: string
           enum: [var, izin_yok, servis_kapali, zaman_asimi, bilinmiyor]
@@ -14053,8 +14053,8 @@ components:
           format: date-time
           nullable: true
           description: Verilmezse SUNUCU SAATI kullanilir.
-        gps_lat: { type: number, nullable: true }
-        gps_lng: { type: number, nullable: true }
+        gps_lat: { type: number, nullable: true, minimum: -90, maximum: 90 }
+        gps_lng: { type: number, nullable: true, minimum: -180, maximum: 180 }
     ScanCreate:
       type: object
       required: [nfc_tag_uid, okutma_zamani]
@@ -14077,8 +14077,8 @@ components:
           type: string
           format: date-time
           description: "Cihazin okuttugu an (UTC). Offline gecikmeli gonderilebilir."
-        gps_lat: { type: number, format: double, nullable: true }
-        gps_lng: { type: number, format: double, nullable: true }
+        gps_lat: { type: number, format: double, nullable: true, minimum: -90, maximum: 90 }
+        gps_lng: { type: number, format: double, nullable: true, minimum: -180, maximum: 180 }
         konum_durumu:
           type: string
           enum: [var, izin_yok, servis_kapali, zaman_asimi, bilinmiyor]
@@ -14147,8 +14147,8 @@ components:
         patrol_window_id: { type: string, format: uuid, nullable: true }
         nfc_tag_uid: { type: string }
         okutma_zamani: { type: string, format: date-time }
-        gps_lat: { type: number, format: double, nullable: true }
-        gps_lng: { type: number, format: double, nullable: true }
+        gps_lat: { type: number, format: double, nullable: true, minimum: -90, maximum: 90 }
+        gps_lng: { type: number, format: double, nullable: true, minimum: -180, maximum: 180 }
         konum_durumu:
           type: string
           enum: [var, izin_yok, servis_kapali, zaman_asimi, bilinmiyor]
@@ -14594,8 +14594,8 @@ components:
         iletisim_adres: { type: string, nullable: true }
         iletisim_telefon: { type: string, nullable: true }
         iletisim_email: { type: string, nullable: true }
-        konum_lat: { type: number, format: double, nullable: true }
-        konum_lon: { type: number, format: double, nullable: true }
+        konum_lat: { type: number, format: double, nullable: true, minimum: -90, maximum: 90 }
+        konum_lon: { type: number, format: double, nullable: true, minimum: -180, maximum: 180 }
         galeri: { type: array, items: { type: object } }
         duyurular:
           type: array
@@ -15559,8 +15559,8 @@ components:
           description: "Token'dan turetilir"
         tamamlanma_zamani: { type: string, format: date-time }
         nfc_tag_uid: { type: string, nullable: true }
-        gps_lat: { type: number, format: double, nullable: true }
-        gps_lng: { type: number, format: double, nullable: true }
+        gps_lat: { type: number, format: double, nullable: true, minimum: -90, maximum: 90 }
+        gps_lng: { type: number, format: double, nullable: true, minimum: -180, maximum: 180 }
         foto_key: { type: string, nullable: true }
         foto_url:
           type: string
@@ -15616,8 +15616,8 @@ components:
           type: string
           nullable: true
           description: "Verilirse task.checkpoint_id'nin nfc'si ile eslesmeli"
-        gps_lat: { type: number, format: double, nullable: true }
-        gps_lng: { type: number, format: double, nullable: true }
+        gps_lat: { type: number, format: double, nullable: true, minimum: -90, maximum: 90 }
+        gps_lng: { type: number, format: double, nullable: true, minimum: -180, maximum: 180 }
         foto_key:
           type: string
           nullable: true
@@ -15743,10 +15743,10 @@ components:
           description: "NULL => hala uzerinde (acik zimmet)"
         alma_nfc_tag_uid: { type: string, nullable: true }
         birakma_nfc_tag_uid: { type: string, nullable: true }
-        alma_gps_lat: { type: number, format: double, nullable: true }
-        alma_gps_lng: { type: number, format: double, nullable: true }
-        birakma_gps_lat: { type: number, format: double, nullable: true }
-        birakma_gps_lng: { type: number, format: double, nullable: true }
+        alma_gps_lat: { type: number, format: double, nullable: true, minimum: -90, maximum: 90 }
+        alma_gps_lng: { type: number, format: double, nullable: true, minimum: -180, maximum: 180 }
+        birakma_gps_lat: { type: number, format: double, nullable: true, minimum: -90, maximum: 90 }
+        birakma_gps_lng: { type: number, format: double, nullable: true, minimum: -180, maximum: 180 }
         notlar: { type: string, nullable: true }
         idempotency_key: { type: string }
         created_at: { type: string, format: date-time }
@@ -15757,8 +15757,8 @@ components:
           type: string
           nullable: true
           description: "Okutulan etiket; verilirse asset.nfc_tag_uid ile eslesmeli"
-        gps_lat: { type: number, format: double, nullable: true }
-        gps_lng: { type: number, format: double, nullable: true }
+        gps_lat: { type: number, format: double, nullable: true, minimum: -90, maximum: 90 }
+        gps_lng: { type: number, format: double, nullable: true, minimum: -180, maximum: 180 }
         notlar: { type: string, nullable: true }
     CheckinRequest:
       type: object
@@ -15767,8 +15767,8 @@ components:
           type: string
           nullable: true
           description: "Okutulan etiket; verilirse asset.nfc_tag_uid ile eslesmeli"
-        gps_lat: { type: number, format: double, nullable: true }
-        gps_lng: { type: number, format: double, nullable: true }
+        gps_lat: { type: number, format: double, nullable: true, minimum: -90, maximum: 90 }
+        gps_lng: { type: number, format: double, nullable: true, minimum: -180, maximum: 180 }
         notlar: { type: string, nullable: true }
 
     # ------------------------ tenant settings ---------------------- #

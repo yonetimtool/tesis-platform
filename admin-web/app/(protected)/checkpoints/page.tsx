@@ -30,7 +30,7 @@ import type {
   OkutmaRaporu,
   TenantSettings,
 } from "@/lib/types";
-import { sayiCoz } from "@/lib/sayi";
+import { koordinatBoylamCoz, koordinatEnlemCoz } from "@/lib/sayi";
 import { useT } from "@/lib/i18n/kullan";
 import { alarmHaritasi, noktaDurumu } from "@/lib/rota-durumu";
 import { esikSonucu, mesafeMetre } from "@/lib/mesafe";
@@ -155,8 +155,11 @@ export default function CheckpointsPage() {
     e.preventDefault();
     setSaving(true);
     setFormErr(null);
-    const lat = sayiCoz(form.gps_lat);
-    const lng = sayiCoz(form.gps_lng);
+    // (P203 §1) `sayiCoz` DEGIL: o bir PARA ayristiricisidir ve
+    // "41.008238"i 41008238 yapiyordu (noktayi binlik ayraci sanip
+    // siliyor) -> sunucuda `Numeric(9,6)` tasmasi -> 500.
+    const lat = koordinatEnlemCoz(form.gps_lat);
+    const lng = koordinatBoylamCoz(form.gps_lng);
     if (lat.tur === "gecersiz" || lng.tur === "gecersiz") {
       setFormErr(t("noktaKonumGecersiz"));
       setSaving(false);

@@ -110,3 +110,59 @@ export function tamsayiCoz(girdi: string): SayiSonuc {
   if (sonuc.tur !== "sayi") return sonuc;
   return Number.isInteger(sonuc.deger) ? sonuc : { tur: "gecersiz" };
 }
+
+// ======================= (P203 §1) KOORDINAT ============================== #
+//
+// OLCULEN KUSUR: NFC noktasina koordinat girip kaydedince sunucu **500**
+// donuyordu. Sebep `sayiCoz`du ve `sayiCoz` SUCLU DEGILDI — YANLIS YERDE
+// KULLANILIYORDU.
+//
+// `sayiCoz` bir PARA/MIKTAR ayristiricisidir ve Turkce yazimi cozer:
+// noktadan sonra 2'den fazla basamak varsa nokta BINLIK AYRACIDIR ve
+// SILINIR. Para icin dogru: "1.234" bin iki yuz otuz dorttur.
+// Koordinat icin FELAKET (olculdu):
+//
+//     sayiCoz("41.008238") -> 41008238      ← 41.008238 DEGIL
+//     sayiCoz("28.978359") -> 28978359
+//
+// Sunucudaki sutun `Numeric(9, 6)`; 41008238 tasti ve 500 uretti.
+//
+// KOORDINATIN BINLIK AYRACI YOKTUR: enlem en fazla 90, boylam en fazla
+// 180'dir — uc basamagi asamaz, dolayisiyla gruplama diye bir sey olamaz.
+// Bu yuzden AYRI bir ayristirici dogru: iki ayirac da (`.` ve `,`)
+// ONDALIKTIR. Kullanici haritadan kopyaladigini yapistirir ve hangi
+// ayraci kullandigi onemli olmamalidir.
+
+/** Koordinat ayristirma sonucu — `sayiCoz` ile ayni sekil. */
+export type KoordinatSonuc =
+  | { tur: "bos" }
+  | { tur: "gecersiz" }
+  | { tur: "sayi"; deger: number };
+
+/**
+ * `"41.008238"` ve `"41,008238"` -> `41.008238`.
+ *
+ * `sinir` verilirse mutlak deger o siniri asamaz (enlem 90, boylam 180) —
+ * sunucudaki `Enlem`/`Boylam` dogrulamasinin ISTEMCI ESI. Ikisi de var
+ * cunku sunucu istemciye guvenemez, istemci de kullaniciya gecersiz bir
+ * degeri gonderip 422 yedirmemeli.
+ */
+export function koordinatCoz(girdi: string, sinir: number): KoordinatSonuc {
+  const s = girdi.trim();
+  if (s === "") return { tur: "bos" };
+  // TEK ondalik ayirac: `.` ya da `,`, ikisi birden DEGIL. "1.234,5"
+  // gibi gruplanmis bir yazim koordinat DEGILDIR ve sessizce
+  // yorumlanmasi, kullanicinin yanlis bir noktayi kaydetmesi olurdu.
+  if (s.includes(".") && s.includes(",")) return { tur: "gecersiz" };
+  const duz = s.replace(",", ".");
+  if (!/^-?\d+(\.\d+)?$/.test(duz)) return { tur: "gecersiz" };
+  const deger = Number(duz);
+  if (!Number.isFinite(deger)) return { tur: "gecersiz" };
+  if (Math.abs(deger) > sinir) return { tur: "gecersiz" };
+  return { tur: "sayi", deger };
+}
+
+/** Enlem: -90..90. */
+export const koordinatEnlemCoz = (g: string) => koordinatCoz(g, 90);
+/** Boylam: -180..180. */
+export const koordinatBoylamCoz = (g: string) => koordinatCoz(g, 180);
