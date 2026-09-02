@@ -4399,3 +4399,38 @@ class SurumPolitikasi(Base):
         JSONB, nullable=False, server_default=text("'{}'::jsonb")
     )
     updated_at = _created_at()
+
+
+class VardiyaPlani(Base):
+    """(P203 §4) GUN BAZLI vardiya atamasi — goc 0093.
+
+    `shift_assignment` TARIH TASIMAZ ve VARSAYILAN KADRODUR ("Ali
+    normalde gece vardiyasinda calisir"). Bu tablo O GUN GERCEKTE
+    kimin planlandigini soyler ve kadrodan TOHUMLANIR.
+
+    Ikisini tek tabloya indirmek "her hafta bastan atama" demekti —
+    yirmi kisilik bir ekipte haftada yuzlerce tiklama.
+    """
+
+    __tablename__ = "vardiya_plani"
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    shift_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    #: Planin tasidigi TEK yeni bilgi ve varlik sebebi.
+    tarih = mapped_column(Date, nullable=False)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    #: `planli` | `iptal`. IPTAL SILMEZ: gun ici degisiklikler denetime
+    #: yaziliyor ve silinen bir satir "neyin degistigini" gosteremezdi.
+    durum: Mapped[str] = mapped_column(
+        Text, nullable=False, server_default=text("'planli'")
+    )
+    #: Degisiklik sebebi (hastalik/izin/acil). Serbest metin: sabit bir
+    #: liste sahadaki sebepleri kapsamaz ve "diger" bilgiyi yine metne
+    #: iterdi.
+    not_metni: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at = _created_at()
+    updated_at = _created_at()

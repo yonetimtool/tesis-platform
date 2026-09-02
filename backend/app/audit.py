@@ -108,6 +108,10 @@ class Action:
     #: e-postadir); bu yuzden "kim, ne zaman, nereden nereye" sorusunun
     #: yanitlanabilir olmasi SART.
     TESIS_DEGISTIR = "tesis_degistir"
+    #: (P203 §4.3) Vardiya plani degisikligi. Gun ici degisiklikler
+    #: (hastalik/izin/acil) denetime YAZILMALI: kimin yerine kimin
+    #: konuldugu, bir olay sonrasi sorulacak ILK sorudur.
+    VARDIYA_PLAN_UPDATE = "vardiya_plan_update"
     UNIT_TIP_CREATE = "unit_tip_create"
     UNIT_TIP_UPDATE = "unit_tip_update"
     UNIT_TIP_DELETE = "unit_tip_delete"

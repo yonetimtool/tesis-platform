@@ -350,3 +350,110 @@ Testler: backend 7, mobil 5.
 * **Web tarafındaki `/ziyaretciler` sayfasına dokunmadım**: orası
   yönetim için **salt izleme** (kayıt yalnız güvenlikte, yani mobilde).
   Kayıt formu web'de yok, dolayısıyla seçicinin web karşılığı da yok.
+
+---
+
+# §4 — Vardiya planlama (BACKEND BİTTİ, arayüz sırada)
+
+## Önce ölçtüm: mevcut model planlama YAPAMIYOR
+
+```
+shift            = ŞABLON (ad + başlangıç/bitiş saati + gün_tipi)
+shift_assignment = (tenant, shift_id, user_id)      ← TARİH YOK
+```
+
+Bugün söylenebilen tek şey *"Ali gece vardiyasındadır"* — **hangi gün
+olduğu yok.** İstenen her şey tarih boyutu gerektiriyor: haftalık plan,
+gün içi değişiklik (şablonu değiştirmek geçmişi **ve tüm gelecek
+günleri** değiştirirdi), çakışma kontrolü ("aynı an" ancak tarihle
+tanımlanır) ve §5'in planlanan/gerçekleşen karşılaştırması.
+
+## K4.1 — İki tablo, iki farklı soru
+
+Göç 0093 `vardiya_plani` (tarih taşır) ekledi. **`shift_assignment`
+silinmedi**: anlamı netleşti — **varsayılan kadro** ("Ali normalde gece
+vardiyasında çalışır"). Hafta ondan **tohumlanır**
+(`haftayi-doldur`), sonra gün bazında düzenlenir.
+
+Tek tabloya inmek "her hafta baştan atama" demekti — yirmi kişilik bir
+ekipte haftada yüzlerce tıklama.
+
+## K4.2 — İptal SİLMEZ
+
+Gün içi değişiklikler denetime yazılıyor (istek §4.3) ve **silinen bir
+satırın denetim kaydı "neyin değiştiğini" gösteremezdi**. *"Ali
+çıkarıldı, Veli eklendi"* iki ayrı satır olarak durmalı. Kısmi tekil
+indeks (`WHERE durum='planli'`) iptal edilmiş bir satırın yeniden
+planlamayı engellememesini sağlıyor; aynı satır **canlandırılıyor**.
+
+## K4.3 — Saat sınırı: KOŞTURUNCA KARARI DEĞİŞTİRDİM
+
+İlk yazımda 4857/63'e dayanarak **günlük 11 saati kesin red** yaptım.
+Akışı çalıştırınca ölçtüm:
+
+```
+[4] dün GECE (20:00-08:00) -> 422 "Günlük çalışma süresi 11 saati aşamaz"
+```
+
+**12 saatlik gece vardiyası tek başına reddediliyordu** — güvenlik
+sektörünün **standart kalıbı**. Fiilen 1 saat ara dinlenmeyle 11 saat
+çalışmadır, ama **model ara dinlenmeyi bilmiyor**: 12 saatlik bir kaydın
+11 mi 12 mi saat çalışma olduğunu ayırt edemez.
+
+Doğrulayamadığımız bir şeyi "kanuna aykırı" diye reddetmek, meşru ve
+yaygın bir planı imkânsız kılmak olurdu. **Karar değişti:**
+
+| Kural | Sertlik | Gerekçe |
+|---|---|---|
+| Çakışma | **Kesin red (422)** | Aynı kişi aynı anda iki yerde olamaz — tercih değil, fiziksel imkânsızlık. Doğrulayabildiğimiz tek şey. |
+| Günlük > 11 saat | **Uyarı** | Ara dinlenme modellenmemiş; 12 saatlik vardiya 11 saat çalışma olabilir. |
+| Haftalık > 45 saat | **Uyarı** | 45 üstü **fazla mesaidir** (md. 41): yasal, ama maliyetli — ve §5 tam olarak onu gidere yazıyor. Engellemek, sistemin desteklemesi gereken durumu imkânsız kılardı. |
+
+**Gece çalışması (md. 69, 7,5 saat) bilinçli olarak uygulanmadı:** "gece
+dönemi" tanımı ve istisnaları (güvenlik hizmetleri dâhil) burada
+sağlıklı modellenemez; yanlış bir kesin red meşru bir planı engellerdi.
+Uyarı listesine de konmadı — doğrulanamayan bir uyarı gürültü üretip
+ötekileri de okunmaz yapardı. Kayıt altında: gerekirse ayrı tur.
+
+**Uç uca eklenen vardiyalar çakışma sayılmaz** (`<` değil `<=`
+kullanmak meşru bir devir teslimi engellerdi). **Geceyi aşan vardiya
+ertesi günün sabahıyla çakışır** — tarihi yok saymak bunu kaçırırdı.
+
+## K4.4 — Akışı koşturmak ikinci bir kusur daha gösterdi
+
+Aynı kişiyi aynı vardiyaya ikinci kez atamaya çalışınca *"bu kişi aynı
+saatte başka bir vardiyada"* diyordu — çakışma denetimi **kendi
+satırıyla** çakışıyor sanıyordu. Yanlış ve kafa karıştırıcı. Kontrol
+sırası değişti: aynı-atama denetimi çakışmadan **önce**.
+
+## K4.5 — "Gelmedi" nasıl anlaşılıyor — ve sınırı
+
+İstek "görevli vardiyaya başlamadıysa/gelmediyse belli olsun" diyor.
+**Sistemde gerçek bir varış kaydı (turnike/QR giriş) YOK.** Uydurmak,
+gelmiş bir görevliyi "gelmedi" diye işaretlemek olurdu.
+
+`/vardiya-plani/simdi` bugün **kimin görevde olması gerektiğini** ve
+**sıradakini** döndürüyor. Devriye okutmasına bakan bir "geldi mi"
+göstergesi **§4 arayüzünde** ele alınacak ve adı `okutma_var` olacak —
+"gelmedi" **demeyecek**.
+
+## Ölçüm — akış gerçekten çalıştırıldı
+
+```
+[1] hafta            -> 200, 7 gün, 2 slot/gün, hepsi BOŞ
+[2] ata (gündüz)     -> 201, uyarı yok
+[3] AYNI atama       -> 422 "o gün bu vardiyaya zaten atanmış"
+[4] dün GECE (uç uca)-> 201 + ["gunluk_sinir_asildi"]   (eskiden 422)
+[6] gündüz slotu     -> boş: False, ["Guard A"]
+[7] çıkar            -> 200, durum: iptal
+[8] sonra            -> boş: True
+[9] şimdi            -> 200, sonraki: "Gece", ["Guard A"]
+[10] denetim         -> {"islem":"cikar","not":"hastalik","tarih":...}
+```
+
+| Kilit kanıtı — bozma | Düşen test |
+|---|---|
+| Çakışma kontrolü kaldırıldı | 2 test |
+| Geceyi aşma göz ardı edildi (naif çıkarma) | 6 test |
+
+Testler: kurallar 7, uç davranışı 20.

@@ -1868,6 +1868,71 @@ class ComplaintDeclineRequest(BaseModel):
 # sakin yaniti yok. Guvenlik kaydeder + hedef sakine BILGILENDIRME push'u gider.
 
 
+# ===================== (P203 §4) VARDIYA PLANI ============================== #
+class VardiyaKisiOut(BaseModel):
+    plan_id: uuid.UUID
+    user_id: uuid.UUID
+    ad: str
+    rol: str
+
+
+class VardiyaSlotOut(BaseModel):
+    """Bir gunun bir vardiyasi."""
+
+    shift_id: uuid.UUID
+    shift_ad: str
+    baslangic_saat: time
+    bitis_saat: time
+    kisiler: list[VardiyaKisiOut] = []
+    #: BOS bayragi `kisiler`den TURETILEBILIR ama yine de doner: istemci
+    #: "uzunluk 0" kontrolunu her cizim yerinde tekrarlasaydi birinde
+    #: unuturdu ve bos vardiya BELIRGIN olmazdi (istegin acik sarti).
+    bos: bool = False
+
+
+class VardiyaGunuOut(BaseModel):
+    tarih: date
+    slotlar: list[VardiyaSlotOut] = []
+
+
+class VardiyaHaftaOut(BaseModel):
+    baslangic: date
+    bitis: date
+    gunler: list[VardiyaGunuOut] = []
+
+
+class VardiyaAtamaIstek(BaseModel):
+    shift_id: uuid.UUID
+    tarih: date
+    user_id: uuid.UUID
+    not_metni: str | None = Field(None, max_length=500)
+
+
+class VardiyaPlanOut(BaseModel):
+    id: uuid.UUID
+    shift_id: uuid.UUID
+    tarih: date
+    user_id: uuid.UUID
+    durum: str
+    not_metni: str | None = None
+    #: (4857/63) Haftalik 45 saat asildiysa UYARI doner — RED DEGIL.
+    #: Ustu FAZLA MESAIDIR: yasal (md. 41) ama maliyetli. Engellemek,
+    #: sistemin desteklemesi gereken mesru bir durumu imkansiz kilardi.
+    uyarilar: list[str] = []
+
+
+class VardiyaSimdiOut(BaseModel):
+    """(§4.2) Anlik durum."""
+
+    #: Tenant'in YEREL saati (sunucunun UTC'si degil).
+    zaman: datetime
+    gorevdeki_vardiya: VardiyaSlotOut | None = None
+    gorevdekiler: list[VardiyaKisiOut] = []
+    sonraki_vardiya: VardiyaSlotOut | None = None
+    sonrakiler: list[VardiyaKisiOut] = []
+    sonraki_baslangic: datetime | None = None
+
+
 class DaireAramaOut(BaseModel):
     """(P203 §3) Arama sonucu: daire + AKTIF sakinleri.
 

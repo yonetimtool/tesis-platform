@@ -6750,6 +6750,109 @@ paths:
   # ICIN YENI JETON. Izolasyon bu yuzden yapisal olarak korunur.
   # ================================================================= #
   # (P203 §3) DAIRE ARAMA — kapidaki gorevli numarayi bilmeyebilir.
+  # ================================================================= #
+  # (P203 §4) VARDIYA PLANLAMA
+  # ================================================================= #
+  # OLCUM: `shift_assignment` TARIH TASIMAZ — soyledigi tek sey "Ali
+  # gece vardiyasindadir". Haftalik plan, GUN ICI degisiklik ve cakisma
+  # kontrolu ucu de tarih ister. `vardiya_plani` (goc 0093) o boyutu
+  # ekler; `shift_assignment` VARSAYILAN KADRO olarak KALIR ve hafta
+  # ondan tohumlanir.
+  # ================================================================= #
+  /vardiya-plani:
+    get:
+      tags: [vardiya]
+      summary: Haftalik plan — gun x vardiya izgarasi
+      parameters:
+        - { name: baslangic, in: query, required: true, schema: { type: string, format: date } }
+        - { name: gun, in: query, schema: { type: integer, minimum: 1, maximum: 31, default: 7 } }
+      responses:
+        "200":
+          description: Izgara
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VardiyaHafta" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [vardiya]
+      summary: Kisiyi BELIRLI BIR GUN vardiyaya ata (admin + yonetici)
+      description: >
+        CAKISMA KESIN REDDEDILIR (422): ayni kisi ayni anda iki yerde
+        olamaz — tercih degil, fiziksel imkansizlik. SURE SINIRLARI ise
+        UYARIDIR: model ara dinlenmeyi bilmiyor ve 12 saatlik bir gece
+        vardiyasinin 11 saat calisma olup olmadigini ayirt edemez;
+        dogrulanamayan bir seyi "kanuna aykiri" diye reddetmek,
+        guvenlik sektorunun standart kalibini imkansiz kilardi.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/VardiyaAtama" }
+      responses:
+        "201":
+          description: Atandi (uyarilarla birlikte)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VardiyaPlan" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /vardiya-plani/simdi:
+    get:
+      tags: [vardiya]
+      summary: Su an kim gorevde, sirada kim (yonetim + saha)
+      description: >
+        Saat TENANT'IN saatidir; sunucunun UTC'sine gore hesaplamak,
+        Turkiye'deki bir siteye gece 03:00'te "gunduz vardiyasi"
+        dedirtirdi.
+      responses:
+        "200":
+          description: Anlik durum
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VardiyaSimdi" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /vardiya-plani/haftayi-doldur:
+    post:
+      tags: [vardiya]
+      summary: Varsayilan kadrodan haftayi tohumla (admin + yonetici)
+      description: >
+        Cakisan atama SESSIZCE ATLANIR ve istek KIRILMAZ: bir kisinin
+        kadro cakismasi yuzunden butun haftanin doldurulmamasi, aracin
+        kendisini kullanilamaz yapardi. BILINCLI IPTAL EZILMEZ.
+      parameters:
+        - { name: baslangic, in: query, required: true, schema: { type: string, format: date } }
+        - { name: gun, in: query, schema: { type: integer, minimum: 1, maximum: 31, default: 7 } }
+      responses:
+        "200":
+          description: Doldurulmus izgara
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VardiyaHafta" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /vardiya-plani/{plan_id}:
+    delete:
+      tags: [vardiya]
+      summary: Atamayi kaldir — SILMEZ, iptal isaretler (admin + yonetici)
+      description: >
+        Gun ici degisiklikler denetime yaziliyor; silinen bir satirin
+        denetim kaydi "neyin degistigini" gosteremezdi. "Ali cikarildi,
+        Veli eklendi" IKI AYRI SATIR olarak durmali.
+      parameters:
+        - { name: plan_id, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: not_metni, in: query, schema: { type: string, maxLength: 500 } }
+      responses:
+        "200":
+          description: Iptal edildi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VardiyaPlan" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
   /units/ara:
     get:
       tags: [units]
@@ -13609,6 +13712,87 @@ components:
         created_at: { type: string, format: date-time }
         geri_alma_at: { type: string, format: date-time, nullable: true }
     # ---------- (P154 / Asama 7.3) KURULUM SIHIRBAZI ---------- #
+    VardiyaKisi:
+      type: object
+      required: [plan_id, user_id, ad, rol]
+      properties:
+        plan_id: { type: string, format: uuid }
+        user_id: { type: string, format: uuid }
+        ad: { type: string }
+        rol: { type: string }
+    VardiyaSlot:
+      type: object
+      required: [shift_id, shift_ad, baslangic_saat, bitis_saat]
+      properties:
+        shift_id: { type: string, format: uuid }
+        shift_ad: { type: string }
+        baslangic_saat: { type: string }
+        bitis_saat: { type: string }
+        kisiler:
+          type: array
+          items: { $ref: "#/components/schemas/VardiyaKisi" }
+        bos:
+          type: boolean
+          description: >
+            `kisiler`den turetilebilir ama yine de doner: istemci
+            "uzunluk 0" kontrolunu her cizim yerinde tekrarlasaydi
+            birinde unuturdu ve bos vardiya BELIRGIN olmazdi.
+    VardiyaGunu:
+      type: object
+      required: [tarih]
+      properties:
+        tarih: { type: string, format: date }
+        slotlar:
+          type: array
+          items: { $ref: "#/components/schemas/VardiyaSlot" }
+    VardiyaHafta:
+      type: object
+      required: [baslangic, bitis]
+      properties:
+        baslangic: { type: string, format: date }
+        bitis: { type: string, format: date }
+        gunler:
+          type: array
+          items: { $ref: "#/components/schemas/VardiyaGunu" }
+    VardiyaAtama:
+      type: object
+      required: [shift_id, tarih, user_id]
+      properties:
+        shift_id: { type: string, format: uuid }
+        tarih: { type: string, format: date }
+        user_id: { type: string, format: uuid }
+        not_metni: { type: string, maxLength: 500, nullable: true }
+    VardiyaPlan:
+      type: object
+      required: [id, shift_id, tarih, user_id, durum]
+      properties:
+        id: { type: string, format: uuid }
+        shift_id: { type: string, format: uuid }
+        tarih: { type: string, format: date }
+        user_id: { type: string, format: uuid }
+        durum: { type: string, enum: [planli, iptal] }
+        not_metni: { type: string, nullable: true }
+        uyarilar:
+          type: array
+          items: { type: string }
+          description: >
+            `gunluk_sinir_asildi` / `haftalik_normal_asildi`. UYARI,
+            RED DEGIL: 45 saat ustu fazla mesaidir (4857 md. 41) —
+            yasal ama maliyetli, ve §5 tam olarak onu gidere yaziyor.
+    VardiyaSimdi:
+      type: object
+      required: [zaman]
+      properties:
+        zaman: { type: string, format: date-time }
+        gorevdeki_vardiya: { $ref: "#/components/schemas/VardiyaSlot" }
+        gorevdekiler:
+          type: array
+          items: { $ref: "#/components/schemas/VardiyaKisi" }
+        sonraki_vardiya: { $ref: "#/components/schemas/VardiyaSlot" }
+        sonrakiler:
+          type: array
+          items: { $ref: "#/components/schemas/VardiyaKisi" }
+        sonraki_baslangic: { type: string, format: date-time, nullable: true }
     DaireArama:
       type: object
       required: [id, no]
