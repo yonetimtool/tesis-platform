@@ -1713,5 +1713,7 @@
   "surumGuncelle": "تحديث",
   "surumSimdiGuncelle": "حدِّث الآن",
   "surumSonra": "لاحقًا",
-  "surumMagazaAcilamadi": "تعذّر فتح المتجر. يمكنك تحديث التطبيق يدويًا من متجر التطبيقات على هاتفك."
+  "surumMagazaAcilamadi": "تعذّر فتح المتجر. يمكنك تحديث التطبيق يدويًا من متجر التطبيقات على هاتفك.",
+  "tesisDegistirBaslik": "تغيير المجمع",
+  "tesisDegistirSecili": "أنت هنا"
 }

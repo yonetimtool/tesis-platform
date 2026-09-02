@@ -402,6 +402,7 @@ POST   /unit-uyarilari/kuyruk-isle                          IZIN   RED    RED   
 POST   /unit-uyarilari/{uyari_id}/yapildi                   IZIN   IZIN   RED    RED    RED    RED    RED   
 GET    /units                                               IZIN   IZIN   IZIN   IZIN   RED    RED    RED   
 POST   /units                                               IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /units/ara                                           IZIN   IZIN   IZIN   RED    RED    RED    RED   
 PATCH  /units/arsa-payi                                     IZIN   IZIN   RED    RED    RED    RED    RED   
 GET    /units/arsa-payi-ozeti                               IZIN   IZIN   RED    RED    RED    RED    RED   
 POST   /units/bulk                                          IZIN   IZIN   RED    RED    RED    RED    RED   

@@ -5393,4 +5393,10 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get surumMagazaAcilamadi =>
       'Impossible d\'ouvrir la boutique. Vous pouvez mettre l\'application à jour manuellement depuis la boutique de votre téléphone.';
+
+  @override
+  String get tesisDegistirBaslik => 'Changer de résidence';
+
+  @override
+  String get tesisDegistirSecili => 'Vous êtes ici';
 }

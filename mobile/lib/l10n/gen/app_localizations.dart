@@ -9250,6 +9250,18 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Mağaza açılamadı. Uygulamayı telefonunuzun uygulama mağazasından elle güncelleyebilirsiniz.'**
   String get surumMagazaAcilamadi;
+
+  /// (P203 §2) Coklu tesis seciciyi acan baslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tesis değiştir'**
+  String get tesisDegistirBaslik;
+
+  /// (P203 §2) Kullanicinin SU AN bulundugu tesisin isareti.
+  ///
+  /// In tr, this message translates to:
+  /// **'Buradasınız'**
+  String get tesisDegistirSecili;
 }
 
 class _AppLocalizationsDelegate

@@ -204,3 +204,53 @@ yanlış bir güvence verirdi.
 `/me/tesis-degistir` rol kapısız (bilinçli — denetçi de başka tesiste
 sakin olabilir) ve `tenant_uyelikleri` SECDEF envanterine gerekçesiyle
 eklendi. Rol matrisi yeniden üretildi.
+
+## K2.5 — Arayüz
+
+**Web — girişte seçim.** Tesis kodu alanı artık **zorunlu değil**.
+Şikâyetin kendisi buydu: kullanıcı ezberlemesi gerekmeyen bir kodu
+ezberlemek zorundaydı. Boş bırakılırsa:
+
+| Sonuç | Davranış |
+|---|---|
+| 0 üyelik | Normal giriş denenir → standart 401 (sızdırmama korunur) |
+| 1 üyelik | **Seçim çıkmaz**, doğrudan girilir |
+| N üyelik | Seçim çizilir; her satırda **o tesisteki rol** yazar |
+
+Tesis kodu yazıldıysa üyelik ucu **hiç çağrılmaz** — kolaylık katmanı
+asıl yolu yavaşlatmamalı. Üyelik çağrısı hata verirse **boş liste**
+döner ve kullanıcı kodu yazarak yine girebilir.
+
+**Web — uygulama içi geçiş.** Kullanıcı menüsünde, **yalnızca birden çok
+üyelik varsa**. Başarıda `location.assign("/")` ile **tam sayfa
+yenileme**: jeton değişti ve rol değişmiş olabilir; Next'in istemci
+önbelleği eski tesisin verisini ve eski role göre çizilmiş kabuğu
+tutuyor — yumuşak geçiş, yeni tesiste eski menüyü göstermek olurdu.
+
+BFF `/api/me/tesis-degistir` jetonu **httpOnly çereze yazar** (giriş
+yolunun aynı kuralı) ve **yüzey kapısını burada da uygular**: yeni
+jetonun rolü farklı olabilir, kapıyı yalnız girişte uygulamak kullanıcıyı
+`panel.*`ta sakin jetonuyla bırakırdı — P126.1'de ölçülen kusurun aynısı.
+
+**Mobil — ölçülen sınır.** Mobil giriş **telefonladır** ve
+`uq_app_user_telefon` global benzersizdir: bir numara **tek** bir tesis
+satırına karşılık gelir. Yani "hangi tesise gireyim" sorusu mobilde
+**girişte sorulamaz**; kişi bir tesise girer ve uygulama içinden geçer.
+Seçici Ayarlar ekranında, **rolden bağımsız** (kişi bir tesiste sakin,
+ötekinde yönetici olabilir — sakine göstermemek tam da geçmesi gereken
+kullanıcıyı engellerdi).
+
+## §2 kilit kanıtı (arayüz)
+
+| Bozma | Düşen test |
+|---|---|
+| Tek tesiste de seçim gösterilse | TEK TESİS VARSA SEÇİM ÇIKMAZ |
+| Seçicide bulunduğu tesis tıklanabilir olsa | BULUNDUĞU TESİS İŞARETLİ |
+| Mobilde yeni jeton saklanmasa | GEÇİŞ: JETON SAKLANIR |
+
+## §2 ölçemediğim
+
+* **Gerçek tarayıcıda tam sayfa yenileme sonrası kabuğun yeni role göre
+  çizildiğini görmedim** — DOM testi `location.assign` çağrısını ölçüyor,
+  sonrasını değil.
+* **Mobilde gerçek cihazda geçiş** denenmedi (widget testi).

@@ -1713,5 +1713,7 @@
   "surumGuncelle": "Обновить",
   "surumSimdiGuncelle": "Обновить сейчас",
   "surumSonra": "Позже",
-  "surumMagazaAcilamadi": "Не удалось открыть магазин. Обновите приложение вручную в магазине приложений на телефоне."
+  "surumMagazaAcilamadi": "Не удалось открыть магазин. Обновите приложение вручную в магазине приложений на телефоне.",
+  "tesisDegistirBaslik": "Сменить объект",
+  "tesisDegistirSecili": "Вы здесь"
 }

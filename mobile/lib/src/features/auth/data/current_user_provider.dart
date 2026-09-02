@@ -26,3 +26,15 @@ final currentUserRoleProvider = FutureProvider<UserRole>((ref) async {
   if (token == null) return UserRole.unknown;
   return UserRole.fromClaim(decodeJwtClaims(token)?['role'] as String?);
 });
+
+/// (P203 §2) SECILI TESIS — jetondan.
+///
+/// Rolle AYNI kaynak ve ayni gerekce: gercek TEK KAYNAK jetondur.
+/// Ayri bir istekle sormak, jeton degistikten sonra (tesis gecisi) iki
+/// degerin AYRISABILECEGI bir pencere acardi.
+final currentTenantIdProvider = FutureProvider<String?>((ref) async {
+  ref.watch(authControllerProvider.select((s) => s.status));
+  final token = await ref.watch(tokenStorageProvider).readAccessToken();
+  if (token == null) return null;
+  return decodeJwtClaims(token)?['tenant_id'] as String?;
+});

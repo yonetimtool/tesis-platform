@@ -10,6 +10,7 @@ import '../../../core/i18n/l10n.dart';
 import '../../../core/i18n/locale_controller.dart';
 import '../../../core/theme/theme_controller.dart';
 import '../../../routing/app_router.dart';
+import '../../tesis/presentation/tesis_secici_karti.dart';
 import '../../auth/data/current_user_provider.dart';
 import '../../kvkk/data/kvkk_api.dart';
 import '../../kvkk/presentation/kvkk_onay_screen.dart'
@@ -96,6 +97,14 @@ class SettingsScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
           ],
+          // (P203 §2) TESIS DEGISTIR — rolden BAGIMSIZ.
+          //
+          // Kart YALNIZ birden cok uyelik varsa cizilir (kendi icinde
+          // karar verir). Rol kapisi YOK ve olmamali: kisi bir tesiste
+          // sakin, otekinde yonetici olabilir — sakine gostermemek, tam
+          // da gecmesi gereken kullaniciyi engellerdi.
+          const TesisSeciciKarti(),
+
           // ------------------------------- DIL ------------------------- #
           Text(l10n.ayarlarGorunum,
               style: Theme.of(context).textTheme.titleMedium),

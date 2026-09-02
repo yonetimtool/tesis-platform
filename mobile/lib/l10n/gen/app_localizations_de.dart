@@ -5400,4 +5400,10 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get surumMagazaAcilamadi =>
       'Der Store konnte nicht geöffnet werden. Sie können die App manuell im App-Store Ihres Telefons aktualisieren.';
+
+  @override
+  String get tesisDegistirBaslik => 'Anlage wechseln';
+
+  @override
+  String get tesisDegistirSecili => 'Sie sind hier';
 }

@@ -1868,6 +1868,20 @@ class ComplaintDeclineRequest(BaseModel):
 # sakin yaniti yok. Guvenlik kaydeder + hedef sakine BILGILENDIRME push'u gider.
 
 
+class DaireAramaOut(BaseModel):
+    """(P203 §3) Arama sonucu: daire + AKTIF sakinleri.
+
+    Sakinler AYNI YANITTA doner. Ayri bir cagri, arama sonucundan
+    birini secen gorevliye ikinci bir bekleme daha yasatirdi — ustelik
+    hedef sakin secimi ZORUNLU oldugu icin o cagri HER ZAMAN yapilirdi.
+    """
+
+    id: uuid.UUID
+    no: str
+    blok: str | None = None
+    sakinler: list["UnitResidentBriefOut"] = []
+
+
 class VisitorCreate(BaseModel):
     """Guvenlik kaydi: daire unit_id VEYA unit_no ile verilir (tam biri).
 

@@ -27,9 +27,19 @@ import { Avatar } from "@/components/Avatar";
 import { jsonFetcher } from "@/lib/fetcher";
 import { kimligiUnut } from "@/lib/kimlik-deposu";
 import { useT } from "@/lib/i18n/kullan";
+import { rolAdi } from "@/lib/roles";
 import { PROFIL_BOLUMLERI, profilBaglantisi } from "@/lib/profil-bolumleri";
 
-type Kimlik = { ad: string; email: string | null; avatar_url: string | null };
+type Kimlik = {
+  ad: string;
+  email: string | null;
+  avatar_url: string | null;
+  /** (P203 §2) Secili tesis — secicide "buradasin"i isaretler. */
+  tenant_id?: string;
+};
+
+/** (P203 §2) Bir kisinin TEK bir tesisteki uyeligi. */
+type TesisUyeligi = { tenant_id: string; slug: string; ad: string; rol: string };
 type TesisAyari = { ad: string };
 
 export function KullaniciMenusu() {
@@ -46,6 +56,49 @@ export function KullaniciMenusu() {
   // cizildigi icin gercek istek sayisi oturum basina birer tanedir.
   const { data: kimlik } = useSWR<Kimlik>("/api/me", jsonFetcher);
   const { data: tesis } = useSWR<TesisAyari>("/api/tenant/settings", jsonFetcher);
+  // (P203 §2) TESIS UYELIKLERI. Menu acilmadan da cekilir cunku SAYI
+  // gerekli: tek tesisliye secici HIC cizilmez ve bunu ancak listeyi
+  // bilerek anlariz.
+  const { data: uyelikler } = useSWR<{ tesisler: TesisUyeligi[] }>(
+    "/api/me/tesislerim",
+    jsonFetcher,
+  );
+  const [gecisBekliyor, setGecisBekliyor] = useState(false);
+  const [gecisHatasi, setGecisHatasi] = useState<string | null>(null);
+
+  /**
+   * (P203 §2) Tesis degistir.
+   *
+   * BASARIDA TAM SAYFA YENILEME (`location.assign`), router.replace
+   * DEGIL: jeton degisti ve rol degismis OLABILIR. Next'in istemci
+   * onbellegi eski tesisin verisini ve eski role gore cizilmis kabugu
+   * tutuyor; yumusak gecis, YENI tesiste ESKI menuyu gostermek olurdu.
+   * Kok (`/`) hedeflenir — middleware yeni role gore dogru baslangici
+   * secer (sakin Aidatim'a, yonetici Pano'ya).
+   */
+  async function tesiseGec(tenantId: string) {
+    setGecisBekliyor(true);
+    setGecisHatasi(null);
+    try {
+      const r = await fetch("/api/me/tesis-degistir", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tenant_id: tenantId }),
+      });
+      if (!r.ok) {
+        const d = (await r.json().catch(() => null)) as
+          | { error?: { message?: string } }
+          | null;
+        setGecisHatasi(d?.error?.message ?? t("ortakHataOlustu"));
+        return;
+      }
+      window.location.assign("/");
+    } catch {
+      setGecisHatasi(t("ortakSunucuyaUlasilamadi"));
+    } finally {
+      setGecisBekliyor(false);
+    }
+  }
 
   useEffect(() => {
     if (!acik) return;
@@ -188,6 +241,63 @@ export function KullaniciMenusu() {
               </span>
             </span>
           </div>
+
+          {/* (P203 §2) TESIS DEGISTIR — YALNIZ BIRDEN COK UYELIK VARSA.
+              Tek tesisli kullaniciya secim gostermek, olmayan bir karar
+              sunmaktir; istek de bunu acikca ayiriyor. */}
+          {(uyelikler?.tesisler?.length ?? 0) > 1 && (
+            <div
+              className="border-b px-1 pb-2 pt-1"
+              style={{ borderColor: "var(--yz-border)" }}
+              data-test="tesis-secici"
+            >
+              <p
+                className="px-2 pb-1 pt-1"
+                style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-3)" }}
+              >
+                {t("tesisDegistirBaslik")}
+              </p>
+              {uyelikler!.tesisler.map((u) => {
+                const secili = u.tenant_id === kimlik?.tenant_id;
+                return (
+                  <button
+                    key={u.tenant_id}
+                    type="button"
+                    role="menuitem"
+                    disabled={secili || gecisBekliyor}
+                    onClick={() => void tesiseGec(u.tenant_id)}
+                    data-test={`tesis-sec-${u.tenant_id}`}
+                    className="odak-ic flex w-full items-center justify-between gap-2 rounded px-2 py-1.5 text-start transition-colors hover:bg-[var(--yz-metal-2)] disabled:opacity-100"
+                    style={{
+                      fontSize: "var(--yz-fs-sm)",
+                      color: "var(--yz-text)",
+                      background: secili ? "var(--yz-metal-2)" : undefined,
+                    }}
+                  >
+                    <span className="min-w-0 truncate">{u.ad}</span>
+                    {/* ROL HER TESISTE FARKLI OLABILIR ve gosterilmesi
+                        sart: kullanici birinde yonetici, otekinde sakin
+                        olabilir — hangi yetkiyle girecegini bilmeli. */}
+                    <span
+                      className="shrink-0"
+                      style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-3)" }}
+                    >
+                      {secili ? t("tesisDegistirSecili") : rolAdi(t, u.rol)}
+                    </span>
+                  </button>
+                );
+              })}
+              {gecisHatasi && (
+                <p
+                  role="alert"
+                  className="px-2 pt-1"
+                  style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-danger)" }}
+                >
+                  {gecisHatasi}
+                </p>
+              )}
+            </div>
+          )}
 
           {PROFIL_BOLUMLERI.map((b) => (
             <Link

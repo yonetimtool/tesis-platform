@@ -1713,5 +1713,7 @@
   "surumGuncelle": "Mettre à jour",
   "surumSimdiGuncelle": "Mettre à jour maintenant",
   "surumSonra": "Plus tard",
-  "surumMagazaAcilamadi": "Impossible d'ouvrir la boutique. Vous pouvez mettre l'application à jour manuellement depuis la boutique de votre téléphone."
+  "surumMagazaAcilamadi": "Impossible d'ouvrir la boutique. Vous pouvez mettre l'application à jour manuellement depuis la boutique de votre téléphone.",
+  "tesisDegistirBaslik": "Changer de résidence",
+  "tesisDegistirSecili": "Vous êtes ici"
 }

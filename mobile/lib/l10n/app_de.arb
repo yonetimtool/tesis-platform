@@ -1713,5 +1713,7 @@
   "surumGuncelle": "Aktualisieren",
   "surumSimdiGuncelle": "Jetzt aktualisieren",
   "surumSonra": "Später",
-  "surumMagazaAcilamadi": "Der Store konnte nicht geöffnet werden. Sie können die App manuell im App-Store Ihres Telefons aktualisieren."
+  "surumMagazaAcilamadi": "Der Store konnte nicht geöffnet werden. Sie können die App manuell im App-Store Ihres Telefons aktualisieren.",
+  "tesisDegistirBaslik": "Anlage wechseln",
+  "tesisDegistirSecili": "Sie sind hier"
 }

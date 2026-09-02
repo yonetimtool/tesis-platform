@@ -5378,4 +5378,10 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get surumMagazaAcilamadi =>
       'No se pudo abrir la tienda. Puede actualizar la aplicación manualmente desde la tienda de su teléfono.';
+
+  @override
+  String get tesisDegistirBaslik => 'Cambiar de comunidad';
+
+  @override
+  String get tesisDegistirSecili => 'Está aquí';
 }

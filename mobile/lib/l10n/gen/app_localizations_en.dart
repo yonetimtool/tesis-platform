@@ -5415,4 +5415,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get surumMagazaAcilamadi =>
       'Could not open the store. You can update the app manually from your phone\'s app store.';
+
+  @override
+  String get tesisDegistirBaslik => 'Switch facility';
+
+  @override
+  String get tesisDegistirSecili => 'You are here';
 }

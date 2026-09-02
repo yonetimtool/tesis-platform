@@ -5488,4 +5488,10 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get surumMagazaAcilamadi =>
       'Не удалось открыть магазин. Обновите приложение вручную в магазине приложений на телефоне.';
+
+  @override
+  String get tesisDegistirBaslik => 'Сменить объект';
+
+  @override
+  String get tesisDegistirSecili => 'Вы здесь';
 }

@@ -32,6 +32,7 @@ from ..models import (
     UnitTip,
 )
 from ..schemas import (
+    DaireAramaOut,
     ArsaPayiOzet,
     ArsaPayiToplu,
     KatSilOnizleme,
@@ -315,6 +316,100 @@ async def arsa_payi_toplu(
     )
 
 
+@router.get("/ara", response_model=list[DaireAramaOut])
+async def daire_ara(
+    q: str = Query("", max_length=100),
+    limit: int = Query(20, ge=1, le=50),
+    db: AsyncSession = Depends(get_tenant_db),
+    _: AppUser = Depends(_RESIDENT_LISTER),
+) -> list[DaireAramaOut]:
+    """(P203 §3) Daire ARAMA — numara VEYA SAKIN ADIYLA.
+
+    =======================================================================
+    NEDEN VAR: KAPIDAKI GOREVLI DAIRE NUMARASINI BILMEYEBILIR
+    =======================================================================
+    Ziyaretci kaydinda daire ELLE yaziliyordu. Kapida duran gorevli
+    cogu zaman "Ayse Hanim'a geldim" cumlesini duyar, "A-12'ye geldim"
+    cumlesini degil. Numarayi bilmedigi icin ya sakini arayip soruyor ya
+    da yanlis daire yaziyordu — ikincisi SESSIZ bir kusurdur: kayit
+    olusur, bildirim BASKA BIR SAKINE gider.
+
+    =======================================================================
+    KVKK: YENI BIR IFSA DEGIL, AYNI VERININ BASKA INDEKSI
+    =======================================================================
+    Guvenlik ZATEN `/units/by-no/{no}/residents` ile bir dairenin aktif
+    sakinlerinin adini goruyor. Bu uc ayni kumeyi ADLA da aranabilir
+    kiliyor. AMAC SINIRLI kalsin diye:
+      * yalniz AKTIF baglantilar (bitis IS NULL),
+      * yalniz `user_id` + `ad` doner — telefon/e-posta/borc YOK,
+      * BOS SORGU BOS LISTE doner: uc, "tum sakinleri dok" araci
+        DEGILDIR; en az iki karakter aranir,
+      * `limit` tavani 50.
+
+    RBAC `by-no/.../residents` ile AYNI (`_RESIDENT_LISTER`): security +
+    admin + yonetici. Guvenlige yeni bir yetki VERILMIYOR.
+    """
+    aranan = q.strip()
+    # BOS/TEK HARF SORGU BOS DONER: aksi hâlde uc, tek istekle butun
+    # daire ve sakin listesini veren bir dokum araci olurdu.
+    if len(aranan) < 2:
+        return []
+    kalip = f"%{aranan.lower()}%"
+
+    # Daire NO'suna gore eslesen daireler.
+    no_eslesen = select(Unit.id).where(func.lower(Unit.no).like(kalip))
+    # SAKIN ADINA gore eslesen daireler (yalniz AKTIF baglanti).
+    ad_eslesen = (
+        select(UnitResident.unit_id)
+        .join(AppUser, AppUser.id == UnitResident.user_id)
+        .where(func.lower(AppUser.ad).like(kalip), UnitResident.bitis.is_(None))
+    )
+    daireler = (
+        await db.execute(
+            select(Unit)
+            .where(Unit.id.in_(no_eslesen.union(ad_eslesen)))
+            .order_by(Unit.blok, Unit.no)
+            .limit(limit)
+        )
+    ).scalars().all()
+    if not daireler:
+        return []
+
+    # Sakinleri TEK SORGUDA topla: daire basina ayri sorgu, 20 daire icin
+    # 20 gidis-donus demekti (arama her tusta cagriliyor).
+    kimlikler = [d.id for d in daireler]
+    satirlar = (
+        await db.execute(
+            select(UnitResident.unit_id, AppUser.id, AppUser.ad)
+            .join(AppUser, AppUser.id == UnitResident.user_id)
+            .where(
+                UnitResident.unit_id.in_(kimlikler),
+                UnitResident.bitis.is_(None),
+            )
+            .order_by(AppUser.ad)
+        )
+    ).all()
+    sakinler: dict[uuid.UUID, list[UnitResidentBriefOut]] = {}
+    for unit_id, uid, ad in satirlar:
+        sakinler.setdefault(unit_id, []).append(
+            UnitResidentBriefOut(user_id=uid, ad=ad)
+        )
+    return [
+        DaireAramaOut(
+            id=d.id,
+            no=d.no,
+            blok=d.blok,
+            sakinler=sakinler.get(d.id, []),
+        )
+        for d in daireler
+    ]
+
+
+# (P203 §3) SIRA ANLAMLI: `/ara` `/{unit_id}`DEN ONCE tanimlanmali.
+# Aksi hâlde FastAPI "ara" metnini `unit_id` sanip UUID dogrulamasina
+# sokar ve uc 422 doner — ILK YAZIMDA tam olarak bu oldu ve testler
+# yakaladi. Ayni sinif `admin-web`de `[id]` dinamik segmentinde de
+# olculmustu (P189).
 @router.get("/{unit_id}", response_model=UnitOut)
 async def get_unit(
     unit_id: uuid.UUID,

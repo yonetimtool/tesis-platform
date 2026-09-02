@@ -2443,5 +2443,13 @@
   "surumMagazaAcilamadi": "Mağaza açılamadı. Uygulamayı telefonunuzun uygulama mağazasından elle güncelleyebilirsiniz.",
   "@surumMagazaAcilamadi": {
     "description": "(P202) Magaza acilamadiginda kullaniciya ne oldugu soylenir."
+  },
+  "tesisDegistirBaslik": "Tesis değiştir",
+  "@tesisDegistirBaslik": {
+    "description": "(P203 §2) Coklu tesis seciciyi acan baslik."
+  },
+  "tesisDegistirSecili": "Buradasınız",
+  "@tesisDegistirSecili": {
+    "description": "(P203 §2) Kullanicinin SU AN bulundugu tesisin isareti."
   }
 }

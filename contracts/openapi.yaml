@@ -6749,6 +6749,33 @@ paths:
   # JETON TEK bir `tenant_id` tasir ve RLS onu kullanir; gecis = HEDEF
   # ICIN YENI JETON. Izolasyon bu yuzden yapisal olarak korunur.
   # ================================================================= #
+  # (P203 §3) DAIRE ARAMA — kapidaki gorevli numarayi bilmeyebilir.
+  /units/ara:
+    get:
+      tags: [units]
+      summary: Daire ara — numara VEYA sakin adiyla (admin + yonetici + security)
+      description: >
+        Ziyaretci kaydinda daire ELLE yaziliyordu; gorevli cogu zaman
+        "Ayse Hanim'a geldim" duyar. Yanlis daire yazmak SESSIZ bir
+        kusurdur: kayit olusur ve bildirim BASKA BIR SAKINE gider.
+        KVKK: yeni bir ifsa DEGIL — guvenlik ayni kumeyi zaten
+        `/units/by-no/{unit_no}/residents` ile goruyor; burada ADLA da
+        aranabiliyor. Amac sinirli: yalniz AKTIF baglantilar, yalniz
+        `user_id` + `ad`, en az 2 karakter, limit tavani 50.
+        BOS/TEK HARF sorgu BOS liste doner — uc bir DOKUM ARACI degildir.
+      parameters:
+        - { name: q, in: query, schema: { type: string, maxLength: 100 } }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 50, default: 20 } }
+      responses:
+        "200":
+          description: Eslesen daireler + AKTIF sakinleri
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/DaireArama" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
   /auth/tesislerim:
     post:
       tags: [auth]
@@ -13582,6 +13609,20 @@ components:
         created_at: { type: string, format: date-time }
         geri_alma_at: { type: string, format: date-time, nullable: true }
     # ---------- (P154 / Asama 7.3) KURULUM SIHIRBAZI ---------- #
+    DaireArama:
+      type: object
+      required: [id, no]
+      properties:
+        id: { type: string, format: uuid }
+        no: { type: string }
+        blok: { type: string, nullable: true }
+        sakinler:
+          type: array
+          description: >
+            AKTIF sakinler. AYNI YANITTA doner: hedef sakin secimi
+            zorunlu oldugu icin ayri bir cagri HER ZAMAN yapilirdi ve
+            gorevliye ikinci bir bekleme yasatirdi.
+          items: { $ref: "#/components/schemas/UnitResidentBrief" }
     TesislerimIstek:
       type: object
       required: [email, password]

@@ -1713,5 +1713,7 @@
   "surumGuncelle": "Actualizar",
   "surumSimdiGuncelle": "Actualizar ahora",
   "surumSonra": "Más tarde",
-  "surumMagazaAcilamadi": "No se pudo abrir la tienda. Puede actualizar la aplicación manualmente desde la tienda de su teléfono."
+  "surumMagazaAcilamadi": "No se pudo abrir la tienda. Puede actualizar la aplicación manualmente desde la tienda de su teléfono.",
+  "tesisDegistirBaslik": "Cambiar de comunidad",
+  "tesisDegistirSecili": "Está aquí"
 }

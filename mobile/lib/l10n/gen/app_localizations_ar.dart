@@ -5487,4 +5487,10 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get surumMagazaAcilamadi =>
       'تعذّر فتح المتجر. يمكنك تحديث التطبيق يدويًا من متجر التطبيقات على هاتفك.';
+
+  @override
+  String get tesisDegistirBaslik => 'تغيير المجمع';
+
+  @override
+  String get tesisDegistirSecili => 'أنت هنا';
 }

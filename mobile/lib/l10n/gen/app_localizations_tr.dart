@@ -5227,4 +5227,10 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get surumMagazaAcilamadi =>
       'Mağaza açılamadı. Uygulamayı telefonunuzun uygulama mağazasından elle güncelleyebilirsiniz.';
+
+  @override
+  String get tesisDegistirBaslik => 'Tesis değiştir';
+
+  @override
+  String get tesisDegistirSecili => 'Buradasınız';
 }

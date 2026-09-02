@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import type { ApiError } from "@/lib/types";
+import { rolAdi } from "@/lib/roles";
 
 import { DilSecici } from "@/components/DilSecici";
 import { GirisSahnesi } from "@/components/giris/sahne";
@@ -56,6 +57,10 @@ const EASE = [0.22, 1, 0.36, 1] as const;
 // her dizgeyi "cevrilmemis metin" adayi sayar.
 const UC_TELEFON = "/api/auth/login-phone";
 const UC_EPOSTA = "/api/auth/login";
+const UC_TESISLERIM = "/api/auth/tesislerim";
+
+/** (P203 §2) Bir kisinin TEK bir tesisteki uyeligi. */
+type TesisUyeligi = { tenant_id: string; slug: string; ad: string; rol: string };
 
 export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
   // (P126 sonrasi) GIRIS YOLU YUZEYE GORE.
@@ -96,6 +101,10 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
   // ADIM DURUMDA TUTULUYOR, AYRI ROTADA DEGIL: ayri bir sayfa acmak,
   // kullanicinin yazdigi tesis kodu ve e-postayi ikinci kez sormak ya da
   // adres cubugunda tasimak olurdu.
+  // (P203 §2) COKLU TESIS SECIMI. Ayri bir rota DEGIL, ayni formun bir
+  // adimi: kullanici e-posta ve parolayi zaten girdi, ikinci bir sayfa
+  // onlari yeniden sormak ya da adres cubugunda tasimak olurdu.
+  const [secim, setSecim] = useState<TesisUyeligi[] | null>(null);
   const [kodAdimi, setKodAdimi] = useState<"kapali" | "kod">("kapali");
   const [kod, setKod] = useState("");
   const [kodGonderildi, setKodGonderildi] = useState(false);
@@ -202,6 +211,47 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
     }
   }
 
+  /**
+   * (P203 §2) Kimligin gecerli oldugu tesisler.
+   *
+   * HATA YUTULUR ve BOS LISTE donulur: bu cagri bir KOLAYLIKTIR, giris
+   * yolunun kendisi degil. Uc dusmusse kullanici, tesis kodunu yazarak
+   * yine girebilmeli — kolaylik katmani asil yolu KIRMAMALI.
+   */
+  async function tesisleriGetir(
+    eposta: string,
+    parola: string,
+  ): Promise<TesisUyeligi[]> {
+    try {
+      const r = await fetch(UC_TESISLERIM, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: eposta, password: parola }),
+      });
+      if (!r.ok) return [];
+      const d = (await r.json().catch(() => null)) as
+        | { tesisler?: TesisUyeligi[] }
+        | null;
+      return d?.tesisler ?? [];
+    } catch {
+      return [];
+    }
+  }
+
+  /** (P203 §2) Secim ekranindan bir tesise gir. */
+  async function secilenTesisleGir(slug: string) {
+    setTenantSlug(slug);
+    setSecim(null);
+    setLoading(true);
+    try {
+      await girisIste(slug);
+    } catch {
+      setError(t("ortakSunucuyaUlasilamadi"));
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     // KOD ADIMINDA form gonderimi KODU dogrular. Ayri bir dugmeye
@@ -226,9 +276,40 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
     }
     setLoading(true);
     try {
+      // (P203 §2) TESIS KODU BOS: kimlik hangi tesislerde gecerli?
+      //   0 -> normal giris denenir (SIZDIRMAMA: "hesap yok" demeyiz,
+      //        kullanici standart 401 metnini gorur),
+      //   1 -> o tesisle dogrudan girilir (secim EKRANI CIKMAZ),
+      //   N -> SECIM cizilir.
+      let slug = tenantSlug.trim();
+      if (!telefonla && !slug) {
+        const secenekler = await tesisleriGetir(email, password);
+        if (secenekler.length > 1) {
+          setSecim(secenekler);
+          return;
+        }
+        if (secenekler.length === 1) slug = secenekler[0].slug;
+      }
+      await girisIste(slug);
+    } catch {
+      setError(t("ortakSunucuyaUlasilamadi"));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  /**
+   * (P203 §2) GIRIS ISTEGI — TEK YERDE.
+   *
+   * Hem form gonderiminden hem TESIS SECIMINDEN cagrilir. Ikinci bir
+   * kopya yazmak, P129'da olculen kusurun aynisi olurdu: iki giris
+   * yolundan birindeki dal bozuldugunda hicbir test dusmemisti.
+   */
+  async function girisIste(slug: string) {
+    {
       const govde = telefonla
         ? { phone: telefonNormalle(telefon), password }
-        : { tenant_slug: tenantSlug, email, password };
+        : { tenant_slug: slug, email, password };
       let uc = UC_EPOSTA;
       if (telefonla) uc = UC_TELEFON;
       const res = await fetch(uc, {
@@ -262,10 +343,6 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
       // `/dashboard` yazmak, panoyu goremeyen uc rolu bos ekrana yollardi.
       router.replace("/");
       router.refresh();
-    } catch {
-      setError(t("ortakSunucuyaUlasilamadi"));
-    } finally {
-      setLoading(false);
     }
   }
 
@@ -409,7 +486,47 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
               </p>
             </div>
 
-            {telefonla ? (
+            {/* (P203 §2) COKLU TESIS SECIMI — form ALANLARININ YERINE.
+                Alanlar cizilmeye devam etseydi kullanici, karari
+                verdikten sonra bile duzenleyebilecegi bir e-posta alani
+                gorurdu ve hangi adimda oldugu belirsiz kalirdi. */}
+            {secim ? (
+              <div className="space-y-3" data-test="giris-tesis-secimi">
+                <div>
+                  <p className="text-sm font-medium" style={{ color: METIN }}>
+                    {t("girisTesisSecBaslik")}
+                  </p>
+                  <p className="mt-1 text-xs" style={{ color: METIN_SOLUK }}>
+                    {t("girisTesisSecAlt")}
+                  </p>
+                </div>
+                {secim.map((u) => (
+                  <button
+                    key={u.tenant_id}
+                    type="button"
+                    data-test={`giris-tesis-${u.slug}`}
+                    disabled={loading}
+                    onClick={() => void secilenTesisleGir(u.slug)}
+                    className="odak-ters flex w-full items-center justify-between gap-3 rounded-xl px-4 py-3 text-start transition"
+                    style={{
+                      background: "rgba(255,255,255,0.07)",
+                      borderWidth: "1px",
+                      borderStyle: "solid",
+                      borderColor: CAM_KENAR,
+                      color: METIN,
+                    }}
+                  >
+                    <span className="min-w-0 truncate text-sm">{u.ad}</span>
+                    {/* ROL GOSTERILIR: kisi birinde yonetici, otekinde
+                        sakin olabilir — hangi yetkiyle girecegini
+                        SECMEDEN ONCE bilmeli. */}
+                    <span className="shrink-0 text-xs" style={{ color: METIN_SOLUK }}>
+                      {rolAdi(t, u.rol)}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            ) : telefonla ? (
               <label className="block">
                 <span className={etiketSinifi} style={etiketStili}>
                   {t("kullaniciTelefon")}
@@ -455,7 +572,12 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
                     placeholder="yonetio"
                     autoComplete="organization"
                     aria-label={t("girisTesisSlug")}
-                    required
+                    // (P203 §2) ZORUNLU DEGIL. Bos birakilirsa sunucu
+                    // kimligin hangi tesislerde gecerli oldugunu doner:
+                    // tek tesis varsa dogrudan girilir, birden coksa
+                    // SECIM cikar. Zorunlu birakmak, kullaniciyi
+                    // ezberlemesi gerekmeyen bir kodu ezberlemeye
+                    // zorluyordu — sikayetin kendisi buydu.
                   />
                 </label>
 
