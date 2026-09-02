@@ -59,7 +59,34 @@ from ..schemas import (
 
 router = APIRouter(tags=["finans"])
 
-_ADMIN = require_role("admin")
+# ===========================================================================
+# (P206 §1) FINANSAL YAZMA ARTIK YONETICIDE — `_ADMIN` KALDIRILDI
+# ===========================================================================
+# OLCULEN KUSUR: yonetici kendi tesisinin finansini YONETEMIYORDU. Rol
+# matrisinden cikan tablo (`docs/P206-kararlar.md` §1) on alti finans
+# ucunun yoneticiye KAPALI oldugunu gosterdi — tahsilat, gider, gider
+# onayi, virman, iade, acilis, toplu borclandirma, sayac
+# borclandirmasi, gecikme ayari...
+#
+# ESKI GEREKCE VE NEDEN GECERSIZ:
+#   "Tahakkuk bir BORC YAZMAKTIR ve duzeltilebilir; tahsilat ise PARA
+#    ALINDI beyanidir." (P167)
+# Ayrim mantikli ama YANLIS YERE cizilmisti: parayi kapida elden alan
+# kisi YONETICIDIR, platform admini degil. Platform admininin o
+# tahsilati girmesi icin once yoneticiden duymasi gerekir — yani kaydin
+# dogrulugu zaten yoneticiye dayaniyordu; yetkiyi ondan almak kaydi
+# GECIKTIRMEKTEN baska bir sey yapmiyordu. Modul, yonetici
+# kullanamadigi icin fiilen calismiyordu.
+#
+# DEGISEN SEY YETKI, KAPSAM DEGIL: yonetici yalnizca KENDI tesisinde
+# yazar. Uc yerden birden kapali (P167'de olculdu, hâlâ gecerli):
+#   1. `get_tenant_db` oturumu token'daki tenant'a RLS ile baglar,
+#   2. baska tesisin kasa/daire kimligi 422 `invalid_reference` alir,
+#   3. kayit `tenant_id=user.tenant_id` ile yazilir — istekten GELMEZ.
+#
+# DENETCI DEGISMEDI: salt okuma (`_OKUMA`). Sakin finans uclarina hic
+# giremez.
+
 # (P168 §2) ICRA YAZMA YONETICIYE DE ACIK.
 #
 # Onceki hâl `require_role("admin")`di ve sonucu ekranda gorunuyordu:
@@ -74,8 +101,8 @@ _ADMIN = require_role("admin")
 _YAZMA = require_role("admin", "yonetici")
 # (P128) `_OKUMA` YALNIZ GET uclarinda kullanilir (hareketler, kasa
 # bakiyeleri, ozet, icra dosyalari listesi); denetcinin mali gozetimi tam
-# olarak bu kayitlar uzerindedir. Yazan uclar `_ADMIN`dedir ve denetci
-# oraya HIC girmez.
+# olarak bu kayitlar uzerindedir. Yazan uclar `_YAZMA`dadir (P206 §1:
+# admin + yonetici) ve denetci oraya HIC girmez.
 _OKUMA = require_role("admin", "yonetici", "denetci")
 
 
@@ -230,7 +257,7 @@ async def tahsilat(
     response: Response,
     idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
     db: AsyncSession = Depends(get_tenant_db),
-    user: AppUser = Depends(_ADMIN),
+    user: AppUser = Depends(_YAZMA),
 ) -> HareketOut:
     """Tekil tahsilat — kasaya GIRIS.
 
@@ -282,7 +309,7 @@ async def toplu_tahsilat(
     response: Response,
     idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
     db: AsyncSession = Depends(get_tenant_db),
-    user: AppUser = Depends(_ADMIN),
+    user: AppUser = Depends(_YAZMA),
 ) -> HareketListResponse:
     """Cok satirli tahsilat — TEK ISLEMDE ya hepsi ya hicbiri.
 
@@ -328,7 +355,7 @@ async def hareket_ekle(
     response: Response,
     idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
     db: AsyncSession = Depends(get_tenant_db),
-    user: AppUser = Depends(_ADMIN),
+    user: AppUser = Depends(_YAZMA),
 ) -> HareketListResponse:
     """Cok satirli gider/gelir girisi ("Yeni Satır" akisi)."""
     kayitlar = []
@@ -408,7 +435,7 @@ async def virman(
     response: Response,
     idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
     db: AsyncSession = Depends(get_tenant_db),
-    user: AppUser = Depends(_ADMIN),
+    user: AppUser = Depends(_YAZMA),
 ) -> HareketListResponse:
     """Hesaplar arasi virman — IKI SATIR (cikis + giris), ayni gruba bagli.
 
@@ -466,7 +493,7 @@ async def iade(
     response: Response,
     idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
     db: AsyncSession = Depends(get_tenant_db),
-    user: AppUser = Depends(_ADMIN),
+    user: AppUser = Depends(_YAZMA),
 ) -> HareketOut:
     """Odeme iadesi — TERS YONLU yeni bir hareket.
 
@@ -523,7 +550,7 @@ async def hareket_iptal(
     response: Response,
     idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
     db: AsyncSession = Depends(get_tenant_db),
-    user: AppUser = Depends(_ADMIN),
+    user: AppUser = Depends(_YAZMA),
 ) -> HareketOut:
     """(P154 / Asama 10) YANLIS GIRILEN KAYDI TERS KAYITLA IPTAL EDER.
 
@@ -631,7 +658,7 @@ async def hareket_onayla(
     hareket_id: uuid.UUID,
     body: HareketOnayIstek,
     db: AsyncSession = Depends(get_tenant_db),
-    user: AppUser = Depends(_ADMIN),
+    user: AppUser = Depends(_YAZMA),
 ) -> HareketOut:
     """Onay bekleyen hareketi ONAYLA — o an gerceklesmis sayilir."""
     obj = await get_or_404(db, FinansalHareket, hareket_id)
@@ -656,7 +683,7 @@ async def hareket_reddet(
     hareket_id: uuid.UUID,
     body: HareketOnayIstek,
     db: AsyncSession = Depends(get_tenant_db),
-    user: AppUser = Depends(_ADMIN),
+    user: AppUser = Depends(_YAZMA),
 ) -> HareketOut:
     """Onay bekleyen hareketi REDDET — hic gerceklesmemis sayilir."""
     obj = await get_or_404(db, FinansalHareket, hareket_id)
@@ -681,7 +708,7 @@ async def acilis_fisi(
     response: Response,
     idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
     db: AsyncSession = Depends(get_tenant_db),
-    user: AppUser = Depends(_ADMIN),
+    user: AppUser = Depends(_YAZMA),
 ) -> HareketOut:
     """Acilis fisi — kisi/kasa baslangic bakiyesi defterde bir HAREKETTIR.
 
@@ -777,7 +804,7 @@ async def kasa_bakiyeleri(
 async def banka_eslestirme(
     body: BankaEslestirIstek,
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_ADMIN),
+    _: AppUser = Depends(_YAZMA),
 ) -> BankaEslestirSonuc:
     """Banka ekstresi satirlarina ESLESTIRME ONERISI uret.
 

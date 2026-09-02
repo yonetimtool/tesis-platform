@@ -373,7 +373,8 @@ function TekilModal({
 }: { acik: boolean; onKapat: () => void; onKaydedildi: () => void }) {
   const t = useT();
   const toast = useToast();
-  const kisiler = useKisiler();
+  // (P206 §2) Kanca artik {kisiler, hata} donuyor (hatayi gizlemesin).
+  const { kisiler } = useKisiler();
   const daireler = useDaireler();
   const tanimlar = useGelirGiderTanimlari();
 

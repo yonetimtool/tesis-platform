@@ -49,7 +49,10 @@ from ..schemas import EkCreate, EkListResponse, EkOut
 # Rol kumeleri ILGILI ROUTERDAN okunur — kopyalanmaz (bkz. modul basligi).
 from .blocks import _MANAGER as _BLOK_YAZAR, _READER as _BLOK_OKUR
 from .complaints import _MANAGER as _TALEP_YAZAR, _READER as _TALEP_OKUR
-from .finans import _ADMIN as _ICRA_YAZAR, _OKUMA as _ICRA_OKUR
+# (P206 §1) `_ADMIN` -> `_YAZMA`: finansal yazma yoneticiye acildi
+# ve icra EKI de o kumeyi izler (kume ILGILI ROUTERDAN okunur,
+# kopyalanmaz — modul basligindaki kural).
+from .finans import _YAZMA as _ICRA_YAZAR, _OKUMA as _ICRA_OKUR
 from .muhasebe_tanimlari import _TANIM_OKUR as _FIRMA_OKUR, _YONETIM as _FIRMA_YAZAR
 from .tasks import _READER as _GOREV_OKUR, _WRITER as _GOREV_YAZAR
 from .units import _LAYOUT_EDITOR as _DAIRE_YAZAR, _LAYOUT_READER as _DAIRE_OKUR

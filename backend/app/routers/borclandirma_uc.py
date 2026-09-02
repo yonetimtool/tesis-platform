@@ -62,7 +62,11 @@ from ..schemas import (
 
 router = APIRouter(tags=["aidat"])
 
-_ADMIN = require_role("admin")
+# (P206 §1) `_ADMIN` KALDIRILDI: toplu borclandirma, sayac
+# borclandirmasi, ice aktarim ve gecikme ayari yoneticiye acildi.
+# Aidat yazmak site yoneticisinin ASIL isi; onu platform adminine
+# birakmak, musteriyi her donem basinda bize bagimli kiliyordu
+# (`docs/P206-kararlar.md` K1.1).
 _YONETIM = require_role("admin", "yonetici")
 # (P128) Gecikme (temerrut) AYARI okunur: tahakkuk ile tahsilat
 # arasindaki farkin ne kadarinin gecikme faizi oldugu bu ayardan
@@ -91,7 +95,7 @@ async def _tanim(db: AsyncSession, tanim_id: uuid.UUID) -> GelirGiderTanim:
 async def toplu_onizleme(
     body: TopluBorcIstek,
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_ADMIN),
+    _: AppUser = Depends(_YONETIM),
 ) -> TopluBorcOnizleme:
     """NE OLACAGINI gosterir, HICBIR SEY YAZMAZ.
 
@@ -113,7 +117,7 @@ async def toplu_onizleme(
 async def toplu_borclandir(
     body: TopluBorcIstek,
     db: AsyncSession = Depends(get_tenant_db),
-    user: AppUser = Depends(_ADMIN),
+    user: AppUser = Depends(_YONETIM),
 ) -> DuesAssessmentResult:
     """Onizlemedeki plani ISLER (ayni govde, ayni plan)."""
     tanim = await _tanim(db, body.gelir_gider_tanim_id)
@@ -167,7 +171,7 @@ async def toplu_borclandir(
 async def sayac_ile_borclandir(
     body: SayacBorcIstek,
     db: AsyncSession = Depends(get_tenant_db),
-    user: AppUser = Depends(_ADMIN),
+    user: AppUser = Depends(_YONETIM),
 ) -> DuesAssessmentResult:
     """Sihirbazin 4. adimi: tuketim -> borc.
 
@@ -248,7 +252,7 @@ async def ice_aktarim(
     body: BorcIceAktarimIstek,
     accept_language: str | None = Header(None, alias="Accept-Language"),
     db: AsyncSession = Depends(get_tenant_db),
-    user: AppUser = Depends(_ADMIN),
+    user: AppUser = Depends(_YONETIM),
 ) -> BorcIceAktarimSonuc:
     """Satir listesinden borclandirma — SATIR BAZLI HATA RAPORU ile.
 
@@ -340,7 +344,7 @@ async def gecikme_ayari(
 async def gecikme_ayari_guncelle(
     body: GecikmeAyarUpdate,
     db: AsyncSession = Depends(get_tenant_db),
-    user: AppUser = Depends(_ADMIN),
+    user: AppUser = Depends(_YONETIM),
 ) -> GecikmeAyarOut:
     """Aylik gecikme tazminati orani + uygulanip uygulanmayacagi.
 

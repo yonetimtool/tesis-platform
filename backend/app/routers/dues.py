@@ -65,7 +65,11 @@ from ..schemas import (
 
 router = APIRouter(tags=["aidat"])
 
-_ADMIN = require_role("admin")
+# (P206 §1) `_ADMIN` KALDIRILDI: tahsilat da `_TAHAKKUK` (admin +
+# yonetici) altinda. Eski gerekce ("tahsilat PARA ALINDI beyanidir")
+# ayrimi yanlis yere ciziyordu — parayi kapida elden alan kisi
+# YONETICIDIR; yetkiyi ondan almak, kaydi geciktirmekten baska bir sey
+# yapmiyordu. Gerekce `docs/P206-kararlar.md` K1.1.
 
 # (P167) TAHAKKUK URETME — admin + YONETICI.
 #
@@ -80,12 +84,14 @@ _ADMIN = require_role("admin")
 # YAPAMAYACAGI bir ise gonderiyordu.
 #
 # ================================================================
-# TAHSILAT ACILMADI ve bu bilincli
+# TAHSILAT DA ACILDI (P206 §1) — eski karar GERI ALINDI
 # ================================================================
-# `POST /dues/payments` `_ADMIN`de KALDI. Tahakkuk bir BORC YAZMAKTIR ve
-# yanlissa duzeltilebilir/silinir; tahsilat ise PARA ALINDI beyanidir ve
-# muhasebe kaydini kapatir. Ikisini tek kararla acmak, istenmeyen bir
-# yetkiyi istenenin yanina iliştirmek olurdu.
+# P167'de "tahakkuk yazilir ama tahsilat PARA ALINDI beyanidir" diye
+# ayrilmisti. Ayrim yanlis yere cizilmisti: parayi kapida elden alan
+# kisi YONETICIDIR; platform admininin o tahsilati girmesi icin once
+# yoneticiden duymasi gerekiyordu — yani kaydin dogrulugu zaten
+# yoneticiye dayaniyordu. Yetkiyi ondan almak kaydi GECIKTIRIYOR,
+# dogrulugunu artirmiyordu.
 #
 # ================================================================
 # TENANT IZOLASYONU — YETKI DEGISTI, KAPSAM DEGISMEDI
@@ -103,7 +109,8 @@ _ADMIN = require_role("admin")
 _TAHAKKUK = require_role("admin", "yonetici")
 
 # (P128) Tahakkuk/tahsilat OKUMA — denetcinin "tahakkuk vs tahsilat"
-# karsilastirmasi bu iki listeden cikar. Odeme ALMA `_ADMIN`de kalir.
+# karsilastirmasi bu iki listeden cikar. Denetci HICBIR yazma ucuna
+# giremez (P206 §1'de de degismedi).
 _REPORT = require_role("admin", "yonetici", "denetci")
 _RESIDENT = require_role("resident")
 
@@ -605,7 +612,7 @@ async def create_payment(
     body: DuesPaymentCreate,
     idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
     db: AsyncSession = Depends(get_tenant_db),
-    user: AppUser = Depends(_ADMIN),
+    user: AppUser = Depends(_TAHAKKUK),
 ) -> JSONResponse:
     """Aidat tahsilati — DEFTERE yazar (P192 §1).
 

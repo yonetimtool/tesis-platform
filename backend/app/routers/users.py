@@ -142,7 +142,14 @@ def _list_item(obj: AppUser) -> UserAdminListItem:
 
 @router.get("", response_model=UserAdminListResponse)
 async def list_users(
-    limit: int = Query(50, ge=1, le=200),
+    # (P206 §2) le 200 -> 1000, `/units` ile AYNI GEREKCE (P187).
+    #
+    # OLCULEN KUSUR: tahsilat penceresindeki KISI SECICI bos geliyordu.
+    # Sebep yetki DEGIL, tavan uyusmazligiydi: istemci `limit=500`
+    # istiyor, uc 422 `validation_error` donuyor, SWR hatasi sessizce
+    # yutuluyor ve liste BOS ciziliyordu (olculdu: `/users?limit=500`
+    # -> 422). Tavan ve istemci artik uyumlu.
+    limit: int = Query(50, ge=1, le=1000),
     offset: int = Query(0, ge=0),
     role: UserRoleLiteral | None = Query(None),
     is_active: bool | None = Query(None),

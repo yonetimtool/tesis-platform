@@ -385,8 +385,14 @@ def test_gecikme_UYGULA_KAPALI_kalem_sifir(client, adm, gider):
 
 
 # ================================ RBAC ====================================== #
-def test_rbac_yazma_ADMIN(client, world):
-    for rol, izin in [("admin_a", True), ("yonetici_a", False),
+def test_rbac_yazma_YONETIM(client, world):
+    """(P206 §1) YONETICI DE YAZAR — eski ad `..._ADMIN`di.
+
+    Donem basi toplu borclandirma site yoneticisinin ASIL isi; onu
+    platform adminine birakmak musteriyi her donem bize bagimli
+    kiliyordu.
+    """
+    for rol, izin in [("admin_a", True), ("yonetici_a", True),
                       ("guard_a", False), ("resident_a", False)]:
         h = _headers(client, world["slug_a"], world[rol])
         r = client.post("/borclandirma/toplu/onizleme", headers=h, json={

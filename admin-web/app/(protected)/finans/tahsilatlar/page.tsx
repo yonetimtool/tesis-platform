@@ -23,6 +23,7 @@ import {
 } from "@/components/ui";
 import {
   bugun,
+  useBorclular,
   useDaireler,
   useKasalar,
   useKisiler,
@@ -35,7 +36,7 @@ import {
 } from "@/components/finans/satir-tablosu";
 import { apiSend, genIdempotencyKey } from "@/lib/client";
 import { useT } from "@/lib/i18n/kullan";
-import { tlToKurus } from "@/lib/money";
+import { kurusToTL, tlToKurus } from "@/lib/money";
 
 const TIP = "tahsilat";
 // TAHSILAT YONTEMI: brief "varsayilan Otomatik" diyor. Uc bugun bir
@@ -96,8 +97,20 @@ function TekilModal({
   const t = useT();
   const toast = useToast();
   const kasalar = useKasalar();
-  const kisiler = useKisiler();
+  const { kisiler, hata: kisiHatasi } = useKisiler();
+  const { borclular, yukleniyor: borcYukleniyor } = useBorclular();
   const daireler = useDaireler();
+
+  // (P206 §2) PESIN ODEME ACIK BIR SECIM.
+  //
+  // Varsayilan liste BORCLULARDIR: tahsilat penceresinde sorulan soru
+  // "kime borcu var"dir ve yuzlerce ad arasindan aramak, kapida bekleyen
+  // kisiyle konusurken yapilacak is degildir. Ama P192'de "borc oncesi
+  // pesin odeme ALACAKTA BEKLER" senaryosu var — borcu olmayan birinden
+  // tahsilat MUMKUN olmali. Iki listeyi birlestirmek yerine ACIK bir
+  // anahtar konuldu: kullanici ne yaptigini bilerek gecer.
+  const [pesin, setPesin] = useState(false);
+  const [ara, setAra] = useState("");
 
   const [kisiId, setKisiId] = useState("");
   const [daireId, setDaireId] = useState("");
@@ -114,6 +127,25 @@ function TekilModal({
   const [anahtarTekil, setAnahtarTekil] = useState(() => genIdempotencyKey());
 
   const secKasa = kasaId || kasalar[0]?.id || "";
+
+  // ARAMA HER IKI LISTEDE de calisir. Borclu satirinda DAIRE ve KALAN
+  // TUTAR da yazar: yonetici "hangi Ahmet" ve "ne kadar" sorularini
+  // secmeden once yanitlayabilmeli.
+  const q = ara.trim().toLocaleLowerCase("tr");
+  const sucuzBorclular = borclular
+    .filter(
+      (b) =>
+        !q ||
+        b.ad.toLocaleLowerCase("tr").includes(q) ||
+        b.unitNo.toLocaleLowerCase("tr").includes(q),
+    )
+    .map((b) => ({
+      deger: b.userId,
+      etiket: `${b.ad} · ${b.unitNo} · ${kurusToTL(b.kalanKurus)}`,
+    }));
+  const sucuzKisiler = kisiler
+    .filter((k) => !q || k.ad.toLocaleLowerCase("tr").includes(q))
+    .map((k) => ({ deger: k.id, etiket: k.ad }));
 
   async function kaydet() {
     if (!kisiId) { setHata(t("finansKisiGerekli")); return; }
@@ -158,14 +190,74 @@ function TekilModal({
       }
     >
       <div className="grid gap-3">
+        {/* (P206 §2) KISI SECICI — BORCLULAR ONCE. */}
+        <HataDurumu mesaj={kisiHatasi ? t("finansKisiListesiAlinamadi") : null} />
+        <AlanSarmal etiket={t("finansKisiAra")}>
+          {(b) => (
+            <Alan
+              {...b}
+              value={ara}
+              data-test="tahsilat-kisi-ara"
+              onChange={(e) => setAra(e.target.value)}
+            />
+          )}
+        </AlanSarmal>
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={pesin}
+            data-test="tahsilat-pesin"
+            onChange={(e) => {
+              setPesin(e.target.checked);
+              setKisiId("");
+            }}
+          />
+          <span style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+            {t("finansPesinOdeme")}
+          </span>
+        </label>
         <AlanSarmal etiket={t("finansSutunKisi")} zorunlu>
           {(b) => (
-            <Secim {...b} value={kisiId} onChange={(e) => setKisiId(e.target.value)}>
+            <Secim
+              {...b}
+              value={kisiId}
+              data-test="tahsilat-kisi"
+              onChange={(e) => {
+                setKisiId(e.target.value);
+                // BORCLU SECILINCE DAIRE DE DOLAR: borc daireye
+                // baglidir ve daireyi elle secmek, yanlis daireye
+                // makbuz kesme riskini bedavaya ekliyordu.
+                const b2 = borclular.find((x) => x.userId === e.target.value);
+                if (!pesin && b2) setDaireId(b2.unitId);
+              }}
+            >
               <option value="">{t("finansKisiSec")}</option>
-              {kisiler.map((k) => <option key={k.id} value={k.id}>{k.ad}</option>)}
+              {(pesin ? sucuzKisiler : sucuzBorclular).map((k) => (
+                <option key={k.deger} value={k.deger}>
+                  {k.etiket}
+                </option>
+              ))}
             </Secim>
           )}
         </AlanSarmal>
+        {/* BOS LISTE SESSIZ KALMAZ: "kimseyi secemiyorum" diyen
+            kullaniciya ekran hicbir sey soylemiyordu. */}
+        {!pesin && !borcYukleniyor && borclular.length === 0 && (
+          <p
+            data-test="tahsilat-borclu-yok"
+            style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}
+          >
+            {t("finansBorcluYok")}
+          </p>
+        )}
+        {!pesin && borclular.length > 0 && sucuzBorclular.length === 0 && (
+          <p
+            data-test="tahsilat-arama-bos"
+            style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}
+          >
+            {t("finansAramaSonucYok")}
+          </p>
+        )}
         <AlanSarmal etiket={t("finansSutunDaire")}>
           {(b) => (
             <Secim {...b} value={daireId} onChange={(e) => setDaireId(e.target.value)}>
@@ -223,7 +315,8 @@ function TopluModal({
   const t = useT();
   const toast = useToast();
   const kasalar = useKasalar();
-  const kisiler = useKisiler();
+  // (P206 §2) Kanca artik {kisiler, hata} donuyor.
+  const { kisiler } = useKisiler();
 
   const bosSatir = (): Satir => ({
     _k: yeniSatirAnahtari(),
@@ -245,6 +338,7 @@ function TopluModal({
   const [anahtarToplu, setAnahtarToplu] = useState(() => genIdempotencyKey());
 
   const secKasa = kasaId || kasalar[0]?.id || "";
+
 
   async function kaydet() {
     const dolu = satirlar.filter((s) => (tlToKurus(s.tutar) ?? 0) > 0);

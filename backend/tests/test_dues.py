@@ -193,13 +193,24 @@ def test_yonetici_tahakkuk_tenant_izolasyonu(client, world):
     assert b_liste.status_code == 200, b_liste.text
     assert b_liste.json()["meta"]["total"] == 0
 
-    # 5) TAHSILAT ACILMADI: ayni yonetici odeme ALAMAZ (403).
+    # 5) (P206 §1) TAHSILAT DA ACILDI — ve KAPSAM yine dar: yonetici
+    #    KENDI dairesine odeme yazar, YABANCI daireye yazamaz. Eski
+    #    beklenti (403) bir kusuru kilitliyordu: parayi kapida alan
+    #    kisi yoneticinin ta kendisi.
     odeme = client.post(
         "/dues/payments",
         headers={**yonetici_a, "Idempotency-Key": uuid.uuid4().hex},
-        json={"unit_id": kendi["id"], "tutar_kurus": 1000, "yontem": "nakit"},
+        json={"unit_id": kendi["id"], "tutar_kurus": 1000, "yontem": "elden"},
     )
-    assert odeme.status_code == 403, odeme.text
+    assert odeme.status_code in (200, 201), odeme.text
+
+    yabanci_odeme = client.post(
+        "/dues/payments",
+        headers={**yonetici_a, "Idempotency-Key": uuid.uuid4().hex},
+        json={"unit_id": yabanci["id"], "tutar_kurus": 1000, "yontem": "elden"},
+    )
+    assert yabanci_odeme.status_code == 422, yabanci_odeme.text
+    assert yabanci_odeme.json()["error"]["code"] == "invalid_reference"
 
 
 def test_assessment_amount_must_be_positive(client, world):

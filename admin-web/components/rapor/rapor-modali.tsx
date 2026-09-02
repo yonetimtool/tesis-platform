@@ -126,7 +126,8 @@ export function RaporModali({ rapor, kapat, onTablo, onKuyruk }: RaporModaliProp
 
   const kasalar = useKasalar();
   const firmalar = useFirmalar();
-  const kisiler = useKisiler();
+  // (P206 §2) Kanca artik {kisiler, hata} donuyor (hatayi gizlemesin).
+  const { kisiler } = useKisiler();
   const daireler = useDaireler();
   const tanimlar = useGelirGiderTanimlari();
 

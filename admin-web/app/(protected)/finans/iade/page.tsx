@@ -70,7 +70,8 @@ function IadeModal({
 }: { acik: boolean; onKapat: () => void; onKaydedildi: () => void }) {
   const t = useT();
   const toast = useToast();
-  const kisiler = useKisiler();
+  // (P206 §2) Kanca artik {kisiler, hata} donuyor (hatayi gizlemesin).
+  const { kisiler } = useKisiler();
 
   const [kisiId, setKisiId] = useState("");
   const [hareketId, setHareketId] = useState("");

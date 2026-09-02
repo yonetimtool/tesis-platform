@@ -61,7 +61,8 @@ function AcilisModal({
   const t = useT();
   const toast = useToast();
   const kasalar = useKasalar();
-  const kisiler = useKisiler();
+  // (P206 §2) Kanca artik {kisiler, hata} donuyor (hatayi gizlemesin).
+  const { kisiler } = useKisiler();
 
   const [tarih, setTarih] = useState(bugun());
   const [kasaId, setKasaId] = useState("");

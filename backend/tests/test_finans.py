@@ -280,8 +280,13 @@ def test_ozet_DEFTERDEN_okunur(client, adm, kasa):
 
 # ================================ RBAC ====================================== #
 def test_rbac(client, world):
+    # (P206 §1) YONETICI ARTIK YAZAR. Eski beklenti (`False`) bir
+    # KUSURU kilitliyordu: yonetici kendi tesisinin tahsilatini
+    # giremiyordu — parayi kapida alan kisi o. Gerekce
+    # `docs/P206-kararlar.md` K1.1; kapsam kilidi
+    # `test_p206_yonetici_finans.py`.
     for rol, yazabilir, okuyabilir in [
-        ("admin_a", True, True), ("yonetici_a", False, True),
+        ("admin_a", True, True), ("yonetici_a", True, True),
         ("guard_a", False, False), ("resident_a", False, False),
     ]:
         h = _headers(client, world["slug_a"], world[rol])
