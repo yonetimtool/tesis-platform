@@ -34,6 +34,7 @@ from .routers import muhasebe_tanimlari as muhasebe_tanimlari_router
 from .routers import borclandirma_uc as borclandirma_router
 from .routers import otomasyon as otomasyon_router
 from .routers import surum as surum_router
+from .routers import mesai as mesai_router
 from .routers import vardiya_plani as vardiya_plani_router
 from .routers import finans_gosterge as finans_gosterge_router
 from .routers import finans as finans_router
@@ -197,6 +198,8 @@ app.include_router(otomasyon_router.router)
 app.include_router(surum_router.router)
 # (P203 §4) Vardiya PLANLAMA — gun bazli atama, cakisma, anlik durum.
 app.include_router(vardiya_plani_router.router)
+# (P203 §5) Fazla mesai — TEK DEFTER: gider `finansal_hareket`e duser.
+app.include_router(mesai_router.router)
 # (P192 §5) Yaslandirma, tahsilat gostergesi, borclulara toplu islem.
 app.include_router(finans_gosterge_router.router)
 app.include_router(sakin_odeme_router.router)

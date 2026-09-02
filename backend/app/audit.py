@@ -112,6 +112,10 @@ class Action:
     #: (hastalik/izin/acil) denetime YAZILMALI: kimin yerine kimin
     #: konuldugu, bir olay sonrasi sorulacak ILK sorudur.
     VARDIYA_PLAN_UPDATE = "vardiya_plan_update"
+    #: (P203 §5) Fazla mesai GIDERE yazildi. Para ureten bir hesabin
+    #: kimin tarafindan, hangi saat ve katsayiyla islendigi kayit
+    #: altinda olmali — onay kuyruguna dusen tutar sonradan sorulur.
+    MESAI_GIDERE_YAZ = "mesai_gidere_yaz"
     UNIT_TIP_CREATE = "unit_tip_create"
     UNIT_TIP_UPDATE = "unit_tip_update"
     UNIT_TIP_DELETE = "unit_tip_delete"

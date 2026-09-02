@@ -515,3 +515,101 @@ değil**: sabit sütunları yok ve hücreleri tıklanabilir kartlar.
   (turnike/QR) bulunmuyor; uydurmak, gelmiş bir görevliyi "gelmedi" diye
   işaretlemek olurdu. §4.2'nin bu maddesi **karşılanmadı** ve nedeni
   budur.
+
+---
+
+# §5 — Fazla mesai ve finans bağlantısı (BACKEND BİTTİ)
+
+## Önce ölçtüm: ne var, ne yok
+
+**Var:** `personel_kayit.maas_kurus` (aylık ücret) · `app_user_id`
+(vardiya planıyla bağı kuran alan) · **`finansal_hareket.durum =
+'onay_bekliyor'`** — P167'de eklenmiş onay kuyruğu. İstenen "otomatik
+yazma yapma, onaya düşsün" şartı için **yeni bir şey gerekmiyor.**
+
+**Yok:** saatlik ücret, mesai katsayısı. Göç 0094 **yalnızca o ikisini**
+ekliyor.
+
+## K5.1 — TEK DEFTER korundu (kabul kriteri 12)
+
+Mesai gideri **ayrı bir tabloya yazılmaz**: `finansal_hareket`e
+`tip='gider'` olarak düşer — çünkü o bir **giderdir**. İkinci bir tablo,
+"bu ay ne kadar gider yaptık" sorusunu iki yerden toplamak demekti ve
+P192 tam olarak bunu ortadan kaldırmıştı.
+
+Bunu bir testle **yapısal olarak** kilitledim: şemada `%mesai%` /
+`%overtime%` adında tablo **olmamalı**.
+
+## K5.2 — Otomatik yazma yok (kabul kriteri 11)
+
+Hareket `durum='onay_bekliyor'` ile yazılır ve **bakiyeyi düşürmez**.
+Bir hesaplamanın kasayı kendiliğinden azaltması, yöneticinin görmediği
+bir sayının parayı hareket ettirmesi olurdu.
+
+## K5.3 — Fazla mesai HAFTA HAFTA hesaplanır
+
+4857 md. 41 **haftalık** eşiğe bakar. Ay toplamıyla hesaplamak yanlış
+sonuç verir ve bunu ölçtüm:
+
+```
+1. hafta 60 saat · 2. hafta 24 saat  ->  ay toplamı 84
+ay toplamıyla:  84 < 90 (2 hafta × 45)  ->  "fazla mesai YOK"   ← YANLIŞ
+hafta hafta:    (60-45) + 0            ->  15 saat fazla        ← DOĞRU
+```
+
+İlk haftada 15 saat fazla çalışma **doğmuştur** ve ikinci haftanın azlığı
+onu silmez.
+
+## K5.4 — Saatlik ücret türetilir, ama sıfır sayılmaz
+
+Verilmemişse `maas_kurus / 225` (30 gün × 7,5 saat — Türkiye'de standart
+bölen). Ölçüm: 2.250.000 / 225 = **10.000 kuruş/saat**.
+
+İkisi de yoksa kişi **`ucret_tanimsiz`** işaretlenir ve tutar `null`
+döner — **sıfır değil.** Sıfır yazmak, yöneticiye "mesai yok" demenin
+sessiz ve yanlış yoluydu. Gidere yazarken de **sessizce atlanmaz**, 422
+döner: atlamak "yazıldı" deyip yazmamak olurdu.
+
+## K5.5 — Katsayı 1,50 ama değiştirilebilir
+
+4857 md. 41: fazla çalışma ücreti normal saat ücretinin **yüzde elli
+fazlasıdır**. Varsayılan yasal orandır; toplu iş sözleşmesi daha yüksek
+belirleyebilir ve yazılım meşru bir sözleşmeyi imkânsız kılmamalı.
+
+## K5.6 — Planlanan vs gerçekleşen: dürüstçe
+
+**Sistemde gerçek bir mesai kaydı (turnike/QR giriş-çıkış) YOK** — §4.2
+ile aynı bulgu. Hesap **planlanan** saatler üzerinden yapılır ve yanıt
+bunu açıkça söyler: `kaynak: "plan"`. Yönetici gidere yazarken saati
+**düzeltebilir**.
+
+Uydurma bir "gerçekleşen" üretmek — örneğin devriye okutmalarından
+çıkarım yapmak — gelmiş bir görevliyi eksik, gelmemiş birini tam
+göstermeye açıktı **ve o sayı paraya dönüşüyor.**
+
+## Ölçüm — akış gerçekten çalıştırıldı
+
+```
+[1] ozet        -> 200, kaynak=plan, katsayi=1.5
+                   Guard A: toplam=84s fazla=15s saatlik=10000 tutar=225000
+[2] gidere yaz  -> 201, 1 hareket
+[3] defter      -> ('gider','cikis',225000,'onay_bekliyor',
+                    'Fazla mesai 2026-09 · Guard A · 15 saat x 1.5')
+[4] tekrar ozet -> gidere_yazildi: True
+```
+
+**Koşturmak bir hata gösterdi:** kolon adını `gerceklesme_durumu`
+sanmıştım, gerçek ad `durum` — 500 aldım ve düzelttim.
+
+| Kilit kanıtı — bozma | Düşen test |
+|---|---|
+| `onay_bekliyor` yerine `odendi` | TEK DEFTERE + ONAY BEKLİYOR |
+| Fazla mesai ay toplamından hesaplansa | 9 test birden |
+
+Testler: hesap 12, uç 13.
+
+## §5 ölçemediğim / yapılmadı
+
+* **Arayüz yok.** §5'in backend'i bitti; web ekranı (aylık özet tablosu,
+  "gidere yaz" düğmesi, personel ücret alanları) **yazılmadı.**
+* **Gerçek mesai kaydı** yok — yukarıda.

@@ -434,6 +434,14 @@ class Tenant(Base):
     gecikme_aylik_yuzde = mapped_column(
         Numeric(5, 2), nullable=False, server_default=text("0")
     )
+    #: (P203 §5, goc 0094) FAZLA MESAI KATSAYISI. 4857/41: fazla calisma
+    #: ucreti normal saat ucretinin YUZDE ELLI FAZLASIDIR — varsayilan
+    #: yasal orandir ama DEGISTIRILEBILIR: toplu is sozlesmesi daha
+    #: yuksek bir oran belirleyebilir ve yazilim mesru bir sozlesmeyi
+    #: imkansiz kilmamali.
+    mesai_katsayisi = mapped_column(
+        Numeric(4, 2), nullable=False, server_default=text("1.50")
+    )
     #: (P199, goc 0090) Yonetici OTOMASYON TERCIHLERINI bir kez
     #: KAYDETTI mi. Kurulum sihirbazinin otomasyon adimi bunu olcer;
     #: veriden turetilemez cunku dogru cevap "kapali birak" olabilir ve
@@ -2972,6 +2980,11 @@ class PersonelKayit(Base):
     giris_tarihi = mapped_column(Date, nullable=True)
     cikis_tarihi = mapped_column(Date, nullable=True)
     maas_kurus: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    #: (P203 §5, goc 0094) SAATLIK ucret. BOS ISE aylikten turetilir
+    #: (`maas_kurus / 225`). Bkz. `app/mesai.py` basligi.
+    saatlik_ucret_kurus: Mapped[int | None] = mapped_column(
+        BigInteger, nullable=True
+    )
     app_user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), nullable=True
     )

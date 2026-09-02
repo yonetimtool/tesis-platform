@@ -1868,6 +1868,47 @@ class ComplaintDeclineRequest(BaseModel):
 # sakin yaniti yok. Guvenlik kaydeder + hedef sakine BILGILENDIRME push'u gider.
 
 
+# ======================= (P203 §5) FAZLA MESAI ============================== #
+class MesaiKisiOut(BaseModel):
+    user_id: uuid.UUID
+    ad: str
+    toplam_saat: float
+    #: HAFTA HAFTA hesaplanir (4857 md. 41 haftalik esige bakar); ay
+    #: toplamiyla hesaplamak, bir hafta 60 otekinde 30 saat calisan
+    #: biri icin "fazla mesai yok" derdi.
+    fazla_saat: float
+    saatlik_ucret_kurus: int | None = None
+    #: Ucret tanimsizsa `None` — SIFIR DEGIL. Sifir yazmak, yoneticiye
+    #: "mesai yok" demenin sessiz ve yanlis yoluydu.
+    fazla_mesai_kurus: int | None = None
+    ucret_tanimsiz: bool = False
+    gidere_yazildi: bool = False
+
+
+class MesaiOzetOut(BaseModel):
+    yil: int
+    ay: int
+    katsayi: float
+    #: Hesabin KAYNAGI. Su an daima `"plan"`: sistemde gercek bir mesai
+    #: kaydi (turnike/QR) YOK ve uydurmak, gelmis bir gorevliyi eksik
+    #: gostermeye acikti — ustelik o sayi PARAYA donusuyor.
+    kaynak: str = "plan"
+    kisiler: list[MesaiKisiOut] = []
+
+
+class MesaiGidereYazSatiri(BaseModel):
+    user_id: uuid.UUID
+    #: Yonetici saati DUZELTEBILIR: hesap plan uzerinden yapiliyor ve
+    #: gercegi bilen kisi odur. Bos ise plandaki fazla saat kullanilir.
+    gerceklesen_fazla_saat: float | None = Field(None, ge=0, le=400)
+
+
+class MesaiGidereYazIstek(BaseModel):
+    yil: int = Field(..., ge=2000, le=2100)
+    ay: int = Field(..., ge=1, le=12)
+    satirlar: list[MesaiGidereYazSatiri]
+
+
 # ===================== (P203 §4) VARDIYA PLANI ============================== #
 class VardiyaKisiOut(BaseModel):
     plan_id: uuid.UUID
@@ -4905,6 +4946,12 @@ class PersonelKayitCreate(BaseModel):
     giris_tarihi: date | None = None
     cikis_tarihi: date | None = None
     maas_kurus: int | None = Field(None, ge=0)
+    #: (P203 §5) SAATLIK ucret. BOS ISE aylikten turetilir
+    #: (`maas_kurus / 225`; 30 gun x 7,5 saat — Turkiye'de standart
+    #: bolen). Zorunlu kilmak, ayligi girmis yoneticiye ayni bilgiyi
+    #: ikinci kez sordurmakti; hic sormamak ise saatlik calisan
+    #: sozlesmelerini imkansiz kilardi.
+    saatlik_ucret_kurus: int | None = Field(None, ge=0)
     #: Uygulama hesabiyla BAG (opsiyonel) — her personelin hesabi yoktur.
     app_user_id: uuid.UUID | None = None
     aktif: bool = True
@@ -4929,6 +4976,12 @@ class PersonelKayitUpdate(BaseModel):
     giris_tarihi: date | None = None
     cikis_tarihi: date | None = None
     maas_kurus: int | None = Field(None, ge=0)
+    #: (P203 §5) SAATLIK ucret. BOS ISE aylikten turetilir
+    #: (`maas_kurus / 225`; 30 gun x 7,5 saat — Turkiye'de standart
+    #: bolen). Zorunlu kilmak, ayligi girmis yoneticiye ayni bilgiyi
+    #: ikinci kez sordurmakti; hic sormamak ise saatlik calisan
+    #: sozlesmelerini imkansiz kilardi.
+    saatlik_ucret_kurus: int | None = Field(None, ge=0)
     app_user_id: uuid.UUID | None = None
     aktif: bool | None = None
 

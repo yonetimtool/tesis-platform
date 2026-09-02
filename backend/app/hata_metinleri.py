@@ -452,6 +452,16 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "Employé introuvable.",
         "es": "No se encontró al empleado.",
     },
+    # (P203 §5) Mesai gideri yazilirken ucret tanimsiz.
+    "personel_ucreti_tanimsiz": {
+        "tr": "Bu personelin ücreti tanımlı değil. Aylık ya da saatlik ücret girin.",
+        "en": "This staff member has no wage defined. Enter a monthly or hourly wage.",
+        "ar": "لم يُحدَّد أجر هذا الموظف. أدخل أجرًا شهريًا أو بالساعة.",
+        "ru": "Для этого сотрудника не задана оплата. Укажите месячную или почасовую ставку.",
+        "de": "Für diesen Mitarbeiter ist kein Lohn hinterlegt. Geben Sie einen Monats- oder Stundenlohn ein.",
+        "fr": "Aucun salaire n'est défini pour cet employé. Saisissez un salaire mensuel ou horaire.",
+        "es": "Este empleado no tiene salario definido. Introduzca un salario mensual o por hora.",
+    },
     "platform_gecersiz": {
         "tr": "Geçersiz platform. Yalnızca iOS ve Android desteklenir.",
         "en": "Invalid platform. Only iOS and Android are supported.",

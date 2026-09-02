@@ -6759,6 +6759,66 @@ paths:
   # ekler; `shift_assignment` VARSAYILAN KADRO olarak KALIR ve hafta
   # ondan tohumlanir.
   # ================================================================= #
+  # ================================================================= #
+  # (P203 §5) FAZLA MESAI — TEK DEFTER KORUNDU
+  # ================================================================= #
+  # Mesai gideri AYRI BIR TABLOYA YAZILMAZ: `finansal_hareket`e
+  # `tip='gider'` olarak duser (P192 tek defter). Ikinci bir tablo,
+  # "bu ay ne kadar gider yaptik" sorusunu iki yerden toplamak demekti.
+  #
+  # OTOMATIK YAZMA YOK: hareket `onay_bekliyor` ile yazilir ve BAKIYEYI
+  # DUSURMEZ. Bir hesaplamanin kasayi kendiliginden azaltmasi,
+  # yoneticinin gormedigi bir sayinin parayi hareket ettirmesi olurdu.
+  # ================================================================= #
+  /mesai/ozet:
+    get:
+      tags: [mesai]
+      summary: Aylik personel gideri ozeti (admin + yonetici + denetci)
+      description: >
+        Fazla mesai HAFTA HAFTA hesaplanir (4857 md. 41 haftalik esige
+        bakar); ay toplamiyla hesaplamak, bir hafta 60 otekinde 30 saat
+        calisan biri icin "fazla mesai yok" derdi. Saatlik ucret
+        verilmemisse aylikatan turetilir (`maas_kurus / 225`); ikisi de
+        yoksa kisi `ucret_tanimsiz` isaretlenir ve tutar `null` doner —
+        SIFIR DEGIL, cunku sifir "mesai yok" demenin sessiz ve yanlis
+        yoluydu.
+      parameters:
+        - { name: yil, in: query, required: true, schema: { type: integer, minimum: 2000, maximum: 2100 } }
+        - { name: ay, in: query, required: true, schema: { type: integer, minimum: 1, maximum: 12 } }
+      responses:
+        "200":
+          description: Ozet
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MesaiOzet" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /mesai/gidere-yaz:
+    post:
+      tags: [mesai]
+      summary: Fazla mesaiyi ONAY BEKLEYEN gider olarak yaz (admin + yonetici)
+      description: >
+        TEK DEFTER: `finansal_hareket`, `tip='gider'`,
+        `durum='onay_bekliyor'`. Ucreti tanimsiz kisi SESSIZCE
+        ATLANMAZ — 422 doner; atlamak, yoneticiye "yazildi" deyip
+        yazmamak olurdu. Saat DUZELTILEBILIR: hesap plan uzerinden
+        yapiliyor ve gercegi bilen yoneticidir.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MesaiGidereYaz" }
+      responses:
+        "201":
+          description: Olusan hareket kimlikleri
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { type: string, format: uuid }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
   /vardiya-plani:
     get:
       tags: [vardiya]
@@ -13712,6 +13772,61 @@ components:
         created_at: { type: string, format: date-time }
         geri_alma_at: { type: string, format: date-time, nullable: true }
     # ---------- (P154 / Asama 7.3) KURULUM SIHIRBAZI ---------- #
+    MesaiKisi:
+      type: object
+      required: [user_id, ad, toplam_saat, fazla_saat]
+      properties:
+        user_id: { type: string, format: uuid }
+        ad: { type: string }
+        toplam_saat: { type: number }
+        fazla_saat:
+          type: number
+          description: "HAFTA HAFTA hesaplanir (4857 md. 41)."
+        saatlik_ucret_kurus: { type: integer, nullable: true }
+        fazla_mesai_kurus:
+          type: integer
+          nullable: true
+          description: >
+            Ucret tanimsizsa `null` — SIFIR DEGIL. Sifir yazmak,
+            yoneticiye "mesai yok" demenin sessiz ve yanlis yoluydu.
+        ucret_tanimsiz: { type: boolean }
+        gidere_yazildi: { type: boolean }
+    MesaiOzet:
+      type: object
+      required: [yil, ay, katsayi]
+      properties:
+        yil: { type: integer }
+        ay: { type: integer }
+        katsayi:
+          type: number
+          description: >
+            (4857/41) Varsayilan 1.50 — fazla calisma ucreti normal saat
+            ucretinin yuzde elli fazlasidir. Tenant ayarindan
+            DEGISTIRILEBILIR: toplu is sozlesmesi daha yuksek bir oran
+            belirleyebilir.
+        kaynak:
+          type: string
+          description: >
+            Su an daima `"plan"`: sistemde gercek mesai kaydi
+            (turnike/QR) YOK ve uydurmak, PARAYA donusen bir sayiyi
+            tahmine dayandirmak olurdu.
+        kisiler:
+          type: array
+          items: { $ref: "#/components/schemas/MesaiKisi" }
+    MesaiGidereYaz:
+      type: object
+      required: [yil, ay, satirlar]
+      properties:
+        yil: { type: integer }
+        ay: { type: integer }
+        satirlar:
+          type: array
+          items:
+            type: object
+            required: [user_id]
+            properties:
+              user_id: { type: string, format: uuid }
+              gerceklesen_fazla_saat: { type: number, nullable: true }
     VardiyaKisi:
       type: object
       required: [plan_id, user_id, ad, rol]
