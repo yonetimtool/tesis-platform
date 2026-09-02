@@ -92,6 +92,7 @@ export const TESIS_ROTALARI = [
   "/finans/iade",
   "/finans/acilis",
   "/finans/otomasyon",
+  "/finans/mesai",
   "/finans/borclular",
   "/finans/butce",
   // (P191 §4) BANKA ENTEGRASYONU — finansin ALTI. Ekstre yukleme, eslestirme
@@ -356,6 +357,10 @@ export const ROTA_ROLLERI: Record<string, readonly string[]> = {
   "/finans/iade": ["admin", "yonetici"],
   "/finans/acilis": ["admin", "yonetici"],
   "/finans/otomasyon": ["admin", "yonetici"],
+  // (P203 §5) Fazla mesai — DENETCI DE OKUR (salt-okuma mali denetim
+  // rolu; personel gideri denetimin dogal konusu). Yazma sunucuda
+  // admin+yonetici ile sinirli.
+  "/finans/mesai": ["admin", "yonetici", "denetci"],
   "/finans/borclular": ["admin", "yonetici"],
   "/finans/butce": ["admin", "yonetici"],
   "/finans/banka": ["admin", "yonetici"],

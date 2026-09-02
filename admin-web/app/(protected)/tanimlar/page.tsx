@@ -189,6 +189,11 @@ const DEFTERLER: Defter[] = [
       { ad: "giris_tarihi", etiket: "tanimAlanGirisTarihi", tip: "tarih" },
       { ad: "cikis_tarihi", etiket: "tanimAlanCikisTarihi", tip: "tarih" },
       { ad: "maas_kurus", etiket: "tanimAlanMaas", tip: "kurus" },
+      // (P203 §5) SAATLIK ucret — fazla mesai hesabi icin. BOS
+      // BIRAKILABILIR: o zaman aylikatan turetilir (`maas / 225`;
+      // 30 gun x 7,5 saat). Zorunlu kilmak, ayligi girmis yoneticiye
+      // ayni bilgiyi ikinci kez sordurmakti.
+      { ad: "saatlik_ucret_kurus", etiket: "tanimAlanSaatlikUcret", tip: "kurus" },
       { ad: "aktif", etiket: "tanimAlanAktif", tip: "bool" },
     ],
   },

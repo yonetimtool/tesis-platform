@@ -263,6 +263,10 @@ const OGELER: readonly MenuOgesi[] = [
   // otomasyon gunlugu. Dordu de "yoneticinin her ay elle yaptigi is"i
   // yanitladigi icin tek sayfada.
   { href: "/finans/otomasyon", anahtar: "finansOtomasyon", icon: "clock", grup: "finans" },
+  // (P203 §5) FAZLA MESAI — finans bolumunde, cunku urettigi sey bir
+  // GIDERDIR (P192 tek defter). Vardiya bolumune koymak, parayi
+  // operasyonun icine gizlemek olurdu.
+  { href: "/finans/mesai", anahtar: "kabukMesai", icon: "clock", grup: "finans" },
   // (P192 §5) BORCLULAR: yaslandirma + tahsilat gostergesi + toplu islem.
   // Ucu ayni sayfada cunku yaslandirma bir SORU sorar, toplu islem
   // onun CEVABINI uygular.

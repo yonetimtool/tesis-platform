@@ -296,7 +296,15 @@ void main() {
       ),
       findsOneWidget,
     );
-    expect(find.text('Load residents'), findsOneWidget);
+    // (P203 §3) "Sakinleri getir" DUGMESI KALDIRILDI ve bu bilincli:
+    // daire alani artik ARANABILIR (numara VEYA sakin adi) ve secim
+    // yapilinca sakinler AYNI yanittan dolar — ayri bir dugme ve
+    // ikinci bir bekleme gerekmez. Yerine ARAMA IPUCU cizilir.
+    expect(find.text('Load residents'), findsNothing);
+    expect(
+      find.text("Type a unit number or a resident's name"),
+      findsOneWidget,
+    );
     expect(find.text('Save and notify the resident'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });

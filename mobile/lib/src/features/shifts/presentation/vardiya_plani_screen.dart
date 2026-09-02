@@ -183,37 +183,25 @@ class VardiyaPlaniScreen extends ConsumerWidget {
     VardiyaKisi kisi,
   ) async {
     final l10n = context.l10n;
-    final ctrl = TextEditingController();
-    final onay = await showDialog<bool>(
+    // SEBEP DIALOGU KENDI DENETLEYICISINE SAHIP.
+    //
+    // Once denetleyiciyi BURADA acip `showDialog` donunce `dispose`
+    // etmistim; `denetleyici_atma_test` sizintiyi hakli olarak
+    // yakalamisti ama ilk duzeltmem YENI bir kusur uretti: dialog
+    // KAPANMA ANIMASYONU sirasinda hâlâ agacta ve denetleyiciyi
+    // kullaniyor — "A TextEditingController was used after being
+    // disposed" atti (kendi testim gosterdi).
+    //
+    // Dogru cozum: denetleyiciyi dialogun KENDISI sahiplensin ve
+    // `State.dispose`ta atsin. Yasam dongusu boylece widget'in
+    // yasam dongusuyle AYNI olur.
+    final sebep = await showDialog<String>(
       context: context,
-      builder: (c) => AlertDialog(
-        title: Text(kisi.ad),
-        // SEBEP SORULUR: gun ici degisiklik denetime yaziliyor ve
-        // "neden" bos kalirsa kayit sonradan hicbir soruyu
-        // yanitlayamaz.
-        content: TextField(
-          key: const Key('vardiya-cikar-sebep'),
-          controller: ctrl,
-          decoration: InputDecoration(labelText: l10n.vardiyaCikarSebep),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(c).pop(false),
-            child: Text(l10n.ortakVazgec),
-          ),
-          FilledButton(
-            key: const Key('vardiya-cikar-onayla'),
-            onPressed: () => Navigator.of(c).pop(true),
-            child: Text(l10n.vardiyaCikar),
-          ),
-        ],
-      ),
+      builder: (c) => _CikarSebepDialogu(ad: kisi.ad),
     );
-    if (onay != true) return;
+    if (sebep == null) return;
     try {
-      await ref
-          .read(vardiyaPlaniApiProvider)
-          .cikar(kisi.planId, sebep: ctrl.text.trim());
+      await ref.read(vardiyaPlaniApiProvider).cikar(kisi.planId, sebep: sebep);
       ref.invalidate(vardiyaHaftaProvider);
       ref.invalidate(vardiyaSimdiProvider);
     } on ApiException catch (e) {
@@ -221,5 +209,51 @@ class VardiyaPlaniScreen extends ConsumerWidget {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
     }
+  }
+}
+
+/// (P203 §4) Cikarma sebebi dialogu — denetleyiciyi KENDISI sahiplenir.
+class _CikarSebepDialogu extends StatefulWidget {
+  const _CikarSebepDialogu({required this.ad});
+
+  final String ad;
+
+  @override
+  State<_CikarSebepDialogu> createState() => _CikarSebepDialoguState();
+}
+
+class _CikarSebepDialoguState extends State<_CikarSebepDialogu> {
+  final _ctrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return AlertDialog(
+      title: Text(widget.ad),
+      // SEBEP SORULUR: gun ici degisiklik denetime yaziliyor ve "neden"
+      // bos kalirsa kayit sonradan hicbir soruyu yanitlayamaz.
+      content: TextField(
+        key: const Key('vardiya-cikar-sebep'),
+        controller: _ctrl,
+        decoration: InputDecoration(labelText: l10n.vardiyaCikarSebep),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.ortakVazgec),
+        ),
+        FilledButton(
+          key: const Key('vardiya-cikar-onayla'),
+          onPressed: () => Navigator.of(context).pop(_ctrl.text.trim()),
+          child: Text(l10n.vardiyaCikar),
+        ),
+      ],
+    );
   }
 }

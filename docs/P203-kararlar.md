@@ -608,8 +608,78 @@ sanmıştım, gerçek ad `durum` — 500 aldım ve düzelttim.
 
 Testler: hesap 12, uç 13.
 
+## K5.7 — Arayüz (`/finans/mesai`)
+
+**Finans bölümünde**, vardiya bölümünde değil: ürettiği şey bir
+**giderdir** (P192 tek defter). Vardiyanın içine koymak, parayı
+operasyonun içine gizlemek olurdu.
+
+Ekran üç şeyi **açıkça söylüyor**, çünkü üçü de sessiz kalırsa yanlış
+karara yol açar:
+
+1. **Hesabın kaynağı plan** — sistemde giriş-çıkış kaydı yok. Gizlemek,
+   paraya dönüşen bir sayıyı ölçülmüş gibi göstermek olurdu.
+2. **Ücreti tanımsız kişiye `0,00 TL` yazılmaz**, uyarı çizilir — o
+   kişinin fazla mesaisi *var*, bilinmeyen şey ücreti.
+3. **Onay adımı** — gider onay bekleyen olarak yazılır ve kasadan
+   düşmez; yönetici "yazdım, bitti" sanıp onayı atlarsa gider **hiç
+   gerçekleşmez**.
+
+"Gidere yaz" yalnızca **yazılabilir** kişileri gönderir: ücreti tanımsız
+olanlar ve zaten yazılmış olanlar hariç.
+
+**Denetçi okur, yazamaz.** `rol-menusu` kilidi burada da bir hatamı
+buldu: birincil ucu yazma ucu olarak bildirmiştim, denetçi menüde
+sayfayı görüp uçta 403 alıyordu. Denetçinin oradaki işi **okumaktır**
+(salt-okuma mali denetim rolü; personel gideri denetimin doğal konusu),
+birincil uç okuma ucu olarak düzeltildi.
+
+## §5 kilit kanıtı (arayüz)
+
+| Bozma | Düşen test |
+|---|---|
+| Ücreti tanımsız kişiye 0 TL yazılsa | ÜCRETİ TANIMSIZ 0 TL YAZILMAZ |
+| Yazılabilir süzgeci kaldırılsa | ZATEN YAZILMIŞ + GİDERE YAZ (2 test) |
+
 ## §5 ölçemediğim / yapılmadı
 
-* **Arayüz yok.** §5'in backend'i bitti; web ekranı (aylık özet tablosu,
-  "gidere yaz" düğmesi, personel ücret alanları) **yazılmadı.**
-* **Gerçek mesai kaydı** yok — yukarıda.
+* **Gerçek mesai kaydı yok** — hesap plan üzerinden; yukarıda.
+* **Personel ücret alanları için ayrı ekran yazmadım.**
+  `saatlik_ucret_kurus` şemaya ve `PersonelKayitCreate/Update`e eklendi,
+  yani **Tanımlar → Personel kayıtları** ekranı alanı taşıdığı sürece
+  girilebilir; o ekranın alan listesini **görsel olarak doğrulamadım.**
+* **Mobil tarafı yok:** mesai bir yönetim/finans işi ve web'de.
+
+---
+
+# Tam takımların yakaladıkları (bölüm testleri yeşilken)
+
+Bu turda **hedefli testler yeşilken tam takımlar altı gerçek kusur
+daha buldu.** Hepsi haklıydı ve düzeltildi:
+
+| Kilit | Ne dedi | Ne yaptım |
+|---|---|---|
+| `rol-menusu` (P129) | Web'de saha rolüne sayfa açtım | Web yalnız yönetim; saha mobilde görür |
+| `tasarim-token` (P138) | Elle `<table>` + ham `<th>/<td>` | Izgara `<div>`lerle kuruldu |
+| `tasarim-token` (P160) | `--yz-warn` diye token **yok** | `--yz-warning` |
+| `rol-menusu` | Mesai birincil ucu yazma ucuydu; denetçi menüyü görüp 403 alıyordu | Birincil uç okuma ucu |
+| `erisilebilir-etiket` | Tek `<label>` iki seçiciyi sarmalıyordu — ekran okuyucu yılı da "Dönem" diye okur | İki ayrı `AlanSarmal` |
+| `denetleyici_atma` | Dialog `TextEditingController`'ı **dispose edilmiyor** | Dialog kendi controller'ına sahip |
+
+Son ikisi **iki adımda** düzeldi: `dispose`u dialog kapanır kapanmaz
+çağırınca *"A TextEditingController was used after being disposed"*
+aldım — dialog çıkış animasyonu sırasında hâlâ ağaçta. Doğrusu,
+controller'ı **dialogun kendisinin** sahiplenmesi.
+
+Ayrıca §3'ün ziyaretçi formu değişikliği **iki eski testi** kırdı
+(`visitors_screen_test`, `enteg_ziyaret_rapor_i18n_test`) — kaldırdığım
+"Sakinleri getir" düğmesini arıyorlardı. Bilinçli davranış değişimi;
+testler yeni akışı ölçecek şekilde güncellendi. **Bunu §3'te kaçırdım:**
+hedefli testlerle commit'ledim, tam mobil takım henüz bitmemişti.
+
+Bir de **kodla ilgisi olmayan** bir düşüş: `p200-parola-sifirlama`nın
+akış testi tam takımda 5 sn'yi aşıyor (tek başına ~1 sn). Dört alana
+`userEvent.type` + iki `waitFor` — paralel yük altında doğal. Süresi
+açıkça 20 sn'ye çıkarıldı ve **neden** olduğu teste yazıldı; testi
+bölmek akışı parçalara ayırmak olurdu ve P198'de tam o yüzden bir kusur
+kaçmıştı.

@@ -60,6 +60,15 @@ const BIRINCIL_UC: Record<string, string> = {
   // daha genis (saha da gorur) ama birincil uc yazma ucudur —
   // `/tesis-ayarlari` icin verilen kararin aynisi.
   "/vardiya-plani": "POST /vardiya-plani",
+  // (P203 §5) BIRINCIL UC = OKUMA.
+  //
+  // Once YAZMA ucunu (`POST /mesai/gidere-yaz`) yazmistim ve bu test
+  // HAKLI OLARAK dustu: `denetci` menude sayfayi goruyor ama yazma
+  // ucunda 403 aliyor. Denetcinin o sayfadaki isi ZATEN OKUMAKTIR
+  // (salt-okuma mali denetim rolu; personel gideri denetimin dogal
+  // konusu). `/tesis-ayarlari` yazma ucunu birincil sayar cunku orasi
+  // bir YAZMA ekranidir; burasi denetci icin OKUMA ekranidir.
+  "/finans/mesai": "GET /mesai/ozet",
   "/checkpoints": "GET /checkpoints",
   "/patrol-plans": "GET /patrol-plans",
   "/tasks": "GET /tasks",

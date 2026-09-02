@@ -78,6 +78,18 @@ async function kodIste(k: ReturnType<typeof userEvent.setup>) {
   await k.click(screen.getByRole("button", { name: "Kod gönder" }));
 }
 
+// (P203) BU TESTIN SURESI ACIKCA UZATILDI — 5 sn'lik varsayilan
+// YETMIYOR ve sebep URUNDE DEGIL, YUKTE.
+//
+// OLCULDU: dosya TEK BASINA kosunca 6/6 gecer (~1 sn); TAM TAKIMDA
+// paralel yuk altinda ayni test 5 sn'yi asiyor (dosya suresi 10,5 sn).
+// Test dort ayri alana `userEvent.type` ile YAZIYOR — her tus bir React
+// cizimi tetikliyor — ve iki `waitFor` bekliyor. Bu, akisin TAMAMINI
+// suren bir test icin dogal.
+//
+// SURENIN UZATILMASI KUSURU GIZLEMEZ: test yine ayni seyleri olcuyor,
+// yalnizca butcesi gercekci. Alternatif (testi bolmek) akisi parcalara
+// ayirmakti — P198'de tam olarak o yuzden bir kusur kacmisti.
 it("AKISIN TAMAMI: kod iste -> kod + yeni parola -> girise don", async () => {
   const cagrilar = taklit(() => OK());
   const k = userEvent.setup();
@@ -115,7 +127,7 @@ it("AKISIN TAMAMI: kod iste -> kod + yeni parola -> girise don", async () => {
   await screen.findByText(/parolanız güncellendi/i);
   await k.click(screen.getByRole("button", { name: "Girişe dön" }));
   expect(replace).toHaveBeenCalledWith("/giris");
-});
+}, 20_000);
 
 it("BICIM hatasi varken SUNUCUYA HIC GITMEZ", async () => {
   // Sizdirmama kurali: gecersiz slug/eposta sunucuya sorulmaz. Ayrica
