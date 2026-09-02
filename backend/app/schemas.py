@@ -94,6 +94,37 @@ class LoginRequest(BaseModel):
     password: str = Field(..., min_length=8)
 
 
+# ===================== (P203 §2) COKLU TESIS ================================ #
+class TesislerimIstek(BaseModel):
+    """Giris ekraninda "hangi tesislerdeyim" sorusu.
+
+    PAROLA ZORUNLU. Uyelik listesi bir SIZINTI YUZEYIDIR: parolasiz
+    sorulabilseydi uc, "bu e-posta hangi sitelerde oturuyor" sorgusuna
+    donusurdu. Parolayla birlikte sorulunca, cagirinin ZATEN sahip
+    oldugu bir bilgiden fazlasi verilmez.
+    """
+
+    email: EmailStr
+    password: str = Field(..., min_length=8)
+
+
+class TesisUyeligi(BaseModel):
+    tenant_id: uuid.UUID
+    slug: str
+    ad: str
+    #: Bu TESISTEKI rol. Ayni kisi bir tesiste yonetici, otekinde sakin
+    #: olabilir — rol UYELIGE aittir, kisiye degil.
+    rol: str
+
+
+class TesislerimYanit(BaseModel):
+    tesisler: list[TesisUyeligi]
+
+
+class TesisDegistirIstek(BaseModel):
+    tenant_id: uuid.UUID
+
+
 class PhoneLoginRequest(BaseModel):
     """Telefonla giris: cep telefonu (global benzersiz) + (gecici kod VEYA
     kalici parola). Tenant, telefondan otomatik cozulur (tenant_slug YOK)."""

@@ -102,3 +102,105 @@ neden yanlış olacağı görünür kalsın diye).
   örneğindeki ham girdi elimde yok. Eğer kullanıcı virgülle yazdıysa
   başka bir yol daha olabilir — o durumda sunucu artık 422 döneceği için
   hata mesajı bize kalanı söyler.
+
+---
+
+# §2 — Çoklu tesis (BACKEND BİTTİ, arayüz sırada)
+
+## Önce ölçtüm: model bunu ZATEN destekliyor
+
+```
+uq_app_user_tenant_email        UNIQUE (tenant_id, email)
+uq_app_user_tenant_email_lower  UNIQUE (tenant_id, lower(email))
+uq_app_user_telefon             UNIQUE (telefon) WHERE telefon IS NOT NULL
+```
+
+**E-posta tesis içinde benzersiz, platform genelinde değil.** Yani aynı
+kişi N tesiste **N ayrı `app_user` satırı** olarak durur ve **her satırın
+kendi rolü** vardır. İstenen davranış ("birinde yönetici, diğerinde
+sakin") **şema değişikliği gerektirmiyor.** Eksik olan tek şey,
+kullanıcının bu satırları görebilmesi ve arasında geçebilmesiydi.
+
+**Telefon ise global benzersiz** — aynı kişi iki tesiste aynı telefonu
+taşıyamaz. Akışı engellemiyor (P197'den beri kimlik e-postadır) ama
+bilinen bir sınır ve teste bağlandı: biri bir gün "telefonla çoklu tesis
+girişi" isterse önce o kısıt kalkmalı.
+
+## K2.1 — Üç uç
+
+| Uç | Kimlik | Ne yapar |
+|---|---|---|
+| `POST /auth/tesislerim` | **yok** (parola ister) | Giriş ekranı: bu kimlik hangi tesislerde geçerli |
+| `GET /me/tesislerim` | oturum | Uygulama içi seçici |
+| `POST /me/tesis-degistir` | oturum | Hedef tesis için **yeni jeton** |
+
+## K2.2 — Liste parola ister, sızdırmaz
+
+Üyelik listesi bir **sızıntı yüzeyidir**: parolasız sorulabilseydi uç,
+*"bu e-posta hangi sitelerde oturuyor"* sorgusuna dönüşürdü. Parola
+doğrulanır ve liste **yalnızca parolanın tuttuğu** üyelikleri taşır.
+**Yanlış parola ile hiç üyelik olmaması ayırt edilmez** — ikisi de boş
+liste.
+
+Hız sınırı var ve **mesajı ayrı**: bu bir kod isteği değil, parola deneme
+yüzeyi. Kullanıcıya "çok fazla kod isteği" demek, yapmadığı bir şeyi
+yaptığını söylemekti (`cok_fazla_deneme`, 10/15dk).
+
+## K2.3 — Geçiş parola sormaz; bedelini açıkça yazıyorum
+
+İstek "yeniden giriş gerektirmeden" diyor. Dayanağım: **bu sistemde
+kimlik e-postadır.** P197'den beri e-posta zorunlu; davet, parola
+sıfırlama, doğrulama hepsi ondan geçer. Bir yönetici X e-postasıyla
+kullanıcı açtığında *"X'i kontrol eden kişi bu tesise girebilir"* demiş
+olur. Aynı e-postayı taşıyan iki satır **kuruluş gereği aynı kişidir.**
+
+**Bedeli:** A'daki oturumu ele geçiren biri, aynı e-posta B'de de varsa
+B'ye de geçebilir — B'nin parolasını bilmeden. Bunu kabul ediyorum çünkü
+alternatif daha kötü: kişiye N tesis için N parola ezberletmek, gerçekte
+herkesin aynı parolayı kullanmasıyla sonuçlanır — aynı risk, üstüne
+parola yorgunluğu.
+
+Sınırlar yine de uygulanır: hedef satır **aktif** olmalı, denetçi görev
+penceresi kuralı burada da geçerli (girişle aynı kapı), ve geçiş
+**denetime yazılır** (`tesis_degistir`, kaynak tenant meta'da).
+
+## K2.4 — İzolasyon: en kritik kısım
+
+Jeton **tek** bir `tenant_id` taşır; RLS onu kullanır. Geçiş = hedef için
+yeni jeton. İzolasyon **yapısal olarak** korunur: değişen tek şey
+jetondaki tenant, veri yolu aynı.
+
+Üye olmayan tesise geçiş **403**, ve *"böyle bir tesis yok"* ile *"üye
+değilsin"* **aynı yanıtı** alır — aksi hâlde uç, tenant kimliği sorgulama
+aracı olurdu.
+
+## Ölçüm — akış gerçekten çalıştırıldı
+
+```
+[1] POST /auth/tesislerim        -> 200: A(yonetici) + B(sakin)
+[2] YANLIS parola                -> 200 {"tesisler": []}      (sızdırmaz)
+[3] A'ya giris                   -> 200
+[4] GET /me/tesislerim           -> 200: [A yonetici, B sakin]
+[5] POST /me/tesis-degistir      -> 200 (yeni jeton)
+[6] yeni jetonla GET /me         -> role: resident   ← A'da yonetici
+[7] A jetonu  GET /users         -> 200, 7 kayit
+[8] B jetonu  GET /users         -> 200, 2 kayit     ← FARKLI veri
+[9] UYE OLMAYAN tenant'a gecis   -> 403 tesis_uyeligi_yok
+```
+
+## Kilit kanıtı
+
+`tesis-degistir`den üyelik kontrolünü kaldırdım → **5 test birden düştü**
+(rol taşınması, üye olmayan tesis, olmayan tenant, izolasyon, denetim).
+Geri koydum.
+
+İzolasyon testi `/announcements` üzerinden ölçüyor, `/blocks` üzerinden
+değil: `/blocks` sakine kapalı olduğu için test izolasyonu değil **rol
+kapısını** ölçmüş olurdu — B jetonu 403 alırdı ve "veri görünmüyor" diye
+yanlış bir güvence verirdi.
+
+## Kilit registreleri (tam takım yakaladı)
+
+`/me/tesis-degistir` rol kapısız (bilinçli — denetçi de başka tesiste
+sakin olabilir) ve `tenant_uyelikleri` SECDEF envanterine gerekçesiyle
+eklendi. Rol matrisi yeniden üretildi.

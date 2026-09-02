@@ -20,7 +20,7 @@ from ..db import SessionLocal, set_tenant
 from ..deps import get_redis, gorev_penceresi_disinda
 from ..errors import APIError
 from ..telefon_kodu import GECERSIZ as TK_GECERSIZ
-from ..hiz_siniri import kod_istegi_say
+from ..hiz_siniri import DENEME_ASILDI, DENEME_SINIRI, kod_istegi_say
 from ..telefon_kodu import (
     eposta_kodu_uret_ve_gonder,
     eposta_kodunu_dogrula,
@@ -35,6 +35,10 @@ from ..models import (
 )
 from ..gonderim import tenant_ayari
 from ..schemas import (
+    TesisDegistirIstek,
+    TesisUyeligi,
+    TesislerimIstek,
+    TesislerimYanit,
     EpostaKodDogrulaIstek,
     EpostaKodIstek,
     TelefonIstek,
@@ -108,6 +112,66 @@ async def _audit_login_fail(tenant_id, *, method: str, user: AppUser | None = No
                 actor_rol=(user.role if user else None),
                 meta={"method": method},
             )
+
+
+# ===================== (P203 §2) COKLU TESIS ================================ #
+#
+# OLCUM ONCE: model bunu ZATEN destekliyor. `uq_app_user_tenant_email`
+# e-postayi TESIS ICINDE benzersiz kilar, platform genelinde DEGIL —
+# yani ayni kisi N tesiste N ayri satir olarak durur ve HER SATIRIN
+# KENDI ROLU vardir. Sema degisikligi gerekmedi; eksik olan sey
+# kullanicinin bu satirlari GOREBILMESI ve arasinda GECEBILMESIYDI.
+#
+# JETON `tenant_id` TASIR ve RLS onu kullanir. Tesis degistirmek =
+# HEDEF TESIS ICIN YENI JETON almak. Izolasyon bu yuzden yapisal olarak
+# korunur: degisen tek sey jetondaki tenant, veri yolu ayni.
+async def _uyelikler(session, eposta: str) -> list[dict]:
+    """E-postanin TUM tesis uyelikleri (SECURITY DEFINER, goc 0092)."""
+    satirlar = (
+        await session.execute(
+            text(
+                "SELECT tenant_id, slug, tenant_ad, user_id, rol, is_active, "
+                "password_hash, eposta_dogrulandi "
+                "FROM public.tenant_uyelikleri(:e)"
+            ),
+            {"e": eposta},
+        )
+    ).mappings().all()
+    return [dict(r) for r in satirlar]
+
+
+@router.post("/tesislerim", response_model=TesislerimYanit)
+async def tesislerim(
+    body: TesislerimIstek,
+    redis: aioredis.Redis = Depends(get_redis),
+) -> TesislerimYanit:
+    """Giris ekrani: "bu kimlik hangi tesislerde gecerli".
+
+    PAROLA DOGRULANIR ve liste YALNIZ parolanin TUTTUGU uyelikleri
+    tasir. Iki sebep:
+      * SIZINTI: parolasiz sorulabilseydi uc, "bu e-posta hangi
+        sitelerde oturuyor" sorgusuna donusurdu.
+      * DOGRULUK: parolanin tutmadigi bir tesisi listelemek,
+        kullaniciyi giremeyecegi bir kapiya yollamak olurdu.
+
+    HIZ SINIRI login ile AYNI SINIFTA: uc, parola deneme yuzeyidir.
+
+    BOS LISTE ile YANLIS PAROLA AYIRT EDILMEZ — ikisi de bos doner.
+    """
+    await kod_istegi_say(
+        redis, body.email.lower(), kapsam="tesislerim",
+        sinir=DENEME_SINIRI, hata=DENEME_ASILDI,
+    )
+    async with SessionLocal() as session:
+        satirlar = await _uyelikler(session, body.email)
+    tesisler = [
+        TesisUyeligi(
+            tenant_id=r["tenant_id"], slug=r["slug"], ad=r["tenant_ad"], rol=r["rol"]
+        )
+        for r in satirlar
+        if r["is_active"] and verify_password(body.password, r["password_hash"])
+    ]
+    return TesislerimYanit(tesisler=tesisler)
 
 
 @router.post("/login", response_model=TokenPair)

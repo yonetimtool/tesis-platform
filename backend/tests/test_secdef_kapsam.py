@@ -70,6 +70,16 @@ ENVANTER: dict[str, tuple[str, tuple[str, str] | None]] = {
     "kvkk_metin_listele": ("admin", ("get", "/tenants/{tid}/kvkk")),
     "kvkk_metin_yayinla": ("admin", ("post", "/tenants/{tid}/kvkk")),
     "kvkk_onay_ozeti": ("admin", ("get", "/tenants/{tid}/kvkk")),
+    # (P203 §2) COKLU TESIS — "bu e-posta hangi tesislerde var".
+    # TANIMI GEREGI tenant sinirini gecer; RLS altinda yanitlanamaz.
+    # `tenant_id_by_slug` / `yonetici_by_email` ile AYNI SINIF.
+    #
+    # ROL KAPISI YOK ve olamaz: iki cagiridan biri GIRIS ONCESIDIR
+    # (`/auth/tesislerim`). Kapiyi UC koyar — o uc PAROLA dogrular ve
+    # yalniz parolanin TUTTUGU uyelikleri listeler; oteki cagiri
+    # (`/me/tesislerim`) zaten kimlikli oturum ister ve yalniz KENDI
+    # e-postasini sorar.
+    "tenant_uyelikleri": (None, ("post", "/auth/tesislerim")),
     # (P202) SURUM POLITIKASI — tablo tenant'siz, RLS ACIK ve POLITIKASIZ
     # (goc 0091), yani `app_rw` onu dogrudan goremez. Iki fonksiyon da
     # TENANT SINIRINI GECMEZ: tablonun tenant'i YOKTUR.

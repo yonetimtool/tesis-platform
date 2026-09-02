@@ -6737,6 +6737,78 @@ paths:
   # beklemek gerekirdi — yani tam da ulasamadigimiz kullanicilar icin
   # ise yaramazdi.
   # ================================================================= #
+  # ================================================================= #
+  # (P203 §2) COKLU TESIS
+  # ================================================================= #
+  # OLCUM: model bunu ZATEN destekliyor. `uq_app_user_tenant_email`
+  # e-postayi TESIS ICINDE benzersiz kilar, platform genelinde DEGIL —
+  # ayni kisi N tesiste N ayri satir olarak durur ve HER SATIRIN KENDI
+  # ROLU vardir. Sema degismedi; eksik olan sey kullanicinin bu satirlari
+  # gorebilmesi ve arasinda gecebilmesiydi.
+  #
+  # JETON TEK bir `tenant_id` tasir ve RLS onu kullanir; gecis = HEDEF
+  # ICIN YENI JETON. Izolasyon bu yuzden yapisal olarak korunur.
+  # ================================================================= #
+  /auth/tesislerim:
+    post:
+      tags: [auth]
+      summary: Bu kimlik hangi tesislerde gecerli (PUBLIC, parola ister)
+      security: []   # giris ONCESI — kullanicinin henuz jetonu yok
+      description: >
+        PAROLA ZORUNLU ve liste YALNIZ parolanin TUTTUGU uyelikleri
+        tasir. Parolasiz sorulabilseydi uc, "bu e-posta hangi sitelerde
+        oturuyor" sorgusuna donusurdu. YANLIS PAROLA ile HIC UYELIK YOK
+        AYIRT EDILMEZ: ikisi de bos liste doner. Hiz sinirlidir.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TesislerimIstek" }
+      responses:
+        "200":
+          description: Uyelikler (bos olabilir)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TesislerimYanit" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /me/tesislerim:
+    get:
+      tags: [me]
+      summary: Oturumdaki kisinin tesis uyelikleri
+      description: >
+        PAROLA ISTEMEZ: kimlik zaten kanitlanmis. Liste kisinin KENDI
+        e-postasina ait satirlardir.
+      responses:
+        "200":
+          description: Uyelikler
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TesislerimYanit" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /me/tesis-degistir:
+    post:
+      tags: [me]
+      summary: Hedef tesis icin YENI jeton (yeniden giris YOK)
+      description: >
+        Gecis parola SORMAZ: bu sistemde kimlik E-POSTADIR ve ayni
+        e-postayi tasiyan iki satir kurulus geregi ayni kisidir.
+        Hedef, kisinin kendi uyelikleri arasinda OLMALI — aksi hâlde uc
+        "istedigim tenant'in jetonunu al" ucuna donusurdu. Uye olmayan
+        tesis ile OLMAYAN tesis AYNI yaniti alir (403). Gecis denetime
+        yazilir.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TesisDegistirIstek" }
+      responses:
+        "200":
+          description: Hedef tesis icin jeton cifti
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TokenPair" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
   /surum/kontrol:
     post:
       tags: [surum]
@@ -13510,6 +13582,36 @@ components:
         created_at: { type: string, format: date-time }
         geri_alma_at: { type: string, format: date-time, nullable: true }
     # ---------- (P154 / Asama 7.3) KURULUM SIHIRBAZI ---------- #
+    TesislerimIstek:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, minLength: 8 }
+    TesisUyeligi:
+      type: object
+      required: [tenant_id, slug, ad, rol]
+      properties:
+        tenant_id: { type: string, format: uuid }
+        slug: { type: string }
+        ad: { type: string }
+        rol:
+          type: string
+          description: >
+            BU TESISTEKI rol. Ayni kisi bir tesiste yonetici, otekinde
+            sakin olabilir — rol UYELIGE aittir, kisiye degil.
+    TesislerimYanit:
+      type: object
+      required: [tesisler]
+      properties:
+        tesisler:
+          type: array
+          items: { $ref: "#/components/schemas/TesisUyeligi" }
+    TesisDegistirIstek:
+      type: object
+      required: [tenant_id]
+      properties:
+        tenant_id: { type: string, format: uuid }
     SurumKontrolIstek:
       type: object
       required: [platform, surum]

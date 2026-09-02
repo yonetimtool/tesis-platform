@@ -14,7 +14,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..audit import Action, record_audit
 from ..audit import audit_user
-from ..deps import get_current_user, get_redis, get_tenant_db, require_role
+from ..db import SessionLocal, set_tenant
+from ..deps import (
+    get_current_user,
+    get_redis,
+    get_tenant_db,
+    gorev_penceresi_disinda,
+    require_role,
+)
 from ..errors import APIError
 from ..hiz_siniri import kod_istegi_say
 from ..telefon_kodu import (
@@ -25,6 +32,10 @@ from ..telefon_kodu import (
 from ..hesap_silme import hesabi_sil_veya_anonimlestir, son_admin_mi
 from ..models import AppUser, AuditLog, Checkpoint, UserDevice
 from ..schemas import (
+    TesisDegistirIstek,
+    TesisUyeligi,
+    TesislerimYanit,
+    TokenPair,
     AvatarUpdate,
     BildirimTercihleri,
     BildirimTercihUpdate,
@@ -41,7 +52,13 @@ from ..schemas import (
     PasswordChangeRequest,
     UserOut,
 )
-from ..security import hash_password, verify_password
+from ..security import (
+    access_token_ttl_seconds,
+    create_access_token,
+    create_refresh_token,
+    hash_password,
+    verify_password,
+)
 from ..storage import delete_objects, presign_get
 
 router = APIRouter(tags=["me"])
@@ -701,3 +718,118 @@ async def admin_overview(
 ) -> dict:
     """Sadece admin — RBAC demo (matristen ornek: yonetim ucu)."""
     return {"status": "ok", "role": user.role}
+
+
+from .auth import _store_refresh, _uyelikler  # noqa: E402
+
+
+# ===================== (P203 §2) COKLU TESIS ================================ #
+#
+# ===========================================================================
+# NEDEN GECIS PAROLA SORMAZ — ve bunun KABUL EDILEN bedeli
+# ===========================================================================
+# Istek acikca "yeniden giris gerektirmeden" diyor. Kural su: bu sistemde
+# KIMLIK E-POSTADIR. P197'den beri e-posta zorunlu ve tesis icinde
+# benzersiz; davet, parola sifirlama, dogrulama — hepsi ondan gecer. Bir
+# yonetici X e-postasiyla kullanici actiginda, "X'i kontrol eden kisi bu
+# tesise girebilir" demis olur. Ayni e-postayi tasiyan iki satir, KURULUS
+# GEREGI ayni kisidir.
+#
+# BEDELI ACIKCA YAZIYORUM: A tesisindeki oturumu ele geciren biri, ayni
+# e-posta B tesisinde de varsa B'ye de gecebilir — B'nin parolasini
+# bilmeden. Bunu kabul etmemizin sebebi, alternatifin DAHA KOTU olmasi:
+# kisiye N tesis icin N parola ezberletmek, gercekte herkesin ayni
+# parolayi kullanmasiyla sonuclanir — yani ayni riski, ustune parola
+# yorgunlugu ekleyerek elde ederiz.
+#
+# SINIRLAR YINE DE UYGULANIR: hedef satir AKTIF olmali ve denetci gorev
+# penceresi kurali burada da gecerlidir (girisle AYNI kapi). Gecis
+# DENETIME yazilir.
+#
+# IZOLASYON: yeni jeton hedef tenant icin uretilir. Eski jeton kaynak
+# tenant icin GECERLI KALIR (kullanici geri donebilmeli) ve hicbir jeton
+# iki tenant'i birden tasimaz — RLS jetondaki tek `tenant_id`yi kullanir.
+@router.get("/me/tesislerim", response_model=TesislerimYanit)
+async def tesislerim(
+    user: AppUser = Depends(get_current_user),
+) -> TesislerimYanit:
+    """Oturumdaki kisinin TUM tesis uyelikleri — uygulama ici secici.
+
+    PAROLA ISTEMEZ: kimlik zaten kanitlanmis. Liste, kisinin KENDI
+    e-postasina ait satirlardir; baska kimsenin verisi degil.
+    """
+    async with SessionLocal() as session:
+        satirlar = await _uyelikler(session, user.email)
+    return TesislerimYanit(
+        tesisler=[
+            TesisUyeligi(
+                tenant_id=r["tenant_id"], slug=r["slug"], ad=r["tenant_ad"],
+                rol=r["rol"],
+            )
+            for r in satirlar
+            if r["is_active"]
+        ]
+    )
+
+
+@router.post("/me/tesis-degistir", response_model=TokenPair)
+async def tesis_degistir(
+    body: TesisDegistirIstek,
+    redis: aioredis.Redis = Depends(get_redis),
+    user: AppUser = Depends(get_current_user),
+) -> TokenPair:
+    """Hedef tesis icin YENI jeton — yeniden giris YOK.
+
+    Hedef, kisinin KENDI e-postasinin uyelikleri arasinda OLMALI.
+    Aksi hâlde uc, "istedigim tenant'in jetonunu al" ucuna donusurdu —
+    tesis izolasyonunun tam kalbi.
+    """
+    async with SessionLocal() as session:
+        satirlar = await _uyelikler(session, user.email)
+    hedef = next(
+        (r for r in satirlar if r["tenant_id"] == body.tenant_id and r["is_active"]),
+        None,
+    )
+    if hedef is None:
+        # AYIRT ETTIRMEZ: "boyle bir tesis yok" ile "uye degilsin" ayni
+        # yanit. Aksi hâlde uc, tenant kimligi sorgulama araci olurdu.
+        raise APIError(403, "forbidden", "tesis_uyeligi_yok")
+
+    async with SessionLocal() as session:
+        async with session.begin():
+            await set_tenant(session, hedef["tenant_id"])
+            hedef_user = (
+                await session.execute(
+                    select(AppUser).where(AppUser.id == hedef["user_id"])
+                )
+            ).scalar_one_or_none()
+            if hedef_user is None or not hedef_user.is_active:
+                raise APIError(403, "forbidden", "tesis_uyeligi_yok")
+            # (P128) Gorev penceresi disindaki denetci GIRISTE jeton
+            # ALMIYOR; gecis o kapiyi ATLAYAN bir arka kapi olmamali.
+            if gorev_penceresi_disinda(hedef_user):
+                raise APIError(403, "forbidden", "gorev_suresi_disinda")
+            await record_audit(
+                session,
+                action=Action.TESIS_DEGISTIR,
+                tenant_id=hedef["tenant_id"],
+                actor_user_id=hedef_user.id,
+                actor_rol=hedef_user.role,
+                resource_type="tenant",
+                resource_id=hedef["tenant_id"],
+                meta={"kaynak_tenant": str(user.tenant_id)},
+            )
+
+    access = create_access_token(
+        user_id=hedef_user.id, tenant_id=hedef["tenant_id"], role=hedef_user.role
+    )
+    refresh, jti, fam = create_refresh_token(
+        user_id=hedef_user.id, tenant_id=hedef["tenant_id"]
+    )
+    await _store_refresh(redis, jti, fam)
+    return TokenPair(
+        access_token=access,
+        refresh_token=refresh,
+        token_type="Bearer",
+        expires_in=access_token_ttl_seconds(),
+    )

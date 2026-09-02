@@ -55,12 +55,24 @@ KOD_ISTEK_PENCERE_SN = 15 * 60
 
 ASILDI = APIError(429, "rate_limited", "cok_fazla_kod_istegi")
 
+#: (P203 §2) PAROLA DENEME yuzeyleri icin AYRI mesaj. `tesislerim` bir
+#: kod istegi DEGIL; kullaniciya "cok fazla kod istegi" demek, yapmadigi
+#: bir seyi yaptigini soylemekti.
+DENEME_ASILDI = APIError(429, "rate_limited", "cok_fazla_deneme")
+
+#: Parola denemesi kod istemekten SIKTIR: "SMS gelmedi, tekrar gonder"
+#: gibi mesru bir tekrar yok. On deneme, parolasini yanlis hatirlayan
+#: kullaniciya yer birakir; on birincisi betiktir.
+DENEME_SINIRI = 10
+
 
 async def kod_istegi_say(
     redis: aioredis.Redis | None,
     telefon: str,
     *,
     kapsam: str = "kod",
+    sinir: int = KOD_ISTEK_SINIRI,
+    hata: APIError = ASILDI,
 ) -> None:
     """Telefon basina kod isteme sayacini artirir; sinir asilirsa 429.
 
@@ -81,5 +93,5 @@ async def kod_istegi_say(
         # Bkz. modul basligi: fail-open.
         _log.warning("hiz siniri sayaci yazilamadi (%s): %s", anahtar, e)
         return
-    if sayi > KOD_ISTEK_SINIRI:
-        raise ASILDI
+    if sayi > sinir:
+        raise hata

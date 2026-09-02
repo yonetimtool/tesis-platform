@@ -377,6 +377,26 @@ METINLER: dict[str, dict[str, str]] = {
         "es": "No existe ese paso de configuración.",
     },
     # (P202) Surum politikasi platformu 'ios' | 'android' ile SINIRLI.
+    # (P203 §2) Parola deneme yuzeyi (tesis listesi). "Kod istegi" DEGIL.
+    "cok_fazla_deneme": {
+        "tr": "Çok fazla deneme yapıldı. Lütfen bir süre sonra tekrar deneyin.",
+        "en": "Too many attempts. Please try again later.",
+        "ar": "محاولات كثيرة جدًا. الرجاء المحاولة لاحقًا.",
+        "ru": "Слишком много попыток. Повторите попытку позже.",
+        "de": "Zu viele Versuche. Bitte versuchen Sie es später erneut.",
+        "fr": "Trop de tentatives. Veuillez réessayer plus tard.",
+        "es": "Demasiados intentos. Inténtelo de nuevo más tarde.",
+    },
+    # (P203 §2) Uye olunmayan tesise gecis.
+    "tesis_uyeligi_yok": {
+        "tr": "Bu tesise erişiminiz yok.",
+        "en": "You do not have access to this facility.",
+        "ar": "ليس لديك وصول إلى هذا المجمع.",
+        "ru": "У вас нет доступа к этому объекту.",
+        "de": "Sie haben keinen Zugriff auf diese Anlage.",
+        "fr": "Vous n'avez pas accès à cette résidence.",
+        "es": "No tiene acceso a esta comunidad.",
+    },
     "platform_gecersiz": {
         "tr": "Geçersiz platform. Yalnızca iOS ve Android desteklenir.",
         "en": "Invalid platform. Only iOS and Android are supported.",

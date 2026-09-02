@@ -97,6 +97,21 @@ KAPISIZ_MUTASYONLAR: frozenset[tuple[str, str]] = frozenset({
     # POST'tur cunku yanit politikaya baglidir ve bir vekilin onu
     # onbelleklemesi, esik degistiginde ESKI karari servis etmek olurdu.
     ("POST", "/surum/kontrol"),
+    # (P203 §2) TESIS UYELIKLERI. Rol kapisi OLAMAZ: kisi henuz oturum
+    # ACMAMISTIR — uc tam olarak "hangi tesise gireyim" sorusunu
+    # yanitlar. Kapiyi PAROLA koyar: liste yalniz parolanin TUTTUGU
+    # uyelikleri tasir ve yanlis parola ile hic uyelik olmamasi AYIRT
+    # EDILMEZ (ikisi de bos liste). Hicbir tesisin verisine dokunmaz.
+    ("POST", "/auth/tesislerim"),
+    # (P203 §2) TESIS DEGISTIRME. KIMLIK ISTER (kapisiz degil, ROLSUZ):
+    # rol kapisi KOYULAMAZ cunku uc TUM roller icindir — denetci de
+    # baska bir tesiste sakin olabilir ve oraya gecebilmelidir. Rolu
+    # kisitlamak, ozelligi tam ihtiyac duyulan durumda kapatmak olurdu.
+    #
+    # KAPI ROL DEGIL UYELIKTIR: hedef, cagirinin KENDI e-postasinin
+    # uyelikleri arasinda olmali. Tesis verisine YAZMAZ (yalniz denetim
+    # satiri) ve jetonu HEDEFIN ROLUYLE uretir — yani yetki YUKSELTMEZ.
+    ("POST", "/me/tesis-degistir"),
     # --- (P149) KIMLIK ONCESI parolasiz giris ---
     # Rol kapisi OLAMAZ: istegi atan kisinin henuz oturumu yoktur.
     # Tesisin kayitlarina yazmaz: yalniz kod uretir/dogrular.

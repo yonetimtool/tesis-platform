@@ -104,6 +104,10 @@ class Action:
     #: kaydi denetime yazmak SART: zorunlu guncelleme TUM kullanicilari
     #: etkiler ve "bunu kim, ne zaman acti" sorusu yanitlanabilmeli.
     PLATFORM_AYAR_UPDATE = "platform_ayar_update"
+    #: (P203 §2) Kullanici tesis DEGISTIRDI. Gecis parola sormaz (kimlik
+    #: e-postadir); bu yuzden "kim, ne zaman, nereden nereye" sorusunun
+    #: yanitlanabilir olmasi SART.
+    TESIS_DEGISTIR = "tesis_degistir"
     UNIT_TIP_CREATE = "unit_tip_create"
     UNIT_TIP_UPDATE = "unit_tip_update"
     UNIT_TIP_DELETE = "unit_tip_delete"
