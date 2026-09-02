@@ -27,6 +27,14 @@ import { useT } from "@/lib/i18n/kullan";
 import { kurusToTL, kurusToTLSade, tlToKurus } from "@/lib/money";
 import { sayiCoz } from "@/lib/sayi";
 import { telefonGiris, telefonNormalle } from "@/lib/telefon";
+import {
+  BANKA_ADLARI,
+  bankaAdiCoz,
+  ibanBicimle,
+  ibanGiris,
+  ibanHatasi,
+  ibanTemizle,
+} from "@/lib/iban";
 import { useSorguSecimi } from "@/lib/sorgu-secimi";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 
@@ -47,8 +55,15 @@ import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 // bildirdigi kusur buydu. Tip olunca bicimleme, uzunluk siniri, klavye
 // ve hata metni ORTAK BILESENDEN gelir; defter tanimina tek kelime
 // yazmak yetiyor.
+// (P206 §3) `iban` ve `banka` AYRI TIPLER — `telefon` emsali (P166 §9).
+// Once ikisi de `metin`di: IBAN sinirsiz yaziliyordu, denetim sunucuda
+// yalniz `^TR[0-9]{24}$` regex'iydi (yanlis hanesi olan IBAN GECERLI
+// sayiliyordu) ve banka adi ELLE yaziliyordu. Tip olunca gruplama,
+// saglama toplami, hata metni ve banka listesi ORTAK yerden gelir.
 type AlanTip =
   | "metin"
+  | "iban"
+  | "banka"
   | "telefon"
   | "sayi"
   | "kurus"
@@ -103,8 +118,8 @@ const DEFTERLER: Defter[] = [
       { ad: "acilis_tarihi", etiket: "tanimAlanAcilisTarihi", tip: "tarih" },
       { ad: "acilis_bakiye_kurus", etiket: "tanimAlanAcilisBakiye", tip: "kurus", sutun: true },
       { ad: "banka_mi", etiket: "tanimAlanBankaMi", tip: "bool", sutun: true },
-      { ad: "iban", etiket: "tanimAlanIban", tip: "metin" },
-      { ad: "banka_adi", etiket: "tanimAlanBankaAdi", tip: "metin" },
+      { ad: "iban", etiket: "tanimAlanIban", tip: "iban" },
+      { ad: "banka_adi", etiket: "tanimAlanBankaAdi", tip: "banka" },
       { ad: "sube", etiket: "tanimAlanSube", tip: "metin" },
       { ad: "aktif", etiket: "tanimAlanAktif", tip: "bool" },
     ],
@@ -310,6 +325,8 @@ function liraya(kurus: unknown): string {
  *  saglar (`Record<AlanTip, ...>` eksik anahtari yakalar). */
 const GIRIS_TIPI: Record<AlanTip, string> = {
   metin: "text",
+  iban: "text",
+  banka: "text",
   telefon: "tel",
   sayi: "text",
   kurus: "text",
@@ -318,6 +335,15 @@ const GIRIS_TIPI: Record<AlanTip, string> = {
   secim: "text",
   referans: "text",
 };
+/** IBAN hata kimligi -> sozluk anahtari. Kimlik/METIN ayrimi: kural
+ *  `lib/iban.ts`te, metin sozlukte. */
+const IBAN_HATA_METNI = {
+  iban_bos: "tanimIbanBos",
+  iban_bicim: "tanimIbanBicim",
+  iban_uzunluk: "tanimIbanUzunluk",
+  iban_saglama: "tanimIbanSaglama",
+} as const;
+
 const GIRIS_MODU: Partial<Record<AlanTip, "decimal">> = {
   sayi: "decimal",
   kurus: "decimal",
@@ -621,6 +647,20 @@ function DefterGorunumu({ defter }: { defter: Defter }) {
         // Ayni numaranin iki farkli yazimla iki kayit uretmesi, telefonu
         // bir esleme anahtari olarak kullanan her yeri bozardi.
         govde[a.ad] = telefonNormalle(metin);
+      } else if (a.tip === "iban") {
+        // (P206 §3.1) GECERSIZ IBAN ISTEK ATMADAN DURDURULUR ve
+        // KANONIK (bosluksuz) gonderilir: ayni IBAN'in iki farkli
+        // yazimla iki kayit uretmesi, ekstre eslestirmesini (P191)
+        // bozardi.
+        const temiz = ibanTemizle(metin);
+        if (temiz) {
+          const kod = ibanHatasi(temiz);
+          if (kod) {
+            setFormHata(t(IBAN_HATA_METNI[kod]));
+            return;
+          }
+        }
+        govde[a.ad] = temiz || null;
       } else govde[a.ad] = metin;
     }
     setKaydediyor(true);
@@ -711,6 +751,10 @@ function DefterGorunumu({ defter }: { defter: Defter }) {
                       // demekti: `5000.00` okuyan kullanici bes yuz bin
                       // sanabilirdi.
                       kurusToTL(Number(k[a.ad] ?? 0))
+                    : a.tip === "iban"
+                      ? // (P206 §3.1) TABLODA DA BOSLUKLU: depoda
+                        // bosluksuz durur, insan onu okuyamaz.
+                        ibanBicimle(String(k[a.ad] ?? "")) || "—"
                     : a.tip === "telefon"
                       ? // (P166 §9) TABLODA DA BOSLUKLU: depoda E.164
                         // (`+905431992904`) durur, insan onu okuyamaz.
@@ -784,6 +828,48 @@ function DefterGorunumu({ defter }: { defter: Defter }) {
                   devre={Boolean(a.sadeceOlustur && duzenlenen)}
                   onDegis={(v) => setForm({ ...form, [a.ad]: v })}
                 />
+              ) : a.tip === "iban" ? (
+                // (P206 §3.1) YAZARKEN GRUPLANIR ve uzunluk SERT
+                // sinirlidir. Sinirsiz yazdirip sonra reddetmek,
+                // kullaniciyi bosuna ugrastirmakti.
+                <Alan
+                  aria-label={t(a.etiket)}
+                  data-test={`tanim-iban-${a.ad}`}
+                  value={ibanGiris(String(form[a.ad] ?? ""))}
+                  autoComplete="off"
+                  onChange={(e) => {
+                    const yeni = ibanGiris(e.target.value);
+                    // (§3.2) BANKA OTOMATIK DOLAR: IBAN'in banka kodu
+                    // taninirsa ad yazilir. Kullaniciyi bir yazim
+                    // hatasindan kurtarir; ELLE DEGISTIRILEBILIR
+                    // (uzerine yazmak yasak degil).
+                    const banka = bankaAdiCoz(yeni);
+                    setForm((f) => ({
+                      ...f,
+                      [a.ad]: yeni,
+                      ...(banka && !f.banka_adi ? { banka_adi: banka } : {}),
+                    }));
+                  }}
+                />
+              ) : a.tip === "banka" ? (
+                // (§3.2) LISTEDEN SEC + SERBEST GIRIS. `datalist`
+                // ikisini birden verir: kapali bir acilir liste,
+                // listede olmayan gercek bir bankayi (katilim,
+                // yabanci sube, yeni lisans) kaydedilemez yapardi.
+                <>
+                  <Alan
+                    aria-label={t(a.etiket)}
+                    data-test={`tanim-banka-${a.ad}`}
+                    list="p206-banka-listesi"
+                    value={String(form[a.ad] ?? "")}
+                    onChange={(e) => setForm({ ...form, [a.ad]: e.target.value })}
+                  />
+                  <datalist id="p206-banka-listesi">
+                    {BANKA_ADLARI.map((b) => (
+                      <option key={b} value={b} />
+                    ))}
+                  </datalist>
+                </>
               ) : a.tip === "secim" ? (
                 // (P63) ACIK `aria-label`: referans dali araya girince
                 // `Field` sarmalayicisi pencereden cikti ve etiket

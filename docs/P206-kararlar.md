@@ -151,3 +151,84 @@ numarasında çalışır.
 kişisiz daire atlanır, borçlu yok mesajı, uç hatası görünür, arama,
 peşin ödeme, seçimde dairenin gövdeye gitmesi). Kilit kanıtı: borçlu
 listesi boş dönecek şekilde bozuldu → 3 test düştü, geri alındı.
+
+---
+
+## §3 — IBAN VE BANKA ALANI
+
+### Ölçüm: ne vardı
+
+```
+schemas.py:  _IBAN_PATTERN = r"^TR[0-9]{24}$"     (Pydantic)
+DB CHECK:    ck_kasa_iban  iban ~ '^TR[0-9]{24}$'
+web:         { ad: "iban", tip: "metin" }          (serbest metin, gruplama yok)
+             { ad: "banka_adi", tip: "metin" }     (elle yazılıyor)
+```
+
+Bu denetim **iki uçta birden yanlıştı**:
+
+* **Çok dar:** yurt dışındaki bir tesis kendi IBAN'ını giremiyordu; DB
+  hatası "değer kısıt ihlali" diyordu, yani kullanıcı nedenini bile
+  anlayamıyordu.
+* **Çok gevşek:** "TR" + 24 rakamın **herhangi biri** geçerli sayılıyordu.
+  Tek hanesi yanlış yazılmış bir IBAN kaydediliyor, para yanlış hesaba
+  gidiyor ve bu ancak ödeme kaybolunca fark ediliyordu. (Ölçüldü:
+  `TR330006100519786457841327` eski regex'ten **geçiyor**, mod 97'den
+  geçmiyor.)
+
+### K3.1 — Ülke sınırı YOK; doğruluk MOD 97 ile
+
+Uzunluk **ülkeye göre** denetlenir (tablo: TR=26, DE=22, GB=22, …).
+Tabloda olmayan ülke için yalnız genel ISO sınırı (15–34) uygulanır —
+listede olmayan bir ülkeyi reddetmek, doğru IBAN'ı olan kullanıcıyı
+kilitlemek olurdu. Doğruluk **ISO 13616 mod 97** sağlama toplamıyla
+denetlenir; regex'in yapamadığı tam olarak buydu.
+
+Katmanlar:
+
+| Katman | Ne denetler | Neden orada |
+|---|---|---|
+| DB CHECK (göç 0097) | Yapı: `^[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}$` | "Bu alan bir IBAN'dır"ın veritabanında söylenebilecek en doğru hâli. Mod 97'yi CHECK içinde yazmak mümkün ama okunmaz bir ifade olur ve kural iki dilde iki kez bakım isterdi |
+| Pydantic (`app/iban.py`) | Ülke uzunluğu + mod 97, **kanonik** hâle çevirir | Son söz sunucunundur; istemci her zaman bizim istemcimiz değil |
+| Web (`lib/iban.ts`) | Aynısı + yazarken gruplama | Kullanıcıyı 422 beklemeden uyarır |
+
+Kural iki dilde yazılı; ayrışmaya karşı **aynı örnek kümesi** iki tarafta
+da koşuyor (`test_p206_iban.py` / `p206-iban.test.ts`).
+
+### K3.2 — Depoda boşluksuz, ekranda dörderli
+
+Aynı IBAN'ın `TR33 0006…` ve `TR330006…` diye iki kayıt üretmesi, IBAN'ı
+eşleme anahtarı olarak kullanan **banka ekstresi eşleştirmesini** (P191)
+bozardı. Kanonik biçim depoda; okunabilirlik çizim katmanının işi.
+Yazarken alan dörderli gruplar ve azami uzunluğu **sert** sınırlar
+(sınırsız yazdırıp sonra reddetmek kullanıcıyı boşuna uğraştırırdı).
+
+### K3.3 — Banka adı: liste + otomatik doldurma + serbest giriş
+
+TR IBAN'ı: `TR` + 2 kontrol + **5 hane banka kodu** + 1 rezerv + 16 hane
+hesap. EFT kodları 4 hanedir ve alana soldan sıfırla doldurulur
+(`0062` → `00062`) — bu yüzden **son dört hane** alınır. (İlk yazımda ilk
+dördü alıyordum; Garanti "0006" diye okunup listede bulunamıyordu, örnek
+IBAN'la görüldü ve düzeltildi.)
+
+IBAN girilince banka adı **otomatik dolar** (boşsa; üzerine yazmak
+serbest). TR dışında banka **uydurulmaz** — kodun yeri ülkeye göre
+değişir ve tahmin, yanlış banka adı yazdırırdı.
+
+**Liste kapalı değil.** `datalist` ile hem seçim hem serbest giriş var.
+Kapalı bir açılır liste, katılım bankalarını, yeni lisans alanları ve
+yabancı şubeleri dışarıda bırakır; gerçek bir hesabı **kaydedilemez**
+yapardı. Banka adları çeviri taramasından muaf tutuldu (gerekçe
+`tests/i18n.test.ts` içinde): banka adı bir cümle değil, **kurumun tescilli
+adıdır** ve mutabakatta ekrandaki adla bankanın adı aynı olmalı.
+
+### Ölçüm
+
+Backend `test_p206_iban.py` 16 test, web `p206-iban.test.ts` 8 +
+`p206-iban-alani.dom.test.ts` 5 test. Kilit kanıtı: mod 97 denetimi
+kaldırıldı → 3 test düştü (biri açıkça "eski regex bunu geçiriyordu"
+diyen test), geri alındı. Göç 0097 downgrade→upgrade ile doğrulandı.
+
+**Ölçemediğim:** banka kodu listesinin güncelliği — kodlar TCMB/BKM
+yayınından elle alındı; yeni lisans alan bir bankanın kodu listede
+olmaz (serbest giriş bu yüzden korundu).

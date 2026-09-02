@@ -56,13 +56,17 @@ def test_kasa_IBAN_yalniz_BANKA_kasasinda(client, yon):
     """Banka olmayan bir kasada dolu IBAN, odemeyi yanlis hesaba yonlendirirdi."""
     kotu = client.post("/kasalar", headers=yon, json={
         "kod": f"K{_sfx()}", "ad": "Nakit", "banka_mi": False,
-        "iban": "TR" + "1" * 24,
+        # (P206 §3.1) GERCEK bir IBAN kullaniliyor: "TR" + 24 rakam artik
+        # tek basina YETMIYOR (mod 97 saglama toplami). Eski deger
+        # (`"TR"+"1"*24`) bu testin OLCTUGU seyi (banka olmayan kasada
+        # IBAN) degil, IBAN'in gecersizligini olcer hâle gelirdi.
+        "iban": "TR330006100519786457841326",
     })
     assert kotu.status_code == 422
 
     iyi = client.post("/kasalar", headers=yon, json={
         "kod": f"K{_sfx()}", "ad": "Banka", "banka_mi": True,
-        "iban": "TR" + "1" * 24, "banka_adi": "X Bank",
+        "iban": "TR330006100519786457841326", "banka_adi": "X Bank",
     })
     assert iyi.status_code == 201
 
@@ -72,7 +76,7 @@ def test_kasa_banka_KAPATILIRKEN_iban_kalirsa_422(client, yon):
     DB CHECK'i 500 gibi okunan bir ihlal verirdi."""
     kid = client.post("/kasalar", headers=yon, json={
         "kod": f"K{_sfx()}", "ad": "Banka", "banka_mi": True,
-        "iban": "TR" + "2" * 24,
+        "iban": "TR670006200000000000000000",
     }).json()["id"]
     r = client.patch(f"/kasalar/{kid}", headers=yon, json={"banka_mi": False})
     assert r.status_code == 422

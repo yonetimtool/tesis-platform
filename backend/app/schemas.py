@@ -4887,8 +4887,32 @@ BorcHedefKurali = Literal["kiraci_oncelikli", "malik"]
 BakiyeYon = Literal["borc", "alacak"]
 SayacTip = Literal["su", "elektrik", "dogalgaz", "isi", "diger"]
 
-#: TR IBAN: "TR" + 24 rakam (bosluklar istemcide temizlenir).
-_IBAN_PATTERN = r"^TR[0-9]{24}$"
+# (P206 §3.1) IBAN DENETIMI REGEX'TEN CIKTI.
+#
+# Eski hâl `^TR[0-9]{24}$` iki ucta birden yanlisti: yurt disindaki bir
+# tesis kendi IBAN'ini GIREMIYOR, buna karsilik tek hanesi yanlis
+# yazilmis bir TR IBAN'i KABUL EDILIYORDU (para yanlis hesaba gider ve
+# ancak kaybolunca fark edilir). Yerine `app/iban.py`: ulke uzunlugu +
+# ISO 13616 mod 97 saglama toplami. Gerekce `docs/P206-kararlar.md` K3.1.
+def _iban_dogrula(v: str | None) -> str | None:
+    """Bos gecerli; dolu ise DOGRULANIR ve KANONIK bicimde saklanir.
+
+    Normalizasyon SUNUCUDA yapilir, yalniz istemcide degil: ayni IBAN'in
+    "TR33 0006..." ve "TR330006..." diye iki kayit uretmesi, IBAN'i
+    esleme anahtari olarak kullanan banka ekstresi eslestirmesini
+    (P191) bozardi — ve istemci her zaman bizim istemcimiz degil.
+    """
+    from .iban import iban_gecerli_mi, iban_temizle
+
+    if v is None or not v.strip():
+        return None
+    if not iban_gecerli_mi(v):
+        # Pydantic hatasi -> 422 `validation_error`. Metin kataloga
+        # bagli degil cunku alan duzeyinde doner (`details[].field`).
+        raise ValueError("iban_gecersiz")
+    return iban_temizle(v)
+
+
 #: Vergi no 10 hane (tuzel) ya da TC 11 hane (sahis) — ikisi de kabul.
 _VERGI_NO_PATTERN = r"^[0-9]{10,11}$"
 
@@ -4911,10 +4935,15 @@ class KasaCreate(BaseModel):
     acilis_tarihi: date | None = None
     acilis_bakiye_kurus: int = 0
     banka_mi: bool = False
-    iban: str | None = Field(None, pattern=_IBAN_PATTERN)
+    iban: str | None = Field(None, max_length=42)
     banka_adi: str | None = Field(None, max_length=100)
     sube: str | None = Field(None, max_length=100)
     aktif: bool = True
+
+    @field_validator("iban")
+    @classmethod
+    def _iban(cls, v: str | None) -> str | None:
+        return _iban_dogrula(v)
 
     @model_validator(mode="after")
     def _banka_alanlari(self) -> "KasaCreate":
@@ -4931,10 +4960,15 @@ class KasaUpdate(BaseModel):
     acilis_tarihi: date | None = None
     acilis_bakiye_kurus: int | None = None
     banka_mi: bool | None = None
-    iban: str | None = Field(None, pattern=_IBAN_PATTERN)
+    iban: str | None = Field(None, max_length=42)
     banka_adi: str | None = Field(None, max_length=100)
     sube: str | None = Field(None, max_length=100)
     aktif: bool | None = None
+
+    @field_validator("iban")
+    @classmethod
+    def _iban(cls, v: str | None) -> str | None:
+        return _iban_dogrula(v)
 
     @model_validator(mode="after")
     def _at_least_one(self) -> "KasaUpdate":

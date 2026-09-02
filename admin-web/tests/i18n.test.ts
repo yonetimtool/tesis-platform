@@ -440,6 +440,18 @@ describe("kaynak taramasi — kabuk/giris yuzeyi", () => {
         // karakter oldugu yanlis hesaplanir ve kullanici faturayi
         // gonderdikten sonra ogrenir.
         if (göreli.includes("lib/sms-olcu")) continue;
+        // (P206 §3.2) BANKA ADLARI — ARAYUZ METNI DEGIL, OZEL ISIM.
+        //
+        // `lib/iban.ts` IBAN banka kodu -> BANKANIN TESCILLI ADI
+        // eslemesini tasir. "Ziraat Bankası" bir cumle degil, bir
+        // KURUMUN ADIDIR ve hicbir dilde cevrilmez: Ingilizce arayuzde
+        // de dekontta yazan sey odur. Cevirmek, kullanicinin ekranda
+        // gordugu adla bankanin kendi adini AYIRMAK olurdu — ve
+        // mutabakatta tam olarak bu iki adin ayni olmasi gerekiyor.
+        //
+        // KUME OLCUSUZ DEGIL: `tests/p206-iban.test.ts` kod -> ad
+        // esdegerligini ve TR disinda banka UYDURULMADIGINI olcer.
+        if (göreli.includes("lib/iban")) continue;
         fs.readFileSync(tam, "utf8")
           .split("\n")
           .forEach((satir, i) => {
