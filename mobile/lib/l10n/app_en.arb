@@ -1715,5 +1715,7 @@
   "surumSonra": "Later",
   "surumMagazaAcilamadi": "Could not open the store. You can update the app manually from your phone's app store.",
   "tesisDegistirBaslik": "Switch facility",
-  "tesisDegistirSecili": "You are here"
+  "tesisDegistirSecili": "You are here",
+  "ziyaretDaireAra": "Unit",
+  "ziyaretDaireAraIpucu": "Type a unit number or a resident's name"
 }

@@ -5406,4 +5406,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get tesisDegistirSecili => 'Sie sind hier';
+
+  @override
+  String get ziyaretDaireAra => 'Wohnung';
+
+  @override
+  String get ziyaretDaireAraIpucu =>
+      'Wohnungsnummer oder Name eines Bewohners eingeben';
 }

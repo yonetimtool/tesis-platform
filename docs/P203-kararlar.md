@@ -254,3 +254,99 @@ kullanıcıyı engellerdi).
   çizildiğini görmedim** — DOM testi `location.assign` çağrısını ölçüyor,
   sonrasını değil.
 * **Mobilde gerçek cihazda geçiş** denenmedi (widget testi).
+
+---
+
+# §3 — Ziyaretçi: daire otomatik seçimi (BİTTİ)
+
+## Önce ölçtüm — iki şey beklediğimden farklıydı
+
+**1. Bildirim ZATEN VAR.** İstek "daire seçilince o dairenin sakinine
+bildirim gidebilmeli — mevcut bildirim altyapısına bağla" diyor.
+`routers/visitors.py` başlığı ve kodu ölçüldü: kayıt oluşunca seçilen
+hedef sakine push + kalıcı bildirim **zaten yazılıyor**. Yeniden
+yapmadım.
+
+**2. Güvenliğin daire listeleme yetkisi VAR.** Şemadaki yorum
+*"güvenlik daire listesine RBAC'i yoktur"* diyordu; rol matrisi bunu
+**yalanlıyor**: `GET /units` ve `GET /units/by-no/{no}/residents`
+güvenliğe açık. Yani eksik olan **yetki değil, adla aramaydı.**
+
+## Kusur: numara elle yazılıyordu
+
+Mobil formda `_unitNo` serbest metindi; görevli numarayı yazıp
+"Sakinleri getir"e basıyordu. Kapıdaki görevli çoğu zaman *"Ayşe
+Hanım'a geldim"* duyar, *"A-12'ye geldim"* duymaz. Numarayı tahmin
+etmek **sessiz bir kusurdur**: kayıt oluşur ve bildirim **başka bir
+sakine** gider.
+
+## K3.1 — `GET /units/ara` — numara VEYA sakin adıyla
+
+RBAC `by-no/.../residents` ile **aynı** (admin + yönetici + security).
+Güvenliğe **yeni yetki verilmiyor.**
+
+**KVKK — yeni bir ifşa değil, aynı verinin başka indeksi.** Güvenlik
+zaten bir dairenin aktif sakinlerinin adını görüyor. Amaç sınırlı
+kalsın diye: yalnız **aktif** bağlantılar · yalnız `user_id` + `ad`
+(telefon/e-posta/borç yok) · **en az 2 karakter** · limit tavanı 50.
+Boş/tek harf sorgu **boş liste** döner — uç bir **döküm aracı değildir.**
+
+Sonuç **sakinleri de taşır**: hedef sakin seçimi zorunlu olduğu için
+ayrı bir çağrı **her zaman** yapılırdı; görevliye ikinci bir bekleme
+yaşatırdı.
+
+## K3.2 — Serbest metin: EKLENMEYECEK — gerekçesiyle
+
+Önce bir düzeltme: **bugün serbest metin yok.** `unit_no` sunucuda bir
+daireye çözülür, bulunamazsa 422. Yani soru "kalsın mı" değil,
+"eklensin mi".
+
+**Kararım: eklenmeyecek.** Üç ölçülmüş sebep:
+
+1. `visitor.unit_id` **NOT NULL** ve `target_resident_user_id` de
+   **NOT NULL**. Kaydın tüm anlamı budur: **bir** sakin bilgilendirilir
+   ve kaydı **yalnız o** görür. Yönetim ofisine gelen ziyaretçinin
+   hedef sakini **yoktur** — kaydın çekirdek semantiği çöker.
+2. İkisini nullable yapmak, aynı tabloda **semantik olarak ikinci bir
+   kayıt türü** yaratırdı; bildirim, "şu an içeride kim", sakin
+   görünürlüğü — her tüketicinin null dalı olurdu.
+3. İhtiyaç **gerçek** ama **başka bir özellik**: hedef sakini olmayan,
+   ortak alan/ofis ziyaretçisi kaydı. Onu bu kaydın içine sıkıştırmak,
+   iki farklı şeyi tek tabloya gömmek olurdu.
+
+**Bunu yarım bırakmıyorum, kapsam dışına alıyorum ve söylüyorum:**
+ortak alan ziyaretçisi bugün kaydedilemiyor. Gerekirse ayrı bir tur —
+`ziyaret_hedefi` (daire | ortak alan | yönetim) ayrımı ve hedefsiz
+kayıtta bildirimin yöneticiye gitmesi.
+
+## K3.3 — Arama gecikmeli, seçim eski hedefi düşürür
+
+Her tuşta istek atmak, dokuz harflik bir isim için dokuz istek demekti
+→ **350 ms gecikme**.
+
+Arama metni değişince **seçili hedef düşer**. Sessizce durursa: görevli
+daireyi değiştirir, hedef eski dairenin sakini olarak kalır ve bildirim
+**yanlış kişiye** gider — düzeltmeye çalıştığımız kusurun ta kendisi.
+
+## Ölçüm
+
+Rota sırası tuzağı testler tarafından yakalandı: `/units/ara`
+`/units/{unit_id}`den **önce** tanımlanmalı, yoksa FastAPI "ara"yı UUID
+sanıp **422** döner (`admin-web`de `[id]` segmentinde ölçülen P189
+sınıfının aynısı).
+
+| Kilit kanıtı — bozma | Düşen test |
+|---|---|
+| Rota sırası geri alındı | 6 test birden |
+| Boş sorgu koruması kaldırıldı | BOŞ/TEK HARF BOŞ DÖNER |
+| Arama değişince eski hedef dursa | ESKİ HEDEF DÜŞER |
+| Gecikme kaldırıldı | İKİ HARFTEN KISA İSTEK ATMAZ |
+
+Testler: backend 7, mobil 5.
+
+## §3 ölçemediğim
+
+* **Gerçek cihazda** arama akışı denenmedi (widget testi).
+* **Web tarafındaki `/ziyaretciler` sayfasına dokunmadım**: orası
+  yönetim için **salt izleme** (kayıt yalnız güvenlikte, yani mobilde).
+  Kayıt formu web'de yok, dolayısıyla seçicinin web karşılığı da yok.

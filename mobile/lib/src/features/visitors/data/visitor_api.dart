@@ -67,6 +67,30 @@ class VisitorApi {
     }
   }
 
+  /// (P203 §3) Daire ARA — numara VEYA sakin adiyla.
+  ///
+  /// Kapidaki gorevli cogu zaman "Ayse Hanim'a geldim" duyar, "A-12'ye
+  /// geldim" duymaz. Numarayi ELLE yazmak sessiz bir kusur uretiyordu:
+  /// yanlis daire yazilinca kayit olusuyor ve bildirim BASKA BIR
+  /// SAKINE gidiyordu.
+  ///
+  /// Yanit SAKINLERI DE tasir — hedef sakin secimi zorunlu oldugu icin
+  /// ayri bir cagri HER ZAMAN yapilirdi.
+  Future<List<DaireArama>> daireAra(String q) async {
+    try {
+      final res = await _dio.get<List<dynamic>>(
+        '/units/ara',
+        queryParameters: {'q': q},
+      );
+      return (res.data ?? const [])
+          .whereType<Map>()
+          .map((m) => DaireArama.fromJson(Map<String, dynamic>.from(m)))
+          .toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
   Future<Visitor> create(VisitorDraft draft) async {
     try {
       final res = await _dio.post<Map<String, dynamic>>(

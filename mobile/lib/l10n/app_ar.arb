@@ -1715,5 +1715,7 @@
   "surumSonra": "لاحقًا",
   "surumMagazaAcilamadi": "تعذّر فتح المتجر. يمكنك تحديث التطبيق يدويًا من متجر التطبيقات على هاتفك.",
   "tesisDegistirBaslik": "تغيير المجمع",
-  "tesisDegistirSecili": "أنت هنا"
+  "tesisDegistirSecili": "أنت هنا",
+  "ziyaretDaireAra": "الشقة",
+  "ziyaretDaireAraIpucu": "اكتب رقم الشقة أو اسم أحد السكان"
 }

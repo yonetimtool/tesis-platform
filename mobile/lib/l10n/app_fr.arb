@@ -1715,5 +1715,7 @@
   "surumSonra": "Plus tard",
   "surumMagazaAcilamadi": "Impossible d'ouvrir la boutique. Vous pouvez mettre l'application à jour manuellement depuis la boutique de votre téléphone.",
   "tesisDegistirBaslik": "Changer de résidence",
-  "tesisDegistirSecili": "Vous êtes ici"
+  "tesisDegistirSecili": "Vous êtes ici",
+  "ziyaretDaireAra": "Logement",
+  "ziyaretDaireAraIpucu": "Saisissez un numéro de logement ou le nom d'un résident"
 }

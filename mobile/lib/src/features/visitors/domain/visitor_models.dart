@@ -99,3 +99,31 @@ class UnitResidentBrief {
         ad: json['ad'] as String? ?? '',
       );
 }
+
+/// (P203 §3) Daire arama sonucu: daire + AKTIF sakinleri.
+class DaireArama {
+  const DaireArama({
+    required this.id,
+    required this.no,
+    this.blok,
+    this.sakinler = const [],
+  });
+
+  final String id;
+  final String no;
+  final String? blok;
+  final List<UnitResidentBrief> sakinler;
+
+  /// Listede gosterilen ad: blok varsa "A / 12", yoksa "12".
+  String get gorunenAd => (blok == null || blok!.isEmpty) ? no : '$blok / $no';
+
+  factory DaireArama.fromJson(Map<String, dynamic> j) => DaireArama(
+        id: j['id'] as String,
+        no: (j['no'] as String?) ?? '',
+        blok: j['blok'] as String?,
+        sakinler: ((j['sakinler'] as List?) ?? const [])
+            .whereType<Map>()
+            .map((m) => UnitResidentBrief.fromJson(Map<String, dynamic>.from(m)))
+            .toList(),
+      );
+}

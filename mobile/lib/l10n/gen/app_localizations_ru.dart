@@ -5494,4 +5494,10 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get tesisDegistirSecili => 'Вы здесь';
+
+  @override
+  String get ziyaretDaireAra => 'Квартира';
+
+  @override
+  String get ziyaretDaireAraIpucu => 'Введите номер квартиры или имя жильца';
 }

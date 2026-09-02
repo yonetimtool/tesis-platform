@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -100,7 +102,7 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen> {
 Future<bool> _showVisitorForm(BuildContext context, {Visitor? existing}) async {
   final saved = await merkezSayfaAc<bool>(
     context,
-    builder: (_) => _VisitorForm(existing: existing),
+    builder: (_) => VisitorForm(existing: existing),
   );
   return saved == true;
 }
@@ -305,18 +307,25 @@ void _showDetail(
   );
 }
 
-/// Ziyaretci formu (yalniz guvenlik): ad + daire no + hedef sakin + not.
-/// [existing] null → yeni kayit; dolu → o kaydi DUZENLE (ad/daire/hedef/not).
-class _VisitorForm extends ConsumerStatefulWidget {
-  const _VisitorForm({this.existing});
+/// Ziyaretci formu (yalniz guvenlik): ad + daire + hedef sakin + not.
+/// [existing] null → yeni kayit; dolu → o kaydi DUZENLE.
+///
+/// (P203 §3) SINIF DISA ACILDI (`@visibleForTesting`): daire secimi
+/// artik bir ARAMA AKISIDIR (gecikmeli istek, sonuc listesi, secimle
+/// dolan hedef secicisi) ve bu akis ancak formun KENDISI cizilerek
+/// olculebilir. Ekranin tamamini cizmek, olculmek istenen seyin
+/// yanina ziyaretci listesini ve rol kapisini da katmakti.
+@visibleForTesting
+class VisitorForm extends ConsumerStatefulWidget {
+  const VisitorForm({this.existing, super.key});
 
   final Visitor? existing;
 
   @override
-  ConsumerState<_VisitorForm> createState() => _VisitorFormState();
+  ConsumerState<VisitorForm> createState() => _VisitorFormState();
 }
 
-class _VisitorFormState extends ConsumerState<_VisitorForm> {
+class _VisitorFormState extends ConsumerState<VisitorForm> {
   final _formKey = GlobalKey<FormState>();
   final _ad = TextEditingController();
   final _unitNo = TextEditingController();
@@ -354,9 +363,68 @@ class _VisitorFormState extends ConsumerState<_VisitorForm> {
   @override
   void dispose() {
     _ad.dispose();
+    _aramaZamanlayici?.cancel();
     _unitNo.dispose();
     _notlar.dispose();
     super.dispose();
+  }
+
+  /// (P203 §3) Arama sonuclari. `null` = henuz aranmadi.
+  List<DaireArama>? _sonuclar;
+
+  /// Aramayi GECIKTIREN zamanlayici. Her tusta istek atmak, dokuz
+  /// harflik bir isim icin dokuz istek demekti.
+  Timer? _aramaZamanlayici;
+
+  /// (P203 §3) Arama kutusu degisti — GECIKMELI ara.
+  void _aramaDegisti(String deger) {
+    _aramaZamanlayici?.cancel();
+    // Secim yapilmis bir daireyi kullanici DEGISTIRIYORSA eski hedef
+    // artik gecerli degil: sessizce durmasi, yanlis sakine bildirim
+    // gonderilmesi demekti.
+    setState(() {
+      _targetId = null;
+      _residents = null;
+    });
+    if (deger.trim().length < 2) {
+      setState(() => _sonuclar = null);
+      return;
+    }
+    _aramaZamanlayici = Timer(const Duration(milliseconds: 350), () {
+      unawaited(_ara(deger.trim()));
+    });
+  }
+
+  Future<void> _ara(String q) async {
+    setState(() {
+      _loadingResidents = true;
+      _residentsError = null;
+    });
+    try {
+      final liste = await ref.read(visitorApiProvider).daireAra(q);
+      if (!mounted) return;
+      setState(() => _sonuclar = liste);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _residentsError = apiHataMetni(_l10n, e));
+    } finally {
+      if (mounted) setState(() => _loadingResidents = false);
+    }
+  }
+
+  /// Listeden bir daire secildi: numara alana yazilir, sakinler AYNI
+  /// yanittan doldurulur (ikinci cagri YOK).
+  void _daireSec(DaireArama d) {
+    setState(() {
+      _unitNo.text = d.no;
+      _sonuclar = null;
+      _residents = d.sakinler;
+      _residentsError =
+          d.sakinler.isEmpty ? _l10n.ziyaretciDaireSakinYok : null;
+      // TEK SAKIN VARSA otomatik secilir — gorevliye anlamsiz bir
+      // secim yaptirmayiz (mevcut davranisin aynisi).
+      _targetId = d.sakinler.length == 1 ? d.sakinler.first.userId : null;
+    });
   }
 
   /// Girilen daire NO'su icin AKTIF sakinleri getir (hedef secicisini doldur).
@@ -480,38 +548,61 @@ class _VisitorFormState extends ConsumerState<_VisitorForm> {
                   : null,
             ),
             const SizedBox(height: 8),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _unitNo,
-                    decoration: InputDecoration(
-                      labelText: l10n.karDaireNo,
-                      border: const OutlineInputBorder(),
-                    ),
-                    maxLength: 50,
-                    validator: (v) => (v == null || v.trim().isEmpty)
-                        ? l10n.karDaireNoGerekli
-                        : null,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: OutlinedButton(
-                    onPressed: _loadingResidents ? null : _loadResidents,
-                    child: _loadingResidents
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : Text(l10n.ziyaretSakinleriGetir),
-                  ),
-                ),
-              ],
+            // (P203 §3) DAIRE SECIMI — ARANABILIR, ELLE YAZILMAZ.
+            //
+            // Eskiden serbest metin + "Sakinleri getir" dugmesiydi.
+            // Kapidaki gorevli cogu zaman daire numarasini DEGIL ISMI
+            // biliyor; numarayi tahmin etmek sessiz bir kusur
+            // uretiyordu (yanlis daire -> bildirim BASKA sakine).
+            //
+            // Alan hem NUMARAYA hem SAKIN ADINA gore arar. Secim
+            // yapilinca sakinler AYNI YANITTAN dolar — ikinci bir
+            // cagri ve ikinci bir bekleme yok.
+            TextFormField(
+              key: const Key('ziyaret-daire-ara'),
+              controller: _unitNo,
+              decoration: InputDecoration(
+                labelText: l10n.ziyaretDaireAra,
+                helperText: l10n.ziyaretDaireAraIpucu,
+                border: const OutlineInputBorder(),
+                suffixIcon: _loadingResidents
+                    ? const Padding(
+                        padding: EdgeInsets.all(12),
+                        child: SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      )
+                    : const Icon(Icons.search),
+              ),
+              maxLength: 50,
+              onChanged: _aramaDegisti,
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? l10n.karDaireNoGerekli
+                  : null,
             ),
+            // ARAMA SONUCLARI — secilince kapanir.
+            if (_sonuclar != null && _sonuclar!.isNotEmpty)
+              Card(
+                margin: const EdgeInsets.only(bottom: 8),
+                child: Column(
+                  children: [
+                    for (final d in _sonuclar!)
+                      ListTile(
+                        key: Key('ziyaret-daire-${d.no}'),
+                        dense: true,
+                        title: Text(d.gorunenAd),
+                        // SAKIN ADLARI GORUNUR: gorevli dogru daireyi
+                        // ISIMDEN tanir — ozelligin varlik sebebi.
+                        subtitle: d.sakinler.isEmpty
+                            ? Text(l10n.ziyaretciDaireSakinYok)
+                            : Text(d.sakinler.map((s) => s.ad).join(', ')),
+                        onTap: () => _daireSec(d),
+                      ),
+                  ],
+                ),
+              ),
             // Hedef sakin secicisi — daire sakinleri cekilince gorunur.
             if (_residentsError != null)
               Padding(

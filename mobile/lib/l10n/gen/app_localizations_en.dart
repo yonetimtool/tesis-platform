@@ -5421,4 +5421,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tesisDegistirSecili => 'You are here';
+
+  @override
+  String get ziyaretDaireAra => 'Unit';
+
+  @override
+  String get ziyaretDaireAraIpucu => 'Type a unit number or a resident\'s name';
 }

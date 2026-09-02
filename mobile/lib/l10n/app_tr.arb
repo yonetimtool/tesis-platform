@@ -2451,5 +2451,13 @@
   "tesisDegistirSecili": "Buradasınız",
   "@tesisDegistirSecili": {
     "description": "(P203 §2) Kullanicinin SU AN bulundugu tesisin isareti."
+  },
+  "ziyaretDaireAra": "Daire",
+  "@ziyaretDaireAra": {
+    "description": "(P203 §3) Ziyaretci formunda daire ARAMA alani (eski: serbest metin daire no)."
+  },
+  "ziyaretDaireAraIpucu": "Daire numarası ya da sakin adı yazın",
+  "@ziyaretDaireAraIpucu": {
+    "description": "(P203 §3) Gorevli numarayi bilmeyebilir; adla da aranabildigi soylenir."
   }
 }

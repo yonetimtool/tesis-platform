@@ -5233,4 +5233,10 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get tesisDegistirSecili => 'Buradasınız';
+
+  @override
+  String get ziyaretDaireAra => 'Daire';
+
+  @override
+  String get ziyaretDaireAraIpucu => 'Daire numarası ya da sakin adı yazın';
 }

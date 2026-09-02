@@ -9262,6 +9262,18 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Buradasınız'**
   String get tesisDegistirSecili;
+
+  /// (P203 §3) Ziyaretci formunda daire ARAMA alani (eski: serbest metin daire no).
+  ///
+  /// In tr, this message translates to:
+  /// **'Daire'**
+  String get ziyaretDaireAra;
+
+  /// (P203 §3) Gorevli numarayi bilmeyebilir; adla da aranabildigi soylenir.
+  ///
+  /// In tr, this message translates to:
+  /// **'Daire numarası ya da sakin adı yazın'**
+  String get ziyaretDaireAraIpucu;
 }
 
 class _AppLocalizationsDelegate

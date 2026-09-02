@@ -1715,5 +1715,7 @@
   "surumSonra": "Позже",
   "surumMagazaAcilamadi": "Не удалось открыть магазин. Обновите приложение вручную в магазине приложений на телефоне.",
   "tesisDegistirBaslik": "Сменить объект",
-  "tesisDegistirSecili": "Вы здесь"
+  "tesisDegistirSecili": "Вы здесь",
+  "ziyaretDaireAra": "Квартира",
+  "ziyaretDaireAraIpucu": "Введите номер квартиры или имя жильца"
 }

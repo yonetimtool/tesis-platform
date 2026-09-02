@@ -5399,4 +5399,11 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get tesisDegistirSecili => 'Vous êtes ici';
+
+  @override
+  String get ziyaretDaireAra => 'Logement';
+
+  @override
+  String get ziyaretDaireAraIpucu =>
+      'Saisissez un numéro de logement ou le nom d\'un résident';
 }

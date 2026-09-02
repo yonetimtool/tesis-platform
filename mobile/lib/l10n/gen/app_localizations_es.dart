@@ -5384,4 +5384,11 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get tesisDegistirSecili => 'Está aquí';
+
+  @override
+  String get ziyaretDaireAra => 'Vivienda';
+
+  @override
+  String get ziyaretDaireAraIpucu =>
+      'Escriba el número de vivienda o el nombre de un residente';
 }

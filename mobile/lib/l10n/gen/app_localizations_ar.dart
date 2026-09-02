@@ -5493,4 +5493,10 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get tesisDegistirSecili => 'أنت هنا';
+
+  @override
+  String get ziyaretDaireAra => 'الشقة';
+
+  @override
+  String get ziyaretDaireAraIpucu => 'اكتب رقم الشقة أو اسم أحد السكان';
 }
