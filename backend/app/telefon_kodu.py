@@ -42,6 +42,7 @@ async def eposta_kodu_uret_ve_gonder(
     eposta: str,
     amac: str,
     ayar=None,
+    sabit_kod: str | None = None,
 ) -> GonderimSonucu:
     """(P172 §5) AYNI KOD MEKANIZMASI, E-POSTA KIMLIGIYLE.
 
@@ -64,7 +65,13 @@ async def eposta_kodu_uret_ve_gonder(
     """
     from .gonderim import saglayici as kanal_saglayicisi
 
-    kod = f"{secrets.randbelow(1_000_000):06d}"
+    # (P205 §1) `sabit_kod` verilirse YENI KOD URETILMEZ.
+    #
+    # Slug'siz e-posta kod girisinde AYNI kod, adresin TUM uyelik
+    # tesislerine yazilir. Tenant basina farkli kod uretmek,
+    # kullanicidan "hangi tesisin kodu" ayrimi yapmasini istemek
+    # olurdu — oysa posta kutusuna TEK bir e-posta dustu.
+    kod = sabit_kod or f"{secrets.randbelow(1_000_000):06d}"
     await session.execute(
         text(
             "DELETE FROM kayit_dogrulama WHERE eposta = :e AND amac = :a "

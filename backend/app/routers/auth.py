@@ -9,6 +9,8 @@ tum aile iptal edilir.
 """
 from __future__ import annotations
 
+import secrets
+
 import jwt
 import redis.asyncio as aioredis
 from fastapi import APIRouter, Depends
@@ -733,33 +735,41 @@ async def eposta_giris_kodu_iste(
     HIZ SINIRI KIMLIGE BAGLI: anahtar `tesis:eposta`. Yalniz e-posta
     kullanmak, ayni adresi tasiyan iki tesisin sayacini birlestirirdi.
     """
-    kimlik = f"{body.tenant_slug}:{str(body.eposta).lower()}"
-    await kod_istegi_say(redis, kimlik, kapsam="giris_eposta")
+    eposta = str(body.eposta).lower()
+    # (P205 §1) HIZ SINIRI ARTIK KIMLIGE BAGLI, tesise degil: slug
+    # opsiyonel oldugu icin "tesis:eposta" anahtari her zaman
+    # kurulamaz. Adres basina saymak, ayni adresi tasiyan iki tesisin
+    # sayacini birlestirir — ve DOGRUSU budur: kotuye kullanan kisi
+    # ADRESI deniyor, tesisi degil.
+    await kod_istegi_say(redis, eposta, kapsam="giris_eposta")
 
     async with SessionLocal() as session:
-        async with session.begin():
-            tenant_id = (
-                await session.execute(
-                    text("SELECT public.tenant_id_by_slug(:slug)"),
-                    {"slug": body.tenant_slug},
+        # (P205 §1) SLUG YOKSA ADRESIN TUM UYELIKLERINE AYNI KOD.
+        #
+        # Kod ADRESE gider ve adresin sahibi TEK KISIDIR; ayni kodu iki
+        # tenant satirina yazmak yeni bir yetki VERMEZ. Dogrulamada
+        # eslesen tesis tek ise giris, cok ise SECIM istenir.
+        satirlar = await _uyelikler(session, eposta)
+    hedefler = [
+        r for r in satirlar
+        if r["is_active"] and (
+            body.tenant_slug is None or r["slug"] == body.tenant_slug
+        )
+    ]
+    # SIZDIRMAMA: hedef bulunamasa da AYNI yanit doner.
+    # KOD BIR KEZ URETILIR ve tum hedeflere AYNISI yazilir: posta
+    # kutusuna TEK bir e-posta dusuyor, kullanicidan "hangi tesisin
+    # kodu" ayrimi yapmasi istenemez.
+    kod = f"{secrets.randbelow(1_000_000):06d}" if hedefler else None
+    for r in hedefler:
+        async with SessionLocal() as session:
+            async with session.begin():
+                await set_tenant(session, r["tenant_id"])
+                ayar = await tenant_ayari(session, r["tenant_id"])
+                await eposta_kodu_uret_ve_gonder(
+                    session, tenant_id=r["tenant_id"], eposta=eposta,
+                    amac="giris", ayar=ayar, sabit_kod=kod,
                 )
-            ).scalar_one_or_none()
-            if tenant_id is None:
-                return KayitDurumResponse(durum="onay_bekliyor")
-            await set_tenant(session, tenant_id)
-            eposta = str(body.eposta).lower()
-            user = (
-                await session.execute(
-                    select(AppUser).where(func.lower(AppUser.email) == eposta)
-                )
-            ).scalar_one_or_none()
-            if user is None or not user.is_active:
-                return KayitDurumResponse(durum="onay_bekliyor")
-            ayar = await tenant_ayari(session, tenant_id)
-            await eposta_kodu_uret_ve_gonder(
-                session, tenant_id=tenant_id, eposta=eposta,
-                amac="giris", ayar=ayar,
-            )
     return KayitDurumResponse(durum="onay_bekliyor")
 
 
@@ -768,46 +778,69 @@ async def eposta_giris_kodu_dogrula(
     body: EpostaKodDogrulaIstek,
     redis: aioredis.Redis = Depends(get_redis),
 ) -> TokenPair:
-    """Kod dogru ise OTURUM ACAR — parola aranmaz (telefon yolunun esi)."""
+    """Kod dogru ise OTURUM ACAR — parola aranmaz (telefon yolunun esi).
+
+    (P205 §1) SLUG OPSIYONEL. Verilmezse adresin uyeliklerinden KODU
+    TUTAN tesisler bulunur:
+      * TEK ise dogrudan giris,
+      * BIRDEN COK ise 409 `tesis_secimi_gerekli` — parola yolundaki
+        davranisin AYNISI; rastgele birini secmek, kullaniciyi
+        bilmedigi bir tesise sokmak olurdu.
+    """
+    eposta = str(body.eposta).lower()
+    async with SessionLocal() as session:
+        satirlar = await _uyelikler(session, eposta)
+    adaylar = [
+        r for r in satirlar
+        if r["is_active"] and (
+            body.tenant_slug is None or r["slug"] == body.tenant_slug
+        )
+    ]
+    if not adaylar:
+        raise TK_GECERSIZ
+
+    # KODU TUTAN tesisler. Slug'siz istekte ayni kod hepsine yazildi,
+    # yani normalde hepsi tutar; yine de TEK TEK dogrulanir — kod bir
+    # tesiste tuketilmis ya da suresi dolmus olabilir.
+    tutanlar: list[dict] = []
+    for r in adaylar:
+        async with SessionLocal() as session:
+            async with session.begin():
+                await set_tenant(session, r["tenant_id"])
+                try:
+                    await eposta_kodunu_dogrula(
+                        session, tenant_id=r["tenant_id"], eposta=eposta,
+                        kod=body.kod, amac="giris",
+                    )
+                except APIError:
+                    continue
+                tutanlar.append(r)
+
+    if not tutanlar:
+        raise TK_GECERSIZ
+    if len(tutanlar) > 1:
+        raise APIError(409, "tesis_secimi_gerekli", "tesis_secimi_gerekli")
+
+    hedef = tutanlar[0]
     async with SessionLocal() as session:
         async with session.begin():
-            tenant_id = (
-                await session.execute(
-                    text("SELECT public.tenant_id_by_slug(:slug)"),
-                    {"slug": body.tenant_slug},
-                )
-            ).scalar_one_or_none()
-            if tenant_id is None:
-                raise TK_GECERSIZ
-            eposta = str(body.eposta).lower()
-            kayit = await eposta_kodunu_dogrula(
-                session, tenant_id=tenant_id, eposta=eposta,
-                kod=body.kod, amac="giris",
-            )
+            await set_tenant(session, hedef["tenant_id"])
             user = (
                 await session.execute(
-                    select(AppUser).where(func.lower(AppUser.email) == eposta)
+                    select(AppUser).where(AppUser.id == hedef["user_id"])
                 )
             ).scalar_one_or_none()
             if user is None or not user.is_active:
                 raise TK_GECERSIZ
-            # (P128) Gorev suresi disindaki denetci token ALMAZ — parolali
-            # ve telefonlu yollarla AYNI kural; burada da olmali, yoksa
-            # ucuncu bir parolasiz yol kapiyi delerdi.
             if gorev_penceresi_disinda(user):
                 raise _GOREV_SURESI_DISINDA
-            # (P181 Bölüm 4) E-POSTA KODUNU GIRMEK ADRESIN KONTROLUNU KANITLAR:
-            # bu, dogrulamanin ta kendisidir. Bayragi burada ACARIZ ki e-posta'li
-            # ama hic dogrulamamis MEVCUT kullanicilar OTP ile girerek otomatik
-            # dogrulansin ve parola sifirlama (Bölüm 2) onlar icin de calissin.
-            if not user.eposta_dogrulandi:
-                user.eposta_dogrulandi = True
-                user.updated_at = func.now()
-            # Kod TUKETILIR: tekrar kullanilamaz.
-            kayit.durum = "onaylandi"
-            await session.flush()
-            return await _issue_token_pair(redis, user)
-
+            await record_audit(
+                session, action=Action.LOGIN_OK, tenant_id=hedef["tenant_id"],
+                actor_user_id=user.id, actor_rol=user.role,
+                resource_type="app_user", resource_id=user.id,
+            )
+            hedef_user = user
+    return await _issue_token_pair(redis, hedef_user)
 
 @router.post("/sifre/kod-iste", response_model=KayitDurumResponse)
 async def sifre_sifirlama_kodu_iste(

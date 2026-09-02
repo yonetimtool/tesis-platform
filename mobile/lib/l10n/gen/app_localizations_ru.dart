@@ -3003,6 +3003,22 @@ class AppLocalizationsRu extends AppLocalizations {
       'При первом входе введите временный код, полученный от управления.';
 
   @override
+  String get girisKimlik => 'Эл. почта или номер телефона';
+
+  @override
+  String get girisKimlikOrnek => 'name@example.com или 5XX XXX XX XX';
+
+  @override
+  String get girisKimlikYardim =>
+      'Войдите по адресу эл. почты или номеру телефона';
+
+  @override
+  String get girisKimlikGerekli => 'Введите адрес эл. почты или номер телефона';
+
+  @override
+  String get girisTesisSec => 'В какой объект вы хотите войти?';
+
+  @override
   String get girisBeniHatirla => 'Запомнить меня';
 
   @override
@@ -5518,6 +5534,45 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get vardiyaBos => 'Не закрыта';
+
+  @override
+  String get vardiyaYeni => 'Новая смена';
+
+  @override
+  String get vardiyaKayitYok => 'На этой неделе смен не запланировано.';
+
+  @override
+  String get vardiyaPersonel => 'Сотрудник';
+
+  @override
+  String get vardiyaBaslangicTarihi => 'Дата начала';
+
+  @override
+  String get vardiyaBitisTarihi => 'Дата окончания';
+
+  @override
+  String get vardiyaBaslangicSaati => 'Время начала';
+
+  @override
+  String get vardiyaBitisSaati => 'Время окончания';
+
+  @override
+  String get vardiyaNot => 'Заметка';
+
+  @override
+  String get vardiyaEkleBilgi =>
+      'Если указать диапазон дат, смена создаётся на каждый день диапазона. Если время окончания раньше времени начала (22:00–05:00), смена переходит на следующий день.';
+
+  @override
+  String get vardiyaEkleGonder => 'Добавить смены';
+
+  @override
+  String get vardiyaCakisanHaric => 'Добавить без конфликтных дней';
+
+  @override
+  String vardiyaCakisanGunler(int n) {
+    return 'Конфликты в $n днях';
+  }
 
   @override
   String get vardiyaCikar => 'Убрать';

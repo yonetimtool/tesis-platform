@@ -3,6 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/error/api_exception.dart';
 import '../../push/presentation/push_registrar.dart';
 import '../data/auth_repository_impl.dart';
+import '../../../core/ui/telefon_alani.dart';
+import '../data/auth_api.dart';
+import '../data/token_storage.dart';
+import '../../tesis/domain/tesis_uyeligi.dart';
 import '../domain/giris_hatasi.dart';
 import 'giris_hata_metni.dart';
 
@@ -255,6 +259,62 @@ class AuthController extends Notifier<AuthState> {
     } on ApiException catch (e) {
       state = state.copyWith(
         submitting: false, errorMessage: e.message, hataKimligi: girisAgHatasi(e));
+      return null;
+    }
+  }
+
+  /// (P205 §1) TEK ALANDAN giris — e-posta VEYA telefon.
+  ///
+  /// Ayrimi ISTEMCI yapar ama yalnizca TASIMA icin (bkz. `auth_api`
+  /// `login` basligi): telefon `login-phone`a gider cunku ILK GIRIS
+  /// akisi (gecici kod -> setup_token) orada. Kullanici bu ayrimi
+  /// GORMEZ.
+  ///
+  /// Donus: `null` = giris tamam · liste dolu = TESIS SECIMI gerekli.
+  Future<List<TesisUyeligi>?> girisYap({
+    required String kimlik,
+    required String password,
+    String? tenantSlug,
+    bool rememberMe = false,
+  }) async {
+    final k = kimlik.trim();
+    if (!k.contains('@')) {
+      // TELEFON: mevcut yol AYNEN korunur (ilk giris akisi orada) ve
+      // telefon GLOBAL BENZERSIZ oldugu icin tesis secimi cikmaz.
+      await loginPhone(
+        phone: telefonNormalle(k), password: password, rememberMe: rememberMe);
+      return null;
+    }
+    state = state.copyWith(
+        submitting: true, errorMessage: null, hataKimligi: null);
+    try {
+      final jetonlar = await ref.read(authApiProvider).login(
+            kimlik: k, password: password, tenantSlug: tenantSlug);
+      await ref.read(tokenStorageProvider).save(jetonlar);
+      state = state.copyWith(
+          submitting: false, status: AuthStatus.authenticated);
+      return null;
+    } on ApiException catch (e) {
+      // 409 = BIRDEN COK TESIS. Hata DEGIL: kullanicidan bir KARAR
+      // isteniyor. Liste ayri ucla alinir — giris ucu jeton uretmeden
+      // once tesis adlarini dondurmemeli.
+      if (e.statusCode == 409) {
+        try {
+          final liste = await ref
+              .read(authApiProvider)
+              .tesislerim(kimlik: k, password: password);
+          state = state.copyWith(submitting: false);
+          return liste;
+        } on ApiException {
+          // Liste alinamadi: kullaniciyi bos bir secim ekraninda
+          // birakmaktansa JENERIK hataya dusur.
+        }
+      }
+      state = state.copyWith(
+        submitting: false,
+        errorMessage: e.message,
+        hataKimligi: girisAgHatasi(e),
+      );
       return null;
     }
   }

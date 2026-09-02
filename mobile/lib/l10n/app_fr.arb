@@ -804,6 +804,11 @@
   "sakinYok": "Aucun résident pour l’instant.\nAjoutez-en depuis le bas à droite.",
   "girisParolaVeyaKod": "Mot de passe ou code temporaire",
   "girisIlkKodIpucu": "À la première connexion, saisissez le code temporaire reçu de la gestion.",
+  "girisKimlik": "E-mail ou numéro de téléphone",
+  "girisKimlikOrnek": "nom@exemple.com ou 5XX XXX XX XX",
+  "girisKimlikYardim": "Connectez-vous avec votre e-mail ou votre numéro de téléphone",
+  "girisKimlikGerekli": "Saisissez votre e-mail ou votre numéro de téléphone",
+  "girisTesisSec": "Sur quel site souhaitez-vous vous connecter ?",
   "girisBeniHatirla": "Se souvenir de moi",
   "girisYap": "Se connecter",
   "girisOturumSonaErdi": "Votre session a expiré. Veuillez vous reconnecter.",
@@ -1724,6 +1729,21 @@
   "vardiyaSiradaki": "Poste suivant",
   "vardiyaSiradakiYok": "Aucun poste à venir n'est planifié.",
   "vardiyaBos": "Non pourvu",
+  "vardiyaYeni": "Nouveau poste",
+  "vardiyaKayitYok": "Aucun poste planifié cette semaine.",
+  "vardiyaPersonel": "Personnel",
+  "vardiyaBaslangicTarihi": "Date de début",
+  "vardiyaBitisTarihi": "Date de fin",
+  "vardiyaBaslangicSaati": "Heure de début",
+  "vardiyaBitisSaati": "Heure de fin",
+  "vardiyaNot": "Note",
+  "vardiyaEkleBilgi": "Si vous indiquez une plage de dates, un poste distinct est créé pour chaque jour. Si l'heure de fin précède l'heure de début (22:00–05:00), le poste se poursuit le lendemain.",
+  "vardiyaEkleGonder": "Ajouter les postes",
+  "vardiyaCakisanHaric": "Ajouter en excluant les conflits",
+  "vardiyaCakisanGunler": "Conflits sur {n} jours",
+  "@vardiyaCakisanGunler": {
+    "placeholders": { "n": { "type": "int" } }
+  },
   "vardiyaCikar": "Retirer",
   "vardiyaCikarSebep": "Motif du retrait (maladie, congé, urgence)"
 }

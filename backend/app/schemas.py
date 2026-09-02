@@ -143,8 +143,21 @@ class TesislerimIstek(BaseModel):
     olurdu. Kisa parola da sessizce bos liste doner.
     """
 
-    kimlik: str = Field(..., min_length=1, max_length=254)
+    kimlik: str | None = Field(None, min_length=1, max_length=254)
+    #: (P203 §2) ILK SURUMDE alan `email` idi. Tarayicida ONBELLEKTEKI
+    #: eski JS bir sure daha `email` gonderir; alani reddetmek, giris
+    #: ekranindaki tesis SECIMINI onlarda kirardi. `LoginRequest` ile
+    #: AYNI uzlasma.
+    email: EmailStr | None = None
     password: str = Field(..., min_length=1)
+
+    @model_validator(mode="after")
+    def _kimlik_birlestir(self) -> "TesislerimIstek":
+        if not self.kimlik and self.email:
+            object.__setattr__(self, "kimlik", str(self.email))
+        if not self.kimlik:
+            raise ValueError("kimlik zorunlu")
+        return self
 
 
 class TesisUyeligi(BaseModel):
@@ -1633,18 +1646,28 @@ class TelefonKodIstek(BaseModel):
 class EpostaKodIstek(BaseModel):
     """(P172 §5) E-posta ile giris kodu istegi.
 
-    TESIS KODU ZORUNLU ve bu telefon yolundan FARKLI: telefon PLATFORM
-    GENELINDE benzersizdir (`tenant_id_by_phone` tesisi ondan cozer),
-    e-posta ise TENANT ICINDE benzersizdir. Tesis kodu olmadan ayni
-    adresi kullanan iki tesis birbirine karisirdi.
+    (P205 §1) TESIS KODU ARTIK OPSIYONEL.
+
+    Eski gerekce: "telefon platform genelinde benzersiz, e-posta tenant
+    icinde — tesis kodu olmadan iki tesis birbirine karisirdi." Dogru
+    ama COZUMU YANLISTI: kullaniciya ezberlemesi gerekmeyen bir kod
+    yazdirmak.
+
+    YENI DAVRANIS: slug verilmezse kod, ADRESIN UYE OLDUGU TUM
+    TESISLERE AYNI DEGERLE yazilir. Dogrulamada eslesen tesis TEK ise
+    dogrudan giris; BIRDEN COK ise 409 `tesis_secimi_gerekli` ve
+    istemci secim gosterir — parola yolundaki davranisin AYNISI.
+
+    Kod ADRESE gider ve adresin sahibi TEK KISIDIR; ayni kodu iki
+    tenant satirina yazmak yeni bir yetki vermez.
     """
 
-    tenant_slug: str = Field(min_length=1, max_length=100)
+    tenant_slug: str | None = Field(None, min_length=1, max_length=100)
     eposta: EmailStr
 
 
 class EpostaKodDogrulaIstek(BaseModel):
-    tenant_slug: str = Field(min_length=1, max_length=100)
+    tenant_slug: str | None = Field(None, min_length=1, max_length=100)
     eposta: EmailStr
     kod: str = Field(min_length=4, max_length=12)
 
@@ -1990,7 +2013,8 @@ class VardiyaAtamaIstek(BaseModel):
 
 class VardiyaPlanOut(BaseModel):
     id: uuid.UUID
-    shift_id: uuid.UUID
+    #: (P205 §2) SERBEST vardiyada YOK — satir kendi saatlerini tasir.
+    shift_id: uuid.UUID | None = None
     tarih: date
     user_id: uuid.UUID
     durum: str
@@ -1999,6 +2023,94 @@ class VardiyaPlanOut(BaseModel):
     #: Ustu FAZLA MESAIDIR: yasal (md. 41) ama maliyetli. Engellemek,
     #: sistemin desteklemesi gereken mesru bir durumu imkansiz kilardi.
     uyarilar: list[str] = []
+
+
+# ================= (P205 §2) ZAMAN CIZELGESI ================================ #
+class VardiyaBlokOut(BaseModel):
+    """Cizelgede TEK bir vardiya blogu — bir kisinin bir vardiyasi.
+
+    SAATLER COZULMUS GELIR (`baslar`/`biter` tam damga). Istemciye
+    "sablon mu satir mi" secimini yaptirmak, ayni kurali web'de ve
+    mobilde IKI KEZ yazmak olurdu; biri sapinca cizelge yalan soylerdi.
+    """
+
+    plan_id: uuid.UUID
+    tarih: date
+    baslar: datetime
+    biter: datetime
+    #: Sablondan geliyorsa adi; serbest vardiyada YOK.
+    shift_ad: str | None = None
+    not_metni: str | None = None
+    #: (§2.2) 22:00-05:00 gibi ERTESI GUNE tasan vardiya. Istemci bunu
+    #: `baslar`/`biter`den de cikarabilir ama cizelge bunu IKI GUNDE
+    #: cizmek zorunda ve bayragi tek yerde uretmek, iki yuzeyde ayri
+    #: hesaplamaktan daha guvenli.
+    gece_asiyor: bool = False
+
+
+class VardiyaCizelgeKisiOut(BaseModel):
+    user_id: uuid.UUID
+    ad: str
+    rol: str
+    bloklar: list[VardiyaBlokOut] = []
+
+
+class VardiyaCizelgeOut(BaseModel):
+    baslangic: date
+    bitis: date
+    #: Vardiyasi OLMAYAN personel de listede DURUR: cizelgenin isi
+    #: "kim calisiyor" kadar "kim BOSTA" sorusunu da yanitlamaktir.
+    personel: list[VardiyaCizelgeKisiOut] = []
+
+
+class VardiyaTopluIstek(BaseModel):
+    """(§2.2) Hizli vardiya ekle — TARIH ARALIGI.
+
+    `cakisanlari_atla` VARSAYILAN OLARAK FALSE ve bu bilincli: istek
+    acikca "cakisan gunler ATLANMASIN, kullaniciya sorulsun" diyor.
+    Sunucu once REDDEDER ve cakisan gunleri sayar; istemci kullaniciya
+    sorup ISTERSE bayragi acik gonderir.
+    """
+
+    user_id: uuid.UUID
+    baslangic_tarih: date
+    bitis_tarih: date
+    baslangic_saat: time
+    bitis_saat: time
+    not_metni: str | None = Field(None, max_length=500)
+    cakisanlari_atla: bool = False
+
+
+class VardiyaTopluGunOut(BaseModel):
+    tarih: date
+    #: `eklendi` | `cakisma` | `eklenebilir` (yalniz onizlemede)
+    durum: str
+    plan_id: uuid.UUID | None = None
+
+
+class VardiyaTopluOut(BaseModel):
+    #: FALSE = HICBIR SEY YAZILMADI: cakisma var ve kullanici henuz
+    #: karar vermedi. Istemci gunleri gosterip istegi
+    #: `cakisanlari_atla=true` ile TEKRARLAR (ya da vazgecer).
+    uygulandi: bool = True
+    eklenen: int
+    cakisan: int
+    gunler: list[VardiyaTopluGunOut] = []
+    uyarilar: list[str] = []
+
+
+class VardiyaGuncelleIstek(BaseModel):
+    """(§2.3) Blogun saatini/gununu degistir.
+
+    Verilmeyen alan DEGISMEZ. `None` ile "sablona geri don" DEMEK
+    MUMKUN DEGIL — bilincli: bos birakmak "degistirme" demek ve iki
+    anlami tek alana yuklemek, yanlislikla saat silmeye acik olurdu.
+    """
+
+    tarih: date | None = None
+    baslangic_saat: time | None = None
+    bitis_saat: time | None = None
+    not_metni: str | None = Field(None, max_length=500)
 
 
 class VardiyaSimdiOut(BaseModel):

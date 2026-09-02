@@ -804,6 +804,11 @@
   "sakinYok": "Aún no hay residentes.\nAñada uno desde abajo a la derecha.",
   "girisParolaVeyaKod": "Contraseña o código temporal",
   "girisIlkKodIpucu": "En el primer acceso, introduzca el código temporal que le dio la administración.",
+  "girisKimlik": "Correo electrónico o número de teléfono",
+  "girisKimlikOrnek": "nombre@ejemplo.com o 5XX XXX XX XX",
+  "girisKimlikYardim": "Inicie sesión con su correo electrónico o número de teléfono",
+  "girisKimlikGerekli": "Escriba su correo electrónico o número de teléfono",
+  "girisTesisSec": "¿En qué instalación desea iniciar sesión?",
   "girisBeniHatirla": "Recordarme",
   "girisYap": "Iniciar sesión",
   "girisOturumSonaErdi": "Su sesión ha caducado. Vuelva a iniciar sesión.",
@@ -1724,6 +1729,21 @@
   "vardiyaSiradaki": "Próximo turno",
   "vardiyaSiradakiYok": "No hay un próximo turno planificado.",
   "vardiyaBos": "Sin cubrir",
+  "vardiyaYeni": "Nuevo turno",
+  "vardiyaKayitYok": "No hay turnos planificados esta semana.",
+  "vardiyaPersonel": "Personal",
+  "vardiyaBaslangicTarihi": "Fecha de inicio",
+  "vardiyaBitisTarihi": "Fecha de fin",
+  "vardiyaBaslangicSaati": "Hora de inicio",
+  "vardiyaBitisSaati": "Hora de fin",
+  "vardiyaNot": "Nota",
+  "vardiyaEkleBilgi": "Si indica un intervalo de fechas, se crea un turno para cada día. Si la hora de fin es anterior a la de inicio (22:00–05:00), el turno pasa al día siguiente.",
+  "vardiyaEkleGonder": "Añadir turnos",
+  "vardiyaCakisanHaric": "Añadir excluyendo los conflictos",
+  "vardiyaCakisanGunler": "Hay conflictos en {n} días",
+  "@vardiyaCakisanGunler": {
+    "placeholders": { "n": { "type": "int" } }
+  },
   "vardiyaCikar": "Quitar",
   "vardiyaCikarSebep": "Motivo de la retirada (enfermedad, permiso, emergencia)"
 }

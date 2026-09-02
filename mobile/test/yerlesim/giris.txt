@@ -1,11 +1,12 @@
- 276,  77  236x26  yönetiyor
- 346,  36  24x24  U+F290
- 346,  76  274x24  örn. 0532 111 22 03
- 350,  76  198x16  Cep telefonu
- 418,  36  24x24  U+E3B1
- 418, 330  24x24  U+F4A1
- 422,  76  238x16  Parola veya geçici kod
- 462,  40  310x32  İlk girişte yönetimden aldığınız geçici kodu yazın.
- 516,  80  286x20  Beni hatırla
- 590, 132  127x20  Giriş yap
- 648,  68  254x20  Tesis ID ile giriş
+ 258,  77  236x26  yönetiyor
+ 328,  36  24x24  U+E497
+ 328,  76  274x24  ornek@eposta.com veya 5XX XXX XX XX
+ 332,  76  274x16  E-posta veya telefon numarası
+ 372,  40  310x32  E-posta veya telefon numaranız ile giriş yapın
+ 436,  36  24x24  U+E3B1
+ 436, 330  24x24  U+F4A1
+ 440,  76  238x16  Parola veya geçici kod
+ 480,  40  310x32  İlk girişte yönetimden aldığınız geçici kodu yazın.
+ 534,  80  286x20  Beni hatırla
+ 608, 132  127x20  Giriş yap
+ 666,  68  254x20  Tesis ID ile giriş

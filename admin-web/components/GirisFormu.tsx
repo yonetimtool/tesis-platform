@@ -38,7 +38,7 @@ import { MAGAZA_ANDROID, MAGAZA_IOS } from "@/lib/config";
 import { ParolaAlani } from "@/components/ParolaAlani";
 import { SosyalGiris } from "@/components/SosyalGiris";
 import { useT } from "@/lib/i18n/kullan";
-import { telefonGiris, telefonHatasi, telefonNormalle } from "@/lib/telefon";
+import { telefonGiris } from "@/lib/telefon";
 import type { Yuzey } from "@/lib/yuzey";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -55,7 +55,10 @@ const EASE = [0.22, 1, 0.36, 1] as const;
 // BFF uclari MODUL DUZEYINDE sabit: ucluda satir-ici dizge yazmak
 // `sabit-metin` taramasini (hakli olarak) tetikliyor — o tarama ucludaki
 // her dizgeyi "cevrilmemis metin" adayi sayar.
-const UC_TELEFON = "/api/auth/login-phone";
+// (P205 §1) `login-phone` ARTIK CAGRILMIYOR: tek alan `/auth/login`a
+// gider ve kimlik turunu SUNUCU cozer. Uc BACKEND'DE DURUYOR — eski
+// mobil surumler onu kullaniyor ve magazadaki bir uygulamayi
+// guncellemeyen kullanicinin girisini kirmayiz.
 const UC_EPOSTA = "/api/auth/login";
 const UC_TESISLERIM = "/api/auth/tesislerim";
 
@@ -77,9 +80,16 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
   const telefonla = yuzey === "tesis";
   const t = useT();
   const router = useRouter();
-  const [telefon, setTelefon] = useState("");
+  // (P205 §1) TEK ALAN — e-posta VEYA telefon.
+  //
+  // Iki ayri alan (telefon / e-posta+tesis) tutmak, kullaniciya
+  // "hangisiyle giriyorsun" sorusunu SORMAKTI. Bilgisayarin kolayca
+  // yapabilecegi bir ayrimi insana yaptirmak, her sorulan soru gibi
+  // bir yanlis cevap firsatiydi.
+  const [kimlik, setKimlik] = useState("");
+  // `tenantSlug` ARTIK BIR GIRDI DEGIL: yalniz TESIS SECIMININ sonucu
+  // olarak dolar ve giris govdesine oyle gider.
   const [tenantSlug, setTenantSlug] = useState("");
-  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -124,9 +134,11 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
   useEffect(() => {
     const d = tanimlayiciOku(telefonla);
     if (d === null) return;
-    if (d.telefon !== undefined) setTelefon(telefonGiris(d.telefon));
-    if (d.tenantSlug !== undefined) setTenantSlug(d.tenantSlug);
-    if (d.email !== undefined) setEmail(d.email);
+    // (P205 §1) TEK ALAN: hangisi saklanmissa o doldurulur. Eski
+    // kayitlar iki ayri anahtar tasiyor olabilir — ikisi de kimlik
+    // alanina duser.
+    if (d.telefon !== undefined) setKimlik(telefonGiris(d.telefon));
+    else if (d.email !== undefined) setKimlik(d.email);
     setRememberMe(true);
     // PAROLA BURADA DOLDURULMAZ ve doldurulmayacak: parolayi bizim
     // okuyabildigimiz bir yerden getirmek, onu bizim yazmis olmamizi
@@ -143,18 +155,17 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
       tanimlayiciSil();
       return;
     }
-    tanimlayiciYaz(
-      telefonla
-        ? { telefon: telefonNormalle(telefon) }
-        : { tenantSlug, email },
-    );
-    await kimligiSakla(telefonla ? telefonNormalle(telefon) : email, password);
+    // TESIS KODU ARTIK SAKLANMAZ: kullanicidan istenmiyor ve secim
+    // sonucu her giriste yeniden cozuluyor.
+    const k = kimlik.trim();
+    tanimlayiciYaz(k.includes("@") ? { email: k } : { telefon: k });
+    await kimligiSakla(k, password);
   }
 
   /** Kod iste. Yanit HER DURUMDA aynidir (adres varligini sizdirmaz). */
   async function kodIste() {
     setError(null);
-    if (!tenantSlug.trim() || !email.trim()) {
+    if (!kimlik.trim()) {
       setError(t("girisAlanZorunlu"));
       return;
     }
@@ -163,7 +174,10 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
       const res = await fetch("/api/auth/eposta-kod?adim=iste", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tenant_slug: tenantSlug, eposta: email }),
+        // (P205 §1) TESIS KODU GONDERILMEZ: sunucu kodu adresin TUM
+        // uyelik tesislerine AYNI degerle yaziyor ve dogrulamada
+        // eslesen tesis tek ise giris, cok ise SECIM istiyor.
+        body: JSON.stringify({ eposta: kimlik.trim() }),
       });
       if (!res.ok) {
         const d = (await res.json().catch(() => null)) as ApiError | null;
@@ -191,7 +205,8 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          tenant_slug: tenantSlug, eposta: email, kod: kod.trim(),
+          eposta: kimlik.trim(), kod: kod.trim(),
+          ...(tenantSlug.trim() ? { tenant_slug: tenantSlug.trim() } : {}),
         }),
       });
       if (!res.ok) {
@@ -219,14 +234,14 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
    * yine girebilmeli — kolaylik katmani asil yolu KIRMAMALI.
    */
   async function tesisleriGetir(
-    eposta: string,
+    kimlikDegeri: string,
     parola: string,
   ): Promise<TesisUyeligi[]> {
     try {
       const r = await fetch(UC_TESISLERIM, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: eposta, password: parola }),
+        body: JSON.stringify({ kimlik: kimlikDegeri, password: parola }),
       });
       if (!r.ok) return [];
       const d = (await r.json().catch(() => null)) as
@@ -263,34 +278,20 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
     }
     setError(null);
     setMagazaGoster(false);
-    // TELEFON DOGRULAMASI ISTEMCIDE (P123): eksik/hatali numarayla istek
-    // gondermek sunucudan anlasilmaz bir 401 aldirirdi ("numara mi parola
-    // mi yanlis?" — sunucu adimi bilincli olarak sizdirmiyor).
-    if (telefonla) {
-      const th = telefonHatasi(telefon);
-      if (th) {
-        setError(th === "gecersizOnEk" ? t("telefonHataOnEk") : t("telefonHataEksik"));
-        setHataSayaci((n) => n + 1);
-        return;
-      }
-    }
+    // (P205 §1) ISTEMCI TARAFI BICIM DENETIMI KALKTI.
+    //
+    // Eskiden telefon yuzeyinde numara bicimi burada denetleniyordu
+    // ("numara mi parola mi yanlis" belirsizligini onlemek icin). Tek
+    // alanda bu YAPILAMAZ: girdi telefon OLMAK ZORUNDA DEGIL. Ve
+    // gerek de yok — sunucu artik cozulemeyen girdiye de AYNI 401'i
+    // donuyor, yani belirsizlik SUNUCUDA BILINCLI bir karar.
     setLoading(true);
     try {
-      // (P203 §2) TESIS KODU BOS: kimlik hangi tesislerde gecerli?
-      //   0 -> normal giris denenir (SIZDIRMAMA: "hesap yok" demeyiz,
-      //        kullanici standart 401 metnini gorur),
-      //   1 -> o tesisle dogrudan girilir (secim EKRANI CIKMAZ),
-      //   N -> SECIM cizilir.
-      let slug = tenantSlug.trim();
-      if (!telefonla && !slug) {
-        const secenekler = await tesisleriGetir(email, password);
-        if (secenekler.length > 1) {
-          setSecim(secenekler);
-          return;
-        }
-        if (secenekler.length === 1) slug = secenekler[0].slug;
-      }
-      await girisIste(slug);
+      // (P205 §1) SLUG BIR GIRDI DEGIL: dogrudan giris denenir.
+      //   200 -> girildi (tek uyelik),
+      //   409 -> BIRDEN COK uyelik; liste alinip SECIM cizilir,
+      //   401 -> jenerik hata (sizdirmama).
+      await girisIste(tenantSlug.trim());
     } catch {
       setError(t("ortakSunucuyaUlasilamadi"));
     } finally {
@@ -307,16 +308,31 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
    */
   async function girisIste(slug: string) {
     {
-      const govde = telefonla
-        ? { phone: telefonNormalle(telefon), password }
-        : { tenant_slug: slug, email, password };
-      let uc = UC_EPOSTA;
-      if (telefonla) uc = UC_TELEFON;
-      const res = await fetch(uc, {
+      // (P205 §1) TEK UC, TEK GOVDE: `kimlik` e-posta da olabilir
+      // telefon da; ayrimi SUNUCU yapar. `login-phone` DURUYOR ama
+      // yeni tek alan buraya gelir — ikinci bir uc cagirmak, ayni
+      // karari (kimlik turu) iki yerde vermek olurdu.
+      const govde: Record<string, unknown> = {
+        kimlik: kimlik.trim(),
+        password,
+      };
+      if (slug) govde.tenant_slug = slug;
+      const res = await fetch(UC_EPOSTA, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(govde),
       });
+      // (P205 §1) 409 = BIRDEN COK TESIS. Hata DEGIL: kullanicidan bir
+      // KARAR isteniyor. Liste ayri bir ucla alinir cunku giris ucu
+      // jeton uretmeden once tesis adlarini dondurmemeli — o bilgi
+      // parolayi dogrulayan `tesislerim` ucunun isi.
+      if (res.status === 409) {
+        const secenekler = await tesisleriGetir(kimlik.trim(), password);
+        if (secenekler.length > 1) {
+          setSecim(secenekler);
+          return;
+        }
+      }
       if (!res.ok) {
         const data = (await res.json().catch(() => null)) as ApiError | null;
         // Sunucu metni ONCE (tur 14'ten beri istegin dilinde gelir); yoksa
@@ -526,80 +542,40 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
                   </button>
                 ))}
               </div>
-            ) : telefonla ? (
+            ) : (
+              /* (P205 §1) TEK ALAN — E-POSTA VEYA TELEFON.
+                 Iki ayri alan (telefon / e-posta + tesis kodu)
+                 kullaniciya "hangisiyle giriyorsun" sorusunu
+                 SORUYORDU. Bilgisayarin kolayca yapabilecegi bir
+                 ayrimi (`@` var mi) insana yaptirmak, her sorulan
+                 soru gibi bir yanlis cevap firsatiydi.
+
+                 `type="text"` BILINCLI: `type="email"` tarayicinin
+                 kendi bicim denetimini devreye sokar ve telefon
+                 numarasi yazan kullaniciya "gecerli bir e-posta
+                 girin" dedirtirdi. */
               <label className="block">
                 <span className={etiketSinifi} style={etiketStili}>
-                  {t("kullaniciTelefon")}
+                  {t("girisKimlik")}
                 </span>
                 <input
-                  key={`tel-${hataSayaci}`}
-                  // (P170 §1) `name` + `id` EKLENDI. `autocomplete` tek
-                  // basina yetmiyor: tarayicilarin parola yoneticisi bir
-                  // alani "kullanici adi" diye KAYDEDEBILMEK icin kararli
-                  // bir ad arar; adsiz alanlar cogu tarayicida teklifin
-                  // disinda kalir.
-                  id="yz-telefon"
-                  name="telefon"
-                  type="tel"
-                  inputMode="numeric"
+                  key={`kimlik-${hataSayaci}`}
+                  id="yz-kimlik"
+                  name="username"
+                  type="text"
                   className={`${alanSinifi} giris-alan${error ? " giris-titre" : ""}`}
                   style={alanStili}
-                  // (P123) TEK bicimlendirici — 05XX XXX XX XX.
-                  value={telefonGiris(telefon)}
-                  onChange={(e) => setTelefon(telefonGiris(e.target.value))}
-                  placeholder={t("kullaniciTelefonOrnek")}
+                  value={kimlik}
+                  onChange={(e) => setKimlik(e.target.value)}
+                  placeholder={t("girisKimlikOrnek")}
                   autoComplete="username"
-                  aria-label={t("kullaniciTelefon")}
+                  aria-label={t("girisKimlik")}
                   required
                 />
                 <span className="mt-1.5 block text-xs" style={{ color: METIN_SOLUK }}>
-                  {t("girisTelefonYardim")}
+                  {t("girisKimlikYardim")}
                 </span>
               </label>
-            ) : (
-              <>
-                <label className="block">
-                  <span className={etiketSinifi} style={etiketStili}>
-                    {t("girisTesisSlug")}
-                  </span>
-                  <input
-                    className={`${alanSinifi} giris-alan`}
-                    style={alanStili}
-                    value={tenantSlug}
-                    onChange={(e) => setTenantSlug(e.target.value)}
-                    id="yz-tesis"
-                    name="tenant_slug"
-                    placeholder="yonetio"
-                    autoComplete="organization"
-                    aria-label={t("girisTesisSlug")}
-                    // (P203 §2) ZORUNLU DEGIL. Bos birakilirsa sunucu
-                    // kimligin hangi tesislerde gecerli oldugunu doner:
-                    // tek tesis varsa dogrudan girilir, birden coksa
-                    // SECIM cikar. Zorunlu birakmak, kullaniciyi
-                    // ezberlemesi gerekmeyen bir kodu ezberlemeye
-                    // zorluyordu — sikayetin kendisi buydu.
-                  />
-                </label>
-
-                <label className="block">
-                  <span className={etiketSinifi} style={etiketStili}>
-                    {t("girisEposta")}
-                  </span>
-                  <input
-                    key={`eposta-${hataSayaci}`}
-                    id="yz-eposta"
-                    name="email"
-                    type="email"
-                    className={`${alanSinifi} giris-alan${error ? " giris-titre" : ""}`}
-                    style={alanStili}
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    autoComplete="username"
-                    aria-label={t("girisEposta")}
-                    required
-                  />
-                </label>
-              </>
             )}
 
             {kodAdimi === "kod" ? (
@@ -652,7 +628,11 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
             {/* (P172 §5) KOD ILE GIRIS — parolasiz yol.
                 YALNIZ E-POSTA YUZEYINDE: `app.*` telefonla girer ve orada
                 kod yolu mobil uygulamada zaten var. */}
-            {!telefonla && (
+            {/* (P205 §1) KOD YOLU ARTIK HER IKI YUZEYDE. Eskiden
+                `app.*`ta gizliydi cunku orada yalniz telefon vardi ve
+                kod yolu e-postaya bagliydi; tek alanda bu ayrim
+                anlamsiz — kullanici ne yazdiysa kod oraya gider. */}
+            {(
               <button
                 type="button"
                 className="odak-ters text-xs underline"
@@ -678,9 +658,13 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
                 className="odak-ters block text-xs underline"
                 style={{ color: METIN_IKINCIL }}
                 onClick={() => {
+                  // (P205 §1) Parola sifirlama E-POSTAYLA calisir
+                  // (P200 §1); telefon yazilmissa on-doldurma
+                  // YAPILMAZ — yanlis alani doldurmak, kullaniciya
+                  // duzeltmesi gereken bir sey vermek olurdu.
                   const q = new URLSearchParams();
                   if (tenantSlug) q.set("tesis", tenantSlug);
-                  if (email) q.set("eposta", email);
+                  if (kimlik.includes("@")) q.set("eposta", kimlik.trim());
                   const qs = q.toString();
                   router.push(`/giris/sifremi-unuttum${qs ? `?${qs}` : ""}`);
                 }}

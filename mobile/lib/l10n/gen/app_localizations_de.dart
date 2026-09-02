@@ -2906,6 +2906,23 @@ class AppLocalizationsDe extends AppLocalizations {
       'Geben Sie bei der ersten Anmeldung den von der Verwaltung erhaltenen temporären Code ein.';
 
   @override
+  String get girisKimlik => 'E-Mail oder Telefonnummer';
+
+  @override
+  String get girisKimlikOrnek => 'name@beispiel.com oder 5XX XXX XX XX';
+
+  @override
+  String get girisKimlikYardim =>
+      'Melden Sie sich mit Ihrer E-Mail-Adresse oder Telefonnummer an';
+
+  @override
+  String get girisKimlikGerekli =>
+      'Geben Sie Ihre E-Mail-Adresse oder Telefonnummer ein';
+
+  @override
+  String get girisTesisSec => 'Bei welcher Anlage möchten Sie sich anmelden?';
+
+  @override
   String get girisBeniHatirla => 'Angemeldet bleiben';
 
   @override
@@ -5431,6 +5448,45 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get vardiyaBos => 'Unbesetzt';
+
+  @override
+  String get vardiyaYeni => 'Neue Schicht';
+
+  @override
+  String get vardiyaKayitYok => 'Diese Woche sind keine Schichten geplant.';
+
+  @override
+  String get vardiyaPersonel => 'Mitarbeiter';
+
+  @override
+  String get vardiyaBaslangicTarihi => 'Startdatum';
+
+  @override
+  String get vardiyaBitisTarihi => 'Enddatum';
+
+  @override
+  String get vardiyaBaslangicSaati => 'Startzeit';
+
+  @override
+  String get vardiyaBitisSaati => 'Endzeit';
+
+  @override
+  String get vardiyaNot => 'Notiz';
+
+  @override
+  String get vardiyaEkleBilgi =>
+      'Bei einem Datumsbereich wird für jeden Tag darin eine eigene Schicht angelegt. Ist die Endzeit früher als die Startzeit (22:00–05:00), reicht die Schicht in den nächsten Tag.';
+
+  @override
+  String get vardiyaEkleGonder => 'Schichten anlegen';
+
+  @override
+  String get vardiyaCakisanHaric => 'Ohne Konflikttage anlegen';
+
+  @override
+  String vardiyaCakisanGunler(int n) {
+    return 'An $n Tagen gibt es Konflikte';
+  }
 
   @override
   String get vardiyaCikar => 'Entfernen';

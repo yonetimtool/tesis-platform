@@ -36,15 +36,19 @@ docker compose -f infra/docker-compose.yml \
 > demo hesabı bırakırdı — hem de tam olarak denetçiye verilen hesaplarda.
 > Parolayı App Store Connect'in parola alanına da **aynen** girin.
 
-> **GİRİŞ TELEFONLADIR — e-posta ile DEĞİL.** İlk TestFlight yapımında
-> bu satır yanlıştı: not "e-posta + tesis kodu" diyordu ama **mobil giriş
-> ekranında öyle bir alan yok** (telefon + parola). Denetçi giriş
-> yapamazdı → kesin ret. Ürün tasarımı bilinçlidir: **yönetim paneli**
-> e-posta + tesis kodu ile, **mobil uygulama** telefonla girer. Not
-> gerçeğe uyduruldu; uygulamaya denetçi için ayrı bir giriş yolu
-> **eklenmedi**.
+> **Demo hesapları için TELEFON kullanın.** (P205) Mobil giriş ekranında
+> artık **tek bir alan** var: *"E-posta veya telefon numarası"* — hangisi
+> yazılırsa onunla giriş yapılır. Aşağıdaki tabloda **her ikisi de**
+> listelidir; denetçi ikisinden birini kullanabilir, ama **telefon
+> sütunu** ölçülmüş ve doğrulanmış olandır.
+>
+> Bu satır İLK TestFlight yapımında YANLIŞTI: not "e-posta + tesis kodu"
+> diyordu ama ekranda öyle bir alan yoktu (yalnız telefon + parola).
+> Denetçi giriş yapamazdı → kesin ret. **Tesis kodu hâlâ SORULMAZ**;
+> yalnız aynı kimlik birden çok tesiste kayıtlıysa giriş sonrası bir
+> tesis seçim penceresi çıkar (demo hesapları tek tesistedir, çıkmaz).
 
-| Rol | Telefon (giriş) | E-posta (yalnız kayıt) | Ne görür |
+| Rol | Telefon (giriş) | E-posta (giriş — P205) | Ne görür |
 |---|---|---|---|
 | Yönetici | `05000000101` | `yonetici@demo.yonetio.site` | Tam yönetim: aidat, talepler, duyurular, tur planları, tanımlar |
 | Yönetici 2 | `05000000106` | `yonetici2@demo.yonetio.site` | (P193) İkinci yönetici — **hesap silme testinin 409'a takılmaması için**: son yönetici kendini silemez, bkz. §8 |

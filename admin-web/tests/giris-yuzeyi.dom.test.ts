@@ -1,13 +1,23 @@
 // @vitest-environment jsdom
-// (P126 sonrasi) GIRIS EKRANI YUZEYE GORE.
+// (P205 §1) GIRIS EKRANI ARTIK TEK ALAN — HER IKI YUZEYDE.
 //
-// `app.*` mobil uygulamanin web ikizidir: TELEFON + PAROLA (mobil ile ayni
-// uc, `POST /auth/login-phone`), tenant kodu YOK — telefon global benzersiz.
-// `panel.*` platform sahibinindir: tesis kodu + e-posta KALIR.
+// =========================================================================
+// ESKI TASARIM VE NEDEN DEGISTI
+// =========================================================================
+// P126'dan beri `app.*` TELEFON+parola, `panel.*` ise TESIS KODU+e-posta
+// istiyordu. Ayrim tutarliydi ama OLCULEN bir kusuru vardi:
 //
-// Bu ayrimin sessizce bozulmasi mumkun ve pahalidir: `app.*`ta e-posta alani
-// gostermek, e-postasi OLMAYAN sakinleri (sema'da opsiyonel) disarida
-// birakirdi.
+//   P197'den beri E-POSTA ZORUNLU, TELEFON OPSIYONEL. Web'den
+//   e-posta+parolayla kaydolmus, telefon girmemis bir yonetici
+//   `app.*`ta HIC GIRIS YAPAMIYORDU — alan yalnizca telefon
+//   istiyordu.
+//
+// Yeni tasarim: TEK alan, "E-posta veya telefon numarasi". Ayrimi
+// (`@` var mi) SUNUCU yapar. Eski `login-phone` ucu backend'de DURUYOR
+// (magazadaki eski mobil surumler kullaniyor) ama web ARTIK CAGIRMIYOR.
+//
+// Bu dosya yeni sozlesmeyi kilitler; eski iki-alan iddialari BILINCLI
+// olarak kaldirildi.
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createElement } from "react";
@@ -66,103 +76,91 @@ afterEach(() => {
 const parolaGirdisi = () =>
   screen.getByLabelText(/Parola/i, { selector: "input" });
 
-describe("app.* (tesis yuzeyi) — TELEFONLA giris", () => {
-  const Form = () => createElement(GirisFormu, { yuzey: "tesis" as const });
+const kimlikGirdisi = () =>
+  screen.getByLabelText(/E-posta veya telefon/i, { selector: "input" });
 
-  it("telefon alani var; tesis kodu ve e-posta YOK", () => {
+describe.each([
+  ["app.* (tesis yuzeyi)", "tesis" as const],
+  ["panel.* (platform yuzeyi)", "platform" as const],
+])("%s — TEK ALAN", (_ad, yuzey) => {
+  const Form = () => createElement(GirisFormu, { yuzey });
+
+  it("tek kimlik alani var; AYRI telefon/e-posta/tesis alani YOK", () => {
     ciz(Form);
-    expect(screen.getByLabelText(/Cep telefonu/i)).toBeInTheDocument();
-    expect(screen.queryByLabelText(/Tesis \(slug\)/i)).toBeNull();
-    expect(screen.queryByLabelText(/E-posta/i)).toBeNull();
-  });
-
-  it("numara MASKELENIR, sunucuya E.164 gider ve uc login-phone'dur", async () => {
-    const c = taklit();
-    ciz(Form);
-    const tel = screen.getByLabelText(/Cep telefonu/i);
-    await userEvent.type(tel, "5321112201");
-    expect(tel).toHaveValue("0532 111 22 01");
-    await userEvent.type(parolaGirdisi(), "Yonetici123!");
-    await userEvent.click(screen.getByRole("button", { name: /Giriş yap/i }));
-
-    await waitFor(() => expect(c.length).toBe(1));
-    expect(c[0].url).toBe("/api/auth/login-phone");
-    expect(c[0].body).toEqual({ phone: "+905321112201", password: "Yonetici123!" });
-  });
-
-  it("EKSIK numarayla istek GONDERILMEZ (sunucudan anlamsiz 401 alinmaz)", async () => {
-    const c = taklit();
-    ciz(Form);
-    await userEvent.type(screen.getByLabelText(/Cep telefonu/i), "532111");
-    await userEvent.type(parolaGirdisi(), "Yonetici123!");
-    await userEvent.click(screen.getByRole("button", { name: /Giriş yap/i }));
-
-    expect(await screen.findByRole("alert")).toHaveTextContent(/eksik/i);
-    expect(c.length).toBe(0);
-  });
-
-  it("basarili giriste KOKE gidilir — rol yonlendirmesi middleware'de", async () => {
-    taklit();
-    ciz(Form);
-    await userEvent.type(screen.getByLabelText(/Cep telefonu/i), "5321112203");
-    await userEvent.type(parolaGirdisi(), "Resident123!");
-    await userEvent.click(screen.getByRole("button", { name: /Giriş yap/i }));
-    // `/dashboard` YAZILMAZ: panoyu yalniz yonetim gorur.
-    await waitFor(() => expect(replace).toHaveBeenCalledWith("/"));
-  });
-
-  it("ILK GIRIS (parola belirleme) mesaji AYNEN gosterilir", async () => {
-    taklit(409, {
-      error: {
-        code: "password_setup_required",
-        message: "İlk girişte parolanızı mobil uygulamadan belirlemeniz gerekir.",
-      },
-    });
-    ciz(Form);
-    await userEvent.type(screen.getByLabelText(/Cep telefonu/i), "5321112206");
-    await userEvent.type(parolaGirdisi(), "123456");
-    await userEvent.click(screen.getByRole("button", { name: /Giriş yap/i }));
-    expect(await screen.findByRole("alert")).toHaveTextContent(/mobil uygulamadan/i);
-  });
-
-  it("`beni hatirla` NUMARAYI saklar, parolayi ASLA", async () => {
-    taklit();
-    ciz(Form);
-    await userEvent.type(screen.getByLabelText(/Cep telefonu/i), "5321112201");
-    await userEvent.type(parolaGirdisi(), "Yonetici123!");
-    await userEvent.click(screen.getByRole("checkbox"));
-    await userEvent.click(screen.getByRole("button", { name: /Giriş yap/i }));
-    await waitFor(() =>
-      expect(localStorage.getItem("yonetio.rememberMe.telefon")).toBe("+905321112201"),
-    );
-    expect(JSON.stringify(localStorage)).not.toContain("Yonetici123!");
-  });
-});
-
-describe("panel.* (platform yuzeyi) — E-POSTA + TESIS KODU", () => {
-  const Form = () => createElement(GirisFormu, { yuzey: "platform" as const });
-
-  it("tesis kodu + e-posta var; telefon YOK", () => {
-    ciz(Form);
-    expect(screen.getByLabelText(/Tesis \(slug\)/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/E-posta/i)).toBeInTheDocument();
+    expect(kimlikGirdisi()).toBeInTheDocument();
+    // Ucu de KALKTI: kullaniciya "hangisiyle giriyorsun" sorulmuyor.
     expect(screen.queryByLabelText(/Cep telefonu/i)).toBeNull();
+    expect(screen.queryByLabelText(/^E-posta$/i)).toBeNull();
+    expect(screen.queryByLabelText(/Tesis \(slug\)/i)).toBeNull();
   });
 
-  it("istek e-posta ucuna gider (govde degismedi)", async () => {
+  it("ekranda 'e-posta VEYA telefon ile giris yapin' yazar", () => {
+    // Istegin acik sarti (kabul kriteri 2).
+    ciz(Form);
+    expect(
+      screen.getByText(/E-posta veya telefon numaranız ile giriş yapın/i),
+    ).toBeInTheDocument();
+  });
+
+  it("E-POSTA yazilinca istek /auth/login'e `kimlik` ile gider", async () => {
     const c = taklit();
     ciz(Form);
-    await userEvent.type(screen.getByLabelText(/Tesis \(slug\)/i), "demo");
-    await userEvent.type(screen.getByLabelText(/E-posta/i), "a@b.test");
+    await userEvent.type(kimlikGirdisi(), "a@b.test");
     await userEvent.type(parolaGirdisi(), "Admin123!");
     await userEvent.click(screen.getByRole("button", { name: /Giriş yap/i }));
 
     await waitFor(() => expect(c.length).toBe(1));
     expect(c[0].url).toBe("/api/auth/login");
-    expect(c[0].body).toEqual({
-      tenant_slug: "demo",
-      email: "a@b.test",
-      password: "Admin123!",
+    expect(c[0].body).toEqual({ kimlik: "a@b.test", password: "Admin123!" });
+  });
+
+  it("TELEFON yazilinca AYNI uca AYNI alanla gider", async () => {
+    // `login-phone` ARTIK CAGRILMIYOR: ikinci bir uc cagirmak, ayni
+    // karari (kimlik turu) iki yerde vermek olurdu.
+    const c = taklit();
+    ciz(Form);
+    await userEvent.type(kimlikGirdisi(), "0532 111 22 03");
+    await userEvent.type(parolaGirdisi(), "Admin123!");
+    await userEvent.click(screen.getByRole("button", { name: /Giriş yap/i }));
+
+    await waitFor(() => expect(c.length).toBe(1));
+    expect(c[0].url).toBe("/api/auth/login");
+    expect(c.some((x) => x.url.includes("login-phone"))).toBe(false);
+    // TESIS KODU GONDERILMEZ: kullanicidan istenmiyor.
+    expect((c[0].body as Record<string, unknown>).tenant_slug).toBeUndefined();
+  });
+
+  it("basarili giriste KOKE gidilir — rol yonlendirmesi middleware'de", async () => {
+    taklit();
+    ciz(Form);
+    await userEvent.type(kimlikGirdisi(), "a@b.test");
+    await userEvent.type(parolaGirdisi(), "Admin123!");
+    await userEvent.click(screen.getByRole("button", { name: /Giriş yap/i }));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/"), {
+      timeout: 3000,
     });
+  });
+
+  it("sunucunun hata metni AYNEN gosterilir (istemci metin uydurmaz)", async () => {
+    taklit(401, { error: { code: "invalid_credentials", message: "Giriş bilgileri hatalı." } });
+    ciz(Form);
+    await userEvent.type(kimlikGirdisi(), "a@b.test");
+    await userEvent.type(parolaGirdisi(), "Admin123!");
+    await userEvent.click(screen.getByRole("button", { name: /Giriş yap/i }));
+    expect(await screen.findByText("Giriş bilgileri hatalı.")).toBeInTheDocument();
+  });
+
+  it("`beni hatirla` KIMLIGI saklar, parolayi ASLA", async () => {
+    taklit();
+    ciz(Form);
+    await userEvent.type(kimlikGirdisi(), "a@b.test");
+    await userEvent.type(parolaGirdisi(), "Admin123!");
+    await userEvent.click(screen.getByLabelText(/Beni hatırla/i));
+    await userEvent.click(screen.getByRole("button", { name: /Giriş yap/i }));
+    await waitFor(() => expect(replace).toHaveBeenCalled(), { timeout: 3000 });
+
+    const ham = JSON.stringify(localStorage);
+    expect(ham).toContain("a@b.test");
+    expect(ham).not.toContain("Admin123!");
   });
 });

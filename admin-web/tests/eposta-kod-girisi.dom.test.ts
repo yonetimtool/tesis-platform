@@ -61,15 +61,23 @@ const OK_BOS = {
   ok: true, status: 200, json: async () => ({ durum: "onay_bekliyor" }),
 } as unknown as Response;
 
+/** (P205 §1) TEK ALAN: ayri tesis kodu / e-posta alani YOK.
+ *  Kod istegi de artik SLUG GONDERMEZ — sunucu kodu adresin tum
+ *  uyelik tesislerine ayni degerle yaziyor. */
 async function alanlariDoldur() {
-  await userEvent.type(screen.getByLabelText(/Tesis \(slug\)/i), "demo");
-  await userEvent.type(screen.getByLabelText(/E-posta/i), "a@example.com");
+  await userEvent.type(
+    screen.getByLabelText(/E-posta veya telefon/i, { selector: "input" }),
+    "a@example.com",
+  );
 }
 
 describe("kod ile giris — yuzey", () => {
-  it("TELEFON yuzeyinde (app.*) YOL GORUNMEZ", () => {
+  it("KOD YOLU HER IKI YUZEYDE GORUNUR", () => {
+    // (P205 §1) Eskiden `app.*`ta gizliydi cunku orada yalniz telefon
+    // vardi ve kod yolu e-postaya baglliydi. Tek alanda bu ayrim
+    // kalkti: kullanici e-posta yazdiysa kod da e-postaya gider.
     ciz(() => React.createElement(GirisFormu, { yuzey: "tesis" } as never));
-    expect(screen.queryByText(KOD_DUGMESI)).toBeNull();
+    expect(screen.queryByText(KOD_DUGMESI)).not.toBeNull();
   });
 
   it("E-POSTA yuzeyinde (panel.*) yol gorunur", () => {

@@ -2947,6 +2947,22 @@ class AppLocalizationsEn extends AppLocalizations {
       'On first sign-in, enter the temporary code you got from management.';
 
   @override
+  String get girisKimlik => 'E-mail or phone number';
+
+  @override
+  String get girisKimlikOrnek => 'name@example.com or 5XX XXX XX XX';
+
+  @override
+  String get girisKimlikYardim =>
+      'Sign in with your e-mail address or phone number';
+
+  @override
+  String get girisKimlikGerekli => 'Enter your e-mail address or phone number';
+
+  @override
+  String get girisTesisSec => 'Which facility do you want to sign in to?';
+
+  @override
   String get girisBeniHatirla => 'Remember me';
 
   @override
@@ -5445,6 +5461,45 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get vardiyaBos => 'Unstaffed';
+
+  @override
+  String get vardiyaYeni => 'New shift';
+
+  @override
+  String get vardiyaKayitYok => 'No shifts are planned this week.';
+
+  @override
+  String get vardiyaPersonel => 'Staff member';
+
+  @override
+  String get vardiyaBaslangicTarihi => 'Start date';
+
+  @override
+  String get vardiyaBitisTarihi => 'End date';
+
+  @override
+  String get vardiyaBaslangicSaati => 'Start time';
+
+  @override
+  String get vardiyaBitisSaati => 'End time';
+
+  @override
+  String get vardiyaNot => 'Note';
+
+  @override
+  String get vardiyaEkleBilgi =>
+      'If you give a date range, a separate shift is created for every day in it. If the end time is earlier than the start time (22:00–05:00), the shift runs into the next day.';
+
+  @override
+  String get vardiyaEkleGonder => 'Add shifts';
+
+  @override
+  String get vardiyaCakisanHaric => 'Add, skipping conflicts';
+
+  @override
+  String vardiyaCakisanGunler(int n) {
+    return '$n days have conflicts';
+  }
 
   @override
   String get vardiyaCikar => 'Remove';

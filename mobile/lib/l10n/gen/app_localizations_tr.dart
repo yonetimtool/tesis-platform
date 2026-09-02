@@ -2804,6 +2804,22 @@ class AppLocalizationsTr extends AppLocalizations {
       'İlk girişte yönetimden aldığınız geçici kodu yazın.';
 
   @override
+  String get girisKimlik => 'E-posta veya telefon numarası';
+
+  @override
+  String get girisKimlikOrnek => 'ornek@eposta.com veya 5XX XXX XX XX';
+
+  @override
+  String get girisKimlikYardim =>
+      'E-posta veya telefon numaranız ile giriş yapın';
+
+  @override
+  String get girisKimlikGerekli => 'E-posta veya telefon numaranızı yazın';
+
+  @override
+  String get girisTesisSec => 'Hangi tesise giriş yapacaksınız?';
+
+  @override
   String get girisBeniHatirla => 'Beni hatırla';
 
   @override
@@ -5257,6 +5273,45 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get vardiyaBos => 'Boş';
+
+  @override
+  String get vardiyaYeni => 'Yeni vardiya';
+
+  @override
+  String get vardiyaKayitYok => 'Bu hafta planlanmış vardiya yok.';
+
+  @override
+  String get vardiyaPersonel => 'Personel';
+
+  @override
+  String get vardiyaBaslangicTarihi => 'Başlangıç tarihi';
+
+  @override
+  String get vardiyaBitisTarihi => 'Bitiş tarihi';
+
+  @override
+  String get vardiyaBaslangicSaati => 'Başlangıç saati';
+
+  @override
+  String get vardiyaBitisSaati => 'Bitiş saati';
+
+  @override
+  String get vardiyaNot => 'Not';
+
+  @override
+  String get vardiyaEkleBilgi =>
+      'Tarih aralığı verirseniz aradaki her gün için ayrı bir vardiya oluşur. Bitiş saati başlangıçtan küçükse (22:00–05:00) vardiya ertesi güne taşar.';
+
+  @override
+  String get vardiyaEkleGonder => 'Vardiyaları ekle';
+
+  @override
+  String get vardiyaCakisanHaric => 'Çakışanlar hariç ekle';
+
+  @override
+  String vardiyaCakisanGunler(int n) {
+    return '$n günde çakışma var';
+  }
 
   @override
   String get vardiyaCikar => 'Çıkar';

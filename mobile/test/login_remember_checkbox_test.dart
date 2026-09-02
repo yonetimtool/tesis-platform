@@ -97,9 +97,13 @@ void main() {
     await tester.pump();
   }
 
+  // (P205 §1) TEK ALAN: "Cep telefonu" etiketi kalmadi. Telefon YAZMAYA
+  // devam ediyoruz — bu dosyanin olctugu sey "beni hatirla" bayraginin
+  // TELEFON yolunda iletilmesi; kimlik cozumu kendi testinde
+  // (`p205_coklu_kimlik_giris_test`) suruluyor.
   Future<void> fillForm(WidgetTester tester) async {
     await tester.enterText(
-        find.widgetWithText(TextFormField, 'Cep telefonu'), '05321112203');
+        find.byKey(const Key('giris-kimlik')), '05321112203');
     await tester.enterText(
         find.widgetWithText(TextFormField, 'Parola veya geçici kod'),
         'sifre-123');

@@ -10,7 +10,8 @@
 ///   1. not, mobilde olmayan bir giriş yolu VAAT ETMESİN,
 ///   2. nottaki telefon numaraları, tohumlama betiğinin GERÇEKTEN
 ///      yazdığı numaralarla AYNI olsun,
-///   3. giriş ekranı gerçekten TELEFON alanı çizsin.
+///   3. giriş ekranı gerçekten notun anlattığı alanı çizsin (P205'ten
+///      beri: e-posta VEYA telefon kabul eden TEK alan).
 library;
 
 import 'dart:io';
@@ -44,8 +45,11 @@ void main() {
       expect(n.contains(yasak), isFalse,
           reason: 'not hala e-posta giris vaat ediyor: "$yasak"');
     }
-    // Ve dogrusunu ACIKCA soylemeli.
-    expect(n, contains('GİRİŞ TELEFONLADIR'));
+    // Ve dogrusunu ACIKCA soylemeli. (P205) Ekran TEK ALANA dustu —
+    // e-posta ARTIK KABUL EDILIYOR — ama denetciye hangi sutunun
+    // olculmus oldugu soylenmeli, yoksa dogrulanmamis bir yolla
+    // deneyip ret uretebilir.
+    expect(n, contains('Demo hesapları için TELEFON kullanın'));
   });
 
   test('NOTTAKI telefonlar TOHUMLAMA betigiyle AYNI', () {
@@ -110,11 +114,19 @@ void main() {
     }
   });
 
-  test('GIRIS EKRANI gercekten TELEFON alani ciziyor', () {
-    // Notun dayandigi gercek. Ekran bir gun e-posta girisine cevrilirse
-    // bu test duser ve NOTUN da guncellenmesi gerektigini hatirlatir.
+  test('GIRIS EKRANI gercekten TEK KIMLIK alani ciziyor', () {
+    // Notun dayandigi gercek. (P205) Ekran telefon-yalniz olmaktan
+    // cikti: tek alan hem e-postayi hem telefonu kabul ediyor. Alan
+    // yeniden bolunurse ya da telefona geri donerse bu test duser ve
+    // NOTUN da guncellenmesi gerektigini hatirlatir.
     final g = _oku(_giris);
-    expect(g, contains('TextInputType.phone'));
-    expect(g, contains('ortakCepTelefonu'));
+    expect(g, contains('girisKimlik'));
+    expect(g, contains('TextInputType.emailAddress'));
+    // Telefon-yalniz alanin izleri geri gelmemeli. ("Cep telefonu"
+    // etiketi ve rakam disini yutan bicimlendirici; ikincisi ADIYLA
+    // aranmaz cunku ekranin aciklama yorumunda NEDEN kaldirildigi
+    // yaziyor ve yazmaya da devam etmeli.)
+    expect(g, isNot(contains('ortakCepTelefonu')));
+    expect(g, isNot(contains('inputFormatters')));
   });
 }

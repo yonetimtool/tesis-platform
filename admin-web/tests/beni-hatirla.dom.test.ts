@@ -144,8 +144,11 @@ describe("giris formu isaretlemesi (parola yoneticisi icin)", () => {
 
     // KULLANICI ADI ALANLARI: `autocomplete` tek basina yetmiyor —
     // tarayicilar kararli bir `name` de arar.
-    expect(kaynak).toContain('name="telefon"');
-    expect(kaynak).toContain('name="email"');
+    // (P205 §1) TEK ALAN: ayri `telefon` ve `email` alanlari KALKTI —
+    // kullaniciya "hangisiyle giriyorsun" sorulmuyor. Parola
+    // yoneticisi icin gereken kararli ad artik `username`, ki bu
+    // zaten `autocomplete="username"` ile ayni sozlesmeyi kurar.
+    expect(kaynak).toContain('name="username"');
     expect(kaynak).toMatch(/autoComplete="username"/);
 
     // PAROLA ALANI.

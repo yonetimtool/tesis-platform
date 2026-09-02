@@ -2891,6 +2891,23 @@ class AppLocalizationsEs extends AppLocalizations {
       'En el primer acceso, introduzca el código temporal que le dio la administración.';
 
   @override
+  String get girisKimlik => 'Correo electrónico o número de teléfono';
+
+  @override
+  String get girisKimlikOrnek => 'nombre@ejemplo.com o 5XX XXX XX XX';
+
+  @override
+  String get girisKimlikYardim =>
+      'Inicie sesión con su correo electrónico o número de teléfono';
+
+  @override
+  String get girisKimlikGerekli =>
+      'Escriba su correo electrónico o número de teléfono';
+
+  @override
+  String get girisTesisSec => '¿En qué instalación desea iniciar sesión?';
+
+  @override
   String get girisBeniHatirla => 'Recordarme';
 
   @override
@@ -5409,6 +5426,45 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get vardiyaBos => 'Sin cubrir';
+
+  @override
+  String get vardiyaYeni => 'Nuevo turno';
+
+  @override
+  String get vardiyaKayitYok => 'No hay turnos planificados esta semana.';
+
+  @override
+  String get vardiyaPersonel => 'Personal';
+
+  @override
+  String get vardiyaBaslangicTarihi => 'Fecha de inicio';
+
+  @override
+  String get vardiyaBitisTarihi => 'Fecha de fin';
+
+  @override
+  String get vardiyaBaslangicSaati => 'Hora de inicio';
+
+  @override
+  String get vardiyaBitisSaati => 'Hora de fin';
+
+  @override
+  String get vardiyaNot => 'Nota';
+
+  @override
+  String get vardiyaEkleBilgi =>
+      'Si indica un intervalo de fechas, se crea un turno para cada día. Si la hora de fin es anterior a la de inicio (22:00–05:00), el turno pasa al día siguiente.';
+
+  @override
+  String get vardiyaEkleGonder => 'Añadir turnos';
+
+  @override
+  String get vardiyaCakisanHaric => 'Añadir excluyendo los conflictos';
+
+  @override
+  String vardiyaCakisanGunler(int n) {
+    return 'Hay conflictos en $n días';
+  }
 
   @override
   String get vardiyaCikar => 'Quitar';

@@ -804,6 +804,11 @@
   "sakinYok": "لا يوجد سكان بعد.\nيمكنك الإضافة من أسفل اليمين.",
   "girisParolaVeyaKod": "كلمة المرور أو الرمز المؤقت",
   "girisIlkKodIpucu": "في أول تسجيل دخول، أدخل الرمز المؤقت الذي حصلت عليه من الإدارة.",
+  "girisKimlik": "البريد الإلكتروني أو رقم الهاتف",
+  "girisKimlikOrnek": "name@example.com أو 5XX XXX XX XX",
+  "girisKimlikYardim": "سجّل الدخول ببريدك الإلكتروني أو رقم هاتفك",
+  "girisKimlikGerekli": "أدخل بريدك الإلكتروني أو رقم هاتفك",
+  "girisTesisSec": "إلى أي منشأة تريد تسجيل الدخول؟",
   "girisBeniHatirla": "تذكّرني",
   "girisYap": "تسجيل الدخول",
   "girisOturumSonaErdi": "انتهت صلاحية جلستك. الرجاء تسجيل الدخول مرة أخرى.",
@@ -1724,6 +1729,21 @@
   "vardiyaSiradaki": "الوردية التالية",
   "vardiyaSiradakiYok": "لا توجد وردية تالية مخططة.",
   "vardiyaBos": "شاغرة",
+  "vardiyaYeni": "وردية جديدة",
+  "vardiyaKayitYok": "لا توجد ورديات مخططة هذا الأسبوع.",
+  "vardiyaPersonel": "الموظف",
+  "vardiyaBaslangicTarihi": "تاريخ البدء",
+  "vardiyaBitisTarihi": "تاريخ الانتهاء",
+  "vardiyaBaslangicSaati": "وقت البدء",
+  "vardiyaBitisSaati": "وقت الانتهاء",
+  "vardiyaNot": "ملاحظة",
+  "vardiyaEkleBilgi": "إذا حددت نطاقًا زمنيًا، تُنشأ وردية منفصلة لكل يوم فيه. وإذا كان وقت الانتهاء أبكر من وقت البدء (22:00–05:00) فإن الوردية تمتد إلى اليوم التالي.",
+  "vardiyaEkleGonder": "إضافة الورديات",
+  "vardiyaCakisanHaric": "الإضافة مع استثناء التعارضات",
+  "vardiyaCakisanGunler": "توجد تعارضات في {n} يومًا",
+  "@vardiyaCakisanGunler": {
+    "placeholders": { "n": { "type": "int" } }
+  },
   "vardiyaCikar": "إزالة",
   "vardiyaCikarSebep": "سبب الإزالة (مرض، إجازة، طارئ)"
 }

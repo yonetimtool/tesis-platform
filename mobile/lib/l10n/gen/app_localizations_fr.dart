@@ -2898,6 +2898,23 @@ class AppLocalizationsFr extends AppLocalizations {
       'À la première connexion, saisissez le code temporaire reçu de la gestion.';
 
   @override
+  String get girisKimlik => 'E-mail ou numéro de téléphone';
+
+  @override
+  String get girisKimlikOrnek => 'nom@exemple.com ou 5XX XXX XX XX';
+
+  @override
+  String get girisKimlikYardim =>
+      'Connectez-vous avec votre e-mail ou votre numéro de téléphone';
+
+  @override
+  String get girisKimlikGerekli =>
+      'Saisissez votre e-mail ou votre numéro de téléphone';
+
+  @override
+  String get girisTesisSec => 'Sur quel site souhaitez-vous vous connecter ?';
+
+  @override
   String get girisBeniHatirla => 'Se souvenir de moi';
 
   @override
@@ -5424,6 +5441,45 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get vardiyaBos => 'Non pourvu';
+
+  @override
+  String get vardiyaYeni => 'Nouveau poste';
+
+  @override
+  String get vardiyaKayitYok => 'Aucun poste planifié cette semaine.';
+
+  @override
+  String get vardiyaPersonel => 'Personnel';
+
+  @override
+  String get vardiyaBaslangicTarihi => 'Date de début';
+
+  @override
+  String get vardiyaBitisTarihi => 'Date de fin';
+
+  @override
+  String get vardiyaBaslangicSaati => 'Heure de début';
+
+  @override
+  String get vardiyaBitisSaati => 'Heure de fin';
+
+  @override
+  String get vardiyaNot => 'Note';
+
+  @override
+  String get vardiyaEkleBilgi =>
+      'Si vous indiquez une plage de dates, un poste distinct est créé pour chaque jour. Si l\'heure de fin précède l\'heure de début (22:00–05:00), le poste se poursuit le lendemain.';
+
+  @override
+  String get vardiyaEkleGonder => 'Ajouter les postes';
+
+  @override
+  String get vardiyaCakisanHaric => 'Ajouter en excluant les conflits';
+
+  @override
+  String vardiyaCakisanGunler(int n) {
+    return 'Conflits sur $n jours';
+  }
 
   @override
   String get vardiyaCikar => 'Retirer';

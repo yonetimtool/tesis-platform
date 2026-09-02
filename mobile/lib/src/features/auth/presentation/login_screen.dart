@@ -9,14 +9,22 @@ import 'auth_controller.dart';
 import 'giris_hata_metni.dart';
 import 'sosyal_baglama_formu.dart';
 import 'sosyal_giris.dart';
-import '../../../core/ui/telefon_alani.dart';
-import '../../../core/ui/telefon_hata_metni.dart';
+import '../../../core/ui/merkez_diyalog.dart';
+import '../../tesis/domain/tesis_uyeligi.dart';
+import '../domain/user_role.dart';
+import 'rol_adi.dart';
 import '../../../routing/app_router.dart';
 
-/// Telefonla giris ekrani (contracts/auth.md §1): cep telefonu (global
-/// benzersiz) + parola/gecici kod. Tenant numaradan otomatik cozulur — tesis
-/// kodu/e-posta/daire no ISTENMEZ. Ilk giriste gecici parola girilince parola
-/// belirleme ekranina gecilir.
+/// GIRIS EKRANI.
+///
+/// (P205 §1) TEK ALAN: "E-posta veya telefon numarasi". Eskiden yalniz
+/// TELEFON kabul ediliyordu; P197'den beri e-posta zorunlu, telefon
+/// OPSIYONEL oldugu icin telefonsuz kaydolmus bir yonetici mobile hic
+/// giremiyordu. Girdinin hangisi oldugunu SUNUCU cozer (backend
+/// `app/kimlik.py`) — burada yalnizca "@" var mi diye bakilir, cunku
+/// telefon yolu ILK GIRIS (`setup_token`) akisini tasiyor.
+///
+/// Ilk giriste gecici parola girilince parola belirleme ekranina gecilir.
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -26,7 +34,7 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _phoneCtrl = TextEditingController();
+  final _kimlikCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   bool _obscure = true;
   bool _rememberMe = false;
@@ -46,7 +54,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final saved = await ref.read(authRepositoryProvider).readSavedCredentials();
     if (saved == null || !mounted) return;
     setState(() {
-      _phoneCtrl.text = saved.phone;
+      _kimlikCtrl.text = saved.phone;
       _passwordCtrl.text = saved.password;
       _rememberMe = true;
     });
@@ -54,7 +62,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   void dispose() {
-    _phoneCtrl.dispose();
+    _kimlikCtrl.dispose();
     _passwordCtrl.dispose();
     super.dispose();
   }
@@ -62,9 +70,66 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _submit() async {
     FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) return;
-    await ref.read(authControllerProvider.notifier).loginPhone(
-          phone: telefonNormalle(_phoneCtrl.text),
+    final secim = await ref.read(authControllerProvider.notifier).girisYap(
+          kimlik: _kimlikCtrl.text,
           password: _passwordCtrl.text,
+          rememberMe: _rememberMe,
+        );
+    // (P205 §1) BIRDEN COK TESIS: kullanicidan bir KARAR isteniyor.
+    // Rastgele birini secmek, onu bilmedigi bir tesise sokmak olurdu.
+    if (secim != null && secim.length > 1 && mounted) {
+      await _tesisSec(secim);
+    }
+  }
+
+  /// (P205 §1) COK TESISLI KULLANICI — SECIM.
+  ///
+  /// Sunucu 409 `tesis_secimi_gerekli` dedi. Liste `/auth/tesislerim`den
+  /// geldi ve KAPANMAYAN bir sayfa olarak degil, KAPANABILIR bir sayfa
+  /// olarak gosterilir: kullanici vazgecip baska bir hesapla girmek
+  /// isteyebilir.
+  Future<void> _tesisSec(List<TesisUyeligi> liste) async {
+    final l10n = context.l10n;
+    // MERKEZ DIYALOG (tur 31 karari): alt sayfa DEGIL — uygulamada tek
+    // bir pencere bicimi var ve `merkez_diyalog_test` bunu kaynak
+    // taramasiyla kilitliyor.
+    final secilen = await merkezSayfaAc<TesisUyeligi>(
+      context,
+      builder: (c) => SafeArea(
+        child: Column(
+          key: const Key('giris-tesis-secimi'),
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+              child: Text(
+                l10n.girisTesisSec,
+                style: Theme.of(c).textTheme.titleMedium,
+              ),
+            ),
+            for (final u in liste)
+              ListTile(
+                key: Key('giris-tesis-${u.slug}'),
+                title: Text(u.ad),
+                // ROL GORUNUR: ayni kisi birinde yonetici, otekinde
+                // sakin olabilir — hangi yetkiyle girecegini SECMEDEN
+                // ONCE bilmeli.
+                subtitle: Text(rolAdi(l10n, UserRole.fromClaim(u.rol))),
+                onTap: () => Navigator.of(c).pop(u),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (secilen == null || !mounted) return;
+    // IKINCI GIRIS: ayni kimlik + parola, bu kez SLUG ile. Jetonu ilk
+    // istekte uretip beklemek, kullanici secmeden once bir tesise
+    // baglanmak olurdu.
+    await ref.read(authControllerProvider.notifier).girisYap(
+          kimlik: _kimlikCtrl.text,
+          password: _passwordCtrl.text,
+          tenantSlug: secilen.slug,
           rememberMe: _rememberMe,
         );
   }
@@ -104,22 +169,42 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   children: [
                     const Center(child: YonetioLogoVertical(iconSize: 100)),
                     const SizedBox(height: 28),
+                    // (P205 §1) TEK ALAN — E-POSTA VEYA TELEFON.
+                    //
+                    // Eskiden yalniz TELEFON vardi ve bu OLCULEN bir
+                    // kusurdu: P197'den beri e-posta ZORUNLU, telefon
+                    // OPSIYONEL — web'den e-posta+parolayla kaydolmus,
+                    // telefon girmemis bir yonetici mobile HIC
+                    // GIREMIYORDU.
+                    //
+                    // `TelefonBicimlendirici` KALDIRILDI: rakam disini
+                    // yutuyordu, yani e-posta YAZILAMIYORDU.
+                    // `keyboardType` de `emailAddress` — iki kimlik
+                    // icin de yazilabilir tek klavye.
                     TextFormField(
-                      controller: _phoneCtrl,
+                      key: const Key('giris-kimlik'),
+                      controller: _kimlikCtrl,
                       enabled: !submitting,
                       textInputAction: TextInputAction.next,
-                      keyboardType: TextInputType.phone,
-                      // (P123) TEK bicimlendirici: gruplar, rakam disini
-                      // yutar, uzunlugu SERT sinirlar, yapistirmayi cozer.
-                      inputFormatters: const [TelefonBicimlendirici()],
+                      keyboardType: TextInputType.emailAddress,
                       autocorrect: false,
+                      autofillHints: const [AutofillHints.username],
                       decoration: InputDecoration(
-                        labelText: l10n.ortakCepTelefonu,
-                        hintText: l10n.ortakTelefonIpucu,
-                        prefixIcon: const Icon(Icons.phone_outlined),
+                        labelText: l10n.girisKimlik,
+                        hintText: l10n.girisKimlikOrnek,
+                        helperText: l10n.girisKimlikYardim,
+                        helperMaxLines: 2,
+                        prefixIcon: const Icon(Icons.person_outline),
                         border: const OutlineInputBorder(),
                       ),
-                      validator: (v) => telefonHataMetni(l10n, v ?? ''),
+                      // BICIM DENETIMI YOK (bos disinda): girdi telefon
+                      // OLMAK ZORUNDA DEGIL ve "gecerli bir telefon
+                      // girin" demek, e-posta yazan kullaniciyi
+                      // engellerdi. Gecersiz kimlik SUNUCUDAN jenerik
+                      // 401 alir — belirsizlik orada BILINCLI.
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? l10n.girisKimlikGerekli
+                          : null,
                     ),
                     const SizedBox(height: 16),
                     TextFormField(

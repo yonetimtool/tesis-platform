@@ -4937,6 +4937,36 @@ abstract class AppLocalizations {
   /// **'İlk girişte yönetimden aldığınız geçici kodu yazın.'**
   String get girisIlkKodIpucu;
 
+  /// No description provided for @girisKimlik.
+  ///
+  /// In tr, this message translates to:
+  /// **'E-posta veya telefon numarası'**
+  String get girisKimlik;
+
+  /// No description provided for @girisKimlikOrnek.
+  ///
+  /// In tr, this message translates to:
+  /// **'ornek@eposta.com veya 5XX XXX XX XX'**
+  String get girisKimlikOrnek;
+
+  /// No description provided for @girisKimlikYardim.
+  ///
+  /// In tr, this message translates to:
+  /// **'E-posta veya telefon numaranız ile giriş yapın'**
+  String get girisKimlikYardim;
+
+  /// No description provided for @girisKimlikGerekli.
+  ///
+  /// In tr, this message translates to:
+  /// **'E-posta veya telefon numaranızı yazın'**
+  String get girisKimlikGerekli;
+
+  /// No description provided for @girisTesisSec.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hangi tesise giriş yapacaksınız?'**
+  String get girisTesisSec;
+
   /// No description provided for @girisBeniHatirla.
   ///
   /// In tr, this message translates to:
@@ -9310,6 +9340,78 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Boş'**
   String get vardiyaBos;
+
+  /// No description provided for @vardiyaYeni.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni vardiya'**
+  String get vardiyaYeni;
+
+  /// No description provided for @vardiyaKayitYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu hafta planlanmış vardiya yok.'**
+  String get vardiyaKayitYok;
+
+  /// No description provided for @vardiyaPersonel.
+  ///
+  /// In tr, this message translates to:
+  /// **'Personel'**
+  String get vardiyaPersonel;
+
+  /// No description provided for @vardiyaBaslangicTarihi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Başlangıç tarihi'**
+  String get vardiyaBaslangicTarihi;
+
+  /// No description provided for @vardiyaBitisTarihi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bitiş tarihi'**
+  String get vardiyaBitisTarihi;
+
+  /// No description provided for @vardiyaBaslangicSaati.
+  ///
+  /// In tr, this message translates to:
+  /// **'Başlangıç saati'**
+  String get vardiyaBaslangicSaati;
+
+  /// No description provided for @vardiyaBitisSaati.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bitiş saati'**
+  String get vardiyaBitisSaati;
+
+  /// No description provided for @vardiyaNot.
+  ///
+  /// In tr, this message translates to:
+  /// **'Not'**
+  String get vardiyaNot;
+
+  /// No description provided for @vardiyaEkleBilgi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tarih aralığı verirseniz aradaki her gün için ayrı bir vardiya oluşur. Bitiş saati başlangıçtan küçükse (22:00–05:00) vardiya ertesi güne taşar.'**
+  String get vardiyaEkleBilgi;
+
+  /// No description provided for @vardiyaEkleGonder.
+  ///
+  /// In tr, this message translates to:
+  /// **'Vardiyaları ekle'**
+  String get vardiyaEkleGonder;
+
+  /// No description provided for @vardiyaCakisanHaric.
+  ///
+  /// In tr, this message translates to:
+  /// **'Çakışanlar hariç ekle'**
+  String get vardiyaCakisanHaric;
+
+  /// No description provided for @vardiyaCakisanGunler.
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} günde çakışma var'**
+  String vardiyaCakisanGunler(int n);
 
   /// (P203 §4) Vardiya plani ekrani — vardiyaCikar.
   ///

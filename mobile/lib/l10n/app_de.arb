@@ -804,6 +804,11 @@
   "sakinYok": "Noch keine Bewohner.\nUnten rechts hinzufügen.",
   "girisParolaVeyaKod": "Passwort oder temporärer Code",
   "girisIlkKodIpucu": "Geben Sie bei der ersten Anmeldung den von der Verwaltung erhaltenen temporären Code ein.",
+  "girisKimlik": "E-Mail oder Telefonnummer",
+  "girisKimlikOrnek": "name@beispiel.com oder 5XX XXX XX XX",
+  "girisKimlikYardim": "Melden Sie sich mit Ihrer E-Mail-Adresse oder Telefonnummer an",
+  "girisKimlikGerekli": "Geben Sie Ihre E-Mail-Adresse oder Telefonnummer ein",
+  "girisTesisSec": "Bei welcher Anlage möchten Sie sich anmelden?",
   "girisBeniHatirla": "Angemeldet bleiben",
   "girisYap": "Anmelden",
   "girisOturumSonaErdi": "Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.",
@@ -1724,6 +1729,21 @@
   "vardiyaSiradaki": "Nächste Schicht",
   "vardiyaSiradakiYok": "Keine nächste Schicht geplant.",
   "vardiyaBos": "Unbesetzt",
+  "vardiyaYeni": "Neue Schicht",
+  "vardiyaKayitYok": "Diese Woche sind keine Schichten geplant.",
+  "vardiyaPersonel": "Mitarbeiter",
+  "vardiyaBaslangicTarihi": "Startdatum",
+  "vardiyaBitisTarihi": "Enddatum",
+  "vardiyaBaslangicSaati": "Startzeit",
+  "vardiyaBitisSaati": "Endzeit",
+  "vardiyaNot": "Notiz",
+  "vardiyaEkleBilgi": "Bei einem Datumsbereich wird für jeden Tag darin eine eigene Schicht angelegt. Ist die Endzeit früher als die Startzeit (22:00–05:00), reicht die Schicht in den nächsten Tag.",
+  "vardiyaEkleGonder": "Schichten anlegen",
+  "vardiyaCakisanHaric": "Ohne Konflikttage anlegen",
+  "vardiyaCakisanGunler": "An {n} Tagen gibt es Konflikte",
+  "@vardiyaCakisanGunler": {
+    "placeholders": { "n": { "type": "int" } }
+  },
   "vardiyaCikar": "Entfernen",
   "vardiyaCikarSebep": "Grund für die Entfernung (Krankheit, Urlaub, Notfall)"
 }

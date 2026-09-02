@@ -103,11 +103,17 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets('telefon + parola alanlari var; tenant/e-posta/mod yok',
+  // (P205 §1) EKRAN TEK ALANA DUSTU: "Cep telefonu" / "E-posta" diye AYRI
+  // alanlar YOK. Bu dosya once "e-posta alani gorunmemeli" diye kilitliyordu;
+  // o kural ARTIK GECERSIZ — ayri alan olmadigi icin degil, e-posta ile
+  // giris ARTIK DESTEKLENDIGI icin (telefonsuz kaydolmus yonetici mobile
+  // hic giremiyordu).
+  testWidgets('TEK kimlik alani + parola; ayri telefon/e-posta/mod alani yok',
       (tester) async {
     await pumpLogin(tester);
 
-    expect(find.widgetWithText(TextFormField, 'Cep telefonu'), findsOneWidget);
+    expect(find.byKey(const Key('giris-kimlik')), findsOneWidget);
+    expect(find.text('E-posta veya telefon numarası'), findsOneWidget);
     expect(
       find.widgetWithText(TextFormField, 'Parola veya geçici kod'),
       findsOneWidget,
@@ -119,7 +125,6 @@ void main() {
       find.widgetWithText(TextFormField, 'Tesis kodu (tenant)'),
       findsNothing,
     );
-    expect(find.widgetWithText(TextFormField, 'E-posta'), findsNothing);
   });
 
   testWidgets('giris loginPhone\'a telefon + rememberMe ile gider',
@@ -127,7 +132,7 @@ void main() {
     await pumpLogin(tester);
 
     await tester.enterText(
-        find.widgetWithText(TextFormField, 'Cep telefonu'), '05321112203');
+        find.byKey(const Key('giris-kimlik')), '05321112203');
     await tester.enterText(
         find.widgetWithText(TextFormField, 'Parola veya geçici kod'),
         'K7MR-2QWX');
@@ -146,8 +151,11 @@ void main() {
     expect(call.phone, '+905321112203');
     expect(call.password, 'K7MR-2QWX');
     expect(call.rememberMe, isTrue);
-    // KULLANICININ GORDUGU sey gruplanmis yerel bicim.
-    expect(find.text('0532 111 22 03'), findsOneWidget);
+    // (P205 §1) GRUPLAMA KALKTI: `TelefonBicimlendirici` rakam disini
+    // YUTUYORDU — ayni alana e-posta yazilamazdi. Kullanici artik
+    // yazdigini aynen gorur; normallestirme yalniz TASIMADA yapilir
+    // (yukarida olculdu).
+    expect(find.text('05321112203'), findsOneWidget);
   });
 
   testWidgets('bos alanlarla giris → dogrulama, cagri yapilmaz',
@@ -158,6 +166,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(repo.phoneLogins, isEmpty);
-    expect(find.text('Telefon zorunludur'), findsOneWidget);
+    // BICIM DENETIMI YOK, BOSLUK DENETIMI VAR: girdi telefon OLMAK
+    // ZORUNDA degil, o yuzden "Telefon zorunludur" metni kalkti.
+    expect(find.text('E-posta veya telefon numaranızı yazın'), findsOneWidget);
   });
 }

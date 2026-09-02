@@ -1165,6 +1165,11 @@
   },
   "girisParolaVeyaKod": "Parola veya geçici kod",
   "girisIlkKodIpucu": "İlk girişte yönetimden aldığınız geçici kodu yazın.",
+  "girisKimlik": "E-posta veya telefon numarası",
+  "girisKimlikOrnek": "ornek@eposta.com veya 5XX XXX XX XX",
+  "girisKimlikYardim": "E-posta veya telefon numaranız ile giriş yapın",
+  "girisKimlikGerekli": "E-posta veya telefon numaranızı yazın",
+  "girisTesisSec": "Hangi tesise giriş yapacaksınız?",
   "girisBeniHatirla": "Beni hatırla",
   "girisYap": "Giriş yap",
   "girisOturumSonaErdi": "Oturumunuz sona erdi. Lütfen tekrar giriş yapın.",
@@ -2483,6 +2488,21 @@
   "vardiyaBos": "Boş",
   "@vardiyaBos": {
     "description": "(P203 §4) Vardiya plani ekrani — vardiyaBos."
+  },
+  "vardiyaYeni": "Yeni vardiya",
+  "vardiyaKayitYok": "Bu hafta planlanmış vardiya yok.",
+  "vardiyaPersonel": "Personel",
+  "vardiyaBaslangicTarihi": "Başlangıç tarihi",
+  "vardiyaBitisTarihi": "Bitiş tarihi",
+  "vardiyaBaslangicSaati": "Başlangıç saati",
+  "vardiyaBitisSaati": "Bitiş saati",
+  "vardiyaNot": "Not",
+  "vardiyaEkleBilgi": "Tarih aralığı verirseniz aradaki her gün için ayrı bir vardiya oluşur. Bitiş saati başlangıçtan küçükse (22:00–05:00) vardiya ertesi güne taşar.",
+  "vardiyaEkleGonder": "Vardiyaları ekle",
+  "vardiyaCakisanHaric": "Çakışanlar hariç ekle",
+  "vardiyaCakisanGunler": "{n} günde çakışma var",
+  "@vardiyaCakisanGunler": {
+    "placeholders": { "n": { "type": "int" } }
   },
   "vardiyaCikar": "Çıkar",
   "@vardiyaCikar": {

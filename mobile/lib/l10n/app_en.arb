@@ -804,6 +804,11 @@
   "sakinYok": "No residents yet.\nAdd one from the bottom right.",
   "girisParolaVeyaKod": "Password or temporary code",
   "girisIlkKodIpucu": "On first sign-in, enter the temporary code you got from management.",
+  "girisKimlik": "E-mail or phone number",
+  "girisKimlikOrnek": "name@example.com or 5XX XXX XX XX",
+  "girisKimlikYardim": "Sign in with your e-mail address or phone number",
+  "girisKimlikGerekli": "Enter your e-mail address or phone number",
+  "girisTesisSec": "Which facility do you want to sign in to?",
   "girisBeniHatirla": "Remember me",
   "girisYap": "Sign in",
   "girisOturumSonaErdi": "Your session has expired. Please sign in again.",
@@ -1724,6 +1729,21 @@
   "vardiyaSiradaki": "Next shift",
   "vardiyaSiradakiYok": "No upcoming shift is planned.",
   "vardiyaBos": "Unstaffed",
+  "vardiyaYeni": "New shift",
+  "vardiyaKayitYok": "No shifts are planned this week.",
+  "vardiyaPersonel": "Staff member",
+  "vardiyaBaslangicTarihi": "Start date",
+  "vardiyaBitisTarihi": "End date",
+  "vardiyaBaslangicSaati": "Start time",
+  "vardiyaBitisSaati": "End time",
+  "vardiyaNot": "Note",
+  "vardiyaEkleBilgi": "If you give a date range, a separate shift is created for every day in it. If the end time is earlier than the start time (22:00–05:00), the shift runs into the next day.",
+  "vardiyaEkleGonder": "Add shifts",
+  "vardiyaCakisanHaric": "Add, skipping conflicts",
+  "vardiyaCakisanGunler": "{n} days have conflicts",
+  "@vardiyaCakisanGunler": {
+    "placeholders": { "n": { "type": "int" } }
+  },
   "vardiyaCikar": "Remove",
   "vardiyaCikarSebep": "Reason for removal (illness, leave, emergency)"
 }

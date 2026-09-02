@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/error/api_exception.dart';
 import '../../../core/network/dio_provider.dart';
 import '../domain/oauth_sonuc.dart';
+import '../../tesis/domain/tesis_uyeligi.dart';
 import '../domain/phone_login_result.dart';
 import '../domain/token_pair.dart';
 
@@ -27,6 +28,67 @@ class AuthApi {
         data: {'phone': phone, 'password': password},
       );
       return PhoneLoginResult.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// (P205 §1) `POST /auth/login` — E-POSTA (veya telefon) + parola.
+  ///
+  /// =======================================================================
+  /// NEDEN `login-phone` DURUYOR
+  /// =======================================================================
+  /// Ekranda TEK ALAN var ama TASIMA ikiye ayrilir ve bu bilincli:
+  /// `login-phone` ILK GIRIS akisini tasiyor (gecici kodla girip
+  /// `setup_token` alma). `/auth/login` o dali BILMIYOR. Telefonu da
+  /// oraya yollamak, parolasi henuz belirlenmemis kullanicilarin
+  /// girisini KIRARDI.
+  ///
+  /// Ayrim kullaniciya GORUNMEZ — o tek alana yazar. Ve telefon GLOBAL
+  /// BENZERSIZ oldugu icin telefon yolunda tesis secimi zaten cikmaz;
+  /// yani iki yol AYNI davranisi gosterir.
+  ///
+  /// 409 = BIRDEN COK TESIS. Hata DEGIL: cagiri `tesislerim` ile liste
+  /// alip SECIM gosterir.
+  Future<TokenPair> login({
+    required String kimlik,
+    required String password,
+    String? tenantSlug,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/auth/login',
+        data: {
+          'kimlik': kimlik,
+          'password': password,
+          'tenant_slug': ?tenantSlug,
+        },
+      );
+      return TokenPair.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// (P205 §1) `POST /auth/tesislerim` — kimligin gecerli oldugu tesisler.
+  ///
+  /// PAROLA ZORUNLU ve liste yalniz parolanin TUTTUGU uyelikleri tasir:
+  /// parolasiz sorulabilseydi uc, "bu kimlik hangi sitelerde oturuyor"
+  /// sorgusuna donusurdu.
+  Future<List<TesisUyeligi>> tesislerim({
+    required String kimlik,
+    required String password,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/auth/tesislerim',
+        data: {'kimlik': kimlik, 'password': password},
+      );
+      final ham = (res.data?['tesisler'] as List?) ?? const [];
+      return ham
+          .whereType<Map<String, dynamic>>()
+          .map(TesisUyeligi.fromJson)
+          .toList();
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }

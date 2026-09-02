@@ -3024,6 +3024,21 @@ class AppLocalizationsAr extends AppLocalizations {
       'في أول تسجيل دخول، أدخل الرمز المؤقت الذي حصلت عليه من الإدارة.';
 
   @override
+  String get girisKimlik => 'البريد الإلكتروني أو رقم الهاتف';
+
+  @override
+  String get girisKimlikOrnek => 'name@example.com أو 5XX XXX XX XX';
+
+  @override
+  String get girisKimlikYardim => 'سجّل الدخول ببريدك الإلكتروني أو رقم هاتفك';
+
+  @override
+  String get girisKimlikGerekli => 'أدخل بريدك الإلكتروني أو رقم هاتفك';
+
+  @override
+  String get girisTesisSec => 'إلى أي منشأة تريد تسجيل الدخول؟';
+
+  @override
   String get girisBeniHatirla => 'تذكّرني';
 
   @override
@@ -5517,6 +5532,45 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get vardiyaBos => 'شاغرة';
+
+  @override
+  String get vardiyaYeni => 'وردية جديدة';
+
+  @override
+  String get vardiyaKayitYok => 'لا توجد ورديات مخططة هذا الأسبوع.';
+
+  @override
+  String get vardiyaPersonel => 'الموظف';
+
+  @override
+  String get vardiyaBaslangicTarihi => 'تاريخ البدء';
+
+  @override
+  String get vardiyaBitisTarihi => 'تاريخ الانتهاء';
+
+  @override
+  String get vardiyaBaslangicSaati => 'وقت البدء';
+
+  @override
+  String get vardiyaBitisSaati => 'وقت الانتهاء';
+
+  @override
+  String get vardiyaNot => 'ملاحظة';
+
+  @override
+  String get vardiyaEkleBilgi =>
+      'إذا حددت نطاقًا زمنيًا، تُنشأ وردية منفصلة لكل يوم فيه. وإذا كان وقت الانتهاء أبكر من وقت البدء (22:00–05:00) فإن الوردية تمتد إلى اليوم التالي.';
+
+  @override
+  String get vardiyaEkleGonder => 'إضافة الورديات';
+
+  @override
+  String get vardiyaCakisanHaric => 'الإضافة مع استثناء التعارضات';
+
+  @override
+  String vardiyaCakisanGunler(int n) {
+    return 'توجد تعارضات في $n يومًا';
+  }
 
   @override
   String get vardiyaCikar => 'إزالة';

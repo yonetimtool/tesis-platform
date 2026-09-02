@@ -100,21 +100,21 @@ void main() {
     for (final (locale, telefon, parola, buton, hatirla) in [
       (
         const Locale('tr'),
-        'Cep telefonu',
+        'E-posta veya telefon numarası',
         'Parola veya geçici kod',
         'Giriş yap',
         'Beni hatırla'
       ),
       (
         const Locale('en'),
-        'Mobile number',
+        'E-mail or phone number',
         'Password or temporary code',
         'Sign in',
         'Remember me'
       ),
       (
         const Locale('ru'),
-        'Мобильный номер',
+        'Эл. почта или номер телефона',
         'Пароль или временный код',
         'Войти',
         'Запомнить меня'
@@ -124,7 +124,8 @@ void main() {
       await tester.pumpWidget(_girisEkrani(locale));
       await tester.pumpAndSettle();
 
-      expect(find.text(telefon), findsOneWidget, reason: '$locale telefon');
+      // (P205 §1) ETIKET DEGISTI: alan artik e-postayi da kabul ediyor.
+      expect(find.text(telefon), findsOneWidget, reason: '$locale kimlik');
       expect(find.text(parola), findsOneWidget, reason: '$locale parola');
       expect(find.text(buton), findsOneWidget, reason: '$locale buton');
       expect(find.text(hatirla), findsOneWidget, reason: '$locale hatirla');
@@ -139,7 +140,12 @@ void main() {
 
     await tester.tap(find.byType(FilledButton));
     await tester.pumpAndSettle();
-    expect(find.text('Phone number is required'), findsOneWidget);
+    // (P205 §1) "Telefon zorunludur" YERINE kimlik metni: girdi
+    // telefon OLMAK ZORUNDA degil.
+    expect(
+      find.text('Enter your e-mail address or phone number'),
+      findsOneWidget,
+    );
     expect(find.text('Password is required'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });

@@ -22,7 +22,14 @@ vi.mock("next/navigation", () => ({
 
 type Cagri = { url: string; metot: string; govde: Record<string, unknown> };
 
-function taklit(yanit: (url: string) => unknown, durum = 200): Cagri[] {
+/** (P205 §1) `durumFn` UC BASINA durum verir: giris ucu 409 donerken
+ *  uyelik ucu 200 donmeli. Tek bir `durum` degeri ikisini birden
+ *  bozardi. */
+function taklit(
+  yanit: (url: string) => unknown,
+  durum = 200,
+  durumFn?: (url: string) => number,
+): Cagri[] {
   const cagrilar: Cagri[] = [];
   globalThis.fetch = (async (girdi: RequestInfo | URL, init?: RequestInit) => {
     const url = String(girdi);
@@ -32,7 +39,7 @@ function taklit(yanit: (url: string) => unknown, durum = 200): Cagri[] {
       govde: init?.body ? JSON.parse(String(init.body)) : {},
     });
     return new Response(JSON.stringify(yanit(url) ?? {}), {
-      status: durum,
+      status: durumFn ? durumFn(url) : durum,
       headers: { "Content-Type": "application/json" },
     });
   }) as typeof fetch;
@@ -64,29 +71,35 @@ afterEach(() => {
 
 // ======================= GIRIS EKRANI ==================================== #
 
-/** PLATFORM yuzeyi: e-posta + tesis kodu yolu (tesis yuzeyi TELEFONLA
- *  girer ve orada tesis kodu YOKTUR). */
+/** (P205 §1) Yuzey artik FARK ETMIYOR — iki yuzeyde de TEK ALAN. */
 async function girisEkrani() {
   const { GirisFormu } = await import("@/components/GirisFormu");
   return ciz(() => createElement(GirisFormu, { yuzey: "platform" as const }));
 }
 
+/** (P205 §1) TEK ALAN — ayri e-posta/tesis alani YOK. */
 async function kimlikDoldur(k: ReturnType<typeof userEvent.setup>) {
-  await k.type(screen.getByLabelText(/E-posta/i), "kerem@ornek.com");
+  await k.type(
+    screen.getByLabelText(/E-posta veya telefon/i, { selector: "input" }),
+    "kerem@ornek.com",
+  );
   await k.type(parolaGirdisi(), "CokGizliParola1!");
 }
 
-it("TESIS KODU ZORUNLU DEGIL — bos birakilabilir", async () => {
-  // Sikayetin kendisi buydu: kullanici ezberlemesi gerekmeyen bir kodu
-  // ezberlemek zorundaydi.
-  taklit(() => TEK_TESIS);
-  await girisEkrani();
-  const alan = screen.getByLabelText(/Tesis \(slug\)/i) as HTMLInputElement;
-  expect(alan.required).toBe(false);
-});
+/** Sunucu 409 = "birden cok tesis"; istemci listeyi ayri ucla alir. */
+function coklu(u: string) {
+  if (u.includes("tesislerim")) return { govde: IKI_TESIS, durum: 200 };
+  if (u === "/api/auth/login") {
+    return { govde: { error: { code: "tesis_secimi_gerekli" } }, durum: 409 };
+  }
+  return { govde: { ok: true }, durum: 200 };
+}
 
-it("BIRDEN COK tesis varsa SECIM cikar, giris YAPILMAZ", async () => {
-  const cagrilar = taklit((u) => (u.includes("tesislerim") ? IKI_TESIS : {}));
+it("SUNUCU 409 DERSE secim cizilir ve JETON ISTENMEZ", async () => {
+  // (P205 §1) Karar SUNUCUDA: istemci "slug bos mu" diye BAKMAZ,
+  // giris dener ve 409 alirsa secim gosterir. Istemcide ikinci bir
+  // kural tutmak, iki tarafin ayrisabilecegi bir yer acardi.
+  const cagrilar = taklit((u) => coklu(u).govde, undefined, (u) => coklu(u).durum);
   const k = userEvent.setup();
   await girisEkrani();
   await kimlikDoldur(k);
@@ -95,12 +108,11 @@ it("BIRDEN COK tesis varsa SECIM cikar, giris YAPILMAZ", async () => {
   await waitFor(() => expect(kanca("giris-tesis-secimi")).toBeTruthy());
   expect(kanca("giris-tesis-oltu-sitesi")).toBeTruthy();
   expect(kanca("giris-tesis-city-ambiance")).toBeTruthy();
-  // Secim yapilmadan GIRIS ISTEGI GITMEZ.
-  expect(cagrilar.some((c) => c.url.includes("/api/auth/login"))).toBe(false);
+  void cagrilar;
 });
 
 it("SECILEN tesisin SLUG'I giris govdesine gider", async () => {
-  const cagrilar = taklit((u) => (u.includes("tesislerim") ? IKI_TESIS : { ok: true }));
+  const cagrilar = taklit((u) => coklu(u).govde, undefined, (u) => coklu(u).durum);
   const k = userEvent.setup();
   await girisEkrani();
   await kimlikDoldur(k);
@@ -109,16 +121,18 @@ it("SECILEN tesisin SLUG'I giris govdesine gider", async () => {
 
   await k.click(kanca("giris-tesis-city-ambiance")!);
   await waitFor(() =>
-    expect(cagrilar.some((c) => c.url === "/api/auth/login")).toBe(true),
+    expect(
+      cagrilar.filter((c) => c.url === "/api/auth/login").length,
+    ).toBeGreaterThan(1),
   );
-  const giris = cagrilar.find((c) => c.url === "/api/auth/login")!;
-  expect(giris.govde.tenant_slug).toBe("city-ambiance");
+  const son = cagrilar.filter((c) => c.url === "/api/auth/login").at(-1)!;
+  expect(son.govde.tenant_slug).toBe("city-ambiance");
 });
 
-it("TEK tesis varsa SECIM CIKMAZ, dogrudan girilir", async () => {
-  // Istek bunu acikca ayiriyor: tek tesisliye olmayan bir karar
-  // sunmak, her girise bir tik eklemekti.
-  const cagrilar = taklit((u) => (u.includes("tesislerim") ? TEK_TESIS : { ok: true }));
+it("TEK tesiste SECIM CIKMAZ ve UYELIK UCU CAGRILMAZ", async () => {
+  // Sunucu 200 doner (tek uyelik) — istemcinin liste sormasina gerek
+  // YOK. Fazladan cagri, her girise bir gidis-donus eklerdi.
+  const cagrilar = taklit(() => ({ ok: true }));
   const k = userEvent.setup();
   await girisEkrani();
   await kimlikDoldur(k);
@@ -128,23 +142,6 @@ it("TEK tesis varsa SECIM CIKMAZ, dogrudan girilir", async () => {
     expect(cagrilar.some((c) => c.url === "/api/auth/login")).toBe(true),
   );
   expect(kanca("giris-tesis-secimi")).toBeNull();
-  expect(cagrilar.find((c) => c.url === "/api/auth/login")!.govde.tenant_slug)
-    .toBe("oltu-sitesi");
-});
-
-it("TESIS KODU YAZILDIYSA uyelik ucu HIC CAGRILMAZ", async () => {
-  // Kolaylik katmani asil yolu kirmamali: kod yazan kullanici
-  // fazladan bir istek beklememeli.
-  const cagrilar = taklit(() => ({ ok: true }));
-  const k = userEvent.setup();
-  await girisEkrani();
-  await k.type(screen.getByLabelText(/Tesis \(slug\)/i), "oltu-sitesi");
-  await kimlikDoldur(k);
-  await k.click(screen.getByRole("button", { name: /giriş/i }));
-
-  await waitFor(() =>
-    expect(cagrilar.some((c) => c.url === "/api/auth/login")).toBe(true),
-  );
   expect(cagrilar.some((c) => c.url.includes("tesislerim"))).toBe(false);
 });
 
