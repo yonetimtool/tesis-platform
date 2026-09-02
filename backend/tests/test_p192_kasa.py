@@ -17,6 +17,8 @@ from datetime import date
 
 import pytest
 
+from .conftest import rastgele_iban
+
 
 def _headers(client, slug, cred):
     r = client.post(
@@ -132,7 +134,7 @@ def test_onay_uclari_sakine_kapali(client, world, kasa, adm):
 def banka_hesabi(client, adm):
     r = client.post("/kasalar", headers=adm, json={
         "kod": f"BN{_sfx()}", "ad": "Site Banka", "banka_mi": True,
-        "iban": f"TR{uuid.uuid4().int % 10**24:024d}",
+        "iban": rastgele_iban(),
         "acilis_bakiye_kurus": 0})
     assert r.status_code == 201, r.text
     return r.json()

@@ -19,6 +19,8 @@ from datetime import date, timedelta
 
 import pytest
 
+from .conftest import rastgele_iban
+
 
 def _headers(client, slug, cred):
     r = client.post(
@@ -371,7 +373,7 @@ def test_banka_cikisi_onay_bekleyen_gider_yazar(client, adm, owner_conn, world):
     OTOMATIK "ODENDI" YAZILMAZ: banka masrafi yoneticinin onayina duser."""
     hesap = client.post("/kasalar", headers=adm, json={
         "kod": f"BC{_sfx()}", "ad": "Banka", "banka_mi": True,
-        "iban": f"TR{uuid.uuid4().int % 10**24:024d}"}).json()
+        "iban": rastgele_iban()}).json()
     etiket = _sfx()
     r = client.post("/banka/ice-aktar", headers=adm, json={
         "kaynak": "ekstre", "kasa_id": hesap["id"],

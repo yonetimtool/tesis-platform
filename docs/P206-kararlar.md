@@ -367,3 +367,34 @@ düştü; geri alındı. Mobil tam takım **2029 yeşil**.
 **Ölçemediğim:** gerçek cihazda kamera akışı (fotoğraf çekme ve yükleme
 uçtan uca sürülmedi — `image_picker` testte taklit); MinIO'ya gerçek
 presigned PUT; sahada tek elle kullanım hissi.
+
+---
+
+## Tam takım sonrası düzeltmeler (§1 ve §3'ün yakalanan artçıları)
+
+İlk tam backend koşumu **5 kırmızı** gösterdi — hepsi bu turda bilinçli
+değiştirilen davranışı kilitleyen eski testler ya da onların yan etkisi:
+
+1. `test_ters_kayit::test_YALNIZ_ADMIN_iptal_edebilir` — iptal artık
+   yöneticide. Test yeniden adlandırıldı
+   (`test_YONETICI_DE_iptal_edebilir_SAHA_EDEMEZ`) ve **saha rolünün hâlâ
+   giremediği** ölçülüyor. İptal silmez, ters kayıt yazar — yetkinin
+   genişlemesi denetim izini zayıflatmıyor.
+2. `test_yonetici::..._TAHSILAT_YAZAMAZ` — tahsilat artık yöneticide.
+   Ayrıca ölçüm sırasında görüldü: `/dues/payments` `Idempotency-Key`
+   **zorunlu** (P192 §6.2), anahtarsız istek 400 alıyor — bu yetkiyle
+   ilgili değil, test anahtarı göndermiyordu.
+3. `test_p192_kasa` + `test_p192_otomasyon` — testler
+   `f"TR{rastgele:024d}"` ile **sahte IBAN** üretiyordu; eski regex'ten
+   geçiyordu, mod 97'den geçmiyor. `conftest.rastgele_iban()` eklendi
+   (sağlama toplamı doğru). İlk yazımında 24 haneli gövde üretip
+   `iban_uzunluk` aldı — TR IBAN'ında gövde 22 hanedir; ölçümle
+   düzeltildi.
+4. `test_health::..._SEMA_SURUMUNU_bildirir` — API imajı göç 0098'den
+   önce derlenmişti (imaj beklenen şema başını gömüyor). Yeniden
+   derleme çözdü; kod kusuru değil.
+
+Bu dördü de "test yeşil sanıyordum" durumunun karşıtı: **tam takım
+olmasaydı** üçüncü madde (sahte IBAN'lar) prodüksiyonda değil ama
+gelecekteki her banka kasası testinde sessizce yanlış veri üretmeye
+devam ederdi.

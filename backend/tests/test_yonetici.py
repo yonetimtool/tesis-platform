@@ -112,8 +112,8 @@ def test_yonetici_takip_ve_rapor_okur(client, world):
         assert client.get(path, headers=yonetici).status_code == 200, path
 
 
-def test_yonetici_aidat_raporu_okur_TAHAKKUK_YAZAR_TAHSILAT_YAZAMAZ(client, world):
-    """Yonetici aidat defterini okur, TAHAKKUK yazar, TAHSILAT yazamaz.
+def test_yonetici_aidat_defterini_okur_TAHAKKUK_ve_TAHSILAT_YAZAR(client, world):
+    """(P206 §1) Yonetici aidat defterini okur, TAHAKKUK ve TAHSILAT yazar.
 
     ESKI ADI `..._okur_yazamaz`ti ve iki yazmayi da 403 bekliyordu. Commit
     `3a71736f` (P167) `POST /dues/assessments`i admin + yoneticiye ACTI —
@@ -123,10 +123,15 @@ def test_yonetici_aidat_raporu_okur_TAHAKKUK_YAZAR_TAHSILAT_YAZAMAZ(client, worl
     guncellendi ama BU DOSYA atlandi. Yani test, urunun kasitli
     davranisina karsi kirmizi duruyordu.
 
-    AYRIM KORUNUYOR ve testin asil degeri artik burada: tahakkuk bir BORC
-    YAZMAKTIR (yanlissa duzeltilebilir), tahsilat ise PARA ALINDI
-    beyanidir ve muhasebe kaydini kapatir. Ikisi ayni yetkiye baglanirsa,
-    acilmasi istenen kapinin yaninda istenmeyen kapi da acilir.
+    (P206 §1) TAHSILAT AYRIMI DA KALKTI. Eski gerekce ("tahakkuk borc
+    yazmaktir, tahsilat PARA ALINDI beyanidir") ayrimi YANLIS YERE
+    ciziyordu: parayi kapida elden alan kisi YONETICIDIR; platform
+    admininin girmesi icin once ondan duymasi gerekiyordu — yani kaydin
+    dogrulugu zaten yoneticiye dayaniyordu, yetkiyi ondan almak kaydi
+    GECIKTIRMEKTEN baska bir sey yapmiyordu.
+
+    TESTIN DEGERI KAPSAMDA: yonetici KENDI tesisinde yazar. Kapsam
+    kilidi `test_p206_yonetici_finans.py`de.
     """
     admin = _headers(client, world["slug_a"], world["admin_a"])
     yonetici = _headers(client, world["slug_a"], world["yonetici_a"])
@@ -147,12 +152,14 @@ def test_yonetici_aidat_raporu_okur_TAHAKKUK_YAZAR_TAHSILAT_YAZAMAZ(client, worl
         "/dues/assessments", headers=yonetici,
         json={"unit_id": u["id"], "donem": "2026-08", "tutar_kurus": 1000},
     ).status_code == 201
-    # TAHSILAT: hala admin-only. Bu satir kasitli olarak KALDI — yetkiyi
-    # genisleten commit'in bilincli sinirini kilitleyen tek olcum bu.
+    # (P206 §1) TAHSILAT DA YONETICIDE. `Idempotency-Key` ZORUNLU
+    # (P192 §6.2): anahtarsiz istek 400 alir ve bu YETKIYLE ILGILI
+    # DEGILDIR — yetkinin acildigini olcmek icin anahtar gonderilir.
     assert client.post(
-        "/dues/payments", headers=yonetici,
+        "/dues/payments",
+        headers={**yonetici, "Idempotency-Key": uuid.uuid4().hex},
         json={"unit_id": u["id"], "tutar_kurus": 1000, "yontem": "elden"},
-    ).status_code == 403
+    ).status_code in (200, 201)
 
 
 # --------------------------- admin-only sinirlar --------------------------- #

@@ -409,4 +409,23 @@ def world(owner_conn, request):
         "bos_telefonlar": _telefonlar(b, adet=4),
     }
 
+# ===================== (P206 §3.1) TEST ICIN GECERLI IBAN =================== #
+def rastgele_iban(ulke: str = "TR", banka_kodu: str = "00062") -> str:
+    """SAGLAMA TOPLAMI DOGRU rastgele IBAN uretir.
 
+    NEDEN GEREKLI: testler `f"TR{rastgele:024d}"` yaziyordu ve bu, eski
+    `^TR[0-9]{24}$` regex'inden geciyordu. P206 §3.1 mod 97 denetimini
+    getirince o degerler HAKLI OLARAK reddedildi — testin olctugu sey
+    (banka kasasi davranisi) IBAN gecerliligi DEGIL, o yuzden burada
+    gecerli bir deger uretiliyor.
+    """
+    import random
+
+    # TR IBAN'i 26 hane: TR + 2 kontrol + 5 banka + 1 rezerv + 16 hesap
+    # => govde 22 hane. Ilk yazimda 24 hane uretiyordum ve `iban_uzunluk`
+    # aliyordu (olcumle goruldu).
+    govde = banka_kodu + f"{random.randrange(10**17):017d}"
+    ham = govde + ulke + "00"
+    sayi = "".join(str(ord(c) - 55) if c.isalpha() else c for c in ham)
+    kontrol = 98 - (int(sayi) % 97)
+    return f"{ulke}{kontrol:02d}{govde}"

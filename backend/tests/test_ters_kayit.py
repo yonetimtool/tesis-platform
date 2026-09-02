@@ -129,12 +129,28 @@ def test_IPTALIN_IPTALI_edilemez(client, adm):
     ).status_code == 422
 
 
-def test_YALNIZ_ADMIN_iptal_edebilir(client, world, adm):
+def test_YONETICI_DE_iptal_edebilir_SAHA_EDEMEZ(client, world, adm):
+    """(P206 §1) YONETICI ARTIK IPTAL EDEBILIR — eski ad `..._YALNIZ_ADMIN_...`.
+
+    Eski beklenti (403) bir KUSURU kilitliyordu: yanlis yazilmis bir
+    hareketi duzeltmek icin platform admini beklemek gerekiyordu ve
+    duzeltme, kaydin yanlis kaldigi her gun buyuyen bir borc oluyordu.
+    IPTAL SILMEZ, TERS KAYIT YAZAR — yani yetkinin genislemesi denetim
+    izini zayiflatmaz (P154 karari).
+
+    SAHA ROLU HÂLÂ GIREMEZ: kilit oradan olculuyor.
+    """
     kasa_id = _kasa(client, adm)
     h = _gelir(client, adm, kasa_id)
     yon = _giris(client, world["slug_a"], world["yonetici_a"])
     assert client.post(
         f"/finans/hareketler/{h['id']}/iptal", headers=yon, json={}
+    ).status_code == 201
+
+    h2 = _gelir(client, adm, kasa_id)
+    saha = _giris(client, world["slug_a"], world["guard_a"])
+    assert client.post(
+        f"/finans/hareketler/{h2['id']}/iptal", headers=saha, json={}
     ).status_code == 403
 
 
