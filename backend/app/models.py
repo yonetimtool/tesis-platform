@@ -4432,9 +4432,19 @@ class VardiyaPlani(Base):
         UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"),
         nullable=False,
     )
-    shift_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    #: (P205 §2) NULLABLE: sablonsuz ("serbest") vardiya da yazilabilir.
+    #: Sablon KALDIRILMADI — varsayilan kadro ve `haftayi-doldur`
+    #: tohumlamasi ona dayaniyor (goc 0096).
+    shift_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
     #: Planin tasidigi TEK yeni bilgi ve varlik sebebi.
     tarih = mapped_column(Date, nullable=False)
+    #: (P205 §2) SATIRIN KENDI saatleri. Doluysa sablonu EZER — o gunluk
+    #: sapma ("bugun 1 saat erken cikiyor") sablonu degistirmeden
+    #: yazilabilsin diye. Okuma kurali TEK YERDE: `vardiya.plan_araligi`.
+    baslangic_saat = mapped_column(Time, nullable=True)
+    bitis_saat = mapped_column(Time, nullable=True)
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     #: `planli` | `iptal`. IPTAL SILMEZ: gun ici degisiklikler denetime
     #: yaziliyor ve silinen bir satir "neyin degistigini" gosteremezdi.

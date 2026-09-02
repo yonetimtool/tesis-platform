@@ -398,6 +398,24 @@ METINLER: dict[str, dict[str, str]] = {
         "es": "No tiene acceso a esta comunidad.",
     },
     # (P203 §4) Vardiya planlama.
+    "vardiya_tarih_araligi_ters": {
+        "tr": "Bitiş tarihi başlangıç tarihinden önce olamaz.",
+        "en": "The end date cannot be earlier than the start date.",
+        "ar": "لا يمكن أن يسبق تاريخ الانتهاء تاريخ البدء.",
+        "ru": "Дата окончания не может быть раньше даты начала.",
+        "de": "Das Enddatum darf nicht vor dem Startdatum liegen.",
+        "fr": "La date de fin ne peut pas précéder la date de début.",
+        "es": "La fecha de fin no puede ser anterior a la de inicio.",
+    },
+    "vardiya_aralik_cok_uzun": {
+        "tr": "Tarih aralığı en fazla 31 gün olabilir.",
+        "en": "The date range can be at most 31 days.",
+        "ar": "يمكن أن يكون النطاق الزمني 31 يومًا كحد أقصى.",
+        "ru": "Диапазон дат не может превышать 31 день.",
+        "de": "Der Zeitraum darf höchstens 31 Tage betragen.",
+        "fr": "La plage de dates ne peut excéder 31 jours.",
+        "es": "El intervalo de fechas puede ser de 31 días como máximo.",
+    },
     "vardiya_cakisiyor": {
         "tr": "Bu kişi aynı saatte başka bir vardiyada görevli.",
         "en": "This person is already on another shift at the same time.",

@@ -17,11 +17,34 @@ EN PAHALI SONUCLAR:
 """
 from __future__ import annotations
 
+import pytest
+
 import uuid
 
 from app.mesajlasma import SaglayiciAyari, _ayardan_veya_env
 
 
+
+
+@pytest.fixture(autouse=True)
+def _giris_kod_hizini_sifirla(redis_client):
+    """(P205 §1) HIZ SINIRI ARTIK ADRESE BAGLI, tesise DEGIL.
+
+    Slug opsiyonel oldugu icin "tesis:eposta" anahtari her zaman
+    kurulamiyor; sayac adres basina isliyor ve DOGRUSU bu (kotuye
+    kullanan kisi ADRESI deniyor). Bedeli TESTTE: bu dosyadaki testler
+    AYNI adresi paylasiyor ve sayac sifirlanmazsa birbirinin butcesini
+    tuketiyorlar — kodla ilgisi olmayan 429'lar. (P203'te
+    `hiz:tesislerim:*` icin alinan onlemin aynisi.)
+
+    Sinirin KENDISI ayrica olculuyor: `test_p205_kod_girisi.py`.
+    """
+    if redis_client is None:
+        yield
+        return
+    for anahtar in redis_client.scan_iter("hiz:giris_eposta:*"):
+        redis_client.delete(anahtar)
+    yield
 
 def _p197_mail() -> str:
     """(P197) Kullanici/sakin olusturmada e-posta ZORUNLU oldu.

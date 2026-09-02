@@ -40,6 +40,57 @@ class VardiyaPlaniApi {
     }
   }
 
+  /// (P205 §2) KISI x SAAT cizelgesi.
+  ///
+  /// MOBIL ARTIK BUNU KULLANIYOR: `GET /vardiya-plani` izgarasi
+  /// SABLONA bagli slotlari doner ve SERBEST (sablonsuz) vardiyalar
+  /// orada HIC GORUNMEZ — web'den hizli eklenen bir vardiya sahada
+  /// gorunmezdi. Izgara ucu duruyor (varsayilan kadro tohumlamasi ona
+  /// dayaniyor), ekran ondan koptu.
+  Future<VardiyaCizelge> cizelge(DateTime baslangic, {int gun = 7}) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/vardiya-plani/cizelge',
+        queryParameters: {'baslangic': _tarih(baslangic), 'gun': gun},
+      );
+      return VardiyaCizelge.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// (P205 §2) Tarih araligindaki HER GUN icin vardiya.
+  ///
+  /// `cakisanlariAtla` VARSAYILAN FALSE: cakisan gunler kullaniciya
+  /// SORULMADAN atlanmaz (istegin acik sarti).
+  Future<VardiyaTopluSonuc> topluEkle({
+    required String userId,
+    required DateTime baslangic,
+    required DateTime bitis,
+    required String baslangicSaat,
+    required String bitisSaat,
+    String? not,
+    bool cakisanlariAtla = false,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/vardiya-plani/toplu',
+        data: {
+          'user_id': userId,
+          'baslangic_tarih': _tarih(baslangic),
+          'bitis_tarih': _tarih(bitis),
+          'baslangic_saat': baslangicSaat,
+          'bitis_saat': bitisSaat,
+          'not_metni': not,
+          'cakisanlari_atla': cakisanlariAtla,
+        },
+      );
+      return VardiyaTopluSonuc.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
   Future<VardiyaSimdi> simdi() async {
     try {
       final res = await _dio.get<Map<String, dynamic>>('/vardiya-plani/simdi');

@@ -6893,7 +6893,81 @@ paths:
               schema: { $ref: "#/components/schemas/VardiyaHafta" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
+  /vardiya-plani/cizelge:
+    get:
+      tags: [vardiya]
+      summary: Zaman cizelgesi — KISI x SAAT (yonetim + saha)
+      description: >
+        Haftalik izgara (`GET /vardiya-plani`) GUN x VARDIYA sorusunu
+        yanitlar ve DURUYOR. Cizelge baska bir soruyu yanitlar: KISI x
+        SAAT. Ayni yanittan ikisini de turetmek mumkun degil — izgarada
+        kisiler slotun ICINDE ve saatler SABLONDAN; cizelgede kisi
+        SATIRDIR ve saatler blok basinadir. Ayrica SABLONSUZ (serbest)
+        vardiyalar izgarada hic gorunmez. Vardiyasi OLMAYAN personel de
+        listede durur: "kim BOSTA" da bir plan sorusudur.
+      parameters:
+        - { name: baslangic, in: query, required: true, schema: { type: string, format: date } }
+        - { name: gun, in: query, schema: { type: integer, minimum: 1, maximum: 31, default: 7 } }
+      responses:
+        "200":
+          description: Cizelge
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VardiyaCizelge" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /vardiya-plani/toplu:
+    post:
+      tags: [vardiya]
+      summary: Tarih araligindaki HER GUN icin vardiya olustur (admin + yonetici)
+      description: >
+        CAKISAN GUNLER SESSIZCE ATLANMAZ. `cakisanlari_atla=false`
+        (varsayilan) ve cakisma varsa HICBIR SEY YAZILMAZ:
+        `uygulandi=false` doner ve cakisan gunler listelenir. Kullanici
+        karar verir; istemci istegi `cakisanlari_atla=true` ile
+        tekrarlar. Sessizce atlamak, yoneticinin "on dort gun ekledim"
+        sanip yedi gun eklemesi demekti — eksigi ancak sahada fark
+        ederdi. Bu yuzden yanit HATA ZARFI DEGIL: gun listesi tasimasi
+        gerekiyor.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/VardiyaToplu" }
+      responses:
+        "200":
+          description: Sonuc (uygulandi ya da cakisma onizlemesi)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VardiyaTopluSonuc" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
   /vardiya-plani/{plan_id}:
+    patch:
+      tags: [vardiya]
+      summary: Blogun saatini/gununu degistir (admin + yonetici)
+      description: >
+        SAATLER SATIRA yazilir, SABLONA DEGIL: sablonu guncellemek o
+        vardiyadaki HERKESIN saatini sessizce degistirmek olurdu.
+        Cakisma denetimi KENDI SATIRINI haric tutar.
+      parameters:
+        - { name: plan_id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/VardiyaGuncelle" }
+      responses:
+        "200":
+          description: Guncellendi (uyarilarla birlikte)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VardiyaPlan" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
     delete:
       tags: [vardiya]
       summary: Atamayi kaldir — SILMEZ, iptal isaretler (admin + yonetici)
@@ -13900,10 +13974,11 @@ components:
         not_metni: { type: string, maxLength: 500, nullable: true }
     VardiyaPlan:
       type: object
-      required: [id, shift_id, tarih, user_id, durum]
+      required: [id, tarih, user_id, durum]
       properties:
         id: { type: string, format: uuid }
-        shift_id: { type: string, format: uuid }
+        # (P205 §2) SERBEST vardiyada YOK: satir kendi saatlerini tasir.
+        shift_id: { type: string, format: uuid, nullable: true }
         tarih: { type: string, format: date }
         user_id: { type: string, format: uuid }
         durum: { type: string, enum: [planli, iptal] }
@@ -13915,6 +13990,89 @@ components:
             `gunluk_sinir_asildi` / `haftalik_normal_asildi`. UYARI,
             RED DEGIL: 45 saat ustu fazla mesaidir (4857 md. 41) —
             yasal ama maliyetli, ve §5 tam olarak onu gidere yaziyor.
+    VardiyaBlok:
+      type: object
+      required: [plan_id, tarih, baslar, biter]
+      properties:
+        plan_id: { type: string, format: uuid }
+        tarih: { type: string, format: date }
+        baslar: { type: string, format: date-time }
+        biter: { type: string, format: date-time }
+        shift_ad: { type: string, nullable: true }
+        not_metni: { type: string, nullable: true }
+        gece_asiyor:
+          type: boolean
+          description: >
+            22:00-05:00 gibi ERTESI GUNE tasan vardiya. `baslar`/`biter`
+            farkindan turetilebilir ama tek yerde uretiliyor: cizelge
+            bunu IKI GUNDE cizmek zorunda ve ayni kurali web'de ve
+            mobilde ayri hesaplamak, birinin sapmasi demekti.
+    VardiyaCizelgeKisi:
+      type: object
+      required: [user_id, ad, rol]
+      properties:
+        user_id: { type: string, format: uuid }
+        ad: { type: string }
+        rol: { type: string }
+        bloklar:
+          type: array
+          items: { $ref: "#/components/schemas/VardiyaBlok" }
+    VardiyaCizelge:
+      type: object
+      required: [baslangic, bitis]
+      properties:
+        baslangic: { type: string, format: date }
+        bitis: { type: string, format: date }
+        personel:
+          type: array
+          items: { $ref: "#/components/schemas/VardiyaCizelgeKisi" }
+    VardiyaToplu:
+      type: object
+      required: [user_id, baslangic_tarih, bitis_tarih, baslangic_saat, bitis_saat]
+      properties:
+        user_id: { type: string, format: uuid }
+        baslangic_tarih: { type: string, format: date }
+        bitis_tarih: { type: string, format: date }
+        baslangic_saat: { type: string }
+        bitis_saat: { type: string }
+        not_metni: { type: string, maxLength: 500, nullable: true }
+        cakisanlari_atla:
+          type: boolean
+          default: false
+          description: >
+            VARSAYILAN FALSE ve bu bilincli: cakisan gunler atlanmadan
+            once kullaniciya SORULUR.
+    VardiyaTopluGun:
+      type: object
+      required: [tarih, durum]
+      properties:
+        tarih: { type: string, format: date }
+        durum: { type: string, enum: [eklendi, cakisma, eklenebilir] }
+        plan_id: { type: string, format: uuid, nullable: true }
+    VardiyaTopluSonuc:
+      type: object
+      required: [uygulandi, eklenen, cakisan]
+      properties:
+        uygulandi:
+          type: boolean
+          description: >
+            FALSE = HICBIR SEY YAZILMADI (cakisma var, kullanici henuz
+            karar vermedi).
+        eklenen: { type: integer }
+        cakisan: { type: integer }
+        gunler:
+          type: array
+          items: { $ref: "#/components/schemas/VardiyaTopluGun" }
+        uyarilar:
+          type: array
+          items: { type: string }
+    VardiyaGuncelle:
+      type: object
+      properties:
+        tarih: { type: string, format: date, nullable: true }
+        baslangic_saat: { type: string, nullable: true }
+        bitis_saat: { type: string, nullable: true }
+        not_metni: { type: string, maxLength: 500, nullable: true }
     VardiyaSimdi:
       type: object
       required: [zaman]

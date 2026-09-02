@@ -247,6 +247,19 @@ async def login(
     if body.tenant_slug:
         uygun = [r for r in uygun if r["slug"] == body.tenant_slug]
     if not uygun:
+        # BASARISIZ GIRIS DENETIME YAZILIR.
+        #
+        # OLCULEN KUSUR (P205 §1, `test_audit` yakaladi): yeni akista
+        # yanlis parola sessizce 401 donuyordu — `login_fail` satiri
+        # HIC yazilmiyordu. Bir hesaba yapilan parola denemelerini
+        # gormeden "bu hesaba saldirildi mi" sorusu YANITSIZ kalir.
+        #
+        # KIMLIGI COZULEN her uyelik icin yazilir (slug verilmisse
+        # yalniz o): tenant COZULMEDIYSE kapsam yok, cagrilmaz.
+        for r in satirlar:
+            if body.tenant_slug and r["slug"] != body.tenant_slug:
+                continue
+            await _audit_login_fail(r["tenant_id"], method="kimlik")
         raise _INVALID_CREDS
     if len(uygun) > 1:
         # SECIM GEREKLI: jeton URETILMEZ. Rastgele birini secmek,
@@ -799,32 +812,47 @@ async def eposta_giris_kodu_dogrula(
     if not adaylar:
         raise TK_GECERSIZ
 
-    # KODU TUTAN tesisler. Slug'siz istekte ayni kod hepsine yazildi,
-    # yani normalde hepsi tutar; yine de TEK TEK dogrulanir — kod bir
-    # tesiste tuketilmis ya da suresi dolmus olabilir.
+    # ================= 1. GECIS: YALNIZ YOKLA, TUKETME =================
+    #
+    # OLCULEN KUSUR (P205 §1): ilk yazimda dogrulama TARAMA sirasinda
+    # yapiliyor ve kod O SIRADA tuketilmiyordu — `test_eposta_kanali`
+    # iki seyi birden yakaladi: kod IKINCI kez de calisiyordu ve
+    # `eposta_dogrulandi` bayragi ACILMIYORDU (P181 Bölüm 4 kurali).
+    #
+    # Dogru ayrim: TARAMA yazmaz (oturum COMMIT EDILMEZ), KAZANAN
+    # tesiste tam islem yapilir. Tarama sirasinda tuketmek, iki tesisi
+    # olan bir kullanicinin kodunu ilk bakista harcamak olurdu.
     tutanlar: list[dict] = []
     for r in adaylar:
         async with SessionLocal() as session:
-            async with session.begin():
-                await set_tenant(session, r["tenant_id"])
-                try:
-                    await eposta_kodunu_dogrula(
-                        session, tenant_id=r["tenant_id"], eposta=eposta,
-                        kod=body.kod, amac="giris",
-                    )
-                except APIError:
-                    continue
-                tutanlar.append(r)
+            await set_tenant(session, r["tenant_id"])
+            try:
+                await eposta_kodunu_dogrula(
+                    session, tenant_id=r["tenant_id"], eposta=eposta,
+                    kod=body.kod, amac="giris",
+                )
+            except APIError:
+                continue
+            finally:
+                # YAZMA YOK: `begin()` acilmadi, oturum commit edilmeden
+                # kapaniyor.
+                await session.rollback()
+            tutanlar.append(r)
 
     if not tutanlar:
         raise TK_GECERSIZ
     if len(tutanlar) > 1:
         raise APIError(409, "tesis_secimi_gerekli", "tesis_secimi_gerekli")
 
+    # ================= 2. GECIS: KAZANAN TESISTE TAM ISLEM =============
     hedef = tutanlar[0]
     async with SessionLocal() as session:
         async with session.begin():
             await set_tenant(session, hedef["tenant_id"])
+            kayit = await eposta_kodunu_dogrula(
+                session, tenant_id=hedef["tenant_id"], eposta=eposta,
+                kod=body.kod, amac="giris",
+            )
             user = (
                 await session.execute(
                     select(AppUser).where(AppUser.id == hedef["user_id"])
@@ -834,11 +862,21 @@ async def eposta_giris_kodu_dogrula(
                 raise TK_GECERSIZ
             if gorev_penceresi_disinda(user):
                 raise _GOREV_SURESI_DISINDA
+            # (P181 Bölüm 4) KODU GIRMEK ADRESIN KONTROLUNU KANITLAR:
+            # bayrak burada acilir ki e-postali ama hic dogrulamamis
+            # MEVCUT kullanici OTP ile girip otomatik dogrulansin
+            # (parola sifirlama onlar icin de calissin).
+            if not user.eposta_dogrulandi:
+                user.eposta_dogrulandi = True
+                user.updated_at = func.now()
+            # KOD TUKETILIR: tekrar kullanilamaz.
+            kayit.durum = "onaylandi"
             await record_audit(
                 session, action=Action.LOGIN_OK, tenant_id=hedef["tenant_id"],
                 actor_user_id=user.id, actor_rol=user.role,
                 resource_type="app_user", resource_id=user.id,
             )
+            await session.flush()
             hedef_user = user
     return await _issue_token_pair(redis, hedef_user)
 

@@ -64,6 +64,28 @@ class StaffApi {
     }
   }
 
+  /// (P205 §2.4) VARDIYA ATANABILIR TUM personel — saha rolleriyle
+  /// SINIRLI DEGIL. `getFieldStaff` yalniz `security` +
+  /// `tesis_gorevlisi` doner; vardiya guvenlik amirine de yazilabilir
+  /// (sunucu `guvenlik_amiri` ve `yonetici`yi de kabul ediyor) ve
+  /// listede olmayan bir kisiyi mobilde atamak IMKANSIZ olurdu.
+  /// SAKIN DISARIDA: vardiya personele yazilir.
+  Future<List<StaffMember>> tumPersonel() async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/users',
+        queryParameters: {'limit': 200},
+      );
+      final items = (res.data!['items'] as List).cast<Map<String, dynamic>>();
+      return items
+          .map(StaffMember.fromJson)
+          .where((s) => s.role != 'resident' && s.isActive)
+          .toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
   /// Yeni saha personeli. Backend hesabi PAROLASIZ acar ve otomatik bir davet
   /// gonderir; kisi daveti (Tesis ID) ile kendi kaydini tamamlar — yonetici
   /// parola belirlemez, kod iletmez. Donus: id (foto yukleme icin

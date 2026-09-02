@@ -240,3 +240,23 @@ def test_SECILEN_TESIS_DISI_VERI_GORUNMEZ(client, world, cift_tesis, owner_conn)
     assert isaret_a in a and isaret_b in b
     assert isaret_b not in a, "A jetonu B'nin verisini GORUYOR"
     assert isaret_a not in b, "B jetonu A'nin verisini GORUYOR"
+
+
+def test_YANLIS_PAROLA_DENETIME_YAZILIR(client, world, owner_conn):
+    """OLCULEN KUSUR (tam takim yakaladi): yeni tek-alan akisinda yanlis
+    parola sessizce 401 donuyordu — `login_fail` satiri HIC yazilmiyordu.
+    Bir hesaba yapilan parola denemelerini gormeden "bu hesaba saldirildi
+    mi" sorusu YANITSIZ kalir.
+    """
+    def sayi():
+        with owner_conn.cursor() as cur:
+            cur.execute(
+                "SELECT count(*) FROM audit_log WHERE tenant_id=%s "
+                "AND action='login_fail'", (world["a"],))
+            return cur.fetchone()[0]
+
+    onceki = sayi()
+    r = _giris(client, kimlik=world["yonetici_a"]["email"],
+               password="TamamenYanlis1!", tenant_slug=world["slug_a"])
+    assert r.status_code == 401, r.text
+    assert sayi() == onceki + 1, "basarisiz giris denetime yazilmadi"

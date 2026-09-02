@@ -93,3 +93,29 @@ def cakisiyor_mu(
     yerine `<=` kullanmak, mesru bir devir teslimi engellerdi.
     """
     return a[0] < b[1] and b[0] < a[1]
+
+
+def plan_araligi(plan, shift) -> tuple[dt.datetime, dt.datetime]:
+    """(P205 §2) BIR PLAN SATIRININ gercek zaman araligi — TEK KURAL.
+
+    Saat iki yerden gelebilir ve oncelik NETTIR:
+      1. SATIRIN KENDI saatleri (serbest vardiya ya da o gunluk sapma),
+      2. yoksa SABLONUN saatleri.
+
+    Bu secim uc yerde lazim (cizelge, cakisma denetimi, mesai hesabi) ve
+    orada ayri ayri yazilsaydi, birinde unutulan bir dal saatleri
+    sessizce sablondan okur — yani kullanicinin yazdigi saat KAYBOLURDU.
+    """
+    bas = plan.baslangic_saat or (shift.baslangic_saat if shift else None)
+    son = plan.bitis_saat or (shift.bitis_saat if shift else None)
+    if bas is None or son is None:
+        # Goc 0096'daki CHECK bunu engelliyor; yine de sessiz bir 0 saat
+        # yerine ACIK hata: saati olmayan bir vardiya, cakisma ve mesai
+        # hesabinda gorunmez bir bosluk olurdu.
+        raise ValueError("vardiya plani satirinin saati yok")
+    return vardiya_araligi(plan.tarih, bas, son)
+
+
+def gece_asiyor_mu(bas: dt.time, son: dt.time) -> bool:
+    """22:00-05:00 gibi ERTESI GUNE tasan vardiya mi?"""
+    return son <= bas

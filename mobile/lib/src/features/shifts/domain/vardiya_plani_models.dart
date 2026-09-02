@@ -120,3 +120,123 @@ class VardiyaSimdi {
             .toList(),
       );
 }
+
+// ==================== (P205 §2) ZAMAN CIZELGESI ============================ #
+
+/// Cizelgedeki TEK bir vardiya blogu.
+///
+/// SAATLER SUNUCUDA COZULMUS gelir (`baslar`/`biter` tam damga):
+/// "sablon mu satirin kendi saati mi" secimini istemciye yaptirmak,
+/// ayni kurali web'de ve mobilde IKI KEZ yazmak olurdu.
+class VardiyaBlok {
+  const VardiyaBlok({
+    required this.planId,
+    required this.tarih,
+    required this.baslar,
+    required this.biter,
+    this.shiftAd,
+    this.notMetni,
+    this.geceAsiyor = false,
+  });
+
+  final String planId;
+  final String tarih;
+  final DateTime baslar;
+  final DateTime biter;
+
+  /// Sablondan geliyorsa adi; SERBEST vardiyada null.
+  final String? shiftAd;
+  final String? notMetni;
+
+  /// 22:00-05:00 gibi ERTESI GUNE tasan vardiya.
+  final bool geceAsiyor;
+
+  String get saatAraligi => '${_ss(baslar)}–${_ss(biter)}';
+
+  static String _ss(DateTime d) =>
+      '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
+
+  factory VardiyaBlok.fromJson(Map<String, dynamic> j) => VardiyaBlok(
+        planId: j['plan_id'] as String,
+        tarih: (j['tarih'] as String?) ?? '',
+        baslar: DateTime.parse(j['baslar'] as String),
+        biter: DateTime.parse(j['biter'] as String),
+        shiftAd: j['shift_ad'] as String?,
+        notMetni: j['not_metni'] as String?,
+        geceAsiyor: (j['gece_asiyor'] as bool?) ?? false,
+      );
+}
+
+class VardiyaCizelgeKisi {
+  const VardiyaCizelgeKisi({
+    required this.userId,
+    required this.ad,
+    required this.rol,
+    this.bloklar = const [],
+  });
+
+  final String userId;
+  final String ad;
+  final String rol;
+  final List<VardiyaBlok> bloklar;
+
+  factory VardiyaCizelgeKisi.fromJson(Map<String, dynamic> j) =>
+      VardiyaCizelgeKisi(
+        userId: j['user_id'] as String,
+        ad: (j['ad'] as String?) ?? '',
+        rol: (j['rol'] as String?) ?? '',
+        bloklar: ((j['bloklar'] as List?) ?? const [])
+            .whereType<Map>()
+            .map((m) => VardiyaBlok.fromJson(Map<String, dynamic>.from(m)))
+            .toList(),
+      );
+}
+
+class VardiyaCizelge {
+  const VardiyaCizelge({this.personel = const []});
+
+  final List<VardiyaCizelgeKisi> personel;
+
+  factory VardiyaCizelge.fromJson(Map<String, dynamic> j) => VardiyaCizelge(
+        personel: ((j['personel'] as List?) ?? const [])
+            .whereType<Map>()
+            .map((m) => VardiyaCizelgeKisi.fromJson(Map<String, dynamic>.from(m)))
+            .toList(),
+      );
+}
+
+/// Toplu eklemenin sonucu.
+///
+/// `uygulandi=false` => HICBIR SEY YAZILMADI: cakisma var ve kullanici
+/// henuz karar vermedi. Cakisan gunler `cakisanGunler`de.
+class VardiyaTopluSonuc {
+  const VardiyaTopluSonuc({
+    required this.uygulandi,
+    required this.eklenen,
+    required this.cakisan,
+    this.cakisanGunler = const [],
+    this.uyarilar = const [],
+  });
+
+  final bool uygulandi;
+  final int eklenen;
+  final int cakisan;
+  final List<String> cakisanGunler;
+  final List<String> uyarilar;
+
+  factory VardiyaTopluSonuc.fromJson(Map<String, dynamic> j) {
+    final gunler = ((j['gunler'] as List?) ?? const []).whereType<Map>();
+    return VardiyaTopluSonuc(
+      uygulandi: (j['uygulandi'] as bool?) ?? true,
+      eklenen: (j['eklenen'] as int?) ?? 0,
+      cakisan: (j['cakisan'] as int?) ?? 0,
+      cakisanGunler: gunler
+          .where((g) => g['durum'] == 'cakisma')
+          .map((g) => (g['tarih'] as String?) ?? '')
+          .toList(),
+      uyarilar: ((j['uyarilar'] as List?) ?? const [])
+          .whereType<String>()
+          .toList(),
+    );
+  }
+}

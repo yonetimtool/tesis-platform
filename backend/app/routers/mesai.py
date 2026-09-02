@@ -54,7 +54,7 @@ from ..schemas import (
     MesaiKisiOut,
     MesaiOzetOut,
 )
-from ..vardiya import saat_farki, vardiya_araligi
+from ..vardiya import plan_araligi, saat_farki
 
 router = APIRouter(prefix="/mesai", tags=["mesai"])
 
@@ -72,8 +72,11 @@ async def _ozet_hesapla(
     bas, son = ay_araligi(yil, ay)
     satirlar = (
         await db.execute(
+            # (P205 §2) OUTER JOIN: sablonsuz vardiyalar da MESAI
+            # URETIR. `join` birakilsaydi serbest yazilan gece
+            # vardiyalari ucret hesabindan sessizce DUSERDI.
             select(VardiyaPlani, Shift, AppUser.id, AppUser.ad)
-            .join(Shift, Shift.id == VardiyaPlani.shift_id)
+            .outerjoin(Shift, Shift.id == VardiyaPlani.shift_id)
             .join(AppUser, AppUser.id == VardiyaPlani.user_id)
             .where(
                 VardiyaPlani.tarih >= bas,
@@ -86,12 +89,7 @@ async def _ozet_hesapla(
     kisiler: dict[uuid.UUID, KisiOzeti] = {}
     for plan, shift, uid, ad in satirlar:
         k = kisiler.setdefault(uid, KisiOzeti(user_id=str(uid), ad=ad))
-        k.ekle(
-            plan.tarih,
-            saat_farki(
-                *vardiya_araligi(plan.tarih, shift.baslangic_saat, shift.bitis_saat)
-            ),
-        )
+        k.ekle(plan.tarih, saat_farki(*plan_araligi(plan, shift)))
 
     # UCRET personel kaydindan gelir; `app_user_id` bagi yoksa ucret
     # bilinmez ve kisi "tanimsiz" isaretlenir (sifir SAYILMAZ).
