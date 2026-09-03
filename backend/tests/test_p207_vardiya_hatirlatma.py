@@ -273,3 +273,43 @@ def test_BASKA_TESISIN_plani_HATIRLATILMAZ(owner_conn, push_spy):
         assert len(_bildirimler(owner_conn, b, "vardiya_hatirlatma")) == 1
     finally:
         owner_conn.execute("DELETE FROM tenant WHERE id IN (%s,%s)", (a, b))
+
+
+# ============== (P210) 5 DAKIKA KADEMESI GERCEKTEN AYARLANABILIYOR ========= #
+
+def test_BES_DAKIKA_kademesi_AYARLANABILIR_ve_CALISIR(owner_conn, push_spy):
+    """(P210 madde 4) Ses dosyasi "5 dk kala" anonsu icin uretildi;
+    ayarin o degeri gercekten kabul ettigini ve pencerenin tuttugunu
+    olcuyoruz.
+
+    P207'de varsayilan 15 dk ve en fazla 3 kademeydi; 5 SINIRLARIN
+    ICINDE (1..240) ve tek basina da yazilabiliyor.
+    """
+    from app.scheduler.service import hatirlatma_kademeleri
+
+    assert hatirlatma_kademeleri("5") == [5]
+    assert hatirlatma_kademeleri("30,15,5") == [30, 15, 5]
+
+    tid = _tenant(owner_conn, kademe="5")
+    gid = _guard(owner_conn, tid)
+    _plan(owner_conn, tid, gid)
+    try:
+        # Vardiya 06:00Z; 5 dakika kala = 05:55Z.
+        assert vardiya_hatirlatmalari(
+            now=datetime(2026, 1, 15, 5, 55, tzinfo=UTC)) == 1
+        satirlar = _bildirimler(owner_conn, tid, "vardiya_hatirlatma")
+        assert satirlar[0][1]["dakika"] == 5
+        # 6 dakika kala PENCERE DISI (kademe-1 < kalan <= kademe).
+        assert vardiya_hatirlatmalari(
+            now=datetime(2026, 1, 15, 5, 53, tzinfo=UTC)) == 0
+    finally:
+        owner_conn.execute("DELETE FROM tenant WHERE id = %s", (tid,))
+
+
+def test_BES_DAKIKA_hatirlatmasi_VARDIYA_KANALINDAN_gider():
+    """Zincirin son halkasi: 5 dk kala giden bildirim, ses dosyasinin
+    uretildigi kanaldan calmali."""
+    from app.push_kanal import KANAL_VARDIYA, VARDIYA_SES_ADI, kanal_sec, ses_adi
+
+    assert kanal_sec("vardiya_hatirlatma", sesli=True) == KANAL_VARDIYA
+    assert ses_adi("vardiya_hatirlatma", sesli=True) == f"{VARDIYA_SES_ADI}.caf"

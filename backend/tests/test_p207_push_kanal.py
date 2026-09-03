@@ -55,12 +55,19 @@ def _mobil_kaynak(ad: str) -> str | None:
 
 # ===================== 1) KANAL SECIMI ===================================== #
 
-def test_KRITIK_TIPLER_kritik_kanaldan_gider():
-    """Istegin acik sarti: sikayet ve vardiya hatirlatmalari SESLI."""
+def test_KRITIK_TIPLER_SESLI_gider():
+    """Istegin acik sarti (P207): sikayet ve vardiya hatirlatmalari SESLI.
+
+    (P210) Hatirlatma artik KENDI kanalinda — ama hâlâ `KRITIK_TIPLER`
+    icinde ve hâlâ sesli. Kume "sesli olmali" listesidir; kanal secimi
+    ondan SONRA gelir (`OZEL_KANALLI_TIPLER` once bakilir).
+    """
+    from app.push_kanal import KANAL_VARDIYA
+
     assert "yeni_talep" in KRITIK_TIPLER
     assert "vardiya_hatirlatma" in KRITIK_TIPLER
     assert kanal_sec("yeni_talep", sesli=True) == KANAL_KRITIK
-    assert kanal_sec("vardiya_hatirlatma", sesli=True) == KANAL_KRITIK
+    assert kanal_sec("vardiya_hatirlatma", sesli=True) == KANAL_VARDIYA
 
 
 def test_SIRADAN_bildirim_genel_kanaldan_gider():
@@ -76,10 +83,19 @@ def test_SES_KAPALIYSA_KRITIK_bile_sessiz_kanaldan_gider():
     assert ses_adi("yeni_talep", sesli=False) is None
 
 
-def test_SES_ADI_dosya_yokken_SISTEM_sesi():
-    """"Ses yok" ile "ozel ses yok" ayni sey degil: dosya gelene kadar
-    sistem sesi calar."""
-    assert ses_adi("yeni_talep", sesli=True) == "default"
+def test_SES_ADI_DOSYA_GELMEDEN_sistem_sesi(monkeypatch):
+    """(P210'da dosyalar GELDI — bu test kurali koruyor.)
+
+    "Ses yok" ile "ozel ses yok" ayni sey degil: dosya olmadigi surece
+    SISTEM SESI calar. Bayrak kapatilinca eski davranisa donuldugunu
+    olcuyoruz; boylece dosyalar bir gun paketten dusarse (or. yanlis
+    bir temizlik) kural hâlâ yazili kalir.
+    """
+    from app import push_kanal
+
+    monkeypatch.setattr(push_kanal, "SES_HAZIR", False)
+    assert push_kanal.ses_adi("yeni_talep", sesli=True) == "default"
+    assert push_kanal.ses_adi("vardiya_hatirlatma", sesli=True) == "default"
 
 
 # ============== 2) KIMLIKLER MOBILLE AYNI (EN KRITIK KILIT) ================ #
@@ -214,14 +230,19 @@ def test_GURULTU_UYARISI_KENDI_KANALINDAN_gider():
     assert kanal_sec("gurultu_uyari_sakin", sesli=False) == KANAL_SESSIZ
 
 
-def test_KACAN_VARDIYA_OZEL_SES_ALMAZ_ama_KRITIK():
+def test_KACAN_VARDIYA_OZEL_KANAL_ACMAZ():
     """Istegin karari: "normal alarm sesi yeterli". Kritik kanaldan
     gider (sesli + high oncelik), kendi kanalini ACMAZ — her yeni kanal
-    kullanicinin sistem ayarlarinda bir satir daha demek."""
+    kullanicinin sistem ayarlarinda bir satir daha demek.
+
+    (P210) `vardiya_hatirlatma` ARTIK KENDI KANALINDA: satiri buradan
+    cikardim cunku dosya geldi ve hatirlatma kendi anonsunu calior.
+    Kacan vardiya ise HÂLÂ kritik kanalda — ayrimin gerekcesi
+    `test_KACAN_VARDIYA_HATIRLATMA_SESINI_KULLANMAZ`da.
+    """
     from app.push_kanal import KANAL_KRITIK, OZEL_KANALLI_TIPLER, kanal_sec
 
     assert kanal_sec("vardiya_baslamadi", sesli=True) == KANAL_KRITIK
-    assert kanal_sec("vardiya_hatirlatma", sesli=True) == KANAL_KRITIK
     assert "vardiya_baslamadi" not in OZEL_KANALLI_TIPLER
 
 
@@ -232,18 +253,18 @@ def test_SIKAYET_ve_VARDIYA_P207_KANALINDAN_devam():
         assert kanal_sec(tip, sesli=True) == KANAL_KRITIK, tip
 
 
-def test_SES_ADI_dosya_HAZIR_OLUNCA_tipe_gore_ayrilir(monkeypatch):
-    """`SES_HAZIR=True` oldugunda gurultu KENDI dosyasini, otekiler ORTAK
-    dosyayi ister. Bugun ikisi de sistem sesi (`default`) — dosyalar
-    gelmedi ve bunu bir "ayar" gibi gostermiyoruz."""
+def test_SES_ADI_tipe_gore_AYRISIYOR():
+    """(P210) Dosyalar geldi: gurultu ve vardiya KENDI dosyalarini,
+    otekiler ORTAK dosyayi ister."""
     from app import push_kanal
 
-    assert push_kanal.ses_adi("gurultu_uyari_sakin", sesli=True) == "default"
-    monkeypatch.setattr(push_kanal, "SES_HAZIR", True)
     assert push_kanal.ses_adi("gurultu_uyari_sakin", sesli=True) == (
         f"{push_kanal.GURULTU_SES_ADI}.caf"
     )
     assert push_kanal.ses_adi("vardiya_hatirlatma", sesli=True) == (
+        f"{push_kanal.VARDIYA_SES_ADI}.caf"
+    )
+    assert push_kanal.ses_adi("yeni_talep", sesli=True) == (
         f"{push_kanal.OZEL_SES_ADI}.caf"
     )
 
@@ -254,3 +275,69 @@ def test_GURULTU_TIPLERI_KRITIK_kumesinde():
 
     assert "gurultu_uyari_sakin" in KRITIK_TIPLER
     assert "gurultu_esik_yonetim" in KRITIK_TIPLER
+
+
+# ============== (P210) VARDIYA ANONSU + SES DOSYALARI GELDI ================ #
+
+def test_VARDIYA_HATIRLATMASI_KENDI_KANALINDAN_kendi_sesiyle():
+    """Vardiyasi yaklasan gorevliye giden anons: kendi kanali, kendi
+    sesi. Ayri kanal SART cunku Android'de ses KANALIN ozelligidir."""
+    from app.push_kanal import KANAL_VARDIYA, VARDIYA_SES_ADI, kanal_sec, ses_adi
+
+    assert kanal_sec("vardiya_hatirlatma", sesli=True) == KANAL_VARDIYA
+    assert ses_adi("vardiya_hatirlatma", sesli=True) == f"{VARDIYA_SES_ADI}.caf"
+    # SES KAPALIYSA tercih kazanir (P207 kurali degismedi).
+    assert kanal_sec("vardiya_hatirlatma", sesli=False) == KANAL_SESSIZ
+    assert ses_adi("vardiya_hatirlatma", sesli=False) is None
+
+
+def test_KACAN_VARDIYA_HATIRLATMA_SESINI_KULLANMAZ():
+    """(P210 karari) Kacan vardiya YONETICIYE gider ("gorevli gelmedi"),
+    hatirlatma GOREVLIYE ("vardiyan basliyor"). Ayni sesi vermek, sesin
+    TEK ISINI bozardi: bakmadan ne oldugunu anlatmak. Kendisi de bir
+    vardiya listesinde olan yonetici, "vardiyan basliyor" sesini duyup
+    kendi vardiyasini sanirdi.
+    """
+    from app.push_kanal import (
+        KANAL_KRITIK,
+        KANAL_VARDIYA,
+        OZEL_SES_ADI,
+        VARDIYA_SES_ADI,
+        kanal_sec,
+        ses_adi,
+    )
+
+    assert kanal_sec("vardiya_baslamadi", sesli=True) == KANAL_KRITIK
+    assert kanal_sec("vardiya_baslamadi", sesli=True) != KANAL_VARDIYA
+    assert ses_adi("vardiya_baslamadi", sesli=True) == f"{OZEL_SES_ADI}.caf"
+    assert ses_adi("vardiya_baslamadi", sesli=True) != f"{VARDIYA_SES_ADI}.caf"
+
+
+def test_SES_HAZIR_ARTIK_ACIK_ve_UC_SES_AYRISIYOR():
+    """Dosyalar geldi: her tip KENDI dosyasini ister, hicbiri artik
+    "default" (sistem sesi) degil."""
+    from app import push_kanal
+
+    assert push_kanal.SES_HAZIR is True
+    esleme = {
+        "vardiya_hatirlatma": push_kanal.VARDIYA_SES_ADI,
+        "gurultu_uyari_sakin": push_kanal.GURULTU_SES_ADI,
+        "yeni_talep": push_kanal.OZEL_SES_ADI,
+        "vardiya_baslamadi": push_kanal.OZEL_SES_ADI,
+    }
+    for tip, ses in esleme.items():
+        assert push_kanal.ses_adi(tip, sesli=True) == f"{ses}.caf", tip
+    # UC AYRI SES: ikisi ayni dosyaya duserse "bakmadan anlama" biter.
+    assert len({push_kanal.OZEL_SES_ADI, push_kanal.GURULTU_SES_ADI,
+                push_kanal.VARDIYA_SES_ADI}) == 3
+
+
+def test_KANAL_KIMLIKLERI_SURUMLU():
+    """Ses eklenince kimlik de degismeli: Android'de var olan kanalin
+    sesi PROGRAMLA degistirilemez ve kimlik ayni kalirsa guncelleyen
+    kullanicida ESKI (sessiz) kanal kalir."""
+    from app import push_kanal
+
+    for ad in ("KANAL_KRITIK", "KANAL_GENEL", "KANAL_SESSIZ",
+               "KANAL_GURULTU", "KANAL_VARDIYA"):
+        assert getattr(push_kanal, ad).endswith("_v2"), ad

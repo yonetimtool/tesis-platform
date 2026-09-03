@@ -16,4 +16,6 @@
     <string name="kanal_sessiz_aciklama">Sesli uyarıları kapattığınızda bildirimler buradan gelir.</string>
     <string name="kanal_gurultu_ad">Gürültü uyarısı</string>
     <string name="kanal_gurultu_aciklama">Daireniz hakkında gürültü şikayeti geldiğinde kendi sesiyle çalar.</string>
+    <string name="kanal_vardiya_ad">Vardiya hatırlatması</string>
+    <string name="kanal_vardiya_aciklama">Vardiyanız yaklaştığında sesli anonsla hatırlatır.</string>
 </resources>

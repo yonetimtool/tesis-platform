@@ -36,9 +36,9 @@ from __future__ import annotations
 #: Kanal kimlikleri — MOBILDEKI `MainActivity.kt` ile AYNI olmak
 #: zorunda. Surum eki (`_v1`) bilincli: Android'de kanalin sesi
 #: sonradan degistirilemez, ses degisirse kimlik de degisir.
-KANAL_KRITIK = "yonetio_kritik_v1"
-KANAL_GENEL = "yonetio_genel_v1"
-KANAL_SESSIZ = "yonetio_sessiz_v1"
+KANAL_KRITIK = "yonetio_kritik_v2"
+KANAL_GENEL = "yonetio_genel_v2"
+KANAL_SESSIZ = "yonetio_sessiz_v2"
 #: (P208 §2) GURULTU UYARISININ KENDI KANALI — kendi sesiyle.
 #:
 #: NEDEN AYRI KANAL: Android'de ses KANALIN ozelligidir; "ayni kanaldan
@@ -46,7 +46,13 @@ KANAL_SESSIZ = "yonetio_sessiz_v1"
 #: ayri kanal SART. Ve bu, kullaniciya sistem ayarlarinda da ayri bir
 #: satir verir: gurultu uyarisini susturup vardiya hatirlatmasini acik
 #: birakabilir.
-KANAL_GURULTU = "yonetio_gurultu_v1"
+KANAL_GURULTU = "yonetio_gurultu_v2"
+#: (P210) VARDIYA HATIRLATMASININ KENDI KANALI — kendi anonsuyla.
+#:
+#: Ses, vardiyasi YAKLASAN gorevliye "hazirlan" der. Ayri kanal
+#: olmasinin sebebi P208'dekiyle ayni: Android'de ses KANALIN
+#: ozelligidir, "ayni kanaldan farkli ses" diye bir sey yok.
+KANAL_VARDIYA = "yonetio_vardiya_v2"
 
 #: Ozel ses dosyasinin ADI (uzantisiz — Android `res/raw`, iOS paket).
 #: DOSYA HENUZ YOK: `SES_HAZIR` false oldugu surece sistem sesi
@@ -56,7 +62,14 @@ OZEL_SES_ADI = "yonetio_bildirim"
 #: (P208 §2) GURULTU UYARISININ AYRI SESI: sakin, bildirimi GORMEDEN
 #: ne oldugunu anlayabilmeli (istegin acik sarti).
 GURULTU_SES_ADI = "yonetio_gurultu"
-SES_HAZIR = False
+#: (P210) Vardiyasi yaklasan gorevliye giden anons.
+VARDIYA_SES_ADI = "yonetio_vardiya"
+#: (P210) DOSYALAR GELDI — ses artik SISTEM SESI DEGIL, kendi
+#: dosyalarimiz. Kanal kimlikleri bu yuzden `_v2`: Android'de var olan
+#: bir kanalin sesi PROGRAMLA degistirilemez; kimlik ayni kalsaydi
+#: guncelleyen kullanicida ESKI (sessiz) kanal kalir ve "ses ekledik
+#: ama calmiyor" olurdu.
+SES_HAZIR = True
 
 #: SESLI OLMASI GEREKEN bildirimler (istegin acik sarti: sikayet ve
 #: vardiya hatirlatmalari). Bunlar KRITIK kanaldan gider; kullanici
@@ -99,6 +112,24 @@ KRITIK_TIPLER: frozenset[str] = frozenset({
 OZEL_KANALLI_TIPLER: dict[str, tuple[str, str]] = {
     # tip -> (kanal, ses adi)
     "gurultu_uyari_sakin": (KANAL_GURULTU, GURULTU_SES_ADI),
+    # (P210) VARDIYA HATIRLATMASI: vardiyasi YAKLASAN gorevliye.
+    "vardiya_hatirlatma": (KANAL_VARDIYA, VARDIYA_SES_ADI),
+    #
+    # ================================================================
+    # `vardiya_baslamadi` BILINCLI OLARAK BURADA YOK
+    # ================================================================
+    # Kacan vardiya uyarisi YONETICIYE gider ("gorevli gelmedi"),
+    # hatirlatma ise GOREVLIYE ("vardiyan basliyor"). Ikisine ayni sesi
+    # vermek, sesin TEK ISINI bozardi: bakmadan ne oldugunu anlatmak.
+    # Kendisi de bir vardiya listesinde olan bir yonetici, "vardiyan
+    # basliyor" sesini duyup kendi vardiyasini sanirdi — oysa gidip
+    # birini yerine gondermesi gerekiyor.
+    #
+    # Ayri UCUNCU bir kanal da acmadik: nadir bir olay icin kullanicinin
+    # sistem ayarlarina bir satir daha eklemek, ayar ekranini
+    # okunmaz yapmaya dogru giden yoldur. Kacan vardiya KRITIK
+    # kanaldan, genel kritik sesle (`yonetio_bildirim`) gider —
+    # "onemli, simdi bak" demenin ortak sesi.
 }
 
 

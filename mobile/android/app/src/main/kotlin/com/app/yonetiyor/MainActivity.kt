@@ -41,9 +41,9 @@ class MainActivity : FlutterActivity() {
 
     companion object {
         // SUNUCUYLA AYNI OLMAK ZORUNDA (backend/app/push_kanal.py).
-        const val KANAL_KRITIK = "yonetio_kritik_v1"
-        const val KANAL_GENEL = "yonetio_genel_v1"
-        const val KANAL_SESSIZ = "yonetio_sessiz_v1"
+        const val KANAL_KRITIK = "yonetio_kritik_v2"
+        const val KANAL_GENEL = "yonetio_genel_v2"
+        const val KANAL_SESSIZ = "yonetio_sessiz_v2"
 
         /**
          * (P208 §2) GURULTU UYARISININ KENDI KANALI.
@@ -54,17 +54,64 @@ class MainActivity : FlutterActivity() {
          * satir da verir (gurultu uyarisini susturup vardiya
          * hatirlatmasini acik birakabilir).
          */
-        const val KANAL_GURULTU = "yonetio_gurultu_v1"
+        const val KANAL_GURULTU = "yonetio_gurultu_v2"
 
         /**
-         * Ozel ses dosyasinin adi (`res/raw/yonetio_bildirim.<uzanti>`).
-         * DOSYA HENUZ YOK: bulunamazsa SISTEM VARSAYILAN sesi kullanilir
-         * (bkz. [sesUri]) — "ses yok" ile "ozel ses yok" ayni sey degil.
+         * (P210) VARDIYA HATIRLATMASININ KENDI KANALI.
+         *
+         * Vardiyasi YAKLASAN gorevliye giden anons. Ayri kanal olmasinin
+         * sebebi P208'dekiyle ayni: Android'de ses KANALIN ozelligidir.
          */
-        const val OZEL_SES = "yonetio_bildirim"
+        const val KANAL_VARDIYA = "yonetio_vardiya_v2"
 
-        /** (P208 §2) Gurultu uyarisinin AYRI sesi (`res/raw/`). */
+        /**
+         * (P210) ESKI KUSAK KANALLAR — silinecek.
+         *
+         * `_v1` kanallari SESSIZ (sistem sesi) donemden kalma. Silinmezse
+         * kullanici sistem ayarlarinda IKI KUSAK kanal gorur ("Onemli
+         * uyarilar" iki kez) ve hangisinin gecerli oldugunu anlayamaz.
+         * Silme, kullanicinin O KANALDA yaptigi ayari da siler — ama
+         * kanal zaten sessizdi ve yenisi ayri bir kanaldir; tasinabilecek
+         * bir tercih yok.
+         */
+        val ESKI_KANALLAR = listOf(
+            "yonetio_kritik_v1",
+            "yonetio_genel_v1",
+            "yonetio_sessiz_v1",
+            "yonetio_gurultu_v1",
+        )
+
+        // ==================================================================
+        // (P210) SES DOSYALARI STATIK REFERANSLA — `getIdentifier` DEGIL
+        // ==================================================================
+        // OLCULEN KUSUR: dosyalar `res/raw/`e konuldu, `flutter build apk
+        // --release` sorunsuz gecti, AMA APK'DA YOKTULAR. Sebep: release
+        // yapiminda KAYNAK KUCULTUCU (resource shrinker) calisiyor ve
+        // `resources.getIdentifier(...)` bir CALISMA ZAMANI dizgi
+        // aramasidir — kucultucu onu GOREMEZ, dosyalari "kullanilmiyor"
+        // sayip ATAR.
+        //
+        // Kanit: `aapt2 dump resources app-release.apk` ciktisinda `raw`
+        // TIPI HIC YOKTU; ara dizinlerde (`packaged_res`) dosyalar
+        // duruyordu — yani kucultme adiminda dusuyorlardi.
+        //
+        // Bu sessiz bir kusurdur: kod calisir, kanal olusur, bildirim
+        // gelir — yalnizca SES SISTEM SESIDIR. Ancak cihazda, kulakla
+        // fark edilir.
+        //
+        // `R.raw.*` ise DERLEME ZAMANI referanstir: kucultucu gorur ve
+        // dosya silinirse KOD DERLENMEZ. Sessiz kusur, derleme hatasina
+        // donusur.
+        val SES_BILDIRIM = R.raw.yonetio_bildirim
+        val SES_GURULTU = R.raw.yonetio_gurultu
+        val SES_VARDIYA = R.raw.yonetio_vardiya
+
+        // Ad sabitleri SUNUCUYLA ESITLIK KILIDI icin duruyor
+        // (`p207_kanal_kimlik_test.dart` bu dizgileri `push_kanal.py` ile
+        // karsilastirir).
+        const val OZEL_SES = "yonetio_bildirim"
         const val GURULTU_SES = "yonetio_gurultu"
+        const val VARDIYA_SES = "yonetio_vardiya"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -72,19 +119,9 @@ class MainActivity : FlutterActivity() {
         kanallariKur()
     }
 
-    /**
-     * Kaynak ADIYLA aranir: dosya pakete eklendiginde kod DEGISMEDEN
-     * ozel ses devreye girer. Dosya yoksa SISTEM VARSAYILANI — "ses yok"
-     * ile "ozel ses yok" ayni sey degil.
-     */
-    private fun sesUri(ad: String = OZEL_SES): Uri? {
-        val id = resources.getIdentifier(ad, "raw", packageName)
-        return if (id != 0) {
-            Uri.parse("android.resource://$packageName/$id")
-        } else {
-            android.provider.Settings.System.DEFAULT_NOTIFICATION_URI
-        }
-    }
+    /** Kaynak KIMLIGINDEN ses adresi (bkz. yukaridaki kucultucu notu). */
+    private fun sesUri(kaynak: Int): Uri =
+        Uri.parse("android.resource://$packageName/$kaynak")
 
     private fun kanallariKur() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
@@ -103,7 +140,7 @@ class MainActivity : FlutterActivity() {
             NotificationManager.IMPORTANCE_HIGH,
         ).apply {
             description = getString(R.string.kanal_kritik_aciklama)
-            setSound(sesUri(), ozellikler)
+            setSound(sesUri(SES_BILDIRIM), ozellikler)
             enableVibration(true)
         }
 
@@ -142,13 +179,30 @@ class MainActivity : FlutterActivity() {
             NotificationManager.IMPORTANCE_HIGH,
         ).apply {
             description = getString(R.string.kanal_gurultu_aciklama)
-            setSound(sesUri(GURULTU_SES), ozellikler)
+            setSound(sesUri(SES_GURULTU), ozellikler)
+            enableVibration(true)
+        }
+
+        // (P210) VARDIYA: vardiyasi yaklasan gorevliye anons. HIGH —
+        // gecikmis bir "vardiyan basliyor" bildirimi ANLAMSIZ olur.
+        val vardiya = NotificationChannel(
+            KANAL_VARDIYA,
+            getString(R.string.kanal_vardiya_ad),
+            NotificationManager.IMPORTANCE_HIGH,
+        ).apply {
+            description = getString(R.string.kanal_vardiya_aciklama)
+            setSound(sesUri(SES_VARDIYA), ozellikler)
             enableVibration(true)
         }
 
         mgr.createNotificationChannel(kritik)
         mgr.createNotificationChannel(gurultu)
+        mgr.createNotificationChannel(vardiya)
         mgr.createNotificationChannel(genel)
         mgr.createNotificationChannel(sessiz)
+
+        // ESKI KUSAGI TEMIZLE: iki kusak kanal, ayar ekraninda ayni ada
+        // sahip iki satir demek.
+        ESKI_KANALLAR.forEach { mgr.deleteNotificationChannel(it) }
     }
 }

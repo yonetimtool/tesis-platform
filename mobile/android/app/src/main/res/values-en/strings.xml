@@ -8,4 +8,6 @@
     <string name="kanal_sessiz_aciklama">When you turn sound alerts off, notifications arrive here.</string>
     <string name="kanal_gurultu_ad">Noise notice</string>
     <string name="kanal_gurultu_aciklama">Plays with its own sound when a noise complaint is received about your home.</string>
+    <string name="kanal_vardiya_ad">Shift reminder</string>
+    <string name="kanal_vardiya_aciklama">Announces with sound when your shift is about to start.</string>
 </resources>
