@@ -81,7 +81,12 @@ describe("(P193 §5) tesis ayarları ekranı", () => {
     kur();
     ciz(TesisAyarlariPage);
     await screen.findByLabelText(/Tesis adı/);
-    expect(screen.getByLabelText(/Gürültü/)).toBeInTheDocument();
+    // (P208 §1) DAR SORGU SART: gurultu alani ARTIK TEK DEGIL —
+    // esik + sayim penceresi + susma suresi + sakine bildirim. Genis
+    // `/Gürültü/` sorgusu "birden cok eslesme" ile duser (ilk kosumda
+    // oyle oldu) ve bu, taramanin HAKLI uyarisi.
+    expect(screen.getByLabelText(/Gürültü uyarı eşiği/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Gürültü sayım penceresi/)).toBeInTheDocument();
     expect(screen.getByLabelText(/Okutma/)).toBeInTheDocument();
   });
 

@@ -14,4 +14,6 @@
     <string name="kanal_genel_aciklama">Duyuru, kargo, rezervasyon ve diğer bildirimler.</string>
     <string name="kanal_sessiz_ad">Sessiz bildirimler</string>
     <string name="kanal_sessiz_aciklama">Sesli uyarıları kapattığınızda bildirimler buradan gelir.</string>
+    <string name="kanal_gurultu_ad">Gürültü uyarısı</string>
+    <string name="kanal_gurultu_aciklama">Daireniz hakkında gürültü şikayeti geldiğinde kendi sesiyle çalar.</string>
 </resources>

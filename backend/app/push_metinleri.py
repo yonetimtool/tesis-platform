@@ -213,6 +213,60 @@ METINLER: dict[str, PushMetni] = {
         params=("nokta", "mesafe", "esik"),
     ),
     # (P37) MANUEL MOD: entegrasyonu olmayan sitede anonsu YONETICI yapar.
+    # ---------------- (P208 §1) GURULTU: SAKIN + YONETIM ---------------- #
+    #
+    # SIKAYET EDENIN KIMLIGI ASLA GECMEZ. Metinde ne kisi, ne daire, ne
+    # de SAYI var: sayi yazmak, sakini "kim sikayet etti" aramaya iter
+    # (bes kisilik bir koridorda bes sikayet, herkesi isaret eder).
+    # Mesajin isi DAVRANISI DEGISTIRMEK, muhasebe yapmak degil.
+    #
+    # TON NOTR: uyari bir CEZA DEGIL hatirlatmadir ve hakkinda haksiz
+    # sikayet birikmis bir daireye de aynen gider (P37 karari).
+    "gurultu_uyari_sakin": PushMetni(
+        baslik={
+            "tr": "Gürültü uyarısı",
+            "en": "Noise notice",
+            "ar": "تنبيه بشأن الضوضاء",
+            "ru": "Уведомление о шуме",
+            "de": "Lärmhinweis",
+            "fr": "Avis de bruit",
+            "es": "Aviso por ruido",
+        },
+        govde={
+            "tr": "Daireniz hakkında gürültü şikâyeti alındı. Lütfen komşularınıza karşı dikkatli olun.",
+            "en": "A noise complaint has been received about your home. Please be considerate of your neighbours.",
+            "ar": "وردت شكوى بشأن الضوضاء من وحدتك. يرجى مراعاة جيرانك.",
+            "ru": "Поступила жалоба на шум из вашей квартиры. Пожалуйста, будьте внимательны к соседям.",
+            "de": "Zu Ihrer Wohnung ist eine Lärmbeschwerde eingegangen. Bitte nehmen Sie Rücksicht auf Ihre Nachbarn.",
+            "fr": "Une plainte pour bruit concernant votre logement a été reçue. Merci d'être attentif à vos voisins.",
+            "es": "Se ha recibido una queja por ruido sobre su vivienda. Por favor, tenga consideración con sus vecinos.",
+        },
+        params=(),
+    ),
+    # YONETIME GIDEN AYRI BILDIRIM: burada SAYI VAR cunku yoneticinin
+    # isi ilgilenmek ve gerekirse yuz yuze konusmak — karar verebilmesi
+    # icin buyuklugu bilmeli. Sikayet EDENIN kimligi burada da YOK.
+    "gurultu_esik_yonetim": PushMetni(
+        baslik={
+            "tr": "Gürültü eşiği aşıldı",
+            "en": "Noise threshold reached",
+            "ar": "تم بلوغ حد الضوضاء",
+            "ru": "Достигнут порог по шуму",
+            "de": "Lärmschwelle erreicht",
+            "fr": "Seuil de bruit atteint",
+            "es": "Umbral de ruido alcanzado",
+        },
+        govde={
+            "tr": "{daire} dairesi için {sayi} gürültü şikâyeti birikti; sakine uyarı bildirimi gönderildi.",
+            "en": "{sayi} noise complaints have accumulated for unit {daire}; a notice was sent to the resident.",
+            "ar": "تراكمت {sayi} شكاوى ضوضاء بشأن الوحدة {daire}؛ وأُرسل تنبيه إلى الساكن.",
+            "ru": "По квартире {daire} накопилось жалоб на шум: {sayi}; жильцу отправлено уведомление.",
+            "de": "Für Einheit {daire} liegen {sayi} Lärmbeschwerden vor; der Bewohner wurde benachrichtigt.",
+            "fr": "{sayi} plaintes pour bruit concernent le logement {daire} ; un avis a été envoyé au résident.",
+            "es": "Se han acumulado {sayi} quejas por ruido en la vivienda {daire}; se avisó al residente.",
+        },
+        params=('daire', 'sayi'),
+    ),
     "gurultu_uyarisi": PushMetni(
         baslik={
             "tr": "Gürültü uyarısı gerekiyor",

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import logging
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from fastapi.concurrency import run_in_threadpool
 from sqlalchemy import func, select, update
@@ -23,8 +23,19 @@ from .gurultu import (
     imzala,
     uyari_metni,
 )
-from .models import Integration, Tenant, Unit, UnitComplaint, UnitUyari
+from .audit import Action, record_audit
+from .models import (
+    Integration,
+    Notification,
+    Tenant,
+    Unit,
+    UnitComplaint,
+    UnitResident,
+    UnitUyari,
+)
 from .safe_http import SSRFBlocked, send_webhook
+from .push_metinleri import push_govdesi
+from .sakin_bildirimi import sakin_bildirimi_yaz
 from .scheduler.notify import dispatch_external
 
 logger = logging.getLogger(__name__)
@@ -33,24 +44,89 @@ logger = logging.getLogger(__name__)
 _MANUEL_ROLLER: tuple[str, ...] = ("admin", "yonetici")
 
 
-async def acik_gurultu_sayisi(db: AsyncSession, unit_id: uuid.UUID) -> int:
-    """YALNIZ `gurultu` kategorisi sayilir.
+async def acik_gurultu_sayisi(
+    db: AsyncSession, unit_id: uuid.UUID, *, pencere_gun: int = 0
+) -> int:
+    """YALNIZ `gurultu` kategorisi, YALNIZ PENCERE ICINDE.
 
     Kapi onune ayakkabi birakan bir daireye "gurultu uyarisi" anonsu
     yapmak, caydiriciyi anlamsiz kilardi — P24'un renk skalasi TUM
     kategorileri sayar ama CAYDIRICI gurulyuye ozeldir.
+
+    (P208 §1) PENCERE EKLENDI. Onceden `durum='acik'` olan HER sikayet
+    sayiliyordu: bir yil once acilmis ve kimsenin kapatmadigi bir
+    sikayet, dun geceki kadar agirlik tasiyordu. `pencere_gun=0` ESKI
+    DAVRANISTIR (sinirsiz) ve mevcut tesisler icin kacis kapisidir.
     """
+    kosullar = [
+        UnitComplaint.target_unit_id == unit_id,
+        UnitComplaint.kategori == "gurultu",
+        UnitComplaint.durum == "acik",
+    ]
+    if pencere_gun and pencere_gun > 0:
+        sinir = datetime.now(tz=timezone.utc) - timedelta(days=pencere_gun)
+        kosullar.append(UnitComplaint.created_at >= sinir)
     return (
         await db.execute(
-            select(func.count())
-            .select_from(UnitComplaint)
-            .where(
-                UnitComplaint.target_unit_id == unit_id,
-                UnitComplaint.kategori == "gurultu",
-                UnitComplaint.durum == "acik",
-            )
+            select(func.count()).select_from(UnitComplaint).where(*kosullar)
         )
     ).scalar_one()
+
+
+async def _uyarilacak_sakinler(
+    db: AsyncSession, unit_id: uuid.UUID
+) -> list[uuid.UUID]:
+    """(P208 §1) Uyarinin gidecegi kisiler — OTURAN KISI.
+
+    =======================================================================
+    KIRACI VARSA YALNIZ KIRACIYA
+    =======================================================================
+    Gurultu daireden cikar ve onu durdurabilecek kisi ORADA OTURANDIR.
+    Oturmayan malike "hakkinizda gurultu sikayeti var" demek, hem yanlis
+    kisiyi uyarmak hem de kiraci hakkindaki sikayeti ev sahibine ihbar
+    etmektir — sistemin gorevi olmayan ve kiraci-malik iliskisini
+    zedeleyen bir sey.
+
+    Kiraci bagi YOKSA malik(ler)e gider: o durumda oturan kisi odur.
+    AKTIF BAG: `bitis IS NULL` ya da gelecekte. Tasinmis birine uyari
+    gondermek, gecmisteki bir komsuluk icin bugun rahatsiz etmekti.
+    """
+    simdi = datetime.now(tz=timezone.utc)
+    satirlar = (
+        await db.execute(
+            select(UnitResident.user_id, UnitResident.rol_tipi).where(
+                UnitResident.unit_id == unit_id,
+                (UnitResident.bitis.is_(None)) | (UnitResident.bitis > simdi),
+            )
+        )
+    ).all()
+    kiracilar = [uid for uid, rol in satirlar if rol == "kiraci"]
+    if kiracilar:
+        return kiracilar
+    return [uid for uid, _ in satirlar]
+
+
+async def _susma_suresinde_mi(
+    db: AsyncSession, unit_id: uuid.UUID, susma_gun: int
+) -> bool:
+    """(P208 §1) Bu daire yakin zamanda UYARILDI mi?
+
+    Her gece tekrarlanan bir uyari KENDISI gurultuye donusur ve okunmaz
+    olur; uyarinin isi davranisi degistirmek ve buna zaman tanimak.
+    Kayit YINE YAZILIR (asagida) — susan sey BILDIRIMDIR, defter degil:
+    tekrarlanan esik asimlari yoneticinin escalation dayanagidir.
+    """
+    if susma_gun <= 0:
+        return False
+    sinir = datetime.now(tz=timezone.utc) - timedelta(days=susma_gun)
+    son = (
+        await db.execute(
+            select(UnitUyari.id)
+            .where(UnitUyari.unit_id == unit_id, UnitUyari.created_at >= sinir)
+            .limit(1)
+        )
+    ).scalar_one_or_none()
+    return son is not None
 
 
 async def _gonder(
@@ -92,8 +168,21 @@ async def esik_kontrol(
     if tenant is None:
         return None
 
-    sayac = await acik_gurultu_sayisi(db, unit.id)
+    sayac = await acik_gurultu_sayisi(
+        db, unit.id, pencere_gun=tenant.gurultu_pencere_gun
+    )
     if not esik_asildi(sayac, tenant.gurultu_esigi):
+        return None
+
+    # (P208 §1) SUSMA SURESI: yakin zamanda uyarilmis daire YENIDEN
+    # uyarilmaz. Kontrol SIFIRLAMADAN ONCE yapilir ve `None` doner —
+    # sikayetleri kapatmak, uyari gonderilmeden sayaci sifirlamak
+    # olurdu ve daire kalici olarak "temiz" gorunurdu.
+    if await _susma_suresinde_mi(db, unit.id, tenant.gurultu_susma_gun):
+        logger.info(
+            "NOISE_DETERRENT SUSMA tenant=%s unit=%s sayac=%s (son uyari "
+            "%s gun icinde)", tenant_id, unit.id, sayac, tenant.gurultu_susma_gun,
+        )
         return None
 
     metin = uyari_metni(tenant.gurultu_uyari_metni)
@@ -129,7 +218,7 @@ async def esik_kontrol(
         kayit.durum = "gonderildi" if ok else "basarisiz"
         kayit.hata = hata
     else:
-        # MANUEL MOD: yoneticiye bildirim gider, anonsu o yapar. Bu bir
+        # MANUEL MOD: yoneticiye "anonsu yapin" bildirimi gider. Bu bir
         # hata durumu DEGIL — cogu sitede entegrasyon hic olmayacak.
         dispatch_external(
             "gurultu_uyarisi",
@@ -139,7 +228,84 @@ async def esik_kontrol(
             data={"tip": "gurultu_uyarisi", "unit_id": str(unit.id)},
         )
 
+    # ================= (P208 §1) SAKINE UYARI ========================= #
+    #
+    # OLCULEN EKSIK: esik asilinca uyari ya anons cihazina ya yoneticiye
+    # gidiyordu; UYARILMASI GEREKEN KISIYE hicbir sey gitmiyordu.
+    #
+    # METINDE SIKAYET EDENIN IZI YOK: ne kisi, ne daire, ne SAYI
+    # (bkz. `push_metinleri.gurultu_uyari_sakin` basligi).
+    sakinler = await _uyarilacak_sakinler(db, unit.id)
+    if sakinler and tenant.gurultu_sakin_uyarisi:
+        # IN-APP SATIR DA YAZILIR: push kapali/basarisiz olabilir ve o
+        # zaman uyari HIC ULASMAMIS olurdu. Bildirim listesi, "bana
+        # uyari geldi mi" sorusunun kalici yaniti.
+        sakin_bildirimi_yaz(
+            db, tenant_id=tenant_id, tip="gurultu_uyari_sakin",
+            user_ids=sakinler, veri={},
+        )
+        dispatch_external(
+            "gurultu_uyari_sakin",
+            tenant_id=tenant_id,
+            target_roles=None,
+            target_user_ids=sakinler,
+            params={},
+            data={"tip": "gurultu_uyari_sakin", "unit_id": str(unit.id)},
+        )
+    kayit.sakin_bildirildi = bool(sakinler) and tenant.gurultu_sakin_uyarisi
+
+    # ============== YONETIME AYRI BILDIRIM (her modda) ================ #
+    #
+    # Webhook modunda yonetici bugune kadar HICBIR SEY DUYMUYORDU: anons
+    # cihaza gidiyor, kayit veritabaninda duruyordu. "O daireyle
+    # ilgilenmem gerekebilir" bilgisi bildirimle gelmeliydi.
+    #
+    # MANUEL MODDA IKINCI BILDIRIM GONDERILMEZ: yukaridaki
+    # `gurultu_uyarisi` zaten yoneticinin telefonunu caldirdi; ayni
+    # olay icin iki bildirim, ikisinin de okunmamasiyla biterdi.
+    if entegrasyon is not None:
+        # YONETIM SATIRI `user_id=NULL` ile yazilir: bildirim listesinde
+        # yonetim gozu (`admin`/`yonetici`) SAHIPSIZ satirlari gorur
+        # (bkz. `routers/notifications._kapsam`). Kisi kisi yazmak,
+        # ayni olayi yonetici sayisi kadar cogaltmak olurdu.
+        db.add(Notification(
+            tenant_id=tenant_id,
+            tip="gurultu_esik_yonetim",
+            mesaj=push_govdesi(
+                "gurultu_esik_yonetim", "tr",
+                {"daire": unit.no, "sayi": sayac},
+            ),
+            mesaj_kimlik="gurultu_esik_yonetim",
+            mesaj_veri={"daire": unit.no, "sayi": sayac},
+        ))
+        dispatch_external(
+            "gurultu_esik_yonetim",
+            tenant_id=tenant_id,
+            target_roles=_MANUEL_ROLLER,
+            params={"daire": unit.no, "sayi": sayac},
+            data={"tip": "gurultu_esik_yonetim", "unit_id": str(unit.id)},
+        )
+
     db.add(kayit)
+    # DENETIME YAZILIR: "bu daireye uyari gonderildi mi, ne zaman,
+    # kacinci sikayette" sorusu bir anlasmazlikta sorulacak ILK sorudur.
+    # SAKINLERIN KIMLIGI meta'ya YAZILMAZ — denetim kaydi da bir sizinti
+    # yuzeyidir; kac kisiye gittigi yeter.
+    await record_audit(
+        db,
+        action=Action.UYARI_MANUEL if entegrasyon is None else Action.UYARI_MANUEL,
+        tenant_id=tenant_id,
+        resource_type="unit_uyari",
+        resource_id=unit.id,
+        meta={
+            "islem": "gurultu_esik",
+            "sayac": sayac,
+            "esik": tenant.gurultu_esigi,
+            "pencere_gun": tenant.gurultu_pencere_gun,
+            "kanal": kayit.kanal,
+            "sakin_bildirimi": len(sakinler) if kayit.sakin_bildirildi else 0,
+        },
+    )
 
     # SIFIRLAMA: kayitlar GECMISTE DURUR, yalnizca durum kapaniyor —
     # silmek, uyarinin dayanagini yok etmek olurdu. P24 renk skalasi ACIK

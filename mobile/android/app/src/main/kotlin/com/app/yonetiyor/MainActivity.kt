@@ -46,11 +46,25 @@ class MainActivity : FlutterActivity() {
         const val KANAL_SESSIZ = "yonetio_sessiz_v1"
 
         /**
+         * (P208 §2) GURULTU UYARISININ KENDI KANALI.
+         *
+         * Android'de ses KANALIN ozelligidir; "ayni kanaldan farkli ses"
+         * diye bir sey yok. Ayirt edilebilir bir ses istiyorsak ayri
+         * kanal SART — ve bu, kullaniciya sistem ayarlarinda ayri bir
+         * satir da verir (gurultu uyarisini susturup vardiya
+         * hatirlatmasini acik birakabilir).
+         */
+        const val KANAL_GURULTU = "yonetio_gurultu_v1"
+
+        /**
          * Ozel ses dosyasinin adi (`res/raw/yonetio_bildirim.<uzanti>`).
          * DOSYA HENUZ YOK: bulunamazsa SISTEM VARSAYILAN sesi kullanilir
          * (bkz. [sesUri]) — "ses yok" ile "ozel ses yok" ayni sey degil.
          */
         const val OZEL_SES = "yonetio_bildirim"
+
+        /** (P208 §2) Gurultu uyarisinin AYRI sesi (`res/raw/`). */
+        const val GURULTU_SES = "yonetio_gurultu"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -58,10 +72,13 @@ class MainActivity : FlutterActivity() {
         kanallariKur()
     }
 
-    private fun sesUri(): Uri? {
-        // Kaynak ADIYLA aranir: dosya pakete eklendiginde kod
-        // DEGISMEDEN ozel ses devreye girer.
-        val id = resources.getIdentifier(OZEL_SES, "raw", packageName)
+    /**
+     * Kaynak ADIYLA aranir: dosya pakete eklendiginde kod DEGISMEDEN
+     * ozel ses devreye girer. Dosya yoksa SISTEM VARSAYILANI — "ses yok"
+     * ile "ozel ses yok" ayni sey degil.
+     */
+    private fun sesUri(ad: String = OZEL_SES): Uri? {
+        val id = resources.getIdentifier(ad, "raw", packageName)
         return if (id != 0) {
             Uri.parse("android.resource://$packageName/$id")
         } else {
@@ -117,7 +134,20 @@ class MainActivity : FlutterActivity() {
             enableVibration(false)
         }
 
+        // (P208 §2) GURULTU: kendi sesi, yuksek onem. Sakin bildirimi
+        // GORMEDEN ne oldugunu anlayabilmeli.
+        val gurultu = NotificationChannel(
+            KANAL_GURULTU,
+            getString(R.string.kanal_gurultu_ad),
+            NotificationManager.IMPORTANCE_HIGH,
+        ).apply {
+            description = getString(R.string.kanal_gurultu_aciklama)
+            setSound(sesUri(GURULTU_SES), ozellikler)
+            enableVibration(true)
+        }
+
         mgr.createNotificationChannel(kritik)
+        mgr.createNotificationChannel(gurultu)
         mgr.createNotificationChannel(genel)
         mgr.createNotificationChannel(sessiz)
     }

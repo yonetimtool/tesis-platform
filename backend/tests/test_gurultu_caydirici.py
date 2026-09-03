@@ -249,9 +249,28 @@ def test_uyari_kaydi_YALNIZ_YONETIM(d, world, client):
         assert client.get("/unit-uyarilari", headers=h).status_code == 403
 
 
-def test_ESIK_SONRASI_yeniden_birikir(d):
-    """Sifirlama sayaci sifirlar, ozelligi KAPATMAZ: daire tekrar esige
-    varirsa IKINCI uyari verilir."""
+def test_SUSMA_SURESINDE_ikinci_uyari_GITMEZ(d):
+    """(P208 §1) TEKRAR ENGELLEME — eski beklenti DEGISTI.
+
+    Bu test once "ikinci bes sikayette IKINCI uyari" bekliyordu ve o
+    davranis P208'de BILINCLI olarak degistirildi: her gece tekrarlanan
+    bir uyari KENDISI gurultuye donusur ve okunmaz olur. Uyarilan daire
+    `gurultu_susma_gun` (varsayilan 7) boyunca YENIDEN uyarilmaz.
+    """
+    for _ in range(5):
+        _sikayet(d)
+    assert len(_uyarilar(d)) == 1
+    for _ in range(5):
+        _sikayet(d)
+    assert len(_uyarilar(d)) == 1, "susma suresinde ikinci uyari gitti"
+
+
+def test_SUSMA_KAPALIYSA_yeniden_uyarilir(d):
+    """Susma suresi 0 = KAPALI: ozellik kapatilabilir olmali, yoksa
+    "her esikte uyarsin" isteyen tesisin secenegi kalmazdi."""
+    d.conn.execute(
+        "UPDATE tenant SET gurultu_susma_gun = 0 WHERE id = %s", (d.tenant,))
+    d.conn.commit()
     for _ in range(5):
         _sikayet(d)
     assert len(_uyarilar(d)) == 1

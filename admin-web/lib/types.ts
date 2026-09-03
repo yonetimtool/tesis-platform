@@ -590,6 +590,13 @@ export interface TenantSettings {
   /** (P207 §3) Vardiya basladiktan sonra okutma gelmezse yoneticiye
    *  uyari (dakika). 0 = kapali. */
   vardiya_baslamadi_dk?: number;
+  /** (P208 §1) Gurultu sikayetlerinin sayildigi pencere (gun). 0 =
+   *  sinirsiz (P37 davranisi). */
+  gurultu_pencere_gun?: number;
+  /** (P208 §1) Uyarilan daire bu kadar gun YENIDEN uyarilmaz. */
+  gurultu_susma_gun?: number;
+  /** (P208 §1) Esik asilinca DAIRENIN SAKININE bildirim gonderilsin mi. */
+  gurultu_sakin_uyarisi?: boolean;
 }
 
 // ------------------------ tenant olusturma (admin) ------------------------- #

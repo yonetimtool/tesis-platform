@@ -40,7 +40,14 @@ void main() {
     final py = backend.readAsStringSync();
     final kt = kotlin.readAsStringSync();
 
-    for (final ad in ['KANAL_KRITIK', 'KANAL_GENEL', 'KANAL_SESSIZ']) {
+    // (P208 §2) `KANAL_GURULTU` EKLENDI: gurultu uyarisinin kendi
+    // kanali/sesi var (Android'de "ayni kanaldan farkli ses" yok).
+    for (final ad in [
+      'KANAL_KRITIK',
+      'KANAL_GENEL',
+      'KANAL_SESSIZ',
+      'KANAL_GURULTU',
+    ]) {
       final deger = _pySabit(py, ad);
       expect(deger, isNotNull, reason: '$ad sunucuda bulunamadi');
       expect(kt.contains('"$deger"'), isTrue,
@@ -69,12 +76,24 @@ void main() {
     expect(kt.contains('setSound(null, null)'), isTrue);
   });
 
-  test('OZEL SES ADI iki tarafta AYNI', () {
+  test('OZEL SES ADLARI iki tarafta AYNI', () {
     final py = backend.readAsStringSync();
-    final ses = _pySabit(py, 'OZEL_SES_ADI');
     final kt = kotlin.readAsStringSync();
-    expect(ses, isNotNull);
-    expect(kt.contains('"$ses"'), isTrue,
-        reason: 'ozel ses adi ($ses) MainActivity.kt ile ayrismis');
+    for (final ad in ['OZEL_SES_ADI', 'GURULTU_SES_ADI']) {
+      final ses = _pySabit(py, ad);
+      expect(ses, isNotNull, reason: '$ad sunucuda yok');
+      expect(kt.contains('"$ses"'), isTrue,
+          reason: 'ses adi ($ses) MainActivity.kt ile ayrismis');
+    }
+  });
+
+  test('(P208 §2) GURULTU KANALI kendi sesiyle olusturuluyor', () {
+    // Kanal kimligi ayni olsa bile SES BAGLANMAMISSA bildirim kritik
+    // kanaldan farksiz calar; kimlik karsilastirmasi bunu yakalamaz.
+    final kt = kotlin.readAsStringSync();
+    final ses = _pySabit(backend.readAsStringSync(), 'GURULTU_SES_ADI');
+    expect(kt.contains('setSound(sesUri(GURULTU_SES)'), isTrue,
+        reason: 'gurultu kanalina kendi sesi baglanmamis');
+    expect(kt.contains('"$ses"'), isTrue);
   });
 }

@@ -199,3 +199,58 @@ def test_SES_TERCIHI_okunur_ve_degistirilir(client, world):
 
     client.patch("/me/bildirim-tercihleri", headers=h,
                  json={"bildirim_sesi": True})
+
+
+# ================== (P208 §2) TIPE GORE SES ================================ #
+
+def test_GURULTU_UYARISI_KENDI_KANALINDAN_gider():
+    """Istegin acik sarti: sakin, bildirimi GORMEDEN ne oldugunu
+    anlayabilmeli. Android'de "ayni kanaldan farkli ses" diye bir sey
+    YOK — ayirt edilebilir ses ayri kanal demek."""
+    from app.push_kanal import KANAL_GURULTU, kanal_sec
+
+    assert kanal_sec("gurultu_uyari_sakin", sesli=True) == KANAL_GURULTU
+    # SES KAPALIYSA tercih kazanir (P207 kurali degismedi).
+    assert kanal_sec("gurultu_uyari_sakin", sesli=False) == KANAL_SESSIZ
+
+
+def test_KACAN_VARDIYA_OZEL_SES_ALMAZ_ama_KRITIK():
+    """Istegin karari: "normal alarm sesi yeterli". Kritik kanaldan
+    gider (sesli + high oncelik), kendi kanalini ACMAZ — her yeni kanal
+    kullanicinin sistem ayarlarinda bir satir daha demek."""
+    from app.push_kanal import KANAL_KRITIK, OZEL_KANALLI_TIPLER, kanal_sec
+
+    assert kanal_sec("vardiya_baslamadi", sesli=True) == KANAL_KRITIK
+    assert kanal_sec("vardiya_hatirlatma", sesli=True) == KANAL_KRITIK
+    assert "vardiya_baslamadi" not in OZEL_KANALLI_TIPLER
+
+
+def test_SIKAYET_ve_VARDIYA_P207_KANALINDAN_devam():
+    from app.push_kanal import KANAL_KRITIK, kanal_sec
+
+    for tip in ("yeni_talep", "talep_cozuldu", "vardiya_ozeti"):
+        assert kanal_sec(tip, sesli=True) == KANAL_KRITIK, tip
+
+
+def test_SES_ADI_dosya_HAZIR_OLUNCA_tipe_gore_ayrilir(monkeypatch):
+    """`SES_HAZIR=True` oldugunda gurultu KENDI dosyasini, otekiler ORTAK
+    dosyayi ister. Bugun ikisi de sistem sesi (`default`) — dosyalar
+    gelmedi ve bunu bir "ayar" gibi gostermiyoruz."""
+    from app import push_kanal
+
+    assert push_kanal.ses_adi("gurultu_uyari_sakin", sesli=True) == "default"
+    monkeypatch.setattr(push_kanal, "SES_HAZIR", True)
+    assert push_kanal.ses_adi("gurultu_uyari_sakin", sesli=True) == (
+        f"{push_kanal.GURULTU_SES_ADI}.caf"
+    )
+    assert push_kanal.ses_adi("vardiya_hatirlatma", sesli=True) == (
+        f"{push_kanal.OZEL_SES_ADI}.caf"
+    )
+
+
+def test_GURULTU_TIPLERI_KRITIK_kumesinde():
+    """Sakine giden uyari ve yoneticiye giden esik bilgisi SESLIDIR."""
+    from app.push_kanal import KRITIK_TIPLER
+
+    assert "gurultu_uyari_sakin" in KRITIK_TIPLER
+    assert "gurultu_esik_yonetim" in KRITIK_TIPLER

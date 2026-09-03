@@ -455,6 +455,22 @@ class Tenant(Base):
     gurultu_esigi: Mapped[int] = mapped_column(
         Integer, nullable=False, server_default=text("5")
     )
+    #: (P208 §1, goc 0103) Sikayetlerin sayildigi PENCERE (gun).
+    #: 0 = sinirsiz (P37 davranisi). Bir yil once acilmis ve kimsenin
+    #: kapatmadigi bir sikayet, dun geceki kadar agirlik tasimamali.
+    gurultu_pencere_gun: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default=text("30")
+    )
+    #: (P208 §1) Uyarilan daire bu kadar gun YENIDEN uyarilmaz.
+    #: Her gece tekrarlanan uyari, kendisi gurultuye donusur.
+    gurultu_susma_gun: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default=text("7")
+    )
+    #: (P208 §1) Sakine dogrudan bildirim gonderilsin mi. Bazi tesisler
+    #: bunu yonetim eliyle (kapiya not, telefon) yapmak isteyebilir.
+    gurultu_sakin_uyarisi: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
     #: (P160) Okutmanin NFC noktasina azami uzakligi (metre). Bunun
     #: uzerindeki okutma panelde "esik disi" isaretlenir. Sabit degil
     #: cunku site olcekleri cok farkli: bir sitede noktalar 10 m
@@ -3975,6 +3991,13 @@ class UnitUyari(Base):
     )
     hata: Mapped[str | None] = mapped_column(Text, nullable=True)
     son_deneme_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    #: (P208 §1, goc 0103) Uyari SAKINE bildirildi mi. "Uyarildim mi"
+    #: sorusu bir anlasmazlikta sorulur ve yaniti "push gonderildi mi"
+    #: ile ayni sey DEGILDIR (daire bos olabilir, ayar kapali olabilir).
+    #: Kimlik yazilmaz — bayrak yeter.
+    sakin_bildirildi: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
     created_at = _created_at()
 
 

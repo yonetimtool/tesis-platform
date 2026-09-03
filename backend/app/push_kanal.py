@@ -39,12 +39,23 @@ from __future__ import annotations
 KANAL_KRITIK = "yonetio_kritik_v1"
 KANAL_GENEL = "yonetio_genel_v1"
 KANAL_SESSIZ = "yonetio_sessiz_v1"
+#: (P208 §2) GURULTU UYARISININ KENDI KANALI — kendi sesiyle.
+#:
+#: NEDEN AYRI KANAL: Android'de ses KANALIN ozelligidir; "ayni kanaldan
+#: farkli ses" diye bir sey YOK. Ayirt edilebilir bir ses istiyorsak
+#: ayri kanal SART. Ve bu, kullaniciya sistem ayarlarinda da ayri bir
+#: satir verir: gurultu uyarisini susturup vardiya hatirlatmasini acik
+#: birakabilir.
+KANAL_GURULTU = "yonetio_gurultu_v1"
 
 #: Ozel ses dosyasinin ADI (uzantisiz — Android `res/raw`, iOS paket).
 #: DOSYA HENUZ YOK: `SES_HAZIR` false oldugu surece sistem sesi
 #: kullanilir. Dosya geldiginde tek satir degisir (ve kanal `_v2`
 #: olur — bkz. modul basligi).
 OZEL_SES_ADI = "yonetio_bildirim"
+#: (P208 §2) GURULTU UYARISININ AYRI SESI: sakin, bildirimi GORMEDEN
+#: ne oldugunu anlayabilmeli (istegin acik sarti).
+GURULTU_SES_ADI = "yonetio_gurultu"
 SES_HAZIR = False
 
 #: SESLI OLMASI GEREKEN bildirimler (istegin acik sarti: sikayet ve
@@ -62,6 +73,9 @@ KRITIK_TIPLER: frozenset[str] = frozenset({
     # Vardiya: baslamadan once hatirlatma ve BASLAMAYAN vardiya uyarisi
     # (P207 §3). Duyulmayan bir vardiya hatirlatmasi, hic gonderilmemis
     # gibidir.
+    # (P208 §2) KACAN VARDIYA OZEL SES ALMAZ — istegin karari: "normal
+    # alarm sesi yeterli". Kritik kanaldan gider (sesli + high
+    # oncelikli), kendi kanalini ACMIYORUZ.
     "vardiya_hatirlatma",
     "vardiya_baslamadi",
     "vardiya_ozeti",
@@ -71,7 +85,21 @@ KRITIK_TIPLER: frozenset[str] = frozenset({
     "gecikmis_okutma",
     "uzak_okutma",
     "gurultu_uyarisi",
+    # (P208 §1) Sakine giden uyari ve yoneticiye giden esik bilgisi.
+    "gurultu_uyari_sakin",
+    "gurultu_esik_yonetim",
 })
+
+
+#: (P208 §2) KENDI KANALI/SESI OLAN TIPLER. Bugun yalniz gurultu
+#: uyarisi: "kacan vardiya normal alarm sesi yeterli" (istegin karari);
+#: sikayet ve vardiya hatirlatmasi P207'deki kritik kanaldan devam
+#: ediyor. Sinirsiz buyumemeli — her yeni kanal, kullanicinin sistem
+#: ayarlarinda gordugu bir satir daha demek.
+OZEL_KANALLI_TIPLER: dict[str, tuple[str, str]] = {
+    # tip -> (kanal, ses adi)
+    "gurultu_uyari_sakin": (KANAL_GURULTU, GURULTU_SES_ADI),
+}
 
 
 def kanal_sec(tip: str | None, *, sesli: bool) -> str:
@@ -84,6 +112,8 @@ def kanal_sec(tip: str | None, *, sesli: bool) -> str:
     """
     if not sesli:
         return KANAL_SESSIZ
+    if tip and tip in OZEL_KANALLI_TIPLER:
+        return OZEL_KANALLI_TIPLER[tip][0]
     if tip and tip in KRITIK_TIPLER:
         return KANAL_KRITIK
     return KANAL_GENEL
@@ -93,7 +123,9 @@ def ses_adi(tip: str | None, *, sesli: bool) -> str | None:
     """iOS `aps.sound` degeri. Sessizde `None` (alan HIC gonderilmez)."""
     if not sesli:
         return None
-    if SES_HAZIR and tip and tip in KRITIK_TIPLER:
+    if SES_HAZIR and tip and tip in OZEL_KANALLI_TIPLER:
         # iOS ses dosyasi uzantisiyla birlikte gonderilir.
+        return f"{OZEL_KANALLI_TIPLER[tip][1]}.caf"
+    if SES_HAZIR and tip and tip in KRITIK_TIPLER:
         return f"{OZEL_SES_ADI}.caf"
     return "default"

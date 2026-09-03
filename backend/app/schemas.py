@@ -3357,6 +3357,10 @@ class TenantSettings(BaseModel):
     rezervasyon_gecmis_ay: int = 12
     gurultu_uyari_metni: str | None = None
     gurultu_integration_id: uuid.UUID | None = None
+    # (P208 §1) Sayim penceresi / susma suresi / sakine bildirim.
+    gurultu_pencere_gun: int = 30
+    gurultu_susma_gun: int = 7
+    gurultu_sakin_uyarisi: bool = True
     # (P34) Tur gecikme alarmi. Tolerans TENANT AYARIDIR: 10 dk bir sitede
     # makul, kampus buyuklugunde erken alarm demektir. Tekrar 0 = KAPALI.
     tur_gecikme_toleransi_dk: int = 10
@@ -3404,6 +3408,11 @@ class TenantSettingsUpdate(BaseModel):
     tur_gecikme_toleransi_dk: int | None = Field(None, ge=1, le=240)
     tur_alarm_tekrar_sayisi: int | None = Field(None, ge=0, le=10)
     tur_baslangic_foto_zorunlu: bool | None = None
+    #: (P208 §1) Sinirlar DB CHECK'i ile AYNI (goc 0103). 0 = kapali
+    #: (pencere sinirsiz / susma yok).
+    gurultu_pencere_gun: int | None = Field(None, ge=0, le=365)
+    gurultu_susma_gun: int | None = Field(None, ge=0, le=365)
+    gurultu_sakin_uyarisi: bool | None = None
     #: (P207 §3) Kademe listesi — bicim dogrulamasi UYGULAMADA
     #: (`hatirlatma_kademeleri`): gecersiz metin KAPALI demektir ve
     #: kullaniciyi 422 ile durdurmak, "kapat" niyetini hataya

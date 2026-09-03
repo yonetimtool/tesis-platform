@@ -132,4 +132,28 @@ export const OPERASYON: Ayar[] = [
     max: 50,
   },
   { anahtar: "gurultu_uyari_metni", etiket: "ayarGurultuMetni", ipucu: "ayarGurultuMetniIpucu", tip: "metin" },
+  // --- (P208 §1) SAYIM PENCERESI / SUSMA / SAKINE BILDIRIM ---
+  {
+    anahtar: "gurultu_pencere_gun",
+    etiket: "ayarGurultuPencere",
+    ipucu: "ayarGurultuPencereIpucu",
+    tip: "sayi",
+    // 0 = SINIRSIZ (P37 davranisi) — sinirlar sunucuyla AYNI.
+    min: 0,
+    max: 365,
+  },
+  {
+    anahtar: "gurultu_susma_gun",
+    etiket: "ayarGurultuSusma",
+    ipucu: "ayarGurultuSusmaIpucu",
+    tip: "sayi",
+    min: 0,
+    max: 365,
+  },
+  {
+    anahtar: "gurultu_sakin_uyarisi",
+    etiket: "ayarGurultuSakin",
+    ipucu: "ayarGurultuSakinIpucu",
+    tip: "bool",
+  },
 ];
