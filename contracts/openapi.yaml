@@ -10086,11 +10086,21 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
         "409":
-          description: Ayni Idempotency-Key farkli govde ile gonderildi
+          description: |
+            Ayni Idempotency-Key farkli govde ile gonderildi, YA DA (P211 §3)
+            makbuz numarasi zaten kullanilmis (`belge_no_kullanimda`).
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Error" }
-        "422": { $ref: "#/components/responses/ValidationError" }
+        "422":
+          description: |
+            Gecersiz govde/referans. (P211 §3) Bunlar eskiden 500 donuyordu:
+            `tutar_kurus` ust siniri (10^15 kurus) asarsa, `odeme_zamani`nin
+            yili belge serisi araliginin (2000-2200) disinda kalirsa.
+            Olmayan `kasa_id` -> `invalid_reference`.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
 
   /me/dues:
     get:
@@ -18922,7 +18932,8 @@ components:
       properties:
         unit_id: { type: string, format: uuid }
         assessment_id: { type: string, format: uuid, nullable: true }
-        tutar_kurus: { type: integer, minimum: 1 }
+        # (P211 §3) UST SINIR: 10^15 kurus. int64 tasmasi 500 uretiyordu.
+        tutar_kurus: { type: integer, minimum: 1, maximum: 1000000000000000 }
         yontem: { $ref: "#/components/schemas/DuesYontem" }
         makbuz_no: { type: string, nullable: true }
         odeme_zamani:

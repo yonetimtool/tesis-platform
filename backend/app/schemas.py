@@ -88,6 +88,19 @@ def _hhmm(v: object) -> object:
 
 
 # ------------------------------- auth -------------------------------------- #
+# --------------------------------------------------------------------------- #
+# (P211 §3) PARA ALANLARININ UST SINIRI — 500'UN KOK NEDENLERINDEN BIRI.
+#
+# OLCULDU: `POST /dues/payments` govdesinde `tutar_kurus=10**19` gonderildi
+# ve uc 500 dondu. Sebep is kurali degil, VERI TIPI: `bigint` (int64) tasti
+# ve asyncpg `DataError: value out of int64 range` atti — yani gecersiz
+# girdi, dogrulama katmanini gecip surucude patliyordu.
+#
+# Sinir int64'un cok altinda BILINCLI olarak: 10^15 kurus = 10 trilyon TL.
+# Gercek bir aidat/gider bunun yanina yaklasmaz; yaklasan bir sayi kullanici
+# hatasidir ve "anlasilir 422" ile geri donmelidir.
+KURUS_UST_SINIR = 10**15
+
 class LoginRequest(BaseModel):
     """(P205 §1) TEK KIMLIK ALANI — e-posta VEYA telefon.
 
@@ -4105,7 +4118,7 @@ class DuesAssessmentOut(BaseModel):
 
 class DuesAssessmentCreate(BaseModel):
     donem: str = Field(..., min_length=1)
-    tutar_kurus: int = Field(..., ge=1)  # KURUS; negatif/sifir reddedilir
+    tutar_kurus: int = Field(..., ge=1, le=KURUS_UST_SINIR)  # KURUS; negatif/sifir reddedilir
     unit_id: uuid.UUID | None = None     # verilirse tek daire
     unit_ids: list[uuid.UUID] | None = None  # toplu hedef; yoksa tum aktif daireler
     son_odeme_tarihi: date | None = None
@@ -4177,7 +4190,7 @@ class DuesPaymentOut(BaseModel):
 class DuesPaymentCreate(BaseModel):
     unit_id: uuid.UUID
     assessment_id: uuid.UUID | None = None
-    tutar_kurus: int = Field(..., ge=1)  # KURUS
+    tutar_kurus: int = Field(..., ge=1, le=KURUS_UST_SINIR)  # KURUS
     yontem: DuesYontem
     makbuz_no: str | None = None
     odeme_zamani: datetime | None = None
@@ -4253,7 +4266,7 @@ class BudgetEntryCreate(BaseModel):
     (kategori-tip uyusmazligi imkansiz olsun)."""
 
     kategori_id: uuid.UUID
-    tutar_kurus: int = Field(..., ge=1)  # KURUS; sifir/negatif reddedilir
+    tutar_kurus: int = Field(..., ge=1, le=KURUS_UST_SINIR)  # KURUS; sifir/negatif reddedilir
     tarih: date
     aciklama: str | None = Field(None, max_length=1000)
 
@@ -5207,7 +5220,7 @@ class FirmaCreate(BaseModel):
     adres: str | None = Field(None, max_length=500)
     yetkili_ad: str | None = Field(None, max_length=150)
     yetkili_telefon: str | None = Field(None, max_length=30)
-    acilis_bakiye_kurus: int = Field(0, ge=0)
+    acilis_bakiye_kurus: int = Field(0, ge=0, le=KURUS_UST_SINIR)
     acilis_bakiye_yon: BakiyeYon = "borc"
     aktif: bool = True
 
@@ -5575,7 +5588,7 @@ class SayacBorcIstek(BaseModel):
     #: Ana sayacin DONEM TUKETIMI (birim).
     ana_tuketim: float = Field(..., ge=0)
     #: Birim fiyat, KURUS (orn. 1 m3 su = 3550 kurus).
-    birim_fiyat_kurus: int = Field(..., ge=1)
+    birim_fiyat_kurus: int = Field(..., ge=1, le=KURUS_UST_SINIR)
     #: daire sayac id -> donem tuketimi.
     bolum_tuketimleri: dict[uuid.UUID, float]
     son_odeme_tarihi: date | None = None
@@ -5814,7 +5827,7 @@ class ButceHedefiCreate(BaseModel):
     #: NULL = YILLIK hedef; dolu ('YYYY-MM') = o ayin hedefi.
     donem: str | None = Field(None, min_length=7, max_length=7)
     kategori_id: uuid.UUID
-    tutar_kurus: int = Field(..., ge=0)
+    tutar_kurus: int = Field(..., ge=0, le=KURUS_UST_SINIR)
     aciklama: str | None = Field(None, max_length=500)
 
 
@@ -5968,7 +5981,7 @@ class HatirlatmaAyariUpdate(BaseModel):
 
 class DuzenliGiderBase(BaseModel):
     ad: str = Field(..., min_length=1, max_length=100)
-    tutar_kurus: int = Field(..., ge=1)
+    tutar_kurus: int = Field(..., ge=1, le=KURUS_UST_SINIR)
     periyot: GiderPeriyot = "aylik"
     sonraki_tarih: date
     kasa_id: uuid.UUID | None = None
@@ -6073,7 +6086,7 @@ class TahsilatCreate(BaseModel):
     unit_id: uuid.UUID | None = None
     assessment_id: uuid.UUID | None = None
     kasa_id: uuid.UUID
-    tutar_kurus: int = Field(..., ge=1)
+    tutar_kurus: int = Field(..., ge=1, le=KURUS_UST_SINIR)
     tarih: date | None = None
     belge_no: str | None = Field(None, max_length=50)
     aciklama: str | None = Field(None, max_length=500)
@@ -6089,7 +6102,7 @@ class TopluTahsilatSatir(BaseModel):
     user_id: uuid.UUID | None = None
     unit_id: uuid.UUID | None = None
     assessment_id: uuid.UUID | None = None
-    tutar_kurus: int = Field(..., ge=1)
+    tutar_kurus: int = Field(..., ge=1, le=KURUS_UST_SINIR)
     aciklama: str | None = None
     donem: str | None = Field(None, min_length=1, max_length=7)
 
@@ -6106,7 +6119,7 @@ class HareketSatir(BaseModel):
     """Gider/gelir hareketi satiri (cok satirli giris)."""
 
     tip: Literal["gider", "gelir"]
-    tutar_kurus: int = Field(..., ge=1)
+    tutar_kurus: int = Field(..., ge=1, le=KURUS_UST_SINIR)
     kasa_id: uuid.UUID
     firma_id: uuid.UUID | None = None
     gelir_gider_tanim_id: uuid.UUID | None = None
@@ -6128,7 +6141,7 @@ class VirmanIstek(BaseModel):
 
     kaynak_kasa_id: uuid.UUID
     hedef_kasa_id: uuid.UUID
-    tutar_kurus: int = Field(..., ge=1)
+    tutar_kurus: int = Field(..., ge=1, le=KURUS_UST_SINIR)
     tarih: date | None = None
     aciklama: str | None = Field(None, max_length=500)
 
@@ -6169,7 +6182,7 @@ class AcilisFisi(BaseModel):
     kasa_id: uuid.UUID
     user_id: uuid.UUID | None = None
     yon: HareketYon
-    tutar_kurus: int = Field(..., ge=1)
+    tutar_kurus: int = Field(..., ge=1, le=KURUS_UST_SINIR)
     tarih: date | None = None
     aciklama: str | None = Field(None, max_length=500)
 
@@ -6213,7 +6226,7 @@ class KasaBakiyeResponse(BaseModel):
 class BankaSatirIn(BaseModel):
     satir_no: int
     aciklama: str = Field(..., max_length=500)
-    tutar_kurus: int = Field(..., ge=1)
+    tutar_kurus: int = Field(..., ge=1, le=KURUS_UST_SINIR)
 
 
 class BankaEslestirIstek(BaseModel):
@@ -6485,7 +6498,7 @@ class OdemeBilgileri(BaseModel):
 
 
 class KartOdemeBaslat(BaseModel):
-    tutar_kurus: int = Field(..., ge=1)
+    tutar_kurus: int = Field(..., ge=1, le=KURUS_UST_SINIR)
 
 
 class KartOdemeSonuc(BaseModel):

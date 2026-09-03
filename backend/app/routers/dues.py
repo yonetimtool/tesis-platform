@@ -33,7 +33,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..audit import Action, audit_user
 from ..belge_no import belge_no_ata
-from ..crud_helpers import get_or_404, is_unique_violation, translate_integrity
+from ..crud_helpers import (
+    get_or_404,
+    is_unique_violation,
+    kisit_adi,
+    translate_integrity,
+)
 from .. import defter
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
@@ -44,6 +49,7 @@ from ..models import (
     DuesAssessment,
     FinansalHareket,
     GelirGiderTanim,
+    Kasa,
     Tenant,
     Unit,
     UnitResident,
@@ -668,6 +674,15 @@ async def create_payment(
     # defterde gorunur, hicbir kasa bakiyesinde gorunmezdi (P192 §2.1'in
     # duzelttigi kusur). Verilmediyse havale/kart BANKA hesabina, elden
     # odeme MERKEZ KASAYA yazilir; hicbiri yoksa acilir.
+    # (P211 §3) KASA GERCEKTEN VAR MI? Eskiden dogrulanmadan yaziliyor,
+    # FK ihlali `translate_integrity` uzerinden 409 "iliskili kayit"a
+    # cevriliyordu — kullanicinin gordugu cumle sorunu ANLATMIYORDU.
+    if body.kasa_id is not None:
+        var = (
+            await db.execute(select(Kasa.id).where(Kasa.id == body.kasa_id))
+        ).scalar_one_or_none()
+        if var is None:
+            raise APIError(422, "invalid_reference", "kasa_bulunamadi")
     kasa_id = await defter.kasa_coz(
         db, user.tenant_id, body.kasa_id,
         banka=body.yontem in ("havale", "kart"),
@@ -711,6 +726,13 @@ async def create_payment(
         except Exception:
             pass
         if is_unique_violation(exc):
+            # (P211 §3) HANGI KISIT KIRILDI? Ayni makbuz numarasi ikinci
+            # kez yazildiginda ihlal `uq_hareket_belge_no`dur; onu
+            # "Idempotency-Key govdesi farkli" diye bildirmek kullaniciyi
+            # yanlis yere bakmaya gonderiyordu (olculdu).
+            if (kisit_adi(exc) or "").startswith("uq_hareket_belge_no"):
+                raise APIError(409, "conflict", "belge_no_kullanimda",
+                               belge_no=(body.makbuz_no or "").strip())
             # YARIS: ayni anahtarla ikinci istek arada yazdi.
             again = await _idem_bul(db, anahtar)
             if again is not None and _ayni_odeme(again, **cmp):

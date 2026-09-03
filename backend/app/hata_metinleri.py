@@ -1192,6 +1192,26 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "Format de rapport invalide. Options : tableau, excel, pdf.",
         "es": "Formato de informe no válido. Opciones: tabla, excel, pdf.",
     },
+    # (P211 §3) Belge serisi yil araligi — `ck_belge_sayaci_yil` (goc 0058).
+    "belge_yili_araligi_disi": {
+        "tr": "Belge tarihi {yil} yılı seri aralığının dışında ({alt}-{ust}).",
+        "en": "Document year {yil} is outside the allowed range ({alt}-{ust}).",
+        "ar": "سنة المستند {yil} خارج النطاق المسموح به ({alt}-{ust}).",
+        "ru": "Год документа {yil} вне допустимого диапазона ({alt}-{ust}).",
+        "de": "Belegjahr {yil} liegt außerhalb des zulässigen Bereichs ({alt}-{ust}).",
+        "fr": "L'année du document {yil} est hors de la plage autorisée ({alt}-{ust}).",
+        "es": "El año del documento {yil} está fuera del rango permitido ({alt}-{ust}).",
+    },
+    # (P211 §3) Ayni makbuz/belge numarasi ikinci kez yazildi.
+    "belge_no_kullanimda": {
+        "tr": "Bu belge numarası ({belge_no}) zaten kullanılmış.",
+        "en": "This document number ({belge_no}) is already in use.",
+        "ar": "رقم المستند هذا ({belge_no}) مستخدم بالفعل.",
+        "ru": "Этот номер документа ({belge_no}) уже используется.",
+        "de": "Diese Belegnummer ({belge_no}) wird bereits verwendet.",
+        "fr": "Ce numéro de document ({belge_no}) est déjà utilisé.",
+        "es": "Este número de documento ({belge_no}) ya está en uso.",
+    },
     "kasa_bulunamadi": {
         "tr": "Kasa bulunamadı.",
         "en": "Cash account not found.",

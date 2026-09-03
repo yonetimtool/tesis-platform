@@ -31,6 +31,24 @@ def is_unique_violation(exc: IntegrityError) -> bool:
     return _pgcode(exc) == "23505"
 
 
+def kisit_adi(exc: IntegrityError) -> str | None:
+    """Ihlal edilen KISITIN ADI (asyncpg `constraint_name`).
+
+    (P211 §3) Neden gerekli: `create_payment` her unique ihlalini
+    "ayni Idempotency-Key farkli govde" sayiyordu. Kullanici AYNI MAKBUZ
+    NUMARASINI ikinci kez yazdiginda ihlal `uq_hareket_belge_no` oluyor ve
+    ekranda ALAKASIZ bir mesaj cikiyordu (olculdu). Hangi kisidin kirildigi
+    bilinmeden dogru cumle kurulamaz.
+    """
+    orig = getattr(exc, "orig", None)
+    ad = getattr(orig, "constraint_name", None)
+    if ad:
+        return str(ad)
+    ic = getattr(orig, "__cause__", None)
+    ad = getattr(ic, "constraint_name", None)
+    return str(ad) if ad else None
+
+
 def is_exclusion_violation(exc: IntegrityError) -> bool:
     """EXCLUDE constraint ihlali (23P01) — orn. rezervasyon cakisma kisiti."""
     return _pgcode(exc) == "23P01"

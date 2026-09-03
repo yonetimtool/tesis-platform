@@ -42,6 +42,8 @@ from datetime import date
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .errors import APIError
+
 #: Belge turu -> on ek. Kume BURADA kapali: veritabani `tip` sutununu
 #: serbest metin tutuyor (yeni tur eklemek `ALTER TYPE` gerektirmesin) ama
 #: uygulamanin tanidigi turler sinirli olmali — yoksa bir yazim hatasi
@@ -69,6 +71,15 @@ ON_EKLER: dict[str, str] = {
     # ayri yerde yasar ve biri gunun birinde otekinden ayrisirdi.
     "karar": "KRR",
 }
+
+#: (P211 §3) SERININ KABUL ETTIGI YIL ARALIGI — `ck_belge_sayaci_yil`
+#: (goc 0058) ile AYNI. Burada da olmasi sart: kisitin tek basina durmasi,
+#: gecersiz bir tarihin 500 olarak donmesi demekti.
+#:
+#: OLCULDU: `POST /dues/payments` `odeme_zamani=9999-12-31` ile 500 donuyordu
+#: (`CheckViolationError: ck_belge_sayaci_yil`). Kullanicinin yil alanina
+#: fazladan bir hane yazmasi, "sunucu hatasi" olarak geri geliyordu.
+YIL_ALT, YIL_UST = 2000, 2200
 
 #: En az kac hane. Asilirsa numara uzar — KESILMEZ; kesmek iki farkli
 #: belgeye ayni numarayi vermek olurdu.
@@ -104,6 +115,14 @@ async def belge_no_uret(
     if onek is None:
         raise BilinmeyenBelgeTuru(tip)
     yil = (tarih or date.today()).year
+    if not YIL_ALT <= yil <= YIL_UST:
+        # ANLASILIR 422: kisit veritabaninda zaten var, ama oraya varmadan
+        # once soylenmeli. TEK YERDE: belge numarasi alan HER akis (tahsilat,
+        # gider, virman, iade, karar defteri...) ayni kapidan geciyor.
+        raise APIError(
+            422, "validation_error", "belge_yili_araligi_disi",
+            yil=yil, alt=YIL_ALT, ust=YIL_UST,
+        )
 
     sonuc = await db.execute(
         text(

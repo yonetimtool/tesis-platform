@@ -124,3 +124,57 @@ ara" yerine "kapıyı çağırıyor mu" ölçer.
 Gerçek `panel.yonetiyor.com` üzerinden uçtan uca akış: prod'a erişimim yok.
 Ölçülen kısım, gerçek `NextRequest`lerle giriş ucunun döndürdüğü yanıt
 (7 test: adres, portsuzluk, çerez alan adı şartı, admin/gerileme durumları).
+
+---
+
+## §3 — `POST /dues/payments` 500'leri: kök neden ve "500 değil 422"
+
+### ÖLÇÜM (uçtan uca gerçek istekler; taklit YOK)
+Uca 20+ gövde varyantı gönderildi. **İki gerçek 500 üretildi** ve api
+günlüğünden kök nedenleri okundu:
+
+| Girdi | Sonuç (önce) | Kök neden |
+|---|---|---|
+| `tutar_kurus = 10^19` | **500** | `bigint` (int64) taştı — asyncpg `DataError: value out of int64 range`. Doğrulama katmanı üst sınır tanımıyordu; hata **sürücüde** patlıyordu. |
+| `odeme_zamani = 9999-12-31` | **500** | `belge_no_uret` → `ck_belge_sayaci_yil` (2000-2200, göç 0058) `CheckViolationError`. |
+
+Ayrıca **iki mesaj yanlış şeyi anlatıyordu** (500 değil ama aynı sınıf hata):
+
+| Girdi | Sonuç (önce) | Sorun |
+|---|---|---|
+| var olmayan `kasa_id` | 409 "İlişkili kayıt nedeniyle işlem yapılamıyor" | FK ihlali genel çeviriye düşüyordu. |
+| aynı `makbuz_no` ikinci kez | 409 "Aynı Idempotency-Key farklı gövde ile gönderildi" | İhlal `uq_hareket_belge_no`ydu; kullanıcı anahtarı değiştirse de aynı cümleyi alırdı. |
+
+### KARARLAR
+
+**K3.1 — Para alanlarına üst sınır: `KURUS_UST_SINIR = 10^15` kuruş
+(10 trilyon TL).** Şemada, yani veritabanına inmeden. int64'ün çok
+altında **bilinçli**: gerçek bir aidat/gider bu sayıya yaklaşmaz,
+yaklaşan bir değer kullanıcı hatasıdır. Sınır `dues_payment`a özel
+değil — `_kurus` biten **tüm** para giriş alanlarına uygulandı (14 alan),
+çünkü taşma tipin özelliği, ucun değil.
+
+**K3.2 — Yıl aralığı denetimi `belge_no_uret` içinde, TEK YERDE.**
+Uç bazında yazsaydık tahsilat düzelir, gider/virman/iade/karar defteri
+aynı 500'ü vermeye devam ederdi; hepsi aynı seriden numara alıyor.
+Mesaj hangi yılı ve hangi aralığı reddettiğini **söyler**.
+
+**K3.3 — `kasa_id` varlığı önceden doğrulanır** → 422 `invalid_reference`
+("Kasa bulunamadı"), FK ihlaline bırakılmaz.
+
+**K3.4 — Unique ihlalinde KISIT ADINA bakılır** (`kisit_adi` yardımcısı).
+`uq_hareket_belge_no` → 409 "Bu belge numarası (X) zaten kullanılmış".
+Idempotency dalı kendi mesajını korur (gerileme testiyle kilitli).
+
+### Kilit
+7 test (`test_p211_tahsilat_500.py`), hepsi canlı uca gider. Dördü de
+**kırma denemesiyle** doğrulandı: dört koruma tek tek devre dışı
+bırakıldığında tam olarak beklenen 5 test düştü, geri alınca 7'si geçti.
+
+### Ölçemediğim / açık madde
+Senin gördüğün 500'ün **bu ikisinden hangisi** olduğunu bilmiyorum: elimde
+o isteğin gövdesi ya da prod günlüğü yok. İkisi de kapandı; hâlâ 500
+alıyorsan bana isteğin gövdesini ya da o ana ait api günlüğünü ver.
+Bir gözlem daha: `donem` alanı **serbest metin** kabul ediyor ("Ağustos
+2026", 500 karakter) — 500 üretmiyor ama rapor kırılımını sessizce bozar;
+bu turda kapsam dışı bıraktım, ayrı bir madde olarak duruyor.
