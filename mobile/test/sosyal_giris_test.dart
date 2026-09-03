@@ -32,6 +32,14 @@ import 'package:mobile/src/features/auth/presentation/sosyal_giris.dart';
 import 'helpers/l10n_test_app.dart';
 
 class _SahteOauth implements OauthRepository {
+
+  /// (P211 §1) Cok tesisli yonetici secimi — bu testin olctugu akista
+  /// cagrilmaz; arayuz uyesi oldugu icin uygulanir.
+  @override
+  Future<void> tesisSec({
+    required String secimJetonu,
+    required String tenantId,
+  }) async {}
   _SahteOauth({this.liste = const [], this.sonuc});
 
   final List<String> liste;

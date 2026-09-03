@@ -40,6 +40,14 @@ import 'helpers/l10n_test_app.dart';
 
 /// Kimligi HENUZ BAGLI OLMAYAN bir SSO donusunu taklit eder.
 class _SahteOauth implements OauthRepository {
+
+  /// (P211 §1) Cok tesisli yonetici secimi — bu testin olctugu akista
+  /// cagrilmaz; arayuz uyesi oldugu icin uygulanir.
+  @override
+  Future<void> tesisSec({
+    required String secimJetonu,
+    required String tenantId,
+  }) async {}
   _SahteOauth({this.tamamlaDurum = 'giris'});
 
   final String tamamlaDurum;

@@ -79,6 +79,11 @@ BEKLENEN_SINIR = (303, 182, 768, 810)  # sol, ust, sag, alt (KAPSAYICI)
 # --- KARAR VERILDI: kirpma kutusu (sag/alt DISLAYICI) --------------------
 KUTU = (303, 182, 769, 641)  # -> 466 x 459
 
+#: (P211 §7) YENI LOGO GELDIGINDE: `--kutu` ve `--kaynak-onay` ile
+#: sabitleri DEGISTIRMEDEN kosulabilir. Ikisi de acik birer INSAN
+#: kararidir — betik kendi basina yeni kutuya gecmez.
+KAYNAK_ONAY = False
+
 # --- Tuvalde markanin kapladigi oran -------------------------------------
 #: Magaza ikonu. Apple'in kendi kilavuzu kenar boslugu birakmayi onerir;
 #: %72 hem nefes payi birakir hem 1024'te isareti buyuk tutar.
@@ -127,19 +132,63 @@ def _sinir_kutusu(en, boy, piksel, esik=8):
 
 def _kaynagi_oku():
     en, boy, kanal, px = pa.oku(KAYNAK)
+    px = pa.rgba_yap(en, boy, kanal, px)
+    if KAYNAK_ONAY:
+        # (P211 §7) YENI LOGO YOLU. Dogrulama ATLANIR ama sessizce degil:
+        # kullanici `--olc` ile kutuyu OLCMUS ve `--kutu` ile ACIKCA
+        # vermis olmali. Kutu bir KARARDIR; betigin kendi basina yeniden
+        # olcmesi, markanin kirpmasinin sessizce kaymasi demekti.
+        return en, boy, px
     if (en, boy) != BEKLENEN_BOYUT:
         raise SystemExit(
             f"kaynak boyutu degismis: {en}x{boy}, beklenen {BEKLENEN_BOYUT}. "
-            "Kirpma kutusu (KUTU) bu olcume dayaniyor — elle gozden gecirin."
+            "Kirpma kutusu (KUTU) bu olcume dayaniyor — elle gozden gecirin.\n"
+            "YENI LOGO ICIN: `python3 scripts/ikon-uret.py --olc` ile olcun, "
+            "sonra `--kutu sol,ust,sag,alt --kaynak-onay` ile kosun."
         )
-    px = pa.rgba_yap(en, boy, kanal, px)
     olculen = _sinir_kutusu(en, boy, px)
     if olculen != BEKLENEN_SINIR:
         raise SystemExit(
             f"markanin sinir kutusu degismis: {olculen}, beklenen "
-            f"{BEKLENEN_SINIR}. Kirpma kutusu elle gozden gecirilmeli."
+            f"{BEKLENEN_SINIR}. Kirpma kutusu elle gozden gecirilmeli.\n"
+            "YENI LOGO ICIN: `--olc` -> `--kutu ... --kaynak-onay`."
         )
     return en, boy, px
+
+
+def olc():
+    """(P211 §7) YENI KAYNAGI OLCER ve kirpma kutusu ONERIR — yazmaz.
+
+    Neden ayri bir kip: betigin kutuyu her kosumda yeniden olcmesi
+    yasak (karar sessizce kaymasin). Ama yeni bir logo geldiginde
+    kullanicinin elle piksel saymasi da gercekci degil. Bu kip olcumu
+    yapar, ONERIR ve yapistirmaya hazir satirlari basar; kutuyu
+    kabul etmek yine INSANIN isi.
+    """
+    en, boy, kanal, px = pa.oku(KAYNAK)
+    px = pa.rgba_yap(en, boy, kanal, px)
+    sol, ust, sag, alt = _sinir_kutusu(en, boy, px)
+    g, y = sag - sol + 1, alt - ust + 1
+    print(f"kaynak      : {KAYNAK}")
+    print(f"boyut       : {en}x{boy}")
+    print(f"alfa sinir  : ({sol}, {ust}) - ({sag}, {alt})  ->  {g}x{y}")
+    print(f"en/boy orani: {g / y:.3f} ({'yatay' if g > y else 'dikey'})")
+    # ONERI: tam markayi KARE bir kutuya alir (kisa kenar uzun kenara
+    # tamamlanir, merkezden). Kare oneri, tuvale oturtmada isareti en
+    # buyuk tutar; dikey bir markada eski karar (govdeyi kismen kirpma)
+    # gibi bir tercih gerekiyorsa ONU insan verir.
+    kenar = max(g, y)
+    ksol = max(0, sol - (kenar - g) // 2)
+    kust = max(0, ust - (kenar - y) // 2)
+    print("\nONERI (tam marka, kare kutu; sag/alt DISLAYICI):")
+    print(f"    KUTU = ({ksol}, {kust}, {ksol + kenar}, {kust + kenar})")
+    print("\nYAPISTIR (kalici hâle getirmek icin betikteki sabitler):")
+    print(f"    BEKLENEN_BOYUT = ({en}, {boy})")
+    print(f"    BEKLENEN_SINIR = ({sol}, {ust}, {sag}, {alt})")
+    print(f"    KUTU = ({ksol}, {kust}, {ksol + kenar}, {kust + kenar})")
+    print("\nDENEME KOSUMU (sabitleri degistirmeden):")
+    print(f"    python3 scripts/ikon-uret.py --kutu {ksol},{kust},"
+          f"{ksol + kenar},{kust + kenar} --kaynak-onay --onizle")
 
 
 def _isaret(beyaz_siluet=False):
@@ -357,6 +406,19 @@ def _onizle(en, boy, px, W=56, H=34):
 
 
 def main(argv):
+    global KUTU, KAYNAK_ONAY, KAYNAK
+    if "--kaynak" in argv:
+        KAYNAK = argv[argv.index("--kaynak") + 1]
+    if "--olc" in argv:
+        olc()
+        return 0
+    if "--kutu" in argv:
+        p = argv[argv.index("--kutu") + 1].split(",")
+        if len(p) != 4:
+            raise SystemExit("--kutu sol,ust,sag,alt bicimindedir")
+        KUTU = tuple(int(x) for x in p)
+    if "--kaynak-onay" in argv:
+        KAYNAK_ONAY = True
     onizle = "--onizle" in argv
     varsayilan = VARSAYILAN_VARYANT
     if "--varsayilan" in argv:

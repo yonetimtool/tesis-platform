@@ -383,3 +383,67 @@ Identifiers & Profiles)
 
 > **Simülatörde push çalışmaz** (APNs jetonu üretilmez). Test **gerçek
 > cihazda** yapılmalı.
+
+---
+
+## §7 — Uygulama ikonu: yeni logoyu nasıl vereceksin
+
+### ÖLÇÜM
+`scripts/ikon-uret.py` çalışıyor ve doğrulaması sağlam (alfa kuralı + %66
+güvenli bölge). Ama **yeni bir logoyu kabul edemiyordu**: kırpma kutusu
+(`KUTU`) eski kaynağa göre sabit ve betik, kaynağın boyutu ya da alfa
+sınır kutusu değişirse **açıkça duruyor** ("elle gözden geçirin"). Bu
+durma bilinçliydi (kırpma sessizce kaymasın) ama yeni logo geldiğinde
+elle piksel saymak gerekiyordu.
+
+**Yeni logo dosyası bu depoda YOK** — bu yüzden yeni ikonları
+**üretemedim**. Ölçemediğim şey bu; aşağıdaki dosyayı koyduğunda tek
+komutla üretilecek.
+
+### SANA GEREKEN — logo dosyasının yeri, biçimi, çözünürlüğü
+
+| | |
+|---|---|
+| **Yol** | `assets/marka/yonetiyor-logo.png` (aynı dosyanın üzerine yaz) |
+| **Biçim** | **PNG, RGBA** — alfa kanalı **şart** (arka plan **saydam**) |
+| **Çözünürlük** | **en az 1024×1024**; ideal **2048×2048**. Kare olması gerekmez; işaret dikey/yatay olabilir, betik ölçer |
+| **İçerik** | Yalnız **işaret** (+ istersen kısa gövde). **Yazı/slogan koyma**: 48 px launcher'da okunmaz |
+| **Kenar boşluğu** | Bırakma — betik oranı kendisi verir (mağaza %72, adaptif %66) |
+| **Renk** | Lacivert işaret; koyu zemin varyantı için beyaz siluete **betik çevirir** (`beyaza_boya`) |
+| **Vermemesi gerekenler** | JPEG (alfa yok), SVG (araç PNG okur), düz beyaz zeminli PNG (siluet çıkarılamaz) |
+
+> Elinde yalnız SVG varsa: 2048×2048 saydam PNG olarak dışa aktar.
+
+### KARAR K7 — betik yeni kaynağı kabul eder, ama kırpma **karar olarak** kalır
+Yeni kip: `--olc` kaynağı ölçer, alfa sınır kutusunu ve **yapıştırmaya
+hazır** sabitleri basar; `--kutu sol,ust,sag,alt --kaynak-onay` ise
+sabitleri değiştirmeden deneme koşumu yapar. Betik **kendi başına** yeni
+kutuya geçmez: kırpma bir karardır, her koşumda yeniden ölçülürse marka
+sessizce kayar.
+
+Bugünkü kaynakta ölçüm:
+`1072×992`, alfa sınırı `(303,182)-(768,810)` → `466×629` (dikey).
+
+### Senin adımların (logo geldiğinde)
+```
+1) assets/marka/yonetiyor-logo.png  <- yeni dosya
+2) python3 scripts/ikon-uret.py --olc                 # ölçüm + öneri
+3) python3 scripts/ikon-uret.py --kutu <öneri> --kaynak-onay --onizle
+   # ASCII önizlemede işaret tanınıyor mu? Değilse kutuyu daralt/genişlet
+4) Beğendiğin kutuyu betikteki BEKLENEN_BOYUT / BEKLENEN_SINIR / KUTU
+   sabitlerine yaz (—olc çıktısı hazır satırları veriyor)
+5) python3 scripts/ikon-uret.py                        # iki varyant + doğrulama
+6) python3 scripts/test_ikon_uret.py                   # kilit
+7) cd mobile && dart run flutter_launcher_icons        # mipmap'leri tazele
+   (P184 dersi: bu adım atlanınca gömülü ikonlar BAYAT kalır)
+8) Mağaza görselleri: assets/marka/ikon/ios-appstore-1024.png ve
+   play-store-512.png — mağaza simgesiyle tutarlılık buradan gelir,
+   ikisi de AYNI zemin+siluetten üretiliyor
+```
+
+### Kilit
+`scripts/test_ikon_uret.py` (yeni): `--olc` kipi çalışıyor mu, mağaza
+ikonları alfasız mı, adaptif ön katman %66'yı aşıyor mu. Kırma denemesiyle
+doğrulandı: oran 0,80'e çıkarılınca kilit `819x806 > 675` diyerek düştü,
+geri alınca geçti. Bugünkü ölçüm: **675×664 ≤ 675** ve mağaza ikonlarının
+hepsi alfasız.

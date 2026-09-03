@@ -67,6 +67,14 @@ class _SahteAuthApi extends AuthApi {
 /// SSO yolunu suren sahte depo. `akis` "baglama gerekli" doner (kimlik henuz
 /// bagli degil). `rolTamamla`/`rolTamamlaDogrula` durumu yapilandirilabilir.
 class _SahteOauthDepo implements OauthRepository {
+
+  /// (P211 §1) Cok tesisli yonetici secimi — bu testin olctugu akista
+  /// cagrilmaz; arayuz uyesi oldugu icin uygulanir.
+  @override
+  Future<void> tesisSec({
+    required String secimJetonu,
+    required String tenantId,
+  }) async {}
   _SahteOauthDepo({
     this.saglayiciListesi = const ['google', 'apple'],
     this.tamamlaDurum = 'giris',
