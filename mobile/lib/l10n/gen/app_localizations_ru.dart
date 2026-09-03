@@ -5739,6 +5739,17 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get ayarlarBildirimSesi => 'Звуковые уведомления';
+
+  @override
+  String get ayarlarBildirimSesiAciklama =>
+      'Уведомления о жалобах и сменах приходят со звуком.';
+
+  @override
+  String get ayarlarBildirimSesiUyari =>
+      'Звук отключён: вы можете не услышать напоминания о смене и уведомления о жалобах.';
+
+  @override
   String get vardiyaCikar => 'Убрать';
 
   @override

@@ -575,6 +575,13 @@ class AppUser(Base):
     bildirim_mobil: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("true")
     )
+    #: (P207 §2, goc 0100) SESLI UYARI TERCIHI — `bildirim_mobil`den
+    #: AYRI soru: "push gelsin mi" degil, "SESLI mi gelsin". Ikisini tek
+    #: bayrakla yonetmek, "gece caliyor" diyen kullaniciya bildirimin
+    #: tamamini kapattirirdi.
+    bildirim_sesi: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
     #: (P167 Asama 2, goc 0056) OZET SAYFASININ KULLANICI BASINA DUZENI —
     #: widget seridi + bolum sirasi/gizliligi. `localStorage` yerine burada
     #: cunku tarayici deposu KULLANICI basina degil TARAYICI basina calisir:

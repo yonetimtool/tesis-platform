@@ -791,13 +791,18 @@ class _BildirimKartiState extends ConsumerState<_BildirimKarti> {
     });
   }
 
-  Future<void> _kaydet({bool? eposta, bool? sms, bool? mobil}) async {
+  Future<void> _kaydet({
+    bool? eposta,
+    bool? sms,
+    bool? mobil,
+    bool? sesli,
+  }) async {
     final l10n = context.l10n;
     final messenger = ScaffoldMessenger.of(context);
     try {
       await ref
           .read(bildirimTercihApiProvider)
-          .guncelle(eposta: eposta, sms: sms, mobil: mobil);
+          .guncelle(eposta: eposta, sms: sms, mobil: mobil, sesli: sesli);
       ref.invalidate(bildirimTercihProvider);
       if (mounted) {
         messenger.showSnackBar(
@@ -875,6 +880,33 @@ class _BildirimKartiState extends ConsumerState<_BildirimKarti> {
                 value: tercih.mobil,
                 onChanged: (v) => _kaydet(mobil: v),
               ),
+              // (P207 §2) SESLI UYARI ANAHTARI.
+              if (tercih.mobil)
+                SwitchListTile(
+                  key: const Key('ayar-bildirim-sesi'),
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(l10n.ayarlarBildirimSesi),
+                  subtitle: Text(l10n.ayarlarBildirimSesiAciklama),
+                  value: tercih.sesli,
+                  onChanged: (v) => _kaydet(sesli: v),
+                ),
+              // KRITIK BILDIRIM UYARISI: ses kapaliyken kullanici
+              // vardiya hatirlatmasini DUYMAYABILIR ve bunu ancak
+              // vardiyayi kacirdiginda ogrenir. Uyari, anahtarin
+              // hemen altinda ve ancak KAPALIYKEN cikar — surekli
+              // gorunen bir uyari okunmaz olurdu.
+              if (tercih.mobil && !tercih.sesli)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(
+                    l10n.ayarlarBildirimSesiUyari,
+                    key: const Key('ayar-bildirim-sesi-uyari'),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                ),
               // CIHAZ izni uyarisi: mobil kanal ACIK ama OS izni yoksa push
               // telefona dusmez — bunu goster (aksi halde sessiz basarisizlik).
               if (tercih.mobil)

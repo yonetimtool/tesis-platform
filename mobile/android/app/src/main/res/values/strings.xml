@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  (P207 §2) BILDIRIM KANALI ADLARI — kullanici SISTEM AYARLARINDA gorur.
+
+  Bu metinler uygulamanin icinde degil, Android'in "Bildirimler" ekraninda
+  cikar; oradaki dil SISTEM dilidir ve uygulamanin sozlugunden okunamaz.
+  Bu yuzden `values/` (varsayilan, TR) + `values-en/` (Ingilizce) olarak
+  KAYNAKTA durur — uygulama sozluguyle ayni yerde tutulamaz.
+-->
+<resources>
+    <string name="kanal_kritik_ad">Önemli uyarılar</string>
+    <string name="kanal_kritik_aciklama">Şikayet ve vardiya hatırlatmaları — sesli gelir.</string>
+    <string name="kanal_genel_ad">Genel bildirimler</string>
+    <string name="kanal_genel_aciklama">Duyuru, kargo, rezervasyon ve diğer bildirimler.</string>
+    <string name="kanal_sessiz_ad">Sessiz bildirimler</string>
+    <string name="kanal_sessiz_aciklama">Sesli uyarıları kapattığınızda bildirimler buradan gelir.</string>
+</resources>

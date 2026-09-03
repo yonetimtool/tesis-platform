@@ -655,6 +655,10 @@ class BildirimTercihleri(BaseModel):
     bildirim_eposta: bool
     bildirim_sms: bool
     bildirim_mobil: bool
+    #: (P207 §2) SESLI UYARI. `bildirim_mobil` ile karistirilmamali:
+    #: bu, bildirimin GELIP GELMEYECEGINI degil SESLI olup olmayacagini
+    #: soyler.
+    bildirim_sesi: bool = True
 
 
 class BildirimTercihUpdate(BaseModel):
@@ -671,6 +675,7 @@ class BildirimTercihUpdate(BaseModel):
     bildirim_eposta: bool | None = None
     bildirim_sms: bool | None = None
     bildirim_mobil: bool | None = None
+    bildirim_sesi: bool | None = None
 
 
 class CihazOut(BaseModel):

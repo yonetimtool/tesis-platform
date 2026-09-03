@@ -9695,6 +9695,24 @@ abstract class AppLocalizations {
   /// **'Borçlandırma tamam. Atlanan daire: {n}'**
   String sayacBorclandirildi(int n);
 
+  /// No description provided for @ayarlarBildirimSesi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sesli uyarılar'**
+  String get ayarlarBildirimSesi;
+
+  /// No description provided for @ayarlarBildirimSesiAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şikayet ve vardiya bildirimleri sesli gelir.'**
+  String get ayarlarBildirimSesiAciklama;
+
+  /// No description provided for @ayarlarBildirimSesiUyari.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sesli uyarıları kapattınız: vardiya hatırlatmalarını ve şikayet bildirimlerini duymayabilirsiniz.'**
+  String get ayarlarBildirimSesiUyari;
+
   /// (P203 §4) Vardiya plani ekrani — vardiyaCikar.
   ///
   /// In tr, this message translates to:

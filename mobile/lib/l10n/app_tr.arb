@@ -2578,6 +2578,9 @@
   "@sayacBorclandirildi": {
     "placeholders": { "n": { "type": "int" } }
   },
+  "ayarlarBildirimSesi": "Sesli uyarılar",
+  "ayarlarBildirimSesiAciklama": "Şikayet ve vardiya bildirimleri sesli gelir.",
+  "ayarlarBildirimSesiUyari": "Sesli uyarıları kapattınız: vardiya hatırlatmalarını ve şikayet bildirimlerini duymayabilirsiniz.",
   "vardiyaCikar": "Çıkar",
   "@vardiyaCikar": {
     "description": "(P203 §4) Vardiya plani ekrani — vardiyaCikar."

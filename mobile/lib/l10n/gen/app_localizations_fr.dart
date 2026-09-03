@@ -5648,6 +5648,17 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get ayarlarBildirimSesi => 'Alertes sonores';
+
+  @override
+  String get ayarlarBildirimSesiAciklama =>
+      'Les notifications de réclamation et de poste arrivent avec un son.';
+
+  @override
+  String get ayarlarBildirimSesiUyari =>
+      'Les alertes sonores sont désactivées : vous risquez de ne pas entendre les rappels de poste et les notifications de réclamation.';
+
+  @override
   String get vardiyaCikar => 'Retirer';
 
   @override

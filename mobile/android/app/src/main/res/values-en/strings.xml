@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="kanal_kritik_ad">Important alerts</string>
+    <string name="kanal_kritik_aciklama">Complaints and shift reminders — delivered with sound.</string>
+    <string name="kanal_genel_ad">General notifications</string>
+    <string name="kanal_genel_aciklama">Announcements, parcels, reservations and other notifications.</string>
+    <string name="kanal_sessiz_ad">Silent notifications</string>
+    <string name="kanal_sessiz_aciklama">When you turn sound alerts off, notifications arrive here.</string>
+</resources>

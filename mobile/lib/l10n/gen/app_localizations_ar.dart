@@ -5737,6 +5737,17 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String get ayarlarBildirimSesi => 'التنبيهات الصوتية';
+
+  @override
+  String get ayarlarBildirimSesiAciklama =>
+      'تصل إشعارات الشكاوى والورديات بصوت.';
+
+  @override
+  String get ayarlarBildirimSesiUyari =>
+      'أوقفت التنبيهات الصوتية: قد لا تسمع تذكيرات الورديات وإشعارات الشكاوى.';
+
+  @override
   String get vardiyaCikar => 'إزالة';
 
   @override

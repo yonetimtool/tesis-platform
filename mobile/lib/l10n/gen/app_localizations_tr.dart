@@ -5477,6 +5477,17 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String get ayarlarBildirimSesi => 'Sesli uyarılar';
+
+  @override
+  String get ayarlarBildirimSesiAciklama =>
+      'Şikayet ve vardiya bildirimleri sesli gelir.';
+
+  @override
+  String get ayarlarBildirimSesiUyari =>
+      'Sesli uyarıları kapattınız: vardiya hatırlatmalarını ve şikayet bildirimlerini duymayabilirsiniz.';
+
+  @override
   String get vardiyaCikar => 'Çıkar';
 
   @override

@@ -24,6 +24,7 @@ import psycopg
 from .. import push
 from ..config import settings
 from ..gunlukleme import guvenli_alanlar
+from ..push_kanal import kanal_sec, ses_adi
 from ..push_metinleri import dil_normalize, push_basligi, push_govdesi
 from ..ceviri import VARSAYILAN_DIL
 
@@ -106,6 +107,12 @@ class Cihaz:
     dil: str
     user_id: uuid.UUID
     platform: str | None
+    #: (P207 §2) SAHIBININ ses tercihi (`app_user.bildirim_sesi`).
+    #: Cihazda degil KISIDE durur: Android'de bildirimin sesi KANALIN
+    #: ozelligidir ve kanal olusturulduktan sonra uygulama onu
+    #: degistiremez — "sesi kapat" ancak sunucunun BASKA BIR KANALA
+    #: gondermesiyle olur.
+    sesli: bool = True
 
 
 #: Saglayici TOPLAM durumu -> teshis durumu (token bazinda sonuc yoksa yedek).
@@ -170,26 +177,41 @@ def _push_to_devices(
     gecersiz: list[str] = []
     satirlar: list[tuple] = []
     for dil, tokenlar in gruplar.items():
-        sonuc = provider.send(
-            tokenlar,
-            title=push_basligi(kimlik, dil),
-            body=govde or push_govdesi(kimlik, dil, params),
-            data=dict(data or {}),
-        )
-        # FCM'in KALICI gecersiz dedigi token'lar -> budanacak. `getattr`
-        # savunmasi: noop/eski saglayici None ya da alansiz sonuc dondurebilir.
-        gecersiz.extend(getattr(sonuc, "gecersiz", None) or [])
-        # (P191 §2) TOKEN BASINA IZ. `token_sonuc` yoksa (eski saglayici)
-        # toplam durumdan tek bir degere duseriz — satir KAYBOLMAZ.
-        token_sonuc = getattr(sonuc, "token_sonuc", None) or {}
-        for token in tokenlar:
-            durum, hata = token_sonuc.get(
-                token, (_TOPLAM_DURUM.get(getattr(sonuc, "status", ""), "basarisiz"), None)
+        # (P207 §2) KANAL VE SES KISI BAZINDA: ayni gonderimde bir
+        # kullanici sesli, oteki sessiz olabilir. Gruplama DILE gore
+        # yapildigi icin ses kirilimi burada IKINCI bir gruplamayla
+        # yapilir — tek bir "sesli mi" degeri kullanmak, sesi kapatan
+        # kullanicinin telefonunu caldirirdi.
+        for sesli in (True, False):
+            alt = [t for t in tokenlar if cihazlar[t].sesli is sesli]
+            if not alt:
+                continue
+            sonuc = provider.send(
+                alt,
+                title=push_basligi(kimlik, dil),
+                body=govde or push_govdesi(kimlik, dil, params),
+                data=dict(data or {}),
+                kanal=kanal_sec(kimlik, sesli=sesli),
+                ses=ses_adi(kimlik, sesli=sesli),
             )
-            c = cihazlar[token]
-            satirlar.append(
-                (kimlik, c.user_id, token[-6:], c.platform, provider.name, durum, hata)
-            )
+            # FCM'in KALICI gecersiz dedigi token'lar -> budanacak.
+            # `getattr` savunmasi: noop/eski saglayici None ya da alansiz
+            # sonuc dondurebilir.
+            gecersiz.extend(getattr(sonuc, "gecersiz", None) or [])
+            # (P191 §2) TOKEN BASINA IZ. `token_sonuc` yoksa (eski
+            # saglayici) toplam durumdan tek bir degere duseriz — satir
+            # KAYBOLMAZ.
+            token_sonuc = getattr(sonuc, "token_sonuc", None) or {}
+            for token in alt:
+                durum, hata = token_sonuc.get(
+                    token,
+                    (_TOPLAM_DURUM.get(getattr(sonuc, "status", ""), "basarisiz"), None),
+                )
+                c = cihazlar[token]
+                satirlar.append(
+                    (kimlik, c.user_id, token[-6:], c.platform, provider.name,
+                     durum, hata)
+                )
     logger.info(
         "PUSH sonuc: kimlik=%s tenant=%s saglayici=%s cihaz=%d | %s",
         kimlik, tenant_id, provider.name, len(cihazlar),
@@ -222,13 +244,14 @@ def _fetch_device_tokens(
                 "SELECT set_config('app.current_tenant_id', %s, true)", (str(tenant_id),)
             )
             cur.execute(
-                "SELECT d.fcm_token, d.dil, d.user_id, d.platform FROM user_device d "
+                "SELECT d.fcm_token, d.dil, d.user_id, d.platform, "
+                "u.bildirim_sesi FROM user_device d "
                 "JOIN app_user u ON u.id = d.user_id "
                 "WHERE d.aktif = true AND u.is_active = true AND u.role::text = ANY(%s)"
                 + _KANAL_KOSULU,
                 (list(roles),),
             )
-            return [Cihaz(r[0], r[1], r[2], r[3]) for r in cur.fetchall()]
+            return [Cihaz(r[0], r[1], r[2], r[3], bool(r[4])) for r in cur.fetchall()]
 
 
 def _fetch_device_tokens_for_users(
@@ -246,13 +269,14 @@ def _fetch_device_tokens_for_users(
                 "SELECT set_config('app.current_tenant_id', %s, true)", (str(tenant_id),)
             )
             cur.execute(
-                "SELECT d.fcm_token, d.dil, d.user_id, d.platform FROM user_device d "
+                "SELECT d.fcm_token, d.dil, d.user_id, d.platform, "
+                "u.bildirim_sesi FROM user_device d "
                 "JOIN app_user u ON u.id = d.user_id "
                 "WHERE d.aktif = true AND u.is_active = true "
                 "AND u.id = ANY(%s::uuid[])" + _KANAL_KOSULU,
                 ([str(u) for u in user_ids],),
             )
-            return [Cihaz(r[0], r[1], r[2], r[3]) for r in cur.fetchall()]
+            return [Cihaz(r[0], r[1], r[2], r[3], bool(r[4])) for r in cur.fetchall()]
 
 
 def _teshis_yaz(tenant_id: uuid.UUID, satirlar: Sequence[tuple]) -> None:

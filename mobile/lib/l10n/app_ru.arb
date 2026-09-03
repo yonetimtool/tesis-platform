@@ -1818,6 +1818,9 @@
   "@sayacBorclandirildi": {
     "placeholders": { "n": { "type": "int" } }
   },
+  "ayarlarBildirimSesi": "Звуковые уведомления",
+  "ayarlarBildirimSesiAciklama": "Уведомления о жалобах и сменах приходят со звуком.",
+  "ayarlarBildirimSesiUyari": "Звук отключён: вы можете не услышать напоминания о смене и уведомления о жалобах.",
   "vardiyaCikar": "Убрать",
   "vardiyaCikarSebep": "Причина снятия (болезнь, отпуск, срочность)"
 }

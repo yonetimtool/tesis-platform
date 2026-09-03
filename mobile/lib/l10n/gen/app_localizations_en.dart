@@ -5665,6 +5665,17 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get ayarlarBildirimSesi => 'Sound alerts';
+
+  @override
+  String get ayarlarBildirimSesiAciklama =>
+      'Complaint and shift notifications arrive with sound.';
+
+  @override
+  String get ayarlarBildirimSesiUyari =>
+      'Sound alerts are off: you may not hear shift reminders and complaint notifications.';
+
+  @override
   String get vardiyaCikar => 'Remove';
 
   @override

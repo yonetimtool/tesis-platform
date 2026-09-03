@@ -1818,6 +1818,9 @@
   "@sayacBorclandirildi": {
     "placeholders": { "n": { "type": "int" } }
   },
+  "ayarlarBildirimSesi": "Alertas con sonido",
+  "ayarlarBildirimSesiAciklama": "Las notificaciones de quejas y turnos llegan con sonido.",
+  "ayarlarBildirimSesiUyari": "Ha desactivado las alertas con sonido: puede que no oiga los recordatorios de turno ni los avisos de quejas.",
   "vardiyaCikar": "Quitar",
   "vardiyaCikarSebep": "Motivo de la retirada (enfermedad, permiso, emergencia)"
 }

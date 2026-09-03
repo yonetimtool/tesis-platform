@@ -5635,6 +5635,17 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String get ayarlarBildirimSesi => 'Alertas con sonido';
+
+  @override
+  String get ayarlarBildirimSesiAciklama =>
+      'Las notificaciones de quejas y turnos llegan con sonido.';
+
+  @override
+  String get ayarlarBildirimSesiUyari =>
+      'Ha desactivado las alertas con sonido: puede que no oiga los recordatorios de turno ni los avisos de quejas.';
+
+  @override
   String get vardiyaCikar => 'Quitar';
 
   @override

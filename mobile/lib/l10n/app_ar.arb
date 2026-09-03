@@ -1818,6 +1818,9 @@
   "@sayacBorclandirildi": {
     "placeholders": { "n": { "type": "int" } }
   },
+  "ayarlarBildirimSesi": "التنبيهات الصوتية",
+  "ayarlarBildirimSesiAciklama": "تصل إشعارات الشكاوى والورديات بصوت.",
+  "ayarlarBildirimSesiUyari": "أوقفت التنبيهات الصوتية: قد لا تسمع تذكيرات الورديات وإشعارات الشكاوى.",
   "vardiyaCikar": "إزالة",
   "vardiyaCikarSebep": "سبب الإزالة (مرض، إجازة، طارئ)"
 }

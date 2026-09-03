@@ -1818,6 +1818,9 @@
   "@sayacBorclandirildi": {
     "placeholders": { "n": { "type": "int" } }
   },
+  "ayarlarBildirimSesi": "Alertes sonores",
+  "ayarlarBildirimSesiAciklama": "Les notifications de réclamation et de poste arrivent avec un son.",
+  "ayarlarBildirimSesiUyari": "Les alertes sonores sont désactivées : vous risquez de ne pas entendre les rappels de poste et les notifications de réclamation.",
   "vardiyaCikar": "Retirer",
   "vardiyaCikarSebep": "Motif du retrait (maladie, congé, urgence)"
 }

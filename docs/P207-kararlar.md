@@ -117,3 +117,124 @@ sahanın sorusu; yazma yalnız admin+yönetici).
 **Ölçemediğim:** gerçek tarayıcıda fare sürükleme hissi (jsdom'da
 `mousedown`/`mouseenter` olayları tetikleniyor ama gerçek sürükleme
 eşiği/ivmesi ölçülmedi).
+
+---
+
+## §2 — BİLDİRİM SESİ
+
+### Ölçüm: neden sessizdi
+
+FCM gövdesi (`app/push.py`) yalnızca `notification{title, body}` + `data`
+taşıyordu. **Android 8'den beri bildirimin sesi kanalın özelliğidir**;
+kanal belirtilmeyen bildirim manifest'teki varsayılan kanala düşer ve o
+kanal **tanımlı değildi** (`AndroidManifest.xml`'de
+`default_notification_channel_id` yoktu, `MainActivity.kt` boş bir sınıftı).
+iOS tarafında `aps.sound` **hiç** gönderilmiyordu. Yani sessizlik bir ayar
+değil, **eksikti**.
+
+### Teknik gerçekler — doğrulandı ve karara bağlandı
+
+| Platform | Gerçek | Bizdeki karşılığı |
+|---|---|---|
+| Android | Kanalın sesi **oluşturulduktan sonra program tarafından değiştirilemez** (yalnız kullanıcı sistem ayarlarından değiştirir) | Kanal kimlikleri **sürümlü**: `yonetio_kritik_v1`. Ses dosyası değişirse `_v2` açılır, eskisi silinir |
+| Android | Kanal **uygulamada** oluşturulur; FCM'deki `channel_id` var olan kanalı **seçer**, oluşturmaz | `MainActivity.kt` üç kanalı `onCreate`te oluşturuyor |
+| iOS | Özel ses **uygulama paketine gömülüdür**; sunucu yalnız adını gönderir | Yeni ses = **yeni sürüm yayını**. `SES_HAZIR=False` iken `aps.sound="default"` |
+
+**Bağımlılık eklenmedi:** `flutter_local_notifications` yalnızca kanal
+açmak için eklenecekti; uygulamanın hiçbir yerinde yerel bildirim
+göstermiyoruz. Kanallar native tarafta (Kotlin) açılıyor.
+
+### SES DOSYASI — İSTENEN BİÇİM (siz sağlayacaksınız)
+
+Tek bir ses, iki formatta gerekiyor:
+
+**Android** — `mobile/android/app/src/main/res/raw/yonetio_bildirim.ogg`
+- Biçim: **OGG/Vorbis** (tercih) veya MP3/WAV
+- Süre: **1–3 saniye** (sistem 30 sn'ye kadar çalar ama bildirim sesi
+  uzun olursa kullanıcı kapatır)
+- Örnekleme: 44.1 kHz, mono yeter; hedef boyut **< 100 KB**
+- Dosya adı **küçük harf + rakam + alt çizgi** olmalı (Android kaynak adı
+  kuralı) ve **uzantısız** olarak koda girer — bu yüzden ad sabit:
+  `yonetio_bildirim`
+
+**iOS** — `mobile/ios/Runner/yonetio_bildirim.caf`
+- Biçim: **CAF** (Linear PCM / IMA4), alternatif `.aiff` / `.wav`
+- Süre: **30 saniyeden kısa olmak ZORUNDA** — uzunsa iOS sesi çalmaz,
+  sessizce varsayılana düşer (en sinsi hata biçimi); pratikte 1–3 sn
+- Xcode'da **Runner target'ına** eklenmeli (Copy Bundle Resources)
+- Dönüştürme: `afconvert -f caff -d LEI16 giris.wav yonetio_bildirim.caf`
+
+Dosyalar geldiğinde kodda değişecek **tek yer**: `push_kanal.py` içinde
+`SES_HAZIR = True` ve kanal kimliklerinin `_v2`ye çıkarılması (Android'de
+sesi değişen kanal yeni kimlik ister). Şu an sistem sesiyle çalışıyor.
+
+### K2.1 — Üç kanal, bildirim tipine göre seçim
+
+`yonetio_kritik_v1` (IMPORTANCE_HIGH, özel/sistem sesi + titreşim),
+`yonetio_genel_v1` (IMPORTANCE_DEFAULT, sistem sesi),
+`yonetio_sessiz_v1` (IMPORTANCE_LOW, ses yok).
+
+Kritik listesi (`KRITIK_TIPLER`): şikayet/talep hattının tamamı, vardiya
+hatırlatma + başlamama + özet, kaçırılan tur, gecikmiş okutma, uzak
+okutma, gürültü uyarısı. Ortak yanları: **bekleyen bir iş değil, olmayan
+bir işi** ya da kullanıcının hemen görmesi gerekeni bildiriyorlar.
+
+Kritik bildirimde FCM önceliği `high`: Android düşük öncelikli mesajları
+Doze modunda toplayıp geciktirir; "vardiyanıza 5 dakika" bildiriminin
+gecikmesi onu **anlamsız** yapardı.
+
+### K2.2 — Ses tercihi SUNUCUDA (göç 0100)
+
+`app_user.bildirim_sesi` (varsayılan **true**). Neden istemcide değil:
+Android'de sesi kapatmak kanalı değiştirmek demektir ve uygulama var olan
+bir kanalın sesini değiştiremez — "sesi kapat" ancak sunucunun **başka
+bir kanala** göndermesiyle olur.
+
+`bildirim_mobil`den ayrı bir bayrak: biri "push gelsin mi", öteki "sesli
+mi gelsin". Tek bayrağa bağlamak, "gece çalıyor" diyen kullanıcıya
+bildirimin **tamamını** kapattırırdı — ve o kullanıcı ertesi gün
+vardiyasını da kaçırırdı.
+
+Gönderimde ses kırılımı **kişi bazında**: aynı gönderimde bir kullanıcı
+sesli, öteki sessiz olabilir; tek bir "sesli mi" değeri kullanmak, sesi
+kapatan kullanıcının telefonunu çaldırırdı.
+
+Ayarlar ekranında anahtar var ve **kapalıyken uyarı çıkıyor**: "sesli
+uyarıları kapattınız: vardiya hatırlatmalarını ve şikayet bildirimlerini
+duymayabilirsiniz". Uyarı yalnız kapalıyken görünür — sürekli görünen
+bir uyarı okunmaz olurdu.
+
+### K2.3 — Sessiz saatler: HAYIR (gerekçeli)
+
+**Yapılmadı.** Gece vardiyası olan bir sistemde "gece sessiz olsun" kuralı
+tam olarak **yanlış kişiyi** susturur: 23:00'te vardiyaya girecek
+güvenlik görevlisinin hatırlatması, sessiz saatlerin göbeğine düşer.
+Doğru kurgu "kullanıcının **kendi vardiyası dışındaki** saatler" olurdu;
+bu, vardiya planına bağlı kişiselleştirilmiş bir sessizlik penceresi
+demek ve planı olmayan roller (sakin) için tanımsız kalır.
+
+Kullanıcının bugün elinde olan iki kaldıraç yeterli: (a) uygulama içi
+"sesli uyarılar" anahtarı, (b) Android'in kendi kanal ayarları ve
+"Rahatsız Etmeyin" programı — ki bu, işletim sisteminin zaten çözdüğü ve
+kullanıcının kendi ritmine göre kurduğu bir şey. Kayıt altında: vardiya
+planına bağlı sessizlik penceresi istenirse ayrı bir tur.
+
+### Ölçüm
+
+Backend `test_p207_push_kanal.py` **8 test + 2 atlanan**: kanal seçimi
+(kritik/genel/sessiz), ses kapalıyken kritik bildirimin de sessiz kanala
+düşmesi, dosya yokken sistem sesi, FCM gövdesinde `channel_id` +
+`priority` + `aps.sound`, sessiz gönderimde `apns`ın **hiç** olmaması,
+kanalsız eski çağıranın kırılmaması, tercih ucunun okunup değiştirilmesi.
+
+Kanal kimliği **eşitlik kilidi** mobil tarafta:
+`p207_kanal_kimlik_test.dart` **4 test** — backend'deki `push_kanal.py`
+ile `MainActivity.kt`i okuyup karşılaştırır (backend konteynerinde mobil
+kaynak olmadığı için oradaki aynı kilit kendini atlıyor ve bunu açıkça
+söylüyor). Kilit kanıtı: Kotlin'deki kimlik `_v2` yapıldı → test düştü,
+geri alındı.
+
+**Ölçemediğim:** gerçek cihazda sesin çalması. Kanalın oluşması, sesin
+kanala bağlanması ve FCM'in doğru kanalı seçmesi ancak fiziksel cihazda
+(veya emülatörde) doğrulanabilir; burada emülatör yok. Ölçtüğüm şey
+**gövdenin doğru alanları taşıdığı** ve **kimliklerin ayrışmadığı**.

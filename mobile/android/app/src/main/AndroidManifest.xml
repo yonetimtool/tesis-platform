@@ -91,6 +91,16 @@
             android:name="com.google.firebase.messaging.default_notification_color"
             android:resource="@color/yonetio_teal" />
 
+        <!-- (P207 §2) VARSAYILAN FCM KANALI.
+             Sunucu her bildirimde `channel_id` gonderir; bu meta-data
+             GONDERMEDIGI durum icin agdir (eski sunucu surumu, teshis
+             ucu). Olmasaydi bildirim Android'in isimsiz varsayilan
+             kanalina duser ve SESSIZ olurdu — olculen kusurun ta
+             kendisi. Kanal `MainActivity.kt`te olusturuluyor. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="yonetio_genel_v1" />
+
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

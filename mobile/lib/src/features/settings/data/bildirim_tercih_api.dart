@@ -31,11 +31,17 @@ class BildirimTercihApi {
     bool? eposta,
     bool? sms,
     bool? mobil,
+    bool? sesli,
   }) async {
     final data = <String, dynamic>{};
     if (eposta != null) data['bildirim_eposta'] = eposta;
     if (sms != null) data['bildirim_sms'] = sms;
     if (mobil != null) data['bildirim_mobil'] = mobil;
+    // (P207 §2) SES TERCIHI SUNUCUDA: Android'de bildirimin sesi
+    // KANALIN ozelligidir ve kanal olusturulduktan sonra uygulama onu
+    // degistiremez — "sesi kapat" ancak sunucunun BASKA BIR KANALA
+    // gondermesiyle olur.
+    if (sesli != null) data['bildirim_sesi'] = sesli;
     try {
       final res = await _dio.patch<Map<String, dynamic>>(
         '/me/bildirim-tercihleri',

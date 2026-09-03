@@ -189,6 +189,11 @@ class PushProvider(ABC):
         title: str,
         body: str,
         data: Mapping[str, str] | None = None,
+        # (P207 §2) KANAL ve SES. Varsayilan `None`: eski cagiranlar
+        # (teshis ucu, testler) degismeden calisir ve o durumda genel
+        # kanal + sistem sesi kullanilir.
+        kanal: str | None = None,
+        ses: str | None = None,
     ) -> PushResult: ...
 
     def dogrula(self, tokens: Sequence[str]) -> DogrulamaSonucu:
@@ -208,7 +213,9 @@ class PushProvider(ABC):
 class NoopPushProvider(PushProvider):
     name = "noop"
 
-    def send(self, tokens, *, title, body, data=None) -> PushResult:
+    def send(
+        self, tokens, *, title, body, data=None, kanal=None, ses=None
+    ) -> PushResult:
         tokenlar = list(tokens)
         # (P191 §2) TESHIS: "noop" bir HATA DEGIL, bir YAPILANDIRMADIR — ama
         # bildirim beklerken bunu bilmeyen operator saatlerce cihaz/izin
@@ -231,7 +238,9 @@ class NoopPushProvider(PushProvider):
 class FcmProvider(PushProvider):
     name = "fcm"
 
-    def send(self, tokens, *, title, body, data=None) -> PushResult:
+    def send(
+        self, tokens, *, title, body, data=None, kanal=None, ses=None
+    ) -> PushResult:
         sa = _load_service_account()
         # project_id oncelik: env override > service account dosyasindaki deger.
         project_id = settings.fcm_project_id or (sa or {}).get("project_id") or None
@@ -263,13 +272,31 @@ class FcmProvider(PushProvider):
         basarisiz = 0
         token_sonuc: dict[str, tuple[str, str | None]] = {}
         for token in tokens:
-            message = {
-                "message": {
-                    "token": token,
-                    "notification": {"title": title, "body": body},
-                    "data": str_data,
-                }
+            # (P207 §2) KANAL VE SES GOVDEDE.
+            #
+            # OLCULEN KUSUR: govde yalnizca `notification` + `data`
+            # tasiyordu. Android 8'den beri bildirimin SESI KANALIN
+            # ozelligidir; kanal belirtilmeyen bildirim manifest'teki
+            # varsayilan kanala duser ve o kanal tanimli degildi. iOS'ta
+            # `aps.sound` HIC gonderilmiyordu. Yani sessizlik bir ayar
+            # degil, EKSIKTI.
+            govde_msg: dict = {
+                "token": token,
+                "notification": {"title": title, "body": body},
+                "data": str_data,
             }
+            if kanal:
+                govde_msg["android"] = {
+                    # KRITIK BILDIRIMDE `high`: Android, dusuk oncelikli
+                    # mesajlari Doze modunda TOPLAYIP geciktirir —
+                    # "vardiyaniza 5 dakika" bildiriminin gecikmesi onu
+                    # ANLAMSIZ yapardi.
+                    "priority": "high" if ses else "normal",
+                    "notification": {"channel_id": kanal},
+                }
+            if ses:
+                govde_msg["apns"] = {"payload": {"aps": {"sound": ses}}}
+            message = {"message": govde_msg}
             try:
                 resp = _http_post_json(url, headers, message)
             except Exception as exc:  # ag/parse — GECICI; batch'i durdurma, token'i koru

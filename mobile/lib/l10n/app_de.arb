@@ -1818,6 +1818,9 @@
   "@sayacBorclandirildi": {
     "placeholders": { "n": { "type": "int" } }
   },
+  "ayarlarBildirimSesi": "Tonsignale",
+  "ayarlarBildirimSesiAciklama": "Beschwerde- und Schichtbenachrichtigungen kommen mit Ton.",
+  "ayarlarBildirimSesiUyari": "Tonsignale sind aus: Sie hören Schichterinnerungen und Beschwerdebenachrichtigungen möglicherweise nicht.",
   "vardiyaCikar": "Entfernen",
   "vardiyaCikarSebep": "Grund für die Entfernung (Krankheit, Urlaub, Notfall)"
 }

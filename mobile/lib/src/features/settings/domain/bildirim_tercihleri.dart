@@ -8,25 +8,38 @@ class BildirimTercihleri {
     required this.eposta,
     required this.sms,
     required this.mobil,
+    this.sesli = true,
   });
 
   final bool eposta;
   final bool sms;
   final bool mobil;
 
+  /// (P207 §2) SESLI UYARI. `mobil`den AYRI soru: bildirim gelsin mi
+  /// DEGIL, SESLI mi gelsin. Ikisini tek anahtara baglamak, "gece
+  /// caliyor" diyen kullaniciya bildirimin TAMAMINI kapattirirdi.
+  final bool sesli;
+
   factory BildirimTercihleri.fromJson(Map<String, dynamic> json) {
     return BildirimTercihleri(
       eposta: json['bildirim_eposta'] as bool? ?? true,
       sms: json['bildirim_sms'] as bool? ?? true,
       mobil: json['bildirim_mobil'] as bool? ?? true,
+      sesli: json['bildirim_sesi'] as bool? ?? true,
     );
   }
 
-  BildirimTercihleri copyWith({bool? eposta, bool? sms, bool? mobil}) {
+  BildirimTercihleri copyWith({
+    bool? eposta,
+    bool? sms,
+    bool? mobil,
+    bool? sesli,
+  }) {
     return BildirimTercihleri(
       eposta: eposta ?? this.eposta,
       sms: sms ?? this.sms,
       mobil: mobil ?? this.mobil,
+      sesli: sesli ?? this.sesli,
     );
   }
 
@@ -35,8 +48,9 @@ class BildirimTercihleri {
       other is BildirimTercihleri &&
       other.eposta == eposta &&
       other.sms == sms &&
-      other.mobil == mobil;
+      other.mobil == mobil &&
+      other.sesli == sesli;
 
   @override
-  int get hashCode => Object.hash(eposta, sms, mobil);
+  int get hashCode => Object.hash(eposta, sms, mobil, sesli);
 }

@@ -5656,6 +5656,17 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get ayarlarBildirimSesi => 'Tonsignale';
+
+  @override
+  String get ayarlarBildirimSesiAciklama =>
+      'Beschwerde- und Schichtbenachrichtigungen kommen mit Ton.';
+
+  @override
+  String get ayarlarBildirimSesiUyari =>
+      'Tonsignale sind aus: Sie hören Schichterinnerungen und Beschwerdebenachrichtigungen möglicherweise nicht.';
+
+  @override
   String get vardiyaCikar => 'Entfernen';
 
   @override
