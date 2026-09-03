@@ -55,6 +55,13 @@ abstract interface class OauthRepository {
   /// ACILMAZ (liste disi ya da gecersiz Tesis ID — AYNI yanit).
   /// (P194) `rol` OPSIYONEL: GIRIS akisinda GONDERILMEZ — sunucu rolu
   /// hesaptan okur (P191 §1). Yalniz KAYIT akisi rol beyan eder.
+  /// (P211 §1) Cok tesisli yoneticinin SSO girisini SECIMLE tamamlar.
+  /// Basarida jetonlar SAKLANIR ve oturum acilir.
+  Future<void> tesisSec({
+    required String secimJetonu,
+    required String tenantId,
+  });
+
   Future<({String durum, String? tesisAd})> rolTamamla({
     required String baglamaJetonu,
     required String tesisKodu,

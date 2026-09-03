@@ -170,6 +170,34 @@ class AuthApi {
     }
   }
 
+  /// (P211 §1) `POST /auth/oauth/tesis-sec` — COK TESISLI YONETICININ
+  /// SSO girisini tamamlar.
+  ///
+  /// TESIS ID SORULMAZ: kullanici ezberlemedigi bir kodu yazmak yerine
+  /// adlar arasindan secer. Jeton TEK KULLANIMLIKTIR ve hicbir tesise
+  /// yetki vermez; sunucu secilen tesisin ADAY LISTESINDE oldugunu
+  /// dogrular (aksi hâlde uc "istedigim tesisin jetonunu al" ucuna
+  /// donusurdu).
+  Future<TokenPair> oauthTesisSec({
+    required String secimJetonu,
+    required String tenantId,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/auth/oauth/tesis-sec',
+        data: {'secim_jetonu': secimJetonu, 'tenant_id': tenantId},
+      );
+      final j = res.data?['jetonlar'];
+      if (j is! Map<String, dynamic>) {
+        throw const ApiException(
+          code: 'invalid_response', message: '', statusCode: 500);
+      }
+      return TokenPair.fromJson(j);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
   /// `POST /auth/oauth/baglan/basla` — tesis kodu + telefon; eslesirse SMS.
   ///
   /// ESLESME SONUCU YANITTAN OKUNAMAZ (`rolKayitBasla` ile ayni ilke).

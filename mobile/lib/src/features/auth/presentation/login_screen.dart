@@ -152,7 +152,51 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               // ekran eslestirme moduna gecer. Ayri bir rota DEGIL —
               // akis giristen ayrilmaz ve geri tusuyla yarim kalmis bir
               // duruma dusulmez.
-              child: auth.oauthBaglamaJetonu != null
+              // (P211 §1) SSO SONRASI TESIS SECIMI — Tesis ID formundan
+              // ONCE bakilir. Iki durum ayni ekranda ama AYRI mod:
+              // biri "hangi tesise gireceksin" (secim), oteki "hesabini
+              // Tesis ID ile bagla" (baglama). Sirasi onemli: cok
+              // tesisli yonetici artik kod ezberlemez.
+              child: auth.oauthSecimJetonu != null
+                  ? Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Center(child: YonetioLogoVertical(iconSize: 100)),
+                        const SizedBox(height: 28),
+                        Text(
+                          l10n.girisTesisSec,
+                          key: const Key('sso-tesis-secimi'),
+                          style: Theme.of(context).textTheme.titleMedium,
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 12),
+                        for (final t in auth.oauthTesisler)
+                          Card(
+                            child: ListTile(
+                              key: Key('sso-tesis-${t.slug}'),
+                              title: Text(t.ad),
+                              trailing: const Icon(Icons.chevron_right),
+                              onTap: submitting
+                                  ? null
+                                  : () => ref
+                                      .read(authControllerProvider.notifier)
+                                      .oauthTesisSec(t.tenantId),
+                            ),
+                          ),
+                        if (hata != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 12),
+                            child: Text(
+                              hata,
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.error,
+                              ),
+                            ),
+                          ),
+                      ],
+                    )
+                  : auth.oauthBaglamaJetonu != null
                   ? Column(
                       mainAxisSize: MainAxisSize.min,
                       children: const [

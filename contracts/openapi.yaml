@@ -1063,8 +1063,26 @@ paths:
                 properties:
                   durum:
                     type: string
-                    enum: [giris, baglama_gerekli, kayit, mevcut_hesap]
+                    enum: [giris, baglama_gerekli, kayit, mevcut_hesap, tesis_secimi]
                   jetonlar: { $ref: "#/components/schemas/TokenPair" }
+                  secim_jetonu:
+                    type: string
+                    nullable: true
+                    description: |
+                      (P211) `durum=tesis_secimi` — dogrulanmis e-posta
+                      BIRDEN COK tesiste yonetici. Tek kullanimlik jeton
+                      `/auth/oauth/tesis-sec` ile tuketilir.
+                  tesisler:
+                    type: array
+                    nullable: true
+                    description: (P211) Aday tesisler — ADLARIYLA secilir.
+                    items:
+                      type: object
+                      required: [tenant_id, ad, slug]
+                      properties:
+                        tenant_id: { type: string, format: uuid }
+                        ad: { type: string }
+                        slug: { type: string }
                   saglayici: { type: string, nullable: true }
                   eposta:
                     type: string
@@ -1273,6 +1291,45 @@ paths:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
         "503":
           description: Yeni kayit akisi kapali
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  /auth/oauth/tesis-sec:
+    post:
+      tags: [auth]
+      summary: (P211) Cok tesisli yonetici — SSO'da tesis secimi
+      description: |
+        `/auth/oauth/sonuc` `durum=tesis_secimi` dondugunde 2. adim.
+        `secim_jetonu` TEK KULLANIMLIKTIR ve yetki VERMEZ; secilen
+        `tenant_id` jetondaki aday listesinde olmak zorundadir.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [secim_jetonu, tenant_id]
+              properties:
+                secim_jetonu: { type: string }
+                tenant_id: { type: string, format: uuid }
+      responses:
+        "200":
+          description: durum=giris + jetonlar
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [durum]
+                properties:
+                  durum: { type: string, description: "giris" }
+                  jetonlar: { $ref: "#/components/schemas/TokenPair" }
+        "400":
+          description: Secim jetonu gecersiz/suresi dolmus/kullanilmis
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "403":
+          description: Secilen tesis aday listesinde degil
           content:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
 

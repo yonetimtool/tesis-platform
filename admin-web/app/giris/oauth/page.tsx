@@ -43,8 +43,14 @@ type Sonuc = {
    *  on-doldurmasi. Apple vermez; bos gelir ve akis kirilmaz. */
   ad?: string | null;
   baglama_jetonu?: string | null;
+  /** (P211 §1) COK TESISLI YONETICI: tek kullanimlik secim jetonu +
+   *  aday tesislerin ADLARI. Tesis ID ezberlemek GEREKMEZ. */
+  secim_jetonu?: string | null;
+  tesisler?: TesisSecenegi[] | null;
   error?: { message?: string };
 };
+
+type TesisSecenegi = { tenant_id: string; ad: string; slug: string };
 
 type Adim =
   | "yukleniyor"
@@ -55,6 +61,9 @@ type Adim =
   // (b)/(a) tutmadi: yoneticinin onay kuyruguna dustu.
   | "onay_bekliyor"
   | "kayit_gerekli"
+  // (P211 §1) COK TESISLI YONETICI: hangi tesise girecegi SORULUR —
+  // Tesis ID DEGIL, adlardan secim.
+  | "tesis_secimi"
   | "hata"
   | "mevcut";
 
@@ -70,6 +79,7 @@ const UC_DAVET_SOSYAL = "/api/auth/davet/sosyal";
 // (P191 §1) GIRISTE TAMAMLAMA — `rol` GONDERILMEZ, hesaptan okunur.
 const UC_TAMAMLA = "/api/auth/oauth/rol-tamamla";
 const UC_TAMAMLA_DOGRULA = "/api/auth/oauth/rol-tamamla-dogrula";
+const UC_TESIS_SEC = "/api/auth/oauth/tesis-sec";
 const DURUM_GIRIS = "giris";
 const DURUM_OTP = "otp_gerekli";
 
@@ -80,6 +90,11 @@ function OauthDonus() {
   const sonucId = arama.get("oauth");
 
   const [adim, setAdim] = useState<Adim>("yukleniyor");
+  // (P211 §1) Secim jetonu TEK KULLANIMLIK ve hicbir tesise yetki
+  // VERMEZ; yalnizca "bu dogrulanmis adres su tesislerde yonetici"
+  // bilgisini tasir.
+  const [secimJetonu, setSecimJetonu] = useState<string | null>(null);
+  const [tesisler, setTesisler] = useState<TesisSecenegi[]>([]);
   const [hata, setHata] = useState<string | null>(null);
   // (P191 §1) Girişte tamamlama formu.
   const [baglamaJetonu, setBaglamaJetonu] = useState<string | null>(null);
@@ -162,6 +177,18 @@ function OauthDonus() {
           }
           router.replace("/");
           router.refresh();
+          return;
+        }
+        // (P211 §1) COK TESISLI YONETICI: TESIS ID sormadan SECIM.
+        //
+        // Sunucu, dogrulanmis e-posta birden cok tesiste yonetici
+        // eslesirse `tesis_secimi` doner. Eskiden `baglama_gerekli`
+        // donuyor ve kullanici ezberlemedigi bir kodu yazmak zorunda
+        // kaliyordu (P205'te parola yolunda kaldirilan sartin aynisi).
+        if (d?.durum === "tesis_secimi" && d.secim_jetonu) {
+          setSecimJetonu(d.secim_jetonu);
+          setTesisler(d.tesisler ?? []);
+          setAdim("tesis_secimi");
           return;
         }
         if (d?.durum === "baglama_gerekli") {
@@ -272,6 +299,25 @@ function OauthDonus() {
     }
   }
 
+  /// (P211 §1) Secilen tesisle oturumu acar. Jeton tuketilir; sunucu
+  /// secilen tesisin ADAY LISTESINDE oldugunu dogrular.
+  async function tesisSec(tenantId: string) {
+    if (!secimJetonu) return;
+    const r = await fetch(UC_TESIS_SEC, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ secim_jetonu: secimJetonu, tenant_id: tenantId }),
+    });
+    if (r.ok) {
+      router.replace("/");
+      router.refresh();
+      return;
+    }
+    const v = (await r.json().catch(() => null)) as Sonuc | null;
+    setHata(v?.error?.message ?? t("ortakHataOlustu"));
+    setAdim("hata");
+  }
+
   return (
     <main className="mx-auto flex min-h-screen max-w-md items-center p-6">
       <div className={`${cardCls} w-full space-y-4 p-6`}>
@@ -380,6 +426,25 @@ function OauthDonus() {
             kullaniciya durum soylenir. Hesabin VARLIGI yalniz saglayici e-postayi
             DOGRULADIYSA buraya duser (backend email_verified kapisi) -> var
             olmayan/dogrulanmamis hesap bu mesaji GORMEZ, sizinti yok. */}
+        {/* (P211 §1) TESIS SECIMI — Tesis ID formunun YERINE. */}
+        {adim === "tesis_secimi" ? (
+          <div className="space-y-3" data-test="oauth-tesis-secimi">
+            <h2 className="font-medium">{t("girisTesisSecBaslik")}</h2>
+            <p className="text-sm text-metin-body">{t("girisTesisSecAlt")}</p>
+            {tesisler.map((x) => (
+              <button
+                key={x.tenant_id}
+                type="button"
+                className={`${cardCls} w-full p-3 text-start`}
+                data-test={`oauth-tesis-${x.slug}`}
+                onClick={() => void tesisSec(x.tenant_id)}
+              >
+                {x.ad}
+              </button>
+            ))}
+          </div>
+        ) : null}
+
         {adim === "mevcut" ? (
           <>
             <p className="text-sm text-metin-body">{t("sosyalMevcutHesap")}</p>

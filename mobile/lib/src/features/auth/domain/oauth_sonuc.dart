@@ -13,9 +13,11 @@ class OauthSonuc {
     this.relay = false,
     this.ad,
     this.baglamaJetonu,
+    this.secimJetonu,
+    this.tesisler = const [],
   });
 
-  /// `giris` | `baglama_gerekli`
+  /// `giris` | `baglama_gerekli` | `tesis_secimi` | `kayit`
   final String durum;
   final TokenPair? jetonlar;
   final String? saglayici;
@@ -36,7 +38,18 @@ class OauthSonuc {
   final String? ad;
   final String? baglamaJetonu;
 
+  /// (P211 §1) COK TESISLI YONETICI: hangi tesise girecegi SORULUR.
+  /// Jeton TEK KULLANIMLIK ve hicbir tesise yetki VERMEZ; yalnizca
+  /// "bu dogrulanmis adres su tesislerde yonetici" bilgisini tasir.
+  final String? secimJetonu;
+  final List<OauthTesisSecenegi> tesisler;
+
   bool get girisYapildi => durum == 'giris' && jetonlar != null;
+
+  /// Tesis secimi gerekiyor mu (jeton VE liste dolu olmali — birinin
+  /// eksikligi secim ekranini bos cizmek olurdu).
+  bool get tesisSecimiGerekli =>
+      durum == 'tesis_secimi' && secimJetonu != null && tesisler.isNotEmpty;
 
   factory OauthSonuc.fromJson(Map<String, dynamic> json) {
     final j = json['jetonlar'];
@@ -48,6 +61,31 @@ class OauthSonuc {
       relay: json['relay'] as bool? ?? false,
       ad: json['ad'] as String?,
       baglamaJetonu: json['baglama_jetonu'] as String?,
+      secimJetonu: json['secim_jetonu'] as String?,
+      tesisler: ((json['tesisler'] as List?) ?? const [])
+          .whereType<Map>()
+          .map((m) => OauthTesisSecenegi.fromJson(Map<String, dynamic>.from(m)))
+          .toList(),
     );
   }
+}
+
+/// (P211 §1) SSO secim ekranindaki tek tesis.
+class OauthTesisSecenegi {
+  const OauthTesisSecenegi({
+    required this.tenantId,
+    required this.ad,
+    required this.slug,
+  });
+
+  final String tenantId;
+  final String ad;
+  final String slug;
+
+  factory OauthTesisSecenegi.fromJson(Map<String, dynamic> j) =>
+      OauthTesisSecenegi(
+        tenantId: j['tenant_id'] as String,
+        ad: (j['ad'] as String?) ?? '',
+        slug: (j['slug'] as String?) ?? '',
+      );
 }

@@ -7704,6 +7704,23 @@ class OauthSonucResponse(BaseModel):
     #: VERMEZ, bos gelir ve akis kirilmaz.
     ad: str | None = None
     baglama_jetonu: str | None = None
+    #: (P211 §1) `durum="tesis_secimi"` icin: TEK KULLANIMLIK secim
+    #: jetonu ve secilebilecek tesisler. Jeton hicbir tesise yetki
+    #: VERMEZ; yalnizca "bu dogrulanmis adres su tesislerde yonetici"
+    #: bilgisini tasir.
+    secim_jetonu: str | None = None
+    tesisler: list[OauthTesisSecenek] = []
+
+
+class OauthTesisSecenek(BaseModel):
+    tenant_id: uuid.UUID
+    ad: str
+    slug: str
+
+
+class OauthTesisSecIstek(BaseModel):
+    secim_jetonu: str = Field(..., min_length=8, max_length=200)
+    tenant_id: uuid.UUID
 
 
 class OauthKayitBaslaResponse(BaseModel):

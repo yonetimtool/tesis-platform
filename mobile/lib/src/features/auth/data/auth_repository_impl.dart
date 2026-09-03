@@ -208,6 +208,16 @@ class OauthRepositoryImpl implements OauthRepository {
   }
 
   @override
+  Future<void> tesisSec({
+    required String secimJetonu,
+    required String tenantId,
+  }) async {
+    final jetonlar = await api.oauthTesisSec(
+      secimJetonu: secimJetonu, tenantId: tenantId);
+    await storage.save(jetonlar);
+  }
+
+  @override
   Future<({String tesisAd, String telefonMaskeli})> baglanBasla({
     required String baglamaJetonu,
     required String tesisKodu,

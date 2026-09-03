@@ -105,6 +105,7 @@ from ..schemas import (
     OauthSaglayiciListesi,
     OauthSonucIstek,
     OauthSonucResponse,
+    OauthTesisSecIstek,
     TokenPair,
 )
 from ..security import normalize_phone
@@ -346,13 +347,60 @@ async def _yoneticiyi_epostayla_bul(kimlik: Kimlik) -> dict | None:
                     {"e": kimlik.eposta},
                 )
             ).all()
-    if len(satirlar) != 1:
+    if not satirlar:
         return None
+    if len(satirlar) > 1:
+        # (P211 §1) COK TESISLI YONETICI — ARTIK CIKMAZ DEGIL.
+        #
+        # OLCULEN KUSUR: eslesme birden coksa `None` donuyordu ve akis
+        # "baglama_gerekli"ye dusuyordu; ekran TESIS ID soruyordu. Yani
+        # iki tesise bakan bir yonetici, SSO ile girmeye calistiginda
+        # ezberlemesi gerekmeyen bir kodu ezberlemek zorunda kaliyordu —
+        # P205'te parola yolunda kaldirdigimiz sartin ta kendisi.
+        #
+        # BELIRSIZLIK YOK, SECIM VAR: hangi tesis oldugu bilinmiyorsa
+        # KULLANICIYA SORULUR (parola yolundaki 409 `tesis_secimi_gerekli`
+        # ile AYNI desen). Guvenlik sarti degismedi: adres SAGLAYICI
+        # TARAFINDAN DOGRULANMIS ve secilebilecek tesisler yalnizca O
+        # ADRESIN yonetici oldugu tesislerdir.
+        return {
+            "tur": "tesis_secimi",
+            "adaylar": [
+                {"tenant_id": str(r.tenant_id), "user_id": str(r.user_id)}
+                for r in satirlar
+            ],
+        }
     return {
         "tur": "mevcut_hesap",
         "tenant_id": str(satirlar[0].tenant_id),
         "user_id": str(satirlar[0].user_id),
     }
+
+
+async def _tesis_adlari(tenant_idler: list[str]) -> list[dict]:
+    """(P211 §1) Secim ekraninda gosterilecek tesis adlari.
+
+    RLS BOOTSTRAP: oturum YOK, tenant baglami YOK. Ad okumak icin
+    `tenant_uyelikleri` gibi bir SECDEF yoluna gerek yok — adaylar
+    ZATEN dogrulanmis e-postadan turedi; burada yalnizca ADLARI
+    okuyoruz ve okuma OWNER baglantisiyla degil, tenant baglami
+    kurularak TEK TEK yapiliyor.
+    """
+    adlar: list[dict] = []
+    for tid in tenant_idler:
+        async with SessionLocal() as session:
+            async with session.begin():
+                await set_tenant(session, tid)
+                satir = (
+                    await session.execute(
+                        select(Tenant.ad, Tenant.slug).where(Tenant.id == tid)
+                    )
+                ).first()
+        if satir is not None:
+            adlar.append(
+                {"tenant_id": tid, "ad": satir[0], "slug": satir[1]}
+            )
+    return adlar
 
 
 async def _kayit_coz(kimlik: Kimlik) -> dict:
@@ -551,6 +599,36 @@ async def sonuc(
     # e-posta TEK bir yonetici hesabiyla esleseblir (bkz. `_callback_isle`).
     # O durumda kimlik asagida BAGLANIR ve oturum acilir — kullaniciya Tesis
     # ID sorulmaz, cunku hangi tesis oldugu ZATEN bilinmektedir.
+    # (P211 §1) COK TESISLI YONETICI: hangi tesise girecegi SORULUR.
+    #
+    # Tesis ID DEGIL, TESIS SECIMI: kullanici ezberlemedigi bir kodu
+    # yazmaz, adlarindan secer. Secim `oauth:secim:<jeton>` altinda
+    # KISA OMURLU tutulur; jetonun kendisi hicbir tesise yetki VERMEZ,
+    # yalnizca "bu dogrulanmis adres su tesislerde yonetici" bilgisini
+    # tasir ve `-tesis-sec` onu tuketir.
+    if niyet != "kayit" and tur == "tesis_secimi":
+        secim_jetonu = secrets.token_urlsafe(32)
+        await redis.set(
+            f"oauth:secim:{secim_jetonu}",
+            json.dumps({
+                "adaylar": veri["adaylar"],
+                "saglayici": veri["saglayici"],
+                "subject": veri["subject"],
+                "eposta": veri.get("eposta"),
+            }),
+            ex=settings.oauth_baglama_ttl_seconds,
+        )
+        adlar = await _tesis_adlari([a["tenant_id"] for a in veri["adaylar"]])
+        return OauthSonucResponse(
+            durum="tesis_secimi",
+            saglayici=veri["saglayici"],
+            eposta=veri.get("eposta"),
+            relay=bool(veri.get("relay")),
+            ad=veri.get("ad"),
+            secim_jetonu=secim_jetonu,
+            tesisler=adlar,
+        )
+
     if niyet != "kayit" and tur not in ("giris", "mevcut_hesap"):
         return OauthSonucResponse(
             durum="baglama_gerekli",
@@ -622,6 +700,72 @@ async def sonuc(
     # soyle ("zaten hesabiniz var, giris yapildi").
     durum = "mevcut_hesap" if niyet == "kayit" else "giris"
     return OauthSonucResponse(durum=durum, jetonlar=cift)
+
+
+@router.post("/tesis-sec", response_model=OauthSonucResponse)
+async def oauth_tesis_sec(
+    body: OauthTesisSecIstek,
+    redis: aioredis.Redis = Depends(get_redis),
+) -> OauthSonucResponse:
+    """(P211 §1) COK TESISLI YONETICININ SSO GIRISINI TAMAMLAR.
+
+    =======================================================================
+    JETON YETKI VERMEZ, SECIMI TASIR
+    =======================================================================
+    `secim_jetonu` yalnizca "su dogrulanmis adres su tesislerde
+    yoneticidir" bilgisini tasir ve TEK KULLANIMLIKTIR (`getdel`).
+    Istekteki `tenant_id` ADAY LISTESINDE OLMAK ZORUNDA: aksi hâlde uc,
+    "istedigim tesisin jetonunu al" ucuna donusurdu — tesis izolasyonunun
+    tam kalbi.
+
+    Secilen tesiste kimlik BAGLANIR (`_kimligi_bagla`), boylece bir
+    sonraki giriste secim sorulmaz: `tenant_id_by_oauth` artik o tesisi
+    dondurur.
+    """
+    ham = await redis.getdel(f"oauth:secim:{body.secim_jetonu}")
+    if not ham:
+        raise _OTURUM_GECERSIZ
+    veri = json.loads(ham)
+    aday = next(
+        (a for a in veri["adaylar"] if a["tenant_id"] == str(body.tenant_id)),
+        None,
+    )
+    if aday is None:
+        # AYIRT ETTIRMEZ: "boyle bir tesis yok" ile "uye degilsin" ayni
+        # yanit (P203 §2 `tesis-degistir` ile ayni kural).
+        raise APIError(403, "forbidden", "tesis_uyeligi_yok")
+
+    async with SessionLocal() as session:
+        async with session.begin():
+            await set_tenant(session, aday["tenant_id"])
+            user = (
+                await session.execute(
+                    select(AppUser).where(AppUser.id == aday["user_id"])
+                )
+            ).scalar_one_or_none()
+            if user is None or not user.is_active:
+                raise KIMLIK_GECERSIZ
+            if gorev_penceresi_disinda(user):
+                raise _GOREV_SURESI_DISINDA
+            await _kimligi_bagla(
+                session,
+                user=user,
+                saglayici=veri["saglayici"],
+                subject=veri["subject"],
+                eposta=veri.get("eposta"),
+            )
+            await record_audit(
+                session,
+                action=Action.LOGIN_OK,
+                tenant_id=user.tenant_id,
+                actor_user_id=user.id,
+                actor_rol=user.role,
+                resource_type="app_user",
+                resource_id=user.id,
+                meta={"method": f"oauth:{veri['saglayici']}", "secim": True},
+            )
+            cift = await _issue_token_pair(redis, user)
+    return OauthSonucResponse(durum="giris", jetonlar=cift)
 
 
 @router.post("/baglan/basla", response_model=OauthKayitBaslaResponse)

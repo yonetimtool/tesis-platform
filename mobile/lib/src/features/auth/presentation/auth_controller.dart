@@ -8,6 +8,7 @@ import '../data/auth_api.dart';
 import '../data/token_storage.dart';
 import '../../tesis/domain/tesis_uyeligi.dart';
 import '../domain/giris_hatasi.dart';
+import '../domain/oauth_sonuc.dart';
 import 'giris_hata_metni.dart';
 
 enum AuthStatus {
@@ -31,6 +32,8 @@ class AuthState {
     this.setupToken,
     this.kodBekleniyor = false,
     this.oauthBaglamaJetonu,
+    this.oauthSecimJetonu,
+    this.oauthTesisler = const [],
     this.oauthSaglayici,
     this.oauthRelay = false,
     this.oauthAd,
@@ -59,6 +62,14 @@ class AuthState {
   /// merkez kurali: sosyal hesap kimlik dogrulama YONTEMIDIR, eslesme
   /// anahtari degil.
   final String? oauthBaglamaJetonu;
+
+  /// (P211 §1) COK TESISLI YONETICI: SSO sonrasi tesis SECIMI.
+  /// `oauthBaglamaJetonu`dan AYRI alan — ikisi iki farkli akis: biri
+  /// "hesabini Tesis ID ile bagla", oteki "hangi tesise gireceksin".
+  /// Tek alana sigdirmak, ekranin hangi formu cizecegini belirsiz
+  /// yapardi.
+  final String? oauthSecimJetonu;
+  final List<OauthTesisSecenegi> oauthTesisler;
   final String? oauthSaglayici;
 
   /// Apple "e-postami gizle" dediyse true; kullaniciya soylenir.
@@ -83,6 +94,8 @@ class AuthState {
   AuthState copyWith({
     bool? kodBekleniyor,
     Object? oauthBaglamaJetonu = _sentinel,
+    Object? oauthSecimJetonu = _sentinel,
+    List<OauthTesisSecenegi>? oauthTesisler,
     Object? oauthAd = _sentinel,
     Object? oauthSaglayici = _sentinel,
     bool? oauthRelay,
@@ -107,6 +120,10 @@ class AuthState {
       oauthBaglamaJetonu: oauthBaglamaJetonu == _sentinel
           ? this.oauthBaglamaJetonu
           : oauthBaglamaJetonu as String?,
+      oauthSecimJetonu: oauthSecimJetonu == _sentinel
+          ? this.oauthSecimJetonu
+          : oauthSecimJetonu as String?,
+      oauthTesisler: oauthTesisler ?? this.oauthTesisler,
       oauthAd: oauthAd == _sentinel ? this.oauthAd : oauthAd as String?,
       oauthSaglayici: oauthSaglayici == _sentinel
           ? this.oauthSaglayici
@@ -465,6 +482,20 @@ class AuthController extends Notifier<AuthState> {
           submitting: false, status: AuthStatus.authenticated);
         return;
       }
+      // (P211 §1) COK TESISLI YONETICI: Tesis ID formu DEGIL, SECIM.
+      //
+      // OLCULEN KUSUR: sunucu birden cok eslesmede `baglama_gerekli`
+      // donuyordu ve ekran TESIS ID soruyordu — P205'te parola yolunda
+      // kaldirdigimiz sartin ta kendisi.
+      if (sonuc.tesisSecimiGerekli) {
+        state = state.copyWith(
+          submitting: false,
+          oauthSecimJetonu: sonuc.secimJetonu,
+          oauthTesisler: sonuc.tesisler,
+          oauthSaglayici: sonuc.saglayici,
+        );
+        return;
+      }
       state = state.copyWith(
         submitting: false,
         oauthBaglamaJetonu: sonuc.baglamaJetonu,
@@ -475,6 +506,31 @@ class AuthController extends Notifier<AuthState> {
     } on ApiException catch (e) {
       state = state.copyWith(
         submitting: false, errorMessage: e.message, hataKimligi: girisAgHatasi(e));
+    }
+  }
+
+  /// (P211 §1) SSO sonrasi TESIS SECIMI — oturumu acar.
+  Future<void> oauthTesisSec(String tenantId) async {
+    final jeton = state.oauthSecimJetonu;
+    if (jeton == null) return;
+    state = state.copyWith(
+      submitting: true, errorMessage: null, hataKimligi: null);
+    try {
+      await ref.read(oauthRepositoryProvider).tesisSec(
+            secimJetonu: jeton, tenantId: tenantId);
+      state = state.copyWith(
+        submitting: false,
+        status: AuthStatus.authenticated,
+        oauthSecimJetonu: null,
+        oauthTesisler: const [],
+      );
+    } on ApiException catch (e) {
+      // JETON TEK KULLANIMLIK: basarisiz denemede secimi TEMIZLEMIYORUZ
+      // ki kullanici baska bir tesisi deneyebilsin — ama sunucu jetonu
+      // tuketmisse ikinci deneme de hata verir ve mesaj bunu soyler.
+      state = state.copyWith(
+        submitting: false, errorMessage: e.message,
+        hataKimligi: girisAgHatasi(e));
     }
   }
 
