@@ -43,6 +43,19 @@ logger = logging.getLogger(__name__)
 #: Manuel modda anonsu yapacak roller.
 _MANUEL_ROLLER: tuple[str, ...] = ("admin", "yonetici")
 
+#: (P209) SESLI CAYDIRICININ BAGLI OLDUGU TEK KATEGORI.
+#:
+#: Sayac ZATEN kategoriye bagliydi (`acik_gurultu_sayisi` yalniz
+#: `gurultu` sayar, sifirlama da yalniz onu kapatir) — yani tipler
+#: birbirinin sayacini HIC artirmiyordu. Eksik olan sey KAPININ
+#: CAGRI YERINDE gorunmesiydi: uc, kategori ne olursa olsun
+#: `esik_kontrol` cagiriyordu ve fonksiyon iceride "gurultu degilse
+#: zaten sayilmaz" diye sessizce hicbir sey yapmiyordu.
+#:
+#: Sabiti disari almak iki sey kazandirir: (1) kapi OKUNUR hale gelir,
+#: (2) gorunutu/diger sikayetinde bes sorgu bosuna kosmaz.
+CAYDIRICI_KATEGORI = "gurultu"
+
 
 async def acik_gurultu_sayisi(
     db: AsyncSession, unit_id: uuid.UUID, *, pencere_gun: int = 0
@@ -60,7 +73,7 @@ async def acik_gurultu_sayisi(
     """
     kosullar = [
         UnitComplaint.target_unit_id == unit_id,
-        UnitComplaint.kategori == "gurultu",
+        UnitComplaint.kategori == CAYDIRICI_KATEGORI,
         UnitComplaint.durum == "acik",
     ]
     if pencere_gun and pencere_gun > 0:
@@ -157,13 +170,24 @@ async def _gonder(
 
 
 async def esik_kontrol(
-    db: AsyncSession, *, tenant_id: uuid.UUID, unit: Unit
+    db: AsyncSession,
+    *,
+    tenant_id: uuid.UUID,
+    unit: Unit,
+    kategori: str | None = None,
 ) -> UnitUyari | None:
     """Esik asildiysa uyariyi olustur, gonder ve SAYACI SIFIRLA.
 
     Donus: olusturulan uyari (yoksa None). Cagiran bunu YOK SAYABILIR —
     sikayet kaydi bu fonksiyonun sonucuna bagli DEGILDIR.
+
+    (P209) `kategori` VERILIRSE ve `gurultu` DEGILSE hicbir sey yapmaz.
+    Sayac zaten kategoriye bagliydi; bu kapi davranisi degil GORUNURLUGU
+    degistirir — ve gorunutu/diger sikayetinde bosuna sorgu kosmaz.
+    HARITA VE BILDIRIM ETKILENMEZ: onlar bu fonksiyondan gecmiyor.
     """
+    if kategori is not None and kategori != CAYDIRICI_KATEGORI:
+        return None
     tenant = (await db.execute(select(Tenant))).scalar_one_or_none()
     if tenant is None:
         return None
@@ -315,7 +339,10 @@ async def esik_kontrol(
         update(UnitComplaint)
         .where(
             UnitComplaint.target_unit_id == unit.id,
-            UnitComplaint.kategori == "gurultu",
+            # SIFIRLAMA DA KATEGORIYE BAGLI: gurultu esigi asilinca
+            # dairenin gorunutu/diger sikayetleri KAPANMAZ. Kapansaydi
+            # bir tipin esigi otekinin defterini silerdi.
+            UnitComplaint.kategori == CAYDIRICI_KATEGORI,
             UnitComplaint.durum == "acik",
         )
         .values(durum="kapali", updated_at=func.now())

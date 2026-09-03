@@ -178,8 +178,16 @@ async def file_unit_complaint(
     # (P37) CAYDIRICI KANCASI: esik asildiysa uyari uretilir ve o dairenin
     # gurultu sayaci SIFIRLANIR. Sikayet kaydi bunun sonucuna BAGLI DEGILDIR
     # — caydiricinin basarisiz olmasi kullanicinin beyanini dusurmemeli.
+    #
+    # (P209) KATEGORI CAGRI YERINDE GECIYOR: sesli caydirici YALNIZ
+    # `gurultu` tipine baglidir. Sayac zaten kategoriye bagliydi (bir
+    # tip otekinin sayacini HIC artirmiyordu); degisen sey kapinin
+    # BURADA gorunmesi ve gorunutu/diger sikayetinde bes sorgunun
+    # bosuna kosmamasi.
     try:
-        await esik_kontrol(db, tenant_id=user.tenant_id, unit=unit)
+        await esik_kontrol(
+            db, tenant_id=user.tenant_id, unit=unit, kategori=body.kategori,
+        )
     except Exception:  # noqa: BLE001 — kanca ucu ASLA dusurmez
         logger.exception("gurultu caydiricisi basarisiz (sikayet kaydi durur)")
 
