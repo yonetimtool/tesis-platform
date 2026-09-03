@@ -5597,6 +5597,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get finansSutunKasa => 'الصندوق';
 
   @override
+  String get finansOdeyenKisi => 'الشخص الدافع';
+
+  @override
   String get finansAlanAciklama => 'الوصف';
 
   @override

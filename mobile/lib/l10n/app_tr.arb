@@ -2512,6 +2512,7 @@
   "finansBorcluYok": "Şu anda borçlu kayıt yok.",
   "finansAlanTutar": "Tutar",
   "finansSutunKasa": "Kasa",
+  "finansOdeyenKisi": "Ödeyen kişi",
   "finansAlanAciklama": "Açıklama",
   "finansMakbuzNotu": "Makbuz numarası ve sakine giden bildirim sunucuda üretilir — web ile aynı.",
   "finansGecikmeGun": "{n} gün gecikme",

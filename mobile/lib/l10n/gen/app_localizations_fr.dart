@@ -5506,6 +5506,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get finansSutunKasa => 'Caisse';
 
   @override
+  String get finansOdeyenKisi => 'Personne qui paie';
+
+  @override
   String get finansAlanAciklama => 'Description';
 
   @override

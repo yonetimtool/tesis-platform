@@ -5599,6 +5599,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get finansSutunKasa => 'Касса';
 
   @override
+  String get finansOdeyenKisi => 'Плательщик';
+
+  @override
   String get finansAlanAciklama => 'Описание';
 
   @override

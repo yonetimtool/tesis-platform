@@ -10,7 +10,7 @@
 // tarih). Tek forma sigdirmak, tek kisi icin makbuz kesen kullaniciya
 // bos bir tablo gostermek olurdu.
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useToast } from "@/components/Toast";
 import {
@@ -25,6 +25,7 @@ import {
   bugun,
   useBorclular,
   useDaireler,
+  useDaireSakinleri,
   useKasalar,
   useKisiler,
 } from "@/components/finans/ortak";
@@ -114,6 +115,15 @@ function TekilModal({
 
   const [kisiId, setKisiId] = useState("");
   const [daireId, setDaireId] = useState("");
+  // (P211 §4) DAIRE -> KISI. Daire secilince o dairenin sakinleri gelir;
+  // TEK sakin varsa kendiliginden secilir, coksa secici O DAIREYE suzulur.
+  //
+  // KARAR: suzgec KILIT DEGIL. Odemeyi yapan kisi her zaman sakin degildir
+  // (kiraciyi adina ev sahibi oder, aile bireyi getirir). Bu kutu
+  // isaretlenince liste yine TUM kisilere acilir — ama bu ACIK bir
+  // secimdir, kazara olmaz.
+  const [daireDisi, setDaireDisi] = useState(false);
+  const { sakinler } = useDaireSakinleri(daireId || null);
   const [kasaId, setKasaId] = useState("");
   const [tutar, setTutar] = useState("");
   const [tarih, setTarih] = useState(bugun());
@@ -127,6 +137,33 @@ function TekilModal({
   const [anahtarTekil, setAnahtarTekil] = useState(() => genIdempotencyKey());
 
   const secKasa = kasaId || kasalar[0]?.id || "";
+
+  // Suzgec YALNIZ daire secili + o dairenin sakini varken anlamli.
+  const sakinSuzgeci = Boolean(daireId) && sakinler.length > 0 && !daireDisi;
+
+  // TEK SAKIN -> KENDILIGINDEN SECILIR. Yalniz DAIRE DEGISTIGINDE calisir:
+  // kullanici sonradan baska birini sectiyse, sakin listesi tazelendi diye
+  // secimini geri almak onun isini bozmak olurdu.
+  const sonDaire = useRef("");
+  useEffect(() => {
+    if (daireId !== sonDaire.current) {
+      sonDaire.current = daireId;
+      setDaireDisi(false);
+      if (!daireId) return;
+    }
+    if (!daireId || daireDisi) return;
+    if (sakinler.length === 1) {
+      setKisiId(sakinler[0].id);
+      return;
+    }
+    // COK SAKIN: secim KULLANICININ. Ama listede olmayan bir kisi secili
+    // kalirsa `<select>` BOS gorunur — sessiz yanlis secim riski.
+    if (sakinler.length > 1 && kisiId && !sakinler.some((x) => x.id === kisiId)) {
+      setKisiId("");
+    }
+    // `kisiId` bilerek bagimlilik listesinde: yukaridaki temizlik onun
+    // degisimine de bakmali.
+  }, [daireId, daireDisi, sakinler, kisiId]);
 
   // ARAMA HER IKI LISTEDE de calisir. Borclu satirinda DAIRE ve KALAN
   // TUTAR da yazar: yonetici "hangi Ahmet" ve "ne kadar" sorularini
@@ -144,6 +181,11 @@ function TekilModal({
       etiket: `${b.ad} · ${b.unitNo} · ${kurusToTL(b.kalanKurus)}`,
     }));
   const sucuzKisiler = kisiler
+    .filter((k) => !q || k.ad.toLocaleLowerCase("tr").includes(q))
+    .map((k) => ({ deger: k.id, etiket: k.ad }));
+  // (P211 §4) Daire sakinleri — borclu olsun olmasin. Tahsilat penceresinde
+  // daire secildiyse dogru soru "bu dairede kim oturuyor"dur.
+  const sucuzSakinler = sakinler
     .filter((k) => !q || k.ad.toLocaleLowerCase("tr").includes(q))
     .map((k) => ({ deger: k.id, etiket: k.ad }));
 
@@ -216,6 +258,45 @@ function TekilModal({
             {t("finansPesinOdeme")}
           </span>
         </label>
+        {/* (P211 §4) DAIRE ONCE SORULUR: "daire secilince kisi kendiliginden
+            gelsin" akisinin dogal sirasi budur. Kisi -> daire yonu de
+            calismaya devam eder (P206 §2, borclu secilince daire dolar). */}
+        <AlanSarmal etiket={t("finansSutunDaire")}>
+          {(b) => (
+            <Secim
+              {...b}
+              value={daireId}
+              data-test="tahsilat-daire"
+              onChange={(e) => setDaireId(e.target.value)}
+            >
+              <option value="">{t("finansDaireSec")}</option>
+              {daireler.map((d) => <option key={d.id} value={d.id}>{d.ad}</option>)}
+            </Secim>
+          )}
+        </AlanSarmal>
+        {/* (P211 §4) SAKINI OLMAYAN DAIRE SESSIZ KALMAZ: kullanici kisi
+            seciciyi bos bulup "sistem bozuk" sanmasin. */}
+        {daireId && sakinler.length === 0 && (
+          <p
+            data-test="tahsilat-sakin-yok"
+            style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}
+          >
+            {t("finansDaireSakiniYok")}
+          </p>
+        )}
+        {daireId && sakinler.length > 0 && (
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              data-test="tahsilat-daire-disi"
+              checked={daireDisi}
+              onChange={(e) => setDaireDisi(e.target.checked)}
+            />
+            <span style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+              {t("finansDaireDisiKisi")}
+            </span>
+          </label>
+        )}
         <AlanSarmal etiket={t("finansSutunKisi")} zorunlu>
           {(b) => (
             <Secim
@@ -232,7 +313,7 @@ function TekilModal({
               }}
             >
               <option value="">{t("finansKisiSec")}</option>
-              {(pesin ? sucuzKisiler : sucuzBorclular).map((k) => (
+              {(sakinSuzgeci ? sucuzSakinler : pesin ? sucuzKisiler : sucuzBorclular).map((k) => (
                 <option key={k.deger} value={k.deger}>
                   {k.etiket}
                 </option>
@@ -258,14 +339,6 @@ function TekilModal({
             {t("finansAramaSonucYok")}
           </p>
         )}
-        <AlanSarmal etiket={t("finansSutunDaire")}>
-          {(b) => (
-            <Secim {...b} value={daireId} onChange={(e) => setDaireId(e.target.value)}>
-              <option value="">{t("finansDaireSec")}</option>
-              {daireler.map((d) => <option key={d.id} value={d.id}>{d.ad}</option>)}
-            </Secim>
-          )}
-        </AlanSarmal>
         {/* TAHSILAT YONTEMI: brief'in "varsayilan Otomatik" alani. Uc
             bugun bir `yontem` alani tasimiyor; secenek UYDURULMADI ve
             deger sunucuya GONDERILMIYOR — alan tek secenekle gorunur ve

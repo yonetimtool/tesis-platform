@@ -1752,6 +1752,7 @@
   "finansBorcluYok": "Ahora mismo no hay deudores.",
   "finansAlanTutar": "Importe",
   "finansSutunKasa": "Caja",
+  "finansOdeyenKisi": "Persona que paga",
   "finansAlanAciklama": "Descripción",
   "finansMakbuzNotu": "El número de recibo y el aviso al residente se generan en el servidor, igual que en la web.",
   "finansGecikmeGun": "{n} días de retraso",

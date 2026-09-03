@@ -5338,6 +5338,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get finansSutunKasa => 'Kasa';
 
   @override
+  String get finansOdeyenKisi => 'Ödeyen kişi';
+
+  @override
   String get finansAlanAciklama => 'Açıklama';
 
   @override

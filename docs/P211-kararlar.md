@@ -178,3 +178,46 @@ alıyorsan bana isteğin gövdesini ya da o ana ait api günlüğünü ver.
 Bir gözlem daha: `donem` alanı **serbest metin** kabul ediyor ("Ağustos
 2026", 500 karakter) — 500 üretmiyor ama rapor kırılımını sessizce bozar;
 bu turda kapsam dışı bıraktım, ayrı bir madde olarak duruyor.
+
+---
+
+## §4 — Tahsilatta daire → kişi
+
+### ÖLÇÜM
+- **Web** (`finans/tahsilatlar`): P206 §2 **ters yönü** kurmuştu (borçlu
+  seçilince daire dolar). Daireden kişiye giden yön **yoktu**; yönetici
+  daireyi seçtikten sonra doğru kişiyi yüzlerce ad arasından kendisi
+  buluyordu.
+- **Mobil** (`tahsilat_screen`): seçim zaten satır bazlıydı — bir satır
+  = **daire + borçlu**, yani kişi daireyle birlikte geliyordu. Eksik olan
+  şey **aynı dairedeki başka birine** makbuz kesebilmekti.
+- Backend'de **yeni uç gerekmedi**: `GET /units/{id}/residents` (adıyla)
+  ve `GET /units/by-no/{no}/residents` (kısa) zaten var.
+
+### KARAR K4 — Otomatik gelir, ama KİLİT DEĞİL
+
+| Durum | Davranış |
+|---|---|
+| Dairede **tek** sakin | Kişi **kendiliğinden** seçilir (mobilde zaten öyleydi; seçici hiç çizilmez) |
+| Dairede **çok** sakin | Web'de kişi seçici **o daireye süzülür**, otomatik seçim yapılmaz; mobilde "Ödeyen kişi" listesi çıkar (varsayılan borçlunun kendisi) |
+| Dairede **sakin yok** | Web'de bilgilendirme metni yazılır, süzgeç uygulanmaz; mobilde seçici çizilmez |
+
+**"Kullanıcı yine de başka birini seçebilmeli mi?" → EVET.** Ödeyen her
+zaman sakin değildir: kiracı adına ev sahibi öder, aile bireyi kapıya
+gelir, muhasebeci getirir. Süzgeci kilit yapmak, bu tamamen normal işlemi
+imkânsız kılardı. Ama süzgeci kaldırmak **açık bir seçimdir** ("Bu
+bağımsız bölüm dışından biri ödüyor" kutusu) — kazara olmaz.
+
+**Neden çok sakinde sistem seçmiyor:** iki kişiden birini seçmek, yanlış
+kişiye makbuz kesme riskini "kolaylık" adına bedavaya eklemek olurdu.
+Tek sakinde belirsizlik yok, orada sormak gereksiz dokunuş.
+
+**Yan düzeltme:** `useDaireSakinleri` gelen veri dizi değilse (uç hata
+zarfı döndüğünde) boş sayar. Önceki hâlinde `.filter` patlıyor ve
+**tahsilat penceresi hiç çizilmiyordu** — bir liste hatası yüzünden formu
+kaybetmek kabul edilemez. Mobilde aynı ilke: sakin listesi hata verirse
+seçici çizilmez, tahsilat borçlunun adına kaydedilir.
+
+### Kilit
+Web 5 DOM testi (taklit HTTP katmanında), mobil 5 widget testi (taklit
+HTTP adapter'ında). İkisi de gönderilen **gövdeyi** ölçer.

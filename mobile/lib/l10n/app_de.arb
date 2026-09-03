@@ -1752,6 +1752,7 @@
   "finansBorcluYok": "Derzeit gibt es keine Schuldner.",
   "finansAlanTutar": "Betrag",
   "finansSutunKasa": "Konto",
+  "finansOdeyenKisi": "Zahlende Person",
   "finansAlanAciklama": "Beschreibung",
   "finansMakbuzNotu": "Belegnummer und Bewohnerbenachrichtigung werden auf dem Server erzeugt — wie im Web.",
   "finansGecikmeGun": "{n} Tage überfällig",

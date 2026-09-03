@@ -1752,6 +1752,7 @@
   "finansBorcluYok": "There are no debtors right now.",
   "finansAlanTutar": "Amount",
   "finansSutunKasa": "Cash account",
+  "finansOdeyenKisi": "Paying person",
   "finansAlanAciklama": "Description",
   "finansMakbuzNotu": "The receipt number and the resident notification are produced on the server — same as on the web.",
   "finansGecikmeGun": "{n} days overdue",

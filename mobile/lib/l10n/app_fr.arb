@@ -1752,6 +1752,7 @@
   "finansBorcluYok": "Il n'y a aucun débiteur pour le moment.",
   "finansAlanTutar": "Montant",
   "finansSutunKasa": "Caisse",
+  "finansOdeyenKisi": "Personne qui paie",
   "finansAlanAciklama": "Description",
   "finansMakbuzNotu": "Le numéro de reçu et la notification au résident sont générés sur le serveur — comme sur le web.",
   "finansGecikmeGun": "{n} jours de retard",

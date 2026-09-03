@@ -1752,6 +1752,7 @@
   "finansBorcluYok": "Сейчас должников нет.",
   "finansAlanTutar": "Сумма",
   "finansSutunKasa": "Касса",
+  "finansOdeyenKisi": "Плательщик",
   "finansAlanAciklama": "Описание",
   "finansMakbuzNotu": "Номер квитанции и уведомление жильцу формируются на сервере — как и в веб-версии.",
   "finansGecikmeGun": "просрочка {n} дн.",

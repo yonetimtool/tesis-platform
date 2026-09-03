@@ -132,6 +132,37 @@ export function useDaireler() {
   return (data?.items ?? []).map((u) => ({ id: u.id, ad: u.no }));
 }
 
+/**
+ * (P211 §4) BIR DAIRENIN SAKINLERI — "daire secilince kisi kendiliginden
+ * gelsin" akisinin kaynagi.
+ *
+ * `unitId` bos ise istek HIC YAPILMAZ (SWR anahtari null): modal acilir
+ * acilmaz daire secilmemis olur ve o anda bir istek atmak bosuna trafik
+ * olurdu.
+ *
+ * Yeni uc YAZILMADI: `GET /units/{id}/residents` sakinleri ADIYLA zaten
+ * donuyor (P181 §6.1). Ikinci bir uc, ayni bilginin iki yerde ayrisma
+ * riski demekti.
+ */
+export function useDaireSakinleri(unitId: string | null | undefined) {
+  const { data, isLoading } = useSWR<
+    { user_id: string; user_ad: string | null; rol_tipi: string | null }[]
+  >(unitId ? `/api/units/${unitId}/residents` : null, jsonFetcher, {
+    revalidateOnFocus: false,
+  });
+  return {
+    // DIZI DEGILSE BOS SAY: uc hata zarfi (`{error:...}`) dondugunde
+    // `.filter` patlar ve modal komple cizilemez — tahsilat penceresini
+    // bir liste hatasi yuzunden kaybetmek kabul edilemez.
+    sakinler: (Array.isArray(data) ? data : [])
+      // ADI OLMAYAN SATIR ATLANIR: kullanici silinmisse bag durur ama
+      // secicide bos bir satir gostermek yanlis kisiyi secmeye davettir.
+      .filter((r) => r.user_ad)
+      .map((r) => ({ id: r.user_id, ad: r.user_ad as string, rol: r.rol_tipi })),
+    yukleniyor: isLoading,
+  };
+}
+
 /** Bugunun tarihi — `<input type="date">` icin YEREL, UTC degil. */
 export function bugun(): string {
   const d = new Date();

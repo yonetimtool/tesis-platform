@@ -93,6 +93,36 @@ class FinansApi {
     }
   }
 
+  /// (P211 §4) Bir dairenin sakinleri — TAHSILATTA "odeyen kim?" sorusu.
+  ///
+  /// `by-no` ucu KULLANILIYOR (yeni uc yazilmadi): yaslandirma satiri
+  /// daire NUMARASINI zaten tasiyor ve bu uc tam da "hedef sakin secici"
+  /// icin var (yonetici okuyabiliyor).
+  ///
+  /// HATA YUTULUR VE BOS LISTE DONER: bu cagri ekranin ANA isi degil,
+  /// bir KOLAYLIK. Basarisiz olursa tahsilat yine borclunun adina
+  /// kaydedilebilmeli — kolaylik ugruna asil isi kaybetmeyiz.
+  Future<List<({String userId, String ad})>> daireSakinleri(
+    String unitNo,
+  ) async {
+    try {
+      final res = await _dio.get<List<dynamic>>(
+        '/units/by-no/$unitNo/residents',
+      );
+      return (res.data ?? const [])
+          .whereType<Map>()
+          .map((m) => Map<String, dynamic>.from(m))
+          .where((m) => m['user_id'] != null && (m['ad'] ?? m['user_ad']) != null)
+          .map((m) => (
+                userId: m['user_id'] as String,
+                ad: (m['ad'] ?? m['user_ad']) as String,
+              ))
+          .toList();
+    } on DioException {
+      return const [];
+    }
+  }
+
   // ------------------------------ yazma ----------------------------------- #
 
   /// (§4.1) TEKIL TAHSILAT.

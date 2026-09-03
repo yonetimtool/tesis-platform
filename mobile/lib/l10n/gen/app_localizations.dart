@@ -9461,6 +9461,12 @@ abstract class AppLocalizations {
   /// **'Kasa'**
   String get finansSutunKasa;
 
+  /// No description provided for @finansOdeyenKisi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ödeyen kişi'**
+  String get finansOdeyenKisi;
+
   /// No description provided for @finansAlanAciklama.
   ///
   /// In tr, this message translates to:

@@ -1752,6 +1752,7 @@
   "finansBorcluYok": "لا يوجد مدينون حاليًا.",
   "finansAlanTutar": "المبلغ",
   "finansSutunKasa": "الصندوق",
+  "finansOdeyenKisi": "الشخص الدافع",
   "finansAlanAciklama": "الوصف",
   "finansMakbuzNotu": "يتم إنشاء رقم الإيصال وإشعار الساكن على الخادم — كما في الويب.",
   "finansGecikmeGun": "متأخر {n} يومًا",

@@ -48,6 +48,18 @@ final borclularProvider =
   return ref.watch(finansApiProvider).yaslandirma();
 });
 
+/// (P211 §4) Secili DAIRENIN sakinleri — "odeyen kim?" secicisinin kaynagi.
+///
+/// `family` daire NUMARASINA gore: yaslandirma satiri numarayi zaten
+/// tasiyor ve uc (`by-no`) numarayla calisiyor. `autoDispose`: ekran
+/// kapaninca onbellekte kalmasinin anlami yok.
+final daireSakinleriProvider =
+    FutureProvider.autoDispose.family<List<({String userId, String ad})>, String>(
+  (ref, unitNo) async {
+    return ref.watch(finansApiProvider).daireSakinleri(unitNo);
+  },
+);
+
 class TahsilatScreen extends ConsumerStatefulWidget {
   const TahsilatScreen({super.key});
 
@@ -57,6 +69,10 @@ class TahsilatScreen extends ConsumerStatefulWidget {
 
 class _TahsilatScreenState extends ConsumerState<TahsilatScreen> {
   Borclu? _secili;
+  /// (P211 §4) ODEYEN. Varsayilan BORCLUNUN KENDISI; dairede birden cok
+  /// sakin varsa kullanici degistirebilir (kiraci adina ev sahibi oder).
+  /// `null` = "borclunun kendisi".
+  String? _odeyenUserId;
   String? _kasaId;
   final _tutarCtrl = TextEditingController();
   final _aciklamaCtrl = TextEditingController();
@@ -100,7 +116,7 @@ class _TahsilatScreenState extends ConsumerState<TahsilatScreen> {
             kasaId: kasaId,
             tutarKurus: kurus,
             idempotencyKey: _anahtar,
-            userId: _secili!.userId,
+            userId: _odeyenUserId ?? _secili!.userId,
             unitId: _secili!.unitId,
             aciklama: _aciklamaCtrl.text.trim().isEmpty
                 ? null
@@ -111,6 +127,7 @@ class _TahsilatScreenState extends ConsumerState<TahsilatScreen> {
       setState(() {
         _anahtar = _yeniAnahtar();
         _secili = null;
+        _odeyenUserId = null;
         _tutarCtrl.clear();
         _aciklamaCtrl.clear();
         _kaydediyor = false;
@@ -178,6 +195,8 @@ class _TahsilatScreenState extends ConsumerState<TahsilatScreen> {
                     ),
                     onTap: () => setState(() {
                       _secili = b;
+                      // Daire degisti: onceki dairenin odeyeni TASINMAZ.
+                      _odeyenUserId = null;
                       // VARSAYILAN: KALAN BORCUN TAMAMI. Sahada en sik
                       // yapilan islem bu; bos birakmak her seferinde
                       // rakam yazdirirdi.
@@ -185,6 +204,40 @@ class _TahsilatScreenState extends ConsumerState<TahsilatScreen> {
                     }),
                   ),
                 ),
+              // (P211 §4) DAIREDE BIRDEN COK SAKIN VARSA "ODEYEN" SORULUR.
+              //
+              // Tek sakinde SORULMAZ: olmayan bir karari sormak her
+              // tahsilata bir dokunus eklerdi (bu ekranin kurucu ilkesi).
+              // Liste alinamazsa (uc hata verdi) secici HIC cizilmez ve
+              // tahsilat borclunun adina kaydedilir — kolaylik ugruna
+              // asil isi kaybetmeyiz.
+              if (_secili != null)
+                ref.watch(daireSakinleriProvider(_secili!.unitNo)).maybeWhen(
+                      data: (sakinler) {
+                        if (sakinler.length < 2) return const SizedBox.shrink();
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 12),
+                          child: DropdownButtonFormField<String>(
+                            key: const Key('tahsilat-odeyen'),
+                            initialValue:
+                                _odeyenUserId ?? _secili!.userId,
+                            decoration: InputDecoration(
+                              labelText: l10n.finansOdeyenKisi,
+                            ),
+                            items: [
+                              for (final s in sakinler)
+                                DropdownMenuItem(
+                                  value: s.userId,
+                                  child: Text(s.ad),
+                                ),
+                            ],
+                            onChanged: (v) =>
+                                setState(() => _odeyenUserId = v),
+                          ),
+                        );
+                      },
+                      orElse: () => const SizedBox.shrink(),
+                    ),
               const SizedBox(height: 16),
               TextField(
                 key: const Key('tahsilat-tutar'),
