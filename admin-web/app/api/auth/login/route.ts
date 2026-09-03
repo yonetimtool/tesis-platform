@@ -1,13 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { istekMetni } from "@/lib/i18n/istek-metni";
 
-import { backendLogin, loginResponse } from "@/lib/backend";
-import { tokenRolu } from "@/lib/rol-token";
-import {
-  konakYuzeyi,
-  girisRedKarari,
-  rolYuzeyeGirebilir,
-} from "@/lib/yuzey";
+import { backendLogin } from "@/lib/backend";
+import { oturumAc } from "@/lib/oturum-kapisi";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -50,28 +45,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // backend RBAC'ta zorlanir (contracts/auth.md §4). Ama yanlis yuzeye
   // giren kullaniciya isini yapamayacagi bir kabuk gostermek "sistem bozuk"
   // izlenimi uretir — kapi bunu onler ve NEDENINI soyler.
-  const rol = tokenRolu(tokens.access_token);
-  const yuzey = konakYuzeyi(req.headers.get("host"));
-  if (!rolYuzeyeGirebilir(rol, yuzey)) {
-    // Sayfalari HENUZ olmayan tesis rolleri icin ayri bir cumle: "panel
-    // yalnizca platform icindir" demek onlari yanlis yere yollardi.
-    // (P129) UC AYRI DURUM, UC AYRI CUMLE — karar TEK YERDE (lib/yuzey.ts).
-    // Iki giris rotasina kopyalanmisti; mutasyon denetimi telefon
-    // rotasindaki dal bozuldugunda hicbir testin dusmedigini gosterdi.
-    const { anahtar, kod } = girisRedKarari(rol, yuzey);
-    return NextResponse.json(
-      {
-        error: {
-          // KOD, ISTEMCININ NE CIZECEGINI belirler: mobil-yalniz rolde
-          // giris ekrani magaza baglantilarini gosterir. Metne bakarak
-          // karar vermek, dil degisince sessizce bozulurdu.
-          code: kod,
-          message: istekMetni(req, anahtar),
-        },
-      },
-      { status: 403 },
-    );
-  }
-
-  return loginResponse(tokens.access_token, tokens.refresh_token);
+  // (P211 §2) KAPI ARTIK TEK YERDE (`lib/oturum-kapisi.ts`). Buradaki
+  // kopya, panele dusen yoneticiyi app.*'a tasiyan KOPRUYU gormuyordu:
+  // ayni kural iki dosyada yasarsa biri her zaman geride kalir (P129'da
+  // olculmustu, yine oldu).
+  return oturumAc(req, tokens.access_token, tokens.refresh_token);
 }

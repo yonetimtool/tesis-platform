@@ -1,13 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { backendPhoneLogin, loginResponse } from "@/lib/backend";
+import { backendPhoneLogin } from "@/lib/backend";
 import { istekMetni } from "@/lib/i18n/istek-metni";
-import { tokenRolu } from "@/lib/rol-token";
-import {
-  konakYuzeyi,
-  girisRedKarari,
-  rolYuzeyeGirebilir,
-} from "@/lib/yuzey";
+import { oturumAc } from "@/lib/oturum-kapisi";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -76,28 +71,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // YUZEY KAPISI — e-posta girisiyle AYNI kural (bkz. login/route.ts).
-  // Telefonla giris `app.*` icindir; platform sahibi panele e-posta ile girer.
-  const rol = tokenRolu(yanit.access_token);
-  const yuzey = konakYuzeyi(req.headers.get("host"));
-  if (!rolYuzeyeGirebilir(rol, yuzey)) {
-    // (P129) UC AYRI DURUM, UC AYRI CUMLE — karar TEK YERDE (lib/yuzey.ts).
-    // Iki giris rotasina kopyalanmisti; mutasyon denetimi telefon
-    // rotasindaki dal bozuldugunda hicbir testin dusmedigini gosterdi.
-    const { anahtar, kod } = girisRedKarari(rol, yuzey);
-    return NextResponse.json(
-      {
-        error: {
-          // KOD, ISTEMCININ NE CIZECEGINI belirler: mobil-yalniz rolde
-          // giris ekrani magaza baglantilarini gosterir. Metne bakarak
-          // karar vermek, dil degisince sessizce bozulurdu.
-          code: kod,
-          message: istekMetni(req, anahtar),
-        },
-      },
-      { status: 403 },
-    );
-  }
-
-  return loginResponse(yanit.access_token, yanit.refresh_token);
+  // YUZEY KAPISI — e-posta girisiyle AYNI kural, AYNI KOD
+  // (`lib/oturum-kapisi.ts`): kopyalanan kapi P129'da bir kez geride
+  // kalmisti, P211 §2'de bir kez daha kalacakti (panel -> app koprusu).
+  return oturumAc(req, yanit.access_token, yanit.refresh_token);
 }

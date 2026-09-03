@@ -79,3 +79,48 @@ bir sonraki girişte seçim sorulmaz.
 Gerçek Google/Apple ile uçtan uca giriş: dev'de sağlayıcı yapılandırması
 yok (yukarıdaki tablo). Taklit HTTP katmanına konuldu (P200 dersi);
 sağlayıcıdan dönen `sonuc_id` sonrası **tüm** akış gerçek kodla sürüldü.
+
+---
+
+## §2 — `panel.yonetiyor.com`a düşen yönetici: mesaj değil, köprü
+
+### ÖLÇÜM
+Kırılma noktası **giriş ucunda**, `admin-web/lib/oturum-kapisi.ts` (ve o
+sırada kuralı **kopyalayan** iki rota): `panel.*` yüzeyinde tesis rolü
+`403` + "panel platform içindir" mesajı alıyordu. Kapı doğruydu —
+**eksik olan çıkış yoluydu**: kullanıcıya gideceği adres söylenmiyordu.
+
+Doğrudan gezinme tarafı (oturumu olan yöneticinin `panel.*`ta bir sayfa
+açması) **zaten** P190 §1'de 307 ile `app.*`a taşınıyor ve P191 §1'de
+portsuzluğu kilitlenmiş; `tests/middleware.test.ts` bunu ölçüyor. Yani §2'de
+kalan tek boşluk giriş anıydı.
+
+### KARAR K2 — Oturum açılır ve `yonlendir` adresi verilir
+
+`oturumAc` artık: rol `app.*`a girebiliyorsa **oturumu açar** (çerezler
+`COOKIE_DOMAIN=.yonetiyor.com` ile üst alan adına yazılır) ve gövdede
+`yonlendir` ile **mutlak** `app.*` adresini döner; form `window.location`
+ile oraya gider (`router.replace` konak-ötesi gidemez).
+
+**Neden 403 + mesaj değil:** kullanıcı doğru paroladır, doğru kişidir,
+yalnızca yanlış kapıdadır. Onu geri çevirmek yerine taşımak, ikinci bir
+giriş de gerektirmiyor.
+
+**Neden `router.replace` değil, tam adres:** hedef başka konaktır. Adres
+**sunucuda** üretilir (`NEXT_PUBLIC_APP_ADRESI` → iletilmiş başlıklar),
+böylece Next'in iç dinleme portu (`:3000`) adrese sızmaz — P201'de ölçülen
+kusurun aynısı.
+
+**Neden çerez alan adı şartı:** `COOKIE_DOMAIN` boşsa çerez konak-özel
+kalır; köprü kurulsaydı kullanıcı `app.*`a varır varmaz `/login`e düşerdi —
+mesajda kalmaktan **daha kötü**. O durumda eski 403 davranışı aynen kalır
+(dev/yerel de böyle).
+
+**Yan düzeltme:** kapı iki giriş rotasında kopyalanmıştı (P129'da bu sınıf
+zaten bir kez ölçülmüştü). Tek yere alındı; kilit testleri de "rotada metin
+ara" yerine "kapıyı çağırıyor mu" ölçer.
+
+### Ölçemediğim
+Gerçek `panel.yonetiyor.com` üzerinden uçtan uca akış: prod'a erişimim yok.
+Ölçülen kısım, gerçek `NextRequest`lerle giriş ucunun döndürdüğü yanıt
+(7 test: adres, portsuzluk, çerez alan adı şartı, admin/gerileme durumları).

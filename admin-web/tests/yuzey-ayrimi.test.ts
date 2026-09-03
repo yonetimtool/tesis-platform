@@ -152,8 +152,12 @@ describe("panel giris kapisi — TESIS ROLU PANELE GIREMEZ", () => {
     }
   });
 
-  it("giris rotasi kapiyi UYGULUYOR ve 403 donuyor", () => {
-    const kaynak = readFileSync("app/api/auth/login/route.ts", "utf8");
+  it("giris kapisi UYGULANIYOR ve 403 donuyor", () => {
+    // (P211 §2) Kapi tek dosyada: `lib/oturum-kapisi.ts`.
+    expect(readFileSync("app/api/auth/login/route.ts", "utf8")).toContain(
+      "oturumAc(req",
+    );
+    const kaynak = readFileSync("lib/oturum-kapisi.ts", "utf8");
     expect(kaynak).toContain("rolYuzeyeGirebilir");
     expect(kaynak).toContain("403");
   });
@@ -204,10 +208,16 @@ describe("rol x yuzey kapisi (P126.1)", () => {
     expect(tesisYuzeyiBekleyenRol("yonetici")).toBe(false);
   });
 
-  it("giris rotasi kapiyi KONAKTAN turetiyor (sabit rol karsilastirmasi YOK)", () => {
+  it("giris kapisi KONAKTAN tureniyor (sabit rol karsilastirmasi YOK)", () => {
     // Eski hal `!== "admin"` diye sabit bir karsilastirmaydi; app.* acilinca
     // tesis rollerini de reddederdi.
-    const kaynak = readFileSync("app/api/auth/login/route.ts", "utf8");
+    // (P211 §2) Kapi rotadan `lib/oturum-kapisi.ts`e TASINDI — kural iki
+    // rotada kopyaliydi ve panel->app koprusu eklenince kopyalar geride
+    // kaldi. Rotada aranan sey artik kapiyi CAGIRMASI.
+    expect(readFileSync("app/api/auth/login/route.ts", "utf8")).toContain(
+      "oturumAc(req",
+    );
+    const kaynak = readFileSync("lib/oturum-kapisi.ts", "utf8");
     expect(kaynak).toContain('konakYuzeyi(req.headers.get("host"))');
     expect(kaynak).toContain("rolYuzeyeGirebilir(rol, yuzey)");
     expect(kaynak).not.toContain('!== "admin"');

@@ -65,6 +65,21 @@ const UC_TESISLERIM = "/api/auth/tesislerim";
 /** (P203 §2) Bir kisinin TEK bir tesisteki uyeligi. */
 type TesisUyeligi = { tenant_id: string; slug: string; ad: string; rol: string };
 
+/**
+ * (P211 §2) PANELE GIREN YONETICIYI `app.*`A TASIR.
+ *
+ * Sunucu oturumu ACMIS ve gidilecek MUTLAK adresi (`yonlendir`) yaziya
+ * dokmustur. `router.replace` ISE YARAMAZ: hedef BASKA KONAKTIR, Next
+ * yonlendiricisi konak-otesi gidemez — tam adres tarayiciya verilir.
+ * Adres sunucuda uretilir (port sizmaz, P201 dersi).
+ */
+async function yonlendirVarsaGit(res: Response): Promise<boolean> {
+  const d = (await res.json().catch(() => null)) as { yonlendir?: string } | null;
+  if (!d?.yonlendir) return false;
+  window.location.replace(d.yonlendir);
+  return true;
+}
+
 export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
   // (P126 sonrasi) GIRIS YOLU YUZEYE GORE.
   //
@@ -217,6 +232,7 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
       }
       setBasarili(true);
       await new Promise((c) => setTimeout(c, 520));
+      if (await yonlendirVarsaGit(res)) return;
       router.replace("/");
       router.refresh();
     } catch {
@@ -353,6 +369,9 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
       // olsaydi bekleme hissi verirdi.
       setBasarili(true);
       await new Promise((c) => setTimeout(c, 520));
+      // (P211 §2) YANLIS YUZEY: sunucu oturumu acti ve `app.*` adresini
+      // verdi — koke degil ORAYA gidilir.
+      if (await yonlendirVarsaGit(res)) return;
       // KOKE GIDILIR, PANOYA DEGIL: `/` middleware'de ROLE gore cozulur
       // (kokRotaRol) — yonetici Pano'ya, sakin Aidatim'a, guvenlik
       // Ziyaretciler'e, saha gorevlisi Gorevlerim'e duser. Burada sabit

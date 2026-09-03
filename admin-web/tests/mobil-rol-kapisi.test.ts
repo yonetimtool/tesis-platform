@@ -100,17 +100,27 @@ describe("(P129) giris reddi KARARI", () => {
   });
 });
 
-describe("(P129) giris rotalari kapiyi UYGULUYOR", () => {
+// (P211 §2) KAPI ARTIK ROTALARDA DEGIL, `lib/oturum-kapisi.ts`TE.
+// Iki rota kurali KOPYALIYORDU; panel -> app koprusu eklenince kopyalar
+// yine geride kaldi (tam da P129'da olculen sinif). Rotalarda aranan sey
+// artik "kapiyi CAGIRIYOR mu", karar metni tek dosyada olculuyor.
+describe("(P129/P211) giris rotalari kapiyi UYGULUYOR", () => {
   for (const yol of GIRIS_ROTALARI) {
-    it(`${yol}: kapi + TEK karar fonksiyonu (kopya kural yok)`, () => {
+    it(`${yol}: kapiyi CAGIRIYOR, kendi kopyasi YOK`, () => {
       const kaynak = readFileSync(yol, "utf8");
-      expect(kaynak).toContain("rolYuzeyeGirebilir(rol, yuzey)");
-      expect(kaynak).toContain("403");
-      expect(kaynak).toContain("girisRedKarari(rol, yuzey)");
+      expect(kaynak).toContain("oturumAc(req");
       // Kural KOPYALANMAMALI: rotada kendi dallanmasi kalmamali.
+      expect(kaynak).not.toContain("girisRedKarari(");
       expect(kaynak).not.toContain('? "girisMobilUygulama"');
     });
   }
+
+  it("kapi TEK dosyada: rol -> yuzey + karar + 403", () => {
+    const kaynak = readFileSync("lib/oturum-kapisi.ts", "utf8");
+    expect(kaynak).toContain("rolYuzeyeGirebilir(rol, yuzey)");
+    expect(kaynak).toContain("girisRedKarari(rol, yuzey)");
+    expect(kaynak).toContain("403");
+  });
 });
 
 describe("(P129) magaza baglantilari UYDURULMUYOR", () => {
