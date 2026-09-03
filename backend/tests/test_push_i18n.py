@@ -129,7 +129,12 @@ class _SahteSaglayici:
     def __init__(self) -> None:
         self.cagrilar: list[tuple[tuple[str, ...], str, str]] = []
 
-    def send(self, tokens, *, title, body, data=None):
+    # (P207 §2) `kanal`/`ses` EKLENDI: saglayici arayuzu bildirim
+    # kanalini ve sesi de tasiyor. Sahte saglayici imzayi izlemezse
+    # `dispatch_external` TypeError'i YUTAR (savunma try/except) ve
+    # test "hic gonderim olmadi" diye duser — ilk kosumda tam olarak
+    # bu oldu.
+    def send(self, tokens, *, title, body, data=None, kanal=None, ses=None):
         self.cagrilar.append((tuple(tokens), title, body))
         return None
 

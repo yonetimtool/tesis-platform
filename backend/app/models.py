@@ -493,6 +493,17 @@ class Tenant(Base):
     tur_baslangic_foto_zorunlu: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("false")
     )
+    #: (P207 §3, goc 0101) Vardiya hatirlatma kademeleri — virgullu
+    #: liste ("30,5"). Bos = KAPALI. Cozumleme
+    #: `scheduler.service.hatirlatma_kademeleri`de.
+    vardiya_hatirlatma_dk: Mapped[str] = mapped_column(
+        Text, nullable=False, server_default=text("'15'")
+    )
+    #: (P207 §3) Vardiya basladiktan sonra okutma gelmezse yoneticiye
+    #: uyari (dakika). 0 = kapali.
+    vardiya_baslamadi_dk: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default=text("15")
+    )
     # Hava durumu konumu (0005) — baslikta gorunen ad + Open-Meteo koordinati.
     konum_ad: Mapped[str] = mapped_column(
         Text, nullable=False, server_default=text("'İstanbul'")

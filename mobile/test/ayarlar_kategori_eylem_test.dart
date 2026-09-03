@@ -96,15 +96,23 @@ Widget _ayarlar({
 class _SahteBildirimApi extends BildirimTercihApi {
   _SahteBildirimApi(this._t) : super(Dio());
   BildirimTercihleri _t;
-  final cagrilar = <({bool? eposta, bool? sms, bool? mobil})>[];
+  // (P207 §2) `sesli` EKLENDI: ses tercihi SUNUCUDA tutuluyor cunku
+  // Android'de bildirimin sesi kanalin ozelligidir ve uygulama var olan
+  // kanalin sesini degistiremez.
+  final cagrilar = <({bool? eposta, bool? sms, bool? mobil, bool? sesli})>[];
 
   @override
   Future<BildirimTercihleri> getir() async => _t;
 
   @override
-  Future<BildirimTercihleri> guncelle({bool? eposta, bool? sms, bool? mobil}) async {
-    cagrilar.add((eposta: eposta, sms: sms, mobil: mobil));
-    _t = _t.copyWith(eposta: eposta, sms: sms, mobil: mobil);
+  Future<BildirimTercihleri> guncelle({
+    bool? eposta,
+    bool? sms,
+    bool? mobil,
+    bool? sesli,
+  }) async {
+    cagrilar.add((eposta: eposta, sms: sms, mobil: mobil, sesli: sesli));
+    _t = _t.copyWith(eposta: eposta, sms: sms, mobil: mobil, sesli: sesli);
     return _t;
   }
 }

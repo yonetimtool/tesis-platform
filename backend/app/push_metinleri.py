@@ -99,6 +99,49 @@ METINLER: dict[str, PushMetni] = {
     ),
     # (P181 Bölüm 10.2) VARDIYA OZETI — vardiya sonu TEK bildirim (batching):
     # o vardiyada kac noktanin okutuldugu. Okutmalar tek tek push URETMEZ.
+    # ---------------- (P207 §3) VARDIYA HATIRLATMA -------------------- #
+    "vardiya_hatirlatma": PushMetni(
+        baslik={
+            "tr": "Vardiya hatırlatması",
+            "en": "Shift reminder",
+            "ar": "تذكير بالوردية",
+            "ru": "Напоминание о смене",
+            "de": "Schichterinnerung",
+            "fr": "Rappel de poste",
+            "es": "Recordatorio de turno",
+        },
+        govde={
+            "tr": "Vardiyanıza {dakika} dakika kaldı ({saat}).",
+            "en": "Your shift starts in {dakika} minutes ({saat}).",
+            "ar": "تبدأ ورديتك خلال {dakika} دقيقة ({saat}).",
+            "ru": "Ваша смена начнётся через {dakika} мин. ({saat}).",
+            "de": "Ihre Schicht beginnt in {dakika} Minuten ({saat}).",
+            "fr": "Votre poste commence dans {dakika} minutes ({saat}).",
+            "es": "Su turno comienza en {dakika} minutos ({saat}).",
+        },
+        params=('dakika', 'saat'),
+    ),
+    "vardiya_baslamadi": PushMetni(
+        baslik={
+            "tr": "Vardiya başlamadı",
+            "en": "Shift not started",
+            "ar": "لم تبدأ الوردية",
+            "ru": "Смена не начата",
+            "de": "Schicht nicht begonnen",
+            "fr": "Poste non commencé",
+            "es": "Turno no iniciado",
+        },
+        govde={
+            "tr": "{kisi} ({saat}) vardiyasına başlamadı: {dakika} dakikadır okutma yok.",
+            "en": "{kisi} has not started the {saat} shift: no scan for {dakika} minutes.",
+            "ar": "{kisi} لم يبدأ وردية {saat}: لا يوجد مسح منذ {dakika} دقيقة.",
+            "ru": "{kisi} не начал смену {saat}: нет отметок уже {dakika} мин.",
+            "de": "{kisi} hat die Schicht um {saat} nicht begonnen: seit {dakika} Minuten keine Erfassung.",
+            "fr": "{kisi} n'a pas commencé le poste de {saat} : aucun scan depuis {dakika} minutes.",
+            "es": "{kisi} no ha iniciado el turno de {saat}: sin escaneos desde hace {dakika} minutos.",
+        },
+        params=('kisi', 'saat', 'dakika'),
+    ),
     "vardiya_ozeti": PushMetni(
         baslik={
             "tr": "Vardiya özeti",

@@ -57,6 +57,19 @@ celery_app.conf.beat_schedule = {
         "task": "scheduler.summarize_shifts",
         "schedule": 300.0,
     },
+    # (P207 §3) VARDIYA HATIRLATMA + BASLAMAMA UYARISI.
+    #
+    # DAKIKADA BIR: kademe penceresi bir dakikadir (`kademe-1 < kalan <=
+    # kademe`). Bes dakikada bir kossaydi "5 dakika kaldi" kademesi
+    # cogu vardiyada HIC yakalanmazdi.
+    #
+    # DAGITIM NOTU: bu gorev BEAT + WORKER imajlarinda kosar; ikisi de
+    # yeniden dagitilmali (daha once iki kez atlandi — bkz.
+    # `docs/dagitim.md`).
+    "vardiya-hatirlatma": {
+        "task": "scheduler.vardiya_hatirlatma",
+        "schedule": 60.0,
+    },
     # (P37) Caydirici webhook yeniden deneme kuyrugu — geri cekilme
     # dakikalar mertebesinde oldugu icin dakikada bir bakmak yeterli.
     "gurultu-kuyrugu": {

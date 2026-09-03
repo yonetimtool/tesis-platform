@@ -95,6 +95,30 @@ def summarize_shifts() -> dict:
     return {"ozet": summarize_ended_shifts()}
 
 
+@celery_app.task(name="scheduler.vardiya_hatirlatma")
+def vardiya_hatirlatma() -> dict:
+    """(P207 §3) Beat: vardiyasi YAKLASAN personele hatirlatma.
+
+    DAKIKADA BIR kosar: kademe penceresi bir dakikadir (bkz.
+    `vardiya_hatirlatmalari`), daha seyrek kosmak kademeyi tamamen
+    kacirmak olurdu.
+
+    IDEMPOTENT: (plan, kademe) basina tek bildirim (`dedup_key`).
+    ILERI BAKAR, GERI BAKMAZ: beat bir sure kosmadiysa gecmis vardiya
+    icin telafi YAPILMAZ — "5 dakika kaldi" demek yanlis olurdu ve
+    kacirilmis vardiya ayrica `vardiya_baslamadi` ile yakalaniyor.
+    """
+    from .scheduler.service import (
+        vardiya_baslamadi_uyarilari,
+        vardiya_hatirlatmalari,
+    )
+
+    return {
+        "hatirlatma": vardiya_hatirlatmalari(),
+        "baslamadi": vardiya_baslamadi_uyarilari(),
+    }
+
+
 @celery_app.task(name="scheduler.gurultu_kuyrugu")
 def gurultu_kuyrugu() -> dict:
     """(P37) Beat: basarisiz caydirici webhook'larini geri-cekilmeli dener.

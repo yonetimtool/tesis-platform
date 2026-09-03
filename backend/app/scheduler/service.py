@@ -430,3 +430,266 @@ def detect_gecikmis(
                     ):
                         gonderilen += 1
     return gonderilen
+
+
+# ===================== (P207 §3) VARDIYA HATIRLATMA ========================= #
+#
+# ===========================================================================
+# ILERI BAKAR, GERI BAKMAZ
+# ===========================================================================
+# Hatirlatma yalnizca HENUZ BASLAMAMIS vardiyalar icin gonderilir. Beat
+# bir gun kosmadiysa TELAFI YAPILMAZ: gecmis bir vardiya icin "5 dakika
+# kaldi" demek, kullaniciya YANLIS bir sey soylemektir ve kacirilmis
+# vardiyayi geri getirmez. Kacirma durumu zaten AYRI bir bildirimle
+# (`vardiya_baslamadi`) yakalaniyor.
+#
+# ===========================================================================
+# IDEMPOTENT: dedup_key = tip:plan_id:kademe
+# ===========================================================================
+# Kademe anahtara GIRER: 30 ve 5 dakika kademeleri AYRI bildirimlerdir ve
+# ikisi de gitmelidir. Anahtara girmeseydi ikinci kademe "zaten gonderildi"
+# diye yutulurdu.
+_VARDIYA_HATIRLATMA = "vardiya_hatirlatma"
+_VARDIYA_BASLAMADI = "vardiya_baslamadi"
+#: Uyari YONETIME gider. Personelin kendisine gondermek, "gelmedin"
+#: demenin faydasiz bicimi olurdu — sorunu cozecek kisi yoneticidir.
+_BASLAMADI_ROLLERI: tuple[str, ...] = ("admin", "yonetici")
+
+#: En fazla kademe. Ucten fazlasi bildirim yorgunlugu uretir ve
+#: hatirlatma ANLAMINI kaybeder (`tur_alarm_tekrar_sayisi` ile ayni
+#: gerekce, P34).
+AZAMI_KADEME = 3
+
+
+def hatirlatma_kademeleri(ham: str | None) -> list[int]:
+    """"30,5" -> [30, 5]. Gecersiz/bos -> [] (KAPALI).
+
+    BUYUKTEN KUCUGE siralanir: kullanici "5,30" yazsa bile once 30
+    dakika kalinca hatirlatilir. Sirasiz birakmak, ayni vardiyada
+    once 5 sonra 30 dakika bildirimi demekti.
+    """
+    if not ham:
+        return []
+    kademeler: list[int] = []
+    for parca in str(ham).split(","):
+        parca = parca.strip()
+        if not parca.isdigit():
+            continue
+        dk = int(parca)
+        # 0 ANLAMSIZ (vardiya baslarken "0 dakika kaldi"), 240 ustu ise
+        # hatirlatma olmaktan cikip GUNLUK PLAN bildirimi olurdu.
+        if 1 <= dk <= 240:
+            kademeler.append(dk)
+    return sorted(set(kademeler), reverse=True)[:AZAMI_KADEME]
+
+
+def _plan_baslangici(
+    tzname: str, tarih: date, baslangic_saat: time
+) -> datetime:
+    """Yerel vardiya baslangicini ZAMAN DILIMLI damgaya cevirir."""
+    return _local_dt(tzname, tarih, baslangic_saat)
+
+
+def vardiya_hatirlatmalari(
+    *,
+    now: datetime | None = None,
+    owner_dsn: str | None = None,
+    app_dsn: str | None = None,
+) -> int:
+    """(§3) Vardiyasi YAKLASAN personele hatirlatma.
+
+    Donus: yeni yazilan bildirim sayisi.
+    """
+    now = _now(now)
+    owner_dsn = owner_dsn or settings.owner_dsn
+    app_dsn = app_dsn or settings.app_dsn
+
+    yazilan = 0
+    with psycopg.connect(owner_dsn, connect_timeout=10) as okonn:
+        tenants = okonn.execute(
+            "SELECT id, timezone, vardiya_hatirlatma_dk FROM tenant"
+        ).fetchall()
+
+    with psycopg.connect(app_dsn, connect_timeout=10) as conn:
+        for tenant_id, tzname, ayar in tenants:
+            kademeler = hatirlatma_kademeleri(ayar)
+            if not kademeler:
+                continue
+            with conn.transaction():
+                conn.execute(
+                    "SELECT set_config('app.current_tenant_id', %s, true)",
+                    (str(tenant_id),),
+                )
+                # BUGUN VE YARIN: gece yarisina yakin kosumda yarinki
+                # 00:30 vardiyasi BUGUNUN sorgusuna girmezdi.
+                bugun = now.astimezone(ZoneInfo(tzname)).date()
+                satirlar = conn.execute(
+                    "SELECT vp.id, vp.tarih, vp.user_id, u.ad, "
+                    "COALESCE(vp.baslangic_saat, s.baslangic_saat) "
+                    "FROM vardiya_plani vp "
+                    "JOIN app_user u ON u.id = vp.user_id "
+                    "LEFT JOIN shift s ON s.id = vp.shift_id "
+                    "WHERE vp.durum = 'planli' AND u.is_active = true "
+                    "AND vp.tarih IN (%s, %s)",
+                    (bugun, bugun + timedelta(days=1)),
+                ).fetchall()
+                for plan_id, tarih, user_id, ad, bas_saat in satirlar:
+                    if bas_saat is None:
+                        continue  # saati cozulemeyen satir (goc 0096 CHECK)
+                    baslangic = _plan_baslangici(tzname, tarih, bas_saat)
+                    kalan_dk = (baslangic - now).total_seconds() / 60.0
+                    for kademe in kademeler:
+                        # PENCERE: (kademe-1, kademe]. Beat dakikada bir
+                        # kosuyor; tam esitlik aramak, bir dakikalik
+                        # gecikmede hatirlatmayi TAMAMEN kaciirtirdi.
+                        #
+                        # "ILERI BAKAR, GERI BAKMAZ" KURALINI DA BU
+                        # PENCERE UYGULAR: kademe >= 1 oldugu icin
+                        # BASLAMIS vardiyada (kalan_dk <= 0) kosul
+                        # tutmaz. Ayrica bir `kalan_dk <= 0` koruması
+                        # YAZMADIM: ayni kurali iki yerde tutmak, biri
+                        # degisince otekinin sessizce eskimesi demekti
+                        # (ve o kod dalini hicbir test kiramazdi —
+                        # denendi, kirilmadi).
+                        if not (kademe - 1 < kalan_dk <= kademe):
+                            continue
+                        veri = {
+                            "dakika": kademe,
+                            "saat": bas_saat.strftime("%H:%M"),
+                        }
+                        dedup = f"{_VARDIYA_HATIRLATMA}:{plan_id}:{kademe}"
+                        mesaj = push_govdesi(
+                            _VARDIYA_HATIRLATMA, VARSAYILAN_DIL, veri
+                        )
+                        cur = conn.execute(
+                            "INSERT INTO notification (tenant_id, tip, dedup_key, "
+                            "mesaj, mesaj_kimlik, mesaj_veri, user_id) "
+                            "VALUES (%s, 'vardiya_hatirlatma', %s, %s, %s, "
+                            "%s::jsonb, %s) "
+                            "ON CONFLICT (tenant_id, dedup_key) DO NOTHING",
+                            (tenant_id, dedup, mesaj, _VARDIYA_HATIRLATMA,
+                             json.dumps(veri), user_id),
+                        )
+                        if cur.rowcount == 0:
+                            continue  # bu kademe zaten gonderildi
+                        # HEDEF YALNIZ ATANAN KISI: yoneticiye de gondermek,
+                        # yirmi kisilik ekipte yoneticinin gunde yirmi
+                        # bildirim almasi demekti ve o bildirimler
+                        # okunmaz olurdu (karar K3.2).
+                        dispatch_external(
+                            _VARDIYA_HATIRLATMA,
+                            tenant_id=tenant_id,
+                            target_roles=None,
+                            target_user_ids=[user_id],
+                            params=veri,
+                            data={
+                                "tip": _VARDIYA_HATIRLATMA,
+                                "plan_id": str(plan_id),
+                            },
+                        )
+                        yazilan += 1
+    return yazilan
+
+
+def vardiya_baslamadi_uyarilari(
+    *,
+    now: datetime | None = None,
+    owner_dsn: str | None = None,
+    app_dsn: str | None = None,
+) -> int:
+    """(§3) Vardiya BASLADI ama personel OKUTMA YAPMADI -> yoneticiye uyari.
+
+    =======================================================================
+    GECIKMIS DEVRIYE ALARMINDAN FARKLI (P34)
+    =======================================================================
+    O alarm, ACILMIS bir tur penceresinin gec kalmasidir. Bu ise vardiyaya
+    HIC BASLAMAMA durumudur: personel gelmemis olabilir ve tur penceresi
+    hic acilmamis olabilir. Ikisini tek alarma indirmek, "gec kaldi" ile
+    "yok" arasindaki farki silerdi — biri beklenir, oteki YERINE BIRINI
+    GONDERMEYI gerektirir.
+
+    IDEMPOTENT: plan basina TEK uyari (`dedup_key`).
+    """
+    now = _now(now)
+    owner_dsn = owner_dsn or settings.owner_dsn
+    app_dsn = app_dsn or settings.app_dsn
+
+    yazilan = 0
+    with psycopg.connect(owner_dsn, connect_timeout=10) as okonn:
+        tenants = okonn.execute(
+            "SELECT id, timezone, vardiya_baslamadi_dk FROM tenant"
+        ).fetchall()
+
+    with psycopg.connect(app_dsn, connect_timeout=10) as conn:
+        for tenant_id, tzname, tolerans in tenants:
+            if not tolerans or int(tolerans) <= 0:
+                continue  # 0 = kapali
+            with conn.transaction():
+                conn.execute(
+                    "SELECT set_config('app.current_tenant_id', %s, true)",
+                    (str(tenant_id),),
+                )
+                bugun = now.astimezone(ZoneInfo(tzname)).date()
+                satirlar = conn.execute(
+                    "SELECT vp.id, vp.tarih, vp.user_id, u.ad, "
+                    "COALESCE(vp.baslangic_saat, s.baslangic_saat) "
+                    "FROM vardiya_plani vp "
+                    "JOIN app_user u ON u.id = vp.user_id "
+                    "LEFT JOIN shift s ON s.id = vp.shift_id "
+                    "WHERE vp.durum = 'planli' AND u.is_active = true "
+                    "AND vp.tarih IN (%s, %s)",
+                    (bugun - timedelta(days=1), bugun),
+                ).fetchall()
+                for plan_id, tarih, user_id, ad, bas_saat in satirlar:
+                    if bas_saat is None:
+                        continue
+                    baslangic = _plan_baslangici(tzname, tarih, bas_saat)
+                    gecen = (now - baslangic).total_seconds() / 60.0
+                    # PENCERE: tolerans ile tolerans+60 dk arasi. Ust sinir
+                    # SART: gun icinde her kosumda gecmis vardiyalari
+                    # yeniden taramak, `dedup` sayesinde bildirim uretmez
+                    # ama her dakika butun gunu sorgulamak olurdu.
+                    if not (tolerans <= gecen < tolerans + 60):
+                        continue
+                    # SUTUN `guard_id`: okutmayi YAPAN kisidir (kolon adi
+                    # devriye doneminden kalma; `user_id` DIYE BIR SUTUN
+                    # YOK — ilk yazimda oyle sanmistim, test gosterdi).
+                    okutma = conn.execute(
+                        "SELECT 1 FROM scan_event "
+                        "WHERE guard_id = %s AND okutma_zamani >= %s "
+                        "LIMIT 1",
+                        (user_id, baslangic),
+                    ).fetchone()
+                    if okutma:
+                        continue  # basladi
+                    veri = {
+                        "kisi": ad,
+                        "saat": bas_saat.strftime("%H:%M"),
+                        "dakika": int(gecen),
+                    }
+                    dedup = f"{_VARDIYA_BASLAMADI}:{plan_id}"
+                    mesaj = push_govdesi(
+                        _VARDIYA_BASLAMADI, VARSAYILAN_DIL, veri
+                    )
+                    cur = conn.execute(
+                        "INSERT INTO notification (tenant_id, tip, dedup_key, "
+                        "mesaj, mesaj_kimlik, mesaj_veri) "
+                        "VALUES (%s, 'vardiya_baslamadi', %s, %s, %s, %s::jsonb) "
+                        "ON CONFLICT (tenant_id, dedup_key) DO NOTHING",
+                        (tenant_id, dedup, mesaj, _VARDIYA_BASLAMADI,
+                         json.dumps(veri)),
+                    )
+                    if cur.rowcount == 0:
+                        continue
+                    dispatch_external(
+                        _VARDIYA_BASLAMADI,
+                        tenant_id=tenant_id,
+                        target_roles=_BASLAMADI_ROLLERI,
+                        params=veri,
+                        data={
+                            "tip": _VARDIYA_BASLAMADI,
+                            "plan_id": str(plan_id),
+                        },
+                    )
+                    yazilan += 1
+    return yazilan

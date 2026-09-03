@@ -89,7 +89,7 @@ def test_dispatch_calls_provider_with_tokens(monkeypatch):
     class Recorder:
         name = "recorder"
 
-        def send(self, tokens, *, title, body, data=None):
+        def send(self, tokens, *, title, body, data=None, kanal=None, ses=None):
             rec.append((list(tokens), title, body, data))
 
     monkeypatch.setattr(notify.push, "get_push_provider", lambda: Recorder())
@@ -132,7 +132,7 @@ def test_dispatch_user_targeted_uses_user_fetch(monkeypatch):
     class Recorder:
         name = "recorder"
 
-        def send(self, tokens, *, title, body, data=None):
+        def send(self, tokens, *, title, body, data=None, kanal=None, ses=None):
             rec.append((list(tokens), title, body, data))
 
     monkeypatch.setattr(notify.push, "get_push_provider", lambda: Recorder())
@@ -305,7 +305,7 @@ def test_dispatch_ROL_ve_KISI_birlikte_TOKEN_dedup(monkeypatch):
     class Recorder:
         name = "recorder"
 
-        def send(self, tokens, *, title, body, data=None):
+        def send(self, tokens, *, title, body, data=None, kanal=None, ses=None):
             rec.append(list(tokens))
 
     monkeypatch.setattr(notify.push, "get_push_provider", lambda: Recorder())
@@ -465,7 +465,7 @@ def test_dispatch_prunes_invalid_tokens(monkeypatch):
     class P:
         name = "fcm"
 
-        def send(self, tokens, *, title, body, data=None):
+        def send(self, tokens, *, title, body, data=None, kanal=None, ses=None):
             return push.PushResult(provider="fcm", sent=1, status="sent", gecersiz=["BAD"])
 
     monkeypatch.setattr(notify.push, "get_push_provider", lambda: P())

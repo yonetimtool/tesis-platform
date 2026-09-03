@@ -584,6 +584,12 @@ export interface TenantSettings {
   otopark_kapasite?: number | null;
   anpr_guven_esigi?: number;
   anpr_otomatik_cikis?: boolean;
+  /** (P207 §3) Vardiya hatirlatma kademeleri — virgullu liste ("30,5").
+   *  Bos = KAPALI. */
+  vardiya_hatirlatma_dk?: string;
+  /** (P207 §3) Vardiya basladiktan sonra okutma gelmezse yoneticiye
+   *  uyari (dakika). 0 = kapali. */
+  vardiya_baslamadi_dk?: number;
 }
 
 // ------------------------ tenant olusturma (admin) ------------------------- #

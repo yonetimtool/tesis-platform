@@ -238,3 +238,107 @@ geri alındı.
 kanala bağlanması ve FCM'in doğru kanalı seçmesi ancak fiziksel cihazda
 (veya emülatörde) doğrulanabilir; burada emülatör yok. Ölçtüğüm şey
 **gövdenin doğru alanları taşıdığı** ve **kimliklerin ayrışmadığı**.
+
+---
+
+## §3 — VARDİYA HATIRLATMA BİLDİRİMİ
+
+### K3.1 — Kademe sayısı: en fazla ÜÇ, tenant ayarı
+
+`tenant.vardiya_hatirlatma_dk` virgüllü liste ("30,5"); boş = kapalı.
+Neden metin: kademe **sayısı** değişken (bir ya da üç) ve ayrı bir tablo
+açmak, iki satırlık bir ayarı yönetmek için CRUD ekranı gerektirirdi.
+
+**Birden çok kademe destekleniyor** ama en fazla üç: üçten fazlası
+bildirim yorgunluğu üretir ve hatırlatma **anlamını kaybeder**
+(`tur_alarm_tekrar_sayisi` ile aynı gerekçe, P34). Liste büyükten küçüğe
+sıralanır — kullanıcı "5,30" yazsa bile önce 30 dakika kalınca
+hatırlatılır; sırasız bırakmak aynı vardiyada önce 5 sonra 30 bildirimi
+demekti.
+
+Geçersiz/boş metin **kapalı** demektir; 422 ile durdurmak kullanıcının
+"kapat" niyetini hataya çevirirdi.
+
+### K3.2 — Hatırlatma YALNIZ atanan personele
+
+Yöneticiye **gönderilmiyor.** Yirmi kişilik bir ekipte yönetici günde
+yirmi "vardiyanıza 15 dakika" bildirimi alırdı — kendisiyle ilgisi
+olmayan yirmi bildirim, okunmaz hale gelir ve gerçekten yöneticiye ait
+olan uyarıyı (aşağıdaki "başlamadı") da götürürdü.
+
+Yöneticinin ihtiyacı olan bilgi "kim gelmedi"dir, "kim gelecek" değil —
+ve o bilgi zaten ikinci bildirimde var.
+
+### K3.3 — İleri bakar, GERİ BAKMAZ (telafi yok)
+
+Hatırlatma penceresi `(kademe-1, kademe]` dakikadır. Beat bir süre
+koşmadıysa **telafi yapılmaz**: geçmiş bir vardiya için "5 dakika kaldı"
+demek kullanıcıya **yanlış** bir şey söylemektir ve kaçırılmış vardiyayı
+geri getirmez.
+
+Kuralı ayrıca `kalan_dk <= 0` diye yazmadım: aynı kuralı iki yerde tutmak,
+biri değişince ötekinin sessizce eskimesi demekti — ve o kod dalını
+hiçbir test kıramıyordu (denendi; break testinde pencere koşulu zaten
+yakalıyor, guard ölü koddu).
+
+### K3.4 — "Vardiyaya başlamadı" uyarısı — geciken devriyeden FARKLI
+
+`tenant.vardiya_baslamadi_dk` (varsayılan 15, 0 = kapalı). Vardiya
+başladıktan sonra bu süre içinde **personelden hiç okutma gelmediyse**
+yöneticiye uyarı.
+
+P34'teki geciken devriye alarmı **açılmış bir tur penceresinin** gecikmesi;
+bu ise vardiyaya **hiç başlamama**. İkisini tek alarma indirmek, "geç
+kaldı" ile "yok" arasındaki farkı silerdi — biri beklenir, öteki **yerine
+birini göndermeyi** gerektirir.
+
+Uyarı **yöneticiye** gider: personele "gelmedin" demek faydasız biçim;
+sorunu çözecek kişi yöneticidir.
+
+Tarama penceresi üstten sınırlı (`tolerans` ile `tolerans+60` dk arası):
+`dedup` zaten tekrarı engelliyor ama her dakika bütün günü sorgulamak
+gereksiz yük olurdu.
+
+### K3.5 — İdempotency
+
+`dedup_key = tip:plan_id:kademe` (hatırlatma) ve `tip:plan_id`
+(başlamadı), `notification` tablosunda `ON CONFLICT DO NOTHING`.
+**Kademe anahtara girer**: 30 ve 5 dakika kademeleri ayrı bildirimlerdir
+ve ikisi de gitmelidir; anahtara girmeseydi ikinci kademe "zaten
+gönderildi" diye yutulurdu.
+
+### K3.6 — Sesli (§2'ye bağlı)
+
+`vardiya_hatirlatma` ve `vardiya_baslamadi` `KRITIK_TIPLER` içinde: kritik
+kanaldan, `priority=high` ile gider. Android düşük öncelikli mesajları
+Doze modunda toplayıp geciktirir; "vardiyanıza 5 dakika" bildiriminin
+gecikmesi onu **anlamsız** yapardı.
+
+### Beat ve dağıtım
+
+`scheduler.vardiya_hatirlatma`, **60 saniye**. Beş dakikada bir koşsaydı
+"5 dakika kaldı" kademesi çoğu vardiyada hiç yakalanmazdı.
+
+Görev tanımı **worker**, zamanlama **beat** imajında —
+`docs/P207-dagitim.md` bunu ayrıca yazıyor (iki turda atlandığı için).
+
+### Ölçüm
+
+`test_p207_vardiya_hatirlatma.py` **15 test**: kademe çözümleme (sıra,
+sınır, geçersiz/boş), pencerede gönderim + kişiye hedefleme,
+idempotency, başlamış vardiyada sessizlik, pencere dışında sessizlik,
+iki kademenin ayrı bildirim olması, kapalı ayar, iptal edilmiş plan,
+başlamama uyarısı (yöneticiye), okutma varsa gönderilmemesi,
+idempotency, tolerans dolmadan/çok eski vardiyada sessizlik, tesis
+izolasyonu.
+
+**Kilit kanıtı:** dedup anahtarından kademe çıkarıldı →
+`IKI_KADEME_IKI_AYRI_BILDIRIM` düştü; geri alındı.
+
+**İlk yazımda bulunan kusur:** `scan_event` tablosunda `user_id` **yok**
+(sütun `guard_id`); test bunu ilk koşumda gösterdi ve düzeltildi —
+kaynak okuyarak varsaydığım bir sütun adıydı.
+
+**Ölçemediğim:** gerçek beat döngüsünde (Celery zamanlayıcısı) tetiklenme;
+testler zamanlayıcı fonksiyonunu `now` enjekte ederek doğrudan çağırıyor.
+Prod'da doğrulama komutları dağıtım belgesinde.

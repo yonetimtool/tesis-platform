@@ -3364,6 +3364,14 @@ class TenantSettings(BaseModel):
     # (P34) Kamera fotografi urun kurali DEGIL tenant tercihi: gece
     # vardiyasinda kamera kullanimi her sitede kabul gormez.
     tur_baslangic_foto_zorunlu: bool = False
+    # (P207 §3) VARDIYA HATIRLATMA. "Kac dakika once" sorusunun TEK
+    # dogru yaniti yok: sitede 15 dakika makul, kampuste personel yola
+    # cikmis olmali. Virgullu kademe listesi ("30,5"); bos = KAPALI.
+    vardiya_hatirlatma_dk: str = "15"
+    #: Vardiya basladiktan sonra okutma gelmezse yoneticiye uyari.
+    #: 0 = kapali. GECIKMIS DEVRIYE ALARMINDAN FARKLI: o, acilmis bir
+    #: turun gec kalmasi; bu, vardiyaya HIC BASLAMAMA.
+    vardiya_baslamadi_dk: int = 15
 
 
 class TenantSettingsUpdate(BaseModel):
@@ -3396,6 +3404,13 @@ class TenantSettingsUpdate(BaseModel):
     tur_gecikme_toleransi_dk: int | None = Field(None, ge=1, le=240)
     tur_alarm_tekrar_sayisi: int | None = Field(None, ge=0, le=10)
     tur_baslangic_foto_zorunlu: bool | None = None
+    #: (P207 §3) Kademe listesi — bicim dogrulamasi UYGULAMADA
+    #: (`hatirlatma_kademeleri`): gecersiz metin KAPALI demektir ve
+    #: kullaniciyi 422 ile durdurmak, "kapat" niyetini hataya
+    #: cevirirdi. Uzunluk siniri yeter.
+    vardiya_hatirlatma_dk: str | None = Field(None, max_length=40)
+    #: DB CHECK ile AYNI sinir (goc 0101).
+    vardiya_baslamadi_dk: int | None = Field(None, ge=0, le=180)
     #: (P35) Mod degisimi SAHIPLIGI devreder — bu yuzden YALNIZ admin
     #: (bkz. router). Yoneticinin kendi yetkisini kendine geri verebilmesi,
     #: dis sirkete devri anlamsizlastirirdi.

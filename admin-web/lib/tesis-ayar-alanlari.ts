@@ -66,6 +66,25 @@ export const OPERASYON: Ayar[] = [
     ipucu: "ayarTurFotoIpucu",
     tip: "bool",
   },
+  // --- (P207 §3) VARDIYA HATIRLATMA ---
+  {
+    anahtar: "vardiya_hatirlatma_dk",
+    etiket: "ayarVardiyaHatirlatma",
+    ipucu: "ayarVardiyaHatirlatmaIpucu",
+    // METIN, sayi DEGIL: kademe listesi ("30,5"). Sayi alani yapmak
+    // tek kademeye mahkum ederdi; bos birakmak KAPALI demektir ve
+    // sunucu bunu 422 ile degil sessizce "kapali" diye okur.
+    tip: "metin",
+  },
+  {
+    anahtar: "vardiya_baslamadi_dk",
+    etiket: "ayarVardiyaBaslamadi",
+    ipucu: "ayarVardiyaBaslamadiIpucu",
+    tip: "sayi",
+    // Sinirlar SUNUCUYLA AYNI (DB CHECK + API Field). 0 = KAPALI.
+    min: 0,
+    max: 180,
+  },
   // --- P35 guvenlik modu ---
   {
     anahtar: "guvenlik_modu",
