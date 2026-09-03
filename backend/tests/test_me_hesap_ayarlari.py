@@ -182,6 +182,10 @@ def test_bildirim_varsayilani_ACIK(client, world):
         "bildirim_eposta": True,
         "bildirim_sms": True,
         "bildirim_mobil": True,
+        # (P207 §2) SES DE VARSAYILAN ACIK: bugune kadar sesli olmasi
+        # beklenen bildirimler sessiz geliyordu; varsayilani kapali
+        # yapmak, kusuru "ayar" diye kalici hale getirmek olurdu.
+        "bildirim_sesi": True,
     }
 
 
@@ -195,6 +199,9 @@ def test_bildirim_KISMI_guncelleme_otekileri_kimildatmaz(client, world):
         "bildirim_eposta": True,
         "bildirim_sms": False,
         "bildirim_mobil": True,
+        # (P207 §2) SES ALANI DA KIMILDAMAZ: kismi guncellemenin
+        # kapsami dorduncu alanla birlikte de gecerli.
+        "bildirim_sesi": True,
     }
 
 
