@@ -1965,6 +1965,19 @@ class MesaiKisiOut(BaseModel):
     gidere_yazildi: bool = False
 
 
+class MesaiAyarOut(BaseModel):
+    """(P211 §5) Fazla mesai katsayisi."""
+
+    katsayi: float
+
+
+class MesaiAyarUpdate(BaseModel):
+    #: Yasal taban 1.50 (4857/41); toplu is sozlesmesi yukseltebilir.
+    #: UST SINIR: yanlislikla girilmis "150" gibi bir deger bir maasi 150
+    #: katina cikarir ve bu sayi ONAY BEKLEYEN BIR GIDERE donusurdu.
+    katsayi: float = Field(..., ge=1.0, le=5.0)
+
+
 class MesaiOzetOut(BaseModel):
     yil: int
     ay: int

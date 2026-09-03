@@ -221,3 +221,77 @@ seçici çizilmez, tahsilat borçlunun adına kaydedilir.
 ### Kilit
 Web 5 DOM testi (taklit HTTP katmanında), mobil 5 widget testi (taklit
 HTTP adapter'ında). İkisi de gönderilen **gövdeyi** ölçer.
+
+---
+
+## §5 — Fazla mesai ücreti: ne vardı, ne eksikti
+
+### ÖLÇÜM — P203 §5'ten geriye kalan tek boşluk
+Beklediğimden çoğu **zaten yapılmıştı** (P203 §5, göç 0094):
+
+| İstenen | Durum |
+|---|---|
+| Personel başına **saatlik/aylık** ücret | **VAR** — `personel_kayit.maas_kurus` + `saatlik_ucret_kurus`; saatlik boşsa `maas/225` (30 gün × 7,5 saat) |
+| Mesai çarpanı, varsayılan 1,5 | **VAR** — `tenant.mesai_katsayisi`, varsayılan `1.50` (4857/41) |
+| "değiştirilebilir" | **YOKTU** — sütun vardı, onu yazan **hiçbir uç yoktu**. P203'ün kendi testi bile katsayıyı `UPDATE tenant …` ile değiştiriyordu. Söz ancak SQL ile tutuluyordu. |
+| Ücret hassas: yalnız yönetici, **sunucuda** zorlanmış | **VAR** — `personel-kayitlari` uçları `require_role("admin","yonetici")`; denetçi ücret yazamaz |
+| Mesai gideri **onay bekleyen** olarak `finansal_hareket`e, ayrı tablo yok | **VAR** — `/mesai/gidere-yaz`, `tip='gider'`, `durum='onay_bekliyor'` |
+
+### KARAR K5.1 — `GET/PATCH /mesai/ayar`
+Katsayı uçtan değiştirilebilir; **yazma** admin + yönetici, **okuma**
+denetçiye de açık. Sınır **1,0 – 5,0**: yasal taban 1,50, toplu iş
+sözleşmesi yükseltebilir; üst sınır ise yazım hatasını keser — yanlışlıkla
+girilen "150" bir maaşı 150 katına çıkarır ve o sayı **onay bekleyen bir
+gidere** dönüşürdü. **Geçmişe dokunmaz**: yalnız henüz yazılmamış hesapta
+kullanılır (`gecikme_aylik_yuzde` ile aynı ilke).
+
+### KARAR K5.2 — Hafta sonu/tatil çarpanı: **BU TURDA YOK**, gerekçesiyle
+Değerlendirdim; eklemedim. Üç sebep:
+
+1. **Hukuken ayrı bir "saatlik çarpan" değil.** 4857 md. 41 fazla çalışmayı
+   **haftalık 45 saat** eşiğine bağlar — günün hangi gün olduğuna değil.
+   Ulusal bayram/genel tatil çalışması (md. 47) ise **günlük** bir kuraldır
+   (o günün ücreti + çalışılan gün için bir yevmiye daha), saatlik bir
+   katsayı değil. Onu "1,5 yerine 2,0" diye modellemek yanlış olurdu.
+2. **Tatil takvimi yok.** Resmî tatiller yıllara göre değişir (dinî
+   bayramlar kayar) ve sistemde bir tatil takvimi tablosu **yok**. Hangi
+   günün tatil olduğunu bilmeden "tatil çarpanı" uygulamak, çarpanı
+   rastgele günlere uygulamak demek.
+3. **Çarpan bir TAHMİNİ çarpardı** (aşağıdaki kısıt).
+
+Yapılacaksa doğru sıra: (a) resmî tatil takvimi tablosu (yıl bazlı,
+elle düzenlenebilir), (b) md. 47 kuralının **günlük** modellenmesi,
+(c) ancak ondan sonra hesaba katılması. Bu, kendi başına bir tur.
+
+### P203 KISITI — hâlâ geçerli, tekrar yazıyorum
+**Sistemde gerçek mesai kaydı YOK.** Hesap **planlanan** vardiya saatleri
+üzerinden yapılır; yanıt bunu `kaynak: "plan"` ile açıkça söyler ve ekran
+da yazar. Yönetici gidere yazarken saati **düzeltebilir**.
+
+**Çözüm görüşüm (bu turda uygulanmadı):** doğru kaynak, personelin
+**vardiya başlangıcında ve bitişinde** kimlik doğrulamalı bir kayıt
+bırakmasıdır. Sırasıyla, maliyetten faydaya:
+
+1. **Mobilden "vardiyaya başla / bitir"** (en ucuz, bugünkü altyapı yeter):
+   görevli zaten uygulamada; iki dokunuş + sunucu saati. Zayıflığı: kişi
+   evden de basabilir.
+2. **Konum/QR ile doğrulanmış giriş-çıkış**: devriye noktası okutma
+   altyapısı (`scan_event`) **zaten var**; vardiya başı/sonu için özel bir
+   nokta okutulur. Zayıflığı: telefon el değiştirebilir.
+3. **Turnike/PDKS entegrasyonu**: en güvenilir, en pahalı; ancak sitede
+   böyle bir cihaz varsa anlamlı.
+
+Öneri: **(1) + (2)** birlikte — "başla/bitir" kaydı, mümkünse noktaya
+okutmayla doğrulanır; doğrulanmamış kayıtlar özet ekranında **işaretlenir**.
+Böylece plan ile gerçekleşen **yan yana** görünür ve fark ödemeden önce
+göze çarpar. Devriye okutmalarından mesai **çıkarımı yapmak** ise yanlış
+olurdu: gelmiş birini eksik, gelmemiş birini tam gösterebilirdi ve o sayı
+doğrudan **paraya** dönüşüyor.
+
+### Kilit
+Backend 5 test (yönetici yazar, özet yeni katsayıyı kullanır, denetçi
+yazamaz, sınır dışı 422, tesis izolasyonu) + web 4 DOM testi (PATCH gövdesi,
+virgüllü giriş, kapsam notu, iptalde istek gitmez). openapi + rol matrisi
+güncel. Ayrıca §1'in kaçırdığı bir kilit kaydı da burada kapatıldı:
+`/auth/oauth/tesis-sec` "rol kapısı olmayan mutasyon uçları" kümesine
+gerekçesiyle eklendi.

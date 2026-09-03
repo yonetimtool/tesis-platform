@@ -38,6 +38,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..audit import Action, audit_user
+from ..crud_helpers import get_or_404
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
 from ..mesai import KisiOzeti, ay_araligi, saatlik_ucret
@@ -50,6 +51,8 @@ from ..models import (
     VardiyaPlani,
 )
 from ..schemas import (
+    MesaiAyarOut,
+    MesaiAyarUpdate,
     MesaiGidereYazIstek,
     MesaiKisiOut,
     MesaiOzetOut,
@@ -108,6 +111,56 @@ async def _ozet_hesapla(
                     p.saatlik_ucret_kurus, p.maas_kurus
                 )
     return sorted(kisiler.values(), key=lambda k: k.ad)
+
+
+# =============================== MESAI AYARI ================================ #
+#
+# (P211 §5) KATSAYI SUTUNU P203'TE ACILMISTI AMA HICBIR UCTAN
+# YAZILAMIYORDU: "degistirilebilir" sozu ancak SQL ile tutuluyordu.
+#
+# UST SINIR 5.0: yasal taban 1.50 (4857/41), toplu is sozlesmesi bunu
+# yukseltebilir. Sinir, sifir/negatif ve yanlislikla girilmis "150"
+# gibi degerleri keser — 150 katsayi bir maasi 150 katina cikarirdi ve
+# bu sayi ONAY BEKLEYEN BIR GIDERE donusurdu.
+_KATSAYI_ALT, _KATSAYI_UST = 1.0, 5.0
+
+
+@router.get("/ayar", response_model=MesaiAyarOut)
+async def mesai_ayari(
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_OKUR),
+) -> MesaiAyarOut:
+    tenant = (
+        await db.execute(select(Tenant).where(Tenant.id == user.tenant_id))
+    ).scalar_one()
+    return MesaiAyarOut(katsayi=float(tenant.mesai_katsayisi or 1.5))
+
+
+@router.patch("/ayar", response_model=MesaiAyarOut)
+async def mesai_ayari_guncelle(
+    body: MesaiAyarUpdate,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_YAZAR),
+) -> MesaiAyarOut:
+    """Fazla mesai katsayisi (varsayilan 1.50 — 4857/41).
+
+    YAZMA YETKISI DAR: `_YAZAR` (admin + yonetici). Denetci OKUR ama
+    yazamaz — katsayi dogrudan PARAYA cevrilen bir sayidir.
+
+    GECMISE DOKUNMAZ: katsayi yalniz HENUZ YAZILMAMIS ozet hesabinda
+    kullanilir; gidere yazilmis hareketlerin tutari degismez. Aksi hâlde
+    bir ayar degisikligi gecmis defteri geriye donuk buyuturdu
+    (`gecikme_aylik_yuzde` ile ayni ilke).
+    """
+    tenant = await get_or_404(db, Tenant, user.tenant_id)
+    tenant.mesai_katsayisi = body.katsayi
+    await db.flush()
+    await db.refresh(tenant)
+    await audit_user(
+        db, user, Action.MUHASEBE_AYAR_UPDATE, resource_type="tenant",
+        resource_id=tenant.id, meta={"mesai_katsayisi": body.katsayi},
+    )
+    return MesaiAyarOut(katsayi=float(tenant.mesai_katsayisi))
 
 
 @router.get("/ozet", response_model=MesaiOzetOut)

@@ -4,7 +4,7 @@ import { useState } from "react";
 import useSWR from "swr";
 
 import { useToast } from "@/components/Toast";
-import { AlanSarmal, Dugme, HataDurumu, Kart, Rozet, Secim } from "@/components/ui";
+import { Alan, AlanSarmal, Dugme, HataDurumu, Kart, Rozet, Secim } from "@/components/ui";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
@@ -52,6 +52,15 @@ export default function MesaiSayfasi() {
   const [bekliyor, setBekliyor] = useState(false);
   const [hata, setHata] = useState<string | null>(null);
 
+  // (P211 §5) KATSAYI ARTIK EKRANDAN DEGISTIRILEBILIR.
+  //
+  // P203 sutunu acmis ve belgesine "degistirilebilir" yazmisti; ama
+  // hicbir uc onu yazmiyordu — yani soz ancak SQL ile tutuluyordu.
+  // Yetki SUNUCUDA: denetci okur, yazamaz (sayi dogrudan paraya
+  // cevriliyor). Buradaki alanin varligi bir yetki karari DEGILDIR.
+  const [katsayiDuzenle, setKatsayiDuzenle] = useState(false);
+  const [katsayiMetin, setKatsayiMetin] = useState("");
+
   const uc = `/api/mesai/ozet?yil=${yil}&ay=${ay}`;
   const { data, error, mutate } = useSWR<Ozet>(uc, jsonFetcher);
 
@@ -59,6 +68,26 @@ export default function MesaiSayfasi() {
     (k) => k.fazla_saat > 0 && !k.ucret_tanimsiz && !k.gidere_yazildi,
   );
   const toplam = yazilabilir.reduce((n, k) => n + (k.fazla_mesai_kurus ?? 0), 0);
+
+  async function katsayiKaydet() {
+    const n = Number(katsayiMetin.replace(",", "."));
+    if (!Number.isFinite(n)) return;
+    setBekliyor(true);
+    setHata(null);
+    try {
+      await apiSend("/api/mesai/ayar", "PATCH", { katsayi: n });
+      toast.success(t("mesaiKatsayiKaydedildi"));
+      setKatsayiDuzenle(false);
+      // OZET YENIDEN CEKILIR: katsayi tutarlari degistirir; eski sayiyi
+      // ekranda birakmak, yoneticinin yazacagi giderle gordugu sayinin
+      // ayrismasi demekti.
+      await mutate();
+    } catch (e) {
+      setHata(e instanceof Error ? e.message : t("ortakHataOlustu"));
+    } finally {
+      setBekliyor(false);
+    }
+  }
 
   async function gidereYaz() {
     setBekliyor(true);
@@ -132,12 +161,59 @@ export default function MesaiSayfasi() {
             )}
           </AlanSarmal>
         </div>
-        {data && (
-          <Rozet durum="bilgi">
-            {t("mesaiKatsayi", { n: data.katsayi })}
-          </Rozet>
+        {data && !katsayiDuzenle && (
+          <span className="flex items-center gap-2">
+            <Rozet durum="bilgi">
+              {t("mesaiKatsayi", { n: data.katsayi })}
+            </Rozet>
+            <Dugme
+              tur="ikincil"
+              data-test="mesai-katsayi-duzenle"
+              onClick={() => {
+                setKatsayiMetin(String(data.katsayi));
+                setKatsayiDuzenle(true);
+              }}
+            >
+              {t("mesaiKatsayiDuzenle")}
+            </Dugme>
+          </span>
+        )}
+        {katsayiDuzenle && (
+          <span className="flex items-end gap-2">
+            <AlanSarmal etiket={t("mesaiKatsayiDuzenle")}>
+              {(baglar) => (
+                <Alan
+                  {...baglar}
+                  data-test="mesai-katsayi-alan"
+                  inputMode="decimal"
+                  value={katsayiMetin}
+                  onChange={(e) => setKatsayiMetin(e.target.value)}
+                />
+              )}
+            </AlanSarmal>
+            <Dugme
+              tur="birincil"
+              disabled={bekliyor}
+              data-test="mesai-katsayi-kaydet"
+              onClick={() => void katsayiKaydet()}
+            >
+              {t("ortakKaydet")}
+            </Dugme>
+            <Dugme tur="ikincil" onClick={() => setKatsayiDuzenle(false)}>
+              {t("ortakIptal")}
+            </Dugme>
+          </span>
         )}
       </div>
+
+      {katsayiDuzenle && (
+        <p
+          data-test="mesai-katsayi-notu"
+          style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}
+        >
+          {t("mesaiKatsayiNotu")}
+        </p>
+      )}
 
       {/* KAYNAK ACIKCA SOYLENIR: hesap PLAN uzerinden yapiliyor ve
           sistemde gercek bir mesai kaydi YOK. Bunu gizlemek, PARAYA

@@ -41,6 +41,14 @@ class SosyalKapaliRepository implements OauthRepository {
     required String kod,
   }) async {}
 
+  /// (P211 §1) Cok tesisli yonetici secimi — bu sahte "sosyal giris
+  /// KAPALI" hâlini temsil ettigi icin cagrilmasi beklenmez.
+  @override
+  Future<void> tesisSec({
+    required String secimJetonu,
+    required String tenantId,
+  }) async {}
+
   @override
   Future<({String durum, String? tesisAd})> rolTamamla({
     required String baglamaJetonu,

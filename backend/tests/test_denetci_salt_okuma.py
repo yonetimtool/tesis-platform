@@ -200,6 +200,11 @@ KAPISIZ_MUTASYONLAR: frozenset[tuple[str, str]] = frozenset({
     # disi e-posta AYNI yaniti (`onay_bekliyor`) alir.
     ("POST", "/auth/oauth/rol-tamamla"),
     ("POST", "/auth/oauth/rol-tamamla-dogrula"),
+    # (P211 §1) COK TESISLI YONETICI SECIMI. Rol kapisi YOK cunku
+    # kullanicinin HENUZ JETONU YOKTUR — kapi, `secim_jetonu`nun kendisi:
+    # tek kullanimlik (`getdel`) ve secilen tesis jetondaki ADAY
+    # LISTESINDE olmak zorunda (403 `tesis_uyeligi_yok`).
+    ("POST", "/auth/oauth/tesis-sec"),
     # --- (P155 §7) DAVET (kimlik oncesi) ---
     # Rol kapisi OLAMAZ: davetle gelen kisinin henuz oturumu yoktur
     # (`/auth/kayit/rol-*` ile ayni sinif). Tesisin kayitlarina KEYFI

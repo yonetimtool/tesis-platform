@@ -6827,6 +6827,53 @@ paths:
   # DUSURMEZ. Bir hesaplamanin kasayi kendiliginden azaltmasi,
   # yoneticinin gormedigi bir sayinin parayi hareket ettirmesi olurdu.
   # ================================================================= #
+  /mesai/ayar:
+    get:
+      tags: [mesai]
+      summary: Fazla mesai katsayisi (admin + yonetici + denetci okur)
+      responses:
+        "200":
+          description: Ayar
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [katsayi]
+                properties:
+                  katsayi: { type: number, example: 1.5 }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    patch:
+      tags: [mesai]
+      summary: (P211) Fazla mesai katsayisini degistir (admin + yonetici)
+      description: >
+        Yasal taban 1.50 (4857/41); toplu is sozlesmesi yukseltebilir.
+        Sutun P203'te acilmisti ama hicbir uctan YAZILAMIYORDU. Ust sinir
+        5.0: yanlislikla girilmis "150" gibi bir deger bir maasi 150
+        katina cikarir ve ONAY BEKLEYEN BIR GIDERE donusurdu. GECMISE
+        DOKUNMAZ: yazilmis hareketlerin tutari degismez.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [katsayi]
+              properties:
+                katsayi: { type: number, minimum: 1.0, maximum: 5.0 }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [katsayi]
+                properties:
+                  katsayi: { type: number }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
   /mesai/ozet:
     get:
       tags: [mesai]
