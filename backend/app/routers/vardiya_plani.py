@@ -30,9 +30,24 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..audit import Action, audit_user
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
-from ..models import AppUser, Shift, ShiftAssignment, Tenant, VardiyaPlani
+from ..models import (
+    AppUser,
+    Shift,
+    ShiftAssignment,
+    Tenant,
+    VardiyaKalibi,
+    VardiyaPlani,
+)
 from ..schemas import (
     VardiyaAtamaIstek,
+    VardiyaDilim,
+    VardiyaKalibiCreate,
+    VardiyaKalibiListResponse,
+    VardiyaKalibiOut,
+    VardiyaKalipGunDilim,
+    VardiyaKalipSonuc,
+    VardiyaKalipUygulaIstek,
+    VardiyaPartiGeriAlSonuc,
     VardiyaBlokOut,
     VardiyaCizelgeKisiOut,
     VardiyaCizelgeOut,
@@ -644,6 +659,307 @@ async def toplu_ekle(
         cakisan=sum(1 for x in sonuc if x.durum == "cakisma"),
         gunler=sonuc,
         uyarilar=sorted(uyarilar),
+    )
+
+
+# ==================== (P207 §1) VARDIYA KALIBI ============================== #
+#
+# ===========================================================================
+# NEDEN KALIP
+# ===========================================================================
+# "Gunu kac vardiyaya bolecegim" sorusu her ay AYNI yanitlanir: 2
+# vardiya (08-20 / 20-08) ya da 3 vardiya (08-16 / 16-24 / 00-08).
+# Bunu her ay basinda elle girmek, yirmi kisilik bir ekipte yuzlerce
+# tiklama demek — ve her tekrarda bir saat yanlis yazilabilir.
+@router.get("/kaliplar", response_model=VardiyaKalibiListResponse)
+async def kaliplar(
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_OKUR),
+) -> VardiyaKalibiListResponse:
+    satirlar = (
+        await db.execute(
+            select(VardiyaKalibi).order_by(VardiyaKalibi.ad)
+        )
+    ).scalars().all()
+    return VardiyaKalibiListResponse(
+        items=[VardiyaKalibiOut.model_validate(k) for k in satirlar]
+    )
+
+
+@router.post("/kaliplar", response_model=VardiyaKalibiOut, status_code=201)
+async def kalip_olustur(
+    body: VardiyaKalibiCreate,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_YAZAR),
+) -> VardiyaKalibiOut:
+    var = (
+        await db.execute(select(VardiyaKalibi).where(VardiyaKalibi.ad == body.ad))
+    ).scalar_one_or_none()
+    if var is not None:
+        raise APIError(409, "conflict", "vardiya_kalibi_ad_kullanimda")
+    kalip = VardiyaKalibi(
+        tenant_id=user.tenant_id,
+        ad=body.ad,
+        dilimler=[d.model_dump(mode="json") for d in body.dilimler],
+        aktif=body.aktif,
+    )
+    db.add(kalip)
+    await db.flush()
+    await db.refresh(kalip)
+    await audit_user(
+        db, user, Action.VARDIYA_PLAN_UPDATE, resource_type="vardiya_kalibi",
+        resource_id=kalip.id,
+        meta={"islem": "kalip_olustur", "ad": body.ad,
+              "dilim": len(body.dilimler)},
+    )
+    return VardiyaKalibiOut.model_validate(kalip)
+
+
+@router.delete("/kaliplar/{kalip_id}", status_code=204, response_model=None)
+async def kalip_sil(
+    kalip_id: uuid.UUID,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_YAZAR),
+) -> None:
+    kalip = (
+        await db.execute(select(VardiyaKalibi).where(VardiyaKalibi.id == kalip_id))
+    ).scalar_one_or_none()
+    if kalip is None:
+        raise APIError(404, "not_found", "vardiya_kalibi_bulunamadi")
+    # KALIP SILINIR, OLUSMUS PLANLAR KALIR: kalip bir SABLONDUR, plan
+    # satirlarinin ona bagli bir yasami yok (`parti_id` ile geri alinir).
+    await db.delete(kalip)
+    await audit_user(
+        db, user, Action.VARDIYA_PLAN_UPDATE, resource_type="vardiya_kalibi",
+        resource_id=kalip_id, meta={"islem": "kalip_sil"},
+    )
+
+
+def _rotasyonlu_atama(
+    atamalar: dict[int, list[uuid.UUID]],
+    dilim_sayisi: int,
+    hafta: int,
+) -> dict[int, list[uuid.UUID]]:
+    """(§1.3) HAFTALIK ROTASYON — ekipler dilimler arasinda kayar.
+
+    =======================================================================
+    ROTASYON NEDEN DESTEKLENDI
+    =======================================================================
+    Guvenlik sektorunun STANDART kalibi: A ekibi bu hafta gunduz, gelecek
+    hafta gece. Desteklemezsek yonetici ayni ayi IKI kez planlamak
+    (once A gunduz, sonra B gunduz) ya da her hafta elle degistirmek
+    zorunda kalir — ve elle degistirilen her hafta, bir haftanin
+    atlanma ihtimalidir.
+    =======================================================================
+    NEDEN YALNIZ "HAFTALIK" VE NEDEN TEK KAYDIRMA
+    =======================================================================
+    Ucler/dortluler, ileri/geri rotasyon, "iki gun calis bir gun izin"
+    gibi desenler VAR ama her biri BASKA bir kural. Hepsini bir
+    parametreye sigdirmak, kullanicinin anlamadigi bir kutu uretirdi.
+    Buradaki soz NET: her hafta atamalar BIR DILIM ILERI kayar. Otekiler
+    icin kalip iki kez uygulanir (ayri partiler, ayri geri alma).
+    """
+    if dilim_sayisi <= 1:
+        return atamalar
+    kaydir = hafta % dilim_sayisi
+    return {
+        (i + kaydir) % dilim_sayisi: kisiler
+        for i, kisiler in atamalar.items()
+    }
+
+
+@router.post("/kalip-uygula", response_model=VardiyaKalipSonuc)
+async def kalip_uygula(
+    body: VardiyaKalipUygulaIstek,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_YAZAR),
+) -> VardiyaKalipSonuc:
+    """(§1.1-§1.3) SECILI GUNLERE kalibi uygula — onizleme + geri alinabilir.
+
+    =======================================================================
+    ONIZLEME AYRI BIR UC DEGIL
+    =======================================================================
+    `kuru=true` hicbir sey yazmaz ve AYNI hesabi dondurur. Ayri bir
+    "onizleme" ucu yazmak, iki kod yolunun ayrisma riski demekti: sonuc
+    onizlemede baska, kaydetmede baska cikardi — ve kullanici buna ancak
+    yazdiktan sonra guvenmeyi birakirdi.
+
+    =======================================================================
+    CAKISMA SESSIZCE ATLANMAZ (P205 KURALI KORUNDU)
+    =======================================================================
+    Cakisma varsa ve `cakisanlari_atla=false` ise HICBIR SEY YAZILMAZ;
+    yanit hangi gun/dilim/kisi cakistigini SATIR SATIR soyler.
+
+    =======================================================================
+    GERI ALINABILIR
+    =======================================================================
+    Yazilan her satir AYNI `parti_id`yi tasir. "30 gunluk yanlis plan"
+    tek istekle geri alinir (`POST /vardiya-plani/parti/{id}/geri-al`).
+    """
+    if body.kalip_id is not None:
+        kalip = (
+            await db.execute(
+                select(VardiyaKalibi).where(VardiyaKalibi.id == body.kalip_id)
+            )
+        ).scalar_one_or_none()
+        if kalip is None:
+            raise APIError(422, "validation_error", "vardiya_kalibi_bulunamadi")
+        dilimler = [VardiyaDilim.model_validate(d) for d in kalip.dilimler]
+    else:
+        dilimler = body.dilimler or []
+
+    gunler = sorted(set(body.gunler))
+    kisi_idler = {u for liste in body.atamalar.values() for u in liste}
+    if not kisi_idler:
+        raise APIError(422, "validation_error", "vardiya_atama_bos")
+    kisiler = {
+        k.id: k
+        for k in (
+            await db.execute(select(AppUser).where(AppUser.id.in_(kisi_idler)))
+        ).scalars().all()
+    }
+    eksik = kisi_idler - set(kisiler)
+    if eksik or any(not k.is_active for k in kisiler.values()):
+        # TESIS IZOLASYONU: baska tesisin kullanicisi RLS'te GORUNMEZ,
+        # yani "bulunamadi" olur. Yetki genisledi, kapsam genislemedi.
+        raise APIError(422, "validation_error", "personel_bulunamadi")
+
+    ilk_gun = gunler[0]
+    parti_id = uuid.uuid4()
+    satirlar: list[VardiyaKalipGunDilim] = []
+    yazilacak: list[tuple[dt.date, VardiyaDilim, uuid.UUID]] = []
+    uyarilar: set[str] = set()
+
+    for gun in gunler:
+        hafta = (gun - ilk_gun).days // 7
+        atama = (
+            _rotasyonlu_atama(body.atamalar, len(dilimler), hafta)
+            if body.rotasyon == "haftalik"
+            else body.atamalar
+        )
+        for sira, dilim in enumerate(dilimler):
+            for kisi_id in atama.get(sira, []):
+                aralik = vardiya_araligi(gun, dilim.baslangic, dilim.bitis)
+                # AYNI SATIR ZATEN VAR MI: kalibi ikinci kez uygulamak
+                # (or. bir gun ekleyip yeniden calistirmak) mevcut
+                # satirlari "cakisma" diye raporlamamali — bu, dogru bir
+                # islemi hata gibi gostermek olurdu.
+                mevcut = (
+                    await db.execute(
+                        select(VardiyaPlani).where(
+                            VardiyaPlani.tarih == gun,
+                            VardiyaPlani.user_id == kisi_id,
+                            VardiyaPlani.durum == "planli",
+                            VardiyaPlani.baslangic_saat == dilim.baslangic,
+                            VardiyaPlani.bitis_saat == dilim.bitis,
+                        )
+                    )
+                ).scalar_one_or_none()
+                if mevcut is not None:
+                    satirlar.append(VardiyaKalipGunDilim(
+                        tarih=gun, dilim=dilim.ad, baslangic=dilim.baslangic,
+                        bitis=dilim.bitis, user_id=kisi_id,
+                        ad=kisiler[kisi_id].ad, durum="zaten_var"))
+                    continue
+                try:
+                    uyarilar.update(await _cakisma_denetle(
+                        db, user_id=kisi_id, tarih=gun, aralik=aralik))
+                except APIError:
+                    satirlar.append(VardiyaKalipGunDilim(
+                        tarih=gun, dilim=dilim.ad, baslangic=dilim.baslangic,
+                        bitis=dilim.bitis, user_id=kisi_id,
+                        ad=kisiler[kisi_id].ad, durum="cakisma"))
+                    continue
+                satirlar.append(VardiyaKalipGunDilim(
+                    tarih=gun, dilim=dilim.ad, baslangic=dilim.baslangic,
+                    bitis=dilim.bitis, user_id=kisi_id,
+                    ad=kisiler[kisi_id].ad, durum="eklenecek"))
+                yazilacak.append((gun, dilim, kisi_id))
+
+    cakisan = sum(1 for r in satirlar if r.durum == "cakisma")
+    zaten = sum(1 for r in satirlar if r.durum == "zaten_var")
+
+    # ONIZLEME ya da "cakisma var ama kullanici karar vermedi": YAZMA.
+    if body.kuru or (cakisan and not body.cakisanlari_atla):
+        return VardiyaKalipSonuc(
+            uygulandi=False, eklenecek=len(yazilacak), cakisan=cakisan,
+            zaten_var=zaten, satirlar=satirlar, uyarilar=sorted(uyarilar),
+        )
+
+    for gun, dilim, kisi_id in yazilacak:
+        db.add(VardiyaPlani(
+            tenant_id=user.tenant_id,
+            shift_id=None,
+            tarih=gun,
+            user_id=kisi_id,
+            baslangic_saat=dilim.baslangic,
+            bitis_saat=dilim.bitis,
+            not_metni=body.not_metni,
+            parti_id=parti_id,
+        ))
+    await db.flush()
+    for r in satirlar:
+        if r.durum == "eklenecek":
+            r.durum = "eklendi"
+    await audit_user(
+        db, user, Action.VARDIYA_PLAN_UPDATE, resource_type="vardiya_plani",
+        resource_id=None,
+        meta={
+            "islem": "kalip_uygula",
+            "parti_id": str(parti_id),
+            "gun": len(gunler),
+            "dilim": len(dilimler),
+            "rotasyon": body.rotasyon,
+            "eklenen": len(yazilacak),
+            "cakisan": cakisan,
+        },
+    )
+    return VardiyaKalipSonuc(
+        uygulandi=True, parti_id=parti_id, eklenen=len(yazilacak),
+        cakisan=cakisan, zaten_var=zaten, satirlar=satirlar,
+        uyarilar=sorted(uyarilar),
+    )
+
+
+@router.post("/parti/{parti_id}/geri-al", response_model=VardiyaPartiGeriAlSonuc)
+async def parti_geri_al(
+    parti_id: uuid.UUID,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_YAZAR),
+) -> VardiyaPartiGeriAlSonuc:
+    """(§1 KRITIK) TOPLU ISLEMI GERI AL.
+
+    "30 gunluk yanlis plan olusturan yonetici tek tek silmek zorunda
+    kalmasin" — istegin acik sarti.
+
+    SILMEZ, `iptal` ISARETLER: P203'ten beri gecerli kural. Silmek,
+    denetim kaydini "neyin degistigini" gosteremez hâle getirirdi.
+
+    YALNIZ HÂLÂ `planli` OLAN SATIRLAR: parti sonrasi elle degistirilmis
+    (cikarilmis) satirlari yeniden ellemek, yoneticinin ARADAKI kararini
+    sessizce ezmek olurdu.
+    """
+    satirlar = (
+        await db.execute(
+            select(VardiyaPlani).where(
+                VardiyaPlani.parti_id == parti_id,
+                VardiyaPlani.durum == "planli",
+            )
+        )
+    ).scalars().all()
+    if not satirlar:
+        raise APIError(404, "not_found", "vardiya_partisi_bulunamadi")
+    for plan in satirlar:
+        plan.durum = "iptal"
+    await db.flush()
+    await audit_user(
+        db, user, Action.VARDIYA_PLAN_UPDATE, resource_type="vardiya_plani",
+        resource_id=None,
+        meta={"islem": "parti_geri_al", "parti_id": str(parti_id),
+              "iptal_edilen": len(satirlar)},
+    )
+    return VardiyaPartiGeriAlSonuc(
+        parti_id=parti_id, iptal_edilen=len(satirlar)
     )
 
 

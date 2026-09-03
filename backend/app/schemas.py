@@ -2099,6 +2099,106 @@ class VardiyaTopluOut(BaseModel):
     uyarilar: list[str] = []
 
 
+# ================= (P207 §1) VARDIYA KALIBI + AY BAZINDA TOPLU ============== #
+class VardiyaDilim(BaseModel):
+    """Bir gunun TEK bir vardiya dilimi."""
+
+    ad: str = Field(..., min_length=1, max_length=40)
+    baslangic: time
+    bitis: time
+
+
+class VardiyaKalibiCreate(BaseModel):
+    ad: str = Field(..., min_length=1, max_length=60)
+    #: EN AZ BIR, EN FAZLA ALTI dilim. Alti, saatlik nobet gibi bir
+    #: kaliba bile yeter; sinirsiz birakmak tek istekle yuzlerce
+    #: vardiya uretilmesine kapi acardi.
+    dilimler: list[VardiyaDilim] = Field(..., min_length=1, max_length=6)
+    aktif: bool = True
+
+
+class VardiyaKalibiOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    ad: str
+    dilimler: list[VardiyaDilim]
+    aktif: bool
+
+
+class VardiyaKalibiListResponse(BaseModel):
+    items: list[VardiyaKalibiOut] = []
+
+
+class VardiyaKalipUygulaIstek(BaseModel):
+    """(§1.3) Secili GUNLERE kalip uygula.
+
+    GUNLER ISTEMCIDEN GELIR, aralik degil: takvimde tiklayarak,
+    surukleyerek ya da "tum pazartesiler" kalibiyla secilen gunler
+    duzensiz olabilir. Sunucuya "baslangic-bitis" gondermek, o secimi
+    ANLATAMAZDI.
+    """
+
+    kalip_id: uuid.UUID | None = None
+    #: Kalip KAYDEDILMEDEN de uygulanabilir (tek seferlik plan).
+    dilimler: list[VardiyaDilim] | None = None
+    gunler: list[date] = Field(..., min_length=1, max_length=62)
+    #: dilim sirasi -> o dilime atanacak personel kimlikleri.
+    #: Bos birakilan dilim ATLANIR (o gun o vardiya BOS kalir).
+    atamalar: dict[int, list[uuid.UUID]] = Field(default_factory=dict)
+    #: `yok` | `haftalik`. Rotasyon, dilim atamalarini HAFTA BASINA
+    #: bir kaydirir (A ekibi gunduz -> gece, B ekibi gece -> gunduz).
+    rotasyon: Literal["yok", "haftalik"] = "yok"
+    not_metni: str | None = Field(None, max_length=500)
+    #: TRUE ise HICBIR SEY YAZILMAZ — yalnizca onizleme doner.
+    kuru: bool = False
+    cakisanlari_atla: bool = False
+
+    @model_validator(mode="after")
+    def _kaynak_tek(self) -> "VardiyaKalipUygulaIstek":
+        if (self.kalip_id is None) == (self.dilimler is None):
+            # Ikisi birden ya da hicbiri: hangi dilimlerin uygulanacagi
+            # BELIRSIZ olurdu.
+            raise ValueError("kalip_id VEYA dilimler verilmeli (ikisi degil)")
+        return self
+
+
+class VardiyaKalipGunDilim(BaseModel):
+    """Onizleme/sonuc satiri: gun x dilim x kisi."""
+
+    tarih: date
+    dilim: str
+    baslangic: time
+    bitis: time
+    user_id: uuid.UUID
+    ad: str | None = None
+    #: `eklenecek` | `eklendi` | `cakisma` | `zaten_var`
+    durum: str
+
+
+class VardiyaKalipSonuc(BaseModel):
+    """(§1.3) Onizleme ya da uygulama sonucu.
+
+    ONIZLEME KAYDETMEDEN ONCE KAC VARDIYA OLUSACAGINI SOYLER (istegin
+    acik sarti): `eklenecek` sayisi. Uygulamada `parti_id` doner ve
+    GERI ALMA onu kullanir.
+    """
+
+    uygulandi: bool
+    parti_id: uuid.UUID | None = None
+    eklenecek: int = 0
+    eklenen: int = 0
+    cakisan: int = 0
+    zaten_var: int = 0
+    satirlar: list[VardiyaKalipGunDilim] = []
+    uyarilar: list[str] = []
+
+
+class VardiyaPartiGeriAlSonuc(BaseModel):
+    parti_id: uuid.UUID
+    iptal_edilen: int
+
+
 class VardiyaGuncelleIstek(BaseModel):
     """(§2.3) Blogun saatini/gununu degistir.
 

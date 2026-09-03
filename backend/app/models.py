@@ -4440,6 +4440,13 @@ class VardiyaPlani(Base):
     )
     #: Planin tasidigi TEK yeni bilgi ve varlik sebebi.
     tarih = mapped_column(Date, nullable=False)
+    #: (P207 §1) TOPLU ISLEM KIMLIGI — geri alma bunu kullanir.
+    #: Tekil atamalarda NULL. `created_at` araligiyla geri almak, ayni
+    #: dakikada calisan ikinci bir yoneticinin satirlarini da iptal
+    #: ederdi.
+    parti_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
     #: (P205 §2) SATIRIN KENDI saatleri. Doluysa sablonu EZER — o gunluk
     #: sapma ("bugun 1 saat erken cikiyor") sablonu degistirmeden
     #: yazilabilsin diye. Okuma kurali TEK YERDE: `vardiya.plan_araligi`.
@@ -4455,5 +4462,33 @@ class VardiyaPlani(Base):
     #: liste sahadaki sebepleri kapsamaz ve "diger" bilgiyi yine metne
     #: iterdi.
     not_metni: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at = _created_at()
+    updated_at = _created_at()
+
+
+class VardiyaKalibi(Base):
+    """(P207 §1) GUNU VARDIYALARA BOLME KALIBI — goc 0099.
+
+    "2 vardiya: 08:00-20:00 / 20:00-08:00" gibi bir tanim her ay basinda
+    ELLE tekrar girilmemeli. Kalip TESISE aittir ve tekrar kullanilir.
+
+    `dilimler` JSONB dizisi: `[{"ad", "baslangic", "bitis"}]`. Ayri bir
+    dilim tablosu acmak, hep BIRLIKTE okunan/yazilan ve bagimsiz bir
+    yasami olmayan bir listeyi ikiye bolmek olurdu; sira da JSONB
+    dizisinde zaten korunuyor.
+    """
+
+    __tablename__ = "vardiya_kalibi"
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    ad: Mapped[str] = mapped_column(Text, nullable=False)
+    dilimler: Mapped[list] = mapped_column(JSONB, nullable=False)
+    aktif: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
     created_at = _created_at()
     updated_at = _created_at()

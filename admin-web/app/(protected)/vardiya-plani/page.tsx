@@ -14,6 +14,7 @@ import {
   Rozet,
   Secim,
 } from "@/components/ui";
+import { KalipModali } from "@/components/vardiya/kalip-modali";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
@@ -106,6 +107,20 @@ const PX_GUN_AY = 34;
 
 const SAATLER = Array.from({ length: 24 }, (_, i) => i);
 
+/** Hafta gunu -> sozluk anahtari (JS `getDay()` sirasi: 0=pazar). */
+const HAFTA_GUNLERI = [
+  { gun: 1, anahtar: "gunPazartesi" },
+  { gun: 2, anahtar: "gunSali" },
+  { gun: 3, anahtar: "gunCarsamba" },
+  { gun: 4, anahtar: "gunPersembe" },
+  { gun: 5, anahtar: "gunCuma" },
+  { gun: 6, anahtar: "gunCumartesi" },
+  { gun: 0, anahtar: "gunPazar" },
+] as const;
+
+/** JSX ucluda sabit metin yazilamaz (`sabit-metin` taramasi). */
+const SEFFAF = "transparent";
+
 /** Dugme turleri — JSX ucluda sabit metin olarak yazilamaz. */
 const BIRINCIL = "birincil" as const;
 const IKINCIL = "ikincil" as const;
@@ -153,6 +168,19 @@ export default function VardiyaPlaniSayfasi() {
   const [secili, setSecili] = useState<{ kisi: CizelgeKisi; blok: Blok } | null>(
     null,
   );
+  // (P207 §1) AY GORUNUMUNDE GUN SECIMI.
+  //
+  // Secim SET olarak tutulur cunku secim DUZENSIZ olabilir ("tum
+  // pazartesiler"); aralik (baslangic-bitis) bunu anlatamazdi.
+  const [seciliGunler, setSeciliGunler] = useState<Set<string>>(new Set());
+  const [kalipAcik, setKalipAcik] = useState(false);
+  // Son toplu islemin kimligi — GERI ALMA bunu kullanir. Yalnizca son
+  // islem tutulur: "hangi partiyi geri alacagim" sorusu yoneticiye
+  // sorulacak bir sey degil; yanlis planin ardindan yapilan ILK sey
+  // onu geri almaktir.
+  const [sonParti, setSonParti] = useState<string | null>(null);
+  // Suruklerken baslangic gunu — fare basiliyken gezilen gunler secilir.
+  const [surukleBas, setSurukleBas] = useState<string | null>(null);
   const [hata, setHata] = useState<string | null>(null);
   const [bekliyor, setBekliyor] = useState(false);
   const seritRef = useRef<HTMLDivElement | null>(null);
@@ -204,6 +232,41 @@ export default function VardiyaPlaniSayfasi() {
     const saat = fark * 24 + simdi.getHours() + simdi.getMinutes() / 60;
     return saat * PX_SAAT[gorunum];
   }, [baslangic, bugun, gun, gorunum, simdi]);
+
+  function gunDegistir(g: string) {
+    setSeciliGunler((s2) => {
+      const y = new Set(s2);
+      if (y.has(g)) {
+        y.delete(g);
+      } else {
+        y.add(g);
+      }
+      return y;
+    });
+  }
+
+  /** Suruklerken: iki gun ARASINDAKI her gunu secer (kaldirmaz). */
+  function araligiSec(a: string, b: string) {
+    const [ilk, son] = gunFarki(a, b) >= 0 ? [a, b] : [b, a];
+    const adet = gunFarki(ilk, son);
+    setSeciliGunler((s2) => {
+      const y = new Set(s2);
+      for (let i = 0; i <= adet; i++) y.add(gunEkle(ilk, i));
+      return y;
+    });
+  }
+
+  /** "Tum pazartesiler" gibi kalip secimi: 0=pazar ... 1=pazartesi. */
+  function haftaGunuSec(haftaGunu: number) {
+    setSeciliGunler((s2) => {
+      const y = new Set(s2);
+      for (let i = 0; i < gun; i++) {
+        const g = gunEkle(baslangic, i);
+        if (new Date(`${g}T00:00:00`).getDay() === haftaGunu) y.add(g);
+      }
+      return y;
+    });
+  }
 
   async function calistir(is: AsyncIs) {
     setBekliyor(true);
@@ -313,6 +376,78 @@ export default function VardiyaPlaniSayfasi() {
           {t("vardiyaTazele")}
         </Dugme>
       </div>
+
+      {/* (P207 §1) SECIM ARAC CUBUGU — yalniz AY gorunumunde.
+          Gun/hafta gorunumunde bir avuc gun vardir ve toplu planlama
+          orada anlamli degil; cubugu her gorunumde cizmek, ekrani
+          kullanilmayan bir araca ayirmak olurdu. */}
+      {gorunum === "ay" && (
+        <div className="flex flex-wrap items-center gap-2" data-test="vardiya-secim-araclari">
+          {HAFTA_GUNLERI.map((h) => (
+            <Dugme
+              key={h.gun}
+              type="button"
+              boy="kucuk"
+              tur={IKINCIL}
+              data-test={`vardiya-hafta-gunu-${h.gun}`}
+              onClick={() => haftaGunuSec(h.gun)}
+            >
+              {t(h.anahtar)}
+            </Dugme>
+          ))}
+          <Dugme
+            type="button"
+            boy="kucuk"
+            tur={IKINCIL}
+            data-test="vardiya-secimi-temizle"
+            onClick={() => setSeciliGunler(new Set())}
+          >
+            {t("vardiyaSecimiTemizle")}
+          </Dugme>
+          <span
+            data-test="vardiya-secim-sayisi"
+            style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}
+          >
+            {t("vardiyaSeciliGun", { n: seciliGunler.size })}
+          </span>
+          <Dugme
+            type="button"
+            boy="kucuk"
+            disabled={seciliGunler.size === 0}
+            data-test="vardiya-kalip-ac"
+            onClick={() => setKalipAcik(true)}
+          >
+            {t("vardiyaKalipUygula")}
+          </Dugme>
+          {/* GERI ALMA: son toplu islem varken gorunur. Otuz gunluk
+              yanlis plani tek tek silmek zorunda kalmamak, istegin
+              KRITIK sarti. */}
+          {sonParti && (
+            <Dugme
+              type="button"
+              boy="kucuk"
+              tur="tehlike"
+              disabled={bekliyor}
+              data-test="vardiya-parti-geri-al"
+              onClick={() =>
+                void calistir(async () => {
+                  const y = (await apiSend(
+                    `/api/vardiya-plani/parti/${sonParti}/geri-al`,
+                    "POST",
+                    {},
+                  )) as { iptal_edilen?: number };
+                  toast.success(
+                    t("vardiyaPartiGeriAlindi", { n: y?.iptal_edilen ?? 0 }),
+                  );
+                  setSonParti(null);
+                })
+              }
+            >
+              {t("vardiyaSonIslemiGeriAl")}
+            </Dugme>
+          )}
+        </div>
+      )}
 
       {filtrelerAcik && (
         <Kart>
@@ -487,17 +622,46 @@ export default function VardiyaPlaniSayfasi() {
                 {gorunum === "ay"
                   ? Array.from({ length: gun }, (_, i) => gunEkle(baslangic, i)).map(
                       (g) => (
-                        <span
+                        // (P207 §1) GUN SECIMI: tiklamak secer/kaldirir,
+                        // basili tutup gezmek ARALIK secer. Secim GORSEL
+                        // OLARAK BELIRGIN (dolgu + kenarlik): silik bir
+                        // isaret, otuz sutunluk bir seritte goz
+                        // taramasiyla bulunamazdi.
+                        <button
                           key={g}
-                          className="shrink-0 tabular-nums"
+                          type="button"
+                          data-test={`vardiya-gun-sec-${g}`}
+                          aria-pressed={seciliGunler.has(g)}
+                          className="odak-ic shrink-0 tabular-nums"
                           style={{
                             width: `${PX_GUN_AY}px`,
                             fontSize: "var(--yz-fs-xs)",
-                            color: "var(--yz-text-3)",
+                            color: seciliGunler.has(g)
+                              ? "var(--yz-text)"
+                              : "var(--yz-text-3)",
+                            background: seciliGunler.has(g)
+                              ? "var(--yz-surface-2)"
+                              : SEFFAF,
+                            borderInlineStart: seciliGunler.has(g)
+                              ? "var(--yz-border-w) solid var(--yz-accent-edge)"
+                              : undefined,
+                          }}
+                          onMouseDown={() => {
+                            setSurukleBas(g);
+                            gunDegistir(g);
+                          }}
+                          onMouseEnter={() => {
+                            if (surukleBas) araligiSec(surukleBas, g);
+                          }}
+                          onMouseUp={() => setSurukleBas(null)}
+                          onClick={(e) => {
+                            // Dokunmatik/klavye: `mousedown` gelmeyen
+                            // yollarda tiklama tek basina calismali.
+                            if (e.detail === 0) gunDegistir(g);
                           }}
                         >
                           {g.slice(8)}
-                        </span>
+                        </button>
                       ),
                     )
                   : Array.from({ length: gun }, (_, g) => g).flatMap((g) =>
@@ -630,6 +794,20 @@ export default function VardiyaPlaniSayfasi() {
           }
         />
       )}
+
+      {/* ---------------- (P207 §1) KALIP UYGULA ------------------------ */}
+      <KalipModali
+        acik={kalipAcik}
+        gunler={Array.from(seciliGunler).sort()}
+        personel={(personel?.items ?? []).filter((p) => p.role !== "resident")}
+        onKapat={() => setKalipAcik(false)}
+        onUygulandi={(partiId) => {
+          setSonParti(partiId);
+          setKalipAcik(false);
+          setSeciliGunler(new Set());
+          void mutate();
+        }}
+      />
 
       {/* --------------------- 2.2 HIZLI VARDIYA EKLE -------------------- */}
       <HizliEkle

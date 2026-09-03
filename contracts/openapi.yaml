@@ -6943,6 +6943,109 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "422": { $ref: "#/components/responses/ValidationError" }
+  /vardiya-plani/kaliplar:
+    get:
+      tags: [vardiya]
+      summary: Vardiya kaliplari (yonetim + saha okur)
+      responses:
+        "200":
+          description: Kalip listesi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VardiyaKalipListe" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [vardiya]
+      summary: Vardiya kalibi tanimla (admin + yonetici)
+      description: >
+        "Gunu kac vardiyaya bolecegim" sorusu her ay AYNI yanitlanir
+        (2 vardiya 08-20/20-08 gibi). Kalip bir kez tanimlanir, tekrar
+        kullanilir; her ay elle girmek yuzlerce tiklama ve her tekrarda
+        bir yanlis saat demekti. Ayni ad IKI KEZ kullanilamaz (409):
+        ay basinda "hangisiydi" sorusu yanitlanamaz olurdu.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/VardiyaKalipCreate" }
+      responses:
+        "201":
+          description: Olusturuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VardiyaKalip" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /vardiya-plani/kaliplar/{kalip_id}:
+    delete:
+      tags: [vardiya]
+      summary: Vardiya kalibini sil (admin + yonetici)
+      description: >
+        Kalip SILINIR, ondan olusmus PLANLAR KALIR: kalip bir sablondur,
+        plan satirlarinin ona bagli bir yasami yok (geri alma `parti_id`
+        ile yapilir).
+      parameters:
+        - { name: kalip_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "204": { description: Silindi }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /vardiya-plani/kalip-uygula:
+    post:
+      tags: [vardiya]
+      summary: Secili GUNLERE kalip uygula — onizleme + geri alinabilir (admin + yonetici)
+      description: >
+        GUNLER ISTEMCIDEN GELIR, aralik degil: takvimde tiklayarak,
+        surukleyerek ya da "tum pazartesiler" kalibiyla secilen gunler
+        DUZENSIZ olabilir ve aralik bunu anlatamazdi.
+        ONIZLEME AYRI UC DEGIL: `kuru=true` hicbir sey yazmaz ve AYNI
+        hesabi doner — ayri bir onizleme ucu, iki kod yolunun ayrisma
+        riski demekti.
+        CAKISMA SESSIZCE ATLANMAZ (P205 kurali): cakisma varsa ve
+        `cakisanlari_atla=false` ise HICBIR SEY yazilmaz; yanit hangi
+        gun/dilim/kisi cakistigini SATIR SATIR soyler.
+        ROTASYON (`haftalik`) atamalari hafta basina BIR DILIM ILERI
+        kaydirir — guvenlik sektorunun standart kalibi.
+        Yazilan her satir AYNI `parti_id`yi tasir; geri alma onu kullanir.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/VardiyaKalipUygula" }
+      responses:
+        "200":
+          description: Onizleme ya da uygulama sonucu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VardiyaKalipSonuc" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+  /vardiya-plani/parti/{parti_id}/geri-al:
+    post:
+      tags: [vardiya]
+      summary: Toplu islemi geri al (admin + yonetici)
+      description: >
+        "30 gunluk yanlis plan olusturan yonetici tek tek silmek zorunda
+        kalmasin." SILMEZ, `iptal` isaretler (denetim izi korunur) ve
+        YALNIZ hâlâ `planli` olan satirlara dokunur — parti sonrasi elle
+        cikarilmis satirlari geri getirmek, yoneticinin ARADAKI kararini
+        sessizce ezmek olurdu.
+      parameters:
+        - { name: parti_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Iptal edildi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VardiyaPartiGeriAl" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
   /vardiya-plani/{plan_id}:
     patch:
       tags: [vardiya]
@@ -14073,6 +14176,107 @@ components:
         baslangic_saat: { type: string, nullable: true }
         bitis_saat: { type: string, nullable: true }
         not_metni: { type: string, maxLength: 500, nullable: true }
+    VardiyaDilim:
+      type: object
+      required: [ad, baslangic, bitis]
+      properties:
+        ad: { type: string, maxLength: 40 }
+        baslangic: { type: string }
+        bitis: { type: string }
+    VardiyaKalipCreate:
+      type: object
+      required: [ad, dilimler]
+      properties:
+        ad: { type: string, maxLength: 60 }
+        dilimler:
+          type: array
+          minItems: 1
+          maxItems: 6
+          items: { $ref: "#/components/schemas/VardiyaDilim" }
+        aktif: { type: boolean, default: true }
+    VardiyaKalip:
+      type: object
+      required: [id, ad, dilimler, aktif]
+      properties:
+        id: { type: string, format: uuid }
+        ad: { type: string }
+        dilimler:
+          type: array
+          items: { $ref: "#/components/schemas/VardiyaDilim" }
+        aktif: { type: boolean }
+    VardiyaKalipListe:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/VardiyaKalip" }
+    VardiyaKalipUygula:
+      type: object
+      required: [gunler]
+      properties:
+        kalip_id: { type: string, format: uuid, nullable: true }
+        dilimler:
+          type: array
+          nullable: true
+          items: { $ref: "#/components/schemas/VardiyaDilim" }
+        gunler:
+          type: array
+          minItems: 1
+          maxItems: 62
+          items: { type: string, format: date }
+          description: >
+            DUZENSIZ olabilir ("tum pazartesiler"); aralik DEGIL.
+        atamalar:
+          type: object
+          additionalProperties:
+            type: array
+            items: { type: string, format: uuid }
+          description: >
+            dilim sirasi -> personel kimlikleri. Bos birakilan dilim
+            ATLANIR (o gun o vardiya BOS kalir).
+        rotasyon:
+          type: string
+          enum: [yok, haftalik]
+          default: yok
+        not_metni: { type: string, maxLength: 500, nullable: true }
+        kuru:
+          type: boolean
+          default: false
+          description: TRUE ise HICBIR SEY yazilmaz — yalnizca onizleme.
+        cakisanlari_atla: { type: boolean, default: false }
+    VardiyaKalipSatir:
+      type: object
+      required: [tarih, dilim, baslangic, bitis, user_id, durum]
+      properties:
+        tarih: { type: string, format: date }
+        dilim: { type: string }
+        baslangic: { type: string }
+        bitis: { type: string }
+        user_id: { type: string, format: uuid }
+        ad: { type: string, nullable: true }
+        durum: { type: string, enum: [eklenecek, eklendi, cakisma, zaten_var] }
+    VardiyaKalipSonuc:
+      type: object
+      required: [uygulandi]
+      properties:
+        uygulandi: { type: boolean }
+        parti_id: { type: string, format: uuid, nullable: true }
+        eklenecek: { type: integer }
+        eklenen: { type: integer }
+        cakisan: { type: integer }
+        zaten_var: { type: integer }
+        satirlar:
+          type: array
+          items: { $ref: "#/components/schemas/VardiyaKalipSatir" }
+        uyarilar:
+          type: array
+          items: { type: string }
+    VardiyaPartiGeriAl:
+      type: object
+      required: [parti_id, iptal_edilen]
+      properties:
+        parti_id: { type: string, format: uuid }
+        iptal_edilen: { type: integer }
     VardiyaSimdi:
       type: object
       required: [zaman]
