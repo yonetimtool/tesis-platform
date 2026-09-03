@@ -295,3 +295,91 @@ virgüllü giriş, kapsam notu, iptalde istek gitmez). openapi + rol matrisi
 güncel. Ayrıca §1'in kaçırdığı bir kilit kaydı da burada kapatıldı:
 `/auth/oauth/tesis-sec` "rol kapısı olmayan mutasyon uçları" kümesine
 gerekçesiyle eklendi.
+
+---
+
+## §6 — iOS'ta bildirim gelmiyor: zincirin nerede koptuğu
+
+### ÖLÇÜM — zinciri baştan sona, halka halka
+
+| Halka | Durum | Not |
+|---|---|---|
+| Backend FCM v1 gönderimi | ✅ | `app/push.py`, tek token/istek, hata kodlarına göre budama |
+| iOS `aps.sound` gövdede | ✅ | `.caf` **uzantısıyla** gönderiliyor (`ses_adi`) — doğru |
+| `.caf` dosyaları pakette | ✅ | üçü de `ios/Runner/` altında (Xcode target'a eklemeyi sen yapacaksın) |
+| `GoogleService-Info.plist` | ✅ | `site.yonetio.app` — Runner'ın paket kimliğiyle aynı |
+| İzin isteme + jeton kaydı (Dart) | ✅ | `push_registrar` ilk oturumda ister, `platform: "ios"` gönderir |
+| **`aps-environment` entitlement** | ❌ **YOKTU** | **Birincil sebep** |
+| **Push Notifications capability** | ❌ **YOKTU** | pbxproj'da `com.apple.Push` işaretli değildi |
+| iOS'ta `getToken()` sırası | ⚠️ **kırılgandı** | APNs jetonu gelmeden çağrılıyordu |
+| APNs Auth Key (.p8) Firebase'de | **ÖLÇEMEDİM** | Firebase konsolunda; erişimim yok |
+| App ID'de Push yeteneği | **ÖLÇEMEDİM** | Apple Developer portalı |
+
+**Kırılma zinciri:** `aps-environment` yok → `registerForRemoteNotifications`
+**APNs jetonu almaz** → FCM `getToken()` ya `null` döner ya
+`apns-token-not-set` atar → bizim `catch` bunu **sessizce null**'a çevirir →
+cihaz sunucuya **hiç kaydolmaz** → hiçbir bildirim gelmez. Hiçbir katman
+hata göstermez; Android çalışırken iOS'un sessiz kalmasının doğal
+açıklaması budur.
+
+### Bu turda yapılanlar (kod tarafı)
+1. `Runner.entitlements` → `aps-environment` = `development`. **Değer
+   bilinçli `development`**: Xcode, App Store/TestFlight dağıtımında
+   imzalarken `production` ile değiştirir; elle `production` yazmak
+   cihaza doğrudan kurulan geliştirme yapısında jetonu engellerdi.
+2. `project.pbxproj` → `SystemCapabilities` içine `com.apple.Push`
+   (NFC için zaten kullanılan aynı kalıp).
+3. `push_messaging.dart` → iOS'ta önce `getAPNSToken()` beklenir (10 ×
+   500 ms), gelmezse FCM jetonu **istenmez** ve sebep günlüğe yazılır —
+   sessiz null yerine söylenmiş bir başarısızlık.
+4. 5 kilit testi (`p211_ios_push_zinciri_test.dart`).
+
+### SENİN YAPACAKLARIN — Xcode ve Apple/Firebase konsolu
+Erişimim yok; sırayla:
+
+**A. Apple Developer portalı** (developer.apple.com → Certificates,
+Identifiers & Profiles)
+1. **Identifiers → `site.yonetio.app`** → Capabilities listesinde
+   **Push Notifications**'ı işaretle → Save. (Aynı ekranda
+   **Associated Domains** ve **NFC Tag Reading** de işaretli olmalı.)
+2. **Keys → +** → adı `Yonetio APNs` → **Apple Push Notifications
+   service (APNs)** kutusunu işaretle → Continue → Register →
+   **`AuthKey_XXXXXXXXXX.p8` dosyasını indir** (bir kez indirilebilir!).
+   Not al: **Key ID** (10 karakter) ve **Team ID** (Membership sayfasında).
+3. Profilleri **yeniden üret**: yetenek eklendiği için mevcut provisioning
+   profilleri geçersizleşir. Xcode otomatik imzalama kullanıyorsan
+   Xcode kendisi yeniler; manuel imzalıyorsan profili yeniden indir.
+
+**B. Firebase konsolu** (console.firebase.google.com → `tesis-platform`)
+4. **Project settings → Cloud Messaging → Apple app configuration**
+   (`site.yonetio.app`) → **APNs Authentication Key → Upload**:
+   `.p8` dosyası + **Key ID** + **Team ID**. (Sertifika değil, **key**
+   yükle: key her iki ortamda da — sandbox ve production — çalışır ve
+   süresi dolmaz.)
+
+**C. Xcode** (Runner.xcworkspace)
+5. **Runner target → Signing & Capabilities → + Capability → Push
+   Notifications**. (Bu adımdan sonra `aps-environment`'ı Xcode kendi
+   yönetir; dosyaya koyduğum değer zaten uyumlu.)
+6. Aynı ekranda **Background Modes**'u eklemek **isteğe bağlı**: yalnız
+   *sessiz/veri* bildirimi işlemek gerekirse **Remote notifications**
+   kutusu şart. Bugünkü gönderimlerimiz `notification` taşıdığı için
+   alarm bildirimleri onsuz da gelir — bu yüzden `Info.plist`e
+   `UIBackgroundModes` **eklemedim**; App Store denetimi gerekçesiz
+   arka plan modunu sorgular.
+7. **`yonetio_bildirim.caf`, `yonetio_vardiya.caf`, `yonetio_gurultu.caf`**
+   dosyalarını **Runner target'ına ekle** (Build Phases → Copy Bundle
+   Resources). Dosyalar depoda var ama target üyeliğini Xcode tutuyor;
+   eksikse iOS sessizce **varsayılan sese** düşer.
+8. Archive → TestFlight.
+
+**D. Cihazda doğrulama sırası** (hangi halkanın koptuğunu ayırt eder)
+9. Uygulamayı aç, bildirim iznini **ver**.
+10. Ayarlar ekranındaki push tanılama bölümünde **jetonun kaydedildiğini**
+    gör. Jeton **yoksa** sorun A/C adımlarındadır (APNs jetonu gelmiyor).
+11. Jeton varsa panelden bir test bildirimi gönder. Jeton var ama bildirim
+    gelmiyorsa sorun **B**'dedir (APNs key yüklü değil / yanlış Team ID) —
+    bu durumda `push_gonderim` kaydında hata kodu görünür.
+
+> **Simülatörde push çalışmaz** (APNs jetonu üretilmez). Test **gerçek
+> cihazda** yapılmalı.

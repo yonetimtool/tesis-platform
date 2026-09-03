@@ -2,6 +2,26 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- (P211 §6) PUSH BILDIRIM — IOS'TA BILDIRIM GELMEMESININ BIRINCI
+	     SEBEBI BUYDU: `aps-environment` YOKTU.
+
+	     Bu anahtar olmadan `registerForRemoteNotifications` APNs
+	     jetonu ALMAZ; APNs jetonu olmayinca FCM `getToken()` ya null
+	     doner ya `apns-token-not-set` atar — yani cihaz sunucuya HIC
+	     kaydolmaz ve hicbir bildirim gelmez. Android tarafi calisirken
+	     iOS'un sessiz kalmasinin dogal aciklamasi budur.
+
+	     DEGER `development`: Xcode, App Store/TestFlight dagitiminda
+	     imzalarken bunu `production` ile DEGISTIRIR. Elle `production`
+	     yazmak, cihaza dogrudan kurulan (development imzali) yapida
+	     jetonun alinmamasina yol acardi.
+
+	     KONSOL ISI (yalniz bu dosya YETMEZ) — bkz. §6 listesi:
+	       * Xcode > Signing & Capabilities > + Push Notifications,
+	       * Apple Developer > App ID > Push Notifications yetenegi,
+	       * APNs Auth Key (.p8) Firebase konsoluna yuklenmeli. -->
+	<key>aps-environment</key>
+	<string>development</string>
 	<!-- (P114) CORE NFC. Bu yetkilendirme olmadan `nfc_manager` iOS'ta
 	     SESSIZCE calismaz: okuma oturumu acilir gibi gorunur ama etiket
 	     hic okunmaz. Yetkilendirme dosyasi TEK BASINA yetmez — Apple

@@ -127,11 +127,44 @@ class FirebasePushMessaging implements PushMessaging {
   @override
   Future<String?> getToken() async {
     try {
+      // (P211 §6) IOS'TA SIRA ONEMLI: APNS JETONU ONCE.
+      //
+      // OLCULEN SINIF: iOS'ta FCM jetonu ancak APNs jetonu geldikten
+      // SONRA uretilir. Erken cagrilirsa `getToken()` ya null doner ya
+      // `[firebase_messaging/apns-token-not-set]` atar — ikisi de
+      // buradaki `catch`e dusup SESSIZCE null donuyordu: cihaz sunucuya
+      // hic kaydolmuyor, kimse de bir hata gormuyordu.
+      //
+      // APNs jetonu ag/kayit isidir ve birkac saniye surebilir; kisa
+      // araliklarla BEKLENIR. Gelmezse `null` DONULUR ve sebep GUNLUGE
+      // yazilir — uydurma bir jeton kaydetmek, sunucuda olu bir token
+      // birakmak olurdu.
+      if (defaultTargetPlatform == TargetPlatform.iOS) {
+        final hazir = await _apnsJetonunuBekle();
+        if (!hazir) {
+          debugPrint(
+            'APNs jetonu gelmedi -> FCM jetonu istenmedi. '
+            'Olasi sebep: Push Notifications yetenegi/aps-environment '
+            'eksik, ya da cihaz simulator.',
+          );
+          return null;
+        }
+      }
       return await FirebaseMessaging.instance.getToken();
     } catch (e) {
       debugPrint('FCM token alinamadi: $e');
       return null;
     }
+  }
+
+  /// APNs jetonu gelene kadar kisa araliklarla bekler (en fazla ~5 sn).
+  static Future<bool> _apnsJetonunuBekle() async {
+    for (var i = 0; i < 10; i++) {
+      final apns = await FirebaseMessaging.instance.getAPNSToken();
+      if (apns != null && apns.isNotEmpty) return true;
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+    }
+    return false;
   }
 
   @override
