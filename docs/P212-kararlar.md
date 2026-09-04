@@ -219,3 +219,83 @@ Gerçek bir cihazda eskalasyon bildiriminin **duyulması**: push gönderimi
 dev'de `PUSH_PROVIDER=noop` ve dev tesiste kayıtlı cihaz yok (günlükte
 "PUSH hedef yok" satırları bunun kanıtı). Kanal/ses **seçimi** birim
 testiyle kilitli; teslimin kendisi cihazda doğrulanmalı.
+
+---
+
+## §1-ek — Profil e-postası: doğrulama kodu HİÇ gönderilmiyordu
+
+### ÖLÇÜM — kod yolunu izledim, sonra sürdüm
+Akış: form → `PATCH /api/me/contact` (ad/telefon) → **`POST
+/api/me/eposta/kod-iste`** → backend `me.py::eposta_dogrulama_kodu_iste`
+→ `_kod_gonder_ve_dogrula` → `telefon_kodu.eposta_kodu_uret_ve_gonder`.
+
+Gönderimi tetiklemeyen yer bulundu: uç, adres **başka bir kullanıcıda
+kayıtlıysa** kod **üretmeden** `{"durum": "gonderildi"}` dönüyordu
+(P184-ek §9'un sızdırmama kararı). Dev'de sürdüm:
+
+```
+SERBEST ADRES     -> 502  | mesaj_gonderim: 0 -> 1   (gönderim DENENDİ)
+BAŞKASININ ADRESİ -> 200  | mesaj_gonderim: 0 -> 0   (hiç denenmedi)   <-- KUSUR
+```
+
+İkinci satır senin ölçümünle birebir aynı: **kayıt bile oluşmuyor**.
+
+### NEDEN P196 BU AKIŞI KAPSAMADI
+P196, *"gönderim **denendi** ama başarısız oldu, yine de başarılı
+dendi"* hâlini kapattı: sağlayıcının sonucunu okuyup 502 dönmeye başladı.
+Buradaki hâl ise *"gönderim **hiç denenmedi**"*ydi ve akış o kontrolden
+**önce** `return` ediyordu. P196'nın kapısı doğru yerdeydi; **kapının
+önünden geçen bir yol** vardı.
+
+### KARAR K1.3 — Adres başkasındaysa: sessiz "gönderildi" değil, **409**
+P184-ek §9'un kararı **değiştirildi**. Gerekçe:
+1. **Bu uç kimlik doğrulanmış ve tenant'a kapalı.** `auth.py`'deki
+   giriş-kodu / parola-sıfırlama uçları **kimliksizdir**; onlarda tek
+   biçimli yanıt zorunlu ve **dokunulmadı**. Burada soran kişi zaten o
+   tesisin üyesi; öğrendiği şey "bu adres tesisimde kayıtlı" — sakin,
+   personel ve daire listeleri ona zaten görünüyor.
+2. **Bedeli kalıcı bir çıkmazdı**: kullanıcı kendi e-postasını
+   düzeltemiyor ve nedenini öğrenemiyor. Bilgi sızdırmayan ama
+   **kullanılamaz** bir akış.
+3. Kaba kuvvet zaten sınırlı: `kod_istegi_say` adres başına hız sınırı
+   uyguluyor ve bu daldan **önce** çalışıyor.
+
+Yanıt **kimin** kullandığını söylemez, yalnız "kullanımda" der.
+
+### KARAR K1.4 — Yapısal kapı: **iz yoksa "gönderildi" yok**
+`_kod_gonder_ve_dogrula` artık sonuca değil **ize** bakıyor: gönderim
+denendiyse `telefon_kodu` **ayrı oturumda** bir `mesaj_gonderim` satırı
+yazar (başarılı ya da başarısız). Satır yoksa → **502** + log.
+
+Bu, "bir sonraki erken `return`" için de geçerlidir: kapı, çağıranın
+hangi yeni dalı eklediğinden **bağımsız** çalışır. Aradığı şey bir
+karar değil, bir **iz**.
+
+### §4 — Aynı kalıp tüm kod gönderen akışlarda tarandı
+İki sınıf, iki farklı kural:
+
+| Akış | Sınıf | Kural | Test |
+|---|---|---|---|
+| Profil e-posta (`/me/eposta/kod-iste`) | kimlik doğrulanmış | iz yoksa **hata** | ✅ 3 test |
+| Hesap silme kodu (`/me/hesap-sil/eposta-kod-iste`) | kimlik doğrulanmış | iz yoksa **hata** | ✅ |
+| Giriş kodu (`/auth/giris/eposta-kod-iste`) | **kimliksiz** | yanıt tek biçim; **hedef varsa iz olmalı** | ✅ 2 test |
+| Parola sıfırlama (`/auth/sifre/kod-iste`) | **kimliksiz** | aynı | ✅ |
+| Davet e-postası (`POST /users`) | yönetim | "gönderildi" diyorsa iz olmalı | ✅ |
+
+Kimliksiz akışlarda hatayı kullanıcıya yansıtmak **"hata = adres
+kayıtlı"** anlamına gelirdi; orada kilit **yanıtı değil davranışı**
+ölçer: hedef varsa gönderim gerçekten denenmiş olmalı, hedef yoksa yanıt
+aynı kalır ve iz de olmaz.
+
+### Kırma denemeleri
+* Eski sessiz `return {"durum": "gonderildi"}` geri konduğunda 409 testi
+  düştü; geri alınca 8'i geçti.
+* Test yazarken **hız sınırı** (429) iki testi anlamsız yere kırdı: sabit
+  adres kullanmak, tekrarlanan koşumlarda aynı sayaç anahtarına
+  vuruyordu. Testler artık her koşumda **taze adres** üretiyor — bu da
+  ölçülmüş bir ders.
+
+### Ölçemediğim
+Prod'da gerçek SMTP ile teslim. Dev'de SMTP yapılandırılmadığı için
+`durum='basarisiz'` kaydı düşüyor ve uç 502 dönüyor — **doğru davranış**:
+kullanıcı "bekleyin" ekranı yerine hatayı görüyor.

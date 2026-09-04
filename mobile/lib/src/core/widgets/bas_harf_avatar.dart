@@ -23,6 +23,8 @@ library;
 
 import 'package:flutter/material.dart';
 
+import '../ui/gorsel_cozme.dart';
+
 /// Adin bas harfleri — en fazla iki harf. Bos ad -> bos dize.
 String basHarfler(String ad) {
   final parcalar =
@@ -67,6 +69,9 @@ class BasHarfAvatar extends StatelessWidget {
   final double cap;
 
   /// Testlerde ag istegi yapilmasin diye gecersiz kilinabilir.
+  /// VERILMEZSE saglayici BURADA kurulur ve COZME SINIRI uygulanir
+  /// (tur 61 kurali): `NetworkImage` ciplak birakilirsa 4000x3000'lik
+  /// bir fotograf 40 dp'lik avatar icin ~48 MB RGBA acar.
   final ImageProvider? gorsel;
 
   @override
@@ -75,7 +80,9 @@ class BasHarfAvatar extends StatelessWidget {
     final ton = adTonu(ad);
     final zemin = HSLColor.fromAHSL(1, ton.toDouble(), 0.45, 0.82).toColor();
     final yazi = HSLColor.fromAHSL(1, ton.toDouble(), 0.60, 0.24).toColor();
-    final resim = url != null ? (gorsel ?? NetworkImage(url!)) : null;
+    final resim = url == null
+        ? null
+        : (gorsel ?? sinirliGorsel(context, NetworkImage(url!), cap));
     return CircleAvatar(
       radius: cap / 2,
       backgroundColor: zemin,

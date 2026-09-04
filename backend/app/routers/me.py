@@ -6,6 +6,7 @@ panel uclari Prompt 3+'te sozlesmeye gore eklenecek.
 """
 from __future__ import annotations
 
+import logging
 import uuid
 
 from fastapi import APIRouter, Depends, Response
@@ -23,6 +24,7 @@ from ..deps import (
     require_role,
 )
 from ..errors import APIError
+from ..gunlukleme import maskele_kimlik
 from ..hiz_siniri import kod_istegi_say
 from ..telefon_kodu import (
     eposta_kodu_uret_ve_gonder,
@@ -60,6 +62,8 @@ from ..security import (
     verify_password,
 )
 from ..storage import delete_objects, presign_get
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["me"])
 
@@ -280,11 +284,33 @@ async def eposta_dogrulama_kodu_iste(
     if "@" not in eposta or "." not in eposta.split("@")[-1]:
         raise APIError(422, "validation_error", "eposta_gecersiz")
     await kod_istegi_say(redis, eposta, kapsam="eposta_ekle")
-    # (P184-ek §9) SIZDIRMAMA: adres BAŞKA kullanıcıda kayıtlıysa uç, adresin
-    # kayıtlı olduğunu DIŞARI VERMEZ — geçerli durumla AYNI yanıtı döndürür
-    # (`gonderildi`) ama KOD ÜRETMEZ. Eskiden 409 `eposta_kullanimda` idi; o
-    # bir "bu adres kimde" sorgusuydu. Artık `giris/eposta-kod-iste` ile aynı
-    # sızdırmama ilkesi: yanıt tek biçim, gerçek eşleşme okunamaz.
+    # =====================================================================
+    # (P212-ek §1) ADRES BASKASINDAYSA: SESSIZ "gonderildi" DEGIL, 409
+    # =====================================================================
+    # OLCULEN KUSUR (prod): kullanici profilden e-postasini degistirdi,
+    # ekran "dogrulama bekliyor" dedi, `mesaj_gonderim` tablosunda O
+    # ADRESE AIT HIC KAYIT OLUSMADI. Sebep SMTP degil: akis gonderimi HIC
+    # TETIKLEMIYORDU — istek bu erken `return`de bitiyordu.
+    #
+    # P184-ek §9 burada 409'u KALDIRIP tek bicimli yanita gecmisti;
+    # gerekcesi "409 bir 'bu adres kimde' sorgusudur" idi. Karar
+    # DEGISTIRILDI ve nedeni su:
+    #
+    #   1. BU UC KIMLIK DOGRULANMIS ve TENANT'A KAPALI. `auth.py`deki
+    #      giris-kodu/parola-sifirlama uclari KIMLIKSIZDIR — orada tek
+    #      bicimli yanit ZORUNLU ve DOKUNULMADI. Burada soran kisi zaten
+    #      o tesisin uyesi; ogrendigi sey "bu adres tesisimde kayitli".
+    #      Sakin listesi, personel listesi ve daire sakinleri o kisiye
+    #      zaten gorunuyor — kazanc kucuk.
+    #   2. BEDELI KALICI BIR CIKMAZDI: kullanici kendi e-postasini
+    #      duzeltemiyor, neden olmadigini ogrenemiyor ve ekran ona
+    #      "bekleyin" diyor. Sessizce yanlis calisan bir akis, bilgi
+    #      sizdirmayan ama KULLANILAMAZ bir akistir.
+    #   3. Kaba kuvvet ZATEN sinirli: `kod_istegi_say` adres basina hiz
+    #      siniri uyguluyor (yukarida, bu daldan ONCE calisir).
+    #
+    # KIM OLDUGU YINE SIZMAZ: yanit yalnizca "bu adres kullanimda" der,
+    # hangi kullanicida oldugunu SOYLEMEZ.
     baska = (
         await db.execute(
             select(AppUser.id).where(
@@ -293,7 +319,7 @@ async def eposta_dogrulama_kodu_iste(
         )
     ).scalar_one_or_none()
     if baska is not None:
-        return {"durum": "gonderildi"}
+        raise APIError(409, "conflict", "eposta_kullanimda")
     # (P184-ek §9) DEĞİŞTİRME BİLDİRİMİ: kullanıcının DOĞRULANMIŞ eski adresi
     # varsa ve yeni adres farklıysa, ESKİ adrese "değiştirme talebi alındı"
     # bildirimi gider (hesap ele geçirilmişse sahibi fark etsin). Eski adres
@@ -352,6 +378,26 @@ async def _kod_gonder_ve_dogrula(
     sonuc = await eposta_kodu_uret_ve_gonder(
         db, tenant_id=tenant_id, eposta=eposta, amac=amac, ayar=ayar
     )
+    # =====================================================================
+    # (P212-ek §1) YAPISAL KAPI: GONDERIM KAYDI YOKSA "gonderildi" YOK
+    # =====================================================================
+    # P196 "gonderim BASARISIZ oldu ama basarili dendi" halini kapatti.
+    # ACIK KALAN hal ise "gonderim HIC DENENMEDI ama basarili dendi"ydi
+    # ve prod'da tam olarak o yasandi: `mesaj_gonderim`de o adrese ait
+    # HICBIR kayit yoktu.
+    #
+    # Bu kontrol ikisini de kapsar cunku SONUCA DEGIL IZE bakar: gonderim
+    # denendiyse `telefon_kodu` AYRI OTURUMDA bir `mesaj_gonderim` satiri
+    # yazar (basarili ya da basarisiz). Satir yoksa gonderim yolu hic
+    # calismamistir — cagirinin hangi yeni erken-donusu eklendiginden
+    # BAGIMSIZ olarak yakalanir. Yani bir sonraki "erken return"u de
+    # bu kapi durdurur.
+    if not await _gonderim_izi_var(tenant_id, eposta):
+        logger.error(
+            "kod gonderimi IZ BIRAKMADI amac=%s hedef=%s — akis gonderimi "
+            "tetiklemedi", amac, maskele_kimlik(eposta),
+        )
+        raise APIError(502, "bad_gateway", "kod_gonderilemedi")
     if sonuc.durum != "gonderildi":
         # HATA DONUNCA istek transaction'i geri alinir; uretilen kod
         # satiri da gider. BU DOGRUDUR: gonderilmemis bir kodu
@@ -359,6 +405,36 @@ async def _kod_gonder_ve_dogrula(
         # sirri saklamak olurdu. Teshis kaydi (`mesaj_gonderim`) AYRI
         # oturumda yazildigi icin geri alinmaz — bkz. `telefon_kodu`.
         raise APIError(502, "bad_gateway", "kod_gonderilemedi")
+
+
+async def _gonderim_izi_var(tenant_id, eposta: str) -> bool:
+    """(P212-ek §1) Son bir dakikada bu adrese GONDERIM KAYDI dustu mu?
+
+    AYRI OTURUM: teshis kaydi da ayri oturumda yaziliyor (bkz.
+    `telefon_kodu`); cagiranin oturumundan okumak, henuz commit edilmemis
+    bir satiri aramak olurdu ve kapi HER ZAMAN kapali kalirdi.
+
+    PENCERE 1 DAKIKA: "bu istekte yazildi mi" sorusunun pratik karsiligi.
+    Daha genis bir pencere, onceki bir denemenin izini bu istegin izi
+    sanardi.
+    """
+    from datetime import datetime, timedelta, timezone
+
+    from ..db import SessionLocal, set_tenant
+    from ..models import MesajGonderim
+
+    sinir = datetime.now(tz=timezone.utc) - timedelta(minutes=1)
+    async with SessionLocal() as oturum:
+        await set_tenant(oturum, tenant_id)
+        return (
+            await oturum.execute(
+                select(MesajGonderim.id).where(
+                    MesajGonderim.kanal == "eposta",
+                    func.lower(MesajGonderim.hedef) == eposta.lower(),
+                    MesajGonderim.created_at >= sinir,
+                ).limit(1)
+            )
+        ).scalar_one_or_none() is not None
 
 
 async def _eposta_degistirme_bildirimi(db, tenant_id, eski_adres: str) -> None:

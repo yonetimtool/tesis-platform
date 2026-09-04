@@ -8,7 +8,6 @@ import '../../../../core/widgets/bas_harf_avatar.dart';
 import '../../../auth/domain/user_role.dart';
 import '../../../notifications/data/notifications_controller.dart';
 import '../../../profile/data/avatar_api.dart';
-import '../../../profile/data/profile_api.dart';
 import '../../../push/domain/push_models.dart';
 import '../../../push/presentation/push_registrar.dart';
 import '../../../../routing/app_router.dart';
@@ -16,7 +15,6 @@ import '../../domain/home_tabs.dart';
 import 'dil_modali.dart';
 import 'home_drawer.dart';
 import 'home_marka.dart';
-import '../../../../core/ui/gorsel_cozme.dart';
 import '../../../../core/ui/merkez_diyalog.dart';
 
 /// Referans ana ekranin ORTAK KABUGU — uc rol varyantinda da AYNI widget:
@@ -270,15 +268,12 @@ class _AvatarButonu extends StatelessWidget {
                     // ayni gorunur: ikisinde de ad baslari cizilir.
                     // Genel silüet, iki hesabi olan kullanici icin
                     // hangi hesapla girildigini SILIYORDU.
-                    final url = ref.watch(myAvatarUrlProvider).value;
-                    final ad = ref.watch(profileProvider).value?.ad ?? '';
+                    // TEK CAGRI: `/me` hem fotografi hem adi doner.
+                    final me = ref.watch(myAvatarProvider).value;
                     return BasHarfAvatar(
-                      ad: ad,
-                      url: url,
+                      ad: me?.ad ?? '',
+                      url: me?.url,
                       cap: 40,
-                      gorsel: url != null
-                          ? sinirliGorsel(context, NetworkImage(url), 40)
-                          : null,
                     );
                   },
                 ),

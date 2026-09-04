@@ -50,6 +50,15 @@ export const BILDIRIM_TIP: EnumHarita = {
   aidat_onizleme: "bildirimTipAidatOnizleme",
   aylik_ozet: "bildirimTipAylikOzet",
   gider_onay: "bildirimTipGiderOnay",
+  // (P208 §1, göç 0103) Gürültü eşiği: sakine uyarı + yönetime bilgi.
+  // NOT (P212): bu iki değer arka uçta P208'de eklenmişti ama BURAYA
+  // yazılmamıştı — `enum-bag` kilidi P212'de yakaladı (aynanın varlık
+  // sebebi tam olarak bu; P147'de de aynısı olmuştu).
+  gurultu_uyari_sakin: "bildirimTipGurultuUyariSakin",
+  gurultu_esik_yonetim: "bildirimTipGurultuEsikYonetim",
+  // (P212 §3, göç 0104) İkinci eşikte güvenliğe eskalasyon + yönetime bilgi.
+  gurultu_eskalasyon_guvenlik: "bildirimTipGurultuEskalasyonGuvenlik",
+  gurultu_eskalasyon_yonetim: "bildirimTipGurultuEskalasyonYonetim",
 };
 
 /** `patrol_window_durum` (pano "Bugunun turlari" + tur raporu). */

@@ -13,7 +13,6 @@ import '../data/avatar_api.dart';
 import '../data/profile_api.dart';
 import '../domain/profile.dart';
 import '../../../core/error/akis_hatasi.dart';
-import '../../../core/ui/gorsel_cozme.dart';
 import '../../../core/widgets/bas_harf_avatar.dart';
 import '../../../core/ui/merkez_diyalog.dart';
 import '../../../core/ui/telefon_alani.dart';
@@ -232,14 +231,7 @@ class _AvatarCardState extends ConsumerState<_AvatarCard> {
         child: Row(
           children: [
             // (P212 §2) FOTOGRAF YOKSA BAS HARFLER — genel silüet DEGIL.
-            BasHarfAvatar(
-              ad: ad,
-              url: url,
-              cap: 64,
-              gorsel: url != null
-                  ? sinirliGorsel(context, NetworkImage(url), 64)
-                  : null,
-            ),
+            BasHarfAvatar(ad: ad, url: url, cap: 64),
             const SizedBox(width: 16),
             Expanded(
               child: Column(

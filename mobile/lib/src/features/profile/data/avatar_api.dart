@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/api_exception.dart';
 import '../../../core/network/dio_provider.dart';
+import '../../auth/data/token_storage.dart';
 import '../../tasks/domain/task_models.dart' show PresignTicket;
 
 /// GET /me yanitindan avatar_url (SAF — test edilebilir).
@@ -59,9 +60,19 @@ class AvatarApi {
     }
   }
 
-  Future<String?> fetchMyAvatarUrl() async {
+  Future<String?> fetchMyAvatarUrl() async => (await fetchMyAvatar()).url;
+
+  /// (P212 §2) TEK CAGRI, IKI BILGI: `/me` hem `avatar_url` hem `ad`
+  /// doner. Adi ayri bir uctan (`/me/profile`) cekmek, app-bar'i
+  /// IKINCI bir ag istegine baglamak olurdu — ve o istek testlerde
+  /// asili kalip "A Timer is still pending" uretti (olculdu).
+  Future<({String? url, String ad})> fetchMyAvatar() async {
     final res = await _dio.get<Map<String, dynamic>>('/me');
-    return avatarUrlFromMe(res.data ?? const {});
+    final json = res.data ?? const <String, dynamic>{};
+    return (
+      url: avatarUrlFromMe(json),
+      ad: (json['ad'] as String?) ?? '',
+    );
   }
 }
 
@@ -83,5 +94,19 @@ final avatarApiProvider = Provider<AvatarApi>((ref) {
 /// ayirt eder (profil kartinda mesaj + "tekrar dene", app-bar'da sessiz
 /// bas-harf yedegi). "Fotograf yok" ile "okuyamadim" AYNI SEY DEGILDIR.
 final myAvatarUrlProvider = FutureProvider.autoDispose<String?>((ref) async {
-  return ref.watch(avatarApiProvider).fetchMyAvatarUrl();
+  return (await ref.watch(myAvatarProvider.future)).url;
+});
+
+/// Fotograf URL'i + AD — bas harf yedegi icin ikisi de gerekir ve
+/// ikisi de AYNI `/me` yanitindan gelir.
+///
+/// (P212 §2) OTURUM YOKSA ISTEK DE YOK. `/me` kimlik ister; jeton
+/// yokken cagirmak garanti bir 401 uretir. Yan etkisi olculdu:
+/// oturumsuz widget testlerinde bu cagri asili kaliyor ve
+/// "A Timer is still pending" ile testi dusuruyordu.
+final myAvatarProvider =
+    FutureProvider.autoDispose<({String? url, String ad})>((ref) async {
+  final jeton = await ref.watch(tokenStorageProvider).readAccessToken();
+  if (jeton == null) return (url: null, ad: '');
+  return ref.watch(avatarApiProvider).fetchMyAvatar();
 });

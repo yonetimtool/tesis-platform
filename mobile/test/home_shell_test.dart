@@ -19,8 +19,13 @@ Widget _shell({
   VoidCallback? onLogout,
 }) =>
     ProviderScope(
-      // App-bar avatari [myAvatarUrlProvider] izler — testte aga cikmasin.
-      overrides: [myAvatarUrlProvider.overrideWith((ref) async => null)],
+      // (P212 §2) App-bar avatari artik [myAvatarProvider]'i izler:
+      // TEK `/me` cagrisiyla hem fotograf hem AD gelir (bas harf yedegi
+      // icin ad gerekiyor). Gecersiz kilinmazsa test gercek bir istek
+      // baslatir ve "A Timer is still pending" ile duser.
+      overrides: [
+        myAvatarProvider.overrideWith((ref) async => (url: null, ad: 'Ali Veli')),
+      ],
       child: MaterialApp(
       locale: const Locale('tr'),
       supportedLocales: supportedLocales,

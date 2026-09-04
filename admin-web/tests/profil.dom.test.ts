@@ -294,3 +294,82 @@ describe("(P212 §2) profil fotografi", () => {
     });
   });
 });
+
+// ===========================================================================
+// (P212-ek §1) E-POSTA DEGISTIRME: SESSIZ "BEKLIYOR" EKRANI YOK
+// ===========================================================================
+// OLCULEN KUSUR (prod): kullanici e-postasini degistirdi, ekran
+// "dogrulama bekliyor" dedi ve kod kutusu acildi; `mesaj_gonderim`
+// tablosunda O ADRESE AIT HIC KAYIT YOKTU. Sunucu, adres baskasindaysa
+// kod URETMEDEN "gonderildi" donuyordu.
+//
+// Sunucu artik 409 donuyor (backend `test_p212_gonderim_izi.py`).
+// Burada olculen sey ARAYUZUN o yaniti nasil ele aldigi: kod kutusu
+// ACILMAMALI ve sebep GORUNMELI.
+describe("(P212-ek §1) e-posta degistirme", () => {
+  function epostaTaklidi(kodIsteDurumu: number, hataMetni = "Bu e-posta adresi başka bir hesapta kullanılıyor.") {
+    const cagrilar: { url: string; method: string; body: unknown }[] = [];
+    globalThis.fetch = (async (girdi: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(girdi);
+      cagrilar.push({
+        url,
+        method: (init?.method ?? "GET").toUpperCase(),
+        body: init?.body ? JSON.parse(String(init.body)) : undefined,
+      });
+      if (url.startsWith("/api/me/eposta/kod-iste")) {
+        return new Response(
+          JSON.stringify(
+            kodIsteDurumu === 200
+              ? { durum: "gonderildi" }
+              : { error: { code: "conflict", message: hataMetni } },
+          ),
+          { status: kodIsteDurumu, headers: { "Content-Type": "application/json" } },
+        );
+      }
+      if (url.startsWith("/api/me/contact")) return new Response(null, { status: 204 });
+      if (url.startsWith("/api/me")) {
+        return new Response(JSON.stringify(PROFIL), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify({}), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }) as typeof fetch;
+    return cagrilar;
+  }
+
+  async function epostaDegistir(k: ReturnType<typeof userEvent.setup>) {
+    ciz(ProfilPage);
+    const alan = await screen.findByDisplayValue(PROFIL.email);
+    await k.clear(alan);
+    await k.type(alan, "yeni-adres@ornek.com");
+    await k.click(screen.getByRole("button", { name: /kaydet/i }));
+  }
+
+  it("409: KOD KUTUSU ACILMAZ ve sebep GORUNUR", async () => {
+    const k = userEvent.setup();
+    epostaTaklidi(409);
+    await epostaDegistir(k);
+
+    await screen.findByText(/başka bir hesapta kullanılıyor/i);
+    // "Doğrulama bekliyor" ekrani HIC GONDERILMEMISKEN GOSTERILMEZ.
+    expect(screen.queryByPlaceholderText(/kod/i)).toBeNull();
+  });
+
+  it("200: kod kutusu ACILIR (gerileme yok)", async () => {
+    const k = userEvent.setup();
+    const cagrilar = epostaTaklidi(200);
+    await epostaDegistir(k);
+
+    await waitFor(() =>
+      expect(cagrilar.some((c) => c.url === "/api/me/eposta/kod-iste")).toBe(true),
+    );
+    expect(
+      cagrilar.find((c) => c.url === "/api/me/eposta/kod-iste")!.body,
+    ).toEqual({ eposta: "yeni-adres@ornek.com" });
+    expect(await screen.findByPlaceholderText(/kod/i)).toBeTruthy();
+  });
+});
