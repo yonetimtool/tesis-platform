@@ -30,11 +30,10 @@
 //                                        mavi→teal gradyan
 //   assets/branding/icon_foreground.png  adaptive on katman: beyaz isaret,
 //                                        seffaf zemin, %66 guvenli bolgede
-//   android/.../drawable-*/ic_stat_yonetio.png
-//                                        bildirim kucuk ikonu — basitlestirilmis
-//                                        isaret, beyaz-on-seffaf (Android bunu
-//                                        alfa maskesi olarak boyar: monokrom
-//                                        ZORUNLU)
+//
+// (P211-ek2) ARTIK BURADA URETILMEYENLER: `ic_stat_yonetio.png` (bildirim
+// kucuk ikonu) ve `splash_logo.png`. Ikisi de LOGODAN turuyor —
+// `scripts/ikon-uret.py`. Gerekce dosyanin ilgili yerinde.
 import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
@@ -46,7 +45,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/src/core/branding/yonetio_logo.dart';
 
 const _dir = 'assets/branding';
-const _resDir = 'android/app/src/main/res';
+// (P211-ek2) `_resDir` KALDIRILDI: android kaynaklarina yazan iki uretim
+// (`ic_stat_yonetio`, `splash_logo`) `scripts/ikon-uret.py`e tasindi.
 
 /// Master'in yuvarlak-kare kose yaricapi (kenar oranı) — kirpma sonrasi
 /// gorsel olcumden. Isaret cikarilirken kose disindaki beyaz kenar bosluğunu
@@ -344,66 +344,19 @@ void main() {
     expect(File('$_dir/icon_foreground.png').existsSync(), isTrue);
   });
 
-  test('ic_stat_yonetio.png — bildirim kucuk ikonu, tum yogunluklar', () async {
-    // Android kucuk ikonu ALFA MASKESI olarak boyar → renk atilir, yalniz
-    // saydamlik kalir. Bu yuzden basitlestirilmis isaret, beyaz-on-seffaf.
-    const densities = <String, int>{
-      'mdpi': 24,
-      'hdpi': 36,
-      'xhdpi': 48,
-      'xxhdpi': 72,
-      'xxxhdpi': 96,
-    };
-    const painter = YonetioSimpleMarkPainter(color: Colors.white);
-    for (final entry in densities.entries) {
-      final img = await _render((canvas, size) {
-        const scale = 0.86; // sistem ikonlarinda adet olan optik pay
-        final inner = size.width * scale;
-        final off = (size.width - inner) / 2;
-        canvas.save();
-        canvas.translate(off, off);
-        painter.paint(canvas, Size(inner, inner));
-        canvas.restore();
-      }, entry.value);
-      final path = '$_resDir/drawable-${entry.key}/ic_stat_yonetio.png';
-      await _writePng(path, img);
-      expect(File(path).existsSync(), isTrue);
-    }
-  });
-
-  test('splash_logo.png — acilis ekrani logosu, tum yogunluklar', () async {
-    // Splash elle baglanir (flutter_native_splash YOK): launch_background.xml
-    // navy zemin + ortada bu bitmap. @mipmap/ic_launcher yerine ayri ve daha
-    // buyuk bir drawable uretilir — launcher ikonu 48dp icin olcekli, splash'ta
-    // bulanik kalirdi.
-    const densities = <String, int>{
-      'mdpi': 96,
-      'hdpi': 144,
-      'xhdpi': 192,
-      'xxhdpi': 288,
-      'xxxhdpi': 384,
-    };
-    for (final entry in densities.entries) {
-      final img = await _render((canvas, size) {
-        final r = Radius.circular(size.width * _cornerRadiusRatio);
-        canvas.clipRRect(
-          RRect.fromRectAndRadius(
-            Rect.fromLTWH(0, 0, size.width, size.height),
-            r,
-          ),
-        );
-        canvas.drawImageRect(
-          master,
-          crop,
-          Rect.fromLTWH(0, 0, size.width, size.height),
-          Paint()..filterQuality = FilterQuality.high,
-        );
-      }, entry.value);
-      final path = '$_resDir/drawable-${entry.key}/splash_logo.png';
-      await _writePng(path, img);
-      expect(File(path).existsSync(), isTrue);
-    }
-  });
+  // (P211-ek2) `ic_stat_yonetio.png` VE `splash_logo.png` ARTIK BURADA
+  // URETILMIYOR — kaynak `scripts/ikon-uret.py`.
+  //
+  // OLCULEN KUSUR: ikisi de burada KODLA CIZILEN basitlestirilmis bir
+  // isaretten (`YonetioSimpleMarkPainter`) uretiliyordu. Ana ekran ikonu
+  // yeni logoya gecince ikisi ESKI CIZIMDE kaldi: kullanicinin ana
+  // ekranda gordugu simge ile bildirim cubugunda gordugu isaret ayristi.
+  // Ayrica eski `splash_logo` LACIVERT bir isaretti ve acilis ekraninin
+  // zemini de lacivert — neredeyse gorunmuyordu.
+  //
+  // Ikisi de artik logodan turuyor (beyaz siluet, saydam zemin):
+  //     python3 scripts/ikon-uret.py
+  // Burada yeniden yazmak, tek kaynagi ikiye bolerdi.
 
   test('DOGRULAMA onizleme — adaptive fg/bg birlesimi + maske', () async {
     // Beyaz-on-seffaf fg'yi gozle dogrulamak icin: tek basina bakildiginda

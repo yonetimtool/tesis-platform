@@ -70,6 +70,14 @@ import sys
 KOK = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 KAYNAK = os.path.join(KOK, "assets", "marka", "yonetiyor-logo.png")
 CIKTI_DIZIN = os.path.join(KOK, "assets", "marka", "ikon")
+#: (P211-ek2) TUKETEN PROJELER. Ikonlar burada uretilip ORAYA da yazilir.
+#: NEDEN TEK KOMUT: P184'te olculen kusur "araci kosmayi unutmak"ti;
+#: ciktiyi elle kopyalamak da ayni sinifin ikinci yarisi — kopya bir gun
+#: geride kalir ve kimse fark etmez (nitekim favicon'lar eski logoda
+#: kalmisti).
+MOBIL_RES = os.path.join(KOK, "mobile", "android", "app", "src", "main", "res")
+TANITIM_MARKA = os.path.join(KOK, "apps", "tanitim-web", "public", "marka")
+ADMIN_IKON = os.path.join(KOK, "admin-web", "app", "icon.png")
 ONIZLEME_DIZIN = os.path.join(KOK, "assets", "marka", "ikon-onizleme")
 
 # --- olculen kaynak ozellikleri (dogrulama icin; uydurulmadi) -------------
@@ -101,6 +109,22 @@ ORAN_MAGAZA = 0.72
 ORAN_ADAPTIF = 0.66
 
 BEYAZ = (0xFF, 0xFF, 0xFF)
+
+#: (P211-ek2) ANDROID BILDIRIM KUCUK IKONU — yogunluk -> piksel.
+#: Android bu ikonu ALFA MASKESI olarak boyar: renk ATILIR, yalniz
+#: saydamlik kalir. Bu yuzden BEYAZ SILUET + saydam zemin; renkli bir
+#: ikon durum cubugunda bir lekeye donusur.
+STAT_YOGUNLUKLARI = {"mdpi": 24, "hdpi": 36, "xhdpi": 48, "xxhdpi": 72,
+                     "xxxhdpi": 96}
+#: Sistem ikonlarinda adet olan optik pay.
+ORAN_STAT = 0.86
+
+#: (P211-ek2) ACILIS EKRANI LOGOSU — yogunluk -> piksel. Launcher ikonu
+#: 48dp icin olceklidir ve splash'ta bulanik kalirdi; ayri ve daha buyuk
+#: bir drawable uretilir (`launch_background.xml` bunu ortalar).
+SPLASH_YOGUNLUKLARI = {"mdpi": 96, "hdpi": 144, "xhdpi": 192,
+                       "xxhdpi": 288, "xxxhdpi": 384}
+ORAN_SPLASH = 0.86
 
 # --- ZEMIN VARYANTLARI (P184) --------------------------------------------
 #: Her varyant: zemin rengi + isaretin BEYAZ SILUETE cevrilip cevrilmeyecegi.
@@ -340,6 +364,71 @@ def uret(varyant, cikti_dizin, onizle=False):
     return olcumler, olcu_on
 
 
+def mobil_drawable_uret():
+    """(P211-ek2) BILDIRIM KUCUK IKONU + ACILIS LOGOSU — tum yogunluklar.
+
+    =======================================================================
+    NEDEN ARTIK BURADA (kodla cizen arac DEGIL)
+    =======================================================================
+    Bu iki gorsel `mobile/test/tools/generate_branding_assets.dart` icinde
+    KODLA CIZILEN basitlestirilmis bir isaretten uretiliyordu. Ana ekran
+    ikonu yeni logoya gecince ikisi ESKI CIZIMDE kaldi: kullanicinin
+    ana ekranda gordugu simge ile bildirim cubugunda gordugu isaret
+    AYRISTI. Tek kaynak kurali burada da gecerli — ikisi de logodan
+    turer.
+
+    IKISI DE BEYAZ SILUET, SAYDAM ZEMIN:
+      * bildirim ikonunu Android ALFA MASKESI olarak boyar (renk atilir),
+      * acilis ekraninin zemini LACIVERTTIR (`@color/yonetio_navy`);
+        lacivert bir isaret orada neredeyse gorunmezdi — olculen eski
+        durum tam olarak buydu (opak renkler #002060/#004080).
+    """
+    isaret_beyaz = _isaret(beyaz_siluet=True)
+    yazilan = []
+    for ad, yogunluklar, oran in (
+        ("ic_stat_yonetio", STAT_YOGUNLUKLARI, ORAN_STAT),
+        ("splash_logo", SPLASH_YOGUNLUKLARI, ORAN_SPLASH),
+    ):
+        for yogunluk, kenar in yogunluklar.items():
+            dizin = os.path.join(MOBIL_RES, f"drawable-{yogunluk}")
+            if not os.path.isdir(dizin):
+                raise SystemExit(f"yok: {dizin}")
+            tuval, olcu = _tuvale_otur(kenar, oran, isaret_beyaz, None)
+            yol = os.path.join(dizin, f"{ad}.png")
+            pa.yaz(yol, kenar, kenar, tuval)
+            yazilan.append((yol, kenar, olcu))
+    print(f"\n>>> MOBIL DRAWABLE ({MOBIL_RES})")
+    for yol, kenar, olcu in yazilan:
+        kisa = os.path.join(*yol.split(os.sep)[-2:])
+        print(f"  {kisa:38s} {kenar}x{kenar}  isaret {olcu[0]}x{olcu[1]}")
+    return [y for y, _, _ in yazilan]
+
+
+def web_kopyala():
+    """(P211-ek2) WEB YUZEYLERININ FAVICON'LARI — ayni setten.
+
+    Kopyalar elle tasindigi icin bir gun geride kalmisti: tanitim sitesi
+    ve panel eski logoyla gorunurken uygulama yenilenmisti. Artik ayni
+    komut yaziyor.
+    """
+    import shutil
+    yazilan = []
+    os.makedirs(TANITIM_MARKA, exist_ok=True)
+    for ad in ("favicon.ico", "icon-192.png", "icon-512.png",
+               "apple-touch-icon.png", "web-marka-160.png",
+               "web-marka-beyaz-160.png"):
+        hedef = os.path.join(TANITIM_MARKA, ad)
+        shutil.copyfile(os.path.join(CIKTI_DIZIN, ad), hedef)
+        yazilan.append(hedef)
+    # Panelin favicon'u: Next `app/icon.png` dosyasini favicon olarak sunar.
+    shutil.copyfile(os.path.join(CIKTI_DIZIN, "icon-512.png"), ADMIN_IKON)
+    yazilan.append(ADMIN_IKON)
+    print("\n>>> WEB KOPYALARI")
+    for y in yazilan:
+        print("  " + os.path.relpath(y, KOK))
+    return yazilan
+
+
 def dogrula(cikti_dizin, olcumler, olcu_on):
     """ALFA KONTROLU + %66 guvenli bolge kontrolu. Basarisizsa (False, ...)."""
     hata = []
@@ -466,6 +555,11 @@ def main(argv):
         print(f"  {ad:34s} {kenar}x{kenar}  isaret {olcu[0]}x{olcu[1]}")
     tamam, _, _ = dogrula(CIKTI_DIZIN, olcumler, olcu_on)
     tum_gecti = tum_gecti and tamam
+
+    # 3) TUKETEN PROJELER — ayni komutta. Elle kopyalamak, kopyanin bir
+    #    gun geride kalmasi demekti (olculdu: favicon'lar eski logodaydi).
+    mobil_drawable_uret()
+    web_kopyala()
 
     return 0 if tum_gecti else 1
 

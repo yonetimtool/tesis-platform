@@ -506,3 +506,49 @@ seçilmişti), yani "sessizce bayat kalmış" dosyalar değil, ayrı bir karar.
 İstek APK/mağaza ikonuydu; web yüzeylerinin favicon'unu da yenilememi
 istersen tek komut. Birebir kopya olan iki dosya (`web-marka-160`,
 `web-marka-beyaz-160`) **güncellendi**.
+
+---
+
+## §7-ek2 — Bildirim ikonu, açılış logosu ve web favicon'ları da yenilendi
+
+### ÖLÇÜM — neden geride kalmışlardı
+İki ayrı sebep, ikisi de "tek kaynak" kuralının delinmesi:
+
+1. **`ic_stat_yonetio` (bildirim çubuğu) ve `splash_logo` (açılış ekranı)**
+   logodan değil, `mobile/test/tools/generate_branding_assets.dart` içinde
+   **kodla çizilen** basitleştirilmiş bir işaretten (`YonetioSimpleMarkPainter`)
+   üretiliyordu. Ana ekran ikonu yeni logoya geçince ikisi **eski çizimde**
+   kaldı.
+2. **Web favicon'ları** üretilen setin **elle taşınan kopyalarıydı**;
+   kopya bir gün geride kalır ve kimse fark etmez — nitekim
+   `tanitim-web` ve `admin-web` eski logoyla duruyordu.
+
+Ayrıca ölçerken üçüncü bir kusur çıktı: eski `splash_logo` **lacivert**
+bir işaretti (opak renkleri #002060/#004080) ama açılış ekranının zemini de
+**lacivert** (`@color/yonetio_navy`) — yani logo neredeyse görünmüyordu.
+
+### KARAR — ikisi de logodan türer, **beyaz siluet + saydam**
+* **Bildirim ikonu**: Android bu ikonu **alfa maskesi** olarak boyar —
+  renk atılır, yalnız saydamlık kalır. Renkli bir ikon durum çubuğunda
+  bir lekeye dönüşür. Beyaz siluet, %86 optik pay, 5 yoğunluk (24–96 px).
+* **Açılış logosu**: lacivert zemin üzerinde **beyaz siluet**; eski
+  dark-on-dark sorunu da böylece kapandı. 5 yoğunluk (96–384 px).
+* Dart aracındaki iki üretim **kaldırıldı** (kaynağı ikiye bölmemek için),
+  yerine gerekçeyi anlatan not bırakıldı.
+
+### KARAR — kopyalama da aynı komutta
+`scripts/ikon-uret.py` artık tek koşumda hem `assets/marka/ikon/` setini,
+hem mobil `drawable-*` dosyalarını, hem de web kopyalarını yazar
+(`tanitim-web/public/marka/*`, `admin-web/app/icon.png`). P184'ün dersi
+"aracı koşmayı unutmak"tı; elle kopyalamak aynı sınıfın ikinci yarısıydı.
+
+**Dokunulmayanlar (bilerek):** `admin-web/public/yonetio-marka*.png`
+(kelime işaretli **banner**, 1271×339) ve `yonetio-logo*.png` — bunlar
+favicon değil, arayüz içinde kullanılan ayrı görseller ve ikon setinden
+türemiyorlar. İstersen ayrıca ele alırız.
+
+### Kilit
+`scripts/test_ikon_uret.py` genişletildi: 10 mobil drawable **beyaz siluet
++ saydam** mı, 7 web kopyası üretilen setle **birebir aynı** mı. Kırma
+denemesiyle doğrulandı — bildirim ikonu lacivert siluete çevrildiğinde
+kilit `BEYAZ SILUET DEGIL` diyerek düştü, geri alınca geçti.

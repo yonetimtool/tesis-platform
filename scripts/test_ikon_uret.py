@@ -37,6 +37,31 @@ ALFASIZ = [
 SAYDAM = ["android-adaptive-foreground.png", "android-monochrome.png"]
 ORAN_ADAPTIF = 0.66
 
+#: (P211-ek2) LOGODAN TUREYEN, BASKA PROJELERE YAZILAN dosyalar.
+#: Bildirim ikonu ve acilis logosu BEYAZ SILUET + SAYDAM olmak zorunda:
+#: Android bildirim ikonunu alfa maskesi olarak boyar (renk atilir) ve
+#: acilis ekraninin zemini LACIVERTTIR — lacivert bir isaret orada
+#: gorunmezdi (olculen eski durum tam olarak buydu).
+MOBIL_RES = "mobile/android/app/src/main/res"
+BEYAZ_SILUET = [
+    f"{MOBIL_RES}/drawable-{y}/{ad}.png"
+    for ad in ("ic_stat_yonetio", "splash_logo")
+    for y in ("mdpi", "hdpi", "xhdpi", "xxhdpi", "xxxhdpi")
+]
+#: Web yuzeylerinin kopyalari — elle tasindigi surece geride kaliyorlardi.
+WEB_KOPYALARI = [
+    ("assets/marka/ikon/favicon.ico", "apps/tanitim-web/public/marka/favicon.ico"),
+    ("assets/marka/ikon/icon-192.png", "apps/tanitim-web/public/marka/icon-192.png"),
+    ("assets/marka/ikon/icon-512.png", "apps/tanitim-web/public/marka/icon-512.png"),
+    ("assets/marka/ikon/apple-touch-icon.png",
+     "apps/tanitim-web/public/marka/apple-touch-icon.png"),
+    ("assets/marka/ikon/web-marka-160.png",
+     "apps/tanitim-web/public/marka/web-marka-160.png"),
+    ("assets/marka/ikon/web-marka-beyaz-160.png",
+     "apps/tanitim-web/public/marka/web-marka-beyaz-160.png"),
+    ("assets/marka/ikon/icon-512.png", "admin-web/app/icon.png"),
+]
+
 
 def _arac():
     yol = os.path.join(KOK, "tools", "png-arac.py")
@@ -82,6 +107,36 @@ def main() -> int:
     sinir = int(en * ORAN_ADAPTIF)
     if g > sinir or d > sinir:
         hata.append(f"on katman %66 bolgesini asiyor: {g}x{d} > {sinir}")
+
+    # 4) BEYAZ SILUET + SAYDAM (bildirim ikonu, acilis logosu).
+    for yol in BEYAZ_SILUET:
+        tam = os.path.join(KOK, yol)
+        if not os.path.exists(tam):
+            hata.append(f"{yol} YOK")
+            continue
+        en, boy, kanal, p2 = pa.oku(tam)
+        p2 = pa.rgba_yap(en, boy, kanal, p2)
+        opak = [(p2[i * 4], p2[i * 4 + 1], p2[i * 4 + 2])
+                for i in range(en * boy) if p2[i * 4 + 3] > 200]
+        if not opak:
+            hata.append(f"{yol} BOS (hic opak piksel yok)")
+        elif not all(r > 240 and g > 240 and b > 240 for r, g, b in opak):
+            hata.append(f"{yol} BEYAZ SILUET DEGIL")
+        if not any(p2[i * 4 + 3] < 8 for i in range(en * boy)):
+            hata.append(f"{yol} SAYDAM DEGIL")
+
+    # 5) WEB KOPYALARI GERIDE KALMASIN — birebir ayni dosya olmali.
+    import hashlib
+
+    def _ozet(y):
+        return hashlib.md5(open(os.path.join(KOK, y), "rb").read()).hexdigest()
+
+    for kaynak, kopya in WEB_KOPYALARI:
+        try:
+            if _ozet(kaynak) != _ozet(kopya):
+                hata.append(f"{kopya} URETILEN SETTEN FARKLI (geride kalmis)")
+        except FileNotFoundError as e:
+            hata.append(f"{kopya} okunamadi: {e}")
 
     if hata:
         print("BASARISIZ:")
