@@ -7,13 +7,35 @@ import { oturumAc } from "@/lib/oturum-kapisi";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+/**
+ * (P212 §1) GIRIS VEKILI — SOZLESME `kimlik` + `password`.
+ *
+ * =========================================================================
+ * OLCULEN KUSUR: ARAYUZ P205'E GECMISTI, VEKIL GECMEMISTI
+ * =========================================================================
+ * Form `{kimlik, password}` gonderiyor (tek alan: e-posta VEYA telefon),
+ * bu rota ise HALA eski sozlesmeyi (`{tenant_slug, email, password}`)
+ * dogruluyordu ve `tenant_slug` bos oldugu icin istek BACKEND'E HIC
+ * GITMEDEN 400 "Tesis kodu, e-posta ve parola zorunlu." donuyordu.
+ *
+ * Yani web'de parolayla giris, kimlik ne olursa olsun (telefon da
+ * e-posta da) KIRIKTI; mobilde ayni akis calisiyordu cunku o dogrudan
+ * backend'e gidiyor. Backend ZATEN dogruydu (`LoginRequest.kimlik`,
+ * slug opsiyonel, cok tesiste 409).
+ *
+ * `tenant_slug` ARTIK ZORUNLU DEGIL ve giriste SORULMAZ: yalnizca
+ * kullanici tesis SECTIGINDE ikinci cagrida dolar.
+ */
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const body = (await req.json().catch(() => ({}))) as {
-    tenant_slug?: string;
+    kimlik?: string;
+    /** Eski istemciler (ve eski testler) `email` gonderiyordu. */
     email?: string;
     password?: string;
+    tenant_slug?: string;
   };
-  if (!body.tenant_slug || !body.email || !body.password) {
+  const kimlik = (body.kimlik ?? body.email ?? "").trim();
+  if (!kimlik || !body.password) {
     return NextResponse.json(
       { error: { code: "validation_error", message: istekMetni(req, "girisAlanZorunlu") } },
       { status: 400 },
@@ -21,9 +43,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   const { ok, status, data } = await backendLogin({
-    tenant_slug: body.tenant_slug,
-    email: body.email,
+    kimlik,
     password: body.password,
+    ...(body.tenant_slug ? { tenant_slug: body.tenant_slug } : {}),
   });
 
   if (!ok) {

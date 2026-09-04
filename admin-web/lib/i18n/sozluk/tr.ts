@@ -517,6 +517,7 @@ export const tr = {
   girisParola: "Parola",
   girisKod: "Doğrulama kodu",
   girisKodIle: "Parola yerine e-postaya kod gönder",
+  girisKodYalnizEposta: "Kod ile giriş e-posta adresiyle çalışır. Telefonla girmek için parolanızı kullanın.",
   girisParolaylaDon: "Parolayla giriş yap",
   girisSifremiUnuttum: "Şifremi unuttum",
   sifreSifirlaBaslik: "Şifremi Unuttum",

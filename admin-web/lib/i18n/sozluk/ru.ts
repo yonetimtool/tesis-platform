@@ -499,6 +499,7 @@ export const ru: Sozluk = {
   girisParola: "Пароль",
   girisKod: "Код подтверждения",
   girisKodIle: "Отправить код на почту вместо пароля",
+  girisKodYalnizEposta: "Вход по коду работает с адресом электронной почты. Для входа по номеру телефона используйте пароль.",
   girisParolaylaDon: "Войти с паролем",
   girisSifremiUnuttum: "Забыли пароль?",
   sifreSifirlaBaslik: "Забыли пароль",

@@ -91,9 +91,10 @@ afterEach(() => vi.unstubAllGlobals());
 describe("backendLogin", () => {
   it("backend /auth/login'e JSON POST atar; ok/status/data doner", async () => {
     const cagrilar = stubFetch(() => ({ status: 200, body: OK_CIFT }));
+    // (P212 §1) SOZLESME `kimlik`: e-posta VEYA telefon. `tenant_slug`
+    // OPSIYONEL ve yalniz tesis seciminin sonucudur.
     const r = await backendLogin({
-      tenant_slug: "acme-plaza",
-      email: "admin@acme.com",
+      kimlik: "admin@acme.com",
       password: "Admin123!",
     });
 
@@ -104,7 +105,9 @@ describe("backendLogin", () => {
     expect((init.headers as Record<string, string>)["Content-Type"]).toBe(
       "application/json",
     );
-    expect(JSON.parse(init.body as string).email).toBe("admin@acme.com");
+    expect(JSON.parse(init.body as string).kimlik).toBe("admin@acme.com");
+    // TESIS KODU GITMEZ: giriste sorulmuyor.
+    expect(JSON.parse(init.body as string).tenant_slug).toBeUndefined();
     // Oturum verisi ONBELLEKLENEMEZ.
     expect(init.cache).toBe("no-store");
   });
@@ -112,7 +115,7 @@ describe("backendLogin", () => {
   it("401: ok=false + sunucunun hata zarfi AYNEN tasinir", async () => {
     const zarf = { error: { code: "unauthorized", message: "Kimlik dogrulanamadi." } };
     stubFetch(() => ({ status: 401, body: zarf }));
-    const r = await backendLogin({ tenant_slug: "a", email: "e", password: "p" });
+    const r = await backendLogin({ kimlik: "e", password: "p" });
     expect(r.ok).toBe(false);
     expect(r.status).toBe(401);
     expect(r.data).toEqual(zarf);
@@ -120,13 +123,13 @@ describe("backendLogin", () => {
 
   it("govde JSON degilse data=null (cagiran route patlamasin)", async () => {
     stubFetch(() => ({ status: 502, bozukGovde: true }));
-    const r = await backendLogin({ tenant_slug: "a", email: "e", password: "p" });
+    const r = await backendLogin({ kimlik: "e", password: "p" });
     expect(r).toEqual({ ok: false, status: 502, data: null });
   });
 
   it("hicbir cookie OKUNMAZ (login oncesi oturum yok)", async () => {
     stubFetch(() => ({ body: OK_CIFT }));
-    await backendLogin({ tenant_slug: "a", email: "e", password: "p" });
+    await backendLogin({ kimlik: "e", password: "p" });
     const [, init] = (fetch as unknown as { mock: { calls: [string, Record<string, unknown>][] } })
       .mock.calls[0];
     expect((init.headers as Record<string, string>).Authorization).toBeUndefined();

@@ -184,6 +184,18 @@ export function GirisFormu({ yuzey }: { yuzey: Yuzey }) {
       setError(t("girisAlanZorunlu"));
       return;
     }
+    // (P212 §1) KOD YOLU E-POSTAYA BAGLI — TELEFONDA SOYLENIR.
+    //
+    // OLCULDU: telefon yazip "Kod ile giriş"e basinca istek `eposta`
+    // alaniyla gidiyor, sunucu `EmailStr` dogrulamasinda 422 donuyor ve
+    // kullanici bicimsel bir dogrulama hatasi goruyordu. Kod E-POSTAYLA
+    // teslim ediliyor (SMS kapali); telefon kimligiyle kod istemek
+    // bugun MUMKUN DEGIL. Bunu istekten ONCE ve ACIKCA soylemek,
+    // 422'yi cevirmeye calismaktan durust.
+    if (!kimlik.includes("@")) {
+      setError(t("girisKodYalnizEposta"));
+      return;
+    }
     setLoading(true);
     try {
       const res = await fetch("/api/auth/eposta-kod?adim=iste", {

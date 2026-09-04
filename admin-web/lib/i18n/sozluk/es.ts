@@ -499,6 +499,7 @@ export const es: Sozluk = {
   girisParola: "Contraseña",
   girisKod: "Código de verificación",
   girisKodIle: "Enviarme un código por correo en lugar de contraseña",
+  girisKodYalnizEposta: "El acceso con código funciona con una dirección de correo. Para entrar con el número de teléfono, use su contraseña.",
   girisParolaylaDon: "Iniciar sesión con contraseña",
   girisSifremiUnuttum: "¿Olvidó su contraseña?",
   sifreSifirlaBaslik: "Olvidé mi contraseña",

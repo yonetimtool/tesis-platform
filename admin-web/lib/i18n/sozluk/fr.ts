@@ -499,6 +499,7 @@ export const fr: Sozluk = {
   girisParola: "Mot de passe",
   girisKod: "Code de vérification",
   girisKodIle: "Recevoir un code par e-mail au lieu du mot de passe",
+  girisKodYalnizEposta: "La connexion par code fonctionne avec une adresse e-mail. Pour vous connecter avec un numéro de téléphone, utilisez votre mot de passe.",
   girisParolaylaDon: "Se connecter avec le mot de passe",
   girisSifremiUnuttum: "Mot de passe oublié ?",
   sifreSifirlaBaslik: "Mot de passe oublié",

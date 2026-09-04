@@ -499,6 +499,7 @@ export const de: Sozluk = {
   girisParola: "Passwort",
   girisKod: "Bestätigungscode",
   girisKodIle: "Code per E-Mail statt Passwort",
+  girisKodYalnizEposta: "Die Anmeldung per Code funktioniert mit einer E-Mail-Adresse. Für die Anmeldung mit Telefonnummer verwenden Sie Ihr Passwort.",
   girisParolaylaDon: "Mit Passwort anmelden",
   girisSifremiUnuttum: "Passwort vergessen?",
   sifreSifirlaBaslik: "Passwort vergessen",

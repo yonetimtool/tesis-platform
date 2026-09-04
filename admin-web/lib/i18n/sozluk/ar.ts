@@ -499,6 +499,7 @@ export const ar: Sozluk = {
   girisParola: "كلمة المرور",
   girisKod: "رمز التحقق",
   girisKodIle: "أرسل لي رمزًا بالبريد بدلاً من كلمة المرور",
+  girisKodYalnizEposta: "الدخول بالرمز يعمل مع البريد الإلكتروني. استخدم كلمة المرور للدخول برقم الهاتف.",
   girisParolaylaDon: "تسجيل الدخول بكلمة المرور",
   girisSifremiUnuttum: "هل نسيت كلمة المرور؟",
   sifreSifirlaBaslik: "نسيت كلمة المرور",

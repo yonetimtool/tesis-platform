@@ -214,9 +214,11 @@ function refreshSingleFlight(rt: string): Promise<TokenPair | null> {
 
 /** Backend'e dogrudan login (cookie set etmeyi cagiran route handler yapar). */
 export async function backendLogin(body: {
-  tenant_slug: string;
-  email: string;
+  /** (P205 §1) E-POSTA **VEYA** TELEFON — ayrimi SUNUCU yapar. */
+  kimlik: string;
   password: string;
+  /** YALNIZ tesis seciminin SONUCU olarak dolar; giriste SORULMAZ. */
+  tenant_slug?: string;
 }): Promise<{ ok: boolean; status: number; data: unknown }> {
   const res = await callBackend("/auth/login", "POST", undefined, body);
   const data = await res.json().catch(() => null);
