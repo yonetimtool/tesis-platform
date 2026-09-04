@@ -120,3 +120,102 @@ istemci olarak bağlanamıyorum. Ölçebildiğim her katman (backend, depo,
 istemci API sınıfı) dev'de çalışıyor. Şimdi ekran hatayı **gösterecek**;
 cihazda tekrar denediğinde **ekranda çıkan mesajı** bana ilet — sessiz
 başarısızlık kalmadığı için artık teşhis edilebilir olacak.
+
+---
+
+## §3 — Gürültü eşiği: ikinci aşamada güvenliğe eskalasyon
+
+### ÖNCE OKUNDU
+`docs/P208-kararlar.md` (sakine sesli uyarı, pencere, susma süresi) ve
+`docs/P209-kararlar.md` (sayaçlar tipe göre ayrı). Değişmeyecekler
+listesine uyuldu: **harita**, **görüntü/diğer tiplerin davranışı**,
+**tip bazlı sayaçlar** ve **ses/kanal tanımları** ellenmedi.
+
+### KARAR K3.1 — VERİ MODELİ: yeni sayaç tablosu **YOK**, bir sütun **VAR**
+"Bu daire için eşik kaç kez aşıldı" sorusunun yanıtı **zaten defterde**:
+`unit_uyari` satır sayısı. İkinci bir sayaç tutmak, aynı gerçeği iki
+yerde tutmak ve günün birinde ayrışmalarını beklemek olurdu.
+
+Yine de `unit_uyari.asama` sütunu eklendi (göç **0104**) ve o anki
+değeriyle **damgalanıyor** — gerekçesi `esik`/`sayac`/`metin`
+sütunlarıyla birebir aynı: pencere ayarı sonradan değişirse geçmiş bir
+uyarının kaçıncı aşama olduğu **yeniden hesaplandığında başka çıkar**.
+Damga, "o gün ne yapıldı" sorusunun yanıtını sabitler.
+Göç **geri alınabilir**: `downgrade` sütunu düşürür (test edildi:
+downgrade → sütun yok → upgrade → sütun var). Enum değerleri bırakılır
+(Postgres'te `DROP VALUE` yok — göç 0102/0103 ile aynı karar).
+
+**Aşama sayımı da pencerelidir** (`gurultu_pencere_gun`): uyarıları
+sınırsız saymak, üç yıl önce bir kez uyarılmış daireyi bugün doğrudan
+"güvenliği çağır" aşamasına sokardı. Şikâyet sayımı ve uyarı sayımı
+**aynı** pencereyi kullanır.
+
+### KARAR K3.2 — Hangi ses? **`yonetio_bildirim`** (kritik kanal)
+`yonetio_gurultu` **kullanılmadı**. O ses **sakine yapılan anonstur**
+(7,4 sn) ve amacı daireye "sesini kıs" demek. Görevlinin ihtiyacı bir
+anons değil, **kısa bir "şimdi bak" işareti** — kaçan vardiya uyarısında
+verilen kararın aynısı (P208 §2). Üçüncü bir kanal da açılmadı: nadir bir
+olay için kullanıcının sistem ayarlarına bir satır daha eklemek, o ekranı
+okunmaz yapmaya giden yoldur.
+
+Kullanıcı sesli uyarıları kapatmışsa eskalasyon da **sessiz kanaldan**
+gider — tercih görmezden gelinmez (P207 kararı), testle kilitli.
+
+### KARAR K3.3 — Güvenlik vardiyada değilse: **herkese gönder + yöneticiye kopya**
+Sistemde "şu an vardiyada olan görevli" bilgisi **plandan** gelir; gerçek
+giriş-çıkış kaydı **yok** (P203 §5'te yazılı kısıt). Plana bakıp yalnız
+"vardiyadaki" kişiye göndermek, plan boş ya da yanlış olduğunda bildirimi
+**hiç göndermemek** demekti — kimsenin fark etmediği bir sessizlik.
+
+Bu yüzden bildirim **tüm aktif `security` + `guvenlik_amiri`** rollerine
+gider ve **yöneticiye ayrı bir bilgi bildirimi** düşer. Gürültülü ama
+**görünür** bir fazlalık, görünmez bir kayıptan iyidir. Ayrıca her iki
+tarafa **in-app satır** da yazılır: push kapalı/başarısız olabilir ve o
+zaman "bana geldi mi" sorusunun kalıcı yanıtı kalmazdı.
+
+### KARAR K3.4 — Üçüncü ve sonraki kezler: **aynı eskalasyon, artan sayı**
+Sistemde daha üst bir merci **yok** — polis zaten eskalasyonun kendisi.
+Yeni bir "aşama 3 davranışı" uydurmak, olmayan bir yetkiyi varmış gibi
+göstermek olurdu. Bildirim metni kaçıncı kez olduğunu (`kez`) taşır;
+görevli ciddiyeti oradan okur. Testle kilitli: aşamalar `[1,2,3]`,
+eskalasyon `kez` değerleri `[2,3]`.
+
+### KARAR K3.5 — Sistem **kimseyi aramaz**
+Metin "kontrol edin ve **gerekirse** polise haber veriniz" der. Arama
+kararı ve eylemi görevlinindir. Otomatik arama, yanlış alarmda kamu
+kaynağını boşuna meşgul etmek ve sorumluluğu yazılıma yüklemek olurdu.
+
+### Şikâyet edenin kimliği
+Eskalasyon metninde geçen üç şey var: **daire** (güvenliğin gideceği
+yer), **sayı** ve **kaçıncı kez**. Kişi yok, şikâyet eden yok. Denetim
+kaydına da güvenlikçilerin kimliği yazılmaz (denetim kaydı da bir sızıntı
+yüzeyidir) — aşama ve eskalasyon bayrağı yeter.
+
+### Susma süresiyle ilişkisi (bilinçli davranış)
+Bir daire uyarıldıktan sonra `gurultu_susma_gun` boyunca **yeniden
+uyarılmaz**; bu, ikinci eşiğin de o süre boyunca **beklemesi** demektir.
+Bilinçli: her gece tekrarlanan bir uyarı kendisi gürültüye dönüşür. Süreyi
+0 yapan tesiste eskalasyon anında çalışır (testte böyle sürüldü).
+
+### Ölçüm — ne sürdüm
+`esik_kontrol` **gerçek veritabanıyla** sürüldü (taklit yalnız push
+gönderiminde, yani HTTP sınırında):
+* 5 gürültü → aşama 1, sakine uyarı, **güvenliğe hiçbir şey** (gerileme kapısı);
+* 5 gürültü daha → aşama 2, güvenliğe bildirim (`daire`,`sayi`,`kez`),
+  yöneticiye bilgi, **sayaç sıfır**;
+* 5 daha → aşama 3, aynı eskalasyon, `kez=3`;
+* araya **5 görüntü kirliliği** şikâyeti → gürültü akışı **hiç
+  tetiklenmedi** ve görüntü şikâyetleri **açık kaldı** (bir tipin eşiği
+  ötekinin defterini silmez);
+* denetim kaydında `asama` ve `eskalasyon` bayrağı;
+* 7 dil parite, sesli/sessiz kanal seçimi.
+
+**Kırma denemesi:** `eskalasyon = False` yapıldığında tam olarak 4 test
+düştü (güvenliğe bildirim, yöneticiye bilgi, üçüncü kez, denetim aşaması);
+geri alınca 17'si geçti.
+
+### Ölçemediğim
+Gerçek bir cihazda eskalasyon bildiriminin **duyulması**: push gönderimi
+dev'de `PUSH_PROVIDER=noop` ve dev tesiste kayıtlı cihaz yok (günlükte
+"PUSH hedef yok" satırları bunun kanıtı). Kanal/ses **seçimi** birim
+testiyle kilitli; teslimin kendisi cihazda doğrulanmalı.

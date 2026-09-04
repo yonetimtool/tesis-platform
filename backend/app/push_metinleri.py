@@ -267,6 +267,63 @@ METINLER: dict[str, PushMetni] = {
         },
         params=('daire', 'sayi'),
     ),
+    # ==================================================================
+    # (P212 §3) ESKALASYON — IKINCI ESIKTE GUVENLIGE
+    # ==================================================================
+    # SIKAYET EDENIN KIMLIGI YINE YOK. Gecen sey DAIRE (guvenligin
+    # gidecegi yer), SAYI ve KACINCI kez oldugu — guvenlik gorevlisinin
+    # ne kadar ciddi bir durumla karsi karsiya oldugunu bilmesi icin.
+    #
+    # "POLISE HABER VERINIZ" METNI BILINCLI VE SINIRLI: sistem KIMSEYI
+    # ARAMAZ. Arama karari ve eylemi gorevlinindir; yazilim yalnizca
+    # bilgiyi ve onerilen adimi iletir. Otomatik arama, yanlis alarmda
+    # kamu kaynagini bosuna mesgul etmek ve sorumlulugu yazilima
+    # yuklemek olurdu.
+    "gurultu_eskalasyon_guvenlik": PushMetni(
+        baslik={
+            "tr": "Gürültü: güvenlik müdahalesi gerekiyor",
+            "en": "Noise: security response needed",
+            "ar": "ضوضاء: مطلوب تدخل أمني",
+            "ru": "Шум: требуется вмешательство охраны",
+            "de": "Lärm: Sicherheitsmaßnahme erforderlich",
+            "fr": "Bruit : intervention de sécurité nécessaire",
+            "es": "Ruido: se requiere intervención de seguridad",
+        },
+        govde={
+            "tr": "{daire} dairesi için {kez}. kez {sayi} gürültü şikâyeti birikti. Lütfen kontrol edin ve gerekirse polise haber veriniz.",
+            "en": "Unit {daire} has reached {sayi} noise complaints for the {kez}. time. Please check and notify the police if necessary.",
+            "ar": "بلغت الوحدة {daire} {sayi} شكاوى ضوضاء للمرة {kez}. يرجى التحقق وإبلاغ الشرطة عند الحاجة.",
+            "ru": "По квартире {daire} уже {kez}-й раз накопилось жалоб на шум: {sayi}. Проверьте и при необходимости сообщите в полицию.",
+            "de": "Für Einheit {daire} sind zum {kez}. Mal {sayi} Lärmbeschwerden eingegangen. Bitte prüfen und nötigenfalls die Polizei verständigen.",
+            "fr": "Le logement {daire} atteint {sayi} plaintes pour bruit pour la {kez}e fois. Veuillez vérifier et prévenir la police si nécessaire.",
+            "es": "La vivienda {daire} ha alcanzado {sayi} quejas por ruido por {kez}.ª vez. Compruébelo y avise a la policía si es necesario.",
+        },
+        params=('daire', 'sayi', 'kez'),
+    ),
+    # YONETIME AYRI BILGI: eskalasyonun OLDUGUNU bilmeli (guvenlik
+    # gorevlisi vardiyada olmayabilir ve o zaman tek haberdar olan
+    # yonetici olur — bkz. docs/P212-kararlar.md §3).
+    "gurultu_eskalasyon_yonetim": PushMetni(
+        baslik={
+            "tr": "Gürültü eşiği yeniden aşıldı",
+            "en": "Noise threshold reached again",
+            "ar": "تم بلوغ حد الضوضاء مجددًا",
+            "ru": "Порог по шуму снова достигнут",
+            "de": "Lärmschwelle erneut erreicht",
+            "fr": "Seuil de bruit à nouveau atteint",
+            "es": "Umbral de ruido alcanzado de nuevo",
+        },
+        govde={
+            "tr": "{daire} dairesi için {kez}. kez {sayi} gürültü şikâyeti birikti; güvenliğe bildirim gönderildi.",
+            "en": "Unit {daire} reached {sayi} noise complaints for the {kez}. time; security has been notified.",
+            "ar": "بلغت الوحدة {daire} {sayi} شكاوى ضوضاء للمرة {kez}؛ وتم إبلاغ الأمن.",
+            "ru": "По квартире {daire} {kez}-й раз накопилось жалоб на шум: {sayi}; охрана уведомлена.",
+            "de": "Für Einheit {daire} wurden zum {kez}. Mal {sayi} Lärmbeschwerden erreicht; die Sicherheit wurde benachrichtigt.",
+            "fr": "Le logement {daire} atteint {sayi} plaintes pour bruit pour la {kez}e fois ; la sécurité a été prévenue.",
+            "es": "La vivienda {daire} alcanzó {sayi} quejas por ruido por {kez}.ª vez; se avisó a seguridad.",
+        },
+        params=('daire', 'sayi', 'kez'),
+    ),
     "gurultu_uyarisi": PushMetni(
         baslik={
             "tr": "Gürültü uyarısı gerekiyor",

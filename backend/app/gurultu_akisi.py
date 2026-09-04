@@ -25,6 +25,7 @@ from .gurultu import (
 )
 from .audit import Action, record_audit
 from .models import (
+    AppUser,
     Integration,
     Notification,
     Tenant,
@@ -42,6 +43,18 @@ logger = logging.getLogger(__name__)
 
 #: Manuel modda anonsu yapacak roller.
 _MANUEL_ROLLER: tuple[str, ...] = ("admin", "yonetici")
+
+#: (P212 §3) ESKALASYONUN GITTIGI ROLLER.
+#:
+#: VARDIYADA OLUP OLMADIGINA BAKILMAZ ve bu bilincli bir karardir:
+#: sistemde "su an vardiyada olan gorevli" bilgisi PLANDAN gelir
+#: (P203 §5'te de yazildigi gibi gercek giris-cikis kaydi YOK). Plana
+#: bakip yalnizca "vardiyadaki" kisiye gondermek, plan bos ya da yanlis
+#: oldugunda bildirimi HIC GONDERMEMEK demekti — ve bu, kimsenin fark
+#: etmedigi bir sessizlik uretirdi. Herkese gonderip yoneticiye de kopya
+#: birakmak, gurultulu ama GORUNUR bir hatadir; tersi gorunmez bir
+#: kayiptir.
+_ESKALASYON_ROLLER: tuple[str, ...] = ("security", "guvenlik_amiri")
 
 #: (P209) SESLI CAYDIRICININ BAGLI OLDUGU TEK KATEGORI.
 #:
@@ -117,6 +130,37 @@ async def _uyarilacak_sakinler(
     if kiracilar:
         return kiracilar
     return [uid for uid, _ in satirlar]
+
+
+async def onceki_uyari_sayisi(
+    db: AsyncSession, unit_id: uuid.UUID, *, pencere_gun: int = 0
+) -> int:
+    """(P212 §3) Bu daireye AYNI PENCEREDE kac kez uyari verildi.
+
+    =======================================================================
+    NEDEN AYRI BIR SAYAC TABLOSU YOK
+    =======================================================================
+    "Kac kez esik asildi" sorusunun yaniti ZATEN defterde: `unit_uyari`
+    satirlari. Ikinci bir sayac tutmak, ayni gercegi iki yerde tutmak ve
+    gunun birinde ayrismalarini beklemek olurdu.
+
+    =======================================================================
+    NEDEN PENCERE
+    =======================================================================
+    Sikayetler `gurultu_pencere_gun` icinde sayiliyor (P208 §1). Uyarilari
+    SINIRSIZ saymak, uc yil once bir kez uyarilmis bir daireyi bugun
+    dogrudan "guvenligi cagir" asamasina sokardi. Iki sayim AYNI pencereyi
+    kullanir; pencere 0 ise (eski davranis) ikisi de sinirsizdir.
+    """
+    kosullar = [UnitUyari.unit_id == unit_id]
+    if pencere_gun and pencere_gun > 0:
+        sinir = datetime.now(tz=timezone.utc) - timedelta(days=pencere_gun)
+        kosullar.append(UnitUyari.created_at >= sinir)
+    return (
+        await db.execute(
+            select(func.count()).select_from(UnitUyari).where(*kosullar)
+        )
+    ).scalar_one()
 
 
 async def _susma_suresinde_mi(
@@ -221,11 +265,18 @@ async def esik_kontrol(
             )
         ).scalar_one_or_none()
 
+    # (P212 §3) KACINCI ESIK ASIMI — eskalasyon kapisi.
+    asama = await onceki_uyari_sayisi(
+        db, unit.id, pencere_gun=tenant.gurultu_pencere_gun
+    ) + 1
+    eskalasyon = asama >= 2
+
     kayit = UnitUyari(
         tenant_id=tenant_id,
         unit_id=unit.id,
         esik=tenant.gurultu_esigi,
         sayac=sayac,
+        asama=asama,
         metin=metin,
         kanal="webhook" if entegrasyon is not None else "manuel",
         durum="manuel_bekliyor",
@@ -278,6 +329,62 @@ async def esik_kontrol(
         )
     kayit.sakin_bildirildi = bool(sakinler) and tenant.gurultu_sakin_uyarisi
 
+    # ============ (P212 §3) IKINCI ESIK: GUVENLIGE ESKALASYON ========= #
+    #
+    # SISTEM KIMSEYI ARAMAZ. Bildirim "kontrol edin ve GEREKIRSE polise
+    # haber veriniz" der; arama karari ve eylemi gorevlinindir. Otomatik
+    # arama, yanlis alarmda kamu kaynagini bosuna mesgul etmek ve
+    # sorumlulugu yazilima yuklemek olurdu.
+    #
+    # SIKAYET EDENIN KIMLIGI GECMEZ: gecen sey DAIRE (guvenligin
+    # gidecegi yer), SAYI ve KACINCI kez oldugu.
+    #
+    # UCUNCU VE SONRAKI ASAMALAR: ayni eskalasyon, artan `kez` ile
+    # tekrarlanir. Sistemde daha ust bir merci YOK — polis zaten
+    # eskalasyonun kendisi. Yeni bir "asama 3 davranisi" uydurmak,
+    # olmayan bir yetkiyi varmis gibi gostermek olurdu.
+    if eskalasyon:
+        params = {"daire": unit.no, "sayi": sayac, "kez": asama}
+        guvenlikciler = (
+            (await db.execute(
+                select(AppUser.id).where(
+                    AppUser.role.in_(_ESKALASYON_ROLLER),
+                    AppUser.is_active.is_(True),
+                )
+            )).scalars().all()
+        )
+        # IN-APP SATIR HER KISIYE: "bana geldi mi" sorusunun kalici
+        # yaniti. Push kapali/basarisiz olabilir.
+        if guvenlikciler:
+            sakin_bildirimi_yaz(
+                db, tenant_id=tenant_id, tip="gurultu_eskalasyon_guvenlik",
+                user_ids=list(guvenlikciler), veri=params,
+            )
+        dispatch_external(
+            "gurultu_eskalasyon_guvenlik",
+            tenant_id=tenant_id,
+            target_roles=_ESKALASYON_ROLLER,
+            params=params,
+            data={"tip": "gurultu_eskalasyon_guvenlik", "unit_id": str(unit.id)},
+        )
+        # YONETICI DE HABERDAR: guvenlik gorevlisi vardiyada olmayabilir
+        # ve o zaman tek haberdar olan yonetici olur. Sahipsiz satir
+        # (`user_id=NULL`) yonetim gozunde gorunur.
+        db.add(Notification(
+            tenant_id=tenant_id,
+            tip="gurultu_eskalasyon_yonetim",
+            mesaj=push_govdesi("gurultu_eskalasyon_yonetim", "tr", params),
+            mesaj_kimlik="gurultu_eskalasyon_yonetim",
+            mesaj_veri=params,
+        ))
+        dispatch_external(
+            "gurultu_eskalasyon_yonetim",
+            tenant_id=tenant_id,
+            target_roles=_MANUEL_ROLLER,
+            params=params,
+            data={"tip": "gurultu_eskalasyon_yonetim", "unit_id": str(unit.id)},
+        )
+
     # ============== YONETIME AYRI BILDIRIM (her modda) ================ #
     #
     # Webhook modunda yonetici bugune kadar HICBIR SEY DUYMUYORDU: anons
@@ -328,6 +435,12 @@ async def esik_kontrol(
             "pencere_gun": tenant.gurultu_pencere_gun,
             "kanal": kayit.kanal,
             "sakin_bildirimi": len(sakinler) if kayit.sakin_bildirildi else 0,
+            # (P212 §3) ESKALASYON DENETIME YAZILIR: "guvenlige ne zaman,
+            # kacinci asamada haber verildi" sorusu bir olaydan sonra
+            # sorulacak ilk sorulardan. Guvenlikcilerin KIMLIGI yazilmaz
+            # (denetim kaydi da bir sizinti yuzeyidir); asama yeter.
+            "asama": asama,
+            "eskalasyon": eskalasyon,
         },
     )
 

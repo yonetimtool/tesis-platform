@@ -101,6 +101,18 @@ KRITIK_TIPLER: frozenset[str] = frozenset({
     # (P208 §1) Sakine giden uyari ve yoneticiye giden esik bilgisi.
     "gurultu_uyari_sakin",
     "gurultu_esik_yonetim",
+    # (P212 §3) ESKALASYON: guvenlige "kontrol edin, gerekirse polise
+    # haber verin" ve yoneticiye bilgi. Duyulmayan bir eskalasyon, hic
+    # gonderilmemis gibidir — ikisi de KRITIK kanaldan gider.
+    #
+    # NEDEN `yonetio_gurultu` DEGIL: o ses SAKINE yapilan ANONSTUR
+    # (7,4 sn) ve amaci daireye "sesini kis" demek. Gorevlinin ihtiyaci
+    # bir anons degil, KISA bir "simdi bak" isaretidir — kacan vardiya
+    # uyarisinda verilen kararin aynisi (P208 §2). Ayri UCUNCU bir
+    # kanal da acmadik: nadir bir olay icin kullanicinin sistem
+    # ayarlarina bir satir daha eklemek, o ekrani okunmaz yapardi.
+    "gurultu_eskalasyon_guvenlik",
+    "gurultu_eskalasyon_yonetim",
 })
 
 

@@ -102,6 +102,14 @@ NOTIFICATION_TIP = ENUM(
     #   * `aylik_ozet`       — ay basi ozeti (yoneticiye).
     #   * `gider_onay`       — vadesi gelen duzenli gider (yoneticiye).
     "aidat_hatirlatma", "aidat_onizleme", "aylik_ozet", "gider_onay",
+    # (P208 §1, göç 0103) Gürültü eşiği: sakine uyarı + yönetime bilgi.
+    # NOT (P212): bu iki değer göç 0103'te eklenmiş ama bu listeye
+    # YAZILMAMIŞTI. Dosyanın kendi kuralı "göçün birebir aynası olmak";
+    # eksik kalması, listeye bakarak karar veren bir sonraki kişiyi
+    # yanıltırdı.
+    "gurultu_uyari_sakin", "gurultu_esik_yonetim",
+    # (P212 §3, göç 0104) İkinci eşikte güvenliğe eskalasyon + yönetime bilgi.
+    "gurultu_eskalasyon_guvenlik", "gurultu_eskalasyon_yonetim",
     name="notification_tip", create_type=False,
 )
 ASSET_KATEGORI = ENUM(
@@ -3983,6 +3991,12 @@ class UnitUyari(Base):
     unit_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     esik: Mapped[int] = mapped_column(Integer, nullable=False)
     sayac: Mapped[int] = mapped_column(Integer, nullable=False)
+    #: (P212 §3, goc 0104) KACINCI ESIK ASIMI. 1 = sakine uyari;
+    #: 2 ve uzeri = GUVENLIGE eskalasyon ("polise haber veriniz").
+    #: Turetilebilir (ayni daireye ait onceki uyari sayisi) ama o anki
+    #: degeriyle DAMGALANIR: pencere ayari sonradan degisirse gecmis bir
+    #: uyarinin asamasi yeniden hesaplandiginda baska cikardi.
+    asama: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("1"))
     metin: Mapped[str] = mapped_column(Text, nullable=False)
     kanal: Mapped[str] = mapped_column(UYARI_KANAL, nullable=False)
     durum: Mapped[str] = mapped_column(UYARI_DURUM, nullable=False)
