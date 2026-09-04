@@ -156,9 +156,10 @@ it("KAYIT niyetinde TESIS ID formu CIKMAZ", async () => {
   expect(screen.queryByLabelText(/tesis/i)).toBeNull();
 });
 
-it("GIRIS niyetinde `baglama_gerekli` hâlâ TESIS ID sorar (gerileme yok)", async () => {
-  // Kayit dalini genisletirken giris dalini bozmadigimiz olculur:
-  // panelden eklenmis, tesis kodu olan kisi bu formu GORMELI.
+it("GIRIS niyetinde `baglama_gerekli` -> KAYDA devreder (TESIS ID SORULMAZ)", async () => {
+  // (P211-ek3) DEGISEN DAVRANIS. P191'de burasi Tesis ID soruyordu;
+  // kural artik mobille AYNI: Tesis ID YALNIZ kayit akisinda sorulur.
+  // Jeton `/kayit`a tasinir, saglayici akisi TEKRARLANMAZ.
   arama = new URLSearchParams({ oauth: "sonuc-9" });
   taklit((url) =>
     url.includes("/oauth/sonuc")
@@ -172,7 +173,13 @@ it("GIRIS niyetinde `baglama_gerekli` hâlâ TESIS ID sorar (gerileme yok)", asy
   );
 
   await oauthSayfasi();
-  await waitFor(() => expect(replace).not.toHaveBeenCalled());
-  expect(await screen.findByRole("button", { name: /devam|tamamla|gönder/i }))
-    .toBeTruthy();
+
+  await waitFor(() => expect(replace).toHaveBeenCalledWith("/kayit"));
+  const s = kayitSosyalSonucOku();
+  expect(s?.baglamaJetonu).toBe("b-9");
+  // ROL BOS: giristen gelindi, rolu kullanici SECER (kayit ekraninin
+  // rol adimi). Varsayilan bir rol yazmak, kisiyi yanlis kayit turune
+  // sokmanin sessiz yoluydu.
+  expect(s?.rol).toBe("");
+  expect(screen.queryByLabelText(/tesis/i)).toBeNull();
 });

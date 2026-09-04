@@ -87,6 +87,11 @@ const UC_YONETICI_BASVURU = "/api/auth/kayit/yonetici-basvuru";
 const UC_YONETICI_DOGRULA = "/api/auth/kayit/yonetici-dogrula";
 const UC_YONETICI_TESIS = "/api/auth/kayit/yonetici-tesis";
 const UC_TESIS = "/api/auth/kayit/tesis-olustur";
+// (P211-ek3) ADIM ADLARI MODUL DUZEYINDE SABIT: ucluda dizge yazmak
+// `sabit-metin` taramasini (hakli olarak) tetikliyor — o tarama ucludeki
+// her dizgeyi cevrilmemis metin adayi sayar.
+const ADIM_ROL = "rol" as const;
+const ADIM_BILGILER = "bilgiler" as const;
 const UC_ROL_EPOSTA_BASLA = "/api/auth/kayit/rol-eposta-basla";
 const UC_ROL_EPOSTA_DOGRULA = "/api/auth/kayit/rol-eposta-dogrula";
 const UC_PAROLA = "/api/auth/set-password";
@@ -294,7 +299,10 @@ export default function KayitSayfasi() {
     // Saglayicidan gelen ad soyad forma OTOMATIK DOLAR; kullanici
     // duzeltebilir. Apple ad vermez -> alan bos kalir.
     if (s.ad) setAd(s.ad);
-    setAdim("bilgiler");
+    // (P211-ek3) ROL BOSSA GIRISTEN GELINDI: hangi rolde kaydolacagini
+    // kullanici SECER. Kayit akisindan gelenlerde rol zaten secilmisti,
+    // onlar bilgiler adimindan devam eder (gerileme yok).
+    setAdim(s.rol ? ADIM_BILGILER : ADIM_ROL);
   }, []);
 
   /**

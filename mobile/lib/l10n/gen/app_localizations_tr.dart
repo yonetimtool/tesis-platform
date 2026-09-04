@@ -4650,7 +4650,17 @@ class AppLocalizationsTr extends AppLocalizations {
   String get hesapSilKodGerekli => 'Onay kodunu girin';
 
   @override
-  String get kayitBaslik => 'Tesis ID ile giriş';
+  String get kayitBaslik => 'Kayıt ol';
+
+  @override
+  String get girisKayitBaglantisi => 'Hesabınız yok mu? Kayıt olun';
+
+  @override
+  String get girisHesapBagliDegil => 'Bu hesap bir tesise bağlı değil';
+
+  @override
+  String get girisHesapBagliDegilAlt =>
+      'Hesabınız varsa parola ile giriş yapın. Hesabınız yoksa kayıt olurken davet e-postanızdaki Tesis ID’yi girersiniz.';
 
   @override
   String get kayitAltBaslik => 'Size uygun olanı seçiniz';

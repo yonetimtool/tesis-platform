@@ -148,59 +148,37 @@ void main() {
     }
   });
 
-  testWidgets('SSO donusunde ROL SECIMI YOK (giris rol sormaz)',
+  // (P211-ek3) BU BLOK YENIDEN YAZILDI — GIRIS EKRANINDA ARTIK
+  // TAMAMLAMA FORMU YOK.
+  //
+  // P194'un kilitledigi kural "giris rol SORMAZ"di ve o kural artik
+  // YAPISAL olarak sagl aniyor: giris ekrani bagli olmayan bir kimlige
+  // ne rol ne Tesis ID sorar — kullaniciyi kayda yonlendirir. Rol
+  // gonderilmemesi gereken uc (`rol-tamamla`) sunucu tarafinda
+  // kilitlidir (backend `test_p194_mobil_yonetici_sso.py`) ve kayit
+  // ekraninda rol BILEREK gonderilir (orasi bir KAYIT akisidir).
+  testWidgets('BAGLI OLMAYAN KIMLIK: giris ekrani NE ROL NE TESIS ID sorar',
       (tester) async {
-    final oauth = _SahteOauth();
-    final kap = await _sur(tester, oauth);
-
+    await _sur(tester, _SahteOauth());
     await _sagayiciyaBas(tester, 'google');
-    // ignore: avoid_print
-    // Baglama formu acildi...
-    expect(find.byKey(const Key('sosyal-tesis-kodu')), findsOneWidget);
-    // ...ama ROL ACILIR LISTESI YOK. Bu listenin varligi, yoneticiyi
-    // kendi rolunu SECEMEDIGI bir formda birakiyordu.
+
+    // Eski cikmazin iki parcasi da YOK.
     expect(find.byKey(const Key('sosyal-rol')), findsNothing,
         reason: 'giris ekraninda rol secimi olmamali');
+    expect(find.byKey(const Key('sosyal-tesis-kodu')), findsNothing,
+        reason: 'Tesis ID YALNIZ kayit akisinda sorulur');
+    // Yerine ACIK bir yol gosterilir.
+    expect(find.byKey(const Key('sso-hesap-bagli-degil')), findsOneWidget);
+    expect(find.byKey(const Key('sso-kayda-git')), findsOneWidget);
   });
 
-  testWidgets('TESIS ID ile tamamlama ROL GONDERMEDEN yapilir -> oturum',
-      (tester) async {
+  testWidgets('GIRIS EKRANI hicbir TAMAMLAMA istegi GONDERMEZ', (tester) async {
+    // P194'te olculen kusur, giris ekraninin rol beyan ederek tamamlama
+    // cagirmasiydi. Artik o cagri BU EKRANDAN HIC yapilmiyor.
     final oauth = _SahteOauth(tamamlaDurum: 'giris');
-    final kap = await _sur(tester, oauth);
-
+    await _sur(tester, oauth);
     await _sagayiciyaBas(tester, 'google');
-    await tester.enterText(
-        find.byKey(const Key('sosyal-tesis-kodu')), 'ACME-260901');
-    await tester.tap(find.byKey(const Key('sosyal-ilerle')));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
-
-    // ROL GONDERILMEDI: sunucu rolu hesaptan okur ve yoneticiyi de kabul
-    // eder. `rol` dolu gitseydi sunucu "onay_bekliyor" donerdi (olculdu).
-    expect(oauth.tamamlaCagrilari.single.rol, isNull,
-        reason: 'giris akisi rol BEYAN ETMEMELI');
-    expect(oauth.tamamlaCagrilari.single.tesisKodu, 'ACME-260901');
-    expect(kap.read(authControllerProvider).status, AuthStatus.authenticated);
-  });
-
-  testWidgets('OTP yolunda da ROL GONDERILMEZ', (tester) async {
-    final oauth = _SahteOauth(tamamlaDurum: 'otp_gerekli');
-    final kap = await _sur(tester, oauth);
-
-    await _sagayiciyaBas(tester, 'google');
-    await tester.enterText(
-        find.byKey(const Key('sosyal-tesis-kodu')), 'ACME-260901');
-    await tester.tap(find.byKey(const Key('sosyal-ilerle')));
-    await tester.pumpAndSettle();
-
-    // Ikinci adim (e-posta OTP) — burada da rol beyan edilmemeli; aksi
-    // halde OTP yolundaki yonetici yine cikmaza duserdi.
-    await tester.enterText(find.byKey(const Key('sosyal-kod')), '123456');
-    await tester.tap(find.byKey(const Key('sosyal-ilerle')));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
-
-    expect(oauth.dogrulaCagrilari.single.rol, isNull);
-    expect(kap.read(authControllerProvider).status, AuthStatus.authenticated);
+    expect(oauth.tamamlaCagrilari, isEmpty);
+    expect(oauth.dogrulaCagrilari, isEmpty);
   });
 }

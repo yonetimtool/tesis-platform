@@ -7,7 +7,6 @@ import '../../../core/i18n/l10n.dart';
 import '../data/auth_repository_impl.dart';
 import 'auth_controller.dart';
 import 'giris_hata_metni.dart';
-import 'sosyal_baglama_formu.dart';
 import 'sosyal_giris.dart';
 import '../../../core/ui/merkez_diyalog.dart';
 import '../../tesis/domain/tesis_uyeligi.dart';
@@ -196,13 +195,60 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                       ],
                     )
+                  // (P211-ek3) SSO KIMLIGI BIR HESABA BAGLI DEGIL.
+                  //
+                  // BURADA ARTIK TESIS ID SORULMUYOR. Kural: Tesis ID
+                  // YALNIZ KAYIT akisinda sorulur (davet e-postasindaki
+                  // kod), giriste ASLA. Eskiden bu dalda `SosyalBaglamaFormu`
+                  // ciziliyor ve giris ekrani bir kayit formuna
+                  // donusuyordu.
+                  //
+                  // Jeton STATE'TE DURUR: kayit ekrani onu bulunca
+                  // tarayici akisini TEKRARLAMAZ, yalniz rol + Tesis ID
+                  // sorar.
                   : auth.oauthBaglamaJetonu != null
                   ? Column(
                       mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Center(child: YonetioLogoVertical(iconSize: 100)),
-                        SizedBox(height: 28),
-                        SosyalBaglamaFormu(),
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Center(child: YonetioLogoVertical(iconSize: 100)),
+                        const SizedBox(height: 28),
+                        Text(
+                          l10n.girisHesapBagliDegil,
+                          key: const Key('sso-hesap-bagli-degil'),
+                          style: Theme.of(context).textTheme.titleMedium,
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          l10n.girisHesapBagliDegilAlt,
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 20),
+                        FilledButton(
+                          key: const Key('sso-kayda-git'),
+                          style: FilledButton.styleFrom(
+                            minimumSize: const Size.fromHeight(52),
+                          ),
+                          onPressed: submitting
+                              ? null
+                              : () => context.go(AppRoutes.kayit),
+                          child: Text(l10n.girisKayitBaglantisi),
+                        ),
+                        // "Zaten hesabim var" yolu: PAROLA ILE GIRIS.
+                        // Sosyal hesabini kendi hesabina baglamak isteyen
+                        // kullanici bunu web panelinden yapar (mobilde
+                        // "bagli hesaplar" ekrani HENUZ YOK — acik madde,
+                        // docs/P211-kararlar.md §8).
+                        TextButton(
+                          key: const Key('sso-vazgec'),
+                          onPressed: submitting
+                              ? null
+                              : () => ref
+                                  .read(authControllerProvider.notifier)
+                                  .oauthIptal(),
+                          child: Text(l10n.ortakVazgec),
+                        ),
                       ],
                     )
                   : Form(
@@ -319,19 +365,29 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     // giris tenant_slug ister). Parolasiz sakinler ARTIK SSO
                     // ile girer; parola belirleyenler parola ile. Boylece
                     // giris ekraninda SMS vaadi KALMAZ (kabul 1).
+                    //
+                    // (P211-ek3) SIRA DEGISTI: SSO dugmeleri PAROLANIN
+                    // HEMEN ALTINDA, kayit baglantisi EN ALTTA. Eskiden
+                    // araya kayit baglantisi giriyordu; "giris yollari"
+                    // ile "hesabim yok" ayni oburde gorunuyordu.
+                    const SosyalGirisDugmeleri(),
                     // (P154 / Asama 3) KAYIT KAPISI. Hesabi yonetici
                     // aciyor ama kisi onu SAHIPLENMEDEN giremiyor; bu
                     // baglanti olmadan kayit ekranina ulasilamazdi.
+                    //
+                    // (P211-ek3) ETIKET DUZELTILDI. `kayitBaslik` metni
+                    // "Tesis ID ile giris" idi ve bu YANLIS iki sey
+                    // soyluyordu: (a) burasi bir GIRIS yolu degil KAYIT
+                    // yolu, (b) giriste Tesis ID SORULMAZ. Kullanici
+                    // haklı olarak "giris ekraninda Tesis ID baglantisi
+                    // var" diye bildirdi.
                     const SizedBox(height: 8),
                     TextButton(
                       key: const Key('login-kayit-baglantisi'),
                       onPressed:
                           submitting ? null : () => context.go(AppRoutes.kayit),
-                      child: Text(l10n.kayitBaslik),
+                      child: Text(l10n.girisKayitBaglantisi),
                     ),
-                    // (P154 / Asama 4) Sosyal giris dugmeleri — saglayici
-                    // yapilandirilmamissa HIC cizilmez.
-                    const SosyalGirisDugmeleri(),
                   ],
                 ),
               ),

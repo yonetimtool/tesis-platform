@@ -4818,7 +4818,18 @@ class AppLocalizationsDe extends AppLocalizations {
   String get hesapSilKodGerekli => 'Bestätigungscode eingeben';
 
   @override
-  String get kayitBaslik => 'Mit Anlagen-ID anmelden';
+  String get kayitBaslik => 'Registrieren';
+
+  @override
+  String get girisKayitBaglantisi => 'Kein Konto? Jetzt registrieren';
+
+  @override
+  String get girisHesapBagliDegil =>
+      'Dieses Konto ist keiner Anlage zugeordnet';
+
+  @override
+  String get girisHesapBagliDegilAlt =>
+      'Wenn Sie bereits ein Konto haben, melden Sie sich mit Ihrem Passwort an. Andernfalls geben Sie bei der Registrierung die Anlagen-ID aus Ihrer Einladungs-E-Mail ein.';
 
   @override
   String get kayitAltBaslik => 'Wählen Sie, was auf Sie zutrifft';

@@ -54,10 +54,6 @@ type TesisSecenegi = { tenant_id: string; ad: string; slug: string };
 
 type Adim =
   | "yukleniyor"
-  // (P191 §1) Kimlik bir hesaba bagli DEGIL -> once TESIS ID sorulur.
-  | "tamamla"
-  // Tesis ID verildi ama saglayici e-postayi dogrulamamis -> e-posta OTP.
-  | "tamamla_kod"
   // (b)/(a) tutmadi: yoneticinin onay kuyruguna dustu.
   | "onay_bekliyor"
   | "kayit_gerekli"
@@ -77,8 +73,6 @@ const UC_SONUC = "/api/auth/oauth/sonuc";
 const UC_BAGLANTILAR = "/api/auth/oauth/baglantilarim";
 const UC_DAVET_SOSYAL = "/api/auth/davet/sosyal";
 // (P191 §1) GIRISTE TAMAMLAMA — `rol` GONDERILMEZ, hesaptan okunur.
-const UC_TAMAMLA = "/api/auth/oauth/rol-tamamla";
-const UC_TAMAMLA_DOGRULA = "/api/auth/oauth/rol-tamamla-dogrula";
 const UC_TESIS_SEC = "/api/auth/oauth/tesis-sec";
 const DURUM_GIRIS = "giris";
 const DURUM_OTP = "otp_gerekli";
@@ -97,11 +91,6 @@ function OauthDonus() {
   const [tesisler, setTesisler] = useState<TesisSecenegi[]>([]);
   const [hata, setHata] = useState<string | null>(null);
   // (P191 §1) Girişte tamamlama formu.
-  const [baglamaJetonu, setBaglamaJetonu] = useState<string | null>(null);
-  const [eposta, setEposta] = useState<string>("");
-  const [tesisKodu, setTesisKodu] = useState("");
-  const [kod, setKod] = useState("");
-  const [bekliyor, setBekliyor] = useState(false);
 
   // SONUC TEK KULLANIMLIKTIR: sunucu onu `getdel` ile tuketir. React 18
   // gelistirme modunda efektler IKI KEZ kosar ve ikinci cagri "gecersiz
@@ -229,19 +218,28 @@ function OauthDonus() {
             router.replace("/kayit");
             return;
           }
-          // (P191 §1) GIRIS ekranindan gelen ve hicbir hesaba bagli OLMAYAN
-          // kimlik. P185'te burasi dogrudan "Kaydol"a yolluyordu ve OLCULEN
-          // KUSUR buydu: yoneticinin PANELDEN ekledigi, tesis kodlu davet
-          // e-postasini almis kisi de bu dala dusuyor ve kendi hesabi
-          // dururken "kaydol" cikmazina giriyordu. Dogru soru once "Tesis
-          // ID'niz var mi?"dir — varsa hesap eslesir ve giris tamamlanir.
+          // (P211-ek3) HICBIR HESABA BAGLI OLMAYAN KIMLIK -> KAYIT.
           //
-          // KAYIT YOLU KAPANMADI: form altinda "Tesisim yok" baglantisi
-          // duruyor (o baglanti `app.*`taki kayit yuzeyine gider).
+          // P191'de burasi Tesis ID soruyordu. KURAL DEGISTI ve mobille
+          // AYNI: Tesis ID YALNIZ KAYIT akisinda sorulur (davet
+          // e-postasindaki kod), GIRISTE ASLA. Iki yuzeyin ayni soruyu
+          // farkli yerlerde sormasi, kullaniciya "giris icin bir kod
+          // gerekiyor" izlenimi veriyordu — vermedigimiz bir soz.
+          //
+          // Jeton `/kayit`a TASINIR: orada rol secilir, Tesis ID kayit
+          // adimi olarak sorulur ve saglayici akisi TEKRARLANMAZ.
           if (d.baglama_jetonu) {
-            setBaglamaJetonu(d.baglama_jetonu);
-            setEposta(d.eposta ?? "");
-            setAdim("tamamla");
+            kayitSosyalSonucYaz({
+              // ROL BOS: kullanici giristen geldi, hangi rolde kaydolacagi
+              // BILINMIYOR. `/kayit` bos rolu gorunce ROL ADIMINDAN
+              // baslar — varsayilan bir rol secmek, kisiyi yanlis kayit
+              // turune sokmanin sessiz yoluydu.
+              rol: "",
+              baglamaJetonu: d.baglama_jetonu,
+              saglayici: d.saglayici ?? "",
+              ad: d.ad ?? undefined,
+            });
+            router.replace("/kayit");
             return;
           }
           setAdim("kayit_gerekli");
@@ -258,46 +256,14 @@ function OauthDonus() {
     })();
   }, [sonucId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /** (P191 §1) Tesis ID (+ varsa e-posta kodu) ile hesabi tamamla. */
-  async function tamamlaGonder(e: React.FormEvent, kodla: boolean): Promise<void> {
-    e.preventDefault();
-    if (!baglamaJetonu) return;
-    setBekliyor(true);
-    setHata(null);
-    try {
-      const r = await fetch(kodla ? UC_TAMAMLA_DOGRULA : UC_TAMAMLA, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          baglama_jetonu: baglamaJetonu,
-          tesis_kodu: tesisKodu.trim(),
-          // `rol` YOK: rol hesaptan okunur (backend `_tamamla_uygunluk`).
-          ...(kodla ? { kod: kod.trim() } : {}),
-        }),
-      });
-      const d = (await r.json().catch(() => null)) as Sonuc | null;
-      if (!r.ok) {
-        setHata(d?.error?.message ?? t("ortakHataOlustu"));
-        return;
-      }
-      if (d?.durum === DURUM_GIRIS) {
-        // Cerez BFF'te yazildi. Kok middleware'de ROLE gore cozulur.
-        router.replace("/");
-        router.refresh();
-        return;
-      }
-      if (d?.durum === DURUM_OTP) {
-        setAdim("tamamla_kod");
-        return;
-      }
-      // `onay_bekliyor` — hangi sartin tutmadigi BILINCLI olarak sizmaz.
-      setAdim("onay_bekliyor");
-    } catch {
-      setHata(t("ortakSunucuyaUlasilamadi"));
-    } finally {
-      setBekliyor(false);
-    }
-  }
+  // (P211-ek3) `tamamlaGonder` VE Tesis ID formu KALDIRILDI.
+  //
+  // P191'de bu sayfa, hicbir hesaba bagli olmayan bir SSO kimligine
+  // "Tesis ID" soruyordu. Kural degisti ve mobille AYNI: Tesis ID
+  // YALNIZ kayit akisinda sorulur. Bagli olmayan kimlik artik jetonuyla
+  // birlikte `/kayit`a devredilir; olu kodu birakmak, kurali sessizce
+  // geri getirmenin en kolay yoluydu.
+
 
   /// (P211 §1) Secilen tesisle oturumu acar. Jeton tuketilir; sunucu
   /// secilen tesisin ADAY LISTESINDE oldugunu dogrular.
@@ -327,77 +293,7 @@ function OauthDonus() {
           <p className="text-sm text-metin-muted">{t("ortakYukleniyor")}</p>
         ) : null}
 
-        {/* (P191 §1) BAGLI DEGIL -> ONCE TESIS ID. Telefon/SMS YOK. */}
-        {adim === "tamamla" ? (
-          <form className="space-y-4" onSubmit={(e) => void tamamlaGonder(e, false)}>
-            <h2 className="font-medium">{t("sosyalTamamlaBaslik")}</h2>
-            <p className="text-sm text-metin-body">{t("sosyalTamamlaAciklama")}</p>
-            <label className="block">
-              <span className="text-sm font-medium">{t("kayitTesisKodu")}</span>
-              <input
-                className={`${inputCls} mt-1`}
-                value={tesisKodu}
-                onChange={(e) => setTesisKodu(e.target.value)}
-                required
-                minLength={3}
-                autoFocus
-                autoComplete="off"
-                data-test="oauth-tesis-kodu"
-              />
-              <span className="mt-1 block text-xs text-metin-muted">
-                {t("kayitTesisKoduIpucu")}
-              </span>
-            </label>
-            {hata ? <ErrorBox message={hata} /> : null}
-            <button
-              type="submit"
-              disabled={bekliyor}
-              data-test="oauth-tamamla-gonder"
-              className={`${btnPrimary} w-full py-3`}
-            >
-              {t("sosyalTamamlaGonder")}
-            </button>
-            <button
-              type="button"
-              className={`${btnGhost} w-full px-4 py-3`}
-              onClick={() => setAdim("kayit_gerekli")}
-            >
-              {t("sosyalTamamlaYeniKayit")}
-            </button>
-          </form>
-        ) : null}
 
-        {/* Saglayici e-postayi dogrulamamis -> e-posta OTP (P184 yolu). */}
-        {adim === "tamamla_kod" ? (
-          <form className="space-y-4" onSubmit={(e) => void tamamlaGonder(e, true)}>
-            <h2 className="font-medium">{t("kayitKodBaslik")}</h2>
-            <p className="text-sm text-metin-body">
-              {t("kayitKodEpostaAciklama", { eposta })}
-            </p>
-            <label className="block">
-              <span className="text-sm font-medium">{t("kayitKodAlani")}</span>
-              <input
-                className={`${inputCls} mt-1 tracking-widest`}
-                value={kod}
-                onChange={(e) => setKod(e.target.value)}
-                required
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                autoFocus
-                data-test="oauth-tamamla-kod"
-              />
-            </label>
-            {hata ? <ErrorBox message={hata} /> : null}
-            <button
-              type="submit"
-              disabled={bekliyor}
-              data-test="oauth-tamamla-kod-gonder"
-              className={`${btnPrimary} w-full py-3`}
-            >
-              {t("kayitTamamla")}
-            </button>
-          </form>
-        ) : null}
 
         {/* Tesis ID gecersiz / e-posta listede yok / hesap uygun degil —
             HANGISI OLDUGU SOYLENMEZ (backend K4 sizdirmama kurali). */}

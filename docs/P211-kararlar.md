@@ -552,3 +552,98 @@ türemiyorlar. İstersen ayrıca ele alırız.
 + saydam** mı, 7 web kopyası üretilen setle **birebir aynı** mı. Kırma
 denemesiyle doğrulandı — bildirim ikonu lacivert siluete çevrildiğinde
 kilit `BEYAZ SILUET DEGIL` diyerek düştü, geri alınca geçti.
+
+---
+
+## §8 — Mobil giriş: istek sunucuya ulaşmıyordu + giriş ekranı düzeni
+
+### SORUN 1 — ÖLÇÜM: paketin içindeki adres yanlıştı
+
+```
+$ unzip -p app-release.aab base/lib/arm64-v8a/libapp.so | strings | grep -E '^https?://'
+http://10.0.2.2:8000        <-- GÖMÜLÜ ADRES
+```
+
+`10.0.2.2` **Android emülatörünün** ana makineye giden takma adresidir;
+fiziksel telefonda böyle bir adres **yoktur**. Bağlantı 15 saniye sonra
+zaman aşımına düşer — kullanıcının gördüğü hata tam olarak budur ve
+istek hiç çıkmadığı için **prod loglarında görünmez**. Ölçümün üçü de
+(tarayıcıdan `/health` 200, loglarda mobil isteği yok, uygulamada zaman
+aşımı) bu tek nedenle açıklanıyor.
+
+**Sebep bende:** AAB'yi `flutter build appbundle --release` ile elle
+ürettim; `--dart-define=API_BASE_URL=...` **vermedim**. Depoda tam bu
+hata için yazılmış bir betik var — `mobile/yayin-yap.sh` (P153) — ve
+başlığında birebir bu vaka anlatılıyor. Onu kullanmadım.
+
+**Doğrulama (ben ölçtüm, prod'a karşı):**
+
+```
+GET  https://api.yonetio.site/health                 -> 200
+GET  https://api.yonetio.site/auth/oauth/saglayicilar
+     -> {"saglayicilar":["google","microsoft","apple"]}
+POST https://api.yonetio.site/auth/login             -> 401 invalid_credentials
+POST https://api.yonetio.site/auth/login-phone       -> 401 invalid_credentials
+```
+
+Yani **sunucu tarafı sağlam**: iki giriş ucu da çalışıyor, üç sağlayıcı
+da yapılandırılmış.
+
+**SORUN 3'ün cevabı da bu:** SSO düğmeleri çizilmiyordu çünkü
+`/auth/oauth/saglayicilar` isteği hiç ulaşmıyordu → liste boş → düğmeler
+gizleniyordu (tasarım gereği: yapılandırılmamış bir sağlayıcıyı düğme
+olarak göstermek kullanıcıyı kesin başarısız bir yola sokar). Prod'da
+liste **dolu**; adres düzelince düğmeler çıkacak.
+
+**Karar:** yayın paketi bundan sonra **yalnız** `mobile/yayin-yap.sh` ile
+üretilir. Betik adresi gömer, sonra paketten **geri okuyup doğrular** ve
+`10.0.2.2` kalıntısı varsa **çıkış kodu 1** verir.
+
+### SORUN 2 — ÖLÇÜM: "Tesis ID ile giriş" bağlantısı aslında KAYIT bağlantısıydı
+Giriş ekranındaki bağlantı `AppRoutes.kayit`'e gidiyordu ama etiketi
+`l10n.kayitBaslik` idi ve o metnin Türkçesi **"Tesis ID ile giriş"**
+olarak kalmıştı. Yani hem yanlış bir vaat (girişte Tesis ID) hem yanlış
+bir hedef adı. Bastığında açılan 5 adımlı akış **kayıt akışıydı**.
+
+### KARAR K8 — Tesis ID YALNIZ kayıt akışında
+| Yüzey | Önce | Sonra |
+|---|---|---|
+| Mobil giriş — bağlantı etiketi | "Tesis ID ile giriş" | "Hesabınız yok mu? Kayıt olun" |
+| Mobil giriş — SSO kimliği bağlı değilse | ekranda **Tesis ID formu** açılıyordu | "Bu hesap bir tesise bağlı değil" + **Kayıt ol** düğmesi; jeton state'te kalır, kayıt ekranı tarayıcı akışını **tekrarlamaz** |
+| Mobil kayıt | — | jeton varsa rol seçiminden sonra **doğrudan Tesis ID adımı** (yöntem adımı atlanır) |
+| Web `/giris/oauth` — `baglama_gerekli` | **Tesis ID formu** (P191) | `/kayit`a devredilir; rol **boş** gönderilir, kullanıcı rolü kendisi seçer |
+| Web — Tesis ID formu kodu | duruyordu | **silindi** (ölü kod, kuralı sessizce geri getirmenin en kolay yolu) |
+
+Giriş ekranı sırası da düzeltildi: kimlik + parola → **SSO düğmeleri** →
+kayıt bağlantısı (en altta). Eskiden kayıt bağlantısı SSO'nun üstündeydi.
+
+**Çok tesisli yönetici** zaten P211 §1'de doğru: seçim **kimlik
+doğrulandıktan sonra** çıkıyor (parola yolunda 409 → `tesislerim`,
+SSO yolunda `durum=tesis_secimi`), giriş öncesi değil. Tek tesiste seçim
+çıkmaz. İkisi de testle kilitli.
+
+### Kilit
+Yeni `test/p211_giris_ekrani_duzeni_test.dart` (4 test): düzen ve **sıra**
+(widget'ların dikey konumları ölçülüyor), ekranda hiçbir yerde "Tesis ID"
+geçmemesi, sağlayıcı listesi boşken düğmelerin çizilmemesi, ve
+`/auth/oauth/saglayicilar` ucunun **gerçekten çağrılması**. Değişen
+davranışlar için mobil + web mevcut testleri güncellendi.
+
+### Ölçemediğim
+Gerçek cihazda giriş — telefon bende yok. Ölçebildiğim: paketin içindeki
+adres (artık `https://api.yonetio.site`, `10.0.2.2` **yok**) ve o adresin
+prod'da doğru yanıt verdiği (yukarıdaki dört istek).
+
+### §8 — açık madde: SSO e-postası hesabınkinden FARKLI olan kullanıcı
+Giriş ekranındaki Tesis ID formu kaldırılınca **bir yol daraldı**: sosyal
+hesabının doğrulanmış e-postası, sistemdeki hesabının e-postasından
+**farklı** olan bir kullanıcı (ör. Google'ı iş adresiyle, hesabı kişisel
+adresle) eskiden Tesis ID yazıp kimliğini bağlayabiliyordu. Artık
+mobilde bunu yapamaz.
+
+**Bugünkü yolu:** parola ile giriş yapar (o hep çalışır); sosyal hesabını
+**web panelinden** bağlar — `/api/auth/oauth/baglantilarim` uçları ve web
+arayüzü **var**. Ekrandaki metin de bunu söylüyor.
+
+**Kapatmak için gereken:** mobilde "Bağlı hesaplar" ekranı (profil altında,
+`baglantilarim` uçlarını kullanan). Bu turda **yapılmadı** — ayrı bir iş.

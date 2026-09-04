@@ -4810,7 +4810,18 @@ class AppLocalizationsFr extends AppLocalizations {
   String get hesapSilKodGerekli => 'Saisissez le code de confirmation';
 
   @override
-  String get kayitBaslik => 'Se connecter avec l\'ID de site';
+  String get kayitBaslik => 'S\'inscrire';
+
+  @override
+  String get girisKayitBaglantisi => 'Pas de compte ? Inscrivez-vous';
+
+  @override
+  String get girisHesapBagliDegil =>
+      'Ce compte n\'est rattaché à aucune résidence';
+
+  @override
+  String get girisHesapBagliDegilAlt =>
+      'Si vous avez déjà un compte, connectez-vous avec votre mot de passe. Sinon, vous saisirez l\'identifiant de résidence de votre e-mail d\'invitation lors de l\'inscription.';
 
   @override
   String get kayitAltBaslik => 'Choisissez ce qui vous correspond';

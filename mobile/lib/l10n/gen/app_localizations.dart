@@ -8240,8 +8240,26 @@ abstract class AppLocalizations {
   /// No description provided for @kayitBaslik.
   ///
   /// In tr, this message translates to:
-  /// **'Tesis ID ile giriş'**
+  /// **'Kayıt ol'**
   String get kayitBaslik;
+
+  /// No description provided for @girisKayitBaglantisi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hesabınız yok mu? Kayıt olun'**
+  String get girisKayitBaglantisi;
+
+  /// No description provided for @girisHesapBagliDegil.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu hesap bir tesise bağlı değil'**
+  String get girisHesapBagliDegil;
+
+  /// No description provided for @girisHesapBagliDegilAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hesabınız varsa parola ile giriş yapın. Hesabınız yoksa kayıt olurken davet e-postanızdaki Tesis ID’yi girersiniz.'**
+  String get girisHesapBagliDegilAlt;
 
   /// No description provided for @kayitAltBaslik.
   ///

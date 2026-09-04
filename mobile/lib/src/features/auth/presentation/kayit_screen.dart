@@ -102,6 +102,15 @@ class _KayitScreenState extends ConsumerState<KayitScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       unawaited(ref.read(rolSecimiBekliyorProvider.notifier).gosterildi());
+      // (P211-ek3) GIRISTEN DEVREDILEN SSO KIMLIGI.
+      //
+      // Giris ekraninda ARTIK Tesis ID SORULMUYOR: sosyal kimlik bir
+      // hesaba bagli degilse kullanici BURAYA gelir. Jeton state'te
+      // hazirsa tarayici akisini TEKRARLAMAYIZ — yalniz rol sorulur,
+      // ardindan Tesis ID adimina gecilir (kayit akisinin dogal yeri).
+      if (ref.read(authControllerProvider).oauthBaglamaJetonu != null) {
+        setState(() => _yol = _Yol.sosyal);
+      }
     });
   }
 
@@ -444,7 +453,14 @@ class _KayitScreenState extends ConsumerState<KayitScreen> {
               trailing: const Icon(Icons.chevron_right),
               onTap: () => setState(() {
                 _rol = rol;
-                _adim = _Adim.yontem;
+                // (P211-ek3) SSO KIMLIGI ZATEN ELIMIZDE (giristen
+                // devredildi): tarayici akisini TEKRARLAMAYIZ, dogrudan
+                // Tesis ID adimina geceriz. Yontem adimini gostermek
+                // kullaniciya "Google ile devam et"i IKINCI kez
+                // sordurmak olurdu.
+                _adim = ref.read(authControllerProvider).oauthBaglamaJetonu != null
+                    ? _Adim.tesisKodu
+                    : _Adim.yontem;
               }),
             ),
           ),

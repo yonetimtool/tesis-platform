@@ -1,12 +1,12 @@
- 258,  77  236x26  yönetiyor
- 328,  36  24x24  U+E497
- 328,  76  274x24  ornek@eposta.com veya 5XX XXX XX XX
- 332,  76  274x16  E-posta veya telefon numarası
- 372,  40  310x32  E-posta veya telefon numaranız ile giriş yapın
- 436,  36  24x24  U+E3B1
- 436, 330  24x24  U+F4A1
- 440,  76  238x16  Parola veya geçici kod
- 480,  40  310x32  İlk girişte yönetimden aldığınız geçici kodu yazın.
- 534,  80  286x20  Beni hatırla
- 608, 132  127x20  Giriş yap
- 666,  68  254x20  Tesis ID ile giriş
+ 254,  77  236x26  yönetiyor
+ 324,  36  24x24  U+E497
+ 324,  76  274x24  ornek@eposta.com veya 5XX XXX XX XX
+ 328,  76  274x16  E-posta veya telefon numarası
+ 368,  40  310x32  E-posta veya telefon numaranız ile giriş yapın
+ 432,  36  24x24  U+E3B1
+ 432, 330  24x24  U+F4A1
+ 436,  76  238x16  Parola veya geçici kod
+ 476,  40  310x32  İlk girişte yönetimden aldığınız geçici kodu yazın.
+ 530,  80  286x20  Beni hatırla
+ 604, 132  127x20  Giriş yap
+ 656,  36  318x40  Hesabınız yok mu? Kayıt olun

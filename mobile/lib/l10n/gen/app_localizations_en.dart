@@ -4838,7 +4838,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get hesapSilKodGerekli => 'Enter the confirmation code';
 
   @override
-  String get kayitBaslik => 'Sign in with Facility ID';
+  String get kayitBaslik => 'Sign up';
+
+  @override
+  String get girisKayitBaglantisi => 'Don\'t have an account? Sign up';
+
+  @override
+  String get girisHesapBagliDegil => 'This account is not linked to a facility';
+
+  @override
+  String get girisHesapBagliDegilAlt =>
+      'If you already have an account, sign in with your password. If not, you will enter the Facility ID from your invitation e-mail while signing up.';
 
   @override
   String get kayitAltBaslik => 'Choose what applies to you';

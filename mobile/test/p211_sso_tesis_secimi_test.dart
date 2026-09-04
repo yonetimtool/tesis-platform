@@ -173,13 +173,18 @@ void main() {
     expect(post.govde['tenant_id'], 't-2');
   });
 
-  testWidgets('KIMLIGI BAGLI OLMAYAN YENI kullanicida BAGLAMA formu DURUYOR',
+  testWidgets('KIMLIGI BAGLI OLMAYAN kullanici KAYDA yonlendirilir — TESIS ID SORULMAZ',
       (tester) async {
-    // Secim dali, baglama akisini KALDIRMADI: hesabi olmayan biri hâlâ
-    // Tesis ID ile baglanir (kayit/davet yolu).
+    // (P211-ek3) DEGISEN DAVRANIS. Eskiden burada giris ekrani bir
+    // "Tesis ID" formuna donusuyordu; kural artik acik: Tesis ID YALNIZ
+    // kayit akisinda sorulur, giriste ASLA. Jeton state'te durur, kayit
+    // ekrani onu bulup tarayici akisini tekrarlamaz.
     await _sur(tester, _BAGLAMA);
     await _googleTikla(tester);
     expect(find.byKey(const Key('sso-tesis-secimi')), findsNothing);
-    expect(find.byType(TextFormField), findsWidgets);
+    expect(find.byKey(const Key('sso-hesap-bagli-degil')), findsOneWidget);
+    expect(find.byKey(const Key('sso-kayda-git')), findsOneWidget);
+    // HICBIR METIN ALANI YOK: Tesis ID de dahil hicbir sey sorulmuyor.
+    expect(find.byType(TextFormField), findsNothing);
   });
 }

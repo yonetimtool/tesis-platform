@@ -106,9 +106,13 @@ export function kayitSosyalSonucOku(): KayitSosyalSonuc | null {
     sessionStorage.removeItem(OAUTH_KAYIT_SONUC);
     if (!ham) return null;
     const d = JSON.parse(ham) as Partial<KayitSosyalSonuc>;
-    if (!d.rol || !d.baglamaJetonu || !d.saglayici) return null;
+    // (P211-ek3) ROL ARTIK BOS OLABILIR: giristen gelen (hicbir hesaba
+    // bagli olmayan) kimlikte rol HENUZ SECILMEMISTIR ve `/kayit` onu
+    // rol adimindan sorar. Bos rolu "gecersiz sonuc" sayip null donmek,
+    // jetonu sessizce dusurur ve kullaniciyi akisin basina atardi.
+    if (!d.baglamaJetonu || !d.saglayici) return null;
     return {
-      rol: d.rol,
+      rol: d.rol ?? "",
       baglamaJetonu: d.baglamaJetonu,
       saglayici: d.saglayici,
       ad: d.ad,

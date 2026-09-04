@@ -4917,7 +4917,17 @@ class AppLocalizationsAr extends AppLocalizations {
   String get hesapSilKodGerekli => 'أدخل رمز التأكيد';
 
   @override
-  String get kayitBaslik => 'تسجيل الدخول بمعرّف المنشأة';
+  String get kayitBaslik => 'إنشاء حساب';
+
+  @override
+  String get girisKayitBaglantisi => 'ليس لديك حساب؟ سجّل الآن';
+
+  @override
+  String get girisHesapBagliDegil => 'هذا الحساب غير مرتبط بأي مجمع';
+
+  @override
+  String get girisHesapBagliDegilAlt =>
+      'إذا كان لديك حساب، فسجّل الدخول بكلمة المرور. وإن لم يكن لديك، فستُدخل معرّف المجمع من بريد الدعوة أثناء التسجيل.';
 
   @override
   String get kayitAltBaslik => 'اختر ما ينطبق عليك';

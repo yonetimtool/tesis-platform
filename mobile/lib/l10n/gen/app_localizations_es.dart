@@ -4795,7 +4795,18 @@ class AppLocalizationsEs extends AppLocalizations {
   String get hesapSilKodGerekli => 'Introduzca el código de confirmación';
 
   @override
-  String get kayitBaslik => 'Iniciar sesión con ID de instalación';
+  String get kayitBaslik => 'Registrarse';
+
+  @override
+  String get girisKayitBaglantisi => '¿No tiene cuenta? Regístrese';
+
+  @override
+  String get girisHesapBagliDegil =>
+      'Esta cuenta no está vinculada a ninguna comunidad';
+
+  @override
+  String get girisHesapBagliDegilAlt =>
+      'Si ya tiene una cuenta, inicie sesión con su contraseña. Si no, introducirá el ID de comunidad de su correo de invitación al registrarse.';
 
   @override
   String get kayitAltBaslik => 'Elija lo que le corresponde';

@@ -4908,7 +4908,17 @@ class AppLocalizationsRu extends AppLocalizations {
   String get hesapSilKodGerekli => 'Введите код подтверждения';
 
   @override
-  String get kayitBaslik => 'Вход по ID объекта';
+  String get kayitBaslik => 'Регистрация';
+
+  @override
+  String get girisKayitBaglantisi => 'Нет аккаунта? Зарегистрируйтесь';
+
+  @override
+  String get girisHesapBagliDegil => 'Этот аккаунт не привязан к объекту';
+
+  @override
+  String get girisHesapBagliDegilAlt =>
+      'Если у вас уже есть аккаунт, войдите по паролю. Если нет — при регистрации введите ID объекта из письма-приглашения.';
 
   @override
   String get kayitAltBaslik => 'Выберите подходящий вариант';
