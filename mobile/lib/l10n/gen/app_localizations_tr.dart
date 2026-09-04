@@ -2888,6 +2888,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get profilFotoKaldirildi => 'Profil fotoğrafı kaldırıldı';
 
   @override
+  String get profilFotoOkunamadi => 'Profil fotoğrafı okunamadı.';
+
+  @override
   String get ortakGaleri => 'Galeri';
 
   @override

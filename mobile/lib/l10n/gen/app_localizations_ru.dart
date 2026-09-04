@@ -3088,6 +3088,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get profilFotoKaldirildi => 'Фото профиля удалено';
 
   @override
+  String get profilFotoOkunamadi => 'Не удалось загрузить фото профиля.';
+
+  @override
   String get ortakGaleri => 'Галерея';
 
   @override

@@ -2993,6 +2993,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get profilFotoKaldirildi => 'Profilfoto entfernt';
 
   @override
+  String get profilFotoOkunamadi => 'Profilfoto konnte nicht geladen werden.';
+
+  @override
   String get ortakGaleri => 'Galerie';
 
   @override

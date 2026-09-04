@@ -831,6 +831,7 @@
   "profilFotoSec": "Выбрать фото",
   "profilFotoGuncellendi": "Фото профиля обновлено ✓",
   "profilFotoKaldirildi": "Фото профиля удалено",
+  "profilFotoOkunamadi": "Не удалось загрузить фото профиля.",
   "ortakGaleri": "Галерея",
   "profilParolaDegistir": "Смена пароля",
   "profilMevcutParola": "Текущий пароль",

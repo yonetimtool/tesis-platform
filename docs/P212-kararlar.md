@@ -56,3 +56,67 @@ yapılmadı, uydurma bir yol da açılmadı.
 ### Ölçemediğim
 Gerçek `app.yonetiyor.com` üzerinden giriş — prod'a erişimim yok. Ölçülen
 şey, istemcinin ve vekilin gerçek kodla ürettiği isteklerdir.
+
+---
+
+## §2 — Profil fotoğrafı: ne bozuktu, ne bozuk değildi
+
+### ÖLÇÜM 1 — Sunucu ve istemci API katmanı **çalışıyor**
+Dev API'ye **gerçek istekler** gönderdim (taklit yok):
+
+```
+POST /uploads/presign            -> 200  (upload_url: 192.168.20.101:9000)
+PUT  <presigned>                 -> 200
+PATCH /me/avatar {key}           -> 200
+GET  /me                         -> avatar_url DOLU
+PATCH /me/avatar {avatar_key:null} -> 200
+GET  /me                         -> avatar_url null
+```
+
+Aynı zinciri **mobil `AvatarApi` sınıfıyla** da sürdüm (gerçek Dio, dev
+MinIO): `PRESIGN OK → UPLOAD OK → SET AVATAR → KALDIR (null)`. Yani
+"kaldırılamıyor/güncellenemiyor" şikâyetinin sebebi **bu katman değil**.
+
+Yan ölçüm — presigned PUT'un iki tuzağı (ikisi de gerçek yanıt):
+* gövde **chunked** gönderilirse MinIO **411 MissingContentLength**;
+* **farklı `Content-Type`** ile PUT edilirse **403 SignatureDoesNotMatch**.
+Mobil kod ikisini de doğru yapıyor (`Content-Length` set ediliyor, presign
+ile PUT aynı tipi kullanıyor).
+
+### ÖLÇÜM 2 — Ekran **hatayı yutuyordu** (gerçek kusur)
+`myAvatarUrlProvider` şöyleydi: `catch (_) { return null; }`. Sonuç:
+`GET /me` başarısız olduğunda ekran **fotoğrafı olmayan** bir kullanıcı
+gibi davranıyor, **"Kaldır" düğmesini gizliyor** ve kullanıcıya **hiçbir
+şey söylemiyordu**. "Kaldıramıyorum" şikâyetinin ekranda hiçbir izinin
+olmamasının sebebi bu.
+
+**KARAR K2.1 — "fotoğraf yok" ile "okuyamadım" ayrı durumlar.** Hata artık
+yukarı çıkar; profil kartı mesaj + **"Tekrar dene"** gösterir, app-bar
+sessizce baş harflere düşer (orası bir durum ekranı değil).
+
+### ÖLÇÜM 3 — Mobilde baş harf yoktu (kabul kriteri 7)
+Web'de karar **zaten verilmişti** (`components/Avatar.tsx`: baş harfler +
+addan türeyen kararlı renk). Mobil ise herkese aynı gri silueti çiziyordu.
+
+**KARAR K2.2 — `BasHarfAvatar` (mobil), web ile aynı kurallar:** en fazla
+iki harf, tek kelimede ilk iki harf, addan türeyen **kararlı** renk.
+Türkçe büyütme **elle**: Dart'ın `toUpperCase()`i locale tanımaz ve
+"ismail" → "IS" verirdi; doğrusu "**İ**S".
+
+### Web tarafı — kontrol edildi, kusur bulunmadı
+Yükleme presign + **doğrudan** PUT + `PATCH {avatar_key}`; kaldırma
+`PATCH {avatar_key: null}`; fotoğraf yokken **baş harfler**; "Kaldır"
+düğmesi yalnız fotoğraf varken. Dördü de artık testli.
+
+### Kilit
+Mobil 7 test (baş harf kuralları, renk kararlılığı, fotoğraflı/fotoğrafsız
+çizim, presign→PATCH gövdesi, kaldırmada `avatar_key: null`'ın gerçekten
+gitmesi, hatanın yutulmaması) + web 4 test. Kırma denemesi: web'de
+kaldırma gövdesi `{}` yapıldığında ilgili test düştü, geri alınca geçti.
+
+### Ölçemediğim — ve senden istediğim
+**Cihazdaki hatayı yeniden üretemedim**: telefon bende yok ve prod'a
+istemci olarak bağlanamıyorum. Ölçebildiğim her katman (backend, depo,
+istemci API sınıfı) dev'de çalışıyor. Şimdi ekran hatayı **gösterecek**;
+cihazda tekrar denediğinde **ekranda çıkan mesajı** bana ilet — sessiz
+başarısızlık kalmadığı için artık teşhis edilebilir olacak.

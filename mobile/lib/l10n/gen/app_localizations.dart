@@ -5099,6 +5099,12 @@ abstract class AppLocalizations {
   /// **'Profil fotoğrafı kaldırıldı'**
   String get profilFotoKaldirildi;
 
+  /// No description provided for @profilFotoOkunamadi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Profil fotoğrafı okunamadı.'**
+  String get profilFotoOkunamadi;
+
   /// No description provided for @ortakGaleri.
   ///
   /// In tr, this message translates to:

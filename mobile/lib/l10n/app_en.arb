@@ -831,6 +831,7 @@
   "profilFotoSec": "Choose photo",
   "profilFotoGuncellendi": "Profile photo updated ✓",
   "profilFotoKaldirildi": "Profile photo removed",
+  "profilFotoOkunamadi": "Could not load the profile photo.",
   "ortakGaleri": "Gallery",
   "profilParolaDegistir": "Change password",
   "profilMevcutParola": "Current password",

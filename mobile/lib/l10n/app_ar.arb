@@ -831,6 +831,7 @@
   "profilFotoSec": "اختر صورة",
   "profilFotoGuncellendi": "تم تحديث صورة الملف الشخصي ✓",
   "profilFotoKaldirildi": "تمت إزالة صورة الملف الشخصي",
+  "profilFotoOkunamadi": "تعذّر تحميل صورة الملف الشخصي.",
   "ortakGaleri": "المعرض",
   "profilParolaDegistir": "تغيير كلمة المرور",
   "profilMevcutParola": "كلمة المرور الحالية",

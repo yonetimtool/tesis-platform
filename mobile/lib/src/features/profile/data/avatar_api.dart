@@ -69,12 +69,19 @@ final avatarApiProvider = Provider<AvatarApi>((ref) {
   return AvatarApi(ref.watch(dioProvider));
 });
 
-/// App-bar avatari + profil ekrani onizlemesi. Hata -> null (bas harf/ikon
-/// fallback'i cizilir; ekran dusmez).
+/// App-bar avatari + profil ekrani onizlemesi.
+///
+/// (P212 §2) HATA ARTIK YUTULMUYOR.
+///
+/// OLCULEN KUSUR: `catch (_) { return null; }` her hatayi "fotograf yok"a
+/// ceviriyordu. Sonuc: `/me` cagrisi basarisiz olunca ekran fotografi
+/// OLMAYAN bir kullanici gibi davraniyor, "Kaldir" dugmesini GIZLIYOR ve
+/// kullaniciya HICBIR SEY soylemiyordu — "kaldiramiyorum" sikayetinin
+/// ekranda hicbir izi olmamasinin sebebi buydu.
+///
+/// Artik hata YUKARI CIKAR: cagiran `AsyncValue.hasError` ile durumu
+/// ayirt eder (profil kartinda mesaj + "tekrar dene", app-bar'da sessiz
+/// bas-harf yedegi). "Fotograf yok" ile "okuyamadim" AYNI SEY DEGILDIR.
 final myAvatarUrlProvider = FutureProvider.autoDispose<String?>((ref) async {
-  try {
-    return await ref.watch(avatarApiProvider).fetchMyAvatarUrl();
-  } catch (_) {
-    return null;
-  }
+  return ref.watch(avatarApiProvider).fetchMyAvatarUrl();
 });

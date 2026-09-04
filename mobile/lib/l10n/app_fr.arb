@@ -831,6 +831,7 @@
   "profilFotoSec": "Choisir une photo",
   "profilFotoGuncellendi": "Photo de profil mise à jour ✓",
   "profilFotoKaldirildi": "Photo de profil supprimée",
+  "profilFotoOkunamadi": "Impossible de charger la photo de profil.",
   "ortakGaleri": "Galerie",
   "profilParolaDegistir": "Changer le mot de passe",
   "profilMevcutParola": "Mot de passe actuel",

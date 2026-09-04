@@ -3109,6 +3109,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get profilFotoKaldirildi => 'تمت إزالة صورة الملف الشخصي';
 
   @override
+  String get profilFotoOkunamadi => 'تعذّر تحميل صورة الملف الشخصي.';
+
+  @override
   String get ortakGaleri => 'المعرض';
 
   @override

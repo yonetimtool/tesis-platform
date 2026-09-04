@@ -4,9 +4,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/i18n/l10n.dart';
 import '../../../../core/theme/home_tokens.dart';
+import '../../../../core/widgets/bas_harf_avatar.dart';
 import '../../../auth/domain/user_role.dart';
 import '../../../notifications/data/notifications_controller.dart';
 import '../../../profile/data/avatar_api.dart';
+import '../../../profile/data/profile_api.dart';
 import '../../../push/domain/push_models.dart';
 import '../../../push/presentation/push_registrar.dart';
 import '../../../../routing/app_router.dart';
@@ -261,21 +263,21 @@ class _AvatarButonu extends StatelessWidget {
               children: [
                 Consumer(
                   builder: (context, ref, _) {
-                    // Personel avatari varsa resimli goster; yoksa/hata varsa ikon
-                    // fallback (ekran dusmez). Resident'ta uc 403 -> null -> ikon.
+                    // (P212 §2) FOTOGRAF YOKSA BAS HARFLER.
+                    //
+                    // App-bar'da HATA GOSTERILMEZ (orasi bir durum
+                    // ekrani degil) ama "fotograf yok" ile "okunamadi"
+                    // ayni gorunur: ikisinde de ad baslari cizilir.
+                    // Genel silüet, iki hesabi olan kullanici icin
+                    // hangi hesapla girildigini SILIYORDU.
                     final url = ref.watch(myAvatarUrlProvider).value;
-                    return CircleAvatar(
-                      radius: 20,
-                      backgroundColor: HomeTokens.tint(HomeTokens.primary),
-                      backgroundImage: url != null
+                    final ad = ref.watch(profileProvider).value?.ad ?? '';
+                    return BasHarfAvatar(
+                      ad: ad,
+                      url: url,
+                      cap: 40,
+                      gorsel: url != null
                           ? sinirliGorsel(context, NetworkImage(url), 40)
-                          : null,
-                      child: url == null
-                          ? const Icon(
-                              Icons.person_outline,
-                              size: 22,
-                              color: HomeTokens.primary,
-                            )
                           : null,
                     );
                   },

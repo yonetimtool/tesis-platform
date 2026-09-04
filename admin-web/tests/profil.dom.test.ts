@@ -175,3 +175,122 @@ describe("Profilim", () => {
     expect(await screen.findByText(/5 ile başlamalı/i)).toBeInTheDocument();
   });
 });
+
+// ===========================================================================
+// (P212 §2) PROFIL FOTOGRAFI — YUKLEME, KALDIRMA, BAS HARFLER
+// ===========================================================================
+// Web tarafi "test edilmedi" diye isaretlenmisti. Olculen sey: dosyanin
+// BFF'ten GECMEDIGI (presign + dogrudan PUT), `PATCH /me/avatar`e giden
+// govde, kaldirmada `avatar_key: null`in GERCEKTEN gitmesi (alan gövdeden
+// duserse sunucu "degistirme" diye yorumlar ve fotograf DURUR) ve fotograf
+// yokken BAS HARFLERIN cizilmesi.
+describe("(P212 §2) profil fotografi", () => {
+  const FOTOLU = { ...PROFIL, avatar_url: "https://storage.test/eski.jpg" };
+
+  /** Presign + PUT + PATCH yollarini ayri ayri yanitlar. */
+  function fotoTaklidi(profil: unknown) {
+    const cagrilar: { url: string; method: string; body: unknown }[] = [];
+    globalThis.fetch = (async (girdi: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(girdi);
+      const method = (init?.method ?? "GET").toUpperCase();
+      const ikili = init?.body instanceof Blob || init?.body instanceof File;
+      cagrilar.push({
+        url,
+        method,
+        body: init?.body && !ikili ? JSON.parse(String(init.body)) : undefined,
+      });
+      if (url.startsWith("/api/uploads/presign")) {
+        return new Response(
+          JSON.stringify({
+            foto_key: "t-1/tasks/yeni.jpg",
+            upload_url: "https://storage.test/tesis-foto/t-1/tasks/yeni.jpg?imza=1",
+            method: "PUT",
+            expires_in: 900,
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        );
+      }
+      if (url.startsWith("https://storage.test/")) {
+        return new Response(null, { status: 200 });
+      }
+      if (url.startsWith("/api/me/avatar")) {
+        return new Response(JSON.stringify({ ok: true }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      if (url.startsWith("/api/me")) {
+        return new Response(JSON.stringify(profil), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify({ error: { message: "yok" } }), {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+      });
+    }) as typeof fetch;
+    return cagrilar;
+  }
+
+  it("FOTOGRAF YOKKEN bas harfler cizilir (silüet DEGIL)", async () => {
+    fotoTaklidi(PROFIL);
+    ciz(ProfilPage);
+    // "Ayşe Yılmaz" -> "AY". Genel bir ikon, iki hesabi olan kullanici
+    // icin hangi hesapla girildigini silerdi.
+    await waitFor(() => expect(screen.getAllByText("AY").length).toBeGreaterThan(0));
+  });
+
+  it("KALDIR: `avatar_key: null` GERCEKTEN gonderilir", async () => {
+    const k = userEvent.setup();
+    const cagrilar = fotoTaklidi(FOTOLU);
+    ciz(ProfilPage);
+
+    const dugme = await screen.findByRole("button", { name: /kaldır/i });
+    await k.click(dugme);
+
+    await waitFor(() =>
+      expect(cagrilar.some((c) => c.url === "/api/me/avatar")).toBe(true),
+    );
+    const patch = cagrilar.find((c) => c.url === "/api/me/avatar")!;
+    expect(patch.method).toBe("PATCH");
+    // Alan GOVDEDE ve degeri null: "kaldir" ile "degistirme" farki.
+    expect(patch.body).toEqual({ avatar_key: null });
+  });
+
+  it("KALDIR dugmesi fotograf YOKKEN cizilmez", async () => {
+    fotoTaklidi(PROFIL);
+    ciz(ProfilPage);
+    // Ad bir GIRDI DEGERI; metin olarak aranmaz. Kart cizildiginde
+    // "Fotoğraf yükle" dugmesi bulunur.
+    await screen.findByRole("button", { name: /fotoğraf yükle/i });
+    expect(screen.queryByRole("button", { name: /kaldır/i })).toBeNull();
+  });
+
+  it("YUKLEME: dosya BFF'ten GECMEZ, presign + dogrudan PUT + PATCH", async () => {
+    const k = userEvent.setup();
+    const cagrilar = fotoTaklidi(PROFIL);
+    ciz(ProfilPage);
+    await screen.findByRole("button", { name: /fotoğraf yükle/i });
+
+    const girdi = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    await k.upload(
+      girdi,
+      new File([new Uint8Array([1, 2, 3])], "ben.jpg", { type: "image/jpeg" }),
+    );
+
+    await waitFor(() =>
+      expect(cagrilar.some((c) => c.url === "/api/me/avatar")).toBe(true),
+    );
+    // 1) presign istendi, 2) dosya DOGRUDAN depoya PUT edildi,
+    // 3) BFF'e yalniz ANAHTAR gitti.
+    expect(cagrilar.some((c) => c.url === "/api/uploads/presign")).toBe(true);
+    const put = cagrilar.find((c) => c.url.startsWith("https://storage.test/"))!;
+    expect(put.method).toBe("PUT");
+    expect(cagrilar.find((c) => c.url === "/api/me/avatar")!.body).toEqual({
+      avatar_key: "t-1/tasks/yeni.jpg",
+    });
+  });
+});

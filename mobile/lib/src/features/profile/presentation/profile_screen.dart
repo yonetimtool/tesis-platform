@@ -14,6 +14,7 @@ import '../data/profile_api.dart';
 import '../domain/profile.dart';
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/ui/gorsel_cozme.dart';
+import '../../../core/widgets/bas_harf_avatar.dart';
 import '../../../core/ui/merkez_diyalog.dart';
 import '../../../core/ui/telefon_alani.dart';
 
@@ -48,7 +49,7 @@ class ProfileScreen extends ConsumerWidget {
             // personeli fotosunu yonetici StaffScreen'den yonetir.
             if (UserRole.fromClaim(profile.role) == UserRole.yonetici ||
                 UserRole.fromClaim(profile.role) == UserRole.resident) ...[
-              const _AvatarCard(),
+              _AvatarCard(ad: profile.ad),
               const SizedBox(height: 16),
             ],
             const _PasswordCard(),
@@ -111,7 +112,10 @@ class _Header extends StatelessWidget {
 /// kaldirir. Onizleme [myAvatarUrlProvider]'dan; yukleme announcements'daki
 /// presign PUT deseniyle. Hata SnackBar; ekran asla dusmez.
 class _AvatarCard extends ConsumerStatefulWidget {
-  const _AvatarCard();
+  const _AvatarCard({required this.ad});
+
+  /// Bas harfleri cizmek icin — fotograf yokken kimlik gostergesi.
+  final String ad;
 
   @override
   ConsumerState<_AvatarCard> createState() => _AvatarCardState();
@@ -216,21 +220,24 @@ class _AvatarCardState extends ConsumerState<_AvatarCard> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final l10n = context.l10n;
-    final url = ref.watch(myAvatarUrlProvider).value;
+    // (P212 §2) UC DURUM AYRI: fotograf VAR / fotograf YOK / OKUNAMADI.
+    // Ucunu de `null`a indirmek, hatayi "fotograf yok" gibi gosteriyordu.
+    final durum = ref.watch(myAvatarUrlProvider);
+    final url = durum.value;
+    final okunamadi = durum.hasError;
+    final ad = widget.ad;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            CircleAvatar(
-              radius: 32,
-              backgroundColor: scheme.primaryContainer,
-              backgroundImage: url != null
+            // (P212 §2) FOTOGRAF YOKSA BAS HARFLER — genel silüet DEGIL.
+            BasHarfAvatar(
+              ad: ad,
+              url: url,
+              cap: 64,
+              gorsel: url != null
                   ? sinirliGorsel(context, NetworkImage(url), 64)
-                  : null,
-              child: url == null
-                  ? Icon(Icons.person_outline,
-                      size: 34, color: scheme.onPrimaryContainer)
                   : null,
             ),
             const SizedBox(width: 16),
@@ -260,9 +267,27 @@ class _AvatarCardState extends ConsumerState<_AvatarCard> {
                       ),
                       if (url != null)
                         TextButton(
+                          key: const Key('profil-foto-kaldir'),
                           onPressed: _busy ? null : _kaldir,
                           child: Text(l10n.gorevKaldir),
                         ),
+                      // OKUNAMADIYSA SESSIZ KALINMAZ: "fotograf yok"
+                      // ile "okuyamadim" ayni sey degil; ikincisinde
+                      // kullaniciya tekrar deneme yolu verilir.
+                      if (okunamadi) ...[
+                        Text(
+                          l10n.profilFotoOkunamadi,
+                          key: const Key('profil-foto-hata'),
+                          style: TextStyle(color: scheme.error, fontSize: 12),
+                        ),
+                        TextButton(
+                          key: const Key('profil-foto-tekrar'),
+                          onPressed: _busy
+                              ? null
+                              : () => ref.invalidate(myAvatarUrlProvider),
+                          child: Text(l10n.ortakTekrarDene),
+                        ),
+                      ],
                     ],
                   ),
                 ],
