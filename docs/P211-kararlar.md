@@ -447,3 +447,62 @@ ikonları alfasız mı, adaptif ön katman %66'yı aşıyor mu. Kırma denemesiy
 doğrulandı: oran 0,80'e çıkarılınca kilit `819x806 > 675` diyerek düştü,
 geri alınca geçti. Bugünkü ölçüm: **675×664 ≤ 675** ve mağaza ikonlarının
 hepsi alfasız.
+
+---
+
+## §7-ek — Yeni logo uygulandı (2026-09-03)
+
+### Gelen dosya (ölçüldü, varsayılmadı)
+`512×512 RGBA PNG`, **%87 saydam**, işaret lacivert (#002060–#2060A0),
+alfa sınırı `(144,93)-(367,418)` → **224×326** (dikey).
+`assets/marka/yonetiyor-logo.png` üzerine yazıldı (tek kaynak kuralı).
+
+### KARAR — kırpma kutusu `(93, 93, 419, 419)` → 326×326, **TAM MARKA**
+Eski kaynakta gövdenin bir kısmı **kırpılıyordu** (466×459): o dosyada
+işaret 466×629 ile fazla uzundu ve 48 px'te figürler okunmuyordu. Yeni
+logo daha derli toplu (224×326) ve tamamı kare kutuya sığıyor — **gövdeyi
+kesmeye gerek kalmadı**, marka bütün hâliyle çıkıyor.
+
+Ölçülen iyileşme: dairesel maske dışında kalan işaret pikseli **%3,78 → %0,00**
+(yuvarlak launcher maskelerinde artık hiçbir şey kesilmiyor).
+
+### KARAR — varsayılan zemin **BEYAZ**, ve neden saydam olamadığı
+İstek "zemin olmasın, sadece şekil" idi. **Telefon ikonu saydam olamaz** —
+bu bir tercih değil, platform kuralı:
+* **iOS**: mağaza ikonu alfa **taşıyamaz** (`ITMS-90717`) ve ana ekranda
+  saydam pikseller **siyah** çıkar;
+* **Android**: adaptive ikonun **zemin katmanı zorunludur**; saydam
+  bırakılırsa launcher'a göre siyah/tanımsız görünür.
+
+"Zeminsiz" görünüme en yakın sonuç **düz beyaz** (kullanıcı seçti); işaret
+lacivert kaldığı için hem açık hem koyu temada okunur. `VARYANTLAR`'a
+`beyaz` eklendi ve **varsayılan** yapıldı; `acik`/`lacivert` önizleme
+setleri duruyor.
+
+**Saydamlık korunan yerler:** Android ön katmanı, monokrom (Android 13
+temalı ikon), web marka görselleri — üçü de alfalı yazılıyor.
+
+### Çözünürlük — 512 ile devam edildi (kullanıcı kararı)
+iOS 1024 ikonu **2× büyütmeyle** üretildi. Logo düz renkli geometrik bir
+işaret olduğu için kayıp sınırlı; yine de mağaza görselinde en keskin
+sonuç için 1024/2048 kaynak daha iyi olurdu. Daha büyük dosya gelirse
+`--olc` → sabitler → yeniden üretim, tek tur.
+
+### Doğrulama (programatik)
+* `scripts/test_ikon_uret.py` **geçti**: mağaza ikonlarında alfa **yok**,
+  adaptif ön katman **462×674 ≤ 675** (%66 güvenli bölge).
+* Sol-üst piksel ölçümü: iOS 1024, Play 512, adaptive zemin, Xcode
+  `Icon-App-1024`, Android `mipmap-xxxhdpi` → hepsi `RGBA(255,255,255,255)`.
+* `flutter_launcher_icons` koşuldu — mipmap/AppIcon seti **tazelendi**
+  (P184 dersi: bu adım atlanınca gömülü ikonlar bayat kalıyor).
+* Mobil `ios_yapilandirma_test.dart` + `p211_ios_push_zinciri_test.dart`
+  geçti ("simge yer tutucu değil, **saydamlık yok**" kilidi dâhil).
+
+### Kapsam dışı bıraktığım (bilerek)
+`apps/tanitim-web/public/marka/` altındaki **favicon / icon-192 / icon-512 /
+apple-touch-icon** ve `admin-web/app/icon.png` **eski logoyla duruyor**.
+Bunlar zaten üretilen setin birebir kopyası **değildi** (ayrı bir varyant
+seçilmişti), yani "sessizce bayat kalmış" dosyalar değil, ayrı bir karar.
+İstek APK/mağaza ikonuydu; web yüzeylerinin favicon'unu da yenilememi
+istersen tek komut. Birebir kopya olan iki dosya (`web-marka-160`,
+`web-marka-beyaz-160`) **güncellendi**.

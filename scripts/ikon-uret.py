@@ -73,11 +73,19 @@ CIKTI_DIZIN = os.path.join(KOK, "assets", "marka", "ikon")
 ONIZLEME_DIZIN = os.path.join(KOK, "assets", "marka", "ikon-onizleme")
 
 # --- olculen kaynak ozellikleri (dogrulama icin; uydurulmadi) -------------
-BEKLENEN_BOYUT = (1072, 992)
-BEKLENEN_SINIR = (303, 182, 768, 810)  # sol, ust, sag, alt (KAPSAYICI)
+#: (P211-ek) YENI LOGO (2026-09-03): arka plani kaldirilmis, %87 saydam,
+#: 512x512 RGBA. Isaret lacivert (#002060 - #2060A0).
+#: OLCULDU: `--olc` kipi ile; degerler elle sayilmadi.
+BEKLENEN_BOYUT = (512, 512)
+BEKLENEN_SINIR = (144, 93, 367, 418)  # sol, ust, sag, alt (KAPSAYICI)
 
 # --- KARAR VERILDI: kirpma kutusu (sag/alt DISLAYICI) --------------------
-KUTU = (303, 182, 769, 641)  # -> 466 x 459
+#: (P211-ek) TAM MARKA, KARE KUTU -> 326x326.
+#: Eski kaynakta govdenin bir kismi KIRPILIYORDU (466x459) cunku o dosyada
+#: isaret 466x629 ile cok uzundu ve 48 px'te figurler okunmuyordu. YENI
+#: logo daha derli toplu (224x326) ve tamami kare kutuya sigiyor: gövdeyi
+#: kesmeye GEREK KALMADI — marka butun haliyle cikiyor.
+KUTU = (93, 93, 419, 419)  # -> 326 x 326
 
 #: (P211 §7) YENI LOGO GELDIGINDE: `--kutu` ve `--kaynak-onay` ile
 #: sabitleri DEGISTIRMEDEN kosulabilir. Ikisi de acik birer INSAN
@@ -99,10 +107,24 @@ BEYAZ = (0xFF, 0xFF, 0xFF)
 #: "acik"     -> acik mavi zemin, lacivert isaret oldugu gibi.
 #: "lacivert" -> lacivert zemin, isaret beyaz siluet (koyu zeminde gorunsun).
 VARYANTLAR = {
+    # (P211-ek) VARSAYILAN ARTIK BEYAZ.
+    #
+    # Istek "zemin olmasin, sadece sekil" idi. TELEFON IKONU SAYDAM
+    # OLAMAZ ve bu bir tercih degil, platform kurali:
+    #   * iOS magaza ikonu alfa TASIYAMAZ (ITMS-90717) ve ana ekranda
+    #     saydam pikseller SIYAH cikar,
+    #   * Android adaptive ikonun ZEMIN KATMANI zorunludur; saydam
+    #     birakilirsa launcher'a gore siyah/tanimsiz gorunur.
+    # "Zeminsiz" gorunume en yakin sonuc DUZ BEYAZdir; isaret lacivert
+    # kaldigi icin hem acik hem koyu temada okunur.
+    #
+    # SAYDAMLIK KORUNAN YERLER: Android on katmani, monokrom (Android 13
+    # temali ikon) ve web marka gorselleri — onlar zaten alfali yaziliyor.
+    "beyaz": {"zemin": (0xFF, 0xFF, 0xFF), "beyaz_siluet": False},
     "acik": {"zemin": (0xEA, 0xF1, 0xFA), "beyaz_siluet": False},
     "lacivert": {"zemin": (0x10, 0x20, 0x60), "beyaz_siluet": True},
 }
-VARSAYILAN_VARYANT = "lacivert"
+VARSAYILAN_VARYANT = "beyaz"
 
 
 def _arac():
