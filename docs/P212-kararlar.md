@@ -299,3 +299,71 @@ aynı kalır ve iz de olmaz.
 Prod'da gerçek SMTP ile teslim. Dev'de SMTP yapılandırılmadığı için
 `durum='basarisiz'` kaydı düşüyor ve uç 502 dönüyor — **doğru davranış**:
 kullanıcı "bekleyin" ekranı yerine hatayı görüyor.
+
+---
+
+## §2-ek — Çoklu tesis: ölçüm, kök neden ve tamamlanan ayrım
+
+### KULLANICININ GÖRDÜĞÜ HATA — ve gerçek kök nedeni
+Hata **"Bu e-posta adresi başka bir hesapta kullanılıyor"** idi ve
+**profil sayfasında**, kendi e-postasını değiştirirken çıktı. Sebep
+çoklu tesis değildi: kullanıcının **aynı tesiste iki hesabı** vardı
+(biri `yonetici`, biri `security`) ve taşımak istediği adres **kendi
+güvenlik hesabındaydı**. Güvenlik kaydını silince değişim çalıştı.
+
+Not: bu hatayı **görebilmesi** P212-ek §1'in sonucudur — o değişiklikten
+önce uç sessizce "gönderildi" diyordu ve kullanıcı hiçbir şey
+öğrenemiyordu. Teşhisi mümkün kılan şey mesajın kendisi oldu.
+
+### KURAL — bir kişi aynı tesiste TEK ROLDE
+Kural **şemada zaten duruyor**: `uq_app_user_tenant_email` (tenant_id,
+email). Aynı tesiste aynı e-postayla ikinci bir rol **açılamaz** — test
+edildi (409). Farklı tesislerde aynı e-posta **açılabilir** (201).
+
+**Sınır — dürüstçe:** sistem kişiyi **e-postasıyla** tanır. Aynı insan
+**farklı iki e-postayla** aynı tesiste iki hesap açabilir ve yazılım bunu
+**anlayamaz** (telefon artık opsiyonel olduğu için ikinci bir kimlik
+anahtarı da yok). Kullanıcının yaşadığı durum tam olarak buydu. Kilit,
+sistemin **görebildiği** çakışmayı kapsar; görebilmediğini kapsıyormuş
+gibi yapmıyoruz.
+
+### ÖLÇÜM — çoklu tesis akışının tamamı sürüldü
+| # | Adım | Önce | Sonra |
+|---|---|---|---|
+| 1 | A'ya kullanıcı ekle | 201 | 201 |
+| 2 | **B'ye aynı e-postayla ekle** | **422** `telefon: Field required` / telefonla **409** | **201** |
+| 3 | B'ye **aynı telefonla** | 409 | 409 (kasıtlı) |
+| 4 | Slug'sız giriş | — | **409 `tesis_secimi_gerekli`** |
+| 5 | `/auth/tesislerim` | — | iki tesis |
+| 6 | Slug ile giriş | — | 200, jeton **B** |
+| 7 | İzolasyon | — | B jetonuyla A'nın daireleri **görünmüyor** |
+| 8 | `/me/tesis-degistir` | — | 200, jeton **A** |
+| 9 | Tek tesisli | — | 200 — seçim **yok** |
+
+### KARAR K2.3 — `telefon` opsiyonel (kimlik ≠ üyelik)
+Şema çoklu üyeliği zaten destekliyordu; engel **uç sözleşmesiydi**:
+`POST /users` telefonu zorunlu tutuyor, telefon ise **platform genelinde**
+benzersiz. Yani ikinci üyelik ancak **uydurma bir numarayla** açılabiliyordu
+— kimlik verisini bozmadan yapılamazdı.
+
+P197'den beri **kimlik e-postadır**; telefon bir iletişim alanıdır.
+Zorunluluk kaldırıldı; **benzersizlik korundu** (verilirse global
+benzersiz, boş dize `NULL`'a düşer). Web formu ve mobil personel formu da
+aynı hâle getirildi.
+
+### Kilitler
+* Backend 10 test: telefonsuz açılır, boş telefon `NULL`, verilirse hâlâ
+  global benzersiz, **aynı tesiste ikinci rol açılamaz**, farklı tesiste
+  açılır, çok tesiste seçim istenir, tek tesiste istenmez, seçilen tesis
+  jetonu + **izolasyon**, uygulama içinden geçiş, **üye olmadığı tesise
+  geçemez** (403).
+* Web 2 DOM testi (telefon boşken gövdede `null`; doluysa normalleşmiş).
+* Mobil 3 test (telefonsuz/boş → alan gövdeye konmaz; doluysa gider).
+* Kırma denemeleri: şemada telefonu yeniden zorunlu yapınca **8 backend
+  testi** düştü; web formunda `|| null` kaldırılınca ilgili DOM testi
+  düştü. (İlk denemem yanlış satırı — güncelleme yolunu — bozmuştu ve
+  test haklı olarak geçmişti; ekleme yolunu bozunca düştü.)
+
+### Ölçemediğim
+Gerçek kullanıcıyla prod'da giriş → seçim → geçiş. Ölçtüğüm şey aynı
+akışın dev'de **gerçek uçlarla** sürülmesi.

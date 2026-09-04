@@ -425,7 +425,24 @@ class UserCreate(BaseModel):
     # (SSO ya da e-posta + kendi parolasi). Yoneticinin parola bilmesi
     # guvenlik acigiydi.
     ad: str = Field(..., min_length=1)
-    telefon: str = Field(..., min_length=1, examples=["+905321112203"])
+    # =====================================================================
+    # (P212-ek §2) TELEFON ARTIK OPSIYONEL — COKLU TESISIN ONUNDEKI ENGEL
+    # =====================================================================
+    # OLCULDU: ayni kisiyi IKINCI bir tesise yonetici eklemek
+    # imkansizdi. Sema coklu uyeligi ZATEN destekliyor (e-posta TESIS
+    # ICINDE benzersiz, goc 0092 belgesi) ama bu uc telefonu ZORUNLU
+    # tutuyordu ve `uq_app_user_telefon` telefonu PLATFORM GENELINDE
+    # benzersiz kiliyor. Sonuc:
+    #     telefonsuz  -> 422 "Field required"
+    #     ayni tel    -> 409 "zaten kayitli"
+    # Yani kisinin ikinci tesise eklenmesi ancak UYDURMA bir ikinci
+    # numarayla mumkundu — kimlik verisini bozmadan yapilamazdi.
+    #
+    # P197'den beri KIMLIK E-POSTADIR; telefon bir ILETISIM alanidir.
+    # Zorunlulugu kaldirmak, kimlik (e-posta) ile UYELIK (tesis+rol)
+    # ayrimini tamamlar. Benzersizlik KORUNUR: verilirse hala global
+    # benzersizdir (iki kisi ayni numarayi tasiyamaz).
+    telefon: str | None = Field(None, min_length=1, examples=["+905321112203"])
     email: EmailStr
     aranabilir: bool = False
     role: UserRoleLiteral
@@ -451,7 +468,12 @@ class UserCreate(BaseModel):
 
     @field_validator("telefon")
     @classmethod
-    def _normalize_telefon(cls, v: str) -> str:
+    def _normalize_telefon(cls, v: str | None) -> str | None:
+        # (P212-ek §2) None GECERLI: telefon opsiyonel. Bos dize de
+        # None'a duser — arayuzden bos gelen alan "gecersiz numara"
+        # degil "numara yok" demektir.
+        if v is None or not v.strip():
+            return None
         try:
             return normalize_phone(v)
         except ValueError as exc:

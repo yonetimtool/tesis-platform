@@ -341,10 +341,13 @@ export default function UsersPage() {
         }
         const body: Record<string, unknown> = {
           ad: form.ad,
-          // (P185 NOT) Telefon şimdilik ZORUNLU kalıyor: backend'de global
-          // benzersiz anahtardı; opsiyonele çevirmek bir göç işi (dagitim'de
-          // belirtildi). Etiketi "giriş anahtarı"ndan arındırıldı (§5).
-          telefon: telefonNormalle(form.telefon),
+          // (P212-ek §2) TELEFON ARTIK OPSIYONEL — ve bu coklu tesisin
+          // onundeki engeldi. Telefon PLATFORM GENELINDE benzersiz;
+          // zorunlu oldugu surece ayni kisi IKINCI bir tesise ancak
+          // UYDURMA bir numarayla eklenebiliyordu (olculdu: telefonsuz
+          // 422, ayni numarayla 409). Kimlik P197'den beri E-POSTADIR.
+          // Bos birakilirsa alan GONDERILMEZ.
+          telefon: telefonNormalle(form.telefon) || null,
           aranabilir: form.aranabilir,
           role: form.role,
           email: form.email.trim(),
@@ -713,11 +716,12 @@ export default function UsersPage() {
           </AlanSarmal>
 
           {/* (P185 §3) TELEFON YALNIZ ILETISIM — "giris anahtari" DEGIL.
-              (Simdilik zorunlu; opsiyonele cevirmek backend goc isi.) */}
+              (P212-ek §2) ARTIK OPSIYONEL: zorunlulugu, ayni kisinin
+              ikinci bir tesise eklenmesini imkansiz kiliyordu (telefon
+              global benzersiz). */}
           <TelefonAlani
             etiket={t("kullaniciTelefon")}
             ipucu={t("kullaniciTelefonIpucu")}
-            zorunlu
             deger={form.telefon}
             onDegisti={(v) => setForm({ ...form, telefon: v })}
           />

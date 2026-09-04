@@ -33,7 +33,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/src/core/network/dio_provider.dart';
 import 'package:mobile/src/core/widgets/bas_harf_avatar.dart';
+import 'package:mobile/src/features/auth/data/token_storage.dart';
 import 'package:mobile/src/features/profile/data/avatar_api.dart';
+
+import 'helpers/bellek_depo.dart';
 
 import 'helpers/l10n_test_app.dart';
 
@@ -92,7 +95,16 @@ class _Tel implements HttpClientAdapter {
 ({ProviderContainer kap, _Tel tel}) _kur({String? avatarUrl, int meDurumu = 200}) {
   final tel = _Tel(avatarUrl: avatarUrl, meDurumu: meDurumu);
   final dio = Dio(BaseOptions(baseUrl: 'http://api.test'))..httpClientAdapter = tel;
-  final kap = ProviderContainer(overrides: [dioProvider.overrideWithValue(dio)]);
+  // (P212 §2) OTURUM SART: `myAvatarProvider` jeton yoksa istek YAPMAZ
+  // (oturumsuz `/me` garanti 401 uretirdi ve widget testlerinde asili
+  // kalip "A Timer is still pending" veriyordu). Bu dosya `/me`
+  // davranisini olctugu icin jeton KURULUR.
+  final kap = ProviderContainer(overrides: [
+    dioProvider.overrideWithValue(dio),
+    tokenStorageProvider.overrideWithValue(
+      TokenStorage(BellekDepo({'auth.access_token': 'x.y.z'})),
+    ),
+  ]);
   addTearDown(kap.dispose);
   return (kap: kap, tel: tel);
 }

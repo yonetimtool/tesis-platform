@@ -101,15 +101,18 @@ class StaffApi {
   /// e-postasiz acilan hesap sahiplenilemiyor. Yani mobilde personel
   /// ekleme P197'den bu yana KIRIKTI ve P204 paritesinde "tam" diye
   /// isaretlenmisti.
+  /// (P212-ek §2) TELEFON OPSIYONEL: bos ise alan GONDERILMEZ.
+  /// Zorunlu oldugu surece ayni kisi ikinci bir tesise ancak uydurma
+  /// bir numarayla eklenebiliyordu (telefon global benzersiz).
   Future<String> addStaff({
     required String ad,
-    required String telefon,
+    String? telefon,
     required String email,
     required String role,
   }) async {
     final data = <String, dynamic>{
       'ad': ad,
-      'telefon': telefon,
+      if (telefon != null && telefon.trim().isNotEmpty) 'telefon': telefon,
       'email': email,
       'role': role,
     };

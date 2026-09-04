@@ -48,18 +48,36 @@ def test_eposta_kod_iste_TAZE_adres_gonderir(client, world, konsol_eposta):
     assert r.json()["durum"] == "gonderildi"
 
 
-def test_eposta_kod_iste_BASKASININ_adresi_SIZDIRMAZ(client, world, owner_conn):
-    """(P184-ek §9) Adres BAŞKA kullanıcıda kayıtlıysa uç SIZDIRMAZ.
+def test_eposta_kod_iste_BASKASININ_adresi_409_ve_KOD_YAZILMAZ(
+    client, world, owner_conn
+):
+    """(P212-ek §1) Adres BAŞKA kullanıcıdaysa AÇIK 409 döner.
 
-    Eskiden 409 `eposta_kullanimda` idi — bir "bu adres kimde" sorgusuydu.
-    Artık geçerli durumla AYNI yanıt (`gonderildi`) döner ama KOD ÜRETİLMEZ:
-    isteyen, başkasının adresine ait doğrulanabilir bir kod alamaz.
+    ===================================================================
+    KARAR DEĞİŞTİ — VE NEDENİ
+    ===================================================================
+    P184-ek §9 burada 409'u kaldırıp tek biçimli `gonderildi` yanıtına
+    geçmişti (gerekçe: 409 bir "bu adres kimde" sorgusudur). Prod'da
+    ölçülen sonuç şuydu: kullanıcı profilden e-postasını değiştiriyor,
+    ekran "doğrulama bekliyor" diyor, `mesaj_gonderim` tablosunda O
+    ADRESE AİT HİÇBİR KAYIT OLUŞMUYOR ve kullanıcı NEDENİNİ
+    ÖĞRENEMİYOR. Bilgi sızdırmayan ama KULLANILAMAZ bir akış.
+
+    Bu uç KİMLİK DOĞRULANMIŞ ve tenant'a kapalıdır; soran kişi zaten o
+    tesisin üyesi (sakin/personel listeleri ona görünüyor).
+    `auth.py`deki KİMLİKSİZ uçlar (giriş kodu, parola sıfırlama) tek
+    biçimli yanıtlarını KORUYOR — orada sızdırmama hâlâ zorunlu.
+
+    KORUNAN YARI: başkasının adresine KOD YAZILMAZ. İsteyen,
+    doğrulanabilir bir kod elde edemez.
     """
     guard = _headers(client, world["slug_a"], world["guard_a"])
     admin_eposta = world["admin_a"]["email"]
     r = client.post("/me/eposta/kod-iste", headers=guard, json={"eposta": admin_eposta})
-    assert r.status_code == 200, r.text          # 409 DEĞİL — sızdırmama
-    assert r.json()["durum"] == "gonderildi"
+    assert r.status_code == 409, r.text
+    assert r.json()["error"]["code"] == "conflict"
+    # KİM OLDUĞU SIZMAZ: mesaj kullanıcıyı adlandırmaz.
+    assert "admin" not in r.json()["error"]["message"].lower()
     with owner_conn.cursor() as cur:
         cur.execute(
             "SELECT count(*) FROM kayit_dogrulama WHERE eposta = %s "
@@ -67,6 +85,7 @@ def test_eposta_kod_iste_BASKASININ_adresi_SIZDIRMAZ(client, world, owner_conn):
             (admin_eposta,),
         )
         assert cur.fetchone()[0] == 0, "başkasının adresine kod YAZILMAMALI"
+
 
 
 def test_dogrulanmis_epostayi_DEGISTIR_gonderildi_doner(client, world, owner_conn, konsol_eposta):

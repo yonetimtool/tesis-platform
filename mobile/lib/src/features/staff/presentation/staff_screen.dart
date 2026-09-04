@@ -432,8 +432,15 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
               // fark ederdi — yani hic fark etmezdi.
               //
               // Duzenlemede telefon opsiyonel (bos = degismez).
+              //
+              // (P212-ek §2) EKLEMEDE DE OPSIYONEL. Telefon PLATFORM
+              // GENELINDE benzersiz; zorunlu oldugu surece ayni kisi
+              // IKINCI bir tesise ancak UYDURMA bir numarayla
+              // eklenebiliyordu (backend'de olculdu: telefonsuz 422,
+              // gercek numarayla 409). Kimlik P197'den beri E-POSTADIR.
+              // Bicim denetimi DURUYOR: doldurulduysa gecerli olmali.
               validator: (v) =>
-                  telefonHataMetni(l10n, v ?? '', zorunlu: !_isEdit),
+                  telefonHataMetni(l10n, v ?? '', zorunlu: false),
             ),
             const SizedBox(height: 12),
             TextFormField(
