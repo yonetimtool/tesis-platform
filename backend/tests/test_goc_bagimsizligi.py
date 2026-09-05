@@ -42,7 +42,16 @@ import pathlib
 #: onarim gocunun ihtiyaci ve `requirements.txt` uzerinden imaja girer —
 #: alembic'le AYNI kanaldan, yani goc dosyasiyla ayrisma riski YOK.
 #: Standart kutuphane serbest.
-IZINLI_PAKETLER = {"alembic", "sqlalchemy", "sa", "nh3"}
+IZINLI_PAKETLER = {
+    "alembic", "sqlalchemy", "sa", "nh3",
+    # (P213 §6b) `cryptography`: goc 0107 kamera parolasini AES-GCM ile
+    # sifreler. Kuralin AMACI `app.*`i disarida tutmak — cunku o kod
+    # imaja gomulu ve goclarla ayri surumlerde olabilir. Ucuncu parti bir
+    # kutuphane bu riski TASIMAZ: `requirements`ta sabitlenmis, migrate
+    # imajinda zaten kurulu ve goc dosyasi onu YALNIZ dondurulmus bir
+    # bicimde (base64(nonce||ct+tag)) kullaniyor.
+    "cryptography",
+}
 
 #: Standart kutuphaneden gocbaslarinda kullanilanlar.
 IZINLI_STDLIB = {
@@ -50,6 +59,9 @@ IZINLI_STDLIB = {
     "os", "re", "json", "uuid", "textwrap", "datetime", "pathlib",
     "typing", "collections", "itertools", "hashlib", "secrets", "enum",
     "decimal", "math", "string", "sys",
+    # (P213 §6b) goc 0107: base64 (sifreli blob bicimi) + urllib
+    # (adresten kimlik ayirma). Ikisi de standart kutuphane.
+    "base64", "urllib",
 }
 
 
