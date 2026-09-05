@@ -28,9 +28,12 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import ipaddress
 import logging
 import re
+import socket
 import uuid
+from urllib.parse import urlparse
 
 import httpx
 import redis.asyncio as aioredis
@@ -370,18 +373,76 @@ async def _gorunur_kamera(
     return obj
 
 
-#: (P213 §3) BULUT META-VERI UCLARI — hicbir kamera burada yasamaz.
+#: (P213 §3) ADRESE GORE DEGIL, COZULEN IP'YE GORE ENGEL.
 #:
-#: `hls` kaynagi acilinca sunucu artik `http(s)` de cekiyor. Kameralar
-#: cogunlukla YEREL AGDA oldugu icin "ozel araliklari engelle" seklindeki
-#: klasik SSRF listesi BURADA UYGULANAMAZ — 192.168.x.x tam da gecerli
-#: kamera adresidir. Engellenen sey, kamera OLMADIGI kesin olan ve
-#: sizdirmasi en pahali olan uclardir.
+#: ILK YAZIMDA konak ADI bir listeyle karsilastiriliyordu ve bu ATLATILABILIR
+#: bir denetimdi (guvenlik incelemesi hakli olarak isaretledi):
+#:   * `http://kamera.ornek.com/...` DNS'te 169.254.169.254'e cozulebilir,
+#:   * `http://2852039166/...` (ondalik IP), `http://[::ffff:169.254.169.254]/...`,
+#:   * sondaki nokta (`metadata.google.internal.`) listeyi ISKALAR.
+#: Bu yuzden konak COZULUR ve DONEN HER ADRES kontrol edilir.
+#:
+#: NEDEN OZEL ARALIKLARIN TAMAMI DEGIL: kameralar cogunlukla YEREL AGDA
+#: (`192.168.x.x`, `10.x.x.x`) ve orayi engellemek urunu calismaz kilardi.
+#: Engellenen kume, KAMERA OLMASI MUMKUN OLMAYAN ve sizmasi en pahali
+#: olan yerlerdir: link-local (tum bulut meta-veri servisleri burada),
+#: yerel dongu ve IPv6 karsiliklari.
+_YASAK_AGLAR = tuple(
+    ipaddress.ip_network(a) for a in (
+        "169.254.0.0/16",   # AWS/GCP/Azure/Oracle IMDS + ECS 169.254.170.2
+        "127.0.0.0/8",      # sunucunun kendisi
+        "::1/128",
+        "fe80::/10",        # IPv6 link-local
+        "fd00:ec2::254/128",
+    )
+)
+
+#: Ad tabanli liste BELT-AND-BRACES olarak DURUYOR: DNS cozumlemesi
+#: basarisiz olsa bile bu adresler gecmemeli.
 _YASAK_KONAKLAR = frozenset({
-    "169.254.169.254",   # AWS/GCP/Azure IMDS
-    "metadata.google.internal",
-    "100.100.100.200",   # Alibaba
+    "169.254.169.254", "metadata.google.internal",
+    "100.100.100.200", "192.0.0.192",
 })
+
+
+def _yasak_adres_mi(konak: str) -> bool:
+    """Konak (ad ya da IP) yasak bir aga mi cozuluyor?
+
+    COZUMLEME BURADA YAPILIR ama ffmpeg'e YINE ADI veriyoruz; yani iki
+    cozumleme arasinda DNS degisirse (rebinding) engel asilabilir. Bunu
+    kapatmanin yolu cozulen IP'yi ffmpeg'e vermektir — ama o zaman HTTPS
+    kameralarda SNI/vhost kirilirdi (sertifika ada gore dogrulanir).
+    Kalan risk BILINCLI ve sinirli: `stream_url`i yalniz YONETIM yazar ve
+    cikti bir JPEG'dir; rastgele bir ucun govdesi istemciye donmez.
+    """
+    ad = (konak or "").strip().rstrip(".").lower()
+    if not ad:
+        return True
+    if ad in _YASAK_KONAKLAR:
+        return True
+    # Koseli parantezli IPv6 (`[::1]`) urlparse'ta zaten soyulur.
+    adresler: list[str] = []
+    try:
+        adresler = [
+            bilgi[4][0]
+            for bilgi in socket.getaddrinfo(ad, None, proto=socket.IPPROTO_TCP)
+        ]
+    except OSError:
+        # Cozulemeyen ad: engellemeye gerek yok — ffmpeg de ulasamaz.
+        # (Burada True donmek, DNS'i gecici bozuk olan bir kamerayi
+        # "yasak" gibi gostermek olurdu.)
+        return False
+    for ham in adresler:
+        try:
+            ip = ipaddress.ip_address(ham.split("%")[0])
+        except ValueError:
+            continue
+        # IPv4-eslemeli IPv6 (`::ffff:169.254.169.254`) IPv4 olarak olculur.
+        if getattr(ip, "ipv4_mapped", None):
+            ip = ip.ipv4_mapped
+        if any(ip in ag for ag in _YASAK_AGLAR):
+            return True
+    return False
 
 
 def _kare_dogrula(obj: Camera) -> None:
@@ -399,20 +460,18 @@ def _kare_dogrula(obj: Camera) -> None:
     SSRF SINIRI NEREDE
     =======================================================================
     `stream_url`i YALNIZ yonetim yazabilir (kamera kaydi admin/yonetici
-    ucudur) — yani bu, kullanici girdisi degil YAPILANDIRMADIR; RTSP'de
-    de durum boyleydi. Cikti ffmpeg'in urettigi bir JPEG'dir: hedef medya
-    degilse kare CIKMAZ, yani rastgele bir ucun govdesi istemciye
-    donmez. Yine de bulut meta-veri uclari ACIKCA engellenir (bkz.
-    `_YASAK_KONAKLAR`): oralarda kamera olmaz, sizarsa bedeli agirdir.
+    ucudur) — yani bu, kullanici girdisi degil YAPILANDIRMADIR. Cikti
+    ffmpeg'in urettigi bir JPEG'dir: hedef medya degilse kare CIKMAZ,
+    yani rastgele bir ucun govdesi istemciye donmez. Ustune konak
+    COZULUR ve link-local/loopback aglara giden adresler REDDEDILIR
+    (bkz. `_yasak_adres_mi`).
     """
     url = (obj.stream_url or "").lower()
     if not (url.startswith("rtsp://") or url.startswith("http://")
             or url.startswith("https://")):
         raise APIError(422, "validation_error", "kamera_kare_desteklenmeyen")
-    from urllib.parse import urlparse
-
-    konak = (urlparse(obj.stream_url).hostname or "").lower()
-    if konak in _YASAK_KONAKLAR:
+    konak = urlparse(obj.stream_url).hostname or ""
+    if _yasak_adres_mi(konak):
         raise APIError(422, "validation_error", "kamera_kare_desteklenmeyen")
 
 

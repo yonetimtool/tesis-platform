@@ -193,3 +193,33 @@ kamera **geçit varsa** oynatılabilir, **yoksa** değil. **İkisi de gerçek
 bir dağıtım hâli**; testler `CANLI_ACIK` ile dallanıyor ve geçitsiz
 kurulumu ölçen test `skipif` ile işaretlendi. Tek hâli sabitlemek,
 ötekini kusur gibi gösterirdi.
+
+### §3-ek — SSRF denetimi: **ad değil, çözülen IP**
+Otomatik güvenlik incelemesi ilk yazımı haklı olarak işaretledi: konak
+**adını** bir listeyle karşılaştırmak atlatılabilir bir denetimdir.
+Ölçülen atlatma yolları:
+
+| Girdi | Neden liste ıskalardı |
+|---|---|
+| `http://169.254.169.254./…` | sondaki nokta |
+| `http://[::ffff:169.254.169.254]/…` | IPv4-eşlemeli IPv6 |
+| `http://2852039166/…` | ondalık IP kodlaması |
+| `http://0177.0.0.1/…` | sekizlik IP |
+| `kamera.ornek.com` → IMDS | **DNS** ile yönlendirme |
+
+Denetim artık konağı **çözüyor** ve dönen **her adresi** ölçüyor;
+engellenen küme: `169.254.0.0/16` (tüm bulut meta-veri servisleri),
+`127.0.0.0/8`, `::1/128`, `fe80::/10`, `fd00:ec2::254/128`. Ad tabanlı
+liste **belt-and-braces** olarak duruyor (DNS çözülemese de geçmemeli).
+
+**Neden özel aralıkların tamamı değil:** kameralar yerel ağda yaşar;
+`192.168.x.x`'i engellemek ürünü çalışmaz kılardı. Bunu ölçen bir test
+de var (`test_YEREL_AG_kamerasi_ENGELLENMEZ`).
+
+**Kalan risk — bilinçli:** çözümleme ile ffmpeg'in kendi çözümlemesi
+arasında DNS değişirse (rebinding) engel aşılabilir. Kapatmanın yolu
+çözülen IP'yi ffmpeg'e vermektir, ama o zaman HTTPS kameralarda
+SNI/sertifika doğrulaması kırılırdı. Risk sınırlı: `stream_url`i yalnız
+yönetim yazar ve çıktı bir JPEG'dir.
+
+Kırma denemesi: IP kontrolü devre dışı bırakıldığında **5 test** düştü.

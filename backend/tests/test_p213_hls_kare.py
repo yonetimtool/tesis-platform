@@ -79,6 +79,49 @@ def test_BULUT_METAVERI_uclari_REDDEDILIR(client, world, url):
         client.delete(f"/cameras/{kid}", headers=h)
 
 
+@pytest.mark.parametrize("url", [
+    # (P213 §3-ek) ATLATMA DENEMELERI — guvenlik incelemesi hakli olarak
+    # "ad tabanli liste asilabilir" dedi. Denetim artik konak ADINI degil
+    # COZULEN IP'yi olcuyor.
+    "http://169.254.169.254./x/index.m3u8",        # sondaki nokta
+    "http://[::ffff:169.254.169.254]/x/index.m3u8",  # IPv4-eslemeli IPv6
+    "http://2852039166/x/index.m3u8",              # ondalik IP kodlamasi
+    "http://127.0.0.1:8888/x/index.m3u8",          # sunucunun kendisi
+    "http://[::1]:8888/x/index.m3u8",
+    "http://0177.0.0.1/x/index.m3u8",              # sekizlik IP
+])
+def test_ATLATMA_denemeleri_REDDEDILIR(client, world, url):
+    h = _h(client, world["slug_a"], world["yonetici_a"])
+    r = client.post("/cameras", headers=h, json={
+        "ad": f"P213 {uuid.uuid4().hex[:6]}", "tur": "hls",
+        "stream_url": url, "aktif": True})
+    if r.status_code != 201:
+        return  # kayit kapisi zaten reddettiyse sorun yok
+    kid = r.json()["id"]
+    try:
+        k = client.get(f"/cameras/{kid}/kare", headers=h, timeout=20)
+        assert k.status_code == 422, f"{url} -> {k.status_code} {k.text[:120]}"
+    finally:
+        client.delete(f"/cameras/{kid}", headers=h)
+
+
+def test_YEREL_AG_kamerasi_ENGELLENMEZ(client, world):
+    """Kurallarin sinirini olcer: kameralar YEREL AGDA yasar.
+
+    "Ozel araliklari engelle" seklindeki klasik SSRF listesi burada
+    urunu calismaz kilardi — 192.168.x.x tam da gecerli bir kamera
+    adresidir. Engel YALNIZ link-local/loopback'e konur.
+    """
+    h = _h(client, world["slug_a"], world["yonetici_a"])
+    kid = _kamera(client, h, "hls", "http://192.168.13.37:8888/cam/index.m3u8")
+    try:
+        r = client.get(f"/cameras/{kid}/kare", headers=h, timeout=30)
+        # Ulasilamaz ama YASAK DEGIL: 422 degil baglanti hatasi bekleriz.
+        assert r.status_code != 422, "yerel ag kamerasi engellenmemeli"
+    finally:
+        client.delete(f"/cameras/{kid}", headers=h)
+
+
 def test_DESTEKLENMEYEN_SEMA_reddedilir(client, world):
     """`mp4` turu bir DOSYADIR: canli kare kavrami yok."""
     h = _h(client, world["slug_a"], world["yonetici_a"])
