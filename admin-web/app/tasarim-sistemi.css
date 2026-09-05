@@ -311,7 +311,29 @@
   --yz-ease: cubic-bezier(0.4, 0, 0.2, 1);
   --yz-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
-  /* --- Z-INDEX (tek olcek — sayfa sayfa uydurma yok) ------------------- */
+  /* --- Z-INDEX (tek olcek — sayfa sayfa uydurma yok) -------------------
+
+     OLCEK 0-99 BANDINDA KALIR. Ustune cikmak cazip gorunur ("modali 9999
+     yapalim") ama yanlistir: sonraki catisma 10000 ister ve olcek anlamini
+     yitirir. Sira BURADA belirlenir, sayfada degil.
+
+     UCUNCU PARTI KUTUPHANELER (P214) — bu olcege UYMAZLAR ve uymalari da
+     beklenemez: Leaflet kendi katmanlarini 200-1000 arasinda numaralandirir
+     (`.leaflet-pane` 400, kontroller 1000). Bir zamanlar modal (60) harita
+     panelinin (400) ALTINDA kaliyordu ve `/checkpoints`te "Yeni nokta"
+     formu gorunmuyordu.
+
+     KURAL: ucuncu parti bir bilesenin katman degerlerini TEK TEK EZME.
+     Onu KENDI YIGINLAMA BAGLAMINA HAPSET:
+
+         style={{ isolation: "isolate", position: "relative",
+                  zIndex: "var(--yz-z-base)" }}
+
+     Boylece kutuphanenin ic sirasi KORUNUR (pane < popup < control) ama
+     disariya tek bir katman olarak gorunur; bizim olcegimizle yarismaz.
+     Ezme yontemi hem o ic sirayi bozar hem de kutuphane surumu degisince
+     SESSIZCE kirilir. Kilit: `tests/z-katman-duzeni.test.ts`.
+     ------------------------------------------------------------------- */
   --yz-z-base: 0;
   --yz-z-sticky: 10;
   --yz-z-sidebar: 20;

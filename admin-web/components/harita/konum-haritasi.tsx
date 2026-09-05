@@ -149,6 +149,31 @@ export default function KonumHaritasi({
   return (
     <div
       style={{
+        // (P214) YIGINLAMA BAGLAMINI HAPSET — modalin harita altinda
+        // kalmasinin KOK NEDENI burasiydi.
+        //
+        // OLCUM: uygulama z-olcegi 0-80 arasinda (`--yz-z-modal: 60`),
+        // Leaflet ise KENDI olceginde 200-1000 kullaniyor
+        // (`.leaflet-pane` 400, kontroller 1000 — leaflet/dist/leaflet.css).
+        // Modal portal kullanmadigi icin ikisi de AYNI kok baglamda
+        // yarisiyordu ve 400 > 60 oldugundan harita kazaniyordu.
+        //
+        // `isolation: isolate` yeni bir yiginlama baglami acar: Leaflet'in
+        // 200-1000 arasi TUM ic degerleri BU KUTUNUN ICINDE kalir, disarida
+        // harita TEK bir katman gibi davranir.
+        //
+        // NEDEN LEAFLET'IN DEGERLERINI EZMEDIK: `.leaflet-pane`,
+        // `.leaflet-popup`, `.leaflet-control`... on kadar kurali tek tek
+        // ezmek gerekirdi ve bunlar kendi ARALARINDA anlamli (pane <
+        // popup < control). Ezmek hem o ic sirayi bozma riski tasir hem de
+        // Leaflet surumu degisince sessizce kirilir. Izolasyon tek satir,
+        // surumden bagimsiz ve ic sirayi KORUR.
+        isolation: "isolate",
+        // Izolasyonun ACIK olmasi icin: baglami yaratan sey `isolation`,
+        // ama `position` + `z-index` niyeti okunur kilar ve eski
+        // tarayicilarda geri dusus saglar.
+        position: "relative",
+        zIndex: "var(--yz-z-base)" as unknown as number,
         height: yukseklik,
         borderRadius: "var(--yz-radius-card)",
         overflow: "hidden",

@@ -85,7 +85,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
       <MotionConfig reducedMotion="user">
         <div
-          className="pointer-events-none fixed bottom-4 end-4 z-[60] flex w-[min(92vw,22rem)] flex-col gap-2"
+          // (P214) HAM `z-[60]` OLCEKTEN KOPUKTU ve modalla AYNI degerdi:
+          // ikisi esitken sirayi DOM konumu belirliyordu, yani modal
+          // acikken cikan bir bildirimin gorunup gorunmemesi tesadufe
+          // kaliyordu. Olcek zaten toast'i modalin USTUNE koyuyor (70>60).
+          className="pointer-events-none fixed bottom-4 end-4 flex w-[min(92vw,22rem)] flex-col gap-2"
+          style={{ zIndex: "var(--yz-z-toast)" as unknown as number }}
           role="status"
           aria-live="polite"
         >

@@ -81,8 +81,15 @@ export function DokunmaKapisi({
         <button
           type="button"
           onClick={() => setEtkin(false)}
-          className="odak-ic absolute end-2 top-2 z-[400] rounded-full px-3 py-2"
+          // (P214) HAM `z-[400]` KALDIRILDI. Leaflet'in pane degerini
+          // (400) asmak icin konmustu ama kontrolleri (1000) zaten
+          // asamiyordu — yani sorunu cozmuyor, yalnizca cozuyor gibi
+          // duruyordu. Artik harita KENDI yiginlama baglamina hapsedildigi
+          // icin (bkz. harita bilesenleri) bu dugme onun disinda kalir ve
+          // olcekteki en dusuk "ustte dursun" degeri yeterlidir.
+          className="odak-ic absolute end-2 top-2 rounded-full px-3 py-2"
           style={{
+            zIndex: "var(--yz-z-sticky)" as unknown as number,
             fontSize: "var(--yz-fs-sm)",
             color: "var(--yz-text)",
             background: "var(--yz-surface-1)",

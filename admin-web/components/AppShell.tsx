@@ -882,7 +882,7 @@ export function AppShell({
             gelen ilk Tab'da bulur. */}
         <a
           href="#icerik"
-          className="sr-only focus:not-sr-only focus:absolute focus:start-4 focus:top-4 focus:z-[60] focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-white"
+          className="sr-only focus:not-sr-only focus:absolute focus:start-4 focus:top-4 focus:z-[var(--yz-z-tooltip)] focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-white"
         >
           {t("kabukIcerigeAtla")}
         </a>
