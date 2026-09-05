@@ -315,3 +315,136 @@ kaydırma kısıtı gerektiriyor — ana ekran zaten kaydırılabilir bir gövde
 
 **Ölçüm:** 7 test. Kilidin tuttuğu, `kKameraSutun`'u 3 yapıp 6 testin düşmesi ve
 2'ye dönünce hepsinin geçmesiyle kanıtlandı.
+
+## §6 — Geçmiş kayıt izleme (NVR/DVR): uygulama kararları
+
+Analiz ve seçenek karşılaştırması ayrı belgede:
+`docs/P213-06-gecmis-kayit-analiz.md`. Siteden istenecek bilgi listesi:
+`docs/P213-06-nvr-bilgi-listesi.md`. Aşağıdakiler onay sonrası verilen
+**uygulama** kararlarıdır.
+
+### 6a — Güvenlik amirini yönetici atar
+
+**Kök durum (ölçüldü):** `guvenlik_amiri` rolü vardı ama
+`YONETILEBILIR_ROLLER["yonetici"]` kümesinde **yoktu** — amiri yalnızca
+platform operatörü atayabiliyordu. Dahası rol **hiçbir yüzeye
+giremiyordu**: web'de "yakında" mesajı alıyor, mobilde ekran seti yoktu.
+Yani backend'de yetkileri olan ama giriş yapamayan bir rol.
+
+**Karar:** yönetici `guvenlik_amiri` atayabilir. **Yetki yükseltmesi
+değil** — amirin açabildiği tek rol `security` ve yönetici zaten onu
+açıyor; yani yönetici yalnızca kendi yetkisinin bir alt kümesini
+devrediyor. Bu, testle de ölçülüyor
+(`yonetilebilir("guvenlik_amiri") <= yonetilebilir("yonetici")`).
+
+**Sınır korundu:** amirin kendisi amir açamaz. Aksi halde bir kez atanan
+amir sınırsız amir üretebilir ve yönetici denetimden çıkardı.
+
+**Yüzey:** amire web açıldı ama **dar** — `/kamera-kayitlari`,
+`/dashboard`, `/profil`. Kamera **yönetimi** (`/kameralar`) yöneticide
+kaldı: amir kamera ekleyemez, silemez, NVR kimliği giremez (backend
+`_WRITER` da onu istemiyor), o sayfayı açmak hiçbirini yapamayacağı bir
+form göstermek olurdu.
+
+### 6b — `stream_url`'deki düz parola (ayrı güvenlik düzeltmesi)
+
+**Kusur:** adres `rtsp://kullanici:parola@...` biçiminde **düz** duruyordu.
+Üç sonucu vardı: DB dökümü parolayı açıyordu, `GET /cameras` adresi
+olduğu gibi döndürüyordu (parola yetkili her istemciye gidiyordu),
+günlüğe yazılan adres parolayı da yazıyordu.
+
+**Karar:** kimlik adresten **ayrıldı** — `stream_kullanici` (düz) +
+`stream_parola_sifreli` (AES-GCM, mevcut `app/crypto.py` deseni). Adres
+kimliksiz saklanır ve kimliksiz döner; parola yalnızca sunucunun kendi
+kullandığı anda geri takılır (ffmpeg, MediaMTX).
+
+**Neden "yanıtta maskele" değil:** maskeleme veriyi hâlâ düz saklamanın
+üstüne bir katman koymaktır; yedek/döküm/günlük yolları açık kalırdı.
+Ayrıca maskeyi bir yerde unutmak **sessiz** bir sızıntıdır — ayırmak,
+unutulunca **çalışmayan** (yani fark edilen) bir tasarımdır.
+
+**Göç 0107 mevcut kayıtları taşır** ve `downgrade` parolayı çözüp adrese
+geri takar. Çift yönlü olarak gerçek veriyle doğrulandı:
+`rtsp://kul:GizliParola9@10.5.5.5:554/s` → adres temizlendi + şifreli
+blob; downgrade → adres aynen geri geldi.
+
+**Yan bulgu:** göç şifreleme yaptığı için `SDM_KEK` ister; `migrate`
+servisine bu değişken geçirilmemişti ve göç zinciri düştü. İki compose
+dosyasına eklendi. **Düşmesi doğrudur** — sessizce atlamak parolaları düz
+bırakır ve kimse fark etmezdi.
+
+**Çözülemeyen kimlik artık sessizce geçmiyor:** parolada kaçışsız `#`
+varsa `urlsplit` konağı kaybediyor, ayırma atlanıyor ve adres parolayla
+birlikte düz saklanıyordu — yani tam olarak kapatmaya çalıştığımız durum,
+hem de fark edilmeden. Artık 422 ve kullanıcıya parolayı ayrı alana
+yazması söyleniyor (o yolun gerçekten çalıştığı ayrıca ölçülüyor).
+
+### 6c–6f — Adaptörler
+
+Tek `KayitSaglayici` arayüzü, iki metot: `araliklari_listele` ve
+`oynatma_adresi`. **Ayrı olmaları önemli:** arama API'si kapalı bir
+kurulumda listeleme çalışmaz ama oynatma çalışır; tek metotta
+birleştirmek ikinci yeteneği birincinin eksikliğine kurban ederdi.
+
+- **`sablon`** — aramasız oynatma. Pilot sitenin markası bilinmediği ve
+  çoğu kurulumda yalnız 554 yönlendirildiği için **birinci sınıf** bir
+  yol, geçici çözüm değil. Şablon dili kasten küçük (sabit yer tutucu
+  listesi): metni yazan kullanıcı, değerlendiren sunucu — genel amaçlı
+  bir şablon motoru sunucu tarafı şablon enjeksiyonu yüzeyi açardı.
+- **`hikvision`** — ISAPI XML araması; cihazın kendi `playbackURI`si
+  tercih edilir, arama çökerse **oynatma vazgeçmez**, standart şablona
+  düşer.
+- **`dahua`** — üç adımlı durumlu CGI araması. Bulucu `finally` içinde
+  **kapatılır**: kapatılmayan bulucular cihazda birikir ve bir süre sonra
+  arama tamamen çalışmaz olur (bu satır ayrıca testle ölçülüyor).
+- **`onvif` bilerek yok.** Profile G standart ama sahada güvenilmez; iki
+  satıcı adaptörü gerçek cihazda doğrulandıktan **sonra** eklenecek.
+  Önce eklemek, doğrulanmamış bir yolu varsayılan gibi göstermekti.
+
+Tanınmayan sağlayıcı **fail-closed** reddedilir: varsayılan bir adaptöre
+düşmek, yanlış markaya yanlış istekler göndermek ve teşhisi çok zor bir
+hata sınıfı üretmek olurdu.
+
+### 6g — Uçlar, yetki, KVKK
+
+- Erişim **yönetici + güvenlik amiri**; amir olmayan `security` **hariç**
+  (geriye dönük gözetim kapıdaki görevlinin işi değil). Kapı **sunucuda**,
+  iki uçta da ayrı ayrı ölçülüyor.
+- **Her arama ve her izleme denetim kaydına yazılır** (kim, hangi kamera,
+  hangi zaman aralığı). Sonradan eklenmesi imkânsıza yakın: geçmişe dönük
+  üretilemez.
+- Pencere **en çok 24 saat**: bu cihazların arama API'leri yavaş ve tek iş
+  parçacıklı; "son bir yıl" isteği cihazı kilitlerdi.
+- **IDOR:** kayıt yolu adı `kayit<kamera-hex><imza>` ve ilk parçası
+  istekteki kamerayla eşleşmek zorunda — yoksa rol kapısı geçildikten
+  sonra bile A kamerasının ucundan B'nin kaydı çekilebilirdi.
+- Oynatma zinciri **canlıyla aynı**; `_mediamtx_yol_kaydet` ortaklaştırıldı
+  ki §2'nin kök nedeni (yutulan 401) iki yerde birden yaşamasın.
+
+### 6h — Web
+
+Ayrı sayfa `/kamera-kayitlari`. "Arama desteklenmiyor" ile "kayıt yok"
+arayüzde de **ayrı** mesajlar — ikisini aynı göstermek, kaydı olan bir
+günü boş gibi gösterip kullanıcıyı vazgeçirirdi.
+
+Kameralar formunda NVR ayarları yalnız onay kutusu işaretlenince çizilir.
+**Boş parola gönderilmez:** `null` göndermek "parolayı sil" demekti ve her
+düzenlemede NVR erişimini sessizce koparırdı.
+
+### Bu turda bulunan gerçek hata (§4'ün eksiği)
+
+`/api/cameras` BFF rotası yalnız `limit`/`offset` iletiyordu; §4'te
+eklenen `ana_ekranda=true` süzgeci **backend'e hiç ulaşmıyordu** ve Özet
+tüm kameraları çekiyordu. Sayfa "çalışıyor" görünüyordu çünkü dönen
+listenin ilk kameraları zaten doğruydu. DOM testi istemci→BFF adımını
+ölçmüştü, BFF→backend adımını değil — **P200 dersi birebir tekrar etti**.
+Yeni kilit rota işlevini doğrudan çağırıyor ve kırılarak doğrulandı.
+
+### Ölçemediğim şey — açıkça
+
+Elimde gerçek **Hikvision/Dahua NVR yok**. Adaptörler taklit HTTP
+taşımasında (`httpx.MockTransport`) birebir istek/gövde/yanıt düzeyinde
+ölçüldü: "protokolü doğru uyguluyoruz" diyebilirim, **"bu cihazda
+çalışıyor" diyemem**. Bu yüzden her adım ayrıntılı hata günlüğü yazıyor
+ve ağ hatası ile cihaz hatası ayrı mesajlar veriyor — ilk saha denemesi
+teşhis edilebilir olsun diye (§2'de MediaMTX 401'ini bulan şey buydu).
