@@ -1114,7 +1114,13 @@ class CameraCreate(BaseModel):
     tur: CameraTur = "hls"
     aktif: bool = True
     # KVKK: sakin/tesis gorevlisi gorunurlugu YALNIZ bu bayrakla acilir.
+    # (P213 §4 DUZELTME) VARSAYILAN GERI KONDU: `ana_ekranda` eklenirken
+    # bu satirin `= False` varsayilani kazara dusmustu ve alan ZORUNLU
+    # olmustu — kamera olusturan HER cagri 422 aliyordu (23 test dustu).
     sakin_gorebilir: bool = False
+    #: (P213 §4) Ana ekranda (web: Ozet, mobil: ana ekran) karesi
+    #: gosterilsin mi. `sakin_gorebilir`DEN AYRI: o YETKI, bu YERLESIM.
+    ana_ekranda: bool = False
     # RESTREAM (0012 / P17): RTSP kamerayi oynatilabilir yapan HLS gecidi
     # (Frigate/go2rtc). Dolu ise istemci BUNU oynatir. Yalniz http(s) —
     # istemci HLS oynatir, rtsp gecit adresi anlamsizdir.
@@ -1144,6 +1150,7 @@ class CameraUpdate(BaseModel):
     tur: CameraTur | None = None
     aktif: bool | None = None
     sakin_gorebilir: bool | None = None
+    ana_ekranda: bool | None = None
     # RESTREAM (0012 / P17): RTSP kamerayi oynatilabilir yapan HLS gecidi
     # (Frigate/go2rtc). Dolu ise istemci BUNU oynatir. Yalniz http(s) —
     # istemci HLS oynatir, rtsp gecit adresi anlamsizdir.
@@ -1175,6 +1182,8 @@ class CameraOut(BaseModel):
     tur: CameraTur
     aktif: bool
     sakin_gorebilir: bool
+    #: (P213 §4) Ana ekranda karesi gosterilsin mi (YERLESIM bayragi).
+    ana_ekranda: bool = False
     # TURETILMIS (saklanmaz): istemci bu kamerayi oynatabilir mi. `rtsp` bile
     # `restream_url` doluysa TRUE olur.
     oynatilabilir: bool = True

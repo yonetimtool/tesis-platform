@@ -19641,6 +19641,16 @@ components:
           description: >
             **KVKK anahtari.** true = resident + tesis_gorevlisi bu kamerayi
             gorur (aktif=true ise). Varsayilan false.
+        ana_ekranda:
+          type: boolean
+          default: false
+          description: >
+            (P213 §4) Ana ekranda (web: Ozet, mobil: ana ekran alti) karesi
+            gosterilsin mi. `sakin_gorebilir`DEN AYRI: o YETKI, bu YERLESIM.
+            Varsayilan false — aksi halde cok kamerali bir sitede ozet her
+            acildiginda kamera sayisi kadar ffmpeg sureci baslardi. Ayni
+            anda en cok `KAMERA_ANA_EKRAN_SINIR` (varsayilan 4) kamera
+            secilebilir; asimda 422 `kamera_ana_ekran_sinir`.
         oynatilabilir:
           type: boolean
           description: >
@@ -19679,6 +19689,10 @@ components:
           type: boolean
           default: false
           description: Verilmezse KAPALI — sakin/tesis gorevlisi gormez
+        ana_ekranda:
+          type: boolean
+          default: false
+          description: (P213 §4) Ana ekran bandinda gosterilsin mi (sinirli).
         restream_url:
           type: string
           nullable: true

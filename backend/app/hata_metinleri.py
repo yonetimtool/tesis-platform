@@ -2832,6 +2832,16 @@ METINLER: dict[str, dict[str, str]] = {
     },
     # (P213 §3) HLS de acildi: artik "yalniz RTSP" degil, "bu adres
     # sunucudan cekilemez" (desteklenmeyen sema ya da yasak konak).
+    # (P213 §4) Ana ekran kamera sayisi sinirli — sebebi ffmpeg yuku.
+    "kamera_ana_ekran_sinir": {
+        "tr": "Ana ekranda en çok {sinir} kamera gösterilebilir. Önce birini kaldırın.",
+        "en": "At most {sinir} cameras can be shown on the home screen. Remove one first.",
+        "ar": "يمكن عرض {sinir} كاميرات كحد أقصى في الشاشة الرئيسية. أزل واحدة أولاً.",
+        "ru": "На главном экране можно показать не более {sinir} камер. Сначала уберите одну.",
+        "de": "Auf dem Startbildschirm können höchstens {sinir} Kameras angezeigt werden. Entfernen Sie zuerst eine.",
+        "fr": "Au maximum {sinir} caméras peuvent être affichées sur l'écran d'accueil. Retirez-en une d'abord.",
+        "es": "Como máximo se pueden mostrar {sinir} cámaras en la pantalla de inicio. Quite una primero.",
+    },
     "kamera_kare_desteklenmeyen": {
         "tr": "Bu kamera adresinden sunucu tarafı görüntü alınamıyor (yalnız RTSP ve HLS adresleri desteklenir).",
         "en": "Server-side capture is not possible for this camera address (only RTSP and HLS addresses are supported).",

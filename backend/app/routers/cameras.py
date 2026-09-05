@@ -173,11 +173,25 @@ async def list_cameras(
             "SAYILIR: o roller her durumda yalniz aktif+gorunur kameralari alir."
         ),
     ),
+    ana_ekranda: bool | None = Query(
+        None,
+        description=(
+            "(P213 §4) Ana ekran bandi bu suzgecle cekilir. Rol gorunurlugu "
+            "AYRICA uygulanir: sakinin ana ekraninda yalniz kendisine ACIK "
+            "kameralar cikar."
+        ),
+    ),
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_READER),
 ) -> CameraListResponse:
     stmt = select(Camera)
     sayim = select(func.count()).select_from(Camera)
+
+    # (P213 §4) ANA EKRAN SUZGECI ROL KAPISININ USTUNE BINER, YERINE
+    # GECMEZ: asagidaki `_TAM_GORUS` kosulu her durumda uygulanir.
+    if ana_ekranda is not None:
+        stmt = stmt.where(Camera.ana_ekranda.is_(ana_ekranda))
+        sayim = sayim.where(Camera.ana_ekranda.is_(ana_ekranda))
 
     if user.role not in _TAM_GORUS:
         # KVKK kapisi: sakin/tesis gorevlisi icin suzgec ZORUNLU ve
@@ -212,6 +226,8 @@ async def create_camera(
     _snapshot_dogrula(body.snapshot_url)
     obj = Camera(tenant_id=user.tenant_id, **body.model_dump())
     db.add(obj)
+    if obj.ana_ekranda:
+        await _ana_ekran_siniri_dogrula(db)
     try:
         await db.flush()
     except IntegrityError as exc:
@@ -243,6 +259,8 @@ async def update_camera(
         _restream_dogrula(alanlar["restream_url"])
     if "snapshot_url" in alanlar:
         _snapshot_dogrula(alanlar["snapshot_url"])
+    if alanlar.get("ana_ekranda") and not obj.ana_ekranda:
+        await _ana_ekran_siniri_dogrula(db)
     for key, value in alanlar.items():
         setattr(obj, key, value)
     obj.updated_at = func.now()
@@ -359,6 +377,31 @@ _KARE_ZAMAN_ASIMI_SN = 8
 _KARE_YOK = "YOK"
 
 _CANLI_TTL_SN = 30  # aktif-izleyici kaydinin omru (playlist istegiyle tazelenir)
+
+
+async def _ana_ekran_siniri_dogrula(db: AsyncSession) -> None:
+    """(P213 §4) ANA EKRAN KAMERA SAYISI SINIRLI — ve sebebi acik.
+
+    Her kare AYRI BIR FFMPEG SURECIDIR. Sinirsiz birakmak, 20 kamerali
+    bir sitede ozet her acildiginda 20 surec baslatirdi; kullanicinin
+    gormedigi ama sunucunun odedigi bir maliyet. Sinir SEMA KISITI DEGIL
+    AYAR (`KAMERA_ANA_EKRAN_SINIR`): degistirmek goc gerektirmemeli.
+
+    Hata SESSIZ DEGIL: yonetici neden ekleyemedigini ve kac kamera
+    secebilecegini gorur.
+    """
+    sayi = (
+        await db.execute(
+            select(func.count()).select_from(Camera).where(
+                Camera.ana_ekranda.is_(True)
+            )
+        )
+    ).scalar_one()
+    if sayi >= settings.kamera_ana_ekran_sinir:
+        raise APIError(
+            422, "validation_error", "kamera_ana_ekran_sinir",
+            sinir=settings.kamera_ana_ekran_sinir,
+        )
 
 
 async def _gorunur_kamera(

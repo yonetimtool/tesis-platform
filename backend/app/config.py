@@ -93,6 +93,13 @@ class Settings(BaseSettings):
     mediamtx_api_url: str = ""        # orn. http://mediamtx:9997  (yol kayit API)
     #: Ayni anda en cok kac FARKLI kamera donusturulur (CPU siniri; asimda 429).
     kamera_canli_sinir: int = 3
+    #: (P213 §4) ANA EKRANDA en cok kac kamera karesi gosterilebilir.
+    #:
+    #: HER KARE AYRI BIR FFMPEG SURECIDIR (kare onbellegi 10 sn). Sinirsiz
+    #: birakmak, 20 kamerali bir sitede ozet her acildiginda 20 surec
+    #: baslatirdi — kullanicinin gormedigi bir maliyet. SEMA KISITI DEGIL
+    #: AYAR: siniri degistirmek goc gerektirmemeli.
+    kamera_ana_ekran_sinir: int = 4
 
     # --- (P155r2 / §4 · P186) MAGAZA BAGLANTILARI — davet SMS'i + e-postasi ---
     #

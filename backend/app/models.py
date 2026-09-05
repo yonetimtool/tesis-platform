@@ -776,6 +776,13 @@ class Camera(Base):
     sakin_gorebilir: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("false")
     )
+    #: (P213 §4, goc 0106) ANA EKRANDA (web: Ozet, mobil: ana ekran) karesi
+    #: gosterilsin mi. `sakin_gorebilir`DEN AYRI: o YETKI, bu YERLESIM.
+    #: Varsayilan false — yoksa 20 kamerali bir sitede ozet acilir acilmaz
+    #: 20 ffmpeg sureci baslardi.
+    ana_ekranda: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
     created_at = _created_at()
     updated_at = _created_at()
 

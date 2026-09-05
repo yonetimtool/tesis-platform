@@ -223,3 +223,48 @@ SNI/sertifika doğrulaması kırılırdı. Risk sınırlı: `stream_url`i yalnı
 yönetim yazar ve çıktı bir JPEG'dir.
 
 Kırma denemesi: IP kontrolü devre dışı bırakıldığında **5 test** düştü.
+
+---
+
+## §4 — Kareler ana ekranda (backend)
+
+### KARAR K4.1 — **Ayrı bayrak** (`ana_ekranda`), `sakin_gorebilir` değil
+İki farklı soru: `sakin_gorebilir` bir **yetki** sorusudur ("sakin bu
+kamerayı görebilir mi"), `ana_ekranda` bir **yerleşim** sorusudur ("bu
+kamera özetin bandında dursun mu"). Tek bayrakla yönetmek, otopark
+kamerasını sakinlere açan yöneticinin özetini de kendiliğinden
+doldururdu. Göç **0106**, geri alınabilir (downgrade→upgrade koşuldu).
+
+### KARAR K4.2 — Seçilmemişse **hiçbiri gösterilmez**
+Varsayılan `false`. "İlk N kamerayı otomatik göster" gibi bir kural
+**uydurma** olurdu: hangi kameranın öne çıkacağı yöneticinin bilgisidir,
+alfabetik sıranın değil. Varsayılan `true` ise 20 kameralı bir sitede
+özet açılır açılmaz **20 ffmpeg süreci** başlatırdı.
+
+Seçim yoksa ana ekranda kamera bandı **hiç çizilmez** — boş bir kutu
+değil, yok.
+
+### KARAR K4.3 — Sınır **4** (ayar, şema kısıtı değil)
+Her kare ayrı bir ffmpeg sürecidir (10 sn kare önbelleğiyle). Sınır
+`KAMERA_ANA_EKRAN_SINIR` ile ayarlanır; şema kısıtı yapmak, sınırı
+değiştirmeyi göç işine çevirirdi. Aşımda **422** ve mesaj **sınırı
+söyler** ("en çok 4 kamera… önce birini kaldırın") — yönetici neden
+ekleyemediğini bilir. Zaten açık bir kamerayı güncellemek sınıra
+takılmaz; kaldırınca yer açılır.
+
+### KARAR K4.4 — Süzgeç rol kapısının **üstüne biner**
+`GET /cameras?ana_ekranda=true` rol görünürlüğünü **değiştirmez**:
+sakinin ana ekranında yalnız kendisine açık kameralar çıkar. Testle
+kilitli.
+
+### Kilit
+9 test (varsayılan kapalı, seçim yoksa boş, seçilen listede,
+`sakin_gorebilir` ile karışmıyor, sınır 422 + mesaj, PATCH yolunda da
+sınır, açık kamerayı güncellemek takılmıyor, kaldırınca yer açılıyor,
+sakin görünürlüğü).
+
+### Yan bulgu — kendi hatam, testler yakaladı
+`ana_ekranda`yı eklerken `sakin_gorebilir`in `= False` varsayılanı kazara
+düştü ve alan **zorunlu** oldu: kamera oluşturan her çağrı 422 almaya
+başladı. `test_cameras.py`'de **23 test** düştü ve kusuru anında
+gösterdi.
