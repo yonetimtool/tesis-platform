@@ -132,7 +132,7 @@ Widget _uygulama(BellekDepo depo, UserRole role, {AcilisTercihleri? tohum}) {
       yoneticiIletisimProvider
           .overrideWith((ref) async => throw Exception('offline')),
       shiftsProvider.overrideWith((ref) async => const []),
-      camerasProvider.overrideWith((ref) async => const []),
+      anaEkranKameralariProvider.overrideWith((ref) async => const []),
       kargoListProvider.overrideWith((ref) async => const []),
       sonDuyurularProvider.overrideWith((ref) async => const []),
       sonHareketlerProvider.overrideWith((ref) async => const []),

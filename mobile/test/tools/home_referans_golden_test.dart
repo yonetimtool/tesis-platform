@@ -98,7 +98,7 @@ List<Object> _temsili(String ad, String role) => [
                 bitisSaat: '06:00',
                 gunTipi: 'her_gun'),
           ]),
-      camerasProvider.overrideWith((ref) async => const [
+      anaEkranKameralariProvider.overrideWith((ref) async => const [
             Camera(id: 'c1', ad: 'Ana Giriş', streamUrl: 'https://x/1.m3u8'),
             Camera(id: 'c2', ad: 'Otopark', streamUrl: 'https://x/2.m3u8'),
           ]),

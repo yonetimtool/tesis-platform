@@ -70,7 +70,7 @@ Widget _saha(UserRole role, Locale locale, {List<ActivityItem>? akis}) =>
         kargoListProvider.overrideWith((ref) async => const []),
         sonDuyurularProvider.overrideWith((ref) async => const []),
         sonHareketlerProvider.overrideWith((ref) async => akis ?? const []),
-        camerasProvider.overrideWith((ref) async => const [
+        anaEkranKameralariProvider.overrideWith((ref) async => const [
               Camera(
                 id: 'c1',
                 ad: 'Ana Kapı',

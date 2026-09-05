@@ -93,7 +93,7 @@ Widget _app(
           if (hareketHata != null) throw hareketHata;
           return hareketler;
         }),
-        camerasProvider.overrideWith((ref) async => const [
+        anaEkranKameralariProvider.overrideWith((ref) async => const [
               Camera(id: 'c1', ad: 'Ana Kapı', streamUrl: 'https://x/s.m3u8'),
             ]),
       ],

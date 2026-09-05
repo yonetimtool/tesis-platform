@@ -32,7 +32,7 @@ Widget _app({List<Shift> vardiyalar = const []}) => ProviderScope(
         unreadNotificationCountProvider.overrideWith((ref) async => 5),
         shiftsProvider.overrideWith((ref) async => vardiyalar),
         // Bolumler GERCEK uctan beslenir; testte aga cikmadan doldurulur.
-        camerasProvider.overrideWith((ref) async => const [
+        anaEkranKameralariProvider.overrideWith((ref) async => const [
               Camera(id: 'c1', ad: 'Ana Kapı', streamUrl: 'https://x/s.m3u8'),
             ]),
         icerdekiZiyaretciSayisiProvider.overrideWith((ref) async => 1),
