@@ -832,7 +832,7 @@ async def _mediamtx_yol_kaydet(yol: str, kaynak: str) -> None:
             "gecit yapilandirmasini kontrol edin (infra/mediamtx.yml)",
             api_adresi(), yanit.status_code,
         )
-        raise APIError(502, "bad_gateway", "kamera_gecit_yetkisiz")
+        raise APIError(502, SUNUCU_YAPILANDIRMA, "kamera_gecit_yetkisiz")
     if yanit.status_code >= 400:
         # Yol ZATEN VARSA MediaMTX yine 4xx doner ve bu NORMALDIR
         # (idempotent kayit). Ayirt etmek icin govdeye bakariz: "already
@@ -843,7 +843,7 @@ async def _mediamtx_yol_kaydet(yol: str, kaynak: str) -> None:
                 "[kamera] MediaMTX yol kaydi reddedildi durum=%s govde=%r",
                 yanit.status_code, (yanit.text or "")[:200],
             )
-            raise APIError(502, "bad_gateway", "kamera_gecit_yapilandirma")
+            raise APIError(502, SUNUCU_YAPILANDIRMA, "kamera_gecit_yapilandirma")
 
 
 #: (P190 §6 guvenlik) HLS dosya adi TEK bilesendir: harf/rakam/._- + uzanti.
@@ -870,7 +870,7 @@ async def kamera_canli(
     (asimda 429 `kamera_canli_sinir` — kullanici acik mesaj gorur).
     """
     if not settings.mediamtx_url:
-        raise APIError(503, "service_unavailable", "kamera_canli_kapali")
+        raise APIError(503, SUNUCU_YAPILANDIRMA, "kamera_canli_kapali")
     obj = await _gorunur_kamera(db, user, camera_id)
     _rtsp_dogrula(obj)
 
@@ -899,7 +899,7 @@ async def kamera_canli(
             # Ikisini ayni mesajla anlatmak, yoneticiyi kamerayi kontrol
             # etmeye gonderiyordu; oysa duzeltilecek yer SUNUCUDUR.
             logger.error("[kamera] MediaMTX API'sine ulasilamadi (%s)", api_adresi())
-            raise APIError(502, "bad_gateway", "kamera_gecit_yok")
+            raise APIError(502, SUNUCU_YAPILANDIRMA, "kamera_gecit_yok")
 
     hedef = f"{settings.mediamtx_url.rstrip('/')}/cam{obj.id.hex}/{dosya}"
     try:
@@ -907,7 +907,7 @@ async def kamera_canli(
             yanit = await istemci.get(hedef)
     except httpx.HTTPError:
         logger.error("[kamera] MediaMTX HLS gecidine ulasilamadi (%s)", api_adresi())
-        raise APIError(502, "bad_gateway", "kamera_gecit_yok")
+        raise APIError(502, SUNUCU_YAPILANDIRMA, "kamera_gecit_yok")
     if yanit.status_code >= 400:
         # Gecit AYAKTA ama yayin yok: kaynak RTSP'ye baglanamamis demektir.
         # 404 bu durumda "yol henuz hazir degil" anlamina da gelir; ikisini
@@ -939,6 +939,24 @@ async def kamera_canli(
 # duran gorevlinin isi degildir. Kapi SUNUCUDA — istemcide gizlemek
 # yetkilendirme olmaz.
 _KAYIT_IZLEYICI = require_role("admin", "yonetici", "guvenlik_amiri")
+
+# =========================================================================== #
+# (P215) HATA AYRIMI: KAMERA SORUNU MU, SUNUCU YAPILANDIRMASI MI
+# =========================================================================== #
+# OLCULEN KUSUR (sahadan): prod'da mediamtx ile api FARKLI docker aglarinda
+# oldugu icin her canli yayin istegi 502 donuyordu. Kullanicinin gordugu sey
+# "Yayin acilamadi. Adresi ve ag erisimini kontrol edin." idi — yani
+# yonetici, HICBIR SORUNU OLMAYAN kamerayi duzeltmeye calisiyordu. Sorun
+# sunucudaydi ve onun mudahale edebilecegi bir sey degildi.
+#
+# Ayrim `code` ile MAKINE OKUNUR yapiliyor (mesaj metnine bakmak dil
+# degisince kirilir):
+#     `server_config` -> SUNUCUDA yapilandirma/ag/port sorunu. Yonetici
+#                        kameraya DOKUNMAMALI, sistem yoneticisine bildirmeli.
+#     `bad_gateway`   -> KAMERAYA ulasilamiyor: adres, kimlik, ag izni.
+#
+# Ikisini ayni kodla dondurmek, teshisi kullanicidan gizlemekti.
+SUNUCU_YAPILANDIRMA = "server_config"
 
 #: Kullanicinin sorabilecegi en genis pencere. Sinirsiz birakmak, "son bir
 #: yil" gibi bir istegi NVR'a yollayip cihazi kilitlemek olurdu (bu
@@ -1031,7 +1049,7 @@ async def kayit_oynat(
     edilemez), bu yuzden bant sunucumuzdan gecer.
     """
     if not settings.mediamtx_url:
-        raise APIError(503, "service_unavailable", "kamera_canli_kapali")
+        raise APIError(503, SUNUCU_YAPILANDIRMA, "kamera_canli_kapali")
     obj = await get_or_404(db, Camera, camera_id)
     _kayit_kamerasi(obj)
     b, s = _kayit_araligi(body.bas, body.bit)
@@ -1082,7 +1100,7 @@ async def kayit_hls(
     (IDOR) — rol kapisi gecildikten sonra bile tesis ici bir sizinti.
     """
     if not settings.mediamtx_url:
-        raise APIError(503, "service_unavailable", "kamera_canli_kapali")
+        raise APIError(503, SUNUCU_YAPILANDIRMA, "kamera_canli_kapali")
     obj = await get_or_404(db, Camera, camera_id)
     _kayit_kamerasi(obj)
     if not _KAYIT_YOL.match(yol) or not yol.startswith(f"kayit{obj.id.hex}"):
@@ -1096,7 +1114,7 @@ async def kayit_hls(
             yanit = await istemci.get(hedef)
     except httpx.HTTPError:
         logger.error("[kayit] MediaMTX HLS gecidine ulasilamadi (%s)", api_adresi())
-        raise APIError(502, "bad_gateway", "kamera_gecit_yok")
+        raise APIError(502, SUNUCU_YAPILANDIRMA, "kamera_gecit_yok")
     if yanit.status_code >= 400:
         logger.warning("[kayit] gecit %s icin %s dondu", yol, yanit.status_code)
         raise APIError(502, "bad_gateway", "kamera_yayin_hazir_degil")

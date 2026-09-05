@@ -22,6 +22,10 @@
 import { useEffect, useRef, useState } from "react";
 
 import { useT } from "@/lib/i18n/kullan";
+import {
+  yayinHatasiniCoz,
+  type YayinHataSinifi,
+} from "@/lib/kamera-hata";
 
 type Props = {
   // Oynatılacak adres — restream varsa ÇAĞIRAN onu geçirir (P17).
@@ -40,6 +44,9 @@ export function KameraOynatici({ url, mp4, poster }: Props) {
   const t = useT();
   const ref = useRef<HTMLVideoElement | null>(null);
   const [hata, setHata] = useState<string | null>(null);
+  // (P215) Hata SINIFI: "sunucu" ise kullaniciya kamerayi kurcalamamasi
+  // gerektigi ayrica soylenir.
+  const [sinif, setSinif] = useState<YayinHataSinifi>("kamera");
   const [yol, setYol] = useState<"mp4" | "yerel-hls" | "hlsjs" | null>(null);
 
   useEffect(() => {
@@ -79,7 +86,17 @@ export function KameraOynatici({ url, mp4, poster }: Props) {
           // YALNIZ ÖLÜMCÜL hata gösterilir: hls.js geçici ağ/parça
           // hatalarını kendi kurtarır ve her birini kullanıcıya
           // göstermek, oynayan bir yayında sürekli uyarı demekti.
-          if (veri.fatal) setHata(t("kameraYayinAcilamadi"));
+          if (!veri.fatal) return;
+          // (P215) SUNUCUNUN TANILI MESAJINI OKU. Eskiden burada sabit
+          // bir metin gösteriliyordu ("Adresi ve ağ erişimini kontrol
+          // edin") ve sunucu kaynaklı bir yapılandırma hatasında bile
+          // yöneticiyi KAMERASINI düzeltmeye gönderiyordu.
+          setHata(t("kameraYayinAcilamadi"));
+          void yayinHatasiniCoz(url).then((c) => {
+            if (iptal || !c) return;
+            setHata(c.mesaj);
+            setSinif(c.sinif);
+          });
         });
         setYol("hlsjs");
         yikici = () => hls.destroy();
@@ -118,8 +135,21 @@ export function KameraOynatici({ url, mp4, poster }: Props) {
         onError={() => setHata(t("kameraYayinAcilamadi"))}
       />
       {hata && (
-        <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p
+          role="alert"
+          data-hata-sinifi={sinif}
+          className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+        >
           {hata}
+          {/* (P215) SUNUCU KAYNAKLIYSA NE YAPILMAYACAGINI da soyle:
+              yonetici aksi halde saglam kamerayi kurcalar. Ayri satir,
+              cunku sunucunun tanili mesaji zaten NE OLDUGUNU anlatiyor;
+              buradaki cumle NE YAPILACAGINI anlatiyor. */}
+          {sinif === "sunucu" && (
+            <span className="mt-1 block font-medium">
+              {t("kameraSunucuYapilandirmasi")}
+            </span>
+          )}
         </p>
       )}
       {yol && !hata && (

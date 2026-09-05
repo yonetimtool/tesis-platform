@@ -449,6 +449,7 @@ export const ar: Sozluk = {
   kameraOynatilamazRozet: "لا يمكن تشغيلها في المتصفح",
   kameraRtspAciklama: "تبث هذه الكاميرا عبر RTSP والمتصفحات لا تشغّل RTSP. لمشاهدتها على الويب، حدّد عنوان بوابة HLS (إعادة بث)؛ ويمكن فتح الكاميرا نفسها في تطبيق الهاتف.",
   kameraYayinAcilamadi: "تعذّر فتح البث. تحقق من العنوان والاتصال بالشبكة.",
+  kameraSunucuYapilandirmasi: "هذه مشكلة في إعداد الخادم. لا تُغيّر إعدادات الكاميرا؛ أبلغ مسؤول النظام.",
   kameraOynatilamiyor: "لا يستطيع هذا المتصفح تشغيل هذا البث.",
   kameraHlsYerel: "HLS (أصلي في المتصفح)",
   kameraHlsKutuphane: "HLS ‏(hls.js)",

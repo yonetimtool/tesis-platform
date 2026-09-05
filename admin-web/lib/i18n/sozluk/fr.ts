@@ -449,6 +449,7 @@ export const fr: Sozluk = {
   kameraOynatilamazRozet: "Non lisible dans le navigateur",
   kameraRtspAciklama: "Cette caméra diffuse en RTSP et les navigateurs ne lisent pas le RTSP. Pour la regarder sur le web, définissez une adresse de passerelle HLS (rediffusion) ; la même caméra s'ouvre dans l'application mobile.",
   kameraYayinAcilamadi: "Le flux n'a pas pu être ouvert. Vérifiez l'adresse et l'accès réseau.",
+  kameraSunucuYapilandirmasi: "Il s'agit d'un problème de configuration serveur. Ne modifiez pas les réglages de la caméra ; signalez-le à l'administrateur système.",
   kameraOynatilamiyor: "Ce navigateur ne peut pas lire ce flux.",
   kameraHlsYerel: "HLS (natif au navigateur)",
   kameraHlsKutuphane: "HLS (hls.js)",

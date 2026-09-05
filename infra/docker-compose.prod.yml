@@ -301,16 +301,32 @@ services:
     # Gerekce ve olculen kusur `infra/mediamtx.yml` basinda.
     volumes:
       - ./mediamtx.yml:/mediamtx.yml:ro
-    environment:
-      MTX_API: "yes"
-      MTX_APIADDRESS: :9997
-      MTX_HLS: "yes"
-      MTX_HLSADDRESS: :8888
-      MTX_HLSVARIANT: mpegts
-      MTX_RTSP: "no"
-      MTX_RTMP: "no"
-      MTX_WEBRTC: "no"
-      MTX_SRT: "no"
+    # ===================================================================== #
+    # (P215) AG — CANLI YAYININ PRODDAKI KOK NEDENI TAM OLARAK BURASIYDI
+    # ===================================================================== #
+    # Bu satir EKSIKTI. Prod'daki 14 servisin 13'u `tesisnet`e bagliyken
+    # mediamtx yazilmadigi icin Docker onu VARSAYILAN aga koydu:
+    #     mediamtx -> yonetio-prod_default
+    #     api      -> yonetio-prod_tesisnet
+    # Iki ag arasinda DNS yok; `api` konteynerinde `mediamtx` adi
+    # cozulmedi (socket.gaierror) ve HER canli yayin istegi 502 dondu.
+    #
+    # Dev'de GORULMEDI cunku `docker-compose.yml`de HICBIR servis ag
+    # belirtmez — hepsi ayni varsayilan aga duser ve isim cozumu calisir.
+    # Yani kusur yalnizca PROD TOPOLOJISINDE vardi ve o topoloji hicbir
+    # testte olculmuyordu. Kilit: `backend/tests/test_p215_gecit_ag.py`.
+    networks: [tesisnet]
+    # ===================================================================== #
+    # PORT/AYAR TEK KAYNAKTAN: `mediamtx.yml`
+    # ===================================================================== #
+    # `MTX_*` ortam degiskenleri KALDIRILDI. Ayni ayar hem mount edilen
+    # dosyada hem env'de duruyordu ve env dosyayi EZIYORDU: "hangi deger
+    # gecerli" sorusunun yaniti okunarak anlasilamiyordu. Portun bir
+    # yerde 9997, digerinde baska bir sey olmasi tam da bu yuzden
+    # sessiz kalabilecek bir hataydi.
+    #
+    # Tek kaynak dosya; `api`nin aradigi port ile dosyadaki portun ayni
+    # oldugu ayrica TESTLE olculuyor (test_p215_gecit_ag.py).
 
   api:
     build:

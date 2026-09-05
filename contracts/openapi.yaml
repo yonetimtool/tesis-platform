@@ -11947,13 +11947,23 @@ paths:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
         "502":
           description: >
-            (P191 §3) `kamera_gecit_yok` (MediaMTX'e ulasilamadi — SUNUCU
-            sorunu) ya da `kamera_yayin_hazir_degil` (gecit ayakta, kaynaktan
-            goruntu gelmedi)
+            (P191 §3 / P215) HATA SINIFI `code` ILE AYRILIR — istemci
+            kullaniciya ne yapmasi gerektigini buna gore soyler:
+
+            * `code: server_config` -> SUNUCUDA ag/port/yapilandirma sorunu
+              (`kamera_gecit_yok`, `kamera_gecit_yetkisiz`,
+              `kamera_gecit_yapilandirma`). Yonetici KAMERAYA DOKUNMAMALI.
+              P215'te prod'da mediamtx ile api farkli docker aglarindaydi ve
+              genel bir mesaj yoneticiyi saglam kamerayi duzeltmeye
+              gonderiyordu.
+            * `code: bad_gateway` -> KAMERAYA ulasilamiyor
+              (`kamera_yayin_hazir_degil`): adres, kimlik ya da ag izni.
           content:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
         "503":
-          description: Canli izleme yapilandirilmamis (`kamera_canli_kapali`)
+          description: >
+            Canli izleme yapilandirilmamis (`kamera_canli_kapali`).
+            (P215) `code: server_config` — sunucu tarafi eksigidir.
           content:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
 

@@ -467,6 +467,7 @@ export const tr = {
   kameraOynatilamazRozet: "Tarayıcıda oynatılamaz",
   kameraRtspAciklama: "Bu kamera RTSP yayını yapıyor ve tarayıcılar RTSP oynatamaz. Yayını web'de izlemek için bir HLS geçidi (restream) adresi tanımlayın; mobil uygulamada aynı kamera açılabilir.",
   kameraYayinAcilamadi: "Yayın açılamadı. Adresi ve ağ erişimini kontrol edin.",
+  kameraSunucuYapilandirmasi: "Bu bir sunucu yapılandırma sorunudur. Kamera ayarlarını değiştirmeyin; sistem yöneticisine bildirin.",
   kameraOynatilamiyor: "Bu tarayıcı bu yayını oynatamıyor.",
   kameraHlsYerel: "HLS (tarayıcı yerel)",
   kameraHlsKutuphane: "HLS (hls.js)",

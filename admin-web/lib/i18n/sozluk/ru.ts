@@ -449,6 +449,7 @@ export const ru: Sozluk = {
   kameraOynatilamazRozet: "Не воспроизводится в браузере",
   kameraRtspAciklama: "Эта камера вещает по RTSP, а браузеры не воспроизводят RTSP. Чтобы смотреть её в вебе, задайте адрес HLS-шлюза (рестрим); в мобильном приложении та же камера открывается.",
   kameraYayinAcilamadi: "Не удалось открыть поток. Проверьте адрес и доступ к сети.",
+  kameraSunucuYapilandirmasi: "Это проблема настройки сервера. Не меняйте настройки камеры — сообщите системному администратору.",
   kameraOynatilamiyor: "Этот браузер не может воспроизвести данный поток.",
   kameraHlsYerel: "HLS (встроенный в браузер)",
   kameraHlsKutuphane: "HLS (hls.js)",

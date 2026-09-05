@@ -449,6 +449,7 @@ export const en: Sozluk = {
   kameraOynatilamazRozet: "Not playable in browser",
   kameraRtspAciklama: "This camera streams over RTSP and browsers cannot play RTSP. To watch it on the web, define an HLS gateway (restream) URL; the same camera can be opened in the mobile app.",
   kameraYayinAcilamadi: "The stream could not be opened. Check the URL and network access.",
+  kameraSunucuYapilandirmasi: "This is a server configuration problem. Do not change the camera settings; report it to your system administrator.",
   kameraOynatilamiyor: "This browser cannot play this stream.",
   kameraHlsYerel: "HLS (browser native)",
   kameraHlsKutuphane: "HLS (hls.js)",

@@ -197,33 +197,14 @@ services:
     restart: unless-stopped
     # (P213 §2) YAPILANDIRMA DOSYADAN: `api` izni docker agina acilir.
     # Gerekce ve olculen kusur `infra/mediamtx.yml` basinda.
+    #
+    # (P215) `MTX_*` ORTAM DEGISKENLERI KALDIRILDI — prod ile AYNI sebeple:
+    # ayni ayar hem dosyada hem env'de durdugunda env dosyayi ezer ve
+    # "hangi deger gecerli" sorusu okunarak yanitlanamaz. Dev ile prod'un
+    # ayni kaynagi kullanmasi ayrica bir prod kusurunun dev'de
+    # gorunmemesi olasiligini dusurur.
     volumes:
       - ./mediamtx.yml:/mediamtx.yml:ro
-    environment:
-      MTX_API: "yes"
-      MTX_APIADDRESS: :9997
-      MTX_HLS: "yes"
-      MTX_HLSADDRESS: :8888
-      # Dusuk gecikmeli kucuk parcalar; tek izleyicili site kamerasi icin yeterli.
-      MTX_HLSVARIANT: mpegts
-      # (P213 §2) API IZNI DOCKER AGINA ACILIR — CANLI YAYININ KOK NEDENI.
-      #
-      # OLCULDU: `GET /v3/paths/list` -> 401. MediaMTX 1.9'un varsayilan
-      # `authInternalUsers` yapilandirmasinda `api` izni YALNIZ
-      # 127.0.0.1/::1'e verilmis. `api` servisi konteyner agindan
-      # (172.x) baglandigi icin yol kaydi (`/v3/config/paths/add/...`)
-      # 401 aliyor, backend bunu "yol zaten var" sanip PATCH deniyor, o
-      # da 401 ve HICBIR ISTISNA ATILMIYORDU: sonra HLS istegi 404
-      # doner ve kullanici "yayin hazir degil" gorurdu. Izgaradaki kare
-      # calisiyordu cunku onu ffmpeg KAMERADAN DOGRUDAN cekiyor.
-      #
-      # API PORTU DISARI ACILMIYOR (ports yok): erisim yalnizca compose
-      # agindan mumkun. Ozel ag araligini yetkilendirmek, API'yi
-      # internete acmak DEGILDIR.
-      MTX_RTSP: "no"
-      MTX_RTMP: "no"
-      MTX_WEBRTC: "no"
-      MTX_SRT: "no"
 
   api:
     build:
@@ -365,6 +346,10 @@ services:
       # sir icermiyor (yalniz degisken REFERANSLARI).
       - ./docker-compose.yml:/infra/docker-compose.yml:ro
       - ./docker-compose.prod.yml:/infra/docker-compose.prod.yml:ro
+      # (P215) Gecit yapilandirmasi: `api`nin aradigi port ile gecidin
+      # dinledigi portun ayni oldugunu test OKUYARAK dogruluyor. Sir
+      # icermez (yalniz dinleme adresleri ve ag izinleri).
+      - ./mediamtx.yml:/infra/mediamtx.yml:ro
     healthcheck:
       test:
         - CMD

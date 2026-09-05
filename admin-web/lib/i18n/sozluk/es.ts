@@ -449,6 +449,7 @@ export const es: Sozluk = {
   kameraOynatilamazRozet: "No reproducible en el navegador",
   kameraRtspAciklama: "Esta cámara emite por RTSP y los navegadores no reproducen RTSP. Para verla en la web, defina una dirección de pasarela HLS (reemisión); la misma cámara se abre en la aplicación móvil.",
   kameraYayinAcilamadi: "No se pudo abrir la emisión. Compruebe la dirección y el acceso a la red.",
+  kameraSunucuYapilandirmasi: "Es un problema de configuración del servidor. No cambie los ajustes de la cámara; comuníqueselo al administrador del sistema.",
   kameraOynatilamiyor: "Este navegador no puede reproducir esta emisión.",
   kameraHlsYerel: "HLS (nativo del navegador)",
   kameraHlsKutuphane: "HLS (hls.js)",
