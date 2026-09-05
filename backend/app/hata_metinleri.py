@@ -2830,6 +2830,17 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "La capture côté serveur est réservée aux caméras RTSP.",
         "es": "La captura del lado del servidor es solo para cámaras RTSP.",
     },
+    # (P213 §3) HLS de acildi: artik "yalniz RTSP" degil, "bu adres
+    # sunucudan cekilemez" (desteklenmeyen sema ya da yasak konak).
+    "kamera_kare_desteklenmeyen": {
+        "tr": "Bu kamera adresinden sunucu tarafı görüntü alınamıyor (yalnız RTSP ve HLS adresleri desteklenir).",
+        "en": "Server-side capture is not possible for this camera address (only RTSP and HLS addresses are supported).",
+        "ar": "لا يمكن الالتقاط من جانب الخادم لعنوان هذه الكاميرا (يُدعم RTSP وHLS فقط).",
+        "ru": "Захват на стороне сервера для этого адреса камеры невозможен (поддерживаются только RTSP и HLS).",
+        "de": "Für diese Kameraadresse ist keine serverseitige Aufnahme möglich (nur RTSP- und HLS-Adressen).",
+        "fr": "La capture côté serveur est impossible pour cette adresse (seuls RTSP et HLS sont pris en charge).",
+        "es": "No se puede capturar del lado del servidor para esta dirección (solo se admiten RTSP y HLS).",
+    },
     "destek_bileti_bulunamadi": {
         "tr": "Destek bileti bulunamadı.",
         "en": "Support ticket not found.",

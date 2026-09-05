@@ -19,6 +19,21 @@ _MP4 = "https://cdn.example.com/kayit/1.mp4"
 _RTSP = "rtsp://nvr.example.com/kanal1"
 
 
+# (P213 §2) CANLI GECIT YAPILANDIRILMIS MI?
+#
+# `oynatilabilir` bayragi P190'dan beri canli yola da bakiyor
+# (`oynatilabilir_mi(...) or canli_yol is not None`). Yani ayni kamera
+# MediaMTX YAPILANDIRILMISSA oynatilabilir, DEGILSE degildir — IKISI DE
+# gercek bir dagitim halidir:
+#   * prod: gecit ayakta -> RTSP kamera vekil uzerinden oynar,
+#   * gecitsiz kurulum: RTSP kamera yalnizca envanterde durur.
+# Testler bu yuzden ortama gore dallanir; tek bir hali sabitlemek,
+# otekini "kusur" gibi gosterirdi.
+from app.config import settings as _ayarlar  # noqa: E402
+
+CANLI_ACIK = bool(_ayarlar.mediamtx_url)
+
+
 def _headers(client, slug, cred):
     r = client.post(
         "/auth/login",
@@ -191,7 +206,9 @@ def test_rtsp_kabul_edilir_ama_oynatilabilir_false(client, world):
     yonetici = _headers(client, world["slug_a"], world["yonetici_a"])
     c = _mk_cam(client, yonetici, tur="rtsp", stream_url=_RTSP)
     assert c["tur"] == "rtsp"
-    assert c["oynatilabilir"] is False, "RTSP istemcide oynatilamaz"
+    assert c["oynatilabilir"] is CANLI_ACIK, (
+        "gecitsiz kurulumda RTSP oynatilamaz; gecit varsa vekil uzerinden oynar"
+    )
     # Kayit gercekten saklanir (envanter) — listede aynen doner.
     ids = [i["id"] for i in _ids(client, yonetici)["items"]]
     assert c["id"] in ids
@@ -241,7 +258,7 @@ def test_patch_tur_mevcut_url_ile_dogrulanir(client, world):
     r = client.patch(f"/cameras/{c['id']}", headers=yonetici,
                      json={"tur": "rtsp", "stream_url": _RTSP})
     assert r.status_code == 200, r.text
-    assert r.json()["oynatilabilir"] is False
+    assert r.json()["oynatilabilir"] is CANLI_ACIK  # bkz. CANLI_ACIK notu
 
 
 def test_patch_bos_govde_422(client, world):
@@ -317,7 +334,7 @@ def test_rtsp_restreamsiz_OYNATILAMAZ(client, world):
         "stream_url": "rtsp://10.0.0.5:554/stream1", "tur": "rtsp",
     })
     assert r.status_code == 201, r.text
-    assert r.json()["oynatilabilir"] is False
+    assert r.json()["oynatilabilir"] is CANLI_ACIK  # bkz. CANLI_ACIK notu
     assert r.json()["restream_url"] is None
 
 
@@ -352,7 +369,7 @@ def test_restream_SONRADAN_eklenip_kaldirilabilir(client, world):
                       json={"restream_url": None})
     assert r2.status_code == 200
     assert r2.json()["restream_url"] is None
-    assert r2.json()["oynatilabilir"] is False
+    assert r2.json()["oynatilabilir"] is CANLI_ACIK  # bkz. CANLI_ACIK notu
 
 
 def test_restream_YALNIZ_http_olabilir(client, world):
@@ -466,7 +483,7 @@ def test_snapshot_OYNATILABILIRI_degistirmez(client, world):
         "stream_url": _RTSP, "tur": "rtsp", "snapshot_url": _SNAP,
     })
     assert r.status_code == 201, r.text
-    assert r.json()["oynatilabilir"] is False
+    assert r.json()["oynatilabilir"] is CANLI_ACIK  # bkz. CANLI_ACIK notu
     assert r.json()["snapshot_url"] == _SNAP
 
 
@@ -639,7 +656,15 @@ def test_P190_kare_BAGLANTI_YOK_acik_hata(client, world):
     assert r.json()["error"]["code"] == "bad_gateway"
 
 
-def test_P190_kare_yalniz_rtsp_422(client, world):
+def test_P213_kare_HLS_ICIN_DE_denenir(client, world):
+    """(P213 §3) DEGISEN DAVRANIS — eskiden burada 422 bekleniyordu.
+
+    Kullanicinin gordugu davranis kamera TURUNE gore degisiyordu (RTSP'de
+    kare var, HLS'te yok). Tur bir ALTYAPI ayrintisi; ekranda gorunur
+    olmasi icin sebep yok. Artik HLS de DENENIR: ulasilamayan bir adres
+    icin gelen sey BAGLANTI hatasidir, "tur desteklenmiyor" degil.
+    Ayrintili gerekce ve SSRF siniri: `test_p213_hls_kare.py`.
+    """
     yon = _headers(client, world["slug_a"], world["yonetici_a"])
     r = client.post("/cameras", headers=yon, json={
         "ad": f"HLS-{uuid.uuid4().hex[:6]}",
@@ -647,8 +672,9 @@ def test_P190_kare_yalniz_rtsp_422(client, world):
         "tur": "hls",
     })
     assert r.status_code == 201, r.text
-    kare = client.get(f"/cameras/{r.json()['id']}/kare", headers=yon)
-    assert kare.status_code == 422
+    kare = client.get(f"/cameras/{r.json()['id']}/kare", headers=yon, timeout=30)
+    assert kare.status_code != 422, "HLS artik desteklenmeli"
+    assert kare.status_code in (200, 502, 503)
 
 
 def test_P190_kare_gorunurluk_sakinden_gizli_404(client, world):
@@ -659,9 +685,17 @@ def test_P190_kare_gorunurluk_sakinden_gizli_404(client, world):
     assert client.get(f"/cameras/{kam['id']}/kare", headers=sakin).status_code == 404
 
 
+@pytest.mark.skipif(
+    CANLI_ACIK,
+    reason="(P213 §2) canli gecit YAPILANDIRILMIS — bu test GECITSIZ kurulumu olcer",
+)
 def test_P190_canli_yapilandirilmamissa_503_ve_canli_yol_null(client, world):
-    """MediaMTX env bos (test ortami): canli 503 `kamera_canli_kapali`; CameraOut
-    `canli_yol` null ve rtsp restream'siz kamera `oynatilabilir=false` kalir."""
+    """GECITSIZ kurulum: canli 503 `kamera_canli_kapali`; CameraOut
+    `canli_yol` null ve rtsp restream'siz kamera `oynatilabilir=false`.
+
+    (P213 §2) Gecit YAPILANDIRILDIGINDA davranis bilincli olarak farkli
+    (`test_p213_canli_yayin.py`); ikisi de gercek dagitim hali.
+    """
     yon = _headers(client, world["slug_a"], world["yonetici_a"])
     kam = _rtsp_kamera(client, yon)
     assert kam["canli_yol"] is None

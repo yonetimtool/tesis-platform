@@ -370,10 +370,55 @@ async def _gorunur_kamera(
     return obj
 
 
+#: (P213 §3) BULUT META-VERI UCLARI — hicbir kamera burada yasamaz.
+#:
+#: `hls` kaynagi acilinca sunucu artik `http(s)` de cekiyor. Kameralar
+#: cogunlukla YEREL AGDA oldugu icin "ozel araliklari engelle" seklindeki
+#: klasik SSRF listesi BURADA UYGULANAMAZ — 192.168.x.x tam da gecerli
+#: kamera adresidir. Engellenen sey, kamera OLMADIGI kesin olan ve
+#: sizdirmasi en pahali olan uclardir.
+_YASAK_KONAKLAR = frozenset({
+    "169.254.169.254",   # AWS/GCP/Azure IMDS
+    "metadata.google.internal",
+    "100.100.100.200",   # Alibaba
+})
+
+
+def _kare_dogrula(obj: Camera) -> None:
+    """(P213 §3) Sunucu-tarafi cekim: `rtsp://` VE `http(s)` (HLS).
+
+    =======================================================================
+    NEDEN HLS DE ACILDI
+    =======================================================================
+    Kullanicinin gordugu davranis kamera TURUNE gore degisiyordu: RTSP
+    kamerada izgarada kare vardi, HLS kamerada YOKTU. Kamera turu bir
+    ALTYAPI ayrintisidir; kullanicinin ekraninda gorunur olmasi icin bir
+    sebep yok (istegin acik sarti: "hepsi ayni davransin").
+
+    =======================================================================
+    SSRF SINIRI NEREDE
+    =======================================================================
+    `stream_url`i YALNIZ yonetim yazabilir (kamera kaydi admin/yonetici
+    ucudur) — yani bu, kullanici girdisi degil YAPILANDIRMADIR; RTSP'de
+    de durum boyleydi. Cikti ffmpeg'in urettigi bir JPEG'dir: hedef medya
+    degilse kare CIKMAZ, yani rastgele bir ucun govdesi istemciye
+    donmez. Yine de bulut meta-veri uclari ACIKCA engellenir (bkz.
+    `_YASAK_KONAKLAR`): oralarda kamera olmaz, sizarsa bedeli agirdir.
+    """
+    url = (obj.stream_url or "").lower()
+    if not (url.startswith("rtsp://") or url.startswith("http://")
+            or url.startswith("https://")):
+        raise APIError(422, "validation_error", "kamera_kare_desteklenmeyen")
+    from urllib.parse import urlparse
+
+    konak = (urlparse(obj.stream_url).hostname or "").lower()
+    if konak in _YASAK_KONAKLAR:
+        raise APIError(422, "validation_error", "kamera_kare_desteklenmeyen")
+
+
 def _rtsp_dogrula(obj: Camera) -> None:
-    """Sunucu-tarafi cekim YALNIZ rtsp:// — SSRF siniri (yukaridaki blok)."""
-    if obj.tur != "rtsp" or not obj.stream_url.lower().startswith("rtsp"):
-        raise APIError(422, "validation_error", "kamera_kare_yalniz_rtsp")
+    """Eski ad — `_kare_dogrula`ya devreder (cagri yerleri korunsun)."""
+    _kare_dogrula(obj)
 
 
 # --------------------------------------------------------------------------- #
@@ -402,8 +447,12 @@ async def kamera_test(
     duzeltecegini bilir.
     """
     _url_tur_dogrula(body.stream_url, body.tur)
-    if body.tur != "rtsp" or not body.stream_url.lower().startswith("rtsp"):
-        raise APIError(422, "validation_error", "kamera_kare_yalniz_rtsp")
+    # (P213 §3) HLS de denenebilir: "kaydetmeden once dene" dugmesinin
+    # kamera turune gore calisip calismamasi, kullaniciya turu
+    # HISSETTIRIRDI — oysa tur bir altyapi ayrintisi.
+    from types import SimpleNamespace
+
+    _kare_dogrula(SimpleNamespace(tur=body.tur, stream_url=body.stream_url))
 
     anahtar = f"kamera:test:{user.tenant_id}"
     sayi = await redis.incr(anahtar)
@@ -484,10 +533,22 @@ async def _kare_cek(stream_url: str) -> tuple[bytes, str]:
     soyluyor. Ham cikti loglara gider, istemciye GITMEZ — icinde
     `stream_url` (yani kamera parolasi) gecebilir.
     """
+    # (P213 §3) TASIYICIYA GORE ARGUMAN.
+    #
+    # `-rtsp_transport tcp` YALNIZ RTSP icin anlamli; HLS'te ffmpeg onu
+    # yok sayar ama `-protocol_whitelist` GEREKIR: HLS playlist'i baska
+    # bir URL'e (segment) gider ve ffmpeg varsayilan olarak alt istegi
+    # reddeder. Liste DAR tutuldu — `file` YOK: yerel dosya okuma yolu
+    # acmak, kare ucunu bir dosya okuyucusuna cevirirdi.
+    rtsp = stream_url.lower().startswith("rtsp")
+    tasiyici = (
+        ["-rtsp_transport", "tcp"] if rtsp
+        else ["-protocol_whitelist", "http,https,tcp,tls,crypto"]
+    )
     try:
         proc = await asyncio.create_subprocess_exec(
             "ffmpeg", "-nostdin", "-loglevel", "error",
-            "-rtsp_transport", "tcp",
+            *tasiyici,
             "-i", stream_url,
             "-frames:v", "1", "-q:v", "5", "-f", "image2", "pipe:1",
             stdout=asyncio.subprocess.PIPE,

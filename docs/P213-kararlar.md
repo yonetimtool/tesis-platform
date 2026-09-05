@@ -141,3 +141,55 @@ düştü.
 **Gerçek kamerayla prod**. Prod'da `mediamtx.yml` mount edilene kadar API
 401 dönmeye devam eder — dağıtımda `infra/mediamtx.yml` sunucuya
 gitmeli ve `docker compose up -d mediamtx` ile yeniden oluşturulmalı.
+
+---
+
+## §3 — HLS kameralarda da anlık kare
+
+### ÖLÇÜM
+Uç, `tur != "rtsp"` olan her kamerada **422 "yalnız RTSP"** dönüyordu.
+Yani kullanıcının gördüğü davranış kamera **türüne** göre değişiyordu:
+RTSP kamerada ızgarada kare var, HLS kamerada yok.
+
+### KARAR K3.1 — Tür kullanıcıya görünmez; kare her ikisinde de
+`rtsp://` **ve** `http(s)` (HLS) sunucu tarafında çekilir. ffmpeg
+argümanları taşıyıcıya göre seçilir:
+* RTSP → `-rtsp_transport tcp`
+* HLS → `-protocol_whitelist http,https,tcp,tls,crypto`
+  — playlist segmentlere gittiği için alt istek izni **şart**; liste
+  **dar** ve `file` **yok**: yerel dosya izni, kare ucunu bir dosya
+  okuyucusuna çevirirdi.
+
+### KARAR K3.2 — SSRF sınırı nereye kondu
+Klasik "özel IP aralıklarını engelle" listesi **burada uygulanamaz**:
+kameralar çoğunlukla yerel ağda ve `192.168.x.x` tam da geçerli bir
+kamera adresi. Bunun yerine üç katman:
+1. `stream_url`i **yalnız yönetim** yazar — bu kullanıcı girdisi değil
+   **yapılandırma**dır (RTSP'de de böyleydi);
+2. çıktı ffmpeg'in ürettiği bir **JPEG**: hedef medya değilse kare
+   çıkmaz, yani rastgele bir ucun gövdesi istemciye dönmez;
+3. **bulut meta-veri uçları açıkça engellenir** (`169.254.169.254`,
+   `metadata.google.internal`, `100.100.100.200`) — orada kamera olmaz,
+   sızarsa bedeli ağır.
+
+### ÖLÇÜM — gerçekten çalıştığı görüldü
+Kendi geçidimizin yayınladığı test akışını HLS kamera olarak kaydettim:
+```
+HLS  kare -> 200, 14 913 bayt, image/jpeg
+RTSP kare -> 200, 15 478 bayt        (gerileme yok)
+IMDS kare -> 422 "bu adresten çekilemez"
+```
+
+### Kilit
+8 yeni test + `test_cameras.py`'de **bilinçli olarak değiştirilen** P190
+kilidi (`kare_yalniz_rtsp_422` → `kare_HLS_ICIN_DE_denenir`), gerekçesi
+testin içinde. Kırma denemesi: yasak-konak kontrolü devre dışı
+bırakıldığında tam olarak üç meta-veri testi düştü.
+
+### Yan bulgu — testler ortama göre dallanıyor artık
+Dev'de canlı geçidi açınca `test_cameras.py`'deki beş iddia düştü:
+`oynatilabilir` bayrağı P190'dan beri `canli_yol`a da bakıyor, yani aynı
+kamera **geçit varsa** oynatılabilir, **yoksa** değil. **İkisi de gerçek
+bir dağıtım hâli**; testler `CANLI_ACIK` ile dallanıyor ve geçitsiz
+kurulumu ölçen test `skipif` ile işaretlendi. Tek hâli sabitlemek,
+ötekini kusur gibi gösterirdi.
