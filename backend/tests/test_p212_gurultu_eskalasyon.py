@@ -273,6 +273,36 @@ def test_ASAMA_denetim_kaydina_YAZILIR(d):
                for m in metalar)
 
 
+def test_ESKALASYON_ESIGI_TESIS_AYARINDAN_gelir(d, push_spy):
+    """(P213 §1) `gurultu_eskalasyon_esigi = 2` -> UCUNCU asimda eskalasyon.
+
+    Eskiden `asama >= 2` KOD SABITIYDI. Bir sitede ikinci uyari,
+    otekinde ucuncu uyari dogru olabilir.
+    """
+    _sakin_ekle(d, "kiraci")
+    _guvenlikci(d)
+    d.conn.execute(
+        "UPDATE tenant SET gurultu_susma_gun=0, gurultu_eskalasyon_esigi=2 "
+        "WHERE id=%s", (d.tenant,))
+    d.conn.commit()
+    try:
+        for _ in range(2):
+            _bes_gurultu(d)
+            _calistir(d)
+        # IKINCI asimda HENUZ guvenlige gitmez (esik 2).
+        assert not [p for p in push_spy if p["k"] == "gurultu_eskalasyon_guvenlik"]
+
+        _bes_gurultu(d)
+        ucuncu = _calistir(d)
+        assert ucuncu.asama == 3
+        esk = [p for p in push_spy if p["k"] == "gurultu_eskalasyon_guvenlik"]
+        assert esk and esk[-1]["params"]["kez"] == 3
+    finally:
+        d.conn.execute(
+            "UPDATE tenant SET gurultu_eskalasyon_esigi=1 WHERE id=%s", (d.tenant,))
+        d.conn.commit()
+
+
 @pytest.mark.parametrize("dil", ["tr", "en", "ar", "ru", "de", "fr", "es"])
 def test_7_DIL_PARITE(dil):
     for tip in ("gurultu_eskalasyon_guvenlik", "gurultu_eskalasyon_yonetim"):

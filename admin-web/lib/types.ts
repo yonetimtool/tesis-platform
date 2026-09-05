@@ -597,6 +597,8 @@ export interface TenantSettings {
   gurultu_susma_gun?: number;
   /** (P208 §1) Esik asilinca DAIRENIN SAKININE bildirim gonderilsin mi. */
   gurultu_sakin_uyarisi?: boolean;
+  /** (P213 §1) Kacinci esik asimindan SONRA guvenlige gider (1 = ikinci). */
+  gurultu_eskalasyon_esigi?: number;
 }
 
 // ------------------------ tenant olusturma (admin) ------------------------- #

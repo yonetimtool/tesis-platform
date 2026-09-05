@@ -16825,6 +16825,35 @@ components:
           description: >
             (P37) NULL veya bos = varsayilan metin. Bos metni "bilerek
             bosalttim" saymak, iceriksiz bir anons gondermek olurdu.
+        gurultu_pencere_gun:
+          type: integer
+          minimum: 0
+          maximum: 365
+          default: 30
+          description: >
+            (P208 §1) Sikayetler bu kadar gun icinde sayilir; 0 = sinirsiz.
+            (P213 §1) BU UC ALAN YANITTA EKSIKTI: sema varsayilani
+            donuyordu, yani ekran gercek degeri hic gostermiyordu.
+        gurultu_susma_gun:
+          type: integer
+          minimum: 0
+          maximum: 365
+          default: 7
+          description: "(P208 §1) Uyarilan daire bu kadar gun YENIDEN uyarilmaz."
+        gurultu_sakin_uyarisi:
+          type: boolean
+          default: true
+          description: "(P208 §1) Sakine bildirim gonderilsin mi."
+        gurultu_eskalasyon_esigi:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 1
+          description: >
+            (P213 §1, goc 0105) KACINCI esik asimindan SONRA guvenlige
+            "kontrol edin, gerekirse polise haber verin" bildirimi gider.
+            1 = ikinci asimda (P212 davranisi). 0 kabul EDILMEZ: birinci
+            esigin anlamini silerdi.
         gurultu_integration_id:
           type: string
           format: uuid
@@ -16922,6 +16951,11 @@ components:
           enum: [yonetim_ici, dis_sirket]
           description: "(P35) YALNIZ admin gonderebilir (yonetici 403); denetlenir"
         gurultu_esigi: { type: integer, minimum: 1, maximum: 50 }
+        # (P213 §1) Dordu de YONETICI yazabilir (`_YONETICI_YAZABILIR`).
+        gurultu_pencere_gun: { type: integer, minimum: 0, maximum: 365 }
+        gurultu_susma_gun: { type: integer, minimum: 0, maximum: 365 }
+        gurultu_sakin_uyarisi: { type: boolean }
+        gurultu_eskalasyon_esigi: { type: integer, minimum: 1, maximum: 10 }
         gurultu_uyari_metni:
           type: string
           nullable: true

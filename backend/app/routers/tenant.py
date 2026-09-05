@@ -50,6 +50,15 @@ _YONETICI_YAZABILIR = {
     # (P37) Gurultu caydiricisi SITE YONETIMININ isidir: esigi ve anons
     # metnini komsuluk iliskisini bilen kisi ayarlar.
     "gurultu_esigi", "gurultu_uyari_metni", "gurultu_integration_id",
+    # (P213 §1) GURULTU AYARLARININ TAMAMI YONETICIDE.
+    #
+    # OLCULEN KUSUR: P208 uc ayari (pencere/susma/sakin bildirimi)
+    # SEMAYA ekledi ama ne bu listeye ne `_to_settings`e koydu. Sonuc:
+    # yonetici degistiremiyor (403) ve GET her tesiste sema
+    # VARSAYILANINI donuyordu — yani ekran gercek degeri hic
+    # gostermemisti. P165'te birebir ayni kusur olculmustu.
+    "gurultu_pencere_gun", "gurultu_susma_gun", "gurultu_sakin_uyarisi",
+    "gurultu_eskalasyon_esigi",
     # (P160) Okutma mesafe esigi SAHA ISLETMESIDIR: noktalari yerlestiren
     # ve site duzenini bilen kisi ayarlamali.
     "okutma_mesafe_esigi_m",
@@ -94,7 +103,19 @@ def _to_settings(t: Tenant) -> TenantSettings:
         rezervasyon_gecmis_ay=t.rezervasyon_gecmis_ay,
         gurultu_uyari_metni=t.gurultu_uyari_metni,
         gurultu_integration_id=t.gurultu_integration_id,
+        # (P213 §1) BU DORT SATIR EKSIKTI ve kusur SESSIZDI: PATCH 200
+        # donuyor, deger DB'ye yaziliyor, yanit alani tasimadigi icin
+        # sema varsayilani geri geliyordu (P165'in aynisi).
+        gurultu_pencere_gun=t.gurultu_pencere_gun,
+        gurultu_susma_gun=t.gurultu_susma_gun,
+        gurultu_sakin_uyarisi=t.gurultu_sakin_uyarisi,
+        gurultu_eskalasyon_esigi=t.gurultu_eskalasyon_esigi,
     )
+
+
+def _denetim_degeri(v):
+    """Denetim meta'si JSON: UUID ve benzeri degerler dizgeye cevrilir."""
+    return v if isinstance(v, (int, float, bool, str)) or v is None else str(v)
 
 
 async def _current_tenant(db: AsyncSession) -> Tenant:
@@ -135,6 +156,26 @@ async def update_settings(
             db, user, Action.GUVENLIK_MODU, resource_type="tenant",
             resource_id=t.id,
             meta={"eski": t.guvenlik_modu, "yeni": data["guvenlik_modu"]},
+        )
+    # (P213 §1) GURULTU AYARLARI DENETLENIR.
+    #
+    # Bu ayarlar PARAYA degil ama BILDIRIME donusuyor: esigi 1 yapan bir
+    # yonetici her sikayette daireye anons gonderir; eskalasyon esigini
+    # dusuren guvenligi daha sik cagirir. "Kim ne zaman degistirdi"
+    # sorusu bir anlasmazlikta sorulacak ilk sorulardan.
+    gurultu_alanlari = {
+        k: v for k, v in data.items()
+        if k.startswith("gurultu_") and getattr(t, k) != v
+    }
+    if gurultu_alanlari:
+        await audit_user(
+            db, user, Action.MUHASEBE_AYAR_UPDATE, resource_type="tenant",
+            resource_id=t.id,
+            meta={
+                "islem": "gurultu_ayari",
+                "eski": {k: _denetim_degeri(getattr(t, k)) for k in gurultu_alanlari},
+                "yeni": {k: _denetim_degeri(v) for k, v in gurultu_alanlari.items()},
+            },
         )
     for key, value in data.items():
         setattr(t, key, value)

@@ -269,7 +269,10 @@ async def esik_kontrol(
     asama = await onceki_uyari_sayisi(
         db, unit.id, pencere_gun=tenant.gurultu_pencere_gun
     ) + 1
-    eskalasyon = asama >= 2
+    # (P213 §1) ESKALASYON ESIGI ARTIK TESIS AYARI (goc 0105).
+    # `gurultu_eskalasyon_esigi = N` -> N. asimdan SONRAKI her asimda
+    # guvenlige gider. Varsayilan 1 = ikinci asim (P212 davranisi).
+    eskalasyon = asama > int(tenant.gurultu_eskalasyon_esigi or 1)
 
     kayit = UnitUyari(
         tenant_id=tenant_id,

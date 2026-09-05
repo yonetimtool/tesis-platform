@@ -37,6 +37,14 @@ const AYARLAR = {
   tur_baslangic_foto_zorunlu: false,
   guvenlik_modu: "yonetim_ici",
   gurultu_uyari_metni: null,
+  // (P213 §1) Dort gurultu ayari da yanitta gelir. UCU (pencere/susma/
+  // sakin) P208'de semaya girmisti ama `_to_settings`te YOKTU: GET her
+  // tesiste sema VARSAYILANINI donuyordu — ekran gercek degeri hic
+  // gostermemisti.
+  gurultu_pencere_gun: 30,
+  gurultu_susma_gun: 7,
+  gurultu_sakin_uyarisi: true,
+  gurultu_eskalasyon_esigi: 1,
 };
 
 function kur() {
@@ -88,6 +96,31 @@ describe("(P193 §5) tesis ayarları ekranı", () => {
     expect(screen.getByLabelText(/Gürültü uyarı eşiği/)).toBeInTheDocument();
     expect(screen.getByLabelText(/Gürültü sayım penceresi/)).toBeInTheDocument();
     expect(screen.getByLabelText(/Okutma/)).toBeInTheDocument();
+  });
+
+  it("(P213 §1) ESKALASYON ESIGI alani CIZILIR ve GONDERILIR", async () => {
+    const govdeler = kur();
+    ciz(TesisAyarlariPage);
+    const alan = await screen.findByLabelText(/eskalasyon eşiği/i);
+    const k = userEvent.setup();
+    await k.clear(alan);
+    await k.type(alan, "3");
+    await k.click(screen.getByRole("button", { name: /kaydet/i }));
+    await waitFor(() => expect(govdeler.length).toBe(1));
+    expect(govdeler[0]).toEqual({ gurultu_eskalasyon_esigi: 3 });
+  });
+
+  it("(P213 §1) ESIK 1 SECILINCE UYARI gorunur (uc REDDETMEZ)", async () => {
+    // Esik 1'de her sikayette anons gider ve uyari hizla anlamsizlasir;
+    // ama bu KULLANILAMAZ degil TERCIH edilebilir bir uc degerdir.
+    // Sunucu kabul eder, arayuz UYARIR.
+    kur();
+    ciz(TesisAyarlariPage);
+    const k = userEvent.setup();
+    const esik = await screen.findByLabelText(/Gürültü uyarı eşiği/);
+    await k.clear(esik);
+    await k.type(esik, "1");
+    expect(await screen.findByText(/her gürültü şikâyetinde/i)).toBeTruthy();
   });
 
   it("YALNIZ DEGISEN alan gonderilir", async () => {

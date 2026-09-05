@@ -3409,6 +3409,9 @@ class TenantSettings(BaseModel):
     gurultu_pencere_gun: int = 30
     gurultu_susma_gun: int = 7
     gurultu_sakin_uyarisi: bool = True
+    #: (P213 §1, goc 0105) Kacinci esik asimindan SONRA guvenlige gider.
+    #: 1 = ikinci asimda (P212 davranisi).
+    gurultu_eskalasyon_esigi: int = 1
     # (P34) Tur gecikme alarmi. Tolerans TENANT AYARIDIR: 10 dk bir sitede
     # makul, kampus buyuklugunde erken alarm demektir. Tekrar 0 = KAPALI.
     tur_gecikme_toleransi_dk: int = 10
@@ -3461,6 +3464,11 @@ class TenantSettingsUpdate(BaseModel):
     gurultu_pencere_gun: int | None = Field(None, ge=0, le=365)
     gurultu_susma_gun: int | None = Field(None, ge=0, le=365)
     gurultu_sakin_uyarisi: bool | None = None
+    #: (P213 §1) Sinir DB CHECK'iyle AYNI (goc 0105): 1..10.
+    #: 0 "her uyarida guvenligi cagir" demek olurdu ve birinci esigin
+    #: anlamini silerdi; cok buyuk bir sayi ise "hic cagirma"nin dolayli
+    #: ve okunmaz bicimidir.
+    gurultu_eskalasyon_esigi: int | None = Field(None, ge=1, le=10)
     #: (P207 §3) Kademe listesi — bicim dogrulamasi UYGULAMADA
     #: (`hatirlatma_kademeleri`): gecersiz metin KAPALI demektir ve
     #: kullaniciyi 422 ile durdurmak, "kapat" niyetini hataya

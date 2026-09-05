@@ -442,6 +442,13 @@ class Tenant(Base):
     gecikme_aylik_yuzde = mapped_column(
         Numeric(5, 2), nullable=False, server_default=text("0")
     )
+    #: (P213 §1, goc 0105) KACINCI ESIK ASIMINDAN SONRA GUVENLIGE.
+    #: N = 1 -> ikinci esik asiminda eskalasyon (P212 davranisi).
+    #: Tesise gore degisir: bina yogunlugu, guvenlik ekibinin buyuklugu
+    #: ve komsuluk iliskisi ayni degil.
+    gurultu_eskalasyon_esigi: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default=text("1")
+    )
     #: (P203 §5, goc 0094) FAZLA MESAI KATSAYISI. 4857/41: fazla calisma
     #: ucreti normal saat ucretinin YUZDE ELLI FAZLASIDIR — varsayilan
     #: yasal orandir ama DEGISTIRILEBILIR: toplu is sozlesmesi daha

@@ -151,6 +151,20 @@ export const OPERASYON: Ayar[] = [
     max: 365,
   },
   {
+    // (P213 §1) KACINCI ESIK ASIMINDAN SONRA GUVENLIGE.
+    //
+    // Eskiden KOD SABITIYDI (`asama >= 2`). Bir sitede ikinci uyari,
+    // otekinde ucuncu uyari dogru olabilir: bina yogunlugu, guvenlik
+    // ekibinin buyuklugu ve komsuluk iliskisi ayni degil.
+    // Sinirlar sunucudaki `Field(ge=1, le=10)` ve DDL CHECK ile AYNI.
+    anahtar: "gurultu_eskalasyon_esigi",
+    etiket: "ayarGurultuEskalasyon",
+    ipucu: "ayarGurultuEskalasyonIpucu",
+    tip: "sayi",
+    min: 1,
+    max: 10,
+  },
+  {
     anahtar: "gurultu_sakin_uyarisi",
     etiket: "ayarGurultuSakin",
     ipucu: "ayarGurultuSakinIpucu",

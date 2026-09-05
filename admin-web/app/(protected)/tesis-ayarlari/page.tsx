@@ -186,7 +186,21 @@ export default function TesisAyarlariPage() {
               <AlanSarmal
                 key={a.anahtar}
                 etiket={t(a.etiket)}
-                ipucu={a.ipucu ? t(a.ipucu) : undefined}
+                ipucu={
+                  // (P213 §1) ESIK 1 UYARISI — REDDETMEK DEGIL, SOYLEMEK.
+                  //
+                  // Esik 1'de HER sikayette daireye anons gider ve uyari
+                  // hizla anlamsizlasir. Ama bu KULLANILAMAZ degil,
+                  // TERCIH edilebilir bir uc deger (kucuk bir sitede
+                  // bilincli olarak secilebilir). Uc 422 dondurseydi,
+                  // mesru bir kullanimi imkansiz kilardik; bu yuzden
+                  // sunucu KABUL EDER, arayuz UYARIR.
+                  a.anahtar === "gurultu_esigi" && Number(form[a.anahtar]) === 1
+                    ? t("ayarGurultuEsikBirUyari")
+                    : a.ipucu
+                      ? t(a.ipucu)
+                      : undefined
+                }
               >
                 {() => {
                   if (a.tip === "bool") {
