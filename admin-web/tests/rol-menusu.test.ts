@@ -150,6 +150,9 @@ const BIRINCIL_UC: Record<string, string> = {
   "/arac-gecisleri": "GET /vehicle-passes",
   "/gorevlerim": "GET /tasks",
   "/kameralar": "GET /cameras",
+  // (P213 §6) Gecmis kayit izleme — birincil uc ARAMA ucudur; oynatma
+  // ondan sonra gelir ve ayni rol kapisini kullanir.
+  "/kamera-kayitlari": "GET /cameras/{camera_id}/kayit/araliklar",
   "/dis-hizmetler": "GET /external-services",
   "/yonetim-iletisim": "GET /yonetici-iletisim",
 };
@@ -290,7 +293,11 @@ describe("bilinmeyen rol / rota", () => {
   });
 
   it("bilinmeyen rol hicbir tesis sayfasi gormez", () => {
-    expect(rotaRoldeGorunur("/profil", "guvenlik_amiri")).toBe(false);
+    // (P213 §6) Ornek rol DEGISTI: `guvenlik_amiri` artik TANINAN bir
+    // web rolu. Iddia bilinmeyen rol icin gecerliydi, dogru ornekle
+    // surduruluyor.
+    expect(rotaRoldeGorunur("/profil", "boyle_bir_rol_yok")).toBe(false);
+    expect(rotaRoldeGorunur("/kameralar", "boyle_bir_rol_yok")).toBe(false);
   });
 
   it("PLATFORM rotasinda rol ayrimi YOK — yalniz `admin`", () => {

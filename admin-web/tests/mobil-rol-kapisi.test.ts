@@ -47,10 +47,11 @@ describe("(P129) mobil-yalniz roller", () => {
     }
   });
 
-  it("`guvenlik_amiri` mobil-yalniz DEGIL — 'yakinda' rolu", () => {
-    // Onun mobil ekran seti de yok; magazaya yollamak yanlis olurdu.
+  // (P213 §6) Amir artik WEB rolu: mobil-yalniz da degil, "yakinda" da
+  // degil — dogrudan `app.*`a girer.
+  it("`guvenlik_amiri` mobil-yalniz DEGIL ve artik BEKLEMEDE de degil", () => {
     expect(mobilYalnizRol("guvenlik_amiri")).toBe(false);
-    expect(tesisYuzeyiBekleyenRol("guvenlik_amiri")).toBe(true);
+    expect(tesisYuzeyiBekleyenRol("guvenlik_amiri")).toBe(false);
   });
 
   it("platform yuzeyi etkilenmedi — yalniz `admin`", () => {
@@ -76,11 +77,16 @@ describe("(P129) giris reddi KARARI", () => {
     }
   });
 
-  it("`guvenlik_amiri` -> 'yakinda' (magaza mesaji DEGIL)", () => {
-    expect(girisRedKarari("guvenlik_amiri", "tesis")).toEqual({
-      anahtar: "girisRolYakinda",
-      kod: "forbidden",
-    });
+  // (P213 §6) Amir icin ARTIK RED KARARINA HIC VARILMIYOR: `oturumAc`
+  // once `rolYuzeyeGirebilir`e bakiyor ve amir gecti. Karar fonksiyonunu
+  // "null doner" diye olcmek yanlis olurdu — o fonksiyon yalnizca REDDIN
+  // metnini secer, reddedilip reddedilmeyecegine karar vermez.
+  it("`guvenlik_amiri` kapiyi GECER — red metni secicisine hic ulasilmaz", () => {
+    expect(rolYuzeyeGirebilir("guvenlik_amiri", "tesis")).toBe(true);
+    // Ayni cagriyi bir de REDDEDILEN bir rolle yaparak, testin
+    // "her sey null doner" gibi bir bosluga dusmedigini gosteriyoruz.
+    expect(rolYuzeyeGirebilir("resident", "tesis")).toBe(false);
+    expect(girisRedKarari("resident", "tesis").kod).toBe("mobil_uygulama");
   });
 
   it("platform yuzeyi -> panel mesaji, rol ne olursa olsun", () => {

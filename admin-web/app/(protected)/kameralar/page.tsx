@@ -79,6 +79,14 @@ type Form = {
   /** (P213 §4) Ana ekranda (Ozet) karesi gosterilsin mi. */
   ana_ekranda: boolean;
   aktif: boolean;
+  /** (P213 §6) Gecmis kayit (NVR/DVR). `kayit_parola` YAZILIR-OKUNMAZ:
+   *  sunucu geri dondurmez, bos birakilirsa mevcut parola KORUNUR. */
+  kayit_aktif: boolean;
+  kayit_saglayici: string;
+  kayit_adres: string;
+  kayit_kanal: string;
+  kayit_kullanici: string;
+  kayit_parola: string;
 };
 
 const BOS_FORM: Form = {
@@ -91,7 +99,19 @@ const BOS_FORM: Form = {
   sakin_gorebilir: false,
   ana_ekranda: false,
   aktif: true,
+  kayit_aktif: false,
+  kayit_saglayici: "",
+  kayit_adres: "",
+  kayit_kanal: "",
+  kayit_kullanici: "",
+  kayit_parola: "",
 };
+
+/** (P213 §6) Secilebilir kayit cihazi turleri. `onvif` BILEREK YOK:
+ *  standart olmasi cazip ama sahada guvenilmez (Profile G cogu cihazda
+ *  eksik). Iki satici adaptoru gercek cihazda dogrulandiktan SONRA
+ *  eklenecek. Marka bilinmiyorsa `sablon` calisir. */
+const KAYIT_SAGLAYICILARI = ["sablon", "hikvision", "dahua"] as const;
 
 export default function KameralarPage() {
   const t = useT();
@@ -229,6 +249,14 @@ export default function KameralarPage() {
       sakin_gorebilir: k.sakin_gorebilir,
       ana_ekranda: k.ana_ekranda ?? false,
       aktif: k.aktif,
+      kayit_aktif: k.kayit_aktif ?? false,
+      kayit_saglayici: k.kayit_saglayici ?? "",
+      kayit_adres: k.kayit_adres ?? "",
+      kayit_kanal: k.kayit_kanal ?? "",
+      kayit_kullanici: k.kayit_kullanici ?? "",
+      // PAROLA HIC GELMEZ (sunucu dondurmez). Bos birakilirsa mevcut
+      // parola korunur; doldurulursa degistirilir.
+      kayit_parola: "",
     });
     setFormHata(null);
     setAcik(true);
@@ -289,7 +317,15 @@ export default function KameralarPage() {
         sakin_gorebilir: form.sakin_gorebilir,
         ana_ekranda: form.ana_ekranda,
         aktif: form.aktif,
+        kayit_aktif: form.kayit_aktif,
+        kayit_saglayici: form.kayit_saglayici || null,
+        kayit_adres: form.kayit_adres.trim() || null,
+        kayit_kanal: form.kayit_kanal.trim() || null,
+        kayit_kullanici: form.kayit_kullanici.trim() || null,
       };
+      // BOS PAROLA GONDERILMEZ: `null` gondermek "parolayi SIL" demekti
+      // ve her duzenlemede NVR erisimi sessizce kopardi.
+      if (form.kayit_parola) govde.kayit_parola = form.kayit_parola;
       if (duzenlenen) await apiSend(`/api/cameras/${duzenlenen}`, "PATCH", govde);
       else await apiSend("/api/cameras", "POST", govde);
       setAcik(false);
@@ -656,6 +692,113 @@ export default function KameralarPage() {
               />
               {t("ortakAktif")}
             </label>
+          </div>
+
+          {/* ============ (P213 §6) GECMIS KAYIT (NVR/DVR) ============ */}
+          {/* KAYITLAR SITENIN CIHAZINDA KALIR; biz yalnizca erisiriz.
+              VARSAYILAN KAPALI: gecmis kayit geriye donuk gozetimdir ve
+              hicbir tesiste kendiliginden acik gelmemeli. Alanlar ancak
+              onay kutusu isaretlenince cizilir — kapali bir ozelligin
+              formu, formu iki katina cikarirdi. */}
+          <div className="grid gap-2 pt-2" style={{ borderTop: "1px solid var(--yz-border)" }}>
+            <p style={{ fontSize: "var(--yz-fs-sm)", fontWeight: 600, color: "var(--yz-text)" }}>
+              {t("kamKayitAyarBaslik")}
+            </p>
+            <label
+              className="flex items-center gap-2"
+              style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}
+            >
+              <input
+                type="checkbox"
+                data-test="kamera-kayit-aktif"
+                checked={form.kayit_aktif}
+                onChange={(e) => setForm({ ...form, kayit_aktif: e.target.checked })}
+              />
+              {t("kamKayitAktifOnay")}
+            </label>
+            {form.kayit_aktif && (
+              <>
+                <AlanSarmal etiket={t("kamKayitSaglayici")}>
+                  {(b) => (
+                    <Secim
+                      {...b}
+                      data-test="kamera-kayit-saglayici"
+                      value={form.kayit_saglayici}
+                      onChange={(e) =>
+                        setForm({ ...form, kayit_saglayici: e.target.value })
+                      }
+                    >
+                      <option value="">—</option>
+                      {KAYIT_SAGLAYICILARI.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </Secim>
+                  )}
+                </AlanSarmal>
+                <AlanSarmal
+                  etiket={
+                    form.kayit_saglayici === "sablon"
+                      ? t("kamKayitAdresSablon")
+                      : t("kamKayitAdres")
+                  }
+                >
+                  {(b) => (
+                    <Alan
+                      {...b}
+                      data-test="kamera-kayit-adres"
+                      value={form.kayit_adres}
+                      onChange={(e) => setForm({ ...form, kayit_adres: e.target.value })}
+                      placeholder={
+                        form.kayit_saglayici === "sablon"
+                          ? "rtsp://10.0.0.2:554/play?ch={kanal}&s={bas}&e={bit}"
+                          : "http://10.0.0.2"
+                      }
+                    />
+                  )}
+                </AlanSarmal>
+                <AlanSarmal etiket={t("kamKayitKanal")}>
+                  {(b) => (
+                    <Alan
+                      {...b}
+                      data-test="kamera-kayit-kanal"
+                      value={form.kayit_kanal}
+                      onChange={(e) => setForm({ ...form, kayit_kanal: e.target.value })}
+                      placeholder="101"
+                    />
+                  )}
+                </AlanSarmal>
+                <AlanSarmal etiket={t("kamKayitKullanici")}>
+                  {(b) => (
+                    <Alan
+                      {...b}
+                      data-test="kamera-kayit-kullanici"
+                      value={form.kayit_kullanici}
+                      onChange={(e) =>
+                        setForm({ ...form, kayit_kullanici: e.target.value })
+                      }
+                      autoComplete="off"
+                    />
+                  )}
+                </AlanSarmal>
+                <AlanSarmal etiket={t("kamKayitParola")} ipucu={t("kamKayitParolaNot")}>
+                  {(b) => (
+                    <Alan
+                      {...b}
+                      type="password"
+                      data-test="kamera-kayit-parola"
+                      value={form.kayit_parola}
+                      onChange={(e) => setForm({ ...form, kayit_parola: e.target.value })}
+                      autoComplete="new-password"
+                    />
+                  )}
+                </AlanSarmal>
+                <p style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}>
+                  {t("kamKayitKvkkNot")}
+                </p>
+              </>
+            )}
           </div>
           {formHata && (
             <p role="alert" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-danger-ink)" }}>

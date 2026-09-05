@@ -28,6 +28,8 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import datetime as dt
+import hashlib
 import ipaddress
 import logging
 import re
@@ -45,6 +47,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..audit import Action, audit_user
 from ..crud_helpers import get_or_404, translate_integrity
 from ..config import settings
+from ..kamera_kayit import (
+    SAGLAYICILAR,
+    AramaDesteklenmiyor,
+    saglayici_kur,
+)
+from ..kamera_kimlik import (
+    kimligi_ayir,
+    kimligi_uygula,
+    parola_coz,
+    parola_sakla,
+)
 from ..deps import get_redis, get_tenant_db, require_role
 from ..errors import APIError
 from ..models import AppUser, Camera
@@ -55,6 +68,10 @@ from ..schemas import (
     CameraListResponse,
     CameraOut,
     CameraUpdate,
+    KayitAralikListesi,
+    KayitAralikOut,
+    KayitOynatOut,
+    KayitOynatRequest,
     URL_UST_SINIR,
     UrlCokUzun,
     UrlTurUyusmazligi,
@@ -78,6 +95,78 @@ _WRITER = require_role("admin", "yonetici")
 _TAM_GORUS: frozenset[str] = frozenset(
     {"admin", "yonetici", "security", "guvenlik_amiri"}
 )
+
+
+def _kimlik_cozulur_mu(url: str) -> None:
+    """Adres kimlik tasiyor ama COZULEMIYORSA 422 (sessizce saklama)."""
+    try:
+        yetki = url.split("://", 1)[1].split("/", 1)[0]
+    except IndexError:
+        return
+    if "@" not in yetki:
+        return
+    # HAM ADRESLE COZUMU KARSILASTIR, "konak var mi"ya BAKMA: `kul:Par`
+    # gibi bir parca da gecerli bir konak gibi cozulur (host=kul,
+    # port=Par) ve kontrol sessizce gecerdi. Asil sorulacak soru:
+    # adreste `@` VARSA cozum de bir KULLANICI vermis midir?
+    if urlparse(url).username is not None:
+        return
+    raise APIError(422, "validation_error", "kamera_url_kimlik_cozulemedi")
+
+
+def _kimligi_ayikla(veri: dict) -> None:
+    """(P213 §6b) Gelen govdedeki adres/parolayi AYRISTIRIR — YERINDE.
+
+    Iki kaynak birlestirilir ve ONCELIK ACIK bir kuraldir:
+      1. Ayri alan (`stream_parola`) verilmisse O gecerlidir.
+      2. Verilmemis ama adres `kul:par@` tasiyorsa, adresten AYRILIR.
+
+    Adresi yapistiran kullaniciyi form doldurmaya zorlamamak icin ikinci
+    yol duruyor; ama adres HICBIR ZAMAN parolayi tasiyarak SAKLANMIYOR.
+    """
+    # `verildi` ile `duz` AYRI: `model_dump()` verilmeyen alani da None
+    # olarak koyar, yani "gonderilmedi" ile "null gonderildi" ayrimini
+    # anahtarin VARLIGI tasir. Ilk yazimda tek bir sentinel kullanmistim
+    # ve create'te alan hep var oldugu icin (None) ADRESTEN AYRILAN
+    # parola hemen eziliyordu — testler bunu yakaladi.
+    verildi = "stream_parola" in veri
+    duz = veri.pop("stream_parola", None)
+    if "stream_url" in veri and veri["stream_url"]:
+        # COZULEMEYEN KIMLIK SESSIZCE GECMEZ. Parolada `#`, `/` ya da `?`
+        # KACISSIZ yazilirsa adres BELIRSIZDIR: `urlsplit` `#` sonrasini
+        # parca (fragment) sayar ve konak kaybolur. Eski davranis bunu
+        # fark etmeden adresi OLDUGU GIBI saklamakti — yani tam olarak
+        # kapatmaya calistigimiz duz-parola durumu, hem de sessizce.
+        # Artik kullaniciya ne yapacagi soyleniyor.
+        _kimlik_cozulur_mu(veri["stream_url"])
+        temiz, kul, par = kimligi_ayir(veri["stream_url"])
+        veri["stream_url"] = temiz
+        # `setdefault` DEGIL: `model_dump()` alani None olarak KOYUYOR,
+        # yani anahtar zaten var ve setdefault hicbir sey yapmiyordu —
+        # adresten ayrilan kullanici adi sessizce kayboluyordu.
+        if kul is not None and not veri.get("stream_kullanici"):
+            veri["stream_kullanici"] = kul
+        if par is not None and not duz:
+            duz, verildi = par, True
+    if verildi:
+        veri["stream_parola_sifreli"] = parola_sakla(duz)
+    # (P213 §6) NVR kimligi AYNI KURALLA saklanir — ayri bir yol yazmak,
+    # birinin sifrelenip otekinin unutulmasi demekti.
+    if "kayit_parola" in veri:
+        veri["kayit_parola_sifreli"] = parola_sakla(veri.pop("kayit_parola"))
+
+
+def etkin_stream_url(obj: Camera) -> str:
+    """SUNUCU ICI kullanim icin kimligi geri takilmis adres.
+
+    ffmpeg cagrisi ve MediaMTX yol tanimi BUNU kullanir; istemciye giden
+    hicbir yol bu fonksiyondan gecmez.
+    """
+    return kimligi_uygula(
+        obj.stream_url or "",
+        getattr(obj, "stream_kullanici", None),
+        parola_coz(getattr(obj, "stream_parola_sifreli", None)),
+    )
 
 
 def _out(obj: Camera, rol: str | None = None) -> CameraOut:
@@ -224,7 +313,9 @@ async def create_camera(
     _url_tur_dogrula(body.stream_url, body.tur)
     _restream_dogrula(body.restream_url)
     _snapshot_dogrula(body.snapshot_url)
-    obj = Camera(tenant_id=user.tenant_id, **body.model_dump())
+    veri = body.model_dump()
+    _kimligi_ayikla(veri)
+    obj = Camera(tenant_id=user.tenant_id, **veri)
     db.add(obj)
     if obj.ana_ekranda:
         await _ana_ekran_siniri_dogrula(db)
@@ -261,6 +352,7 @@ async def update_camera(
         _snapshot_dogrula(alanlar["snapshot_url"])
     if alanlar.get("ana_ekranda") and not obj.ana_ekranda:
         await _ana_ekran_siniri_dogrula(db)
+    _kimligi_ayikla(alanlar)
     for key, value in alanlar.items():
         setattr(obj, key, value)
     obj.updated_at = func.now()
@@ -612,7 +704,7 @@ async def kamera_kare(
                 media_type="image/jpeg",
                 headers={"Cache-Control": "private, max-age=5"},
             )
-        veri, kimlik = await _kare_cek(obj.stream_url)
+        veri, kimlik = await _kare_cek(etkin_stream_url(obj))
 
     if not veri:
         # Olu/ulasilamayan kamera: kisa negatif-onbellek (cekic yok) + panel
@@ -700,17 +792,26 @@ async def _canli_yolu_kaydet(obj: Camera) -> None:
     TUTULMAZ (kaynak karari, §6). Yol zaten varsa MediaMTX hata doner ve
     bu BASARI sayilir.
     """
+    await _mediamtx_yol_kaydet(f"cam{obj.id.hex}", etkin_stream_url(obj))
+
+
+async def _mediamtx_yol_kaydet(yol: str, kaynak: str) -> None:
+    """(P213 §6) Herhangi bir MediaMTX yolunu (idempotent) kaydeder.
+
+    `_canli_yolu_kaydet`ten AYRILDI cunku gecmis kayit ayni zinciri
+    kullaniyor ama yol adi ve kaynak farkli. Ayirmadan once kopyalamak
+    gerekirdi ve P213 §2'nin kok nedeni (yutulan 401) IKI YERDE birden
+    yasardi.
+    """
     api = settings.mediamtx_api_url.rstrip("/")
-    govde = {"source": obj.stream_url, "sourceOnDemand": True}
+    govde = {"source": kaynak, "sourceOnDemand": True}
     async with httpx.AsyncClient(timeout=5) as istemci:
-        yanit = await istemci.post(
-            f"{api}/v3/config/paths/add/cam{obj.id.hex}", json=govde
-        )
+        yanit = await istemci.post(f"{api}/v3/config/paths/add/{yol}", json=govde)
         # 200 = eklendi; MediaMTX var olan yol icin 4xx doner — idempotent
         # kabul: kaynak URL degistiyse guncelle (patch) dene.
         if yanit.status_code >= 400:
             yanit = await istemci.patch(
-                f"{api}/v3/config/paths/patch/cam{obj.id.hex}", json=govde
+                f"{api}/v3/config/paths/patch/{yol}", json=govde
             )
     # =====================================================================
     # (P213 §2) YETKI HATASI ARTIK YUTULMUYOR — CANLI YAYININ KOK NEDENI
@@ -824,3 +925,190 @@ async def kamera_canli(
         yanit.content, media_type=icerik_turu,
         headers={"Cache-Control": "no-store"},
     )
+
+
+# =========================================================================== #
+# (P213 §6) GECMIS KAYIT IZLEME — NVR/DVR
+# =========================================================================== #
+# KAYITLAR SITENIN NVR'INDA KALIR; biz yalnizca erisip gosteririz. Kaydi
+# kendimiz tutma secenegi olculdu ve maliyet gerekcesiyle reddedildi
+# (docs/P213-06-gecmis-kayit-analiz.md §1.D).
+#
+# ERISIM: yonetici + guvenlik amiri. `security` (amir OLMAYAN gorevli)
+# HARICTIR ve bu bilincli: gecmis kayit geriye donuk gozetimdir, kapida
+# duran gorevlinin isi degildir. Kapi SUNUCUDA — istemcide gizlemek
+# yetkilendirme olmaz.
+_KAYIT_IZLEYICI = require_role("admin", "yonetici", "guvenlik_amiri")
+
+#: Kullanicinin sorabilecegi en genis pencere. Sinirsiz birakmak, "son bir
+#: yil" gibi bir istegi NVR'a yollayip cihazi kilitlemek olurdu (bu
+#: cihazlarin arama API'leri yavas ve tek is parcacikli).
+_KAYIT_PENCERE_AZAMI = dt.timedelta(hours=24)
+
+
+def _kayit_kamerasi(obj: Camera) -> None:
+    """Kamerada gecmis kayit ACIK mi ve saglayici SECILI mi?"""
+    if not obj.kayit_aktif:
+        raise APIError(422, "validation_error", "kamera_kayit_kapali")
+    if (obj.kayit_saglayici or "") not in SAGLAYICILAR:
+        raise APIError(422, "validation_error", "kamera_kayit_saglayici_yok")
+
+
+def _kayit_araligi(bas: dt.datetime, bit: dt.datetime) -> tuple[dt.datetime, dt.datetime]:
+    """Aralik dogrulama — ters ve asiri genis aralik REDDEDILIR."""
+    b = bas if bas.tzinfo else bas.replace(tzinfo=dt.timezone.utc)
+    s = bit if bit.tzinfo else bit.replace(tzinfo=dt.timezone.utc)
+    if s <= b:
+        raise APIError(422, "validation_error", "kamera_kayit_araligi_ters")
+    if s - b > _KAYIT_PENCERE_AZAMI:
+        raise APIError(422, "validation_error", "kamera_kayit_araligi_genis")
+    return b, s
+
+
+@router.get("/{camera_id}/kayit/araliklar", response_model=KayitAralikListesi)
+async def kayit_araliklari(
+    camera_id: uuid.UUID,
+    bas: dt.datetime,
+    bit: dt.datetime,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_KAYIT_IZLEYICI),
+) -> KayitAralikListesi:
+    """Verilen pencerede KAYIT BULUNAN araliklar.
+
+    `arama_destekli=false` "kayit yok" DEMEK DEGILDIR: `sablon` adaptoru
+    oynatabilir ama arayamaz. Ikisini ayni sekilde gostermek, kaydi olan
+    bir gunu bos gibi gostererek kullaniciyi vazgecirirdi — arayuz bu
+    bayraga gore "hangi saatler dolu bilinmiyor, dogrudan saat secin"
+    der.
+    """
+    obj = await get_or_404(db, Camera, camera_id)
+    _kayit_kamerasi(obj)
+    b, s = _kayit_araligi(bas, bit)
+    await audit_user(
+        db, user, Action.CAMERA_KAYIT_ARAMA, resource_type="camera",
+        resource_id=obj.id,
+        meta={"bas": b.isoformat(), "bit": s.isoformat(),
+              "saglayici": obj.kayit_saglayici},
+    )
+    async with httpx.AsyncClient(timeout=30) as istemci:
+        saglayici = saglayici_kur(obj, istemci)
+        try:
+            araliklar = await saglayici.araliklari_listele(b, s)
+        except AramaDesteklenmiyor:
+            return KayitAralikListesi(arama_destekli=False, araliklar=[])
+        except httpx.HTTPError as exc:
+            # AG HATASI ile CIHAZ HATASI ayri mesajlar: ilki "NVR'a
+            # ulasilamiyor" (port/VPN), ikincisi "cihaz anlamadi".
+            logger.error(
+                "[kayit] NVR'a ulasilamadi kamera=%s saglayici=%s hata=%s",
+                obj.id, obj.kayit_saglayici, exc,
+            )
+            raise APIError(502, "bad_gateway", "kamera_kayit_ulasilamiyor")
+        except Exception as exc:  # noqa: BLE001 — adaptore ozel istisnalar
+            logger.error(
+                "[kayit] arama cozumlenemedi kamera=%s saglayici=%s hata=%s",
+                obj.id, obj.kayit_saglayici, exc,
+            )
+            raise APIError(502, "bad_gateway", "kamera_kayit_cozumlenemedi")
+    return KayitAralikListesi(
+        arama_destekli=True,
+        araliklar=[KayitAralikOut(bas=a.bas, bit=a.bit) for a in araliklar],
+    )
+
+
+@router.post("/{camera_id}/kayit/oynat", response_model=KayitOynatOut)
+async def kayit_oynat(
+    camera_id: uuid.UUID,
+    body: KayitOynatRequest,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_KAYIT_IZLEYICI),
+) -> KayitOynatOut:
+    """Secilen araligi izlenebilir hale getirir ve HLS YOLUNU doner.
+
+    ZINCIR CANLI YAYINLA AYNI: adaptor -> zaman aralikli RTSP -> MediaMTX
+    yolu -> HLS -> backend vekili -> tarayici. Tarayici NVR'a DOGRUDAN
+    baglanamaz (RTSP oynatamaz; ustelik parolayi istemciye vermek kabul
+    edilemez), bu yuzden bant sunucumuzdan gecer.
+    """
+    if not settings.mediamtx_url:
+        raise APIError(503, "service_unavailable", "kamera_canli_kapali")
+    obj = await get_or_404(db, Camera, camera_id)
+    _kayit_kamerasi(obj)
+    b, s = _kayit_araligi(body.bas, body.bit)
+
+    # DENETIM KAYDI ONCE: izleme baslamadan yazilir ki gecit hata verse
+    # bile "bu kullanici su araligi acmaya calisti" izi kalsin.
+    await audit_user(
+        db, user, Action.CAMERA_KAYIT_IZLEME, resource_type="camera",
+        resource_id=obj.id,
+        meta={"bas": b.isoformat(), "bit": s.isoformat(),
+              "saglayici": obj.kayit_saglayici},
+    )
+    async with httpx.AsyncClient(timeout=30) as istemci:
+        saglayici = saglayici_kur(obj, istemci)
+        try:
+            kaynak = await saglayici.oynatma_adresi(b, s)
+        except httpx.HTTPError as exc:
+            logger.error("[kayit] oynatma adresi alinamadi kamera=%s: %s", obj.id, exc)
+            raise APIError(502, "bad_gateway", "kamera_kayit_ulasilamiyor")
+
+    yol = _kayit_yolu(obj, b, s)
+    await _mediamtx_yol_kaydet(yol, kaynak)
+    return KayitOynatOut(yol=f"/cameras/{obj.id}/kayit/{yol}/index.m3u8")
+
+
+def _kayit_yolu(obj: Camera, bas: dt.datetime, bit: dt.datetime) -> str:
+    """MediaMTX yol adi — kamera + aralik. Ayni aralik ayni yolu uretir,
+    yani iki kullanici ayni kaydi acinca IKINCI bir cekim baslamaz."""
+    imza = hashlib.sha256(
+        f"{obj.id.hex}|{int(bas.timestamp())}|{int(bit.timestamp())}".encode()
+    ).hexdigest()[:16]
+    return f"kayit{obj.id.hex}{imza}"
+
+
+@router.get("/{camera_id}/kayit/{yol}/{dosya}")
+async def kayit_hls(
+    camera_id: uuid.UUID,
+    yol: str,
+    dosya: str,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_KAYIT_IZLEYICI),
+) -> Response:
+    """Kayit HLS vekili — canli vekiliyle AYNI kurallar.
+
+    YOL ADI KAMERAYA BAGLI: `kayit<kamera-hex><imza>` deseninin ilk
+    parcasi istekteki kamerayla ESLESMEK ZORUNDA. Bunu dogrulamamak,
+    A kamerasinin ucunden B kamerasinin kaydini cekmeye izin verirdi
+    (IDOR) — rol kapisi gecildikten sonra bile tesis ici bir sizinti.
+    """
+    if not settings.mediamtx_url:
+        raise APIError(503, "service_unavailable", "kamera_canli_kapali")
+    obj = await get_or_404(db, Camera, camera_id)
+    _kayit_kamerasi(obj)
+    if not _KAYIT_YOL.match(yol) or not yol.startswith(f"kayit{obj.id.hex}"):
+        raise APIError(404, "not_found", "kayit_bulunamadi")
+    if "/" in dosya or "\\" in dosya or ".." in dosya or not _CANLI_DOSYA.match(dosya):
+        raise APIError(404, "not_found", "kayit_bulunamadi")
+
+    hedef = f"{settings.mediamtx_url.rstrip('/')}/{yol}/{dosya}"
+    try:
+        async with httpx.AsyncClient(timeout=15) as istemci:
+            yanit = await istemci.get(hedef)
+    except httpx.HTTPError:
+        logger.error("[kayit] MediaMTX HLS gecidine ulasilamadi (%s)", api_adresi())
+        raise APIError(502, "bad_gateway", "kamera_gecit_yok")
+    if yanit.status_code >= 400:
+        logger.warning("[kayit] gecit %s icin %s dondu", yol, yanit.status_code)
+        raise APIError(502, "bad_gateway", "kamera_yayin_hazir_degil")
+    return Response(
+        yanit.content,
+        media_type=yanit.headers.get(
+            "content-type",
+            "application/vnd.apple.mpegurl" if dosya.endswith(".m3u8") else "video/mp2t",
+        ),
+        headers={"Cache-Control": "no-store"},
+    )
+
+
+#: Kayit yol adi deseni — `kayit` + 32 hex (kamera) + 16 hex (aralik imzasi).
+_KAYIT_YOL = re.compile(r"^kayit[0-9a-f]{48}$")

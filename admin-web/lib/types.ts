@@ -811,6 +811,12 @@ export interface Kamera {
   /** (P213 §4) Ana ekranda (Ozet) karesi gosterilsin mi — YERLESIM
    *  bayragi; `sakin_gorebilir` (YETKI) ile karistirilmamali. */
   ana_ekranda?: boolean;
+  /** (P213 §6) Gecmis kayit (NVR/DVR). PAROLA YOK: sunucu dondurmez. */
+  kayit_aktif?: boolean;
+  kayit_saglayici?: string | null;
+  kayit_adres?: string | null;
+  kayit_kanal?: string | null;
+  kayit_kullanici?: string | null;
   // (P190 §6) YONETILEN canli izleme yolu (backend HLS vekili, rtsp icin).
   // Doluysa istemci restream yerine `/api${canli_yol}` oynatir.
   canli_yol?: string | null;

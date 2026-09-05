@@ -273,6 +273,11 @@ export const config = {
     "/arac-gecisleri/:path*",
     "/gorevlerim/:path*",
     "/kameralar/:path*",
+    // (P213 §6) Gecmis kayit izleme — YENI KORUMALI SAYFA. Matcher'a
+    // yazilmazsa sayfa oturum kapisi OLMADAN acilirdi (P193 dersi).
+    // `:path*` sifir segmenti de esler, yani `/kamera-kayitlari`in
+    // kendisi de kapsanir (diger satirlarla ayni kalip).
+    "/kamera-kayitlari/:path*",
     "/dis-hizmetler/:path*",
     "/yonetim-iletisim/:path*",
   ],

@@ -49,7 +49,11 @@ YONETILEN = {
     # (P128/P130b) Denetciyi ATAYAN denetlenen tesisin kendi yonetimidir.
     # `resident`: yonetici kendi tesisinin sakinini yonetir.
     # (P185) `yonetici`: es-yonetici ekleme.
-    "yonetici": {"resident", "security", "tesis_gorevlisi", "denetci", "yonetici"},
+    # (P213 §6) `guvenlik_amiri`: yonetici kendi tesisinde bir guvenlik
+    # gorevlisini AMIR isaretler. Yetki yukseltmesi degil — amirin
+    # acabildigi tek rol `security` ve yonetici zaten onu aciyor.
+    "yonetici": {"resident", "security", "tesis_gorevlisi", "denetci",
+                 "yonetici", "guvenlik_amiri"},
     "guvenlik_amiri": {"security"},
     "security": set(),
     "tesis_gorevlisi": set(),
@@ -312,3 +316,73 @@ def test_olusturma_audit_kaydinda_ACANIN_rolu_var(client, world):
     assert satir is not None, "olusturma audit'e yazilmamis"
     assert satir["meta"]["role"] == "security"   # ACILAN rol
     assert satir["actor_rol"] == "yonetici"      # ACANIN rolu
+
+
+# ==================== (P213 §6) YONETICI AMIR ATAR ========================= #
+
+def test_P213_yonetici_GUVENLIK_GOREVLISINI_AMIR_yapar(client, world):
+    """Istegin birebir karsiligi: "yonetici kendi tesisinde bir guvenlik
+    gorevlisini amir olarak isaretler".
+
+    ONCESI: `guvenlik_amiri` YONETILEBILIR_ROLLER["yonetici"] kumesinde
+    YOKTU; amiri yalnizca platform operatoru (admin) atayabiliyordu ve her
+    amir degisikligi icin tesisin bizi aramasi gerekiyordu.
+
+    UCTAN UCA olculur: gercek kullanici acilir, rolu gercek PATCH ile
+    cevrilir, sonra /users listesinden OKUNUR.
+    """
+    yon = _headers(client, world["slug_a"], world["yonetici_a"])
+    r = client.post(
+        "/users",
+        headers=yon,
+        json={"ad": "Amir Adayi", "email": _p197_mail(), "telefon": _uphone(),
+              "role": "security", "password": "Parola123!"},
+    )
+    assert r.status_code == 201, r.text
+    uid = r.json()["id"]
+    try:
+        p = client.patch(f"/users/{uid}", headers=yon,
+                         json={"role": "guvenlik_amiri"})
+        assert p.status_code == 200, p.text
+        assert p.json()["role"] == "guvenlik_amiri"
+    finally:
+        client.delete(f"/users/{uid}", headers=yon)
+
+
+def test_P213_yonetici_DOGRUDAN_amir_acabilir(client, world):
+    """Var olan gorevliyi cevirmek TEK yol degil: dogrudan da acilabilir."""
+    yon = _headers(client, world["slug_a"], world["yonetici_a"])
+    r = client.post(
+        "/users",
+        headers=yon,
+        json={"ad": "Yeni Amir", "email": _p197_mail(), "telefon": _uphone(),
+              "role": "guvenlik_amiri", "password": "Parola123!"},
+    )
+    assert r.status_code == 201, r.text
+    client.delete(f"/users/{r.json()['id']}", headers=yon)
+
+
+def test_P213_amir_KENDI_ROLUNU_cogaltamaz(client, world):
+    """Sinir KORUNDU: amirin kendisi amir ACAMAZ.
+
+    Yoneticiye verilen yetki, amire GECMEZ — aksi halde bir kez atanan
+    amir sinirsiz amir uretebilir ve yonetici denetimden cikardi.
+    """
+    amir = _acan(client, world, "guvenlik_amiri")
+    r = client.post(
+        "/users",
+        headers=amir,
+        json={"ad": "x", "email": _p197_mail(), "telefon": _uphone(),
+              "role": "guvenlik_amiri", "password": "Parola123!"},
+    )
+    assert r.status_code == 403, r.text
+    assert r.json()["error"]["code"] == "forbidden"
+
+
+def test_P213_amir_atamak_YETKI_YUKSELTMESI_DEGIL(client, world):
+    """Kararin gerekcesini olcer: amirin acabildigi kume, yoneticininkinin
+    ALT KUMESIDIR. Boyle olmasaydi yonetici, amir atayarak kendisinde
+    OLMAYAN bir yetkiyi devretmis olurdu."""
+    from app.roller import yonetilebilir
+
+    assert yonetilebilir("guvenlik_amiri") <= yonetilebilir("yonetici")

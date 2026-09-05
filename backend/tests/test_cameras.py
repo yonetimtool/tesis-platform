@@ -633,10 +633,20 @@ def _rtsp_kamera(client, yon, *, sakin_gorebilir=False):
 
 def test_P190_rtsp_stream_url_yonetim_disina_MASKELENIR(client, world):
     """RTSP adresi kullanici adi/parola tasiyabilir; izleyici roller ham
-    adresi GORMEZ (yonetici duzenleme icin gorur)."""
+    adresi GORMEZ.
+
+    (P213 §6b) DAVRANIS DEGISTI — DAHA SIKI. Eskiden yonetici adresi
+    KIMLIGIYLE goruyordu ("duzenleme icin"): yani parola, yetkili her
+    istemciye (tarayici bellegi, ag gunlugu) gidiyordu ve DB'de de duz
+    duruyordu. Artik kimlik adresten AYRI saklaniyor: yonetici kullanici
+    adini AYRI ALANDA gorur, parolayi HIC gormez.
+    """
     yon = _headers(client, world["slug_a"], world["yonetici_a"])
     kam = _rtsp_kamera(client, yon, sakin_gorebilir=True)
-    assert kam["stream_url"].startswith("rtsp://kullanici")  # yonetici gorur
+    # Adres KIMLIKSIZ; kullanici adi ayri alanda; parola HICBIR YERDE.
+    assert "@" not in kam["stream_url"].split("//", 1)[1].split("/", 1)[0]
+    assert kam["stream_kullanici"] == "kullanici"
+    assert "gizli" not in str(kam), "parola yoneticiye bile donmemeli"
 
     guard = _headers(client, world["slug_a"], world["guard_a"])
     liste = client.get("/cameras", headers=guard).json()["items"]

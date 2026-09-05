@@ -64,7 +64,20 @@ YONETILEBILIR_ROLLER: dict[str, frozenset[str]] = {
     # secer; uygulamada onu tanimlayan kisi yonetici olur). Platform
     # operatorune baglamak, her denetci degisikligi icin bizi arayan bir
     # tesis demekti.
-    "yonetici": frozenset({"resident", "security", "tesis_gorevlisi", "denetci", "yonetici"}),
+    # (P213 §6) `guvenlik_amiri` EKLENDI. Onceki tabloda yoktu: amiri
+    # YALNIZ platform operatoru (admin) atayabiliyordu, cunku rol P35'te
+    # "DIS guvenlik sirketinin amiri" olarak tasarlanmisti ve tesisin ic
+    # isi sayilmamisti. Gecmis kayit izleme bu varsayimi bozdu: kayda
+    # kimin bakacagina karar veren kisi TESISIN YONETICISIDIR ve her
+    # amir degisikligi icin bizi aramasi anlamsizdi.
+    #
+    # YETKI YUKSELTMESI DEGIL: amirin acabildigi tek rol `security` ve
+    # yonetici zaten `security` aciyor. Yani yonetici, amir atayarak
+    # KENDINDE OLMAYAN bir yetkiyi kimseye veremez — yalnizca kendi
+    # yetkisinin bir alt kumesini devreder.
+    "yonetici": frozenset(
+        {"resident", "security", "tesis_gorevlisi", "denetci", "yonetici", "guvenlik_amiri"}
+    ),
     # (P35) Dis guvenlik sirketinin amiri YALNIZ kendi ekibini acar;
     # `tesis_gorevlisi` bile degil (o site isidir, dis sirketin degil) ve
     # kendi rolunu de acamaz.

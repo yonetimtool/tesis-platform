@@ -30,7 +30,11 @@ export type IconName =
   // (P191 §4) Banka entegrasyonu — finans grubunda benzersiz ikon.
   | "bank"
   // (P202) Surum politikasi — platform grubunda benzersiz ikon.
-  | "phone";
+  | "phone"
+  // (P213 §6) Gecmis kayit izleme — guvenlik grubunda `camera`dan AYRI
+  // olmali: iki oge (canli kameralar / kayitlar) yan yana duruyor ve
+  // dar kenar cubukta yalnizca ikon cizilir.
+  | "kayit";
 
 /** Bolum kimlikleri. Sira BURADAKI siradir (menude de bu sirayla cizilir). */
 export type GrupId =
@@ -205,6 +209,7 @@ const OGELER: readonly MenuOgesi[] = [
   { href: "/olaylar", anahtar: "kabukOlaylar", icon: "alert", grup: "guvenlik" },
   { href: "/notifications", anahtar: "kabukBildirimler", icon: "bell", grup: "guvenlik" },
   { href: "/kameralar", anahtar: "kabukKameralar", icon: "camera", grup: "guvenlik" },
+  { href: "/kamera-kayitlari", anahtar: "kabukKameraKayitlari", icon: "kayit", grup: "guvenlik" },
   { href: "/shifts", anahtar: "kabukVardiyalar", icon: "clock", grup: "guvenlik" },
   // (P203 §4) PLAN, sablonlarin YANINDA: "vardiya" iki farkli sey —
   // biri SABLON (saatler), oteki PLAN (kim, hangi gun). Ayni bolumde

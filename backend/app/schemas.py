@@ -1118,6 +1118,18 @@ class CameraCreate(BaseModel):
     # bu satirin `= False` varsayilani kazara dusmustu ve alan ZORUNLU
     # olmustu — kamera olusturan HER cagri 422 aliyordu (23 test dustu).
     sakin_gorebilir: bool = False
+    #: (P213 §6b) ADRESTEN AYRI KIMLIK. Adres `kul:par@konak` biciminde de
+    #: verilebilir (sunucu ayirir); ama bu alanlar verilirse ONCELIKLIDIR.
+    #: `stream_parola` YAZILIR-OKUNMAZ: hicbir GET yanitinda donmez.
+    stream_kullanici: str | None = Field(default=None, max_length=200)
+    stream_parola: str | None = Field(default=None, max_length=200)
+    #: (P213 §6) GECMIS KAYIT. `kayit_parola` YAZILIR-OKUNMAZ.
+    kayit_aktif: bool | None = None
+    kayit_saglayici: str | None = None
+    kayit_adres: str | None = None
+    kayit_kanal: str | None = None
+    kayit_kullanici: str | None = None
+    kayit_parola: str | None = None
     #: (P213 §4) Ana ekranda (web: Ozet, mobil: ana ekran) karesi
     #: gosterilsin mi. `sakin_gorebilir`DEN AYRI: o YETKI, bu YERLESIM.
     ana_ekranda: bool = False
@@ -1151,6 +1163,18 @@ class CameraUpdate(BaseModel):
     aktif: bool | None = None
     sakin_gorebilir: bool | None = None
     ana_ekranda: bool | None = None
+    #: (P213 §6b) ADRESTEN AYRI KIMLIK. Adres `kul:par@konak` biciminde de
+    #: verilebilir (sunucu ayirir); ama bu alanlar verilirse ONCELIKLIDIR.
+    #: `stream_parola` YAZILIR-OKUNMAZ: hicbir GET yanitinda donmez.
+    stream_kullanici: str | None = None
+    stream_parola: str | None = None
+    #: (P213 §6) GECMIS KAYIT. `kayit_parola` YAZILIR-OKUNMAZ.
+    kayit_aktif: bool | None = None
+    kayit_saglayici: str | None = None
+    kayit_adres: str | None = None
+    kayit_kanal: str | None = None
+    kayit_kullanici: str | None = None
+    kayit_parola: str | None = None
     # RESTREAM (0012 / P17): RTSP kamerayi oynatilabilir yapan HLS gecidi
     # (Frigate/go2rtc). Dolu ise istemci BUNU oynatir. Yalniz http(s) —
     # istemci HLS oynatir, rtsp gecit adresi anlamsizdir.
@@ -1184,6 +1208,15 @@ class CameraOut(BaseModel):
     sakin_gorebilir: bool
     #: (P213 §4) Ana ekranda karesi gosterilsin mi (YERLESIM bayragi).
     ana_ekranda: bool = False
+    #: (P213 §6b) Kullanici adi DONER (formda gosterilebilmeli), parola
+    #: ASLA donmez — sema alani bile yok ki bir gun "dolduralim" denmesin.
+    stream_kullanici: str | None = None
+    #: (P213 §6) Gecmis kayit ayarlari — PAROLA YOK (yazilir-okunmaz).
+    kayit_aktif: bool = False
+    kayit_saglayici: str | None = None
+    kayit_adres: str | None = None
+    kayit_kanal: str | None = None
+    kayit_kullanici: str | None = None
     # TURETILMIS (saklanmaz): istemci bu kamerayi oynatabilir mi. `rtsp` bile
     # `restream_url` doluysa TRUE olur.
     oynatilabilir: bool = True
@@ -1194,6 +1227,38 @@ class CameraOut(BaseModel):
     canli_yol: str | None = None
     created_at: datetime
     updated_at: datetime
+
+
+# ------------------- (P213 §6) GECMIS KAYIT (NVR/DVR) ---------------------- #
+class KayitAralikOut(BaseModel):
+    """Kayit BULUNAN bir zaman araligi (UTC)."""
+
+    bas: datetime
+    bit: datetime
+
+
+class KayitAralikListesi(BaseModel):
+    """`arama_destekli=false` "KAYIT YOK" DEMEK DEGILDIR.
+
+    `sablon` adaptoru oynatabilir ama arayamaz. Ikisini ayni sekilde
+    dondurmek — bos liste — kaydi olan bir gunu bos gibi gosterip
+    kullaniciyi vazgecirirdi. Bayrak, arayuze "hangi saatler dolu
+    bilinmiyor, dogrudan saat secin" dedirtir.
+    """
+
+    arama_destekli: bool
+    araliklar: list[KayitAralikOut]
+
+
+class KayitOynatRequest(BaseModel):
+    bas: datetime
+    bit: datetime
+
+
+class KayitOynatOut(BaseModel):
+    """Izlenecek HLS yolu — backend vekili uzerinden (NVR adresi DEGIL)."""
+
+    yol: str
 
 
 class CameraListResponse(BaseModel):

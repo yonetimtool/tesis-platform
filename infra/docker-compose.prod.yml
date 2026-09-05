@@ -244,6 +244,11 @@ services:
       OWNER_DSN: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD gerekli}@db:5432/${POSTGRES_DB}
       APP_DB_USER: ${APP_DB_USER:?APP_DB_USER gerekli (bos birakilirsa baglanti kimligi belirsizlesir)}
       APP_DB_PASSWORD: ${APP_DB_PASSWORD:?APP_DB_PASSWORD gerekli}
+      # (P213 §6b) GOC 0107 SIFRELEME YAPAR: kamera adresindeki duz
+      # parolayi ayirip AES-GCM ile sifreler. Anahtar olmadan goc DUSER —
+      # ve dusmesi DOGRUDUR: sessizce atlamak parolalari duz metin
+      # birakir ve kimse fark etmezdi.
+      SDM_KEK: ${SDM_KEK:?SDM_KEK gerekli (goc 0107 kamera parolasini sifreler)}
     volumes:
       - ../contracts:/contracts:ro
       - ./scripts:/scripts:ro

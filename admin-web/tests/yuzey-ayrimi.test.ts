@@ -21,6 +21,7 @@ import {
   mobilYalnizRol,
   rotaYuzeyi,
   tesisYuzeyiBekleyenRol,
+  rotaRoldeGorunur,
 } from "@/lib/yuzey";
 
 /**
@@ -190,11 +191,30 @@ describe("rol x yuzey kapisi (P126.1)", () => {
     }
   });
 
-  it("`guvenlik_amiri` HÂLÂ BEKLEYEN rol (ne web ne mobil seti var)", () => {
-    expect(rolYuzeyeGirebilir("guvenlik_amiri", "tesis")).toBe(false);
-    expect(tesisYuzeyiBekleyenRol("guvenlik_amiri")).toBe(true);
-    // Mobil-yalniz DEGIL: onu magazaya yollamak da yanlis olurdu.
+  // (P213 §6) DAVRANIS DEGISTI. `guvenlik_amiri` P129'dan beri "yakinda"
+  // kutusundaydi: backend'de yetkileri VARDI ama hicbir yuzeyde ekrani
+  // yoktu, yani giris yapamiyordu. Gecmis kayit izleme yetkisi bu role
+  // verilince ona bir yuzey acmak ZORUNLU oldu.
+  it("`guvenlik_amiri` ARTIK tesis yuzeyine girer (dar rota kumesiyle)", () => {
+    expect(rolYuzeyeGirebilir("guvenlik_amiri", "tesis")).toBe(true);
+    expect(tesisYuzeyiBekleyenRol("guvenlik_amiri")).toBe(false);
     expect(mobilYalnizRol("guvenlik_amiri")).toBe(false);
+    // Platform yuzeyi ETKILENMEDI.
+    expect(rolYuzeyeGirebilir("guvenlik_amiri", "platform")).toBe(false);
+  });
+
+  it("amirin kumesi DAR: kayit/ozet/profil VAR, para ve yonetim YOK", () => {
+    for (const r of ["/kamera-kayitlari", "/dashboard", "/profil"]) {
+      expect(rotaRoldeGorunur(r, "guvenlik_amiri"), r).toBe(true);
+    }
+    // Yetki yukseltmesi olmadigini olcen asil iddia: amir tesisin
+    // PARASINI ve YONETIM ekranlarini gormez.
+    // `/kameralar` (kamera YONETIMI) de yasak: amir kamera ekleyemez,
+    // silemez, NVR kimligi giremez — backend `_WRITER` onu istemiyor.
+    for (const r of ["/kameralar", "/finans", "/dues", "/users",
+                     "/tesis-ayarlari", "/raporlar"]) {
+      expect(rotaRoldeGorunur(r, "guvenlik_amiri"), r).toBe(false);
+    }
   });
 
   it("ROLSUZ/bilinmeyen token hicbir yuzeye giremez", () => {

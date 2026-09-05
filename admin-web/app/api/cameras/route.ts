@@ -23,6 +23,16 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     limit: sp.get("limit") ?? "50",
     offset: sp.get("offset") ?? "0",
   });
+  // (P213 §6 DUZELTME) SUZGEC BURADA DUSUYORDU. §4'te Ozet sayfasi
+  // `ana_ekranda=true` gondermeye baslamisti; bu rota yalnizca
+  // limit/offset'i tasidigi icin suzgec BACKEND'E HIC ULASMIYOR, ozet
+  // TUM kameralari cekiyordu. DOM testi istemci -> BFF adimini olcmustu,
+  // BFF -> backend adimini degil (P200 dersi: taklit, olculen katmanin
+  // ALTINA konmali). Beyaz liste: bilinmeyen parametre gecmez.
+  for (const ad of ["ana_ekranda", "kayit_aktif"]) {
+    const deger = sp.get(ad);
+    if (deger !== null) qs.set(ad, deger);
+  }
   return proxyJson(`/cameras?${qs.toString()}`, "GET");
 }
 

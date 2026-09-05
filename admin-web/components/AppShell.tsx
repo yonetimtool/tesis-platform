@@ -159,6 +159,8 @@ function Icon({ name }: { name: IconName }) {
       return svg(<><path d="M12 4 3 19h18L12 4Z" /><line x1="12" y1="10" x2="12" y2="14" /><line x1="12" y1="17" x2="12" y2="17" /></>);
     case "camera": // kamera govdesi
       return svg(<><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z" /><circle cx="12" cy="13" r="3" /></>);
+    case "kayit": // (P213 §6) kayit oynatma — film seridi + oynat ucgeni
+      return svg(<><rect x="3" y="5" width="18" height="14" rx="2" /><line x1="7" y1="5" x2="7" y2="19" /><line x1="17" y1="5" x2="17" y2="19" /><path d="M11 10.5v3l3-1.5z" /></>);
     case "nfc": // temassiz okuma dalgalari
       return svg(<><path d="M6 4.5C4 6.5 3 9 3 12s1 5.5 3 7.5" /><path d="M9 7C7.7 8.3 7 10 7 12s.7 3.7 2 5" /><path d="M14 6.5c1.2.6 2 1.9 2 3.3v4.4c0 1.4-.8 2.7-2 3.3" /><line x1="14" y1="10" x2="14" y2="14" /></>);
     case "visitor": // kisi + yaka karti

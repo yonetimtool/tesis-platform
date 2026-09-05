@@ -11754,6 +11754,165 @@ paths:
           content:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
 
+  # ---------------- (P213 §6) GECMIS KAYIT (NVR/DVR) ----------------------
+  # Kayitlar SITENIN NVR'inda kalir; biz yalnizca erisip gosteririz. Kaydi
+  # kendimiz tutma secenegi olculdu ve maliyet gerekcesiyle reddedildi
+  # (docs/P213-06-gecmis-kayit-analiz.md).
+  #
+  # ERISIM: admin + yonetici + guvenlik_amiri. Amir OLMAYAN `security`
+  # HARICTIR: gecmis kayit geriye donuk gozetimdir, kapida duran gorevlinin
+  # isi degildir. Her arama ve izleme DENETIM KAYDINA yazilir (KVKK).
+  /cameras/{camera_id}/kayit/araliklar:
+    parameters:
+      - name: camera_id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [cameras]
+      summary: "(P213 §6) Gecmis kayit ARAMASI — kayit bulunan araliklar"
+      description: >
+        `arama_destekli=false` "KAYIT YOK" DEMEK DEGILDIR: `sablon`
+        saglayicisi oynatabilir ama arayamaz. Ikisini ayni sekilde
+        gostermek, kaydi olan bir gunu bos gibi gosterip kullaniciyi
+        vazgecirirdi. Pencere en cok 24 saat (cihazlarin arama API'leri
+        yavas ve tek is parcacikli).
+      parameters:
+        - name: bas
+          in: query
+          required: true
+          schema: { type: string, format: date-time }
+        - name: bit
+          in: query
+          required: true
+          schema: { type: string, format: date-time }
+      responses:
+        "200":
+          description: Kayit araliklari
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [arama_destekli, araliklar]
+                properties:
+                  arama_destekli: { type: boolean }
+                  araliklar:
+                    type: array
+                    items:
+                      type: object
+                      required: [bas, bit]
+                      properties:
+                        bas: { type: string, format: date-time }
+                        bit: { type: string, format: date-time }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422":
+          description: >
+            `kamera_kayit_kapali` (kamerada ozellik kapali),
+            `kamera_kayit_saglayici_yok`, `kamera_kayit_araligi_ters`,
+            `kamera_kayit_araligi_genis`
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "502":
+          description: >
+            `kamera_kayit_ulasilamiyor` (NVR'a ulasilamadi — ag/port/VPN)
+            ya da `kamera_kayit_cozumlenemedi` (cihaz beklenmeyen yanit verdi)
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  /cameras/{camera_id}/kayit/oynat:
+    parameters:
+      - name: camera_id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [cameras]
+      summary: "(P213 §6) Secilen araligi izlenebilir kilar; HLS yolunu doner"
+      description: >
+        Zincir CANLI YAYINLA AYNI: adaptor -> zaman aralikli RTSP ->
+        MediaMTX yolu -> HLS -> backend vekili -> tarayici. Tarayici NVR'a
+        DOGRUDAN baglanamaz (RTSP oynatamaz; parolayi istemciye vermek
+        kabul edilemez), bu yuzden bant sunucudan gecer.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [bas, bit]
+              properties:
+                bas: { type: string, format: date-time }
+                bit: { type: string, format: date-time }
+      responses:
+        "200":
+          description: Izlenecek HLS yolu (backend vekili)
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [yol]
+                properties:
+                  yol:
+                    type: string
+                    example: "/cameras/9f.../kayit/kayit9f...a1b2/index.m3u8"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "502":
+          description: "`kamera_kayit_ulasilamiyor` / `kamera_gecit_yetkisiz`"
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "503":
+          description: Canli/kayit gecidi yapilandirilmamis (`kamera_canli_kapali`)
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
+  /cameras/{camera_id}/kayit/{yol}/{dosya}:
+    parameters:
+      - name: camera_id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+      - name: yol
+        in: path
+        required: true
+        description: >
+          MediaMTX yol adi — `kayit` + 32 hex (kamera) + 16 hex (aralik
+          imzasi). Yolun ilk parcasi ISTEKTEKI KAMERAYLA eslesmek zorunda:
+          aksi halde A kamerasinin ucundan B'nin kaydi cekilebilirdi (IDOR).
+        schema: { type: string, pattern: "^kayit[0-9a-f]{48}$" }
+      - name: dosya
+        in: path
+        required: true
+        description: "HLS dosyasi (index.m3u8 / segment .ts|.mp4)"
+        schema: { type: string }
+    get:
+      tags: [cameras]
+      summary: "(P213 §6) Kayit HLS vekili — canli vekiliyle AYNI kurallar"
+      responses:
+        "200":
+          description: HLS playlist ya da segment
+          content:
+            application/vnd.apple.mpegurl:
+              schema: { type: string }
+            video/mp2t:
+              schema: { type: string, format: binary }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+        "502":
+          description: "`kamera_gecit_yok` / `kamera_yayin_hazir_degil`"
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "503":
+          description: Kayit gecidi yapilandirilmamis (`kamera_canli_kapali`)
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
   /cameras/{id}/canli/{dosya}:
     parameters:
       - $ref: "#/components/parameters/PathId"
@@ -19651,6 +19810,39 @@ components:
             acildiginda kamera sayisi kadar ffmpeg sureci baslardi. Ayni
             anda en cok `KAMERA_ANA_EKRAN_SINIR` (varsayilan 4) kamera
             secilebilir; asimda 422 `kamera_ana_ekran_sinir`.
+        stream_kullanici:
+          type: string
+          nullable: true
+          description: >
+            (P213 §6b) Yayin adresinin kullanici adi. PAROLA HIC DONMEZ:
+            adres artik KIMLIKSIZ saklaniyor, parola AES-GCM ile sifreli.
+            Eskiden `stream_url` `rtsp://kul:parola@...` biciminde DUZ
+            saklaniyor ve bu yanitla disari cikiyordu.
+        kayit_aktif:
+          type: boolean
+          default: false
+          description: >
+            (P213 §6) Gecmis kayit (NVR/DVR) izleme ACIK mi. KAMERA BASINA,
+            varsayilan KAPALI — gecmis kayit geriye donuk gozetimdir.
+        kayit_saglayici:
+          type: string
+          nullable: true
+          enum: [sablon, hikvision, dahua]
+          description: >
+            Kayit cihazi adaptoru. `onvif` BILEREK YOK: Profile G sahada
+            guvenilmez (cogu cihazda eksik); iki satici adaptoru gercek
+            cihazda dogrulandiktan sonra eklenecek.
+        kayit_adres:
+          type: string
+          nullable: true
+          description: >
+            NVR HTTP tabani (`http://10.0.0.2`). `sablon` saglayicisinda
+            OYNATMA ADRES KALIBI tasir. Bos ise kameranin konagi kullanilir.
+        kayit_kanal: { type: string, nullable: true }
+        kayit_kullanici:
+          type: string
+          nullable: true
+          description: NVR kullanici adi. PAROLA HIC DONMEZ (yazilir-okunmaz).
         oynatilabilir:
           type: boolean
           description: >
@@ -19693,6 +19885,30 @@ components:
           type: boolean
           default: false
           description: (P213 §4) Ana ekran bandinda gosterilsin mi (sinirli).
+        stream_kullanici: { type: string, nullable: true, maxLength: 200 }
+        stream_parola:
+          type: string
+          nullable: true
+          maxLength: 200
+          description: >
+            (P213 §6b) YAZILIR-OKUNMAZ. Sifreli saklanir, hicbir GET
+            yanitinda donmez. Adres `kul:parola@konak` biciminde de
+            verilebilir (sunucu ayirir); bu alan verilirse ONCELIKLIDIR.
+        kayit_aktif: { type: boolean, default: false }
+        kayit_saglayici:
+          type: string
+          nullable: true
+          enum: [sablon, hikvision, dahua]
+        kayit_adres: { type: string, nullable: true, maxLength: 2048 }
+        kayit_kanal: { type: string, nullable: true, maxLength: 50 }
+        kayit_kullanici: { type: string, nullable: true, maxLength: 200 }
+        kayit_parola:
+          type: string
+          nullable: true
+          maxLength: 200
+          description: >
+            (P213 §6) NVR parolasi — YAZILIR-OKUNMAZ, sifreli saklanir.
+            GONDERILMEZSE MEVCUT PAROLA KORUNUR; `null` gondermek onu SILER.
         restream_url:
           type: string
           nullable: true
@@ -19724,6 +19940,31 @@ components:
         tur: { type: string, enum: [hls, mp4, rtsp] }
         aktif: { type: boolean }
         sakin_gorebilir: { type: boolean }
+        # (P213 §4) `ana_ekranda` PATCH sozlesmesinde EKSIKTI: alan §4'te
+        # eklenirken yalnizca CameraCreate'e yazilmisti, yani duzenleme
+        # yoluyla degistirilmesi sozlesmede gorunmuyordu.
+        ana_ekranda: { type: boolean }
+        stream_kullanici: { type: string, nullable: true, maxLength: 200 }
+        stream_parola:
+          type: string
+          nullable: true
+          maxLength: 200
+          description: (P213 §6b) YAZILIR-OKUNMAZ; gonderilmezse mevcut korunur.
+        kayit_aktif: { type: boolean }
+        kayit_saglayici:
+          type: string
+          nullable: true
+          enum: [sablon, hikvision, dahua]
+        kayit_adres: { type: string, nullable: true, maxLength: 2048 }
+        kayit_kanal: { type: string, nullable: true, maxLength: 50 }
+        kayit_kullanici: { type: string, nullable: true, maxLength: 200 }
+        kayit_parola:
+          type: string
+          nullable: true
+          maxLength: 200
+          description: >
+            (P213 §6) YAZILIR-OKUNMAZ. GONDERILMEZSE MEVCUT PAROLA KORUNUR;
+            `null` gondermek onu SILER.
         restream_url:
           type: string
           nullable: true

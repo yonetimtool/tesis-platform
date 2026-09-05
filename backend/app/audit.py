@@ -80,6 +80,13 @@ class Action:
     CAMERA_CREATE = "camera_create"
     CAMERA_UPDATE = "camera_update"
     CAMERA_DELETE = "camera_delete"
+    # (P213 §6) GECMIS KAYIT IZLEME — KVKK acisindan en agir kamera islemi.
+    # Canli izleme anliktir; gecmis kayit GERIYE DONUK GOZETIMDIR. Kim,
+    # hangi kamerayi, HANGI ZAMAN ARALIGI icin actigi yazilmazsa sonradan
+    # hesabi sorulamaz. Denetim kaydini sonradan eklemek imkansiza yakin:
+    # gecmise donuk uretilemez.
+    CAMERA_KAYIT_ARAMA = "camera_kayit_arama"
+    CAMERA_KAYIT_IZLEME = "camera_kayit_izleme"
     KARAR_UPSERT = "karar_upsert"
     KARAR_SIL = "karar_sil"
     DOKUMAN_EKLE = "dokuman_ekle"

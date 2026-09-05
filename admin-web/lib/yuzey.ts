@@ -142,6 +142,8 @@ export const TESIS_ROTALARI = [
   "/gorevlerim",
   // (P126.5) Yoneticinin eksik ekranlari.
   "/kameralar",
+  // (P213 §6) Gecmis kayit izleme — kamera YONETIMINDEN AYRI sayfa.
+  "/kamera-kayitlari",
   "/dis-hizmetler",
   "/yonetim-iletisim",
   // (P155 §7) Davet gonderim durumu — tesis yuzeyi (yonetici).
@@ -277,6 +279,14 @@ const TESIS_ROLLERI = new Set([
   "admin",
   // (P128/P129) Salt-okuma mali denetim — masabasi rolu.
   "denetci",
+  // (P213 §6) Guvenlik amiri — GECMIS KAYIT IZLEME masabasi isidir.
+  // P129'da "yakinda" kutusunda birakilmisti: rol backend'de vardi ama
+  // hicbir yuzeyde ekrani yoktu, yani pratikte HICBIR YERE giremiyordu.
+  // Gecmis kayit yetkisini bu role vermek, once ona bir yuzey vermeyi
+  // gerektirdi. KAPSAM DAR: kamera + ozet + profil (asagida) — devriye,
+  // vardiya ve kullanici ekranlari backend'de acik olsa da bu turun
+  // isteginde yoktu, ayri bir urun karari olarak birakildi.
+  "guvenlik_amiri",
 ]);
 
 /**
@@ -314,7 +324,7 @@ const MOBIL_ROLLERI = new Set(["resident", "security", "tesis_gorevlisi"]);
  */
 export const ROTA_ROLLERI: Record<string, readonly string[]> = {
   // --- YONETIM EKRANLARI: yonetici + admin -------------------------------
-  "/dashboard": ["admin", "yonetici"],
+  "/dashboard": ["admin", "yonetici", "guvenlik_amiri"],
   "/shifts": ["admin", "yonetici"],
   // (P203 §4) WEB'DE YALNIZ YONETIM.
   //
@@ -402,7 +412,13 @@ export const ROTA_ROLLERI: Record<string, readonly string[]> = {
   "/karar-defteri": ["admin", "yonetici"],
   "/dokumanlar": ["admin", "yonetici"],
   "/gurultu-uyarilari": ["admin", "yonetici"],
+  // (P213 §6) KAMERA YONETIMI yoneticide kalir: amir kamera EKLEYEMEZ,
+  // silemez, NVR kimligi giremez (backend `_WRITER` da onu istemiyor).
+  // Sayfayi ona acmak, hicbirini yapamayacagi bir form gostermekti.
   "/kameralar": ["admin", "yonetici"],
+  // Gecmis kayit IZLEME ayri sayfa ve amire ACIK — istegin birebir
+  // karsiligi: "gecmis kayit erisimi: yonetici ve guvenlik amiri".
+  "/kamera-kayitlari": ["admin", "yonetici", "guvenlik_amiri"],
   // Olaylar: guvenlik BILDIRIR (mobilde), yonetim OKUR (burada).
   // (P129) `security` cikarildi — `app.*`ta oturumu yok; kaydi mobilden
   // olusturur.
@@ -450,7 +466,7 @@ export const ROTA_ROLLERI: Record<string, readonly string[]> = {
   "/arac-gecisleri": ["admin"],
 
   // --- HERKESIN / PAYLASILAN --------------------------------------------
-  "/profil": ["admin", "yonetici", "denetci"],
+  "/profil": ["admin", "yonetici", "denetci", "guvenlik_amiri"],
   "/kvkk": ["admin", "yonetici", "denetci"],
   // Guvenilir esnaf: sunucu "herkes gorur/arayabilir" diyor (routers/
   // external_services.py). Yonetici icin ayni sayfa YAZMA formunu da acar.
@@ -484,13 +500,16 @@ export function rolYuzeyeGirebilir(rol: string | null, yuzey: Yuzey): boolean {
 
 /** Henuz `app.*`a alinmamis tesis rolleri (giriste "yakinda" mesaji icin).
  *
- * (P129) Bugun YALNIZ `guvenlik_amiri`: rol backend'de var (P35) ama ne web
- * ne mobil ekran seti tanimlandi. Onu mobile yollamak da yanlis olurdu —
- * orada da kendi ekranlari yok. */
+ * (P213 §6) LISTE BOSALDI. Tek uyesi `guvenlik_amiri` idi ve o artik
+ * TESIS_ROLLERI'nde. Fonksiyon SILINMEDI cunku olctugu SORU hâlâ gecerli:
+ * "backend'de var ama yuzeyi olmayan bir rol" bir daha dogarsa giriste
+ * dogru mesaji verecek yer burasi. Bos liste, "boyle bir rol yok" demenin
+ * durust yolu — `false` donduren bir govde yazmak ayni seyi sessizce
+ * soylerdi. */
+const YUZEYSIZ_ROLLER: readonly string[] = [];
+
 export function tesisYuzeyiBekleyenRol(rol: string | null): boolean {
-  return (
-    !!rol && ["guvenlik_amiri"].includes(rol)
-  );
+  return !!rol && YUZEYSIZ_ROLLER.includes(rol);
 }
 
 /** (P129) Bu rol MOBIL-YALNIZ mi? Giriste magaza mesaji icin. */

@@ -783,6 +783,32 @@ class Camera(Base):
     ana_ekranda: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("false")
     )
+    #: (P213 §6b, goc 0107) ADRESTEN AYRILAN KIMLIK. `stream_url` artik
+    #: kimliksiz saklanir ve kimliksiz DONER; parola AES-GCM ile sifreli
+    #: (app/crypto.py). Gerekce ve ayrisma kurallari: app/kamera_kimlik.py.
+    stream_kullanici: Mapped[str | None] = mapped_column(Text, nullable=True)
+    stream_parola_sifreli: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # ---------------- (P213 §6, goc 0108) GECMIS KAYIT (NVR/DVR) ---------- #
+    #: KAMERA BASINA ACILIR, VARSAYILAN KAPALI. Kayitlar SITENIN NVR'inda
+    #: kalir; biz yalnizca erisip gosteririz (kendi kaydimizi TUTMUYORUZ —
+    #: gerekce docs/P213-06-gecmis-kayit-analiz.md §1.D).
+    kayit_aktif: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
+    #: Hangi adaptor: `sablon` | `hikvision` | `dahua`. NULL = secilmedi.
+    #: Enum DEGIL metin: yeni bir marka eklemek goc gerektirmemeli, ve
+    #: taninmayan deger zaten adaptor secilirken (fail-closed) reddedilir.
+    kayit_saglayici: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: NVR'in HTTP tabani (`http://10.0.0.2:80`). BOSSA `stream_url`in
+    #: konagi kullanilir — cogu kurulumda kamera ve NVR ayni cihazdir.
+    kayit_adres: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: NVR kanal numarasi (Hikvision `101`, Dahua `1`). Marka basina anlami
+    #: degisir; docs/P213-06-nvr-bilgi-listesi.md'de yazili.
+    kayit_kanal: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: NVR YONETIM kimligi — canli yayin kimliginden AYRI. Parola sifreli
+    #: (app/crypto.py); GET yanitlarinda ASLA donmez.
+    kayit_kullanici: Mapped[str | None] = mapped_column(Text, nullable=True)
+    kayit_parola_sifreli: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at = _created_at()
     updated_at = _created_at()
 
