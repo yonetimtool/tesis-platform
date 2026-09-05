@@ -217,7 +217,13 @@ describe("(P132.4a) tesis konumu haritasi", () => {
 });
 
 describe("(P132.4b) kamera seridi", () => {
-  it("EN COK 4 karo gosterir (serit, tam liste degil)", async () => {
+  // (P213 §4) DAVRANIS DEGISTI. Eskiden serit istemcide `slice(0, 4)` ile
+  // kirpiliyordu: sunucu 7 kamera dondurse de dorduncuden sonrasi
+  // cizilmiyordu. Bu, yoneticinin ana ekranda gormek istedigi kamerayi
+  // ACIKLANAMAZ bicimde gizliyordu (kirpma siraya bagliydi).
+  // Artik secim `ana_ekranda` bayragi, sinir SUNUCUDA (isaretleme siniri
+  // asarsa 422 `kamera_ana_ekran_sinir`). Istemci ne geldiyse onu cizer.
+  it("SUNUCU ne dondurduyse HEPSI cizilir (kirpma ISTEMCIDE DEGIL)", async () => {
     const cok = Array.from({ length: 7 }, (_, i) => ({
       ...KAMERA,
       id: `k${i}`,
@@ -226,7 +232,23 @@ describe("(P132.4b) kamera seridi", () => {
     fetchTaklidi({ kameralar: cok });
     ciz(DashboardPage);
     await screen.findByText("Kamera 0");
-    expect(screen.queryByText("Kamera 4")).toBeNull();
+    expect(await screen.findByText("Kamera 6")).toBeInTheDocument();
+  });
+
+  it("ana ekran istegi `ana_ekranda=true` SUZGECI tasir", async () => {
+    fetchTaklidi();
+    const adresler: string[] = [];
+    const asil = globalThis.fetch;
+    globalThis.fetch = ((girdi: RequestInfo | URL, init?: RequestInit) => {
+      adresler.push(String(girdi));
+      return asil(girdi, init);
+    }) as typeof fetch;
+    ciz(DashboardPage);
+    await screen.findByText("Ana Kapı");
+    expect(
+      adresler.some((u) => u.includes("/api/cameras") && u.includes("ana_ekranda=true")),
+      adresler.join(" | "),
+    ).toBe(true);
   });
 
   it("OTOMATIK OYNATMAZ — oynatici ancak tiklayinca acilir", async () => {

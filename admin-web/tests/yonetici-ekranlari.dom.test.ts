@@ -132,20 +132,29 @@ describe("Kameralar (canlı karo)", () => {
     await vi.waitFor(() => expect(karoAdresi()).not.toBe(gizliyken));
   });
 
-  it("snapshot adresi olmayan kamerada zamanlayıcı KURULMAZ", async () => {
-    const kur = vi.spyOn(globalThis, "setInterval");
+  // (P213 §3) DAVRANIS DEGISTI. Eskiden kare YALNIZ kameranin kendi
+  // `snapshot_url` alanindan geliyordu; adres yoksa karo "Görüntü adresi
+  // tanımlı değil" yaziyordu. Bu, HLS kameralarda pratikte HEP bos karo
+  // demekti — kamera turu kullaniciya gorunmemesi gerekirken tur farki
+  // ekranda kendini gosteriyordu.
+  //
+  // Artik adres yoksa SUNUCU karesi (`/api/cameras/:id/kare`) kullaniliyor
+  // ve tazeleme HER kamerada calisiyor.
+  it("snapshot adresi YOKSA sunucu karesi kullanilir ve TAZELENIR", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
     taklit({
       "/api/cameras": { items: [{ ...KAMERA, snapshot_url: null }] },
     });
     ciz(KameralarPage);
-    await screen.findByText("Giriş kapısı");
-    // ARALIGA gore bakilir, cagri sayisina degil: `waitFor` kendi 50 ms'lik
-    // zamanlayicisini kuruyor ve "hic cagrilmadi" iddiasi onu yakalayip
-    // sahte bir basarisizlik uretiyordu.
-    expect(
-      kur.mock.calls.some(([, ms]) => ms === 8000),
-    ).toBe(false);
-    expect(screen.getByText(/Görüntü adresi tanımlı değil/i)).toBeInTheDocument();
+    await vi.waitFor(() => screen.getByRole("img", { name: "Giriş kapısı" }));
+    expect(karoAdresi()).toContain(`/api/cameras/${KAMERA.id}/kare`);
+    // Kamera turu EKRANDA GECMEZ: ne "rtsp"/"hls" etiketi, ne de
+    // "adres tanimli degil" mazereti.
+    expect(screen.queryByText(/Görüntü adresi tanımlı değil/i)).toBeNull();
+
+    const ilk = karoAdresi();
+    await vi.advanceTimersByTimeAsync(8000);
+    await vi.waitFor(() => expect(karoAdresi()).not.toBe(ilk));
   });
 });
 
