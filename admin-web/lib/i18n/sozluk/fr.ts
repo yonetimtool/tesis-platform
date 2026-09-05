@@ -438,6 +438,7 @@ export const fr: Sozluk = {
   kameraSnapshotIpucu: "La tuile récupère une image depuis cette adresse ; facultatif.",
   kameraSakinGorebilir: "Visible par les résidents",
   kameraSakinGorebilirOnay: "Montrer aux résidents",
+  kameraAnaEkrandaOnay: "Afficher sur l'écran d'accueil (page Résumé)",
   kameraSakinGorebilirIpucu: "Si désactivé, la caméra n'est visible que par la gestion et la sécurité.",
   kameraOlusturuldu: "Caméra ajoutée.",
   kameraGuncellendi: "Caméra mise à jour.",

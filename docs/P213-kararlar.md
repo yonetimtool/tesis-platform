@@ -268,3 +268,50 @@ sakin görünürlüğü).
 düştü ve alan **zorunlu** oldu: kamera oluşturan her çağrı 422 almaya
 başladı. `test_cameras.py`'de **23 test** düştü ve kusuru anında
 gösterdi.
+
+## §4 — Kareler ana ekranda, hangi kameralar gösterilecek (web + mobil)
+
+**Karar:** seçim **kamera başına kalıcı bir bayrak** (`camera.ana_ekranda`, göç
+0106), süzgeç **sunucuda** (`GET /cameras?ana_ekranda=true`), sınır
+**yapılandırılabilir ve varsayılan 4** (`kamera_ana_ekran_sinir`).
+
+**Neden bayrak, neden "ilk N" değil:** karar yöneticinin olmalı. Kamera listesi
+alfabetik ya da ekleme sırasına göre gelir; "ilk 4"te otoparkın çöp konteyneri
+kamerası ana ekranı işgal edebilir, giriş kapısı görünmeyebilir. Bayrak ayrıca
+kameralar sayfasında tek onay kutusuyla yönetilebiliyor — ayrı bir "ana ekran
+düzeni" ekranı açmaya değmezdi.
+
+**Neden süzgeç sunucuda:** 20 kameralı bir sitede 20 kayıt indirip 4'ünü çizmek
+gereksiz trafik; dahası her kart sunucudan bir **kare** çeker, istemci
+süzgeciyle yanlışlıkla 20 kare isteği doğabilirdi.
+
+**Neden sınır ve neden 4:** her kare bir ffmpeg çağrısı demek; sınırsız bırakmak
+"ana ekranı aç → 15 ffmpeg" anlamına gelirdi. 4, iki sütunlu ızgarada iki tam
+satır ve tipik telefon ekranında kaydırmasız görünen miktar. Sabit değil, ayar:
+`kamera_ana_ekran_sinir`. Sınırı aşan işaretleme **422 `kamera_ana_ekran_sinir`**
+ile reddedilir — sessizce kırpmak, yöneticinin işaretlediği kameranın neden
+görünmediğini açıklanamaz kılardı.
+
+**Ölçüm:** backend `test_p213_ana_ekran_kamera.py` (9), web
+`p213-ana-ekran-kamera.dom.test.ts` (6) — özet sayfasının isteğinde
+`ana_ekranda=true` bulunması, karede `rtsp://`/parola sızmaması, pasif kameranın
+çizilmemesi dahil.
+
+## §5 — Mobil kamera ızgarası: satır başına iki kart, tam genişlik
+
+**Kök neden:** bant yatay kaydırmalı bir şeritti ve kart genişliği "ekrana dört
+kart sığsın" (P25c) kuralından türüyordu; tipik telefonda kart ~85 dp'ye düşüyor,
+sağda boş şerit kalıyor ve kare okunmuyordu.
+
+**Karar:** `GridView` ya da yatay `ListView` değil, **iki sütunlu `Wrap`**.
+Genişlik `(kullanılabilir - aralık) / 2` ile hesaplanır, yani satır **tam
+doldurulur**; üçüncü/dördüncü kamera kendiliğinden alt satıra geçer. `Wrap`
+seçildi çünkü kamera sayısı 1–4 arasında değişiyor ve `GridView` sarmalayıcı bir
+kaydırma kısıtı gerektiriyor — ana ekran zaten kaydırılabilir bir gövde.
+
+**Kapsam:** yalnız kamera ızgarası. Hızlı erişim ve istatistik ızgaraları kendi
+`crossAxisCount: sutun` hesabını **koruyor**; bu, kaynak kilidiyle ölçülüyor
+(`p213_kamera_bandi_test.dart`, "DIGER IZGARALAR DOKUNULMADI").
+
+**Ölçüm:** 7 test. Kilidin tuttuğu, `kKameraSutun`'u 3 yapıp 6 testin düşmesi ve
+2'ye dönünce hepsinin geçmesiyle kanıtlandı.

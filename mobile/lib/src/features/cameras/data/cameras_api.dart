@@ -28,11 +28,18 @@ class CamerasApi {
   CamerasApi(this._dio);
   final Dio _dio;
 
-  Future<List<Camera>> fetch({int limit = 100}) async {
+  /// (P213 §4) `anaEkranda: true` -> yalnizca ANA EKRANDA gosterilmek
+  /// uzere isaretlenmis kameralar. Suzgec SUNUCUDA uygulanir; istemci
+  /// tum listeyi cekip elemez — 20 kamerali bir sitede o, 20 kamera
+  /// verisi indirip 4'unu gostermek olurdu.
+  Future<List<Camera>> fetch({int limit = 100, bool? anaEkranda}) async {
     try {
       final res = await _dio.get<Map<String, dynamic>>(
         '/cameras',
-        queryParameters: {'limit': limit},
+        queryParameters: {
+          'limit': limit,
+          'ana_ekranda': ?anaEkranda,
+        },
       );
       return [
         for (final item in (res.data?['items'] as List?) ?? const [])
@@ -105,4 +112,15 @@ final camerasApiProvider = Provider<CamerasApi>((ref) {
 /// gizlenir (ana ekran rehin degil).
 final camerasProvider = FutureProvider.autoDispose<List<Camera>>((ref) {
   return ref.watch(camerasApiProvider).fetch();
+});
+
+/// (P213 §4) ANA EKRAN BANDI — yalnizca isaretli kameralar.
+///
+/// Ayri saglayici: kameralar EKRANI tum kameralari gosterir (yonetim
+/// ekranidir), ana ekran ise yoneticinin SECTIKLERINI. Tek saglayiciyi
+/// paylasip istemcide elemek, iki ekranin ayni onbellegi farkli
+/// anlamlarla kullanmasi olurdu.
+final anaEkranKameralariProvider =
+    FutureProvider.autoDispose<List<Camera>>((ref) {
+  return ref.watch(camerasApiProvider).fetch(limit: 10, anaEkranda: true);
 });

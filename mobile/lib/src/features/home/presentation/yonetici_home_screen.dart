@@ -85,7 +85,16 @@ class YoneticiHomeScreen extends ConsumerWidget {
     final hareketler = ref.watch(sonHareketlerProvider);
     // Kamera listesi SUNUCUDA role gore suzuludur; istemci ek suzgec
     // UYGULAMAZ. Hata -> bolum sessizce gizlenir (ana ekran rehin degil).
-    final kameralar = ref.watch(camerasProvider).value ?? const <Camera>[];
+    // (P213 §4) ANA EKRANDA YALNIZ ISARETLI KAMERALAR.
+    //
+    // Eskiden tum liste cekilip ilk N'i ciziliyordu — yani ana ekranda
+    // hangi kameranin gorunecegine sunucunun siralamasi karar veriyordu.
+    // Karar artik YONETICININ (`ana_ekranda` bayragi) ve suzgec
+    // SUNUCUDA: 20 kamerali bir sitede 20 kamera verisi indirip 4'unu
+    // gostermek gereksiz trafikti. Isaretli kamera yoksa bolum HIC
+    // cizilmez. Rol gorunurlugu AYRICA uygulanir (sunucu).
+    final kameralar =
+        ref.watch(anaEkranKameralariProvider).value ?? const <Camera>[];
 
     final aktifVardiya = vardiyalar.where((v) => v.aktifMi(now)).length;
     final izgaraSecimi = ref.watch(izgaraKarolariProvider(role));

@@ -25,6 +25,7 @@ import useSWR from "swr";
 
 
 import { KameraOynatici } from "@/components/KameraOynatici";
+import { kareKaynagi } from "@/components/KameraSeridi";
 import {
   Alan,
   AlanSarmal,
@@ -75,6 +76,8 @@ type Form = {
   restream_url: string;
   snapshot_url: string;
   sakin_gorebilir: boolean;
+  /** (P213 §4) Ana ekranda (Ozet) karesi gosterilsin mi. */
+  ana_ekranda: boolean;
   aktif: boolean;
 };
 
@@ -86,6 +89,7 @@ const BOS_FORM: Form = {
   restream_url: "",
   snapshot_url: "",
   sakin_gorebilir: false,
+  ana_ekranda: false,
   aktif: true,
 };
 
@@ -103,8 +107,11 @@ export default function KameralarPage() {
   // (P190 §6) Karo kaynagi: yoneticinin girdigi snapshot_url varsa o; yoksa
   // RTSP kameralarda SUNUCUNUN cektigi kare (`/api/cameras/{id}/kare`) —
   // kimlik bilgili RTSP adresi istemciye inmeden izgara dolar.
-  const kareKaynagi = (k: Kamera): string | null =>
-    k.snapshot_url || (k.tur === "rtsp" ? `/api/cameras/${k.id}/kare` : null);
+  // (P213 §3) TUR AYRIMI KALKTI: sunucu artik HLS kameradan da kare
+  // cekiyor. Ortak yardimci `KameraSeridi`den geliyor — iki ekranin
+  // ayni kurali iki kez yazmasi, birini degistirince otekini unutmakti.
+  // NOT: `ana_ekranda` bayragi BURAYI ETKILEMEZ; bu sayfa YONETIM
+  // ekranidir ve TUM kameralari gosterir.
   const kareCekilebilir = gorunen.some((k) => !!kareKaynagi(k));
   // Kare cekilemeyen (baglanti yok) kameralar — karo acik durum cizer,
   // bos kutu birakmaz. Her tazeleme turunda yeniden denenir.
@@ -220,6 +227,7 @@ export default function KameralarPage() {
       restream_url: k.restream_url ?? "",
       snapshot_url: k.snapshot_url ?? "",
       sakin_gorebilir: k.sakin_gorebilir,
+      ana_ekranda: k.ana_ekranda ?? false,
       aktif: k.aktif,
     });
     setFormHata(null);
@@ -279,6 +287,7 @@ export default function KameralarPage() {
         restream_url: form.restream_url.trim() || null,
         snapshot_url: form.snapshot_url.trim() || null,
         sakin_gorebilir: form.sakin_gorebilir,
+        ana_ekranda: form.ana_ekranda,
         aktif: form.aktif,
       };
       if (duzenlenen) await apiSend(`/api/cameras/${duzenlenen}`, "PATCH", govde);
@@ -618,6 +627,23 @@ export default function KameralarPage() {
                 onChange={(e) => setForm({ ...form, sakin_gorebilir: e.target.checked })}
               />
               {t("kameraSakinGorebilirOnay")}
+            </label>
+            {/* (P213 §4) ANA EKRAN — GORUNURLUKTEN AYRI BIR SORU.
+                `sakin_gorebilir` YETKI ("sakin gorebilir mi"),
+                bu ise YERLESIM ("ozetin bandinda dursun mu"). Ayni
+                kutuya baglamak, otopark kamerasini sakinlere acan
+                yoneticinin ozetini de kendiliginden doldururdu. */}
+            <label
+              className="flex items-center gap-2"
+              style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text)" }}
+            >
+              <input
+                type="checkbox"
+                data-test="kamera-ana-ekranda"
+                checked={form.ana_ekranda}
+                onChange={(e) => setForm({ ...form, ana_ekranda: e.target.checked })}
+              />
+              {t("kameraAnaEkrandaOnay")}
             </label>
             <label
               className="flex items-center gap-2"

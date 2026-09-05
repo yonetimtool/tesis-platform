@@ -99,6 +99,9 @@ List<ProviderOrFamily> _tamProviderlar(HomeVaryant varyant) => [
       weatherProvider,
       tenantSettingsProvider,
       camerasProvider,
+      // (P213 §4) Ana ekran bandi AYRI saglayicidan besleniyor; tazeleme
+      // listesine eklenmezse "asagi cek" bandi guncellemezdi.
+      anaEkranKameralariProvider,
       sonDuyurularProvider,
       if (varyant == HomeVaryant.sakin) ...[
         anaEkranKurallariProvider,

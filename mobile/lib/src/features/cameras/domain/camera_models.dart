@@ -114,6 +114,7 @@ class Camera {
     this.tur = CameraTur.hls,
     this.aktif = true,
     this.sakinGorebilir = false,
+    this.anaEkranda = false,
     this.restreamUrl,
     this.snapshotUrl,
     this.canliYol,
@@ -166,6 +167,11 @@ class Camera {
   /// KVKK anahtari — sakin/tesis gorevlisi gorunurlugu (yonetim acar).
   final bool sakinGorebilir;
 
+  /// (P213 §4) Ana ekranda karesi gosterilsin mi — YERLESIM bayragi.
+  /// `sakinGorebilir` (YETKI) ile karistirilmamali: biri "sakin bunu
+  /// gorebilir mi", oteki "bu kamera ana ekranin bandinda dursun mu".
+  final bool anaEkranda;
+
   final bool? _oynatilabilir;
 
   /// Sunucunun `oynatilabilir` alani; yoksa YERELDE ayni kural uygulanir
@@ -190,6 +196,7 @@ class Camera {
     ad: json['ad'] as String? ?? '',
     konum: json['konum'] as String?,
     streamUrl: json['stream_url'] as String? ?? '',
+    anaEkranda: json['ana_ekranda'] as bool? ?? false,
     tur: CameraTur.fromWire(json['tur'] as String?),
     aktif: json['aktif'] as bool? ?? true,
     sakinGorebilir: json['sakin_gorebilir'] as bool? ?? false,

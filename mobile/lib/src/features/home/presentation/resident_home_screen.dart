@@ -80,7 +80,16 @@ class ResidentHomeScreen extends ConsumerWidget {
     // sinirlar — istemci artik kargo/ziyaretci/odeme/talep birlestirmez.
     final hareketler = ref.watch(sonHareketlerProvider);
     // Sunucu suzgeci: sakine YALNIZ `aktif && sakin_gorebilir` doner.
-    final kameralar = ref.watch(camerasProvider).value ?? const <Camera>[];
+    // (P213 §4) ANA EKRANDA YALNIZ ISARETLI KAMERALAR.
+    //
+    // Eskiden tum liste cekilip ilk N'i ciziliyordu — yani ana ekranda
+    // hangi kameranin gorunecegine sunucunun siralamasi karar veriyordu.
+    // Karar artik YONETICININ (`ana_ekranda` bayragi) ve suzgec
+    // SUNUCUDA: 20 kamerali bir sitede 20 kamera verisi indirip 4'unu
+    // gostermek gereksiz trafikti. Isaretli kamera yoksa bolum HIC
+    // cizilmez. Rol gorunurlugu AYRICA uygulanir (sunucu).
+    final kameralar =
+        ref.watch(anaEkranKameralariProvider).value ?? const <Camera>[];
     // Ana ekran icerik bolumleri (3 kayit): kurallar sira ASC, etkinlikler
     // ?aktif=true + en yakin once — ikisi de sunucudan sirali gelir.
     final kurallar = ref.watch(anaEkranKurallariProvider).value ?? const [];

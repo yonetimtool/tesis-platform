@@ -8,9 +8,22 @@ import 'section_header.dart';
 import 'section_padding.dart';
 import 'hizli_erisim.dart';
 
-/// Ana ekranin "Canlı Kamera" seridi (gorevli.jpeg): yatay kaydirilabilir
-/// kamera kartlari. Kart tipi Kameralar ekranindaki izgarayla AYNIDIR
-/// ([KameraKarti]) — ad + konum + "• Canlı" / "Oynatılamıyor".
+/// Ana ekranin "Canlı Kamera" bandi: SATIR BASINA IKI kart, genislik TAM
+/// DOLDURULUR; ucuncu ve dorduncu kameralar ALTA gecer.
+///
+/// =========================================================================
+/// (P213 §5) YATAY SERIT -> IKI SUTUNLU IZGARA
+/// =========================================================================
+/// OLCULEN SIKAYET: "kamera izgarasi 3 sutun ve sayfayi enlemesine
+/// doldurmuyor". Sebep, seridin YATAY KAYDIRMALI olmasi ve kart
+/// genisliginin "ekrana DORT kart sigsin" kuralindan turemesiydi (P25c):
+/// tipik telefonda kartlar ~80-90 dp'ye dusuyor, sagda bos bir serit
+/// kaliyor ve kare neredeyse okunmuyordu. Ana ekranda amac BAKIP GORMEK;
+/// dar kartlar bunu engelliyordu.
+///
+/// Kart tipi Kameralar ekranindaki izgarayla AYNIDIR ([KameraKarti]).
+/// YALNIZ BU IZGARA degisti — hizli erisim ve istatistik izgaralari
+/// (`hizli_erisim.dart`, `stat_tile.dart`) DOKUNULMADI.
 ///
 /// Liste SUNUCUDAN gelir ve sunucuda rol'e gore suzulmustur; bu widget
 /// EK SUZGEC UYGULAMAZ (sakin/gorevli yalniz kendisine gonderilen kameralari
@@ -43,38 +56,48 @@ class KameraSeridi extends StatelessWidget {
             onSeeAll: onSeeAll,
           ),
         ),
-        Builder(
-          builder: (context) {
-            final kartGenislik = kameraKartGenisligi(context);
-            return SizedBox(
-              height: kameraSeritYuksekligi(context, kartGenislik),
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: kHomePagePadding),
-                itemCount: kameralar.length,
-                separatorBuilder: (_, _) =>
-                    const SizedBox(width: HomeTokens.gridGap),
-                itemBuilder: (context, i) => KameraKarti(
-                  kamera: kameralar[i],
-                  width: kartGenislik,
-                  onTap: () => onAc(kameralar[i]),
-                ),
-              ),
-            );
-          },
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: kHomePagePadding),
+          child: LayoutBuilder(
+            builder: (context, kisit) {
+              // IKI SUTUN, ARADA TEK BOSLUK: kalan genislik ikiye
+              // BOLUNUR, yani band sayfayi TAM doldurur.
+              final kartGenislik =
+                  (kisit.maxWidth - HomeTokens.gridGap) / kKameraSutun;
+              return Wrap(
+                spacing: HomeTokens.gridGap,
+                runSpacing: HomeTokens.gridGap,
+                children: [
+                  for (final k in kameralar)
+                    SizedBox(
+                      width: kartGenislik,
+                      height: kameraSeritYuksekligi(context, kartGenislik),
+                      child: KameraKarti(
+                        kamera: k,
+                        width: kartGenislik,
+                        onTap: () => onAc(k),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
         ),
       ],
     );
   }
 }
 
-/// Ana ekranda AYNI ANDA gorunmesi hedeflenen kamera sayisi (P25c).
+/// (P213 §5) SATIR BASINA KART SAYISI.
 ///
-/// Eskiden kart sabit 168 dp idi ve tipik bir telefonda ekrana yalnizca IKI
-/// kamera sigiyordu: sekiz kameralik bir sitede yonetici ana ekranda ne
-/// oldugunu goremiyor, her seferinde yatay kaydiriyordu. Genislik artik
-/// EKRANDAN hesaplanir.
+/// P25c'de bu sayi 4'tu ve kartlar YATAY bir seritte diziliyordu; tipik
+/// telefonda kart ~85 dp'ye dusuyor, kare okunmuyordu. Iki sutun, ayni
+/// ekranda hem GORULEBILIR bir kare hem de dort kamerayi (iki satir)
+/// veriyor.
+const int kKameraSutun = 2;
+
+/// Eski ad — `kameraKartGenisligi` hesabinda hâlâ kullaniliyor (P25c
+/// testleri o fonksiyonun sinirlarini kilitliyor).
 const int kKameraGorunenKart = 4;
 
 /// Serit karti genisligi — ekrana [kKameraGorunenKart] tanesi sigacak sekilde.

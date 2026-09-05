@@ -183,7 +183,16 @@ class SahaHomeScreen extends ConsumerWidget {
 
     // Kamera listesi SUNUCUDA rol'e gore suzuludur: tesis gorevlisi yalniz
     // sakine acilmis kameralari alir. Istemci burada suzgec UYGULAMAZ.
-    final kameralar = ref.watch(camerasProvider).value ?? const <Camera>[];
+    // (P213 §4) ANA EKRANDA YALNIZ ISARETLI KAMERALAR.
+    //
+    // Eskiden tum liste cekilip ilk N'i ciziliyordu — yani ana ekranda
+    // hangi kameranin gorunecegine sunucunun siralamasi karar veriyordu.
+    // Karar artik YONETICININ (`ana_ekranda` bayragi) ve suzgec
+    // SUNUCUDA: 20 kamerali bir sitede 20 kamera verisi indirip 4'unu
+    // gostermek gereksiz trafikti. Isaretli kamera yoksa bolum HIC
+    // cizilmez. Rol gorunurlugu AYRICA uygulanir (sunucu).
+    final kameralar =
+        ref.watch(anaEkranKameralariProvider).value ?? const <Camera>[];
 
     return HomeCanliVeri(
       varyant: varyant,

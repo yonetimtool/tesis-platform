@@ -438,6 +438,7 @@ export const ru: Sozluk = {
   kameraSnapshotIpucu: "Плитка сетки берёт один кадр по этому адресу; необязательно.",
   kameraSakinGorebilir: "Видна жильцам",
   kameraSakinGorebilirOnay: "Показывать жильцам",
+  kameraAnaEkrandaOnay: "Показывать на главном экране (страница «Сводка»)",
   kameraSakinGorebilirIpucu: "Если выключено, камера видна только управлению и охране.",
   kameraOlusturuldu: "Камера добавлена.",
   kameraGuncellendi: "Камера обновлена.",

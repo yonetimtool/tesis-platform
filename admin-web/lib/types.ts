@@ -808,6 +808,9 @@ export interface Kamera {
   snapshot_url?: string | null;
   // Sunucunun karari (restream varsa rtsp de oynatilabilir olur — P17).
   oynatilabilir: boolean;
+  /** (P213 §4) Ana ekranda (Ozet) karesi gosterilsin mi — YERLESIM
+   *  bayragi; `sakin_gorebilir` (YETKI) ile karistirilmamali. */
+  ana_ekranda?: boolean;
   // (P190 §6) YONETILEN canli izleme yolu (backend HLS vekili, rtsp icin).
   // Doluysa istemci restream yerine `/api${canli_yol}` oynatir.
   canli_yol?: string | null;

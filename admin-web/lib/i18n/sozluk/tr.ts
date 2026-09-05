@@ -456,6 +456,7 @@ export const tr = {
   kameraSnapshotIpucu: "Izgara karosu bu adresten tek kare çeker; boş bırakılabilir.",
   kameraSakinGorebilir: "Sakin görebilir",
   kameraSakinGorebilirOnay: "Sakinlere göster",
+  kameraAnaEkrandaOnay: "Ana ekranda göster (Özet sayfası)",
   kameraSakinGorebilirIpucu: "Kapalıysa kamera yalnız yönetim ve güvenlikte görünür.",
   kameraOlusturuldu: "Kamera eklendi.",
   kameraGuncellendi: "Kamera güncellendi.",

@@ -23,13 +23,30 @@ import type { Kamera } from "@/lib/types";
 /** Kare tazeleme araligi — kamera sayfasi ve mobil ile AYNI (8 sn). */
 const KARE_ARALIGI_MS = 8000;
 
+/**
+ * (P213 §3-4) KARO KAYNAGI — KAMERA TURUNDEN BAGIMSIZ.
+ *
+ * Yoneticinin girdigi `snapshot_url` varsa o; yoksa SUNUCUNUN cektigi
+ * kare (`/api/cameras/{id}/kare`). Eskiden bu yedek YALNIZ `rtsp`
+ * kameralardaydi ve HLS kameralar bos kutu gosteriyordu — kullanicinin
+ * gordugu davranis kamera TURUNE gore degisiyordu. Sunucu artik ikisini
+ * de cekiyor (P213 §3), yani tur ayrimi burada da KALKTI.
+ */
+export function kareKaynagi(k: Kamera): string | null {
+  return k.snapshot_url || `/api/cameras/${k.id}/kare`;
+}
+
 export function KameraSeridi({ kameralar }: { kameralar: Kamera[] }) {
   const t = useT();
   const [nesil, setNesil] = useState(0);
   const [oynatilan, setOynatilan] = useState<Kamera | null>(null);
 
-  const gorunen = kameralar.filter((k) => k.aktif).slice(0, 4);
-  const kareCekilebilir = gorunen.some((k) => !!k.snapshot_url);
+  // (P213 §4) SECIM SUNUCUDA YAPILDI (`ana_ekranda`); burada yalnizca
+  // pasif kameralar elenir. `slice(0, 4)` KALDIRILDI: siniri uc
+  // uyguluyor (`KAMERA_ANA_EKRAN_SINIR`) ve iki yerde iki farkli sayi
+  // tutmak, birini degistirince otekini unutmak demekti.
+  const gorunen = kameralar.filter((k) => k.aktif);
+  const kareCekilebilir = gorunen.some((k) => !!kareKaynagi(k));
 
   useEffect(() => {
     if (!kareCekilebilir) return;
@@ -77,9 +94,21 @@ export function KameraSeridi({ kameralar }: { kameralar: Kamera[] }) {
               {t("ortakKapat")}
             </button>
           </div>
+          {/* (P213 §2-4) YONETILEN CANLI YOL ONCELIKLI — kameralar
+              sayfasindaki ile AYNI kural. `stream_url` kameranin KENDI
+              adresidir (kimlik bilgisi tasiyabilir ve rtsp olabilir);
+              vekil uzerinden gitmek onu istemciden uzak tutar. */}
           <KameraOynatici
-            url={oynatilan.restream_url || oynatilan.stream_url}
-            mp4={oynatilan.tur === "mp4" && !oynatilan.restream_url}
+            url={
+              oynatilan.canli_yol
+                ? `/api${oynatilan.canli_yol}`
+                : oynatilan.restream_url || oynatilan.stream_url
+            }
+            mp4={
+              oynatilan.tur === "mp4" &&
+              !oynatilan.restream_url &&
+              !oynatilan.canli_yol
+            }
             poster={oynatilan.snapshot_url}
           />
         </Kart>
@@ -97,10 +126,10 @@ export function KameraSeridi({ kameralar }: { kameralar: Kamera[] }) {
                 className="block w-full text-start disabled:cursor-default"
               >
                 <span className="relative block aspect-video bg-yuzey-placeholder">
-                  {k.snapshot_url ? (
+                  {kareKaynagi(k) ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={`${k.snapshot_url}${k.snapshot_url.includes("?") ? "&" : "?"}_k=${nesil}`}
+                      src={`${kareKaynagi(k)}${kareKaynagi(k)!.includes("?") ? "&" : "?"}_k=${nesil}`}
                       alt={k.ad}
                       loading="lazy"
                       decoding="async"

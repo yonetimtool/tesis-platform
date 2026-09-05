@@ -438,6 +438,7 @@ export const ar: Sozluk = {
   kameraSnapshotIpucu: "تسحب البطاقة لقطة واحدة من هذا العنوان؛ اختياري.",
   kameraSakinGorebilir: "مرئية للسكان",
   kameraSakinGorebilirOnay: "إظهارها للسكان",
+  kameraAnaEkrandaOnay: "إظهار في الشاشة الرئيسية (صفحة الملخص)",
   kameraSakinGorebilirIpucu: "عند الإيقاف تظهر الكاميرا للإدارة والأمن فقط.",
   kameraOlusturuldu: "تمت إضافة الكاميرا.",
   kameraGuncellendi: "تم تحديث الكاميرا.",

@@ -438,6 +438,7 @@ export const es: Sozluk = {
   kameraSnapshotIpucu: "La tarjeta toma un fotograma de esta dirección; opcional.",
   kameraSakinGorebilir: "Visible para residentes",
   kameraSakinGorebilirOnay: "Mostrar a los residentes",
+  kameraAnaEkrandaOnay: "Mostrar en la pantalla de inicio (página Resumen)",
   kameraSakinGorebilirIpucu: "Si está apagado, la cámara solo la ven la administración y la seguridad.",
   kameraOlusturuldu: "Cámara añadida.",
   kameraGuncellendi: "Cámara actualizada.",

@@ -438,6 +438,7 @@ export const en: Sozluk = {
   kameraSnapshotIpucu: "The grid tile pulls a single frame from this address; optional.",
   kameraSakinGorebilir: "Visible to residents",
   kameraSakinGorebilirOnay: "Show to residents",
+  kameraAnaEkrandaOnay: "Show on the home screen (Summary page)",
   kameraSakinGorebilirIpucu: "When off, the camera is visible only to management and security.",
   kameraOlusturuldu: "Camera added.",
   kameraGuncellendi: "Camera updated.",

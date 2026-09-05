@@ -347,8 +347,16 @@ export default function DashboardPage() {
     jsonFetcher,
     { refreshInterval: 15000, revalidateOnFocus: false },
   );
+  // (P213 §4) OZETTE YALNIZ "ANA EKRANDA GOSTER" ISARETLI KAMERALAR.
+  //
+  // Eskiden ilk 50 kamera cekilip ilk 4'u ciziliyordu — yani hangi
+  // kameranin ozette gorunecegine ALFABETIK SIRA karar veriyordu.
+  // Artik karar YONETICININ (`ana_ekranda` bayragi) ve sunucu sinirli
+  // sayida kamerada aciyor (her kare bir ffmpeg sureci).
+  //
+  // Isaretli kamera yoksa liste BOS gelir ve serit HIC cizilmez.
   const { data: kameraYanit } = useSWR<KameraListResponse>(
-    "/api/cameras?limit=50&offset=0",
+    "/api/cameras?ana_ekranda=true&limit=10&offset=0",
     jsonFetcher,
     { revalidateOnFocus: false },
   );

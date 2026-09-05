@@ -438,6 +438,7 @@ export const de: Sozluk = {
   kameraSnapshotIpucu: "Die Kachel holt von dieser Adresse ein Einzelbild; optional.",
   kameraSakinGorebilir: "Für Bewohner sichtbar",
   kameraSakinGorebilirOnay: "Bewohnern anzeigen",
+  kameraAnaEkrandaOnay: "Auf dem Startbildschirm anzeigen (Übersichtsseite)",
   kameraSakinGorebilirIpucu: "Wenn aus, ist die Kamera nur für Verwaltung und Sicherheit sichtbar.",
   kameraOlusturuldu: "Kamera hinzugefügt.",
   kameraGuncellendi: "Kamera aktualisiert.",
