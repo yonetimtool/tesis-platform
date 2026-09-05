@@ -2692,6 +2692,27 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "La passerelle de diffusion en direct (MediaMTX) est injoignable. Le service mediamtx n'est peut-être pas démarré sur le serveur.",
         "es": "No se puede acceder a la pasarela de emisión en directo (MediaMTX). El servicio mediamtx puede no estar en ejecución.",
     },
+    # (P213 §2) GECIT AYAKTA AMA API'YE IZIN VERMIYOR — duzeltilecek yer
+    # KAMERA DEGIL SUNUCU YAPILANDIRMASI. Ayri metin sart: "ulasilamiyor"
+    # ile "reddetti" yoneticiyi iki FARKLI yere gonderir.
+    "kamera_gecit_yetkisiz": {
+        "tr": "Canlı yayın geçidi isteği reddetti (yetki). Sunucudaki mediamtx yapılandırması düzeltilmeli.",
+        "en": "The live streaming gateway rejected the request (authorisation). The mediamtx configuration on the server needs fixing.",
+        "ar": "رفضت بوابة البث المباشر الطلب (تصريح). يجب إصلاح إعداد mediamtx على الخادم.",
+        "ru": "Шлюз прямой трансляции отклонил запрос (авторизация). Нужно исправить настройку mediamtx на сервере.",
+        "de": "Das Live-Gateway hat die Anfrage abgelehnt (Berechtigung). Die mediamtx-Konfiguration auf dem Server muss korrigiert werden.",
+        "fr": "La passerelle de diffusion a refusé la requête (autorisation). La configuration mediamtx du serveur doit être corrigée.",
+        "es": "La pasarela de emisión rechazó la solicitud (autorización). Hay que corregir la configuración de mediamtx en el servidor.",
+    },
+    "kamera_gecit_yapilandirma": {
+        "tr": "Canlı yayın geçidi kamera yolunu kaydedemedi. Sunucu günlüklerinde ayrıntı var.",
+        "en": "The live streaming gateway could not register the camera path. Details are in the server logs.",
+        "ar": "تعذّر على بوابة البث تسجيل مسار الكاميرا. التفاصيل في سجلات الخادم.",
+        "ru": "Шлюз трансляции не смог зарегистрировать путь камеры. Подробности в журналах сервера.",
+        "de": "Das Live-Gateway konnte den Kamerapfad nicht registrieren. Details stehen in den Serverprotokollen.",
+        "fr": "La passerelle n'a pas pu enregistrer le chemin de la caméra. Les détails sont dans les journaux du serveur.",
+        "es": "La pasarela no pudo registrar la ruta de la cámara. Los detalles están en los registros del servidor.",
+    },
     "kamera_yayin_hazir_degil": {
         "tr": "Canlı yayın henüz hazır değil. Geçit çalışıyor ama kameradan görüntü alamadı; birkaç saniye sonra tekrar deneyin.",
         "en": "The live stream is not ready yet. The gateway is running but could not pull video from the camera; try again in a few seconds.",

@@ -61,3 +61,83 @@ kaydı; tesis izolasyonu; denetçi 403) + eskalasyon eşiğinin **gerçekten
 kullanıldığı** (eşik 2 → üçüncü aşımda eskalasyon) P212 dosyasına eklendi.
 Web 2 DOM testi (alan çizilir ve gönderilir; eşik 1'de uyarı görünür).
 Göç geri alınabilir — downgrade→upgrade koşuldu.
+
+---
+
+## §2 — RTSP canlı yayın açılmıyordu: kök neden **MediaMTX API yetkisi**
+
+### ÖLÇÜM — zinciri sırayla sürdüm
+```
+1) GET  http://mediamtx:9997/v3/paths/list      -> 401     ← KIRILMA NOKTASI
+2) POST /v3/config/paths/add/cam<id>            -> 401
+3) backend bunu "yol zaten var" sanıp PATCH     -> 401 (sonucu OKUNMUYOR)
+4) GET  /cam<id>/index.m3u8                     -> 404 (yol hiç oluşmadı)
+5) kullanıcı: "Canlı yayın henüz hazır değil"
+```
+
+MediaMTX 1.9'un **gömülü varsayılan** `authInternalUsers` ayarında iki iç
+kullanıcı var:
+* `any` → publish/read/playback (her IP)
+* `any` → **api**/metrics/pprof ama **yalnız `ips: [127.0.0.1, ::1]`**
+
+`api` servisi geçide docker ağının IP'siyle (172.x) bağlandığı için **her
+API çağrısı 401** alıyordu.
+
+**Kare neden çalışıyordu:** ızgaradaki kareyi ffmpeg **kameradan
+doğrudan** çekiyor; MediaMTX'e hiç uğramıyor. Kullanıcının gözlemi
+("kare var, canlı yok") bu ayrımın birebir yansıması.
+
+### KARAR K2.1 — `infra/mediamtx.yml` (dosya, ortam değişkeni değil)
+`api` izni özel ağ aralıklarına (`10/8`, `172.16/12`, `192.168/16`) +
+yerel döngüye açıldı. **API portu dışarı açılmıyor** (compose'da `ports`
+yok): özel ağ aralığını yetkilendirmek, API'yi internete açmak değildir.
+
+Önce `MTX_AUTHINTERNALUSERS_1_IPS=…` ortam değişkeni denendi ve **etki
+etmedi** (401 sürdü) — liste öğelerini env ile ezmek bu sürümde güvenilir
+değil. Dosya hem çalışıyor hem kararı **okunur** kılıyor.
+
+### KARAR K2.2 — Yetki hatası artık **yutulmuyor**
+Eski kod POST'un 4xx'ini idempotent kabul edip PATCH deniyor, **onun
+sonucunu hiç okumuyordu**. Artık:
+* **401/403** → `kamera_gecit_yetkisiz` ("sunucudaki mediamtx
+  yapılandırması düzeltilmeli") — çünkü düzeltilecek yer kamera değil;
+* `"already exists"` içeren 4xx → **normal**, idempotent kayıt;
+* başka 4xx/5xx → `kamera_gecit_yapilandirma` + gövde loglanır.
+
+Böylece dört durum dört ayrı cümle: geçide **ulaşılamıyor** /
+geçit **reddetti** / geçit **yolu kaydedemedi** / **yayın hazır değil**.
+Dördünü tek mesaja indirmek, yöneticiyi yanlış yere gönderiyordu.
+
+### ÖLÇÜM — zincirin tamamı sentetik bir yayınla sürüldü
+Gerçek kamera yok; bu yüzden ikinci bir MediaMTX konteynerini "kamera"
+yapıp ffmpeg ile test deseni yayınladım:
+
+```
+paths/add            -> 200
+index.m3u8 (geçit)   -> 200  (varyant playlist)
+main_stream.m3u8     -> 200
+BACKEND VEKİLİ:
+  /cameras/{id}/canli/index.m3u8       -> 200
+  /cameras/{id}/canli/main_stream.m3u8 -> 200
+  /cameras/{id}/canli/<seg>.ts         -> 200, 59 784 bayt gerçek video
+```
+
+Segment adı `e251157e82b2_main_seg0.ts` — vekildeki dosya deseni
+(`^[A-Za-z0-9._-]+\.(m3u8|ts|mp4)$`) bunu kabul ediyor; iki kademeli
+playlist (index → main_stream → segment) vekilden ayrı istekler olarak
+geçiyor.
+
+**Dev'de canlı izleme artık açık:** `infra/.env`e `MEDIAMTX_URL` ve
+`MEDIAMTX_API_URL` eklendi — kök neden ancak zincir çalışırken ölçülebilir.
+
+### Kilit
+10 test: dört geçit hatasının **ayrı ayrı** metinleri (7 dil, dördü de
+birbirinden farklı ve yetki hatası "sunucu" diyor), 401/403 → ayrı kimlik,
+"already exists" → hata değil, başka 4xx → hata, 5 gezinti denemesi 404.
+Kırma denemesi: 401 dalı devre dışı bırakıldığında tam olarak o iki test
+düştü.
+
+### Ölçemediğim
+**Gerçek kamerayla prod**. Prod'da `mediamtx.yml` mount edilene kadar API
+401 dönmeye devam eder — dağıtımda `infra/mediamtx.yml` sunucuya
+gitmeli ve `docker compose up -d mediamtx` ile yeniden oluşturulmalı.

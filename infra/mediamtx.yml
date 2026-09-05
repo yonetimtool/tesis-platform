@@ -1,0 +1,73 @@
+# (P213 §2) MEDIAMTX YAPILANDIRMASI — CANLI YAYININ KOK NEDENI BURADAYDI.
+#
+# ===========================================================================
+# OLCULEN KUSUR
+# ===========================================================================
+#   $ GET http://mediamtx:9997/v3/paths/list   ->  401
+#
+# MediaMTX 1.9'un GOMULU varsayilan yapilandirmasinda iki ic kullanici var:
+#   1) `any`  -> publish/read/playback  (her IP)
+#   2) `any`  -> api/metrics/pprof      ama YALNIZ ips: [127.0.0.1, ::1]
+#
+# `api` servisi MediaMTX'e docker aginin IP'siyle (172.x) baglaniyor, yani
+# ikinci kullanicinin IP kisitina TAKILIYOR ve API cagrilari 401 aliyordu.
+# Sonuc zinciri:
+#   `/v3/config/paths/add/cam<id>` -> 401
+#   backend bunu "yol zaten var" sanip PATCH dener -> 401
+#   HICBIR ISTISNA ATILMAZ, akis sessizce devam eder
+#   `GET /cam<id>/index.m3u8` -> yol hic olusmadigi icin 404
+#   kullanici "yayin hazir degil" gorur.
+#
+# Izgaradaki KARE calisiyordu cunku onu ffmpeg KAMERADAN DOGRUDAN cekiyor;
+# MediaMTX'e hic ugramiyor. Kullanicinin gozlemi ("kare var, canli yok")
+# bu ayrimin birebir yansimasi.
+#
+# ===========================================================================
+# NEDEN ORTAM DEGISKENI DEGIL, DOSYA
+# ===========================================================================
+# `MTX_AUTHINTERNALUSERS_1_IPS=...` denendi ve ETKI ETMEDI (401 surdu).
+# Liste ogelerini ortam degiskeniyle ezmek bu surumde guvenilir degil;
+# dosya hem calisiyor hem de KARARI OKUNUR kiliyor.
+#
+# ===========================================================================
+# GUVENLIK
+# ===========================================================================
+# API portu (9997) DISARI ACILMIYOR — compose'da `ports` yok, yalnizca
+# ic ag. `api` iznini OZEL AG ARALIKLARINA vermek, API'yi internete
+# acmak DEGILDIR. Halka acik olan tek sey HLS (8888) ve ona da yalnizca
+# backend vekili uzerinden gidiliyor (rol kapisi orada).
+api: yes
+apiAddress: :9997
+
+hls: yes
+hlsAddress: :8888
+# Dusuk gecikmeli kucuk parcalar; tek izleyicili site kamerasi icin yeterli.
+# `mpegts` -> playlist `.ts` parcalari referanslar (vekildeki dosya adi
+# deseni bunu bekliyor).
+hlsVariant: mpegts
+
+# Sunucu rollerinin HICBIRI acilmiyor: MediaMTX burada yalnizca RTSP
+# KAYNAGINI cekip HLS'e ceviren bir gecittir.
+rtsp: no
+rtmp: no
+webrtc: no
+srt: no
+
+authInternalUsers:
+  # Okuma/yayin — HLS izleyicisi (backend vekili) bu kullaniciyla gelir.
+  - user: any
+    pass:
+    ips: []
+    permissions:
+      - action: publish
+      - action: read
+      - action: playback
+  # API — YALNIZ ozel ag araliklari. Yerel dongu de birakildi ki
+  # konteyner ici teshis (`curl 127.0.0.1:9997`) calismaya devam etsin.
+  - user: any
+    pass:
+    ips: ['127.0.0.1', '::1', '10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16']
+    permissions:
+      - action: api
+      - action: metrics
+      - action: pprof

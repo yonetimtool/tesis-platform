@@ -538,18 +538,48 @@ async def _canli_yolu_kaydet(obj: Camera) -> None:
     bu BASARI sayilir.
     """
     api = settings.mediamtx_api_url.rstrip("/")
+    govde = {"source": obj.stream_url, "sourceOnDemand": True}
     async with httpx.AsyncClient(timeout=5) as istemci:
         yanit = await istemci.post(
-            f"{api}/v3/config/paths/add/cam{obj.id.hex}",
-            json={"source": obj.stream_url, "sourceOnDemand": True},
+            f"{api}/v3/config/paths/add/cam{obj.id.hex}", json=govde
         )
         # 200 = eklendi; MediaMTX var olan yol icin 4xx doner — idempotent
         # kabul: kaynak URL degistiyse guncelle (patch) dene.
         if yanit.status_code >= 400:
-            await istemci.patch(
-                f"{api}/v3/config/paths/patch/cam{obj.id.hex}",
-                json={"source": obj.stream_url, "sourceOnDemand": True},
+            yanit = await istemci.patch(
+                f"{api}/v3/config/paths/patch/cam{obj.id.hex}", json=govde
             )
+    # =====================================================================
+    # (P213 §2) YETKI HATASI ARTIK YUTULMUYOR — CANLI YAYININ KOK NEDENI
+    # =====================================================================
+    # OLCULDU: MediaMTX 1.9'un varsayilan `authInternalUsers` ayarinda
+    # `api` izni YALNIZ 127.0.0.1/::1'e verilmis; `api` servisi docker
+    # aginin IP'siyle (172.x) baglandigi icin HER API cagrisi 401
+    # aliyordu. Eski kod POST 4xx'i "yol zaten var" sayip PATCH deniyor,
+    # o da 401 donuyor ve SONUC OKUNMUYORDU: akis sessizce devam edip
+    # HLS'i istiyor, yol hic olusmadigi icin 404 geliyor ve kullanici
+    # "yayin hazir degil" goruyordu — yani yanlis yere bakiyordu.
+    #
+    # 401/403 AYRI BIR HATA: duzeltilecek yer KAMERA DEGIL SUNUCU
+    # YAPILANDIRMASIDIR (bkz. infra/mediamtx.yml).
+    if yanit.status_code in (401, 403):
+        logger.error(
+            "[kamera] MediaMTX API yetkisi REDDETTI (%s) durum=%s — "
+            "gecit yapilandirmasini kontrol edin (infra/mediamtx.yml)",
+            api_adresi(), yanit.status_code,
+        )
+        raise APIError(502, "bad_gateway", "kamera_gecit_yetkisiz")
+    if yanit.status_code >= 400:
+        # Yol ZATEN VARSA MediaMTX yine 4xx doner ve bu NORMALDIR
+        # (idempotent kayit). Ayirt etmek icin govdeye bakariz: "already
+        # exists" disindaki bir hata gercek bir yapilandirma sorunudur.
+        metin = (yanit.text or "").lower()
+        if "already exists" not in metin:
+            logger.error(
+                "[kamera] MediaMTX yol kaydi reddedildi durum=%s govde=%r",
+                yanit.status_code, (yanit.text or "")[:200],
+            )
+            raise APIError(502, "bad_gateway", "kamera_gecit_yapilandirma")
 
 
 #: (P190 §6 guvenlik) HLS dosya adi TEK bilesendir: harf/rakam/._- + uzanti.

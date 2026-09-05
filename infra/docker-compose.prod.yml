@@ -292,6 +292,10 @@ services:
   mediamtx:
     image: bluenviron/mediamtx:1.9.3
     restart: unless-stopped
+    # (P213 §2) YAPILANDIRMA DOSYADAN: `api` izni docker agina acilir.
+    # Gerekce ve olculen kusur `infra/mediamtx.yml` basinda.
+    volumes:
+      - ./mediamtx.yml:/mediamtx.yml:ro
     environment:
       MTX_API: "yes"
       MTX_APIADDRESS: :9997
