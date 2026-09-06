@@ -52,6 +52,18 @@ interface Satir extends SatirTabani {
   aciklama: string;
 }
 
+/** (P217 §3) Kisi arama alaninin gorundugu ESIK.
+ *
+ * Bu sayidan KISA listede acilir menu zaten taranabilir ve ayri bir
+ * arama kutusu yalnizca kalabalik yapar (istegin sikayeti). Uzun
+ * listede ise arama, seciciyi kullanilabilir kilan tek sey.
+ *
+ * 10: iki-uc sakinli bir daire, on kisilik kucuk bir site ve "pesin
+ * odeme" listesi bu esigin altinda kalir; 500 kisilik bir sitenin
+ * borclu listesi ustunde.
+ */
+const ARAMA_ESIGI = 10;
+
 export default function TahsilatlarPage() {
   const t = useT();
   const [tekil, setTekil] = useState(false);
@@ -189,6 +201,16 @@ function TekilModal({
     .filter((k) => !q || k.ad.toLocaleLowerCase("tr").includes(q))
     .map((k) => ({ deger: k.id, etiket: k.ad }));
 
+  // (P217 §3) Arama alani LISTE UZUNKEN gorunur. Esik SUZULMEMIS liste
+  // uzerinden olculur: aksi halde kullanici arayip listeyi kisaltinca
+  // alan KENDI ALTINDAN kaybolur ve yazdigi metin ekrandan silinir.
+  const kaynakUzunluk = sakinSuzgeci
+    ? sakinler.length
+    : pesin
+      ? kisiler.length
+      : borclular.length;
+  const aramaGerekli = kaynakUzunluk > ARAMA_ESIGI;
+
   async function kaydet() {
     if (!kisiId) { setHata(t("finansKisiGerekli")); return; }
     if (!secKasa) { setHata(t("finansKasaGerekli")); return; }
@@ -234,16 +256,37 @@ function TekilModal({
       <div className="grid gap-3">
         {/* (P206 §2) KISI SECICI — BORCLULAR ONCE. */}
         <HataDurumu mesaj={kisiHatasi ? t("finansKisiListesiAlinamadi") : null} />
-        <AlanSarmal etiket={t("finansKisiAra")}>
-          {(b) => (
-            <Alan
-              {...b}
-              value={ara}
-              data-test="tahsilat-kisi-ara"
-              onChange={(e) => setAra(e.target.value)}
-            />
-          )}
-        </AlanSarmal>
+        {/* ===================================================================
+            (P217 §3) ARAMA ALANI ARTIK KOSULLU
+            ===================================================================
+            Sikayet: "daire ve kisi zaten ayri ayri secilebiliyor, arama
+            gereksiz kalabalik". KALDIRMADAN ONCE OLCTUM ve alan
+            seciclerin YAPAMADIGI bir is yapiyor: kisi seciciyi
+            besleyen UC listeyi de (borclular, tum kisiler, daire
+            sakinleri) suzuyor. 500 kisilik bir sitede daire secmeden
+            kisi aramak, aramasiz bir acilir listede pratikte imkansiz.
+
+            Ama sikayet de HAKLI: daire secildiginde liste zaten o
+            dairenin sakinlerine (2-3 kisi) iniyor ve orada arama
+            gercekten fazladan bir alan.
+
+            KARAR: alan LISTE UZUNKEN gorunur, kisayken gizlenir. Boylece
+            tipik akista (daire sec -> kisi sec) kalabalik kalkar,
+            buyuk listede islev korunur. Esik `ARAMA_ESIGI`de tek
+            yerde yazili.
+        */}
+        {aramaGerekli && (
+          <AlanSarmal etiket={t("finansKisiAra")}>
+            {(b) => (
+              <Alan
+                {...b}
+                value={ara}
+                data-test="tahsilat-kisi-ara"
+                onChange={(e) => setAra(e.target.value)}
+              />
+            )}
+          </AlanSarmal>
+        )}
         <label className="flex items-center gap-2">
           <input
             type="checkbox"

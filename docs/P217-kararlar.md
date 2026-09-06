@@ -152,3 +152,47 @@ haber verir). Kilit kırılarak doğrulandı.
 Test yazarken kendi hatamı ölçüm ortaya çıkardı: **dönem alanı `required`**
 ve boş bırakınca form hiç gönderilmiyor — modal "kapanmadı" görünüyordu.
 Kodun kusuru değil, testin eksiğiydi.
+
+---
+
+## §3 — Tahsilattaki arama alanı
+
+### Kaldırmadan önce ölçtüm — alan bir iş yapıyor
+
+Şikâyet: *"daire ve kişi zaten ayrı ayrı seçilebiliyor, arama gereksiz
+kalabalık."* Ölçüm, alanın **seçicilerin yapamadığı** bir iş yaptığını
+gösterdi: kişi seçicisini besleyen **üç listeyi de** süzüyor —
+borçlular, tüm kişiler ve daire sakinleri. 500 kişilik bir sitede daire
+seçmeden kişi bulmak, aramasız bir açılır listede pratikte imkânsız.
+
+Ama şikâyet de haklı: **daire seçilince** liste o dairenin sakinlerine
+(2-3 kişi) iniyor ve orada arama fazladan bir alan.
+
+### Karar: kaldırma değil, koşullu gösterim
+
+Arama alanı **liste uzunken** görünür, kısayken gizlenir
+(`ARAMA_ESIGI = 10`). Böylece tipik akışta (daire seç → kişi seç)
+kalabalık kalkar, büyük listede işlev korunur. P211'in "daire seçilince
+kişi otomatik gelir" davranışı **aynen duruyor** (mevcut testleri de
+geçiyor).
+
+**Eşik süzülmemiş liste üzerinden ölçülüyor.** Süzülmüş liste üzerinden
+ölçseydim kullanıcı arama yazıp listeyi kısaltınca alan **kendi altından
+kaybolur** ve yazdığı metin ekrandan silinirdi — bu ayrıca testle
+kilitli.
+
+`10` sayısı: iki-üç sakinli bir daire, on kişilik küçük bir site ve peşin
+ödeme listesi bu eşiğin altında; 500 kişilik bir sitenin borçlu listesi
+üstünde.
+
+### Ölçüm
+
+`p217-tahsilat-arama.dom.test.ts` (4): kısa listede görünmez (şikâyetin
+çözümü) ama kişi/daire seçicileri durur, uzun listede görünür,
+**gerçekten süzer** (seçenek sayısı azalıyor), ve yazarken kendi altından
+kaybolmaz.
+
+Test yazarken bir eksiğimi ölçüm gösterdi: borçlular `/api/panel/yaslandirma`
+uçundan **kova yapısıyla** geliyor; ilk yazımda düz `items` döndürdüm ve
+"uzun liste" senaryosu hiç kurulmamıştı (test yeşil olurdu ama hiçbir şey
+ölçmezdi).
