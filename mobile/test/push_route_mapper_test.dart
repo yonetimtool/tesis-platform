@@ -1,38 +1,57 @@
+/// (P217) `routeForPushData` KALDIRILDI, yerine ROL ALAN `pushHedefi`.
+///
+/// Bu dosyadaki iddialar KORUNDU — hicbiri yanlis degildi, eksikti:
+/// hedefin ROLE bagli olabilecegini hesaba katmiyorlardi. Her cagri
+/// artik acik bir rolle yapiliyor; boylece "hangi rol icin dogru"
+/// sorusu testin kendisinde de gorunur oluyor.
+///
+/// Rol-ayrimi ve erisim suzgeci ayrica `p217_push_yonlendirme_test.dart`
+/// dosyasinda olculuyor.
+library;
+
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mobile/src/routing/app_router.dart';
+import 'package:mobile/src/features/auth/domain/user_role.dart';
+import 'package:mobile/src/routing/push_yonlendirme.dart';
+
+/// Testlerin cogu YONETIM bakisini olcuyordu; varsayilan rol o.
+/// Sakine ozel hedefler kendi testlerinde acikca belirtiliyor.
+const _rol = UserRole.yonetici;
 
 void main() {
-  group('routeForPushData (push tiklama yonlendirmesi)', () {
+  group('pushHedefi (push tiklama yonlendirmesi)', () {
     test('tip=talep -> ilgili talep (complaint_id ile)', () {
       expect(
-        routeForPushData(const {'tip': 'talep', 'complaint_id': 'c-1'}),
+        pushHedefi({'tip': 'talep', 'complaint_id': 'c-1'}, _rol),
         '/complaints?complaint_id=c-1',
       );
     });
 
     test('tip=talep_yanit -> ilgili talep (sakine yanit push\'u)', () {
       expect(
-        routeForPushData(const {'tip': 'talep_yanit', 'complaint_id': 'c-2'}),
+        pushHedefi({'tip': 'talep_yanit', 'complaint_id': 'c-2'}, _rol),
         '/complaints?complaint_id=c-2',
       );
     });
 
     test('complaint_id yoksa/bossa talep LISTESI acilir', () {
-      expect(routeForPushData(const {'tip': 'talep'}), '/complaints');
+      expect(pushHedefi({'tip': 'talep'}, _rol), '/complaints');
       expect(
-        routeForPushData(const {'tip': 'talep_yanit', 'complaint_id': ''}),
+        pushHedefi({'tip': 'talep_yanit', 'complaint_id': ''}, _rol),
         '/complaints',
       );
     });
 
     test('tip=duyuru -> duyurular', () {
-      expect(routeForPushData(const {'tip': 'duyuru'}), '/announcements');
+      expect(pushHedefi({'tip': 'duyuru'}, _rol), '/announcements');
     });
 
     test('tip=ziyaretci -> ilgili ziyaretci (sakine bilgilendirme push\'u)',
         () {
+      // (P217) ROL SAKIN: bu bildirimler SAKINE gider ve hedef
+      // ekranlar (kargo/ziyaretci/aidatim) yalniz onun menusunde var.
+      // Yonetici rolüyle olcmek, gercekte olmayan bir akisi olcmekti.
       expect(
-        routeForPushData(const {'tip': 'ziyaretci', 'visitor_id': 'v-1'}),
+        pushHedefi({'tip': 'ziyaretci', 'visitor_id': 'v-1'}, UserRole.resident),
         '/visitors?visitor_id=v-1',
       );
     });
@@ -40,30 +59,39 @@ void main() {
     test('tip=ziyaretci_sonuc KALDIRILDI -> null (artik onay/red push\'u yok)',
         () {
       expect(
-        routeForPushData(const {'tip': 'ziyaretci_sonuc', 'visitor_id': 'v-2'}),
+        pushHedefi({'tip': 'ziyaretci_sonuc', 'visitor_id': 'v-2'}, _rol),
         isNull,
       );
     });
 
     test('tip=kargo -> ilgili kargo (sakine kargonuz-geldi push\'u)', () {
+      // (P217) ROL SAKIN: bu bildirimler SAKINE gider ve hedef
+      // ekranlar (kargo/ziyaretci/aidatim) yalniz onun menusunde var.
+      // Yonetici rolüyle olcmek, gercekte olmayan bir akisi olcmekti.
       expect(
-        routeForPushData(const {'tip': 'kargo', 'kargo_id': 'k-1'}),
+        pushHedefi({'tip': 'kargo', 'kargo_id': 'k-1'}, UserRole.resident),
         '/kargo?kargo_id=k-1',
       );
     });
 
     test('kargo_id yoksa/bossa kargo LISTESI acilir', () {
-      expect(routeForPushData(const {'tip': 'kargo'}), '/kargo');
+      // (P217) ROL SAKIN: bu bildirimler SAKINE gider ve hedef
+      // ekranlar (kargo/ziyaretci/aidatim) yalniz onun menusunde var.
+      // Yonetici rolüyle olcmek, gercekte olmayan bir akisi olcmekti.
+      expect(pushHedefi({'tip': 'kargo'}, UserRole.resident), '/kargo');
       expect(
-        routeForPushData(const {'tip': 'kargo', 'kargo_id': ''}),
+        pushHedefi({'tip': 'kargo', 'kargo_id': ''}, UserRole.resident),
         '/kargo',
       );
     });
 
     test('visitor_id yoksa/bossa ziyaretci LISTESI acilir', () {
-      expect(routeForPushData(const {'tip': 'ziyaretci'}), '/visitors');
+      // (P217) ROL SAKIN: bu bildirimler SAKINE gider ve hedef
+      // ekranlar (kargo/ziyaretci/aidatim) yalniz onun menusunde var.
+      // Yonetici rolüyle olcmek, gercekte olmayan bir akisi olcmekti.
+      expect(pushHedefi({'tip': 'ziyaretci'}, UserRole.resident), '/visitors');
       expect(
-        routeForPushData(const {'tip': 'ziyaretci', 'visitor_id': ''}),
+        pushHedefi({'tip': 'ziyaretci', 'visitor_id': ''}, UserRole.resident),
         '/visitors',
       );
     });
@@ -71,73 +99,69 @@ void main() {
     test('tip=erisim_talebi (sakine) / erisim_sonuc (talep edene) -> '
         'goruntuleme izni ekrani', () {
       expect(
-        routeForPushData(const {'tip': 'erisim_talebi', 'request_id': 'q-1'}),
+        pushHedefi({'tip': 'erisim_talebi', 'request_id': 'q-1'}, _rol),
         '/unit-access',
       );
       expect(
-        routeForPushData(const {'tip': 'erisim_sonuc', 'request_id': 'q-1'}),
+        pushHedefi({'tip': 'erisim_sonuc', 'request_id': 'q-1'}, _rol),
         '/unit-access',
       );
     });
 
     test('tip=rezervasyon / rezervasyon_karar -> ilgili rezervasyon', () {
       expect(
-        routeForPushData(const {'tip': 'rezervasyon', 'rezervasyon_id': 'r-1'}),
+        pushHedefi({'tip': 'rezervasyon', 'rezervasyon_id': 'r-1'}, _rol),
         '/rezervasyon?rezervasyon_id=r-1',
       );
       expect(
-        routeForPushData(
-            const {'tip': 'rezervasyon_karar', 'rezervasyon_id': 'r-2'}),
+        pushHedefi({'tip': 'rezervasyon_karar', 'rezervasyon_id': 'r-2'}, _rol),
         '/rezervasyon?rezervasyon_id=r-2',
       );
     });
 
     test('rezervasyon_id yoksa/bossa rezervasyon LISTESI acilir', () {
-      expect(routeForPushData(const {'tip': 'rezervasyon'}), '/rezervasyon');
+      expect(pushHedefi({'tip': 'rezervasyon'}, _rol), '/rezervasyon');
       expect(
-        routeForPushData(const {'tip': 'rezervasyon_karar', 'rezervasyon_id': ''}),
+        pushHedefi({'tip': 'rezervasyon_karar', 'rezervasyon_id': ''}, _rol),
         '/rezervasyon',
       );
     });
 
     test('tip=etkinlik -> ilgili etkinlik (sakine yeni-etkinlik push\'u)', () {
       expect(
-        routeForPushData(const {'tip': 'etkinlik', 'etkinlik_id': 'e-1'}),
+        pushHedefi({'tip': 'etkinlik', 'etkinlik_id': 'e-1'}, _rol),
         '/etkinlik?etkinlik_id=e-1',
       );
     });
 
     test('etkinlik_id yoksa/bossa etkinlik LISTESI acilir', () {
-      expect(routeForPushData(const {'tip': 'etkinlik'}), '/etkinlik');
+      expect(pushHedefi({'tip': 'etkinlik'}, _rol), '/etkinlik');
       expect(
-        routeForPushData(const {'tip': 'etkinlik', 'etkinlik_id': ''}),
+        pushHedefi({'tip': 'etkinlik', 'etkinlik_id': ''}, _rol),
         '/etkinlik',
       );
     });
 
-    test('(Böl.10.1) devriye alarmlari -> ilgili patrol ekrani', () {
-      // Gecikmis/uzak okutma gorevliye kisi olarak → aktif tur ekrani.
-      expect(
-        routeForPushData(
-            const {'tip': 'gecikmis_okutma', 'patrol_window_id': 'w-1'}),
-        '/patrol',
-      );
-      expect(
-        routeForPushData(
-            const {'tip': 'uzak_okutma', 'checkpoint_id': 'c-1'}),
-        '/patrol',
-      );
-      // Kacirilan tur yonetime → plan genel gorunumu.
-      expect(
-        routeForPushData(
-            const {'tip': 'kacirilan_tur', 'patrol_window_id': 'w-2'}),
-        '/patrol-plans',
-      );
+    test('(Böl.10.1 / P217) devriye alarmlari ROLE GORE ayrisir', () {
+      // ESKI IDDIA: hepsi `/patrol`, `kacirilan_tur` ise `/patrol-plans`.
+      // Rol hesaba katilmadigi icin YONETICI de `/patrol`e gidiyordu ve
+      // o ekran onun menusunde YOK — "yetkiniz yok" cikiyordu.
+      //
+      // Saha rolu icin hedef DEGISMEDI (aktif tur ekrani); yonetim icin
+      // DEVRIYE TAKIBI (bugunun pencereleri + gecmis, salt izleme).
+      // `patrol-plans` (plan TANIMLAMA) bilerek secilmedi: kacirilan bir
+      // tur hakkinda sorulan sey "ne oldu", "plani nasil kurarim" degil.
+      for (final tip in ['gecikmis_okutma', 'uzak_okutma', 'kacirilan_tur']) {
+        expect(pushHedefi({'tip': tip, 'patrol_window_id': 'w-1'},
+            UserRole.security), '/patrol', reason: tip);
+        expect(pushHedefi({'tip': tip, 'patrol_window_id': 'w-1'},
+            UserRole.yonetici), '/patrol-tracking', reason: tip);
+      }
     });
 
     test('(Böl.10.2) vardiya ozeti -> vardiyalar ekrani', () {
       expect(
-        routeForPushData(const {'tip': 'vardiya_ozeti', 'shift_id': 's-1'}),
+        pushHedefi({'tip': 'vardiya_ozeti', 'shift_id': 's-1'}, _rol),
         '/vardiyalar',
       );
     });
@@ -147,23 +171,26 @@ void main() {
       // nesnesiz gelindiginde zaten listeye yonlendirir. Push'tan nesne
       // tasinamaz.
       expect(
-        routeForPushData(const {'tip': 'gorev_atandi', 'task_id': 't-1'}),
+        pushHedefi({'tip': 'gorev_atandi', 'task_id': 't-1'}, _rol),
         '/tasks',
       );
-      expect(routeForPushData(const {'tip': 'gorev_atandi'}), '/tasks');
+      expect(pushHedefi({'tip': 'gorev_atandi'}, _rol), '/tasks');
     });
 
     test('(P191 §2/§4) aidat borcu ve odeme -> Aidatim', () {
-      expect(routeForPushData(const {'tip': 'aidat_borc'}), '/my-dues');
+      // (P217) ROL SAKIN: bu bildirimler SAKINE gider ve hedef
+      // ekranlar (kargo/ziyaretci/aidatim) yalniz onun menusunde var.
+      // Yonetici rolüyle olcmek, gercekte olmayan bir akisi olcmekti.
+      expect(pushHedefi({'tip': 'aidat_borc'}, UserRole.resident), '/my-dues');
       expect(
-        routeForPushData(const {'tip': 'aidat_odendi', 'receipt_id': 'r-1'}),
+        pushHedefi({'tip': 'aidat_odendi', 'receipt_id': 'r-1'}, UserRole.resident),
         '/my-dues',
       );
     });
 
     test('bilinmeyen/eksik tip -> null (yonlendirme yok)', () {
-      expect(routeForPushData(const {'tip': 'bilinmeyen_tip'}), isNull);
-      expect(routeForPushData(const {}), isNull);
+      expect(pushHedefi({'tip': 'bilinmeyen_tip'}, _rol), isNull);
+      expect(pushHedefi(const {}, _rol), isNull);
     });
   });
 }

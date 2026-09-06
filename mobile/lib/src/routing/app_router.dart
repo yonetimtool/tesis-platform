@@ -163,82 +163,13 @@ class AppRoutes {
   static const plakaOlaylari = '/plaka-okumalari';
 }
 
-/// Push bildirimi DATA'sindan hedef rota uretir (tiklama yonlendirmesi).
-/// Bilinmeyen/eksik tip → null (yonlendirme yapilmaz, uygulama oldugu
-/// yerde kalir). Backend data sozlesmesi: contracts/openapi.yaml.
-String? routeForPushData(Map<String, String> data) {
-  switch (data['tip']) {
-    // Yeni talep (yonetime) / talep yaniti (sakine) → ilgili talep acilir.
-    case 'talep':
-    case 'talep_yanit':
-      final id = data['complaint_id'];
-      return id == null || id.isEmpty
-          ? AppRoutes.complaints
-          : '${AppRoutes.complaints}?complaint_id=$id';
-    // Ziyaretci LOG kaydi (hedef sakine bilgilendirme) → ilgili kayit acilir.
-    // (Onay/red kaldirildi; 'ziyaretci_sonuc' push'u artik yok.)
-    case 'ziyaretci':
-      final id = data['visitor_id'];
-      return id == null || id.isEmpty
-          ? AppRoutes.visitors
-          : '${AppRoutes.visitors}?visitor_id=$id';
-    // Gelen paket (daire sakinlerine) → ilgili kargo kaydi acilir.
-    case 'kargo':
-      final id = data['kargo_id'];
-      return id == null || id.isEmpty
-          ? AppRoutes.kargo
-          : '${AppRoutes.kargo}?kargo_id=$id';
-    // Tek-seferlik erisim talebi (dairenin sakinine, Onayla/Reddet) VEYA
-    // sonuc (talebi acan yonetici/admin'e) → izin ekrani acilir. Liste zaten
-    // ilgili kaydi one alir; ekran icinde deep-link id'ye gerek yok.
-    case 'erisim_talebi':
-    case 'erisim_sonuc':
-      return AppRoutes.unitAccess;
-    // Yeni talep (yonetime) / karar (talep eden sakine) → ilgili rezervasyon.
-    case 'rezervasyon':
-    case 'rezervasyon_karar':
-      final id = data['rezervasyon_id'];
-      return id == null || id.isEmpty
-          ? AppRoutes.rezervasyon
-          : '${AppRoutes.rezervasyon}?rezervasyon_id=$id';
-    // Yeni etkinlik duyurusu (sakinlere) → ilgili etkinlik acilir.
-    case 'etkinlik':
-      final id = data['etkinlik_id'];
-      return id == null || id.isEmpty
-          ? AppRoutes.etkinlik
-          : '${AppRoutes.etkinlik}?etkinlik_id=$id';
-    case 'duyuru':
-      return AppRoutes.announcements;
-    // (P181 Bölüm 10.1) DEVRİYE alarmları — görevliye KİŞİ olarak gider
-    // (uzak/gecikmiş okutmayı düzeltebilecek kişi odur) → aktif tur ekranı.
-    case 'gecikmis_okutma':
-    case 'uzak_okutma':
-      return AppRoutes.patrol;
-    // Kaçırılan tur → yönetime rol olarak gider; plan/pencere genel görünümü.
-    case 'kacirilan_tur':
-      return AppRoutes.patrolPlans;
-    // (P181 Bölüm 10.2) Vardiya sonu özeti → yönetime; vardiyalar ekranı.
-    case 'vardiya_ozeti':
-      return AppRoutes.vardiyalar;
-    // (P191 §2) GÖREV ATAMA → "Görevlerim".
-    //
-    // `taskDetail` KULLANILMAZ ve bu bilinçli: o rota Task NESNESİNİ
-    // `extra` ile bekler (listeden seçilir) ve nesnesiz gelindiğinde zaten
-    // listeye yönlendirir. Push'tan nesne taşınamaz; doğrudan listeye
-    // gitmek aynı yere BİR ADIM ERKEN varmaktır. Parametresiz `/tasks`
-    // "bana atananlar" görünümüdür — bildirimin muhatabı zaten odur.
-    case 'gorev_atandi':
-      return AppRoutes.tasks;
-    // (P191 §2/§4) AİDAT: borç doğdu ya da ödeme işlendi → "Aidatım".
-    // İkisi de aynı ekrana gider çünkü kullanıcının bakacağı şey aynı:
-    // kendi bakiyesi ve hareketleri.
-    case 'aidat_borc':
-    case 'aidat_odendi':
-      return AppRoutes.myDues;
-    default:
-      return null;
-  }
-}
+/// (P217) `routeForPushData` KALDIRILDI — yerine `push_yonlendirme.dart`.
+///
+/// Neden: hedef ROLE BAGLI. Ayni bildirim (devriye alarmi) hem gorevliye
+/// hem yonetime gidiyor ve "Turlarim" yoneticinin menusunde YOK; eski
+/// fonksiyon rolu bilmedigi icin yoneticiyi "yetkiniz yok" ekranina
+/// atiyordu. Iki fonksiyonu yan yana birakmak, cagiran birinin yanlis
+/// olani secmesi demekti — bu yuzden SILINDI, TASINMADI.
 
 /// Auth durumundaki degisimleri go_router'a bildiren kopru. `status` her
 /// degistiginde router redirect'i yeniden degerlendirilir.

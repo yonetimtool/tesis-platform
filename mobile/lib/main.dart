@@ -15,7 +15,9 @@ import 'src/features/push/presentation/push_setup.dart';
 import 'src/features/scan/data/scan_outbox.dart';
 import 'src/features/surum/presentation/surum_denetleyici.dart';
 import 'src/features/surum/presentation/surum_kapisi.dart';
+import 'src/features/auth/data/current_user_provider.dart';
 import 'src/routing/app_router.dart';
+import 'src/routing/push_yonlendirme.dart';
 
 Future<void> main() async {
   // Depo okumasi platform kanali kullanir → baglama once kurulmalidir.
@@ -65,7 +67,12 @@ class TesisGuvenlikApp extends ConsumerWidget {
     ref.listen(pushRegistrarProvider.select((s) => s.sonBildirim),
         (prev, next) {
       if (next == null || identical(prev, next)) return;
-      final route = routeForPushData(next.data);
+    // (P217) HEDEF ROLE GORE. Ayni bildirim (or. uzak okutma alarmi) HEM
+    // gorevliye HEM yonetime gidiyor; "Turlarim" yoneticinin menusunde
+    // YOK ve acilinca "yetkiniz yok" cikiyordu. `pushHedefi` rolu de
+    // hesaba katar ve erisilemeyen hedefte null doner (yonlendirme yok).
+    final rol = ref.read(currentUserRoleProvider).asData?.value;
+      final route = pushHedefi(next.data, rol);
       rootScaffoldMessengerKey.currentState?.showSnackBar(
         SnackBar(
           content: Text(next.displayText),
@@ -84,7 +91,12 @@ class TesisGuvenlikApp extends ConsumerWidget {
     ref.listen(pushRegistrarProvider.select((s) => s.sonTiklanan),
         (prev, next) {
       if (next == null || identical(prev, next)) return;
-      final route = routeForPushData(next.data);
+    // (P217) HEDEF ROLE GORE. Ayni bildirim (or. uzak okutma alarmi) HEM
+    // gorevliye HEM yonetime gidiyor; "Turlarim" yoneticinin menusunde
+    // YOK ve acilinca "yetkiniz yok" cikiyordu. `pushHedefi` rolu de
+    // hesaba katar ve erisilemeyen hedefte null doner (yonlendirme yok).
+    final rol = ref.read(currentUserRoleProvider).asData?.value;
+      final route = pushHedefi(next.data, rol);
       if (route == null) return;
       // (P183 §3) HEDEF ACILAMAZSA COKME YOK → ana ekrana dus. routeForPushData
       // bilinen AppRoutes uretir, ama bozuk/eksik id ile push nadiren
