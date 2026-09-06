@@ -94,21 +94,43 @@ docker compose -f docker-compose.prod.yml exec db \
 
 ### 3.3 Lokasyon ve kategori verisi
 
-Göç tabloları **oluşturur ama doldurmaz**. Veri yüklemesi ayrı ve **elle**:
+Göç tabloları **oluşturur ama doldurmaz**. Veri yüklemesi ayrı ve **elle**.
+
+> **Lokasyon dosyası DEPODA.** `contracts/veri/tr-lokasyon.json` —
+> indirmene gerek yok, `docker cp` de gerekmiyor. `contracts/` hem
+> `migrate` hem `api` konteynerine `:ro` mount'lu, dosya konteynerin
+> içinde `/contracts/veri/tr-lokasyon.json` yolunda görünüyor.
+>
+> İlk yazdığım dağıtım notu operatörden dosyayı **indirmesini** istiyordu
+> ve bu yanlıştı: ham dosya GitHub'da `master` dalında duruyor, üstteki
+> depo onu her an değiştirebilir. "İndir" talimatı, prod'a dev'de
+> **doğrulanmamış** bir veri gitmesi demekti — ve fark ancak binlerce SEO
+> yolu üretildikten sonra görünürdü. Kaynak, lisans (MIT), indirme tarihi
+> ve sha256 `contracts/veri/README.md`'de yazılı.
 
 ```bash
-# Lokasyon dosyasını sunucuya koy (MIT lisanslı kaynak, docs/dukkan/01 §2)
-docker compose -f docker-compose.prod.yml cp \
-  tr-lokasyon.json api:/tmp/tr-lokasyon.json
-
 docker compose -f docker-compose.prod.yml exec api \
-  python -m app.dukkan.lokasyon_yukle /tmp/tr-lokasyon.json
+  python -m app.dukkan.lokasyon_yukle /contracts/veri/tr-lokasyon.json
 # BEKLENEN: {'il': 81, 'ilce': 973, 'mahalle': 44719, 'atlanan': 29728, 'slug_cakisma': 0}
 
 docker compose -f docker-compose.prod.yml exec api \
   python -m app.dukkan.kategori_yukle
 # BEKLENEN: {'ana': 12, 'alt': 51}
 ```
+
+**Dosyanın doğruluğunu teyit etmek istersen** (gerekmiyor, git zaten
+garanti ediyor):
+
+```bash
+docker compose -f docker-compose.prod.yml exec api \
+  sha256sum /contracts/veri/tr-lokasyon.json
+# BEKLENEN: defbf445b2169c16417a27a7b4bf9149da2e97bea82abac9663e5f4f4573c695
+```
+
+**Türkçe karakter onarımı için ayrı bir komut YOK.** Onarım
+`app/dukkan/lokasyon_yukle.py` içindeki `_onar()` fonksiyonunda ve
+yükleme sırasında **otomatik** uygulanıyor. Dosyayı elle onarma: onarılmış
+bir dosya yüklenirse `_onar()` ikinci kez çalışır ve adları yeniden bozar.
 
 İkisi de **idempotent**: tekrar koşturmak zarar vermez, `ON CONFLICT` ile
 günceller. İkisi de **sıfır kayıtta hata verir** (exit 1), sessizce geçmez.
