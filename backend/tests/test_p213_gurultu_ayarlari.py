@@ -130,3 +130,18 @@ def test_DENETCI_degistiremez(client, world):
     h = _h(client, world["slug_a"], world["denetci_a"])
     r = client.patch("/tenant/settings", headers=h, json={"gurultu_esigi": 7})
     assert r.status_code == 403, r.text
+
+
+# ==================== (P219 §1) GOC DOGRULAMASI ====================== #
+
+
+def test_P219_VARSAYILAN_2_ve_ESKI_DAVRANISLA_AYNI(client, world):
+    """Goc 0111 mevcut degerleri +1 yapti: eski `1` (=2. uyari) yeni `2`
+    (=2. uyari). Hicbir sitede davranis degismedi."""
+    h = {"Authorization": f"Bearer {client.post('/auth/login', json={
+        'tenant_slug': world['slug_a'], 'email': world['yonetici_a']['email'],
+        'password': world['yonetici_a']['password']}).json()['access_token']}"}
+    ayar = client.get("/tenant/settings", headers=h).json()
+    assert ayar["gurultu_eskalasyon_esigi"] >= 2, (
+        "goc uygulanmamis olabilir: eski deger 1 kalmis"
+    )

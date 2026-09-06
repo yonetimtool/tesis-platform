@@ -446,8 +446,12 @@ class Tenant(Base):
     #: N = 1 -> ikinci esik asiminda eskalasyon (P212 davranisi).
     #: Tesise gore degisir: bina yogunlugu, guvenlik ekibinin buyuklugu
     #: ve komsuluk iliskisi ayni degil.
+    #: (P219 §1) KACINCI UYARIDA guvenlige bildirilsin (goc 0111).
+    #: Deger ANLAMIYLA hizali: 2 = 2. uyarida. Eskiden `asama > esik`
+    #: karsilastirmasi yuzunden ekrandaki "1" aslinda "2. uyarida"
+    #: demekti.
     gurultu_eskalasyon_esigi: Mapped[int] = mapped_column(
-        Integer, nullable=False, server_default=text("1")
+        Integer, nullable=False, server_default=text("2")
     )
     #: (P218, goc 0110) YENI gelir/gider tanimlarinin VARSAYILAN borc
     #: hedefi. ZORLAYICI DEGIL: tenant duzeyinde kilit olsaydi, o siteye

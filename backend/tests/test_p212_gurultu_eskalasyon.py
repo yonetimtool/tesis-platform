@@ -274,22 +274,28 @@ def test_ASAMA_denetim_kaydina_YAZILIR(d):
 
 
 def test_ESKALASYON_ESIGI_TESIS_AYARINDAN_gelir(d, push_spy):
-    """(P213 §1) `gurultu_eskalasyon_esigi = 2` -> UCUNCU asimda eskalasyon.
+    """(P213 §1) Esik tesis ayarindan gelir.
 
     Eskiden `asama >= 2` KOD SABITIYDI. Bir sitede ikinci uyari,
     otekinde ucuncu uyari dogru olabilir.
+
+    (P219 §1) DEGERIN ANLAMI DEGISTI ve bu testin sayilari da degisti:
+    ayar artik DOGRUDAN "kacinci uyarida" demek. Eskiden `esigi=2`
+    UCUNCU asimda eskale ediyordu (`asama > esik`); artik `esigi=3`
+    ucuncu asimda eskale ediyor (`asama >= esik`). Olculen DAVRANIS
+    ayni: "ucuncu uyariya kadar guvenlige gitmez, ucuncude gider".
     """
     _sakin_ekle(d, "kiraci")
     _guvenlikci(d)
     d.conn.execute(
-        "UPDATE tenant SET gurultu_susma_gun=0, gurultu_eskalasyon_esigi=2 "
+        "UPDATE tenant SET gurultu_susma_gun=0, gurultu_eskalasyon_esigi=3 "
         "WHERE id=%s", (d.tenant,))
     d.conn.commit()
     try:
         for _ in range(2):
             _bes_gurultu(d)
             _calistir(d)
-        # IKINCI asimda HENUZ guvenlige gitmez (esik 2).
+        # IKINCI asimda HENUZ guvenlige gitmez (esik 3 = ucuncu uyari).
         assert not [p for p in push_spy if p["k"] == "gurultu_eskalasyon_guvenlik"]
 
         _bes_gurultu(d)
@@ -299,7 +305,8 @@ def test_ESKALASYON_ESIGI_TESIS_AYARINDAN_gelir(d, push_spy):
         assert esk and esk[-1]["params"]["kez"] == 3
     finally:
         d.conn.execute(
-            "UPDATE tenant SET gurultu_eskalasyon_esigi=1 WHERE id=%s", (d.tenant,))
+            # Varsayilan artik 2 (= ikinci uyari; goc 0111).
+            "UPDATE tenant SET gurultu_eskalasyon_esigi=2 WHERE id=%s", (d.tenant,))
         d.conn.commit()
 
 
@@ -309,3 +316,59 @@ def test_7_DIL_PARITE(dil):
         m = METINLER[tip]
         assert m.baslik.get(dil), f"{tip}/{dil} baslik yok"
         assert m.govde.get(dil), f"{tip}/{dil} govde yok"
+
+
+# ==================== (P219 §1) DEGER ile ANLAM HIZALI =================== #
+
+def test_P219_ESIK_DEGERI_KACINCI_UYARI_demek(d, push_spy):
+    """(P219 §1) OLCULEN KUSUR: ayar `1` iken eskalasyon `2.` uyarida
+    oluyordu (`asama > esik`). Ekranda "1" yazan alan aslinda "2.
+    uyarida" demekti ve bu, ipucuyla telafi edilmeye calisiliyordu.
+
+    Artik deger DOGRUDAN "kacinci uyarida": `esigi=2` -> IKINCI uyarida.
+    """
+    _sakin_ekle(d, "kiraci")
+    _guvenlikci(d)
+    d.conn.execute(
+        "UPDATE tenant SET gurultu_susma_gun=0, gurultu_eskalasyon_esigi=2 "
+        "WHERE id=%s", (d.tenant,))
+    d.conn.commit()
+
+    _bes_gurultu(d)
+    ilk = _calistir(d)
+    assert ilk.asama == 1
+    assert not [p for p in push_spy if p["k"] == "gurultu_eskalasyon_guvenlik"], (
+        "ILK uyarida guvenlige gitmemeli (esik 2)"
+    )
+
+    _bes_gurultu(d)
+    ikinci = _calistir(d)
+    assert ikinci.asama == 2
+    assert [p for p in push_spy if p["k"] == "gurultu_eskalasyon_guvenlik"], (
+        "IKINCI uyarida guvenlige GITMELI — ayar 2 ise ikinci uyaridir"
+    )
+
+
+def test_P219_ESIK_BIR_ILK_UYARIDA_eskale_eder(d, push_spy):
+    """`1` artik MESRU ve ANLAMI ACIK: ilk uyarida guvenlige de gitsin.
+
+    Eski semantikte `1` "ikinci uyarida" demekti ve "ilk uyarida"
+    ifade EDILEMIYORDU (0 gecersizdi). Yeni anlamda ifade edilebiliyor.
+    """
+    _sakin_ekle(d, "kiraci")
+    _guvenlikci(d)
+    d.conn.execute(
+        "UPDATE tenant SET gurultu_susma_gun=0, gurultu_eskalasyon_esigi=1 "
+        "WHERE id=%s", (d.tenant,))
+    d.conn.commit()
+    try:
+        _bes_gurultu(d)
+        ilk = _calistir(d)
+        assert ilk.asama == 1
+        assert [p for p in push_spy if p["k"] == "gurultu_eskalasyon_guvenlik"], (
+            "esik 1 ise ILK uyarida guvenlige gitmeli"
+        )
+    finally:
+        d.conn.execute(
+            "UPDATE tenant SET gurultu_eskalasyon_esigi=2 WHERE id=%s", (d.tenant,))
+        d.conn.commit()

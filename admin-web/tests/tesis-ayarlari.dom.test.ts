@@ -44,7 +44,7 @@ const AYARLAR = {
   gurultu_pencere_gun: 30,
   gurultu_susma_gun: 7,
   gurultu_sakin_uyarisi: true,
-  gurultu_eskalasyon_esigi: 1,
+  gurultu_eskalasyon_esigi: 2,
 };
 
 function kur() {
@@ -91,17 +91,23 @@ describe("(P193 §5) tesis ayarları ekranı", () => {
     await screen.findByLabelText(/Tesis adı/);
     // (P208 §1) DAR SORGU SART: gurultu alani ARTIK TEK DEGIL —
     // esik + sayim penceresi + susma suresi + sakine bildirim. Genis
-    // `/Gürültü/` sorgusu "birden cok eslesme" ile duser (ilk kosumda
-    // oyle oldu) ve bu, taramanin HAKLI uyarisi.
-    expect(screen.getByLabelText(/Gürültü uyarı eşiği/)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Gürültü sayım penceresi/)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Okutma/)).toBeInTheDocument();
+    // bir sorgu "birden cok eslesme" ile duser ve bu, taramanin HAKLI
+    // uyarisi.
+    //
+    // (P219 §1) ETIKETLER SONUC ODAKLI YENIDEN YAZILDI: "Gürültü uyarı
+    // eşiği" -> "Kaç şikâyet birikince daireye uyarı gitsin". Iddia
+    // degismedi (alan cizilyor mu), sorgu yeni metne uyarlandi.
+    expect(screen.getByLabelText(/Kaç şikâyet birikince/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/kaç gün geriye kadar sayılsın/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/kaç metre uzaktan/)).toBeInTheDocument();
   });
 
   it("(P213 §1) ESKALASYON ESIGI alani CIZILIR ve GONDERILIR", async () => {
     const govdeler = kur();
     ciz(TesisAyarlariPage);
-    const alan = await screen.findByLabelText(/eskalasyon eşiği/i);
+    // (P219 §1) "Güvenliğe eskalasyon eşiği" -> "Kaçıncı uyarıda
+    // güvenliğe bildirilsin". Deger de anlamiyla hizalandi (goc 0111).
+    const alan = await screen.findByLabelText(/Kaçıncı uyarıda güvenliğe/);
     const k = userEvent.setup();
     await k.clear(alan);
     await k.type(alan, "3");
@@ -116,7 +122,7 @@ describe("(P193 §5) tesis ayarları ekranı", () => {
     // Sunucu kabul eder, arayuz UYARIR.
     kur();
     ciz(TesisAyarlariPage);
-    const esik = await screen.findByLabelText(/Gürültü uyarı eşiği/);
+    const esik = await screen.findByLabelText(/Kaç şikâyet birikince/);
     // (P218) `userEvent.type` YERINE `fireEvent.change`.
     //
     // KOK NEDEN: `userEvent` tusa tus yazar ve HER karakterde yeniden

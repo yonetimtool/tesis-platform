@@ -16,7 +16,7 @@ import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
-import { GIRDI_TIPI, OPERASYON } from "@/lib/tesis-ayar-alanlari";
+import { AYAR_GRUPLARI, GIRDI_TIPI, OPERASYON } from "@/lib/tesis-ayar-alanlari";
 import type { TenantSettings } from "@/lib/types";
 
 /**
@@ -178,11 +178,26 @@ export default function TesisAyarlariPage() {
             ))}
           </Kart>
 
-          <Kart className="space-y-4">
+          {/* ===================================================================
+              (P219 §1) AYARLAR GRUPLANDI
+              ===================================================================
+              On bes ayar tek bir sutunda diziliyordu ve aralarinda hicbir
+              baglanti yoktu: devriye toleransi, gurultu susma suresi ve
+              borc hedefi ard arda. Yonetici aradigi ayari bulmak icin
+              listenin tamamini okumak zorundaydi.
+
+              Gruplar ISLEVE gore: kullanicinin "neyi ayarlamak
+              istiyorum" sorusuna karsilik gelir. BOS GRUP CIZILMEZ —
+              rolun goremedigi ayarlar elendiginde bos bir baslik
+              kalmasin. */}
+          {AYAR_GRUPLARI.filter((g) =>
+            ayarlar.some((a) => a.grup === g.id),
+          ).map((g) => (
+          <Kart key={g.id} className="space-y-4">
             <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>
-              {t("ayarOperasyon")}
+              {t(g.baslik)}
             </h2>
-            {ayarlar.map((a) => (
+            {ayarlar.filter((a) => a.grup === g.id).map((a) => (
               <AlanSarmal
                 key={a.anahtar}
                 etiket={t(a.etiket)}
@@ -252,6 +267,7 @@ export default function TesisAyarlariPage() {
               </AlanSarmal>
             ))}
           </Kart>
+          ))}
 
           <HataDurumu mesaj={hata} />
           {bilgi && (

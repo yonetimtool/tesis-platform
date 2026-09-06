@@ -269,10 +269,18 @@ async def esik_kontrol(
     asama = await onceki_uyari_sayisi(
         db, unit.id, pencere_gun=tenant.gurultu_pencere_gun
     ) + 1
-    # (P213 §1) ESKALASYON ESIGI ARTIK TESIS AYARI (goc 0105).
-    # `gurultu_eskalasyon_esigi = N` -> N. asimdan SONRAKI her asimda
-    # guvenlige gider. Varsayilan 1 = ikinci asim (P212 davranisi).
-    eskalasyon = asama > int(tenant.gurultu_eskalasyon_esigi or 1)
+    # (P213 §1) ESKALASYON ESIGI TESIS AYARI (goc 0105).
+    #
+    # (P219 §1) KARSILASTIRMA `>` DEGIL `>=`. Ayar artik DOGRUDAN
+    # "kacinci uyarida guvenlige bildirilsin" demek:
+    #     ayar=2 -> 2. uyarida (eski `1`in davranisi)
+    #     ayar=1 -> ILK uyarida
+    # Eskiden ekranda "1" yazan alan aslinda "2. uyarida" anlamina
+    # geliyordu ve bu, ipucuyla telafi edilmeye calisiliyordu. Bir
+    # ayarin anlamini dipnotla duzeltmek, ayarin kendisinin yanlis
+    # oldugunu kabul etmektir (goc 0111 mevcut degerleri +1 yapti,
+    # davranis degismedi).
+    eskalasyon = asama >= int(tenant.gurultu_eskalasyon_esigi or 2)
 
     kayit = UnitUyari(
         tenant_id=tenant_id,

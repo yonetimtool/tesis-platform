@@ -3493,7 +3493,7 @@ class TenantSettings(BaseModel):
     gurultu_sakin_uyarisi: bool = True
     #: (P213 §1, goc 0105) Kacinci esik asimindan SONRA guvenlige gider.
     #: 1 = ikinci asimda (P212 davranisi).
-    gurultu_eskalasyon_esigi: int = 1
+    gurultu_eskalasyon_esigi: int = 2
     #: (P218) YENI gelir/gider tanimlarinin varsayilan borc hedefi.
     #: ZORLAYICI DEGIL: tur bazinda her zaman degistirilebilir.
     varsayilan_hedef_kurali: BorcHedefKurali = "kiraci_oncelikli"

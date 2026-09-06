@@ -24,8 +24,36 @@
 import type { TenantSettings } from "@/lib/types";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 
+/** (P219 §1) AYAR GRUPLARI — hepsi tek listede olmasin.
+ *
+ * On bes ayar tek bir sutunda diziliyordu ve aralarinda hicbir baglanti
+ * yoktu: devriye toleransi, gurultu susma suresi ve borc hedefi ard
+ * arda. Yonetici aradigi ayari bulmak icin listenin tamamini okumak
+ * zorundaydi.
+ *
+ * Gruplama ISLEVE gore: kullanicinin "neyi ayarlamak istiyorum"
+ * sorusuna karsilik gelir, koddaki tablo adina degil.
+ */
+export type AyarGrubu =
+  | "devriye"
+  | "vardiya"
+  | "gurultu"
+  | "finans"
+  | "rezervasyon";
+
+/** Grup sirasi ve basliklari (cizim sirasi BURADAKI siradir). */
+export const AYAR_GRUPLARI: { id: AyarGrubu; baslik: SozlukAnahtari }[] = [
+  { id: "devriye", baslik: "ayarGrupDevriye" },
+  { id: "vardiya", baslik: "ayarGrupVardiya" },
+  { id: "gurultu", baslik: "ayarGrupGurultu" },
+  { id: "finans", baslik: "ayarGrupFinans" },
+  { id: "rezervasyon", baslik: "ayarGrupRezervasyon" },
+];
+
 /** Operasyon ayari alan tanimi. `anahtar` backend alan adidir. */
 export interface Ayar {
+  /** (P219 §1) Hangi baslik altinda cizilecek. */
+  grup: AyarGrubu;
   anahtar: keyof TenantSettings & string;
   etiket: SozlukAnahtari;
   ipucu?: SozlukAnahtari;
@@ -45,6 +73,7 @@ export const GIRDI_TIPI: Record<string, string> = { sayi: "number", metin: "text
 export const OPERASYON: Ayar[] = [
   // --- P34 tur butunlugu ---
   {
+    grup: "devriye",
     anahtar: "tur_gecikme_toleransi_dk",
     etiket: "ayarTurTolerans",
     ipucu: "ayarTurToleransIpucu",
@@ -53,6 +82,7 @@ export const OPERASYON: Ayar[] = [
     max: 240,
   },
   {
+    grup: "devriye",
     anahtar: "tur_alarm_tekrar_sayisi",
     etiket: "ayarTurTekrar",
     ipucu: "ayarTurTekrarIpucu",
@@ -61,6 +91,7 @@ export const OPERASYON: Ayar[] = [
     max: 10,
   },
   {
+    grup: "devriye",
     anahtar: "tur_baslangic_foto_zorunlu",
     etiket: "ayarTurFoto",
     ipucu: "ayarTurFotoIpucu",
@@ -68,6 +99,7 @@ export const OPERASYON: Ayar[] = [
   },
   // --- (P207 §3) VARDIYA HATIRLATMA ---
   {
+    grup: "vardiya",
     anahtar: "vardiya_hatirlatma_dk",
     etiket: "ayarVardiyaHatirlatma",
     ipucu: "ayarVardiyaHatirlatmaIpucu",
@@ -77,6 +109,7 @@ export const OPERASYON: Ayar[] = [
     tip: "metin",
   },
   {
+    grup: "vardiya",
     anahtar: "vardiya_baslamadi_dk",
     etiket: "ayarVardiyaBaslamadi",
     ipucu: "ayarVardiyaBaslamadiIpucu",
@@ -87,6 +120,7 @@ export const OPERASYON: Ayar[] = [
   },
   // --- P35 guvenlik modu ---
   {
+    grup: "vardiya",
     anahtar: "guvenlik_modu",
     etiket: "ayarGuvenlikModu",
     ipucu: "ayarGuvenlikModuIpucu",
@@ -99,6 +133,7 @@ export const OPERASYON: Ayar[] = [
   },
   // --- (P160) okutma mesafe esigi ---
   {
+    grup: "devriye",
     anahtar: "okutma_mesafe_esigi_m",
     etiket: "ayarOkutmaMesafe",
     ipucu: "ayarOkutmaMesafeIpucu",
@@ -111,6 +146,7 @@ export const OPERASYON: Ayar[] = [
   },
   // --- (P165) rezervasyon gecmisi saklama penceresi ---
   {
+    grup: "rezervasyon",
     anahtar: "rezervasyon_gecmis_ay",
     etiket: "ayarRezervasyonGecmis",
     ipucu: "ayarRezervasyonGecmisIpucu",
@@ -136,6 +172,7 @@ export const OPERASYON: Ayar[] = [
     // degistirilebilir (Tanimlar > Gelir/Gider turleri). Tenant
     // duzeyinde KILIT olsaydi, o siteye bir gun su faturasini kiraciya
     // yazmak gerektiginde ayar TUM turleri birden etkilerdi.
+    grup: "finans",
     anahtar: "varsayilan_hedef_kurali",
     etiket: "ayarVarsayilanHedef",
     ipucu: "ayarVarsayilanHedefIpucu",
@@ -146,6 +183,7 @@ export const OPERASYON: Ayar[] = [
     ],
   },
   {
+    grup: "gurultu",
     anahtar: "gurultu_esigi",
     etiket: "ayarGurultuEsigi",
     ipucu: "ayarGurultuEsigiIpucu",
@@ -153,9 +191,16 @@ export const OPERASYON: Ayar[] = [
     min: 1,
     max: 50,
   },
-  { anahtar: "gurultu_uyari_metni", etiket: "ayarGurultuMetni", ipucu: "ayarGurultuMetniIpucu", tip: "metin" },
+  {
+    grup: "gurultu",
+    anahtar: "gurultu_uyari_metni",
+    etiket: "ayarGurultuMetni",
+    ipucu: "ayarGurultuMetniIpucu",
+    tip: "metin",
+  },
   // --- (P208 §1) SAYIM PENCERESI / SUSMA / SAKINE BILDIRIM ---
   {
+    grup: "gurultu",
     anahtar: "gurultu_pencere_gun",
     etiket: "ayarGurultuPencere",
     ipucu: "ayarGurultuPencereIpucu",
@@ -165,6 +210,7 @@ export const OPERASYON: Ayar[] = [
     max: 365,
   },
   {
+    grup: "gurultu",
     anahtar: "gurultu_susma_gun",
     etiket: "ayarGurultuSusma",
     ipucu: "ayarGurultuSusmaIpucu",
@@ -179,6 +225,7 @@ export const OPERASYON: Ayar[] = [
     // otekinde ucuncu uyari dogru olabilir: bina yogunlugu, guvenlik
     // ekibinin buyuklugu ve komsuluk iliskisi ayni degil.
     // Sinirlar sunucudaki `Field(ge=1, le=10)` ve DDL CHECK ile AYNI.
+    grup: "gurultu",
     anahtar: "gurultu_eskalasyon_esigi",
     etiket: "ayarGurultuEskalasyon",
     ipucu: "ayarGurultuEskalasyonIpucu",
@@ -187,6 +234,7 @@ export const OPERASYON: Ayar[] = [
     max: 10,
   },
   {
+    grup: "gurultu",
     anahtar: "gurultu_sakin_uyarisi",
     etiket: "ayarGurultuSakin",
     ipucu: "ayarGurultuSakinIpucu",
