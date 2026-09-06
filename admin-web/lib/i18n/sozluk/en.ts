@@ -1762,6 +1762,8 @@ export const en: Sozluk = {
   ayarGuvenlikModuAdminNotu: "Only the platform admin can change the security mode; the change is written to the audit log.",
   ayarGurultuPencere: "Count complaints from how many days back",
   ayarGurultuPencereIpucu: "Only complaints from the last this many days are counted. Five complaints spread over a year are not the same as five in one week. Enter 0 to count all open complaints. (Not the same as how long they stay on the map — that is a separate setting.)",
+  ayarHaritaSaat: "How many hours complaints stay on the map",
+  ayarHaritaSaatIpucu: "After this time a complaint leaves the map. It is NOT deleted: it stays in the list, in reports and in the threshold counter — it is only hidden so the map answers “where is there a problem right now”. Enter 0 to show them indefinitely. (The counter has its own separate period: “Count complaints from how many days back”.)",
   ayarGurultuSusma: "Days of silence after a warning",
   ayarGurultuSusmaIpucu: "No new warning is sent to that unit during this period. A warning repeated every night becomes noise itself. Enter 0 to warn again at every threshold.",
   ayarGurultuSakin: "Send a notice to the unit's resident",

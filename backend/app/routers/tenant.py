@@ -55,6 +55,8 @@ _YONETICI_YAZABILIR = {
     # teamulunu bilen kisi odur. Platform operatorune birakmak, her
     # site icin bizi arayan bir ayar demekti.
     "varsayilan_hedef_kurali",
+    # (P219 §2) Sikayet haritasi gorunurluk suresi — saha isletmesi.
+    "sikayet_harita_saat",
     # (P213 §1) GURULTU AYARLARININ TAMAMI YONETICIDE.
     #
     # OLCULEN KUSUR: P208 uc ayari (pencere/susma/sakin bildirimi)
@@ -115,6 +117,7 @@ def _to_settings(t: Tenant) -> TenantSettings:
         gurultu_susma_gun=t.gurultu_susma_gun,
         gurultu_sakin_uyarisi=t.gurultu_sakin_uyarisi,
         gurultu_eskalasyon_esigi=t.gurultu_eskalasyon_esigi,
+        sikayet_harita_saat=t.sikayet_harita_saat,
         varsayilan_hedef_kurali=t.varsayilan_hedef_kurali,
     )
 

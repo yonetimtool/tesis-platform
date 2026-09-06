@@ -453,6 +453,15 @@ class Tenant(Base):
     gurultu_eskalasyon_esigi: Mapped[int] = mapped_column(
         Integer, nullable=False, server_default=text("2")
     )
+    #: (P219 §2, goc 0112) Sikayetin HARITADA kac saat gorunecegi.
+    #:
+    #: GORUNURLUK FILTRESI, VERI SILME DEGIL: kayit yerinde durur,
+    #: yalnizca haritada gosterilmez. Esik sayaclarinin kendi penceresi
+    #: var (`gurultu_pencere_gun`) ve bu ayardan ETKILENMEZ.
+    #: `0` = suresiz goster.
+    sikayet_harita_saat: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default=text("24")
+    )
     #: (P218, goc 0110) YENI gelir/gider tanimlarinin VARSAYILAN borc
     #: hedefi. ZORLAYICI DEGIL: tenant duzeyinde kilit olsaydi, o siteye
     #: bir gun su faturasini kiraciya yazmak gerektiginde ayar TUM

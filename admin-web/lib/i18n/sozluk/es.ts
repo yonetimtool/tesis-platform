@@ -1762,6 +1762,8 @@ export const es: Sozluk = {
   ayarGuvenlikModuAdminNotu: "Solo el administrador de la plataforma puede cambiar el modo; el cambio se registra.",
   ayarGurultuPencere: "Contar las quejas de cuántos días atrás",
   ayarGurultuPencereIpucu: "Solo se cuentan las quejas de los últimos días indicados. Cinco quejas repartidas en un año no son lo mismo que cinco en una semana. Con 0 se cuentan todas las quejas abiertas. (No es lo mismo que el tiempo que permanecen en el mapa: ese es un ajuste aparte.)",
+  ayarHaritaSaat: "Cuántas horas se ven las quejas en el mapa",
+  ayarHaritaSaatIpucu: "Pasado este tiempo la queja desaparece del mapa. NO se elimina: sigue en la lista, en los informes y en el contador de umbral; solo se oculta para que el mapa responda a «dónde hay un problema ahora mismo». Escriba 0 para mostrarlas sin límite. (El contador tiene su propio periodo: «Contar las quejas de cuántos días atrás».)",
   ayarGurultuSusma: "Days of silence after a warning",
   ayarGurultuSusmaIpucu: "No new warning is sent to that unit during this period. A warning repeated every night becomes noise itself. Enter 0 to warn again at every threshold.",
   ayarGurultuSakin: "Enviar aviso al residente de la vivienda",

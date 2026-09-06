@@ -1762,6 +1762,8 @@ export const fr: Sozluk = {
   ayarGuvenlikModuAdminNotu: "Seul l'administrateur de la plateforme peut changer le mode ; le changement est journalisé.",
   ayarGurultuPencere: "Compter les plaintes sur combien de jours",
   ayarGurultuPencereIpucu: "Seules les plaintes des derniers jours indiqués sont comptées. Cinq plaintes réparties sur un an ne valent pas cinq en une semaine. Avec 0, toutes les plaintes ouvertes sont comptées. (À ne pas confondre avec la durée d'affichage sur la carte — réglage distinct.)",
+  ayarHaritaSaat: "Combien d'heures les plaintes restent sur la carte",
+  ayarHaritaSaatIpucu: "Passé ce délai, la plainte quitte la carte. Elle n'est PAS supprimée : elle reste dans la liste, dans les rapports et dans le compteur de seuil — elle est seulement masquée pour que la carte réponde à « où y a-t-il un problème en ce moment ». Saisissez 0 pour un affichage illimité. (Le compteur a sa propre durée : « Compter les plaintes sur combien de jours ».)",
   ayarGurultuSusma: "Days of silence after a warning",
   ayarGurultuSusmaIpucu: "No new warning is sent to that unit during this period. A warning repeated every night becomes noise itself. Enter 0 to warn again at every threshold.",
   ayarGurultuSakin: "Envoyer un avis au résident du logement",

@@ -112,3 +112,84 @@ edilemiyordu). Mevcut P212/P213 testleri yeni anlama göre güncellendi.
 **Bir metnin "anlaşılır" olduğunu test edemem** — ölçtüğüm şey yapısal
 eksikler (birimsiz sayı, grupsuz ayar, açıklamasız alan) ve kusur tam
 olarak orada başlamıştı.
+
+---
+
+## §2 — Şikâyet haritasında saklama süresi
+
+### Neden
+
+Şikâyetler haritada **süresiz** kalıyordu: altı ay önce çözülmüş bir
+gürültü şikâyeti, dün gece gelenle aynı kırmızı noktayı üretiyordu.
+Harita *"şu anda nerede sorun var"* sorusunu yanıtlaması gerekirken
+*"hiç olmuş mu"* sorusunu yanıtlıyor ve zamanla her daire kırmızıya
+dönüyordu.
+
+### Bu bir görünürlük filtresi, veri silme değil
+
+`tenant.sikayet_harita_saat` (göç 0112, varsayılan **24 saat**).
+Etkilenmeyenler — hepsi testle ölçülüyor:
+
+| | etkileniyor mu |
+|---|---|
+| Harita (`/density` ve `/building-map`) | **evet** — filtrelenir |
+| Şikâyet kaydının kendisi | hayır — **silinmez** |
+| Eşik sayaçları (P208/P209/P212) | hayır — **kendi penceresi var** |
+| Şikâyet listeleri, raporlar, denetim kaydı | hayır |
+| Sakinin kendi şikâyetleri | hayır |
+
+**İki uç birden filtrelendi.** `/density` (yoğunluk) ve
+`/building-map` (bina şeması) **aynı haritayı** besliyor; birinde
+filtreleyip ötekinde filtrelememek aynı ekranda iki farklı sayı
+göstermek olurdu.
+
+**"Sil" kelimesi hiçbir yerde geçmiyor** — ne kodda ne arayüzde.
+Açıklama "SİLİNMEZ" diyor ve neyin etkilenmediğini tek tek sayıyor. Bu
+da testle kilitli.
+
+### `0` = süresiz göster — evet, kapatılabilir olmalı
+
+**Gerekçe:** haftada bir şikâyet gelen küçük bir sitede 24 saatlik
+pencere haritayı sürekli boş gösterir ve harita işlevini yitirir.
+Yönetici süresiz görmeyi tercih edebilmeli.
+
+`0` değeri üründe zaten "sınırsız" anlamında kullanılıyor
+(`gurultu_pencere_gun`, `rezervasyon_gecmis_ay`) — aynı kavrama aynı
+değeri vermek, yöneticinin öğrenmesi gereken kural sayısını artırmıyor.
+
+**Üst sınır 8760 saat (bir yıl):** daha uzunu "süresiz"in kendisidir ve
+`0` onu zaten ifade ediyor.
+
+### İki süre karıştırılmasın
+
+| ayar | birim | ne yapar |
+|---|---|---|
+| Şikâyetler kaç gün geriye kadar sayılsın | **gün** (30) | **eşik mantığı** — uyarı ne zaman tetiklenir |
+| Şikâyetler haritada kaç saat görünsün | **saat** (24) | **görünürlük** — haritada ne kadar durur |
+
+İkisi de "Gürültü şikâyetleri" grubunda **yan yana** duruyor (bilinçli:
+yönetici farkı bir arada görsün) ve **açıklamaları birbirine gönderme
+yapıyor**.
+
+### Ölçüm — istediğiniz akış uçtan uca sürüldü
+
+`test_p219_harita_penceresi.py` (7):
+
+1. Şikâyet açıldı → **haritada göründü** (hem `/density` hem
+   `/building-map`: 1).
+2. Şikâyet 30 saat öncesine alındı → **haritadan kayboldu** (ikisi de 0).
+3. **Kayıt duruyor:** şikâyet listesinde hâlâ var, `durum = acik`.
+4. **Süre uzatılınca yeniden göründü** — silinseydi bu mümkün olmazdı.
+5. `0` ile üç ay önceki şikâyet bile görünüyor.
+6. **Eşik sayacı etkilenmiyor:** 30 günlük pencerede sayı hâlâ 1;
+   `acik_gurultu_sayisi` imzasında `pencere_gun` var ve kaynağında
+   "harita" geçmiyor.
+7. Sakinin kendi şikâyeti görünmeye devam ediyor.
+
+Kilit kırılarak doğrulandı: filtreyi devre dışı bırakınca 4 test düştü.
+
+**Ölçüm kurulurken üç gerçek kural öğrendim** (ve testler bunlara
+uyarlandı): sakin yalnız **kendi bloğundaki** daireleri şikâyet
+edebiliyor; `world` fixture'ı sakini hiçbir daireye bağlamıyor (test
+kendi ön koşulunu kuruyor); bina şeması ucu `/unit-complaints/building-map`
+ve yerleşimsiz daireler `unplaced` kovasında duruyor.

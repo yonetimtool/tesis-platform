@@ -124,3 +124,46 @@ describe("(P219 §1) eskalasyon eşiği — değer ile anlam hizalı", () => {
     expect(TR["ayarGurultuPencereIpucu"]).toMatch(/harita/i);
   });
 });
+
+describe("(P219 §2) harita süresi — GÖRÜNÜRLÜK, veri silme DEĞİL", () => {
+  it("ayar VAR ve gürültü grubunda (sayım penceresiyle YAN YANA)", () => {
+    const harita = OPERASYON.find((a) => a.anahtar === "sikayet_harita_saat");
+    expect(harita, "harita süresi ayarı yok").toBeTruthy();
+    expect(harita!.grup).toBe("gurultu");
+    // Sayim penceresi de ayni grupta: yonetici ikisini bir arada gorup
+    // farki anlasin.
+    expect(OPERASYON.find((a) => a.anahtar === "gurultu_pencere_gun")!.grup)
+      .toBe("gurultu");
+  });
+
+  it("`0` (süresiz) KABUL EDİLİYOR — kapatılabilir olmalı", () => {
+    // Haftada bir sikayet gelen kucuk bir sitede 24 saatlik pencere
+    // haritayi surekli bos gosterir ve harita islevini yitirir.
+    const harita = OPERASYON.find((a) => a.anahtar === "sikayet_harita_saat")!;
+    expect(harita.min).toBe(0);
+  });
+
+  it("AÇIKLAMADA 'sil' kelimesi GEÇMİYOR, 'silinmez' GEÇİYOR", () => {
+    // Istegin acik sarti: bu bir gorunurluk filtresi, veri silme degil
+    // ve arayuz bunu yanlis anlatmamali.
+    const ipucu = TR["ayarHaritaSaatIpucu"] ?? "";
+    expect(ipucu).toMatch(/SİLİNMEZ|silinmez/);
+    // "silinir/silinecek" gibi bir ifade OLMAMALI.
+    expect(ipucu).not.toMatch(/silinir|silinecek|silin(ecek|ir)/i);
+  });
+
+  it("AÇIKLAMA sayaç penceresinden AYRI olduğunu SÖYLÜYOR", () => {
+    // Iki sure karistirilmasin: biri saat (gorunurluk), oteki gun
+    // (esik mantigi).
+    const ipucu = TR["ayarHaritaSaatIpucu"] ?? "";
+    expect(ipucu).toMatch(/sayaç|sayacı/i);
+    expect(ipucu).toMatch(/kaç gün geriye/i);
+  });
+
+  it("AÇIKLAMA neyin ETKİLENMEDİĞİNİ sayıyor", () => {
+    const ipucu = TR["ayarHaritaSaatIpucu"] ?? "";
+    for (const yer of [/liste/i, /rapor/i, /sayac|sayaç/i]) {
+      expect(ipucu).toMatch(yer);
+    }
+  });
+});

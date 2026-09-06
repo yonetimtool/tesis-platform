@@ -1762,6 +1762,8 @@ export const de: Sozluk = {
   ayarGuvenlikModuAdminNotu: "Den Sicherheitsmodus kann nur der Plattform-Admin ändern; die Änderung wird protokolliert.",
   ayarGurultuPencere: "Beschwerden wie viele Tage rückwirkend zählen",
   ayarGurultuPencereIpucu: "Nur Beschwerden der letzten so vielen Tage werden gezählt. Fünf Beschwerden über ein Jahr sind nicht dasselbe wie fünf in einer Woche. Mit 0 werden alle offenen Beschwerden gezählt. (Nicht zu verwechseln mit der Anzeigedauer auf der Karte — das ist eine eigene Einstellung.)",
+  ayarHaritaSaat: "Wie viele Stunden Beschwerden auf der Karte bleiben",
+  ayarHaritaSaatIpucu: "Nach dieser Zeit verschwindet die Beschwerde von der Karte. Sie wird NICHT gelöscht: sie bleibt in der Liste, in Berichten und im Schwellenzähler — sie wird nur ausgeblendet, damit die Karte beantwortet, „wo gerade ein Problem ist“. Mit 0 dauerhaft anzeigen. (Der Zähler hat eine eigene Frist: „Beschwerden wie viele Tage rückwirkend zählen“.)",
   ayarGurultuSusma: "Days of silence after a warning",
   ayarGurultuSusmaIpucu: "No new warning is sent to that unit during this period. A warning repeated every night becomes noise itself. Enter 0 to warn again at every threshold.",
   ayarGurultuSakin: "Hinweis an den Bewohner der Einheit senden",

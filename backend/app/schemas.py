@@ -3494,6 +3494,9 @@ class TenantSettings(BaseModel):
     #: (P213 §1, goc 0105) Kacinci esik asimindan SONRA guvenlige gider.
     #: 1 = ikinci asimda (P212 davranisi).
     gurultu_eskalasyon_esigi: int = 2
+    #: (P219 §2) Sikayetin HARITADA kac saat gorunecegi. GORUNURLUK
+    #: filtresi — kayit silinmez, sayaclar etkilenmez. `0` = suresiz.
+    sikayet_harita_saat: int = 24
     #: (P218) YENI gelir/gider tanimlarinin varsayilan borc hedefi.
     #: ZORLAYICI DEGIL: tur bazinda her zaman degistirilebilir.
     varsayilan_hedef_kurali: BorcHedefKurali = "kiraci_oncelikli"
@@ -3554,6 +3557,9 @@ class TenantSettingsUpdate(BaseModel):
     #: anlamini silerdi; cok buyuk bir sayi ise "hic cagirma"nin dolayli
     #: ve okunmaz bicimidir.
     gurultu_eskalasyon_esigi: int | None = Field(None, ge=1, le=10)
+    #: 0 = suresiz goster. Ust sinir 8760 (bir yil): daha uzunu
+    #: "suresiz"in kendisidir ve `0` onu zaten ifade ediyor.
+    sikayet_harita_saat: int | None = Field(None, ge=0, le=8760)
     varsayilan_hedef_kurali: BorcHedefKurali | None = None
     #: (P207 §3) Kademe listesi — bicim dogrulamasi UYGULAMADA
     #: (`hatirlatma_kademeleri`): gecersiz metin KAPALI demektir ve

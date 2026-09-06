@@ -30,6 +30,7 @@ yapilandirilabilir hale getirmek icin degistirilecek tek yer burasidir.
 from __future__ import annotations
 
 import logging
+from datetime import datetime, timedelta, timezone
 
 import uuid
 
@@ -44,7 +45,14 @@ from ..deps import get_tenant_db, require_role
 from ..gurultu_akisi import esik_kontrol
 from ..sakin_bildirimi import sakin_bildirimi_yaz
 from ..errors import APIError
-from ..models import AppUser, Unit, UnitComplaint, UnitComplaintOkuma, UnitResident
+from ..models import (
+    AppUser,
+    Tenant,
+    Unit,
+    UnitComplaint,
+    UnitComplaintOkuma,
+    UnitResident,
+)
 from ..schemas import (
     BuildingMapBlok,
     BuildingMapKat,
@@ -197,13 +205,43 @@ async def file_unit_complaint(
 
 
 # ------------------------------ yogunluk ------------------------------------ #
+async def _harita_penceresi(db: AsyncSession):
+    """(P219 §2) Haritada gosterilecek sikayetlerin ZAMAN KOSULU.
+
+    GORUNURLUK FILTRESI, VERI SILME DEGIL. Sikayet kaydi yerinde durur;
+    yalnizca haritada gosterilmez. Etkilenmeyenler:
+      * esik sayaclari (P208/P209/P212) — kendi penceresi var
+        (`gurultu_pencere_gun`, varsayilan 30 gun),
+      * raporlar, denetim kaydi, sikayet listeleri,
+      * sakinin kendi sikayetleri.
+
+    Haritanin yanitlamasi gereken soru "SU ANDA nerede sorun var";
+    suresiz gosterim onu "hic olmus mu"ya cevirip zamanla her daireyi
+    kirmiziya boyuyordu.
+
+    `0` = SURESIZ (kosul yok) — haftada bir sikayet gelen kucuk bir
+    sitede 24 saatlik pencere haritayi surekli bos gosterir.
+    """
+    saat = (
+        await db.execute(select(Tenant.sikayet_harita_saat))
+    ).scalar_one_or_none()
+    if not saat or int(saat) <= 0:
+        return None
+    sinir = datetime.now(tz=timezone.utc) - timedelta(hours=int(saat))
+    return UnitComplaint.created_at >= sinir
+
+
+
 @router.get("/density", response_model=UnitDensityResponse)
 async def unit_density(
     db: AsyncSession = Depends(get_tenant_db),
     _: AppUser = Depends(_MANAGER),
 ) -> UnitDensityResponse:
     """Daire-basi ACIK sikayet sayisi + renk — YALNIZ YONETIM (denetim).
-    residentlar sayilari GOREMEZ (Rev-1); bkz. /building-map (rol-farkinda)."""
+    residentlar sayilari GOREMEZ (Rev-1); bkz. /building-map (rol-farkinda).
+
+    (P219 §2) Sayim `sikayet_harita_saat` penceresiyle SINIRLI."""
+    pencere = await _harita_penceresi(db)
     rows = (
         await db.execute(
             select(
@@ -218,6 +256,8 @@ async def unit_density(
                 and_(
                     UnitComplaint.target_unit_id == Unit.id,
                     UnitComplaint.durum == "acik",
+                    # (P219 §2) HARITA PENCERESI — gorunurluk filtresi.
+                    *( [pencere] if pencere is not None else [] ),
                 ),
             )
             .group_by(Unit.id, Unit.no, Unit.blok)
@@ -321,6 +361,7 @@ async def building_map(
         ).all()
         own_open = {uid: n for uid, n in own_rows}
 
+    pencere = await _harita_penceresi(db)
     rows = (
         await db.execute(
             select(
@@ -337,6 +378,11 @@ async def building_map(
                 and_(
                     UnitComplaint.target_unit_id == Unit.id,
                     UnitComplaint.durum == "acik",
+                    # (P219 §2) Ayni pencere BURADA DA: iki uc ayni
+                    # haritayi besliyor ve birinde filtreleyip otekinde
+                    # filtrelememek, ayni ekranda iki farkli sayi
+                    # gostermek olurdu.
+                    *( [pencere] if pencere is not None else [] ),
                 ),
             )
             .group_by(Unit.id, Unit.no, Unit.blok, Unit.kat, Unit.sira)

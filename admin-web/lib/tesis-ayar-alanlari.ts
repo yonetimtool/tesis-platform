@@ -234,6 +234,26 @@ export const OPERASYON: Ayar[] = [
     max: 10,
   },
   {
+    // =====================================================================
+    // (P219 §2) HARITADA GORUNME SURESI — SAYIM PENCERESIYLE KARISTIRMA
+    // =====================================================================
+    // Ikisi ayni grupta ve yan yana duruyor; bu BILINCLI: yonetici
+    // ikisini bir arada gorup farki anlasin diye. Aciklamalarda da
+    // birbirlerine gonderme var.
+    //   `gurultu_pencere_gun`  -> kac GUN geriye SAYILIR   (esik mantigi)
+    //   `sikayet_harita_saat`  -> kac SAAT haritada DURUR  (gorunurluk)
+    //
+    // "Sil" kelimesi HICBIR YERDE gecmiyor: bu bir gorunurluk filtresi
+    // ve sikayet kaydi yerinde duruyor.
+    grup: "gurultu",
+    anahtar: "sikayet_harita_saat",
+    etiket: "ayarHaritaSaat",
+    ipucu: "ayarHaritaSaatIpucu",
+    tip: "sayi",
+    min: 0,
+    max: 8760,
+  },
+  {
     grup: "gurultu",
     anahtar: "gurultu_sakin_uyarisi",
     etiket: "ayarGurultuSakin",

@@ -1762,6 +1762,8 @@ export const ar: Sozluk = {
   ayarGuvenlikModuAdminNotu: "يمكن لمسؤول المنصة فقط تغيير وضع الأمن؛ ويُسجَّل التغيير في سجل التدقيق.",
   ayarGurultuPencere: "احتساب الشكاوى حتى كم يومًا للخلف",
   ayarGurultuPencereIpucu: "تُحتسب شكاوى آخر هذا العدد من الأيام فقط. خمس شكاوى موزّعة على سنة ليست كخمس شكاوى في أسبوع. أدخل 0 لاحتساب كل الشكاوى المفتوحة. (يختلف عن مدة الظهور على الخريطة — هذا إعداد منفصل.)",
+  ayarHaritaSaat: "كم ساعة تبقى الشكاوى على الخريطة",
+  ayarHaritaSaatIpucu: "بعد هذه المدة تختفي الشكوى من الخريطة. لا تُحذف: تبقى في القائمة والتقارير وعدّاد العتبة — تُخفى فقط لتجيب الخريطة عن سؤال «أين توجد مشكلة الآن». أدخل 0 لعرضها بلا حد زمني. (لعدّاد العتبة مدة منفصلة: «احتساب الشكاوى حتى كم يومًا للخلف».)",
   ayarGurultuSusma: "Days of silence after a warning",
   ayarGurultuSusmaIpucu: "No new warning is sent to that unit during this period. A warning repeated every night becomes noise itself. Enter 0 to warn again at every threshold.",
   ayarGurultuSakin: "إرسال تنبيه إلى ساكن الوحدة",

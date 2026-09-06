@@ -611,6 +611,9 @@ export interface TenantSettings {
   gurultu_sakin_uyarisi?: boolean;
   /** (P213 §1) Kacinci esik asimindan SONRA guvenlige gider (1 = ikinci). */
   gurultu_eskalasyon_esigi?: number;
+  /** (P219 §2) Şikâyetin HARİTADA kaç saat görüneceği. GÖRÜNÜRLÜK
+   *  filtresi — kayıt silinmez, eşik sayaçları etkilenmez. 0 = süresiz. */
+  sikayet_harita_saat?: number;
   /** (P218) YENİ gelir/gider türlerinin varsayılan borç hedefi.
    *  ZORLAYICI DEĞİL: tür bazında her zaman değiştirilebilir. */
   varsayilan_hedef_kurali?: "kiraci_oncelikli" | "malik";

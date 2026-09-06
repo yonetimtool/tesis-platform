@@ -1762,6 +1762,8 @@ export const ru: Sozluk = {
   ayarGuvenlikModuAdminNotu: "Режим охраны меняет только администратор платформы; изменение пишется в журнал аудита.",
   ayarGurultuPencere: "За сколько дней считать жалобы",
   ayarGurultuPencereIpucu: "Считаются только жалобы за последние столько дней. Пять жалоб за год — не то же самое, что пять за неделю. Введите 0, чтобы считать все открытые жалобы. (Это не то же самое, что срок показа на карте — отдельная настройка.)",
+  ayarHaritaSaat: "Сколько часов жалобы видны на карте",
+  ayarHaritaSaatIpucu: "По истечении этого времени жалоба исчезает с карты. Она НЕ удаляется: остаётся в списке, в отчётах и в счётчике порога — скрывается лишь для того, чтобы карта отвечала на вопрос «где проблема прямо сейчас». Введите 0, чтобы показывать бессрочно. (У счётчика свой отдельный период: «За сколько дней считать жалобы».)",
   ayarGurultuSusma: "Days of silence after a warning",
   ayarGurultuSusmaIpucu: "No new warning is sent to that unit during this period. A warning repeated every night becomes noise itself. Enter 0 to warn again at every threshold.",
   ayarGurultuSakin: "Отправлять уведомление жильцу квартиры",

@@ -1824,6 +1824,8 @@ export const tr = {
   ayarGuvenlikModuAdminNotu: "Güvenlik yönetimi modunu yalnız platform admini değiştirebilir; değişiklik denetim kaydına yazılır.",
   ayarGurultuPencere: "Şikâyetler kaç gün geriye kadar sayılsın",
   ayarGurultuPencereIpucu: "Yalnızca son bu kadar gün içindeki şikâyetler sayılır. Bir yıla yayılan beş şikâyet ile bir haftadaki beş şikâyet aynı şey değildir. 0 yazarsanız tüm açık şikâyetler sayılır. (Haritada görünme süresiyle karıştırmayın — o ayrı bir ayardır.)",
+  ayarHaritaSaat: "Şikâyetler haritada kaç saat görünsün",
+  ayarHaritaSaatIpucu: "Bu süre geçince şikâyet haritadan kalkar. Şikâyet SİLİNMEZ: listede, raporlarda ve eşik sayacında durmaya devam eder — yalnızca harita “şu anda nerede sorun var” sorusunu yanıtlasın diye gizlenir. 0 yazarsanız süresiz görünür. (Eşik sayacının kendi süresi ayrıdır: “Şikâyetler kaç gün geriye kadar sayılsın”.)",
   ayarGurultuSusma: "Uyarıdan sonra kaç gün yeniden uyarılmasın",
   ayarGurultuSusmaIpucu: "Uyarı alan daireye bu süre boyunca yeni uyarı gönderilmez. Her gece tekrarlanan bir uyarı kendisi gürültüye dönüşür. 0 yazarsanız her eşikte yeniden uyarılır.",
   ayarGurultuSakin: "Daire sakinine uyarı bildirimi gönder",
