@@ -163,8 +163,58 @@ async def list_units(
     ).scalars().all()
     return UnitListResponse(
         meta={"limit": limit, "offset": offset, "total": total},
-        items=await _adlarla(db, list(rows)),
+        items=await _borclarla(db, await _adlarla(db, list(rows))),
     )
+
+
+async def _borclarla(
+    db: AsyncSession, kayitlar: list[UnitOut]
+) -> list[UnitOut]:
+    """(P217 §1) Daire listesine ACIK BORCU ekler.
+
+    OLCULEN KUSUR: yonetici toplu borclandirma yapip Daireler ekranina
+    bakiyor ve "borc gorunmuyor" diyordu. Hakliydi — `/units` yaniti
+    borc ALANI TASIMIYORDU. Tahakkuklar yazilmisti (olculdu: 15 kayit),
+    finans ozeti de sayiyordu; gorunmeyen yer YALNIZ bu listeydi.
+    Kullanici "toplu borclandirma calismiyor" sonucuna buradan varmis
+    olabilir.
+
+    TEK SORGU: daire basina sorgu (N+1) elli daireli bir sitede elli
+    sorgu demekti. Tahakkuk toplamindan tahsilat toplami dusuluyor —
+    tahsilat `finansal_hareket`te (P192 TEK DEFTER), tahakkuk
+    `dues_assessment`ta.
+    """
+    if not kayitlar:
+        return kayitlar
+    idler = [k.id for k in kayitlar]
+
+    tahakkuk = dict(
+        (
+            await db.execute(
+                select(DuesAssessment.unit_id,
+                       func.coalesce(func.sum(DuesAssessment.tutar_kurus), 0))
+                .where(DuesAssessment.unit_id.in_(idler))
+                .group_by(DuesAssessment.unit_id)
+            )
+        ).all()
+    )
+    tahsilat = dict(
+        (
+            await db.execute(
+                select(FinansalHareket.unit_id,
+                       func.coalesce(func.sum(FinansalHareket.tutar_kurus), 0))
+                .where(FinansalHareket.unit_id.in_(idler),
+                       FinansalHareket.tip == "tahsilat")
+                .group_by(FinansalHareket.unit_id)
+            )
+        ).all()
+    )
+    for k in kayitlar:
+        # Negatif bakiye (fazla odeme) 0'a KIRPILMAZ: "borcu yok" ile
+        # "alacakli" ayri seylerdir ve ikincisi yoneticinin gormesi
+        # gereken bir durumdur.
+        k.borc_kurus = int(tahakkuk.get(k.id, 0)) - int(tahsilat.get(k.id, 0))
+    return kayitlar
 
 
 # SIRA ONEMLI — BU UC `/{unit_id}`DEN ONCE DURMALI.

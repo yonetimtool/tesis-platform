@@ -3883,6 +3883,14 @@ class UnitOut(BaseModel):
     #: DISINDA kalir ve bu kullaniciya soylenir.
     arsa_payi: float | None = None
     aktif: bool
+    #: (P217 §1) ACIK BORC (tahakkuk - tahsilat), kurus.
+    #:
+    #: Yonetici toplu borclandirma yapip Daireler ekranina bakiyor ve
+    #: "borc gorunmuyor" diyordu — hakliydi, yanit bu alani TASIMIYORDU.
+    #: NEGATIF DEGER GECERLIDIR: fazla odeme yapmis daire alacaklidir ve
+    #: bunu 0'a kirpmak, yoneticiden bir bilgiyi saklamak olurdu.
+    #: `None` = hesaplanmadi (tekil uclar bu alani doldurmaz).
+    borc_kurus: int | None = None
     # SINIFLANDIRMA (P26). Ad da doner: istemci ayri bir istek yapmadan
     # listeyi cizebilsin (daire listesi tip/grup adini gosterir).
     unit_tip_id: uuid.UUID | None = None
@@ -4274,6 +4282,18 @@ class TahakkukAtlanan(BaseModel):
 
 class DuesAssessmentResult(BaseModel):
     created: list[DuesAssessmentOut]
+    #: (P217 §1) KAC TAHAKKUK OLUSTU.
+    #:
+    #: Toplu borclandirmada `created` BILEREK bos doner (500 satirlik
+    #: yanit istemciyi bogar). Ama sayi da donmuyordu: istemcinin elinde
+    #: "oldu mu, kac tane oldu" sorusunun YANITI YOKTU ve ekranda her
+    #: durumda "Kaydedildi" yaziyordu.
+    #:
+    #: OLCULDU: ayni donem ikinci kez borclandirilinca 15 satirin HEPSI
+    #: benzersizlik carpismasiyla atlaniyor, HICBIR SEY yazilmiyor —
+    #: kullanici yine "Kaydedildi" goruyordu. Sessiz basarisizligin ta
+    #: kendisi.
+    olusan: int = 0
     atlanan: int
     #: Atlananlarin DOKUMU. Bos liste, atlanan olmadigi anlamina gelir.
     atlananlar: list[TahakkukAtlanan] = []

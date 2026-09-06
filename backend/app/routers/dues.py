@@ -386,8 +386,10 @@ async def create_assessments(
             tenant_id=user.tenant_id,
             kalemler=[(obj.unit_id, obj.hedef_user_id, obj.donem, obj.tutar_kurus)],
         )
+        # (P217 §1) `olusan` her yolda DOLU doner; istemci tek bir alana
+        # bakarak "kac tahakkuk olustu" sorusunu yanitlayabilmeli.
         return DuesAssessmentResult(
-            created=await _zenginlestir(db, [obj]), atlanan=0
+            created=await _zenginlestir(db, [obj]), olusan=1, atlanan=0
         )
 
     # TOPLU mod: unit_ids verildiyse dogrula, yoksa tum aktif daireler
@@ -450,7 +452,8 @@ async def create_assessments(
             ],
         )
     return DuesAssessmentResult(
-        created=created, atlanan=len(atlananlar), atlananlar=atlananlar
+        created=created, olusan=len(created),
+        atlanan=len(atlananlar), atlananlar=atlananlar
     )
 
 

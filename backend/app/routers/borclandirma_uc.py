@@ -161,8 +161,13 @@ async def toplu_borclandir(
     # `created` BOS doner: 500 satirlik bir yanit istemciyi bogar ve onizleme
     # zaten ayrintiyi verdi. ATLANANLAR ise DOKUMLU doner (P192 §3.2):
     # eksik tahakkuk sessizce kaybolmamali.
+    #
+    # (P217 §1) `olusan` EKLENDI: sayi donmuyordu ve istemci "oldu mu"
+    # sorusunu yanitlayamiyordu. Ayni donem ikinci kez borclandirilinca
+    # 15 satirin hepsi atlaniyor, hicbir sey yazilmiyor ve ekranda yine
+    # "Kaydedildi" cikiyordu — olculdu.
     return DuesAssessmentResult(
-        created=[], atlanan=atlanan, atlananlar=atlananlar
+        created=[], olusan=olusan, atlanan=atlanan, atlananlar=atlananlar
     )
 
 
@@ -241,7 +246,10 @@ async def sayac_ile_borclandir(
         )
     # (P191 §2) Sayac borclandirmasi da sakine bildirilir.
     await aidat_bildir(db, tenant_id=user.tenant_id, kalemler=kalemler)
-    return DuesAssessmentResult(created=[], atlanan=atlanan)
+    # (P217 §1) Sayac yolu da ayni bilgiyi doner: iki yol ayni ekrandan
+    # kullaniliyor ve birinin sayi verip otekinin vermemesi, ayni
+    # belirsizligi yarim birakmak olurdu.
+    return DuesAssessmentResult(created=[], olusan=olusan, atlanan=atlanan)
 
 
 # ============================== ICE AKTARIM ================================= #

@@ -560,7 +560,7 @@ function TopluModal({
   async function isle() {
     setHata(null); setMesgul(true);
     try {
-      const sonuc = await apiSend<{ atlananlar?: Atlanan[] }>(
+      const sonuc = await apiSend<{ olusan?: number; atlananlar?: Atlanan[] }>(
         "/api/panel/borclandirma-toplu", "POST", govde());
       // (P192 §3.2) SESSIZ ATLAMA YOK: atlanan varsa kullaniciya SOYLENIR.
       // Onceden yalnizca bir sayi donuyordu ve kimse bakmiyordu; yonetici
@@ -572,10 +572,28 @@ function TopluModal({
             .join(", ")}`,
         );
       }
-      toast.success(t("finansKaydedildi"));
+      // (P217 §1) "KAYDEDILDI" HER DURUMDA CIKIYORDU — SESSIZ BASARISIZLIK.
+      //
+      // OLCULDU: ayni donem ikinci kez borclandirilinca 15 satirin HEPSI
+      // benzersizlik carpismasiyla atlaniyor, HICBIR TAHAKKUK yazilmiyor
+      // ve ekranda yine "Kaydedildi" cikiyordu. Kullanicinin "toplu
+      // borclandirma calismiyor" demesinin en olasi sebebi buydu: islem
+      // basarili gorunuyor, ortada yeni bir borc yok.
+      //
+      // Artik sunucu KAC TANE olustugunu doner ve mesaj ona gore secilir.
+      const olusan = sonuc?.olusan ?? 0;
+      if (olusan > 0) {
+        toast.success(t("finansTahakkukOlustu", { adet: String(olusan) }));
+      } else {
+        // Hicbiri yazilmadiysa bu bir BASARI DEGILDIR: kullanici ne
+        // yapmasi gerektigini bilmeli (baska donem sec ya da duzelt).
+        toast.error(t("finansTahakkukOlusmadi"));
+      }
       setOnizleme(null); setTutar(""); setAciklama("");
       onKaydedildi();
-      onKapat();
+      // Hicbir sey olusmadiysa MODAL ACIK KALIR: kullanici donemi
+      // duzeltip yeniden deneyebilsin. Basaride kapanir (§2 karari).
+      if (olusan > 0) onKapat();
     } catch (e) {
       setHata(e instanceof Error ? e.message : t("ortakHataOlustu"));
     } finally {

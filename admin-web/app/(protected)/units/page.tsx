@@ -30,6 +30,7 @@ import { sayiBicimi, sayiCoz, tamsayiCoz } from "@/lib/sayi";
 import type { Unit, UnitList } from "@/lib/types";
 import { useAcilinca } from "@/lib/kaydir";
 import { useT } from "@/lib/i18n/kullan";
+import { kurusToTL } from "@/lib/money";
 
 /** Sunucudaki `_BLOK_PATTERN` ile AYNI — ikisi ayrisirsa test duser. */
 const BLOK_KALIBI = /^[A-Za-z0-9]+$/;
@@ -310,6 +311,21 @@ export default function UnitsPage() {
         baslik: t("daireArsaPayi"),
         sayisal: true,
         hucre: (u) => sayiBicimi(u.arsa_payi),
+        darEkrandaGizle: true,
+      },
+      {
+        // (P217 §1) ACIK BORC SUTUNU.
+        //
+        // OLCULEN KUSUR: yonetici toplu borclandirma yapip bu ekrana
+        // bakiyor ve "dairelerde borc gorunmuyor" diyordu. Hakliydi —
+        // tahakkuklar YAZILMISTI (olculdu) ama ne yanit bu alani
+        // tasiyordu ne de liste bir sutun cizyordu. "Borclandirma
+        // calismiyor" sonucuna buradan varilmis olabilir.
+        id: "borc",
+        baslik: t("daireAcikBorc"),
+        sayisal: true,
+        hucre: (u) =>
+          u.borc_kurus == null ? "—" : kurusToTL(u.borc_kurus),
         darEkrandaGizle: true,
       },
       {
