@@ -162,7 +162,13 @@ async def toplu_plan(
                 nedenler[d[0]] = eksik
 
     hedefler = {
-        d[0]: hedef_sec(baglar.get(d[0], []), tanim.hedef_kurali) for d in daireler
+        # (P218) Istekte kural EZILDIYSE o gecerli; yoksa tanimin
+        # kurali. Ayni ekrandan yapilan tekil islemle AYNI davranis.
+        d[0]: hedef_sec(
+            baglar.get(d[0], []),
+            body.hedef_kurali or tanim.hedef_kurali,
+        )
+        for d in daireler
     }
     adlar = await hedef_adlari(
         db, {uuid.UUID(h) for h in hedefler.values() if h}

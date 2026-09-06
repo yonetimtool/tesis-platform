@@ -4264,6 +4264,11 @@ class DuesAssessmentOut(BaseModel):
     gelir_gider_tanim_ad: str | None = None
     hedef_user_id: uuid.UUID | None = None
     hedef_ad: str | None = None
+    #: (P218) Hedefin O DAIREDEKI SIFATI: `malik` | `kiraci` |
+    #: `malik_oturan`. Finans ekranlarinda "bu borc neden ona yazildi"
+    #: sorusunun yaniti; ad tek basina bunu soylemiyordu.
+    #: `None` = borc daireye yazilmis (hedef yok) ya da bag bulunamadi.
+    hedef_sifat: str | None = None
     tarih: date | None = None
     gecikme_uygula: bool = True
     kaynak: str = "tekil"
@@ -4297,6 +4302,14 @@ class DuesAssessmentCreate(BaseModel):
     aciklama: str | None = None
     # --- P28 (hepsi OPSIYONEL: mevcut cagiranlar aynen calisir) ------------ #
     gelir_gider_tanim_id: uuid.UUID | None = None
+    #: (P218) BU TAHAKKUK ICIN hedef kuralini EZ.
+    #:
+    #: Varsayilan tanimdan gelir (ayni gider turu her ay ayni kisiye
+    #: yazilir; her tahakkukta sormak her ay yeni bir hata firsatidir).
+    #: Ama ISTISNALAR var: bir kere malige yazilan bir isletme gideri,
+    #: sozlesmeye gore devredilen bir kalem. Bu alan O PARTIYE
+    #: uygulanir, tanimi DEGISTIRMEZ.
+    hedef_kurali: BorcHedefKurali | None = None
     tarih: date | None = None
     gecikme_uygula: bool = True
     # --- (P192 §3.2) ------------------------------------------------------- #
@@ -5718,6 +5731,10 @@ class TopluBorcIstek(BaseModel):
     tarih: date | None = None
     aciklama: str | None = Field(None, max_length=500)
     gecikme_uygula: bool = True
+    #: (P218) BU PARTI ICIN hedef kuralini EZ — tanimi degistirmeden.
+    #: Tekil tahakkukla AYNI alan: iki yolun farkli davranmasi, ayni
+    #: ekrandan yapilan iki islemin farkli sonuc vermesi demekti.
+    hedef_kurali: BorcHedefKurali | None = None
     kalem_tipi: Literal[
         "aidat", "demirbas", "olaganustu", "sayac", "diger"
     ] = "aidat"

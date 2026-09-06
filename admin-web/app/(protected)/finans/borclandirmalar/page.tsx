@@ -56,6 +56,10 @@ interface Tahakkuk {
   aciklama: string | null;
   gelir_gider_tanim_ad: string | null;
   hedef_ad: string | null;
+  /** (P218) Hedefin o dairedeki sıfatı — "bu borç neden ona yazıldı"
+   *  sorusunun yanıtı. Ad tek başına bunu söylemiyordu: aynı isim bir
+   *  dairede malik, ötekinde kiracı olabilir. */
+  hedef_sifat?: string | null;
   tarih: string | null;
   gecikme_kurus: number;
   /** Doluysa bu satirin KENDISI bir duzeltmedir. */
@@ -105,6 +109,13 @@ function atlamaMetni(t: (a: SozlukAnahtari) => string, neden: string): string {
   const anahtar = ATLAMA_ETIKET[neden];
   return anahtar ? t(anahtar) : t("finansAtlamaTutarYok");
 }
+
+/** (P218) Sunucudan gelen sıfat -> sözlük anahtarı. */
+const SIFAT_ETIKETI: Record<string, SozlukAnahtari> = {
+  malik: "kullaniciSifatMalik",
+  kiraci: "kullaniciSifatKiraci",
+  malik_oturan: "kullaniciSifatMalikOturan",
+};
 
 interface TopluSatir {
   unit_id: string;
@@ -290,7 +301,12 @@ export default function BorclandirmalarPage() {
     { id: "donem", baslik: t("finansAlanDonem"),
       hucre: (a) => a.donem, deger: (a) => a.donem },
     { id: "kisi", baslik: t("finansSutunKisi"),
-      hucre: (a) => a.hedef_ad ?? YOK_ISARETI },
+      hucre: (a) =>
+        a.hedef_ad
+          ? `${a.hedef_ad}${
+              a.hedef_sifat ? ` (${t(SIFAT_ETIKETI[a.hedef_sifat] ?? "ortakDiger")})` : ""
+            }`
+          : YOK_ISARETI },
     { id: "tur", baslik: t("finansSutunTur"),
       hucre: (a) => a.gelir_gider_tanim_ad ?? YOK_ISARETI },
     { id: "sonOdeme", baslik: t("finansAlanSonOdeme"),

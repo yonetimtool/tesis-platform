@@ -229,3 +229,44 @@ daire numarası görünür, hedefsiz yokken uyarı çıkmaz).
 
 Kilit kırılarak doğrulandı: rol koşulunu kapatınca kiracı 57.000 kuruş
 görüyor (50.000'i maliğe ait bakım borcu).
+
+---
+
+## §E — Tahakkukta hedef ezme + finans ekranlarında sıfat
+
+### Ezme (analiz §3.2)
+
+Varsayılan **tanımdan gelir** — aynı gider türü her ay aynı kişiye
+yazılır; her tahakkukta sormak her ay yeni bir hata fırsatıdır. Ama
+istisnalar var: sözleşmeye göre devredilen bir kalem, bir kereye mahsus
+malige yazılan bir işletme gideri.
+
+`hedef_kurali` artık **tekil ve toplu** tahakkuk gövdesinde kabul
+ediliyor; **o partiye** uygulanıyor ve **tanımı değiştirmiyor** (ölçüldü:
+ezmeden sonra tanım hâlâ `kiraci_oncelikli`).
+
+İki yolun da aynı alanı kabul etmesi şart: aynı ekrandan yapılan iki
+işlemin farklı davranması, kullanıcının güvenini bozan türden bir
+tutarsızlık olurdu.
+
+**Tahakkukta saklanmıyor** (analizdeki karar korundu): sonuç zaten
+`hedef_user_id`de duruyor, kural yalnızca ona nasıl varıldığını anlatıyor.
+Bir sütun daha eklemek, aynı gerçeği iki yerde tutmaktı.
+
+### Sıfat görünürlüğü (analizin B5 boşluğu)
+
+`DuesAssessmentOut.hedef_sifat` eklendi: `malik | kiraci | malik_oturan`.
+Ad tek başına *"bu borç neden ona yazıldı"* sorusunu yanıtlamıyordu —
+aynı isim bir dairede malik, ötekinde kiracı olabilir.
+
+**"Malik ve oturan" ayrı gösteriliyor:** yalnızca "malik" demek, ekranda
+okunamayan bir ayrım bırakırdı.
+
+**Tek sorgu:** kayıt başına sorgu, 400 satırlık listede 400 sorgu demekti.
+
+Borçlandırmalar listesinde kişi sütunu artık `Ad (Sıfat)` biçiminde.
+
+### Testler
+
++5: tekil ezme, **ezme tanımı değiştirmez**, toplu yolda da ezme, sıfat
+döner (`malik_oturan`), hedefsiz tahakkukta sıfat `None`. Toplam 21.

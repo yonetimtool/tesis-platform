@@ -142,11 +142,22 @@ async def _tanim_coz(db: AsyncSession, tanim_id) -> GelirGiderTanim | None:
     return obj
 
 
-async def _hedef_coz(db: AsyncSession, unit_id, tanim: GelirGiderTanim | None):
+async def _hedef_coz(
+    db: AsyncSession,
+    unit_id,
+    tanim: GelirGiderTanim | None,
+    kural_ezme: str | None = None,
+):
     """(P28) Borcun KIME yazilacagini P23 bag verisinden coz.
 
     Tanim yoksa hedef de yoktur: tursuz bir tahakkuk ESKI DAVRANISTIR ve
     daireye yazilir.
+
+    (P218) `kural_ezme` VERILIRSE tanimin kurali yerine O kullanilir —
+    bu tahakkuk icin, tanima DOKUNMADAN. Istisnalar icin: sozlesmeye
+    gore devredilen bir kalem, bir kereye mahsus malige yazilan isletme
+    gideri. Varsayilanin tanimdan gelmesi (ve her tahakkukta
+    sorulmamasi) ayri bir karar — bkz. docs/malik-kiraci-analiz.md §3.2.
     """
     if tanim is None:
         return None
@@ -161,7 +172,7 @@ async def _hedef_coz(db: AsyncSession, unit_id, tanim: GelirGiderTanim | None):
     ).all()
     secilen = hedef_sec(
         [Bag(str(u), r, oturuyor=bool(o)) for u, r, o in rows],
-        tanim.hedef_kurali,
+        kural_ezme or tanim.hedef_kurali,
     )
     return uuid.UUID(secilen) if secilen else None
 
@@ -224,11 +235,35 @@ async def _zenginlestir(
             select(AppUser.id, AppUser.ad).where(AppUser.id.in_(h_idler))
         )).all()
     ) if h_idler else {}
+    # (P218) HEDEFIN O DAIREDEKI SIFATI. Ad tek basina "bu borc neden ona
+    # yazildi" sorusunu yanitlamiyordu: ayni isim bir dairede malik,
+    # otekinde kiraci olabilir. TEK SORGU — kayit basina sorgu, 400
+    # satirlik listede 400 sorgu demekti.
+    ciftler = {(k.unit_id, k.hedef_user_id) for k in kayitlar if k.hedef_user_id}
+    h_sifat: dict[tuple, str] = {}
+    if ciftler:
+        for uid, kid, rol, oturuyor in (
+            await db.execute(
+                select(UnitResident.unit_id, UnitResident.user_id,
+                       UnitResident.rol_tipi, UnitResident.oturuyor)
+                .where(
+                    UnitResident.unit_id.in_({c[0] for c in ciftler}),
+                    UnitResident.user_id.in_({c[1] for c in ciftler}),
+                    UnitResident.bitis.is_(None),
+                )
+            )
+        ).all():
+            # "Malik ve oturan" AYRI gosterilir: yalnizca "malik" demek,
+            # ekranda okunamayan bir ayrim birakirdi.
+            h_sifat[(uid, kid)] = (
+                "malik_oturan" if rol == "malik" and oturuyor else (rol or "")
+            )
 
     return [
         DuesAssessmentOut.model_validate(k).model_copy(update={
             "gelir_gider_tanim_ad": t_ad.get(k.gelir_gider_tanim_id),
             "hedef_ad": h_ad.get(k.hedef_user_id),
+            "hedef_sifat": h_sifat.get((k.unit_id, k.hedef_user_id)) or None,
             "gecikme_kurus": max(
                 gecikme_kurus(
                     k.tutar_kurus, k.son_odeme_tarihi, bugun, oran,
@@ -368,7 +403,7 @@ async def create_assessments(
     if body.unit_id is not None:
         if (await db.execute(select(Unit.id).where(Unit.id == body.unit_id))).scalar_one_or_none() is None:
             raise APIError(422, "invalid_reference", "daire_bulunamadi")
-        hedef = await _hedef_coz(db, body.unit_id, tanim)
+        hedef = await _hedef_coz(db, body.unit_id, tanim, body.hedef_kurali)
         obj = DuesAssessment(
             tenant_id=user.tenant_id, unit_id=body.unit_id,
             hedef_user_id=hedef, **common,
@@ -421,7 +456,8 @@ async def create_assessments(
     for uid in targets:
         obj = DuesAssessment(
             tenant_id=user.tenant_id, unit_id=uid,
-            hedef_user_id=await _hedef_coz(db, uid, tanim), **common,
+            hedef_user_id=await _hedef_coz(db, uid, tanim, body.hedef_kurali),
+            **common,
         )
         try:
             async with db.begin_nested():

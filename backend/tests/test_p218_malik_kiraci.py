@@ -348,3 +348,83 @@ def test_MALIK_hedefsiz_kalemi_GORUR(client, world, owner_conn):
     mh = _h(client, world["slug_a"], {"email": eposta, "password": "MalikPass1"})
     borc = client.get("/me/odeme-bilgileri", headers=mh).json()["borc_kurus"]
     assert borc == 3300, f"malik kendi dairesinin hedefsiz borcunu gormuyor: {borc}"
+
+
+# ==================== (§E) HEDEF EZME ve SIFAT GORUNURLUGU ============== #
+
+def test_TEKIL_tahakkukta_hedef_kurali_EZILEBILIR(client, yon):
+    """Varsayilan tanimdan gelir (her ay ayni karar, her ay yeni hata
+    firsati) AMA istisnalar var: sozlesmeye gore devredilen bir kalem,
+    bir kereye mahsus malige yazilan isletme gideri."""
+    u = _daire(client, yon)
+    m, k = _kisi(client, yon, "Malik"), _kisi(client, yon, "Kiraci")
+    client.post(f"/units/{u}/residents", headers=yon,
+                json={"user_id": m, "rol_tipi": "malik"})
+    client.post(f"/units/{u}/residents", headers=yon,
+                json={"user_id": k, "rol_tipi": "kiraci"})
+    tanim = _tanim(client, yon, "kiraci_oncelikli")
+
+    # Tanimin kurali: kullanan -> kiraci
+    assert _hedef(client, yon, u, tanim, _donem()) == k
+
+    # EZME: bu tahakkuk malige
+    r = client.post("/dues/assessments", headers=yon, json={
+        "unit_id": u, "donem": _donem(), "tutar_kurus": 999,
+        "gelir_gider_tanim_id": tanim, "hedef_kurali": "malik"})
+    assert r.json()["created"][0]["hedef_user_id"] == m
+
+
+def test_EZME_TANIMI_DEGISTIRMEZ(client, yon):
+    """Ezme O PARTIYE uygulanir; tanim bir sonraki ay yine kendi
+    kuraliyla calismali."""
+    u = _daire(client, yon)
+    m = _kisi(client, yon, "Malik")
+    client.post(f"/units/{u}/residents", headers=yon,
+                json={"user_id": m, "rol_tipi": "malik"})
+    tanim = _tanim(client, yon, "kiraci_oncelikli")
+    client.post("/dues/assessments", headers=yon, json={
+        "unit_id": u, "donem": _donem(), "tutar_kurus": 100,
+        "gelir_gider_tanim_id": tanim, "hedef_kurali": "malik"})
+    hepsi = client.get("/gelir-gider-tanimlari?limit=200", headers=yon).json()
+    ayni = [x for x in hepsi["items"] if x["id"] == tanim][0]
+    assert ayni["hedef_kurali"] == "kiraci_oncelikli", "tanim DEGISMIS"
+
+
+def test_TOPLU_yolda_da_EZILEBILIR(client, yon):
+    """Iki yol ayni ekrandan kullaniliyor; birinde ezme olup otekinde
+    olmamasi, ayni islemin farkli sonuc vermesi demekti."""
+    u = _daire(client, yon)
+    m = _kisi(client, yon, "Malik Toplu")
+    client.post(f"/units/{u}/residents", headers=yon,
+                json={"user_id": m, "rol_tipi": "malik"})
+    r = client.post("/borclandirma/toplu/onizleme", headers=yon, json={
+        "donem": _donem(), "gelir_gider_tanim_id": _tanim(client, yon, "kiraci_oncelikli"),
+        "tutar_kurus": 500, "hedef_kurali": "malik"}, timeout=60)
+    assert r.status_code == 200, r.text
+    bizim = [s for s in r.json()["satirlar"] if s["unit_id"] == u][0]
+    assert bizim["hedef_user_id"] == m
+
+
+def test_TAHAKKUK_hedefin_SIFATINI_doner(client, yon):
+    """(B5) "Bu borc neden ona yazildi" sorusu EKRANDAN yanitlanabilmeli.
+    Ad tek basina soylemiyordu: ayni isim bir dairede malik, otekinde
+    kiraci olabilir."""
+    u = _daire(client, yon)
+    mo = _kisi(client, yon, "Malik Oturan")
+    client.post(f"/units/{u}/residents", headers=yon,
+                json={"user_id": mo, "rol_tipi": "malik", "oturuyor": True})
+    r = client.post("/dues/assessments", headers=yon, json={
+        "unit_id": u, "donem": _donem(), "tutar_kurus": 100,
+        "gelir_gider_tanim_id": _tanim(client, yon, "malik")})
+    kayit = r.json()["created"][0]
+    assert kayit["hedef_ad"]
+    # "malik" DEGIL "malik_oturan": yalnizca "malik" demek, ekranda
+    # okunamayan bir ayrim birakirdi.
+    assert kayit["hedef_sifat"] == "malik_oturan"
+
+
+def test_HEDEFSIZ_tahakkukta_sifat_None(client, yon):
+    u = _daire(client, yon)
+    r = client.post("/dues/assessments", headers=yon, json={
+        "unit_id": u, "donem": _donem(), "tutar_kurus": 100})
+    assert r.json()["created"][0]["hedef_sifat"] is None
