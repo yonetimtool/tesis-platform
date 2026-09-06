@@ -3891,6 +3891,14 @@ class UnitOut(BaseModel):
     #: bunu 0'a kirpmak, yoneticiden bir bilgiyi saklamak olurdu.
     #: `None` = hesaplanmadi (tekil uclar bu alani doldurmaz).
     borc_kurus: int | None = None
+    #: (P217 §4) AKTIF SAKIN SAYISI (`bitis` bos olanlar).
+    #:
+    #: NEDEN SAYI, NEDEN "dolu/bos" BAYRAGI DEGIL: bir dairede BIRDEN
+    #: COK sakin mesrudur — esler, aile, ve malik+kiraci bir arada.
+    #: Ikili bir bayrak "1 sakin var" ile "4 sakin var"i ayni gosterir;
+    #: sayi, yoneticinin ikinci sakini bilerek mi ekledigini anlamasini
+    #: saglar.
+    sakin_sayisi: int | None = None
     # SINIFLANDIRMA (P26). Ad da doner: istemci ayri bir istek yapmadan
     # listeyi cizebilsin (daire listesi tip/grup adini gosterir).
     unit_tip_id: uuid.UUID | None = None

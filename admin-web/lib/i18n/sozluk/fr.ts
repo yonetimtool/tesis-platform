@@ -835,6 +835,7 @@ export const fr: Sozluk = {
   kullaniciDaireAtanamadi: "Le compte a été créé mais le logement n'a pas pu être attribué. Vous pouvez l'attribuer depuis l'écran Logements.",
   kullaniciDaireAta: "Attribuer un logement (facultatif)",
   kullaniciDaireYok: "Aucun logement",
+  kullaniciDaireDolu: "{adet} résident(s)",
   kullaniciBlokSec: "Choisir le bloc",
   kullaniciDuzenle: "Modifier l'utilisateur",
   kullaniciYeni: "Nouvel utilisateur",

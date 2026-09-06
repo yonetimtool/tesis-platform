@@ -209,11 +209,23 @@ async def _borclarla(
             )
         ).all()
     )
+    # (P217 §4) AKTIF SAKIN SAYISI — ayni toplu sorgu deseni.
+    sakinler = dict(
+        (
+            await db.execute(
+                select(UnitResident.unit_id, func.count())
+                .where(UnitResident.unit_id.in_(idler),
+                       UnitResident.bitis.is_(None))
+                .group_by(UnitResident.unit_id)
+            )
+        ).all()
+    )
     for k in kayitlar:
         # Negatif bakiye (fazla odeme) 0'a KIRPILMAZ: "borcu yok" ile
         # "alacakli" ayri seylerdir ve ikincisi yoneticinin gormesi
         # gereken bir durumdur.
         k.borc_kurus = int(tahakkuk.get(k.id, 0)) - int(tahsilat.get(k.id, 0))
+        k.sakin_sayisi = int(sakinler.get(k.id, 0))
     return kayitlar
 
 

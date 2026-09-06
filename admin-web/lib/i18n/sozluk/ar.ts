@@ -835,6 +835,7 @@ export const ar: Sozluk = {
   kullaniciDaireAtanamadi: "تم إنشاء الحساب لكن تعذّر تعيين الشقة. يمكنك تعيينها من شاشة الشقق.",
   kullaniciDaireAta: "تعيين شقة (اختياري)",
   kullaniciDaireYok: "بدون شقة",
+  kullaniciDaireDolu: "{adet} ساكن",
   kullaniciBlokSec: "اختر الكتلة",
   kullaniciDuzenle: "تعديل المستخدم",
   kullaniciYeni: "مستخدم جديد",

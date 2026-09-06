@@ -275,3 +275,64 @@ def test_TAHAKKUK_deftere_YAZILMAZ_ve_bu_KUSUR_DEGIL(client, world, owner_conn):
         assert "tahakkuk" not in turler
     finally:
         _temizle(owner_conn, donem)
+
+
+# ==================== (P217 §4) DAIRE DOLULUK BILGISI ==================== #
+
+def test_DAIRE_LISTESI_aktif_sakin_SAYISINI_doner(client, world, owner_conn):
+    """(P217 §4) Daire atamasinda "dolu mu" sorusunun yaniti.
+
+    SAYI donuyor, "dolu/bos" BAYRAGI degil: bir dairede BIRDEN COK sakin
+    mesrudur (esler, aile; malik + kiraci) ve `unit_resident`ta tekillik
+    kisiti YOK. Ikili bir bayrak "1 sakin" ile "4 sakin"i ayni gosterir;
+    yonetici ikinci sakini BILEREK ekleyebilmeli.
+    """
+    h = _h(client, world["slug_a"], world["yonetici_a"])
+    daire = _daire(client, h)
+    once = next(d["sakin_sayisi"] for d in
+                client.get("/units?limit=200", headers=h).json()["items"]
+                if d["id"] == daire["id"])
+    assert once is not None, "sakin sayisi alani HIC donmuyor"
+
+    # Sakin ata ve sayinin arttigini gor.
+    kisi = client.post("/users", headers=h, json={
+        "ad": "P217 Sakin", "email": f"p217-{uuid.uuid4().hex[:8]}@ornek.com",
+        "role": "resident", "password": "Parola123!"})
+    assert kisi.status_code == 201, kisi.text
+    uid = kisi.json()["id"]
+    try:
+        r = client.post(f"/units/{daire['id']}/residents", headers=h,
+                        json={"user_id": uid, "rol_tipi": "kiraci"})
+        assert r.status_code in (200, 201), r.text
+        sonra = next(d["sakin_sayisi"] for d in
+                     client.get("/units?limit=200", headers=h).json()["items"]
+                     if d["id"] == daire["id"])
+        assert sonra == once + 1, f"sakin sayisi yansimadi: {once} -> {sonra}"
+    finally:
+        client.delete(f"/units/{daire['id']}/residents/{uid}", headers=h)
+        client.delete(f"/users/{uid}", headers=h)
+
+
+def test_AYRILAN_sakin_SAYILMAZ(client, world, owner_conn):
+    """`bitis` dolu kayit AKTIF sakin degildir: tasinmis biri yuzunden
+    daire sonsuza dek "dolu" gorunemez."""
+    h = _h(client, world["slug_a"], world["yonetici_a"])
+    daire = _daire(client, h)
+    kisi = client.post("/users", headers=h, json={
+        "ad": "P217 Ayrilan", "email": f"p217-{uuid.uuid4().hex[:8]}@ornek.com",
+        "role": "resident", "password": "Parola123!"})
+    uid = kisi.json()["id"]
+    try:
+        client.post(f"/units/{daire['id']}/residents", headers=h,
+                    json={"user_id": uid, "rol_tipi": "kiraci"})
+        dolu = next(d["sakin_sayisi"] for d in
+                    client.get("/units?limit=200", headers=h).json()["items"]
+                    if d["id"] == daire["id"])
+        # Cikar (bitis yazilir) ve sayinin DUSTUGUNU gor.
+        client.delete(f"/units/{daire['id']}/residents/{uid}", headers=h)
+        sonra = next(d["sakin_sayisi"] for d in
+                     client.get("/units?limit=200", headers=h).json()["items"]
+                     if d["id"] == daire["id"])
+        assert sonra == dolu - 1, f"ayrilan sakin hâlâ sayiliyor: {dolu} -> {sonra}"
+    finally:
+        client.delete(f"/users/{uid}", headers=h)

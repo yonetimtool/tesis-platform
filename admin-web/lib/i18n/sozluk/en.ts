@@ -835,6 +835,7 @@ export const en: Sozluk = {
   kullaniciDaireAtanamadi: "The account was created but the unit could not be assigned. You can assign it from the Units screen.",
   kullaniciDaireAta: "Assign a unit (optional)",
   kullaniciDaireYok: "No unit",
+  kullaniciDaireDolu: "{adet} resident(s)",
   kullaniciBlokSec: "Select block",
   kullaniciDuzenle: "Edit user",
   kullaniciYeni: "New user",

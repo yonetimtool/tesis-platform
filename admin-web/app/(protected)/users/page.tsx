@@ -142,6 +142,16 @@ export default function UsersPage() {
       ),
     [daireListesi, secilenBlok],
   );
+  // (P217 §4) BOS DAIRELER ONCE — dolu olanlar listeden CIKARILMAZ.
+  // Siralama KARARLI: bos/dolu ayrimindan sonra mevcut sira (blok, no)
+  // korunur; aksi halde ayni liste her cizimde farkli gorunurdu.
+  const daireSecenekleri = useMemo(() => {
+    const kaynak = blokSecici ? filtreliDaireler : (daireListesi?.items ?? []);
+    return [...kaynak].sort(
+      (a, b) => (a.sakin_sayisi ? 1 : 0) - (b.sakin_sayisi ? 1 : 0),
+    );
+  }, [blokSecici, filtreliDaireler, daireListesi]);
+
   const toast = useToast();
 
   const [durum, setDurum] = useState<TabloDurumu>({
@@ -667,13 +677,31 @@ export default function UsersPage() {
                   disabled={blokSecici && !secilenBlok}
                 >
                   <option value="">{t("kullaniciDaireYok")}</option>
-                  {(blokSecici ? filtreliDaireler : daireListesi?.items ?? []).map(
-                    (u) => (
-                      <option key={u.id} value={u.id}>
-                        {u.blok ? `${u.blok}/${u.no}` : u.no}
-                      </option>
-                    ),
-                  )}
+                  {/* ===========================================================
+                      (P217 §4) DOLU DAIRELER GIZLENMEZ, ISARETLENIR
+                      ===========================================================
+                      Sikayet: "zaten baskasina atanmis daireler listede
+                      gorunuyor, gorunmesin". Gizlemek YANLIS olurdu: bir
+                      dairede BIRDEN COK sakin mesrudur — esler, aile, ve
+                      malik + kiraci bir arada (`unit_resident.rol_tipi`
+                      tam bunun icin var ve tabloda tekillik kisiti YOK).
+                      Gizleseydik ikinci sakini eklemek IMKANSIZ olurdu.
+
+                      Ama sikayetin cozdugu sorun gercek: 200 daire
+                      arasinda BOS olani bulmak zor. Cozum iki parcali:
+                        1. BOS DAIRELER ONCE siralanir,
+                        2. dolu olanin yaninda KAC SAKIN oldugu yazar.
+                      Boylece bos daire ilk bakista bulunur, ikinci sakin
+                      eklemek de mumkun kalir — ve yonetici bunu BILEREK
+                      yapar. */}
+                  {daireSecenekleri.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.blok ? `${u.blok}/${u.no}` : u.no}
+                      {u.sakin_sayisi
+                        ? ` · ${t("kullaniciDaireDolu", { adet: String(u.sakin_sayisi) })}`
+                        : ""}
+                    </option>
+                  ))}
                 </Secim>
               )}
             </AlanSarmal>

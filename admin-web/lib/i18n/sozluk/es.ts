@@ -835,6 +835,7 @@ export const es: Sozluk = {
   kullaniciDaireAtanamadi: "La cuenta se creó pero no se pudo asignar la vivienda. Puede asignarla desde la pantalla Viviendas.",
   kullaniciDaireAta: "Asignar vivienda (opcional)",
   kullaniciDaireYok: "Sin vivienda",
+  kullaniciDaireDolu: "{adet} residente(s)",
   kullaniciBlokSec: "Selecciona el bloque",
   kullaniciDuzenle: "Editar usuario",
   kullaniciYeni: "Nuevo usuario",

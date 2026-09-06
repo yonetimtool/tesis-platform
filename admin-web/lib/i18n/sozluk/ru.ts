@@ -835,6 +835,7 @@ export const ru: Sozluk = {
   kullaniciDaireAtanamadi: "Учётная запись создана, но квартиру назначить не удалось. Назначьте её на экране «Квартиры».",
   kullaniciDaireAta: "Назначить квартиру (необязательно)",
   kullaniciDaireYok: "Без квартиры",
+  kullaniciDaireDolu: "жильцов: {adet}",
   kullaniciBlokSec: "Выберите блок",
   kullaniciDuzenle: "Изменить пользователя",
   kullaniciYeni: "Новый пользователь",

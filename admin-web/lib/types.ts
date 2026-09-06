@@ -179,6 +179,10 @@ export interface Unit {
    *  fazla ödeme yapmış daire alacaklıdır ve bunu gizlemek yöneticiden
    *  bir bilgiyi saklamak olurdu. `null` = sunucu hesaplamadı. */
   borc_kurus?: number | null;
+  /** (P217 §4) Aktif sakin sayısı. SAYI, çünkü bir dairede birden çok
+   *  sakin meşrudur (eşler, aile, malik+kiracı); ikili bir "dolu"
+   *  bayrağı "1 sakin" ile "4 sakin"i aynı gösterirdi. */
+  sakin_sayisi?: number | null;
   // (P26/P122) Siniflandirma. AD da tasinir: hucre ayri istek yapmadan
   // etiketi cizebilsin. Tanim silinmisse null — uydurma etiket YOK.
   unit_tip_id?: string | null;

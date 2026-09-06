@@ -881,6 +881,7 @@ export const tr = {
   kullaniciDaireAtanamadi: "Hesap açıldı ancak daire ataması yapılamadı. Daireler ekranından atayabilirsiniz.",
   kullaniciDaireAta: "Daire ata (isteğe bağlı)",
   kullaniciDaireYok: "Daire atama",
+  kullaniciDaireDolu: "{adet} sakin",
   kullaniciBlokSec: "Blok seçin",
   kullaniciDuzenle: "Kullanıcı düzenle",
   kullaniciYeni: "Yeni kullanıcı",

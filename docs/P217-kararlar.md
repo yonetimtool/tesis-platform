@@ -196,3 +196,57 @@ Test yazarken bir eksiğimi ölçüm gösterdi: borçlular `/api/panel/yaslandir
 uçundan **kova yapısıyla** geliyor; ilk yazımda düz `items` döndürdüm ve
 "uzun liste" senaryosu hiç kurulmamıştı (test yeşil olurdu ama hiçbir şey
 ölçmezdi).
+
+---
+
+## §4 — Daire atamasında dolu daireler
+
+### Karar: gizleme, işaretle
+
+İstek "atanmış daireler görünmesin" diyordu ama aynı zamanda doğru
+soruyu da soruyordu: *"bir dairede birden çok sakin olabilir; tamamen
+gizlemek mi doğru, yoksa 'dolu' işaretiyle göstermek mi?"*
+
+**Ölçüm — veri modeli:** `unit_resident` tablosunda daire başına
+**tekillik kısıtı yok** ve `rol_tipi` alanı `malik | kiraci` değerlerini
+tutuyor. Yani model, bir dairede birden çok sakini **bilerek** destekliyor:
+
+- eşler / aile bireyleri,
+- **malik + kiracı bir arada** (malik oturmuyor, kiracı oturuyor — ikisi
+  de kayıtlı olmalı; aidat borcu birine, tebligat ötekine gidebilir).
+
+Dolu daireleri gizleseydik **ikinci sakini eklemek imkânsız** olurdu.
+Bu, var olan bir ihtiyacı arayüzden silmek demekti.
+
+**Ama şikâyetin işaret ettiği sorun gerçek:** 200 daire arasında boş
+olanı bulmak zor. Çözüm iki parçalı:
+
+1. **Boş daireler önce sıralanır** — aranan daire ilk bakışta bulunur.
+2. **Dolu olanın yanında kaç sakin olduğu yazar** (`A-1 · 2 sakin`).
+
+Böylece varsayılan akış hızlanır, ikinci sakin eklemek mümkün kalır ve
+yönetici bunu **bilerek** yapar.
+
+**Sayı, "dolu" bayrağı değil:** ikili bayrak "1 sakin" ile "4 sakin"i
+aynı gösterirdi. Sayı, yöneticiye ne yaptığını söyler.
+
+**Sıralama kararlı:** boş/dolu ayrımından sonra mevcut sıra (blok, no)
+korunur; aksi hâlde aynı liste her çizimde farklı görünürdü.
+
+### Kiracı/malik durumu
+
+Seçeneğe rol dökümü (`1 malik, 1 kiracı`) **koymadım**: açılır liste
+satırı zaten blok/daire + sayı taşıyor ve rol ayrımı bu ekranda bir karar
+değiştirmiyor — atama sırasında rol **ayrıca soruluyor**. Daire panelinde
+(`UnitDetail`) sakinler rolleriyle birlikte zaten listeleniyor.
+
+### Ölçüm
+
+Backend (`test_p217_toplu_borclandirma.py`, 2 test): `/units`
+`sakin_sayisi` döndürüyor ve sakin atanınca artıyor; **ayrılan sakin
+sayılmıyor** (`bitis` dolu kayıt aktif değil — taşınmış biri yüzünden
+daire sonsuza dek "dolu" görünemez).
+
+Web (`p217-daire-atama.dom.test.ts`, 4): dolu daireler **listede kalır**,
+kaç sakin olduğu yazar, boş dairede işaret **yok** (kalabalık yapmasın),
+boşlar önce sıralanır ve sıralama kararlı. Kilit kırılarak doğrulandı.

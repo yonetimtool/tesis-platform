@@ -835,6 +835,7 @@ export const de: Sozluk = {
   kullaniciDaireAtanamadi: "Das Konto wurde erstellt, die Wohnung konnte aber nicht zugewiesen werden. Sie können sie im Bereich Wohnungen zuweisen.",
   kullaniciDaireAta: "Wohnung zuweisen (optional)",
   kullaniciDaireYok: "Keine Wohnung",
+  kullaniciDaireDolu: "{adet} Bewohner",
   kullaniciBlokSec: "Block wählen",
   kullaniciDuzenle: "Benutzer bearbeiten",
   kullaniciYeni: "Neuer Benutzer",
