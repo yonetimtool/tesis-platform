@@ -87,3 +87,68 @@ gider tanımı ve daire yok (test kendi verisini kuruyor), tahsilat ucu
 `yontem: elden` ve `Idempotency-Key` istiyor. İlk yazımda tahsilat testini
 **atlıyordum** — atlanan test hiçbir şey korumaz, doğru değeri kullanmak
 gerekiyordu.
+
+---
+
+## §2 — Modal kapanmıyor
+
+### Kök neden
+
+Daire panelinde (`components/UnitDetail.tsx`) **üç modal** var ve üçü
+**ayrı davranıyordu**:
+
+| modal | başarıda kapanıyor mu | başarı bildirimi |
+|---|---|---|
+| Tahsilat | **evet** (`setPOpen(false)`) | — |
+| **Tahakkuk** | **hayır** | `setAOk("Tahakkuk eklendi.")` — modal içi, **sabit Türkçe** |
+| **Sakin atama** | **hayır** | yok |
+
+Kullanıcının tarifi birebir tahakkuk modalı: kayıt başarılı, mesaj
+çıkıyor, liste tazeleniyor — ama modal açık kalıyor. En olası tepki aynı
+tahakkuku bir kez daha yazmaya çalışmak ve "zaten var" hatası almak.
+
+### Karar
+
+Üç modal da aynı kuralı izler:
+
+- **Başarıda kapanır**, bildirim **toast**'a taşınır (modal kapanınca
+  modal içi mesaj zaten görünmez olurdu).
+- **Hatada açık kalır** — başarısız kayıtta form kaybolursa kullanıcı ne
+  yazdığını da kaybeder.
+
+`"Tahakkuk eklendi."` sabit Türkçe metni sözlüğe alındı (7 dil); artık
+kullanılmayan `aOk` durumu kaldırıldı.
+
+Aynı kural §1'deki toplu borçlandırma modalına da uygulandı: **hiçbir
+tahakkuk oluşmadıysa kapanmaz** (kullanıcı dönemi düzeltip yeniden
+denesin).
+
+### Diğer modallar — tarama
+
+Sayfa dosyalarında `toast.success` sonrası kapanma araması yaptım; sonuç
+çok gürültülü çıktı (çoğu `toast.success` satır içi işlemlerden: silme,
+durum değiştirme). Bu yüzden isteğin saydığı modalları **tek tek**
+inceledim:
+
+| modal | durum |
+|---|---|
+| Tahsilat (`finans/tahsilatlar`) | kapanıyor · `onKapat()` |
+| Tahakkuk (`finans/borclandirmalar`, tekil) | kapanıyor · `onKapat()` |
+| Toplu borçlandırma | **§1'de düzeltildi** (yalnız başarıda kapanır) |
+| Gider (`finans/giderler`) | kapanıyor |
+| Kamera (`kameralar`) | kapanıyor · `setAcik(false)` |
+| Kullanıcı ekleme (`users`) | kapanıyor |
+| **Daire paneli: tahakkuk / sakin atama** | **kapanmıyordu → düzeltildi** |
+
+Yani kusur genel değil, `UnitDetail`'e özgüydü.
+
+### Ölçüm
+
+`p217-modal-kapanma.dom.test.ts` (4): başarıda kapanır, **hatada açık
+kalır** (kapanma kuralı kör olmasın), bildirim çevrilmiş metinle gelir, ve
+üç modalın da kapatma çağrısını taşıdığı (kaynak kilidi — biri unutulursa
+haber verir). Kilit kırılarak doğrulandı.
+
+Test yazarken kendi hatamı ölçüm ortaya çıkardı: **dönem alanı `required`**
+ve boş bırakınca form hiç gönderilmiyor — modal "kapanmadı" görünüyordu.
+Kodun kusuru değil, testin eksiğiydi.

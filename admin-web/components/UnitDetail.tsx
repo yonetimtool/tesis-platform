@@ -59,13 +59,11 @@ export function UnitDetail({ unit }: { unit: Unit }) {
   const [aSon, setASon] = useState("");
   const [aDesc, setADesc] = useState("");
   const [aErr, setAErr] = useState<string | null>(null);
-  const [aOk, setAOk] = useState<string | null>(null);
   const [aBusy, setABusy] = useState(false);
 
   async function addAssessment(e: React.FormEvent) {
     e.preventDefault();
     setAErr(null);
-    setAOk(null);
     const k = tlToKurus(aTl);
     if (k === null || k <= 0) {
       setAErr(t("aidatTutarGecersiz"));
@@ -84,7 +82,22 @@ export function UnitDetail({ unit }: { unit: Unit }) {
       setATl("");
       setASon("");
       setADesc("");
-      setAOk("Tahakkuk eklendi.");
+      // (P217 §2) MODAL ARTIK KAPANIYOR.
+      //
+      // OLCULEN KUSUR: kayit basariliydi, "Tahakkuk eklendi." yaziliyor,
+      // liste tazeleniyordu — ama modal ACIK KALIYORDU. Kullanici
+      // basardigini goruyor, sonucu goremiyordu; en olasi tepki ayni
+      // tahakkuku BIR KEZ DAHA yazmaya calismak (ve "zaten var"
+      // hatasiyla karsilasmak).
+      //
+      // Ayni bilesende UC modal var ve UCU AYRI DAVRANIYORDU: tahsilat
+      // kapaniyor, tahakkuk ve sakin atama kalmayordu. Ucu de artik
+      // BASARIDA kapanir; HATADA acik kalir (kullanici duzeltebilsin).
+      setAOpen(false);
+      // Basari bildirimi TOAST'a tasindi: modal kapandiginda modal ici
+      // mesaj gorunmez olurdu. Ayrica metin CEVRILIYOR — "Tahakkuk
+      // eklendi." sabit Turkce yaziliydi ve yedi dilin disindaydi.
+      toast.success(t("daireTahakkukEklendi"));
       mutateDues();
     } catch (err) {
       const m = err instanceof Error ? err.message : t("ortakHataOlustu");
@@ -179,6 +192,10 @@ export function UnitDetail({ unit }: { unit: Unit }) {
       });
       setRUser("");
       setRRol("");
+      // (P217 §2) Sakin atama modali da BASARIDA kapanir — tahakkukla
+      // ayni gerekce ve ayni davranis.
+      setROpen(false);
+      toast.success(t("daireSakinEklendi"));
       mutateRes();
     } catch (err) {
       setRErr(err instanceof Error ? err.message : t("ortakKaydedilemedi"));
@@ -424,7 +441,6 @@ export function UnitDetail({ unit }: { unit: Unit }) {
           </Field>
         </div>
         <ErrorBox message={aErr} />
-        {aOk && <p className="text-sm text-emerald-700">{aOk}</p>}
         </form>
       </Modal>
 

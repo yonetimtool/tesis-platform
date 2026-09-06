@@ -906,6 +906,8 @@ export const fr: Sozluk = {
   talepNotIstege: "Facultatif — le résident le voit dans l'application.",
   daireKiraci: "Locataire",
   daireTahakkukVar: "Un appel de charges existe déjà pour cette période.",
+  daireTahakkukEklendi: "Appel de fonds ajouté.",
+  daireSakinEklendi: "Résident ajouté au lot.",
   daireOdemeKaydedilemedi: "Impossible d'enregistrer le paiement.",
   daireSakinCikarilsinMi: "Retirer le résident de ce logement ?",
   daireSakinCikarildi: "Le résident a été retiré.",

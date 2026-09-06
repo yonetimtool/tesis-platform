@@ -906,6 +906,8 @@ export const ar: Sozluk = {
   talepNotIstege: "اختياري — يراه الساكن في التطبيق.",
   daireKiraci: "مستأجر",
   daireTahakkukVar: "توجد بالفعل استحقاق لهذه الوحدة لهذه الفترة.",
+  daireTahakkukEklendi: "تمت إضافة الاستحقاق.",
+  daireSakinEklendi: "تمت إضافة الساكن إلى الوحدة.",
   daireOdemeKaydedilemedi: "تعذّر تسجيل الدفعة.",
   daireSakinCikarilsinMi: "هل تريد إزالة الساكن من الوحدة؟",
   daireSakinCikarildi: "تمت إزالة الساكن من الوحدة.",

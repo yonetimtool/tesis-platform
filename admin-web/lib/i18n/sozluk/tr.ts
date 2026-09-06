@@ -955,6 +955,8 @@ export const tr = {
   talepNotIstege: "İsteğe bağlı — sakin mobilde görür.",
   daireKiraci: "Kiracı",
   daireTahakkukVar: "Bu daireye bu dönem için zaten tahakkuk var.",
+  daireTahakkukEklendi: "Tahakkuk eklendi.",
+  daireSakinEklendi: "Sakin daireye eklendi.",
   daireOdemeKaydedilemedi: "Ödeme kaydedilemedi.",
   daireSakinCikarilsinMi: "Sakin daireden çıkarılsın mı?",
   daireSakinCikarildi: "Sakin daireden çıkarıldı.",

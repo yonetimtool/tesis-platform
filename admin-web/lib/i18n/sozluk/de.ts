@@ -906,6 +906,8 @@ export const de: Sozluk = {
   talepNotIstege: "Optional — der Bewohner sieht es in der App.",
   daireKiraci: "Mieter",
   daireTahakkukVar: "Für diese Einheit besteht bereits eine Sollstellung.",
+  daireTahakkukEklendi: "Sollstellung hinzugefügt.",
+  daireSakinEklendi: "Bewohner der Einheit hinzugefügt.",
   daireOdemeKaydedilemedi: "Zahlung konnte nicht erfasst werden.",
   daireSakinCikarilsinMi: "Bewohner aus der Wohneinheit entfernen?",
   daireSakinCikarildi: "Der Bewohner wurde entfernt.",

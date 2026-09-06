@@ -906,6 +906,8 @@ export const ru: Sozluk = {
   talepNotIstege: "Необязательно — житель увидит это в приложении.",
   daireKiraci: "Арендатор",
   daireTahakkukVar: "Для этой квартиры уже есть начисление за период.",
+  daireTahakkukEklendi: "Начисление добавлено.",
+  daireSakinEklendi: "Житель добавлен к квартире.",
   daireOdemeKaydedilemedi: "Не удалось записать платёж.",
   daireSakinCikarilsinMi: "Удалить жителя из квартиры?",
   daireSakinCikarildi: "Житель удалён из квартиры.",

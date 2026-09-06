@@ -906,6 +906,8 @@ export const es: Sozluk = {
   talepNotIstege: "Opcional: el residente lo ve en la app.",
   daireKiraci: "Inquilino",
   daireTahakkukVar: "Ya existe un cargo para esta vivienda y período.",
+  daireTahakkukEklendi: "Cargo añadido.",
+  daireSakinEklendi: "Residente añadido a la vivienda.",
   daireOdemeKaydedilemedi: "No se pudo registrar el pago.",
   daireSakinCikarilsinMi: "¿Quitar al residente de la vivienda?",
   daireSakinCikarildi: "Se quitó al residente de la vivienda.",
