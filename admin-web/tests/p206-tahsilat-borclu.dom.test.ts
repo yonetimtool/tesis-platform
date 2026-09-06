@@ -129,10 +129,35 @@ it("KISI UCU HATA VERIRSE ekran SOYLER (sessiz bos liste yok)", async () => {
   );
 });
 
+// (P217 §3) ARAMA ALANI ARTIK KOSULLU: liste KISAYKEN gizleniyor
+// (secicide zaten taranabilir; ayri kutu yalnizca kalabalik yapiyordu).
+// Bu testin IDDIASI degismedi — "arama daraltir ve sonuc yoksa soyler" —
+// ama olculebilmesi icin alanin GORUNDUGU kosul kurulmali: esik ustu
+// bir borclu listesi. Yukaridaki `BORCLULAR` iki satirlik ve esigin
+// ALTINDA kaliyor.
+const COK_BORCLU = {
+  kovalar: [
+    {
+      kova: "0-30",
+      daireler: [
+        ...BORCLULAR.kovalar[0].daireler,
+        ...Array.from({ length: 12 }, (_, i) => ({
+          unit_id: `u-x${i}`,
+          unit_no: `B-${i}`,
+          kalan_kurus: 1000 + i,
+          borclu_ad: `Borclu ${i}`,
+          borclu_user_id: `k-x${i}`,
+        })),
+      ],
+    },
+  ],
+};
+
 it("ARAMA listeyi daraltir ve sonuc yoksa SOYLER", async () => {
   const k = userEvent.setup();
-  taklit();
+  taklit({ borclular: COK_BORCLU });
   await pencereyiAc(k);
+  await waitFor(() => expect(kanca("tahsilat-kisi-ara")).toBeTruthy());
   await k.type(kanca("tahsilat-kisi-ara")!, "A-3");
   await waitFor(() =>
     expect((kanca("tahsilat-kisi") as HTMLSelectElement).options.length).toBe(2),

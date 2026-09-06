@@ -456,6 +456,20 @@ describe("kaynak taramasi — kabuk/giris yuzeyi", () => {
           .split("\n")
           .forEach((satir, i) => {
             const kod = satir.split("//")[0];
+            // (P217) JSDOC GOVDESI KOD DEGIL, YORUMDUR.
+            //
+            // Tarama `//` yorumlarini zaten atiyordu ama `/** ... */`
+            // bloklarini atmiyordu: `lib/types.ts`e yazilan Turkce alan
+            // aciklamalari "cok satirli JSX metni" sanildi. Bir tip
+            // dosyasindaki JSDoc kullaniciya HIC gosterilmez; onu
+            // cevrilmemis arayuz metni saymak yanlis pozitiftir.
+            //
+            // KAPSAM DAR: yalnizca `*` ile BASLAYAN satirlar (JSDoc
+            // govdesi) ve `/**` acilislari elenir. JSX metni bu bicimde
+            // yazilmaz, yani tur 21'de bulunan kusur sinifi HÂLÂ
+            // yakalanir.
+            const kirpik = satir.trim();
+            if (kirpik.startsWith("*") || kirpik.startsWith("/**")) return;
             for (const m of kod.matchAll(/"([^"\\\n]{2,})"|'([^'\\\n]{2,})'/g)) {
               const v = m[1] ?? m[2] ?? "";
               if (TR.test(v) && !MARKA.test(v)) {

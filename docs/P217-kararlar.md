@@ -250,3 +250,26 @@ daire sonsuza dek "dolu" görünemez).
 Web (`p217-daire-atama.dom.test.ts`, 4): dolu daireler **listede kalır**,
 kaç sakin olduğu yazar, boş dairede işaret **yok** (kalabalık yapmasın),
 boşlar önce sıralanır ve sıralama kararlı. Kilit kırılarak doğrulandı.
+
+---
+
+## Tam takım koşumunda çıkan iki hata (ikisi de bu turun sonucu)
+
+**1. i18n taraması Türkçe JSDoc'u "JSX metni" saydı.** Tarama `//`
+yorumlarını zaten atıyordu ama `/** ... */` bloklarını atmıyordu;
+`lib/types.ts`'e yazılan Türkçe alan açıklamaları çevrilmemiş arayüz
+metni gibi göründü. Bir tip dosyasındaki JSDoc kullanıcıya **hiç
+gösterilmez** — yanlış pozitif. Tarama düzeltildi, **kapsam dar**:
+yalnızca `*` ile başlayan satırlar ve `/**` açılışları eleniyor; JSX
+metni bu biçimde yazılmaz, yani tur 21'de bulunan kusur sınıfı hâlâ
+yakalanıyor.
+
+**2. §3 mevcut bir P206 testini kırdı.** `p206-tahsilat-borclu` testi
+2 borçluyla koşuyor — yeni eşiğin **altında**, yani arama alanı gizli ve
+`user.type(null)` patlıyordu. Bu, kararın **doğru** sonucu: kısa listede
+arama yok. Testin iddiası ("arama daraltır ve sonuç yoksa söyler)
+değişmedi, ama ölçülebilmesi için alanın **göründüğü koşul** kurulmalı —
+eşik üstü (14) bir borçlu listesi eklendi.
+
+Her iki durumda da kilitler doğru davrandı: biri taramanın kendi
+eksiğini, öteki kararımın yan etkisini gösterdi.
