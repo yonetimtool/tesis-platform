@@ -38,6 +38,150 @@ security:
 
 paths:
   # ================================================================= #
+  # DUKKAN (F1) — KAMU LOKASYON + KATEGORI UCLARI
+  # ================================================================= #
+  # Hepsi `security: []`. Gerekce: Dukkan'in buyume kanali SEO ve
+  # `/istanbul/cekmekoy/catalmese/elektrikci` sayfasini hem arama motoru
+  # botu hem de hic uye olmamis bir ziyaretci gorebilmeli. Il/ilce/mahalle
+  # adlari zaten resmi ve kamuya acik veri; kimlik istemek yalnizca
+  # SEO'yu oldururdu.
+  #
+  # YAZMA UCU YOK: lokasyon ve kategori ELLE yuklenir
+  # (app/dukkan/lokasyon_yukle.py, kategori_yukle.py). Bu iki tablo SEO
+  # yollarinin temeli; bir uctan degistirilebilir olmalari canli
+  # baglantilarin sessizce olmesi demekti.
+  /dukkan/lokasyon/il:
+    get:
+      tags: [dukkan]
+      summary: Turkiye'nin illeri (81)
+      security: []
+      responses:
+        "200":
+          description: Il listesi (Turkce siralı)
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      required: [ad, slug]
+                      properties:
+                        ad: { type: string }
+                        slug: { type: string }
+  /dukkan/lokasyon/il/{il_slug}/ilce:
+    get:
+      tags: [dukkan]
+      summary: Bir ilin ilceleri
+      security: []
+      parameters:
+        - { name: il_slug, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Ilce listesi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [il, items]
+                properties:
+                  il:
+                    type: object
+                    properties:
+                      ad: { type: string }
+                      slug: { type: string }
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      required: [ad, slug]
+                      properties:
+                        ad: { type: string }
+                        slug: { type: string }
+        "404":
+          description: Il bulunamadi (bos liste DEGIL - hatayi gizlememek icin)
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/lokasyon/il/{il_slug}/ilce/{ilce_slug}/mahalle:
+    get:
+      tags: [dukkan]
+      summary: Bir ilcenin mahalle/koyleri
+      description: |
+        Yol IL SLUG'INI DA ICERIR: ilce slug'i yalnizca IL ICINDE
+        benzersizdir (UNIQUE (il_id, slug)). Turkiye'de birden cok ilde
+        "Merkez" ilcesi var; yalniz ilce slug'iyla sorulsaydi hangi ilin
+        Merkez'i oldugu belirsiz kalirdi.
+      security: []
+      parameters:
+        - { name: il_slug, in: path, required: true, schema: { type: string } }
+        - { name: ilce_slug, in: path, required: true, schema: { type: string } }
+        - name: q
+          in: query
+          required: false
+          schema: { type: string }
+          description: Mahalle adi icinde arama
+      responses:
+        "200":
+          description: Mahalle listesi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ilce, items]
+                properties:
+                  ilce:
+                    type: object
+                    properties:
+                      ad: { type: string }
+                      slug: { type: string }
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      required: [ad, slug, tip]
+                      properties:
+                        ad: { type: string }
+                        slug: { type: string }
+                        tip: { type: string, enum: [mahalle, koy, belde] }
+        "404":
+          description: Il ya da ilce bulunamadi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/kategori:
+    get:
+      tags: [dukkan]
+      summary: Kategori agaci (iki seviye - ana > hizmet)
+      security: []
+      responses:
+        "200":
+          description: Aktif kategoriler
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      required: [ad, slug, alt]
+                      properties:
+                        ad: { type: string }
+                        slug: { type: string }
+                        ikon: { type: string, nullable: true }
+                        alt:
+                          type: array
+                          items:
+                            type: object
+                            required: [ad, slug]
+                            properties:
+                              ad: { type: string }
+                              slug: { type: string }
+  # ================================================================= #
   # DAVET (P155 §7) — jetonlu kayit bagi
   # ================================================================= #
   /davet/coz:

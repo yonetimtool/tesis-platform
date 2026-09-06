@@ -61,10 +61,11 @@ Akış:
 
 **Telefonu boş olan Yönetiyor kullanıcısı** (`app_user.telefon` nullable —
 ölçtüm): SSO **tamamlanamaz**. Kullanıcıya Dukkan'da bir kez telefon+OTP
-sorulur, sonra bağ kurulur. **EMİN DEĞİLİM:** telefonu boş `app_user` oranını
-ölçmedim; küçükse bu yol nadir, büyükse akışın *ana* yolu olur. Uygulamadan
-önce ölçülecek — M5'te (il doluluğu 1/2239) tam da bunu varsaymayıp ölçtüğüm
-için kötü bir sürprizden dönmüştüm.
+sorulur, sonra bağ kurulur. **ÖLÇÜLDÜ (Ö1) — ve sonuç bu yolu ana yol yapıyor: 3104 kullanıcının
+837'sinde telefon YOK (%27).** Yani her dört Yönetiyor kullanıcısından biri
+SSO'ya girdiğinde telefonu sorulacak. Bu, "nadir bir kenar durum" değil;
+akışın **normal bir dalı**. Sonucu: telefon sorma adımı bir hata ekranı gibi
+değil, kayıt akışının doğal bir parçası gibi tasarlanmalı.
 
 **Bağımsızken sonradan Yönetiyor'a bağlanma:** telefon aynıysa aynı satırda
 buluşurlar (`UNIQUE(telefon)`), geçmiş talepler korunur. Kendiliğinden çalışır —

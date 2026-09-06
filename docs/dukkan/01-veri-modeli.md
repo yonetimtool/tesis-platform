@@ -87,8 +87,56 @@ sessizce ölü bağlantı üretmenin en kısa yoludur.
 |---|---|---|
 | **NVI / AKS** (`adres.nvi.gov.tr`) | Resmî Adres Kayıt Sistemi | **Otoritatif kaynak budur.** Ama halka açık toplu indirme/serbest API'si **yok**; MAKS kurumlara (belediye) protokolle açılıyor. **Tek kişilik bir ürünün erişemeyeceğini varsayıyorum — EMİN DEĞİLİM, doğrulanmalı** |
 | **NVI web sorgu** | İl→ilçe→mahalle kademeli sorgu | Resmî veriyi **bir kez** çıkarmanın pratik yolu; toplu/otomatik çekim izin durumu **EMİN DEĞİLİM** |
-| **GitHub: `emreuenal/turkiye-il-ilce-sokak-mahalle-veri-tabani`** | NVI'den türetilmiş, PostgreSQL dökümü hazır | **V1 için önerim.** Hazır PostgreSQL, doğrudan `dukkan` şemasına yüklenir. Riski: **güncelliği garanti değil**, bakımı üçüncü şahısta |
+| **GitHub: `emreuenal/...-veri-tabani`** | NVI türevi, PostgreSQL dökümü | ~~V1 için önerim~~ → **REDDEDİLDİ.** Lisansı **GPL-3.0**, son güncelleme **Nisan 2021**. "Lisansı net + ticari kullanıma uygun" şartını karşılamıyor |
+| **GitHub: `ferhat-mousavi/turkiye-il-ilce-mahalle-koy`** | JSON, hiyerarşik | **SEÇİLDİ. Lisans: MIT** (LICENSE dosyası var). Ancak verisi HAM HALİYLE KULLANILAMAZDI — aşağıya bak |
+| **GitHub: `bertugfahriozer/il_ilce_mahalle`** | JSON, TÜİK/İçişleri kaynaklı | README "ticari kullanılabilir" diyor ama **LICENSE dosyası YOK**. Bir README cümlesi resmî lisans değil; kullanılmadı |
 | **TurkiyeAPI / Tradres** | REST API | Çalışma anında dış servise bağımlılık — **hayır.** Lokasyon ağacı SEO URL'lerinin temeli; dış servis düşünce site çöker. Yalnız **ilk yükleme** için kullanılabilir |
+
+
+### Seçilen kaynak ham haliyle kullanılamazdı — ölçüldü ve onarıldı
+
+MIT lisansı temiz olsa da **verinin kendisi bozuktu**. İndirip ölçtüm:
+
+| Ölçüm | Sonuç |
+|---|---|
+| 74.402 Türkçe adda **`ı` harfi** | **0 kez** — Türkçede `ı` çok yaygın ("Balıkesir", "Çınarlı"); sıfır olması istatistiksel olarak imkânsız |
+| U+0307 birleşen nokta taşıyan mahalle adı | **%83,6** (`"Mahallesi̇"`) |
+| İl adları | Onlar da bozuk: `Balikesi̇r`, `Di̇yarbakir`, `Afyonkarahi̇sar` |
+
+**Teşhis:** kaynak metin BÜYÜK HARFTİ ve **Türkçe olmayan bir yerel ayarla**
+küçültülmüş. Python'da bu dönüşüm birebir şudur:
+`'İ'.lower()` → `'i' + U+0307`, `'I'.lower()` → `'i'` (doğrusu `'ı'` olmalıydı).
+
+**Bozulma geri döndürülebilir**, çünkü iki durum birbirinden ayırt edilebiliyor:
+biri birleşen nokta taşıyor, öteki taşımıyor. Onarım uygulandı ve
+**tahminle değil ölçümle** doğrulandı:
+
+- **81/81** il adı bilinen doğru adla eşleşti,
+- **39/39** İstanbul ilçesi eşleşti,
+- brief'in örnek yolu `Çatalmeşe` doğru biçimde bulundu,
+- yükleme sonrası: 14.113 adda `ı` geri geldi, **bozuk kayıt 0**.
+
+**Yüklenmeyenler:** `Mevkii` (22.912) ve `Mezrası` (5.337). Bunlar kırsal
+konum adları; bir usta hizmet alanı olarak "mevki" seçmez. Yüklemek, mahalle
+seçicisini 45.000 yerine 74.000 seçeneğe çıkarır ve hiçbir işletme onları
+seçmeyeceği için o sayfalar **kalıcı olarak SEO eşiğinin altında** kalırdı.
+
+**Yüklenen: 81 il / 973 ilçe / 44.719 mahalle+köy.** Slug çakışması: 0.
+
+### Kaynak izi veritabanında: `dukkan.veri_kaynagi`
+
+Senin şartın "kaynağı ve indirme tarihini belgele" idi. Bunu bir markdown
+cümlesi yerine **tabloya** koydum: `kaynak_url`, `lisans`, `surum`, `sha256`,
+`indirme_tarihi`, `kayit_sayisi`, `onarim_notu`.
+
+Gerekçe: iki yıl sonra "bu mahalle listesi nereden geldi, ne zaman, hangi
+sürümden?" diye soran kişi kodu değil **veritabanını** sorgular. `sha256`
+ayrıca aynı dosyanın yeniden yüklenip yüklenmediğini kesin söyler — dosya adı
+ve tarih yanıltıcıdır, özet değildir.
+
+**Güncelleme yolu:** yılda 1-2 kez yeni döküm → **fark raporu** (yeni/silinen/
+adı değişen) → **elle onay**. Otomatik uygulanmıyor: silinen bir mahalle,
+ona bağlı işletmeleri ve canlı SEO sayfalarını sessizce düşürür.
 
 **Karar:** lokasyon verisi **Dukkan'ın kendi tablosunda yaşar**, çalışma anında
 hiçbir dış servise sorulmaz. Bir kez yüklenir, elle güncellenir.

@@ -72,6 +72,47 @@ işlevsiz** olur. Katı olan kural, burada güvenli olan kural değil.
 - Bir işletme + bir telefon: **90 günde bir** davet yorumu
   (`UNIQUE(isletme_id, yazan_id, kaynak)` + zaman kuralı).
 
+### 2.2b Onayladığın üç ek şart
+
+**(a) Rozet farkı GÖRÜNÜR olsun, ince yazıyla değil.**
+Doğrulanmış yorum, listede **kendi rozetiyle ve kendi satırında** durur;
+davetli yorum ayrı bir başlık altında toplanır. Aynı listeye karıştırıp
+sonuna küçük bir etiket iliştirmek, farkı *teknik olarak* göstermek ama
+*fiilen* gizlemek olurdu. Profil özetinde iki sayı **ayrı ayrı** yazılır.
+
+**(b) Ağırlık farkı puan hesabında nasıl yansıyor — açık formül.**
+`isletme.siralama_puani` hesabında yorum bileşeni şudur:
+
+```
+yorum_bileseni = (A_ortalama × A_sayisi × 1.0  +  B_ortalama × B_sayisi × 0.3)
+                 / (A_sayisi × 1.0 + B_sayisi × 0.3)
+
+güven_çarpanı  = min(1, (A_sayisi + 0.3 × B_sayisi) / 5)
+```
+
+- **A = doğrulanmış** (platform üzerinden iş), **B = davetli**.
+- **0,3 katsayısı:** bir davetli yorum, doğrulanmış bir yorumun **üçte biri**
+  kadar ağırlık taşır. Sıfır yapmak Katman B'yi anlamsız kılardı (o zaman
+  hiç toplamayalım); bire eşitlemek ise davet kotasını tek savunma hattı
+  bırakırdı.
+- **`güven_çarpanı`** ayrı duruyor ve şunu çözüyor: tek bir 5 yıldızlı
+  yorumu olan işletme, 40 yorumlu 4,6 ortalamalı işletmenin üstüne çıkmamalı.
+  Az sayıda yorum, ortalamayı yükseltmez — **güveni** düşürür.
+- Katsayılar **başlangıç değeri**, ölçülmüş sabit değil; ilk üç ayda
+  gerçek veriyle ayarlanacak ve yapılandırmadan okunacak.
+
+**(c) Kota aşımı ve şüpheli örüntü moderatöre BİLDİRİLİR.**
+Sessizce reddetmek, kötüye kullanımı *görünmez* yapar — engellenen deneme de
+bir sinyaldir. Moderasyon kuyruğuna düşenler:
+
+| Olay | Neden sinyal |
+|---|---|
+| Davet kotası aşıldı | İşletme platform etkinliğinden fazla yorum topluyor |
+| Aynı cihaz/IP'den aynı işletmeye 2+ yorum | T1/T8 örüntüsü |
+| Yeni hesap → tek işletmeye tek olumsuz yorum → sessizlik | T2 (rakip saldırısı) |
+| Yorumcu telefonu = işletme telefonu | T1, kesin ret + kayıt |
+| Kısa sürede ≥N ödeme şikâyeti | T5, otomatik askı + inceleme |
+
 **İşletme profilinde ikisi ayrı gösterilir:**
 ```
   ★ 4,7   ·  23 değerlendirme
@@ -139,6 +180,16 @@ emin değilim.** Bulunmuş gibi tasarlamak, uygulamada çöken bir adım yaratı
 **V1 kararı:** vergi no **beyan** alınır (format + kontrol hanesi doğrulanır),
 **belge fotoğrafı** istenir, **insan** onaylar. Otomasyon yok.
 
+**İnceleme izi kalır (senin şartın).** `isletme_belge` satırı şunları tutar:
+`tip` (vergi_levhasi / ustalik_belgesi / sicil), `dosya_yolu` (MinIO),
+`durum` (bekliyor / onaylandi / reddedildi), **`inceleyen`** (hangi moderatör),
+`incelendi_at`, `not`. Admin panelinde işletme kartında **"Vergi levhası:
+yüklendi / incelendi / yok"** açıkça görünür.
+
+Gerekçe: bir işletme sonradan sorun çıkardığında "biz bunu onaylarken neye
+baktık?" sorusunun cevabı olmalı. İz yoksa cevap "hatırlamıyorum"dur ve
+hem hukuki hem operasyonel olarak savunulamaz.
+
 Bu bilinçli: günde 5-10 başvuruda insan incelemesi günde birkaç dakika, ve
 bir insanın gözü sahte belgeyi bugün herhangi bir otomasyondan iyi yakalar.
 Hacim büyüyünce otomasyon aranır — **önce hacim, sonra otomasyon.**
@@ -199,6 +250,10 @@ kavramlarını ve ETBİS kayıt yükümlülüğünü düzenliyor.
 > **Önerim: yayına çıkmadan önce e-ticaret mevzuatı bilen bir avukatla bir
 > saatlik görüşme.** Bu, teknik tasarımın çözemeyeceği bir belirsizlik ve
 > tahminle kapatılırsa geriye dönük düzeltmesi pahalı.
+>
+> **Soru listesi hazır: [`07-hukuki-sorular.md`](07-hukuki-sorular.md)** —
+> 16 soru, öncelik sırasında, her birinin altında "bu neden önemli" ve
+> "cevaba göre hangi tasarım kararı değişir". Cevap üretilmedi, yalnız soru.
 
 Buna rağmen, **hangi kategoriye girerse girsin doğru olan** şeyler var ve
 tasarım onları bugünden içeriyor:

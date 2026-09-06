@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Yonetio ailesinden renk jetonlari. Panelin `--yz-*` jetonlari BURAYA
+   TASINMADI: iki ayri paket, iki ayri tailwind yapilandirmasi. */
+:root {
+  --dk-zemin: #ffffff;
+  --dk-zemin-alt: #f6f8fb;
+  --dk-metin: #12233d;
+  --dk-metin-soluk: #52627a;
+  --dk-cizgi: #d9e2ee;
+  --dk-marka: #2060a0;
+  --dk-marka-koyu: #102060;
+}
+
+body {
+  background: var(--dk-zemin);
+  color: var(--dk-metin);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}

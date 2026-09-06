@@ -8,16 +8,34 @@ Bu tasarım beş yerde **tahmine** dayanıyor. Uygulamanın **ilk işi** bunlar�
 ölçmek, çünkü M5'te (tesislerin `il` doluluğu **1/2239**) tam da varsaymayıp
 ölçtüğüm için özelliği yanlış kurmaktan dönmüştüm.
 
-| # | Ölçüm | Neyi etkiler |
-|---|---|---|
-| Ö1 | `app_user.telefon` **boş olan** kullanıcı oranı | SSO'nun ana yolu mu, nadir hâli mi (`02` §3) |
-| Ö2 | `tenant.posta_kodu` doluluğu | Bölge ön-doldurmanın ikinci şansı var mı (`00` §5) |
-| Ö3 | İki Alembic zincirinin tek `migrate`'te davranışı ve `test_goc_bagimsizligi.py` etkileşimi | Şema ayrımının maliyeti (`00` K2) |
-| Ö4 | `dukkan_app` rolüyle `SELECT public.app_user` → `permission denied` **kanıtı** | Kısıtın gerçekten zorlandığının kanıtı |
-| Ö5 | Lokasyon dökümünün gerçek satır sayısı ve güncelliği | SEO sayfa sayısı (`01` §2) |
+> **F1'de HEPSİ YAPILDI. Sonuçlar aşağıda — ikisi tasarımı değiştirdi.**
 
-**Ö4 ilk yazılacak testtir.** "Yönetiyor veritabanına yazma" kuralı, ancak
-kırıldığında kırmızı yanan bir test varsa kuraldır; yoksa yalnızca bir niyet.
+| # | Ölçüm | **SONUÇ** | Ne değişti |
+|---|---|---|---|
+| Ö1 | `app_user.telefon` boş oranı | **837 / 3104 = %27** | **Değişti.** SSO'da telefon sorma yolu "nadir kenar durum" değil, **her dört kullanıcıdan biri**. Hata ekranı gibi değil, akışın doğal dalı olarak tasarlanacak (`02` §3) |
+| Ö2 | `tenant.posta_kodu` doluluğu | **1 / 2239** (`ilce` de 1/2239) | Bölge ön-doldurmanın **ikinci şansı yok**. "En iyi çaba" kararı doğrulandı (`00` §5) |
+| Ö3 | İkinci Alembic zinciri gerekli mi | **GEREKMEDİ** | **Değişti.** Ölçüm: `migrate` zaten OWNER ile, `api`/`worker`/`beat` `app_rw` ile bağlanıyor — "göçü owner koşar, uygulama kısıtlı rolle bağlanır" deseni **evde zaten var**. Dukkan üçüncü rol olarak katıldı. İkinci zincir yalnızca ikinci bir `migrate` servisi ve ikinci bir yedekleme yolu getirirdi |
+| Ö4 | Sınır kanıtı | **KANITLANDI** (aşağıda) | — |
+| Ö5 | Lokasyon verisi | **81 il / 973 ilçe / 44.719 mahalle+köy** | Kaynak değişti: GPL-3.0+2021 yerine MIT. Veri bozuktu, onarıldı (`01` §2) |
+
+### Ö4 — kanıt
+
+```
+dukkan_app ile SELECT public.app_user   ->  permission denied for table app_user
+dukkan_app ile UPDATE public.app_user   ->  permission denied for table app_user
+dukkan_app ile SELECT public.tenant     ->  permission denied for table tenant
+dukkan_app ile INSERT dukkan.ulke       ->  çalışıyor
+app_rw     ile SELECT dukkan.ulke       ->  permission denied   (simetrik)
+```
+
+`backend/tests/test_dukkan_sinir.py` bunu kilitliyor ve kilit **kırılarak
+doğrulandı**: `GRANT SELECT ON public.app_user TO dukkan_app` verilince iki
+test kırmızı yandı, `REVOKE` ile yeşile döndü. Katalog üzerinden yapılan
+test, **gelecekte eklenecek** Yönetiyor tablolarını da kapsıyor — tablo tablo
+bakan bir test yeni tabloyu görmezdi.
+
+"Yönetiyor veritabanına yazma" kuralı artık bir niyet değil, kırıldığında
+kırmızı yanan bir kilit.
 
 ---
 
@@ -26,10 +44,20 @@ kırıldığında kırmızı yanan bir test varsa kuraldır; yoksa yalnızca bir
 ### F0 — Temel (kod yok, karar var)
 Bu belgelerin onayı + §4'teki soruların cevapları.
 
-### F1 — İskelet
-`dukkan` şeması + `dukkan_app` rolü + **Ö4 testi**; lokasyon verisi yüklenir;
-kategori ağacı; `apps/dukkan-web` iskeleti + BFF sözleşme kapısı (`04` §7).
-**Çıktı:** boş ama ayakta bir site. Kullanıcıya değeri yok, mimariye kanıtı var.
+### F1 — İskelet ✅ **TAMAMLANDI**
+`dukkan` şeması + `dukkan_app` rolü + Ö4 testi; lokasyon (44.719 mahalle) ve
+kategori (12 ana / 51 hizmet) yüklendi; 4 kamu ucu; `apps/dukkan-web` +
+**BFF sözleşme kapısı** (kırarak doğrulandı).
+
+`/istanbul/cekmekoy/catalmese/elektrikci` — brief'in örnek yolunun **her
+parçası** API'den çözülüyor.
+
+**Akış sürülürken bulunan kusur:** mahalle araması Türkçe harfsiz yazımda
+(`"catal"`) hiçbir şey bulmuyordu, oysa "Çatalmeşe" oradaydı. Türkçe klavyesi
+olmayan biri hiçbir mahalle bulamazdı — ve mahalle seçimi hem sakinin hem
+**ustanın hizmet alanı seçtiği** yer. Çözüm bedavaydı: `slug` sütunu zaten
+ASCII'ye katlanmış duruyordu (SEO için üretilmişti), `unaccent` eklentisi
+gerekmedi.
 
 ### F2 — Arz tarafı (önce bu)
 İşletme kaydı, telefon doğrulama, kategori/hizmet alanı seçimi, belge yükleme,

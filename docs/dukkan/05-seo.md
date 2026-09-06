@@ -62,10 +62,12 @@ sayfa başına değil, **alan adı geneline** işler. Yani 10 iyi sayfan da dü�
 **Neden 3?** Bir listeleme sayfasının kullanıcıya değeri **karşılaştırmadır**.
 Tek işletmeli bir "liste", listenin vaadini tutmaz — kullanıcı geri döner,
 ve dönüş oranı Google'ın gördüğü en net kalite sinyali.
-**EMİN DEĞİLİM:** 3 bir başlangıç değeri, ölçülmüş bir eşik değil. İlk üç ayda
-Search Console'da 1-2 işletmeli sayfaların gösterim/tıklama davranışı
-ölçülüp ayarlanmalı. Sabit bir doğru gibi kodlanmamalı — **yapılandırma
-değeri** olsun.
+**3 bir başlangıç değeri, ölçülmüş bir eşik değil** — ve senin de dediğin gibi
+gerçek veriyle ayarlanacak. Bu yüzden **koda gömülü sabit değil**:
+`apps/dukkan-web/config/site.ts` içinde `INCE_ICERIK_ESIGI`, ortam
+değişkeninden (`NEXT_PUBLIC_INCE_ICERIK_ESIGI`) okunuyor. İlk üç ayda Search
+Console'da 1-2 işletmeli sayfaların gösterim/tıklama davranışı ölçülüp
+değiştirilecek — yeniden dağıtım gerektirmeden.
 
 ### Eşik altı sayfa boş bırakılmaz
 
