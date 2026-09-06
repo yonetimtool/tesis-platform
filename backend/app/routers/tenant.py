@@ -50,6 +50,11 @@ _YONETICI_YAZABILIR = {
     # (P37) Gurultu caydiricisi SITE YONETIMININ isidir: esigi ve anons
     # metnini komsuluk iliskisini bilen kisi ayarlar.
     "gurultu_esigi", "gurultu_uyari_metni", "gurultu_integration_id",
+    # (P218) BORC HEDEF VARSAYILANI: "isletme gideri kime yazilir"
+    # karari SITE YONETIMININ isidir — kira sozlesmelerini ve site
+    # teamulunu bilen kisi odur. Platform operatorune birakmak, her
+    # site icin bizi arayan bir ayar demekti.
+    "varsayilan_hedef_kurali",
     # (P213 §1) GURULTU AYARLARININ TAMAMI YONETICIDE.
     #
     # OLCULEN KUSUR: P208 uc ayari (pencere/susma/sakin bildirimi)
@@ -110,6 +115,7 @@ def _to_settings(t: Tenant) -> TenantSettings:
         gurultu_susma_gun=t.gurultu_susma_gun,
         gurultu_sakin_uyarisi=t.gurultu_sakin_uyarisi,
         gurultu_eskalasyon_esigi=t.gurultu_eskalasyon_esigi,
+        varsayilan_hedef_kurali=t.varsayilan_hedef_kurali,
     )
 
 

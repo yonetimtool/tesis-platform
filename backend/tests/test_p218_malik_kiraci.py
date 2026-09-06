@@ -170,3 +170,73 @@ def test_LISTE_oturuyor_alanini_DONER(client, yon):
     kayit = [x for x in r.json() if x["user_id"] == mo][0]
     assert kayit["oturuyor"] is True
     assert kayit["rol_tipi"] == "malik"
+
+
+# ==================== (§C) TESIS VARSAYILANI ============================ #
+
+def _ayar(client, h, kural: str) -> None:
+    r = client.patch("/tenant/settings", headers=h,
+                     json={"varsayilan_hedef_kurali": kural})
+    assert r.status_code == 200, r.text
+
+
+def test_YENI_TANIM_tesis_varsayilanini_ALIR(client, yon):
+    """Bazi siteler HER SEYI malige yaziyor; her tanimda ayni secimi
+    tekrarlatmak gereksiz."""
+    onceki = client.get("/tenant/settings", headers=yon).json()[
+        "varsayilan_hedef_kurali"]
+    try:
+        _ayar(client, yon, "malik")
+        r = client.post("/gelir-gider-tanimlari", headers=yon, json={
+            "ad": f"P218 vars {uuid.uuid4().hex[:5]}", "tip": "gider"})
+        assert r.status_code in (200, 201), r.text
+        assert r.json()["hedef_kurali"] == "malik"
+    finally:
+        _ayar(client, yon, onceki)
+
+
+def test_VARSAYILAN_ZORLAYICI_DEGIL_tanim_bazinda_EZILIR(client, yon):
+    """Kilit olsaydi, o siteye bir gun su faturasini kiraciya yazmak
+    gerektiginde ayar TUM turleri birden etkilerdi."""
+    onceki = client.get("/tenant/settings", headers=yon).json()[
+        "varsayilan_hedef_kurali"]
+    try:
+        _ayar(client, yon, "malik")
+        r = client.post("/gelir-gider-tanimlari", headers=yon, json={
+            "ad": f"P218 ezme {uuid.uuid4().hex[:5]}", "tip": "gider",
+            "hedef_kurali": "kiraci_oncelikli"})
+        assert r.json()["hedef_kurali"] == "kiraci_oncelikli"
+    finally:
+        _ayar(client, yon, onceki)
+
+
+def test_VARSAYILAN_MEVCUT_tanimlara_DOKUNMAZ(client, yon):
+    """Calisan bir sitenin gecmis kurulumunu degistirmek, kimsenin
+    istemedigi bir davranis degisimi olurdu."""
+    onceki = client.get("/tenant/settings", headers=yon).json()[
+        "varsayilan_hedef_kurali"]
+    try:
+        _ayar(client, yon, "kiraci_oncelikli")
+        t = client.post("/gelir-gider-tanimlari", headers=yon, json={
+            "ad": f"P218 eski {uuid.uuid4().hex[:5]}", "tip": "gider"}).json()
+        assert t["hedef_kurali"] == "kiraci_oncelikli"
+        _ayar(client, yon, "malik")
+        hepsi = client.get("/gelir-gider-tanimlari?limit=200", headers=yon).json()
+        ayni = [x for x in hepsi["items"] if x["id"] == t["id"]][0]
+        assert ayni["hedef_kurali"] == "kiraci_oncelikli", "mevcut tanim DEGISMIS"
+    finally:
+        _ayar(client, yon, onceki)
+
+
+def test_YONETICI_varsayilani_DEGISTIREBILIR(client, yon):
+    """"Isletme gideri kime yazilir" karari SITE YONETIMININ isidir —
+    kira sozlesmelerini ve site teamulunu bilen kisi odur."""
+    onceki = client.get("/tenant/settings", headers=yon).json()[
+        "varsayilan_hedef_kurali"]
+    try:
+        r = client.patch("/tenant/settings", headers=yon,
+                         json={"varsayilan_hedef_kurali": "malik"})
+        assert r.status_code == 200, f"yoneticiye kapali: {r.text}"
+        assert r.json()["varsayilan_hedef_kurali"] == "malik"
+    finally:
+        _ayar(client, yon, onceki)

@@ -3494,6 +3494,9 @@ class TenantSettings(BaseModel):
     #: (P213 §1, goc 0105) Kacinci esik asimindan SONRA guvenlige gider.
     #: 1 = ikinci asimda (P212 davranisi).
     gurultu_eskalasyon_esigi: int = 1
+    #: (P218) YENI gelir/gider tanimlarinin varsayilan borc hedefi.
+    #: ZORLAYICI DEGIL: tur bazinda her zaman degistirilebilir.
+    varsayilan_hedef_kurali: BorcHedefKurali = "kiraci_oncelikli"
     # (P34) Tur gecikme alarmi. Tolerans TENANT AYARIDIR: 10 dk bir sitede
     # makul, kampus buyuklugunde erken alarm demektir. Tekrar 0 = KAPALI.
     tur_gecikme_toleransi_dk: int = 10
@@ -3551,6 +3554,7 @@ class TenantSettingsUpdate(BaseModel):
     #: anlamini silerdi; cok buyuk bir sayi ise "hic cagirma"nin dolayli
     #: ve okunmaz bicimidir.
     gurultu_eskalasyon_esigi: int | None = Field(None, ge=1, le=10)
+    varsayilan_hedef_kurali: BorcHedefKurali | None = None
     #: (P207 §3) Kademe listesi — bicim dogrulamasi UYGULAMADA
     #: (`hatirlatma_kademeleri`): gecersiz metin KAPALI demektir ve
     #: kullaniciyi 422 ile durdurmak, "kapat" niyetini hataya
@@ -5347,9 +5351,16 @@ class GelirGiderTanimCreate(BaseModel):
     tip: GelirGiderTip
     grup_id: uuid.UUID | None = None
     dagitim_sekli: GelirGiderDagitim | None = None
-    #: (P28) Borc KIME yazilir. Varsayilan `kiraci_oncelikli` (aidat,
-    #: faturalar: kullanan oder); yatirim/demirbas icin `malik` secilir.
-    hedef_kurali: BorcHedefKurali = "kiraci_oncelikli"
+    #: (P28) Borc KIME yazilir. Kullanan (`kiraci_oncelikli`) = isletme
+    #: giderleri (KMK md. 20/a: kapici, elektrik, su, asansor isletme,
+    #: temizlik); `malik` = anayapinin bakim/onarim/guclendirme giderleri
+    #: (md. 20/b).
+    #:
+    #: (P218) VERILMEZSE TESISIN VARSAYILANI uygulanir
+    #: (`tenant.varsayilan_hedef_kurali`) — bazi siteler her seyi malige
+    #: yaziyor ve her tanimda ayni secimi tekrarlamak zorunda
+    #: kalmamalilar. `None` = "tesis varsayilanini kullan".
+    hedef_kurali: BorcHedefKurali | None = None
     aktif: bool = True
 
     @model_validator(mode="after")

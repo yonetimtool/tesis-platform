@@ -127,3 +127,61 @@ Aynı üç seçenek, aynı eşleme. `residents_api` `oturuyor` alanını taşıy
 seçenek sunar, varsayılan seçili değildir, ve **üç sıfat da doğru iki
 alana çevriliyor** — gönderilen gövde okunarak. Kilit kırılarak
 doğrulandı (malik-oturan'ı `false` yapınca ilgili test düştü).
+
+---
+
+## §C — "Kim öder" arayüzü ve tesis varsayılanı
+
+### Tanımlar ekranına `hedef_kurali`
+
+Alan ve motor P28'den beri vardı ama **hiçbir ekranda düzenlenemiyordu**
+(analizin B1 boşluğu): her tanım varsayılanla doğuyor, yönetici "bu bakım
+gideri malige yazılsın" diyemiyordu.
+
+Etiketler kullanıcının dilinde — `kiraci_oncelikli` bir enum değeri,
+cümle değil:
+
+| değer | etiket | KMK md. 20 |
+|---|---|---|
+| `kiraci_oncelikli` | **Kullanan öder (kiracı, yoksa malik)** | a) işletme giderleri |
+| `malik` | **Malik öder** | b) bakım, onarım, güçlendirme |
+
+Bunun için tanım tablosuna `secenekEtiketleri` desteği eklendi:
+seçenekler bugüne kadar **ham değerle** çiziliyordu (`tipe_gore`) ve bu,
+teknik adı kullanıcıya göstermekti. **Mevcut alanların görünümü
+değiştirilmedi** — eşleme verilmezse eski davranış sürüyor.
+
+### Tesis varsayılanı
+
+`tenant.varsayilan_hedef_kurali` yalnızca **yeni açılan** türlerin
+başlangıç değeri. Ölçüldü:
+
+```
+ayar = malik
+  hedef_kurali VERMEDEN açılan tanım  -> malik           (varsayılan uygulandı)
+  açıkça kiraci_oncelikli verilen     -> kiraci_oncelikli (varsayılan EZİLDİ)
+  mevcut tanımlar                      -> DEĞİŞMEDİ
+```
+
+**Neden zorlayıcı değil:** tenant düzeyinde kilit olsaydı, o siteye bir
+gün su faturasını kiracıya yazmak gerektiğinde ayar tüm türleri birden
+etkilerdi.
+
+**Neden yöneticide:** "işletme gideri kime yazılır" kararı site
+yönetiminin işi — kira sözleşmelerini ve site teamülünü bilen kişi odur.
+Platform operatörüne bırakmak, her site için bizi arayan bir ayar demekti.
+
+### Yan düzeltme: yavaş test
+
+`tesis-ayarlari.dom.test.ts`'teki eşik testi tam takımda **5006 ms** ile
+sınırı aşıyordu. Kök neden: `userEvent.type` tuşa tuş yazıyor ve her
+karakterde yeniden çizim tetikliyor; bu sayfa her çizimde tüm ayar
+alanlarını kuruyor. Zaman aşımını büyütmek belirtiyi ertelerdi —
+`fireEvent.change` ile giriş **tek seferde** yapıldı ve sebep ortadan
+kalktı (3,7 sn → tüm dosya).
+
+### Testler
+
+`test_p218_malik_kiraci.py` +4: yeni tanım varsayılanı alır, tanım
+bazında ezilir, **mevcut tanımlara dokunulmaz**, yönetici ayarı
+değiştirebilir. Toplam 12.

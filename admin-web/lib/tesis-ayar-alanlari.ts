@@ -124,6 +124,28 @@ export const OPERASYON: Ayar[] = [
   },
   // --- P37 gurultu caydirici ---
   {
+    // =====================================================================
+    // (P218) YENI GIDER TURLERININ VARSAYILAN BORC HEDEFI
+    // =====================================================================
+    // Kat Mulkiyeti Kanunu md. 20 gideri turune gore ayiriyor (isletme
+    // -> kullanan, bakim/onarim -> malik) AMA uygulamada siteler farkli
+    // davraniyor: bazilari her seyi malige yaziyor, bazilari kira
+    // sozlesmesine bakiyor. Urun bunlardan birini dayatamaz.
+    //
+    // ZORLAYICI DEGIL, YALNIZCA VARSAYILAN: tur bazinda her zaman
+    // degistirilebilir (Tanimlar > Gelir/Gider turleri). Tenant
+    // duzeyinde KILIT olsaydi, o siteye bir gun su faturasini kiraciya
+    // yazmak gerektiginde ayar TUM turleri birden etkilerdi.
+    anahtar: "varsayilan_hedef_kurali",
+    etiket: "ayarVarsayilanHedef",
+    ipucu: "ayarVarsayilanHedefIpucu",
+    tip: "secim",
+    secenekler: [
+      { deger: "kiraci_oncelikli", etiket: "tanimHedefKullanan" },
+      { deger: "malik", etiket: "tanimHedefMalik" },
+    ],
+  },
+  {
     anahtar: "gurultu_esigi",
     etiket: "ayarGurultuEsigi",
     ipucu: "ayarGurultuEsigiIpucu",

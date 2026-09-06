@@ -11,7 +11,7 @@
 //
 // Bu dosya ekranin dogru alanlari cizdigini, PLATFORMA ait olanlari
 // CIZMEDIGINI ve yalniz DEGISEN alani gonderdigini kilitler.
-import { screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -116,10 +116,18 @@ describe("(P193 §5) tesis ayarları ekranı", () => {
     // Sunucu kabul eder, arayuz UYARIR.
     kur();
     ciz(TesisAyarlariPage);
-    const k = userEvent.setup();
     const esik = await screen.findByLabelText(/Gürültü uyarı eşiği/);
-    await k.clear(esik);
-    await k.type(esik, "1");
+    // (P218) `userEvent.type` YERINE `fireEvent.change`.
+    //
+    // KOK NEDEN: `userEvent` tusa tus yazar ve HER karakterde yeniden
+    // cizim tetikler; bu sayfa her cizimde tum ayar alanlarini kuruyor.
+    // Tam takimda (180+ dosya paralel) tek karakterlik bir giris 5
+    // saniyeyi asabiliyordu — olculen davranis degil, makinenin o anki
+    // yuku belirliyordu. Zaman asimini buyutmek belirtiyi erteler;
+    // GIRISI TEK SEFERDE yapmak sebebi ortadan kaldirir.
+    //
+    // Olculen sey degismedi: "1 yazilinca uyari cikar".
+    fireEvent.change(esik, { target: { value: "1" } });
     // ZAMAN ASIMI ACIKCA VERILDI. Izole kosumda bu iddia ~100 ms'de
     // gerceklesiyor; TAM TAKIMDA (180+ dosya paralel) makine yuku altinda
     // 1000 ms'lik varsayilani asip DUSUYORDU — olculen davranis degil,

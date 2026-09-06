@@ -611,6 +611,9 @@ export interface TenantSettings {
   gurultu_sakin_uyarisi?: boolean;
   /** (P213 §1) Kacinci esik asimindan SONRA guvenlige gider (1 = ikinci). */
   gurultu_eskalasyon_esigi?: number;
+  /** (P218) YENİ gelir/gider türlerinin varsayılan borç hedefi.
+   *  ZORLAYICI DEĞİL: tür bazında her zaman değiştirilebilir. */
+  varsayilan_hedef_kurali?: "kiraci_oncelikli" | "malik";
 }
 
 // ------------------------ tenant olusturma (admin) ------------------------- #

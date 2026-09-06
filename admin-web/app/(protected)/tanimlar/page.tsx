@@ -80,6 +80,16 @@ interface Alan {
   tip: AlanTip;
   zorunlu?: boolean;
   secenekler?: string[];
+  /** (P218) Secenek degeri -> SOZLUK ANAHTARI.
+   *
+   *  Secenekler bugune kadar HAM DEGERLE ciziliyordu (`tipe_gore`,
+   *  `bagimsiz_bolumlere_esit`) ve bu, teknik adi kullaniciya
+   *  gostermek demekti. Yeni eklenen `hedef_kurali` icin kabul
+   *  edilemezdi: "kiraci_oncelikli" bir cumle degil, bir enum degeri.
+   *
+   *  Verilmezse ESKI DAVRANIS (ham deger) surer — mevcut alanlarin
+   *  gorunumunu bu turda degistirmiyorum. */
+  secenekEtiketleri?: Record<string, SozlukAnahtari>;
   /** Listede sutun olarak gosterilsin mi (hepsi gosterilirse tablo tasar). */
   sutun?: boolean;
 
@@ -121,6 +131,30 @@ const DEFTERLER: Defter[] = [
       { ad: "iban", etiket: "tanimAlanIban", tip: "iban" },
       { ad: "banka_adi", etiket: "tanimAlanBankaAdi", tip: "banka" },
       { ad: "sube", etiket: "tanimAlanSube", tip: "metin" },
+      {
+        // ===================================================================
+        // (P218) BORC KIMDE — KMK md. 20 AYRIMI
+        // ===================================================================
+        // Alan ve motor P28'den beri VARDI ama HICBIR EKRANDA
+        // DUZENLENEMIYORDU: her tanim varsayilanla doguyor ve yonetici
+        // "bu bakim gideri malige yazilsin" diyemiyordu.
+        //
+        // Kanun gider turune gore sorumluyu degistiriyor: isletme
+        // giderleri (kapici, elektrik, asansor isletme, temizlik)
+        // KULLANANIN, anayapinin bakim/onarim/guclendirme giderleri
+        // MALIKIN. Ama uygulamada siteler farkli davraniyor, bu yuzden
+        // secim ZORLAYICI DEGIL: varsayilan tesisten gelir, tanim
+        // bazinda degistirilir.
+        ad: "hedef_kurali",
+        etiket: "tanimAlanHedefKurali",
+        tip: "secim",
+        secenekler: ["kiraci_oncelikli", "malik"],
+        secenekEtiketleri: {
+          kiraci_oncelikli: "tanimHedefKullanan",
+          malik: "tanimHedefMalik",
+        },
+        sutun: true,
+      },
       { ad: "aktif", etiket: "tanimAlanAktif", tip: "bool" },
     ],
   },
@@ -882,7 +916,7 @@ function DefterGorunumu({ defter }: { defter: Defter }) {
                   <option value="">—</option>
                   {(a.secenekler ?? []).map((s) => (
                     <option key={s} value={s}>
-                      {s}
+                      {a.secenekEtiketleri?.[s] ? t(a.secenekEtiketleri[s]) : s}
                     </option>
                   ))}
                 </Secim>

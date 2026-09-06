@@ -358,9 +358,23 @@ async def create_gg_tanim(
     user: AppUser = Depends(_YONETIM),
 ) -> GelirGiderTanimOut:
     await _referans_dogrula(db, GelirGiderGrup, body.grup_id, "gelir_gider_grup_yok")
-    obj = GelirGiderTanim(
-        tenant_id=user.tenant_id, **body.model_dump() | {"ad": body.ad.strip()}
-    )
+    veri = body.model_dump() | {"ad": body.ad.strip()}
+    # (P218) HEDEF KURALI VERILMEDIYSE TESISIN VARSAYILANI.
+    #
+    # Uygulamada siteler farkli davraniyor: bazilari her seyi malige
+    # yaziyor, bazilari KMK md. 20 ayrimini uyguluyor. Urun bunlardan
+    # birini dayatamaz; ama her tanimda ayni secimi tekrarlatmak da
+    # gereksiz. Varsayilan tesisten gelir, tanim bazinda DEGISTIRILEBILIR
+    # (zorlayici degil — bkz. docs/malik-kiraci-analiz.md §3.3).
+    if veri.get("hedef_kurali") is None:
+        veri["hedef_kurali"] = (
+            await db.execute(
+                select(Tenant.varsayilan_hedef_kurali).where(
+                    Tenant.id == user.tenant_id
+                )
+            )
+        ).scalar_one_or_none() or "kiraci_oncelikli"
+    obj = GelirGiderTanim(tenant_id=user.tenant_id, **veri)
     db.add(obj)
     await _kaydet(db, obj)
     await audit_user(
