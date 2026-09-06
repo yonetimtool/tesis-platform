@@ -1816,6 +1816,7 @@
   "fabSikayetBildir": "Komşu şikayeti bildir",
   "sakinRolTipi": "İlişki tipi",
   "sakinRolMalik": "Kat maliki",
+  "sakinRolMalikOturan": "Malik ve oturan",
   "sakinRolKiraci": "Kiracı",
   "sakinRolDegisme": "Değiştirme",
   "sakinRolAlt": "Aidat kiracıya, yatırım gideri malike borçlandırılır.",

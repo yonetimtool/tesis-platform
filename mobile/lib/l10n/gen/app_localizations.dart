@@ -7487,6 +7487,12 @@ abstract class AppLocalizations {
   /// **'Kat maliki'**
   String get sakinRolMalik;
 
+  /// No description provided for @sakinRolMalikOturan.
+  ///
+  /// In tr, this message translates to:
+  /// **'Malik ve oturan'**
+  String get sakinRolMalikOturan;
+
   /// No description provided for @sakinRolKiraci.
   ///
   /// In tr, this message translates to:

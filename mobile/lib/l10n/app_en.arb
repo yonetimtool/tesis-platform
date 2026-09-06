@@ -1278,6 +1278,7 @@
   "fabSikayetBildir": "Report a neighbour complaint",
   "sakinRolTipi": "Relationship type",
   "sakinRolMalik": "Owner",
+  "sakinRolMalikOturan": "Owner and residing",
   "sakinRolKiraci": "Tenant",
   "sakinRolDegisme": "Leave unchanged",
   "sakinRolAlt": "Dues are charged to the tenant, investment costs to the owner.",

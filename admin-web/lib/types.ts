@@ -218,6 +218,10 @@ export interface UnitResident {
   // (P181 6.1) Sakin ad-soyad — arayüz UUID yerine bunu gösterir (backend join).
   user_ad?: string | null;
   rol_tipi?: string | null;
+  /** (P218) Dairede oturuyor mu — MÜLKİYETTEN AYRI bir gerçek.
+   *  KMK md. 20: işletme gideri kullananın, bakım gideri malikin.
+   *  "Malik ve oturan" üçüncü bir rol değil, malikin oturuyor olması. */
+  oturuyor?: boolean;
   baslangic?: string | null;
   bitis?: string | null;
   created_at: string;

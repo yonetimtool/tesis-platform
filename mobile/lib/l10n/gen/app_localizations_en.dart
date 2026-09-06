@@ -4412,6 +4412,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sakinRolMalik => 'Owner';
 
   @override
+  String get sakinRolMalikOturan => 'Owner and residing';
+
+  @override
   String get sakinRolKiraci => 'Tenant';
 
   @override

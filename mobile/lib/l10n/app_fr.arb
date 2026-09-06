@@ -1278,6 +1278,7 @@
   "fabSikayetBildir": "Signaler une plainte de voisinage",
   "sakinRolTipi": "Type de relation",
   "sakinRolMalik": "Propriétaire",
+  "sakinRolMalikOturan": "Propriétaire et résident",
   "sakinRolKiraci": "Locataire",
   "sakinRolDegisme": "Ne pas modifier",
   "sakinRolAlt": "Les charges sont imputées au locataire, les investissements au propriétaire.",

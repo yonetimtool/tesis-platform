@@ -29,10 +29,36 @@ const YONTEM: { value: DuesYontem; anahtar: SozlukAnahtari }[] = [
   { value: "havale", anahtar: "odemeHavale" },
   { value: "diger", anahtar: "ortakDiger" },
 ];
-const ROL: { value: ResidentRol; anahtar: SozlukAnahtari }[] = [
-  { value: "malik", anahtar: "daireMalik" },
-  { value: "kiraci", anahtar: "daireKiraci" },
+// (P218) UC SECENEK — kullanici ekleme ekraniyla AYNI.
+//
+// Uc yuzeyin (bu panel, `/users`, mobil sakinler) farkli soru sormasi
+// bugunku tutarsizligin kaynagiydi: burada iki secenek vardi ve "malik
+// ve oturan" hicbir yerde temsil edilemiyordu.
+//
+// Arayuzde tek alan, VERIDE iki alan (`rol_tipi` + `oturuyor`):
+// mulkiyet ile kullanim ayri iki gercek (KMK md. 20).
+type DaireSifati = "malik" | "kiraci" | "malik_oturan";
+
+const SIFAT_VERISI: Record<DaireSifati, { rol_tipi: ResidentRol; oturuyor: boolean }> = {
+  malik: { rol_tipi: "malik", oturuyor: false },
+  kiraci: { rol_tipi: "kiraci", oturuyor: true },
+  malik_oturan: { rol_tipi: "malik", oturuyor: true },
+};
+
+const ROL: { value: DaireSifati; anahtar: SozlukAnahtari }[] = [
+  { value: "malik", anahtar: "kullaniciSifatMalik" },
+  { value: "kiraci", anahtar: "kullaniciSifatKiraci" },
+  { value: "malik_oturan", anahtar: "kullaniciSifatMalikOturan" },
 ];
+
+/** Veri -> arayuz sifati (listede gostermek icin). */
+function sifatAnahtari(rol: string | null | undefined, oturuyor: boolean): SozlukAnahtari | null {
+  if (rol === "kiraci") return "kullaniciSifatKiraci";
+  if (rol === "malik") {
+    return oturuyor ? "kullaniciSifatMalikOturan" : "kullaniciSifatMalik";
+  }
+  return null;
+}
 
 export function UnitDetail({ unit }: { unit: Unit }) {
   const t = useT();
@@ -177,7 +203,7 @@ export function UnitDetail({ unit }: { unit: Unit }) {
 
   // --- sakin ekle/cikar ---
   const [rUser, setRUser] = useState("");
-  const [rRol, setRRol] = useState<ResidentRol | "">("");
+  const [rRol, setRRol] = useState<DaireSifati | "">("");
   const [rErr, setRErr] = useState<string | null>(null);
   const [rBusy, setRBusy] = useState(false);
 
@@ -188,7 +214,9 @@ export function UnitDetail({ unit }: { unit: Unit }) {
     try {
       await apiSend(`/api/units/${unit.id}/residents`, "POST", {
         user_id: rUser.trim(),
-        rol_tipi: rRol || null,
+        // (P218) Sifat IKI ALANA cevrilir; `rol_tipi` tek basina
+        // "malik ve oturan"i anlatamiyordu.
+        ...(rRol ? SIFAT_VERISI[rRol] : { rol_tipi: null }),
       });
       setRUser("");
       setRRol("");
@@ -452,7 +480,13 @@ export function UnitDetail({ unit }: { unit: Unit }) {
             <li key={r.id} className="flex items-center justify-between rounded border border-yuzey-divider px-2 py-1">
               {/* (P181 6.1) SAKİN ADI — yoksa (kullanıcı silinmiş) kısa kimliğe düş. */}
               <span className={r.user_ad ? "" : "font-mono"}>
-                {r.user_ad ?? kisaKimlik(r.user_id)} · {r.rol_tipi ?? "—"}
+                {r.user_ad ?? kisaKimlik(r.user_id)} ·{" "}
+                {/* (P218) SIFAT tam adiyla: "malik" yazip oturup
+                    oturmadigini gizlemek, ekrandan okunamayan bir
+                    ayrim birakiyordu. */}
+                {sifatAnahtari(r.rol_tipi, r.oturuyor ?? false)
+                  ? t(sifatAnahtari(r.rol_tipi, r.oturuyor ?? false)!)
+                  : "—"}
               </span>
               <button className={btnDanger} onClick={() => removeResident(r.user_id)}>
                 {t("kullaniciCikar")}

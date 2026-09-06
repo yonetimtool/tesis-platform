@@ -1278,6 +1278,7 @@
   "fabSikayetBildir": "Пожаловаться на соседа",
   "sakinRolTipi": "Тип отношения",
   "sakinRolMalik": "Собственник",
+  "sakinRolMalikOturan": "Собственник и проживает",
   "sakinRolKiraci": "Арендатор",
   "sakinRolDegisme": "Не менять",
   "sakinRolAlt": "Взносы начисляются арендатору, инвестиционные расходы — собственнику.",

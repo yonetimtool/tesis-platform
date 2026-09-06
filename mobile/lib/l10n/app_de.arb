@@ -1278,6 +1278,7 @@
   "fabSikayetBildir": "Nachbarschaftsbeschwerde melden",
   "sakinRolTipi": "Beziehungsart",
   "sakinRolMalik": "Eigentümer",
+  "sakinRolMalikOturan": "Eigentümer und Bewohner",
   "sakinRolKiraci": "Mieter",
   "sakinRolDegisme": "Unverändert lassen",
   "sakinRolAlt": "Hausgeld wird dem Mieter, Investitionskosten dem Eigentümer belastet.",

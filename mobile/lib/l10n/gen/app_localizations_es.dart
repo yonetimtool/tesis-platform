@@ -4366,6 +4366,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get sakinRolMalik => 'Propietario';
 
   @override
+  String get sakinRolMalikOturan => 'Propietario y residente';
+
+  @override
   String get sakinRolKiraci => 'Inquilino';
 
   @override

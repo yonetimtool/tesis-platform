@@ -4387,6 +4387,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get sakinRolMalik => 'Eigentümer';
 
   @override
+  String get sakinRolMalikOturan => 'Eigentümer und Bewohner';
+
+  @override
   String get sakinRolKiraci => 'Mieter';
 
   @override

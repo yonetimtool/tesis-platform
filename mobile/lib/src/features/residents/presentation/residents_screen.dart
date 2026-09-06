@@ -199,7 +199,23 @@ class _EditResidentSheetState extends ConsumerState<_EditResidentSheet> {
   final _emailCtrl = TextEditingController();
 
   /// null = "degistirme" (gonderilmez).
-  String? _rolTipi;
+  /// (P218) DAIREDEKI SIFAT — uc secenek, tek alan.
+  ///
+  /// Web'deki iki yuzeyle (kullanici ekleme, daire paneli) AYNI soruyu
+  /// sorar. Onceden yalniz `malik|kiraci` vardi ve "malik ve oturan"
+  /// hicbir yerde temsil edilemiyordu; oysa KMK md. 20 isletme giderini
+  /// KULLANANA, bakim giderini MALIGE yukluyor ve oturan malik ikisinden
+  /// de sorumlu.
+  ///
+  /// Degerler ARAYUZ kavramidir; sunucuya IKI ALAN gider.
+  String? _sifat;
+
+  /// Arayuz sifati -> (rol_tipi, oturuyor).
+  static const _sifatVerisi = <String, (String, bool)>{
+    'malik': ('malik', false),
+    'kiraci': ('kiraci', true),
+    'malik_oturan': ('malik', true),
+  };
   bool _emailTemizle = false;
   bool _submitting = false;
 
@@ -227,7 +243,8 @@ class _EditResidentSheetState extends ConsumerState<_EditResidentSheet> {
             telefon: telefonNormalle(_phoneCtrl.text),
             email: _emailCtrl.text.trim(),
             emailTemizle: _emailTemizle,
-            rolTipi: _rolTipi,
+            rolTipi: _sifat == null ? null : _sifatVerisi[_sifat]!.$1,
+            oturuyor: _sifat == null ? null : _sifatVerisi[_sifat]!.$2,
           );
       if (!mounted) return;
       navigator.pop(true);
@@ -316,7 +333,7 @@ class _EditResidentSheetState extends ConsumerState<_EditResidentSheet> {
             // 320 dp'de tasirir.
             DropdownButtonFormField<String?>(
               isExpanded: true,
-              initialValue: _rolTipi,
+              initialValue: _sifat,
               decoration: InputDecoration(
                 labelText: l10n.sakinRolTipi,
                 helperText: l10n.sakinRolAlt,
@@ -337,10 +354,15 @@ class _EditResidentSheetState extends ConsumerState<_EditResidentSheet> {
                   value: 'kiraci',
                   child: Text(l10n.sakinRolKiraci),
                 ),
+                // (P218) UCUNCU DURUM: hem malik hem kullanan.
+                DropdownMenuItem(
+                  value: 'malik_oturan',
+                  child: Text(l10n.sakinRolMalikOturan),
+                ),
               ],
               onChanged: _submitting
                   ? null
-                  : (v) => setState(() => _rolTipi = v),
+                  : (v) => setState(() => _sifat = v),
             ),
             const SizedBox(height: 16),
             FilledButton(

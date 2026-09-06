@@ -4482,6 +4482,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get sakinRolMalik => 'Собственник';
 
   @override
+  String get sakinRolMalikOturan => 'Собственник и проживает';
+
+  @override
   String get sakinRolKiraci => 'Арендатор';
 
   @override

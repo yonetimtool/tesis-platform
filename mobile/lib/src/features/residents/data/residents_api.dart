@@ -79,6 +79,9 @@ class ResidentsApi {
     String? email,
     bool emailTemizle = false,
     String? rolTipi,
+    // (P218) Dairede OTURUYOR mu — mulkiyetten ayri. `null` =
+    // degistirme; sunucu kiraci icin `true` varsayar.
+    bool? oturuyor,
   }) async {
     final data = <String, dynamic>{};
     if (ad != null && ad.isNotEmpty) data['ad'] = ad;
@@ -89,6 +92,7 @@ class ResidentsApi {
       data['email'] = email;
     }
     if (rolTipi != null && rolTipi.isNotEmpty) data['rol_tipi'] = rolTipi;
+    if (oturuyor != null) data['oturuyor'] = oturuyor;
     try {
       await _dio.patch<void>('/residents/$userId', data: data);
     } on DioException catch (e) {

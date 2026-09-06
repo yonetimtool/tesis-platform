@@ -1278,6 +1278,7 @@
   "fabSikayetBildir": "Informar de una queja vecinal",
   "sakinRolTipi": "Tipo de relación",
   "sakinRolMalik": "Propietario",
+  "sakinRolMalikOturan": "Propietario y residente",
   "sakinRolKiraci": "Inquilino",
   "sakinRolDegisme": "Sin cambios",
   "sakinRolAlt": "Las cuotas se cargan al inquilino y las inversiones al propietario.",

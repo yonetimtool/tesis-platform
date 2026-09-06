@@ -96,6 +96,27 @@ const DURUM_OLUMLU = "olumlu" as const;
 const DURUM_NOTR = "notr" as const;
 
 const ROL_SAKIN = "resident" as const;
+
+/** (P218) Kullanicinin dairedeki sifati — ARAYUZ kavrami. */
+type DaireSifati = "malik" | "kiraci" | "malik_oturan";
+
+/** Arayuz secimi -> VERI (iki alan). Tek kaynak; formun uc yerinde
+ *  ayni esleme yazilsaydi biri degisip otekiler kalirdi. */
+const SIFAT_VERISI: Record<DaireSifati, { rol_tipi: string; oturuyor: boolean }> = {
+  // Malik, dairede oturmuyor (kiraya vermis).
+  malik: { rol_tipi: "malik", oturuyor: false },
+  // Kiraci tanimi geregi oturur.
+  kiraci: { rol_tipi: "kiraci", oturuyor: true },
+  // Ucuncu durum: hem malik hem kullanan -> her iki gider turunden de
+  // sorumlu (KMK md. 20).
+  malik_oturan: { rol_tipi: "malik", oturuyor: true },
+};
+
+const SIFAT_SECENEKLERI: { deger: DaireSifati; anahtar: string }[] = [
+  { deger: "malik", anahtar: "kullaniciSifatMalik" },
+  { deger: "kiraci", anahtar: "kullaniciSifatKiraci" },
+  { deger: "malik_oturan", anahtar: "kullaniciSifatMalikOturan" },
+];
 // (P185 §4) Daire ROLE BAGLI DEGIL: bir yonetici AYNI ZAMANDA sakin olabilir,
 // ona da daire atanabilir. Form daire alanini sakin VE yonetici rolunde gosterir.
 const ROL_YONETICI = "yonetici" as const;
@@ -119,6 +140,17 @@ export default function UsersPage() {
   // residents`. Ikisi ARDISIK cagriliyor; sunucuya birlesik bir uc
   // eklemek sozlesmeyi degistirmek olurdu (kilitli kural).
   const [atanacakDaire, setAtanacakDaire] = useState("");
+  // (P218) DAIREDEKI SIFAT — TEK ALAN, UC SECENEK.
+  //
+  // Yoneticinin kafasindaki soru tektir: "bu kisi buranin nesi?". Iki
+  // ayri kutu ("malik mi?" + "oturuyor mu?") DORT kombinasyon uretir ve
+  // biri anlamsizdir (malik degil + oturmuyor). Anlamsiz durumu
+  // cizmemek icin nasilsa kosul yazmak gerekir — o zaman uc secenekli
+  // tek alan hem daha kisa hem daha durust.
+  //
+  // VERIDE IKI ALANA yazilir (`rol_tipi` + `oturuyor`): mulkiyet ile
+  // kullanim ayri iki gercek ve KMK md. 20 ayrimi tam buna dayaniyor.
+  const [daireSifati, setDaireSifati] = useState<DaireSifati | "">("");
   // (P186) BLOK -> DAIRE iki asamali secim: cok daireli sitede tek liste
   // kullanissizdir; once blok secilir, daire listesi ona gore filtrelenir.
   const [secilenBlok, setSecilenBlok] = useState("");
@@ -334,6 +366,10 @@ export default function UsersPage() {
             if (atanacakDaire) {
               await apiSend(`/api/units/${atanacakDaire}/residents`, "POST", {
                 user_id: editingId,
+                // (P218) SIFAT ARTIK GONDERILIYOR. Eskiden bu cagri
+                // rol TASIMIYORDU ve bag ROLSUZ doguyordu; hedefleme
+                // onu "belirsiz" torbasina koyuyordu.
+                ...(daireSifati ? SIFAT_VERISI[daireSifati] : {}),
               });
             }
           } catch {
@@ -379,6 +415,7 @@ export default function UsersPage() {
           try {
             await apiSend(`/api/units/${atanacakDaire}/residents`, "POST", {
               user_id: created.id,
+              ...(daireSifati ? SIFAT_VERISI[daireSifati] : {}),
             });
           } catch {
             toast.error(t("kullaniciDaireAtanamadi"));
@@ -700,6 +737,42 @@ export default function UsersPage() {
                       {u.sakin_sayisi
                         ? ` · ${t("kullaniciDaireDolu", { adet: String(u.sakin_sayisi) })}`
                         : ""}
+                    </option>
+                  ))}
+                </Secim>
+              )}
+            </AlanSarmal>
+          )}
+
+          {/* ===================================================================
+              (P218) DAIREDEKI SIFAT — daire secilince sorulur
+              ===================================================================
+              Eskiden HIC sorulmuyordu ve bag ROLSUZ doguyordu; borc
+              hedefleme onu "belirsiz" torbasina koyuyor, KMK md. 20
+              ayrimi bu kisiler icin calismiyordu.
+
+              ZORUNLU ve VARSAYILANSIZ: yanlis bir varsayilan sessizce
+              yanlis veri uretir (ornegin herkesi "malik" saymak, isletme
+              giderini oturmayan malige yazdirirdi). Yonetici BILEREK
+              secsin.
+
+              DAIRE SECILMEDEN GORUNMEZ: daire yoksa sifat da yok. */}
+          {DAIRE_ROLLERI.includes(form.role) && atanacakDaire && (
+            <AlanSarmal etiket={t("kullaniciDaireSifati")} zorunlu>
+              {(b) => (
+                <Secim
+                  {...b}
+                  value={daireSifati}
+                  data-test="kullanici-daire-sifati"
+                  required
+                  onChange={(e) =>
+                    setDaireSifati(e.target.value as DaireSifati | "")
+                  }
+                >
+                  <option value="">{t("kullaniciSifatSec")}</option>
+                  {SIFAT_SECENEKLERI.map((o) => (
+                    <option key={o.deger} value={o.deger}>
+                      {t(o.anahtar as Parameters<typeof t>[0])}
                     </option>
                   ))}
                 </Secim>

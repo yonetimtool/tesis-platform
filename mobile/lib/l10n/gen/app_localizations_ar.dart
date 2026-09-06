@@ -4496,6 +4496,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get sakinRolMalik => 'المالك';
 
   @override
+  String get sakinRolMalikOturan => 'مالك ومقيم';
+
+  @override
   String get sakinRolKiraci => 'مستأجر';
 
   @override

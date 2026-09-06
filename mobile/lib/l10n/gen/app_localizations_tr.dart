@@ -4226,6 +4226,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get sakinRolMalik => 'Kat maliki';
 
   @override
+  String get sakinRolMalikOturan => 'Malik ve oturan';
+
+  @override
   String get sakinRolKiraci => 'Kiracı';
 
   @override

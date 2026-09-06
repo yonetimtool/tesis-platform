@@ -1278,6 +1278,7 @@
   "fabSikayetBildir": "الإبلاغ عن شكوى جار",
   "sakinRolTipi": "نوع العلاقة",
   "sakinRolMalik": "المالك",
+  "sakinRolMalikOturan": "مالك ومقيم",
   "sakinRolKiraci": "مستأجر",
   "sakinRolDegisme": "دون تغيير",
   "sakinRolAlt": "تُحمّل الرسوم على المستأجر ونفقات الاستثمار على المالك.",
