@@ -152,12 +152,17 @@ async def _hedef_coz(db: AsyncSession, unit_id, tanim: GelirGiderTanim | None):
         return None
     rows = (
         await db.execute(
-            select(UnitResident.user_id, UnitResident.rol_tipi).where(
+            # (P218) `oturuyor` da alinir — hedefleme "oturan oncelikli".
+            select(UnitResident.user_id, UnitResident.rol_tipi,
+                   UnitResident.oturuyor).where(
                 UnitResident.unit_id == unit_id, UnitResident.bitis.is_(None)
             )
         )
     ).all()
-    secilen = hedef_sec([Bag(str(u), r) for u, r in rows], tanim.hedef_kurali)
+    secilen = hedef_sec(
+        [Bag(str(u), r, oturuyor=bool(o)) for u, r, o in rows],
+        tanim.hedef_kurali,
+    )
     return uuid.UUID(secilen) if secilen else None
 
 

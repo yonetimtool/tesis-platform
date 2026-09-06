@@ -449,6 +449,14 @@ class Tenant(Base):
     gurultu_eskalasyon_esigi: Mapped[int] = mapped_column(
         Integer, nullable=False, server_default=text("1")
     )
+    #: (P218, goc 0110) YENI gelir/gider tanimlarinin VARSAYILAN borc
+    #: hedefi. ZORLAYICI DEGIL: tenant duzeyinde kilit olsaydi, o siteye
+    #: bir gun su faturasini kiraciya yazmak gerektiginde ayar TUM
+    #: turleri birden etkilerdi. Tur bazinda her zaman degistirilebilir.
+    varsayilan_hedef_kurali: Mapped[str] = mapped_column(
+        BORC_HEDEF_KURALI, nullable=False,
+        server_default=text("'kiraci_oncelikli'"),
+    )
     #: (P203 §5, goc 0094) FAZLA MESAI KATSAYISI. 4857/41: fazla calisma
     #: ucreti normal saat ucretinin YUZDE ELLI FAZLASIDIR — varsayilan
     #: yasal orandir ama DEGISTIRILEBILIR: toplu is sozlesmesi daha
@@ -1464,6 +1472,16 @@ class UnitResident(Base):
     unit_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     rol_tipi: Mapped[str | None] = mapped_column(RESIDENT_ROL, nullable=True)
+    #: (P218, goc 0109) Bu kisi dairede OTURUYOR mu — MULKIYETTEN AYRI.
+    #:
+    #: KMK md. 20 gider sorumlulugunu iki ayri gercege baglar: isletme
+    #: gideri KULLANANIN, bakim/onarim gideri MALIKIN. "Malik ve oturan"
+    #: ucuncu bir rol degil, malikin oturuyor olmasidir; `rol_tipi`ye
+    #: ucuncu deger eklemek "malikler" sorgusunu iki degeri birden
+    #: aramaya zorlardi (ve unutuldugu yerde sessizce yanlis calisirdi).
+    oturuyor: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
     baslangic = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     bitis = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     created_at = _created_at()

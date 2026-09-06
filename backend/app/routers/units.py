@@ -19,6 +19,7 @@ from ..audit import Action, audit_user
 from ..crud_helpers import get_or_404, is_unique_violation, translate_integrity
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
+from ..toplu_tahakkuk import oturuyor_coz
 from ..models import (
     AppUser,
     BuildingBlock,
@@ -959,6 +960,7 @@ async def assign_resident(
         unit_id=unit_id,
         user_id=body.user_id,
         rol_tipi=body.rol_tipi,
+        oturuyor=oturuyor_coz(body.rol_tipi, body.oturuyor),
         baslangic=body.baslangic,
     )
     db.add(obj)

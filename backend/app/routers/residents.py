@@ -23,6 +23,7 @@ from ..crud_helpers import is_unique_violation, translate_integrity
 from ..davet import davet_olustur_ve_gonder
 from ..deps import get_tenant_db, require_role
 from ..errors import APIError
+from ..toplu_tahakkuk import oturuyor_coz
 from ..hata_metinleri import istek_dili
 from ..hesap_silme import hesabi_sil_veya_anonimlestir
 from ..models import AppUser, Unit, UnitResident
@@ -114,6 +115,9 @@ async def create_resident(
             unit_id=unit.id,
             user_id=resident.id,
             rol_tipi=body.rol_tipi,
+            # (P218) Kural TEK YERDE (`toplu_tahakkuk.oturuyor_coz`):
+            # acikca verilmisse o, verilmemisse kiraci->True.
+            oturuyor=oturuyor_coz(body.rol_tipi, body.oturuyor),
         )
     )
     try:
@@ -235,7 +239,8 @@ async def update_resident(
     if alanlar.get("email", _ATLA) is None:
         alanlar.pop("email")
     rol_tipi = alanlar.pop("rol_tipi", _ATLA)
-    if rol_tipi is not _ATLA:
+    oturuyor = alanlar.pop("oturuyor", _ATLA)
+    if rol_tipi is not _ATLA or oturuyor is not _ATLA:
         baglar = (
             await db.execute(
                 select(UnitResident).where(
@@ -247,7 +252,20 @@ async def update_resident(
         if not baglar:
             raise APIError(422, "invalid_reference", "sakin_daireye_bagli_degil")
         for bag in baglar:
-            bag.rol_tipi = rol_tipi
+            if rol_tipi is not _ATLA:
+                bag.rol_tipi = rol_tipi
+            # (P218) OTURMA DURUMU AYRI GUNCELLENIR.
+            #
+            # `None` = DEGISTIRME. Rol `kiraci`ya cevrilirken oturma
+            # bilgisi verilmemisse `True` varsayilir (kiraci oturur);
+            # `malik`e cevrilirken DEGER KORUNUR — oturan bir malikin
+            # rolu duzeltildiginde "oturmuyor" hâline dusmesi, bakim
+            # giderini ona yazmayi surdururken isletme giderini
+            # baskasina kaydirirdi.
+            if oturuyor is not _ATLA and oturuyor is not None:
+                bag.oturuyor = oturuyor
+            elif rol_tipi is not _ATLA and rol_tipi == "kiraci":
+                bag.oturuyor = True
     for key, value in alanlar.items():
         setattr(resident, key, value)
     resident.updated_at = func.now()

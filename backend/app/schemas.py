@@ -4088,6 +4088,8 @@ class UnitResidentOut(BaseModel):
     # Endpoint AppUser join'iyle doldurur; kayıt silinmişse null.
     user_ad: str | None = None
     rol_tipi: str | None = None
+    #: (P218) Dairede oturuyor mu (mulkiyetten ayri).
+    oturuyor: bool = False
     baslangic: datetime | None = None
     bitis: datetime | None = None
     created_at: datetime
@@ -4096,6 +4098,16 @@ class UnitResidentOut(BaseModel):
 class ResidentAssign(BaseModel):
     user_id: uuid.UUID
     rol_tipi: ResidentRol | None = None
+    #: (P218) Bu kisi dairede OTURUYOR mu — MULKIYETTEN AYRI bir gercek.
+    #: KMK md. 20: isletme gideri KULLANANIN, bakim/onarim gideri
+    #: MALIKIN. "Malik ve oturan" ucuncu bir rol degil, malikin
+    #: oturuyor olmasidir.
+    #:
+    #: `None` = DEGISTIRME (guncellemede) / VARSAYILANI KULLAN
+    #: (olusturmada). Kiraci icin sunucu `True` varsayar: kiraci tanimi
+    #: geregi oturur ve bunu ayrica sormak, yoneticiye bilgi degeri
+    #: olmayan bir soru sormakti.
+    oturuyor: bool | None = None
     baslangic: datetime | None = None
 
 
@@ -4129,6 +4141,16 @@ class ResidentCreate(BaseModel):
     #: `app_user.email` goc 0089'da NOT NULL oldu.
     email: EmailStr
     rol_tipi: ResidentRol | None = None
+    #: (P218) Bu kisi dairede OTURUYOR mu — MULKIYETTEN AYRI bir gercek.
+    #: KMK md. 20: isletme gideri KULLANANIN, bakim/onarim gideri
+    #: MALIKIN. "Malik ve oturan" ucuncu bir rol degil, malikin
+    #: oturuyor olmasidir.
+    #:
+    #: `None` = DEGISTIRME (guncellemede) / VARSAYILANI KULLAN
+    #: (olusturmada). Kiraci icin sunucu `True` varsayar: kiraci tanimi
+    #: geregi oturur ve bunu ayrica sormak, yoneticiye bilgi degeri
+    #: olmayan bir soru sormakti.
+    oturuyor: bool | None = None
     # (P186-ek2) `password` KALDIRILDI: yonetici parola atamaz; hesap parolasiz
     # acilir ve DAVET (Tesis ID) ile kisi kendi kimligini kurar.
 
@@ -4194,6 +4216,11 @@ class ResidentUpdate(BaseModel):
     #: ayni anlama gelir — TEMIZLEME ARTIK YOK (bkz. docstring).
     email: EmailStr | None = None
     rol_tipi: ResidentRol | None = None
+    #: (P218) `None` = DEGISTIRME. Kiraci yapilan bir bag icin sunucu
+    #: `True` varsayar (kiraci tanimi geregi oturur); malik yapilirken
+    #: DEGER KORUNUR — oturan malik, rol duzeltmesi yuzunden "oturmuyor"
+    #: hâline dusmemeli.
+    oturuyor: bool | None = None
 
     @field_validator("telefon")
     @classmethod

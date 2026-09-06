@@ -32,6 +32,26 @@ from .models import (
 from .schemas import TopluBorcIstek, TopluBorcSatir
 
 
+def oturuyor_coz(rol_tipi: str | None, verilen: bool | None) -> bool:
+    """(P218) `oturuyor` degerini coz — TEK KURAL, iki yazma yolu.
+
+    * Deger ACIKCA verilmisse o gecerlidir (yonetici "malik ve oturan"
+      diyebilmeli).
+    * Verilmemisse KIRACI icin `True`: kiraci tanimi geregi dairede
+      oturur ve bunu ayrica sormak, yoneticiye bilgi degeri olmayan bir
+      soru sormakti.
+    * Malik ve rolsuz baglarda `False`: "oturuyor mu" BILINMIYOR ve
+      varsaymak, bakim giderini yanlis kisiye yazdirabilirdi.
+
+    Kural TEK YERDE: `/residents` ve `/units/{id}/residents` ayri
+    dosyalarda ve ayni varsayimi iki kez yazmak, birinin degisip
+    otekinin kalmasi demekti.
+    """
+    if verilen is not None:
+        return verilen
+    return rol_tipi == "kiraci"
+
+
 async def daire_baglari(
     db: AsyncSession, unit_idler: list[uuid.UUID]
 ) -> dict[uuid.UUID, list[Bag]]:
@@ -40,7 +60,10 @@ async def daire_baglari(
         return {}
     rows = (
         await db.execute(
-            select(UnitResident.unit_id, UnitResident.user_id, UnitResident.rol_tipi)
+            # (P218) `oturuyor` DA CEKILIYOR: hedefleme artik "kiraci
+            # varsa" degil "OTURAN varsa" diye soruyor (bkz. hedef_sec).
+            select(UnitResident.unit_id, UnitResident.user_id,
+                   UnitResident.rol_tipi, UnitResident.oturuyor)
             .where(
                 UnitResident.unit_id.in_(unit_idler),
                 UnitResident.bitis.is_(None),
@@ -48,8 +71,10 @@ async def daire_baglari(
         )
     ).all()
     sonuc: dict[uuid.UUID, list[Bag]] = {}
-    for uid, kullanici, rol in rows:
-        sonuc.setdefault(uid, []).append(Bag(str(kullanici), rol))
+    for uid, kullanici, rol, oturuyor in rows:
+        sonuc.setdefault(uid, []).append(
+            Bag(str(kullanici), rol, oturuyor=bool(oturuyor))
+        )
     return sonuc
 
 

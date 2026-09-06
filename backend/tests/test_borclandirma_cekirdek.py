@@ -40,6 +40,47 @@ def test_malik_kurali_MALIK_YOKSA_None():
     assert hedef_sec([Bag("k1", "kiraci")], "malik") is None
 
 
+# ---------------------- (P218) OTURAN ONCELIGI ------------------------------ #
+def test_MALIK_OTURUYORSA_kullanan_kurali_ONA_yazar():
+    """UCUNCU DURUM: malik dairede oturuyor -> her iki gider turunden de
+    sorumlu.
+
+    Eskiden bu senaryo TESADUFEN dogru calisiyordu: kural "kiraci varsa
+    ona" diyordu, kiraci olmadigi icin malige dusuyordu. Ama ayni dusus
+    OTURMAYAN malikte de yasaniyordu — yani "kullanan oder" kurali
+    kullanani DEGIL "kim varsa"yi seciyordu. Artik KASITLI.
+    """
+    baglar = [Bag("m1", "malik", oturuyor=True)]
+    assert hedef_sec(baglar, "kiraci_oncelikli") == "m1"
+    assert hedef_sec(baglar, "malik") == "m1"
+
+
+def test_OTURAN_MALIK_kiraciya_TERCIH_EDILMEZ_ama_ikisi_birdeyse_OTURAN_kazanir():
+    """Devir doneminde ikisi bir arada bulunabilir (malik bir odayi
+    kiraya vermis olabilir — urun karari: engellenmiyor).
+
+    `oturanlar` listesi SIRAYI korur: baglar hangi sirada geldiyse ilk
+    OTURAN secilir. Ikisi de oturuyorsa karar veriye kalir; onemli olan
+    OTURMAYANIN secilmemesidir.
+    """
+    baglar = [Bag("m1", "malik", oturuyor=False), Bag("k1", "kiraci", oturuyor=True)]
+    assert hedef_sec(baglar, "kiraci_oncelikli") == "k1"
+    # Bakim gideri yine MALIGE — oturan kiraci olsa bile.
+    assert hedef_sec(baglar, "malik") == "m1"
+
+
+def test_GOC_ONCESI_veri_ESKI_davranisi_korur():
+    """`oturuyor` hepsinde False iken (goc uygulanmamis ya da yarim
+    kalmis veri) kural ESKI hâliyle calismali: kiraci -> malik.
+
+    Bu, gocun yarim kalmasi durumunda borclarin sessizce yanlis kisiye
+    gitmesini onler.
+    """
+    baglar = [Bag("m1", "malik", oturuyor=False), Bag("k1", "kiraci", oturuyor=False)]
+    assert hedef_sec(baglar, "kiraci_oncelikli") == "k1"
+    assert hedef_sec(baglar, "malik") == "m1"
+
+
 def test_ROL_TIPI_BOS_bag_MALIK_SAYILMAZ():
     """P23'te tip opsiyoneldir; "bilinmiyor"u malik saymak yatirim giderini
     yanlis kisiye yazardi."""

@@ -16,40 +16,77 @@ from decimal import ROUND_DOWN, ROUND_HALF_UP, Decimal
 MALIK = "malik"
 KIRACI = "kiraci"
 
+#: (P218) `gelir_gider_tanim.hedef_kurali` degerleri.
+#:
+#: `KULLANAN`in veritabanindaki degeri HÂLÂ `kiraci_oncelikli`: enum
+#: degerini degistirmek goc + tum satirlarin yeniden yazilmasi demekti
+#: ve kazanci yalnizca bir isimdi. ANLAMI degisti ("kiraci" degil
+#: "oturan"), degeri degismedi; arayuzde gorunen etiket zaten ceviriden
+#: geliyor.
+KULLANAN = "kiraci_oncelikli"
+
 
 @dataclass(frozen=True)
 class Bag:
-    """Bir dairenin AKTIF sakin bagi (P23 verisinden)."""
+    """Bir dairenin AKTIF sakin bagi (P23 verisinden).
+
+    (P218) `oturuyor` EKLENDI. MULKIYET ile KULLANIM ayri iki gercektir
+    ve KMK md. 20 ayrimi tam olarak buna dayanir:
+      * isletme giderleri (kapici, elektrik, asansor isletme, temizlik)
+        -> KULLANAN oder,
+      * anayapinin bakim/onarim/guclendirme giderleri -> MALIK oder.
+
+    "Malik ve oturan" ucuncu bir ROL DEGIL, malikin oturuyor olmasidir.
+    `rol_tipi`ye ucuncu bir deger eklemek modeli bozardi: "malikler"
+    sorgusu artik iki degeri birden aramak zorunda kalir ve bunu bir
+    yerde unutmak SESSIZ bir hata olurdu.
+    """
 
     user_id: str
     rol_tipi: str | None
+    #: Bu kisi dairede OTURUYOR mu. Kiraci tanimi geregi oturur; malik
+    #: oturabilir de oturmayabilir de. Varsayilan `False` — eski
+    #: cagrilarin (ve gocmemis verinin) davranisi degismesin diye.
+    oturuyor: bool = False
 
 
 def hedef_sec(baglar: list[Bag], kural: str) -> str | None:
     """Borcun yazilacagi kisiyi sec (P28 hedefleme kurali).
 
-    `kiraci_oncelikli` — kiraci varsa ONA, yoksa malike (aidat, faturalar:
-    kullanan oder).
-    `malik`            — her zaman malike (yatirim, demirbas: mulk sahibi
-    oder; kiraci tasinsa da yukumluluk malikte kalir).
+    `kullanan`  — dairede OTURAN varsa ona; yoksa malike; o da yoksa
+    belirsiz baga. (Eski adi `kiraci_oncelikli`; isletme giderleri.)
+    `malik`     — her zaman malike (bakim/onarim: mulk sahibi oder;
+    kiraci tasinsa da yukumluluk malikte kalir).
+
+    (P218) "KIRACI ONCELIKLI" -> "OTURAN ONCELIKLI".
+    Eski kural kiraciyi ariyordu ve OTURAN MALIK senaryosunu ancak
+    TESADUFEN dogru cozuyordu: kiraci yoksa malige dusuyordu. Ama ayni
+    dusus, oturmayan bir malikte de yasaniyordu — yani "kullanan oder"
+    kurali kullanani DEGIL, "kiraci ya da kim varsa"yi seciyordu. Artik
+    once GERCEKTEN OTURAN aranir; malik-oturan bunu KASITLI kazanir.
 
     HICBIRI BULUNAMAZSA `None` DONER ve borc DAIREYE yazilir. Uydurma bir
-    kisi secmek (orn. "ilk bag") yanlis kisiyi borclandirirdi; daireye
-    yazmak ise mevcut davranistir ve tahsilat yine daire uzerinden yapilir.
+    kisi secmek (orn. "ilk bag") yanlis kisiyi borclandirirdi.
 
     ROL_TIPI BOS olan baglar MALIK SAYILMAZ: P23'te tip opsiyoneldir ve
-    "bilinmiyor"u malik saymak, yatirim giderini yanlis kisiye yazardi.
-    Boyle bir bag yalnizca `kiraci_oncelikli` kuralinin SON CARESIDIR.
+    "bilinmiyor"u malik saymak, bakim giderini yanlis kisiye yazardi.
+    Boyle bir bag yalnizca `kullanan` kuralinin SON CARESIDIR.
     """
     malikler = [b for b in baglar if b.rol_tipi == MALIK]
+    oturanlar = [b for b in baglar if b.oturuyor]
     kiracilar = [b for b in baglar if b.rol_tipi == KIRACI]
     belirsiz = [b for b in baglar if b.rol_tipi not in (MALIK, KIRACI)]
 
-    if kural == "malik":
+    if kural == MALIK:
         return malikler[0].user_id if malikler else None
 
-    # kiraci_oncelikli
-    for aday in (kiracilar, malikler, belirsiz):
+    # `kullanan` (ve eski adi `kiraci_oncelikli`):
+    # OTURAN -> KIRACI -> MALIK -> belirsiz.
+    #
+    # `kiracilar` ADIMI KORUNDU cunku goc oncesi veride `oturuyor`
+    # hepsinde False olabilir; o durumda eski davranis (kiraciya yaz)
+    # gecerli kalir ve goc yarim kalsa bile borc dogru kisiye gider.
+    for aday in (oturanlar, kiracilar, malikler, belirsiz):
         if aday:
             return aday[0].user_id
     return None
