@@ -2683,6 +2683,15 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "ffmpeg n'est pas installé sur le serveur, aucune image ne peut être capturée. L'administrateur doit mettre à jour l'image api.",
         "es": "ffmpeg no está instalado en el servidor, no se puede capturar imagen. El administrador debe actualizar la imagen api.",
     },
+    "kamera_kodek_desteklenmiyor": {
+        "tr": "Bu kamera {kodek} ile yayın yapıyor ve tarayıcıda izlenemiyor. Mobil uygulamadan izleyebilir ya da kameranın ayarlarından H264 (alt) akışı açıp adresi onunla değiştirebilirsiniz.",
+        "en": "This camera streams in {kodek}, which browsers cannot play. Watch it in the mobile app, or enable the camera's H264 (sub) stream and point the address at it.",
+        "ar": "تبثّ هذه الكاميرا بترميز {kodek} ولا يمكن تشغيله في المتصفّح. شاهدها عبر تطبيق الهاتف، أو فعّل تدفّق H264 (الفرعي) في إعدادات الكاميرا ووجّه العنوان إليه.",
+        "ru": "Эта камера вещает в {kodek}, браузер такое не воспроизводит. Смотрите в мобильном приложении или включите в камере поток H264 (второй) и укажите его адрес.",
+        "de": "Diese Kamera sendet in {kodek}, was Browser nicht abspielen können. Sehen Sie sie in der mobilen App an oder aktivieren Sie den H264-(Sub-)Stream der Kamera und tragen Sie dessen Adresse ein.",
+        "fr": "Cette caméra diffuse en {kodek}, que les navigateurs ne peuvent pas lire. Regardez-la dans l'application mobile, ou activez le flux H264 (secondaire) de la caméra et pointez l'adresse dessus.",
+        "es": "Esta cámara emite en {kodek}, que los navegadores no pueden reproducir. Véala en la aplicación móvil o active el flujo H264 (secundario) de la cámara y apunte la dirección a él.",
+    },
     "kamera_gecit_yok": {
         "tr": "Canlı yayın SUNUCU tarafında yapılandırılmamış: yayın geçidine ulaşılamıyor. Kameranızda bir sorun yok — sistem yöneticisine bildirin.",
         "en": "Live streaming is misconfigured ON THE SERVER: the streaming gateway is unreachable. There is nothing wrong with your camera — report this to your system administrator.",

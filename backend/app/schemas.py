@@ -1103,6 +1103,14 @@ class KameraTestSonuc(BaseModel):
     basarili: bool
     #: Alınan karenin bayt boyu — "gerçekten görüntü geldi" kanıtı.
     kare_bayt: int
+    #: (P216) ffprobe'un gördüğü video kodeği (`h264`, `hevc`, ...).
+    #: Tespit edilemezse `null` — teşhis bir kolaylıktır, kamera
+    #: eklemeyi engellememeli.
+    kodek: str | None = None
+    #: (P216) Bu kamera TARAYICIDA izlenebilir mi? `null` = bilinmiyor.
+    #: Kare gelmiş olması yeterli DEĞİL: kare çekimini sunucudaki ffmpeg
+    #: yapar ve H265'te de çalışır; tarayıcıda oynatma ayrı bir sorudur.
+    tarayicida_oynatilir: bool | None = None
 
 
 class CameraCreate(BaseModel):

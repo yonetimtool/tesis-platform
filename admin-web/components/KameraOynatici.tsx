@@ -23,6 +23,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { useT } from "@/lib/i18n/kullan";
 import {
+  kodekOnKontrolu,
   yayinHatasiniCoz,
   type YayinHataSinifi,
 } from "@/lib/kamera-hata";
@@ -73,6 +74,18 @@ export function KameraOynatici({ url, mp4, poster }: Props) {
     let yikici: (() => void) | null = null;
     (async () => {
       try {
+        // (P216) KODEK ON KONTROLU — hls.js'i BOSUNA calistirma.
+        // MediaMTX `fmp4` ile H265'i HLS'e koyabiliyor; oynatip
+        // oynatamayacagina TARAYICI karar verir. Desteklemiyorsa
+        // hls.js once yukler sonra bocalar ve genel bir "ag hatasi"
+        // uretir — kullanici NEDEN acilmadigini ogrenemez.
+        const kod = await kodekOnKontrolu(url);
+        if (iptal) return;
+        if (kod && !kod.oynatilir) {
+          setHata(t("kameraKodekTarayici", { kodek: kod.kodek.split(".")[0] }));
+          setSinif("kamera");
+          return;
+        }
         const { default: Hls } = await import("hls.js");
         if (iptal || !ref.current) return;
         if (!Hls.isSupported()) {

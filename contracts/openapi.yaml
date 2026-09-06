@@ -11698,6 +11698,20 @@ paths:
                 required: [basarili, kare_bayt]
                 properties:
                   basarili: { type: boolean }
+                  kodek:
+                    type: string
+                    nullable: true
+                    description: >
+                      (P216) ffprobe'un gordugu video kodegi (`h264`,
+                      `hevc`...). Tespit edilemezse null — teshis bir
+                      KOLAYLIKTIR, kamera eklemeyi engellemez.
+                  tarayicida_oynatilir:
+                    type: boolean
+                    nullable: true
+                    description: >
+                      (P216) Bu kamera TARAYICIDA izlenebilir mi.
+                      "Kare geldi" yeterli DEGIL: kareyi sunucudaki
+                      ffmpeg ceker ve H265'te de calisir.
                   kare_bayt: { type: integer }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
@@ -11958,6 +11972,14 @@ paths:
               gonderiyordu.
             * `code: bad_gateway` -> KAMERAYA ulasilamiyor
               (`kamera_yayin_hazir_degil`): adres, kimlik ya da ag izni.
+            * `code: codec_unsupported` -> (P216) gecit yayini uretemedi
+              cunku kodek desteklenmiyor (`kamera_kodek_desteklenmiyor`).
+              Kamera SAGLAM; yapilacak sey kameradan H264 (alt) akis
+              istemek ya da mobil uygulamadan izlemek. NOT: `fmp4`
+              varyantiyla H265 ARTIK SUNULUYOR — bu kod yalnizca gecidin
+              gercekten muxer kuramadigi durumda doner. "Bu TARAYICI
+              oynatabilir mi" sorusunu sunucu DEGIL istemci yanitlar
+              (`MediaSource.isTypeSupported`).
           content:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
         "503":

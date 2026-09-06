@@ -104,11 +104,28 @@ def _kaydet_sonucu(monkeypatch, durum: int, govde: str):
         text = govde
 
     class _Istemci:
+        """(P216) SAHTE ARTIK `GET`I DE TANIYOR.
+
+        Akis degisti: once `GET /v3/config/paths/get/{yol}` ile yol VAR
+        MI diye sorulur, sonra yazilir. Sahte yalnizca post/patch
+        biliyordu ve `AttributeError` veriyordu — yani sahte, olctugu
+        protokolun gerisinde kalmisti.
+
+        GET burada 404 doner: "yol YOK" durumu, yani test edilen dal
+        (ekleme) calisir.
+        """
+
         async def __aenter__(self):
             return self
 
         async def __aexit__(self, *a):
             return False
+
+        async def get(self, *a, **k):
+            class _Yok:
+                status_code = 404
+                text = "not found"
+            return _Yok()
 
         async def post(self, *a, **k):
             return _Yanit()
@@ -152,11 +169,28 @@ def test_YOL_ZATEN_VARSA_hata_DEGIL(monkeypatch):
         text = "path already exists"
 
     class _Istemci:
+        """(P216) SAHTE ARTIK `GET`I DE TANIYOR.
+
+        Akis degisti: once `GET /v3/config/paths/get/{yol}` ile yol VAR
+        MI diye sorulur, sonra yazilir. Sahte yalnizca post/patch
+        biliyordu ve `AttributeError` veriyordu — yani sahte, olctugu
+        protokolun gerisinde kalmisti.
+
+        GET burada 404 doner: "yol YOK" durumu, yani test edilen dal
+        (ekleme) calisir.
+        """
+
         async def __aenter__(self):
             return self
 
         async def __aexit__(self, *a):
             return False
+
+        async def get(self, *a, **k):
+            class _Yok:
+                status_code = 404
+                text = "not found"
+            return _Yok()
 
         async def post(self, *a, **k):
             return _Yanit()
@@ -186,11 +220,28 @@ def test_YOL_KAYDI_BASKA_4xx_ISE_hata(monkeypatch):
         text = "invalid source"
 
     class _Istemci:
+        """(P216) SAHTE ARTIK `GET`I DE TANIYOR.
+
+        Akis degisti: once `GET /v3/config/paths/get/{yol}` ile yol VAR
+        MI diye sorulur, sonra yazilir. Sahte yalnizca post/patch
+        biliyordu ve `AttributeError` veriyordu — yani sahte, olctugu
+        protokolun gerisinde kalmisti.
+
+        GET burada 404 doner: "yol YOK" durumu, yani test edilen dal
+        (ekleme) calisir.
+        """
+
         async def __aenter__(self):
             return self
 
         async def __aexit__(self, *a):
             return False
+
+        async def get(self, *a, **k):
+            class _Yok:
+                status_code = 404
+                text = "not found"
+            return _Yok()
 
         async def post(self, *a, **k):
             return _Yanit()

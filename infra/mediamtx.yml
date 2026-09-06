@@ -41,10 +41,36 @@ apiAddress: :9997
 
 hls: yes
 hlsAddress: :8888
-# Dusuk gecikmeli kucuk parcalar; tek izleyicili site kamerasi icin yeterli.
-# `mpegts` -> playlist `.ts` parcalari referanslar (vekildeki dosya adi
-# deseni bunu bekliyor).
-hlsVariant: mpegts
+# ===========================================================================
+# (P216) VARYANT `mpegts` DEGIL `fmp4` — H265 KAMERALAR ICIN
+# ===========================================================================
+# OLCULEN KUSUR: H265 yayin yapan bir kamerada MediaMTX su satiri yaziyor
+# ve muxer'i ANINDA yok ediyordu:
+#     [HLS] [muxer X] destroyed: the MPEG-TS variant of HLS supports
+#           H264 video only
+# Sonra HLS istegi 404 doner, backend 502 verir ve kullanici "yayin
+# acilamadi" gorurdu. Guvenlik kameralarinda H265 artik VARSAYILAN
+# (ayni bant genisliginde daha iyi goruntu), yani bu nadir bir durum
+# degil.
+#
+# OLCULDU (dev, sentetik H265 kaynak `rtsp://testcam:8554/cam265`):
+#     mpegts + H265      -> muxer destroyed, HLS 404
+#     fmp4 + H265        -> HLS 200, CODECS="hvc1.4.10.L63.9e.8"
+#     fmp4 + H264        -> HLS 200, CODECS="avc1.f40016"   (bozulmadi)
+#
+# NEDEN `lowLatency` DEGIL: o da H265 destekliyor (olculdu, 200) ama
+# LL-HLS `CAN-BLOCK-RELOAD=YES` ile playlist isteklerini SUNUCUDA
+# BEKLETIR. Bizim HLS vekilimiz her istegi 15 sn zaman asimiyla
+# vekilliyor ve es-zamanli kamera sinirini Redis'te tutuyor; bekletilen
+# istekler o sinirin altini oyar ve zaman asimi hatalarina yol acar.
+# `fmp4` ayni kodek destegini SADE bir playlist ile veriyor — kazanc
+# gecikmede, bedel karmasiklikta olurdu ve site kamerasinda yarim
+# saniyelik gecikme farki bir sey degistirmiyor.
+#
+# NOT: `fmp4` segmentleri `.mp4` uzantilidir (`..._seg0.mp4`) ve ayrica
+# bir `..._init.mp4` bulunur. Vekildeki dosya adi deseni ucunu de
+# kabul ediyor (`m3u8|ts|mp4`).
+hlsVariant: fmp4
 
 # Sunucu rollerinin HICBIRI acilmiyor: MediaMTX burada yalnizca RTSP
 # KAYNAGINI cekip HLS'e ceviren bir gecittir.

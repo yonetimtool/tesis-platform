@@ -659,7 +659,19 @@ async def kamera_test(
         veri, kimlik = await _kare_cek(body.stream_url)
     if not veri:
         raise _kare_hatasi(kimlik or "kamera_baglanti_yok")
-    return KameraTestSonuc(basarili=True, kare_bayt=len(veri))
+    # (P216) KODEK DE RAPORLANIR: yonetici KAYDETMEDEN once bu kameranin
+    # tarayicida izlenip izlenemeyecegini bilsin. Kare gelmis olmasi
+    # yeterli degil — kare cekimi ffmpeg'in isidir ve H265'te de calisir;
+    # tarayicida oynatma AYRI bir sorudur.
+    kodek = await kodek_tespit(body.stream_url)
+    return KameraTestSonuc(
+        basarili=True,
+        kare_bayt=len(veri),
+        kodek=kodek,
+        tarayicida_oynatilir=(
+            None if kodek is None else kodek not in TARAYICI_DISI_KODEKLER
+        ),
+    )
 
 
 @router.get("/{camera_id}/kare")
@@ -718,6 +730,41 @@ async def kamera_kare(
         veri, media_type="image/jpeg",
         headers={"Cache-Control": "private, max-age=5"},
     )
+
+
+async def kodek_tespit(stream_url: str) -> str | None:
+    """(P216) Yayinin VIDEO kodegi (`h264`, `hevc`, ...) — ffprobe ile.
+
+    NEDEN KAYDETMEDEN ONCE: H265 bir kamera kaydedilir, ana ekrana
+    konur, sonra ilk tiklamada "izlenemiyor" denir. Yonetici o noktada
+    adresi, agi, parolayi kontrol etmeye baslar — hicbiri bozuk
+    degildir. Kodek KAYIT ANINDA bilinirse bu tur bastan onlenir.
+
+    Basarisizlikta None: teshis bir KOLAYLIKTIR, kamera eklemeyi
+    engellememeli.
+    """
+    komut = [
+        "ffprobe", "-v", "error",
+        *(["-rtsp_transport", "tcp"] if stream_url.lower().startswith("rtsp")
+          else ["-protocol_whitelist", "http,https,tcp,tls,crypto"]),
+        "-select_streams", "v:0",
+        "-show_entries", "stream=codec_name",
+        "-of", "default=nw=1:nk=1",
+        stream_url,
+    ]
+    try:
+        surec = await asyncio.create_subprocess_exec(
+            *komut, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.DEVNULL,
+        )
+        cikti, _ = await asyncio.wait_for(surec.communicate(), timeout=12)
+    except (OSError, asyncio.TimeoutError):
+        return None
+    ad = (cikti or b"").decode("utf-8", "ignore").strip().splitlines()
+    return ad[0].strip().lower() if ad and ad[0].strip() else None
+
+
+#: (P216) Tarayicida OYNATILAMAYAN kodeklerin ffprobe adlari.
+TARAYICI_DISI_KODEKLER = frozenset({"hevc", "h265", "av1", "vp9"})
 
 
 async def _kare_cek(stream_url: str) -> tuple[bytes, str]:
@@ -806,13 +853,44 @@ async def _mediamtx_yol_kaydet(yol: str, kaynak: str) -> None:
     api = settings.mediamtx_api_url.rstrip("/")
     govde = {"source": kaynak, "sourceOnDemand": True}
     async with httpx.AsyncClient(timeout=5) as istemci:
-        yanit = await istemci.post(f"{api}/v3/config/paths/add/{yol}", json=govde)
-        # 200 = eklendi; MediaMTX var olan yol icin 4xx doner — idempotent
-        # kabul: kaynak URL degistiyse guncelle (patch) dene.
-        if yanit.status_code >= 400:
+        # =================================================================
+        # (P216) ONCE SOR, SONRA YAZ — "path already exists" HATA DEGIL
+        # =================================================================
+        # Eski akis her istekte KORU KORUNE `add` deniyordu. Yol zaten
+        # varsa (ikinci izleyici, sayfa yenileme, ayni kullanicinin
+        # ardisik istekleri) MediaMTX bunu HATA olarak gunluge yaziyordu:
+        #     ERR [API] path already exists
+        # ...ve biz de arkasindan gereksiz bir `patch` atip yapilandirmayi
+        # YENIDEN YUKLETIYORDUK:
+        #     INF reloading configuration (API request)
+        # Her yeniden yukleme, o an ACIK olan muxer'lari etkileyen bir
+        # islem; "izleyen varken yapilandirmayi tazelemek" en hafif
+        # tabirle gereksiz bir risk.
+        #
+        # Dogru soru sirasi: VAR MI? -> yoksa EKLE, varsa ve kaynak AYNI
+        # ise DOKUNMA, farkliysa GUNCELLE. Boylece hem gunlukte sahte
+        # hata kalmaz hem gereksiz reload olmaz.
+        mevcut = await istemci.get(f"{api}/v3/config/paths/get/{yol}")
+        if mevcut.status_code == 200:
+            eski_kaynak = (mevcut.json() or {}).get("source")
+            if eski_kaynak == kaynak:
+                return  # yol hazir ve dogru — YAPILACAK BIR SEY YOK
             yanit = await istemci.patch(
                 f"{api}/v3/config/paths/patch/{yol}", json=govde
             )
+        else:
+            yanit = await istemci.post(
+                f"{api}/v3/config/paths/add/{yol}", json=govde
+            )
+            # YARIS: iki istek ayni anda gelirse ikisi de "yok" gorup
+            # `add` deneyebilir; ikincisi "already exists" alir. Bu bir
+            # HATA DEGIL, beklenen sonuctur — yol vardir ve dogrudur.
+            if (yanit.status_code >= 400
+                    and "already exists" in (yanit.text or "").lower()):
+                logger.info(
+                    "[kamera] yol %s zaten var (es-zamanli istek) — kabul", yol
+                )
+                return
     # =====================================================================
     # (P213 §2) YETKI HATASI ARTIK YUTULMUYOR — CANLI YAYININ KOK NEDENI
     # =====================================================================
@@ -844,6 +922,45 @@ async def _mediamtx_yol_kaydet(yol: str, kaynak: str) -> None:
                 yanit.status_code, (yanit.text or "")[:200],
             )
             raise APIError(502, SUNUCU_YAPILANDIRMA, "kamera_gecit_yapilandirma")
+
+
+#: (P216) TARAYICIDA OYNATILAMAYAN VIDEO KODEKLERI.
+#:
+#: `fmp4` varyanti H265'i HLS'e KOYABILIYOR (P216'da olculdu), ama
+#: TARAYICININ oynatabilmesi ayri bir sorudur: Safari donanim destegiyle
+#: oynar, Chrome platform/donanima gore DEGISIR, Firefox cogu kurulumda
+#: oynatmaz. Yani "yayin uretildi" ile "kullanici gorebiliyor" ayni sey
+#: degil ve karari SUNUCU veremez — asil karar istemcide, gercek
+#: `MediaSource.isTypeSupported` sonucuyla verilir (bkz. admin-web
+#: `lib/kamera-hata.ts`). Sunucu yalnizca TESHISI saglar.
+SORUNLU_KODEKLER = frozenset({"H265", "HEVC", "AV1"})
+
+
+async def _yol_kodegi(yol: str) -> str | None:
+    """MediaMTX'in gordugu VIDEO kodegi (`H265` gibi) ya da None.
+
+    NEDEN GEREKLI: HLS 404 dondugunde sebep UC AYRI sey olabilir —
+    kaynak henuz hazir degil, kaynaga baglanilamiyor, ya da kodek
+    desteklenmiyor. Ucu de ayni 404'u uretir. Kullaniciya "adresi
+    kontrol edin" demek, kodek durumunda onu SAGLAM kamerayi
+    duzeltmeye gonderiyordu.
+    """
+    api = settings.mediamtx_api_url.rstrip("/")
+    try:
+        async with httpx.AsyncClient(timeout=5) as istemci:
+            yanit = await istemci.get(f"{api}/v3/paths/get/{yol}")
+        if yanit.status_code != 200:
+            return None
+        izler = (yanit.json() or {}).get("tracks") or []
+    except (httpx.HTTPError, ValueError):
+        # Teshis DENEMESI, asil akisi bozmamali: bilgi alinamazsa
+        # genel mesaja duseriz.
+        return None
+    for iz in izler:
+        ad = str(iz).upper()
+        if ad in SORUNLU_KODEKLER:
+            return ad
+    return None
 
 
 #: (P190 §6 guvenlik) HLS dosya adi TEK bilesendir: harf/rakam/._- + uzanti.
@@ -909,13 +1026,21 @@ async def kamera_canli(
         logger.error("[kamera] MediaMTX HLS gecidine ulasilamadi (%s)", api_adresi())
         raise APIError(502, SUNUCU_YAPILANDIRMA, "kamera_gecit_yok")
     if yanit.status_code >= 400:
-        # Gecit AYAKTA ama yayin yok: kaynak RTSP'ye baglanamamis demektir.
-        # 404 bu durumda "yol henuz hazir degil" anlamina da gelir; ikisini
-        # ayirmak icin ilk deneme icin KARE cekimi bir teshis verir — panel
-        # zaten karo cekimini de yapiyor ve oradaki kimlik gosterilir.
+        # (P216) 404'UN SEBEBINI SOR, TAHMIN ETME. Gecit ayakta ama yayin
+        # yoksa uc olasilik var ve ucu de ayni 404'u uretir: kaynak henuz
+        # hazir degil / kaynaga baglanilamiyor / KODEK desteklenmiyor.
+        # Sonuncusunda kullaniciya "adresi kontrol edin" demek, hicbir
+        # sorunu olmayan kamerayi kurcalatmakti.
+        kodek = await _yol_kodegi(f"cam{obj.id.hex}")
         logger.warning(
-            "[kamera] gecit %s icin %s dondu", obj.id, yanit.status_code
+            "[kamera] gecit %s icin %s dondu (kodek=%s)",
+            obj.id, yanit.status_code, kodek or "?",
         )
+        if kodek:
+            raise APIError(
+                502, "codec_unsupported", "kamera_kodek_desteklenmiyor",
+                kodek=kodek,
+            )
         raise APIError(502, "bad_gateway", "kamera_yayin_hazir_degil")
     icerik_turu = yanit.headers.get(
         "content-type",

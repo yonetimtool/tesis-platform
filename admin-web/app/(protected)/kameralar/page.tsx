@@ -279,8 +279,28 @@ export default function KameralarPage() {
       const d = (await apiSend("/api/cameras/test-baglanti", "POST", {
         stream_url: form.stream_url.trim(),
         tur: form.tur,
-      })) as { kare_bayt?: number };
+      })) as {
+        kare_bayt?: number;
+        kodek?: string | null;
+        tarayicida_oynatilir?: boolean | null;
+      };
       toast.success(t("kameraTestBasarili", { bayt: String(d.kare_bayt ?? 0) }));
+      // (P216) KODEK DE SOYLENIR — KAYDETMEDEN ONCE. "Kare geldi" yeterli
+      // degil: kareyi sunucudaki ffmpeg ceker ve H265'te de calisir;
+      // tarayicida OYNATMA ayri bir sorudur. Yonetici bunu ancak kamerayi
+      // kaydedip ana ekrana koyduktan sonra, ilk tiklamada ogreniyordu ve
+      // o noktada adresi/parolayi kurcalamaya basliyordu.
+      if (d.kodek) {
+        const anahtar =
+          d.tarayicida_oynatilir === false
+            ? "kameraTestKodekSorunlu"
+            : "kameraTestKodekTamam";
+        const metin = t(anahtar, { kodek: d.kodek.toUpperCase() });
+        // Sorunlu kodek UYARI olarak durur (kaydetmeyi ENGELLEMEZ:
+        // kamera mobilde izlenebilir ve kaydi anlamlidir).
+        if (d.tarayicida_oynatilir === false) setFormHata(metin);
+        else toast.success(metin);
+      }
     } catch (err) {
       // Sunucu TANILI mesaj doner ("parola kabul edilmedi", "ffmpeg yok",
       // "yol bulunamadi"...). Genel bir cumleye indirgemek, teshisin butun
