@@ -270,3 +270,79 @@ Borçlandırmalar listesinde kişi sütunu artık `Ad (Sıfat)` biçiminde.
 
 +5: tekil ezme, **ezme tanımı değiştirmez**, toplu yolda da ezme, sıfat
 döner (`malik_oturan`), hedefsiz tahakkukta sıfat `None`. Toplam 21.
+
+---
+
+## Ek — KMK md. 20 gider eşlemesi (REFERANS, zorlayıcı değil)
+
+> Bu tablo **koda gömülü değildir** ve hiçbir yerde otomatik
+> uygulanmaz. Yöneticinin bir gider türü açarken başvurabileceği bir
+> referanstır. Karar her zaman türün kendi `hedef_kurali` alanındadır.
+
+**Kanun ne diyor (Kat Mülkiyeti Kanunu md. 20):** kat malikleri anagayrimenkulün
+ortak giderlerine katılmakla yükümlüdür; ancak *kullanmadan doğan* giderler
+ile *anayapının korunması ve onarımına* ilişkin giderler farklı
+değerlendirilir. Uygulamada yerleşmiş ayrım:
+
+### Kullanan öder (işletme giderleri)
+
+Dairenin **kullanılmasından doğan**, kiracı varsa ona yansıyan giderler:
+
+| gider türü | not |
+|---|---|
+| Kapıcı / görevli ücreti ve SGK | md. 20/a'da açıkça sayılır |
+| Elektrik (ortak alan), su, doğalgaz | tüketim kullanımla doğar |
+| Asansör **işletme** gideri (elektrik, periyodik kontrol) | bakımdan ayrı |
+| Temizlik malzemesi ve hizmeti | |
+| Bahçe bakımı, çöp toplama | |
+| Güvenlik hizmeti | |
+| Yakıt (kalorifer) | |
+
+### Malik öder (anayapı giderleri)
+
+**Mülkiyete** bağlı, kiracı değişse de malikte kalan yükümlülükler:
+
+| gider türü | not |
+|---|---|
+| Çatı, cephe, dış boya onarımı | anayapının korunması |
+| Asansör **yenileme / büyük onarım** | işletmeden ayrı |
+| Isıtma sistemi değişimi, kazan yenileme | |
+| Deprem güçlendirme | |
+| Ortak yerlerin büyük tadilatı | |
+| Demirbaş alımı | mülke kalıcı katkı |
+| Olağanüstü aidat (yenileme fonu) | |
+| Yönetim planı değişikliği, dava/avukat giderleri | |
+
+### Sınır durumlar — dikkat
+
+- **Asansör** iki satırda birden geçiyor ve bu bilinçli: *işletme*
+  (elektrik, aylık kontrol) kullananın, *yenileme/büyük onarım* malikin.
+  Tür adını "Asansör" diye tek kalem açmak bu ayrımı kaybettirir; iki
+  ayrı tür açmak daha doğru.
+- **Sözleşme farklı diyebilir.** Kira sözleşmesi giderleri başka türlü
+  paylaştırmışsa geçerli olan odur; bu yüzden eşleme zorlayıcı değil ve
+  tekil tahakkukta **ezme** var (§E).
+- **Bazı siteler her şeyi malige yazar.** Tesis varsayılanı (§C) tam bu
+  yüzden var; o siteler ayarı bir kez `Malik öder` yapar ve tür tür
+  uğraşmaz.
+
+### Arayüzde ipucu — ne yaptım, ne yapmadım
+
+**Yaptım:** tanım formunda "Borç kime yazılır" alanının altında **statik
+bir ipucu** — KMK ayrımının bir cümlelik özeti ve örnekleri. Zorlayıcı
+değil, seçimi değiştirmiyor.
+
+**Yapmadım — tür adından tahmin:** "adında 'bakım' geçiyorsa malik öner"
+gibi bir kural cazip ama **reddettim**:
+
+1. Tür adı **serbest metin ve 7 dil**. "Asansör Bakımı", "Asansör
+   bakım-onarım", "Lift maintenance", yazım hataları... Kelime eşleme bu
+   çeşitlilikte güvenilir olamaz.
+2. **Yanlış öneri, önerisizlikten kötüdür.** "Asansör" hem işletme hem
+   yenileme olabilir (yukarıdaki sınır durum); ada bakan bir kural bunu
+   ayırt edemez ve yöneticiyi yanlış seçime **iter**.
+3. Öneri bir kez yanlış çıkarsa yönetici sonrakilere de güvenmez —
+   ipucunun tüm değeri kaybolur.
+
+Statik ipucu bu üç riski de taşımıyor: kanunun ne dediğini söylüyor,
+kararı yöneticiye bırakıyor.

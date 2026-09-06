@@ -138,6 +138,7 @@ export const de: Sozluk = {
   tanimAlanAktif: "Aktiv",
   tanimAlanTip: "Typ",
   tanimAlanHedefKurali: "Wem wird belastet",
+  tanimHedefKuraliIpucu: "Türkisches WEG Art. 20: Betriebskosten (Hausmeister, Strom, Wasser, Aufzugsbetrieb, Reinigung) trägt in der Regel der NUTZER; Instandhaltung, Reparatur und Ertüchtigung des Gebäudes der EIGENTÜMER. Ein Mietvertrag kann es anders regeln — Sie entscheiden.",
   tanimHedefKullanan: "Nutzer zahlt (Mieter, sonst Eigentümer)",
   tanimHedefMalik: "Eigentümer zahlt",
   tanimAlanDagitim: "Verteilungsart (nur Ausgaben)",

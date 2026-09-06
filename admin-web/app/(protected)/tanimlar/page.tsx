@@ -90,6 +90,15 @@ interface Alan {
    *  Verilmezse ESKI DAVRANIS (ham deger) surer — mevcut alanlarin
    *  gorunumunu bu turda degistirmiyorum. */
   secenekEtiketleri?: Record<string, SozlukAnahtari>;
+  /** (P218) Alanin ALTINDA duran aciklama — SECIMI DEGISTIRMEZ.
+   *
+   *  "Borc kime yazilir" alani icin KMK md. 20 ayriminin bir cumlelik
+   *  ozeti konuyor. TUR ADINDAN TAHMIN ETMEK reddedildi: ad serbest
+   *  metin ve 7 dil ("Asansör Bakımı" / "Lift maintenance"), ustelik
+   *  ayni kelime iki tarafa da dusebiliyor (asansor ISLETME kullananin,
+   *  YENILEME malikin). Yanlis bir oneri, onerisizlikten kotudur —
+   *  bir kez yanildiginda yonetici sonrakilere de guvenmez. */
+  ipucu?: SozlukAnahtari;
   /** Listede sutun olarak gosterilsin mi (hepsi gosterilirse tablo tasar). */
   sutun?: boolean;
 
@@ -131,30 +140,6 @@ const DEFTERLER: Defter[] = [
       { ad: "iban", etiket: "tanimAlanIban", tip: "iban" },
       { ad: "banka_adi", etiket: "tanimAlanBankaAdi", tip: "banka" },
       { ad: "sube", etiket: "tanimAlanSube", tip: "metin" },
-      {
-        // ===================================================================
-        // (P218) BORC KIMDE — KMK md. 20 AYRIMI
-        // ===================================================================
-        // Alan ve motor P28'den beri VARDI ama HICBIR EKRANDA
-        // DUZENLENEMIYORDU: her tanim varsayilanla doguyor ve yonetici
-        // "bu bakim gideri malige yazilsin" diyemiyordu.
-        //
-        // Kanun gider turune gore sorumluyu degistiriyor: isletme
-        // giderleri (kapici, elektrik, asansor isletme, temizlik)
-        // KULLANANIN, anayapinin bakim/onarim/guclendirme giderleri
-        // MALIKIN. Ama uygulamada siteler farkli davraniyor, bu yuzden
-        // secim ZORLAYICI DEGIL: varsayilan tesisten gelir, tanim
-        // bazinda degistirilir.
-        ad: "hedef_kurali",
-        etiket: "tanimAlanHedefKurali",
-        tip: "secim",
-        secenekler: ["kiraci_oncelikli", "malik"],
-        secenekEtiketleri: {
-          kiraci_oncelikli: "tanimHedefKullanan",
-          malik: "tanimHedefMalik",
-        },
-        sutun: true,
-      },
       { ad: "aktif", etiket: "tanimAlanAktif", tip: "bool" },
     ],
   },
@@ -185,6 +170,34 @@ const DEFTERLER: Defter[] = [
         etiket: "tanimAlanDagitim",
         tip: "secim",
         secenekler: ["bagimsiz_bolumlere_esit", "tipe_gore"],
+        sutun: true,
+      },
+      {
+        // ===================================================================
+        // (P218) BORC KIMDE — KMK md. 20 AYRIMI
+        // ===================================================================
+        // Alan ve motor P28'den beri VARDI ama HICBIR EKRANDA
+        // DUZENLENEMIYORDU: her tanim varsayilanla doguyor ve yonetici
+        // "bu bakim gideri malige yazilsin" diyemiyordu.
+        //
+        // Kanun gider turune gore sorumluyu degistiriyor: isletme
+        // giderleri (kapici, elektrik, asansor isletme, temizlik)
+        // KULLANANIN, anayapinin bakim/onarim/guclendirme giderleri
+        // MALIKIN. Ama uygulamada siteler farkli davraniyor, bu yuzden
+        // secim ZORLAYICI DEGIL: varsayilan tesisten gelir, tanim
+        // bazinda degistirilir.
+        ad: "hedef_kurali",
+        etiket: "tanimAlanHedefKurali",
+        tip: "secim",
+        secenekler: ["kiraci_oncelikli", "malik"],
+        secenekEtiketleri: {
+          kiraci_oncelikli: "tanimHedefKullanan",
+          malik: "tanimHedefMalik",
+        },
+        // ZORLAYICI DEGIL: kanunun ne dedigini soyler, karari
+        // yoneticiye birakir. Siteler farkli davraniyor ve sozlesme
+        // baska turlu paylastirmis olabilir.
+        ipucu: "tanimHedefKuraliIpucu",
         sutun: true,
       },
       { ad: "aktif", etiket: "tanimAlanAktif", tip: "bool" },
@@ -844,7 +857,7 @@ function DefterGorunumu({ defter }: { defter: Defter }) {
                 onDegisti={(v) => setForm({ ...form, [a.ad]: v })}
               />
             ) : (
-            <AlanSarmal key={a.ad} etiket={t(a.etiket)}>
+            <AlanSarmal key={a.ad} etiket={t(a.etiket)} ipucu={a.ipucu ? t(a.ipucu) : undefined}>
               {() =>
                 a.tip === "bool" ? (
                 <input

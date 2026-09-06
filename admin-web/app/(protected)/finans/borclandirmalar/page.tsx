@@ -301,12 +301,15 @@ export default function BorclandirmalarPage() {
     { id: "donem", baslik: t("finansAlanDonem"),
       hucre: (a) => a.donem, deger: (a) => a.donem },
     { id: "kisi", baslik: t("finansSutunKisi"),
-      hucre: (a) =>
-        a.hedef_ad
-          ? `${a.hedef_ad}${
-              a.hedef_sifat ? ` (${t(SIFAT_ETIKETI[a.hedef_sifat] ?? "ortakDiger")})` : ""
-            }`
-          : YOK_ISARETI },
+      hucre: (a) => {
+        if (!a.hedef_ad) return YOK_ISARETI;
+        // Taninmayan sifat icin PARANTEZ HIC ACILMAZ: "(Diğer)" yazmak
+        // bilgi vermeyen bir gurultu olurdu. (Ayrica ucluda sozluk
+        // anahtari yazmak sabit-metin taramasina takiliyor — tarama
+        // anahtar ile metni ayirt edemez.)
+        const anahtar = SIFAT_ETIKETI[a.hedef_sifat ?? ""];
+        return anahtar ? `${a.hedef_ad} (${t(anahtar)})` : a.hedef_ad;
+      } },
     { id: "tur", baslik: t("finansSutunTur"),
       hucre: (a) => a.gelir_gider_tanim_ad ?? YOK_ISARETI },
     { id: "sonOdeme", baslik: t("finansAlanSonOdeme"),

@@ -138,6 +138,7 @@ export const es: Sozluk = {
   tanimAlanAktif: "Activo",
   tanimAlanTip: "Tipo",
   tanimAlanHedefKurali: "A quién se carga la deuda",
+  tanimHedefKuraliIpucu: "Ley de propiedad horizontal turca art. 20: los gastos de explotación (conserje, electricidad, agua, funcionamiento del ascensor, limpieza) suelen corresponder al OCUPANTE; el mantenimiento, la reparación y el refuerzo del edificio, al PROPIETARIO. El contrato de alquiler puede disponer otra cosa: usted decide.",
   tanimHedefKullanan: "Paga el ocupante (inquilino; si no, propietario)",
   tanimHedefMalik: "Paga el propietario",
   tanimAlanDagitim: "Método de reparto (solo gastos)",

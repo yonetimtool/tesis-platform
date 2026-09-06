@@ -138,6 +138,7 @@ export const en: Sozluk = {
   tanimAlanAktif: "Active",
   tanimAlanTip: "Type",
   tanimAlanHedefKurali: "Who is charged",
+  tanimHedefKuraliIpucu: "Turkish Condominium Law art. 20: operating costs (caretaker, electricity, water, lift operation, cleaning) usually fall on the OCCUPANT; maintenance, repair and strengthening of the building fall on the OWNER. A lease may say otherwise — the choice is yours.",
   tanimHedefKullanan: "Occupant pays (tenant, else owner)",
   tanimHedefMalik: "Owner pays",
   tanimAlanDagitim: "Distribution method (expenses only)",

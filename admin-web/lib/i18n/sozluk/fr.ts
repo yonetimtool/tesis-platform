@@ -138,6 +138,7 @@ export const fr: Sozluk = {
   tanimAlanAktif: "Actif",
   tanimAlanTip: "Type",
   tanimAlanHedefKurali: "À qui la dette est imputée",
+  tanimHedefKuraliIpucu: "Loi turque sur la copropriété art. 20 : les charges d'exploitation (concierge, électricité, eau, fonctionnement de l'ascenseur, nettoyage) incombent généralement à l'OCCUPANT ; l'entretien, la réparation et le renforcement du bâtiment au PROPRIÉTAIRE. Un bail peut en disposer autrement — c'est vous qui décidez.",
   tanimHedefKullanan: "L'occupant paie (locataire, sinon propriétaire)",
   tanimHedefMalik: "Le propriétaire paie",
   tanimAlanDagitim: "Mode de répartition (dépenses uniquement)",

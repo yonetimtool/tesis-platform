@@ -52,12 +52,18 @@ const ROL: { value: DaireSifati; anahtar: SozlukAnahtari }[] = [
 ];
 
 /** Veri -> arayuz sifati (listede gostermek icin). */
-function sifatAnahtari(rol: string | null | undefined, oturuyor: boolean): SozlukAnahtari | null {
+function sifatAnahtari(
+  rol: string | null | undefined,
+  oturuyor: boolean,
+): SozlukAnahtari | null {
+  // (P218) UCLU KOSULDA ANAHTAR YAZILMAZ — sabit-metin taramasi (tur 47)
+  // bunu hakli olarak "cevrilmemis metin" sayiyor ve tarama anahtar ile
+  // metni ayirt edemez (etmemeli de). Ayri `return`lar hem taramayi
+  // gecer hem daha okunur.
   if (rol === "kiraci") return "kullaniciSifatKiraci";
-  if (rol === "malik") {
-    return oturuyor ? "kullaniciSifatMalikOturan" : "kullaniciSifatMalik";
-  }
-  return null;
+  if (rol !== "malik") return null;
+  if (oturuyor) return "kullaniciSifatMalikOturan";
+  return "kullaniciSifatMalik";
 }
 
 export function UnitDetail({ unit }: { unit: Unit }) {

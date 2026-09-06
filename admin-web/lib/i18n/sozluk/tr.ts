@@ -150,6 +150,7 @@ export const tr = {
   tanimAlanAktif: "Aktif",
   tanimAlanTip: "Tip",
   tanimAlanHedefKurali: "Borç kime yazılır",
+  tanimHedefKuraliIpucu: "KMK md. 20: işletme giderleri (kapıcı, elektrik, su, asansör işletme, temizlik) genellikle KULLANANA; anayapının bakım, onarım ve güçlendirme giderleri MALİKE yazılır. Kira sözleşmesi farklı düzenlemiş olabilir — karar sizindir.",
   tanimHedefKullanan: "Kullanan öder (kiracı, yoksa malik)",
   tanimHedefMalik: "Malik öder",
   tanimAlanDagitim: "Dağıtım şekli (yalnız gider)",
