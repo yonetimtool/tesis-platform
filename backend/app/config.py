@@ -47,6 +47,23 @@ class Settings(BaseSettings):
     # Async SQLAlchemy URL (app_rw, asyncpg suruculu).
     # Ornek: postgresql+asyncpg://app_rw:***@db:5432/tesis
     database_url: str = "postgresql+asyncpg://app_rw:app_rw_secret_change_me@localhost:5432/tesis"
+    # ------------------------------------------------------------------ #
+    # (DUKKAN F1) DUKKAN'IN KENDI BAGLANTISI
+    # ------------------------------------------------------------------ #
+    # AYRI ROL (`dukkan_app`), ayni PostgreSQL ornegi. Bu rolun `public`
+    # semasinda HICBIR yetkisi yoktur — "Dukkan Yonetiyor'un veritabanina
+    # dokunmaz" kisitini zorlayan sey bu rol, bir yorum satiri degil.
+    # Kanit: backend/tests/test_dukkan_sinir.py
+    dukkan_database_url: str = (
+        "postgresql+asyncpg://dukkan_app:dev-dukkan-parola-degistir"
+        "@localhost:5432/tesis"
+    )
+    # Havuz KUCUK ve Yonetiyor'unkinden AYRI: Dukkan ayni surecte ikinci
+    # bir havuz aciyor ve tek sunucuda baglanti kit kaynak (P187'de prod'da
+    # idle-in-transaction 90/100 olculdu). SEO trafigi OLCULDUKTEN sonra
+    # buyutulur; once olcum.
+    dukkan_db_pool_size: int = 3
+    dukkan_db_max_overflow: int = 2
 
     # Redis (cache / Celery broker+backend).
     redis_url: str = "redis://localhost:6379/0"

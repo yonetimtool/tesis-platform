@@ -24,6 +24,13 @@ APP_DSN = os.getenv(
     "APP_DSN",
     "postgresql://app_rw:app_rw_secret_change_me@db:5432/tesis",
 )
+# (DUKKAN F1) Dukkan modulunun rolu. `public` semasinda HICBIR yetkisi
+# olmamali — `test_dukkan_sinir.py` tam olarak bunu olcuyor. Varsayilan
+# parola `docker-compose.yml`deki dev varsayilaniyla ayni.
+DUKKAN_DSN = os.getenv(
+    "DUKKAN_DSN",
+    "postgresql://dukkan_app:dev-dukkan-parola-degistir@db:5432/tesis",
+)
 
 
 def _connect(dsn: str, **kw):
@@ -146,6 +153,21 @@ def app_conn():
         yield conn
     finally:
         conn.rollback()
+        conn.close()
+
+
+@pytest.fixture
+def dukkan_conn():
+    """dukkan_app baglantisi — Dukkan modulunun GERCEK baglantisi.
+
+    Bu fixture'in varlik sebebi tek bir sey: "Dukkan Yonetiyor'un
+    veritabanina dokunmaz" kisitinin OLCULEBILIR olmasi. Kisiti belgede
+    yazmak yeterli degil; kirildiginda kirmizi yanan bir sey gerekiyor.
+    """
+    conn = _connect(DUKKAN_DSN, autocommit=True)
+    try:
+        yield conn
+    finally:
         conn.close()
 
 

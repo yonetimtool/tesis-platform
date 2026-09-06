@@ -244,6 +244,13 @@ services:
       OWNER_DSN: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD gerekli}@db:5432/${POSTGRES_DB}
       APP_DB_USER: ${APP_DB_USER:?APP_DB_USER gerekli (bos birakilirsa baglanti kimligi belirsizlesir)}
       APP_DB_PASSWORD: ${APP_DB_PASSWORD:?APP_DB_PASSWORD gerekli}
+      # (DUKKAN F1) Dukkan modulu BU rolle baglanir. Rolun `public`
+      # semasinda HICBIR yetkisi yoktur — "Yonetiyor veritabanina
+      # dokunma" kisitini zorlayan sey, bir yorum satiri degil, bu rol.
+      # `:?` zorunlu: prod'da dev varsayilani kullanmak, kisitin parolasini
+      # herkesin bildigi bir degere birakmak olurdu.
+      DUKKAN_DB_USER: ${DUKKAN_DB_USER:?DUKKAN_DB_USER gerekli}
+      DUKKAN_DB_PASSWORD: ${DUKKAN_DB_PASSWORD:?DUKKAN_DB_PASSWORD gerekli}
       # (P213 §6b) GOC 0107 SIFRELEME YAPAR: kamera adresindeki duz
       # parolayi ayirip AES-GCM ile sifreler. Anahtar olmadan goc DUSER —
       # ve dusmesi DOGRUDUR: sessizce atlamak parolalari duz metin
@@ -286,6 +293,8 @@ services:
         alembic -c /contracts/db/alembic.ini upgrade head || hata
         echo ">> app_rw rolu hazirlaniyor..."
         python /scripts/setup_app_role.py
+        echo ">> dukkan_app rolu hazirlaniyor..."
+        python /scripts/setup_dukkan_role.py
     networks: [tesisnet]
     restart: "no"
 
@@ -390,6 +399,9 @@ services:
       <<: *tz
       # Uygulama app_rw (async asyncpg) ile baglanir — RLS'e TABI.
       DATABASE_URL: postgresql+asyncpg://${APP_DB_USER:?APP_DB_USER gerekli (bos birakilirsa baglanti kimligi belirsizlesir)}:${APP_DB_PASSWORD:?APP_DB_PASSWORD gerekli}@db:5432/${POSTGRES_DB}
+      # (DUKKAN F1) Dukkan modulunun AYRI baglantisi — ayri rol.
+      # `public` semasinda SIFIR yetki; kisiti zorlayan sey bu.
+      DUKKAN_DATABASE_URL: postgresql+asyncpg://${DUKKAN_DB_USER:?DUKKAN_DB_USER gerekli}:${DUKKAN_DB_PASSWORD:?DUKKAN_DB_PASSWORD gerekli}@db:5432/${POSTGRES_DB}
       REDIS_URL: redis://redis:6379/0
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET gerekli (bos birakilirsa token BOS anahtarla imzalanir)}
       SDM_KEK: ${SDM_KEK}
@@ -505,6 +517,9 @@ services:
     environment:
       <<: *tz
       DATABASE_URL: postgresql+asyncpg://${APP_DB_USER:?APP_DB_USER gerekli (bos birakilirsa baglanti kimligi belirsizlesir)}:${APP_DB_PASSWORD:?APP_DB_PASSWORD gerekli}@db:5432/${POSTGRES_DB}
+      # (DUKKAN F1) Dukkan modulunun AYRI baglantisi — ayri rol.
+      # `public` semasinda SIFIR yetki; kisiti zorlayan sey bu.
+      DUKKAN_DATABASE_URL: postgresql+asyncpg://${DUKKAN_DB_USER:?DUKKAN_DB_USER gerekli}:${DUKKAN_DB_PASSWORD:?DUKKAN_DB_PASSWORD gerekli}@db:5432/${POSTGRES_DB}
       REDIS_URL: redis://redis:6379/0
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET gerekli (bos birakilirsa token BOS anahtarla imzalanir)}
       OWNER_DSN: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD gerekli}@db:5432/${POSTGRES_DB}
@@ -570,6 +585,9 @@ services:
     environment:
       <<: *tz
       DATABASE_URL: postgresql+asyncpg://${APP_DB_USER:?APP_DB_USER gerekli (bos birakilirsa baglanti kimligi belirsizlesir)}:${APP_DB_PASSWORD:?APP_DB_PASSWORD gerekli}@db:5432/${POSTGRES_DB}
+      # (DUKKAN F1) Dukkan modulunun AYRI baglantisi — ayri rol.
+      # `public` semasinda SIFIR yetki; kisiti zorlayan sey bu.
+      DUKKAN_DATABASE_URL: postgresql+asyncpg://${DUKKAN_DB_USER:?DUKKAN_DB_USER gerekli}:${DUKKAN_DB_PASSWORD:?DUKKAN_DB_PASSWORD gerekli}@db:5432/${POSTGRES_DB}
       REDIS_URL: redis://redis:6379/0
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET gerekli (bos birakilirsa token BOS anahtarla imzalanir)}
       OWNER_DSN: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD gerekli}@db:5432/${POSTGRES_DB}
