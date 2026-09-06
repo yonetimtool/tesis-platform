@@ -50,11 +50,14 @@ describe("Ayarlar — operasyon", () => {
     // yazilan metin sunucu degerinin ARDINA eklenirdi: 10 + "25" = 1025.
     // Test 14 kosumun 1'inde boyle duserdi — urun kodu saglam, yaris
     // testin kendisindeydi.
+    // (P219 §1) ETIKET DEGISTI: "Tur gecikme toleransı (dk)" ->
+    // "Tur başlamazsa kaç dakika sonra uyarılsın". Etiket artik bir
+    // SORU ve birimi kendi icinde tasiyor; iddia degismedi.
     await waitFor(() =>
-      expect(screen.getByLabelText(/Tur gecikme toleransı/)).toHaveValue(10),
+      expect(screen.getByLabelText(/Tur başlamazsa kaç dakika sonra/)).toHaveValue(10),
     );
 
-    const alan = screen.getByLabelText(/Tur gecikme toleransı/);
+    const alan = screen.getByLabelText(/Tur başlamazsa kaç dakika sonra/);
     await userEvent.clear(alan);
     await userEvent.type(alan, "25");
     await userEvent.click(screen.getAllByRole("button", { name: "Kaydet" })[1]);
@@ -69,7 +72,7 @@ describe("Ayarlar — operasyon", () => {
     const govdeler = govdeYakala({ "/api/tenant/settings": AYARLAR });
     ciz(SettingsPage);
     await waitFor(() =>
-      expect(screen.getByLabelText(/Tur gecikme toleransı/)).toBeInTheDocument(),
+      expect(screen.getByLabelText(/Tur başlamazsa kaç dakika sonra/)).toBeInTheDocument(),
     );
     await userEvent.click(screen.getAllByRole("button", { name: "Kaydet" })[1]);
     await waitFor(() =>
