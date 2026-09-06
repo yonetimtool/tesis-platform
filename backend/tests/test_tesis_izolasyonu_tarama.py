@@ -400,9 +400,31 @@ def test_tarama_kapsami_daralmadi(client, world):
     """
     r = client.get("/openapi.json")
     assert r.status_code == 200
+    # `/dukkan` HARIC — ve bu bir muafiyet degil, KAVRAM FARKI.
+    #
+    # Bu tarama "her tesis-kapsamli listeleme ucu RLS baglamini kuruyor mu"
+    # diye bakiyor. Dukkan (dukkan.yonetiyor.com) COK-KIRACILI DEGIL: bir
+    # isletme Istanbul'daki 40 siteye birden hizmet verir, `tenant_id`
+    # tasimaz ve `app.current_tenant_id` ile hicbir isi yoktur
+    # (docs/dukkan/00-mimari.md K4). Uclari da kamuya acik (`security: []`)
+    # cunku SEO sayfalarini bot ve uye olmayan ziyaretci gormeli.
+    #
+    # Bunlari paydaya katmak ORANI SULANDIRIRDI: Dukkan buyudukce (F2-F5)
+    # her yeni uc, Yonetiyor tarafinin tarama kapsamini OLCMEDEN dusururdu
+    # ve kilit sessizce anlamsizlasirdi. Nitekim daralma zaten burada
+    # basladi: iki Dukkan ucu paydayi 156'dan 158'e cikarinca esik 78'den
+    # 79'a kaydi ve test dustu.
+    #
+    # Dukkan'in KENDI izolasyon kapisi ayri ve daha dar: sinir
+    # `isletme.sahip_kullanici_id` (sahiplik) ve her ozel uc icin ZORUNLU
+    # bir IDOR testi var (docs/dukkan/02-kimlik-ve-yetki.md §5). O kapi
+    # F2'de, isletme uclariyla birlikte kurulacak.
     yollar = [
         y for y in r.json()["paths"]
-        if "{" not in y and not y.startswith(("/auth", "/me", "/health", "/docs", "/openapi"))
+        if "{" not in y
+        and not y.startswith(
+            ("/auth", "/me", "/health", "/docs", "/openapi", "/dukkan")
+        )
     ]
     taranan = set(TESIS_UCLARI) | set(PLATFORM_UCLARI)
     kapsanan = [y for y in yollar if y in taranan]
