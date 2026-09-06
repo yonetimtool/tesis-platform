@@ -291,14 +291,18 @@ export default function KameralarPage() {
       // kaydedip ana ekrana koyduktan sonra, ilk tiklamada ogreniyordu ve
       // o noktada adresi/parolayi kurcalamaya basliyordu.
       if (d.kodek) {
-        const anahtar =
-          d.tarayicida_oynatilir === false
-            ? "kameraTestKodekSorunlu"
-            : "kameraTestKodekTamam";
-        const metin = t(anahtar, { kodek: d.kodek.toUpperCase() });
+        // `t()` KOSULUN ICINDE: anahtari uclude sabit dize olarak
+        // yazmak, sabit-metin taramasini (tur 47) hakli olarak
+        // dusuruyordu — tarama "anahtar" ile "cevrilmemis metin"i
+        // ayirt edemez ve etmemeli de.
+        const sorunlu = d.tarayicida_oynatilir === false;
+        const kodekAdi = d.kodek.toUpperCase();
+        const metin = sorunlu
+          ? t("kameraTestKodekSorunlu", { kodek: kodekAdi })
+          : t("kameraTestKodekTamam", { kodek: kodekAdi });
         // Sorunlu kodek UYARI olarak durur (kaydetmeyi ENGELLEMEZ:
         // kamera mobilde izlenebilir ve kaydi anlamlidir).
-        if (d.tarayicida_oynatilir === false) setFormHata(metin);
+        if (sorunlu) setFormHata(metin);
         else toast.success(metin);
       }
     } catch (err) {

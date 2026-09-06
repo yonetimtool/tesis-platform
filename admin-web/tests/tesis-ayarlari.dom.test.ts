@@ -120,7 +120,14 @@ describe("(P193 §5) tesis ayarları ekranı", () => {
     const esik = await screen.findByLabelText(/Gürültü uyarı eşiği/);
     await k.clear(esik);
     await k.type(esik, "1");
-    expect(await screen.findByText(/her gürültü şikâyetinde/i)).toBeTruthy();
+    // ZAMAN ASIMI ACIKCA VERILDI. Izole kosumda bu iddia ~100 ms'de
+    // gerceklesiyor; TAM TAKIMDA (180+ dosya paralel) makine yuku altinda
+    // 1000 ms'lik varsayilani asip DUSUYORDU — olculen davranis degil,
+    // makinenin o anki yuku belirliyordu. Sinirin kendisi bir sey
+    // olcmuyor; uyarinin GORUNMESI olcuyor.
+    expect(
+      await screen.findByText(/her gürültü şikâyetinde/i, {}, { timeout: 5000 }),
+    ).toBeTruthy();
   });
 
   it("YALNIZ DEGISEN alan gonderilir", async () => {
