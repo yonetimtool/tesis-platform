@@ -185,3 +185,47 @@ kalktı (3,7 sn → tüm dosya).
 `test_p218_malik_kiraci.py` +4: yeni tanım varsayılanı alır, tanım
 bazında ezilir, **mevcut tanımlara dokunulmaz**, yönetici ayarı
 değiştirebilir. Toplam 12.
+
+---
+
+## §D — Hedef çözülemezse (analizin B4 boşluğu)
+
+**Ölçülen durum:** `hedef_kurali = malik` olan bir tanımda dairede malik
+kayıtlı değilse hedef çözülemiyor ve borç **daireye** yazılıyordu
+(`hedef_user_id = NULL`). İki sonucu vardı ve ikisi de sessizdi:
+
+1. borç kimseye "ait" olmuyor,
+2. daireye yazılan her kalem o dairenin **tüm** sakinlerine görünüyor —
+   yani malik için kesilmiş bir bakım borcunu **kiracı görüyordu**.
+
+Bu, bir **veri eksikliğinin** sonucu (dairede malik kayıtlı değil), ama
+kullanıcıya bir davranış olarak yansıyordu.
+
+### İki yönlü düzeltme
+
+**1. Yönetici bilgilendiriliyor.** Toplu borçlandırma önizlemesi artık
+`hedefsiz` sayısını ve **hangi daireler** olduğunu gösteriyor. Bu bir
+**atlama değil** — satır işlenir — bu yüzden "atlanacak" kutusundan
+**ayrı** duruyor: ikisini birleştirmek "hiç yazılmayacak" ile "sahipsiz
+yazılacak" durumlarını karıştırırdı. Mesaj ne yapılacağını da söylüyor
+("genellikle malik kayıtlı değildir").
+
+**2. Kiracıya gösterilmiyor.** Hedefsiz bir kalem, tanımı `malik` diyorsa
+artık kiracının borç toplamına **girmiyor**. Pratikte kimseye görünmüyor
+— ve bu doğru: eksik olan **veri**, gösterilecek kişi değil. Yönetici
+uyarıyı zaten önizlemede görüyor.
+
+**Kural bilerek dar:** yalnızca **kiracı** bağı olan sakinler için
+uygulanıyor. Malik ve rolsüz sakinler daireye yazılmış kalemleri görmeye
+**devam ediyor** — P28 öncesi (türsüz) tahakkuklar öyle yazılıydı ve
+onları gizlemek, ödenmesi gereken borcu saklamak olurdu. Bu sınır ayrıca
+testle ölçülüyor.
+
+### Testler
+
+Backend +4 (önizleme sayar, çözülen satır işaretlenmez, **kiracı malik
+kalemini görmez**, **malik hedefsiz kalemi görür**), web +2 (uyarı ve
+daire numarası görünür, hedefsiz yokken uyarı çıkmaz).
+
+Kilit kırılarak doğrulandı: rol koşulunu kapatınca kiracı 57.000 kuruş
+görüyor (50.000'i maliğe ait bakım borcu).

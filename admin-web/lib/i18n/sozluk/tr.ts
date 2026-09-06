@@ -2139,6 +2139,7 @@ export const tr = {
   finansKaydedildi: "Kayıt eklendi.",
   finansTahakkukOlustu: "{adet} tahakkuk oluşturuldu.",
   finansTahakkukOlusmadi: "Hiçbir tahakkuk oluşturulmadı — seçilen dönemde bu dairelerin borcu zaten var. Başka bir dönem seçin ya da mevcut kayıtları düzeltin.",
+  finansHedefsizUyari: "{n} dairede borcun yazılacağı kişi bulunamadı; bu kalemler daireye yazılacak. Genellikle malik kayıtlı değildir — daire kayıtlarını tamamlarsanız borç doğru kişiye gider.",
   finansKisiSec: "Kişi seçin",
   finansKisiListesiAlinamadi: "Kişi listesi alınamadı. Sayfayı yenileyip tekrar deneyin.",
   finansKisiAra: "Kişi ara (ad veya daire)",

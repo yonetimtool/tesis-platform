@@ -32,6 +32,7 @@ from ..models import (
     AppUser,
     DuesAssessment,
     FinansalHareket,
+    GelirGiderTanim,
     Kasa,
     Receipt,
     UnitResident,
@@ -82,19 +83,50 @@ async def _borc_kurus(db: AsyncSession, user: AppUser) -> int:
     ve tursuz tahakkuklar daireye yazilidir ve sakin onlari da odemek
     zorundadir.
     """
-    daireler = (
-        (await db.execute(
-            select(UnitResident.unit_id).where(
+    # (P218) DAIRELER VE ROL BIRLIKTE OKUNUR: hedefsiz kalemlerin
+    # gorunurlugu ROLE BAGLI (asagida).
+    baglar = (
+        await db.execute(
+            select(UnitResident.unit_id, UnitResident.rol_tipi).where(
                 UnitResident.user_id == user.id, UnitResident.bitis.is_(None)
             )
-        )).scalars().all()
-    )
+        )
+    ).all()
+    daireler = [b[0] for b in baglar]
     kosul = DuesAssessment.hedef_user_id == user.id
     if daireler:
-        kosul = kosul | (
+        hedefsiz = (
             (DuesAssessment.unit_id.in_(daireler))
             & (DuesAssessment.hedef_user_id.is_(None))
         )
+        # =================================================================
+        # (P218) MALIK ICIN KESILMIS HEDEFSIZ BORC KIRACIYA GORUNMEZ
+        # =================================================================
+        # OLCULEN KUSUR: `hedef_kurali = malik` olan bir tanimda dairede
+        # MALIK KAYITLI DEGILSE hedef cozulemiyor ve borc DAIREYE
+        # yaziliyor. Daireye yazilan her kalem, o dairenin TUM
+        # sakinlerine gorunuyordu — yani malik icin kesilmis bir bakim
+        # borcunu KIRACI goruyordu. Hem yanlis bilgi hem gereksiz
+        # endise; ustelik kiraci onu odemekle yukumlu de degil.
+        #
+        # Kural: hedefsiz bir kalem, tanimi `malik` diyorsa YALNIZ
+        # malige gorunur. Malik kayitli olmadigi icin pratikte kimseye
+        # gorunmez — ve bu DOGRUDUR: eksik olan veri, gosterilecek
+        # kisi degil. Yonetici uyariyi onizlemede zaten goruyor
+        # (`hedefsiz` sayaci).
+        #
+        # KIRACI OLMAYANLAR (malik, rolsuz) icin kural DEGISMEDI: eski
+        # tahakkuklar (P28 oncesi, tursuz) daireye yazilidir ve onlari
+        # gizlemek, odenmesi gereken borcu saklamak olurdu.
+        if any(rol == "kiraci" for _, rol in baglar):
+            hedefsiz = hedefsiz & (
+                ~DuesAssessment.gelir_gider_tanim_id.in_(
+                    select(GelirGiderTanim.id).where(
+                        GelirGiderTanim.hedef_kurali == "malik"
+                    )
+                )
+            )
+        kosul = kosul | hedefsiz
     borc = (
         await db.execute(
             select(func.coalesce(func.sum(DuesAssessment.tutar_kurus), 0))

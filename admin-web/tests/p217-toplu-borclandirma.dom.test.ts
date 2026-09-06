@@ -27,13 +27,20 @@ const TANIMLAR = {
 };
 
 /** `olusan` degerine gore yanit veren SAHTE SUNUCU (fetch duzeyinde). */
-function sunucu(olusan: number, atlananlar: unknown[] = []) {
+function sunucu(olusan: number, atlananlar: unknown[] = [], hedefsizSayisi = 0) {
   const cagrilar: string[] = [];
   globalThis.fetch = (async (girdi: RequestInfo | URL, init?: RequestInit) => {
     const url = String(girdi);
     cagrilar.push(`${init?.method ?? "GET"} ${url}`);
     const govde = url.includes("borclandirma-toplu-onizleme")
-      ? { islenecek: 15, atlanacak: 0, toplam_kurus: 150000, satirlar: [] }
+      ? {
+          islenecek: 15, atlanacak: 0, toplam_kurus: 150000,
+          hedefsiz: hedefsizSayisi,
+          satirlar: hedefsizSayisi
+            ? [{ unit_id: "u1", unit_no: "A-1", tutar_kurus: 1000,
+                 atlama_nedeni: null, hedef_cozulemedi: true }]
+            : [],
+        }
       : url.includes("borclandirma-toplu")
         ? { created: [], olusan, atlanan: atlananlar.length, atlananlar }
         : url.includes("gelir-gider-tanimlari") || url.includes("tanimlar")
@@ -113,5 +120,45 @@ describe("(P217 §1) toplu borçlandırma sonucu", () => {
     await modaliAcVeIsle(15);
     await screen.findByText(/15 tahakkuk oluşturuldu/i);
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  });
+});
+
+describe("(P218 §D) hedefi çözülemeyen satırlar önizlemede GÖRÜNÜR", () => {
+  async function onizle(hedefsiz: number) {
+    sunucu(15, [], hedefsiz);
+    ciz(BorclandirmalarPage);
+    const k = userEvent.setup();
+    await k.click(await screen.findByRole("button", { name: /toplu borçlandırma/i }));
+    const modallar = await screen.findAllByRole("dialog");
+    const modal = modallar.find((m) =>
+      /toplu borçlandırma/i.test(m.textContent ?? "")) ?? modallar[0];
+    const secim = within(modal).getAllByRole("combobox").find((sc) =>
+      Array.from(sc.querySelectorAll("option")).some((o) => o.getAttribute("value") === "t1"));
+    await k.selectOptions(secim!, "t1");
+    await k.click(within(modal).getByRole("button", { name: /önizle/i }));
+    return modal;
+  }
+
+  it("HEDEFSIZ VARSA uyarı ve DAİRE NUMARASI gösterilir", async () => {
+    // Sessizce daireye yazıp yanlış kişiye göstermek, P217'de üçüncü kez
+    // çıkan "sessiz başarısızlık" kalıbının aynısıydı.
+    const modal = await onizle(1);
+    const uyari = await waitFor(() => {
+      const u = modal.querySelector('[data-test="toplu-hedefsiz"]');
+      expect(u).not.toBeNull();
+      return u as HTMLElement;
+    });
+    expect(uyari.textContent).toMatch(/1 dairede/i);
+    // NE YAPILACAĞI da yazılı olmalı.
+    expect(uyari.textContent).toMatch(/malik|kayıt/i);
+    expect(uyari.textContent).toContain("A-1");
+  });
+
+  it("HEDEFSIZ YOKSA uyarı ÇIKMAZ (uyarı körelmesin)", async () => {
+    const modal = await onizle(0);
+    await waitFor(() =>
+      expect(within(modal).getByRole("button", { name: /^kaydet$/i })).toBeInTheDocument(),
+    );
+    expect(modal.querySelector('[data-test="toplu-hedefsiz"]')).toBeNull();
   });
 });

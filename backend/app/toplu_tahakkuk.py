@@ -186,6 +186,11 @@ async def toplu_plan(
                 atlama_nedeni=(
                     None if tutar else nedenler.get(uid, "tutar_cozulemedi")
                 ),
+                # (P218) HEDEF COZULEMEDI: satir ISLENIR ama borc
+                # daireye yazilir. Onizlemede GORUNUR olmali — yoksa
+                # yonetici, bakim borcunun kiraciya gorunecegini ancak
+                # sakin sikayet edince ogrenir.
+                hedef_cozulemedi=bool(tutar) and hedef is None,
             )
         )
     return satirlar

@@ -2076,6 +2076,7 @@ export const de: Sozluk = {
   finansKaydedildi: "Der Datensatz wurde hinzugefügt.",
   finansTahakkukOlustu: "{adet} Sollstellungen erstellt.",
   finansTahakkukOlusmadi: "Es wurden keine Sollstellungen erstellt — für den gewählten Zeitraum haben diese Einheiten bereits eine. Wählen Sie einen anderen Zeitraum oder bearbeiten Sie die vorhandenen Einträge.",
+  finansHedefsizUyari: "In {n} Einheit(en) konnte der Schuldner nicht ermittelt werden; diese Posten werden der Einheit belastet. Meist ist der Eigentümer nicht erfasst — vervollständigen Sie die Daten, damit die Schuld der richtigen Person zugeordnet wird.",
   finansKisiSec: "Person wählen",
   finansKisiListesiAlinamadi: "Die Personenliste konnte nicht geladen werden. Aktualisieren Sie die Seite und versuchen Sie es erneut.",
   finansKisiAra: "Person suchen (Name oder Einheit)",

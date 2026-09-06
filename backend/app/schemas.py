@@ -5748,6 +5748,18 @@ class TopluBorcSatir(BaseModel):
     hedef_ad: str | None = None
     #: Bu satir neden ATLANACAK (None ise islenecek).
     atlama_nedeni: str | None = None
+    #: (P218) HEDEF COZULEMEDI — borc DAIREYE yazilacak.
+    #:
+    #: Bu bir ATLAMA DEGIL: satir islenir ve borc kaydedilir. Ama
+    #: `hedef_user_id` bos kalir ve bunun IKI sonucu vardir:
+    #:   1. borc kimseye "ait" degildir (tahsilat daire uzerinden),
+    #:   2. sakin ekraninda DAIREYE yazilmis kalemler herkese gorunur —
+    #:      yani malik icin kesilmis bir bakim borcunu KIRACI gorur.
+    #: Ikisi de bir VERI EKSIKLIGININ sonucudur (dairede malik kayitli
+    #: degil) ve yoneticinin bunu bilmesi gerekir. Sessizce yazip
+    #: yanlis kisiye gostermek, P217'de ucuncu kez cikan "sessiz
+    #: basarisizlik" kalibinin ta kendisiydi.
+    hedef_cozulemedi: bool = False
 
 
 class TopluBorcOnizleme(BaseModel):
@@ -5761,6 +5773,11 @@ class TopluBorcOnizleme(BaseModel):
     satirlar: list[TopluBorcSatir]
     islenecek: int
     atlanacak: int
+    #: (P218) HEDEFI COZULEMEYEN satir sayisi — islenecek ama borcu
+    #: DAIREYE yazilacak olanlar. Arayuz bunu ayri bir uyari olarak
+    #: gosterir: "atlanacak" ile ayni kutuya koymak, iki farkli durumu
+    #: (hic yazilmayacak / sahipsiz yazilacak) birbirine karistirirdi.
+    hedefsiz: int = 0
     toplam_kurus: int
 
 

@@ -2076,6 +2076,7 @@ export const es: Sozluk = {
   finansKaydedildi: "Se ha añadido el registro.",
   finansTahakkukOlustu: "{adet} cargos creados.",
   finansTahakkukOlusmadi: "No se creó ningún cargo: estas viviendas ya tienen uno para el período seleccionado. Elija otro período o edite los registros existentes.",
+  finansHedefsizUyari: "En {n} vivienda(s) no se pudo determinar a quién cargar; estas partidas se cargarán a la vivienda. Normalmente el propietario no está registrado: complete los registros para que la deuda vaya a la persona correcta.",
   finansKisiSec: "Seleccione una persona",
   finansKisiListesiAlinamadi: "No se pudo cargar la lista de personas. Actualice la página e inténtelo de nuevo.",
   finansKisiAra: "Buscar persona (nombre o unidad)",

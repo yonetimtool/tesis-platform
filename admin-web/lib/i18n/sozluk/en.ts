@@ -2076,6 +2076,7 @@ export const en: Sozluk = {
   finansKaydedildi: "The record has been added.",
   finansTahakkukOlustu: "{adet} charges created.",
   finansTahakkukOlusmadi: "No charges were created — these units already have a charge for the selected period. Choose another period or edit the existing records.",
+  finansHedefsizUyari: "In {n} unit(s) the person to charge could not be determined; these items will be charged to the unit. Usually the owner is not registered — complete the unit records so the debt goes to the right person.",
   finansKisiSec: "Select a person",
   finansKisiListesiAlinamadi: "The person list could not be loaded. Refresh the page and try again.",
   finansKisiAra: "Search person (name or unit)",

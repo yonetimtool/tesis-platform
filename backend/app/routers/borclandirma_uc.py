@@ -109,6 +109,8 @@ async def toplu_onizleme(
         satirlar=satirlar,
         islenecek=len(islenecek),
         atlanacak=len(satirlar) - len(islenecek),
+        # (P218) VERI EKSIKLIGI SESSIZ KALMAZ.
+        hedefsiz=sum(1 for s in satirlar if s.hedef_cozulemedi),
         toplam_kurus=sum(s.tutar_kurus or 0 for s in islenecek),
     )
 

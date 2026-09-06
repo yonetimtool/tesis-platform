@@ -111,6 +111,9 @@ interface TopluSatir {
   unit_no: string;
   tutar_kurus: number | null;
   atlama_nedeni: string | null;
+  /** (P218) Hedef çözülemedi — borç DAİREYE yazılacak. Bu bir ATLAMA
+   *  DEĞİL: satır işlenir, ama borç kimseye ait olmaz. */
+  hedef_cozulemedi?: boolean;
 }
 
 interface Atlanan {
@@ -506,7 +509,7 @@ function TopluModal({
   const [dagitim, setDagitim] = useState<Dagitim>("daire_basina");
   const [kalemTipi, setKalemTipi] = useState<KalemTipi>("aidat");
   const [onizleme, setOnizleme] = useState<{
-    islenecek: number; atlanacak: number; toplam_kurus: number;
+    islenecek: number; atlanacak: number; toplam_kurus: number; hedefsiz?: number;
     satirlar?: TopluSatir[];
   } | null>(null);
   const [hata, setHata] = useState<string | null>(null);
@@ -547,6 +550,9 @@ function TopluModal({
     try {
       const s = await apiSend<{
         islenecek: number; atlanacak: number; toplam_kurus: number;
+        /** (P218) Hedefi çözülemeyen satır sayısı — işlenecek ama borcu
+         *  DAİREYE yazılacak olanlar. */
+        hedefsiz?: number;
         satirlar?: TopluSatir[];
       }>("/api/panel/borclandirma-toplu-onizleme", "POST", govde());
       setOnizleme(s);
@@ -691,6 +697,26 @@ function TopluModal({
             {/* (P192 §3.2) ATLANANLAR ISLEMEDEN ONCE GORUNUR. "500
                 daireden 3'u atlanacak" bilgisi sonradan fark edilirse
                 eksik tahakkuk sessizce yayilir. */}
+            {/* ===============================================================
+                (P218) HEDEFI COZULEMEYEN SATIRLAR — ATLANANLARDAN AYRI
+                ===============================================================
+                Bunlar ISLENECEK ama borcu DAIREYE yazilacak: dairede o
+                kuralin istedigi kisi (genelde MALIK) kayitli degil.
+                Sonucu iki yonlu: borc kimseye "ait" olmaz ve sakin
+                ekraninda yanlis kisiye gorunebilir.
+                "Atlanacak" ile ayni kutuya koymak, iki farkli durumu
+                (hic yazilmayacak / sahipsiz yazilacak) karistirirdi. */}
+            {(onizleme.hedefsiz ?? 0) > 0 && (
+              <p className="mt-2" data-test="toplu-hedefsiz">
+                {t("finansHedefsizUyari", { n: String(onizleme.hedefsiz) })}
+                <span className="block">
+                  {(onizleme.satirlar ?? [])
+                    .filter((r) => r.hedef_cozulemedi)
+                    .map((r) => r.unit_no)
+                    .join(", ")}
+                </span>
+              </p>
+            )}
             {(onizleme.satirlar ?? []).some((r) => r.atlama_nedeni) && (
               <ul className="mt-2 list-disc ps-4">
                 {(onizleme.satirlar ?? [])

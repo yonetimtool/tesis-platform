@@ -240,3 +240,111 @@ def test_YONETICI_varsayilani_DEGISTIREBILIR(client, yon):
         assert r.json()["varsayilan_hedef_kurali"] == "malik"
     finally:
         _ayar(client, yon, onceki)
+
+
+# ==================== (§D / B4) HEDEF COZULEMEZSE ======================= #
+
+def test_ONIZLEME_hedefsiz_satirlari_SAYAR(client, yon):
+    """(B4) VERI EKSIKLIGI SESSIZ KALMAZ.
+
+    `hedef_kurali = malik` olan bir tanimda dairede MALIK KAYITLI
+    DEGILSE hedef cozulemez ve borc DAIREYE yazilir. Bu bir ATLAMA
+    DEGIL (satir islenir) ama yoneticinin bilmesi gereken bir eksiklik:
+    borc kimseye ait olmaz ve sakin ekraninda yanlis kisiye gorunebilir.
+    """
+    u = _daire(client, yon)
+    k = _kisi(client, yon, "Yalniz Kiraci")
+    client.post(f"/units/{u}/residents", headers=yon,
+                json={"user_id": k, "rol_tipi": "kiraci"})
+    tanim = _tanim(client, yon, "malik")
+
+    r = client.post("/borclandirma/toplu/onizleme", headers=yon, json={
+        "donem": _donem(), "gelir_gider_tanim_id": tanim,
+        "tutar_kurus": 1000}, timeout=60)
+    assert r.status_code == 200, r.text
+    d = r.json()
+    assert d["hedefsiz"] >= 1, "hedefi cozulemeyen satir SAYILMIYOR"
+    # Satir DUZEYINDE de isaretli — arayuz hangi daire oldugunu soylesin.
+    isaretli = [s for s in d["satirlar"] if s.get("hedef_cozulemedi")]
+    assert any(s["unit_id"] == u for s in isaretli), "daire isaretlenmemis"
+    # Ve bu bir ATLAMA DEGIL: satir islenecekler arasinda.
+    bizim = [s for s in d["satirlar"] if s["unit_id"] == u][0]
+    assert bizim["atlama_nedeni"] is None
+
+
+def test_HEDEFI_COZULEN_satir_ISARETLENMEZ(client, yon):
+    """Isaret kor olmamali: malik kayitliyken uyari CIKMAMALI."""
+    u = _daire(client, yon)
+    m = _kisi(client, yon, "Malik")
+    client.post(f"/units/{u}/residents", headers=yon,
+                json={"user_id": m, "rol_tipi": "malik"})
+    r = client.post("/borclandirma/toplu/onizleme", headers=yon, json={
+        "donem": _donem(), "gelir_gider_tanim_id": _tanim(client, yon, "malik"),
+        "tutar_kurus": 1000}, timeout=60)
+    bizim = [s for s in r.json()["satirlar"] if s["unit_id"] == u][0]
+    assert bizim["hedef_cozulemedi"] is False
+    assert bizim["hedef_user_id"] is not None
+
+
+def test_KIRACI_hedefsiz_MALIK_borcunu_GORMEZ(client, world, owner_conn):
+    """(B4 ikinci yari) YANLIS KISIYE GOSTERME.
+
+    Daireye yazilan her kalem o dairenin TUM sakinlerine gorunuyordu —
+    yani malik icin kesilmis bir bakim borcunu KIRACI goruyordu. Hem
+    yanlis bilgi hem gereksiz endise; ustelik kiraci onu odemekle
+    yukumlu de degil.
+
+    Sakinin KENDI borcu uzerinden olculuyor (`/me/odeme-bilgileri`):
+    ekranda gordugu sayi budur.
+    """
+    from app.security import hash_password
+
+    yon = _h(client, world["slug_a"], world["yonetici_a"])
+    u = _daire(client, yon)
+    # Kiraci hesabi — parola DOGRUDAN yazilir (yonetici parola atayamaz).
+    eposta = f"p218k-{uuid.uuid4().hex[:10]}@ornek.com"
+    kid = _kisi(client, yon, "Kiraci Gorunurluk")
+    owner_conn.execute("UPDATE app_user SET email = %s, password_hash = %s WHERE id = %s",
+                       (eposta, hash_password("KiraciPass1"), kid))
+    client.post(f"/units/{u}/residents", headers=yon,
+                json={"user_id": kid, "rol_tipi": "kiraci"})
+
+    # 1) MALIK kalemi (dairede malik YOK -> hedefsiz, daireye yazilir)
+    client.post("/dues/assessments", headers=yon, json={
+        "unit_id": u, "donem": _donem(), "tutar_kurus": 50000,
+        "gelir_gider_tanim_id": _tanim(client, yon, "malik")})
+    # 2) KULLANAN kalemi -> kiraciya hedeflenir
+    client.post("/dues/assessments", headers=yon, json={
+        "unit_id": u, "donem": _donem(), "tutar_kurus": 7000,
+        "gelir_gider_tanim_id": _tanim(client, yon, "kiraci_oncelikli")})
+
+    kh = _h(client, world["slug_a"], {"email": eposta, "password": "KiraciPass1"})
+    borc = client.get("/me/odeme-bilgileri", headers=kh).json()["borc_kurus"]
+    assert borc == 7000, (
+        f"kiraci {borc} kurus goruyor; MALIK kalemi (50000) sizmis olabilir"
+    )
+
+
+def test_MALIK_hedefsiz_kalemi_GORUR(client, world, owner_conn):
+    """Kural fazla genis olmamali: kiraci OLMAYAN bir sakin (malik ya da
+    rolsuz) daireye yazilmis kalemleri gormeye DEVAM etmeli — eski
+    (P28 oncesi, tursuz) tahakkuklar oyle yaziliydi ve onlari gizlemek,
+    odenmesi gereken borcu saklamak olurdu."""
+    from app.security import hash_password
+
+    yon = _h(client, world["slug_a"], world["yonetici_a"])
+    u = _daire(client, yon)
+    eposta = f"p218m-{uuid.uuid4().hex[:10]}@ornek.com"
+    mid = _kisi(client, yon, "Malik Gorunurluk")
+    owner_conn.execute("UPDATE app_user SET email = %s, password_hash = %s WHERE id = %s",
+                       (eposta, hash_password("MalikPass1"), mid))
+    client.post(f"/units/{u}/residents", headers=yon,
+                json={"user_id": mid, "rol_tipi": "malik"})
+
+    # TURSUZ tahakkuk -> hedefsiz, daireye yazilir.
+    client.post("/dues/assessments", headers=yon, json={
+        "unit_id": u, "donem": _donem(), "tutar_kurus": 3300})
+
+    mh = _h(client, world["slug_a"], {"email": eposta, "password": "MalikPass1"})
+    borc = client.get("/me/odeme-bilgileri", headers=mh).json()["borc_kurus"]
+    assert borc == 3300, f"malik kendi dairesinin hedefsiz borcunu gormuyor: {borc}"

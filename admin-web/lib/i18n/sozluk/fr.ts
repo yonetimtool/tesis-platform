@@ -2076,6 +2076,7 @@ export const fr: Sozluk = {
   finansKaydedildi: "L'enregistrement a été ajouté.",
   finansTahakkukOlustu: "{adet} appels de fonds créés.",
   finansTahakkukOlusmadi: "Aucun appel de fonds créé — ces lots en ont déjà un pour la période choisie. Choisissez une autre période ou modifiez les enregistrements existants.",
+  finansHedefsizUyari: "Dans {n} lot(s), la personne à débiter n'a pas pu être déterminée ; ces postes seront imputés au lot. Généralement le propriétaire n'est pas enregistré — complétez les fiches pour que la dette aille à la bonne personne.",
   finansKisiSec: "Sélectionnez une personne",
   finansKisiListesiAlinamadi: "La liste des personnes n'a pas pu être chargée. Actualisez la page et réessayez.",
   finansKisiAra: "Rechercher une personne (nom ou lot)",
