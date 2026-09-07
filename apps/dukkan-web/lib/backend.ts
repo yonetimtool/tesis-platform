@@ -77,3 +77,79 @@ export async function sunucudanAl<T>(yol: string, saniye = 3600): Promise<T | nu
     return null;
   }
 }
+
+/**
+ * GENEL VEKIL — metot, govde, sorgu dizesi ve KIMLIK BASLIGI aktarilir.
+ *
+ * =========================================================================
+ * `Authorization` NEDEN ILETILIYOR
+ * =========================================================================
+ * Dukkan jetonu TARAYICIDA durur ve her istekte BFF uzerinden backend'e
+ * gecmek zorunda. Basligi iletmezsek her korumali cagri 401 alir —
+ * ve bu, backend kusursuz calisirken web'in bozuk gorunmesi demek
+ * (P173/P189'daki 405 sinifi ile ayni aile: kirilan ARADA kalan katman).
+ *
+ * =========================================================================
+ * SORGU DIZESI DE GECER
+ * =========================================================================
+ * `?q=`, `?durum=`, `?limit=` gibi parametreler dusurulseydi arama ve
+ * kuyruk suzgecleri SESSIZCE calismaz, "hep ayni sonuc geliyor" diye
+ * teshis edilmesi zor bir kusur olurdu.
+ *
+ * =========================================================================
+ * HATA GOVDESI OLDUGU GIBI GECER
+ * =========================================================================
+ * Backend'in `{error:{code,message}}` zarfi yeniden yazilmaz. Burada
+ * genel bir "bir hata olustu" uretmek, kullanicinin gordugu metni
+ * backend'in soyledigi seyden koparirdi (P175'te olculen kusur) —
+ * ozellikle `basvuru_eksik:kategori,hizmet_alani` gibi EYLEME DONUK
+ * hatalarda kullanici ne yapacagini bilemezdi.
+ */
+export async function backendeIlet(
+  istek: Request,
+  yol: string,
+): Promise<NextResponse> {
+  const gelen = new URL(istek.url);
+  const hedef = `${TABAN}${yol}${gelen.search}`;
+
+  const basliklar: Record<string, string> = { accept: "application/json" };
+  const yetki = istek.headers.get("authorization");
+  if (yetki) basliklar.authorization = yetki;
+
+  const tur = istek.headers.get("content-type");
+  let govde: string | undefined;
+  if (istek.method !== "GET" && istek.method !== "HEAD") {
+    const metin = await istek.text();
+    if (metin) {
+      govde = metin;
+      basliklar["content-type"] = tur ?? "application/json";
+    }
+  }
+
+  // Istemci IP'si: backend'in hiz siniri (`/auth/telefon/kod`) bunu okur.
+  // Iletilmezse TUM ziyaretciler tek sayaci (BFF'in IP'si) paylasir ve
+  // besinci kod isteginden sonra kayit HERKESE kapanirdi —
+  // `apps/tanitim-web/app/api/iletisim/route.ts` ayni tuzagi kaydediyor.
+  const ip = istek.headers.get("x-forwarded-for") ?? istek.headers.get("x-real-ip");
+  if (ip) basliklar["x-forwarded-for"] = ip;
+
+  let yanit: Response;
+  try {
+    yanit = await fetch(hedef, {
+      method: istek.method,
+      headers: basliklar,
+      body: govde,
+      cache: "no-store",
+    });
+  } catch {
+    return hataZarfi(502, "backend_erisilemedi", "Servise ulaşılamadı.");
+  }
+
+  const metin = await yanit.text();
+  if (!metin) return new NextResponse(null, { status: yanit.status });
+  try {
+    return NextResponse.json(JSON.parse(metin), { status: yanit.status });
+  } catch {
+    return hataZarfi(502, "backend_gecersiz_yanit", "Servisten geçersiz yanıt alındı.");
+  }
+}

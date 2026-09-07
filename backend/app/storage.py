@@ -102,6 +102,32 @@ def presign_put(
     return key, url, settings.minio_url_expire_seconds
 
 
+def presign_put_anahtar(
+    key: str, content_type: str
+) -> tuple[str, str, int]:
+    """(key, presigned_put_url, expires_in) — ANAHTARI CAGIRAN belirler.
+
+    `presign_put` anahtari KENDI uretir ve `{tenant}/tasks/...` bicimini
+    dayatir. Bu, gorev fotograflari icin dogru ama her yerde degil:
+    Dukkan'in isletme belgeleri `tasks` altinda yasamamali — depoda
+    hangi dosyanin nereye ait oldugu YOLDAN okunabilmeli ve iki urunun
+    ad alani birbirine karismamali.
+
+    ANAHTAR DOGRULANMAZ: cagiran, kendi ad alanini onekleyerek vermek
+    zorundadir (`presign_put` ile ayni sozlesme).
+    """
+    url = _client().generate_presigned_url(
+        "put_object",
+        Params={
+            "Bucket": settings.minio_bucket,
+            "Key": key,
+            "ContentType": content_type,
+        },
+        ExpiresIn=settings.minio_url_expire_seconds,
+    )
+    return key, url, settings.minio_url_expire_seconds
+
+
 def sunucudan_yukle(
     key: str, icerik: bytes, content_type: str
 ) -> None:

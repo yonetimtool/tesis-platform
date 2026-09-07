@@ -122,8 +122,14 @@ async def mahalleler(
     # Cozum BEDAVA: `slug` sutunu zaten ASCII'ye katlanmis halde duruyor
     # (SEO yolu icin uretilmisti). Ikinci bir "aranabilir ad" sutunu ya da
     # `unaccent` eklentisi GEREKMEDI.
+    # `id` DE DONUYOR ve bu gerekli: hizmet alani ucu
+    # (`PUT /isletme/{id}/hizmet-alanlari`) mahalle KIMLIGI istiyor, cunku
+    # mahalle slug'i yalniz ILCE ICINDE benzersiz. Yalniz slug dondurmek,
+    # arayuzu "listede gorunuyor ama secilemiyor" durumunda birakirdi —
+    # ve isletme hizmet alani secemedigi icin basvurusunu HIC
+    # tamamlayamazdi. Ilk yazimda tam bu bosluk vardi.
     sql = (
-        "SELECT ad, slug, tip FROM mahalle WHERE ilce_id = :i "
+        "SELECT id, ad, slug, tip FROM mahalle WHERE ilce_id = :i "
         "{filtre} ORDER BY ad COLLATE \"tr-TR-x-icu\" LIMIT 2000"
     )
     param: dict = {"i": ilce[0]}
@@ -136,7 +142,10 @@ async def mahalleler(
     satirlar = (await db.execute(text(sql), param)).all()
     return {
         "ilce": {"ad": ilce[1], "slug": ilce[2]},
-        "items": [{"ad": a, "slug": s, "tip": t} for a, s, t in satirlar],
+        "items": [
+            {"id": str(i), "ad": a, "slug": s, "tip": t}
+            for i, a, s, t in satirlar
+        ],
     }
 
 

@@ -116,6 +116,25 @@ def main() -> int:
             ).format(sema=sema, role=role)
         )
 
+        # --- denetim: APPEND-ONLY (goc 0115) --- #
+        # Yukaridaki blanket GRANT dukkan_app'e `denetim` tablosunda da
+        # UPDATE/DELETE verir; BURADA GERI ALIYORUZ.
+        #
+        # Bu satirlarin varlik sebebi `setup_app_role.py`de ogrenilmis bir
+        # ders: audit_log'un append-only kilidi YALNIZ gocte yapilsaydi,
+        # ilk `migrate` kosumundaki blanket GRANT kilidi SESSIZCE acardi.
+        # Bir moderasyon karari sonradan "hic verilmemis" hale
+        # getirilememeli — itiraz sureci buna dayaniyor.
+        if conn.execute(
+            "SELECT to_regclass(%s)", (f"{SEMA}.denetim",)
+        ).fetchone()[0] is not None:
+            conn.execute(
+                sql.SQL("REVOKE UPDATE, DELETE ON {t} FROM {role}").format(
+                    t=sql.Identifier(SEMA, "denetim"), role=role
+                )
+            )
+            print("[setup_dukkan_role] denetim append-only (UPDATE/DELETE revoked).")
+
         # --- SINIR: `public` semasinda hicbir sey --- #
         # Idempotent ve her kosumda yeniden dayatiliyor (yukaridaki gerekce).
         for ifade in (
@@ -152,6 +171,24 @@ def main() -> int:
             print(
                 f"[setup_dukkan_role] HATA: '{app_user}' rolunun public "
                 f"semasinda hala {kalan} tablo yetkisi var.",
+                file=sys.stderr,
+            )
+            return 1
+
+        # denetim append-only KANITI. Betik kendi isini dogruluyor:
+        # "yaptim" deyip yapmamak bu depoda P217'de olculmus bir kusur.
+        yazma = conn.execute(
+            """
+            SELECT count(*) FROM information_schema.table_privileges
+            WHERE grantee = %s AND table_schema = %s AND table_name = 'denetim'
+              AND privilege_type IN ('UPDATE', 'DELETE')
+            """,
+            (app_user, SEMA),
+        ).fetchone()[0]
+        if yazma:
+            print(
+                f"[setup_dukkan_role] HATA: denetim tablosu append-only DEGIL "
+                f"({yazma} yetki). Moderasyon karari silinebilir durumda.",
                 file=sys.stderr,
             )
             return 1

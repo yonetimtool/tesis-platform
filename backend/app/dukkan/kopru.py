@@ -46,12 +46,43 @@ from __future__ import annotations
 import uuid
 from dataclasses import dataclass
 
+from collections.abc import AsyncIterator
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 # ISTISNA: kopru.py Yonetiyor'u ithal EDEBILEN tek dosyadir. Paketin
-# geri kalani icin bu satir yasak (bkz. __init__.py ve AST testi).
+# geri kalani icin bu satirlar yasak (bkz. __init__.py ve AST testi).
+from ..db import get_session, set_tenant
 from ..models import AppUser, Tenant
+
+
+async def yonetiyor_oturumu() -> AsyncIterator[AsyncSession]:
+    """Yonetiyor oturumu (app_rw) — FastAPI bagimliligi.
+
+    Doner: Yonetiyor veritabani oturumu (`AsyncSession`).
+
+    ==================================================================
+    NEDEN BU FONKSIYON BURADA
+    ==================================================================
+    Ilk yazimda `/dukkan/auth/yonetiyor` ucu `app.db`yi DOGRUDAN ithal
+    ediyordu ve sinir testi (`test_dukkan_kopru_siniri.py`) bunu
+    yakaladi. Kilidi gevsetmek yanlis cevap olurdu: kural "Dukkan
+    Yonetiyor'a yalniz kopruden bakar" ve bir OTURUM da tam olarak
+    Yonetiyor'a bakmanin yoludur.
+
+    Dogru cevap, kapiyi genisletmek degil kapinin ARKASINA almakti:
+    oturumu da kopru saglar. Boylece Dukkan tarafinda Yonetiyor'a acilan
+    TEK dosya yine bu dosya olur ve "hangi kod Yonetiyor verisine
+    ulasiyor" sorusu tek yerde okunarak yanitlanir.
+
+    SALT OKUNUR KULLANIM: bu oturum yalnizca asagidaki okuma
+    fonksiyonlarina verilmek uzere vardir. Cagiran taraf onunla yazma
+    yapmamali — ve bu dosyada yazma fonksiyonu YOK oldugu icin,
+    kopruden gecen yolda yazacak bir sey de yok.
+    """
+    async for oturum in get_session():
+        yield oturum
 
 
 @dataclass(frozen=True)
@@ -100,6 +131,24 @@ async def yonetiyor_kimligi(
     cevirmek zorundadir. Bos bir kimlikle devam etmek, kimligi
     dogrulanmamis birine Dukkan jetonu vermek olurdu.
     """
+    # ===================================================================
+    # RLS BAGLAMI KURULUR — kopru RLS'i ATLAMAZ, ONA TABIDIR
+    # ===================================================================
+    # Ilk yazimda bu satir YOKTU ve uc 500 veriyordu:
+    #   invalid input syntax for type uuid: ""
+    # `app_user` ve `tenant` FORCE RLS altinda; politika
+    # `current_setting('app.current_tenant_id')::uuid` okuyor ve deger
+    # kurulmadiginda bos dizge cast'i patliyor.
+    #
+    # Hata mesaji teshis edilmesi zor bir bicimde geldigi icin (parametre
+    # listesinde UUID'ler DOGRU gorunuyor) bunu ancak akisi surerek
+    # buldum — ve bulunmasi iyi oldu, cunku duzeltmesi bir GUVENLIK
+    # KAZANCI: kopru artik yalnizca KENDISINE VERILEN tesisin satirlarini
+    # gorebilir. Owner baglantisiyla ya da RLS'i atlayarak okusaydi,
+    # jetondaki `tenant_id` ile oynayan biri baska bir tesisin
+    # kullanicisini okuyabilirdi.
+    await set_tenant(session, tenant_id)
+
     satir = (
         await session.execute(
             select(
@@ -141,6 +190,8 @@ async def tesis_bolgesi(
     Doner: (il, ilce) — ikisi de `None` olabilir ve OLACAKTIR
     (2239 tesisin 1'inde dolu). Cagiran bunu hata saymamali.
     """
+    # RLS baglami (ayni gerekce: `yonetiyor_kimligi`).
+    await set_tenant(session, tenant_id)
     satir = (
         await session.execute(
             select(Tenant.il, Tenant.ilce).where(Tenant.id == tenant_id)

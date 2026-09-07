@@ -62,6 +62,14 @@ class Settings(BaseSettings):
     # bir havuz aciyor ve tek sunucuda baglanti kit kaynak (P187'de prod'da
     # idle-in-transaction 90/100 olculdu). SEO trafigi OLCULDUKTEN sonra
     # buyutulur; once olcum.
+    # (DUKKAN F2) OTP kodunu YANITTA dondur — YALNIZ dev/test.
+    #
+    # Varsayilan KAPALI ve bu bilincli bir guvenli-yon secimi: "ortam
+    # production degilse ac" bicimindeki bir kosul, ortam degiskeni
+    # prod'da eksik ya da yanlis geldiginde kodu SESSIZCE herkese acardi
+    # ve telefon dogrulamasinin tamami anlamsizlasirdi. Acikca
+    # acilmadikca kapali.
+    dukkan_otp_yanitta: bool = False
     dukkan_db_pool_size: int = 3
     dukkan_db_max_overflow: int = 2
 

@@ -230,6 +230,10 @@ services:
       # Bu rolun `public` semasinda hicbir yetkisi yoktur; kisiti
       # zorlayan sey bu (backend/tests/test_dukkan_sinir.py).
       DUKKAN_DATABASE_URL: postgresql+asyncpg://${DUKKAN_DB_USER:-dukkan_app}:${DUKKAN_DB_PASSWORD:-dev-dukkan-parola-degistir}@db:5432/${POSTGRES_DB}
+      # (DUKKAN F2) YALNIZ DEV: OTP kodu yanitta doner ki akis
+      # SMS saglayicisi olmadan surulebilsin. PROD compose'unda BU
+      # SATIR YOK ve varsayilan `false` — acikca acilmadikca kapali.
+      DUKKAN_OTP_YANITTA: "true"
       REDIS_URL: redis://redis:6379/0
       # --- (P172 §2) MESAJ SAGLAYICILARI ---
       #
@@ -411,6 +415,10 @@ services:
       # Bu rolun `public` semasinda hicbir yetkisi yoktur; kisiti
       # zorlayan sey bu (backend/tests/test_dukkan_sinir.py).
       DUKKAN_DATABASE_URL: postgresql+asyncpg://${DUKKAN_DB_USER:-dukkan_app}:${DUKKAN_DB_PASSWORD:-dev-dukkan-parola-degistir}@db:5432/${POSTGRES_DB}
+      # (DUKKAN F2) YALNIZ DEV: OTP kodu yanitta doner ki akis
+      # SMS saglayicisi olmadan surulebilsin. PROD compose'unda BU
+      # SATIR YOK ve varsayilan `false` — acikca acilmadikca kapali.
+      DUKKAN_OTP_YANITTA: "true"
       REDIS_URL: redis://redis:6379/0
       # --- (P172 §2) MESAJ SAGLAYICILARI ---
       #
@@ -472,6 +480,10 @@ services:
       # Bu rolun `public` semasinda hicbir yetkisi yoktur; kisiti
       # zorlayan sey bu (backend/tests/test_dukkan_sinir.py).
       DUKKAN_DATABASE_URL: postgresql+asyncpg://${DUKKAN_DB_USER:-dukkan_app}:${DUKKAN_DB_PASSWORD:-dev-dukkan-parola-degistir}@db:5432/${POSTGRES_DB}
+      # (DUKKAN F2) YALNIZ DEV: OTP kodu yanitta doner ki akis
+      # SMS saglayicisi olmadan surulebilsin. PROD compose'unda BU
+      # SATIR YOK ve varsayilan `false` — acikca acilmadikca kapali.
+      DUKKAN_OTP_YANITTA: "true"
       REDIS_URL: redis://redis:6379/0
       JWT_SECRET: ${JWT_SECRET}
       OWNER_DSN: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}

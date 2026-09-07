@@ -188,3 +188,52 @@ def test_KOPRU_DAR_kalsin():
         "Her yeni fonksiyon icin once sunu sor: Dukkan bunu gercekten "
         "Yonetiyor'dan mi almali, yoksa kendi kaydinda mi tutmali?"
     )
+
+
+# ===================================================================== #
+# KOPRU RLS'E TABI — atlamaz
+# ===================================================================== #
+
+def test_KOPRU_RLS_BAGLAMI_KURUYOR():
+    """Kopru `set_tenant` cagirmali.
+
+    ==================================================================
+    BU TEST NEDEN VAR — OLCULEN KUSUR
+    ==================================================================
+    Ilk yazimda `set_tenant` YOKTU ve `/dukkan/auth/yonetiyor` 500
+    veriyordu:  `invalid input syntax for type uuid: ""`.
+    `app_user` ve `tenant` FORCE RLS altinda; politika
+    `current_setting('app.current_tenant_id')::uuid` okuyor ve deger
+    kurulmadiginda bos dizge cast'i patliyor.
+
+    Duzeltme bir GUVENLIK KAZANCIYDI, sadece bir hata giderme degil:
+    kopru artik RLS'i ATLAMIYOR, ONA TABI. Yani yalnizca KENDISINE
+    VERILEN tesisin satirlarini gorebiliyor. Owner baglantisiyla ya da
+    RLS'i atlayarak okusaydi, jetondaki `tenant_id` ile oynayan biri
+    baska bir tesisin kullanicisini okuyabilirdi.
+
+    Bu kilit, birinin ileride "sorgu zaten tenant_id ile filtreliyor,
+    set_tenant gereksiz" diye satiri silmesini engelliyor: filtre
+    UYGULAMA katmanindadir ve bir gun unutulabilir; RLS veritabanindadir.
+    """
+    import ast
+
+    kaynak = (DUKKAN_DIZINI / ISTISNA).read_text()
+    agac = ast.parse(kaynak)
+
+    for dugum in agac.body:
+        if not isinstance(dugum, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            continue
+        if dugum.name.startswith("_") or dugum.name == "yonetiyor_oturumu":
+            continue
+        cagrilar = {
+            d.func.id if isinstance(d.func, ast.Name) else
+            (d.func.attr if isinstance(d.func, ast.Attribute) else None)
+            for d in ast.walk(dugum) if isinstance(d, ast.Call)
+        }
+        assert "set_tenant" in cagrilar, (
+            f"kopru fonksiyonu `{dugum.name}` RLS baglamini KURMUYOR. "
+            "Tenant-kapsamli tablo okuyan her kopru fonksiyonu "
+            "`set_tenant` cagirmali — aksi halde ya 500 verir ya da "
+            "(RLS bir gun gevsetilirse) BASKA TESISIN verisini okur."
+        )

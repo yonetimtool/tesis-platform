@@ -83,6 +83,30 @@ def test_ARAMA_TURKCE_HARFSIZ_de_bulur(client):
         assert adlar == ["Çatalmeşe"], f"q={q!r} -> {adlar}"
 
 
+def test_MAHALLE_UCU_KIMLIK_DONDURUR(client):
+    """`id` OLMADAN arayuz hizmet alani SECEMEZ — ilk yazimda tam bu
+    bosluk vardi ve web'den basvuru TAMAMLANAMIYORDU.
+
+    Hizmet alani ucu (`PUT /dukkan/isletme/{id}/hizmet-alanlari`) mahalle
+    KIMLIGI ister, cunku mahalle slug'i yalniz ILCE ICINDE benzersizdir.
+    Kamu ucu yalniz slug dondurseydi liste "gorunuyor ama secilemiyor"
+    olurdu; isletme hizmet alani secemez, hizmet alani olmadan da basvuru
+    yapamazdi. Backend kusursuz gorunurken akis SESSIZCE tikanirdi.
+    """
+    import uuid as _uuid
+
+    r = client.get("/dukkan/lokasyon/il/istanbul/ilce/cekmekoy/mahalle")
+    assert r.status_code == 200
+    items = r.json()["items"]
+    assert items
+    for x in items:
+        assert "id" in x, f"mahalle kaydinda `id` yok: {x}"
+        # Gercekten UUID mi? Bos ya da bozuk bir dizge, hizmet alani
+        # ucunda 422 uretir ve hata mahalle ucunda oldugu icin teshis
+        # edilmesi zor olurdu.
+        _uuid.UUID(x["id"])
+
+
 def test_ILCE_SLUGU_IL_ICINDE_benzersiz_yol_bunu_yansitiyor(client):
     """Turkiye'de birden cok ilde "Merkez" ilcesi var.
 

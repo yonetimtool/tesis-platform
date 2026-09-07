@@ -121,3 +121,60 @@ def test_app_rw_DUKKAN_SEMASINA_giremez(app_conn):
     with pytest.raises(psycopg.Error) as hata:
         app_conn.execute("SELECT 1 FROM dukkan.ulke LIMIT 1")
     assert "permission denied" in str(hata.value)
+
+
+# ===================================================================== #
+# (F2) DENETIM APPEND-ONLY
+# ===================================================================== #
+
+def test_DENETIM_yazilabilir_ama_DEGISTIRILEMEZ(dukkan_conn):
+    """Bir moderasyon karari sonradan "hic verilmemis" hale getirilemez.
+
+    Itiraz sureci buna dayaniyor: karar verildiginde `denetim`e kim, ne
+    zaman, hangi gerekceyle yazildigi kalir. UPDATE/DELETE acik olsaydi
+    bir moderator kendi kararini silebilir ve itiraz eden kisi
+    degerlendirilecek bir sey bulamazdi. Yonetiyor'un `audit_log`u da
+    ayni sekilde korunuyor (goc 0002) — ayni ilke, ayri sema.
+
+    ==================================================================
+    BU TEST NEDEN GOCE EK OLARAK GEREKLI
+    ==================================================================
+    `setup_dukkan_role.py` her `migrate` kosumunda TUM tablolara blanket
+    GRANT veriyor ve gocteki REVOKE'u SESSIZCE geri alirdi. Bu yuzden
+    revoke betikte de tekrarlaniyor; bu test ikisinin birlikte
+    calistigini DISARIDAN olcuyor. `setup_app_role.py`de birebir ayni
+    ders `audit_log` icin yazili.
+    """
+    import uuid as _uuid
+
+    import psycopg
+
+    iz = "test_append_only_" + _uuid.uuid4().hex[:8]
+    dukkan_conn.execute("INSERT INTO dukkan.denetim (eylem) VALUES (%s)", (iz,))
+    var = dukkan_conn.execute(
+        "SELECT count(*) FROM dukkan.denetim WHERE eylem = %s", (iz,)
+    ).fetchone()[0]
+    assert var == 1, "denetim satiri yazilamadi"
+
+    with pytest.raises(psycopg.errors.InsufficientPrivilege):
+        dukkan_conn.execute(
+            "UPDATE dukkan.denetim SET eylem = 'x' WHERE eylem = %s", (iz,)
+        )
+    with pytest.raises(psycopg.errors.InsufficientPrivilege):
+        dukkan_conn.execute("DELETE FROM dukkan.denetim WHERE eylem = %s", (iz,))
+
+
+def test_DENETIM_katalogda_UPDATE_DELETE_yetkisi_YOK(owner_conn):
+    """Katalog uzerinden butuncul kontrol."""
+    n = owner_conn.execute(
+        """
+        SELECT count(*) FROM information_schema.table_privileges
+        WHERE grantee = 'dukkan_app' AND table_schema = 'dukkan'
+          AND table_name = 'denetim'
+          AND privilege_type IN ('UPDATE', 'DELETE')
+        """
+    ).fetchone()[0]
+    assert n == 0, (
+        f"denetim tablosunda {n} yazma yetkisi var — append-only DELINMIS. "
+        "En olasi sebep: setup_dukkan_role.py'deki REVOKE atlanmis."
+    )

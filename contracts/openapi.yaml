@@ -50,6 +50,761 @@ paths:
   # (app/dukkan/lokasyon_yukle.py, kategori_yukle.py). Bu iki tablo SEO
   # yollarinin temeli; bir uctan degistirilebilir olmalari canli
   # baglantilarin sessizce olmesi demekti.
+  # ================================================================= #
+  # DUKKAN (F2) — KIMLIK, ISLETME, MODERASYON
+  # ================================================================= #
+  /dukkan/auth/telefon/kod:
+    post:
+      tags: [dukkan]
+      summary: Telefona dogrulama kodu uretir
+      description: |
+        Kod YANITTA DONMEZ (yalniz `DUKKAN_OTP_YANITTA` acikken `dev_kod`).
+        Varsayilan KAPALI: "ortam production degilse ac" kosulu, ortam
+        degiskeni prod'da eksik geldiginde kodu sessizce herkese acardi.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [telefon]
+              properties:
+                telefon: { type: string, minLength: 7, maxLength: 32 }
+      responses:
+        "200":
+          description: Kod uretildi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [gonderildi, gonderim]
+                properties:
+                  gonderildi: { type: boolean }
+                  gecerlilik_dk: { type: integer }
+                  gonderim:
+                    type: string
+                    description: |
+                      SMS saglayicisi bagli degilse `saglayici_bagli_degil`.
+                      SESSIZ BASARISIZLIK YOK: "gonderildi" deyip hicbir sey
+                      gondermemek kullaniciyi olmayan bir SMS'i beklerken birakir.
+                  dev_kod: { type: string, nullable: true }
+        "422":
+          description: Telefon bicimi gecersiz
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "429":
+          description: Cok sik kod istendi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/auth/telefon/dogrula:
+    post:
+      tags: [dukkan]
+      summary: Kodu dogrular, kullaniciyi acar/bulur ve Dukkan jetonu doner
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [telefon, kod]
+              properties:
+                telefon: { type: string }
+                kod: { type: string, minLength: 6, maxLength: 6 }
+                ad_soyad: { type: string, nullable: true }
+      responses:
+        "200":
+          description: Giris basarili
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [access_token, token_type, yeni_kayit, kullanici]
+                properties:
+                  access_token: { type: string }
+                  token_type: { type: string }
+                  yeni_kayit: { type: boolean }
+                  kullanici:
+                    type: object
+                    properties:
+                      id: { type: string, format: uuid }
+                      telefon: { type: string }
+        "401":
+          description: Kod hatali
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "403":
+          description: Hesap askida
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "404":
+          description: Kod bulunamadi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "409":
+          description: Kod kullanilmis
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "410":
+          description: Kod suresi doldu
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "429":
+          description: Cok fazla deneme
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/auth/yonetiyor:
+    post:
+      tags: [dukkan]
+      summary: Yonetiyor jetonuyla Dukkan'a giris (SSO koprusu)
+      description: |
+        Yonetiyor JWT'si `tenant_id` ZORUNLU tasir; Dukkan jetonu tasimaz.
+        Iki jeton dunyasi ayridir ve bu uc koprudur.
+        409 `telefon_gerekli` NADIR DEGIL: olculdu, 3104 Yonetiyor
+        kullanicisinin 837'sinde (%27) telefon yok.
+      responses:
+        "200":
+          description: Dukkan jetonu
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [access_token, token_type, kullanici]
+                properties:
+                  access_token: { type: string }
+                  token_type: { type: string }
+                  kullanici: { type: object }
+                  bolge:
+                    type: object
+                    description: |
+                      EN IYI CABA. Olculdu: 2239 tesisin YALNIZ 1'inde `il`
+                      dolu. Bos gelmesi akisin NORMAL hali.
+                    properties:
+                      il: { type: string, nullable: true }
+                      ilce: { type: string, nullable: true }
+        "401":
+          description: Yonetiyor jetonu gecersiz
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "403":
+          description: Hesap askida
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "409":
+          description: Telefon gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/auth/ben:
+    get:
+      tags: [dukkan]
+      summary: Oturum acmis Dukkan kullanicisinin profili
+      responses:
+        "200":
+          description: Profil
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id, telefon, moderator, isletme_sayisi]
+                properties:
+                  id: { type: string, format: uuid }
+                  telefon: { type: string }
+                  ad_soyad: { type: string, nullable: true }
+                  eposta: { type: string, nullable: true }
+                  tip: { type: string }
+                  durum: { type: string }
+                  moderator: { type: boolean }
+                  isletme_sayisi: { type: integer }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "403":
+          description: Hesap askida
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/isletme:
+    post:
+      tags: [dukkan]
+      summary: Yeni isletme kaydi acar (TASLAK baslar)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ad, telefon]
+              properties:
+                ad: { type: string, minLength: 2, maxLength: 160 }
+                telefon: { type: string }
+                aciklama: { type: string, nullable: true }
+                eposta: { type: string, nullable: true }
+                whatsapp: { type: string, nullable: true }
+                vergi_no: { type: string, nullable: true, maxLength: 11 }
+                vergi_dairesi: { type: string, nullable: true }
+                adres_il_slug: { type: string, nullable: true }
+                adres_ilce_slug: { type: string, nullable: true }
+                adres_mahalle_slug: { type: string, nullable: true }
+                adres_detay: { type: string, nullable: true }
+      responses:
+        "201":
+          description: Olusturuldu
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id, slug, durum, dogrulama_seviyesi]
+                properties:
+                  id: { type: string, format: uuid }
+                  slug: { type: string }
+                  durum: { type: string }
+                  dogrulama_seviyesi: { type: integer }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422":
+          description: Dogrulama hatasi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/isletme/benim:
+    get:
+      tags: [dukkan]
+      summary: Kullanicinin KENDI isletmeleri
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: { type: array, items: { type: object } }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/isletme/{isletme_id}:
+    parameters:
+      - { name: isletme_id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [dukkan]
+      summary: Sahibinin gordugu tam detay
+      responses:
+        "200":
+          description: Detay
+          content:
+            application/json: { schema: { type: object } }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "403":
+          description: Isletme size ait degil
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "404":
+          description: Bulunamadi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+    patch:
+      tags: [dukkan]
+      summary: Isletme alanlarini gunceller
+      description: |
+        Guncellenen ALAN SAYISINI doner. Sifirsa arayuz "Kaydedildi"
+        DEMEMELI (P217 dersi). Telefon degisirse dogrulama DUSER.
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { type: object } }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [guncellenen]
+                properties:
+                  guncellenen: { type: integer }
+                  satir: { type: integer }
+                  telefon_dogrulamasi_dustu: { type: boolean }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "403":
+          description: Isletme size ait degil
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "404":
+          description: Bulunamadi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422":
+          description: Guncellenecek alan yok
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/isletme/{isletme_id}/kategoriler:
+    parameters:
+      - { name: isletme_id, in: path, required: true, schema: { type: string, format: uuid } }
+    put:
+      tags: [dukkan]
+      summary: Isletmenin hizmet kategorilerini TAMAMEN degistirir
+      description: |
+        Bulunamayan slug SESSIZCE YUTULMAZ (422): yanlis yazilmis bir slug
+        dusup "kaydedildi" denseydi isletme hic talep almaz ve sebebini
+        asla ogrenemezdi. YALNIZ alt (hizmet) kategorileri kabul edilir.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                slugler: { type: array, items: { type: string } }
+      responses:
+        "200":
+          description: Ayarlandi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [eklenen]
+                properties:
+                  eklenen: { type: integer }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "403":
+          description: Isletme size ait degil
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "404":
+          description: Bulunamadi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422":
+          description: Kategori bulunamadi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/isletme/{isletme_id}/hizmet-alanlari:
+    parameters:
+      - { name: isletme_id, in: path, required: true, schema: { type: string, format: uuid } }
+    put:
+      tags: [dukkan]
+      summary: Hizmet verilen mahalleleri TAMAMEN degistirir
+      description: |
+        Eslesme motorunun TAMAMI bu tablo. Mahalle KIMLIGI alinir, slug
+        DEGIL: mahalle slug'i yalniz ILCE ICINDE benzersizdir.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                mahalle_idler:
+                  type: array
+                  items: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Ayarlandi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [eklenen]
+                properties:
+                  eklenen: { type: integer }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "403":
+          description: Isletme size ait degil
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "404":
+          description: Bulunamadi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422":
+          description: Mahalle bulunamadi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/isletme/{isletme_id}/basvur:
+    parameters:
+      - { name: isletme_id, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [dukkan]
+      summary: Isletmeyi moderasyon kuyruguna gonderir
+      description: |
+        On kosullar BURADA ve ACIKCA: eksikler TEK SEFERDE ve ADIYLA doner
+        (`basvuru_eksik:kategori,hizmet_alani`). Eksigi kuyruga birakip
+        moderatore reddettirmek hem zaman harcar hem gerekcesiz ret uretir.
+      responses:
+        "200":
+          description: Kuyruga alindi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [durum]
+                properties:
+                  durum: { type: string }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "403":
+          description: Isletme size ait degil
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "404":
+          description: Bulunamadi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "409":
+          description: Askida ya da zaten onayli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422":
+          description: Basvuru eksik
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/isletme/{isletme_id}/belge:
+    parameters:
+      - { name: isletme_id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [dukkan]
+      summary: Isletmenin belgeleri ve inceleme durumu
+      description: |
+        Moderatorun ADI donmez, yalnizca durum ve tarih: moderator kimligi
+        isletme sahibine karsi korunmali.
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: { type: array, items: { type: object } }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "403":
+          description: Isletme size ait degil
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "404":
+          description: Bulunamadi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/isletme/{isletme_id}/belge/presign:
+    parameters:
+      - { name: isletme_id, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [dukkan]
+      summary: Belge yuklemek icin imzali PUT adresi uretir
+      description: |
+        Belge satiri `bekliyor` durumunda ONCEDEN acilir: PUT tamamlanmazsa
+        ortada sahipsiz dosya degil, durumu belli bir KAYIT kalir.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tip, content_type]
+              properties:
+                tip:
+                  type: string
+                  enum: [vergi_levhasi, ustalik_belgesi, sicil, diger]
+                content_type:
+                  type: string
+                  enum: [image/jpeg, image/png, image/webp, application/pdf]
+                dosya_adi: { type: string, nullable: true }
+      responses:
+        "200":
+          description: Imzali adres
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [belge_id, key, url, expires_in]
+                properties:
+                  belge_id: { type: string, format: uuid }
+                  key: { type: string }
+                  url: { type: string }
+                  expires_in: { type: integer }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "403":
+          description: Isletme size ait degil
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "404":
+          description: Bulunamadi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422":
+          description: Belge turu desteklenmiyor
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/isletme/{isletme_id}/telefon/kod:
+    parameters:
+      - { name: isletme_id, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [dukkan]
+      summary: Isletme telefonuna dogrulama kodu uretir
+      description: |
+        Isletme telefonu SAHIBIN telefonundan AYRI dogrulanir: kullanicinin
+        arayacagi numara odur.
+      responses:
+        "200":
+          description: Kod uretildi
+          content:
+            application/json: { schema: { type: object } }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "403":
+          description: Isletme size ait degil
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "404":
+          description: Bulunamadi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "429":
+          description: Cok sik kod istendi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/isletme/{isletme_id}/telefon/dogrula:
+    parameters:
+      - { name: isletme_id, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [dukkan]
+      summary: Isletme telefonunu dogrular (seviye 1)
+      description: |
+        Seviye 0 ARAMADA CIKMAZ: kayit ucretsiz ve aninda; gorunur kilmak
+        sahte isletmeyi DAVET etmek olurdu. Telefon dogrulamasi KIMLIK
+        KANITI DEGILDIR — yalnizca numaranin kontrolunu kanitlar.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [kod]
+              properties:
+                kod: { type: string, minLength: 6, maxLength: 6 }
+      responses:
+        "200":
+          description: Dogrulandi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [dogrulama_seviyesi]
+                properties:
+                  dogrulama_seviyesi: { type: integer }
+                  telefon_dogrulandi: { type: boolean }
+        "401":
+          description: Kod hatali ya da kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "403":
+          description: Isletme size ait degil
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "404":
+          description: Kod bulunamadi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "409":
+          description: Kod kullanilmis
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "410":
+          description: Kod suresi doldu
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "429":
+          description: Cok fazla deneme
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/moderasyon/kuyruk:
+    get:
+      tags: [dukkan]
+      summary: Moderasyon kuyrugu (TEK EKRAN)
+      description: |
+        Her satir karar vermek icin gereken HER SEYI tasir: kategoriler,
+        hizmet alani sayisi, belge durumu, vergi levhasi sayisi, telefon
+        dogrulanmis mi. Ayri sayfa acmak gerekseydi gunde 10 basvuru
+        30 dakikaya cikardi.
+      parameters:
+        - { name: durum, in: query, required: false, schema: { type: string } }
+        - { name: limit, in: query, required: false, schema: { type: integer, minimum: 1, maximum: 200 } }
+      responses:
+        "200":
+          description: Kuyruk
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, toplam]
+                properties:
+                  items: { type: array, items: { type: object } }
+                  toplam: { type: integer }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "403":
+          description: Moderator gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422":
+          description: Durum gecersiz
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/moderasyon/isletme/{isletme_id}/karar:
+    parameters:
+      - { name: isletme_id, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [dukkan]
+      summary: Isletme hakkinda moderasyon karari
+      description: |
+        RET ve ASKI icin GEREKCE ZORUNLU: gerekcesiz ret isletmeye ne
+        duzeltecegini soylemez, itiraz sureci de degerlendirecek bir sey
+        bulamaz. Karar `denetim` tablosuna yazilir (APPEND-ONLY).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [karar]
+              properties:
+                karar:
+                  type: string
+                  enum: [onayla, reddet, askiya_al, askiyi_kaldir]
+                gerekce: { type: string, nullable: true, maxLength: 2000 }
+      responses:
+        "200":
+          description: Karar uygulandi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [durum, dogrulama_seviyesi]
+                properties:
+                  durum: { type: string }
+                  dogrulama_seviyesi: { type: integer }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "403":
+          description: Moderator gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "404":
+          description: Bulunamadi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "409":
+          description: Telefon dogrulanmamis
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422":
+          description: Gerekce zorunlu
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/moderasyon/isletme/{isletme_id}/denetim:
+    parameters:
+      - { name: isletme_id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [dukkan]
+      summary: Isletmenin karar gecmisi (itiraz surecinin dayanagi)
+      responses:
+        "200":
+          description: Gecmis
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: { type: array, items: { type: object } }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "403":
+          description: Moderator gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/moderasyon/belge/{belge_id}/karar:
+    parameters:
+      - { name: belge_id, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [dukkan]
+      summary: Belge incelemesi (inceleme izi birakir)
+      description: |
+        Onaylanan VERGI LEVHASI isletmeyi seviye 2'ye ("Dogrulanmis
+        isletme") tasir — ama yalniz isletme zaten `onayli` ve seviye >= 1
+        ise. `inceleyen_id` ve `incelendi_at` yazilir: bir isletme sonradan
+        sorun cikardiginda "biz bunu onaylarken neye baktik?" sorusunun
+        cevabi olmali.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [karar]
+              properties:
+                karar: { type: string, enum: [onayla, reddet] }
+                not_metni: { type: string, nullable: true, maxLength: 2000 }
+      responses:
+        "200":
+          description: Karar uygulandi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [durum, dogrulama_seviyesi]
+                properties:
+                  durum: { type: string }
+                  dogrulama_seviyesi: { type: integer }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "403":
+          description: Moderator gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "404":
+          description: Bulunamadi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422":
+          description: Gerekce zorunlu
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
   /dukkan/lokasyon/il:
     get:
       tags: [dukkan]
@@ -141,8 +896,15 @@ paths:
                     type: array
                     items:
                       type: object
-                      required: [ad, slug, tip]
+                      required: [id, ad, slug, tip]
                       properties:
+                        id:
+                          type: string
+                          format: uuid
+                          description: |
+                            Hizmet alani ucu (`PUT /dukkan/isletme/{id}/
+                            hizmet-alanlari`) mahalle KIMLIGI ister: mahalle
+                            slug'i yalniz ILCE ICINDE benzersizdir.
                         ad: { type: string }
                         slug: { type: string }
                         tip: { type: string, enum: [mahalle, koy, belde] }

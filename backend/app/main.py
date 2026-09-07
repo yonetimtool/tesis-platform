@@ -17,6 +17,9 @@ from .errors import install_error_handlers
 # (DUKKAN F1) Dukkan MODUL olarak ayni `api` surecinde yasiyor — ayri
 # konteyner degil (gerekce: docs/dukkan/00-mimari.md K1). Kendi ROLUYLE
 # ayri bir engine kullanir ve Yonetiyor tablolarina erisemez.
+from .dukkan import auth_uclar as dukkan_auth_router
+from .dukkan import isletme as dukkan_isletme_router
+from .dukkan import moderasyon as dukkan_moderasyon_router
 from .dukkan import uclar as dukkan_router
 from .routers import activity as activity_router
 from .routers import arama as arama_router
@@ -269,6 +272,9 @@ app.include_router(activity_router.router)
 app.include_router(arama_router.router)
 app.include_router(ekler_router.router)
 app.include_router(dukkan_router.router)
+app.include_router(dukkan_auth_router.router)
+app.include_router(dukkan_isletme_router.router)
+app.include_router(dukkan_moderasyon_router.router)
 
 
 @app.get("/health", tags=["health"])
