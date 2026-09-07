@@ -209,6 +209,14 @@ ModuleCardSpec moduleCardSpec(HomeMenuEntry entry) {
           icon: Icons.handyman_outlined,
           accent: _amber,
           route: AppRoutes.disHizmet);
+    case HomeMenuEntry.yerelIsletmeler:
+      // IKON FARKLI: `disHizmet` el aleti (yoneticinin defteri),
+      // bu ise MAGAZA (kamu pazar yeri). Ayni ikon iki girisi
+      // birbirine karistirirdi.
+      return const ModuleCardSpec(
+          icon: Icons.storefront_outlined,
+          accent: _navy,
+          route: AppRoutes.dukkanArama);
     case HomeMenuEntry.integrations:
       return const ModuleCardSpec(
           icon: Icons.hub_outlined,

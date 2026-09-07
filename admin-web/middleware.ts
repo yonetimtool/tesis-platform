@@ -279,6 +279,7 @@ export const config = {
     // kendisi de kapsanir (diger satirlarla ayni kalip).
     "/kamera-kayitlari/:path*",
     "/dis-hizmetler/:path*",
+    "/yerel-isletmeler/:path*",
     "/yonetim-iletisim/:path*",
   ],
 };

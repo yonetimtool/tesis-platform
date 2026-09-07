@@ -143,6 +143,10 @@ function Icon({ name }: { name: IconName }) {
       return svg(<><path d="M6 9a6 6 0 1 1 12 0c0 4 1.5 5 2 6H4c.5-1 2-2 2-6Z" /><path d="M10 20a2 2 0 0 0 4 0" /></>);
     case "hub":
       return svg(<><circle cx="12" cy="12" r="2.5" /><circle cx="5" cy="6" r="1.6" /><circle cx="19" cy="6" r="1.6" /><circle cx="12" cy="20" r="1.6" /><path d="M6.3 7l4 3.4M17.7 7l-4 3.4M12 14.5V18.4" /></>);
+    case "storefront":
+      // Tente + tezgah: "dukkan". `hub`in dugum-graf gorseliyle
+      // KARISMAZ — ikisi menude yan yana duruyor.
+      return svg(<><path d="M4 9h16l-1.2-3.5A1 1 0 0 0 17.85 5H6.15a1 1 0 0 0-.95.5L4 9Z" /><path d="M5 9v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9" /><path d="M9.5 19v-5h5v5" /></>);
     case "gear":
       return svg(<><circle cx="12" cy="12" r="3" /><path d="M12 3v2.5M12 18.5V21M4.2 7l2.2 1.3M17.6 15.7l2.2 1.3M4.2 17l2.2-1.3M17.6 8.3l2.2-1.3" /></>);
     // (P167 §1.1) KALKAN — GUVENLIK ana basliginin ikonu. Bolum ikonu

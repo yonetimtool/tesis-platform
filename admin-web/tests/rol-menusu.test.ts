@@ -154,6 +154,8 @@ const BIRINCIL_UC: Record<string, string> = {
   // ondan sonra gelir ve ayni rol kapisini kullanir.
   "/kamera-kayitlari": "GET /cameras/{camera_id}/kayit/araliklar",
   "/dis-hizmetler": "GET /external-services",
+  // (DUKKAN F6) Birincil uc Dukkan'in KAMU arama ucu.
+  "/yerel-isletmeler": "GET /dukkan/isletme-ara",
   "/yonetim-iletisim": "GET /yonetici-iletisim",
 };
 

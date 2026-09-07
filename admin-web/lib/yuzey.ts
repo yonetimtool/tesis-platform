@@ -145,6 +145,8 @@ export const TESIS_ROTALARI = [
   // (P213 §6) Gecmis kayit izleme — kamera YONETIMINDEN AYRI sayfa.
   "/kamera-kayitlari",
   "/dis-hizmetler",
+  // (DUKKAN F6) Tesis yuzeyi: yonetici bolgesindeki esnafi gorur.
+  "/yerel-isletmeler",
   "/yonetim-iletisim",
   // (P155 §7) Davet gonderim durumu — tesis yuzeyi (yonetici).
   "/davetler",
@@ -471,6 +473,11 @@ export const ROTA_ROLLERI: Record<string, readonly string[]> = {
   // Guvenilir esnaf: sunucu "herkes gorur/arayabilir" diyor (routers/
   // external_services.py). Yonetici icin ayni sayfa YAZMA formunu da acar.
   "/dis-hizmetler": ["admin", "yonetici"],
+  // (DUKKAN F6) Dukkan arama ucu KIMLIKSIZ; sayfa yalniz yonetim
+  // rollerine aciliyor cunku menu yuzeyi onlarin. Sakin ayni bilgiye
+  // MOBILDEN (Yerel Isletmeler sekmesi) ve dukkan.yonetiyor.com'dan
+  // ulasiyor — bilgi kisitlanmis degil, YUZEY secilmis.
+  "/yerel-isletmeler": ["admin", "yonetici"],
 };
 
 /**

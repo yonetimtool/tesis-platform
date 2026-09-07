@@ -31,6 +31,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .bildirim import bildir
 from .kimlik import DukkanKimlik, moderator_zorunlu
 from .siralama import siralama_puani_hesapla
 from .veritabani import get_dukkan_session
@@ -187,6 +188,31 @@ async def isletme_karar(
                   or None,
         },
     )
+
+    # ISLETME SAHIBINE BILDIRIM. Ret ve aski GEREKCEYLE gidiyor:
+    # "reddedildi" deyip sebebini soylememek, isletmeyi ne
+    # duzeltecegini bilmez halde birakirdi.
+    isl_sahip = (
+        await db.execute(
+            text("SELECT sahip_kullanici_id, ad, slug FROM isletme WHERE id = :i"),
+            {"i": isletme_id},
+        )
+    ).mappings().one()
+    _metin = {
+        "onayla": ("İşletmeniz onaylandı",
+                   "Artık aramalarda görünüyorsunuz."),
+        "reddet": ("Başvurunuz reddedildi", govde.gerekce or ""),
+        "askiya_al": ("İşletmeniz askıya alındı", govde.gerekce or ""),
+        "askiyi_kaldir": ("Askı kaldırıldı",
+                          "İşletmeniz yeniden aramalarda görünüyor."),
+    }[govde.karar]
+    _tip = {"onayla": "isletme_onaylandi", "reddet": "isletme_reddedildi",
+            "askiya_al": "isletme_askiya_alindi",
+            "askiyi_kaldir": "isletme_onaylandi"}[govde.karar]
+    await bildir(db, kullanici_id=isl_sahip["sahip_kullanici_id"], tip=_tip,
+                 baslik=_metin[0], govde=_metin[1],
+                 veri={"isletme_id": str(isletme_id),
+                       "isletme_slug": isl_sahip["slug"]})
 
     # PUAN YENIDEN HESAPLANIR: onay `dogrulama_seviyesi`ni ve
     # `onaylandi_at`i degistiriyor, ikisi de formulun girdisi. Hesabi

@@ -18,6 +18,10 @@ export type IconName =
   | "box" | "home" | "edit" | "pin" | "money" | "chart"
   | "users" | "megaphone" | "chat" | "bell" | "hub" | "gear"
   | "shield" | "doc"
+  // (DUKKAN F6) Dukkan pazar yeri. `hub` DEGIL: o zaten
+  // `dis-hizmetler`in (yoneticinin ozel defteri) ikonu ve iki farkli
+  // kavram ayni ikonla gorununce menude birbirine karisir.
+  | "storefront"
   // (P184-ek §10) Dar kenar cubukta her oge YALNIZ ikonla cizilir; ayni grup
   // icinde iki oge ayni ikonu paylasamaz. Asagidakiler o ayrimi saglamak icin
   // eklendi — hepsi ayni cizim dilinde (stroke, viewBox 24, ~18px).
@@ -229,6 +233,10 @@ const OGELER: readonly MenuOgesi[] = [
   { href: "/assets", anahtar: "kabukDemirbas", icon: "cube", grup: "tesis" },
   { href: "/schematic", anahtar: "kabukSikayetHaritasi", icon: "pin", grup: "tesis" },
   { href: "/dis-hizmetler", anahtar: "kabukDisHizmetler", icon: "hub", grup: "tesis" },
+  // (DUKKAN F6) YEREL ISLETMELER — `dis-hizmetler` ile AYRI ve bilincli:
+  // biri yoneticinin OZEL defteri (tesise bagli), oteki KAMU pazar yeri.
+  // Ayni girise koymak yoneticiden kendi defterini almak olurdu.
+  { href: "/yerel-isletmeler", anahtar: "dukkanYerelIsletmeler", icon: "storefront", grup: "tesis" },
   { href: "/etkinlikler", anahtar: "kabukEtkinlikler", icon: "calendar", grup: "tesis" },
   { href: "/rezervasyonlarim", anahtar: "kabukRezervasyon", icon: "ticket", grup: "tesis" },
   { href: "/rezervasyon-yonetimi", anahtar: "kabukRezervasyonYonetimi", icon: "clock", grup: "tesis" },

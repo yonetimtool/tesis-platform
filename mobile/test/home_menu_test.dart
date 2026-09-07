@@ -20,6 +20,7 @@ void main() {
         HomeMenuEntry.anketler,
         HomeMenuEntry.siteKurallari,
         HomeMenuEntry.disHizmet,
+        HomeMenuEntry.yerelIsletmeler,
         HomeMenuEntry.sikayetHaritasi,
         HomeMenuEntry.complaints,
         HomeMenuEntry.unitAccess,
@@ -55,6 +56,7 @@ void main() {
         HomeMenuEntry.anketler,
         HomeMenuEntry.siteKurallari,
         HomeMenuEntry.disHizmet,
+        HomeMenuEntry.yerelIsletmeler,
         HomeMenuEntry.complaints,
         HomeMenuEntry.visitors,
         HomeMenuEntry.kargo,
@@ -136,6 +138,7 @@ void main() {
           HomeMenuEntry.anketler,
           HomeMenuEntry.siteKurallari,
         HomeMenuEntry.disHizmet,
+        HomeMenuEntry.yerelIsletmeler,
           HomeMenuEntry.sikayetHaritasi,
           HomeMenuEntry.complaints,
           HomeMenuEntry.unitAccess,
@@ -297,6 +300,7 @@ void main() {
         // (duyuru gibi anlik degil, gerektiginde bakilan sey).
         HomeMenuEntry.dokumanlar,
         HomeMenuEntry.disHizmet,
+        HomeMenuEntry.yerelIsletmeler,
         HomeMenuEntry.sikayetHaritasi,
         // (P145) `complaints` KALKTI — izin degil UCUNCU KAPI kalkti.
         HomeMenuEntry.myDues,

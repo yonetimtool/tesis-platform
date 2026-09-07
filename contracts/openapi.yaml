@@ -1838,6 +1838,122 @@ paths:
           description: Moderator gerekli
           content:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  # ================================================================= #
+  # DUKKAN (F6) — BILDIRIM VE CIHAZ
+  # ================================================================= #
+  /dukkan/cihaz:
+    post:
+      tags: [dukkan]
+      summary: Cihaz jetonunu kaydeder/tazeler
+      description: |
+        AYNI JETON BASKA KULLANICIDAYSA DEVRALINIR: cihaz el degistirdiginde
+        (ortak telefon, ikinci el) eski sahibin bildirimleri yeni
+        kullaniciya DUSMEMELI. `fcm_token` UNIQUE oldugu icin bu garanti
+        veritabaninda.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [fcm_token]
+              properties:
+                fcm_token: { type: string, minLength: 10, maxLength: 512 }
+                platform: { type: string, enum: [android, ios, web], nullable: true }
+                dil: { type: string, maxLength: 8 }
+      responses:
+        "200":
+          description: Kaydedildi
+          content:
+            application/json: { schema: { type: object } }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+    delete:
+      tags: [dukkan]
+      summary: Cihaz kaydini siler (cikis)
+      description: |
+        SAYI DONDURUR: sifir ise arayuz "cikis yapildi" derken bildirimlerin
+        DEVAM EDECEGINI bilmeli.
+      parameters:
+        - { name: fcm_token, in: query, required: true, schema: { type: string, minLength: 10 } }
+      responses:
+        "200":
+          description: Silindi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [silinen]
+                properties:
+                  silinen: { type: integer }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/bildirim:
+    get:
+      tags: [dukkan]
+      summary: Kullanicinin bildirimleri
+      description: |
+        METIN DONMUYOR, `tip` + `veri` donuyor: istemci metni KENDI dilinde
+        uretir. Sunucuda uretilmis bir metin, kullanici dilini
+        degistirdiginde ESKI dilde kalirdi (Yonetiyor'da
+        `sakin_bildirimi.py` ayni karari tasiyor).
+
+        `hedef_yol` SUNUCUDA uretilir: mobil ve web AYNI degeri okur. Iki
+        istemcide ayri eslestirme, bildirime tiklayinca YANLIS EKRANA
+        gitmek demekti (P217'de push yonlendirmesi tam bu sinif bir
+        kusurdu).
+
+        `gonderildi_at` yalnizca saglayici KABUL ettiginde dolar; NULL
+        olmasi "gitmedi" demektir ve teshiste GORUNUR — noop saglayicinin
+        sessizce "gonderildi" demesi (P191 tuzagi) boyle onlenir.
+      parameters:
+        - { name: limit, in: query, required: false, schema: { type: integer, minimum: 1, maximum: 200 } }
+      responses:
+        "200":
+          description: Bildirimler
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, okunmamis]
+                properties:
+                  items: { type: array, items: { type: object } }
+                  okunmamis: { type: integer }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/bildirim/okundu:
+    post:
+      tags: [dukkan]
+      summary: Bildirimi/bildirimleri okundu isaretler
+      description: |
+        `bildirim_id` verilmezse HEPSI isaretlenir. Yanit OKUNAN SAYIYI
+        doner: ikinci cagride 0 gelmesi idempotentligi gosterir ve
+        arayuz rozeti buna gore ciziyor.
+
+        Yol kimlik tasiyor: baskasinin bildirimini okundu isaretlemek
+        onun rozetini sifirlardi — sorgu `kullanici_id` ile sinirli.
+      parameters:
+        - { name: bildirim_id, in: query, required: false, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Isaretlendi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [okunan]
+                properties:
+                  okunan: { type: integer }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
   /dukkan/lokasyon/il:
     get:
       tags: [dukkan]

@@ -115,6 +115,19 @@ enum HomeMenuEntry {
   /// yonetici notu. Yonetici ekler/duzenler/siler; yonetici+guvenlik+sakin okur.
   disHizmet,
 
+  /// (DUKKAN F6) YEREL ISLETMELER — dukkan.yonetiyor.com'un mobil yuzu.
+  ///
+  /// `disHizmet` ILE AYRI VE BILINCLI: `dis_hizmet` YONETICININ OZEL
+  /// DEFTERI (tesise bagli, yalniz o tesis gorur, yonetici elle girer);
+  /// Dukkan ise KAMU PAZAR YERI (herkes gorur, isletme kendi kaydolur,
+  /// yorum ve dogrulama tasir). Ayni menu girisinde birlestirmek iki
+  /// farkli kavrami karistirirdi ve yoneticinin kendi defterini
+  /// kaybetmesi demek olurdu (docs/dukkan/00-mimari.md §4).
+  ///
+  /// TUM ROLLERE ACIK: arama ve profil uclari kimliksiz. Sakin de,
+  /// guvenlik de, yonetici de bolgesindeki ustayi arayabilmeli.
+  yerelIsletmeler,
+
   /// Entegrasyonlar (C1b) — dis sistem (megafon/akilli-ev/webhook) konfig +
   /// SSRF-korumali tetik. Mobilde YONETICI yonetir (admin panelden).
   integrations,
@@ -242,6 +255,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.anketler,
         HomeMenuEntry.siteKurallari,
         HomeMenuEntry.disHizmet,
+        HomeMenuEntry.yerelIsletmeler,
         HomeMenuEntry.sikayetHaritasi,
         HomeMenuEntry.complaints,
         HomeMenuEntry.unitAccess,
@@ -292,6 +306,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.anketler,
         HomeMenuEntry.siteKurallari,
         HomeMenuEntry.disHizmet,
+        HomeMenuEntry.yerelIsletmeler,
         HomeMenuEntry.complaints,
         HomeMenuEntry.visitors,
         HomeMenuEntry.kargo,
@@ -317,6 +332,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.anketler,
         HomeMenuEntry.siteKurallari,
         HomeMenuEntry.disHizmet,
+        HomeMenuEntry.yerelIsletmeler,
         HomeMenuEntry.complaints,
         HomeMenuEntry.tasks,
         HomeMenuEntry.assets,
@@ -336,6 +352,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.anketler,
         HomeMenuEntry.siteKurallari,
         HomeMenuEntry.disHizmet,
+        HomeMenuEntry.yerelIsletmeler,
         HomeMenuEntry.sikayetHaritasi,
         HomeMenuEntry.complaints,
         HomeMenuEntry.unitAccess,
@@ -386,6 +403,7 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         // gosterirdi.
         HomeMenuEntry.dokumanlar,
         HomeMenuEntry.disHizmet,
+        HomeMenuEntry.yerelIsletmeler,
         // Sikayet Haritasi: resident KENDI sikayetlerini de HARITA uzerinde
         // gorur (kendi ilettigi daireler isaretli) — ayri "Sikayetlerim"
         // sayfasina yonlendirilmez (D-viz Rev-1.1 fix).
@@ -453,6 +471,7 @@ String moduleBaslik(AppLocalizations l10n, HomeMenuEntry entry) =>
       HomeMenuEntry.siteKurallari => l10n.modulSiteKurallari,
       HomeMenuEntry.dokumanlar => l10n.modulDokumanlar,
       HomeMenuEntry.disHizmet => l10n.modulDisHizmetler,
+      HomeMenuEntry.yerelIsletmeler => l10n.dukkanBaslik,
       HomeMenuEntry.integrations => l10n.modulEntegrasyonlar,
       HomeMenuEntry.kurulum => l10n.kurulumBaslik,
       HomeMenuEntry.taskCategories => l10n.kurulumGorevAlani,
@@ -526,6 +545,7 @@ HomeMenuGrup homeMenuGrubu(HomeMenuEntry e) => switch (e) {
   HomeMenuEntry.siteKurallari ||
   HomeMenuEntry.dokumanlar ||
   HomeMenuEntry.disHizmet ||
+      HomeMenuEntry.yerelIsletmeler ||
   HomeMenuEntry.sikayetHaritasi ||
   HomeMenuEntry.sikayetlerim => HomeMenuGrup.tesis,
   HomeMenuEntry.tahsilat ||

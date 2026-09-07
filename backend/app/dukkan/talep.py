@@ -25,6 +25,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .bildirim import bildir
 from .isletme import _denetim, _sahiplik_dogrula
 from .kimlik import DukkanKimlik, kimlik_zorunlu
 from .veritabani import get_dukkan_session
@@ -469,6 +470,22 @@ async def teklif_ver(
              "WHERE id=:i AND durum='acik'"),
         {"i": talep_id},
     )
+    # TALEP SAHIBINE BILDIRIM. Teklif gelen kullanici bunu ANINDA
+    # bilmeli: teklifi gormeyen musteri baska yerden usta bulur ve
+    # teklif veren isletme bosuna beklemis olur.
+    sahip = (
+        await db.execute(
+            text("SELECT t.kullanici_id, i.ad FROM talep t "
+                 "CROSS JOIN isletme i WHERE t.id = :t AND i.id = :i"),
+            {"t": talep_id, "i": isletme_id},
+        )
+    ).mappings().one()
+    await bildir(
+        db, kullanici_id=sahip["kullanici_id"], tip="teklif_geldi",
+        baslik="Yeni teklif",
+        govde=f"{sahip['ad']} talebine teklif verdi.",
+        veri={"talep_id": str(talep_id), "isletme": sahip["ad"]},
+    )
     await _denetim(db, aktor_id=kimlik.kullanici_id, eylem="teklif_ver",
                    hedef_tip="teklif", hedef_id=yeni["id"], istek=istek)
     return {"id": str(yeni["id"]), "durum": yeni["durum"]}
@@ -575,6 +592,21 @@ async def teklif_kabul(
     await db.execute(
         text("UPDATE talep SET durum='is_verildi', updated_at=now() WHERE id=:t"),
         {"t": tk["talep_id"]},
+    )
+    # ISLETME SAHIBINE BILDIRIM: is verildi ve ADRES ACILDI. Ustanin
+    # bunu gormemesi, kabul edilmis bir isin yapilmamasi demek.
+    isl_sahip = (
+        await db.execute(
+            text("SELECT sahip_kullanici_id, ad FROM isletme WHERE id = :i"),
+            {"i": tk["isletme_id"]},
+        )
+    ).mappings().one()
+    await bildir(
+        db, kullanici_id=isl_sahip["sahip_kullanici_id"], tip="is_verildi",
+        baslik="İş verildi",
+        govde="Teklifiniz kabul edildi. Müşteri bilgileri açıldı.",
+        veri={"isletme_id": str(tk["isletme_id"]),
+              "talep_id": str(tk["talep_id"])},
     )
     await _denetim(db, aktor_id=kimlik.kullanici_id, eylem="teklif_kabul",
                    hedef_tip="is", hedef_id=yeni["id"], istek=istek)
