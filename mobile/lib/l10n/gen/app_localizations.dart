@@ -9760,6 +9760,162 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Çıkarma sebebi (hastalık, izin, acil durum)'**
   String get vardiyaCikarSebep;
+
+  /// No description provided for @dukkanBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yerel işletmeler'**
+  String get dukkanBaslik;
+
+  /// No description provided for @dukkanAra.
+  ///
+  /// In tr, this message translates to:
+  /// **'Usta veya firma ara'**
+  String get dukkanAra;
+
+  /// No description provided for @dukkanHizmetSec.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hizmet seç'**
+  String get dukkanHizmetSec;
+
+  /// No description provided for @dukkanBolgeSec.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bölge seç'**
+  String get dukkanBolgeSec;
+
+  /// No description provided for @dukkanTumIller.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tüm iller'**
+  String get dukkanTumIller;
+
+  /// No description provided for @dukkanTumIlceler.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tüm ilçeler'**
+  String get dukkanTumIlceler;
+
+  /// No description provided for @dukkanSonucYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu aramada işletme bulunamadı.'**
+  String get dukkanSonucYok;
+
+  /// No description provided for @dukkanSonucYokIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bölgeni genişletmeyi deneyebilirsin.'**
+  String get dukkanSonucYokIpucu;
+
+  /// No description provided for @dukkanYukleniyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yükleniyor…'**
+  String get dukkanYukleniyor;
+
+  /// No description provided for @dukkanListeAlinamadi.
+  ///
+  /// In tr, this message translates to:
+  /// **'İşletmeler alınamadı.'**
+  String get dukkanListeAlinamadi;
+
+  /// No description provided for @dukkanTekrarDene.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tekrar dene'**
+  String get dukkanTekrarDene;
+
+  /// No description provided for @dukkanAra2.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ara'**
+  String get dukkanAra2;
+
+  /// No description provided for @dukkanWhatsapp.
+  ///
+  /// In tr, this message translates to:
+  /// **'WhatsApp'**
+  String get dukkanWhatsapp;
+
+  /// No description provided for @dukkanDogrulanmisIsletme.
+  ///
+  /// In tr, this message translates to:
+  /// **'Doğrulanmış işletme'**
+  String get dukkanDogrulanmisIsletme;
+
+  /// No description provided for @dukkanTelefonDogrulandi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Telefon doğrulandı'**
+  String get dukkanTelefonDogrulandi;
+
+  /// No description provided for @dukkanDegerlendirmeYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz değerlendirme yok'**
+  String get dukkanDegerlendirmeYok;
+
+  /// No description provided for @dukkanDegerlendirme.
+  ///
+  /// In tr, this message translates to:
+  /// **'değerlendirme'**
+  String get dukkanDegerlendirme;
+
+  /// No description provided for @dukkanHakkinda.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hakkında'**
+  String get dukkanHakkinda;
+
+  /// No description provided for @dukkanVerdigiHizmetler.
+  ///
+  /// In tr, this message translates to:
+  /// **'Verdiği hizmetler'**
+  String get dukkanVerdigiHizmetler;
+
+  /// No description provided for @dukkanHizmetBolgeleri.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hizmet verdiği bölgeler'**
+  String get dukkanHizmetBolgeleri;
+
+  /// No description provided for @dukkanMahalleSayisi.
+  ///
+  /// In tr, this message translates to:
+  /// **'mahalle'**
+  String get dukkanMahalleSayisi;
+
+  /// No description provided for @dukkanRozetNedir.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu rozet ne anlama geliyor?'**
+  String get dukkanRozetNedir;
+
+  /// No description provided for @dukkanRozetSeviye2.
+  ///
+  /// In tr, this message translates to:
+  /// **'İşletmenin belgesi tarafımızca incelendi. Bu, hizmet kalitesi için bir garanti değildir.'**
+  String get dukkanRozetSeviye2;
+
+  /// No description provided for @dukkanRozetSeviye1.
+  ///
+  /// In tr, this message translates to:
+  /// **'İşletmenin telefon numarası doğrulandı. Bu, numaranın gerçek olduğunu gösterir; işletmenin kimliğini doğrulamaz.'**
+  String get dukkanRozetSeviye1;
+
+  /// No description provided for @dukkanOdemeUyarisi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ödemeyi iş bitmeden yapmayın. Kapora talebi bir uyarı işaretidir.'**
+  String get dukkanOdemeUyarisi;
+
+  /// No description provided for @dukkanIsletmeBulunamadi.
+  ///
+  /// In tr, this message translates to:
+  /// **'İşletme bulunamadı.'**
+  String get dukkanIsletmeBulunamadi;
 }
 
 class _AppLocalizationsDelegate

@@ -5773,4 +5773,85 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get vardiyaCikarSebep => 'Причина снятия (болезнь, отпуск, срочность)';
+
+  @override
+  String get dukkanBaslik => 'Местные компании';
+
+  @override
+  String get dukkanAra => 'Найти мастера или компанию';
+
+  @override
+  String get dukkanHizmetSec => 'Выбрать услугу';
+
+  @override
+  String get dukkanBolgeSec => 'Выбрать район';
+
+  @override
+  String get dukkanTumIller => 'Все провинции';
+
+  @override
+  String get dukkanTumIlceler => 'Все районы';
+
+  @override
+  String get dukkanSonucYok => 'По этому запросу компаний не найдено.';
+
+  @override
+  String get dukkanSonucYokIpucu => 'Попробуйте расширить район поиска.';
+
+  @override
+  String get dukkanYukleniyor => 'Загрузка…';
+
+  @override
+  String get dukkanListeAlinamadi => 'Не удалось загрузить компании.';
+
+  @override
+  String get dukkanTekrarDene => 'Повторить';
+
+  @override
+  String get dukkanAra2 => 'Позвонить';
+
+  @override
+  String get dukkanWhatsapp => 'WhatsApp';
+
+  @override
+  String get dukkanDogrulanmisIsletme => 'Проверенная компания';
+
+  @override
+  String get dukkanTelefonDogrulandi => 'Телефон подтверждён';
+
+  @override
+  String get dukkanDegerlendirmeYok => 'Отзывов пока нет';
+
+  @override
+  String get dukkanDegerlendirme => 'отзывов';
+
+  @override
+  String get dukkanHakkinda => 'О компании';
+
+  @override
+  String get dukkanVerdigiHizmetler => 'Предоставляемые услуги';
+
+  @override
+  String get dukkanHizmetBolgeleri => 'Обслуживаемые районы';
+
+  @override
+  String get dukkanMahalleSayisi => 'кварталов';
+
+  @override
+  String get dukkanRozetNedir => 'Что означает этот значок?';
+
+  @override
+  String get dukkanRozetSeviye2 =>
+      'Документы компании были проверены нами. Это не гарантия качества услуг.';
+
+  @override
+  String get dukkanRozetSeviye1 =>
+      'Номер телефона компании подтверждён. Это означает, что номер реальный; личность компании при этом не проверяется.';
+
+  @override
+  String get dukkanOdemeUyarisi =>
+      'Не платите до завершения работы. Требование предоплаты — тревожный знак.';
+
+  @override
+  String get dukkanIsletmeBulunamadi => 'Компания не найдена.';
 }

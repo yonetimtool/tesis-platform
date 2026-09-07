@@ -5511,4 +5511,85 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get vardiyaCikarSebep => 'Çıkarma sebebi (hastalık, izin, acil durum)';
+
+  @override
+  String get dukkanBaslik => 'Yerel işletmeler';
+
+  @override
+  String get dukkanAra => 'Usta veya firma ara';
+
+  @override
+  String get dukkanHizmetSec => 'Hizmet seç';
+
+  @override
+  String get dukkanBolgeSec => 'Bölge seç';
+
+  @override
+  String get dukkanTumIller => 'Tüm iller';
+
+  @override
+  String get dukkanTumIlceler => 'Tüm ilçeler';
+
+  @override
+  String get dukkanSonucYok => 'Bu aramada işletme bulunamadı.';
+
+  @override
+  String get dukkanSonucYokIpucu => 'Bölgeni genişletmeyi deneyebilirsin.';
+
+  @override
+  String get dukkanYukleniyor => 'Yükleniyor…';
+
+  @override
+  String get dukkanListeAlinamadi => 'İşletmeler alınamadı.';
+
+  @override
+  String get dukkanTekrarDene => 'Tekrar dene';
+
+  @override
+  String get dukkanAra2 => 'Ara';
+
+  @override
+  String get dukkanWhatsapp => 'WhatsApp';
+
+  @override
+  String get dukkanDogrulanmisIsletme => 'Doğrulanmış işletme';
+
+  @override
+  String get dukkanTelefonDogrulandi => 'Telefon doğrulandı';
+
+  @override
+  String get dukkanDegerlendirmeYok => 'Henüz değerlendirme yok';
+
+  @override
+  String get dukkanDegerlendirme => 'değerlendirme';
+
+  @override
+  String get dukkanHakkinda => 'Hakkında';
+
+  @override
+  String get dukkanVerdigiHizmetler => 'Verdiği hizmetler';
+
+  @override
+  String get dukkanHizmetBolgeleri => 'Hizmet verdiği bölgeler';
+
+  @override
+  String get dukkanMahalleSayisi => 'mahalle';
+
+  @override
+  String get dukkanRozetNedir => 'Bu rozet ne anlama geliyor?';
+
+  @override
+  String get dukkanRozetSeviye2 =>
+      'İşletmenin belgesi tarafımızca incelendi. Bu, hizmet kalitesi için bir garanti değildir.';
+
+  @override
+  String get dukkanRozetSeviye1 =>
+      'İşletmenin telefon numarası doğrulandı. Bu, numaranın gerçek olduğunu gösterir; işletmenin kimliğini doğrulamaz.';
+
+  @override
+  String get dukkanOdemeUyarisi =>
+      'Ödemeyi iş bitmeden yapmayın. Kapora talebi bir uyarı işaretidir.';
+
+  @override
+  String get dukkanIsletmeBulunamadi => 'İşletme bulunamadı.';
 }

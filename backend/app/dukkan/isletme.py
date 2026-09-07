@@ -27,6 +27,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from .kimlik import DukkanKimlik, kimlik_zorunlu
 from .lokasyon_yukle import slugla
+from .siralama import siralama_puani_hesapla
 from .veritabani import get_dukkan_session
 
 router = APIRouter(prefix="/dukkan", tags=["dukkan"])
@@ -344,6 +345,8 @@ async def isletme_guncelle(
         text(f"UPDATE isletme SET {', '.join(set_parcalari)} WHERE id = :__id"),
         {**alanlar, "__id": isletme_id},
     )
+    # Profil eksiksizligi formulun bileseni (`siralama.py` §3).
+    await siralama_puani_hesapla(db, isletme_id)
     await _denetim(db, aktor_id=kimlik.kullanici_id, eylem="isletme_guncelle",
                    hedef_tip="isletme", hedef_id=isletme_id, istek=istek)
     return {
@@ -444,6 +447,8 @@ async def hizmet_alanlarini_ayarla(
                  "VALUES (:i, :m)"),
             {"i": isletme_id, "m": mid},
         )
+    # Hizmet alani genisligi formulun bileseni (`siralama.py` §4).
+    await siralama_puani_hesapla(db, isletme_id)
     return {"eklenen": len(gecerli)}
 
 

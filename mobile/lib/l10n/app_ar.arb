@@ -1747,7 +1747,11 @@
   "vardiyaCakisanHaric": "الإضافة مع استثناء التعارضات",
   "vardiyaCakisanGunler": "توجد تعارضات في {n} يومًا",
   "@vardiyaCakisanGunler": {
-    "placeholders": { "n": { "type": "int" } }
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
   },
   "finansTahsilatBaslik": "التحصيل",
   "finansKisiGerekli": "اختر شخصًا.",
@@ -1762,7 +1766,11 @@
   "finansMakbuzNotu": "يتم إنشاء رقم الإيصال وإشعار الساكن على الخادم — كما في الويب.",
   "finansGecikmeGun": "متأخر {n} يومًا",
   "@finansGecikmeGun": {
-    "placeholders": { "n": { "type": "int" } }
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
   },
   "finansGiderBaslik": "تسجيل مصروف",
   "finansGiderKaydedildi": "تم تسجيل المصروف.",
@@ -1777,19 +1785,38 @@
   "finansOranYok": "لا توجد استحقاقات لهذه الفترة.",
   "finansOranDegeri": "{oran}٪ · {donem}",
   "@finansOranDegeri": {
-    "placeholders": { "oran": { "type": "int" }, "donem": { "type": "String" } }
+    "placeholders": {
+      "oran": {
+        "type": "int"
+      },
+      "donem": {
+        "type": "String"
+      }
+    }
   },
   "finansKovaDaire": "{n} وحدة",
   "@finansKovaDaire": {
-    "placeholders": { "n": { "type": "int" } }
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
   },
   "finansHatirlat": "تذكير {n} أشخاص",
   "@finansHatirlat": {
-    "placeholders": { "n": { "type": "int" } }
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
   },
   "finansHatirlatmaGonderildi": "تم إرسال {n} تذكيرًا.",
   "@finansHatirlatmaGonderildi": {
-    "placeholders": { "n": { "type": "int" } }
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
   },
   "personelEposta": "البريد الإلكتروني",
   "personelEpostaYardim": "تُرسل الدعوة ورابط كلمة المرور إلى هذا العنوان.",
@@ -1810,23 +1837,65 @@
   "sayacDegerYok": "أدخل قراءة لوحدة واحدة على الأقل.",
   "sayacDegerGecersiz": "القيمة المُدخلة لـ {daire} غير صالحة.",
   "@sayacDegerGecersiz": {
-    "placeholders": { "daire": { "type": "String" } }
+    "placeholders": {
+      "daire": {
+        "type": "String"
+      }
+    }
   },
   "sayacGeriSayiyor": "{daire}: لا يمكن أن تكون القراءة الجديدة أقل من السابقة.",
   "@sayacGeriSayiyor": {
-    "placeholders": { "daire": { "type": "String" } }
+    "placeholders": {
+      "daire": {
+        "type": "String"
+      }
+    }
   },
   "sayacOncekiOkuma": "السابقة: {deger}",
   "@sayacOncekiOkuma": {
-    "placeholders": { "deger": { "type": "String" } }
+    "placeholders": {
+      "deger": {
+        "type": "String"
+      }
+    }
   },
   "sayacBorclandirildi": "تم إنشاء الاستحقاقات. الوحدات المتخطاة: {n}",
   "@sayacBorclandirildi": {
-    "placeholders": { "n": { "type": "int" } }
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
   },
   "ayarlarBildirimSesi": "التنبيهات الصوتية",
   "ayarlarBildirimSesiAciklama": "تصل إشعارات الشكاوى والورديات بصوت.",
   "ayarlarBildirimSesiUyari": "أوقفت التنبيهات الصوتية: قد لا تسمع تذكيرات الورديات وإشعارات الشكاوى.",
   "vardiyaCikar": "إزالة",
-  "vardiyaCikarSebep": "سبب الإزالة (مرض، إجازة، طارئ)"
+  "vardiyaCikarSebep": "سبب الإزالة (مرض، إجازة، طارئ)",
+  "dukkanBaslik": "الأعمال المحلية",
+  "dukkanAra": "ابحث عن حرفي أو شركة",
+  "dukkanHizmetSec": "اختر الخدمة",
+  "dukkanBolgeSec": "اختر المنطقة",
+  "dukkanTumIller": "كل المحافظات",
+  "dukkanTumIlceler": "كل الأقضية",
+  "dukkanSonucYok": "لم يتم العثور على أعمال لهذا البحث.",
+  "dukkanSonucYokIpucu": "جرّب توسيع نطاق منطقتك.",
+  "dukkanYukleniyor": "جارٍ التحميل…",
+  "dukkanListeAlinamadi": "تعذّر تحميل الأعمال.",
+  "dukkanTekrarDene": "أعد المحاولة",
+  "dukkanAra2": "اتصل",
+  "dukkanWhatsapp": "واتساب",
+  "dukkanDogrulanmisIsletme": "عمل موثّق",
+  "dukkanTelefonDogrulandi": "تم التحقق من الهاتف",
+  "dukkanDegerlendirmeYok": "لا توجد تقييمات بعد",
+  "dukkanDegerlendirme": "تقييمات",
+  "dukkanHakkinda": "نبذة",
+  "dukkanVerdigiHizmetler": "الخدمات المقدمة",
+  "dukkanHizmetBolgeleri": "المناطق المخدومة",
+  "dukkanMahalleSayisi": "أحياء",
+  "dukkanRozetNedir": "ماذا تعني هذه الشارة؟",
+  "dukkanRozetSeviye2": "تمت مراجعة مستندات العمل من قِبلنا. هذا ليس ضماناً لجودة الخدمة.",
+  "dukkanRozetSeviye1": "تم التحقق من رقم هاتف العمل. هذا يبيّن أن الرقم حقيقي؛ ولا يتحقق من هوية العمل.",
+  "dukkanOdemeUyarisi": "لا تدفع قبل إنجاز العمل. طلب العربون علامة تحذير.",
+  "dukkanIsletmeBulunamadi": "لم يتم العثور على العمل."
 }

@@ -5700,4 +5700,85 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get vardiyaCikarSebep =>
       'Reason for removal (illness, leave, emergency)';
+
+  @override
+  String get dukkanBaslik => 'Local businesses';
+
+  @override
+  String get dukkanAra => 'Search for a tradesperson or company';
+
+  @override
+  String get dukkanHizmetSec => 'Select service';
+
+  @override
+  String get dukkanBolgeSec => 'Select area';
+
+  @override
+  String get dukkanTumIller => 'All provinces';
+
+  @override
+  String get dukkanTumIlceler => 'All districts';
+
+  @override
+  String get dukkanSonucYok => 'No businesses found for this search.';
+
+  @override
+  String get dukkanSonucYokIpucu => 'Try widening your area.';
+
+  @override
+  String get dukkanYukleniyor => 'Loading…';
+
+  @override
+  String get dukkanListeAlinamadi => 'Could not load businesses.';
+
+  @override
+  String get dukkanTekrarDene => 'Try again';
+
+  @override
+  String get dukkanAra2 => 'Call';
+
+  @override
+  String get dukkanWhatsapp => 'WhatsApp';
+
+  @override
+  String get dukkanDogrulanmisIsletme => 'Verified business';
+
+  @override
+  String get dukkanTelefonDogrulandi => 'Phone verified';
+
+  @override
+  String get dukkanDegerlendirmeYok => 'No reviews yet';
+
+  @override
+  String get dukkanDegerlendirme => 'reviews';
+
+  @override
+  String get dukkanHakkinda => 'About';
+
+  @override
+  String get dukkanVerdigiHizmetler => 'Services offered';
+
+  @override
+  String get dukkanHizmetBolgeleri => 'Areas served';
+
+  @override
+  String get dukkanMahalleSayisi => 'neighbourhoods';
+
+  @override
+  String get dukkanRozetNedir => 'What does this badge mean?';
+
+  @override
+  String get dukkanRozetSeviye2 =>
+      'The business\'s documents were reviewed by us. This is not a guarantee of service quality.';
+
+  @override
+  String get dukkanRozetSeviye1 =>
+      'The business\'s phone number was verified. This shows the number is real; it does not verify the business\'s identity.';
+
+  @override
+  String get dukkanOdemeUyarisi =>
+      'Do not pay before the job is done. A deposit request is a warning sign.';
+
+  @override
+  String get dukkanIsletmeBulunamadi => 'Business not found.';
 }

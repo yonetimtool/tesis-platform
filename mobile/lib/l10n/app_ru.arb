@@ -1747,7 +1747,11 @@
   "vardiyaCakisanHaric": "Добавить без конфликтных дней",
   "vardiyaCakisanGunler": "Конфликты в {n} днях",
   "@vardiyaCakisanGunler": {
-    "placeholders": { "n": { "type": "int" } }
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
   },
   "finansTahsilatBaslik": "Приём оплаты",
   "finansKisiGerekli": "Выберите человека.",
@@ -1762,7 +1766,11 @@
   "finansMakbuzNotu": "Номер квитанции и уведомление жильцу формируются на сервере — как и в веб-версии.",
   "finansGecikmeGun": "просрочка {n} дн.",
   "@finansGecikmeGun": {
-    "placeholders": { "n": { "type": "int" } }
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
   },
   "finansGiderBaslik": "Запись расхода",
   "finansGiderKaydedildi": "Расход записан.",
@@ -1777,19 +1785,38 @@
   "finansOranYok": "За этот период начислений нет.",
   "finansOranDegeri": "{oran}% · {donem}",
   "@finansOranDegeri": {
-    "placeholders": { "oran": { "type": "int" }, "donem": { "type": "String" } }
+    "placeholders": {
+      "oran": {
+        "type": "int"
+      },
+      "donem": {
+        "type": "String"
+      }
+    }
   },
   "finansKovaDaire": "{n} помещ.",
   "@finansKovaDaire": {
-    "placeholders": { "n": { "type": "int" } }
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
   },
   "finansHatirlat": "Напомнить {n}",
   "@finansHatirlat": {
-    "placeholders": { "n": { "type": "int" } }
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
   },
   "finansHatirlatmaGonderildi": "Отправлено напоминаний: {n}.",
   "@finansHatirlatmaGonderildi": {
-    "placeholders": { "n": { "type": "int" } }
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
   },
   "personelEposta": "Эл. почта",
   "personelEpostaYardim": "Приглашение и ссылка для пароля отправляются на этот адрес.",
@@ -1810,23 +1837,65 @@
   "sayacDegerYok": "Введите показание хотя бы для одного помещения.",
   "sayacDegerGecersiz": "Значение для {daire} некорректно.",
   "@sayacDegerGecersiz": {
-    "placeholders": { "daire": { "type": "String" } }
+    "placeholders": {
+      "daire": {
+        "type": "String"
+      }
+    }
   },
   "sayacGeriSayiyor": "{daire}: новое показание не может быть меньше предыдущего.",
   "@sayacGeriSayiyor": {
-    "placeholders": { "daire": { "type": "String" } }
+    "placeholders": {
+      "daire": {
+        "type": "String"
+      }
+    }
   },
   "sayacOncekiOkuma": "Предыдущее: {deger}",
   "@sayacOncekiOkuma": {
-    "placeholders": { "deger": { "type": "String" } }
+    "placeholders": {
+      "deger": {
+        "type": "String"
+      }
+    }
   },
   "sayacBorclandirildi": "Начисление выполнено. Пропущено помещений: {n}",
   "@sayacBorclandirildi": {
-    "placeholders": { "n": { "type": "int" } }
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
   },
   "ayarlarBildirimSesi": "Звуковые уведомления",
   "ayarlarBildirimSesiAciklama": "Уведомления о жалобах и сменах приходят со звуком.",
   "ayarlarBildirimSesiUyari": "Звук отключён: вы можете не услышать напоминания о смене и уведомления о жалобах.",
   "vardiyaCikar": "Убрать",
-  "vardiyaCikarSebep": "Причина снятия (болезнь, отпуск, срочность)"
+  "vardiyaCikarSebep": "Причина снятия (болезнь, отпуск, срочность)",
+  "dukkanBaslik": "Местные компании",
+  "dukkanAra": "Найти мастера или компанию",
+  "dukkanHizmetSec": "Выбрать услугу",
+  "dukkanBolgeSec": "Выбрать район",
+  "dukkanTumIller": "Все провинции",
+  "dukkanTumIlceler": "Все районы",
+  "dukkanSonucYok": "По этому запросу компаний не найдено.",
+  "dukkanSonucYokIpucu": "Попробуйте расширить район поиска.",
+  "dukkanYukleniyor": "Загрузка…",
+  "dukkanListeAlinamadi": "Не удалось загрузить компании.",
+  "dukkanTekrarDene": "Повторить",
+  "dukkanAra2": "Позвонить",
+  "dukkanWhatsapp": "WhatsApp",
+  "dukkanDogrulanmisIsletme": "Проверенная компания",
+  "dukkanTelefonDogrulandi": "Телефон подтверждён",
+  "dukkanDegerlendirmeYok": "Отзывов пока нет",
+  "dukkanDegerlendirme": "отзывов",
+  "dukkanHakkinda": "О компании",
+  "dukkanVerdigiHizmetler": "Предоставляемые услуги",
+  "dukkanHizmetBolgeleri": "Обслуживаемые районы",
+  "dukkanMahalleSayisi": "кварталов",
+  "dukkanRozetNedir": "Что означает этот значок?",
+  "dukkanRozetSeviye2": "Документы компании были проверены нами. Это не гарантия качества услуг.",
+  "dukkanRozetSeviye1": "Номер телефона компании подтверждён. Это означает, что номер реальный; личность компании при этом не проверяется.",
+  "dukkanOdemeUyarisi": "Не платите до завершения работы. Требование предоплаты — тревожный знак.",
+  "dukkanIsletmeBulunamadi": "Компания не найдена."
 }

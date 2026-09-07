@@ -5692,4 +5692,85 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get vardiyaCikarSebep =>
       'Grund für die Entfernung (Krankheit, Urlaub, Notfall)';
+
+  @override
+  String get dukkanBaslik => 'Lokale Betriebe';
+
+  @override
+  String get dukkanAra => 'Handwerker oder Firma suchen';
+
+  @override
+  String get dukkanHizmetSec => 'Leistung wählen';
+
+  @override
+  String get dukkanBolgeSec => 'Gebiet wählen';
+
+  @override
+  String get dukkanTumIller => 'Alle Provinzen';
+
+  @override
+  String get dukkanTumIlceler => 'Alle Bezirke';
+
+  @override
+  String get dukkanSonucYok => 'Keine Betriebe für diese Suche gefunden.';
+
+  @override
+  String get dukkanSonucYokIpucu => 'Versuchen Sie, Ihr Gebiet zu erweitern.';
+
+  @override
+  String get dukkanYukleniyor => 'Wird geladen…';
+
+  @override
+  String get dukkanListeAlinamadi => 'Betriebe konnten nicht geladen werden.';
+
+  @override
+  String get dukkanTekrarDene => 'Erneut versuchen';
+
+  @override
+  String get dukkanAra2 => 'Anrufen';
+
+  @override
+  String get dukkanWhatsapp => 'WhatsApp';
+
+  @override
+  String get dukkanDogrulanmisIsletme => 'Verifizierter Betrieb';
+
+  @override
+  String get dukkanTelefonDogrulandi => 'Telefon verifiziert';
+
+  @override
+  String get dukkanDegerlendirmeYok => 'Noch keine Bewertungen';
+
+  @override
+  String get dukkanDegerlendirme => 'Bewertungen';
+
+  @override
+  String get dukkanHakkinda => 'Über uns';
+
+  @override
+  String get dukkanVerdigiHizmetler => 'Angebotene Leistungen';
+
+  @override
+  String get dukkanHizmetBolgeleri => 'Einsatzgebiete';
+
+  @override
+  String get dukkanMahalleSayisi => 'Stadtteile';
+
+  @override
+  String get dukkanRozetNedir => 'Was bedeutet dieses Abzeichen?';
+
+  @override
+  String get dukkanRozetSeviye2 =>
+      'Die Dokumente des Betriebs wurden von uns geprüft. Dies ist keine Garantie für die Servicequalität.';
+
+  @override
+  String get dukkanRozetSeviye1 =>
+      'Die Telefonnummer des Betriebs wurde verifiziert. Das zeigt, dass die Nummer echt ist; die Identität des Betriebs wird damit nicht bestätigt.';
+
+  @override
+  String get dukkanOdemeUyarisi =>
+      'Zahlen Sie nicht, bevor die Arbeit erledigt ist. Eine Anzahlungsforderung ist ein Warnsignal.';
+
+  @override
+  String get dukkanIsletmeBulunamadi => 'Betrieb nicht gefunden.';
 }

@@ -5671,4 +5671,85 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get vardiyaCikarSebep =>
       'Motivo de la retirada (enfermedad, permiso, emergencia)';
+
+  @override
+  String get dukkanBaslik => 'Negocios locales';
+
+  @override
+  String get dukkanAra => 'Buscar un profesional o empresa';
+
+  @override
+  String get dukkanHizmetSec => 'Elegir servicio';
+
+  @override
+  String get dukkanBolgeSec => 'Elegir zona';
+
+  @override
+  String get dukkanTumIller => 'Todas las provincias';
+
+  @override
+  String get dukkanTumIlceler => 'Todos los distritos';
+
+  @override
+  String get dukkanSonucYok => 'No se encontraron negocios para esta búsqueda.';
+
+  @override
+  String get dukkanSonucYokIpucu => 'Prueba a ampliar tu zona.';
+
+  @override
+  String get dukkanYukleniyor => 'Cargando…';
+
+  @override
+  String get dukkanListeAlinamadi => 'No se pudieron cargar los negocios.';
+
+  @override
+  String get dukkanTekrarDene => 'Reintentar';
+
+  @override
+  String get dukkanAra2 => 'Llamar';
+
+  @override
+  String get dukkanWhatsapp => 'WhatsApp';
+
+  @override
+  String get dukkanDogrulanmisIsletme => 'Negocio verificado';
+
+  @override
+  String get dukkanTelefonDogrulandi => 'Teléfono verificado';
+
+  @override
+  String get dukkanDegerlendirmeYok => 'Aún no hay valoraciones';
+
+  @override
+  String get dukkanDegerlendirme => 'valoraciones';
+
+  @override
+  String get dukkanHakkinda => 'Acerca de';
+
+  @override
+  String get dukkanVerdigiHizmetler => 'Servicios ofrecidos';
+
+  @override
+  String get dukkanHizmetBolgeleri => 'Zonas atendidas';
+
+  @override
+  String get dukkanMahalleSayisi => 'barrios';
+
+  @override
+  String get dukkanRozetNedir => '¿Qué significa esta insignia?';
+
+  @override
+  String get dukkanRozetSeviye2 =>
+      'Los documentos del negocio fueron revisados por nosotros. Esto no es una garantía de calidad del servicio.';
+
+  @override
+  String get dukkanRozetSeviye1 =>
+      'El número de teléfono del negocio fue verificado. Esto muestra que el número es real; no verifica la identidad del negocio.';
+
+  @override
+  String get dukkanOdemeUyarisi =>
+      'No pagues antes de que el trabajo esté terminado. Pedir un anticipo es una señal de alerta.';
+
+  @override
+  String get dukkanIsletmeBulunamadi => 'Negocio no encontrado.';
 }

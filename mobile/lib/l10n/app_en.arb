@@ -1747,7 +1747,11 @@
   "vardiyaCakisanHaric": "Add, skipping conflicts",
   "vardiyaCakisanGunler": "{n} days have conflicts",
   "@vardiyaCakisanGunler": {
-    "placeholders": { "n": { "type": "int" } }
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
   },
   "finansTahsilatBaslik": "Collection",
   "finansKisiGerekli": "Select a person.",
@@ -1762,7 +1766,11 @@
   "finansMakbuzNotu": "The receipt number and the resident notification are produced on the server — same as on the web.",
   "finansGecikmeGun": "{n} days overdue",
   "@finansGecikmeGun": {
-    "placeholders": { "n": { "type": "int" } }
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
   },
   "finansGiderBaslik": "Expense entry",
   "finansGiderKaydedildi": "Expense recorded.",
@@ -1777,19 +1785,38 @@
   "finansOranYok": "No assessments for this period.",
   "finansOranDegeri": "{oran}% · {donem}",
   "@finansOranDegeri": {
-    "placeholders": { "oran": { "type": "int" }, "donem": { "type": "String" } }
+    "placeholders": {
+      "oran": {
+        "type": "int"
+      },
+      "donem": {
+        "type": "String"
+      }
+    }
   },
   "finansKovaDaire": "{n} units",
   "@finansKovaDaire": {
-    "placeholders": { "n": { "type": "int" } }
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
   },
   "finansHatirlat": "Remind {n} people",
   "@finansHatirlat": {
-    "placeholders": { "n": { "type": "int" } }
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
   },
   "finansHatirlatmaGonderildi": "{n} reminders sent.",
   "@finansHatirlatmaGonderildi": {
-    "placeholders": { "n": { "type": "int" } }
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
   },
   "personelEposta": "E-mail",
   "personelEpostaYardim": "The invitation and password link are sent to this address.",
@@ -1810,23 +1837,65 @@
   "sayacDegerYok": "Enter a reading for at least one unit.",
   "sayacDegerGecersiz": "The value entered for {daire} is invalid.",
   "@sayacDegerGecersiz": {
-    "placeholders": { "daire": { "type": "String" } }
+    "placeholders": {
+      "daire": {
+        "type": "String"
+      }
+    }
   },
   "sayacGeriSayiyor": "{daire}: the new reading cannot be lower than the previous one.",
   "@sayacGeriSayiyor": {
-    "placeholders": { "daire": { "type": "String" } }
+    "placeholders": {
+      "daire": {
+        "type": "String"
+      }
+    }
   },
   "sayacOncekiOkuma": "Previous: {deger}",
   "@sayacOncekiOkuma": {
-    "placeholders": { "deger": { "type": "String" } }
+    "placeholders": {
+      "deger": {
+        "type": "String"
+      }
+    }
   },
   "sayacBorclandirildi": "Charges created. Units skipped: {n}",
   "@sayacBorclandirildi": {
-    "placeholders": { "n": { "type": "int" } }
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
   },
   "ayarlarBildirimSesi": "Sound alerts",
   "ayarlarBildirimSesiAciklama": "Complaint and shift notifications arrive with sound.",
   "ayarlarBildirimSesiUyari": "Sound alerts are off: you may not hear shift reminders and complaint notifications.",
   "vardiyaCikar": "Remove",
-  "vardiyaCikarSebep": "Reason for removal (illness, leave, emergency)"
+  "vardiyaCikarSebep": "Reason for removal (illness, leave, emergency)",
+  "dukkanBaslik": "Local businesses",
+  "dukkanAra": "Search for a tradesperson or company",
+  "dukkanHizmetSec": "Select service",
+  "dukkanBolgeSec": "Select area",
+  "dukkanTumIller": "All provinces",
+  "dukkanTumIlceler": "All districts",
+  "dukkanSonucYok": "No businesses found for this search.",
+  "dukkanSonucYokIpucu": "Try widening your area.",
+  "dukkanYukleniyor": "Loading…",
+  "dukkanListeAlinamadi": "Could not load businesses.",
+  "dukkanTekrarDene": "Try again",
+  "dukkanAra2": "Call",
+  "dukkanWhatsapp": "WhatsApp",
+  "dukkanDogrulanmisIsletme": "Verified business",
+  "dukkanTelefonDogrulandi": "Phone verified",
+  "dukkanDegerlendirmeYok": "No reviews yet",
+  "dukkanDegerlendirme": "reviews",
+  "dukkanHakkinda": "About",
+  "dukkanVerdigiHizmetler": "Services offered",
+  "dukkanHizmetBolgeleri": "Areas served",
+  "dukkanMahalleSayisi": "neighbourhoods",
+  "dukkanRozetNedir": "What does this badge mean?",
+  "dukkanRozetSeviye2": "The business's documents were reviewed by us. This is not a guarantee of service quality.",
+  "dukkanRozetSeviye1": "The business's phone number was verified. This shows the number is real; it does not verify the business's identity.",
+  "dukkanOdemeUyarisi": "Do not pay before the job is done. A deposit request is a warning sign.",
+  "dukkanIsletmeBulunamadi": "Business not found."
 }

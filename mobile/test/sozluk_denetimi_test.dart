@@ -38,10 +38,15 @@ const _tumKopyaIstisnalari = {
   'entegTest', 'entegTestBasarisiz', 'entegUrl', 'gorevKamera',
   'kabukProfil', 'nfcUidSatir', 'otoparkDoluKapasite', 'profilTelefon',
   'rezSlotAralik', 'seffafNet', 'vardiyaSaatAraligi',
+  'dukkanWhatsapp',
   // P8: gercek KOGNAT'lar — ceviri unutulmasi degil.
   //   Kamera: tr == de ("Kamera"), fr "Caméra", ru "Камера" AYRI.
   //   Manuel: tr == fr ("Manuel"), de "Manuell", es "Manual" AYRI.
   'ihlalKaynakKamera', 'ihlalKaynakManuel',
+  // (DUKKAN F3) "WhatsApp" bir MARKA ADIDIR ve latin alfabesi kullanan
+  // dillerde AYNI yazilir; cevirmek markayi tanınmaz kilardi. Arapca
+  // karsiligi ZATEN farkli ("واتساب") — yani ceviri unutulmasi degil,
+  // gercek bir kognat.
   // (P167 ek) "KB" bir BIRIM KISALTMASIDIR (kilobayt) ve tr/en/ar/ru/de/es
   // hepsinde ayni yazilir; yalniz Fransizca "Ko" kullanir ve o ZATEN
   // farkli. Cevirmek, dosya boyutunu tanimadigi bir birimle gostermek

@@ -5771,4 +5771,85 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get vardiyaCikarSebep => 'سبب الإزالة (مرض، إجازة، طارئ)';
+
+  @override
+  String get dukkanBaslik => 'الأعمال المحلية';
+
+  @override
+  String get dukkanAra => 'ابحث عن حرفي أو شركة';
+
+  @override
+  String get dukkanHizmetSec => 'اختر الخدمة';
+
+  @override
+  String get dukkanBolgeSec => 'اختر المنطقة';
+
+  @override
+  String get dukkanTumIller => 'كل المحافظات';
+
+  @override
+  String get dukkanTumIlceler => 'كل الأقضية';
+
+  @override
+  String get dukkanSonucYok => 'لم يتم العثور على أعمال لهذا البحث.';
+
+  @override
+  String get dukkanSonucYokIpucu => 'جرّب توسيع نطاق منطقتك.';
+
+  @override
+  String get dukkanYukleniyor => 'جارٍ التحميل…';
+
+  @override
+  String get dukkanListeAlinamadi => 'تعذّر تحميل الأعمال.';
+
+  @override
+  String get dukkanTekrarDene => 'أعد المحاولة';
+
+  @override
+  String get dukkanAra2 => 'اتصل';
+
+  @override
+  String get dukkanWhatsapp => 'واتساب';
+
+  @override
+  String get dukkanDogrulanmisIsletme => 'عمل موثّق';
+
+  @override
+  String get dukkanTelefonDogrulandi => 'تم التحقق من الهاتف';
+
+  @override
+  String get dukkanDegerlendirmeYok => 'لا توجد تقييمات بعد';
+
+  @override
+  String get dukkanDegerlendirme => 'تقييمات';
+
+  @override
+  String get dukkanHakkinda => 'نبذة';
+
+  @override
+  String get dukkanVerdigiHizmetler => 'الخدمات المقدمة';
+
+  @override
+  String get dukkanHizmetBolgeleri => 'المناطق المخدومة';
+
+  @override
+  String get dukkanMahalleSayisi => 'أحياء';
+
+  @override
+  String get dukkanRozetNedir => 'ماذا تعني هذه الشارة؟';
+
+  @override
+  String get dukkanRozetSeviye2 =>
+      'تمت مراجعة مستندات العمل من قِبلنا. هذا ليس ضماناً لجودة الخدمة.';
+
+  @override
+  String get dukkanRozetSeviye1 =>
+      'تم التحقق من رقم هاتف العمل. هذا يبيّن أن الرقم حقيقي؛ ولا يتحقق من هوية العمل.';
+
+  @override
+  String get dukkanOdemeUyarisi =>
+      'لا تدفع قبل إنجاز العمل. طلب العربون علامة تحذير.';
+
+  @override
+  String get dukkanIsletmeBulunamadi => 'لم يتم العثور على العمل.';
 }

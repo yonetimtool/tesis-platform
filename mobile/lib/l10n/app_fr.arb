@@ -1747,7 +1747,11 @@
   "vardiyaCakisanHaric": "Ajouter en excluant les conflits",
   "vardiyaCakisanGunler": "Conflits sur {n} jours",
   "@vardiyaCakisanGunler": {
-    "placeholders": { "n": { "type": "int" } }
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
   },
   "finansTahsilatBaslik": "Encaissement",
   "finansKisiGerekli": "Sélectionnez une personne.",
@@ -1762,7 +1766,11 @@
   "finansMakbuzNotu": "Le numéro de reçu et la notification au résident sont générés sur le serveur — comme sur le web.",
   "finansGecikmeGun": "{n} jours de retard",
   "@finansGecikmeGun": {
-    "placeholders": { "n": { "type": "int" } }
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
   },
   "finansGiderBaslik": "Saisie de dépense",
   "finansGiderKaydedildi": "Dépense enregistrée.",
@@ -1777,19 +1785,38 @@
   "finansOranYok": "Aucune imputation pour cette période.",
   "finansOranDegeri": "{oran} % · {donem}",
   "@finansOranDegeri": {
-    "placeholders": { "oran": { "type": "int" }, "donem": { "type": "String" } }
+    "placeholders": {
+      "oran": {
+        "type": "int"
+      },
+      "donem": {
+        "type": "String"
+      }
+    }
   },
   "finansKovaDaire": "{n} lots",
   "@finansKovaDaire": {
-    "placeholders": { "n": { "type": "int" } }
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
   },
   "finansHatirlat": "Rappeler à {n} personnes",
   "@finansHatirlat": {
-    "placeholders": { "n": { "type": "int" } }
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
   },
   "finansHatirlatmaGonderildi": "{n} rappels envoyés.",
   "@finansHatirlatmaGonderildi": {
-    "placeholders": { "n": { "type": "int" } }
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
   },
   "personelEposta": "E-mail",
   "personelEpostaYardim": "L'invitation et le lien de mot de passe sont envoyés à cette adresse.",
@@ -1810,23 +1837,65 @@
   "sayacDegerYok": "Saisissez un relevé pour au moins un lot.",
   "sayacDegerGecersiz": "La valeur saisie pour {daire} est invalide.",
   "@sayacDegerGecersiz": {
-    "placeholders": { "daire": { "type": "String" } }
+    "placeholders": {
+      "daire": {
+        "type": "String"
+      }
+    }
   },
   "sayacGeriSayiyor": "{daire} : le nouveau relevé ne peut pas être inférieur au précédent.",
   "@sayacGeriSayiyor": {
-    "placeholders": { "daire": { "type": "String" } }
+    "placeholders": {
+      "daire": {
+        "type": "String"
+      }
+    }
   },
   "sayacOncekiOkuma": "Précédent : {deger}",
   "@sayacOncekiOkuma": {
-    "placeholders": { "deger": { "type": "String" } }
+    "placeholders": {
+      "deger": {
+        "type": "String"
+      }
+    }
   },
   "sayacBorclandirildi": "Facturation effectuée. Lots ignorés : {n}",
   "@sayacBorclandirildi": {
-    "placeholders": { "n": { "type": "int" } }
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
   },
   "ayarlarBildirimSesi": "Alertes sonores",
   "ayarlarBildirimSesiAciklama": "Les notifications de réclamation et de poste arrivent avec un son.",
   "ayarlarBildirimSesiUyari": "Les alertes sonores sont désactivées : vous risquez de ne pas entendre les rappels de poste et les notifications de réclamation.",
   "vardiyaCikar": "Retirer",
-  "vardiyaCikarSebep": "Motif du retrait (maladie, congé, urgence)"
+  "vardiyaCikarSebep": "Motif du retrait (maladie, congé, urgence)",
+  "dukkanBaslik": "Entreprises locales",
+  "dukkanAra": "Rechercher un artisan ou une entreprise",
+  "dukkanHizmetSec": "Choisir un service",
+  "dukkanBolgeSec": "Choisir une zone",
+  "dukkanTumIller": "Toutes les provinces",
+  "dukkanTumIlceler": "Tous les districts",
+  "dukkanSonucYok": "Aucune entreprise trouvée pour cette recherche.",
+  "dukkanSonucYokIpucu": "Essayez d'élargir votre zone.",
+  "dukkanYukleniyor": "Chargement…",
+  "dukkanListeAlinamadi": "Impossible de charger les entreprises.",
+  "dukkanTekrarDene": "Réessayer",
+  "dukkanAra2": "Appeler",
+  "dukkanWhatsapp": "WhatsApp",
+  "dukkanDogrulanmisIsletme": "Entreprise vérifiée",
+  "dukkanTelefonDogrulandi": "Téléphone vérifié",
+  "dukkanDegerlendirmeYok": "Pas encore d'avis",
+  "dukkanDegerlendirme": "avis",
+  "dukkanHakkinda": "À propos",
+  "dukkanVerdigiHizmetler": "Services proposés",
+  "dukkanHizmetBolgeleri": "Zones desservies",
+  "dukkanMahalleSayisi": "quartiers",
+  "dukkanRozetNedir": "Que signifie ce badge ?",
+  "dukkanRozetSeviye2": "Les documents de l'entreprise ont été examinés par nos soins. Ce n'est pas une garantie de qualité de service.",
+  "dukkanRozetSeviye1": "Le numéro de téléphone de l'entreprise a été vérifié. Cela montre que le numéro est réel ; cela ne vérifie pas l'identité de l'entreprise.",
+  "dukkanOdemeUyarisi": "Ne payez pas avant que le travail soit terminé. Une demande d'acompte est un signal d'alerte.",
+  "dukkanIsletmeBulunamadi": "Entreprise introuvable."
 }

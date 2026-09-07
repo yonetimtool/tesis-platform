@@ -843,6 +843,159 @@ paths:
           description: Gerekce zorunlu
           content:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  # ================================================================= #
+  # DUKKAN (F3) — KAMU ARAMA + SEO
+  # ================================================================= #
+  # Hepsi `security: []`: Dukkan'in buyume kanali SEO ve bu sayfalari
+  # hem arama motoru botu hem uye olmayan ziyaretci gormeli.
+  /dukkan/isletme-ara:
+    get:
+      tags: [dukkan]
+      summary: Isletme aramasi (konum + kategori + ad)
+      description: |
+        ESLESME HIZMET ALANINDAN, ADRESTEN DEGIL: bir usta Kadikoy'de
+        oturup Atasehir'e gidebilir; adrese gore eslestirmek onu
+        Atasehir aramalarindan dislardi.
+
+        KONUM HIYERARSIK: mahalle verilirse `il` ve `ilce` de ZORUNLU —
+        mahalle slug'i yalniz ilce icinde benzersizdir (Turkiye'de
+        onlarca "Merkez" var).
+
+        Yalniz `durum='onayli' AND dogrulama_seviyesi>=1` isletmeler
+        doner. Seviye 0 aramada CIKMAZ: kayit ucretsiz ve aninda,
+        gorunur kilmak sahte isletmeyi davet etmek olurdu.
+
+        SIRALAMA ikincil anahtar olarak HER ZAMAN `id` kullanir: esit
+        puanlarda PostgreSQL sirayi garanti etmez ve sayfa 2'de ayni
+        isletme tekrar cikabilir ya da biri hic gorunmeyebilir.
+      security: []
+      parameters:
+        - { name: il, in: query, required: false, schema: { type: string } }
+        - { name: ilce, in: query, required: false, schema: { type: string } }
+        - { name: mahalle, in: query, required: false, schema: { type: string } }
+        - { name: kategori, in: query, required: false, schema: { type: string } }
+        - { name: q, in: query, required: false, schema: { type: string } }
+        - name: sirala
+          in: query
+          required: false
+          schema: { type: string, enum: [puan, yeni, ad] }
+        - { name: sayfa, in: query, required: false, schema: { type: integer, minimum: 1, maximum: 500 } }
+        - { name: boyut, in: query, required: false, schema: { type: integer, minimum: 1, maximum: 50 } }
+      responses:
+        "200":
+          description: Sonuclar
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, toplam, sayfa, boyut]
+                properties:
+                  items: { type: array, items: { type: object } }
+                  toplam: { type: integer }
+                  sayfa: { type: integer }
+                  boyut: { type: integer }
+        "422":
+          description: Konum suzgeci eksik (mahalle icin il+ilce gerekli)
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/isletme-profil/{slug}:
+    get:
+      tags: [dukkan]
+      summary: Kamuya acik isletme profili
+      description: |
+        SAHIBIN gordugu detaydan (`/dukkan/isletme/{id}`) AYRI VE DAR:
+        burada `vergi_no`, `red_sebebi`, `askiya_alma_sebebi` YOK. Tek uc
+        kullanip alan gizlemeye calismak, bir gun eklenen bir alani
+        gizlemeyi unutmak demekti.
+
+        Gorunmeyen (onaysiz/askidaki) isletme 404 — 403 DEGIL: "bu
+        isletme var ama askida" bilgisi kamuya acik olmamali.
+
+        HIZMET BOLGELERI ILCE DUZEYINDE OZETLENIR: 40 mahalle secen bir
+        isletmenin profilinde 40 satir sayfayi bogardi.
+      security: []
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Profil
+          content:
+            application/json: { schema: { type: object } }
+        "404":
+          description: Bulunamadi ya da gorunur degil
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/sayfa/{il}/{ilce}/{mahalle}/{kategori}:
+    get:
+      tags: [dukkan]
+      summary: SEO bolge/kategori sayfasinin tum verisi
+      description: |
+        SIFIR ISLETMEDE 404. Bos bir "yakinda" sayfasi INCE ICERIKTIR ve
+        ceza sayfa basina degil ALAN ADI GENELINE isler.
+
+        ESIK KARARI ISTEMCIDE: burada yalniz SAYI doner; `noindex` karari
+        `apps/dukkan-web/config/site.ts`teki `INCE_ICERIK_ESIGI` ile
+        verilir — esik ayarlanabilir olmali ve TEK YERDE durmali.
+
+        IC BAGLANTI icin donen komsu mahalleler ve diger kategoriler
+        YALNIZ gercekten isletmesi olanlardir: bos sayfaya baglanti
+        vermek, arama motoruna var olmayan sayfalarin haritasini cizmek
+        olurdu.
+      security: []
+      parameters:
+        - { name: il, in: path, required: true, schema: { type: string } }
+        - { name: ilce, in: path, required: true, schema: { type: string } }
+        - { name: mahalle, in: path, required: true, schema: { type: string } }
+        - { name: kategori, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Sayfa verisi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [konum, kategori, isletmeler, toplam]
+                properties:
+                  konum: { type: object }
+                  kategori: { type: object }
+                  isletmeler: { type: array, items: { type: object } }
+                  toplam: { type: integer }
+                  komsu_mahalleler: { type: array, items: { type: object } }
+                  diger_kategoriler: { type: array, items: { type: object } }
+        "404":
+          description: Konum/kategori yok ya da bu bolgede isletme yok
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/sitemap/sayfalar:
+    get:
+      tags: [dukkan]
+      summary: Sitemap'e girecek bolge/kategori yollari
+      description: |
+        YALNIZ ESIGI GECENLER. Esik ISTEMCIDEN gelir cunku deger
+        `config/site.ts`te ve orada ayarlanabilir olmali; iki yerde
+        tutmak birinin bir gun otekinden ayrismasi demekti.
+
+        Bu uc olmadan sitemap elle yazilmak zorunda kalirdi;
+        `tanitim-web`in yedi yolluk sabit dizisi burada ISE YARAMAZ
+        cunku Dukkan'da sayfalar isletme sayisina gore DOGAR VE OLUR.
+
+        Sonuclar isletme sayisina gore azalan sirali: 50.000 sinirinda
+        kesilen kisim EN AZ degerli sayfalar olur.
+      security: []
+      parameters:
+        - { name: esik, in: query, required: false, schema: { type: integer, minimum: 1, maximum: 50 } }
+        - { name: limit, in: query, required: false, schema: { type: integer, minimum: 1, maximum: 50000 } }
+      responses:
+        "200":
+          description: Yollar
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, esik]
+                properties:
+                  items: { type: array, items: { type: object } }
+                  esik: { type: integer }
   /dukkan/lokasyon/il:
     get:
       tags: [dukkan]

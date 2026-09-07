@@ -32,6 +32,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .kimlik import DukkanKimlik, moderator_zorunlu
+from .siralama import siralama_puani_hesapla
 from .veritabani import get_dukkan_session
 
 router = APIRouter(prefix="/dukkan/moderasyon", tags=["dukkan"])
@@ -187,6 +188,12 @@ async def isletme_karar(
         },
     )
 
+    # PUAN YENIDEN HESAPLANIR: onay `dogrulama_seviyesi`ni ve
+    # `onaylandi_at`i degistiriyor, ikisi de formulun girdisi. Hesabi
+    # atlamak, yeni onaylanmis bir isletmenin puani 0 kalarak listenin
+    # EN ALTINDA dogmasi demekti.
+    await siralama_puani_hesapla(db, isletme_id)
+
     son = (
         await db.execute(
             text("SELECT durum, dogrulama_seviyesi FROM isletme WHERE id = :i"),
@@ -251,6 +258,8 @@ async def belge_karar(
                  "WHERE id = :i"),
             {"s": seviye, "i": belge["isletme_id"]},
         )
+        # Seviye degisti -> puan degisir.
+        await siralama_puani_hesapla(db, belge["isletme_id"])
 
     await db.execute(
         text("INSERT INTO denetim (aktor_id, aktor_tip, eylem, hedef_tip, "

@@ -14,7 +14,7 @@ celery_app = Celery(
     "tesis",
     broker=settings.redis_url,
     backend=settings.redis_url,
-    include=["app.tasks"],
+    include=["app.tasks", "app.dukkan.gorevler"],
 )
 
 celery_app.conf.update(
@@ -103,5 +103,19 @@ celery_app.conf.beat_schedule = {
     "finans-otomasyonu": {
         "task": "scheduler.finans_otomasyonu",
         "schedule": crontab(hour=3, minute=0),
+    },
+    # (DUKKAN F3) SIRALAMA PUANI TAZELEME — her gece 05:00 Istanbul
+    # (02:00 UTC).
+    #
+    # SAAT SECIMI: retention (01:00 UTC) ile finans (03:00 UTC) ARASINA
+    # kondu. Ikisiyle cakismamasi bilincli — ucu de veritabanini yoruyor
+    # ve ayni anda kosmalari gereksiz bir tepe olustururdu.
+    #
+    # NEDEN GEREKLI: puanin `yenilik` bileseni ZAMANA bagli ve
+    # kendiliginden soner, ama sutunda saklandigi icin yeniden
+    # hesaplanmadikca eski deger kalir.
+    "dukkan-siralama": {
+        "task": "dukkan.siralama_yenile",
+        "schedule": crontab(hour=2, minute=0),
     },
 }

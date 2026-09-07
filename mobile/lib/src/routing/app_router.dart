@@ -56,6 +56,8 @@ import '../features/kurulum/presentation/kurulum_screen.dart';
 import '../features/settings/presentation/settings_screen.dart';
 import '../features/staff/presentation/staff_screen.dart';
 import '../features/dis_hizmet/presentation/dis_hizmet_screen.dart';
+import '../features/dukkan/presentation/dukkan_arama_screen.dart';
+import '../features/dukkan/presentation/dukkan_profil_screen.dart';
 import '../features/site_kurali/presentation/site_kurali_screen.dart';
 import '../features/tasks/domain/task_models.dart';
 import '../features/tasks/presentation/task_categories_screen.dart';
@@ -122,6 +124,14 @@ class AppRoutes {
   /// (P167 ek) Site dokumanlari — sakin YALNIZ acilanlari gorur.
   static const dokumanlar = '/dokumanlar';
   static const disHizmet = '/dis-hizmetler';
+  // (DUKKAN F3) YEREL ISLETMELER — kamu arama ve profil.
+  //
+  // `disHizmet` ile AYRI YOLLAR ve bu bilincli: `dis_hizmet` yoneticinin
+  // OZEL defteri (tesise bagli, yalniz o tesis gorur), Dukkan ise KAMU
+  // pazar yeri. Ayni yola koymak iki farkli kavrami birlestirirdi
+  // (docs/dukkan/00-mimari.md §4).
+  static const dukkanArama = '/dukkan';
+  static const dukkanIsletme = '/dukkan/isletme/:slug';
   static const integrations = '/integrations';
   static const binaDuzenleme = '/bina-duzenleme';
   static const sikayetHaritasi = '/sikayet-haritasi';
@@ -426,6 +436,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.disHizmet,
         builder: (context, state) => const DisHizmetScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.dukkanArama,
+        builder: (context, state) => const DukkanAramaScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.dukkanIsletme,
+        builder: (context, state) => DukkanProfilScreen(
+          slug: state.pathParameters['slug'] ?? '',
+        ),
       ),
       GoRoute(
         path: AppRoutes.integrations,

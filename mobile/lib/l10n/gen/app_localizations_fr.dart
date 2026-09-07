@@ -5683,4 +5683,86 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get vardiyaCikarSebep => 'Motif du retrait (maladie, congé, urgence)';
+
+  @override
+  String get dukkanBaslik => 'Entreprises locales';
+
+  @override
+  String get dukkanAra => 'Rechercher un artisan ou une entreprise';
+
+  @override
+  String get dukkanHizmetSec => 'Choisir un service';
+
+  @override
+  String get dukkanBolgeSec => 'Choisir une zone';
+
+  @override
+  String get dukkanTumIller => 'Toutes les provinces';
+
+  @override
+  String get dukkanTumIlceler => 'Tous les districts';
+
+  @override
+  String get dukkanSonucYok =>
+      'Aucune entreprise trouvée pour cette recherche.';
+
+  @override
+  String get dukkanSonucYokIpucu => 'Essayez d\'élargir votre zone.';
+
+  @override
+  String get dukkanYukleniyor => 'Chargement…';
+
+  @override
+  String get dukkanListeAlinamadi => 'Impossible de charger les entreprises.';
+
+  @override
+  String get dukkanTekrarDene => 'Réessayer';
+
+  @override
+  String get dukkanAra2 => 'Appeler';
+
+  @override
+  String get dukkanWhatsapp => 'WhatsApp';
+
+  @override
+  String get dukkanDogrulanmisIsletme => 'Entreprise vérifiée';
+
+  @override
+  String get dukkanTelefonDogrulandi => 'Téléphone vérifié';
+
+  @override
+  String get dukkanDegerlendirmeYok => 'Pas encore d\'avis';
+
+  @override
+  String get dukkanDegerlendirme => 'avis';
+
+  @override
+  String get dukkanHakkinda => 'À propos';
+
+  @override
+  String get dukkanVerdigiHizmetler => 'Services proposés';
+
+  @override
+  String get dukkanHizmetBolgeleri => 'Zones desservies';
+
+  @override
+  String get dukkanMahalleSayisi => 'quartiers';
+
+  @override
+  String get dukkanRozetNedir => 'Que signifie ce badge ?';
+
+  @override
+  String get dukkanRozetSeviye2 =>
+      'Les documents de l\'entreprise ont été examinés par nos soins. Ce n\'est pas une garantie de qualité de service.';
+
+  @override
+  String get dukkanRozetSeviye1 =>
+      'Le numéro de téléphone de l\'entreprise a été vérifié. Cela montre que le numéro est réel ; cela ne vérifie pas l\'identité de l\'entreprise.';
+
+  @override
+  String get dukkanOdemeUyarisi =>
+      'Ne payez pas avant que le travail soit terminé. Une demande d\'acompte est un signal d\'alerte.';
+
+  @override
+  String get dukkanIsletmeBulunamadi => 'Entreprise introuvable.';
 }
