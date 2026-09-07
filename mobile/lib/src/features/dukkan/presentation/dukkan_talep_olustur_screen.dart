@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../l10n/gen/app_localizations.dart';
 import '../data/dukkan_api.dart';
+import 'dukkan_telefon_screen.dart';
 import '../data/dukkan_oturum.dart';
 
 /// (DUKKAN F4) TALEP OLUSTURMA — KVKK paylasim tercihleri merkezi.
@@ -102,9 +103,24 @@ class _DukkanTalepOlusturScreenState
     } on DukkanOturumHatasi catch (e) {
       if (!mounted) return;
       final t = AppLocalizations.of(context);
-      setState(() => _hata = e.kod == 'telefon_gerekli'
-          ? t.dukkanTelefonGerekli
-          : t.dukkanListeAlinamadi);
+      if (e.kod == 'telefon_gerekli') {
+        // (F7 §2) COZUMU OLAN BIR HATA, METIN DEGIL AKIS.
+        //
+        // Buraya kadar gelen kullanici formu DOLDURMUS durumda; ona
+        // "web'e gidin" demek, girdigi her seyi cope atmasini istemekti.
+        // Telefon dogrulama ekrani acilir ve basariliysa GONDERIM
+        // KALDIGI YERDEN tekrarlanir.
+        final ok = await Navigator.of(context).push<bool>(
+          MaterialPageRoute(builder: (_) => const DukkanTelefonScreen()),
+        );
+        if (ok == true && mounted) {
+          setState(() => _bekle = false);
+          return _gonder();
+        }
+        setState(() => _hata = t.dukkanTelefonAciklama);
+      } else {
+        setState(() => _hata = t.dukkanListeAlinamadi);
+      }
     } catch (e) {
       if (mounted) setState(() => _hata = '$e');
     } finally {

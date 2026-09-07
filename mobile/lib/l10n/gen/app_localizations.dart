@@ -10444,6 +10444,144 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Değerlendirmen yayınlandı'**
   String get dukkanBildirimYorumYayinlandi;
+
+  /// No description provided for @dukkanTelefonBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Telefonunu doğrula'**
+  String get dukkanTelefonBaslik;
+
+  /// No description provided for @dukkanTelefonAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yönetiyor hesabında telefon numarası kayıtlı değil. Dükkân\'ı kullanmak için numaranı buradan doğrulayabilirsin.'**
+  String get dukkanTelefonAciklama;
+
+  /// No description provided for @dukkanKodAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Numarana 6 haneli bir kod gönderdik.'**
+  String get dukkanKodAciklama;
+
+  /// No description provided for @dukkanTelefonAlani.
+  ///
+  /// In tr, this message translates to:
+  /// **'Telefon numarası'**
+  String get dukkanTelefonAlani;
+
+  /// No description provided for @dukkanAdSoyadAlani.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ad soyad'**
+  String get dukkanAdSoyadAlani;
+
+  /// No description provided for @dukkanAdSoyadIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'İsteğe bağlı. İşletmeler seni bu adla görür.'**
+  String get dukkanAdSoyadIpucu;
+
+  /// No description provided for @dukkanKodAlani.
+  ///
+  /// In tr, this message translates to:
+  /// **'Doğrulama kodu'**
+  String get dukkanKodAlani;
+
+  /// No description provided for @dukkanKodGonder.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kod gönder'**
+  String get dukkanKodGonder;
+
+  /// No description provided for @dukkanKodDogrula.
+  ///
+  /// In tr, this message translates to:
+  /// **'Doğrula'**
+  String get dukkanKodDogrula;
+
+  /// No description provided for @dukkanNumarayiDegistir.
+  ///
+  /// In tr, this message translates to:
+  /// **'Numarayı değiştir'**
+  String get dukkanNumarayiDegistir;
+
+  /// No description provided for @dukkanTelefonDogrula.
+  ///
+  /// In tr, this message translates to:
+  /// **'Telefonumu doğrula'**
+  String get dukkanTelefonDogrula;
+
+  /// No description provided for @dukkanSmsBaslikYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'SMS gönderimi henüz açılmadı. Onay sürecimiz sürüyor; bu arada dukkan.yonetiyor.com üzerinden devam edebilirsin.'**
+  String get dukkanSmsBaslikYok;
+
+  /// No description provided for @dukkanSmsBasarisiz.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kod gönderilemedi. Birkaç dakika sonra tekrar dene.'**
+  String get dukkanSmsBasarisiz;
+
+  /// No description provided for @dukkanSmsSaglayiciYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'SMS servisi şu anda kullanılamıyor.'**
+  String get dukkanSmsSaglayiciYok;
+
+  /// No description provided for @dukkanKodCokSik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Çok sık kod istendi. Bir süre sonra tekrar dene.'**
+  String get dukkanKodCokSik;
+
+  /// No description provided for @dukkanTelefonGecersiz.
+  ///
+  /// In tr, this message translates to:
+  /// **'Telefon numarası geçersiz.'**
+  String get dukkanTelefonGecersiz;
+
+  /// No description provided for @dukkanKodHatali.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kod hatalı.'**
+  String get dukkanKodHatali;
+
+  /// No description provided for @dukkanKodSuresiDoldu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kodun süresi doldu, yeni kod iste.'**
+  String get dukkanKodSuresiDoldu;
+
+  /// No description provided for @dukkanKodKullanilmis.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu kod zaten kullanıldı.'**
+  String get dukkanKodKullanilmis;
+
+  /// No description provided for @dukkanKodBulunamadi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Önce kod iste.'**
+  String get dukkanKodBulunamadi;
+
+  /// No description provided for @dukkanCokFazlaDeneme.
+  ///
+  /// In tr, this message translates to:
+  /// **'Çok fazla hatalı deneme. Yeni kod iste.'**
+  String get dukkanCokFazlaDeneme;
+
+  /// No description provided for @dukkanHesapAskida.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hesabın askıya alınmış.'**
+  String get dukkanHesapAskida;
+
+  /// No description provided for @dukkanAgHatasi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bağlantı kurulamadı. İnternetini kontrol et.'**
+  String get dukkanAgHatasi;
 }
 
 class _AppLocalizationsDelegate

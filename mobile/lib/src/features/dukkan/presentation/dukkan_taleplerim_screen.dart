@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../l10n/gen/app_localizations.dart';
 import '../data/dukkan_api.dart';
+import 'dukkan_hata_govdesi.dart';
 import '../data/dukkan_oturum.dart';
 
 /// (DUKKAN F4) TALEPLERIM — mobil.
@@ -28,30 +29,14 @@ class DukkanTaleplerimScreen extends ConsumerWidget {
       ),
       body: liste.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (h, _) {
-          // OTURUM HATASI ILE AG HATASI AYRI: kullanicinin yapacagi sey
-          // farkli. Telefonu olmayan kullanici (olculdu: %27) tekrar
-          // denemekle sonuca ulasmaz.
-          final mesaj = h is DukkanOturumHatasi && h.kod == 'telefon_gerekli'
-              ? t.dukkanTelefonGerekli
-              : t.dukkanListeAlinamadi;
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(mesaj, textAlign: TextAlign.center),
-                  const SizedBox(height: 12),
-                  OutlinedButton(
-                    onPressed: () => ref.invalidate(dukkanTaleplerimProvider),
-                    child: Text(t.dukkanTekrarDene),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
+        // OTURUM HATASI ILE AG HATASI AYRI: kullanicinin yapacagi sey
+        // farkli. Telefonu olmayan kullanici (olculdu: %27) tekrar
+        // denemekle sonuca ulasmaz — ONA TELEFON DOGRULAMA sunulur
+        // (F7 §2; once yalnizca "web'e gidin" deniyordu).
+        error: (h, _) => DukkanHataGovdesi(
+          hata: h,
+          onYenile: () => ref.invalidate(dukkanTaleplerimProvider),
+        ),
         data: (items) {
           if (items.isEmpty) {
             return Center(

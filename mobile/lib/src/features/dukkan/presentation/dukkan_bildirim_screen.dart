@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../core/ui/merkez_diyalog.dart';
 import '../data/dukkan_api.dart';
+import 'dukkan_hata_govdesi.dart';
 import '../data/dukkan_oturum.dart';
 import '../domain/dukkan_push_yonlendirme.dart';
 
@@ -52,16 +53,9 @@ class DukkanBildirimScreen extends ConsumerWidget {
       ),
       body: liste.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (h, _) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Text(
-              h is DukkanOturumHatasi && h.kod == 'telefon_gerekli'
-                  ? t.dukkanTelefonGerekli
-                  : t.dukkanListeAlinamadi,
-              textAlign: TextAlign.center,
-            ),
-          ),
+        error: (h, _) => DukkanHataGovdesi(
+          hata: h,
+          onYenile: () => ref.invalidate(dukkanBildirimlerProvider),
         ),
         data: (sonuc) {
           if (sonuc.items.isEmpty) {

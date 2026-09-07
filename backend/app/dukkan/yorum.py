@@ -245,10 +245,20 @@ async def _davet_kotasi(db: AsyncSession, isletme_id: uuid.UUID) -> dict:
         )
     ).scalar_one()
     hak = min(KOTA_TAVAN, KOTA_TABAN + etkinlik * KOTA_ETKINLIK_BASINA)
+    # ==================================================================
+    # YALNIZ GONDERILMIS DAVETLER SAYILIR (goc 0122)
+    # ==================================================================
+    # OLCULEN KUSUR: sayac TUM satirlari sayiyordu. Onayli SMS basligi
+    # olmadigi surece her davet basarisiz oluyor — yani baslik onaylandigi
+    # gun ilk isletmeler kotalarini HIC SMS GITMEDEN tuketmis olurdu.
+    #
+    # Basarisiz deneme kayitta DURUR (teshis icin) ama kotayi YEMEZ.
+    # Ayni karar `telefon_dogrulama` icin goc 0116'da verildi.
     kullanilan = (
         await db.execute(
             text("SELECT count(*) FROM yorum_daveti WHERE isletme_id = :i "
-                 "AND created_at > now() - interval '30 days'"),
+                 "AND created_at > now() - interval '30 days' "
+                 "AND gonderim_durumu = 'gonderildi'"),
             {"i": isletme_id},
         )
     ).scalar_one()
@@ -337,26 +347,21 @@ async def yorum_daveti_gonder(
         raise HTTPException(status_code=429, detail="davet_kotasi_doldu")
 
     # 90 GUNDE BIR: ayni isletme + ayni numara.
+    # AYNI DERT, IKINCI SAYAC (goc 0122): bu kural da TUM satirlari
+    # sayiyordu. Gonderilemeyen bir davet, o numarayi UC AY boyunca
+    # kilitliyordu — musteri hicbir sey almamisken. Isletme "davet
+    # gonderdim, gelmedi, tekrar gondereyim" diyemiyordu.
     son = (
         await db.execute(
             text("SELECT 1 FROM yorum_daveti WHERE isletme_id = :i "
                  "AND telefon = :t "
-                 "AND created_at > now() - make_interval(days => :g)"),
+                 "AND created_at > now() - make_interval(days => :g) "
+                 "AND gonderim_durumu = 'gonderildi'"),
             {"i": isletme_id, "t": telefon, "g": DAVET_TEKRAR_GUN},
         )
     ).first()
     if son:
         raise HTTPException(status_code=409, detail="bu_numaraya_yakinda_davet")
-
-    kod = kod_uret()
-    yeni = (
-        await db.execute(
-            text("INSERT INTO yorum_daveti (isletme_id, telefon, kod_hash, "
-                 " gecerlilik) VALUES (:i, :t, :h, "
-                 " now() + interval '7 days') RETURNING id"),
-            {"i": isletme_id, "t": telefon, "h": kod_hashle(kod, telefon)},
-        )
-    ).mappings().one()
 
     from ..config import settings
     from ..mesajlasma import dukkan_sms_saglayicisi
@@ -366,12 +371,43 @@ async def yorum_daveti_gonder(
             text("SELECT ad FROM isletme WHERE id = :i"), {"i": isletme_id}
         )
     ).scalar_one()
+
+    # ==================================================================
+    # ONCE GONDER, SONRA YAZ — `kimlik.kod_gonder_ve_kaydet` ile AYNI SIRA
+    # ==================================================================
+    # Once yazip sonra UPDATE etmek de olurdu; tek INSERT tercih edildi
+    # cunku UPDATE unutuldugunda kayit sessizce 'saglayici_yok' kalir ve
+    # kotayi yemez — yani hatanin YONU yanlis olurdu (herkese sinirsiz
+    # davet). Tek yazimda boyle bir ara durum yok.
+    kod = kod_uret()
     sonuc = dukkan_sms_saglayicisi().gonder(
         telefon, None,
         f"{isl_ad} hizmetini degerlendirmeniz icin kod: {kod}. "
         "Dukkan uzerinden.",
     )
     gonderildi = sonuc.durum == "gonderildi"
+    # Degerler `telefon_dogrulama` ile BIREBIR AYNI (goc 0116/0122):
+    # iki sayacin ileride ayrisma ihtimali olmasin.
+    if gonderildi:
+        gonderim_durumu = "gonderildi"
+    elif sonuc.hata == "baslik_yok":
+        gonderim_durumu = "baslik_yok"
+    elif sonuc.durum == "yapilandirilmadi":
+        gonderim_durumu = "saglayici_yok"
+    else:
+        gonderim_durumu = "basarisiz"
+
+    yeni = (
+        await db.execute(
+            text("INSERT INTO yorum_daveti (isletme_id, telefon, kod_hash, "
+                 " gecerlilik, gonderim_durumu, gonderim_hatasi, saglayici) "
+                 "VALUES (:i, :t, :h, now() + interval '7 days', "
+                 "        :gd, :gh, :sg) RETURNING id"),
+            {"i": isletme_id, "t": telefon, "h": kod_hashle(kod, telefon),
+             "gd": gonderim_durumu, "gh": sonuc.hata,
+             "sg": sonuc.saglayici},
+        )
+    ).mappings().one()
 
     yanit = {
         "id": str(yeni["id"]),
@@ -379,7 +415,10 @@ async def yorum_daveti_gonder(
         # olculen kusurun ayni sinifI).
         "gonderildi": gonderildi,
         "gonderim": sonuc.durum if gonderildi else (sonuc.hata or sonuc.durum),
-        "kalan": kota["kalan"] - 1,
+        # GONDERILMEDIYSE KOTA DUSMEZ. Yanitta dusurup veritabaninda
+        # dusurmemek, arayuzu sunucuyla CELISTIRIRDI — ve isletme
+        # "kotam bitti" sanip denemeyi birakirdi.
+        "kalan": kota["kalan"] - 1 if gonderildi else kota["kalan"],
     }
     if settings.dukkan_otp_yanitta and (
         settings.dukkan_sms_saglayici or ""

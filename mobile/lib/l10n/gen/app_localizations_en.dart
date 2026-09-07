@@ -6063,4 +6063,79 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dukkanBildirimYorumYayinlandi => 'Your review was published';
+
+  @override
+  String get dukkanTelefonBaslik => 'Verify your phone';
+
+  @override
+  String get dukkanTelefonAciklama =>
+      'Your Yönetiyor account has no phone number. You can verify your number here to use the marketplace.';
+
+  @override
+  String get dukkanKodAciklama => 'We sent a 6-digit code to your number.';
+
+  @override
+  String get dukkanTelefonAlani => 'Phone number';
+
+  @override
+  String get dukkanAdSoyadAlani => 'Full name';
+
+  @override
+  String get dukkanAdSoyadIpucu =>
+      'Optional. Businesses will see you under this name.';
+
+  @override
+  String get dukkanKodAlani => 'Verification code';
+
+  @override
+  String get dukkanKodGonder => 'Send code';
+
+  @override
+  String get dukkanKodDogrula => 'Verify';
+
+  @override
+  String get dukkanNumarayiDegistir => 'Change number';
+
+  @override
+  String get dukkanTelefonDogrula => 'Verify my phone';
+
+  @override
+  String get dukkanSmsBaslikYok =>
+      'SMS sending is not enabled yet. Approval is in progress; meanwhile you can continue at dukkan.yonetiyor.com.';
+
+  @override
+  String get dukkanSmsBasarisiz =>
+      'The code could not be sent. Try again in a few minutes.';
+
+  @override
+  String get dukkanSmsSaglayiciYok =>
+      'The SMS service is currently unavailable.';
+
+  @override
+  String get dukkanKodCokSik => 'Too many code requests. Try again later.';
+
+  @override
+  String get dukkanTelefonGecersiz => 'The phone number is invalid.';
+
+  @override
+  String get dukkanKodHatali => 'The code is incorrect.';
+
+  @override
+  String get dukkanKodSuresiDoldu => 'The code expired, request a new one.';
+
+  @override
+  String get dukkanKodKullanilmis => 'This code was already used.';
+
+  @override
+  String get dukkanKodBulunamadi => 'Request a code first.';
+
+  @override
+  String get dukkanCokFazlaDeneme =>
+      'Too many incorrect attempts. Request a new code.';
+
+  @override
+  String get dukkanHesapAskida => 'Your account has been suspended.';
+
+  @override
+  String get dukkanAgHatasi => 'Could not connect. Check your internet.';
 }

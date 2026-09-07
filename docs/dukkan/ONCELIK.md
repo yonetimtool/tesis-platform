@@ -9,7 +9,12 @@
 
 ---
 
-## Ürünü ENGELLEYENLER
+## Ürünü ENGELLEYENLER — **F7'de kapatıldı**
+
+> İkisi de yazıldı ve `main`'e push'landı (`F7-kararlar.md`,
+> `F7-dagitim.md`). SMS başlığı onayı beklenmedi: ikisi de başlık gelene
+> kadar *tam olarak* sürülemez ama başlık geldiği gün **tek satır
+> `SMS_BASLIK=`** ile çalışır. Aşağıdaki iki bölüm kayıt olarak duruyor.
 
 ### 1. Mobilde telefon-OTP akışı yok — **%27'lik duvar**
 
@@ -123,9 +128,9 @@ döner. Kararlar belgesinde açık madde olarak yazılı.
 
 | # | Madde | Neden bu sırada |
 |---|---|---|
-| 1 | **SMS başlığı** (dış bağımlılık) | 2 ve 3'ün ikisini birden açar; senin elinde, kod işi değil |
-| 2 | **Davet kotası düzeltmesi** | Küçük iş, kalıbı hazır; başlık gelmeden **önce** yapılmalı yoksa ilk davetler boşa gider |
-| 3 | **Mobil OTP akışı** | Kullanıcının %27'sini geri kazandırır; başlık onayı gelmeden **sürülemez** |
+| ~~1~~ | ~~**Davet kotası düzeltmesi**~~ | **F7 §1 — YAPILDI** (göç 0122) |
+| ~~2~~ | ~~**Mobil OTP akışı**~~ | **F7 §2 — YAPILDI** (jeton cihazda, sızıntı kilidi kırılarak doğrulandı) |
+| 1 | **SMS başlığı** (dış bağımlılık) | Yukarıdaki ikisini de *çalışır* hâle getirir; sende, kod işi değil |
 | 4 | `talep.son_gecerlilik` | Küçük; ilk gerçek talepler gelmeden yapılırsa hiç veri düzeltmesi gerekmez |
 | 5 | Bildirim batching | İlk yoğun mahalle görülünce; erken yapmak tahminle ayar demek |
 | 6 | `bildirim` retention | Gerçek hacim görülünce |

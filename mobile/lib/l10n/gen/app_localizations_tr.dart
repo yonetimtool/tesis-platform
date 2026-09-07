@@ -5873,4 +5873,78 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get dukkanBildirimYorumYayinlandi => 'Değerlendirmen yayınlandı';
+
+  @override
+  String get dukkanTelefonBaslik => 'Telefonunu doğrula';
+
+  @override
+  String get dukkanTelefonAciklama =>
+      'Yönetiyor hesabında telefon numarası kayıtlı değil. Dükkân\'ı kullanmak için numaranı buradan doğrulayabilirsin.';
+
+  @override
+  String get dukkanKodAciklama => 'Numarana 6 haneli bir kod gönderdik.';
+
+  @override
+  String get dukkanTelefonAlani => 'Telefon numarası';
+
+  @override
+  String get dukkanAdSoyadAlani => 'Ad soyad';
+
+  @override
+  String get dukkanAdSoyadIpucu =>
+      'İsteğe bağlı. İşletmeler seni bu adla görür.';
+
+  @override
+  String get dukkanKodAlani => 'Doğrulama kodu';
+
+  @override
+  String get dukkanKodGonder => 'Kod gönder';
+
+  @override
+  String get dukkanKodDogrula => 'Doğrula';
+
+  @override
+  String get dukkanNumarayiDegistir => 'Numarayı değiştir';
+
+  @override
+  String get dukkanTelefonDogrula => 'Telefonumu doğrula';
+
+  @override
+  String get dukkanSmsBaslikYok =>
+      'SMS gönderimi henüz açılmadı. Onay sürecimiz sürüyor; bu arada dukkan.yonetiyor.com üzerinden devam edebilirsin.';
+
+  @override
+  String get dukkanSmsBasarisiz =>
+      'Kod gönderilemedi. Birkaç dakika sonra tekrar dene.';
+
+  @override
+  String get dukkanSmsSaglayiciYok => 'SMS servisi şu anda kullanılamıyor.';
+
+  @override
+  String get dukkanKodCokSik =>
+      'Çok sık kod istendi. Bir süre sonra tekrar dene.';
+
+  @override
+  String get dukkanTelefonGecersiz => 'Telefon numarası geçersiz.';
+
+  @override
+  String get dukkanKodHatali => 'Kod hatalı.';
+
+  @override
+  String get dukkanKodSuresiDoldu => 'Kodun süresi doldu, yeni kod iste.';
+
+  @override
+  String get dukkanKodKullanilmis => 'Bu kod zaten kullanıldı.';
+
+  @override
+  String get dukkanKodBulunamadi => 'Önce kod iste.';
+
+  @override
+  String get dukkanCokFazlaDeneme => 'Çok fazla hatalı deneme. Yeni kod iste.';
+
+  @override
+  String get dukkanHesapAskida => 'Hesabın askıya alınmış.';
+
+  @override
+  String get dukkanAgHatasi => 'Bağlantı kurulamadı. İnternetini kontrol et.';
 }

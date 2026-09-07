@@ -442,3 +442,98 @@ def test_YORUM_KARARI_GEREKCE_ISTER(client, sahne, moderator):
                     headers=moderator["h"],
                     json={"karar": "yayinla"})
     assert r.status_code == 200 and r.json()["durum"] == "yayinda"
+
+
+# ==================================================================== #
+# 6. (F7 §1) BASARISIZ GONDERIM KOTAYI YEMEZ — goc 0122
+# ==================================================================== #
+# OLCULEN KUSUR: kota sayaci `yorum_daveti` satirlarinin HEPSINI
+# sayiyordu, SMS gitmis mi bakmadan. Onayli SMS basligi olmadigi surece
+# her davet basarisiz oluyor; yani baslik onaylandigi gun ilk isletmeler
+# kotalarini HIC SMS GITMEDEN tuketmis olacakti.
+#
+# NEDEN BOYLE OLCULUYOR: `client` CANLI sunucuya gidiyor, saglayiciyi
+# surec disindan degistiremiyoruz (dev'de `konsol` ve BASARILI). Bu
+# yuzden basarisiz satir DOGRUDAN yaziliyor ve sonra GERCEK UC
+# cagriliyor — olculen sey, ucun kullandigi SORGU.
+
+def _basarisiz_davet(dukkan_conn, isletme_id, telefon, durum="baslik_yok"):
+    """Gonderilememis bir davet satiri yazar."""
+    dukkan_conn.execute(
+        "INSERT INTO dukkan.yorum_daveti "
+        "(isletme_id, telefon, kod_hash, gecerlilik, gonderim_durumu, "
+        " gonderim_hatasi) "
+        "VALUES (%s, %s, 'x', now() + interval '7 days', %s, 'baslik_yok')",
+        (isletme_id, telefon, durum))
+
+
+def test_BASARISIZ_DAVET_KOTAYI_YEMEZ(client, dukkan_conn, sahne):
+    once = client.get(f"/dukkan/isletme/{sahne['isl']}/yorum-daveti/kota",
+                      headers=sahne["sahip"]["h"]).json()
+
+    for _ in range(3):
+        _basarisiz_davet(dukkan_conn, sahne["isl"], _tel())
+
+    sonra = client.get(f"/dukkan/isletme/{sahne['isl']}/yorum-daveti/kota",
+                       headers=sahne["sahip"]["h"]).json()
+    assert sonra["kullanilan"] == once["kullanilan"], sonra
+    assert sonra["kalan"] == once["kalan"], sonra
+
+
+def test_BASARILI_DAVET_KOTAYI_YER(client, sahne):
+    """Ters yon: duzeltme kotayi TAMAMEN etkisiz birakmamali.
+
+    Dev'de saglayici `konsol` ve gercekten gonderiyor; yani bu cagri
+    'gonderildi' yaziyor ve sayilmali.
+    """
+    once = client.get(f"/dukkan/isletme/{sahne['isl']}/yorum-daveti/kota",
+                      headers=sahne["sahip"]["h"]).json()
+    r = client.post(f"/dukkan/isletme/{sahne['isl']}/yorum-daveti",
+                    headers=sahne["sahip"]["h"], json={"telefon": _tel()})
+    assert r.status_code == 201, r.text
+    assert r.json()["gonderildi"] is True, r.text
+
+    sonra = client.get(f"/dukkan/isletme/{sahne['isl']}/yorum-daveti/kota",
+                       headers=sahne["sahip"]["h"]).json()
+    assert sonra["kullanilan"] == once["kullanilan"] + 1, sonra
+    # Yanittaki `kalan` sunucudaki sayimla TUTMALI: ikisi ayrisirsa
+    # arayuz "kotam bitti" der, sunucu "devam" der.
+    assert r.json()["kalan"] == sonra["kalan"], (r.json(), sonra)
+
+
+def test_GONDERIM_DURUMU_KAYDA_GECIYOR(client, dukkan_conn, sahne):
+    """Sutun yazilmazsa varsayilan 'saglayici_yok' kalir ve BASARILI bir
+    davet de kotayi yemez — duzeltmenin ters yonde kirilmasi."""
+    tel = _tel()
+    client.post(f"/dukkan/isletme/{sahne['isl']}/yorum-daveti",
+                headers=sahne["sahip"]["h"], json={"telefon": tel})
+    r = dukkan_conn.execute(
+        "SELECT gonderim_durumu, saglayici FROM dukkan.yorum_daveti "
+        "WHERE isletme_id=%s AND telefon=%s", (sahne["isl"], tel)).fetchone()
+    assert r[0] == "gonderildi", r
+    assert r[1], "saglayici adi kaydedilmemis"
+
+
+def test_BASARISIZ_DAVET_NUMARAYI_90_GUN_KILITLEMEZ(client, dukkan_conn,
+                                                    sahne):
+    """Gonderilemeyen bir davet, o numarayi UC AY boyunca kilitliyordu —
+    musteri hicbir sey almamisken isletme tekrar deneyemiyordu."""
+    tel = _tel()
+    _basarisiz_davet(dukkan_conn, sahne["isl"], tel)
+
+    r = client.post(f"/dukkan/isletme/{sahne['isl']}/yorum-daveti",
+                    headers=sahne["sahip"]["h"], json={"telefon": tel})
+    assert r.status_code == 201, r.text
+
+
+def test_BASARILI_DAVET_NUMARAYI_KILITLER(client, sahne):
+    """Ters yon: tekrar engeli KALKMAMALI — kalksaydi ayni numaraya
+    surekli davet gonderilebilir, bu da SMS bombardimani olurdu."""
+    tel = _tel()
+    assert client.post(f"/dukkan/isletme/{sahne['isl']}/yorum-daveti",
+                       headers=sahne["sahip"]["h"],
+                       json={"telefon": tel}).status_code == 201
+    r = client.post(f"/dukkan/isletme/{sahne['isl']}/yorum-daveti",
+                    headers=sahne["sahip"]["h"], json={"telefon": tel})
+    assert r.status_code == 409, r.text
+    assert "yakinda_davet" in r.text

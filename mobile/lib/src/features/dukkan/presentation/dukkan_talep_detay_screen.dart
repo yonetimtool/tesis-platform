@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../l10n/gen/app_localizations.dart';
 import '../data/dukkan_api.dart';
+import 'dukkan_hata_govdesi.dart';
 import '../data/dukkan_oturum.dart';
 
 /// (DUKKAN F6-ek) TALEP DETAYI — GELEN TEKLIFLER.
@@ -65,16 +66,10 @@ class _DukkanTalepDetayState extends ConsumerState<DukkanTalepDetayScreen> {
       appBar: AppBar(title: Text(t.dukkanTeklifler)),
       body: teklifler.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (h, _) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Text(
-              h is DukkanOturumHatasi && h.kod == 'telefon_gerekli'
-                  ? t.dukkanTelefonGerekli
-                  : t.dukkanListeAlinamadi,
-              textAlign: TextAlign.center,
-            ),
-          ),
+        error: (h, _) => DukkanHataGovdesi(
+          hata: h,
+          onYenile: () =>
+              ref.invalidate(dukkanTeklifleriProvider(widget.talepId)),
         ),
         data: (items) {
           if (items.isEmpty) {

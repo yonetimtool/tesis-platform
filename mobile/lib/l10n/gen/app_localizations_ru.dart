@@ -6134,4 +6134,79 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get dukkanBildirimYorumYayinlandi => 'Ваш отзыв опубликован';
+
+  @override
+  String get dukkanTelefonBaslik => 'Подтвердите телефон';
+
+  @override
+  String get dukkanTelefonAciklama =>
+      'В вашем аккаунте Yönetiyor нет номера телефона. Подтвердите номер здесь, чтобы пользоваться маркетплейсом.';
+
+  @override
+  String get dukkanKodAciklama => 'Мы отправили 6-значный код на ваш номер.';
+
+  @override
+  String get dukkanTelefonAlani => 'Номер телефона';
+
+  @override
+  String get dukkanAdSoyadAlani => 'Имя и фамилия';
+
+  @override
+  String get dukkanAdSoyadIpucu =>
+      'Необязательно. Компании увидят вас под этим именем.';
+
+  @override
+  String get dukkanKodAlani => 'Код подтверждения';
+
+  @override
+  String get dukkanKodGonder => 'Отправить код';
+
+  @override
+  String get dukkanKodDogrula => 'Подтвердить';
+
+  @override
+  String get dukkanNumarayiDegistir => 'Изменить номер';
+
+  @override
+  String get dukkanTelefonDogrula => 'Подтвердить телефон';
+
+  @override
+  String get dukkanSmsBaslikYok =>
+      'Отправка SMS ещё не подключена. Идёт согласование; пока можно продолжить на dukkan.yonetiyor.com.';
+
+  @override
+  String get dukkanSmsBasarisiz =>
+      'Не удалось отправить код. Повторите через несколько минут.';
+
+  @override
+  String get dukkanSmsSaglayiciYok => 'Служба SMS сейчас недоступна.';
+
+  @override
+  String get dukkanKodCokSik => 'Слишком много запросов кода. Повторите позже.';
+
+  @override
+  String get dukkanTelefonGecersiz => 'Некорректный номер телефона.';
+
+  @override
+  String get dukkanKodHatali => 'Неверный код.';
+
+  @override
+  String get dukkanKodSuresiDoldu =>
+      'Срок действия кода истёк, запросите новый.';
+
+  @override
+  String get dukkanKodKullanilmis => 'Этот код уже использован.';
+
+  @override
+  String get dukkanKodBulunamadi => 'Сначала запросите код.';
+
+  @override
+  String get dukkanCokFazlaDeneme =>
+      'Слишком много неверных попыток. Запросите новый код.';
+
+  @override
+  String get dukkanHesapAskida => 'Ваш аккаунт заблокирован.';
+
+  @override
+  String get dukkanAgHatasi => 'Не удалось подключиться. Проверьте интернет.';
 }

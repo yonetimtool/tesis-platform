@@ -17,9 +17,11 @@
 | **F5** | İki katmanlı yorum, kota, şikâyet, moderasyon paneli | 0119 | prod'a hazır |
 | **F6** | Bildirim, mobil menü, panel sayfası | 0120 | prod'a hazır |
 | **F6-ek** | Mobil bildirim ekranı + FCM kaydı, Dukkan push kanalı, ayrı tercih, web bildirim sayfası | 0121 | prod'a hazır |
+| **F7** | Başarısız SMS kotayı yemesin + mobil telefon-OTP (jeton cihazda) | 0122 | prod'a hazır |
 
 Dağıtım notları: `F1-dagitim.md` … `F6-dagitim.md`, `F6-ek-dagitim.md`,
-`SMS-entegrasyonu.md`. **Sıralı uygulanmalı** — göç zinciri 0113→0121.
+`F7-dagitim.md`, `SMS-entegrasyonu.md`. **Sıralı uygulanmalı** — göç
+zinciri 0113→0122.
 
 > **F6-ek mobil sürüm gerektirir.** Backend'i mobilden önce dağıtmak,
 > eski sürümdeki cihazlarda Dukkan push'unu **sessizce düşürür**
@@ -80,16 +82,14 @@ Hepsi **kırılarak** doğrulandı — kırıldığında kırmızı yandığı g
 
 ### Teknik açıklar
 
-> Triyaj ve önerilen sıra: **`ONCELIK.md`**. Özet: ürünü *engelleyen*
-> iki madde var (mobil OTP akışı, davet kotası); kalan beşi iyileştirme.
+> Triyaj ve önerilen sıra: **`ONCELIK.md`**. Engelleyen iki madde
+> (davet kotası, mobil OTP) **F7'de kapatıldı**; kalan beşi iyileştirme.
 
 | Madde | Nerede yazılı |
 |---|---|
-| Mobilde **telefon-OTP akışı yok** (telefonsuz %27 web'e gidiyor) | F4 §14 |
 | **Bildirim toplulaştırma (batching) yok** | F6 §13 |
 | `bildirim` tablosunda **retention yok** | F6-dagitim §8 |
 | **Web push yok** (service worker altyapısı kurulmadı) | F6-ek §7 |
-| **Davet kotası**: başarısız SMS kotayı yiyor | F5-dagitim §6 |
 | `talep.son_gecerlilik` var ama **kullanılmıyor** | F4 §14 |
 | **İtiraz ucu yok** (denetim izi hazır, süreç e-posta ile) | F5 §14 |
 | **Jeton `localStorage`'da** | F2 §11 — ödeme fazında yeniden değerlendir |

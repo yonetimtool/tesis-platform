@@ -779,3 +779,82 @@ final dukkanBildirimTercihiProvider =
   final jeton = await ref.watch(dukkanOturumProvider).jetonAl();
   return ref.watch(dukkanApiProvider).tercihOku(jeton);
 });
+
+// =========================================================================
+// (DUKKAN F7 §2) TELEFON-OTP — KIMLIK GEREKTIRMEZ
+// =========================================================================
+// Bu iki uç Dukkan jetonu İSTEMEZ; jetonu ÜRETİRLER. Yönetiyor jetonu da
+// gönderilmemeli: `AuthInterceptor` onu her isteğe eklediği için burada
+// da `dukkanJetonu` işareti kullanılıyor — boş dize ile. Uç kimliksiz
+// olduğu için değeri önemsiz; önemli olan interceptor'ın YÖNETIYOR
+// jetonunu koymaması ve olası bir 401'i "oturum bitti" sanmaması.
+
+/// SMS gönderilemediğinde fırlatılır. `kod` eyleme dönük:
+/// `sms_baslik_yok` | `sms_basarisiz` | `sms_saglayici_yok` |
+/// `kod_istegi_cok_sik` | `telefon_bicimi_gecersiz`
+class DukkanOtpHatasi implements Exception {
+  DukkanOtpHatasi(this.kod);
+
+  final String kod;
+
+  @override
+  String toString() => 'DukkanOtpHatasi($kod)';
+}
+
+extension DukkanOtpApi on DukkanApi {
+  /// Kimliksiz istek: interceptor YÖNETIYOR jetonunu KOYMASIN diye
+  /// boş Dukkan jetonu işaretleniyor.
+  Options get _kimliksiz =>
+      Options(extra: {AuthInterceptor.dukkanJetonu: ''});
+
+  /// Telefona doğrulama kodu ister.
+  ///
+  /// Başarısızlıkta `DukkanOtpHatasi` fırlatır — sessizce `false`
+  /// dönmek, kullanıcıyı GELMEYECEK bir kodu bekleyen ekranda bırakırdı
+  /// (uç bu yüzden 200 değil 503 dönüyor).
+  Future<void> otpKodIste(String telefon) async {
+    try {
+      await _dio.post<Map<String, dynamic>>(
+        '/dukkan/auth/telefon/kod',
+        options: _kimliksiz,
+        data: <String, dynamic>{'telefon': telefon},
+      );
+    } on DioException catch (e) {
+      throw DukkanOtpHatasi(_kod(e));
+    }
+  }
+
+  /// Kodu doğrular ve DUKKAN JETONU döner.
+  Future<String> otpDogrula({
+    required String telefon,
+    required String kod,
+    String? adSoyad,
+  }) async {
+    try {
+      final r = await _dio.post<Map<String, dynamic>>(
+        '/dukkan/auth/telefon/dogrula',
+        options: _kimliksiz,
+        data: <String, dynamic>{
+          'telefon': telefon,
+          'kod': kod,
+          if (adSoyad != null && adSoyad.isNotEmpty) 'ad_soyad': adSoyad,
+        },
+      );
+      final j = r.data?['access_token'] as String?;
+      if (j == null || j.isEmpty) throw DukkanOtpHatasi('yanit_bos');
+      return j;
+    } on DioException catch (e) {
+      throw DukkanOtpHatasi(_kod(e));
+    }
+  }
+
+  static String _kod(DioException e) {
+    final veri = e.response?.data;
+    if (veri is Map) {
+      final k = (veri['error'] as Map?)?['code'];
+      if (k is String && k.isNotEmpty) return k;
+    }
+    // Ağ hatası ile sunucu hatası AYRI: kullanıcının yapacağı şey farklı.
+    return e.response == null ? 'ag' : 'bilinmeyen';
+  }
+}

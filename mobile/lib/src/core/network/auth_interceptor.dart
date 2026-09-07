@@ -65,8 +65,17 @@ class AuthInterceptor extends Interceptor {
     RequestInterceptorHandler handler,
   ) async {
     final dukkan = options.extra[dukkanJetonu];
-    if (dukkan is String && dukkan.isNotEmpty) {
-      options.headers['Authorization'] = 'Bearer $dukkan';
+    if (dukkan is String) {
+      // BOS DIZE = "DUKKAN'IN KIMLIKSIZ UCU" (F7 §2: telefon-OTP).
+      //
+      // O uclar jeton URETIR, jeton istemez — ama Yonetiyor jetonu
+      // gonderilmemeli: gonderilse ve uc 401 donse, asagidaki `onError`
+      // dali kullaniciyi YONETIYOR'DAN atardi. Isaretin VARLIGI
+      // (degeri degil) o dali kapatiyor; baslik ise yalniz gercek bir
+      // jeton varsa ekleniyor.
+      if (dukkan.isNotEmpty) {
+        options.headers['Authorization'] = 'Bearer $dukkan';
+      }
       return handler.next(options);
     }
     if (!_isAuthEndpoint(options.path)) {

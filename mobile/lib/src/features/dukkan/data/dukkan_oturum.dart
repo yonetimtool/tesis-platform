@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/dio_provider.dart';
+import 'dukkan_jeton_deposu.dart';
 import 'dukkan_push.dart';
 
 /// (DUKKAN F4) DUKKAN JETONU — Yonetiyor SSO koprusuyle alinir.
@@ -53,6 +54,24 @@ class DukkanOturum {
   Future<String> jetonAl() async {
     final mevcut = _jeton;
     if (mevcut != null) return mevcut;
+
+    // ==================================================================
+    // (F7 §2) ONCE CIHAZDAKI JETON — KOPRU SONRA
+    // ==================================================================
+    // Sira onemli: kopru once denenseydi, telefonu OLMAYAN kullanici
+    // (olculdu: %27) OTP ile jeton almis olsa bile her acilista yine
+    // 409 alir ve YENIDEN OTP'ye sokulurdu. Yani OTP akisi her gun bir
+    // SMS demek olurdu ve kullanilamazdi.
+    //
+    // Depo, jetonu Yonetiyor kullanicisina BAGLI tutuyor; baskasinin
+    // jetonu okunmaz (bkz. dukkan_jeton_deposu.dart).
+    final saklanan = await _ref.read(dukkanJetonDeposuProvider).oku();
+    if (saklanan != null) {
+      _jeton = saklanan;
+      unawaited(_ref.read(dukkanPushKaydiProvider).kaydet(saklanan));
+      return saklanan;
+    }
+
     try {
       // `dio` Yonetiyor jetonunu `auth_interceptor` ile zaten ekliyor;
       // kopru o jetonu okuyup Dukkan jetonu uretiyor.
@@ -60,6 +79,7 @@ class DukkanOturum {
       final j = r.data?['access_token'] as String?;
       if (j == null) throw DukkanOturumHatasi('yanit_bos');
       _jeton = j;
+      unawaited(_ref.read(dukkanJetonDeposuProvider).yaz(j));
       // (F6-ek) CIHAZI DUKKAN'A KAYDET — jeton ALINDIGI AN.
       //
       // `unawaited` degil, `await` DE DEGIL: kayit bilerek beklenmeden
@@ -93,7 +113,28 @@ class DukkanOturum {
   void temizle() {
     final j = _jeton;
     _jeton = null;
+    // KALICI KAYIT DA SILINIYOR: yalniz bellegi temizlemek, cikis sonrasi
+    // ayni cihazda giren kisinin depodaki jetonu okumasini engellemezdi.
+    unawaited(_ref.read(dukkanJetonDeposuProvider).sil());
     if (j != null) unawaited(_ref.read(dukkanPushKaydiProvider).sil(j));
+  }
+
+  /// (F7 §2) OTP akisi bittiginde cagrilir: jetonu YERLESTIRIR.
+  ///
+  /// Kopru 409 `telefon_gerekli` dondugunde kullanici telefonunu Dukkan'da
+  /// DOGRUDAN dogruluyor ve buradan devam ediyor. Yonetiyor'a telefon
+  /// YAZILMIYOR — kopru salt okunur ve bu sinir testle kilitli; Dukkan'in
+  /// Yonetiyor'a yazmasi bir sinir ihlali olurdu.
+  ///
+  /// Bunun bedeli: OTP ile acilan hesapta `dukkan_yonetiyor_bag` satiri
+  /// YOK. Yani ayni kisi web'de Yonetiyor SSO'suyla girerse, telefonu
+  /// AYNIYSA ayni Dukkan hesabina duser (`dukkan_kullanici.telefon`
+  /// UNIQUE); degilse ayri bir hesabi olur. Bu, telefonu Yonetiyor'da
+  /// olmayan bir kullanici icin kacinilmaz.
+  Future<void> jetonKur(String jeton) async {
+    _jeton = jeton;
+    await _ref.read(dukkanJetonDeposuProvider).yaz(jeton);
+    unawaited(_ref.read(dukkanPushKaydiProvider).kaydet(jeton));
   }
 }
 

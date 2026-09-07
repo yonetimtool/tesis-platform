@@ -6056,4 +6056,82 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get dukkanBildirimYorumYayinlandi =>
       'Ihre Bewertung wurde veröffentlicht';
+
+  @override
+  String get dukkanTelefonBaslik => 'Telefonnummer bestätigen';
+
+  @override
+  String get dukkanTelefonAciklama =>
+      'Ihr Yönetiyor-Konto hat keine Telefonnummer. Sie können Ihre Nummer hier bestätigen, um den Marktplatz zu nutzen.';
+
+  @override
+  String get dukkanKodAciklama =>
+      'Wir haben einen 6-stelligen Code an Ihre Nummer gesendet.';
+
+  @override
+  String get dukkanTelefonAlani => 'Telefonnummer';
+
+  @override
+  String get dukkanAdSoyadAlani => 'Vor- und Nachname';
+
+  @override
+  String get dukkanAdSoyadIpucu =>
+      'Optional. Unternehmen sehen Sie unter diesem Namen.';
+
+  @override
+  String get dukkanKodAlani => 'Bestätigungscode';
+
+  @override
+  String get dukkanKodGonder => 'Code senden';
+
+  @override
+  String get dukkanKodDogrula => 'Bestätigen';
+
+  @override
+  String get dukkanNumarayiDegistir => 'Nummer ändern';
+
+  @override
+  String get dukkanTelefonDogrula => 'Telefonnummer bestätigen';
+
+  @override
+  String get dukkanSmsBaslikYok =>
+      'SMS-Versand ist noch nicht freigeschaltet. Die Genehmigung läuft; in der Zwischenzeit können Sie auf dukkan.yonetiyor.com fortfahren.';
+
+  @override
+  String get dukkanSmsBasarisiz =>
+      'Der Code konnte nicht gesendet werden. Versuchen Sie es in einigen Minuten erneut.';
+
+  @override
+  String get dukkanSmsSaglayiciYok =>
+      'Der SMS-Dienst ist derzeit nicht verfügbar.';
+
+  @override
+  String get dukkanKodCokSik =>
+      'Zu viele Code-Anfragen. Versuchen Sie es später erneut.';
+
+  @override
+  String get dukkanTelefonGecersiz => 'Die Telefonnummer ist ungültig.';
+
+  @override
+  String get dukkanKodHatali => 'Der Code ist falsch.';
+
+  @override
+  String get dukkanKodSuresiDoldu =>
+      'Der Code ist abgelaufen, fordern Sie einen neuen an.';
+
+  @override
+  String get dukkanKodKullanilmis => 'Dieser Code wurde bereits verwendet.';
+
+  @override
+  String get dukkanKodBulunamadi => 'Fordern Sie zuerst einen Code an.';
+
+  @override
+  String get dukkanCokFazlaDeneme =>
+      'Zu viele Fehlversuche. Fordern Sie einen neuen Code an.';
+
+  @override
+  String get dukkanHesapAskida => 'Ihr Konto wurde gesperrt.';
+
+  @override
+  String get dukkanAgHatasi => 'Keine Verbindung. Prüfen Sie Ihr Internet.';
 }

@@ -6129,4 +6129,77 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get dukkanBildirimYorumYayinlandi => 'تم نشر تقييمك';
+
+  @override
+  String get dukkanTelefonBaslik => 'أكّد رقم هاتفك';
+
+  @override
+  String get dukkanTelefonAciklama =>
+      'لا يوجد رقم هاتف في حسابك على Yönetiyor. يمكنك تأكيد رقمك هنا لاستخدام السوق.';
+
+  @override
+  String get dukkanKodAciklama => 'أرسلنا رمزاً من 6 أرقام إلى رقمك.';
+
+  @override
+  String get dukkanTelefonAlani => 'رقم الهاتف';
+
+  @override
+  String get dukkanAdSoyadAlani => 'الاسم الكامل';
+
+  @override
+  String get dukkanAdSoyadIpucu =>
+      'اختياري. ستراك الأنشطة التجارية بهذا الاسم.';
+
+  @override
+  String get dukkanKodAlani => 'رمز التحقق';
+
+  @override
+  String get dukkanKodGonder => 'إرسال الرمز';
+
+  @override
+  String get dukkanKodDogrula => 'تأكيد';
+
+  @override
+  String get dukkanNumarayiDegistir => 'تغيير الرقم';
+
+  @override
+  String get dukkanTelefonDogrula => 'تأكيد هاتفي';
+
+  @override
+  String get dukkanSmsBaslikYok =>
+      'إرسال الرسائل النصية غير مفعّل بعد. الموافقة قيد الإجراء؛ في هذه الأثناء يمكنك المتابعة عبر dukkan.yonetiyor.com.';
+
+  @override
+  String get dukkanSmsBasarisiz =>
+      'تعذّر إرسال الرمز. أعد المحاولة بعد بضع دقائق.';
+
+  @override
+  String get dukkanSmsSaglayiciYok => 'خدمة الرسائل النصية غير متاحة حالياً.';
+
+  @override
+  String get dukkanKodCokSik => 'طلبات رمز كثيرة جداً. أعد المحاولة لاحقاً.';
+
+  @override
+  String get dukkanTelefonGecersiz => 'رقم الهاتف غير صالح.';
+
+  @override
+  String get dukkanKodHatali => 'الرمز غير صحيح.';
+
+  @override
+  String get dukkanKodSuresiDoldu => 'انتهت صلاحية الرمز، اطلب رمزاً جديداً.';
+
+  @override
+  String get dukkanKodKullanilmis => 'تم استخدام هذا الرمز من قبل.';
+
+  @override
+  String get dukkanKodBulunamadi => 'اطلب رمزاً أولاً.';
+
+  @override
+  String get dukkanCokFazlaDeneme => 'محاولات خاطئة كثيرة. اطلب رمزاً جديداً.';
+
+  @override
+  String get dukkanHesapAskida => 'تم إيقاف حسابك.';
+
+  @override
+  String get dukkanAgHatasi => 'تعذّر الاتصال. تحقق من الإنترنت.';
 }
