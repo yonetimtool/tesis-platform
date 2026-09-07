@@ -70,6 +70,18 @@ class Settings(BaseSettings):
     # ve telefon dogrulamasinin tamami anlamsizlasirdi. Acikca
     # acilmadikca kapali.
     dukkan_otp_yanitta: bool = False
+    # (DUKKAN) SMS SAGLAYICISI — Yonetiyor'un `sms_aktif` salterinden AYRI.
+    #
+    # Gerekce `mesajlasma.dukkan_sms_saglayicisi` basliginda: Yonetiyor'da
+    # SMS urun genelinde KAPALI (telefon yalniz iletisim bilgisi), Dukkan'da
+    # ise telefon KIMLIGIN CAPASI ve SMS olmadan kimlik calismaz. Iki
+    # urunun karari gercekten farkli.
+    #
+    # "konsol" | "verimor" | "" (kapali). Varsayilan KAPALI: prod'da
+    # yapilandirma unutulursa SMS akmaz — "yanlislikla gonderim" yerine
+    # "hic gonderim" tarafinda hata yapmak icin bilincli varsayilan
+    # (`sms_aktif` basliginda ayni ilke yazili).
+    dukkan_sms_saglayici: str = ""
     dukkan_db_pool_size: int = 3
     dukkan_db_max_overflow: int = 2
 
@@ -253,7 +265,7 @@ class Settings(BaseSettings):
     #
     # Kod yolu ILERIDE ACILABILIR halde birakildi: tek satir `SMS_AKTIF=true`.
     sms_aktif: bool = False
-    sms_saglayici: str | None = None        # "netgsm" | None
+    sms_saglayici: str | None = None        # "netgsm" | "verimor" | None
     sms_kullanici: str | None = None
     sms_parola: str | None = None
     sms_baslik: str | None = None           # onayli gonderici basligi

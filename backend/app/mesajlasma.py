@@ -280,6 +280,131 @@ class NetgsmSmsSaglayici(MesajSaglayici):
         return GonderimSonucu("hata", self.ad, hata=kod or "bos_yanit")
 
 
+class KonsolSmsSaglayici(MesajSaglayici):
+    """(DUKKAN) GELISTIRME TASIYICISI — teslimat KONSOLA yapilir.
+
+    =======================================================================
+    NEDEN VAR — `KonsolEpostaSaglayici` ile AYNI GEREKCE
+    =======================================================================
+    Dukkan'da kod gonderimi "sessizce basarisiz olamaz" kuralina bagli:
+    saglayici mesaji kabul etmezse uc 503 doner. DOGRU davranis — ama bir
+    yan etkisi var: dev'de hicbir SMS gecidi yok, dolayisiyla telefonla
+    giris ve isletme telefonu dogrulama akislari dev'de HIC
+    calistirilamaz hale gelir.
+
+    `KapaliSmsSaglayici` bu isi goremez cunku `yapilandirilmadi` doner ve
+    "gonderildi" DEMEZ — dogrusu da budur. Burada gereken sey mesaji
+    GERCEKTEN teslim eden bir tasiyici; hedefi konsoldur.
+
+    Yani `gonderildi: true` DURUSTTUR: mesaj gercekten teslim edildi.
+    Kod, konteyner gunlugunde okunabilir ve akis uctan uca calisir.
+
+    PROD'DA KULLANILMAZ: secimi acik bir yapilandirmadir
+    (`DUKKAN_SMS_SAGLAYICI=konsol`) ve prod'da `verimor` secilir.
+    """
+
+    ad = "konsol"
+
+    def gonder(self, hedef: str, konu: str | None, govde: str, html: str | None = None, headers: dict[str, str] | None = None) -> GonderimSonucu:
+        # Kod GUNLUGE yaziliyor — dev'de akisin surulebilmesi icin. Bu
+        # bilincli: prod'da bu saglayici SECILMEZ.
+        logger.info("[SMS/konsol] %s <- %s", maskele_kimlik(hedef), govde)
+        return GonderimSonucu("gonderildi", self.ad)
+
+
+class VerimorSmsSaglayici(MesajSaglayici):
+    """(DUKKAN) Verimor HTTP API v2 — `POST /v2/send.json`.
+
+    =======================================================================
+    NEDEN BURAYA EKLENDI, DUKKAN'A AYRI BIR KATMAN YAZILMADI
+    =======================================================================
+    Ilk yaklasim Dukkan icin ayri bir `dukkan/sms.py` yazmakti. YANLISTI:
+    bu dosyada ZATEN calisan bir soyutlama var — ana salter (`sms_aktif`),
+    tek secim noktasi (`sms_saglayicisi`), ve "gonderildi DEMEYEN" bir
+    kapali saglayici.
+
+    Paralel bir katman iki yerde kimlik, iki yerde ana salter ve iki yerde
+    hata eslemesi demekti; biri gun gelip otekinden ayrisirdi. Ustelik
+    Verimor hesabi ve kredisi Yonetiyor icin ZATEN VAR — ayni hesap.
+
+    Saglayici degistirmek "bu dosyaya BIR SINIF eklemek" olarak
+    tasarlanmisti (bkz. `NetgsmSmsSaglayici` basligi); bu sinif tam olarak
+    o sozu kullaniyor.
+
+    =======================================================================
+    BASARILI YANIT JSON DEGIL, DUZ METINDIR
+    =======================================================================
+    Verimor 200'de yalnizca KAMPANYA NUMARASINI doner (orn. `20212`).
+    `yanit.json()` cagirmak burada hata verirdi.
+
+    =======================================================================
+    ONAYSIZ BASLIK: 400
+    =======================================================================
+    Verimor, `oim.verimor.com.tr/headers` uzerinde ONAYLANMAMIS bir
+    `source_addr` icin 400 doner. Basvuru sirket kurulumuna bagli oldugu
+    icin bu, urunun bir sure yasayacagi GERCEK bir durum — ve "hata"dan
+    AYRI raporlaniyor (`baslik_yok`): operatorun yapmasi gereken sey kod
+    duzeltmek degil, onayi beklemek.
+
+    GOVDE VE NUMARA GUNLUGE YAZILMAZ (P134).
+
+    ZAMAN ASIMI ZORUNLU: gonderim bir kullanici isteginin ICINDE calisiyor.
+    """
+
+    ad = "verimor"
+    UC = "https://sms.verimor.com.tr/v2/send.json"
+    ZAMAN_ASIMI_SN = 15
+
+    def __init__(self, kullanici: str, parola: str, baslik: str) -> None:
+        self._kullanici = kullanici
+        self._parola = parola
+        self._baslik = baslik
+
+    def gonder(self, hedef: str, konu: str | None, govde: str, html: str | None = None, headers: dict[str, str] | None = None) -> GonderimSonucu:
+        import httpx
+
+        # ONAYLI BASLIK YOKSA HIC DENEME. Denemek yalniz gunlugu kirletir
+        # ve kullaniciya "basarisiz" der; oysa gercek durum farkli ve
+        # operatorun yapacagi is de farkli.
+        if not self._baslik:
+            logger.warning("[SMS/verimor] onayli baslik yok — gonderim DENENMEDI")
+            return GonderimSonucu("yapilandirilmadi", self.ad, hata="baslik_yok")
+
+        # Verimor yurt ici numarayi `905XXXXXXXXX` bekliyor: bas sifir ve
+        # `+` YOK. `+90...` gondermek numarayi gecersiz kilar.
+        numara = hedef.lstrip("+")
+        try:
+            yanit = httpx.post(
+                self.UC,
+                json={
+                    "username": self._kullanici,
+                    "password": self._parola,
+                    "source_addr": self._baslik,
+                    "messages": [{"msg": govde, "dest": numara}],
+                },
+                timeout=self.ZAMAN_ASIMI_SN,
+            )
+        except Exception as exc:
+            logger.warning("[SMS/verimor] gonderilemedi: %s", type(exc).__name__)
+            return GonderimSonucu("hata", self.ad, hata="baglanti")
+
+        if yanit.status_code == 200:
+            logger.info("[SMS/verimor] %s <- gonderildi", maskele_kimlik(hedef))
+            # "gonderildi" DENIR, "iletildi" DENMEZ: teslim bilgisi ayri
+            # bir sorgudur ve uydurmak panelde YANLIS kanit gosterirdi
+            # (Netgsm saglayicisinda ayni not var).
+            return GonderimSonucu("gonderildi", self.ad)
+
+        kod = {
+            400: "gecersiz_istek",   # onaysiz baslik / kredi / icerik
+            401: "kimlik_gecersiz",
+            413: "paket_buyuk",
+            429: "hiz_siniri",
+        }.get(yanit.status_code, f"http_{yanit.status_code}")
+        logger.warning("[SMS/verimor] saglayici reddetti: %s", kod)
+        return GonderimSonucu("hata", self.ad, hata=kod)
+
+
 class KonsolEpostaSaglayici(MesajSaglayici):
     """(P196) GELISTIRME/TEST TASIYICISI — teslimat KONSOLA yapilir.
 
@@ -571,6 +696,31 @@ def sms_saglayicisi(ayar: SaglayiciAyari | None = None) -> MesajSaglayici:
     ad = (a.sms_saglayici or "").strip().lower()
     if not ad:
         return LogSmsSaglayici()
+    if ad == "verimor":
+        eksik = [
+            k
+            for k, v in (
+                ("SMS_KULLANICI", a.sms_kullanici),
+                ("SMS_PAROLA", a.sms_parola),
+            )
+            if not v
+        ]
+        if eksik:
+            logger.error(
+                "[SMS] saglayici 'verimor' secildi ama %s eksik — LOG'a dusuldu",
+                ", ".join(eksik),
+            )
+            return LogSmsSaglayici()
+        # BASLIK EKSIK OLABILIR ve bu LOG'a DUSME sebebi DEGIL: baslik
+        # onayi sirket kurulumuna bagli ve bir sure bos kalacak.
+        # Saglayici bu durumu KENDI raporluyor (`baslik_yok`) — LOG'a
+        # dusmek, onay geldiginde yalnizca SMS_BASLIK'i doldurmanin
+        # yetmemesi (SMS_SAGLAYICI'yi da hatirlamak gerekmesi) demekti.
+        return VerimorSmsSaglayici(
+            kullanici=a.sms_kullanici or "",
+            parola=a.sms_parola or "",
+            baslik=a.sms_baslik or "",
+        )
     if ad == "netgsm":
         eksik = [
             k
@@ -595,3 +745,59 @@ def sms_saglayicisi(ayar: SaglayiciAyari | None = None) -> MesajSaglayici:
         )
     logger.error("[SMS] bilinmeyen saglayici '%s' — LOG'a dusuldu", ad)
     return LogSmsSaglayici()
+
+
+# --------------------------------------------------------------------------- #
+# DUKKAN SMS SECIMI — Yonetiyor'un ana salterinden AYRI
+# --------------------------------------------------------------------------- #
+def dukkan_sms_saglayicisi() -> MesajSaglayici:
+    """(DUKKAN) SMS saglayicisi — TEK SECIM NOKTASI.
+
+    Doner: `MesajSaglayici` ornegi.
+
+    =======================================================================
+    NEDEN YONETIYOR'UN `sms_aktif` SALTERINDEN AYRI
+    =======================================================================
+    Yonetiyor'da SMS URUN GENELINDE KAPALI ve bu bir KARAR: telefon orada
+    yalniz iletisim bilgisi, dogrulama e-posta koduyla yapiliyor
+    (`sms_aktif` basligindaki not).
+
+    Dukkan'da durum TERSI: telefon KIMLIGIN CAPASI (e-posta bir kisiyi
+    tekillestiremez — `uq_app_user_tenant_email` yalniz tesis ici
+    benzersiz). SMS olmadan Dukkan kimligi calismaz.
+
+    Iki urunun bu konudaki karari GERCEKTEN farkli, dolayisiyla salter de
+    ayri. SAGLAYICI SINIFLARI ise PAYLASILIYOR (`VerimorSmsSaglayici`
+    ikisinde de ayni) — ayrisan sey karar, kod degil.
+
+    Taninmayan ad `KapaliSmsSaglayici`ya duser: cokmez, ama "gonderildi"
+    de DEMEZ.
+    """
+    from .config import settings
+
+    ad = (settings.dukkan_sms_saglayici or "").strip().lower()
+    if ad == "konsol":
+        return KonsolSmsSaglayici()
+    if ad == "verimor":
+        eksik = [
+            k for k, v in (
+                ("SMS_KULLANICI", settings.sms_kullanici),
+                ("SMS_PAROLA", settings.sms_parola),
+            ) if not v
+        ]
+        if eksik:
+            logger.error(
+                "[SMS/dukkan] 'verimor' secildi ama %s eksik — KAPALI'ya dusuldu",
+                ", ".join(eksik),
+            )
+            return KapaliSmsSaglayici()
+        # Baslik BOS OLABILIR: onay sirket kurulumuna bagli ve bir sure
+        # bos kalacak. Saglayici bunu KENDI raporluyor (`baslik_yok`);
+        # kapaliya dusurmek, onay geldiginde yalnizca SMS_BASLIK'i
+        # doldurmanin yetmemesi demekti.
+        return VerimorSmsSaglayici(
+            kullanici=settings.sms_kullanici or "",
+            parola=settings.sms_parola or "",
+            baslik=settings.sms_baslik or "",
+        )
+    return KapaliSmsSaglayici()

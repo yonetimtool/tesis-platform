@@ -30,20 +30,20 @@ export default function Giris() {
     setHata(null);
     setBekle(true);
     try {
+      // GONDERILEMEDIYSE UC 503 DONER ve `api` HATA FIRLATIR — yani
+      // asagidaki `setAdim("kod")` HIC CALISMAZ. Kullaniciya gelmeyecek
+      // bir kodun bekleme ekrani GOSTERILMEZ.
+      //
+      // Eskiden uc 200 + `gonderildi: false` donduruyordu ve burada
+      // "kod adimina" geciliyordu; kullanici olmayan bir SMS'i beklerdi.
       const y = await api<KodYanit>("/auth/telefon/kod", {
         metot: "POST",
         govde: { telefon },
       });
       setAdim("kod");
-      // SESSIZ BASARISIZLIK YOK: SMS saglayicisi bagli degilse bunu
-      // SOYLUYORUZ. "Kod gonderildi" deyip hicbir sey gondermemek,
-      // kullaniciyi olmayan bir SMS'i beklerken birakirdi.
       if (y.dev_kod) {
+        // Yalniz gelistirme: gercek saglayici varken uc bunu DONDURMEZ.
         setBilgi(`Geliştirme kodu: ${y.dev_kod}`);
-      } else if (y.gonderim !== "gonderildi") {
-        setBilgi(
-          "SMS servisi henüz bağlı değil. Kodu yöneticinizden isteyin.",
-        );
       }
     } catch (h) {
       setHata(hataMetni(h));

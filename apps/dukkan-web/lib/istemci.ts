@@ -103,6 +103,21 @@ export function hataMetni(h: unknown): string {
     return `Şu kategoriler bulunamadı: ${k.split(":")[1]}`;
   }
   const sozluk: Record<string, string> = {
+    // --- SMS GONDERIM (503) ---
+    // Kullanici NE OLDUGUNU ve NE YAPACAGINI anlamali. "Bir hata olustu"
+    // demek, gelmeyecek bir kodu beklemesine yol acardi.
+    //
+    // Uc ucunu de AYRI yaziyoruz cunku kullanicinin yapacagi sey farkli:
+    //   baslik_yok    -> beklemekten baska sey yok, alternatif kanal sun
+    //   basarisiz     -> tekrar denemek MANTIKLI (gecici)
+    //   saglayici_yok -> yapilandirma eksik; tekrar denemek ise yaramaz
+    sms_baslik_yok:
+      "SMS gönderimi henüz açılmadı. Onay sürecimiz sürüyor; " +
+      "bu arada bize ulaşarak hesabınızı açtırabilirsiniz.",
+    sms_basarisiz:
+      "Kod gönderilemedi. Birkaç dakika sonra tekrar deneyin.",
+    sms_saglayici_yok:
+      "SMS servisi şu anda kullanılamıyor. Lütfen bizimle iletişime geçin.",
     kod_hatali: "Kod hatalı.",
     kod_suresi_doldu: "Kodun süresi doldu, yeni kod isteyin.",
     kod_kullanilmis: "Bu kod zaten kullanıldı.",

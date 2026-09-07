@@ -26,11 +26,11 @@ from .kimlik import (
     OTP_MAKS_DENEME,
     OTP_OMRU_DK,
     DukkanKimlik,
+    gonderilmis_kod_sayisi,
+    jeton_uret,
     kimlik_zorunlu,
     kod_dogru_mu,
-    kod_hashle,
-    kod_uret,
-    jeton_uret,
+    kod_gonder_ve_kaydet,
     telefon_normalize,
 )
 from .kopru import yonetiyor_kimligi, yonetiyor_oturumu
@@ -76,45 +76,28 @@ async def kod_gonder(
     """
     telefon = telefon_normalize(govde.telefon)
 
-    son_saat = (
-        await db.execute(
-            text(
-                "SELECT count(*) FROM telefon_dogrulama "
-                "WHERE telefon = :t AND created_at > now() - interval '1 hour'"
-            ),
-            {"t": telefon},
-        )
-    ).scalar_one()
-    if son_saat >= SAATLIK_KOD_SINIRI:
+    # SINIR YALNIZ GONDERILMIS kodlari sayar: saglayici kesintisinde
+    # kullanici bes kez deneyip hicbirini ALAMADAN kilitlenmemeli.
+    if await gonderilmis_kod_sayisi(db, telefon=telefon, amac="giris") >= (
+        SAATLIK_KOD_SINIRI
+    ):
         raise HTTPException(status_code=429, detail="kod_istegi_cok_sik")
 
-    kod = kod_uret()
-    await db.execute(
-        text(
-            "INSERT INTO telefon_dogrulama "
-            "(telefon, kod_hash, amac, gecerlilik, ip) "
-            "VALUES (:t, :h, 'giris', now() + make_interval(mins => :d), :ip)"
-        ),
-        {"t": telefon, "h": kod_hashle(kod, telefon), "d": OTP_OMRU_DK,
-         "ip": _ip(istek)},
+    yanit = await kod_gonder_ve_kaydet(
+        db, telefon=telefon, amac="giris", ip=_ip(istek)
     )
-    from ..config import settings
-
-    yanit: dict = {
-        "gonderildi": True,
-        "gecerlilik_dk": OTP_OMRU_DK,
-        # SESSIZ BASARISIZLIK YOK: SMS saglayicisi bagli degilse bunu
-        # SOYLUYORUZ. "gonderildi: true" deyip hicbir sey gondermemek,
-        # kullaniciyi olmayan bir SMS'i beklerken birakirdi.
-        "gonderim": "saglayici_bagli_degil",
-    }
-    # KODU YANITTA DONDURMEK YALNIZ ACIK BIR AYARLA MUMKUN ve varsayilan
-    # KAPALI. "ortam != production" gibi bir kosul kullanmadim bilerek:
-    # ortam degiskeni prod'da yanlis/eksik gelirse kod SESSIZCE herkese
-    # acilirdi — ve telefon dogrulamasinin tamami anlamsizlasirdi.
-    # Guvenli yon: acikca acilmadikca KAPALI.
-    if settings.dukkan_otp_yanitta:
-        yanit["dev_kod"] = kod
+    if not yanit["gonderildi"]:
+        # ==============================================================
+        # GONDERILEMEDIYSE 200 DONMEZ
+        # ==============================================================
+        # 200 + `gonderildi: false` dondurmek istemciyi "basarili yanit
+        # geldi" dalina sokar ve kullaniciya kod bekleme ekrani gosterir —
+        # gelmeyecek bir kodu. Durum kodu, istemcinin okumak zorunda
+        # OLDUGU tek sinyal; hatayi oraya koymak onu atlanamaz kilar.
+        #
+        # 503: gecici ve TEKRAR DENENEBILIR. 500 "bizde bir kusur var"
+        # der ve kullaniciya yanlis umut/umutsuzluk verirdi.
+        raise HTTPException(status_code=503, detail=f"sms_{yanit['gonderim']}")
     return yanit
 
 

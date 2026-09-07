@@ -58,9 +58,24 @@ paths:
       tags: [dukkan]
       summary: Telefona dogrulama kodu uretir
       description: |
-        Kod YANITTA DONMEZ (yalniz `DUKKAN_OTP_YANITTA` acikken `dev_kod`).
-        Varsayilan KAPALI: "ortam production degilse ac" kosulu, ortam
-        degiskeni prod'da eksik geldiginde kodu sessizce herkese acardi.
+        `gonderildi` GERCEK sonucu yansitir ve `gonderim` ile ASLA
+        CELISMEZ. Onceki bicim `{"gonderildi": true, "gonderim":
+        "saglayici_bagli_degil"}` idi; iki alan birbiriyle celisiyordu ve
+        istemci hangisine bakacagini bilemezdi.
+
+        GONDERILEMEZSE 200 DONMEZ, **503** doner (`sms_baslik_yok`,
+        `sms_basarisiz`, `sms_saglayici_yok`). 200 + `gonderildi: false`
+        istemciyi "basarili" dalina sokar ve kullaniciya GELMEYECEK bir
+        kodun bekleme ekranini gosterirdi.
+
+        HIZ SINIRI YALNIZ GONDERILMIS kodlari sayar: saglayici
+        kesintisinde kullanici bes kez deneyip hicbirini ALAMADAN bir
+        saatligine kilitlenmemeli.
+
+        `dev_kod` yanitta ancak IKI KOSUL BIRDEN dogruysa doner:
+        (1) `DUKKAN_OTP_YANITTA` acik, VE (2) gercek bir SMS saglayicisi
+        YOK. Prod'da Verimor yapilandirili oldugu icin ikinci kosul
+        YAPISAL OLARAK tutmaz — ayar yanlislikla acilsa bile kod SIZMAZ.
       security: []
       requestBody:
         required: true
@@ -80,21 +95,40 @@ paths:
                 type: object
                 required: [gonderildi, gonderim]
                 properties:
-                  gonderildi: { type: boolean }
+                  gonderildi:
+                    type: boolean
+                    description: |
+                      Saglayici mesaji KABUL ettiyse `true`. `gonderim`
+                      alani ile asla celismez.
                   gecerlilik_dk: { type: integer }
                   gonderim:
                     type: string
+                    enum: [gonderildi, saglayici_yok, baslik_yok, basarisiz]
                     description: |
-                      SMS saglayicisi bagli degilse `saglayici_bagli_degil`.
-                      SESSIZ BASARISIZLIK YOK: "gonderildi" deyip hicbir sey
-                      gondermemek kullaniciyi olmayan bir SMS'i beklerken birakir.
-                  dev_kod: { type: string, nullable: true }
+                      `gonderildi` disindaki degerlerde uc 503 doner;
+                      200 yanitta bu alan daima `gonderildi`dir.
+                  dev_kod:
+                    type: string
+                    nullable: true
+                    description: |
+                      YALNIZ gelistirme. Gercek saglayici yapilandiriliysa
+                      bu alan HICBIR kosulda donmez.
         "422":
           description: Telefon bicimi gecersiz
           content:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
         "429":
           description: Cok sik kod istendi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "503":
+          description: |
+            SMS gonderilemedi — `sms_baslik_yok` (onayli gonderici basligi
+            henuz yok), `sms_basarisiz` (gecici, tekrar denenebilir) ya da
+            `sms_saglayici_yok` (yapilandirma eksik). Kullaniciya
+            gosterilecek metin bu uce gore AYRISIR: baslik yoksa beklemek
+            disinda yapacagi bir sey yok, gecici hatada tekrar denemek
+            mantikli.
           content:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
   /dukkan/auth/telefon/dogrula:
@@ -588,6 +622,10 @@ paths:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
         "429":
           description: Cok sik kod istendi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "503":
+          description: SMS gonderilemedi (bkz. /dukkan/auth/telefon/kod)
           content:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
   /dukkan/isletme/{isletme_id}/telefon/dogrula:

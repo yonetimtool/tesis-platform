@@ -608,8 +608,12 @@ async def isletme_telefon_kod(
     numarasi dogrulanmis olsa bile isletmenin numarasi baska bir
     numaradir ve kullanicinin ARAYACAGI numara odur.
     """
-    isl = await _sahiplik_dogrula(db, kimlik.kullanici_id, isletme_id)
-    from .kimlik import OTP_OMRU_DK, kod_hashle, kod_uret, telefon_normalize
+    await _sahiplik_dogrula(db, kimlik.kullanici_id, isletme_id)
+    from .kimlik import (
+        gonderilmis_kod_sayisi,
+        kod_gonder_ve_kaydet,
+        telefon_normalize,
+    )
 
     tam = (
         await db.execute(
@@ -618,30 +622,20 @@ async def isletme_telefon_kod(
     ).scalar_one()
     telefon = telefon_normalize(tam)
 
-    son_saat = (
-        await db.execute(
-            text("SELECT count(*) FROM telefon_dogrulama WHERE telefon = :t "
-                 "AND amac = 'isletme_telefon' "
-                 "AND created_at > now() - interval '1 hour'"),
-            {"t": telefon},
-        )
-    ).scalar_one()
-    if son_saat >= 5:
+    # Sinir YALNIZ gonderilmis kodlari sayar (bkz. `kod_gonder_ve_kaydet`).
+    if await gonderilmis_kod_sayisi(
+        db, telefon=telefon, amac="isletme_telefon"
+    ) >= 5:
         raise HTTPException(status_code=429, detail="kod_istegi_cok_sik")
 
-    kod = kod_uret()
-    await db.execute(
-        text("INSERT INTO telefon_dogrulama "
-             "(telefon, kod_hash, amac, gecerlilik) "
-             "VALUES (:t, :h, 'isletme_telefon', "
-             " now() + make_interval(mins => :d))"),
-        {"t": telefon, "h": kod_hashle(kod, telefon), "d": OTP_OMRU_DK},
+    yanit = await kod_gonder_ve_kaydet(
+        db, telefon=telefon, amac="isletme_telefon"
     )
-    from ..config import settings
-
-    yanit = {"gonderildi": True, "gonderim": "saglayici_bagli_degil"}
-    if settings.dukkan_otp_yanitta:
-        yanit["dev_kod"] = kod
+    if not yanit["gonderildi"]:
+        # Gerekce `auth_uclar.py`de yazili: 200 + `gonderildi: false`
+        # istemciyi "basarili" dalina sokar ve kullaniciya gelmeyecek bir
+        # kodun bekleme ekranini gosterirdi.
+        raise HTTPException(status_code=503, detail=f"sms_{yanit['gonderim']}")
     return yanit
 
 

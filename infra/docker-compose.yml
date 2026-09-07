@@ -234,6 +234,12 @@ services:
       # SMS saglayicisi olmadan surulebilsin. PROD compose'unda BU
       # SATIR YOK ve varsayilan `false` — acikca acilmadikca kapali.
       DUKKAN_OTP_YANITTA: "true"
+      # (DUKKAN) DEV TASIYICISI: kod KONSOLA teslim edilir ve
+      # `gonderildi: true` DURUSTTUR — mesaj gercekten teslim
+      # edildi. `KapaliSmsSaglayici` bu isi goremezdi: o
+      # "gonderildi" DEMEZ (dogrusu da budur) ve akis dev'de
+      # hic surulemezdi. PROD'DA "verimor" secilir.
+      DUKKAN_SMS_SAGLAYICI: "konsol"
       REDIS_URL: redis://redis:6379/0
       # --- (P172 §2) MESAJ SAGLAYICILARI ---
       #
@@ -419,6 +425,12 @@ services:
       # SMS saglayicisi olmadan surulebilsin. PROD compose'unda BU
       # SATIR YOK ve varsayilan `false` — acikca acilmadikca kapali.
       DUKKAN_OTP_YANITTA: "true"
+      # (DUKKAN) DEV TASIYICISI: kod KONSOLA teslim edilir ve
+      # `gonderildi: true` DURUSTTUR — mesaj gercekten teslim
+      # edildi. `KapaliSmsSaglayici` bu isi goremezdi: o
+      # "gonderildi" DEMEZ (dogrusu da budur) ve akis dev'de
+      # hic surulemezdi. PROD'DA "verimor" secilir.
+      DUKKAN_SMS_SAGLAYICI: "konsol"
       REDIS_URL: redis://redis:6379/0
       # --- (P172 §2) MESAJ SAGLAYICILARI ---
       #
@@ -484,6 +496,12 @@ services:
       # SMS saglayicisi olmadan surulebilsin. PROD compose'unda BU
       # SATIR YOK ve varsayilan `false` — acikca acilmadikca kapali.
       DUKKAN_OTP_YANITTA: "true"
+      # (DUKKAN) DEV TASIYICISI: kod KONSOLA teslim edilir ve
+      # `gonderildi: true` DURUSTTUR — mesaj gercekten teslim
+      # edildi. `KapaliSmsSaglayici` bu isi goremezdi: o
+      # "gonderildi" DEMEZ (dogrusu da budur) ve akis dev'de
+      # hic surulemezdi. PROD'DA "verimor" secilir.
+      DUKKAN_SMS_SAGLAYICI: "konsol"
       REDIS_URL: redis://redis:6379/0
       JWT_SECRET: ${JWT_SECRET}
       OWNER_DSN: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
