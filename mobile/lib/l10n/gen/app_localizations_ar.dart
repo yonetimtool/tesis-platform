@@ -5852,4 +5852,108 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get dukkanIsletmeBulunamadi => 'لم يتم العثور على العمل.';
+
+  @override
+  String get dukkanTeklifAl => 'عروض أسعار مجانية';
+
+  @override
+  String get dukkanTaleplerim => 'طلباتي';
+
+  @override
+  String get dukkanYeniTalep => 'طلب جديد';
+
+  @override
+  String get dukkanIhtiyacin => 'ما تحتاجه';
+
+  @override
+  String get dukkanIhtiyacinIpucu => 'صف باختصار ما تريد إنجازه.';
+
+  @override
+  String get dukkanNeGorecek => 'ماذا ستشاهد الأعمال عند الإرسال؟';
+
+  @override
+  String get dukkanMahallenGorunur =>
+      'حيّك — مرئي دائماً حتى يتمكنوا من تقديم عرض';
+
+  @override
+  String get dukkanAciklamaGorunur => 'وصفك';
+
+  @override
+  String get dukkanAdimiPaylas => 'اسمي';
+
+  @override
+  String get dukkanTelefonumuPaylas => 'رقم هاتفي';
+
+  @override
+  String get dukkanAdresimiPaylas => 'عنواني الكامل';
+
+  @override
+  String get dukkanAdresIpucu =>
+      'يُفتح فقط للعمل الذي تختاره بعد قبول المهمة. لا أحد يراه أثناء تقديم العروض.';
+
+  @override
+  String get dukkanAdresSaklanmaz =>
+      'بما أنك لم تختر مشاركة عنوانك، فلن يُحفظ.';
+
+  @override
+  String get dukkanAcikAdres => 'العنوان الكامل';
+
+  @override
+  String get dukkanTalebiGonder => 'إرسال الطلب';
+
+  @override
+  String dukkanTalepGonderildi(int sayi) {
+    return 'وصل طلبك إلى $sayi من الأعمال.';
+  }
+
+  @override
+  String get dukkanTalepUlasmadi =>
+      'لا توجد أعمال مسجلة في هذه المنطقة، لذا لم يصل طلبك إلى أحد بعد.';
+
+  @override
+  String get dukkanTeklifler => 'العروض';
+
+  @override
+  String get dukkanTeklifYok => 'لا توجد عروض بعد.';
+
+  @override
+  String get dukkanIsiVer => 'تعيين';
+
+  @override
+  String get dukkanIsVerildi => 'تم التعيين';
+
+  @override
+  String get dukkanKapandi => 'مغلق';
+
+  @override
+  String get dukkanYerindeGorsun => 'يريد المعاينة على الطبيعة قبل التسعير';
+
+  @override
+  String get dukkanTalepYok => 'ليس لديك طلبات بعد.';
+
+  @override
+  String get dukkanIsletmelerinGordukleri => 'ما تراه الأعمال';
+
+  @override
+  String get dukkanHenuzAcilmadi =>
+      'لم يُشارَك مع أحد بعد — يُفتح بعد قبول المهمة.';
+
+  @override
+  String get dukkanIseVerildiAcildi => 'تمت مشاركته مع العمل الذي عيّنته.';
+
+  @override
+  String get dukkanIsTamamlandi => 'اكتمل العمل';
+
+  @override
+  String get dukkanGirisGerekli => 'سجّل الدخول للمتابعة.';
+
+  @override
+  String get dukkanDevam => 'متابعة';
+
+  @override
+  String get dukkanGeri => 'رجوع';
+
+  @override
+  String get dukkanTelefonGerekli =>
+      'لا يوجد رقم هاتف مسجّل في حسابك. أكّد رقمك عبر dukkan.yonetiyor.com لإنشاء طلب.';
 }

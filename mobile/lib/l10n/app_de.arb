@@ -1897,5 +1897,44 @@
   "dukkanRozetSeviye2": "Die Dokumente des Betriebs wurden von uns geprüft. Dies ist keine Garantie für die Servicequalität.",
   "dukkanRozetSeviye1": "Die Telefonnummer des Betriebs wurde verifiziert. Das zeigt, dass die Nummer echt ist; die Identität des Betriebs wird damit nicht bestätigt.",
   "dukkanOdemeUyarisi": "Zahlen Sie nicht, bevor die Arbeit erledigt ist. Eine Anzahlungsforderung ist ein Warnsignal.",
-  "dukkanIsletmeBulunamadi": "Betrieb nicht gefunden."
+  "dukkanIsletmeBulunamadi": "Betrieb nicht gefunden.",
+  "dukkanTeklifAl": "Kostenlose Angebote",
+  "dukkanTaleplerim": "Meine Anfragen",
+  "dukkanYeniTalep": "Neue Anfrage",
+  "dukkanIhtiyacin": "Ihr Anliegen",
+  "dukkanIhtiyacinIpucu": "Beschreiben Sie kurz, was zu tun ist.",
+  "dukkanNeGorecek": "Was sehen Betriebe, wenn Sie das senden?",
+  "dukkanMahallenGorunur": "Ihr Stadtteil — immer sichtbar, damit sie anbieten können",
+  "dukkanAciklamaGorunur": "Ihre Beschreibung",
+  "dukkanAdimiPaylas": "Mein Name",
+  "dukkanTelefonumuPaylas": "Meine Telefonnummer",
+  "dukkanAdresimiPaylas": "Meine vollständige Adresse",
+  "dukkanAdresIpucu": "Wird nur dem beauftragten Betrieb nach Auftragsannahme angezeigt. Während der Angebotsphase sieht sie niemand.",
+  "dukkanAdresSaklanmaz": "Da Sie Ihre Adresse nicht teilen, wird sie nicht gespeichert.",
+  "dukkanAcikAdres": "Vollständige Adresse",
+  "dukkanTalebiGonder": "Anfrage senden",
+  "dukkanTalepGonderildi": "Ihre Anfrage erreichte {sayi} Betriebe.",
+  "@dukkanTalepGonderildi": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  },
+  "dukkanTalepUlasmadi": "Keine registrierten Betriebe in diesem Gebiet; Ihre Anfrage hat noch niemanden erreicht.",
+  "dukkanTeklifler": "Angebote",
+  "dukkanTeklifYok": "Noch keine Angebote.",
+  "dukkanIsiVer": "Beauftragen",
+  "dukkanIsVerildi": "Beauftragt",
+  "dukkanKapandi": "Geschlossen",
+  "dukkanYerindeGorsun": "Möchte es vor dem Angebot vor Ort sehen",
+  "dukkanTalepYok": "Sie haben noch keine Anfragen.",
+  "dukkanIsletmelerinGordukleri": "Was Betriebe sehen können",
+  "dukkanHenuzAcilmadi": "Noch mit niemandem geteilt — wird nach Auftragsannahme freigegeben.",
+  "dukkanIseVerildiAcildi": "Mit dem beauftragten Betrieb geteilt.",
+  "dukkanIsTamamlandi": "Auftrag abgeschlossen",
+  "dukkanGirisGerekli": "Zum Fortfahren anmelden.",
+  "dukkanDevam": "Weiter",
+  "dukkanGeri": "Zurück",
+  "dukkanTelefonGerekli": "In Ihrem Konto ist keine Telefonnummer hinterlegt. Bestätigen Sie Ihre Nummer auf dukkan.yonetiyor.com, um eine Anfrage zu erstellen."
 }

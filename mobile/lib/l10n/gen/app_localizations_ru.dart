@@ -5854,4 +5854,108 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get dukkanIsletmeBulunamadi => 'Компания не найдена.';
+
+  @override
+  String get dukkanTeklifAl => 'Бесплатные предложения';
+
+  @override
+  String get dukkanTaleplerim => 'Мои заявки';
+
+  @override
+  String get dukkanYeniTalep => 'Новая заявка';
+
+  @override
+  String get dukkanIhtiyacin => 'Что вам нужно';
+
+  @override
+  String get dukkanIhtiyacinIpucu => 'Кратко опишите, что нужно сделать.';
+
+  @override
+  String get dukkanNeGorecek => 'Что увидят компании при отправке?';
+
+  @override
+  String get dukkanMahallenGorunur =>
+      'Ваш квартал — виден всегда, чтобы могли предложить цену';
+
+  @override
+  String get dukkanAciklamaGorunur => 'Ваше описание';
+
+  @override
+  String get dukkanAdimiPaylas => 'Моё имя';
+
+  @override
+  String get dukkanTelefonumuPaylas => 'Мой номер телефона';
+
+  @override
+  String get dukkanAdresimiPaylas => 'Мой полный адрес';
+
+  @override
+  String get dukkanAdresIpucu =>
+      'Открывается только выбранной компании после принятия заказа. На этапе предложений его никто не видит.';
+
+  @override
+  String get dukkanAdresSaklanmaz =>
+      'Поскольку вы не выбрали делиться адресом, он не сохраняется.';
+
+  @override
+  String get dukkanAcikAdres => 'Полный адрес';
+
+  @override
+  String get dukkanTalebiGonder => 'Отправить заявку';
+
+  @override
+  String dukkanTalepGonderildi(int sayi) {
+    return 'Ваша заявка дошла до $sayi компаний.';
+  }
+
+  @override
+  String get dukkanTalepUlasmadi =>
+      'В этом районе нет зарегистрированных компаний, заявка пока никому не дошла.';
+
+  @override
+  String get dukkanTeklifler => 'Предложения';
+
+  @override
+  String get dukkanTeklifYok => 'Предложений пока нет.';
+
+  @override
+  String get dukkanIsiVer => 'Нанять';
+
+  @override
+  String get dukkanIsVerildi => 'Нанят';
+
+  @override
+  String get dukkanKapandi => 'Закрыто';
+
+  @override
+  String get dukkanYerindeGorsun => 'Хочет посмотреть на месте перед оценкой';
+
+  @override
+  String get dukkanTalepYok => 'У вас пока нет заявок.';
+
+  @override
+  String get dukkanIsletmelerinGordukleri => 'Что видят компании';
+
+  @override
+  String get dukkanHenuzAcilmadi =>
+      'Пока никому не открыт — откроется после принятия заказа.';
+
+  @override
+  String get dukkanIseVerildiAcildi => 'Открыт выбранной компании.';
+
+  @override
+  String get dukkanIsTamamlandi => 'Работа завершена';
+
+  @override
+  String get dukkanGirisGerekli => 'Войдите, чтобы продолжить.';
+
+  @override
+  String get dukkanDevam => 'Далее';
+
+  @override
+  String get dukkanGeri => 'Назад';
+
+  @override
+  String get dukkanTelefonGerekli =>
+      'В вашем аккаунте не указан номер телефона. Подтвердите номер на dukkan.yonetiyor.com, чтобы создать заявку.';
 }

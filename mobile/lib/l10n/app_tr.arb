@@ -2663,5 +2663,44 @@
   "dukkanRozetSeviye2": "İşletmenin belgesi tarafımızca incelendi. Bu, hizmet kalitesi için bir garanti değildir.",
   "dukkanRozetSeviye1": "İşletmenin telefon numarası doğrulandı. Bu, numaranın gerçek olduğunu gösterir; işletmenin kimliğini doğrulamaz.",
   "dukkanOdemeUyarisi": "Ödemeyi iş bitmeden yapmayın. Kapora talebi bir uyarı işaretidir.",
-  "dukkanIsletmeBulunamadi": "İşletme bulunamadı."
+  "dukkanIsletmeBulunamadi": "İşletme bulunamadı.",
+  "dukkanTeklifAl": "Ücretsiz teklif al",
+  "dukkanTaleplerim": "Taleplerim",
+  "dukkanYeniTalep": "Yeni talep",
+  "dukkanIhtiyacin": "İhtiyacın",
+  "dukkanIhtiyacinIpucu": "Ne yaptırmak istediğini kısaca anlat.",
+  "dukkanNeGorecek": "Bu talebi gönderdiğinde işletmeler ne görecek?",
+  "dukkanMahallenGorunur": "Mahallen — teklif verebilmeleri için her zaman görünür",
+  "dukkanAciklamaGorunur": "İhtiyacının açıklaması",
+  "dukkanAdimiPaylas": "Adım",
+  "dukkanTelefonumuPaylas": "Telefon numaram",
+  "dukkanAdresimiPaylas": "Açık adresim",
+  "dukkanAdresIpucu": "İşi verdiğin ustaya, iş kabulünden sonra açılır. Teklif aşamasında kimse göremez.",
+  "dukkanAdresSaklanmaz": "Açık adresini paylaşmayı seçmediğin için adres bilgisi kaydedilmez.",
+  "dukkanAcikAdres": "Açık adres",
+  "dukkanTalebiGonder": "Talebi gönder",
+  "dukkanTalepGonderildi": "Talebin {sayi} işletmeye ulaştı.",
+  "@dukkanTalepGonderildi": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  },
+  "dukkanTalepUlasmadi": "Bu bölgede kayıtlı işletme yok, talebin şu an kimseye ulaşmadı.",
+  "dukkanTeklifler": "Teklifler",
+  "dukkanTeklifYok": "Henüz teklif gelmedi.",
+  "dukkanIsiVer": "İşi ver",
+  "dukkanIsVerildi": "İş verildi",
+  "dukkanKapandi": "Kapandı",
+  "dukkanYerindeGorsun": "Fiyat için yerinde görmek istiyor",
+  "dukkanTalepYok": "Henüz talebin yok.",
+  "dukkanIsletmelerinGordukleri": "İşletmelerin gördükleri",
+  "dukkanHenuzAcilmadi": "Henüz kimseye açılmadı — iş kabulünden sonra açılır.",
+  "dukkanIseVerildiAcildi": "İşi verdiğin işletmeye açıldı.",
+  "dukkanIsTamamlandi": "İş tamamlandı",
+  "dukkanGirisGerekli": "Devam etmek için giriş yapın.",
+  "dukkanDevam": "Devam",
+  "dukkanGeri": "Geri",
+  "dukkanTelefonGerekli": "Hesabınızda telefon numarası kayıtlı değil. Talep oluşturmak için dukkan.yonetiyor.com üzerinden telefonunuzu doğrulayın."
 }

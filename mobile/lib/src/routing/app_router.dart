@@ -58,6 +58,8 @@ import '../features/staff/presentation/staff_screen.dart';
 import '../features/dis_hizmet/presentation/dis_hizmet_screen.dart';
 import '../features/dukkan/presentation/dukkan_arama_screen.dart';
 import '../features/dukkan/presentation/dukkan_profil_screen.dart';
+import '../features/dukkan/presentation/dukkan_talep_olustur_screen.dart';
+import '../features/dukkan/presentation/dukkan_taleplerim_screen.dart';
 import '../features/site_kurali/presentation/site_kurali_screen.dart';
 import '../features/tasks/domain/task_models.dart';
 import '../features/tasks/presentation/task_categories_screen.dart';
@@ -132,6 +134,9 @@ class AppRoutes {
   // (docs/dukkan/00-mimari.md §4).
   static const dukkanArama = '/dukkan';
   static const dukkanIsletme = '/dukkan/isletme/:slug';
+  // (DUKKAN F4) TALEP TARAFI — Dukkan jetonu gerektirir (SSO koprusu).
+  static const dukkanTalepOlustur = '/dukkan/talep-olustur';
+  static const dukkanTaleplerim = '/dukkan/taleplerim';
   static const integrations = '/integrations';
   static const binaDuzenleme = '/bina-duzenleme';
   static const sikayetHaritasi = '/sikayet-haritasi';
@@ -440,6 +445,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.dukkanArama,
         builder: (context, state) => const DukkanAramaScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.dukkanTalepOlustur,
+        builder: (context, state) => DukkanTalepOlusturScreen(
+          kategoriSlug: state.uri.queryParameters['kategori'],
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.dukkanTaleplerim,
+        builder: (context, state) => const DukkanTaleplerimScreen(),
       ),
       GoRoute(
         path: AppRoutes.dukkanIsletme,

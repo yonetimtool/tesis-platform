@@ -5752,4 +5752,110 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get dukkanIsletmeBulunamadi => 'Negocio no encontrado.';
+
+  @override
+  String get dukkanTeklifAl => 'Presupuestos gratis';
+
+  @override
+  String get dukkanTaleplerim => 'Mis solicitudes';
+
+  @override
+  String get dukkanYeniTalep => 'Nueva solicitud';
+
+  @override
+  String get dukkanIhtiyacin => 'Lo que necesitas';
+
+  @override
+  String get dukkanIhtiyacinIpucu =>
+      'Describe brevemente lo que quieres hacer.';
+
+  @override
+  String get dukkanNeGorecek => '¿Qué verán los negocios al enviar esto?';
+
+  @override
+  String get dukkanMahallenGorunur =>
+      'Tu barrio — siempre visible para que puedan presupuestar';
+
+  @override
+  String get dukkanAciklamaGorunur => 'Tu descripción';
+
+  @override
+  String get dukkanAdimiPaylas => 'Mi nombre';
+
+  @override
+  String get dukkanTelefonumuPaylas => 'Mi número de teléfono';
+
+  @override
+  String get dukkanAdresimiPaylas => 'Mi dirección completa';
+
+  @override
+  String get dukkanAdresIpucu =>
+      'Solo se muestra al negocio que contrates, tras aceptar el trabajo. Nadie la ve durante los presupuestos.';
+
+  @override
+  String get dukkanAdresSaklanmaz =>
+      'Como no elegiste compartir tu dirección, no se guarda.';
+
+  @override
+  String get dukkanAcikAdres => 'Dirección completa';
+
+  @override
+  String get dukkanTalebiGonder => 'Enviar solicitud';
+
+  @override
+  String dukkanTalepGonderildi(int sayi) {
+    return 'Tu solicitud llegó a $sayi negocios.';
+  }
+
+  @override
+  String get dukkanTalepUlasmadi =>
+      'No hay negocios registrados en esta zona, así que tu solicitud aún no llegó a nadie.';
+
+  @override
+  String get dukkanTeklifler => 'Presupuestos';
+
+  @override
+  String get dukkanTeklifYok => 'Aún no hay presupuestos.';
+
+  @override
+  String get dukkanIsiVer => 'Contratar';
+
+  @override
+  String get dukkanIsVerildi => 'Contratado';
+
+  @override
+  String get dukkanKapandi => 'Cerrado';
+
+  @override
+  String get dukkanYerindeGorsun =>
+      'Quiere verlo en persona antes de presupuestar';
+
+  @override
+  String get dukkanTalepYok => 'Todavía no tienes solicitudes.';
+
+  @override
+  String get dukkanIsletmelerinGordukleri => 'Lo que ven los negocios';
+
+  @override
+  String get dukkanHenuzAcilmadi =>
+      'Aún no compartida — se abre tras aceptar un trabajo.';
+
+  @override
+  String get dukkanIseVerildiAcildi => 'Compartida con el negocio contratado.';
+
+  @override
+  String get dukkanIsTamamlandi => 'Trabajo completado';
+
+  @override
+  String get dukkanGirisGerekli => 'Inicia sesión para continuar.';
+
+  @override
+  String get dukkanDevam => 'Continuar';
+
+  @override
+  String get dukkanGeri => 'Atrás';
+
+  @override
+  String get dukkanTelefonGerekli =>
+      'No hay un número de teléfono registrado en tu cuenta. Verifica tu teléfono en dukkan.yonetiyor.com para crear una solicitud.';
 }

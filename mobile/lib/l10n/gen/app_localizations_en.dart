@@ -5781,4 +5781,108 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dukkanIsletmeBulunamadi => 'Business not found.';
+
+  @override
+  String get dukkanTeklifAl => 'Get free quotes';
+
+  @override
+  String get dukkanTaleplerim => 'My requests';
+
+  @override
+  String get dukkanYeniTalep => 'New request';
+
+  @override
+  String get dukkanIhtiyacin => 'What you need';
+
+  @override
+  String get dukkanIhtiyacinIpucu => 'Briefly describe what you need done.';
+
+  @override
+  String get dukkanNeGorecek => 'What will businesses see when you send this?';
+
+  @override
+  String get dukkanMahallenGorunur =>
+      'Your neighbourhood — always visible so they can quote';
+
+  @override
+  String get dukkanAciklamaGorunur => 'Your description';
+
+  @override
+  String get dukkanAdimiPaylas => 'My name';
+
+  @override
+  String get dukkanTelefonumuPaylas => 'My phone number';
+
+  @override
+  String get dukkanAdresimiPaylas => 'My full address';
+
+  @override
+  String get dukkanAdresIpucu =>
+      'Opens only to the business you hire, after you accept the job. No one sees it while quoting.';
+
+  @override
+  String get dukkanAdresSaklanmaz =>
+      'Since you chose not to share your address, it is not stored.';
+
+  @override
+  String get dukkanAcikAdres => 'Full address';
+
+  @override
+  String get dukkanTalebiGonder => 'Send request';
+
+  @override
+  String dukkanTalepGonderildi(int sayi) {
+    return 'Your request reached $sayi businesses.';
+  }
+
+  @override
+  String get dukkanTalepUlasmadi =>
+      'No registered businesses in this area, so your request reached no one yet.';
+
+  @override
+  String get dukkanTeklifler => 'Quotes';
+
+  @override
+  String get dukkanTeklifYok => 'No quotes yet.';
+
+  @override
+  String get dukkanIsiVer => 'Hire';
+
+  @override
+  String get dukkanIsVerildi => 'Hired';
+
+  @override
+  String get dukkanKapandi => 'Closed';
+
+  @override
+  String get dukkanYerindeGorsun => 'Wants to see it in person before quoting';
+
+  @override
+  String get dukkanTalepYok => 'You have no requests yet.';
+
+  @override
+  String get dukkanIsletmelerinGordukleri => 'What businesses can see';
+
+  @override
+  String get dukkanHenuzAcilmadi =>
+      'Not shared with anyone yet — opens after you accept a job.';
+
+  @override
+  String get dukkanIseVerildiAcildi => 'Shared with the business you hired.';
+
+  @override
+  String get dukkanIsTamamlandi => 'Job completed';
+
+  @override
+  String get dukkanGirisGerekli => 'Sign in to continue.';
+
+  @override
+  String get dukkanDevam => 'Continue';
+
+  @override
+  String get dukkanGeri => 'Back';
+
+  @override
+  String get dukkanTelefonGerekli =>
+      'No phone number is registered on your account. Verify your phone at dukkan.yonetiyor.com to create a request.';
 }

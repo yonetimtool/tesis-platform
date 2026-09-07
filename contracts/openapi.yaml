@@ -996,6 +996,374 @@ paths:
                 properties:
                   items: { type: array, items: { type: object } }
                   esik: { type: integer }
+  # ================================================================= #
+  # DUKKAN (F4) — TALEP / TEKLIF / IS  ve KVKK GORUNURLUGU
+  # ================================================================= #
+  /dukkan/talep:
+    post:
+      tags: [dukkan]
+      summary: Yeni hizmet talebi
+      description: |
+        `paylas_ad`, `paylas_telefon`, `paylas_adres` UCU DE VARSAYILAN
+        `false`. Kullanici formu dikkatsiz doldurdugunda olan sey "veri
+        paylasilmadi" olmali, "veri paylasildi" degil — guvenli yon.
+
+        ADRES PAYLASILMAYACAKSA SAKLANMAZ: "nasilsa gostermeyiz" diye
+        saklamak KVKK veri minimizasyonuna aykiri ve gereksiz bir sizinti
+        yuzeyi. Izin yoksa veri veritabanina HIC GIRMEZ.
+
+        Yanit `eslesen_isletme` SAYISINI doner: kullanici talebinin
+        KIMSEYE ulasmadigini ANINDA gormeli. Sessizce 0 isletmeye giden
+        bir talep kullaniciyi bos yere bekletirdi.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [kategori_slug, il_slug, ilce_slug, mahalle_slug, aciklama]
+              properties:
+                kategori_slug: { type: string }
+                il_slug: { type: string }
+                ilce_slug: { type: string }
+                mahalle_slug: { type: string }
+                aciklama: { type: string, minLength: 10, maxLength: 4000 }
+                baslik: { type: string, nullable: true }
+                butce_min_kurus: { type: integer, nullable: true, minimum: 0 }
+                butce_max_kurus: { type: integer, nullable: true, minimum: 0 }
+                paylas_ad: { type: boolean, default: false }
+                paylas_telefon: { type: boolean, default: false }
+                paylas_adres: { type: boolean, default: false }
+                acik_adres: { type: string, nullable: true }
+                tesis_id_beyan: { type: string, format: uuid, nullable: true }
+      responses:
+        "201":
+          description: Olusturuldu
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id, durum, eslesen_isletme]
+                properties:
+                  id: { type: string, format: uuid }
+                  durum: { type: string }
+                  eslesen_isletme: { type: integer }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422":
+          description: Kategori/mahalle bulunamadi ya da butce araligi gecersiz
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+    get:
+      tags: [dukkan]
+      summary: Kullanicinin KENDI talepleri
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: { type: array, items: { type: object } }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/talep/{talep_id}:
+    parameters:
+      - { name: talep_id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [dukkan]
+      summary: Talep detayi — GORUNUM CAGIRANA GORE DEGISIR
+      description: |
+        ==============================================================
+        IKI ASAMALI GORUNURLUK (tasarimin en kritik kurali)
+        ==============================================================
+        TEKLIF asamasi  -> isletme yalniz MAHALLE gorur; `acik_adres`
+                           anahtari VARDIR ama degeri `null`.
+        IS kabul edildi -> `acik_adres` ve `telefon` YALNIZ kabul edilen
+                           isletmeye acilir.
+
+        `acik_adres` anahtari HER ZAMAN doner: alani tamamen cikarmak,
+        istemciyi "alan yok mu, izin mi yok?" ayrimini yapmak zorunda
+        birakirdi.
+
+        BOLGE KONTROLU: isletme, hizmet alani + kategorisi ESLESMEYEN bir
+        talebi OKUYAMAZ (403). Aksi halde bir isletme TUM taleplerin
+        aciklamasini okuyabilir ve bu, TALEP HASADININ (sakinlerin
+        telefon/adres bilgisinin toplanmasi) ta kendisi olurdu.
+      parameters:
+        - name: isletme_id
+          in: query
+          required: false
+          schema: { type: string, format: uuid }
+          description: |
+            Isletme sahibi olarak bakiliyorsa. SAHIPLIK once dogrulanir:
+            baskasinin isletmesi adina talep okumak, o isletmenin
+            bolgesindeki TUM talepleri okumak demekti.
+      responses:
+        "200":
+          description: Talep gorunumu
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id, aciklama, kategori, mahalle, ad, telefon, acik_adres]
+                properties:
+                  id: { type: string, format: uuid }
+                  aciklama: { type: string }
+                  kategori: { type: object }
+                  mahalle: { type: object }
+                  ad: { type: string, nullable: true }
+                  telefon: { type: string, nullable: true }
+                  acik_adres:
+                    type: string
+                    nullable: true
+                    description: |
+                      `is` kaydi DOGMADAN daima `null`. Kural SUNUCUDA:
+                      arayuzde gizlemek yetmez, ikinci istemci (mobil) o
+                      gizlemeyi tasimaz.
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "403":
+          description: Talep size ait degil ya da bolgenizde degil
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "404":
+          description: Bulunamadi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/talep/{talep_id}/iptal:
+    parameters:
+      - { name: talep_id, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [dukkan]
+      summary: Talebi iptal eder
+      responses:
+        "200":
+          description: Iptal edildi
+          content:
+            application/json: { schema: { type: object } }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "403":
+          description: Talep size ait degil
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "404":
+          description: Bulunamadi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "409":
+          description: Is verilmis talep tek tarafli iptal edilemez
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/isletme/{isletme_id}/talepler:
+    parameters:
+      - { name: isletme_id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [dukkan]
+      summary: Isletmeye gelen talepler (hizmet alani + kategori eslesmesi)
+      description: |
+        Her kalem TEKLIF ASAMASI gorunumunde: ACIK ADRES YOK, ad/telefon
+        yalniz kullanici izin verdiyse.
+
+        `acik_adres` bu sorguda HIC SECILMIYOR — secip sonra silmek
+        yerine hic okumamak, bir gun "sil" adiminin unutulmasi riskini
+        ortadan kaldirir.
+      parameters:
+        - { name: limit, in: query, required: false, schema: { type: integer, minimum: 1, maximum: 200 } }
+      responses:
+        "200":
+          description: Talep akisi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: { type: array, items: { type: object } }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "403":
+          description: Isletme size ait degil
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "404":
+          description: Bulunamadi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/talep/{talep_id}/teklif:
+    parameters:
+      - { name: talep_id, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [dukkan]
+      summary: Talebe teklif verir
+      description: |
+        `tutar_kurus` NULL OLABILIR = "yerinde gormem gerek". Zorunlu
+        yapmak ustayi uydurma rakam yazmaya iter; sonra musteri "fiyat
+        tutmadi" diye sikayet eder. Bos birakabilmek daha durust.
+
+        Isletme ONAYLI olmali (403): onaysiz isletme teklif verseydi
+        kullanici, aramada HIC GORMEDIGI bir isletmeden teklif alirdi.
+      parameters:
+        - { name: isletme_id, in: query, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tutar_kurus: { type: integer, nullable: true, minimum: 0 }
+                mesaj: { type: string, nullable: true, maxLength: 2000 }
+      responses:
+        "201":
+          description: Teklif verildi
+          content:
+            application/json: { schema: { type: object } }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "403":
+          description: Isletme size ait degil / onayli degil / talep bolgenizde degil
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "404":
+          description: Bulunamadi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "409":
+          description: Zaten teklif verdiniz ya da talep teklife kapali
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/talep/{talep_id}/teklifler:
+    parameters:
+      - { name: talep_id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [dukkan]
+      summary: Talebe gelen teklifler — YALNIZ TALEP SAHIBI
+      description: |
+        Bir isletme BASKA isletmelerin tekliflerini GOREMEZ: gorseydi
+        fiyat kirma ve teklif kopyalama mumkun olurdu.
+      responses:
+        "200":
+          description: Teklifler
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: { type: array, items: { type: object } }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "403":
+          description: Talep size ait degil
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "404":
+          description: Bulunamadi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/teklif/{teklif_id}/kabul:
+    parameters:
+      - { name: teklif_id, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [dukkan]
+      summary: Teklifi kabul eder ve `is_kaydi` acar — ADRESI ACAN TEK YER
+      description: |
+        `is_kaydi` satirinin VARLIGI iki seyin anahtari: acik adres +
+        telefonun kabul edilen isletmeye acilmasi, ve (F5) DOGRULANMIS
+        yorum hakki.
+
+        BIR TALEPTEN BIR IS (`talep_id` UNIQUE). Ayni talebi iki ustaya
+        vermek isteyen kullanici IKINCI BIR TALEP acar — aksi halde
+        "hangi isin yorumu bu?" sorusu cevapsiz kalirdi.
+
+        Diger teklifler REDDEDILIR: "bekliyor" halinde birakmak, teklif
+        veren ustayi gereksiz yere bekletirdi.
+      responses:
+        "200":
+          description: Kabul edildi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [is_id, durum]
+                properties:
+                  is_id: { type: string, format: uuid }
+                  durum: { type: string }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "403":
+          description: Talep size ait degil
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "404":
+          description: Bulunamadi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "409":
+          description: Teklif kabul edilemez ya da talebe zaten is verilmis
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/is/{is_id}/tamamlandi:
+    parameters:
+      - { name: is_id, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [dukkan]
+      summary: Isi tamamlandi isaretler
+      description: |
+        KULLANICI YA DA ISLETME SAHIBI isaretleyebilir. Yalniz kullaniciya
+        birakmak, ustanin yorum hakkinin dogmasini musterinin
+        unutkanligina baglardi; yalniz isletmeye birakmak ustaya "bitti"
+        deme yetkisini tek tarafli verirdi.
+
+        YORUM HAKKI yalniz KULLANICIDA (F5) — yanit `yorum_hakki` ile
+        bunu soyluyor.
+      responses:
+        "200":
+          description: Tamamlandi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [durum, yorum_hakki]
+                properties:
+                  durum: { type: string }
+                  yorum_hakki: { type: boolean }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "403":
+          description: Is size ait degil
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "404":
+          description: Bulunamadi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "409":
+          description: Is kapali (iptal/anlasmazlik)
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
   /dukkan/lokasyon/il:
     get:
       tags: [dukkan]

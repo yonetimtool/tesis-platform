@@ -1897,5 +1897,44 @@
   "dukkanRozetSeviye2": "The business's documents were reviewed by us. This is not a guarantee of service quality.",
   "dukkanRozetSeviye1": "The business's phone number was verified. This shows the number is real; it does not verify the business's identity.",
   "dukkanOdemeUyarisi": "Do not pay before the job is done. A deposit request is a warning sign.",
-  "dukkanIsletmeBulunamadi": "Business not found."
+  "dukkanIsletmeBulunamadi": "Business not found.",
+  "dukkanTeklifAl": "Get free quotes",
+  "dukkanTaleplerim": "My requests",
+  "dukkanYeniTalep": "New request",
+  "dukkanIhtiyacin": "What you need",
+  "dukkanIhtiyacinIpucu": "Briefly describe what you need done.",
+  "dukkanNeGorecek": "What will businesses see when you send this?",
+  "dukkanMahallenGorunur": "Your neighbourhood — always visible so they can quote",
+  "dukkanAciklamaGorunur": "Your description",
+  "dukkanAdimiPaylas": "My name",
+  "dukkanTelefonumuPaylas": "My phone number",
+  "dukkanAdresimiPaylas": "My full address",
+  "dukkanAdresIpucu": "Opens only to the business you hire, after you accept the job. No one sees it while quoting.",
+  "dukkanAdresSaklanmaz": "Since you chose not to share your address, it is not stored.",
+  "dukkanAcikAdres": "Full address",
+  "dukkanTalebiGonder": "Send request",
+  "dukkanTalepGonderildi": "Your request reached {sayi} businesses.",
+  "@dukkanTalepGonderildi": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  },
+  "dukkanTalepUlasmadi": "No registered businesses in this area, so your request reached no one yet.",
+  "dukkanTeklifler": "Quotes",
+  "dukkanTeklifYok": "No quotes yet.",
+  "dukkanIsiVer": "Hire",
+  "dukkanIsVerildi": "Hired",
+  "dukkanKapandi": "Closed",
+  "dukkanYerindeGorsun": "Wants to see it in person before quoting",
+  "dukkanTalepYok": "You have no requests yet.",
+  "dukkanIsletmelerinGordukleri": "What businesses can see",
+  "dukkanHenuzAcilmadi": "Not shared with anyone yet — opens after you accept a job.",
+  "dukkanIseVerildiAcildi": "Shared with the business you hired.",
+  "dukkanIsTamamlandi": "Job completed",
+  "dukkanGirisGerekli": "Sign in to continue.",
+  "dukkanDevam": "Continue",
+  "dukkanGeri": "Back",
+  "dukkanTelefonGerekli": "No phone number is registered on your account. Verify your phone at dukkan.yonetiyor.com to create a request."
 }

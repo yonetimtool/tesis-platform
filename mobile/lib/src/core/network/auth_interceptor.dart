@@ -40,11 +40,35 @@ class AuthInterceptor extends Interceptor {
 
   static const _retriedKey = '__auth_retried__';
 
+  /// (DUKKAN F4) ISTEK BASINA JETON EZME ANAHTARI.
+  ///
+  /// =======================================================================
+  /// NEDEN GEREKLI
+  /// =======================================================================
+  /// Dukkan'in KENDI jetonu var (`tur: "dukkan"`), Yonetiyor jetonundan
+  /// AYRI ve birbirinin ucunda GECERSIZ — sunucu tarafinda testle kilitli.
+  ///
+  /// Bu interceptor her istege Yonetiyor jetonunu koyuyor. Dukkan'in
+  /// KORUNAN uclarina (`/dukkan/talep`, `/dukkan/isletme/...`) o jetonla
+  /// gidilirse 401 doner ve — daha kotusu — asagidaki `onError` bunu
+  /// "oturum bitti" sanip YONETIYOR OTURUMUNU KAPATIRDI. Yani Dukkan'da
+  /// bir istek, kullaniciyi Yonetiyor'dan atardi.
+  ///
+  /// Cozum: cagiran, isteginde `extra[dukkanJetonu]` ile Dukkan jetonunu
+  /// verir; burada o jeton kullanilir ve `onError`'daki refresh/oturum
+  /// mantigi ATLANIR.
+  static const dukkanJetonu = '__dukkan_jeton__';
+
   @override
   Future<void> onRequest(
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
+    final dukkan = options.extra[dukkanJetonu];
+    if (dukkan is String && dukkan.isNotEmpty) {
+      options.headers['Authorization'] = 'Bearer $dukkan';
+      return handler.next(options);
+    }
     if (!_isAuthEndpoint(options.path)) {
       final access = await storage.readAccessToken();
       if (access != null && access.isNotEmpty) {
@@ -60,8 +84,14 @@ class AuthInterceptor extends Interceptor {
     ErrorInterceptorHandler handler,
   ) async {
     final req = err.requestOptions;
+    // DUKKAN JETONLU ISTEKTE REFRESH DENENMEZ.
+    //
+    // Denenseydi, Dukkan jetonunun suresi dolduğunda YONETIYOR refresh'i
+    // calisir, o da basarisiz olursa `_expireSession()` kullaniciyi
+    // YONETIYOR'DAN ATARDI. Iki oturum birbirinden bagimsiz olmali.
     final shouldRefresh = err.response?.statusCode == 401 &&
         !_isAuthEndpoint(req.path) &&
+        req.extra[dukkanJetonu] == null &&
         req.extra[_retriedKey] != true;
 
     if (!shouldRefresh) {

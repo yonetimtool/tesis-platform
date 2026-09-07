@@ -97,6 +97,11 @@ OZEL_UCLAR = [
     ("get", "/dukkan/isletme/{id}/belge", None),
     ("post", "/dukkan/isletme/{id}/telefon/kod", None),
     ("post", "/dukkan/isletme/{id}/telefon/dogrula", {"kod": "000000"}),
+    # (F4) Isletmeye gelen talep akisi. IDOR burada OZELLIKLE tehlikeli:
+    # baskasinin isletmesi adina okuyabilen biri, O ISLETMENIN
+    # BOLGESINDEKI TUM TALEPLERI okurdu — sakinlerin adi, telefonu ve
+    # ihtiyac aciklamalari. Talep hasadinin (T6) ta kendisi.
+    ("get", "/dukkan/isletme/{id}/talepler", None),
 ]
 
 

@@ -1,7 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/network/auth_interceptor.dart';
 import '../../../core/network/dio_provider.dart';
+import 'dukkan_oturum.dart';
 
 /// (DUKKAN F3) Kamu arama ve profil ucları — KIMLIK GEREKTIRMEZ.
 ///
@@ -91,6 +93,9 @@ class DukkanKategori {
 class DukkanApi {
   DukkanApi(this._dio);
 
+  /// Extension metotlari (F4 talep uclari) buradan erisiyor; 
+  /// birakmak ayni dosyada bile extension'lardan gorunur olsa da,
+  /// niyeti acikca belirtmek icin adlandirma korunuyor.
   final Dio _dio;
 
   Future<List<DukkanKategori>> kategoriler() async {
@@ -161,3 +166,193 @@ final dukkanIllerProvider =
     FutureProvider.autoDispose<List<Map<String, String>>>(
   (ref) => ref.watch(dukkanApiProvider).iller(),
 );
+
+// ===================================================================== //
+// (DUKKAN F4) TALEP — KIMLIK GEREKTIRIR
+// ===================================================================== //
+//
+// F3 uclari kimliksizdi (arama/profil). Talep olusturmak DUKKAN JETONU
+// ister. Mobilde kullanici Yonetiyor'a zaten girmis oldugu icin jeton
+// SSO koprusunden aliniyor (`dukkan_oturum.dart`) — kullaniciyi ikinci
+// bir kayit akisina sokmak, urunun degerini gorduktan sonra onu
+// kaybetmek olurdu.
+
+class DukkanTalep {
+  const DukkanTalep({
+    required this.id,
+    required this.aciklama,
+    required this.durum,
+    required this.kategori,
+    required this.mahalle,
+    required this.ilce,
+    required this.teklifSayisi,
+    this.baslik,
+  });
+
+  final String id;
+  final String aciklama;
+  final String durum;
+  final String kategori;
+  final String mahalle;
+  final String ilce;
+  final int teklifSayisi;
+  final String? baslik;
+
+  factory DukkanTalep.fromJson(Map<String, dynamic> j) => DukkanTalep(
+        id: '${j['id']}',
+        aciklama: j['aciklama'] as String? ?? '',
+        durum: j['durum'] as String? ?? '',
+        kategori: '${j['kategori'] ?? ''}',
+        mahalle: '${j['mahalle'] ?? ''}',
+        ilce: '${j['ilce'] ?? ''}',
+        teklifSayisi: (j['teklif_sayisi'] as num?)?.toInt() ?? 0,
+        baslik: j['baslik'] as String?,
+      );
+}
+
+class DukkanTeklif {
+  const DukkanTeklif({
+    required this.id,
+    required this.durum,
+    required this.isletmeAd,
+    required this.isletmeTelefon,
+    required this.dogrulamaSeviyesi,
+    required this.yorumSayisi,
+    this.tutarKurus,
+    this.mesaj,
+    this.ortalamaPuan,
+  });
+
+  final String id;
+  final String durum;
+  final String isletmeAd;
+  final String isletmeTelefon;
+  final int dogrulamaSeviyesi;
+  final int yorumSayisi;
+  final int? tutarKurus;
+  final String? mesaj;
+  final double? ortalamaPuan;
+
+  factory DukkanTeklif.fromJson(Map<String, dynamic> j) => DukkanTeklif(
+        id: '${j['id']}',
+        durum: j['durum'] as String? ?? '',
+        isletmeAd: j['isletme_ad'] as String? ?? '',
+        isletmeTelefon: j['isletme_telefon'] as String? ?? '',
+        dogrulamaSeviyesi: (j['dogrulama_seviyesi'] as num?)?.toInt() ?? 0,
+        yorumSayisi: (j['yorum_sayisi'] as num?)?.toInt() ?? 0,
+        // `null` = "yerinde gormem gerek" — 0 DEGIL. Ikisini karistirmak
+        // ucretsiz is teklifi gostermek olurdu.
+        tutarKurus: (j['tutar_kurus'] as num?)?.toInt(),
+        mesaj: j['mesaj'] as String?,
+        ortalamaPuan: j['ortalama_puan'] == null
+            ? null
+            : double.tryParse('${j['ortalama_puan']}'),
+      );
+}
+
+extension DukkanTalepApi on DukkanApi {
+  /// Dukkan jetonlu istek secenekleri.
+  ///
+  /// `extra[dukkanJetonu]` KRITIK: bu olmadan interceptor YONETIYOR
+  /// jetonunu koyar, uc 401 doner ve interceptor bunu "oturum bitti"
+  /// sanip kullaniciyi YONETIYOR'DAN ATARDI (bkz. auth_interceptor.dart).
+  Options _dukkanSecenek(String jeton) =>
+      Options(extra: {AuthInterceptor.dukkanJetonu: jeton});
+
+  /// Talep olusturur. Doner: (talepId, eslesenIsletmeSayisi).
+  ///
+  /// `eslesenIsletme` SAYIYI tasir: kullanici talebinin KIMSEYE
+  /// ulasmadigini ANINDA gormeli.
+  Future<({String id, int eslesen})> talepOlustur({
+    required String kategoriSlug,
+    required String ilSlug,
+    required String ilceSlug,
+    required String mahalleSlug,
+    required String aciklama,
+    required String jeton,
+    bool paylasAd = false,
+    bool paylasTelefon = false,
+    bool paylasAdres = false,
+    String? acikAdres,
+  }) async {
+    final r = await _dio.post<Map<String, dynamic>>(
+      '/dukkan/talep',
+      options: _dukkanSecenek(jeton),
+      data: <String, dynamic>{
+        'kategori_slug': kategoriSlug,
+        'il_slug': ilSlug,
+        'ilce_slug': ilceSlug,
+        'mahalle_slug': mahalleSlug,
+        'aciklama': aciklama,
+        'paylas_ad': paylasAd,
+        'paylas_telefon': paylasTelefon,
+        'paylas_adres': paylasAdres,
+        // ADRES YALNIZ IZIN VARSA GONDERILIYOR. Sunucu da izin yoksa
+        // saklamiyor; iki taraf da ayni kurali uyguluyor.
+        if (paylasAdres && acikAdres != null && acikAdres.isNotEmpty)
+          'acik_adres': acikAdres,
+      },
+    );
+    return (
+      id: '${r.data?['id']}',
+      eslesen: (r.data?['eslesen_isletme'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  Future<List<DukkanTalep>> taleplerim(String jeton) async {
+    final r = await _dio.get<Map<String, dynamic>>('/dukkan/talep',
+        options: _dukkanSecenek(jeton));
+    return ((r.data?['items'] as List?) ?? const [])
+        .cast<Map<String, dynamic>>()
+        .map(DukkanTalep.fromJson)
+        .toList();
+  }
+
+  Future<Map<String, dynamic>> talepDetay(String id, String jeton) async {
+    final r = await _dio.get<Map<String, dynamic>>('/dukkan/talep/$id',
+        options: _dukkanSecenek(jeton));
+    return r.data ?? const {};
+  }
+
+  Future<List<DukkanTeklif>> teklifler(String talepId, String jeton) async {
+    final r = await _dio.get<Map<String, dynamic>>(
+        '/dukkan/talep/$talepId/teklifler', options: _dukkanSecenek(jeton));
+    return ((r.data?['items'] as List?) ?? const [])
+        .cast<Map<String, dynamic>>()
+        .map(DukkanTeklif.fromJson)
+        .toList();
+  }
+
+  Future<String> teklifKabul(String teklifId, String jeton) async {
+    final r = await _dio.post<Map<String, dynamic>>(
+        '/dukkan/teklif/$teklifId/kabul', options: _dukkanSecenek(jeton));
+    return '${r.data?['is_id']}';
+  }
+
+  Future<void> isTamamlandi(String isId, String jeton) async {
+    await _dio.post<Map<String, dynamic>>('/dukkan/is/$isId/tamamlandi',
+        options: _dukkanSecenek(jeton));
+  }
+
+  Future<List<Map<String, String>>> mahalleler(
+      String ilSlug, String ilceSlug) async {
+    final r = await _dio.get<Map<String, dynamic>>(
+      '/dukkan/lokasyon/il/$ilSlug/ilce/$ilceSlug/mahalle',
+    );
+    return ((r.data?['items'] as List?) ?? const [])
+        .cast<Map<String, dynamic>>()
+        .map((e) => {'id': '${e['id']}', 'ad': '${e['ad']}', 'slug': '${e['slug']}'})
+        .toList();
+  }
+}
+
+/// Taleplerim — Dukkan jetonu ONCE alinir (SSO koprusu).
+///
+/// Jeton alinamazsa hata YUKARI CIKAR (`DukkanOturumHatasi`): sessizce
+/// bos liste dondurmek, kullaniciya "talebin yok" demek olurdu — oysa
+/// sorun oturumdadir.
+final dukkanTaleplerimProvider =
+    FutureProvider.autoDispose<List<DukkanTalep>>((ref) async {
+  final jeton = await ref.watch(dukkanOturumProvider).jetonAl();
+  return ref.watch(dukkanApiProvider).taleplerim(jeton);
+});

@@ -1897,5 +1897,44 @@
   "dukkanRozetSeviye2": "Les documents de l'entreprise ont été examinés par nos soins. Ce n'est pas une garantie de qualité de service.",
   "dukkanRozetSeviye1": "Le numéro de téléphone de l'entreprise a été vérifié. Cela montre que le numéro est réel ; cela ne vérifie pas l'identité de l'entreprise.",
   "dukkanOdemeUyarisi": "Ne payez pas avant que le travail soit terminé. Une demande d'acompte est un signal d'alerte.",
-  "dukkanIsletmeBulunamadi": "Entreprise introuvable."
+  "dukkanIsletmeBulunamadi": "Entreprise introuvable.",
+  "dukkanTeklifAl": "Devis gratuits",
+  "dukkanTaleplerim": "Mes demandes",
+  "dukkanYeniTalep": "Nouvelle demande",
+  "dukkanIhtiyacin": "Votre besoin",
+  "dukkanIhtiyacinIpucu": "Décrivez brièvement ce que vous voulez faire faire.",
+  "dukkanNeGorecek": "Que verront les entreprises en envoyant ceci ?",
+  "dukkanMahallenGorunur": "Votre quartier — toujours visible pour qu'elles puissent répondre",
+  "dukkanAciklamaGorunur": "Votre description",
+  "dukkanAdimiPaylas": "Mon nom",
+  "dukkanTelefonumuPaylas": "Mon numéro de téléphone",
+  "dukkanAdresimiPaylas": "Mon adresse complète",
+  "dukkanAdresIpucu": "Communiquée uniquement à l'entreprise choisie, après acceptation. Personne ne la voit pendant les devis.",
+  "dukkanAdresSaklanmaz": "Comme vous n'avez pas choisi de partager votre adresse, elle n'est pas enregistrée.",
+  "dukkanAcikAdres": "Adresse complète",
+  "dukkanTalebiGonder": "Envoyer la demande",
+  "dukkanTalepGonderildi": "Votre demande a atteint {sayi} entreprises.",
+  "@dukkanTalepGonderildi": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  },
+  "dukkanTalepUlasmadi": "Aucune entreprise enregistrée dans cette zone ; votre demande n'a encore atteint personne.",
+  "dukkanTeklifler": "Devis",
+  "dukkanTeklifYok": "Pas encore de devis.",
+  "dukkanIsiVer": "Confier",
+  "dukkanIsVerildi": "Confié",
+  "dukkanKapandi": "Fermé",
+  "dukkanYerindeGorsun": "Souhaite voir sur place avant de chiffrer",
+  "dukkanTalepYok": "Vous n'avez pas encore de demandes.",
+  "dukkanIsletmelerinGordukleri": "Ce que les entreprises voient",
+  "dukkanHenuzAcilmadi": "Pas encore partagée — communiquée après acceptation.",
+  "dukkanIseVerildiAcildi": "Partagée avec l'entreprise choisie.",
+  "dukkanIsTamamlandi": "Travail terminé",
+  "dukkanGirisGerekli": "Connectez-vous pour continuer.",
+  "dukkanDevam": "Continuer",
+  "dukkanGeri": "Retour",
+  "dukkanTelefonGerekli": "Aucun numéro de téléphone n'est enregistré sur votre compte. Vérifiez votre numéro sur dukkan.yonetiyor.com pour créer une demande."
 }

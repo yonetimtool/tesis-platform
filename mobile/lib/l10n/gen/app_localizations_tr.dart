@@ -5592,4 +5592,109 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get dukkanIsletmeBulunamadi => 'İşletme bulunamadı.';
+
+  @override
+  String get dukkanTeklifAl => 'Ücretsiz teklif al';
+
+  @override
+  String get dukkanTaleplerim => 'Taleplerim';
+
+  @override
+  String get dukkanYeniTalep => 'Yeni talep';
+
+  @override
+  String get dukkanIhtiyacin => 'İhtiyacın';
+
+  @override
+  String get dukkanIhtiyacinIpucu => 'Ne yaptırmak istediğini kısaca anlat.';
+
+  @override
+  String get dukkanNeGorecek =>
+      'Bu talebi gönderdiğinde işletmeler ne görecek?';
+
+  @override
+  String get dukkanMahallenGorunur =>
+      'Mahallen — teklif verebilmeleri için her zaman görünür';
+
+  @override
+  String get dukkanAciklamaGorunur => 'İhtiyacının açıklaması';
+
+  @override
+  String get dukkanAdimiPaylas => 'Adım';
+
+  @override
+  String get dukkanTelefonumuPaylas => 'Telefon numaram';
+
+  @override
+  String get dukkanAdresimiPaylas => 'Açık adresim';
+
+  @override
+  String get dukkanAdresIpucu =>
+      'İşi verdiğin ustaya, iş kabulünden sonra açılır. Teklif aşamasında kimse göremez.';
+
+  @override
+  String get dukkanAdresSaklanmaz =>
+      'Açık adresini paylaşmayı seçmediğin için adres bilgisi kaydedilmez.';
+
+  @override
+  String get dukkanAcikAdres => 'Açık adres';
+
+  @override
+  String get dukkanTalebiGonder => 'Talebi gönder';
+
+  @override
+  String dukkanTalepGonderildi(int sayi) {
+    return 'Talebin $sayi işletmeye ulaştı.';
+  }
+
+  @override
+  String get dukkanTalepUlasmadi =>
+      'Bu bölgede kayıtlı işletme yok, talebin şu an kimseye ulaşmadı.';
+
+  @override
+  String get dukkanTeklifler => 'Teklifler';
+
+  @override
+  String get dukkanTeklifYok => 'Henüz teklif gelmedi.';
+
+  @override
+  String get dukkanIsiVer => 'İşi ver';
+
+  @override
+  String get dukkanIsVerildi => 'İş verildi';
+
+  @override
+  String get dukkanKapandi => 'Kapandı';
+
+  @override
+  String get dukkanYerindeGorsun => 'Fiyat için yerinde görmek istiyor';
+
+  @override
+  String get dukkanTalepYok => 'Henüz talebin yok.';
+
+  @override
+  String get dukkanIsletmelerinGordukleri => 'İşletmelerin gördükleri';
+
+  @override
+  String get dukkanHenuzAcilmadi =>
+      'Henüz kimseye açılmadı — iş kabulünden sonra açılır.';
+
+  @override
+  String get dukkanIseVerildiAcildi => 'İşi verdiğin işletmeye açıldı.';
+
+  @override
+  String get dukkanIsTamamlandi => 'İş tamamlandı';
+
+  @override
+  String get dukkanGirisGerekli => 'Devam etmek için giriş yapın.';
+
+  @override
+  String get dukkanDevam => 'Devam';
+
+  @override
+  String get dukkanGeri => 'Geri';
+
+  @override
+  String get dukkanTelefonGerekli =>
+      'Hesabınızda telefon numarası kayıtlı değil. Talep oluşturmak için dukkan.yonetiyor.com üzerinden telefonunuzu doğrulayın.';
 }

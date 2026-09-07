@@ -1897,5 +1897,44 @@
   "dukkanRozetSeviye2": "Los documentos del negocio fueron revisados por nosotros. Esto no es una garantía de calidad del servicio.",
   "dukkanRozetSeviye1": "El número de teléfono del negocio fue verificado. Esto muestra que el número es real; no verifica la identidad del negocio.",
   "dukkanOdemeUyarisi": "No pagues antes de que el trabajo esté terminado. Pedir un anticipo es una señal de alerta.",
-  "dukkanIsletmeBulunamadi": "Negocio no encontrado."
+  "dukkanIsletmeBulunamadi": "Negocio no encontrado.",
+  "dukkanTeklifAl": "Presupuestos gratis",
+  "dukkanTaleplerim": "Mis solicitudes",
+  "dukkanYeniTalep": "Nueva solicitud",
+  "dukkanIhtiyacin": "Lo que necesitas",
+  "dukkanIhtiyacinIpucu": "Describe brevemente lo que quieres hacer.",
+  "dukkanNeGorecek": "¿Qué verán los negocios al enviar esto?",
+  "dukkanMahallenGorunur": "Tu barrio — siempre visible para que puedan presupuestar",
+  "dukkanAciklamaGorunur": "Tu descripción",
+  "dukkanAdimiPaylas": "Mi nombre",
+  "dukkanTelefonumuPaylas": "Mi número de teléfono",
+  "dukkanAdresimiPaylas": "Mi dirección completa",
+  "dukkanAdresIpucu": "Solo se muestra al negocio que contrates, tras aceptar el trabajo. Nadie la ve durante los presupuestos.",
+  "dukkanAdresSaklanmaz": "Como no elegiste compartir tu dirección, no se guarda.",
+  "dukkanAcikAdres": "Dirección completa",
+  "dukkanTalebiGonder": "Enviar solicitud",
+  "dukkanTalepGonderildi": "Tu solicitud llegó a {sayi} negocios.",
+  "@dukkanTalepGonderildi": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  },
+  "dukkanTalepUlasmadi": "No hay negocios registrados en esta zona, así que tu solicitud aún no llegó a nadie.",
+  "dukkanTeklifler": "Presupuestos",
+  "dukkanTeklifYok": "Aún no hay presupuestos.",
+  "dukkanIsiVer": "Contratar",
+  "dukkanIsVerildi": "Contratado",
+  "dukkanKapandi": "Cerrado",
+  "dukkanYerindeGorsun": "Quiere verlo en persona antes de presupuestar",
+  "dukkanTalepYok": "Todavía no tienes solicitudes.",
+  "dukkanIsletmelerinGordukleri": "Lo que ven los negocios",
+  "dukkanHenuzAcilmadi": "Aún no compartida — se abre tras aceptar un trabajo.",
+  "dukkanIseVerildiAcildi": "Compartida con el negocio contratado.",
+  "dukkanIsTamamlandi": "Trabajo completado",
+  "dukkanGirisGerekli": "Inicia sesión para continuar.",
+  "dukkanDevam": "Continuar",
+  "dukkanGeri": "Atrás",
+  "dukkanTelefonGerekli": "No hay un número de teléfono registrado en tu cuenta. Verifica tu teléfono en dukkan.yonetiyor.com para crear una solicitud."
 }

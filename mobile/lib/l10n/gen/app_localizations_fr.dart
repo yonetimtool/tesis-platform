@@ -5765,4 +5765,110 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get dukkanIsletmeBulunamadi => 'Entreprise introuvable.';
+
+  @override
+  String get dukkanTeklifAl => 'Devis gratuits';
+
+  @override
+  String get dukkanTaleplerim => 'Mes demandes';
+
+  @override
+  String get dukkanYeniTalep => 'Nouvelle demande';
+
+  @override
+  String get dukkanIhtiyacin => 'Votre besoin';
+
+  @override
+  String get dukkanIhtiyacinIpucu =>
+      'Décrivez brièvement ce que vous voulez faire faire.';
+
+  @override
+  String get dukkanNeGorecek =>
+      'Que verront les entreprises en envoyant ceci ?';
+
+  @override
+  String get dukkanMahallenGorunur =>
+      'Votre quartier — toujours visible pour qu\'elles puissent répondre';
+
+  @override
+  String get dukkanAciklamaGorunur => 'Votre description';
+
+  @override
+  String get dukkanAdimiPaylas => 'Mon nom';
+
+  @override
+  String get dukkanTelefonumuPaylas => 'Mon numéro de téléphone';
+
+  @override
+  String get dukkanAdresimiPaylas => 'Mon adresse complète';
+
+  @override
+  String get dukkanAdresIpucu =>
+      'Communiquée uniquement à l\'entreprise choisie, après acceptation. Personne ne la voit pendant les devis.';
+
+  @override
+  String get dukkanAdresSaklanmaz =>
+      'Comme vous n\'avez pas choisi de partager votre adresse, elle n\'est pas enregistrée.';
+
+  @override
+  String get dukkanAcikAdres => 'Adresse complète';
+
+  @override
+  String get dukkanTalebiGonder => 'Envoyer la demande';
+
+  @override
+  String dukkanTalepGonderildi(int sayi) {
+    return 'Votre demande a atteint $sayi entreprises.';
+  }
+
+  @override
+  String get dukkanTalepUlasmadi =>
+      'Aucune entreprise enregistrée dans cette zone ; votre demande n\'a encore atteint personne.';
+
+  @override
+  String get dukkanTeklifler => 'Devis';
+
+  @override
+  String get dukkanTeklifYok => 'Pas encore de devis.';
+
+  @override
+  String get dukkanIsiVer => 'Confier';
+
+  @override
+  String get dukkanIsVerildi => 'Confié';
+
+  @override
+  String get dukkanKapandi => 'Fermé';
+
+  @override
+  String get dukkanYerindeGorsun => 'Souhaite voir sur place avant de chiffrer';
+
+  @override
+  String get dukkanTalepYok => 'Vous n\'avez pas encore de demandes.';
+
+  @override
+  String get dukkanIsletmelerinGordukleri => 'Ce que les entreprises voient';
+
+  @override
+  String get dukkanHenuzAcilmadi =>
+      'Pas encore partagée — communiquée après acceptation.';
+
+  @override
+  String get dukkanIseVerildiAcildi => 'Partagée avec l\'entreprise choisie.';
+
+  @override
+  String get dukkanIsTamamlandi => 'Travail terminé';
+
+  @override
+  String get dukkanGirisGerekli => 'Connectez-vous pour continuer.';
+
+  @override
+  String get dukkanDevam => 'Continuer';
+
+  @override
+  String get dukkanGeri => 'Retour';
+
+  @override
+  String get dukkanTelefonGerekli =>
+      'Aucun numéro de téléphone n\'est enregistré sur votre compte. Vérifiez votre numéro sur dukkan.yonetiyor.com pour créer une demande.';
 }

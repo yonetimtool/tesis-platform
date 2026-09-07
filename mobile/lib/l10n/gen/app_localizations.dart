@@ -9916,6 +9916,198 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'İşletme bulunamadı.'**
   String get dukkanIsletmeBulunamadi;
+
+  /// No description provided for @dukkanTeklifAl.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ücretsiz teklif al'**
+  String get dukkanTeklifAl;
+
+  /// No description provided for @dukkanTaleplerim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Taleplerim'**
+  String get dukkanTaleplerim;
+
+  /// No description provided for @dukkanYeniTalep.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni talep'**
+  String get dukkanYeniTalep;
+
+  /// No description provided for @dukkanIhtiyacin.
+  ///
+  /// In tr, this message translates to:
+  /// **'İhtiyacın'**
+  String get dukkanIhtiyacin;
+
+  /// No description provided for @dukkanIhtiyacinIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ne yaptırmak istediğini kısaca anlat.'**
+  String get dukkanIhtiyacinIpucu;
+
+  /// No description provided for @dukkanNeGorecek.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu talebi gönderdiğinde işletmeler ne görecek?'**
+  String get dukkanNeGorecek;
+
+  /// No description provided for @dukkanMahallenGorunur.
+  ///
+  /// In tr, this message translates to:
+  /// **'Mahallen — teklif verebilmeleri için her zaman görünür'**
+  String get dukkanMahallenGorunur;
+
+  /// No description provided for @dukkanAciklamaGorunur.
+  ///
+  /// In tr, this message translates to:
+  /// **'İhtiyacının açıklaması'**
+  String get dukkanAciklamaGorunur;
+
+  /// No description provided for @dukkanAdimiPaylas.
+  ///
+  /// In tr, this message translates to:
+  /// **'Adım'**
+  String get dukkanAdimiPaylas;
+
+  /// No description provided for @dukkanTelefonumuPaylas.
+  ///
+  /// In tr, this message translates to:
+  /// **'Telefon numaram'**
+  String get dukkanTelefonumuPaylas;
+
+  /// No description provided for @dukkanAdresimiPaylas.
+  ///
+  /// In tr, this message translates to:
+  /// **'Açık adresim'**
+  String get dukkanAdresimiPaylas;
+
+  /// No description provided for @dukkanAdresIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'İşi verdiğin ustaya, iş kabulünden sonra açılır. Teklif aşamasında kimse göremez.'**
+  String get dukkanAdresIpucu;
+
+  /// No description provided for @dukkanAdresSaklanmaz.
+  ///
+  /// In tr, this message translates to:
+  /// **'Açık adresini paylaşmayı seçmediğin için adres bilgisi kaydedilmez.'**
+  String get dukkanAdresSaklanmaz;
+
+  /// No description provided for @dukkanAcikAdres.
+  ///
+  /// In tr, this message translates to:
+  /// **'Açık adres'**
+  String get dukkanAcikAdres;
+
+  /// No description provided for @dukkanTalebiGonder.
+  ///
+  /// In tr, this message translates to:
+  /// **'Talebi gönder'**
+  String get dukkanTalebiGonder;
+
+  /// No description provided for @dukkanTalepGonderildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Talebin {sayi} işletmeye ulaştı.'**
+  String dukkanTalepGonderildi(int sayi);
+
+  /// No description provided for @dukkanTalepUlasmadi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu bölgede kayıtlı işletme yok, talebin şu an kimseye ulaşmadı.'**
+  String get dukkanTalepUlasmadi;
+
+  /// No description provided for @dukkanTeklifler.
+  ///
+  /// In tr, this message translates to:
+  /// **'Teklifler'**
+  String get dukkanTeklifler;
+
+  /// No description provided for @dukkanTeklifYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz teklif gelmedi.'**
+  String get dukkanTeklifYok;
+
+  /// No description provided for @dukkanIsiVer.
+  ///
+  /// In tr, this message translates to:
+  /// **'İşi ver'**
+  String get dukkanIsiVer;
+
+  /// No description provided for @dukkanIsVerildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'İş verildi'**
+  String get dukkanIsVerildi;
+
+  /// No description provided for @dukkanKapandi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kapandı'**
+  String get dukkanKapandi;
+
+  /// No description provided for @dukkanYerindeGorsun.
+  ///
+  /// In tr, this message translates to:
+  /// **'Fiyat için yerinde görmek istiyor'**
+  String get dukkanYerindeGorsun;
+
+  /// No description provided for @dukkanTalepYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz talebin yok.'**
+  String get dukkanTalepYok;
+
+  /// No description provided for @dukkanIsletmelerinGordukleri.
+  ///
+  /// In tr, this message translates to:
+  /// **'İşletmelerin gördükleri'**
+  String get dukkanIsletmelerinGordukleri;
+
+  /// No description provided for @dukkanHenuzAcilmadi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz kimseye açılmadı — iş kabulünden sonra açılır.'**
+  String get dukkanHenuzAcilmadi;
+
+  /// No description provided for @dukkanIseVerildiAcildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'İşi verdiğin işletmeye açıldı.'**
+  String get dukkanIseVerildiAcildi;
+
+  /// No description provided for @dukkanIsTamamlandi.
+  ///
+  /// In tr, this message translates to:
+  /// **'İş tamamlandı'**
+  String get dukkanIsTamamlandi;
+
+  /// No description provided for @dukkanGirisGerekli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Devam etmek için giriş yapın.'**
+  String get dukkanGirisGerekli;
+
+  /// No description provided for @dukkanDevam.
+  ///
+  /// In tr, this message translates to:
+  /// **'Devam'**
+  String get dukkanDevam;
+
+  /// No description provided for @dukkanGeri.
+  ///
+  /// In tr, this message translates to:
+  /// **'Geri'**
+  String get dukkanGeri;
+
+  /// No description provided for @dukkanTelefonGerekli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hesabınızda telefon numarası kayıtlı değil. Talep oluşturmak için dukkan.yonetiyor.com üzerinden telefonunuzu doğrulayın.'**
+  String get dukkanTelefonGerekli;
 }
 
 class _AppLocalizationsDelegate

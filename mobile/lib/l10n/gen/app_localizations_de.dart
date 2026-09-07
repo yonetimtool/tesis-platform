@@ -5773,4 +5773,108 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get dukkanIsletmeBulunamadi => 'Betrieb nicht gefunden.';
+
+  @override
+  String get dukkanTeklifAl => 'Kostenlose Angebote';
+
+  @override
+  String get dukkanTaleplerim => 'Meine Anfragen';
+
+  @override
+  String get dukkanYeniTalep => 'Neue Anfrage';
+
+  @override
+  String get dukkanIhtiyacin => 'Ihr Anliegen';
+
+  @override
+  String get dukkanIhtiyacinIpucu => 'Beschreiben Sie kurz, was zu tun ist.';
+
+  @override
+  String get dukkanNeGorecek => 'Was sehen Betriebe, wenn Sie das senden?';
+
+  @override
+  String get dukkanMahallenGorunur =>
+      'Ihr Stadtteil — immer sichtbar, damit sie anbieten können';
+
+  @override
+  String get dukkanAciklamaGorunur => 'Ihre Beschreibung';
+
+  @override
+  String get dukkanAdimiPaylas => 'Mein Name';
+
+  @override
+  String get dukkanTelefonumuPaylas => 'Meine Telefonnummer';
+
+  @override
+  String get dukkanAdresimiPaylas => 'Meine vollständige Adresse';
+
+  @override
+  String get dukkanAdresIpucu =>
+      'Wird nur dem beauftragten Betrieb nach Auftragsannahme angezeigt. Während der Angebotsphase sieht sie niemand.';
+
+  @override
+  String get dukkanAdresSaklanmaz =>
+      'Da Sie Ihre Adresse nicht teilen, wird sie nicht gespeichert.';
+
+  @override
+  String get dukkanAcikAdres => 'Vollständige Adresse';
+
+  @override
+  String get dukkanTalebiGonder => 'Anfrage senden';
+
+  @override
+  String dukkanTalepGonderildi(int sayi) {
+    return 'Ihre Anfrage erreichte $sayi Betriebe.';
+  }
+
+  @override
+  String get dukkanTalepUlasmadi =>
+      'Keine registrierten Betriebe in diesem Gebiet; Ihre Anfrage hat noch niemanden erreicht.';
+
+  @override
+  String get dukkanTeklifler => 'Angebote';
+
+  @override
+  String get dukkanTeklifYok => 'Noch keine Angebote.';
+
+  @override
+  String get dukkanIsiVer => 'Beauftragen';
+
+  @override
+  String get dukkanIsVerildi => 'Beauftragt';
+
+  @override
+  String get dukkanKapandi => 'Geschlossen';
+
+  @override
+  String get dukkanYerindeGorsun => 'Möchte es vor dem Angebot vor Ort sehen';
+
+  @override
+  String get dukkanTalepYok => 'Sie haben noch keine Anfragen.';
+
+  @override
+  String get dukkanIsletmelerinGordukleri => 'Was Betriebe sehen können';
+
+  @override
+  String get dukkanHenuzAcilmadi =>
+      'Noch mit niemandem geteilt — wird nach Auftragsannahme freigegeben.';
+
+  @override
+  String get dukkanIseVerildiAcildi => 'Mit dem beauftragten Betrieb geteilt.';
+
+  @override
+  String get dukkanIsTamamlandi => 'Auftrag abgeschlossen';
+
+  @override
+  String get dukkanGirisGerekli => 'Zum Fortfahren anmelden.';
+
+  @override
+  String get dukkanDevam => 'Weiter';
+
+  @override
+  String get dukkanGeri => 'Zurück';
+
+  @override
+  String get dukkanTelefonGerekli =>
+      'In Ihrem Konto ist keine Telefonnummer hinterlegt. Bestätigen Sie Ihre Nummer auf dukkan.yonetiyor.com, um eine Anfrage zu erstellen.';
 }
