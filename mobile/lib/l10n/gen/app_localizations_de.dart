@@ -5877,4 +5877,76 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get dukkanTelefonGerekli =>
       'In Ihrem Konto ist keine Telefonnummer hinterlegt. Bestätigen Sie Ihre Nummer auf dukkan.yonetiyor.com, um eine Anfrage zu erstellen.';
+
+  @override
+  String get dukkanDegerlendir => 'Bewerten';
+
+  @override
+  String get dukkanPuanVer => 'Ihre Bewertung';
+
+  @override
+  String get dukkanYorumMetni => 'Beschreiben Sie Ihre Erfahrung (optional)';
+
+  @override
+  String get dukkanYorumGonder => 'Bewertung senden';
+
+  @override
+  String get dukkanYorumTesekkur => 'Danke für Ihre Bewertung.';
+
+  @override
+  String get dukkanYorumHatasi => 'Bewertung konnte nicht gesendet werden.';
+
+  @override
+  String get dukkanSikayetBildir => 'Beschwerde melden';
+
+  @override
+  String get dukkanSikayetKonu => 'Thema';
+
+  @override
+  String get dukkanSikayetMetin => 'Was ist passiert?';
+
+  @override
+  String get dukkanSikayetIletisim => 'Kontakt (optional)';
+
+  @override
+  String get dukkanSikayetIletisimIpucu =>
+      'Nur damit wir Ihnen das Ergebnis mitteilen können.';
+
+  @override
+  String get dukkanSikayetGonder => 'Beschwerde senden';
+
+  @override
+  String get dukkanSikayetAlindi =>
+      'Ihre Beschwerde ist eingegangen. Wir prüfen sie.';
+
+  @override
+  String get dukkanSikayetOdeme => 'Zahlung / Anzahlung';
+
+  @override
+  String get dukkanSikayetHizmet => 'Servicequalität';
+
+  @override
+  String get dukkanSikayetSahte => 'Verdacht auf gefälschten Betrieb';
+
+  @override
+  String get dukkanSikayetYorum => 'Zu einer Bewertung';
+
+  @override
+  String get dukkanSikayetVeri => 'Meine personenbezogenen Daten';
+
+  @override
+  String get dukkanSikayetDiger => 'Sonstiges';
+
+  @override
+  String get dukkanDogrulanmisYorum => 'Über die Plattform gebuchte Leistung';
+
+  @override
+  String get dukkanDavetliYorum => 'Eingeladene Bewertung';
+
+  @override
+  String get dukkanDavetliAciklama =>
+      'Auf Einladung des Betriebs verfasst. Der Auftrag lief nicht über die Plattform und ist daher nicht verifiziert.';
+
+  @override
+  String get dukkanIsletmeCevabi => 'Antwort des Betriebs';
 }

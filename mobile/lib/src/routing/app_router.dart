@@ -58,6 +58,7 @@ import '../features/staff/presentation/staff_screen.dart';
 import '../features/dis_hizmet/presentation/dis_hizmet_screen.dart';
 import '../features/dukkan/presentation/dukkan_arama_screen.dart';
 import '../features/dukkan/presentation/dukkan_profil_screen.dart';
+import '../features/dukkan/presentation/dukkan_sikayet_screen.dart';
 import '../features/dukkan/presentation/dukkan_talep_olustur_screen.dart';
 import '../features/dukkan/presentation/dukkan_taleplerim_screen.dart';
 import '../features/site_kurali/presentation/site_kurali_screen.dart';
@@ -137,6 +138,8 @@ class AppRoutes {
   // (DUKKAN F4) TALEP TARAFI — Dukkan jetonu gerektirir (SSO koprusu).
   static const dukkanTalepOlustur = '/dukkan/talep-olustur';
   static const dukkanTaleplerim = '/dukkan/taleplerim';
+  // (DUKKAN F5) SIKAYET — KIMLIKSIZ; jeton gerektirmez.
+  static const dukkanSikayet = '/dukkan/sikayet';
   static const integrations = '/integrations';
   static const binaDuzenleme = '/bina-duzenleme';
   static const sikayetHaritasi = '/sikayet-haritasi';
@@ -455,6 +458,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.dukkanTaleplerim,
         builder: (context, state) => const DukkanTaleplerimScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.dukkanSikayet,
+        builder: (context, state) => DukkanSikayetScreen(
+          isletmeSlug: state.uri.queryParameters['isletme'],
+        ),
       ),
       GoRoute(
         path: AppRoutes.dukkanIsletme,

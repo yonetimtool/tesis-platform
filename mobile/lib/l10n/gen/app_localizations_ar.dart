@@ -5956,4 +5956,74 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get dukkanTelefonGerekli =>
       'لا يوجد رقم هاتف مسجّل في حسابك. أكّد رقمك عبر dukkan.yonetiyor.com لإنشاء طلب.';
+
+  @override
+  String get dukkanDegerlendir => 'قيّم';
+
+  @override
+  String get dukkanPuanVer => 'تقييمك';
+
+  @override
+  String get dukkanYorumMetni => 'صف تجربتك (اختياري)';
+
+  @override
+  String get dukkanYorumGonder => 'إرسال التقييم';
+
+  @override
+  String get dukkanYorumTesekkur => 'شكراً على تقييمك.';
+
+  @override
+  String get dukkanYorumHatasi => 'تعذّر إرسال التقييم.';
+
+  @override
+  String get dukkanSikayetBildir => 'تقديم شكوى';
+
+  @override
+  String get dukkanSikayetKonu => 'الموضوع';
+
+  @override
+  String get dukkanSikayetMetin => 'ماذا حدث؟';
+
+  @override
+  String get dukkanSikayetIletisim => 'وسيلة تواصل (اختياري)';
+
+  @override
+  String get dukkanSikayetIletisimIpucu => 'فقط لنُبلغك بالنتيجة.';
+
+  @override
+  String get dukkanSikayetGonder => 'إرسال الشكوى';
+
+  @override
+  String get dukkanSikayetAlindi => 'تم استلام شكواك. سنراجعها.';
+
+  @override
+  String get dukkanSikayetOdeme => 'الدفع / العربون';
+
+  @override
+  String get dukkanSikayetHizmet => 'جودة الخدمة';
+
+  @override
+  String get dukkanSikayetSahte => 'اشتباه بعمل وهمي';
+
+  @override
+  String get dukkanSikayetYorum => 'بخصوص تقييم';
+
+  @override
+  String get dukkanSikayetVeri => 'بياناتي الشخصية';
+
+  @override
+  String get dukkanSikayetDiger => 'أخرى';
+
+  @override
+  String get dukkanDogrulanmisYorum => 'خدمة تمّت عبر المنصة';
+
+  @override
+  String get dukkanDavetliYorum => 'تقييم بدعوة';
+
+  @override
+  String get dukkanDavetliAciklama =>
+      'كُتب بدعوة من العمل. لم يتم حجز العمل عبر المنصة، لذا فهو غير موثّق.';
+
+  @override
+  String get dukkanIsletmeCevabi => 'رد العمل';
 }

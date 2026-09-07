@@ -102,6 +102,11 @@ OZEL_UCLAR = [
     # BOLGESINDEKI TUM TALEPLERI okurdu — sakinlerin adi, telefonu ve
     # ihtiyac aciklamalari. Talep hasadinin (T6) ta kendisi.
     ("get", "/dukkan/isletme/{id}/talepler", None),
+    # (F5) Yorum daveti. IDOR burada: baskasinin isletmesi adina davet
+    # gonderebilen biri, O ISLETMENIN adina sahte yorum toplatabilir —
+    # ve kotayi da onun hesabindan yer.
+    ("post", "/dukkan/isletme/{id}/yorum-daveti", {"telefon": "+905321112233"}),
+    ("get", "/dukkan/isletme/{id}/yorum-daveti/kota", None),
 ]
 
 
@@ -130,11 +135,23 @@ def test_KENDI_ISLETMESI_403_DEGIL(iki_sahip, client, metot, sablon, govde):
     erisebildigini olcer: 403 DISINDA herhangi bir yanit (200, 422, 409
     dahil) kabul.
     """
-    yol = sablon.format(id=iki_sahip["a_isletme"])
+    yol = sablon.format(id=iki_sahip["a"] and iki_sahip["a_isletme"])
     cagri = getattr(client, metot)
     r = cagri(yol, headers=iki_sahip["a"]["h"], **({"json": govde} if govde else {}))
-    assert r.status_code != 403, (
-        f"{metot.upper()} {yol} sahibine 403 donuyor — sahiplik kontrolu ters."
+    # ==================================================================
+    # DURUM KODU DEGIL, HATA KODU OLCULUYOR — ve sebebi bir olcumden
+    # ==================================================================
+    # Ilk yazimda `status_code != 403` bekleniyordu ve `/yorum-daveti`
+    # eklendiginde DUSTU: o uc, isletme `onayli` degilse 403
+    # `isletme_onayli_degil` doner. Bu MESRU bir 403 ve IDOR ile ilgisi
+    # yok — sahnedeki isletme taslak durumda.
+    #
+    # Testin asil iddiasi "sahip SAHIPLIK yuzunden reddedilmiyor". O
+    # yuzden bakilan sey hata KODU: `isletme_size_ait_degil` gormemeliyiz.
+    # Durum koduna bakmak, ucun mesru is kurallarini IDOR sanmak olurdu.
+    assert "isletme_size_ait_degil" not in r.text, (
+        f"{metot.upper()} {yol} SAHIBINE 'size ait degil' diyor — "
+        "sahiplik kontrolu ters."
     )
 
 
@@ -251,6 +268,20 @@ def test_HER_DUKKAN_MUTASYONUNUN_KIMLIK_KAPISI_VAR():
         # SSO koprusu: Dukkan jetonu YOK (zaten onu uretiyor). Kendi
         # kapisi var — YONETIYOR jetonu dogrulanir, gecersizse 401.
         ("POST", "/dukkan/auth/yonetiyor"),
+        # (F5) SIKAYET — KIMLIKSIZ VE BU BILINCLI.
+        #
+        # Dolandirilan bir kullanicinin Dukkan hesabi OLMAYABILIR:
+        # numarayi profilden alip TELEFONLA aramis olabilir. Kimlik
+        # zorunlu olsaydi en cok duyulmasi gereken ses kesilirdi
+        # (docs/dukkan/03-guven-ve-fraud.md §5.2).
+        ("POST", "/dukkan/sikayet"),
+        # (F5) DAVETLI YORUM — kimlik OTP ile kanitlanir.
+        #
+        # Yorum yazacak kisinin Dukkan hesabi olmayabilir; telefonuna
+        # gelen kodla dogruluyoruz ve gerekiyorsa hesabi ACIYORUZ. Once
+        # kayit istemek, davetlerin cogunun cevapsiz kalmasi demekti.
+        # Yani "kimliksiz" degil, "kimlik ONCESI".
+        ("POST", "/dukkan/yorum-daveti/dogrula"),
     }
 
     kapisiz: list[str] = []
@@ -304,6 +335,8 @@ def test_KAMU_KUMESI_OLU_SATIR_TASIMAZ():
         ("POST", "/dukkan/auth/telefon/kod"),
         ("POST", "/dukkan/auth/telefon/dogrula"),
         ("POST", "/dukkan/auth/yonetiyor"),
+        ("POST", "/dukkan/sikayet"),
+        ("POST", "/dukkan/yorum-daveti/dogrula"),
     }
     olu = sorted(KAMU - var)
     assert not olu, f"KAMU kumesinde olu satir: {olu}"

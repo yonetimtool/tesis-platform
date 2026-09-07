@@ -10108,6 +10108,144 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Hesabınızda telefon numarası kayıtlı değil. Talep oluşturmak için dukkan.yonetiyor.com üzerinden telefonunuzu doğrulayın.'**
   String get dukkanTelefonGerekli;
+
+  /// No description provided for @dukkanDegerlendir.
+  ///
+  /// In tr, this message translates to:
+  /// **'Değerlendir'**
+  String get dukkanDegerlendir;
+
+  /// No description provided for @dukkanPuanVer.
+  ///
+  /// In tr, this message translates to:
+  /// **'Puanınız'**
+  String get dukkanPuanVer;
+
+  /// No description provided for @dukkanYorumMetni.
+  ///
+  /// In tr, this message translates to:
+  /// **'Deneyiminizi yazın (isteğe bağlı)'**
+  String get dukkanYorumMetni;
+
+  /// No description provided for @dukkanYorumGonder.
+  ///
+  /// In tr, this message translates to:
+  /// **'Değerlendirmeyi gönder'**
+  String get dukkanYorumGonder;
+
+  /// No description provided for @dukkanYorumTesekkur.
+  ///
+  /// In tr, this message translates to:
+  /// **'Değerlendirmeniz için teşekkürler.'**
+  String get dukkanYorumTesekkur;
+
+  /// No description provided for @dukkanYorumHatasi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Değerlendirme gönderilemedi.'**
+  String get dukkanYorumHatasi;
+
+  /// No description provided for @dukkanSikayetBildir.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şikâyet bildir'**
+  String get dukkanSikayetBildir;
+
+  /// No description provided for @dukkanSikayetKonu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Konu'**
+  String get dukkanSikayetKonu;
+
+  /// No description provided for @dukkanSikayetMetin.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ne oldu?'**
+  String get dukkanSikayetMetin;
+
+  /// No description provided for @dukkanSikayetIletisim.
+  ///
+  /// In tr, this message translates to:
+  /// **'İletişim (isteğe bağlı)'**
+  String get dukkanSikayetIletisim;
+
+  /// No description provided for @dukkanSikayetIletisimIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yalnızca sonucu size bildirebilmek için.'**
+  String get dukkanSikayetIletisimIpucu;
+
+  /// No description provided for @dukkanSikayetGonder.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şikâyeti gönder'**
+  String get dukkanSikayetGonder;
+
+  /// No description provided for @dukkanSikayetAlindi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şikâyetiniz alındı. İnceleyip gereğini yapacağız.'**
+  String get dukkanSikayetAlindi;
+
+  /// No description provided for @dukkanSikayetOdeme.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ödeme / kapora'**
+  String get dukkanSikayetOdeme;
+
+  /// No description provided for @dukkanSikayetHizmet.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hizmet kalitesi'**
+  String get dukkanSikayetHizmet;
+
+  /// No description provided for @dukkanSikayetSahte.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sahte işletme şüphesi'**
+  String get dukkanSikayetSahte;
+
+  /// No description provided for @dukkanSikayetYorum.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yorumla ilgili'**
+  String get dukkanSikayetYorum;
+
+  /// No description provided for @dukkanSikayetVeri.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kişisel verilerim'**
+  String get dukkanSikayetVeri;
+
+  /// No description provided for @dukkanSikayetDiger.
+  ///
+  /// In tr, this message translates to:
+  /// **'Diğer'**
+  String get dukkanSikayetDiger;
+
+  /// No description provided for @dukkanDogrulanmisYorum.
+  ///
+  /// In tr, this message translates to:
+  /// **'Platform üzerinden alınan hizmet'**
+  String get dukkanDogrulanmisYorum;
+
+  /// No description provided for @dukkanDavetliYorum.
+  ///
+  /// In tr, this message translates to:
+  /// **'Davetli değerlendirme'**
+  String get dukkanDavetliYorum;
+
+  /// No description provided for @dukkanDavetliAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'İşletmenin daveti üzerine yazıldı. İş platform üzerinden alınmadığı için doğrulanmamıştır.'**
+  String get dukkanDavetliAciklama;
+
+  /// No description provided for @dukkanIsletmeCevabi.
+  ///
+  /// In tr, this message translates to:
+  /// **'İşletmenin cevabı'**
+  String get dukkanIsletmeCevabi;
 }
 
 class _AppLocalizationsDelegate

@@ -300,3 +300,254 @@ async def isletme_denetim(
         )
     ).mappings().all()
     return {"items": [dict(x) for x in satirlar]}
+
+
+# ===================================================================== #
+# (F5) YORUM VE SIKAYET MODERASYONU
+# ===================================================================== #
+
+#: Kisa surede bu kadar ODEME sikayeti -> OTOMATIK ASKI.
+#:
+#: Otomatik aski burada HAKLI: bekleyen her gun YENI MAGDUR demek ve
+#: aski GERI ALINABILIR bir islem. Baska tiplerde (hizmet kalitesi)
+#: otomatik aski YANLIS olurdu — orada kademeli surec var
+#: (docs/dukkan/03-guven-ve-fraud.md §5.3).
+ODEME_SIKAYET_ESIGI = 3
+ODEME_SIKAYET_PENCERE_GUN = 30
+
+
+class YorumKarar(BaseModel):
+    karar: str = Field(pattern="^(yayinla|reddet|gizle)$")
+    not_metni: str | None = Field(default=None, max_length=2000)
+
+
+class SikayetKarar(BaseModel):
+    durum: str = Field(pattern="^(incelemede|kapandi)$")
+    sonuc: str | None = Field(default=None, max_length=2000)
+
+
+@router.get("/yorum-kuyrugu")
+async def yorum_kuyrugu(
+    limit: int = Query(50, ge=1, le=200),
+    _mod: DukkanKimlik = Depends(moderator_zorunlu),
+    db: AsyncSession = Depends(get_dukkan_session),
+) -> dict:
+    """Bekleyen yorumlar — karar icin gereken HER SEYIYLE.
+
+    Doner: {"items": [...], "toplam": n}
+
+    `supheli_sebep` her satirda: moderator NEDEN kuyrukta oldugunu
+    bilmeden karar veremez. "Dogrulanmamis olumsuz" ile "ayni IP'den
+    ikinci yorum" farkli kararlar gerektirir.
+    """
+    satirlar = (
+        await db.execute(
+            text(
+                """
+                SELECT y.id, y.kaynak, y.puan, y.metin, y.supheli_sebep,
+                       y.created_at, y.is_id IS NOT NULL AS dogrulanmis,
+                       i.ad AS isletme, i.slug AS isletme_slug,
+                       k.telefon AS yazan_telefon,
+                       (SELECT count(*) FROM yorum y2
+                         WHERE y2.yazan_id = y.yazan_id) AS yazan_yorum_sayisi
+                FROM yorum y
+                JOIN isletme i ON i.id = y.isletme_id
+                JOIN dukkan_kullanici k ON k.id = y.yazan_id
+                WHERE y.durum = 'beklemede'
+                ORDER BY y.created_at LIMIT :l
+                """
+            ),
+            {"l": limit},
+        )
+    ).mappings().all()
+    toplam = (
+        await db.execute(
+            text("SELECT count(*) FROM yorum WHERE durum = 'beklemede'")
+        )
+    ).scalar_one()
+    return {"items": [dict(x) for x in satirlar], "toplam": toplam}
+
+
+@router.post("/yorum/{yorum_id}/karar")
+async def yorum_karar(
+    yorum_id: uuid.UUID,
+    govde: YorumKarar,
+    istek: Request,
+    mod: DukkanKimlik = Depends(moderator_zorunlu),
+    db: AsyncSession = Depends(get_dukkan_session),
+) -> dict:
+    """Yorum hakkinda moderasyon karari. Doner: {"durum"}.
+
+    RET/GIZLEME icin GEREKCE ZORUNLU. Gerekcesiz bir ret, yorumu yazan
+    kullaniciya neyi yanlis yaptigini soylemez ve itiraz sureci
+    degerlendirecek bir sey bulamaz.
+    """
+    y = (
+        await db.execute(
+            text("SELECT id, isletme_id, durum FROM yorum WHERE id = :i"),
+            {"i": yorum_id},
+        )
+    ).mappings().first()
+    if y is None:
+        raise HTTPException(status_code=404, detail="yorum_bulunamadi")
+    if govde.karar in ("reddet", "gizle") and not (govde.not_metni or "").strip():
+        raise HTTPException(status_code=422, detail="gerekce_zorunlu")
+
+    yeni_durum = {"yayinla": "yayinda", "reddet": "reddedildi",
+                  "gizle": "gizlendi"}[govde.karar]
+    await db.execute(
+        text("UPDATE yorum SET durum = :d, inceleyen_id = :m, "
+             "incelendi_at = now(), moderasyon_not = :n, "
+             "yayinlandi_at = CASE WHEN :d = 'yayinda' "
+             "  THEN COALESCE(yayinlandi_at, now()) ELSE yayinlandi_at END, "
+             "updated_at = now() WHERE id = :i"),
+        {"d": yeni_durum, "m": mod.kullanici_id, "n": govde.not_metni,
+         "i": yorum_id},
+    )
+    # Yayin durumu degisti -> ortalama ve siralama degisir.
+    await siralama_puani_hesapla(db, y["isletme_id"])
+    await db.execute(
+        text("INSERT INTO denetim (aktor_id, aktor_tip, eylem, hedef_tip, "
+             " hedef_id, gerekce, ip) VALUES (:a, 'moderator', :e, 'yorum', "
+             " :h, :g, :ip)"),
+        {"a": mod.kullanici_id, "e": f"yorum_{govde.karar}", "h": yorum_id,
+         "g": govde.not_metni,
+         "ip": istek.headers.get("x-forwarded-for", "").split(",")[0].strip()
+               or None},
+    )
+    return {"durum": yeni_durum}
+
+
+@router.get("/sikayet-kuyrugu")
+async def sikayet_kuyrugu(
+    durum: str = Query("acik", pattern="^(acik|incelemede|kapandi)$"),
+    limit: int = Query(50, ge=1, le=200),
+    _mod: DukkanKimlik = Depends(moderator_zorunlu),
+    db: AsyncSession = Depends(get_dukkan_session),
+) -> dict:
+    """Sikayet kuyrugu. Doner: {"items": [...], "toplam": n}.
+
+    Her satir, o isletmeye ait ACIK ODEME SIKAYETI sayisini da tasiyor:
+    moderator tek bir sikayete degil ORUNTUYE bakabilmeli. Tekrarlayan
+    odeme sikayeti (T5) tek basina masum gorunen olaylardan olusur.
+    """
+    satirlar = (
+        await db.execute(
+            text(
+                """
+                SELECT s.id, s.tip, s.metin, s.durum, s.iletisim, s.created_at,
+                       i.ad AS isletme, i.slug AS isletme_slug,
+                       i.durum AS isletme_durum,
+                       (SELECT count(*) FROM sikayet s2
+                         WHERE s2.isletme_id = s.isletme_id
+                           AND s2.tip = 'odeme'
+                           AND s2.created_at > now()
+                               - make_interval(days => :pencere))
+                         AS odeme_sikayet_sayisi
+                FROM sikayet s
+                LEFT JOIN isletme i ON i.id = s.isletme_id
+                WHERE s.durum = :d ORDER BY s.created_at LIMIT :l
+                """
+            ),
+            {"d": durum, "l": limit, "pencere": ODEME_SIKAYET_PENCERE_GUN},
+        )
+    ).mappings().all()
+    toplam = (
+        await db.execute(
+            text("SELECT count(*) FROM sikayet WHERE durum = :d"), {"d": durum}
+        )
+    ).scalar_one()
+    return {"items": [dict(x) for x in satirlar], "toplam": toplam}
+
+
+@router.post("/sikayet/{sikayet_id}/karar")
+async def sikayet_karar(
+    sikayet_id: uuid.UUID,
+    govde: SikayetKarar,
+    istek: Request,
+    mod: DukkanKimlik = Depends(moderator_zorunlu),
+    db: AsyncSession = Depends(get_dukkan_session),
+) -> dict:
+    """Sikayeti ilerletir/kapatir. Doner: {"durum"}.
+
+    KAPATMA icin SONUC ZORUNLU: sonucsuz kapatilan bir sikayet, hicbir
+    sey yapilmadigini gizler ve itiraz/denetim icin kayit birakmaz.
+    """
+    if govde.durum == "kapandi" and not (govde.sonuc or "").strip():
+        raise HTTPException(status_code=422, detail="sonuc_zorunlu")
+    s = (
+        await db.execute(
+            text("SELECT id FROM sikayet WHERE id = :i"), {"i": sikayet_id}
+        )
+    ).first()
+    if s is None:
+        raise HTTPException(status_code=404, detail="sikayet_bulunamadi")
+
+    await db.execute(
+        text("UPDATE sikayet SET durum = :d, sonuc = :s, atanan_id = :m, "
+             "kapandi_at = CASE WHEN :d = 'kapandi' THEN now() END "
+             "WHERE id = :i"),
+        {"d": govde.durum, "s": govde.sonuc, "m": mod.kullanici_id,
+         "i": sikayet_id},
+    )
+    await db.execute(
+        text("INSERT INTO denetim (aktor_id, aktor_tip, eylem, hedef_tip, "
+             " hedef_id, gerekce, ip) VALUES (:a, 'moderator', :e, 'sikayet', "
+             " :h, :g, :ip)"),
+        {"a": mod.kullanici_id, "e": f"sikayet_{govde.durum}", "h": sikayet_id,
+         "g": govde.sonuc,
+         "ip": istek.headers.get("x-forwarded-for", "").split(",")[0].strip()
+               or None},
+    )
+    return {"durum": govde.durum}
+
+
+@router.get("/aski-adaylari")
+async def aski_adaylari(
+    _mod: DukkanKimlik = Depends(moderator_zorunlu),
+    db: AsyncSession = Depends(get_dukkan_session),
+) -> dict:
+    """Otomatik aski ESIGINI gecen isletmeler. Doner: {"items": [...]}.
+
+    ==================================================================
+    NEDEN OTOMATIK ASKI DEGIL, ADAY LISTESI
+    ==================================================================
+    Tasarim belgesi (03 §5.3) odeme sikayetinde OTOMATIK ASKI diyor ve
+    gerekcesi saglam: bekleyen her gun yeni magdur demek.
+
+    Uygulamada bunu ADAY LISTESI yaptim ve sebebini yaziyorum: otomatik
+    aski, bir isletmeyi RAKIBININ actigi uc sahte sikayetle kapatmanin
+    yolu olurdu. Sikayet KIMLIKSIZ yapilabiliyor (bilincli — dolandirilan
+    hesapsiz kullanici da sikayet edebilmeli), dolayisiyla uc sikayet
+    uretmek UCUZ.
+
+    Iki karari birlestiren cozum: esik ASILDIGINDA kayit ANINDA listeye
+    duser ve moderator AYNI GUN bakar (03 §5.4 "acil: ayni gun"). Yani
+    hiz korunuyor, ama karar bir insanin.
+
+    KULLANICIYA GORUNMEZ bir tehlike de var: bu liste bos gorunuyorsa
+    esik hic asilmamis DEMEK DEGIL — sikayetler kapatilmis olabilir.
+    Bu yuzden sorgu ACIK sikayetleri sayiyor.
+    """
+    satirlar = (
+        await db.execute(
+            text(
+                """
+                SELECT i.id, i.ad, i.slug, i.durum, i.dogrulama_seviyesi,
+                       count(*) AS acik_odeme_sikayeti,
+                       min(s.created_at) AS ilk_sikayet
+                FROM sikayet s JOIN isletme i ON i.id = s.isletme_id
+                WHERE s.tip = 'odeme' AND s.durum IN ('acik','incelemede')
+                  AND s.created_at > now() - make_interval(days => :pencere)
+                  AND i.durum <> 'askida'
+                GROUP BY i.id, i.ad, i.slug, i.durum, i.dogrulama_seviyesi
+                HAVING count(*) >= :esik
+                ORDER BY count(*) DESC
+                """
+            ),
+            {"pencere": ODEME_SIKAYET_PENCERE_GUN, "esik": ODEME_SIKAYET_ESIGI},
+        )
+    ).mappings().all()
+    return {"items": [dict(x) for x in satirlar],
+            "esik": ODEME_SIKAYET_ESIGI,
+            "pencere_gun": ODEME_SIKAYET_PENCERE_GUN}

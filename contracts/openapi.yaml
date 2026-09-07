@@ -1364,6 +1364,480 @@ paths:
           description: Is kapali (iptal/anlasmazlik)
           content:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  # ================================================================= #
+  # DUKKAN (F5) — YORUM, GUVEN, SIKAYET
+  # ================================================================= #
+  /dukkan/is/{is_id}/yorum:
+    parameters:
+      - { name: is_id, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [dukkan]
+      summary: Dogrulanmis yorum (Katman A)
+      description: |
+        YALNIZ IS SAHIBI KULLANICI ve yalniz TAMAMLANMIS is icin.
+        Isletme sahibi de isi "tamamlandi" isaretleyebilir ama YORUM HAKKI
+        musteriye aittir.
+        
+        DOGRULANMIS OLUMSUZ YORUM DA DOGRUDAN YAYINLANIR: gercek bir is var ve
+        susturmak yorum sistemini YALANCI yapardi. Yalnizca supheli oruntu
+        (ayni IP'den ikinci yorum) moderasyona dusurur — RET DEGIL, cunku ortak
+        ev/isyeri IP'si mesru olabilir.
+        
+        KENDINE YORUM iki yoldan da kapali: sahip dogrudan yazamaz VE isletme
+        numarasiyla acilmis ayri bir hesap da yazamaz.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [puan]
+              properties:
+                puan: { type: integer, minimum: 1, maximum: 5 }
+                metin: { type: string, nullable: true, maxLength: 2000 }
+      responses:
+        "201":
+          description: Yorum yazildi
+          content:
+            application/json: { schema: { type: object } }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "403":
+          description: Is size ait degil / kendi isletmeniz
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "404":
+          description: Is bulunamadi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "409":
+          description: Is tamamlanmadi ya da zaten yorum var
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/isletme/{isletme_id}/yorum-daveti/kota:
+    parameters:
+      - { name: isletme_id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [dukkan]
+      summary: Kalan davet hakki
+      description: |
+        Isletme kotasini GORMELI: gormezse "neden gonderemiyorum" sorusu
+        cevapsiz kalir ve destek yuku dogar.
+        
+        Kota PLATFORM ETKINLIGINE bagli (son 30 gundeki teklif + is sayisi).
+        Hic teklif vermemis isletme yalniz taban kadar davet gonderebilir —
+        sahte yorumun maliyeti boylece GERCEK IS YAPMAYA baglaniyor.
+      responses:
+        "200":
+          description: Kota
+          content:
+            application/json: { schema: { type: object } }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "403":
+          description: Isletme size ait degil
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "404":
+          description: Bulunamadi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/isletme/{isletme_id}/yorum-daveti:
+    parameters:
+      - { name: isletme_id, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [dukkan]
+      summary: Musteriye yorum daveti gonderir (Katman B)
+      description: |
+        KOTA ASIMI 429 ve MODERATORE BILDIRILIR (denetim kaydi): sessizce
+        reddetmek kotuye kullanimi GORUNMEZ yapar — engellenen deneme de bir
+        sinyaldir.
+        
+        Denetim kaydi AYRI BIR OTURUMA yazilir: ayni oturuma yazilsaydi
+        `HTTPException` transaction'i geri sarardi ve sinyal, TAM DA
+        ENGELLENDIGI ICIN kaybolurdu (olculdu).
+        
+        KENDI NUMARASINA DAVET 403: en kaba sahte yorum yolu.
+        AYNI NUMARAYA 90 GUNDE BIR.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [telefon]
+              properties:
+                telefon: { type: string, minLength: 7, maxLength: 32 }
+      responses:
+        "201":
+          description: Davet gonderildi
+          content:
+            application/json: { schema: { type: object } }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "403":
+          description: Isletme size ait degil / onayli degil / kendi numaraniz
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "404":
+          description: Bulunamadi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "409":
+          description: Bu numaraya yakinda davet gonderilmis
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422":
+          description: Telefon bicimi gecersiz
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "429":
+          description: Davet kotasi doldu
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/yorum-daveti/dogrula:
+    parameters:
+      - { name: telefon, in: query, required: true, schema: { type: string } }
+    post:
+      tags: [dukkan]
+      summary: Davet koduyla yorum yazar — KIMLIKSIZ
+      description: |
+        Kullanicinin Dukkan hesabi OLMAYABILIR: telefonuna gelen kodla
+        dogruluyoruz ve gerekiyorsa hesabi aciyoruz. Once kayit istemek,
+        davetlerin cogunun cevapsiz kalmasi demekti.
+        
+        DAVETLI + OLUMSUZ yorum MODERASYONA duser (dogrulanmis is YOK):
+        rakip saldirisini SUSTURMADAN yavaslatmanin yolu — yayin GECIKIR,
+        KAYBOLMAZ.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [kod, puan]
+              properties:
+                kod: { type: string, minLength: 6, maxLength: 6 }
+                puan: { type: integer, minimum: 1, maximum: 5 }
+                metin: { type: string, nullable: true, maxLength: 2000 }
+      responses:
+        "201":
+          description: Yorum yazildi
+          content:
+            application/json: { schema: { type: object } }
+        "401":
+          description: Kod hatali
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "403":
+          description: Kendi isletmeniz
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "404":
+          description: Davet bulunamadi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "409":
+          description: Davet kullanilmis ya da zaten yorum yaptiniz
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "410":
+          description: Davet suresi doldu
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422":
+          description: Telefon bicimi gecersiz
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "429":
+          description: Cok fazla deneme
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/isletme-profil/{slug}/yorum:
+    parameters:
+      - { name: slug, in: path, required: true, schema: { type: string } }
+      - { name: limit, in: query, required: false, schema: { type: integer, minimum: 1, maximum: 200 } }
+    get:
+      tags: [dukkan]
+      summary: Isletmenin yayindaki yorumlari — KIMLIKSIZ
+      description: |
+        `kaynak` HER YORUMDA doner ve `ozet` iki katmani AYRI sayar
+        (`dogrulanmis` / `davetli`).
+        
+        Kullanici "8 dogrulanmis" ile "0 dogrulanmis, 40 davetli" arasindaki
+        farki KENDI okur — karari gizlemek yerine GORUNUR kiliyoruz.
+        
+        Dogrulanmis yorumlar ONCE siralanir: okuyucuya en guvenilir bilgi once.
+      security: []
+      responses:
+        "200":
+          description: Yorumlar + ozet
+          content:
+            application/json: { schema: { type: object } }
+        "404":
+          description: Isletme bulunamadi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/yorum/{yorum_id}/cevap:
+    parameters:
+      - { name: yorum_id, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [dukkan]
+      summary: Isletmenin herkese acik cevabi
+      description: |
+        ISLETME YORUMU SILEMEZ — silebilseydi sistemin tamami anlamsiz olurdu.
+        Cevap verebilir; okuyucu iki tarafi gorur ve cogu durumda EN IYI
+        SAVUNMA budur.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [metin]
+              properties:
+                metin: { type: string, minLength: 1, maxLength: 2000 }
+      responses:
+        "201":
+          description: Cevap yazildi
+          content:
+            application/json: { schema: { type: object } }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "403":
+          description: Isletme size ait degil
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "404":
+          description: Yorum bulunamadi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "409":
+          description: Zaten cevap verdiniz
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/yorum/{yorum_id}/bildir:
+    parameters:
+      - { name: yorum_id, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [dukkan]
+      summary: Yorumu moderasyona bildirir
+      description: |
+        ISLETME SILEMEZ, ISARETLEYEBILIR. Silme yetkisi verilseydi olumsuz her
+        yorum kaybolur ve yorum sistemi anlamsizlasirdi.
+      responses:
+        "200":
+          description: Bildirildi
+          content:
+            application/json: { schema: { type: object } }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "404":
+          description: Yorum bulunamadi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/sikayet:
+    post:
+      tags: [dukkan]
+      summary: Sikayet kaydi — KIMLIKSIZ
+      description: |
+        KIMLIK ZORUNLU DEGIL ve bu bilincli: dolandirilan ve hesabi olmayan bir
+        kullanici sikayet EDEMESEYDI, en cok duyulmasi gereken ses kesilirdi.
+        `iletisim` opsiyonel — sonuc bildirilebilsin diye.
+        
+        YANLIS YAZILMIS `isletme_slug` sikayeti REDDETMEZ, yalnizca isletme
+        baglantisi bos kalir: bir DOLANDIRICILIK sikayetini slug hatasi
+        yuzunden reddetmek en kotu sonucu uretirdi.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tip, metin]
+              properties:
+                tip: { type: string, enum: [odeme, hizmet, sahte_isletme, yorum, kisisel_veri, diger] }
+                metin: { type: string, minLength: 10, maxLength: 4000 }
+                isletme_slug: { type: string, nullable: true }
+                iletisim: { type: string, nullable: true, maxLength: 200 }
+      responses:
+        "201":
+          description: Sikayet alindi
+          content:
+            application/json: { schema: { type: object } }
+        "422":
+          description: Dogrulama hatasi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/moderasyon/yorum-kuyrugu:
+    parameters:
+      - { name: limit, in: query, required: false, schema: { type: integer, minimum: 1, maximum: 200 } }
+    get:
+      tags: [dukkan]
+      summary: Bekleyen yorumlar
+      description: |
+        `supheli_sebep` her satirda: moderator NEDEN kuyrukta oldugunu bilmeden
+        karar veremez. "Dogrulanmamis olumsuz" ile "ayni IP'den ikinci yorum"
+        FARKLI kararlar gerektirir.
+      responses:
+        "200":
+          description: Kuyruk
+          content:
+            application/json: { schema: { type: object } }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "403":
+          description: Moderator gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/moderasyon/yorum/{yorum_id}/karar:
+    parameters:
+      - { name: yorum_id, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [dukkan]
+      summary: Yorum hakkinda moderasyon karari
+      description: |
+        RET/GIZLEME icin GEREKCE ZORUNLU: gerekcesiz bir ret, yorumu yazan
+        kullaniciya neyi yanlis yaptigini soylemez ve itiraz sureci
+        degerlendirecek bir sey bulamaz.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [karar]
+              properties:
+                karar: { type: string, enum: [yayinla, reddet, gizle] }
+                not_metni: { type: string, nullable: true, maxLength: 2000 }
+      responses:
+        "200":
+          description: Karar uygulandi
+          content:
+            application/json: { schema: { type: object } }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "403":
+          description: Moderator gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "404":
+          description: Yorum bulunamadi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422":
+          description: Gerekce zorunlu
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/moderasyon/sikayet-kuyrugu:
+    parameters:
+      - { name: durum, in: query, required: false, schema: { type: string, enum: [acik, incelemede, kapandi] } }
+      - { name: limit, in: query, required: false, schema: { type: integer, minimum: 1, maximum: 200 } }
+    get:
+      tags: [dukkan]
+      summary: Sikayet kuyrugu
+      description: |
+        Her satir, o isletmeye ait ACIK ODEME SIKAYETI sayisini da tasiyor:
+        moderator tek bir sikayete degil ORUNTUYE bakabilmeli. Tekrarlayan
+        odeme sikayeti tek basina masum gorunen olaylardan olusur.
+      responses:
+        "200":
+          description: Kuyruk
+          content:
+            application/json: { schema: { type: object } }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "403":
+          description: Moderator gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/moderasyon/sikayet/{sikayet_id}/karar:
+    parameters:
+      - { name: sikayet_id, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [dukkan]
+      summary: Sikayeti ilerletir/kapatir
+      description: |
+        KAPATMA icin SONUC ZORUNLU: sonucsuz kapatilan bir sikayet, hicbir sey
+        yapilmadigini gizler ve itiraz/denetim icin kayit birakmaz.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [durum]
+              properties:
+                durum: { type: string, enum: [incelemede, kapandi] }
+                sonuc: { type: string, nullable: true, maxLength: 2000 }
+      responses:
+        "200":
+          description: Karar uygulandi
+          content:
+            application/json: { schema: { type: object } }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "403":
+          description: Moderator gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "404":
+          description: Sikayet bulunamadi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "422":
+          description: Sonuc zorunlu
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/moderasyon/aski-adaylari:
+    get:
+      tags: [dukkan]
+      summary: Odeme sikayeti esigini gecen isletmeler
+      description: |
+        OTOMATIK ASKI DEGIL, ADAY LISTESI — ve bu tasarim belgesinden bilincli
+        bir sapma.
+        
+        Belge (03 §5.3) otomatik aski diyordu, gerekcesi de saglamdi: bekleyen
+        her gun yeni magdur demek. Ama sikayet KIMLIKSIZ yapilabiliyor
+        (bilincli — dolandirilan hesapsiz kullanici da sikayet edebilmeli),
+        dolayisiyla UC SIKAYET URETMEK UCUZ. Otomatik aski, bir isletmeyi
+        RAKIBININ kapatmasinin yolu olurdu.
+        
+        Iki karari birlestiren cozum: esik asildiginda kayit ANINDA listeye
+        duser ve moderator AYNI GUN bakar. Hiz korunuyor, karar bir insanin.
+      responses:
+        "200":
+          description: Adaylar
+          content:
+            application/json: { schema: { type: object } }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "403":
+          description: Moderator gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
   /dukkan/lokasyon/il:
     get:
       tags: [dukkan]

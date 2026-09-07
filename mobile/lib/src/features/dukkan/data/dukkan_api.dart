@@ -356,3 +356,110 @@ final dukkanTaleplerimProvider =
   final jeton = await ref.watch(dukkanOturumProvider).jetonAl();
   return ref.watch(dukkanApiProvider).taleplerim(jeton);
 });
+
+// ===================================================================== //
+// (DUKKAN F5) YORUM VE SIKAYET
+// ===================================================================== //
+
+class DukkanYorum {
+  const DukkanYorum({
+    required this.id,
+    required this.kaynak,
+    required this.puan,
+    this.metin,
+    this.cevap,
+  });
+
+  final String id;
+  /// 'platform' (dogrulanmis) | 'davet' (davetli)
+  final String kaynak;
+  final int puan;
+  final String? metin;
+  final String? cevap;
+
+  bool get dogrulanmis => kaynak == 'platform';
+
+  factory DukkanYorum.fromJson(Map<String, dynamic> j) => DukkanYorum(
+        id: '${j['id']}',
+        kaynak: j['kaynak'] as String? ?? 'davet',
+        puan: (j['puan'] as num?)?.toInt() ?? 0,
+        metin: j['metin'] as String?,
+        cevap: j['cevap'] as String?,
+      );
+}
+
+class DukkanYorumListesi {
+  const DukkanYorumListesi({
+    required this.items,
+    required this.dogrulanmis,
+    required this.davetli,
+  });
+
+  final List<DukkanYorum> items;
+  final int dogrulanmis;
+  final int davetli;
+
+  factory DukkanYorumListesi.fromJson(Map<String, dynamic> j) =>
+      DukkanYorumListesi(
+        items: ((j['items'] as List?) ?? const [])
+            .cast<Map<String, dynamic>>()
+            .map(DukkanYorum.fromJson)
+            .toList(),
+        dogrulanmis: ((j['ozet'] as Map?)?['dogrulanmis'] as num?)?.toInt() ?? 0,
+        davetli: ((j['ozet'] as Map?)?['davetli'] as num?)?.toInt() ?? 0,
+      );
+}
+
+extension DukkanGuvenApi on DukkanApi {
+  /// Isletmenin yayindaki yorumlari — KIMLIKSIZ.
+  Future<DukkanYorumListesi> yorumlar(String slug) async {
+    final r = await _dio
+        .get<Map<String, dynamic>>('/dukkan/isletme-profil/$slug/yorum');
+    return DukkanYorumListesi.fromJson(r.data ?? const {});
+  }
+
+  /// Dogrulanmis yorum yazar (Katman A). Dukkan jetonu gerekir.
+  Future<void> yorumYaz({
+    required String isId,
+    required String jeton,
+    required int puan,
+    String? metin,
+  }) async {
+    await _dio.post<Map<String, dynamic>>(
+      '/dukkan/is/$isId/yorum',
+      options: Options(extra: {AuthInterceptor.dukkanJetonu: jeton}),
+      data: <String, dynamic>{
+        'puan': puan,
+        if (metin != null && metin.isNotEmpty) 'metin': metin,
+      },
+    );
+  }
+
+  /// Sikayet — KIMLIKSIZ.
+  ///
+  /// Jeton GONDERILMIYOR ve bu bilincli: dolandirilan bir kullanicinin
+  /// Dukkan hesabi olmayabilir. Kimlik zorunlu olsaydi en cok duyulmasi
+  /// gereken ses kesilirdi.
+  Future<void> sikayetGonder({
+    required String tip,
+    required String metin,
+    String? isletmeSlug,
+    String? iletisim,
+  }) async {
+    await _dio.post<Map<String, dynamic>>(
+      '/dukkan/sikayet',
+      data: <String, dynamic>{
+        'tip': tip,
+        'metin': metin,
+        if (isletmeSlug != null && isletmeSlug.isNotEmpty)
+          'isletme_slug': isletmeSlug,
+        if (iletisim != null && iletisim.isNotEmpty) 'iletisim': iletisim,
+      },
+    );
+  }
+}
+
+final dukkanYorumlarProvider =
+    FutureProvider.autoDispose.family<DukkanYorumListesi, String>(
+  (ref, slug) => ref.watch(dukkanApiProvider).yorumlar(slug),
+);

@@ -16,6 +16,13 @@ type Detay = {
   hizmet_alanlari: { id: string; ad: string; ilce: string; il: string }[];
 };
 type Kategori = { ad: string; slug: string; alt: { ad: string; slug: string }[] };
+type Belge = {
+  id: string;
+  tip: string;
+  durum: string;
+  not_metni: string | null;
+  incelendi_at: string | null;
+};
 type Mahalle = { id: string; ad: string; slug: string; tip: string };
 
 export default function IsletmeDetay() {
@@ -36,10 +43,21 @@ export default function IsletmeDetay() {
   const [seciliAlan, setSeciliAlan] = useState<Map<string, string>>(new Map());
 
   const [kod, setKod] = useState("");
+  const [belgeler, setBelgeler] = useState<Belge[]>([]);
+  const [belgeTipi, setBelgeTipi] = useState("vergi_levhasi");
+  const [yukleniyor, setYukleniyor] = useState(false);
 
   const yukle = useCallback(async () => {
     const v = await api<Detay>(`/isletme/${isletmeId}`);
     setD(v);
+    try {
+      const b = await api<{ items: Belge[] }>(`/isletme/${isletmeId}/belge`);
+      setBelgeler(b.items);
+    } catch {
+      // Belge listesi alinamazsa panelin geri kalani calismali:
+      // belge YARDIMCI bir yuzey, profilin kendisi degil.
+      setBelgeler([]);
+    }
     setSecili(new Set(v.kategoriler));
     // Mevcut hizmet alanlarini secime yukle: kullanici bir mahalle daha
     // eklemek istediginde onceki secimi KAYBETMEMELI. Uc TAM LISTE
@@ -362,6 +380,135 @@ export default function IsletmeDetay() {
         >
           Bölgeleri kaydet
         </button>
+      </section>
+
+      {/* --- BELGELER --- */}
+      <section className="mt-8 rounded border border-[color:var(--dk-cizgi)] p-4">
+        <h2 className="font-medium">Belgeler</h2>
+        {/* NE ISE YARADIGINI SOYLUYORUZ: belge YUKLEMEK basvuru icin
+            ZORUNLU DEGIL; "Doğrulanmış işletme" rozetini acar. Zorunlu
+            sanilirsa kayit akisi gereksiz yere tikanir. */}
+        <p className="mt-1 text-sm text-[color:var(--dk-metin-soluk)]">
+          Zorunlu değil. Vergi levhanızı yüklerseniz, incelemeden sonra
+          profilinizde <strong>&quot;Doğrulanmış işletme&quot;</strong> rozeti
+          görünür.
+        </p>
+
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <select
+            value={belgeTipi}
+            onChange={(e) => setBelgeTipi(e.target.value)}
+            className="rounded border border-[color:var(--dk-cizgi)] px-3 py-2 text-sm"
+          >
+            <option value="vergi_levhasi">Vergi levhası</option>
+            <option value="ustalik_belgesi">Ustalık belgesi</option>
+            <option value="sicil">Sicil kaydı</option>
+            <option value="diger">Diğer</option>
+          </select>
+          <label className="cursor-pointer rounded bg-marka px-4 py-2 text-sm font-medium text-white">
+            {yukleniyor ? "Yükleniyor…" : "Dosya seç"}
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,application/pdf"
+              className="hidden"
+              disabled={yukleniyor}
+              onChange={async (e) => {
+                const dosya = e.target.files?.[0];
+                if (!dosya) return;
+                setHata(null);
+                setBilgi(null);
+                setYukleniyor(true);
+                try {
+                  // PRESIGN: sunucu megabaytlarca ikili veriye ARACI
+                  // OLMAZ; tarayici dogrudan depoya yukler
+                  // (app/storage.py ayni gerekceyi tasiyor).
+                  const p = await api<{ url: string; belge_id: string }>(
+                    `/isletme/${isletmeId}/belge/presign`,
+                    {
+                      metot: "POST",
+                      govde: {
+                        tip: belgeTipi,
+                        content_type: dosya.type,
+                        dosya_adi: dosya.name,
+                      },
+                    },
+                  );
+                  const y = await fetch(p.url, {
+                    method: "PUT",
+                    headers: { "content-type": dosya.type },
+                    body: dosya,
+                  });
+                  // SESSIZ BASARISIZLIK YOK: presign basarili olup PUT
+                  // duserse kayit "bekliyor" olarak kalir ve kullanici
+                  // yuklediğini SANIR. Durumu soyluyoruz.
+                  if (!y.ok) {
+                    throw new Error("yukleme_basarisiz");
+                  }
+                  await yukle();
+                  setBilgi("Belge yüklendi, incelemeye alındı.");
+                } catch (h) {
+                  setHata(
+                    h instanceof Error && h.message === "yukleme_basarisiz"
+                      ? "Dosya yüklenemedi. Bağlantınızı kontrol edip tekrar deneyin."
+                      : hataMetni(h),
+                  );
+                } finally {
+                  setYukleniyor(false);
+                  e.target.value = "";
+                }
+              }}
+            />
+          </label>
+          <span className="text-xs text-[color:var(--dk-metin-soluk)]">
+            JPG, PNG, WEBP veya PDF
+          </span>
+        </div>
+
+        {belgeler.length > 0 && (
+          <ul className="mt-4 space-y-2">
+            {belgeler.map((b) => (
+              <li
+                key={b.id}
+                className="flex flex-wrap items-center justify-between gap-2 rounded border border-[color:var(--dk-cizgi)] px-3 py-2 text-sm"
+              >
+                <span>
+                  {{
+                    vergi_levhasi: "Vergi levhası",
+                    ustalik_belgesi: "Ustalık belgesi",
+                    sicil: "Sicil kaydı",
+                    diger: "Diğer",
+                  }[b.tip] ?? b.tip}
+                </span>
+                <span className="flex items-center gap-2">
+                  {/* INCELEME DURUMU GORUNUR: goremezse "yukledim ama bir
+                      sey olmuyor" durumunda kalir ve destek yuku dogar.
+                      MODERATORUN ADI DONMUYOR — kimligi isletme sahibine
+                      karsi korunmali. */}
+                  <span
+                    className={`rounded px-2 py-0.5 text-xs ${
+                      b.durum === "onaylandi"
+                        ? "bg-emerald-100 text-emerald-900"
+                        : b.durum === "reddedildi"
+                          ? "bg-red-100 text-red-900"
+                          : "bg-amber-100 text-amber-900"
+                    }`}
+                  >
+                    {b.durum === "onaylandi"
+                      ? "Onaylandı"
+                      : b.durum === "reddedildi"
+                        ? "Reddedildi"
+                        : "İnceleniyor"}
+                  </span>
+                </span>
+                {b.not_metni && (
+                  <span className="w-full text-xs text-[color:var(--dk-metin-soluk)]">
+                    Not: {b.not_metni}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       {/* --- BASVURU --- */}

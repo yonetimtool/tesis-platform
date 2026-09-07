@@ -5958,4 +5958,75 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get dukkanTelefonGerekli =>
       'В вашем аккаунте не указан номер телефона. Подтвердите номер на dukkan.yonetiyor.com, чтобы создать заявку.';
+
+  @override
+  String get dukkanDegerlendir => 'Оценить';
+
+  @override
+  String get dukkanPuanVer => 'Ваша оценка';
+
+  @override
+  String get dukkanYorumMetni => 'Опишите ваш опыт (необязательно)';
+
+  @override
+  String get dukkanYorumGonder => 'Отправить отзыв';
+
+  @override
+  String get dukkanYorumTesekkur => 'Спасибо за ваш отзыв.';
+
+  @override
+  String get dukkanYorumHatasi => 'Не удалось отправить отзыв.';
+
+  @override
+  String get dukkanSikayetBildir => 'Подать жалобу';
+
+  @override
+  String get dukkanSikayetKonu => 'Тема';
+
+  @override
+  String get dukkanSikayetMetin => 'Что случилось?';
+
+  @override
+  String get dukkanSikayetIletisim => 'Контакт (необязательно)';
+
+  @override
+  String get dukkanSikayetIletisimIpucu =>
+      'Только чтобы сообщить вам результат.';
+
+  @override
+  String get dukkanSikayetGonder => 'Отправить жалобу';
+
+  @override
+  String get dukkanSikayetAlindi => 'Ваша жалоба принята. Мы её рассмотрим.';
+
+  @override
+  String get dukkanSikayetOdeme => 'Оплата / предоплата';
+
+  @override
+  String get dukkanSikayetHizmet => 'Качество услуги';
+
+  @override
+  String get dukkanSikayetSahte => 'Подозрение на фиктивную компанию';
+
+  @override
+  String get dukkanSikayetYorum => 'Об отзыве';
+
+  @override
+  String get dukkanSikayetVeri => 'Мои персональные данные';
+
+  @override
+  String get dukkanSikayetDiger => 'Другое';
+
+  @override
+  String get dukkanDogrulanmisYorum => 'Услуга заказана через платформу';
+
+  @override
+  String get dukkanDavetliYorum => 'Отзыв по приглашению';
+
+  @override
+  String get dukkanDavetliAciklama =>
+      'Написан по приглашению компании. Работа не заказывалась через платформу, поэтому отзыв не подтверждён.';
+
+  @override
+  String get dukkanIsletmeCevabi => 'Ответ компании';
 }

@@ -5885,4 +5885,76 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get dukkanTelefonGerekli =>
       'No phone number is registered on your account. Verify your phone at dukkan.yonetiyor.com to create a request.';
+
+  @override
+  String get dukkanDegerlendir => 'Rate';
+
+  @override
+  String get dukkanPuanVer => 'Your rating';
+
+  @override
+  String get dukkanYorumMetni => 'Describe your experience (optional)';
+
+  @override
+  String get dukkanYorumGonder => 'Submit review';
+
+  @override
+  String get dukkanYorumTesekkur => 'Thank you for your review.';
+
+  @override
+  String get dukkanYorumHatasi => 'Review could not be submitted.';
+
+  @override
+  String get dukkanSikayetBildir => 'Report a complaint';
+
+  @override
+  String get dukkanSikayetKonu => 'Subject';
+
+  @override
+  String get dukkanSikayetMetin => 'What happened?';
+
+  @override
+  String get dukkanSikayetIletisim => 'Contact (optional)';
+
+  @override
+  String get dukkanSikayetIletisimIpucu =>
+      'Only so we can tell you the outcome.';
+
+  @override
+  String get dukkanSikayetGonder => 'Send complaint';
+
+  @override
+  String get dukkanSikayetAlindi =>
+      'Your complaint was received. We will review it.';
+
+  @override
+  String get dukkanSikayetOdeme => 'Payment / deposit';
+
+  @override
+  String get dukkanSikayetHizmet => 'Service quality';
+
+  @override
+  String get dukkanSikayetSahte => 'Suspected fake business';
+
+  @override
+  String get dukkanSikayetYorum => 'About a review';
+
+  @override
+  String get dukkanSikayetVeri => 'My personal data';
+
+  @override
+  String get dukkanSikayetDiger => 'Other';
+
+  @override
+  String get dukkanDogrulanmisYorum => 'Service booked through the platform';
+
+  @override
+  String get dukkanDavetliYorum => 'Invited review';
+
+  @override
+  String get dukkanDavetliAciklama =>
+      'Written at the business\'s invitation. The job was not booked through the platform, so it is unverified.';
+
+  @override
+  String get dukkanIsletmeCevabi => 'Business reply';
 }

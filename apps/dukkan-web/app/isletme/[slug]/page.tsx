@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { DogrulamaRozeti, Puan } from "@/components/Rozet";
+import { Yorumlar } from "@/components/Yorumlar";
 import { SITE_ADRESI } from "@/config/site";
 import { sunucudanAl } from "@/lib/backend";
 
@@ -186,6 +187,8 @@ export default async function IsletmeProfili(
         </section>
       )}
 
+      <Yorumlar slug={params.slug} />
+
       {/* GUVEN NOTU — rozetin NE ANLAMA GELDIGINI soyluyor.
           "Dogrulanmis" rozeti bir GARANTI gibi okunmamali; ne kanitladigi
           ve ne KANITLAMADIGI acikca yazili (03-guven §3, soru 7). */}
@@ -200,6 +203,15 @@ export default async function IsletmeProfili(
           Ödemeyi iş bitmeden yapmayın. Dükkan ödemelere aracılık etmez;
           kapora talebi bir uyarı işaretidir.
         </p>
+        {/* SIKAYET YOLU HER PROFILDE VE KIMLIKSIZ: dolandirilan bir
+            kullanicinin hesabi olmayabilir ve en cok onun sesi
+            duyulmali. */}
+        <Link
+          href={`/sikayet?isletme=${d.slug}`}
+          className="mt-3 inline-block text-sm text-marka underline"
+        >
+          Bu işletmeyle ilgili şikâyet bildir
+        </Link>
       </section>
     </main>
   );

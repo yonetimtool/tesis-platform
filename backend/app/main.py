@@ -22,6 +22,7 @@ from .dukkan import auth_uclar as dukkan_auth_router
 from .dukkan import isletme as dukkan_isletme_router
 from .dukkan import moderasyon as dukkan_moderasyon_router
 from .dukkan import talep as dukkan_talep_router
+from .dukkan import yorum as dukkan_yorum_router
 from .dukkan import uclar as dukkan_router
 from .routers import activity as activity_router
 from .routers import arama as arama_router
@@ -279,6 +280,7 @@ app.include_router(dukkan_arama_router.router)
 app.include_router(dukkan_isletme_router.router)
 app.include_router(dukkan_moderasyon_router.router)
 app.include_router(dukkan_talep_router.router)
+app.include_router(dukkan_yorum_router.router)
 
 
 @app.get("/health", tags=["health"])

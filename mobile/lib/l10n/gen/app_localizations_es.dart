@@ -5858,4 +5858,75 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get dukkanTelefonGerekli =>
       'No hay un número de teléfono registrado en tu cuenta. Verifica tu teléfono en dukkan.yonetiyor.com para crear una solicitud.';
+
+  @override
+  String get dukkanDegerlendir => 'Valorar';
+
+  @override
+  String get dukkanPuanVer => 'Tu valoración';
+
+  @override
+  String get dukkanYorumMetni => 'Describe tu experiencia (opcional)';
+
+  @override
+  String get dukkanYorumGonder => 'Enviar valoración';
+
+  @override
+  String get dukkanYorumTesekkur => 'Gracias por tu valoración.';
+
+  @override
+  String get dukkanYorumHatasi => 'No se pudo enviar la valoración.';
+
+  @override
+  String get dukkanSikayetBildir => 'Presentar una queja';
+
+  @override
+  String get dukkanSikayetKonu => 'Asunto';
+
+  @override
+  String get dukkanSikayetMetin => '¿Qué pasó?';
+
+  @override
+  String get dukkanSikayetIletisim => 'Contacto (opcional)';
+
+  @override
+  String get dukkanSikayetIletisimIpucu =>
+      'Solo para poder informarte del resultado.';
+
+  @override
+  String get dukkanSikayetGonder => 'Enviar queja';
+
+  @override
+  String get dukkanSikayetAlindi => 'Hemos recibido tu queja. La revisaremos.';
+
+  @override
+  String get dukkanSikayetOdeme => 'Pago / anticipo';
+
+  @override
+  String get dukkanSikayetHizmet => 'Calidad del servicio';
+
+  @override
+  String get dukkanSikayetSahte => 'Sospecha de negocio falso';
+
+  @override
+  String get dukkanSikayetYorum => 'Sobre una valoración';
+
+  @override
+  String get dukkanSikayetVeri => 'Mis datos personales';
+
+  @override
+  String get dukkanSikayetDiger => 'Otro';
+
+  @override
+  String get dukkanDogrulanmisYorum => 'Servicio contratado por la plataforma';
+
+  @override
+  String get dukkanDavetliYorum => 'Valoración por invitación';
+
+  @override
+  String get dukkanDavetliAciklama =>
+      'Escrita por invitación del negocio. El trabajo no se contrató por la plataforma, así que no está verificada.';
+
+  @override
+  String get dukkanIsletmeCevabi => 'Respuesta del negocio';
 }

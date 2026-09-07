@@ -5697,4 +5697,76 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get dukkanTelefonGerekli =>
       'Hesabınızda telefon numarası kayıtlı değil. Talep oluşturmak için dukkan.yonetiyor.com üzerinden telefonunuzu doğrulayın.';
+
+  @override
+  String get dukkanDegerlendir => 'Değerlendir';
+
+  @override
+  String get dukkanPuanVer => 'Puanınız';
+
+  @override
+  String get dukkanYorumMetni => 'Deneyiminizi yazın (isteğe bağlı)';
+
+  @override
+  String get dukkanYorumGonder => 'Değerlendirmeyi gönder';
+
+  @override
+  String get dukkanYorumTesekkur => 'Değerlendirmeniz için teşekkürler.';
+
+  @override
+  String get dukkanYorumHatasi => 'Değerlendirme gönderilemedi.';
+
+  @override
+  String get dukkanSikayetBildir => 'Şikâyet bildir';
+
+  @override
+  String get dukkanSikayetKonu => 'Konu';
+
+  @override
+  String get dukkanSikayetMetin => 'Ne oldu?';
+
+  @override
+  String get dukkanSikayetIletisim => 'İletişim (isteğe bağlı)';
+
+  @override
+  String get dukkanSikayetIletisimIpucu =>
+      'Yalnızca sonucu size bildirebilmek için.';
+
+  @override
+  String get dukkanSikayetGonder => 'Şikâyeti gönder';
+
+  @override
+  String get dukkanSikayetAlindi =>
+      'Şikâyetiniz alındı. İnceleyip gereğini yapacağız.';
+
+  @override
+  String get dukkanSikayetOdeme => 'Ödeme / kapora';
+
+  @override
+  String get dukkanSikayetHizmet => 'Hizmet kalitesi';
+
+  @override
+  String get dukkanSikayetSahte => 'Sahte işletme şüphesi';
+
+  @override
+  String get dukkanSikayetYorum => 'Yorumla ilgili';
+
+  @override
+  String get dukkanSikayetVeri => 'Kişisel verilerim';
+
+  @override
+  String get dukkanSikayetDiger => 'Diğer';
+
+  @override
+  String get dukkanDogrulanmisYorum => 'Platform üzerinden alınan hizmet';
+
+  @override
+  String get dukkanDavetliYorum => 'Davetli değerlendirme';
+
+  @override
+  String get dukkanDavetliAciklama =>
+      'İşletmenin daveti üzerine yazıldı. İş platform üzerinden alınmadığı için doğrulanmamıştır.';
+
+  @override
+  String get dukkanIsletmeCevabi => 'İşletmenin cevabı';
 }

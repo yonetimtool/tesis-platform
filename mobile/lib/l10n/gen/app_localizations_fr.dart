@@ -5871,4 +5871,76 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get dukkanTelefonGerekli =>
       'Aucun numéro de téléphone n\'est enregistré sur votre compte. Vérifiez votre numéro sur dukkan.yonetiyor.com pour créer une demande.';
+
+  @override
+  String get dukkanDegerlendir => 'Évaluer';
+
+  @override
+  String get dukkanPuanVer => 'Votre note';
+
+  @override
+  String get dukkanYorumMetni => 'Décrivez votre expérience (facultatif)';
+
+  @override
+  String get dukkanYorumGonder => 'Envoyer l\'avis';
+
+  @override
+  String get dukkanYorumTesekkur => 'Merci pour votre avis.';
+
+  @override
+  String get dukkanYorumHatasi => 'L\'avis n\'a pas pu être envoyé.';
+
+  @override
+  String get dukkanSikayetBildir => 'Signaler une réclamation';
+
+  @override
+  String get dukkanSikayetKonu => 'Sujet';
+
+  @override
+  String get dukkanSikayetMetin => 'Que s\'est-il passé ?';
+
+  @override
+  String get dukkanSikayetIletisim => 'Contact (facultatif)';
+
+  @override
+  String get dukkanSikayetIletisimIpucu =>
+      'Uniquement pour vous communiquer le résultat.';
+
+  @override
+  String get dukkanSikayetGonder => 'Envoyer la réclamation';
+
+  @override
+  String get dukkanSikayetAlindi =>
+      'Votre réclamation a été reçue. Nous l\'examinerons.';
+
+  @override
+  String get dukkanSikayetOdeme => 'Paiement / acompte';
+
+  @override
+  String get dukkanSikayetHizmet => 'Qualité du service';
+
+  @override
+  String get dukkanSikayetSahte => 'Soupçon d\'entreprise fictive';
+
+  @override
+  String get dukkanSikayetYorum => 'À propos d\'un avis';
+
+  @override
+  String get dukkanSikayetVeri => 'Mes données personnelles';
+
+  @override
+  String get dukkanSikayetDiger => 'Autre';
+
+  @override
+  String get dukkanDogrulanmisYorum => 'Service réservé via la plateforme';
+
+  @override
+  String get dukkanDavetliYorum => 'Avis sur invitation';
+
+  @override
+  String get dukkanDavetliAciklama =>
+      'Rédigé à l\'invitation de l\'entreprise. Le travail n\'a pas été réservé via la plateforme, il n\'est donc pas vérifié.';
+
+  @override
+  String get dukkanIsletmeCevabi => 'Réponse de l\'entreprise';
 }

@@ -30,7 +30,7 @@ class DukkanProfilScreen extends ConsumerWidget {
       body: gelecek.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (_, _) => Center(child: Text(t.dukkanIsletmeBulunamadi)),
-        data: (d) => _Govde(d: d),
+        data: (d) => _Govde(d: d, slug: slug),
       ),
     );
   }
@@ -41,13 +41,14 @@ final _profilProvider =
   (ref, slug) => ref.watch(dukkanApiProvider).profil(slug),
 );
 
-class _Govde extends StatelessWidget {
-  const _Govde({required this.d});
+class _Govde extends ConsumerWidget {
+  const _Govde({required this.d, required this.slug});
 
   final Map<String, dynamic> d;
+  final String slug;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final t = AppLocalizations.of(context);
     final metin = Theme.of(context).textTheme;
     final seviye = (d['dogrulama_seviyesi'] as num?)?.toInt() ?? 0;
@@ -135,6 +136,47 @@ class _Govde extends StatelessWidget {
             ),
         ],
 
+        // ============================================================ //
+        // YORUMLAR — IKI KATMAN AYRI
+        // ============================================================ //
+        // Web ile ayni ilke: rozet farki GORUNUR, ince yaziyla degil.
+        // Davetli yorumlarin USTUNDE ne oldugu yaziyor.
+        ...ref.watch(dukkanYorumlarProvider(slug)).when(
+              loading: () => const [Center(child: CircularProgressIndicator())],
+              error: (_, _) => const <Widget>[],
+              data: (y) {
+                if (y.dogrulanmis + y.davetli == 0) return const <Widget>[];
+                final dogrulanmislar =
+                    y.items.where((x) => x.dogrulanmis).toList();
+                final davetliler =
+                    y.items.where((x) => !x.dogrulanmis).toList();
+                return <Widget>[
+                  const SizedBox(height: 28),
+                  Text('${t.dukkanDegerlendirme} (${y.dogrulanmis + y.davetli})',
+                      style: metin.titleMedium),
+                  const SizedBox(height: 8),
+                  // OZET IKI SAYIYI AYRI VERIYOR.
+                  Text('✔ ${y.dogrulanmis} · ${t.dukkanDogrulanmisYorum}',
+                      style: metin.bodySmall),
+                  Text('• ${y.davetli} · ${t.dukkanDavetliYorum}',
+                      style: metin.bodySmall),
+                  if (dogrulanmislar.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    Text(t.dukkanDogrulanmisYorum, style: metin.titleSmall),
+                    for (final x in dogrulanmislar)
+                      _YorumKarti(y: x, t: t, vurgulu: true),
+                  ],
+                  if (davetliler.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    Text(t.dukkanDavetliYorum, style: metin.titleSmall),
+                    Text(t.dukkanDavetliAciklama, style: metin.bodySmall),
+                    for (final x in davetliler)
+                      _YorumKarti(y: x, t: t, vurgulu: false),
+                  ],
+                ];
+              },
+            ),
+
         // ROZET ACIKLAMASI ACIK METIN: dokunmatikte hover yok, ipucu
         // balonu kesfedilmez. Rozetin ne KANITLAMADIGI da yazili.
         const SizedBox(height: 28),
@@ -158,6 +200,58 @@ class _Govde extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+
+class _YorumKarti extends StatelessWidget {
+  const _YorumKarti({required this.y, required this.t, required this.vurgulu});
+
+  final DukkanYorum y;
+  final AppLocalizations t;
+  final bool vurgulu;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      margin: const EdgeInsets.only(top: 8),
+      color: vurgulu ? scheme.primaryContainer.withValues(alpha: 0.25) : null,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('★' * y.puan + '☆' * (5 - y.puan)),
+            if (y.metin != null && y.metin!.trim().isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(y.metin!),
+            ],
+            if (y.cevap != null) ...[
+              const SizedBox(height: 8),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: scheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(t.dukkanIsletmeCevabi,
+                        style: Theme.of(context).textTheme.labelSmall),
+                    const SizedBox(height: 2),
+                    Text(y.cevap!,
+                        style: Theme.of(context).textTheme.bodySmall),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }
