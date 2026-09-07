@@ -156,6 +156,36 @@ def test_TURKCE_HARFSIZ_ISLETME_ARAMASI(client, dukkan_conn, moderator):
         assert r.json()["toplam"] >= 1, f"q={q!r} bulamadi"
 
 
+def _bos_mahalle(dukkan_conn, kategori_slug: str) -> tuple[str, str, str]:
+    """HIC isletmesi olmayan bir mahalle bulur. Doner: (id, slug, ilce_slug).
+
+    ==================================================================
+    ILK YAZIMDA BU TEST SIRA-BAGIMLIYDI
+    ==================================================================
+    Sabit bir ilce ("uskudar") secmisti ve ayni takimda daha once kosan
+    testler oraya isletme birakinca sayi esigi gecmis oluyordu; test
+    IZOLASYONDA gecip TAM TAKIMDA DUSUYORDU.
+
+    Cozum sabiti kaldirmak degil, ON KOSULU KURMAK: gercekten bos bir
+    mahalle ARANIYOR. (Bu depoda ayni sinif bir kirilganlik
+    `patrol-windows-pollution-flake` olarak kayitli.)
+    """
+    satir = dukkan_conn.execute(
+        """
+        SELECT m.id, m.slug, ic.slug
+        FROM dukkan.mahalle m
+        JOIN dukkan.ilce ic ON ic.id = m.ilce_id
+        JOIN dukkan.il i ON i.id = ic.il_id
+        WHERE i.slug = 'istanbul'
+          AND NOT EXISTS (SELECT 1 FROM dukkan.isletme_hizmet_alani ha
+                           WHERE ha.mahalle_id = m.id)
+        ORDER BY random() LIMIT 1
+        """
+    ).fetchone()
+    assert satir, "bos mahalle bulunamadi"
+    return str(satir[0]), satir[1], satir[2]
+
+
 # ==================================================================== #
 # 3. SEO SAYFASI
 # ==================================================================== #
@@ -169,17 +199,28 @@ def test_SEO_SAYFASI_SIFIR_ISLETMEDE_404(client):
 
 
 def test_SEO_SAYFASI_VERI_DONDURUR(client, dukkan_conn, moderator):
-    hedef = _mahalle_idler(dukkan_conn, n=1)
-    ad = f"SEO {uuid.uuid4().hex[:6]}"
-    _yayinla(client, dukkan_conn, moderator, ad=ad, mahalle_idler=hedef,
-             aciklama="Test açıklaması")
-    slug = dukkan_conn.execute(
-        "SELECT slug FROM dukkan.mahalle WHERE id=%s", (hedef[0],)).fetchone()[0]
+    """
+    ==================================================================
+    BOS MAHALLE KULLANILIYOR — ve sebebi bir olcumden
+    ==================================================================
+    Ilk yazimda sabit bir mahalle (`_mahalle_idler(n=1)`) seciliyordu.
+    Tam takimda DUSTU: ayni mahalleye once kosan testler onlarca isletme
+    birakmisti ve SEO sayfasi `LIMIT 50` ile dondugu icin yeni eklenen
+    isletme listeye GIRMIYORDU.
 
-    r = client.get(f"/dukkan/sayfa/istanbul/cekmekoy/{slug}/elektrikci")
+    Test IZOLASYONDA gecip TAM TAKIMDA dusuyordu — sitemap testinde
+    olculen kirilganligin AYNISI. Cozum yine ayni: on kosulu KURMAK,
+    varsaymamak.
+    """
+    mid, slug, ilce = _bos_mahalle(dukkan_conn, "elektrikci")
+    ad = f"SEO {uuid.uuid4().hex[:6]}"
+    _yayinla(client, dukkan_conn, moderator, ad=ad, mahalle_idler=[mid],
+             aciklama="Test açıklaması")
+
+    r = client.get(f"/dukkan/sayfa/istanbul/{ilce}/{slug}/elektrikci")
     assert r.status_code == 200, r.text
     d = r.json()
-    assert d["konum"]["ilce"] == "Çekmeköy"
+    assert d["konum"]["ilce_slug"] == ilce
     assert d["kategori"]["slug"] == "elektrikci"
     assert d["toplam"] >= 1
     assert any(x["ad"] == ad for x in d["isletmeler"])
@@ -362,36 +403,6 @@ def test_KAMU_PROFILI_BOLGELERI_ILCE_DUZEYINDE_OZETLER(
 # ==================================================================== #
 # 6. SITEMAP
 # ==================================================================== #
-
-def _bos_mahalle(dukkan_conn, kategori_slug: str) -> tuple[str, str, str]:
-    """HIC isletmesi olmayan bir mahalle bulur. Doner: (id, slug, ilce_slug).
-
-    ==================================================================
-    ILK YAZIMDA BU TEST SIRA-BAGIMLIYDI
-    ==================================================================
-    Sabit bir ilce ("uskudar") secmisti ve ayni takimda daha once kosan
-    testler oraya isletme birakinca sayi esigi gecmis oluyordu; test
-    IZOLASYONDA gecip TAM TAKIMDA DUSUYORDU.
-
-    Cozum sabiti kaldirmak degil, ON KOSULU KURMAK: gercekten bos bir
-    mahalle ARANIYOR. (Bu depoda ayni sinif bir kirilganlik
-    `patrol-windows-pollution-flake` olarak kayitli.)
-    """
-    satir = dukkan_conn.execute(
-        """
-        SELECT m.id, m.slug, ic.slug
-        FROM dukkan.mahalle m
-        JOIN dukkan.ilce ic ON ic.id = m.ilce_id
-        JOIN dukkan.il i ON i.id = ic.il_id
-        WHERE i.slug = 'istanbul'
-          AND NOT EXISTS (SELECT 1 FROM dukkan.isletme_hizmet_alani ha
-                           WHERE ha.mahalle_id = m.id)
-        ORDER BY random() LIMIT 1
-        """
-    ).fetchone()
-    assert satir, "bos mahalle bulunamadi"
-    return str(satir[0]), satir[1], satir[2]
-
 
 def test_SITEMAP_ESIGI_UYGULANIR(client, dukkan_conn, moderator):
     """Esigi gecmeyen yol sitemap'e GIRMEZ — arama motoruna ince icerik
