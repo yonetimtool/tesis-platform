@@ -375,6 +375,28 @@ def test_ROL_KAPISI_OLMAYAN_mutasyon_uclari_BEKLENEN_KUME():
     for route in app.routes:
         if not isinstance(route, APIRoute):
             continue
+        # `/dukkan` HARIC — ve bu bir muafiyet degil, KAVRAM FARKI.
+        #
+        # Bu kilidin sorusu su: "rol kapisi olmayan bir uc `denetci`ye de
+        # ACIKTIR". Dukkan uclari icin bu ONERME YANLIS: Dukkan'in KENDI
+        # kimlik sistemi var (`kimlik_zorunlu` / `moderator_zorunlu`) ve
+        # Yonetiyor jetonu oraya HIC GECMIYOR — jeton `tur: "dukkan"`
+        # iddiasi tasimadigi icin 401 alir. Rol matrisi de bunu
+        # gosteriyor: tum Yonetiyor rolleri icin `KIMLIK`.
+        #
+        # Yani `denetci` bu uclara erisemez; "denetciye acik" sayilmalari
+        # olcumun yanlis okunmasi olurdu. Buraya 13 satir eklemek ise
+        # listeyi Dukkan buyudukce (F4-F5 onlarca uc) surekli sisirir ve
+        # ASIL kilidi — Yonetiyor tarafinda kapisiz bir mutasyon ucu
+        # dogdugunu yakalamayi — gurultuye bogardi.
+        #
+        # MUAFIYET DELIK ACMASIN DIYE: Dukkan'in KENDI esdegeri
+        # `tests/test_dukkan_isletme_idor.py::test_HER_DUKKAN_MUTASYONUNUN
+        # _KIMLIK_KAPISI_VAR` — her Dukkan mutasyon ucunun ya acikca
+        # `security: []` ile kamu beyan edilmis ya da Dukkan kimlik
+        # bagimliligi tasidigini olcuyor.
+        if route.path.startswith("/dukkan"):
+            continue
         roller, _mod = _rol_kumesi(route.dependant)
         if roller is not None:
             continue

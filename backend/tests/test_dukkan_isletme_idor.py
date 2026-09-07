@@ -208,3 +208,97 @@ def test_MODERASYON_UCLARI_moderator_ISTER(iki_sahip, client):
             yol, headers=iki_sahip["a"]["h"], **({"json": govde} if govde else {})
         )
         assert r.status_code == 403, f"{metot.upper()} {yol} -> {r.status_code}"
+
+
+# --------------------------------------------------------------------- #
+# DUKKAN'IN KENDI "KAPISIZ MUTASYON" KILIDI
+# --------------------------------------------------------------------- #
+
+def test_HER_DUKKAN_MUTASYONUNUN_KIMLIK_KAPISI_VAR():
+    """Her Dukkan mutasyon ucu ya KAMU beyan edilmis ya kimlik istiyor.
+
+    ==================================================================
+    NEDEN BU TEST VAR
+    ==================================================================
+    Yonetiyor'un `test_denetci_salt_okuma.py` kilidi "rol kapisi olmayan
+    mutasyon ucu" ariyor ve Dukkan uclari oraya dusuyordu — ama o
+    kilidin onermesi ("kapisiz uc denetciye aciktir") Dukkan icin YANLIS:
+    Dukkan'in kendi kimlik sistemi var ve Yonetiyor jetonu oraya HIC
+    gecmiyor (401).
+
+    Dukkan uclarini o kilitten muaf tuttuk. MUAFIYET BIR DELIK ACMASIN
+    diye Dukkan'in KENDI esdegeri bu testtir: kimlik kapisi unutulmus
+    bir mutasyon ucu, o ucu HERKESE acardi — ornegin kimliksiz birinin
+    isletme olusturmasi ya da moderasyon karari vermesi.
+    """
+    from fastapi.routing import APIRoute
+
+    from app.dukkan.kimlik import kimlik_zorunlu, moderator_zorunlu
+    from app.main import app
+
+    # ACIKCA KAMU olan mutasyon uclari — her biri GEREKCELI.
+    KAMU = {
+        # Kimlik ONCESI: istegi atanin henuz oturumu yok. Kapi OLAMAZ,
+        # cunku uc tam olarak oturum acmaya yariyor. Hiz siniri var
+        # (saatte 5) ve kod yanitta DONMEZ.
+        ("POST", "/dukkan/auth/telefon/kod"),
+        ("POST", "/dukkan/auth/telefon/dogrula"),
+        # SSO koprusu: Dukkan jetonu YOK (zaten onu uretiyor). Kendi
+        # kapisi var — YONETIYOR jetonu dogrulanir, gecersizse 401.
+        ("POST", "/dukkan/auth/yonetiyor"),
+    }
+
+    kapisiz: list[str] = []
+    for route in app.routes:
+        if not isinstance(route, APIRoute):
+            continue
+        if not route.path.startswith("/dukkan"):
+            continue
+        metotlar = {m for m in route.methods if m not in ("GET", "HEAD", "OPTIONS")}
+        if not metotlar:
+            continue
+
+        # Bagimlilik agacinda Dukkan kimlik kapisi var mi?
+        cagrilar = {d.call for d in route.dependant.dependencies}
+        # Ic ice bagimliliklar (moderator_zorunlu -> kimlik_zorunlu).
+        yigin = list(route.dependant.dependencies)
+        while yigin:
+            d = yigin.pop()
+            cagrilar.add(d.call)
+            yigin.extend(d.dependencies)
+        korumali = kimlik_zorunlu in cagrilar or moderator_zorunlu in cagrilar
+
+        for metot in metotlar:
+            if (metot, route.path) in KAMU:
+                continue
+            if not korumali:
+                kapisiz.append(f"{metot} {route.path}")
+
+    assert not kapisiz, (
+        "Su Dukkan mutasyon uclarinda KIMLIK KAPISI YOK: "
+        + ", ".join(sorted(kapisiz))
+        + ". Kimliksiz biri bu ucu cagirabilir. Kasitliysa `KAMU` kumesine "
+        "GEREKCESIYLE ekleyin."
+    )
+
+
+def test_KAMU_KUMESI_OLU_SATIR_TASIMAZ():
+    """Kaldirilan bir uc `KAMU` kumesinde kalirsa kural sessizce genis
+    kalirdi — ve o yol bir gun yeniden acildiginda kapisiz dogardi."""
+    from fastapi.routing import APIRoute
+
+    from app.main import app
+
+    var = {
+        (m, r.path)
+        for r in app.routes
+        if isinstance(r, APIRoute)
+        for m in r.methods
+    }
+    KAMU = {
+        ("POST", "/dukkan/auth/telefon/kod"),
+        ("POST", "/dukkan/auth/telefon/dogrula"),
+        ("POST", "/dukkan/auth/yonetiyor"),
+    }
+    olu = sorted(KAMU - var)
+    assert not olu, f"KAMU kumesinde olu satir: {olu}"
