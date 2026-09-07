@@ -28,6 +28,7 @@
 library;
 
 import '../features/auth/domain/user_role.dart';
+import '../features/dukkan/domain/dukkan_push_yonlendirme.dart';
 import '../features/home/domain/home_menu.dart';
 import '../features/home/presentation/module_card_spec.dart';
 import 'app_router.dart';
@@ -103,6 +104,20 @@ String? _devriyeHedefi(UserRole role) => switch (role) {
 /// Push data'sindan ROLE UYGUN hedef rota. Bilinmeyen tip, uygun hedefi
 /// olmayan rol ya da ERISILEMEYEN hedef -> `null` (yonlendirme yok).
 String? pushHedefi(Map<String, String> data, UserRole? role) {
+  // ===================================================================
+  // (DUKKAN F6-ek) DUKKAN DALI — ROL SUZGECINDEN ONCE
+  // ===================================================================
+  // Dukkan ekranlari rol MENUSUNDE degil (tek `yerelIsletmeler` karti
+  // var, alt ekranlari yok). Asagidaki erisim suzgecinden gecirilseydi
+  // her Dukkan hedefi `null` doner ve teklif bildirimi DOKUNULAMAZ
+  // olurdu — suzgec burada guvenlik saglamaz, yalnizca yanlis olcerdi.
+  //
+  // Yetki burada rolle degil DUKKAN JETONUYLA saglaniyor: hedef ekranlar
+  // jetonu kendileri istiyor ve sunucu sahiplik dogrulamasini her ucta
+  // yapiyor (`_sahiplik_dogrula`). Rol suzgecini atlamak bir yetki
+  // gevsemesi DEGIL, baska bir kapiya devir.
+  if (dukkanBildirimiMi(data)) return dukkanPushHedefi(data);
+
   final ham = _hamHedef(data, role);
   if (ham == null) return null;
   if (role == null) {

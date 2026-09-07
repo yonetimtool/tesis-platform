@@ -44,6 +44,11 @@ export default function Taleplerim() {
     <main className="mx-auto max-w-3xl px-4 py-12">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-marka-koyu">Taleplerim</h1>
+        {/* (F6-ek) BILDIRIM EKRANINA GIRIS. Ekran yalniz URL ile
+            acilabilseydi, push kaciran kullanici olayi hic ogrenemezdi. */}
+        <Link href="/bildirimler" className="text-sm text-marka">
+          Bildirimler
+        </Link>
         <Link
           href="/talep-olustur"
           className="rounded bg-marka px-4 py-2 text-sm font-medium text-white"

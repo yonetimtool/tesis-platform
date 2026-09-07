@@ -18,4 +18,6 @@
     <string name="kanal_gurultu_aciklama">Daireniz hakkında gürültü şikayeti geldiğinde kendi sesiyle çalar.</string>
     <string name="kanal_vardiya_ad">Vardiya hatırlatması</string>
     <string name="kanal_vardiya_aciklama">Vardiyanız yaklaştığında sesli anonsla hatırlatır.</string>
+    <string name="kanal_dukkan_ad">Yerel işletmeler</string>
+    <string name="kanal_dukkan_aciklama">Teklif, iş ve işletme bildirimleri. Kapatmak site bildirimlerini etkilemez.</string>
 </resources>

@@ -67,6 +67,11 @@ export default function Panel() {
     <main className="mx-auto max-w-3xl px-4 py-12">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-marka-koyu">İşletmelerim</h1>
+        {/* (F6-ek) Isletme sahibinin bildirim girisi: "yeni talep" ve
+            "is verildi" buradan okunur. */}
+        <Link href="/bildirimler" className="text-sm text-marka">
+          Bildirimler
+        </Link>
         <Link
           href="/isletme-kaydi"
           className="rounded bg-marka px-4 py-2 text-sm font-medium text-white"

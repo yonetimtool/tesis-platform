@@ -65,6 +65,27 @@ class MainActivity : FlutterActivity() {
         const val KANAL_VARDIYA = "yonetio_vardiya_v2"
 
         /**
+         * (DUKKAN F6-ek) PAZAR YERI BILDIRIMLERININ KENDI KANALI.
+         *
+         * Ayrisan sey OLAY TIPI degil URUN. Kanal, kullaniciya sistem
+         * ayarlarinda bir acma/kapama verir; Dukkan bildirimleri
+         * `KANAL_GENEL`den gitseydi, pazar yeri pinglerinden bunalan bir
+         * sakin SITESININ duyurularini da susturmak zorunda kalirdi.
+         * Tersi de dogru: is bekleyen usta tesis duyurularini kapatip
+         * tekliflerini acik tutabilmeli.
+         *
+         * SES: SISTEM SESI. `yonetio_bildirim` Yonetiyor'un kimlik
+         * sesidir ve "binanla ilgili bir sey oldu" der; bir teklif
+         * bildirimi onemlidir ama o degildir. Ozel ses eklenirse kanal
+         * `_v2` olarak YENIDEN acilmali (var olan kanalin sesi
+         * programla degistirilemez — P208).
+         *
+         * `backend/app/push_kanal.py:KANAL_DUKKAN` ile BIREBIR AYNI
+         * olmali; `test_p207_push_kanal.py` bu esligi kilitliyor.
+         */
+        const val KANAL_DUKKAN = "yonetio_dukkan_v1"
+
+        /**
          * (P210) ESKI KUSAK KANALLAR — silinecek.
          *
          * `_v1` kanallari SESSIZ (sistem sesi) donemden kalma. Silinmezse
@@ -198,7 +219,22 @@ class MainActivity : FlutterActivity() {
         mgr.createNotificationChannel(kritik)
         mgr.createNotificationChannel(gurultu)
         mgr.createNotificationChannel(vardiya)
+        // (DUKKAN) Pazar yeri: sistem sesi, DEFAULT onem. Bir teklif
+        // beklenen bir seydir; ekranin ustune ziplamasi gerekmez.
+        val dukkan = NotificationChannel(
+            KANAL_DUKKAN,
+            getString(R.string.kanal_dukkan_ad),
+            NotificationManager.IMPORTANCE_DEFAULT,
+        ).apply {
+            description = getString(R.string.kanal_dukkan_aciklama)
+            setSound(
+                android.provider.Settings.System.DEFAULT_NOTIFICATION_URI,
+                ozellikler,
+            )
+        }
+
         mgr.createNotificationChannel(genel)
+        mgr.createNotificationChannel(dukkan)
         mgr.createNotificationChannel(sessiz)
 
         // ESKI KUSAGI TEMIZLE: iki kusak kanal, ayar ekraninda ayni ada

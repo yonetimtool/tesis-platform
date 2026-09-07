@@ -6026,4 +6026,107 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get dukkanIsletmeCevabi => 'رد العمل';
+
+  @override
+  String get dukkanPanelBaslik => 'لوحة نشاطي التجاري';
+
+  @override
+  String get dukkanIsletmenYok =>
+      'لا يوجد نشاط تجاري مسجل لديك. يمكنك التسجيل عبر dukkan.yonetiyor.com.';
+
+  @override
+  String get dukkanGelenTalepler => 'الطلبات الواردة';
+
+  @override
+  String get dukkanGelenTalepYok => 'لا توجد طلبات مفتوحة في منطقتك حالياً.';
+
+  @override
+  String get dukkanOnaysizTeklifYok =>
+      'لا يمكنك إرسال عروض حتى تتم الموافقة على نشاطك.';
+
+  @override
+  String get dukkanTeklifVer => 'إرسال عرض';
+
+  @override
+  String get dukkanTeklifVerildi => 'تم إرسال العرض';
+
+  @override
+  String get dukkanTeklifTutar => 'المبلغ (₺)';
+
+  @override
+  String get dukkanTeklifTutarIpucu =>
+      'اتركه فارغاً للإشارة إلى «أحتاج للمعاينة على الطبيعة».';
+
+  @override
+  String get dukkanTeklifMesaj => 'رسالة (اختياري)';
+
+  @override
+  String get dukkanTeklifGonder => 'أرسل العرض';
+
+  @override
+  String get dukkanTeklifGonderildi => 'تم إرسال عرضك.';
+
+  @override
+  String get dukkanTeklifHatasi => 'تعذّر إرسال العرض.';
+
+  @override
+  String get dukkanDurumOnayli => 'معتمد';
+
+  @override
+  String get dukkanDurumBeklemede => 'قيد المراجعة';
+
+  @override
+  String get dukkanDurumReddedildi => 'مرفوض';
+
+  @override
+  String get dukkanDurumAskida => 'موقوف';
+
+  @override
+  String get dukkanDurumTaslak => 'مسودة';
+
+  @override
+  String get dukkanPanelWebNotu =>
+      'يتم إدارة الملف الشخصي ونطاق الخدمة والمستندات ودعوات التقييم عبر dukkan.yonetiyor.com.';
+
+  @override
+  String get dukkanBildirimler => 'إشعارات السوق';
+
+  @override
+  String get dukkanBildirimYok => 'لا توجد إشعارات بعد.';
+
+  @override
+  String get dukkanBildirimAyari => 'إعداد الإشعارات';
+
+  @override
+  String get dukkanBildirimAcik => 'إشعارات السوق';
+
+  @override
+  String get dukkanBildirimAcikIpucu => 'إيقافها لا يؤثر على إشعارات المجمع.';
+
+  @override
+  String get dukkanBildirimSesli => 'مع صوت';
+
+  @override
+  String get dukkanBildirimDetayIcinDokun => 'اضغط للتفاصيل';
+
+  @override
+  String get dukkanBildirimTeklifGeldi => 'وصلك عرض';
+
+  @override
+  String get dukkanBildirimYeniTalep => 'طلب جديد في منطقتك';
+
+  @override
+  String get dukkanBildirimIsVerildi => 'تم إسناد العمل إليك';
+
+  @override
+  String get dukkanBildirimIsletmeOnaylandi => 'تمت الموافقة على نشاطك';
+
+  @override
+  String get dukkanBildirimIsletmeReddedildi => 'تم رفض طلبك';
+
+  @override
+  String get dukkanBildirimIsletmeAskida => 'تم إيقاف نشاطك';
+
+  @override
+  String get dukkanBildirimYorumYayinlandi => 'تم نشر تقييمك';
 }

@@ -10246,6 +10246,204 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'İşletmenin cevabı'**
   String get dukkanIsletmeCevabi;
+
+  /// No description provided for @dukkanPanelBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'İşletme panelim'**
+  String get dukkanPanelBaslik;
+
+  /// No description provided for @dukkanIsletmenYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kayıtlı işletmen yok. dukkan.yonetiyor.com üzerinden işletme kaydı yapabilirsin.'**
+  String get dukkanIsletmenYok;
+
+  /// No description provided for @dukkanGelenTalepler.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gelen talepler'**
+  String get dukkanGelenTalepler;
+
+  /// No description provided for @dukkanGelenTalepYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şu an bölgende açık talep yok.'**
+  String get dukkanGelenTalepYok;
+
+  /// No description provided for @dukkanOnaysizTeklifYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'İşletmen onaylanana kadar teklif veremezsin.'**
+  String get dukkanOnaysizTeklifYok;
+
+  /// No description provided for @dukkanTeklifVer.
+  ///
+  /// In tr, this message translates to:
+  /// **'Teklif ver'**
+  String get dukkanTeklifVer;
+
+  /// No description provided for @dukkanTeklifVerildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Teklif verdin'**
+  String get dukkanTeklifVerildi;
+
+  /// No description provided for @dukkanTeklifTutar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tutar (₺)'**
+  String get dukkanTeklifTutar;
+
+  /// No description provided for @dukkanTeklifTutarIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Boş bırakırsan “yerinde görmem gerek” olarak iletilir.'**
+  String get dukkanTeklifTutarIpucu;
+
+  /// No description provided for @dukkanTeklifMesaj.
+  ///
+  /// In tr, this message translates to:
+  /// **'Mesaj (isteğe bağlı)'**
+  String get dukkanTeklifMesaj;
+
+  /// No description provided for @dukkanTeklifGonder.
+  ///
+  /// In tr, this message translates to:
+  /// **'Teklifi gönder'**
+  String get dukkanTeklifGonder;
+
+  /// No description provided for @dukkanTeklifGonderildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Teklifin iletildi.'**
+  String get dukkanTeklifGonderildi;
+
+  /// No description provided for @dukkanTeklifHatasi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Teklif gönderilemedi.'**
+  String get dukkanTeklifHatasi;
+
+  /// No description provided for @dukkanDurumOnayli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Onaylı'**
+  String get dukkanDurumOnayli;
+
+  /// No description provided for @dukkanDurumBeklemede.
+  ///
+  /// In tr, this message translates to:
+  /// **'İncelemede'**
+  String get dukkanDurumBeklemede;
+
+  /// No description provided for @dukkanDurumReddedildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Reddedildi'**
+  String get dukkanDurumReddedildi;
+
+  /// No description provided for @dukkanDurumAskida.
+  ///
+  /// In tr, this message translates to:
+  /// **'Askıya alındı'**
+  String get dukkanDurumAskida;
+
+  /// No description provided for @dukkanDurumTaslak.
+  ///
+  /// In tr, this message translates to:
+  /// **'Taslak'**
+  String get dukkanDurumTaslak;
+
+  /// No description provided for @dukkanPanelWebNotu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Profil, hizmet alanı, belge ve değerlendirme daveti işlemleri dukkan.yonetiyor.com üzerinden yapılır.'**
+  String get dukkanPanelWebNotu;
+
+  /// No description provided for @dukkanBildirimler.
+  ///
+  /// In tr, this message translates to:
+  /// **'Dükkân bildirimleri'**
+  String get dukkanBildirimler;
+
+  /// No description provided for @dukkanBildirimYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz bildirim yok.'**
+  String get dukkanBildirimYok;
+
+  /// No description provided for @dukkanBildirimAyari.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bildirim ayarı'**
+  String get dukkanBildirimAyari;
+
+  /// No description provided for @dukkanBildirimAcik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Dükkân bildirimleri'**
+  String get dukkanBildirimAcik;
+
+  /// No description provided for @dukkanBildirimAcikIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kapatmak site bildirimlerini etkilemez.'**
+  String get dukkanBildirimAcikIpucu;
+
+  /// No description provided for @dukkanBildirimSesli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sesli gelsin'**
+  String get dukkanBildirimSesli;
+
+  /// No description provided for @dukkanBildirimDetayIcinDokun.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ayrıntı için dokunun'**
+  String get dukkanBildirimDetayIcinDokun;
+
+  /// No description provided for @dukkanBildirimTeklifGeldi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Talebine teklif geldi'**
+  String get dukkanBildirimTeklifGeldi;
+
+  /// No description provided for @dukkanBildirimYeniTalep.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bölgende yeni talep var'**
+  String get dukkanBildirimYeniTalep;
+
+  /// No description provided for @dukkanBildirimIsVerildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'İş sana verildi'**
+  String get dukkanBildirimIsVerildi;
+
+  /// No description provided for @dukkanBildirimIsletmeOnaylandi.
+  ///
+  /// In tr, this message translates to:
+  /// **'İşletmen onaylandı'**
+  String get dukkanBildirimIsletmeOnaylandi;
+
+  /// No description provided for @dukkanBildirimIsletmeReddedildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'İşletme başvurun reddedildi'**
+  String get dukkanBildirimIsletmeReddedildi;
+
+  /// No description provided for @dukkanBildirimIsletmeAskida.
+  ///
+  /// In tr, this message translates to:
+  /// **'İşletmen askıya alındı'**
+  String get dukkanBildirimIsletmeAskida;
+
+  /// No description provided for @dukkanBildirimYorumYayinlandi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Değerlendirmen yayınlandı'**
+  String get dukkanBildirimYorumYayinlandi;
 }
 
 class _AppLocalizationsDelegate

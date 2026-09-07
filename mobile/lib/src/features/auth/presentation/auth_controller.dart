@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/api_exception.dart';
+import '../../dukkan/data/dukkan_oturum.dart';
 import '../../push/presentation/push_registrar.dart';
 import '../data/auth_repository_impl.dart';
 import '../../../core/ui/telefon_alani.dart';
@@ -665,6 +666,15 @@ class AuthController extends Notifier<AuthState> {
     // (DELETE /devices auth ister). Hatalari kendi icinde yutar — push
     // sorunu logout'u engellemez.
     await ref.read(pushRegistrarProvider.notifier).onLogout();
+    // (DUKKAN F6-ek) OLCULEN SIZINTI: Dukkan jetonu BELLEKTE tutuluyor ve
+    // cikista temizlenmiyordu. Ayni telefonda ikinci bir kullanici giris
+    // yapinca `DukkanOturum._jeton` HALA ONCEKININ jetonuydu — yeni
+    // kullanici "Taleplerim"i acinca ONCEKININ taleplerini gorurdu.
+    //
+    // Yonetiyor jetonuyla ayni anda temizlenmesi ZORUNLU, cunku iki jeton
+    // birbirinden bagimsiz: Yonetiyor jetonunun gecersizlesmesi Dukkan
+    // jetonunu gecersiz KILMAZ (ayri imza, ayri omur).
+    ref.read(dukkanOturumProvider).temizle();
     await ref.read(authRepositoryProvider).logout();
     state = state.copyWith(status: AuthStatus.unauthenticated);
   }
@@ -673,6 +683,9 @@ class AuthController extends Notifier<AuthState> {
   /// silinmistir). Auth state'i `unauthenticated` yapar → router login'e doner.
   void onSessionExpired() {
     if (state.status == AuthStatus.unauthenticated) return;
+    // Oturum DUSTUGUNDE de Dukkan jetonu birakilmaz: yukaridaki sizinti
+    // "cikis" yolundan degil bu yoldan da gerceklesebilirdi.
+    ref.read(dukkanOturumProvider).temizle();
     state = state.copyWith(
       status: AuthStatus.unauthenticated,
       submitting: false,

@@ -106,7 +106,12 @@ def test_KANAL_KIMLIKLERI_MOBILLE_AYNI():
     )
     if kaynak is None:
         pytest.skip("mobil kaynak bu koşumda yok (konteyner) — kilit ATLANDI")
-    for kimlik in (KANAL_KRITIK, KANAL_GENEL, KANAL_SESSIZ):
+    # (DUKKAN F6-ek) KANAL_DUKKAN de kilitli: sunucu bu kimlikle
+    # gonderirken MainActivity o kanali ACMAMIS olsaydi, Android
+    # bildirimi SESSIZCE DUSURURDU (kayitsiz kanal = gosterilmez).
+    from app.push_kanal import KANAL_DUKKAN
+
+    for kimlik in (KANAL_KRITIK, KANAL_GENEL, KANAL_SESSIZ, KANAL_DUKKAN):
         assert f'"{kimlik}"' in kaynak, f"{kimlik} MainActivity.kt'te yok"
 
 

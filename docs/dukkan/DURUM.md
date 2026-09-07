@@ -16,9 +16,14 @@
 | **F4** | Talep, KVKK paylaşım tercihleri, teklif, iş | 0118 | prod'a hazır |
 | **F5** | İki katmanlı yorum, kota, şikâyet, moderasyon paneli | 0119 | prod'a hazır |
 | **F6** | Bildirim, mobil menü, panel sayfası | 0120 | prod'a hazır |
+| **F6-ek** | Mobil bildirim ekranı + FCM kaydı, Dukkan push kanalı, ayrı tercih, web bildirim sayfası | 0121 | prod'a hazır |
 
-Dağıtım notları: `F1-dagitim.md` … `F6-dagitim.md`, `SMS-entegrasyonu.md`.
-**Sıralı uygulanmalı** — göç zinciri 0113→0120.
+Dağıtım notları: `F1-dagitim.md` … `F6-dagitim.md`, `F6-ek-dagitim.md`,
+`SMS-entegrasyonu.md`. **Sıralı uygulanmalı** — göç zinciri 0113→0121.
+
+> **F6-ek mobil sürüm gerektirir.** Backend'i mobilden önce dağıtmak,
+> eski sürümdeki cihazlarda Dukkan push'unu **sessizce düşürür**
+> (kayıtsız kanal). Sıra ve gerekçe: `F6-ek-dagitim.md` §7.
 
 ---
 
@@ -34,7 +39,8 @@ Dağıtım notları: `F1-dagitim.md` … `F6-dagitim.md`, `SMS-entegrasyonu.md`.
 
 Dukkan'a ait backend testleri: sınır (15), köprü (15), lokasyon (32),
 uçlar (13), arama (16), IDOR + kimlik kapısı (30), KVKK (10), arz akışı
-(23), güven (23), bildirim (12), SMS (18).
+(23), güven (23), bildirim (12), **bildirim kanalı + tercih (15)**,
+SMS (18). Mobil: jeton ayrımı (3), **bildirim yönlendirmesi (9)**.
 
 ---
 
@@ -51,6 +57,8 @@ Hepsi **kırılarak** doğrulandı — kırıldığında kırmızı yandığı g
 | `test_dukkan_kvkk` | Açık adres `is_kaydi` doğmadan **hiçbir yanıtta** yok |
 | `denetim` append-only | Moderasyon kararı sonradan silinemez (göç + setup betiği, ikisi birden) |
 | `test_beat_schedule` | Zamanlanmış iş kayıtsız kalamaz; kapsam `include`dan **kendini** okur |
+| `test_dukkan_bildirim_kanal` | Dukkan push'u Yönetiyor kanalına düşemez; kanal **önekten** türetilir (liste değil); kapalı tercih push'u susturur ama **satırı silmez** |
+| `dukkan_bildirim_yonlendirme_test` | Sunucudaki her bildirim tipinin mobil hedefi var **ve o hedef router'da tanımlı** (F4'te olmayan bir rotaya `push` ediliyordu) |
 | BFF sözleşme kapısı | Vekili olmayan uç = web'de 405; bu turda **üç kez** işe yaradı |
 
 ---
@@ -72,12 +80,15 @@ Hepsi **kırılarak** doğrulandı — kırıldığında kırmızı yandığı g
 
 ### Teknik açıklar
 
+> Triyaj ve önerilen sıra: **`ONCELIK.md`**. Özet: ürünü *engelleyen*
+> iki madde var (mobil OTP akışı, davet kotası); kalan beşi iyileştirme.
+
 | Madde | Nerede yazılı |
 |---|---|
-| Mobilde Dukkan **bildirim ekranı ve FCM kaydı yok** | F6 §12 |
 | Mobilde **telefon-OTP akışı yok** (telefonsuz %27 web'e gidiyor) | F4 §14 |
 | **Bildirim toplulaştırma (batching) yok** | F6 §13 |
 | `bildirim` tablosunda **retention yok** | F6-dagitim §8 |
+| **Web push yok** (service worker altyapısı kurulmadı) | F6-ek §7 |
 | **Davet kotası**: başarısız SMS kotayı yiyor | F5-dagitim §6 |
 | `talep.son_gecerlilik` var ama **kullanılmıyor** | F4 §14 |
 | **İtiraz ucu yok** (denetim izi hazır, süreç e-posta ile) | F5 §14 |
@@ -88,7 +99,9 @@ Hepsi **kırılarak** doğrulandı — kırıldığında kırmızı yandığı g
 ## Ölçemediklerim — dürüst liste
 
 1. **Gerçek push teslimi.** Dev'de `PUSH_PROVIDER=noop`; hiçbir bildirim
-   gerçekten gönderilmedi. Prod ölçüm sorgusu `F6-dagitim.md` §4.4'te.
+   gerçekten gönderilmedi. Ölçülen şey, `bildir()`in sağlayıcıya **doğru
+   kanal ve sesi verdiği**; Android'in o kanalı çalıp çalmadığı değil.
+   Prod ölçümü `F6-ek-dagitim.md` §4.3–4.4.
 2. **Gerçek SMS teslimi.** Başlık onayı yok; Verimor'a hiç istek atılmadı.
 3. **Sayfalama kararsızlığı** (F3 §6) — davranışsal olarak tetiklenemedi;
    kilit **yapısal**.

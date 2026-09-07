@@ -57,8 +57,11 @@ import '../features/settings/presentation/settings_screen.dart';
 import '../features/staff/presentation/staff_screen.dart';
 import '../features/dis_hizmet/presentation/dis_hizmet_screen.dart';
 import '../features/dukkan/presentation/dukkan_arama_screen.dart';
+import '../features/dukkan/presentation/dukkan_bildirim_screen.dart';
+import '../features/dukkan/presentation/dukkan_panel_screen.dart';
 import '../features/dukkan/presentation/dukkan_profil_screen.dart';
 import '../features/dukkan/presentation/dukkan_sikayet_screen.dart';
+import '../features/dukkan/presentation/dukkan_talep_detay_screen.dart';
 import '../features/dukkan/presentation/dukkan_talep_olustur_screen.dart';
 import '../features/dukkan/presentation/dukkan_taleplerim_screen.dart';
 import '../features/site_kurali/presentation/site_kurali_screen.dart';
@@ -138,8 +141,21 @@ class AppRoutes {
   // (DUKKAN F4) TALEP TARAFI — Dukkan jetonu gerektirir (SSO koprusu).
   static const dukkanTalepOlustur = '/dukkan/talep-olustur';
   static const dukkanTaleplerim = '/dukkan/taleplerim';
+  // (F6-ek) TALEP DETAYI. F4'te liste bu yola `push` ediyordu ama rota
+  // TANIMLI DEGILDI: mobilde gelen teklifler GORULEMIYORDU. Bildirim
+  // hedefi olarak da bu yol kullaniliyor.
+  static const dukkanTalepDetay = '/dukkan/taleplerim/:talepId';
   // (DUKKAN F5) SIKAYET — KIMLIKSIZ; jeton gerektirmez.
   static const dukkanSikayet = '/dukkan/sikayet';
+  // (DUKKAN F6-ek) ARZ TARAFI + BILDIRIM — Dukkan jetonu gerektirir.
+  //
+  // `notifications` (Yonetiyor bildirimleri) ile AYRI EKRAN: iki urunun
+  // bildirimleri tek listede karisirsa, "site duyurusu" ile "teklif
+  // geldi" ayni yigina duser ve kullanici hangisinin acil oldugunu
+  // ayirt edemez. Ayrica Dukkan listesi AYRI KIMLIGE (Dukkan jetonu)
+  // bagli; Yonetiyor listesi onu okuyamaz.
+  static const dukkanPanel = '/dukkan/panel';
+  static const dukkanBildirim = '/dukkan/bildirim';
   static const integrations = '/integrations';
   static const binaDuzenleme = '/bina-duzenleme';
   static const sikayetHaritasi = '/sikayet-haritasi';
@@ -464,6 +480,22 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => DukkanSikayetScreen(
           isletmeSlug: state.uri.queryParameters['isletme'],
         ),
+      ),
+      GoRoute(
+        path: AppRoutes.dukkanTalepDetay,
+        builder: (context, state) => DukkanTalepDetayScreen(
+          talepId: state.pathParameters['talepId'] ?? '',
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.dukkanPanel,
+        builder: (context, state) => DukkanPanelScreen(
+          isletmeId: state.uri.queryParameters['isletme_id'],
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.dukkanBildirim,
+        builder: (context, state) => const DukkanBildirimScreen(),
       ),
       GoRoute(
         path: AppRoutes.dukkanIsletme,

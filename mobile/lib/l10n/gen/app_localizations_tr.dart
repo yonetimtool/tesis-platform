@@ -5769,4 +5769,108 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get dukkanIsletmeCevabi => 'İşletmenin cevabı';
+
+  @override
+  String get dukkanPanelBaslik => 'İşletme panelim';
+
+  @override
+  String get dukkanIsletmenYok =>
+      'Kayıtlı işletmen yok. dukkan.yonetiyor.com üzerinden işletme kaydı yapabilirsin.';
+
+  @override
+  String get dukkanGelenTalepler => 'Gelen talepler';
+
+  @override
+  String get dukkanGelenTalepYok => 'Şu an bölgende açık talep yok.';
+
+  @override
+  String get dukkanOnaysizTeklifYok =>
+      'İşletmen onaylanana kadar teklif veremezsin.';
+
+  @override
+  String get dukkanTeklifVer => 'Teklif ver';
+
+  @override
+  String get dukkanTeklifVerildi => 'Teklif verdin';
+
+  @override
+  String get dukkanTeklifTutar => 'Tutar (₺)';
+
+  @override
+  String get dukkanTeklifTutarIpucu =>
+      'Boş bırakırsan “yerinde görmem gerek” olarak iletilir.';
+
+  @override
+  String get dukkanTeklifMesaj => 'Mesaj (isteğe bağlı)';
+
+  @override
+  String get dukkanTeklifGonder => 'Teklifi gönder';
+
+  @override
+  String get dukkanTeklifGonderildi => 'Teklifin iletildi.';
+
+  @override
+  String get dukkanTeklifHatasi => 'Teklif gönderilemedi.';
+
+  @override
+  String get dukkanDurumOnayli => 'Onaylı';
+
+  @override
+  String get dukkanDurumBeklemede => 'İncelemede';
+
+  @override
+  String get dukkanDurumReddedildi => 'Reddedildi';
+
+  @override
+  String get dukkanDurumAskida => 'Askıya alındı';
+
+  @override
+  String get dukkanDurumTaslak => 'Taslak';
+
+  @override
+  String get dukkanPanelWebNotu =>
+      'Profil, hizmet alanı, belge ve değerlendirme daveti işlemleri dukkan.yonetiyor.com üzerinden yapılır.';
+
+  @override
+  String get dukkanBildirimler => 'Dükkân bildirimleri';
+
+  @override
+  String get dukkanBildirimYok => 'Henüz bildirim yok.';
+
+  @override
+  String get dukkanBildirimAyari => 'Bildirim ayarı';
+
+  @override
+  String get dukkanBildirimAcik => 'Dükkân bildirimleri';
+
+  @override
+  String get dukkanBildirimAcikIpucu =>
+      'Kapatmak site bildirimlerini etkilemez.';
+
+  @override
+  String get dukkanBildirimSesli => 'Sesli gelsin';
+
+  @override
+  String get dukkanBildirimDetayIcinDokun => 'Ayrıntı için dokunun';
+
+  @override
+  String get dukkanBildirimTeklifGeldi => 'Talebine teklif geldi';
+
+  @override
+  String get dukkanBildirimYeniTalep => 'Bölgende yeni talep var';
+
+  @override
+  String get dukkanBildirimIsVerildi => 'İş sana verildi';
+
+  @override
+  String get dukkanBildirimIsletmeOnaylandi => 'İşletmen onaylandı';
+
+  @override
+  String get dukkanBildirimIsletmeReddedildi => 'İşletme başvurun reddedildi';
+
+  @override
+  String get dukkanBildirimIsletmeAskida => 'İşletmen askıya alındı';
+
+  @override
+  String get dukkanBildirimYorumYayinlandi => 'Değerlendirmen yayınlandı';
 }

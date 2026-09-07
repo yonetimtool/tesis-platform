@@ -42,14 +42,23 @@ from sqlalchemy.ext.asyncio import AsyncSession
 #: Iki istemcide ayri ayri eslestirmek, birinin bir gun otekinden
 #: ayrismasi ve bildirime tiklayinca YANLIS EKRANA gidilmesi demekti
 #: (P217'de push yonlendirmesi tam bu sinif bir kusurdu).
+#: TIPLER `dukkan_` ONEKLI ve bu ZORUNLU: `push_kanal.kanal_sec` bu
+#: oneke bakip Dukkan kanalini seciyor. Onek olmayan bir tip SESSIZCE
+#: Yonetiyor kanalindan gider ve kullanici pazar yeri bildirimlerini
+#: kapattigini sanip almaya devam ederdi.
+#:
+#: Ayrica `yeni_talep` Yonetiyor'da ZATEN VAR (sakinin actigi talep,
+#: KRITIK kanaldan gider). Oneksiz birakmak iki urunun tipini
+#: CAKISTIRIRDI — bir Dukkan talebi, yoneticinin telefonunda site
+#: sikayeti sesiyle calardi.
 TIPLER: dict[str, str] = {
-    "teklif_geldi": "/taleplerim/{talep_id}",
-    "is_verildi": "/panel/{isletme_id}",
-    "isletme_onaylandi": "/panel/{isletme_id}",
-    "isletme_reddedildi": "/panel/{isletme_id}",
-    "isletme_askiya_alindi": "/panel/{isletme_id}",
-    "yorum_yayinlandi": "/isletme/{isletme_slug}",
-    "yeni_talep": "/panel/{isletme_id}",
+    "dukkan_teklif_geldi": "/taleplerim/{talep_id}",
+    "dukkan_is_verildi": "/panel/{isletme_id}",
+    "dukkan_isletme_onaylandi": "/panel/{isletme_id}",
+    "dukkan_isletme_reddedildi": "/panel/{isletme_id}",
+    "dukkan_isletme_askiya_alindi": "/panel/{isletme_id}",
+    "dukkan_yorum_yayinlandi": "/isletme/{isletme_slug}",
+    "dukkan_yeni_talep": "/panel/{isletme_id}",
 }
 
 
@@ -92,6 +101,23 @@ async def bildir(
         )
     ).scalar_one()
 
+    # ==================================================================
+    # KULLANICI TERCIHI — SATIR YAZILDIKTAN SONRA BAKILIYOR
+    # ==================================================================
+    # Sira onemli: bildirim KAPALI olsa bile KALICI SATIR yaziliyor.
+    # Kullanici push almak istemiyor olabilir ama uygulamayi actiginda
+    # olayi GORMELI. "Kapali" push'u susturur, olayi SILMEZ — Yonetiyor'da
+    # `bildirim_mobil` icin de ayni ayrim yazili.
+    tercih = (
+        await db.execute(
+            text("SELECT bildirim_acik, bildirim_sesli FROM dukkan_kullanici "
+                 "WHERE id = :k"),
+            {"k": kullanici_id},
+        )
+    ).mappings().first()
+    if tercih is None or not tercih["bildirim_acik"]:
+        return yeni
+
     jetonlar = [
         r[0] for r in (
             await db.execute(
@@ -104,11 +130,17 @@ async def bildir(
         return yeni
 
     from ..push import get_push_provider
+    from ..push_kanal import kanal_sec, ses_adi
 
+    sesli = bool(tercih["bildirim_sesli"])
     sonuc = get_push_provider().send(
         jetonlar, title=baslik, body=govde,
         data={"tip": tip, "bildirim_id": str(yeni),
               "yol": _hedef_yol(tip, veri) or ""},
+        # KANAL VE SES SUNUCUDA SECILIYOR (P207 kalibi): Android'de ses
+        # kanalin ozelligidir ve istemci onu degistiremez.
+        kanal=kanal_sec(tip, sesli=sesli),
+        ses=ses_adi(tip, sesli=sesli),
     )
     if sonuc.sent > 0:
         await db.execute(

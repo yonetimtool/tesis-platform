@@ -5949,4 +5949,111 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get dukkanIsletmeCevabi => 'Antwort des Betriebs';
+
+  @override
+  String get dukkanPanelBaslik => 'Mein Betriebsbereich';
+
+  @override
+  String get dukkanIsletmenYok =>
+      'Sie haben kein registriertes Unternehmen. Sie können es auf dukkan.yonetiyor.com anmelden.';
+
+  @override
+  String get dukkanGelenTalepler => 'Eingehende Anfragen';
+
+  @override
+  String get dukkanGelenTalepYok =>
+      'Derzeit gibt es keine offenen Anfragen in Ihrem Gebiet.';
+
+  @override
+  String get dukkanOnaysizTeklifYok =>
+      'Sie können keine Angebote senden, bis Ihr Unternehmen genehmigt ist.';
+
+  @override
+  String get dukkanTeklifVer => 'Angebot senden';
+
+  @override
+  String get dukkanTeklifVerildi => 'Angebot gesendet';
+
+  @override
+  String get dukkanTeklifTutar => 'Betrag (₺)';
+
+  @override
+  String get dukkanTeklifTutarIpucu =>
+      'Leer lassen für „Ich muss es vor Ort ansehen“.';
+
+  @override
+  String get dukkanTeklifMesaj => 'Nachricht (optional)';
+
+  @override
+  String get dukkanTeklifGonder => 'Angebot senden';
+
+  @override
+  String get dukkanTeklifGonderildi => 'Ihr Angebot wurde gesendet.';
+
+  @override
+  String get dukkanTeklifHatasi => 'Das Angebot konnte nicht gesendet werden.';
+
+  @override
+  String get dukkanDurumOnayli => 'Genehmigt';
+
+  @override
+  String get dukkanDurumBeklemede => 'In Prüfung';
+
+  @override
+  String get dukkanDurumReddedildi => 'Abgelehnt';
+
+  @override
+  String get dukkanDurumAskida => 'Gesperrt';
+
+  @override
+  String get dukkanDurumTaslak => 'Entwurf';
+
+  @override
+  String get dukkanPanelWebNotu =>
+      'Profil, Servicegebiet, Dokumente und Bewertungseinladungen werden auf dukkan.yonetiyor.com verwaltet.';
+
+  @override
+  String get dukkanBildirimler => 'Marktplatz-Benachrichtigungen';
+
+  @override
+  String get dukkanBildirimYok => 'Noch keine Benachrichtigungen.';
+
+  @override
+  String get dukkanBildirimAyari => 'Benachrichtigungseinstellung';
+
+  @override
+  String get dukkanBildirimAcik => 'Marktplatz-Benachrichtigungen';
+
+  @override
+  String get dukkanBildirimAcikIpucu =>
+      'Das Ausschalten betrifft die Gebäudebenachrichtigungen nicht.';
+
+  @override
+  String get dukkanBildirimSesli => 'Mit Ton';
+
+  @override
+  String get dukkanBildirimDetayIcinDokun => 'Für Details tippen';
+
+  @override
+  String get dukkanBildirimTeklifGeldi => 'Sie haben ein Angebot erhalten';
+
+  @override
+  String get dukkanBildirimYeniTalep => 'Neue Anfrage in Ihrem Gebiet';
+
+  @override
+  String get dukkanBildirimIsVerildi => 'Der Auftrag wurde Ihnen erteilt';
+
+  @override
+  String get dukkanBildirimIsletmeOnaylandi =>
+      'Ihr Unternehmen wurde genehmigt';
+
+  @override
+  String get dukkanBildirimIsletmeReddedildi => 'Ihr Antrag wurde abgelehnt';
+
+  @override
+  String get dukkanBildirimIsletmeAskida => 'Ihr Unternehmen wurde gesperrt';
+
+  @override
+  String get dukkanBildirimYorumYayinlandi =>
+      'Ihre Bewertung wurde veröffentlicht';
 }

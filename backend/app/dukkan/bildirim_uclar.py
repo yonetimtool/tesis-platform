@@ -117,3 +117,60 @@ async def okundu_isaretle(
             {"k": kimlik.kullanici_id},
         )
     return {"okunan": r.rowcount}
+
+
+# --------------------------------------------------------------------------- #
+# TERCIH — DUKKAN'IN KENDI ANAHTARI
+# --------------------------------------------------------------------------- #
+# Yonetiyor'un `/me/bildirim-tercihleri` ucundan AYRI, cunku:
+#   (1) Dukkan kullanicisinin Yonetiyor hesabi olmayabilir (bagimsiz
+#       telefon kaydi) — o ucu cagiramaz;
+#   (2) iki urunun bildirimleri farkli seyler. Tek anahtar olsaydi, pazar
+#       yeri pinglerinden bunalan sakin SITESININ duyurularini da
+#       susturmak zorunda kalirdi.
+# Goc 0121'in modul basligindaki gerekce ile ayni.
+class Tercih(BaseModel):
+    bildirim_acik: bool | None = None
+    bildirim_sesli: bool | None = None
+
+
+@router.get("/bildirim-tercihi")
+async def tercih_oku(
+    kimlik: DukkanKimlik = Depends(kimlik_zorunlu),
+    db: AsyncSession = Depends(get_dukkan_session),
+) -> dict:
+    """Doner: {"bildirim_acik": bool, "bildirim_sesli": bool}."""
+    r = (
+        await db.execute(
+            text("SELECT bildirim_acik, bildirim_sesli FROM dukkan_kullanici "
+                 "WHERE id = :i"),
+            {"i": kimlik.kullanici_id},
+        )
+    ).mappings().first()
+    if r is None:
+        raise HTTPException(status_code=404, detail={"code": "kullanici_yok"})
+    return dict(r)
+
+
+@router.patch("/bildirim-tercihi")
+async def tercih_yaz(
+    govde: Tercih,
+    kimlik: DukkanKimlik = Depends(kimlik_zorunlu),
+    db: AsyncSession = Depends(get_dukkan_session),
+) -> dict:
+    """Tercihi gunceller. Doner: GUNCEL SATIR (istemci ne yazdigini degil,
+    sunucuda NE OLDUGUNU gorsun — P217'de "Kaydedildi" yazip hicbir sey
+    yazmayan akis bu yuzden fark edilmemisti).
+
+    Bos govde 400: "hicbir alan verilmedi" ile "hepsi ayni kaldi" ayni
+    yanit olsaydi, istemci hatasini kimse gormezdi.
+    """
+    alanlar = govde.model_dump(exclude_none=True)
+    if not alanlar:
+        raise HTTPException(status_code=400, detail={"code": "alan_yok"})
+    set_ifadesi = ", ".join(f"{k} = :{k}" for k in alanlar)
+    await db.execute(
+        text(f"UPDATE dukkan_kullanici SET {set_ifadesi} WHERE id = :i"),
+        {**alanlar, "i": kimlik.kullanici_id},
+    )
+    return await tercih_oku(kimlik=kimlik, db=db)

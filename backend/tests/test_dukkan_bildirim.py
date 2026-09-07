@@ -10,7 +10,11 @@ NE KORUNUYOR
    kalir ve "hic gitmemis" olarak GORULUR (P191 tuzagi).
 4. HEDEF YOL SUNUCUDA: mobil ve web ayni degeri okur; iki istemcide ayri
    eslestirme, bildirime tiklayinca YANLIS EKRANA gitmek demekti.
-5. Cihaz jetonu DEVRALINIR: cihaz el degistirirse eski sahibin
+5. (F6-ek) TIPLER `dukkan_` ONEKLI: onek, push kanalini secen kuraldir
+   (`push_kanal.DUKKAN_ONEK`). Oneksiz bir tip dogru calisiyor gibi
+   gorunur ama YANLIS KANALDAN gider. Ayrica `yeni_talep` Yonetiyor'da
+   ZATEN VAR — oneksiz birakmak iki urunun tipini cakistirirdi.
+6. Cihaz jetonu DEVRALINIR: cihaz el degistirirse eski sahibin
    bildirimleri yeni kullaniciya DUSMEZ.
 """
 from __future__ import annotations
@@ -131,7 +135,7 @@ def test_ONAY_ISLETME_SAHIBINE_BILDIRIM_YAZAR(client, akis):
     yayina girdigini fark etmez."""
     d = client.get("/dukkan/bildirim", headers=akis["sahip"]["h"]).json()
     tipler = [x["tip"] for x in d["items"]]
-    assert "isletme_onaylandi" in tipler, tipler
+    assert "dukkan_isletme_onaylandi" in tipler, tipler
     assert d["okunmamis"] >= 1
 
 
@@ -142,7 +146,7 @@ def test_TEKLIF_TALEP_SAHIBINE_BILDIRIM_YAZAR(client, akis):
                 headers=akis["sahip"]["h"], params={"isletme_id": akis["isl"]},
                 json={"tutar_kurus": 120000})
     d = client.get("/dukkan/bildirim", headers=akis["musteri"]["h"]).json()
-    b = next((x for x in d["items"] if x["tip"] == "teklif_geldi"), None)
+    b = next((x for x in d["items"] if x["tip"] == "dukkan_teklif_geldi"), None)
     assert b is not None, [x["tip"] for x in d["items"]]
     # HEDEF YOL SUNUCUDA: iki istemci ayni degeri okur.
     assert b["hedef_yol"] == f"/taleplerim/{akis['talep']}"
@@ -158,7 +162,7 @@ def test_IS_VERILINCE_ISLETMEYE_BILDIRIM(client, akis):
 
     d = client.get("/dukkan/bildirim", headers=akis["sahip"]["h"]).json()
     tipler = [x["tip"] for x in d["items"]]
-    assert "is_verildi" in tipler, tipler
+    assert "dukkan_is_verildi" in tipler, tipler
 
 
 def test_RET_GEREKCESI_BILDIRIMDE(client, dukkan_conn, moderator):
@@ -174,7 +178,7 @@ def test_RET_GEREKCESI_BILDIRIMDE(client, dukkan_conn, moderator):
                 json={"karar": "reddet", "gerekce": "Belge okunmuyor."})
 
     d = client.get("/dukkan/bildirim", headers=k["h"]).json()
-    b = next(x for x in d["items"] if x["tip"] == "isletme_reddedildi")
+    b = next(x for x in d["items"] if x["tip"] == "dukkan_isletme_reddedildi")
     assert b["hedef_yol"] == f"/panel/{isl}"
 
 
@@ -243,6 +247,6 @@ def test_BASKASININ_BILDIRIMI_OKUNAMAZ(client, akis):
 def test_BILDIRIM_LISTESI_YALNIZ_KENDI(client, akis):
     d = client.get("/dukkan/bildirim", headers=akis["musteri"]["h"]).json()
     for x in d["items"]:
-        assert x["tip"] != "isletme_onaylandi", (
+        assert x["tip"] != "dukkan_isletme_onaylandi", (
             "isletme sahibinin bildirimi musteriye gorundu"
         )

@@ -1954,6 +1954,80 @@ paths:
           description: Kimlik gerekli
           content:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/bildirim-tercihi:
+    get:
+      tags: [dukkan]
+      summary: Dukkan bildirim tercihi
+      description: |
+        DUKKAN'IN KENDI ANAHTARI — Yonetiyor'un `/me/bildirim-tercihleri`
+        ucundan AYRI. Iki sebep:
+
+        1. Dukkan kullanicisinin Yonetiyor hesabi OLMAYABILIR (bagimsiz
+           telefon kaydi); o ucu cagiramaz. `dukkan_app` rolu zaten
+           `public.app_user`a erisemiyor (goc 0113).
+        2. Iki urunun bildirimleri farkli seyler. Tek anahtar olsaydi,
+           pazar yeri pinglerinden bunalan sakin SITESININ duyurularini
+           da susturmak zorunda kalirdi.
+
+        `bildirim_sesli` AYRI bir soru: "gelsin mi" degil "SESLI mi
+        gelsin". Tek anahtara baglamak, gece calan bildirimden rahatsiz
+        olan kullaniciya bildirimin TAMAMINI kapattirirdi.
+
+        Kapali tercih PUSH'u susturur, SATIRI SILMEZ: kullanici
+        uygulamayi actiginda olayi yine gorur.
+      responses:
+        "200":
+          description: Tercih
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [bildirim_acik, bildirim_sesli]
+                properties:
+                  bildirim_acik: { type: boolean }
+                  bildirim_sesli: { type: boolean }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+    patch:
+      tags: [dukkan]
+      summary: Dukkan bildirim tercihini gunceller
+      description: |
+        Yanit SUNUCUDAKI GUNCEL SATIRI doner (istemcinin gonderdigini
+        degil): "Kaydedildi" yazip hicbir sey yazmayan akis (P217) boyle
+        gorunmez kalmisti.
+
+        Bos govde 400 `alan_yok`: "hicbir alan verilmedi" ile "hepsi ayni
+        kaldi" ayni yanit olsaydi, istemci hatasini kimse gormezdi.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                bildirim_acik: { type: boolean }
+                bildirim_sesli: { type: boolean }
+      responses:
+        "200":
+          description: Guncel tercih
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [bildirim_acik, bildirim_sesli]
+                properties:
+                  bildirim_acik: { type: boolean }
+                  bildirim_sesli: { type: boolean }
+        "400":
+          description: Hicbir alan verilmedi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
   /dukkan/lokasyon/il:
     get:
       tags: [dukkan]

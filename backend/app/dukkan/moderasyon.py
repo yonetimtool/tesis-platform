@@ -206,9 +206,10 @@ async def isletme_karar(
         "askiyi_kaldir": ("Askı kaldırıldı",
                           "İşletmeniz yeniden aramalarda görünüyor."),
     }[govde.karar]
-    _tip = {"onayla": "isletme_onaylandi", "reddet": "isletme_reddedildi",
-            "askiya_al": "isletme_askiya_alindi",
-            "askiyi_kaldir": "isletme_onaylandi"}[govde.karar]
+    _tip = {"onayla": "dukkan_isletme_onaylandi",
+            "reddet": "dukkan_isletme_reddedildi",
+            "askiya_al": "dukkan_isletme_askiya_alindi",
+            "askiyi_kaldir": "dukkan_isletme_onaylandi"}[govde.karar]
     await bildir(db, kullanici_id=isl_sahip["sahip_kullanici_id"], tip=_tip,
                  baslik=_metin[0], govde=_metin[1],
                  veri={"isletme_id": str(isletme_id),

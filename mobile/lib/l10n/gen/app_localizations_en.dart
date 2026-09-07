@@ -5957,4 +5957,110 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dukkanIsletmeCevabi => 'Business reply';
+
+  @override
+  String get dukkanPanelBaslik => 'My business panel';
+
+  @override
+  String get dukkanIsletmenYok =>
+      'You have no registered business. You can register one at dukkan.yonetiyor.com.';
+
+  @override
+  String get dukkanGelenTalepler => 'Incoming requests';
+
+  @override
+  String get dukkanGelenTalepYok =>
+      'There are no open requests in your area right now.';
+
+  @override
+  String get dukkanOnaysizTeklifYok =>
+      'You cannot send offers until your business is approved.';
+
+  @override
+  String get dukkanTeklifVer => 'Send offer';
+
+  @override
+  String get dukkanTeklifVerildi => 'Offer sent';
+
+  @override
+  String get dukkanTeklifTutar => 'Amount (₺)';
+
+  @override
+  String get dukkanTeklifTutarIpucu =>
+      'Leave empty to say “I need to see it in person”.';
+
+  @override
+  String get dukkanTeklifMesaj => 'Message (optional)';
+
+  @override
+  String get dukkanTeklifGonder => 'Send the offer';
+
+  @override
+  String get dukkanTeklifGonderildi => 'Your offer has been sent.';
+
+  @override
+  String get dukkanTeklifHatasi => 'The offer could not be sent.';
+
+  @override
+  String get dukkanDurumOnayli => 'Approved';
+
+  @override
+  String get dukkanDurumBeklemede => 'Under review';
+
+  @override
+  String get dukkanDurumReddedildi => 'Rejected';
+
+  @override
+  String get dukkanDurumAskida => 'Suspended';
+
+  @override
+  String get dukkanDurumTaslak => 'Draft';
+
+  @override
+  String get dukkanPanelWebNotu =>
+      'Profile, service area, documents and review invitations are managed at dukkan.yonetiyor.com.';
+
+  @override
+  String get dukkanBildirimler => 'Marketplace notifications';
+
+  @override
+  String get dukkanBildirimYok => 'No notifications yet.';
+
+  @override
+  String get dukkanBildirimAyari => 'Notification setting';
+
+  @override
+  String get dukkanBildirimAcik => 'Marketplace notifications';
+
+  @override
+  String get dukkanBildirimAcikIpucu =>
+      'Turning this off does not affect building notifications.';
+
+  @override
+  String get dukkanBildirimSesli => 'With sound';
+
+  @override
+  String get dukkanBildirimDetayIcinDokun => 'Tap for details';
+
+  @override
+  String get dukkanBildirimTeklifGeldi => 'You received an offer';
+
+  @override
+  String get dukkanBildirimYeniTalep => 'New request in your area';
+
+  @override
+  String get dukkanBildirimIsVerildi => 'The job was given to you';
+
+  @override
+  String get dukkanBildirimIsletmeOnaylandi => 'Your business was approved';
+
+  @override
+  String get dukkanBildirimIsletmeReddedildi =>
+      'Your business application was rejected';
+
+  @override
+  String get dukkanBildirimIsletmeAskida => 'Your business was suspended';
+
+  @override
+  String get dukkanBildirimYorumYayinlandi => 'Your review was published';
 }

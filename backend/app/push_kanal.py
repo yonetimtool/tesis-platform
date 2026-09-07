@@ -53,6 +53,36 @@ KANAL_GURULTU = "yonetio_gurultu_v2"
 #: olmasinin sebebi P208'dekiyle ayni: Android'de ses KANALIN
 #: ozelligidir, "ayni kanaldan farkli ses" diye bir sey yok.
 KANAL_VARDIYA = "yonetio_vardiya_v2"
+#: (DUKKAN) PAZAR YERI BILDIRIMLERININ KENDI KANALI.
+#:
+#: ===================================================================
+#: NEDEN AYRI KANAL — VE NEDEN YALNIZ BIR TANE
+#: ===================================================================
+#: Bu dosyada tekrar tekrar yazilan bir kural var: "nadir bir olay icin
+#: kullanicinin sistem ayarlarina bir satir daha eklemek, o ekrani
+#: okunmaz yapmaya dogru giden yoldur." Dukkan icin YINE DE ayri kanal
+#: aciliyor, cunku burada ayrisan sey OLAY TIPI degil URUN.
+#:
+#: Android'de kanal, kullaniciya SISTEM AYARLARINDA bir acma/kapama
+#: verir. Dukkan bildirimleri `yonetio_genel_v2`den gitseydi, pazar yeri
+#: pinglerinden bunalan bir sakin SITESININ duyurularini da susturmak
+#: zorunda kalirdi. Tersi de dogru: is bekleyen bir usta tesis
+#: duyurularini kapatip tekliflerini acik tutabilmeli.
+#:
+#: TEK KANAL, OLAY BASINA DEGIL: "teklif geldi", "is verildi", "isletmen
+#: onaylandi" ayri kanallar olsaydi ayar ekrani okunmaz olurdu — bu
+#: dosyanin baska yerlerinde verilen kararin aynisi.
+#:
+#: SES: SISTEM SESI (`default`). `yonetio_bildirim` Yonetiyor'un kimlik
+#: sesidir ve "binanla ilgili bir sey oldu" der. Bir teklif bildirimi
+#: onemlidir ama o degildir; ayni sesi vermek, sesin TEK ISINI
+#: (bakmadan ne oldugunu anlatmak) bozardi. Ayrica ozel ses YENI SURUM
+#: YAYINI ister; sistem sesiyle baslamak bu fazi bir ses dosyasina
+#: BAGIMLI kilmiyor.
+#:
+#: `_v1`: henuz ozel ses yok. Ses eklenirse `_v2` acilir (Android'de var
+#: olan bir kanalin sesi programla degistirilemez — modul basligi).
+KANAL_DUKKAN = "yonetio_dukkan_v1"
 
 #: Ozel ses dosyasinin ADI (uzantisiz — Android `res/raw`, iOS paket).
 #: DOSYA HENUZ YOK: `SES_HAZIR` false oldugu surece sistem sesi
@@ -145,6 +175,15 @@ OZEL_KANALLI_TIPLER: dict[str, tuple[str, str]] = {
 }
 
 
+#: (DUKKAN) Bu onekle baslayan tipler Dukkan kanalindan gider.
+#:
+#: ONEK ESLEMESI, LISTE DEGIL: Dukkan bildirim tipleri buyuyecek
+#: (F7'de odeme, mesajlasma...). Elle tutulan bir liste, yeni bir tip
+#: eklendiginde SESSIZCE Yonetiyor kanalina duserdi — ve kullanici
+#: pazar yeri bildirimini kapattigini sanip almaya devam ederdi.
+DUKKAN_ONEK = "dukkan_"
+
+
 def kanal_sec(tip: str | None, *, sesli: bool) -> str:
     """Bildirim tipine ve KULLANICI TERCIHINE gore kanal.
 
@@ -155,6 +194,11 @@ def kanal_sec(tip: str | None, *, sesli: bool) -> str:
     """
     if not sesli:
         return KANAL_SESSIZ
+    # DUKKAN URUN AYRIMI — tip kontrollerinden ONCE: bir Dukkan tipi
+    # yanlislikla `KRITIK_TIPLER`e benzer adlandirilirsa bile Yonetiyor
+    # kanalina DUSMEZ.
+    if tip and tip.startswith(DUKKAN_ONEK):
+        return KANAL_DUKKAN
     if tip and tip in OZEL_KANALLI_TIPLER:
         return OZEL_KANALLI_TIPLER[tip][0]
     if tip and tip in KRITIK_TIPLER:
@@ -166,6 +210,10 @@ def ses_adi(tip: str | None, *, sesli: bool) -> str | None:
     """iOS `aps.sound` degeri. Sessizde `None` (alan HIC gonderilmez)."""
     if not sesli:
         return None
+    # DUKKAN: sistem sesi. Yonetiyor'un kimlik sesi "binanla ilgili bir
+    # sey oldu" der; bir teklif bildirimi onemlidir ama o degildir.
+    if tip and tip.startswith(DUKKAN_ONEK):
+        return "default"
     if SES_HAZIR and tip and tip in OZEL_KANALLI_TIPLER:
         # iOS ses dosyasi uzantisiyla birlikte gonderilir.
         return f"{OZEL_KANALLI_TIPLER[tip][1]}.caf"

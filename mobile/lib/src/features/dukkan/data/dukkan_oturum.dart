@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/dio_provider.dart';
+import 'dukkan_push.dart';
 
 /// (DUKKAN F4) DUKKAN JETONU — Yonetiyor SSO koprusuyle alinir.
 ///
@@ -34,9 +37,10 @@ class DukkanOturumHatasi implements Exception {
 }
 
 class DukkanOturum {
-  DukkanOturum(this._dio);
+  DukkanOturum(this._dio, this._ref);
 
   final Dio _dio;
+  final Ref _ref;
   String? _jeton;
 
   String? get jeton => _jeton;
@@ -56,6 +60,13 @@ class DukkanOturum {
       final j = r.data?['access_token'] as String?;
       if (j == null) throw DukkanOturumHatasi('yanit_bos');
       _jeton = j;
+      // (F6-ek) CIHAZI DUKKAN'A KAYDET — jeton ALINDIGI AN.
+      //
+      // `unawaited` degil, `await` DE DEGIL: kayit bilerek beklenmeden
+      // baslatiliyor. Beklemek, kullanicinin acmak istedigi ekrani bir ag
+      // gidis-donusu kadar geciktirirdi; kayit ise gecikse de calisir.
+      // Fonksiyon hicbir kosulda firlatmiyor (bkz. dukkan_push.dart).
+      unawaited(_ref.read(dukkanPushKaydiProvider).kaydet(j));
       return j;
     } on DioException catch (e) {
       final kod = (e.response?.data is Map)
@@ -74,8 +85,17 @@ class DukkanOturum {
     }
   }
 
-  void temizle() => _jeton = null;
+  /// Cikista: cihaz kaydini DA dusurur.
+  ///
+  /// Yalniz `_jeton = null` demek yetmezdi — sunucudaki cihaz satiri
+  /// kalirdi ve telefonda oturum acan bir sonraki kisi onceki
+  /// kullanicinin teklif bildirimlerini gorurdu.
+  void temizle() {
+    final j = _jeton;
+    _jeton = null;
+    if (j != null) unawaited(_ref.read(dukkanPushKaydiProvider).sil(j));
+  }
 }
 
 final dukkanOturumProvider =
-    Provider<DukkanOturum>((ref) => DukkanOturum(ref.watch(dioProvider)));
+    Provider<DukkanOturum>((ref) => DukkanOturum(ref.watch(dioProvider), ref));

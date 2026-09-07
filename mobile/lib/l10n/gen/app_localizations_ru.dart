@@ -6029,4 +6029,109 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get dukkanIsletmeCevabi => 'Ответ компании';
+
+  @override
+  String get dukkanPanelBaslik => 'Мой бизнес-раздел';
+
+  @override
+  String get dukkanIsletmenYok =>
+      'У вас нет зарегистрированного бизнеса. Зарегистрировать его можно на dukkan.yonetiyor.com.';
+
+  @override
+  String get dukkanGelenTalepler => 'Входящие заявки';
+
+  @override
+  String get dukkanGelenTalepYok =>
+      'Сейчас в вашем районе нет открытых заявок.';
+
+  @override
+  String get dukkanOnaysizTeklifYok =>
+      'Вы не можете отправлять предложения, пока бизнес не одобрен.';
+
+  @override
+  String get dukkanTeklifVer => 'Отправить предложение';
+
+  @override
+  String get dukkanTeklifVerildi => 'Предложение отправлено';
+
+  @override
+  String get dukkanTeklifTutar => 'Сумма (₺)';
+
+  @override
+  String get dukkanTeklifTutarIpucu =>
+      'Оставьте пустым, чтобы указать «нужно посмотреть на месте».';
+
+  @override
+  String get dukkanTeklifMesaj => 'Сообщение (необязательно)';
+
+  @override
+  String get dukkanTeklifGonder => 'Отправить предложение';
+
+  @override
+  String get dukkanTeklifGonderildi => 'Ваше предложение отправлено.';
+
+  @override
+  String get dukkanTeklifHatasi => 'Не удалось отправить предложение.';
+
+  @override
+  String get dukkanDurumOnayli => 'Одобрен';
+
+  @override
+  String get dukkanDurumBeklemede => 'На рассмотрении';
+
+  @override
+  String get dukkanDurumReddedildi => 'Отклонён';
+
+  @override
+  String get dukkanDurumAskida => 'Приостановлен';
+
+  @override
+  String get dukkanDurumTaslak => 'Черновик';
+
+  @override
+  String get dukkanPanelWebNotu =>
+      'Профиль, зона обслуживания, документы и приглашения к отзыву настраиваются на dukkan.yonetiyor.com.';
+
+  @override
+  String get dukkanBildirimler => 'Уведомления маркетплейса';
+
+  @override
+  String get dukkanBildirimYok => 'Уведомлений пока нет.';
+
+  @override
+  String get dukkanBildirimAyari => 'Настройка уведомлений';
+
+  @override
+  String get dukkanBildirimAcik => 'Уведомления маркетплейса';
+
+  @override
+  String get dukkanBildirimAcikIpucu =>
+      'Отключение не влияет на уведомления дома.';
+
+  @override
+  String get dukkanBildirimSesli => 'Со звуком';
+
+  @override
+  String get dukkanBildirimDetayIcinDokun => 'Нажмите для подробностей';
+
+  @override
+  String get dukkanBildirimTeklifGeldi => 'Вам поступило предложение';
+
+  @override
+  String get dukkanBildirimYeniTalep => 'Новая заявка в вашем районе';
+
+  @override
+  String get dukkanBildirimIsVerildi => 'Работу поручили вам';
+
+  @override
+  String get dukkanBildirimIsletmeOnaylandi => 'Ваш бизнес одобрен';
+
+  @override
+  String get dukkanBildirimIsletmeReddedildi => 'Ваша заявка отклонена';
+
+  @override
+  String get dukkanBildirimIsletmeAskida => 'Ваш бизнес приостановлен';
+
+  @override
+  String get dukkanBildirimYorumYayinlandi => 'Ваш отзыв опубликован';
 }

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../l10n/gen/app_localizations.dart';
+import '../../../routing/app_router.dart';
 import '../data/dukkan_api.dart';
 
 /// (DUKKAN F3) YEREL ISLETMELER — arama ve liste.
@@ -63,7 +64,33 @@ class _DukkanAramaScreenState extends ConsumerState<DukkanAramaScreen> {
     final iller = ref.watch(dukkanIllerProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(t.dukkanBaslik)),
+      appBar: AppBar(
+        title: Text(t.dukkanBaslik),
+        // (F6-ek) DUKKAN'IN UC KIMLIKLI YUZEYINE GIRIS BURADAN.
+        //
+        // Ana ekranda AYRI KART ACILMADI: "Yerel isletmeler" tek kart
+        // olarak duruyor ve alt yuzeyler bu ekrandan aciliyor. Uc kart
+        // daha eklemek, pazar yerini hic kullanmayan cogunluga uc olu
+        // kutu gostermek olurdu (ana ekran zaten yogun — P184'te
+        // kucultme calismasi yapildi).
+        actions: [
+          IconButton(
+            tooltip: t.dukkanTaleplerim,
+            icon: const Icon(Icons.assignment_outlined),
+            onPressed: () => context.push(AppRoutes.dukkanTaleplerim),
+          ),
+          IconButton(
+            tooltip: t.dukkanPanelBaslik,
+            icon: const Icon(Icons.storefront_outlined),
+            onPressed: () => context.push(AppRoutes.dukkanPanel),
+          ),
+          IconButton(
+            tooltip: t.dukkanBildirimler,
+            icon: const Icon(Icons.notifications_none),
+            onPressed: () => context.push(AppRoutes.dukkanBildirim),
+          ),
+        ],
+      ),
       body: Column(
         children: [
           Padding(

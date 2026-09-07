@@ -463,3 +463,319 @@ final dukkanYorumlarProvider =
     FutureProvider.autoDispose.family<DukkanYorumListesi, String>(
   (ref, slug) => ref.watch(dukkanApiProvider).yorumlar(slug),
 );
+
+// =========================================================================
+// (DUKKAN F6-ek) ISLETME PANELI + BILDIRIM — MOBIL ESLIK
+// =========================================================================
+// Web'de olan bir yuzeyin mobilde OLMAMASI, bildirimi ISE YARAMAZ hale
+// getirir: "yeni talep var" bildirimini alan usta, dokununca gidecek bir
+// ekran bulamazdi. P217'de olculen kusurun aynisi (bildirim dogru kisiye
+// gidiyor, yonlendirme bos donuyor).
+//
+// UYARLAMA, KOPYA DEGIL: web panelinde isletme duzenleme, belge yukleme,
+// yorum daveti ve hizmet alani secimi de var. Mobilde bu fazda YALNIZ
+// bildirimin isaret ettigi is akisi var — gelen talep ve teklif verme.
+// Digerleri panelde "web'de duzenleyin" satiriyla ACIKCA soyleniyor;
+// sessizce eksik birakmak, kullanicinin aramayi surdurmesine yol acardi.
+
+class DukkanBenimIsletme {
+  const DukkanBenimIsletme({
+    required this.id,
+    required this.ad,
+    required this.slug,
+    required this.durum,
+    this.redSebebi,
+    this.askiSebebi,
+  });
+
+  factory DukkanBenimIsletme.fromJson(Map<String, dynamic> j) =>
+      DukkanBenimIsletme(
+        id: '${j['id']}',
+        ad: '${j['ad'] ?? ''}',
+        slug: '${j['slug'] ?? ''}',
+        durum: '${j['durum'] ?? ''}',
+        redSebebi: j['red_sebebi'] as String?,
+        askiSebebi: j['askiya_alma_sebebi'] as String?,
+      );
+
+  final String id;
+  final String ad;
+  final String slug;
+
+  /// 'taslak' | 'beklemede' | 'onayli' | 'reddedildi' | 'askida'
+  final String durum;
+  final String? redSebebi;
+  final String? askiSebebi;
+
+  /// Yalniz ONAYLI isletme teklif verebilir (sunucu 403 doner). Arayuz
+  /// bunu ONCEDEN gostermeli: reddedilmis bir teklif butonu, kullaniciya
+  /// sebebini soylemeden calismayan bir dugmedir.
+  bool get teklifVerebilir => durum == 'onayli';
+}
+
+class DukkanGelenTalep {
+  const DukkanGelenTalep({
+    required this.id,
+    required this.baslik,
+    required this.aciklama,
+    required this.kategori,
+    required this.mahalle,
+    required this.ilce,
+    required this.il,
+    this.ad,
+    this.telefon,
+    this.benimTeklifim,
+  });
+
+  factory DukkanGelenTalep.fromJson(Map<String, dynamic> j) =>
+      DukkanGelenTalep(
+        id: '${j['id']}',
+        baslik: '${j['baslik'] ?? ''}',
+        aciklama: '${j['aciklama'] ?? ''}',
+        kategori: '${j['kategori'] ?? ''}',
+        mahalle: '${j['mahalle'] ?? ''}',
+        ilce: '${j['ilce'] ?? ''}',
+        il: '${j['il'] ?? ''}',
+        ad: j['ad'] as String?,
+        telefon: j['telefon'] as String?,
+        benimTeklifim: j['benim_teklifim'] as String?,
+      );
+
+  final String id;
+  final String baslik;
+  final String aciklama;
+  final String kategori;
+  final String mahalle;
+  final String ilce;
+  final String il;
+
+  /// KVKK: sunucu bu iki alani YALNIZ kullanici izin verdiyse doldurur.
+  /// `null` "veri yok" degil, "PAYLASILMADI" demek — arayuz ikisini ayni
+  /// gostermemeli.
+  final String? ad;
+  final String? telefon;
+
+  /// Doluysa bu talebe ZATEN teklif verilmis (sunucu ikinciyi 409 keser).
+  final String? benimTeklifim;
+}
+
+class DukkanBildirim {
+  const DukkanBildirim({
+    required this.id,
+    required this.tip,
+    required this.veri,
+    required this.createdAt,
+    required this.okundu,
+    this.hedefYol,
+  });
+
+  factory DukkanBildirim.fromJson(Map<String, dynamic> j) => DukkanBildirim(
+        id: '${j['id']}',
+        tip: '${j['tip'] ?? ''}',
+        veri: (j['veri'] as Map?)?.cast<String, dynamic>() ?? const {},
+        createdAt: DateTime.tryParse('${j['created_at']}')?.toLocal(),
+        okundu: j['okundu_at'] != null,
+        hedefYol: j['hedef_yol'] as String?,
+      );
+
+  final String id;
+
+  /// `dukkan_teklif_geldi` gibi. METIN SUNUCUDAN GELMIYOR: istemci metni
+  /// KENDI dilinde uretir, boylece kullanici dil degistirdiginde eski
+  /// bildirimler de yeni dilde okunur.
+  final String tip;
+  final Map<String, dynamic> veri;
+  final DateTime? createdAt;
+  final bool okundu;
+
+  /// Sunucunun urettigi WEB yolu. Mobil bunu DOGRUDAN KULLANMAZ —
+  /// `dukkanPushHedefi` cevirir (bkz. dukkan_push_yonlendirme.dart).
+  final String? hedefYol;
+}
+
+class DukkanBildirimTercihi {
+  const DukkanBildirimTercihi({required this.acik, required this.sesli});
+
+  factory DukkanBildirimTercihi.fromJson(Map<String, dynamic> j) =>
+      DukkanBildirimTercihi(
+        acik: j['bildirim_acik'] as bool? ?? true,
+        sesli: j['bildirim_sesli'] as bool? ?? true,
+      );
+
+  final bool acik;
+  final bool sesli;
+}
+
+extension DukkanPanelApi on DukkanApi {
+  Options _panelSecenek(String jeton) =>
+      Options(extra: {AuthInterceptor.dukkanJetonu: jeton});
+
+  Future<List<DukkanBenimIsletme>> isletmelerim(String jeton) async {
+    final r = await _dio.get<Map<String, dynamic>>('/dukkan/isletme/benim',
+        options: _panelSecenek(jeton));
+    return ((r.data?['items'] as List?) ?? const [])
+        .cast<Map<String, dynamic>>()
+        .map(DukkanBenimIsletme.fromJson)
+        .toList();
+  }
+
+  Future<List<DukkanGelenTalep>> gelenTalepler(
+      String isletmeId, String jeton) async {
+    final r = await _dio.get<Map<String, dynamic>>(
+        '/dukkan/isletme/$isletmeId/talepler',
+        options: _panelSecenek(jeton));
+    return ((r.data?['items'] as List?) ?? const [])
+        .cast<Map<String, dynamic>>()
+        .map(DukkanGelenTalep.fromJson)
+        .toList();
+  }
+
+  /// Teklif verir. `isletme_id` SORGU PARAMETRESI (uc boyle tanimli).
+  Future<void> teklifVer({
+    required String talepId,
+    required String isletmeId,
+    required String jeton,
+    int? tutarKurus,
+    String? mesaj,
+  }) async {
+    await _dio.post<Map<String, dynamic>>(
+      '/dukkan/talep/$talepId/teklif',
+      queryParameters: <String, dynamic>{'isletme_id': isletmeId},
+      options: _panelSecenek(jeton),
+      data: <String, dynamic>{
+        if (tutarKurus != null) 'tutar_kurus': tutarKurus,
+        if (mesaj != null && mesaj.isNotEmpty) 'mesaj': mesaj,
+      },
+    );
+  }
+
+  // ---------------------------- BILDIRIM ------------------------------ #
+
+  /// FCM jetonunu Dukkan tarafina kaydeder.
+  ///
+  /// AYRI KAYIT, YONETIYOR'UNKINDEN: `dukkan_cihaz` ayri semada ve
+  /// `dukkan_app` rolu `public.device_token`a ERISEMEZ (goc 0113). Ayni
+  /// cihaz jetonunun iki tabloda bulunmasi KOPYA DEGIL: iki urun ayri
+  /// muhataba (Yonetiyor kullanicisi / Dukkan kullanicisi) gonderiyor ve
+  /// biri kapatildiginda digeri etkilenmemeli.
+  Future<void> cihazKaydet({
+    required String fcmToken,
+    required String platform,
+    required String dil,
+    required String jeton,
+  }) async {
+    await _dio.post<Map<String, dynamic>>(
+      '/dukkan/cihaz',
+      options: _panelSecenek(jeton),
+      data: <String, dynamic>{
+        'fcm_token': fcmToken,
+        'platform': platform,
+        'dil': dil,
+      },
+    );
+  }
+
+  Future<int> cihazSil({required String fcmToken, required String jeton}) async {
+    final r = await _dio.delete<Map<String, dynamic>>(
+      '/dukkan/cihaz',
+      queryParameters: <String, dynamic>{'fcm_token': fcmToken},
+      options: _panelSecenek(jeton),
+    );
+    return (r.data?['silinen'] as num?)?.toInt() ?? 0;
+  }
+
+  Future<({List<DukkanBildirim> items, int okunmamis})> bildirimler(
+      String jeton) async {
+    final r = await _dio.get<Map<String, dynamic>>('/dukkan/bildirim',
+        options: _panelSecenek(jeton));
+    return (
+      items: ((r.data?['items'] as List?) ?? const [])
+          .cast<Map<String, dynamic>>()
+          .map(DukkanBildirim.fromJson)
+          .toList(),
+      okunmamis: (r.data?['okunmamis'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  /// `bildirimId` verilmezse HEPSI okundu isaretlenir. Doner: okunan sayi.
+  Future<int> bildirimOkundu(String jeton, {String? bildirimId}) async {
+    final r = await _dio.post<Map<String, dynamic>>(
+      '/dukkan/bildirim/okundu',
+      queryParameters: <String, dynamic>{
+        if (bildirimId != null) 'bildirim_id': bildirimId,
+      },
+      options: _panelSecenek(jeton),
+    );
+    return (r.data?['okunan'] as num?)?.toInt() ?? 0;
+  }
+
+  Future<DukkanBildirimTercihi> tercihOku(String jeton) async {
+    final r = await _dio.get<Map<String, dynamic>>('/dukkan/bildirim-tercihi',
+        options: _panelSecenek(jeton));
+    return DukkanBildirimTercihi.fromJson(r.data ?? const {});
+  }
+
+  /// Doner: SUNUCUDAKI GUNCEL tercih (istemcinin yazdigi degil).
+  /// P217 dersi: "Kaydedildi" yazip hicbir sey yazmayan akis boyle
+  /// gorunmez kalmisti.
+  Future<DukkanBildirimTercihi> tercihYaz(
+    String jeton, {
+    bool? acik,
+    bool? sesli,
+  }) async {
+    final r = await _dio.patch<Map<String, dynamic>>(
+      '/dukkan/bildirim-tercihi',
+      options: _panelSecenek(jeton),
+      data: <String, dynamic>{
+        if (acik != null) 'bildirim_acik': acik,
+        if (sesli != null) 'bildirim_sesli': sesli,
+      },
+    );
+    return DukkanBildirimTercihi.fromJson(r.data ?? const {});
+  }
+}
+
+/// Talep detayi (tek talep). `family` — her talep AYRI onbellek.
+final dukkanTalepDetayProvider =
+    FutureProvider.autoDispose.family<Map<String, dynamic>, String>(
+        (ref, id) async {
+  final jeton = await ref.watch(dukkanOturumProvider).jetonAl();
+  return ref.watch(dukkanApiProvider).talepDetay(id, jeton);
+});
+
+/// Bir talebe gelen teklifler.
+final dukkanTeklifleriProvider =
+    FutureProvider.autoDispose.family<List<DukkanTeklif>, String>(
+        (ref, talepId) async {
+  final jeton = await ref.watch(dukkanOturumProvider).jetonAl();
+  return ref.watch(dukkanApiProvider).teklifler(talepId, jeton);
+});
+
+/// Kullanicinin isletmeleri (arz tarafi paneli).
+final dukkanIsletmelerimProvider =
+    FutureProvider.autoDispose<List<DukkanBenimIsletme>>((ref) async {
+  final jeton = await ref.watch(dukkanOturumProvider).jetonAl();
+  return ref.watch(dukkanApiProvider).isletmelerim(jeton);
+});
+
+/// Bir isletmeye gelen ACIK talepler.
+final dukkanGelenTaleplerProvider =
+    FutureProvider.autoDispose.family<List<DukkanGelenTalep>, String>(
+        (ref, isletmeId) async {
+  final jeton = await ref.watch(dukkanOturumProvider).jetonAl();
+  return ref.watch(dukkanApiProvider).gelenTalepler(isletmeId, jeton);
+});
+
+/// Dukkan bildirim listesi + okunmamis sayisi.
+final dukkanBildirimlerProvider = FutureProvider.autoDispose<
+    ({List<DukkanBildirim> items, int okunmamis})>((ref) async {
+  final jeton = await ref.watch(dukkanOturumProvider).jetonAl();
+  return ref.watch(dukkanApiProvider).bildirimler(jeton);
+});
+
+/// Dukkan bildirim tercihi (Yonetiyor'unkinden AYRI — goc 0121).
+final dukkanBildirimTercihiProvider =
+    FutureProvider.autoDispose<DukkanBildirimTercihi>((ref) async {
+  final jeton = await ref.watch(dukkanOturumProvider).jetonAl();
+  return ref.watch(dukkanApiProvider).tercihOku(jeton);
+});

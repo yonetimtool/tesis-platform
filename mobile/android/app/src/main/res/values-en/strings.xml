@@ -10,4 +10,6 @@
     <string name="kanal_gurultu_aciklama">Plays with its own sound when a noise complaint is received about your home.</string>
     <string name="kanal_vardiya_ad">Shift reminder</string>
     <string name="kanal_vardiya_aciklama">Announces with sound when your shift is about to start.</string>
+    <string name="kanal_dukkan_ad">Local businesses</string>
+    <string name="kanal_dukkan_aciklama">Offer, job and business notifications. Turning this off does not affect building notifications.</string>
 </resources>

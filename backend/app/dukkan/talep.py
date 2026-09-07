@@ -481,7 +481,7 @@ async def teklif_ver(
         )
     ).mappings().one()
     await bildir(
-        db, kullanici_id=sahip["kullanici_id"], tip="teklif_geldi",
+        db, kullanici_id=sahip["kullanici_id"], tip="dukkan_teklif_geldi",
         baslik="Yeni teklif",
         govde=f"{sahip['ad']} talebine teklif verdi.",
         veri={"talep_id": str(talep_id), "isletme": sahip["ad"]},
@@ -602,7 +602,7 @@ async def teklif_kabul(
         )
     ).mappings().one()
     await bildir(
-        db, kullanici_id=isl_sahip["sahip_kullanici_id"], tip="is_verildi",
+        db, kullanici_id=isl_sahip["sahip_kullanici_id"], tip="dukkan_is_verildi",
         baslik="İş verildi",
         govde="Teklifiniz kabul edildi. Müşteri bilgileri açıldı.",
         veri={"isletme_id": str(tk["isletme_id"]),
