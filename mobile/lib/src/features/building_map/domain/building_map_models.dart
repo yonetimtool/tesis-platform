@@ -57,6 +57,22 @@ class BuildingMapUnit {
 
   /// ACIK sikayet sayisi — YALNIZ yonetim (shows_density) icin dolu; digerinde
   /// null (resident/saha hangi dairenin kac sikayeti oldugunu bilemez, Rev-1).
+  /// (a) GORUNUR SIKAYET SAYISI — yonetim gorunumu.
+  ///
+  /// ==================================================================
+  /// IKI FARKLI SAYI VAR, BU BIRINCISI  (P220 §1)
+  /// ==================================================================
+  /// (a) GORUNUR SAYI  — bu alan. Yoneticinin ayarladigi
+  ///     `sikayet_harita_saat` penceresine tabi (varsayilan 24 saat).
+  ///     Sorusu: "SU ANDA nerede sorun var".
+  /// (b) ESIK SAYACI   — uyari mantigi icin, `gurultu_pencere_gun`
+  ///     (30 gun) penceresine tabi. ISTEMCIYE HIC GELMEZ ve bu alan
+  ///     degistiginde DEGISMEZ. 5 sikayete ulasinca sesli anons gider.
+  ///
+  /// Ikisini karistirmak iki yonde de kusur uretir; gerekce sunucuda
+  /// `unit_complaints.py` basliginda yazili.
+  ///
+  /// Sunucu hesaplar, ISTEMCI ESIK HESAPLAMAZ — renk de sunucudan gelir.
   final int? complaintCount;
 
   /// Yogunluk rengi — YALNIZ yonetim icin dolu; digerinde null (yapi gorunumu).
@@ -68,6 +84,13 @@ class BuildingMapUnit {
 
   /// KENDI acik sikayet sayim (yalniz resident; digerinde null). Genel sayim
   /// DEGILDIR — yalniz oturum acmis sakinin kendi kayitlari.
+  /// Sakinin KENDI actigi ACIK sikayet sayisi — (a) ile AYNI PENCEREYE
+  /// tabi (P220 §1).
+  ///
+  /// OLCULEN KUSUR: P219'da `complaintCount` pencereye baglanmis, bu alan
+  /// ATLANMISTI. Sonuc: 48 saat eskitilmis bir sikayette yonetim sayimi
+  /// 1 -> 0 duserken sakinin isareti 1 -> 1 kaliyordu; AYNI IZGARADA
+  /// haritadan dusmus bir sikayet gorunmeye devam ediyordu.
   final int? benimAcikSayisi;
 
   /// Yerlesim tam mi (blok + kat girilmis)? Haritada cizilebilir demektir.

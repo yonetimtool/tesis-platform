@@ -1,5 +1,32 @@
 """Daire sikayeti (D1 + D-viz Rev-1) — sakin -> HEDEF DAIRE.
 
+===========================================================================
+IKI FARKLI SAYI VAR — KARISTIRILMAZ  (P220 §1)
+===========================================================================
+Bu modulde "sikayet sayisi" diye tek bir sey YOKTUR. Iki ayri sayi var,
+iki ayri soruyu yanitliyorlar ve IKI AYRI PENCEREYE tabiler:
+
+  (a) GORUNUR SIKAYET SAYISI — kullaniciya gosterilen
+      Nerede: `/density.acik_sayisi`, `/building-map.complaint_count`,
+              `/building-map.benim_acik_sayisi`
+      Penceresi: `tenant.sikayet_harita_saat` (varsayilan 24 saat)
+      Sorusu: "SU ANDA nerede sorun var"
+      Fonksiyon: `_harita_penceresi()`
+
+  (b) ESIK SAYACI — uyari mantigi, kullaniciya GOSTERILMEZ
+      Nerede: `gurultu_akisi.acik_gurultu_sayisi()` -> `esik_kontrol()`
+      Penceresi: `tenant.gurultu_pencere_gun` (varsayilan 30 gun)
+      Sorusu: "bu daire icin uyari gonderilmeli mi"
+      BU MODULDEN GECMEZ ve (a) degistiginde DEGISMEZ.
+
+Ikisini birbirine baglamak iki yonde de kusur uretir:
+  * (b)'yi (a)'ya baglamak -> 24 saat sonra sayac sifirlanir, 5 sikayete
+    hicbir zaman ulasilamaz, sesli uyari HIC gitmez.
+  * (a)'yi (b)'ye baglamak -> harita 30 gun boyunca kirmizi kalir ve
+    "hic olmus mu" sorusunu yanitlamaya doner (P219'da duzeltilen kusur).
+
+Kilit: `test_p220_gorunur_sayi.py`.
+
 GIZLILIK KADEMESI (Rev-2, auth.md §4):
   * yonetici/admin (YONETIM): daire-basi ACIK sayi + renk (harita) + daire
     detayinda kategori + not + durum gorur. SIKAYET EDEN kimligini (complainant)
@@ -344,6 +371,10 @@ async def building_map(
     # resident: KENDI acik sikayetlerinin daire-basi sayisi (yalniz kendi
     # kayitlarindan; complainant == kendisi). Baskalarinin verisi ASLA girmez.
     own_open: dict[uuid.UUID, int] = {}
+    # (P220 §1) PENCERE ONCE OKUNUYOR: sakinin KENDI sayimi da ayni
+    # filtreden gecmek zorunda (asagida).
+    pencere = await _harita_penceresi(db)
+
     if is_resident:
         resident_blocks = await _resident_blocks(db, user)
         own_rows = (
@@ -355,13 +386,31 @@ async def building_map(
                 .where(
                     UnitComplaint.complainant_user_id == user.id,
                     UnitComplaint.durum == "acik",
+                    # ==========================================
+                    # (P220 §1) OLCULEN KUSUR — AYNI PENCERE
+                    # ==========================================
+                    # `complaint_count` (yonetim) P219'da pencereye
+                    # baglanmisti ama sakinin KENDI sayimi
+                    # (`benim_acik_sayisi` / `benim_sikayetim`)
+                    # BAGLANMAMISTI.
+                    #
+                    # Olculdu: 48 saat eskitilmis bir sikayette
+                    # yonetim sayimi 1 -> 0 dustu, sakinin isareti
+                    # 1 -> 1 KALDI. Yani AYNI IZGARADA, haritadan
+                    # dusmus bir sikayet sakinin hucresinde
+                    # gorunmeye devam ediyordu.
+                    #
+                    # Ayni ekranda iki farkli gercek gostermek, P219
+                    # `building-map` notunda ZATEN yazili olan
+                    # gerekcenin ta kendisi — o not `complaint_count`
+                    # icin yazilmis, bu sutun atlanmis.
+                    *([pencere] if pencere is not None else []),
                 )
                 .group_by(UnitComplaint.target_unit_id)
             )
         ).all()
         own_open = {uid: n for uid, n in own_rows}
 
-    pencere = await _harita_penceresi(db)
     rows = (
         await db.execute(
             select(

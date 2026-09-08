@@ -42,6 +42,36 @@ from tests.test_p208_gurultu_sakin import (  # noqa: F401 — fixture'lar
 )
 
 
+@pytest.fixture
+def susma_ayari_geri_al(owner_conn, world):
+    """(P220) `gurultu_susma_gun` DEGISTIRILDIYSE ESKI DEGERINE DONER.
+
+    ==================================================================
+    OLCULEN FLAKE
+    ==================================================================
+    Uc test bu ayari `0` yapip GERI ALMIYORDU. Veritabani pytest
+    kosumlari arasinda KALICI oldugu icin, bir kosumda susma
+    kapatildiginda SONRAKI kosum onu kapali bulur ve
+    `test_SUSMA_SURESINDE_ikinci_uyari_GITMEZ` duser.
+
+    Belirtisi sinsi: test tek basina GECER, kendi dosyasinda GECER,
+    yalnizca belirli bir kosum SIRASINDAN sonra duser. Uc kez farkli
+    kombinasyonlarda kosturup ancak dorduncusunde yakalayabildim.
+
+    Ayari YOK SAYMAK yerine GERI ALMAK dogru cozum: testin mesru isi
+    ozelligi kapatip olcmek, ve kapali birakmasi baska testlerin isi
+    degil.
+    """
+    onceki = owner_conn.execute(
+        "SELECT gurultu_susma_gun FROM tenant WHERE id = %s",
+        (world["a"],)).fetchone()[0]
+    yield
+    owner_conn.execute(
+        "UPDATE tenant SET gurultu_susma_gun = %s WHERE id = %s",
+        (onceki, world["a"]))
+    owner_conn.commit()
+
+
 def _bes_gurultu(d):
     for _ in range(5):
         _sikayet(d, kategori="gurultu")
@@ -81,7 +111,7 @@ def test_BIRINCI_esikte_GUVENLIGE_HICBIR_SEY_gitmez(d, push_spy):
 
 # ==================== 2) IKINCI ESIK: ESKALASYON ========================= #
 
-def test_IKINCI_esikte_GUVENLIGE_bildirim_gider(d, push_spy):
+def test_IKINCI_esikte_GUVENLIGE_bildirim_gider(d, push_spy, susma_ayari_geri_al):
     _sakin_ekle(d, "kiraci")
     guvenlik = _guvenlikci(d)
     # Susma suresi kapatilir: iki esik ARDISIK olarak surulecek ve
@@ -124,7 +154,7 @@ def test_ESKALASYON_METNI_daire_sayi_kez_tasir_ve_POLISI_soyler(d):
     assert set(m.baslik) == set(m.govde)
 
 
-def test_SIKAYETCININ_KIMLIGI_hicbir_metinde_GECMEZ(d, push_spy):
+def test_SIKAYETCININ_KIMLIGI_hicbir_metinde_GECMEZ(d, push_spy, susma_ayari_geri_al):
     """En sert kural: eskalasyon daireyi soyler, KISIYI degil."""
     _sakin_ekle(d, "kiraci")
     _guvenlikci(d)
@@ -146,7 +176,7 @@ def test_SIKAYETCININ_KIMLIGI_hicbir_metinde_GECMEZ(d, push_spy):
             assert "Sikayetci" not in (mesaj or "")
 
 
-def test_YONETICI_de_haberdar_olur(d, push_spy):
+def test_YONETICI_de_haberdar_olur(d, push_spy, susma_ayari_geri_al):
     _sakin_ekle(d, "kiraci")
     _guvenlikci(d)
     d.conn.execute(
@@ -181,7 +211,7 @@ def test_ESKALASYON_SESLI_kanaldan_gider(d):
 
 # ==================== 3) SAYAC VE DIGER TIPLER =========================== #
 
-def test_IKINCI_esikte_de_SAYAC_SIFIRLANIR(d):
+def test_IKINCI_esikte_de_SAYAC_SIFIRLANIR(d, susma_ayari_geri_al):
     _sakin_ekle(d, "kiraci")
     _guvenlikci(d)
     d.conn.execute(
@@ -230,7 +260,7 @@ def test_GORUNTU_sikayetleri_GURULTU_akisini_ETKILEMEZ(d, push_spy):
 
 # ==================== 4) UCUNCU KEZ + DENETIM ============================ #
 
-def test_UCUNCU_kez_ayni_eskalasyon_ARTAN_kez_ile(d, push_spy):
+def test_UCUNCU_kez_ayni_eskalasyon_ARTAN_kez_ile(d, push_spy, susma_ayari_geri_al):
     """Sistemde daha ust bir merci YOK — polis zaten eskalasyonun
     kendisi. Yeni bir "asama 3 davranisi" uydurmak, olmayan bir yetkiyi
     varmis gibi gostermek olurdu."""
@@ -250,7 +280,7 @@ def test_UCUNCU_kez_ayni_eskalasyon_ARTAN_kez_ile(d, push_spy):
     assert [p["params"]["kez"] for p in esk] == [2, 3]
 
 
-def test_ASAMA_denetim_kaydina_YAZILIR(d):
+def test_ASAMA_denetim_kaydina_YAZILIR(d, susma_ayari_geri_al):
     _sakin_ekle(d, "kiraci")
     _guvenlikci(d)
     d.conn.execute(
@@ -273,7 +303,7 @@ def test_ASAMA_denetim_kaydina_YAZILIR(d):
                for m in metalar)
 
 
-def test_ESKALASYON_ESIGI_TESIS_AYARINDAN_gelir(d, push_spy):
+def test_ESKALASYON_ESIGI_TESIS_AYARINDAN_gelir(d, push_spy, susma_ayari_geri_al):
     """(P213 §1) Esik tesis ayarindan gelir.
 
     Eskiden `asama >= 2` KOD SABITIYDI. Bir sitede ikinci uyari,
@@ -320,7 +350,7 @@ def test_7_DIL_PARITE(dil):
 
 # ==================== (P219 §1) DEGER ile ANLAM HIZALI =================== #
 
-def test_P219_ESIK_DEGERI_KACINCI_UYARI_demek(d, push_spy):
+def test_P219_ESIK_DEGERI_KACINCI_UYARI_demek(d, push_spy, susma_ayari_geri_al):
     """(P219 §1) OLCULEN KUSUR: ayar `1` iken eskalasyon `2.` uyarida
     oluyordu (`asama > esik`). Ekranda "1" yazan alan aslinda "2.
     uyarida" demekti ve bu, ipucuyla telafi edilmeye calisiliyordu.
@@ -349,7 +379,7 @@ def test_P219_ESIK_DEGERI_KACINCI_UYARI_demek(d, push_spy):
     )
 
 
-def test_P219_ESIK_BIR_ILK_UYARIDA_eskale_eder(d, push_spy):
+def test_P219_ESIK_BIR_ILK_UYARIDA_eskale_eder(d, push_spy, susma_ayari_geri_al):
     """`1` artik MESRU ve ANLAMI ACIK: ilk uyarida guvenlige de gitsin.
 
     Eski semantikte `1` "ikinci uyarida" demekti ve "ilk uyarida"

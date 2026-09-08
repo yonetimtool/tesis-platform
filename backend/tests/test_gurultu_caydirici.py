@@ -149,6 +149,36 @@ def _sikayet(d, kategori="gurultu"):
         "target_unit_id": d.hedef["id"], "kategori": kategori})
 
 
+@pytest.fixture
+def susma_ayari_geri_al(owner_conn, world):
+    """(P220) `gurultu_susma_gun` DEGISTIRILDIYSE ESKI DEGERINE DONER.
+
+    ==================================================================
+    OLCULEN FLAKE
+    ==================================================================
+    Uc test bu ayari `0` yapip GERI ALMIYORDU. Veritabani pytest
+    kosumlari arasinda KALICI oldugu icin, bir kosumda susma
+    kapatildiginda SONRAKI kosum onu kapali bulur ve
+    `test_SUSMA_SURESINDE_ikinci_uyari_GITMEZ` duser.
+
+    Belirtisi sinsi: test tek basina GECER, kendi dosyasinda GECER,
+    yalnizca belirli bir kosum SIRASINDAN sonra duser. Uc kez farkli
+    kombinasyonlarda kosturup ancak dorduncusunde yakalayabildim.
+
+    Ayari YOK SAYMAK yerine GERI ALMAK dogru cozum: testin mesru isi
+    ozelligi kapatip olcmek, ve kapali birakmasi baska testlerin isi
+    degil.
+    """
+    onceki = owner_conn.execute(
+        "SELECT gurultu_susma_gun FROM tenant WHERE id = %s",
+        (world["a"],)).fetchone()[0]
+    yield
+    owner_conn.execute(
+        "UPDATE tenant SET gurultu_susma_gun = %s WHERE id = %s",
+        (onceki, world["a"]))
+    owner_conn.commit()
+
+
 def _uyarilar(d):
     return d.client.get("/unit-uyarilari", headers=d.yonetici,
                         params={"unit_id": d.hedef["id"]}).json()["items"]
@@ -265,7 +295,7 @@ def test_SUSMA_SURESINDE_ikinci_uyari_GITMEZ(d):
     assert len(_uyarilar(d)) == 1, "susma suresinde ikinci uyari gitti"
 
 
-def test_SUSMA_KAPALIYSA_yeniden_uyarilir(d):
+def test_SUSMA_KAPALIYSA_yeniden_uyarilir(d, susma_ayari_geri_al):
     """Susma suresi 0 = KAPALI: ozellik kapatilabilir olmali, yoksa
     "her esikte uyarsin" isteyen tesisin secenegi kalmazdi."""
     d.conn.execute(
