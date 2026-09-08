@@ -111,7 +111,16 @@ hacmi düşük. Bir uç yazmak, gelmeyen itirazlar için ekran yapmak olurdu.
 
 **Ne zaman:** aylık ret sayısı iki haneye çıktığında.
 
-### 7. Jeton `localStorage`'da
+### 7. Jeton `localStorage`'da — **ARTIK ENGELLEYİCİ (F8)**
+
+> **Sınıfı değişti.** Bu madde "ödeme fazından önce yapılmalı" diye
+> yazılmıştı ve ödeme fazı **geldi**. Reklam satın alma akışı devreye
+> girdiğinde, çalınan bir jeton başkasının adına reklam satın
+> alabilir — ve o an gerçek para söz konusu.
+>
+> **Sağlayıcı bağlanmadan önce yapılmalı.** Bugün ödeme kapalı olduğu
+> için hâlâ zaman var; sağlayıcı onayı geldiği gün bu madde ilk sıraya
+> çıkar.
 
 > `F2 §11`
 

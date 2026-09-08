@@ -255,11 +255,36 @@ eklenecek — `docker-compose.prod.yml`'de. O hatayı bir kez ödedik; ikinci ke
 
 ---
 
-## 8. V1 dışı — ve veri modelinin bunları engellememesi
+## 8. Gelir modeli ve kapsam dışı olanlar
 
-| Dışarıda | Gerekçe (seninki, katılıyorum) | Model bugünden ne yapmalı |
+> **GÜNCELLENDİ (F8).** Bu bölüm önce "ödeme V1 dışı, V2'de gelebilir"
+> diyordu. Artık öyle değil: hizmet bedeli akışı **hiç gelmiyor**.
+
+### 8.1 Gelir: yalnız reklam
+
+Platform hizmet bedeline **hiç dokunmaz**. Sakin ustayla doğrudan
+iletişime geçer, parayı **doğrudan** öder. Sipariş, satın alma, tahsilat,
+komisyon **yok**.
+
+Tek gelir: işletmelerin görünürlük için ödediği **reklam bedeli** —
+işletme → platform **doğrudan satış**. Bu bir ödeme *aracılığı* değil;
+kendi hizmetimizin satışı.
+
+Bunun mimari sonuçları:
+
+| Kural | Nerede zorlanıyor |
+|---|---|
+| Talep/teklif/iş akışında **para yok** | `test_dukkan_para_akisi_yok.py` — o üç tabloda ödeme ima eden sütun belirirse kırmızı yanar |
+| `teklif.tutar_kurus` bir **beyandır**, tahsilat değil | Sütun yorumu (göç 0123) + `talep.py` başlığı |
+| Platform **hakemlik etmez** | `is_kaydi.durum`'dan `anlasmazlik` kaldırıldı (göç 0123) |
+| Reklam **organik sıralamaya karışmaz** | Ayrı tablo, ayrı sorgu, ayrı blok; `siralama_puani` reklamdan habersiz |
+| Reklam ödemesi **tek defter** kalıbı | P192 dersi burada geçerli: reklam tahsilatı tek yerden yazılır |
+
+### 8.2 Hâlâ kapsam dışı
+
+| Dışarıda | Gerekçe | Model bugünden ne yapmalı |
 |---|---|---|
-| Ödeme / abonelik | Şirket yok, fatura kesilemez; ödeme aracılığı BDDK lisansı gerektirebilir | `teklif.tutar` **kuruş `bigint`** tutulur, `float` asla. Para akışı gelirse **P192 dersi: TEK DEFTER** — `finansal_hareket` kalıbı |
-| Reklam / sponsorluk | Gelir modeli belirsiz | Sıralama `siralama_puani` üzerinden; sponsorluk sonradan **ayrı** bir alan olur, puana gömülmez |
+| **Hizmet bedeline aracılık** (ödeme/escrow/komisyon) | Gelir modeli değişti: kalıcı olarak dışarıda. Eklemek 6563 anlamında aracı hizmet sağlayıcı konumuna taşır ve BDDK'yı gündeme getirir | Hiçbir şey. Kısıt **testle** korunuyor; "ileride ekleriz" diye yer ayırmak yanlış vaat olurdu |
+| Abonelik / tekrarlayan ödeme | Reklam **tek seferlik** satın alma; abonelik iptal/iade/kısmi dönem karmaşası getirir | Reklam satın alma satırı dönem taşır; abonelik gerekirse üstüne kurulur |
 | AI arama | Klasik arama önce ölçülmeli | Metin arama `pg_trgm`/FTS ile; vektör sonradan **ek** sütun |
 | Harita / mesafe | Maliyet ve karmaşıklık | Eşleşme **mahalle** üzerinden (`01-veri-modeli.md` §6). PostGIS eklenirse mahalleye koordinat eklenir, model değişmez |

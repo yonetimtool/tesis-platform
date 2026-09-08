@@ -74,6 +74,23 @@ String? dukkanPushHedefi(Map<String, String> veri) {
           ? AppRoutes.dukkanPanel
           : '${AppRoutes.dukkanPanel}?isletme_id=$id';
 
+    // ----------------------- REKLAM (F8) ----------------------------- #
+    // Ikisi de isletme sahibine gider ve PANELIN REKLAM SEKMESINE
+    // goturur. Web hedefi `/panel/{id}/reklam`; mobilde panel tek ekran
+    // ve reklam bolumu onun icinde — bu yuzden `sekme` parametresiyle
+    // aciliyor. Sunucunun WEB YOLUNU dogrudan kullanmamanin sebebi tam
+    // olarak bu: iki yuzeyin yerlesimi ayni degil (P211 dersi).
+    case 'dukkan_reklam_bitiyor':
+    case 'dukkan_reklam_yer_acildi':
+    // (F8c) Odeme olaylari da ayni yere gider: isletme sahibinin
+    // yapacagi sey ayni ekranda (kart guncelle / yeniden satin al).
+    case 'dukkan_odeme_basarisiz':
+    case 'dukkan_abonelik_durdu':
+      final id = veri['isletme_id'];
+      return id == null || id.isEmpty
+          ? '${AppRoutes.dukkanPanel}?sekme=reklam'
+          : '${AppRoutes.dukkanPanel}?isletme_id=$id&sekme=reklam';
+
     // "Yorumun yayinlandi" -> KAMU PROFILI. Yorumu yazan da isletme
     // sahibi de ayni sayfayi gormeli: yayinlanan sey odur.
     case 'dukkan_yorum_yayinlandi':

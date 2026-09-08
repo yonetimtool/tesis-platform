@@ -82,6 +82,22 @@ class Settings(BaseSettings):
     # "hic gonderim" tarafinda hata yapmak icin bilincli varsayilan
     # (`sms_aktif` basliginda ayni ilke yazili).
     dukkan_sms_saglayici: str = ""
+    # (DUKKAN F8c) ODEME SAGLAYICISI — sanal POS.
+    #
+    # "" (kapali, VARSAYILAN) | "sahte" (dev) | ileride "iyzico" vb.
+    #
+    # VARSAYILAN KAPALI ve bu SMS'tekiyle ayni ilke: prod'da
+    # yapilandirma unutulursa hicbir sey tahsil edilmez ve uc 503 doner.
+    # Ters yonde hata yapmak — yani "yapilandirilmadi" iken "odendi"
+    # demek — platformun parasini almadan hizmet vermesi demekti.
+    #
+    # Saglayici HENUZ SECILMEDI (basvuru sirket kurulumuna bagli);
+    # karsilastirma: docs/dukkan/08-odeme-saglayici-karsilastirma.md
+    odeme_saglayici: str = ""
+    # Odeme sonrasi kullanicinin donecegi taban adres (3DS/hosted sayfa).
+    # Bos ise saglayici cagrisi yapilmaz — yarim yapilandirmayla odeme
+    # baslatmak, kullaniciyi donusu olmayan bir sayfada birakirdi.
+    odeme_donus_adresi: str = ""
     dukkan_db_pool_size: int = 3
     dukkan_db_max_overflow: int = 2
 

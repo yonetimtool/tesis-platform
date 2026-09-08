@@ -5804,7 +5804,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get dukkanAdresIpucu =>
-      'Communiquée uniquement à l\'entreprise choisie, après acceptation. Personne ne la voit pendant les devis.';
+      'Communiquée à l\'entreprise avec laquelle vous continuez. Personne ne la voit pendant les devis.';
 
   @override
   String get dukkanAdresSaklanmaz =>
@@ -5832,10 +5832,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get dukkanTeklifYok => 'Pas encore de devis.';
 
   @override
-  String get dukkanIsiVer => 'Confier';
+  String get dukkanIsiVer => 'Continuer avec cette entreprise';
 
   @override
-  String get dukkanIsVerildi => 'Confié';
+  String get dukkanIsVerildi => 'Vous continuez avec cette entreprise';
 
   @override
   String get dukkanKapandi => 'Fermé';
@@ -5851,13 +5851,14 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get dukkanHenuzAcilmadi =>
-      'Pas encore partagée — communiquée après acceptation.';
+      'Pas encore partagée — communiquée dès que vous continuez avec une entreprise.';
 
   @override
-  String get dukkanIseVerildiAcildi => 'Partagée avec l\'entreprise choisie.';
+  String get dukkanIseVerildiAcildi =>
+      'Vos coordonnées ont été communiquées à cette entreprise.';
 
   @override
-  String get dukkanIsTamamlandi => 'Travail terminé';
+  String get dukkanIsTamamlandi => 'Marquer comme terminé';
 
   @override
   String get dukkanGirisGerekli => 'Connectez-vous pour continuer.';
@@ -6004,7 +6005,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get dukkanPanelWebNotu =>
-      'Le profil, la zone de service, les documents et les invitations à évaluer se gèrent sur dukkan.yonetiyor.com.';
+      'Le profil, la zone de service, les documents, les invitations à évaluer et l\'achat d\'annonces se gèrent sur dukkan.yonetiyor.com.';
 
   @override
   String get dukkanBildirimler => 'Notifications de la place de marché';
@@ -6128,4 +6129,25 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get dukkanAgHatasi =>
       'Connexion impossible. Vérifiez votre connexion Internet.';
+
+  @override
+  String get dukkanAraciDegiliz =>
+      'Dükkan est un service d\'annonces et de mise en relation. L\'accord et le paiement se font directement entre vous et l\'entreprise ; Dükkan n\'y est pas partie.';
+
+  @override
+  String get dukkanSponsorlu => 'Sponsorisé';
+
+  @override
+  String get dukkanReklamBaslik => 'Vos annonces';
+
+  @override
+  String get dukkanReklamYok => 'Aucune annonce active.';
+
+  @override
+  String dukkanReklamKalanGun(int gun) {
+    return 'En ligne — $gun jours restants';
+  }
+
+  @override
+  String get dukkanReklamBitti => 'Expirée';
 }

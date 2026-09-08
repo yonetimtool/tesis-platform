@@ -147,8 +147,36 @@ async def isletme_ara(
         )
     ).mappings().all()
 
+    # ==================================================================
+    # (F8b) SPONSORLU BLOK — AYRI ANAHTAR, AYRI SORGU
+    # ==================================================================
+    # `items` icine karistirilmiyor ve bu KASITLI:
+    #
+    #   * Karistirmak, kullanicinin "en iyi sonuc" sandigi seyi satmak
+    #     olurdu. O an organik listenin degeri duser — ve satilan sey tam
+    #     olarak "degerli bir listenin ustunde olmak".
+    #   * Ayri anahtar, istemcinin rozeti UNUTMASINI zorlastiriyor:
+    #     sponsorlu sonuclar tek bir yerden gelir ve orada "Sponsorlu"
+    #     etiketi zorunlu.
+    #   * Sunucudaki `siralama_puani` bu sorgudan HABERSIZ kalir
+    #     (`test_dukkan_reklam.py` bunu olcuyor).
+    #
+    # SPONSORLU ISLETME ORGANIK LISTEDE DE CIKAR (hak ettigi sirada).
+    # Organikten cikarmak, paranin siraya karismasinin tersten haliydi.
+    #
+    # YALNIZ ILK SAYFADA: ikinci sayfaya inen kullanici zaten aramasini
+    # surduruyor; oraya da reklam koymak, listeyi reklamla kesmek olurdu.
+    from .reklam import sponsorlu_isletmeler
+
+    sponsorlu = (
+        await sponsorlu_isletmeler(
+            db, kategori_slug=kategori, il=il, ilce=ilce, mahalle=mahalle)
+        if sayfa == 1 else []
+    )
+
     return {
         "items": [dict(x) for x in satirlar],
+        "sponsorlu": sponsorlu,
         "toplam": toplam, "sayfa": sayfa, "boyut": boyut,
     }
 

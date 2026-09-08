@@ -309,7 +309,8 @@ is
   teklif_id     uuid FK -> teklif NOT NULL
   isletme_id    uuid FK -> isletme NOT NULL
   kullanici_id  uuid FK -> dukkan_kullanici NOT NULL
-  durum         text  -- 'kabul'|'devam'|'tamamlandi'|'iptal'|'anlasmazlik'
+  durum         text  -- 'kabul'|'devam'|'tamamlandi'|'iptal'
+                        -- (F8a) 'anlasmazlik' KALDIRILDI: platform hakemlik etmez
   kabul_at      timestamptz NOT NULL
   tamamlandi_at timestamptz
 ```
@@ -378,18 +379,24 @@ SEO sayfasının sorgusu ilk üçünün kesişimi ve **en sıcak yol** budur:
 
 ## 8. Bilerek yazmadıklarım
 
-`odeme`, `abonelik`, `fatura`, `reklam`, `sponsorluk`, `mesaj` — V1 dışı
-(`00-mimari.md` §8). Yerlerini **ayırmıyorum bile**: boş tablo, yarın onu
-dolduracak kişiyi bugünkü yarım fikrime mahkûm eder.
+> **GÜNCELLENDİ (F8).** Bu bölüm "ödeme geldiğinde `is` mi `teklif` mi
+> çapa olacak" diye bir belirsizlik kaydediyordu. O belirsizlik **düştü**:
+> hizmet bedeli hiç çapalanmıyor, çünkü platform ona hiç dokunmuyor.
 
-Modelin bunları engellemediğini iddia ediyorum, şu somut sebeplerle:
-para zaten **kuruş `bigint`** (`teklif.tutar_kurus`); `is` satırı bir ödemenin
-doğal çapası; sıralama tek bir `siralama_puani` sütununda, dolayısıyla
-sponsorluk ona **karışmadan** ayrı bir çarpan olarak eklenebilir.
+`odeme`, `abonelik`, `komisyon`, `mesaj` — kapsam dışı, ve
+`odeme`/`komisyon` **kalıcı olarak** (`00-mimari.md` §8.1). Yerlerini
+ayırmıyorum: boş tablo, yarın onu dolduracak kişiyi bugünkü yarım fikrime
+mahkûm eder.
 
-**EMİN DEĞİLİM:** ödeme geldiğinde `is` üzerinden mi yoksa `teklif` üzerinden mi
-çapalanacağını bugünden bilmiyorum — hizmet bedeli mi yoksa platform komisyonu
-mu tahsil edileceğine bağlı ve bu bir **iş kararı**, teknik karar değil.
+`teklif.tutar_kurus` kuruş `bigint` olarak **kalıyor** — ama sebebi
+"ödeme gelirse hazır olsun" değil: bir para değeri `float` ile
+saklandığında yanlış gösterilir ve yanlış karşılaştırılır. Değer bir
+**beyandır**; platform onu tahsil etmez.
+
+`reklam` ve `sponsorluk` artık **kapsam içinde** (F8, göç 0124) ve
+kendi tablolarında yaşıyor. Sıralamaya karışmıyorlar: `siralama_puani`
+reklamdan habersiz kalır, sponsorlu sonuç **ayrı sorgu ve ayrı blok**
+olarak gelir.
 
 Sources:
 - [NVI Adres Kayıt Sistemi](https://adres.nvi.gov.tr/Home)

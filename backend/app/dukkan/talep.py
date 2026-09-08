@@ -1,6 +1,39 @@
 """(DUKKAN F4) TALEP + TEKLIF + IS — KVKK'nin gobegi.
 
 ===========================================================================
+BU AKISTA PARA YOKTUR VE OLMAYACAKTIR  (F8a)
+===========================================================================
+Platform hizmet bedeline HIC DOKUNMAZ. Sakin ustayla dogrudan iletisime
+gecer, parayi DOGRUDAN oder. Siparis, satin alma, tahsilat, komisyon,
+fatura, iade YOK.
+
+`teklif.tutar_kurus` bir BEYANDIR — isletmenin bildirdigi fiyat bilgisi.
+Gosterilir, karsilastirilir; TAHSIL EDILMEZ. `NULL` olmasi "ucretsiz"
+degil "yerinde gormem gerek" demektir.
+
+"Bu isletmeyle devam et" (eski adiyla "Isi ver") bir SOZLESME KURMAZ:
+yaptigi tek sey, kullanicinin izin verdigi iletisim bilgilerini o
+isletmeye ACMAK. `is_kaydi` satiri bir eslesme kaydidir ve asil isi
+YORUMA CAPA olmaktir (F5) — bir is sozlesmesi degil.
+
+--- BURAYA ODEME EKLEMEK ISTEYEN OKUSUN --------------------------------
+Bu akisa tahsilat eklemek, platformu 6563 sayili Kanun anlaminda ARACI
+HIZMET SAGLAYICI konumuna tasir ve odeme hizmetleri mevzuatini (BDDK)
+devreye sokabilir. Guven ve fraud tasariminin tamami (03-guven-ve-fraud)
+"para platform disinda" varsayimi uzerine kurulu; kapora dolandiriciligi
+savunmasi da oyle.
+
+Bu bir performans ya da tasarim tercihi degil, HUKUKI bir sinir. Hukuki
+gorus almadan eklemeyin. Kisit ayrica testle kilitli:
+`test_dukkan_para_akisi_yok.py` — talep/teklif/is_kaydi tablolarinda
+odeme ima eden bir sutun belirirse kirmizi yanar.
+
+REKLAM TARAFI AYRI VE MESRU: isletme -> platform dogrudan satis. O akista
+odeme GERCEKTIR ve kendi tablolarinda yasar (`reklam_*`). Yasak yalniz
+BU akis icin.
+-----------------------------------------------------------------------
+
+===========================================================================
 GORUNURLUK KURALI TEK FONKSIYONDA
 ===========================================================================
 `_talep_gorunumu()` bir talebi CAGIRANA GORE sekillendiren TEK yerdir.
@@ -641,7 +674,11 @@ async def is_tamamlandi(
         raise HTTPException(status_code=404, detail="is_bulunamadi")
     if kimlik.kullanici_id not in (i["kullanici_id"], i["sahip_kullanici_id"]):
         raise HTTPException(status_code=403, detail="is_size_ait_degil")
-    if i["durum"] in ("iptal", "anlasmazlik"):
+    # (F8a) `anlasmazlik` KALDIRILDI (goc 0123): bir uyusmazlik durumu
+    # tutmak, platformun hakemlik ettigini ima ediyordu. Platform
+    # sozlesmenin tarafi degil; memnun olmayan kullanicinin yolu yorum
+    # ya da sikayet.
+    if i["durum"] == "iptal":
         raise HTTPException(status_code=409, detail="is_kapali")
 
     await db.execute(

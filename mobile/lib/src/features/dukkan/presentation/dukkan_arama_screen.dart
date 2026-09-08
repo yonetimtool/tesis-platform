@@ -240,11 +240,26 @@ class _DukkanAramaScreenState extends ConsumerState<DukkanAramaScreen> {
             ),
           );
         }
+        // (F8) SPONSORLU BLOK ORGANIK LISTENIN USTUNDE, AYRI.
+        //
+        // Tek listeye karistirmak, kullanicinin "en iyi sonuc" sandigi
+        // seyi satmak olurdu — ve o an organik listenin degeri duser,
+        // dolayisiyla reklamin degeri de duser. Ayrim sunucuda basliyor
+        // (`items` / `sponsorlu` ayri anahtarlar), arayuz onu SURDURUYOR.
+        final hepsi = [...d.sponsorlu, ...d.items];
         return ListView.separated(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-          itemCount: d.items.length,
-          separatorBuilder: (_, _) => const SizedBox(height: 8),
-          itemBuilder: (_, n) => _IsletmeKarti(isletme: d.items[n]),
+          itemCount: hepsi.length,
+          separatorBuilder: (_, n) =>
+              // Sponsorlu blogun SONUNDA gorsel ayirac: iki blok arasinda
+              // bosluk birakmak, rozetin tek ayirt edici olmasini onler.
+              n == d.sponsorlu.length - 1 && d.sponsorlu.isNotEmpty
+                  ? const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 4),
+                      child: Divider(height: 16),
+                    )
+                  : const SizedBox(height: 8),
+          itemBuilder: (_, n) => _IsletmeKarti(isletme: hepsi[n]),
         );
       },
     );
@@ -263,6 +278,9 @@ class _IsletmeKarti extends StatelessWidget {
 
     return Card(
       margin: EdgeInsets.zero,
+      // SPONSORLU KART GORSEL OLARAK AYRI: rozet tek basina yetmez,
+      // hizli kaydiran kullanici onu okumaz.
+      color: isletme.sponsorlu ? scheme.tertiaryContainer : null,
       child: InkWell(
         onTap: () => context.push('/dukkan/isletme/${isletme.slug}'),
         child: Padding(
@@ -270,6 +288,19 @@ class _IsletmeKarti extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // (F8) "Sponsorlu" ROZETI ZORUNLU — reklamin reklam
+              // oldugu acikca belli olmali (07-hukuki-sorular S18).
+              if (isletme.sponsorlu)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Text(
+                    t.dukkanSponsorlu,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: scheme.onTertiaryContainer,
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                ),
               Text(isletme.ad,
                   style: Theme.of(context).textTheme.titleMedium,
                   maxLines: 2,

@@ -180,3 +180,42 @@ def test_DUKKAN_UCLARI_YAZMA_KABUL_ETMEZ(client):
     ]:
         r = getattr(client, metot)(yol)
         assert r.status_code == 405, f"{metot.upper()} {yol} -> {r.status_code}"
+
+
+# ==================================================================== #
+# (F8) HATA KODU ISTEMCIYE ULASIYOR — OLCULEN KUSURUN KILIDI
+# ==================================================================== #
+# Dukkan bastan beri `HTTPException(404, detail="kod_bulunamadi")`
+# kaliniyla yaziyor ve o kimligin ISTEMCIDE okunmasini bekliyor. Ama
+# genel hata zarfi `code`u DURUM KODUNDAN uretiyordu:
+#
+#     {"error": {"code": "not_found", "message": "kod_bulunamadi"}}
+#
+# Sonuc: `dukkan-web/lib/istemci.ts`in otuzdan fazla eyleme donuk metni
+# (`sms_baslik_yok`, `basvuru_eksik:...`, `kod_suresi_doldu`) HIC
+# eslesmiyordu; kullanici her hatada genel yedek metni goruyordu. F7'de
+# yazilan mobil OTP hata metinleri de ayni sekilde olu kalirdi.
+#
+# BACKEND TESTLERI BUNU GORMEDI: hepsi `r.text` icinde arama yapiyor ve
+# kimlik `message` alaninda oldugu icin aramalar geciyordu. Kusur ancak
+# IKI TARAFI birden olcunce gorundu.
+
+def test_DUKKAN_HATA_KODU_CODE_ALANINDA(client):
+    """Eyleme donuk kimlik `code` alaninda olmali, `message`da degil."""
+    r = client.post("/dukkan/auth/telefon/dogrula",
+                    json={"telefon": "+905000000000", "kod": "123456"})
+    assert r.status_code == 404, r.text
+    assert r.json()["error"]["code"] == "kod_bulunamadi", r.text
+
+
+def test_YONETIYOR_HATA_KODLARI_DEGISMEDI(client):
+    """Duzeltme YOLA GORE: Yonetiyor'un kayitli `code` degerleri
+    bozulmamali.
+
+    Genel eslemeyi tum uygulamada degistirmek, sozlesmede kayitli
+    kodlari (ve onlara bakan admin-web'i) kirardi.
+    """
+    r = client.get("/units/00000000-0000-0000-0000-000000000000")
+    assert r.status_code in (401, 403, 404), r.text
+    assert r.json()["error"]["code"] in ("unauthorized", "forbidden",
+                                         "not_found"), r.text

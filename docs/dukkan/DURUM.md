@@ -18,10 +18,13 @@
 | **F6** | Bildirim, mobil menü, panel sayfası | 0120 | prod'a hazır |
 | **F6-ek** | Mobil bildirim ekranı + FCM kaydı, Dukkan push kanalı, ayrı tercih, web bildirim sayfası | 0121 | prod'a hazır |
 | **F7** | Başarısız SMS kotayı yemesin + mobil telefon-OTP (jeton cihazda) | 0122 | prod'a hazır |
+| **F8a** | Gelir modeli değişti: para akışı yok — `anlasmazlik` kaldırıldı, kısıt kilitlendi, metinler | 0123 | prod'a hazır |
+| **F8b** | Reklam: paket/slot/bekleme, sponsorlu ayrı blok, gecelik bakım | 0124 | prod'a hazır |
+| **F8c** | Ödeme altyapısı (sağlayıcıdan bağımsız), kart token, abonelik | 0125 | prod'a hazır |
 
 Dağıtım notları: `F1-dagitim.md` … `F6-dagitim.md`, `F6-ek-dagitim.md`,
-`F7-dagitim.md`, `SMS-entegrasyonu.md`. **Sıralı uygulanmalı** — göç
-zinciri 0113→0122.
+`F7-dagitim.md`, `F8-dagitim.md`, `SMS-entegrasyonu.md`.
+**Sıralı uygulanmalı** — göç zinciri 0113→0125.
 
 > **F6-ek mobil sürüm gerektirir.** Backend'i mobilden önce dağıtmak,
 > eski sürümdeki cihazlarda Dukkan push'unu **sessizce düşürür**
@@ -33,16 +36,18 @@ zinciri 0113→0122.
 
 | Takım | Sonuç |
 |---|---|
-| backend | **2957** passed, 38 skipped |
+| backend | **3018+** passed, 38 skipped |
 | admin-web | **1735** passed |
-| dukkan-web | **52** passed (BFF sözleşme kapısı) |
+| dukkan-web | **63** passed (BFF sözleşme kapısı) |
 | tanitim-web | **24** passed |
-| mobil | **2088** passed |
+| mobil | **2103** passed |
 
 Dukkan'a ait backend testleri: sınır (15), köprü (15), lokasyon (32),
 uçlar (13), arama (16), IDOR + kimlik kapısı (30), KVKK (10), arz akışı
 (23), güven (23), bildirim (12), **bildirim kanalı + tercih (15)**,
-SMS (18). Mobil: jeton ayrımı (3), **bildirim yönlendirmesi (9)**.
+SMS (18), **para akışı yok (4)**, **reklam (17)**, **ödeme (18)**.
+Mobil: jeton ayrımı (3), bildirim yönlendirmesi (9), **OTP jeton
+deposu (6)**.
 
 ---
 
@@ -61,7 +66,11 @@ Hepsi **kırılarak** doğrulandı — kırıldığında kırmızı yandığı g
 | `test_beat_schedule` | Zamanlanmış iş kayıtsız kalamaz; kapsam `include`dan **kendini** okur |
 | `test_dukkan_bildirim_kanal` | Dukkan push'u Yönetiyor kanalına düşemez; kanal **önekten** türetilir (liste değil); kapalı tercih push'u susturur ama **satırı silmez** |
 | `dukkan_bildirim_yonlendirme_test` | Sunucudaki her bildirim tipinin mobil hedefi var **ve o hedef router'da tanımlı** (F4'te olmayan bir rotaya `push` ediliyordu) |
-| BFF sözleşme kapısı | Vekili olmayan uç = web'de 405; bu turda **üç kez** işe yaradı |
+| BFF sözleşme kapısı | Vekili olmayan uç = web'de 405; **beş kez** işe yaradı (son ikisi F8'de, 10 vekil) |
+| `test_dukkan_para_akisi_yok` | Talep/teklif/iş akışına ödeme ima eden sütun eklenemez; `anlasmazlik` yazılamaz (platform hakemlik etmez) |
+| `test_KART_ALANI_HICBIR_TABLODA_YOK` | Kart numarası/CVV/son kullanma **hiçbir** Dukkan tablosunda olamaz — şemanın tamamını tarar |
+| `test_REKLAM_SIRALAMA_PUANINI_DEGISTIRMEZ` | Reklam organik sıralamayı manipüle edemez — gelir modelinin dayandığı kilit |
+| `test_YABANCI_KART_SILME_ABONELIGI_DURAKLATMAZ` | IDOR: yabancı istek başkasının aboneliğini duraklatamaz (güvenlik taramasında bulundu) |
 
 ---
 
@@ -69,8 +78,14 @@ Hepsi **kırılarak** doğrulandı — kırıldığında kırmızı yandığı g
 
 ### Karar sende (baştan öyle anlaşıldı)
 
-1. **Para** — ödeme yazılmadı. Model hazır: `teklif.tutar_kurus` kuruş
-   `bigint`, `is_kaydi` doğal çapa. Sağlayıcı, komisyon, plan **senin**.
+1. **GELİR MODELİ DEĞİŞTİ (F8).** Platform hizmet bedeline **hiç
+   dokunmuyor** — sipariş, tahsilat, komisyon yok ve bu **kalıcı**
+   (testle kilitli). Tek gelir: işletmelerden alınan **reklam bedeli**,
+   doğrudan satış.
+   **Kalan karar:** (a) **sanal POS sağlayıcısı** — karşılaştırma
+   `08-odeme-saglayici-karsilastirma.md`, teklif isteme listesi §4;
+   (b) **reklam fiyatları** — `reklam_paketi` tablosu boş, fiyat
+   girilene kadar reklam satılamaz (bilinçli: fiyat kodda değil).
 2. **Hukuk** — `07-hukuki-sorular.md`, 16 soru, öncelik sıralı. En
    muhafazakâr varsayımla kuruldu: ödeme yok, aracılık yok, şikâyet
    mekanizması ve kayıt saklama var.
@@ -92,7 +107,9 @@ Hepsi **kırılarak** doğrulandı — kırıldığında kırmızı yandığı g
 | **Web push yok** (service worker altyapısı kurulmadı) | F6-ek §7 |
 | `talep.son_gecerlilik` var ama **kullanılmıyor** | F4 §14 |
 | **İtiraz ucu yok** (denetim izi hazır, süreç e-posta ile) | F5 §14 |
-| **Jeton `localStorage`'da** | F2 §11 — ödeme fazında yeniden değerlendir |
+| **Jeton `localStorage`'da** | F2 §11 — **ödeme geldi, bu madde artık ENGELLEYİCİ** (`ONCELIK.md` §7) |
+| **Reklam tıklama/gösterim ölçümü yok** | Bilerek: ölçüm "gösterim garantisi" beklentisi yaratır ve sözleşmede taahhüde döner (hukuki S19) |
+| **3DS dalı ölçülmedi** | Kodda var; sağlayıcı seçilince yeniden ölçülmeli |
 
 ---
 
@@ -114,6 +131,11 @@ Hepsi **kırılarak** doğrulandı — kırıldığında kırmızı yandığı g
    ürünün çalışıp çalışmayacağını belirler ve **ancak gerçek trafikte**
    görülür.
 7. **Mobil ekranların cihazdaki görünümü** — emülatör yok.
+7b. **Gerçek tahsilat.** Sanal POS yok; hiçbir karta hiç dokunulmadı.
+   Ölçülen şey akışın kendisi (sahte sağlayıcıyla) ve sağlayıcı bağlı
+   değilken davranış (503). **3DS dalı hiç sürülmedi.**
+7c. **Reklamın işe yarayıp yaramadığı.** Tıklama/gösterim ölçümü yok
+   (bilerek — hukuki S19). Slot sayıları (1/2/3, %20) tahmin.
 8. **Hukuki durum** — 6563/ETBİS kapsamı belirsiz; yazılımla kapatılamaz.
 
 ---

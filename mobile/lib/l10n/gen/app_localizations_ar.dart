@@ -5889,7 +5889,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get dukkanAdresIpucu =>
-      'يُفتح فقط للعمل الذي تختاره بعد قبول المهمة. لا أحد يراه أثناء تقديم العروض.';
+      'تُشارَك مع النشاط الذي تتابع معه. لا أحد يراه أثناء تقديم العروض.';
 
   @override
   String get dukkanAdresSaklanmaz =>
@@ -5917,10 +5917,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get dukkanTeklifYok => 'لا توجد عروض بعد.';
 
   @override
-  String get dukkanIsiVer => 'تعيين';
+  String get dukkanIsiVer => 'المتابعة مع هذا النشاط';
 
   @override
-  String get dukkanIsVerildi => 'تم التعيين';
+  String get dukkanIsVerildi => 'أنت تتابع مع هذا النشاط';
 
   @override
   String get dukkanKapandi => 'مغلق';
@@ -5936,13 +5936,14 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get dukkanHenuzAcilmadi =>
-      'لم يُشارَك مع أحد بعد — يُفتح بعد قبول المهمة.';
+      'لم تُشارَك مع أحد بعد — تُشارَك عند المتابعة مع نشاط.';
 
   @override
-  String get dukkanIseVerildiAcildi => 'تمت مشاركته مع العمل الذي عيّنته.';
+  String get dukkanIseVerildiAcildi =>
+      'تمت مشاركة بيانات التواصل الخاصة بك مع هذا النشاط.';
 
   @override
-  String get dukkanIsTamamlandi => 'اكتمل العمل';
+  String get dukkanIsTamamlandi => 'وضع علامة مكتمل';
 
   @override
   String get dukkanGirisGerekli => 'سجّل الدخول للمتابعة.';
@@ -6086,7 +6087,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get dukkanPanelWebNotu =>
-      'يتم إدارة الملف الشخصي ونطاق الخدمة والمستندات ودعوات التقييم عبر dukkan.yonetiyor.com.';
+      'يتم إدارة الملف الشخصي ونطاق الخدمة والمستندات ودعوات التقييم وشراء الإعلانات عبر dukkan.yonetiyor.com.';
 
   @override
   String get dukkanBildirimler => 'إشعارات السوق';
@@ -6202,4 +6203,25 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get dukkanAgHatasi => 'تعذّر الاتصال. تحقق من الإنترنت.';
+
+  @override
+  String get dukkanAraciDegiliz =>
+      'دُكان خدمة إعلانات ومطابقة. الاتفاق والدفع يتمّان مباشرة بينك وبين النشاط؛ دُكان ليس طرفاً فيهما.';
+
+  @override
+  String get dukkanSponsorlu => 'إعلان مموّل';
+
+  @override
+  String get dukkanReklamBaslik => 'إعلاناتك';
+
+  @override
+  String get dukkanReklamYok => 'لا توجد إعلانات نشطة.';
+
+  @override
+  String dukkanReklamKalanGun(int gun) {
+    return 'نشط — بقي $gun يوم';
+  }
+
+  @override
+  String get dukkanReklamBitti => 'انتهت المدة';
 }

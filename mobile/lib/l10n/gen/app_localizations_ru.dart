@@ -5891,7 +5891,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get dukkanAdresIpucu =>
-      'Открывается только выбранной компании после принятия заказа. На этапе предложений его никто не видит.';
+      'Передаётся компании, с которой вы продолжаете. На этапе предложений его никто не видит.';
 
   @override
   String get dukkanAdresSaklanmaz =>
@@ -5919,10 +5919,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get dukkanTeklifYok => 'Предложений пока нет.';
 
   @override
-  String get dukkanIsiVer => 'Нанять';
+  String get dukkanIsiVer => 'Продолжить с этой компанией';
 
   @override
-  String get dukkanIsVerildi => 'Нанят';
+  String get dukkanIsVerildi => 'Вы продолжаете с этой компанией';
 
   @override
   String get dukkanKapandi => 'Закрыто';
@@ -5938,13 +5938,14 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get dukkanHenuzAcilmadi =>
-      'Пока никому не открыт — откроется после принятия заказа.';
+      'Пока никому не передан — передаётся, когда вы продолжаете с компанией.';
 
   @override
-  String get dukkanIseVerildiAcildi => 'Открыт выбранной компании.';
+  String get dukkanIseVerildiAcildi =>
+      'Ваши контактные данные переданы этой компании.';
 
   @override
-  String get dukkanIsTamamlandi => 'Работа завершена';
+  String get dukkanIsTamamlandi => 'Отметить как завершённое';
 
   @override
   String get dukkanGirisGerekli => 'Войдите, чтобы продолжить.';
@@ -6090,7 +6091,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get dukkanPanelWebNotu =>
-      'Профиль, зона обслуживания, документы и приглашения к отзыву настраиваются на dukkan.yonetiyor.com.';
+      'Профиль, зона обслуживания, документы, приглашения к отзыву и покупка рекламы настраиваются на dukkan.yonetiyor.com.';
 
   @override
   String get dukkanBildirimler => 'Уведомления маркетплейса';
@@ -6209,4 +6210,25 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get dukkanAgHatasi => 'Не удалось подключиться. Проверьте интернет.';
+
+  @override
+  String get dukkanAraciDegiliz =>
+      'Dükkan — сервис объявлений и подбора. Договорённость и оплата происходят напрямую между вами и компанией; Dükkan не является стороной.';
+
+  @override
+  String get dukkanSponsorlu => 'Реклама';
+
+  @override
+  String get dukkanReklamBaslik => 'Ваша реклама';
+
+  @override
+  String get dukkanReklamYok => 'Активной рекламы нет.';
+
+  @override
+  String dukkanReklamKalanGun(int gun) {
+    return 'Активна — осталось $gun дн.';
+  }
+
+  @override
+  String get dukkanReklamBitti => 'Срок истёк';
 }

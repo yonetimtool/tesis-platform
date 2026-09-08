@@ -99,7 +99,7 @@ uydurma bir takvim, sonra ona göre karar verilen bir sayı hâline gelir.
 | **BFF vekil bütünlüğü** — metot metot sözleşme kapısı | P173/P189: eksik `export` → 405, testler görmüyor |
 | **Testler akışı ölçer** — taklit **HTTP** katmanında | P198/P200: repo düzeyinde taklit, kıran katmanı ölçmüyor |
 | **Sahiplik sunucuda, testle kilitli** — her özel uç için IDOR testi | `02` §5 |
-| **Para gelirse TEK DEFTER** | P192 |
+| **Reklam tahsilatı TEK DEFTER** | P192 — hizmet bedeli akışı yok (F8) |
 | **Yeni servis → `tesisnet` ağı + dağıtım belgesinde doğrulama komutu** | P215: `mediamtx` yanlış ağda, prod'a kadar gitti |
 | **Göç `app.*` import etmez** — gereken mantık göçe donmuş kopya olarak girer | P213: 0107 zinciri komple düşürdü |
 
@@ -222,7 +222,9 @@ Prompt'un son sorusu buydu. Tam liste:
    varsa **kaçırmışımdır**.
 2. **Hukuki durum belirsiz.** Dukkan V1'in 6563 anlamında "elektronik ticaret
    aracı hizmet sağlayıcı" sayılıp sayılmayacağından **emin değilim** —
-   platform üzerinden sipariş/ödeme yok, yapılan şey ilan/eşleştirme. ETBİS
+   platform üzerinden sipariş/ödeme yok, yapılan şey ilan/eşleştirme.
+   **F8:** reklam geliri eklendi — 6563 değerlendirmesine etkisi avukata
+   soruldu (07 S17). ETBİS
    kayıt yükümlülüğünün doğup doğmadığından da emin değilim. Saklama sürelerini
    ve ceza tutarlarını **bilerek yazmadım**; yanlış hatırlanmış bir süre hiç
    yazmamaktan kötüdür. **Yayına çıkmadan bir avukatla bir saatlik görüşme
@@ -237,8 +239,9 @@ Prompt'un son sorusu buydu. Tam liste:
 7. **Hesap silme etkileşimi**: Yönetiyor hesabını silen kullanıcının Dukkan
    hesabına ne olacağı bir **ürün kararı** — teknik olarak bağımsız yaşayabilir,
    ama kullanıcı ikisini birden kastediyor olabilir. Senin kararın (`02` §6.5).
-8. **Ödeme geldiğinde çapa** `is` mi `teklif` mi — hizmet bedeli mi komisyon mu
-   tahsil edileceğine bağlı; **iş kararı**, teknik karar değil.
+8. ~~**Ödeme geldiğinde çapa** `is` mi `teklif` mi~~ — **DÜŞTÜ (F8).**
+   Hizmet bedeli akışı hiç gelmiyor; platform ona dokunmuyor. Gelir
+   reklamdan ve kendi tablolarında yaşıyor.
 9. **İşletme sahipliği devri / kimlik gaspı itirazının** hukuki tarafını
    tasarlayacak yetkinlikte değilim (`03` §3).
 10. **Hiçbiri gerçek trafikle sınanmadı.** Bu belgeler bir tasarım; ölçüm

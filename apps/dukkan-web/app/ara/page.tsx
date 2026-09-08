@@ -23,6 +23,11 @@ export const dynamic = "force-dynamic";
 
 type Sonuc = {
   items: IsletmeOzet[];
+  /** (F8) SPONSORLU — organik `items`tan AYRI ANAHTAR.
+   *
+   * Sunucu ikisini bilerek ayirdi: karistirmak, kullanicinin "en iyi
+   * sonuc" sandigi seyi satmak olurdu. Arayuz de ayri blokta gosterir. */
+  sponsorlu?: IsletmeOzet[];
   toplam: number;
   sayfa: number;
   boyut: number;
@@ -84,6 +89,16 @@ export default async function Ara({
           <p className="mt-4 text-sm text-[color:var(--dk-metin-soluk)]">
             {d.toplam} işletme bulundu
           </p>
+          {d.sponsorlu && d.sponsorlu.length > 0 && (
+            <ul className="mt-4 space-y-3">
+              {d.sponsorlu.map((i) => (
+                <IsletmeKarti key={`sp-${i.slug}`} i={i} />
+              ))}
+            </ul>
+          )}
+          {/* AYRI BLOK, AYRI LISTE: sponsorlu sonuclar organik listenin
+              USTUNDE ve gorsel olarak ayri. Ayni <ul> icine koymak,
+              ayrimi yalniz rozete birakirdi. */}
           <ul className="mt-4 space-y-3">
             {d.items.map((i) => (
               <IsletmeKarti key={i.slug} i={i} />

@@ -17,13 +17,29 @@
 > `dukkan.yonetiyor.com`, kullanıcıların yerel esnaf/hizmet sağlayıcı
 > (elektrikçi, tesisatçı, temizlikçi, nakliyeci) aradığı bir **ilan ve
 > eşleştirme** platformu. Kullanıcı ihtiyacını yazar, bölgesindeki işletmeler
-> teklif verir, kullanıcı birini seçer. **V1'de platform üzerinden ödeme,
-> sipariş veya komisyon YOK** — para tamamen taraflar arasında, platform dışında
-> el değiştirir. Platform işletmelerden ücret almaz. Kullanıcılar yorum yazar.
-> İşletmeler kayıt olur ve **elle onaydan** geçer.
+> teklif verir, kullanıcı birini seçer ve **doğrudan** o işletmeyle iletişime
+> geçer.
+>
+> **Platform hizmet bedeline hiç dokunmaz:** sipariş, satın alma, tahsilat,
+> komisyon, escrow YOK. Para tamamen taraflar arasında, platform dışında el
+> değiştirir. Platform sözleşmenin tarafı değildir ve taraflar arasında
+> **hakemlik yapmaz**.
+>
+> **Platformun tek geliri:** işletmelerin görünürlük (reklam) için ödediği
+> bedel. Bu **doğrudan satış** — işletme platforma öder, platform kendi
+> hizmetini satar. Ödeme *aracılığı* değildir.
+>
+> Kullanıcılar yorum yazar. İşletmeler kayıt olur ve **elle onaydan** geçer.
 
-Bu tanımın **"ödeme yok"** kısmının altını çiz: aşağıdaki soruların çoğunun
-cevabı buna bağlı.
+> **DEĞİŞİKLİK NOTU:** Bu belgenin ilk hâlinde ürün "platform işletmelerden
+> ücret almaz" diye tanımlanmıştı ve ödeme "V1 dışı, ileride gelebilir"
+> sayılıyordu. **İkisi de değişti:** hizmet bedeli akışı artık *kalıcı
+> olarak* kapsam dışı, buna karşılık işletmelerden **reklam geliri**
+> alınıyor. Aşağıdaki soruların bir kısmı bu yüzden düştü, bir kısmı
+> değişti, üç tanesi yeni eklendi (S17-S19).
+
+Altını çiz: **hizmet bedeline aracılık yok, reklam geliri var.** Aşağıdaki
+soruların çoğunun cevabı bu ikisinin birleşimine bağlı.
 
 ---
 
@@ -38,6 +54,13 @@ yükümlülükler gündeme gelir; değilsek yük çok daha hafif.
 **Sorunun özü:** Platform üzerinden **sipariş/sözleşme kurulmuyor ve ödeme
 alınmıyorsa**, yapılan iş "aracı hizmet sağlayıcılık" mı yoksa bir **ilan/
 rehber hizmeti** mi sayılır?
+
+**F8 EKİ — mutlaka birlikte sor:** Platform, listelediği işletmelerden
+**reklam/görünürlük bedeli** alıyor. Bu gelir, ürünü "ilan hizmeti"
+olmaktan çıkarıp aracı hizmet sağlayıcı konumuna taşır mı? Yoksa
+gazete/rehber ilanı gibi mi değerlendirilir? Yani belirleyici olan
+**ticari fayda elde etmek** mi, yoksa **işlemin platformda kurulması**
+mı?
 
 **Cevaba göre ne değişir:** ETAHS isek ETBİS kaydı ve doğrulama akışları V1
 kapsamına girer — F2'nin (işletme kaydı) tasarımı değişir.
@@ -152,22 +175,39 @@ zorunda mıyız**?
 
 ## C. GELECEK (13-16) — ama bugün sorulması ucuz
 
-### 13. Platform bir gün komisyon/abonelik alırsa ne değişir?
+> S13 **F8 ile değişti** (aşağıda), S14 **genişledi**.
 
-**Neden önemli:** Cevap veri modelini **bugünden** etkileyebilir. Tasarımda para
-alanı kuruş `bigint` olarak hazır ama akışın nereye çapalanacağı
-(`is` mi `teklif` mi) belirsiz bırakıldı — çünkü bu bir iş kararı.
+### 13. ~~Platform bir gün komisyon/abonelik alırsa ne değişir?~~ → **DEĞİŞTİ**
 
-**Sorunun özü:**
-- **Abonelik** (işletmeden sabit ücret) ile **komisyon** (iş başına yüzde)
-  arasında hukuki fark var mı?
-- Komisyon alırsak ETAHS statüsü **kesinleşir mi** (soru 1)?
-- Platform **ödemeye aracılık ederse** BDDK lisansı gerekir mi? *(Bu yüzden V1'de
-  ödeme kapsam dışı bırakıldı — doğru bir karar mı?)*
+**Eski hâli varsayımsaldı** ("bir gün alırsak"). Artık varsayım değil:
+komisyon **hiç alınmayacak**, reklam **alınıyor**. Soru ikiye bölündü:
 
-### 14. Fatura: işletmeden ücret aldığımızda faturayı kim, kime, ne zaman keser?
+**13a. Komisyona geçmenin bedeli nedir?** Bugün hizmet bedeline hiç
+dokunmuyoruz ve bu kararı kodda **testle** kilitledik. İleride biri
+"komisyon ekleyelim" derse, hangi yükümlülükler devreye girer? (ETAHS
+statüsü kesinleşir mi, ödeme aracılığı BDDK lisansı gerektirir mi,
+mesafeli satış mevzuatı bağlar mı?) **Cevabı bugün istiyoruz ki, o gün
+gelirse bilerek karar verilsin.**
+
+**13b. Reklam geliri hangi mevzuata tabi?** Ticari Reklam ve Haksız
+Ticari Uygulamalar Yönetmeliği kapsamında mıyız? Sponsorlu sonucun
+**ayırt edilebilir** olması yasal bir zorunluluk mu, yoksa iyi
+uygulama mı? (Ürün tarafında "Sponsorlu" etiketini zaten zorunlu
+yaptık — ama yeterli mi, konumu/büyüklüğü için bir ölçüt var mı?)
+
+### 14. Fatura: işletmeden **reklam bedeli** aldığımızda faturayı kim, kime, ne zaman keser?
 
 *(Bu soru mali müşavire.)*
+
+**F8 eki — somut sorular:**
+- Reklam satışında **e-Arşiv fatura zorunlu mu**, yoksa ciro eşiğine mi
+  bağlı? Eşik nedir?
+- Fatura **satın alma anında mı** yoksa **dönem sonunda mı** kesilir?
+  (Reklam 30/90 günlük bir dönem için peşin satılıyor.)
+- **KDV oranı** reklam hizmetinde kaç? Ara dönemde iptal olursa (bkz.
+  S19) düzeltme nasıl yapılır?
+- Ödeme sağlayıcısının (sanal POS) kestiği komisyon **gider olarak** mı
+  yazılır, yoksa hasılattan mı düşülür?
 
 ### 15. Platformdaki işletmeler bizim "çalışanımız" ya da "bayimiz" sayılır mı?
 
@@ -182,6 +222,60 @@ mantıklı mı, yoksa gereksiz karmaşıklık mı?
 
 ---
 
+## D. F8 İLE GELEN YENİ SORULAR (17-19) — reklam modeli
+
+### 17. Reklam geliri, platformun 6563 karşısındaki konumunu değiştirir mi?
+
+**Neden önemli:** S1'in cevabı "hayır, ilan hizmetiyiz" ise, reklam
+geliri bu cevabı bozar mı? Ürün hâlâ sipariş/ödeme taşımıyor ama artık
+**listelediği işletmelerden para alıyor**.
+
+**Sorunun özü:** 6563'ün "aracı hizmet sağlayıcı" tanımında belirleyici
+olan, elektronik ticaret ortamında **başkalarına ait iktisadi ve ticari
+faaliyetlerin yapılmasına imkân sağlamak** mı? Reklam geliri bu tanımı
+tetikler mi, yoksa tanım için **işlemin platformda kurulması** mı
+gerekir?
+
+**Ek olarak sor:** Cevap "evet, ETAHS'sınız" ise, aracı hizmet
+sağlayıcının **kendi hizmetini** (reklam) satması ayrıca bir sınıflama
+doğurur mu?
+
+### 18. Sponsorlu sonuçları nasıl göstermeliyiz? "Örtülü reklam" riski var mı?
+
+**Neden önemli:** Reklam Kurulu'nun örtülü reklam yaptırımları var ve
+platform tarafında da uygulanıyor.
+
+**Sorunun özü:**
+- Reklamlı işletme, arama sonuçlarında **organik listeden ayrı bir
+  blokta** ve **"Sponsorlu" rozetiyle** gösteriliyor. Bu yeterli mi?
+- Rozetin **boyutu, konumu, kontrastı** için bir asgari ölçüt var mı?
+- Sponsorlu sonuç aynı zamanda organik listede de çıkıyor (hak ettiği
+  sırada). Bu bir sorun mu?
+- SEO sayfalarında sponsorlu içerik göstermek ek yükümlülük doğurur mu?
+
+**Ürün tarafındaki karar:** Reklam, organik sıralama puanına **hiç
+karışmıyor** — ayrı tablo, ayrı sorgu, ayrı blok; bunu bir testle
+kilitledik. Bu ayrımın hukuken de doğru ayrım olup olmadığını sor.
+
+### 19. Reklam sözleşmesi: iade, iptal ve "gösterim garantisi" yükümlülüğü
+
+**Neden önemli:** Reklam bedeli **peşin** ve **tek seferlik** alınıyor
+(abonelik yok). İşletme "yeterince gösterilmedim" derse ne olur?
+
+**Sorunun özü:**
+- İşletme bir **tacir** olduğu için mesafeli satış mevzuatındaki
+  **cayma hakkı** uygulanmaz sanıyoruz — doğru mu?
+- Reklam süresi içinde işletme **askıya alınırsa** (bizim moderasyon
+  kararımızla), kalan süre iade edilmeli mi? Sözleşmeye ne yazmalıyız?
+- **Gösterim sayısı garantisi vermiyoruz** (bölgede kaç arama yapılacağı
+  bilinmiyor). Bunu sözleşmede nasıl ifade etmeliyiz ki eksik ifa
+  sayılmasın?
+- Aynı bölgede slot sayısı **sınırlı** (mahalle 1 / ilçe 2 / il 3) ve
+  dolunca satış kapanıyor. Bu sınırın **rekabet** açısından bir sakıncası
+  var mı?
+
+---
+
 ## D. Görüşmeye giderken yanında götür
 
 1. Bu belge.
@@ -190,7 +284,11 @@ mantıklı mı, yoksa gereksiz karmaşıklık mı?
 3. `docs/dukkan/02-kimlik-ve-yetki.md` §6 — KVKK tasarımı: sakinin adresi,
    telefonu ve daire numarasının bir işletmeye **otomatik gitmediği**, iki
    aşamalı görünürlük.
-4. Şu tek cümle: **"V1'de platform üzerinden ödeme ve sipariş YOK."**
+4. Şu iki cümle: **"Platform hizmet bedeline hiç dokunmuyor — sipariş,
+   ödeme, komisyon yok."** ve **"Tek gelir, işletmelerden alınan reklam
+   bedeli — doğrudan satış."**
+5. `docs/dukkan/F8-kararlar.md` — reklam modelinin ürün tarafındaki
+   kuralları (slot sınırı, "Sponsorlu" etiketi, sıralamaya karışmama).
 
 ## E. Görüşmeden sonra
 

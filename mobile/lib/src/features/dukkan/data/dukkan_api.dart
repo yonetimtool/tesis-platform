@@ -28,6 +28,7 @@ class DukkanIsletme {
     this.whatsapp,
     this.ortalamaPuan,
     this.kategoriler = const [],
+    this.sponsorlu = false,
   });
 
   final String ad;
@@ -39,6 +40,13 @@ class DukkanIsletme {
   final String? whatsapp;
   final double? ortalamaPuan;
   final List<String> kategoriler;
+
+  /// (F8) SUNUCUDAN GELIR, ISTEMCI VARSAYMAZ.
+  ///
+  /// "Sponsorlu listeden gelenler sponsorludur" varsayimina birakilsaydi,
+  /// listeyi baska bir yerde kullanan ikinci bir ekran rozeti DUSURURDU.
+  /// Rozet zorunlu; bayrak nesnenin uzerinde.
+  final bool sponsorlu;
 
   factory DukkanIsletme.fromJson(Map<String, dynamic> j) => DukkanIsletme(
         ad: j['ad'] as String? ?? '',
@@ -54,18 +62,33 @@ class DukkanIsletme {
             : double.tryParse('${j['ortalama_puan']}'),
         kategoriler:
             ((j['kategoriler'] as List?) ?? const []).map((e) => '$e').toList(),
+        sponsorlu: j['sponsorlu'] as bool? ?? false,
       );
 }
 
 class DukkanAramaSonucu {
-  const DukkanAramaSonucu({required this.items, required this.toplam});
+  const DukkanAramaSonucu({
+    required this.items,
+    required this.toplam,
+    this.sponsorlu = const [],
+  });
 
   final List<DukkanIsletme> items;
   final int toplam;
 
+  /// (F8) SPONSORLU — organik `items`tan AYRI LISTE.
+  ///
+  /// Sunucu ikisini bilerek ayirdi: karistirmak, kullanicinin "en iyi
+  /// sonuc" sandigi seyi satmak olurdu. Mobil de ayri blokta gosterir.
+  final List<DukkanIsletme> sponsorlu;
+
   factory DukkanAramaSonucu.fromJson(Map<String, dynamic> j) =>
       DukkanAramaSonucu(
         items: ((j['items'] as List?) ?? const [])
+            .cast<Map<String, dynamic>>()
+            .map(DukkanIsletme.fromJson)
+            .toList(),
+        sponsorlu: ((j['sponsorlu'] as List?) ?? const [])
             .cast<Map<String, dynamic>>()
             .map(DukkanIsletme.fromJson)
             .toList(),
@@ -858,3 +881,77 @@ extension DukkanOtpApi on DukkanApi {
     return e.response == null ? 'ag' : 'bilinmeyen';
   }
 }
+
+// =========================================================================
+// (DUKKAN F8) REKLAM — MOBIL
+// =========================================================================
+// Mobilde SATIN ALMA YOK, yalnizca DURUM ve HATIRLATMA var. Gerekce:
+//
+//   * Satin alma fatura bilgisi (unvan, VKN, vergi dairesi, adres) ve
+//     kart adimi ister; ikisi de masa basi, tek seferlik isler. Telefon
+//     klavyesinde VKN yazdirmak, akisi bitirmeyen bir form uretirdi.
+//   * Buna karsilik "reklamim ne durumda", "ne zaman bitiyor", "odeme
+//     alinamadi" SAHADA sorulan sorular — ve bildirimlerin hedefi.
+//
+// Uyarlama, kopya degil (F6-ek'te panel icin verilen kararin aynisi).
+// Eksik olan SESSIZCE atlanmiyor: ekran "satin alma web'de" diyor.
+
+class DukkanReklam {
+  const DukkanReklam({
+    required this.id,
+    required this.kapsam,
+    required this.durum,
+    required this.kategori,
+    required this.bitis,
+    this.bolge,
+    this.paket,
+  });
+
+  factory DukkanReklam.fromJson(Map<String, dynamic> j) => DukkanReklam(
+        id: '${j['id']}',
+        kapsam: '${j['kapsam'] ?? ''}',
+        durum: '${j['durum'] ?? ''}',
+        kategori: '${j['kategori'] ?? ''}',
+        bitis: DateTime.tryParse('${j['bitis']}')?.toLocal(),
+        bolge: j['bolge'] as String?,
+        paket: j['paket'] as String?,
+      );
+
+  final String id;
+  final String kapsam;
+
+  /// 'yayinda' | 'bitti' | 'iptal' | 'beklemede'
+  final String durum;
+  final String kategori;
+  final DateTime? bitis;
+  final String? bolge;
+  final String? paket;
+
+  bool get yayinda => durum == 'yayinda';
+
+  /// Bitisine kalan gun — negatifse gecmis.
+  int? get kalanGun =>
+      bitis == null ? null : bitis!.difference(DateTime.now()).inDays;
+}
+
+extension DukkanReklamApi on DukkanApi {
+  Future<List<DukkanReklam>> reklamlarim(String isletmeId, String jeton) async {
+    final r = await _dio.get<Map<String, dynamic>>(
+      '/dukkan/reklam/benim',
+      queryParameters: <String, dynamic>{'isletme_id': isletmeId},
+      options: Options(extra: {AuthInterceptor.dukkanJetonu: jeton}),
+    );
+    return ((r.data?['items'] as List?) ?? const [])
+        .cast<Map<String, dynamic>>()
+        .map(DukkanReklam.fromJson)
+        .toList();
+  }
+}
+
+/// Bir isletmenin reklamlari.
+final dukkanReklamlarimProvider =
+    FutureProvider.autoDispose.family<List<DukkanReklam>, String>(
+        (ref, isletmeId) async {
+  final jeton = await ref.watch(dukkanOturumProvider).jetonAl();
+  return ref.watch(dukkanApiProvider).reklamlarim(isletmeId, jeton);
+});

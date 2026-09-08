@@ -96,6 +96,40 @@ def install_error_handlers(app: FastAPI) -> None:
     async def _http_error(
         request: Request, exc: StarletteHTTPException
     ) -> JSONResponse:
+        # ==============================================================
+        # (DUKKAN F8) DUKKAN'IN `detail`I BIR KIMLIKTIR — `code`A GECER
+        # ==============================================================
+        # OLCULEN KUSUR: Dukkan modulu bastan beri
+        # `HTTPException(404, detail="kod_bulunamadi")` kaliniyla
+        # yaziyor ve o kimligi ISTEMCININ okumasini bekliyor. Ama
+        # asagidaki genel esleme `code`u DURUM KODUNDAN uretiyordu:
+        #
+        #   {"error": {"code": "not_found", "message": "kod_bulunamadi"}}
+        #
+        # Yani `dukkan-web/lib/istemci.ts`in `hataMetni` sozlugu
+        # (`sms_baslik_yok`, `basvuru_eksik:...`, `kod_suresi_doldu` —
+        # otuzdan fazla eyleme donuk metin) HIC ESLESMIYORDU ve kullanici
+        # her hatada genel yedek metni goruyordu. Mobil tarafta F7'de
+        # yazilan OTP hata metinleri de ayni sekilde olu kalirdi.
+        #
+        # Backend testleri bunu GORMEDI cunku hepsi `r.text` icinde
+        # arama yapiyor — kimlik `message` alaninda oldugu icin
+        # aramalar geciyordu. Kusur ancak IKI TARAFI birden olcunce
+        # gorundu (F8'de yeni kodlar eklenirken).
+        #
+        # NEDEN YOLA GORE: `code` degerleri sozlesmede kayitli ve
+        # Yonetiyor tarafinda `APIError` ile ACIKCA veriliyor. Genel
+        # eslemeyi tum uygulamada degistirmek, kayitli kodlari
+        # bozardi. Dukkan kendi modulu ve kendi sozlugu olan ayri bir
+        # yuzey; kural yalniz orada gecerli.
+        yol = request.url.path
+        if yol.startswith("/dukkan/") and isinstance(exc.detail, str) \
+                and exc.detail:
+            return _envelope(
+                exc.status_code, exc.detail,
+                hata_metni(exc.detail, _dil(request)),
+            )
+
         # FastAPI/Starlette kaynakli HTTPException'lari da zarfa cevir.
         code = {
             400: "bad_request",

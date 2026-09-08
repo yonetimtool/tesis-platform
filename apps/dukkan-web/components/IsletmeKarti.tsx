@@ -12,6 +12,8 @@ export type IsletmeOzet = {
   ortalama_puan: number | string | null;
   yorum_sayisi: number;
   kategoriler?: string[];
+  /** (F8) Sunucudan gelir; istemci VARSAYMAZ. */
+  sponsorlu?: boolean;
 };
 
 /** Listelerde kullanilan isletme karti.
@@ -21,7 +23,14 @@ export type IsletmeOzet = {
  * bir sonraki sitede aramasi demek olurdu. */
 export function IsletmeKarti({ i }: { i: IsletmeOzet }) {
   return (
-    <li className="rounded border border-[color:var(--dk-cizgi)] p-4">
+    <li
+      className={
+        "rounded border p-4 " +
+        (i.sponsorlu
+          ? "border-amber-300 bg-amber-50/60"
+          : "border-[color:var(--dk-cizgi)]")
+      }
+    >
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
           <h3 className="font-medium text-marka-koyu">
@@ -30,6 +39,17 @@ export function IsletmeKarti({ i }: { i: IsletmeOzet }) {
             </Link>
           </h3>
           <div className="mt-1 flex flex-wrap items-center gap-2">
+            {/* (F8) "Sponsorlu" ROZETI ZORUNLU ve ORGANIK SONUCTAN
+                AYIRT EDILEBILIR olmali: ince gri dipnot degil, kartin
+                cercevesini de degistiren gorunur bir etiket. Reklamin
+                reklam oldugunun acikca belli olmasi hem urun karari hem
+                de olasi bir mevzuat yukumlulugu (avukata soruldu:
+                07-hukuki-sorular S18). */}
+            {i.sponsorlu && (
+              <span className="rounded bg-amber-200 px-1.5 py-0.5 text-xs font-medium text-amber-900">
+                Sponsorlu
+              </span>
+            )}
             <Puan puan={i.ortalama_puan} sayi={i.yorum_sayisi} />
             <DogrulamaRozeti seviye={i.dogrulama_seviyesi} />
           </div>

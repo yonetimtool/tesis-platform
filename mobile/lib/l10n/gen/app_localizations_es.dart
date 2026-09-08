@@ -5790,7 +5790,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get dukkanAdresIpucu =>
-      'Solo se muestra al negocio que contrates, tras aceptar el trabajo. Nadie la ve durante los presupuestos.';
+      'Se comparte con el negocio con el que continúas. Nadie la ve durante los presupuestos.';
 
   @override
   String get dukkanAdresSaklanmaz =>
@@ -5818,10 +5818,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get dukkanTeklifYok => 'Aún no hay presupuestos.';
 
   @override
-  String get dukkanIsiVer => 'Contratar';
+  String get dukkanIsiVer => 'Continuar con este negocio';
 
   @override
-  String get dukkanIsVerildi => 'Contratado';
+  String get dukkanIsVerildi => 'Estás continuando con este negocio';
 
   @override
   String get dukkanKapandi => 'Cerrado';
@@ -5838,13 +5838,14 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get dukkanHenuzAcilmadi =>
-      'Aún no compartida — se abre tras aceptar un trabajo.';
+      'Aún no compartida — se comparte cuando continúas con un negocio.';
 
   @override
-  String get dukkanIseVerildiAcildi => 'Compartida con el negocio contratado.';
+  String get dukkanIseVerildiAcildi =>
+      'Tus datos de contacto se compartieron con este negocio.';
 
   @override
-  String get dukkanIsTamamlandi => 'Trabajo completado';
+  String get dukkanIsTamamlandi => 'Marcar como completado';
 
   @override
   String get dukkanGirisGerekli => 'Inicia sesión para continuar.';
@@ -5990,7 +5991,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get dukkanPanelWebNotu =>
-      'El perfil, la zona de servicio, los documentos y las invitaciones de valoración se gestionan en dukkan.yonetiyor.com.';
+      'El perfil, la zona de servicio, los documentos, las invitaciones de valoración y la compra de anuncios se gestionan en dukkan.yonetiyor.com.';
 
   @override
   String get dukkanBildirimler => 'Notificaciones del mercado';
@@ -6113,4 +6114,25 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get dukkanAgHatasi => 'No se pudo conectar. Comprueba tu conexión.';
+
+  @override
+  String get dukkanAraciDegiliz =>
+      'Dükkan es un servicio de anuncios y emparejamiento. El acuerdo y el pago son directamente entre tú y el negocio; Dükkan no es parte.';
+
+  @override
+  String get dukkanSponsorlu => 'Patrocinado';
+
+  @override
+  String get dukkanReklamBaslik => 'Tus anuncios';
+
+  @override
+  String get dukkanReklamYok => 'No tienes anuncios activos.';
+
+  @override
+  String dukkanReklamKalanGun(int gun) {
+    return 'Activo — quedan $gun días';
+  }
+
+  @override
+  String get dukkanReklamBitti => 'Caducado';
 }

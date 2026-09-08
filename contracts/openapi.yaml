@@ -2028,6 +2028,449 @@ paths:
           description: Kimlik gerekli
           content:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/reklam/paketler:
+    get:
+      tags: [dukkan]
+      summary: Satistaki reklam paketleri
+      security: []
+      description: |
+        KIMLIKSIZ: fiyat gizli bir bilgi degil ve isletme kaydolmadan
+        once "ne kadara mal olur" sorusunu cevaplayabilmeli.
+
+        Platformun TEK geliri reklamdir; hizmet bedeline (talep/teklif)
+        HIC dokunulmaz (bkz. `docs/dukkan/00-mimari.md` §8.1).
+      responses:
+        "200":
+          description: Paketler
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: { type: array, items: { type: object } }
+  /dukkan/reklam/slot-durumu:
+    get:
+      tags: [dukkan]
+      summary: Bu bolgede reklam yeri var mi
+      security: []
+      description: |
+        SATIN ALMADAN ONCE gorulebilir: "bu bolge dolu, siraya girin"
+        demek, parayi alip sonra "aslinda dolu" demekten durust.
+
+        ETKIN AZAMI = min(kural slotu, oran tavaninin izin verdigi slot).
+        Sayilar `dukkan.reklam_slot_kurali` tablosunda — KODDA DEGIL:
+        ilk uc ayda gercek veriyle ayarlanacaklar.
+      parameters:
+        - { name: kapsam, in: query, required: true, schema: { type: string, enum: [mahalle, ilce, il] } }
+        - { name: bolge_id, in: query, required: true, schema: { type: string, format: uuid } }
+        - { name: kategori_slug, in: query, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Slot durumu
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [azami, dolu, bos, isletme_sayisi]
+                properties:
+                  azami: { type: integer }
+                  dolu: { type: integer }
+                  bos: { type: integer }
+                  isletme_sayisi: { type: integer }
+                  oran_tavani_slot: { type: integer }
+                  kategori_id: { type: string, format: uuid }
+        "404":
+          description: Kategori yok
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/reklam/benim:
+    get:
+      tags: [dukkan]
+      summary: Isletmenin reklamlari (gecmis dahil)
+      description: |
+        BITMIS REKLAM DA DONER: "gecen ay hangi reklam yayindaydi"
+        sorusu bir faturada ya da itirazda sorulur; listeden dusurmek
+        onu cevapsiz birakirdi.
+      parameters:
+        - { name: isletme_id, in: query, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Reklamlar
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: { type: array, items: { type: object } }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "403":
+          description: Isletme size ait degil
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/reklam:
+    post:
+      tags: [dukkan]
+      summary: Reklam satin alir (yayina alir)
+      description: |
+        ON KOSUL: isletme ONAYLI ve o KATEGORIDE kayitli olmali. Onaysiz
+        isletmenin reklami, aramada hic gorunmeyen bir isletmeye para
+        odetmek olurdu.
+
+        409 `bolge_dolu`: slot dolu. ROTASYON YOK — satis KAPANIR ve
+        isletme bekleme listesine girer. Fazla satip sirayla gostermek
+        daha cok gelir getirirdi ama isletme ne satin aldigini bilemez
+        ve platform "ne kadar gorundun"u KANITLAMAK zorunda kalirdi.
+
+        REKLAM ORGANIK SIRALAMAYI DEGISTIRMEZ: `siralama_puani` bu
+        akistan habersizdir ve testle kilitlidir.
+      parameters:
+        - { name: isletme_id, in: query, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [paket_id, kategori_slug]
+              properties:
+                paket_id: { type: string, format: uuid }
+                kategori_slug: { type: string }
+                mahalle_id: { type: string, format: uuid, nullable: true }
+                ilce_id: { type: string, format: uuid, nullable: true }
+                il_id: { type: string, format: uuid, nullable: true }
+      responses:
+        "201":
+          description: Reklam yayina alindi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id, bitis]
+                properties:
+                  id: { type: string, format: uuid }
+                  bitis: { type: string, format: date-time }
+        "400":
+          description: Bolge kapsamla uyusmuyor / isletme bu kategoride degil
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "403":
+          description: Isletme size ait degil ya da onayli degil
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "404":
+          description: Paket ya da kategori yok
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "409":
+          description: Bolge dolu
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/reklam/bekleme:
+    post:
+      tags: [dukkan]
+      summary: Dolu bolgede siraya girer
+      description: |
+        Yanit KACINCI SIRADA oldugunu doner: "siradasiniz" demek yetmez,
+        kacinci oldugunu bilmeyen isletme bekleyip beklememeye karar
+        veremez.
+
+        409 `yer_var`: bolge dolu DEGIL. Isletme bekledigini sanip
+        beklerken, satin alabilecegi bir yer bos dururdu.
+        409 `zaten_sirada`: ayni isletme ayni yere iki kez giremez.
+      parameters:
+        - { name: isletme_id, in: query, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [paket_id, kategori_slug]
+              properties:
+                paket_id: { type: string, format: uuid }
+                kategori_slug: { type: string }
+                mahalle_id: { type: string, format: uuid, nullable: true }
+                ilce_id: { type: string, format: uuid, nullable: true }
+                il_id: { type: string, format: uuid, nullable: true }
+      responses:
+        "201":
+          description: Siraya girildi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id, sira]
+                properties:
+                  id: { type: string, format: uuid }
+                  sira: { type: integer }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "403":
+          description: Isletme size ait degil
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "404":
+          description: Paket ya da kategori yok
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "409":
+          description: Yer var ya da zaten sirada
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/reklam/bekleme/{bekleme_id}:
+    delete:
+      tags: [dukkan]
+      summary: Siradan cikar
+      description: |
+        SILMIYOR, `vazgecti` isaretliyor: "kac isletme siraya girip
+        vazgecti" sorusu, bolge fiyatlamasi icin bir sinyaldir.
+      parameters:
+        - { name: bekleme_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Cikildi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [cikan]
+                properties:
+                  cikan: { type: integer }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "403":
+          description: Kayit size ait degil
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "404":
+          description: Kayit yok
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/reklam/satin-al:
+    post:
+      tags: [dukkan]
+      summary: Reklami ODEYEREK satin alir
+      description: |
+        SIRA: ODEME ONCE, REKLAM SONRA. Once reklami acip sonra tahsil
+        etmek daha basit olurdu; yapilmadi — tahsilat basarisiz olursa
+        yayinda duran reklami geri almak gerekirdi ve gosterim ZATEN
+        olmus olurdu.
+
+        Tersi de risksiz degil: odeme basarili olup reklam acma adimi
+        patlarsa (or. bu arada slot doldu) SAHIPSIZ TAHSILAT kalir. Bu
+        GIZLENMIYOR: `reklam_satin_alma.reklam_id` NULL kalir ve o
+        satirlar icin kismi indeks var — iade edilecek para odur.
+
+        **503 `odeme_yapilandirilmadi`**: sanal POS bagli degil.
+        200 + `basarili: false` DONMEZ — istemci basarili yanit dalina
+        girip "odeme alindi" ekrani gosterirdi (SMS turunde olculen
+        kusurun ayni sinifi; odemede bedeli cok daha agir).
+
+        **402 `odeme_reddedildi`**: banka/kart reddetti.
+
+        KART BILGISI ISTEK GOVDESINDE YOK ve olmayacak: kullanici karti
+        saglayicinin sayfasinda girer, biz yalniz token sakleriz.
+
+        `otomatik_yenile` VARSAYILAN false: sessizce kart cekmek en cok
+        sikayet ureten seydir. Altyapi tekrarlayan cekimi destekler;
+        urun onu VARSAYILAN yapmaz.
+      parameters:
+        - { name: isletme_id, in: query, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [paket_id, kategori_slug, fatura]
+              properties:
+                paket_id: { type: string, format: uuid }
+                kategori_slug: { type: string }
+                mahalle_id: { type: string, format: uuid, nullable: true }
+                ilce_id: { type: string, format: uuid, nullable: true }
+                il_id: { type: string, format: uuid, nullable: true }
+                odeme_yontemi_id: { type: string, format: uuid, nullable: true }
+                otomatik_yenile: { type: boolean, default: false }
+                fatura:
+                  type: object
+                  required: [unvan, vkn, adres]
+                  properties:
+                    unvan: { type: string }
+                    vkn: { type: string }
+                    vergi_dairesi: { type: string, nullable: true }
+                    adres: { type: string }
+                    il: { type: string, nullable: true }
+                    ilce: { type: string, nullable: true }
+                    eposta: { type: string, nullable: true }
+      responses:
+        "201":
+          description: Satin alindi (ya da 3DS yonlendirmesi gerekiyor)
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [satin_alma_id, durum]
+                properties:
+                  satin_alma_id: { type: string, format: uuid }
+                  durum: { type: string }
+                  reklam_id: { type: string, format: uuid, nullable: true }
+                  yonlendirme_url: { type: string, nullable: true }
+        "402":
+          description: Odeme reddedildi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "403":
+          description: Isletme size ait degil ya da onayli degil
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "404":
+          description: Paket, kategori ya da odeme yontemi yok
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "409":
+          description: Bolge dolu
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "503":
+          description: Odeme saglayicisi yapilandirilmadi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/odeme-yontemi:
+    get:
+      tags: [dukkan]
+      summary: Saklanan kartlar
+      description: |
+        TOKEN DONMUYOR: token bir sirdir ve arayuzun ona ihtiyaci yok.
+        Kullanici karti `id` ile secer; token yalniz sunucuda kullanilir.
+
+        `son_dort` ve `marka` doner — kullanicinin "hangi kart" sorusunu
+        ancak onlar yanitlar ve ikisi de PCI kapsaminda saklanabilir.
+      responses:
+        "200":
+          description: Kartlar
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: { type: array, items: { type: object } }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+    post:
+      tags: [dukkan]
+      summary: Kart saklama akisini baslatir
+      description: |
+        ISTEK GOVDESINDE KART ALANI YOK ve olmayacak: kart numarasi, CVV
+        ve son kullanma tarihi bizim surecimizden HIC GECMEZ. Kullanici
+        onlari saglayicinin sayfasinda girer; biz donen TOKEN'i sakleriz.
+
+        Token calinsa bile baska bir uye isyerinde kullanilamaz —
+        kart numarasinin aksine.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [takma_ad]
+              properties:
+                takma_ad: { type: string }
+      responses:
+        "201":
+          description: Kart saklandi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id]
+                properties:
+                  id: { type: string, format: uuid }
+                  son_dort: { type: string, nullable: true }
+                  marka: { type: string, nullable: true }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "502":
+          description: Saglayici kart saklayamadi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "503":
+          description: Odeme saglayicisi yapilandirilmadi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/odeme-yontemi/{yontem_id}:
+    delete:
+      tags: [dukkan]
+      summary: Saklanan karti kaldirir
+      description: |
+        ABONELIK ETKISI YANITTA DONER: karti silen kullanici, o kartla
+        yenilenen aboneliklerin duracagini BILMELI. Sessizce silmek, ay
+        sonunda "reklamim neden dustu" sorusu uretirdi.
+      parameters:
+        - { name: yontem_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Kaldirildi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [silinen, etkilenen_abonelik]
+                properties:
+                  silinen: { type: integer }
+                  etkilenen_abonelik: { type: integer }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+  /dukkan/abonelik/{abonelik_id}/iptal:
+    post:
+      tags: [dukkan]
+      summary: Otomatik yenilemeyi durdurur
+      description: |
+        YAYINDAKI REKLAMI DUSURMEZ: isletme donemin parasini odedi,
+        sonuna kadar yayinda kalir. Iptal, YENILENMEYECEGINI soyler.
+      parameters:
+        - { name: abonelik_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Iptal edildi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [iptal]
+                properties:
+                  iptal: { type: integer }
+        "401":
+          description: Kimlik gerekli
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "403":
+          description: Abonelik size ait degil
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "404":
+          description: Abonelik yok
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
   /dukkan/lokasyon/il:
     get:
       tags: [dukkan]

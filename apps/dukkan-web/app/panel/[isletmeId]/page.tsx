@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
@@ -125,7 +126,19 @@ export default function IsletmeDetay() {
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-12">
-      <h1 className="text-2xl font-bold text-marka-koyu">{d.ad}</h1>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-2xl font-bold text-marka-koyu">{d.ad}</h1>
+        {/* (F8) REKLAM AYRI SAYFA: bu panel zaten yogun (profil,
+            kategori, hizmet alani, belge, telefon, talepler). Reklami
+            buraya sikistirmak sayfayi okunmaz yapardi ve bildirimlerin
+            varacagi net bir yer birakmazdi. */}
+        <Link
+          href={`/panel/${isletmeId}/reklam`}
+          className="rounded border border-marka px-3 py-1.5 text-sm font-medium text-marka"
+        >
+          Reklam
+        </Link>
+      </div>
 
       {/* BASVURU HAZIRLIK LISTESI — kullanici NE EKSIK'i tek bakista gorsun.
           Eksikleri yalniz basvuru aninda 422 ile soylemek, kullaniciyi

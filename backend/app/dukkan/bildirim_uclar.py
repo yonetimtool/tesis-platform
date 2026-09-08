@@ -148,7 +148,7 @@ async def tercih_oku(
         )
     ).mappings().first()
     if r is None:
-        raise HTTPException(status_code=404, detail={"code": "kullanici_yok"})
+        raise HTTPException(status_code=404, detail="kullanici_yok")
     return dict(r)
 
 
@@ -167,7 +167,7 @@ async def tercih_yaz(
     """
     alanlar = govde.model_dump(exclude_none=True)
     if not alanlar:
-        raise HTTPException(status_code=400, detail={"code": "alan_yok"})
+        raise HTTPException(status_code=400, detail="alan_yok")
     set_ifadesi = ", ".join(f"{k} = :{k}" for k in alanlar)
     await db.execute(
         text(f"UPDATE dukkan_kullanici SET {set_ifadesi} WHERE id = :i"),

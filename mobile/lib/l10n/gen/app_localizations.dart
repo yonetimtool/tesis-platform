@@ -9986,7 +9986,7 @@ abstract class AppLocalizations {
   /// No description provided for @dukkanAdresIpucu.
   ///
   /// In tr, this message translates to:
-  /// **'İşi verdiğin ustaya, iş kabulünden sonra açılır. Teklif aşamasında kimse göremez.'**
+  /// **'Devam ettiğin işletmeye açılır. Teklif aşamasında kimse göremez.'**
   String get dukkanAdresIpucu;
 
   /// No description provided for @dukkanAdresSaklanmaz.
@@ -10034,13 +10034,13 @@ abstract class AppLocalizations {
   /// No description provided for @dukkanIsiVer.
   ///
   /// In tr, this message translates to:
-  /// **'İşi ver'**
+  /// **'Bu işletmeyle devam et'**
   String get dukkanIsiVer;
 
   /// No description provided for @dukkanIsVerildi.
   ///
   /// In tr, this message translates to:
-  /// **'İş verildi'**
+  /// **'Bu işletmeyle devam ediyorsun'**
   String get dukkanIsVerildi;
 
   /// No description provided for @dukkanKapandi.
@@ -10070,19 +10070,19 @@ abstract class AppLocalizations {
   /// No description provided for @dukkanHenuzAcilmadi.
   ///
   /// In tr, this message translates to:
-  /// **'Henüz kimseye açılmadı — iş kabulünden sonra açılır.'**
+  /// **'Henüz kimseye açılmadı — bir işletmeyle devam edince açılır.'**
   String get dukkanHenuzAcilmadi;
 
   /// No description provided for @dukkanIseVerildiAcildi.
   ///
   /// In tr, this message translates to:
-  /// **'İşi verdiğin işletmeye açıldı.'**
+  /// **'İletişim bilgilerin bu işletmeye açıldı.'**
   String get dukkanIseVerildiAcildi;
 
   /// No description provided for @dukkanIsTamamlandi.
   ///
   /// In tr, this message translates to:
-  /// **'İş tamamlandı'**
+  /// **'Tamamlandı olarak işaretle'**
   String get dukkanIsTamamlandi;
 
   /// No description provided for @dukkanGirisGerekli.
@@ -10358,7 +10358,7 @@ abstract class AppLocalizations {
   /// No description provided for @dukkanPanelWebNotu.
   ///
   /// In tr, this message translates to:
-  /// **'Profil, hizmet alanı, belge ve değerlendirme daveti işlemleri dukkan.yonetiyor.com üzerinden yapılır.'**
+  /// **'Profil, hizmet alanı, belge, değerlendirme daveti ve reklam satın alma dukkan.yonetiyor.com üzerinden yapılır.'**
   String get dukkanPanelWebNotu;
 
   /// No description provided for @dukkanBildirimler.
@@ -10582,6 +10582,42 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Bağlantı kurulamadı. İnternetini kontrol et.'**
   String get dukkanAgHatasi;
+
+  /// No description provided for @dukkanAraciDegiliz.
+  ///
+  /// In tr, this message translates to:
+  /// **'Dükkan bir ilan ve eşleştirme hizmetidir. Anlaşma ve ödeme doğrudan işletmeyle senin arandadır; Dükkan taraf değildir.'**
+  String get dukkanAraciDegiliz;
+
+  /// No description provided for @dukkanSponsorlu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sponsorlu'**
+  String get dukkanSponsorlu;
+
+  /// No description provided for @dukkanReklamBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Reklamların'**
+  String get dukkanReklamBaslik;
+
+  /// No description provided for @dukkanReklamYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aktif reklamın yok.'**
+  String get dukkanReklamYok;
+
+  /// No description provided for @dukkanReklamKalanGun.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yayında — {gun} gün kaldı'**
+  String dukkanReklamKalanGun(int gun);
+
+  /// No description provided for @dukkanReklamBitti.
+  ///
+  /// In tr, this message translates to:
+  /// **'Süresi doldu'**
+  String get dukkanReklamBitti;
 }
 
 class _AppLocalizationsDelegate

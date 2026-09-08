@@ -281,8 +281,53 @@ class _IsletmeGovdesiState extends ConsumerState<_IsletmeGovdesi> {
             },
           ),
         const Divider(height: 32),
-        // EKSIK OLANI SOYLE: kullanici profilini duzenlemeyi burada
-        // arayip bulamazsa, ekranin bozuk oldugunu dusunur.
+        // (F8) REKLAM DURUMU — satin alma DEGIL.
+        //
+        // Bildirimler ("reklamin bitiyor", "odeme alinamadi") buraya
+        // geliyor; varilacak yer olmasaydi bildirim islevsiz kalirdi
+        // (P211/F6-ek dersi).
+        Text(t.dukkanReklamBaslik,
+            style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 8),
+        ref.watch(dukkanReklamlarimProvider(isl.id)).when(
+              loading: () => const Padding(
+                padding: EdgeInsets.all(16),
+                child: Center(child: CircularProgressIndicator()),
+              ),
+              error: (_, _) => Text(t.dukkanListeAlinamadi),
+              data: (items) {
+                if (items.isEmpty) return Text(t.dukkanReklamYok);
+                return Column(
+                  children: [
+                    for (final r in items)
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: Icon(
+                          r.yayinda
+                              ? Icons.campaign
+                              : Icons.campaign_outlined,
+                          color: r.yayinda
+                              ? Theme.of(context).colorScheme.primary
+                              : null,
+                        ),
+                        title: Text('${r.kategori} · ${r.bolge ?? "—"}'),
+                        // BITISE KALAN GUN GORUNUR: "yayinda" demek
+                        // yetmez, isletme yenileme kararini o sayiyla
+                        // verir (ve otomatik yenileme YOK).
+                        subtitle: Text(
+                          r.yayinda && (r.kalanGun ?? 0) >= 0
+                              ? t.dukkanReklamKalanGun(r.kalanGun ?? 0)
+                              : t.dukkanReklamBitti,
+                        ),
+                      ),
+                  ],
+                );
+              },
+            ),
+        const SizedBox(height: 12),
+        // EKSIK OLANI SOYLE: kullanici profilini duzenlemeyi ya da
+        // reklam satin almayi burada arayip bulamazsa, ekranin bozuk
+        // oldugunu dusunur.
         Text(t.dukkanPanelWebNotu,
             style: Theme.of(context).textTheme.bodySmall),
       ],

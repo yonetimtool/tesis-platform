@@ -82,13 +82,33 @@ class _DukkanTalepDetayState extends ConsumerState<DukkanTalepDetayScreen> {
           }
           return ListView.separated(
             padding: const EdgeInsets.all(16),
-            itemCount: items.length,
+            // +1: ILK SATIR ARACI OLMADIGIMIZI SOYLEYEN NOT.
+            //
+            // (F8a) Butonun adi degisti ("Isi ver" -> "Bu isletmeyle devam
+            // et") ama ad tek basina yetmez: kullanici bir dugmeye basip
+            // "platform uzerinden anlastim" sanabilir. Not, teklif
+            // listesinin USTUNDE ve kalici — dipnot degil.
+            itemCount: items.length + 1,
             separatorBuilder: (_, _) => const SizedBox(height: 8),
-            itemBuilder: (_, n) => _TeklifKarti(
-              teklif: items[n],
-              islemde: _islemde,
-              onIsiVer: () => _isiVer(items[n].id),
-            ),
+            itemBuilder: (_, n) {
+              if (n == 0) {
+                return Card(
+                  margin: EdgeInsets.zero,
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Text(t.dukkanAraciDegiliz,
+                        style: Theme.of(context).textTheme.bodySmall),
+                  ),
+                );
+              }
+              final x = items[n - 1];
+              return _TeklifKarti(
+                teklif: x,
+                islemde: _islemde,
+                onIsiVer: () => _isiVer(x.id),
+              );
+            },
           );
         },
       ),

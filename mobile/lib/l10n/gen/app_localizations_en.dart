@@ -5818,7 +5818,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dukkanAdresIpucu =>
-      'Opens only to the business you hire, after you accept the job. No one sees it while quoting.';
+      'Shared with the business you continue with. No one sees it while quoting.';
 
   @override
   String get dukkanAdresSaklanmaz =>
@@ -5846,10 +5846,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dukkanTeklifYok => 'No quotes yet.';
 
   @override
-  String get dukkanIsiVer => 'Hire';
+  String get dukkanIsiVer => 'Continue with this business';
 
   @override
-  String get dukkanIsVerildi => 'Hired';
+  String get dukkanIsVerildi => 'You are continuing with this business';
 
   @override
   String get dukkanKapandi => 'Closed';
@@ -5865,13 +5865,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dukkanHenuzAcilmadi =>
-      'Not shared with anyone yet — opens after you accept a job.';
+      'Not shared with anyone yet — shared once you continue with a business.';
 
   @override
-  String get dukkanIseVerildiAcildi => 'Shared with the business you hired.';
+  String get dukkanIseVerildiAcildi =>
+      'Your contact details were shared with this business.';
 
   @override
-  String get dukkanIsTamamlandi => 'Job completed';
+  String get dukkanIsTamamlandi => 'Mark as completed';
 
   @override
   String get dukkanGirisGerekli => 'Sign in to continue.';
@@ -6018,7 +6019,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dukkanPanelWebNotu =>
-      'Profile, service area, documents and review invitations are managed at dukkan.yonetiyor.com.';
+      'Profile, service area, documents, review invitations and ad purchase are managed at dukkan.yonetiyor.com.';
 
   @override
   String get dukkanBildirimler => 'Marketplace notifications';
@@ -6138,4 +6139,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dukkanAgHatasi => 'Could not connect. Check your internet.';
+
+  @override
+  String get dukkanAraciDegiliz =>
+      'Dükkan is a listing and matching service. Any agreement and payment is directly between you and the business; Dükkan is not a party to it.';
+
+  @override
+  String get dukkanSponsorlu => 'Sponsored';
+
+  @override
+  String get dukkanReklamBaslik => 'Your ads';
+
+  @override
+  String get dukkanReklamYok => 'You have no active ads.';
+
+  @override
+  String dukkanReklamKalanGun(int gun) {
+    return 'Live — $gun days left';
+  }
+
+  @override
+  String get dukkanReklamBitti => 'Expired';
 }

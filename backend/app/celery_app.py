@@ -118,4 +118,29 @@ celery_app.conf.beat_schedule = {
         "task": "dukkan.siralama_yenile",
         "schedule": crontab(hour=2, minute=0),
     },
+    # (DUKKAN F8b) REKLAM BAKIMI — suresi bitenleri dusur, hatirlat,
+    # bekleme listesine yer-acildi haberi ver.
+    #
+    # SIRALAMADAN SONRA (02:20): ikisi ayni veritabanina yaziyor ve
+    # siralama isi tum gorunur isletmeleri dolasiyor. Ust uste
+    # koymak, gecelik pencerede gereksiz kilitlenme riski olurdu.
+    #
+    # SABAH DEGIL GECE: "reklamin 1 gun sonra bitiyor" bildirimi
+    # gunun ortasinda gelirse isletme o gunu kacirabilir.
+    "dukkan-reklam-bakimi": {
+        "task": "dukkan.reklam_bakimi",
+        "schedule": crontab(hour=2, minute=20),
+    },
+    # (DUKKAN F8c) ABONELIK CEKIMI — vadesi gelen otomatik yenilemeler.
+    #
+    # REKLAM BAKIMINDAN SONRA (02:40): bakim suresi bitenleri dusurur ve
+    # SLOT ACAR; cekim o slota yeni donemi yazar. Ters sirada, kendi
+    # reklami hala "yayinda" oldugu icin yenileme "bolge dolu" alirdi.
+    #
+    # SAGLAYICI BAGLI DEGILKEN gorev hicbir sey yapmaz ve sayaclari
+    # sismez (bkz. `abonelik_cekimi` basligi).
+    "dukkan-abonelik-cekimi": {
+        "task": "dukkan.abonelik_cekimi",
+        "schedule": crontab(hour=2, minute=40),
+    },
 }

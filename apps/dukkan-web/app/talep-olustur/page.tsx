@@ -285,7 +285,7 @@ function TalepOlustur() {
               <span>
                 Açık adresim
                 <span className="block text-xs text-[color:var(--dk-metin-soluk)]">
-                  <strong>İşi verdiğin ustaya, iş kabulünden sonra açılır.</strong>{" "}
+                  <strong>Devam ettiğin işletmeye açılır.</strong>{" "}
                   Teklif aşamasında kimse göremez.
                 </span>
               </span>

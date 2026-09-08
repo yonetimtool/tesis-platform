@@ -2675,7 +2675,7 @@
   "dukkanAdimiPaylas": "Adım",
   "dukkanTelefonumuPaylas": "Telefon numaram",
   "dukkanAdresimiPaylas": "Açık adresim",
-  "dukkanAdresIpucu": "İşi verdiğin ustaya, iş kabulünden sonra açılır. Teklif aşamasında kimse göremez.",
+  "dukkanAdresIpucu": "Devam ettiğin işletmeye açılır. Teklif aşamasında kimse göremez.",
   "dukkanAdresSaklanmaz": "Açık adresini paylaşmayı seçmediğin için adres bilgisi kaydedilmez.",
   "dukkanAcikAdres": "Açık adres",
   "dukkanTalebiGonder": "Talebi gönder",
@@ -2690,15 +2690,15 @@
   "dukkanTalepUlasmadi": "Bu bölgede kayıtlı işletme yok, talebin şu an kimseye ulaşmadı.",
   "dukkanTeklifler": "Teklifler",
   "dukkanTeklifYok": "Henüz teklif gelmedi.",
-  "dukkanIsiVer": "İşi ver",
-  "dukkanIsVerildi": "İş verildi",
+  "dukkanIsiVer": "Bu işletmeyle devam et",
+  "dukkanIsVerildi": "Bu işletmeyle devam ediyorsun",
   "dukkanKapandi": "Kapandı",
   "dukkanYerindeGorsun": "Fiyat için yerinde görmek istiyor",
   "dukkanTalepYok": "Henüz talebin yok.",
   "dukkanIsletmelerinGordukleri": "İşletmelerin gördükleri",
-  "dukkanHenuzAcilmadi": "Henüz kimseye açılmadı — iş kabulünden sonra açılır.",
-  "dukkanIseVerildiAcildi": "İşi verdiğin işletmeye açıldı.",
-  "dukkanIsTamamlandi": "İş tamamlandı",
+  "dukkanHenuzAcilmadi": "Henüz kimseye açılmadı — bir işletmeyle devam edince açılır.",
+  "dukkanIseVerildiAcildi": "İletişim bilgilerin bu işletmeye açıldı.",
+  "dukkanIsTamamlandi": "Tamamlandı olarak işaretle",
   "dukkanGirisGerekli": "Devam etmek için giriş yapın.",
   "dukkanDevam": "Devam",
   "dukkanGeri": "Geri",
@@ -2744,7 +2744,7 @@
   "dukkanDurumReddedildi": "Reddedildi",
   "dukkanDurumAskida": "Askıya alındı",
   "dukkanDurumTaslak": "Taslak",
-  "dukkanPanelWebNotu": "Profil, hizmet alanı, belge ve değerlendirme daveti işlemleri dukkan.yonetiyor.com üzerinden yapılır.",
+  "dukkanPanelWebNotu": "Profil, hizmet alanı, belge, değerlendirme daveti ve reklam satın alma dukkan.yonetiyor.com üzerinden yapılır.",
   "dukkanBildirimler": "Dükkân bildirimleri",
   "dukkanBildirimYok": "Henüz bildirim yok.",
   "dukkanBildirimAyari": "Bildirim ayarı",
@@ -2781,5 +2781,18 @@
   "dukkanKodBulunamadi": "Önce kod iste.",
   "dukkanCokFazlaDeneme": "Çok fazla hatalı deneme. Yeni kod iste.",
   "dukkanHesapAskida": "Hesabın askıya alınmış.",
-  "dukkanAgHatasi": "Bağlantı kurulamadı. İnternetini kontrol et."
+  "dukkanAgHatasi": "Bağlantı kurulamadı. İnternetini kontrol et.",
+  "dukkanAraciDegiliz": "Dükkan bir ilan ve eşleştirme hizmetidir. Anlaşma ve ödeme doğrudan işletmeyle senin arandadır; Dükkan taraf değildir.",
+  "dukkanSponsorlu": "Sponsorlu",
+  "dukkanReklamBaslik": "Reklamların",
+  "dukkanReklamYok": "Aktif reklamın yok.",
+  "dukkanReklamKalanGun": "Yayında — {gun} gün kaldı",
+  "dukkanReklamBitti": "Süresi doldu",
+  "@dukkanReklamKalanGun": {
+    "placeholders": {
+      "gun": {
+        "type": "int"
+      }
+    }
+  }
 }

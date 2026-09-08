@@ -59,6 +59,13 @@ TIPLER: dict[str, str] = {
     "dukkan_isletme_askiya_alindi": "/panel/{isletme_id}",
     "dukkan_yorum_yayinlandi": "/isletme/{isletme_slug}",
     "dukkan_yeni_talep": "/panel/{isletme_id}",
+    # (F8b) REKLAM — ikisi de isletme sahibine gider ve REKLAM
+    # sayfasina goturur. `dukkan_` oneki ZORUNLU (kanal kurali).
+    "dukkan_reklam_bitiyor": "/panel/{isletme_id}/reklam",
+    "dukkan_reklam_yer_acildi": "/panel/{isletme_id}/reklam",
+    # (F8c) ODEME — ikisi de isletme sahibine, reklam/odeme sayfasina.
+    "dukkan_odeme_basarisiz": "/panel/{isletme_id}/reklam",
+    "dukkan_abonelik_durdu": "/panel/{isletme_id}/reklam",
 }
 
 

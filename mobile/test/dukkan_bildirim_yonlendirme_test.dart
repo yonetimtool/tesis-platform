@@ -15,27 +15,44 @@
 ///      takilsalardi tum Dukkan bildirimleri dokunulamaz olurdu.
 library;
 
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/src/features/auth/domain/user_role.dart';
 import 'package:mobile/src/features/dukkan/domain/dukkan_push_yonlendirme.dart';
 import 'package:mobile/src/routing/app_router.dart';
 import 'package:mobile/src/routing/push_yonlendirme.dart';
 
-/// `backend/app/dukkan/bildirim.py: TIPLER` sozlugunun BIREBIR kopyasi.
+/// Sunucudaki tip listesi — KAYNAKTAN OKUNUYOR, kopya DEGIL.
 ///
-/// ELLE KOPYA VE BU BILINCLI: mobil test sunucu kaynagini okuyamaz
-/// (ayri depo dizini, konteynerde koşum). Kopya oldugu icin sunucu bir
-/// tip eklediginde bu liste GUNCELLENMEK ZORUNDA — kilit tam da bunu
-/// hatirlatmak icin var.
-const _sunucuTipleri = <String>[
-  'dukkan_teklif_geldi',
-  'dukkan_is_verildi',
-  'dukkan_isletme_onaylandi',
-  'dukkan_isletme_reddedildi',
-  'dukkan_isletme_askiya_alindi',
-  'dukkan_yorum_yayinlandi',
-  'dukkan_yeni_talep',
-];
+/// ==========================================================================
+/// KENDI KILIDIMDEKI ZAYIFLIK (F8'de olculdu)
+/// ==========================================================================
+/// F6-ek'te bu liste ELLE KOPYAYDI ve gerekcesi "sunucu tip eklerse liste
+/// guncellenmek zorunda" idi. Yanlisti: kopya bir liste, EKLENEN bir tipi
+/// yakalayamaz — yalniz kaldirilani yakalar. F8'de sunucuya iki reklam
+/// tipi eklendi ve test YESIL KALDI; hedefleri olmayan iki bildirim
+/// dokunulamaz olurdu.
+///
+/// Artik `backend/app/dukkan/bildirim.py` DOGRUDAN okunuyor.
+/// `test_p207_push_kanal.py` ayni sınırı ters yonde geciyor (backend
+/// mobil kaynagi okuyor) ve kaynak yoksa ATLIYOR — ayni kalip.
+List<String>? _sunucuTipleri() {
+  final dosya = File('../backend/app/dukkan/bildirim.py');
+  if (!dosya.existsSync()) return null; // konteyner koşumu: kilit ATLANIR
+  final kaynak = dosya.readAsStringSync();
+  final blok = RegExp(r'TIPLER: dict\[str, str\] = \{(.*?)\n\}',
+          dotAll: true)
+      .firstMatch(kaynak);
+  if (blok == null) {
+    throw StateError('bildirim.py icinde TIPLER sozlugu bulunamadi — '
+        'kilit SESSIZCE gecmemeli');
+  }
+  return RegExp(r'"([a-z_]+)":')
+      .allMatches(blok.group(1)!)
+      .map((m) => m.group(1)!)
+      .toList();
+}
 
 /// Router'da TANIMLI Dukkan yollari (app_router.dart ile ayni sabitler).
 final _tanimliRotalar = <String>{
@@ -77,7 +94,10 @@ String _desene(String yol) {
 void main() {
   group('Dukkan push yonlendirmesi', () {
     test('SUNUCUDAKI HER TIPIN mobil hedefi VAR', () {
-      for (final tip in _sunucuTipleri) {
+      final tipler = _sunucuTipleri();
+      if (tipler == null) return; // kaynak yok: kilit ATLANDI
+      expect(tipler, isNotEmpty);
+      for (final tip in tipler) {
         final hedef = dukkanPushHedefi({
           'tip': tip,
           'talep_id': 't-1',
@@ -99,7 +119,9 @@ void main() {
       // GORULEMIYORDU; kart'a dokunmak go_router hata ekrani aciyordu.
       // F6-ek'te hem rota hem ekran eklendi. Bu kilit, ayni sinifin
       // tekrarini imkansiz kiliyor.
-      for (final tip in _sunucuTipleri) {
+      final tipler = _sunucuTipleri();
+      if (tipler == null) return;
+      for (final tip in tipler) {
         final hedef = dukkanPushHedefi({
           'tip': tip,
           'talep_id': 't-1',

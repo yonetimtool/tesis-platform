@@ -210,8 +210,10 @@ yetkinlikte değilim; hukuki görüş gerekiyor.
 
 ## 4. Kapora dolandırıcılığı (T5)
 
-V1'de platform üzerinden ödeme **yok** (`00-mimari.md` §8). Para tamamen
-platform dışında. Bu, ödeme riskini almadığımız anlamına geliyor ama
+Platform üzerinden ödeme **yok ve olmayacak** (`00-mimari.md` §8.1) —
+bu artık bir V1 ertelemesi değil, **kalıcı** bir tasarım kararı ve
+testle kilitli (`test_dukkan_para_akisi_yok.py`). Para tamamen platform
+dışında. Bu, ödeme riskini almadığımız anlamına geliyor ama
 **algısal sorumluluğu** ortadan kaldırmıyor: kullanıcı ustayı *burada*
 buldu, dolandırıldığında *buraya* kızacak.
 
@@ -239,6 +241,10 @@ kavramlarını ve ETBİS kayıt yükümlülüğünü düzenliyor.
 
 1. **Dukkan V1'in ETAHS sayılıp sayılmayacağından emin değilim.** V1'de
    platform üzerinden **sipariş ve ödeme yok**; yapılan şey ilan/eşleştirme.
+   **F8 notu:** gelir modeli reklama döndü. Sipariş/ödeme hâlâ yok, ama
+   platform artık işletmelerden **reklam bedeli** alıyor. Bunun 6563
+   değerlendirmesini değiştirip değiştirmediği avukata soruldu
+   (`07-hukuki-sorular.md` S1, S17).
    Bu, mevzuatın "aracı hizmet sağlayıcı" tanımına girebilir de girmeyebilir de.
    Ayrım **önemsiz değil**: ETAHS yükümlülükleri (ETBİS kaydı, hizmet
    sağlayıcı bilgilerinin doğrulanması, ciro eşiklerine bağlı ek yükümlülükler)

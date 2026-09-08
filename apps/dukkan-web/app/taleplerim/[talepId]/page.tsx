@@ -79,7 +79,7 @@ function TalepDetay() {
       await api(`/teklif/${teklifId}/kabul`, { metot: "POST" });
       await yukle();
       setBilgi(
-        "İş verildi. Açık adresin ve telefonun yalnızca seçtiğin işletmeye açıldı.",
+        "İletişim bilgilerin yalnızca seçtiğin işletmeye açıldı. Anlaşma ve ödeme doğrudan aranızda.",
       );
     } catch (h) {
       setHata(hataMetni(h));
@@ -134,8 +134,8 @@ function TalepDetay() {
             {t.paylas_adres && (
               <span className="block text-xs">
                 {t.is_id
-                  ? "İşi verdiğin işletmeye açıldı."
-                  : "Henüz kimseye açılmadı — iş kabulünden sonra açılır."}
+                  ? "Devam ettiğin işletmeye açıldı."
+                  : "Henüz kimseye açılmadı — bir işletmeyle devam edince açılır."}
               </span>
             )}
           </li>
@@ -150,7 +150,16 @@ function TalepDetay() {
           Henüz teklif gelmedi.
         </p>
       ) : (
-        <ul className="mt-4 space-y-3">
+        <>
+          {/* (F8a) ARACI DEGILIZ — TEKLIF LISTESININ USTUNDE, DIPNOT DEGIL.
+              Butonun adi degisti ("Isi ver" -> "Bu isletmeyle devam et")
+              ama ad tek basina yetmez: kullanici bir dugmeye basip
+              "platform uzerinden anlastim" sanabilir. */}
+          <p className="mt-4 rounded border border-gray-200 bg-gray-50 p-3 text-sm text-[color:var(--dk-metin-soluk)]">
+            Dükkan bir ilan ve eşleştirme hizmetidir. Anlaşma ve ödeme
+            doğrudan işletmeyle senin arandadır; Dükkan taraf değildir.
+          </p>
+          <ul className="mt-4 space-y-3">
           {teklifler.map((tk) => (
             <li
               key={tk.id}
@@ -188,7 +197,7 @@ function TalepDetay() {
                   {tk.durum === "kabul" ? (
                     <div className="text-right">
                       <span className="text-sm font-medium text-emerald-900">
-                        İş verildi
+                        Devam ediliyor
                       </span>
                       <a
                         href={`tel:${tk.isletme_telefon}`}
@@ -206,14 +215,15 @@ function TalepDetay() {
                       onClick={() => kabulEt(tk.id)}
                       className="rounded bg-marka-koyu px-4 py-2 text-sm font-medium text-white"
                     >
-                      İşi ver
+                      Bu işletmeyle devam et
                     </button>
                   )}
                 </div>
               </div>
             </li>
           ))}
-        </ul>
+          </ul>
+        </>
       )}
 
       {bilgi && (

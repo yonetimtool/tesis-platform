@@ -20,7 +20,7 @@ type Talep = {
 const DURUM: Record<string, string> = {
   acik: "Teklif bekleniyor",
   teklif_var: "Teklifler geldi",
-  is_verildi: "İş verildi",
+  is_verildi: "İşletmeyle devam ediliyor",
   iptal: "İptal edildi",
   suresi_doldu: "Süresi doldu",
 };

@@ -5630,7 +5630,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get dukkanAdresIpucu =>
-      'İşi verdiğin ustaya, iş kabulünden sonra açılır. Teklif aşamasında kimse göremez.';
+      'Devam ettiğin işletmeye açılır. Teklif aşamasında kimse göremez.';
 
   @override
   String get dukkanAdresSaklanmaz =>
@@ -5658,10 +5658,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get dukkanTeklifYok => 'Henüz teklif gelmedi.';
 
   @override
-  String get dukkanIsiVer => 'İşi ver';
+  String get dukkanIsiVer => 'Bu işletmeyle devam et';
 
   @override
-  String get dukkanIsVerildi => 'İş verildi';
+  String get dukkanIsVerildi => 'Bu işletmeyle devam ediyorsun';
 
   @override
   String get dukkanKapandi => 'Kapandı';
@@ -5677,13 +5677,14 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get dukkanHenuzAcilmadi =>
-      'Henüz kimseye açılmadı — iş kabulünden sonra açılır.';
+      'Henüz kimseye açılmadı — bir işletmeyle devam edince açılır.';
 
   @override
-  String get dukkanIseVerildiAcildi => 'İşi verdiğin işletmeye açıldı.';
+  String get dukkanIseVerildiAcildi =>
+      'İletişim bilgilerin bu işletmeye açıldı.';
 
   @override
-  String get dukkanIsTamamlandi => 'İş tamamlandı';
+  String get dukkanIsTamamlandi => 'Tamamlandı olarak işaretle';
 
   @override
   String get dukkanGirisGerekli => 'Devam etmek için giriş yapın.';
@@ -5829,7 +5830,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get dukkanPanelWebNotu =>
-      'Profil, hizmet alanı, belge ve değerlendirme daveti işlemleri dukkan.yonetiyor.com üzerinden yapılır.';
+      'Profil, hizmet alanı, belge, değerlendirme daveti ve reklam satın alma dukkan.yonetiyor.com üzerinden yapılır.';
 
   @override
   String get dukkanBildirimler => 'Dükkân bildirimleri';
@@ -5947,4 +5948,25 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get dukkanAgHatasi => 'Bağlantı kurulamadı. İnternetini kontrol et.';
+
+  @override
+  String get dukkanAraciDegiliz =>
+      'Dükkan bir ilan ve eşleştirme hizmetidir. Anlaşma ve ödeme doğrudan işletmeyle senin arandadır; Dükkan taraf değildir.';
+
+  @override
+  String get dukkanSponsorlu => 'Sponsorlu';
+
+  @override
+  String get dukkanReklamBaslik => 'Reklamların';
+
+  @override
+  String get dukkanReklamYok => 'Aktif reklamın yok.';
+
+  @override
+  String dukkanReklamKalanGun(int gun) {
+    return 'Yayında — $gun gün kaldı';
+  }
+
+  @override
+  String get dukkanReklamBitti => 'Süresi doldu';
 }
