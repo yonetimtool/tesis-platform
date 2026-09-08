@@ -32,6 +32,8 @@ from __future__ import annotations
 # modülü eklendiğinde kilit kendiliğinden kapsıyor.
 import importlib
 
+import pytest
+
 from app.celery_app import celery_app
 
 for _modul in celery_app.conf.include or ():
@@ -103,3 +105,82 @@ def test_ON_DEMAND_listesi_GERCEK():
     for ad in ON_DEMAND:
         assert ad in kayitli, f"ON_DEMAND '{ad}' kayıtlı değil"
         assert ad not in zamanlanan, f"ON_DEMAND '{ad}' aslında zamanlanmış"
+
+
+# ==================================================================== #
+# (P219) MANIFEST KILIDI — "BEAT ESKI IMAJLA KOSUYOR" KUSURUNUN KAYNAGI
+# ==================================================================== #
+# Bu dosyanin ustundeki kilitler "gorev beat_schedule'da mi" sorusunu
+# yanitliyor. UC KEZ yasanan kusur ondan BASKA bir sey: gorev
+# `beat_schedule`da VARDI, testler GECTI, ama PROD'DAKI BEAT ESKI
+# IMAJDAYDI ve o gorevi hic gormedi (P187 vardiya ozeti, P192 finans
+# otomasyonu, F8b reklam bakimi).
+#
+# Calisma anindaki tespit `beat_kilidi.py`de ve `contracts/`teki CANLI
+# MOUNT manifeste dayaniyor. Bu kilit o manifestin GUNCEL kalmasini
+# sagliyor: manifest eskirse calisma anindaki tespit de YALAN SOYLERDI
+# (her acilista "ayrisma" der, operator gurultuye alisir ve bakmaz).
+#
+# Kayit kilidi kalibi: `rol-matrisi.txt` ve `openapi.yaml` ile ayni
+# fikir — kod degisti, kayit guncellenmedi -> KIRMIZI.
+
+def test_MANIFEST_KOD_ILE_AYNI():
+    """`contracts/beat-gorevleri.txt` ile `beat_schedule` birebir ayni."""
+    from pathlib import Path
+
+    from app.beat_kilidi import sozlesme_satirlari, zamanlama_satirlari
+
+    yol = Path("/contracts/beat-gorevleri.txt")
+    if not yol.exists():
+        pytest.skip("contracts mount yok — kilit ATLANDI")
+
+    kod = zamanlama_satirlari(celery_app.conf.beat_schedule)
+    sz = sozlesme_satirlari(yol)
+    yalniz_kodda = [s for s in kod if s not in sz]
+    yalniz_sozlesmede = [s for s in sz if s not in kod]
+    assert not yalniz_kodda and not yalniz_sozlesmede, (
+        "beat manifesti KODLA UYUSMUYOR.\n"
+        f"  YALNIZ KODDA:      {yalniz_kodda}\n"
+        f"  YALNIZ MANIFESTTE: {yalniz_sozlesmede}\n"
+        "contracts/beat-gorevleri.txt guncellenmeli — o dosya beat'in "
+        "acilista ESKI IMAJLA kostugunu anlamasinin TEK yolu."
+    )
+
+
+def test_KARSILASTIRMA_AYRISMAYI_GERCEKTEN_GORUR():
+    """Tespit mekanizmasinin KENDISI olculuyor.
+
+    Manifeste bir gorev eklenmis gibi davranip `karsilastir`in bunu
+    yakaladigini dogruluyoruz. Yakalamayan bir tespit, olmayan bir
+    tespitten KOTUDUR: guven verir, korumaz.
+    """
+    from app.beat_kilidi import karsilastir
+
+    d = karsilastir(celery_app.conf.beat_schedule)
+    if d["uyumlu"] is None:
+        pytest.skip("contracts mount yok — kilit ATLANDI")
+    assert d["uyumlu"] is True, d
+
+    # Koddan bir gorev DUSMUS gibi davran (eski imaj davranisi).
+    eksik = dict(celery_app.conf.beat_schedule)
+    dusen = sorted(eksik)[0]
+    eksik.pop(dusen)
+    d2 = karsilastir(eksik)
+    assert d2["uyumlu"] is False, d2
+    assert dusen in d2["yalniz_sozlesmede"], d2
+    # AYRINTI DONMELI: "uyumsuz" demek operatore ne yapacagini soylemez.
+    assert d2["kod_gorev"] == d2["sozlesme_gorev"] - 1
+
+
+def test_MANIFEST_OKUNAMAZSA_UYUMLU_DEMEZ(tmp_path):
+    """"Olculemedi" ile "uyumlu" AYRI seylerdir.
+
+    Ikisini ayni saymak, `contracts` mount'u unutulmus bir kurulumu
+    "saglikli" gosterirdi — ve tespit mekanizmasi tam da o kurulumda
+    ise yaramazdi.
+    """
+    from app.beat_kilidi import karsilastir
+
+    d = karsilastir(celery_app.conf.beat_schedule, tmp_path / "yok.txt")
+    assert d["uyumlu"] is None, d
+    assert d["sozlesme_parmak"] is None

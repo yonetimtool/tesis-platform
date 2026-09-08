@@ -51,9 +51,15 @@ Zincir: `0122` → `0123` → `0124` → `0125`.
 
 ## 3. Uygulama
 
+> Kanonik komut **`docs/DAGITIM-SABLONU.md`**'den gelir ve `beat` HER
+> ZAMAN listededir. Üç kez atlandı (P187/P192/F8b) ve zamanlayıcı
+> sessizce eski kodla çalıştı — dördüncüsü olmasın diye artık şablondan
+> türüyor ve `GET /health` → `beat` ile **ölçülüyor**.
+
+
 ```bash
 git pull
-docker compose -f docker-compose.prod.yml build migrate api worker
+docker compose -f docker-compose.prod.yml build migrate api worker beat
 docker compose -f docker-compose.prod.yml up migrate
 docker compose -f docker-compose.prod.yml up -d --force-recreate api worker beat
 ```
@@ -155,10 +161,26 @@ VALUES ('Mahalle 30 gün', 'mahalle', 30, 50000, 20.00, 1),
 *(Tutarlar **kuruş**: 50000 = 500,00 TL. Bunlar örnek, fiyat kararı
 senin.)*
 
-### 4.5 Zamanlanmış işler kayıtlı mı
+### 4.5 Zamanlanmış işler kayıtlı mı — **TEK SATIRDA ÖLÇÜLÜR**
 
 ```bash
-docker compose -f docker-compose.prod.yml logs beat --since 5m | grep -i dukkan
+curl -s https://api.yonetiyor.com/health \
+  | python3 -c 'import json,sys; b=json.load(sys.stdin)["beat"]; \
+print(b["durum"], b.get("kod_gorev"), "/", b.get("sozlesme_gorev"), \
+b.get("yalniz_sozlesmede") or "")'
+```
+
+**Beklenen:** `uyumlu 12 / 12`
+
+`ayrisma` çıkarsa **beat eski imajda** ve eksik görevin adı çıktıda
+yazılı — `build beat` + `up -d --force-recreate beat`. Bu ölçüm üç kez
+yaşanan kusur için eklendi (P187/P192/F8b); ayrıntı
+`docs/DAGITIM-SABLONU.md`.
+
+Ham log da bakılabilir:
+
+```bash
+docker compose -f docker-compose.prod.yml logs beat --since 5m | grep -i "BEAT\|dukkan"
 ```
 
 **Beklenen üç iş:** `dukkan-siralama` (02:00),
@@ -200,8 +222,8 @@ Karşılaştırma ve teklif isterken sorulacaklar:
 ## 6. `dukkan-web`
 
 ```bash
-docker compose -f docker-compose.prod.yml build dukkan-web
-docker compose -f docker-compose.prod.yml up -d --force-recreate dukkan-web
+docker compose -f docker-compose.prod.yml build dukkan-web beat
+docker compose -f docker-compose.prod.yml up -d --force-recreate dukkan-web beat
 docker inspect -f '{{json .NetworkSettings.Networks}}' \
   $(docker compose -f docker-compose.prod.yml ps -q dukkan-web) \
   | tr ',' '\n' | grep -i tesisnet

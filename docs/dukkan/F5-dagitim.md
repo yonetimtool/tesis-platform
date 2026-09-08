@@ -27,9 +27,15 @@
 
 ## 3. Uygulama
 
+> Kanonik komut **`docs/DAGITIM-SABLONU.md`**'den gelir ve `beat` HER
+> ZAMAN listededir. Üç kez atlandı (P187/P192/F8b) ve zamanlayıcı
+> sessizce eski kodla çalıştı — dördüncüsü olmasın diye artık şablondan
+> türüyor ve `GET /health` → `beat` ile **ölçülüyor**.
+
+
 ```bash
 git pull
-docker compose -f docker-compose.prod.yml build migrate api admin-web worker
+docker compose -f docker-compose.prod.yml build migrate api admin-web worker beat
 docker compose -f docker-compose.prod.yml up migrate
 docker compose -f docker-compose.prod.yml up -d --force-recreate api worker beat
 ```

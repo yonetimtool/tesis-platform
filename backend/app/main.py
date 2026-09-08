@@ -4,6 +4,8 @@ from __future__ import annotations
 import logging
 from contextlib import asynccontextmanager
 
+import json
+
 import redis.asyncio as aioredis
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -322,6 +324,18 @@ async def health() -> JSONResponse:
     # yuk dengeleyiciden dusururdu. Bu yuzden `status` DEGISMEZ, alan
     # yalnizca RAPOR EDER.
     sema = await _sema_surumu()
+    # BEAT AYRISMASI — UC KEZ YASANAN KUSURUN OLCUM NOKTASI (P187/P192/F8b).
+    #
+    # `beat`in HTTP'si yok; durumunu acilista Redis'e yaziyor ve burada
+    # okunuyor. Boylece dagitim sonrasi dogrulama TEK SATIR oluyor ve
+    # beat konteynerine girmeye gerek kalmiyor — uc olayin ucunde de
+    # kimse `docker compose logs beat`e bakmadi.
+    #
+    # `healthy`YE DAHIL DEGIL ve bu bilincli (sema kontrolunde verilen
+    # kararla ayni, P124): eski zamanlamayla kosan bir beat gorevlerin
+    # BIR KISMINI yine de calistirir; 503 dondurmek calisan bir sistemi
+    # yuk dengeleyiciden dusururdu. Alan yalnizca RAPOR EDER.
+    beat = await _beat_durumu()
     healthy = db_ok and redis_ok
     return JSONResponse(
         status_code=200 if healthy else 503,
@@ -329,8 +343,45 @@ async def health() -> JSONResponse:
             "status": "ok" if healthy else "degraded",
             "checks": {"database": db_ok, "redis": redis_ok},
             "schema": sema,
+            "beat": beat,
         },
     )
+
+
+async def _beat_durumu() -> dict[str, object]:
+    """Beat'in acilista yazdigi ayrisma raporu.
+
+    Doner: `{"durum": "uyumlu"|"ayrisma"|"olculemedi"|"kayit_yok"|
+              "okunamadi", ...}`
+
+    "KAYIT YOK" ILE "UYUMLU" AYRI: kayit yoksa beat ya hic kalkmadi ya
+    da ESKI bir imajla kalkti (bu kontrol o imajda yok). Ikisini "ok"
+    saymak, tam da olculmek istenen durumu gizlerdi.
+
+    Kaydin TTL'i var (25 saat): olmus bir beat'in kaydi ESKIR ve burada
+    gorunmez olur.
+    """
+    try:
+        from .beat_kilidi import REDIS_ANAHTARI
+
+        ham = await app.state.redis.get(REDIS_ANAHTARI)
+        if ham is None:
+            return {
+                "durum": "kayit_yok",
+                "aciklama": (
+                    "beat acilis raporu YOK: ya beat calismiyor ya da "
+                    "ESKI imajla kosuyor (bu kontrol o imajda yok). "
+                    "`docker compose build ... beat` + "
+                    "`up -d --force-recreate beat`."
+                ),
+            }
+        veri = json.loads(ham)
+        uyumlu = veri.get("uyumlu")
+        durum = ("uyumlu" if uyumlu is True
+                 else "ayrisma" if uyumlu is False else "olculemedi")
+        return {"durum": durum, **veri}
+    except Exception:
+        return {"durum": "okunamadi"}
 
 
 async def _sema_gunlukle() -> None:

@@ -41,7 +41,7 @@ git pull
 #    eski kodla karşılaşınca ZİNCİR KOMPLE DÜŞER ve api/admin-web/worker
 #    hiç başlamaz (üçü de migrate'e `service_completed_successfully` ile
 #    bağlı). P213'te 0107 bunu yaşattı.
-docker compose -f docker-compose.prod.yml build migrate api admin-web worker
+docker compose -f docker-compose.prod.yml build migrate api admin-web worker beat
 
 # 3) Göç + rol kurulumu (0113, 0114 + setup_dukkan_role.py)
 docker compose -f docker-compose.prod.yml up migrate

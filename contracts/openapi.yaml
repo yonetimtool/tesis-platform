@@ -14583,7 +14583,30 @@ paths:
       # tek denetlenebilir kaydidir.
       security: []
       responses:
-        '200': { description: ayakta }
+        '200':
+          description: |
+            Ayakta. Govde: `status`, `checks` (database/redis), `schema`
+            (P124 — kod/sema ayrismasi) ve `beat`.
+
+            `beat` (P219): ZAMANLAYICININ ESKI IMAJLA kostugunu gorunur
+            kilar. Uc kez yasandi (P187 vardiya ozeti, P192 finans
+            otomasyonu, F8b reklam bakimi): gorev yazildi, `api` ve
+            `worker` yenilendi, `beat` ATLANDI, hicbir hata gorunmedi.
+
+            `beat.durum`:
+              uyumlu      -> imajdaki zamanlama `contracts/beat-gorevleri.txt`
+                             ile ayni
+              ayrisma     -> BEAT ESKI IMAJDA; `yalniz_sozlesmede` eksik
+                             gorevleri ADIYLA verir
+              kayit_yok   -> beat hic kalkmadi ya da bu kontrolun olmadigi
+                             eski imajda
+              olculemedi  -> `contracts` beat'e mount edilmemis
+              okunamadi   -> Redis erisilemedi
+
+            `status` DEGISMEZ: eski zamanlamayla kosan bir beat gorevlerin
+            bir kismini yine de calistirir; 503 dondurmek calisan bir
+            sistemi yuk dengeleyiciden dusururdu (sema kontrolunde
+            verilen kararla ayni).
   /me:
     get:
       tags: [me]

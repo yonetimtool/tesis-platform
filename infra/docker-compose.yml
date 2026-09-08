@@ -506,6 +506,15 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       OWNER_DSN: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       APP_DSN: postgresql://${APP_DB_USER}:${APP_DB_PASSWORD}@db:5432/${POSTGRES_DB}
+    volumes:
+      # BEAT AYRISMA TESPITI (P187/P192/F8b): `contracts/` CANLI MOUNT,
+      # `backend/` ise imaja GOMULU. Beat acilista kendi zamanlamasini
+      # buradaki manifestle karsilastirir; ayrisma varsa ERROR loglar ve
+      # durumu Redis'e yazar (`GET /health` -> `beat`).
+      #
+      # MOUNT OLMAZSA kontrol "olculemedi" der ve bunu ACIKCA soyler —
+      # sessizce "uyumlu" DEMEZ.
+      - ../contracts:/contracts:ro
     command: ["celery", "-A", "app.celery_app", "beat", "--loglevel=info"]
     restart: unless-stopped
 

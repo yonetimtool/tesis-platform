@@ -38,7 +38,7 @@ doğrulamasının tamamı anlamsızlaşırdı. Açıkça açılmadıkça kapalı
 git pull
 
 # KISMİ BUILD YAPMA (P213 dersi: 0107 zinciri komple düşürmüştü).
-docker compose -f docker-compose.prod.yml build migrate api admin-web worker
+docker compose -f docker-compose.prod.yml build migrate api admin-web worker beat
 
 # Göç 0115 + rol kurulumu
 docker compose -f docker-compose.prod.yml up migrate

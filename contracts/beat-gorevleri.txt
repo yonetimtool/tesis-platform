@@ -1,0 +1,46 @@
+# BEAT GOREV MANIFESTI — ZAMANLAYICININ SOZLESMESI
+#
+# ===========================================================================
+# BU DOSYA NEDEN `contracts/` ALTINDA
+# ===========================================================================
+# `contracts/` bu depoda CANLI MOUNT'tur; `backend/` ise imaja GOMULUDUR.
+# Yani bu dosya HER ZAMAN depodaki halidir — `beat` imaji eski olsa bile.
+#
+# Beat acilista kendi zamanlamasini buradaki listeyle karsilastirir. Iki
+# taraf ayni imajdan gelseydi karsilastirma anlamsiz olurdu (bir seyi
+# kendisiyle karsilastirmak her zaman gecer). Ayrisma ancak IMAJIN
+# DISINDAN gelen bir referansla gorunur.
+#
+# ===========================================================================
+# UC KEZ YASANAN KUSUR
+# ===========================================================================
+#   P187  vardiya ozeti      -> gorev yazildi, api+worker yenilendi,
+#   P192  finans otomasyonu     beat ATLANDI, hicbir hata gorunmedi,
+#   F8b   reklam bakimi         gorev prod'da HIC KOSMADI.
+#
+# ===========================================================================
+# GUNCELLEME
+# ===========================================================================
+# `celery_app.conf.beat_schedule`a gorev ekleyip burayi guncellemezsen
+# `test_beat_schedule.py` KIRMIZI yanar (kayit kilidi kalibi — depoda
+# `rol-matrisi.txt`, `openapi.yaml` ile ayni fikir).
+#
+# Yeniden uretmek:
+#   docker compose exec -T api sh -lc "cd /app && python -c \"
+#   from app.celery_app import celery_app
+#   from app.beat_kilidi import zamanlama_satirlari
+#   print(chr(10).join(zamanlama_satirlari(celery_app.conf.beat_schedule)))\""
+#
+# Bicim: <kayit adi> TAB <task adi> TAB <schedule>
+detect-late-patrols	scheduler.detect_late_patrols	120.0
+detect-missed-tours	scheduler.detect_missed_tours	300.0
+dukkan-abonelik-cekimi	dukkan.abonelik_cekimi	<crontab: 40 2 * * * (m/h/dM/MY/d)>
+dukkan-reklam-bakimi	dukkan.reklam_bakimi	<crontab: 20 2 * * * (m/h/dM/MY/d)>
+dukkan-siralama	dukkan.siralama_yenile	<crontab: 0 2 * * * (m/h/dM/MY/d)>
+finans-otomasyonu	scheduler.finans_otomasyonu	<crontab: 0 3 * * * (m/h/dM/MY/d)>
+generate-patrol-windows	scheduler.generate_patrol_windows	3600.0
+gurultu-kuyrugu	scheduler.gurultu_kuyrugu	60.0
+mesaj-kuyrugu	scheduler.mesaj_kuyrugu	60.0
+run-retention	scheduler.run_retention	<crontab: 0 1 * * * (m/h/dM/MY/d)>
+summarize-shifts	scheduler.summarize_shifts	300.0
+vardiya-hatirlatma	scheduler.vardiya_hatirlatma	60.0

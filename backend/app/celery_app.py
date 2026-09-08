@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from celery import Celery
 from celery.schedules import crontab
+from celery.signals import beat_init
 
 from .config import settings
 
@@ -144,3 +145,31 @@ celery_app.conf.beat_schedule = {
         "schedule": crontab(hour=2, minute=40),
     },
 }
+
+
+# =========================================================================== #
+# BEAT ACILIS KONTROLU — UC KEZ YASANAN "ESKI IMAJ" KUSURU
+# =========================================================================== #
+# P187 (vardiya ozeti), P192 (finans otomasyonu) ve F8b (reklam bakimi):
+# ucunde de gorev yazildi, `api` ve `worker` yenilendi, `beat` ATLANDI ve
+# gorev prod'da HIC KOSMADI. Hicbir hata gorunmedi.
+#
+# Bu kanca, beat'in yukledigi zamanlamayi `contracts/` altindaki CANLI
+# MOUNT manifestle karsilastirir. Karsilastirmanin anlamli olmasinin tek
+# sebebi manifestin IMAJIN DISINDAN gelmesi (gerekce: `beat_kilidi.py`).
+#
+# `beat_init` SECILDI, `worker_init` DEGIL: kusur beat'e ozgu. Worker'in
+# zamanlamayla isi yok; orada uyarmak gurultu olurdu.
+@beat_init.connect
+def _beat_acilis_kontrolu(**_kw) -> None:
+    """Acilista ayrismayi olcer, loglar ve Redis'e yazar. FIRLATMAZ."""
+    try:
+        from .beat_kilidi import durumu_gunlukle_ve_yaz
+
+        durumu_gunlukle_ve_yaz(celery_app.conf.beat_schedule, settings.redis_url)
+    except Exception:  # pragma: no cover
+        # Bir TESPIT mekanizmasi, tespit ettigi seyden buyuk bir arizaya
+        # yol acmamali: beat her halukarda kalkar.
+        import logging
+
+        logging.getLogger(__name__).exception("beat acilis kontrolu basarisiz")
