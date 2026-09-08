@@ -87,8 +87,22 @@ export interface PageMeta {
 }
 
 export interface NotificationList {
-  meta: PageMeta;
+  meta: NotificationPageMeta;
   items: AppNotification[];
+}
+
+/** (P220 §3) Sayfa üstverisi + ARAMA ŞEFFAFLIĞI.
+ *
+ * Arama SQL'de yapılamıyor (bildirim metni kayıtta durmuyor, okuma
+ * anında üretiliyor), bu yüzden uç tavana kadar satır tarıyor.
+ * `arama_tavani_asildi` o tavanı görünür kılıyor: sessizce eksik sonuç
+ * döndürmek, kullanıcıyı "aradım, bulamadım, demek ki yok" sonucuna
+ * götürür.
+ *
+ * Aramasız istekte ikisi de `null`. */
+export interface NotificationPageMeta extends PageMeta {
+  arama_tarandi?: number | null;
+  arama_tavani_asildi?: boolean | null;
 }
 
 // Sozlesme hata zarfi: { error: { code, message } }

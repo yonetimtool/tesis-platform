@@ -87,15 +87,26 @@ describe("(P160) Bildirimler — tasima sonrasi", () => {
     await waitFor(() =>
       expect(screen.getByText("A blok noktasi okutulmadi")).toBeInTheDocument(),
     );
-    // Baslangicta "Tümü" secili.
-    expect(screen.getByRole("button", { name: "Tümü" })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
-    await userEvent.click(screen.getByRole("button", { name: "Okunmamış" }));
+    // (P220 §3) BASLANGIC ARTIK "Okunmamış" — "Tümü" sekmesi KALDIRILDI.
+    //
+    // Bildirim listesinin yanitlamasi gereken soru "NEYI KACIRDIM";
+    // okunmuslarla karisik bir liste o soruyu yanitlamiyordu. "Tümü"
+    // gorunumu arama geldigi icin de gereksiz: bir bildirimi metniyle
+    // ariyorsan hangi sekmede oldugunu bilmen gerekmez, iki sekmede de
+    // arama var.
     expect(screen.getByRole("button", { name: "Okunmamış" })).toHaveAttribute(
       "aria-pressed",
       "true",
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Okunmuş" }));
+    expect(screen.getByRole("button", { name: "Okunmuş" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    // ...ve digeri BIRAKIR (iki sekme birbirini disliyor).
+    expect(screen.getByRole("button", { name: "Okunmamış" })).toHaveAttribute(
+      "aria-pressed",
+      "false",
     );
   });
 

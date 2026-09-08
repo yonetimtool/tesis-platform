@@ -15,7 +15,7 @@ from ..errors import APIError
 from ..deps import get_tenant_db, require_role
 from ..hata_metinleri import istek_dili
 from ..models import AppUser, Notification
-from ..push_metinleri import push_govdesi
+from ..push_metinleri import push_basligi, push_govdesi
 from ..schemas import (
     NotificationListResponse,
     NotificationOut,
@@ -82,11 +82,76 @@ def _out(row: Notification, dil: str) -> NotificationOut:
     return out
 
 
+#: (P220 §3) ARAMADA TARANACAK EN COK SATIR.
+#:
+#: Arama SQL'de YAPILAMIYOR — gerekce `_arama_eslesir` basliginda.
+#: Metin uretmek satir basina bir sozluk aramasi + `format`; ucuz ama
+#: SINIRSIZ degil. Tavan olmadan, on bin bildirimi olan bir tesiste tek
+#: arama istegi butun listeyi belleğe alirdi.
+#:
+#: Tavan asilirsa yanit BUNU SOYLUYOR (`meta.arama_tarandi`,
+#: `meta.arama_tavani_asildi`) — sessizce eksik sonuc dondurmek, "aradim
+#: bulamadim, demek ki yok" sonucuna goturur.
+ARAMA_TAVANI = 1000
+
+#: Arama icin en az bu kadar karakter. Tek harf, tavan kadar satirin
+#: neredeyse tamamiyla eslesir ve arama bir ise yaramaz.
+ARAMA_ASGARI = 2
+
+
+def _kucult(metin: str) -> str:
+    """Turkce-guvenli kucultme.
+
+    `str.lower()` Turkce'de bozar: `'I'.lower()` -> `'i'` (nokta kaybolur),
+    `'İ'.lower()` -> `'i'` + U+0307. `casefold()` bu ikisini de kararli
+    ele aliyor ve depoda `raporlar.py` ayni tercihi yapmis.
+    """
+    return (metin or "").casefold()
+
+
+def _arama_eslesir(out: NotificationOut, baslik: str, aranan: str) -> bool:
+    """Bir bildirim aramayla esletiyor mu?
+
+    ==================================================================
+    ARAMA NEYI KAPSIYOR — VE NEDEN SQL'DE YAPILAMIYOR
+    ==================================================================
+    Kapsam UCU DE: kullanicinin GORDUGU her metin.
+      * `baslik` — `push_basligi(mesaj_kimlik, dil)`, istegin dilinde
+                   URETILMIS bildirim basligi,
+      * `mesaj`  — govde, yine istegin dilinde uretilmis,
+      * `tip`    — ham kimlik (`gorev_atandi`). Kullanici bunu ekranda
+                   gormuyor ama destek yazismasinda gecebiliyor; dar bir
+                   kapsam icin disarida birakmak, "tipe gore bulayim"
+                   diyen yoneticiyi bos dondururdu.
+
+    SQL'DE YAPILAMAZ: bildirim metni KAYITTA DURMUYOR. Satir
+    `mesaj_kimlik` + `mesaj_veri` tasiyor ve cumle OKUMA ANINDA, istegin
+    dilinde kuruluyor (tur 16 karari). `WHERE mesaj ILIKE ...` yalniz
+    ESKI (tur 16 oncesi) satirlari bulurdu — yani kullanicinin gordugu
+    metinlerin neredeyse hicbirini.
+
+    Istemcide filtrelemek de yanlis olurdu: yalniz ACIK SAYFAYI suzer.
+    "kargo" arayan kullanici 3. sayfadaki kaydi bulamaz ve "yok" sanir.
+
+    Bu yuzden: kapsam icindeki satirlar (tavana kadar) URETILIR, sonra
+    uretilen metin uzerinde filtrelenir. Kullanici NE GORUYORSA onda
+    arama yapiyor.
+    """
+    return (
+        aranan in _kucult(out.mesaj)
+        or aranan in _kucult(baslik)
+        or aranan in _kucult(out.tip)
+    )
+
+
 @router.get("", response_model=NotificationListResponse)
 async def list_notifications(
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     okundu: bool | None = Query(None),
+    q: str | None = Query(
+        None, description="Metin aramasi (govde + tip). En az 2 karakter."
+    ),
     accept_language: str | None = Header(None, alias="Accept-Language"),
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_VIEWER),
@@ -94,22 +159,62 @@ async def list_notifications(
     where = [_kapsam(user), _canli()]
     if okundu is not None:
         where.append(Notification.okundu == okundu)
-    total = (
-        await db.execute(select(func.count()).select_from(Notification).where(*where))
-    ).scalar_one()
-    rows = (
+
+    dil = istek_dili(accept_language)
+    aranan = _kucult((q or "").strip())
+
+    if len(aranan) < ARAMA_ASGARI:
+        # ARAMASIZ YOL DEGISMEDI: sayfalama SQL'de kaliyor ve buyuk
+        # listelerde tek satir bile fazladan uretilmiyor.
+        total = (
+            await db.execute(
+                select(func.count()).select_from(Notification).where(*where)
+            )
+        ).scalar_one()
+        rows = (
+            await db.execute(
+                select(Notification)
+                .where(*where)
+                .order_by(Notification.created_at.desc(), Notification.id.desc())
+                .limit(limit)
+                .offset(offset)
+            )
+        ).scalars().all()
+        return NotificationListResponse(
+            meta={"limit": limit, "offset": offset, "total": total},
+            items=[_out(r, dil) for r in rows],
+        )
+
+    # ---------------------------- ARAMALI YOL ---------------------------- #
+    ham = (
         await db.execute(
             select(Notification)
             .where(*where)
             .order_by(Notification.created_at.desc(), Notification.id.desc())
-            .limit(limit)
-            .offset(offset)
+            .limit(ARAMA_TAVANI)
         )
     ).scalars().all()
-    dil = istek_dili(accept_language)
+    eslesenler = [
+        out
+        for out in (_out(r, dil) for r in ham)
+        if _arama_eslesir(
+            out,
+            push_basligi(out.mesaj_kimlik, dil) if out.mesaj_kimlik else "",
+            aranan,
+        )
+    ]
     return NotificationListResponse(
-        meta={"limit": limit, "offset": offset, "total": total},
-        items=[_out(r, dil) for r in rows],
+        meta={
+            "limit": limit,
+            "offset": offset,
+            # `total` ESLESEN SAYISI: sayfalama onun uzerinden yurur.
+            "total": len(eslesenler),
+            # TARAMA SEFFAF: tavan asildiysa kullanici "hepsi bu kadar"
+            # sanmasin.
+            "arama_tarandi": len(ham),
+            "arama_tavani_asildi": len(ham) >= ARAMA_TAVANI,
+        },
+        items=eslesenler[offset : offset + limit],
     )
 
 

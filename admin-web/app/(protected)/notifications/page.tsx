@@ -15,6 +15,7 @@ import { BILDIRIM_SAYAC_UC } from "@/components/ui/bildirim-merkezi";
 import { PushTeshis } from "@/components/PushTeshis";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
+import { useGecikmeli } from "@/lib/gecikmeli";
 import { useRol } from "@/lib/rol-kullan";
 import { BILDIRIM_TIP, enumAdi } from "@/lib/enum-adlari";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
@@ -22,7 +23,15 @@ import type { AppNotification, NotificationList } from "@/lib/types";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 
-type OkunduFiltre = "" | "true" | "false";
+// (P220 §3) IKI SEKME — "Tumu" KALDIRILDI ve varsayilan OKUNMAMIS.
+//
+// Onceden uc dugme vardi ve varsayilan "Tumu"ydu. Bildirim listesinin
+// yanitlamasi gereken soru "NEYI KACIRDIM"; okunmuslarla karisik bir
+// liste o soruyu yanitlamiyor, kullaniciyi her acilista suzmeye
+// zorluyordu. "Tumu" gorunumu, arama geldigi icin de gereksiz: bir
+// bildirimi metniyle ariyorsan hangi sekmede oldugunu bilmen gerekmez —
+// iki sekmede de arama var.
+type OkunduFiltre = "true" | "false";
 const LIMIT = 20;
 
 // (P53) Harita `lib/enum-adlari.ts`e tasindi: AYNI tip panoda da rozet
@@ -39,19 +48,29 @@ const ROL_YONETICI = "yonetici" as const;
 export default function NotificationsPage() {
   const t = useT();
   const toast = useToast();
-  const [okundu, setOkundu] = useState<OkunduFiltre>("");
+  const [okundu, setOkundu] = useState<OkunduFiltre>("false");
   const [offset, setOffset] = useState(0);
   // (P181 Bölüm 6.5) TOPLU İŞLEM seçimi — sayfa içindeki id'ler.
   const [secili, setSecili] = useState<Set<string>>(new Set());
+  // (P220 §3) ARAMA — her iki sekmede de calisir.
+  const [arama, setArama] = useState("");
+  // GECIKMELI: her tusa basista sunucuya gitmek, uzun listede gereksiz
+  // yuk ve titreyen bir liste demekti.
+  const aramaGecikmeli = useGecikmeli(arama, 300);
+  const aramaGecerli = aramaGecikmeli.trim().length >= 2;
   const [topluCalisiyor, setTopluCalisiyor] = useState(false);
   // (P191 §2) PUSH TESHISI YALNIZ YONETIME. Sakin/guvenlik icin cihaz
   // sayilari ve baskalarinin gonderim sonuclari ne isine yarar ne de
   // gormeli; uc zaten 403 doner, kabuk da onu ISTEMEZ.
   const rol = useRol(null);
 
-  const key = `/api/notifications?limit=${LIMIT}&offset=${offset}${
-    okundu ? `&okundu=${okundu}` : ""
-  }`;
+  // (P220 §3) ARAMA SUNUCUDA. Istemcide filtrelemek yalniz ACIK SAYFAYI
+  // suzerdi: "kargo" arayan kullanici 3. sayfadaki kaydi bulamaz ve
+  // "yok" sanirdi. Uc, kullanicinin GORDUGU metinde ariyor (baslik +
+  // govde + tip) — metin kayitta durmuyor, okuma aninda uretiliyor.
+  const key = `/api/notifications?limit=${LIMIT}&offset=${offset}` +
+    `&okundu=${okundu}` +
+    (aramaGecerli ? `&q=${encodeURIComponent(aramaGecikmeli.trim())}` : "");
   const { data, error, isLoading, mutate } = useSWR<NotificationList>(key, jsonFetcher);
 
   // HAM `fetch` DEGIL `apiSend`: ham fetch basarisiz yanitta da cozulur,
@@ -74,6 +93,15 @@ export default function NotificationsPage() {
 
   function setFilter(v: OkunduFiltre) {
     setOkundu(v);
+    setOffset(0);
+    // SEKME DEGISINCE SECIM TEMIZLENIR: gorunmeyen satirlar uzerinde
+    // toplu islem yapmak, kullanicinin gormedigi bir seyi silmesi
+    // olurdu.
+    setSecili(new Set());
+  }
+
+  function setArananMetin(v: string) {
+    setArama(v);
     setOffset(0);
     setSecili(new Set());
   }
@@ -119,6 +147,25 @@ export default function NotificationsPage() {
 
   const seciliListe = () => Array.from(secili);
 
+  // (P220 §3) ARAMA HER IKI SEKMEDE — VE SUNUCUDA
+  //
+  // Sunucu, kullanicinin GORDUGU metinde ariyor: baslik + govde + tip.
+  // Metin kayitta DURMUYOR (okuma aninda, istegin dilinde uretiliyor),
+  // bu yuzden SQL `ILIKE` ile aranamiyor.
+  //
+  // Istemcide filtrelemek de yanlis olurdu: yalniz ACIK SAYFAYI suzer.
+  // "kargo" arayan kullanici 3. sayfadaki kaydi bulamaz.
+  //
+  // (P220 §3) TARAMA TAVANI NEDEN GORUNUR OLMALI
+  //
+  // Arama SQL'de yapilamiyor: bildirim metni kayitta durmuyor, okuma
+  // aninda uretiliyor. Uc bu yuzden TAVANA kadar satir tariyor.
+  //
+  // Tavan asildiginda bunu SOYLEMEZSEK, kullanici sonucu "hepsi bu"
+  // sanar ve arananin var olmadigi sonucuna varir — oysa kayit
+  // TARANMAMIS olabilir. `meta.arama_tavani_asildi` o yuzden yanitta ve
+  // o yuzden ekranda.
+
   return (
     <div className="space-y-5">
       <h1 style={{ fontSize: "var(--yz-fs-h1)", color: "var(--yz-text)" }}>
@@ -134,7 +181,6 @@ export default function NotificationsPage() {
           degil dugme oldugu icin sarmak dogru cozum — kaydirma gerekmez. */}
       <div className="flex flex-wrap items-center gap-2">
         {([
-          ["", t("ortakTumu")],
           ["false", t("bildirimOkunmamis")],
           ["true", t("bildirimOkunmus")],
         ] as [OkunduFiltre, string][]).map(([v, label]) => (
@@ -152,6 +198,35 @@ export default function NotificationsPage() {
             {label}
           </Dugme>
         ))}
+      </div>
+
+      {/* (P220 §3) ARAMA — her iki sekmede; gerekce yukarida. */}
+      <div className="flex flex-wrap items-center gap-2">
+        <input
+          type="search"
+          value={arama}
+          onChange={(e) => setArananMetin(e.target.value)}
+          placeholder={t("bildirimAraIpucu")}
+          aria-label={t("bildirimAra")}
+          className="w-full max-w-sm rounded px-3 py-2"
+          style={{
+            fontSize: "var(--yz-fs-sm)",
+            border: "1px solid var(--yz-border)",
+            background: "var(--yz-surface-1)",
+            color: "var(--yz-text)",
+          }}
+        />
+        {arama.trim().length > 0 && arama.trim().length < 2 && (
+          <span style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+            {t("bildirimAraAsgari")}
+          </span>
+        )}
+        {/* TARAMA TAVANI GORUNUR — gerekce yukarida. */}
+        {data?.meta?.arama_tavani_asildi ? (
+          <span role="status" style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+            {t("bildirimAramaTavani")}
+          </span>
+        ) : null}
       </div>
 
       {/* (P181 Bölüm 6.5) TOPLU İŞLEM ŞERİDİ: tümünü seç + seçilenlere okundu/sil + tümünü okundu. */}

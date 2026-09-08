@@ -2994,8 +2994,26 @@ class NotificationOut(BaseModel):
     created_at: datetime
 
 
+class NotificationPageMetaOut(PageMetaOut):
+    """(P220 §3) Sayfa ustverisi + ARAMA SEFFAFLIGI.
+
+    Arama SQL'de yapilamiyor (bildirim metni kayitta durmuyor, okuma
+    aninda uretiliyor — `notifications._arama_eslesir`). Bu yuzden
+    aramada TAVANA kadar satir taraniyor.
+
+    Iki alan o tavanı GORUNUR kiliyor: sessizce eksik sonuc dondurmek,
+    kullaniciyi "aradim, bulamadim, demek ki yok" sonucuna goturur —
+    oysa kayit taranmamis olabilir.
+
+    Aramasiz istekte ikisi de `None` (alan var, deger yok).
+    """
+
+    arama_tarandi: int | None = None
+    arama_tavani_asildi: bool | None = None
+
+
 class NotificationListResponse(BaseModel):
-    meta: PageMetaOut
+    meta: NotificationPageMetaOut
     items: list[NotificationOut]
 
 

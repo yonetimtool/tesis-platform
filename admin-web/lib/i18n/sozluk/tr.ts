@@ -610,6 +610,10 @@ export const tr = {
 
   // ----------------------------- bildirimler ------------------------------
   bildirimOkunduIsaretlendi: "Bildirim okundu olarak işaretlendi.",
+  bildirimAra: "Bildirimlerde ara",
+  bildirimAraIpucu: "Bildirimlerde ara…",
+  bildirimAraAsgari: "En az 2 karakter",
+  bildirimAramaTavani: "Son 1000 bildirim tarandı",
   bildirimOkunmamis: "Okunmamış",
   bildirimOkunmus: "Okunmuş",
 
