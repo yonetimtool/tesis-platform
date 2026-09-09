@@ -225,6 +225,23 @@ export interface BlockList {
   items: Block[];
 }
 
+/** (P220 §4) `GET /residents` satırı — site sakini.
+ *
+ * `blok` P220'de eklendi: sakinleri bloklara göre gruplamak ve blokta
+ * aramak için gerekli. Daire numarasından TÜRETİLEMEZ — blok
+ * `unit.blok` sütunu, numaranın parçası değil (P193'te ayrıldı).
+ *
+ * Telefon KVKK gereği DÖNMEZ. */
+export interface ResidentListItem {
+  user_id: string;
+  ad: string;
+  /** Aktif daire(ler); çoklu ise virgülle birleşir. */
+  unit_no?: string | null;
+  /** Aktif dairelerin blok adları; `null` = aktif daire bağı yok. */
+  blok?: string | null;
+  is_active: boolean;
+}
+
 export interface UnitResident {
   id: string;
   unit_id: string;

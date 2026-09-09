@@ -530,10 +530,50 @@ valid string". Testlerin bunu varsayması gerekti.
 
 - **Cihazda daire penceresi** — emülatör yok. Ölçülen şey, doğru uca
   doğru gövdeyle gidildiği ve sunucunun doğru davrandığı.
-- **Web'de daire penceresinde sakin bilgisi.** `admin-web`'in bina
-  düzenleme yüzeyi bu turda **yapılmadı**; §5 mobilde tam, web'de
-  **eksik**. Kabul kriteri 9'un yarısı karşılanmadı ve bunu açıkça
-  söylüyorum.
+- ~~Web'de daire penceresinde sakin bilgisi~~ — **YAPILDI** (aşağıda).
 - **Aynı anda iki yöneticinin aynı daireyi düzenlemesi** — yarış koşulu
   üretilmedi; sunucu tarafında `daire_zaten_dolu` kontrolü var ama
   eşzamanlı iki `PATCH` sürülmedi.
+
+
+---
+
+## §5 (web) — bina düzenlemede sakin bilgisi
+
+`admin-web/app/(protected)/building-editor` daire düzenleme modalına
+`DaireSakinleri` bileşeni eklendi: ad + rol + oturma durumu, birden çok
+sakin, boş daire durumu, rol değiştir / oturma durumu değiştir / çıkar /
+ekle.
+
+**Yalnız mevcut dairede** (mobilde olduğu gibi): yeni daire formunda
+daire henüz yok.
+
+**Form dışında duruyor.** İçine koymak, "Kaydet"e basınca sakin
+değişikliklerinin de gönderileceği izlenimi verirdi — oysa her işlem
+kendi isteğiyle anında gidiyor.
+
+**BFF vekili eklendi**: `PATCH /api/units/[id]/residents/[userId]`.
+Olmasaydı uç web'den çağrılınca 405 alırdı ve backend testleri bunu
+görmezdi (P173/P189).
+
+### Web'de beş kilit yakaladı
+
+1. **Çok satırlı JSX'te Türkçe** — gerekçeler TS yorumlarına taşındı.
+2. **`window.confirm()` yasak** (P161): o diyalog uygulamanın dışında,
+   çevrilemez ve ekran okuyucuya uygulamanın parçası gibi görünmez.
+   `useOnay` kancasına geçildi.
+3. **Üçlüde sabit dize** — rol değerleri (`"malik"`/`"kiraci"`) JSX
+   ternary'sinden çıkarılıp sabitlere alındı.
+4. **`() => Promise<unknown>` imzası** sabit-metin tarayıcısına takıldı:
+   `=>` ile `<unknown>` arasındaki `" Promise"` JSX metni sanılıyor.
+   Deponun kendi `onay-kullan.tsx` dosyası aynı tuzağa düşmüş ve aynı
+   çözümü (arayüzde metot biçimi) yazmış — onu izledim.
+5. **Sözlükte çift anahtar**: `daireSakinSec` zaten vardı. Kendi
+   eklediğimi çıkardım, mevcut olanı kullandım.
+
+### Ölçemediklerim
+
+- **Tarayıcıda görünüm** — DOM testleri var ama gerçek tarayıcıda
+  sürülmedi.
+- **Eşzamanlı düzenleme** — iki yöneticinin aynı daireyi aynı anda
+  düzenlemesi sürülmedi; sunucuda `daire_zaten_dolu` kontrolü var.

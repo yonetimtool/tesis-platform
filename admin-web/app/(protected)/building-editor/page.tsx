@@ -14,6 +14,7 @@ import {
   useOnay,
   Secim,
 } from "@/components/ui";
+import { DaireSakinleri } from "@/components/DaireSakinleri";
 import { useToast } from "@/components/Toast";
 import { alanliHataMetni, apiSend } from "@/lib/client";
 import { aralikCoz } from "@/lib/aralik";
@@ -837,6 +838,17 @@ export default function BuildingEditorPage() {
           </div>
           <HataDurumu mesaj={unitForm.err} />
         </form>
+        {/* (P220 §5) SAKIN BILGISI — YALNIZ MEVCUT DAIREDE.
+            Yeni daire formunda gosterilmiyor: daire HENUZ YOK ve bos bir
+            bolum, kullaniciyi calismayan bir dugmeye tiklatirdi. Form
+            DISINDA duruyor cunku kendi istekleriyle calisiyor; icine
+            koymak "Kaydet"e basinca sakin degisikliklerinin de
+            gonderilecegi izlenimi verirdi. */}
+        {unitForm.editingId ? (
+          <div className="mt-4 border-t pt-4" style={{ borderColor: "var(--yz-border)" }}>
+            <DaireSakinleri unitId={unitForm.editingId} />
+          </div>
+        ) : null}
       </Modal>
 
       {/* Icerik: kutucuk listesi veya blok detayi */}
