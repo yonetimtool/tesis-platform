@@ -10618,6 +10618,108 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Süresi doldu'**
   String get dukkanReklamBitti;
+
+  /// No description provided for @bildirimSec.
+  ///
+  /// In tr, this message translates to:
+  /// **'Seç'**
+  String get bildirimSec;
+
+  /// No description provided for @bildirimTumunuSec.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tümünü seç'**
+  String get bildirimTumunuSec;
+
+  /// No description provided for @bildirimSecimiTemizle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Seçimi temizle'**
+  String get bildirimSecimiTemizle;
+
+  /// No description provided for @bildirimSeciliSayi.
+  ///
+  /// In tr, this message translates to:
+  /// **'{sayi} seçili'**
+  String bildirimSeciliSayi(int sayi);
+
+  /// No description provided for @bildirimSeciliOkundu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Okundu'**
+  String get bildirimSeciliOkundu;
+
+  /// No description provided for @bildirimSeciliSil.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sil'**
+  String get bildirimSeciliSil;
+
+  /// No description provided for @bildirimTumunuOkundu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tümünü okundu işaretle'**
+  String get bildirimTumunuOkundu;
+
+  /// No description provided for @bildirimOkunduSayi.
+  ///
+  /// In tr, this message translates to:
+  /// **'{sayi} bildirim okundu işaretlendi'**
+  String bildirimOkunduSayi(int sayi);
+
+  /// No description provided for @bildirimSilindiSayi.
+  ///
+  /// In tr, this message translates to:
+  /// **'{sayi} bildirim silindi'**
+  String bildirimSilindiSayi(int sayi);
+
+  /// No description provided for @bildirimTopluBasarisiz.
+  ///
+  /// In tr, this message translates to:
+  /// **'İşlem tamamlanamadı.'**
+  String get bildirimTopluBasarisiz;
+
+  /// No description provided for @bildirimSilOnayBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'{sayi} bildirim silinsin mi?'**
+  String bildirimSilOnayBaslik(int sayi);
+
+  /// No description provided for @bildirimSilOnayMetin.
+  ///
+  /// In tr, this message translates to:
+  /// **'Silinen bildirim listeden kalkar ve geri alınamaz.'**
+  String get bildirimSilOnayMetin;
+
+  /// No description provided for @bildirimOkunmamis.
+  ///
+  /// In tr, this message translates to:
+  /// **'Okunmamış'**
+  String get bildirimOkunmamis;
+
+  /// No description provided for @bildirimOkunmus.
+  ///
+  /// In tr, this message translates to:
+  /// **'Okunmuş'**
+  String get bildirimOkunmus;
+
+  /// No description provided for @bildirimAraIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bildirimlerde ara…'**
+  String get bildirimAraIpucu;
+
+  /// No description provided for @bildirimAraAsgari.
+  ///
+  /// In tr, this message translates to:
+  /// **'En az 2 karakter'**
+  String get bildirimAraAsgari;
+
+  /// No description provided for @bildirimAramaSonucYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aramanla eşleşen bildirim yok.'**
+  String get bildirimAramaSonucYok;
 }
 
 class _AppLocalizationsDelegate

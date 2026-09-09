@@ -2794,5 +2794,50 @@
         "type": "int"
       }
     }
-  }
+  },
+  "bildirimSec": "Seç",
+  "bildirimTumunuSec": "Tümünü seç",
+  "bildirimSecimiTemizle": "Seçimi temizle",
+  "bildirimSeciliSayi": "{sayi} seçili",
+  "@bildirimSeciliSayi": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  },
+  "bildirimSeciliOkundu": "Okundu",
+  "bildirimSeciliSil": "Sil",
+  "bildirimTumunuOkundu": "Tümünü okundu işaretle",
+  "bildirimOkunduSayi": "{sayi} bildirim okundu işaretlendi",
+  "@bildirimOkunduSayi": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  },
+  "bildirimSilindiSayi": "{sayi} bildirim silindi",
+  "@bildirimSilindiSayi": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  },
+  "bildirimTopluBasarisiz": "İşlem tamamlanamadı.",
+  "bildirimSilOnayBaslik": "{sayi} bildirim silinsin mi?",
+  "@bildirimSilOnayBaslik": {
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  },
+  "bildirimSilOnayMetin": "Silinen bildirim listeden kalkar ve geri alınamaz.",
+  "bildirimOkunmamis": "Okunmamış",
+  "bildirimOkunmus": "Okunmuş",
+  "bildirimAraIpucu": "Bildirimlerde ara…",
+  "bildirimAraAsgari": "En az 2 karakter",
+  "bildirimAramaSonucYok": "Aramanla eşleşen bildirim yok."
 }

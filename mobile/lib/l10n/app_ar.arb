@@ -2021,5 +2021,22 @@
   "dukkanReklamBaslik": "إعلاناتك",
   "dukkanReklamYok": "لا توجد إعلانات نشطة.",
   "dukkanReklamKalanGun": "نشط — بقي {gun} يوم",
-  "dukkanReklamBitti": "انتهت المدة"
+  "dukkanReklamBitti": "انتهت المدة",
+  "bildirimSec": "تحديد",
+  "bildirimTumunuSec": "تحديد الكل",
+  "bildirimSecimiTemizle": "إلغاء التحديد",
+  "bildirimSeciliSayi": "{sayi} محددة",
+  "bildirimSeciliOkundu": "تعليم كمقروء",
+  "bildirimSeciliSil": "حذف",
+  "bildirimTumunuOkundu": "تعليم الكل كمقروء",
+  "bildirimOkunduSayi": "تم تعليم {sayi} إشعاراً كمقروء",
+  "bildirimSilindiSayi": "تم حذف {sayi} إشعاراً",
+  "bildirimTopluBasarisiz": "تعذّر إتمام العملية.",
+  "bildirimSilOnayBaslik": "حذف {sayi} إشعاراً؟",
+  "bildirimSilOnayMetin": "الإشعارات المحذوفة تختفي من القائمة ولا يمكن استعادتها.",
+  "bildirimOkunmamis": "غير مقروءة",
+  "bildirimOkunmus": "مقروءة",
+  "bildirimAraIpucu": "البحث في الإشعارات…",
+  "bildirimAraAsgari": "حرفان على الأقل",
+  "bildirimAramaSonucYok": "لا توجد إشعارات تطابق بحثك."
 }

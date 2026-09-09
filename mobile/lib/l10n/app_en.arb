@@ -2021,5 +2021,22 @@
   "dukkanReklamBaslik": "Your ads",
   "dukkanReklamYok": "You have no active ads.",
   "dukkanReklamKalanGun": "Live — {gun} days left",
-  "dukkanReklamBitti": "Expired"
+  "dukkanReklamBitti": "Expired",
+  "bildirimSec": "Select",
+  "bildirimTumunuSec": "Select all",
+  "bildirimSecimiTemizle": "Clear selection",
+  "bildirimSeciliSayi": "{sayi} selected",
+  "bildirimSeciliOkundu": "Mark read",
+  "bildirimSeciliSil": "Delete",
+  "bildirimTumunuOkundu": "Mark all as read",
+  "bildirimOkunduSayi": "{sayi} notifications marked as read",
+  "bildirimSilindiSayi": "{sayi} notifications deleted",
+  "bildirimTopluBasarisiz": "The action could not be completed.",
+  "bildirimSilOnayBaslik": "Delete {sayi} notifications?",
+  "bildirimSilOnayMetin": "Deleted notifications leave the list and cannot be restored.",
+  "bildirimOkunmamis": "Unread",
+  "bildirimOkunmus": "Read",
+  "bildirimAraIpucu": "Search notifications…",
+  "bildirimAraAsgari": "At least 2 characters",
+  "bildirimAramaSonucYok": "No notifications match your search."
 }

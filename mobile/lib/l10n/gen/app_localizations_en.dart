@@ -6160,4 +6160,64 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dukkanReklamBitti => 'Expired';
+
+  @override
+  String get bildirimSec => 'Select';
+
+  @override
+  String get bildirimTumunuSec => 'Select all';
+
+  @override
+  String get bildirimSecimiTemizle => 'Clear selection';
+
+  @override
+  String bildirimSeciliSayi(int sayi) {
+    return '$sayi selected';
+  }
+
+  @override
+  String get bildirimSeciliOkundu => 'Mark read';
+
+  @override
+  String get bildirimSeciliSil => 'Delete';
+
+  @override
+  String get bildirimTumunuOkundu => 'Mark all as read';
+
+  @override
+  String bildirimOkunduSayi(int sayi) {
+    return '$sayi notifications marked as read';
+  }
+
+  @override
+  String bildirimSilindiSayi(int sayi) {
+    return '$sayi notifications deleted';
+  }
+
+  @override
+  String get bildirimTopluBasarisiz => 'The action could not be completed.';
+
+  @override
+  String bildirimSilOnayBaslik(int sayi) {
+    return 'Delete $sayi notifications?';
+  }
+
+  @override
+  String get bildirimSilOnayMetin =>
+      'Deleted notifications leave the list and cannot be restored.';
+
+  @override
+  String get bildirimOkunmamis => 'Unread';
+
+  @override
+  String get bildirimOkunmus => 'Read';
+
+  @override
+  String get bildirimAraIpucu => 'Search notifications…';
+
+  @override
+  String get bildirimAraAsgari => 'At least 2 characters';
+
+  @override
+  String get bildirimAramaSonucYok => 'No notifications match your search.';
 }

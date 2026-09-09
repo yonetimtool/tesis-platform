@@ -21,6 +21,7 @@ class ActivityRow extends StatelessWidget {
     this.accent,
     this.noktaRengi,
     this.onTap,
+    this.onLongPress,
   });
 
   final IconData icon;
@@ -31,12 +32,23 @@ class ActivityRow extends StatelessWidget {
   final Color? noktaRengi;
   final VoidCallback? onTap;
 
+  /// (P220 §2) UZUN BASMA — bildirim listesinde secim modu kisayolu.
+  ///
+  /// `InkWell`E VERILIYOR, sarmalayici `GestureDetector`a DEGIL: ciplak
+  /// `GestureDetector` kendi `Focus`unu kurmaz ve harici klavye / anahtar
+  /// erisimi / masaustu hedefleri icin ULASILAMAZ olur
+  /// (`klavye_kaynak_denetimi_test.dart` bunu tariyor ve ilk yazimda
+  /// beni YAKALADI). `InkWell` zaten odaklanabilir; uzun basmayi ona
+  /// tasimak hem kilidi hem erisilebilirligi koruyor.
+  final VoidCallback? onLongPress;
+
   @override
   Widget build(BuildContext context) {
     final s = HomeSurface.of(context);
     final accentColor = accent ?? HomeTokens.primary;
     return InkWell(
       onTap: onTap,
+      onLongPress: onLongPress,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
         child: Row(

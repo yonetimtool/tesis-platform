@@ -2021,5 +2021,22 @@
   "dukkanReklamBaslik": "Ваша реклама",
   "dukkanReklamYok": "Активной рекламы нет.",
   "dukkanReklamKalanGun": "Активна — осталось {gun} дн.",
-  "dukkanReklamBitti": "Срок истёк"
+  "dukkanReklamBitti": "Срок истёк",
+  "bildirimSec": "Выбрать",
+  "bildirimTumunuSec": "Выбрать все",
+  "bildirimSecimiTemizle": "Снять выделение",
+  "bildirimSeciliSayi": "Выбрано: {sayi}",
+  "bildirimSeciliOkundu": "Прочитано",
+  "bildirimSeciliSil": "Удалить",
+  "bildirimTumunuOkundu": "Отметить все как прочитанные",
+  "bildirimOkunduSayi": "Отмечено как прочитанные: {sayi}",
+  "bildirimSilindiSayi": "Удалено уведомлений: {sayi}",
+  "bildirimTopluBasarisiz": "Не удалось выполнить действие.",
+  "bildirimSilOnayBaslik": "Удалить уведомления ({sayi})?",
+  "bildirimSilOnayMetin": "Удалённые уведомления исчезают из списка и не восстанавливаются.",
+  "bildirimOkunmamis": "Непрочитанные",
+  "bildirimOkunmus": "Прочитанные",
+  "bildirimAraIpucu": "Поиск по уведомлениям…",
+  "bildirimAraAsgari": "Минимум 2 символа",
+  "bildirimAramaSonucYok": "Нет уведомлений по вашему запросу."
 }

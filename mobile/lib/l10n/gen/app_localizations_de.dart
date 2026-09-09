@@ -6156,4 +6156,66 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get dukkanReklamBitti => 'Abgelaufen';
+
+  @override
+  String get bildirimSec => 'Auswählen';
+
+  @override
+  String get bildirimTumunuSec => 'Alle auswählen';
+
+  @override
+  String get bildirimSecimiTemizle => 'Auswahl aufheben';
+
+  @override
+  String bildirimSeciliSayi(int sayi) {
+    return '$sayi ausgewählt';
+  }
+
+  @override
+  String get bildirimSeciliOkundu => 'Als gelesen';
+
+  @override
+  String get bildirimSeciliSil => 'Löschen';
+
+  @override
+  String get bildirimTumunuOkundu => 'Alle als gelesen markieren';
+
+  @override
+  String bildirimOkunduSayi(int sayi) {
+    return '$sayi Benachrichtigungen als gelesen markiert';
+  }
+
+  @override
+  String bildirimSilindiSayi(int sayi) {
+    return '$sayi Benachrichtigungen gelöscht';
+  }
+
+  @override
+  String get bildirimTopluBasarisiz =>
+      'Die Aktion konnte nicht abgeschlossen werden.';
+
+  @override
+  String bildirimSilOnayBaslik(int sayi) {
+    return '$sayi Benachrichtigungen löschen?';
+  }
+
+  @override
+  String get bildirimSilOnayMetin =>
+      'Gelöschte Benachrichtigungen verschwinden aus der Liste und können nicht wiederhergestellt werden.';
+
+  @override
+  String get bildirimOkunmamis => 'Ungelesen';
+
+  @override
+  String get bildirimOkunmus => 'Gelesen';
+
+  @override
+  String get bildirimAraIpucu => 'Benachrichtigungen durchsuchen…';
+
+  @override
+  String get bildirimAraAsgari => 'Mindestens 2 Zeichen';
+
+  @override
+  String get bildirimAramaSonucYok =>
+      'Keine Benachrichtigung passt zu Ihrer Suche.';
 }

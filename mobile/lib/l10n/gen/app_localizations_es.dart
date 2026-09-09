@@ -6135,4 +6135,65 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get dukkanReklamBitti => 'Caducado';
+
+  @override
+  String get bildirimSec => 'Seleccionar';
+
+  @override
+  String get bildirimTumunuSec => 'Seleccionar todo';
+
+  @override
+  String get bildirimSecimiTemizle => 'Borrar selección';
+
+  @override
+  String bildirimSeciliSayi(int sayi) {
+    return '$sayi seleccionadas';
+  }
+
+  @override
+  String get bildirimSeciliOkundu => 'Marcar leída';
+
+  @override
+  String get bildirimSeciliSil => 'Eliminar';
+
+  @override
+  String get bildirimTumunuOkundu => 'Marcar todo como leído';
+
+  @override
+  String bildirimOkunduSayi(int sayi) {
+    return '$sayi notificaciones marcadas como leídas';
+  }
+
+  @override
+  String bildirimSilindiSayi(int sayi) {
+    return '$sayi notificaciones eliminadas';
+  }
+
+  @override
+  String get bildirimTopluBasarisiz => 'No se pudo completar la acción.';
+
+  @override
+  String bildirimSilOnayBaslik(int sayi) {
+    return '¿Eliminar $sayi notificaciones?';
+  }
+
+  @override
+  String get bildirimSilOnayMetin =>
+      'Las notificaciones eliminadas salen de la lista y no se pueden restaurar.';
+
+  @override
+  String get bildirimOkunmamis => 'No leídas';
+
+  @override
+  String get bildirimOkunmus => 'Leídas';
+
+  @override
+  String get bildirimAraIpucu => 'Buscar en las notificaciones…';
+
+  @override
+  String get bildirimAraAsgari => 'Al menos 2 caracteres';
+
+  @override
+  String get bildirimAramaSonucYok =>
+      'Ninguna notificación coincide con tu búsqueda.';
 }

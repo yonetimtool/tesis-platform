@@ -49,6 +49,10 @@ class _FakeNotificationsApi extends NotificationsApi {
     int limit = 50,
     int offset = 0,
     bool? okundu,
+    // (P220 §3) Arama parametresi eklendi; bu taklit onu KULLANMIYOR
+    // cunku olculen sey rozet tazeleme, arama degil. Imzanin uyusmasi
+    // yeterli.
+    String? q,
   }) async {
     cagriSayisi++;
     return NotificationPage(items: const [], total: okunmamis);

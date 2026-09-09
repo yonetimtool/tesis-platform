@@ -126,3 +126,191 @@ yeşilliğini ölçemez hâle getirirdi.
   doğması ve push sağlayıcısına gitmesi; dev'de `PUSH_PROVIDER=noop`.
 - **Mobil ızgaranın cihazdaki görünümü** — emülatör yok. Ölçülen şey
   sunucunun döndürdüğü sayı.
+
+
+---
+
+## §2 — Mobilde bildirim toplu işlemleri
+
+### Uçlar zaten vardı — eksik olan yüzeydi
+
+`toplu-okundu`, `tumunu-okundu`, `toplu-sil` üçü de backend'de mevcuttu
+(P181 Bölüm 6.5'te web için yazılmış). **Yeni uç yazılmadı**; mobil
+onları çağırmıyordu.
+
+### Seçim modu: "Seç" düğmesi **ve** uzun basma
+
+Sorulan karar buydu. **İkisi birden** yapıldı ve ikisinin de işi farklı:
+
+**Neden yalnız uzun basma değil:**
+- **Keşfedilemez.** Bu uygulamanın kullanıcıları site yöneticileri ve
+  güvenlik görevlileri; "uzun bas" hiçbir yerde yazmıyor. Web'de toplu
+  işlem şeridi **görünüyor**; mobilde gizli olsaydı özellik ikinci
+  yüzeyde fiilen **yok** sayılırdı.
+- **Erişilebilirlik.** Uzun basma, motor güçlük yaşayan kullanıcıda ve
+  ekran okuyucuda zayıf çalışır. Görünür düğme ikisinde de çalışır.
+
+**Neden uzun basma da var:** Android'in liste çoklu-seçim geleneği ve
+bilenler için tek dokunuşluk kısayol. Varsayılan listeyi kirletmiyor.
+
+Seçim modunda başlık `{n} seçili` olur, sol üstte kapatma, sağ üstte
+**tümünü seç / seçimi temizle**, altta eylem şeridi.
+
+### Silme: onay **var**, geri alma **yok**
+
+- **Davranış web'le aynı:** sunucuda yumuşak silme (`silindi_at`),
+  arayüzden geri alınamaz. Web'de de geri yükleme ucu yok.
+- **Affordans farklı:** dokunmatik ekranda yanlışlıkla basma olasılığı
+  fareyle tıklamaya göre çok daha yüksek ve seçili satırların hepsi
+  ekranda görünmüyor olabilir. Geri alınamaz bir işlemin önündeki tek
+  koruma onay penceresi.
+
+Bu bir davranış ayrışması değil, aynı davranışın iki girdi yöntemine
+uyarlanması.
+
+### Sonuç **sayısı** gösteriliyor
+
+"İşlem tamam" demek, hiçbir satır etkilenmediğinde de aynı şeyi
+söylerdi — P217'de ölçülen "Kaydedildi yazıp sıfır kayıt üretmek"
+sınıfı. Yanıt `etkilenen` döndürüyor, arayüz onu gösteriyor.
+
+### Rozet: P190'ın tekrarı önlendi
+
+P190'da web'de ölçülen kusur: toplu okundu deyince liste güncelleniyor
+ama **üst bardaki sayı düşmüyordu** — çünkü rozet ayrı bir sorgudan
+besleniyor. Mobilde de `unreadNotificationCountProvider` ayrı. Üç
+işlemin **hepsinde** tazeleniyor ve üçü de testle kilitli.
+
+### Ölçüm sırasında bulduğum kendi hatam: sahte yeşil test
+
+Rozet kilidini yazdım, geçti. Sonra **kırdım** — tazelemeyi tamamen
+kaldırdım — ve test **yine geçti**. Sebep: rozet sağlayıcısı
+`autoDispose` ve testte dinleyicisi yoktu; okuma biter bitmez atılıyor,
+ikinci okuma zaten yeniden sorguluyordu. Ölçtüğüm şey ürün değil,
+`autoDispose`'un kendisiydi.
+
+Düzeltme: teste rozet sağlayıcısı için de bir dinleyici eklendi. Artık
+ikinci sorgu **ancak açık bir `invalidate`** ile oluşuyor; kırma denemesi
+üç testi birden kırmızı yakıyor.
+
+> Bu, "test yeşil" ile "test ölçüyor" arasındaki farkın somut örneği ve
+> kırmadan fark edilemezdi.
+
+### Yan bulgu: dayanıklılık açığı
+
+`ref.invalidate`, sağlayıcı atılmışsa **fırlatıyor**. `notificationsProvider`
+`autoDispose`: kullanıcı toplu işlem sırasında (ağ çağrısı sürerken)
+ekrandan çıkarsa dinleyici kalmaz, sağlayıcı atılır ve tazeleme
+patlardı. Sonucu: sunucuda **başarıyla tamamlanmış** bir işlem arayüzde
+"başarısız" görünür, kullanıcı tekrar dener ve ikinci kez siler.
+
+`ref.mounted` kontrolü eklendi. Ekran zaten kapandığı için tazelemeye de
+gerek yok: bir sonraki açılışta liste yeniden çekiliyor.
+
+### Yan bulgu 2: erişilebilirlik kilidi beni yakaladı
+
+Uzun basmayı önce sarmalayıcı bir `GestureDetector` ile yazdım. Mobil
+takım kırmızı yandı: *"lib/src içinde çıplak `GestureDetector` yok
+(klavyeyle ulaşılamaz)"*.
+
+Kilit haklıydı. `GestureDetector` kendi `Focus`unu kurmaz — harici
+klavye, anahtar erişimi (switch access) ve masaüstü hedefleri için öğe
+**erişilemez** olur. Uzun basmayı `ActivityRow`un zaten var olan
+`InkWell`ine taşıdım; `InkWell` odaklanabilir.
+
+Bu, "erişilebilirlik sonra düşünülür" tuzağının tam olarak nasıl
+kapatıldığının örneği: kural kaynak taramasıyla zorlanıyor ve yazarken
+yakalıyor.
+
+### Ölçemediklerim
+
+- **Cihazda uzun basma ve onay penceresi** — emülatör yok. Ölçülen şey,
+  doğru uca doğru gövdeyle gidildiği ve rozetin tazelendiği.
+- **Çok sayıda seçimde davranış** — `ids` en çok 500 (sunucu sınırı);
+  501 seçimde ne olacağı sürülmedi.
+
+
+---
+
+## §3 — Okundu / okunmadı sekmeleri + arama
+
+### İki sekme, varsayılan **okunmamış** — "Tümü" kaldırıldı
+
+Web'de üç filtre düğmesi vardı (Tümü / Okunmamış / Okunmuş) ve
+varsayılan **Tümü**ydü. Mobilde hiç filtre yoktu.
+
+**"Tümü" neden kaldırıldı:** bildirim listesinin yanıtlaması gereken
+soru *"neyi kaçırdım"*. Okunmuşlarla karışık bir liste o soruyu
+yanıtlamıyor ve kullanıcıyı her açılışta süzmeye zorluyordu. Arama
+geldiği için de gereksiz: bir bildirimi metniyle arıyorsan hangi sekmede
+olduğunu bilmen gerekmez — **iki sekmede de arama var**.
+
+Okundu işaretlenen bildirim okunmuş sekmesine geçiyor (liste
+tazeleniyor), rozet yalnız okunmamışları sayıyor (zaten öyleydi:
+`okundu=false&limit=1`).
+
+### Arama neyi kapsıyor: **başlık + gövde + tip**
+
+Kararın gerekçesi bir **ölçümden** çıktı: bildirim metni **kayıtta
+durmuyor**. Satır `mesaj_kimlik` + `mesaj_veri` taşıyor; cümle **okuma
+anında, isteğin dilinde** kuruluyor (tur 16 kararı — aynı kayıt her
+kullanıcıya kendi dilinde görünsün diye).
+
+Sonucu: `WHERE mesaj ILIKE '%kargo%'` yalnız **tur 16 öncesi** satırları
+bulurdu — yani kullanıcının gördüğü metinlerin neredeyse hiçbirini.
+`test_KAYITTAKI_MESAJ_BOS_ama_ARAMA_BULUYOR` bu kısıtı kanıtlıyor.
+
+Bu yüzden arama **üretilmiş metin** üzerinde:
+
+| Kapsam | Neden |
+|---|---|
+| **başlık** (`push_basligi`) | Kullanıcının listede gördüğü etiket |
+| **gövde** (`push_govdesi`) | Aradığı cümlenin kendisi |
+| **tip** (ham kimlik) | Ekranda görünmüyor ama destek yazışmasında geçiyor; dışarıda bırakmak "tipe göre bulayım" diyen yöneticiyi boş döndürürdü |
+
+### İstemcide filtrelemek neden yanlış olurdu
+
+Yalnız **açık sayfayı** süzer. "kargo" arayan kullanıcı 3. sayfadaki
+kaydı bulamaz ve "yok" sanar.
+`test_ARAMA_SAYFA_DISINDAKINI_de_BULUR` bunu ölçüyor: aranan kayıt
+`limit=1` ile ilk sayfada görünmüyor, arama onu buluyor.
+
+### Tarama tavanı **görünür**
+
+SQL'de arayamadığımız için uç, kapsamdaki en yeni **1000** satırı
+üretip filtreliyor. Tavan aşılırsa yanıt bunu söylüyor
+(`meta.arama_tavani_asildi`) ve iki yüzey de gösteriyor.
+
+Sessizce eksik sonuç döndürmek, kullanıcıyı *"aradım, bulamadım, demek
+ki yok"* sonucuna götürür — oysa kayıt taranmamış olabilir.
+
+**En az 2 karakter:** tek harf, taranan satırların neredeyse tamamıyla
+eşleşir ve arama bir işe yaramaz. Kısa sorgu aramasız yola düşüyor
+(sayfalama SQL'de kalıyor, büyük listede tek satır bile fazladan
+üretilmiyor).
+
+### Arama yetkiyi genişletmiyor
+
+`_kapsam(user)` aynen uygulanıyor: yönetici yalnız `user_id IS NULL`
+satırlarını, diğerleri kendi satırlarını arıyor.
+`test_ARAMA_KAPSAMI_ASMAZ` başka tesisin kaydının gelmediğini ölçüyor.
+
+### Web'de dört kilit yakaladı
+
+1. **Tasarım tokenı** — `--yz-line` / `--yz-surface` tanımsızdı
+   (`--yz-border` / `--yz-surface-1` doğrusu).
+2. **Çok satırlı JSX'te Türkçe** ×2 — tarayıcı çok satırlı `{/* */}`
+   bloklarını JSX metni sayıyor. Gerekçeler TS yorumlarına taşındı.
+3. **`aria-pressed` testi** — "Tümü" düğmesini bekliyordu. Test
+   güncellendi ve iki sekmenin birbirini dışladığı da ölçülüyor.
+
+### Ölçemediklerim
+
+- **Gerçek dilde arama.** Testler Türkçe metinlerle koşuyor; Arapça ya
+  da Rusça arayüzde üretilen metinde arama sürülmedi. Mekanizma dilden
+  bağımsız (`Accept-Language` ile üretiliyor) ama ölçülmedi.
+- **1000 satırlık tavanın performansı.** Tavan üstünde bir kapsamla
+  koşulmadı; ölçülen şey tavanın **bildirildiği**.
+- **Gecikmenin (300 ms) doğru süre olduğu.** İki yüzeyde de aynı ve
+  tutarlılık kriterini karşılıyor, ama sürenin kendisi bir tahmin;
+  gerçek kullanımda ölçülmedi.

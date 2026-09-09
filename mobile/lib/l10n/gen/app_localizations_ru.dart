@@ -6231,4 +6231,64 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get dukkanReklamBitti => 'Срок истёк';
+
+  @override
+  String get bildirimSec => 'Выбрать';
+
+  @override
+  String get bildirimTumunuSec => 'Выбрать все';
+
+  @override
+  String get bildirimSecimiTemizle => 'Снять выделение';
+
+  @override
+  String bildirimSeciliSayi(int sayi) {
+    return 'Выбрано: $sayi';
+  }
+
+  @override
+  String get bildirimSeciliOkundu => 'Прочитано';
+
+  @override
+  String get bildirimSeciliSil => 'Удалить';
+
+  @override
+  String get bildirimTumunuOkundu => 'Отметить все как прочитанные';
+
+  @override
+  String bildirimOkunduSayi(int sayi) {
+    return 'Отмечено как прочитанные: $sayi';
+  }
+
+  @override
+  String bildirimSilindiSayi(int sayi) {
+    return 'Удалено уведомлений: $sayi';
+  }
+
+  @override
+  String get bildirimTopluBasarisiz => 'Не удалось выполнить действие.';
+
+  @override
+  String bildirimSilOnayBaslik(int sayi) {
+    return 'Удалить уведомления ($sayi)?';
+  }
+
+  @override
+  String get bildirimSilOnayMetin =>
+      'Удалённые уведомления исчезают из списка и не восстанавливаются.';
+
+  @override
+  String get bildirimOkunmamis => 'Непрочитанные';
+
+  @override
+  String get bildirimOkunmus => 'Прочитанные';
+
+  @override
+  String get bildirimAraIpucu => 'Поиск по уведомлениям…';
+
+  @override
+  String get bildirimAraAsgari => 'Минимум 2 символа';
+
+  @override
+  String get bildirimAramaSonucYok => 'Нет уведомлений по вашему запросу.';
 }

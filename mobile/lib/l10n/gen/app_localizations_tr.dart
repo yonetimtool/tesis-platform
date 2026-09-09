@@ -5969,4 +5969,64 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get dukkanReklamBitti => 'Süresi doldu';
+
+  @override
+  String get bildirimSec => 'Seç';
+
+  @override
+  String get bildirimTumunuSec => 'Tümünü seç';
+
+  @override
+  String get bildirimSecimiTemizle => 'Seçimi temizle';
+
+  @override
+  String bildirimSeciliSayi(int sayi) {
+    return '$sayi seçili';
+  }
+
+  @override
+  String get bildirimSeciliOkundu => 'Okundu';
+
+  @override
+  String get bildirimSeciliSil => 'Sil';
+
+  @override
+  String get bildirimTumunuOkundu => 'Tümünü okundu işaretle';
+
+  @override
+  String bildirimOkunduSayi(int sayi) {
+    return '$sayi bildirim okundu işaretlendi';
+  }
+
+  @override
+  String bildirimSilindiSayi(int sayi) {
+    return '$sayi bildirim silindi';
+  }
+
+  @override
+  String get bildirimTopluBasarisiz => 'İşlem tamamlanamadı.';
+
+  @override
+  String bildirimSilOnayBaslik(int sayi) {
+    return '$sayi bildirim silinsin mi?';
+  }
+
+  @override
+  String get bildirimSilOnayMetin =>
+      'Silinen bildirim listeden kalkar ve geri alınamaz.';
+
+  @override
+  String get bildirimOkunmamis => 'Okunmamış';
+
+  @override
+  String get bildirimOkunmus => 'Okunmuş';
+
+  @override
+  String get bildirimAraIpucu => 'Bildirimlerde ara…';
+
+  @override
+  String get bildirimAraAsgari => 'En az 2 karakter';
+
+  @override
+  String get bildirimAramaSonucYok => 'Aramanla eşleşen bildirim yok.';
 }

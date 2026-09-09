@@ -2021,5 +2021,22 @@
   "dukkanReklamBaslik": "Tus anuncios",
   "dukkanReklamYok": "No tienes anuncios activos.",
   "dukkanReklamKalanGun": "Activo — quedan {gun} días",
-  "dukkanReklamBitti": "Caducado"
+  "dukkanReklamBitti": "Caducado",
+  "bildirimSec": "Seleccionar",
+  "bildirimTumunuSec": "Seleccionar todo",
+  "bildirimSecimiTemizle": "Borrar selección",
+  "bildirimSeciliSayi": "{sayi} seleccionadas",
+  "bildirimSeciliOkundu": "Marcar leída",
+  "bildirimSeciliSil": "Eliminar",
+  "bildirimTumunuOkundu": "Marcar todo como leído",
+  "bildirimOkunduSayi": "{sayi} notificaciones marcadas como leídas",
+  "bildirimSilindiSayi": "{sayi} notificaciones eliminadas",
+  "bildirimTopluBasarisiz": "No se pudo completar la acción.",
+  "bildirimSilOnayBaslik": "¿Eliminar {sayi} notificaciones?",
+  "bildirimSilOnayMetin": "Las notificaciones eliminadas salen de la lista y no se pueden restaurar.",
+  "bildirimOkunmamis": "No leídas",
+  "bildirimOkunmus": "Leídas",
+  "bildirimAraIpucu": "Buscar en las notificaciones…",
+  "bildirimAraAsgari": "Al menos 2 caracteres",
+  "bildirimAramaSonucYok": "Ninguna notificación coincide con tu búsqueda."
 }

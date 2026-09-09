@@ -6224,4 +6224,64 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get dukkanReklamBitti => 'انتهت المدة';
+
+  @override
+  String get bildirimSec => 'تحديد';
+
+  @override
+  String get bildirimTumunuSec => 'تحديد الكل';
+
+  @override
+  String get bildirimSecimiTemizle => 'إلغاء التحديد';
+
+  @override
+  String bildirimSeciliSayi(int sayi) {
+    return '$sayi محددة';
+  }
+
+  @override
+  String get bildirimSeciliOkundu => 'تعليم كمقروء';
+
+  @override
+  String get bildirimSeciliSil => 'حذف';
+
+  @override
+  String get bildirimTumunuOkundu => 'تعليم الكل كمقروء';
+
+  @override
+  String bildirimOkunduSayi(int sayi) {
+    return 'تم تعليم $sayi إشعاراً كمقروء';
+  }
+
+  @override
+  String bildirimSilindiSayi(int sayi) {
+    return 'تم حذف $sayi إشعاراً';
+  }
+
+  @override
+  String get bildirimTopluBasarisiz => 'تعذّر إتمام العملية.';
+
+  @override
+  String bildirimSilOnayBaslik(int sayi) {
+    return 'حذف $sayi إشعاراً؟';
+  }
+
+  @override
+  String get bildirimSilOnayMetin =>
+      'الإشعارات المحذوفة تختفي من القائمة ولا يمكن استعادتها.';
+
+  @override
+  String get bildirimOkunmamis => 'غير مقروءة';
+
+  @override
+  String get bildirimOkunmus => 'مقروءة';
+
+  @override
+  String get bildirimAraIpucu => 'البحث في الإشعارات…';
+
+  @override
+  String get bildirimAraAsgari => 'حرفان على الأقل';
+
+  @override
+  String get bildirimAramaSonucYok => 'لا توجد إشعارات تطابق بحثك.';
 }
