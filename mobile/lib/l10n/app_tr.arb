@@ -2839,5 +2839,41 @@
   "bildirimOkunmus": "Okunmuş",
   "bildirimAraIpucu": "Bildirimlerde ara…",
   "bildirimAraAsgari": "En az 2 karakter",
-  "bildirimAramaSonucYok": "Aramanla eşleşen bildirim yok."
+  "bildirimAramaSonucYok": "Aramanla eşleşen bildirim yok.",
+  "sakinAraIpucu": "Ad, daire no ya da blokta ara…",
+  "sakinAraAsgari": "En az 2 karakter",
+  "sakinAramaSonucYok": "Aramanla eşleşen sakin yok.",
+  "sakinBloksuz": "Blok atanmamış",
+  "sakinBlogaDaralt": "Bu bloğa daralt",
+  "sakinBlokSuzgeci": "Blok: {blok}",
+  "sakinBlokAlani": "Blok (isteğe bağlı)",
+  "sakinBlokIpucu": "Yalnızca YENİ açılan daireye işlenir; mevcut dairenin bloğu değişmez.",
+  "@sakinBlokSuzgeci": {
+    "placeholders": {
+      "blok": {
+        "type": "String"
+      }
+    }
+  },
+  "daireSakinleri": "Dairede oturanlar",
+  "daireBos": "Boş daire",
+  "daireSakinEkle": "Sakin ekle",
+  "daireSakinSec": "Sakin seç",
+  "daireRolMalik": "Malik",
+  "daireRolKiraci": "Kiracı",
+  "daireRolYok": "Rol atanmamış",
+  "daireOturuyor": "oturuyor",
+  "daireOturuyorYap": "Oturuyor olarak işaretle",
+  "daireOturmuyorYap": "Oturmuyor olarak işaretle",
+  "daireSakinCikar": "Daireden çıkar",
+  "daireSakinCikarOnay": "{ad} daireden çıkarılsın mı?",
+  "daireSakinCikarNot": "Yalnızca bu daireyle bağı kapanır; hesabı silinmez.",
+  "daireSakinEklendi": "Sakin daireye eklendi.",
+  "@daireSakinCikarOnay": {
+    "placeholders": {
+      "ad": {
+        "type": "String"
+      }
+    }
+  }
 }

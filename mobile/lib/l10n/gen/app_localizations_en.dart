@@ -6220,4 +6220,76 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get bildirimAramaSonucYok => 'No notifications match your search.';
+
+  @override
+  String get sakinAraIpucu => 'Search by name, unit or block…';
+
+  @override
+  String get sakinAraAsgari => 'At least 2 characters';
+
+  @override
+  String get sakinAramaSonucYok => 'No residents match your search.';
+
+  @override
+  String get sakinBloksuz => 'No block assigned';
+
+  @override
+  String get sakinBlogaDaralt => 'Filter to this block';
+
+  @override
+  String sakinBlokSuzgeci(String blok) {
+    return 'Block: $blok';
+  }
+
+  @override
+  String get sakinBlokAlani => 'Block (optional)';
+
+  @override
+  String get sakinBlokIpucu =>
+      'Applied only to a NEWLY created unit; an existing unit\'s block is unchanged.';
+
+  @override
+  String get daireSakinleri => 'Residents of this unit';
+
+  @override
+  String get daireBos => 'Empty unit';
+
+  @override
+  String get daireSakinEkle => 'Add resident';
+
+  @override
+  String get daireSakinSec => 'Select resident';
+
+  @override
+  String get daireRolMalik => 'Owner';
+
+  @override
+  String get daireRolKiraci => 'Tenant';
+
+  @override
+  String get daireRolYok => 'No role assigned';
+
+  @override
+  String get daireOturuyor => 'resides here';
+
+  @override
+  String get daireOturuyorYap => 'Mark as residing';
+
+  @override
+  String get daireOturmuyorYap => 'Mark as not residing';
+
+  @override
+  String get daireSakinCikar => 'Remove from unit';
+
+  @override
+  String daireSakinCikarOnay(String ad) {
+    return 'Remove $ad from this unit?';
+  }
+
+  @override
+  String get daireSakinCikarNot =>
+      'Only the link to this unit is closed; the account is not deleted.';
+
+  @override
+  String get daireSakinEklendi => 'Resident added to the unit.';
 }

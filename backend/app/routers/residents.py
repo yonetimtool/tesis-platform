@@ -13,8 +13,8 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Depends, Header, Response
-from sqlalchemy import and_, func, select, text
+from fastapi import APIRouter, Depends, Header, Query, Response
+from sqlalchemy import and_, exists, func, or_, select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -157,14 +157,88 @@ async def create_resident(
 
 @router.get("", response_model=ResidentListResponse)
 async def list_residents(
+    q: str | None = Query(
+        None,
+        description="Ad, daire no ya da BLOK adinda arama (en az 2 karakter)",
+    ),
+    blok: str | None = Query(None, description="Tek bloga daralt (tam eslesme)"),
     db: AsyncSession = Depends(get_tenant_db),
     _: AppUser = Depends(_YONETIM),
 ) -> ResidentListResponse:
-    """Site sakinleri (yonetici/admin) — ad + aktif daire no + durum.
+    """Site sakinleri (yonetici/admin) — ad + aktif daire no + BLOK + durum.
 
-    Telefon KVKK geregi DONMEZ. unit_no aktif (bitis IS NULL) daire baglarindan
-    turer; coklu daire virgulle birlesir, yoksa null. RLS ile tenant-kapsamli.
+    Telefon KVKK geregi DONMEZ. unit_no/blok aktif (bitis IS NULL) daire
+    baglarindan turer; coklu daire virgulle birlesir, yoksa null. RLS ile
+    tenant-kapsamli.
+
+    ==================================================================
+    (P220 §4) BLOK DONUYOR — ONCEDEN DONMUYORDU
+    ==================================================================
+    Istek: "sakinler BLOKLARA GORE gruplansin" ve "yonetici bir sakini
+    bulmak icin BLOKTA arayabilsin". Ikisi de istemcide yapilamiyordu
+    cunku liste blok tasimiyordu — ve `A-12` gibi bir daire numarasindan
+    blok CIKARILAMAZ: blok `unit.blok` sutunudur, numaranin bir parcasi
+    degil (P193'te ikisi bilerek AYRILDI).
+
+    ==================================================================
+    ARAMA SUNUCUDA — VE UC ALANI BIRDEN KAPSAR
+    ==================================================================
+    Kapsam: AD + DAIRE NO + BLOK. Yoneticinin bir sakini ararken elinde
+    olan sey bu ucunden biridir: adini bilir, dairesini bilir ya da
+    yalnizca hangi blokta oturdugunu bilir.
+
+    Istemcide filtrelemek burada da yanlis olurdu (bkz. bildirim
+    aramasi): liste sayfalanmiyor ama buyudugunde sayfalanacak ve o gun
+    arama sessizce yarim calismaya baslardi.
+
+    `blok` parametresi AYRI ve TAM ESLESME: gruplanmis gorunumde bir
+    bloga dokunup daraltmak icin. `q` ile karistirmak, "A" blogunu
+    ararken "A-12" dairesindeki herkesi getirirdi.
     """
+    # `string_agg` SIRALI: ayni sakinin daireleri her istekte AYNI sirada
+    # gorunsun (siralamasiz toplama, listede titremeye yol acar).
+    kosullar = [AppUser.role == "resident"]
+
+    #: Blok/daire suzgecleri AKTIF baglar uzerinden; kapanmis bag
+    #: (`bitis` dolu) sakini o blokta gostermemeli — siteden ayrilmis
+    #: demektir.
+    aktif_bag = and_(
+        UnitResident.user_id == AppUser.id, UnitResident.bitis.is_(None)
+    )
+
+    if blok:
+        kosullar.append(
+            exists(
+                select(1)
+                .select_from(UnitResident)
+                .join(Unit, Unit.id == UnitResident.unit_id)
+                .where(
+                    UnitResident.user_id == AppUser.id,
+                    UnitResident.bitis.is_(None),
+                    Unit.blok == blok,
+                )
+            )
+        )
+
+    aranan = (q or "").strip()
+    if len(aranan) >= 2:
+        kalip = f"%{aranan}%"
+        kosullar.append(
+            or_(
+                AppUser.ad.ilike(kalip),
+                exists(
+                    select(1)
+                    .select_from(UnitResident)
+                    .join(Unit, Unit.id == UnitResident.unit_id)
+                    .where(
+                        UnitResident.user_id == AppUser.id,
+                        UnitResident.bitis.is_(None),
+                        or_(Unit.no.ilike(kalip), Unit.blok.ilike(kalip)),
+                    )
+                ),
+            )
+        )
+
     rows = (
         await db.execute(
             select(
@@ -172,16 +246,13 @@ async def list_residents(
                 AppUser.ad,
                 AppUser.is_active,
                 func.string_agg(Unit.no, ", ").label("unit_no"),
+                # DISTINCT: iki dairesi ayni blokta olan sakinde blok
+                # adi iki kez yazilirdi ("A, A").
+                func.string_agg(func.distinct(Unit.blok), ", ").label("blok"),
             )
-            .outerjoin(
-                UnitResident,
-                and_(
-                    UnitResident.user_id == AppUser.id,
-                    UnitResident.bitis.is_(None),
-                ),
-            )
+            .outerjoin(UnitResident, aktif_bag)
             .outerjoin(Unit, Unit.id == UnitResident.unit_id)
-            .where(AppUser.role == "resident")
+            .where(*kosullar)
             .group_by(AppUser.id, AppUser.ad, AppUser.is_active)
             .order_by(AppUser.ad)
         )
@@ -189,7 +260,8 @@ async def list_residents(
     return ResidentListResponse(
         items=[
             ResidentListItem(
-                user_id=r.id, ad=r.ad, unit_no=r.unit_no, is_active=r.is_active
+                user_id=r.id, ad=r.ad, unit_no=r.unit_no, blok=r.blok,
+                is_active=r.is_active,
             )
             for r in rows
         ]

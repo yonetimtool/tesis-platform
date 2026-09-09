@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -13,12 +15,48 @@ import '../../../core/ui/telefon_hata_metni.dart';
 /// Site Sakinleri — yonetici/admin: sakinleri listeler, yeni tasinani ekler
 /// (parolasiz hesap + otomatik davet), ayrilani cikarir (pasiflestir). Sakin
 /// daveti (Tesis ID) ile kendi kaydini tamamlar.
-class ResidentsScreen extends ConsumerWidget {
+/// (P220 §4) SAKINLER BLOKLARA GORE GRUPLU + BLOKTA ARAMA.
+///
+/// Gerekce (kullanicinin): "bir sakin siteden ayrildiginda yonetici onu
+/// kolayca bulup hesabini silsin, yerine yeni sakini eklesin."
+///
+/// Duz bir liste o isi zorlastiriyordu: yonetici sakinin ADINI
+/// bilmiyorsa (cogu zaman bilmiyor — "B blokta 4. kattaki") listeyi
+/// tepeden tarayacakti. Gruplama ve blok aramasi o adimi kaldiriyor.
+class ResidentsScreen extends ConsumerStatefulWidget {
   const ResidentsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ResidentsScreen> createState() => _ResidentsScreenState();
+}
+
+class _ResidentsScreenState extends ConsumerState<ResidentsScreen> {
+  final _aramaKtrl = TextEditingController();
+
+  /// Bildirim aramasiyla AYNI gecikme (300 ms) — iki ekranin farkli
+  /// davranmasi, ayni jestin birinde akici otekinde takilarak calismasi
+  /// olurdu.
+  Timer? _zamanlayici;
+
+  @override
+  void dispose() {
+    _zamanlayici?.cancel();
+    _aramaKtrl.dispose();
+    super.dispose();
+  }
+
+  void _aramaDegisti(String v) {
+    _zamanlayici?.cancel();
+    _zamanlayici = Timer(const Duration(milliseconds: 300), () {
+      if (!mounted) return;
+      ref.read(sakinSuzgeciProvider.notifier).ara(v);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final async = ref.watch(residentsProvider);
+    final suzgec = ref.watch(sakinSuzgeciProvider);
     final l10n = context.l10n;
     return Scaffold(
       appBar: AppBar(
@@ -29,36 +67,90 @@ class ResidentsScreen extends ConsumerWidget {
         icon: const Icon(Icons.person_add_alt_1),
         label: Text(l10n.sakinEkle),
       ),
-      body: async.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => _ErrorState(
-          // Sunucu metni varsa o gosterilir (SERVER-LOCALIZED siniri);
-          // yoksa yerellestirilmis genel metin.
-          message: e is ApiException
-              ? apiHataMetni(l10n, e)
-              : l10n.sakinListelenemedi,
-          onRetry: () => ref.invalidate(residentsProvider),
-        ),
-        data: (list) => list.isEmpty
-            // (P166 §10) Bos durumda cagri dugmesi — bkz. personel.
-            ? BosDurum(
-                ikon: Icons.home_outlined,
-                baslik: l10n.sakinYok,
-                aciklama: l10n.sakinYokAlt,
-                eylemEtiketi: l10n.sakinEkle,
-                eylemIkonu: Icons.person_add_alt_1,
-                onEylem: () => _openAddSheet(context, ref),
-              )
-            : RefreshIndicator(
-                onRefresh: () async => ref.invalidate(residentsProvider),
-                child: ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 88),
-                  itemCount: list.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 8),
-                  itemBuilder: (context, i) =>
-                      _ResidentTile(member: list[i], ref: ref),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+            child: TextField(
+              controller: _aramaKtrl,
+              onChanged: _aramaDegisti,
+              decoration: InputDecoration(
+                isDense: true,
+                prefixIcon: const Icon(Icons.search),
+                // ARAMA UC ALANI KAPSAR: ad, daire no, blok. Yoneticinin
+                // elinde bu ucunden biri olur.
+                hintText: l10n.sakinAraIpucu,
+                helperText:
+                    suzgec.arama.trim().isNotEmpty && !suzgec.aramaGecerli
+                        ? l10n.sakinAraAsgari
+                        : null,
+                suffixIcon: suzgec.arama.isEmpty
+                    ? null
+                    : IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          _zamanlayici?.cancel();
+                          _aramaKtrl.clear();
+                          ref.read(sakinSuzgeciProvider.notifier).ara('');
+                        },
+                      ),
+              ),
+            ),
+          ),
+          // BLOK DARALTMASI ACIKSA GORUNUR ve TEK DOKUNUSLA kalkar:
+          // gizli bir suzgec, "sakinim listede yok" sorusunun en sik
+          // sebebidir.
+          if (suzgec.blok != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: InputChip(
+                  label: Text(l10n.sakinBlokSuzgeci(suzgec.blok!)),
+                  onDeleted: () =>
+                      ref.read(sakinSuzgeciProvider.notifier).blokSec(null),
                 ),
               ),
+            ),
+          Expanded(
+            child: async.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, _) => _ErrorState(
+                // Sunucu metni varsa o gosterilir (SERVER-LOCALIZED siniri);
+                // yoksa yerellestirilmis genel metin.
+                message: e is ApiException
+                    ? apiHataMetni(l10n, e)
+                    : l10n.sakinListelenemedi,
+                onRetry: () => ref.invalidate(residentsProvider),
+              ),
+              data: (list) => list.isEmpty
+                  ? (suzgec.aramaGecerli || suzgec.blok != null
+                      // ARAMA SONUCU BOS ile SITE BOS AYRI: ikisine ayni
+                      // "sakin yok" demek, yoneticiye siteyi bos
+                      // gosterirdi.
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Text(l10n.sakinAramaSonucYok,
+                                textAlign: TextAlign.center),
+                          ),
+                        )
+                      // (P166 §10) Bos durumda cagri dugmesi — bkz. personel.
+                      : BosDurum(
+                          ikon: Icons.home_outlined,
+                          baslik: l10n.sakinYok,
+                          aciklama: l10n.sakinYokAlt,
+                          eylemEtiketi: l10n.sakinEkle,
+                          eylemIkonu: Icons.person_add_alt_1,
+                          onEylem: () => _openAddSheet(context, ref),
+                        ))
+                  : RefreshIndicator(
+                      onRefresh: () async => ref.invalidate(residentsProvider),
+                      child: _BloklaListe(gruplar: bloklaraGore(list)),
+                    ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -69,6 +161,69 @@ class ResidentsScreen extends ConsumerWidget {
       builder: (_) => const _AddResidentSheet(),
     );
     if (created != null) ref.invalidate(residentsProvider);
+  }
+}
+
+/// Bloklara gore gruplu liste — her blok bir baslik + sakinleri.
+class _BloklaListe extends ConsumerWidget {
+  const _BloklaListe({required this.gruplar});
+
+  final List<SakinBlogu> gruplar;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    // Duz bir `ListView` uzerinde baslik + satirlar: `ExpansionTile`
+    // KULLANILMADI, cunku kapali bir grup "sakinim listede yok"
+    // sorusunun ikinci sebebi olurdu.
+    final ogeler = <Widget>[];
+    for (final g in gruplar) {
+      ogeler.add(
+        Padding(
+          padding: const EdgeInsets.fromLTRB(4, 12, 4, 6),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  g.blok ?? l10n.sakinBloksuz,
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleSmall
+                      ?.copyWith(fontWeight: FontWeight.w700),
+                ),
+              ),
+              Text('${g.sakinler.length}',
+                  style: Theme.of(context).textTheme.bodySmall),
+              if (g.blok != null) ...[
+                const SizedBox(width: 4),
+                IconButton(
+                  // `visualDensity: compact` KALDIRILDI: dokunma hedefini
+                  // 40x40'a dusuruyordu ve erisilebilirlik kilidi
+                  // ("Tappable objects should be at least 48x48")
+                  // YAKALADI. Sıkısik gorunum ugruna dokunma hedefini
+                  // kucultmek, motor gucluk yasayan kullanicida dugmeyi
+                  // isabet ettirilemez yapar.
+                  tooltip: l10n.sakinBlogaDaralt,
+                  icon: const Icon(Icons.filter_alt_outlined, size: 18),
+                  onPressed: () =>
+                      ref.read(sakinSuzgeciProvider.notifier).blokSec(g.blok),
+                ),
+              ],
+            ],
+          ),
+        ),
+      );
+      for (final m in g.sakinler) {
+        ogeler.add(Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: _ResidentTile(member: m, ref: ref),
+        ));
+      }
+    }
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 88),
+      children: ogeler,
+    );
   }
 }
 
@@ -411,12 +566,20 @@ class _AddResidentSheetState extends ConsumerState<_AddResidentSheet> {
   final _formKey = GlobalKey<FormState>();
   final _phoneCtrl = TextEditingController();
   final _unitCtrl = TextEditingController();
+  // (P220 §4) BLOK AYRI ALAN — daire numarasindan TURETILMIYOR.
+  //
+  // `A-12` numarali bir daire `B` blogunda olabilir: blok `unit.blok`
+  // sutunudur, numaranin bir parcasi degil (P193'te ikisi BILEREK
+  // ayrildi). Numaradan tahmin etmek, yanlis blokta bir daire acardi ve
+  // o sakin bloklara gore gruplanmis listede YANLIS YERDE gorunurdu.
+  final _blokCtrl = TextEditingController();
   bool _submitting = false;
 
   @override
   void dispose() {
     _phoneCtrl.dispose();
     _unitCtrl.dispose();
+    _blokCtrl.dispose();
     super.dispose();
   }
 
@@ -433,6 +596,7 @@ class _AddResidentSheetState extends ConsumerState<_AddResidentSheet> {
           .addResident(
             telefon: telefonNormalle(_phoneCtrl.text),
             unitNo: _unitCtrl.text.trim(),
+            blok: _blokCtrl.text,
           );
       if (!mounted) return;
       navigator.pop('ok');
@@ -490,6 +654,21 @@ class _AddResidentSheetState extends ConsumerState<_AddResidentSheet> {
               ),
               validator: (v) =>
                   (v?.trim() ?? '').isEmpty ? l10n.sakinDaireNoZorunlu : null,
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _blokCtrl,
+              enabled: !_submitting,
+              decoration: InputDecoration(
+                labelText: l10n.sakinBlokAlani,
+                prefixIcon: const Icon(Icons.apartment_outlined),
+                border: const OutlineInputBorder(),
+                // NE YAPTIGI ACIKCA YAZILI: sunucu blogu yalniz YENI
+                // acilan daireye isliyor. Bunu soylememek, mevcut bir
+                // dairenin blogunu degistirdigini sanan yonetici
+                // uretirdi.
+                helperText: l10n.sakinBlokIpucu,
+              ),
             ),
             const SizedBox(height: 16),
             FilledButton(

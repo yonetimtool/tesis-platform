@@ -4123,6 +4123,28 @@ class UnitResidentOut(BaseModel):
     created_at: datetime
 
 
+class UnitResidentUpdate(BaseModel):
+    """(P220 §5) BIR DAIRENIN sakin bagini gunceller — rol / oturuyor.
+
+    ==================================================================
+    NEDEN `PATCH /residents/{id}`DEN AYRI
+    ==================================================================
+    O uc, kullanicinin AKTIF TUM daire baglarina uyguluyor (kendi
+    dokumaninda yazili). Iki dairesi olan bir sakinde — bir dairede
+    malik, otekinde kiraci — o ucu cagirmak IKISINI DE degistirirdi.
+
+    Bina duzenleme ekranindaki daire penceresi TEK BIR DAIRE hakkinda
+    konusuyor; oradan yapilan bir rol degisikligi baska bir daireyi
+    etkilememeli.
+
+    En az bir alan verilmeli: bos govde "hicbir sey degismedi" ile
+    "istemci hata yapti" arasindaki farki silerdi.
+    """
+
+    rol_tipi: ResidentRol | None = None
+    oturuyor: bool | None = None
+
+
 class ResidentAssign(BaseModel):
     user_id: uuid.UUID
     rol_tipi: ResidentRol | None = None
@@ -4211,6 +4233,19 @@ class ResidentListItem(BaseModel):
     user_id: uuid.UUID
     ad: str
     unit_no: str | None = None  # aktif daire(ler); coklu ise virgulle birlesir
+    #: (P220 §4) AKTIF DAIRELERIN BLOK ADLARI — gruplama ve arama icin.
+    #:
+    #: Onceden DONMUYORDU ve bu, "sakinler bloklara gore gruplansin"
+    #: isteginin ISTEMCIDE karsilanamamasi demekti: liste yalniz daire
+    #: numarasi tasiyordu ve `A-12` gibi bir numaradan blok CIKARILAMAZ
+    #: (blok `unit.blok` sutunudur, numaranin bir parcasi degil — P193'te
+    #: ikisi bilerek AYRILDI).
+    #:
+    #: Coklu daire virgulle birlesir (`unit_no` ile ayni kalip). Dairesi
+    #: olmayan sakinde `null`; arayuz onlari "Blok atanmamis" grubunda
+    #: gosteriyor — gizlemek, siteden ayrilan ama daire bagi kapanmis bir
+    #: sakini BULUNAMAZ yapardi.
+    blok: str | None = None
     is_active: bool
 
 

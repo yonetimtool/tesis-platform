@@ -6291,4 +6291,76 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get bildirimAramaSonucYok => 'Нет уведомлений по вашему запросу.';
+
+  @override
+  String get sakinAraIpucu => 'Поиск по имени, квартире или блоку…';
+
+  @override
+  String get sakinAraAsgari => 'Минимум 2 символа';
+
+  @override
+  String get sakinAramaSonucYok => 'Нет жильцов по вашему запросу.';
+
+  @override
+  String get sakinBloksuz => 'Блок не назначен';
+
+  @override
+  String get sakinBlogaDaralt => 'Показать только этот блок';
+
+  @override
+  String sakinBlokSuzgeci(String blok) {
+    return 'Блок: $blok';
+  }
+
+  @override
+  String get sakinBlokAlani => 'Блок (необязательно)';
+
+  @override
+  String get sakinBlokIpucu =>
+      'Применяется только к НОВОЙ квартире; блок существующей квартиры не меняется.';
+
+  @override
+  String get daireSakinleri => 'Жильцы этой квартиры';
+
+  @override
+  String get daireBos => 'Пустая квартира';
+
+  @override
+  String get daireSakinEkle => 'Добавить жильца';
+
+  @override
+  String get daireSakinSec => 'Выберите жильца';
+
+  @override
+  String get daireRolMalik => 'Собственник';
+
+  @override
+  String get daireRolKiraci => 'Арендатор';
+
+  @override
+  String get daireRolYok => 'Роль не назначена';
+
+  @override
+  String get daireOturuyor => 'проживает здесь';
+
+  @override
+  String get daireOturuyorYap => 'Отметить как проживающего';
+
+  @override
+  String get daireOturmuyorYap => 'Отметить как непроживающего';
+
+  @override
+  String get daireSakinCikar => 'Убрать из квартиры';
+
+  @override
+  String daireSakinCikarOnay(String ad) {
+    return 'Убрать $ad из этой квартиры?';
+  }
+
+  @override
+  String get daireSakinCikarNot =>
+      'Закрывается только связь с этой квартирой; аккаунт не удаляется.';
+
+  @override
+  String get daireSakinEklendi => 'Жилец добавлен в квартиру.';
 }

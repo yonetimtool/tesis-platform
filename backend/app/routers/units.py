@@ -51,6 +51,7 @@ from ..schemas import (
     UnitOut,
     UnitResidentBriefOut,
     UnitResidentOut,
+    UnitResidentUpdate,
     UnitUpdate,
 )
 
@@ -976,6 +977,81 @@ async def assign_resident(
         resource_id=body.user_id, meta={"unit_id": str(unit_id)},
     )
     return obj
+
+
+@router.patch("/{unit_id}/residents/{user_id}", response_model=UnitResidentOut)
+async def update_unit_resident(
+    unit_id: uuid.UUID,
+    user_id: uuid.UUID,
+    body: UnitResidentUpdate,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_BAG_YONETICI),
+) -> UnitResident:
+    """(P220 §5) BU DAIREDEKI bagin rolunu/oturma durumunu gunceller.
+
+    `PATCH /residents/{user_id}`DEN AYRI ve bu KASITLI: o uc kullanicinin
+    AKTIF TUM baglarina uyguluyor. Iki dairesi olan bir sakinde (birinde
+    malik, otekinde kiraci) o ucu cagirmak IKISINI DE degistirirdi.
+    Daire penceresi TEK BIR DAIRE hakkinda konusuyor.
+
+    YETKI SUNUCUDA: `_BAG_YONETICI` (admin + yonetici). Arayuzde
+    gizlemek YETMEZ — ikinci istemci o gizlemeyi tasimaz.
+    """
+    await get_or_404(db, Unit, unit_id)
+    alanlar = body.model_dump(exclude_unset=True)
+    if not alanlar:
+        # "Hicbir sey degismedi" ile "istemci hata yapti" ayni yanit
+        # olsaydi, istemci hatasini kimse gormezdi.
+        raise APIError(422, "validation_error", "guncellenecek_alan_yok")
+
+    binding = (
+        await db.execute(
+            select(UnitResident).where(
+                UnitResident.unit_id == unit_id,
+                UnitResident.user_id == user_id,
+                UnitResident.bitis.is_(None),
+            )
+        )
+    ).scalar_one_or_none()
+    if binding is None:
+        raise APIError(404, "not_found", "aktif_sakin_baglantisi_yok")
+
+    if "rol_tipi" in alanlar and alanlar["rol_tipi"] != binding.rol_tipi:
+        # AYNI ROLDEN IKINCI SAKIN OLAMAZ (goc 0049 / P154 kurali).
+        # Kendi satirini saymamak icin once rolu degistirilecek bagin
+        # DISINDA bakiyoruz — aksi halde "malik -> malik" bile 409
+        # verirdi.
+        cakisma = (
+            await db.execute(
+                select(UnitResident.id).where(
+                    UnitResident.unit_id == unit_id,
+                    UnitResident.bitis.is_(None),
+                    UnitResident.id != binding.id,
+                    UnitResident.rol_tipi.is_(None)
+                    if alanlar["rol_tipi"] is None
+                    else UnitResident.rol_tipi == alanlar["rol_tipi"],
+                )
+            )
+        ).first()
+        if cakisma is not None:
+            raise APIError(409, "conflict", "daire_zaten_dolu")
+        binding.rol_tipi = alanlar["rol_tipi"]
+        # ROL DEGISINCE OTURMA DURUMU YENIDEN COZULUR: kiraci tanimi
+        # geregi oturur. Istemci acikca `oturuyor` gonderdiyse o kazanir
+        # (asagida).
+        binding.oturuyor = oturuyor_coz(binding.rol_tipi, None)
+
+    if "oturuyor" in alanlar and alanlar["oturuyor"] is not None:
+        binding.oturuyor = alanlar["oturuyor"]
+
+    await db.flush()
+    await db.refresh(binding)
+    await audit_user(
+        db, user, Action.RESIDENT_ASSIGN, resource_type="app_user",
+        resource_id=user_id,
+        meta={"unit_id": str(unit_id), "guncelleme": list(alanlar)},
+    )
+    return binding
 
 
 @router.delete("/{unit_id}/residents/{user_id}", status_code=204)

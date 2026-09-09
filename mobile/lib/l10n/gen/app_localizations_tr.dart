@@ -6029,4 +6029,76 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get bildirimAramaSonucYok => 'Aramanla eşleşen bildirim yok.';
+
+  @override
+  String get sakinAraIpucu => 'Ad, daire no ya da blokta ara…';
+
+  @override
+  String get sakinAraAsgari => 'En az 2 karakter';
+
+  @override
+  String get sakinAramaSonucYok => 'Aramanla eşleşen sakin yok.';
+
+  @override
+  String get sakinBloksuz => 'Blok atanmamış';
+
+  @override
+  String get sakinBlogaDaralt => 'Bu bloğa daralt';
+
+  @override
+  String sakinBlokSuzgeci(String blok) {
+    return 'Blok: $blok';
+  }
+
+  @override
+  String get sakinBlokAlani => 'Blok (isteğe bağlı)';
+
+  @override
+  String get sakinBlokIpucu =>
+      'Yalnızca YENİ açılan daireye işlenir; mevcut dairenin bloğu değişmez.';
+
+  @override
+  String get daireSakinleri => 'Dairede oturanlar';
+
+  @override
+  String get daireBos => 'Boş daire';
+
+  @override
+  String get daireSakinEkle => 'Sakin ekle';
+
+  @override
+  String get daireSakinSec => 'Sakin seç';
+
+  @override
+  String get daireRolMalik => 'Malik';
+
+  @override
+  String get daireRolKiraci => 'Kiracı';
+
+  @override
+  String get daireRolYok => 'Rol atanmamış';
+
+  @override
+  String get daireOturuyor => 'oturuyor';
+
+  @override
+  String get daireOturuyorYap => 'Oturuyor olarak işaretle';
+
+  @override
+  String get daireOturmuyorYap => 'Oturmuyor olarak işaretle';
+
+  @override
+  String get daireSakinCikar => 'Daireden çıkar';
+
+  @override
+  String daireSakinCikarOnay(String ad) {
+    return '$ad daireden çıkarılsın mı?';
+  }
+
+  @override
+  String get daireSakinCikarNot =>
+      'Yalnızca bu daireyle bağı kapanır; hesabı silinmez.';
+
+  @override
+  String get daireSakinEklendi => 'Sakin daireye eklendi.';
 }

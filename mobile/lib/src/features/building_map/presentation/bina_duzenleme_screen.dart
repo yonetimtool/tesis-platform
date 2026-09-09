@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../residents/data/residents_api.dart';
+import '../data/daire_sakin_api.dart';
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/i18n/l10n.dart';
 import '../../../core/error/api_exception.dart';
@@ -1160,6 +1162,16 @@ class _BlockFormState extends ConsumerState<_BlockForm> {
               helperText: context.l10n.binaBlokEtiketiYardim,
             ),
           ),
+          // (P220 §5) SAKIN BILGISI — YALNIZ MEVCUT DAIREDE.
+          //
+          // Yeni daire formunda gosterilmiyor cunku daire HENUZ YOK:
+          // bagi olmayan bir daireye sakin atamak icin once kaydetmek
+          // gerekiyor. Bos bir bolum gostermek, kullaniciyi calismayan
+          // bir dugmeye tiklatirdi.
+          if (widget.existing != null) ...[
+            const Divider(height: 24),
+            _DaireSakinleri(unitId: widget.existing!.id),
+          ],
           if (_error != null) ...[
             const SizedBox(height: 8),
             Text(
@@ -1398,6 +1410,16 @@ class _UnitFormState extends ConsumerState<_UnitForm> {
             secenekler: ref.watch(unitGruplariProvider).value ?? const [],
             onSec: _busy ? null : (v) => setState(() => _grupId = v),
           ),
+          // (P220 §5) SAKIN BILGISI — YALNIZ MEVCUT DAIREDE.
+          //
+          // Yeni daire formunda gosterilmiyor cunku daire HENUZ YOK:
+          // bagi olmayan bir daireye sakin atamak icin once kaydetmek
+          // gerekiyor. Bos bir bolum gostermek, kullaniciyi calismayan
+          // bir dugmeye tiklatirdi.
+          if (widget.existing != null) ...[
+            const Divider(height: 24),
+            _DaireSakinleri(unitId: widget.existing!.id),
+          ],
           if (_error != null) ...[
             const SizedBox(height: 8),
             Text(
@@ -1742,6 +1764,308 @@ class _TanimSecici extends StatelessWidget {
             ),
         ],
         onChanged: onSec,
+      ),
+    );
+  }
+}
+
+/// (P220 §5) DAIRE PENCERESINDE SAKIN BILGISI.
+///
+/// =========================================================================
+/// NE GOSTERIYOR
+/// =========================================================================
+///   * Dairede kim oturuyor: AD + ROL (malik / kiraci) + oturma durumu,
+///   * birden cok sakin varsa HEPSI (bir dairede malik VE kiraci olabilir
+///     — P154 karari),
+///   * sakin yoksa "BOS DAIRE" ve EKLEME YOLU.
+///
+/// =========================================================================
+/// ROL DEGISIMI DAIRE BAZLI
+/// =========================================================================
+/// `PATCH /units/{id}/residents/{user}` kullaniliyor,
+/// `PATCH /residents/{user}` DEGIL: ikincisi kullanicinin AKTIF TUM
+/// baglarina uyguluyor ve iki dairesi olan bir sakinde (birinde malik,
+/// otekinde kiraci) buradan yapilan degisiklik IKISINI DE degistirirdi.
+///
+/// =========================================================================
+/// YETKI SUNUCUDA
+/// =========================================================================
+/// Uc `admin` + `yonetici` istiyor ve sakin/guvenlik icin 403 doner
+/// (testli). Buradaki gizleme yalnizca GORUNUM: ikinci istemci o
+/// gizlemeyi tasimayabilir, kural sunucuda.
+class _DaireSakinleri extends ConsumerStatefulWidget {
+  const _DaireSakinleri({required this.unitId});
+
+  final String unitId;
+
+  @override
+  ConsumerState<_DaireSakinleri> createState() => _DaireSakinleriState();
+}
+
+class _DaireSakinleriState extends ConsumerState<_DaireSakinleri> {
+  bool _busy = false;
+
+  Future<void> _calistir(Future<void> Function() islem) async {
+    setState(() => _busy = true);
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = context.l10n;
+    try {
+      await islem();
+      ref.invalidate(daireSakinleriProvider(widget.unitId));
+      // SITE GENELI LISTE DE TAZELENIR: ayni gercek iki ekranda
+      // gosteriliyor ve birinde degisip otekinde eski kalmasi,
+      // yoneticinin hangisine inanacagini bilememesi demekti.
+      ref.invalidate(residentsProvider);
+    } on ApiException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(apiHataMetni(l10n, e))));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final async = ref.watch(daireSakinleriProvider(widget.unitId));
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(l10n.daireSakinleri,
+            style: Theme.of(context)
+                .textTheme
+                .titleSmall
+                ?.copyWith(fontWeight: FontWeight.w700)),
+        const SizedBox(height: 4),
+        async.when(
+          loading: () => const Padding(
+            padding: EdgeInsets.all(12),
+            child: Center(child: CircularProgressIndicator()),
+          ),
+          error: (e, _) => Text(
+            e is ApiException ? apiHataMetni(l10n, e) : l10n.sakinListelenemedi,
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          ),
+          data: (liste) => liste.isEmpty
+              // BOS DAIRE bir HATA DEGIL, normal bir durum — ve ekleme
+              // yolu BURADA duruyor, kullanici baska ekrana gitmesin.
+              ? Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Row(
+                    children: [
+                      Expanded(child: Text(l10n.daireBos)),
+                      TextButton.icon(
+                        onPressed: _busy ? null : _sakinEkle,
+                        icon: const Icon(Icons.person_add_alt_1, size: 18),
+                        label: Text(l10n.daireSakinEkle),
+                      ),
+                    ],
+                  ),
+                )
+              : Column(
+                  children: [
+                    for (final s in liste)
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(Icons.person_outline),
+                        // AD YOKSA UUID GOSTERILMEZ: kullanici silinmis
+                        // olabilir ve bir kimlik dizisi hicbir sey
+                        // anlatmaz.
+                        title: Text(s.ad ?? '—'),
+                        subtitle: Text(_rolMetni(l10n, s)),
+                        trailing: _busy
+                            ? null
+                            : PopupMenuButton<String>(
+                                onSelected: (v) => switch (v) {
+                                  'malik' || 'kiraci' => _calistir(
+                                      () => ref
+                                          .read(daireSakinApiProvider)
+                                          .guncelle(widget.unitId, s.userId,
+                                              rolTipi: v),
+                                    ),
+                                  'oturuyor' => _calistir(
+                                      () => ref
+                                          .read(daireSakinApiProvider)
+                                          .guncelle(widget.unitId, s.userId,
+                                              oturuyor: !s.oturuyor),
+                                    ),
+                                  _ => _cikar(s),
+                                },
+                                itemBuilder: (_) => [
+                                  PopupMenuItem(
+                                      value: 'malik',
+                                      child: Text(l10n.daireRolMalik)),
+                                  PopupMenuItem(
+                                      value: 'kiraci',
+                                      child: Text(l10n.daireRolKiraci)),
+                                  PopupMenuItem(
+                                    value: 'oturuyor',
+                                    child: Text(s.oturuyor
+                                        ? l10n.daireOturmuyorYap
+                                        : l10n.daireOturuyorYap),
+                                  ),
+                                  PopupMenuItem(
+                                      value: 'cikar',
+                                      child: Text(l10n.daireSakinCikar)),
+                                ],
+                              ),
+                      ),
+                    Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: TextButton.icon(
+                        onPressed: _busy ? null : _sakinEkle,
+                        icon: const Icon(Icons.person_add_alt_1, size: 18),
+                        label: Text(l10n.daireSakinEkle),
+                      ),
+                    ),
+                  ],
+                ),
+        ),
+      ],
+    );
+  }
+
+  String _rolMetni(AppLocalizations l10n, DaireSakini s) {
+    final rol = switch (s.rolTipi) {
+      'malik' => l10n.daireRolMalik,
+      'kiraci' => l10n.daireRolKiraci,
+      _ => l10n.daireRolYok,
+    };
+    // (P218) OTURMA DURUMU AYRI GOSTERILIYOR: "malik-oturan" ucuncu bir
+    // rol degil, malikin oturuyor olmasi. Ikisini tek etikete
+    // sikistirmak, aidat hedeflemesindeki ayrimi gizlerdi.
+    return s.oturuyor ? '$rol · ${l10n.daireOturuyor}' : rol;
+  }
+
+  Future<void> _cikar(DaireSakini s) async {
+    final l10n = context.l10n;
+    final onay = await merkezSayfaAc<bool>(
+      context,
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.daireSakinCikarOnay(s.ad ?? '—'),
+                style: Theme.of(ctx).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            // NE OLMADIGINI DA SOYLE: cikarma HESABI SILMEZ. Kisi
+            // siteden ayrilmadiysa baska bir daireye tasinmis olabilir.
+            Text(l10n.daireSakinCikarNot),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                    onPressed: () => Navigator.of(ctx).pop(false),
+                    child: Text(l10n.ortakVazgec)),
+                const SizedBox(width: 8),
+                FilledButton(
+                    onPressed: () => Navigator.of(ctx).pop(true),
+                    child: Text(l10n.ortakSil)),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+    if (onay != true) return;
+    await _calistir(
+      () => ref.read(daireSakinApiProvider).cikar(widget.unitId, s.userId),
+    );
+  }
+
+  /// Sakin ekleme: SITE SAKINLERI arasindan secim.
+  ///
+  /// Yeni hesap ACMIYOR — o "Sakinler" ekraninin isi ve burada
+  /// tekrarlamak, ayni akisin iki yerde bakim gerektirmesi olurdu.
+  /// Buradaki is BAG KURMAK.
+  Future<void> _sakinEkle() async {
+    final l10n = context.l10n;
+    final adaylar = await ref.read(residentsProvider.future);
+    if (!mounted) return;
+    final secim = await merkezSayfaAc<({String userId, String rol})>(
+      context,
+      builder: (ctx) => _SakinSecici(adaylar: adaylar),
+    );
+    if (secim == null) return;
+    await _calistir(
+      () => ref
+          .read(daireSakinApiProvider)
+          .ekle(widget.unitId, secim.userId, secim.rol),
+    );
+    if (mounted) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.daireSakinEklendi)));
+    }
+  }
+}
+
+/// Site sakinleri arasindan secim + rol.
+class _SakinSecici extends StatefulWidget {
+  const _SakinSecici({required this.adaylar});
+
+  final List<ResidentMember> adaylar;
+
+  @override
+  State<_SakinSecici> createState() => _SakinSeciciState();
+}
+
+class _SakinSeciciState extends State<_SakinSecici> {
+  String? _secili;
+  String _rol = 'malik';
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(l10n.daireSakinEkle,
+              style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<String>(
+            initialValue: _secili,
+            isExpanded: true,
+            decoration: InputDecoration(
+              labelText: l10n.daireSakinSec,
+              border: const OutlineInputBorder(),
+            ),
+            items: [
+              for (final a in widget.adaylar)
+                DropdownMenuItem(
+                  value: a.userId,
+                  // DAIRESI DE YAZILI: ayni adli iki sakinde secim
+                  // yapilamazdi.
+                  child: Text(
+                    a.unitNo == null ? a.ad : '${a.ad} · ${a.unitNo}',
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+            ],
+            onChanged: (v) => setState(() => _secili = v),
+          ),
+          const SizedBox(height: 12),
+          SegmentedButton<String>(
+            segments: [
+              ButtonSegment(value: 'malik', label: Text(l10n.daireRolMalik)),
+              ButtonSegment(value: 'kiraci', label: Text(l10n.daireRolKiraci)),
+            ],
+            selected: {_rol},
+            onSelectionChanged: (s) => setState(() => _rol = s.first),
+          ),
+          const SizedBox(height: 16),
+          FilledButton(
+            onPressed: _secili == null
+                ? null
+                : () => Navigator.of(context)
+                    .pop((userId: _secili!, rol: _rol)),
+            child: Text(l10n.ortakEkle),
+          ),
+        ],
       ),
     );
   }

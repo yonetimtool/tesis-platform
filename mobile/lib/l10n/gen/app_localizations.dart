@@ -10720,6 +10720,138 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Aramanla eşleşen bildirim yok.'**
   String get bildirimAramaSonucYok;
+
+  /// No description provided for @sakinAraIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ad, daire no ya da blokta ara…'**
+  String get sakinAraIpucu;
+
+  /// No description provided for @sakinAraAsgari.
+  ///
+  /// In tr, this message translates to:
+  /// **'En az 2 karakter'**
+  String get sakinAraAsgari;
+
+  /// No description provided for @sakinAramaSonucYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aramanla eşleşen sakin yok.'**
+  String get sakinAramaSonucYok;
+
+  /// No description provided for @sakinBloksuz.
+  ///
+  /// In tr, this message translates to:
+  /// **'Blok atanmamış'**
+  String get sakinBloksuz;
+
+  /// No description provided for @sakinBlogaDaralt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu bloğa daralt'**
+  String get sakinBlogaDaralt;
+
+  /// No description provided for @sakinBlokSuzgeci.
+  ///
+  /// In tr, this message translates to:
+  /// **'Blok: {blok}'**
+  String sakinBlokSuzgeci(String blok);
+
+  /// No description provided for @sakinBlokAlani.
+  ///
+  /// In tr, this message translates to:
+  /// **'Blok (isteğe bağlı)'**
+  String get sakinBlokAlani;
+
+  /// No description provided for @sakinBlokIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yalnızca YENİ açılan daireye işlenir; mevcut dairenin bloğu değişmez.'**
+  String get sakinBlokIpucu;
+
+  /// No description provided for @daireSakinleri.
+  ///
+  /// In tr, this message translates to:
+  /// **'Dairede oturanlar'**
+  String get daireSakinleri;
+
+  /// No description provided for @daireBos.
+  ///
+  /// In tr, this message translates to:
+  /// **'Boş daire'**
+  String get daireBos;
+
+  /// No description provided for @daireSakinEkle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sakin ekle'**
+  String get daireSakinEkle;
+
+  /// No description provided for @daireSakinSec.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sakin seç'**
+  String get daireSakinSec;
+
+  /// No description provided for @daireRolMalik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Malik'**
+  String get daireRolMalik;
+
+  /// No description provided for @daireRolKiraci.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kiracı'**
+  String get daireRolKiraci;
+
+  /// No description provided for @daireRolYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Rol atanmamış'**
+  String get daireRolYok;
+
+  /// No description provided for @daireOturuyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'oturuyor'**
+  String get daireOturuyor;
+
+  /// No description provided for @daireOturuyorYap.
+  ///
+  /// In tr, this message translates to:
+  /// **'Oturuyor olarak işaretle'**
+  String get daireOturuyorYap;
+
+  /// No description provided for @daireOturmuyorYap.
+  ///
+  /// In tr, this message translates to:
+  /// **'Oturmuyor olarak işaretle'**
+  String get daireOturmuyorYap;
+
+  /// No description provided for @daireSakinCikar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Daireden çıkar'**
+  String get daireSakinCikar;
+
+  /// No description provided for @daireSakinCikarOnay.
+  ///
+  /// In tr, this message translates to:
+  /// **'{ad} daireden çıkarılsın mı?'**
+  String daireSakinCikarOnay(String ad);
+
+  /// No description provided for @daireSakinCikarNot.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yalnızca bu daireyle bağı kapanır; hesabı silinmez.'**
+  String get daireSakinCikarNot;
+
+  /// No description provided for @daireSakinEklendi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sakin daireye eklendi.'**
+  String get daireSakinEklendi;
 }
 
 class _AppLocalizationsDelegate

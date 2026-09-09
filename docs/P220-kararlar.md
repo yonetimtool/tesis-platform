@@ -314,3 +314,226 @@ satırlarını, diğerleri kendi satırlarını arıyor.
 - **Gecikmenin (300 ms) doğru süre olduğu.** İki yüzeyde de aynı ve
   tutarlılık kriterini karşılıyor, ama sürenin kendisi bir tahmin;
   gerçek kullanımda ölçülmedi.
+
+
+---
+
+## §4 — Blok bazlı sakin düzeni
+
+### Önce ölçtüm: mevcut durum
+
+| Ölçüm | Bulgu |
+|---|---|
+| `POST /residents` gövdesi | `blok` **zaten vardı** — ama yalnız **yeni açılan** daireye işleniyor |
+| Mobil ekleme formu | `telefon` + `unit_no` gönderiyordu, **blok yok** |
+| `GET /residents` yanıtı | `ad` + `unit_no` + `is_active` — **blok yok** |
+| Web'de sakin listesi | **Yok** — `admin-web` `/users` sayfasını kullanıyor; `GET /residents` mobil-özel |
+
+Yani "sakinler bloklara göre gruplansın" ve "blokta arayabilsin"
+istemcide **karşılanamıyordu**: liste blok taşımıyordu.
+
+### Blok, daire numarasından türetilemez
+
+`A-12` numaralı bir daire `B` bloğunda olabilir. Blok `unit.blok`
+sütunudur, numaranın bir parçası değil — **P193'te ikisi bilerek
+ayrıldı**. Numaradan tahmin etmek yanlış blokta daire açardı ve o sakin
+gruplanmış listede **yanlış yerde** görünürdü.
+
+### `q` ve `blok` **ayrı** parametreler
+
+| Parametre | Ne yapar |
+|---|---|
+| `q` | Ad + daire no + blok üzerinde **metin** araması (en az 2 karakter) |
+| `blok` | **Tam eşleşme** daraltması |
+
+Tek parametreye sığdırmak, `A` bloğunu daraltmak isteyen yöneticiye
+`A-12` dairesindeki herkesi getirirdi.
+
+Arama üç alanı birden kapsıyor çünkü yöneticinin elinde bunlardan **biri**
+olur: adını bilir, dairesini bilir ya da yalnızca hangi blokta oturduğunu
+bilir.
+
+### Bloksuz sakin **gizlenmiyor**
+
+Aktif daire bağı olmayan sakin "Blok atanmamış" grubunda, **en sonda**
+görünüyor. Gizlemek, siteden ayrılmış ama hesabı duran bir sakini
+**bulunamaz** yapardı — ve isteğin gerekçesi tam olarak onu bulup silmek.
+
+### `ExpansionTile` kullanılmadı
+
+Kapalı bir grup, *"sakinim listede yok"* sorusunun ikinci sebebi olurdu.
+Gruplar düz listede, başlık + satırlar olarak açık duruyor. Blok
+daraltması açıksa **görünür bir çip** olarak duruyor ve tek dokunuşla
+kalkıyor — gizli süzgeç aynı sorunun en sık sebebi.
+
+### Ayrılan sakin akışı: uçtan uca sürüldü
+
+İsteğin gerekçe cümlesi üç ölçüme çevrildi ve **gerçek uçlardan**
+sürüldü:
+
+1. **Blokta bulunuyor** (`blok=` süzgeci).
+2. **Siliniyor** — P189 akıllı silme: geçmişsiz sakin `deleted=true`
+   (tamamen), geçmişli `deleted=false` (anonimleştirme).
+3. **Daire boşalıyor** — `unit_resident.bitis` doluyor. **Her iki
+   modda da**: anonimleştirmede de boşalıyor. İkisini karıştırmak,
+   "silinemedi" yanıtını "daire hâlâ dolu" diye okumak olurdu.
+4. **Yerine yeni sakin eklenebiliyor** — aynı daireye.
+
+Ters yön de ölçüldü: daire **gerçekten** doluyken ikinci malik 409
+alıyor. Bu olmasaydı "daire boşaldı" ölçümü bir şey kanıtlamazdı — her
+durumda eklenebiliyor olurdu.
+
+### Ölçüm sırasında öğrendiğim iki şey
+
+**`audit_log` "geçmiş" saymıyor.** Anonimleştirme dalını kurmak için
+önce `audit_log` satırı yazdım; sakin **yine tamamen silindi**.
+`app_user`'a `ON DELETE RESTRICT` ile bağlı tabloları ölçtüm
+(`scan_event`, `task_completion`, `dues_payment`, `complaint`, …) ve
+`complaint` kullandım.
+
+Bu, `hesap_silme.py`'nin kendi yaklaşımıyla aynı: o da tahmin etmiyor,
+`DELETE`i bir savepoint içinde **deniyor**. Testin de denenen şeyi
+gerçekten kurması gerekiyordu.
+
+**Hata kimliği `message`da, `code`da değil.** `/residents` ucu
+`APIError(409, "conflict", <kimlik>)` kalıbını kullanıyor ve zarf metni
+isteğin dilinde üretiyor. `daire_zaten_dolu` kodunu beklemek, çevirinin
+varlığını kusur saymak olurdu.
+
+*(Not: Dukkan tarafında bu kalıp F8'de yola göre değiştirilmişti; burada
+Yönetiyor'un kayıtlı `code` değerleri korunuyor.)*
+
+### İki kilit daha yakaladı (mobil)
+
+1. **Yerleşim kilidi** — gruplu görünüm ekranın düzenini değiştiriyor.
+   Değişiklik bilinçli olduğu için kilit yenilendi. Ayrıca test
+   fixture'ına **blok verildi**: bloksuz bırakılsaydı kilit yalnız
+   "Blok atanmamış" dalını kaydeder, asıl davranışı (blok başlığı +
+   sayaç + daraltma düğmesi) hiç görmezdi.
+2. **Dokunma hedefi** — blok daraltma düğmesine
+   `visualDensity: compact` vermiştim; hedef 40×40'a düşüyordu ve
+   erişilebilirlik kilidi *"Tappable objects should be at least
+   48×48"* diye yakaladı. Sıkışık görünüm uğruna dokunma hedefini
+   küçültmek, motor güçlük yaşayan kullanıcıda düğmeyi isabet
+   ettirilemez yapar.
+
+### Kendi hatam: bozuk imajla koşan suite
+
+Kırma denemesinden sonra host dosyasını geri aldım ama **api imajını
+yeniden kurmadım**. `backend/` imaja gömülü olduğu için konteyner bozuk
+kodla koştu ve tam suite tam olarak o iki testte kırmızı yandı.
+
+Bu turda **ikinci kez** aynı sınıf hata: daha önce koşan bir suite'in
+altından konteyneri yeniden kurup suite'i öldürmüştüm (`EXIT=137`).
+Kural tek cümle: **`backend/` imaja gömülü — host dosyasını değiştirmek
+konteyneri değiştirmez, ve koşan bir suite'in altından konteyneri
+değiştirmek suite'i öldürür.**
+
+### Ölçemediklerim
+
+- **Cihazda gruplu görünüm ve blok çipi** — emülatör yok.
+- **Çok bloklu büyük sitede performans.** Liste sayfalanmıyor (site
+  sakini sayısı binlerce değil varsayımı); 500+ sakinli bir sitede
+  gruplama maliyeti ölçülmedi.
+- **Web'de blok gruplaması** — `admin-web`'de ayrı bir sakin listesi
+  sayfası yok; `/users` sayfası farklı bir uçtan besleniyor. Bu turda
+  dokunulmadı.
+
+
+---
+
+## §5 — Bina düzenlemede sakin bilgisi
+
+### Backend'in çoğu zaten vardı — biri hariç
+
+| İhtiyaç | Durum |
+|---|---|
+| Dairede kim oturuyor (ad + rol) | `GET /units/{id}/residents` **vardı** (`user_ad` dâhil) |
+| Sakin ekle | `POST /units/{id}/residents` **vardı** |
+| Sakin çıkar | `DELETE /units/{id}/residents/{user}` **vardı** |
+| **Rol değiştir** | **Yoktu** — aşağıda |
+
+### Yeni uç: `PATCH /units/{id}/residents/{user_id}`
+
+Rol değiştirmek için elimizde yalnız `PATCH /residents/{user_id}` vardı
+ve o uç kullanıcının **aktif tüm bağlarına** uyguluyor (kendi
+dokümanında yazılı).
+
+Somut sonucu: iki dairesi olan bir sakinde — birinde **malik**, ötekinde
+**kiracı** — daire penceresinden yapılan bir rol değişikliği **iki
+daireyi de** değiştirirdi. Daire penceresi **tek bir daire** hakkında
+konuşuyor.
+
+Bu farkı testle **kanıtladım**: `test_ESKI_UC_TUM_BAGLARA_UYGULUYOR` eski
+ucun iki bağı birden değiştirdiğini,
+`test_ROL_DEGISIMI_DIGER_DAIREYI_ETKILEMEZ` yeni ucun yalnız hedefe
+dokunduğunu ölçüyor. İkincisi tek başına yeterli olmazdı — farkın
+gerçekten var olduğunu göstermek gerekiyordu.
+
+### Kendi satırı çatışma sayılmıyor
+
+Rol değişiminde "bu dairede aynı rolden başkası var mı" kontrolü,
+**güncellenecek bağın kendisini hariç tutuyor**. Tutmasaydı "malik →
+malik" bile 409 verirdi ve `oturuyor` alanını değiştirmek **imkânsız**
+olurdu.
+
+### Rol değişince `oturuyor` yeniden çözülüyor
+
+Kiracı tanımı gereği oturur (P218). İstemci açıkça `oturuyor`
+gönderirse o kazanıyor. Bu, "malik-oturan"ın **üçüncü bir rol
+olmadığı** — malikin oturuyor olması — ayrımını koruyor; ikisini tek
+etikete sıkıştırmak aidat hedeflemesindeki ayrımı gizlerdi.
+
+### Boş gövde 422
+
+"Hiçbir şey değişmedi" ile "istemci hata yaptı" aynı yanıt olsaydı,
+istemci hatasını kimse görmezdi.
+
+### Mobil pencere
+
+`bina_duzenleme_screen.dart`'ın daire formuna sakin bölümü eklendi:
+ad + rol + oturma durumu, birden çok sakin, **boş daire** durumu ve
+ekleme yolu, rol değiştir / oturma durumu değiştir / çıkar.
+
+**Yalnız mevcut dairede gösteriliyor.** Yeni daire formunda daire henüz
+**yok**; boş bir bölüm göstermek kullanıcıyı çalışmayan bir düğmeye
+tıklatırdı.
+
+**Çıkarma onayı ne olmadığını da söylüyor:** "yalnızca bu daireyle bağı
+kapanır; hesabı silinmez". Kişi siteden ayrılmadıysa başka bir daireye
+taşınmış olabilir.
+
+**Ad yoksa UUID gösterilmiyor** — kullanıcı silinmiş olabilir ve bir
+kimlik dizisi hiçbir şey anlatmaz.
+
+**Sakin ekleme yeni hesap açmıyor**, site sakinleri arasından seçtiriyor.
+Hesap açma "Sakinler" ekranının işi; burada tekrarlamak aynı akışı iki
+yerde bakım gerektirir hâle getirirdi. Buradaki iş **bağ kurmak**.
+
+**Site geneli liste de tazeleniyor:** aynı gerçek iki ekranda
+gösteriliyor; birinde değişip ötekinde eski kalması, yöneticinin
+hangisine inanacağını bilememesi olurdu.
+
+### Yetki sunucuda
+
+`admin` + `yonetici`. Sakin ve güvenlik için **403** ölçüldü. Arayüzde
+gizlemek yetmez: ikinci istemci o gizlemeyi taşımayabilir. Rol matrisi
+yenilendi (`IZIN IZIN RED RED RED RED RED`).
+
+### Ölçüm sırasında öğrendiğim
+
+`POST /units` **blok zorunlu** istiyor (P193: blok ve daire ayrıldı).
+`blok` vermeyince 422 "Field required", `null` verince 422 "should be a
+valid string". Testlerin bunu varsayması gerekti.
+
+### Ölçemediklerim
+
+- **Cihazda daire penceresi** — emülatör yok. Ölçülen şey, doğru uca
+  doğru gövdeyle gidildiği ve sunucunun doğru davrandığı.
+- **Web'de daire penceresinde sakin bilgisi.** `admin-web`'in bina
+  düzenleme yüzeyi bu turda **yapılmadı**; §5 mobilde tam, web'de
+  **eksik**. Kabul kriteri 9'un yarısı karşılanmadı ve bunu açıkça
+  söylüyorum.
+- **Aynı anda iki yöneticinin aynı daireyi düzenlemesi** — yarış koşulu
+  üretilmedi; sunucu tarafında `daire_zaten_dolu` kontrolü var ama
+  eşzamanlı iki `PATCH` sürülmedi.

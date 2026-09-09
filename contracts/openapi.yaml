@@ -12518,6 +12518,41 @@ paths:
         in: path
         required: true
         schema: { type: string, format: uuid }
+    patch:
+      tags: [aidat]
+      summary: Bu DAIREDEKI sakin bagini gunceller — rol / oturuyor (admin + yonetici)
+      description: |
+        (P220 §5) `PATCH /residents/{user_id}`DEN AYRI ve bu KASITLI: o
+        uc kullanicinin AKTIF TUM daire baglarina uyguluyor. Iki dairesi
+        olan bir sakinde (birinde malik, otekinde kiraci) daire
+        penceresinden yapilan bir rol degisikligi IKISINI DE
+        degistirirdi. Daire penceresi TEK BIR DAIRE hakkinda konusuyor.
+
+        `rol_tipi` degisince `oturuyor` YENIDEN COZULUR (kiraci tanimi
+        geregi oturur); istemci acikca `oturuyor` gonderirse o kazanir.
+
+        409: o dairede AYNI ROLDEN baska aktif sakin var (goc 0049 /
+        P154). Kendi satiri catisma SAYILMAZ — "malik -> malik" 409
+        verseydi `oturuyor` degistirmek imkansiz olurdu.
+
+        422: bos govde. "Hicbir sey degismedi" ile "istemci hata yapti"
+        ayni yanit olsaydi istemci hatasini kimse gormezdi.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                rol_tipi: { type: string, enum: [malik, kiraci], nullable: true }
+                oturuyor: { type: boolean, nullable: true }
+      responses:
+        "200": { description: Guncellendi }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { description: Dairede ayni rolden baska sakin var }
+        "422": { description: Guncellenecek alan yok }
     delete:
       tags: [aidat]
       summary: Sakini daireden cikar (bitis=now) (admin + yonetici)

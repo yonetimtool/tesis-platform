@@ -6196,4 +6196,76 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get bildirimAramaSonucYok =>
       'Ninguna notificación coincide con tu búsqueda.';
+
+  @override
+  String get sakinAraIpucu => 'Buscar por nombre, vivienda o bloque…';
+
+  @override
+  String get sakinAraAsgari => 'Al menos 2 caracteres';
+
+  @override
+  String get sakinAramaSonucYok => 'Ningún residente coincide con tu búsqueda.';
+
+  @override
+  String get sakinBloksuz => 'Sin bloque asignado';
+
+  @override
+  String get sakinBlogaDaralt => 'Filtrar por este bloque';
+
+  @override
+  String sakinBlokSuzgeci(String blok) {
+    return 'Bloque: $blok';
+  }
+
+  @override
+  String get sakinBlokAlani => 'Bloque (opcional)';
+
+  @override
+  String get sakinBlokIpucu =>
+      'Se aplica solo a una vivienda NUEVA; el bloque de una vivienda existente no cambia.';
+
+  @override
+  String get daireSakinleri => 'Residentes de esta vivienda';
+
+  @override
+  String get daireBos => 'Vivienda vacía';
+
+  @override
+  String get daireSakinEkle => 'Añadir residente';
+
+  @override
+  String get daireSakinSec => 'Seleccionar residente';
+
+  @override
+  String get daireRolMalik => 'Propietario';
+
+  @override
+  String get daireRolKiraci => 'Inquilino';
+
+  @override
+  String get daireRolYok => 'Sin rol asignado';
+
+  @override
+  String get daireOturuyor => 'reside aquí';
+
+  @override
+  String get daireOturuyorYap => 'Marcar como residente';
+
+  @override
+  String get daireOturmuyorYap => 'Marcar como no residente';
+
+  @override
+  String get daireSakinCikar => 'Quitar de la vivienda';
+
+  @override
+  String daireSakinCikarOnay(String ad) {
+    return '¿Quitar a $ad de esta vivienda?';
+  }
+
+  @override
+  String get daireSakinCikarNot =>
+      'Solo se cierra el vínculo con esta vivienda; la cuenta no se elimina.';
+
+  @override
+  String get daireSakinEklendi => 'Residente añadido a la vivienda.';
 }

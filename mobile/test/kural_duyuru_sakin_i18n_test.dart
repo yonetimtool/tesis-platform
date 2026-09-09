@@ -119,6 +119,11 @@ ResidentMember _sakin({String? unitNo = 'A-12', bool aktif = true}) =>
       userId: 'u-1',
       ad: 'Ayse Sakin',
       unitNo: unitNo,
+      // (P220 §4) BLOK VERILIYOR: kilidin GRUPLU gorunumu olcmesi icin.
+      // Bloksuz birakilsaydi yerlesim kilidi yalniz "Blok atanmamis"
+      // dalini kaydeder ve asil davranisi (blok basligi + sayaci +
+      // daraltma dugmesi) hic gormezdi.
+      blok: 'A',
       isActive: aktif,
     );
 
@@ -164,7 +169,10 @@ class _FakeSakinApi extends ResidentsApi {
   final List<ResidentMember> _items;
 
   @override
-  Future<List<ResidentMember>> getResidents() async => _items;
+  // (P220 §4) `q` + `blok` eklendi; bu taklit SUZMUYOR cunku olculen sey
+  // i18n/yerlesim, suzgec degil. Imzanin uyusmasi yeterli.
+  Future<List<ResidentMember>> getResidents({String? q, String? blok}) async =>
+      _items;
 
   @override
   Future<bool> removeResident(String userId) async => true;

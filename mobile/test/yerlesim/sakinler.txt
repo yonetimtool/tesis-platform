@@ -1,7 +1,12 @@
   14,  16  308x28  SİTE SAKİNLERİ
-  87,  88  198x24  Ayse Sakin
-  96,  40  24x24  U+F107
-  96, 314  24x24  U+E404
- 111,  88  198x20  Daire A-12
+  68,  64  314x24  Ad, daire no ya da blokta ara…
+  79,  27  18x18  U+E567
+ 142,  16  294x20  A
+ 143, 341  18x18  U+F068
+ 144, 310  12x16  1
+ 201,  88  198x24  Ayse Sakin
+ 210,  40  24x24  U+F107
+ 210, 314  24x24  U+E404
+ 225,  88  198x20  Daire A-12
  788, 181  24x24  U+E494
  790, 213  141x20  Sakin ekle

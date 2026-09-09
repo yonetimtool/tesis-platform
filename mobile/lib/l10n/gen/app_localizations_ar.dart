@@ -6284,4 +6284,76 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get bildirimAramaSonucYok => 'لا توجد إشعارات تطابق بحثك.';
+
+  @override
+  String get sakinAraIpucu => 'ابحث بالاسم أو الشقة أو البلوك…';
+
+  @override
+  String get sakinAraAsgari => 'حرفان على الأقل';
+
+  @override
+  String get sakinAramaSonucYok => 'لا يوجد سكان يطابقون بحثك.';
+
+  @override
+  String get sakinBloksuz => 'لم يُخصَّص بلوك';
+
+  @override
+  String get sakinBlogaDaralt => 'عرض هذا البلوك فقط';
+
+  @override
+  String sakinBlokSuzgeci(String blok) {
+    return 'البلوك: $blok';
+  }
+
+  @override
+  String get sakinBlokAlani => 'البلوك (اختياري)';
+
+  @override
+  String get sakinBlokIpucu =>
+      'يُطبَّق فقط على شقة جديدة؛ بلوك الشقة الموجودة لا يتغيّر.';
+
+  @override
+  String get daireSakinleri => 'سكان هذه الشقة';
+
+  @override
+  String get daireBos => 'شقة فارغة';
+
+  @override
+  String get daireSakinEkle => 'إضافة ساكن';
+
+  @override
+  String get daireSakinSec => 'اختر ساكناً';
+
+  @override
+  String get daireRolMalik => 'مالك';
+
+  @override
+  String get daireRolKiraci => 'مستأجر';
+
+  @override
+  String get daireRolYok => 'لم تُحدَّد صفة';
+
+  @override
+  String get daireOturuyor => 'يقيم هنا';
+
+  @override
+  String get daireOturuyorYap => 'تعليم كمقيم';
+
+  @override
+  String get daireOturmuyorYap => 'تعليم كغير مقيم';
+
+  @override
+  String get daireSakinCikar => 'إزالة من الشقة';
+
+  @override
+  String daireSakinCikarOnay(String ad) {
+    return 'إزالة $ad من هذه الشقة؟';
+  }
+
+  @override
+  String get daireSakinCikarNot =>
+      'يُغلَق الارتباط بهذه الشقة فقط؛ الحساب لا يُحذف.';
+
+  @override
+  String get daireSakinEklendi => 'تمت إضافة الساكن إلى الشقة.';
 }
