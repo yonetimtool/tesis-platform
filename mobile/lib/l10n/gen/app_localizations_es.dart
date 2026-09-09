@@ -6275,4 +6275,16 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get dukkanYakindaMetin =>
       'Aquí podrás encontrar profesionales y empresas de servicios de tu barrio. Esta pantalla se abrirá cuando esté lista, sin necesidad de actualizar la aplicación.';
+
+  @override
+  String get kayitSosyalEpostaNotu =>
+      'Esta dirección proviene de tu cuenta social y no se puede cambiar.';
+
+  @override
+  String get kayitSosyalRelayNotu =>
+      'Apple ocultó tu dirección. No se le puede enviar correo; Apple reenvía las notificaciones.';
+
+  @override
+  String get kayitSosyalEpostaYok =>
+      'Tu cuenta social no compartió una dirección de correo esta vez. Apple solo la proporciona en la primera autorización. Puedes registrarte con correo, o quitar el acceso de esta app en tus ajustes de Apple e intentarlo de nuevo.';
 }

@@ -2877,5 +2877,17 @@
     }
   },
   "dukkanYakindaBaslik": "Yerel işletmeler hazırlanıyor",
-  "dukkanYakindaMetin": "Mahallendeki ustaları ve hizmet firmalarını buradan bulabileceksin. Hazır olduğunda bu ekran açılacak — uygulamayı güncellemene gerek kalmayacak."
+  "dukkanYakindaMetin": "Mahallendeki ustaları ve hizmet firmalarını buradan bulabileceksin. Hazır olduğunda bu ekran açılacak — uygulamayı güncellemene gerek kalmayacak.",
+  "kayitSosyalEpostaNotu": "Bu adres sosyal hesabınızdan geldi ve değiştirilemez.",
+  "@kayitSosyalEpostaNotu": {
+    "description": "(P222) SSO e-postasi salt okunur notu"
+  },
+  "kayitSosyalRelayNotu": "Apple adresinizi gizledi. Bu adrese e-posta gönderilemez; bildirimleri Apple iletir.",
+  "@kayitSosyalRelayNotu": {
+    "description": "(P222) Apple private relay uyarisi"
+  },
+  "kayitSosyalEpostaYok": "Sosyal hesabınız bu kez e-posta adresi paylaşmadı. Apple adresi yalnız ilk izinde verir. E-posta ile kaydolabilir ya da Apple ayarlarından bu uygulamanın iznini kaldırıp yeniden deneyebilirsiniz.",
+  "@kayitSosyalEpostaYok": {
+    "description": "(P222) Saglayici e-posta paylasmadi"
+  }
 }

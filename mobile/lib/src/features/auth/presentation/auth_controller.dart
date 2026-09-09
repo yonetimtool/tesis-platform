@@ -38,6 +38,7 @@ class AuthState {
     this.oauthSaglayici,
     this.oauthRelay = false,
     this.oauthAd,
+    this.oauthEposta,
   });
 
   final AuthStatus status;
@@ -80,6 +81,18 @@ class AuthState {
   /// ON-DOLDURUR ve kullanici duzeltebilir. Apple'da BOS gelir.
   final String? oauthAd;
 
+  /// (P222 §2) Saglayicinin bildirdigi E-POSTA — kayit ekrani bunu
+  /// GOSTERIR, sormaz.
+  ///
+  /// SALT OKUNUR OLMASININ SEBEBI: sunucu adresi HER SSO YOLUNDA imzali
+  /// `baglama_jetonu`nun ICINDEN okur (`kayit.tesis-olustur`,
+  /// `oauth.rol-tamamla`); istemcinin yolladigi bir deger HICBIR YERDE
+  /// kullanilmaz. Duzenlenebilir gostermek, yazilanin sessizce yok
+  /// sayilmasi demekti.
+  ///
+  /// BOS OLABILIR: Apple e-postayi YALNIZ ilk yetkilendirmede verir.
+  final String? oauthEposta;
+
   /// (P200 §2) `hataKimligi` OBJECT ALIR ama YALNIZ [GirisAkisHatasi]
   /// KABUL EDER — String verilirse asagidaki cast CALISMA ANINDA patlar.
   ///
@@ -98,6 +111,7 @@ class AuthState {
     Object? oauthSecimJetonu = _sentinel,
     List<OauthTesisSecenegi>? oauthTesisler,
     Object? oauthAd = _sentinel,
+    Object? oauthEposta = _sentinel,
     Object? oauthSaglayici = _sentinel,
     bool? oauthRelay,
     AuthStatus? status,
@@ -126,6 +140,9 @@ class AuthState {
           : oauthSecimJetonu as String?,
       oauthTesisler: oauthTesisler ?? this.oauthTesisler,
       oauthAd: oauthAd == _sentinel ? this.oauthAd : oauthAd as String?,
+      oauthEposta: oauthEposta == _sentinel
+          ? this.oauthEposta
+          : oauthEposta as String?,
       oauthSaglayici: oauthSaglayici == _sentinel
           ? this.oauthSaglayici
           : oauthSaglayici as String?,
@@ -272,6 +289,7 @@ class AuthController extends Notifier<AuthState> {
         submitting: false,
         oauthBaglamaJetonu: null,
         oauthAd: null,
+        oauthEposta: null,
       );
       return sonuc;
     } on ApiException catch (e) {
@@ -503,6 +521,7 @@ class AuthController extends Notifier<AuthState> {
         oauthSaglayici: sonuc.saglayici,
         oauthRelay: sonuc.relay,
         oauthAd: sonuc.ad,
+        oauthEposta: sonuc.eposta,
       );
     } on ApiException catch (e) {
       state = state.copyWith(
@@ -655,6 +674,10 @@ class AuthController extends Notifier<AuthState> {
     state = state.copyWith(
       oauthBaglamaJetonu: null,
       oauthSaglayici: null,
+      // (P222 §2) E-POSTA DA TEMIZLENIR: kalan bir adres, sonraki
+      // denemede BASKA bir hesabin adresini gostermek olurdu.
+      oauthEposta: null,
+      oauthAd: null,
       kodBekleniyor: false,
       errorMessage: null,
       hataKimligi: null,

@@ -372,22 +372,50 @@ export default function DashboardPage() {
   // sarti, `menuGruplari` ile AYNI kaynaktan gelir. Ikinci bir yetki
   // listesi yazsaydik, bir sayfanin rol kapisi degistiginde biri
   // guncellenip oteki unutulurdu.
+  // (P222 §1) SIKAYET HARITASI ROZETI — MOBIL IZGARAYLA AYNI SAYI.
+  //
+  // Mobilde olculen kusur: izgara karosu `/unit-complaints?durum=acik`in
+  // `meta.total` degerini okuyordu ve o LISTE ucu `sikayet_harita_saat`
+  // penceresini UYGULAMAZ; karo "5 Acik" derken dokununca acilan harita
+  // 0 gosterebiliyordu. Web'de o gune kadar rozet HIC YOKTU — yani ayni
+  // kusur degil, EKSIK bir yuzey vardi. Ikisi de ayni uctan besleniyor.
+  const { data: gorunurSikayet } = useSWR<{ acik_sayisi: number }>(
+    "/api/unit-complaints/gorunur-sayi",
+    jsonFetcher,
+  );
+
   const adaylar: WidgetAdayi[] = useMemo(() => {
     return menuGruplari("tesis", rol).flatMap((g) =>
-      g.ogeler.map((o) => ({
-        rota: ogeBaglantisi(o),
-        etiket: t(o.anahtar),
-        bolum: t(g.anahtar),
-        ikon: <Ikon d={YOL.tur} />,
-      })),
+      g.ogeler.map((o) => {
+        const rota = ogeBaglantisi(o);
+        return {
+          rota,
+          etiket: t(o.anahtar),
+          bolum: t(g.anahtar),
+          ikon: <Ikon d={YOL.tur} />,
+          // Rozet UYDURULMAZ: sayi elimizde yoksa (yukleniyor, hata,
+          // yetkisiz) alan HIC KONMAZ ve serit rozetsiz cizilir.
+          ...(rota === "/schematic" && typeof gorunurSikayet?.acik_sayisi === "number"
+            ? { rozet: gorunurSikayet.acik_sayisi }
+            : {}),
+        };
+      }),
     );
-  }, [rol, t]);
+  }, [rol, t, gorunurSikayet]);
 
   const izinliRotalar = useMemo(() => adaylar.map((a) => a.rota), [adaylar]);
 
   // VARSAYILAN KISAYOLLAR: yoneticinin gunluk baktigi ilk alti ekran.
   // Sunucuda TUTULMAZ — orada hesaplamak, ayni karari menuden sonra
   // ikinci bir yerde daha vermek olurdu (bkz. `/me/pano-tercihi` notu).
+  // VARSAYILAN KISAYOLLAR: yoneticinin gunluk baktigi ilk alti ekran.
+  // Sunucuda TUTULMAZ — orada hesaplamak, ayni karari menuden sonra
+  // ikinci bir yerde daha vermek olurdu (bkz. `/me/pano-tercihi` notu).
+  //
+  // (P222 §1) `/schematic` BILEREK EKLENMEDI: `WIDGET_SINIRI` 6 ve yedinci
+  // giris sessizce `/olaylar`i dusururdu. Hangi kisayolun varsayilandan
+  // cikacagi bir URUN KARARIDIR, yan etki olarak verilmez. Sikayet rozeti
+  // `/schematic` widget'ini SECEN kullanicida gorunur.
   const varsayilanWidget = useMemo(
     () => ["/dues", "/finans", "/tasks", "/complaints", "/units", "/olaylar"],
     [],

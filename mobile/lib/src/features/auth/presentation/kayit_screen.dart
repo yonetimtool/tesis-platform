@@ -632,6 +632,56 @@ class _KayitScreenState extends ConsumerState<KayitScreen> {
 
   // ============================ ADIM 4 ==================================== //
 
+  /// (P222 §2) "Bu hesapla kaydoluyorsun" seridi.
+  ///
+  /// Adres YOKSA (Apple e-postayi YALNIZ ilk yetkilendirmede verir;
+  /// kullanici kaydi yarida birakip tekrar denerse gelmez) sessizce bos
+  /// birakilmaz: sunucu bu yolu reddedecegi icin sebep SOYLENIR.
+  Widget _baglananHesap(AppLocalizations l10n) {
+    final durum = ref.watch(authControllerProvider);
+    final eposta = durum.oauthEposta;
+    if (eposta == null || eposta.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 12),
+        child: Text(
+          l10n.kayitSosyalEpostaYok,
+          key: const Key('kayit-sosyal-eposta-yok'),
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.error,
+              ),
+        ),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.mail_outline, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  eposta,
+                  key: const Key('kayit-sosyal-eposta'),
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            durum.oauthRelay
+                ? l10n.kayitSosyalRelayNotu
+                : l10n.kayitSosyalEpostaNotu,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _tesisKoduFormu(AppLocalizations l10n) {
     return Form(
       key: _tesisKoduFormKey,
@@ -643,6 +693,15 @@ class _KayitScreenState extends ConsumerState<KayitScreen> {
             l10n.kayitTesisKoduGir,
             style: Theme.of(context).textTheme.titleMedium,
           ),
+          // (P222 §2) SSO YOLUNDA BAGLANAN HESAP GOSTERILIR.
+          //
+          // E-POSTA SORULMAZ, GOSTERILIR: sunucu adresi imzali
+          // `baglama_jetonu`nun ICINDEN okur ve istemcinin yolladigi bir
+          // deger hicbir yerde kullanilmaz — soran bir alan, yazilani
+          // sessizce yok sayardi. Ama kullanicinin HANGI hesapla
+          // kaydoldugunu gormesi gerekir: iki Google hesabi olan biri
+          // yanlis olanla kaydolduğunu ancak is islerken anlardi.
+          if (_yol == _Yol.sosyal) _baglananHesap(l10n),
           const SizedBox(height: 16),
           TextFormField(
             controller: _tesisKoduCtrl,

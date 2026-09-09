@@ -13733,6 +13733,25 @@ paths:
               schema: { $ref: "#/components/schemas/UnitDensity" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
+  /unit-complaints/gorunur-sayi:
+    get:
+      tags: [unit-complaints]
+      summary: Ana ekran izgarasinin ACIK sikayet sayisi (harita penceresiyle)
+      description: >
+        (P222 §1) Izgara karosu eskiden `/unit-complaints?durum=acik`in
+        `meta.total` degerini okuyordu; o LISTE ucu `sikayet_harita_saat`
+        penceresini UYGULAMAZ ve karo "5 Acik" derken karoya dokununca
+        acilan harita 0 gosterebiliyordu. Bu uc harita ile AYNI pencereden
+        gecer. Liste ucu bilerek penceresiz kalir (kuyruktan kayit
+        dusurmek "sikayetim kayboldu" demek olurdu).
+      responses:
+        "200":
+          description: Gorunur acik sikayet sayisi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GorunurSikayetSayisi" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
   /unit-complaints/building-map:
     get:
       tags: [unit-complaints]
@@ -16131,6 +16150,11 @@ components:
             Renk SUNUCUDAN gelir; istemci esikleri TEKRARLAMAZ (tek dogruluk
             kaynagi). Sayim tabani ACIK sikayetlerdir: kapatma skalayi
             dusurur, P37'nin sifirlamasi da dogal olarak yesile dondurur.
+    GorunurSikayetSayisi:
+      type: object
+      required: [acik_sayisi]
+      properties:
+        acik_sayisi: { type: integer }
     UnitDensity:
       type: object
       required: [items]

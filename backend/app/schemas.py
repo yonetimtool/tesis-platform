@@ -4856,6 +4856,25 @@ class UnitDensityResponse(BaseModel):
     items: list[UnitDensityItem]
 
 
+class GorunurSikayetSayisi(BaseModel):
+    """(P222 §1) ANA EKRAN IZGARASININ okudugu ACIK sikayet sayisi.
+
+    NEDEN AYRI BIR UC: izgara karosu `GET /unit-complaints?durum=acik`
+    cagirip `meta.total` okuyordu ve o uc `sikayet_harita_saat`
+    PENCERESINI UYGULAMAZ. Karoya dokununca acilan harita ise pencereli
+    sayiyor — ayni karo "5 Acik" derken harita 0 gosterebiliyordu.
+
+    Modul basligindaki iki sayi (gorunur / esik) disinda UCUNCU bir sayi
+    ureten sey buydu. Bu uc, haritayla AYNI `_harita_penceresi()`
+    fonksiyonundan gecer; boylece karo ile actigi ekran ayni seyi sayar.
+
+    Liste ucunun kendisi BILEREK penceresiz kaldi: kuyruktan kayit
+    dusurmek "sikayetim kayboldu" demek olurdu (P220 kilidi).
+    """
+
+    acik_sayisi: int
+
+
 # ------------------- building map (D-viz — bina semasi) --------------------- #
 # ROL-FARKINDA (Rev-1): yonetici/admin sayim+renk gorur; resident/security/
 # tesis_gorevlisi YALNIZ yapi (sayim+renk NULL). Renk esikleri: 0-2/3-4/5+.

@@ -6363,4 +6363,16 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get dukkanYakindaMetin =>
       'ستتمكّن من العثور هنا على الحرفيين وشركات الخدمات في حيّك. ستُفتح هذه الشاشة عندما تصبح جاهزة — دون الحاجة إلى تحديث التطبيق.';
+
+  @override
+  String get kayitSosyalEpostaNotu =>
+      'هذا العنوان مأخوذ من حسابك الاجتماعي ولا يمكن تغييره.';
+
+  @override
+  String get kayitSosyalRelayNotu =>
+      'أخفت Apple عنوانك. لا يمكن إرسال بريد إليه؛ تقوم Apple بإعادة توجيه الإشعارات.';
+
+  @override
+  String get kayitSosyalEpostaYok =>
+      'لم يشارك حسابك الاجتماعي عنوان بريد إلكتروني هذه المرة. تقدّمه Apple عند أول تفويض فقط. يمكنك التسجيل بالبريد الإلكتروني، أو إزالة صلاحية هذا التطبيق من إعدادات Apple والمحاولة مجددًا.';
 }

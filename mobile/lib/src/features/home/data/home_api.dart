@@ -58,9 +58,24 @@ class HomeApi {
   /// `GET /tasks?aktif=true` → acik (aktif) gorev sayisi.
   Future<int> aktifGorevSayisi() => _total('/tasks', {'aktif': true});
 
-  /// `GET /unit-complaints?durum=acik` → acik daire sikayeti (YALNIZ yonetim).
-  Future<int> acikDaireSikayetSayisi() =>
-      _total('/unit-complaints', {'durum': 'acik'});
+  /// `GET /unit-complaints/gorunur-sayi` → izgarada gosterilen ACIK daire
+  /// sikayeti (YALNIZ yonetim).
+  ///
+  /// (P222 §1) LISTE UCUNUN `meta.total` DEGERI DEGIL. Karo eskiden
+  /// `GET /unit-complaints?durum=acik`in toplamini okuyordu; o uc
+  /// `sikayet_harita_saat` PENCERESINI UYGULAMAZ ve karo "5 Acik"
+  /// derken dokununca acilan harita 0 gosterebiliyordu. Yeni uc
+  /// haritayla AYNI pencereden gecer.
+  Future<int> acikDaireSikayetSayisi() async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/unit-complaints/gorunur-sayi',
+      );
+      return (res.data?['acik_sayisi'] as num?)?.toInt() ?? 0;
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
 
   /// `GET /unit-complaints/mine?durum=acik` → sakinin KENDI acik sikayetleri.
   Future<int> kendiAcikDaireSikayetSayisi() =>

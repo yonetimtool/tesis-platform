@@ -460,6 +460,7 @@ GET    /unit-complaints                                     IZIN   IZIN   RED   
 POST   /unit-complaints                                     RED    RED    RED    RED    IZIN   RED    RED   
 GET    /unit-complaints/building-map                        IZIN   IZIN   IZIN   IZIN   IZIN   RED    RED   
 GET    /unit-complaints/density                             IZIN   IZIN   RED    RED    RED    RED    RED   
+GET    /unit-complaints/gorunur-sayi                        IZIN   IZIN   RED    RED    RED    RED    RED   
 GET    /unit-complaints/mine                                RED    RED    RED    RED    IZIN   RED    RED   
 PATCH  /unit-complaints/{id}                                IZIN   IZIN   RED    RED    RED    RED    RED   
 POST   /unit-complaints/{id}/okundu                         IZIN   IZIN   RED    RED    RED    RED    RED   

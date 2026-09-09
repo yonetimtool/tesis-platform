@@ -100,6 +100,31 @@ void main() {
       expect(uri.queryParameters['durum'], 'acik');
     });
 
+    // (P222 §1) IZGARA KAROSU ARTIK LISTE UCUNU OKUMAZ.
+    //
+    // OLCULEN KUSUR: karo `GET /unit-complaints?durum=acik`in
+    // `meta.total` degerini okuyordu ve o LISTE ucu
+    // `sikayet_harita_saat` penceresini UYGULAMAZ. Karo "5 Acik"
+    // derken, karoya dokununca acilan harita 0 gosterebiliyordu.
+    //
+    // Bu test URL'yi kilitler: liste ucuna donulurse DUSER.
+    test('P222 izgara: GET /unit-complaints/gorunur-sayi — LISTE DEGIL',
+        () async {
+      final (api: api, adapter: adapter) = _kur(const {'acik_sayisi': 7});
+      expect(await api.acikDaireSikayetSayisi(), 7);
+
+      final uri = adapter.istekler.single;
+      expect(uri.path, '/unit-complaints/gorunur-sayi');
+      // Liste ucunun izleri OLMAMALI: sayfalama da, durum suzgeci de.
+      expect(uri.queryParameters['limit'], isNull);
+      expect(uri.queryParameters['durum'], isNull);
+    });
+
+    test('P222 izgara: alan YOKSA 0 — uydurma sayi yok', () async {
+      final (api: api, adapter: _) = _kur(const {});
+      expect(await api.acikDaireSikayetSayisi(), 0);
+    });
+
     test('meta YOKSA/bozuksa 0 (ekran cokmez, uydurma sayi da yok)', () async {
       final (api: api, adapter: _) = _kur(const {'items': []});
       expect(await api.yeniIhlalSayisi(), 0);

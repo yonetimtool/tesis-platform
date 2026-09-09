@@ -187,6 +187,9 @@ export default function KayitSayfasi() {
   const [ad, setAd] = useState("");
   const [soyad, setSoyad] = useState("");
   const [eposta, setEposta] = useState("");
+  // (P222 §2) Apple "e-postami gizle": adrese posta GIDEMEZ,
+  // kullanici bunu kaydolmadan ONCE bilmeli.
+  const [sosyalRelay, setSosyalRelay] = useState(false);
   const [telefon, setTelefon] = useState("");
   const [parola, setParola] = useState("");
   const [parola2, setParola2] = useState("");
@@ -299,6 +302,9 @@ export default function KayitSayfasi() {
     // Saglayicidan gelen ad soyad forma OTOMATIK DOLAR; kullanici
     // duzeltebilir. Apple ad vermez -> alan bos kalir.
     if (s.ad) setAd(s.ad);
+    // (P222 §2) E-POSTA DA DOLAR — ve SALT OKUNUR olur (asagida).
+    if (s.eposta) setEposta(s.eposta);
+    setSosyalRelay(Boolean(s.relay));
     // (P211-ek3) ROL BOSSA GIRISTEN GELINDI: hangi rolde kaydolacagini
     // kullanici SECER. Kayit akisindan gelenlerde rol zaten secilmisti,
     // onlar bilgiler adimindan devam eder (gerileme yok).
@@ -651,6 +657,31 @@ export default function KayitSayfasi() {
           {yol === "sosyal" ? (
             <p className="text-sm text-metin-muted">{t("kayitSosyalAdNotu")}</p>
           ) : null}
+          {/* (P222 §2) SAGLAYICI E-POSTA VERMEDI.
+              APPLE e-postayi YALNIZ ILK yetkilendirmede paylasir. Kullanici
+              kaydi yarida birakip tekrar denerse adres GELMEZ ve sunucu bu
+              yolu `eposta_gerekli` (422) ile REDDEDER: e-postasiz bir
+              yonetici hesabi daveti alamaz, parolasini sifirlayamaz,
+              silemez. Bos ve SALT OKUNUR bir alanla kullaniciyi cikissiz
+              birakmak yerine sebebi soyleyip e-posta yoluna gonderiyoruz. */}
+          {yol === "sosyal" && !eposta ? (
+            <div
+              role="alert"
+              className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800"
+            >
+              <p>{t("kayitSosyalEpostaYok")}</p>
+              <button
+                type="button"
+                className="mt-2 underline"
+                onClick={() => {
+                  setYol("parola");
+                  setAdim("yontem");
+                }}
+              >
+                {t("kayitEpostaIleDevam")}
+              </button>
+            </div>
+          ) : null}
           <label className="block">
             <span className="text-sm font-medium">{t("kayitAd")}</span>
             <input
@@ -678,16 +709,32 @@ export default function KayitSayfasi() {
           </label>
           <label className="block">
             <span className="text-sm font-medium">{t("kayitEposta")}</span>
+            {/* (P222 §2) SOSYAL YOLDA SALT OKUNUR.
+                Sunucu bu adresi imzali `baglama_jetonu`nun ICINDEN okur
+                (`kayit.tesis_olustur`, `oauth.rol_tamamla`) ve formda
+                yazilani HIC KULLANMAZ. Duzenlenebilir birakmak, yazilan
+                adresin SESSIZCE yok sayilmasi demekti — kullanici baska
+                bir adres yazip hesabinin o adrese acildigini sanirdi.
+                Ayrica elle yazilan adres DOGRULANMAMIS olurdu ve
+                dogrulanmamis adresle allowlist eslesmesi hesap ele
+                gecirmedir (P180 dersi). */}
             <input
-              className={`${inputCls} mt-1`}
+              className={`${inputCls} mt-1${yol === "sosyal" ? " opacity-70" : ""}`}
               type="email"
               value={eposta}
               onChange={(e) => setEposta(e.target.value)}
               required
+              readOnly={yol === "sosyal"}
+              aria-readonly={yol === "sosyal"}
               inputMode="email"
               autoComplete="email"
               data-test="kayit-eposta"
             />
+            {yol === "sosyal" ? (
+              <span className="mt-1 block text-xs text-metin-muted">
+                {sosyalRelay ? t("kayitSosyalRelayNotu") : t("kayitSosyalEpostaNotu")}
+              </span>
+            ) : null}
           </label>
           <label className="block">
             <span className="text-sm font-medium">{t("kayitTelefon")}</span>

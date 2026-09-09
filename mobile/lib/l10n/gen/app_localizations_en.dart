@@ -6299,4 +6299,16 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get dukkanYakindaMetin =>
       'You\'ll be able to find tradespeople and service providers in your neighbourhood here. This screen will open when it\'s ready — you won\'t need to update the app.';
+
+  @override
+  String get kayitSosyalEpostaNotu =>
+      'This address comes from your social account and cannot be changed.';
+
+  @override
+  String get kayitSosyalRelayNotu =>
+      'Apple hid your address. Mail cannot be sent to it; Apple forwards notifications.';
+
+  @override
+  String get kayitSosyalEpostaYok =>
+      'Your social account did not share an email address this time. Apple only provides it on the first authorization. You can register with email, or remove this app\'s access in your Apple settings and try again.';
 }

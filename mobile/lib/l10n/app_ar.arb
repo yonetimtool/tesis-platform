@@ -2062,5 +2062,17 @@
   "daireSakinCikarNot": "يُغلَق الارتباط بهذه الشقة فقط؛ الحساب لا يُحذف.",
   "daireSakinEklendi": "تمت إضافة الساكن إلى الشقة.",
   "dukkanYakindaBaslik": "الأنشطة التجارية المحلية قيد الإعداد",
-  "dukkanYakindaMetin": "ستتمكّن من العثور هنا على الحرفيين وشركات الخدمات في حيّك. ستُفتح هذه الشاشة عندما تصبح جاهزة — دون الحاجة إلى تحديث التطبيق."
+  "dukkanYakindaMetin": "ستتمكّن من العثور هنا على الحرفيين وشركات الخدمات في حيّك. ستُفتح هذه الشاشة عندما تصبح جاهزة — دون الحاجة إلى تحديث التطبيق.",
+  "kayitSosyalEpostaNotu": "هذا العنوان مأخوذ من حسابك الاجتماعي ولا يمكن تغييره.",
+  "@kayitSosyalEpostaNotu": {
+    "description": "(P222) SSO e-postasi salt okunur notu"
+  },
+  "kayitSosyalRelayNotu": "أخفت Apple عنوانك. لا يمكن إرسال بريد إليه؛ تقوم Apple بإعادة توجيه الإشعارات.",
+  "@kayitSosyalRelayNotu": {
+    "description": "(P222) Apple private relay uyarisi"
+  },
+  "kayitSosyalEpostaYok": "لم يشارك حسابك الاجتماعي عنوان بريد إلكتروني هذه المرة. تقدّمه Apple عند أول تفويض فقط. يمكنك التسجيل بالبريد الإلكتروني، أو إزالة صلاحية هذا التطبيق من إعدادات Apple والمحاولة مجددًا.",
+  "@kayitSosyalEpostaYok": {
+    "description": "(P222) Saglayici e-posta paylasmadi"
+  }
 }

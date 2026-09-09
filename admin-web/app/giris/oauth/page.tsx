@@ -156,6 +156,12 @@ function OauthDonus() {
               baglamaJetonu: d.baglama_jetonu,
               saglayici: d.saglayici ?? "",
               ad: d.ad ?? undefined,
+              // (P222 §2) E-POSTA DA TASINIR: sunucu adresi
+              // baglama jetonundan okur, formda yazilani
+              // kullanmaz — tasinmazsa kullanici bos bir alani
+              // bosuna dolduruyordu.
+              eposta: d.eposta ?? undefined,
+              relay: d.relay,
             });
             router.replace("/kayit");
             return;
@@ -214,6 +220,12 @@ function OauthDonus() {
               baglamaJetonu: d.baglama_jetonu,
               saglayici: d.saglayici ?? "",
               ad: d.ad ?? undefined,
+              // (P222 §2) E-POSTA DA TASINIR: sunucu adresi
+              // baglama jetonundan okur, formda yazilani
+              // kullanmaz — tasinmazsa kullanici bos bir alani
+              // bosuna dolduruyordu.
+              eposta: d.eposta ?? undefined,
+              relay: d.relay,
             });
             router.replace("/kayit");
             return;
@@ -238,6 +250,12 @@ function OauthDonus() {
               baglamaJetonu: d.baglama_jetonu,
               saglayici: d.saglayici ?? "",
               ad: d.ad ?? undefined,
+              // (P222 §2) E-POSTA DA TASINIR: sunucu adresi
+              // baglama jetonundan okur, formda yazilani
+              // kullanmaz — tasinmazsa kullanici bos bir alani
+              // bosuna dolduruyordu.
+              eposta: d.eposta ?? undefined,
+              relay: d.relay,
             });
             router.replace("/kayit");
             return;

@@ -89,6 +89,19 @@ export interface KayitSosyalSonuc {
   saglayici: string;
   /** Saglayicinin bildirdigi ad soyad; Apple'da BOS gelir. */
   ad?: string;
+  /**
+   * (P222 §2) Saglayicinin bildirdigi E-POSTA — kayit formunu doldurur.
+   *
+   * NEDEN TASINIYOR: sunucu bu adresi `baglama_jetonu`nun ICINDEN okur
+   * (`kayit.tesis_olustur`, `oauth.rol_tamamla`) ve formda yazilani HIC
+   * KULLANMAZ. Tasinmadigi surece kullanici, sonucu hicbir yere gitmeyen
+   * bir alani elle dolduruyordu.
+   *
+   * BOS OLABILIR: Apple e-postayi YALNIZ ilk yetkilendirmede verir.
+   */
+  eposta?: string;
+  /** Apple "e-postami gizle" — o adrese posta GONDERILEMEZ. */
+  relay?: boolean;
 }
 
 export function kayitSosyalSonucYaz(sonuc: KayitSosyalSonuc) {
@@ -116,6 +129,8 @@ export function kayitSosyalSonucOku(): KayitSosyalSonuc | null {
       baglamaJetonu: d.baglamaJetonu,
       saglayici: d.saglayici,
       ad: d.ad,
+      eposta: d.eposta,
+      relay: d.relay,
     };
   } catch {
     return null;

@@ -6291,4 +6291,16 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get dukkanYakindaMetin =>
       'Vous pourrez trouver ici les artisans et prestataires de votre quartier. Cet écran s\'ouvrira une fois prêt — sans mise à jour de l\'application.';
+
+  @override
+  String get kayitSosyalEpostaNotu =>
+      'Cette adresse provient de votre compte social et ne peut pas être modifiée.';
+
+  @override
+  String get kayitSosyalRelayNotu =>
+      'Apple a masqué votre adresse. Aucun e-mail ne peut y être envoyé ; Apple transmet les notifications.';
+
+  @override
+  String get kayitSosyalEpostaYok =>
+      'Votre compte social n\'a pas transmis d\'adresse e-mail cette fois. Apple ne la fournit qu\'à la première autorisation. Vous pouvez vous inscrire par e-mail, ou retirer l\'accès de cette application dans vos réglages Apple et réessayer.';
 }

@@ -10864,6 +10864,24 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Mahallendeki ustaları ve hizmet firmalarını buradan bulabileceksin. Hazır olduğunda bu ekran açılacak — uygulamayı güncellemene gerek kalmayacak.'**
   String get dukkanYakindaMetin;
+
+  /// (P222) SSO e-postasi salt okunur notu
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu adres sosyal hesabınızdan geldi ve değiştirilemez.'**
+  String get kayitSosyalEpostaNotu;
+
+  /// (P222) Apple private relay uyarisi
+  ///
+  /// In tr, this message translates to:
+  /// **'Apple adresinizi gizledi. Bu adrese e-posta gönderilemez; bildirimleri Apple iletir.'**
+  String get kayitSosyalRelayNotu;
+
+  /// (P222) Saglayici e-posta paylasmadi
+  ///
+  /// In tr, this message translates to:
+  /// **'Sosyal hesabınız bu kez e-posta adresi paylaşmadı. Apple adresi yalnız ilk izinde verir. E-posta ile kaydolabilir ya da Apple ayarlarından bu uygulamanın iznini kaldırıp yeniden deneyebilirsiniz.'**
+  String get kayitSosyalEpostaYok;
 }
 
 class _AppLocalizationsDelegate

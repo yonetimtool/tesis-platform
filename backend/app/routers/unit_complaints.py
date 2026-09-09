@@ -81,6 +81,7 @@ from ..models import (
     UnitResident,
 )
 from ..schemas import (
+    GorunurSikayetSayisi,
     BuildingMapBlok,
     BuildingMapKat,
     BuildingMapResponse,
@@ -302,6 +303,34 @@ async def unit_density(
         for r in rows
     ]
     return UnitDensityResponse(items=items)
+
+
+@router.get("/gorunur-sayi", response_model=GorunurSikayetSayisi)
+async def gorunur_sikayet_sayisi(
+    db: AsyncSession = Depends(get_tenant_db),
+    _: AppUser = Depends(_MANAGER),
+) -> GorunurSikayetSayisi:
+    """(P222 §1) ANA EKRAN IZGARASININ sayisi — harita ile AYNI pencere.
+
+    OLCULEN KUSUR: izgara `GET /unit-complaints?durum=acik&limit=1`in
+    `meta.total` degerini okuyordu. O uc bir LISTE ucudur ve
+    `sikayet_harita_saat` penceresini UYGULAMAZ (bilerek: kuyruktan
+    kayit dusurmek "sikayetim kayboldu" demek olurdu). Sonuc: karo
+    "5 Acik" derken, karoya dokununca acilan harita 0 gosteriyordu.
+
+    Bu uc `_harita_penceresi()`den gecer — yani modul basligindaki
+    (a) GORUNUR SAYI ailesine katilir, ucuncu bir sayi uretmez.
+    `/density` de ayni sayiyi verir ama daire-basi tum listeyi tasir;
+    izgara icin tek bir tam sayi yeter.
+    """
+    pencere = await _harita_penceresi(db)
+    kosullar = [UnitComplaint.durum == "acik"]
+    if pencere is not None:
+        kosullar.append(pencere)
+    toplam = (
+        await db.execute(select(func.count(UnitComplaint.id)).where(*kosullar))
+    ).scalar_one()
+    return GorunurSikayetSayisi(acik_sayisi=int(toplam))
 
 
 # --------------------------- sikayetlerim (resident) ------------------------ #

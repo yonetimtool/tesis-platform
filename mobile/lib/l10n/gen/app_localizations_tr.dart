@@ -6108,4 +6108,16 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get dukkanYakindaMetin =>
       'Mahallendeki ustaları ve hizmet firmalarını buradan bulabileceksin. Hazır olduğunda bu ekran açılacak — uygulamayı güncellemene gerek kalmayacak.';
+
+  @override
+  String get kayitSosyalEpostaNotu =>
+      'Bu adres sosyal hesabınızdan geldi ve değiştirilemez.';
+
+  @override
+  String get kayitSosyalRelayNotu =>
+      'Apple adresinizi gizledi. Bu adrese e-posta gönderilemez; bildirimleri Apple iletir.';
+
+  @override
+  String get kayitSosyalEpostaYok =>
+      'Sosyal hesabınız bu kez e-posta adresi paylaşmadı. Apple adresi yalnız ilk izinde verir. E-posta ile kaydolabilir ya da Apple ayarlarından bu uygulamanın iznini kaldırıp yeniden deneyebilirsiniz.';
 }

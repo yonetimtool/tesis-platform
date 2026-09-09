@@ -2062,5 +2062,17 @@
   "daireSakinCikarNot": "Only the link to this unit is closed; the account is not deleted.",
   "daireSakinEklendi": "Resident added to the unit.",
   "dukkanYakindaBaslik": "Local businesses are on the way",
-  "dukkanYakindaMetin": "You'll be able to find tradespeople and service providers in your neighbourhood here. This screen will open when it's ready — you won't need to update the app."
+  "dukkanYakindaMetin": "You'll be able to find tradespeople and service providers in your neighbourhood here. This screen will open when it's ready — you won't need to update the app.",
+  "kayitSosyalEpostaNotu": "This address comes from your social account and cannot be changed.",
+  "@kayitSosyalEpostaNotu": {
+    "description": "(P222) SSO e-postasi salt okunur notu"
+  },
+  "kayitSosyalRelayNotu": "Apple hid your address. Mail cannot be sent to it; Apple forwards notifications.",
+  "@kayitSosyalRelayNotu": {
+    "description": "(P222) Apple private relay uyarisi"
+  },
+  "kayitSosyalEpostaYok": "Your social account did not share an email address this time. Apple only provides it on the first authorization. You can register with email, or remove this app's access in your Apple settings and try again.",
+  "@kayitSosyalEpostaYok": {
+    "description": "(P222) Saglayici e-posta paylasmadi"
+  }
 }

@@ -2062,5 +2062,17 @@
   "daireSakinCikarNot": "Seul le lien avec ce logement est clôturé ; le compte n'est pas supprimé.",
   "daireSakinEklendi": "Résident ajouté au logement.",
   "dukkanYakindaBaslik": "Les entreprises locales arrivent",
-  "dukkanYakindaMetin": "Vous pourrez trouver ici les artisans et prestataires de votre quartier. Cet écran s'ouvrira une fois prêt — sans mise à jour de l'application."
+  "dukkanYakindaMetin": "Vous pourrez trouver ici les artisans et prestataires de votre quartier. Cet écran s'ouvrira une fois prêt — sans mise à jour de l'application.",
+  "kayitSosyalEpostaNotu": "Cette adresse provient de votre compte social et ne peut pas être modifiée.",
+  "@kayitSosyalEpostaNotu": {
+    "description": "(P222) SSO e-postasi salt okunur notu"
+  },
+  "kayitSosyalRelayNotu": "Apple a masqué votre adresse. Aucun e-mail ne peut y être envoyé ; Apple transmet les notifications.",
+  "@kayitSosyalRelayNotu": {
+    "description": "(P222) Apple private relay uyarisi"
+  },
+  "kayitSosyalEpostaYok": "Votre compte social n'a pas transmis d'adresse e-mail cette fois. Apple ne la fournit qu'à la première autorisation. Vous pouvez vous inscrire par e-mail, ou retirer l'accès de cette application dans vos réglages Apple et réessayer.",
+  "@kayitSosyalEpostaYok": {
+    "description": "(P222) Saglayici e-posta paylasmadi"
+  }
 }
