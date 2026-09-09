@@ -55,6 +55,11 @@ TESIS_UCLARI: tuple[str, ...] = (
     "/task-categories",
     "/complaints",
     "/unit-complaints",
+    # (P222 §1) Izgara sayaci. TESIS-KAPSAMLI: `get_tenant_db` ile RLS
+    # baglami kurar ve yalniz o tesisin sikayetlerini sayar. Taramaya
+    # yazilmasaydi kapsam orani sessizce duserdi — nitekim tam suite'te
+    # `test_tarama_kapsami_daralmadi` bunu YAKALADI.
+    "/unit-complaints/gorunur-sayi",
     "/assets",
     "/cameras",
     "/announcements",
