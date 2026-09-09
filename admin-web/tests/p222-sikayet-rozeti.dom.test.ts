@@ -16,6 +16,7 @@
 // SAHTE HTTP KATMANINDA (P200 dersi): `useSWR` taklit edilseydi, yanlis
 // ucu cagirmak testten kacardi.
 import { screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import DashboardPage from "@/app/(protected)/dashboard/page";
@@ -100,5 +101,69 @@ describe("P222 pano sikayet rozeti", () => {
     const kart = (await screen.findAllByText("Şikayet Haritası"))[0]
       .closest("a, div[class*='relative']") as HTMLElement;
     await waitFor(() => expect(within(kart).queryByText("0")).toBeNull());
+  });
+
+  // =====================================================================
+  // KISAYOL VARSAYILAN DEGIL — AMA SECILEBILIR OLMAK ZORUNDA
+  // =====================================================================
+  // `/schematic` varsayilan kisayol listesine EKLENMEDI: `WIDGET_SINIRI`
+  // 6 ve yedinci giris `/olaylar`i sessizce dusururdu. Hangi kisayolun
+  // cikacagi YONETICIYE GORE degisir — birinin isine yarayan otekine
+  // yaramaz — ve sabit bir secim yapmak yanlis olurdu.
+  //
+  // Bu ancak yonetici kisayolu KENDI EKLEYEBILIYORSA dogru bir karar.
+  // Asagidaki test tam olarak onu olcer: secim listesinde var mi,
+  // isaretlenebiliyor mu. Menuden dusurulurse ya da rol kapisi
+  // degisirse BU TEST DUSER.
+  it("SECIM LISTESINDE var ve yonetici kendisi EKLEYEBILIYOR", async () => {
+    const secilen: string[][] = [];
+    globalThis.fetch = (async (girdi: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(girdi);
+      if (init?.method === "PUT" && url.includes("/api/me/pano-tercihi")) {
+        const g = JSON.parse(String(init.body)) as {
+          widgetlar?: { rota: string }[];
+        };
+        secilen.push((g.widgetlar ?? []).map((w) => w.rota));
+        return json({});
+      }
+      if (url.includes("/api/unit-complaints/gorunur-sayi")) {
+        return json({ acik_sayisi: 3 });
+      }
+      if (url.includes("/api/me") && !url.includes("pano-tercihi")) {
+        return json({ role: "yonetici" });
+      }
+      // KAYITLI TERCIH: `/schematic` SECILI DEGIL — varsayilan hâl.
+      if (url.includes("/api/me/pano-tercihi")) {
+        return json({ widgetlar: [{ rota: "/dues" }] });
+      }
+      if (url.includes("/api/building-map")) {
+        return json({ bloklar: [], unplaced: [] });
+      }
+      return json({ items: [], meta: { total: 0 } });
+    }) as typeof fetch;
+
+    ciz(DashboardPage);
+    // Duzenleme kipine gec, secim kutusunu ac.
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Paneli düzenle" }),
+    );
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Kısayolları seç" }),
+    );
+
+    const diyalog = await screen.findByRole("dialog");
+    const satir = within(diyalog)
+      .getByText("Şikayet Haritası")
+      .closest("label") as HTMLElement;
+    const kutu = within(satir).getByRole("checkbox") as HTMLInputElement;
+
+    // SECILEBILIR: isaretsiz ve `disabled` DEGIL (sinir dolu degil).
+    expect(kutu.checked).toBe(false);
+    expect(kutu.disabled).toBe(false);
+
+    await userEvent.click(kutu);
+    await waitFor(() =>
+      expect(secilen.at(-1)).toContain("/schematic"),
+    );
   });
 });

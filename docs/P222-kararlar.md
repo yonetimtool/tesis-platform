@@ -56,11 +56,26 @@ sayısı gösteren hiçbir rozet yoktu (pano `/api/dashboard/live`'dan
 besleniyor ve yanıtında şikayet alanı yok). Parite gereği eklendi ve
 mobille aynı uçtan besleniyor.
 
-**`/schematic` varsayılan kısayol listesine EKLENMEDİ.** `WIDGET_SINIRI`
-6 ve yedinci giriş `/olaylar`ı sessizce düşürürdü. Hangi kısayolun
-varsayılandan çıkacağı bir ürün kararıdır, yan etki olarak verilmez —
-**bu senin kararın**. Rozet, `/schematic` widget'ını seçen kullanıcıda
-görünür.
+**`/schematic` varsayılan kısayol listesine EKLENMEDİ — ve eklenmeyecek.**
+`WIDGET_SINIRI` 6; yedinci giriş `/olaylar`ı sessizce düşürürdü. Kullanıcı
+kararı: *"hangi kısayolun çıkacağı yöneticiye göre değişir — birinin işine
+yarayan diğerine yaramaz; sabit bir seçim yapıp birinin kısayolunu düşürmek
+yanlış olur."*
+
+Bu karar ancak yönetici kısayolu **kendisi ekleyebiliyorsa** doğru. Ölçüldü:
+
+- `/schematic` `lib/menu.ts`te `grup: "tesis"` ile duruyor,
+- `lib/yuzey.ts`te rol kapısı `["admin", "yonetici"]`,
+- pano `adaylar` listesini `menuGruplari("tesis", rol)`ten türetiyor —
+  yani menüde görünen her sayfa seçilebilir kısayol adayı,
+- "Paneli düzenle" → "Kısayolları seç" kutusunda satır **işaretsiz ve
+  etkin** geliyor, işaretlenince `/api/me/pano-tercihi`ye yazılıyor.
+
+Uçtan uca sürüldü ve kilitlendi
+(`tests/p222-sikayet-rozeti.dom.test.ts`). Kırarak doğrulandı: menüden
+düşürmek de rol kapısını daraltmak da testi düşürüyor.
+
+Rozet, `/schematic` widget'ını seçen kullanıcıda görünür.
 
 Rozet **uydurulmaz**: sayı elimizde yoksa (yükleniyor, 500, yetkisiz)
 alan hiç konmaz; `0` da çizilmez (boş rozet gürültüdür).
