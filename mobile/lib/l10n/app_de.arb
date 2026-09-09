@@ -2060,5 +2060,7 @@
   "daireSakinCikar": "Aus der Wohnung entfernen",
   "daireSakinCikarOnay": "{ad} aus dieser Wohnung entfernen?",
   "daireSakinCikarNot": "Nur die Verknüpfung mit dieser Wohnung wird beendet; das Konto bleibt bestehen.",
-  "daireSakinEklendi": "Bewohner zur Wohnung hinzugefügt."
+  "daireSakinEklendi": "Bewohner zur Wohnung hinzugefügt.",
+  "dukkanYakindaBaslik": "Lokale Betriebe werden vorbereitet",
+  "dukkanYakindaMetin": "Hier finden Sie künftig Handwerker und Dienstleister in Ihrer Nachbarschaft. Dieser Bereich öffnet sich, sobald er fertig ist — ein App-Update ist dafür nicht nötig."
 }

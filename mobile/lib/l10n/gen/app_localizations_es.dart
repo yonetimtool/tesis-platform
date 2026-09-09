@@ -6268,4 +6268,11 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get daireSakinEklendi => 'Residente añadido a la vivienda.';
+
+  @override
+  String get dukkanYakindaBaslik => 'Los negocios locales están en camino';
+
+  @override
+  String get dukkanYakindaMetin =>
+      'Aquí podrás encontrar profesionales y empresas de servicios de tu barrio. Esta pantalla se abrirá cuando esté lista, sin necesidad de actualizar la aplicación.';
 }

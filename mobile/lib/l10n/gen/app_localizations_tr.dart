@@ -6101,4 +6101,11 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get daireSakinEklendi => 'Sakin daireye eklendi.';
+
+  @override
+  String get dukkanYakindaBaslik => 'Yerel işletmeler hazırlanıyor';
+
+  @override
+  String get dukkanYakindaMetin =>
+      'Mahallendeki ustaları ve hizmet firmalarını buradan bulabileceksin. Hazır olduğunda bu ekran açılacak — uygulamayı güncellemene gerek kalmayacak.';
 }

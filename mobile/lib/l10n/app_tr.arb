@@ -2875,5 +2875,7 @@
         "type": "String"
       }
     }
-  }
+  },
+  "dukkanYakindaBaslik": "Yerel işletmeler hazırlanıyor",
+  "dukkanYakindaMetin": "Mahallendeki ustaları ve hizmet firmalarını buradan bulabileceksin. Hazır olduğunda bu ekran açılacak — uygulamayı güncellemene gerek kalmayacak."
 }

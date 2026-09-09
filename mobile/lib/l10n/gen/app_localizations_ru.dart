@@ -6363,4 +6363,11 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get daireSakinEklendi => 'Жилец добавлен в квартиру.';
+
+  @override
+  String get dukkanYakindaBaslik => 'Местные компании готовятся';
+
+  @override
+  String get dukkanYakindaMetin =>
+      'Здесь вы сможете находить мастеров и сервисные компании в своём районе. Этот раздел откроется, когда будет готов, — обновлять приложение не потребуется.';
 }

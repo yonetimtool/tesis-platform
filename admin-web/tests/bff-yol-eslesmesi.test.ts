@@ -80,6 +80,96 @@ function rotaDosyasi(yol: string): string | null {
   return existsSync(dosya) ? dosya : null;
 }
 
+/**
+ * (P221) IKINCI TARAMA: `fetch("/api/...")` ve `useSWR("/api/...")`.
+ *
+ * `apoSend` taramasi TEK BASINA YETMIYORDU: `/api/ozellikler` vekilini
+ * silip suite'i kosunca HICBIR test dusmedi — cunku o cagri `apiSend`
+ * ile degil SWR anahtariyla, `lib/` altinda yapiliyor. Yani P163'te
+ * kilitlenen 405 sinifi, cagri BU BICIMDE yazildiginda hala kacabiliyordu.
+ *
+ * `lib/` de taranir: veri cekme oradan da yapiliyor.
+ */
+function duzCagrilar(): { yol: string; dosya: string }[] {
+  const cikti: { yol: string; dosya: string }[] = [];
+  const tara = (dizin: string) => {
+    for (const ad of readdirSync(dizin)) {
+      const tam = join(dizin, ad);
+      if (statSync(tam).isDirectory()) {
+        if (tam === API) continue;
+        tara(tam);
+        continue;
+      }
+      if (!ad.endsWith(".tsx") && !ad.endsWith(".ts")) continue;
+      const kaynak = readFileSync(tam, "utf8");
+      for (const m of kaynak.matchAll(
+        /(?:fetch|useSWR(?:<[^>]*>)?)\(\s*[`"](\/api\/[^`"$?]+)/g,
+      )) {
+        cikti.push({ yol: m[1], dosya: tam.slice(KOK.length + 1) });
+      }
+    }
+  };
+  tara(join(KOK, "app"));
+  tara(join(KOK, "components"));
+  tara(join(KOK, "lib"));
+  return cikti;
+}
+
+/**
+ * Yol bir `route.ts`e cozuluyor mu?
+ *
+ * GERI IZLEMELI: duz segment dinamigi yener AMA yalniz o dalda gercekten
+ * bir `route.ts` varsa. `app/api/panel/ice-aktarim/` yalniz `[id]`
+ * tasiyor, kendi `route.ts`i yok — Next o istegi kardes `[kaynak]`
+ * vekiline verir. Duz dali kosulsuz secen bir cozucu, CALISAN bir yolu
+ * "eksik" diye raporlardi (ilk yazimda tam bunu yapti).
+ *
+ * Sondaki `/` (sablon degiskeninin onu) DINAMIK segment demektir.
+ */
+function cozuluyorMu(yol: string): boolean {
+  const parcalar = yol.replace(/^\/api\//, "").split("/");
+  const acikUclu = parcalar[parcalar.length - 1] === "";
+  const segmentler = parcalar.filter(Boolean);
+
+  const dene = (dizin: string, i: number): boolean => {
+    if (i === segmentler.length) {
+      if (!acikUclu) return existsSync(join(dizin, "route.ts"));
+      // ACIK UCLU (`/api/x/${id}/...`): degiskenden SONRASINI kaynaktan
+      // bilemiyoruz. Olculebilen tek sey, dinamik bir cocugun VAR
+      // olmasi — bunu olcup fazlasini iddia etmiyoruz.
+      return readdirSync(dizin).some(
+        (a) => a.startsWith("[") && statSync(join(dizin, a)).isDirectory(),
+      );
+    }
+    const duz = join(dizin, segmentler[i]);
+    if (existsSync(duz) && statSync(duz).isDirectory() && dene(duz, i + 1)) {
+      return true;
+    }
+    return readdirSync(dizin).some(
+      (a) =>
+        a.startsWith("[") &&
+        statSync(join(dizin, a)).isDirectory() &&
+        dene(join(dizin, a), i + 1),
+    );
+  };
+  return dene(API, 0);
+}
+
+const DUZ_CAGRILAR = duzCagrilar();
+
+describe("(P221) duz fetch/SWR cagrilarinin da vekili VAR", () => {
+  it("tarama gercekten cagri buluyor", () => {
+    expect(DUZ_CAGRILAR.length).toBeGreaterThan(50);
+  });
+
+  it("HER `/api/...` anahtari bir route dosyasina duser", () => {
+    const eksik = DUZ_CAGRILAR.filter((c) => !cozuluyorMu(c.yol)).map(
+      (c) => `${c.dosya}: ${c.yol}`,
+    );
+    expect(eksik, `vekil dosyasi YOK:\n${eksik.join("\n")}`).toEqual([]);
+  });
+});
+
 const CAGRILAR = cagrilar();
 
 describe("(P163) her BFF cagrisinin vekili VAR ve METODU tanimli", () => {

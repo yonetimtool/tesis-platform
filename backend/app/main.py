@@ -24,6 +24,7 @@ from .dukkan import bildirim_uclar as dukkan_bildirim_router
 from .dukkan import auth_uclar as dukkan_auth_router
 from .dukkan import isletme as dukkan_isletme_router
 from .dukkan import moderasyon as dukkan_moderasyon_router
+from .routers import ozellikler as ozellikler_router
 from .dukkan import odeme_akisi as dukkan_odeme_router
 from .dukkan import reklam as dukkan_reklam_router
 from .dukkan import talep as dukkan_talep_router
@@ -286,6 +287,7 @@ app.include_router(dukkan_bildirim_router.router)
 app.include_router(dukkan_isletme_router.router)
 app.include_router(dukkan_moderasyon_router.router)
 app.include_router(dukkan_reklam_router.router)
+app.include_router(ozellikler_router.router)
 app.include_router(dukkan_odeme_router.router)
 app.include_router(dukkan_talep_router.router)
 app.include_router(dukkan_yorum_router.router)

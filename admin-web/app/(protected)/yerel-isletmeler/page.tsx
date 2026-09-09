@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { useT } from "@/lib/i18n/kullan";
+import { useDukkanAcik } from "@/lib/ozellikler";
 
 /**
  * ==========================================================================
@@ -38,6 +39,9 @@ type Yer = { ad: string; slug: string };
 
 export default function YerelIsletmeler() {
   const t = useT();
+  // (P221) AYNI SUNUCU BAYRAGI — mobildeki `dukkanAcikProvider` ile tek
+  // kaynak. Menu girisi DURUYOR (bkz. asagidaki gerekce), icerik degisiyor.
+  const dukkanAcik = useDukkanAcik();
   const [iller, setIller] = useState<Yer[]>([]);
   const [ilceler, setIlceler] = useState<Yer[]>([]);
   const [kategoriler, setKategoriler] = useState<Kategori[]>([]);
@@ -98,6 +102,26 @@ export default function YerelIsletmeler() {
       setBekle(false);
     }
   }, [il, ilce, kategori, q, t]);
+
+  if (!dukkanAcik) {
+    // MENU GIRISI KALDIRILMIYOR, ICERIK DEGISIYOR: girisi gizlemek
+    // yoneticiye ozelligin var oldugunu hic anlatmazdi; bos bir pazar
+    // yeri gostermek ise kotu izlenim birakirdi. Ucuncu yol: yer tutucu.
+    // TARIH TAAHHUDU YOK — kacirilan bir tarih guvensizlik yaratir.
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-xl font-semibold">{t("dukkanYerelIsletmeler")}</h1>
+        </div>
+        <div className="rounded border border-[--yz-border] p-8 text-center">
+          <p className="text-base font-medium">{t("dukkanYakindaBaslik")}</p>
+          <p className="mt-2 text-sm text-[--yz-text-2]">
+            {t("dukkanYakindaMetin")}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

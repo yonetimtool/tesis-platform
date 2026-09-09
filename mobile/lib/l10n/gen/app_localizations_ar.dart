@@ -6356,4 +6356,11 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get daireSakinEklendi => 'تمت إضافة الساكن إلى الشقة.';
+
+  @override
+  String get dukkanYakindaBaslik => 'الأنشطة التجارية المحلية قيد الإعداد';
+
+  @override
+  String get dukkanYakindaMetin =>
+      'ستتمكّن من العثور هنا على الحرفيين وشركات الخدمات في حيّك. ستُفتح هذه الشاشة عندما تصبح جاهزة — دون الحاجة إلى تحديث التطبيق.';
 }

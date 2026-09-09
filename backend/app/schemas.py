@@ -276,6 +276,20 @@ class UserOut(BaseModel):
     ui_tema: str = "system"
 
 
+class OzellikBayraklari(BaseModel):
+    """(P221) Istemcinin acilista okudugu ozellik bayraklari.
+
+    HER ALAN VARSAYILANLI: eski bir istemci bilmedigi alani yok sayar,
+    yeni bir istemci eski sunucudan alani almadiginda kendi
+    varsayilanina duser. Iki yonde de kirilma olmaz.
+
+    `dukkan`: pazar yeri yuzeyi acik mi. VARSAYILAN FALSE — bayrak
+    eksik/bozuk gelirse yuzey SESSIZCE ACILMAZ.
+    """
+
+    dukkan: bool = False
+
+
 class MeTemaRequest(BaseModel):
     """(P190 §5) Tema tercihini güncelle — hesapta saklanır."""
 

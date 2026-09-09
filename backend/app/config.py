@@ -436,6 +436,26 @@ class Settings(BaseSettings):
     #: KAPI TEK YERDE: tanitim sitesinde ikinci bir istemci bayragi YOK.
     #: Iki bayrak, ayrisabilecekleri bir durum uretirdi.
     yeni_kayit_akisi: bool = False
+    # (P221) DUKKAN YUZEYI ACIK MI — SUNUCUDAN kontrol edilir.
+    #
+    # ==================================================================
+    # NEDEN SUNUCUDA, ISTEMCIDE DEGIL
+    # ==================================================================
+    # Dukkan sekmesi mobil surumde YAYINLANIYOR ama icerigi hazir
+    # degil. Bayrak uygulamanin icinde olsaydi, acmak icin YENI SURUM
+    # ve MAGAZA TURU gerekirdi — kacinilmak istenen sey tam olarak bu.
+    #
+    # Sunucuda olunca: `DUKKAN_MOBIL_ACIK=true` + servis yenileme
+    # yeterli; kullanicilar yeni bir surum indirmeden acilir.
+    #
+    # ==================================================================
+    # VARSAYILAN KAPALI — VE BU BILINCLI
+    # ==================================================================
+    # Bayrak eksik/bozuk gelirse Dukkan SESSIZCE ACILMAZ. Ters yonde
+    # hata yapmak (yapilandirma unutulunca yayina girmek), hazir olmayan
+    # bir pazar yerini kullaniciya gostermek olurdu. `sms_aktif` ve
+    # `odeme_saglayici` icin de ayni ilke yazili.
+    dukkan_mobil_acik: bool = False
 
     #: (P177 §4) TICARI ELEKTRONIK ILETI GONDERIMI — VARSAYILAN KAPALI.
     #:

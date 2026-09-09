@@ -58,6 +58,7 @@ import '../features/staff/presentation/staff_screen.dart';
 import '../features/dis_hizmet/presentation/dis_hizmet_screen.dart';
 import '../features/dukkan/presentation/dukkan_arama_screen.dart';
 import '../features/dukkan/presentation/dukkan_bildirim_screen.dart';
+import '../features/dukkan/presentation/dukkan_kapisi.dart';
 import '../features/dukkan/presentation/dukkan_panel_screen.dart';
 import '../features/dukkan/presentation/dukkan_profil_screen.dart';
 import '../features/dukkan/presentation/dukkan_sikayet_screen.dart';
@@ -463,44 +464,60 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.dukkanArama,
-        builder: (context, state) => const DukkanAramaScreen(),
+        // (P221) TUM DUKKAN ROTALARI KAPIDAN GECER: yalniz girisi sarmak
+        // yetmezdi — bildirime dokunma, derin baglanti ve panel rotalari
+        // kapiyi ATLARDI.
+        builder: (context, state) =>
+            const DukkanKapisi(child: DukkanAramaScreen()),
       ),
       GoRoute(
         path: AppRoutes.dukkanTalepOlustur,
-        builder: (context, state) => DukkanTalepOlusturScreen(
-          kategoriSlug: state.uri.queryParameters['kategori'],
+        builder: (context, state) => DukkanKapisi(
+          child: DukkanTalepOlusturScreen(
+            kategoriSlug: state.uri.queryParameters['kategori'],
+          ),
         ),
       ),
       GoRoute(
         path: AppRoutes.dukkanTaleplerim,
-        builder: (context, state) => const DukkanTaleplerimScreen(),
+        builder: (context, state) =>
+            const DukkanKapisi(child: DukkanTaleplerimScreen()),
       ),
       GoRoute(
         path: AppRoutes.dukkanSikayet,
-        builder: (context, state) => DukkanSikayetScreen(
-          isletmeSlug: state.uri.queryParameters['isletme'],
+        builder: (context, state) => DukkanKapisi(
+          child: DukkanSikayetScreen(
+            isletmeSlug: state.uri.queryParameters['isletme'],
+          ),
         ),
       ),
       GoRoute(
         path: AppRoutes.dukkanTalepDetay,
-        builder: (context, state) => DukkanTalepDetayScreen(
-          talepId: state.pathParameters['talepId'] ?? '',
+        builder: (context, state) => DukkanKapisi(
+          child: DukkanTalepDetayScreen(
+            talepId: state.pathParameters['talepId'] ?? '',
+          ),
         ),
       ),
       GoRoute(
         path: AppRoutes.dukkanPanel,
-        builder: (context, state) => DukkanPanelScreen(
-          isletmeId: state.uri.queryParameters['isletme_id'],
+        builder: (context, state) => DukkanKapisi(
+          child: DukkanPanelScreen(
+            isletmeId: state.uri.queryParameters['isletme_id'],
+          ),
         ),
       ),
       GoRoute(
         path: AppRoutes.dukkanBildirim,
-        builder: (context, state) => const DukkanBildirimScreen(),
+        builder: (context, state) =>
+            const DukkanKapisi(child: DukkanBildirimScreen()),
       ),
       GoRoute(
         path: AppRoutes.dukkanIsletme,
-        builder: (context, state) => DukkanProfilScreen(
-          slug: state.pathParameters['slug'] ?? '',
+        builder: (context, state) => DukkanKapisi(
+          child: DukkanProfilScreen(
+            slug: state.pathParameters['slug'] ?? '',
+          ),
         ),
       ),
       GoRoute(

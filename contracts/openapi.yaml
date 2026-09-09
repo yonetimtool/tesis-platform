@@ -14642,6 +14642,44 @@ paths:
             bir kismini yine de calistirir; 503 dondurmek calisan bir
             sistemi yuk dengeleyiciden dusururdu (sema kontrolunde
             verilen kararla ayni).
+  /ozellikler:
+    get:
+      tags: [ozellikler]
+      summary: Genel ozellik bayraklari (kimliksiz)
+      description: |
+        (P221) Istemcinin ACILISTA okudugu bayraklar. Bir ozelligi
+        acmak/kapatmak SUNUCUNUN karari: bayrak uygulamanin icinde
+        olsaydi acmak icin YENI SURUM ve MAGAZA TURU gerekirdi.
+
+        `POST /surum/kontrol`a EKLENMEDI: o uc yanitini bir POLITIKA
+        TABLOSUNDAN aliyor, bunlar ORTAM YAPILANDIRMASINDAN geliyor;
+        tek yanitta toplamak birinin degisiminin otekinin onbellegini
+        bozmasi demekti.
+
+        KIMLIK GEREKTIRMEZ: hangi sekmelerin gorunecegi giris
+        ekranindan ONCE belli olmali ve yanit kisiye/tesise ozel veri
+        TASIMIYOR.
+
+        VARSAYILAN KAPALI: yanit uretilemezse (ag hatasi, eski sunucu)
+        istemci KAPALI varsayar. Hazir olmayan bir yuzeyi gostermektense
+        gostermemek yeglenir.
+
+        YENI BAYRAK: alani VARSAYILANIYLA ekleyin — eski istemciler
+        bilmedigi alani yok sayar, yeni istemciler eski sunucuda kendi
+        varsayilanina duser.
+      security: []
+      responses:
+        "200":
+          description: Bayraklar
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [dukkan]
+                properties:
+                  dukkan:
+                    type: boolean
+                    description: Pazar yeri yuzeyi acik mi (varsayilan false)
   /me:
     get:
       tags: [me]

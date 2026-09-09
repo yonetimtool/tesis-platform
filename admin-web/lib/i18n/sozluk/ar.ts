@@ -2708,6 +2708,8 @@ export const ar: Sozluk = {
   tesisYoneticiEpostaIpucu: "تُرسل الدعوة إلى هذا العنوان؛ وبدونه لا يستطيع المدير تفعيل حسابه.",
   dukkanYerelIsletmeler: "الأعمال المحلية",
   dukkanYerelIsletmelerAciklama: "الحرفيون والشركات الذين يخدمون منطقتك. تأتي هذه القائمة من سوق دكان؛ أما دفتر الخدمات الخارجية الخاص بك فهو منفصل.",
+  dukkanYakindaBaslik: "المتاجر المحلية قيد الإعداد",
+  dukkanYakindaMetin: "ستتمكن من العثور هنا على الحرفيين وشركات الخدمات في منطقتك. ستُفتح هذه الشاشة عندما تصبح جاهزة.",
   dukkanIl: "المحافظة",
   dukkanIlce: "القضاء",
   dukkanHizmet: "الخدمة",

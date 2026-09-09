@@ -2771,6 +2771,8 @@ export const tr = {
   tesisYoneticiEpostaIpucu: "Davet bu adrese gider; adres olmadan yönetici hesabını sahiplenemez.",
   dukkanYerelIsletmeler: "Yerel işletmeler",
   dukkanYerelIsletmelerAciklama: "Bölgenizde hizmet veren esnaf ve firmalar. Bu liste Dükkan pazar yerinden gelir; kendi Dış Hizmetler defteriniz ayrıdır.",
+  dukkanYakindaBaslik: "Yerel işletmeler hazırlanıyor",
+  dukkanYakindaMetin: "Bölgenizdeki ustaları ve hizmet firmalarını buradan bulabileceksiniz. Hazır olduğunda bu ekran açılacak.",
   dukkanIl: "İl",
   dukkanIlce: "İlçe",
   dukkanHizmet: "Hizmet",

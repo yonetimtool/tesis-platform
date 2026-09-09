@@ -6292,4 +6292,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get daireSakinEklendi => 'Resident added to the unit.';
+
+  @override
+  String get dukkanYakindaBaslik => 'Local businesses are on the way';
+
+  @override
+  String get dukkanYakindaMetin =>
+      'You\'ll be able to find tradespeople and service providers in your neighbourhood here. This screen will open when it\'s ready — you won\'t need to update the app.';
 }

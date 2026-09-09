@@ -356,6 +356,7 @@ POST   /notifications/toplu-sil                             IZIN   IZIN   IZIN  
 POST   /notifications/tumunu-okundu                         IZIN   IZIN   IZIN   RED    IZIN   IZIN   RED   
 PATCH  /notifications/{id}                                  IZIN   IZIN   IZIN   RED    IZIN   IZIN   RED   
 GET    /otomasyon-gunlugu                                   IZIN   IZIN   RED    RED    RED    RED    IZIN  
+GET    /ozellikler                                          IZIN   IZIN   IZIN   IZIN   IZIN   IZIN   IZIN  
 GET    /parking/occupancy                                   IZIN   IZIN   IZIN   IZIN   IZIN   RED    RED   
 GET    /patrol-plans                                        IZIN   IZIN   IZIN   IZIN   RED    IZIN   RED   
 POST   /patrol-plans                                        IZIN   IZIN   RED    RED    RED    RED    RED   

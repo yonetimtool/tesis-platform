@@ -10852,6 +10852,18 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Sakin daireye eklendi.'**
   String get daireSakinEklendi;
+
+  /// No description provided for @dukkanYakindaBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yerel işletmeler hazırlanıyor'**
+  String get dukkanYakindaBaslik;
+
+  /// No description provided for @dukkanYakindaMetin.
+  ///
+  /// In tr, this message translates to:
+  /// **'Mahallendeki ustaları ve hizmet firmalarını buradan bulabileceksin. Hazır olduğunda bu ekran açılacak — uygulamayı güncellemene gerek kalmayacak.'**
+  String get dukkanYakindaMetin;
 }
 
 class _AppLocalizationsDelegate

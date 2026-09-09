@@ -2708,6 +2708,8 @@ export const fr: Sozluk = {
   tesisYoneticiEpostaIpucu: "L'invitation part à cette adresse ; sans elle, le gestionnaire ne peut pas activer son compte.",
   dukkanYerelIsletmeler: "Entreprises locales",
   dukkanYerelIsletmelerAciklama: "Artisans et entreprises intervenant dans votre zone. Cette liste provient de la place de marché Dükkan ; votre propre carnet de Services externes est distinct.",
+  dukkanYakindaBaslik: "Les entreprises locales arrivent",
+  dukkanYakindaMetin: "Vous pourrez trouver ici les artisans et les entreprises de services de votre secteur. Cet écran s'ouvrira dès qu'il sera prêt.",
   dukkanIl: "Province",
   dukkanIlce: "District",
   dukkanHizmet: "Service",

@@ -2060,5 +2060,7 @@
   "daireSakinCikar": "Quitar de la vivienda",
   "daireSakinCikarOnay": "¿Quitar a {ad} de esta vivienda?",
   "daireSakinCikarNot": "Solo se cierra el vínculo con esta vivienda; la cuenta no se elimina.",
-  "daireSakinEklendi": "Residente añadido a la vivienda."
+  "daireSakinEklendi": "Residente añadido a la vivienda.",
+  "dukkanYakindaBaslik": "Los negocios locales están en camino",
+  "dukkanYakindaMetin": "Aquí podrás encontrar profesionales y empresas de servicios de tu barrio. Esta pantalla se abrirá cuando esté lista, sin necesidad de actualizar la aplicación."
 }

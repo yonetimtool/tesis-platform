@@ -2060,5 +2060,7 @@
   "daireSakinCikar": "Retirer du logement",
   "daireSakinCikarOnay": "Retirer {ad} de ce logement ?",
   "daireSakinCikarNot": "Seul le lien avec ce logement est clôturé ; le compte n'est pas supprimé.",
-  "daireSakinEklendi": "Résident ajouté au logement."
+  "daireSakinEklendi": "Résident ajouté au logement.",
+  "dukkanYakindaBaslik": "Les entreprises locales arrivent",
+  "dukkanYakindaMetin": "Vous pourrez trouver ici les artisans et prestataires de votre quartier. Cet écran s'ouvrira une fois prêt — sans mise à jour de l'application."
 }

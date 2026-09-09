@@ -6290,4 +6290,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get daireSakinEklendi => 'Bewohner zur Wohnung hinzugefügt.';
+
+  @override
+  String get dukkanYakindaBaslik => 'Lokale Betriebe werden vorbereitet';
+
+  @override
+  String get dukkanYakindaMetin =>
+      'Hier finden Sie künftig Handwerker und Dienstleister in Ihrer Nachbarschaft. Dieser Bereich öffnet sich, sobald er fertig ist — ein App-Update ist dafür nicht nötig.';
 }

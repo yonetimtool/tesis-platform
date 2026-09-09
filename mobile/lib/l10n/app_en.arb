@@ -2060,5 +2060,7 @@
   "daireSakinCikar": "Remove from unit",
   "daireSakinCikarOnay": "Remove {ad} from this unit?",
   "daireSakinCikarNot": "Only the link to this unit is closed; the account is not deleted.",
-  "daireSakinEklendi": "Resident added to the unit."
+  "daireSakinEklendi": "Resident added to the unit.",
+  "dukkanYakindaBaslik": "Local businesses are on the way",
+  "dukkanYakindaMetin": "You'll be able to find tradespeople and service providers in your neighbourhood here. This screen will open when it's ready — you won't need to update the app."
 }

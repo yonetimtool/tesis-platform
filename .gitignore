@@ -74,3 +74,7 @@ mobile/ios/Runner/GoogleService-Info.plist
 
 # Kapı koşum günlükleri (infra/kapilar.sh) — yerel, sürüm kontrolüne girmez.
 .kapilar/
+
+# (P221) Yayin paketleri — 70-75 MB ikililer depoya girmez.
+# Uretimi: `bash mobile/yayin-yap.sh appbundle` (ve `apk`).
+dagitim/
