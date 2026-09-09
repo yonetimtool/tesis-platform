@@ -402,6 +402,15 @@ const OGELER: readonly MenuOgesi[] = [
   { href: "/tanimlar", sorgu: "defter=ayarlar", anahtar: "tanimAyarlar", icon: "gear", grup: "tanimlar" },
 
   { href: "/users", anahtar: "kabukKullanicilar", icon: "users", grup: "yonetim" },
+  // (P220 §4) SAKINLER — `/users`TAN AYRI ve bu KASITLI.
+  //
+  // `/users` "kimin hesabi var ve rolu ne" (tum roller), bu sayfa "KIM
+  // NEREDE OTURUYOR" (bloklara gore gruplu). Iki soru, iki uc: `/users`
+  // `UserOut` okuyor ve o semada `unit_no`/`blok` YOK.
+  //
+  // Adlar ayrimi TASIYOR: "Kullanicilar" = hesaplar, "Sakinler" = daire
+  // sakinleri. Ayni ikonu paylasmiyorlar ki menude ayirt edilsinler.
+  { href: "/residents", anahtar: "kabukSakinler", icon: "home", grup: "yonetim" },
   // (P193 §5) Tesis ayarlari — YONETIM grubunda, `/settings` (platform)
   // ile karismasin diye ayri ad ve ayri ikon.
   { href: "/tesis-ayarlari", anahtar: "kabukTesisAyarlari", icon: "building", grup: "yonetim" },

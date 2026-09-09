@@ -123,6 +123,10 @@ const BIRINCIL_UC: Record<string, string> = {
   "/raporlar": "GET /raporlar/katalog",
   "/transparency": "GET /transparency",
   "/users": "GET /users",
+  // (P220 §4) Sakinler sayfasinin BIRINCIL ucu — `/users` DEGIL.
+  // Sayfa acilinca ana listeyi getiren cagri budur ve rol kapisi
+  // sunucudaki `_YONETIM` ile ayni.
+  "/residents": "GET /residents",
   "/announcements": "GET /announcements",
   "/mesajlar": "GET /mesaj-sablonlari",
   "/complaints": "GET /complaints",

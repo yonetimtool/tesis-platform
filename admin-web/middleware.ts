@@ -210,6 +210,9 @@ export const config = {
     "/sayac-okuma/:path*",
     "/dues/:path*",
     "/users/:path*",
+    // (P220 §4) Sakinler sayfasi — KORUMALI. Matcher'a eklemeyi
+    // unutmak, sayfayi kimliksiz erisime acardi (P193 dersi).
+    "/residents/:path*",
     "/assets/:path*",
     "/tasks/:path*",
     "/announcements/:path*",

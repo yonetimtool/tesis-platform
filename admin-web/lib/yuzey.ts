@@ -106,6 +106,13 @@ export const TESIS_ROTALARI = [
   "/raporlar",
   "/transparency",
   "/users",
+  // (P220 §4) SAKINLER — TESIS rotasi, `/users` gibi.
+  //
+  // Bir tesisin daire sakinleri listesi; platformlar-arasi bir gorunum
+  // DEGIL. `/users`tan ayri bir sayfa cunku farkli soruyu yanitliyor
+  // ("kim nerede oturuyor" / "kimin hesabi var"), ama ayni yuzeye ve
+  // ayni rol kapisina ait.
+  "/residents",
   "/announcements",
   // (P162) Site kurali ve etkinlik YONETIM ekranlari. Sakin gorunumleri
   // (`/kurallar`, `/etkinlikler`) ayri kalir — duyurulardaki desenin
@@ -393,6 +400,10 @@ export const ROTA_ROLLERI: Record<string, readonly string[]> = {
   // (P129) Seffaflik panosu zaten anonim ozet; denetci OKUR.
   "/transparency": ["admin", "yonetici", "denetci"],
   "/users": ["admin", "yonetici"],
+  // Sunucudaki `_YONETIM` ile AYNI kume (`GET /residents`). Ayrisirlarsa
+  // ya yetkisiz kullaniciya menude gorunen bir sayfa gosterilir ya da
+  // yetkili kullanicidan gizlenir.
+  "/residents": ["admin", "yonetici"],
   "/announcements": ["admin", "yonetici"],
   // (P162) Sunucudaki `_MANAGER` ile AYNI kume (site_rules + events).
   // Ayrisirlarsa ya yetkisiz kullaniciya dugme gosterilir ya da yetkili

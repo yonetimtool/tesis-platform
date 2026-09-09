@@ -435,9 +435,7 @@ değiştirmek suite'i öldürür.**
 - **Çok bloklu büyük sitede performans.** Liste sayfalanmıyor (site
   sakini sayısı binlerce değil varsayımı); 500+ sakinli bir sitede
   gruplama maliyeti ölçülmedi.
-- **Web'de blok gruplaması** — `admin-web`'de ayrı bir sakin listesi
-  sayfası yok; `/users` sayfası farklı bir uçtan besleniyor. Bu turda
-  dokunulmadı.
+- ~~Web'de blok gruplaması~~ — **YAPILDI** (aşağıda, §4 web).
 
 
 ---
@@ -577,3 +575,88 @@ görmezdi (P173/P189).
   sürülmedi.
 - **Eşzamanlı düzenleme** — iki yöneticinin aynı daireyi aynı anda
   düzenlemesi sürülmedi; sunucuda `daire_zaten_dolu` kontrolü var.
+
+
+---
+
+## §4 (web) — sakinler sayfası: `/users` genişletilmedi, **ayrı sayfa** açıldı
+
+### Karar ve gerekçesi
+
+Soru şuydu: `/users`'ı mı genişleteyim, ayrı sayfa mı açayım? **Ayrı
+sayfa** — ve karar ölçüme dayanıyor:
+
+1. **Farklı soru, farklı uç.** `/users` *"kimin hesabı var ve rolü ne"*
+   sorusunu yanıtlıyor: admin, yönetici, güvenlik, denetçi, sakin — tüm
+   roller. Yeni sayfa *"kim nerede oturuyor"* sorusunu yanıtlıyor.
+   Bloklara göre gruplama yalnız ikincisi için anlamlı.
+
+2. **`/users` veriyi taşımıyor.** `UserOut` şemasını okudum: `unit_no`
+   da `blok` da **yok**. Eklemek, çok sayıda ekranın okuduğu bir şemayı
+   genişletmek demekti — etki alanı özelliğin kendisinden büyük.
+
+3. **Gruplama `/users`'ın işini bozardı.** Orada bir yöneticinin ya da
+   güvenlik görevlisinin dairesi yok; onları "Blok atanmamış" grubunda
+   göstermek anlamsız olurdu — onlar sakin değil.
+
+4. **`/users` zaten 1011 satır** ve kendi filtreleri var (rol, durum,
+   arama) artı bir daire-atama formu. İkinci bir gruplu kip, tek sayfayı
+   iki farklı zihinsel modele hizmet ettirirdi.
+
+5. **Mobil paritesi.** Mobilde ayrı bir "Sakinler" ekranı var ve **aynı
+   uçtan** besleniyor. Ayrı sayfa, aynı davranışı aynı sözcüklerle
+   veriyor.
+
+**Karşı argümanı da yazıyorum:** iki ayrı kişi listesi *"sakini nerede
+bulacağım"* tereddüdü yaratabilir. Karşılığı: menüde adlar ayrımı
+taşıyor (**Kullanıcılar** = hesaplar, **Sakinler** = daire sakinleri),
+ikonları farklı, ve yeni sayfa **hesap açmıyor** — açıklama satırı
+kullanıcıyı `/users`'a yönlendiriyor.
+
+### Mobil davranışıyla birebir
+
+| Kural | Web | Mobil |
+|---|---|---|
+| Bloklar alfabetik | ✅ | ✅ |
+| Bloksuzlar sonda, **gizlenmiyor** | ✅ | ✅ |
+| Ad + daire + blokta arama (≥2 karakter) | ✅ | ✅ |
+| Blok daraltma, tek tıkla kalkar | ✅ | ✅ |
+| 300 ms gecikme | ✅ | ✅ |
+
+Gruplama mantığı `lib/sakin-gruplama.ts`'e alındı — Next bir `page.tsx`
+dosyasından serbest export kabul etmiyor (derleme reddetti). İyi de
+oldu: saf fonksiyon olarak **test edilebilir**.
+
+**Türkçe sıralama:** `sort()` varsayılanı kod noktasına göre sıralar ve
+`Ç` ile `Ş` alfabenin sonuna düşerdi. `localeCompare(_, "tr")` gerekli
+ve bu testle kilitli.
+
+### Ölçüm sırasında bulduğum kendi kusurum
+
+`/api/residents` **BFF vekili yoktu.** Bir önceki commit'te
+(`DaireSakinleri`) aday listesi için `/api/residents` çağırıyordum — o
+istek Next'in 404'üne düşüyordu ve **"sakin ekle" seçim listesi boş
+geliyordu**.
+
+Bu tam olarak `dukkan-web`'de bir kilidin (BFF sözleşme kapısı) beş kez
+yakaladığı sınıf: **backend ucu çalışıyor, web'den 405/404 alınıyor,
+backend testleri görmüyor.** `admin-web`'de böyle bir kilit **yok**.
+Vekilleri ekledim (`GET`/`POST /api/residents`,
+`PATCH`/`DELETE /api/residents/[userId]`).
+
+> **Açık madde:** `admin-web` için de bir BFF sözleşme kapısı yazılmalı.
+> Bu turun kapsamı değildi ama aynı sınıf kusuru altıncı kez üretmemek
+> için not ediyorum.
+
+### P193 dersi uygulandı
+
+Yeni korumalı sayfa `middleware.ts` matcher'ına eklendi. Eklemeseydim
+sayfa **kimliksiz erişime açık** kalırdı — P193'te birebir bu yaşandı.
+
+### Ölçemediklerim
+
+- **Gerçek tarayıcıda görünüm** — DOM/birim testleri var, tarayıcıda
+  sürülmedi.
+- **Çok sakinli sitede sayfalama.** `GET /residents` sayfalanmıyor
+  (site sakini sayısı binlerce değil varsayımı); 1000+ sakinli bir
+  sitede davranış ölçülmedi.
