@@ -18,6 +18,7 @@ import { KopyaKod } from "@/components/KopyaKod";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
+import type { TenantSilmeOzeti } from "@/lib/types";
 import { TelefonAlani } from "@/components/TelefonAlani";
 import { useT } from "@/lib/i18n/kullan";
 import { tarihSaatUzun } from "@/lib/tarih";
@@ -74,6 +75,13 @@ export default function TenantDetailPage() {
   const [saving, setSaving] = useState(false);
   const [busy, setBusy] = useState(false);
   const [confirmAd, setConfirmAd] = useState("");
+  // (P224) SILME ONIZLEMESI. Prod'da bir tesis silindi, platform admin
+  // hesabi CASCADE ile gitti ve panele girilemez hale gelindi — kullanici
+  // NE KAYBEDECEGINI gormeden onayladi. Sayilar SUNUCUDAN gelir.
+  const { data: ozet, mutate: ozetTazele } = useSWR<TenantSilmeOzeti>(
+    id ? `/api/tenants/${id}/silme-ozeti` : null,
+    jsonFetcher,
+  );
   const [nameEditing, setNameEditing] = useState(false);
   const [nameInput, setNameInput] = useState("");
   const [nameErr, setNameErr] = useState<string | null>(null);
@@ -232,10 +240,41 @@ export default function TenantDetailPage() {
   async function deleteTenant() {
     setBusy(true);
     try {
-      await apiSend(`/api/tenants/${id}`, "DELETE");
+      // (P224) ONAY SUNUCUYA DA GIDER. Panelin tek basina zorlamasi,
+      // ucu dogrudan cagiran her seyi korumasiz birakirdi.
+      await apiSend(
+        `/api/tenants/${id}?onay=${encodeURIComponent(confirmAd.trim())}`,
+        "DELETE",
+      );
       router.push("/tenants");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("ortakSilinemedi"));
+      setBusy(false);
+    }
+  }
+
+  async function arsivle() {
+    setBusy(true);
+    try {
+      await apiSend(`/api/tenants/${id}/arsivle`, "POST", {});
+      toast.success(t("tesisArsivlendi"));
+      await Promise.all([mutate(), ozetTazele()]);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("ortakHataOlustu"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function geriAl() {
+    setBusy(true);
+    try {
+      await apiSend(`/api/tenants/${id}/geri-al`, "POST", {});
+      toast.success(t("tesisGeriGetirildi"));
+      await Promise.all([mutate(), ozetTazele()]);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("ortakHataOlustu"));
+    } finally {
       setBusy(false);
     }
   }
@@ -517,29 +556,92 @@ export default function TenantDetailPage() {
 
           <div className="rounded-xl border border-rose-200 bg-rose-50 p-5">
             <h2 className="font-medium text-rose-800">{t("tesisTehlikeliBolge")}</h2>
-            <p className="mt-1 text-sm text-rose-700">
-              {t("tesisSilUyari", { kelime: t("tesisSilOnayKelimesi") })}
-            </p>
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              {/* (P63) YER TUTUCU ETIKET DEGILDIR: yazmaya baslayinca
-                  KAYBOLUR ve ekran okuyucularin bir kismi hic okumaz.
-                  Burasi bir TESISI SILME onayidir — adini duyamayan
-                  kullanicinin ne yazdigini bilmeden onaylamasi demekti. */}
-              <Alan
-                aria-label={t("tesisSilOnayEtiketi")}
-                className="max-w-xs"
-                value={confirmAd}
-                onChange={(e) => setConfirmAd(e.target.value)}
-                placeholder={t("tesisSilOnayKelimesi")}
-              />
-              <button
-                className="rounded-lg bg-rose-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-rose-700 disabled:opacity-50"
-                onClick={deleteTenant}
-                disabled={busy || confirmAd.trim().toLocaleUpperCase("tr") !== t("tesisSilOnayKelimesi")}
+
+            {/* (P224) ONCE NE KAYBEDILECEGI, SONRA DUGME.
+                Prod kazasinda kullanici sabit onay kelimesini yazip
+                onayladi ve icinde ne oldugunu hicbir yerde gormedi.
+                Sayilar SUNUCUDAN gelir; panelin kendi saymasi, iki yerde
+                iki farkli gercek uretmek olurdu. */}
+            {ozet && (
+              <dl
+                data-test="tesis-silme-ozeti"
+                className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-sm text-rose-800 sm:grid-cols-3"
               >
-                {t("tesisKaliciSil")}
-              </button>
-            </div>
+                {[
+                  { etiket: t("tesisOzetKullanici"), deger: ozet.kullanici },
+                  { etiket: t("tesisOzetDaire"), deger: ozet.daire },
+                  { etiket: t("tesisOzetFinans"), deger: ozet.finansal_hareket },
+                  { etiket: t("tesisOzetSikayet"), deger: ozet.sikayet },
+                  { etiket: t("tesisOzetBelge"), deger: ozet.belge },
+                  { etiket: t("tesisOzetDenetim"), deger: ozet.denetim_kaydi },
+                ].map((x) => (
+                  <div key={x.etiket} className="flex justify-between gap-2">
+                    <dt>{x.etiket}</dt>
+                    <dd className="font-medium tabular-nums">{x.deger}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
+
+            {/* ARSIVDEYSE: tek is GERI GETIRMEK. Silme dugmesini yine
+                gosteriyoruz cunku arsiv bir CIKMAZ SOKAK degil — ama
+                once donus yolu duruyor. */}
+            {ozet?.arsivlendi_at ? (
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <p className="text-sm text-rose-700">{t("tesisArsivdeUyari")}</p>
+                <Dugme tur="ikincil" boy="kucuk" disabled={busy} onClick={() => void geriAl()}>
+                  {t("tesisGeriGetir")}
+                </Dugme>
+              </div>
+            ) : ozet && !ozet.dogrudan_silinebilir ? (
+              /* GECMISI OLAN ya da PLATFORM ADMINI BARINDIRAN tesis
+                 dogrudan silinemez. Sunucu da reddeder; burada dugmeyi
+                 hic gostermemek, kullaniciyi anlamsiz bir 409'a
+                 surmemek icin. */
+              <div className="mt-3 space-y-2">
+                <p className="text-sm text-rose-700">
+                  {ozet.platform_admini_var
+                    ? t("tesisSilAdminVar")
+                    : t("tesisSilGecmisVar")}
+                </p>
+                {!ozet.platform_admini_var && (
+                  <Dugme tur="ikincil" boy="kucuk" disabled={busy} onClick={() => void arsivle()}>
+                    {t("tesisArsivle")}
+                  </Dugme>
+                )}
+              </div>
+            ) : null}
+
+            {ozet && (ozet.dogrudan_silinebilir || ozet.arsivlendi_at) && (
+              <>
+                <p className="mt-3 text-sm text-rose-700">
+                  {t("tesisSilUyari", { kelime: ozet.onay_metni })}
+                </p>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  {/* (P63) YER TUTUCU ETIKET DEGILDIR: yazmaya baslayinca
+                      KAYBOLUR ve ekran okuyucularin bir kismi hic okumaz. */}
+                  <Alan
+                    aria-label={t("tesisSilOnayEtiketi")}
+                    className="max-w-xs"
+                    value={confirmAd}
+                    onChange={(e) => setConfirmAd(e.target.value)}
+                    data-test="tesis-sil-onay"
+                  />
+                  <button
+                    className="rounded-lg bg-rose-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-rose-700 disabled:opacity-50"
+                    onClick={deleteTenant}
+                    data-test="tesis-sil-dugme"
+                    /* (P224) ONAY ARTIK TESISIN ADI. Sabit bir onay
+                       kelimesi her tesiste ayniydi: kas hafizasi uretiyor
+                       ve yanlis tesiste de ayni refleksle yaziliyordu.
+                       Buyuk/kucuk harf TOLERE EDILMEZ — sunucu da etmiyor. */
+                    disabled={busy || confirmAd.trim() !== ozet.onay_metni}
+                  >
+                    {t("tesisKaliciSil")}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </>
       )}

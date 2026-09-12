@@ -21,7 +21,16 @@ export async function PATCH(req: NextRequest, ctx: Ctx): Promise<NextResponse> {
 }
 
 // Tesisi + TUM verisini siler (cascade, geri alinamaz).
-export async function DELETE(_req: NextRequest, ctx: Ctx): Promise<NextResponse> {
+//
+// (P224) `onay` SORGU PARAMETRESI TASINIR: sunucu tesisin ADINI bekler.
+// Tasimazsak panel 409 alir ve kullanici sebebini goremez; daha kotusu,
+// onayi yalniz panelde zorlamis olurduk ve ucu dogrudan cagiran her sey
+// (betik, curl, ileride baska bir istemci) korumasiz kalirdi.
+export async function DELETE(req: NextRequest, ctx: Ctx): Promise<NextResponse> {
   const { id } = await ctx.params;
-  return proxyJson(`/tenants/${id}`, "DELETE");
+  const onay = new URL(req.url).searchParams.get("onay") ?? "";
+  return proxyJson(
+    `/tenants/${id}?onay=${encodeURIComponent(onay)}`,
+    "DELETE",
+  );
 }

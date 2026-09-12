@@ -899,3 +899,22 @@ export interface OkutmaRaporu {
   /** (P34) Filtreden BAGIMSIZ konumsuz okutma sayisi. */
   konumsuz_sayisi: number;
 }
+
+/** (P224) Tesis silme onizlemesi — sunucudan gelen sayilar. */
+export interface TenantSilmeOzeti {
+  tenant_id: string;
+  ad: string;
+  slug: string;
+  arsivlendi_at: string | null;
+  /** Onay kutusuna YAZILACAK metin (= tesisin adi). Sunucu soyler. */
+  onay_metni: string;
+  kullanici: number;
+  daire: number;
+  finansal_hareket: number;
+  sikayet: number;
+  belge: number;
+  denetim_kaydi: number;
+  /** false ise once ARSIVLENMELI (gecmisi var ya da admin barindiriyor). */
+  dogrudan_silinebilir: boolean;
+  platform_admini_var: boolean;
+}
