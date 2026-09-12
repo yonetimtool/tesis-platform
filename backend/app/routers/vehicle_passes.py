@@ -47,8 +47,17 @@ router = APIRouter(prefix="/vehicle-passes", tags=["vehicle-passes"])
 parking_router = APIRouter(prefix="/parking", tags=["vehicle-passes"])
 
 # Kapi operasyonu: guvenlik kaydeder, admin duzeltir/denetler.
-_OPERATOR = require_role("admin", "security")
-_READER = require_role("admin", "security")
+# (P223 §3) YONETICI DE ISARETLEYEBILIR.
+#
+# OLCULEN BOSLUK: otopark dolulugu ACIK GECIS sayimidir ve gecisi yalnizca
+# admin+security acip kapatabiliyordu. Kucuk sitelerde 7/24 guvenlik yok;
+# yonetici sayaci duzeltemiyordu — "elle isaretlenebilsin" istegi tam
+# olarak bu yuzden karsilanmiyordu.
+#
+# `resident` EKLENMEDI: kendi aracini "girdi" isaretleyen sakin, baskasinin
+# yerini de doldurabilirdi ve sayac dogrulanamaz hale gelirdi.
+_OPERATOR = require_role("admin", "yonetici", "security")
+_READER = require_role("admin", "yonetici", "security")
 # Agregat doluluk: plaka/daire icermez -> tum kimlikli roller (ana ekran karti).
 _OCCUPANCY_READER = require_role(
     "admin", "yonetici", "security", "tesis_gorevlisi", "resident"

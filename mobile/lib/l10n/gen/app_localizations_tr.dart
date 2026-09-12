@@ -6134,4 +6134,14 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get panoKameraHicYok =>
       'Henüz kamera eklenmemiş. Kameralar ekranından ekleyebilirsiniz.';
+
+  @override
+  String otoparkBosYer(int sayi) {
+    return 'Otoparkta $sayi boş yer var';
+  }
+
+  @override
+  String otoparkIcerideArac(int sayi) {
+    return 'Otoparkta $sayi araç var';
+  }
 }

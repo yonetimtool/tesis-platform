@@ -2905,5 +2905,23 @@
   "panoKameraHicYok": "Henüz kamera eklenmemiş. Kameralar ekranından ekleyebilirsiniz.",
   "@panoKameraHicYok": {
     "description": "(P223) Tesiste hic kamera yok"
+  },
+  "otoparkBosYer": "Otoparkta {sayi} boş yer var",
+  "@otoparkBosYer": {
+    "description": "(P223) Sakin: bos yer sayisi",
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  },
+  "otoparkIcerideArac": "Otoparkta {sayi} araç var",
+  "@otoparkIcerideArac": {
+    "description": "(P223) Kapasite tanimsizken iceride arac sayisi",
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
   }
 }

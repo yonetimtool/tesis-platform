@@ -10906,6 +10906,18 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Henüz kamera eklenmemiş. Kameralar ekranından ekleyebilirsiniz.'**
   String get panoKameraHicYok;
+
+  /// (P223) Sakin: bos yer sayisi
+  ///
+  /// In tr, this message translates to:
+  /// **'Otoparkta {sayi} boş yer var'**
+  String otoparkBosYer(int sayi);
+
+  /// (P223) Kapasite tanimsizken iceride arac sayisi
+  ///
+  /// In tr, this message translates to:
+  /// **'Otoparkta {sayi} araç var'**
+  String otoparkIcerideArac(int sayi);
 }
 
 class _AppLocalizationsDelegate

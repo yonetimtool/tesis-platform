@@ -2090,5 +2090,23 @@
   "panoKameraHicYok": "Todavía no se ha añadido ninguna cámara. Puedes añadirlas en la pantalla Cámaras.",
   "@panoKameraHicYok": {
     "description": "(P223) Tesiste hic kamera yok"
+  },
+  "otoparkBosYer": "{sayi} plazas de aparcamiento libres",
+  "@otoparkBosYer": {
+    "description": "(P223) Sakin: bos yer sayisi",
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
+  },
+  "otoparkIcerideArac": "{sayi} vehículos en el aparcamiento",
+  "@otoparkIcerideArac": {
+    "description": "(P223) Kapasite tanimsizken iceride arac sayisi",
+    "placeholders": {
+      "sayi": {
+        "type": "int"
+      }
+    }
   }
 }

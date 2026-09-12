@@ -39,7 +39,8 @@ export type AyarGrubu =
   | "vardiya"
   | "gurultu"
   | "finans"
-  | "rezervasyon";
+  | "rezervasyon"
+  | "otopark";
 
 /** Grup sirasi ve basliklari (cizim sirasi BURADAKI siradir). */
 export const AYAR_GRUPLARI: { id: AyarGrubu; baslik: SozlukAnahtari }[] = [
@@ -48,6 +49,7 @@ export const AYAR_GRUPLARI: { id: AyarGrubu; baslik: SozlukAnahtari }[] = [
   { id: "gurultu", baslik: "ayarGrupGurultu" },
   { id: "finans", baslik: "ayarGrupFinans" },
   { id: "rezervasyon", baslik: "ayarGrupRezervasyon" },
+  { id: "otopark", baslik: "ayarGrupOtopark" },
 ];
 
 /** Operasyon ayari alan tanimi. `anahtar` backend alan adidir. */
@@ -143,6 +145,23 @@ export const OPERASYON: Ayar[] = [
     // reddetmek olurdu.
     min: 1,
     max: 5000,
+  },
+  // --- (P223 §3) otopark kapasitesi ---
+  //
+  // OLCULEN BOSLUK: `otopark_kapasite` VERITABANINDA ve `/tenant/settings`
+  // SEMASINDA vardi, `/parking/occupancy` onu okuyup `oran` hesapliyordu —
+  // ama hicbir ekranda GIRILEMIYORDU. Yani doluluk yuzdesi, kimsenin
+  // dolduramadigi bir alana bagliydi ve her zaman "—" gosteriyordu.
+  {
+    grup: "otopark",
+    anahtar: "otopark_kapasite",
+    etiket: "ayarOtoparkKapasite",
+    ipucu: "ayarOtoparkKapasiteIpucu",
+    tip: "sayi",
+    // Sinirlar SUNUCUYLA AYNI (`Field(None, ge=0, le=100000)`); burada dar
+    // bir aralik yazmak, sunucunun kabul ettigi degeri panelde reddetmekti.
+    min: 0,
+    max: 100000,
   },
   // --- (P165) rezervasyon gecmisi saklama penceresi ---
   {

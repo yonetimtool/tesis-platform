@@ -138,3 +138,60 @@ alt playlist: 200 · 315 bayt
 - MediaMTX'te **37 artık yol** birikmiş (her test koşumu bir tane
   bırakıyor). Zarar vermiyor ama sınırsız büyüyor — bu turda
   dokunulmadı, ayrı bir iş.
+
+---
+
+## §3 — Otopark sayacı
+
+### Ölçüm: altyapının çoğu zaten vardı
+
+| Parça | Ölçülen durum |
+|---|---|
+| `vehicle_pass` + açık geçiş = içeride | vardı |
+| `GET /parking/occupancy` (kapasite/dolu/oran) | vardı |
+| `tenant.otopark_kapasite` | **veritabanında vardı, hiçbir ekranda GİRİLEMİYORDU** |
+| Giriş/çıkış işaretleme | vardı ama `_OPERATOR = admin + security` — **yönetici 403 alıyordu** |
+| Sakinin boş yeri görmesi | **hiçbir yerde yoktu** |
+
+Yani "kamera bağımsız sayaç" isteği, üç küçük boşluk yüzünden
+karşılanmıyordu — modül eksik değildi.
+
+### Karar
+
+1. **Yönetici de işaretleyebilir** (`_OPERATOR`'e eklendi). Küçük
+   sitelerde 7/24 güvenlik yok; yönetici sayacı düzeltemiyordu.
+   **`resident` EKLENMEDİ**: kendi aracını "girdi" işaretleyen sakin
+   başkasının yerini de doldurabilirdi ve sayaç doğrulanamaz hale
+   gelirdi.
+2. **Kapasite tesis ayarlarına eklendi** (yeni "Otopark" grubu).
+   Sınırlar sunucuyla aynı (0–100 000); panelde dar bir aralık yazmak,
+   sunucunun kabul ettiği değeri reddetmek olurdu.
+3. **Sakin "N boş yer" görüyor** — aynı uçtan türetilmiş, ikinci uç yok.
+   **Kapasite tanımsızsa boş yer UYDURULMAZ**: yalnız içerideki araç
+   sayısı yazılır.
+4. **Kapasite aşılırsa sunucu gerçek sayıyı döner** (oran %100 üstü
+   olabilir); istemci "boş yer"i 0'da tabanlar — negatif boş yer
+   kullanıcıya anlamsız gelir. Sayıyı sunucuda kırpmak veriyi yalan
+   söylemek olurdu.
+
+### Sıfırlama ve bildirim — analiz belgesinde, kod yazılmadı
+
+`docs/P223-plaka-okuma-analiz.md` §4'te gerekçeleriyle:
+- **Gece yarısı/vardiya sıfırlaması: HAYIR.** Doluluk bir *durum*dur,
+  sayaç değil; sıfırlamak sabah 08:00'de dolu otoparkı "0" göstermek
+  olur. Doğru araç **bayat geçiş süpürme**dir (24 saat, tesis ayarı).
+- **Kritik doluluk bildirimi: EVET ama yalnız YÖNETİME**, eşik tesis
+  ayarı, tekrarsız. Sakine göndermek istenmeyen bildirimdir.
+
+Bu ikisi **onay bekliyor**, kod yazılmadı.
+
+### Uçtan uca sürüldü (dev)
+
+```
+kapasite 50 yazıldı        -> 200
+doluluk                    -> {'kapasite': 50, 'dolu': 3, 'oran': 6}
+yönetici GİRİŞ işaretledi  -> 201
+doluluk                    -> dolu 4, oran 8
+yönetici ÇIKIŞ işaretledi  -> 200
+doluluk                    -> dolu 3, oran 6
+```

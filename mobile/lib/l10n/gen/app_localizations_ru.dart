@@ -6397,4 +6397,14 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get panoKameraHicYok =>
       'Камеры ещё не добавлены. Вы можете добавить их на экране «Камеры».';
+
+  @override
+  String otoparkBosYer(int sayi) {
+    return 'Свободных мест: $sayi';
+  }
+
+  @override
+  String otoparkIcerideArac(int sayi) {
+    return 'Машин на парковке: $sayi';
+  }
 }

@@ -254,6 +254,12 @@ class ResidentHomeScreen extends ConsumerWidget {
               onSeeAll: () => context.push(AppRoutes.kameralar),
               onAc: (kamera) => kameraAc(context, kamera),
             ),
+          // (P223 §3) OTOPARKTA BOS YER — sakinin sordugu sayi.
+          //
+          // Yonetim "doluluk %" gorur; sakin otoparka gelmeden once
+          // "yer var mi" diye sorar. AYNI uctan (`/parking/occupancy`,
+          // sakine zaten acik) beslenir, ikinci bir uc yoktur.
+          const _OtoparkBosYer(),
         ],
       ),
       ),
@@ -336,3 +342,41 @@ List<BildirGiris> sakinBildirGirisleri(AppLocalizations l10n) => [
           label: l10n.fabRezervasyonYap,
           route: AppRoutes.rezervasyon),
     ];
+
+/// (P223 §3) "Otoparkta N boş yer" karti.
+///
+/// KAPASITE TANIMSIZSA bos yer HESAPLANAMAZ ve UYDURULMAZ: o durumda
+/// yalnizca iceride kac arac oldugu yazilir. Yanit gelmeden ya da hata
+/// halinde HICBIR SEY cizilmez — yanlis bir sayi gostermek, sakini bos
+/// yer yokken otoparka gondermekti.
+class _OtoparkBosYer extends ConsumerWidget {
+  const _OtoparkBosYer();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final veri = ref.watch(otoparkDolulukProvider).value;
+    if (veri == null) return const SizedBox.shrink();
+    final bos = veri.bosYer;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: Card(
+        child: ListTile(
+          key: const Key('sakin-otopark-bos-yer'),
+          leading: const Icon(Icons.local_parking_outlined),
+          title: Text(
+            bos == null
+                ? l10n.otoparkIcerideArac(veri.dolu)
+                : l10n.otoparkBosYer(bos),
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          // SAYI YALNIZ RENKLE ANLATILMAZ: kritik seviyede ikon DA
+          // degisir (renk korlugu).
+          trailing: bos != null && bos == 0
+              ? const Icon(Icons.do_not_disturb_on_outlined)
+              : null,
+        ),
+      ),
+    );
+  }
+}

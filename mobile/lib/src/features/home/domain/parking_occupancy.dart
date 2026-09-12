@@ -17,6 +17,23 @@ class ParkingOccupancy {
   /// Yuzde (0-100); kapasite null/0 ise null.
   final int? oran;
 
+  /// (P223 §3) SAKININ SORDUGU SAYI: kac bos yer var?
+  ///
+  /// Yonetim "doluluk %" ile ilgilenir; sakin otoparka gelmeden once
+  /// "yer var mi" diye sorar. Ayni yanittan TURETILIR, ikinci bir uc
+  /// gerekmez.
+  ///
+  /// `null` = KAPASITE TANIMSIZ. Bu durumda bos yer HESAPLANAMAZ ve
+  /// uydurulmaz; ekran yalnizca iceride kac arac oldugunu soyler.
+  /// Kapasite asilmissa (elle isaretlemede olur) 0 doner — negatif bir
+  /// "bos yer" sayisi kullaniciya anlamsiz gelirdi.
+  int? get bosYer {
+    final k = kapasite;
+    if (k == null || k <= 0) return null;
+    final bos = k - dolu;
+    return bos < 0 ? 0 : bos;
+  }
+
   factory ParkingOccupancy.fromJson(Map<String, dynamic> json) =>
       ParkingOccupancy(
         dolu: (json['dolu'] as num?)?.toInt() ?? 0,

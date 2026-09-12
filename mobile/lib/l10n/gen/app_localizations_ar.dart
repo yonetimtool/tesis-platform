@@ -6389,4 +6389,14 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get panoKameraHicYok =>
       'لم تتم إضافة أي كاميرا بعد. يمكنك إضافتها من شاشة الكاميرات.';
+
+  @override
+  String otoparkBosYer(int sayi) {
+    return '$sayi مكان شاغر في المواقف';
+  }
+
+  @override
+  String otoparkIcerideArac(int sayi) {
+    return '$sayi مركبة في المواقف';
+  }
 }
