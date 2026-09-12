@@ -284,7 +284,13 @@ def test_delete_tenant_cascade(client, world):
     a = client.post("/announcements", headers=yon, json={"baslik": "Test", "govde": "Govde"})
     assert a.status_code in (200, 201), a.text
     # tesisi sil -> 204 (RESTRICT'e takilmadan cascade)
-    d = client.delete(f"/tenants/{tid}", headers=admin)
+    #
+    # (P224) ONAY ARTIK ZORUNLU ve TESISIN ADI. Sabit bir kelime ("SİL")
+    # her tesiste ayni oldugu icin yanlis tesisi silmeye karsi hicbir sey
+    # yapmiyordu; prod'da bir tesis boyle silindi ve platform admin
+    # hesabi CASCADE ile gitti.
+    ad = client.get(f"/tenants/{tid}/silme-ozeti", headers=admin).json()["ad"]
+    d = client.delete(f"/tenants/{tid}", headers=admin, params={"onay": ad})
     assert d.status_code == 204, d.text
     assert client.get(f"/tenants/{tid}", headers=admin).status_code == 404
     ids = {i["id"] for i in client.get("/tenants", headers=admin).json()["items"]}
@@ -292,8 +298,16 @@ def test_delete_tenant_cascade(client, world):
 
 
 def test_delete_tenant_404(client, world):
+    """Bilinmeyen tesis 404 — ONAY KONTROLUNDEN ONCE.
+
+    (P224) Sira onemli: once "tesis yok" denmezse, var olmayan bir
+    tesisin adini tahmin etmeye calisan cagri "onay tutmadi" (409) alir
+    ve tesisin VARLIGI sizdirilmis olurdu.
+    """
     admin = _admin(client, world)
-    assert client.delete(f"/tenants/{uuid.uuid4()}", headers=admin).status_code == 404
+    r = client.delete(f"/tenants/{uuid.uuid4()}", headers=admin,
+                      params={"onay": "herhangi"})
+    assert r.status_code == 404, r.text
 
 
 def test_tenant_detail_rbac(client, world):
@@ -317,6 +331,11 @@ def test_tenant_detail_rbac(client, world):
 
 def _tenant_sil(owner_conn, tid):
     with owner_conn.cursor() as cur:
+        # (P224) ADMIN ROLU ONCE DUSURULUR: `trg_admin_tesisini_koru` platform
+        # admini barindiran tesisin silinmesini REDDEDER. SILMEK degil ROLU
+        # DUSURMEK: admin satiri RESTRICT'li FK'lerle referanslaniyor ve
+        # silmek `fk_site_kurali_olusturan` gibi kisitlara carpiyor.
+        cur.execute("UPDATE app_user SET role='yonetici' WHERE role='admin' AND tenant_id = %s", (tid,))
         cur.execute("DELETE FROM tenant WHERE id = %s", (tid,))
 
 

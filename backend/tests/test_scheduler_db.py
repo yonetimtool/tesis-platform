@@ -102,6 +102,11 @@ def sched(owner_conn):
     tid = _tenant(owner_conn)
     gid = _guard(owner_conn, tid)
     yield SimpleNamespace(tid=tid, gid=gid, conn=owner_conn)
+    # (P224) ADMIN ROLU ONCE DUSURULUR: `trg_admin_tesisini_koru` platform
+    # admini barindiran tesisin silinmesini REDDEDER. SILMEK degil ROLU
+    # DUSURMEK: admin satiri RESTRICT'li FK'lerle referanslaniyor ve
+    # silmek `fk_site_kurali_olusturan` gibi kisitlara carpiyor.
+    owner_conn.execute("UPDATE app_user SET role='yonetici' WHERE role='admin' AND tenant_id = %s", (tid,))
     owner_conn.execute("DELETE FROM tenant WHERE id = %s", (tid,))
 
 
@@ -198,4 +203,9 @@ def test_tenant_isolation_in_detection(owner_conn, notify_spy):
         assert any(r["window_id"] == wid_a for r in notify_spy)
         assert all(r["window_id"] != wid_b for r in notify_spy)
     finally:
+        # (P224) ADMIN ROLU ONCE DUSURULUR: `trg_admin_tesisini_koru` platform
+        # admini barindiran tesisin silinmesini REDDEDER. SILMEK degil ROLU
+        # DUSURMEK: admin satiri RESTRICT'li FK'lerle referanslaniyor ve
+        # silmek `fk_site_kurali_olusturan` gibi kisitlara carpiyor.
+        owner_conn.execute("UPDATE app_user SET role='yonetici' WHERE role='admin' AND tenant_id IN (%s,%s)", (a, b))
         owner_conn.execute("DELETE FROM tenant WHERE id IN (%s,%s)", (a, b))

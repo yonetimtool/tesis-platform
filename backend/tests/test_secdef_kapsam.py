@@ -58,7 +58,18 @@ ENVANTER: dict[str, tuple[str, tuple[str, str] | None]] = {
     # gecer) ve ucu de YALNIZ admin.
     "tenant_silme_ozeti": ("admin", ("get", "/tenants/{tid}/silme-ozeti")),
     "tenant_arsiv_ayarla": ("admin", ("post", "/tenants/{tid}/arsivle")),
-    "platform_admin_sayisi": ("admin", ("delete", "/users/{uid}")),
+    # (P224) SAYAC — ADMIN KAPILI DEGIL ve bu BILINCLI.
+    #
+    # `DELETE /users/{id}` yoneticiye de acik (kendi yonettigi rolleri
+    # siler), dolayisiyla bu fonksiyon "admin kapili" degildir; oyle
+    # isaretlemek testi hakli olarak dusurdu (yonetici 403 ALMIYOR).
+    #
+    # RLS bypass'i SART: son platform adminini korumak PLATFORM GENELI
+    # bir sayim ister, tenant baglami altinda gorulmez. SIZINTI YOK —
+    # fonksiyon yalniz BIR TAM SAYI doner, satir vermez; ogrenilebilen
+    # tek sey "platformda baska admin var mi" ve o bilgi zaten silme
+    # denemesinin hata mesajinda veriliyor.
+    "platform_admin_sayisi": ("public", None),
     # (P154) Tesis basina COKLU yonetici. Ucu de tenant sinirini GECER
     # (admin baska bir tesisin kadrosunu yonetir) ve ucu de YALNIZ admin.
     "tenant_yoneticiler": ("admin", ("get", "/tenants/{tid}/yoneticiler")),

@@ -77,6 +77,11 @@ def sched(owner_conn):
     tid = _tenant(owner_conn)
     gid = _guard(owner_conn, tid)
     yield SimpleNamespace(tid=tid, gid=gid, conn=owner_conn)
+    # (P224) ADMIN ROLU ONCE DUSURULUR: `trg_admin_tesisini_koru` platform
+    # admini barindiran tesisin silinmesini REDDEDER. SILMEK degil ROLU
+    # DUSURMEK: admin satiri RESTRICT'li FK'lerle referanslaniyor ve
+    # silmek `fk_site_kurali_olusturan` gibi kisitlara carpiyor.
+    owner_conn.execute("UPDATE app_user SET role='yonetici' WHERE role='admin' AND tenant_id = %s", (tid,))
     owner_conn.execute("DELETE FROM tenant WHERE id = %s", (tid,))
 
 
@@ -169,6 +174,11 @@ def test_IKI_KADEME_IKI_AYRI_BILDIRIM(owner_conn, push_spy):
         satirlar = _bildirimler(owner_conn, tid, "vardiya_hatirlatma")
         assert {s[1]["dakika"] for s in satirlar} == {30, 5}
     finally:
+        # (P224) ADMIN ROLU ONCE DUSURULUR: `trg_admin_tesisini_koru` platform
+        # admini barindiran tesisin silinmesini REDDEDER. SILMEK degil ROLU
+        # DUSURMEK: admin satiri RESTRICT'li FK'lerle referanslaniyor ve
+        # silmek `fk_site_kurali_olusturan` gibi kisitlara carpiyor.
+        owner_conn.execute("UPDATE app_user SET role='yonetici' WHERE role='admin' AND tenant_id = %s", (tid,))
         owner_conn.execute("DELETE FROM tenant WHERE id = %s", (tid,))
 
 
@@ -180,6 +190,11 @@ def test_KADEME_KAPALIYSA_hicbir_sey_gitmez(owner_conn, push_spy):
         assert vardiya_hatirlatmalari(
             now=datetime(2026, 1, 15, 5, 45, tzinfo=UTC)) == 0
     finally:
+        # (P224) ADMIN ROLU ONCE DUSURULUR: `trg_admin_tesisini_koru` platform
+        # admini barindiran tesisin silinmesini REDDEDER. SILMEK degil ROLU
+        # DUSURMEK: admin satiri RESTRICT'li FK'lerle referanslaniyor ve
+        # silmek `fk_site_kurali_olusturan` gibi kisitlara carpiyor.
+        owner_conn.execute("UPDATE app_user SET role='yonetici' WHERE role='admin' AND tenant_id = %s", (tid,))
         owner_conn.execute("DELETE FROM tenant WHERE id = %s", (tid,))
 
 
@@ -246,6 +261,11 @@ def test_BASLAMADI_KAPALIYSA_uyari_YOK(owner_conn):
         assert vardiya_baslamadi_uyarilari(
             now=datetime(2026, 1, 15, 6, 20, tzinfo=UTC)) == 0
     finally:
+        # (P224) ADMIN ROLU ONCE DUSURULUR: `trg_admin_tesisini_koru` platform
+        # admini barindiran tesisin silinmesini REDDEDER. SILMEK degil ROLU
+        # DUSURMEK: admin satiri RESTRICT'li FK'lerle referanslaniyor ve
+        # silmek `fk_site_kurali_olusturan` gibi kisitlara carpiyor.
+        owner_conn.execute("UPDATE app_user SET role='yonetici' WHERE role='admin' AND tenant_id = %s", (tid,))
         owner_conn.execute("DELETE FROM tenant WHERE id = %s", (tid,))
 
 
@@ -272,6 +292,11 @@ def test_BASKA_TESISIN_plani_HATIRLATILMAZ(owner_conn, push_spy):
         assert _bildirimler(owner_conn, a, "vardiya_hatirlatma") == []
         assert len(_bildirimler(owner_conn, b, "vardiya_hatirlatma")) == 1
     finally:
+        # (P224) ADMIN ROLU ONCE DUSURULUR: `trg_admin_tesisini_koru` platform
+        # admini barindiran tesisin silinmesini REDDEDER. SILMEK degil ROLU
+        # DUSURMEK: admin satiri RESTRICT'li FK'lerle referanslaniyor ve
+        # silmek `fk_site_kurali_olusturan` gibi kisitlara carpiyor.
+        owner_conn.execute("UPDATE app_user SET role='yonetici' WHERE role='admin' AND tenant_id IN (%s,%s)", (a, b))
         owner_conn.execute("DELETE FROM tenant WHERE id IN (%s,%s)", (a, b))
 
 
@@ -303,6 +328,11 @@ def test_BES_DAKIKA_kademesi_AYARLANABILIR_ve_CALISIR(owner_conn, push_spy):
         assert vardiya_hatirlatmalari(
             now=datetime(2026, 1, 15, 5, 53, tzinfo=UTC)) == 0
     finally:
+        # (P224) ADMIN ROLU ONCE DUSURULUR: `trg_admin_tesisini_koru` platform
+        # admini barindiran tesisin silinmesini REDDEDER. SILMEK degil ROLU
+        # DUSURMEK: admin satiri RESTRICT'li FK'lerle referanslaniyor ve
+        # silmek `fk_site_kurali_olusturan` gibi kisitlara carpiyor.
+        owner_conn.execute("UPDATE app_user SET role='yonetici' WHERE role='admin' AND tenant_id = %s", (tid,))
         owner_conn.execute("DELETE FROM tenant WHERE id = %s", (tid,))
 
 

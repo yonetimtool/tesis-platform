@@ -126,34 +126,40 @@ def _artik_temizligi():
                     "temizlik digerinin verisini siler. Once o kosumun "
                     "bitmesini bekleyin."
                 )
-            # (P224) PLATFORM ADMINLERI ONCE SILINIR.
+            # (P224) ADMIN ROLU ONCE DUSURULUR — SILINMEZ.
             #
             # `trg_admin_tesisini_koru` (goc 0126) platform admini
-            # barindiran bir tesisin silinmesini REDDEDER — prod'da bir
-            # tesis silinip admin hesabi CASCADE ile gittigi ve panele
-            # girilemez hale gelindigi icin konuldu. Fixture tenant'lari
-            # da `role='admin'` kullanici tasiyor, yani bu temizlik
+            # barindiran bir tesisin silinmesini REDDEDER (prod'da bir
+            # tesis silindi, admin hesabi CASCADE ile gitti, panele
+            # girilemez hale gelindi). Fixture tenant'lari da
+            # `role='admin'` kullanici tasiyor, yani bu temizlik
             # trigger'a carpar.
             #
-            # HATA FIXTURE'DA, KORUMADA DEGIL: uretimde de dogru yol
-            # aynidir — "adminleri once tasiyin ya da silin" (hata
-            # mesajinin kendisi bunu soyluyor). Burada tasiyacak yer
-            # olmadigi icin siliniyorlar.
+            # ILK DENEMEM "adminleri SIL" idi ve YANLISTI: admin satiri
+            # RESTRICT'li FK'lerle referanslaniyor ve temizlik
+            #     ForeignKeyViolation: ... "fk_site_kurali_olusturan"
+            # ile patladi. Tam suite bastan sona kirmiziya dondu (%5'te
+            # yuzlerce E/F) — kusur korumada degil, benim temizlik
+            # sirami degistirmemdeydi.
             #
-            # SIRA ONEMLI: admin satirlari gidince `trg_son_platform_
-            # admini_koru` da devreye girmez, cunku geride BASKA
-            # tenant'larin adminleri kalir (fixture her kosumda coklu
-            # tenant acar). TEK admin kalsaydi trigger hakli olarak
-            # engellerdi ve bu, korunmasi gereken durumun ta kendisidir.
+            # DOGRUSU ROLU DUSURMEK: satir YERINDE kalir, RESTRICT'li
+            # referanslar kirilmaz ve tenant silme CASCADE yolu
+            # DEGISMEDEN calisir (o yol zaten calisiyordu). Trigger da
+            # tatmin olur, cunku tesiste artik platform admini yoktur.
+            #
+            # `trg_son_platform_admini_koru` devreye girmez: rol
+            # dusuruluyor, satir silinmiyor.
             for onek in FIXTURE_SLUG_ONEKLERI:
                 cur.execute(
-                    "DELETE FROM app_user WHERE role = 'admin' AND tenant_id IN "
-                    "(SELECT id FROM tenant WHERE slug LIKE %s)", (onek + "%",))
+                    "UPDATE app_user SET role = 'yonetici' WHERE role = 'admin' "
+                    "AND tenant_id IN (SELECT id FROM tenant WHERE slug LIKE %s)",
+                    (onek + "%",))
                 cur.execute("DELETE FROM tenant WHERE slug LIKE %s", (onek + "%",))
             for desen in FIXTURE_SLUG_DESENLERI:
                 cur.execute(
-                    "DELETE FROM app_user WHERE role = 'admin' AND tenant_id IN "
-                    "(SELECT id FROM tenant WHERE slug ~ %s)", (desen,))
+                    "UPDATE app_user SET role = 'yonetici' WHERE role = 'admin' "
+                    "AND tenant_id IN (SELECT id FROM tenant WHERE slug ~ %s)",
+                    (desen,))
                 cur.execute("DELETE FROM tenant WHERE slug ~ %s", (desen,))
         yield
     finally:
@@ -230,12 +236,12 @@ def two_tenants(owner_conn):
     yield tenant_a, tenant_b
 
     # Temizlik: tenant silinince checkpoint'lar CASCADE ile gider.
-    # (P224) ADMINLER ONCE: `trg_admin_tesisini_koru` platform admini
-    # barindiran tesisin silinmesini reddeder (bkz. conftest basindaki
-    # oturum temizligi notu).
+    # (P224) ADMIN ROLU ONCE DUSURULUR (silinmez — RESTRICT'li FK'ler
+    # kirilir; gerekce conftest basindaki oturum temizligi notunda).
     with owner_conn.cursor() as cur:
         cur.execute(
-            "DELETE FROM app_user WHERE role='admin' AND tenant_id IN (%s, %s)",
+            "UPDATE app_user SET role='yonetici' WHERE role='admin' "
+            "AND tenant_id IN (%s, %s)",
             (tenant_a, tenant_b),
         )
         cur.execute(
@@ -399,9 +405,10 @@ def world(owner_conn, request):
     # kalirdi (tur 46).
     def _sil() -> None:
         with owner_conn.cursor() as cur:
-            # (P224) ADMINLER ONCE — trigger tesisi korur.
+            # (P224) ADMIN ROLU ONCE DUSURULUR — trigger tesisi korur.
             cur.execute(
-                "DELETE FROM app_user WHERE role='admin' AND tenant_id IN (%s,%s)",
+                "UPDATE app_user SET role='yonetici' WHERE role='admin' "
+                "AND tenant_id IN (%s,%s)",
                 (a, b),
             )
             cur.execute("DELETE FROM tenant WHERE id IN (%s,%s)", (a, b))

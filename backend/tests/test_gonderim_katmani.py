@@ -130,6 +130,11 @@ async def test_kota_gonderim_BASLAMADAN_kontrol_edilir(owner_conn):
             assert e.value.status_code == 429
 
     with owner_conn.cursor() as cur:
+        # (P224) ADMIN ROLU ONCE DUSURULUR: `trg_admin_tesisini_koru` platform
+        # admini barindiran tesisin silinmesini REDDEDER. SILMEK degil ROLU
+        # DUSURMEK: admin satiri RESTRICT'li FK'lerle referanslaniyor ve
+        # silmek `fk_site_kurali_olusturan` gibi kisitlara carpiyor.
+        cur.execute("UPDATE app_user SET role='yonetici' WHERE role='admin' AND tenant_id = %s", (tid,))
         cur.execute("DELETE FROM tenant WHERE id = %s", (tid,))
 
 

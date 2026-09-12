@@ -107,6 +107,11 @@ def test_cakisma_eki_RASTGELE_iki_hane(owner_conn):
         # Onceki kosumlardan kalinti VARSA temizle: bu testin olctugu sey
         # "ilk kayit ek ALMAZ, ikincisi ALIR" kuralidir ve kalinti onu
         # gorunmez kilardi.
+        # (P224) ADMIN ROLU ONCE DUSURULUR: `trg_admin_tesisini_koru` platform
+        # admini barindiran tesisin silinmesini REDDEDER. SILMEK degil ROLU
+        # DUSURMEK: admin satiri RESTRICT'li FK'lerle referanslaniyor ve
+        # silmek `fk_site_kurali_olusturan` gibi kisitlara carpiyor.
+        cur.execute("UPDATE app_user SET role='yonetici' WHERE role='admin' AND tenant_id IN (SELECT id FROM tenant WHERE kayit_kodu LIKE %s)", (taban + "%",))
         cur.execute("DELETE FROM tenant WHERE kayit_kodu LIKE %s", (taban + "%",))
         cur.execute(
             "INSERT INTO tenant (ad, slug, created_at) VALUES (%s, %s, '2026-07-15'), "
@@ -114,6 +119,11 @@ def test_cakisma_eki_RASTGELE_iki_hane(owner_conn):
             (ad, f"c-{uuid.uuid4().hex[:8]}", ad, f"c-{uuid.uuid4().hex[:8]}"),
         )
         kodlar = [r[0] for r in cur.fetchall()]
+        # (P224) ADMIN ROLU ONCE DUSURULUR: `trg_admin_tesisini_koru` platform
+        # admini barindiran tesisin silinmesini REDDEDER. SILMEK degil ROLU
+        # DUSURMEK: admin satiri RESTRICT'li FK'lerle referanslaniyor ve
+        # silmek `fk_site_kurali_olusturan` gibi kisitlara carpiyor.
+        cur.execute("UPDATE app_user SET role='yonetici' WHERE role='admin' AND tenant_id IN (SELECT id FROM tenant WHERE kayit_kodu LIKE %s)", (taban + "%",))
         cur.execute("DELETE FROM tenant WHERE kayit_kodu LIKE %s", (taban + "%",))
     assert len(set(kodlar)) == 2, "cakisma sessizce ayni kodu uretemez"
     assert taban in kodlar, f"ilk kayit ek ALMAMALI: {kodlar}"

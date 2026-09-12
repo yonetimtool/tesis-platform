@@ -302,6 +302,11 @@ def iki_tenant_kamera(owner_conn):
             )
     yield a, b
     with owner_conn.cursor() as cur:
+        # (P224) ADMIN ROLU ONCE DUSURULUR: `trg_admin_tesisini_koru` platform
+        # admini barindiran tesisin silinmesini REDDEDER. SILMEK degil ROLU
+        # DUSURMEK: admin satiri RESTRICT'li FK'lerle referanslaniyor ve
+        # silmek `fk_site_kurali_olusturan` gibi kisitlara carpiyor.
+        cur.execute("UPDATE app_user SET role='yonetici' WHERE role='admin' AND tenant_id IN (%s,%s)", (a, b))
         cur.execute("DELETE FROM tenant WHERE id IN (%s,%s)", (a, b))
 
 

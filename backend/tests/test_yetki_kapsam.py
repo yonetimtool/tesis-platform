@@ -232,6 +232,11 @@ def test_rol_matrisi_kilidi(client, spec, world, owner_conn):
     finally:
         # Bos govdeli POST /tenants "(Kurulum bekliyor)" tesisi yaratir.
         with owner_conn.cursor() as cur:
+            # (P224) ADMIN ROLU ONCE DUSURULUR: `trg_admin_tesisini_koru` platform
+            # admini barindiran tesisin silinmesini REDDEDER. SILMEK degil ROLU
+            # DUSURMEK: admin satiri RESTRICT'li FK'lerle referanslaniyor ve
+            # silmek `fk_site_kurali_olusturan` gibi kisitlara carpiyor.
+            cur.execute("UPDATE app_user SET role='yonetici' WHERE role='admin' AND tenant_id IN (SELECT id FROM tenant WHERE slug LIKE 'kurulum-bekliyor-%')")
             cur.execute("DELETE FROM tenant WHERE slug LIKE 'kurulum-bekliyor-%'")
 
     baslik = "# " + " ".join(f"{r:6}" for r, _hesap in hesaplar)

@@ -110,6 +110,11 @@ def sched(owner_conn):
     tid = _tenant(owner_conn)
     gid = _guard(owner_conn, tid)
     yield SimpleNamespace(tid=tid, gid=gid, conn=owner_conn)
+    # (P224) ADMIN ROLU ONCE DUSURULUR: `trg_admin_tesisini_koru` platform
+    # admini barindiran tesisin silinmesini REDDEDER. SILMEK degil ROLU
+    # DUSURMEK: admin satiri RESTRICT'li FK'lerle referanslaniyor ve
+    # silmek `fk_site_kurali_olusturan` gibi kisitlara carpiyor.
+    owner_conn.execute("UPDATE app_user SET role='yonetici' WHERE role='admin' AND tenant_id = %s", (tid,))
     owner_conn.execute("DELETE FROM tenant WHERE id = %s", (tid,))
 
 
