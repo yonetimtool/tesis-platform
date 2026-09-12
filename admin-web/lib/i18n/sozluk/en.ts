@@ -455,6 +455,7 @@ export const en: Sozluk = {
   kameraOynatilamazRozet: "Not playable in browser",
   kameraRtspAciklama: "This camera streams over RTSP and browsers cannot play RTSP. To watch it on the web, define an HLS gateway (restream) URL; the same camera can be opened in the mobile app.",
   kameraYayinAcilamadi: "The stream could not be opened. Check the URL and network access.",
+  kameraBagleniyor: "Connecting… The first connection to the camera can take up to half a minute.",
   kameraKodekTarayici: "This camera streams in {kodek}, which your browser cannot play. Watch it in the mobile app, or enable the camera's H264 (sub) stream and point the address at it.",
   kameraTestKodekSorunlu: "Codec: {kodek} — not playable in browsers. It works in the mobile app; for the web, enable the camera's H264 (sub) stream.",
   kameraTestKodekTamam: "Codec: {kodek} — playable in browsers.",

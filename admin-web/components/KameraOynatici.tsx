@@ -45,6 +45,13 @@ export function KameraOynatici({ url, mp4, poster }: Props) {
   const t = useT();
   const ref = useRef<HTMLVideoElement | null>(null);
   const [hata, setHata] = useState<string | null>(null);
+  // (P223 §2) ILK ACILIS UZUN SURER VE BU NORMALDIR.
+  //
+  // OLCULDU: `sourceOnDemand` ile soguk baslangicta playlist 33.8 sn'de
+  // dondu (dev, gercek RTSP kaynagi). O sure boyunca ekranda SIYAH bir
+  // video vardi ve kullanici "acilmiyor" diye vazgeciyordu — sorun
+  // yokken sorun var gibi gorunuyordu.
+  const [bagleniyor, setBagleniyor] = useState(false);
   // (P215) Hata SINIFI: "sunucu" ise kullaniciya kamerayi kurcalamamasi
   // gerektigi ayrica soylenir.
   const [sinif, setSinif] = useState<YayinHataSinifi>("kamera");
@@ -93,6 +100,11 @@ export function KameraOynatici({ url, mp4, poster }: Props) {
           return;
         }
         const hls = new Hls({ enableWorker: true });
+        setBagleniyor(true);
+        // MANIFEST GELDIGINDE bekleme biter: video henuz oynamiyor
+        // olabilir ama "sunucu cevap verdi" bilgisi kullaniciya
+        // yeter — asil belirsizlik o ana kadardir.
+        hls.on(Hls.Events.MANIFEST_PARSED, () => setBagleniyor(false));
         hls.loadSource(url);
         hls.attachMedia(ref.current);
         hls.on(Hls.Events.ERROR, (_olay, veri) => {
@@ -100,6 +112,7 @@ export function KameraOynatici({ url, mp4, poster }: Props) {
           // hatalarını kendi kurtarır ve her birini kullanıcıya
           // göstermek, oynayan bir yayında sürekli uyarı demekti.
           if (!veri.fatal) return;
+          setBagleniyor(false);
           // (P215) SUNUCUNUN TANILI MESAJINI OKU. Eskiden burada sabit
           // bir metin gösteriliyordu ("Adresi ve ağ erişimini kontrol
           // edin") ve sunucu kaynaklı bir yapılandırma hatasında bile
@@ -165,7 +178,12 @@ export function KameraOynatici({ url, mp4, poster }: Props) {
           )}
         </p>
       )}
-      {yol && !hata && (
+      {bagleniyor && !hata && (
+        <p role="status" className="text-xs text-metin-muted" data-bagleniyor="1">
+          {t("kameraBagleniyor")}
+        </p>
+      )}
+      {yol && !hata && !bagleniyor && (
         <p className="text-xs text-metin-muted" data-yol={yol}>
           {yolEtiketi[yol]}
         </p>

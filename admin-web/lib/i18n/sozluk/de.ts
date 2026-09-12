@@ -455,6 +455,7 @@ export const de: Sozluk = {
   kameraOynatilamazRozet: "Im Browser nicht abspielbar",
   kameraRtspAciklama: "Diese Kamera sendet per RTSP und Browser können RTSP nicht abspielen. Für die Web-Ansicht eine HLS-Gateway-Adresse (Restream) hinterlegen; in der mobilen App lässt sich dieselbe Kamera öffnen.",
   kameraYayinAcilamadi: "Der Stream konnte nicht geöffnet werden. Adresse und Netzwerkzugang prüfen.",
+  kameraBagleniyor: "Verbindung wird hergestellt… Die erste Verbindung zur Kamera kann bis zu einer halben Minute dauern.",
   kameraKodekTarayici: "Diese Kamera sendet in {kodek}; Ihr Browser kann dieses Format nicht abspielen. Sehen Sie sie in der mobilen App an oder aktivieren Sie den H264-(Sub-)Stream der Kamera und tragen Sie dessen Adresse ein.",
   kameraTestKodekSorunlu: "Codec: {kodek} — im Browser nicht abspielbar. In der mobilen App funktioniert es; fürs Web den H264-(Sub-)Stream aktivieren.",
   kameraTestKodekTamam: "Codec: {kodek} — im Browser abspielbar.",

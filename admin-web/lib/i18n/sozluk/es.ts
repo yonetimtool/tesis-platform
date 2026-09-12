@@ -455,6 +455,7 @@ export const es: Sozluk = {
   kameraOynatilamazRozet: "No reproducible en el navegador",
   kameraRtspAciklama: "Esta cámara emite por RTSP y los navegadores no reproducen RTSP. Para verla en la web, defina una dirección de pasarela HLS (reemisión); la misma cámara se abre en la aplicación móvil.",
   kameraYayinAcilamadi: "No se pudo abrir la emisión. Compruebe la dirección y el acceso a la red.",
+  kameraBagleniyor: "Conectando… La primera conexión con la cámara puede tardar hasta medio minuto.",
   kameraKodekTarayici: "Esta cámara emite en {kodek}; su navegador no puede reproducir ese formato. Véala en la aplicación móvil o active el flujo H264 (secundario) de la cámara y apunte la dirección a él.",
   kameraTestKodekSorunlu: "Códec: {kodek} — no reproducible en navegadores. Funciona en la aplicación móvil; para la web, active el flujo H264 (secundario).",
   kameraTestKodekTamam: "Códec: {kodek} — reproducible en navegadores.",

@@ -473,6 +473,7 @@ export const tr = {
   kameraOynatilamazRozet: "Tarayıcıda oynatılamaz",
   kameraRtspAciklama: "Bu kamera RTSP yayını yapıyor ve tarayıcılar RTSP oynatamaz. Yayını web'de izlemek için bir HLS geçidi (restream) adresi tanımlayın; mobil uygulamada aynı kamera açılabilir.",
   kameraYayinAcilamadi: "Yayın açılamadı. Adresi ve ağ erişimini kontrol edin.",
+  kameraBagleniyor: "Bağlanıyor… Kameraya ilk bağlantı yarım dakikayı bulabilir.",
   kameraKodekTarayici: "Bu kamera {kodek} ile yayın yapıyor; tarayıcınız bu biçimi oynatamıyor. Mobil uygulamada izleyebilir ya da kameranın H264 (alt) akışını açıp adresi onunla değiştirebilirsiniz.",
   kameraTestKodekSorunlu: "Kodek: {kodek} — tarayıcıda izlenemez. Mobil uygulamada çalışır; web için kameradan H264 (alt) akış açın.",
   kameraTestKodekTamam: "Kodek: {kodek} — tarayıcıda izlenebilir.",

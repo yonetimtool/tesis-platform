@@ -455,6 +455,7 @@ export const fr: Sozluk = {
   kameraOynatilamazRozet: "Non lisible dans le navigateur",
   kameraRtspAciklama: "Cette caméra diffuse en RTSP et les navigateurs ne lisent pas le RTSP. Pour la regarder sur le web, définissez une adresse de passerelle HLS (rediffusion) ; la même caméra s'ouvre dans l'application mobile.",
   kameraYayinAcilamadi: "Le flux n'a pas pu être ouvert. Vérifiez l'adresse et l'accès réseau.",
+  kameraBagleniyor: "Connexion… La première connexion à la caméra peut prendre jusqu'à une demi-minute.",
   kameraKodekTarayici: "Cette caméra diffuse en {kodek} ; votre navigateur ne peut pas lire ce format. Regardez-la dans l'application mobile, ou activez le flux H264 (secondaire) de la caméra et pointez l'adresse dessus.",
   kameraTestKodekSorunlu: "Codec : {kodek} — non lisible dans un navigateur. Fonctionne dans l'application mobile ; pour le web, activez le flux H264 (secondaire).",
   kameraTestKodekTamam: "Codec : {kodek} — lisible dans un navigateur.",

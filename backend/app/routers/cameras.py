@@ -32,6 +32,7 @@ import datetime as dt
 import hashlib
 import ipaddress
 import logging
+import time
 import re
 import socket
 import uuid
@@ -936,6 +937,82 @@ async def _mediamtx_yol_kaydet(yol: str, kaynak: str) -> None:
 SORUNLU_KODEKLER = frozenset({"H265", "HEVC", "AV1"})
 
 
+#: (P223 §2) PLAYLIST istegi icin butce — kaynagin hazirlanmasi DAHIL.
+#:
+#: Dev'de soguk baslangic TEK istekle 33.8 sn olculdu; 40 sn makul bir
+#: pay birakir. Daha kisa tutmak, olculen gercek davranisi "hata"
+#: saymak olurdu.
+_CANLI_HAZIRLIK_BUTCESI = 40
+
+
+async def _gecit_ayakta() -> bool:
+    """(P223 §2) MediaMTX API'si cevap veriyor mu?
+
+    Playlist istegi zaman asimina dustugunde IKI ayri durum var ve
+    ayirt etmek SART:
+      * gecit ayakta, kaynak HENUZ hazirlanmadi -> "birkac saniye sonra
+        tekrar deneyin" DOGRU cumledir,
+      * gecit ulasilamiyor -> sunucu yapilandirmasi bozuktur.
+    Eskiden ikisi de `kamera_gecit_yok` idi ve yonetici, HICBIR SORUNU
+    OLMAYAN bir kurulumu duzeltmeye gonderiliyordu.
+    """
+    try:
+        async with httpx.AsyncClient(timeout=3) as istemci:
+            yanit = await istemci.get(f"{api_adresi()}/v3/paths/list")
+        return yanit.status_code < 500
+    except httpx.HTTPError:
+        return False
+
+
+async def _playlist_bekle(hedef: str, kamera_id: uuid.UUID) -> httpx.Response:
+    """(P223 §2) `sourceOnDemand` kaynagi hazir olana kadar TEK istek.
+
+    =====================================================================
+    OLCULDU — VE ILK COZUMUM YANLISTI
+    =====================================================================
+    Gercek bir RTSP kaynagiyla (`rtsp://testcam:8554/cam`, dev'de ffmpeg
+    ile yayinlandi) soguk baslangic, DOGRUDAN MediaMTX'e olculdu:
+
+      TEKRAR DENEYEN DONGU (istek basina 12 sn):
+        1: zaman asimi 12.0s · 2: zaman asimi 12.0s
+        3: zaman asimi 12.0s · 4: 200      TOPLAM 41.2 s
+
+      TEK ISTEK (60 sn):
+        200                                TOPLAM 33.8 s
+
+    Yani tekrar denemek COZUM DEGIL SEBEPTI: MediaMTX istegi kaynak
+    hazir olana kadar ASILI TUTUYOR ve her zaman asimi o bekleyen
+    istegi iptal edip `sourceOnDemand` dongusunu SIFIRDAN baslatiyordu.
+
+    ONCESI (uretimdeki davranis): istek basina 15 sn zaman asimi ->
+    ILK TIKLAMA HER ZAMAN BASARISIZ, ustune YANLIS TESHIS
+    (`kamera_gecit_yok` = "sunucu yapilandirmasi") — yonetici saglam
+    bir MediaMTX kurulumunu duzeltmeye gonderiliyordu.
+
+    NE OLCULMEDI: gercek bir IP kameranin (H265, kimlik dogrulamali,
+    LAN'da) hazirlanma suresi. Dev'de yalniz sentetik H264 kaynak ve
+    disariya cikamayan bir ag var. 33.8 sn BU ORTAMIN sayisidir.
+    """
+    basla = time.monotonic()
+    try:
+        async with httpx.AsyncClient(timeout=_CANLI_HAZIRLIK_BUTCESI) as istemci:
+            yanit = await istemci.get(hedef)
+        logger.info(
+            "[kamera] %s canli playlist %.1f sn'de dondu (durum=%s)",
+            kamera_id, time.monotonic() - basla, yanit.status_code,
+        )
+        return yanit
+    except httpx.HTTPError:
+        if await _gecit_ayakta():
+            logger.info(
+                "[kamera] %s canli yayin %s sn icinde hazir olmadi",
+                kamera_id, _CANLI_HAZIRLIK_BUTCESI,
+            )
+            raise APIError(502, "bad_gateway", "kamera_yayin_hazir_degil")
+        logger.error("[kamera] MediaMTX HLS gecidine ulasilamadi (%s)", api_adresi())
+        raise APIError(502, SUNUCU_YAPILANDIRMA, "kamera_gecit_yok")
+
+
 async def _yol_kodegi(yol: str) -> str | None:
     """MediaMTX'in gordugu VIDEO kodegi (`H265` gibi) ya da None.
 
@@ -1019,12 +1096,21 @@ async def kamera_canli(
             raise APIError(502, SUNUCU_YAPILANDIRMA, "kamera_gecit_yok")
 
     hedef = f"{settings.mediamtx_url.rstrip('/')}/cam{obj.id.hex}/{dosya}"
-    try:
-        async with httpx.AsyncClient(timeout=15) as istemci:
-            yanit = await istemci.get(hedef)
-    except httpx.HTTPError:
-        logger.error("[kamera] MediaMTX HLS gecidine ulasilamadi (%s)", api_adresi())
-        raise APIError(502, SUNUCU_YAPILANDIRMA, "kamera_gecit_yok")
+    if dosya.endswith(".m3u8"):
+        # (P223 §2) PLAYLIST kaynagin hazirlanmasini BEKLER — gerekcesi
+        # ve olculen sayilar `_playlist_bekle` docstring'inde.
+        yanit = await _playlist_bekle(hedef, obj.id)
+    else:
+        # SEGMENTLER beklemez: playlist donduyse kaynak ZATEN hazirdir;
+        # burada uzun bir butce yalnizca kopmus bir yayini bekletirdi.
+        try:
+            async with httpx.AsyncClient(timeout=15) as istemci:
+                yanit = await istemci.get(hedef)
+        except httpx.HTTPError:
+            logger.error(
+                "[kamera] MediaMTX HLS gecidine ulasilamadi (%s)", api_adresi()
+            )
+            raise APIError(502, SUNUCU_YAPILANDIRMA, "kamera_gecit_yok")
     if yanit.status_code >= 400:
         # (P216) 404'UN SEBEBINI SOR, TAHMIN ETME. Gecit ayakta ama yayin
         # yoksa uc olasilik var ve ucu de ayni 404'u uretir: kaynak henuz
