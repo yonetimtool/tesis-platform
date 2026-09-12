@@ -3737,6 +3737,10 @@ class TenantAdminListItem(BaseModel):
     #: (P224) Dolu ise tesis ARSIVDE. Liste varsayilan olarak arsivlileri
     #: HIC getirmez; bu alan yalnizca arsiv ekraninda dolar.
     arsivlendi_at: datetime | None = None
+    #: (P225) Bu tesiste platform admini var mi — panel Sil dugmesini HIC
+    #: cizmesin diye LISTEDE doner. Alternatifi her satir icin
+    #: `silme-ozeti` cagirmakti (8 tesiste 8 istek, 200'de 200).
+    platform_admini_var: bool = False
 
 
 class TenantSilmeOzeti(BaseModel):

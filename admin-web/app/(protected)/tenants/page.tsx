@@ -26,6 +26,7 @@ import { KopyaKod } from "@/components/KopyaKod";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
+import { useGecikmeli } from "@/lib/gecikmeli";
 import type { TenantAdminCreate, TenantAdminCreatedOut } from "@/lib/types";
 import { ParolaAlani } from "@/components/ParolaAlani";
 import { TelefonAlani } from "@/components/TelefonAlani";
@@ -40,6 +41,8 @@ interface TenantRow {
   kayit_kodu: string | null;
   kurulum_tamamlandi: boolean;
   created_at: string;
+  /** (P225) Platform admini barindiriyor mu — Sil dugmesi CIZILMEZ. */
+  platform_admini_var?: boolean;
 }
 interface TenantListResponse {
   items: TenantRow[];
@@ -91,8 +94,26 @@ export default function TenantsPage() {
   // (P161) Yikici onaylar tema/dil taniyan diyalogdan gecer.
   const { onayla, diyalog } = useOnay();
   const toast = useToast();
+  // (P225) ARAMA SUNUCUDA. Bugun 8 tesis var ve istemcide suzmek de
+  // calisirdi; sunucu secildi cunku (a) sayfalama eklendigi gun arama
+  // TASINMAK ZORUNDA KALMAZ — istemcide suzen liste ilk sayfalamada
+  // "yalniz bu sayfada ara" haline duser ve bu SESSIZ bir gerilemedir,
+  // (b) TURKCE HARF KATLAMASI TEK KURAL olmali: sunucu `slug` uzerinden
+  // katliyor (Dukkan aramasiyla ayni), istemcide ikinci bir katlama
+  // yazmak iki farkli "cekmekoy" tanimi demekti.
+  const [arama, setArama] = useState("");
+  const [kurulumSuzgec, setKurulumSuzgec] = useState<"" | "bekliyor" | "tamam">("");
+  // Her tusta istek atmamak icin gecikme (P220'de yazilan ortak kanca).
+  const gecikmeliArama = useGecikmeli(arama, 300);
+  // BOS DURUM MESAJI icin: suzgec acik mi? Gecikmeli degeri kullaniyoruz —
+  // kullanici yazarken mesaj titremesin.
+  const aramaAktif = Boolean(gecikmeliArama.trim() || kurulumSuzgec);
+
+  const sorgu = new URLSearchParams();
+  if (gecikmeliArama.trim()) sorgu.set("q", gecikmeliArama.trim());
+  if (kurulumSuzgec) sorgu.set("kurulum", String(kurulumSuzgec === "tamam"));
   const { data, error, isLoading, mutate } = useSWR<TenantListResponse>(
-    "/api/tenants",
+    `/api/tenants${sorgu.toString() ? `?${sorgu}` : ""}`,
     jsonFetcher,
   );
 
@@ -108,18 +129,31 @@ export default function TenantsPage() {
   }
 
   async function removeTenant(tesis: TenantRow) {
-    // Tesisi + TUM verisini kalici siler (geri alinamaz). Tek adimli net onay
-    // (yeni tesisin adi "(Kurulum bekliyor)" yer tutucu oldugundan ad-yazdirma
-    // pratik degil).
+    // (P225) ONAY ARTIK TESISIN ADI.
+    //
+    // Eskiden sabit bir kelime yazdiriliyordu ve o kelime HER TESISTE
+    // AYNIYDI: kas hafizasi olusuyor, yanlis tesiste de ayni refleksle
+    // yaziliyordu. Prod'da bir tesis boyle silindi ve platform admin
+    // hesabi CASCADE ile gitti.
+    //
+    // Eski yorum "yeni tesisin adi yer tutucu oldugu icin ad-yazdirma
+    // pratik degil" diyordu; dogru cozum ad-yazdirmaktan vazgecmek
+    // DEGIL, ne yazilacagini SUNUCUNUN soylemesiydi — liste zaten
+    // gercek adi tasiyor.
     const ok = await onayla({
       baslik: t("ortakSilBaslik"),
       mesaj: t("tesisSilOnayMetni", { ad: tesis.ad }),
-      onayMetni: t("ortakSil"),
+      onayMetni: tesis.ad,
       tehlikeli: true,
     });
     if (!ok) return;
     try {
-      await apiSend(`/api/tenants/${tesis.id}`, "DELETE");
+      // ONAY SUNUCUYA DA GIDER: panelin tek basina zorlamasi, ucu
+      // dogrudan cagiran her seyi korumasiz birakirdi.
+      await apiSend(
+        `/api/tenants/${tesis.id}?onay=${encodeURIComponent(tesis.ad)}`,
+        "DELETE",
+      );
       mutate();
       toast.success(t("tesisSilindi"));
     } catch (err) {
@@ -260,9 +294,30 @@ export default function TenantsPage() {
             >
               {t("tesisYonet")}
             </Link>
-            <Dugme tur="tehlike" boy="kucuk" onClick={() => void removeTenant(x)}>
-              {t("ortakSil")}
-            </Dugme>
+            {/* (P225) PLATFORM ADMINI BARINDIRAN TESISTE SIL DUGMESI
+                HIC CIZILMEZ. Sunucu ve trigger da reddediyor (uc
+                katman); buradaki gizleme, yoneticiyi anlamsiz bir
+                409'a surmemek ve yanlis tikla o an bir sey
+                olabilecegi izlenimini vermemek icin.
+                Ekran goruntusunde gorulen kusur tam buydu: platform
+                tesisinin satirinda Sil dugmesi otekilerle AYNIYDI. */}
+            {x.platform_admini_var ? (
+              <span
+                data-test="tesis-sil-korumali"
+                title={t("tesisSilAdminVar")}
+                className="inline-flex items-center px-3 py-2"
+                style={{
+                  fontSize: "var(--yz-fs-sm)",
+                  color: "var(--yz-text-3)",
+                }}
+              >
+                {t("tesisKorumali")}
+              </span>
+            ) : (
+              <Dugme tur="tehlike" boy="kucuk" onClick={() => void removeTenant(x)}>
+                {t("ortakSil")}
+              </Dugme>
+            )}
           </div>
         ),
       },
@@ -445,8 +500,46 @@ export default function TenantsPage() {
         hata={error ? error.message : null}
         onTekrar={() => void mutate()}
         yukleniyor={isLoading && !data}
-        bosBaslik={t("tesisYok")}
-        bosAciklama={t("tesisYokAlt")}
+        // (P225) SONUC YOKSA BOS TABLO BIRAKILMAZ ve mesaj ARAMAYA GORE
+        // degisir: "hic tesis yok" ile "aramana eslesen yok" ayri
+        // durumlardir; ayni cumle, suzgeci acik biraktigini fark etmeyen
+        // kullaniciya "tesisler silinmis" dedirtirdi.
+        bosBaslik={aramaAktif ? t("tesisAramaSonucYok") : t("tesisYok")}
+        bosAciklama={aramaAktif ? t("tesisAramaSonucYokAlt") : t("tesisYokAlt")}
+        // Satirlar 1'den numaralanir; numara SAYFA BASINA degil LISTENIN
+        // TAMAMINA gore (gerekce `VeriTablosu.numarali`).
+        numarali
+        araclar={
+          <div className="flex flex-wrap items-center gap-2">
+            <Alan
+              aria-label={t("tesisAraEtiketi")}
+              placeholder={t("tesisAraIpucu")}
+              value={arama}
+              onChange={(e) => setArama(e.target.value)}
+              className="w-64"
+              data-test="tesis-ara"
+            />
+            <select
+              aria-label={t("tesisKurulumSuzgec")}
+              value={kurulumSuzgec}
+              onChange={(e) =>
+                setKurulumSuzgec(e.target.value as "" | "bekliyor" | "tamam")
+              }
+              data-test="tesis-kurulum-suzgec"
+              className="rounded border px-3 py-2"
+              style={{
+                fontSize: "var(--yz-fs-sm)",
+                borderColor: "var(--yz-border)",
+                background: "var(--yz-metal-1)",
+                color: "var(--yz-text)",
+              }}
+            >
+              <option value="">{t("tesisKurulumHepsi")}</option>
+              <option value="bekliyor">{t("tesisKurulumBekleyen")}</option>
+              <option value="tamam">{t("tesisKurulumTamamlanan")}</option>
+            </select>
+          </div>
+        }
       />
       {diyalog}
     </div>

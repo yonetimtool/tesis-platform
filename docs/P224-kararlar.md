@@ -208,3 +208,91 @@ Bu turda **yalnız tarama yapıldı**, düzeltme yapılmadı.
 - Arşivli tesise ait **mevcut bir erişim jetonunun** ne kadar sürede
   geçersizleştiği prod'da ölçülmedi; tasarım gereği erişim jetonu ömrü
   kadar.
+
+---
+
+# P225 — Tesisler ekranı: koruma + numaralandırma + arama
+
+Tarih: 2026-09-12
+
+## 1. Silme koruması — eksik olan ÜÇÜNCÜ katmandı
+
+P224'te sunucu ve trigger kapatılmıştı; kullanıcının ekran görüntüsü
+**arayüz katmanının açık kaldığını** gösterdi: Tesisler listesinde
+platform tesisinin satırında Sil düğmesi ötekilerle **aynıydı** — kırmızı,
+tıklanabilir, hiçbir uyarı yok.
+
+Üç katman artık tam:
+
+| Katman | Nasıl |
+|---|---|
+| Arayüz | `platform_admini_var` satırda Sil yerine "Korumalı" işareti çizer |
+| Sunucu | `DELETE /tenants/{id}` 409 `tesiste_platform_admini_var` |
+| Veritabanı | `trg_admin_tesisini_koru` — psql'den bile |
+
+**Bayrak listede dönüyor**, satır başına sorgu yok: alternatifi her satır
+için `silme-ozeti` çağırmaktı (8 tesiste 8 istek, 200 tesiste 200).
+
+**Onay artık tesisin adı** listede de. Eski kodun yorumu "yeni tesisin adı
+yer tutucu olduğu için ad-yazdırma pratik değil" diyordu; doğru çözüm
+ad-yazdırmaktan vazgeçmek değil, **ne yazılacağını sunucunun söylemesi**
+(liste zaten gerçek adı taşıyor). Onay sunucuya da gidiyor.
+
+## 2. Numaralandırma — bileşene eklendi, sayfaya değil
+
+`VeriTablosu`'na `numarali` prop'u. Kural iki maddede:
+
+- Numara **listenin tamamına** göre: `(sayfa-1)*boy + i + 1` — ikinci
+  sayfada 26'dan devam eder, 1'e dönmez.
+- **Sıralama değişince yeniden hesaplanır**: sayım sıralanmış dizi
+  üzerinden yapıldığı için bu kendiliğinden olur. Numara satırın kimliği
+  değil konumudur.
+
+Sayfaya değil bileşene eklendi: başka tablolar da aynı davranışı tek
+satırla alsın, iki yerde iki farklı numaralandırma olmasın.
+
+## 3. Arama — SUNUCUDA
+
+Bugün 8 tesis var; istemcide süzmek de çalışırdı. Sunucu seçildi:
+
+- **Süzgeç verinin yanında durursa, sayfalama eklendiği gün arama
+  taşınmak zorunda kalmaz.** İstemcide süzen liste ilk sayfalamada
+  "yalnız bu sayfada ara" haline düşer ve bu sessiz bir gerilemedir.
+- **Türkçe harf katlaması tek kural olmalı.** Dükkan araması aynı sorunu
+  `slug` üzerinden çözmüştü ve `tenant.slug` da ASCII katlanmış olarak
+  zaten duruyor. İstemcide ikinci bir katlama yazmak, iki yerde iki
+  farklı "cekmekoy" tanımı demekti.
+
+**İlk yazımım eksikti ve test yakaladı:** yalnız harfleri katlıyordum,
+boşlukları bırakıyordum. Gerçek slug `arikoy-sitesi-239a9` iken katlanmış
+sorgu `arikoy sitesi 239a9` oluyor ve hiçbir şey eşleşmiyordu. Artık
+`slugify_tenant` ile **aynı iki adım** uygulanıyor (harf katlama +
+alfanumerik olmayanların tireye dönmesi); rastgele ek ve uzunluk kırpması
+yok — onlar slug'ı benzersiz kılmak için, arama için değil.
+
+Gecikme 300 ms (`useGecikmeli`, P220'de yazılan ortak kanca).
+
+**Boş sonuç mesajı aramaya göre değişiyor:** "hiç tesis yok" ile "aramana
+eşleşen yok" ayrı durumlar; aynı cümle, süzgeci açık bıraktığını fark
+etmeyen kullanıcıya "tesisler silinmiş" dedirtirdi.
+
+## 4. Kurulum süzgeci — eklendi
+
+Değerlendirme sonucu **evet**: listede "bekliyor" ve "tamamlandı" zaten
+görünüyor ama yarım kalmış kurulumları *bulmak* için süzgeç gerekiyordu.
+Sunucu tarafında, aramayla aynı yerde — ikisi farklı katmanda olsaydı
+sayfalama geldiğinde biri doğru biri yanlış çalışırdı.
+
+## Ölçüm
+
+```
+q='arikoy'            -> 1 sonuç  ['Arıköy Sitesi b8693']
+q='Arıköy'            -> 1 sonuç  ['Arıköy Sitesi b8693']
+q='ARIKOY'            -> 1 sonuç  ['Arıköy Sitesi b8693']
+q='yok-boyle-bir-sey' -> 0 sonuç  []
+platform_admini_var olanlar: ['Acme Plaza']
+kurulum=False: 609 · kurulum=True: 2225
+```
+
+Testler: backend 10, web 6. Beş kırma testi yapıldı (ASCII katlama,
+platform bayrağı, korumalı satır, numaralandırma, gecikme).

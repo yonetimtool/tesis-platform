@@ -9,6 +9,7 @@ list_all_tenants); YALNIZ admin'e acilir (RBAC). tenant_id GIZLI kimliktir.
 from __future__ import annotations
 
 import json
+import re
 import uuid
 from datetime import datetime, timezone
 
@@ -52,6 +53,29 @@ from ..security import (
 router = APIRouter(prefix="/tenants", tags=["tenant"])
 
 _ADMIN = require_role("admin")
+
+
+def _ascii_katla(q: str) -> str:
+    """(P225) Arama sorgusunu `slug` ile karsilastirilabilir hale getirir.
+
+    `tenant.slug` olusturulurken ASCII'ye katlanmis (`slugify_tenant`):
+    "Arıköy Sitesi" -> "arikoy-sitesi-xxxxxx". Kullanici Turkce klavyesi
+    olmadan "arikoy" yazdiginda eslesmenin tek yolu sorguyu AYNI kuralla
+    katlamaktir.
+
+    ILK YAZIMIM EKSIKTI ve test yakaladi: yalniz harfleri katliyordum,
+    BOSLUKLARI birakiyordum. Gercek slug `arikoy-sitesi-239a9` iken
+    katlanmis sorgu `arikoy sitesi 239a9` oluyor ve
+    `LIKE '%arikoy sitesi 239a9%'` HICBIR SEY eslemiyordu.
+
+    `slugify_tenant` ile AYNI iki adim uygulanir (harf katlama + alfanumerik
+    olmayanlarin tireye donmesi); rastgele ek ve uzunluk kirpmasi YOK —
+    onlar slug'i BENZERSIZ kilmak icin, arama icin degil.
+    """
+    from ..security import _TR_ASCII
+
+    katlanmis = q.strip().translate(_TR_ASCII).lower()
+    return re.sub(r"[^a-z0-9]+", "-", katlanmis).strip("-")
 
 # Yonetici tesisi adlandirana kadar gorunecek yer tutucu ad.
 _PLACEHOLDER_AD = "(Kurulum bekliyor)"
@@ -156,6 +180,22 @@ async def list_tenants(
             "arsiv ayri bir ekrandir, ayni listeye karismaz."
         ),
     ),
+    q: str | None = Query(
+        None,
+        max_length=100,
+        description=(
+            "(P225) Tesis adi / kayit kodu / slug'da arar. TURKCE HARF "
+            "DUYARSIZ: sorgu ASCII'ye katlanip `slug`la da karsilastirilir "
+            "('arikoy' -> 'Arıköy Sitesi'). Dukkan aramasiyla AYNI kural."
+        ),
+    ),
+    kurulum: bool | None = Query(
+        None,
+        description=(
+            "(P225) true: yalniz kurulumu TAMAMLANMIS, false: yalniz "
+            "BEKLEYEN. Bos: hepsi. Yarim kalmis kurulumlari bulmak icin."
+        ),
+    ),
     _: AppUser = Depends(_ADMIN),
 ) -> TenantAdminListResponse:
     """Admin: tesisler (id + ad + kurulum durumu + tarih). Baska tenant
@@ -171,10 +211,19 @@ async def list_tenants(
                 await session.execute(
                     text(
                         "SELECT id, ad, kayit_kodu, kurulum_tamamlandi, "
-                        "created_at, arsivlendi_at "
-                        "FROM public.list_all_tenants(:arsivli)"
+                        "created_at, arsivlendi_at, platform_admin "
+                        "FROM public.list_all_tenants("
+                        ":arsivli, :q, :qs, :kurulum)"
                     ),
-                    {"arsivli": arsivli},
+                    {
+                        "arsivli": arsivli,
+                        # BOS/BOSLUKLU SORGU = SUZGEC YOK: `%%` her satiri
+                        # eslerdi ama niyeti gizlerdi; NULL gecmek sorguyu
+                        # da basitlestirir.
+                        "q": f"%{q.strip()}%" if q and q.strip() else None,
+                        "qs": f"%{_ascii_katla(q)}%" if q and q.strip() else None,
+                        "kurulum": kurulum,
+                    },
                 )
             ).all()
     return TenantAdminListResponse(
@@ -186,6 +235,7 @@ async def list_tenants(
                 kurulum_tamamlandi=r.kurulum_tamamlandi,
                 created_at=r.created_at,
                 arsivlendi_at=r.arsivlendi_at,
+                platform_admini_var=bool(r.platform_admin),
             )
             for r in rows
         ]

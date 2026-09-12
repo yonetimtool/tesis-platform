@@ -137,6 +137,18 @@ export interface VeriTablosuProps<T> {
   araclar?: ReactNode;
 
   /**
+   * (P225) SIRA NUMARASI SUTUNU.
+   *
+   * Numara SATIRIN KIMLIGI DEGIL KONUMUDUR ve iki kural bunu belirler:
+   *   * LISTENIN TAMAMINA gore sayilir — ikinci sayfada 26'dan devam
+   *     eder, 1'e DONMEZ (`(sayfa-1)*boy + i + 1`),
+   *   * SIRALAMA degisince YENIDEN hesaplanir; siralanmis dizi uzerinden
+   *     sayildigi icin bu kendiliginden olur.
+   * Sunucu-tarafli kipte ofset sunucunun verdigi sayfadan gelir.
+   */
+  numarali?: boolean;
+
+  /**
    * TOPLAM SATIRI (`<tfoot>`). GORUNEN kolonlari alir — kullanici bir
    * kolonu gizlediyse altbilgi de o kolonu atlamali, yoksa hucreler
    * kayar ve toplam YANLIS SUTUNUN altinda gorunur.
@@ -185,6 +197,7 @@ export function VeriTablosu<T>({
   onSeciliDegisti,
   topluEylemler,
   araclar,
+  numarali = false,
   altbilgi,
   darMod = "otomatik",
   sunucuTarafli = false,
@@ -385,6 +398,20 @@ export function VeriTablosu<T>({
                     />
                   </th>
                 )}
+                {numarali && (
+                  <th
+                    scope="col"
+                    className="w-12 p-3 text-end"
+                    style={{
+                      fontSize: "var(--yz-fs-xs)",
+                      color: "var(--yz-text-3)",
+                    }}
+                  >
+                    {/* KISALTMA DEGIL SIMGE: "#" her dilde ayni okunur ve
+                        cevrilmesi gerekmez. */}
+                    #
+                  </th>
+                )}
                 {gorunen.map((k) => (
                   <BaslikHucresi
                     key={k.id}
@@ -423,6 +450,18 @@ export function VeriTablosu<T>({
                           onChange={() => satirCevir(id)}
                           aria-label={t("tabloSatirSec")}
                         />
+                      </td>
+                    )}
+                    {numarali && (
+                      <td
+                        className="p-3 text-end tabular-nums"
+                        data-test="tablo-sira"
+                        style={{
+                          fontSize: "var(--yz-fs-sm)",
+                          color: "var(--yz-text-3)",
+                        }}
+                      >
+                        {(d.sayfa - 1) * d.boy + sira + 1}
                       </td>
                     )}
                     {gorunen.map((k) => (

@@ -1485,6 +1485,15 @@ export const tr = {
   tesisTamamlandi: "tamamlandı",
   tesisYok: "Henüz tesis yok",
   tesisYokAlt: "İlk tesisi ve yöneticisini oluşturarak başlayın.",
+  tesisKorumali: "Korumalı",
+  tesisAraEtiketi: "Tesis ara",
+  tesisAraIpucu: "Tesis adı veya kodu",
+  tesisAramaSonucYok: "Eşleşen tesis yok",
+  tesisAramaSonucYokAlt: "Arama terimini veya süzgeci değiştirip tekrar deneyin.",
+  tesisKurulumSuzgec: "Kurulum durumu",
+  tesisKurulumHepsi: "Tüm kurulum durumları",
+  tesisKurulumBekleyen: "Kurulum bekleyen",
+  tesisKurulumTamamlanan: "Kurulumu tamamlanan",
   // tur 20 — tesis kurulum bekliyor
   tesisBekliyor: "bekliyor",
   // tur 20 — tesis yonet

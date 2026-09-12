@@ -7666,6 +7666,29 @@ paths:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
         "422": { $ref: "#/components/responses/ValidationError" }
     get:
+      parameters:
+        - name: arsivli
+          in: query
+          schema: { type: boolean, default: false }
+          description: >
+            (P224) true ise YALNIZ arsivlenmis tesisler. Varsayilan false —
+            arsiv ayri bir gorunumdur, listeye karismaz.
+        - name: q
+          in: query
+          schema: { type: string, maxLength: 100 }
+          description: >
+            (P225) Tesis adi / kayit kodu / slug'da arar. TURKCE HARF
+            DUYARSIZ: sorgu ASCII'ye katlanip (`slugify_tenant` ile AYNI
+            iki adim: harf katlama + alfanumerik olmayanlarin tireye
+            donmesi) `slug` ile de karsilastirilir. "arikoy" -> "Arıköy
+            Sitesi". Dukkan aramasiyla AYNI kural — iki yerde iki farkli
+            katlama tanimi bir gun ayrisirdi.
+        - name: kurulum
+          in: query
+          schema: { type: boolean }
+          description: >
+            (P225) true: yalniz kurulumu TAMAMLANMIS, false: yalniz
+            BEKLEYEN. Bos: hepsi. Yarim kalmis kurulumlari bulmak icin.
       tags: [tenant]
       summary: Admin — tum tesisler (id + ad + kurulum durumu)
       responses:
