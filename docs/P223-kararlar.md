@@ -195,3 +195,99 @@ doluluk                    -> dolu 4, oran 8
 yönetici ÇIKIŞ işaretledi  -> 200
 doluluk                    -> dolu 3, oran 6
 ```
+
+---
+
+## §4 — Rapor ve veri görselleştirme
+
+### Ölçüm önce: neyimiz var
+
+| Katman | Ölçülen durum |
+|---|---|
+| Web grafik kütüphanesi | **recharts ^2.15.4** — tek kütüphane, her ekranda aynısı |
+| `components/ui/grafik.tsx` | vardı: tema paleti, **her zaman sayısal tablo**, boş veri durumu, tembel yükleme — ama **yalnız PASTA** |
+| `components/rapor/rapor-grafik.tsx` (P181) | sütun/çizgi/pasta + boş durum + büyük veri örnekleme |
+| PDF çıktısı (P181) | logo, site adı, rapor adı, dönem, zaman damgası, **"Sayfa n / m" iki geçişli**, gömülü pasta/çubuk |
+| Excel çıktısı (P181) | `PieChart` / `BarChart` / `LineChart` |
+| **Mobil** | **hiç grafik yok** — kütüphane de yok, `CustomPaint` de |
+
+Çıktılar gerçekten üretiliyor (dev'de çalıştırıldı):
+
+```
+PDF:  3 683 bayt  b'%PDF-'
+XLSX: 6 741 bayt  b'PK'
+BOŞ VERİ PDF: 1 938 bayt   (grafik sayfası eklenmiyor)
+```
+
+Yani §4'ün "**İNDİRİLEN DOSYALAR**" maddesi P181'de zaten karşılanmıştı;
+yeniden yazmadım, **çalıştığını doğruladım**.
+
+### Bu turda yapılan
+
+**Web — grafik türleri.** `Grafik` bileşenine `tur` eklendi:
+`pasta · cubuk · cizgi · yatay · otomatik`.
+
+- **Tür seçimi TEK YERDE** (`grafikTuruSec`): her çağıranın ayrı karar
+  vermesi, aynı veriyi iki ekranda iki farklı biçimde göstermek olurdu.
+- **`otomatik` kuralı kullanıcının kuralıdır**: 6 dilime kadar pasta,
+  fazlasında çubuk. Sınır `PASTA_DILIM_SINIRI` sabitinde.
+- **Açıkça istenen tür ezilmez**: 3 noktaya düşen bir zaman serisi
+  çizgi kalır — "az veri" diye pastaya çevirmek zaman eksenini yok
+  etmekti.
+- **Yatay çubuk** yaşlandırma kovaları için: "90+" gibi etiketler dikey
+  eksende kırpılır; yatayda kova sırası yukarıdan aşağıya doğal okunur.
+  Borçlular sayfasına eklendi (kovalar o güne kadar yalnız düğme
+  olarak diziliyordu).
+- Renk kuralı değişmedi ve değişmemeli: bileşen **her zaman** sayısal
+  tabloyu da çizer, grafik `aria-hidden`dır.
+
+**Mobil — grafik kartı.** `core/grafik/grafik_karti.dart`.
+
+- **Kütüphane EKLENMEDİ.** Çizilen şey oransal çubuklar; `LayoutBuilder`
+  + `Container` yetiyor, `CustomPainter` bile gerekmiyor. Üç ekran için
+  kalıcı bir bağımlılık, sürüm yükseltme yükü ve APK boyutu demekti.
+  İhtiyaç çizgi/pasta grafiğe dönerse karar yeniden verilir.
+- Web'le **aynı üç kural**: sayı her çubuğun yanında (renk tek başına
+  anlam taşımaz), veri yoksa grafik çizilmez, renkler `colorScheme`den
+  (karanlık temada okunur).
+- Bütçe ekranındaki kategori kırılımına bağlandı; **alttaki liste
+  kaldırılmadı** — kategori tipi/ikonu orada.
+
+### Bu turda YAPILMADI — açıkça
+
+Kabul kriteri 6 ("raporlarda grafikler var, veri türüne uygun") **web'de
+karşılandı, mobilde kısmen**:
+
+- **Mobilde yalnız bütçe kategori kırılımı** görselleşti. Devriye/vardiya
+  raporları, şikayet dağılımı ve şeffaflık ekranı mobilde hâlâ düz
+  liste.
+- **Mobilde çizgi ve pasta yok** — bileşen yalnız çubuk çiziyor. Zaman
+  serisi (tahsilat oranı, doluluk) mobilde görselleşmedi.
+- **Web'de şikayet dağılımı ve devriye/vardiya raporları** için yeni bir
+  grafik eklenmedi; mevcut rapor grafiği (P181) katalogdaki `grafik`
+  tanımına bağlı ve o tanımlar gözden geçirilmedi.
+
+Bunlar bu turun dışında kaldı; uydurup "yapıldı" demiyorum.
+
+---
+
+## Tam takım koşumundan çıkan iki ders
+
+**1. Üç takımı aynı anda koşturmak sekiz sahte hata üretti.** Web
+suite'inde `Test timed out in 5000ms` diyen sekiz test, tek başına
+koşunca 38/38 geçti. Sebep koddaki bir gerileme değil, aynı makinede
+backend + mobil + web'in yarışmasıydı. Bundan sonra takımlar **en fazla
+ikişer** koşturulacak; "kırmızı" bir sonucu koda yormadan önce yalıtımda
+tekrarlanmalı.
+
+**2. Ölçüm için kurduğum konteyner, başka bir testin kaynağını çaldı.**
+§2'yi ölçmek için `testcam` ağ adıyla bir MediaMTX konteyneri açtım —
+oysa dev'de P216'dan kalan **gerçek bir `testcam`** ve ona H265 yayını
+yapan `testpub265` zaten vardı. Benim konteynerim adı gölgeledi; ayrıca
+api konteynerini defalarca yeniden yaratmam H264 yayıncısı `testpub`'ı
+düşürdü. Sonuç: `test_p216_kodek.py` "H264 kaynak `None` göründü"
+dedi — **koda bağlı olmayan bir hata**.
+
+Düzeltme: kendi konteynerimi sildim, `testpub`'ı geri başlattım, kodek
+testleri 9/9 yeşile döndü. Ders: ölçüm için ortam kurarken **var olan
+adları** önce sorgula; `docker ps -a` bir dakikada söylüyordu.

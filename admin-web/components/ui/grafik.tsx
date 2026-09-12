@@ -53,12 +53,44 @@ const Pasta = dynamic(() => import("./grafik-pasta").then((m) => m.Pasta), {
   loading: () => <div style={{ height: 220 }} />,
 });
 
+const Cubuk = dynamic(() => import("./grafik-cubuk").then((m) => m.Cubuk), {
+  ssr: false,
+  loading: () => <div style={{ height: 220 }} />,
+});
+
+/** (P223 §4) Grafik turu. `otomatik` = veriye bak, asagidaki kurali uygula. */
+export type GrafikTuru = "otomatik" | "pasta" | "cubuk" | "cizgi" | "yatay";
+
+/**
+ * PASTADA OKUNABILIR DILIM SINIRI.
+ *
+ * Kullanicinin kurali: "6-7 dilimden fazlasinda pasta okunmaz olur, o
+ * durumda cubuk kullan". Sinir BURADA, tek yerde: her cagiranin ayri
+ * ayri karar vermesi, ayni veriyi iki ekranda iki farkli bicimde
+ * gostermek olurdu.
+ */
+export const PASTA_DILIM_SINIRI = 6;
+
+// (P161) UCLUDE DIZE YAZILMAZ — bunlar GRAFIK TURU, gorunen metin degil.
+const TUR_PASTA = "pasta" as const;
+const TUR_CUBUK = "cubuk" as const;
+
+/** Tur secimi — `otomatik` icin TEK KURAL. */
+export function grafikTuruSec(
+  istenen: GrafikTuru,
+  dilimSayisi: number,
+): Exclude<GrafikTuru, "otomatik"> {
+  if (istenen !== "otomatik") return istenen;
+  return dilimSayisi > PASTA_DILIM_SINIRI ? TUR_CUBUK : TUR_PASTA;
+}
+
 export function Grafik({
   baslik,
   dilimler,
   bicimle,
   bosBaslik,
   eylem,
+  tur = "otomatik",
 }: {
   baslik: string;
   dilimler: GrafikDilimi[];
@@ -66,6 +98,15 @@ export function Grafik({
   bicimle?: (n: number) => string;
   bosBaslik: string;
   eylem?: ReactNode;
+  /**
+   * (P223 §4) Veri turune UYGUN gosterim.
+   *   pasta  — butunun parcalari (gider dagilimi, sikayet tipleri)
+   *   cubuk  — karsilastirma (aylar, bloklar, kategoriler)
+   *   cizgi  — zaman icinde degisim (tahsilat orani, doluluk)
+   *   yatay  — yaslandirma kovalari (uzun etiket, dikeyde kirpilir)
+   * Varsayilan `otomatik`: 6 dilime kadar pasta, fazlasinda cubuk.
+   */
+  tur?: GrafikTuru;
 }) {
   const t = useT();
   const tabloId = useId();
@@ -84,7 +125,15 @@ export function Grafik({
         <>
           {/* GRAFIK DEKORDUR: rakamlar asagidaki tabloda. */}
           <div aria-hidden="true">
-            <Pasta dilimler={dilimler} palet={PALET} />
+            {grafikTuruSec(tur, dilimler.length) === TUR_PASTA ? (
+              <Pasta dilimler={dilimler} palet={PALET} />
+            ) : (
+              <Cubuk
+                dilimler={dilimler}
+                palet={PALET}
+                tur={grafikTuruSec(tur, dilimler.length) as "cubuk" | "cizgi" | "yatay"}
+              />
+            )}
           </div>
 
           {/* RAKAMLAR — gorsel olarak grafigin altinda, ekran okuyucu icin

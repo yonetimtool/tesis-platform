@@ -2108,5 +2108,9 @@
         "type": "int"
       }
     }
+  },
+  "grafikVeriYok": "Nicht genügend Daten für ein Diagramm.",
+  "@grafikVeriYok": {
+    "description": "(P223) Grafik icin veri yok"
   }
 }

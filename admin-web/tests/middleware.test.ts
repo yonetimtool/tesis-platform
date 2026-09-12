@@ -191,12 +191,14 @@ describe("rol kapisi (P126.7)", () => {
     }
   });
 
-  it("YONETICI arac gecislerini ACAMAZ (uc ona 403 doner)", () => {
+  it("YONETICI arac gecislerini ACAR — P223'te uc ona ACILDI", () => {
+    // (P223 §3) KARAR DEGISTI. Once `_OPERATOR = admin + security` idi ve
+    // yonetici 403 aliyordu; kucuk sitelerde 7/24 guvenlik olmadigi icin
+    // otopark sayacini kimse duzeltemiyordu. Uc acilinca rol kapisi da
+    // acildi — kapiyi kapali birakmak, yapabildigi bir ise kendi
+    // panelinden ulasamamasi olurdu.
     const res = middleware(rolIstegi(APP, "/arac-gecisleri", "yonetici"));
-    expect(res.status).toBe(307);
-    expect(new URL(res.headers.get("location") ?? "").pathname).toBe(
-      "/dashboard",
-    );
+    expect(res.status).not.toBe(307);
   });
 
   it("YONETICI kendi yonetim sayfalarini ACAR", () => {

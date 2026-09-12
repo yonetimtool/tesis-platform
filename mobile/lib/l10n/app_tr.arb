@@ -2923,5 +2923,9 @@
         "type": "int"
       }
     }
+  },
+  "grafikVeriYok": "Grafik için yeterli veri yok.",
+  "@grafikVeriYok": {
+    "description": "(P223) Grafik icin veri yok"
   }
 }

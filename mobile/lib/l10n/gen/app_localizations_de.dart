@@ -6334,4 +6334,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String otoparkIcerideArac(int sayi) {
     return '$sayi Fahrzeuge im Parkhaus';
   }
+
+  @override
+  String get grafikVeriYok => 'Nicht genügend Daten für ein Diagramm.';
 }

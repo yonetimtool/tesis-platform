@@ -192,12 +192,37 @@ def test_gelecege_damga_422(client, world):
 
 
 # --------------------------------- RBAC ------------------------------------ #
-@pytest.mark.parametrize("who", ["yonetici_a", "resident_a", "gorevli_a"])
-def test_okuma_ve_yazma_yalniz_admin_security(client, world, who):
+@pytest.mark.parametrize("who", ["resident_a", "gorevli_a"])
+def test_okuma_ve_yazma_yalniz_YONETIM_ve_GUVENLIK(client, world, who):
+    """(P223 §3) YONETICI BU LISTEDEN CIKTI — karar degisti.
+
+    Once `_OPERATOR = admin + security` idi. Kucuk sitelerde 7/24
+    guvenlik yok ve otopark dolulugu ACIK GECIS sayimidir: yonetici
+    giris/cikis isaretleyemedigi icin sayaci duzeltemiyordu. "Elle
+    isaretlenebilsin" istegi tam olarak bu yuzden karsilanmiyordu.
+
+    `resident` ve `tesis_gorevlisi` BILEREK DISARIDA: kendi aracini
+    "girdi" isaretleyen sakin baskasinin yerini de doldurabilir ve sayac
+    dogrulanamaz hale gelirdi.
+    """
     h = _headers(client, world["slug_a"], world[who])
     assert client.get("/vehicle-passes", headers=h).status_code == 403
     r = client.post("/vehicle-passes", headers=h, json={"plaka": _plaka()})
     assert r.status_code == 403
+
+
+def test_YONETICI_OKUR_VE_YAZAR(client, world):
+    """Ters yon: yoneticinin ACILDIGI kilitlenir.
+
+    Bu olmadan `_OPERATOR`u geri daraltmak sessizce gecerdi ve otopark
+    sayaci yine duzeltilemez hale gelirdi.
+    """
+    h = _headers(client, world["slug_a"], world["yonetici_a"])
+    assert client.get("/vehicle-passes", headers=h).status_code == 200
+    obj = _giris(client, h)
+    assert client.post(
+        f"/vehicle-passes/{obj['id']}/checkout", headers=h
+    ).status_code == 200
 
 
 def test_admin_okur_ve_yazar(client, world):

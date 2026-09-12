@@ -300,10 +300,17 @@ void main() {
         'https://test/kare.jpg',
       ]);
       // "Site sakinleri görebilsin" acik gelir (kayitta true).
+      //
+      // (P223 §1) UCUNCU ANAHTAR EKLENDI: "Ana ekranda goster". Mobilde
+      // bu bayrak HIC yoktu — `CameraDraft` alani gondermiyor, form
+      // sayfasinda anahtar bulunmuyordu; yani mobilden yoneten kullanici
+      // ana ekran karesini ACAMIYORDU (P213 §4'te yazma tarafi yalniz
+      // web'e konmus). Kayitta `ana_ekranda` YOK -> varsayilan KAPALI,
+      // cunku her kare bir ffmpeg surecidir.
       final anahtar = tester.widgetList<SwitchListTile>(
         find.byType(SwitchListTile),
       );
-      expect(anahtar.map((s) => s.value).toList(), [true, true]);
+      expect(anahtar.map((s) => s.value).toList(), [true, true, false]);
     });
   });
 }

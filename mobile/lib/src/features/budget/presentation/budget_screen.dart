@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../../core/grafik/grafik_karti.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/akis_hatasi.dart';
@@ -217,40 +219,34 @@ class _SummaryTab extends StatelessWidget {
         ),
         if (summary.kategoriler.isNotEmpty) ...[
           const SizedBox(height: 16),
-          Text(l10n.butKategoriKirilimi,
-              style: Theme.of(context).textTheme.titleSmall),
-          const SizedBox(height: 8),
-          for (final k in summary.kategoriler)
-            ListTile(
-              dense: true,
-              contentPadding: EdgeInsets.zero,
-              leading: Icon(
-                k.tip == BudgetTip.gelir
-                    ? Icons.add_circle_outline
-                    : Icons.remove_circle_outline,
-                color: k.tip == BudgetTip.gelir ? Colors.green : Colors.red,
-              ),
-              // `trailing:` ile tutar SIKISTIRILAMAZ; dar ekranda (320 dp)
-              // uzun kategori adi + 7 haneli tutar tile'i tasiriyordu
-              // (tur 26 surusu `de`de +30 px olctu). Ayni cozum `_AmountCard`
-              // icinde de var: etiket ELLIPSIS, tutar KUCULUR.
-              title: Row(
-                children: [
-                  Expanded(child: Text(k.ad, overflow: TextOverflow.ellipsis)),
-                  const SizedBox(width: 8),
-                  Flexible(
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: AlignmentDirectional.centerEnd,
-                      child: Text(
-                        tlSonEkli(k.toplamKurus, dil),
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          // (P223 §4) KATEGORI KIRILIMI GORSELLESTI.
+          //
+          // Liste tek basina "hangi kalem agir basiyor" sorusunu ancak
+          // rakamlar tek tek okunarak yanitliyordu. Cubuk oranlari bir
+          // bakista gosterir.
+          //
+          // ESKI LISTE KALDIRILDI, GRAFIGIN YANINA KONMADI: ilk yazimda
+          // ikisini birden birakmistim ve AYNI TUTAR EKRANDA IKI KEZ
+          // yaziliyordu (tam suite bunu yakaladi: "2.450,00 TL" iki
+          // yerine UC kez bulundu). Kategori tipi bilgisi kaybolmasin
+          // diye ikon GRAFIK SATIRINA tasindi — renk tek basina anlam
+          // tasimaz kurali boylece korunuyor.
+          GrafikKarti(
+            baslik: l10n.butKategoriKirilimi,
+            bicimle: (v) => tlSonEkli(v.round(), dil),
+            dilimler: [
+              for (final k in summary.kategoriler)
+                GrafikDilimi(
+                  ad: k.ad,
+                  deger: k.toplamKurus.toDouble(),
+                  vurgulu: k.tip == BudgetTip.gider,
+                  // GELIR/GIDER ayrimi RENGE EK olarak IKONLA da taşınır.
+                  ikon: k.tip == BudgetTip.gelir
+                      ? Icons.add_circle_outline
+                      : Icons.remove_circle_outline,
+                ),
+            ],
+          ),
         ],
       ],
     );

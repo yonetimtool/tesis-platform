@@ -212,10 +212,20 @@ describe("MENUDEKI HER ROTA O ROLUN ACABILDIGI ROTADIR", () => {
     expect(ihlal, `menude AMA yetkisiz:\n${ihlal.join("\n")}`).toEqual([]);
   });
 
-  it("`arac-gecisleri` YONETICIYE gosterilmez — uc ona 403 doner", () => {
-    // Bu satir bir ORNEK degil KANIT: kural elle degil olcumle kondu.
-    expect(erisenRoller("GET /vehicle-passes")).not.toContain("yonetici");
-    expect(rotaRoldeGorunur("/arac-gecisleri", "yonetici")).toBe(false);
+  it("`arac-gecisleri` YONETICIYE gosterilir — P223'te uc ona ACILDI", () => {
+    // (P223 §3) KARAR DEGISTI ve bu test onun kanitidir.
+    //
+    // Once: `_OPERATOR = admin + security` idi, yonetici 403 aliyordu ve
+    // sayfa menude YOKTU. Kucuk sitelerde 7/24 guvenlik olmadigi icin
+    // yonetici otopark sayacini duzeltemiyordu ("elle isaretlenebilsin"
+    // istegi tam bu yuzden karsilanmiyordu).
+    //
+    // Simdi: uc ona acik, dolayisiyla sayfa da acik. Menude gostermemek,
+    // yapabildigi bir isi bulamamasi olurdu. Bu satir yine ORNEK DEGIL
+    // KANIT: rol matrisi KODDAN uretiliyor ve uc geri daraltilirsa
+    // burasi DUSER.
+    expect(erisenRoller("GET /vehicle-passes")).toContain("yonetici");
+    expect(rotaRoldeGorunur("/arac-gecisleri", "yonetici")).toBe(true);
     // (P129) `security` artik `app.*`ta DEGIL; sayfa yalniz `admin`e
     // acik kaldi (dogrulama icin). Uc kurali degismedi — YUZEY degisti.
     expect(rotaRoldeGorunur("/arac-gecisleri", "security")).toBe(false);

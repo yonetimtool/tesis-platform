@@ -6144,4 +6144,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String otoparkIcerideArac(int sayi) {
     return 'Otoparkta $sayi araç var';
   }
+
+  @override
+  String get grafikVeriYok => 'Grafik için yeterli veri yok.';
 }

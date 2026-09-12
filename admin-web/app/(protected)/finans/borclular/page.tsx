@@ -21,6 +21,7 @@ import {
   Alan,
   AlanSarmal,
   Dugme,
+  Grafik,
   Kart,
   Modal,
   HataDurumu,
@@ -241,6 +242,27 @@ export default function BorclularPage() {
           {t("yasAciklama")}
         </p>
         {error && <HataDurumu mesaj={t("ortakHataOlustu")} onTekrar={() => void mutate()} />}
+        {/* (P223 §4) YASLANDIRMA GORSELI — YATAY cubuk.
+            Kovalar bugune kadar yalnizca dugme olarak diziliyordu: hangi
+            kovanin agir bastigi ancak rakamlar tek tek okunarak
+            anlasiliyordu. Yatay secildi cunku etiketler ("90+") dikey
+            eksende kirpilmadan sigar ve kova sirasi YUKARIDAN ASAGIYA
+            dogal okunur. Rakamlar grafigin altindaki tabloda DA var
+            (bilesen her zaman cizer) — renk tek basina anlam tasimaz. */}
+        {(data?.kovalar ?? []).length > 0 && (
+          <div className="mb-3">
+            <Grafik
+              tur="yatay"
+              baslik={t("yasGrafikBaslik")}
+              bosBaslik={t("yasKovaYok")}
+              dilimler={(data?.kovalar ?? []).map((k) => ({
+                ad: k.kova,
+                deger: k.kalan_kurus,
+              }))}
+              bicimle={(n) => kurusToTL(n)}
+            />
+          </div>
+        )}
         <div className="flex flex-wrap gap-2">
           {(data?.kovalar ?? []).map((k) => (
             <Dugme

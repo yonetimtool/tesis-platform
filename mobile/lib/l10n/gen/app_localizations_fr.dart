@@ -6328,4 +6328,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String otoparkIcerideArac(int sayi) {
     return '$sayi véhicules dans le parking';
   }
+
+  @override
+  String get grafikVeriYok =>
+      'Pas assez de données pour afficher un graphique.';
 }

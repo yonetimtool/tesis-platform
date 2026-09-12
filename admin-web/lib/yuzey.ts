@@ -476,7 +476,10 @@ export const ROTA_ROLLERI: Record<string, readonly string[]> = {
   // `yonetici` BU SAYFAYI GOREMEZ ve bu bir tercih degil OLCUM:
   // `GET /vehicle-passes` yoneticiye 403 doner (matris kilidi). Geriye
   // yalniz `admin` kaldi (dogrulama icin bakabilmeli).
-  "/arac-gecisleri": ["admin"],
+  // (P223 §3) YONETICI EKLENDI: giris/cikis isaretlemesi artik ona da
+  // acik (`_OPERATOR`), yani sayfayi acabilir. Menude gostermemek,
+  // yapabildigi bir isi bulamamasi olurdu.
+  "/arac-gecisleri": ["admin", "yonetici"],
 
   // --- HERKESIN / PAYLASILAN --------------------------------------------
   "/profil": ["admin", "yonetici", "denetci", "guvenlik_amiri"],

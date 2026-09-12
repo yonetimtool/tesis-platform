@@ -128,8 +128,12 @@ describe("app.* menusu role gore", () => {
     expect(adlar).toContain("Finans");
     expect(adlar).toContain("Kameralar");
     expect(adlar).not.toContain("Aidatım");
-    // Uc ona 403 doner (matris) — menude olmamali.
-    expect(adlar).not.toContain("Araç geçişleri");
+    // (P223 §3) ARTIK MENUDE: uc yoneticiye ACILDI (`_OPERATOR`e eklendi)
+    // cunku kucuk sitelerde 7/24 guvenlik yok ve otopark sayacini
+    // duzeltebilen kimse kalmiyordu. Menude gostermemek, yapabildigi bir
+    // isi bulamamasi olurdu. Uc geri daraltilirsa `rol-menusu.test.ts`
+    // (koddan uretilen matrisle karsilastiran kilit) DUSER.
+    expect(adlar).toContain("Araç geçişleri");
   });
 
   it("LOGO hedefi ROLE gore — denetci panoya yollanmaz", () => {

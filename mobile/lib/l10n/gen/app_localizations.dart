@@ -10918,6 +10918,12 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Otoparkta {sayi} araç var'**
   String otoparkIcerideArac(int sayi);
+
+  /// (P223) Grafik icin veri yok
+  ///
+  /// In tr, this message translates to:
+  /// **'Grafik için yeterli veri yok.'**
+  String get grafikVeriYok;
 }
 
 class _AppLocalizationsDelegate

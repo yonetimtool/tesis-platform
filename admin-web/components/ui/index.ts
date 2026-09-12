@@ -51,5 +51,11 @@ export {
   AlanSarmal,
   AramaAlani,
 } from "./alan";
-export { Grafik, type GrafikDilimi } from "./grafik";
+export {
+  Grafik,
+  grafikTuruSec,
+  PASTA_DILIM_SINIRI,
+  type GrafikDilimi,
+  type GrafikTuru,
+} from "./grafik";
 export { TarihAraligi, aralikGecerli, type AralikTipi } from "./tarih-araligi";

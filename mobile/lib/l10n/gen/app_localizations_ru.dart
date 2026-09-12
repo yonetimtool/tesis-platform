@@ -6407,4 +6407,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String otoparkIcerideArac(int sayi) {
     return 'Машин на парковке: $sayi';
   }
+
+  @override
+  String get grafikVeriYok => 'Недостаточно данных для построения графика.';
 }

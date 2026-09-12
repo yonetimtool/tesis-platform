@@ -6399,4 +6399,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String otoparkIcerideArac(int sayi) {
     return '$sayi مركبة في المواقف';
   }
+
+  @override
+  String get grafikVeriYok => 'لا توجد بيانات كافية لرسم المخطط.';
 }
