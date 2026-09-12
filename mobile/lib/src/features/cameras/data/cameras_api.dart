@@ -124,3 +124,16 @@ final anaEkranKameralariProvider =
     FutureProvider.autoDispose<List<Camera>>((ref) {
   return ref.watch(camerasApiProvider).fetch(limit: 10, anaEkranda: true);
 });
+
+/// (P223 §1) TESISTE HIC KAMERA VAR MI — yalnizca BOS HAL mesajini
+/// dogru secmek icin.
+///
+/// Isaretli kamera yokken "kamera secilmedi" mi yoksa "hic kamera yok"
+/// mu denecegi buna bagli; ikisini karistirmak yoneticiyi olmayan bir
+/// kutuyu aramaya gonderirdi. TEK KAYIT cekilir (`limit: 1`): sayiyi
+/// ogrenmek icin tum listeyi indirmek gorunmeyen bir maliyet olurdu.
+/// Bu saglayici YALNIZ bos halde izlenir.
+final kameraVarMiProvider = FutureProvider.autoDispose<bool>((ref) async {
+  final liste = await ref.watch(camerasApiProvider).fetch(limit: 1);
+  return liste.isNotEmpty;
+});

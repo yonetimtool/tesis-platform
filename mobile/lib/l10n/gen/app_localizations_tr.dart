@@ -6120,4 +6120,18 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get kayitSosyalEpostaYok =>
       'Sosyal hesabınız bu kez e-posta adresi paylaşmadı. Apple adresi yalnız ilk izinde verir. E-posta ile kaydolabilir ya da Apple ayarlarından bu uygulamanın iznini kaldırıp yeniden deneyebilirsiniz.';
+
+  @override
+  String get kameraAnaEkranda => 'Ana ekranda göster';
+
+  @override
+  String get kameraAnaEkrandaAlt => 'Bu kameranın karesi ana ekranda görünsün.';
+
+  @override
+  String get panoKameraSecilmedi =>
+      'Ana ekranda gösterilecek kamera seçilmedi. Kameralar ekranından bir kamerayı düzenleyip “Ana ekranda göster” seçeneğini açın.';
+
+  @override
+  String get panoKameraHicYok =>
+      'Henüz kamera eklenmemiş. Kameralar ekranından ekleyebilirsiniz.';
 }

@@ -6375,4 +6375,18 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get kayitSosyalEpostaYok =>
       'لم يشارك حسابك الاجتماعي عنوان بريد إلكتروني هذه المرة. تقدّمه Apple عند أول تفويض فقط. يمكنك التسجيل بالبريد الإلكتروني، أو إزالة صلاحية هذا التطبيق من إعدادات Apple والمحاولة مجددًا.';
+
+  @override
+  String get kameraAnaEkranda => 'العرض في الشاشة الرئيسية';
+
+  @override
+  String get kameraAnaEkrandaAlt => 'عرض لقطة هذه الكاميرا في الشاشة الرئيسية.';
+
+  @override
+  String get panoKameraSecilmedi =>
+      'لم يتم اختيار أي كاميرا لعرضها في الشاشة الرئيسية. افتح شاشة الكاميرات، وعدّل كاميرا، وفعّل «العرض في الشاشة الرئيسية».';
+
+  @override
+  String get panoKameraHicYok =>
+      'لم تتم إضافة أي كاميرا بعد. يمكنك إضافتها من شاشة الكاميرات.';
 }

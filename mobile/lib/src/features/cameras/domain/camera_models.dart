@@ -215,6 +215,7 @@ class CameraDraft {
     required this.tur,
     required this.aktif,
     required this.sakinGorebilir,
+    this.anaEkranda = false,
     this.konum,
     this.restreamUrl,
     this.snapshotUrl,
@@ -230,6 +231,14 @@ class CameraDraft {
   final bool aktif;
   final bool sakinGorebilir;
 
+  /// (P223 §1) ANA EKRANDA karesi gosterilsin mi.
+  ///
+  /// P213 §4'te bu bayrak backend'de ve OKUMA tarafinda yapilmis, YAZMA
+  /// tarafi yalniz web'e konmustu: mobilden yoneten bir kullanici
+  /// ozelligi HIC acamiyordu ve ana ekraninda neden kare olmadigini
+  /// anlamasinin yolu da yoktu.
+  final bool anaEkranda;
+
   /// Opsiyonel HLS gecidi (P17). Bos ise gonderilmez/temizlenir.
   final String? restreamUrl;
 
@@ -244,6 +253,7 @@ class CameraDraft {
     'tur': tur.wire,
     'aktif': aktif,
     'sakin_gorebilir': sakinGorebilir,
+    'ana_ekranda': anaEkranda,
     if (restreamUrl != null && restreamUrl!.isNotEmpty)
       'restream_url': restreamUrl,
     if (snapshotUrl != null && snapshotUrl!.isNotEmpty)
@@ -259,6 +269,7 @@ class CameraDraft {
     'tur': tur.wire,
     'aktif': aktif,
     'sakin_gorebilir': sakinGorebilir,
+    'ana_ekranda': anaEkranda,
     // ACIK null: bos birakilirsa gecit KALDIRILIR (sunucu sozlesmesi).
     'restream_url': (restreamUrl == null || restreamUrl!.isEmpty)
         ? null

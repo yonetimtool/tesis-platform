@@ -230,6 +230,21 @@ class YoneticiHomeScreen extends ConsumerWidget {
               onSeeAll: () => context.push(AppRoutes.kameralar),
               // Oynatilabilirse oynatici, RTSP ise bilgi karti (tek kural).
               onAc: (kamera) => kameraAc(context, kamera),
+            )
+          else
+            // (P223 §1) BOS HAL ARTIK SESSIZ DEGIL.
+            //
+            // Eskiden `if (kameralar.isNotEmpty)` disinda hicbir sey
+            // yoktu: isaretli kamera olmayinca bolum HIC cizilmiyordu.
+            // Kullanici Kameralar ekraninda kareleri goruyor (o ekran
+            // TUM kameralari ceker), ana ekranda hicbir sey gormuyor ve
+            // NEDENINI soyleyen tek satir bile yok.
+            //
+            // YALNIZ YONETICI EKRANINDA: sakin ve saha bu isareti
+            // koyamaz; onlara bos bir kutu gostermek yapamayacaklari bir
+            // is icin gurultu olurdu — o iki ekranda davranis DEGISMEDI.
+            _KameraSecilmedi(
+              onGit: () => context.push(AppRoutes.kameralar),
             ),
         ],
       ),
@@ -283,5 +298,41 @@ class YoneticiHomeScreen extends ConsumerWidget {
       case 4: // Ayarlar.
         context.push(AppRoutes.settings);
     }
+  }
+}
+
+/// (P223 §1) "Ana ekranda kamera secilmedi" karti.
+///
+/// TESISTE HIC KAMERA YOKSA MESAJ FARKLI: "secilmedi" demek, yoneticiyi
+/// olmayan bir kutuyu aramaya gondermek olurdu. Ayrim `kameraVarMiProvider`
+/// ile yapilir ve o saglayici YALNIZ bu kart cizilirken izlenir — her ana
+/// ekran acilisinda fazladan bir istek, gorunmeyen bir maliyet olurdu.
+class _KameraSecilmedi extends ConsumerWidget {
+  const _KameraSecilmedi({required this.onGit});
+
+  final VoidCallback onGit;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    // Yanit HENUZ GELMEDIYSE hicbir sey cizilmez: iki mesajdan yanlis
+    // olani bir an gosterip duzeltmek, hic gostermemekten kotudur.
+    final varMi = ref.watch(kameraVarMiProvider).value;
+    if (varMi == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: Card(
+        child: ListTile(
+          key: const Key('ana-ekran-kamera-secilmedi'),
+          leading: const Icon(Icons.videocam_off_outlined),
+          title: Text(
+            varMi ? l10n.panoKameraSecilmedi : l10n.panoKameraHicYok,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: onGit,
+        ),
+      ),
+    );
   }
 }

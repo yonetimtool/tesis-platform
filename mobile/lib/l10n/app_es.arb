@@ -2074,5 +2074,21 @@
   "kayitSosyalEpostaYok": "Tu cuenta social no compartió una dirección de correo esta vez. Apple solo la proporciona en la primera autorización. Puedes registrarte con correo, o quitar el acceso de esta app en tus ajustes de Apple e intentarlo de nuevo.",
   "@kayitSosyalEpostaYok": {
     "description": "(P222) Saglayici e-posta paylasmadi"
+  },
+  "kameraAnaEkranda": "Mostrar en la pantalla de inicio",
+  "@kameraAnaEkranda": {
+    "description": "(P223) Kamera ana ekran bayragi"
+  },
+  "kameraAnaEkrandaAlt": "Mostrar la imagen de esta cámara en la pantalla de inicio.",
+  "@kameraAnaEkrandaAlt": {
+    "description": "(P223) Kamera ana ekran bayragi aciklamasi"
+  },
+  "panoKameraSecilmedi": "No hay ninguna cámara seleccionada para la pantalla de inicio. Abre Cámaras, edita una cámara y activa «Mostrar en la pantalla de inicio».",
+  "@panoKameraSecilmedi": {
+    "description": "(P223) Ana ekranda kamera isaretlenmemis"
+  },
+  "panoKameraHicYok": "Todavía no se ha añadido ninguna cámara. Puedes añadirlas en la pantalla Cámaras.",
+  "@panoKameraHicYok": {
+    "description": "(P223) Tesiste hic kamera yok"
   }
 }

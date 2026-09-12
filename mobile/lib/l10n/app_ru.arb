@@ -2074,5 +2074,21 @@
   "kayitSosyalEpostaYok": "Ваша учётная запись в этот раз не передала адрес электронной почты. Apple предоставляет его только при первой авторизации. Вы можете зарегистрироваться по электронной почте или отозвать доступ приложения в настройках Apple и повторить попытку.",
   "@kayitSosyalEpostaYok": {
     "description": "(P222) Saglayici e-posta paylasmadi"
+  },
+  "kameraAnaEkranda": "Показывать на главном экране",
+  "@kameraAnaEkranda": {
+    "description": "(P223) Kamera ana ekran bayragi"
+  },
+  "kameraAnaEkrandaAlt": "Показывать кадр этой камеры на главном экране.",
+  "@kameraAnaEkrandaAlt": {
+    "description": "(P223) Kamera ana ekran bayragi aciklamasi"
+  },
+  "panoKameraSecilmedi": "Для главного экрана не выбрана ни одна камера. Откройте «Камеры», измените камеру и включите «Показывать на главном экране».",
+  "@panoKameraSecilmedi": {
+    "description": "(P223) Ana ekranda kamera isaretlenmemis"
+  },
+  "panoKameraHicYok": "Камеры ещё не добавлены. Вы можете добавить их на экране «Камеры».",
+  "@panoKameraHicYok": {
+    "description": "(P223) Tesiste hic kamera yok"
   }
 }

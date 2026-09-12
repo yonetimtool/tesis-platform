@@ -248,6 +248,8 @@ export const ru: Sozluk = {
   panoKonumYok: "Расположение ещё не указано. Добавьте его в Настройки → Данные объекта.",
   panoKonumOsm: "Карта показана через OpenStreetMap (ключ Google Maps не задан).",
   panoKameralar: "Камеры",
+  panoKameraSecilmedi: "Для главного экрана не выбрана ни одна камера. Откройте «Камеры», измените камеру и отметьте «Показывать на главном экране».",
+  panoKameraHicYok: "Камеры ещё не добавлены. Вы можете добавить их на странице «Камеры».",
   tanitimFormAd: "Имя и фамилия",
   tanitimFormEposta: "Эл. почта",
   tanitimFormTelefon: "Телефон",

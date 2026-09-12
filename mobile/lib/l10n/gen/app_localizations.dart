@@ -10882,6 +10882,30 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Sosyal hesabınız bu kez e-posta adresi paylaşmadı. Apple adresi yalnız ilk izinde verir. E-posta ile kaydolabilir ya da Apple ayarlarından bu uygulamanın iznini kaldırıp yeniden deneyebilirsiniz.'**
   String get kayitSosyalEpostaYok;
+
+  /// (P223) Kamera ana ekran bayragi
+  ///
+  /// In tr, this message translates to:
+  /// **'Ana ekranda göster'**
+  String get kameraAnaEkranda;
+
+  /// (P223) Kamera ana ekran bayragi aciklamasi
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu kameranın karesi ana ekranda görünsün.'**
+  String get kameraAnaEkrandaAlt;
+
+  /// (P223) Ana ekranda kamera isaretlenmemis
+  ///
+  /// In tr, this message translates to:
+  /// **'Ana ekranda gösterilecek kamera seçilmedi. Kameralar ekranından bir kamerayı düzenleyip “Ana ekranda göster” seçeneğini açın.'**
+  String get panoKameraSecilmedi;
+
+  /// (P223) Tesiste hic kamera yok
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz kamera eklenmemiş. Kameralar ekranından ekleyebilirsiniz.'**
+  String get panoKameraHicYok;
 }
 
 class _AppLocalizationsDelegate

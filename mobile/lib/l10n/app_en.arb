@@ -2074,5 +2074,21 @@
   "kayitSosyalEpostaYok": "Your social account did not share an email address this time. Apple only provides it on the first authorization. You can register with email, or remove this app's access in your Apple settings and try again.",
   "@kayitSosyalEpostaYok": {
     "description": "(P222) Saglayici e-posta paylasmadi"
+  },
+  "kameraAnaEkranda": "Show on home screen",
+  "@kameraAnaEkranda": {
+    "description": "(P223) Kamera ana ekran bayragi"
+  },
+  "kameraAnaEkrandaAlt": "Show this camera's frame on the home screen.",
+  "@kameraAnaEkrandaAlt": {
+    "description": "(P223) Kamera ana ekran bayragi aciklamasi"
+  },
+  "panoKameraSecilmedi": "No camera is selected for the home screen. Open Cameras, edit a camera and turn on “Show on home screen”.",
+  "@panoKameraSecilmedi": {
+    "description": "(P223) Ana ekranda kamera isaretlenmemis"
+  },
+  "panoKameraHicYok": "No cameras have been added yet. You can add them on the Cameras screen.",
+  "@panoKameraHicYok": {
+    "description": "(P223) Tesiste hic kamera yok"
   }
 }

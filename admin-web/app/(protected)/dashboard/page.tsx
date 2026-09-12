@@ -698,7 +698,7 @@ export default function DashboardPage() {
           </div>
         );
       case "kameralar":
-        return <KameraSeridi kameralar={kameralar} />;
+        return <KameraSeridi kameralar={kameralar} rol={rol} />;
       case "alarmlar":
         return isLoading && !data ? (
           <Yukleniyor satir={3} />

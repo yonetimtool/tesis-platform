@@ -248,6 +248,8 @@ export const de: Sozluk = {
   panoKonumYok: "Noch kein Standort. Ergänzen Sie ihn unter Einstellungen → Anlagendaten.",
   panoKonumOsm: "Karte über OpenStreetMap (kein Google-Maps-Schlüssel konfiguriert).",
   panoKameralar: "Kameras",
+  panoKameraSecilmedi: "Für die Startseite ist keine Kamera ausgewählt. Öffnen Sie Kameras, bearbeiten Sie eine Kamera und aktivieren Sie „Auf Startseite anzeigen“.",
+  panoKameraHicYok: "Es wurden noch keine Kameras hinzugefügt. Sie können sie auf der Seite Kameras anlegen.",
   tanitimFormAd: "Name",
   tanitimFormEposta: "E-Mail",
   tanitimFormTelefon: "Telefon",

@@ -262,6 +262,8 @@ export const tr = {
   panoKonumYok: "Konum henüz girilmedi. Ayarlar → Tesis bilgileri'nden ekleyin.",
   panoKonumOsm: "Harita OpenStreetMap ile gösteriliyor (Google Haritalar anahtarı tanımlı değil).",
   panoKameralar: "Kameralar",
+  panoKameraSecilmedi: "Ana ekranda gösterilecek kamera seçilmedi. Kameralar sayfasından bir kamerayı düzenleyip “Ana ekranda göster” seçeneğini işaretleyin.",
+  panoKameraHicYok: "Henüz kamera eklenmemiş. Kameralar sayfasından ekleyebilirsiniz.",
   tanitimFormAd: "Ad Soyad",
   tanitimFormEposta: "E-posta",
   tanitimFormTelefon: "Telefon",

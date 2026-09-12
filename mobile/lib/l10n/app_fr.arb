@@ -2074,5 +2074,21 @@
   "kayitSosyalEpostaYok": "Votre compte social n'a pas transmis d'adresse e-mail cette fois. Apple ne la fournit qu'à la première autorisation. Vous pouvez vous inscrire par e-mail, ou retirer l'accès de cette application dans vos réglages Apple et réessayer.",
   "@kayitSosyalEpostaYok": {
     "description": "(P222) Saglayici e-posta paylasmadi"
+  },
+  "kameraAnaEkranda": "Afficher sur l'accueil",
+  "@kameraAnaEkranda": {
+    "description": "(P223) Kamera ana ekran bayragi"
+  },
+  "kameraAnaEkrandaAlt": "Afficher l'image de cette caméra sur l'écran d'accueil.",
+  "@kameraAnaEkrandaAlt": {
+    "description": "(P223) Kamera ana ekran bayragi aciklamasi"
+  },
+  "panoKameraSecilmedi": "Aucune caméra n'est sélectionnée pour l'écran d'accueil. Ouvrez Caméras, modifiez une caméra et activez « Afficher sur l'accueil ».",
+  "@panoKameraSecilmedi": {
+    "description": "(P223) Ana ekranda kamera isaretlenmemis"
+  },
+  "panoKameraHicYok": "Aucune caméra n'a encore été ajoutée. Vous pouvez en ajouter depuis l'écran Caméras.",
+  "@panoKameraHicYok": {
+    "description": "(P223) Tesiste hic kamera yok"
   }
 }

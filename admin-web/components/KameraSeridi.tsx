@@ -13,10 +13,12 @@
 // SERIT PANONUN SONUNDA: kare tazeleme yalniz sekme GORUNURKEN calisir
 // (asagida) — arka planda birakilmis bir pano istek atmaz.
 import { useEffect, useState } from "react";
+import useSWR from "swr";
 
 import { KameraOynatici } from "@/components/KameraOynatici";
 import { BolumBasligi, Kart } from "@/components/tasarim";
 import { useT } from "@/lib/i18n/kullan";
+import { jsonFetcher } from "@/lib/fetcher";
 import { oynatilabilirMi } from "@/lib/kamera-url";
 import type { Kamera } from "@/lib/types";
 
@@ -36,7 +38,14 @@ export function kareKaynagi(k: Kamera): string | null {
   return k.snapshot_url || `/api/cameras/${k.id}/kare`;
 }
 
-export function KameraSeridi({ kameralar }: { kameralar: Kamera[] }) {
+export function KameraSeridi({
+  kameralar,
+  rol,
+}: {
+  kameralar: Kamera[];
+  /** Bos hal mesaji YALNIZ isareti koyabilene gosterilir. */
+  rol?: string | null;
+}) {
   const t = useT();
   const [nesil, setNesil] = useState(0);
   const [oynatilan, setOynatilan] = useState<Kamera | null>(null);
@@ -78,7 +87,40 @@ export function KameraSeridi({ kameralar }: { kameralar: Kamera[] }) {
     };
   }, [kareCekilebilir]);
 
-  if (gorunen.length === 0) return null;
+  // (P223 §1) BOS HAL ARTIK SESSIZ DEGIL.
+  //
+  // OLCULEN KUSUR: `return null` idi. Isaretli kamera yoksa bolum HIC
+  // cizilmiyordu; kullanici Kameralar sekmesinde kareleri goruyor
+  // (o sayfa TUM kameralari ceker), ana sayfada hicbir sey gormuyor ve
+  // NEDENINI soyleyen tek satir bile yok. Dev veritabaninda olculdu:
+  // 6 kamera, ana_ekranda = 0.
+  //
+  // MESAJ YALNIZ YONETIME: sakin bu isareti koyamaz; ona bos bir kutu
+  // gostermek yapamayacagi bir is icin gurultu olurdu — onda eski
+  // davranis (bolum gizli) SURUYOR.
+  const yonetim = rol === "admin" || rol === "yonetici";
+  // Tesiste HIC kamera yoksa "secilmedi" demek yanlis yonlendirme olur;
+  // ayrimi ancak isaretli liste BOSKEN sormaya deger (tek hafif istek).
+  const { data: tumKameralar } = useSWR<{ meta?: { total?: number } }>(
+    yonetim && gorunen.length === 0 ? "/api/cameras?limit=1&offset=0" : null,
+    jsonFetcher,
+    { revalidateOnFocus: false },
+  );
+
+  if (gorunen.length === 0) {
+    if (!yonetim) return null;
+    const hicKameraYok = tumKameralar?.meta?.total === 0;
+    return (
+      <section>
+        <BolumBasligi baslik={t("panoKameralar")} href="/kameralar" />
+        <Kart className="p-kart">
+          <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}>
+            {hicKameraYok ? t("panoKameraHicYok") : t("panoKameraSecilmedi")}
+          </p>
+        </Kart>
+      </section>
+    );
+  }
 
   return (
     <section>

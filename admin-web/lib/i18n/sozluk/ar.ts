@@ -248,6 +248,8 @@ export const ar: Sozluk = {
   panoKonumYok: "لم يُدخل الموقع بعد. أضِفه من الإعدادات ← بيانات الموقع.",
   panoKonumOsm: "تُعرض الخريطة عبر OpenStreetMap (لا يوجد مفتاح خرائط Google).",
   panoKameralar: "الكاميرات",
+  panoKameraSecilmedi: "لم يتم اختيار أي كاميرا لعرضها في الشاشة الرئيسية. افتح صفحة الكاميرات، وعدّل كاميرا، وفعّل خيار «العرض في الشاشة الرئيسية».",
+  panoKameraHicYok: "لم تتم إضافة أي كاميرا بعد. يمكنك إضافتها من صفحة الكاميرات.",
   tanitimFormAd: "الاسم الكامل",
   tanitimFormEposta: "البريد الإلكتروني",
   tanitimFormTelefon: "الهاتف",

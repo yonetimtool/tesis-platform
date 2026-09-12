@@ -248,6 +248,8 @@ export const en: Sozluk = {
   panoKonumYok: "No location yet. Add it in Settings → Site details.",
   panoKonumOsm: "Map shown with OpenStreetMap (no Google Maps key configured).",
   panoKameralar: "Cameras",
+  panoKameraSecilmedi: "No camera is selected for the home screen. Open Cameras, edit a camera and tick “Show on home screen”.",
+  panoKameraHicYok: "No cameras have been added yet. You can add them on the Cameras page.",
   tanitimFormAd: "Full name",
   tanitimFormEposta: "Email",
   tanitimFormTelefon: "Phone",

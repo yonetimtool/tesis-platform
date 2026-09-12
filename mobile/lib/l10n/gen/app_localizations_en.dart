@@ -6311,4 +6311,19 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get kayitSosyalEpostaYok =>
       'Your social account did not share an email address this time. Apple only provides it on the first authorization. You can register with email, or remove this app\'s access in your Apple settings and try again.';
+
+  @override
+  String get kameraAnaEkranda => 'Show on home screen';
+
+  @override
+  String get kameraAnaEkrandaAlt =>
+      'Show this camera\'s frame on the home screen.';
+
+  @override
+  String get panoKameraSecilmedi =>
+      'No camera is selected for the home screen. Open Cameras, edit a camera and turn on “Show on home screen”.';
+
+  @override
+  String get panoKameraHicYok =>
+      'No cameras have been added yet. You can add them on the Cameras screen.';
 }

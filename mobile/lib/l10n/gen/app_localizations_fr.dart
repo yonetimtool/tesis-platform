@@ -6303,4 +6303,19 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get kayitSosyalEpostaYok =>
       'Votre compte social n\'a pas transmis d\'adresse e-mail cette fois. Apple ne la fournit qu\'à la première autorisation. Vous pouvez vous inscrire par e-mail, ou retirer l\'accès de cette application dans vos réglages Apple et réessayer.';
+
+  @override
+  String get kameraAnaEkranda => 'Afficher sur l\'accueil';
+
+  @override
+  String get kameraAnaEkrandaAlt =>
+      'Afficher l\'image de cette caméra sur l\'écran d\'accueil.';
+
+  @override
+  String get panoKameraSecilmedi =>
+      'Aucune caméra n\'est sélectionnée pour l\'écran d\'accueil. Ouvrez Caméras, modifiez une caméra et activez « Afficher sur l\'accueil ».';
+
+  @override
+  String get panoKameraHicYok =>
+      'Aucune caméra n\'a encore été ajoutée. Vous pouvez en ajouter depuis l\'écran Caméras.';
 }

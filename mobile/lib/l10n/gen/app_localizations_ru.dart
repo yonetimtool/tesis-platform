@@ -6382,4 +6382,19 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get kayitSosyalEpostaYok =>
       'Ваша учётная запись в этот раз не передала адрес электронной почты. Apple предоставляет его только при первой авторизации. Вы можете зарегистрироваться по электронной почте или отозвать доступ приложения в настройках Apple и повторить попытку.';
+
+  @override
+  String get kameraAnaEkranda => 'Показывать на главном экране';
+
+  @override
+  String get kameraAnaEkrandaAlt =>
+      'Показывать кадр этой камеры на главном экране.';
+
+  @override
+  String get panoKameraSecilmedi =>
+      'Для главного экрана не выбрана ни одна камера. Откройте «Камеры», измените камеру и включите «Показывать на главном экране».';
+
+  @override
+  String get panoKameraHicYok =>
+      'Камеры ещё не добавлены. Вы можете добавить их на экране «Камеры».';
 }

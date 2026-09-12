@@ -58,6 +58,8 @@ class _KameraFormSheetState extends ConsumerState<KameraFormSheet> {
   late CameraTur _tur = widget.mevcut?.tur ?? CameraTur.hls;
   late bool _aktif = widget.mevcut?.aktif ?? true;
   late bool _sakinGorebilir = widget.mevcut?.sakinGorebilir ?? false;
+  // (P223 §1) Web'deki "Ana ekranda goster" kutusunun karsiligi.
+  late bool _anaEkranda = widget.mevcut?.anaEkranda ?? false;
 
   bool _kaydediyor = false;
   String? _hata;
@@ -85,6 +87,7 @@ class _KameraFormSheetState extends ConsumerState<KameraFormSheet> {
       tur: _tur,
       aktif: _aktif,
       sakinGorebilir: _sakinGorebilir,
+      anaEkranda: _anaEkranda,
       restreamUrl: _restreamCtrl.text.trim(),
       snapshotUrl: _snapshotCtrl.text.trim(),
     );
@@ -345,6 +348,19 @@ class _KameraFormSheetState extends ConsumerState<KameraFormSheet> {
                 onChanged: _kaydediyor
                     ? null
                     : (v) => setState(() => _sakinGorebilir = v),
+              ),
+              // (P223 §1) `sakinGorebilir`DEN AYRI: o YETKI, bu YERLESIM.
+              // Sunucu isaretli kamera sayisini sinirlar
+              // (`KAMERA_ANA_EKRAN_SINIR`) — her kare bir ffmpeg surecidir.
+              SwitchListTile(
+                key: const Key('kamera-ana-ekranda'),
+                contentPadding: EdgeInsets.zero,
+                title: Text(l10n.kameraAnaEkranda),
+                subtitle: Text(l10n.kameraAnaEkrandaAlt),
+                value: _anaEkranda,
+                onChanged: _kaydediyor
+                    ? null
+                    : (v) => setState(() => _anaEkranda = v),
               ),
               if (_hata != null) ...[
                 const SizedBox(height: 8),

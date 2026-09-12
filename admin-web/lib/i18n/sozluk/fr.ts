@@ -248,6 +248,8 @@ export const fr: Sozluk = {
   panoKonumYok: "Aucun emplacement pour l'instant. Ajoutez-le dans Réglages → Informations du site.",
   panoKonumOsm: "Carte affichée via OpenStreetMap (aucune clé Google Maps configurée).",
   panoKameralar: "Caméras",
+  panoKameraSecilmedi: "Aucune caméra n'est sélectionnée pour l'écran d'accueil. Ouvrez Caméras, modifiez une caméra et cochez « Afficher sur l'accueil ».",
+  panoKameraHicYok: "Aucune caméra n'a encore été ajoutée. Vous pouvez en ajouter depuis la page Caméras.",
   tanitimFormAd: "Nom et prénom",
   tanitimFormEposta: "E-mail",
   tanitimFormTelefon: "Téléphone",

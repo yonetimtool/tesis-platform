@@ -6287,4 +6287,19 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get kayitSosyalEpostaYok =>
       'Tu cuenta social no compartió una dirección de correo esta vez. Apple solo la proporciona en la primera autorización. Puedes registrarte con correo, o quitar el acceso de esta app en tus ajustes de Apple e intentarlo de nuevo.';
+
+  @override
+  String get kameraAnaEkranda => 'Mostrar en la pantalla de inicio';
+
+  @override
+  String get kameraAnaEkrandaAlt =>
+      'Mostrar la imagen de esta cámara en la pantalla de inicio.';
+
+  @override
+  String get panoKameraSecilmedi =>
+      'No hay ninguna cámara seleccionada para la pantalla de inicio. Abre Cámaras, edita una cámara y activa «Mostrar en la pantalla de inicio».';
+
+  @override
+  String get panoKameraHicYok =>
+      'Todavía no se ha añadido ninguna cámara. Puedes añadirlas en la pantalla Cámaras.';
 }

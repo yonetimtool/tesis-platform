@@ -248,6 +248,8 @@ export const es: Sozluk = {
   panoKonumYok: "Aún no hay ubicación. Añádela en Ajustes → Datos de la finca.",
   panoKonumOsm: "Mapa mostrado con OpenStreetMap (no hay clave de Google Maps configurada).",
   panoKameralar: "Cámaras",
+  panoKameraSecilmedi: "No hay ninguna cámara seleccionada para la pantalla de inicio. Abre Cámaras, edita una cámara y marca «Mostrar en la pantalla de inicio».",
+  panoKameraHicYok: "Todavía no se ha añadido ninguna cámara. Puedes añadirlas en la página Cámaras.",
   tanitimFormAd: "Nombre y apellidos",
   tanitimFormEposta: "Correo electrónico",
   tanitimFormTelefon: "Teléfono",
