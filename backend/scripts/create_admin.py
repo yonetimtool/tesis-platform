@@ -49,6 +49,11 @@ from app.security import hash_password
 OWNER_DSN = os.getenv("OWNER_DSN", "")
 
 # schemas.validate_password_strength ile ayni kurallar (panel/mobil ile tutarli).
+#: Veritabanindaki `ck_tenant_slug` ile BIREBIR ayni. Kopyalanmis bir kural
+#: degil, AYNI kuralin istemci tarafi: ikisi ayrisirsa betik yine ham bir
+#: kisit hatasina duser ve bu kez sebebi bulmak daha da zor olur.
+_SLUG_BICIMI = re.compile(r"^[a-z0-9][a-z0-9-]*$")
+
 _PW_UPPER = re.compile(r"[A-ZĞÜŞİÖÇ]")
 _PW_DIGIT = re.compile(r"\d")
 _PW_SYMBOL = re.compile(r"[^A-Za-z0-9ĞÜŞİÖÇğüşıöç]")
@@ -115,6 +120,28 @@ def main() -> int:
         print("Gecerli bir e-posta gerekli.", file=sys.stderr)
         return 2
 
+    # (P224) SLUG BURADA DOGRULANIR — veritabani kisitina CARPTIRILMAZ.
+    #
+    # OLCULEN KUSUR (prod kurtarmasi): `--tenant-slug Platform` verildi ve
+    # betik onu OLDUGU GIBI INSERT etti. Sonuc, kullaniciya hicbir sey
+    # anlatmayan ham bir istisnaydi:
+    #     psycopg.errors.CheckViolation: ... violates check constraint
+    #     "ck_tenant_slug"
+    # Kurtarma anindaki bir yoneticinin okuyacagi en kotu mesaj budur:
+    # NE yanlis, NE yazmali, ikisi de yok. Kisit (`^[a-z0-9][a-z0-9-]*$`)
+    # 0001'den beri var; eksik olan sey ONDAN ONCE konusan bir cumleydi.
+    slug = args.tenant_slug.strip()
+    if not _SLUG_BICIMI.match(slug):
+        onerilen = re.sub(r"[^a-z0-9-]+", "-", slug.lower()).strip("-")
+        print(
+            f"Gecersiz tesis slug'i: {slug!r}\n"
+            "  Kural: yalniz KUCUK harf, rakam ve tire; rakam ya da harfle "
+            "baslamali (^[a-z0-9][a-z0-9-]*$).\n"
+            + (f"  Onerilen: --tenant-slug {onerilen}\n" if onerilen else ""),
+            file=sys.stderr,
+        )
+        return 2
+
     # Parola: bayrak > guvenli prompt. Bayrakla gelirse yine de dogrula.
     if args.password is not None:
         try:
@@ -135,7 +162,7 @@ def main() -> int:
             ON CONFLICT (slug) DO UPDATE SET ad = EXCLUDED.ad
             RETURNING id
             """,
-            (args.tenant_name, args.tenant_slug),
+            (args.tenant_name, slug),
         ).fetchone()[0]
 
         # 2) admin upsert ((tenant_id, email) benzersiz). Parola HER ZAMAN verilir
@@ -157,7 +184,7 @@ def main() -> int:
         )
 
     print("\n✓ Platform admin hazir.")
-    print(f"  Tenant (slug) : {args.tenant_slug}")
+    print(f"  Tenant (slug) : {slug}")
     print(f"  E-posta       : {email}")
     print("  Panele giris  : Tesis(slug) + e-posta + parola ile.")
     return 0

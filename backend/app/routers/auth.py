@@ -459,6 +459,22 @@ async def refresh(
                 await _revoke_family(redis, fam, jti)
                 raise APIError(401, "invalid_token", "kullanici_bulunamadi_veya_pasif")
 
+            # (P224) ARSIVLENMIS TESIS OTURUM YENILEYEMEZ.
+            #
+            # Giris yolu `tenant_uyelikleri` suzgeciyle zaten kapali ama
+            # ARSIVLEMEDEN ONCE alinmis bir oturum, yenilemeyle sonsuza
+            # kadar yasayabilirdi. Erisim jetonu kisa omurlu oldugu icin
+            # kopus en gec o sure sonunda tamamlanir.
+            arsiv = (
+                await session.execute(
+                    text("SELECT arsivlendi_at FROM tenant WHERE id = :t"),
+                    {"t": tenant_id},
+                )
+            ).scalar()
+            if arsiv is not None:
+                await _revoke_family(redis, fam, jti)
+                raise APIError(401, "invalid_token", "tesis_arsivde")
+
             access = create_access_token(
                 user_id=user.id, tenant_id=user.tenant_id, role=user.role
             )

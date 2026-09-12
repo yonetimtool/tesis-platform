@@ -11,7 +11,7 @@ import uuid
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, Header, Query
-from sqlalchemy import delete as sa_delete, func, or_, select
+from sqlalchemy import delete as sa_delete, func, or_, select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -527,6 +527,25 @@ async def delete_user(
     # YANILTICI; asil sebep yetki degil, kendini silemiyor olmasi.
     if obj.id == user.id:
         raise APIError(409, "conflict", "kendi_hesabini_silemez")
+    # (P224) SON PLATFORM ADMINI SILINEMEZ.
+    #
+    # Veritabani trigger'i (`trg_son_platform_admini_koru`, goc 0126) bunu
+    # ZATEN reddediyor ve asil koruma odur — uygulama katmani atlanabilir,
+    # veritabani atlanamaz. Buradaki kontrol yalnizca ANLASILIR bir mesaj
+    # icin: ham bir `restrict_violation` yoneticiye ne oldugunu da ne
+    # yapmasi gerektigini de soylemez.
+    #
+    # SAYIM TENANT-GENELI DEGIL PLATFORM-GENELI: RLS burada bakmamiza izin
+    # vermedigi icin SECURITY DEFINER sayaci kullanilir.
+    if obj.role == "admin":
+        kalan = (
+            await db.execute(
+                text("SELECT public.platform_admin_sayisi(:haric)"),
+                {"haric": obj.id},
+            )
+        ).scalar_one()
+        if kalan == 0:
+            raise APIError(409, "conflict", "son_platform_admini_silinemez")
     _yonetim_kapisi(user, obj.role)
     rol = obj.role  # sert silme sonrasi `obj` erisilemez olabilir; simdi oku.
 

@@ -47,6 +47,15 @@ class Action:
     #: farklidir (kullanicinin kendisi mi, yonetim mi) ve bu ayrim
     #: KVKK acisindan anlamlidir.
     ACCOUNT_SELF_DELETE = "account_self_delete"
+
+    # --- (P224) TESIS YASAM DONGUSU ---
+    #
+    # Bugune kadar tesis silme HICBIR YERE yazilmiyordu: prod'da bir tesis
+    # silindi, platform admini CASCADE ile gitti ve geriye "kim, ne zaman,
+    # neyi sildi" sorusunu yanitlayan TEK BIR SATIR bile kalmadi.
+    TENANT_ARCHIVE = "tenant_archive"      # arsivlendi (geri alinabilir)
+    TENANT_RESTORE = "tenant_restore"      # arsivden geri getirildi
+    TENANT_DELETE = "tenant_delete"        # GERCEK silme (geri alinamaz)
     KAYIT_SELF = "kayit_self"
     KAYIT_ONAY = "kayit_onay"
     KAYIT_RED = "kayit_red"

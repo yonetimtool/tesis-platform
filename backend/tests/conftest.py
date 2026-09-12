@@ -126,9 +126,34 @@ def _artik_temizligi():
                     "temizlik digerinin verisini siler. Once o kosumun "
                     "bitmesini bekleyin."
                 )
+            # (P224) PLATFORM ADMINLERI ONCE SILINIR.
+            #
+            # `trg_admin_tesisini_koru` (goc 0126) platform admini
+            # barindiran bir tesisin silinmesini REDDEDER — prod'da bir
+            # tesis silinip admin hesabi CASCADE ile gittigi ve panele
+            # girilemez hale gelindigi icin konuldu. Fixture tenant'lari
+            # da `role='admin'` kullanici tasiyor, yani bu temizlik
+            # trigger'a carpar.
+            #
+            # HATA FIXTURE'DA, KORUMADA DEGIL: uretimde de dogru yol
+            # aynidir — "adminleri once tasiyin ya da silin" (hata
+            # mesajinin kendisi bunu soyluyor). Burada tasiyacak yer
+            # olmadigi icin siliniyorlar.
+            #
+            # SIRA ONEMLI: admin satirlari gidince `trg_son_platform_
+            # admini_koru` da devreye girmez, cunku geride BASKA
+            # tenant'larin adminleri kalir (fixture her kosumda coklu
+            # tenant acar). TEK admin kalsaydi trigger hakli olarak
+            # engellerdi ve bu, korunmasi gereken durumun ta kendisidir.
             for onek in FIXTURE_SLUG_ONEKLERI:
+                cur.execute(
+                    "DELETE FROM app_user WHERE role = 'admin' AND tenant_id IN "
+                    "(SELECT id FROM tenant WHERE slug LIKE %s)", (onek + "%",))
                 cur.execute("DELETE FROM tenant WHERE slug LIKE %s", (onek + "%",))
             for desen in FIXTURE_SLUG_DESENLERI:
+                cur.execute(
+                    "DELETE FROM app_user WHERE role = 'admin' AND tenant_id IN "
+                    "(SELECT id FROM tenant WHERE slug ~ %s)", (desen,))
                 cur.execute("DELETE FROM tenant WHERE slug ~ %s", (desen,))
         yield
     finally:
@@ -205,7 +230,14 @@ def two_tenants(owner_conn):
     yield tenant_a, tenant_b
 
     # Temizlik: tenant silinince checkpoint'lar CASCADE ile gider.
+    # (P224) ADMINLER ONCE: `trg_admin_tesisini_koru` platform admini
+    # barindiran tesisin silinmesini reddeder (bkz. conftest basindaki
+    # oturum temizligi notu).
     with owner_conn.cursor() as cur:
+        cur.execute(
+            "DELETE FROM app_user WHERE role='admin' AND tenant_id IN (%s, %s)",
+            (tenant_a, tenant_b),
+        )
         cur.execute(
             "DELETE FROM tenant WHERE id IN (%s, %s)", (tenant_a, tenant_b)
         )
@@ -367,6 +399,11 @@ def world(owner_conn, request):
     # kalirdi (tur 46).
     def _sil() -> None:
         with owner_conn.cursor() as cur:
+            # (P224) ADMINLER ONCE — trigger tesisi korur.
+            cur.execute(
+                "DELETE FROM app_user WHERE role='admin' AND tenant_id IN (%s,%s)",
+                (a, b),
+            )
             cur.execute("DELETE FROM tenant WHERE id IN (%s,%s)", (a, b))
 
     request.addfinalizer(_sil)

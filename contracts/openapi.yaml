@@ -7787,6 +7787,75 @@ paths:
   # cogul yol kadroyu yonetir (ekleme/silme). Ikisi ayri durur cunku tekil
   # yola bir kimlik eklemek, eski cagiranlarin sessizce baska bir kaydi
   # guncellemesine yol acabilirdi.
+  /tenants/{tenant_id}/silme-ozeti:
+    parameters:
+      - name: tenant_id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [tenant]
+      summary: Silmeden once NE KAYBEDILECEK (YALNIZ platform admin)
+      description: >
+        (P224) Prod'da bir tesis silindi, platform admin hesabi CASCADE ile
+        gitti ve panele girilemez hale gelindi. Onay kutusu o gune kadar
+        yalnizca "SİL" yazdiriyordu; icinde ne oldugunu soyleyen tek bir
+        sayi yoktu. Bu uc kullanici/daire/finansal hareket/sikayet/belge/
+        denetim sayilarini doner. `onay_metni` SUNUCUDAN gelir — istemci
+        onu uydurmamali. Sayilar TEMSILIDIR: 100 cascade tablosunun
+        hepsini saymak hem yavas hem okunmaz olurdu.
+      responses:
+        "200":
+          description: ozet
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TenantSilmeOzeti" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /tenants/{tenant_id}/arsivle:
+    parameters:
+      - name: tenant_id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [tenant]
+      summary: Tesisi ARSIVLE — yikici olmayan, geri alinabilir (platform admin)
+      description: >
+        (P224) Arsivli tesis hicbir giris yolundan gorunmez
+        (`tenant_uyelikleri` suzgeci) ve tesis listesine gelmez. VERI
+        YERINDE DURUR; geri getirmek tek adimdir. Kendi bagli oldugun
+        tesis arsivlenemez (409) ve platform admini barindiran tesis de
+        arsivlenemez (409).
+      responses:
+        "200":
+          description: arsivlendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TenantSilmeOzeti" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /tenants/{tenant_id}/geri-al:
+    parameters:
+      - name: tenant_id
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [tenant]
+      summary: Tesisi ARSIVDEN geri getir (YALNIZ platform admin)
+      description: >
+        (P224) Yanlis silmeden donus yolu. Arsivde OLMAYAN tesis 409.
+      responses:
+        "200":
+          description: geri getirildi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TenantSilmeOzeti" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
   /tenants/{tenant_id}/kvkk:
     parameters:
       - name: tenant_id
@@ -16370,6 +16439,34 @@ components:
         yoneticiler:
           type: array
           items: { $ref: "#/components/schemas/YoneticiCreatedOut" }
+    TenantSilmeOzeti:
+      type: object
+      required: [tenant_id, ad, slug, onay_metni, kullanici, daire,
+                 finansal_hareket, sikayet, belge, denetim_kaydi,
+                 dogrudan_silinebilir, platform_admini_var]
+      properties:
+        tenant_id: { type: string, format: uuid }
+        ad: { type: string }
+        slug: { type: string }
+        arsivlendi_at: { type: string, format: date-time, nullable: true }
+        onay_metni:
+          type: string
+          description: >
+            (P224) Silme onayina YAZILACAK metin = tesisin adi. "SİL" gibi
+            sabit bir kelime her tesiste ayni oldugu icin kas hafizasi
+            uretiyor ve yanlis tesiste de ayni refleksle yaziliyordu.
+        kullanici: { type: integer }
+        daire: { type: integer }
+        finansal_hareket: { type: integer }
+        sikayet: { type: integer }
+        belge: { type: integer }
+        denetim_kaydi: { type: integer }
+        dogrudan_silinebilir:
+          type: boolean
+          description: >
+            false ise tesis once ARSIVLENMELI (gecmisi var ya da platform
+            admini barindiriyor).
+        platform_admini_var: { type: boolean }
     TenantAdminListItem:
       type: object
       required: [id, ad, kurulum_tamamlandi, created_at]

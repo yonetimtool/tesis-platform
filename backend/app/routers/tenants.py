@@ -12,13 +12,14 @@ import json
 import uuid
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 
-from ..db import SessionLocal
+from ..db import SessionLocal, set_tenant
 from ..deps import require_role
 from ..errors import APIError
+from ..audit import Action, audit_user
 from ..models import AppUser
 from ..schemas import (
     KvkkMetinCreate,
@@ -30,6 +31,7 @@ from ..schemas import (
     TenantAdminDetail,
     TenantAdminListItem,
     TenantAdminListResponse,
+    TenantSilmeOzeti,
     TenantAdminUpdate,
     TenantYoneticiAdd,
     TenantYoneticiAddedOut,
@@ -147,18 +149,32 @@ async def create_tenant(
 
 @router.get("", response_model=TenantAdminListResponse)
 async def list_tenants(
+    arsivli: bool = Query(
+        False,
+        description=(
+            "(P224) true: YALNIZ arsivlenmis tesisler. Varsayilan false — "
+            "arsiv ayri bir ekrandir, ayni listeye karismaz."
+        ),
+    ),
     _: AppUser = Depends(_ADMIN),
 ) -> TenantAdminListResponse:
-    """Admin: TUM tesisler (id + ad + kurulum durumu + tarih). Baska tenant
-    verisi (kullanici vb.) donmez."""
+    """Admin: tesisler (id + ad + kurulum durumu + tarih). Baska tenant
+    verisi (kullanici vb.) donmez.
+
+    (P224) ARSIVLILER VARSAYILAN OLARAK GELMEZ. Silindi sanilan bir tesisi
+    listede gormek, yoneticiye "silinmemis" dedirtirdi; arsiv ayri bir
+    gorunumdur ve oraya ACIKCA bakilir.
+    """
     async with SessionLocal() as session:
         async with session.begin():
             rows = (
                 await session.execute(
                     text(
                         "SELECT id, ad, kayit_kodu, kurulum_tamamlandi, "
-                        "created_at FROM public.list_all_tenants()"
-                    )
+                        "created_at, arsivlendi_at "
+                        "FROM public.list_all_tenants(:arsivli)"
+                    ),
+                    {"arsivli": arsivli},
                 )
             ).all()
     return TenantAdminListResponse(
@@ -169,6 +185,7 @@ async def list_tenants(
                 kayit_kodu=r.kayit_kodu,
                 kurulum_tamamlandi=r.kurulum_tamamlandi,
                 created_at=r.created_at,
+                arsivlendi_at=r.arsivlendi_at,
             )
             for r in rows
         ]
@@ -589,15 +606,219 @@ async def kvkk_yayinla(
     )
 
 
+#: (P224) SILME OZETI — SECURITY DEFINER fonksiyondan.
+#:
+#: DUZ SORGU CALISMAZ ve bu OLCULDU: bu uclar PLATFORM uclarıdır, tenant
+#: baglami olmadan kosar; `tenant` RLS politikasi
+#: `id = current_setting('app.current_tenant_id')` dedigi icin ayar bos
+#: olunca sorgu `invalid input syntax for type uuid: ""` ile patlar.
+#: Depodaki butun platform uclari ayni sebeple SECURITY DEFINER kullanir.
+_OZET_SQL = text(
+    "SELECT ad, slug, arsivlendi_at, kullanici, daire, finans, sikayet, "
+    "belge, denetim, platform_admin FROM public.tenant_silme_ozeti(:tid)"
+)
+
+
+async def _ozet(session, tenant_id: uuid.UUID):
+    satir = (await session.execute(_OZET_SQL, {"tid": tenant_id})).mappings().first()
+    if satir is None:
+        raise APIError(404, "not_found", "tenant_bulunamadi")
+    return satir
+
+
+def _gecmisi_var(satir) -> bool:
+    """(P224) "Gecmisi olan tesis" tanimi — P189'un tesis karsiligi.
+
+    P189'da KULLANICI silmede olcut "ledger referansi var mi" idi: gecmisi
+    olan anonimlestirilir, olmayan silinir. Tesiste karsiligi PARA ve
+    SIKAYET: ikisi de geriye donuk sorulabilen, silindiginde yerine
+    konamayan kayitlardir. Daire/kullanici sayisi olcut DEGIL — bos bir
+    deneme tesisinde de daire acilmis olabilir ve onu silmek mesrudur.
+    """
+    return bool(satir["finans"]) or bool(satir["sikayet"])
+
+
+@router.get("/{tenant_id}/silme-ozeti", response_model=TenantSilmeOzeti)
+async def tenant_silme_ozeti(
+    tenant_id: uuid.UUID,
+    _: AppUser = Depends(_ADMIN),
+) -> TenantSilmeOzeti:
+    """(P224) SILMEDEN ONCE NE KAYBEDILECEK.
+
+    Bugunku kaza tam olarak bu ekranin yoklugundan oldu: onay kutusu
+    yalnizca "SİL" yazdiriyordu ve icinde ne oldugunu soyleyen tek bir
+    sayi yoktu.
+
+    `onay_metni` SUNUCUDAN doner: istemci onu uydurmamali. Onay kelimesi
+    artik TESISIN ADI — "SİL" her tesiste ayni oldugu icin kas hafizasi
+    olusturuyor ve yanlis tesiste de ayni refleksle yaziliyordu.
+    """
+    async with SessionLocal() as session:
+        async with session.begin():
+            r = await _ozet(session, tenant_id)
+    return TenantSilmeOzeti(
+        tenant_id=tenant_id,
+        ad=r["ad"],
+        slug=r["slug"],
+        arsivlendi_at=r["arsivlendi_at"],
+        onay_metni=r["ad"],
+        kullanici=r["kullanici"],
+        daire=r["daire"],
+        finansal_hareket=r["finans"],
+        sikayet=r["sikayet"],
+        belge=r["belge"],
+        denetim_kaydi=r["denetim"],
+        dogrudan_silinebilir=not _gecmisi_var(r) and not r["platform_admin"],
+        platform_admini_var=bool(r["platform_admin"]),
+    )
+
+
+@router.post("/{tenant_id}/arsivle", response_model=TenantSilmeOzeti)
+async def tenant_arsivle(
+    tenant_id: uuid.UUID,
+    user: AppUser = Depends(_ADMIN),
+) -> TenantSilmeOzeti:
+    """(P224) Tesisi ARSIVLE — yikici olmayan, geri alinabilir adim.
+
+    Arsivli tesis hicbir giris yolundan gorunmez (`tenant_uyelikleri`
+    suzgeci) ve tesis listesine gelmez. VERI YERINDE DURUR: geri getirmek
+    tek UPDATE'tir.
+
+    KENDI TESISINI ARSIVLEYEMEZSIN: platform admini kendi girisini
+    kapatmis olurdu ve bu, bugunku kazanin daha sessiz bir tekrariydi.
+    """
+    if tenant_id == user.tenant_id:
+        raise APIError(409, "conflict", "kendi_tesisini_arsivleyemezsin")
+    async with SessionLocal() as session:
+        async with session.begin():
+            # (P224) DENETIM SATIRI YAZILABILSIN DIYE ADMININ KENDI
+            # BAGLAMI KURULUR. Okuma/yazma BASKA tesise SECURITY DEFINER
+            # ile gidiyor; `audit_log` ise RLS'e tabi ve satir adminin
+            # kendi tesisine yazilir — silinen tesise yazsaydik cascade
+            # onu da goturur ve "kim ne sildi" sorusu cevapsiz kalirdi.
+            await set_tenant(session, user.tenant_id)
+            r = await _ozet(session, tenant_id)
+            if r["platform_admin"]:
+                raise APIError(409, "conflict", "tesiste_platform_admini_var")
+            await session.execute(
+                text("SELECT public.tenant_arsiv_ayarla(:tid, true)"),
+                {"tid": tenant_id},
+            )
+            await audit_user(
+                session, user,
+                action=Action.TENANT_ARCHIVE,
+                resource_type="tenant",
+                resource_id=tenant_id,
+                meta={
+                    "ad": r["ad"],
+                    "kullanici": r["kullanici"],
+                    "daire": r["daire"],
+                    "finansal_hareket": r["finans"],
+                    "sikayet": r["sikayet"],
+                },
+            )
+            son = await _ozet(session, tenant_id)
+    return TenantSilmeOzeti(
+        tenant_id=tenant_id, ad=son["ad"], slug=son["slug"],
+        arsivlendi_at=son["arsivlendi_at"], onay_metni=son["ad"],
+        kullanici=son["kullanici"], daire=son["daire"],
+        finansal_hareket=son["finans"], sikayet=son["sikayet"],
+        belge=son["belge"], denetim_kaydi=son["denetim"],
+        dogrudan_silinebilir=False, platform_admini_var=False,
+    )
+
+
+@router.post("/{tenant_id}/geri-al", response_model=TenantSilmeOzeti)
+async def tenant_geri_al(
+    tenant_id: uuid.UUID,
+    user: AppUser = Depends(_ADMIN),
+) -> TenantSilmeOzeti:
+    """(P224) Arsivden GERI GETIR — yanlis silmeden donus yolu."""
+    async with SessionLocal() as session:
+        async with session.begin():
+            await set_tenant(session, user.tenant_id)
+            r = await _ozet(session, tenant_id)
+            if r["arsivlendi_at"] is None:
+                raise APIError(409, "conflict", "tesis_arsivde_degil")
+            await session.execute(
+                text("SELECT public.tenant_arsiv_ayarla(:tid, false)"),
+                {"tid": tenant_id},
+            )
+            await audit_user(
+                session, user,
+                action=Action.TENANT_RESTORE,
+                resource_type="tenant",
+                resource_id=tenant_id,
+                meta={"ad": r["ad"]},
+            )
+            son = await _ozet(session, tenant_id)
+    return TenantSilmeOzeti(
+        tenant_id=tenant_id, ad=son["ad"], slug=son["slug"],
+        arsivlendi_at=None, onay_metni=son["ad"],
+        kullanici=son["kullanici"], daire=son["daire"],
+        finansal_hareket=son["finans"], sikayet=son["sikayet"],
+        belge=son["belge"], denetim_kaydi=son["denetim"],
+        dogrudan_silinebilir=not _gecmisi_var(son) and not son["platform_admin"],
+        platform_admini_var=bool(son["platform_admin"]),
+    )
+
+
 @router.delete("/{tenant_id}", status_code=204)
 async def delete_tenant_endpoint(
     tenant_id: uuid.UUID,
-    _: AppUser = Depends(_ADMIN),
+    onay: str = Query(
+        ...,
+        description=(
+            "(P224) Tesisin TAM ADI. 'SİL' gibi sabit bir kelime her "
+            "tesiste ayni oldugu icin kas hafizasi olusturuyordu."
+        ),
+    ),
+    user: AppUser = Depends(_ADMIN),
 ) -> Response:
-    """Admin: tesisi ve ON DELETE CASCADE ile TUM verisini (yonetici + duyuru +
-    daire + sakin...) siler. GERI ALINAMAZ. Bilinmeyen tesis 404."""
+    """Admin: tesisi ve CASCADE ile TUM verisini siler. GERI ALINAMAZ.
+
+    =====================================================================
+    (P224) UC KADEMELI KORUMA — bugunku kazadan sonra
+    =====================================================================
+      1. ONAY = TESISIN ADI. Sunucu da dogrular; panelin tek basina
+         zorlamasi, ucu dogrudan cagiran her seyi (betik, curl, ileride
+         yazilacak baska bir istemci) korumasiz birakirdi.
+      2. PLATFORM ADMINI BARINDIRAN TESIS SILINEMEZ. Trigger da bunu
+         reddeder; buradaki kontrol yalnizca ANLASILIR bir mesaj vermek
+         icin — ham bir `restrict_violation` yoneticiye hicbir sey
+         anlatmaz.
+      3. GECMISI OLAN TESIS DOGRUDAN SILINEMEZ, once ARSIVLENIR. P189'un
+         kullanici silmedeki "akilli silme" mantiginin tesis karsiligi:
+         geriye donuk sorulabilen kayit varsa yikici islem TEK ADIMDA
+         yapilmaz.
+    """
     async with SessionLocal() as session:
         async with session.begin():
+            await set_tenant(session, user.tenant_id)
+            r = await _ozet(session, tenant_id)
+            if onay.strip() != r["ad"]:
+                raise APIError(409, "conflict", "tesis_adi_onayi_tutmadi")
+            if r["platform_admin"]:
+                raise APIError(409, "conflict", "tesiste_platform_admini_var")
+            if _gecmisi_var(r) and r["arsivlendi_at"] is None:
+                raise APIError(409, "conflict", "tesis_once_arsivlenmeli")
+            # DENETIM SATIRI SILMEDEN ONCE YAZILIR: ayni transaction'da
+            # olsa bile, `audit_log.tenant_id` cascade ile gidecegi icin
+            # kayit SILINEN tesise degil ADMININ tesisine yazilir
+            # (`audit_user` tam bunu yapar) — yoksa "kim ne sildi"
+            # sorusunun cevabi da silinirdi.
+            await audit_user(
+                session, user,
+                action=Action.TENANT_DELETE,
+                resource_type="tenant",
+                resource_id=tenant_id,
+                meta={
+                    "ad": r["ad"], "slug": r["slug"],
+                    "kullanici": r["kullanici"], "daire": r["daire"],
+                    "finansal_hareket": r["finans"], "sikayet": r["sikayet"],
+                    "belge": r["belge"], "denetim_kaydi": r["denetim"],
+                },
+            )
             deleted = (
                 await session.execute(
                     text("SELECT public.delete_tenant(:tid)"),

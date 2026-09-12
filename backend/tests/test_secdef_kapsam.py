@@ -54,6 +54,11 @@ ENVANTER: dict[str, tuple[str, tuple[str, str] | None]] = {
         ("post", "/tenants/{tid}/yonetici/reset-credential"),
     ),
     "delete_tenant": ("admin", ("delete", "/tenants/{tid}")),
+    # (P224) TESIS SILME KORUMASI. Ucu de PLATFORM ucudur (tenant sinirini
+    # gecer) ve ucu de YALNIZ admin.
+    "tenant_silme_ozeti": ("admin", ("get", "/tenants/{tid}/silme-ozeti")),
+    "tenant_arsiv_ayarla": ("admin", ("post", "/tenants/{tid}/arsivle")),
+    "platform_admin_sayisi": ("admin", ("delete", "/users/{uid}")),
     # (P154) Tesis basina COKLU yonetici. Ucu de tenant sinirini GECER
     # (admin baska bir tesisin kadrosunu yonetir) ve ucu de YALNIZ admin.
     "tenant_yoneticiler": ("admin", ("get", "/tenants/{tid}/yoneticiler")),

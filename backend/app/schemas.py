@@ -3734,6 +3734,39 @@ class TenantAdminListItem(BaseModel):
     kayit_kodu: str | None = None
     kurulum_tamamlandi: bool
     created_at: datetime
+    #: (P224) Dolu ise tesis ARSIVDE. Liste varsayilan olarak arsivlileri
+    #: HIC getirmez; bu alan yalnizca arsiv ekraninda dolar.
+    arsivlendi_at: datetime | None = None
+
+
+class TenantSilmeOzeti(BaseModel):
+    """(P224) SILMEDEN ONCE NE KAYBEDILECEK.
+
+    Bugunku kaza, kullanicinin ne kaybedecegini GORMEDEN onaylamasiyla
+    oldu. Onay kutusu yalnizca "SİL" yazdiriyordu; icinde ne oldugunu
+    soyleyen tek bir sayi yoktu.
+
+    SAYILAR TAM DEGIL, TEMSILI: 100 cascade tablosunun hepsini saymak
+    hem yavas hem okunmaz olurdu. Kullanicinin karar vermesine yetecek
+    olanlar secildi — kullanici, daire, para, sikayet, belge, denetim.
+    """
+
+    tenant_id: uuid.UUID
+    ad: str
+    slug: str
+    arsivlendi_at: datetime | None = None
+    #: Onay kutusuna YAZILACAK metin. Sunucu soyler ki istemci uydurmasin.
+    onay_metni: str
+    kullanici: int
+    daire: int
+    finansal_hareket: int
+    sikayet: int
+    belge: int
+    denetim_kaydi: int
+    #: Gecmisi olan tesis DOGRUDAN silinemez; once arsivlenir.
+    dogrudan_silinebilir: bool
+    #: Platform admini barindiran tesis HICBIR kosulda silinemez.
+    platform_admini_var: bool
 
 
 class TenantAdminListResponse(BaseModel):
