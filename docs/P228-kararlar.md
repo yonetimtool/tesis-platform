@@ -112,9 +112,49 @@ sonra bağlam **gerçekten** o tesisti.
 beri. Hiçbir sürümde `eposta_dogrulandi` denetimi bulunmuyordu — yani
 bu bir regresyon değil, **baştan eksik** bir denetim.
 
-**Prod'da kimler etkilendi: ÖLÇEMEDİM.** Bu makine (192.168.20.101)
-dev; prod'a (192.168.1.105) erişimim yok. Tarama sorgusu
-`docs/P228-prod-tarama.sql` dosyasında — çalıştırması kullanıcıda.
+**Prod'da kimler etkilendi — ÖLÇÜLDÜ (2026-09-13, kullanıcı çalıştırdı):**
+
+| e-posta | tesis | durum |
+|---|---|---|
+| `yonetimtool@gmail.com` | 3 (Ergene Vadisi, Oltu Sitesi, Yönetio Platform) | 1 doğrulanmış, **2 doğrulanmamış** |
+| `kafkasozunde@gmail.com` | 2 (CityAmbiance69 security, Oltu Sitesi resident) | 1 doğrulanmış, **1 doğrulanmamış** |
+
+Bu iki hesabın her doğrulanmamış satırı bir sızıntıydı.
+
+## 6. BİLDİRİLEN VAKA AÇIKLANMADI — düzeltme
+
+Yukarıdaki §2'de anlatılan mekanizma **Kerem Aşçı'nın vakasını
+açıklamıyor.** Prod taraması onun için tek satır gösteriyor:
+
+```
+Kerem AŞCI | keremasci34@gmail.com | dogrulandi=f | +905071531323 | yonetici | CityAmbiance69
+```
+
+E-postası başka hiçbir tesiste yok; telefonu global benzersiz. Yani
+`tenant_uyelikleri` onun için Oltu Sitesi'ni **hiçbir koşulda**
+döndüremezdi. §2'deki kök neden analizi **iki başka hesap için doğru**
+ama **bildirilen vaka için kanıtlanmadı** — ilk raporda verilen üç satır
+da (farklı e-posta, farklı telefon) bu mekanizmayla eşleşmiyordu ve bunu
+o sırada fark etmeliydim.
+
+Açık kalan üç olasılık, sıralı:
+
+1. **Satır sonradan kalktı.** Aynı günlerde prod kurtarma işlemi
+   yapıldı (platform admini kalmamıştı); Kerem'in Oltu'daki satırı o
+   sırada silinmiş/taşınmış olabilir. `docs/P228-prod-tarama2.sql`
+   §5–6 denetim kaydında bunu arar.
+2. **İstemci önbelleği.** Mobil "Tesis değiştir" listesi bir kez
+   çekilip saklanıyorsa, satır kalktıktan sonra da görünmeye devam
+   ederdi.
+3. **Üçüncü bir yol.** Ölçtüğüm iki uç dışında bir kaynak. `tesis_uyelik`
+   tablosu arandı: modelde var, **hiçbir router onu okumuyor**.
+
+Düzeltmenin kendisi bu belirsizlikten bağımsız olarak doğru ve
+gereklidir — ölçülen iki gerçek sızıntıyı kapatıyor. Ama "bildirilen
+şikâyetin nedeni buydu" **denemez**.
+
+Tarama sorguları `docs/P228-prod-tarama.sql` ve
+`docs/P228-prod-tarama2.sql`.
 
 ## 6. Web/mobil parite
 
