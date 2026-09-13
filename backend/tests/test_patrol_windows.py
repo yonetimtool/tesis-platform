@@ -74,8 +74,31 @@ def test_range_status_order_and_counts(client, world, owner_conn):
     w3 = _ins_window(owner_conn, world["a"], plan["id"], T3, T3 + HOUR, "bekliyor")
     _ins_scan(owner_conn, world["a"], guard_id, cp1["id"], T1 + timedelta(seconds=5))  # w1 -> 1/2
 
-    # tum kume: DESC (en yeni ustte) + sayilar + ozet
-    r = client.get("/patrol-windows", headers=admin)
+    # (P226) SORGU KENDI PLANINA DARALTILDI — SIRA BAGIMLILIGI GIDERILDI.
+    #
+    # OLCULEN KUSUR: sorgu SUZGECSIZDI ve "tum kume" ile TESISIN TAMAMINI
+    # kastediyordu. Ayni tesiste pencere acan BASKA testler once kostugunda
+    # liste onlari da getiriyor ve kilit duser:
+    #     AssertionError: Left contains 12 more items
+    # Yalitimda her zaman geciyordu (6/6), tam suitte SIRAYA gore
+    # duruyordu — yani kusur URUNDE DEGIL TESTTE.
+    #
+    # `patrol_plan_id` ucun KENDI suzgeci; testin olctugu sey (DESC
+    # siralama + sayimlar + ozet) bu daraltmayla AYNEN olculuyor, cunku
+    # ucuncu satirlar zaten baska planlara ait.
+    # SIRA BAGIMSIZLIGININ KANITI: BASKA bir planin penceresi de acilir.
+    # Suzgec kaldirilirsa bu satir testi DUSURUR — yani kilit, "tam suitte
+    # baska testler once kossa ne olurdu" durumunu KENDI ICINDE uretiyor.
+    # Boyle olmadan duzeltme yalnizca "bugun gecti"ye dayanirdi.
+    baska_plan = _plan(client, admin, [cp1["id"]])
+    _ins_window(
+        owner_conn, world["a"], baska_plan["id"], T3 + HOUR, T3 + 2 * HOUR,
+        "bekliyor",
+    )
+
+    r = client.get(
+        "/patrol-windows", headers=admin, params={"patrol_plan_id": plan["id"]}
+    )
     assert r.status_code == 200, r.text
     body = r.json()
     ids = [w["id"] for w in body["items"]]
