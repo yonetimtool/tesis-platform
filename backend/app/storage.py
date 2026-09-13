@@ -48,11 +48,28 @@ def _require_config() -> None:
         )
 
 
-def _client():
+def _client(*, ic: bool = False):
+    """S3 istemcisi.
+
+    (P227 §1) IKI ADRES, IKI IS:
+      * `ic=True`  -> SUNUCU-TARAFI islem (put/delete). Konteyner aginin
+        icinden erisilen adres (`http://minio:9000`).
+      * `ic=False` -> PRESIGN. Imza HOST'A baglidir, dolayisiyla URL
+        istemcinin erisecegi PUBLIC adresle uretilmelidir.
+
+    Ikisini tek ayara baglamak prod'da rapor uretimini `SSLError` ile
+    dusurdu: `worker` PDF'i yuklemek icin PUBLIC adrese cikmaya calisti
+    ve konteyner icinden kendi genel adresine erisilemiyor (NAT
+    reflection). Gerekce ve olcum: config.minio_internal_endpoint.
+    """
     _require_config()
+    adres = (
+        settings.minio_internal_endpoint.strip()
+        or settings.minio_endpoint
+    ) if ic else settings.minio_endpoint
     return boto3.client(
         "s3",
-        endpoint_url=settings.minio_endpoint,
+        endpoint_url=adres,
         aws_access_key_id=settings.minio_access_key,
         aws_secret_access_key=settings.minio_secret_key,
         region_name=settings.minio_region,
@@ -143,7 +160,7 @@ def sunucudan_yukle(
     ANAHTAR CAGIRANDAN GELIR ve tenant onekli olmalidir (`make_foto_key`
     ile ayni kural): bu fonksiyon anahtari DOGRULAMAZ, yalnizca yazar.
     """
-    _client().put_object(
+    _client(ic=True).put_object(
         Bucket=settings.minio_bucket,
         Key=key,
         Body=icerik,
@@ -161,7 +178,7 @@ def delete_objects(keys: list[str]) -> int:
     keys = [k for k in keys if k]
     if not keys:
         return 0
-    client = _client()
+    client = _client(ic=True)
     deleted = 0
     for i in range(0, len(keys), 1000):
         chunk = keys[i : i + 1000]
@@ -181,7 +198,7 @@ def delete_prefix(prefix: str) -> int:
     sey yapmaz (tum bucket'i silmeyi onler)."""
     if not prefix:
         return 0
-    client = _client()
+    client = _client(ic=True)
     keys: list[str] = []
     paginator = client.get_paginator("list_objects_v2")
     for page in paginator.paginate(Bucket=settings.minio_bucket, Prefix=prefix):

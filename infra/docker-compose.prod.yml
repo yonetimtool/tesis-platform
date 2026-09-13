@@ -412,8 +412,13 @@ services:
       # backend/app/config.py -> portal_base_url.
       PORTAL_BASE_URL: ${PORTAL_BASE_URL:-https://yönetiyor.com}
       # MinIO: presigned URL host'u PUBLIC storage adresi olmali (istemci erisir).
-      # api sunucu-tarafi MinIO cagrisi YAPMAZ (presign yerel imzalanir).
       MINIO_ENDPOINT: ${MINIO_PUBLIC_URL}
+      # (P227 §1) "api sunucu-tarafi MinIO cagrisi YAPMAZ" YORUMU YANLISTI
+      # ve olculdu: `banka.py` dekont PDF'ini, `hesap_silme.py` avatar
+      # silmeyi SUNUCU TARAFINDAN yapiyor. Public adrese cikmak konteyner
+      # icinden NAT reflection'a takiliyor (rapor uretiminde `SSLError`
+      # olarak goruldu). Presign yine PUBLIC adresle imzalanir.
+      MINIO_INTERNAL_ENDPOINT: ${MINIO_INTERNAL_URL:-http://minio:9000}
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD gerekli}
       MINIO_BUCKET: ${MINIO_BUCKET:-tesis-foto}
@@ -525,6 +530,14 @@ services:
       OWNER_DSN: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD gerekli}@db:5432/${POSTGRES_DB}
       APP_DSN: postgresql://${APP_DB_USER:?APP_DB_USER gerekli (bos birakilirsa baglanti kimligi belirsizlesir)}:${APP_DB_PASSWORD:?APP_DB_PASSWORD gerekli}@db:5432/${POSTGRES_DB}
       MINIO_ENDPOINT: ${MINIO_PUBLIC_URL}
+      # (P227 §1) SUNUCU-TARAFI ADRES — RAPOR URETIMI BUNSUZ SSLError VERIYORDU.
+      #
+      # `worker` uretilen PDF/Excel'i MinIO'ya YUKLER (rapor_kuyruk.py ->
+      # storage.sunucudan_yukle). MINIO_ENDPOINT public adres oldugu icin
+      # konteyner kendi genel adresine cikmaya calisiyor; pfSense NAT
+      # reflection bunu engelliyor ve TLS el sikismasi kopuyordu.
+      # Presign PUBLIC adresle imzalanmaya devam eder (imza host'a bagli).
+      MINIO_INTERNAL_ENDPOINT: ${MINIO_INTERNAL_URL:-http://minio:9000}
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD gerekli}
       MINIO_BUCKET: ${MINIO_BUCKET:-tesis-foto}

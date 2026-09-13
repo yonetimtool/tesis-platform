@@ -249,6 +249,22 @@ class Settings(BaseSettings):
     # --- MinIO (S3-uyumlu foto kanit deposu) ---
     # PUBLIC endpoint: presigned URL host'u (istemci buraya PUT'lar). dev: localhost.
     minio_endpoint: str = "http://localhost:9000"
+    #: (P227 §1) SUNUCU-TARAFI endpoint — put/delete BURAYA gider.
+    #:
+    #: OLCULEN KUSUR: tek ayar IKI FARKLI ISE hizmet ediyordu ve prod'da
+    #: rapor uretimi `SSLError` veriyordu. `worker`, PDF'i MinIO'ya
+    #: yuklerken `MINIO_ENDPOINT`i kullaniyor; o da PUBLIC adrese
+    #: (`https://storage.yonetio.site`) ayarli. Konteyner icinden kendi
+    #: genel adresine cikmak pfSense NAT reflection yuzunden calismiyor,
+    #: TLS el sikismasi kopuyor ve kullaniciya "SSLError" gorunuyordu.
+    #:
+    #: compose'daki yorum bile varsayimi yaziyordu: "api sunucu-tarafi
+    #: MinIO cagrisi YAPMAZ (presign yerel imzalanir)". `api` icin DOGRU,
+    #: `worker` icin YANLIS — ve iki servise de AYNI deger veriliyordu.
+    #:
+    #: BOS BIRAKILIRSA `minio_endpoint`e duser: dev'de ve tek-adresli
+    #: kurulumlarda davranis DEGISMEZ.
+    minio_internal_endpoint: str = ""
     minio_access_key: str = "minioadmin"
     minio_secret_key: str = "minioadmin12345"  # compose varsayilani ile ayni (>=8)
     minio_bucket: str = "tesis-foto"

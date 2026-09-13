@@ -11,6 +11,7 @@ kilmak, logo yuklememis bir siteye rapor urettirmemek olurdu.
 from __future__ import annotations
 
 import io
+import logging
 from datetime import date, datetime, timezone
 
 from openpyxl import Workbook
@@ -244,6 +245,55 @@ def _excel_deger(sutun, ham):
 
 
 # ================================== PDF ===================================== #
+
+# =========================================================================== #
+# (P227 §2) TURKCE KARAKTERLER — Helvetica BUNLARI CIZEMIYORDU
+# =========================================================================== #
+#
+# OLCULDU: uretilen PDF'in metni cikarilinca su cikti —
+#     "Olu■turma", "Kad■köy", "■stanbul", "Ba■■ms■z Bölüm"
+# `ç`, `ö`, `ü` DOGRU ciziliyordu ama `ş`, `ğ`, `ı`, `İ` KUTU oluyordu.
+#
+# SEBEP: reportlab'in gomulu `Helvetica`si WinAnsi (cp1252) kodlamasi
+# kullanir; o kume `ç/ö/ü` icerir ama `ş/ğ/ı/İ` ICERMEZ (onlar Latin-5).
+# Yani kusur "bazen bozuluyor" degil, TANIMLI bir eksiklikti ve
+# "muhasebeciye verilebilecek kalite" iddiasini dogrudan cürütüyordu.
+#
+# COZUM: DejaVuSans — imajda ZATEN KURULU (`/usr/share/fonts/truetype/
+# dejavu`), tam Unicode kapsar. Yeni bagimlilik YOK.
+#
+# GERI DUSUS VAR ve SESSIZ DEGIL: font bulunamazsa Helvetica'ya donulur
+# ve UYARI log'a yazilir. Rapor uretimini font yuzunden dusurmek, bozuk
+# birkac harf yuzunden butun ciktiyi kaybettirmek olurdu.
+_TR_FONT = "DejaVuSans"
+_TR_FONT_BOLD = "DejaVuSans-Bold"
+_FONT_ADAYLARI = (
+    ("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+     "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"),
+)
+
+
+def _turkce_font() -> tuple[str, str]:
+    """(duz, kalin) font adlari. Kayit BIR KEZ yapilir."""
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+
+    if _TR_FONT in pdfmetrics.getRegisteredFontNames():
+        return _TR_FONT, _TR_FONT_BOLD
+    for duz, kalin in _FONT_ADAYLARI:
+        try:
+            pdfmetrics.registerFont(TTFont(_TR_FONT, duz))
+            pdfmetrics.registerFont(TTFont(_TR_FONT_BOLD, kalin))
+            return _TR_FONT, _TR_FONT_BOLD
+        except Exception:  # noqa: BLE001 — sebebi asagida loglanir
+            continue
+    logging.getLogger(__name__).warning(
+        "[rapor] Turkce font bulunamadi, Helvetica'ya donuluyor: "
+        "s/g/i harfleri KUTU cizilecek"
+    )
+    return "Helvetica", "Helvetica-Bold"
+
+
 def pdf_uret(
     sonuc: RaporSonuc,
     site_ad: str,
@@ -277,6 +327,8 @@ def pdf_uret(
 
 def _ciz(sonuc, site_ad, baslangic, bitis, sayfa, logo_png, tampon, toplam=None,
          veri=None, grafik=None, site_adres=None):
+    # (P227 §2) TURKCE FONT — gerekcesi `_turkce_font` basliginda.
+    F, FB = _turkce_font()
     hedef = tampon or io.BytesIO()
     c = pdf_canvas.Canvas(hedef, pagesize=sayfa)
     genislik, yukseklik = sayfa
@@ -312,11 +364,11 @@ def _ciz(sonuc, site_ad, baslangic, bitis, sayfa, logo_png, tampon, toplam=None,
                 sol = kenar
         else:
             sol = kenar
-        c.setFont("Helvetica-Bold", 14)
+        c.setFont(FB, 14)
         c.drawString(sol, y - 5 * mm, site_ad)
-        c.setFont("Helvetica-Bold", 11)
+        c.setFont(FB, 11)
         c.drawString(sol, y - 11 * mm, sonuc.baslik)
-        c.setFont("Helvetica", 8)
+        c.setFont(F, 8)
         c.drawString(sol, y - 16 * mm, f"Dönem: {_aralik_metni(baslangic, bitis)}")
         c.drawRightString(genislik - kenar, y - 16 * mm, f"Oluşturma: {_damga()}")
         y -= 22 * mm
@@ -324,11 +376,11 @@ def _ciz(sonuc, site_ad, baslangic, bitis, sayfa, logo_png, tampon, toplam=None,
         # adiyla degil adresiyle de gostermesi gerekir. Adres YOKSA satir
         # HIC acilmaz ve yerlesim aynen eskisi gibi kalir.
         if site_adres:
-            c.setFont("Helvetica", 7)
+            c.setFont(F, 7)
             c.setFillColor(colors.grey)
             c.drawString(kenar, y + 4 * mm, site_adres[:150])
             c.setFillColor(colors.black)
-        c.setFont("Helvetica-Bold", 8)
+        c.setFont(FB, 8)
         for s, sx in zip(sutunlar, xler):
             c.drawString(sx, y, s.baslik[:28])
         y -= 2 * mm
@@ -336,20 +388,20 @@ def _ciz(sonuc, site_ad, baslangic, bitis, sayfa, logo_png, tampon, toplam=None,
         return y - satir_yuksekligi
 
     def _altbilgi() -> None:
-        c.setFont("Helvetica", 7)
+        c.setFont(F, 7)
         c.setFillColor(colors.grey)
         etiket = f"Sayfa {sayfa_no}" + (f" / {toplam}" if toplam else "")
         c.drawCentredString(genislik / 2, kenar / 2, etiket)
         c.setFillColor(colors.black)
 
     y = _baslik()
-    c.setFont("Helvetica", 8)
+    c.setFont(F, 8)
     for satir in sonuc.satirlar:
         if y < kenar + 20 * mm:
             _altbilgi()
             c.showPage()
             y = _baslik()
-            c.setFont("Helvetica", 8)
+            c.setFont(F, 8)
         for s, sx in zip(sutunlar, xler):
             ham = satir.get(s.anahtar)
             metin = (
@@ -365,7 +417,7 @@ def _ciz(sonuc, site_ad, baslangic, bitis, sayfa, logo_png, tampon, toplam=None,
     if sonuc.toplamlar:
         y -= 2 * mm
         c.line(kenar, y + 4 * mm, genislik - kenar, y + 4 * mm)
-        c.setFont("Helvetica-Bold", 8)
+        c.setFont(FB, 8)
         for i, (s, sx) in enumerate(zip(sutunlar, xler)):
             if i == 0:
                 c.drawString(sx, y, "TOPLAM")
@@ -377,13 +429,13 @@ def _ciz(sonuc, site_ad, baslangic, bitis, sayfa, logo_png, tampon, toplam=None,
         y -= satir_yuksekligi
 
     if sonuc.metin:
-        c.setFont("Helvetica", 8)
+        c.setFont(F, 8)
         for parca in sonuc.metin.split("\n"):
             if y < kenar + 20 * mm:
                 _altbilgi()
                 c.showPage()
                 y = _baslik()
-                c.setFont("Helvetica", 8)
+                c.setFont(F, 8)
             c.drawString(kenar, y, parca[:160])
             y -= satir_yuksekligi
 
@@ -397,7 +449,7 @@ def _ciz(sonuc, site_ad, baslangic, bitis, sayfa, logo_png, tampon, toplam=None,
             _pdf_grafik(c, kenar, kenar + 12 * mm, genislik - 2 * kenar,
                         yb - (kenar + 14 * mm), sonuc, grafik, veri)
         except Exception:
-            c.setFont("Helvetica", 9)
+            c.setFont(F, 9)
             c.drawString(kenar, yb, "Grafik çizilemedi.")
 
     _altbilgi()
@@ -504,21 +556,23 @@ def metin_pdf(baslik: str, govde: str, site_ad: str) -> bytes:
     Tablo sablonundan AYRI: ihtar bir yazidir, sutunlu bir liste degil;
     tablo sablonuna sikistirmak metni hucrelere bolerdi.
     """
+    # (P227 §2) TURKCE FONT — gerekcesi `_turkce_font` basliginda.
+    F, FB = _turkce_font()
     tampon = io.BytesIO()
     c = pdf_canvas.Canvas(tampon, pagesize=A4)
     genislik, yukseklik = A4
     kenar = 20 * mm
     stil = getSampleStyleSheet()["BodyText"]
     y = yukseklik - kenar
-    c.setFont("Helvetica-Bold", 12)
+    c.setFont(FB, 12)
     c.drawString(kenar, y, baslik)
     y -= 10 * mm
-    c.setFont("Helvetica", 10)
+    c.setFont(F, 10)
     for parca in govde.split("\n"):
         if y < kenar + 15 * mm:
             c.showPage()
             y = yukseklik - kenar
-            c.setFont("Helvetica", 10)
+            c.setFont(F, 10)
         # Uzun satirlari kir: PDF kendiliginden sarmaz ve metin sayfadan
         # tasip GORUNMEZ olurdu.
         while len(parca) > 95:
@@ -529,7 +583,7 @@ def metin_pdf(baslik: str, govde: str, site_ad: str) -> bytes:
             y -= 5 * mm
         c.drawString(kenar, y, parca)
         y -= 5 * mm
-    c.setFont("Helvetica", 7)
+    c.setFont(F, 7)
     c.setFillColor(colors.grey)
     c.drawCentredString(genislik / 2, kenar / 2, f"{site_ad} · {_damga()}")
     c.save()

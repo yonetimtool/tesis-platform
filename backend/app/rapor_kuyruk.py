@@ -44,6 +44,51 @@ from .storage import sunucudan_yukle
 
 log = logging.getLogger(__name__)
 
+#: (P227 §1) SINIF ADI TESHIS DEGILDIR.
+#:
+#: Prod'da uc rapor da "SSLError" diye dustu. Yonetici bu kelimeyle ne
+#: yapacagini bilemez. Gercek sebep sunucunun KENDI genel adresine
+#: cikmaya calismasiydi (bkz. config.minio_internal_endpoint) — yani
+#: duzeltilecek yer SUNUCU YAPILANDIRMASI, kullanicinin dokunabilecegi
+#: hicbir sey degil.
+#:
+#: Metin NE OLDUGUNU ve KIMIN duzeltecegini soyler; teknik sinif adi
+#: parantez icinde KALIR, cunku yonetici onu destege iletebilmeli.
+_HATA_METINLERI: tuple[tuple[tuple[str, ...], str], ...] = (
+    (
+        ("SSLError", "SSLCertVerificationError", "EndpointConnectionError",
+         "ConnectTimeoutError", "ConnectionClosedError"),
+        "Dosya deposuna ulasilamadi. Bu bir SUNUCU YAPILANDIRMA sorunudur; "
+        "rapor verisiyle ilgisi yok. Sistem yoneticisine bildirin",
+    ),
+    (
+        ("NoCredentialsError", "ClientError", "ParamValidationError"),
+        "Dosya deposu istegi reddetti (kimlik/yetki). Sunucu "
+        "yapilandirmasi kontrol edilmeli",
+    ),
+    (
+        ("OperationalError", "InterfaceError", "DBAPIError"),
+        "Veritabanina erisilemedi; raporu birkac dakika sonra tekrar deneyin",
+    ),
+    (
+        ("MemoryError",),
+        "Rapor cok buyuk. Tarih araligini daraltip tekrar deneyin",
+    ),
+)
+
+
+def _hata_metni(exc: Exception) -> str:
+    """Istisnayi yoneticinin ANLAYACAGI bir cumleye cevirir."""
+    ad = type(exc).__name__
+    for adlar, metin in _HATA_METINLERI:
+        if ad in adlar:
+            return f"{metin} ({ad})"
+    # BILINMEYEN HATA: sinif adi YINE verilir — "bilinmeyen hata" demek,
+    # destege iletilebilecek TEK ipucunu da silmek olurdu.
+    return f"Rapor uretilemedi ({ad})"
+
+
+
 EXCEL_TURU = (
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
@@ -140,6 +185,6 @@ async def isi_uret(is_id: uuid.UUID) -> dict:
             # sizarsa hem okunmaz hem de ic yapiyi disari verir.
             log.exception("rapor isi basarisiz: %s", is_id)
             isim.durum = "hata"
-            isim.hata = type(exc).__name__
+            isim.hata = _hata_metni(exc)
             isim.biten_at = datetime.now(timezone.utc)
             return {"durum": "hata"}
