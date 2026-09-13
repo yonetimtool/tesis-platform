@@ -551,21 +551,34 @@ async def toplu_ekle(
     Sessizce atlamak, yoneticinin "on dort gun ekledim" saniip yedi gun
     eklemesi demekti — ve eksik gunu ancak sahada fark ederdi.
     """
-    if body.bitis_tarih < body.baslangic_tarih:
-        raise APIError(422, "validation_error", "vardiya_tarih_araligi_ters")
-    gun_sayisi = (body.bitis_tarih - body.baslangic_tarih).days + 1
-    if gun_sayisi > AZAMI_GUN:
-        raise APIError(422, "validation_error", "vardiya_aralik_cok_uzun")
+    # (P229 §2) IKI GIRIS BICIMI, TEK KURAL KUMESI.
+    #
+    # `gunler` verilirse KEYFI (bitisik olmayan) secim; verilmezse
+    # ARALIK. Ikisi de ayni denetimlerden gecer — cakisma, "hepsi ya da
+    # hicbiri", azami gun, denetim kaydi. Ayrintili gerekce semada.
+    if body.gunler is not None:
+        if not body.gunler:
+            raise APIError(422, "validation_error", "vardiya_gun_secilmedi")
+        # TEKRARLAR ELENIR: istemci ayni gunu iki kez gonderirse sessizce
+        # iki vardiya yazmak, kullanicinin gormedigi bir cakisma uretirdi.
+        gunler = sorted(set(body.gunler))
+        if len(gunler) > AZAMI_GUN:
+            raise APIError(422, "validation_error", "vardiya_aralik_cok_uzun")
+    else:
+        if body.bitis_tarih < body.baslangic_tarih:
+            raise APIError(422, "validation_error", "vardiya_tarih_araligi_ters")
+        gun_sayisi = (body.bitis_tarih - body.baslangic_tarih).days + 1
+        if gun_sayisi > AZAMI_GUN:
+            raise APIError(422, "validation_error", "vardiya_aralik_cok_uzun")
+        gunler = [
+            body.baslangic_tarih + dt.timedelta(days=i) for i in range(gun_sayisi)
+        ]
 
     hedef = (
         await db.execute(select(AppUser).where(AppUser.id == body.user_id))
     ).scalar_one_or_none()
     if hedef is None or not hedef.is_active:
         raise APIError(422, "validation_error", "personel_bulunamadi")
-
-    gunler = [
-        body.baslangic_tarih + dt.timedelta(days=i) for i in range(gun_sayisi)
-    ]
 
     # ============ 1. GECIS: YALNIZ OLC, HICBIR SEY YAZMA ============
     # Once denetleyip sonra yazmak SART: "hepsi ya da hicbiri"

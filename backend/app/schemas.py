@@ -2212,6 +2212,12 @@ class VardiyaCizelgeOut(BaseModel):
     personel: list[VardiyaCizelgeKisiOut] = []
 
 
+# (P229 §2) Azami gun sayisi. `routers/vardiya_plani.AZAMI_GUN` ile AYNI
+# deger; oradan ithal edilemez cunku router semalari ithal eder (dongu).
+# Iki yerin ayrismasi `test_p229_vardiya_gunleri` ile kilitlidir.
+AZAMI_VARDIYA_GUN = 31
+
+
 class VardiyaTopluIstek(BaseModel):
     """(§2.2) Hizli vardiya ekle — TARIH ARALIGI.
 
@@ -2228,6 +2234,19 @@ class VardiyaTopluIstek(BaseModel):
     bitis_saat: time
     not_metni: str | None = Field(None, max_length=500)
     cakisanlari_atla: bool = False
+
+    # (P229 §2) KEYFI GUN LISTESI — bitisik olmayan secim.
+    #
+    # ARALIK KALDIRILMADI, USTUNE KONDU: `gunler` verilirse aralik alanlari
+    # YOK SAYILIR; verilmezse davranis birebir eskisi gibidir. Aralik
+    # alanlarini opsiyonel yapmak, yayindaki mobil surumleri (aralik
+    # gonderiyorlar) ve web'i kirardi.
+    #
+    # NEDEN AYNI UC, YENI BIR UC DEGIL: cakisma denetimi, "hepsi ya da
+    # hicbiri" iki gecisi, AZAMI_GUN siniri ve denetim kaydi burada.
+    # Ikinci bir uc, o kurallarin IKINCI BIR KOPYASI demekti ve P205'te
+    # cozulen "sessizce atlama" kusuru yeni ucta yeniden dogardi.
+    gunler: list[date] | None = Field(None, max_length=AZAMI_VARDIYA_GUN)
 
 
 class VardiyaTopluGunOut(BaseModel):
@@ -3105,6 +3124,23 @@ class TicketSummaryOut(BaseModel):
     unit_label: str | None = None     # talebi acanin daire no'su (varsa)
 
 
+class TaskTamamlamaOzet(BaseModel):
+    """(P229 §3) Gorev LISTESINDE gosterilecek tamamlama ozeti.
+
+    NEDEN OZET, TAM KAYIT DEGIL: liste ucu yuzlerce gorev donebilir; her
+    biri icin tam tamamlama kaydi (GPS, NFC, presigned foto URL) tasimak
+    yaniti sisirirdi — presign URL uretmek ayrica HER SATIRDA imza
+    hesabi demektir. Ayrinti zaten `GET /tasks/{id}/completions`te.
+    """
+
+    id: uuid.UUID
+    tamamlayan_user_id: uuid.UUID
+    tamamlayan_ad: str | None = None
+    tamamlanma_zamani: datetime
+    foto_var: bool = False
+    notlar: str | None = None
+
+
 class TaskOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -3124,6 +3160,16 @@ class TaskOut(BaseModel):
     ticket_id: uuid.UUID | None = None
     oncelik: TaskOncelik | None = None
     ticket: TicketSummaryOut | None = None
+    # (P229 §3) TAMAMLAMA DURUMU — listede ve ayrintida.
+    #
+    # OLCULEN KUSUR: `TaskOut` tamamlama hakkinda HICBIR SEY tasimiyordu.
+    # Veri kaydediliyordu (`task_completion` tablosu doluydu) ama hicbir
+    # istemci gosteremiyordu: mobil yalniz KENDI POST yanitini cizip
+    # ekran kapaninca unutuyordu, `GET /tasks/{id}/completions` ise
+    # HICBIR ISTEMCIDEN cagrilmiyordu. Yani soru "kaydediliyor mu" degil
+    # "gosteriliyor mu" idi — kaydediliyordu, gosterilmiyordu.
+    tamamlandi: bool = False
+    son_tamamlama: TaskTamamlamaOzet | None = None
     created_at: datetime
     updated_at: datetime | None = None
 
@@ -3178,6 +3224,12 @@ class TaskCompletionOut(BaseModel):
     id: uuid.UUID
     task_id: uuid.UUID
     tamamlayan_user_id: uuid.UUID
+    # (P229 §3) KIM tamamladi — AD.
+    #
+    # Id yeterli degildi: istemci adi gostermek icin kullanici listesini
+    # ayrica cekmek zorundaydi ve saha rolu o listeyi GOREMIYOR (403).
+    # Yani "kim tamamladi" mobilde teknik olarak cizilemiyordu.
+    tamamlayan_ad: str | None = None
     tamamlanma_zamani: datetime
     nfc_tag_uid: str | None = None
     gps_lat: Enlem | None = None

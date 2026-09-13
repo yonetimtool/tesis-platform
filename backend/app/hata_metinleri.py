@@ -452,6 +452,16 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "La plage de dates ne peut excéder 31 jours.",
         "es": "El intervalo de fechas puede ser de 31 días como máximo.",
     },
+    # (P229 §2) Keyfi gun listesi BOS gonderildi.
+    "vardiya_gun_secilmedi": {
+        "tr": "En az bir gün seçin.",
+        "en": "Select at least one day.",
+        "ar": "اختر يومًا واحدًا على الأقل.",
+        "ru": "Выберите хотя бы один день.",
+        "de": "Wählen Sie mindestens einen Tag.",
+        "fr": "Sélectionnez au moins un jour.",
+        "es": "Seleccione al menos un día.",
+    },
     "vardiya_cakisiyor": {
         "tr": "Bu kişi aynı saatte başka bir vardiyada görevli.",
         "en": "This person is already on another shift at the same time.",

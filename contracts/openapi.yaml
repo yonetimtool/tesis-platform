@@ -6613,6 +6613,31 @@ paths:
               schema: { $ref: "#/components/schemas/Error" }
         "422": { $ref: "#/components/responses/ValidationError" }
 
+  /tasks/{id}/completions/{completion_id}:
+    delete:
+      tags: [tasks]
+      summary: Tamamlamayi geri al — gorevi yeniden ac (admin + yonetici)
+      description: >
+        (P229 §3) Geri acma bir KANITI siler; bu yuzden saha rolleri
+        DISARIDA: sahadaki kisi kendi tamamlamasini silebilseydi "yaptim"
+        deyip izini temizleyebilirdi. Kayit "iptal" bayragiyla degil
+        SILINEREK geri alinir — iptal bayragi, "son tamamlama" hesabini
+        ve rapor toplamlarini her yerde o bayragi kontrol etmeye
+        zorlardi ve bir yerde unutulmasi, geri alinmis bir isin raporda
+        YAPILMIS gorunmesi demekti. Iz DENETIM KAYDINDA: `task_complete`
+        ve `task_reopen`.
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+        - name: completion_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "204": { description: Geri alindi }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /task-completions:
     get:
       tags: [tasks]
@@ -15614,6 +15639,19 @@ components:
         platform: { $ref: "#/components/schemas/DevicePlatform" }
         dil: { type: string, enum: [tr, en, ar, ru, de, fr, es] }
         aktif: { type: boolean }
+        tamamlandi:
+          type: boolean
+          default: false
+          description: >
+            (P229 §3) Bu gorevin EN AZ BIR tamamlamasi var mi. Onceden
+            `Task` tamamlama hakkinda hicbir sey tasimiyordu: veri
+            kaydediliyor ama hicbir istemci gosteremiyordu.
+        son_tamamlama:
+          allOf: [{ $ref: "#/components/schemas/TaskTamamlamaOzet" }]
+          nullable: true
+          description: >
+            EN YENI tamamlama ozeti. Periyodik gorev defalarca tamamlanir;
+            listede gosterilmesi gereken ilki degil sonuncusudur.
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
 
@@ -17262,6 +17300,18 @@ components:
           description: >
             VARSAYILAN FALSE ve bu bilincli: cakisan gunler atlanmadan
             once kullaniciya SORULUR.
+        gunler:
+          type: array
+          nullable: true
+          maxItems: 31
+          items: { type: string, format: date }
+          description: >
+            (P229 §2) KEYFI GUN LISTESI — bitisik olmayan secim. Verilirse
+            `baslangic_tarih`/`bitis_tarih` YOK SAYILIR; verilmezse
+            davranis eskisi gibi ARALIKTIR. Aralik alanlari zorunlu
+            birakildi cunku yayindaki istemciler onlari gonderiyor.
+            Tekrar eden gunler sunucuda elenir: ayni gunu iki kez yazmak
+            kullanicinin GORMEDIGI bir cakisma uretirdi.
     VardiyaTopluGun:
       type: object
       required: [tarih, durum]
@@ -19500,6 +19550,21 @@ components:
         ad: { type: string, minLength: 1, maxLength: 100 }
         aktif: { type: boolean }
 
+    TaskTamamlamaOzet:
+      type: object
+      required: [id, tamamlayan_user_id, tamamlanma_zamani]
+      description: >
+        (P229 §3) Gorev LISTESINDE gosterilecek tamamlama ozeti. Tam kayit
+        degil: liste yuzlerce gorev donebilir ve her satir icin presigned
+        foto URL'i uretmek HER SATIRDA imza hesabi demektir. Ayrinti
+        `GET /tasks/{id}/completions`te.
+      properties:
+        id: { type: string, format: uuid }
+        tamamlayan_user_id: { type: string, format: uuid }
+        tamamlayan_ad: { type: string, nullable: true }
+        tamamlanma_zamani: { type: string, format: date-time }
+        foto_var: { type: boolean, default: false }
+        notlar: { type: string, nullable: true }
     TaskCompletion:
       type: object
       required: [id, task_id, tamamlayan_user_id, tamamlanma_zamani, idempotency_key, created_at]
@@ -19510,6 +19575,14 @@ components:
           type: string
           format: uuid
           description: "Token'dan turetilir"
+        tamamlayan_ad:
+          type: string
+          nullable: true
+          description: >
+            (P229 §3) KIM tamamladi. Id yeterli degildi: saha rolu
+            kullanici listesini goremedigi icin (403) adi kendisi
+            cozemiyordu, yani "kim tamamladi" mobilde teknik olarak
+            cizilemiyordu.
         tamamlanma_zamani: { type: string, format: date-time }
         nfc_tag_uid: { type: string, nullable: true }
         gps_lat: { type: number, format: double, nullable: true, minimum: -90, maximum: 90 }
