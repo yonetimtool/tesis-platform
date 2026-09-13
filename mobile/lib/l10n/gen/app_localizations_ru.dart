@@ -6447,4 +6447,19 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get vardiyaTakvimIpucu =>
       'Нажмите, чтобы добавить или убрать день. Долгое нажатие — заполнить диапазон от последнего.';
+
+  @override
+  String get gorevTamamlamaGecmisi => 'История выполнения';
+
+  @override
+  String get gorevHenuzTamamlanmadi => 'Ещё не выполнено';
+
+  @override
+  String get gorevGecmisYuklenemedi => 'Не удалось загрузить историю.';
+
+  @override
+  String get gorevTamamlamayiGeriAl => 'Отменить';
+
+  @override
+  String get ortakBilinmiyor => 'Неизвестно';
 }

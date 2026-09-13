@@ -6374,4 +6374,20 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get vardiyaTakvimIpucu =>
       'Tippen: Tag hinzufügen oder entfernen. Lange drücken: Bereich ab dem letzten Tag füllen.';
+
+  @override
+  String get gorevTamamlamaGecmisi => 'Abschlussverlauf';
+
+  @override
+  String get gorevHenuzTamamlanmadi => 'Noch nicht abgeschlossen';
+
+  @override
+  String get gorevGecmisYuklenemedi =>
+      'Abschlussverlauf konnte nicht geladen werden.';
+
+  @override
+  String get gorevTamamlamayiGeriAl => 'Rückgängig';
+
+  @override
+  String get ortakBilinmiyor => 'Unbekannt';
 }

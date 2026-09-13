@@ -6376,4 +6376,20 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get vardiyaTakvimIpucu =>
       'Tap to add or remove a day. Long-press to fill the range from the last one.';
+
+  @override
+  String get gorevTamamlamaGecmisi => 'Completion history';
+
+  @override
+  String get gorevHenuzTamamlanmadi => 'Not completed yet';
+
+  @override
+  String get gorevGecmisYuklenemedi =>
+      'Completion history could not be loaded.';
+
+  @override
+  String get gorevTamamlamayiGeriAl => 'Undo';
+
+  @override
+  String get ortakBilinmiyor => 'Unknown';
 }

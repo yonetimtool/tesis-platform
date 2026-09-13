@@ -6439,4 +6439,19 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get vardiyaTakvimIpucu =>
       'اضغط لإضافة يوم أو إزالته. اضغط مطولاً لملء المدى من آخر يوم.';
+
+  @override
+  String get gorevTamamlamaGecmisi => 'سجل الإنجاز';
+
+  @override
+  String get gorevHenuzTamamlanmadi => 'لم يُنجز بعد';
+
+  @override
+  String get gorevGecmisYuklenemedi => 'تعذّر تحميل سجل الإنجاز.';
+
+  @override
+  String get gorevTamamlamayiGeriAl => 'تراجع';
+
+  @override
+  String get ortakBilinmiyor => 'غير معروف';
 }

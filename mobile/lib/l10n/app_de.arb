@@ -2123,5 +2123,10 @@
   "vardiyaGunSec": "Tage",
   "vardiyaSeciliGun": "{n, plural, =0{Kein Tag gewählt} one{1 Tag gewählt} other{{n} Tage gewählt}}",
   "vardiyaSecimiTemizle": "Auswahl löschen",
-  "vardiyaTakvimIpucu": "Tippen: Tag hinzufügen oder entfernen. Lange drücken: Bereich ab dem letzten Tag füllen."
+  "vardiyaTakvimIpucu": "Tippen: Tag hinzufügen oder entfernen. Lange drücken: Bereich ab dem letzten Tag füllen.",
+  "gorevTamamlamaGecmisi": "Abschlussverlauf",
+  "gorevHenuzTamamlanmadi": "Noch nicht abgeschlossen",
+  "gorevGecmisYuklenemedi": "Abschlussverlauf konnte nicht geladen werden.",
+  "gorevTamamlamayiGeriAl": "Rückgängig",
+  "ortakBilinmiyor": "Unbekannt"
 }

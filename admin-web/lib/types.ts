@@ -520,8 +520,28 @@ export interface Task {
   sonraki_planlanan?: string | null;
   foto_zorunlu: boolean;
   aktif: boolean;
+  /** (P229 §3) En az bir tamamlamasi var mi. */
+  tamamlandi?: boolean;
+  /** (P229 §3) EN YENI tamamlama ozeti — periyodik gorevde ilki degil sonuncusu. */
+  son_tamamlama?: TaskTamamlamaOzet | null;
   created_at: string;
   updated_at?: string | null;
+}
+
+/**
+ * (P229 §3) Gorev LISTESINDE gosterilen tamamlama ozeti.
+ *
+ * Tam kayit degil: liste yuzlerce gorev donebilir ve her satir icin
+ * presigned foto URL'i uretmek HER SATIRDA imza hesabi demektir. Ayrinti
+ * `GET /tasks/{id}/completions`te.
+ */
+export interface TaskTamamlamaOzet {
+  id: string;
+  tamamlayan_user_id: string;
+  tamamlayan_ad?: string | null;
+  tamamlanma_zamani: string;
+  foto_var: boolean;
+  notlar?: string | null;
 }
 export interface TaskList {
   meta: PageMeta;
@@ -544,6 +564,8 @@ export interface TaskCompletion {
   id: string;
   task_id: string;
   tamamlayan_user_id: string;
+  /** (P229 §3) KIM tamamladi — sunucudan gelen AD. */
+  tamamlayan_ad?: string | null;
   tamamlanma_zamani: string;
   nfc_tag_uid?: string | null;
   foto_key?: string | null;

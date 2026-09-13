@@ -162,3 +162,87 @@ kalabilecek 49 satır demekti.
 Takvimden gün seçilmişse aralık alanları **gizlenir**. İkisini birden
 göstermek hangisinin geçerli olduğunu belirsiz bırakırdı: kullanıcı aralığı
 1–7 bırakıp takvimden 3 gün seçer ve kaç vardiya oluşacağını bilemezdi.
+
+---
+
+## §3 — Görev tamamlama bilgisi
+
+### Ölçüm: "kaydediliyor da mı gösterilmiyor?" → **kaydediliyor, gösterilmiyor**
+
+Bu ayrım kullanıcının kendi sorusuydu ve yanıtı belirleyici oldu.
+
+`POST /tasks/{id}/completions` **zaten** kaydediyordu: kim
+(`tamamlayan_user_id`), ne zaman (`tamamlanma_zamani`), fotoğraf
+(`foto_key` + presigned `foto_url`), not, NFC, GPS, idempotency, görev
+bazlı foto zorunluluğu, periyodik ilerletme, talep otomatik çözme.
+
+Eksik olan **beş** şey:
+
+1. **`TaskOut` tamamlama hakkında hiçbir şey taşımıyordu.** Liste ve
+   ayrıntı "tamamlandı mı" sorusunu yanıtlayamıyordu.
+2. **`GET /tasks/{id}/completions` hiçbir istemciden çağrılmıyordu.**
+   Mobil detay ekranı yalnız **kendi POST yanıtını** çiziyordu — ekranı
+   kapatınca kayboluyor, başka kimse görmüyordu.
+3. **`tamamlayan_ad` yoktu.** Saha rolü kullanıcı listesini göremiyor
+   (403), yani id'den adı çözemezdi: "kim tamamladı" mobilde **teknik
+   olarak çizilemiyordu**.
+4. **Denetim kaydı yoktu** — `tasks.py`'de tek bir `audit_user` çağrısı
+   bile yoktu.
+5. **Geri açma yolu yoktu.**
+
+### Ek bulgu: web'de tamamlama tablosu hiç çalışmıyormuş
+
+`app/(protected)/tasks/page.tsx` detay panelinde
+`/api/tasks/{id}/completions` okuyor ve tabloyu çiziyordu. Arka uç doğru,
+sayfa doğru — ama BFF rotası **yalnız POST export ediyordu**, yani istek
+**405** alıyordu ve tablo hiç dolmuyordu. P189 ve P226'da ölçülen sınıfın
+aynısı: "iki uç ayrı ayrı doğru, **orta halka** ölçülmemiş". `GET`
+eklendi ve kilitlendi.
+
+### Kararlar
+
+| Soru | Karar | Gerekçe |
+|---|---|---|
+| **Kim tamamlayabilir?** | admin + **yönetici** + saha (saha yalnız kendine atananı) | `_COMPLETER`'da yönetici **yoktu**: personel izinli/ayrılmışsa görev sonsuza kadar açık kalıyordu. Saha kısıtı korundu. |
+| **Geri açılabilir mi, kim?** | Evet — **yalnız admin + yönetici** | Geri açma bir **kanıtı** siler. Sahadaki kişi kendi tamamlamasını silebilseydi "yaptım" deyip izini temizleyebilirdi. |
+| **Nasıl geri açılır?** | Kayıt **silinir**, "iptal" bayrağı konmaz | Bayrak, "son tamamlama" hesabını ve rapor toplamlarını her yerde o bayrağı kontrol etmeye zorlardı; bir yerde unutulması, geri alınmış bir işin raporda **yapılmış** görünmesi demekti. İz denetim kaydında: `task_complete` / `task_reopen`. |
+| **Yöneticiye bildirim?** | Evet — **oluşturana değil yönetime** | Oluşturan kişi izinli/ayrılmış olabilir; o zaman "iş bitti" haberini kimse almazdı. Kendi kapattığı görevi yöneticinin kendisine bildirmiyoruz (gürültü). Yeni tip `gorev_tamamlandi`, göç **0131**. |
+| **Neden `gorev_atandi` tipi değil?** | Ayrı tip | Yönleri ters: atama yönetimden sahaya, tamamlanma sahadan yönetime. Tek tipe indirmek, bildirim tercihinde birini kapatmayı ötekini de kapatmak yapardı. |
+| **Fotoğraf zorunlu mu, türe göre mi?** | Zaten **görev bazında** (`foto_zorunlu`), türe göre değil | Aynı kategorideki iki işten biri kanıt isteyebilir (yangın tüpü kontrolü), diğeri istemeyebilir (çöp toplama). Kategoriye bağlamak esnekliği kaybettirirdi. |
+
+### Performans kararı: özet listede, ayrıntı ayrı uçta
+
+`son_tamamlama` **özet**tir (id, kim, ne zaman, foto **var mı**, not) —
+tam kayıt değil. Liste yüzlerce görev dönebilir ve her satır için
+presigned foto URL'i üretmek **her satırda imza hesabı** demektir.
+Ayrıntı (GPS, NFC, foto URL) `GET /tasks/{id}/completions`te.
+
+N+1 yok: tüm görevlerin tamamlamaları **tek sorguda** çekilip en yenisi
+seçiliyor.
+
+### Yetki kuralları sunucuda
+
+`_COMPLETER` ve `_REOPENER` arka uçta; BFF yalnız yolu açıyor, rol
+kontrolü **tekrarlanmıyor** — iki yerde ayrışabilecek ikinci bir kural
+olurdu. `backend/tests/yetki/rol-matrisi.txt` yeniden üretildi:
+
+```
+POST   /tasks/{id}/completions                 IZIN IZIN IZIN IZIN RED RED RED
+DELETE /tasks/{id}/completions/{completion_id} IZIN IZIN RED  RED  RED RED RED
+```
+
+### Kilitler — kırılarak kanıtlandı
+
+* Backend `test_p229_gorev_tamamlama.py` — 16 test. `_tamamlama_ozeti_doldur`
+  devre dışı bırakıldı → 4 test düştü. ✔
+* Web `p229-gorev-tamamlama.dom.test.ts` — BFF metot taraması + 7 dil
+  paritesi. `GET` export'u kaldırıldı → test düştü. ✔
+* Mobil `p229_gorev_tamamlama_test.dart` — 6 test, taklit **HTTP
+  adapter'ında** (P200 dersi).
+
+### Ölçemediğim
+
+Gerçek cihazda push **bildiriminin gelişini** ölçemedim: dev'de
+`PUSH_PROVIDER=noop` ve emülatör yok. Ölçtüğüm şey, `notification`
+satırının yazıldığı ve `dispatch_external`'ın doğru tip ve hedeflerle
+çağrıldığı.

@@ -6183,4 +6183,19 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get vardiyaTakvimIpucu =>
       'Dokun: gün ekle/çıkar. Uzun bas: son seçilenden buraya kadar.';
+
+  @override
+  String get gorevTamamlamaGecmisi => 'Tamamlama geçmişi';
+
+  @override
+  String get gorevHenuzTamamlanmadi => 'Henüz tamamlanmadı';
+
+  @override
+  String get gorevGecmisYuklenemedi => 'Tamamlama geçmişi yüklenemedi.';
+
+  @override
+  String get gorevTamamlamayiGeriAl => 'Geri al';
+
+  @override
+  String get ortakBilinmiyor => 'Bilinmiyor';
 }

@@ -110,6 +110,11 @@ NOTIFICATION_TIP = ENUM(
     "gurultu_uyari_sakin", "gurultu_esik_yonetim",
     # (P212 §3, göç 0104) İkinci eşikte güvenliğe eskalasyon + yönetime bilgi.
     "gurultu_eskalasyon_guvenlik", "gurultu_eskalasyon_yonetim",
+    # (P229 §3, göç 0131) Görev TAMAMLANINCA yönetime bildirim. `gorev_atandi`
+    # ile aynı tip DEĞİL: yönleri ters (atama yönetimden sahaya, tamamlanma
+    # sahadan yönetime) ve tek tipe indirmek, bildirim tercihinde birini
+    # kapatmayı ötekini de kapatmak yapardı.
+    "gorev_tamamlandi",
     name="notification_tip", create_type=False,
 )
 ASSET_KATEGORI = ENUM(

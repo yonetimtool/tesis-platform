@@ -10972,6 +10972,36 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Dokun: gün ekle/çıkar. Uzun bas: son seçilenden buraya kadar.'**
   String get vardiyaTakvimIpucu;
+
+  /// No description provided for @gorevTamamlamaGecmisi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tamamlama geçmişi'**
+  String get gorevTamamlamaGecmisi;
+
+  /// No description provided for @gorevHenuzTamamlanmadi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz tamamlanmadı'**
+  String get gorevHenuzTamamlanmadi;
+
+  /// No description provided for @gorevGecmisYuklenemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tamamlama geçmişi yüklenemedi.'**
+  String get gorevGecmisYuklenemedi;
+
+  /// No description provided for @gorevTamamlamayiGeriAl.
+  ///
+  /// In tr, this message translates to:
+  /// **'Geri al'**
+  String get gorevTamamlamayiGeriAl;
+
+  /// No description provided for @ortakBilinmiyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bilinmiyor'**
+  String get ortakBilinmiyor;
 }
 
 class _AppLocalizationsDelegate

@@ -2952,5 +2952,10 @@
     }
   },
   "vardiyaSecimiTemizle": "Seçimi temizle",
-  "vardiyaTakvimIpucu": "Dokun: gün ekle/çıkar. Uzun bas: son seçilenden buraya kadar."
+  "vardiyaTakvimIpucu": "Dokun: gün ekle/çıkar. Uzun bas: son seçilenden buraya kadar.",
+  "gorevTamamlamaGecmisi": "Tamamlama geçmişi",
+  "gorevHenuzTamamlanmadi": "Henüz tamamlanmadı",
+  "gorevGecmisYuklenemedi": "Tamamlama geçmişi yüklenemedi.",
+  "gorevTamamlamayiGeriAl": "Geri al",
+  "ortakBilinmiyor": "Bilinmiyor"
 }

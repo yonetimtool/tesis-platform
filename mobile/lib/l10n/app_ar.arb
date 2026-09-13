@@ -2123,5 +2123,10 @@
   "vardiyaGunSec": "الأيام",
   "vardiyaSeciliGun": "{n, plural, zero{لم يتم اختيار يوم} one{تم اختيار يوم واحد} other{تم اختيار {n} أيام}}",
   "vardiyaSecimiTemizle": "مسح الاختيار",
-  "vardiyaTakvimIpucu": "اضغط لإضافة يوم أو إزالته. اضغط مطولاً لملء المدى من آخر يوم."
+  "vardiyaTakvimIpucu": "اضغط لإضافة يوم أو إزالته. اضغط مطولاً لملء المدى من آخر يوم.",
+  "gorevTamamlamaGecmisi": "سجل الإنجاز",
+  "gorevHenuzTamamlanmadi": "لم يُنجز بعد",
+  "gorevGecmisYuklenemedi": "تعذّر تحميل سجل الإنجاز.",
+  "gorevTamamlamayiGeriAl": "تراجع",
+  "ortakBilinmiyor": "غير معروف"
 }

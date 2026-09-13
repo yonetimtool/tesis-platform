@@ -6368,4 +6368,19 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get vardiyaTakvimIpucu =>
       'Appuyez pour ajouter ou retirer un jour. Appui long : remplir la plage depuis le dernier.';
+
+  @override
+  String get gorevTamamlamaGecmisi => 'Historique d\'achèvement';
+
+  @override
+  String get gorevHenuzTamamlanmadi => 'Pas encore terminé';
+
+  @override
+  String get gorevGecmisYuklenemedi => 'Impossible de charger l\'historique.';
+
+  @override
+  String get gorevTamamlamayiGeriAl => 'Annuler';
+
+  @override
+  String get ortakBilinmiyor => 'Inconnu';
 }

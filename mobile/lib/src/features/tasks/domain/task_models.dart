@@ -40,6 +40,44 @@ class TicketSummary {
 }
 
 /// `GET /tasks` ogesi (Task semasi).
+/// (P229 §3) Gorev LISTESINDE gosterilen tamamlama ozeti.
+///
+/// OLCULEN KUSUR: `Task` tamamlama hakkinda hicbir sey tasimiyordu.
+/// Sunucu kaydediyordu ama liste "tamamlandi mi" sorusunu
+/// yanitlayamiyordu; detay ekrani ise yalniz KENDI POST yanitini
+/// ciziyor, ekran kapaninca unutuyordu.
+class TaskTamamlamaOzet {
+  const TaskTamamlamaOzet({
+    required this.id,
+    required this.tamamlayanUserId,
+    required this.tamamlanmaZamani,
+    this.tamamlayanAd,
+    this.fotoVar = false,
+    this.notlar,
+  });
+
+  final String id;
+  final String tamamlayanUserId;
+
+  /// KIM tamamladi. Id yeterli degildi: saha rolu kullanici listesini
+  /// goremiyor (403), yani adi kendisi cozemezdi.
+  final String? tamamlayanAd;
+  final DateTime tamamlanmaZamani;
+  final bool fotoVar;
+  final String? notlar;
+
+  factory TaskTamamlamaOzet.fromJson(Map<String, dynamic> json) =>
+      TaskTamamlamaOzet(
+        id: json['id'] as String,
+        tamamlayanUserId: json['tamamlayan_user_id'] as String,
+        tamamlayanAd: json['tamamlayan_ad'] as String?,
+        tamamlanmaZamani:
+            DateTime.parse(json['tamamlanma_zamani'] as String).toUtc(),
+        fotoVar: json['foto_var'] as bool? ?? false,
+        notlar: json['notlar'] as String?,
+      );
+}
+
 class Task {
   const Task({
     required this.id,
@@ -55,6 +93,8 @@ class Task {
     this.ticketId,
     this.oncelik,
     this.ticket,
+    this.tamamlandi = false,
+    this.sonTamamlama,
   });
 
   final String id;
@@ -91,6 +131,12 @@ class Task {
   final String? oncelik;
   final TicketSummary? ticket;
 
+  /// (P229 §3) En az bir tamamlamasi var mi + EN YENI tamamlama ozeti.
+  /// Periyodik gorev defalarca tamamlanir; gosterilmesi gereken ilki
+  /// degil SONUNCUSUDUR.
+  final bool tamamlandi;
+  final TaskTamamlamaOzet? sonTamamlama;
+
   /// Gorev bir talepten mi geldi? (chip/rozet gorunurlugu).
   bool get fromTicket => ticketId != null;
 
@@ -114,6 +160,11 @@ class Task {
     ticket: json['ticket'] == null
         ? null
         : TicketSummary.fromJson(json['ticket'] as Map<String, dynamic>),
+    tamamlandi: json['tamamlandi'] as bool? ?? false,
+    sonTamamlama: json['son_tamamlama'] == null
+        ? null
+        : TaskTamamlamaOzet.fromJson(
+            json['son_tamamlama'] as Map<String, dynamic>),
   );
 }
 
@@ -183,6 +234,7 @@ class TaskCompletion {
     required this.taskId,
     required this.tamamlayanUserId,
     required this.tamamlanmaZamani,
+    this.tamamlayanAd,
     this.nfcTagUid,
     this.fotoKey,
     this.fotoUrl,
@@ -192,6 +244,9 @@ class TaskCompletion {
   final String id;
   final String taskId;
   final String tamamlayanUserId;
+
+  /// KIM tamamladi (P229 §3) — saha rolu id'den adi cozemez.
+  final String? tamamlayanAd;
   final DateTime tamamlanmaZamani;
   final String? nfcTagUid;
   final String? fotoKey;
@@ -202,6 +257,7 @@ class TaskCompletion {
     id: json['id'] as String,
     taskId: json['task_id'] as String,
     tamamlayanUserId: json['tamamlayan_user_id'] as String,
+    tamamlayanAd: json['tamamlayan_ad'] as String?,
     tamamlanmaZamani: DateTime.parse(
       json['tamamlanma_zamani'] as String,
     ).toUtc(),

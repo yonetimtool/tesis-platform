@@ -170,7 +170,32 @@ export default function TasksPage() {
   const { ref: detayRef, kaydir: detayKaydir } = useAcilinca();
   const [detail, setDetail] = useState<Task | null>(null);
 
-  const { data: completions } = useSWR<TaskCompletionList>(
+  /**
+   * (P229 §3) TAMAMLAMAYI GERI AL — gorevi yeniden acar.
+   *
+   * Onay isteniyor cunku islem GERI ALINAMAZ: tamamlama kaydi (zaman,
+   * foto, NFC, GPS) silinir. Iz denetim kaydinda kalir (`task_reopen`).
+   */
+  async function geriAl(completionId: string) {
+    if (!detail) return;
+    if (
+      !(await onayla({
+        baslik: t("gorevTamamlamayiGeriAl"),
+        mesaj: t("gorevTamamlamaGeriAlOnay"),
+        onayMetni: t("gorevTamamlamayiGeriAl"),
+        tehlikeli: true,
+      }))
+    )
+      return;
+    await apiSend(
+      `/api/tasks/${detail.id}/completions/${completionId}`,
+      "DELETE",
+    );
+    await mutateCompletions();
+    await mutate();
+  }
+
+  const { data: completions, mutate: mutateCompletions } = useSWR<TaskCompletionList>(
     detail ? `/api/tasks/${detail.id}/completions?limit=50&offset=0` : null,
     jsonFetcher,
   );
@@ -299,6 +324,28 @@ export default function TasksPage() {
         hucre: (g) =>
           g.sonraki_planlanan ? formatDateTime(g.sonraki_planlanan) : "—",
         darEkrandaGizle: true,
+      },
+      {
+        // (P229 §3) TAMAMLAMA DURUMU LISTEDE.
+        //
+        // OLCULEN KUSUR: gorev atanabiliyor ama tamamlanip
+        // tamamlanmadigi hicbir listede gorunmuyordu. Veri
+        // kaydediliyordu; `Task` semasi onu TASIMIYORDU, yani ekran
+        // gosteremezdi. Ayrinti panelindeki tamamlama tablosu vardi ama
+        // her gorev icin TEK TEK acmak gerekiyordu.
+        id: "tamamlama", kartRolu: "rozet",
+        baslik: t("gorevTamamlamaDurumu"),
+        hucre: (g) =>
+          g.son_tamamlama ? (
+            <span className="text-xs">
+              <Rozet durum={DURUM_OLUMLU}>{t("gorevTamamlandiRozet")}</Rozet>{" "}
+              {g.son_tamamlama.tamamlayan_ad ??
+                userName(g.son_tamamlama.tamamlayan_user_id)}{" "}
+              · {formatDateTime(g.son_tamamlama.tamamlanma_zamani)}
+            </span>
+          ) : (
+            <Rozet durum={DURUM_NOTR}>{t("gorevAcikRozet")}</Rozet>
+          ),
       },
       {
         id: "aktif", kartRolu: "rozet",
@@ -592,12 +639,13 @@ export default function TasksPage() {
                   <Th>{t("raporTabloTamamlayan")}</Th>
                   <Th>{t("raporTabloFoto")}</Th>
                   <Th>{t("raporNot")}</Th>
+                  <Th>{""}</Th>
                 </TabloBasligi>
               <tbody>
                 {(completions?.items ?? []).map((c) => (
                   <Tr key={c.id}>
                     <Td className="text-metin-body">{formatDateTime(c.tamamlanma_zamani)}</Td>
-                    <Td>{userName(c.tamamlayan_user_id)}</Td>
+                    <Td>{c.tamamlayan_ad ?? userName(c.tamamlayan_user_id)}</Td>
                     <Td>
                       {c.foto_url ? (
                         // (P131) FOTOGRAFIN KENDISI GOSTERILIR.
@@ -627,11 +675,25 @@ export default function TasksPage() {
                       )}
                     </Td>
                     <Td className="text-metin-body">{c.notlar ?? "—"}</Td>
+                    <Td>
+                      {/* (P229 §3) GERI AL — yetki kurali SUNUCUDA
+                          (`_REOPENER`: admin + yonetici); buradaki dugme
+                          yalnizca yolu acar, saha rolu web'e zaten
+                          giremez. */}
+                      <Dugme
+                        boy="kucuk"
+                        tur="ikincil"
+                        data-test={`gorev-tamamlama-geri-al-${c.id}`}
+                        onClick={() => geriAl(c.id)}
+                      >
+                        {t("gorevTamamlamayiGeriAl")}
+                      </Dugme>
+                    </Td>
                   </Tr>
                 ))}
                 {completions && completions.items.length === 0 && (
                   <tr>
-                    <Td colSpan={4}>
+                    <Td colSpan={5}>
                       <BosDurum baslik={t("denetimKayitYok")} />
                     </Td>
                   </tr>

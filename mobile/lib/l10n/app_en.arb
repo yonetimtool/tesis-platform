@@ -2123,5 +2123,10 @@
   "vardiyaGunSec": "Days",
   "vardiyaSeciliGun": "{n, plural, =0{No day selected} one{1 day selected} other{{n} days selected}}",
   "vardiyaSecimiTemizle": "Clear selection",
-  "vardiyaTakvimIpucu": "Tap to add or remove a day. Long-press to fill the range from the last one."
+  "vardiyaTakvimIpucu": "Tap to add or remove a day. Long-press to fill the range from the last one.",
+  "gorevTamamlamaGecmisi": "Completion history",
+  "gorevHenuzTamamlanmadi": "Not completed yet",
+  "gorevGecmisYuklenemedi": "Completion history could not be loaded.",
+  "gorevTamamlamayiGeriAl": "Undo",
+  "ortakBilinmiyor": "Unknown"
 }

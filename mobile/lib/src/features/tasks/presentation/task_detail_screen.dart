@@ -8,6 +8,7 @@ import '../../../core/i18n/l10n.dart';
 import '../../../core/theme/home_tokens.dart';
 import '../../../core/error/api_exception.dart';
 import '../../auth/data/current_user_provider.dart';
+import '../data/task_api.dart';
 import '../data/task_category_api.dart';
 import '../domain/task_models.dart';
 import 'gorev_hata_metni.dart';
@@ -120,6 +121,14 @@ class TaskDetailScreen extends ConsumerWidget {
               ),
             ),
           ],
+          // (P229 §3) TAMAMLAMA GECMISI — KIM, NE ZAMAN, FOTO, NOT.
+          //
+          // OLCULEN KUSUR: yukaridaki `_ResultCard` YALNIZ o oturumda
+          // yapilan POST'un yanitindan cizilir; ekrani kapatinca
+          // kaybolur ve baska kimse gormez. `GET /tasks/{id}/completions`
+          // sunucuda VARDI ama HICBIR ISTEMCIDEN cagrilmiyordu.
+          const SizedBox(height: 16),
+          _TamamlamaGecmisi(taskId: task.id, yonetebilir: canManage),
         ],
       ),
     );
@@ -577,3 +586,110 @@ class _ResultCard extends StatelessWidget {
     );
   }
 }
+
+
+/// (P229 §3) Gorevin tamamlama gecmisi: KIM, NE ZAMAN, FOTO, NOT.
+///
+/// Yonetim rolleri her kaydi GERI ALABILIR (sunucu `_REOPENER` ile de
+/// korur — yetki kurali istemcide DEGIL sunucudadir; buradaki kosul
+/// yalnizca gosterim).
+class _TamamlamaGecmisi extends ConsumerWidget {
+  const _TamamlamaGecmisi({required this.taskId, required this.yonetebilir});
+
+  final String taskId;
+  final bool yonetebilir;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final dil = context.dilKodu;
+    final gecmis = ref.watch(gorevTamamlamalariProvider(taskId));
+
+    return gecmis.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      // HATA SESSIZ GECILMEZ ama EKRANI DA KIRMAZ: gecmis yuklenemezse
+      // tamamlama akisi calismaya devam etmeli.
+      error: (_, _) => Card(
+        child: ListTile(
+          leading: const Icon(Icons.error_outline),
+          title: Text(l10n.gorevGecmisYuklenemedi),
+        ),
+      ),
+      data: (liste) {
+        if (liste.isEmpty) {
+          return Card(
+            child: ListTile(
+              key: const Key('gorev-gecmis-bos'),
+              leading: const Icon(Icons.pending_outlined),
+              title: Text(l10n.gorevHenuzTamamlanmadi),
+            ),
+          );
+        }
+        return Card(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                child: Text(
+                  l10n.gorevTamamlamaGecmisi,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
+              for (final c in liste)
+                ListTile(
+                  key: Key('gorev-tamamlama-${c.id}'),
+                  leading: const Icon(Icons.check_circle, color: Colors.green),
+                  title: Text(c.tamamlayanAd ?? l10n.ortakBilinmiyor),
+                  subtitle: Text(
+                    [
+                      tarihSaatBicimi(c.tamamlanmaZamani, dil),
+                      if (c.notlar != null && c.notlar!.isNotEmpty) c.notlar!,
+                    ].join(' · '),
+                  ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (c.fotoUrl != null)
+                        IconButton(
+                          key: Key('gorev-tamamlama-foto-${c.id}'),
+                          icon: const Icon(Icons.photo_outlined),
+                          tooltip: l10n.gorevFotoKanitiVar,
+                          onPressed: () => showDialog<void>(
+                            context: context,
+                            builder: (_) => Dialog(
+                              child: InteractiveViewer(
+                                child: Image.network(c.fotoUrl!),
+                              ),
+                            ),
+                          ),
+                        ),
+                      if (yonetebilir)
+                        IconButton(
+                          key: Key('gorev-tamamlama-geri-al-${c.id}'),
+                          icon: const Icon(Icons.undo),
+                          tooltip: l10n.gorevTamamlamayiGeriAl,
+                          onPressed: () async {
+                            await ref
+                                .read(taskApiProvider)
+                                .deleteCompletion(taskId, c.id);
+                            ref.invalidate(
+                                gorevTamamlamalariProvider(taskId));
+                          },
+                        ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// (P229 §3) Gorevin tamamlama gecmisi — `GET /tasks/{id}/completions`.
+final gorevTamamlamalariProvider =
+    FutureProvider.autoDispose.family<List<TaskCompletion>, String>(
+  (ref, taskId) => ref.watch(taskApiProvider).fetchCompletions(taskId),
+);

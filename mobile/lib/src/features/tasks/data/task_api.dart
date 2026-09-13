@@ -91,6 +91,37 @@ class TaskApi {
   }
 
   /// `POST /uploads/presign` — foto icin obje anahtari + kisa omurlu PUT URL.
+  /// (P229 §3) GOREVIN TAMAMLAMA GECMISI.
+  ///
+  /// Bu uc SUNUCUDA VARDI ama HICBIR ISTEMCIDEN cagrilmiyordu: mobil
+  /// detay ekrani yalniz KENDI POST yanitini ciziyor, ekran kapaninca
+  /// unutuyordu. Yani "kim ne zaman tamamladi" hicbir yerde
+  /// gorunmuyordu — veri kaydediliyor, gosterilmiyordu.
+  Future<List<TaskCompletion>> fetchCompletions(String taskId,
+      {int limit = 20}) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/tasks/$taskId/completions',
+        queryParameters: {'limit': limit},
+      );
+      final items = (res.data?['items'] as List? ?? const []);
+      return items
+          .map((e) => TaskCompletion.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// (P229 §3) TAMAMLAMAYI GERI AL — yalniz admin/yonetici (sunucu 403).
+  Future<void> deleteCompletion(String taskId, String completionId) async {
+    try {
+      await _dio.delete<void>('/tasks/$taskId/completions/$completionId');
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
   Future<PresignTicket> presignUpload({
     required String contentType,
     String? dosyaAdi,

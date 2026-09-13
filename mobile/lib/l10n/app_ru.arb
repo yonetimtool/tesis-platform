@@ -2123,5 +2123,10 @@
   "vardiyaGunSec": "Дни",
   "vardiyaSeciliGun": "{n, plural, =0{День не выбран} one{Выбран 1 день} other{Выбрано дней: {n}}}",
   "vardiyaSecimiTemizle": "Очистить выбор",
-  "vardiyaTakvimIpucu": "Нажмите, чтобы добавить или убрать день. Долгое нажатие — заполнить диапазон от последнего."
+  "vardiyaTakvimIpucu": "Нажмите, чтобы добавить или убрать день. Долгое нажатие — заполнить диапазон от последнего.",
+  "gorevTamamlamaGecmisi": "История выполнения",
+  "gorevHenuzTamamlanmadi": "Ещё не выполнено",
+  "gorevGecmisYuklenemedi": "Не удалось загрузить историю.",
+  "gorevTamamlamayiGeriAl": "Отменить",
+  "ortakBilinmiyor": "Неизвестно"
 }

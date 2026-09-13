@@ -697,6 +697,28 @@ METINLER: dict[str, PushMetni] = {
         },
         params=('baslik',),
     ),
+    # (P229 §3) Gorev TAMAMLANDI — yonetime.
+    "gorev_tamamlandi": PushMetni(
+        baslik={
+            "tr": "Görev tamamlandı",
+            "en": "Task completed",
+            "ar": "اكتملت المهمة",
+            "ru": "Задача выполнена",
+            "de": "Aufgabe abgeschlossen",
+            "fr": "Tâche terminée",
+            "es": "Tarea completada",
+        },
+        govde={
+            "tr": "{kisi} şu görevi tamamladı: {baslik}",
+            "en": "{kisi} completed the task: {baslik}",
+            "ar": "أنجز {kisi} المهمة: {baslik}",
+            "ru": "{kisi} выполнил(а) задачу: {baslik}",
+            "de": "{kisi} hat die Aufgabe abgeschlossen: {baslik}",
+            "fr": "{kisi} a terminé la tâche : {baslik}",
+            "es": "{kisi} ha completado la tarea: {baslik}",
+        },
+        params=('kisi', 'baslik'),
+    ),
     "aidat_borc": PushMetni(
         baslik={
             "tr": "Yeni borç",

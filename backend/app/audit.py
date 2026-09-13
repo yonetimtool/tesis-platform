@@ -160,6 +160,14 @@ class Action:
     UNIT_ACCESS_REQUEST = "unit_access_request"
     UNIT_ACCESS_DECIDE = "unit_access_decide"
     COMPLAINT_CREATE = "complaint_create"
+    # (P229 §3) Gorev tamamlama ve GERI ACMA.
+    #
+    # NEDEN DENETIME YAZILIYOR: tamamlama bir IS KANITIDIR — "yapildi"
+    # demek, hakedis ve sorumluluk dogurur. Geri acma ise o kaniti
+    # SILER; kimin sildigi yazilmazsa, tamamlanmis bir isin kaydi iz
+    # birakmadan yok edilebilirdi.
+    TASK_COMPLETE = "task_complete"
+    TASK_REOPEN = "task_reopen"
     GUVENLIK_MODU = "guvenlik_modu"
     UYARI_MANUEL = "uyari_manuel"
     PORTAL_YAYIN = "portal_yayin"

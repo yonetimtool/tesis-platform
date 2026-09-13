@@ -32,6 +32,7 @@ from ..models import (
     Unit,
     UnitResident,
 )
+from ..audit import Action, audit_user
 from ..schemas import (
     TaskCompletionCreate,
     TaskCompletionListResponse,
@@ -39,6 +40,7 @@ from ..schemas import (
     TaskCreate,
     TaskListResponse,
     TaskOut,
+    TaskTamamlamaOzet,
     TaskUpdate,
     TicketSummaryOut,
 )
@@ -51,7 +53,21 @@ router = APIRouter(prefix="/tasks", tags=["tasks"])
 
 _WRITER = require_role("admin", "yonetici")
 _READER = require_role("admin", "yonetici", "security", "tesis_gorevlisi")
-_COMPLETER = require_role("admin", "security", "tesis_gorevlisi")
+# (P229 §3) YONETICI DE TAMAMLAYABILIR.
+#
+# OLCULEN DURUM: `_COMPLETER` admin + saha rolleriydi; YONETICI yoktu.
+# Yani tesisi yoneten kisi, personelin kapatamadigi (izinli, isten
+# ayrilmis) bir gorevi KAPATAMIYORDU — gorev sonsuza kadar acik
+# kaliyordu. Saha kisitlamasi ASAGIDA korunuyor: saha rolu yalniz
+# KENDINE atanan gorevi tamamlar; yonetici/admin icin o kisit yok
+# cunku onlarin isi zaten baskasinin isini denetlemek.
+_COMPLETER = require_role("admin", "yonetici", "security", "tesis_gorevlisi")
+
+# Tamamlamayi GERI ALABILENLER — saha rolleri YOK.
+#
+# NEDEN: geri acma bir kaniti siler. Sahadaki kisi kendi tamamlamasini
+# silebilseydi, "yaptim" deyip sonra izini temizleyebilirdi.
+_REOPENER = require_role("admin", "yonetici")
 
 # yonetici gorevleri yalniz saha rollerine atayabilir (auth.md §4).
 _YONETICI_ATANABILIR = {"security", "tesis_gorevlisi"}
@@ -80,10 +96,65 @@ async def _visible_task_or_404(db: AsyncSession, task_id: uuid.UUID, user: AppUs
     return task
 
 
+async def _tamamlama_ozeti_doldur(
+    db: AsyncSession, tasks: list[Task], outs: list[TaskOut]
+) -> None:
+    """(P229 §3) Her goreve SON tamamlamasini ekler.
+
+    =======================================================================
+    NEDEN LISTE UCUNDA, AYRI BIR ISTEKTE DEGIL
+    =======================================================================
+    `GET /tasks/{id}/completions` zaten vardi ve HICBIR ISTEMCIDEN
+    cagrilmiyordu. Listede durum gostermek icin istemcinin her satir icin
+    ayri istek atmasi gerekirdi — elli gorevlik bir listede elli istek.
+    Bu yuzden ozet, listeyi ureten sorgunun yaninda TEK sorguda gelir.
+
+    =======================================================================
+    N+1 YOK: TEK SORGU, DISTINCT ON
+    =======================================================================
+    Her gorev icin ayri "son tamamlama" sorgusu N+1 olurdu. Tek sorguda
+    tum gorevlerin tamamlamalari cekilip Python'da en yenisi seciliyor;
+    tamamlama sayisi gorev basina kucuk oldugu icin bu, `DISTINCT ON`
+    ile ayni sonucu verir ve SQL lehcesine baglanmaz.
+    """
+    if not tasks:
+        return
+    ids = [t.id for t in tasks]
+    satirlar = (
+        await db.execute(
+            select(TaskCompletion, AppUser.ad)
+            .outerjoin(AppUser, AppUser.id == TaskCompletion.tamamlayan_user_id)
+            .where(TaskCompletion.task_id.in_(ids))
+            .order_by(
+                TaskCompletion.tamamlanma_zamani.desc(), TaskCompletion.id.desc()
+            )
+        )
+    ).all()
+    son: dict[uuid.UUID, TaskTamamlamaOzet] = {}
+    for c, ad in satirlar:
+        # Sorgu ZAMANA GORE AZALAN: her gorev icin ILK gorulen en yenidir.
+        if c.task_id in son:
+            continue
+        son[c.task_id] = TaskTamamlamaOzet(
+            id=c.id,
+            tamamlayan_user_id=c.tamamlayan_user_id,
+            tamamlayan_ad=ad,
+            tamamlanma_zamani=c.tamamlanma_zamani,
+            foto_var=c.foto_key is not None,
+            notlar=c.notlar,
+        )
+    for t, out in zip(tasks, outs):
+        ozet = son.get(t.id)
+        if ozet is not None:
+            out.tamamlandi = True
+            out.son_tamamlama = ozet
+
+
 async def _serialize_tasks(db: AsyncSession, tasks: list[Task]) -> list[TaskOut]:
     """Task -> TaskOut; talepten gelen gorevlere kompakt talep ozeti (ticket)
     ekler. Toplu (batch) sorgu ile N+1 yok. RLS: tum sorgular tenant-kapsamli."""
     outs = [TaskOut.model_validate(t) for t in tasks]
+    await _tamamlama_ozeti_doldur(db, tasks, outs)
     ticket_ids = {t.ticket_id for t in tasks if t.ticket_id is not None}
     if not ticket_ids:
         return outs
@@ -260,6 +331,52 @@ def _gorev_bildir(db, task: Task, user: AppUser) -> None:
     )
 
 
+async def _tamamlandi_bildir(db, task: Task, user: AppUser) -> None:
+    """(P229 §3) Gorev tamamlaninca YONETIME haber ver.
+
+    =======================================================================
+    KIME: OLUSTURANA DEGIL, YONETIME
+    =======================================================================
+    Gorevi olusturan kisi izinli ya da isten ayrilmis olabilir; o zaman
+    "is bitti" haberini KIMSE almazdi. Bu yuzden hedef, tesisin aktif
+    yonetimi (admin + yonetici).
+
+    KENDINI BILDIRME: gorevi tamamlayan kisinin kendisi yonetimdeyse
+    (yonetici kendi kapattigi gorev) ona bildirim GITMEZ — yaptigi isi
+    kendisine haber vermek gurultudur.
+    """
+    hedefler = [
+        r
+        for (r,) in (
+            await db.execute(
+                select(AppUser.id).where(
+                    AppUser.role.in_(("admin", "yonetici")),
+                    AppUser.is_active.is_(True),
+                    AppUser.id != user.id,
+                )
+            )
+        ).all()
+    ]
+    if not hedefler:
+        return
+    veri = {"baslik": task.ad, "kisi": user.ad or ""}
+    dispatch_external(
+        "gorev_tamamlandi",
+        tenant_id=user.tenant_id,
+        target_user_ids=tuple(hedefler),
+        params=veri,
+        data={"tip": "gorev_tamamlandi", "task_id": str(task.id)},
+    )
+    sakin_bildirimi_yaz(
+        db,
+        tenant_id=user.tenant_id,
+        tip="gorev_tamamlandi",
+        user_ids=tuple(hedefler),
+        veri=veri,
+        task_id=task.id,
+    )
+
+
 @router.post("", response_model=TaskOut, status_code=201)
 async def create_task(
     body: TaskCreate,
@@ -332,7 +449,7 @@ async def delete_task(
 
 
 # ----------------------------- completions --------------------------------- #
-def _completion_out(obj: TaskCompletion) -> TaskCompletionOut:
+def _completion_out(obj: TaskCompletion, ad: str | None = None) -> TaskCompletionOut:
     """(P131) Foto KANITINI GORUNUR yapar.
 
     OLCULEN KUSUR: `TaskCompletionOut` semasinda `foto_url` ALANI VARDI ve
@@ -348,6 +465,9 @@ def _completion_out(obj: TaskCompletion) -> TaskCompletionOut:
     """
     out = TaskCompletionOut.model_validate(obj)
     out.foto_url = presign_get(obj.foto_key) if obj.foto_key else None
+    # (P229 §3) KIM tamamladi. Id yeterli degildi: saha rolu kullanici
+    # listesini GOREMIYOR (403), yani adi kendisi cozemezdi.
+    out.tamamlayan_ad = ad
     return out
 
 
@@ -367,16 +487,17 @@ async def list_completions(
     ).scalar_one()
     rows = (
         await db.execute(
-            select(TaskCompletion)
+            select(TaskCompletion, AppUser.ad)
+            .outerjoin(AppUser, AppUser.id == TaskCompletion.tamamlayan_user_id)
             .where(base)
             .order_by(TaskCompletion.tamamlanma_zamani.desc(), TaskCompletion.id.desc())
             .limit(limit)
             .offset(offset)
         )
-    ).scalars().all()
+    ).all()
     return TaskCompletionListResponse(
         meta={"limit": limit, "offset": offset, "total": total},
-        items=[_completion_out(r) for r in rows],
+        items=[_completion_out(r, ad) for r, ad in rows],
     )
 
 
@@ -485,11 +606,24 @@ async def create_completion(
                     tenant_id=user.tenant_id,
                     tip="talep_cozuldu",
                 )
+        # (P229 §3) YONETIME BILDIRIM — "is bitti".
+        await _tamamlandi_bildir(db, task, user)
+
+        # (P229 §3) DENETIM KAYDI — tamamlama bir IS KANITIDIR.
+        #
+        # YALNIZ TAZE INSERT'TE: idempotent tekrar (ag koptu, istemci
+        # yeniden gonderdi) ayni isi IKI KEZ yapilmis gibi gostermemeli.
+        await audit_user(
+            db, user, Action.TASK_COMPLETE,
+            resource_type="task", resource_id=task_id,
+            meta={"completion_id": str(obj.id), "foto": obj.foto_key is not None},
+        )
         await db.refresh(obj)
         return JSONResponse(
             # (P131) `_completion_out`: yeni kaydin fotografi ANINDA
             # gorunur olsun — istemci ikinci bir istek atmak zorunda kalmasin.
-            status_code=201, content=_completion_out(obj).model_dump(mode="json")
+            status_code=201,
+            content=_completion_out(obj, user.ad).model_dump(mode="json"),
         )
 
     existing = (
@@ -502,3 +636,56 @@ async def create_completion(
             status_code=200, content=_completion_out(existing).model_dump(mode="json")
         )
     raise APIError(409, "conflict", "idempotency_key_govde_farkli")
+
+
+@router.delete("/{task_id}/completions/{completion_id}", status_code=204)
+async def delete_completion(
+    task_id: uuid.UUID,
+    completion_id: uuid.UUID,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_REOPENER),
+) -> Response:
+    """(P229 §3) TAMAMLAMAYI GERI AL — gorevi yeniden ac.
+
+    =======================================================================
+    KIM: YALNIZ YONETIM (admin + yonetici)
+    =======================================================================
+    Saha rolleri DISARIDA. Geri acma bir KANITI siler; sahadaki kisi kendi
+    tamamlamasini silebilseydi "yaptim" deyip izini temizleyebilirdi.
+
+    =======================================================================
+    NEDEN SILME, "iptal" BAYRAGI DEGIL
+    =======================================================================
+    Tamamlama kaydinin kendisi olaya dair bir OLCUMDUR (zaman, foto, NFC,
+    GPS). "Iptal edildi" isaretli bir kayit birakmak, listedeki
+    "son tamamlama" hesabini ve rapor toplamlarini her yerde bu bayragi
+    kontrol etmeye zorlardi — bir yerde unutulmasi, geri alinmis bir isin
+    raporda YAPILMIS gorunmesi demekti. Iz DENETIM KAYDINDA duruyor:
+    `task_complete` ve `task_reopen` satirlari kimin ne zaman ne yaptigini
+    tasiyor.
+    """
+    task = await _visible_task_or_404(db, task_id, user)
+    obj = (
+        await db.execute(
+            select(TaskCompletion).where(
+                TaskCompletion.id == completion_id,
+                TaskCompletion.task_id == task.id,
+            )
+        )
+    ).scalar_one_or_none()
+    if obj is None:
+        raise APIError(404, "not_found", "kayit_bulunamadi")
+
+    # Denetim kaydi SILMEDEN ONCE: silinen kaydin alanlarini tasimali.
+    await audit_user(
+        db, user, Action.TASK_REOPEN,
+        resource_type="task", resource_id=task_id,
+        meta={
+            "completion_id": str(obj.id),
+            "tamamlayan_user_id": str(obj.tamamlayan_user_id),
+            "tamamlanma_zamani": obj.tamamlanma_zamani.isoformat(),
+        },
+    )
+    await db.delete(obj)
+    await db.flush()
+    return Response(status_code=204)
