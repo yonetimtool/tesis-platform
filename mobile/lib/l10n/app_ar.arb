@@ -2128,5 +2128,7 @@
   "gorevHenuzTamamlanmadi": "لم يُنجز بعد",
   "gorevGecmisYuklenemedi": "تعذّر تحميل سجل الإنجاز.",
   "gorevTamamlamayiGeriAl": "تراجع",
-  "ortakBilinmiyor": "غير معروف"
+  "ortakBilinmiyor": "غير معروف",
+  "kameraAltAkis": "التدفق الثانوي (RTSP)",
+  "kameraAltAkisAlt": "إذا كانت كاميرتك تبث بترميز H265 فلن يتمكّن المشغّل من فكّه. معظم الكاميرات توفّر تدفقًا ثانيًا بترميز H264 غالبًا؛ أدخل عنوانه هنا. العنوان الرئيسي لا يتغيّر."
 }

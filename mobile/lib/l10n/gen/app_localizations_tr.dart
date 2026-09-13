@@ -6198,4 +6198,11 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get ortakBilinmiyor => 'Bilinmiyor';
+
+  @override
+  String get kameraAltAkis => 'Alt akış (RTSP)';
+
+  @override
+  String get kameraAltAkisAlt =>
+      'Kameranız H265 yayın yapıyorsa oynatıcı onu çözemez. Çoğu kamera H264 olan ikinci bir akış verir; adresini buraya girin. Ana adres değişmez — kare ve kayıt ondan alınmaya devam eder.';
 }

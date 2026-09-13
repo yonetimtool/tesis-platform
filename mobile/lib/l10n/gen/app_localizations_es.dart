@@ -6367,4 +6367,11 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get ortakBilinmiyor => 'Desconocido';
+
+  @override
+  String get kameraAltAkis => 'Flujo secundario (RTSP)';
+
+  @override
+  String get kameraAltAkisAlt =>
+      'Si su cámara emite en H265, el reproductor no puede decodificarlo. La mayoría de las cámaras ofrecen un segundo flujo, normalmente H264; introduzca aquí su dirección. La dirección principal no cambia.';
 }

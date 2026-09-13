@@ -6454,4 +6454,11 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get ortakBilinmiyor => 'غير معروف';
+
+  @override
+  String get kameraAltAkis => 'التدفق الثانوي (RTSP)';
+
+  @override
+  String get kameraAltAkisAlt =>
+      'إذا كانت كاميرتك تبث بترميز H265 فلن يتمكّن المشغّل من فكّه. معظم الكاميرات توفّر تدفقًا ثانيًا بترميز H264 غالبًا؛ أدخل عنوانه هنا. العنوان الرئيسي لا يتغيّر.';
 }

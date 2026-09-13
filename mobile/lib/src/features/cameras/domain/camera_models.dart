@@ -115,6 +115,7 @@ class Camera {
     this.aktif = true,
     this.sakinGorebilir = false,
     this.anaEkranda = false,
+    this.altStreamUrl,
     this.restreamUrl,
     this.snapshotUrl,
     this.canliYol,
@@ -131,6 +132,12 @@ class Camera {
 
   /// RTSP kamerayi oynatilabilir yapan HLS gecidi (P17); yoksa null.
   /// `streamUrl` KORUNUR — o kameranin KENDI adresidir.
+  /// (P230 §1) ALT (ikinci) RTSP akisi — YALNIZ canli izleme icin.
+  ///
+  /// Zincir olculdu: sunucu H265'i HLS'e KOYUYOR, kopan halka ISTEMCININ
+  /// COZMESI. Ana adres degistirilmez cunku kare ve kayit ondan gider
+  /// (ffmpeg H265'i sorunsuz cozer).
+  final String? altStreamUrl;
   final String? restreamUrl;
 
   /// (P121) TEK KARE dondüren adres (image/jpeg); yoksa null.
@@ -200,6 +207,7 @@ class Camera {
     tur: CameraTur.fromWire(json['tur'] as String?),
     aktif: json['aktif'] as bool? ?? true,
     sakinGorebilir: json['sakin_gorebilir'] as bool? ?? false,
+    altStreamUrl: json['alt_stream_url'] as String?,
     restreamUrl: json['restream_url'] as String?,
     snapshotUrl: json['snapshot_url'] as String?,
     canliYol: json['canli_yol'] as String?,
@@ -217,6 +225,7 @@ class CameraDraft {
     required this.sakinGorebilir,
     this.anaEkranda = false,
     this.konum,
+    this.altStreamUrl,
     this.restreamUrl,
     this.snapshotUrl,
   });
@@ -239,6 +248,9 @@ class CameraDraft {
   /// anlamasinin yolu da yoktu.
   final bool anaEkranda;
 
+  /// (P230 §1) ALT (ikinci) RTSP akisi — YALNIZ canli izleme icin.
+  final String? altStreamUrl;
+
   /// Opsiyonel HLS gecidi (P17). Bos ise gonderilmez/temizlenir.
   final String? restreamUrl;
 
@@ -254,6 +266,8 @@ class CameraDraft {
     'aktif': aktif,
     'sakin_gorebilir': sakinGorebilir,
     'ana_ekranda': anaEkranda,
+    if (altStreamUrl != null && altStreamUrl!.isNotEmpty)
+      'alt_stream_url': altStreamUrl,
     if (restreamUrl != null && restreamUrl!.isNotEmpty)
       'restream_url': restreamUrl,
     if (snapshotUrl != null && snapshotUrl!.isNotEmpty)
@@ -270,6 +284,11 @@ class CameraDraft {
     'aktif': aktif,
     'sakin_gorebilir': sakinGorebilir,
     'ana_ekranda': anaEkranda,
+    // ACIK null: bos birakilirsa ALT AKIS kaldirilir ve canli yol ANA
+    // adrese doner (`restream_url` ile ayni sozlesme).
+    'alt_stream_url': (altStreamUrl == null || altStreamUrl!.isEmpty)
+        ? null
+        : altStreamUrl,
     // ACIK null: bos birakilirsa gecit KALDIRILIR (sunucu sozlesmesi).
     'restream_url': (restreamUrl == null || restreamUrl!.isEmpty)
         ? null

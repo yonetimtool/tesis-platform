@@ -875,6 +875,8 @@ export interface Kamera {
   tur: CameraTur;
   aktif: boolean;
   sakin_gorebilir: boolean;
+  /** (P230 §1) ALT (ikinci) RTSP akisi — yalniz canli izleme. */
+  alt_stream_url?: string | null;
   restream_url?: string | null;
   snapshot_url?: string | null;
   // Sunucunun karari (restream varsa rtsp de oynatilabilir olur — P17).

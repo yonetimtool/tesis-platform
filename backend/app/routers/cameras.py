@@ -149,6 +149,21 @@ def _kimligi_ayikla(veri: dict) -> None:
             veri["stream_kullanici"] = kul
         if par is not None and not duz:
             duz, verildi = par, True
+    # (P230 §1) ALT AKIS AYNI KURALDAN GECER.
+    #
+    # Atlanirsa, ana adres icin kapatilan DUZ-PAROLA sizintisi IKINCI bir
+    # alanla yeniden acilirdi: `rtsp://kul:par@konak/sub` veritabaninda
+    # oldugu gibi dururdu. Kimlik TEK CIFTTIR (ayni kamera): alt akistan
+    # ayrilan parola da `stream_parola_sifreli`ye gider ve
+    # `etkin_stream_url` her iki adrese de ONU geri takar.
+    if veri.get("alt_stream_url"):
+        _kimlik_cozulur_mu(veri["alt_stream_url"])
+        a_temiz, a_kul, a_par = kimligi_ayir(veri["alt_stream_url"])
+        veri["alt_stream_url"] = a_temiz
+        if a_kul is not None and not veri.get("stream_kullanici"):
+            veri["stream_kullanici"] = a_kul
+        if a_par is not None and not duz:
+            duz, verildi = a_par, True
     if verildi:
         veri["stream_parola_sifreli"] = parola_sakla(duz)
     # (P213 §6) NVR kimligi AYNI KURALLA saklanir — ayri bir yol yazmak,
@@ -157,14 +172,22 @@ def _kimligi_ayikla(veri: dict) -> None:
         veri["kayit_parola_sifreli"] = parola_sakla(veri.pop("kayit_parola"))
 
 
-def etkin_stream_url(obj: Camera) -> str:
+def etkin_stream_url(obj: Camera, *, canli: bool = False) -> str:
     """SUNUCU ICI kullanim icin kimligi geri takilmis adres.
 
     ffmpeg cagrisi ve MediaMTX yol tanimi BUNU kullanir; istemciye giden
     hicbir yol bu fonksiyondan gecmez.
+
+    (P230 §1) [canli] TRUE ise ALT AKIS tercih edilir. Ayrim bilincli:
+    canli izlemeyi TARAYICI cozer ve cogu tarayici H265 cozemez; KARE ve
+    KAYIT ise ffmpeg'den gecer ve ffmpeg H265'i sorunsuz cozer. Tek adres
+    kullansaydik, alt akisi girmek kare kalitesini de dusururdu.
     """
+    ham = obj.stream_url or ""
+    if canli:
+        ham = (getattr(obj, "alt_stream_url", None) or "").strip() or ham
     return kimligi_uygula(
-        obj.stream_url or "",
+        ham,
         getattr(obj, "stream_kullanici", None),
         parola_coz(getattr(obj, "stream_parola_sifreli", None)),
     )
@@ -185,6 +208,12 @@ def _out(obj: Camera, rol: str | None = None) -> CameraOut:
     # (izleyiciler) MASKELENIR; yonetici/admin duzenleme formu icin gorur.
     if obj.tur == "rtsp" and rol not in ("admin", "yonetici"):
         out.stream_url = "rtsp://***"
+        # (P230 §1) ALT AKIS DA MASKELENIR. Ayni gerekce: o da `kul:par@`
+        # tasiyabilir ve izleyici onu zaten oynatmaz (canli, vekil
+        # uzerinden gider). Maskelemeyi unutmak, ana adres icin kapatilan
+        # sizintiyi IKINCI bir alanla yeniden acmak olurdu.
+        if out.alt_stream_url:
+            out.alt_stream_url = "rtsp://***"
     return out
 
 
@@ -214,6 +243,18 @@ def _cok_uzun(exc: UrlCokUzun) -> APIError:
         422, "invalid_stream_url", "kamera_url_cok_uzun",
         uzunluk=exc.uzunluk, sinir=URL_UST_SINIR,
     )
+
+
+def _alt_akis_dogrula(alt_url: str | None) -> None:
+    """(P230 §1) ALT AKIS bir RTSP adresidir.
+
+    `stream_url` ile AYNI kural: alan "kameranin ikinci akisi" icin var ve
+    oraya bir HLS adresi yazmak sessizce ise yaramayan bir canli yol
+    uretirdi — MediaMTX'e `rtspSource` olarak kaydedilir.
+    """
+    if not alt_url:
+        return
+    _url_tur_dogrula(alt_url, "rtsp")
 
 
 def _restream_dogrula(restream_url: str | None) -> None:
@@ -312,6 +353,7 @@ async def create_camera(
     # URL kurallari TEK YERDE, burada (P25): semadaki bir `model_validator`
     # pydantic'in ham Ingilizce `validation_error`ini uretirdi.
     _url_tur_dogrula(body.stream_url, body.tur)
+    _alt_akis_dogrula(body.alt_stream_url)
     _restream_dogrula(body.restream_url)
     _snapshot_dogrula(body.snapshot_url)
     veri = body.model_dump()
@@ -347,6 +389,8 @@ async def update_camera(
         alanlar.get("stream_url", obj.stream_url),
         alanlar.get("tur", obj.tur),
     )
+    if "alt_stream_url" in alanlar:
+        _alt_akis_dogrula(alanlar["alt_stream_url"])
     if "restream_url" in alanlar:
         _restream_dogrula(alanlar["restream_url"])
     if "snapshot_url" in alanlar:
@@ -840,7 +884,9 @@ async def _canli_yolu_kaydet(obj: Camera) -> None:
     TUTULMAZ (kaynak karari, §6). Yol zaten varsa MediaMTX hata doner ve
     bu BASARI sayilir.
     """
-    await _mediamtx_yol_kaydet(f"cam{obj.id.hex}", etkin_stream_url(obj))
+    # CANLI YOL ALT AKISI KULLANIR (P230 §1): MediaMTX yalnizca canli
+    # izleme icin kurulur; kare ve kayit bu yoldan GECMEZ.
+    await _mediamtx_yol_kaydet(f"cam{obj.id.hex}", etkin_stream_url(obj, canli=True))
 
 
 async def _mediamtx_yol_kaydet(yol: str, kaynak: str) -> None:

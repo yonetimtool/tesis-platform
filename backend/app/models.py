@@ -787,6 +787,17 @@ class Camera(Base):
     # true olur. `stream_url` kameranin KENDI adresidir ve korunur — restream
     # bozulunca gercek adres kaybolmasin.
     restream_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: (P230 §1, goc 0132) ALT (ikinci) RTSP AKISI — CANLI izleme icin.
+    #:
+    #: Olculdu: zincir sunucuda kopmuyor; kamera H265 yayin yapiyor ve
+    #: masaustu tarayicilarin cogu HEVC'yi MSE uzerinden cozemiyor.
+    #: Cogu kamera ikinci bir akis verir ve o genelde H264'tur.
+    #:
+    #: `stream_url` DEGISTIRILMEZ cunku o yalniz canli icin degil, KARE
+    #: (`/cameras/{id}/kare`, ffmpeg — H265'i sorunsuz cozer) ve NVR kayit
+    #: icin de kullaniliyor. Ana adresi alt akisla degistirmek, cozulmesi
+    #: GEREKMEYEN bir yerde cozunurlugu dusururdu.
+    alt_stream_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     # SNAPSHOT (0031 / P121): TEK KARE dondüren adres (image/jpeg). Izgara
     # karosu 5-10 sn'de bir BUNU ceker; oynatici acilmaz. Frigate'in
     # `/api/<kamera>/latest.jpg` ucu tam olarak budur ve P17'de doldurulur.

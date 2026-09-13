@@ -11002,6 +11002,18 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Bilinmiyor'**
   String get ortakBilinmiyor;
+
+  /// No description provided for @kameraAltAkis.
+  ///
+  /// In tr, this message translates to:
+  /// **'Alt akış (RTSP)'**
+  String get kameraAltAkis;
+
+  /// No description provided for @kameraAltAkisAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kameranız H265 yayın yapıyorsa oynatıcı onu çözemez. Çoğu kamera H264 olan ikinci bir akış verir; adresini buraya girin. Ana adres değişmez — kare ve kayıt ondan alınmaya devam eder.'**
+  String get kameraAltAkisAlt;
 }
 
 class _AppLocalizationsDelegate

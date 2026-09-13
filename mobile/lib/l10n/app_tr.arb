@@ -2957,5 +2957,7 @@
   "gorevHenuzTamamlanmadi": "Henüz tamamlanmadı",
   "gorevGecmisYuklenemedi": "Tamamlama geçmişi yüklenemedi.",
   "gorevTamamlamayiGeriAl": "Geri al",
-  "ortakBilinmiyor": "Bilinmiyor"
+  "ortakBilinmiyor": "Bilinmiyor",
+  "kameraAltAkis": "Alt akış (RTSP)",
+  "kameraAltAkisAlt": "Kameranız H265 yayın yapıyorsa oynatıcı onu çözemez. Çoğu kamera H264 olan ikinci bir akış verir; adresini buraya girin. Ana adres değişmez — kare ve kayıt ondan alınmaya devam eder."
 }

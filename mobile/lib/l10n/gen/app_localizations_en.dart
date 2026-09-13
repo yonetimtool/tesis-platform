@@ -6392,4 +6392,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ortakBilinmiyor => 'Unknown';
+
+  @override
+  String get kameraAltAkis => 'Substream (RTSP)';
+
+  @override
+  String get kameraAltAkisAlt =>
+      'If your camera streams H265, the player cannot decode it. Most cameras offer a second stream, usually H264; enter its address here. The main address stays as it is.';
 }

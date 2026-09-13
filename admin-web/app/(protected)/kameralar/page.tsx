@@ -73,6 +73,9 @@ type Form = {
   konum: string;
   stream_url: string;
   tur: CameraTur;
+  /** (P230 §1) ALT (ikinci) RTSP akisi — YALNIZ canli izleme icin.
+   *  Ana adres KARE ve KAYIT icin kullanildigindan degistirilmez. */
+  alt_stream_url: string;
   restream_url: string;
   snapshot_url: string;
   sakin_gorebilir: boolean;
@@ -94,6 +97,7 @@ const BOS_FORM: Form = {
   konum: "",
   stream_url: "",
   tur: "hls",
+  alt_stream_url: "",
   restream_url: "",
   snapshot_url: "",
   sakin_gorebilir: false,
@@ -247,6 +251,7 @@ export default function KameralarPage() {
       restream_url: k.restream_url ?? "",
       snapshot_url: k.snapshot_url ?? "",
       sakin_gorebilir: k.sakin_gorebilir,
+      alt_stream_url: k.alt_stream_url ?? "",
       ana_ekranda: k.ana_ekranda ?? false,
       aktif: k.aktif,
       kayit_aktif: k.kayit_aktif ?? false,
@@ -336,6 +341,7 @@ export default function KameralarPage() {
         konum: form.konum || null,
         stream_url: form.stream_url.trim(),
         tur: form.tur,
+        alt_stream_url: form.alt_stream_url.trim() || null,
         restream_url: form.restream_url.trim() || null,
         snapshot_url: form.snapshot_url.trim() || null,
         sakin_gorebilir: form.sakin_gorebilir,
@@ -649,6 +655,26 @@ export default function KameralarPage() {
                       >
                         {TUR_SECENEKLERI}
                       </Secim>
+                    )}
+                  </AlanSarmal>
+                  {/* (P230 §1) ALT AKIS — H265 kameralar icin.
+                      Zincir olculdu: sunucu H265'i HLS'e KOYUYOR, kopan
+                      halka TARAYICININ COZMESI. Ana adres degistirilmez
+                      cunku kare ve kayit ondan gider (ffmpeg H265'i
+                      sorunsuz cozer). */}
+                  <AlanSarmal
+                    etiket={t("kameraAltAkis")}
+                    ipucu={t("kameraAltAkisIpucu")}
+                  >
+                    {(b) => (
+                      <Alan
+                        {...b}
+                        data-test="kamera-alt-akis"
+                        value={form.alt_stream_url}
+                        onChange={(e) =>
+                          setForm({ ...form, alt_stream_url: e.target.value })
+                        }
+                      />
                     )}
                   </AlanSarmal>
                   <AlanSarmal etiket={t("kameraRestream")} ipucu={t("kameraRestreamIpucu")}>

@@ -46,6 +46,10 @@ class _KameraFormSheetState extends ConsumerState<KameraFormSheet> {
   late final TextEditingController _urlCtrl = TextEditingController(
     text: widget.mevcut?.streamUrl ?? '',
   );
+  // (P230 §1) ALT AKIS — H265 kameralar icin ikinci (genelde H264) akis.
+  late final TextEditingController _altAkisCtrl = TextEditingController(
+    text: widget.mevcut?.altStreamUrl ?? '',
+  );
   // P17: RTSP kamerayi oynatilabilir yapan HLS gecidi (Frigate/go2rtc).
   late final TextEditingController _restreamCtrl = TextEditingController(
     text: widget.mevcut?.restreamUrl ?? '',
@@ -69,6 +73,7 @@ class _KameraFormSheetState extends ConsumerState<KameraFormSheet> {
     _adCtrl.dispose();
     _konumCtrl.dispose();
     _urlCtrl.dispose();
+    _altAkisCtrl.dispose();
     _restreamCtrl.dispose();
     _snapshotCtrl.dispose();
     super.dispose();
@@ -88,6 +93,7 @@ class _KameraFormSheetState extends ConsumerState<KameraFormSheet> {
       aktif: _aktif,
       sakinGorebilir: _sakinGorebilir,
       anaEkranda: _anaEkranda,
+      altStreamUrl: _altAkisCtrl.text.trim(),
       restreamUrl: _restreamCtrl.text.trim(),
       snapshotUrl: _snapshotCtrl.text.trim(),
     );
@@ -275,6 +281,24 @@ class _KameraFormSheetState extends ConsumerState<KameraFormSheet> {
               // oynatilabilir oldugu icin alan GOSTERILMEZ (gereksiz alan
               // formu uzatir ve "bunu da doldurayim mi" tereddudu yaratir).
               if (_tur == CameraTur.rtsp) ...[
+                const SizedBox(height: 8),
+                // (P230 §1) ALT AKIS. Zincir olculdu: sunucu H265'i HLS'e
+                // KOYUYOR, kopan halka ISTEMCININ COZMESI. Ana adres
+                // degistirilmez — kare ve kayit ondan gider.
+                TextFormField(
+                  key: const Key('kamera-alt-akis'),
+                  controller: _altAkisCtrl,
+                  enabled: !_kaydediyor,
+                  keyboardType: TextInputType.url,
+                  autocorrect: false,
+                  decoration: InputDecoration(
+                    labelText: l10n.kameraAltAkis,
+                    helperText: l10n.kameraAltAkisAlt,
+                    helperMaxLines: 4,
+                    hintText: 'rtsp://...',
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _restreamCtrl,

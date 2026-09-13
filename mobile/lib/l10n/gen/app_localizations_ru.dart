@@ -6462,4 +6462,11 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get ortakBilinmiyor => 'Неизвестно';
+
+  @override
+  String get kameraAltAkis => 'Второй поток (RTSP)';
+
+  @override
+  String get kameraAltAkisAlt =>
+      'Если камера вещает в H265, проигрыватель не может его декодировать. Большинство камер дают второй поток, обычно H264; укажите его адрес здесь. Основной адрес не меняется.';
 }

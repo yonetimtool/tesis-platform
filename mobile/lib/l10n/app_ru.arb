@@ -2128,5 +2128,7 @@
   "gorevHenuzTamamlanmadi": "Ещё не выполнено",
   "gorevGecmisYuklenemedi": "Не удалось загрузить историю.",
   "gorevTamamlamayiGeriAl": "Отменить",
-  "ortakBilinmiyor": "Неизвестно"
+  "ortakBilinmiyor": "Неизвестно",
+  "kameraAltAkis": "Второй поток (RTSP)",
+  "kameraAltAkisAlt": "Если камера вещает в H265, проигрыватель не может его декодировать. Большинство камер дают второй поток, обычно H264; укажите его адрес здесь. Основной адрес не меняется."
 }

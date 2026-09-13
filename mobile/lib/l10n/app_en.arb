@@ -2128,5 +2128,7 @@
   "gorevHenuzTamamlanmadi": "Not completed yet",
   "gorevGecmisYuklenemedi": "Completion history could not be loaded.",
   "gorevTamamlamayiGeriAl": "Undo",
-  "ortakBilinmiyor": "Unknown"
+  "ortakBilinmiyor": "Unknown",
+  "kameraAltAkis": "Substream (RTSP)",
+  "kameraAltAkisAlt": "If your camera streams H265, the player cannot decode it. Most cameras offer a second stream, usually H264; enter its address here. The main address stays as it is."
 }

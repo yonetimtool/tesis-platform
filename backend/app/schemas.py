@@ -1133,6 +1133,15 @@ class CameraCreate(BaseModel):
     konum: str | None = Field(None, min_length=1, max_length=200)
     # Istemcinin oynattigi yayin; backend HIC cekmez.
     stream_url: str
+    #: (P230 §1) ALT (ikinci) RTSP AKISI — YALNIZ canli izleme icin.
+    #:
+    #: Kamera H265 yayin yapiyorsa masaustu tarayicilarin cogu cozemez
+    #: (olculdu: zincir sunucuda kopmuyor, CODECS="hvc1..."). Cogu kamera
+    #: ikinci bir akis verir ve o genelde H264'tur. `stream_url`
+    #: DEGISTIRILMEZ: kare (`/kare`, ffmpeg — H265'i sorunsuz cozer) ve
+    #: NVR kayit ondan gider; alt akisi oraya yazmak, cozulmesi
+    #: GEREKMEYEN bir yerde cozunurlugu dusururdu.
+    alt_stream_url: str | None = None
     tur: CameraTur = "hls"
     aktif: bool = True
     # KVKK: sakin/tesis gorevlisi gorunurlugu YALNIZ bu bayrakla acilir.
@@ -1181,6 +1190,15 @@ class CameraUpdate(BaseModel):
     ad: str | None = Field(None, min_length=1, max_length=100)
     konum: str | None = Field(None, max_length=200)
     stream_url: str | None = None
+    #: (P230 §1) ALT (ikinci) RTSP AKISI — YALNIZ canli izleme icin.
+    #:
+    #: Kamera H265 yayin yapiyorsa masaustu tarayicilarin cogu cozemez
+    #: (olculdu: zincir sunucuda kopmuyor, CODECS="hvc1..."). Cogu kamera
+    #: ikinci bir akis verir ve o genelde H264'tur. `stream_url`
+    #: DEGISTIRILMEZ: kare (`/kare`, ffmpeg — H265'i sorunsuz cozer) ve
+    #: NVR kayit ondan gider; alt akisi oraya yazmak, cozulmesi
+    #: GEREKMEYEN bir yerde cozunurlugu dusururdu.
+    alt_stream_url: str | None = None
     tur: CameraTur | None = None
     aktif: bool | None = None
     sakin_gorebilir: bool | None = None
@@ -1220,6 +1238,15 @@ class CameraOut(BaseModel):
     ad: str
     konum: str | None = None
     stream_url: str
+    #: (P230 §1) ALT (ikinci) RTSP AKISI — YALNIZ canli izleme icin.
+    #:
+    #: Kamera H265 yayin yapiyorsa masaustu tarayicilarin cogu cozemez
+    #: (olculdu: zincir sunucuda kopmuyor, CODECS="hvc1..."). Cogu kamera
+    #: ikinci bir akis verir ve o genelde H264'tur. `stream_url`
+    #: DEGISTIRILMEZ: kare (`/kare`, ffmpeg — H265'i sorunsuz cozer) ve
+    #: NVR kayit ondan gider; alt akisi oraya yazmak, cozulmesi
+    #: GEREKMEYEN bir yerde cozunurlugu dusururdu.
+    alt_stream_url: str | None = None
     # Restream gecidi (0012). Dolu ise istemci BUNU oynatmalidir.
     restream_url: str | None = None
     # Anlik kare adresi (0031). Dolu ise izgara karosu periyodik olarak
