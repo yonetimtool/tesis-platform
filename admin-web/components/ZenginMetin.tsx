@@ -189,7 +189,9 @@ export function ZenginMetin({ deger, onDegisti, etiket, ekleRef }: ZenginMetinPr
           onMouseDown={(e) => e.stopPropagation()}
           onChange={(e) => calistir(KOMUT_BASLIK, e.target.value)}
           className="odak-ic rounded px-1 py-1"
-          style={{ fontSize: "var(--yz-fs-xs)", background: "var(--yz-metal-2)", color: "var(--yz-text)" }}
+          // (P226) DUZ RENK: gradyan `<option>`a uygulanmaz, acilir
+          // listede secenekler gorunmez olur.
+          style={{ fontSize: "var(--yz-fs-xs)", background: "var(--yz-surface-1)", color: "var(--yz-text)" }}
         >
           {BASLIKLAR.map((b) => (
             <option key={b} value={b}>
@@ -202,7 +204,9 @@ export function ZenginMetin({ deger, onDegisti, etiket, ekleRef }: ZenginMetinPr
           aria-label={t("zenginYaziTipi")}
           onChange={(e) => calistir(KOMUT_FONT, e.target.value)}
           className="odak-ic rounded px-1 py-1"
-          style={{ fontSize: "var(--yz-fs-xs)", background: "var(--yz-metal-2)", color: "var(--yz-text)" }}
+          // (P226) DUZ RENK: gradyan `<option>`a uygulanmaz, acilir
+          // listede secenekler gorunmez olur.
+          style={{ fontSize: "var(--yz-fs-xs)", background: "var(--yz-surface-1)", color: "var(--yz-text)" }}
         >
           {FONTLAR.map((f) => (
             <option key={f} value={f}>
@@ -215,7 +219,9 @@ export function ZenginMetin({ deger, onDegisti, etiket, ekleRef }: ZenginMetinPr
           aria-label={t("zenginBoyut")}
           onChange={(e) => calistir(KOMUT_BOYUT, e.target.value)}
           className="odak-ic rounded px-1 py-1"
-          style={{ fontSize: "var(--yz-fs-xs)", background: "var(--yz-metal-2)", color: "var(--yz-text)" }}
+          // (P226) DUZ RENK: gradyan `<option>`a uygulanmaz, acilir
+          // listede secenekler gorunmez olur.
+          style={{ fontSize: "var(--yz-fs-xs)", background: "var(--yz-surface-1)", color: "var(--yz-text)" }}
         >
           {BOYUTLAR.map((b) => (
             <option key={b} value={b}>

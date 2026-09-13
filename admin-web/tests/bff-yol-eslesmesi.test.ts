@@ -157,6 +157,99 @@ function cozuluyorMu(yol: string): boolean {
 
 const DUZ_CAGRILAR = duzCagrilar();
 
+/**
+ * (P226) SORGU DIZESI TASINIYOR MU — SINIFIN UCUNCU TEKRARI.
+ *
+ * OLCULEN KUSUR (PROD): panelde arama kutusuna "oltu" yazildi, sekiz
+ * tesisin HEPSI listede kaldi. `app/api/tenants/route.ts` imzasi
+ * `GET()` idi — istegi HIC ALMIYOR, dolayisiyla `?q=`, `?kurulum=` ve
+ * `?arsivli=` BFF'te SESSIZCE DUSUYORDU.
+ *
+ * IKI TEST DE YESILDI VE IKISI DE DOGRUYDU: backend testi ucu DOGRUDAN
+ * cagirdi, web testi `fetch`i TARAYICI sinirinda taklit etti. Hicbiri
+ * ORTA HALKAYI olcmedi. Ayni sinif P213 §6'da da yasanmisti.
+ *
+ * BU TARAMA sinifi kapatir: bir sayfa `/api/x?...` diye SORGU
+ * DIZESIYLE cagiriyorsa, o yolun vekili istegi ALMAK ZORUNDADIR.
+ * `GET()` ya da `GET(_req)` imzasi, sorgunun okunamayacaginin
+ * kanitidir.
+ */
+function sorguluCagrilar(): { yol: string; dosya: string }[] {
+  const cikti: { yol: string; dosya: string }[] = [];
+  const tara = (dizin: string) => {
+    for (const ad of readdirSync(dizin)) {
+      const tam = join(dizin, ad);
+      if (statSync(tam).isDirectory()) {
+        if (tam === API) continue;
+        tara(tam);
+        continue;
+      }
+      if (!ad.endsWith(".tsx") && !ad.endsWith(".ts")) continue;
+      const kaynak = readFileSync(tam, "utf8");
+      // GERCEK sorgu dizesi (`?ad=`) ya da sablonla eklenen sorgu
+      // (`${sorgu}`) — yol parcasi olan `${id}` SAYILMAZ.
+      for (const m of kaynak.matchAll(
+        /[`"](\/api\/[a-z0-9\-/._]+)(?:\?[a-z_]|\$\{sorgu)/g,
+      )) {
+        cikti.push({ yol: m[1], dosya: tam.slice(KOK.length + 1) });
+      }
+    }
+  };
+  tara(join(KOK, "app"));
+  tara(join(KOK, "components"));
+  tara(join(KOK, "lib"));
+  return cikti;
+}
+
+/** Yolun route.ts dosyasi (geri izlemeli cozucuyle ayni kural). */
+function rotaDosyasiniBul(yol: string): string | null {
+  const parcalar = yol.replace(/^\/api\//, "").split("/").filter(Boolean);
+  let dizin = API;
+  for (const p of parcalar) {
+    const duz = join(dizin, p);
+    if (existsSync(duz) && statSync(duz).isDirectory()) {
+      dizin = duz;
+      continue;
+    }
+    const dinamik = readdirSync(dizin).find(
+      (a) => a.startsWith("[") && statSync(join(dizin, a)).isDirectory(),
+    );
+    if (!dinamik) return null;
+    dizin = join(dizin, dinamik);
+  }
+  const dosya = join(dizin, "route.ts");
+  return existsSync(dosya) ? dosya : null;
+}
+
+describe("(P226) sorgu dizesiyle cagrilan vekil istegi OKUR", () => {
+  const SORGULU = sorguluCagrilar();
+
+  it("tarama gercekten cagri buluyor", () => {
+    expect(SORGULU.length).toBeGreaterThan(20);
+  });
+
+  it("HER sorgulu yolun GET'i istegi ALIR", () => {
+    const sagir: string[] = [];
+    for (const c of SORGULU) {
+      const dosya = rotaDosyasiniBul(c.yol);
+      if (!dosya) continue;
+      const kaynak = readFileSync(dosya, "utf8");
+      const m = /export async function GET\(([^)]*)\)/.exec(kaynak);
+      if (!m) continue;
+      const imza = m[1].trim();
+      // `GET()` -> sorgu OKUNAMAZ. `GET(_req: NextRequest)` -> alt cizgi
+      // "kullanilmiyor" demektir, yani sorgu yine okunmuyor.
+      if (imza === "" || /^_req\b/.test(imza)) {
+        sagir.push(`${c.dosya}: ${c.yol} -> ${dosya.slice(KOK.length + 1)}`);
+      }
+    }
+    expect(
+      [...new Set(sagir)],
+      `sorgu dizesi BFF'te DUSUYOR:\n${[...new Set(sagir)].join("\n")}`,
+    ).toEqual([]);
+  });
+});
+
 describe("(P221) duz fetch/SWR cagrilarinin da vekili VAR", () => {
   it("tarama gercekten cagri buluyor", () => {
     expect(DUZ_CAGRILAR.length).toBeGreaterThan(50);

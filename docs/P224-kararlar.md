@@ -296,3 +296,88 @@ kurulum=False: 609 · kurulum=True: 2225
 
 Testler: backend 10, web 6. Beş kırma testi yapıldı (ASCII katlama,
 platform bayrağı, korumalı satır, numaralandırma, gecikme).
+
+---
+
+# P226 — Prod'da kırılan iki şey: BFF sorgusu ve gradyan `<select>`
+
+Tarih: 2026-09-12
+
+P225 prod'a çıktı; koruma ve numaralandırma çalıştı, **arama süzmedi** ve
+**kurulum listesi boş göründü**. İkisi de testlerden geçmişti.
+
+## Kusur 1 — BFF sorgu dizesini düşürüyordu
+
+`app/api/tenants/route.ts`:
+
+```ts
+export async function GET(): Promise<NextResponse> {   // istegi HIC ALMIYOR
+  return proxyJson("/tenants", "GET");
+}
+```
+
+Tarayıcı `?q=oltu` gönderiyor, BFF **sessizce düşürüyor**, backend
+süzgeçsiz listeyi dönüyordu. `?kurulum=` ve `?arsivli=` de hiç
+ulaşmıyordu — yani **arşiv görünümü de bozuktu** ve bunu kimse fark
+etmemişti.
+
+### Testler neden görmedi — iki ölçüm de doğruydu
+
+| Ölçüm | Ne yaptı | Sonuç |
+|---|---|---|
+| Backend testi | ucu **doğrudan** çağırdı (`/tenants?q=...`) | süzüyor ✓ |
+| Web testi | `fetch`i **tarayıcı sınırında** taklit etti, `q=` taşındığını doğruladı | gönderiyor ✓ |
+
+Hiçbiri **tarayıcı → BFF → backend** zincirinin **orta halkasını**
+ölçmedi. Benim "arikoy/Arıköy/ARIKOY üçü de buluyor" ölçümüm de backend
+ucuna doğrudan yapılmıştı — dev/prod farkı değil, **ölçüm katmanı**
+farkıydı.
+
+Bu, P200 dersinin (*taklidi ölçülecek katmanın altına koy*) ve P213 §6'nın
+**üçüncü tekrarı**.
+
+### Kapatılan şey: örnek değil SINIF
+
+`tests/bff-yol-eslesmesi.test.ts`'e yeni tarama: bir sayfa `/api/x?...`
+diye **sorgu dizesiyle** çağırıyorsa, o yolun vekili isteği **almak
+zorunda**. `GET()` ya da `GET(_req)` imzası, sorgunun okunamayacağının
+kanıtıdır. 54 sorgulu çağrı tarandı; düzelttiğim yer dışında ihlal yok.
+
+Beyaz liste kullanıldı (`q`, `kurulum`, `arsivli`), ham yeniden yayın
+değil: gelen her parametreyi iletmek, ileride eklenen bir uç
+parametresini de farkında olmadan açmak olurdu (P213 §3).
+
+## Kusur 2 — `<select>` arka planında gradyan
+
+`background: var(--yz-metal-1)` yazmıştım; o token bir
+**`linear-gradient`** (`app/tasarim-sistemi.css:141`). `<option>` satırları
+select'in arka planını devralır ama native açılır listede gradyan
+**uygulanamaz**: tarayıcı geri düşer, `color` ise `--yz-text` olarak
+kalır. Koyu temada açık metin açık zeminde kalıyor ve **seçenekler
+görünmez** oluyor. Kullanıcının gördüğü "listede yalnız ilk satır var"
+tam olarak bu.
+
+### Testler neden görmedi — ve bu sefer görmesi mümkün değildi
+
+jsdom **renk çizmez**. DOM ölçümü üç `<option>`u da doğru metinle
+buluyordu (bunu ölçtüm: `value=''/'bekliyor'/'tamam'`, metinler yerinde)
+ve test geçiyordu. Görünürlüğü ancak gerçek bir tarayıcı ölçebilir.
+
+Onun yerine **sebebi yasakladım**: yeni tarama, gradyan token listesini
+**CSS'ten üretiyor** ve hiçbir `<select>`/`<option>`ın onu `background`
+olarak kullanmamasını zorluyor. Liste elle yazılmadığı için yeni bir
+gradyan token eklenirse kural onu kendiliğinden kapsıyor.
+
+**Tarama aynı kusuru ikinci bir yerde buldu:** `rapor-modali.tsx`'teki
+çok seçimli liste de `--yz-metal-1` kullanıyordu — orada seçenekler
+`multiple` olduğu için **her zaman ekranda**, yani etkisi tesisler
+ekranındakinden daha belirgin. `ZenginMetin`'deki iki başlık seçici de
+(`--yz-metal-2`) düzeltildi. Üçü de `--yz-surface-1` (düz renk) kullanıyor
+ve `<option>`lar artık açıkça boyanıyor.
+
+## Ölçemediğim
+
+Gradyan düzeltmesinin görsel sonucunu **ölçemedim**: jsdom renk
+çizmiyor, bu makinede tarayıcı testi yok. Yapısal kilit sebebi
+engelliyor ama açılır listenin gerçekten okunur olduğunu **prod'da gözle**
+doğrulaman gerekiyor.

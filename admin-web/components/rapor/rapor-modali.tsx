@@ -245,7 +245,13 @@ export function RaporModali({ rapor, kapat, onTablo, onKuyruk }: RaporModaliProp
               style={{
                 borderRadius: "var(--yz-radius-btn)",
                 border: "var(--yz-border-w) solid var(--yz-border)",
-                background: "var(--yz-metal-1)",
+                // (P226) DUZ RENK — GRADYAN DEGIL. `--yz-metal-1` bir
+                // `linear-gradient` ve `<option>` satirlari onu
+                // uygulayamaz: tarayici geri duser, `color` acik kalir ve
+                // secenekler GORUNMEZ olur. Bu liste `multiple` oldugu
+                // icin secenekler HER ZAMAN ekranda — etkisi tesisler
+                // ekranindakinden de belirgin.
+                background: "var(--yz-surface-1)",
                 color: "var(--yz-text)",
                 fontSize: "var(--yz-fs-sm)",
               }}

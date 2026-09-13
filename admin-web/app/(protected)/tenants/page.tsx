@@ -35,6 +35,12 @@ import { ApiHatasi } from "@/lib/client";
 import { tarihSaatUzun } from "@/lib/tarih";
 import { telefonNormalle } from "@/lib/telefon";
 
+/** (P226) Acilir liste secenek stili — DUZ renk, gradyan DEGIL. */
+const SECENEK_STILI = {
+  background: "var(--yz-surface-1)",
+  color: "var(--yz-text)",
+} as const;
+
 interface TenantRow {
   id: string;
   ad: string;
@@ -527,16 +533,38 @@ export default function TenantsPage() {
               }
               data-test="tesis-kurulum-suzgec"
               className="rounded border px-3 py-2"
+              // (P226) ARKA PLAN DUZ RENK — GRADYAN DEGIL.
+              //
+              // Once `background: var(--yz-metal-1)` yazmistim; o token bir
+              // `linear-gradient`. `<option>` satirlari select'in arka
+              // planini devralir ama native acilir listede gradyan
+              // uygulanamaz: tarayici geri duser, `color` ise
+              // `--yz-text` olarak kalir. Koyu temada acik metin acik
+              // zeminde kaliyor ve SECENEKLER GORUNMEZ oluyordu —
+              // kullanicinin gordugu "listede yalniz ilk satir var"
+              // tam olarak buydu.
+              //
+              // `--yz-surface-1` DUZ renktir (#ffffff / #3b4650) ve her iki
+              // temada da `--yz-text` ile okunur kontrast verir.
               style={{
                 fontSize: "var(--yz-fs-sm)",
                 borderColor: "var(--yz-border)",
-                background: "var(--yz-metal-1)",
+                background: "var(--yz-surface-1)",
                 color: "var(--yz-text)",
               }}
             >
-              <option value="">{t("tesisKurulumHepsi")}</option>
-              <option value="bekliyor">{t("tesisKurulumBekleyen")}</option>
-              <option value="tamam">{t("tesisKurulumTamamlanan")}</option>
+              {/* Secenekler de ACIKCA boyanir: bazi tarayicilar option
+                  arka planini select'ten DEVRALMAZ ve sistem varsayilanina
+                  duser. */}
+              <option value="" style={SECENEK_STILI}>
+                {t("tesisKurulumHepsi")}
+              </option>
+              <option value="bekliyor" style={SECENEK_STILI}>
+                {t("tesisKurulumBekleyen")}
+              </option>
+              <option value="tamam" style={SECENEK_STILI}>
+                {t("tesisKurulumTamamlanan")}
+              </option>
             </select>
           </div>
         }
