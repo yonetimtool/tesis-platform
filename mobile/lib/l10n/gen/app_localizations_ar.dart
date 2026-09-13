@@ -4846,7 +4846,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get izgaraSifirla => 'استعادة الإعدادات الافتراضية';
+  String get izgaraSifirla => 'استعادة الافتراضي';
 
   @override
   String get izgaraKaydet => 'حفظ';
@@ -5581,7 +5581,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get vardiyaEkleGonder => 'إضافة الورديات';
 
   @override
-  String get vardiyaCakisanHaric => 'الإضافة مع استثناء التعارضات';
+  String get vardiyaCakisanHaric => 'دون التعارضات';
 
   @override
   String vardiyaCakisanGunler(int n) {
@@ -6406,4 +6406,37 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get telefonHataTasma =>
       'لا يمكن أن يزيد رقم الهاتف عن 10 أرقام. احذف الأرقام الزائدة.';
+
+  @override
+  String get vardiyaOncekiAy => 'الشهر السابق';
+
+  @override
+  String get vardiyaSonrakiAy => 'الشهر التالي';
+
+  @override
+  String vardiyaTumGunleriSec(String gun) {
+    return 'اختر كل $gun';
+  }
+
+  @override
+  String get vardiyaGunSec => 'الأيام';
+
+  @override
+  String vardiyaSeciliGun(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'تم اختيار $n أيام',
+      one: 'تم اختيار يوم واحد',
+      zero: 'لم يتم اختيار يوم',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get vardiyaSecimiTemizle => 'مسح الاختيار';
+
+  @override
+  String get vardiyaTakvimIpucu =>
+      'اضغط لإضافة يوم أو إزالته. اضغط مطولاً لملء المدى من آخر يوم.';
 }

@@ -223,7 +223,7 @@ void main() {
     expect(find.text('Açıklama *'), findsOneWidget);
     expect(find.textContaining('Zaman: '), findsOneWidget);
     expect(find.text('Yer (opsiyonel)'), findsOneWidget);
-    expect(find.text('Duyur ve sakinlere bildir'), findsOneWidget);
+    expect(find.text('Duyur ve bildir'), findsOneWidget);
   });
 
   testWidgets('yonetim detayda Duzenle + Sil gorur', (tester) async {
@@ -311,7 +311,7 @@ void main() {
       expect(find.text('Galeriden seç'), findsOneWidget);
       expect(find.text('Bitiş ekle (opsiyonel)'), findsOneWidget);
       // Gorselsiz de duyurulabilir.
-      expect(find.text('Duyur ve sakinlere bildir'), findsOneWidget);
+      expect(find.text('Duyur ve bildir'), findsOneWidget);
     });
 
     testWidgets('detayda zaman ARALIGI gosterilir (bitis varsa)',

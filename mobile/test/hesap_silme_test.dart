@@ -208,7 +208,7 @@ void main() {
     await tester.pumpAndSettle();
     await _silmeyiAc(tester);
 
-    await tester.tap(find.text('Parolam yok, kodla onayla'));
+    await tester.tap(find.text('Kodla onayla'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Kod gönder'));
     await tester.pumpAndSettle();

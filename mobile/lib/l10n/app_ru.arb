@@ -240,7 +240,7 @@
   "gorevZaman": "Время: {zaman}",
   "gorevFotoKanitiVar": "есть фотоподтверждение",
   "gorevNfcDogrulandi": "NFC подтверждён",
-  "gorevYeniTamamlamaBaslat": "Начать новое выполнение",
+  "gorevYeniTamamlamaBaslat": "Новое выполнение",
   "gorevDuzenleBaslik": "Изменить задачу",
   "gorevKategoriSilinmis": "Категория (удалена)",
   "gorevAtananListedeDegil": "Исполнитель (нет в списке)",
@@ -611,7 +611,7 @@
   "etkBitisiKaldir": "Убрать окончание",
   "etkYerAlan": "Место (необязательно)",
   "etkGorselAlan": "Изображение (необязательно)",
-  "etkDuyurVeBildir": "Объявить и уведомить жителей",
+  "etkDuyurVeBildir": "Объявить и уведомить",
   "izinBaslik": "Разрешение на просмотр",
   "izinTumDairelere": "Запросить доступ ко всем квартирам",
   "izinYeniIstek": "Новый запрос",
@@ -733,7 +733,7 @@
   "karFirma": "Служба доставки *",
   "karFirmaGerekli": "Служба доставки обязательна",
   "karPaketFotografi": "Фото посылки (необязательно)",
-  "karKaydetVeBildir": "Сохранить и уведомить жителей",
+  "karKaydetVeBildir": "Сохранить и уведомить",
   "ortakTekrarDene": "Повторить",
   "butTahakkuk": "Начислено",
   "butTahsilat": "Собрано",
@@ -983,7 +983,7 @@
   "ziyaretAdGerekli": "Имя посетителя обязательно",
   "ziyaretSakinleriGetir": "Загрузить жителей",
   "ziyaretBildirilecekSakin": "Кого уведомить *",
-  "ziyaretKaydetVeBildir": "Сохранить и уведомить жителя",
+  "ziyaretKaydetVeBildir": "Сохранить и уведомить",
   "raporBaslik": "Месячные отчёты",
   "raporOncekiAy": "Предыдущий месяц",
   "raporSonrakiAy": "Следующий месяц",
@@ -1424,7 +1424,7 @@
   "modulVardiyalar": "Смены",
   "izgaraDuzenleBaslik": "Настроить главный экран",
   "izgaraDuzenleAciklama": "Выберите до {enCok} часто используемых разделов.",
-  "izgaraSifirla": "Сбросить по умолчанию",
+  "izgaraSifirla": "Сбросить",
   "izgaraKaydet": "Сохранить",
   "izgaraSecim": "Выбрано: {secili}/{enCok}",
   "izgaraTavanUyarisi": "Достигнут предел. Уберите один, чтобы добавить другой (плиток: {enCok}).",
@@ -1444,7 +1444,7 @@
   "girisKodlaAciklama": "Мы отправим шестизначный код подтверждения на ваш телефон.",
   "girisKoduGonder": "Отправить код",
   "girisKodAlani": "Код подтверждения",
-  "hesapSilKodlaOnayla": "Нет пароля — подтвердить кодом",
+  "hesapSilKodlaOnayla": "Подтвердить кодом",
   "hesapSilKodAciklama": "Мы отправим шестизначный код на вашу электронную почту для подтверждения удаления.",
   "hesapSilKodGerekli": "Введите код подтверждения",
   "kayitBaslik": "Регистрация",
@@ -1744,7 +1744,7 @@
   "vardiyaNot": "Заметка",
   "vardiyaEkleBilgi": "Если указать диапазон дат, смена создаётся на каждый день диапазона. Если время окончания раньше времени начала (22:00–05:00), смена переходит на следующий день.",
   "vardiyaEkleGonder": "Добавить смены",
-  "vardiyaCakisanHaric": "Добавить без конфликтных дней",
+  "vardiyaCakisanHaric": "Без конфликтов",
   "vardiyaCakisanGunler": "Конфликты в {n} днях",
   "@vardiyaCakisanGunler": {
     "placeholders": {
@@ -2116,5 +2116,12 @@
   "telefonHataTasma": "Номер телефона не может быть длиннее 10 цифр. Удалите лишние цифры.",
   "@telefonHataTasma": {
     "description": "(P227) Telefon 10 haneden uzun"
-  }
+  },
+  "vardiyaOncekiAy": "Предыдущий месяц",
+  "vardiyaSonrakiAy": "Следующий месяц",
+  "vardiyaTumGunleriSec": "Выбрать все {gun}",
+  "vardiyaGunSec": "Дни",
+  "vardiyaSeciliGun": "{n, plural, =0{День не выбран} one{Выбран 1 день} other{Выбрано дней: {n}}}",
+  "vardiyaSecimiTemizle": "Очистить выбор",
+  "vardiyaTakvimIpucu": "Нажмите, чтобы добавить или убрать день. Долгое нажатие — заполнить диапазон от последнего."
 }

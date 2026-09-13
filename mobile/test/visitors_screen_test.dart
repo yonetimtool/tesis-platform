@@ -205,7 +205,7 @@ void main() {
     // Ayri "Sakinleri getir" dugmesi ARTIK YOK.
     expect(find.text('Sakinleri getir'), findsNothing);
     expect(find.text('Not (opsiyonel)'), findsOneWidget);
-    expect(find.text('Kaydet ve sakine bildir'), findsOneWidget);
+    expect(find.text('Kaydet ve bildir'), findsOneWidget);
   });
 
   group('push tiklamasi (initialVisitorId)', () {

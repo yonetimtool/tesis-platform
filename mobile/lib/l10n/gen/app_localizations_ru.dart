@@ -899,7 +899,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get gorevNfcDogrulandi => 'NFC подтверждён';
 
   @override
-  String get gorevYeniTamamlamaBaslat => 'Начать новое выполнение';
+  String get gorevYeniTamamlamaBaslat => 'Новое выполнение';
 
   @override
   String get gorevDuzenleBaslik => 'Изменить задачу';
@@ -2302,7 +2302,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get etkGorselAlan => 'Изображение (необязательно)';
 
   @override
-  String get etkDuyurVeBildir => 'Объявить и уведомить жителей';
+  String get etkDuyurVeBildir => 'Объявить и уведомить';
 
   @override
   String get izinBaslik => 'Разрешение на просмотр';
@@ -2767,7 +2767,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get karPaketFotografi => 'Фото посылки (необязательно)';
 
   @override
-  String get karKaydetVeBildir => 'Сохранить и уведомить жителей';
+  String get karKaydetVeBildir => 'Сохранить и уведомить';
 
   @override
   String get ortakTekrarDene => 'Повторить';
@@ -3621,7 +3621,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get ziyaretBildirilecekSakin => 'Кого уведомить *';
 
   @override
-  String get ziyaretKaydetVeBildir => 'Сохранить и уведомить жителя';
+  String get ziyaretKaydetVeBildir => 'Сохранить и уведомить';
 
   @override
   String get raporBaslik => 'Месячные отчёты';
@@ -4836,7 +4836,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get izgaraSifirla => 'Сбросить по умолчанию';
+  String get izgaraSifirla => 'Сбросить';
 
   @override
   String get izgaraKaydet => 'Сохранить';
@@ -4904,7 +4904,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get girisKodAlani => 'Код подтверждения';
 
   @override
-  String get hesapSilKodlaOnayla => 'Нет пароля — подтвердить кодом';
+  String get hesapSilKodlaOnayla => 'Подтвердить кодом';
 
   @override
   String get hesapSilKodAciklama =>
@@ -5583,7 +5583,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get vardiyaEkleGonder => 'Добавить смены';
 
   @override
-  String get vardiyaCakisanHaric => 'Добавить без конфликтных дней';
+  String get vardiyaCakisanHaric => 'Без конфликтов';
 
   @override
   String vardiyaCakisanGunler(int n) {
@@ -6414,4 +6414,37 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get telefonHataTasma =>
       'Номер телефона не может быть длиннее 10 цифр. Удалите лишние цифры.';
+
+  @override
+  String get vardiyaOncekiAy => 'Предыдущий месяц';
+
+  @override
+  String get vardiyaSonrakiAy => 'Следующий месяц';
+
+  @override
+  String vardiyaTumGunleriSec(String gun) {
+    return 'Выбрать все $gun';
+  }
+
+  @override
+  String get vardiyaGunSec => 'Дни';
+
+  @override
+  String vardiyaSeciliGun(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Выбрано дней: $n',
+      one: 'Выбран 1 день',
+      zero: 'День не выбран',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get vardiyaSecimiTemizle => 'Очистить выбор';
+
+  @override
+  String get vardiyaTakvimIpucu =>
+      'Нажмите, чтобы добавить или убрать день. Долгое нажатие — заполнить диапазон от последнего.';
 }

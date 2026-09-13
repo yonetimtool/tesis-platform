@@ -52,7 +52,7 @@
   "sayacBekleyen": "{n, plural, one{{n} waiting} other{{n} waiting}}",
   "ozetToplamDaire": "Total units",
   "ozetToplamTahsilat": "Total collected",
-  "ozetTahsilatOrani": "Dues collection rate",
+  "ozetTahsilatOrani": "Collection rate",
   "ozetOtoparkDoluluk": "Parking occupancy",
   "ozetTumSite": "Whole site",
   "ozetBuAy": "This month",
@@ -240,7 +240,7 @@
   "gorevZaman": "Time: {zaman}",
   "gorevFotoKanitiVar": "photo evidence attached",
   "gorevNfcDogrulandi": "NFC verified",
-  "gorevYeniTamamlamaBaslat": "Start a new completion",
+  "gorevYeniTamamlamaBaslat": "New completion",
   "gorevDuzenleBaslik": "Edit task",
   "gorevKategoriSilinmis": "Category (deleted)",
   "gorevAtananListedeDegil": "Assignee (not in list)",
@@ -611,7 +611,7 @@
   "etkBitisiKaldir": "Remove the end time",
   "etkYerAlan": "Location (optional)",
   "etkGorselAlan": "Image (optional)",
-  "etkDuyurVeBildir": "Announce and notify residents",
+  "etkDuyurVeBildir": "Announce and notify",
   "izinBaslik": "View permission",
   "izinTumDairelere": "Request permission for all units",
   "izinYeniIstek": "New request",
@@ -733,7 +733,7 @@
   "karFirma": "Courier company *",
   "karFirmaGerekli": "Courier company is required",
   "karPaketFotografi": "Parcel photo (optional)",
-  "karKaydetVeBildir": "Save and notify residents",
+  "karKaydetVeBildir": "Save and notify",
   "ortakTekrarDene": "Try again",
   "butTahakkuk": "Assessed",
   "butTahsilat": "Collected",
@@ -983,7 +983,7 @@
   "ziyaretAdGerekli": "Visitor name is required",
   "ziyaretSakinleriGetir": "Load residents",
   "ziyaretBildirilecekSakin": "Resident to notify *",
-  "ziyaretKaydetVeBildir": "Save and notify the resident",
+  "ziyaretKaydetVeBildir": "Save and notify",
   "raporBaslik": "Monthly reports",
   "raporOncekiAy": "Previous month",
   "raporSonrakiAy": "Next month",
@@ -1444,7 +1444,7 @@
   "girisKodlaAciklama": "We'll send a six-digit verification code to your phone.",
   "girisKoduGonder": "Send code",
   "girisKodAlani": "Verification code",
-  "hesapSilKodlaOnayla": "No password — confirm with a code",
+  "hesapSilKodlaOnayla": "Confirm with a code",
   "hesapSilKodAciklama": "We'll send a six-digit code to your email address to confirm deletion.",
   "hesapSilKodGerekli": "Enter the confirmation code",
   "kayitBaslik": "Sign up",
@@ -1744,7 +1744,7 @@
   "vardiyaNot": "Note",
   "vardiyaEkleBilgi": "If you give a date range, a separate shift is created for every day in it. If the end time is earlier than the start time (22:00–05:00), the shift runs into the next day.",
   "vardiyaEkleGonder": "Add shifts",
-  "vardiyaCakisanHaric": "Add, skipping conflicts",
+  "vardiyaCakisanHaric": "Skip conflicts",
   "vardiyaCakisanGunler": "{n} days have conflicts",
   "@vardiyaCakisanGunler": {
     "placeholders": {
@@ -2116,5 +2116,12 @@
   "telefonHataTasma": "A phone number cannot be longer than 10 digits. Remove the extra digits.",
   "@telefonHataTasma": {
     "description": "(P227) Telefon 10 haneden uzun"
-  }
+  },
+  "vardiyaOncekiAy": "Previous month",
+  "vardiyaSonrakiAy": "Next month",
+  "vardiyaTumGunleriSec": "Select every {gun}",
+  "vardiyaGunSec": "Days",
+  "vardiyaSeciliGun": "{n, plural, =0{No day selected} one{1 day selected} other{{n} days selected}}",
+  "vardiyaSecimiTemizle": "Clear selection",
+  "vardiyaTakvimIpucu": "Tap to add or remove a day. Long-press to fill the range from the last one."
 }

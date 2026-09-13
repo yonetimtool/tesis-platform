@@ -1,0 +1,35 @@
+# (P229 §1) Ana ekran IZGARA KARTI basliklari (kartBasligi() switch govdesi).
+# Hucre 320dp ekranda ~72dp, yatay dolgu 6dp -> metin alani ~60dp, iki satir.
+aidatBaslik
+bolumDuyurular
+bolumEtkinlikler
+bolumSiteKurallari
+butFinansalOzet
+etiketAylikOzet
+etiketDevriye
+etiketIletisim
+etiketKurallar
+karBaslik
+kartAracPlaka
+kartDemirbas
+kartGonderimKuyrugu
+kartGorevlerim
+kartIhlaller
+kartSikayetlerim
+kartTalepAriza
+kartTurlarim
+modulGorevYonetimi
+modulOtopark
+modulSeffaflik
+modulSikayetHaritasi
+modulZiyaretciler
+ozetBuAy
+ozetOtoparkDoluluk
+ozetSuAn
+ozetTahsilatOrani
+ozetToplamDaire
+ozetToplamTahsilat
+ozetTumSite
+raporBaslik
+vardiyaBaslik
+yonIletisimBaslik

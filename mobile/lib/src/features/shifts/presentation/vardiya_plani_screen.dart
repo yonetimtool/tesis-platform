@@ -29,6 +29,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'widgets/gun_takvimi.dart';
 
 import '../../../core/error/api_exception.dart';
 import '../../../core/error/akis_hatasi.dart';
@@ -356,6 +357,13 @@ class _HizliEkleDialoguState extends ConsumerState<_HizliEkleDialogu> {
   String? _userId;
   late DateTime _bas = DateTime.now();
   late DateTime _son = DateTime.now();
+
+  /// (P229 §2) TAKVIMDEN secilen gunler (`yyyy-MM-dd`).
+  ///
+  /// BOSSA ARALIK KIPI: eski davranis (bas/son tarih) aynen calisir.
+  /// Iki kipi AYNI dialogda tutmak bilincli — ayri bir "toplu ekle"
+  /// ekrani, cakisma akisini (P205) IKINCI KEZ yazmak demekti.
+  Set<String> _seciliGunler = {};
   TimeOfDay _basSaat = const TimeOfDay(hour: 8, minute: 0);
   TimeOfDay _sonSaat = const TimeOfDay(hour: 16, minute: 0);
   final _notCtrl = TextEditingController();
@@ -390,6 +398,9 @@ class _HizliEkleDialoguState extends ConsumerState<_HizliEkleDialogu> {
             bitisSaat: _s(_sonSaat),
             not: _notCtrl.text.trim().isEmpty ? null : _notCtrl.text.trim(),
             cakisanlariAtla: atla,
+            gunler: _seciliGunler.isEmpty
+                ? null
+                : (_seciliGunler.toList()..sort()),
           );
       if (!mounted) return;
       if (!sonuc.uygulandi) {
@@ -445,6 +456,47 @@ class _HizliEkleDialoguState extends ConsumerState<_HizliEkleDialogu> {
               error: (_, _) => Text(l10n.ortakBeklenmeyenHata),
             ),
             const SizedBox(height: 8),
+            // ================================================================
+            // (P229 §2) IKI KIP, TEK DIALOG
+            // ================================================================
+            // Takvimden gun secilmisse ARALIK ALANLARI GIZLENIR. Ikisini
+            // birden gostermek, hangisinin gecerli oldugunu belirsiz
+            // birakirdi: kullanici araligi 1-7 birakip takvimden 3 gun
+            // secer ve kac vardiya olusacagini BILEMEZDI.
+            GunTakvimi(
+              key: const Key('vardiya-ekle-takvim'),
+              ay: _bas,
+              secili: _seciliGunler,
+              enErken: DateTime.now().subtract(const Duration(days: 365)),
+              enGec: DateTime.now().add(const Duration(days: 365)),
+              onDegisti: (y) => setState(() => _seciliGunler = y),
+            ),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.vardiyaSeciliGun(_seciliGunler.length),
+                    key: const Key('vardiya-ekle-secim-sayisi'),
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ),
+                if (_seciliGunler.isNotEmpty)
+                  TextButton(
+                    key: const Key('vardiya-ekle-secimi-temizle'),
+                    onPressed: () => setState(() => _seciliGunler = {}),
+                    child: Text(l10n.vardiyaSecimiTemizle),
+                  ),
+              ],
+            ),
+            Text(
+              l10n.vardiyaTakvimIpucu,
+              style: TextStyle(
+                fontSize: 11,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 8),
+            if (_seciliGunler.isEmpty) ...[
             ListTile(
               key: const Key('vardiya-ekle-bas-tarih'),
               dense: true,
@@ -485,6 +537,7 @@ class _HizliEkleDialoguState extends ConsumerState<_HizliEkleDialogu> {
                 if (d != null) setState(() => _son = d);
               },
             ),
+            ],
             ListTile(
               key: const Key('vardiya-ekle-bas-saat'),
               dense: true,

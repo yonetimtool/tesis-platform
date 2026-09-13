@@ -797,7 +797,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get gorevNfcDogrulandi => 'NFC verificado';
 
   @override
-  String get gorevYeniTamamlamaBaslat => 'Iniciar una nueva finalización';
+  String get gorevYeniTamamlamaBaslat => 'Nueva finalización';
 
   @override
   String get gorevDuzenleBaslik => 'Editar tarea';
@@ -2194,7 +2194,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get etkGorselAlan => 'Imagen (opcional)';
 
   @override
-  String get etkDuyurVeBildir => 'Anunciar y notificar a los residentes';
+  String get etkDuyurVeBildir => 'Anunciar y notificar';
 
   @override
   String get izinBaslik => 'Permiso de visualización';
@@ -2655,7 +2655,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get karPaketFotografi => 'Foto del paquete (opcional)';
 
   @override
-  String get karKaydetVeBildir => 'Guardar y notificar a los residentes';
+  String get karKaydetVeBildir => 'Guardar y notificar';
 
   @override
   String get ortakTekrarDene => 'Reintentar';
@@ -3509,7 +3509,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get ziyaretBildirilecekSakin => 'Residente a notificar *';
 
   @override
-  String get ziyaretKaydetVeBildir => 'Guardar y notificar al residente';
+  String get ziyaretKaydetVeBildir => 'Guardar y notificar';
 
   @override
   String get raporBaslik => 'Informes mensuales';
@@ -4192,7 +4192,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'Capacidad no definida: solo se muestra el número de vehículos dentro';
 
   @override
-  String get otoparkAracListesi => 'Abrir los pasos de vehículos';
+  String get otoparkAracListesi => 'Ver los pasos';
 
   @override
   String get ihlalDurumYeni => 'Nueva';
@@ -4723,7 +4723,7 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get izgaraSifirla => 'Restablecer valores predeterminados';
+  String get izgaraSifirla => 'Restablecer';
 
   @override
   String get izgaraKaydet => 'Guardar';
@@ -4791,7 +4791,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get girisKodAlani => 'Código de verificación';
 
   @override
-  String get hesapSilKodlaOnayla => 'Sin contraseña: confirmar con un código';
+  String get hesapSilKodlaOnayla => 'Confirmar con código';
 
   @override
   String get hesapSilKodAciklama =>
@@ -5476,7 +5476,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get vardiyaEkleGonder => 'Añadir turnos';
 
   @override
-  String get vardiyaCakisanHaric => 'Añadir excluyendo los conflictos';
+  String get vardiyaCakisanHaric => 'Sin conflictos';
 
   @override
   String vardiyaCakisanGunler(int n) {
@@ -6319,4 +6319,37 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get telefonHataTasma =>
       'Un número de teléfono no puede tener más de 10 dígitos. Elimina los dígitos sobrantes.';
+
+  @override
+  String get vardiyaOncekiAy => 'Mes anterior';
+
+  @override
+  String get vardiyaSonrakiAy => 'Mes siguiente';
+
+  @override
+  String vardiyaTumGunleriSec(String gun) {
+    return 'Seleccionar todos los $gun';
+  }
+
+  @override
+  String get vardiyaGunSec => 'Días';
+
+  @override
+  String vardiyaSeciliGun(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n días seleccionados',
+      one: '1 día seleccionado',
+      zero: 'Ningún día seleccionado',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get vardiyaSecimiTemizle => 'Borrar selección';
+
+  @override
+  String get vardiyaTakvimIpucu =>
+      'Toque para añadir o quitar un día. Mantenga pulsado para rellenar el intervalo desde el último.';
 }

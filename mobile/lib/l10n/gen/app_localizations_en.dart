@@ -258,7 +258,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ozetToplamTahsilat => 'Total collected';
 
   @override
-  String get ozetTahsilatOrani => 'Dues collection rate';
+  String get ozetTahsilatOrani => 'Collection rate';
 
   @override
   String get ozetOtoparkDoluluk => 'Parking occupancy';
@@ -873,7 +873,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gorevNfcDogrulandi => 'NFC verified';
 
   @override
-  String get gorevYeniTamamlamaBaslat => 'Start a new completion';
+  String get gorevYeniTamamlamaBaslat => 'New completion';
 
   @override
   String get gorevDuzenleBaslik => 'Edit task';
@@ -2255,7 +2255,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get etkGorselAlan => 'Image (optional)';
 
   @override
-  String get etkDuyurVeBildir => 'Announce and notify residents';
+  String get etkDuyurVeBildir => 'Announce and notify';
 
   @override
   String get izinBaslik => 'View permission';
@@ -2713,7 +2713,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get karPaketFotografi => 'Parcel photo (optional)';
 
   @override
-  String get karKaydetVeBildir => 'Save and notify residents';
+  String get karKaydetVeBildir => 'Save and notify';
 
   @override
   String get ortakTekrarDene => 'Try again';
@@ -3558,7 +3558,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ziyaretBildirilecekSakin => 'Resident to notify *';
 
   @override
-  String get ziyaretKaydetVeBildir => 'Save and notify the resident';
+  String get ziyaretKaydetVeBildir => 'Save and notify';
 
   @override
   String get raporBaslik => 'Monthly reports';
@@ -4834,7 +4834,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get girisKodAlani => 'Verification code';
 
   @override
-  String get hesapSilKodlaOnayla => 'No password — confirm with a code';
+  String get hesapSilKodlaOnayla => 'Confirm with a code';
 
   @override
   String get hesapSilKodAciklama =>
@@ -5510,7 +5510,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get vardiyaEkleGonder => 'Add shifts';
 
   @override
-  String get vardiyaCakisanHaric => 'Add, skipping conflicts';
+  String get vardiyaCakisanHaric => 'Skip conflicts';
 
   @override
   String vardiyaCakisanGunler(int n) {
@@ -6343,4 +6343,37 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get telefonHataTasma =>
       'A phone number cannot be longer than 10 digits. Remove the extra digits.';
+
+  @override
+  String get vardiyaOncekiAy => 'Previous month';
+
+  @override
+  String get vardiyaSonrakiAy => 'Next month';
+
+  @override
+  String vardiyaTumGunleriSec(String gun) {
+    return 'Select every $gun';
+  }
+
+  @override
+  String get vardiyaGunSec => 'Days';
+
+  @override
+  String vardiyaSeciliGun(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n days selected',
+      one: '1 day selected',
+      zero: 'No day selected',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get vardiyaSecimiTemizle => 'Clear selection';
+
+  @override
+  String get vardiyaTakvimIpucu =>
+      'Tap to add or remove a day. Long-press to fill the range from the last one.';
 }

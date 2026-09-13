@@ -284,7 +284,7 @@
   },
   "gorevFotoKanitiVar": "foto kanıtı var",
   "gorevNfcDogrulandi": "NFC doğrulandı",
-  "gorevYeniTamamlamaBaslat": "Yeni tamamlama başlat",
+  "gorevYeniTamamlamaBaslat": "Yeni tamamlama",
   "gorevDuzenleBaslik": "Görev düzenle",
   "gorevKategoriSilinmis": "Kategori (silinmiş)",
   "gorevAtananListedeDegil": "Atanan kullanıcı (listede değil)",
@@ -784,7 +784,7 @@
   "etkBitisiKaldir": "Bitişi kaldır",
   "etkYerAlan": "Yer (opsiyonel)",
   "etkGorselAlan": "Görsel (opsiyonel)",
-  "etkDuyurVeBildir": "Duyur ve sakinlere bildir",
+  "etkDuyurVeBildir": "Duyur ve bildir",
   "izinBaslik": "Görüntüleme izni",
   "izinTumDairelere": "Tüm dairelere izin iste",
   "izinYeniIstek": "Yeni istek",
@@ -1033,7 +1033,7 @@
   "karFirma": "Kargo firması *",
   "karFirmaGerekli": "Kargo firması gerekli",
   "karPaketFotografi": "Paket fotoğrafı (opsiyonel)",
-  "karKaydetVeBildir": "Kaydet ve sakinlere bildir",
+  "karKaydetVeBildir": "Kaydet ve bildir",
   "@demSureDakika": {
     "description": "Sure parcasi (ICU cogul) — sablona {sure} olarak girer",
     "placeholders": {
@@ -1410,7 +1410,7 @@
   "ziyaretAdGerekli": "Ziyaretçi adı gerekli",
   "ziyaretSakinleriGetir": "Sakinleri getir",
   "ziyaretBildirilecekSakin": "Bildirilecek sakin *",
-  "ziyaretKaydetVeBildir": "Kaydet ve sakine bildir",
+  "ziyaretKaydetVeBildir": "Kaydet ve bildir",
   "raporBaslik": "Aylık raporlar",
   "raporOncekiAy": "Önceki ay",
   "raporSonrakiAy": "Sonraki ay",
@@ -2054,7 +2054,7 @@
   "girisKodlaAciklama": "Telefonunuza altı haneli bir doğrulama kodu göndereceğiz.",
   "girisKoduGonder": "Kod gönder",
   "girisKodAlani": "Doğrulama kodu",
-  "hesapSilKodlaOnayla": "Parolam yok, kodla onayla",
+  "hesapSilKodlaOnayla": "Kodla onayla",
   "hesapSilKodAciklama": "Silme onayı için e-posta adresinize altı haneli bir kod göndereceğiz.",
   "hesapSilKodGerekli": "Onay kodunu girin",
   "kayitBaslik": "Kayıt ol",
@@ -2931,5 +2931,26 @@
   "telefonHataTasma": "Telefon numarası 10 haneden uzun olamaz. Fazla rakamları silin.",
   "@telefonHataTasma": {
     "description": "(P227) Telefon 10 haneden uzun"
-  }
+  },
+  "vardiyaOncekiAy": "Önceki ay",
+  "vardiyaSonrakiAy": "Sonraki ay",
+  "vardiyaTumGunleriSec": "Tüm {gun} günlerini seç",
+  "@vardiyaTumGunleriSec": {
+    "placeholders": {
+      "gun": {
+        "type": "String"
+      }
+    }
+  },
+  "vardiyaGunSec": "Günler",
+  "vardiyaSeciliGun": "{n, plural, =0{Gün seçilmedi} other{{n} gün seçildi}}",
+  "@vardiyaSeciliGun": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "vardiyaSecimiTemizle": "Seçimi temizle",
+  "vardiyaTakvimIpucu": "Dokun: gün ekle/çıkar. Uzun bas: son seçilenden buraya kadar."
 }

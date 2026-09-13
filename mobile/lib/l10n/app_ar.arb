@@ -1424,7 +1424,7 @@
   "modulVardiyalar": "الورديات",
   "izgaraDuzenleBaslik": "تعديل الشاشة الرئيسية",
   "izgaraDuzenleAciklama": "اختر حتى {enCok} أقسام تستخدمها كثيرًا.",
-  "izgaraSifirla": "استعادة الإعدادات الافتراضية",
+  "izgaraSifirla": "استعادة الافتراضي",
   "izgaraKaydet": "حفظ",
   "izgaraSecim": "{secili}/{enCok} محدد",
   "izgaraTavanUyarisi": "لقد وصلت إلى الحد. أزل واحدًا لإضافة آخر ({enCok} مربعات).",
@@ -1744,7 +1744,7 @@
   "vardiyaNot": "ملاحظة",
   "vardiyaEkleBilgi": "إذا حددت نطاقًا زمنيًا، تُنشأ وردية منفصلة لكل يوم فيه. وإذا كان وقت الانتهاء أبكر من وقت البدء (22:00–05:00) فإن الوردية تمتد إلى اليوم التالي.",
   "vardiyaEkleGonder": "إضافة الورديات",
-  "vardiyaCakisanHaric": "الإضافة مع استثناء التعارضات",
+  "vardiyaCakisanHaric": "دون التعارضات",
   "vardiyaCakisanGunler": "توجد تعارضات في {n} يومًا",
   "@vardiyaCakisanGunler": {
     "placeholders": {
@@ -2116,5 +2116,12 @@
   "telefonHataTasma": "لا يمكن أن يزيد رقم الهاتف عن 10 أرقام. احذف الأرقام الزائدة.",
   "@telefonHataTasma": {
     "description": "(P227) Telefon 10 haneden uzun"
-  }
+  },
+  "vardiyaOncekiAy": "الشهر السابق",
+  "vardiyaSonrakiAy": "الشهر التالي",
+  "vardiyaTumGunleriSec": "اختر كل {gun}",
+  "vardiyaGunSec": "الأيام",
+  "vardiyaSeciliGun": "{n, plural, zero{لم يتم اختيار يوم} one{تم اختيار يوم واحد} other{تم اختيار {n} أيام}}",
+  "vardiyaSecimiTemizle": "مسح الاختيار",
+  "vardiyaTakvimIpucu": "اضغط لإضافة يوم أو إزالته. اضغط مطولاً لملء المدى من آخر يوم."
 }

@@ -1545,7 +1545,7 @@ abstract class AppLocalizations {
   /// No description provided for @gorevYeniTamamlamaBaslat.
   ///
   /// In tr, this message translates to:
-  /// **'Yeni tamamlama başlat'**
+  /// **'Yeni tamamlama'**
   String get gorevYeniTamamlamaBaslat;
 
   /// No description provided for @gorevDuzenleBaslik.
@@ -3782,7 +3782,7 @@ abstract class AppLocalizations {
   /// No description provided for @etkDuyurVeBildir.
   ///
   /// In tr, this message translates to:
-  /// **'Duyur ve sakinlere bildir'**
+  /// **'Duyur ve bildir'**
   String get etkDuyurVeBildir;
 
   /// No description provided for @izinBaslik.
@@ -4514,7 +4514,7 @@ abstract class AppLocalizations {
   /// No description provided for @karKaydetVeBildir.
   ///
   /// In tr, this message translates to:
-  /// **'Kaydet ve sakinlere bildir'**
+  /// **'Kaydet ve bildir'**
   String get karKaydetVeBildir;
 
   /// No description provided for @ortakTekrarDene.
@@ -6014,7 +6014,7 @@ abstract class AppLocalizations {
   /// No description provided for @ziyaretKaydetVeBildir.
   ///
   /// In tr, this message translates to:
-  /// **'Kaydet ve sakine bildir'**
+  /// **'Kaydet ve bildir'**
   String get ziyaretKaydetVeBildir;
 
   /// No description provided for @raporBaslik.
@@ -8234,7 +8234,7 @@ abstract class AppLocalizations {
   /// No description provided for @hesapSilKodlaOnayla.
   ///
   /// In tr, this message translates to:
-  /// **'Parolam yok, kodla onayla'**
+  /// **'Kodla onayla'**
   String get hesapSilKodlaOnayla;
 
   /// No description provided for @hesapSilKodAciklama.
@@ -10930,6 +10930,48 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Telefon numarası 10 haneden uzun olamaz. Fazla rakamları silin.'**
   String get telefonHataTasma;
+
+  /// No description provided for @vardiyaOncekiAy.
+  ///
+  /// In tr, this message translates to:
+  /// **'Önceki ay'**
+  String get vardiyaOncekiAy;
+
+  /// No description provided for @vardiyaSonrakiAy.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sonraki ay'**
+  String get vardiyaSonrakiAy;
+
+  /// No description provided for @vardiyaTumGunleriSec.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tüm {gun} günlerini seç'**
+  String vardiyaTumGunleriSec(String gun);
+
+  /// No description provided for @vardiyaGunSec.
+  ///
+  /// In tr, this message translates to:
+  /// **'Günler'**
+  String get vardiyaGunSec;
+
+  /// No description provided for @vardiyaSeciliGun.
+  ///
+  /// In tr, this message translates to:
+  /// **'{n, plural, =0{Gün seçilmedi} other{{n} gün seçildi}}'**
+  String vardiyaSeciliGun(int n);
+
+  /// No description provided for @vardiyaSecimiTemizle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Seçimi temizle'**
+  String get vardiyaSecimiTemizle;
+
+  /// No description provided for @vardiyaTakvimIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Dokun: gün ekle/çıkar. Uzun bas: son seçilenden buraya kadar.'**
+  String get vardiyaTakvimIpucu;
 }
 
 class _AppLocalizationsDelegate

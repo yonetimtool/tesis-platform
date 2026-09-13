@@ -792,7 +792,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get gorevNfcDogrulandi => 'NFC doğrulandı';
 
   @override
-  String get gorevYeniTamamlamaBaslat => 'Yeni tamamlama başlat';
+  String get gorevYeniTamamlamaBaslat => 'Yeni tamamlama';
 
   @override
   String get gorevDuzenleBaslik => 'Görev düzenle';
@@ -2129,7 +2129,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get etkGorselAlan => 'Görsel (opsiyonel)';
 
   @override
-  String get etkDuyurVeBildir => 'Duyur ve sakinlere bildir';
+  String get etkDuyurVeBildir => 'Duyur ve bildir';
 
   @override
   String get izinBaslik => 'Görüntüleme izni';
@@ -2570,7 +2570,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get karPaketFotografi => 'Paket fotoğrafı (opsiyonel)';
 
   @override
-  String get karKaydetVeBildir => 'Kaydet ve sakinlere bildir';
+  String get karKaydetVeBildir => 'Kaydet ve bildir';
 
   @override
   String get ortakTekrarDene => 'Tekrar dene';
@@ -3399,7 +3399,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get ziyaretBildirilecekSakin => 'Bildirilecek sakin *';
 
   @override
-  String get ziyaretKaydetVeBildir => 'Kaydet ve sakine bildir';
+  String get ziyaretKaydetVeBildir => 'Kaydet ve bildir';
 
   @override
   String get raporBaslik => 'Aylık raporlar';
@@ -4646,7 +4646,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get girisKodAlani => 'Doğrulama kodu';
 
   @override
-  String get hesapSilKodlaOnayla => 'Parolam yok, kodla onayla';
+  String get hesapSilKodlaOnayla => 'Kodla onayla';
 
   @override
   String get hesapSilKodAciklama =>
@@ -6151,4 +6151,36 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get telefonHataTasma =>
       'Telefon numarası 10 haneden uzun olamaz. Fazla rakamları silin.';
+
+  @override
+  String get vardiyaOncekiAy => 'Önceki ay';
+
+  @override
+  String get vardiyaSonrakiAy => 'Sonraki ay';
+
+  @override
+  String vardiyaTumGunleriSec(String gun) {
+    return 'Tüm $gun günlerini seç';
+  }
+
+  @override
+  String get vardiyaGunSec => 'Günler';
+
+  @override
+  String vardiyaSeciliGun(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n gün seçildi',
+      zero: 'Gün seçilmedi',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get vardiyaSecimiTemizle => 'Seçimi temizle';
+
+  @override
+  String get vardiyaTakvimIpucu =>
+      'Dokun: gün ekle/çıkar. Uzun bas: son seçilenden buraya kadar.';
 }

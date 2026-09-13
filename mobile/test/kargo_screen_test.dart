@@ -186,7 +186,7 @@ void main() {
     // foto butonlari mevcut akisin adlariyla (complaints/gorev ile ayni)
     expect(find.text('Kamera'), findsOneWidget);
     expect(find.text('Galeriden seç'), findsOneWidget);
-    expect(find.text('Kaydet ve sakinlere bildir'), findsOneWidget);
+    expect(find.text('Kaydet ve bildir'), findsOneWidget);
   });
 
   group('push tiklamasi (initialKargoId)', () {

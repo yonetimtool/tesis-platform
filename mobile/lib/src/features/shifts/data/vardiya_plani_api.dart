@@ -71,6 +71,11 @@ class VardiyaPlaniApi {
     required String bitisSaat,
     String? not,
     bool cakisanlariAtla = false,
+    // (P229 §2) KEYFI GUN LISTESI. Verilirse sunucu araligi YOK SAYAR.
+    // Aralik alanlari yine de gonderiliyor: sozlesmede ZORUNLU kaldilar
+    // (yayindaki istemciler onlari gonderiyor) ve opsiyonel yapmak
+    // eski surumleri kirardi.
+    List<String>? gunler,
   }) async {
     try {
       final res = await _dio.post<Map<String, dynamic>>(
@@ -79,6 +84,7 @@ class VardiyaPlaniApi {
           'user_id': userId,
           'baslangic_tarih': _tarih(baslangic),
           'bitis_tarih': _tarih(bitis),
+          'gunler': gunler,
           'baslangic_saat': baslangicSaat,
           'bitis_saat': bitisSaat,
           'not_metni': not,

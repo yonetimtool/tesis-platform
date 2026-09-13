@@ -305,7 +305,7 @@ void main() {
       find.text("Type a unit number or a resident's name"),
       findsOneWidget,
     );
-    expect(find.text('Save and notify the resident'), findsOneWidget);
+    expect(find.text('Save and notify'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
