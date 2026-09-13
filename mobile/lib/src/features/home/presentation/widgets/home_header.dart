@@ -1,8 +1,10 @@
+import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/i18n/l10n.dart';
 import '../../../../core/theme/home_tokens.dart';
 import '../../domain/home_view_models.dart';
+import '../../../../routing/app_router.dart';
 
 /// Selamlamanin alt satir bicimi — referans gorsellerde uc varyant:
 /// tesis secici (gorevli: "Mavi Residence ⌄"), duz gri (sakin: daire/blok)
@@ -63,6 +65,20 @@ class HomeHeader extends StatelessWidget {
               ],
             ],
           ),
+        ),
+        // (P230 §3) ARAMA — web'de ustte duran arama kutusunun mobil
+        // karsiligi. Karsilama satirinda, HER rolun ana ekraninda ayni
+        // yerde: menuyu ezbere bilmeyen kullanicinin tek girisi bu.
+        //
+        // KUTU DEGIL SIMGE: dar ekranda bir metin kutusu karsilama
+        // satirini yer kalmayacak kadar daraltirdi (P229 §1'de olculen
+        // tasmanin aynisi). Dokunma hedefi `IconButton` varsayilaniyla
+        // 48x48'dir (P220 kilidi).
+        IconButton(
+          key: const Key('ana-arama'),
+          icon: const Icon(Icons.search),
+          tooltip: context.l10n.aramaBaslik,
+          onPressed: () => context.push(AppRoutes.arama),
         ),
         if (hava != null) ...[
           const SizedBox(width: 12),

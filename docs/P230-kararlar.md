@@ -97,3 +97,52 @@ kurulmadı. Ölçüm, ileride istenirse yapılabilir olduğunu gösteriyor.
   tarafındaki tespit mantığının testleri.
 * Mobil oynatıcının H265 davranışı — emülatör yok. Android platform
   kodekleri HEVC'yi yaygın olarak destekler, ama bunu **doğrulamadım**.
+
+---
+
+## §3 — Mobilde arama
+
+### Ölçüm: uç zaten var, yeni uç açılmadı
+
+`GET /arama?q=` mevcut ve web onu kullanıyor: **17 kaynak** (kişi, daire,
+blok, firma, görev, duyuru, talep, finans, demirbaş, etkinlik, araç,
+nokta, kamera, plan, vardiya, icra, sayaç), rol süzgeci **sunucuda**.
+
+Süzgecin zarif yanı: `kaynak.roller` her router'ın kendi `require_role`
+kümesinden okunuyor (`_rol_kumesi`), yani bir router'ın rol kümesi
+değiştiğinde arama kendiliğinden aynı değişimi alıyor. Mobil için ikinci
+bir uç yazmak, o kümelerin **ikinci bir kopyası** demekti ve biri
+güncellenip öteki eskidiğinde sessiz bir yetki sapması doğururdu.
+
+### Bulunan gerçek eksik: Türkçe harf duyarsızlık yoktu
+
+Arama düz `ILIKE` kullanıyordu. **"cekmekoy" yazan kullanıcı "Çekmeköy"ü
+bulamıyordu** — ve boş sonuç, arama hatalarının en kötüsü: kullanıcı
+kaydın *olmadığını* sanır, aramanın çalışmadığını değil.
+
+Çözüm iki tarafta katlama: `lower(translate(kolon, 'çğıİöşüÇĞÖŞÜ',
+'cgiiosucgosu'))`.
+
+* **Neden `unaccent` değil:** `ı`/`İ` Latin-1 aksanlı harf **değildir**;
+  `unaccent` `ı`yı `i`ye çevirmez. Türkçe için özel katlama şart.
+* **Neden iki tarafta:** yalnız deseni katlamak, "Çekmeköy" yazanı
+  bulamaz hale getirirdi (kolon hâlâ `ö` taşıyor).
+* **İndeks kullanılmıyor, kabul:** tablolar tesis kapsamlı (RLS) ve her
+  kaynak `_KAYNAK_SINIRI` ile sınırlı. 17 kaynak için 17 ifade indeksi,
+  kazancı ölçülmeden ödenecek bir bedeldi.
+
+### Mobil ekran kararları
+
+| karar | gerekçe |
+|---|---|
+| Karşılama satırında **simge**, kutu değil | Dar ekranda metin kutusu karşılama satırını yer kalmayacak kadar daraltırdı — P229 §1'de ölçülen taşmanın aynısı. Dokunma hedefi `IconButton` varsayılanıyla 48×48. |
+| 300 ms gecikme | Tuşlama başına istek, her harfte 17 kaynaklık tam metin taraması demekti. Web'deki değerle aynı. |
+| Önceki istek **iptal edilir** | Yavaş bir yanıt, sonradan yazılan daha dar aramanın sonucunu ezebilirdi (yarış koşulu). |
+| İki harf eşiği istemcide de var | Sunucu zaten 422 veriyor; istemci uygulamasaydı her tek harfte boşuna bir hata alınırdı. |
+| Ekranı olmayan kaynak **gizlenmez**, dokunması kapatılır | Gizlemek "kayıt yok" izlenimi verirdi — **yanlış**: kayıt var, mobilde gösterilecek ekran yok. 17 kaynağın 12'sinin mobil ekranı var. |
+| Kaynak adı sunucudan **kimlik** olarak gelir | Metin gelseydi yedi dilde çevrilemezdi. |
+
+### Ölçemediğim
+
+Gerçek cihazda gezinme (sonuçtan ekrana gidiş) — emülatör yok. Ölçtüğüm,
+rota eşlemesinin ve dokunma davranışının widget testleri.

@@ -81,6 +81,7 @@ import '../features/visitors/presentation/visitors_screen.dart';
 import '../features/dokumanlar/presentation/dokuman_screen.dart';
 import '../features/kvkk/presentation/yasal_metinler_screen.dart';
 import 'splash_screen.dart';
+import '../features/arama/presentation/arama_screen.dart';
 
 class AppRoutes {
   const AppRoutes._();
@@ -175,6 +176,9 @@ class AppRoutes {
   static const borclular = '/borclular';
   static const sayacOkuma = '/sayac-okuma';
   static const kameralar = '/kameralar';
+
+  /// (P230 §3) Genel arama — web'deki ust arama kutusunun mobil karsiligi.
+  static const arama = '/arama';
   static const kameraIzle = '/kamera-izle';
   static const settings = '/settings';
   /// (P36) Aydinlatma metni SALT-OKUMA (onay kapisindan AYRI rota:
@@ -335,6 +339,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.kameralar,
         builder: (context, state) => const KameralarScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.arama,
+        builder: (context, state) => const AramaScreen(),
       ),
       GoRoute(
         path: AppRoutes.kameraIzle,

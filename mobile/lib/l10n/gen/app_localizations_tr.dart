@@ -6205,4 +6205,70 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get kameraAltAkisAlt =>
       'Kameranız H265 yayın yapıyorsa oynatıcı onu çözemez. Çoğu kamera H264 olan ikinci bir akış verir; adresini buraya girin. Ana adres değişmez — kare ve kayıt ondan alınmaya devam eder.';
+
+  @override
+  String get aramaKaynakKisi => 'Kişi';
+
+  @override
+  String get aramaKaynakDaire => 'Daire';
+
+  @override
+  String get aramaKaynakBlok => 'Blok';
+
+  @override
+  String get aramaKaynakFirma => 'Firma';
+
+  @override
+  String get aramaKaynakGorev => 'Görev';
+
+  @override
+  String get aramaKaynakDuyuru => 'Duyuru';
+
+  @override
+  String get aramaKaynakTalep => 'Talep';
+
+  @override
+  String get aramaKaynakFinans => 'Finans';
+
+  @override
+  String get aramaKaynakDemirbas => 'Demirbaş';
+
+  @override
+  String get aramaKaynakEtkinlik => 'Etkinlik';
+
+  @override
+  String get aramaKaynakArac => 'Araç';
+
+  @override
+  String get aramaKaynakNokta => 'Nokta';
+
+  @override
+  String get aramaKaynakKamera => 'Kamera';
+
+  @override
+  String get aramaKaynakPlan => 'Plan';
+
+  @override
+  String get aramaKaynakVardiya => 'Vardiya';
+
+  @override
+  String get aramaKaynakIcra => 'İcra';
+
+  @override
+  String get aramaKaynakSayac => 'Sayaç';
+
+  @override
+  String get aramaBaslik => 'Ara';
+
+  @override
+  String get aramaIpucu => 'Kişi, daire, görev, talep…';
+
+  @override
+  String get aramaSonucYok => 'Sonuç bulunamadı';
+
+  @override
+  String get aramaEnAzIkiHarf => 'Aramak için en az iki harf yazın.';
+
+  @override
+  String get aramaBasarisiz => 'Arama yapılamadı. Birazdan tekrar deneyin.';
 }

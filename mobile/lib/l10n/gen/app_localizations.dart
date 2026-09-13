@@ -11014,6 +11014,138 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Kameranız H265 yayın yapıyorsa oynatıcı onu çözemez. Çoğu kamera H264 olan ikinci bir akış verir; adresini buraya girin. Ana adres değişmez — kare ve kayıt ondan alınmaya devam eder.'**
   String get kameraAltAkisAlt;
+
+  /// No description provided for @aramaKaynakKisi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kişi'**
+  String get aramaKaynakKisi;
+
+  /// No description provided for @aramaKaynakDaire.
+  ///
+  /// In tr, this message translates to:
+  /// **'Daire'**
+  String get aramaKaynakDaire;
+
+  /// No description provided for @aramaKaynakBlok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Blok'**
+  String get aramaKaynakBlok;
+
+  /// No description provided for @aramaKaynakFirma.
+  ///
+  /// In tr, this message translates to:
+  /// **'Firma'**
+  String get aramaKaynakFirma;
+
+  /// No description provided for @aramaKaynakGorev.
+  ///
+  /// In tr, this message translates to:
+  /// **'Görev'**
+  String get aramaKaynakGorev;
+
+  /// No description provided for @aramaKaynakDuyuru.
+  ///
+  /// In tr, this message translates to:
+  /// **'Duyuru'**
+  String get aramaKaynakDuyuru;
+
+  /// No description provided for @aramaKaynakTalep.
+  ///
+  /// In tr, this message translates to:
+  /// **'Talep'**
+  String get aramaKaynakTalep;
+
+  /// No description provided for @aramaKaynakFinans.
+  ///
+  /// In tr, this message translates to:
+  /// **'Finans'**
+  String get aramaKaynakFinans;
+
+  /// No description provided for @aramaKaynakDemirbas.
+  ///
+  /// In tr, this message translates to:
+  /// **'Demirbaş'**
+  String get aramaKaynakDemirbas;
+
+  /// No description provided for @aramaKaynakEtkinlik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Etkinlik'**
+  String get aramaKaynakEtkinlik;
+
+  /// No description provided for @aramaKaynakArac.
+  ///
+  /// In tr, this message translates to:
+  /// **'Araç'**
+  String get aramaKaynakArac;
+
+  /// No description provided for @aramaKaynakNokta.
+  ///
+  /// In tr, this message translates to:
+  /// **'Nokta'**
+  String get aramaKaynakNokta;
+
+  /// No description provided for @aramaKaynakKamera.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kamera'**
+  String get aramaKaynakKamera;
+
+  /// No description provided for @aramaKaynakPlan.
+  ///
+  /// In tr, this message translates to:
+  /// **'Plan'**
+  String get aramaKaynakPlan;
+
+  /// No description provided for @aramaKaynakVardiya.
+  ///
+  /// In tr, this message translates to:
+  /// **'Vardiya'**
+  String get aramaKaynakVardiya;
+
+  /// No description provided for @aramaKaynakIcra.
+  ///
+  /// In tr, this message translates to:
+  /// **'İcra'**
+  String get aramaKaynakIcra;
+
+  /// No description provided for @aramaKaynakSayac.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sayaç'**
+  String get aramaKaynakSayac;
+
+  /// No description provided for @aramaBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ara'**
+  String get aramaBaslik;
+
+  /// No description provided for @aramaIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kişi, daire, görev, talep…'**
+  String get aramaIpucu;
+
+  /// No description provided for @aramaSonucYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sonuç bulunamadı'**
+  String get aramaSonucYok;
+
+  /// No description provided for @aramaEnAzIkiHarf.
+  ///
+  /// In tr, this message translates to:
+  /// **'Aramak için en az iki harf yazın.'**
+  String get aramaEnAzIkiHarf;
+
+  /// No description provided for @aramaBasarisiz.
+  ///
+  /// In tr, this message translates to:
+  /// **'Arama yapılamadı. Birazdan tekrar deneyin.'**
+  String get aramaBasarisiz;
 }
 
 class _AppLocalizationsDelegate

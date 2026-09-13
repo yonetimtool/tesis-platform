@@ -38,7 +38,7 @@ import uuid
 from typing import Callable, NamedTuple
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import Select, or_, select
+from sqlalchemy import Select, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..deps import get_current_user, get_tenant_db
@@ -107,10 +107,45 @@ def _rol_kumesi(bagimlilik) -> frozenset[str]:
     return frozenset(roller)
 
 
+# ===================================================================== #
+# (P230 §3) TURKCE HARF DUYARSIZ ESLESME
+# ===================================================================== #
+# OLCULEN EKSIK: arama duz `ILIKE` kullaniyordu. "cekmekoy" yazan
+# kullanici "Çekmeköy"u BULAMIYORDU — ve bos sonuc, arama hatalarinin en
+# kotusu: kullanici kaydin OLMADIGINI sanir.
+#
+# NEDEN `unaccent` DEGIL: `ı/İ` Latin-1 aksanli harf degildir; unaccent
+# `ı`yi `i`ye cevirmez. Turkce icin ozel katlama SART.
+#
+# NEDEN IKI TARAFTA: yalniz deseni katlamak "Çekmeköy" yazani bulamaz
+# hale getirirdi (kolon hala `ö` tasiyor). Ikisi de ASCII'ye indirilir,
+# yani her iki yon de calisir.
+#
+# INDEKS KULLANILMIYOR ve bu kabul: tablolar tesis kapsamli (RLS) ve her
+# kaynak `_KAYNAK_SINIRI` ile sinirli. Ifade indeksi eklemek 17 kaynak
+# icin 17 indeks demekti; kazanci olculmeden odenmeyecek bir bedel.
+_TR_KAYNAK = "çğıİöşüÇĞÖŞÜ"
+_TR_HEDEF = "cgiiosucgosu"
+
+
+def _katla(sutun):
+    """Kolonu ASCII'ye katlar (Turkce harfler dahil), kucuk harfe indirir."""
+    return func.lower(func.translate(sutun, _TR_KAYNAK, _TR_HEDEF))
+
+
+def _es(sutun, desen: str):
+    """`sutun ILIKE desen` — ama iki taraf da Turkce-katlanmis."""
+    return _katla(sutun).like(_katla_desen(desen))
+
+
+def _katla_desen(desen: str) -> str:
+    return desen.translate(str.maketrans(_TR_KAYNAK, _TR_HEDEF)).lower()
+
+
 def _kisi(q: str, _u: AppUser) -> Select:
     return (
         select(AppUser.id, AppUser.ad, AppUser.telefon)
-        .where(or_(AppUser.ad.ilike(q), AppUser.email.ilike(q), AppUser.telefon.ilike(q)))
+        .where(or_(_es(AppUser.ad, q), _es(AppUser.email, q), _es(AppUser.telefon, q)))
         .order_by(AppUser.ad, AppUser.id)
     )
 
@@ -118,7 +153,7 @@ def _kisi(q: str, _u: AppUser) -> Select:
 def _daire(q: str, _u: AppUser) -> Select:
     return (
         select(Unit.id, Unit.no, Unit.blok)
-        .where(or_(Unit.no.ilike(q), Unit.blok.ilike(q)))
+        .where(or_(_es(Unit.no, q), _es(Unit.blok, q)))
         .order_by(Unit.no, Unit.id)
     )
 
@@ -126,7 +161,7 @@ def _daire(q: str, _u: AppUser) -> Select:
 def _blok(q: str, _u: AppUser) -> Select:
     return (
         select(BuildingBlock.id, BuildingBlock.ad, BuildingBlock.ad)
-        .where(BuildingBlock.ad.ilike(q))
+        .where(_es(BuildingBlock.ad, q))
         .order_by(BuildingBlock.ad, BuildingBlock.id)
     )
 
@@ -134,7 +169,7 @@ def _blok(q: str, _u: AppUser) -> Select:
 def _firma(q: str, _u: AppUser) -> Select:
     return (
         select(Firma.id, Firma.ad, Firma.telefon)
-        .where(or_(Firma.ad.ilike(q), Firma.telefon.ilike(q)))
+        .where(or_(_es(Firma.ad, q), _es(Firma.telefon, q)))
         .order_by(Firma.ad, Firma.id)
     )
 
@@ -142,7 +177,7 @@ def _firma(q: str, _u: AppUser) -> Select:
 def _gorev(q: str, _u: AppUser) -> Select:
     return (
         select(Task.id, Task.ad, Task.aciklama)
-        .where(or_(Task.ad.ilike(q), Task.aciklama.ilike(q)))
+        .where(or_(_es(Task.ad, q), _es(Task.aciklama, q)))
         .order_by(Task.ad, Task.id)
     )
 
@@ -150,7 +185,7 @@ def _gorev(q: str, _u: AppUser) -> Select:
 def _duyuru(q: str, _u: AppUser) -> Select:
     return (
         select(Announcement.id, Announcement.baslik, Announcement.govde)
-        .where(or_(Announcement.baslik.ilike(q), Announcement.govde.ilike(q)))
+        .where(or_(_es(Announcement.baslik, q), _es(Announcement.govde, q)))
         .order_by(Announcement.created_at.desc(), Announcement.id)
     )
 
@@ -158,7 +193,7 @@ def _duyuru(q: str, _u: AppUser) -> Select:
 def _talep(q: str, user: AppUser) -> Select:
     s = (
         select(Complaint.id, Complaint.baslik, Complaint.mesaj)
-        .where(or_(Complaint.baslik.ilike(q), Complaint.mesaj.ilike(q)))
+        .where(or_(_es(Complaint.baslik, q), _es(Complaint.mesaj, q)))
         .order_by(Complaint.created_at.desc(), Complaint.id)
     )
     # SATIR KAPSAMI — `complaints._own_scope` ile AYNI kural. Rol kumesi
@@ -175,8 +210,8 @@ def _finans(q: str, _u: AppUser) -> Select:
         select(FinansalHareket.id, FinansalHareket.aciklama, FinansalHareket.belge_no)
         .where(
             or_(
-                FinansalHareket.aciklama.ilike(q),
-                FinansalHareket.belge_no.ilike(q),
+                _es(FinansalHareket.aciklama, q),
+                _es(FinansalHareket.belge_no, q),
             )
         )
         .order_by(FinansalHareket.created_at.desc(), FinansalHareket.id)
@@ -225,7 +260,7 @@ def _finans(q: str, _u: AppUser) -> Select:
 def _demirbas(q: str, _u: AppUser) -> Select:
     return (
         select(Asset.id, Asset.ad, Asset.ad)
-        .where(Asset.ad.ilike(q))
+        .where(_es(Asset.ad, q))
         .order_by(Asset.ad, Asset.id)
     )
 
@@ -233,7 +268,7 @@ def _demirbas(q: str, _u: AppUser) -> Select:
 def _etkinlik(q: str, _u: AppUser) -> Select:
     return (
         select(Etkinlik.id, Etkinlik.baslik, Etkinlik.baslik)
-        .where(Etkinlik.baslik.ilike(q))
+        .where(_es(Etkinlik.baslik, q))
         .order_by(Etkinlik.baslik, Etkinlik.id)
     )
 
@@ -244,7 +279,7 @@ def _arac(q: str, _u: AppUser) -> Select:
     # bulunmaz. Normalizasyon cagiran tarafta yapiliyor (bkz. `arama`).
     return (
         select(AracKayit.id, AracKayit.plaka, AracKayit.plaka)
-        .where(AracKayit.plaka.ilike(q))
+        .where(_es(AracKayit.plaka, q))
         .order_by(AracKayit.plaka, AracKayit.id)
     )
 
@@ -252,7 +287,7 @@ def _arac(q: str, _u: AppUser) -> Select:
 def _nokta(q: str, _u: AppUser) -> Select:
     return (
         select(Checkpoint.id, Checkpoint.ad, Checkpoint.ad)
-        .where(Checkpoint.ad.ilike(q))
+        .where(_es(Checkpoint.ad, q))
         .order_by(Checkpoint.ad, Checkpoint.id)
     )
 
@@ -260,7 +295,7 @@ def _nokta(q: str, _u: AppUser) -> Select:
 def _kamera(q: str, _u: AppUser) -> Select:
     return (
         select(Camera.id, Camera.ad, Camera.ad)
-        .where(Camera.ad.ilike(q))
+        .where(_es(Camera.ad, q))
         .order_by(Camera.ad, Camera.id)
     )
 
@@ -268,7 +303,7 @@ def _kamera(q: str, _u: AppUser) -> Select:
 def _plan(q: str, _u: AppUser) -> Select:
     return (
         select(PatrolPlan.id, PatrolPlan.ad, PatrolPlan.ad)
-        .where(PatrolPlan.ad.ilike(q))
+        .where(_es(PatrolPlan.ad, q))
         .order_by(PatrolPlan.ad, PatrolPlan.id)
     )
 
@@ -276,7 +311,7 @@ def _plan(q: str, _u: AppUser) -> Select:
 def _vardiya(q: str, _u: AppUser) -> Select:
     return (
         select(Shift.id, Shift.ad, Shift.ad)
-        .where(Shift.ad.ilike(q))
+        .where(_es(Shift.ad, q))
         .order_by(Shift.ad, Shift.id)
     )
 
@@ -284,7 +319,7 @@ def _vardiya(q: str, _u: AppUser) -> Select:
 def _icra(q: str, _u: AppUser) -> Select:
     return (
         select(IcraDosyasi.id, IcraDosyasi.dosya_no, IcraDosyasi.dosya_no)
-        .where(IcraDosyasi.dosya_no.ilike(q))
+        .where(_es(IcraDosyasi.dosya_no, q))
         .order_by(IcraDosyasi.dosya_no, IcraDosyasi.id)
     )
 
@@ -292,7 +327,7 @@ def _icra(q: str, _u: AppUser) -> Select:
 def _sayac(q: str, _u: AppUser) -> Select:
     return (
         select(SayacAna.id, SayacAna.ad, SayacAna.ad)
-        .where(SayacAna.ad.ilike(q))
+        .where(_es(SayacAna.ad, q))
         .order_by(SayacAna.ad, SayacAna.id)
     )
 

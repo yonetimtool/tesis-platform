@@ -6461,4 +6461,70 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get kameraAltAkisAlt =>
       'إذا كانت كاميرتك تبث بترميز H265 فلن يتمكّن المشغّل من فكّه. معظم الكاميرات توفّر تدفقًا ثانيًا بترميز H264 غالبًا؛ أدخل عنوانه هنا. العنوان الرئيسي لا يتغيّر.';
+
+  @override
+  String get aramaKaynakKisi => 'شخص';
+
+  @override
+  String get aramaKaynakDaire => 'وحدة';
+
+  @override
+  String get aramaKaynakBlok => 'مبنى';
+
+  @override
+  String get aramaKaynakFirma => 'شركة';
+
+  @override
+  String get aramaKaynakGorev => 'مهمة';
+
+  @override
+  String get aramaKaynakDuyuru => 'إعلان';
+
+  @override
+  String get aramaKaynakTalep => 'طلب';
+
+  @override
+  String get aramaKaynakFinans => 'المالية';
+
+  @override
+  String get aramaKaynakDemirbas => 'أصل';
+
+  @override
+  String get aramaKaynakEtkinlik => 'فعالية';
+
+  @override
+  String get aramaKaynakArac => 'مركبة';
+
+  @override
+  String get aramaKaynakNokta => 'نقطة';
+
+  @override
+  String get aramaKaynakKamera => 'كاميرا';
+
+  @override
+  String get aramaKaynakPlan => 'خطة';
+
+  @override
+  String get aramaKaynakVardiya => 'وردية';
+
+  @override
+  String get aramaKaynakIcra => 'تحصيل';
+
+  @override
+  String get aramaKaynakSayac => 'عدّاد';
+
+  @override
+  String get aramaBaslik => 'بحث';
+
+  @override
+  String get aramaIpucu => 'شخص، وحدة، مهمة، طلب…';
+
+  @override
+  String get aramaSonucYok => 'لا توجد نتائج';
+
+  @override
+  String get aramaEnAzIkiHarf => 'اكتب حرفين على الأقل للبحث.';
+
+  @override
+  String get aramaBasarisiz => 'تعذّر البحث. حاول بعد قليل.';
 }

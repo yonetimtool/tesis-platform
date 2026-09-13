@@ -6374,4 +6374,70 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get kameraAltAkisAlt =>
       'Si su cámara emite en H265, el reproductor no puede decodificarlo. La mayoría de las cámaras ofrecen un segundo flujo, normalmente H264; introduzca aquí su dirección. La dirección principal no cambia.';
+
+  @override
+  String get aramaKaynakKisi => 'Persona';
+
+  @override
+  String get aramaKaynakDaire => 'Vivienda';
+
+  @override
+  String get aramaKaynakBlok => 'Bloque';
+
+  @override
+  String get aramaKaynakFirma => 'Empresa';
+
+  @override
+  String get aramaKaynakGorev => 'Tarea';
+
+  @override
+  String get aramaKaynakDuyuru => 'Anuncio';
+
+  @override
+  String get aramaKaynakTalep => 'Solicitud';
+
+  @override
+  String get aramaKaynakFinans => 'Finanzas';
+
+  @override
+  String get aramaKaynakDemirbas => 'Activo';
+
+  @override
+  String get aramaKaynakEtkinlik => 'Evento';
+
+  @override
+  String get aramaKaynakArac => 'Vehículo';
+
+  @override
+  String get aramaKaynakNokta => 'Punto';
+
+  @override
+  String get aramaKaynakKamera => 'Cámara';
+
+  @override
+  String get aramaKaynakPlan => 'Plan';
+
+  @override
+  String get aramaKaynakVardiya => 'Turno';
+
+  @override
+  String get aramaKaynakIcra => 'Ejecución';
+
+  @override
+  String get aramaKaynakSayac => 'Contador';
+
+  @override
+  String get aramaBaslik => 'Buscar';
+
+  @override
+  String get aramaIpucu => 'Persona, vivienda, tarea, solicitud…';
+
+  @override
+  String get aramaSonucYok => 'Sin resultados';
+
+  @override
+  String get aramaEnAzIkiHarf => 'Escriba al menos dos caracteres.';
+
+  @override
+  String get aramaBasarisiz => 'La búsqueda falló. Inténtelo en breve.';
 }
