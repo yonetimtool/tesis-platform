@@ -6980,7 +6980,14 @@ class RaporIsOut(BaseModel):
 class RaporGrafikTanimi(BaseModel):
     """(P181 Bölüm 8) Raporun grafik yapılandırması — web/PDF/Excel tek kaynak."""
 
-    tip: str  # "cizgi" | "sutun" | "pasta"
+    #: (P227 §2) `yatay` EKLENDI: uzun etiketli kovalar (yaslandirma)
+    #: dikey eksende dondurulup kirpiliyordu. Panel P223'te ayni karari
+    #: vermisti; cikti da ayni bicimi tasimali.
+    #:
+    #: `pasta` istenip 6'dan cok dilim varsa cikti KENDILIGINDEN cubuga
+    #: duser (`rapor_ciktilari._grafik_tipi_sec`) — pasta o boyutta
+    #: okunmuyor ve katalogda tek tek dusunmek yerine kural TEK YERDE.
+    tip: str  # "cizgi" | "sutun" | "pasta" | "yatay"
     x: str
     seriler: list[str]
 

@@ -232,6 +232,10 @@ KATALOG_KAYITLARI = {
         "dokumler",
         ("baslangic", "bitis", "kasa_id", "listeleme_tipi", "evrak_tipi",
          "gelir_gider_tanim_id", "calisma_sekli"),
+        # (P227 §2) BUTUNUN PARCALARI (hareket tipi dagilimi) -> PASTA.
+        # Tip sayisi 6'yi asarsa cikti KENDILIGINDEN cubuga duser
+        # (`_grafik_tipi_sec`) — o boyutta pasta okunmuyor.
+        grafik=GrafikTanimi("pasta", "tip", ("tutar_kurus",)),
         agir=True,
     ),
     "makbuz_dokumu": KatalogKaydi(
@@ -272,6 +276,10 @@ KATALOG_KAYITLARI = {
         "Denetim Raporu", "Denetçi biçimi: dönem gelir-gider + kasa mutabakatı",
         "dokumler",
         ("baslangic", "bitis"),
+        # (P227 §2) KASA BASINA KARSILASTIRMA -> YATAY cubuk.
+        # Kasa adlari uzun ("Ana Kasa - Nakit"); dikey eksende 30 derece
+        # dondurulup kirpiliyorlar. Yatayda tam okunur.
+        grafik=GrafikTanimi("yatay", "kasa", ("giris", "cikis", "bakiye")),
     ),
     # (P192 §5.5) MUHASEBECIYE DISA AKTARIM.
     #

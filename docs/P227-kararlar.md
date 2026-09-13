@@ -192,3 +192,77 @@ kaldır, eski biçime dön) ikisini de yakaladı.
 **Test verimde bir hata yaptım ve test yakaladı:** `05431992904`'ü taşma
 sandım. Baştaki `0` ulusal haneye dahil değil — o numara **geçerli**.
 Gerçek taşma 11 ulusal hane (`054319929041`).
+
+---
+
+## §2 — Raporları zenginleştir (KISMEN yapıldı)
+
+### Ölçüm önce
+
+Katalogda **17 rapor**, bunların **4'ünde** grafik tanımı vardı
+(`donemsel_bakiye`, `hesap_ekstresi`, `gelir_gider_ozet`,
+`tahsilat_performansi`). Grafik altyapısı (P181) çalışıyor: PDF'e gömülü
+pasta/sütun/çizgi, Excel'e `PieChart`/`BarChart`/`LineChart`, boş veride
+grafik sayfası **eklenmiyor**, büyük veri örnekleniyor, dilim etiketleri
+kategori adı + yüzde taşıyor (renk tek başına anlam taşımıyor).
+
+### Bu turda yapılanlar
+
+**1. Grafik etiketleri Türkçe çiziliyor.** §1'deki font düzeltmesi
+grafiği **kapsamıyordu**: eksen etiketleri, pasta dilim etiketleri ve
+legend kendi `fontName`lerini taşıyor. Uçtan uca ölçüldü —
+`denetim_raporu` ve `donemsel_bakiye` PDF'leri kutu karakteri veriyordu,
+artık vermiyor.
+
+**2. Pasta → çubuk kuralı çıktıya da geldi.** Kullanıcının kuralı
+("6-7 dilimden fazlasında pasta okunmaz") panelde P223'te uygulanmıştı;
+`_grafik_tipi_sec` ile artık PDF/Excel de aynı eşiği uyguluyor. Katalog
+"pasta" dese bile 20 dilimlik dağılım çubuğa düşüyor. Açıkça istenen
+tip **ezilmiyor**: az veri diye zaman serisini pastaya çevirmek, zaman
+eksenini yok etmek olurdu.
+
+**3. `yatay` çubuk tipi eklendi.** Uzun etiketli kovalar dikey eksende
+30 derece döndürülüp kırpılıyordu. Yatayda etiket döndürülmüyor —
+döndürmenin sebebi dikeyde yer olmamasıydı.
+
+**4. İki rapora grafik eklendi:**
+
+| Rapor | Tip | Gerekçe |
+|---|---|---|
+| `denetim_raporu` | **yatay** | Kasa başına karşılaştırma; kasa adları uzun |
+| `finansal_hareketler` | **pasta** | Hareket tipi dağılımı = bütünün parçaları; 6'yı aşarsa kendiliğinden çubuğa düşer |
+
+### Uçtan uca ölçüm
+
+```
+denetim_raporu      : 46 588 bayt  sayfa:2  kutu:False
+finansal_hareketler : 46 321 bayt  sayfa:2  kutu:False
+donemsel_bakiye     : 47 898 bayt  sayfa:2  kutu:False
+gelir_gider_ozet    : 44 406 bayt  sayfa:1  kutu:False
+```
+
+### Kendi testim yetersizdi ve fark ettim
+
+Grafik font kilidini önce **gerçek raporlarla** yazdım ve kırma testi
+**yakalamadı**: dev verisindeki kasa adlarında (`Ana Kasa`) Türkçe harf
+yok, yani fontu geri bozsam bile test geçiyordu. Kilidi veriden bağımsız
+hale getirdim — etiketleri testin kendisi veriyor (`Güvenlik Şirketi`,
+`Bahçe Bakımı`) ve dört tipin dördünü de sürüyor. Şimdi kırma
+yakalanıyor.
+
+### YAPILMADI — açıkça
+
+- **Özet sayfası** (rakamlar tek bakışta): `RaporSonuc.toplamlar` var ve
+  PDF/Excel bir toplam **satırı** çiziyor, ama 17 raporun yalnız 1'i
+  `toplamlar` dolduruyor. Ayrı bir özet sayfası, her rapor motoruna özet
+  verisi eklemeyi gerektiriyor — bu turda yapılmadı.
+- **Kalan 11 grafiksiz rapor**: bir kısmı bilinçli (ihtar yazısı bir
+  mektup, muhasebe aktarımı bir dışa aktarma, döküman listesi bir liste);
+  ama `detayli_borc`, `makbuz_dokumu`, `kasa_ekstresi`, `firma_ekstresi`
+  grafiklendirilebilirdi. Yapılmadı.
+- **Ekranda önizleme**: değerlendirildi, **yapılmadı**. Rapor zaten
+  kuyruğa giriyor ve dosya olarak dönüyor; önizleme için aynı veriyi bir
+  de HTML olarak render eden ikinci bir yol gerekir. Değeri var ama
+  maliyeti bu turun dışında.
+- **Şeffaflık ve bütçe ekranlarında grafik**: şeffaflıkta P223'te
+  eklenmişti; bütçe ekranında mobilde var, **web'de yok**.

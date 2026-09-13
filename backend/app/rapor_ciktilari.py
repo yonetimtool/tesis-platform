@@ -457,6 +457,28 @@ def _ciz(sonuc, site_ad, baslangic, bitis, sayfa, logo_png, tampon, toplam=None,
     return sayfa_no
 
 
+#: (P227 §2) PASTADA OKUNABILIR DILIM SINIRI — panel ile AYNI sayi.
+#:
+#: Kullanicinin kurali: "6-7 dilimden fazlasinda pasta okunmaz olur, o
+#: durumda cubuk kullan". Panel tarafinda `PASTA_DILIM_SINIRI` olarak
+#: duruyor; PDF'te de AYNI esik uygulanmali, yoksa ayni rapor ekranda
+#: cubuk, ciktida okunmaz bir pasta olur.
+_PASTA_DILIM_SINIRI = 6
+
+
+def _grafik_tipi_sec(istenen: str, dilim_sayisi: int) -> str:
+    """Katalogdaki tip + VERININ BOYU -> cizilecek tip.
+
+    Katalog "pasta" dese bile 20 dilimlik bir dagilim pasta olarak
+    okunmaz; cubuga dusulur. Diger tipler (cizgi/sutun/yatay) OLDUGU GIBI
+    kalir — "az veri" diye zaman serisini pastaya cevirmek, zaman eksenini
+    yok etmek olurdu.
+    """
+    if istenen == "pasta" and dilim_sayisi > _PASTA_DILIM_SINIRI:
+        return "sutun"
+    return istenen
+
+
 def _pdf_grafik(c, x, y, w, h, sonuc, grafik, veri) -> None:
     """(P181 Bölüm 8) reportlab.graphics ile gömülü grafik.
 
@@ -474,15 +496,19 @@ def _pdf_grafik(c, x, y, w, h, sonuc, grafik, veri) -> None:
 
     etiketler, seriler, ornek = veri
     pal = [colors.HexColor(h) for h in _GRAFIK_PALET]
+    # (P227 §2) GRAFIK ETIKETLERI DE TURKCE: kategori adlari ("Güvenlik",
+    # "Bağımsız Bölüm") burada ciziliyor ve Helvetica `ş/ğ/ı/İ` harflerini
+    # KUTU yapiyordu — tablodaki kusurun aynisi, grafik tarafinda.
+    F, FB = _turkce_font()
     d = Drawing(w, h)
-    tip = grafik.tip
+    tip = _grafik_tipi_sec(grafik.tip, len(etiketler))
     x_baslik = next((s.baslik for s in sonuc.sutunlar if s.anahtar == grafik.x), grafik.x)
 
     # Başlık + örnekleme notu (metin — bilgi renk-yalnız değil).
-    d.add(String(0, h - 12, sonuc.baslik, fontName="Helvetica-Bold", fontSize=11))
+    d.add(String(0, h - 12, sonuc.baslik, fontName=FB, fontSize=11))
     if ornek:
         d.add(String(0, h - 26, f"(çok nokta — {len(etiketler)} noktaya örneklendi)",
-                     fontName="Helvetica-Oblique", fontSize=8, fillColor=colors.grey))
+                     fontName=F, fontSize=8, fillColor=colors.grey))
 
     cizim_alt = 40  # legend/eksen için alt boşluk
     cizim_ust = h - 40
@@ -497,6 +523,9 @@ def _pdf_grafik(c, x, y, w, h, sonuc, grafik, veri) -> None:
         pie.data = vals0
         pie.labels = [f"{et} %{round(v / toplam * 100)}" for et, v in zip(etiketler, vals0)]
         pie.sideLabels = True
+        # Dilim etiketleri KATEGORI ADI + YUZDE tasiyor (renk tek basina
+        # anlam tasimasin) — o yuzden Turkce font SART.
+        pie.slices.fontName = F
         pie.slices.strokeWidth = 0.5
         for i in range(len(vals0)):
             pie.slices[i].fillColor = pal[i % len(pal)]
@@ -508,6 +537,16 @@ def _pdf_grafik(c, x, y, w, h, sonuc, grafik, veri) -> None:
 
     if tip == "cizgi":
         ch = HorizontalLineChart()
+    elif tip == "yatay":
+        # (P227 §2) YATAY CUBUK — UZUN ETIKETLI kovalar icin.
+        #
+        # Yaslandirma ("90+ gun gecikmis") gibi etiketler dikey eksende
+        # ya 30 derece dondurulur ya kirpilir; yatayda tam okunur ve kova
+        # sirasi YUKARIDAN ASAGIYA dogal akar. Panel tarafinda ayni karar
+        # P223'te verilmisti; cikti da ayni bicimi tasimali.
+        from reportlab.graphics.charts.barcharts import HorizontalBarChart
+
+        ch = HorizontalBarChart()
     else:
         ch = VerticalBarChart()
     ch.x, ch.y = 44, cizim_alt
@@ -515,7 +554,14 @@ def _pdf_grafik(c, x, y, w, h, sonuc, grafik, veri) -> None:
     ch.data = [vals for _, vals in seriler]
     ch.categoryAxis.categoryNames = etiketler
     ch.categoryAxis.labels.boxAnchor = "ne"
-    ch.categoryAxis.labels.angle = 30
+    # YATAYDA ETIKET DONDURULMEZ: dondurmenin sebebi dikeyde yer
+    # olmamasiydi; yatayda etiket zaten yatay eksende duruyor.
+    ch.categoryAxis.labels.angle = 0 if tip == "yatay" else 30
+    # (P227 §2) EKSEN ETIKETLERI DE TURKCE FONT: kategori adlari burada
+    # ciziliyor ("Şişli Kasası", "Bağımsız Bölüm") ve varsayilan Helvetica
+    # `ş/ğ/ı/İ` harflerini KUTU yapiyordu.
+    ch.categoryAxis.labels.fontName = F
+    ch.valueAxis.labels.fontName = F
     ch.categoryAxis.labels.fontSize = 6
     ch.valueAxis.labels.fontSize = 6
     if tip == "cizgi":
@@ -530,8 +576,8 @@ def _pdf_grafik(c, x, y, w, h, sonuc, grafik, veri) -> None:
             ch.bars[i].fillColor = pal[i % len(pal)]
     d.add(ch)
     # Eksen başlıkları (metin).
-    d.add(String(ch.x, 6, x_baslik, fontName="Helvetica", fontSize=8))
-    d.add(String(0, cizim_ust + 4, "TL", fontName="Helvetica", fontSize=8))
+    d.add(String(ch.x, 6, x_baslik, fontName=F, fontSize=8))
+    d.add(String(0, cizim_ust + 4, "TL", fontName=F, fontSize=8))
     # Legend — seri adları (metin).
     leg_pairs = [(pal[i % len(pal)], ad[:22]) for i, (ad, _) in enumerate(seriler)]
     _pdf_legend(d, Legend, ch.x, cizim_ust + 16, leg_pairs)
@@ -542,7 +588,8 @@ def _pdf_legend(d, Legend, x, y, pairs) -> None:
     leg = Legend()
     leg.x, leg.y = x, y
     leg.alignment = "right"
-    leg.fontName = "Helvetica"
+    # (P227 §2) Legend seri/kategori ADLARINI tasir -> Turkce font.
+    leg.fontName = _turkce_font()[0]
     leg.fontSize = 8
     leg.dxTextSpace = 4
     leg.deltay = 10

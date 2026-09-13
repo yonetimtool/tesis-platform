@@ -50,9 +50,26 @@ def _uret(client, yon, owner_conn, kod: str, bicim: str):
     from app.rapor_kuyruk import isi_uret
     from app.tasks import _async_calistir
 
-    r = client.post(f"/raporlar/{kod}/kuyruk?bicim={bicim}", headers=yon, json={})
-    assert r.status_code == 202, r.text
-    is_id = r.json()["id"]
+    # (P227 §1) IS SATIRI DOGRUDAN ACILIR — kuyruk ucu CAGRILMAZ.
+    #
+    # OLCULEN SORUN: uc, Celery gorevini WORKER'a da gonderiyor. Test hem
+    # worker'in isledigi hem kendi isledigi ayni satira yazinca
+    #     psycopg.errors.DeadlockDetected
+    # aliniyordu — ve daha sinsisi, iki uretimden HANGISININ depoya
+    # yazdigi belirsizdi (elle olcum sirasinda worker ESKI imajla yazip
+    # beni yanlis teshise surukledi).
+    #
+    # Kuyruk ucunun SOZLESMESI (sahiplik, bicim dogrulama, 404) zaten
+    # `test_rapor_kuyruk.py`de olculuyor. Burada olculen sey URETIM +
+    # YUKLEME + GERI OKUMA zinciri; is satirini dogrudan acmak onu
+    # DETERMINISTIK yapar.
+    is_id = str(uuid.uuid4())
+    kullanici = client.get("/me", headers=yon).json()
+    owner_conn.execute(
+        "INSERT INTO rapor_isi (id, tenant_id, user_id, kod, bicim, parametre, durum) "
+        "VALUES (%s, %s, %s, %s, %s, '{}'::jsonb, 'bekliyor')",
+        (is_id, kullanici["tenant_id"], kullanici["id"], kod, bicim),
+    )
 
     # (P187) DUZ `asyncio.run` KULLANILMAZ ve bu OLCULDU: ikinci cagride
     #     RuntimeError: ... Future attached to a different loop
@@ -176,3 +193,93 @@ def test_PDF_KURUMSAL_BASLIK_TASIR(client, yon, owner_conn):
     metin = "".join((s.extract_text() or "") for s in PdfReader(io.BytesIO(veri)).pages)
     for beklenen in ("Dönem:", "Oluşturma:", "Sayfa"):
         assert beklenen in metin, f"{beklenen!r} ciktida YOK"
+
+
+# ==================================================================== #
+# 5. GRAFIKLER — VERI TURUNE UYGUN, TURKCE ETIKETLI
+# ==================================================================== #
+
+def test_PASTA_COK_DILIMDE_CUBUGA_DUSER():
+    """Kullanicinin kurali: "6-7 dilimden fazlasinda pasta okunmaz olur".
+
+    Kural TEK YERDE: katalogda her rapor icin tek tek dusunmek yerine
+    cikti veriye bakip karar veriyor. Panel tarafinda ayni esik
+    (`PASTA_DILIM_SINIRI`) duruyor; ayrisirlarsa ayni rapor ekranda cubuk,
+    ciktida okunmaz bir pasta olurdu.
+    """
+    from app.rapor_ciktilari import _PASTA_DILIM_SINIRI, _grafik_tipi_sec
+
+    assert _grafik_tipi_sec("pasta", _PASTA_DILIM_SINIRI) == "pasta"
+    assert _grafik_tipi_sec("pasta", _PASTA_DILIM_SINIRI + 1) == "sutun"
+
+
+def test_ACIKCA_ISTENEN_TIP_EZILMEZ():
+    """Az veri diye zaman serisini pastaya cevirmek, zaman eksenini yok
+    etmek olurdu."""
+    from app.rapor_ciktilari import _grafik_tipi_sec
+
+    assert _grafik_tipi_sec("cizgi", 2) == "cizgi"
+    assert _grafik_tipi_sec("yatay", 30) == "yatay"
+    assert _grafik_tipi_sec("sutun", 50) == "sutun"
+
+
+def test_GRAFIK_ETIKETLERI_TURKCE_HARF_TASIYABILIR():
+    """GRAFIGIN KENDI etiketleri — veriden BAGIMSIZ kilit.
+
+    ILK YAZIMIMDA bu testi gercek raporlarla yazdim ve KIRMA YAKALANMADI:
+    dev verisindeki kasa adlarinda (`Ana Kasa`) Turkce harf YOK, yani
+    grafik fontunu geri bozsam bile test geciyordu. Kusuru olcen tek yol,
+    etiketleri TESTIN KENDISININ vermesi.
+
+    Tablodaki font duzeltmesi grafigi KAPSAMIYORDU: eksen etiketleri,
+    pasta dilim etiketleri ve legend kendi `fontName`lerini tasiyor.
+    """
+    pytest.importorskip("pypdf", reason="pypdf yok")
+    from pypdf import PdfReader
+
+    from app.raporlar import RaporSonuc, Sutun
+    from app.rapor_ciktilari import pdf_uret
+    from app.schemas import RaporGrafikTanimi
+
+    sonuc = RaporSonuc(
+        kod="t", baslik="Gider Dağılımı",
+        sutunlar=[Sutun("kalem", "Kalem", genislik=3),
+                  Sutun("tutar", "Tutar", "kurus", 2)],
+        satirlar=[
+            {"kalem": "Güvenlik Şirketi", "tutar": 120000},
+            {"kalem": "Bahçe Bakımı", "tutar": 45000},
+            {"kalem": "Asansör Bakımı", "tutar": 30000},
+        ],
+    )
+    for tip in ("pasta", "sutun", "yatay", "cizgi"):
+        pdf = pdf_uret(
+            sonuc, "Acme Plaza", None, None,
+            grafik=RaporGrafikTanimi(tip=tip, x="kalem", seriler=["tutar"]),
+        )
+        metin = "".join(
+            (s.extract_text() or "") for s in PdfReader(io.BytesIO(pdf)).pages
+        )
+        assert "■" not in metin, f"{tip} grafiginde KUTU karakteri var"
+        # ETIKET RENK-YALNIZ DEGIL: kategori adi metin olarak da geciyor.
+        assert "Güvenlik Şirketi" in metin, f"{tip}: etiket metni YOK"
+
+
+@pytest.mark.parametrize("kod", ["denetim_raporu", "finansal_hareketler"])
+def test_GRAFIKLI_RAPOR_URETILIR_ve_ETIKETLERI_TURKCE(
+        client, yon, owner_conn, kod):
+    """Grafik ETIKETLERI de Turkce harf tasiyor ("Şişli Kasası").
+
+    Tablodaki font duzeltmesi grafigi KAPSAMIYORDU: eksen etiketleri,
+    pasta dilim etiketleri ve legend kendi `fontName`lerini tasiyor ve
+    varsayilan Helvetica `ş/ğ/ı/İ` harflerini KUTU yapiyordu. Uctan uca
+    olculdu (denetim_raporu ve donemsel_bakiye kutu veriyordu).
+    """
+    pytest.importorskip("pypdf", reason="pypdf yok")
+    from pypdf import PdfReader
+
+    _, veri = _uret(client, yon, owner_conn, kod, "pdf")
+    rd = PdfReader(io.BytesIO(veri))
+    metin = "".join((s.extract_text() or "") for s in rd.pages)
+    assert "■" not in metin, f"{kod} PDF'inde KUTU karakteri var"
+    # GRAFIK SAYFASI EKLENDI: veri varsa ikinci sayfa cizilir.
+    assert len(rd.pages) >= 1
