@@ -351,6 +351,26 @@ Widget _gorevDetayEkrani(
     ),
     scanOutboxProvider.overrideWith(() => _FakeOutbox(const [])),
     currentUserRoleProvider.overrideWith((ref) async => role),
+    // (P229 §3) TAMAMLAMA GECMISI — surusu GERCEK veriyle doldurur.
+    //
+    // Taklit KONMASAYDI bolum HATA halini cizerdi ("gecmis
+    // yuklenemedi") ve altin goruntu o hatayi KILITLERDI: bes eksen
+    // surusu bundan boyle bozuk bir ekrani "dogru" sayardi.
+    gorevTamamlamalariProvider.overrideWith(
+      (ref, _) async => [
+        TaskCompletion(
+          id: 'c1',
+          taskId: gorev.id,
+          tamamlayanUserId: 'u1',
+          // AD ve NOT DIL-NOTR: surus, `en` ekraninda Turkce metin
+          // arayan bir sizinti taramasi da kosuyor ve TEST VERISINI
+          // cevrilmemis arayuz metni saniyordu.
+          tamamlayanAd: 'Alex Kim',
+          tamamlanmaZamani: DateTime.utc(2026, 3, 5, 8, 30),
+          notlar: 'OK',
+        ),
+      ],
+    ),
   ],
   child: l10nApp(TaskDetailScreen(task: gorev), locale: locale),
 );

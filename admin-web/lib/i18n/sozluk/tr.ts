@@ -1652,6 +1652,7 @@ export const tr = {
   bildirimTipRezervasyon: "rezervasyon",
   bildirimTipSikayetCozuldu: "şikayet sonuçlandı",
   bildirimTipVardiyaOzeti: "vardiya özeti",
+  bildirimTipGorevTamamlandi: "Görev tamamlandı",
   bildirimTipGorevAtandi: "Yeni görev",
   bildirimTipAidatBorc: "Yeni borç",
   bildirimTipAidatOdendi: "Ödemeniz alındı",

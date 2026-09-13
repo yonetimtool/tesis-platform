@@ -1590,6 +1590,7 @@ export const es: Sozluk = {
   bildirimTipRezervasyon: "reserva",
   bildirimTipSikayetCozuldu: "queja resuelta",
   bildirimTipVardiyaOzeti: "resumen del turno",
+  bildirimTipGorevTamamlandi: "Tarea completada",
   bildirimTipGorevAtandi: "Nueva tarea",
   bildirimTipAidatBorc: "Nuevo cargo",
   bildirimTipAidatOdendi: "Pago recibido",

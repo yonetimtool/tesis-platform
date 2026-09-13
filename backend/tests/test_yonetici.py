@@ -86,14 +86,28 @@ def test_gorevli_atanan_gorevi_tamamlar(client, world):
     assert r.status_code == 201, r.text
     assert r.json()["tamamlayan_user_id"] == gorevli_id
 
-    # yonetici tamamlanmayi takip eder ama KENDISI completion gonderemez
+    # yonetici tamamlanmayi takip eder — VE (P229 §3) KENDISI DE
+    # tamamlayabilir.
     assert client.get(f"/tasks/{t['id']}/completions", headers=yonetici).status_code == 200
-    deny = client.post(
+
+    # ===================================================================
+    # (P229 §3) DAVRANIS DEGISIMI — burasi eskiden 403 BEKLIYORDU
+    # ===================================================================
+    # `_COMPLETER` admin + saha rolleriydi; YONETICI yoktu. Sonuc: gorevin
+    # atandigi personel izinliyse ya da isten ayrildiysa gorevi KIMSE
+    # kapatamiyordu ve kayit sonsuza kadar acik kaliyordu. Yonetici
+    # eklendi.
+    #
+    # SAHA KISITI KALKMADI: saha rolu hala YALNIZ kendine atanan gorevi
+    # tamamlar (`test_p229_gorev_tamamlama.py` bunu ayrica kilitler).
+    # Gevseyen sey yonetimin kendi tesisindeki bir isi kapatabilmesi —
+    # zaten o isi ATAYAN ve denetleyen rol.
+    ikinci = client.post(
         f"/tasks/{t['id']}/completions",
         headers={**yonetici, "Idempotency-Key": uuid.uuid4().hex},
         json={"tamamlanma_zamani": "2026-07-08T10:00:00Z"},
     )
-    assert deny.status_code == 403
+    assert ikinci.status_code == 201, ikinci.text
 
 
 # ------------------------------ takip / rapor ------------------------------ #

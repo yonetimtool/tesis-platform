@@ -13,3 +13,7 @@
  516,  52  286x72  Örn. çöp konteynerleri boşaltıldı
  654, 155  99x20  Tamamla
  655, 129  18x18  U+E156
+ 720,  36  242x20  Tamamlama geçmişi
+ 752,  76  238x24  Alex Kim
+ 772,  36  24x24  U+E159
+ 776,  76  238x40  GG.AA.YYYY · SS:DD · OK

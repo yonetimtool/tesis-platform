@@ -1590,6 +1590,7 @@ export const ar: Sozluk = {
   bildirimTipRezervasyon: "حجز",
   bildirimTipSikayetCozuldu: "تمت معالجة الشكوى",
   bildirimTipVardiyaOzeti: "ملخص الوردية",
+  bildirimTipGorevTamamlandi: "اكتملت المهمة",
   bildirimTipGorevAtandi: "مهمة جديدة",
   bildirimTipAidatBorc: "مستحق جديد",
   bildirimTipAidatOdendi: "تم استلام الدفعة",

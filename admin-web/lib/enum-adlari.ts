@@ -41,6 +41,11 @@ export const BILDIRIM_TIP: EnumHarita = {
   // (P191 §2, göç 0078) Görev atama ve aidat borcu — ikisinin de bildirimi
   // HIC YOKTU; "görev oluşturdum, telefona hiçbir şey gelmedi" bundandı.
   gorev_atandi: "bildirimTipGorevAtandi",
+  // (P229 §3, göç 0131) Görev TAMAMLANINCA yönetime bildirim. `gorev_atandi`
+  // ile ayrı tip: yönleri ters (atama yönetimden sahaya, tamamlanma sahadan
+  // yönetime) ve tek tipe indirmek, bildirim tercihinde birini kapatmayı
+  // ötekini de kapatmak yapardı.
+  gorev_tamamlandi: "bildirimTipGorevTamamlandi",
   aidat_borc: "bildirimTipAidatBorc",
   // (P191 §4) Banka eslestirmesi odemeyi isledi -> "odemeniz alindi".
   aidat_odendi: "bildirimTipAidatOdendi",

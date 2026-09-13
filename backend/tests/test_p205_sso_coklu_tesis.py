@@ -29,6 +29,37 @@ import uuid
 import psycopg
 import pytest
 
+
+# ===================================================================== #
+# (P229) DOGRULANMIS E-POSTA — bu dosyanin GECERLILIK SARTI
+# ===================================================================== #
+# P228'de olculen sizinti: DOGRULANMAMIS e-posta KIMLIK SAYILAMAZ, cunku
+# `uq_app_user_tenant_email` TENANT ICI benzersizdir ve ayni adres farkli
+# tesislerde FARKLI kisilerde MESRU olarak bulunabilir (yonetici sakin
+# eklerken herhangi bir adres yazabilir). Duzeltmeden sonra
+# `/me/tesislerim` yalniz DOGRULANMIS eslesmeleri listeliyor.
+#
+# Bu dosya `yonetici_a`/`yonetici_b` satirlarini AYNI KISI olarak surer —
+# gercek dunyadaki karsiligi DOGRULANMIS e-postadir. Bayrak
+# `conftest`te TOPLUCA acilamaz: `test_eposta_kanali` ve
+# `test_sifre_sifirla` ayni satirin DOGRULANMAMIS halinden basliyor ve
+# toplu bayrak onlari dusuruyordu (olculdu). Bu yuzden bayrak BURADA,
+# yalniz bu dosyanin suresince aciliyor.
+@pytest.fixture(autouse=True)
+def _dogrulanmis_eposta(world, owner_conn):
+    eposta = world["yonetici_a"]["email"]
+    onceki = owner_conn.execute(
+        "SELECT tenant_id, eposta_dogrulandi FROM app_user WHERE email = %s",
+        (eposta,)).fetchall()
+    owner_conn.execute(
+        "UPDATE app_user SET eposta_dogrulandi = true WHERE email = %s",
+        (eposta,))
+    yield
+    for tid, deger in onceki:
+        owner_conn.execute(
+            "UPDATE app_user SET eposta_dogrulandi = %s WHERE email = %s "
+            "AND tenant_id = %s", (deger, eposta, tid))
+
 from .test_p203_coklu_tesis import _giris, cift_uyelik  # noqa: F401
 from .test_p194_mobil_yonetici_sso import _kendi_dongusunde
 

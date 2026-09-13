@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../core/i18n/l10n.dart';
 import '../../../core/theme/home_tokens.dart';
+import '../../../core/ui/gorsel_cozme.dart';
 import '../../../core/error/api_exception.dart';
 import '../../auth/data/current_user_provider.dart';
 import '../data/task_api.dart';
@@ -657,9 +658,16 @@ class _TamamlamaGecmisi extends ConsumerWidget {
                           tooltip: l10n.gorevFotoKanitiVar,
                           onPressed: () => showDialog<void>(
                             context: context,
-                            builder: (_) => Dialog(
+                            // COZME SINIRI ZORUNLU: tam cozunurlukte
+                            // acilan bir saha fotografi (12 MP) bellekte
+                            // ~48 MB tutar ve eski cihazda uygulamayi
+                            // oldururdu (`gorsel_cozme_denetimi_test`
+                            // bunu STATIK olarak kilitliyor).
+                            builder: (ctx) => Dialog(
                               child: InteractiveViewer(
-                                child: Image.network(c.fotoUrl!),
+                                child: Image(
+                                  image: sinirliGorsel(ctx, NetworkImage(c.fotoUrl!), 1080),
+                                ),
                               ),
                             ),
                           ),
