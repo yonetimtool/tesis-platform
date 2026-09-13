@@ -2112,5 +2112,9 @@
   "grafikVeriYok": "Недостаточно данных для построения графика.",
   "@grafikVeriYok": {
     "description": "(P223) Grafik icin veri yok"
+  },
+  "telefonHataTasma": "Номер телефона не может быть длиннее 10 цифр. Удалите лишние цифры.",
+  "@telefonHataTasma": {
+    "description": "(P227) Telefon 10 haneden uzun"
   }
 }

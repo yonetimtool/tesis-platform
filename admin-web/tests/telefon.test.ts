@@ -6,6 +6,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  telefonTasti,
   TELEFON_HANE_SAYISI,
   telefonBicimle,
   telefonGiris,
@@ -41,29 +42,61 @@ describe("telefonHaneleri", () => {
     expect(telefonHaneleri("054319929041234")).toBe("5431992904");
     expect(telefonHaneleri("5431992904")).toHaveLength(TELEFON_HANE_SAYISI);
   });
+
+  // (P227 §3) KIRPMA SESSIZ DEGIL.
+  //
+  // Kirpma DAVRANISI kaldi (kutuya fazlasi yazilamaz) ama artik
+  // SORULABILIYOR. Once 11. rakam yazildiginda ekranda hicbir sey
+  // degismiyordu; kullanici numarayi dogru sandigi halde son hanesi
+  // DUSMUS oluyordu. Yapistirmada daha sinsi: 11 haneli yanlis bir
+  // numara, 10 haneli BASKA BIR numaraya donusup kaydedilebiliyordu.
+  it("TASMA SORULABILIYOR — sessiz degil", () => {
+    // 11 ULUSAL HANE = tasma. (`05431992904` TASMA DEGILDIR: bastaki `0`
+    // ulusal haneye dahil degil — ilk yazimda bunu karistirdim ve test
+    // hakli olarak dustu.)
+    expect(telefonTasti("054319929041")).toBe(true);
+    expect(telefonTasti("54319929041")).toBe(true);
+    expect(telefonTasti("0543 199 29 04")).toBe(false);
+    expect(telefonTasti("05431992904")).toBe(false);
+  });
+
+  it("ULKE KODU EKLERI TASMA SAYILMAZ", () => {
+    // `+90`, `0090`, `90` ve bastaki `0` soyuluyor; kullanicinin fazladan
+    // rakam yazdigi anlamina GELMEZ.
+    for (const ham of HAM_BICIMLER) {
+      expect(telefonTasti(ham), ham).toBe(false);
+    }
+  });
+
+  it("TASMA HATA OLARAK doner ve ONCE gelir", () => {
+    // Numara 10 haneye kirpildigi icin oteki denetimlerin hepsi GECERLI
+    // gorunur; tasma once sorulmazsa kullanici hatayi HIC gormez.
+    expect(telefonHatasi("054319929041")).toBe("tasma");
+  });
 });
 
 describe("telefonBicimle / telefonGiris", () => {
   it("TAM numara gruplanir", () => {
-    expect(telefonBicimle("5431992904")).toBe("0543 199 29 04");
+    expect(telefonBicimle("5431992904")).toBe("0(543) 199 29 04");
   });
 
   it("KISMI numara da gruplanir (yazarken)", () => {
-    expect(telefonGiris("5")).toBe("05");
-    expect(telefonGiris("543")).toBe("0543");
-    expect(telefonGiris("5431")).toBe("0543 1");
-    expect(telefonGiris("543199")).toBe("0543 199");
-    expect(telefonGiris("54319929")).toBe("0543 199 29");
+    // (P227 §3) Parantez yalniz alan kodu TAMAMLANINCA kapanir.
+    expect(telefonGiris("5")).toBe("0(5");
+    expect(telefonGiris("543")).toBe("0(543)");
+    expect(telefonGiris("5431")).toBe("0(543) 1");
+    expect(telefonGiris("543199")).toBe("0(543) 199");
+    expect(telefonGiris("54319929")).toBe("0(543) 199 29");
   });
 
   it("YAPISTIRMA cozulur", () => {
     for (const ham of HAM_BICIMLER) {
-      expect(telefonGiris(ham), ham).toBe("0543 199 29 04");
+      expect(telefonGiris(ham), ham).toBe("0(543) 199 29 04");
     }
   });
 
   it("RAKAM DISI karakter YUTULUR", () => {
-    expect(telefonGiris("0a5b4c3d1e992904")).toBe("0543 199 29 04");
+    expect(telefonGiris("0a5b4c3d1e992904")).toBe("0(543) 199 29 04");
   });
 
   it("BOS -> bos", () => {

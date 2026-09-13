@@ -521,6 +521,7 @@ export const en: Sozluk = {
   profilKaydedildi: "Profile updated.",
   telefonHataEksik: "The number is incomplete — enter 10 digits.",
   telefonHataOnEk: "A mobile number must start with 5 (e.g. 0543…).",
+  telefonHataTasma: "A phone number cannot be longer than 10 digits. Remove the extra digits.",
   telefonHataBos: "Phone number is required.",
   telefonIpucu: "Mobile number, e.g. 0543 199 29 04",
   telefonYerTutucu: "05XX XXX XX XX",

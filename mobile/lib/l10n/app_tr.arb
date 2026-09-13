@@ -2927,5 +2927,9 @@
   "grafikVeriYok": "Grafik için yeterli veri yok.",
   "@grafikVeriYok": {
     "description": "(P223) Grafik icin veri yok"
+  },
+  "telefonHataTasma": "Telefon numarası 10 haneden uzun olamaz. Fazla rakamları silin.",
+  "@telefonHataTasma": {
+    "description": "(P227) Telefon 10 haneden uzun"
   }
 }

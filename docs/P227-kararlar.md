@@ -105,3 +105,90 @@ suçladım. Sebep koddaki bir fark değildi: kuyruk ucu Celery görevini
 kurmuştum. Worker eski kodla yazıyordu. Bu, "beat üçüncü kez build
 listesinden düştü" olayının aynı sınıfı — **rapor değişikliğinde `worker`
 da yeniden kurulmalı**.
+
+---
+
+## §3 — Telefon alanı
+
+### Ölçüm önce: ne vardı, ne yoktu
+
+`lib/telefon.ts` (panel) ve `telefon_alani.dart` (mobil) **ikiz** olarak
+zaten duruyordu ve paylaşılan bir test tablosuyla kilitliydi. Mevcut:
+gruplama, 10 hane sert sınırı, `5` ile başlama zorunluluğu, yapıştırma
+çözme, E.164 üretimi.
+
+**Saklama biçimi ölçüldü:**
+
+```
+app_user.telefon: +905931019452 …
++90 ile başlayan: 3057    başlamayan: 0
+```
+
+Yani DB **E.164** tutuyor ve bugün **tüm kayıtlar Türkiye**. Gösterim ile
+saklama zaten ayrıydı; dokunmadım — telefon global benzersiz anahtar
+(P185/P197) ve normalizasyonu değiştirmek mevcut kayıtları bozardı.
+
+### Üç boşluk kapatıldı
+
+**1. Biçim `0(541) 922 23 88` oldu.** Eskiden `0543 199 29 04` idi. Alan
+kodu parantez içinde: 10 hanenin ilk üçü operatör kodudur ve gözle ilk
+ayrılması gereken parçadır. Parantez **yalnız grup tamamlanınca**
+kapanıyor — yazarken yarım parantez göstermek imlecin nereye gideceğini
+belirsizleştirirdi.
+
+**2. Fazla hane artık sessizce kesilmiyor.** `telefonHaneleri` 11. haneyi
+`slice(0, 10)` ile atıyordu ve ekranda hiçbir şey değişmiyordu. Kullanıcı
+numarayı doğru sandığı hâlde son hanesi düşmüş oluyordu; yapıştırmada
+daha sinsi — 11 haneli yanlış bir numara, 10 haneli **başka bir
+numaraya** dönüşüp kaydedilebiliyordu.
+
+Kırpma davranışı korundu (kutuya fazlası yazılamaz) ama artık
+`telefonTasti()` ile **sorulabiliyor** ve hata gösteriliyor. Taşma
+denetimi **önce** geliyor: numara 10 haneye kırpıldığı için öteki
+denetimlerin hepsi "geçerli" görünüyordu.
+
+Ülke kodu ekleri (`+90`, `0090`, `90`, baştaki `0`) taşma **sayılmıyor**.
+
+`maxLength` 16 değil **18**: tam numara 16 karakter ve sınırı orada
+bırakırsak tarayıcı 17. karakteri sessizce yutar — yani sessiz kesmeyi
+`maxLength` üzerinden geri getirmiş olurduk.
+
+**3. Kayıt sayfasındaki ham kullanım düzeltildi.** `onChange` içinde
+`telefonGiris` çağrılıyordu; o çağrı fazla haneyi kesiyor ve taşma hiç
+görülmüyordu. Artık ham değer saklanıp biçimli gösteriliyor.
+
+### Yurt dışı numarası — değerlendirme
+
+**Bugün desteklenmiyor ve bu turda değiştirmedim.** Gerekçe:
+
+- 3057 kaydın **tamamı** `+90`; ürün Türkiye apartman yönetimi.
+- Backend `normalize_phone` **zaten** E.164 `+<8-15 hane>` kabul ediyor,
+  yani veri modeli yurt dışına kapalı değil. Kapalı olan şey **giriş
+  maskesi**.
+- Maskeyi çok-ülkeli yapmak, ülke seçici + ülkeye göre uzunluk tablosu +
+  operatör ön ek kuralları demek. Bunu ölçülmemiş bir ihtiyaç için
+  yapmak, her numara girişini karmaşıklaştırırdı.
+
+**Önerim:** yurt dışında oturan bir sakin çıktığında, `+` ile başlayan
+girdide maskeyi devre dışı bırakıp doğrudan E.164 doğrulaması yapan bir
+kaçış yolu eklenebilir — backend değişikliği gerekmez. Bunu şimdi
+yapmadım çünkü henüz tek bir örneği bile yok.
+
+### Tarandı: telefonun girildiği tüm yerler
+
+| Yer | Durum |
+|---|---|
+| `TelefonAlani` bileşeni (kullanıcılar, profil, tanımlar, tesisler, tesis detay, dış hizmetler) | ortak bileşen — düzeltme hepsine geldi |
+| Kayıt sayfası (`/kayit`) | ham kullanım — **düzeltildi** |
+| Giriş formu | tek alan (e-posta **veya** telefon); maske uygulanmaz, bilinçli — kullanıcı e-posta da yazabilir |
+| Mobil `telefon_alani.dart` + 6 alan | ikiz güncellendi (`telefon_alani_kapsam_test.dart` her alanın paylaşılan biçimlendiriciyi kullandığını zorluyor) |
+| `TanitimForm` (tanıtım sitesi) | `maxLength={40}` düz input — pazarlama formu, hesap açmıyor; kapsam dışı bırakıldı |
+
+### Ölçüm
+
+Panel 19 test, mobil 37 test yeşil; iki kırma testi (taşma denetimini
+kaldır, eski biçime dön) ikisini de yakaladı.
+
+**Test verimde bir hata yaptım ve test yakaladı:** `05431992904`'ü taşma
+sandım. Baştaki `0` ulusal haneye dahil değil — o numara **geçerli**.
+Gerçek taşma 11 ulusal hane (`054319929041`).

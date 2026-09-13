@@ -521,6 +521,7 @@ export const ar: Sozluk = {
   profilKaydedildi: "تم تحديث الملف الشخصي.",
   telefonHataEksik: "الرقم غير مكتمل — أدخل ١٠ أرقام.",
   telefonHataOnEk: "يجب أن يبدأ رقم الجوال بـ 5 (مثال: 0543…).",
+  telefonHataTasma: "لا يمكن أن يزيد رقم الهاتف عن 10 أرقام. احذف الأرقام الزائدة.",
   telefonHataBos: "رقم الهاتف مطلوب.",
   telefonIpucu: "رقم الجوال، مثال: 0543 199 29 04",
   telefonYerTutucu: "05XX XXX XX XX",

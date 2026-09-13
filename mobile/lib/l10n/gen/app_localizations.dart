@@ -10924,6 +10924,12 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Grafik için yeterli veri yok.'**
   String get grafikVeriYok;
+
+  /// (P227) Telefon 10 haneden uzun
+  ///
+  /// In tr, this message translates to:
+  /// **'Telefon numarası 10 haneden uzun olamaz. Fazla rakamları silin.'**
+  String get telefonHataTasma;
 }
 
 class _AppLocalizationsDelegate

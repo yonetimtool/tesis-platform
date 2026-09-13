@@ -6332,4 +6332,8 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get grafikVeriYok =>
       'Pas assez de données pour afficher un graphique.';
+
+  @override
+  String get telefonHataTasma =>
+      'Un numéro de téléphone ne peut pas dépasser 10 chiffres. Supprimez les chiffres en trop.';
 }

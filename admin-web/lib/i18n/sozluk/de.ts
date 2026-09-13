@@ -521,6 +521,7 @@ export const de: Sozluk = {
   profilKaydedildi: "Profil aktualisiert.",
   telefonHataEksik: "Die Nummer ist unvollständig – geben Sie 10 Ziffern ein.",
   telefonHataOnEk: "Eine Mobilnummer muss mit 5 beginnen (z. B. 0543…).",
+  telefonHataTasma: "Eine Telefonnummer darf nicht länger als 10 Ziffern sein. Entfernen Sie die überzähligen Ziffern.",
   telefonHataBos: "Telefonnummer ist erforderlich.",
   telefonIpucu: "Mobilnummer, z. B. 0543 199 29 04",
   telefonYerTutucu: "05XX XXX XX XX",

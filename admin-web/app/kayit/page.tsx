@@ -16,7 +16,20 @@ import { YonetioLogo } from "@/components/YonetioLogo";
 import { ParolaAlani } from "@/components/ParolaAlani";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
-import { telefonGiris, telefonHatasi, telefonNormalle } from "@/lib/telefon";
+import {
+  telefonGiris,
+  telefonHatasi,
+  telefonNormalle,
+  type TelefonHatasi,
+} from "@/lib/telefon";
+
+/** (P227 §3) Hata KIMLIGI -> sozluk anahtari (TelefonAlani ile AYNI tablo). */
+const TELEFON_HATA_ANAHTARI: Record<TelefonHatasi, "telefonHataBos" | "telefonHataEksik" | "telefonHataOnEk" | "telefonHataTasma"> = {
+  bos: "telefonHataBos",
+  eksik: "telefonHataEksik",
+  gecersizOnEk: "telefonHataOnEk",
+  tasma: "telefonHataTasma",
+};
 
 /**
  * (P185 §2/§3) ROL SECIMLI KAYIT — web yuzeyi, KARAR VERILEN MODEL.
@@ -738,19 +751,31 @@ export default function KayitSayfasi() {
           </label>
           <label className="block">
             <span className="text-sm font-medium">{t("kayitTelefon")}</span>
+            {/* (P227 §3) HAM DEGER SAKLANIR, BICIMLI GOSTERILIR.
+                Once `onChange` icinde `telefonGiris` cagriliyordu; o
+                cagri fazla haneyi SESSIZCE KESIYOR ve 11. rakam
+                yazildiginda ekranda hicbir sey degismiyordu. Ham degeri
+                saklayinca `telefonHatasi` tasmayi GOREBILIYOR. */}
             <input
               className={`${inputCls} mt-1`}
               value={telefonGiris(telefon)}
-              onChange={(e) => setTelefon(telefonGiris(e.target.value))}
+              onChange={(e) => setTelefon(e.target.value)}
               required
               inputMode="tel"
               autoComplete="tel"
+              maxLength={18}
               data-test="kayit-telefon"
             />
-            {/* Telefon ARTIK bir giris anahtari degil — yalniz iletisim. */}
-            <span className="mt-1 block text-xs text-metin-muted">
-              {t("kayitTelefonIpucu")}
-            </span>
+            {telefonHatasi(telefon, false) ? (
+              <span role="alert" className="mt-1 block text-xs text-red-600">
+                {t(TELEFON_HATA_ANAHTARI[telefonHatasi(telefon, false)!])}
+              </span>
+            ) : (
+              /* Telefon ARTIK bir giris anahtari degil — yalniz iletisim. */
+              <span className="mt-1 block text-xs text-metin-muted">
+                {t("kayitTelefonIpucu")}
+              </span>
+            )}
           </label>
           {/* PAROLA YALNIZ ELLE KAYITTA: sosyal yolda kimlik
               saglayicidadir ve parola HIC yazilmaz. */}

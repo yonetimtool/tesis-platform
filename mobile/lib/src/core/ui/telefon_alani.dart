@@ -62,19 +62,56 @@ String telefonHaneleri(String ham) {
   return s;
 }
 
-/// Haneleri `0543 199 29 04` biçiminde gösterir (eksikse kısmi).
+/// (P227 §3) Haneleri `0(541) 922 23 88` biçiminde gösterir (eksikse kısmi).
+///
+/// ALAN KODU PARANTEZ İÇİNDE: 10 hanenin ilk üçü operatör kodudur ve gözle
+/// ilk ayrılması gereken parçadır. Parantez yalnız grup TAMAMLANINCA
+/// kapanır; yazarken yarım parantez göstermek imlecin nereye gideceğini
+/// belirsizleştirirdi.
+///
+/// SAKLAMA DEĞİŞMEDİ: sunucuya giden değer yine E.164. Biçim GÖSTERİMDİR;
+/// ikisini karıştırmak telefonun global benzersiz anahtar olmasını bozardı.
+///
+/// Panel ikizi `admin-web/lib/telefon.ts` ile AYNI tabloyu üretir
+/// (`test/telefon_alani_test.dart` ve `tests/telefon.test.ts` paylaşılan
+/// örnekleri kullanır) — iki yüzey ayrışırsa yönetici panelde kaydettiği
+/// numarayı mobilde farklı görür.
 String telefonBicimle(String haneler) {
   if (haneler.isEmpty) return '';
-  final b = StringBuffer('0');
-  var i = 0;
-  for (final uzunluk in _gruplar) {
+  final ilk = haneler.length >= _gruplar.first
+      ? haneler.substring(0, _gruplar.first)
+      : haneler;
+  final b = StringBuffer(
+    haneler.length >= _gruplar.first ? '0($ilk)' : '0($ilk',
+  );
+  var i = ilk.length;
+  for (final uzunluk in _gruplar.skip(1)) {
     if (i >= haneler.length) break;
     final son = (i + uzunluk).clamp(0, haneler.length);
-    if (i > 0) b.write(' ');
+    b.write(' ');
     b.write(haneler.substring(i, son));
     i = son;
   }
   return b.toString();
+}
+
+/// (P227 §3) Hane sınırı aşıldı mı — KESMEDEN ÖNCE sorulur.
+///
+/// `telefonHaneleri` fazla haneyi SESSİZCE kesiyordu: kullanıcı 11. rakamı
+/// yazdığında ekranda hiçbir şey değişmiyor, numarayı doğru sandığı hâlde
+/// son hanesi düşmüş oluyordu. Yapıştırmada daha sinsi: 11 haneli yanlış
+/// bir numara, 10 haneli BAŞKA bir numaraya dönüşebiliyordu.
+///
+/// Ülke kodu ekleri (`+90`, `0090`, `90`, baştaki `0`) taşma SAYILMAZ.
+bool telefonTasti(String ham) {
+  var s = ham.replaceAll(RegExp(r'\D'), '');
+  if (s.startsWith('0090')) {
+    s = s.substring(4);
+  } else if (s.startsWith('90') && s.length > kTelefonHaneSayisi) {
+    s = s.substring(2);
+  }
+  if (s.startsWith('0')) s = s.substring(1);
+  return s.length > kTelefonHaneSayisi;
 }
 
 /// Sunucuya gidecek değer — E.164 (`+905431992904`).
@@ -151,6 +188,9 @@ enum TelefonHatasi {
 
   /// `5` ile başlamıyor (sabit hat / hatalı ön ek).
   gecersizOnEk,
+
+  /// (P227 §3) 10 haneden UZUN — sessizce kesilmez, SÖYLENİR.
+  tasma,
 }
 
 /// [ham] için hata kimliği; `null` = geçerli.
@@ -159,6 +199,10 @@ enum TelefonHatasi {
 /// isteğe bağlı alanlar).
 TelefonHatasi? telefonHatasi(String ham, {bool zorunlu = true}) {
   final h = telefonHaneleri(ham);
+  // (P227 §3) TAŞMA ÖNCE SORULUR: numara 10 haneye kırpıldığı için
+  // aşağıdaki denetimlerin hepsi GEÇERLİ görünür ve kullanıcı hatayı HİÇ
+  // görmezdi.
+  if (telefonTasti(ham)) return TelefonHatasi.tasma;
   if (h.isEmpty) return zorunlu ? TelefonHatasi.bos : null;
   if (!telefonOnEkiGecerli(h)) return TelefonHatasi.gecersizOnEk;
   if (h.length < kTelefonHaneSayisi) return TelefonHatasi.eksik;

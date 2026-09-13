@@ -38,7 +38,7 @@ TextEditingValue _yapistir(String metin) => const TelefonBicimlendirici()
 
 void main() {
   group('telefonHaneleri', () {
-    test('YEREL bicim', () => expect(telefonHaneleri('0543 199 29 04'), '5431992904'));
+    test('YEREL bicim', () => expect(telefonHaneleri('0(543) 199 29 04'), '5431992904'));
     test('E.164', () => expect(telefonHaneleri('+905431992904'), '5431992904'));
     test('00 ulke kodu', () => expect(telefonHaneleri('00905431992904'), '5431992904'));
     test('ulke kodsuz', () => expect(telefonHaneleri('5431992904'), '5431992904'));
@@ -56,38 +56,63 @@ void main() {
       expect(telefonHaneleri('054319929041234'), '5431992904');
       expect(telefonHaneleri('5431992904').length, kTelefonHaneSayisi);
     });
+
+    // (P227 §3) KIRPMA SESSIZ DEGIL — panel ikiziyle AYNI kural.
+    //
+    // Kirpma davranisi kaldi ama artik SORULABILIYOR. Once 11. rakam
+    // yazildiginda ekranda hicbir sey degismiyordu; kullanici numarayi
+    // dogru sandigi halde son hanesi DUSMUS oluyordu.
+    test('TASMA sorulabiliyor', () {
+      // 11 ULUSAL hane = tasma. `05431992904` TASMA DEGILDIR (bastaki
+      // `0` ulusal haneye dahil degil).
+      expect(telefonTasti('054319929041'), isTrue);
+      expect(telefonTasti('54319929041'), isTrue);
+      expect(telefonTasti('0543 199 29 04'), isFalse);
+      expect(telefonTasti('05431992904'), isFalse);
+    });
+
+    test('ULKE KODU EKLERI tasma SAYILMAZ', () {
+      for (final ham in ['+905431992904', '00905431992904', '905431992904']) {
+        expect(telefonTasti(ham), isFalse, reason: ham);
+      }
+    });
+
+    test('TASMA hata olarak doner ve ONCE gelir', () {
+      expect(telefonHatasi('054319929041'), TelefonHatasi.tasma);
+    });
   });
 
   group('telefonBicimle', () {
     test('TAM numara gruplanir',
-        () => expect(telefonBicimle('5431992904'), '0543 199 29 04'));
+        () => expect(telefonBicimle('5431992904'), '0(543) 199 29 04'));
     test('KISMI numara da gruplanir', () {
-      expect(telefonBicimle('5'), '05');
-      expect(telefonBicimle('543'), '0543');
-      expect(telefonBicimle('5431'), '0543 1');
-      expect(telefonBicimle('543199'), '0543 199');
-      expect(telefonBicimle('54319929'), '0543 199 29');
+      // (P227 §3) Parantez yalniz alan kodu TAMAMLANINCA kapanir.
+      expect(telefonBicimle('5'), '0(5');
+      expect(telefonBicimle('543'), '0(543)');
+      expect(telefonBicimle('5431'), '0(543) 1');
+      expect(telefonBicimle('543199'), '0(543) 199');
+      expect(telefonBicimle('54319929'), '0(543) 199 29');
     });
     test('BOS -> bos', () => expect(telefonBicimle(''), ''));
   });
 
   group('yazarken', () {
     test('rakamlar GRUPLANARAK cizilir', () {
-      expect(_yaz('05431992904').text, '0543 199 29 04');
+      expect(_yaz('05431992904').text, '0(543) 199 29 04');
     });
 
     test('BASTA 0 YAZILMASA da bicim ayni', () {
-      expect(_yaz('5431992904').text, '0543 199 29 04');
+      expect(_yaz('5431992904').text, '0(543) 199 29 04');
     });
 
     test('RAKAM DISI karakter YUTULUR', () {
-      expect(_yaz('0a5b4c3d1e992904').text, '0543 199 29 04');
+      expect(_yaz('0a5b4c3d1e992904').text, '0(543) 199 29 04');
     });
 
     test('FAZLA HANE YAZILAMAZ (sert sinir)', () {
       // 10 hane dolduktan sonraki her tus metni DEGISTIRMEZ.
       final v = _yaz('054319929041111');
-      expect(v.text, '0543 199 29 04');
+      expect(v.text, '0(543) 199 29 04');
       expect(telefonHaneleri(v.text).length, kTelefonHaneSayisi);
     });
 
@@ -107,7 +132,7 @@ void main() {
       '0543-199-29-04',
     ]) {
       test('`$ham` -> 0543 199 29 04', () {
-        expect(_yapistir(ham).text, '0543 199 29 04');
+        expect(_yapistir(ham).text, '0(543) 199 29 04');
       });
     }
   });
@@ -125,7 +150,7 @@ void main() {
           selection: TextSelection.collapsed(offset: kisa.length),
         ),
       );
-      expect(v.text, '0543 199 29 0');
+      expect(v.text, '0(543) 199 29 0');
     });
 
     test('BOSLUK silinince hane KAYBOLMAZ', () {
@@ -147,7 +172,7 @@ void main() {
 
   group('telefonNormalle', () {
     test('E.164 uretir',
-        () => expect(telefonNormalle('0543 199 29 04'), '+905431992904'));
+        () => expect(telefonNormalle('0(543) 199 29 04'), '+905431992904'));
     test('zaten E.164 olan DEGISMEZ',
         () => expect(telefonNormalle('+905431992904'), '+905431992904'));
     test('BOS -> bos (istege bagli alanlar temizlenebilsin)',
@@ -156,7 +181,7 @@ void main() {
 
   group('telefonHatasi', () {
     test('GECERLI numara -> null',
-        () => expect(telefonHatasi('0543 199 29 04'), isNull));
+        () => expect(telefonHatasi('0(543) 199 29 04'), isNull));
 
     test('EKSIK hane', () {
       expect(telefonHatasi('0543 199'), TelefonHatasi.eksik);

@@ -2112,5 +2112,9 @@
   "grafikVeriYok": "Not enough data to draw a chart.",
   "@grafikVeriYok": {
     "description": "(P223) Grafik icin veri yok"
+  },
+  "telefonHataTasma": "A phone number cannot be longer than 10 digits. Remove the extra digits.",
+  "@telefonHataTasma": {
+    "description": "(P227) Telefon 10 haneden uzun"
   }
 }

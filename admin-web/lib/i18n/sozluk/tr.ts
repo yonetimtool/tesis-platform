@@ -539,6 +539,7 @@ export const tr = {
   profilKaydedildi: "Profil güncellendi.",
   telefonHataEksik: "Numara eksik — 10 hane girin (örn. 0543 199 29 04).",
   telefonHataOnEk: "Cep telefonu 5 ile başlamalı (örn. 0543…). Sabit hat kabul edilmez.",
+  telefonHataTasma: "Telefon numarası 10 haneden uzun olamaz. Fazla rakamları silin.",
   telefonHataBos: "Telefon numarası gerekli.",
   telefonIpucu: "Cep numarası, örn. 0543 199 29 04",
   telefonYerTutucu: "05XX XXX XX XX",

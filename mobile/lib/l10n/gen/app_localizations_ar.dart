@@ -6402,4 +6402,8 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get grafikVeriYok => 'لا توجد بيانات كافية لرسم المخطط.';
+
+  @override
+  String get telefonHataTasma =>
+      'لا يمكن أن يزيد رقم الهاتف عن 10 أرقام. احذف الأرقام الزائدة.';
 }

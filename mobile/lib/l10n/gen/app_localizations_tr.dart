@@ -6147,4 +6147,8 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get grafikVeriYok => 'Grafik için yeterli veri yok.';
+
+  @override
+  String get telefonHataTasma =>
+      'Telefon numarası 10 haneden uzun olamaz. Fazla rakamları silin.';
 }

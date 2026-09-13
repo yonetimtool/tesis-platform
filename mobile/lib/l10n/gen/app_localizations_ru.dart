@@ -6410,4 +6410,8 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get grafikVeriYok => 'Недостаточно данных для построения графика.';
+
+  @override
+  String get telefonHataTasma =>
+      'Номер телефона не может быть длиннее 10 цифр. Удалите лишние цифры.';
 }

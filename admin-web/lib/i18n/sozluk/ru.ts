@@ -521,6 +521,7 @@ export const ru: Sozluk = {
   profilKaydedildi: "Профиль обновлён.",
   telefonHataEksik: "Номер неполный — введите 10 цифр.",
   telefonHataOnEk: "Мобильный номер должен начинаться с 5 (например, 0543…).",
+  telefonHataTasma: "Номер телефона не может быть длиннее 10 цифр. Удалите лишние цифры.",
   telefonHataBos: "Требуется номер телефона.",
   telefonIpucu: "Мобильный номер, например 0543 199 29 04",
   telefonYerTutucu: "05XX XXX XX XX",

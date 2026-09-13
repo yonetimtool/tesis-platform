@@ -39,10 +39,19 @@ const HATA_ANAHTARI: Record<TelefonHatasi, SozlukAnahtari> = {
   bos: "telefonHataBos",
   eksik: "telefonHataEksik",
   gecersizOnEk: "telefonHataOnEk",
+  // (P227 §3) FAZLA HANE SESSIZCE KESILMEZ, SOYLENIR.
+  tasma: "telefonHataTasma",
 };
 
-/** Kutunun kaldirabilecegi en uzun bicimli metin: `0543 199 29 04`. */
-const EN_COK_KARAKTER = 14;
+/** (P227 §3) Kutunun kabul ettigi en uzun metin.
+ *
+ * Bicimli tam numara `0(543) 199 29 04` = 16 karakter. Sinir 16'DA
+ * BIRAKILAMAZ: tarayici 17. karakteri sessizce yutar ve kullanici
+ * "fazla hane girdim" hatasini HIC GOREMEZ — yani sessiz kesmeyi
+ * `maxLength` uzerinden geri getirmis olurduk. Iki karakterlik pay,
+ * tasmanin GORUNUR olmasi icin.
+ */
+const EN_COK_KARAKTER = 18;
 
 export function telefonHataMetni(
   ham: string,

@@ -12,7 +12,17 @@
 /** TR cep numarasi: `5` ile baslayan 10 hane (bastaki `0` haric). */
 export const TELEFON_HANE_SAYISI = 10;
 
-/** Ekranda gorunen gruplama: `0` + `543` `199` `29` `04`. */
+/** (P227 §3) Ekranda gorunen gruplama: `0(541) 922 23 88`.
+ *
+ * ALAN KODU PARANTEZ ICINDE: kullanicinin istedigi bicim bu ve okunurlugu
+ * da daha iyi — 10 hanenin ilk ucu operator/alan kodudur ve gozle ilk
+ * ayrilmasi gereken parcadir. Eski bicim (`0543 199 29 04`) yalnizca
+ * bosluklarla ayiriyordu.
+ *
+ * SAKLAMA DEGISMEDI: sunucuya giden deger yine E.164 (`+905419222388`).
+ * Bicim GOSTERIMDIR; ikisini karistirmak telefonun GLOBAL BENZERSIZ
+ * anahtar olmasini bozardi (P185/P197).
+ */
 const GRUPLAR = [3, 3, 2, 2];
 
 /**
@@ -35,16 +45,46 @@ export function telefonHaneleri(ham: string): string {
   return s;
 }
 
+/**
+ * (P227 §3) HANE SINIRI ASILDI MI — kesmeden ONCE sorulur.
+ *
+ * OLCULEN DAVRANIS: `telefonHaneleri` fazla haneyi SESSIZCE KESIYORDU.
+ * Kullanici 11. rakami yazdiginda ekranda hicbir sey degismiyor; numara
+ * dogru sandigi halde son hanesi DUSMUS oluyordu. Yapistirmada daha da
+ * sinsi: 11 haneli yanlis bir numara, 10 haneli BASKA BIR numaraya
+ * donusup kaydedilebiliyordu.
+ *
+ * Kesme DAVRANISI KORUNUYOR (kutuya fazlasi yazilamaz) ama artik
+ * SESSIZ DEGIL: cizim katmani bunu sorup hata gosteriyor.
+ *
+ * Ulke kodu ekleri (`+90`, `0090`, `90`, bastaki `0`) TASMA SAYILMAZ:
+ * onlar `telefonHaneleri` icinde soyuluyor ve kullanicinin fazladan
+ * rakam yazdigi anlamina gelmiyor.
+ */
+export function telefonTasti(ham: string): boolean {
+  let s = (ham ?? "").replace(/\D/g, "");
+  if (s.startsWith("0090")) {
+    s = s.slice(4);
+  } else if (s.startsWith("90") && s.length > TELEFON_HANE_SAYISI) {
+    s = s.slice(2);
+  }
+  if (s.startsWith("0")) s = s.slice(1);
+  return s.length > TELEFON_HANE_SAYISI;
+}
+
 /** Haneleri `0543 199 29 04` bicimine sokar (eksikse kismi). */
 export function telefonBicimle(haneler: string): string {
   if (!haneler) return "";
-  let out = "0";
-  let i = 0;
-  for (const uzunluk of GRUPLAR) {
+  // ILK GRUP PARANTEZ ICINDE: `0(541) 922 23 88`. Parantez yalniz grup
+  // TAMAMLANINCA kapanir — yazarken `0(54` gibi yarim bir parantez
+  // gostermek, imlecin nereye gidecegini belirsizlestirirdi.
+  const p0 = haneler.slice(0, GRUPLAR[0]);
+  let out = haneler.length >= GRUPLAR[0] ? `0(${p0})` : `0(${p0}`;
+  let i = p0.length;
+  for (const uzunluk of GRUPLAR.slice(1)) {
     if (i >= haneler.length) break;
     const son = Math.min(i + uzunluk, haneler.length);
-    if (i > 0) out += " ";
-    out += haneler.slice(i, son);
+    out += " " + haneler.slice(i, son);
     i = son;
   }
   return out;
@@ -68,7 +108,7 @@ export function telefonNormalle(ham: string): string {
 }
 
 /** Dogrulama sonucu — METIN DEGIL KIMLIK (cumle cizim katmaninda). */
-export type TelefonHatasi = "bos" | "eksik" | "gecersizOnEk";
+export type TelefonHatasi = "bos" | "eksik" | "gecersizOnEk" | "tasma";
 
 /**
  * `null` = gecerli. `zorunlu` false ise bos deger gecerlidir.
@@ -82,6 +122,10 @@ export function telefonHatasi(
   ham: string,
   zorunlu = true,
 ): TelefonHatasi | null {
+  // (P227 §3) TASMA ONCE SORULUR: numara 10 haneye kirpildigi icin
+  // asagidaki denetimlerin hepsi GECERLI gorunur ve kullanici hatayi
+  // HIC gormezdi.
+  if (telefonTasti(ham)) return "tasma";
   const h = telefonHaneleri(ham);
   if (!h) return zorunlu ? "bos" : null;
   if (!h.startsWith("5")) return "gecersizOnEk";

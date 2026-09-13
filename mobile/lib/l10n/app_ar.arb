@@ -2112,5 +2112,9 @@
   "grafikVeriYok": "لا توجد بيانات كافية لرسم المخطط.",
   "@grafikVeriYok": {
     "description": "(P223) Grafik icin veri yok"
+  },
+  "telefonHataTasma": "لا يمكن أن يزيد رقم الهاتف عن 10 أرقام. احذف الأرقام الزائدة.",
+  "@telefonHataTasma": {
+    "description": "(P227) Telefon 10 haneden uzun"
   }
 }
