@@ -28,31 +28,43 @@ function alan(): HTMLInputElement {
 }
 
 describe("(P166 §9) bicimleme", () => {
-  it("BOSLUKLU gosterir: 05XX XXX XX XX", () => {
+  it("(P227 §3) BICIM: 0(5XX) XXX XX XX", () => {
     ciz(() => createElement(Kutu, {}));
     fireEvent.change(alan(), { target: { value: "5431992904" } });
-    expect(alan().value).toBe("0543 199 29 04");
+    expect(alan().value).toBe("0(543) 199 29 04");
   });
 
   it("SINIRSIZ RAKAM GIRILEMEZ — 10 hanede kesilir", () => {
     // Kerem'in bildirdigi kusur tam olarak buydu.
     ciz(() => createElement(Kutu, {}));
     fireEvent.change(alan(), { target: { value: "54319929049999999999" } });
-    expect(alan().value).toBe("0543 199 29 04");
+    expect(alan().value).toBe("0(543) 199 29 04");
+  });
+
+  it("(P227 §3) KESME SESSIZ DEGIL — fazla hane HATA gosterir", () => {
+    // Kirpma davranisi kaldi ama artik SOYLENIYOR. Once 11. rakam
+    // yazildiginda ekranda hicbir sey degismiyordu; kullanici numarayi
+    // dogru sandigi halde son hanesi DUSMUS oluyordu.
+    ciz(() => createElement(Kutu, {}));
+    fireEvent.change(alan(), { target: { value: "054319929041" } });
+    fireEvent.blur(alan());
+    expect(
+      screen.getByText(/10 haneden uzun olamaz/),
+    ).toBeInTheDocument();
   });
 
   it("YAPISTIRMA cozulur (+90 / 0090 / bastaki 0)", () => {
     ciz(() => createElement(Kutu, {}));
     for (const ham of ["+90 543 199 29 04", "00905431992904", "05431992904"]) {
       fireEvent.change(alan(), { target: { value: ham } });
-      expect(alan().value, ham).toBe("0543 199 29 04");
+      expect(alan().value, ham).toBe("0(543) 199 29 04");
     }
   });
 
   it("HARF YUTULUR", () => {
     ciz(() => createElement(Kutu, {}));
     fireEvent.change(alan(), { target: { value: "abc543def199" } });
-    expect(alan().value).toBe("0543 199");
+    expect(alan().value).toBe("0(543) 199");
   });
 });
 

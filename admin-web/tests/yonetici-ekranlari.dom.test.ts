@@ -171,7 +171,7 @@ describe("Dış hizmetler", () => {
   it("kayıtlı numara MASKELİ gösterilir ve tel: bağlantısı taşır", async () => {
     taklit({ "/api/external-services": { note: null, items: [HIZMET] } });
     ciz(DisHizmetlerPage);
-    const bag = await screen.findByRole("link", { name: "0543 199 29 04" });
+    const bag = await screen.findByRole("link", { name: "0(543) 199 29 04" });
     expect(bag).toHaveAttribute("href", "tel:+905431992904");
   });
 
@@ -197,7 +197,7 @@ describe("Dış hizmetler", () => {
     await userEvent.type(screen.getByLabelText(/Soyad/i), "Veli");
     const tel = screen.getByLabelText(/Telefon/i);
     await userEvent.type(tel, "5431992904");
-    expect(tel).toHaveValue("0543 199 29 04"); // maske EKRANDA
+    expect(tel).toHaveValue("0(543) 199 29 04"); // maske EKRANDA
 
     await userEvent.click(screen.getByRole("button", { name: /Ekle/i }));
     await waitFor(() => {
@@ -260,7 +260,7 @@ describe("Yönetim iletişim", () => {
     ciz(YonetimIletisimPage);
     expect(await screen.findByText("Ayşe Yılmaz")).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: "0543 199 29 04" }),
+      screen.getByRole("link", { name: "0(543) 199 29 04" }),
     ).toHaveAttribute("href", "tel:+905431992904");
     expect(
       screen.getByRole("link", { name: "yonetim@ornek.test" }),

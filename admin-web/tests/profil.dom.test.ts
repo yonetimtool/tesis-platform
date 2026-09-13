@@ -149,7 +149,7 @@ describe("Profilim", () => {
     fetchTaklidi(PROFIL);
     ciz(ProfilPage);
     await waitFor(() =>
-      expect(screen.getByDisplayValue("0543 199 29 04")).toBeInTheDocument(),
+      expect(screen.getByDisplayValue("0(543) 199 29 04")).toBeInTheDocument(),
     );
   });
 
@@ -157,7 +157,7 @@ describe("Profilim", () => {
     const cagrilar = fetchTaklidi(PROFIL);
     ciz(ProfilPage);
     await waitFor(() =>
-      expect(screen.getByDisplayValue("0543 199 29 04")).toBeInTheDocument(),
+      expect(screen.getByDisplayValue("0(543) 199 29 04")).toBeInTheDocument(),
     );
     await userEvent.click(screen.getByRole("button", { name: /Kaydet/i }));
     await waitFor(() => {
