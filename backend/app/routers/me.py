@@ -10,7 +10,7 @@ import logging
 import uuid
 
 from fastapi import APIRouter, Depends, Response
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..audit import Action, record_audit
@@ -825,17 +825,105 @@ from .auth import _store_refresh, _uyelikler  # noqa: E402
 # IZOLASYON: yeni jeton hedef tenant icin uretilir. Eski jeton kaynak
 # tenant icin GECERLI KALIR (kullanici geri donebilmeli) ve hicbir jeton
 # iki tenant'i birden tasimaz — RLS jetondaki tek `tenant_id`yi kullanir.
+async def _dogrulanmis_uyelikler(session, user: AppUser) -> list[dict]:
+    """(P228) KISININ KANITLAYABILDIGI uyelikler.
+
+    =====================================================================
+    OLCULEN SIZINTI
+    =====================================================================
+    Bir yonetici mobil "Tesis degistir" listesinde HIC KAYDI OLMAYAN bir
+    tesisi goruyordu ve oraya gecebiliyordu.
+
+    MEKANIZMA — iki kisitin farki:
+        uq_app_user_telefon         UNIQUE (telefon)            -> GLOBAL
+        uq_app_user_tenant_email    UNIQUE (tenant_id, email)   -> TENANT ICI
+
+    Yani AYNI E-POSTA farkli tesislerde FARKLI KISILERDE bulunabilir ve
+    bu semaya gore MESRUDUR: bir yonetici sakin eklerken e-posta alanina
+    baskasinin adresini yazabilir (dogrulama gerekmez). `tenant_uyelikleri`
+    e-postayi DOGRULANMIS olup olmadigina BAKMADAN esliyordu.
+
+    Ad uzerinden bir eslesme YOKTUR (arandi) — sorun adda degil,
+    DOGRULANMAMIS E-POSTADAYDI.
+
+    =====================================================================
+    NEDEN DUZELTME BURADA, PAYLASILAN FONKSIYONDA DEGIL
+    =====================================================================
+    `tenant_uyelikleri` GIRISTE de kullaniliyor ve orada PAROLA kanit
+    yerine geciyor: dogrulanmamis e-postali bir satira ancak o satirin
+    parolasini bilen girebilir. Fonksiyonu siki hale getirmek, o
+    kullanicilarin GIRISINI kirardi.
+
+    Bu uclarda ise hicbir kanit yok: oturumdaki kisinin e-postasi
+    dogrudan sorgulanip TUM eslesmeler veriliyor. Kanit SART:
+
+      * TELEFON eslesmesi -> KABUL. Telefon GLOBAL BENZERSIZ; ayni
+        numara iki kiside olamaz.
+      * E-POSTA eslesmesi -> yalniz HEDEF SATIR dogrulanmissa VE
+        kisinin kendi e-postasi dogrulanmissa. (P180 dersi: dogrulanmamis
+        e-posta ile eslesme hesap ele gecirmedir.)
+      * KISININ KENDI SATIRI -> her zaman (oturum zaten o satirda).
+    """
+    eslesmeler: dict[str, dict] = {}
+
+    # 1) TELEFON — global benzersiz, kanit gerektirmez.
+    if user.telefon:
+        for r in await _uyelikler(session, user.telefon):
+            eslesmeler[str(r["tenant_id"])] = r
+
+    # 2) E-POSTA — YALNIZ iki taraf da dogrulanmissa.
+    if user.email and user.eposta_dogrulandi:
+        for r in await _uyelikler(session, user.email):
+            if r["eposta_dogrulandi"] or r["user_id"] == user.id:
+                eslesmeler[str(r["tenant_id"])] = r
+
+    # 3) KENDI SATIRI her zaman listede (oturum zaten burada).
+    #
+    # KIMLIKTEN DEGIL OTURUMDAN kuruluyor: e-postasi da telefonu da
+    # olmayan kullanicilar var (yonetici Excel'den daire sahibi ekler,
+    # kisi sonra parola belirler). Onlari `_uyelikler("")` ile aramak
+    # BOS donerdi ve "Tesis degistir" ekrani kendi tesisini bile
+    # gostermeden BOS acilirdi — sizintiyi kaparken calisan ekrani
+    # kirmak olurdu.
+    if str(user.tenant_id) not in eslesmeler:
+        # RLS BAGLAMI AYRI OTURUMDA KURULUYOR: `_dogrulanmis_uyelikler`in
+        # aldigi oturumda `app.current_tenant_id` BOSTUR (fonksiyonun
+        # tamami tesis-otesi calisir ve SECURITY DEFINER uzerinden okur).
+        # `tenant`e dogrudan sormak o oturumda RLS politikasini
+        # `''::uuid` cevirmeye zorlayip 500 veriyordu — olculdu.
+        async with SessionLocal() as kendi_oturum:
+            await set_tenant(kendi_oturum, user.tenant_id)
+            kendi = (
+                await kendi_oturum.execute(
+                    text("SELECT id, slug, ad FROM tenant WHERE id = :t"),
+                    {"t": str(user.tenant_id)},
+                )
+            ).mappings().first()
+        if kendi:
+            eslesmeler[str(user.tenant_id)] = {
+                "tenant_id": kendi["id"],
+                "slug": kendi["slug"],
+                "tenant_ad": kendi["ad"],
+                "user_id": user.id,
+                "rol": user.role if isinstance(user.role, str) else user.role.value,
+                "is_active": user.is_active,
+                "eposta_dogrulandi": user.eposta_dogrulandi,
+            }
+    return list(eslesmeler.values())
+
+
 @router.get("/me/tesislerim", response_model=TesislerimYanit)
 async def tesislerim(
     user: AppUser = Depends(get_current_user),
 ) -> TesislerimYanit:
     """Oturumdaki kisinin TUM tesis uyelikleri — uygulama ici secici.
 
-    PAROLA ISTEMEZ: kimlik zaten kanitlanmis. Liste, kisinin KENDI
-    e-postasina ait satirlardir; baska kimsenin verisi degil.
+    PAROLA ISTEMEZ: kimlik zaten kanitlanmis. Liste, kisinin
+    KANITLAYABILDIGI uyeliklerdir — gerekce `_dogrulanmis_uyelikler`
+    basliginda (P228 sizintisi).
     """
     async with SessionLocal() as session:
-        satirlar = await _uyelikler(session, user.email)
+        satirlar = await _dogrulanmis_uyelikler(session, user)
     return TesislerimYanit(
         tesisler=[
             TesisUyeligi(
@@ -856,12 +944,15 @@ async def tesis_degistir(
 ) -> TokenPair:
     """Hedef tesis icin YENI jeton — yeniden giris YOK.
 
-    Hedef, kisinin KENDI e-postasinin uyelikleri arasinda OLMALI.
-    Aksi hâlde uc, "istedigim tenant'in jetonunu al" ucuna donusurdu —
-    tesis izolasyonunun tam kalbi.
+    Hedef, kisinin KANITLAYABILDIGI uyelikler arasinda OLMALI. Aksi hâlde
+    uc, "istedigim tenant'in jetonunu al" ucuna donusurdu — tesis
+    izolasyonunun tam kalbi.
+
+    (P228) LISTE ILE GECIS AYNI KURALDAN GECER: yalniz listeyi daraltmak,
+    ucu dogrudan cagiran bir istemciye kapiyi ACIK birakirdi.
     """
     async with SessionLocal() as session:
-        satirlar = await _uyelikler(session, user.email)
+        satirlar = await _dogrulanmis_uyelikler(session, user)
     hedef = next(
         (r for r in satirlar if r["tenant_id"] == body.tenant_id and r["is_active"]),
         None,

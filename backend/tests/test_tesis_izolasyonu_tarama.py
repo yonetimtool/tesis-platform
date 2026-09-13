@@ -437,3 +437,49 @@ def test_tarama_kapsami_daralmadi(client, world):
         f"tarama kapsami daraldi: {len(kapsanan)}/{len(yollar)} — "
         f"taranmayanlar: {sorted(set(yollar) - taranan)[:20]}"
     )
+
+
+# ===================================================================== #
+# (P228) "FARKLI KISI, AYNI AD" — KIMLIK TARAFINDAKI IZOLASYON
+# ===================================================================== #
+# Yukaridaki taramalarin tamami SORGU tarafina bakar: bir uc, oturumun
+# tenant'i disindaki satirlari donduruyor mu? P228'de sizinti BASKA BIR
+# YERDEN geldi: sorgular dogruydu, KIMIN hangi tesise ait oldugu yanlisti.
+# `/me/tesislerim` dogrulanmamis bir e-posta eslesmesini uyelik saydi ve
+# kullaniciyi HIC KAYDI OLMAYAN bir tesise gecirebildi. Hicbir RLS testi
+# bunu goremezdi cunku gecisten SONRA baglam gercekten o tesisti.
+#
+# Bu yuzden tarama dosyasina kimlik tarafi da giriyor: yeni bir "tesis
+# sec/gec" yolu eklendiginde kanit kurali BURADA hatirlatilir.
+
+def test_P228_ad_benzerligi_hicbir_kod_yolunda_uyelik_kaniti_degil():
+    """AD, kimlik kaniti olarak KULLANILAMAZ.
+
+    Bu bir metin taramasi — davranis kilidi `test_p228_tesis_esleme_
+    sizintisi.py`de. Buradaki amac, gelecekte "kullanici adiyla da
+    eslestirelim, kullanicilar e-postasini yanlis yaziyor" diyen bir
+    degisikligin GOZDEN KACMAMASI: uyelik/tesis-secim kodunda ad
+    kiyaslamasi gorunurse test duser ve degisikligi yapan kisi P228'i
+    okumak zorunda kalir.
+    """
+    import pathlib
+    import re
+
+    kok = pathlib.Path(__file__).resolve().parents[1] / "app"
+    # Uyelik/tesis-secimi KARARINI veren yerler. Genis tarama yapmiyoruz:
+    # "ad" kelimesi kod tabaninda her yerde gecer, gurultu kilidi
+    # anlamsizlastirirdi.
+    dosyalar = [kok / "routers" / "me.py", kok / "routers" / "auth.py"]
+    supheli = re.compile(
+        r"(u\.ad\s*=|\.ad\s*==\s*\w+\.ad|similarity\s*\(|levenshtein\s*\(|ILIKE\s*'%)",
+        re.IGNORECASE,
+    )
+    for d in dosyalar:
+        for no, satir in enumerate(d.read_text(encoding="utf-8").splitlines(), 1):
+            if satir.lstrip().startswith("#"):
+                continue
+            assert not supheli.search(satir), (
+                f"{d.name}:{no} uyelik kararinda AD/BENZERLIK eslesmesi: "
+                f"{satir.strip()!r} — P228: kimlik yalniz dogrulanmis "
+                f"e-posta veya (global benzersiz) telefon ile kanitlanir"
+            )
