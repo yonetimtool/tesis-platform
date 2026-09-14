@@ -75,12 +75,17 @@ TENANT_DEGISKENI = "app.current_tenant_id"
 #:   * `surum_politikasi` (0091, P202) — magazadaki paket TEKTIR ve
 #:     tesise gore degismez; `tenant_id` koymak ayni gercegin tesis
 #:     sayisi kadar kopyasini uretirdi.
+#:   * `eposta_webhook_olay` (0135, P234 §1) — teslim webhook'unun tekrar
+#:     defteri. Webhook GELDIGINDE tenant HENUZ BILINMIYOR (once mesaj
+#:     kimliginden cozuluyor), yani satiri bir tesise baglamak mumkun
+#:     degil. Icinde kisisel veri YOK: yalnizca saglayicinin olay
+#:     kimligi. Erisim `eposta_webhook_olay_ekle` fonksiyonundan.
 #:
 #: Ucu de AYNI DESENI tasir: RLS ACIK + FORCE, POLITIKA YOK, erisim
 #: yalniz SECURITY DEFINER fonksiyonlarindan. Yani `app_rw` bu
 #: tablolarin HICBIR satirini dogrudan goremez (asagidaki davranissal
-#: test bunu olcer). Tavan 2 -> 3 BILINCLI yukseltildi.
-PLATFORM_TABLO_TAVANI = int(os.getenv("RLS_PLATFORM_TAVAN", "3"))
+#: test bunu olcer). Tavan 2 -> 3 -> 4 BILINCLI yukseltildi.
+PLATFORM_TABLO_TAVANI = int(os.getenv("RLS_PLATFORM_TAVAN", "4"))
 
 
 def _platform_tablolari(katalog) -> set[str]:

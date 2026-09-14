@@ -84,6 +84,11 @@ KAPISIZ_MUTASYONLAR: frozenset[tuple[str, str]] = frozenset({
     # (P154 / Asama 7.2) `/public/{slug}/iletisim` KALDIRILDI — portal
     # iletisim formu, portalla birlikte silindi.
     ("POST", "/webhooks/payments/{provider}"),
+    # (P234 §1) RESEND TESLIM WEBHOOK'U. Rol kapisi OLAMAZ: cagiran bir
+    # kullanici degil, SAGLAYICI. Guvenlik jetonla degil IMZAYLA saglanir
+    # (Svix HMAC-SHA256 + 5 dakikalik zaman penceresi); sir yapilandirilmamissa
+    # uc 401 doner, yani "acik" kalmaz. Odeme webhook'uyla AYNI sinif.
+    ("POST", "/webhooks/eposta/resend"),
     # (P202) ZORUNLU GUNCELLEME KONTROLU. Rol kapisi OLAMAZ ve bu
     # ozelligin VARLIK SEBEBIYLE ayni: kontrol GIRISTEN ONCE calisir,
     # cunku kirici bir API degisikligi yapildiysa eski istemci GIRIS

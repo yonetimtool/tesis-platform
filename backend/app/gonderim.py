@@ -147,6 +147,24 @@ def eposta_saglayicisi(ayar: SaglayiciAyari | None = None) -> MesajSaglayici:
         from .mesajlasma import KonsolEpostaSaglayici
 
         return KonsolEpostaSaglayici()
+
+    # (P234 §1) RESEND — TASIYICI ADI OLARAK secilir, `konsol` ile AYNI
+    # KALIP. Yeni bir secim mekanizmasi (bayrak/env anahtari) acmadim:
+    # P196'da tam olarak o denenmis ve GERI ALINMISTI — global bir
+    # `EPOSTA_SAGLAYICI` degiskeni tesis ve env ayarindan ONCE geliyor,
+    # "hicbir yapilandirma yok" durumunu ortadan kaldiriyor ve urunun
+    # cekirdek garantisini (yapilandirma yokken 'gonderildi' DEME)
+    # olcen 14 testi dusuruyordu.
+    #
+    # Boylece: `SMTP_HOST=resend` + `SMTP_PASSWORD=re_...` yeter; kendi
+    # SMTP'sini girmis bir tesis ETKILENMEZ ve ayni tesis isterse kendi
+    # Resend anahtarini kullanabilir.
+    if a.smtp_host.strip().lower() == "resend":
+        from .mesajlasma import ResendEpostaSaglayici
+
+        return ResendEpostaSaglayici(
+            a.smtp_parola, a.smtp_gonderen or "no-reply@localhost"
+        )
     return SmtpEpostaSaglayici(
         a.smtp_host,
         int(a.smtp_port or 587),

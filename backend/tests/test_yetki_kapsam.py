@@ -172,7 +172,30 @@ def test_beyan_edilmemis_her_operasyon_kimliksiz_reddediyor(client, spec):
 
 
 def test_public_beyan_edilenler_gercekten_erisilebilir(client, spec):
-    ops = [o for o in _operasyonlar(spec) if o[2]]
+    """`security: []` beyan eden uc gercekten JETONSUZ calisiyor mu.
+
+    (P234 §1) IMZA KORUMALI WEBHOOK'LAR DISARIDA — ve bu bir muafiyet
+    degil, TANIMIN DUZELTILMESI.
+
+    `security: []` "BEARER JETON istemiyorum" demektir; "kimlik
+    dogrulamam yok" demek DEGIL. Saglayici webhook'lari kimligi IMZAYLA
+    kurar (odeme: saglayici hash'i, Resend: Svix HMAC) ve imzasiz bir
+    istege 401 donmek DOGRU cevaptir.
+
+    Bu ayrimi yapmasaydik iki secenek kalirdi: (1) webhook'u sozlesmede
+    jetonlu gostermek — yalan, saglayici jeton gondermiyor; (2) imzasiz
+    istege 401 yerine 400 donmek — testi memnun etmek icin YANLIS durum
+    kodu. Ikisi de kilidi kandirmak olurdu.
+
+    NOT: odeme webhook'u bu testten bugune kadar TESADUFEN geciyordu —
+    yolunda `{provider}` oldugu icin `_yol_doldur` bilinmeyen bir
+    saglayici koyuyor ve uc 401'den ONCE 404 donuyordu. Yani kural
+    aslinda vardi, yalnizca yanlis sebeple calisiyordu.
+    """
+    ops = [
+        o for o in _operasyonlar(spec)
+        if o[2] and not o[1].startswith("/webhooks")
+    ]
     assert ops, "sozlesmede hic public operasyon yok — beyan mekanizmasi bozuk mu?"
     kilitli = []
     for metot, yol, _ in ops:

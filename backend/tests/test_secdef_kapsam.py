@@ -162,6 +162,17 @@ ENVANTER: dict[str, tuple[str, tuple[str, str] | None]] = {
     "kayit_dogrulama_telefon_sifirla": ("public", None),
     # Saglayici webhook'u imzayla dogrulanir; tenant provider_ref'ten cozulur.
     "payment_tenant_by_ref": ("public", None),
+    # (P234 §1) RESEND TESLIM WEBHOOK'U. Saglayici webhook'u Svix HMAC ile
+    # dogrulanir; tenant baglami istekte YOK ve ancak mesaj kimliginden
+    # cozulebilir. Fonksiyon YALNIZ tenant_id doner — mesajin govdesini ya
+    # da alicisini DONDURMEZ, yani imzasi dogrulanmamis bir cagri (ki
+    # imzasizsa zaten 401) veri sizdiramaz.
+    "gonderim_tenant_by_saglayici_id": ("public", None),
+    # (P234 §1) Ayni webhook'un TEKRAR DEFTERI. Tablo platform tablosu
+    # desenini tasir (RLS ACIK + FORCE, POLITIKA YOK) — `app_rw` ona
+    # dogrudan yazamaz. Fonksiyon HICBIR SEY OKUTMAZ: yalnizca "bu olayi
+    # daha once gordum mu" sorusunu yanitlar.
+    "eposta_webhook_olay_ekle": ("public", None),
     # ANPR girisi (P16): kamera kutusu JWT tasimaz, kimlik `X-ANPR-Key`
     # basligiyla kurulur. Istek geldiginde tenant HENUZ BILINMEDIGI icin RLS
     # baglami kurulamaz — cozumleme burada olur. Fonksiyon YALNIZ

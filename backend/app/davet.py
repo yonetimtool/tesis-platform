@@ -288,7 +288,13 @@ async def davet_gonder(
             tenant_id=user.tenant_id, sablon_id=None, kanal="eposta",
             amac="operasyonel", user_id=user.id, hedef=user.email, konu=eposta_konu,
             govde=eposta_metin, durum=eposta.durum, hata=eposta.hata,
-            saglayici=eposta.saglayici, gonderen_user_id=gonderen_id,
+            saglayici=eposta.saglayici,
+            # (P234 §1) TESLIM GERI BILDIRIMININ BAGLANTI NOKTASI.
+            # Yazilmazsa bounce webhook'u gelir ama hicbir satira
+            # yazilamaz — davet e-postasi icin bu, "davet gitti ama kimse
+            # girmedi" diye gecen gunler demektir.
+            saglayici_mesaj_id=eposta.saglayici_mesaj_id,
+            gonderen_user_id=gonderen_id,
             deneme=1,
         ))
 

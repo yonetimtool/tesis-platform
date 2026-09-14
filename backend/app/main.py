@@ -107,6 +107,7 @@ from .routers import visitors as visitors_router
 from .routers import banka as banka_router
 from .routers import push_teshis as push_teshis_router
 from .routers import weather as weather_router
+from .routers import eposta_webhook as eposta_webhook_router
 from .routers import webhooks as webhooks_router
 
 #: KODUN BEKLEDIGI Alembic revizyonu — goc dosyalarindan HESAPLANIR.
@@ -260,6 +261,7 @@ app.include_router(users_router.router)
 app.include_router(call_targets_router.router)
 app.include_router(integrations_router.router)
 app.include_router(webhooks_router.router)
+app.include_router(eposta_webhook_router.router)
 app.include_router(audit_router.router)
 app.include_router(support_router.router)
 # (P127.2) Tanitim sitesi iletisim formu — public gonderim + admin okuma.

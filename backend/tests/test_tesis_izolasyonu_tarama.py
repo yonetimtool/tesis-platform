@@ -424,11 +424,25 @@ def test_tarama_kapsami_daralmadi(client, world):
     # `isletme.sahip_kullanici_id` (sahiplik) ve her ozel uc icin ZORUNLU
     # bir IDOR testi var (docs/dukkan/02-kimlik-ve-yetki.md §5). O kapi
     # F2'de, isletme uclariyla birlikte kurulacak.
+    # (P234 §1) `/webhooks` DISARIDA — `/auth` ve `/health` ile AYNI SINIF.
+    #
+    # Bu tarama "oturumun tenant'i disindaki satirlar donuyor mu" diye
+    # sorar. Webhook'ta OTURUM YOK: cagiran bir kullanici degil saglayici,
+    # kimlik jetonla degil IMZAYLA kuruluyor ve tenant ancak govdedeki
+    # referanstan cozuluyor. Boyle bir uce "baska tesisin verisi donuyor
+    # mu" diye sormak, sorunun on kosulunu tasimiyor.
+    #
+    # Odeme webhook'u zaten disaridaydi ama TESADUFEN: yolunda `{provider}`
+    # oldugu icin ustteki `"{" not in y` suzgecine takiliyordu. Resend
+    # webhook'unda parametre yok ve paydaya girdi — orani esigin altina
+    # dusurdu. Yani kural ASLINDA VARDI, yalnizca yanlis sebeple
+    # calisiyordu; simdi ADIYLA yaziliyor.
     yollar = [
         y for y in r.json()["paths"]
         if "{" not in y
         and not y.startswith(
-            ("/auth", "/me", "/health", "/docs", "/openapi", "/dukkan")
+            ("/auth", "/me", "/health", "/docs", "/openapi", "/dukkan",
+             "/webhooks")
         )
     ]
     taranan = set(TESIS_UCLARI) | set(PLATFORM_UCLARI)

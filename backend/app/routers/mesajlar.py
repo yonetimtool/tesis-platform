@@ -431,7 +431,10 @@ async def gonder(
             govde=govde,
             durum="kuyrukta" if kuyrukta else sonuc.durum,
             hata=sonuc.hata,
-            saglayici=sonuc.saglayici, gonderen_user_id=user.id,
+            saglayici=sonuc.saglayici,
+            # (P234 §1) Teslim geri bildirimi bu kimlikle baglanir.
+            saglayici_mesaj_id=sonuc.saglayici_mesaj_id,
+            gonderen_user_id=user.id,
             deneme=1, son_deneme_at=func.now(),
         ))
         if kuyrukta:

@@ -87,6 +87,13 @@ interface Onizleme {
 
 const LIMIT = 20;
 
+/** Bilinen teslim kodlarini cevirir; bilinmeyeni OLDUGU GIBI birakir. */
+function hataMetni(kod: string, t: (a: never) => string): string {
+  const anahtar = `mesajHata_${kod}`;
+  const cevrilmis = t(anahtar as never);
+  return cevrilmis === anahtar ? kod : cevrilmis;
+}
+
 export default function MesajlarPage() {
   const t = useT();
   const toast = useToast();
@@ -201,7 +208,14 @@ export default function MesajlarPage() {
                 soylemiyor; saglayici hatasi burada yaziyor. */}
             {g.hata ? (
               <span className="ms-1" style={{ color: "var(--yz-danger-ink)" }}>
-                · {g.hata}
+                {/* (P234 §1) TESLIM GERI BILDIRIMI CEVRILIR.
+                    `bounce` / `spam_sikayeti` bir saglayici kodu degil
+                    kullanicinin EYLEM ALMASI gereken bir bilgidir
+                    ("bu adres ulasilamaz" -> adresi duzelt). Ham kodu
+                    gostermek, yoneticiye sozluk aratmak olurdu.
+                    Cevirisi olmayan saglayici kodlari OLDUGU GIBI kalir:
+                    uydurmak yerine ham kod gostermek dogru. */}
+                · {hataMetni(g.hata, t)}
               </span>
             ) : null}
           </>

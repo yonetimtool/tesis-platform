@@ -132,6 +132,17 @@ class GonderimSonucu:
     durum: str
     saglayici: str
     hata: str | None = None
+    #: (P234 §1) SAGLAYICININ KENDI MESAJ KIMLIGI — teslim geri
+    #: bildiriminin BAGLANTI NOKTASI.
+    #:
+    #: Bounce webhook'u bize "su mesaj geri dondu" der ve elindeki tek
+    #: tanitici saglayicinin kimligidir. Onu KAYDETMEZSEK webhook geldiginde
+    #: hangi `mesaj_gonderim` satirinin guncellenecegini bilemeyiz — yani
+    #: geri bildirim gelir ama HICBIR SEYE yazilamaz.
+    #:
+    #: SMTP'de bos kalir (`None`): SMTP yanitindaki kuyruk kimligi
+    #: sunucudan sunucuya degisir ve guvenilir bir anahtar degildir.
+    saglayici_mesaj_id: str | None = None
 
 
 class MesajSaglayici(ABC):
@@ -403,6 +414,114 @@ class VerimorSmsSaglayici(MesajSaglayici):
         }.get(yanit.status_code, f"http_{yanit.status_code}")
         logger.warning("[SMS/verimor] saglayici reddetti: %s", kod)
         return GonderimSonucu("hata", self.ad, hata=kod)
+
+
+class ResendEpostaSaglayici(MesajSaglayici):
+    """(P234 §1) RESEND — uygulama e-postalarinin tasiyicisi.
+
+    =======================================================================
+    NEDEN SMTP DEGIL HTTP API
+    =======================================================================
+    Resend ikisini de sunuyor; API secildi ve gerekce TEK BIR SEYE dayaniyor:
+    **teslim geri bildirimi**. Mevcut kusur olculmustu — panel "gonderildi"
+    yaziyor ama mail bounce olmus olabiliyor ve bunu HIC gormuyoruz.
+
+      * API yaniti mesajin KIMLIGINI doner (`id`). Webhook "su mesaj geri
+        dondu" dediginde guncellenecek satiri o kimlikle buluyoruz.
+      * SMTP'de boyle bir kimlik YOK: 250 yanitindaki kuyruk kimligi
+        sunucuya gore degisir, Resend tarafindaki kimlikle ayni olacaginin
+        garantisi yoktur. Yani SMTP secseydik webhook gelir ama HICBIR
+        SATIRA yazilamazdi — bounce geri bildirimi maddesi kagit uzerinde
+        kalirdi.
+
+    IKINCIL SEBEPLER (tek baslarina yeterli olmazdi):
+      * 587/465 giden portu bircok ag/saglayicida kisitli; 443 zaten acik
+        (Open-Meteo, FCM, odeme saglayicilari ayni yoldan gidiyor).
+      * Hata YAPISALDIR (JSON + kod): `hata` alanina anlamli bir deger
+        yazilabiliyor; SMTP'de elimizde serbest metin bir hata dizesi olur.
+
+    =======================================================================
+    NEDEN YENI BIR KATMAN DEGIL
+    =======================================================================
+    Istek acikti: "mevcut saglayici soyutlamasini kullan". Bu sinif
+    `MesajSaglayici`nin bir uyesi; secimi `gonderim.eposta_saglayicisi()`
+    yapiyor ve cagiran yollarin hicbiri degismiyor. Tesisin KENDI SMTP'sini
+    girmis olmasi da bozulmuyor — o tesis icin `SmtpEpostaSaglayici`
+    donmeye devam ediyor.
+
+    API ANAHTARI `smtp_parola` ALANINDAN OKUNUR: sir tasiyan kanal zaten o
+    ve sifreli/maskeli akislar ona gore kurulu. Ikinci bir sir alani
+    acmak, maskeleme ve denetim kurallarini iki yerde tutmak olurdu.
+    """
+
+    ad = "resend"
+    UC = "https://api.resend.com/emails"
+    ZAMAN_ASIMI_SN = 10.0
+
+    def __init__(self, api_anahtari: str | None, gonderen: str) -> None:
+        self._anahtar = api_anahtari
+        self._gonderen = gonderen
+
+    def gonder(self, hedef: str, konu: str | None, govde: str, html: str | None = None, headers: dict[str, str] | None = None) -> GonderimSonucu:
+        import httpx
+
+        # ANAHTAR YOKSA HIC DENEME (Verimor baslik kuraliyla ayni mantik):
+        # denemek gunlugu kirletir ve kullaniciya "basarisiz" der; oysa
+        # yapilmasi gereken sey AYARI doldurmaktir.
+        if not self._anahtar:
+            logger.warning("[E-POSTA/resend] API anahtari yok — gonderim DENENMEDI")
+            return GonderimSonucu(
+                DURUM_YAPILANDIRILMADI, self.ad, hata="resend_anahtari_yok"
+            )
+
+        govde_json: dict[str, object] = {
+            "from": self._gonderen,
+            "to": [hedef],
+            "subject": konu or "",
+            "text": govde,
+        }
+        if html:
+            govde_json["html"] = html
+        if headers:
+            govde_json["headers"] = headers
+
+        try:
+            yanit = httpx.post(
+                self.UC,
+                json=govde_json,
+                headers={"Authorization": f"Bearer {self._anahtar}"},
+                timeout=self.ZAMAN_ASIMI_SN,
+            )
+        except Exception as exc:
+            logger.warning("[E-POSTA/resend] gonderilemedi: %s", type(exc).__name__)
+            return GonderimSonucu("basarisiz", self.ad, hata="baglanti")
+
+        if yanit.status_code in (200, 201):
+            try:
+                kimlik = str((yanit.json() or {}).get("id") or "") or None
+            except Exception:
+                # Kimlik OKUNAMAZSA gonderim yine de OLDU. `basarisiz`
+                # demek yanlis olurdu; kaybedilen sey yalnizca teslim
+                # takibidir ve bu gunluge yaziliyor.
+                logger.warning("[E-POSTA/resend] yanit govdesi cozulemedi")
+                kimlik = None
+            logger.info("[E-POSTA/resend] %s <- gonderildi", maskele_kimlik(hedef))
+            # "gonderildi" DENIR, "iletildi" DENMEZ: teslim bilgisi
+            # WEBHOOK'tan gelir. Burada "iletildi" demek, SMS
+            # saglayicilarinda ozellikle kacinilan seyin aynisi olurdu —
+            # panelde YANLIS kanit gostermek.
+            return GonderimSonucu(
+                "gonderildi", self.ad, saglayici_mesaj_id=kimlik
+            )
+
+        kod = {
+            401: "kimlik_gecersiz",
+            403: "alan_adi_dogrulanmadi",
+            422: "gecersiz_istek",
+            429: "hiz_siniri",
+        }.get(yanit.status_code, f"http_{yanit.status_code}")
+        logger.warning("[E-POSTA/resend] saglayici reddetti: %s", kod)
+        return GonderimSonucu("basarisiz", self.ad, hata=kod)
 
 
 class KonsolEpostaSaglayici(MesajSaglayici):

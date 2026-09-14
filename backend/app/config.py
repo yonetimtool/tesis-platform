@@ -307,6 +307,16 @@ class Settings(BaseSettings):
     smtp_user: str | None = None
     smtp_password: str | None = None
     smtp_from: str | None = None
+    # (P234 §1) RESEND TESLIM WEBHOOK'U — imza sirri (Svix `whsec_...`).
+    #
+    # AYRI BIR ANAHTAR, cunku farkli bir sey: `SMTP_PASSWORD` GIDEN
+    # gonderimin API anahtari, bu ise GELEN webhook'un imza sirri. Ikisini
+    # tek alanda tasimak, birini degistirirken otekini sessizce kirmak
+    # olurdu.
+    #
+    # BOSSA WEBHOOK 401 DONER (uc "acik" kalmaz): yapilandirilmamis bir
+    # webhook'u gecerli saymak, ucu herkese acmak demekti.
+    resend_webhook_sirri: str | None = None
     iyzico_api_key: str = ""
     iyzico_secret: str = ""
     iyzico_base_url: str = "https://sandbox-api.iyzipay.com"

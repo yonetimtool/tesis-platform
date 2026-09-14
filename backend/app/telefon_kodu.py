@@ -159,6 +159,10 @@ async def eposta_kodu_uret_ve_gonder(
                             else "basarisiz"
                         ),
                         hata=sonuc.hata,
+                        # (P234 §1) Dogrulama kodu EN KRITIK e-postadir:
+                        # bounce olursa kullanici giris yapamaz ve sebebini
+                        # kimse bilmez. Kimlik burada da yaziliyor.
+                        saglayici_mesaj_id=sonuc.saglayici_mesaj_id,
                     )
                 )
     except Exception:  # noqa: BLE001

@@ -3802,6 +3802,13 @@ class MesajGonderim(Base):
     )
     hata: Mapped[str | None] = mapped_column(Text, nullable=True)
     saglayici: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: (P234 §1, goc 0135) Saglayicinin KENDI mesaj kimligi.
+    #:
+    #: Teslim geri bildiriminin (bounce/delivered/opened) BAGLANTI
+    #: NOKTASI: webhook'un elindeki tek tanitici budur. SMTP ile giden
+    #: satirlarda NULL kalir — SMTP yanitindaki kuyruk kimligi guvenilir
+    #: bir anahtar degildir.
+    saglayici_mesaj_id: Mapped[str | None] = mapped_column(Text, nullable=True)
     gonderen_user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), nullable=True
     )
@@ -3814,6 +3821,21 @@ class MesajGonderim(Base):
     )
     son_deneme_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     created_at = _created_at()
+
+
+class EpostaWebhookOlay(Base):
+    """(P234 §1, goc 0135) Islenen webhook olaylari — TEKRARI ENGELLER.
+
+    Saglayici teslim garantisi "en az bir kez"dir: ayni olay iki kez
+    gelebilir. Tenant'SIZ ve RLS'siz, cunku webhook geldiginde tenant
+    HENUZ BILINMIYOR (once mesaj kimliginden cozuluyor). Icinde kisisel
+    veri yok — yalnizca saglayicinin olay kimligi.
+    """
+
+    __tablename__ = "eposta_webhook_olay"
+
+    olay_id: Mapped[str] = mapped_column(Text, primary_key=True)
+    alindi_at = _created_at()
 
 
 # ========================== P33 YONETISIM MODULLERI ========================= #

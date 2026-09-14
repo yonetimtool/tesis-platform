@@ -140,6 +140,11 @@ async def kuyrugu_isle(db: AsyncSession, *, simdi: datetime | None = None) -> in
         kayit.deneme += 1
         kayit.son_deneme_at = an
         kayit.saglayici = sonuc.saglayici
+        # (P234 §1) YENIDEN DENEMEDE KIMLIK GUNCELLENIR: her deneme yeni
+        # bir saglayici mesaji uretir ve webhook SON denemeye gelir. Eski
+        # kimligi birakmak, teslim bilgisini yanlis denemeye yazmakti.
+        if sonuc.saglayici_mesaj_id:
+            kayit.saglayici_mesaj_id = sonuc.saglayici_mesaj_id
         if sonuc.durum == "basarisiz":
             kayit.hata = sonuc.hata
             # SON DENEMEDEYSE ARTIK KUYRUKTA DEGIL: `kuyrukta` birakmak,

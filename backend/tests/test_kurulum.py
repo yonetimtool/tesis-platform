@@ -83,15 +83,25 @@ def test_ADIM_KODLARI_SABIT(client, world):
         adresi. Zorunlu degil ama SORULUR: kimse sormazsa yonetici boyle
         bir alan oldugunu hic ogrenmiyordu (eksik 1).
 
+    (P233 §1) `konum` ADIMI EKLENDI (18 -> 19). Tesisin koordinati goc
+    0005'ten beri SEMADA VARDI ama hic ayarlanmiyordu: dev'deki tum
+    tesisler sunucu varsayilanini tasiyor ve ana ekrandaki hava durumu
+    HERKESE AYNI sehri gosteriyordu. ZORUNLU DEGIL — konumsuz tesis
+    calisir, yalnizca hava blogu varsayilanda kalir.
+
+    SIRASI NFC NOKTASINDAN SONRA, KASADAN ONCE: sihirbazin "tesisi tanit"
+    yarisinin sonu. Finans adimlarinin arasina girseydi, para kurulumunu
+    yarida kesen alakasiz bir soru olurdu.
+
     SIRA da kilitli: e-posta SAKINDEN HEMEN SONRA (ilk toplu davet oradan
     cikar), kasa AIDATTAN ONCE (once para kutusu, sonra borc).
     """
     yon = _giris(client, world["slug_a"], world["yonetici_a"])
     _, govde = _durum(client, yon)
-    assert govde["toplam"] == 18
+    assert govde["toplam"] == 19
     assert [a["kod"] for a in govde["adimlar"]] == [
         "blok", "daire", "daire_tipi", "sakin", "eposta",
-        "personel", "gorev_alani", "nfc_noktasi", "kasa",
+        "personel", "gorev_alani", "nfc_noktasi", "konum", "kasa",
         "gelir_gider_tanimi", "aidat", "aidat_plani", "otomasyon",
         "butce_kategorisi", "duzenli_gider",
         "adres", "rezervasyon_alani", "sayac",

@@ -13169,6 +13169,57 @@ paths:
   # ================================================================= #
   # ODEME WEBHOOK (public ama imza-korumali)
   # ================================================================= #
+  /webhooks/eposta/resend:
+    post:
+      tags: [webhooks]
+      summary: Resend teslim bildirimi (bounce / delivered / opened)
+      description: |
+        (P234 §1) PUBLIC (token YOK) ama IMZA-KORUMALI: Svix HMAC-SHA256
+        (`svix-id` / `svix-timestamp` / `svix-signature`) dogrulanir,
+        gecersizse 401 ve HICBIR SEY yapilmaz. Zaman penceresi 5 dakika —
+        yakalanan bir istegin sonsuza kadar tekrar oynatilmasini engeller.
+
+        OLCULEN KUSUR: `gonderildi` bir SAGLAYICIYA TESLIM kaydidir,
+        ALICIYA TESLIM kaydi degil. Bounce/sikayet panelde gorunmuyordu.
+
+        Tenant baglami istekte YOK; `saglayici_mesaj_id`den SECURITY
+        DEFINER fonksiyonla cozulur. IDEMPOTENT (`svix-id` ->
+        `eposta_webhook_olay`).
+
+        Olay eslemesi: `delivered`->iletildi, `opened`->okundu,
+        `bounced`/`complained`->basarisiz (+ `hata` kodu),
+        `delivery_delayed` durumu DEGISTIRMEZ. Durum GERI GITMEZ: olaylar
+        sirasiz gelebilir.
+
+        BILINMEYEN OLAY TURU 200 DONER — 4xx donmek saglayiciyi webhook'u
+        devre disi birakmaya iter ve BILDIGIMIZ olaylari da kaybederiz.
+      security: []   # public; guvenlik imzayla saglanir
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { type: object } }
+      responses:
+        "200":
+          description: |
+            Islendi / tekrar / eslesmedi / yoksayildi / beklemede
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [durum]
+                properties:
+                  durum:
+                    type: string
+                    enum: [islendi, tekrar, eslesmedi, yoksayildi, beklemede]
+        "400":
+          description: Govde cozulemedi
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+        "401":
+          description: Imza gecersiz / sir yapilandirilmamis
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
   /webhooks/payments/{provider}:
     post:
       tags: [webhooks]
