@@ -2164,5 +2164,9 @@
   "gorevAtayanBilgi": "Zugewiesen von: {ad}",
   "ayarlarGorunumAciklama": "Große Darstellung: Text und Symbole werden größer, das Startraster zeigt statt 8 nur 4 Kacheln in zwei Spalten. Die Textgröße Ihres Geräts gilt weiterhin.",
   "ayarlarGorunumStandart": "Standard",
-  "ayarlarGorunumBuyuk": "Groß"
+  "ayarlarGorunumBuyuk": "Groß",
+  "vardiyaGrubaEkle": "Diese Gruppe hinzufügen",
+  "vardiyaOnizle": "Vorschau",
+  "vardiyaGrupOzeti": "{gun} Tage · {dilim}",
+  "vardiyaOnizlemeSonuc": "{eklenecek} Schichten werden erstellt, {cakisan} Konflikte"
 }

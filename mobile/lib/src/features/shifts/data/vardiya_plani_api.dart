@@ -97,6 +97,34 @@ class VardiyaPlaniApi {
     }
   }
 
+  /// (P232) COK GRUPLU PLAN — "pazartesi gunduz, sali-carsamba gece".
+  ///
+  /// `kalip-uygula` ucunu kullanir. Mobilde bu uc HIC CAGRILMIYORDU:
+  /// yalniz `topluEkle` (tek aralik + tek saat) vardi, yani farkli
+  /// gunlere farkli saat yazmanin tek yolu diyalogu defalarca acmakti —
+  /// her seferinde AYRI bir parti, ayri onizleme, ayri catisma kontrolu.
+  ///
+  /// [kuru] true ise HICBIR SEY YAZILMAZ: yalnizca onizleme doner.
+  Future<VardiyaKalipSonuc> kalipUygula({
+    required List<VardiyaGunGrubu> gruplar,
+    bool kuru = false,
+    bool cakisanlariAtla = false,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/vardiya-plani/kalip-uygula',
+        data: {
+          'gruplar': [for (final g in gruplar) g.toJson()],
+          'kuru': kuru,
+          'cakisanlari_atla': cakisanlariAtla,
+        },
+      );
+      return VardiyaKalipSonuc.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
   Future<VardiyaSimdi> simdi() async {
     try {
       final res = await _dio.get<Map<String, dynamic>>('/vardiya-plani/simdi');

@@ -6485,4 +6485,20 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get ayarlarGorunumBuyuk => 'Grande';
+
+  @override
+  String get vardiyaGrubaEkle => 'Añadir este grupo';
+
+  @override
+  String get vardiyaOnizle => 'Vista previa';
+
+  @override
+  String vardiyaGrupOzeti(int gun, String dilim) {
+    return '$gun días · $dilim';
+  }
+
+  @override
+  String vardiyaOnizlemeSonuc(int eklenecek, int cakisan) {
+    return 'Se crearán $eklenecek turnos, $cakisan conflictos';
+  }
 }

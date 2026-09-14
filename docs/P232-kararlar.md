@@ -197,3 +197,69 @@ Betiği yazıp bitirmedim, **denedim** ve iki kez düştü:
 * Koşum **yokken** → `>> hazır`, çıkış 0.
 * Koşum **varken** → çıkış 1, koşan süreç adıyla yazıldı, derleme
   yapılmadı ve koşum sağ kaldı.
+
+### §C-2 — İkinci yapısal engel: bayat imajla test koşulmasın
+
+`guvenli-derle.sh` bir kusuru kapattı (koşan takımın altından konteyner
+çekmek). Ama **ikinci** bir kusur aynı seansta **iki kez** tekrarladı ve o
+betik onu görmez:
+
+> kaynağı değiştir (ya da kırma deneyinden geri al) → **derlemeyi unut** →
+> testi koş → konteyner **eski kodla** cevap verir.
+
+Sonuç her iki yönde de yanıltıcı: P230 §4'te **düzeltilmiş** kodu
+"kırmızı" raporladı (üç sahte kırmızı, sebebini bulmak ayrıca zaman
+aldı); P232'de ise geri alınmış bir **kırma deneyi** hâlâ kırıkmış gibi
+göründü. Testin kendisi bunu fark edemez: konteyner sağlıklı, uçlar cevap
+veriyor, yalnızca kod eski.
+
+`infra/guvenli-test.sh` kaynak ile imajın **içerik özetini** karşılaştırır.
+
+**Neden zaman damgası değil:** ilk yazım mtime karşılaştırıyordu ve hemen
+yanlış pozitif verdi — kırma deneyinden `cp` ile geri alınan dosyanın
+içeriği eski haliyle **aynı** olduğu için Docker katman önbelleği tuttu ve
+imajdaki mtime eski kaldı; kaynak "167 sn daha yeni" göründü, oysa kod
+aynıydı. Sorulan asıl soru zaten "kod aynı mı"; içerik özeti onu doğrudan
+yanıtlar.
+
+**Bu engelde de üç kusur çıktı, üçü de ölçümle yakalandı:**
+
+1. mtime yanlış pozitifi (yukarıda).
+2. `sort` **farklı yol önekleri** üzerinde çalışıyordu (`backend/app/…` ve
+   `app/…`), aynı dosyalar farklı sırada özetleniyor ve toplam hep
+   ayrışıyordu — tek tek dosyalar birebir aynı olduğu hâlde.
+3. Konteyner kökü `/` sanılmıştı; doğrusu `/app` (`COPY app ./app`,
+   `COPY tests ./tests`). `tests` bulunamıyor ve **sessizce eksik** bir
+   küme özetleniyordu.
+
+Ayrıca `guvenli-derle.sh`'in "hazır" ölçütü de düzeltildi: `python -c
+pass` konteynerin ayakta olduğunu söylüyordu ama uvicorn henüz
+dinlemiyorken ardından koşan **14 test "API erişilemiyor" diye atlandı**.
+Atlanan test geçmiş test gibi görünür — sessiz bir yanlış güven. Artık
+`/health` yanıtı bekleniyor.
+
+---
+
+## §D — Düzenleme: "yalnız bu günü" / "tüm seriyi"
+
+`PATCH /vardiya-plani/{id}` yalnız tek blok değiştiriyordu; seri kavramı
+yoktu. `kapsam: tek|seri` eklendi — seri, aynı `parti_id`yi taşıyan
+satırlar (P207 toplu işleminin ürettiği küme).
+
+**Varsayılan `tek` ve bu bilinçli:** tek satırı düzeltmek en sık yapılan
+iş; varsayılanı `seri` yapmak kullanıcının **beklemediği** bir toplu
+değişiklik üretirdi.
+
+**Seride tarih değiştirilemez (422).** Serideki her satırın kendi tarihi
+var; hepsini tek tarihe çekmek otuz günlük planı **tek güne yığmak**
+olurdu — kullanıcının "saati düzeltiyorum" derken kaybedeceği bir şey.
+
+**Partisi olmayan satırda `seri` de reddedilir (422).** Sessizce "tek"
+gibi davranmak, kullanıcıya yaptığını sandığı şeyi **yapmamış** olmaktı.
+
+**Seri düzenlemede çakışma satır satır sorulmaz.** Otuz satır için otuz
+ayrı 409, kullanıcıyı aynı kararı otuz kez vermeye zorlardı; çakışanlar
+uyarı olarak döner.
+
+Kapsam **denetim kaydına** yazılıyor: "otuz vardiyam neden değişti"
+sorusunun yanıtı orada aranır.

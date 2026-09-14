@@ -11218,6 +11218,30 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Büyük'**
   String get ayarlarGorunumBuyuk;
+
+  /// No description provided for @vardiyaGrubaEkle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu grubu ekle'**
+  String get vardiyaGrubaEkle;
+
+  /// No description provided for @vardiyaOnizle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Önizle'**
+  String get vardiyaOnizle;
+
+  /// No description provided for @vardiyaGrupOzeti.
+  ///
+  /// In tr, this message translates to:
+  /// **'{gun} gün · {dilim}'**
+  String vardiyaGrupOzeti(int gun, String dilim);
+
+  /// No description provided for @vardiyaOnizlemeSonuc.
+  ///
+  /// In tr, this message translates to:
+  /// **'{eklenecek} vardiya oluşacak, {cakisan} çakışma'**
+  String vardiyaOnizlemeSonuc(int eklenecek, int cakisan);
 }
 
 class _AppLocalizationsDelegate

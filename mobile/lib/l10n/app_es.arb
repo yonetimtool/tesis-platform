@@ -2164,5 +2164,9 @@
   "gorevAtayanBilgi": "Asignada por: {ad}",
   "ayarlarGorunumAciklama": "Visualización grande: el texto y los iconos crecen y la cuadrícula de inicio pasa de 8 a 4 casillas en dos columnas. El ajuste de tamaño de texto de su dispositivo sigue aplicándose.",
   "ayarlarGorunumStandart": "Estándar",
-  "ayarlarGorunumBuyuk": "Grande"
+  "ayarlarGorunumBuyuk": "Grande",
+  "vardiyaGrubaEkle": "Añadir este grupo",
+  "vardiyaOnizle": "Vista previa",
+  "vardiyaGrupOzeti": "{gun} días · {dilim}",
+  "vardiyaOnizlemeSonuc": "Se crearán {eklenecek} turnos, {cakisan} conflictos"
 }

@@ -366,8 +366,16 @@ class _HizliEkleDialoguState extends ConsumerState<_HizliEkleDialogu> {
   Set<String> _seciliGunler = {};
   TimeOfDay _basSaat = const TimeOfDay(hour: 8, minute: 0);
   TimeOfDay _sonSaat = const TimeOfDay(hour: 16, minute: 0);
+  /// (P232) BIRIKEN GRUPLAR — "pazartesi gunduz, sali-carsamba gece".
+  ///
+  /// Onceden farkli gune farkli saat yazmanin tek yolu diyalogu
+  /// DEFALARCA acmakti: her seferinde ayri bir parti, ayri onizleme,
+  /// ayri catisma kontrolu ve geri alirken AYRI BIR ISTEK.
+  final List<VardiyaGunGrubu> _gruplar = [];
   final _notCtrl = TextEditingController();
   List<String>? _cakisanlar;
+  /// (P232) Onizleme sonucu — kaydetmeden once kac vardiya olusacagi.
+  VardiyaKalipSonuc? _onizleme;
   String? _hata;
   bool _bekliyor = false;
 
@@ -381,6 +389,70 @@ class _HizliEkleDialoguState extends ConsumerState<_HizliEkleDialogu> {
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
   String _s(TimeOfDay t) =>
       '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+
+  /// Ekrandaki (gunler + saat) ikilisini gruba cevirir.
+  VardiyaGunGrubu _buGrup() => VardiyaGunGrubu(
+    gunler: (_seciliGunler.toList()..sort()),
+    dilimler: [
+      VardiyaDilim(
+        // AD GEREKLI: sunucu sonuc satirlarinda dilimi adiyla
+        // raporluyor; adsiz dilim "hangi vardiya" sorusunu
+        // yanitlanamaz kilardi.
+        ad: '${_s(_basSaat)}-${_s(_sonSaat)}',
+        baslangic: _s(_basSaat),
+        bitis: _s(_sonSaat),
+      ),
+    ],
+    atamalar: {0: [?_userId]},
+  );
+
+  void _grubaEkle() {
+    if (_userId == null || _seciliGunler.isEmpty) return;
+    setState(() {
+      _gruplar.add(_buGrup());
+      // Sonraki grup BOS baslar: yoksa kullanici ayni gunleri ikinci
+      // gruba da yazar ve kendi kendine cakisma uretirdi.
+      _seciliGunler = {};
+    });
+  }
+
+  /// (P232) COK GRUPLU gonderim — onizleme ve uygulama AYNI yol.
+  Future<void> _gruplariGonder({required bool kuru, required bool atla}) async {
+    final l10n = context.l10n;
+    // Ekranda kurulmakta olan grup da dahil: kullanicinin "ekle"ye
+    // basmayi unutmasi, son grubun SESSIZCE kaybolmasi demekti.
+    final hepsi = [
+      ..._gruplar,
+      if (_userId != null && _seciliGunler.isNotEmpty) _buGrup(),
+    ];
+    if (hepsi.isEmpty) return;
+    setState(() {
+      _bekliyor = true;
+      _hata = null;
+    });
+    try {
+      final sonuc = await ref.read(vardiyaPlaniApiProvider).kalipUygula(
+        gruplar: hepsi,
+        kuru: kuru,
+        cakisanlariAtla: atla,
+      );
+      if (!mounted) return;
+      if (kuru || !sonuc.uygulandi) {
+        setState(() {
+          _bekliyor = false;
+          _onizleme = sonuc;
+        });
+        return;
+      }
+      Navigator.of(context).pop(true);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _hata = apiHataMetni(l10n, e);
+        _bekliyor = false;
+      });
+    }
+  }
 
   Future<void> _gonder({required bool atla}) async {
     final l10n = context.l10n;
@@ -586,6 +658,60 @@ class _HizliEkleDialoguState extends ConsumerState<_HizliEkleDialogu> {
               ),
               Text(_cakisanlar!.join(', ')),
             ],
+            // (P232) BIRIKEN GRUPLAR.
+            if (_gruplar.isNotEmpty) ...[
+              const Divider(),
+              for (var i = 0; i < _gruplar.length; i++)
+                ListTile(
+                  key: Key('vardiya-grup-$i'),
+                  dense: true,
+                  title: Text(
+                    l10n.vardiyaGrupOzeti(
+                      _gruplar[i].gunler.length,
+                      _gruplar[i].dilimler.first.ad,
+                    ),
+                  ),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete_outline),
+                    tooltip: l10n.ortakSil,
+                    onPressed: () => setState(() => _gruplar.removeAt(i)),
+                  ),
+                ),
+            ],
+            if (_onizleme != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  key: const Key('vardiya-onizleme'),
+                  l10n.vardiyaOnizlemeSonuc(
+                    _onizleme!.eklenecek,
+                    _onizleme!.cakisan,
+                  ),
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              children: [
+                OutlinedButton.icon(
+                  key: const Key('vardiya-gruba-ekle'),
+                  onPressed: (_userId == null || _seciliGunler.isEmpty)
+                      ? null
+                      : _grubaEkle,
+                  icon: const Icon(Icons.playlist_add),
+                  label: Text(l10n.vardiyaGrubaEkle),
+                ),
+                OutlinedButton.icon(
+                  key: const Key('vardiya-onizle'),
+                  onPressed: _bekliyor
+                      ? null
+                      : () => _gruplariGonder(kuru: true, atla: false),
+                  icon: const Icon(Icons.visibility_outlined),
+                  label: Text(l10n.vardiyaOnizle),
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -603,8 +729,14 @@ class _HizliEkleDialoguState extends ConsumerState<_HizliEkleDialogu> {
         else
           FilledButton(
             key: const Key('vardiya-ekle-gonder'),
-            onPressed:
-                (_bekliyor || _userId == null) ? null : () => _gonder(atla: false),
+            // GRUP VARSA COK GRUPLU YOL: tek istek, tek parti. Tekil yol
+            // KALDIRILMADI — tek gun + tek saat en sik yapilan is ve
+            // onu grup kurmaya zorlamak gereksiz bir adim olurdu.
+            onPressed: (_bekliyor || (_userId == null && _gruplar.isEmpty))
+                ? null
+                : () => _gruplar.isEmpty
+                    ? _gonder(atla: false)
+                    : _gruplariGonder(kuru: false, atla: false),
             child: Text(l10n.vardiyaEkleGonder),
           ),
       ],

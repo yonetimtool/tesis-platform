@@ -65,10 +65,20 @@ ModuleCardSpec moduleCardSpec(HomeMenuEntry entry) {
           accent: _purple,
           route: AppRoutes.otopark);
     case HomeMenuEntry.vardiyalar:
+      // (P232 §A) MENU ARTIK PLAN EKRANINA GIDIYOR.
+      //
+      // OLCULEN KUSUR — WEB'IN AYNASI: mobilde menu girisi SABLON
+      // ekranina (`/vardiyalar`) gidiyordu ve PLAN ekranina
+      // (`/vardiya-plani`) menuden ULASILAMIYORDU; tek yol genel
+      // aramaydi. Yani gunluk is (kim ne zaman calisiyor) menude yoktu,
+      // ayda bir yapilan is (sablon tanimi) menudeydi.
+      //
+      // Sablon yonetimi plan ekraninin ICINDEN acilir — web'deki
+      // "Vardiya sablonlari" bolumuyle ayni karar.
       return const ModuleCardSpec(
-          icon: Icons.schedule_outlined,
+          icon: Icons.calendar_month_outlined,
           accent: _navy,
-          route: AppRoutes.vardiyalar);
+          route: AppRoutes.vardiyaPlani);
     case HomeMenuEntry.anketler:
       return const ModuleCardSpec(
           icon: Icons.how_to_vote_outlined,

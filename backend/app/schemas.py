@@ -2459,6 +2459,13 @@ class VardiyaGuncelleIstek(BaseModel):
     baslangic_saat: time | None = None
     bitis_saat: time | None = None
     not_metni: str | None = Field(None, max_length=500)
+    #: (P232) "YALNIZ BU GUNU" mu "TUM SERIYI" mi.
+    #:
+    #: Seri = ayni `parti_id`yi tasiyan satirlar (P207 toplu islemin
+    #: urettigi kume). Varsayilan `tek` ve bu BILINCLI: tek satiri
+    #: duzeltmek en sik yapilan is, ve varsayilani `seri` yapmak
+    #: kullanicinin BEKLEMEDIGI bir toplu degisiklik uretirdi.
+    kapsam: Literal["tek", "seri"] = "tek"
 
 
 class VardiyaSimdiOut(BaseModel):

@@ -6580,4 +6580,20 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get ayarlarGorunumBuyuk => 'Крупное';
+
+  @override
+  String get vardiyaGrubaEkle => 'Добавить эту группу';
+
+  @override
+  String get vardiyaOnizle => 'Предпросмотр';
+
+  @override
+  String vardiyaGrupOzeti(int gun, String dilim) {
+    return '$gun дн. · $dilim';
+  }
+
+  @override
+  String vardiyaOnizlemeSonuc(int eklenecek, int cakisan) {
+    return 'Будет создано смен: $eklenecek, конфликтов: $cakisan';
+  }
 }

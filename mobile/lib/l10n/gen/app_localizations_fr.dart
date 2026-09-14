@@ -6501,4 +6501,20 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get ayarlarGorunumBuyuk => 'Grand';
+
+  @override
+  String get vardiyaGrubaEkle => 'Ajouter ce groupe';
+
+  @override
+  String get vardiyaOnizle => 'Aperçu';
+
+  @override
+  String vardiyaGrupOzeti(int gun, String dilim) {
+    return '$gun jours · $dilim';
+  }
+
+  @override
+  String vardiyaOnizlemeSonuc(int eklenecek, int cakisan) {
+    return '$eklenecek postes seront créés, $cakisan conflits';
+  }
 }

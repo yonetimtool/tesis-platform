@@ -240,3 +240,85 @@ class VardiyaTopluSonuc {
     );
   }
 }
+
+/// (P232) Bir vardiya DILIMI — "Gece 22:00-06:00".
+///
+/// Sunucudaki `VardiyaDilim` ile birebir. Gece/gunduz "kalibi" ZATEN bu
+/// kavramdir (P207); ikinci bir kavram uretilmedi.
+class VardiyaDilim {
+  const VardiyaDilim({
+    required this.ad,
+    required this.baslangic,
+    required this.bitis,
+  });
+
+  final String ad;
+  final String baslangic;
+  final String bitis;
+
+  Map<String, dynamic> toJson() => {
+    'ad': ad,
+    'baslangic': baslangic,
+    'bitis': bitis,
+  };
+}
+
+/// (P232) BIR GUN GRUBU + o gruba uygulanacak dilimler.
+///
+/// "Pazartesi gunduz, sali-carsamba gece" TEK istekte gonderilir: gruplar
+/// ayri ayri yazilsaydi geri alma birden cok istek olurdu — kullanici
+/// acisindan tek karar, sistemde birden cok iz.
+class VardiyaGunGrubu {
+  const VardiyaGunGrubu({
+    required this.gunler,
+    required this.dilimler,
+    required this.atamalar,
+  });
+
+  /// `yyyy-MM-dd` — DUZENSIZ olabilir, aralik DEGIL.
+  final List<String> gunler;
+  final List<VardiyaDilim> dilimler;
+
+  /// dilim sirasi -> personel kimlikleri.
+  final Map<int, List<String>> atamalar;
+
+  Map<String, dynamic> toJson() => {
+    'gunler': gunler,
+    'dilimler': [for (final d in dilimler) d.toJson()],
+    // Sunucu anahtarlari DIZGE bekliyor (JSON nesne anahtari).
+    'atamalar': {
+      for (final e in atamalar.entries) e.key.toString(): e.value,
+    },
+  };
+}
+
+/// (P232) `kalip-uygula` yaniti — onizleme ve uygulama AYNI sekli doner.
+class VardiyaKalipSonuc {
+  const VardiyaKalipSonuc({
+    required this.uygulandi,
+    required this.eklenecek,
+    required this.eklenen,
+    required this.cakisan,
+    required this.zatenVar,
+    this.partiId,
+  });
+
+  final bool uygulandi;
+  final int eklenecek;
+  final int eklenen;
+  final int cakisan;
+  final int zatenVar;
+
+  /// Geri alma icin (P207). Onizlemede null.
+  final String? partiId;
+
+  factory VardiyaKalipSonuc.fromJson(Map<String, dynamic> json) =>
+      VardiyaKalipSonuc(
+        uygulandi: json['uygulandi'] as bool? ?? false,
+        eklenecek: (json['eklenecek'] as num?)?.toInt() ?? 0,
+        eklenen: (json['eklenen'] as num?)?.toInt() ?? 0,
+        cakisan: (json['cakisan'] as num?)?.toInt() ?? 0,
+        zatenVar: (json['zaten_var'] as num?)?.toInt() ?? 0,
+        partiId: json['parti_id'] as String?,
+      );
+}

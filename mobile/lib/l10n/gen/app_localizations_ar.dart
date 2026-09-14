@@ -6572,4 +6572,20 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get ayarlarGorunumBuyuk => 'كبير';
+
+  @override
+  String get vardiyaGrubaEkle => 'أضف هذه المجموعة';
+
+  @override
+  String get vardiyaOnizle => 'معاينة';
+
+  @override
+  String vardiyaGrupOzeti(int gun, String dilim) {
+    return '$gun يوم · $dilim';
+  }
+
+  @override
+  String vardiyaOnizlemeSonuc(int eklenecek, int cakisan) {
+    return 'سيتم إنشاء $eklenecek وردية، $cakisan تعارض';
+  }
 }

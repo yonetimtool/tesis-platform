@@ -2164,5 +2164,9 @@
   "gorevAtayanBilgi": "أسندها: {ad}",
   "ayarlarGorunumAciklama": "العرض الكبير: يكبر النص والأيقونات، وتنخفض مربعات الشاشة الرئيسية من 8 إلى 4 في عمودين. يبقى إعداد حجم النص في جهازك ساريًا.",
   "ayarlarGorunumStandart": "قياسي",
-  "ayarlarGorunumBuyuk": "كبير"
+  "ayarlarGorunumBuyuk": "كبير",
+  "vardiyaGrubaEkle": "أضف هذه المجموعة",
+  "vardiyaOnizle": "معاينة",
+  "vardiyaGrupOzeti": "{gun} يوم · {dilim}",
+  "vardiyaOnizlemeSonuc": "سيتم إنشاء {eklenecek} وردية، {cakisan} تعارض"
 }

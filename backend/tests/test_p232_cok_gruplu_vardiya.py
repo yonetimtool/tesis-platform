@@ -203,3 +203,94 @@ def test_AMIR_COK_GRUPLU_ISTEKLE_DE_KAPSAM_DISINA_CIKAMAZ(client, world, yon):
         }],
     })
     assert r.status_code == 403, r.text
+
+
+# ==================================================================== #
+# 5. DUZENLEME: "yalniz bu gunu" / "tum seriyi"
+# ==================================================================== #
+
+def _seri_kur(client, yon, kisi, ofset: int):
+    r = _uygula(client, yon, [
+        {"gunler": [_gun(ofset), _gun(ofset + 1), _gun(ofset + 2)],
+         "dilimler": [GUNDUZ], "atamalar": {"0": [kisi]}},
+    ])
+    assert r.status_code == 200 and r.json()["eklenen"] == 3, r.text
+    parti = r.json()["parti_id"]
+    cizelge = client.get(
+        f"/vardiya-plani/cizelge?baslangic={_gun(ofset)}&gun=3", headers=yon)
+    assert cizelge.status_code == 200, cizelge.text
+    bloklar = [b for k in cizelge.json()["personel"] for b in k["bloklar"]]
+    return parti, bloklar
+
+
+def test_TEK_KAPSAM_YALNIZ_O_GUNU_DEGISTIRIR(client, yon, kisi):
+    """VARSAYILAN `tek` VE BU BILINCLI: tek satiri duzeltmek en sik
+    yapilan is; varsayilani `seri` yapmak kullanicinin BEKLEMEDIGI bir
+    toplu degisiklik uretirdi."""
+    _, bloklar = _seri_kur(client, yon, kisi, 100)
+    hedef = bloklar[0]
+    r = client.patch(f"/vardiya-plani/{hedef['plan_id']}", headers=yon,
+                     json={"baslangic_saat": "09:00"})
+    assert r.status_code == 200, r.text
+
+    cizelge = client.get(
+        f"/vardiya-plani/cizelge?baslangic={_gun(100)}&gun=3", headers=yon)
+    saatler = sorted(
+        b["baslar"][11:16] for k in cizelge.json()["personel"]
+        for b in k["bloklar"])
+    assert saatler.count("09:00") == 1, saatler
+    assert saatler.count("08:00") == 2, saatler
+
+
+def test_SERI_KAPSAMI_TUM_PARTIYI_DEGISTIRIR(client, yon, kisi):
+    _, bloklar = _seri_kur(client, yon, kisi, 110)
+    hedef = bloklar[0]
+    r = client.patch(f"/vardiya-plani/{hedef['plan_id']}", headers=yon,
+                     json={"baslangic_saat": "10:00", "kapsam": "seri"})
+    assert r.status_code == 200, r.text
+
+    cizelge = client.get(
+        f"/vardiya-plani/cizelge?baslangic={_gun(110)}&gun=3", headers=yon)
+    saatler = sorted(
+        b["baslar"][11:16] for k in cizelge.json()["personel"]
+        for b in k["bloklar"])
+    assert saatler == ["10:00", "10:00", "10:00"], saatler
+
+
+def test_SERIDE_TARIH_DEGISTIRILEMEZ(client, yon, kisi):
+    """SERT KURAL: serideki her satirin KENDI tarihi var; hepsini tek
+    tarihe cekmek otuz gunluk plani TEK GUNE YIGMAK olurdu."""
+    _, bloklar = _seri_kur(client, yon, kisi, 120)
+    r = client.patch(f"/vardiya-plani/{bloklar[0]['plan_id']}", headers=yon,
+                     json={"tarih": _gun(130), "kapsam": "seri"})
+    assert r.status_code == 422, r.text
+
+
+def test_PARTISI_OLMAYAN_SATIRDA_SERI_REDDEDILIR(client, yon, kisi):
+    """Sessizce "tek" gibi davranmak, kullaniciya yaptigini sandigi seyi
+    YAPMAMIS olmak olurdu."""
+    g = _gun(140)
+    r = client.post("/vardiya-plani/toplu", headers=yon, json={
+        "user_id": kisi, "baslangic_tarih": g, "bitis_tarih": g,
+        "baslangic_saat": "08:00", "bitis_saat": "16:00"})
+    assert r.status_code == 200 and r.json()["eklenen"] == 1, r.text
+    cizelge = client.get(
+        f"/vardiya-plani/cizelge?baslangic={g}&gun=1", headers=yon).json()
+    pid = [b for k in cizelge["personel"] for b in k["bloklar"]][0]["plan_id"]
+    d = client.patch(f"/vardiya-plani/{pid}", headers=yon,
+                     json={"baslangic_saat": "09:00", "kapsam": "seri"})
+    assert d.status_code == 422, d.text
+
+
+def test_KAPSAM_DENETIME_YAZILIR(client, yon, kisi, owner_conn):
+    """"Otuz vardiyam neden degisti" sorusunun yaniti denetimde
+    aranir."""
+    _, bloklar = _seri_kur(client, yon, kisi, 150)
+    client.patch(f"/vardiya-plani/{bloklar[0]['plan_id']}", headers=yon,
+                 json={"baslangic_saat": "11:00", "kapsam": "seri"})
+    satir = owner_conn.execute(
+        "SELECT meta FROM audit_log WHERE resource_id = %s "
+        "AND action = 'vardiya_plan_update' ORDER BY ts DESC LIMIT 1",
+        (bloklar[0]["plan_id"],)).fetchone()
+    assert satir is not None, "guncelleme denetime yazilmadi"
+    assert "seri" in str(satir[0]), satir[0]

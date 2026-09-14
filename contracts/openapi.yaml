@@ -17354,6 +17354,24 @@ components:
         baslangic_saat: { type: string, nullable: true }
         bitis_saat: { type: string, nullable: true }
         not_metni: { type: string, maxLength: 500, nullable: true }
+        kapsam:
+          type: string
+          enum: [tek, seri]
+          default: tek
+          description: >
+            (P232) "YALNIZ BU GUNU" / "TUM SERIYI". Seri = ayni
+            `parti_id`yi tasiyan satirlar (P207 toplu isleminin urettigi
+            kume).
+
+            VARSAYILAN `tek` VE BU BILINCLI: tek satiri duzeltmek en sik
+            yapilan is; varsayilani `seri` yapmak kullanicinin
+            BEKLEMEDIGI bir toplu degisiklik uretirdi.
+
+            `seri` iken TARIH DEGISTIRILEMEZ (422): serideki her satirin
+            kendi tarihi var ve hepsini tek tarihe cekmek, otuz gunluk
+            plani TEK GUNE YIGMAK olurdu. Partisi olmayan satirda `seri`
+            de 422 — sessizce "tek" gibi davranmak, kullaniciya
+            yaptigini sandigi seyi YAPMAMIS olmak olurdu.
     VardiyaDilim:
       type: object
       required: [ad, baslangic, bitis]

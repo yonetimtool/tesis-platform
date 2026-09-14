@@ -109,8 +109,21 @@ echo ">> yeniden kuruluyor: ${SERVISLER[*]}"
 docker compose up -d --force-recreate "${SERVISLER[@]}"
 # Konteynerin ayaga kalkmasini BEKLE: hemen ardindan pytest calistiran
 # cagrilar "container is restarting" hatasi aliyordu.
-for _ in $(seq 1 30); do
-  if docker compose exec -T api python -c "pass" 2>/dev/null; then
+# HAZIR = UYGULAMA YANIT VERIYOR, "python calisiyor" DEGIL.
+#
+# Ilk yazimda `python -c pass` kullanilmisti ve YETERSIZDI: konteyner
+# ayaga kalkmis ama uvicorn heniz dinlemiyorken ">> hazir" yaziyordu;
+# hemen ardindan kosan testler 14 tanesini "API erisilemiyor" diye
+# ATLADI (olculdu). Atlanan test, gecmis test gibi gorunur — sessiz bir
+# yanlis guven.
+for _ in $(seq 1 45); do
+  if docker compose exec -T api python -c "
+import urllib.request, sys
+try:
+    urllib.request.urlopen('http://localhost:8000/health', timeout=2)
+except Exception:
+    sys.exit(1)
+" 2>/dev/null; then
     echo ">> hazir"
     exit 0
   fi

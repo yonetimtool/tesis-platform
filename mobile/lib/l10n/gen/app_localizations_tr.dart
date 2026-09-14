@@ -6316,4 +6316,20 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get ayarlarGorunumBuyuk => 'Büyük';
+
+  @override
+  String get vardiyaGrubaEkle => 'Bu grubu ekle';
+
+  @override
+  String get vardiyaOnizle => 'Önizle';
+
+  @override
+  String vardiyaGrupOzeti(int gun, String dilim) {
+    return '$gun gün · $dilim';
+  }
+
+  @override
+  String vardiyaOnizlemeSonuc(int eklenecek, int cakisan) {
+    return '$eklenecek vardiya oluşacak, $cakisan çakışma';
+  }
 }

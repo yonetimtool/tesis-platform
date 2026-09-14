@@ -2164,5 +2164,9 @@
   "gorevAtayanBilgi": "Assigned by: {ad}",
   "ayarlarGorunumAciklama": "Large display: text and icons grow, and the home grid drops from 8 tiles to 4 in two columns. Your device’s own text-size setting still applies.",
   "ayarlarGorunumStandart": "Standard",
-  "ayarlarGorunumBuyuk": "Large"
+  "ayarlarGorunumBuyuk": "Large",
+  "vardiyaGrubaEkle": "Add this group",
+  "vardiyaOnizle": "Preview",
+  "vardiyaGrupOzeti": "{gun} days · {dilim}",
+  "vardiyaOnizlemeSonuc": "{eklenecek} shifts will be created, {cakisan} conflicts"
 }

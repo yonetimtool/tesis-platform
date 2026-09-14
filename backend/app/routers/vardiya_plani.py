@@ -1073,7 +1073,22 @@ async def guncelle(
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_YAZAR),
 ) -> VardiyaPlanOut:
-    """(§2.3) Blogun saatini/gununu degistir — DENETIME YAZILIR."""
+    """(§2.3) Blogun saatini/gununu degistir — DENETIME YAZILIR.
+
+    =======================================================================
+    (P232) "YALNIZ BU GUNU" / "TUM SERIYI"
+    =======================================================================
+    `kapsam="seri"` ayni `parti_id`yi tasiyan TUM satirlari gunceller.
+
+    TARIH SERIDE DEGISTIRILEMEZ ve bu kural sert: serideki her satirin
+    KENDI tarihi var; hepsini tek bir tarihe cekmek, otuz gunluk bir
+    plani tek gune YIGMAK olurdu — kullanicinin "saati duzeltiyorum"
+    derken kaybedecegi bir sey. 422 ile reddedilir.
+
+    PARTISI OLMAYAN satirda `seri` ANLAMSIZDIR (tekil ekleme): sessizce
+    "tek" gibi davranmak, kullaniciya yaptigini sandigi seyi YAPMAMIS
+    olmak olurdu. Acikca reddedilir.
+    """
     plan = (
         await db.execute(select(VardiyaPlani).where(VardiyaPlani.id == plan_id))
     ).scalar_one_or_none()
@@ -1087,6 +1102,12 @@ async def guncelle(
         ).scalar_one_or_none()
     )
     onceki = plan_araligi(plan, shift)
+
+    if body.kapsam == "seri":
+        if body.tarih is not None:
+            raise APIError(422, "validation_error", "vardiya_seride_tarih_degismez")
+        if plan.parti_id is None:
+            raise APIError(422, "validation_error", "vardiya_seri_yok")
 
     yeni_tarih = body.tarih or plan.tarih
     yeni_bas = body.baslangic_saat or onceki[0].time()
@@ -1108,6 +1129,33 @@ async def guncelle(
     plan.bitis_saat = yeni_son
     if body.not_metni is not None:
         plan.not_metni = body.not_metni
+
+    # (P232) TUM SERI: ayni partideki DIGER satirlar da guncellenir.
+    #
+    # YALNIZ SAAT VE NOT tasinir — tarih yukarida zaten reddedildi.
+    # Cakisma denetimi satir satir YAPILMAZ ve bu bilincli: seri
+    # duzenleme "bu vardiyanin saati degisti" demek ve her satir icin
+    # ayri bir 409 uretmek, kullaniciyi otuz kez ayni karari vermeye
+    # zorlardi. Cakisan satirlar `uyarilar`da doner.
+    seri_guncellenen = 0
+    if body.kapsam == "seri":
+        digerleri = (
+            await db.execute(
+                select(VardiyaPlani).where(
+                    VardiyaPlani.parti_id == plan.parti_id,
+                    VardiyaPlani.id != plan.id,
+                    VardiyaPlani.durum == "planli",
+                )
+            )
+        ).scalars().all()
+        for d in digerleri:
+            if body.baslangic_saat is not None:
+                d.baslangic_saat = body.baslangic_saat
+            if body.bitis_saat is not None:
+                d.bitis_saat = body.bitis_saat
+            if body.not_metni is not None:
+                d.not_metni = body.not_metni
+            seri_guncellenen += 1
     await db.flush()
     await audit_user(
         db, user, Action.VARDIYA_PLAN_UPDATE, resource_type="vardiya_plani",
@@ -1116,6 +1164,10 @@ async def guncelle(
             "islem": "guncelle",
             "onceki": f"{onceki[0].isoformat()}/{onceki[1].isoformat()}",
             "yeni": f"{aralik[0].isoformat()}/{aralik[1].isoformat()}",
+            # KAPSAM DENETIME YAZILIR: "otuz vardiyam neden degisti"
+            # sorusunun yaniti burada aranir.
+            "kapsam": body.kapsam,
+            "seri_guncellenen": seri_guncellenen,
         },
     )
     return VardiyaPlanOut(

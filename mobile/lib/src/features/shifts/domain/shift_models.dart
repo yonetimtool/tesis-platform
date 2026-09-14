@@ -82,3 +82,4 @@ class Shift {
 // gun_tipi ETIKETI burada DEGIL: tur 12'de kimlik/metin ayrimina gecildi
 // (README §15). Domain sozlesme tel degerini (`hafta_ici`, null = kisitsiz)
 // tasir; gorunen ad `presentation/gun_tipi_adi.dart` icinde cozulur.
+

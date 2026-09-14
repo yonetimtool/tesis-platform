@@ -2164,5 +2164,9 @@
   "gorevAtayanBilgi": "Attribuée par : {ad}",
   "ayarlarGorunumAciklama": "Affichage agrandi : le texte et les icônes grossissent, la grille d’accueil passe de 8 à 4 tuiles sur deux colonnes. Le réglage de taille de texte de votre appareil reste appliqué.",
   "ayarlarGorunumStandart": "Standard",
-  "ayarlarGorunumBuyuk": "Grand"
+  "ayarlarGorunumBuyuk": "Grand",
+  "vardiyaGrubaEkle": "Ajouter ce groupe",
+  "vardiyaOnizle": "Aperçu",
+  "vardiyaGrupOzeti": "{gun} jours · {dilim}",
+  "vardiyaOnizlemeSonuc": "{eklenecek} postes seront créés, {cakisan} conflits"
 }

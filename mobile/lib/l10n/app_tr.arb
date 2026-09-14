@@ -3021,5 +3021,29 @@
   },
   "ayarlarGorunumAciklama": "Büyük görünüm: yazılar ve simgeler büyür, ana ekrandaki kutucuklar 8’den 4’e düşer ve iki sütuna yerleşir. Cihazınızın yazı boyutu ayarını da kullanmaya devam eder.",
   "ayarlarGorunumStandart": "Standart",
-  "ayarlarGorunumBuyuk": "Büyük"
+  "ayarlarGorunumBuyuk": "Büyük",
+  "vardiyaGrubaEkle": "Bu grubu ekle",
+  "vardiyaOnizle": "Önizle",
+  "vardiyaGrupOzeti": "{gun} gün · {dilim}",
+  "@vardiyaGrupOzeti": {
+    "placeholders": {
+      "gun": {
+        "type": "int"
+      },
+      "dilim": {
+        "type": "String"
+      }
+    }
+  },
+  "vardiyaOnizlemeSonuc": "{eklenecek} vardiya oluşacak, {cakisan} çakışma",
+  "@vardiyaOnizlemeSonuc": {
+    "placeholders": {
+      "eklenecek": {
+        "type": "int"
+      },
+      "cakisan": {
+        "type": "int"
+      }
+    }
+  }
 }

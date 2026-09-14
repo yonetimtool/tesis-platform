@@ -457,6 +457,26 @@ METINLER: dict[str, dict[str, str]] = {
     # (P231 §1) Amiri yalniz tesisin yoneticisi atar; admin ancak tesiste
     # aktif yonetici YOKKEN (kurtarma yolu).
     # (P231 §2) Amir yalniz kendi ekibinin vardiyasina dokunabilir.
+    # (P232) Seri duzenlemede TARIH degistirilemez.
+    "vardiya_seride_tarih_degismez": {
+        "tr": "Tüm seride tarih değiştirilemez; yalnız bu günü seçin.",
+        "en": "The date cannot be changed for a whole series; choose “only this day”.",
+        "ar": "لا يمكن تغيير التاريخ لسلسلة كاملة؛ اختر «هذا اليوم فقط».",
+        "ru": "Дату нельзя изменить для всей серии; выберите «только этот день».",
+        "de": "Das Datum kann nicht für eine ganze Serie geändert werden; wählen Sie „nur dieser Tag“.",
+        "fr": "La date ne peut pas être modifiée pour toute une série ; choisissez « ce jour uniquement ».",
+        "es": "La fecha no puede cambiarse para toda una serie; elija «solo este día».",
+    },
+    # (P232) Bu satir bir seriye ait degil (tekil ekleme).
+    "vardiya_seri_yok": {
+        "tr": "Bu vardiya bir seriye ait değil.",
+        "en": "This shift is not part of a series.",
+        "ar": "هذه الوردية ليست ضمن سلسلة.",
+        "ru": "Эта смена не входит в серию.",
+        "de": "Diese Schicht gehört zu keiner Serie.",
+        "fr": "Ce poste ne fait pas partie d'une série.",
+        "es": "Este turno no forma parte de una serie.",
+    },
     "vardiya_yalniz_kendi_ekibin": {
         "tr": "Yalnız kendi ekibinizin vardiyasını düzenleyebilirsiniz.",
         "en": "You can only edit your own team's shifts.",
