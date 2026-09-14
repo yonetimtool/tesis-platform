@@ -6596,4 +6596,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String vardiyaOnizlemeSonuc(int eklenecek, int cakisan) {
     return 'Будет создано смен: $eklenecek, конфликтов: $cakisan';
   }
+
+  @override
+  String get kurulumKonum => 'Расположение объекта';
+
+  @override
+  String get kurulumKonumAlt =>
+      'Укажите, где находится объект, чтобы погода была верной. Настраивается в веб-панели.';
 }

@@ -2168,5 +2168,7 @@
   "vardiyaGrubaEkle": "أضف هذه المجموعة",
   "vardiyaOnizle": "معاينة",
   "vardiyaGrupOzeti": "{gun} يوم · {dilim}",
-  "vardiyaOnizlemeSonuc": "سيتم إنشاء {eklenecek} وردية، {cakisan} تعارض"
+  "vardiyaOnizlemeSonuc": "سيتم إنشاء {eklenecek} وردية، {cakisan} تعارض",
+  "kurulumKonum": "موقع المنشأة",
+  "kurulumKonumAlt": "أدخل موقع المنشأة ليكون الطقس صحيحًا. يُضبط من لوحة الويب."
 }

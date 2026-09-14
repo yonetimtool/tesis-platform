@@ -127,6 +127,31 @@ async def _otomasyon_karari(db: AsyncSession, tenant: Tenant) -> int:
     return 1 if tenant.kurulum_otomasyon_karari else 0
 
 
+async def _konum_verildi(db: AsyncSession, tenant: Tenant) -> int:
+    """(P233 §1) Tesisin konumu GERCEKTEN girildi mi (1) yoksa hala
+    VARSAYILAN mi (0).
+
+    OLCUT ALANIN DOLU OLMASI DEGIL: `konum_lat/lon` goc 0005'ten beri
+    NOT NULL ve `server_default` ile Istanbul koordinatini tasiyor
+    (41.0082, 28.9784). "Dolu mu" diye sormak, HIC AYARLANMAMIS her
+    tesisi "tamam" saymak olurdu — olculdu: dev'deki tesislerin
+    HEPSI ayni varsayilani tasiyor ve Erzurum'daki tesis Istanbul
+    havasini gosteriyordu.
+
+    Bu yuzden olcut "varsayilandan FARKLI mi". Gercekten Istanbul'da
+    olan bir tesis icin bu yanlis negatif uretir (adim "yapilmadi"
+    gorunur) — kabul edilebilir: adim ZORUNLU DEGIL ve yonetici
+    konumu bir kez onaylayinca (kucuk bir oynamayla ya da ad
+    degisikligiyle) kapanir. Tersi — yanlis pozitif — her tesise
+    sessizce yanlis hava durumu gostermekti.
+    """
+    varsayilan = (
+        abs(float(tenant.konum_lat) - 41.0082) < 1e-4
+        and abs(float(tenant.konum_lon) - 28.9784) < 1e-4
+    )
+    return 0 if varsayilan else 1
+
+
 async def _eposta_hazir(db: AsyncSession, tenant: Tenant) -> int:
     """E-posta gonderimi CALISIR durumda mi (1) degil mi (0).
 
@@ -174,6 +199,18 @@ ADIMLAR: tuple[_Adim, ...] = (
     # kaldirildi, tip artik yonetici-tanimli kategoridir).
     _Adim("gorev_alani", _say(TaskCategory)),
     _Adim("nfc_noktasi", _say(Checkpoint)),
+    # (P233 §1) KONUM — ZORUNLU DEGIL.
+    #
+    # NEDEN ZORUNLU DEGIL: alan goc 0005'ten beri NOT NULL ve
+    # varsayilani var; zorunlu isaretlemek, BUGUN CALISAN her tesisi
+    # bir gecede "eksik" ilan etmek olurdu — hicbiri bozulmus degil,
+    # yalnizca hava durumlari yanlis. Sihirbaz bunu GOSTERIR ve
+    # duzeltmeyi kolaylastirir; tesisi durdurmaz.
+    #
+    # KONUMU KIM GIRER: `/konum/ara` yonetim rollerine acik. Okuma
+    # (hava durumu) herkese acik — tesisin genel bilgisi, sakinden
+    # saklamanin anlami yok.
+    _Adim("konum", olcu=_konum_verildi),
     # (P193 §2) KASA — AIDATTAN ONCE ve ZORUNLU.
     #
     # Rehber, eksik 11: tahakkuk yazmak yetmiyor, tahsilat bir kasaya

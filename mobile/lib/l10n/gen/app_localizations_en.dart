@@ -6526,4 +6526,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String vardiyaOnizlemeSonuc(int eklenecek, int cakisan) {
     return '$eklenecek shifts will be created, $cakisan conflicts';
   }
+
+  @override
+  String get kurulumKonum => 'Site location';
+
+  @override
+  String get kurulumKonumAlt =>
+      'Enter where the site is so the weather is correct. Set it from the web panel.';
 }

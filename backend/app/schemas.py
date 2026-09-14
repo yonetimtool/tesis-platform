@@ -3728,6 +3728,21 @@ class TenantSettings(BaseModel):
     vardiya_baslamadi_dk: int = 15
 
 
+class KonumAdayi(BaseModel):
+    """(P233 §1) Cografi kodlama adayi — yonetici LISTEDEN secer."""
+
+    ad: str
+    #: "Erzurum, Türkiye" gibi ayirt edici satir. Bos parcalar elenir.
+    aciklama: str
+    lat: float
+    lon: float
+
+
+class KonumAramaSonucu(BaseModel):
+    q: str
+    items: list[KonumAdayi]
+
+
 class TenantSettingsUpdate(BaseModel):
     """admin: hepsi. yonetici: `ad` + konum + otopark kapasitesi (digerleri 403
     — bkz. router)."""

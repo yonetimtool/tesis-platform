@@ -6517,4 +6517,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String vardiyaOnizlemeSonuc(int eklenecek, int cakisan) {
     return '$eklenecek postes seront créés, $cakisan conflits';
   }
+
+  @override
+  String get kurulumKonum => 'Emplacement du site';
+
+  @override
+  String get kurulumKonumAlt =>
+      'Indiquez où se trouve le site pour que la météo soit correcte. Se règle depuis le panneau web.';
 }

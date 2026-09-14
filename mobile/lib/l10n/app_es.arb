@@ -2168,5 +2168,7 @@
   "vardiyaGrubaEkle": "Añadir este grupo",
   "vardiyaOnizle": "Vista previa",
   "vardiyaGrupOzeti": "{gun} días · {dilim}",
-  "vardiyaOnizlemeSonuc": "Se crearán {eklenecek} turnos, {cakisan} conflictos"
+  "vardiyaOnizlemeSonuc": "Se crearán {eklenecek} turnos, {cakisan} conflictos",
+  "kurulumKonum": "Ubicación de la instalación",
+  "kurulumKonumAlt": "Indique dónde está la instalación para que el tiempo sea correcto. Se configura en el panel web."
 }

@@ -84,6 +84,10 @@ final Map<String, _Hedef> _hedefler = {
     (l) => l.kurulumNfcAlt,
     AppRoutes.checkpoints,
   ),
+  // (P233 §1) KONUM — mobilde tesis ayarlari ekrani YOK (yonetim isi,
+  // web yuzeyinde). Rota `null`: adim GORUNUR ama dokunulamaz; gizlemek,
+  // mobilden bakan yoneticiye kurulumu TAMAM gostermek olurdu.
+  'konum': _Hedef((l) => l.kurulumKonum, (l) => l.kurulumKonumAlt, null),
   // Bkz. sinif notu: mobilde ekrani yok + uc admin'e kilitli.
   'aidat': _Hedef((l) => l.kurulumAidat, (l) => l.kurulumAidatAlt, null),
 };

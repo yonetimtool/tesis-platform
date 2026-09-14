@@ -107,6 +107,19 @@ export const KURULUM_HEDEFLERI: Record<string, KurulumHedefi> = {
     rota: "/checkpoints",
     engel: "kurulumEngelNfc",
   },
+  // (P233 §1) KONUM — hava durumu ve bolgesel analiz icin.
+  //
+  // OLCULEN KUSUR: `konum_lat/lon` goc 0005'ten beri VAR ve `/weather`
+  // onlari kullaniyor, ama HIC AYARLANMIYORDU — her tesis sunucu
+  // varsayilani olan Istanbul koordinatini tasiyordu. Erzurum'daki bir
+  // tesis Istanbul havasini gosteriyordu ve kimse fark etmiyordu,
+  // cunku ekran CALISIYOR gorunur.
+  konum: {
+    etiket: "kurulumKonum",
+    aciklama: "kurulumKonumAlt",
+    rota: "/tesis-ayarlari",
+    engel: "kurulumEngelKonum",
+  },
   // (P193 §2) KASA — tahsilat bir kasaya yazilir; kasasiz tesiste
   // tahakkuk yazilabilir ama TAHSIL EDILEMEZ.
   kasa: {

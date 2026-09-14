@@ -6501,4 +6501,11 @@ class AppLocalizationsEs extends AppLocalizations {
   String vardiyaOnizlemeSonuc(int eklenecek, int cakisan) {
     return 'Se crearán $eklenecek turnos, $cakisan conflictos';
   }
+
+  @override
+  String get kurulumKonum => 'Ubicación de la instalación';
+
+  @override
+  String get kurulumKonumAlt =>
+      'Indique dónde está la instalación para que el tiempo sea correcto. Se configura en el panel web.';
 }

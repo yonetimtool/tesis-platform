@@ -11242,6 +11242,18 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'{eklenecek} vardiya oluşacak, {cakisan} çakışma'**
   String vardiyaOnizlemeSonuc(int eklenecek, int cakisan);
+
+  /// No description provided for @kurulumKonum.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tesis konumu'**
+  String get kurulumKonum;
+
+  /// No description provided for @kurulumKonumAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hava durumunun doğru görünmesi için tesisin bulunduğu yeri girin. Web panelinden ayarlanır.'**
+  String get kurulumKonumAlt;
 }
 
 class _AppLocalizationsDelegate

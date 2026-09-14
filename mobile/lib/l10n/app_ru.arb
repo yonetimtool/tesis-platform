@@ -2168,5 +2168,7 @@
   "vardiyaGrubaEkle": "Добавить эту группу",
   "vardiyaOnizle": "Предпросмотр",
   "vardiyaGrupOzeti": "{gun} дн. · {dilim}",
-  "vardiyaOnizlemeSonuc": "Будет создано смен: {eklenecek}, конфликтов: {cakisan}"
+  "vardiyaOnizlemeSonuc": "Будет создано смен: {eklenecek}, конфликтов: {cakisan}",
+  "kurulumKonum": "Расположение объекта",
+  "kurulumKonumAlt": "Укажите, где находится объект, чтобы погода была верной. Настраивается в веб-панели."
 }

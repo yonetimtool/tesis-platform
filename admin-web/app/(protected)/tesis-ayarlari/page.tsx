@@ -12,6 +12,7 @@ import {
   Kart,
   Secim,
 } from "@/components/ui";
+import { KonumSecici } from "@/components/KonumSecici";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
@@ -176,6 +177,22 @@ export default function TesisAyarlariPage() {
                 )}
               </AlanSarmal>
             ))}
+
+            {/* (P233 §1) KONUM — ENLEM/BOYLAM YAZDIRMIYORUZ.
+                Yonetici yer adini yazar, sunucu aday listesi doner
+                (`/konum/ara`), secilen adayin koordinati forma gecer.
+                Harita eklenmedi: mobilde harita paketi HIC YOK ve
+                yalniz web'e yapmak parite kuralini bozardi; ustelik
+                hava durumu ILCE duzeyinde dogruluk ister, sokak
+                degil. */}
+            <KonumSecici
+              mevcutAd={String(form.konum_ad ?? "")}
+              onSec={(a: { ad: string; lat: number; lon: number }) => {
+                yaz("konum_ad", a.ad);
+                yaz("konum_lat", a.lat);
+                yaz("konum_lon", a.lon);
+              }}
+            />
           </Kart>
 
           {/* ===================================================================

@@ -2168,5 +2168,7 @@
   "vardiyaGrubaEkle": "Ajouter ce groupe",
   "vardiyaOnizle": "Aperçu",
   "vardiyaGrupOzeti": "{gun} jours · {dilim}",
-  "vardiyaOnizlemeSonuc": "{eklenecek} postes seront créés, {cakisan} conflits"
+  "vardiyaOnizlemeSonuc": "{eklenecek} postes seront créés, {cakisan} conflits",
+  "kurulumKonum": "Emplacement du site",
+  "kurulumKonumAlt": "Indiquez où se trouve le site pour que la météo soit correcte. Se règle depuis le panneau web."
 }

@@ -3045,5 +3045,7 @@
         "type": "int"
       }
     }
-  }
+  },
+  "kurulumKonum": "Tesis konumu",
+  "kurulumKonumAlt": "Hava durumunun doğru görünmesi için tesisin bulunduğu yeri girin. Web panelinden ayarlanır."
 }

@@ -6525,4 +6525,11 @@ class AppLocalizationsDe extends AppLocalizations {
   String vardiyaOnizlemeSonuc(int eklenecek, int cakisan) {
     return '$eklenecek Schichten werden erstellt, $cakisan Konflikte';
   }
+
+  @override
+  String get kurulumKonum => 'Standort der Anlage';
+
+  @override
+  String get kurulumKonumAlt =>
+      'Geben Sie den Standort an, damit das Wetter stimmt. Einstellung im Webpanel.';
 }

@@ -6332,4 +6332,11 @@ class AppLocalizationsTr extends AppLocalizations {
   String vardiyaOnizlemeSonuc(int eklenecek, int cakisan) {
     return '$eklenecek vardiya oluşacak, $cakisan çakışma';
   }
+
+  @override
+  String get kurulumKonum => 'Tesis konumu';
+
+  @override
+  String get kurulumKonumAlt =>
+      'Hava durumunun doğru görünmesi için tesisin bulunduğu yeri girin. Web panelinden ayarlanır.';
 }

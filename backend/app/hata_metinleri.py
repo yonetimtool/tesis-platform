@@ -458,6 +458,20 @@ METINLER: dict[str, dict[str, str]] = {
     # aktif yonetici YOKKEN (kurtarma yolu).
     # (P231 §2) Amir yalniz kendi ekibinin vardiyasina dokunabilir.
     # (P232) Seri duzenlemede TARIH degistirilemez.
+    # (P233 §1) Cografi kodlama servisi erisilemiyor.
+    #
+    # BOS LISTE DEGIL 503: bos liste "boyle bir yer yok" demektir ve
+    # servis coktugunde bu YANLIS bir cumledir — kullaniciyi adresini
+    # yanlis yazdigini sanmaya iter.
+    "konum_servisi_yok": {
+        "tr": "Konum servisi şu an yanıt vermiyor. Birazdan tekrar deneyin.",
+        "en": "The location service is not responding. Please try again shortly.",
+        "ar": "خدمة الموقع لا تستجيب حاليًا. حاول بعد قليل.",
+        "ru": "Служба геолокации не отвечает. Повторите попытку позже.",
+        "de": "Der Ortungsdienst antwortet gerade nicht. Bitte gleich erneut versuchen.",
+        "fr": "Le service de localisation ne répond pas. Réessayez bientôt.",
+        "es": "El servicio de ubicación no responde. Inténtelo en breve.",
+    },
     "vardiya_seride_tarih_degismez": {
         "tr": "Tüm seride tarih değiştirilemez; yalnız bu günü seçin.",
         "en": "The date cannot be changed for a whole series; choose “only this day”.",

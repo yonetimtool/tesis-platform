@@ -6588,4 +6588,11 @@ class AppLocalizationsAr extends AppLocalizations {
   String vardiyaOnizlemeSonuc(int eklenecek, int cakisan) {
     return 'سيتم إنشاء $eklenecek وردية، $cakisan تعارض';
   }
+
+  @override
+  String get kurulumKonum => 'موقع المنشأة';
+
+  @override
+  String get kurulumKonumAlt =>
+      'أدخل موقع المنشأة ليكون الطقس صحيحًا. يُضبط من لوحة الويب.';
 }
