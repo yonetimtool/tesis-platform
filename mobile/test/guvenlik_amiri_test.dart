@@ -22,13 +22,15 @@ void main() {
     expect(homeVaryantForRole(amir), HomeVaryant.gorevli);
   });
 
-  test('menude TUR ve EKIP var; SAKIN/KARGO/ZIYARETCI YOK', () {
+  test('menude TUR/EKIP/ZIYARETCI var; SAKIN ve KARGO YOK', () {
     final menu = homeMenuForRole(amir);
     expect(menu, contains(HomeMenuEntry.patrol));
     expect(menu, contains(HomeMenuEntry.personel));
+    // (P231 §3) ZIYARETCI ACILDI: kaydi kapidaki gorevli girer, amirin
+    // isi onu DENETLEMEK. Yazma yetkisi verilmedi.
+    expect(menu, contains(HomeMenuEntry.visitors));
     for (final kapali in [
       HomeMenuEntry.kargo,
-      HomeMenuEntry.visitors,
       HomeMenuEntry.sakinler,
       HomeMenuEntry.myDues,
       HomeMenuEntry.budget,
@@ -43,17 +45,22 @@ void main() {
     expect(amir.isGuvenlikYonetimi, isTrue);
     expect(amir.canViewViolations, isTrue);
     expect(amir.canViewVehiclePasses, isTrue);
-    // KVKK: dis sirket personeline sakin kisisel verisi acilamaz.
+    // KVKK: dis sirket personeline SAKIN kisisel verisi acilamaz.
     expect(amir.canViewKargo, isFalse);
-    expect(amir.canViewVisitors, isFalse);
     expect(amir.canViewReservations, isFalse);
-    // Site yonetimi islevleri de kapali.
+    // (P231 §3) ZIYARETCI OKUMA ACILDI — kayit DENETIMI icin. Yazma
+    // hala kapali (`_REGISTRAR` yalniz `security`).
+    expect(amir.canViewVisitors, isTrue);
+    // (P231 §3) GOREV YONETIMI ACILDI — ama YALNIZ KENDI EKIBI icin;
+    // hedef kisi kisiti SUNUCUDA (`gorunur_roller`), istemci yalnizca
+    // ekranin gorunurlugunu secer.
+    expect(amir.canManageTasks, isTrue);
+    // Site yonetimi islevleri kapali.
     expect(amir.canManageAnnouncements, isFalse);
-    expect(amir.canManageTasks, isFalse);
     expect(amir.canPublishTransparency, isFalse);
   });
 
-  test('KART BAYRAKLARI: bildirim/arac/ihlal ACIK, kargo/ziyaretci KAPALI', () {
+  test('KART BAYRAKLARI: bildirim/arac/ihlal/ZIYARETCI ACIK, kargo KAPALI', () {
     // BULGU: saha ana ekrani tek bir `role == security` bayragina bakiyordu;
     // amir icin bu ya 403 uretecek istekler atardi ya da gordugu kartlari
     // gizlerdi. Kartlar artik YETENEK bayraklarina bakiyor.
@@ -61,7 +68,8 @@ void main() {
     expect(amir.canViewVehiclePasses, isTrue);
     expect(amir.canViewViolations, isTrue);
     expect(amir.canViewKargo, isFalse);
-    expect(amir.canViewVisitors, isFalse);
+    // (P231 §3) Ziyaretci OKUMA acildi (kayit denetimi); yazma kapali.
+    expect(amir.canViewVisitors, isTrue);
     // Tesis gorevlisi bildirim GORMEZ (mevcut davranis korunuyor).
     expect(UserRole.tesisGorevlisi.canViewNotifications, isFalse);
     expect(UserRole.security.canViewNotifications, isTrue);

@@ -133,7 +133,13 @@ enum UserRole {
   /// HEDEFLENEN kayitlar). admin VE yonetici VARSAYILAN KAPALI (403) — daireyi
   /// gormek icin tek-seferlik izin alirlar (bkz. canRequestUnitAccess).
   /// tesis_gorevlisi ERISMEZ.
-  bool get canViewVisitors => this == security || this == resident;
+  /// (P231 §3) AMIR DE OKUR — ama KAYDETMEZ.
+  ///
+  /// Kaydi kapidaki gorevli girer (`_REGISTRAR` = security); amirin isi
+  /// o kaydi DENETLEMEK. Yazma yetkisi vermek, amiri kapida duruyormus
+  /// gibi gostermek ve "kim kaydetti" izini bulaniklastirmak olurdu.
+  bool get canViewVisitors =>
+      this == security || this == resident || this == guvenlikAmiri;
 
   /// Ziyaretci kaydi acma (`POST /visitors`) — YALNIZ security (kapi
   /// operasyonu). Hedef sakini secer (target_resident_user_id). Ziyaretci
@@ -143,7 +149,17 @@ enum UserRole {
   /// Kargo LISTESINI dogrudan gorme (`GET /kargo`) — ziyaretci ile ayni
   /// gizlilik: security + resident (kendi dairesi); admin+yonetici varsayilan
   /// kapali. tesis_gorevlisi ERISMEZ (auth.md §4).
-  bool get canViewKargo => canViewVisitors;
+  /// (P231 §3) ARTIK `canViewVisitors`TAN TURETILMIYOR.
+  ///
+  /// OLCULEN KUSUR: ziyaretci okumasini amire acinca KARGO da sessizce
+  /// acildi — ikisi ayni bayragi paylasiyordu. Test yakaladi ve HAKLI:
+  /// kargo SAKIN kisisel verisidir (kime geldi, hangi daire) ve amirin
+  /// isiyle ilgisi yok; ziyaretci ise EKIBININ kaydettigi veridir.
+  ///
+  /// Iki kavram bir sure ayni kumeyi paylasti diye AYNI SEY degiller;
+  /// biri degisince otekinin de degismesi tam olarak bu tur sessiz
+  /// sizintilarin kaynagi.
+  bool get canViewKargo => this == security || this == resident;
 
   /// Tek-seferlik daire goruntuleme izni TALEBI acma
   /// (`POST /unit-access-request`) — admin + yonetici (ziyaretci/kargo onlara

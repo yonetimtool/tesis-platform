@@ -36,9 +36,18 @@ void main() {
   });
 
   group('(P143) KAPALI olanlar menude YOK', () {
+    // (P231 §3) `visitors` BU LISTEDEN CIKTI — kullanici karariyla
+    // amire ACILDI.
+    //
+    // Gerekce: ziyaretci kaydini KAPIDAKI gorevli girer ve amirin isi o
+    // kaydi DENETLEMEK. YAZMA yetkisi verilmedi (`_REGISTRAR` hala
+    // yalniz `security`); yazma yetkisi "kim kaydetti" izini
+    // bulaniklastirirdi.
+    //
+    // Kapali kalanlar hala kapali: kargo/rezervasyon/aidat/finans —
+    // dis sirket = EN AZ YETKI (KVKK).
     for (final g in [
       HomeMenuEntry.kargo,
-      HomeMenuEntry.visitors,
       HomeMenuEntry.rezervasyon,
       HomeMenuEntry.myDues,
       HomeMenuEntry.financialSummary,

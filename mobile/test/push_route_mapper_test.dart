@@ -159,10 +159,15 @@ void main() {
       }
     });
 
-    test('(Böl.10.2) vardiya ozeti -> vardiyalar ekrani', () {
+    test('(Böl.10.2) vardiya ozeti -> VARDIYA PLANI ekrani', () {
+      // (P232) Hedef `/vardiyalar`dan `/vardiya-plani`ya tasindi:
+      // sablon ekrani artik MENUDE YOK ve push'u menude olmayan bir
+      // ekrana dusurmek, kullaniciyi geri donemeyecegi bir yere
+      // goturmekti (P219 dersi). Anlam olarak da dogrusu bu —
+      // bildirim "kim ne zaman calisiyor" hakkinda.
       expect(
         pushHedefi({'tip': 'vardiya_ozeti', 'shift_id': 's-1'}, _rol),
-        '/vardiyalar',
+        '/vardiya-plani',
       );
     });
 

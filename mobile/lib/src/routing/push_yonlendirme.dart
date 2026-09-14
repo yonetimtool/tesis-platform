@@ -189,12 +189,19 @@ String? _hamHedef(Map<String, String> data, UserRole? role) {
     case 'duyuru':
       return AppRoutes.announcements;
     // Vardiya: hatirlatma/baslamadi GOREVLIYE, ozet YONETIME gider —
-    // ucu de ayni ekrani acar (`vardiyalar`) ve o ekran her iki tarafta
-    // da menude VAR.
+    // ucu de ayni ekrani acar.
+    //
+    // (P232) HEDEF `vardiyalar`DAN `vardiyaPlani`YA TASINDI. Sebep P219
+    // dersinin kendisi: `vardiyalar` (sablon ekrani) artik MENUDE YOK —
+    // menu girisi plana gidiyor. Push'u menude olmayan bir ekrana
+    // dusurmek, kullaniciyi geri donemeyecegi bir yere goturmekti.
+    //
+    // Anlam olarak da dogrusu bu: bildirimlerin hepsi "KIM NE ZAMAN
+    // calisiyor" hakkinda, sablon tanimi hakkinda degil.
     case 'vardiya_ozeti':
     case 'vardiya_hatirlatma':
     case 'vardiya_baslamadi':
-      return AppRoutes.vardiyalar;
+      return AppRoutes.vardiyaPlani;
     // Gorev atama SAHAYA gider -> "Gorevlerim". Yoneticiye ayni tipten
     // push GITMIYOR; gitseydi erisim suzgeci `/tasks`i onun menusunde
     // de bulur ve dogru calisirdi.
