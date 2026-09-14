@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../core/ui/telefon_alani.dart';
+import '../../../core/ui/telefon_alani_widget.dart';
 import '../data/dukkan_api.dart';
 import '../data/dukkan_oturum.dart';
 
@@ -124,14 +125,13 @@ class _DukkanTelefonState extends ConsumerState<DukkanTelefonScreen> {
           ),
           const SizedBox(height: 20),
           if (_adim == _Adim.telefon) ...[
-            TextField(
-              controller: _telefonKtrl,
-              keyboardType: TextInputType.phone,
-              inputFormatters: const [TelefonBicimlendirici()],
-              decoration: InputDecoration(
-                labelText: t.dukkanTelefonAlani,
-                prefixText: '+90 ',
-              ),
+            TelefonAlani(
+              ktrl: _telefonKtrl,
+              // (P233 §3) `prefixText: '+90 '` KALDIRILDI: ülke kodu artık
+              // seçilir. Sabit ön ek, yabancı numarayla kaydolmayı
+              // imkânsız kılıyordu (Dükkân girişi TELEFONLA yapılır).
+              etiket: t.dukkanTelefonAlani,
+              zorunlu: false,
             ),
             const SizedBox(height: 12),
             TextField(

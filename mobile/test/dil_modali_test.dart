@@ -1,8 +1,14 @@
-// (P140.4) DIL SECICI — mobil sag ust + ortada modal.
+// (P140.4 · P233 §2) DIL SECICI MODALI.
 //
-// Kerem: "profil resmi + yaninda ceviri simgesi; simgeye dokununca
-// ekranin ortasinda dil secenekleri modal olarak acilir; secilen dil
-// aninda uygulanir ve kalici olarak saklanir. 7 dil."
+// Kerem (P140.4): "simgeye dokununca ekranin ortasinda dil secenekleri
+// modal olarak acilir; secilen dil aninda uygulanir ve kalici olarak
+// saklanir. 7 dil."
+//
+// (P233 §2) UST BARDAKI DIL SIMGESI KALDIRILDI (yerine ARAMA geldi; dil
+// zaten Ayarlar'dan degistirilebiliyor). Modalin KENDISI duruyor ve bu
+// dosya onu olcmeye devam ediyor — testteki `DilButonu` yerine yerel bir
+// acici dugme kullaniliyor. Modali de silmek, ileride baska bir yerden
+// acmak isteyeni sifirdan yazmaya zorlardi.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -15,25 +21,29 @@ void main() {
         child: MaterialApp(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: supportedLocales,
-          home: const Scaffold(
+          home: Scaffold(
             appBar: null,
-            body: Center(child: DilButonu()),
+            body: Center(
+              child: Builder(
+                builder: (ctx) => IconButton(
+                  key: const Key('home-dil'),
+                  tooltip: ctx.l10n.dilSeciciBaslik,
+                  icon: const Icon(Icons.translate),
+                  onPressed: () => dilModaliniAc(ctx),
+                ),
+              ),
+            ),
           ),
         ),
       );
 
-  testWidgets('simge 44pt DOKUNMA HEDEFI ve erisilebilir AD tasir',
-      (tester) async {
-    await tester.pumpWidget(kur());
-    final kutu = tester.getSize(find.byKey(const Key('home-dil')));
-    expect(kutu.width, greaterThanOrEqualTo(44));
-    expect(kutu.height, greaterThanOrEqualTo(44));
-    // Simge tek basina "bu ne yapar" sorusunu yanitlamaz.
-    expect(
-      tester.getSemantics(find.byKey(const Key('home-dil'))).label.isNotEmpty,
-      isTrue,
-    );
-  });
+  // (P233 §2) "SIMGE 44pt DOKUNMA HEDEFI" TESTI BURADAN KALKTI.
+  //
+  // O test `DilButonu`yu olcuyordu; buton kaldirilinca geriye yalnizca bu
+  // dosyanin KENDI actigi yerel dugme kalirdi — yani test kendi kurdugu
+  // widget'i olcerdi ve hicbir sey kanitlamazdi. Ust bardaki dugmenin
+  // dokunma hedefi kilidi `p233_ust_bar_arama_test.dart` icinde, ARAMA
+  // dugmesi uzerinde duruyor.
 
   testWidgets('dokununca YEDI DIL modalda listelenir', (tester) async {
     await tester.pumpWidget(kur());

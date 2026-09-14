@@ -2113,9 +2113,41 @@
   "@grafikVeriYok": {
     "description": "(P223) Grafik icin veri yok"
   },
-  "telefonHataTasma": "Номер телефона не может быть длиннее 10 цифр. Удалите лишние цифры.",
+  "telefonHataTasma": "Превышено допустимое для этой страны количество цифр. Удалите лишние цифры.",
   "@telefonHataTasma": {
     "description": "(P227) Telefon 10 haneden uzun"
+  },
+  "telefonHataUlkeYok": "Сначала выберите код страны.",
+  "@telefonHataUlkeYok": {
+    "description": "(P233) Ulke kodu secilmedi"
+  },
+  "telefonUlkeEtiket": "Код страны",
+  "@telefonUlkeEtiket": {
+    "description": "(P233) Ulke kodu secici etiketi"
+  },
+  "telefonUlkeSec": "Выбрать",
+  "@telefonUlkeSec": {
+    "description": "(P233) Ulke kodu secici bos secenek"
+  },
+  "telefonUlusalYerTutucu": "5XX XXX XX XX",
+  "@telefonUlusalYerTutucu": {
+    "description": "(P233) Ulusal numara yer tutucu"
+  },
+  "epostaHataBos": "Требуется адрес электронной почты.",
+  "@epostaHataBos": {
+    "description": "(P233) Eposta bos"
+  },
+  "epostaHataBicim": "Адрес электронной почты выглядит неверно. Пример: name@example.com",
+  "@epostaHataBicim": {
+    "description": "(P233) Eposta bicimi"
+  },
+  "epostaHataYerelUzun": "Часть до @ не может превышать 64 символа.",
+  "@epostaHataYerelUzun": {
+    "description": "(P233) Yerel kisim 64"
+  },
+  "epostaHataCokUzun": "Адрес электронной почты не может превышать 254 символа.",
+  "@epostaHataCokUzun": {
+    "description": "(P233) Toplam 254"
   },
   "vardiyaOncekiAy": "Предыдущий месяц",
   "vardiyaSonrakiAy": "Следующий месяц",

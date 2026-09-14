@@ -17,9 +17,12 @@
  529,  88  250x16  Yeni parola (tekrar)
  595,  75  240x20  Parolayı güncelle
  685,  36  318x24  İletişim
- 737,  48  24x24  U+F290
- 737,  88  250x24  örn. +905551112233
- 741,  88  116x16  Telefon
+ 716,  52  133x16  Ülke kodu
+ 735, 132  24x24  U+E098
+ 737,  52  64x20  Seçin
+ 737, 188  24x24  U+F290
+ 737, 228  110x24  örn. +905551112233
+ 741, 228  110x16  Telefon
  785,  36  242x24  Aranabilir
  809,  36  242x100  Yetkili roller (rıza gerektiren arama) numaranıza ulaşabilir
  939,  82  226x20  İletişimi kaydet

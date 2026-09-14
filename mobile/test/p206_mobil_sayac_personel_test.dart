@@ -104,6 +104,18 @@ Future<_Tel> _sur(WidgetTester tester, Widget ekran) async {
   return tel;
 }
 
+/// (P233 §3) TELEFON ARTIK IKI KUTU: ulke secici + ulusal numara.
+///
+/// Ulke secilmeden numara "ulkeYok" hatasi verir ve form ILERLEMEZ —
+/// sessizce `+90` varsayan eski davranis kaldirildi (yabanci numarayi
+/// baska bir numaraya cevirdigi icin).
+Future<void> _ulkeyiTRSec(WidgetTester tester) async {
+  await tester.tap(find.byKey(const Key('telefon-ulke')).first);
+  await tester.pumpAndSettle();
+  await tester.tap(find.byKey(const Key('telefon-ulke-TR')));
+  await tester.pumpAndSettle();
+}
+
 void main() {
   // ========================= 4.2 PERSONEL EKLEME ========================= #
 
@@ -115,7 +127,8 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.enterText(find.byType(TextFormField).at(0), 'Yeni Gorevli');
-    await tester.enterText(find.byType(TextFormField).at(1), '05321112203');
+    await _ulkeyiTRSec(tester);
+    await tester.enterText(find.byType(TextFormField).at(1), '5321112203');
     await tester.enterText(
         find.byKey(const Key('personel-eposta')), 'gorevli@ornek.com');
     await tester.tap(find.byType(FilledButton).last);
@@ -134,7 +147,8 @@ void main() {
     await tester.tap(find.byType(FilledButton).first);
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextFormField).at(0), 'Yeni Gorevli');
-    await tester.enterText(find.byType(TextFormField).at(1), '05321112203');
+    await _ulkeyiTRSec(tester);
+    await tester.enterText(find.byType(TextFormField).at(1), '5321112203');
     await tester.tap(find.byType(FilledButton).last);
     await tester.pumpAndSettle();
 

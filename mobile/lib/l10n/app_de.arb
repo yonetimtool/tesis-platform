@@ -2113,9 +2113,41 @@
   "@grafikVeriYok": {
     "description": "(P223) Grafik icin veri yok"
   },
-  "telefonHataTasma": "Eine Telefonnummer darf nicht länger als 10 Ziffern sein. Entfernen Sie die überzähligen Ziffern.",
+  "telefonHataTasma": "Sie haben die für dieses Land zulässige Ziffernanzahl überschritten. Entfernen Sie die überzähligen Ziffern.",
   "@telefonHataTasma": {
     "description": "(P227) Telefon 10 haneden uzun"
+  },
+  "telefonHataUlkeYok": "Wählen Sie zuerst die Ländervorwahl.",
+  "@telefonHataUlkeYok": {
+    "description": "(P233) Ulke kodu secilmedi"
+  },
+  "telefonUlkeEtiket": "Ländervorwahl",
+  "@telefonUlkeEtiket": {
+    "description": "(P233) Ulke kodu secici etiketi"
+  },
+  "telefonUlkeSec": "Wählen",
+  "@telefonUlkeSec": {
+    "description": "(P233) Ulke kodu secici bos secenek"
+  },
+  "telefonUlusalYerTutucu": "5XX XXX XX XX",
+  "@telefonUlusalYerTutucu": {
+    "description": "(P233) Ulusal numara yer tutucu"
+  },
+  "epostaHataBos": "E-Mail-Adresse erforderlich.",
+  "@epostaHataBos": {
+    "description": "(P233) Eposta bos"
+  },
+  "epostaHataBicim": "Diese E-Mail-Adresse sieht nicht gültig aus. Beispiel: name@beispiel.com",
+  "@epostaHataBicim": {
+    "description": "(P233) Eposta bicimi"
+  },
+  "epostaHataYerelUzun": "Der Teil vor dem @ darf höchstens 64 Zeichen lang sein.",
+  "@epostaHataYerelUzun": {
+    "description": "(P233) Yerel kisim 64"
+  },
+  "epostaHataCokUzun": "Eine E-Mail-Adresse darf höchstens 254 Zeichen lang sein.",
+  "@epostaHataCokUzun": {
+    "description": "(P233) Toplam 254"
   },
   "vardiyaOncekiAy": "Vorheriger Monat",
   "vardiyaSonrakiAy": "Nächster Monat",

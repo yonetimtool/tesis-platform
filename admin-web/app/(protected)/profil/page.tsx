@@ -35,7 +35,9 @@ import { Avatar } from "@/components/Avatar";
 import { YasalMetinler } from "@/components/profil/yasal-metinler";
 import { GirisYontemlerim } from "@/components/GirisYontemlerim";
 import { ParolaAlani } from "@/components/ParolaAlani";
+import { epostaHataMetni } from "@/components/EpostaAlani";
 import { TelefonAlani, telefonHataMetni } from "@/components/TelefonAlani";
+import { EPOSTA_SINIR } from "@/lib/eposta";
 import { useToast } from "@/components/Toast";
 import {
   Alan,
@@ -441,16 +443,28 @@ function HesapBilgileri({
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <div className="flex-1">
+                    {/* (P233 §4) ORTAK DOGRULAMA, ORTAK BILESEN DEGIL.
+                        `EpostaAlani` buraya oturmuyor: alanin YANINDA
+                        dogrulama rozeti, ALTINDA kod kutusu var ve bunlar
+                        `AlanSarmal`in tek-cocuk sozlesmesine sigmiyor.
+                        Bilesen yerine KURAL paylasildi: `epostaHataMetni`
+                        ayni kimlikleri ve ayni cumleleri uretir. Kapsam
+                        kilidi (`eposta-kapsam.test.ts`) ikisini de kabul
+                        eder, UCUNCU bir yolu etmez. */}
                     <Alan
                       {...baglar}
                       type="email"
                       value={eposta}
                       hatali={Boolean(epostaHatasi)}
                       autoComplete="email"
+                      maxLength={EPOSTA_SINIR + 2}
                       onChange={(e) => {
                         setEposta(e.target.value);
                         setEpostaHatasi(null);
                       }}
+                      onBlur={() =>
+                        setEpostaHatasi(epostaHataMetni(eposta, false, t))
+                      }
                     />
                   </div>
                   {kodBekleniyor ? (

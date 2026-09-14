@@ -178,6 +178,13 @@ Future<void> _bilgilereGit(
   await tester.pumpAndSettle();
   await tester.enterText(find.byKey(const Key('kayit-ad')), ad);
   await tester.enterText(find.byKey(const Key('kayit-eposta')), eposta);
+  // (P233 §3) TELEFON IKI KUTU: once ULKE secilir, sonra ulusal numara.
+  // Ulke secilmeden numara "ulkeYok" hatasi verir ve form ILERLEMEZ —
+  // sessizce `+90` varsayan eski davranis kaldirildi.
+  await tester.tap(find.byKey(const Key('kayit-telefon-ulke')));
+  await tester.pumpAndSettle();
+  await tester.tap(find.byKey(const Key('telefon-ulke-TR')));
+  await tester.pumpAndSettle();
   await tester.enterText(find.byKey(const Key('kayit-telefon')), telefon);
   await tester.enterText(find.byKey(const Key('kayit-parola')), parola);
   await tester.tap(find.byKey(const Key('kayit-bilgi-gonder')));

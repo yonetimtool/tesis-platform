@@ -14313,6 +14313,41 @@ paths:
           content:
             application/json: { schema: { $ref: "#/components/schemas/Error" } }
 
+  /konum/ara:
+    get:
+      tags: [weather]
+      summary: Tesis konumu icin yer adi arama — admin + yonetici
+      description: |
+        (P233 §1) Kurulumda/ayarlarda tesisin koordinatini SECTIRMEK icin
+        Open-Meteo geocoding proxy'si. Kullanici il/ilce adini yazar,
+        aday listesinden secer; secim `PATCH /tenant/settings` ile
+        `konum_ad`/`konum_lat`/`konum_lon` olarak yazilir.
+
+        Dis servis dusukse 503 `konum_servisi_yok` doner — BOS LISTE
+        DONMEZ: bos liste "sonuc bulunamadi" ile ayirt edilemezdi ve
+        kullanici adini yanlis yazdigini sanirdi.
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema: { type: string, minLength: 2 }
+        - name: dil
+          in: query
+          required: false
+          schema: { type: string }
+      responses:
+        "200":
+          description: Aday listesi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KonumAramaSonucu" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "503":
+          description: "Konum servisi su an kullanilamiyor (code: konum_servisi_yok)"
+          content:
+            application/json: { schema: { $ref: "#/components/schemas/Error" } }
+
   # ================================================================= #
   # KAMERALAR (G7 — sozlesme geri-doldurmasi; UC ZATEN CANLIDA)
   # ================================================================= #
@@ -22766,6 +22801,25 @@ components:
           type: string
           example: "İstanbul"
           description: "Tenant ayarindaki konum adi (tenant.konum_ad)"
+    KonumAdayi:
+      type: object
+      required: [ad, lat, lon]
+      properties:
+        ad: { type: string, example: "İstanbul" }
+        aciklama:
+          type: string
+          nullable: true
+          example: "Türkiye, İstanbul"
+          description: Ayirt edici ust bolge (ayni adli iki yer icin)
+        lat: { type: number, format: double, example: 41.0138 }
+        lon: { type: number, format: double, example: 28.9497 }
+    KonumAramaSonucu:
+      type: object
+      required: [adaylar]
+      properties:
+        adaylar:
+          type: array
+          items: { $ref: "#/components/schemas/KonumAdayi" }
     Camera:
       type: object
       description: >

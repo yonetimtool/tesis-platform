@@ -2113,9 +2113,41 @@
   "@grafikVeriYok": {
     "description": "(P223) Grafik icin veri yok"
   },
-  "telefonHataTasma": "لا يمكن أن يزيد رقم الهاتف عن 10 أرقام. احذف الأرقام الزائدة.",
+  "telefonHataTasma": "لقد تجاوزت عدد الأرقام المسموح به لهذا البلد. احذف الأرقام الزائدة.",
   "@telefonHataTasma": {
     "description": "(P227) Telefon 10 haneden uzun"
+  },
+  "telefonHataUlkeYok": "اختر رمز الدولة أولاً.",
+  "@telefonHataUlkeYok": {
+    "description": "(P233) Ulke kodu secilmedi"
+  },
+  "telefonUlkeEtiket": "رمز الدولة",
+  "@telefonUlkeEtiket": {
+    "description": "(P233) Ulke kodu secici etiketi"
+  },
+  "telefonUlkeSec": "اختيار",
+  "@telefonUlkeSec": {
+    "description": "(P233) Ulke kodu secici bos secenek"
+  },
+  "telefonUlusalYerTutucu": "5XX XXX XX XX",
+  "@telefonUlusalYerTutucu": {
+    "description": "(P233) Ulusal numara yer tutucu"
+  },
+  "epostaHataBos": "عنوان البريد الإلكتروني مطلوب.",
+  "@epostaHataBos": {
+    "description": "(P233) Eposta bos"
+  },
+  "epostaHataBicim": "لا يبدو عنوان البريد الإلكتروني صالحًا. مثال: name@example.com",
+  "@epostaHataBicim": {
+    "description": "(P233) Eposta bicimi"
+  },
+  "epostaHataYerelUzun": "لا يمكن أن يتجاوز الجزء الذي يسبق @ ‏64 حرفًا.",
+  "@epostaHataYerelUzun": {
+    "description": "(P233) Yerel kisim 64"
+  },
+  "epostaHataCokUzun": "لا يمكن أن يتجاوز عنوان البريد الإلكتروني 254 حرفًا.",
+  "@epostaHataCokUzun": {
+    "description": "(P233) Toplam 254"
   },
   "vardiyaOncekiAy": "الشهر السابق",
   "vardiyaSonrakiAy": "الشهر التالي",

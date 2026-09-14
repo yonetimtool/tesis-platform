@@ -16,7 +16,8 @@ import '../../../core/error/akis_hatasi.dart';
 import '../../../core/ui/gorsel_cozme.dart';
 import '../../../core/ui/merkez_diyalog.dart';
 import '../../../core/ui/telefon_alani.dart';
-import '../../../core/ui/telefon_hata_metni.dart';
+import '../../../core/ui/eposta_alani_widget.dart';
+import '../../../core/ui/telefon_alani_widget.dart';
 
 /// Saha Personeli (Ozellik 3) — yonetici/admin: guvenlik + tesis gorevlisi
 /// hesaplarini listeler ve ekler. yonetici backend'de YALNIZ saha personeli
@@ -405,73 +406,35 @@ class _AddStaffSheetState extends ConsumerState<_AddStaffSheet> {
                   (v?.trim() ?? '').length < 2 ? l10n.butAdZorunlu : null,
             ),
             const SizedBox(height: 12),
-            TextFormField(
-              controller: _phoneCtrl,
-              enabled: !_submitting,
-              keyboardType: TextInputType.phone,
-              // (P123) TEK bicimlendirici: gruplar, rakam disini
-              // yutar, uzunlugu SERT sinirlar, yapistirmayi cozer.
-              inputFormatters: const [TelefonBicimlendirici()],
-              decoration: InputDecoration(
-                labelText: _isEdit
-                    ? l10n.personelTelefonOpsiyonel
-                    : l10n.ortakCepTelefonu,
-                hintText: l10n.ortakTelefonIpucu,
-                prefixIcon: const Icon(Icons.phone_outlined),
-                border: const OutlineInputBorder(),
-                helperText: _isEdit
-                    ? l10n.personelBosBirakDegismezNokta
-                    : l10n.sakinGirisAnahtari,
-              ),
-              // (P166 §9) DOGRULAMA ARTIK BICIMI DE OLCUYOR.
-              //
-              // Eskiden yalniz "bos mu" bakiliyordu: bicimlendirici
-              // rakam disini yutuyor ve 10 hanede kesiyordu ama YARIM
-              // bir numara (`0543 199`) ya da SABIT HAT (`0212…`)
-              // sorunsuz geciyordu. Kullanici bunu ancak SMS gitmeyince
-              // fark ederdi — yani hic fark etmezdi.
-              //
-              // Duzenlemede telefon opsiyonel (bos = degismez).
-              //
-              // (P212-ek §2) EKLEMEDE DE OPSIYONEL. Telefon PLATFORM
-              // GENELINDE benzersiz; zorunlu oldugu surece ayni kisi
-              // IKINCI bir tesise ancak UYDURMA bir numarayla
-              // eklenebiliyordu (backend'de olculdu: telefonsuz 422,
-              // gercek numarayla 409). Kimlik P197'den beri E-POSTADIR.
-              // Bicim denetimi DURUYOR: doldurulduysa gecerli olmali.
-              validator: (v) =>
-                  telefonHataMetni(l10n, v ?? '', zorunlu: false),
+            TelefonAlani(
+              ktrl: _phoneCtrl,
+              etiket:
+                  _isEdit ? l10n.personelTelefonOpsiyonel : l10n.ortakCepTelefonu,
+              ipucu: l10n.ortakTelefonIpucu,
+              etkin: !_submitting,
+              // (P212-ek §2) TELEFON OPSIYONEL: platform genelinde benzersiz
+              // oldugu icin zorunlu tutmak, ayni kisinin IKINCI bir tesise
+              // ancak UYDURMA numarayla eklenmesi demekti. Bicim denetimi
+              // duruyor: doldurulduysa gecerli olmali.
+              zorunlu: false,
             ),
             const SizedBox(height: 12),
-            TextFormField(
-              key: const Key('personel-eposta'),
-              controller: _epostaCtrl,
-              enabled: !_submitting && !_isEdit,
-              keyboardType: TextInputType.emailAddress,
-              autocorrect: false,
-              decoration: InputDecoration(
-                labelText: l10n.personelEposta,
-                helperText: l10n.personelEpostaYardim,
-                helperMaxLines: 2,
-                prefixIcon: const Icon(Icons.alternate_email),
-                border: const OutlineInputBorder(),
-              ),
-              // DUZENLEMEDE DEGISTIRILMEZ: e-posta degisikligi ayri bir
-              // akistir (dogrulama + eski adrese bildirim, P184) ve onu
-              // buradan sessizce yapmak, hesabi baska birine
-              // devretmenin kolay yolu olurdu.
-              validator: (v) {
-                if (_isEdit) return null;
-                final t = (v ?? '').trim();
-                if (t.isEmpty) return l10n.personelEpostaGerekli;
-                // BICIM DENETIMI KABA: son sozu sunucu soyler
-                // (`EmailStr`). Buradaki amac, acik bir yazim hatasini
-                // istek atmadan yakalamak.
-                if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(t)) {
-                  return l10n.personelEpostaGecersiz;
-                }
-                return null;
-              },
+            // DUZENLEMEDE DEGISTIRILMEZ: e-posta degisikligi ayri bir
+            // akistir (dogrulama + eski adrese bildirim, P184) ve onu
+            // buradan sessizce yapmak, hesabi baska birine devretmenin
+            // kolay yolu olurdu.
+            //
+            // (P233 §4) YEREL REGEX KALDIRILDI: `^[^@\s]+@[^@\s]+\.[^@\s]+$`
+            // bicimi goruyordu ama UZUNLUK sinirlarini (yerel 64 / toplam
+            // 254) bilmiyordu — sunucunun reddettigi adres burada gecerli
+            // gorunuyordu.
+            EpostaAlani(
+              alanAnahtari: const Key('personel-eposta'),
+              ktrl: _epostaCtrl,
+              etiket: l10n.personelEposta,
+              ipucu: l10n.personelEpostaYardim,
+              etkin: !_submitting && !_isEdit,
+              zorunlu: !_isEdit,
             ),
             // Parola alani KALDIRILDI (P186-ek2): hesap parolasiz acilir ve
             // davet gonderilir; parolayi kisi kendi kayit akisinda belirler.

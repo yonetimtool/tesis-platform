@@ -52,6 +52,11 @@ const _tumKopyaIstisnalari = {
   // farkli. Cevirmek, dosya boyutunu tanimadigi bir birimle gostermek
   // olurdu.
   'dokumanBoyutKb',
+  // (P233 §3) `5XX XXX XX XX` bir KALIPTIR, cumle degil: rakam duzenini
+  // gosterir ve her dilde ayni okunur. Cevirmek, ornegin Rusca bir "5XX"
+  // uydurmak demek olurdu. Panel ikizi `admin-web/tests/i18n.test.ts`te
+  // ayni istisna var.
+  'telefonUlusalYerTutucu',
   // (P230 §3) ARAMA KAYNAK ADLARI — gercek KOGNATLAR, ceviri unutmasi
   // DEGIL. Rusca ve Arapca karsiliklari ZATEN farkli:
   //   Plan   : tr/en/de/fr/es ayni; ru "План",    ar "خطة"

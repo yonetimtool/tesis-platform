@@ -149,7 +149,7 @@ describe("Profilim", () => {
     fetchTaklidi(PROFIL);
     ciz(ProfilPage);
     await waitFor(() =>
-      expect(screen.getByDisplayValue("0(543) 199 29 04")).toBeInTheDocument(),
+      expect(screen.getByDisplayValue("543 199 29 04")).toBeInTheDocument(),
     );
   });
 
@@ -157,7 +157,7 @@ describe("Profilim", () => {
     const cagrilar = fetchTaklidi(PROFIL);
     ciz(ProfilPage);
     await waitFor(() =>
-      expect(screen.getByDisplayValue("0(543) 199 29 04")).toBeInTheDocument(),
+      expect(screen.getByDisplayValue("543 199 29 04")).toBeInTheDocument(),
     );
     await userEvent.click(screen.getByRole("button", { name: /Kaydet/i }));
     await waitFor(() => {
@@ -169,8 +169,16 @@ describe("Profilim", () => {
   it("GECERSIZ on ek KAYDETTIRMEZ", async () => {
     fetchTaklidi({ ...PROFIL, telefon: null });
     ciz(ProfilPage);
-    const kutu = await screen.findByPlaceholderText(/05/);
-    await userEvent.type(kutu, "02125554433");
+    // (P233 §3) Once ULKE secilir (kutu bos baslar), sonra numara yazilir.
+    await screen.findByPlaceholderText(/5XX/);
+    await userEvent.selectOptions(
+      document.querySelector<HTMLSelectElement>('[data-test="telefon-ulke"]')!,
+      "TR",
+    );
+    const kutu = document.querySelector<HTMLInputElement>(
+      '[data-test="telefon-numara"]',
+    )!;
+    await userEvent.type(kutu, "2125554433");
     await userEvent.click(screen.getByRole("button", { name: /Kaydet/i }));
     expect(await screen.findByText(/5 ile başlamalı/i)).toBeInTheDocument();
   });

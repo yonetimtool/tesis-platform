@@ -113,6 +113,14 @@ describe("erisilebilir etiket", () => {
         if (/^\s*(\/\/|\*|\{\/\*)/.test(satir)) return;
         const parca = satirlar.slice(i, i + 8).join("\n");
         if (/aria-label/.test(parca)) return;
+        // (P233 §3) `{...b}` YAYILIMI GECERLI AD KAYNAGIDIR.
+        //
+        // `AlanSarmal` cocuguna `id` veriyor ve kendi `<label htmlFor>`unu
+        // ona bagliyor; yani yayilimi alan ilkelin adi VARDIR. Once yalniz
+        // "onceki 16 satirda <AlanSarmal gec" araniyordu ve `TelefonAlani`
+        // buyuyunce (ulke secicisi araya girdi) kilit YANLIS ALARM verdi —
+        // gercek bir erisilebilirlik kusuru degildi.
+        if (/\{\.\.\.b\}/.test(parca)) return;
         const onceki = satirlar.slice(Math.max(0, i - 16), i).join("\n");
         // `AlanSarmal` YA DA duz `<label>`: ikisi de gecerli ad kaynagi.
         // Duz `<label>` ilk yazimda unutulmustu ve ustteki `ParolaAlani`

@@ -1,44 +1,43 @@
   20,  16  24x24  U+E3DC
   20, 186  24x24  U+F0D7
   20, 238  24x24  U+F237
-  21, 291  22x22  U+E67B
+  20, 290  24x24  U+E567
   22, 344  20x20  U+E497
   26,  94  173x24  Yönetiyor
   35,  94  222x11  GÜVENLİK & DANIŞMANLIK
   72,  16  394x30  Merhaba, Çiğdem
-  84, 338  24x24  U+E567
- 100,  16  310x20  Daire 12  •  Site Sakini
- 159, 232  19x19  U+E041
- 164,  47  19x19  U+E497
- 164, 324  19x19  U+EFAE
- 171, 139  19x19  U+E34A
- 193, 207  69x26  Aidatım
- 198,  22  69x26  Ziyaretçiler
- 198, 300  69x26  Şikayetlerim
- 205, 121  56x13  Kargo
- 221, 115  69x11  0 Bekliyor
- 222, 207  69x11  ₺1.250,00
- 227,  27  58x11  0 Kayıt
- 227, 309  50x11  0 Açık
- 233, 208  66x11  Borç Yok
- 291,  47  19x19  U+E33C
- 291, 139  19x19  U+E0CC
- 325,  22  69x26  Duyurular
- 325, 115  69x26  Şeffaflık
- 354,  32  50x11  0 Yeni
- 354, 115  69x11  Aylık Özet
- 413,  16  188x26  Ödeme ve Aidat Durumu
- 416, 208  143x20  Tümünü Gör
- 417, 352  18x18  U+E15F
- 468,  30  153x34  Bu Ayki Aidat
- 468, 208  153x34  Gelecek Ödeme
- 508, 208  18x26  —
- 514, 120  52x16  Ödendi
- 517,  30  200x25  ₺1.250,00
- 536, 208  110x17  ₺1.250,00
- 544,  30  147x17  Son Ödeme: —
- 578, 240  111x19  Geçmiş Ödemeler
- 580, 218  16x16  U+E2B8
+ 103,  16  342x20  Daire 12  •  Site Sakini
+ 162, 232  19x19  U+E041
+ 167,  47  19x19  U+E497
+ 167, 324  19x19  U+EFAE
+ 174, 139  19x19  U+E34A
+ 196, 207  69x26  Aidatım
+ 202,  22  69x26  Ziyaretçiler
+ 202, 300  69x26  Şikayetlerim
+ 208, 121  56x13  Kargo
+ 224, 115  69x11  0 Bekliyor
+ 225, 207  69x11  ₺1.250,00
+ 231,  27  58x11  0 Kayıt
+ 231, 309  50x11  0 Açık
+ 236, 208  66x11  Borç Yok
+ 294,  47  19x19  U+E33C
+ 294, 139  19x19  U+E0CC
+ 329,  22  69x26  Duyurular
+ 329, 115  69x26  Şeffaflık
+ 358,  32  50x11  0 Yeni
+ 358, 115  69x11  Aylık Özet
+ 416,  16  188x26  Ödeme ve Aidat Durumu
+ 419, 208  143x20  Tümünü Gör
+ 420, 352  18x18  U+E15F
+ 471,  30  153x34  Bu Ayki Aidat
+ 471, 208  153x34  Gelecek Ödeme
+ 511, 208  18x26  —
+ 517, 120  52x16  Ödendi
+ 521,  30  200x25  ₺1.250,00
+ 539, 208  110x17  ₺1.250,00
+ 547,  30  147x17  Son Ödeme: —
+ 581, 240  111x19  Geçmiş Ödemeler
+ 583, 218  16x16  U+E2B8
  789, 181  28x28  U+E047
  790,  27  24x24  U+E318
  790, 105  24x24  U+F237

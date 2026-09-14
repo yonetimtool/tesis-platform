@@ -6318,7 +6318,34 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get telefonHataTasma =>
-      'Un número de teléfono no puede tener más de 10 dígitos. Elimina los dígitos sobrantes.';
+      'Has superado el número de dígitos permitido para este país. Elimina los dígitos sobrantes.';
+
+  @override
+  String get telefonHataUlkeYok => 'Selecciona primero el código de país.';
+
+  @override
+  String get telefonUlkeEtiket => 'Código de país';
+
+  @override
+  String get telefonUlkeSec => 'Seleccionar';
+
+  @override
+  String get telefonUlusalYerTutucu => '5XX XXX XX XX';
+
+  @override
+  String get epostaHataBos => 'Se requiere una dirección de correo.';
+
+  @override
+  String get epostaHataBicim =>
+      'Esta dirección de correo no parece válida. Ejemplo: nombre@ejemplo.com';
+
+  @override
+  String get epostaHataYerelUzun =>
+      'La parte anterior a @ no puede superar los 64 caracteres.';
+
+  @override
+  String get epostaHataCokUzun =>
+      'Una dirección de correo no puede superar los 254 caracteres.';
 
   @override
   String get vardiyaOncekiAy => 'Mes anterior';

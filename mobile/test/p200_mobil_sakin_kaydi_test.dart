@@ -251,6 +251,12 @@ void main() {
     await tester.enterText(find.byKey(const Key('kayit-ad')), 'Ayse Sakin');
     await tester.enterText(
         find.byKey(const Key('kayit-eposta')), 'ayse@ornek.com');
+    // (P233 §3) Once ULKE secilir: secilmeden numara "ulkeYok" verir ve
+    // form ilerlemez (sessizce `+90` varsayan davranis kaldirildi).
+    await tester.tap(find.byKey(const Key('kayit-telefon-ulke')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('telefon-ulke-TR')));
+    await tester.pumpAndSettle();
     await tester.enterText(
         find.byKey(const Key('kayit-telefon')), '5321112203');
     await tester.enterText(

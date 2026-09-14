@@ -171,7 +171,7 @@ describe("Dış hizmetler", () => {
   it("kayıtlı numara MASKELİ gösterilir ve tel: bağlantısı taşır", async () => {
     taklit({ "/api/external-services": { note: null, items: [HIZMET] } });
     ciz(DisHizmetlerPage);
-    const bag = await screen.findByRole("link", { name: "0(543) 199 29 04" });
+    const bag = await screen.findByRole("link", { name: "(+90) 543 199 29 04" });
     expect(bag).toHaveAttribute("href", "tel:+905431992904");
   });
 
@@ -195,9 +195,16 @@ describe("Dış hizmetler", () => {
     await userEvent.type(screen.getByLabelText(/Hizmet türü/i), "Çilingir");
     await userEvent.type(screen.getByRole("textbox", { name: "Ad" }), "Ali");
     await userEvent.type(screen.getByLabelText(/Soyad/i), "Veli");
-    const tel = screen.getByLabelText(/Telefon/i);
+    // (P233 §3) ULKE KODU AYRI KUTUDA: once secilir, sonra numara yazilir.
+    await userEvent.selectOptions(
+      document.querySelector<HTMLSelectElement>('[data-test="telefon-ulke"]')!,
+      "TR",
+    );
+    const tel = document.querySelector<HTMLInputElement>(
+      '[data-test="telefon-numara"]',
+    )!;
     await userEvent.type(tel, "5431992904");
-    expect(tel).toHaveValue("0(543) 199 29 04"); // maske EKRANDA
+    expect(tel).toHaveValue("543 199 29 04"); // maske EKRANDA, kod ayri kutuda
 
     await userEvent.click(screen.getByRole("button", { name: /Ekle/i }));
     await waitFor(() => {
@@ -217,7 +224,14 @@ describe("Dış hizmetler", () => {
 
     await userEvent.type(screen.getByLabelText(/Hizmet türü/i), "Çilingir");
     await userEvent.type(screen.getByRole("textbox", { name: "Ad" }), "Ali");
-    await userEvent.type(screen.getByLabelText(/Telefon/i), "5431992904");
+    await userEvent.selectOptions(
+      document.querySelector<HTMLSelectElement>('[data-test="telefon-ulke"]')!,
+      "TR",
+    );
+    await userEvent.type(
+      document.querySelector<HTMLInputElement>('[data-test="telefon-numara"]')!,
+      "5431992904",
+    );
     await userEvent.click(screen.getByRole("button", { name: /Ekle/i }));
 
     expect(await screen.findByText(/soyad zorunludur/i)).toBeInTheDocument();
@@ -234,7 +248,14 @@ describe("Dış hizmetler", () => {
     await userEvent.type(screen.getByLabelText(/Hizmet türü/i), "Çilingir");
     await userEvent.type(screen.getByRole("textbox", { name: "Ad" }), "Ali");
     await userEvent.type(screen.getByLabelText(/Soyad/i), "Veli");
-    await userEvent.type(screen.getByLabelText(/Telefon/i), "543199");
+    await userEvent.selectOptions(
+      document.querySelector<HTMLSelectElement>('[data-test="telefon-ulke"]')!,
+      "TR",
+    );
+    await userEvent.type(
+      document.querySelector<HTMLInputElement>('[data-test="telefon-numara"]')!,
+      "543199",
+    );
     await userEvent.click(screen.getByRole("button", { name: /Ekle/i }));
 
     await screen.findByText(/eksik/i);
@@ -260,7 +281,7 @@ describe("Yönetim iletişim", () => {
     ciz(YonetimIletisimPage);
     expect(await screen.findByText("Ayşe Yılmaz")).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: "0(543) 199 29 04" }),
+      screen.getByRole("link", { name: "(+90) 543 199 29 04" }),
     ).toHaveAttribute("href", "tel:+905431992904");
     expect(
       screen.getByRole("link", { name: "yonetim@ornek.test" }),

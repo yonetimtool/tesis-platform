@@ -29,6 +29,7 @@ import { jsonFetcher } from "@/lib/fetcher";
 import { useGecikmeli } from "@/lib/gecikmeli";
 import type { TenantAdminCreate, TenantAdminCreatedOut } from "@/lib/types";
 import { ParolaAlani } from "@/components/ParolaAlani";
+import { EpostaAlani } from "@/components/EpostaAlani";
 import { TelefonAlani } from "@/components/TelefonAlani";
 import { useT } from "@/lib/i18n/kullan";
 import { ApiHatasi } from "@/lib/client";
@@ -390,16 +391,12 @@ export default function TenantsPage() {
               />
               )}
             </AlanSarmal>
-            <AlanSarmal etiket={t("tesisYonetimMaili")} ipucu={t("tesisYonetimMailiIpucu")}>
-              {(b) => (
-                <Alan {...b}
-                type="email"
-                                value={form.yonetim_email}
-                onChange={(e) => setForm({ ...form, yonetim_email: e.target.value })}
-                placeholder={t("tesisYonetimMailiOrnek")}
-              />
-              )}
-            </AlanSarmal>
+            <EpostaAlani
+              etiket={t("tesisYonetimMaili")}
+              ipucu={t("tesisYonetimMailiIpucu")}
+              deger={form.yonetim_email}
+              onDegisti={(v) => setForm({ ...form, yonetim_email: v })}
+            />
           </div>
 
           <div className="space-y-4">
@@ -451,20 +448,13 @@ export default function TenantsPage() {
                       (SMS urun genelinde kapali); adressiz acilan hesap
                       Tesis ID'yi HIC ogrenemez ve giris yapamaz. Sunucu
                       da e-postasiz govdeyi 422 ile reddeder. */}
-                  <AlanSarmal
+                  <EpostaAlani
                     etiket={t("kullaniciEposta")}
                     ipucu={t("tesisYoneticiEpostaIpucu")}
-                  >
-                    {(b) => (
-                      <Alan
-                        {...b}
-                        type="email"
-                        value={y.email}
-                        onChange={(e) => setYonetici(i, { email: e.target.value })}
-                        required
-                      />
-                    )}
-                  </AlanSarmal>
+                    zorunlu
+                    deger={y.email}
+                    onDegisti={(v) => setYonetici(i, { email: v })}
+                  />
                   <AlanSarmal
                     etiket={t("tesisParolaOpsiyonel")}
                     ipucu={t("kullaniciParolaBosYeni")}

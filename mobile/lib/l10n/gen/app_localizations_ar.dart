@@ -6405,7 +6405,34 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get telefonHataTasma =>
-      'لا يمكن أن يزيد رقم الهاتف عن 10 أرقام. احذف الأرقام الزائدة.';
+      'لقد تجاوزت عدد الأرقام المسموح به لهذا البلد. احذف الأرقام الزائدة.';
+
+  @override
+  String get telefonHataUlkeYok => 'اختر رمز الدولة أولاً.';
+
+  @override
+  String get telefonUlkeEtiket => 'رمز الدولة';
+
+  @override
+  String get telefonUlkeSec => 'اختيار';
+
+  @override
+  String get telefonUlusalYerTutucu => '5XX XXX XX XX';
+
+  @override
+  String get epostaHataBos => 'عنوان البريد الإلكتروني مطلوب.';
+
+  @override
+  String get epostaHataBicim =>
+      'لا يبدو عنوان البريد الإلكتروني صالحًا. مثال: name@example.com';
+
+  @override
+  String get epostaHataYerelUzun =>
+      'لا يمكن أن يتجاوز الجزء الذي يسبق @ ‏64 حرفًا.';
+
+  @override
+  String get epostaHataCokUzun =>
+      'لا يمكن أن يتجاوز عنوان البريد الإلكتروني 254 حرفًا.';
 
   @override
   String get vardiyaOncekiAy => 'الشهر السابق';

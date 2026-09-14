@@ -107,6 +107,25 @@ afterEach(() => {
   sessionStorage.clear();
 });
 
+/**
+ * (P233 §3) TELEFON ARTIK IKI KUTU: ulke secici + ulusal numara.
+ *
+ * Kayit sayfasi kendi `<input data-test="kayit-telefon">`unu tasiyordu;
+ * P233 §3'te ORTAK `TelefonAlani`ya baglandi (ulke kodu secicisi yedi
+ * forma elle eklenemezdi — sekizincisi unutulurdu). Testin telefonu
+ * doldurma bicimi de o yuzden degisti.
+ */
+async function telefonGir(numara: string) {
+  await userEvent.selectOptions(
+    document.querySelector<HTMLSelectElement>('[data-test="telefon-ulke"]')!,
+    "TR",
+  );
+  await userEvent.type(
+    document.querySelector<HTMLInputElement>('[data-test="telefon-numara"]')!,
+    numara,
+  );
+}
+
 describe("(P198) Google ile yonetici kaydi — uctan uca", () => {
   it("1) YONETICI + Google -> istek `niyet=kayit` TASIR", async () => {
     const cagrilar = agiSahtele();
@@ -165,7 +184,7 @@ describe("(P198) Google ile yonetici kaydi — uctan uca", () => {
     await userEvent.type(kanca("kayit-soyad"), "Yilmaz");
     await userEvent.type(
       kanca("kayit-eposta"), "ayse@ornek.com");
-    await userEvent.type(kanca("kayit-telefon"), "5321112233");
+    await telefonGir("5321112233");
     await userEvent.click(kanca("kayit-onay-sozlesme"));
     await userEvent.click(kanca("kayit-onay-kvkk"));
     await userEvent.click(kanca("kayit-bilgi-gonder"));
@@ -187,7 +206,7 @@ describe("(P198) Google ile yonetici kaydi — uctan uca", () => {
     await kancaBekle("kayit-ad");
     await userEvent.type(kanca("kayit-soyad"), "Yilmaz");
     await userEvent.type(kanca("kayit-eposta"), "ayse@ornek.com");
-    await userEvent.type(kanca("kayit-telefon"), "5321112233");
+    await telefonGir("5321112233");
     await userEvent.click(kanca("kayit-onay-sozlesme"));
     await userEvent.click(kanca("kayit-onay-kvkk"));
     await userEvent.click(kanca("kayit-bilgi-gonder"));
@@ -215,7 +234,7 @@ describe("(P198) Google ile yonetici kaydi — uctan uca", () => {
     await kancaBekle("kayit-ad");
     await userEvent.type(kanca("kayit-soyad"), "Yilmaz");
     await userEvent.type(kanca("kayit-eposta"), "ayse@ornek.com");
-    await userEvent.type(kanca("kayit-telefon"), "5321112233");
+    await telefonGir("5321112233");
     await userEvent.click(kanca("kayit-onay-sozlesme"));
     await userEvent.click(kanca("kayit-onay-kvkk"));
     await userEvent.click(kanca("kayit-bilgi-gonder"));

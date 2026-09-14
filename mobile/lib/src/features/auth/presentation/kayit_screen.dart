@@ -8,6 +8,8 @@ import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
 import '../../../core/startup/acilis_tercihleri.dart';
 import '../../../core/ui/telefon_alani.dart';
+import '../../../core/ui/eposta_alani_widget.dart';
+import '../../../core/ui/telefon_alani_widget.dart';
 import '../../../routing/app_router.dart';
 import '../data/auth_api.dart';
 import 'auth_controller.dart';
@@ -560,43 +562,25 @@ class _KayitScreenState extends ConsumerState<KayitScreen> {
           ),
           const SizedBox(height: 16),
           // E-POSTA ZORUNLU: dogrulama kanali budur.
-          TextFormField(
-            controller: _epostaCtrl,
-            key: const Key('kayit-eposta'),
-            enabled: !_bekliyor,
-            textInputAction: TextInputAction.next,
-            keyboardType: TextInputType.emailAddress,
-            autocorrect: false,
-            decoration: InputDecoration(
-              labelText: l10n.kayitEposta,
-              prefixIcon: const Icon(Icons.mail_outline),
-              border: const OutlineInputBorder(),
-            ),
-            validator: (v) {
-              final s = (v ?? '').trim();
-              if (s.isEmpty) return l10n.kayitEpostaGerekli;
-              if (!_epostaGecerli(s)) return l10n.kayitEpostaGecersiz;
-              return null;
-            },
+          // (P233 §4) YEREL `_epostaGecerli` REGEXI KALDIRILDI: bicimi
+          // goruyordu ama uzunluk sinirlarini bilmiyordu.
+          EpostaAlani(
+            alanAnahtari: const Key('kayit-eposta'),
+            ktrl: _epostaCtrl,
+            etiket: l10n.kayitEposta,
+            etkin: !_bekliyor,
+            zorunlu: true,
           ),
           const SizedBox(height: 16),
           // TELEFON ISTEGE BAGLI — yalniz iletisim; dogrulama araci DEGIL.
-          TextFormField(
-            controller: _telefonCtrl,
-            key: const Key('kayit-telefon'),
-            enabled: !_bekliyor,
-            textInputAction: TextInputAction.next,
-            keyboardType: TextInputType.phone,
-            inputFormatters: const [TelefonBicimlendirici()],
-            autocorrect: false,
-            decoration: InputDecoration(
-              labelText: l10n.kayitTelefonIletisim,
-              hintText: l10n.ortakTelefonIpucu,
-              helperText: l10n.kayitTelefonNotu,
-              helperMaxLines: 2,
-              prefixIcon: const Icon(Icons.phone_outlined),
-              border: const OutlineInputBorder(),
-            ),
+          TelefonAlani(
+            alanAnahtari: const Key('kayit-telefon'),
+            ulkeAnahtari: const Key('kayit-telefon-ulke'),
+            ktrl: _telefonCtrl,
+            etiket: l10n.kayitTelefonIletisim,
+            ipucu: l10n.ortakTelefonIpucu,
+            etkin: !_bekliyor,
+            zorunlu: false,
           ),
           const SizedBox(height: 16),
           TextFormField(
@@ -626,9 +610,6 @@ class _KayitScreenState extends ConsumerState<KayitScreen> {
       ),
     );
   }
-
-  bool _epostaGecerli(String s) =>
-      RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(s);
 
   // ============================ ADIM 4 ==================================== //
 

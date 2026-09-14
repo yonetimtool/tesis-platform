@@ -14,22 +14,18 @@ import {
 } from "@/components/SosyalGiris";
 import { YonetioLogo } from "@/components/YonetioLogo";
 import { ParolaAlani } from "@/components/ParolaAlani";
+import { EpostaAlani } from "@/components/EpostaAlani";
+import { TelefonAlani } from "@/components/TelefonAlani";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
-import {
-  telefonGiris,
-  telefonHatasi,
-  telefonNormalle,
-  type TelefonHatasi,
-} from "@/lib/telefon";
+import { telefonHatasi, telefonNormalle } from "@/lib/telefon";
 
-/** (P227 §3) Hata KIMLIGI -> sozluk anahtari (TelefonAlani ile AYNI tablo). */
-const TELEFON_HATA_ANAHTARI: Record<TelefonHatasi, "telefonHataBos" | "telefonHataEksik" | "telefonHataOnEk" | "telefonHataTasma"> = {
-  bos: "telefonHataBos",
-  eksik: "telefonHataEksik",
-  gecersizOnEk: "telefonHataOnEk",
-  tasma: "telefonHataTasma",
-};
+/* (P233 §3) YEREL TELEFON ALANI KALDIRILDI.
+ *
+ * Bu sayfa kendi `<input>`unu ve kendi hata tablosunu tasiyordu — yani
+ * P166 §9'un "her forma tek satir dogrulama ekle" cozumunun ONUNCU
+ * FORMUYDU: ulke kodu secimi eklenirken burasi atlanirsa, kayit ekrani
+ * tek basina eski davranista kalirdi. `TelefonAlani`ya baglandi. */
 
 /**
  * (P185 §2/§3) ROL SECIMLI KAYIT — web yuzeyi, KARAR VERILEN MODEL.
@@ -720,8 +716,7 @@ export default function KayitSayfasi() {
               data-test="kayit-soyad"
             />
           </label>
-          <label className="block">
-            <span className="text-sm font-medium">{t("kayitEposta")}</span>
+          <div className="block">
             {/* (P222 §2) SOSYAL YOLDA SALT OKUNUR.
                 Sunucu bu adresi imzali `baglama_jetonu`nun ICINDEN okur
                 (`kayit.tesis_olustur`, `oauth.rol_tamamla`) ve formda
@@ -731,52 +726,27 @@ export default function KayitSayfasi() {
                 Ayrica elle yazilan adres DOGRULANMAMIS olurdu ve
                 dogrulanmamis adresle allowlist eslesmesi hesap ele
                 gecirmedir (P180 dersi). */}
-            <input
-              className={`${inputCls} mt-1${yol === "sosyal" ? " opacity-70" : ""}`}
-              type="email"
-              value={eposta}
-              onChange={(e) => setEposta(e.target.value)}
-              required
+            <EpostaAlani
+              etiket={t("kayitEposta")}
+              deger={eposta}
+              onDegisti={setEposta}
+              zorunlu
               readOnly={yol === "sosyal"}
-              aria-readonly={yol === "sosyal"}
-              inputMode="email"
-              autoComplete="email"
-              data-test="kayit-eposta"
+              kanca="kayit-eposta"
             />
             {yol === "sosyal" ? (
               <span className="mt-1 block text-xs text-metin-muted">
                 {sosyalRelay ? t("kayitSosyalRelayNotu") : t("kayitSosyalEpostaNotu")}
               </span>
             ) : null}
-          </label>
-          <label className="block">
-            <span className="text-sm font-medium">{t("kayitTelefon")}</span>
-            {/* (P227 §3) HAM DEGER SAKLANIR, BICIMLI GOSTERILIR.
-                Once `onChange` icinde `telefonGiris` cagriliyordu; o
-                cagri fazla haneyi SESSIZCE KESIYOR ve 11. rakam
-                yazildiginda ekranda hicbir sey degismiyordu. Ham degeri
-                saklayinca `telefonHatasi` tasmayi GOREBILIYOR. */}
-            <input
-              className={`${inputCls} mt-1`}
-              value={telefonGiris(telefon)}
-              onChange={(e) => setTelefon(e.target.value)}
-              required
-              inputMode="tel"
-              autoComplete="tel"
-              maxLength={18}
-              data-test="kayit-telefon"
-            />
-            {telefonHatasi(telefon, false) ? (
-              <span role="alert" className="mt-1 block text-xs text-red-600">
-                {t(TELEFON_HATA_ANAHTARI[telefonHatasi(telefon, false)!])}
-              </span>
-            ) : (
-              /* Telefon ARTIK bir giris anahtari degil — yalniz iletisim. */
-              <span className="mt-1 block text-xs text-metin-muted">
-                {t("kayitTelefonIpucu")}
-              </span>
-            )}
-          </label>
+          </div>
+          <TelefonAlani
+            etiket={t("kayitTelefon")}
+            deger={telefon}
+            onDegisti={setTelefon}
+            zorunlu
+            ipucu={t("kayitTelefonIpucu")}
+          />
           {/* PAROLA YALNIZ ELLE KAYITTA: sosyal yolda kimlik
               saglayicidadir ve parola HIC yazilmaz. */}
           {yol === "parola" ? (

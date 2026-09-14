@@ -16,6 +16,7 @@ import '../../../core/error/akis_hatasi.dart';
 import '../../../core/widgets/bas_harf_avatar.dart';
 import '../../../core/ui/merkez_diyalog.dart';
 import '../../../core/ui/telefon_alani.dart';
+import '../../../core/ui/telefon_alani_widget.dart';
 
 /// Self-servis profil ekrani — kullanici KENDI parolasini ve telefon/arama
 /// rizasini gunceller (contracts/auth.md self-servis profil). Sag-ust profil
@@ -503,19 +504,12 @@ class _ContactCardState extends ConsumerState<_ContactCard> {
             Text(l10n.etiketIletisim,
                 style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 12),
-            TextField(
-              controller: _telefonCtrl,
-              enabled: !_submitting,
-              keyboardType: TextInputType.phone,
-              // (P123) TEK bicimlendirici: gruplar, rakam disini
-              // yutar, uzunlugu SERT sinirlar, yapistirmayi cozer.
-              inputFormatters: const [TelefonBicimlendirici()],
-              decoration: InputDecoration(
-                labelText: l10n.profilTelefon,
-                hintText: l10n.profilTelefonIpucu,
-                prefixIcon: const Icon(Icons.phone_outlined),
-                border: const OutlineInputBorder(),
-              ),
+            TelefonAlani(
+              ktrl: _telefonCtrl,
+              etiket: l10n.profilTelefon,
+              ipucu: l10n.profilTelefonIpucu,
+              etkin: !_submitting,
+              zorunlu: false,
             ),
             SwitchListTile(
               value: _aranabilir,

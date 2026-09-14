@@ -11,7 +11,7 @@ import '../data/dis_hizmet_api.dart';
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/theme/home_tokens.dart';
 import '../../../core/ui/merkez_diyalog.dart';
-import '../../../core/ui/telefon_alani.dart';
+import '../../../core/ui/telefon_alani_widget.dart';
 
 /// Dis Hizmetler — guvenilir esnaf/hizmet kisileri (cilingir/elektrik/tesisat)
 /// + yonetici notu. Yonetici/admin ekler/duzenler/siler + notu yazar; guvenlik
@@ -393,21 +393,12 @@ class _HizmetFormState extends ConsumerState<_HizmetForm> {
               ],
             ),
             const SizedBox(height: 12),
-            TextFormField(
-              controller: _telefon,
-              enabled: !_busy,
-              keyboardType: TextInputType.phone,
-              // (P123) TEK bicimlendirici: gruplar, rakam disini
-              // yutar, uzunlugu SERT sinirlar, yapistirmayi cozer.
-              inputFormatters: const [TelefonBicimlendirici()],
-              decoration: InputDecoration(
-                labelText: l10n.profilTelefon,
-                hintText: l10n.ortakTelefonIpucu,
-                prefixIcon: const Icon(Icons.phone_outlined),
-                border: const OutlineInputBorder(),
-              ),
-              validator: (v) =>
-                  (v?.trim() ?? '').isEmpty ? l10n.ortakTelefonZorunlu : null,
+            TelefonAlani(
+              ktrl: _telefon,
+              etiket: l10n.profilTelefon,
+              ipucu: l10n.ortakTelefonIpucu,
+              etkin: !_busy,
+              zorunlu: true,
             ),
             const SizedBox(height: 12),
             TextFormField(

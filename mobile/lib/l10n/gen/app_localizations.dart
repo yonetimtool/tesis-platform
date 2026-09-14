@@ -10928,8 +10928,56 @@ abstract class AppLocalizations {
   /// (P227) Telefon 10 haneden uzun
   ///
   /// In tr, this message translates to:
-  /// **'Telefon numarası 10 haneden uzun olamaz. Fazla rakamları silin.'**
+  /// **'Bu ülke için izin verilen hane sayısını aştınız. Fazla rakamları silin.'**
   String get telefonHataTasma;
+
+  /// (P233) Ulke kodu secilmedi
+  ///
+  /// In tr, this message translates to:
+  /// **'Önce ülke kodunu seçin.'**
+  String get telefonHataUlkeYok;
+
+  /// (P233) Ulke kodu secici etiketi
+  ///
+  /// In tr, this message translates to:
+  /// **'Ülke kodu'**
+  String get telefonUlkeEtiket;
+
+  /// (P233) Ulke kodu secici bos secenek
+  ///
+  /// In tr, this message translates to:
+  /// **'Seçin'**
+  String get telefonUlkeSec;
+
+  /// (P233) Ulusal numara yer tutucu
+  ///
+  /// In tr, this message translates to:
+  /// **'5XX XXX XX XX'**
+  String get telefonUlusalYerTutucu;
+
+  /// (P233) Eposta bos
+  ///
+  /// In tr, this message translates to:
+  /// **'E-posta adresi gerekli.'**
+  String get epostaHataBos;
+
+  /// (P233) Eposta bicimi
+  ///
+  /// In tr, this message translates to:
+  /// **'E-posta adresi geçerli görünmüyor. Örnek: ad@ornek.com'**
+  String get epostaHataBicim;
+
+  /// (P233) Yerel kisim 64
+  ///
+  /// In tr, this message translates to:
+  /// **'@ işaretinden önceki kısım 64 karakteri geçemez.'**
+  String get epostaHataYerelUzun;
+
+  /// (P233) Toplam 254
+  ///
+  /// In tr, this message translates to:
+  /// **'E-posta adresi 254 karakteri geçemez.'**
+  String get epostaHataCokUzun;
 
   /// No description provided for @vardiyaOncekiAy.
   ///

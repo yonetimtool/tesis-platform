@@ -24,6 +24,7 @@ import {
 import { alanliHataMetni, apiSend } from "@/lib/client";
 import type { UnitList } from "@/lib/types";
 import { jsonFetcher } from "@/lib/fetcher";
+import { EpostaAlani } from "@/components/EpostaAlani";
 import { TelefonAlani } from "@/components/TelefonAlani";
 import { useT } from "@/lib/i18n/kullan";
 import { ROLE_OPTIONS as ROLES, rolAdi } from "@/lib/roles";
@@ -795,7 +796,10 @@ export default function UsersPage() {
               kanali. TAMAMLANMIS hesapta SALT-OKUNUR: e-posta giris kimligidir,
               panelden ezmek hesap-ele-gecirme olurdu (backend de 409 verir).
               Tamamlanmamis hesapta degistirilirse davet yeni adrese gider. */}
-          <AlanSarmal
+          {/* (P233 §4) ORTAK BILESEN: uzunluk siniri (yerel 64 / toplam 254)
+              ve bicim denetimi ARTIK ALANIN ICINDE. Once yalniz sunucu
+              reddediyordu ve kullanici nedenini gormuyordu. */}
+          <EpostaAlani
             etiket={t("kullaniciEposta")}
             ipucu={
               editingId && duzenlenenTamam
@@ -803,18 +807,10 @@ export default function UsersPage() {
                 : t("kullaniciEpostaIpucu")
             }
             zorunlu
-          >
-            {(b) => (
-              <Alan
-                {...b}
-                type="email"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                required
-                readOnly={Boolean(editingId) && duzenlenenTamam}
-              />
-            )}
-          </AlanSarmal>
+            deger={form.email}
+            onDegisti={(v) => setForm({ ...form, email: v })}
+            readOnly={Boolean(editingId) && duzenlenenTamam}
+          />
 
           {/* (P185 §3) TELEFON YALNIZ ILETISIM — "giris anahtari" DEGIL.
               (P212-ek §2) ARTIK OPSIYONEL: zorunlulugu, ayni kisinin

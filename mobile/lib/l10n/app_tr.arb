@@ -2928,9 +2928,41 @@
   "@grafikVeriYok": {
     "description": "(P223) Grafik icin veri yok"
   },
-  "telefonHataTasma": "Telefon numarası 10 haneden uzun olamaz. Fazla rakamları silin.",
+  "telefonHataTasma": "Bu ülke için izin verilen hane sayısını aştınız. Fazla rakamları silin.",
   "@telefonHataTasma": {
     "description": "(P227) Telefon 10 haneden uzun"
+  },
+  "telefonHataUlkeYok": "Önce ülke kodunu seçin.",
+  "@telefonHataUlkeYok": {
+    "description": "(P233) Ulke kodu secilmedi"
+  },
+  "telefonUlkeEtiket": "Ülke kodu",
+  "@telefonUlkeEtiket": {
+    "description": "(P233) Ulke kodu secici etiketi"
+  },
+  "telefonUlkeSec": "Seçin",
+  "@telefonUlkeSec": {
+    "description": "(P233) Ulke kodu secici bos secenek"
+  },
+  "telefonUlusalYerTutucu": "5XX XXX XX XX",
+  "@telefonUlusalYerTutucu": {
+    "description": "(P233) Ulusal numara yer tutucu"
+  },
+  "epostaHataBos": "E-posta adresi gerekli.",
+  "@epostaHataBos": {
+    "description": "(P233) Eposta bos"
+  },
+  "epostaHataBicim": "E-posta adresi geçerli görünmüyor. Örnek: ad@ornek.com",
+  "@epostaHataBicim": {
+    "description": "(P233) Eposta bicimi"
+  },
+  "epostaHataYerelUzun": "@ işaretinden önceki kısım 64 karakteri geçemez.",
+  "@epostaHataYerelUzun": {
+    "description": "(P233) Yerel kisim 64"
+  },
+  "epostaHataCokUzun": "E-posta adresi 254 karakteri geçemez.",
+  "@epostaHataCokUzun": {
+    "description": "(P233) Toplam 254"
   },
   "vardiyaOncekiAy": "Önceki ay",
   "vardiyaSonrakiAy": "Sonraki ay",

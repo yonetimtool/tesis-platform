@@ -13,25 +13,38 @@ import {
   telefonHaneleri,
   telefonHatasi,
   telefonNormalle,
+  telefonParcala,
+  telefonUlkeyiDegistir,
+  ulkeBul,
 } from "@/lib/telefon";
+import { ulkeyiCoz } from "@/lib/ulke-telefon";
+
+const TR = ulkeBul("TR")!;
 
 /** PAYLASILAN TABLO — mobil testiyle ayni girdiler. */
 const HAM_BICIMLER = [
   "+905431992904",
   "905431992904",
   "05431992904",
-  "5431992904",
   "+90 543 199 29 04",
   "0543-199-29-04",
   "(0543) 199-29-04",
   "00905431992904",
+  // (P233 §3) YENI bicim — eskiler de KABUL EDILMEYE DEVAM EDER.
+  "(+90) 543 199 29 04",
 ];
 
 describe("telefonHaneleri", () => {
   it("HER yazim bicimi ayni 10 haneye iner", () => {
-    for (const ham of HAM_BICIMLER) {
+    for (const ham of [...HAM_BICIMLER, "5431992904"]) {
       expect(telefonHaneleri(ham), ham).toBe("5431992904");
     }
+  });
+
+  // (P233 §3) ULKESIZ yazim AYRI TUTULUR: haneleri ayni, ama ULKE YOK.
+  // Tabloya karistirmak, "kod uydurma" kuralini sessizce delerdi.
+  it("ULKESIZ yazim haneleri verir ama ULKE VERMEZ", () => {
+    expect(telefonParcala("5431992904").ulke).toBeNull();
   });
 
   it("`90` ile BASLAYAN GECERLI numara ulke kodu SANILMAZ", () => {
@@ -75,28 +88,86 @@ describe("telefonHaneleri", () => {
   });
 });
 
+// (P233 §3) ULKE KODU — TR sabiti kalkti. Mobil ikiziyle AYNI tablo.
+describe("ulke kodu", () => {
+  it("E.164 degerden ULKE cozulur", () => {
+    expect(telefonParcala("+491711234567").ulke?.kod).toBe("DE");
+    expect(telefonParcala("+905431992904").ulke?.kod).toBe("TR");
+    expect(telefonParcala("+9647912345678").ulke?.kod).toBe("IQ");
+  });
+
+  it("EN UZUN KOD ONCE denenir (+90 ile +964 ayni 9 ile baslar)", () => {
+    const p = telefonParcala("+9647912345678");
+    expect(p.ulke?.arama).toBe("964");
+    expect(p.haneler).toBe("7912345678");
+  });
+
+  it("ULKE SECILMEDEN numara GECERLI DEGIL", () => {
+    // Eski davranis burada SESSIZCE `+90` ekliyordu; yabanci numara
+    // BASKA BIR NUMARAYA donusuyordu.
+    expect(telefonHatasi("5431992904")).toBe("ulkeYok");
+    expect(telefonNormalle("5431992904")).toBe("");
+  });
+
+  it("`+` YOKSA DA tam eslesen ulke kodu taninir", () => {
+    // `905431992904` numarayi yazmanin cok yaygin bir bicimi.
+    expect(telefonParcala("905431992904").ulke?.kod).toBe("TR");
+    // ...ama hane sayisi tutmuyorsa TAHMIN EDILMEZ: `5431992904` bir AR
+    // numarasi (`+54`) sanilsaydi kullanicinin TR numarasi Arjantin
+    // numarasina donerdi.
+    expect(ulkeyiCoz("5431992904")).toBeNull();
+  });
+
+  it("UZUNLUK SINIRI ULKEYE GORE", () => {
+    expect(telefonHatasi("(+49) 171 1234 5678")).toBeNull();
+    expect(telefonTasti("(+49) 171 1234 5678")).toBe(false);
+    expect(telefonTasti("(+49) 171 1234 567890")).toBe(true);
+    expect(telefonTasti("(+974) 3312 3456")).toBe(false);
+    expect(telefonTasti("(+974) 3312 345678")).toBe(true);
+  });
+
+  it("ON EK KURALI YALNIZ TR", () => {
+    expect(telefonHatasi("(+90) 212 555 44 33")).toBe("gecersizOnEk");
+    // Alman sabit hatti REDDEDILMEZ — bloklarini bilmiyoruz; uydurulmus
+    // bir kural gercek bir numarayi reddederdi.
+    expect(telefonHatasi("(+49) 30 12345678")).toBeNull();
+  });
+
+  it("ULKE DEGISINCE haneler KORUNUR, sinir asilirsa KIRPILIR", () => {
+    expect(telefonUlkeyiDegistir("(+90) 541 922 23 88", "DE")).toBe(
+      "(+49) 541 922 2388",
+    );
+    expect(telefonUlkeyiDegistir("(+90) 541 922 23 88", "QA")).toBe(
+      "(+974) 541 922 23",
+    );
+  });
+});
+
 describe("telefonBicimle / telefonGiris", () => {
   it("TAM numara gruplanir", () => {
-    expect(telefonBicimle("5431992904")).toBe("0(543) 199 29 04");
+    expect(telefonBicimle("5419222388", TR)).toBe("(+90) 541 922 23 88");
   });
 
   it("KISMI numara da gruplanir (yazarken)", () => {
-    // (P227 §3) Parantez yalniz alan kodu TAMAMLANINCA kapanir.
-    expect(telefonGiris("5")).toBe("0(5");
-    expect(telefonGiris("543")).toBe("0(543)");
-    expect(telefonGiris("5431")).toBe("0(543) 1");
-    expect(telefonGiris("543199")).toBe("0(543) 199");
-    expect(telefonGiris("54319929")).toBe("0(543) 199 29");
+    expect(telefonGiris("05")).toBe("(+90) 5");
+    expect(telefonGiris("0541")).toBe("(+90) 541");
+    expect(telefonGiris("05419")).toBe("(+90) 541 9");
+    expect(telefonGiris("0541922")).toBe("(+90) 541 922");
+    expect(telefonGiris("054192223")).toBe("(+90) 541 922 23");
+  });
+
+  it("ULKE YOK -> kod YAZILMAZ (uydurulmaz)", () => {
+    expect(telefonBicimle("5419222388", null)).toBe("541 922 23 88");
   });
 
   it("YAPISTIRMA cozulur", () => {
     for (const ham of HAM_BICIMLER) {
-      expect(telefonGiris(ham), ham).toBe("0(543) 199 29 04");
+      expect(telefonGiris(ham), ham).toBe("(+90) 543 199 29 04");
     }
   });
 
   it("RAKAM DISI karakter YUTULUR", () => {
-    expect(telefonGiris("0a5b4c3d1e992904")).toBe("0(543) 199 29 04");
+    expect(telefonGiris("0a5b4c3d1e992904")).toBe("(+90) 543 199 29 04");
   });
 
   it("BOS -> bos", () => {
@@ -106,6 +177,9 @@ describe("telefonBicimle / telefonGiris", () => {
 
 describe("telefonNormalle", () => {
   it("E.164 uretir", () => {
+    expect(telefonNormalle("(+90) 543 199 29 04")).toBe("+905431992904");
+  });
+  it("ESKI bicim de E.164 uretir (SAKLAMA DEGISMEDI)", () => {
     expect(telefonNormalle("0543 199 29 04")).toBe("+905431992904");
   });
   it("zaten E.164 olan DEGISMEZ", () => {
@@ -118,7 +192,7 @@ describe("telefonNormalle", () => {
 
 describe("telefonHatasi", () => {
   it("GECERLI numara -> null", () => {
-    expect(telefonHatasi("0543 199 29 04")).toBeNull();
+    expect(telefonHatasi("(+90) 543 199 29 04")).toBeNull();
   });
   it("EKSIK hane", () => {
     expect(telefonHatasi("0543 199")).toBe("eksik");

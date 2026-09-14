@@ -17,6 +17,8 @@
 // mesajinin gidip gitmedigini bilememesidir.
 import { useState } from "react";
 
+import { epostaHataMetni } from "@/components/EpostaAlani";
+import { EPOSTA_SINIR } from "@/lib/eposta";
 import { useT } from "@/lib/i18n/kullan";
 import { useI18n } from "@/lib/i18n/kullan";
 
@@ -31,6 +33,19 @@ export function TanitimForm() {
   async function gonder(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const veri = new FormData(e.currentTarget);
+    // (P233 §4) BICIM/UZUNLUK DENETIMI GONDERIMDEN ONCE.
+    //
+    // Alan `type="email"` tasiyordu ama tarayicinin kendi balonu
+    // CEVRILMEZ ve uzunluk sinirlarini (yerel 64 / toplam 254) BILMEZ;
+    // sunucunun reddettigi bir adres burada gecerli gorunuyordu. Adres
+    // ISTEGE BAGLI oldugu icin `zorunlu: false`.
+    const epostaMetni = String(veri.get("email") ?? "");
+    const epostaSorunu = epostaHataMetni(epostaMetni, false, t);
+    if (epostaSorunu) {
+      setHata(epostaSorunu);
+      setDurum("hata");
+      return;
+    }
     setDurum("gonderiliyor");
     setHata(null);
     try {
@@ -84,7 +99,12 @@ export function TanitimForm() {
       </label>
       <label className="block text-sm">
         <span className="mb-1 block font-medium">{t("tanitimFormEposta")}</span>
-        <input name="email" type="email" maxLength={200} className={alan} />
+        <input
+          name="email"
+          type="email"
+          maxLength={EPOSTA_SINIR + 2}
+          className={alan}
+        />
       </label>
       <label className="block text-sm">
         <span className="mb-1 block font-medium">{t("tanitimFormTelefon")}</span>

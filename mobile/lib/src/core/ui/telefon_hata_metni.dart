@@ -22,5 +22,7 @@ String? telefonHataMetni(
     TelefonHatasi.gecersizOnEk => l10n.telefonHataOnEk,
     // (P227 §3) Fazla hane SESSIZCE kesilmez, SOYLENIR.
     TelefonHatasi.tasma => l10n.telefonHataTasma,
+    // (P233 §3) Ulke kodu SECILMEDI — sessizce +90 varsayilmaz.
+    TelefonHatasi.ulkeYok => l10n.telefonHataUlkeYok,
   };
 }

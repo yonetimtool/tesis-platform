@@ -6340,7 +6340,34 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get telefonHataTasma =>
-      'Eine Telefonnummer darf nicht länger als 10 Ziffern sein. Entfernen Sie die überzähligen Ziffern.';
+      'Sie haben die für dieses Land zulässige Ziffernanzahl überschritten. Entfernen Sie die überzähligen Ziffern.';
+
+  @override
+  String get telefonHataUlkeYok => 'Wählen Sie zuerst die Ländervorwahl.';
+
+  @override
+  String get telefonUlkeEtiket => 'Ländervorwahl';
+
+  @override
+  String get telefonUlkeSec => 'Wählen';
+
+  @override
+  String get telefonUlusalYerTutucu => '5XX XXX XX XX';
+
+  @override
+  String get epostaHataBos => 'E-Mail-Adresse erforderlich.';
+
+  @override
+  String get epostaHataBicim =>
+      'Diese E-Mail-Adresse sieht nicht gültig aus. Beispiel: name@beispiel.com';
+
+  @override
+  String get epostaHataYerelUzun =>
+      'Der Teil vor dem @ darf höchstens 64 Zeichen lang sein.';
+
+  @override
+  String get epostaHataCokUzun =>
+      'Eine E-Mail-Adresse darf höchstens 254 Zeichen lang sein.';
 
   @override
   String get vardiyaOncekiAy => 'Vorheriger Monat';

@@ -255,8 +255,14 @@ void main() {
       _profilEkrani(const Locale('de'), profil: _profil(telefon: '+9055511')),
     );
     await tester.pumpAndSettle();
-    // Iki yerde gorunur: baslik satiri + iletisim kartinin on-dolu alani.
-    expect(find.text('+9055511'), findsNWidgets(2));
+    // (P233 §3) ARTIK IKI FARKLI BICIM.
+    //
+    // Baslik satiri HAM E.164'u gosterir (`+9055511`); iletisim kartindaki
+    // alan ise ULKE KODUNU AYRI KUTUYA aldi ve yalniz ULUSAL kismi ciziyor
+    // (`555 11`). Ikisinin ayni metni gostermesini beklemek, ulke
+    // secicisinin eklendigini gormemek olurdu.
+    expect(find.text('+9055511'), findsOneWidget);
+    expect(find.text('555 11'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

@@ -145,7 +145,13 @@ it("BICIM hatasi varken SUNUCUYA HIC GITMEZ", async () => {
   expect(
     screen.getByText("Tesis kodu yalnızca küçük harf, rakam ve tire içerebilir."),
   ).toBeTruthy();
-  expect(screen.getByText("Geçerli bir e-posta adresi girin.")).toBeTruthy();
+  // (P233 §4) METIN DEGISTI VE BU BILINCLI: sayfa kendi regexini birakip
+  // ortak kurala baglandi (`lib/eposta.ts`). Yeni cumle NEDENINI de
+  // soyluyor ve ORNEK veriyor; eski "Gecerli bir e-posta adresi girin."
+  // kullaniciya neyi duzeltecegini anlatmiyordu.
+  expect(
+    screen.getByText(/E-posta adresi geçerli görünmüyor/),
+  ).toBeTruthy();
   // NOT: hata metni `label`in ICINE cizildigi icin etiket metni artik
   // "Tesis (slug)" + hata cumlesi; alan yer tutucusundan bulunur.
   expect(

@@ -39,7 +39,14 @@ export function telefonIhlalleri(kaynak: string, yol: string): string[] {
   const desen = /value=\{[^}]*(?:telefon|phone)[^}]*\}/gi;
   let m: RegExpExecArray | null;
   while ((m = desen.exec(temiz)) !== null) {
-    if (m[0].includes("telefonGiris")) continue;
+    // (P233 §3) `telefonGiris` MUAFIYETI KALDIRILDI.
+    //
+    // P166 §9'da yeterliydi: alan kendi `<input>`unu kurabilirdi, yeter ki
+    // bicimlendiriciyi cagirsin. P233'te YETMEDI — ulke kodu secicisi
+    // ayri bir kutu ve onu her forma ELLE eklemek gerekirdi; `/kayit`
+    // sayfasi tam olarak bu sekilde geride kalmisti (kendi `<input>`u ve
+    // kendi hata tablosu vardi). Artik TEK kabul edilen sey
+    // `<TelefonAlani>`: bicim, ulke, sinir ve hata metni birlikte gelir.
     const satir = temiz.slice(0, m.index).split("\n").length;
     bulgular.push(`${yol}:${satir}  telefon girdisi MASKESIZ`);
   }
@@ -51,12 +58,14 @@ describe("telefon girdisi kapsami", () => {
     expect(
       telefonIhlalleri('<input value={form.telefon} />', "ornek.tsx"),
     ).toHaveLength(1);
+    // (P233 §3) Kendi `<input>`unu kuran form, bicimlendiriciyi CAGIRSA
+    // DA ihlaldir: ulke kodu secicisi gelmez.
     expect(
       telefonIhlalleri(
         "<input value={telefonGiris(form.telefon)} />",
         "ornek.tsx",
       ),
-    ).toHaveLength(0);
+    ).toHaveLength(1);
     expect(
       telefonIhlalleri("// ornek: value={form.telefon}", "ornek.tsx"),
     ).toHaveLength(0);
@@ -83,7 +92,9 @@ describe("telefon girdisi kapsami", () => {
     const hamGirdi = metin.match(/value=\{[^}]*(?:telefon|phone)[^}]*\}/gi)?.length ?? 0;
     const bilesen = metin.match(/<TelefonAlani\b/g)?.length ?? 0;
     expect(hamGirdi + bilesen).toBeGreaterThanOrEqual(3);
-    // Ve bilesen GERCEKTEN kullaniliyor (goc yarim kalmasin).
-    expect(bilesen).toBeGreaterThanOrEqual(3);
+    // (P233 §3) SEKIZ ALAN: tanimlar, users, tenants, tenants/[id] (x2),
+    // dis-hizmetler, profil, kayit. Sayi, taramanin GERCEKTEN bir seye
+    // baktiginin kaniti.
+    expect(bilesen).toBeGreaterThanOrEqual(8);
   });
 });

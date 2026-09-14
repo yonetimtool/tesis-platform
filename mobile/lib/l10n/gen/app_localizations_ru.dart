@@ -6413,7 +6413,33 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get telefonHataTasma =>
-      'Номер телефона не может быть длиннее 10 цифр. Удалите лишние цифры.';
+      'Превышено допустимое для этой страны количество цифр. Удалите лишние цифры.';
+
+  @override
+  String get telefonHataUlkeYok => 'Сначала выберите код страны.';
+
+  @override
+  String get telefonUlkeEtiket => 'Код страны';
+
+  @override
+  String get telefonUlkeSec => 'Выбрать';
+
+  @override
+  String get telefonUlusalYerTutucu => '5XX XXX XX XX';
+
+  @override
+  String get epostaHataBos => 'Требуется адрес электронной почты.';
+
+  @override
+  String get epostaHataBicim =>
+      'Адрес электронной почты выглядит неверно. Пример: name@example.com';
+
+  @override
+  String get epostaHataYerelUzun => 'Часть до @ не может превышать 64 символа.';
+
+  @override
+  String get epostaHataCokUzun =>
+      'Адрес электронной почты не может превышать 254 символа.';
 
   @override
   String get vardiyaOncekiAy => 'Предыдущий месяц';

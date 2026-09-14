@@ -18,6 +18,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 
+import { epostaHataMetni } from "@/components/EpostaAlani";
 import { ParolaAlani } from "@/components/ParolaAlani";
 import { CTA_GRADYANI } from "@/components/giris/stil";
 import {
@@ -30,6 +31,7 @@ import {
   girisEtiketSinifi,
   girisEtiketStili,
 } from "@/components/giris/kabuk";
+import { EPOSTA_SINIR } from "@/lib/eposta";
 import { useT } from "@/lib/i18n/kullan";
 
 const UC_ISTE = "/api/auth/sifre/kod-iste";
@@ -40,7 +42,12 @@ const UC_AYARLA = "/api/auth/sifre/dogrula-ve-ayarla";
 // için makul yapısal denetim. Hiçbiri "bu tesis/hesap var mı" bilgisini
 // SIZDIRMAZ; yalnız girilen metnin biçimini denetler.
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-const EPOSTA_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+/* (P233 §4) YEREL REGEX KALDIRILDI.
+ *
+ * Buradaki `/^[^\s@]+@[^\s@]+\.[^\s@]+$/` bicimi denetliyordu ama UZUNLUK
+ * sinirlarini (yerel 64 / toplam 254) BILMIYORDU: sunucunun reddettigi bir
+ * adres bu sayfada gecerli gorunuyordu. Kural artik `lib/eposta.ts`te tek
+ * yerde. */
 
 function SifirlamaFormu() {
   const t = useT();
@@ -68,9 +75,9 @@ function SifirlamaFormu() {
     return true;
   }
   function epostaDenetle(v: string): boolean {
-    const s = v.trim();
-    if (!s || !EPOSTA_RE.test(s)) {
-      setEpostaHata(t("girisEpostaGecersiz"));
+    const mesaj = epostaHataMetni(v, true, t);
+    if (mesaj) {
+      setEpostaHata(mesaj);
       return false;
     }
     setEpostaHata(null);
@@ -197,6 +204,7 @@ function SifirlamaFormu() {
               className={`${girisAlanSinifi} giris-alan${epostaHata ? " giris-titre" : ""}`}
               style={girisAlanStili(!!epostaHata)}
               type="email"
+              maxLength={EPOSTA_SINIR + 2}
               value={eposta}
               onChange={(e) => {
                 setEposta(e.target.value);

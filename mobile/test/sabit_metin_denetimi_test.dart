@@ -33,6 +33,12 @@ import 'package:flutter_test/flutter_test.dart';
 ///   protokol semasi. Cevrilseydi kullaniciya CALISMAYAN bir ornek
 ///   gosterilmis olurdu (P230 §1).
 ///
+/// * `\u{1F1xx}\u{1F1xx}`: ULKE BAYRAGI (P233 §3). Iki bolgesel
+///   gosterge harfinden olusan bir SIMGEDIR, cumle degil; `ulke_telefon.
+///   dart` tablosunda elli tanesi var ve hicbiri cevrilmez. Taramaya
+///   takilma sebebi, kacis dizisinin KAYNAKTA harf icermesi (`u`, hex) —
+///   yani gercek bir metin degil, taramanin gordugu bir golge.
+///
 /// * `app.yonetiyor.com`: TESIS YUZEYININ ADRESI. Cevrilecek bir cumle
 ///   degil bir ADRESTIR ve her dilde AYNI yazilir; cevrilirse denetciye
 ///   calismayan bir adres verilmis olur (P139.2).
@@ -45,6 +51,7 @@ final _izinli = RegExp(
   r'|PICCData|\(Kurulum bekliyor\)|\{\{.*\}\}.*'
   r'|Yönetiyor|GÜVENLİK & DANIŞMANLIK|app\.yonetiyor\.com'
   r'|Google|Microsoft|Apple'
+  r'|(\\u\{1F1[0-9A-F]{2}\}){2}'
   r')$',
 );
 

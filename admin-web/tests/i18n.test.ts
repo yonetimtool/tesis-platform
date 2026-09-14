@@ -76,6 +76,10 @@ describe("sozluk butunlugu", () => {
   const AYNI_KALABILIR = new Set([
     // Kisaltma ve simgeler — cevrilmezler.
     "NFC", "NFC UID", "SMS", "PDF", "HH:MM", "—", "?", "Tenant ID",
+    // (P233 §3) Telefon yer tutucusu bir KALIPTIR, cumle degil: `5XX XXX
+    // XX XX` rakam duzenini gosterir ve her dilde ayni okunur. Cevirmek,
+    // ornegin Rusca bir "5XX" uydurmak demek olurdu.
+    "5XX XXX XX XX",
     // Dil secici basligi bilincli olarak iki dilli.
     "Dil / Language",
     // Es-sozcukler: hedef dilde de AYNI yazilir (Almanca "Kamera",

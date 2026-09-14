@@ -10,7 +10,8 @@ import '../data/residents_api.dart';
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/ui/merkez_diyalog.dart';
 import '../../../core/ui/telefon_alani.dart';
-import '../../../core/ui/telefon_hata_metni.dart';
+import '../../../core/ui/eposta_alani_widget.dart';
+import '../../../core/ui/telefon_alani_widget.dart';
 
 /// Site Sakinleri — yonetici/admin: sakinleri listeler, yeni tasinani ekler
 /// (parolasiz hesap + otomatik davet), ayrilani cikarir (pasiflestir). Sakin
@@ -440,38 +441,24 @@ class _EditResidentSheetState extends ConsumerState<_EditResidentSheet> {
                   (v?.trim() ?? '').length < 2 ? l10n.butAdZorunlu : null,
             ),
             const SizedBox(height: 12),
-            TextFormField(
-              controller: _phoneCtrl,
-              enabled: !_submitting,
-              keyboardType: TextInputType.phone,
-              // (P123) TEK bicimlendirici: gruplar, rakam disini
-              // yutar, uzunlugu SERT sinirlar, yapistirmayi cozer.
-              inputFormatters: const [TelefonBicimlendirici()],
-              decoration: InputDecoration(
-                labelText: l10n.sakinYeniTelefon,
-                hintText: l10n.ortakTelefonIpucu,
-                helperText: l10n.sakinBosBirakDegismez,
-                prefixIcon: const Icon(Icons.phone_outlined),
-                border: const OutlineInputBorder(),
-              ),
-              // (P166 §9) DUZENLEMEDE BOS = DEGISMEZ, ama YAZILDIYSA
-              // gecerli olmali. Once hic dogrulayici yoktu: yarim bir
-              // numara kaydedilip sakinin girisini kirardi.
-              validator: (v) =>
-                  telefonHataMetni(l10n, v ?? '', zorunlu: false),
+            TelefonAlani(
+              ktrl: _phoneCtrl,
+              etiket: l10n.sakinYeniTelefon,
+              ipucu: l10n.ortakTelefonIpucu,
+              etkin: !_submitting,
+              // (P212-ek §2) EKLEMEDE OPSIYONEL — staff ile ayni gerekce.
+              zorunlu: false,
             ),
             const SizedBox(height: 12),
-            TextFormField(
-              controller: _emailCtrl,
-              enabled: !_submitting && !_emailTemizle,
-              keyboardType: TextInputType.emailAddress,
-              autocorrect: false,
-              decoration: InputDecoration(
-                labelText: l10n.sakinEposta,
-                helperText: l10n.sakinBosBirakDegismez,
-                prefixIcon: const Icon(Icons.mail_outline),
-                border: const OutlineInputBorder(),
-              ),
+            EpostaAlani(
+              ktrl: _emailCtrl,
+              etiket: l10n.sakinEposta,
+              ipucu: l10n.sakinBosBirakDegismez,
+              etkin: !_submitting && !_emailTemizle,
+              // DUZENLEMEDE BOS = DEGISTIRME (asagidaki anahtar ACIKCA
+              // siler). Bos degeri hata saymak, "degistirme" yolunu
+              // kapatirdi.
+              zorunlu: false,
             ),
             // "Bos birakmak" ile "SILMEK" ayri seylerdir: bos alan alani
             // degistirmez, bu anahtar ACIKCA null gonderir.
@@ -625,22 +612,12 @@ class _AddResidentSheetState extends ConsumerState<_AddResidentSheet> {
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 12),
-            TextFormField(
-              controller: _phoneCtrl,
-              enabled: !_submitting,
-              keyboardType: TextInputType.phone,
-              // (P123) TEK bicimlendirici: gruplar, rakam disini
-              // yutar, uzunlugu SERT sinirlar, yapistirmayi cozer.
-              inputFormatters: const [TelefonBicimlendirici()],
-              decoration: InputDecoration(
-                labelText: l10n.ortakCepTelefonu,
-                hintText: l10n.ortakTelefonIpucu,
-                prefixIcon: const Icon(Icons.phone_outlined),
-                border: const OutlineInputBorder(),
-                helperText: l10n.sakinGirisAnahtari,
-              ),
-              // (P166 §9) Bicim de olculur — bkz. personel ekrani.
-              validator: (v) => telefonHataMetni(l10n, v ?? ''),
+            TelefonAlani(
+              ktrl: _phoneCtrl,
+              etiket: l10n.ortakCepTelefonu,
+              ipucu: l10n.ortakTelefonIpucu,
+              etkin: !_submitting,
+              zorunlu: true,
             ),
             const SizedBox(height: 12),
             TextFormField(

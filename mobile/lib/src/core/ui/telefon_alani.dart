@@ -1,153 +1,177 @@
-/// (P123) TELEFON GİRİŞİ — TEK biçimlendirici, TEK kural, HER alan.
+/// (P123 · P227 §3 · P233 §3) TELEFON GİRİŞİ — TEK biçimlendirici, TEK
+/// kural, HER alan.
 ///
-/// Bugüne kadar altı ayrı telefon alanı vardı ve altısı da **ham metin**
-/// kabul ediyordu: kullanıcı `0543 199 29 04` da yazabiliyordu
-/// `+905431992904` de `543-199-29-04` de. Sunucudaki `normalize_phone`
-/// hepsini kabul ettiği için hiçbiri "hata" vermiyordu — ama:
-///   * ekranda okunması zor (gruplanmamış 11 hane),
-///   * yanlışlıkla 12. haneyi yazmak **sessizce** geçiyor ve sunucudan
-///     anlaşılmaz bir 422 dönüyordu,
-///   * geçersiz bir operatör ön eki (`0234…`) ancak KAYDETTİKTEN sonra
-///     fark ediliyordu.
+/// =========================================================================
+/// (P233 §3) TR SABİTİ KALKTI — ÜLKE KODU ARTIK DEĞERİN PARÇASI
+/// =========================================================================
+/// Eskiden bu dosya TR'ye sabitti (gerekçe: `ulke_telefon.dart` baş yorumu).
+/// Kullanıcının gördüğü değer artık ülke kodunu TAŞIR:
+/// `(+90) 541 922 23 88`.
 ///
-/// TEL BİÇİMİ **DEĞİŞMEDİ**: sunucuya giden değer yine `normalize_phone`in
-/// kabul ettiği biçimdedir ([telefonNormalle] E.164 üretir). Değişen tek
-/// şey kullanıcının gördüğü ve yazdığı şey.
+/// Ülke AYRI bir parametre olsaydı telefon girilen YEDİ ekranın her biri
+/// ikinci bir durum parçası taşımak zorunda kalırdı ve sekizincisi onu
+/// unuturdu. Değerin kendisi ülkeyi taşıyınca unutulacak parça kalmıyor.
 ///
-/// **NEDEN AYRI BİR PAKET DEĞİL** (`mask_text_input_formatter` vb.):
-/// ihtiyacımız tek bir ülkenin tek bir kalıbı ve iki kural (uzunluk +
-/// operatör ön eki). Genel bir maske paketi, yapıştırma ve geri silme
-/// davranışını kendi kurallarıyla getirir ve TR ön ek doğrulaması yine
-/// bize kalırdı — bağımlılık yüzeyi kazanç sağlamıyor.
+/// =========================================================================
+/// GÖSTERİM İLE SAKLAMA AYRI
+/// =========================================================================
+/// Sunucuya giden değer yine E.164 (`+905419222388`) — `normalize_phone`
+/// boşluk/parantez siler, biçim değişiminden ETKİLENMEZ. Telefon GLOBAL
+/// BENZERSİZ anahtar olduğu için ikisini karıştırmak eski kayıtları
+/// erişilemez kılardı.
+///
+/// BAŞTAKİ `0` KALKTI: `0(543) 199 29 04` -> `(+90) 543 199 29 04`. Ülke
+/// kodu görünürken ayrıca ulusal `0` öngöster bulundurmak numarayı iki kez
+/// "ülkelendirmek" olurdu.
+///
+/// Panel ikizi `admin-web/lib/telefon.ts` ile AYNI tabloyu üretir.
 library;
 
 import 'package:flutter/services.dart';
 
-/// TR cep numarası: `5` ile başlayan 10 hane (baştaki `0` hariç).
+import 'ulke_telefon.dart';
+
+export 'ulke_telefon.dart';
+
+/// TR hane sayısı — geriye dönük; yeni kod ülkenin `enAz/enCok`unu okur.
 const kTelefonHaneSayisi = 10;
 
-/// Ekranda görünen gruplama: `0` + `543` `199` `29` `04`.
-const _gruplar = <int>[3, 3, 2, 2];
+final _tr = ulkeBul(kVarsayilanUlke)!;
 
-/// Türkiye mobil operatör ön ekleri (ilk üç hane).
+/// Ham dizgeyi (ülke, ulusal haneler) çiftine ayırır.
 ///
-/// LİSTE **KAPALI DEĞİL**: BTK yeni blok tahsis edebilir. Bu yüzden kural
-/// "listede yoksa reddet" değil, **"5 ile başlamıyorsa reddet"**tir; liste
-/// yalnızca bilinen bir yazım hatasını (`0543` yerine `0534`) daha erken
-/// yakalamak için değil, **sabit hattı** ayırmak için var: `0212…` bir cep
-/// numarası değildir ve SMS gitmez. Sabit hat gerektiğinde bu alan
-/// kullanılmaz.
-bool telefonOnEkiGecerli(String haneler) {
-  if (haneler.isEmpty) return true; // henüz yazılıyor
-  return haneler.startsWith('5');
+/// ÜLKE NEREDEN OKUNUR — sırayla:
+///  1. `(+90) ...` / `+90...` / `0090...` — AÇIK ülke kodu.
+///  2. Baştaki tek `0` (`0543...`) — ESKİ TR biçimi; hâlâ gelebilir
+///     (yapıştırma, rehber, eski kayıt).
+///  3. Hiçbiri yoksa ÜLKE YOK döner — sessizce TR sayılmaz; sessiz varsayım
+///     bu turun düzelttiği kusurun ta kendisi.
+({Ulke? ulke, String haneler}) telefonParcala(String ham) {
+  final metin = ham.trim();
+  var s = metin.replaceAll(RegExp(r'\D'), '');
+  if (s.isEmpty) return (ulke: null, haneler: '');
+
+  final acikKod = metin.contains('+') || s.startsWith('00');
+  if (s.startsWith('00')) s = s.substring(2);
+
+  if (acikKod) {
+    final c = ulkeyiCoz(s);
+    if (c != null) return (ulke: c.ulke, haneler: c.ulusal);
+    // Kod tanınıyor ama hane sayısı henüz tutmuyor (kullanıcı YAZIYOR):
+    // en uzun eşleşen kodu soy, kalanı ulusal say.
+    final kodlar = <String>{for (final u in kUlkeler) u.arama}.toList()
+      ..sort((a, b) => b.length.compareTo(a.length));
+    for (final arama in kodlar) {
+      if (s.startsWith(arama)) {
+        return (
+          ulke: kUlkeler.firstWhere((u) => u.arama == arama),
+          haneler: s.substring(arama.length),
+        );
+      }
+    }
+    return (ulke: null, haneler: s);
+  }
+
+  if (s.startsWith('0')) return (ulke: _tr, haneler: s.substring(1));
+
+  // (P233 §3) `+` YOKSA DA ULKE KODU ARANIR — ama YALNIZ hane sayisi TAM
+  // tuttugunda. `905431992904` numarayi yazmanin cok yaygin bir bicimidir
+  // (backend `kimlik.py` bunun icin ayrica telafi tasiyor) ve ilk yazimda
+  // TASMA sayiliyordu: 12 hane, TR siniri 10. Olcum yakaladi.
+  //
+  // Hane sayisi TUTMAK ZORUNDA: aksi halde `5431992904` -> AR (`+54`) diye
+  // cozulur ve kullanicinin yazdigi TR numarasi Arjantin numarasina
+  // donerdi. Tam eslesme sarti bunu imkansiz kilar.
+  final c = ulkeyiCoz(s);
+  if (c != null) return (ulke: c.ulke, haneler: c.ulusal);
+  return (ulke: null, haneler: s);
 }
 
-/// Ham girdiden YALNIZ haneleri çıkarır ve TR yerel biçimine indirger.
-///
-/// `+90`, `0090`, `90` ve baştaki `0` **soyulur**: kullanıcı numarayı
-/// nereden yapıştırırsa yapıştırsın aynı 10 haneye iner. Yapıştırmanın
-/// çalışması şart — insanlar numarayı rehberden kopyalar ve oradan
-/// `+90 543 199 29 04` gelir.
+/// Ulusal haneler (ülke kodu HARİÇ), ülkenin en çok hanesine KIRPILMIŞ.
 String telefonHaneleri(String ham) {
-  var s = ham.replaceAll(RegExp(r'\D'), '');
-  if (s.startsWith('0090')) {
-    s = s.substring(4);
-  } else if (s.startsWith('90') && s.length > kTelefonHaneSayisi) {
-    // `90` YALNIZ fazladan hane varken ülke kodu sayılır: `9053…` diye
-    // başlayan bir numara yoktur ama `905431992904` (12 hane) vardır.
-    s = s.substring(2);
-  }
-  if (s.startsWith('0')) s = s.substring(1);
-  if (s.length > kTelefonHaneSayisi) s = s.substring(0, kTelefonHaneSayisi);
-  return s;
-}
-
-/// (P227 §3) Haneleri `0(541) 922 23 88` biçiminde gösterir (eksikse kısmi).
-///
-/// ALAN KODU PARANTEZ İÇİNDE: 10 hanenin ilk üçü operatör kodudur ve gözle
-/// ilk ayrılması gereken parçadır. Parantez yalnız grup TAMAMLANINCA
-/// kapanır; yazarken yarım parantez göstermek imlecin nereye gideceğini
-/// belirsizleştirirdi.
-///
-/// SAKLAMA DEĞİŞMEDİ: sunucuya giden değer yine E.164. Biçim GÖSTERİMDİR;
-/// ikisini karıştırmak telefonun global benzersiz anahtar olmasını bozardı.
-///
-/// Panel ikizi `admin-web/lib/telefon.ts` ile AYNI tabloyu üretir
-/// (`test/telefon_alani_test.dart` ve `tests/telefon.test.ts` paylaşılan
-/// örnekleri kullanır) — iki yüzey ayrışırsa yönetici panelde kaydettiği
-/// numarayı mobilde farklı görür.
-String telefonBicimle(String haneler) {
-  if (haneler.isEmpty) return '';
-  final ilk = haneler.length >= _gruplar.first
-      ? haneler.substring(0, _gruplar.first)
-      : haneler;
-  final b = StringBuffer(
-    haneler.length >= _gruplar.first ? '0($ilk)' : '0($ilk',
-  );
-  var i = ilk.length;
-  for (final uzunluk in _gruplar.skip(1)) {
-    if (i >= haneler.length) break;
-    final son = (i + uzunluk).clamp(0, haneler.length);
-    b.write(' ');
-    b.write(haneler.substring(i, son));
-    i = son;
-  }
-  return b.toString();
+  final p = telefonParcala(ham);
+  final sinir = (p.ulke ?? _tr).enCok;
+  return p.haneler.length > sinir ? p.haneler.substring(0, sinir) : p.haneler;
 }
 
 /// (P227 §3) Hane sınırı aşıldı mı — KESMEDEN ÖNCE sorulur.
 ///
 /// `telefonHaneleri` fazla haneyi SESSİZCE kesiyordu: kullanıcı 11. rakamı
 /// yazdığında ekranda hiçbir şey değişmiyor, numarayı doğru sandığı hâlde
-/// son hanesi düşmüş oluyordu. Yapıştırmada daha sinsi: 11 haneli yanlış
-/// bir numara, 10 haneli BAŞKA bir numaraya dönüşebiliyordu.
-///
-/// Ülke kodu ekleri (`+90`, `0090`, `90`, baştaki `0`) taşma SAYILMAZ.
+/// son hanesi düşmüş oluyordu.
 bool telefonTasti(String ham) {
-  var s = ham.replaceAll(RegExp(r'\D'), '');
-  if (s.startsWith('0090')) {
-    s = s.substring(4);
-  } else if (s.startsWith('90') && s.length > kTelefonHaneSayisi) {
-    s = s.substring(2);
-  }
-  if (s.startsWith('0')) s = s.substring(1);
-  return s.length > kTelefonHaneSayisi;
+  final p = telefonParcala(ham);
+  return p.haneler.length > (p.ulke ?? _tr).enCok;
 }
 
-/// Sunucuya gidecek değer — E.164 (`+905431992904`).
-///
-/// Sunucu `0543…` biçimini de kabul eder; yine de **normalleştirilmiş**
-/// gönderilir: aynı numaranın iki farklı yazımla iki kayıt üretmesi, telefon
-/// GLOBAL BENZERSİZ olduğu için bir çakışma hatasına dönüşürdü.
+/// `(+90) 541 922 23 88` — eksikse kısmi. Ülke yoksa yalnız gövde.
+String telefonBicimle(String haneler, Ulke? ulke) {
+  final govde = ulusalBicimle(ulke ?? _tr, haneler);
+  if (ulke == null) return govde;
+  return govde.isEmpty ? '(+${ulke.arama}) ' : '(+${ulke.arama}) $govde';
+}
+
+/// Kutuda görünecek ULUSAL kısım (ülke kodu AYRI kutuda çizildiği için).
+String telefonUlusal(String ham) {
+  final p = telefonParcala(ham);
+  return ulusalBicimle(p.ulke ?? _tr, telefonHaneleri(ham));
+}
+
+/// Sunucuya gidecek değer — E.164. Ülke yoksa BOŞ (yanlış kod uydurulmaz).
 String telefonNormalle(String ham) {
+  final p = telefonParcala(ham);
   final h = telefonHaneleri(ham);
-  return h.isEmpty ? '' : '+90$h';
+  if (h.isEmpty || p.ulke == null) return '';
+  return '+${p.ulke!.arama}$h';
 }
 
-/// Girdi biçimlendirici: yazarken gruplar, rakam dışını yutar, uzunluğu
-/// **sert** sınırlar.
+/// Ülke kodunu DEĞİŞTİRİR, girilmiş haneleri korur.
+String telefonUlkeyiDegistir(String ham, String kod) {
+  final u = ulkeBul(kod);
+  if (u == null) return ham;
+  final h = telefonParcala(ham).haneler;
+  final kirpik = h.length > u.enCok ? h.substring(0, u.enCok) : h;
+  return telefonBicimle(kirpik, u);
+}
+
+/// Girdi biçimlendirici — ULUSAL kutu için: yazarken gruplar, rakam dışını
+/// yutar, uzunluğu **sert** sınırlar.
+///
+/// Ülke DIŞARIDAN verilir çünkü sınır ülkeye göre değişir; biçimlendirici
+/// kendi başına ülkeyi bilemez (kutuda ülke kodu YOK).
 class TelefonBicimlendirici extends TextInputFormatter {
-  const TelefonBicimlendirici();
+  const TelefonBicimlendirici([this.ulke]);
+
+  final Ulke? ulke;
 
   @override
   TextEditingValue formatEditUpdate(
     TextEditingValue eski,
     TextEditingValue yeni,
   ) {
-    final haneler = telefonHaneleri(yeni.text);
-    final metin = telefonBicimle(haneler);
+    // YAPIŞTIRILAN METİN KENDİ ÜLKE KODUNU GETİRDİYSE dokunma: çağıran
+    // ekran onu `telefonParcala` ile çözüp ülke kutusunu günceller.
+    if (yeni.text.contains('+')) return yeni;
 
-    // FAZLA HANE YAZILAMAZ: 10 hane doluyken yeni rakam metni DEĞİŞTİRMEZ.
-    // İmleci de eski yerinde bırakmak gerekir, aksi halde her tuşta imleç
+    final u = ulke ?? _tr;
+    // BASTAKI SIFIRLAR ATILIR (`0543…` -> `543…`): ülke kodu ayrı kutuda
+    // dururken alana ulusal gövde ekini (`0`) de yazmak numarayı iki kez
+    // "ülkelendirmek" olur ve TAŞMA üretir (ölçüldü). Hiçbir ülkede ulusal
+    // anlamlı numara `0` ile başlamaz.
+    var haneler =
+        yeni.text.replaceAll(RegExp(r'\D'), '').replaceAll(RegExp(r'^0+'), '');
+    if (haneler.length > u.enCok) haneler = haneler.substring(0, u.enCok);
+    final metin = ulusalBicimle(u, haneler);
+
+    // FAZLA HANE YAZILAMAZ: sınır doluyken yeni rakam metni DEĞİŞTİRMEZ.
+    // İmleci de eski yerinde bırakmak gerekir, aksi hâlde her tuşta imleç
     // sona sıçrar ve ortadan düzeltme yapmak imkânsızlaşır.
     if (metin == eski.text) return eski;
 
-    // İMLEÇ: kullanıcı sona yazıyorsa sonda kalsın. Ortadan düzeltmede
-    // hane sayısını koruyarak yeniden konumlandırmak gerekir; basit ve
-    // öngörülebilir olan, imleci girilen hane sayısına göre hesaplamaktır.
-    final imlecHane = telefonHaneleri(
-      yeni.text.substring(0, yeni.selection.end.clamp(0, yeni.text.length)),
-    ).length;
+    final imlecHane = yeni.text
+        .substring(0, yeni.selection.end.clamp(0, yeni.text.length))
+        .replaceAll(RegExp(r'\D'), '')
+        .length;
     return TextEditingValue(
       text: metin,
       selection: TextSelection.collapsed(
@@ -158,17 +182,15 @@ class TelefonBicimlendirici extends TextInputFormatter {
 
   /// [n] hane girildiğinde imlecin biçimli metindeki konumu.
   ///
-  /// **n'inci hanenin ARDI** döner, n'inci hanenin kendisi değil: imleç
-  /// yazılan rakamdan SONRA durur. İlk yazımda bu bir eksikti ve her
-  /// tuşta imleç bir karakter geride kalıyordu — kullanıcı 5 hane yazınca
-  /// altıncıyı bir önceki hanenin soluna yazardı. Test yakaladı.
+  /// **n'inci hanenin ARDI** döner: imleç yazılan rakamdan SONRA durur. İlk
+  /// yazımda bu bir eksikti ve her tuşta imleç bir karakter geride kalıyordu
+  /// — kullanıcı 5 hane yazınca altıncıyı bir önceki hanenin soluna yazardı.
   static int _haneninEkranKonumu(String metin, int n) {
     if (metin.isEmpty) return 0;
-    if (n <= 0) return 1; // baştaki `0`ın ardı
+    if (n <= 0) return 0;
     final rakam = RegExp(r'\d');
     var sayac = 0;
-    // i=1'den başlar: indeks 0'daki `0` bir HANE değil, biçim ekidir.
-    for (var i = 1; i < metin.length; i++) {
+    for (var i = 0; i < metin.length; i++) {
       if (rakam.hasMatch(metin[i])) {
         sayac++;
         if (sayac == n) return i + 1;
@@ -183,29 +205,38 @@ enum TelefonHatasi {
   /// Alan zorunlu ama boş.
   bos,
 
-  /// 10 haneden az.
+  /// Ülkenin en az hane sayısından kısa.
   eksik,
 
-  /// `5` ile başlamıyor (sabit hat / hatalı ön ek).
+  /// TR'de `5` ile başlamıyor (sabit hat / hatalı ön ek).
   gecersizOnEk,
 
-  /// (P227 §3) 10 haneden UZUN — sessizce kesilmez, SÖYLENİR.
+  /// (P227 §3) Ülkenin en çok hanesinden UZUN — sessizce kesilmez, SÖYLENİR.
   tasma,
+
+  /// (P233 §3) Ülke kodu seçilmemiş.
+  ulkeYok,
 }
 
 /// [ham] için hata kimliği; `null` = geçerli.
-///
-/// [zorunlu] false ise boş değer geçerlidir (profil telefonu gibi
-/// isteğe bağlı alanlar).
 TelefonHatasi? telefonHatasi(String ham, {bool zorunlu = true}) {
-  final h = telefonHaneleri(ham);
-  // (P227 §3) TAŞMA ÖNCE SORULUR: numara 10 haneye kırpıldığı için
-  // aşağıdaki denetimlerin hepsi GEÇERLİ görünür ve kullanıcı hatayı HİÇ
-  // görmezdi.
-  if (telefonTasti(ham)) return TelefonHatasi.tasma;
-  if (h.isEmpty) return zorunlu ? TelefonHatasi.bos : null;
-  if (!telefonOnEkiGecerli(h)) return TelefonHatasi.gecersizOnEk;
-  if (h.length < kTelefonHaneSayisi) return TelefonHatasi.eksik;
+  final p = telefonParcala(ham);
+  // (P227 §3) TAŞMA ÖNCE SORULUR: numara kırpıldığı için aşağıdaki
+  // denetimlerin hepsi GEÇERLİ görünür ve kullanıcı hatayı HİÇ görmezdi.
+  if (p.haneler.length > (p.ulke ?? _tr).enCok) return TelefonHatasi.tasma;
+  if (p.haneler.isEmpty) return zorunlu ? TelefonHatasi.bos : null;
+  if (p.ulke == null) return TelefonHatasi.ulkeYok;
+  // ÖN EK KURALI YALNIZ TR'DE: diğer ülkelerin cep bloklarını doğrulamak
+  // için elimizde güvenilir veri yok; uydurulmuş bir kural gerçek bir
+  // numarayı reddederdi.
+  final onEk = p.ulke!.mobilOnEk;
+  if (onEk != null && !p.haneler.startsWith(onEk)) {
+    return TelefonHatasi.gecersizOnEk;
+  }
+  if (p.haneler.length < p.ulke!.enAz) return TelefonHatasi.eksik;
   return null;
 }
 
+/// TR ön ek kuralı — geriye dönük ad (P123'ten beri çağrılıyor).
+bool telefonOnEkiGecerli(String haneler) =>
+    haneler.isEmpty || haneler.startsWith('5');

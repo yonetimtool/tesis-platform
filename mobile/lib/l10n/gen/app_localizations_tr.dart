@@ -6150,7 +6150,33 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get telefonHataTasma =>
-      'Telefon numarası 10 haneden uzun olamaz. Fazla rakamları silin.';
+      'Bu ülke için izin verilen hane sayısını aştınız. Fazla rakamları silin.';
+
+  @override
+  String get telefonHataUlkeYok => 'Önce ülke kodunu seçin.';
+
+  @override
+  String get telefonUlkeEtiket => 'Ülke kodu';
+
+  @override
+  String get telefonUlkeSec => 'Seçin';
+
+  @override
+  String get telefonUlusalYerTutucu => '5XX XXX XX XX';
+
+  @override
+  String get epostaHataBos => 'E-posta adresi gerekli.';
+
+  @override
+  String get epostaHataBicim =>
+      'E-posta adresi geçerli görünmüyor. Örnek: ad@ornek.com';
+
+  @override
+  String get epostaHataYerelUzun =>
+      '@ işaretinden önceki kısım 64 karakteri geçemez.';
+
+  @override
+  String get epostaHataCokUzun => 'E-posta adresi 254 karakteri geçemez.';
 
   @override
   String get vardiyaOncekiAy => 'Önceki ay';
