@@ -103,6 +103,45 @@ def yonetilebilir(yoneten_rol: str) -> frozenset[str]:
     return YONETILEBILIR_ROLLER.get(yoneten_rol, frozenset())
 
 
+#: (P231 §2) BIR ROLUN PERSONEL LISTESINDE GOREBILECEGI ROLLER.
+#:
+#: OLCULEN SIZINTI (P231 §0, canli surulerek): `GET /users` cagiranin
+#: ROLUNE GORE SUZMUYORDU. `guvenlik_amiri` ile giris yapip listeyi
+#: cektigimde YEDI ROLUN HEPSI geldi — sakin, yonetici, admin, denetci,
+#: tesis gorevlisi dahil. Rol P129'dan beri `GET /users`ta IZINLI ve
+#: hicbir yerde daraltilmamisti.
+#:
+#: NEDEN BURADA: ayni soru UC ucta birden soruluyor (`/users`, `/shifts`,
+#: `/vardiya-plani/*`). Uc kopya, birinin guncellenip otekinin eskimesi
+#: demekti — `MALI_GORUNURLUK`un var olma gerekcesiyle ayni (P133.6).
+#:
+#: `None` = SINIRSIZ (yonetim rolleri tum personeli gorur).
+#:
+#: AMIR NEDEN KENDI ROLUNU DE GORUR: `guvenlik_amiri` de guvenlik
+#: personelidir. Kumeden cikarmak, amirin KENDISINI ve birlikte calistigi
+#: ikinci amiri listede gorememesi demekti — "tesis gorevlisini, sakini,
+#: diger calisanlari gormez" kuralini bozmadan.
+#:
+#: GORMEK != YONETMEK: amir ikinci bir amiri GORUR ama DUZENLEYEMEZ
+#: (`YONETILEBILIR_ROLLER["guvenlik_amiri"] == {"security"}`).
+GORUNUR_ROLLER: dict[str, frozenset[str] | None] = {
+    "admin": None,
+    "yonetici": None,
+    "denetci": None,
+    "guvenlik_amiri": frozenset({"security", "guvenlik_amiri"}),
+}
+
+
+def gorunur_roller(rol: str) -> frozenset[str] | None:
+    """`rol`un personel listelerinde gorebilecegi roller; `None` = hepsi.
+
+    TANINMAYAN ROL ICIN BOS KUME (fail-closed): yeni bir rol eklenip
+    tabloya yazilmazsa HICBIR personeli gormez. Tersi — varsayilani
+    `None` (hepsi) yapmak — yeni rolu sessizce tam gorunurlukle acardi.
+    """
+    return GORUNUR_ROLLER.get(rol, frozenset())
+
+
 #: (P133.6) MALI VERIYI GOREBILEN ROLLER — tek kaynak.
 #:
 #: NEDEN BURADA: "kim parayi gorur" sorusu P133'e kadar IKI yerde

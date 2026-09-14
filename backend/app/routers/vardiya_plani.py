@@ -29,6 +29,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..audit import Action, audit_user
 from ..deps import get_tenant_db, require_role
+from ..roller import gorunur_roller
 from ..errors import APIError
 from ..models import (
     AppUser,
@@ -77,7 +78,34 @@ router = APIRouter(prefix="/vardiya-plani", tags=["vardiya"])
 _OKUR = require_role(
     "admin", "yonetici", "security", "tesis_gorevlisi", "guvenlik_amiri"
 )
-_YAZAR = require_role("admin", "yonetici")
+# (P231 §2) AMIR GUVENLIK VARDIYALARINI DUZENLER.
+#
+# =========================================================================
+# `/shifts` ILE `/vardiya-plani` AYRI SEYLER — ve kapilari da ayri
+# =========================================================================
+# `/shifts` VARDIYA SABLONUDUR ("Gece 00:00-08:00"): sitenin calisma
+# duzenini tanimlar ve P35'te SAHIPLIGI `guvenlik_modu` belirler
+# (dis_sirket -> amir, yonetim_ici -> yonetici). O tasarim testli,
+# dokunulmadi.
+#
+# `/vardiya-plani` KIM NE ZAMAN CALISIYOR sorusudur — ekip yonetimi.
+# Sahada vardiya degisimini amir yonetir; her degisiklik icin yoneticiye
+# gitmek gecikme uretir. Bu yuzden amir burada TAM yetkilidir
+# (ekle/degistir/sil/toplu planla) ama YALNIZ `security` rolundeki
+# kisiler icin — hedef kisi `_hedef_gorunur` ile denetlenir.
+_YAZAR = require_role("admin", "yonetici", "guvenlik_amiri")
+
+
+def _hedef_gorunur(user: AppUser, hedef_rol: str | None) -> None:
+    """(P231 §2) Amir, GOREMEDIGI bir kisinin vardiyasina dokunamaz.
+
+    `gorunur_roller` TEK KAYNAK: personel listesinde kimi goruyorsa
+    vardiyasini da ancak onun icin duzenleyebilir. Ayri bir kume yazmak,
+    birinin guncellenip otekinin eskimesi demekti.
+    """
+    gorunur = gorunur_roller(user.role)
+    if gorunur is not None and (hedef_rol is None or hedef_rol not in gorunur):
+        raise APIError(403, "forbidden", "vardiya_yalniz_kendi_ekibin")
 
 #: Haftalik gorunum EN FAZLA bu kadar gun cekebilir. Sinirsiz birakmak,
 #: tek istekle yillik plani dokturmek olurdu (ve sayfa cizilemezdi).
@@ -189,6 +217,16 @@ async def _haftalik_saat(
     return toplam
 
 
+def _rol_kosulu(user: AppUser) -> list:
+    """(P231 §2) Cagiranin gorebilecegi personel rolleri icin WHERE parcasi.
+
+    Bos liste = SINIRSIZ (yonetim rolleri). Uc ayri sorguda ayni kurali
+    tekrar yazmak yerine tek yerden uretilir.
+    """
+    gorunur = gorunur_roller(user.role)
+    return [AppUser.role.in_(tuple(gorunur))] if gorunur is not None else []
+
+
 @router.get("", response_model=VardiyaHaftaOut)
 async def hafta(
     baslangic: dt.date = Query(...),
@@ -217,6 +255,10 @@ async def hafta(
                 VardiyaPlani.tarih >= baslangic,
                 VardiyaPlani.tarih <= son,
                 VardiyaPlani.durum == "planli",
+                # (P231 §2) Haftalik gorunum de suzulur — `cizelge` ile
+                # AYNI kural. Birini suzup otekini acik birakmak, amire
+                # ayni bilgiyi ikinci bir ekrandan vermek olurdu.
+                *_rol_kosulu(user),
             )
             .order_by(AppUser.ad)
         )
@@ -270,6 +312,7 @@ async def ata(
     ).scalar_one_or_none()
     if hedef is None or not hedef.is_active:
         raise APIError(422, "validation_error", "personel_bulunamadi")
+    _hedef_gorunur(user, hedef.role)
 
     # AYNI ATAMA KONTROLU CAKISMADAN ONCE: aksi hâlde kisi ayni
     # vardiyaya ikinci kez atanmaya calisildiginda cakisma denetimi
@@ -464,6 +507,11 @@ async def cizelge(
 ) -> VardiyaCizelgeOut:
     """Kisi x saat cizelgesi — bloklar COZULMUS saatlerle doner."""
     son = baslangic + dt.timedelta(days=gun - 1)
+    # (P231 §2) ROL BAZLI GORUNURLUK. Amir YALNIZ guvenlik personelinin
+    # cizelgesini gorur; tesis gorevlisinin vardiyasi onun isi degil ve
+    # kim ne zaman calisiyor bilgisi KVKK acisindan da gereksiz.
+    gorunur = gorunur_roller(user.role)
+    rol_kosulu = _rol_kosulu(user)
     # GECEYI ASAN VARDIYA: bir onceki gunun 22:00-05:00'i, gorunen
     # araligin ILK gunune tasar. Sorguyu bir gun geriye acmazsak o blok
     # cizelgede HIC gorunmezdi.
@@ -476,6 +524,7 @@ async def cizelge(
                 VardiyaPlani.tarih >= baslangic - dt.timedelta(days=1),
                 VardiyaPlani.tarih <= son,
                 VardiyaPlani.durum == "planli",
+                *rol_kosulu,
             )
             .order_by(AppUser.ad, VardiyaPlani.tarih)
         )
@@ -505,14 +554,18 @@ async def cizelge(
     # VARDIYASI OLMAYAN PERSONEL DE LISTEDE: cizelgenin isi "kim
     # calisiyor" kadar "kim BOSTA" sorusunu da yanitlamak. Bos satir
     # olmasaydi yonetici, atamak istedigi kisiyi ekranda goremezdi.
+    # BOS SATIRLAR DA SUZULUR: yalniz bloklari suzup personel listesini
+    # acik birakmak, amire tesis gorevlisinin ADINI yine gosterirdi —
+    # "vardiyasi yok" satiri olarak.
+    atanabilir = ["security", "tesis_gorevlisi", "guvenlik_amiri", "yonetici"]
+    if gorunur is not None:
+        atanabilir = [r for r in atanabilir if r in gorunur]
     personel = (
         await db.execute(
             select(AppUser)
             .where(
                 AppUser.is_active.is_(True),
-                AppUser.role.in_(
-                    ["security", "tesis_gorevlisi", "guvenlik_amiri", "yonetici"]
-                ),
+                AppUser.role.in_(atanabilir),
             )
             .order_by(AppUser.ad)
         )
@@ -579,6 +632,7 @@ async def toplu_ekle(
     ).scalar_one_or_none()
     if hedef is None or not hedef.is_active:
         raise APIError(422, "validation_error", "personel_bulunamadi")
+    _hedef_gorunur(user, hedef.role)
 
     # ============ 1. GECIS: YALNIZ OLC, HICBIR SEY YAZMA ============
     # Once denetleyip sonra yazmak SART: "hepsi ya da hicbiri"

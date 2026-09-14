@@ -33,6 +33,7 @@ from ..models import (
     UnitResident,
 )
 from ..audit import Action, audit_user
+from ..roller import gorunur_roller
 from ..schemas import (
     TaskCompletionCreate,
     TaskCompletionListResponse,
@@ -51,8 +52,16 @@ from ..ticketing import add_history, notify_opener
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
-_WRITER = require_role("admin", "yonetici")
-_READER = require_role("admin", "yonetici", "security", "tesis_gorevlisi")
+# (P231 §3) AMIR KENDI EKIBINE GOREV ACAR.
+#
+# Atanabilecek kisi kumesi `gorunur_roller` ile daraltilir (asagida):
+# amir yalniz `security` rolundeki birine gorev atayabilir. Yazma
+# yetkisini vermeden "ekibini yonet" demek, amiri her is icin
+# yoneticiye gitmeye zorlardi.
+_WRITER = require_role("admin", "yonetici", "guvenlik_amiri")
+_READER = require_role(
+    "admin", "yonetici", "security", "tesis_gorevlisi", "guvenlik_amiri"
+)
 # (P229 §3) YONETICI DE TAMAMLAYABILIR.
 #
 # OLCULEN DURUM: `_COMPLETER` admin + saha rolleriydi; YONETICI yoktu.
@@ -270,6 +279,15 @@ async def _ensure_user_in_tenant(
     if target_role is None:
         raise APIError(422, "invalid_reference", "atanan_user_bulunamadi")
     if actor.role == "yonetici" and target_role not in _YONETICI_ATANABILIR:
+        raise APIError(422, "invalid_reference", "gorev_atama_rol_kisiti")
+    # (P231 §3) AMIR YALNIZ KENDI EKIBINE ATAR.
+    #
+    # `gorunur_roller` TEK KAYNAK: personel listesinde kimi goruyorsa
+    # gorev de ancak ona atayabilir. Ayri bir kume yazmak, birinin
+    # guncellenip otekinin eskimesi demekti — amir goremedigi bir
+    # tesis gorevlisine gorev atayabilir hale gelirdi.
+    gorunur = gorunur_roller(actor.role)
+    if gorunur is not None and target_role not in gorunur:
         raise APIError(422, "invalid_reference", "gorev_atama_rol_kisiti")
 
 

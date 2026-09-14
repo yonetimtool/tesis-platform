@@ -3104,12 +3104,22 @@ class TaskCategoryOut(BaseModel):
     id: uuid.UUID
     ad: str
     aktif: bool
+    #: (P231 §3) Bu kategorideki sikayet GUVENLIGI ILGILENDIRIR mi.
+    #: Guvenlik amiri YALNIZ bu bayragi tasiyan kategorileri gorur.
+    #: Varsayilan FALSE (fail-closed): yeni kategori acan yonetici
+    #: farkinda olmadan amire yeni bir veri kumesi ACMAZ.
+    guvenlik_ilgili: bool = False
     created_at: datetime
     updated_at: datetime | None = None
 
 
 class TaskCategoryCreate(BaseModel):
     ad: str = Field(..., min_length=1, max_length=100)
+    #: (P231 §3) Bu kategorideki sikayet GUVENLIGI ILGILENDIRIR mi.
+    #: Guvenlik amiri YALNIZ bu bayragi tasiyan kategorileri gorur.
+    #: Varsayilan FALSE (fail-closed): yeni kategori acan yonetici
+    #: farkinda olmadan amire yeni bir veri kumesi ACMAZ.
+    guvenlik_ilgili: bool = False
 
 
 class TaskCategoryUpdate(BaseModel):
@@ -3132,6 +3142,11 @@ class TaskCategoryUpdate(BaseModel):
         if not self.model_fields_set:
             raise ValueError("en az bir alan gerekli")
         return self
+    #: (P231 §3) Bu kategorideki sikayet GUVENLIGI ILGILENDIRIR mi.
+    #: Guvenlik amiri YALNIZ bu bayragi tasiyan kategorileri gorur.
+    #: Varsayilan FALSE (fail-closed): yeni kategori acan yonetici
+    #: farkinda olmadan amire yeni bir veri kumesi ACMAZ.
+    guvenlik_ilgili: bool | None = None
 
 
 class TaskCategoryListResponse(BaseModel):

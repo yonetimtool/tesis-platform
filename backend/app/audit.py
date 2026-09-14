@@ -166,6 +166,12 @@ class Action:
     # demek, hakedis ve sorumluluk dogurur. Geri acma ise o kaniti
     # SILER; kimin sildigi yazilmazsa, tamamlanmis bir isin kaydi iz
     # birakmadan yok edilebilirdi.
+    # (P231 §1) Guvenlik amiri ATAMA ve GOREVDEN ALMA — ayri eylemler.
+    # Gorevden alma da bir YETKI DEGISIMIDIR ve kendi basina aranir;
+    # tek tipe indirmek "kim amir YAPILDI" sorusunu "kim amirlikten
+    # alindi"dan ayirt edilemez kilardi.
+    GUVENLIK_AMIRI_ATA = "guvenlik_amiri_ata"
+    GUVENLIK_AMIRI_KALDIR = "guvenlik_amiri_kaldir"
     TASK_START = "task_start"
     TASK_COMPLETE = "task_complete"
     TASK_REOPEN = "task_reopen"

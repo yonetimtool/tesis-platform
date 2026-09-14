@@ -93,7 +93,13 @@ enum UserRole {
 
   /// Gorev olusturma/duzenleme/silme (`POST/PATCH/DELETE /tasks`) —
   /// admin + yonetici (yonetici yalniz saha rollerine atayabilir; 422).
-  bool get canManageTasks => this == admin || this == yonetici;
+  /// (P231 §3) AMIR DE GOREV YONETIR — ama YALNIZ kendi ekibi icin.
+  ///
+  /// Hedef kisi kisiti SUNUCUDA (`gorunur_roller`): istemci yalnizca
+  /// ekranin gorunurlugunu secer. Kisiti buraya yazmak, iki yerde
+  /// ayrisabilecek ikinci bir kural olurdu.
+  bool get canManageTasks =>
+      this == admin || this == yonetici || this == guvenlikAmiri;
 
   /// (P166 §8.2) Kurulum sihirbazi (`GET/PATCH /kurulum`) — admin +
   /// yonetici. Ucun `require_role`u ile AYNI kume; saha ve sakin 403

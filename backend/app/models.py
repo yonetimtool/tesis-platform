@@ -1182,6 +1182,19 @@ class TaskCategory(Base):
         UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
     )
     ad: Mapped[str] = mapped_column(Text, nullable=False)
+    #: (P231 §3, goc 0134) Bu kategorideki sikayet GUVENLIGI ILGILENDIRIR mi.
+    #:
+    #: Guvenlik amiri YALNIZ bu bayragi tasiyan kategorilerdeki sikayetleri
+    #: gorur. Bayragi YONETICI koyar: hangi sikayetin guvenligi
+    #: ilgilendirdigine tesisin kendisi karar verir. Kategori adina gore
+    #: tahmin etmek KIRILGAN olurdu ("Asayis" yazan tesis calismaz,
+    #: "Guvenlik Kapisi Tamiri" yazan yanlis calisir) — ustelik 7 dilde.
+    #:
+    #: VARSAYILAN FALSE (fail-closed): yeni kategori acan yonetici,
+    #: farkinda olmadan amire yeni bir veri kumesi ACMAZ.
+    guvenlik_ilgili: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
     aktif: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))
     created_at = _created_at()
     updated_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)

@@ -57,7 +57,11 @@ router = APIRouter(prefix="/complaints", tags=["complaints"])
 # ACMA: saha rolleri + sakin (talebi YASAYAN acar). yonetici ACAMAZ —
 # kanalin cevaplayan tarafi; admin de acmaz (platform operatoru).
 _OPENER = require_role("security", "tesis_gorevlisi", "resident")
-_READER = require_role("admin", "yonetici", "security", "tesis_gorevlisi", "resident")
+# (P231 §3) AMIR EKLENDI — ama GORDUGU KUME DAR (asagida `_amir_kapsami`).
+_READER = require_role(
+    "admin", "yonetici", "security", "tesis_gorevlisi", "resident",
+    "guvenlik_amiri",
+)
 _MANAGER = require_role("admin", "yonetici")
 
 # Kendi-kaydi kapsamindaki roller (yonetim DISI): yalniz actiklarini gorur.
@@ -240,6 +244,27 @@ async def _get_or_404(
     return row[0], row[1]
 
 
+def _amir_kapsami(stmt, user: AppUser):
+    """(P231 §3) Amir YALNIZ guvenligi ilgilendiren kategorileri gorur.
+
+    KATEGORISIZ SIKAYET DE GORUNMEZ: ilgisi KURULAMAZ bir kaydi
+    "ilgilendiriyor olabilir" diye gostermek, en az yetki ilkesinin
+    tersi olurdu. `IN (alt sorgu)` NULL kategoriyi zaten eler.
+
+    Bayragi YONETICI koyar (`task_category.guvenlik_ilgili`); kategori
+    ADINA gore tahmin etmek kirilgan olurdu — gerekce goc 0134'te.
+    """
+    if user.role != "guvenlik_amiri":
+        return stmt
+    return stmt.where(
+        Complaint.kategori_id.in_(
+            select(TaskCategory.id).where(
+                TaskCategory.guvenlik_ilgili.is_(True)
+            )
+        )
+    )
+
+
 @router.get("", response_model=ComplaintListResponse)
 async def list_complaints(
     durum: ComplaintDurum | None = Query(None),
@@ -260,6 +285,7 @@ async def list_complaints(
     if unit_id is not None:
         stmt = stmt.where(Complaint.unit_id == unit_id)
     stmt = _own_scope(stmt, user)
+    stmt = _amir_kapsami(stmt, user)
 
     total = (
         await db.execute(select(func.count()).select_from(stmt.subquery()))

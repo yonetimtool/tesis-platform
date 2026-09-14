@@ -22,7 +22,7 @@ from ..errors import APIError
 from ..hata_metinleri import istek_dili
 from ..hesap_silme import hesabi_sil_veya_anonimlestir
 from ..models import AppUser, Davet, Tenant, Unit, UnitResident, UserDevice
-from ..roller import yonetilebilir
+from ..roller import gorunur_roller, yonetilebilir
 from ..schemas import (
     OdemeKoduListe,
     OdemeKoduSatiri,
@@ -73,6 +73,40 @@ _ROL_DEGISTIRME_HATASI = {
     "yonetici": "rol_yonetilen_kumeye_cevrilir",
     "guvenlik_amiri": "rol_yalniz_guvenlik_yapilabilir",
 }
+
+
+async def _amir_atama_kapisi(
+    db: AsyncSession, user: AppUser, yeni_rol: str | None
+) -> None:
+    """(P231 §1) GUVENLIK AMIRINI YALNIZ TESISIN YONETICISI ATAR.
+
+    =======================================================================
+    ADMIN NEDEN KISITLI — VE NEDEN TAMAMEN KAPALI DEGIL
+    =======================================================================
+    Istek acikti: "platform admini veya baska bir rol amir atayamasin".
+    Gerekcesi de dogru: amir tesisin IC isidir, kime guvenecegine tesisin
+    yoneticisi karar verir.
+
+    Ama admin'i KOSULSUZ kapatmak, bu hafta gercekten yasanan kurtarma
+    senaryosuyla celisiyordu: prod'da platform admini disinda kimse
+    kalmamisti (P224) ve tesiste AKTIF YONETICI YOKKEN amir atamak ya da
+    GOREVDEN ALMAK imkansiz hale gelirdi.
+
+    Secilen kural: admin YALNIZ tesiste aktif yonetici YOKKEN atayabilir.
+    Normal isleyiste kapi kapali; kurtarma yolu aciik kaliyor ve o yol
+    denetim kaydina yaziliyor.
+    """
+    if yeni_rol != "guvenlik_amiri" or user.role != "admin":
+        return
+    yonetici_var = (
+        await db.execute(
+            select(func.count())
+            .select_from(AppUser)
+            .where(AppUser.role == "yonetici", AppUser.is_active.is_(True))
+        )
+    ).scalar_one()
+    if yonetici_var:
+        raise APIError(403, "forbidden", "amiri_yalniz_yonetici_atar")
 
 
 def _yonetim_kapisi(user: AppUser, hedef_rol: str) -> None:
@@ -155,9 +189,27 @@ async def list_users(
     is_active: bool | None = Query(None),
     q: str | None = Query(None),
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_READER),
+    user: AppUser = Depends(_READER),
 ) -> UserAdminListResponse:
     where = []
+    # (P231 §2) ROL BAZLI GORUNURLUK — SUNUCUDA.
+    #
+    # OLCULEN SIZINTI: bu uc cagiranin ROLUNE GORE SUZMUYORDU ve
+    # `guvenlik_amiri` YEDI ROLUN HEPSINI goruyordu (canli suruldu:
+    # sakin, yonetici, admin, denetci, tesis gorevlisi dahil).
+    #
+    # SUZGEC BURADA, ISTEMCIDE DEGIL: arayuzde gizlemek, amirin uca
+    # DOGRUDAN istek atmasini engellemez. `?role=resident` ile sorsa
+    # bile asagidaki kesisim onu bos doner.
+    gorunur = gorunur_roller(user.role)
+    if gorunur is not None:
+        where.append(AppUser.role.in_(tuple(gorunur)))
+        # Istemcinin `role` suzgeci KESISIR, ezmez: `?role=resident`
+        # gonderen bir amir BOS liste alir — 403 degil, cunku "boyle bir
+        # rol yok" ile "gormene izin yok" ayrimini sizdirmanin anlami
+        # yok ve liste ucu zaten kume donduruyor.
+        if role is not None and role not in gorunur:
+            where.append(AppUser.role.in_(()))
     if role is not None:
         where.append(AppUser.role == role)
     if is_active is not None:
@@ -201,9 +253,18 @@ async def acilabilir_roller(
 async def get_user(
     user_id: uuid.UUID,
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_READER),
+    user: AppUser = Depends(_READER),
 ) -> UserAdminOut:
     obj = await get_or_404(db, AppUser, user_id)
+    # (P231 §2) IDOR KAPISI — listeyi daraltmak YETMEZ.
+    #
+    # Liste suzuldugu halde tekil uc acik kalsaydi, amir bir sakinin
+    # id'sini tahmin edip (ya da baska bir uctan gorup) TUM kaydini
+    # okuyabilirdi. 403 DEGIL 404: "var ama goremezsin" yaniti, kaydin
+    # VARLIGINI sizdirmak olurdu (`_visible_task_or_404` ile ayni kural).
+    gorunur = gorunur_roller(user.role)
+    if gorunur is not None and obj.role not in gorunur:
+        raise APIError(404, "not_found", "kayit_bulunamadi")
     out = _admin_out(obj)
     # (P186 §2.1) Duzenleme formu mevcut daire atamasini on-doldurur.
     baglar = await _aktif_daire_baglari(db, obj.id)
@@ -404,6 +465,7 @@ async def update_user(
     #      platform admini uretemez).
     # `admin` icin kume tum roller oldugundan ikisi de serbesttir.
     _yonetim_kapisi(user, obj.role)
+    await _amir_atama_kapisi(db, user, body.role)
     if body.role is not None and body.role not in yonetilebilir(user.role):
         raise APIError(
             403, "forbidden",
@@ -463,6 +525,22 @@ async def update_user(
             dil=istek_dili(accept_language),
         )
         davet_yeniden = True
+
+    # (P231 §1) AMIR ATAMA / GOREVDEN ALMA AYRI DENETIM SATIRI.
+    #
+    # `user_update` icinde kaybolmamali: "bu siteye amiri kim, ne zaman
+    # atadi" sorusu yetki sorusudur ve genel bir guncelleme kaydinin
+    # icinde aranmasi gereken bir sey degil. Iki ayri eylem cunku
+    # GOREVDEN ALMA da bir yetki degisimidir ve kendi basina aranir.
+    if eski_rol != obj.role and "guvenlik_amiri" in (eski_rol, obj.role):
+        await audit_user(
+            db, user,
+            Action.GUVENLIK_AMIRI_ATA
+            if obj.role == "guvenlik_amiri"
+            else Action.GUVENLIK_AMIRI_KALDIR,
+            resource_type="app_user", resource_id=obj.id,
+            meta={"eski_rol": eski_rol, "yeni_rol": obj.role},
+        )
 
     await audit_user(
         db, user, Action.USER_UPDATE, resource_type="app_user",

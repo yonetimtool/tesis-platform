@@ -54,7 +54,14 @@ _REGISTRAR = require_role("security")
 # tek-seferlik izinli daire (handler'da 403/izin tuketimi; KVKK — platform
 # operatoru dahil kimse varsayilan olarak sakinin ozel verisini gormez).
 # tesis_gorevlisi ERISMEZ (403).
-_READER = require_role("admin", "yonetici", "security", "resident")
+# (P231 §3) AMIR OKUR, KAYDETMEZ.
+#
+# Ziyaretci kaydini KAPIDAKI gorevli girer (`_REGISTRAR` = security);
+# amirin isi o kaydi DENETLEMEK. Yazma yetkisi vermek, amiri kapida
+# duruyormus gibi gostermek olurdu — ve "kim kaydetti" izini bulaniklastirirdi.
+_READER = require_role(
+    "admin", "yonetici", "security", "resident", "guvenlik_amiri"
+)
 # Varsayilan kapali roller (izinle acilir): admin + yonetici.
 _IZIN_GEREKEN = {"admin", "yonetici"}
 

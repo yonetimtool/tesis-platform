@@ -332,9 +332,19 @@ const MOBIL_ROLLERI = new Set(["resident", "security", "tesis_gorevlisi"]);
  * Yani asagidaki kume her zaman erisim kumesinin ALT KUMESIDIR.
  */
 export const ROTA_ROLLERI: Record<string, readonly string[]> = {
+  // (P231 §4) GUVENLIK AMIRI — kapsami SUNUCUDA daraltilmis ekranlar.
+  //
+  // Rol P218'e kadar HICBIR yuzeye giremiyordu; P213 §6 kamera+ozet+profil
+  // acti. P231'de kapsam ayrimi sunucuya kondu (`gorunur_roller`), yani
+  // ayni ekran amir icin DAR bir kume gosteriyor: personel listesi yalniz
+  // guvenlik, cizelge yalniz guvenlik vardiyalari.
+  //
+  // ROTAYI ACMAK SUNUCUYU ACMAZ: her uc kendi kapisini koruyor. Buradaki
+  // liste yalnizca MENUYU ve yonlendirmeyi belirler.
+
   // --- YONETIM EKRANLARI: yonetici + admin -------------------------------
   "/dashboard": ["admin", "yonetici", "guvenlik_amiri"],
-  "/shifts": ["admin", "yonetici"],
+  "/shifts": ["admin", "yonetici", "guvenlik_amiri"],
   // (P203 §4) WEB'DE YALNIZ YONETIM.
   //
   // Sunucu okumayi saha rollerine de aciyor ("bir sonraki vardiyada kim
@@ -345,10 +355,10 @@ export const ROTA_ROLLERI: Record<string, readonly string[]> = {
   //
   // Saha, plani MOBILDEN gorur (istegin "mobilde en azindan
   // goruntuleme" sarti).
-  "/vardiya-plani": ["admin", "yonetici"],
-  "/checkpoints": ["admin", "yonetici"],
-  "/patrol-plans": ["admin", "yonetici"],
-  "/tasks": ["admin", "yonetici"],
+  "/vardiya-plani": ["admin", "yonetici", "guvenlik_amiri"],
+  "/checkpoints": ["admin", "yonetici", "guvenlik_amiri"],
+  "/patrol-plans": ["admin", "yonetici", "guvenlik_amiri"],
+  "/tasks": ["admin", "yonetici", "guvenlik_amiri"],
   "/assets": ["admin", "yonetici"],
   "/units": ["admin", "yonetici"],
   // (P193 §5) Sunucu `PATCH /tenant/settings`i yoneticiye zaten aciyordu
@@ -399,7 +409,7 @@ export const ROTA_ROLLERI: Record<string, readonly string[]> = {
   "/raporlar": ["admin", "yonetici", "denetci"],
   // (P129) Seffaflik panosu zaten anonim ozet; denetci OKUR.
   "/transparency": ["admin", "yonetici", "denetci"],
-  "/users": ["admin", "yonetici"],
+  "/users": ["admin", "yonetici", "guvenlik_amiri"],
   // Sunucudaki `_YONETIM` ile AYNI kume (`GET /residents`). Ayrisirlarsa
   // ya yetkisiz kullaniciya menude gorunen bir sayfa gosterilir ya da
   // yetkili kullanicidan gizlenir.
@@ -419,7 +429,7 @@ export const ROTA_ROLLERI: Record<string, readonly string[]> = {
   "/kurulum": ["admin", "yonetici"],
   // (P154 / Asama 8) Ice aktarim catisi — kurulum isi.
   "/ice-aktarim": ["admin", "yonetici"],
-  "/complaints": ["admin", "yonetici"],
+  "/complaints": ["admin", "yonetici", "guvenlik_amiri"],
   "/notifications": ["admin", "yonetici"],
   // (P167 §6.1) "/yonetisim" DORDE BOLUNDU; roller aynen tasindi.
   "/karar-defteri": ["admin", "yonetici"],
@@ -428,7 +438,7 @@ export const ROTA_ROLLERI: Record<string, readonly string[]> = {
   // (P213 §6) KAMERA YONETIMI yoneticide kalir: amir kamera EKLEYEMEZ,
   // silemez, NVR kimligi giremez (backend `_WRITER` da onu istemiyor).
   // Sayfayi ona acmak, hicbirini yapamayacagi bir form gostermekti.
-  "/kameralar": ["admin", "yonetici"],
+  "/kameralar": ["admin", "yonetici", "guvenlik_amiri"],
   // Gecmis kayit IZLEME ayri sayfa ve amire ACIK — istegin birebir
   // karsiligi: "gecmis kayit erisimi: yonetici ve guvenlik amiri".
   "/kamera-kayitlari": ["admin", "yonetici", "guvenlik_amiri"],

@@ -483,3 +483,61 @@ def test_P228_ad_benzerligi_hicbir_kod_yolunda_uyelik_kaniti_degil():
                 f"{satir.strip()!r} — P228: kimlik yalniz dogrulanmis "
                 f"e-posta veya (global benzersiz) telefon ile kanitlanir"
             )
+
+
+# ===================================================================== #
+# (P231 §5) ROL ICI GORUNURLUK — "ayni tesis, FARKLI KAPSAM"
+# ===================================================================== #
+# Bu dosyanin diger taramalari TESISLER ARASI sinira bakiyor: bir uc
+# BASKA TESISIN satirini donduruyor mu? P231'de olculen sizinti AYNI
+# TESIS ICINDEYDI: `guvenlik_amiri` kendi tesisinin TUM sakin ve
+# personel listesini goruyordu (canli suruldu — yedi rolun hepsi geldi).
+#
+# Hicbir RLS testi bunu goremezdi: satirlar dogru tenant'taydi. Izolasyon
+# yalniz tenant siniri degil, ROL KAPSAMI da demek.
+
+def test_P231_amir_TESIS_ICINDE_de_dar_kapsamli(client, world):
+    """Amir kendi tesisinde bile YALNIZ guvenlik personelini gorur."""
+    r = client.post("/auth/login", json={
+        "tenant_slug": world["slug_a"],
+        "email": world["amir_a"]["email"],
+        "password": world["amir_a"]["password"]})
+    assert r.status_code == 200, r.text
+    h = {"Authorization": f"Bearer {r.json()['access_token']}"}
+
+    liste = client.get("/users?limit=1000", headers=h)
+    assert liste.status_code == 200, liste.text
+    roller = {u["role"] for u in liste.json()["items"]}
+    assert roller <= {"security", "guvenlik_amiri"}, (
+        f"amir tesis icinde fazla rol goruyor: {roller}")
+
+
+def test_P231_amir_BASKA_TESISIN_guvenligini_de_gormez(client, world):
+    """IKI SINIR BIRDEN: rol kapsami daralinca tenant siniri UNUTULMAMALI.
+
+    Amirin gorebildigi rol kumesi (`security`) B tesisinde de var; suzgec
+    tenant kosulunun YERINE gecseydi, amir B'nin guvenlik ekibini
+    gorurdu.
+    """
+    r = client.post("/auth/login", json={
+        "tenant_slug": world["slug_a"],
+        "email": world["amir_a"]["email"],
+        "password": world["amir_a"]["password"]})
+    h = {"Authorization": f"Bearer {r.json()['access_token']}"}
+    liste = client.get("/users?limit=1000", headers=h).json()["items"]
+    # B tenant'inin guvenlik kullanicisi listede OLMAMALI.
+    b_idler = {u["id"] for u in liste}
+    assert b_idler, "liste bos — test anlamsizlasir"
+    # Dogrudan kanit: her satir A tenant'inda mi (RLS) — uc tenant_id
+    # dondurmuyor, bu yuzden SAYI ile olculur: A'daki guvenlik sayisi.
+    yon = client.post("/auth/login", json={
+        "tenant_slug": world["slug_a"],
+        "email": world["yonetici_a"]["email"],
+        "password": world["yonetici_a"]["password"]})
+    yh = {"Authorization": f"Bearer {yon.json()['access_token']}"}
+    a_guvenlik = {
+        u["id"] for u in client.get(
+            "/users?limit=1000&role=security", headers=yh).json()["items"]
+    }
+    amir_guvenlik = {u["id"] for u in liste if u["role"] == "security"}
+    assert amir_guvenlik <= a_guvenlik, "amir BASKA TESISIN guvenligini gordu"

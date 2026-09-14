@@ -454,6 +454,27 @@ METINLER: dict[str, dict[str, str]] = {
     },
     # (P229 §2) Keyfi gun listesi BOS gonderildi.
     # (P230 §4) Bilinmeyen gorev durumu suzgeci.
+    # (P231 §1) Amiri yalniz tesisin yoneticisi atar; admin ancak tesiste
+    # aktif yonetici YOKKEN (kurtarma yolu).
+    # (P231 §2) Amir yalniz kendi ekibinin vardiyasina dokunabilir.
+    "vardiya_yalniz_kendi_ekibin": {
+        "tr": "Yalnız kendi ekibinizin vardiyasını düzenleyebilirsiniz.",
+        "en": "You can only edit your own team's shifts.",
+        "ar": "يمكنك تعديل ورديات فريقك فقط.",
+        "ru": "Вы можете изменять смены только своей команды.",
+        "de": "Sie können nur die Schichten Ihres eigenen Teams bearbeiten.",
+        "fr": "Vous ne pouvez modifier que les postes de votre propre équipe.",
+        "es": "Solo puede editar los turnos de su propio equipo.",
+    },
+    "amiri_yalniz_yonetici_atar": {
+        "tr": "Güvenlik amirini yalnız tesisin yöneticisi atayabilir.",
+        "en": "Only the site manager can appoint a security supervisor.",
+        "ar": "لا يمكن تعيين مشرف الأمن إلا من قِبل مدير المنشأة.",
+        "ru": "Назначить начальника охраны может только управляющий объектом.",
+        "de": "Nur die Objektverwaltung kann eine Sicherheitsleitung ernennen.",
+        "fr": "Seul le gestionnaire du site peut nommer un chef de la sécurité.",
+        "es": "Solo el administrador de la instalación puede nombrar a un jefe de seguridad.",
+    },
     "gorev_durum_bilinmiyor": {
         "tr": "Geçersiz görev durumu.",
         "en": "Invalid task status.",

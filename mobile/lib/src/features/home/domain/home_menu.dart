@@ -284,6 +284,17 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.complaints,
         HomeMenuEntry.patrol,
         HomeMenuEntry.personel,
+        // (P231 §3) ZIYARETCI ve GOREV girisleri EKLENDI.
+        //
+        // ZIYARETCI: amir OKUR, kaydetmez — kaydi kapidaki gorevli girer
+        // (`_REGISTRAR` = security) ve amirin isi o kaydi DENETLEMEK.
+        // Yazma yetkisi vermek "kim kaydetti" izini bulaniklastirirdi.
+        //
+        // GOREV: amir KENDI EKIBINE gorev acar/atar. Hedef kisi kumesi
+        // sunucuda `gorunur_roller` ile daraltilir — amir goremedigi bir
+        // tesis gorevlisine gorev ATAYAMAZ (422).
+        HomeMenuEntry.visitors,
+        HomeMenuEntry.tasks,
         // (P143) `auth.md` §4a amire ACIK diyor: "tur/vardiya/kontrol
         // noktasi, tarama raporu, kamera, pano, bildirimler, ARAC GECISI
         // VE IHLAL OKUMA". Ucu de menude YOKTU — amir bunlari izgarasina

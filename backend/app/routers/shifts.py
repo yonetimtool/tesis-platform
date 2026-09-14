@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..audit import Action, audit_user
 from ..crud_helpers import get_or_404, translate_integrity
 from ..deps import get_tenant_db, require_guvenlik_yazma, require_role
+from ..roller import gorunur_roller
 from ..errors import APIError
 from ..models import AppUser, Shift, ShiftAssignment
 from ..schemas import (
@@ -45,16 +46,27 @@ _ATANABILIR = {"security", "tesis_gorevlisi"}
 
 
 async def _personel_map(
-    db: AsyncSession, shift_ids: list[uuid.UUID]
+    db: AsyncSession,
+    shift_ids: list[uuid.UUID],
+    gorunur: frozenset[str] | None = None,
 ) -> dict[uuid.UUID, list[ShiftPersonelOut]]:
-    """shift_id -> atanan personel listesi (ad + presigned avatar)."""
+    """shift_id -> atanan personel listesi (ad + presigned avatar).
+
+    (P231 §2) [gorunur] verilirse YALNIZ o rollerdeki atamalar doner.
+    Amir, bir vardiyada gorevli TESIS GOREVLISININ adini gormemeli —
+    vardiyanin kendisini gorse bile. Suzgeci listede degil BURADA
+    yapmak sart: ad ve avatar bu fonksiyondan cikiyor.
+    """
     if not shift_ids:
         return {}
+    kosullar = [ShiftAssignment.shift_id.in_(shift_ids)]
+    if gorunur is not None:
+        kosullar.append(AppUser.role.in_(tuple(gorunur)))
     rows = (
         await db.execute(
             select(ShiftAssignment.shift_id, AppUser)
             .join(AppUser, AppUser.id == ShiftAssignment.user_id)
-            .where(ShiftAssignment.shift_id.in_(shift_ids))
+            .where(*kosullar)
             .order_by(AppUser.ad)
         )
     ).all()
@@ -81,9 +93,10 @@ async def list_shifts(
     offset: int = Query(0, ge=0),
     gun_tipi: GunTipi | None = Query(None),
     db: AsyncSession = Depends(get_tenant_db),
-    _: AppUser = Depends(_READER),
+    user: AppUser = Depends(_READER),
 ) -> ShiftListResponse:
     where = [Shift.gun_tipi == gun_tipi] if gun_tipi else []
+    gorunur = gorunur_roller(user.role)
     total = (
         await db.execute(select(func.count()).select_from(Shift).where(*where))
     ).scalar_one()
@@ -93,7 +106,7 @@ async def list_shifts(
             .limit(limit).offset(offset)
         )
     ).scalars().all()
-    pmap = await _personel_map(db, [r.id for r in rows])
+    pmap = await _personel_map(db, [r.id for r in rows], gorunur)
     return ShiftListResponse(
         meta={"limit": limit, "offset": offset, "total": total},
         items=[_shift_out(r, pmap.get(r.id, [])) for r in rows],
