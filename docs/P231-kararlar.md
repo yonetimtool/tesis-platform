@@ -195,6 +195,22 @@ kapsıyor.
 * Kırarak doğrulandı: `GORUNUR_ROLLER["guvenlik_amiri"] = None` → **5 test
   düştü**.
 
+## P232'de çıkan bir gerileme — ve kapatılması
+
+`GORUNUR_ROLLER`'in **fail-closed varsayılanı saha rollerini de
+kapsıyordu**: tabloya yalnız yönetim rolleri yazılmıştı, `security` ve
+`tesis_gorevlisi` yoktu → boş küme → `GET /shifts` çağıran bir güvenlik
+görevlisi **vardıyadaki personeli boş görüyordu**.
+
+Kusur sessizdi: uç 200 döner ve liste doludur; yalnızca her vardiyanın
+`personel` alanı boşalır. "Bu vardiyada benimle kim var" sorusu **vardiya
+devrinin kendisidir** — tam takım yakaladı (`0 == 2`).
+
+Saha rolleri açıkça `None` yazıldı. **Bu, onlara personel listesini açmak
+değil:** `/users` onlara zaten `require_role` ile kapalı (403); küme
+yalnız erişebildikleri uçlarda (vardiya/çizelge) iş görüyor. Tanınmayan
+rol hâlâ fail-closed ve bu da ayrıca test ediliyor.
+
 ## Ölçemediğim
 
 Gerçek tarayıcı/cihazda amir oturumuyla gezinme — tarayıcı ve emülatör

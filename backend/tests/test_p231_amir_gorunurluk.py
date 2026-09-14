@@ -301,3 +301,32 @@ def test_YONETICI_CIZELGEDE_HERKESI_GORUR(client, yon):
     assert r.status_code == 200, r.text
     roller = {k["rol"] for k in r.json()["personel"]}
     assert "tesis_gorevlisi" in roller, roller
+
+
+# ==================================================================== #
+# §2 — KORUMA FAZLA GENIS OLMASIN: saha rolleri etkilenmemeli
+# ==================================================================== #
+
+def test_SAHA_ROLU_VARDIYADAKI_PERSONELI_GORMEYE_DEVAM_EDER(client, world, yon):
+    """(P232) OLCULEN GERILEME: `GORUNUR_ROLLER`in fail-closed varsayilani
+    saha rollerini de kapsiyordu ve `GET /shifts` cagiran bir guvenlik
+    gorevlisi vardiyadaki PERSONELI BOS goruyordu.
+
+    Kusur SESSIZDI: uc 200 doner ve liste doludur; yalnizca her
+    vardiyanin `personel` alani bosalir. "Bu vardiyada benimle kim var"
+    sorusu VARDIYA DEVRININ kendisidir.
+    """
+    guard = _h(client, world, "guard_a")
+    r = client.get("/shifts?limit=200", headers=guard)
+    assert r.status_code == 200, r.text
+    # Fail-closed kume donseydi HICBIR vardiyada personel gorunmezdi.
+    from app.roller import gorunur_roller
+    assert gorunur_roller("security") is None, (
+        "saha rolu personel gorunurlugunden DUSMUS")
+    assert gorunur_roller("tesis_gorevlisi") is None
+
+
+def test_TANINMAYAN_ROL_HALA_FAIL_CLOSED():
+    """Saha rollerini acikca yazmak, BILINMEYEN rolu de acmamali."""
+    from app.roller import gorunur_roller
+    assert gorunur_roller("uydurma_rol") == frozenset()

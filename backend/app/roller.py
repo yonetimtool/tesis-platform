@@ -129,6 +129,21 @@ GORUNUR_ROLLER: dict[str, frozenset[str] | None] = {
     "yonetici": None,
     "denetci": None,
     "guvenlik_amiri": frozenset({"security", "guvenlik_amiri"}),
+    # (P232) SAHA ROLLERI ACIKCA YAZILDI — ilk yazimda UNUTULMUSTU ve
+    # fail-closed varsayilani onlari da kapsadi: `GET /shifts` cagiran
+    # bir guvenlik gorevlisi vardiyadaki PERSONELI BOS goruyordu
+    # (`test_shift_assignments` yakaladi, 0 == 2).
+    #
+    # Kusur sessizdi cunku uc 200 doner ve liste doludur; yalnizca her
+    # vardiyanin `personel` alani bosalir. "Bu vardiyada benimle kim
+    # var" sorusu VARDIYA DEVRININ kendisidir.
+    #
+    # NEDEN `None` (sinirsiz): bu kume YALNIZ saha rollerinin ZATEN
+    # erisebildigi uclarda (vardiya/cizelge) isler. `/users` onlara
+    # `require_role` ile kapali (403) — yani "sinirsiz" demek, personel
+    # listesini acmak DEGIL.
+    "security": None,
+    "tesis_gorevlisi": None,
 }
 
 
