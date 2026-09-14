@@ -43,6 +43,7 @@ import 'widgets/section_padding.dart';
 import 'widgets/son_hareketler_karti.dart';
 import '../data/izgara_tercihi.dart';
 import 'izgara_koprusu.dart';
+import '../../../core/gorunum/gorunum_modu.dart';
 
 /// Sakin ana ekrani (referans: site-sakini.jpeg).
 ///
@@ -157,6 +158,9 @@ class ResidentHomeScreen extends ConsumerWidget {
         bolumler: [
           HomeSectionPad(
             child: HizliErisimIzgarasi(
+              // (P230 §2) Modu EKRAN okur, izgaraya gecer — yaprak gorsel
+              // bilesen kuresel duruma uzanmaz.
+              mod: ref.watch(gorunumModuProvider),
               kartlar: erisim,
               onSec: (k) => k.rota == null
                   ? _yakinda(context)

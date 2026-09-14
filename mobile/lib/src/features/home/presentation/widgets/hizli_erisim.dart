@@ -8,8 +8,7 @@ import '../../domain/home_view_models.dart';
 import 'home_card.dart';
 import 'home_states.dart';
 import 'section_padding.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/ui/gorunum_modu.dart';
+import '../../../../core/gorunum/gorunum_modu.dart';
 
 /// Referans "hizli erisim" karti — beyaz kart, ortada tint ikon konteyneri,
 /// altinda 14 semibold baslik ve accent/gri sayac satiri. gorevli.jpeg'in
@@ -213,22 +212,31 @@ class _HizliErisimSeridiState extends State<HizliErisimSeridi> {
 /// kart yazilari gozle gorulur bicimde ziplar. Gruplari state'te tutmak
 /// kimliklerini sabitler; `AutoSizeText.didUpdateWidget` grubu "degismis"
 /// saymaz, ortak boyut korunur. Regresyon: home_kart_titremesi_test.dart.
-class HizliErisimIzgarasi extends ConsumerStatefulWidget {
+class HizliErisimIzgarasi extends StatefulWidget {
   const HizliErisimIzgarasi({
     super.key,
     required this.kartlar,
     required this.onSec,
+    this.mod = GorunumModu.standart,
   });
+
+  /// (P230 §2) GORUNUM MODU — YUKARIDAN VERILIR, burada okunmaz.
+  ///
+  /// Ilk yazimda bu widget `gorunumModuProvider`i KENDI okuyordu ve
+  /// `ProviderScope` gerektirir hale geldi: onu duz `MaterialApp` icinde
+  /// cizen 13 mevcut test "No ProviderScope found" ile dustu. Kirilma bir
+  /// TASARIM SINYALIYDI — yaprak bir gorsel bilesen kuresel duruma
+  /// uzanmamali. Modu ekran okur, izgaraya PARAMETRE olarak gecer.
+  final GorunumModu mod;
 
   final List<HizliErisimKart> kartlar;
   final ValueChanged<HizliErisimKart> onSec;
 
   @override
-  ConsumerState<HizliErisimIzgarasi> createState() =>
-      _HizliErisimIzgarasiState();
+  State<HizliErisimIzgarasi> createState() => _HizliErisimIzgarasiState();
 }
 
-class _HizliErisimIzgarasiState extends ConsumerState<HizliErisimIzgarasi> {
+class _HizliErisimIzgarasiState extends State<HizliErisimIzgarasi> {
   // TITREME KURALI: gruplar STATE'te durur, `build()` icinde URETILMEZ.
   final baslikGrubu = AutoSizeGroup();
   final sayacGrubu = AutoSizeGroup();
@@ -243,7 +251,7 @@ class _HizliErisimIzgarasiState extends ConsumerState<HizliErisimIzgarasi> {
         // (P230 §2) BUYUK MOD: 2 sutun, 4 karo. Sekiz karoyu buyutup
         // ekrana sigdirmaya calismak her karoyu yeniden kuculturdu —
         // ayar HICBIR SEY yapmamis olurdu. "Az oge" > "kucuk oge".
-        final mod = ref.watch(gorunumModuProvider);
+        final mod = widget.mod;
         final sutun = mod.izgaraSutun ?? hizliErisimSutun(c.maxWidth);
         final hucre = (c.maxWidth - HomeTokens.gridGap * (sutun - 1)) / sutun;
         return GridView.count(

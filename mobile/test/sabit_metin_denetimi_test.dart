@@ -28,12 +28,17 @@ import 'package:flutter_test/flutter_test.dart';
 ///   ve saglayicinin marka kilavuzu da bunu sart kosar. Cevrilen sey
 ///   onlari saran cumledir (`sosyalIleDevam`), ki o zaten sozlukte.
 ///
+/// * `rtsp://...`: ADRES ORNEGI (form ipucu). `https://...` zaten
+///   izinliydi; RTSP ayni siniftir — cevrilecek bir cumle degil, bir
+///   protokol semasi. Cevrilseydi kullaniciya CALISMAYAN bir ornek
+///   gosterilmis olurdu (P230 §1).
+///
 /// * `app.yonetiyor.com`: TESIS YUZEYININ ADRESI. Cevrilecek bir cumle
 ///   degil bir ADRESTIR ve her dilde AYNI yazilir; cevrilirse denetciye
 ///   calismayan bir adres verilmis olur (P139.2).
 final _izinli = RegExp(
   r'^('
-  r'[\d.,:/+\-#%*]+|.{0,1}|[a-z_]+|/[\w/{}.-]*|https?://.*'
+  r'[\d.,:/+\-#%*]+|.{0,1}|[a-z_]+|/[\w/{}.-]*|https?://.*|rtsps?://.*'
   r'|\.(png|jpg|jpeg|webp|heic|heif|svg|pdf)|image/\w+'
   r'|[A-Z_]{2,}|(dd|MM|yyyy|HH|mm|ss)[^A-Za-z]*.*|\#[0-9A-Fa-f]{3,8}'
   r'|\[.*\]|[a-zA-Z0-9]+([-_][a-zA-Z0-9]+)+'

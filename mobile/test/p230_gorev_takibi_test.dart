@@ -126,11 +126,23 @@ void main() {
       // (P230 §2-e) Yasli goz dusuk kontrasti zor secer. Rozet RENKLI
       // metin + %12 saydam zemin kullaniyor; bu birlesim kolayca
       // esigin altina duser. Flutter'in kendi WCAG denetimi surulur.
+      // HER IKI TEMA: ilk duzeltmede yalniz ACIK tema olculmustu ve
+      // `shade900` koyu zeminde 1.65 veriyordu — beş eksen surusu
+      // (koyu tema ekseni) onu yakaladi.
       final handle = tester.ensureSemantics();
-      for (final durum in TaskDurum.values) {
-        await tester.pumpWidget(l10nScaffold(DurumRozeti(durum: durum)));
-        await tester.pumpAndSettle();
-        await expectLater(tester, meetsGuideline(textContrastGuideline));
+      for (final koyu in [false, true]) {
+        for (final durum in TaskDurum.values) {
+          await tester.pumpWidget(MaterialApp(
+            theme: ThemeData(
+              brightness: koyu ? Brightness.dark : Brightness.light,
+            ),
+            localizationsDelegates: testLocalizationsDelegates,
+            supportedLocales: const [Locale('tr')],
+            home: Scaffold(body: DurumRozeti(durum: durum)),
+          ));
+          await tester.pumpAndSettle();
+          await expectLater(tester, meetsGuideline(textContrastGuideline));
+        }
       }
       handle.dispose();
     });

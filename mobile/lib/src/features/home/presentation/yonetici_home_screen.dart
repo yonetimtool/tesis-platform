@@ -40,6 +40,7 @@ import 'widgets/stat_tile.dart';
 import 'widgets/vardiya_seridi.dart';
 import '../data/izgara_tercihi.dart';
 import 'izgara_koprusu.dart';
+import '../../../core/gorunum/gorunum_modu.dart';
 
 /// Yonetim ana ekrani (referans: yonetici.jpeg) — site yoneticisi VE platform
 /// admini ayni duzeni gorur (brief: admin→yönetici varyanti).
@@ -167,6 +168,9 @@ class YoneticiHomeScreen extends ConsumerWidget {
         bolumler: [
           HomeSectionPad(
             child: HizliErisimIzgarasi(
+              // (P230 §2) Modu EKRAN okur, izgaraya gecer — yaprak gorsel
+              // bilesen kuresel duruma uzanmaz.
+              mod: ref.watch(gorunumModuProvider),
               kartlar: erisim,
               onSec: (k) =>
                   k.rota == null ? _yakinda(context) : context.push(k.rota!),

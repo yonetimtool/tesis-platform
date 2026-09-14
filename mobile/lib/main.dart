@@ -18,7 +18,7 @@ import 'src/features/surum/presentation/surum_kapisi.dart';
 import 'src/features/auth/data/current_user_provider.dart';
 import 'src/routing/app_router.dart';
 import 'src/routing/push_yonlendirme.dart';
-import 'src/core/ui/gorunum_modu.dart';
+import 'src/core/gorunum/gorunum_modu.dart';
 
 Future<void> main() async {
   // Depo okumasi platform kanali kullanir → baglama once kurulmalidir.

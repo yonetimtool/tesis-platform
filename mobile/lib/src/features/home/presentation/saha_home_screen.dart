@@ -43,6 +43,7 @@ import 'widgets/son_hareketler_karti.dart';
 import 'widgets/vardiya_seridi.dart';
 import '../data/izgara_tercihi.dart';
 import 'izgara_koprusu.dart';
+import '../../../core/gorunum/gorunum_modu.dart';
 
 /// Gorevli ana ekrani (referans: gorevli.jpeg) — guvenlik + tesis gorevlisi
 /// TEK rol-parametrik ekranda.
@@ -232,6 +233,9 @@ class SahaHomeScreen extends ConsumerWidget {
         bolumler: [
           HomeSectionPad(
             child: HizliErisimIzgarasi(
+              // (P230 §2) Modu EKRAN okur, izgaraya gecer — yaprak gorsel
+              // bilesen kuresel duruma uzanmaz.
+              mod: ref.watch(gorunumModuProvider),
               kartlar: erisim,
               onSec: (k) => _ac(context, k),
             ),

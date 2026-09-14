@@ -26,7 +26,7 @@ import '../../profile/data/profile_api.dart';
 import '../../push/domain/push_models.dart';
 import '../../push/presentation/push_registrar.dart';
 import '../data/bildirim_tercih_api.dart';
-import '../../../core/ui/gorunum_modu.dart';
+import '../../../core/gorunum/gorunum_modu.dart';
 
 /// Ayarlar — kullanici tercihleri (DIL + tema modu) + yonetici'ye ozel tesis
 /// adlandirmasi. Iki tercih de kalicidir (guvenli depo) ve ANINDA uygulanir;

@@ -17,18 +17,29 @@ class DurumRozeti extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    // KOYU TONLAR — WCAG AA (4.5:1) GEREGI.
+    // TEMA DUYARLI TONLAR — WCAG AA (4.5:1) HER IKI TEMADA.
     //
-    // Ilk yazimda Material'in varsayilan `Colors.green/red/blue/grey`
-    // tonlari kullanilmisti ve kontrast denetimi 12 puntoda 2.31
-    // olculdu — esigin YARISINDAN AZ. Yasli goz dusuk kontrasti zaten
-    // zor secer; §2'nin amaci tam da buydu. Tonlar `shade800`e
-    // cekildi ve zemin saydamligi dusuruldu.
-    final (metin, renk) = switch (durum) {
-      TaskDurum.tamamlandi => (l10n.gorevDurumTamamlandi, Colors.green.shade900),
-      TaskDurum.gecikti => (l10n.gorevDurumGecikti, Colors.red.shade900),
-      TaskDurum.baslandi => (l10n.gorevDurumBaslandi, Colors.blue.shade900),
-      TaskDurum.atandi => (l10n.gorevDurumAtandi, Colors.grey.shade800),
+    // IKI KEZ OLCULDU, IKISINDE DE DUSTU:
+    //   1. Material varsayilanlari (`Colors.green/red/...`) -> ACIK
+    //      temada 2.31 (esigin yarisindan az).
+    //   2. `shade900` -> acik temada gecti ama KOYU temada 1.65: koyu
+    //      zemin (0.11) uzerinde koyu metin okunmuyor.
+    // Yasli goz dusuk kontrasti zaten zor secer; §2'nin amaci tam da
+    // buydu. Ton artik temaya gore secilir: acik temada `shade900`,
+    // koyu temada `shade200`.
+    final koyuTema = Theme.of(context).brightness == Brightness.dark;
+    MaterialColor tabanRenk = switch (durum) {
+      TaskDurum.tamamlandi => Colors.green,
+      TaskDurum.gecikti => Colors.red,
+      TaskDurum.baslandi => Colors.blue,
+      TaskDurum.atandi => Colors.grey,
+    };
+    final renk = koyuTema ? tabanRenk.shade200 : tabanRenk.shade900;
+    final metin = switch (durum) {
+      TaskDurum.tamamlandi => l10n.gorevDurumTamamlandi,
+      TaskDurum.gecikti => l10n.gorevDurumGecikti,
+      TaskDurum.baslandi => l10n.gorevDurumBaslandi,
+      TaskDurum.atandi => l10n.gorevDurumAtandi,
     };
     final ek = durum == TaskDurum.gecikti && gecikmeGun != null
         ? ' ${l10n.gorevGecikmeGun(gecikmeGun!)}'
