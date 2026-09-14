@@ -147,6 +147,32 @@ VARYANTLAR = {
     "beyaz": {"zemin": (0xFF, 0xFF, 0xFF), "beyaz_siluet": False},
     "acik": {"zemin": (0xEA, 0xF1, 0xFA), "beyaz_siluet": False},
     "lacivert": {"zemin": (0x10, 0x20, 0x60), "beyaz_siluet": True},
+
+    # --- (P233 §5) YENI VARYANTLAR --------------------------------------
+    #
+    # `marka`  : DUZ marka mavisi #2060A0. Lacivertten daha canli; koyu
+    #            temali bir ana ekranda laciverte gore daha iyi ayrisiyor.
+    # `gradyan`: #102060 -> #2060A0 DIKEY gecis. Logonun kendi ici zaten
+    #            bu iki ton arasinda gidiyor; zemin de ayni ekseni izleyince
+    #            ikon tek parca okunuyor.
+    # `buyuk`  : ZEMIN DEGIL OLCEK varyanti — lacivert zemin, ama isaret
+    #            tuvalin daha buyuk bir kismini kapliyor (`oran` alanlari).
+    #            Istek "logo biraz daha buyuk olsun" idi; bu bir renk
+    #            karari degil, ORAN karari — ayri bir eksen oldugu icin
+    #            ayri bir varyant olarak gosteriliyor.
+    "marka": {"zemin": (0x20, 0x60, 0xA0), "beyaz_siluet": True},
+    "gradyan": {
+        "zemin": (0x20, 0x60, 0xA0),   # duz kullanilan yerler icin (alt ton)
+        "gradyan": ((0x10, 0x20, 0x60), (0x20, 0x60, 0xA0)),
+        "beyaz_siluet": True,
+    },
+    "buyuk": {
+        "zemin": (0x10, 0x20, 0x60),
+        "beyaz_siluet": True,
+        # Android GUVENLI BOLGE %66'yi ASMAZ: disi her maskede kirpilir,
+        # buyutmek isareti kirptirirdi. Buyuyen yalniz MAGAZA orani.
+        "oran_magaza": 0.84,
+    },
 }
 VARSAYILAN_VARYANT = "beyaz"
 
@@ -249,8 +275,11 @@ def _isaret(beyaz_siluet=False):
     return en, boy, kirpik
 
 
-def _tuvale_otur(kenar, oran, isaret, zemin=None):
-    """Isareti `oran` kadar kaplayacak sekilde ORTALAYARAK tuvale oturtur."""
+def _tuvale_otur(kenar, oran, isaret, zemin=None, gradyan=None):
+    """Isareti `oran` kadar kaplayacak sekilde ORTALAYARAK tuvale oturtur.
+
+    `gradyan` verilirse zemin duz renk yerine (ust, alt) dikey gecistir.
+    """
     en, boy, px = isaret
     # TABANA YUVARLAMA (round DEGIL): `%66'yi ASMAYACAK` bir sinirda
     # yukari yuvarlamak 1024*0.66 = 675.84'u 676 yapiyor ve kurali bir
@@ -259,7 +288,9 @@ def _tuvale_otur(kenar, oran, isaret, zemin=None):
     olcek = hedef / max(en, boy)
     yEn, yBoy = max(1, int(en * olcek)), max(1, int(boy * olcek))
     olcekli = pa.yeniden_boyutla(en, boy, px, yEn, yBoy)
-    tuval = pa.bos_tuval(kenar, zemin)
+    tuval = (
+        pa.gradyan_tuval(kenar, *gradyan) if gradyan else pa.bos_tuval(kenar, zemin)
+    )
     pa.uzerine_ciz(
         kenar, tuval, yEn, yBoy, olcekli, (kenar - yEn) // 2, (kenar - yBoy) // 2
     )
@@ -275,6 +306,11 @@ def uret(varyant, cikti_dizin, onizle=False):
     ayar = VARYANTLAR[varyant]
     zemin = tuple(ayar["zemin"])
     beyaz_siluet = ayar["beyaz_siluet"]
+    # (P233 §5) Varyant kendi oranini/gradyanini EZEBILIR; vermezse
+    # dosya basindaki karar gecerli kalir.
+    gradyan = ayar.get("gradyan")
+    oran_magaza = ayar.get("oran_magaza", ORAN_MAGAZA)
+    oran_adaptif = ayar.get("oran_adaptif", ORAN_ADAPTIF)
 
     os.makedirs(cikti_dizin, exist_ok=True)
 
@@ -305,19 +341,20 @@ def uret(varyant, cikti_dizin, onizle=False):
     # --- 1) iOS App Store: 1024, ALFASIZ, varyant zemini, kose YOK -------
     # Yuvarlak kose CIZILMEZ: iOS maskeyi kendisi uygular; bizim cizdigimiz
     # kose, sistemin maskesiyle ust uste binip cift kenar birakirdi.
-    tuval, olcu = _tuvale_otur(1024, ORAN_MAGAZA, on_isaret, zemin)
+    tuval, olcu = _tuvale_otur(1024, oran_magaza, on_isaret, zemin, gradyan)
     pa.yaz_opak(_yol("ios-appstore-1024.png"), 1024, 1024, tuval, zemin)
     olcumler["ios-appstore-1024.png"] = (1024, olcu)
 
     # --- 2) Android adaptif ON KATMAN: saydam, %66 guvenli bolge --------
-    on, olcu_on = _tuvale_otur(1024, ORAN_ADAPTIF, on_isaret, None)
+    on, olcu_on = _tuvale_otur(1024, oran_adaptif, on_isaret, None)
     pa.yaz(_yol("android-adaptive-foreground.png"), 1024, 1024, on)
     olcumler["android-adaptive-foreground.png"] = (1024, olcu_on)
 
     # --- 3) Android adaptif ZEMIN: duz varyant rengi --------------------
     pa.yaz(
         _yol("android-adaptive-background.png"),
-        1024, 1024, pa.bos_tuval(1024, zemin),
+        1024, 1024,
+        pa.gradyan_tuval(1024, *gradyan) if gradyan else pa.bos_tuval(1024, zemin),
     )
 
     # --- 4) Android 13+ TEMALI IKON: tek renk beyaz siluet, saydam ------
@@ -326,12 +363,12 @@ def uret(varyant, cikti_dizin, onizle=False):
     olcumler["android-monochrome.png"] = (1024, olcu_mono)
 
     # --- 5) Play Store: 512, ALFASIZ, varyant zemini --------------------
-    tuval, olcu = _tuvale_otur(512, ORAN_MAGAZA, on_isaret, zemin)
+    tuval, olcu = _tuvale_otur(512, oran_magaza, on_isaret, zemin, gradyan)
     pa.yaz_opak(_yol("play-store-512.png"), 512, 512, tuval, zemin)
     olcumler["play-store-512.png"] = (512, olcu)
 
     # --- 6) apple-touch-icon: 180, ALFASIZ ------------------------------
-    tuval, olcu = _tuvale_otur(180, ORAN_MAGAZA, on_isaret, zemin)
+    tuval, olcu = _tuvale_otur(180, oran_magaza, on_isaret, zemin, gradyan)
     pa.yaz_opak(_yol("apple-touch-icon.png"), 180, 180, tuval, zemin)
     olcumler["apple-touch-icon.png"] = (180, olcu)
 
@@ -339,7 +376,7 @@ def uret(varyant, cikti_dizin, onizle=False):
     # `purpose: "any"` ikonu bazi baslaticilarda DUZ cizilir; varyant
     # zeminiyle alfasiz yazilir ki koyu/acik temada tutarli gorunsun.
     for kenar in (192, 512):
-        tuval, olcu = _tuvale_otur(kenar, ORAN_MAGAZA, on_isaret, zemin)
+        tuval, olcu = _tuvale_otur(kenar, oran_magaza, on_isaret, zemin, gradyan)
         pa.yaz_opak(_yol(f"icon-{kenar}.png"), kenar, kenar, tuval, zemin)
         olcumler[f"icon-{kenar}.png"] = (kenar, olcu)
 
@@ -357,7 +394,7 @@ def uret(varyant, cikti_dizin, onizle=False):
     # Varyant zeminli: saydam favicon koyu temali sekme seridinde gorunmez.
     katmanlar = []
     for kenar in (16, 32, 48):
-        tuval, _ = _tuvale_otur(kenar, ORAN_MAGAZA, on_isaret, zemin)
+        tuval, _ = _tuvale_otur(kenar, oran_magaza, on_isaret, zemin, gradyan)
         katmanlar.append((kenar, tuval))
     pa.ico_yaz(_yol("favicon.ico"), katmanlar)
 

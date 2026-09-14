@@ -299,6 +299,29 @@ def bos_tuval(kenar, renk=None):
     return bytearray(bytes((r, g, b, 255)) * (kenar * kenar))
 
 
+def gradyan_tuval(kenar, ust, alt):
+    """(P233 §5) Dikey gradyanli `kenar` x `kenar` RGBA tuval.
+
+    DIKEY, kosegen DEGIL: ikon kucuk boyutlarda (48 px) gorulur ve kosegen
+    bir gecis o olcekte kirli bir leke gibi okunur; dikey gecis ise
+    "ust aydinlik / alt koyu" izlenimini korur.
+
+    Ara renkler DOGRUSAL harmanla uretilir (sRGB'de gamma-dogru degil).
+    Gamma duzeltmesi burada KASITLI OLARAK YAPILMADI: iki renk de ayni
+    tonun (marka mavisi) komsu degerleri, aradaki fark gozle ayirt
+    edilemeyecek kadar kucuk ve gamma hesabi araci karmasiklastirirdi.
+    """
+    out = bytearray(kenar * kenar * 4)
+    for y in range(kenar):
+        t = y / max(1, kenar - 1)
+        r = int(ust[0] + (alt[0] - ust[0]) * t)
+        g = int(ust[1] + (alt[1] - ust[1]) * t)
+        b = int(ust[2] + (alt[2] - ust[2]) * t)
+        satir = bytes((r, g, b, 255)) * kenar
+        out[y * kenar * 4:(y + 1) * kenar * 4] = satir
+    return out
+
+
 def uzerine_ciz(tuvalKenar, tuval, en, boy, piksel, ox, oy):
     """Kaynagi tuvale (ox, oy) noktasindan ALFA HARMANIYLA cizer.
 
