@@ -148,7 +148,7 @@
   "ayarlarBaslik": "Ajustes",
   "ayarlarTesis": "Instalación",
   "ayarlarYonetim": "Administración",
-  "ayarlarGorunum": "Apariencia",
+  "ayarlarGorunum": "Visualización",
   "ayarlarTema": "Tema",
   "ayarlarTemaSistem": "Sistema",
   "ayarlarTemaAcik": "Claro",
@@ -2161,5 +2161,8 @@
   "gorevSonTarihi": "Fecha límite: {tarih}",
   "gorevBaslaDugme": "Iniciar tarea",
   "gorevBaslandiBilgi": "Iniciada: {tarih}",
-  "gorevAtayanBilgi": "Asignada por: {ad}"
+  "gorevAtayanBilgi": "Asignada por: {ad}",
+  "ayarlarGorunumAciklama": "Visualización grande: el texto y los iconos crecen y la cuadrícula de inicio pasa de 8 a 4 casillas en dos columnas. El ajuste de tamaño de texto de su dispositivo sigue aplicándose.",
+  "ayarlarGorunumStandart": "Estándar",
+  "ayarlarGorunumBuyuk": "Grande"
 }

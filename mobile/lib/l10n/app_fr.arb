@@ -148,7 +148,7 @@
   "ayarlarBaslik": "Paramètres",
   "ayarlarTesis": "Site",
   "ayarlarYonetim": "Gestion",
-  "ayarlarGorunum": "Apparence",
+  "ayarlarGorunum": "Affichage",
   "ayarlarTema": "Thème",
   "ayarlarTemaSistem": "Système",
   "ayarlarTemaAcik": "Clair",
@@ -2161,5 +2161,8 @@
   "gorevSonTarihi": "Échéance : {tarih}",
   "gorevBaslaDugme": "Commencer",
   "gorevBaslandiBilgi": "Commencée : {tarih}",
-  "gorevAtayanBilgi": "Attribuée par : {ad}"
+  "gorevAtayanBilgi": "Attribuée par : {ad}",
+  "ayarlarGorunumAciklama": "Affichage agrandi : le texte et les icônes grossissent, la grille d’accueil passe de 8 à 4 tuiles sur deux colonnes. Le réglage de taille de texte de votre appareil reste appliqué.",
+  "ayarlarGorunumStandart": "Standard",
+  "ayarlarGorunumBuyuk": "Grand"
 }

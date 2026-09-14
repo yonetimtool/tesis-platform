@@ -148,7 +148,7 @@
   "ayarlarBaslik": "الإعدادات",
   "ayarlarTesis": "المنشأة",
   "ayarlarYonetim": "الإدارة",
-  "ayarlarGorunum": "المظهر",
+  "ayarlarGorunum": "العرض",
   "ayarlarTema": "السمة",
   "ayarlarTemaSistem": "النظام",
   "ayarlarTemaAcik": "فاتح",
@@ -2161,5 +2161,8 @@
   "gorevSonTarihi": "تاريخ الاستحقاق: {tarih}",
   "gorevBaslaDugme": "ابدأ المهمة",
   "gorevBaslandiBilgi": "بدأت: {tarih}",
-  "gorevAtayanBilgi": "أسندها: {ad}"
+  "gorevAtayanBilgi": "أسندها: {ad}",
+  "ayarlarGorunumAciklama": "العرض الكبير: يكبر النص والأيقونات، وتنخفض مربعات الشاشة الرئيسية من 8 إلى 4 في عمودين. يبقى إعداد حجم النص في جهازك ساريًا.",
+  "ayarlarGorunumStandart": "قياسي",
+  "ayarlarGorunumBuyuk": "كبير"
 }

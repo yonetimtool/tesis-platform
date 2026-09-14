@@ -6499,4 +6499,14 @@ class AppLocalizationsDe extends AppLocalizations {
   String gorevAtayanBilgi(String ad) {
     return 'Zugewiesen von: $ad';
   }
+
+  @override
+  String get ayarlarGorunumAciklama =>
+      'Große Darstellung: Text und Symbole werden größer, das Startraster zeigt statt 8 nur 4 Kacheln in zwei Spalten. Die Textgröße Ihres Geräts gilt weiterhin.';
+
+  @override
+  String get ayarlarGorunumStandart => 'Standard';
+
+  @override
+  String get ayarlarGorunumBuyuk => 'Groß';
 }

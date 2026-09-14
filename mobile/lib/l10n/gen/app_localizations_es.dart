@@ -490,7 +490,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get ayarlarYonetim => 'Administración';
 
   @override
-  String get ayarlarGorunum => 'Apariencia';
+  String get ayarlarGorunum => 'Visualización';
 
   @override
   String get ayarlarTema => 'Tema';
@@ -6475,4 +6475,14 @@ class AppLocalizationsEs extends AppLocalizations {
   String gorevAtayanBilgi(String ad) {
     return 'Asignada por: $ad';
   }
+
+  @override
+  String get ayarlarGorunumAciklama =>
+      'Visualización grande: el texto y los iconos crecen y la cuadrícula de inicio pasa de 8 a 4 casillas en dos columnas. El ajuste de tamaño de texto de su dispositivo sigue aplicándose.';
+
+  @override
+  String get ayarlarGorunumStandart => 'Estándar';
+
+  @override
+  String get ayarlarGorunumBuyuk => 'Grande';
 }

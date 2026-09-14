@@ -568,7 +568,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ayarlarYonetim => 'Management';
 
   @override
-  String get ayarlarGorunum => 'Appearance';
+  String get ayarlarGorunum => 'Display';
 
   @override
   String get ayarlarTema => 'Theme';
@@ -6500,4 +6500,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String gorevAtayanBilgi(String ad) {
     return 'Assigned by: $ad';
   }
+
+  @override
+  String get ayarlarGorunumAciklama =>
+      'Large display: text and icons grow, and the home grid drops from 8 tiles to 4 in two columns. Your device’s own text-size setting still applies.';
+
+  @override
+  String get ayarlarGorunumStandart => 'Standard';
+
+  @override
+  String get ayarlarGorunumBuyuk => 'Large';
 }

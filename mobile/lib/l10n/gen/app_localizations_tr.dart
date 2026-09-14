@@ -6306,4 +6306,14 @@ class AppLocalizationsTr extends AppLocalizations {
   String gorevAtayanBilgi(String ad) {
     return 'Atayan: $ad';
   }
+
+  @override
+  String get ayarlarGorunumAciklama =>
+      'Büyük görünüm: yazılar ve simgeler büyür, ana ekrandaki kutucuklar 8’den 4’e düşer ve iki sütuna yerleşir. Cihazınızın yazı boyutu ayarını da kullanmaya devam eder.';
+
+  @override
+  String get ayarlarGorunumStandart => 'Standart';
+
+  @override
+  String get ayarlarGorunumBuyuk => 'Büyük';
 }

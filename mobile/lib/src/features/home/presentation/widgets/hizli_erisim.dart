@@ -8,6 +8,8 @@ import '../../domain/home_view_models.dart';
 import 'home_card.dart';
 import 'home_states.dart';
 import 'section_padding.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/ui/gorunum_modu.dart';
 
 /// Referans "hizli erisim" karti — beyaz kart, ortada tint ikon konteyneri,
 /// altinda 14 semibold baslik ve accent/gri sayac satiri. gorevli.jpeg'in
@@ -211,7 +213,7 @@ class _HizliErisimSeridiState extends State<HizliErisimSeridi> {
 /// kart yazilari gozle gorulur bicimde ziplar. Gruplari state'te tutmak
 /// kimliklerini sabitler; `AutoSizeText.didUpdateWidget` grubu "degismis"
 /// saymaz, ortak boyut korunur. Regresyon: home_kart_titremesi_test.dart.
-class HizliErisimIzgarasi extends StatefulWidget {
+class HizliErisimIzgarasi extends ConsumerStatefulWidget {
   const HizliErisimIzgarasi({
     super.key,
     required this.kartlar,
@@ -222,10 +224,11 @@ class HizliErisimIzgarasi extends StatefulWidget {
   final ValueChanged<HizliErisimKart> onSec;
 
   @override
-  State<HizliErisimIzgarasi> createState() => _HizliErisimIzgarasiState();
+  ConsumerState<HizliErisimIzgarasi> createState() =>
+      _HizliErisimIzgarasiState();
 }
 
-class _HizliErisimIzgarasiState extends State<HizliErisimIzgarasi> {
+class _HizliErisimIzgarasiState extends ConsumerState<HizliErisimIzgarasi> {
   // TITREME KURALI: gruplar STATE'te durur, `build()` icinde URETILMEZ.
   final baslikGrubu = AutoSizeGroup();
   final sayacGrubu = AutoSizeGroup();
@@ -237,7 +240,11 @@ class _HizliErisimIzgarasiState extends State<HizliErisimIzgarasi> {
 
     return LayoutBuilder(
       builder: (context, c) {
-        final sutun = hizliErisimSutun(c.maxWidth);
+        // (P230 §2) BUYUK MOD: 2 sutun, 4 karo. Sekiz karoyu buyutup
+        // ekrana sigdirmaya calismak her karoyu yeniden kuculturdu —
+        // ayar HICBIR SEY yapmamis olurdu. "Az oge" > "kucuk oge".
+        final mod = ref.watch(gorunumModuProvider);
+        final sutun = mod.izgaraSutun ?? hizliErisimSutun(c.maxWidth);
         final hucre = (c.maxWidth - HomeTokens.gridGap * (sutun - 1)) / sutun;
         return GridView.count(
           crossAxisCount: sutun,
@@ -248,7 +255,10 @@ class _HizliErisimIzgarasiState extends State<HizliErisimIzgarasi> {
           crossAxisSpacing: HomeTokens.gridGap,
           childAspectRatio: izgaraOrani(context, hizliErisimOran(sutun)),
           children: [
-            for (final k in kartlar)
+            // Hangi dortlu kalir: KULLANICININ KENDI izgara sirasinin
+            // ilk dordu. "Buyuk mod icin ayri liste" kavrami eklemek,
+            // kullaniciya IKINCI bir duzenleme ekrani ogretmek olurdu.
+            for (final k in kartlar.take(mod.izgaraKaroSiniri ?? kartlar.length))
               HizliErisimKarti(
                 kart: k,
                 onTap: () => widget.onSec(k),

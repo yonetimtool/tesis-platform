@@ -11200,6 +11200,24 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Atayan: {ad}'**
   String gorevAtayanBilgi(String ad);
+
+  /// No description provided for @ayarlarGorunumAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Büyük görünüm: yazılar ve simgeler büyür, ana ekrandaki kutucuklar 8’den 4’e düşer ve iki sütuna yerleşir. Cihazınızın yazı boyutu ayarını da kullanmaya devam eder.'**
+  String get ayarlarGorunumAciklama;
+
+  /// No description provided for @ayarlarGorunumStandart.
+  ///
+  /// In tr, this message translates to:
+  /// **'Standart'**
+  String get ayarlarGorunumStandart;
+
+  /// No description provided for @ayarlarGorunumBuyuk.
+  ///
+  /// In tr, this message translates to:
+  /// **'Büyük'**
+  String get ayarlarGorunumBuyuk;
 }
 
 class _AppLocalizationsDelegate

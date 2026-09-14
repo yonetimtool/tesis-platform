@@ -122,6 +122,19 @@ void main() {
       expect(find.textContaining('3'), findsOneWidget);
     });
 
+    testWidgets('KONTRAST: dort durum da WCAG AA karsilar', (tester) async {
+      // (P230 §2-e) Yasli goz dusuk kontrasti zor secer. Rozet RENKLI
+      // metin + %12 saydam zemin kullaniyor; bu birlesim kolayca
+      // esigin altina duser. Flutter'in kendi WCAG denetimi surulur.
+      final handle = tester.ensureSemantics();
+      for (final durum in TaskDurum.values) {
+        await tester.pumpWidget(l10nScaffold(DurumRozeti(durum: durum)));
+        await tester.pumpAndSettle();
+        await expectLater(tester, meetsGuideline(textContrastGuideline));
+      }
+      handle.dispose();
+    });
+
     testWidgets('DORT DURUM da cizilir, 7 dilde', (tester) async {
       for (final d in ['tr', 'en', 'de', 'fr', 'es', 'ru', 'ar']) {
         for (final durum in TaskDurum.values) {

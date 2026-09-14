@@ -18,6 +18,7 @@ import 'src/features/surum/presentation/surum_kapisi.dart';
 import 'src/features/auth/data/current_user_provider.dart';
 import 'src/routing/app_router.dart';
 import 'src/routing/push_yonlendirme.dart';
+import 'src/core/ui/gorunum_modu.dart';
 
 Future<void> main() async {
   // Depo okumasi platform kanali kullanir → baglama once kurulmalidir.
@@ -138,8 +139,15 @@ class TesisGuvenlikApp extends ConsumerWidget {
       // PLANA GELDIGINDE kontrol eder — kullanici uygulamayi gunlerce
       // acik birakabilir ve tam o cihazlar en uzun sure guncellenmemis
       // olanlardir.
-      builder: (context, cocuk) => SurumGozcusu(
-        child: SurumKapisi(child: cocuk ?? const SizedBox.shrink()),
+      // (P230 §2) GORUNUM OLCEGI EN DISTA: `MaterialApp.builder` tum
+      // rotalari sarar, yani buyuk mod TEK ekranda degil UYGULAMANIN
+      // TAMAMINDA gecerli olur. Ekran ekran sarmak, birini unutmak
+      // demekti — ve unutulan ekran tam da yasli kullanicinin
+      // takilacagi yer olurdu.
+      builder: (context, cocuk) => GorunumOlcegi(
+        child: SurumGozcusu(
+          child: SurumKapisi(child: cocuk ?? const SizedBox.shrink()),
+        ),
       ),
     );
   }

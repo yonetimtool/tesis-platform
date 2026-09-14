@@ -619,7 +619,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get ayarlarYonetim => 'الإدارة';
 
   @override
-  String get ayarlarGorunum => 'المظهر';
+  String get ayarlarGorunum => 'العرض';
 
   @override
   String get ayarlarTema => 'السمة';
@@ -6562,4 +6562,14 @@ class AppLocalizationsAr extends AppLocalizations {
   String gorevAtayanBilgi(String ad) {
     return 'أسندها: $ad';
   }
+
+  @override
+  String get ayarlarGorunumAciklama =>
+      'العرض الكبير: يكبر النص والأيقونات، وتنخفض مربعات الشاشة الرئيسية من 8 إلى 4 في عمودين. يبقى إعداد حجم النص في جهازك ساريًا.';
+
+  @override
+  String get ayarlarGorunumStandart => 'قياسي';
+
+  @override
+  String get ayarlarGorunumBuyuk => 'كبير';
 }

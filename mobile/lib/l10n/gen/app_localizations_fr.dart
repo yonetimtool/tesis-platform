@@ -490,7 +490,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get ayarlarYonetim => 'Gestion';
 
   @override
-  String get ayarlarGorunum => 'Apparence';
+  String get ayarlarGorunum => 'Affichage';
 
   @override
   String get ayarlarTema => 'Thème';
@@ -6491,4 +6491,14 @@ class AppLocalizationsFr extends AppLocalizations {
   String gorevAtayanBilgi(String ad) {
     return 'Attribuée par : $ad';
   }
+
+  @override
+  String get ayarlarGorunumAciklama =>
+      'Affichage agrandi : le texte et les icônes grossissent, la grille d’accueil passe de 8 à 4 tuiles sur deux colonnes. Le réglage de taille de texte de votre appareil reste appliqué.';
+
+  @override
+  String get ayarlarGorunumStandart => 'Standard';
+
+  @override
+  String get ayarlarGorunumBuyuk => 'Grand';
 }

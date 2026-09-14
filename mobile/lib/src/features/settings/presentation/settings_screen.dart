@@ -26,6 +26,7 @@ import '../../profile/data/profile_api.dart';
 import '../../push/domain/push_models.dart';
 import '../../push/presentation/push_registrar.dart';
 import '../data/bildirim_tercih_api.dart';
+import '../../../core/ui/gorunum_modu.dart';
 
 /// Ayarlar — kullanici tercihleri (DIL + tema modu) + yonetici'ye ozel tesis
 /// adlandirmasi. Iki tercih de kalicidir (guvenli depo) ve ANINDA uygulanir;
@@ -151,6 +152,56 @@ class SettingsScreen extends ConsumerWidget {
                       selected: {mode},
                       onSelectionChanged: (s) =>
                           ref.read(themeModeProvider.notifier).set(s.first),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          // ----------------------- GORUNUM (P230 §2) -------------------- #
+          //
+          // TEK AYAR, BES AYAR DEGIL: yazi boyutu, ikon boyutu, sutun
+          // sayisi ve karo sayisi ayri ayri ayarlanabilir seyler; ama
+          // onlari ayri ayri sunmak, en cok yardima ihtiyaci olan
+          // kullaniciya EN COK karar yukleyen tasarim olurdu.
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(l10n.ayarlarGorunum,
+                      style: const TextStyle(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 4),
+                  Text(
+                    l10n.ayarlarGorunumAciklama,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: SegmentedButton<GorunumModu>(
+                      key: const Key('ayarlar-gorunum-modu'),
+                      segments: [
+                        ButtonSegment(
+                          value: GorunumModu.standart,
+                          icon: const Icon(Icons.grid_view_outlined),
+                          label: Text(l10n.ayarlarGorunumStandart),
+                        ),
+                        ButtonSegment(
+                          value: GorunumModu.buyuk,
+                          icon: const Icon(Icons.zoom_in),
+                          label: Text(l10n.ayarlarGorunumBuyuk),
+                        ),
+                      ],
+                      selected: {ref.watch(gorunumModuProvider)},
+                      onSelectionChanged: (v) => ref
+                          .read(gorunumModuProvider.notifier)
+                          .ayarla(v.first),
                     ),
                   ),
                 ],

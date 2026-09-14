@@ -593,7 +593,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get ayarlarYonetim => 'Управление';
 
   @override
-  String get ayarlarGorunum => 'Оформление';
+  String get ayarlarGorunum => 'Отображение';
 
   @override
   String get ayarlarTema => 'Тема';
@@ -6570,4 +6570,14 @@ class AppLocalizationsRu extends AppLocalizations {
   String gorevAtayanBilgi(String ad) {
     return 'Назначил: $ad';
   }
+
+  @override
+  String get ayarlarGorunumAciklama =>
+      'Крупное отображение: текст и значки становятся больше, а на главном экране вместо 8 плиток остаётся 4 в два столбца. Настройка размера текста устройства продолжает действовать.';
+
+  @override
+  String get ayarlarGorunumStandart => 'Обычное';
+
+  @override
+  String get ayarlarGorunumBuyuk => 'Крупное';
 }

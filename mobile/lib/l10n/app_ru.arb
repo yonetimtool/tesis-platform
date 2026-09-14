@@ -148,7 +148,7 @@
   "ayarlarBaslik": "Настройки",
   "ayarlarTesis": "Объект",
   "ayarlarYonetim": "Управление",
-  "ayarlarGorunum": "Оформление",
+  "ayarlarGorunum": "Отображение",
   "ayarlarTema": "Тема",
   "ayarlarTemaSistem": "Системная",
   "ayarlarTemaAcik": "Светлая",
@@ -2161,5 +2161,8 @@
   "gorevSonTarihi": "Срок: {tarih}",
   "gorevBaslaDugme": "Начать задачу",
   "gorevBaslandiBilgi": "Начата: {tarih}",
-  "gorevAtayanBilgi": "Назначил: {ad}"
+  "gorevAtayanBilgi": "Назначил: {ad}",
+  "ayarlarGorunumAciklama": "Крупное отображение: текст и значки становятся больше, а на главном экране вместо 8 плиток остаётся 4 в два столбца. Настройка размера текста устройства продолжает действовать.",
+  "ayarlarGorunumStandart": "Обычное",
+  "ayarlarGorunumBuyuk": "Крупное"
 }

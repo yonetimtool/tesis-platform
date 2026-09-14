@@ -242,3 +242,85 @@ zamanlayıcı (beat) görevi ister ve "her gün kaç kez, kime, hangi eşikle"
 sorularının yanıtı ürün kararıdır — tahmin edip göndermek, yöneticiye her
 sabah tekrarlayan bir gürültü üretme riski taşır. Alan ve durum artık
 hazır; kural verildiğinde eklenebilir.
+
+---
+
+## §2 — Erişilebilirlik: yaşlı kullanıcılar
+
+### Ölçüm önce — beş maddenin ikisi zaten çözülmüş
+
+| madde | ölçülen durum |
+|---|---|
+| **(b) sistem metin ölçeği izleniyor mu** | **Evet.** `main.dart`'ta bir `textScaler` geçersiz kılması **yok** (arandı) — Flutter varsayılanı sistem ölçeğini uygular. |
+| **(b) büyük ölçekte düzen bozuluyor mu** | P229 §1 kilidi 320dp'de **1.0 ve 1.3** ölçeği zaten sürüyordu; ana ekranlar 7 dilde istisnasız geçiyor. |
+| **(d) dokunma hedefleri** | 48×48 kuralı P220'de kilitli; büyük modda hücreler **zaten büyüyor** (2 sütun), ayrıca bir şey yapmak gerekmedi. |
+| **(e) kontrast** | **Zaten ölçülüyor**: beş eksen sürüşü `meetsGuideline(textContrastGuideline)` — Flutter'ın WCAG AA denetimi. |
+
+Yani (b), (d) ve (e) için yeni altyapı gerekmedi. Eksik olan, sistem
+ayarını **bilmeyen** kullanıcı için uygulama içi bir yol ve "az öğe"
+kararıydı.
+
+### Karar: tek ayar — Ayarlar → Görünüm (Standart / Büyük)
+
+İsteğin kendi cümlesi: *"yaşlı kullanıcı beş ayrı ayarla uğraşmasın"*.
+Yazı boyutu, ikon boyutu, sütun sayısı ve karo sayısı ayrı ayrı
+ayarlanabilir şeyler; ama onları ayrı ayrı sunmak, **en çok yardıma
+ihtiyacı olan kullanıcıya en çok karar yükleyen** tasarım olurdu.
+
+Büyük mod aynı anda: metin ×1.3, ızgara 2 sütun, karo 8 → **4**.
+
+### "Az öğe" > "küçük öğe" — hangi dördü kalır
+
+Sekiz karoyu büyütüp ekrana sığdırmaya çalışmak her karoyu yeniden
+küçültürdü; yani ayar **hiçbir şey yapmamış** olurdu.
+
+Kalan dört karo: **kullanıcının kendi ızgara sırasının ilk dördü**
+(`izgara_duzenle` ekranında düzenlediği sıra). "Büyük mod için ayrı
+liste" kavramı eklemek, kullanıcıya **ikinci bir düzenleme ekranı**
+öğretmek olurdu.
+
+### Metin ölçeği sistem ayarını **ezmez, üstüne çarpar**
+
+En kritik kural. Sistemde zaten 1.5 kullanan biri büyük modu açınca
+1.3'e **düşmemeli** — sabit bir ölçek yazmak tam olarak bunu yapardı ve
+zaten büyük yazı kullanan kullanıcı için bir **gerileme** olurdu.
+`_Carpan` cihazın gerçek ölçeğini koruyup çarpıyor. Kilidi kırarak
+doğruladım: sabit ölçeğe çevirince test düştü.
+
+**Çarpan neden 1.3:** 1.5 ve üstü, iki satırlık kart başlıklarını 8
+puntoya kadar küçültürdü (P229 §1'de ölçülen taban) — yani "büyüt" ayarı
+başlıkları **küçültürdü**.
+
+### Sarmalayıcı en dışta
+
+`MaterialApp.builder` tüm rotaları sarıyor, yani büyük mod tek ekranda
+değil **uygulamanın tamamında** geçerli. Ekran ekran sarmak birini
+unutmak demekti — ve unutulan ekran tam da yaşlı kullanıcının takılacağı
+yer olurdu.
+
+### Kalıcılık: cihaz-yerel, hesap düzeyinde değil
+
+Tema tercihiyle **aynı depo ve aynı desen** (`ui.theme_mode` →
+`ui.gorunum_modu`). Hesap düzeyine taşımak bir göç + uç + web paritesi
+demekti; bedeli, kazançtan (aynı kişinin ikinci cihazında ayarı tekrar
+açması) büyük.
+
+**Takas açıkça kayıtlı:** kullanıcı tablet ve telefonda ayrı ayrı açmak
+zorunda. Tema de bugün böyle davranıyor, yani tutarsızlık yok.
+
+Bozuk depo değeri **standarda düşüyor**, hata atmıyor: Keystore sorunu
+olan bir cihazda uygulama açılmalı.
+
+### Kontrast testi gerçek bir kusur yakaladı
+
+§4'te eklediğim durum rozeti Material'ın varsayılan
+`Colors.green/red/blue/grey` tonlarını kullanıyordu. WCAG denetimi 12
+puntoda **2.31** ölçtü — eşiğin (4.5) **yarısından az**. Yaşlı göz düşük
+kontrastı zaten zor seçer; §2'nin amacı tam da buydu. Tonlar `shade900`'a
+çekildi, zemin saydamlığı düşürüldü, test yeşillendi.
+
+### Web paritesi — yapılmadı, gerekçesi
+
+§2 mobil için istendi ("ana ekrandaki ızgara 8 öğeden 4 öğeye") ve web'de
+karşılığı olan bir ızgara yok; web zaten tarayıcının kendi yakınlaştırma
+ve yazı boyutu ayarlarını kullanıyor. **Web'e görünüm modu eklenmedi.**
