@@ -11,7 +11,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import CheckpointsPage from "@/app/(protected)/checkpoints/page";
 import NotificationsPage from "@/app/(protected)/notifications/page";
-import ShiftsPage from "@/app/(protected)/shifts/page";
+// (P232 §A) SAYFA BILESENE DONUSTU. `/shifts` artik yalnizca
+// `/vardiya-plani`ya yonlendiriyor; sablon yonetimi oradaki "Vardiya
+// sablonlari" bolumunde. Test ayni DAVRANISI olcmeye devam ediyor —
+// yalnizca artik dogru bileseni suruyor.
+import { SablonBolumu } from "@/components/vardiya/sablon-bolumu";
 
 import { ciz, fetchSahtele } from "./yardimci";
 
@@ -33,7 +37,7 @@ afterEach(() => vi.restoreAllMocks());
 describe("Vardiyalar", () => {
   it("GECE VARDIYASI uyarisi YALNIZ baslangic > bitis iken cikar", async () => {
     fetchSahtele({ "/api/shifts": VARDIYALAR });
-    ciz(ShiftsPage);
+    ciz(() => SablonBolumu({ personel: [] }));
     await waitFor(() => expect(screen.getByText("Gündüz")).toBeInTheDocument());
 
     // Formu ac (yeni vardiya): varsayilan 00:00-08:00 → gece DEGIL.
@@ -52,7 +56,7 @@ describe("Vardiyalar", () => {
 
   it("UC DUSTUGUNDE hata gorunur — bos liste GOSTERILMEZ", async () => {
     fetchSahtele({});
-    ciz(ShiftsPage);
+    ciz(() => SablonBolumu({ personel: [] }));
     await waitFor(() => expect(screen.getByText("yok")).toBeInTheDocument());
     expect(screen.queryByText("Gündüz")).not.toBeInTheDocument();
   });

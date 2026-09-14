@@ -207,11 +207,25 @@ describe("rol x yuzey kapisi (P126.1)", () => {
     for (const r of ["/kamera-kayitlari", "/dashboard", "/profil"]) {
       expect(rotaRoldeGorunur(r, "guvenlik_amiri"), r).toBe(true);
     }
+    // (P231 §2) `/users` ARTIK VAR — ama KAPSAMI DAR.
+    //
+    // Amirin isi kendi ekibini yonetmek; personel listesini hic
+    // gorememek, "guvenlik personelini gorur" kuralini uygulanamaz
+    // kilardi. Sunucu listeyi `gorunur_roller` ile daraltiyor: amir
+    // YALNIZ `security` + `guvenlik_amiri` gorur, sakin/tesis
+    // gorevlisi/yonetici GORMEZ ve tekil uc 404 doner.
+    //
+    // Yani buradaki gevseme bir YETKI YUKSELTMESI DEGIL: ekran acildi,
+    // KUME acilmadi. `test_p231_amir_gorunurluk.py` bunu sunucuda
+    // olcuyor (IDOR testi dahil).
+    expect(rotaRoldeGorunur("/users", "guvenlik_amiri")).toBe(true);
+
     // Yetki yukseltmesi olmadigini olcen asil iddia: amir tesisin
     // PARASINI ve YONETIM ekranlarini gormez.
     // `/kameralar` (kamera YONETIMI) de yasak: amir kamera ekleyemez,
     // silemez, NVR kimligi giremez — backend `_WRITER` onu istemiyor.
-    for (const r of ["/kameralar", "/finans", "/dues", "/users",
+    // (P232) Bu satir P231'de kazara gevsetilmisti; kilit YAKALADI.
+    for (const r of ["/kameralar", "/finans", "/dues",
                      "/tesis-ayarlari", "/raporlar"]) {
       expect(rotaRoldeGorunur(r, "guvenlik_amiri"), r).toBe(false);
     }

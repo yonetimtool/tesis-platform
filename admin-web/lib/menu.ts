@@ -214,7 +214,17 @@ const OGELER: readonly MenuOgesi[] = [
   { href: "/notifications", anahtar: "kabukBildirimler", icon: "bell", grup: "guvenlik" },
   { href: "/kameralar", anahtar: "kabukKameralar", icon: "camera", grup: "guvenlik" },
   { href: "/kamera-kayitlari", anahtar: "kabukKameraKayitlari", icon: "kayit", grup: "guvenlik" },
-  { href: "/shifts", anahtar: "kabukVardiyalar", icon: "clock", grup: "guvenlik" },
+  // (P232 §A) "Vardiyalar" GIRISI KALDIRILDI — menude TEK giris kaldi.
+  //
+  // OLCULEN KARISIKLIK: iki giris de vardiyaydi ve ayrim ADDAN
+  // anlasilmiyordu; `/shifts` ustelik BOS gorunuyordu. Sebebi olculdu:
+  // sablon TANIMLANABILIYOR ama web'de KADRO ATANAMIYORDU (yalniz
+  // mobilde), onu tuketen "Haftayi doldur" ise kadroya ihtiyac duyuyor.
+  // Yani ozelligin yarisi eksikti ve kullanici bos bir sayfa goruyordu.
+  //
+  // Sablon yonetimi `/vardiya-plani` icine "Vardiya sablonlari" bolumu
+  // olarak tasindi: KULLANILDIGI YERDE yonetilsin. `/shifts` rotasi
+  // yonlendirmeye donustu (yer imleri kirilmasin).
   // (P203 §4) PLAN, sablonlarin YANINDA: "vardiya" iki farkli sey —
   // biri SABLON (saatler), oteki PLAN (kim, hangi gun). Ayni bolumde
   // ama ayri satir: birlestirmek, gunluk kullanilan plani haftada bir

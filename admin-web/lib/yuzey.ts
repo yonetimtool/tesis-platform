@@ -438,7 +438,19 @@ export const ROTA_ROLLERI: Record<string, readonly string[]> = {
   // (P213 §6) KAMERA YONETIMI yoneticide kalir: amir kamera EKLEYEMEZ,
   // silemez, NVR kimligi giremez (backend `_WRITER` da onu istemiyor).
   // Sayfayi ona acmak, hicbirini yapamayacagi bir form gostermekti.
-  "/kameralar": ["admin", "yonetici", "guvenlik_amiri"],
+  // (P232) `/kameralar` AMIRE GERI KAPATILDI — `yuzey-ayrimi` kilidi
+  // haklı olarak yakaladi.
+  //
+  // P231'de "kameralar: canli + gecmis kayit" derken bu sayfayi da
+  // acmistim; ama `/kameralar` KAMERA YONETIMIDIR (kamera ekleme,
+  // adres/kimlik duzenleme) — tesis yonetiminin isi, guvenlik
+  // gozetiminin degil. Backend zaten `POST/PATCH /cameras`i admin+
+  // yoneticiye kapatiyor, yani amir sayfayi acsa dugmelerde 403
+  // alirdi: "menude ama yetkisiz" durumu.
+  //
+  // Amirin canli izlemesi ozet/panodan, gecmis kaydi
+  // `/kamera-kayitlari`ndan gecer — P213'un dar kapsami DOGRUYDU.
+  "/kameralar": ["admin", "yonetici"],
   // Gecmis kayit IZLEME ayri sayfa ve amire ACIK — istegin birebir
   // karsiligi: "gecmis kayit erisimi: yonetici ve guvenlik amiri".
   "/kamera-kayitlari": ["admin", "yonetici", "guvenlik_amiri"],

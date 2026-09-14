@@ -89,7 +89,11 @@ const SAYFALAR: { yol: string; yukle: () => Promise<{ default: React.ComponentTy
   { yol: "/olaylar", yukle: () => import("@/app/(protected)/olaylar/page") },
   { yol: "/notifications", yukle: () => import("@/app/(protected)/notifications/page") },
   { yol: "/kameralar", yukle: () => import("@/app/(protected)/kameralar/page") },
-  { yol: "/shifts", yukle: () => import("@/app/(protected)/shifts/page") },
+  // (P232 §A) `/shifts` LISTEDEN CIKTI: artik bir sayfa degil,
+  // `/vardiya-plani`ya YONLENDIRME. Bu tarama sayfalari CIZIYOR;
+  // yonlendirme bileseni cizilemez (`redirect()` render sirasinda
+  // firlatir). Sablon yonetiminin kendisi `vardiya-nokta.dom.test`te
+  // `SablonBolumu` uzerinden olculuyor.
   { yol: "/checkpoints", yukle: () => import("@/app/(protected)/checkpoints/page") },
   { yol: "/patrol-plans", yukle: () => import("@/app/(protected)/patrol-plans/page") },
   { yol: "/ziyaretciler", yukle: () => import("@/app/(protected)/ziyaretciler/page") },

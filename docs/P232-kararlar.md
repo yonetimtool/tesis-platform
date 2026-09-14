@@ -109,6 +109,35 @@ Modalda hem `vardiya-ekle-ara` ("Kişi ara") hem `vardiya-ekle-kisi`
 seçeneklerini süzmek (`personel.filter(...)`); başka bir şey yapmıyor.
 Native `<select>` zaten yazarak atlamayı destekliyor. **Kaldırılıyor.**
 
+### §A uygulandı — ve eksik yarının teknik sebebi bulundu
+
+Web'de kadro atanamamasının sebebi ölçüldü: **`assignments` BFF rotası
+hiç yoktu.** Arka uçta `PUT /shifts/{id}/assignments` vardı ve mobil onu
+kullanıyordu (`shifts_api.dart`); web'de karşılığı yoktu. P226/P229'daki
+sınıfın aynısı — iki uç ayrı ayrı doğru, **orta halka** eksik.
+
+Kadro ayrı bir modalda: "bu vardiya ne zaman" (şablon) ile "normalde kim
+çalışır" (kadro) **ayrı kararlar**; tek forma sıkıştırmak, şablon adını
+değiştirmek isteyene kadro listesini de göstermek olurdu.
+
+Üç test dosyası eski sayfayı çiziyordu. Sildiğim için değil **taşıdığım**
+için, testler yeni bileşene yönlendirildi — ölçtükleri davranış (gece
+vardiyası uyarısı, uç düştüğünde hata) korundu.
+
+### Kilitlerin yakaladığı bir P231 hatası
+
+`yuzey-ayrimi` kilidi `/kameralar`'ın amire açılmış olduğunu yakaladı ve
+**haklıydı**. P231 §3'te "kameralar: canlı + geçmiş kayıt" derken bu
+sayfayı da açmıştım; ama `/kameralar` **kamera yönetimidir** (kamera
+ekleme, adres/kimlik düzenleme) — tesis yönetiminin işi, güvenlik
+gözetiminin değil. Backend zaten `POST/PATCH /cameras`'ı admin+yöneticiye
+kapatıyor, yani amir sayfayı açsa düğmelerde 403 alırdı: "menüde ama
+yetkisiz". Geri kapatıldı; P213'ün dar kapsamı doğruymuş.
+
+`/users` ise haklı olarak açık kaldı, kilit gerekçesiyle güncellendi:
+**ekran açıldı, küme açılmadı** — sunucu listeyi `gorunur_roller` ile
+daraltıyor.
+
 ---
 
 ## §C — Yapısal engel: koşan takımın altından konteyner çekilmesin

@@ -15,6 +15,7 @@ import {
   Secim,
 } from "@/components/ui";
 import { KalipModali } from "@/components/vardiya/kalip-modali";
+import { SablonBolumu } from "@/components/vardiya/sablon-bolumu";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
@@ -795,6 +796,18 @@ export default function VardiyaPlaniSayfasi() {
         />
       )}
 
+      {/* ---------------- (P232 §A) VARDIYA SABLONLARI ------------------ */}
+      {/* Sablon yonetimi `/shifts`ten BURAYA tasindi: KULLANILDIGI YERDE
+          yonetilsin. Menude iki ayri "vardiya" girisi vardi ve ayrim
+          ADDAN anlasilmiyordu; ustelik `/shifts` BOS gorunuyordu, cunku
+          web'de sablon tanimlanabiliyor ama KADRO atanamiyordu ve onu
+          tuketen "Haftayi doldur" kadroya ihtiyac duyuyor. */}
+      <section className="mt-8" data-test="vardiya-sablon-bolumu">
+        <SablonBolumu
+          personel={(personel?.items ?? []).filter((p) => p.role !== "resident")}
+        />
+      </section>
+
       {/* ---------------- (P207 §1) KALIP UYGULA ------------------------ */}
       <KalipModali
         acik={kalipAcik}
@@ -958,7 +971,6 @@ function HizliEkle({
   const t = useT();
   const toast = useToast();
   const [userId, setUserId] = useState("");
-  const [ara, setAra] = useState("");
   const [basTarih, setBasTarih] = useState(varsayilanTarih);
   const [sonTarih, setSonTarih] = useState(varsayilanTarih);
   const [basSaat, setBasSaat] = useState("08:00");
@@ -967,13 +979,6 @@ function HizliEkle({
   const [cakisanlar, setCakisanlar] = useState<string[] | null>(null);
   const [hata, setHata] = useState<string | null>(null);
   const [bekliyor, setBekliyor] = useState(false);
-
-  const secenekler = useMemo(() => {
-    const a = ara.trim().toLocaleLowerCase("tr");
-    return a
-      ? personel.filter((p) => p.ad.toLocaleLowerCase("tr").includes(a))
-      : personel;
-  }, [personel, ara]);
 
   async function gonder(atla: boolean) {
     setBekliyor(true);
@@ -1036,16 +1041,17 @@ function HizliEkle({
       <div className="space-y-3">
         <HataDurumu mesaj={hata} />
 
-        <AlanSarmal etiket={t("vardiyaSuzgecKisi")}>
-          {(baglar) => (
-            <Alan
-              {...baglar}
-              value={ara}
-              data-test="vardiya-ekle-ara"
-              onChange={(e) => setAra(e.target.value)}
-            />
-          )}
-        </AlanSarmal>
+        {/* (P232) "Kisi ara" ALANI KALDIRILDI.
+            OLCULDU: tek isi asagidaki acilir listenin SECENEKLERINI
+            suzmekti (`personel.filter(...)`), baska hicbir sey
+            yapmiyordu. Acilir liste denetimi zaten yazarak atlamayi
+            (type-ahead) destekliyor; ayri bir suzgec kutusu onu
+            TEKRARLIYOR ve "hangisini kullanacagim" sorusunu
+            uretiyordu.
+
+            NOT: bu yorumda acilir liste etiketinin ADI YAZILMAZ —
+            `erisilebilir-etiket` taramasi yorumdaki etiketi de gercek
+            bir denetim sanip "adsiz denetim" diye raporluyor (olculdu). */}
         <AlanSarmal etiket={t("vardiyaPersonel")}>
           {(baglar) => (
             <Secim
@@ -1055,7 +1061,7 @@ function HizliEkle({
               onChange={(e) => setUserId(e.target.value)}
             >
               <option value="">{t("ortakSeciniz")}</option>
-              {secenekler.map((p) => (
+              {personel.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.ad}
                 </option>

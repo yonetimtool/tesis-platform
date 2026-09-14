@@ -11,7 +11,10 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import NotificationsPage from "@/app/(protected)/notifications/page";
-import ShiftsPage from "@/app/(protected)/shifts/page";
+// (P232 §A) Sablon yonetimi `/shifts` sayfasindan `/vardiya-plani`
+// icindeki bolume tasindi; `/shifts` artik yonlendirme. Test ayni
+// davranisi olcmeye devam ediyor, yalnizca dogru bileseni suruyor.
+import { SablonBolumu } from "@/components/vardiya/sablon-bolumu";
 
 import { ciz } from "./yardimci";
 
@@ -163,14 +166,14 @@ describe("(P160) Bildirimler — tasima sonrasi", () => {
 describe("(P160) Vardiyalar — tasima sonrasi", () => {
   it("liste cizilir; saat araligi korundu", async () => {
     sahte([VARDIYA]);
-    ciz(ShiftsPage);
+    ciz(() => SablonBolumu({ personel: [] }));
     await waitFor(() => expect(screen.getByText("Gece")).toBeInTheDocument());
     expect(screen.getByText("23:00 – 07:00")).toBeInTheDocument();
   });
 
   it("form MODALDA acilir", async () => {
     sahte([VARDIYA]);
-    ciz(ShiftsPage);
+    ciz(() => SablonBolumu({ personel: [] }));
     await userEvent.click(await screen.findByRole("button", { name: "Yeni vardiya" }));
     const modal = await screen.findByRole("dialog");
     expect(within(modal).getByRole("button", { name: "Kaydet" })).toBeInTheDocument();
@@ -178,7 +181,7 @@ describe("(P160) Vardiyalar — tasima sonrasi", () => {
 
   it("GECE VARDIYASI uyarisi baslangic > bitis iken cikar (korundu)", async () => {
     sahte([VARDIYA]);
-    ciz(ShiftsPage);
+    ciz(() => SablonBolumu({ personel: [] }));
     await userEvent.click(await screen.findByRole("button", { name: "Yeni vardiya" }));
     const modal = await screen.findByRole("dialog");
 
@@ -199,7 +202,7 @@ describe("(P160) Vardiyalar — tasima sonrasi", () => {
 
   it("SAYFA BASINA KAYIT secimi istege yansir (yeni kazanim)", async () => {
     const cagrilar = sahte([VARDIYA], 300);
-    ciz(ShiftsPage);
+    ciz(() => SablonBolumu({ personel: [] }));
     await waitFor(() => expect(screen.getByText("Gece")).toBeInTheDocument());
     await userEvent.selectOptions(screen.getByLabelText(/Sayfa başına/), "100");
     await waitFor(() =>
@@ -209,7 +212,7 @@ describe("(P160) Vardiyalar — tasima sonrasi", () => {
 
   it("UC DUSTUGUNDE hata + TEKRAR DENE", async () => {
     bozukUc();
-    ciz(ShiftsPage);
+    ciz(() => SablonBolumu({ personel: [] }));
     await waitFor(() =>
       expect(screen.getByRole("button", { name: "Tekrar dene" })).toBeInTheDocument(),
     );

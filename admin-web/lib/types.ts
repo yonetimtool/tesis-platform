@@ -119,6 +119,10 @@ export interface Shift {
   baslangic_saat: string; // "HH:MM"
   bitis_saat: string;
   gun_tipi: string;
+  /** (P232 §A) VARSAYILAN KADRO — bu sablonda normalde kim calisir.
+   *  `haftayi-doldur` bunu okuyup haftayi dolduruyor. Web'de
+   *  duzenlenemiyordu (yalniz mobilde); ozelligin eksik yarisi buydu. */
+  personel?: { user_id: string; ad: string; avatar_url?: string | null }[];
   created_at: string;
   updated_at?: string | null;
 }
