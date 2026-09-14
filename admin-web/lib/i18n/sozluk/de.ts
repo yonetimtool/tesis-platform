@@ -2605,6 +2605,8 @@ export const de: Sozluk = {
   vardiyaKadroYok: "Nicht zugewiesen",
   vardiyaKadroGuncellendi: "Standardbesetzung aktualisiert",
   vardiyaKadroAciklama: "Wählen Sie, wer normalerweise in dieser Vorlage arbeitet. „Woche füllen“ nutzt diese Liste.",
+  vardiyaGrubaEkle: "Diese Gruppe hinzufügen",
+  vardiyaGrupOzeti: "{gun} Tage · {dilim}",
   vardiyaSablonlari: "Schichtvorlagen",
   kabukVardiyaPlani: "Schichtplan",
   vardiyaPlaniBaslik: "Schichtplan",

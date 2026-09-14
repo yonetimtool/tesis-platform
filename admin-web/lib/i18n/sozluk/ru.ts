@@ -2605,6 +2605,8 @@ export const ru: Sozluk = {
   vardiyaKadroYok: "Не назначен",
   vardiyaKadroGuncellendi: "Состав обновлён",
   vardiyaKadroAciklama: "Выберите, кто обычно работает по этому шаблону. «Заполнить неделю» использует этот список.",
+  vardiyaGrubaEkle: "Добавить эту группу",
+  vardiyaGrupOzeti: "{gun} дн. · {dilim}",
   vardiyaSablonlari: "Шаблоны смен",
   kabukVardiyaPlani: "План смен",
   vardiyaPlaniBaslik: "План смен",

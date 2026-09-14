@@ -2605,6 +2605,8 @@ export const ar: Sozluk = {
   vardiyaKadroYok: "غير مُسند",
   vardiyaKadroGuncellendi: "تم تحديث الطاقم الافتراضي",
   vardiyaKadroAciklama: "اختر من يعمل عادةً في هذا القالب. «املأ الأسبوع» يستخدم هذه القائمة.",
+  vardiyaGrubaEkle: "أضف هذه المجموعة",
+  vardiyaGrupOzeti: "{gun} يوم · {dilim}",
   vardiyaSablonlari: "قوالب الورديات",
   kabukVardiyaPlani: "خطة الورديات",
   vardiyaPlaniBaslik: "خطة الورديات",

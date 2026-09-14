@@ -2605,6 +2605,8 @@ export const es: Sozluk = {
   vardiyaKadroYok: "Sin asignar",
   vardiyaKadroGuncellendi: "Plantilla habitual actualizada",
   vardiyaKadroAciklama: "Elija quién trabaja normalmente en esta plantilla. «Rellenar la semana» usa esta lista.",
+  vardiyaGrubaEkle: "Añadir este grupo",
+  vardiyaGrupOzeti: "{gun} días · {dilim}",
   vardiyaSablonlari: "Plantillas de turno",
   kabukVardiyaPlani: "Plan de turnos",
   vardiyaPlaniBaslik: "Plan de turnos",

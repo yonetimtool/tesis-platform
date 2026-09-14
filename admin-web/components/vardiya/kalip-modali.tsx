@@ -48,6 +48,8 @@ import { useT } from "@/lib/i18n/kullan";
  *  (`sabit-metin` taramasi onlari cevrilmemis metin adayi sayar). */
 const ROTASYON_HAFTALIK = "haftalik" as const;
 const ROTASYON_YOK = "yok" as const;
+/** JSX ucluda sabit metin yazilamaz (`sabit-metin` taramasi). */
+const IKINCIL = "ikincil" as const;
 
 type Dilim = { ad: string; baslangic: string; bitis: string };
 type Kalip = { id: string; ad: string; dilimler: Dilim[]; aktif: boolean };
@@ -86,12 +88,15 @@ export function KalipModali({
   personel,
   onKapat,
   onUygulandi,
+  onGrupEklendi,
 }: {
   acik: boolean;
   gunler: string[];
   personel: Personel[];
   onKapat: () => void;
   onUygulandi: (partiId: string | null) => void;
+  /** (P232) Grup eklenince sayfa gun secimini temizler. */
+  onGrupEklendi?: () => void;
 }) {
   const t = useT();
   const toast = useToast();
@@ -105,6 +110,14 @@ export function KalipModali({
   const [dilimler, setDilimler] = useState<Dilim[]>(VARSAYILAN_DILIMLER);
   const [atamalar, setAtamalar] = useState<Record<number, string[]>>({});
   const [rotasyon, setRotasyon] = useState<"yok" | "haftalik">("yok");
+  // (P232) COK GRUPLU PLAN — "pazartesi gunduz, sali-carsamba gece".
+  //
+  // Onceden bunun icin modali UC KEZ acmak ve UC AYRI PARTI uretmek
+  // gerekiyordu: uc onizleme, uc catisma kontrolu ve geri alirken UC
+  // AYRI ISTEK. Artik gruplar burada birikiyor ve TEK istekte gidiyor.
+  const [gruplar, setGruplar] = useState<
+    { gunler: string[]; dilimler: Dilim[]; atamalar: Record<number, string[]> }[]
+  >([]);
   const [sonuc, setSonuc] = useState<Sonuc | null>(null);
   const [hata, setHata] = useState<string | null>(null);
   const [bekliyor, setBekliyor] = useState(false);
@@ -117,7 +130,57 @@ export function KalipModali({
     [atamalar],
   );
 
+  /** Ekranda kurulan TEK grubu istege uygun sekle cevirir. */
+  function buGrup() {
+    return {
+      gunler,
+      atamalar,
+      ...(kalipId
+        ? { kalip_id: kalipId }
+        : {
+            dilimler: dilimler.map((d, i) => ({
+              ad: d.ad.trim() || t("vardiyaDilimVarsayilanAd", { n: i + 1 }),
+              baslangic: d.baslangic,
+              bitis: d.bitis,
+            })),
+          }),
+    };
+  }
+
+  function grubaEkle() {
+    setGruplar((o) => [
+      ...o,
+      { gunler, dilimler: etkinDilimler, atamalar: { ...atamalar } },
+    ]);
+    setAtamalar({});
+    // Sayfa gun secimini TEMIZLER: sonraki grup icin takvim bos
+    // baslamali, yoksa kullanici ayni gunleri ikinci gruba da yazardi.
+    onGrupEklendi?.();
+  }
+
   function govde(ek: Record<string, unknown>) {
+    // GRUP VARSA COK GRUPLU BICIM. Ekranda kurulmakta olan grup da
+    // dahil edilir: kullanicinin "ekle"ye basmayi unutmasi, son grubun
+    // SESSIZCE kaybolmasi demekti.
+    if (gruplar.length > 0) {
+      const hepsi = [...gruplar];
+      if (gunler.length > 0 && Object.values(atamalar).flat().length > 0) {
+        hepsi.push({ gunler, dilimler: etkinDilimler, atamalar });
+      }
+      return {
+        gruplar: hepsi.map((g) => ({
+          gunler: g.gunler,
+          atamalar: g.atamalar,
+          dilimler: g.dilimler.map((d, i) => ({
+            ad: d.ad.trim() || t("vardiyaDilimVarsayilanAd", { n: i + 1 }),
+            baslangic: d.baslangic,
+            bitis: d.bitis,
+          })),
+        })),
+        rotasyon,
+        ...ek,
+      };
+    }
     return {
       ...(kalipId
         ? { kalip_id: kalipId }
@@ -197,7 +260,12 @@ export function KalipModali({
           <Dugme
             type="button"
             tur="ikincil"
-            disabled={bekliyor || atanan === 0}
+            // (P232) GRUP EKLENDIYSE de acik: `grubaEkle` ekrandaki
+            // atamalari TEMIZLIYOR (sonraki grup bos baslasin diye) ve
+            // yalniz `atanan`a bakmak, biriken gruplar varken onizleme
+            // ve uygulama dugmelerini KAPATIYORDU — kullanici uc grup
+            // kurup hicbirini kaydedemezdi. Test yakaladi.
+            disabled={bekliyor || (atanan === 0 && gruplar.length === 0)}
             data-test="kalip-onizle"
             onClick={() => void calistir({ kuru: true })}
           >
@@ -205,7 +273,7 @@ export function KalipModali({
           </Dugme>
           <Dugme
             type="button"
-            disabled={bekliyor || atanan === 0}
+            disabled={bekliyor || (atanan === 0 && gruplar.length === 0)}
             data-test="kalip-uygula"
             onClick={() => void calistir({})}
           >
@@ -223,6 +291,48 @@ export function KalipModali({
         >
           {t("vardiyaSeciliGun", { n: gunler.length })}
         </p>
+
+        {/* (P232) EKLENEN GRUPLAR — "pazartesi gunduz, sali-carsamba
+            gece". Hepsi TEK istekte, TEK parti olarak gider: gruplar
+            ayri ayri yazilsaydi geri alma birden cok istek olurdu. */}
+        {gruplar.length > 0 && (
+          <ul data-test="kalip-gruplar" className="space-y-1">
+            {gruplar.map((g, i) => (
+              <li
+                key={i}
+                className="flex items-center justify-between gap-2"
+                style={{ fontSize: "var(--yz-fs-sm)" }}
+              >
+                <span>
+                  {t("vardiyaGrupOzeti", {
+                    gun: g.gunler.length,
+                    dilim: g.dilimler.map((d) => d.ad).join(", "),
+                  })}
+                </span>
+                <Dugme
+                  boy="kucuk"
+                  tur={IKINCIL}
+                  data-test={`kalip-grup-sil-${i}`}
+                  onClick={() =>
+                    setGruplar((o) => o.filter((_, j) => j !== i))
+                  }
+                >
+                  {t("ortakSil")}
+                </Dugme>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <Dugme
+          boy="kucuk"
+          tur={IKINCIL}
+          data-test="kalip-gruba-ekle"
+          disabled={gunler.length === 0 || atanan === 0}
+          onClick={grubaEkle}
+        >
+          {t("vardiyaGrubaEkle")}
+        </Dugme>
 
         <AlanSarmal etiket={t("vardiyaKalip")}>
           {(b) => (

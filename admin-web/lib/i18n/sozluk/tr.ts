@@ -2668,6 +2668,8 @@ export const tr = {
   vardiyaKadroYok: "Atanmamış",
   vardiyaKadroGuncellendi: "Kadro güncellendi",
   vardiyaKadroAciklama: "Bu şablonda normalde kimlerin çalıştığını seçin. “Haftayı doldur” bu kadroyu kullanarak haftayı otomatik doldurur.",
+  vardiyaGrubaEkle: "Bu grubu ekle",
+  vardiyaGrupOzeti: "{gun} gün · {dilim}",
   vardiyaSablonlari: "Vardiya şablonları",
   kabukVardiyaPlani: "Vardiya planı",
   vardiyaPlaniBaslik: "Vardiya planı",

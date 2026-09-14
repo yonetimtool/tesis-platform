@@ -814,6 +814,10 @@ export default function VardiyaPlaniSayfasi() {
         gunler={Array.from(seciliGunler).sort()}
         personel={(personel?.items ?? []).filter((p) => p.role !== "resident")}
         onKapat={() => setKalipAcik(false)}
+        // (P232) Grup eklenince TAKVIM SECIMI TEMIZLENIR: sonraki grup
+        // bos baslamali, yoksa kullanici ayni gunleri ikinci gruba da
+        // yazardi ve cakisma uretirdi.
+        onGrupEklendi={() => setSeciliGunler(new Set())}
         onUygulandi={(partiId) => {
           setSonParti(partiId);
           setKalipAcik(false);

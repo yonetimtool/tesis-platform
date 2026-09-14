@@ -2605,6 +2605,8 @@ export const en: Sozluk = {
   vardiyaKadroYok: "Unassigned",
   vardiyaKadroGuncellendi: "Default staff updated",
   vardiyaKadroAciklama: "Choose who normally works this template. “Fill the week” uses this list to fill the week automatically.",
+  vardiyaGrubaEkle: "Add this group",
+  vardiyaGrupOzeti: "{gun} days · {dilim}",
   vardiyaSablonlari: "Shift templates",
   kabukVardiyaPlani: "Shift plan",
   vardiyaPlaniBaslik: "Shift plan",

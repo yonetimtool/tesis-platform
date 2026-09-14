@@ -2605,6 +2605,8 @@ export const fr: Sozluk = {
   vardiyaKadroYok: "Non attribuée",
   vardiyaKadroGuncellendi: "Équipe par défaut mise à jour",
   vardiyaKadroAciklama: "Choisissez qui travaille normalement sur ce modèle. « Remplir la semaine » utilise cette liste.",
+  vardiyaGrubaEkle: "Ajouter ce groupe",
+  vardiyaGrupOzeti: "{gun} jours · {dilim}",
   vardiyaSablonlari: "Modèles de poste",
   kabukVardiyaPlani: "Planning des postes",
   vardiyaPlaniBaslik: "Planning des postes",
