@@ -3151,6 +3151,15 @@ class TicketSummaryOut(BaseModel):
     unit_label: str | None = None     # talebi acanin daire no'su (varsa)
 
 
+#: (P230 §4) Gorev durumu — TURETILMIS, saklanmaz.
+#:
+#: Dort durumun ucu zaten baska verilerden turuyor; ayri bir `durum`
+#: kolonu onlarla SENKRON TUTULMAK zorunda olurdu ve tamamlama silinince
+#: (P229 geri acma) durumu geri almayi unutan bir kod yolu gorevi
+#: "tamamlandi" gorunur birakirdi.
+TaskDurum = Literal["atandi", "baslandi", "tamamlandi", "gecikti"]
+
+
 class TaskTamamlamaOzet(BaseModel):
     """(P229 §3) Gorev LISTESINDE gosterilecek tamamlama ozeti.
 
@@ -3197,6 +3206,18 @@ class TaskOut(BaseModel):
     # "gosteriliyor mu" idi — kaydediliyordu, gosterilmiyordu.
     tamamlandi: bool = False
     son_tamamlama: TaskTamamlamaOzet | None = None
+    # (P230 §4) TAKIP ALANLARI.
+    son_tarih: datetime | None = None
+    baslama_zamani: datetime | None = None
+    olusturan_user_id: uuid.UUID | None = None
+    olusturan_ad: str | None = None
+    atanan_ad: str | None = None
+    #: TURETILMIS durum — sunucuda hesaplanir ki iki istemci ayni gorevi
+    #: farkli durumda gostermesin.
+    durum: TaskDurum = "atandi"
+    #: Gecikme GUN cinsinden (negatifse henuz vakit var). `son_tarih`
+    #: yoksa None: "gecikmedi" demek YANLIS olurdu — olcusu yok.
+    gecikme_gun: int | None = None
     created_at: datetime
     updated_at: datetime | None = None
 
@@ -3211,6 +3232,8 @@ class TaskCreate(BaseModel):
     sonraki_planlanan: datetime | None = None
     foto_zorunlu: bool = False
     aktif: bool = True
+    # (P230 §4) SON TARIH — gecikme bundan hesaplanir.
+    son_tarih: datetime | None = None
 
 
 class TaskUpdate(BaseModel):
@@ -3229,6 +3252,8 @@ class TaskUpdate(BaseModel):
         if not self.model_fields_set:
             raise ValueError("en az bir alan gerekli")
         return self
+    # (P230 §4) SON TARIH — gecikme bundan hesaplanir.
+    son_tarih: datetime | None = None
 
 
 class TaskListResponse(BaseModel):

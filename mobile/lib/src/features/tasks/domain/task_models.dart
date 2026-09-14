@@ -78,6 +78,25 @@ class TaskTamamlamaOzet {
       );
 }
 
+/// (P230 §4) Gorev durumu — SUNUCUDA turetilir.
+enum TaskDurum {
+  atandi('atandi'),
+  baslandi('baslandi'),
+  tamamlandi('tamamlandi'),
+  gecikti('gecikti');
+
+  const TaskDurum(this.wire);
+
+  final String wire;
+
+  /// BILINMEYEN DEGER `atandi`YA DUSER, HATA ATMAZ: sunucu ileride yeni
+  /// bir durum eklerse eski istemci listeyi cizemez hale GELMEMELI.
+  static TaskDurum coz(String? v) => TaskDurum.values.firstWhere(
+    (e) => e.wire == v,
+    orElse: () => TaskDurum.atandi,
+  );
+}
+
 class Task {
   const Task({
     required this.id,
@@ -95,6 +114,12 @@ class Task {
     this.ticket,
     this.tamamlandi = false,
     this.sonTamamlama,
+    this.sonTarih,
+    this.baslamaZamani,
+    this.olusturanAd,
+    this.atananAd,
+    this.durum = TaskDurum.atandi,
+    this.gecikmeGun,
   });
 
   final String id;
@@ -137,6 +162,21 @@ class Task {
   final bool tamamlandi;
   final TaskTamamlamaOzet? sonTamamlama;
 
+  /// (P230 §4) TAKIP ALANLARI.
+  ///
+  /// `durum` SUNUCUDA turetilir ve istemci onu TEKRAR HESAPLAMAZ: iki
+  /// istemcinin ayni gorevi farkli durumda gostermesi, "gecikti" uyarisini
+  /// guvenilmez yapardi.
+  final DateTime? sonTarih;
+  final DateTime? baslamaZamani;
+  final String? olusturanAd;
+  final String? atananAd;
+  final TaskDurum durum;
+
+  /// Gun cinsinden gecikme; `sonTarih` yoksa null (SIFIR DEGIL — sifir
+  /// "bugun son gun" demektir).
+  final int? gecikmeGun;
+
   /// Gorev bir talepten mi geldi? (chip/rozet gorunurlugu).
   bool get fromTicket => ticketId != null;
 
@@ -165,6 +205,16 @@ class Task {
         ? null
         : TaskTamamlamaOzet.fromJson(
             json['son_tamamlama'] as Map<String, dynamic>),
+    sonTarih: json['son_tarih'] == null
+        ? null
+        : DateTime.parse(json['son_tarih'] as String).toUtc(),
+    baslamaZamani: json['baslama_zamani'] == null
+        ? null
+        : DateTime.parse(json['baslama_zamani'] as String).toUtc(),
+    olusturanAd: json['olusturan_ad'] as String?,
+    atananAd: json['atanan_ad'] as String?,
+    durum: TaskDurum.coz(json['durum'] as String?),
+    gecikmeGun: (json['gecikme_gun'] as num?)?.toInt(),
   );
 }
 

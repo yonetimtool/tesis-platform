@@ -6535,4 +6535,39 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get aramaBasarisiz => 'Поиск не выполнен. Повторите позже.';
+
+  @override
+  String get gorevDurumAtandi => 'Назначена';
+
+  @override
+  String get gorevDurumBaslandi => 'Начата';
+
+  @override
+  String get gorevDurumTamamlandi => 'Выполнена';
+
+  @override
+  String get gorevDurumGecikti => 'Просрочена';
+
+  @override
+  String gorevGecikmeGun(int n) {
+    return '$n дн.';
+  }
+
+  @override
+  String gorevSonTarihi(String tarih) {
+    return 'Срок: $tarih';
+  }
+
+  @override
+  String get gorevBaslaDugme => 'Начать задачу';
+
+  @override
+  String gorevBaslandiBilgi(String tarih) {
+    return 'Начата: $tarih';
+  }
+
+  @override
+  String gorevAtayanBilgi(String ad) {
+    return 'Назначил: $ad';
+  }
 }

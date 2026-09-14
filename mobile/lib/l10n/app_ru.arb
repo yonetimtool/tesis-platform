@@ -2152,5 +2152,14 @@
   "aramaIpucu": "Человек, квартира, задача, заявка…",
   "aramaSonucYok": "Ничего не найдено",
   "aramaEnAzIkiHarf": "Введите не менее двух символов.",
-  "aramaBasarisiz": "Поиск не выполнен. Повторите позже."
+  "aramaBasarisiz": "Поиск не выполнен. Повторите позже.",
+  "gorevDurumAtandi": "Назначена",
+  "gorevDurumBaslandi": "Начата",
+  "gorevDurumTamamlandi": "Выполнена",
+  "gorevDurumGecikti": "Просрочена",
+  "gorevGecikmeGun": "{n} дн.",
+  "gorevSonTarihi": "Срок: {tarih}",
+  "gorevBaslaDugme": "Начать задачу",
+  "gorevBaslandiBilgi": "Начата: {tarih}",
+  "gorevAtayanBilgi": "Назначил: {ad}"
 }

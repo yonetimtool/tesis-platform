@@ -146,3 +146,99 @@ kaydın *olmadığını* sanır, aramanın çalışmadığını değil.
 
 Gerçek cihazda gezinme (sonuçtan ekrana gidiş) — emülatör yok. Ölçtüğüm,
 rota eşlemesinin ve dokunma davranışının widget testleri.
+
+---
+
+## §4 — Görev takibi
+
+### Ölçüm: üç alanın üçü de yoktu
+
+| ihtiyaç | ölçülen durum |
+|---|---|
+| durum | **yok** — P229'da yalnız tamamlama eklendi; "başlandı mı", "gecikti mi" yanıtlanamıyordu |
+| son tarih | **yok** — gecikme hesaplanamıyordu |
+| kim atadı | **yok** — `atanan_user_id` kime atandığını söylüyordu, kimin verdiğini değil |
+
+### Karar: durum **saklanmaz, türetilir**
+
+Dört durumun üçü zaten başka verilerden türüyor:
+
+```
+atandi     : kayıt var, başlama yok, tamamlama yok
+baslandi   : baslama_zamani dolu, tamamlama yok
+tamamlandi : task_completion satırı var (P229)
+gecikti    : son_tarih geçmiş ve tamamlama yok
+```
+
+Ayrı bir `durum` kolonu bu üç kaynakla **senkron tutulmak** zorunda
+olurdu: tamamlama silinince (P229 geri açma) durumu geri almayı unutan
+bir kod yolu, görevi "tamamlandı" görünür bırakırdı. Türetilmiş durum
+böyle bir ayrışma üretemez.
+
+`baslama_zamani` **tek yeni gerçektir** — başka hiçbir yerden türetilemez.
+
+**Sıra önemli:** `tamamlandi` her şeyden önce gelir. Son tarihi geçmiş
+ama tamamlanmış bir görevi "gecikti" göstermek, biten işi bitmemiş gibi
+raporlamak olurdu. Kilidi bunu kırarak doğruladım: sırayı ters çevirince
+2 test düştü.
+
+**`gecikme_gun` son tarih yoksa `null`, sıfır değil.** Sıfır "bugün son
+gün" demektir; "ölçüsü yok" ile karıştırılamaz.
+
+### "Başlandı" durumu — evet, gerekli
+
+Önceden yalnız iki hal vardı. Arada geçen sürede yönetici, işin **ele
+alındığını** mı yoksa **öylece durduğunu** mu bilmiyordu. "Gecikti"
+uyarısının değeri de buna bağlı: başlanmış ama uzayan bir iş ile hiç
+dokunulmamış bir iş aynı şey değil.
+
+* **Kim:** `_COMPLETER` (admin + yönetici + saha). Saha rolü **yalnız
+  kendine atanan** görevi başlatabilir — tamamlama ile aynı kural. Farklı
+  olsaydı, başkasının görevini "başlatıp" tamamlayamayan bir kullanıcı
+  ortaya çıkardı.
+* **İdempotent:** ikinci çağrı zamanı **ezmez**. Ezseydi, yanlışlıkla iki
+  kez dokunan kullanıcı gerçek başlama anını kaybederdi — ve "ne zaman
+  başlandı" takip ekranının taşıdığı bilgiydi.
+* Denetim kaydına yazılıyor (`task_start`).
+
+### Gecikme neye göre
+
+`son_tarih` (yeni alan). `sonraki_planlanan`**dan ayrı**: o yalnız
+periyodik görevlerde dolu ve anlamı "bir sonraki tekrar". Tek seferlik bir
+görevin son tarihi oraya yazılsaydı, tamamlanan görev periyot
+ilerletmesine girerdi.
+
+### Kim atadı
+
+`olusturan_user_id` **gövdeden alınmaz, oturumdan gelir** — istemcinin
+gönderebileceği bir alan olsaydı başkasının adına görev atanabilirdi.
+FK yok (bilinçli): atayan hesap silinse/anonimleşse de görevin geçmişi
+kalmalı, `audit_log.actor_user_id` ile aynı gerekçe.
+
+`olusturan_ad` ve `atanan_ad` sunucuda çözülüyor: saha rolü kullanıcı
+listesini göremiyor (403), yani "bu işi bana kim verdi" sorusunu istemci
+kendi çözemezdi. P229'daki `tamamlayan_ad` kararının aynısı.
+
+### Durum süzgeci **sunucuda**
+
+İstemcide süzmek sayfalamayı bozardı: sunucu 50 satır döner, istemci
+7'sini gösterir ve kullanıcı "toplam 300" yazan bir sayfalayıcıda boş
+sayfalar gezerdi. Süzgeç, türetmenin SQL'deki karşılığını tekrarlıyor —
+ve "geciken görev `baslandi` listesinde çıkmaz" kuralı test edilmiş
+durumda (ayrışsaydı aynı görev iki listede birden görünürdü).
+
+### Ek bulgu: P229'un sözleşme düzenlemesi yanlış şemaya gitmişti
+
+`tamamlandi` ve `son_tamamlama` alanları `Task` yerine **`Device`**
+şemasına eklenmişti (aynı `aktif: { type: boolean }` satırı iki şemada da
+var ve ilk eşleşme `Device`'a düşüyor). P230 alanları da aynı tuzağa
+düştü. İkisi de düzeltildi: `Device` temizlendi, dokuz alan `Task`'a
+taşındı.
+
+### Yapılmadı, açıkça söylüyorum
+
+**Gecikmiş göreve bildirim gönderilmiyor.** Gerekçe: bildirim bir
+zamanlayıcı (beat) görevi ister ve "her gün kaç kez, kime, hangi eşikle"
+sorularının yanıtı ürün kararıdır — tahmin edip göndermek, yöneticiye her
+sabah tekrarlayan bir gürültü üretme riski taşır. Alan ve durum artık
+hazır; kural verildiğinde eklenebilir.

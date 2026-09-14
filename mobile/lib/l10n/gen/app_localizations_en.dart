@@ -6465,4 +6465,39 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aramaBasarisiz => 'Search failed. Please try again shortly.';
+
+  @override
+  String get gorevDurumAtandi => 'Assigned';
+
+  @override
+  String get gorevDurumBaslandi => 'Started';
+
+  @override
+  String get gorevDurumTamamlandi => 'Completed';
+
+  @override
+  String get gorevDurumGecikti => 'Overdue';
+
+  @override
+  String gorevGecikmeGun(int n) {
+    return '$n days';
+  }
+
+  @override
+  String gorevSonTarihi(String tarih) {
+    return 'Due: $tarih';
+  }
+
+  @override
+  String get gorevBaslaDugme => 'Start task';
+
+  @override
+  String gorevBaslandiBilgi(String tarih) {
+    return 'Started: $tarih';
+  }
+
+  @override
+  String gorevAtayanBilgi(String ad) {
+    return 'Assigned by: $ad';
+  }
 }

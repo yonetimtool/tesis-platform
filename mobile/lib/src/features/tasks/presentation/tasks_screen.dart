@@ -11,6 +11,7 @@ import 'task_form_sheet.dart';
 import 'task_ticket_widgets.dart';
 import 'task_tip_style.dart';
 import 'tasks_controller.dart';
+import 'durum_rozeti.dart';
 
 /// Gorev listesi — iki giris noktasi, TEK ekran (A4 kesin matris, auth.md §4):
 ///
@@ -247,6 +248,20 @@ class _TaskTile extends ConsumerWidget {
               style.ad ?? l10n.gorevKategoriDiger,
               style: TextStyle(color: style.color),
             ),
+            // (P230 §4) DURUM ROZETI — gecikmis gorev BELIRGIN olmali.
+            //
+            // Sunucunun TURETTIGI durum cizilir, istemci yeniden
+            // HESAPLAMAZ: iki istemcinin ayni gorevi farkli durumda
+            // gostermesi "gecikti" uyarisini guvenilmez yapardi.
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: DurumRozeti(
+                durum: task.durum,
+                gecikmeGun: task.gecikmeGun,
+              ),
+            ),
+            if (task.sonTarih != null)
+              Text(l10n.gorevSonTarihi(tarihSaatBicimi(task.sonTarih!, dil))),
             // Talepten gelen is emri: "Talepten geldi" chip + oncelik rozeti.
             if (task.fromTicket)
               Padding(

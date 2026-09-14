@@ -166,6 +166,7 @@ class Action:
     # demek, hakedis ve sorumluluk dogurur. Geri acma ise o kaniti
     # SILER; kimin sildigi yazilmazsa, tamamlanmis bir isin kaydi iz
     # birakmadan yok edilebilirdi.
+    TASK_START = "task_start"
     TASK_COMPLETE = "task_complete"
     TASK_REOPEN = "task_reopen"
     GUVENLIK_MODU = "guvenlik_modu"

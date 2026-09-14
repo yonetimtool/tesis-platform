@@ -6271,4 +6271,39 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get aramaBasarisiz => 'Arama yapılamadı. Birazdan tekrar deneyin.';
+
+  @override
+  String get gorevDurumAtandi => 'Atandı';
+
+  @override
+  String get gorevDurumBaslandi => 'Başlandı';
+
+  @override
+  String get gorevDurumTamamlandi => 'Tamamlandı';
+
+  @override
+  String get gorevDurumGecikti => 'Gecikti';
+
+  @override
+  String gorevGecikmeGun(int n) {
+    return '$n gün';
+  }
+
+  @override
+  String gorevSonTarihi(String tarih) {
+    return 'Son tarih: $tarih';
+  }
+
+  @override
+  String get gorevBaslaDugme => 'Göreve başla';
+
+  @override
+  String gorevBaslandiBilgi(String tarih) {
+    return 'Başlandı: $tarih';
+  }
+
+  @override
+  String gorevAtayanBilgi(String ad) {
+    return 'Atayan: $ad';
+  }
 }

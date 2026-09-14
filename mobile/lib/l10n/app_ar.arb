@@ -2152,5 +2152,14 @@
   "aramaIpucu": "شخص، وحدة، مهمة، طلب…",
   "aramaSonucYok": "لا توجد نتائج",
   "aramaEnAzIkiHarf": "اكتب حرفين على الأقل للبحث.",
-  "aramaBasarisiz": "تعذّر البحث. حاول بعد قليل."
+  "aramaBasarisiz": "تعذّر البحث. حاول بعد قليل.",
+  "gorevDurumAtandi": "مُسندة",
+  "gorevDurumBaslandi": "بدأت",
+  "gorevDurumTamamlandi": "مُنجزة",
+  "gorevDurumGecikti": "متأخرة",
+  "gorevGecikmeGun": "{n} يوم",
+  "gorevSonTarihi": "تاريخ الاستحقاق: {tarih}",
+  "gorevBaslaDugme": "ابدأ المهمة",
+  "gorevBaslandiBilgi": "بدأت: {tarih}",
+  "gorevAtayanBilgi": "أسندها: {ad}"
 }

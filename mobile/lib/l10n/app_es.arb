@@ -2152,5 +2152,14 @@
   "aramaIpucu": "Persona, vivienda, tarea, solicitud…",
   "aramaSonucYok": "Sin resultados",
   "aramaEnAzIkiHarf": "Escriba al menos dos caracteres.",
-  "aramaBasarisiz": "La búsqueda falló. Inténtelo en breve."
+  "aramaBasarisiz": "La búsqueda falló. Inténtelo en breve.",
+  "gorevDurumAtandi": "Asignada",
+  "gorevDurumBaslandi": "Iniciada",
+  "gorevDurumTamamlandi": "Completada",
+  "gorevDurumGecikti": "Atrasada",
+  "gorevGecikmeGun": "{n} días",
+  "gorevSonTarihi": "Fecha límite: {tarih}",
+  "gorevBaslaDugme": "Iniciar tarea",
+  "gorevBaslandiBilgi": "Iniciada: {tarih}",
+  "gorevAtayanBilgi": "Asignada por: {ad}"
 }

@@ -453,6 +453,16 @@ METINLER: dict[str, dict[str, str]] = {
         "es": "El intervalo de fechas puede ser de 31 días como máximo.",
     },
     # (P229 §2) Keyfi gun listesi BOS gonderildi.
+    # (P230 §4) Bilinmeyen gorev durumu suzgeci.
+    "gorev_durum_bilinmiyor": {
+        "tr": "Geçersiz görev durumu.",
+        "en": "Invalid task status.",
+        "ar": "حالة مهمة غير صالحة.",
+        "ru": "Недопустимый статус задачи.",
+        "de": "Ungültiger Aufgabenstatus.",
+        "fr": "Statut de tâche invalide.",
+        "es": "Estado de tarea no válido.",
+    },
     "vardiya_gun_secilmedi": {
         "tr": "En az bir gün seçin.",
         "en": "Select at least one day.",

@@ -522,6 +522,18 @@ export interface Task {
   aktif: boolean;
   /** (P229 §3) En az bir tamamlamasi var mi. */
   tamamlandi?: boolean;
+  /** (P230 §4) Gecikme BUNDAN hesaplanir. */
+  son_tarih?: string | null;
+  /** (P230 §4) Ise baslama ani — TEK yeni gercek (digerleri turetilir). */
+  baslama_zamani?: string | null;
+  olusturan_user_id?: string | null;
+  olusturan_ad?: string | null;
+  atanan_ad?: string | null;
+  /** (P230 §4) TURETILMIS durum — sunucuda hesaplanir ki iki istemci
+   *  ayni gorevi farkli durumda gostermesin. */
+  durum?: TaskDurum;
+  /** Gun cinsinden gecikme; `son_tarih` yoksa null (SIFIR DEGIL). */
+  gecikme_gun?: number | null;
   /** (P229 §3) EN YENI tamamlama ozeti — periyodik gorevde ilki degil sonuncusu. */
   son_tamamlama?: TaskTamamlamaOzet | null;
   created_at: string;
@@ -543,6 +555,9 @@ export interface TaskTamamlamaOzet {
   foto_var: boolean;
   notlar?: string | null;
 }
+/** (P230 §4) Gorev durumu — sunucuda TURETILIR, saklanmaz. */
+export type TaskDurum = "atandi" | "baslandi" | "tamamlandi" | "gecikti";
+
 export interface TaskList {
   meta: PageMeta;
   items: Task[];

@@ -15,7 +15,7 @@ from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, Header, Query, Response
 from fastapi.responses import JSONResponse
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -150,11 +150,65 @@ async def _tamamlama_ozeti_doldur(
             out.son_tamamlama = ozet
 
 
+def _durum_hesapla(t: Task, out: TaskOut, simdi: datetime) -> None:
+    """(P230 §4) DORT DURUM — SAKLANMAZ, TURETILIR.
+
+    =======================================================================
+    SIRA ONEMLI
+    =======================================================================
+    `tamamlandi` HER SEYDEN ONCE gelir: son tarihi gecmis AMA tamamlanmis
+    bir gorevi "gecikti" gostermek, biten isi bitmemis gibi raporlamak
+    olurdu. Gecikme yalniz ACIK gorevler icin anlamlidir.
+
+    `gecikme_gun` SON TARIH YOKSA None — sifir DEGIL. Sifir "bugun son
+    gun" demektir; "olcusu yok" ile karistirilamaz.
+    """
+    if out.tamamlandi:
+        out.durum = "tamamlandi"
+    elif t.son_tarih is not None and t.son_tarih < simdi:
+        out.durum = "gecikti"
+    elif t.baslama_zamani is not None:
+        out.durum = "baslandi"
+    else:
+        out.durum = "atandi"
+    if t.son_tarih is not None:
+        out.gecikme_gun = (simdi - t.son_tarih).days
+
+
+async def _adlari_doldur(db: AsyncSession, tasks: list[Task], outs: list[TaskOut]) -> None:
+    """(P230 §4) ATAYAN ve ATANAN adlari — TEK sorguda.
+
+    Id yeterli degil: saha rolu kullanici listesini GOREMIYOR (403), yani
+    "bu isi bana kim verdi" sorusunu istemci kendi cozemezdi. P229'da
+    `tamamlayan_ad` icin verilen kararin aynisi.
+    """
+    ids = {t.atanan_user_id for t in tasks if t.atanan_user_id} | {
+        t.olusturan_user_id for t in tasks if t.olusturan_user_id
+    }
+    if not ids:
+        return
+    adlar = {
+        i: ad
+        for i, ad in (
+            await db.execute(select(AppUser.id, AppUser.ad).where(AppUser.id.in_(ids)))
+        ).all()
+    }
+    for t, out in zip(tasks, outs):
+        out.atanan_ad = adlar.get(t.atanan_user_id)
+        out.olusturan_ad = adlar.get(t.olusturan_user_id)
+
+
 async def _serialize_tasks(db: AsyncSession, tasks: list[Task]) -> list[TaskOut]:
     """Task -> TaskOut; talepten gelen gorevlere kompakt talep ozeti (ticket)
     ekler. Toplu (batch) sorgu ile N+1 yok. RLS: tum sorgular tenant-kapsamli."""
     outs = [TaskOut.model_validate(t) for t in tasks]
     await _tamamlama_ozeti_doldur(db, tasks, outs)
+    await _adlari_doldur(db, tasks, outs)
+    # ZAMAN TEK YERDEN: her gorev icin ayri `now()` cagirmak, uzun bir
+    # listede satirlarin FARKLI anlara gore degerlendirilmesi demekti.
+    simdi = datetime.now(timezone.utc)
+    for t, out in zip(tasks, outs):
+        _durum_hesapla(t, out, simdi)
     ticket_ids = {t.ticket_id for t in tasks if t.ticket_id is not None}
     if not ticket_ids:
         return outs
@@ -255,6 +309,10 @@ async def list_tasks(
     atanan_user_id: str | None = Query(
         None, description="'me' (token kullanicisi) veya user UUID — atanan filtresi (mobil §11)"
     ),
+    durum: str | None = Query(
+        None,
+        description="(P230 §4) atandi | baslandi | tamamlandi | gecikti",
+    ),
     db: AsyncSession = Depends(get_tenant_db),
     user: AppUser = Depends(_READER),
 ) -> TaskListResponse:
@@ -283,6 +341,41 @@ async def list_tasks(
             except ValueError:
                 raise APIError(422, "validation_error", "atanan_user_id_bicimi")
         where.append(Task.atanan_user_id == target)
+
+    # (P230 §4) DURUM SUZGECI — SUNUCUDA.
+    #
+    # Istemcide suzmek, sayfalamayi BOZARDI: sunucu 50 satir doner,
+    # istemci 7'sini gosterir ve kullanici "toplam 300" yazan bir
+    # sayfalayicda bos sayfalar gezerdi. Durum turetilmis oldugu icin
+    # suzgec de ayni turetmeyi SQL'de tekrarlar.
+    if durum is not None:
+        simdi = datetime.now(timezone.utc)
+        tamamlanmis = select(TaskCompletion.task_id).where(
+            TaskCompletion.task_id == Task.id
+        ).exists()
+        if durum == "tamamlandi":
+            where.append(tamamlanmis)
+        elif durum == "gecikti":
+            where.append(~tamamlanmis)
+            where.append(Task.son_tarih.is_not(None))
+            where.append(Task.son_tarih < simdi)
+        elif durum == "baslandi":
+            where.append(~tamamlanmis)
+            where.append(Task.baslama_zamani.is_not(None))
+            # GECIKENLER "baslandi"DAN CIKARILIR: durum hesabi gecikmeyi
+            # once degerlendiriyor; suzgec ayrisirsa ayni gorev iki
+            # listede birden gorunurdu.
+            where.append(
+                or_(Task.son_tarih.is_(None), Task.son_tarih >= simdi)
+            )
+        elif durum == "atandi":
+            where.append(~tamamlanmis)
+            where.append(Task.baslama_zamani.is_(None))
+            where.append(
+                or_(Task.son_tarih.is_(None), Task.son_tarih >= simdi)
+            )
+        else:
+            raise APIError(422, "validation_error", "gorev_durum_bilinmiyor")
     total = (await db.execute(select(func.count()).select_from(Task).where(*where))).scalar_one()
     rows = (
         await db.execute(
@@ -384,9 +477,19 @@ async def create_task(
     user: AppUser = Depends(_WRITER),
 ) -> TaskOut:
     await _ensure_user_in_tenant(db, body.atanan_user_id, user)
+    # (P230 §4) KIM ATADI — "bu isi bana kim verdi" sorusunun yaniti.
+    # Govdeden ALINMAZ, oturumdan gelir: istemcinin gonderecegi bir alan
+    # olsaydi baskasinin adina gorev atanabilirdi.
     await _ensure_checkpoint_in_tenant(db, body.checkpoint_id)
     await _ensure_kategori_in_tenant(db, body.kategori_id)
-    obj = Task(tenant_id=user.tenant_id, **body.model_dump(exclude_unset=True))
+    # (P230 §4) KIM ATADI — "bu isi bana kim verdi" sorusunun yaniti.
+    # GOVDEDEN ALINMAZ, oturumdan gelir: istemcinin gonderebilecegi bir
+    # alan olsaydi baskasinin adina gorev atanabilirdi.
+    obj = Task(
+        tenant_id=user.tenant_id,
+        olusturan_user_id=user.id,
+        **body.model_dump(exclude_unset=True),
+    )
     db.add(obj)
     try:
         await db.flush()
@@ -689,3 +792,54 @@ async def delete_completion(
     await db.delete(obj)
     await db.flush()
     return Response(status_code=204)
+
+
+@router.post("/{task_id}/basla", response_model=TaskOut)
+async def start_task(
+    task_id: uuid.UUID,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_COMPLETER),
+) -> TaskOut:
+    """(P230 §4) GOREVE BASLANDI — personel isi aldigini isaretler.
+
+    =======================================================================
+    NEDEN AYRI BIR DURUM GEREKLI
+    =======================================================================
+    Onceden yalniz iki hal vardi: atanmis ve tamamlanmis. Arada gecen
+    surede yonetici, isin ELE ALINDIGINI mi yoksa OYLECE DURDUGUNU mu
+    bilmiyordu. "Gecikti" uyarisinin degeri de buna bagli: baslanmis ama
+    uzayan bir is ile hic dokunulmamis bir is ayni sey degil.
+
+    =======================================================================
+    KIM: TAMAMLAYABILEN HERKES
+    =======================================================================
+    `_COMPLETER` (admin + yonetici + saha). Saha kisiti asagida korunuyor:
+    saha rolu YALNIZ kendine atanan gorevi baslatabilir — tamamlama ile
+    AYNI kural. Farkli olsaydi, baskasinin gorevini "baslatip"
+    tamamlayamayan bir kullanici ortaya cikardi.
+
+    =======================================================================
+    IDEMPOTENT
+    =======================================================================
+    Ikinci cagri zamani EZMEZ. Ezseydi, yanlislikla iki kez dokunan
+    kullanici gercek baslama anini kaybederdi — ve "ne zaman baslandi"
+    takip ekraninin tasidigi bilgiydi.
+    """
+    task = await _visible_task_or_404(db, task_id, user)
+    if user.role in _SAHA_ROLLERI and task.atanan_user_id != user.id:
+        raise APIError(403, "forbidden", "gorev_yalniz_atanan_tamamlar")
+
+    if task.baslama_zamani is None:
+        task.baslama_zamani = datetime.now(timezone.utc)
+        task.updated_at = func.now()
+        await audit_user(
+            db, user, Action.TASK_START,
+            resource_type="task", resource_id=task_id,
+        )
+        await db.flush()
+        # TAZELEME SART: `func.now()` bir SQL IFADESIDIR; flush sonrasi
+        # onu OKUMAK veritabanina gitmeyi gerektirir ve seri hale
+        # getirme sirasinda `MissingGreenlet` ile 500 uretiyordu
+        # (olculdu). Tazeleme, degeri istemciye donmeden once cozer.
+        await db.refresh(task)
+    return (await _serialize_tasks(db, [task]))[0]

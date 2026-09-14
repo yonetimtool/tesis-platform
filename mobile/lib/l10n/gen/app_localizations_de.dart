@@ -6464,4 +6464,39 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get aramaBasarisiz =>
       'Suche fehlgeschlagen. Bitte gleich erneut versuchen.';
+
+  @override
+  String get gorevDurumAtandi => 'Zugewiesen';
+
+  @override
+  String get gorevDurumBaslandi => 'Begonnen';
+
+  @override
+  String get gorevDurumTamamlandi => 'Abgeschlossen';
+
+  @override
+  String get gorevDurumGecikti => 'Überfällig';
+
+  @override
+  String gorevGecikmeGun(int n) {
+    return '$n Tage';
+  }
+
+  @override
+  String gorevSonTarihi(String tarih) {
+    return 'Fällig: $tarih';
+  }
+
+  @override
+  String get gorevBaslaDugme => 'Aufgabe starten';
+
+  @override
+  String gorevBaslandiBilgi(String tarih) {
+    return 'Begonnen: $tarih';
+  }
+
+  @override
+  String gorevAtayanBilgi(String ad) {
+    return 'Zugewiesen von: $ad';
+  }
 }

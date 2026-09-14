@@ -2152,5 +2152,14 @@
   "aramaIpucu": "Person, Wohnung, Aufgabe, Anfrage…",
   "aramaSonucYok": "Keine Treffer",
   "aramaEnAzIkiHarf": "Geben Sie mindestens zwei Zeichen ein.",
-  "aramaBasarisiz": "Suche fehlgeschlagen. Bitte gleich erneut versuchen."
+  "aramaBasarisiz": "Suche fehlgeschlagen. Bitte gleich erneut versuchen.",
+  "gorevDurumAtandi": "Zugewiesen",
+  "gorevDurumBaslandi": "Begonnen",
+  "gorevDurumTamamlandi": "Abgeschlossen",
+  "gorevDurumGecikti": "Überfällig",
+  "gorevGecikmeGun": "{n} Tage",
+  "gorevSonTarihi": "Fällig: {tarih}",
+  "gorevBaslaDugme": "Aufgabe starten",
+  "gorevBaslandiBilgi": "Begonnen: {tarih}",
+  "gorevAtayanBilgi": "Zugewiesen von: {ad}"
 }

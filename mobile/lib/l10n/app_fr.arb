@@ -2152,5 +2152,14 @@
   "aramaIpucu": "Personne, logement, tâche, demande…",
   "aramaSonucYok": "Aucun résultat",
   "aramaEnAzIkiHarf": "Saisissez au moins deux caractères.",
-  "aramaBasarisiz": "La recherche a échoué. Réessayez bientôt."
+  "aramaBasarisiz": "La recherche a échoué. Réessayez bientôt.",
+  "gorevDurumAtandi": "Attribuée",
+  "gorevDurumBaslandi": "Commencée",
+  "gorevDurumTamamlandi": "Terminée",
+  "gorevDurumGecikti": "En retard",
+  "gorevGecikmeGun": "{n} jours",
+  "gorevSonTarihi": "Échéance : {tarih}",
+  "gorevBaslaDugme": "Commencer",
+  "gorevBaslandiBilgi": "Commencée : {tarih}",
+  "gorevAtayanBilgi": "Attribuée par : {ad}"
 }

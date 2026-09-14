@@ -99,6 +99,16 @@ interface FormState {
   foto_zorunlu: boolean;
   aktif: boolean;
 }
+/** (P230 §4) Durum -> sozluk anahtari. JSX ucluda sabit metin yazilamaz
+ *  (`sabit-metin` taramasi onlari cevrilmemis metin adayi sayar). */
+const DURUM_ETIKET = {
+  atandi: "gorevDurumAtandi",
+  baslandi: "gorevDurumBaslandi",
+  tamamlandi: "gorevDurumTamamlandi",
+  gecikti: "gorevDurumGecikti",
+} as const;
+const DURUM_SECENEKLERI = ["atandi", "baslandi", "tamamlandi", "gecikti"] as const;
+
 const EMPTY: FormState = {
   ad: "",
   aciklama: "",
@@ -113,6 +123,9 @@ const EMPTY: FormState = {
 // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
 const DURUM_OLUMLU = "olumlu" as const;
 const DURUM_NOTR = "notr" as const;
+// GECIKME KRITIK: listede aranan sey "hangi is aksadi" sorusudur.
+const DURUM_OLUMSUZ = "kritik" as const;
+const DURUM_UYARI = "bilgi" as const;
 
 export default function TasksPage() {
   const router = useRouter();
@@ -129,6 +142,9 @@ export default function TasksPage() {
   const [kategoriFiltre, setKategoriFiltre] = useState("");
   const [aktif, setAktif] = useState("");
   const [atananFiltre, setAtananFiltre] = useState("");
+  // (P230 §4) DURUM SUZGECI SUNUCUYA GIDER: istemcide suzmek sayfalamayi
+  // bozardi (sunucu 50 doner, istemci 7 gosterir, sayfalayici yalan soyler).
+  const [durumFiltre, setDurumFiltre] = useState("");
 
   // (P160) SAYFALAMA TEK KAYNAKTAN: `offset` artik tablo durumundan
   // TURETILIR. Iki ayri sayac tutuldugunda tabloda "2. sayfa" yazarken
@@ -141,6 +157,7 @@ export default function TasksPage() {
   if (kategoriFiltre) qs.set("kategori_id", kategoriFiltre);
   if (aktif) qs.set("aktif", aktif);
   if (atananFiltre) qs.set("atanan_user_id", atananFiltre);
+  if (durumFiltre) qs.set("durum", durumFiltre);
   const { data, error, isLoading, mutate } = useSWR<TaskList>(
     `/api/tasks?${qs.toString()}`,
     jsonFetcher,
@@ -335,17 +352,35 @@ export default function TasksPage() {
         // her gorev icin TEK TEK acmak gerekiyordu.
         id: "tamamlama", kartRolu: "rozet",
         baslik: t("gorevTamamlamaDurumu"),
-        hucre: (g) =>
-          g.son_tamamlama ? (
-            <span className="text-xs">
-              <Rozet durum={DURUM_OLUMLU}>{t("gorevTamamlandiRozet")}</Rozet>{" "}
-              {g.son_tamamlama.tamamlayan_ad ??
-                userName(g.son_tamamlama.tamamlayan_user_id)}{" "}
-              · {formatDateTime(g.son_tamamlama.tamamlanma_zamani)}
+        hucre: (g) => {
+          // (P230 §4) DORT DURUM tek rozette. Gecikmis gorev BELIRGIN
+          // olmali: listede aranan sey "hangi is aksadi" sorusudur.
+          const d = g.durum ?? (g.tamamlandi ? "tamamlandi" : "atandi");
+          const stil =
+            d === "tamamlandi"
+              ? DURUM_OLUMLU
+              : d === "gecikti"
+                ? DURUM_OLUMSUZ
+                : d === "baslandi"
+                  ? DURUM_UYARI
+                  : DURUM_NOTR;
+          return (
+            <span className="text-xs" data-test={`gorev-durum-${d}`}>
+              <Rozet durum={stil}>{t(DURUM_ETIKET[d])}</Rozet>
+              {d === "gecikti" && g.gecikme_gun != null && (
+                <> {t("gorevGecikmeGun", { n: g.gecikme_gun })}</>
+              )}
+              {g.son_tamamlama && (
+                <>
+                  {" "}
+                  {g.son_tamamlama.tamamlayan_ad ??
+                    userName(g.son_tamamlama.tamamlayan_user_id)}{" "}
+                  · {formatDateTime(g.son_tamamlama.tamamlanma_zamani)}
+                </>
+              )}
             </span>
-          ) : (
-            <Rozet durum={DURUM_NOTR}>{t("gorevAcikRozet")}</Rozet>
-          ),
+          );
+        },
       },
       {
         id: "aktif", kartRolu: "rozet",

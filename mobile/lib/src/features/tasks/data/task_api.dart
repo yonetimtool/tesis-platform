@@ -91,6 +91,22 @@ class TaskApi {
   }
 
   /// `POST /uploads/presign` — foto icin obje anahtari + kisa omurlu PUT URL.
+  /// (P230 §4) GOREVE BASLANDI isareti.
+  ///
+  /// IDEMPOTENT (sunucu): ikinci cagri zamani ezmez. Istemcide ayrica
+  /// engellemiyoruz — cift dokunma zaten zararsiz ve bir de burada
+  /// durum tutmak, iki yerde ayrisabilecek ikinci bir kural olurdu.
+  Future<Task> basla(String taskId) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/tasks/$taskId/basla',
+      );
+      return Task.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
   /// (P229 §3) GOREVIN TAMAMLAMA GECMISI.
   ///
   /// Bu uc SUNUCUDA VARDI ama HICBIR ISTEMCIDEN cagrilmiyordu: mobil

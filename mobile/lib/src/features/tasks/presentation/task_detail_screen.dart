@@ -20,6 +20,7 @@ import 'task_tip_style.dart';
 import 'tasks_controller.dart';
 import '../../nfc/presentation/nfc_hata_metni.dart';
 import '../../../core/error/akis_hatasi.dart';
+import 'durum_rozeti.dart';
 
 /// Gorev detayi + tamamlama akisi: NFC (gorevde etiket tanimliysa) → foto
 /// kaniti (opsiyonel; cek → presign → PUT) → not → "Tamamla".
@@ -122,6 +123,13 @@ class TaskDetailScreen extends ConsumerWidget {
               ),
             ),
           ],
+          // (P230 §4) ZAMAN CIZELGESI + "BASLA".
+          //
+          // Onceden yalniz IKI hal vardi (atanmis / tamamlanmis) ve
+          // yonetici, arada isin ELE ALINDIGINI mi yoksa OYLECE
+          // DURDUGUNU mu bilmiyordu.
+          const SizedBox(height: 16),
+          _TakipKarti(task: task, baslatabilir: canComplete || canManage),
           // (P229 §3) TAMAMLAMA GECMISI — KIM, NE ZAMAN, FOTO, NOT.
           //
           // OLCULEN KUSUR: yukaridaki `_ResultCard` YALNIZ o oturumda
@@ -701,3 +709,78 @@ final gorevTamamlamalariProvider =
     FutureProvider.autoDispose.family<List<TaskCompletion>, String>(
   (ref, taskId) => ref.watch(taskApiProvider).fetchCompletions(taskId),
 );
+
+
+/// (P230 §4) TAKIP KARTI — durum, zaman cizelgesi, "Basla".
+class _TakipKarti extends ConsumerStatefulWidget {
+  const _TakipKarti({required this.task, required this.baslatabilir});
+
+  final Task task;
+  final bool baslatabilir;
+
+  @override
+  ConsumerState<_TakipKarti> createState() => _TakipKartiState();
+}
+
+class _TakipKartiState extends ConsumerState<_TakipKarti> {
+  late Task _task = widget.task;
+  bool _bekliyor = false;
+
+  Future<void> _basla() async {
+    setState(() => _bekliyor = true);
+    try {
+      final yeni = await ref.read(taskApiProvider).basla(_task.id);
+      if (!mounted) return;
+      setState(() {
+        _task = yeni;
+        _bekliyor = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _bekliyor = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final dil = context.dilKodu;
+    final t = _task;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            DurumRozeti(durum: t.durum, gecikmeGun: t.gecikmeGun),
+            const SizedBox(height: 8),
+            if (t.olusturanAd != null)
+              Text(l10n.gorevAtayanBilgi(t.olusturanAd!)),
+            if (t.sonTarih != null)
+              Text(l10n.gorevSonTarihi(tarihSaatBicimi(t.sonTarih!, dil))),
+            if (t.baslamaZamani != null)
+              Text(
+                l10n.gorevBaslandiBilgi(
+                  tarihSaatBicimi(t.baslamaZamani!, dil),
+                ),
+              ),
+            // BASLA YALNIZ HENUZ BASLANMAMISKEN: baslamis bir gorevde
+            // dugmeyi birakmak, ikinci dokunusun ne yapacagini belirsiz
+            // yapardi (sunucu idempotent ama kullanici bunu bilmez).
+            if (widget.baslatabilir &&
+                t.baslamaZamani == null &&
+                !t.tamamlandi) ...[
+              const SizedBox(height: 12),
+              FilledButton.tonalIcon(
+                key: const Key('gorev-basla'),
+                onPressed: _bekliyor ? null : _basla,
+                icon: const Icon(Icons.play_arrow),
+                label: Text(l10n.gorevBaslaDugme),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}

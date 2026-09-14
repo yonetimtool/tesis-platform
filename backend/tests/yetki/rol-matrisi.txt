@@ -431,6 +431,7 @@ POST   /tasks                                               IZIN   IZIN   RED   
 DELETE /tasks/{id}                                          IZIN   IZIN   RED    RED    RED    RED    RED   
 GET    /tasks/{id}                                          IZIN   IZIN   IZIN   IZIN   RED    RED    RED   
 PATCH  /tasks/{id}                                          IZIN   IZIN   RED    RED    RED    RED    RED   
+POST   /tasks/{id}/basla                                    IZIN   IZIN   IZIN   IZIN   RED    RED    RED   
 GET    /tasks/{id}/completions                              IZIN   IZIN   IZIN   IZIN   RED    RED    RED   
 POST   /tasks/{id}/completions                              IZIN   IZIN   IZIN   IZIN   RED    RED    RED   
 DELETE /tasks/{id}/completions/{completion_id}              IZIN   IZIN   RED    RED    RED    RED    RED   

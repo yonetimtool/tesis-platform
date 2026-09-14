@@ -2981,5 +2981,42 @@
   "aramaIpucu": "Kişi, daire, görev, talep…",
   "aramaSonucYok": "Sonuç bulunamadı",
   "aramaEnAzIkiHarf": "Aramak için en az iki harf yazın.",
-  "aramaBasarisiz": "Arama yapılamadı. Birazdan tekrar deneyin."
+  "aramaBasarisiz": "Arama yapılamadı. Birazdan tekrar deneyin.",
+  "gorevDurumAtandi": "Atandı",
+  "gorevDurumBaslandi": "Başlandı",
+  "gorevDurumTamamlandi": "Tamamlandı",
+  "gorevDurumGecikti": "Gecikti",
+  "gorevGecikmeGun": "{n} gün",
+  "@gorevGecikmeGun": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "gorevSonTarihi": "Son tarih: {tarih}",
+  "@gorevSonTarihi": {
+    "placeholders": {
+      "tarih": {
+        "type": "String"
+      }
+    }
+  },
+  "gorevBaslaDugme": "Göreve başla",
+  "gorevBaslandiBilgi": "Başlandı: {tarih}",
+  "@gorevBaslandiBilgi": {
+    "placeholders": {
+      "tarih": {
+        "type": "String"
+      }
+    }
+  },
+  "gorevAtayanBilgi": "Atayan: {ad}",
+  "@gorevAtayanBilgi": {
+    "placeholders": {
+      "ad": {
+        "type": "String"
+      }
+    }
+  }
 }

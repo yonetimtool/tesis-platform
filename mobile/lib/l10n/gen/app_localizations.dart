@@ -11146,6 +11146,60 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Arama yapılamadı. Birazdan tekrar deneyin.'**
   String get aramaBasarisiz;
+
+  /// No description provided for @gorevDurumAtandi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Atandı'**
+  String get gorevDurumAtandi;
+
+  /// No description provided for @gorevDurumBaslandi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Başlandı'**
+  String get gorevDurumBaslandi;
+
+  /// No description provided for @gorevDurumTamamlandi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tamamlandı'**
+  String get gorevDurumTamamlandi;
+
+  /// No description provided for @gorevDurumGecikti.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gecikti'**
+  String get gorevDurumGecikti;
+
+  /// No description provided for @gorevGecikmeGun.
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} gün'**
+  String gorevGecikmeGun(int n);
+
+  /// No description provided for @gorevSonTarihi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Son tarih: {tarih}'**
+  String gorevSonTarihi(String tarih);
+
+  /// No description provided for @gorevBaslaDugme.
+  ///
+  /// In tr, this message translates to:
+  /// **'Göreve başla'**
+  String get gorevBaslaDugme;
+
+  /// No description provided for @gorevBaslandiBilgi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Başlandı: {tarih}'**
+  String gorevBaslandiBilgi(String tarih);
+
+  /// No description provided for @gorevAtayanBilgi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Atayan: {ad}'**
+  String gorevAtayanBilgi(String ad);
 }
 
 class _AppLocalizationsDelegate

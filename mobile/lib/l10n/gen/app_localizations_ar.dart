@@ -6527,4 +6527,39 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get aramaBasarisiz => 'تعذّر البحث. حاول بعد قليل.';
+
+  @override
+  String get gorevDurumAtandi => 'مُسندة';
+
+  @override
+  String get gorevDurumBaslandi => 'بدأت';
+
+  @override
+  String get gorevDurumTamamlandi => 'مُنجزة';
+
+  @override
+  String get gorevDurumGecikti => 'متأخرة';
+
+  @override
+  String gorevGecikmeGun(int n) {
+    return '$n يوم';
+  }
+
+  @override
+  String gorevSonTarihi(String tarih) {
+    return 'تاريخ الاستحقاق: $tarih';
+  }
+
+  @override
+  String get gorevBaslaDugme => 'ابدأ المهمة';
+
+  @override
+  String gorevBaslandiBilgi(String tarih) {
+    return 'بدأت: $tarih';
+  }
+
+  @override
+  String gorevAtayanBilgi(String ad) {
+    return 'أسندها: $ad';
+  }
 }

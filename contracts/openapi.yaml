@@ -6540,6 +6540,30 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /tasks/{id}/basla:
+    post:
+      tags: [tasks]
+      summary: Goreve BASLANDI isareti (admin + yonetici + saha)
+      description: >
+        (P230 §4) Personel isi aldigini isaretler. Onceden yalniz IKI hal
+        vardi (atanmis / tamamlanmis) ve yonetici, arada isin ELE
+        ALINDIGINI mi yoksa OYLECE DURDUGUNU mu bilmiyordu. Saha rolu
+        YALNIZ kendine atanan gorevi baslatabilir (tamamlama ile AYNI
+        kural). IDEMPOTENT: ikinci cagri zamani EZMEZ — ezseydi
+        yanlislikla iki kez dokunan kullanici gercek baslama anini
+        kaybederdi.
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Gorev (durum guncel)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Task" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /tasks/{id}/completions:
     parameters:
       - $ref: "#/components/parameters/PathId"
@@ -15639,19 +15663,6 @@ components:
         platform: { $ref: "#/components/schemas/DevicePlatform" }
         dil: { type: string, enum: [tr, en, ar, ru, de, fr, es] }
         aktif: { type: boolean }
-        tamamlandi:
-          type: boolean
-          default: false
-          description: >
-            (P229 §3) Bu gorevin EN AZ BIR tamamlamasi var mi. Onceden
-            `Task` tamamlama hakkinda hicbir sey tasimiyordu: veri
-            kaydediliyor ama hicbir istemci gosteremiyordu.
-        son_tamamlama:
-          allOf: [{ $ref: "#/components/schemas/TaskTamamlamaOzet" }]
-          nullable: true
-          description: >
-            EN YENI tamamlama ozeti. Periyodik gorev defalarca tamamlanir;
-            listede gosterilmesi gereken ilki degil sonuncusudur.
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
 
@@ -19500,6 +19511,58 @@ components:
           type: boolean
           description: "true ise completion foto_key olmadan kabul edilmez (422) — mobil §11 #2"
         aktif: { type: boolean }
+        son_tarih:
+          type: string
+          format: date-time
+          nullable: true
+          description: >
+            (P230 §4) Gecikme BUNDAN hesaplanir. `sonraki_planlanan`DAN
+            AYRI: o yalniz periyodik gorevlerde dolu ve anlami "bir
+            sonraki tekrar".
+        baslama_zamani:
+          type: string
+          format: date-time
+          nullable: true
+          description: (P230 §4) Ise baslama ani — TEK yeni gercek.
+        olusturan_user_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: >
+            (P230 §4) KIM atadi. Govdeden ALINMAZ, oturumdan gelir:
+            istemcinin gonderebilecegi bir alan olsaydi baskasinin adina
+            gorev atanabilirdi.
+        olusturan_ad: { type: string, nullable: true }
+        atanan_ad: { type: string, nullable: true }
+        durum:
+          type: string
+          enum: [atandi, baslandi, tamamlandi, gecikti]
+          default: atandi
+          description: >
+            (P230 §4) TURETILMIS, saklanmaz. Ayri bir kolon uc kaynakla
+            senkron tutulmak zorunda olurdu; tamamlama silinince (P229
+            geri acma) durumu geri almayi unutan bir kod yolu gorevi
+            "tamamlandi" gorunur birakirdi. SIRA: tamamlandi > gecikti >
+            baslandi > atandi.
+        gecikme_gun:
+          type: integer
+          nullable: true
+          description: >
+            Gun cinsinden gecikme (negatifse vakit var). `son_tarih` yoksa
+            NULL — sifir DEGIL: sifir "bugun son gun" demektir.
+        tamamlandi:
+          type: boolean
+          default: false
+          description: >
+            (P229 §3) Bu gorevin EN AZ BIR tamamlamasi var mi. Onceden
+            `Task` tamamlama hakkinda hicbir sey tasimiyordu: veri
+            kaydediliyor ama hicbir istemci gosteremiyordu.
+        son_tamamlama:
+          allOf: [{ $ref: "#/components/schemas/TaskTamamlamaOzet" }]
+          nullable: true
+          description: >
+            EN YENI tamamlama ozeti. Periyodik gorev defalarca tamamlanir;
+            listede gosterilmesi gereken ilki degil sonuncusudur.
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
     TaskCreate:

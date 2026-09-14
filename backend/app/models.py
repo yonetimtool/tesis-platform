@@ -1232,6 +1232,23 @@ class Task(Base):
     checkpoint_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     kategori_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     periyot_dakika: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    #: (P230 §4, goc 0133) SON TARIH — gecikme BUNDAN hesaplanir.
+    #:
+    #: `sonraki_planlanan`DAN AYRI: o yalniz PERIYODIK gorevlerde dolu ve
+    #: anlami "bir sonraki tekrar". Tek seferlik bir gorevin son tarihi
+    #: oraya yazilsaydi, tamamlanan gorev periyot ilerletmesine girerdi.
+    son_tarih = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    #: (P230 §4, goc 0133) ISE BASLAMA ANI — personel "aldim" der.
+    #:
+    #: TEK YENI GERCEK: diger uc durum (atandi/tamamlandi/gecikti) baska
+    #: verilerden turuyor; "baslandi" hicbir yerden turetilemez.
+    baslama_zamani = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    #: (P230 §4, goc 0133) KIM ATADI. `atanan_user_id` KIME atandigini
+    #: soyluyordu; kimin verdigi hicbir yerde yoktu. FK YOK (bilincli):
+    #: atayan hesap silinse/anonimlessse de gorevin gecmisi kalmali.
+    olusturan_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
     sonraki_planlanan = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     foto_zorunlu: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("false")

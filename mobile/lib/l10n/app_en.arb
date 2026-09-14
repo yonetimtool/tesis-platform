@@ -2152,5 +2152,14 @@
   "aramaIpucu": "Person, unit, task, request…",
   "aramaSonucYok": "No results found",
   "aramaEnAzIkiHarf": "Type at least two characters to search.",
-  "aramaBasarisiz": "Search failed. Please try again shortly."
+  "aramaBasarisiz": "Search failed. Please try again shortly.",
+  "gorevDurumAtandi": "Assigned",
+  "gorevDurumBaslandi": "Started",
+  "gorevDurumTamamlandi": "Completed",
+  "gorevDurumGecikti": "Overdue",
+  "gorevGecikmeGun": "{n} days",
+  "gorevSonTarihi": "Due: {tarih}",
+  "gorevBaslaDugme": "Start task",
+  "gorevBaslandiBilgi": "Started: {tarih}",
+  "gorevAtayanBilgi": "Assigned by: {ad}"
 }
