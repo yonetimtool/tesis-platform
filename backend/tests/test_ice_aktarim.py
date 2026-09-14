@@ -339,11 +339,21 @@ def test_P193_kisi_EPOSTASIZ_satir_HATA(client, world, owner_conn):
 def test_P193_kisi_EPOSTA_zorunlu_alan_olarak_BILDIRILIYOR(client, world):
     """Arayuz kolon eslemesinde "eposta" alanini ZORUNLU cizmeli; sunucu
     ile arayuzun zorunlu kumesi ayrisirsa kullanici satir satir hata
-    alirdi."""
+    alirdi.
+
+    (P234 §2) TELEFON KUMEDEN CIKTI. Olculen celiski: tekil ekleme ucu
+    P212-ek §2'de telefonu opsiyonel yapmisti (`uq_app_user_telefon`
+    PLATFORM GENELINDE benzersiz oldugu icin ayni kisi ikinci bir tesise
+    ancak UYDURMA numarayla eklenebiliyordu) ama Excel yolu haberi
+    olmadigi icin ayni veriyi iki farkli kuralla aliyordu.
+
+    E-POSTA ZORUNLU KALDI: kimlik P197'den beri odur ve davet TEK
+    KANALDAN (e-posta) gidiyor.
+    """
     h = _giris(client, world["slug_a"], world["yonetici_a"])
     turler = {t["kod"]: t for t in client.get("/ice-aktarim/turler", headers=h).json()}
     zorunlular = {a["kod"] for a in turler["kisi"]["alanlar"] if a["zorunlu"]}
-    assert zorunlular == {"ad", "telefon", "eposta"}
+    assert zorunlular == {"ad", "eposta"}
 
 
 def test_P193_kisi_aktariminda_DAVET_SAYILIYOR(client, world):

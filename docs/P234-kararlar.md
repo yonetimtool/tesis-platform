@@ -392,3 +392,97 @@ yapmasaydık iki seçenek kalırdı: sözleşmede webhook'u jetonlu göstermek
 (yalan — sağlayıcı jeton göndermiyor) ya da 401 yerine 400 dönmek (testi
 memnun etmek için yanlış durum kodu). İkisi de kilidi kandırmak olurdu.
 `/webhooks` testten muaf tutuldu ve gerekçe testin içine yazıldı.
+
+---
+
+## §2 — Excel ile sakin aktarımı
+
+### Ölçüm önce: çerçevenin çoğu P193'te YAPILMIŞTI
+
+İstenen yedi maddeden dördü zaten çalışıyordu:
+
+| İstenen | Durum |
+|---|---|
+| Örnek dosya indirilebilsin | **vardı** (CSV), ama tek örnek satır, açıklama yok |
+| Yükleme öncesi önizleme | **vardı** (`yalniz_dogrula` — hiçbir şey yazmaz) |
+| Sorunlu satır → DUR veya açıkça "atla" | **vardı** (kuru koşum + `sorunlulari_atla`) |
+| Aktarım sonrası özet | **vardı** (eklenen/atlanan/hatalı + davet sayıları) |
+| Blok sütunu | **yoktu** |
+| Malik/kiracı/malik-oturan | kısmen — `malik`/`kiraci` vardı |
+| E-posta zorunlu | **vardı** (P193 §1) |
+
+Yani bu turda yapılan iş, var olanı yeniden yazmak değil **eksik dördü
+kapatmak** oldu.
+
+### Ölçüm sırasında çıkan çelişki — telefon
+
+`kisi` türünde **telefon ZORUNLUYDU**. Ama P212-ek §2'de tekil ekleme
+ucunda (`UserCreate.telefon`) zorunluluk **kaldırılmıştı** ve gerekçesi
+şuydu: `uq_app_user_telefon` telefonu **platform genelinde** benzersiz
+kılıyor, yani aynı kişi ikinci bir tesise ancak **uydurma bir numarayla**
+eklenebiliyordu. Kimlik P197'den beri e-postadır.
+
+Excel yolu o değişiklikten habersiz kalmış: **aynı veri iki farklı kuralla
+giriliyordu** — P193 §1'in düzelttiği kusurun ters yönde aynısı. Telefonu
+olmayan bir sakin listesi yükleyen yönetici her satırda
+"zorunlu_alan_eksik" görüyordu.
+
+Kaldırıldı. **Biçim denetimi duruyor**: doldurulduysa geçerli olmalı —
+sessizce bozuk numara yazmak, sonradan hiçbir kanaldan ulaşılamayan bir
+kayıt bırakırdı.
+
+**Yan etkisi vardı ve kapatıldı:** mükerrer kontrolü yalnız telefona
+bakıyordu. Telefon opsiyonel olunca telefonsuz satırlarda o kontrol **hiç
+çalışmazdı** — aynı dosya iki kez yüklenince aynı kişi iki kez açılır ve
+"idempotent: var olan kayıt ATLANIR" sözü sessizce bozulurdu. Kontrol iki
+anahtara bakıyor ve **kapsamları farklı** (P228'de ölçülmüştü): telefon
+platform genelinde, e-posta tesis içinde benzersiz.
+
+### Blok sütunu — ilk gerekçem yanlıştı, test yakaladı
+
+"İki blokta aynı numaralı daire olabilir, blok onu ayırır" diye yazmıştım.
+`uq_unit_tenant_no` buna **zaten izin vermiyor** — daire numarası tesis
+içinde benzersiz. Şema varsayımımı çürüttü.
+
+Sütun duruyor ama işi başka: **tutarlılık denetimi**. Kullanıcı dosyaya
+`blok=B, daire=A-3` yazdıysa dosyanın kendisi yanlıştır; blok verildiğinde
+arama ona göre daraltılır ve eşleşme bulunamazsa satır **hata olarak
+raporlanır**. Sessizce numaraya bakıp "buldum" demek, yanlış yazılmış bir
+dosyayı doğru sanıp uygulamak olurdu.
+
+Boş bırakılabilir — verilmezse eski davranış korunur, mevcut dosyalar
+bozulmaz.
+
+### `malik_oturan` — üçüncü bir rol DEĞİL
+
+P218'de ölçülmüştü: "malik ve oturan" üçüncü bir rol değil, malikin
+oturuyor olmasıdır (`rol_tipi='malik'` + `oturuyor=true`). Modele üçüncü
+bir enum değeri eklemek, "malikler" sorgusunu iki değeri birden aramaya
+zorlardı ve unutulduğu yerde sessizce yanlış çalışırdı.
+
+Ama **kullanıcı Excel'e "malik-oturan" yazar**. Sütun üçünü de kabul edip
+modele doğru çeviriyor; tire/alt tire/boşluk normalleştiriliyor. Tire
+yüzünden hata vermek, sütunun kendisini kullanılmaz kılardı.
+
+### Örnek dosya — neden CSV, ne değişti
+
+**CSV kaldı, XLSX üretilmiyor** ve bu P28/P29 kararının devamı: sunucu
+xlsx **ayrıştırmıyor** (saldırı yüzeyi) ve üretmiyor da. CSV'yi Excel
+doğrudan açar, BOM sayesinde Türkçe harfler bozulmaz, ve indirilen şablon
+ile kabul edilen biçim **tek kaynaktan** (alan listesi) geliyor — yani
+ayrışamazlar.
+
+Eklenen: **açıklama satırı** (`# ad (zorunlu) | telefon (istege bagli) |
+...`) ve `kisi` türünde **üç örnek satır** (malik, kiracı, malik_oturan).
+Açıklama `#` ile başlıyor ve **yükleyici onu atlıyor** — aksi hâlde kendi
+ürettiğimiz şablon kendi yükleyicimizi kırardı; bu da teste bağlandı.
+
+Ayrı bir "açıklama sayfası" değil, çünkü kullanıcı şablonu Excel'de açıp
+doğrudan dolduruyor; açıklamayı başka yere koymak, okunmayacağı yere
+koymak olurdu.
+
+### Mobil
+
+**Mobilde Excel aktarımı YOK ve olmayacak** — P204 kararı geçerli: 200
+satırlık bir önizlemeyi telefonda doğrulamak mümkün değil. Bu, kalıcı
+web+mobil parite kuralının **önceden gerekçelendirilmiş istisnasıdır**.

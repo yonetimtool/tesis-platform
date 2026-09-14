@@ -60,7 +60,7 @@ from datetime import date
 from typing import Awaitable, Callable
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -262,17 +262,29 @@ async def _uygula_daire(b: _Bag, satir_no: int, d: dict) -> None:
 # ---------------------------------- kisi ------------------------------------ #
 async def _uygula_kisi(b: _Bag, satir_no: int, d: dict) -> None:
     ad = _metin(d, "ad")
-    tel_ham = _metin(d, "telefon")
-    if not ad or not tel_ham:
-        b.hata(satir_no, "ad" if not ad else "telefon", "zorunlu_alan_eksik")
-        return
-    try:
-        telefon = normalize_phone(tel_ham)
-    except ValueError:
-        b.hata(satir_no, "telefon", "telefon_bicimi")
+    if not ad:
+        b.hata(satir_no, "ad", "zorunlu_alan_eksik")
         return
 
-    rol = (_metin(d, "rol_tipi") or "").lower() or None
+    # (P234 §2) TELEFON OPSIYONEL — gerekce tur tanimindaki notta.
+    # Doldurulduysa BICIMI dogrulanir: sessizce bozuk numara yazmak,
+    # sonradan hicbir kanaldan ulasilamayan bir kayit birakirdi.
+    tel_ham = _metin(d, "telefon")
+    telefon: str | None = None
+    if tel_ham:
+        try:
+            telefon = normalize_phone(tel_ham)
+        except ValueError:
+            b.hata(satir_no, "telefon", "telefon_bicimi")
+            return
+
+    # (P234 §2) `malik_oturan` UCUNCU BIR ROL DEGIL: malik + oturuyor.
+    # Kullanicinin yazma bicimleri (tire/alt tire/bosluk) normallestirilir —
+    # "malik-oturan" yazip hata almak, sutunun kendisini kullanilmaz kilardi.
+    ham_rol = (_metin(d, "rol_tipi") or "").lower().replace("-", "_")
+    ham_rol = "_".join(ham_rol.split()) or None
+    oturuyor = ham_rol == "malik_oturan"
+    rol = "malik" if oturuyor else ham_rol
     if rol not in (None, "malik", "kiraci"):
         b.hata(satir_no, "rol_tipi", "gecersiz_rol_tipi")
         return
@@ -286,19 +298,52 @@ async def _uygula_kisi(b: _Bag, satir_no: int, d: dict) -> None:
         b.hata(satir_no, "eposta", "eposta_gecersiz")
         return
 
+    # (P234 §2) MUKERRER KONTROLU IKI ANAHTARA BAKAR.
+    #
+    # Once yalniz TELEFONA bakiliyordu ve telefon zorunluydu. Telefon
+    # opsiyonel olunca o kontrol telefonsuz satirlarda HIC CALISMAZDI:
+    # ayni dosya iki kez yuklense ayni kisi iki kez acilirdi ve
+    # "idempotent: var olan kayit ATLANIR" sozu sessizce bozulurdu.
+    #
+    # ANAHTARLARIN KAPSAMI FARKLI (P228'de olculdu ve belgelendi):
+    #   * telefon  -> PLATFORM GENELINDE benzersiz,
+    #   * e-posta  -> TESIS ICINDE benzersiz.
+    # Bu yuzden e-posta sorgusu TENANT'A daraltilir; daraltmazsak baska
+    # bir tesisin ayni adresli kullanicisi yuzunden satiri atlardik.
+    kosullar = [AppUser.email == eposta]
+    if telefon:
+        kosullar.append(AppUser.telefon == telefon)
     var = (
-        await b.db.execute(select(AppUser.id).where(AppUser.telefon == telefon))
+        await b.db.execute(
+            select(AppUser.id).where(
+                or_(*kosullar),
+                AppUser.tenant_id == b.user.tenant_id,
+            )
+        )
     ).first()
+    if var is None and telefon:
+        # Telefon GLOBAL benzersiz: baska tesiste ayni numara varsa
+        # olusturma 409 verir. Once bakip ATLAMAK, kullaniciya anlasilmaz
+        # bir butunluk hatasi gostermekten iyi.
+        var = (
+            await b.db.execute(
+                select(AppUser.id).where(AppUser.telefon == telefon)
+            )
+        ).first()
     if var is not None:
         b.sonuc.atlanan += 1
         return
 
     daire_no = _metin(d, "daire_no")
+    blok = _metin(d, "blok")
     unit_id: uuid.UUID | None = None
     if daire_no:
-        satir = (
-            await b.db.execute(select(Unit.id).where(Unit.no == daire_no))
-        ).first()
+        sorgu = select(Unit.id).where(Unit.no == daire_no)
+        if blok:
+            # (P234 §2) BLOK VERILDIYSE ARAMA DARALIR. Verilmezse eski
+            # davranis korunur — mevcut dosyalar bozulmasin.
+            sorgu = sorgu.where(Unit.blok == blok)
+        satir = (await b.db.execute(sorgu)).first()
         if satir is None:
             # DAIRE YOKSA HATA, sessiz atlama DEGIL: kullanici sakini
             # daireye baglamak istedi ve baglanmadigini bilmeli.
@@ -341,6 +386,8 @@ async def _uygula_kisi(b: _Bag, satir_no: int, d: dict) -> None:
         ur = UnitResident(
             tenant_id=b.user.tenant_id, unit_id=unit_id,
             user_id=kisi.id, rol_tipi=rol,
+            # (P234 §2) `malik_oturan` burada iki alana ayrilir.
+            oturuyor=oturuyor,
         )
         b.db.add(ur)
         await b.db.flush()
@@ -488,7 +535,22 @@ TURLER: dict[str, _Tur] = {
         "kisi",
         (
             _Alan("ad", zorunlu=True, ornek="Ali Veli"),
-            _Alan("telefon", zorunlu=True, ornek="+905321112233"),
+            # =============================================================
+            # (P234 §2) TELEFON ZORUNLULUGU KALDIRILDI — OLCULEN CELISKI
+            # =============================================================
+            # P212-ek §2'de TEKIL ekleme ucunda (`UserCreate.telefon`)
+            # zorunluluk KALDIRILMISTI; gerekcesi: `uq_app_user_telefon`
+            # telefonu PLATFORM GENELINDE benzersiz kilar, yani ayni kisi
+            # ikinci bir tesise ancak UYDURMA bir numarayla eklenebiliyordu.
+            # Kimlik P197'den beri E-POSTADIR.
+            #
+            # Excel yolu o degisiklikten HABERSIZ kaldi: ayni veri iki
+            # farkli kuralla giriliyordu — P193 §1'in duzelttigi kusurun
+            # TERS YONDE aynisi. Telefonu olmayan bir sakin listesi
+            # yukleyen yonetici her satirda "zorunlu_alan_eksik" goruyordu.
+            #
+            # BICIM DENETIMI DURUYOR: doldurulduysa gecerli olmali.
+            _Alan("telefon", ornek="+905321112233"),
             # (P193 §1) E-POSTA ZORUNLU OLDU.
             #
             # P186'da opsiyoneldi ve gerekcesi "verilirse HTML e-posta da
@@ -500,8 +562,27 @@ TURLER: dict[str, _Tur] = {
             # kaliyor. Tekil ekleme (`UserCreate.email`) zaten zorunlu
             # tutuyordu; ayni veri iki farkli kuralla giriliyordu.
             _Alan("eposta", zorunlu=True, ornek="ali@ornek.com"),
+            # (P234 §2) BLOK SUTUNU — P220'de blok bazli duzen geldi.
+            #
+            # `daire` turunde blok ZATEN vardi; `kisi` turunde yoktu ve
+            # daire YALNIZ numarasindan araniyordu. Iki blokta ayni
+            # numarali daire varsa esleme RASTGELE bir satira dusuyordu.
+            # Blok verilirse arama ONA GORE daraltilir; verilmezse eski
+            # davranis (yalniz numara) korunur — mevcut dosyalar bozulmasin.
+            _Alan("blok", ornek="A"),
             _Alan("daire_no", ornek="A-1"),
-            _Alan("rol_tipi", ornek="malik"),
+            # (P234 §2) UCUNCU DEGER KABUL EDILIR: `malik_oturan`.
+            #
+            # P218'de olculmustu: "malik ve oturan" UCUNCU BIR ROL DEGIL,
+            # malikin oturuyor olmasidir (`rol_tipi='malik'` +
+            # `oturuyor=true`). Modele ucuncu bir enum degeri eklemek
+            # "malikler" sorgusunu iki degeri birden aramaya zorlardi ve
+            # unutuldugu yerde sessizce yanlis calisirdi.
+            #
+            # Ama KULLANICI Excel'e "malik-oturan" yazar. Sutunda ucunu de
+            # kabul edip modele DOGRU cevirmek, kullaniciya modelin ic
+            # ayrimini ogretmekten iyidir.
+            _Alan("rol_tipi", ornek="malik | kiraci | malik_oturan"),
         ),
         _uygula_kisi,
         "iceAktarimKisiAciklama",

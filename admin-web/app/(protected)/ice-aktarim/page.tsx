@@ -137,7 +137,20 @@ export default function IceAktarimPage() {
   );
   const tur = turler?.find((x) => x.kod === turKod);
 
-  const satirlar = ham.split("\n").map((s) => s.trimEnd()).filter((s) => s.trim());
+  // (P234 §2) ACIKLAMA SATIRI ATLANIR.
+  //
+  // Indirilen sablonun ilk satiri `# ad (zorunlu) | telefon (istege
+  // bagli) | ...` bicimindedir. Kullanici sablonu doldurup GERI
+  // YUKLEDIGINDE o satir veri sanilirsa, her aktarimda basi bozuk bir
+  // satir daha olusurdu — yani kendi urettigimiz sablon kendi
+  // yukleyicimizi kirardi.
+  //
+  // `#` SECILDI cunku Excel onu bir formul/deger olarak yorumlamaz ve
+  // hucrede oldugu gibi gorunur; kullanici silmek isterse de gorup siler.
+  const satirlar = ham
+    .split("\n")
+    .map((s) => s.trimEnd())
+    .filter((s) => s.trim() && !s.trimStart().startsWith("#"));
   const basliklar = satirlar.length > 0 ? hucreler(satirlar[0]) : [];
   const veriSatirlari = baslikVar ? satirlar.slice(1) : satirlar;
 
@@ -185,6 +198,39 @@ export default function IceAktarimPage() {
     }
   }
 
+/**
+ * (P234 §2) SABLONDAKI ORNEK SATIRLAR.
+ *
+ * `kisi` turunde UC satir: malik, kiraci ve malik_oturan. Sebep — bu
+ * turun en sik yanlis doldurulan sutunu `rol_tipi` ve tek bir "malik"
+ * ornegi otekilerin VAR OLDUGUNU bile gostermiyordu. Ucu de goren
+ * kullanici sutunun ne kabul ettigini sormak zorunda kalmiyor.
+ *
+ * Oteki turlerde alan tanimindaki tek ornek yeterli: orada belirsiz bir
+ * sozluk yok.
+ */
+function ornekSatirlari(tur: Tur): string[][] {
+  const temel = tur.alanlar.map((a) => a.ornek);
+  if (tur.kod !== "kisi") return [temel];
+  const rolIdx = tur.alanlar.findIndex((a) => a.kod === "rol_tipi");
+  const adIdx = tur.alanlar.findIndex((a) => a.kod === "ad");
+  const epostaIdx = tur.alanlar.findIndex((a) => a.kod === "eposta");
+  const daireIdx = tur.alanlar.findIndex((a) => a.kod === "daire_no");
+  const kur = (ad: string, eposta: string, daire: string, rol: string) => {
+    const r = [...temel];
+    if (adIdx >= 0) r[adIdx] = ad;
+    if (epostaIdx >= 0) r[epostaIdx] = eposta;
+    if (daireIdx >= 0) r[daireIdx] = daire;
+    if (rolIdx >= 0) r[rolIdx] = rol;
+    return r;
+  };
+  return [
+    kur("Ali Veli", "ali@ornek.com", "A-1", "malik"),
+    kur("Ayşe Yılmaz", "ayse@ornek.com", "A-2", "kiraci"),
+    kur("Mehmet Demir", "mehmet@ornek.com", "B-3", "malik_oturan"),
+  ];
+}
+
   /**
    * SABLON INDIRME (brief). Sunucu XLSX URETMEZ ve uretmemeli; sablon
    * alan listesinden kuruluyor — yani kabul edilen bicim ile indirilen
@@ -196,9 +242,26 @@ export default function IceAktarimPage() {
    */
   function sablonIndir() {
     if (!tur) return;
+    // (P234 §2) SABLON GENISLETILDI: ACIKLAMA SATIRI + BIRKAC ORNEK.
+    //
+    // Once TEK ornek satiri vardi ve hicbir aciklama yoktu. Olculen sonuc
+    // sudur: kullanici tek satira bakip "rol_tipi" sutununa ne
+    // yazabilecegini bilemiyor, zorunlu/opsiyonel ayrimini goremiyor ve
+    // dosyayi yukledikten SONRA ogreniyordu.
+    //
+    // ACIKLAMA SATIRI `#` ILE BASLAR ve yukleyici onu ATLAR (asagida
+    // `veriSatirlari`). Ayri bir "aciklama" sayfasi/sutunu degil, cunku
+    // kullanici sablonu Excel'de acip DOGRUDAN doldurur; aciklamayi baska
+    // yere koymak, okunmayacagi yere koymak olurdu.
+    const aciklama =
+      "# " +
+      tur.alanlar
+        .map((a) => `${a.kod}${a.zorunlu ? " (zorunlu)" : " (istege bagli)"}`)
+        .join(" | ");
     const satirlar = [
+      aciklama,
       tur.alanlar.map((a) => a.kod).join(";"),
-      tur.alanlar.map((a) => a.ornek).join(";"),
+      ...ornekSatirlari(tur).map((r) => r.join(";")),
     ].join("\r\n");
     const bag = URL.createObjectURL(
       new Blob(["\uFEFF" + satirlar], { type: "text/csv;charset=utf-8" }),
