@@ -96,3 +96,32 @@ her tesise sessizce yanlış hava göstermekti.
 Coğrafi kodlama servisinin **prod ağından** erişilebilirliği. Dev
 makineden çalıştığı ölçüldü (HTTP 200); prod çıkış kuralları farklıysa uç
 503 döner ve arayüz bunu **söyler** — sessizce boş liste göstermez.
+
+---
+
+## §2 — Mobil üst bar kısayolu: dil yerine arama
+
+Üst barda dört kısayol vardı: ızgara düzenleme, bildirim zili, **dil**,
+avatar. Dil simgesi kaldırıldı, yerine **arama** geldi.
+
+Gerekçe isteğin kendisi: dil **zaten Ayarlar'dan** değiştirilebiliyor
+(`settings_screen` içinde kendi kartı var) ve bir kez seçilip bir daha
+dokunulmayan bir tercih; üst barda kalıcı yer kaplaması orantısızdı.
+
+### Ölçüm sırasında çıkan bir yan sorun
+
+P230 §3'te arama simgesini **karşılama satırına** koymuştum. Üst bara
+taşıyınca **iki arama girişi** oluştu. İkisini de bırakmak, aynı işi iki
+yerden yapan ve hangisinin "gerçek" olduğu belirsiz bir arayüz üretirdi;
+karşılama satırındaki kaldırıldı.
+
+**Üst bar seçildi** çünkü orada **her rolde aynı yerde** duruyor;
+karşılama satırı rol ekranına göre değişiyordu.
+
+`DilButonu` bileşeni silindi ama **`dilModaliniAc` duruyor**: modalin
+kendisi hâlâ çağrılabilir, yalnızca üst bardaki girişi kalktı. Modali de
+silmek, ileride başka bir yerden (örneğin ilk açılış) açmak isteyeni
+sıfırdan yazmaya zorlardı.
+
+Dokunma hedefi `IconButton` varsayılanıyla 48 dp (P220 kilidi) — test
+ediliyor.

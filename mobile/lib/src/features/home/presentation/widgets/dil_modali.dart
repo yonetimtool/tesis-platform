@@ -17,30 +17,15 @@ import '../../../../core/ui/merkez_diyalog.dart';
 // hem de guvenli depoyu gunceller (tema modunun kullandigi depo).
 
 /// Ust cubuktaki ceviri simgesi. Dokununca [dilModaliniAc] cagrilir.
-class DilButonu extends StatelessWidget {
-  const DilButonu({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      // Erisilebilir ad: simge tek basina "bu ne yapar" sorusunu
-      // yanitlamaz.
-      label: context.l10n.dilSeciciBaslik,
-      child: InkResponse(
-        key: const Key('home-dil'),
-        onTap: () => dilModaliniAc(context),
-        radius: 26,
-        // Dokunma hedefi 48 dp (>= 44pt sarti).
-        child: const SizedBox(
-          width: 48,
-          height: 48,
-          child: Icon(Icons.translate, size: 22),
-        ),
-      ),
-    );
-  }
-}
+// (P233 §2) `DilButonu` KALDIRILDI — ust bardaki yerini arama aldi.
+//
+// Dil ZATEN Ayarlar'dan degistirilebiliyor (`settings_screen`de kendi
+// karti var) ve bir kez secilip bir daha dokunulmayan bir tercih; ust
+// barda kalici yer kaplamasi orantisizdi.
+//
+// `dilModaliniAc` DURUYOR: modalin kendisi hala cagrilabiliyor, yalnizca
+// ust bardaki GIRISI kalkti. Modali silmek, ileride baska bir yerden
+// (ornegin ilk acilis) acmak isteyeni sifirdan yazmaya zorlardi.
 
 /// Dil secenekleri — ekranin ORTASINDA modal.
 ///

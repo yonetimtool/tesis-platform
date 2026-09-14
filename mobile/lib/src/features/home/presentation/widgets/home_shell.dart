@@ -12,7 +12,6 @@ import '../../../push/domain/push_models.dart';
 import '../../../push/presentation/push_registrar.dart';
 import '../../../../routing/app_router.dart';
 import '../../domain/home_tabs.dart';
-import 'dil_modali.dart';
 import 'home_drawer.dart';
 import 'home_marka.dart';
 import '../../../../core/ui/merkez_diyalog.dart';
@@ -135,8 +134,18 @@ class HomeShell extends ConsumerWidget {
             onTap: () => onDestinationSelected(1),
           ),
           const SizedBox(width: 4),
-          // (P140.4) DIL SIMGESI PROFILIN YANINDA — sag ust.
-          const DilButonu(),
+          // (P233 §2) DIL SIMGESI YERINE ARAMA.
+          //
+          // Dil ZATEN Ayarlar'dan degistirilebiliyor (`settings_screen`
+          // icinde kendi karti var) ve bir kez secilip bir daha
+          // dokunulmayan bir tercih; ust barda kalici yer kaplamasi
+          // orantisizdi. Arama ise gunluk kullanilan bir giris — P230
+          // §3'te eklendi ve o zaman KARSILAMA SATIRINA konmustu, yani
+          // rol ekranina gore yeri degisiyordu. Artik UST BARDA, her
+          // rolde AYNI yerde.
+          //
+          // DIL ERISIMI KAYBOLMADI: Ayarlar > Dil karti duruyor.
+          _AramaButonu(onTap: () => context.push(AppRoutes.arama)),
           const SizedBox(width: 4),
           _AvatarButonu(onTap: () => _hesapMenusu(context)),
           const SizedBox(width: 12),
@@ -153,6 +162,11 @@ class HomeShell extends ConsumerWidget {
     );
   }
 
+  /// (P233 §2) ARAMA — ust barda, dil simgesinin yerinde.
+  ///
+  /// `_IzgaraButonu` ile ayni desen: 48 dp dokunma hedefi (P220 kilidi)
+  /// ve erisilebilir ad (simge tek basina "bu ne yapar" sorusunu
+  /// yanitlamaz).
   /// Hesap menusu (referans: header avatari) — Profil + Çıkış Yap.
   void _hesapMenusu(BuildContext context) {
     merkezSayfaAc<void>(
@@ -227,6 +241,28 @@ class _IzgaraButonu extends StatelessWidget {
       // ADSIZ IKON DUGMESI OLMAZ: ekran okuyucu yalnizca "dugme" der.
       tooltip: context.l10n.kabukKisayollar,
       icon: Icon(Icons.grid_view_outlined, color: s.heading),
+      onPressed: onTap,
+    );
+  }
+}
+
+
+/// (P233 §2) ARAMA — ust barda, dil simgesinin yerinde.
+///
+/// `_IzgaraButonu` ile AYNI desen: `IconButton` varsayilaniyla 48 dp
+/// dokunma hedefi (P220 kilidi) ve adsiz ikon dugmesi olmaz.
+class _AramaButonu extends StatelessWidget {
+  const _AramaButonu({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = HomeSurface.of(context);
+    return IconButton(
+      key: const Key('home-arama'),
+      tooltip: context.l10n.aramaBaslik,
+      icon: Icon(Icons.search, color: s.heading),
       onPressed: onTap,
     );
   }

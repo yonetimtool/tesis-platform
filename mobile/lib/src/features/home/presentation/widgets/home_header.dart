@@ -1,10 +1,8 @@
-import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/i18n/l10n.dart';
 import '../../../../core/theme/home_tokens.dart';
 import '../../domain/home_view_models.dart';
-import '../../../../routing/app_router.dart';
 
 /// Selamlamanin alt satir bicimi — referans gorsellerde uc varyant:
 /// tesis secici (gorevli: "Mavi Residence ⌄"), duz gri (sakin: daire/blok)
@@ -66,20 +64,15 @@ class HomeHeader extends StatelessWidget {
             ],
           ),
         ),
-        // (P230 §3) ARAMA — web'de ustte duran arama kutusunun mobil
-        // karsiligi. Karsilama satirinda, HER rolun ana ekraninda ayni
-        // yerde: menuyu ezbere bilmeyen kullanicinin tek girisi bu.
+        // (P233 §2) ARAMA SIMGESI BURADAN UST BARA TASINDI.
         //
-        // KUTU DEGIL SIMGE: dar ekranda bir metin kutusu karsilama
-        // satirini yer kalmayacak kadar daraltirdi (P229 §1'de olculen
-        // tasmanin aynisi). Dokunma hedefi `IconButton` varsayilaniyla
-        // 48x48'dir (P220 kilidi).
-        IconButton(
-          key: const Key('ana-arama'),
-          icon: const Icon(Icons.search),
-          tooltip: context.l10n.aramaBaslik,
-          onPressed: () => context.push(AppRoutes.arama),
-        ),
+        // P230 §3'te buraya konmustu; ust barda dil simgesinin yerini
+        // alinca IKI arama girisi olustu. Ikisini de birakmak, ayni isi
+        // iki yerden yapan bir arayuz demekti — ve hangisinin "gercek"
+        // oldugu belirsiz kalirdi.
+        //
+        // UST BAR SECILDI cunku orada HER ROLDE ayni yerde duruyor;
+        // karsilama satiri rol ekranina gore degisiyordu.
         if (hava != null) ...[
           const SizedBox(width: 12),
           _HavaBlogu(hava: hava!),
