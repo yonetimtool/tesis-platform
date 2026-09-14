@@ -2325,6 +2325,44 @@ class VardiyaKalibiListResponse(BaseModel):
     items: list[VardiyaKalibiOut] = []
 
 
+class VardiyaGunGrubu(BaseModel):
+    """(P232) BIR GUN GRUBU + O GRUBA UYGULANACAK DILIMLER.
+
+    =======================================================================
+    NEDEN GEREKTI
+    =======================================================================
+    `kalip-uygula` ZATEN keyfi gun listesi, coklu dilim, onizleme, catisma
+    kurali, rotasyon ve `parti_id` tasiyordu. Eksik olan TEK sey: bir
+    istekte AYNI dilimler TUM gunlere uygulaniyordu.
+
+    Gercek ihtiyac "pazartesi gunduz, sali ve carsamba gece" — yani
+    FARKLI gun gruplarina FARKLI dilimler. Bugun bunun icin modali uc kez
+    acmak ve UC AYRI PARTI uretmek gerekiyordu; uc parti demek, uc ayri
+    onizleme, uc ayri catisma kontrolu ve GERI ALIRKEN UC AYRI ISTEK
+    demekti — kullanici acisindan tek bir karar, sistemde uc iz.
+
+    =======================================================================
+    TEKRARLAMA NEDEN BURADA YOK
+    =======================================================================
+    "1 hafta / 1 ay tekrarla" istemcide GUNLERI COGALTARAK ifade edilir.
+    Sunucuya ayri bir `tekrar` alani koymak, ayni gercegi iki bicimde
+    anlatmak olurdu: hem `gunler` hem `tekrar`. Onizleme sayisi zaten
+    genisletilmis gun listesinden cikiyor.
+    """
+
+    gunler: list[date] = Field(..., min_length=1, max_length=62)
+    kalip_id: uuid.UUID | None = None
+    dilimler: list[VardiyaDilim] | None = None
+    #: dilim sirasi -> personel kimlikleri.
+    atamalar: dict[int, list[uuid.UUID]] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def _kaynak_tek(self) -> "VardiyaGunGrubu":
+        if (self.kalip_id is None) == (self.dilimler is None):
+            raise ValueError("kalip_id VEYA dilimler")
+        return self
+
+
 class VardiyaKalipUygulaIstek(BaseModel):
     """(§1.3) Secili GUNLERE kalip uygula.
 
@@ -2337,7 +2375,16 @@ class VardiyaKalipUygulaIstek(BaseModel):
     kalip_id: uuid.UUID | None = None
     #: Kalip KAYDEDILMEDEN de uygulanabilir (tek seferlik plan).
     dilimler: list[VardiyaDilim] | None = None
-    gunler: list[date] = Field(..., min_length=1, max_length=62)
+    gunler: list[date] = Field(default_factory=list, max_length=62)
+    #: (P232) COK GRUPLU ISTEK — "pazartesi gunduz, sali-carsamba gece".
+    #:
+    #: Verilirse ustteki tekil alanlar (`gunler`/`dilimler`/`atamalar`)
+    #: YOK SAYILIR. Tekil bicim KALDIRILMADI: yayindaki istemciler onu
+    #: gonderiyor ve `kuru` onizlemesi de oradan geciyor.
+    #:
+    #: HEPSI TEK PARTI: gruplar ayri ayri yazilsaydi geri alma UC AYRI
+    #: istek olurdu — kullanici acisindan tek karar, sistemde uc iz.
+    gruplar: list[VardiyaGunGrubu] | None = Field(None, max_length=10)
     #: dilim sirasi -> o dilime atanacak personel kimlikleri.
     #: Bos birakilan dilim ATLANIR (o gun o vardiya BOS kalir).
     atamalar: dict[int, list[uuid.UUID]] = Field(default_factory=dict)
@@ -2351,6 +2398,12 @@ class VardiyaKalipUygulaIstek(BaseModel):
 
     @model_validator(mode="after")
     def _kaynak_tek(self) -> "VardiyaKalipUygulaIstek":
+        # (P232) COK GRUPLU BICIMDE ustteki tekil alanlar kullanilmaz;
+        # dogrulama her GRUBUN kendi icinde yapilir.
+        if self.gruplar:
+            return self
+        if not self.gunler:
+            raise ValueError("gunler VEYA gruplar verilmeli")
         if (self.kalip_id is None) == (self.dilimler is None):
             # Ikisi birden ya da hicbiri: hangi dilimlerin uygulanacagi
             # BELIRSIZ olurdu.

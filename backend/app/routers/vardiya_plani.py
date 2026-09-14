@@ -835,6 +835,41 @@ def _rotasyonlu_atama(
     }
 
 
+async def _gruplari_coz(
+    db: AsyncSession, body
+) -> list[tuple[list[dt.date], list[VardiyaDilim], dict[int, list[uuid.UUID]]]]:
+    """(P232) Istegi (gunler, dilimler, atamalar) UCLULERINE cevirir.
+
+    TEK BICIM, IKI GIRIS: cok gruplu istek de tekil istek de burada ayni
+    sekle indirgenir; asagidaki dongu tek bir kod yolu kullanir. Iki ayri
+    dongu yazmak, catisma kuralinin ya da rotasyonun birinde guncellenip
+    otekinde eskimesi demekti.
+    """
+    async def _dilimler(kalip_id, dilimler) -> list[VardiyaDilim]:
+        if kalip_id is None:
+            return list(dilimler or [])
+        kalip = (
+            await db.execute(
+                select(VardiyaKalibi).where(VardiyaKalibi.id == kalip_id)
+            )
+        ).scalar_one_or_none()
+        if kalip is None:
+            raise APIError(422, "validation_error", "vardiya_kalibi_bulunamadi")
+        return [VardiyaDilim.model_validate(d) for d in kalip.dilimler]
+
+    if body.gruplar:
+        return [
+            (sorted(set(g.gunler)), await _dilimler(g.kalip_id, g.dilimler),
+             g.atamalar)
+            for g in body.gruplar
+        ]
+    return [
+        (sorted(set(body.gunler)),
+         await _dilimler(body.kalip_id, body.dilimler),
+         body.atamalar)
+    ]
+
+
 @router.post("/kalip-uygula", response_model=VardiyaKalipSonuc)
 async def kalip_uygula(
     body: VardiyaKalipUygulaIstek,
@@ -863,20 +898,13 @@ async def kalip_uygula(
     Yazilan her satir AYNI `parti_id`yi tasir. "30 gunluk yanlis plan"
     tek istekle geri alinir (`POST /vardiya-plani/parti/{id}/geri-al`).
     """
-    if body.kalip_id is not None:
-        kalip = (
-            await db.execute(
-                select(VardiyaKalibi).where(VardiyaKalibi.id == body.kalip_id)
-            )
-        ).scalar_one_or_none()
-        if kalip is None:
-            raise APIError(422, "validation_error", "vardiya_kalibi_bulunamadi")
-        dilimler = [VardiyaDilim.model_validate(d) for d in kalip.dilimler]
-    else:
-        dilimler = body.dilimler or []
+    # (P232) COK GRUPLU: "pazartesi gunduz, sali-carsamba gece".
+    gruplar = await _gruplari_coz(db, body)
 
-    gunler = sorted(set(body.gunler))
-    kisi_idler = {u for liste in body.atamalar.values() for u in liste}
+    kisi_idler = {
+        u for _, _, atamalar in gruplar
+        for liste in atamalar.values() for u in liste
+    }
     if not kisi_idler:
         raise APIError(422, "validation_error", "vardiya_atama_bos")
     kisiler = {
@@ -890,58 +918,66 @@ async def kalip_uygula(
         # TESIS IZOLASYONU: baska tesisin kullanicisi RLS'te GORUNMEZ,
         # yani "bulunamadi" olur. Yetki genisledi, kapsam genislemedi.
         raise APIError(422, "validation_error", "personel_bulunamadi")
+    # (P231 §2) AMIR YALNIZ KENDI EKIBINI PLANLAR — cok gruplu istekte de.
+    for k in kisiler.values():
+        _hedef_gorunur(user, k.role)
 
-    ilk_gun = gunler[0]
     parti_id = uuid.uuid4()
     satirlar: list[VardiyaKalipGunDilim] = []
     yazilacak: list[tuple[dt.date, VardiyaDilim, uuid.UUID]] = []
     uyarilar: set[str] = set()
 
-    for gun in gunler:
-        hafta = (gun - ilk_gun).days // 7
-        atama = (
-            _rotasyonlu_atama(body.atamalar, len(dilimler), hafta)
-            if body.rotasyon == "haftalik"
-            else body.atamalar
-        )
-        for sira, dilim in enumerate(dilimler):
-            for kisi_id in atama.get(sira, []):
-                aralik = vardiya_araligi(gun, dilim.baslangic, dilim.bitis)
-                # AYNI SATIR ZATEN VAR MI: kalibi ikinci kez uygulamak
-                # (or. bir gun ekleyip yeniden calistirmak) mevcut
-                # satirlari "cakisma" diye raporlamamali — bu, dogru bir
-                # islemi hata gibi gostermek olurdu.
-                mevcut = (
-                    await db.execute(
-                        select(VardiyaPlani).where(
-                            VardiyaPlani.tarih == gun,
-                            VardiyaPlani.user_id == kisi_id,
-                            VardiyaPlani.durum == "planli",
-                            VardiyaPlani.baslangic_saat == dilim.baslangic,
-                            VardiyaPlani.bitis_saat == dilim.bitis,
+    # TEK PARTI: gruplar ayri ayri yazilsaydi geri alma birden cok istek
+    # olurdu — kullanici acisindan tek karar, sistemde birden cok iz.
+    for gunler, dilimler, atamalar in gruplar:
+        if not gunler or not dilimler:
+            continue
+        ilk_gun = gunler[0]
+        for gun in gunler:
+            hafta = (gun - ilk_gun).days // 7
+            atama = (
+                _rotasyonlu_atama(atamalar, len(dilimler), hafta)
+                if body.rotasyon == "haftalik"
+                else atamalar
+            )
+            for sira, dilim in enumerate(dilimler):
+                for kisi_id in atama.get(sira, []):
+                    aralik = vardiya_araligi(gun, dilim.baslangic, dilim.bitis)
+                    # AYNI SATIR ZATEN VAR MI: kalibi ikinci kez uygulamak
+                    # (or. bir gun ekleyip yeniden calistirmak) mevcut
+                    # satirlari "cakisma" diye raporlamamali — bu, dogru bir
+                    # islemi hata gibi gostermek olurdu.
+                    mevcut = (
+                        await db.execute(
+                            select(VardiyaPlani).where(
+                                VardiyaPlani.tarih == gun,
+                                VardiyaPlani.user_id == kisi_id,
+                                VardiyaPlani.durum == "planli",
+                                VardiyaPlani.baslangic_saat == dilim.baslangic,
+                                VardiyaPlani.bitis_saat == dilim.bitis,
+                            )
                         )
-                    )
-                ).scalar_one_or_none()
-                if mevcut is not None:
+                    ).scalar_one_or_none()
+                    if mevcut is not None:
+                        satirlar.append(VardiyaKalipGunDilim(
+                            tarih=gun, dilim=dilim.ad, baslangic=dilim.baslangic,
+                            bitis=dilim.bitis, user_id=kisi_id,
+                            ad=kisiler[kisi_id].ad, durum="zaten_var"))
+                        continue
+                    try:
+                        uyarilar.update(await _cakisma_denetle(
+                            db, user_id=kisi_id, tarih=gun, aralik=aralik))
+                    except APIError:
+                        satirlar.append(VardiyaKalipGunDilim(
+                            tarih=gun, dilim=dilim.ad, baslangic=dilim.baslangic,
+                            bitis=dilim.bitis, user_id=kisi_id,
+                            ad=kisiler[kisi_id].ad, durum="cakisma"))
+                        continue
                     satirlar.append(VardiyaKalipGunDilim(
                         tarih=gun, dilim=dilim.ad, baslangic=dilim.baslangic,
                         bitis=dilim.bitis, user_id=kisi_id,
-                        ad=kisiler[kisi_id].ad, durum="zaten_var"))
-                    continue
-                try:
-                    uyarilar.update(await _cakisma_denetle(
-                        db, user_id=kisi_id, tarih=gun, aralik=aralik))
-                except APIError:
-                    satirlar.append(VardiyaKalipGunDilim(
-                        tarih=gun, dilim=dilim.ad, baslangic=dilim.baslangic,
-                        bitis=dilim.bitis, user_id=kisi_id,
-                        ad=kisiler[kisi_id].ad, durum="cakisma"))
-                    continue
-                satirlar.append(VardiyaKalipGunDilim(
-                    tarih=gun, dilim=dilim.ad, baslangic=dilim.baslangic,
-                    bitis=dilim.bitis, user_id=kisi_id,
-                    ad=kisiler[kisi_id].ad, durum="eklenecek"))
-                yazilacak.append((gun, dilim, kisi_id))
+                        ad=kisiler[kisi_id].ad, durum="eklenecek"))
+                    yazilacak.append((gun, dilim, kisi_id))
 
     cakisan = sum(1 for r in satirlar if r.durum == "cakisma")
     zaten = sum(1 for r in satirlar if r.durum == "zaten_var")

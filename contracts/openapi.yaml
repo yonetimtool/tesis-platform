@@ -17388,10 +17388,50 @@ components:
         items:
           type: array
           items: { $ref: "#/components/schemas/VardiyaKalip" }
-    VardiyaKalipUygula:
+    VardiyaGunGrubu:
       type: object
       required: [gunler]
+      description: >
+        (P232) BIR GUN GRUBU + O GRUBA UYGULANACAK DILIMLER. Gercek
+        ihtiyac "pazartesi gunduz, sali ve carsamba gece" — yani FARKLI
+        gun gruplarina FARKLI dilimler. Onceden bunun icin modali uc kez
+        acmak ve UC AYRI PARTI uretmek gerekiyordu; uc parti demek uc
+        onizleme, uc catisma kontrolu ve geri alirken UC AYRI ISTEK
+        demekti.
       properties:
+        gunler:
+          type: array
+          minItems: 1
+          maxItems: 62
+          items: { type: string, format: date }
+        kalip_id: { type: string, format: uuid, nullable: true }
+        dilimler:
+          type: array
+          nullable: true
+          items: { $ref: "#/components/schemas/VardiyaDilim" }
+        atamalar:
+          type: object
+          additionalProperties:
+            type: array
+            items: { type: string, format: uuid }
+    VardiyaKalipUygula:
+      type: object
+      properties:
+        gruplar:
+          type: array
+          nullable: true
+          maxItems: 10
+          items: { $ref: "#/components/schemas/VardiyaGunGrubu" }
+          description: >
+            (P232) COK GRUPLU istek. Verilirse tekil alanlar
+            (`gunler`/`dilimler`/`atamalar`) YOK SAYILIR. Tekil bicim
+            KALDIRILMADI: yayindaki istemciler onu gonderiyor. HEPSI TEK
+            PARTI — gruplar ayri ayri yazilsaydi geri alma birden cok
+            istek olurdu.
+
+            TEKRARLAMA ("1 hafta / 1 ay") SUNUCUDA YOK ve bu bilincli:
+            istemci GUNLERI cogaltarak ifade eder. Ayri bir `tekrar`
+            alani, ayni gercegi iki bicimde anlatmak olurdu.
         kalip_id: { type: string, format: uuid, nullable: true }
         dilimler:
           type: array
@@ -17399,11 +17439,11 @@ components:
           items: { $ref: "#/components/schemas/VardiyaDilim" }
         gunler:
           type: array
-          minItems: 1
           maxItems: 62
           items: { type: string, format: date }
           description: >
             DUZENSIZ olabilir ("tum pazartesiler"); aralik DEGIL.
+            `gruplar` verilirse YOK SAYILIR.
         atamalar:
           type: object
           additionalProperties:
