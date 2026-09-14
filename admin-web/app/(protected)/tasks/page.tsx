@@ -107,7 +107,14 @@ const DURUM_ETIKET = {
   tamamlandi: "gorevDurumTamamlandi",
   gecikti: "gorevDurumGecikti",
 } as const;
-const DURUM_SECENEKLERI = ["atandi", "baslandi", "tamamlandi", "gecikti"] as const;
+// UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`): tarayici ucludaki
+// her dizgeyi cevrilmemis metin adayi sayar ve bu DOGRU bir varsayim —
+// istisnasi, adlandirilmis sabite cikarmak.
+const D_ATANDI = "atandi" as const;
+const D_BASLANDI = "baslandi" as const;
+const D_TAMAMLANDI = "tamamlandi" as const;
+const D_GECIKTI = "gecikti" as const;
+const DURUM_SECENEKLERI = [D_ATANDI, D_BASLANDI, D_TAMAMLANDI, D_GECIKTI] as const;
 
 const EMPTY: FormState = {
   ad: "",
@@ -355,19 +362,19 @@ export default function TasksPage() {
         hucre: (g) => {
           // (P230 §4) DORT DURUM tek rozette. Gecikmis gorev BELIRGIN
           // olmali: listede aranan sey "hangi is aksadi" sorusudur.
-          const d = g.durum ?? (g.tamamlandi ? "tamamlandi" : "atandi");
+          const d = g.durum ?? (g.tamamlandi ? D_TAMAMLANDI : D_ATANDI);
           const stil =
-            d === "tamamlandi"
+            d === D_TAMAMLANDI
               ? DURUM_OLUMLU
-              : d === "gecikti"
+              : d === D_GECIKTI
                 ? DURUM_OLUMSUZ
-                : d === "baslandi"
+                : d === D_BASLANDI
                   ? DURUM_UYARI
                   : DURUM_NOTR;
           return (
             <span className="text-xs" data-test={`gorev-durum-${d}`}>
               <Rozet durum={stil}>{t(DURUM_ETIKET[d])}</Rozet>
-              {d === "gecikti" && g.gecikme_gun != null && (
+              {d === D_GECIKTI && g.gecikme_gun != null && (
                 <> {t("gorevGecikmeGun", { n: g.gecikme_gun })}</>
               )}
               {g.son_tamamlama && (

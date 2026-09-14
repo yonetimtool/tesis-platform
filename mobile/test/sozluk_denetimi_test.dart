@@ -52,6 +52,14 @@ const _tumKopyaIstisnalari = {
   // farkli. Cevirmek, dosya boyutunu tanimadigi bir birimle gostermek
   // olurdu.
   'dokumanBoyutKb',
+  // (P230 §3) ARAMA KAYNAK ADLARI — gercek KOGNATLAR, ceviri unutmasi
+  // DEGIL. Rusca ve Arapca karsiliklari ZATEN farkli:
+  //   Plan   : tr/en/de/fr/es ayni; ru "План",    ar "خطة"
+  //   Firma  : tr/de ayni;       ru "Компания", ar "شركة"
+  //   Kamera : tr/de ayni;       ru "Камера",   ar "كاميرا"
+  // Almanca'yi "Unternehmen"e cevirmek dogru olmazdi: "Firma" Almanca'da
+  // da kullanilan bir sozcuk ve kisa etiket icin dogal olan o.
+  'aramaKaynakPlan', 'aramaKaynakFirma', 'aramaKaynakKamera',
 };
 
 Map<String, dynamic> _arb(String dil) => jsonDecode(
