@@ -108,3 +108,63 @@ Modalda hem `vardiya-ekle-ara` ("Kişi ara") hem `vardiya-ekle-kisi`
 ("Personel") var. Arama alanının **tek işi** açılır listenin
 seçeneklerini süzmek (`personel.filter(...)`); başka bir şey yapmıyor.
 Native `<select>` zaten yazarak atlamayı destekliyor. **Kaldırılıyor.**
+
+---
+
+## §C — Yapısal engel: koşan takımın altından konteyner çekilmesin
+
+### Sorun
+
+Tek bir seansta **beş kez** aynı şey oldu: tam test takımı koşarken
+`docker compose build api && up -d --force-recreate api` çalıştırıldı ve
+koşum `EXIT=137` ile öldü. Her seferinde 40–70 dakikalık bir koşum baştan
+başladı. Bir keresinde daha kötüsü oldu: koşum ölmedi ama **eski imajla**
+devam etti ve düzeltilmiş kodu "kırmızı" raporladı (P230 §4 — üç sahte
+kırmızı, sebebini bulmak ayrıca zaman aldı).
+
+"Dikkat edeceğim" bir mekanizma değil. Beş tekrar bunu kanıtladı.
+
+### Seçilen çözüm: canlı duruma bakan sarmalayıcı
+
+`infra/guvenli-derle.sh` — derlemeden önce **api konteynerinde pytest
+süreci var mı** diye bakar, varsa durur ve ne koştuğunu adıyla yazar.
+
+### Neden kilit dosyası değil
+
+İlk akla gelen "koşum başında bir kilit dosyası bırak" idi. **Reddedildi:**
+bu depoda kilidin **bayatlaması bilinen bir sorun** — öldürülen
+`docker compose exec pytest` konteynerde yetim kalıyor ve ileriki
+koşumları bloke ediyor. Bayat bir kilit dosyası da meşru derlemeleri
+engellerdi ve kullanan kişi bunu `--zorla` ile atlamayı **öğrenirdi**; o
+noktada engel yok demektir.
+
+Canlı durum bayatlayamaz.
+
+### Fail-closed
+
+Durum okunamıyorsa derleme **yapılmaz**. Fail-open, tam olarak önlemeye
+çalıştığımız kusuru geri getirirdi: kontrol başarısız → "bir şey yoktur"
+→ derle → koşum öl.
+
+### Engelin kendisinde iki kusur çıktı — ikisi de kanıt denemesinde
+
+Betiği yazıp bitirmedim, **denedim** ve iki kez düştü:
+
+1. **`ps` slim imajda yok.** Komut hata verdi, sondaki `|| true` hatayı
+   **yuttu** ve kontrol "koşan yok" dedi. Yani engelin kendisi
+   **fail-open**'dı — önlemeye çalıştığı kusurun aynısı. Koşan takım
+   gerçekten öldürüldü. `/proc` okumasına geçildi (her Linux
+   konteynerinde var, ek paket istemez) ve `|| true` kaldırıldı.
+2. **Prob kendini gördü.** `case $satir in *pytest*)` yazan probun kendi
+   komut satırı "pytest" kelimesini içeriyor ve `/proc`ta kendini
+   buluyordu — hiçbir takım koşmazken bile engelliyordu. Yanlış pozitif
+   de zararlı: engel güvenilmez olunca insan `--zorla` alışkanlığı edinir.
+   Aranan kelime parçalanarak kuruluyor (`aranan="py""test"`).
+
+### Kanıt
+
+İki yönde de sürüldü:
+
+* Koşum **yokken** → `>> hazır`, çıkış 0.
+* Koşum **varken** → çıkış 1, koşan süreç adıyla yazıldı, derleme
+  yapılmadı ve koşum sağ kaldı.
