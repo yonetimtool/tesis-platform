@@ -11470,6 +11470,90 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Görsel seç'**
   String get anketGorselSec;
+
+  /// No description provided for @anketBaslangic.
+  ///
+  /// In tr, this message translates to:
+  /// **'Başlangıç (isteğe bağlı)'**
+  String get anketBaslangic;
+
+  /// No description provided for @anketBitis.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bitiş (isteğe bağlı)'**
+  String get anketBitis;
+
+  /// No description provided for @anketTarihSec.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tarih seç'**
+  String get anketTarihSec;
+
+  /// No description provided for @anketTarihTemizle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tarihi kaldır'**
+  String get anketTarihTemizle;
+
+  /// No description provided for @anketTarihAraligiGecersiz.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bitiş tarihi başlangıçtan sonra olmalı.'**
+  String get anketTarihAraligiGecersiz;
+
+  /// No description provided for @anketHedefSakinTipi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Malik/kiracı ayrımı'**
+  String get anketHedefSakinTipi;
+
+  /// No description provided for @anketSakinHepsi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ayrım yok'**
+  String get anketSakinHepsi;
+
+  /// No description provided for @anketMalik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yalnız malikler'**
+  String get anketMalik;
+
+  /// No description provided for @anketKiraci.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yalnız kiracılar'**
+  String get anketKiraci;
+
+  /// No description provided for @anketSonuclar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sonuçlar'**
+  String get anketSonuclar;
+
+  /// No description provided for @anketOyAdet.
+  ///
+  /// In tr, this message translates to:
+  /// **'{sayi} oy'**
+  String anketOyAdet(String sayi);
+
+  /// No description provided for @anketOyDokumuAnonim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Anonim ankette kimler oy verdiği kaydedilmez.'**
+  String get anketOyDokumuAnonim;
+
+  /// No description provided for @anketOyYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz oy verilmedi.'**
+  String get anketOyYok;
+
+  /// No description provided for @anketDokumYuklenemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Oy dökümü yüklenemedi.'**
+  String get anketDokumYuklenemedi;
 }
 
 class _AppLocalizationsDelegate

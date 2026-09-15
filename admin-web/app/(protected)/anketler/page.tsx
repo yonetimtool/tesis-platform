@@ -77,6 +77,18 @@ const BOS: FormState = {
   gorselKey: null,
 };
 
+/**
+ * (P237 §4) MALIK/KIRACI AYRIMI YALNIZ SAKIN HEDEFLENDIGINDE ANLAMLI.
+ *
+ * Bos secim = HERKES (sakinler dahil). Roller secilmisse ve `resident`
+ * aralarinda degilse ayrim gosterilmez: "yalniz guvenlik ekibi" +
+ * "yalniz malikler" birlikte anlamsizdir ve sunucu da ayrimi personele
+ * UYGULAMAZ (`_hedef_kisi_sayisi`: rolu `resident` olmayanlar elenmez).
+ */
+function sakinAyrimiAnlamli(roller: string[]): boolean {
+  return roller.length === 0 || roller.includes("resident");
+}
+
 function toIso(yerel: string): string | null {
   if (!yerel) return null;
   const d = new Date(yerel);
@@ -174,12 +186,19 @@ export default function AnketlerPage() {
   }
 
   function rolDegis(rol: string, secildi: boolean): void {
-    setForm((f) => ({
-      ...f,
-      hedefRoller: secildi
+    setForm((f) => {
+      const hedefRoller = secildi
         ? [...f.hedefRoller, rol]
-        : f.hedefRoller.filter((r) => r !== rol),
-    }));
+        : f.hedefRoller.filter((r) => r !== rol);
+      // AYRIM ANLAMSIZ HALE GELDIYSE DEGERI DE TEMIZLE: gizlenen bir
+      // secim govdede kalsaydi, kullanicinin ARTIK GORMEDIGI bir suzgec
+      // uygulanirdi (P237 §4'te olculdu).
+      return {
+        ...f,
+        hedefRoller,
+        hedefSakinTipi: sakinAyrimiAnlamli(hedefRoller) ? f.hedefSakinTipi : "",
+      };
+    });
   }
 
   return (
@@ -481,6 +500,7 @@ export default function AnketlerPage() {
             </div>
           </fieldset>
 
+          {sakinAyrimiAnlamli(form.hedefRoller) ? (
           <AlanSarmal etiket={t("anketHedefSakinTipi")}>
             {(b) => (
               <Secim
@@ -497,6 +517,7 @@ export default function AnketlerPage() {
               </Secim>
             )}
           </AlanSarmal>
+          ) : null}
 
           {/* ANONIMLIK — KAYDEDILDIKTEN SONRA DEGISTIRILEMEZ.
               Uyari BURADA, kaydetmeden ONCE: sonradan gosterilen bir

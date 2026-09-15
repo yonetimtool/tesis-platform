@@ -2253,5 +2253,26 @@
   "anketAnonimUyari": "Die Anonymitätswahl kann nach dem Speichern NICHT geändert werden.",
   "anketKapat": "Umfrage schließen",
   "anketOyDokumu": "Wer hat wofür gestimmt",
-  "anketGorselSec": "Bild wählen"
+  "anketGorselSec": "Bild wählen",
+  "anketBaslangic": "Beginn (optional)",
+  "anketBitis": "Ende (optional)",
+  "anketTarihSec": "Datum wählen",
+  "anketTarihTemizle": "Datum entfernen",
+  "anketTarihAraligiGecersiz": "Das Enddatum muss nach dem Startdatum liegen.",
+  "anketHedefSakinTipi": "Eigentümer/Mieter-Filter",
+  "anketSakinHepsi": "Kein Filter",
+  "anketMalik": "Nur Eigentümer",
+  "anketKiraci": "Nur Mieter",
+  "anketSonuclar": "Ergebnisse",
+  "anketOyAdet": "{sayi} Stimmen",
+  "@anketOyAdet": {
+    "placeholders": {
+      "sayi": {
+        "type": "String"
+      }
+    }
+  },
+  "anketOyDokumuAnonim": "Bei einer anonymen Umfrage werden keine Identitäten gespeichert.",
+  "anketOyYok": "Noch keine Stimmen.",
+  "anketDokumYuklenemedi": "Die Stimmenaufschlüsselung konnte nicht geladen werden."
 }

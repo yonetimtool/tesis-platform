@@ -2253,5 +2253,26 @@
   "anketAnonimUyari": "Выбор анонимности НЕЛЬЗЯ изменить после сохранения.",
   "anketKapat": "Закрыть опрос",
   "anketOyDokumu": "Кто за что проголосовал",
-  "anketGorselSec": "Выбрать изображение"
+  "anketGorselSec": "Выбрать изображение",
+  "anketBaslangic": "Начало (необязательно)",
+  "anketBitis": "Окончание (необязательно)",
+  "anketTarihSec": "Выбрать дату",
+  "anketTarihTemizle": "Убрать дату",
+  "anketTarihAraligiGecersiz": "Дата окончания должна быть позже даты начала.",
+  "anketHedefSakinTipi": "Фильтр «собственник/арендатор»",
+  "anketSakinHepsi": "Без фильтра",
+  "anketMalik": "Только собственники",
+  "anketKiraci": "Только арендаторы",
+  "anketSonuclar": "Результаты",
+  "anketOyAdet": "{sayi} голос(ов)",
+  "@anketOyAdet": {
+    "placeholders": {
+      "sayi": {
+        "type": "String"
+      }
+    }
+  },
+  "anketOyDokumuAnonim": "В анонимном опросе личности голосовавших не сохраняются.",
+  "anketOyYok": "Голосов пока нет.",
+  "anketDokumYuklenemedi": "Не удалось загрузить разбивку голосов."
 }

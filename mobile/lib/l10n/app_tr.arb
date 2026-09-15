@@ -3130,5 +3130,26 @@
   "anketAnonimUyari": "Anonim seçimi kaydedildikten sonra DEĞİŞTİRİLEMEZ.",
   "anketKapat": "Anketi kapat",
   "anketOyDokumu": "Kim neye oy verdi",
-  "anketGorselSec": "Görsel seç"
+  "anketGorselSec": "Görsel seç",
+  "anketBaslangic": "Başlangıç (isteğe bağlı)",
+  "anketBitis": "Bitiş (isteğe bağlı)",
+  "anketTarihSec": "Tarih seç",
+  "anketTarihTemizle": "Tarihi kaldır",
+  "anketTarihAraligiGecersiz": "Bitiş tarihi başlangıçtan sonra olmalı.",
+  "anketHedefSakinTipi": "Malik/kiracı ayrımı",
+  "anketSakinHepsi": "Ayrım yok",
+  "anketMalik": "Yalnız malikler",
+  "anketKiraci": "Yalnız kiracılar",
+  "anketSonuclar": "Sonuçlar",
+  "anketOyAdet": "{sayi} oy",
+  "@anketOyAdet": {
+    "placeholders": {
+      "sayi": {
+        "type": "String"
+      }
+    }
+  },
+  "anketOyDokumuAnonim": "Anonim ankette kimler oy verdiği kaydedilmez.",
+  "anketOyYok": "Henüz oy verilmedi.",
+  "anketDokumYuklenemedi": "Oy dökümü yüklenemedi."
 }

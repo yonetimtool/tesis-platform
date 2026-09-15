@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/i18n/l10n.dart';
+import '../../../core/grafik/grafik_karti.dart';
 import '../../../core/ui/gorsel_cozme.dart';
 import '../../auth/data/current_user_provider.dart';
 import '../data/anket_api.dart';
 import '../domain/anket_models.dart';
 import 'anket_form.dart';
+import 'anket_oy_dokumu_screen.dart';
 
 /// Anket ekrani — SAKIN oy verir, YONETIM acar/kapatir.
 ///
@@ -183,6 +185,26 @@ class _AnketKartiState extends ConsumerState<_AnketKarti> {
             if (a.sonucVar)
               Text(l10n.anketToplamOy(a.toplamOy!),
                   style: Theme.of(context).textTheme.bodySmall),
+            // (P237 §4) SONUC GRAFIGI — web'deki `Grafik` karsiligi.
+            //
+            // YALNIZ SUNUCU SAYILARI VERDIYSE cizilir: acik ankette
+            // secenek `oy`lari null gelir (surusel etki) ve o durumda
+            // sifirlarla bir grafik cizmek, "kimse oy vermedi" gibi
+            // YANLIS bir dunya gostermek olurdu.
+            if (a.sonucVar &&
+                a.secenekler.any((s) => s.oy != null)) ...[
+              const SizedBox(height: 8),
+              GrafikKarti(
+                key: const Key('anket-grafik'),
+                baslik: l10n.anketSonuclar,
+                bicimle: (v) => l10n.anketOyAdet('${v.round()}'),
+                dilimler: [
+                  for (final s in a.secenekler)
+                    if (s.oy != null)
+                      GrafikDilimi(ad: s.metin, deger: s.oy!.toDouble()),
+                ],
+              ),
+            ],
             // KATILIM ORANI: payda sunucudan gelir ("kac kisiye gitti") ve
             // YALNIZ yonetime doner. Payda yoksa oran CIZILMEZ — uydurma
             // bir yuzde, katilimi oldugundan iyi ya da kotu gosterirdi.
@@ -192,6 +214,24 @@ class _AnketKartiState extends ConsumerState<_AnketKarti> {
                 l10n.anketKatilim(
                     '${a.toplamOy}', '${a.hedefKisi}', '$yuzde'),
                 style: Theme.of(context).textTheme.bodySmall,
+              ),
+            // (P237 §4) OY DOKUMU GIRISI — YALNIZ YONETIM ve YALNIZ ADLI
+            // ankette. Anonim ankette dugmeyi gostermek, basildiginda
+            // "veri yok" diyen bir yol acmakti; yapilamayacak seyi hic
+            // teklif etmiyoruz (ayni ekrandaki oy dugmesi kurali).
+            if (widget.yonetebilir && !a.anonim)
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: TextButton.icon(
+                  key: Key('anket-dokum-${a.id}'),
+                  icon: const Icon(Icons.how_to_vote_outlined),
+                  label: Text(l10n.anketOyDokumu),
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => AnketOyDokumuScreen(anket: a),
+                    ),
+                  ),
+                ),
               ),
             if (widget.yonetebilir && a.aktif)
               Align(

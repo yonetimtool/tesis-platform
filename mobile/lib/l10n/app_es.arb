@@ -2253,5 +2253,26 @@
   "anketAnonimUyari": "La elección de anonimato NO se puede cambiar tras guardar.",
   "anketKapat": "Cerrar encuesta",
   "anketOyDokumu": "Quién votó qué",
-  "anketGorselSec": "Elegir imagen"
+  "anketGorselSec": "Elegir imagen",
+  "anketBaslangic": "Inicio (opcional)",
+  "anketBitis": "Fin (opcional)",
+  "anketTarihSec": "Elegir fecha",
+  "anketTarihTemizle": "Quitar fecha",
+  "anketTarihAraligiGecersiz": "La fecha de fin debe ser posterior a la de inicio.",
+  "anketHedefSakinTipi": "Filtro propietario/inquilino",
+  "anketSakinHepsi": "Sin filtro",
+  "anketMalik": "Solo propietarios",
+  "anketKiraci": "Solo inquilinos",
+  "anketSonuclar": "Resultados",
+  "anketOyAdet": "{sayi} votos",
+  "@anketOyAdet": {
+    "placeholders": {
+      "sayi": {
+        "type": "String"
+      }
+    }
+  },
+  "anketOyDokumuAnonim": "En una encuesta anónima no se guardan identidades.",
+  "anketOyYok": "Aún no hay votos.",
+  "anketDokumYuklenemedi": "No se pudo cargar el desglose de votos."
 }

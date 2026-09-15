@@ -544,3 +544,108 @@ de taşıyor; eksik olan yalnızca form/ekran. Parite kuralı gereği bunu
   kapatma, push bildirimi düşmesi, ekran okuyucu telaffuzu.
 - Push zinciri `dispatch_external` çağrısına kadar ölçüldü;
   `PUSH_PROVIDER=noop` olduğu için gerçek gönderim ölçülmedi.
+
+---
+
+## §4 — Mobil anket ekranları tamamlandı
+
+P237 §3'te "açıkça bitmedi" diye yazılan dört madde kapatıldı.
+
+### §4.0 ÖNCE ÖLÇÜM — web'de var mı?
+
+**Dördü de web'de VAR, mobilde YOK.** Yani bu bir *taşıma*, yeni tasarım
+değil:
+
+| Alan | Web | Mobil (önce) |
+|---|---|---|
+| Tarih aralığı | `datetime-local` × 2 (satır 409, 419) | yok |
+| Malik/kiracı | `Secim` (satır 484) | yok |
+| Sonuç grafiği | `<Grafik>` (satır 323) | yok |
+| Oy dökümü | tablo (satır 330, `AnketOyKimList`) | yok |
+
+Model ve API katmanı mobilde zaten hazırdı (`AnketTaslak.baslangicAt`,
+`.kapanisAt`, `.hedefSakinTipi`; `AnketApi.oyDokumu`) — eksik olan
+yalnızca form/ekran.
+
+**Mobil grafik altyapısı da hazırdı:** `core/grafik/grafik_karti.dart`
+(P223 §4). Kütüphane eklenmedi, mevcut `GrafikKarti` kullanıldı.
+
+### §4 NE YAPILDI
+
+**1. Tarih aralığı** — `showDatePicker` → `showTimePicker` (etkinlik
+formundaki desen). İkisi de opsiyonel; boş = "hemen açık, süresiz" (en
+sık hal), bu yüzden varsayılan doldurulmuyor. Seçilince **temizle**
+düğmesi beliriyor. `_TarihSatiri` ayrı widget: aynı yerleşim iki kez
+çiziliyor, kopyalamak birinde yapılan düzeltmenin ötekinde unutulması
+demekti.
+
+**Gün tek başına yetmez:** "12 Ekim'de kapansın" diyen yönetici gün
+içinde bir an kastediyor; günün 00:00'ı o anı bir gün öne çekerdi.
+
+**Ters aralık istemcide de sorulur.** Sunucu 422 veriyor ama
+yapılabilecek bir uyarıyı ağa havale etmek, kullanıcıyı bekletip sonra
+reddetmek olurdu.
+
+**2. Malik/kiracı ayrımı** — `DropdownButtonFormField`. Burada bir
+**tutarsızlık ölçtüm ve İKİ YÜZEYDE birden düzelttim:**
+
+> Ayrım yalnız **sakin hedeflendiğinde** anlamlı. Boş seçim = herkes
+> (sakinler dahil) → gösterilir. Roller seçilmişse ve `resident`
+> aralarında değilse → **gösterilmez ve değer temizlenir**.
+
+Gerekçe: "yalnız güvenlik ekibi" + "yalnız malikler" birlikte anlamsız,
+ve sunucu ayrımı personele zaten **uygulamıyor**
+(`_hedef_kisi_sayisi`: rolü `resident` olmayanlar elenmez). Değeri de
+temizlemek şart: gizlenen bir seçim gövdede kalsaydı, kullanıcının
+**artık görmediği** bir süzgeç uygulanırdı.
+
+**3. Sonuç grafiği** — `GrafikKarti`, seçenek başına bir çubuk.
+**Yalnız sunucu sayıları verdiyse** çizilir: açık ankette seçenek
+`oy`ları null gelir (sürüsel etki) ve sıfırlarla grafik çizmek "kimse oy
+vermedi" gibi yanlış bir dünya göstermek olurdu. P223'ün kuralı korunur:
+sayı çubuğun yanında yazar, renk tek başına anlam taşımaz.
+
+**4. Oy dökümü ekranı** — `AnketOyDokumuScreen`; kim, ne zaman, neye.
+Giriş **yalnız yönetime ve yalnız adlı ankette** çizilir. Ekran ayrıca
+savunmalı: doğrudan rotayla gelinirse **istek atılmaz**, açıklama
+çizilir. İsteği atıp 409 göstermek "bir şey ters gitti" izlenimi
+verirdi — oysa ters giden bir şey yok, veri bilerek tutulmuyor.
+Hata halinde **boş liste gösterilmez**: boş liste "kimse oy vermedi"
+demekti ve bu yanlış bilgi olurdu.
+
+### §4 PARİTE — artık tam
+
+| | Web | Mobil |
+|---|---|---|
+| Tarih aralığı | ✔ | ✔ (+ temizleme) |
+| Malik/kiracı ayrımı | ✔ | ✔ |
+| — yalnız sakin hedefliyken | ✔ **(bu turda eklendi)** | ✔ |
+| Sonuç grafiği | ✔ `Grafik` | ✔ `GrafikKarti` |
+| Oy dökümü | ✔ tablo | ✔ ayrı ekran |
+| Anonimde döküm isteği | atılmaz | atılmaz |
+
+### §4 DOĞRULAMA — dört kilit, dördü de KIRILARAK doğrulandı
+
+`mobile/test/p237_anket_ekranlari_test.dart` — **11 test**,
+`admin-web/tests/p237-anket.dom.test.ts` — **9 test** (2 yeni).
+
+| Kırma denemesi | Sonuç |
+|---|---|
+| Ters aralık guard'ı kaldırıldı | "istek ATILMADAN reddedilir" **kırmızı** ✔ |
+| `_sakinAyrimiAnlamli` kapısı `true` yapıldı | "YALNIZ GUVENLIK…" **kırmızı** ✔ |
+| Döküm ekranındaki anonim kapısı `false` yapıldı | "ISTEK ATILMAZ" **kırmızı** ✔ |
+| Grafik koşulu `true` yapıldı | "sayılar NULL — grafik ÇİZİLMEZ" **kırmızı** ✔ |
+| Web: gizlenen ayrımın temizlenmesi kaldırıldı | "GİZLENEN ayrım GÖVDEYE GİRMEZ" **kırmızı** ✔ |
+
+Hepsi geri alındı, tekrar yeşil.
+
+**İki test tuzağı ölçüldü:**
+1. Takvim/saat onay düğmesini `find.text('TAMAM')` ile hedeflemek: etiket
+   Flutter sürümüne ve dile göre değişiyor, sıfır widget bulundu.
+   `find.byType(TextButton).last` kullanıldı.
+2. `tester.tap` uzun formdaki kaydet düğmesine **dokunmuyordu**
+   ("hit test warning") ve test sahte-yeşil kalacaktı; `ensureVisible`
+   eklendi. Bu, kırma denemesi yapılmasaydı fark edilmeyecekti.
+
+**ÖLÇEMEDİĞİM:** gerçek cihazda takvim/saat seçici açılışı ve ekran
+okuyucu telaffuzu sürülmedi (emülatör yok).

@@ -142,6 +142,42 @@ describe("Anketler sayfasi", () => {
     ]);
   });
 
+  it("MALIK/KIRACI ayrimi: yalniz SAKIN hedeflendiginde cizilir", async () => {
+    // "yalniz guvenlik ekibi" + "yalniz malikler" birlikte anlamsiz;
+    // sunucu da ayrimi personele UYGULAMAZ.
+    fetchSahtele({ "/api/panel/anketler": { items: [] } });
+    ciz(AnketlerPage);
+    await userEvent.click(el("anket-ekle-ac") as HTMLElement);
+    // Hedef BOSKEN (herkes) ayrim gorunur.
+    expect(el("anket-sakin-tipi")).toBeTruthy();
+
+    await userEvent.click(el("anket-hedef-security") as HTMLElement);
+    expect(el("anket-sakin-tipi")).toBeNull();
+
+    // SAKIN de eklenince GERI GELIR.
+    await userEvent.click(el("anket-hedef-resident") as HTMLElement);
+    expect(el("anket-sakin-tipi")).toBeTruthy();
+  });
+
+  it("GIZLENEN ayrim GOVDEYE GIRMEZ", async () => {
+    fetchSahtele({ "/api/panel/anketler": { items: [] } });
+    const govdeler = govdeleriYakala();
+    ciz(AnketlerPage);
+    await userEvent.click(el("anket-ekle-ac") as HTMLElement);
+    await userEvent.type(el("anket-baslik") as HTMLElement, "Otopark");
+    await userEvent.type(el("anket-maddeler") as HTMLElement, "Evet\nHayır");
+
+    // Once malik secilir...
+    await userEvent.selectOptions(el("anket-sakin-tipi") as HTMLElement, "malik");
+    // ...sonra hedef YALNIZ GUVENLIK yapilir: ayrim gizlenir VE temizlenir.
+    await userEvent.click(el("anket-hedef-security") as HTMLElement);
+    await userEvent.click(el("anket-kaydet") as HTMLElement);
+
+    await waitFor(() => expect(govdeler.length).toBe(1));
+    const g = JSON.parse(govdeler[0]);
+    expect(g.hedef_sakin_tipi).toBeNull();
+  });
+
   it("ANONIMLIK UYARISI formda, KAYDETMEDEN ONCE gorunur", async () => {
     fetchSahtele({ "/api/panel/anketler": { items: [] } });
     ciz(AnketlerPage);

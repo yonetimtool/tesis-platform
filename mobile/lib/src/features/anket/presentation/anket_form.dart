@@ -56,6 +56,9 @@ class _AnketFormSayfasiState extends ConsumerState<AnketFormSayfasi> {
   final _aciklama = TextEditingController();
   final _maddeler = TextEditingController();
   final Set<String> _secilenRoller = {};
+  DateTime? _baslangic;
+  DateTime? _bitis;
+  String? _sakinTipi;
   bool _anonim = false;
   String? _gorselKey;
   bool _mesgul = false;
@@ -68,6 +71,36 @@ class _AnketFormSayfasiState extends ConsumerState<AnketFormSayfasi> {
     _maddeler.dispose();
     super.dispose();
   }
+
+  /// TARIH + SAAT — etkinlik formundaki desen (`showDatePicker` ->
+  /// `showTimePicker`). Gun tek basina yetmez: "12 Ekim'de kapansin"
+  /// diyen yonetici gun ICINDE bir an kastediyor ve gunun 00:00'i o anı
+  /// bir gun ONE cekerdi.
+  Future<DateTime?> _tarihSec(DateTime? mevcut) async {
+    final simdi = DateTime.now();
+    final gun = await showDatePicker(
+      context: context,
+      initialDate: mevcut ?? simdi,
+      firstDate: simdi.subtract(const Duration(days: 1)),
+      lastDate: simdi.add(const Duration(days: 365)),
+    );
+    if (gun == null || !mounted) return null;
+    final saat = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(mevcut ?? simdi),
+    );
+    if (saat == null) return null;
+    return DateTime(gun.year, gun.month, gun.day, saat.hour, saat.minute);
+  }
+
+  /// MALIK/KIRACI AYRIMI YALNIZ SAKIN HEDEFLENDIGINDE ANLAMLI.
+  ///
+  /// Bos secim = HERKES (sakinler dahil). Roller secilmisse ve `resident`
+  /// aralarinda degilse ayrim gosterilmez: "yalniz guvenlik ekibi" +
+  /// "yalniz malikler" birlikte anlamsizdir ve sunucu da ayrimi personele
+  /// UYGULAMAZ (`_hedef_kisi_sayisi`: rol != resident olanlar elenmez).
+  bool get _sakinAyrimiAnlamli =>
+      _secilenRoller.isEmpty || _secilenRoller.contains('resident');
 
   Future<void> _gorselSec() async {
     final secici = ref.read(imagePickerProvider);
@@ -109,6 +142,15 @@ class _AnketFormSayfasiState extends ConsumerState<AnketFormSayfasi> {
       setState(() => _hata = l10n.anketEnAzIki);
       return;
     }
+    // TARIH SIRASI ISTEMCIDE DE SORULUR: sunucu 422 veriyor ama
+    // yapilabilecek bir uyariyi aga havale etmek, kullaniciyi bekletip
+    // sonra reddetmek olurdu.
+    if (_baslangic != null &&
+        _bitis != null &&
+        !_bitis!.isAfter(_baslangic!)) {
+      setState(() => _hata = l10n.anketTarihAraligiGecersiz);
+      return;
+    }
     setState(() {
       _mesgul = true;
       _hata = null;
@@ -120,8 +162,14 @@ class _AnketFormSayfasiState extends ConsumerState<AnketFormSayfasi> {
             aciklama:
                 _aciklama.text.trim().isEmpty ? null : _aciklama.text.trim(),
             gorselKey: _gorselKey,
+            baslangicAt: _baslangic,
+            kapanisAt: _bitis,
             maddeler: maddeler,
             hedefRoller: _secilenRoller.toList(),
+            // AYRIM GORUNMUYORSA GONDERILMEZ: gizli kalmis bir deger
+            // sunucuya gitseydi kullanicinin gormedigi bir suzgec
+            // uygulanirdi.
+            hedefSakinTipi: _sakinAyrimiAnlamli ? _sakinTipi : null,
             anonim: _anonim,
           ));
       ref.invalidate(anketlerProvider);
@@ -188,6 +236,30 @@ class _AnketFormSayfasiState extends ConsumerState<AnketFormSayfasi> {
               ),
             ),
             const SizedBox(height: 8),
+            // TARIH ARALIGI — IKISI DE OPSIYONEL. Bos = hemen acik,
+            // suresiz; en sik kullanilan hal budur, bu yuzden zorunlu
+            // degil ve varsayilan da doldurulmuyor.
+            _TarihSatiri(
+              anahtar: 'anket-baslangic',
+              etiket: l10n.anketBaslangic,
+              deger: _baslangic,
+              onSec: () async {
+                final t = await _tarihSec(_baslangic);
+                if (t != null) setState(() => _baslangic = t);
+              },
+              onTemizle: () => setState(() => _baslangic = null),
+            ),
+            _TarihSatiri(
+              anahtar: 'anket-bitis',
+              etiket: l10n.anketBitis,
+              deger: _bitis,
+              onSec: () async {
+                final t = await _tarihSec(_bitis);
+                if (t != null) setState(() => _bitis = t);
+              },
+              onTemizle: () => setState(() => _bitis = null),
+            ),
+            const SizedBox(height: 8),
             Text(l10n.anketHedefKitle,
                 style: Theme.of(context).textTheme.labelLarge),
             Text(l10n.anketHedefHerkes,
@@ -210,6 +282,22 @@ class _AnketFormSayfasiState extends ConsumerState<AnketFormSayfasi> {
                   ),
               ],
             ),
+            // MALIK/KIRACI AYRIMI — yalniz sakin hedeflendiginde cizilir.
+            if (_sakinAyrimiAnlamli)
+              DropdownButtonFormField<String>(
+                key: const Key('anket-sakin-tipi'),
+                initialValue: _sakinTipi,
+                isExpanded: true,
+                decoration:
+                    InputDecoration(labelText: l10n.anketHedefSakinTipi),
+                items: [
+                  DropdownMenuItem(value: null, child: Text(l10n.anketSakinHepsi)),
+                  DropdownMenuItem(value: 'malik', child: Text(l10n.anketMalik)),
+                  DropdownMenuItem(
+                      value: 'kiraci', child: Text(l10n.anketKiraci)),
+                ],
+                onChanged: (v) => setState(() => _sakinTipi = v),
+              ),
             // ANONIMLIK — KAYDEDILDIKTEN SONRA DEGISTIRILEMEZ. Uyari
             // KAYDETMEDEN ONCE: sonradan gosterilen bir uyarinin degeri yok.
             SwitchListTile(
@@ -234,6 +322,56 @@ class _AnketFormSayfasiState extends ConsumerState<AnketFormSayfasi> {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Tarih satiri — SECILMEMISSE "Tarih seç", secilmisse deger + temizle.
+///
+/// Ayri widget: ayni yerlesim iki kez (baslangic/bitis) ciziliyor ve
+/// kopyalamak, birinde yapilan bir duzeltmenin otekinde unutulmasi
+/// demekti.
+class _TarihSatiri extends StatelessWidget {
+  const _TarihSatiri({
+    required this.anahtar,
+    required this.etiket,
+    required this.deger,
+    required this.onSec,
+    required this.onTemizle,
+  });
+
+  final String anahtar;
+  final String etiket;
+  final DateTime? deger;
+  final Future<void> Function() onSec;
+  final VoidCallback onTemizle;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return Row(
+      children: [
+        Expanded(
+          child: TextButton.icon(
+            key: Key(anahtar),
+            icon: const Icon(Icons.event_outlined),
+            label: Text(
+              deger == null
+                  ? '$etiket — ${l10n.anketTarihSec}'
+                  : '$etiket: ${tarihSaatBicimi(deger!, context.dilKodu)}',
+              overflow: TextOverflow.ellipsis,
+            ),
+            onPressed: () => onSec(),
+          ),
+        ),
+        if (deger != null)
+          IconButton(
+            key: Key('$anahtar-temizle'),
+            icon: const Icon(Icons.close),
+            tooltip: l10n.anketTarihTemizle,
+            onPressed: onTemizle,
+          ),
+      ],
     );
   }
 }

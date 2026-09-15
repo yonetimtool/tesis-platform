@@ -2253,5 +2253,26 @@
   "anketAnonimUyari": "The anonymity choice CANNOT be changed after saving.",
   "anketKapat": "Close poll",
   "anketOyDokumu": "Who voted for what",
-  "anketGorselSec": "Choose image"
+  "anketGorselSec": "Choose image",
+  "anketBaslangic": "Start (optional)",
+  "anketBitis": "End (optional)",
+  "anketTarihSec": "Pick a date",
+  "anketTarihTemizle": "Clear date",
+  "anketTarihAraligiGecersiz": "The end date must be after the start date.",
+  "anketHedefSakinTipi": "Owner/tenant filter",
+  "anketSakinHepsi": "No filter",
+  "anketMalik": "Owners only",
+  "anketKiraci": "Tenants only",
+  "anketSonuclar": "Results",
+  "anketOyAdet": "{sayi} votes",
+  "@anketOyAdet": {
+    "placeholders": {
+      "sayi": {
+        "type": "String"
+      }
+    }
+  },
+  "anketOyDokumuAnonim": "In an anonymous poll voter identities are not stored.",
+  "anketOyYok": "No votes yet.",
+  "anketDokumYuklenemedi": "The vote breakdown could not be loaded."
 }

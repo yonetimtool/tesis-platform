@@ -2253,5 +2253,26 @@
   "anketAnonimUyari": "لا يمكن تغيير خيار السرّية بعد الحفظ.",
   "anketKapat": "إغلاق الاستطلاع",
   "anketOyDokumu": "من صوّت لماذا",
-  "anketGorselSec": "اختيار صورة"
+  "anketGorselSec": "اختيار صورة",
+  "anketBaslangic": "البداية (اختياري)",
+  "anketBitis": "النهاية (اختياري)",
+  "anketTarihSec": "اختيار تاريخ",
+  "anketTarihTemizle": "إزالة التاريخ",
+  "anketTarihAraligiGecersiz": "يجب أن يكون تاريخ الانتهاء بعد تاريخ البدء.",
+  "anketHedefSakinTipi": "تصنيف المالك/المستأجر",
+  "anketSakinHepsi": "بدون تصنيف",
+  "anketMalik": "المُلّاك فقط",
+  "anketKiraci": "المستأجرون فقط",
+  "anketSonuclar": "النتائج",
+  "anketOyAdet": "{sayi} صوت",
+  "@anketOyAdet": {
+    "placeholders": {
+      "sayi": {
+        "type": "String"
+      }
+    }
+  },
+  "anketOyDokumuAnonim": "في الاستطلاع المجهول لا تُحفظ هويات المصوّتين.",
+  "anketOyYok": "لا توجد أصوات بعد.",
+  "anketDokumYuklenemedi": "تعذّر تحميل تفصيل الأصوات."
 }

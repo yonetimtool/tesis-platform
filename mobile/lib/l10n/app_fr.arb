@@ -2253,5 +2253,26 @@
   "anketAnonimUyari": "Le choix d'anonymat NE PEUT PAS être modifié après l'enregistrement.",
   "anketKapat": "Clôturer le sondage",
   "anketOyDokumu": "Qui a voté pour quoi",
-  "anketGorselSec": "Choisir une image"
+  "anketGorselSec": "Choisir une image",
+  "anketBaslangic": "Début (facultatif)",
+  "anketBitis": "Fin (facultatif)",
+  "anketTarihSec": "Choisir une date",
+  "anketTarihTemizle": "Effacer la date",
+  "anketTarihAraligiGecersiz": "La date de fin doit être postérieure à la date de début.",
+  "anketHedefSakinTipi": "Filtre propriétaire/locataire",
+  "anketSakinHepsi": "Aucun filtre",
+  "anketMalik": "Propriétaires uniquement",
+  "anketKiraci": "Locataires uniquement",
+  "anketSonuclar": "Résultats",
+  "anketOyAdet": "{sayi} voix",
+  "@anketOyAdet": {
+    "placeholders": {
+      "sayi": {
+        "type": "String"
+      }
+    }
+  },
+  "anketOyDokumuAnonim": "Dans un sondage anonyme, les identités ne sont pas enregistrées.",
+  "anketOyYok": "Aucun vote pour l'instant.",
+  "anketDokumYuklenemedi": "Le détail des votes n'a pas pu être chargé."
 }

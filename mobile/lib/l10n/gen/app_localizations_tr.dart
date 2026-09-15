@@ -6457,4 +6457,50 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get anketGorselSec => 'Görsel seç';
+
+  @override
+  String get anketBaslangic => 'Başlangıç (isteğe bağlı)';
+
+  @override
+  String get anketBitis => 'Bitiş (isteğe bağlı)';
+
+  @override
+  String get anketTarihSec => 'Tarih seç';
+
+  @override
+  String get anketTarihTemizle => 'Tarihi kaldır';
+
+  @override
+  String get anketTarihAraligiGecersiz =>
+      'Bitiş tarihi başlangıçtan sonra olmalı.';
+
+  @override
+  String get anketHedefSakinTipi => 'Malik/kiracı ayrımı';
+
+  @override
+  String get anketSakinHepsi => 'Ayrım yok';
+
+  @override
+  String get anketMalik => 'Yalnız malikler';
+
+  @override
+  String get anketKiraci => 'Yalnız kiracılar';
+
+  @override
+  String get anketSonuclar => 'Sonuçlar';
+
+  @override
+  String anketOyAdet(String sayi) {
+    return '$sayi oy';
+  }
+
+  @override
+  String get anketOyDokumuAnonim =>
+      'Anonim ankette kimler oy verdiği kaydedilmez.';
+
+  @override
+  String get anketOyYok => 'Henüz oy verilmedi.';
+
+  @override
+  String get anketDokumYuklenemedi => 'Oy dökümü yüklenemedi.';
 }

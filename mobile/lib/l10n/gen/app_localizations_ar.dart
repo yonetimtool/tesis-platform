@@ -6713,4 +6713,50 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get anketGorselSec => 'اختيار صورة';
+
+  @override
+  String get anketBaslangic => 'البداية (اختياري)';
+
+  @override
+  String get anketBitis => 'النهاية (اختياري)';
+
+  @override
+  String get anketTarihSec => 'اختيار تاريخ';
+
+  @override
+  String get anketTarihTemizle => 'إزالة التاريخ';
+
+  @override
+  String get anketTarihAraligiGecersiz =>
+      'يجب أن يكون تاريخ الانتهاء بعد تاريخ البدء.';
+
+  @override
+  String get anketHedefSakinTipi => 'تصنيف المالك/المستأجر';
+
+  @override
+  String get anketSakinHepsi => 'بدون تصنيف';
+
+  @override
+  String get anketMalik => 'المُلّاك فقط';
+
+  @override
+  String get anketKiraci => 'المستأجرون فقط';
+
+  @override
+  String get anketSonuclar => 'النتائج';
+
+  @override
+  String anketOyAdet(String sayi) {
+    return '$sayi صوت';
+  }
+
+  @override
+  String get anketOyDokumuAnonim =>
+      'في الاستطلاع المجهول لا تُحفظ هويات المصوّتين.';
+
+  @override
+  String get anketOyYok => 'لا توجد أصوات بعد.';
+
+  @override
+  String get anketDokumYuklenemedi => 'تعذّر تحميل تفصيل الأصوات.';
 }

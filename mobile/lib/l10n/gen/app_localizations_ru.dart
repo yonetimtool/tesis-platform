@@ -6722,4 +6722,50 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get anketGorselSec => 'Выбрать изображение';
+
+  @override
+  String get anketBaslangic => 'Начало (необязательно)';
+
+  @override
+  String get anketBitis => 'Окончание (необязательно)';
+
+  @override
+  String get anketTarihSec => 'Выбрать дату';
+
+  @override
+  String get anketTarihTemizle => 'Убрать дату';
+
+  @override
+  String get anketTarihAraligiGecersiz =>
+      'Дата окончания должна быть позже даты начала.';
+
+  @override
+  String get anketHedefSakinTipi => 'Фильтр «собственник/арендатор»';
+
+  @override
+  String get anketSakinHepsi => 'Без фильтра';
+
+  @override
+  String get anketMalik => 'Только собственники';
+
+  @override
+  String get anketKiraci => 'Только арендаторы';
+
+  @override
+  String get anketSonuclar => 'Результаты';
+
+  @override
+  String anketOyAdet(String sayi) {
+    return '$sayi голос(ов)';
+  }
+
+  @override
+  String get anketOyDokumuAnonim =>
+      'В анонимном опросе личности голосовавших не сохраняются.';
+
+  @override
+  String get anketOyYok => 'Голосов пока нет.';
+
+  @override
+  String get anketDokumYuklenemedi => 'Не удалось загрузить разбивку голосов.';
 }

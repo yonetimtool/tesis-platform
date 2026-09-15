@@ -6653,4 +6653,50 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get anketGorselSec => 'Choose image';
+
+  @override
+  String get anketBaslangic => 'Start (optional)';
+
+  @override
+  String get anketBitis => 'End (optional)';
+
+  @override
+  String get anketTarihSec => 'Pick a date';
+
+  @override
+  String get anketTarihTemizle => 'Clear date';
+
+  @override
+  String get anketTarihAraligiGecersiz =>
+      'The end date must be after the start date.';
+
+  @override
+  String get anketHedefSakinTipi => 'Owner/tenant filter';
+
+  @override
+  String get anketSakinHepsi => 'No filter';
+
+  @override
+  String get anketMalik => 'Owners only';
+
+  @override
+  String get anketKiraci => 'Tenants only';
+
+  @override
+  String get anketSonuclar => 'Results';
+
+  @override
+  String anketOyAdet(String sayi) {
+    return '$sayi votes';
+  }
+
+  @override
+  String get anketOyDokumuAnonim =>
+      'In an anonymous poll voter identities are not stored.';
+
+  @override
+  String get anketOyYok => 'No votes yet.';
+
+  @override
+  String get anketDokumYuklenemedi => 'The vote breakdown could not be loaded.';
 }
