@@ -206,3 +206,47 @@ vermez.
 | Kilit kırma (web) | `<Alan className="w-32">` geri kondu | kilit yakaladı ✔ |
 | Kilit kırma (mobil) | `SizedBox(132)` → `Expanded(flex:100)` | 2 test düştü ✔ |
 | Emoji bayrak desteği | özel font yok → sistem emoji fontu | Windows'ta bayrak YOK, harfe düşüyor |
+
+## §2 — Paketlerin yeniden üretimi (1.3.2+12)
+
+**Neden:** 1.3.1+11 paketleri P236 commit'inden (`8101f6af`) ÖNCE
+üretilmişti. P236 mobil tarafta da kod değiştirdi
+(`ulke_telefon.dart`: `etiket` artık `'$bayrak +$arama'`;
+`telefon_alani_widget.dart`: ISO kodu tekrarı kaldırıldı), dolayısıyla
+11 numaralı yapım bu değişikliği taşımıyor.
+
+**Seçilen numara: `1.3.2+12`.** Gerekçe: 11 üretildi ama mağazaya
+yüklenmedi; aynı `versionCode`'u farklı içerikle ikinci kez üretmek
+"hangi 11'i test ettim" karışıklığı yaratır. Sürüm adını da 1.3.1 →
+1.3.2 çektim: 1.3.1 adı zaten bir yapımla ilişkilendirilmişti.
+
+**Not — "yazılamıyor" kusuru web'e özgüydü.** Kök neden iki Tailwind
+`width` sınıfının çakışmasıydı; Flutter'da böyle bir çakışma yok.
+Mobilde eksik kalan tek şey ETİKET biçimiydi.
+
+### P221 doğrulamaları — ölçülen sonuçlar
+
+Tam mobil takım: `+2230 ~3` — **All tests passed** (paketten önce).
+
+| Kontrol | APK | AAB |
+|---|---|---|
+| Paket adı | `com.app.yonetiyor` | `com.app.yonetiyor` |
+| versionCode | `12` | `12` (manifest protobuf: `versionCode\x1a\x0212`) |
+| versionName | `1.3.2` | `1.3.2` |
+| minSdk / targetSdk | 24 / 36 | — |
+| Gömülü adres | `https://api.yonetio.site`, emülatör adresi YOK | aynı |
+| İmza | upload anahtarı, `CN=furkan kaymakci`, SHA-256 `dd1f5964…20f5` | `META-INF/UPLOAD.RSA` |
+| Bildirim sesleri | 3/3 (`yonetio_bildirim`, `_gurultu`, `_vardiya`) | 3/3 |
+| İkon | `ic_launcher` var, yapım bayat değil | 21 girdi |
+| Boyut | 75.1 MB | 72.2 MB |
+
+**P236 kodunun pakette olduğunun kanıtı:** `lib/arm64-v8a/libapp.so`
+içinde ülke tablosunun bayrak emojileri UTF-16LE olarak bulunuyor
+(🇹🇷 ve 🇩🇪 birer kez). Çalışma ağacı derleme anında `8101f6af`
+üzerinde ve temizdi (yalnız `pubspec.yaml` sürüm satırı + sürüm notları).
+
+**ÖLÇEMEDİĞİM:** AOT ikilisinden "eski etiket mi yeni etiket mi" ayırt
+edilemiyor — her iki biçimde de `TR` ve `🇹🇷` dizeleri tabloda duruyor,
+birleştirme çalışma zamanında oluyor. Etiket biçiminin doğruluğu widget
+testiyle ölçüldü (`p233_telefon_ulke_kodu_test.dart`: `🇩🇪 +49`), paket
+içeriğiyle değil. Ayrıca **cihazda kurulum yapılmadı** (emülatör yok).
