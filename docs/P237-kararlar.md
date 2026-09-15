@@ -649,3 +649,60 @@ Hepsi geri alındı, tekrar yeşil.
 
 **ÖLÇEMEDİĞİM:** gerçek cihazda takvim/saat seçici açılışı ve ekran
 okuyucu telaffuzu sürülmedi (emülatör yok).
+
+---
+
+## §5 — Yayın paketi 1.4.0+13
+
+### Sürüm numarası
+
+**`1.4.0+13`** — yama değil **minor**: bu sürüm iki YENİ ÖZELLİK
+getiriyor (görev alt adımları, yeniden yazılan anket sistemi). `1.3.x`
+serisi düzeltme sürümleriydi.
+
+### Sürüm notları neyi kapsıyor
+
+**1.3.0'dan beri biriken her şeyi.** Mağazadaki son TEYİTLİ sürüm
+`1.3.0+10`; `1.3.1+11` hiç yayınlanmadı, `1.3.2+12` üretildi ama
+yayınlandığı bana bildirilmedi. Bu yüzden P236 telefon alanı düzeltmesi
+de listede duruyor — 1.3.2 yayınlandıysa tekrar görünür (zararsız),
+yayınlanmadıysa eksik kalmaz.
+
+`docs/surum-notlari/1.4.0-play.md` — 7 dil, en uzunu **477/500**.
+`docs/surum-notlari/1.4.0-appstore.md` — 7 dil, en uzunu **1590/4000**.
+
+Play notu kısa madde işaretleri; App Store notu iki yeni özelliğin
+NASIL kullanıldığını anlatıyor (alan genişletilebiliyor).
+
+### P221 doğrulamaları — ölçülen
+
+| Kontrol | APK | AAB |
+|---|---|---|
+| Paket adı | `com.app.yonetiyor` | ✔ |
+| versionCode | `13` | `13` (manifest protobuf) |
+| versionName | `1.4.0` | `1.4.0` |
+| minSdk / targetSdk | 24 / 36 | — |
+| Gömülü adres | `https://api.yonetio.site`, emülatör adresi YOK | aynı |
+| İmza | upload anahtarı, `CN=furkan kaymakci`, SHA-256 `dd1f5964…20f5` | `META-INF/UPLOAD.*` (2 dosya) |
+| Bildirim sesleri | 3/3 | 3/3 |
+| İkon | `ic_launcher` var, yapım bayat değil | 21 girdi |
+| Boyut | 75.4 MB | 72.4 MB |
+
+### YENİ ÖZELLİKLER PAKETTE Mİ — ölçüldü
+
+`lib/arm64-v8a/libapp.so` içinde: `Alt adımlar`, `Anonim anket`,
+`Malik/kiracı ayrımı`, `Yalnız malikler`, `Adımlar sırayla tamamlanır`,
+`Kim neye oy verdi` — **hepsi var**.
+
+**Bir ölçüm hatası yaptım ve düzelttim:** ilk sonda hepsini UTF-16LE
+olarak aradı ve `Kim neye oy verdi`yi "YOK" raporladı. Sebep: **Dart AOT
+saf ASCII dizeleri TEK BAYTLI saklıyor**, özel karakterli olanları
+UTF-16. İki kodlamada da arayınca dize bulundu. (P236'da da benzer bir
+sınır vardı: AOT ikilisinden etiket biçimi ayırt edilemiyordu.)
+
+### ÖLÇEMEDİĞİM
+
+- Cihazda kurulum ve duman testi yapılmadı (emülatör yok) — **APK'yı
+  yükleyip test etmek kullanıcıda.**
+- `.ipa` bu makinede üretilemez (Mac gerekiyor); App Store notları hazır
+  ama paket kullanıcı tarafında derlenecek.
