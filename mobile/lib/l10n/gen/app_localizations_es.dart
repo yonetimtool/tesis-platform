@@ -6535,4 +6535,43 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get kurulumKonumAlt =>
       'Indique dónde está la instalación para que el tiempo sea correcto. Se configura en el panel web.';
+
+  @override
+  String get gorevAdimlar => 'Subpasos';
+
+  @override
+  String gorevAdimIlerleme(String tamam, String toplam) {
+    return '$tamam/$toplam pasos completados';
+  }
+
+  @override
+  String get gorevAdimEkle => 'Añadir paso';
+
+  @override
+  String get gorevAdimAd => 'Nombre del paso';
+
+  @override
+  String get gorevAdimYok => 'Esta tarea no tiene subpasos.';
+
+  @override
+  String get gorevAdimTamamla => 'Completar';
+
+  @override
+  String get gorevAdimGeriAl => 'Deshacer';
+
+  @override
+  String get gorevAdimSil => 'Eliminar paso';
+
+  @override
+  String get gorevAdimFotoZorunlu => 'Foto obligatoria';
+
+  @override
+  String get gorevAdimSirali => 'Los pasos se completan en orden';
+
+  @override
+  String get gorevAdimSatirIpucu =>
+      'Un paso por línea. También se pueden añadir después.';
+
+  @override
+  String get gorevAdimYuklenemedi => 'No se pudieron cargar los pasos.';
 }

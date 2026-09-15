@@ -6551,4 +6551,43 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get kurulumKonumAlt =>
       'Indiquez où se trouve le site pour que la météo soit correcte. Se règle depuis le panneau web.';
+
+  @override
+  String get gorevAdimlar => 'Sous-étapes';
+
+  @override
+  String gorevAdimIlerleme(String tamam, String toplam) {
+    return '$tamam/$toplam étapes terminées';
+  }
+
+  @override
+  String get gorevAdimEkle => 'Ajouter une étape';
+
+  @override
+  String get gorevAdimAd => 'Nom de l\'étape';
+
+  @override
+  String get gorevAdimYok => 'Cette tâche n\'a pas de sous-étapes.';
+
+  @override
+  String get gorevAdimTamamla => 'Terminer';
+
+  @override
+  String get gorevAdimGeriAl => 'Annuler';
+
+  @override
+  String get gorevAdimSil => 'Supprimer l\'étape';
+
+  @override
+  String get gorevAdimFotoZorunlu => 'Photo obligatoire';
+
+  @override
+  String get gorevAdimSirali => 'Les étapes sont terminées dans l\'ordre';
+
+  @override
+  String get gorevAdimSatirIpucu =>
+      'Une étape par ligne. Des étapes peuvent être ajoutées ensuite.';
+
+  @override
+  String get gorevAdimYuklenemedi => 'Impossible de charger les étapes.';
 }

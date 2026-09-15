@@ -16,7 +16,15 @@
  727,  45  74x17  Atandı
  781,  78  169x20  Göreve başla
  782,  52  18x18  U+E4CB
- 867,  36  242x20  Tamamlama geçmişi
- 899,  76  238x24  Alex Kim
- 919,  36  24x24  U+E159
- 923,  76  238x40  GG.AA.YYYY · SS:DD · OK
+ 867,  36  157x20  Alt adımlar
+ 887,  36  236x16  1/2 adım tamamlandı
+ 915,  76  238x24  A
+ 939,  76  238x60  Alex Kim · GG.AA.YYYY · SS:DD
+ 945,  36  24x24  U+E159
+1023,  36  24x24  U+E504
+1023,  76  206x24  B
+1023, 310  24x24  U+E156
+1099,  36  242x20  Tamamlama geçmişi
+1131,  76  238x24  Alex Kim
+1151,  36  24x24  U+E159
+1155,  76  238x40  GG.AA.YYYY · SS:DD · OK

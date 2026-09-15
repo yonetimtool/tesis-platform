@@ -2202,5 +2202,27 @@
   "vardiyaGrupOzeti": "{gun} يوم · {dilim}",
   "vardiyaOnizlemeSonuc": "سيتم إنشاء {eklenecek} وردية، {cakisan} تعارض",
   "kurulumKonum": "موقع المنشأة",
-  "kurulumKonumAlt": "أدخل موقع المنشأة ليكون الطقس صحيحًا. يُضبط من لوحة الويب."
+  "kurulumKonumAlt": "أدخل موقع المنشأة ليكون الطقس صحيحًا. يُضبط من لوحة الويب.",
+  "gorevAdimlar": "الخطوات الفرعية",
+  "gorevAdimIlerleme": "اكتملت {tamam}/{toplam} خطوة",
+  "@gorevAdimIlerleme": {
+    "placeholders": {
+      "tamam": {
+        "type": "String"
+      },
+      "toplam": {
+        "type": "String"
+      }
+    }
+  },
+  "gorevAdimEkle": "إضافة خطوة",
+  "gorevAdimAd": "اسم الخطوة",
+  "gorevAdimYok": "لا تحتوي هذه المهمة على خطوات فرعية.",
+  "gorevAdimTamamla": "إنهاء",
+  "gorevAdimGeriAl": "تراجع",
+  "gorevAdimSil": "حذف الخطوة",
+  "gorevAdimFotoZorunlu": "الصورة مطلوبة",
+  "gorevAdimSirali": "تُنجَز الخطوات بالترتيب",
+  "gorevAdimSatirIpucu": "خطوة واحدة في كل سطر. يمكن إضافة خطوات لاحقًا.",
+  "gorevAdimYuklenemedi": "تعذّر تحميل الخطوات."
 }

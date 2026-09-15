@@ -46,6 +46,12 @@ export const BILDIRIM_TIP: EnumHarita = {
   // yönetime) ve tek tipe indirmek, bildirim tercihinde birini kapatmayı
   // ötekini de kapatmak yapardı.
   gorev_tamamlandi: "bildirimTipGorevTamamlandi",
+  // (P237 §2, göç 0136) Alt adım ilerlemesi — EŞİKLİ/TOPLU gönderilir.
+  // `gorev_tamamlandi`dan ayrı: biri işin SONUNU, öteki ORTASINI bildirir;
+  // tek tipe indirmek "ilerlemeyi kapat, bitişi al" tercihini yok ederdi.
+  gorev_adim_ilerleme: "bildirimTipGorevAdimIlerleme",
+  // (P237 §3, göç 0137) Anket açılınca hedef kitleye bildirim.
+  anket_acildi: "bildirimTipAnketAcildi",
   aidat_borc: "bildirimTipAidatBorc",
   // (P191 §4) Banka eslestirmesi odemeyi isledi -> "odemeniz alindi".
   aidat_odendi: "bildirimTipAidatOdendi",

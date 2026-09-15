@@ -6564,6 +6564,141 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /tasks/{id}/adimlar:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    get:
+      tags: [tasks]
+      summary: Gorevin alt adimlari
+      responses:
+        "200":
+          description: Liste
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Page"
+                  - type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/TaskStep" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    post:
+      tags: [tasks]
+      summary: Alt adim ekle (admin + yonetici + guvenlik amiri)
+      description: >
+        (P237 §2) Adimlar gorev olustururken de (TaskCreate.adimlar)
+        SONRADAN da tanimlanabilir: sahada is verilirken bloklar bellidir
+        ama "D blogu da yapiver" sonradan cikar. PERSONEL ADIM EKLEYEMEZ —
+        adim isin TANIMIDIR; paydayi isi yapan belirleseydi "3/3
+        tamamlandi" olcusu denetlenemez olurdu.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TaskStepCreate" }
+      responses:
+        "201":
+          description: Olusturuldu
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TaskStep" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /tasks/{id}/adimlar/{step_id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+      - { name: step_id, in: path, required: true, schema: { type: string, format: uuid } }
+    patch:
+      tags: [tasks]
+      summary: Alt adimi duzenle (admin + yonetici + guvenlik amiri)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TaskStepUpdate" }
+      responses:
+        "200":
+          description: Guncellendi
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TaskStep" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+    delete:
+      tags: [tasks]
+      summary: Alt adimi sil (admin + yonetici + guvenlik amiri)
+      description: >
+        Tamamlanmis adim da silinebilir; izi `audit_log`da kalir
+        (tamamlayan + foto anahtari). Silmeyi yasaklamak, yanlis yazilmis
+        bir adimi sonsuza kadar listede tutmak olurdu.
+      responses:
+        "204": { description: Silindi }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /tasks/{id}/adimlar/{step_id}/tamamla:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+      - { name: step_id, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [tasks]
+      summary: Alt adimi tamamla (admin + yonetici + saha)
+      description: >
+        (P237 §2) Fotograf + not. Saha rolu YALNIZ kendine atanan gorevin
+        adimini kapatir. Ikinci tamamlama 409 (idempotent DEGIL: ikinci
+        cagri farkli bir fotograf tasiyor olabilir ve sessizce yutmak
+        yuklenen kaniti kaybetmek olurdu) — once /geri-al.
+        Gorev `adim_sirali` ise onceki adimlar bitmeden 409 doner.
+        Bildirim ESIKLIDIR: ilk adim ve 30 dakikada bir, arada biriken
+        ilerlemeyi TOPLU tasiyarak.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TaskStepTamamla" }
+      responses:
+        "200":
+          description: Adim (guncel)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TaskStep" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+  /tasks/{id}/adimlar/{step_id}/geri-al:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+      - { name: step_id, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [tasks]
+      summary: Alt adim tamamlamasini geri al (admin + yonetici + guvenlik amiri)
+      description: >
+        YALNIZ YONETIM: isi yapanin kendi izini temizleyebilmesi denetimi
+        bosa cikarirdi (gorev tamamlamasinin silinmesiyle ayni gerekce).
+      responses:
+        "200":
+          description: Adim (sifirlandi)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TaskStep" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /tasks/{id}/completions:
     parameters:
       - $ref: "#/components/parameters/PathId"
@@ -19655,6 +19790,23 @@ components:
           type: boolean
           description: "true ise completion foto_key olmadan kabul edilmez (422) — mobil §11 #2"
         aktif: { type: boolean }
+        adim_toplam:
+          type: integer
+          default: 0
+          description: "(P237 §2) Alt adim sayisi. LISTEDE de doner: yoneticinin ilk sorusu 'hangi gorev ne kadar ilerledi'."
+        adim_tamam:
+          type: integer
+          default: 0
+          description: "(P237 §2) Tamamlanan alt adim sayisi."
+        adim_sirali:
+          type: boolean
+          default: false
+          description: "(P237 §2) true ise onceki adimlar bitmeden sonraki tamamlanamaz (409 gorev_adimi_sira_bekliyor)."
+        adimlar:
+          type: array
+          nullable: true
+          description: "(P237 §2) YALNIZ GET /tasks/{id} doldurur; listede null."
+          items: { $ref: "#/components/schemas/TaskStep" }
         son_tarih:
           type: string
           format: date-time
@@ -19722,6 +19874,15 @@ components:
         sonraki_planlanan: { type: string, format: date-time, nullable: true }
         foto_zorunlu: { type: boolean, default: false }
         aktif: { type: boolean, default: true }
+        adimlar:
+          type: array
+          maxItems: 50
+          description: "(P237 §2) Alt adimlar gorevle BIRLIKTE tanimlanabilir; sonradan da eklenebilir (POST /tasks/{id}/adimlar)."
+          items: { $ref: "#/components/schemas/TaskStepCreate" }
+        adim_sirali:
+          type: boolean
+          default: false
+          description: "(P237 §2) Varsayilan SERBEST: sahada sira cogu zaman sabit degildir."
     TaskUpdate:
       type: object
       minProperties: 1
@@ -19735,6 +19896,7 @@ components:
         sonraki_planlanan: { type: string, format: date-time, nullable: true }
         foto_zorunlu: { type: boolean }
         aktif: { type: boolean }
+        adim_sirali: { type: boolean }
 
     TaskCategory:
       type: object
@@ -19756,6 +19918,54 @@ components:
       properties:
         ad: { type: string, minLength: 1, maxLength: 100 }
         aktif: { type: boolean }
+
+    TaskStep:
+      type: object
+      required: [id, task_id, sira, ad, foto_zorunlu]
+      description: >
+        (P237 §2) Gorevin ALT ADIMI. "A, B, C bloklarini temizle" gibi bir
+        is tek parca degildir; her adim kendi tamamlayanini, zamanini ve
+        FOTOGRAFINI tasir.
+      properties:
+        id: { type: string, format: uuid }
+        task_id: { type: string, format: uuid }
+        sira: { type: integer }
+        ad: { type: string, maxLength: 200 }
+        foto_zorunlu:
+          type: boolean
+          description: "Gorevden MIRAS; adim SIKILASTIRABILIR, gevsetemez (422)."
+        tamamlandi: { type: boolean, default: false }
+        tamamlayan_user_id: { type: string, format: uuid, nullable: true }
+        tamamlayan_ad: { type: string, nullable: true }
+        tamamlanma_zamani: { type: string, format: date-time, nullable: true }
+        foto_key: { type: string, nullable: true }
+        foto_url: { type: string, nullable: true }
+        notlar: { type: string, nullable: true }
+
+    TaskStepCreate:
+      type: object
+      required: [ad]
+      properties:
+        ad: { type: string, minLength: 1, maxLength: 200 }
+        sira: { type: integer, minimum: 0, default: 0 }
+        foto_zorunlu:
+          type: boolean
+          nullable: true
+          description: "null = gorevden miras."
+
+    TaskStepUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        ad: { type: string, minLength: 1, maxLength: 200 }
+        sira: { type: integer, minimum: 0 }
+        foto_zorunlu: { type: boolean }
+
+    TaskStepTamamla:
+      type: object
+      properties:
+        foto_key: { type: string, nullable: true }
+        notlar: { type: string, maxLength: 2000, nullable: true }
 
     TaskTamamlamaOzet:
       type: object

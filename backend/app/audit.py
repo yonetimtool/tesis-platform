@@ -175,6 +175,11 @@ class Action:
     TASK_START = "task_start"
     TASK_COMPLETE = "task_complete"
     TASK_REOPEN = "task_reopen"
+    # (P237 §2) ALT ADIMLAR — tanimlama ve tamamlama ayri izlenir.
+    TASK_STEP_EKLE = "task_step_ekle"
+    TASK_STEP_SIL = "task_step_sil"
+    TASK_STEP_TAMAMLA = "task_step_tamamla"
+    TASK_STEP_GERI_AL = "task_step_geri_al"
     GUVENLIK_MODU = "guvenlik_modu"
     UYARI_MANUEL = "uyari_manuel"
     PORTAL_YAYIN = "portal_yayin"

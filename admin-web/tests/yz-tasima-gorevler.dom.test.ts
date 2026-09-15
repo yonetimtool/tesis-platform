@@ -110,7 +110,13 @@ describe("(P160) Gorevler — OLU `tip` ZINCIRI GERI GELMESIN", () => {
     ciz(TasksPage);
     await userEvent.click(await screen.findByRole("button", { name: "Yeni görev" }));
     const modal = await screen.findByRole("dialog");
-    await userEvent.type(within(modal).getByLabelText(/Başlık|Ad/), "Yeni is");
+    // (P237 §2) ETIKET TAM ESLESIR: forma "Alt adımlar" alani eklendi ve
+    // gevsek `/Başlık|Ad/` deseni iki alani birden buluyordu. Bulucuyu
+    // daraltmak, testin OLCTUGU seyi degistirmez.
+    await userEvent.type(
+      within(modal).getByLabelText("Başlık"),
+      "Yeni is",
+    );
     await userEvent.click(within(modal).getByRole("button", { name: "Kaydet" }));
     await waitFor(() => {
       const post = cagrilar.find((c) => c.method === "POST");

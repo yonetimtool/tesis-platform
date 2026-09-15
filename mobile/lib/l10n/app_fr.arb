@@ -2202,5 +2202,27 @@
   "vardiyaGrupOzeti": "{gun} jours · {dilim}",
   "vardiyaOnizlemeSonuc": "{eklenecek} postes seront créés, {cakisan} conflits",
   "kurulumKonum": "Emplacement du site",
-  "kurulumKonumAlt": "Indiquez où se trouve le site pour que la météo soit correcte. Se règle depuis le panneau web."
+  "kurulumKonumAlt": "Indiquez où se trouve le site pour que la météo soit correcte. Se règle depuis le panneau web.",
+  "gorevAdimlar": "Sous-étapes",
+  "gorevAdimIlerleme": "{tamam}/{toplam} étapes terminées",
+  "@gorevAdimIlerleme": {
+    "placeholders": {
+      "tamam": {
+        "type": "String"
+      },
+      "toplam": {
+        "type": "String"
+      }
+    }
+  },
+  "gorevAdimEkle": "Ajouter une étape",
+  "gorevAdimAd": "Nom de l'étape",
+  "gorevAdimYok": "Cette tâche n'a pas de sous-étapes.",
+  "gorevAdimTamamla": "Terminer",
+  "gorevAdimGeriAl": "Annuler",
+  "gorevAdimSil": "Supprimer l'étape",
+  "gorevAdimFotoZorunlu": "Photo obligatoire",
+  "gorevAdimSirali": "Les étapes sont terminées dans l'ordre",
+  "gorevAdimSatirIpucu": "Une étape par ligne. Des étapes peuvent être ajoutées ensuite.",
+  "gorevAdimYuklenemedi": "Impossible de charger les étapes."
 }

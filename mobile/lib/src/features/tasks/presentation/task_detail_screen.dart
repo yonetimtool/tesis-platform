@@ -136,6 +136,16 @@ class TaskDetailScreen extends ConsumerWidget {
           // yapilan POST'un yanitindan cizilir; ekrani kapatinca
           // kaybolur ve baska kimse gormez. `GET /tasks/{id}/completions`
           // sunucuda VARDI ama HICBIR ISTEMCIDEN cagrilmiyordu.
+          // (P237 §2) ALT ADIMLAR — tamamlama gecmisinin USTUNDE.
+          //
+          // Acik gorevde sorulan soru "nerede kaldi"; tamamlanma gecmisi
+          // ise gorev BITTIKTEN sonra bakilan yer.
+          const SizedBox(height: 16),
+          _AdimlarKarti(
+            task: task,
+            tamamlayabilir: canComplete || canManage,
+            yonetebilir: canManage,
+          ),
           const SizedBox(height: 16),
           _TamamlamaGecmisi(taskId: task.id, yonetebilir: canManage),
         ],
@@ -703,6 +713,318 @@ class _TamamlamaGecmisi extends ConsumerWidget {
     );
   }
 }
+
+/// (P237 §2) ALT ADIMLAR KARTI — kim, ne zaman, fotografiyla.
+///
+/// =========================================================================
+/// NEDEN AYRI KART, TAMAMLAMA AKISINA GOMULU DEGIL
+/// =========================================================================
+/// `_PhotoStep`/`_NoteStep` GOREVIN TAMAMINI kapatan tek bir kanit toplar.
+/// Adim, isin BIR PARCASINI kapatir ve gorev acik kalir. Ikisini ayni
+/// akista birlestirmek, "fotograf yukledim" eyleminin hangi seyi
+/// kapattigini belirsizlestirirdi.
+class _AdimlarKarti extends ConsumerStatefulWidget {
+  const _AdimlarKarti({
+    required this.task,
+    required this.tamamlayabilir,
+    required this.yonetebilir,
+  });
+
+  final Task task;
+  final bool tamamlayabilir;
+  final bool yonetebilir;
+
+  @override
+  ConsumerState<_AdimlarKarti> createState() => _AdimlarKartiState();
+}
+
+class _AdimlarKartiState extends ConsumerState<_AdimlarKarti> {
+  final _yeniAdim = TextEditingController();
+  String? _mesgulAdim;
+  String? _hata;
+
+  @override
+  void dispose() {
+    _yeniAdim.dispose();
+    super.dispose();
+  }
+
+  Future<void> _tazele() async =>
+      ref.invalidate(gorevAdimlariProvider(widget.task.id));
+
+  Future<void> _sar(Future<void> Function() is_, {String? adimId}) async {
+    setState(() {
+      _mesgulAdim = adimId ?? '';
+      _hata = null;
+    });
+    try {
+      await is_();
+      await _tazele();
+    } on ApiException catch (e) {
+      if (mounted) setState(() => _hata = e.message);
+    } finally {
+      if (mounted) setState(() => _mesgulAdim = null);
+    }
+  }
+
+  /// FOTOGRAFLI TAMAMLAMA: presign -> PUT -> foto_key (tamamlama akisiyla
+  /// AYNI desen; kopyalanan sey yalnizca uc adi).
+  Future<void> _fotoylaTamamla(TaskStep adim) async {
+    final api = ref.read(taskApiProvider);
+    final secici = ref.read(imagePickerProvider);
+    final dosya = await secici.pickImage(
+      source: ImageSource.camera,
+      maxWidth: 1600,
+      imageQuality: 80,
+    );
+    if (dosya == null) return;
+    await _sar(
+      adimId: adim.id,
+      () async {
+        final tip = dosya.mimeType ?? 'image/jpeg';
+        final bilet = await api.presignUpload(
+          contentType: tip,
+          dosyaAdi: dosya.name,
+        );
+        await api.uploadPhoto(
+          ticket: bilet,
+          bytes: await dosya.readAsBytes(),
+          contentType: tip,
+        );
+        await api.completeStep(
+          widget.task.id,
+          adim.id,
+          fotoKey: bilet.fotoKey,
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final dil = context.dilKodu;
+    final api = ref.read(taskApiProvider);
+    final adimlar = ref.watch(gorevAdimlariProvider(widget.task.id));
+
+    return adimlar.when(
+      loading: () => const Card(
+        child: ListTile(
+          leading: SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+          title: Text(''),
+        ),
+      ),
+      // HATA EKRANI KIRMAZ: adimlar yuklenemese de tamamlama akisi surer.
+      error: (_, _) => Card(
+        child: ListTile(
+          leading: const Icon(Icons.error_outline),
+          title: Text(l10n.gorevAdimYuklenemedi),
+        ),
+      ),
+      data: (liste) {
+        final tamam = liste.where((a) => a.tamamlandi).length;
+        return Card(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                // BASLIK VE ILERLEME ALT ALTA, yan yana DEGIL.
+                //
+                // Ilk deneme `Row` idi ve YERLESIM KILIDI curuttu: uzun
+                // ceviriler (ru/de) ilerleme metnini buyutunce baslik
+                // 47 piksele sikisip DORT SATIRA kiriliyordu. Olcum:
+                // `mobile/test/yerlesim/gorev_detay.txt` "47x80".
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.gorevAdimlar,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    if (liste.isNotEmpty)
+                      Text(
+                        key: const Key('gorev-adim-ilerleme'),
+                        l10n.gorevAdimIlerleme('$tamam', '${liste.length}'),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                  ],
+                ),
+              ),
+              if (widget.task.adimSirali && liste.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+                  child: Text(
+                    l10n.gorevAdimSirali,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
+              if (liste.isEmpty)
+                ListTile(
+                  key: const Key('gorev-adim-bos'),
+                  leading: const Icon(Icons.checklist_outlined),
+                  title: Text(l10n.gorevAdimYok),
+                ),
+              for (final a in liste)
+                ListTile(
+                  key: Key('gorev-adim-${a.id}'),
+                  leading: Icon(
+                    a.tamamlandi
+                        ? Icons.check_circle
+                        : Icons.radio_button_unchecked,
+                    color: a.tamamlandi ? Colors.green : null,
+                  ),
+                  title: Text(a.ad),
+                  subtitle: a.tamamlandi
+                      ? Text([
+                          a.tamamlayanAd ?? l10n.ortakBilinmiyor,
+                          if (a.tamamlanmaZamani != null)
+                            tarihSaatBicimi(a.tamamlanmaZamani!, dil),
+                          if (a.notlar != null && a.notlar!.isNotEmpty)
+                            a.notlar!,
+                        ].join(' · '))
+                      : (a.fotoZorunlu
+                          ? Text(l10n.gorevAdimFotoZorunlu)
+                          : null),
+                  trailing: _mesgulAdim == a.id
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (a.fotoUrl != null)
+                              IconButton(
+                                key: Key('gorev-adim-foto-${a.id}'),
+                                icon: const Icon(Icons.photo_outlined),
+                                tooltip: l10n.gorevFotoKanitiVar,
+                                onPressed: () => showDialog<void>(
+                                  context: context,
+                                  builder: (ctx) => Dialog(
+                                    child: InteractiveViewer(
+                                      // TEK SATIR BILINCLI: kilit
+                                      // (`gorsel_cozme_denetimi_test`)
+                                      // `NetworkImage(` oncesindeki 60
+                                      // karaktere bakiyor; cok satira
+                                      // yayilan sarmalayici o pencereye
+                                      // girmiyor ve sahte ihlal uretiyor.
+                                      child: Image(image: sinirliGorsel(ctx, NetworkImage(a.fotoUrl!), 1080)),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            if (!a.tamamlandi && widget.tamamlayabilir)
+                              IconButton(
+                                key: Key('gorev-adim-tamamla-${a.id}'),
+                                icon: Icon(
+                                  a.fotoZorunlu
+                                      ? Icons.photo_camera_outlined
+                                      : Icons.check,
+                                ),
+                                tooltip: l10n.gorevAdimTamamla,
+                                onPressed: () => a.fotoZorunlu
+                                    ? _fotoylaTamamla(a)
+                                    : _sar(
+                                        adimId: a.id,
+                                        () => api
+                                            .completeStep(widget.task.id, a.id)
+                                            .then((_) {}),
+                                      ),
+                              ),
+                            if (a.tamamlandi && widget.yonetebilir)
+                              IconButton(
+                                key: Key('gorev-adim-geri-al-${a.id}'),
+                                icon: const Icon(Icons.undo),
+                                tooltip: l10n.gorevAdimGeriAl,
+                                onPressed: () => _sar(
+                                  adimId: a.id,
+                                  () => api
+                                      .reopenStep(widget.task.id, a.id)
+                                      .then((_) {}),
+                                ),
+                              ),
+                            if (widget.yonetebilir)
+                              IconButton(
+                                key: Key('gorev-adim-sil-${a.id}'),
+                                icon: const Icon(Icons.delete_outline),
+                                tooltip: l10n.gorevAdimSil,
+                                onPressed: () => _sar(
+                                  adimId: a.id,
+                                  () =>
+                                      api.deleteStep(widget.task.id, a.id),
+                                ),
+                              ),
+                          ],
+                        ),
+                ),
+              if (_hata != null)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: Text(
+                    _hata!,
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                ),
+              // ADIM EKLEME YALNIZ YONETIMDE: adim isin TANIMIDIR; paydayi
+              // isi yapan belirleseydi ilerleme olcusu denetlenemez olurdu.
+              if (widget.yonetebilir)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                  // ALAN VE DUGME ALT ALTA: yan yana `Row` 320dp'de
+                  // Almanca'da 68 piksel TASTI (olcum: bes eksen dar
+                  // ekran surusu). Etiketi kisaltmak yerine yerlesimi
+                  // degistirmek, uzun ceviri gelen her dilde calisir.
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      TextField(
+                        key: const Key('gorev-adim-yeni'),
+                        controller: _yeniAdim,
+                        decoration: InputDecoration(
+                          labelText: l10n.gorevAdimAd,
+                          isDense: true,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      TextButton.icon(
+                        key: const Key('gorev-adim-ekle'),
+                        icon: const Icon(Icons.add),
+                        label: Text(l10n.gorevAdimEkle),
+                        onPressed: () {
+                          final ad = _yeniAdim.text.trim();
+                          if (ad.isEmpty) return;
+                          _sar(() async {
+                            await api.addStep(
+                              widget.task.id,
+                              ad,
+                              sira: liste.length,
+                            );
+                            _yeniAdim.clear();
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// (P237 §2) Gorevin alt adimlari — `GET /tasks/{id}/adimlar`.
+final gorevAdimlariProvider =
+    FutureProvider.autoDispose.family<List<TaskStep>, String>(
+  (ref, taskId) => ref.watch(taskApiProvider).fetchSteps(taskId),
+);
 
 /// (P229 §3) Gorevin tamamlama gecmisi — `GET /tasks/{id}/completions`.
 final gorevTamamlamalariProvider =

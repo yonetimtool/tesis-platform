@@ -2202,5 +2202,27 @@
   "vardiyaGrupOzeti": "{gun} días · {dilim}",
   "vardiyaOnizlemeSonuc": "Se crearán {eklenecek} turnos, {cakisan} conflictos",
   "kurulumKonum": "Ubicación de la instalación",
-  "kurulumKonumAlt": "Indique dónde está la instalación para que el tiempo sea correcto. Se configura en el panel web."
+  "kurulumKonumAlt": "Indique dónde está la instalación para que el tiempo sea correcto. Se configura en el panel web.",
+  "gorevAdimlar": "Subpasos",
+  "gorevAdimIlerleme": "{tamam}/{toplam} pasos completados",
+  "@gorevAdimIlerleme": {
+    "placeholders": {
+      "tamam": {
+        "type": "String"
+      },
+      "toplam": {
+        "type": "String"
+      }
+    }
+  },
+  "gorevAdimEkle": "Añadir paso",
+  "gorevAdimAd": "Nombre del paso",
+  "gorevAdimYok": "Esta tarea no tiene subpasos.",
+  "gorevAdimTamamla": "Completar",
+  "gorevAdimGeriAl": "Deshacer",
+  "gorevAdimSil": "Eliminar paso",
+  "gorevAdimFotoZorunlu": "Foto obligatoria",
+  "gorevAdimSirali": "Los pasos se completan en orden",
+  "gorevAdimSatirIpucu": "Un paso por línea. También se pueden añadir después.",
+  "gorevAdimYuklenemedi": "No se pudieron cargar los pasos."
 }

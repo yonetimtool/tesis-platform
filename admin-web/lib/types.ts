@@ -540,8 +540,42 @@ export interface Task {
   gecikme_gun?: number | null;
   /** (P229 §3) EN YENI tamamlama ozeti — periyodik gorevde ilki degil sonuncusu. */
   son_tamamlama?: TaskTamamlamaOzet | null;
+  /** (P237 §2) Alt adim ilerlemesi — LISTEDE de doner. */
+  adim_toplam?: number;
+  adim_tamam?: number;
+  /** (P237 §2) true ise onceki adimlar bitmeden sonraki tamamlanamaz. */
+  adim_sirali?: boolean;
+  /** (P237 §2) YALNIZ `GET /tasks/{id}` doldurur; listede null. */
+  adimlar?: TaskStep[] | null;
   created_at: string;
   updated_at?: string | null;
+}
+
+/**
+ * (P237 §2) Gorevin ALT ADIMI.
+ *
+ * "A, B, C bloklarini temizle" tek parca bir is degildir; her adim kendi
+ * tamamlayanini, zamanini ve FOTOGRAFINI tasir.
+ */
+export interface TaskStep {
+  id: string;
+  task_id: string;
+  sira: number;
+  ad: string;
+  /** Gorevden MIRAS; adim SIKILASTIRABILIR, gevsetemez. */
+  foto_zorunlu: boolean;
+  tamamlandi: boolean;
+  tamamlayan_user_id?: string | null;
+  tamamlayan_ad?: string | null;
+  tamamlanma_zamani?: string | null;
+  foto_key?: string | null;
+  foto_url?: string | null;
+  notlar?: string | null;
+}
+
+export interface TaskStepList {
+  meta: PageMeta;
+  items: TaskStep[];
 }
 
 /**

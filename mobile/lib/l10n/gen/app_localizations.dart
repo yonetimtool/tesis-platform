@@ -11302,6 +11302,78 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Hava durumunun doğru görünmesi için tesisin bulunduğu yeri girin. Web panelinden ayarlanır.'**
   String get kurulumKonumAlt;
+
+  /// No description provided for @gorevAdimlar.
+  ///
+  /// In tr, this message translates to:
+  /// **'Alt adımlar'**
+  String get gorevAdimlar;
+
+  /// No description provided for @gorevAdimIlerleme.
+  ///
+  /// In tr, this message translates to:
+  /// **'{tamam}/{toplam} adım tamamlandı'**
+  String gorevAdimIlerleme(String tamam, String toplam);
+
+  /// No description provided for @gorevAdimEkle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Adım ekle'**
+  String get gorevAdimEkle;
+
+  /// No description provided for @gorevAdimAd.
+  ///
+  /// In tr, this message translates to:
+  /// **'Adım adı'**
+  String get gorevAdimAd;
+
+  /// No description provided for @gorevAdimYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu görev alt adımlara bölünmedi.'**
+  String get gorevAdimYok;
+
+  /// No description provided for @gorevAdimTamamla.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tamamla'**
+  String get gorevAdimTamamla;
+
+  /// No description provided for @gorevAdimGeriAl.
+  ///
+  /// In tr, this message translates to:
+  /// **'Geri al'**
+  String get gorevAdimGeriAl;
+
+  /// No description provided for @gorevAdimSil.
+  ///
+  /// In tr, this message translates to:
+  /// **'Adımı sil'**
+  String get gorevAdimSil;
+
+  /// No description provided for @gorevAdimFotoZorunlu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Fotoğraf zorunlu'**
+  String get gorevAdimFotoZorunlu;
+
+  /// No description provided for @gorevAdimSirali.
+  ///
+  /// In tr, this message translates to:
+  /// **'Adımlar sırayla tamamlanır'**
+  String get gorevAdimSirali;
+
+  /// No description provided for @gorevAdimSatirIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Her satır bir adım. Sonradan da eklenebilir.'**
+  String get gorevAdimSatirIpucu;
+
+  /// No description provided for @gorevAdimYuklenemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Adımlar yüklenemedi.'**
+  String get gorevAdimYuklenemedi;
 }
 
 class _AppLocalizationsDelegate

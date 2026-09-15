@@ -29,6 +29,7 @@ from ..models import (
     Task,
     TaskCategory,
     TaskCompletion,
+    TaskStep,
     Unit,
     UnitResident,
 )
@@ -41,6 +42,11 @@ from ..schemas import (
     TaskCreate,
     TaskListResponse,
     TaskOut,
+    TaskStepCreate,
+    TaskStepListResponse,
+    TaskStepOut,
+    TaskStepTamamla,
+    TaskStepUpdate,
     TaskTamamlamaOzet,
     TaskUpdate,
     TicketSummaryOut,
@@ -207,11 +213,90 @@ async def _adlari_doldur(db: AsyncSession, tasks: list[Task], outs: list[TaskOut
         out.olusturan_ad = adlar.get(t.olusturan_user_id)
 
 
+async def _adim_ilerlemesi_doldur(
+    db: AsyncSession, tasks: list[Task], outs: list[TaskOut]
+) -> None:
+    """(P237 §2) LISTEDE iki sayi: kac adim var, kaci bitti.
+
+    TEK SORGU (N+1 yok). Adimlarin KENDISI burada doldurulmaz — ayrinti
+    ucunun isi; listede yuz gorevin adim govdesini tasimak, yoneticinin
+    sordugu "hangisi ne kadar ilerledi" sorusuna gereksiz bir yuk olurdu.
+    """
+    if not tasks:
+        return
+    idler = [t.id for t in tasks]
+    sayimlar = {
+        tid: (toplam, tamam)
+        for tid, toplam, tamam in (
+            await db.execute(
+                select(
+                    TaskStep.task_id,
+                    func.count(),
+                    func.count(TaskStep.tamamlanma_zamani),
+                )
+                .where(TaskStep.task_id.in_(idler))
+                .group_by(TaskStep.task_id)
+            )
+        ).all()
+    }
+    for t, out in zip(tasks, outs):
+        toplam, tamam = sayimlar.get(t.id, (0, 0))
+        out.adim_toplam = toplam
+        out.adim_tamam = tamam
+
+
+async def _adimlari_getir(
+    db: AsyncSession, task_id: uuid.UUID
+) -> list[TaskStepOut]:
+    """Adimlar + TAMAMLAYANIN ADI. Ad ayri sorguyla cozulur: saha rolu
+    kullanici listesini goremez (403), id'yi kendi basina ada ceviremez."""
+    adimlar = (
+        await db.execute(
+            select(TaskStep)
+            .where(TaskStep.task_id == task_id)
+            .order_by(TaskStep.sira, TaskStep.created_at, TaskStep.id)
+        )
+    ).scalars().all()
+    kisi_ids = {
+        a.tamamlayan_user_id for a in adimlar if a.tamamlayan_user_id is not None
+    }
+    adlar: dict[uuid.UUID, str | None] = {}
+    if kisi_ids:
+        adlar = {
+            i: ad
+            for i, ad in (
+                await db.execute(
+                    select(AppUser.id, AppUser.ad).where(AppUser.id.in_(kisi_ids))
+                )
+            ).all()
+        }
+    return [
+        TaskStepOut(
+            id=a.id,
+            task_id=a.task_id,
+            sira=a.sira,
+            ad=a.ad,
+            foto_zorunlu=a.foto_zorunlu,
+            tamamlandi=a.tamamlanma_zamani is not None,
+            tamamlayan_user_id=a.tamamlayan_user_id,
+            tamamlayan_ad=adlar.get(a.tamamlayan_user_id)
+            if a.tamamlayan_user_id
+            else None,
+            tamamlanma_zamani=a.tamamlanma_zamani,
+            foto_key=a.foto_key,
+            foto_url=(presign_get(a.foto_key) if a.foto_key else None),
+            notlar=a.notlar,
+        )
+        for a in adimlar
+    ]
+
+
 async def _serialize_tasks(db: AsyncSession, tasks: list[Task]) -> list[TaskOut]:
     """Task -> TaskOut; talepten gelen gorevlere kompakt talep ozeti (ticket)
     ekler. Toplu (batch) sorgu ile N+1 yok. RLS: tum sorgular tenant-kapsamli."""
     outs = [TaskOut.model_validate(t) for t in tasks]
     await _tamamlama_ozeti_doldur(db, tasks, outs)
+    await _adim_ilerlemesi_doldur(db, tasks, outs)
     await _adlari_doldur(db, tasks, outs)
     # ZAMAN TEK YERDEN: her gorev icin ayri `now()` cagirmak, uzun bir
     # listede satirlarin FARKLI anlara gore degerlendirilmesi demekti.
@@ -411,7 +496,10 @@ async def get_task(
     user: AppUser = Depends(_READER),
 ) -> TaskOut:
     task = await _visible_task_or_404(db, task_id, user)
-    return (await _serialize_tasks(db, [task]))[0]
+    out = (await _serialize_tasks(db, [task]))[0]
+    # (P237 §2) AYRINTIDA ADIMLARIN KENDISI: kim, ne zaman, fotografiyla.
+    out.adimlar = await _adimlari_getir(db, task.id)
+    return out
 
 
 def _gorev_bildir(db, task: Task, user: AppUser) -> None:
@@ -503,16 +591,33 @@ async def create_task(
     # (P230 §4) KIM ATADI — "bu isi bana kim verdi" sorusunun yaniti.
     # GOVDEDEN ALINMAZ, oturumdan gelir: istemcinin gonderebilecegi bir
     # alan olsaydi baskasinin adina gorev atanabilirdi.
+    veri = body.model_dump(exclude_unset=True)
+    # (P237 §2) ADIMLAR AYRI TABLO — `Task(**veri)` icine gecmemeli.
+    adimlar = veri.pop("adimlar", [])
     obj = Task(
         tenant_id=user.tenant_id,
         olusturan_user_id=user.id,
-        **body.model_dump(exclude_unset=True),
+        **veri,
     )
     db.add(obj)
     try:
         await db.flush()
     except IntegrityError as exc:
         raise translate_integrity(exc)
+    for i, adim in enumerate(adimlar):
+        db.add(
+            TaskStep(
+                tenant_id=user.tenant_id,
+                task_id=obj.id,
+                ad=adim["ad"],
+                # SIRA VERILMEDIYSE GELIS SIRASI: hepsini 0 birakmak,
+                # "sirali" gorevlerde akisi rastgele yapardi.
+                sira=adim.get("sira") or i,
+                foto_zorunlu=_adim_foto_zorunlu(obj, adim.get("foto_zorunlu")),
+            )
+        )
+    if adimlar:
+        await db.flush()
     # (P191 §2) ATANAN KISIYE BILDIRIM. Bu cagri BUGUNE KADAR YOKTU: gorev
     # olusturuluyor, atanan kisinin telefonuna hicbir sey dusmuyordu — "gorev
     # olusturdum, bildirim gelmedi" sikayetinin kok nedeni. Atama YOKSA
@@ -861,3 +966,315 @@ async def start_task(
         # (olculdu). Tazeleme, degeri istemciye donmeden once cozer.
         await db.refresh(task)
     return (await _serialize_tasks(db, [task]))[0]
+
+
+# ========================== (P237 §2) ALT ADIMLAR ============================ #
+#
+# SAHA GERCEGI: "A, B, C bloklarini temizle" tek parca bir is degil. A
+# bitince fotograf yuklenir, o kisim kapanir, B'ye gecilir. Onceden
+# yonetici bu ilerlemeyi HICBIR YERDEN goremiyordu.
+#
+# ---------------------------------------------------------------------------
+# KARAR 1 — KIM ADIM TANIMLAR: YALNIZ YONETIM
+# ---------------------------------------------------------------------------
+# Personel kendi adimini EKLEYEMEZ. Adim, isin TANIMIDIR; tanimi yapan
+# taraf isi vereni baglar. Personel adim ekleyebilseydi "3/3 tamamlandi"
+# ifadesi anlamini yitirirdi: paydayi da isi yapan belirlerdi ve yonetici
+# ekranindaki ilerleme olcusu denetlenemez hale gelirdi. Personelin
+# soyleyecegi sey NOT alanina yazilir (her adimda serbest metin) —
+# bilgi kaybolmaz, olcu bozulmaz.
+#
+# ---------------------------------------------------------------------------
+# KARAR 2 — SIRA: VARSAYILAN SERBEST, ISTENIRSE ZORUNLU
+# ---------------------------------------------------------------------------
+# `task.adim_sirali` varsayilan `false`. Sahada sira cogu zaman sabit
+# degildir: B blogunun kapisi kilitliyse sirayi zorlamak isi TAMAMEN
+# durdururdu. Gercekten sirali isler de var ("once bosalt, sonra yika"),
+# onlar icin gorev duzeyinde bayrak.
+#
+# ---------------------------------------------------------------------------
+# KARAR 3 — FOTOGRAF: GOREVDEN MIRAS, ADIM SIKILASTIRABILIR
+# ---------------------------------------------------------------------------
+# Adim `foto_zorunlu` alani `None` gelirse gorevin bayragini alir. Adim
+# bunu `true` yapabilir, `false` YAPAMAZ: gorev "fotografsiz kapanmasin"
+# diyorsa bir adimin muaf olmasi kurali delerdi. Tur bazinda otomatik bir
+# kural KONMADI — kategoriler yonetici-tanimli (P?/A6), sabit bir tur
+# listesi olmadigi icin "temizlikte foto zorunlu" gibi bir esleme
+# uydurma olurdu.
+#
+# ---------------------------------------------------------------------------
+# KARAR 4 — BILDIRIM YORGUNLUGU: ESIK + TOPLAMA
+# ---------------------------------------------------------------------------
+# "Her guncellemede bildirim" yirmi adimlik gorevde yirmi bildirimdir; bu
+# noktadan sonra kullanici bildirimleri okumayi birakir ve ozellik kendi
+# kendini bozar. Kural:
+#   * ILK tamamlanan adim -> bildirim (is basladi, haber degeri yuksek),
+#   * SON adim -> zaten gorev tamamlanir, mevcut `gorev_tamamlandi` gider,
+#   * aradakiler -> ancak son adim bildiriminden bu yana
+#     `ADIM_BILDIRIM_ARALIK_DK` gectiyse, ve o bildirim ARADA BIRIKEN
+#     ilerlemeyi TOPLU tasir ("3/5 tamamlandi").
+# Yani bildirim sayisi adim sayisiyla degil, GECEN ZAMANLA artar.
+ADIM_BILDIRIM_ARALIK_DK = 30
+
+#: Adim uclarinin okuyucusu/yazari gorev uclariyla AYNI: ayri bir rol
+#: matrisi acmak, gorevde gorulemeyen bir adimin ayri uctan gorulmesi
+#: riskini dogururdu.
+_ADIM_YAZAR = _WRITER
+
+
+def _adim_foto_zorunlu(task: Task, istenen: bool | None) -> bool:
+    """Gorevden miras + SIKILASTIRMA serbest, gevsetme yasak."""
+    if istenen is None:
+        return task.foto_zorunlu
+    if task.foto_zorunlu and not istenen:
+        raise APIError(422, "validation_error", "gorev_adim_foto_gevsetilemez")
+    return istenen
+
+
+async def _adim_or_404(
+    db: AsyncSession, task: Task, step_id: uuid.UUID
+) -> TaskStep:
+    obj = (
+        await db.execute(
+            select(TaskStep).where(
+                TaskStep.id == step_id, TaskStep.task_id == task.id
+            )
+        )
+    ).scalar_one_or_none()
+    if obj is None:
+        raise APIError(404, "not_found", "gorev_adimi_bulunamadi")
+    return obj
+
+
+async def _adim_ilerleme_bildir(
+    db: AsyncSession, task: Task, user: AppUser, adim: TaskStep
+) -> None:
+    """(P237 §2) ESIKLI + TOPLU ilerleme bildirimi — bkz. KARAR 4."""
+    toplam, tamam = (
+        await db.execute(
+            select(func.count(), func.count(TaskStep.tamamlanma_zamani)).where(
+                TaskStep.task_id == task.id
+            )
+        )
+    ).one()
+    simdi = datetime.now(timezone.utc)
+    ilk = tamam == 1
+    son_bildirim = task.son_adim_bildirim_at
+    gecti = son_bildirim is None or (
+        simdi - son_bildirim >= timedelta(minutes=ADIM_BILDIRIM_ARALIK_DK)
+    )
+    if not (ilk or gecti):
+        return
+    hedefler = [
+        r
+        for (r,) in (
+            await db.execute(
+                select(AppUser.id).where(
+                    AppUser.role.in_(("admin", "yonetici")),
+                    AppUser.is_active.is_(True),
+                    AppUser.id != user.id,
+                )
+            )
+        ).all()
+    ]
+    task.son_adim_bildirim_at = simdi
+    if not hedefler:
+        return
+    veri = {
+        "baslik": task.ad,
+        "kisi": user.ad or "",
+        "adim": adim.ad,
+        "tamam": str(tamam),
+        "toplam": str(toplam),
+    }
+    dispatch_external(
+        "gorev_adim_ilerleme",
+        tenant_id=user.tenant_id,
+        target_user_ids=tuple(hedefler),
+        params=veri,
+        data={"tip": "gorev_adim_ilerleme", "task_id": str(task.id)},
+    )
+    sakin_bildirimi_yaz(
+        db,
+        tenant_id=user.tenant_id,
+        tip="gorev_adim_ilerleme",
+        user_ids=tuple(hedefler),
+        veri=veri,
+        task_id=task.id,
+    )
+
+
+@router.get("/{task_id}/adimlar", response_model=TaskStepListResponse)
+async def list_task_steps(
+    task_id: uuid.UUID,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_READER),
+) -> TaskStepListResponse:
+    task = await _visible_task_or_404(db, task_id, user)
+    items = await _adimlari_getir(db, task.id)
+    return TaskStepListResponse(
+        meta={"limit": len(items), "offset": 0, "total": len(items)}, items=items
+    )
+
+
+@router.post("/{task_id}/adimlar", response_model=TaskStepOut, status_code=201)
+async def add_task_step(
+    task_id: uuid.UUID,
+    body: TaskStepCreate,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_ADIM_YAZAR),
+) -> TaskStepOut:
+    """SONRADAN ADIM EKLEME — bilincli olarak acik (bkz. TaskCreate.adimlar)."""
+    task = await get_or_404(db, Task, task_id)
+    obj = TaskStep(
+        tenant_id=user.tenant_id,
+        task_id=task.id,
+        ad=body.ad,
+        sira=body.sira,
+        foto_zorunlu=_adim_foto_zorunlu(task, body.foto_zorunlu),
+    )
+    db.add(obj)
+    await db.flush()
+    await audit_user(
+        db, user, Action.TASK_STEP_EKLE,
+        resource_type="task", resource_id=task.id,
+        meta={"step_id": str(obj.id), "ad": obj.ad},
+    )
+    await db.refresh(obj)
+    return TaskStepOut(
+        id=obj.id, task_id=obj.task_id, sira=obj.sira, ad=obj.ad,
+        foto_zorunlu=obj.foto_zorunlu, tamamlandi=False,
+    )
+
+
+@router.patch("/{task_id}/adimlar/{step_id}", response_model=TaskStepOut)
+async def update_task_step(
+    task_id: uuid.UUID,
+    step_id: uuid.UUID,
+    body: TaskStepUpdate,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_ADIM_YAZAR),
+) -> TaskStepOut:
+    task = await get_or_404(db, Task, task_id)
+    obj = await _adim_or_404(db, task, step_id)
+    veri = body.model_dump(exclude_unset=True)
+    if "foto_zorunlu" in veri:
+        veri["foto_zorunlu"] = _adim_foto_zorunlu(task, veri["foto_zorunlu"])
+    for k, v in veri.items():
+        if v is not None:
+            setattr(obj, k, v)
+    obj.updated_at = func.now()
+    await db.flush()
+    return next(a for a in await _adimlari_getir(db, task.id) if a.id == obj.id)
+
+
+@router.delete("/{task_id}/adimlar/{step_id}", status_code=204)
+async def delete_task_step(
+    task_id: uuid.UUID,
+    step_id: uuid.UUID,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_ADIM_YAZAR),
+) -> Response:
+    """TAMAMLANMIS ADIM SILINEBILIR — ama izi denetim kaydinda kalir.
+
+    Silmeyi yasaklamak, yanlis yazilmis bir adimi sonsuza kadar listede
+    tutmak olurdu. Kayit `audit_log`a tamamlayaniyla birlikte yazilir.
+    """
+    task = await get_or_404(db, Task, task_id)
+    obj = await _adim_or_404(db, task, step_id)
+    await audit_user(
+        db, user, Action.TASK_STEP_SIL,
+        resource_type="task", resource_id=task.id,
+        meta={
+            "step_id": str(obj.id),
+            "ad": obj.ad,
+            "tamamlandi": obj.tamamlanma_zamani is not None,
+            "foto_key": obj.foto_key or "",
+        },
+    )
+    await db.delete(obj)
+    await db.flush()
+    return Response(status_code=204)
+
+
+@router.post("/{task_id}/adimlar/{step_id}/tamamla", response_model=TaskStepOut)
+async def complete_task_step(
+    task_id: uuid.UUID,
+    step_id: uuid.UUID,
+    body: TaskStepTamamla,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_COMPLETER),
+) -> TaskStepOut:
+    """ADIMI TAMAMLA — fotograf + not.
+
+    SAHA KISITI gorev tamamlamayla AYNI: saha rolu yalniz KENDINE atanan
+    gorevin adimini kapatir.
+    """
+    task = await _visible_task_or_404(db, task_id, user)
+    if user.role in _SAHA_ROLLERI and task.atanan_user_id != user.id:
+        raise APIError(403, "forbidden", "gorev_yalniz_atanan_tamamlar")
+    obj = await _adim_or_404(db, task, step_id)
+    if obj.tamamlanma_zamani is not None:
+        # IDEMPOTENT DEGIL, 409: ikinci tamamlama farkli bir fotograf
+        # tasiyor olabilir ve sessizce yutmak, yuklenen kaniti kaybetmek
+        # olurdu. Once geri al, sonra yeniden tamamla.
+        raise APIError(409, "conflict", "gorev_adimi_zaten_tamam")
+    if obj.foto_zorunlu and not body.foto_key:
+        raise APIError(422, "validation_error", "gorev_adimi_foto_zorunlu")
+    if task.adim_sirali:
+        onceki = (
+            await db.execute(
+                select(func.count()).select_from(TaskStep).where(
+                    TaskStep.task_id == task.id,
+                    TaskStep.sira < obj.sira,
+                    TaskStep.tamamlanma_zamani.is_(None),
+                )
+            )
+        ).scalar_one()
+        if onceki:
+            raise APIError(409, "conflict", "gorev_adimi_sira_bekliyor")
+
+    obj.tamamlayan_user_id = user.id
+    obj.tamamlanma_zamani = datetime.now(timezone.utc)
+    obj.foto_key = body.foto_key
+    obj.notlar = body.notlar
+    obj.updated_at = func.now()
+    await db.flush()
+    await audit_user(
+        db, user, Action.TASK_STEP_TAMAMLA,
+        resource_type="task", resource_id=task.id,
+        meta={"step_id": str(obj.id), "ad": obj.ad},
+    )
+    await _adim_ilerleme_bildir(db, task, user, obj)
+    await db.flush()
+    return next(a for a in await _adimlari_getir(db, task.id) if a.id == obj.id)
+
+
+@router.post("/{task_id}/adimlar/{step_id}/geri-al", response_model=TaskStepOut)
+async def reopen_task_step(
+    task_id: uuid.UUID,
+    step_id: uuid.UUID,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_ADIM_YAZAR),
+) -> TaskStepOut:
+    """YALNIZ YONETIM GERI ALIR — gorev tamamlamasinin silinmesiyle ayni
+    gerekce: isi yapanin kendi izini temizleyebilmesi denetimi bosa
+    cikarirdi."""
+    task = await get_or_404(db, Task, task_id)
+    obj = await _adim_or_404(db, task, step_id)
+    await audit_user(
+        db, user, Action.TASK_STEP_GERI_AL,
+        resource_type="task", resource_id=task.id,
+        meta={
+            "step_id": str(obj.id),
+            "tamamlayan_user_id": str(obj.tamamlayan_user_id or ""),
+            "foto_key": obj.foto_key or "",
+        },
+    )
+    obj.tamamlayan_user_id = None
+    obj.tamamlanma_zamani = None
+    obj.foto_key = None
+    obj.notlar = None
+    obj.updated_at = func.now()
+    await db.flush()
+    return next(a for a in await _adimlari_getir(db, task.id) if a.id == obj.id)

@@ -115,6 +115,12 @@ NOTIFICATION_TIP = ENUM(
     # sahadan yönetime) ve tek tipe indirmek, bildirim tercihinde birini
     # kapatmayı ötekini de kapatmak yapardı.
     "gorev_tamamlandi",
+    # (P237 §2, göç 0136) Adım adım ilerleme. `gorev_tamamlandi`dan AYRI:
+    # biri işin SONUNU, öteki ORTASINI bildirir; tek tipe indirmek
+    # "ilerlemeyi kapat, bitişi al" tercihini imkânsız kılardı.
+    "gorev_adim_ilerleme",
+    # (P237 §3, göç 0137) Anket açılınca HEDEF KİTLEYE bildirim.
+    "anket_acildi",
     name="notification_tip", create_type=False,
 )
 ASSET_KATEGORI = ENUM(
@@ -1269,6 +1275,62 @@ class Task(Base):
     oncelik: Mapped[str | None] = mapped_column(TASK_ONCELIK, nullable=True)
     ticket_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     aktif: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))
+    #: (P237 §2, goc 0136) ADIMLAR SIRALI MI. Varsayilan SERBEST: sahada
+    #: sira cogu zaman sabit degildir (A blogunun kapisi kilitli olabilir).
+    adim_sirali: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
+    #: (P237 §2, goc 0136) SON ADIM BILDIRIMI ANI — yorgunluk kapisi.
+    #: Her adimda push atmak yirmi adimlik gorevde yirmi bildirim demekti.
+    son_adim_bildirim_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    created_at = _created_at()
+    updated_at = _created_at()
+
+
+# --------------------------------------------------------------------------- #
+class TaskStep(Base):
+    """(P237 §2) Gorevin ALT ADIMI — "A blok", "B blok", "C blok".
+
+    Tamamlama alanlari ADIMIN USTUNDE: bir adim bir kez tamamlanir.
+    Bedeli periyodik gorevde adim gecmisinin tabloda kalmamasi; kalici iz
+    `audit_log`a yazilir (goc 0136 bas yorumu).
+    """
+
+    __tablename__ = "task_step"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_task_step_id_tenant"),
+        ForeignKeyConstraint(
+            ["task_id", "tenant_id"],
+            ["task.id", "task.tenant_id"],
+            ondelete="CASCADE",
+            name="fk_task_step_task",
+        ),
+        # DDL'de kolon-ozel ON DELETE SET NULL (tamamlayan_user_id).
+        ForeignKeyConstraint(
+            ["tamamlayan_user_id", "tenant_id"],
+            ["app_user.id", "app_user.tenant_id"],
+            ondelete="SET NULL",
+            name="fk_task_step_user",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    task_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    sira: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
+    ad: Mapped[str] = mapped_column(Text, nullable=False)
+    foto_zorunlu: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
+    tamamlayan_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    tamamlanma_zamani = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    foto_key: Mapped[str | None] = mapped_column(Text, nullable=True)
+    foto_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    notlar: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at = _created_at()
     updated_at = _created_at()
 
@@ -4227,7 +4289,25 @@ class Anket(Base):
     )
     baslik: Mapped[str] = mapped_column(Text, nullable=False)
     aciklama: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: (P237 §3, goc 0137) Gorsel — nesne deposu anahtari; URL presign ile.
+    gorsel_key: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: (P237 §3) TARIH ARALIGI — ikisi de OPSIYONEL. Bos = hemen acik,
+    #: suresiz; en sik kullanilan hal budur.
+    baslangic_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     kapanis_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    #: (P237 §3) HEDEF KITLE — rol dizisi. NULL/bos = HERKES.
+    hedef_roller: Mapped[list[str] | None] = mapped_column(
+        ARRAY(Text), nullable=True
+    )
+    #: (P237 §3) Malik/kiraci ayrimi; yalniz `resident` hedeflendiginde
+    #: anlamli. NULL = ayrim yapma.
+    hedef_sakin_tipi: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: (P237 §3) ANONIM ANKET — SONRADAN DEGISTIRILEMEZ (goc 0137: bilesik
+    #: FK + tetikleyici). Anonimse `anket_oy.user_id` NULL olmak ZORUNDA;
+    #: bunu bir CHECK kisiti zorlar, uygulama katmani degil.
+    anonim: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
     aktif: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("true")
     )
@@ -4259,13 +4339,18 @@ class AnketSecenek(Base):
 class AnketOy(Base):
     """(P38) TEK OY, DEGISTIRILEMEZ.
 
-    `user_id` tek-oy kuralini zorlamak icin sarttir; hicbir uc oy verenin
-    kimligini DONDURMEZ (`UnitComplaint.complainant_user_id` deseni).
+    (P237 §3) ANONIM ANKETTE `user_id` **NULL**dur ve bunu veritabani
+    zorlar: `anket_oy (anket_id, anonim)` bilesik FK ile `anket`e baglidir
+    ve `ck_anket_oy_anonim_kimliksiz` anonim satirda kimlik YAZILMASINA
+    izin vermez. Tek oy kurali o durumda `AnketKatilim` defterinde tutulur
+    — o defter KIMIN oy verdigini bilir, NEYE oy verdigini bilmez.
     """
 
     __tablename__ = "anket_oy"
     __table_args__ = (
-        UniqueConstraint("tenant_id", "anket_id", "user_id", name="uq_anket_oy"),
+        # (P237 §3, goc 0137) Benzersizlik artik KISMI INDEKSTE
+        # (`uq_anket_oy_adli`, WHERE user_id IS NOT NULL): anonim oylarda
+        # user_id NULL ve PostgreSQL'de NULL'lar cakismaz.
         ForeignKeyConstraint(
             ["anket_id", "tenant_id"],
             ["anket.id", "anket.tenant_id"],
@@ -4292,8 +4377,52 @@ class AnketOy(Base):
     )
     anket_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     secenek_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
-    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    #: ANONIM ANKETTE NULL — veritabani kisiti zorlar.
+    user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    #: `anket.anonim`in DENORMALIZE kopyasi; CHECK kisitinin ankete
+    #: ulasabilmesi icin sart (bkz. goc 0137 bas yorumu).
+    anonim: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
     created_at = _created_at()
+
+
+class AnketKatilim(Base):
+    """(P237 §3) KIM oy verdi — NEYE oy verdigini BILMEZ.
+
+    Anonim ankette tek-oy kuralini zorlayan tek yapi budur. Iki defter
+    arasinda baglanti yoktur; `gun` alani zaman damgasini GUNE yuvarlar
+    ki siralama uzerinden eslestirme yapilamasin.
+    """
+
+    __tablename__ = "anket_katilim"
+    __table_args__ = (
+        UniqueConstraint(
+            "tenant_id", "anket_id", "user_id", name="uq_anket_katilim"
+        ),
+        ForeignKeyConstraint(
+            ["anket_id", "tenant_id"],
+            ["anket.id", "anket.tenant_id"],
+            ondelete="CASCADE",
+            name="fk_anket_katilim_anket",
+        ),
+        ForeignKeyConstraint(
+            ["user_id", "tenant_id"],
+            ["app_user.id", "app_user.tenant_id"],
+            ondelete="CASCADE",
+            name="fk_anket_katilim_user",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    anket_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    gun = mapped_column(Date, nullable=False)
 
 
 class TanitimIletisim(Base):

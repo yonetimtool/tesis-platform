@@ -6560,4 +6560,43 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get kurulumKonumAlt =>
       'Enter where the site is so the weather is correct. Set it from the web panel.';
+
+  @override
+  String get gorevAdimlar => 'Sub-steps';
+
+  @override
+  String gorevAdimIlerleme(String tamam, String toplam) {
+    return '$tamam/$toplam steps completed';
+  }
+
+  @override
+  String get gorevAdimEkle => 'Add step';
+
+  @override
+  String get gorevAdimAd => 'Step name';
+
+  @override
+  String get gorevAdimYok => 'This task has no sub-steps.';
+
+  @override
+  String get gorevAdimTamamla => 'Complete';
+
+  @override
+  String get gorevAdimGeriAl => 'Undo';
+
+  @override
+  String get gorevAdimSil => 'Delete step';
+
+  @override
+  String get gorevAdimFotoZorunlu => 'Photo required';
+
+  @override
+  String get gorevAdimSirali => 'Steps are completed in order';
+
+  @override
+  String get gorevAdimSatirIpucu =>
+      'One step per line. Steps can be added later too.';
+
+  @override
+  String get gorevAdimYuklenemedi => 'Steps could not be loaded.';
 }

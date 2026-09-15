@@ -719,6 +719,31 @@ METINLER: dict[str, PushMetni] = {
         },
         params=('kisi', 'baslik'),
     ),
+    # (P237 §2) ADIM ILERLEMESI — ESIKLI/TOPLU gonderilir (bkz. tasks.py
+    # KARAR 4). Govde SON BITEN ADIMI ve TOPLAM ILERLEMEYI birlikte tasir:
+    # bildirimler arasinda birden fazla adim bitmis olabilir, yalniz
+    # sonuncuyu yazmak aradaki ilerlemeyi gizlerdi.
+    "gorev_adim_ilerleme": PushMetni(
+        baslik={
+            "tr": "Görev ilerliyor",
+            "en": "Task progress",
+            "ar": "تقدم المهمة",
+            "ru": "Ход задачи",
+            "de": "Aufgabenfortschritt",
+            "fr": "Avancement de la tâche",
+            "es": "Progreso de la tarea",
+        },
+        govde={
+            "tr": "{baslik}: {tamam}/{toplam} adım tamamlandı — son: {adim} ({kisi})",
+            "en": "{baslik}: {tamam}/{toplam} steps done — latest: {adim} ({kisi})",
+            "ar": "{baslik}: {tamam}/{toplam} خطوة مكتملة — الأخيرة: {adim} ({kisi})",
+            "ru": "{baslik}: выполнено {tamam}/{toplam} шагов — последний: {adim} ({kisi})",
+            "de": "{baslik}: {tamam}/{toplam} Schritte erledigt — zuletzt: {adim} ({kisi})",
+            "fr": "{baslik} : {tamam}/{toplam} étapes terminées — dernière : {adim} ({kisi})",
+            "es": "{baslik}: {tamam}/{toplam} pasos completados — último: {adim} ({kisi})",
+        },
+        params=('baslik', 'tamam', 'toplam', 'adim', 'kisi'),
+    ),
     "aidat_borc": PushMetni(
         baslik={
             "tr": "Yeni borç",

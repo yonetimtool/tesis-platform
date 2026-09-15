@@ -2202,5 +2202,27 @@
   "vardiyaGrupOzeti": "{gun} Tage · {dilim}",
   "vardiyaOnizlemeSonuc": "{eklenecek} Schichten werden erstellt, {cakisan} Konflikte",
   "kurulumKonum": "Standort der Anlage",
-  "kurulumKonumAlt": "Geben Sie den Standort an, damit das Wetter stimmt. Einstellung im Webpanel."
+  "kurulumKonumAlt": "Geben Sie den Standort an, damit das Wetter stimmt. Einstellung im Webpanel.",
+  "gorevAdimlar": "Teilschritte",
+  "gorevAdimIlerleme": "{tamam}/{toplam} Schritte abgeschlossen",
+  "@gorevAdimIlerleme": {
+    "placeholders": {
+      "tamam": {
+        "type": "String"
+      },
+      "toplam": {
+        "type": "String"
+      }
+    }
+  },
+  "gorevAdimEkle": "Schritt hinzufügen",
+  "gorevAdimAd": "Schrittname",
+  "gorevAdimYok": "Diese Aufgabe hat keine Teilschritte.",
+  "gorevAdimTamamla": "Abschließen",
+  "gorevAdimGeriAl": "Rückgängig",
+  "gorevAdimSil": "Schritt löschen",
+  "gorevAdimFotoZorunlu": "Foto erforderlich",
+  "gorevAdimSirali": "Schritte werden der Reihe nach abgeschlossen",
+  "gorevAdimSatirIpucu": "Ein Schritt pro Zeile. Schritte können später ergänzt werden.",
+  "gorevAdimYuklenemedi": "Schritte konnten nicht geladen werden."
 }

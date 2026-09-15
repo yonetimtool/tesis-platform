@@ -162,3 +162,165 @@ düğme" der. Kalan ikonlu eylemlerde (`refresh` vb.) `tooltip`, Flutter'da
 `Tooltip` widget'ı üzerinden `Semantics(label:)` kurar. **Ölçemediğim:**
 gerçek bir ekran okuyucuyla (TalkBack/VoiceOver) cihazda dinlemedim —
 bu makinede emülatör yok.
+
+---
+
+## §2 — Görev süreç takibi (alt adımlar)
+
+### §2.0 ÖNCE ÖLÇÜM — alt adım kavramı var mıydı?
+
+**YOKTU.** Ölçülen:
+
+| Yapı | Durum |
+|---|---|
+| `task` tablosu | işi TEK PARÇA taşıyor: ad, açıklama, atanan, foto_zorunlu, son_tarih, başlama |
+| `task_completion` | görev başına TEK kapanış kaydı (foto + not + NFC + GPS) |
+| Alt adım tablosu / kolonu | **hiç yok** |
+| İlerleme göstergesi | yok — yalnızca "tamamlandı / tamamlanmadı" |
+
+Yani "A bitti, B'ye geçildi" bilgisi hiçbir yerde tutulamıyordu. Göç
+**0136** bunu açıyor.
+
+### §2 TASARIM KARARLARI
+
+| Soru | Karar | Gerekçe |
+|---|---|---|
+| Adımlar ne zaman tanımlanır? | **İkisi de**: görev oluştururken (`TaskCreate.adimlar`) VE sonradan (`POST /tasks/{id}/adimlar`) | Sahada iş verilirken bloklar bellidir, ama "D bloğu da yapıver" sonradan çıkar. Yalnız oluşturma anında izin vermek, o isteği **yeni bir görev açmaya** zorlardı ve ilerleme iki yere bölünürdü |
+| Personel kendi adımını ekleyebilir mi? | **HAYIR** | Adım, işin TANIMIDIR. Personel adım ekleyebilseydi "3/3 tamamlandı" ifadesi anlamını yitirirdi: **paydayı da işi yapan belirlerdi** ve yönetici ekranındaki ilerleme ölçüsü denetlenemez olurdu. Personelin söyleyeceği şey **not** alanına yazılır — bilgi kaybolmaz, ölçü bozulmaz |
+| Fotoğraf zorunlu mu? Türe göre değişir mi? | Görevden **MİRAS**; adım **sıkılaştırabilir, gevşetemez**. Türe göre otomatik kural **KONMADI** | Görev "fotoğrafsız kapanmasın" diyorsa bir adımın muaf olması kuralı delerdi (422 `gorev_adim_foto_gevsetilemez`). Tür bazında kural konmadı çünkü kategoriler **yönetici-tanımlı** (sabit tür enum'u P?/A6'da kaldırılmıştı); "temizlikte foto zorunlu" gibi bir eşleme uydurma olurdu |
+| Adımlar sıralı mı? | Varsayılan **SERBEST**, görev düzeyinde `adim_sirali` bayrağı | Sahada sıra çoğu zaman sabit değildir: B bloğunun kapısı kilitliyse sırayı zorlamak işi **tamamen durdururdu**. Gerçekten sıralı işler de var ("önce boşalt, sonra yıka") |
+| Her adımda bildirim yorgunluk yaratır mı? | **EVET** — eşik + toplama uygulandı | Yirmi adımlık görevde yirmi bildirim, kullanıcının bildirimleri okumayı bırakması demektir; özellik kendi kendini bozar |
+
+### §2 BİLDİRİM YORGUNLUĞU ÇÖZÜMÜ
+
+Kural (`ADIM_BILDIRIM_ARALIK_DK = 30`):
+
+- **İlk** tamamlanan adım → bildirim (iş başladı, haber değeri yüksek)
+- **Son** adım → görev zaten tamamlanır, mevcut `gorev_tamamlandi` gider
+- **Aradakiler** → yalnızca son adım bildiriminden 30 dk geçtiyse; ve o
+  bildirim arada biriken ilerlemeyi **toplu** taşır:
+  `"Temizlik: 3/5 adım tamamlandı — son: B blok (Ali)"`
+
+Yani **bildirim sayısı adım sayısıyla değil, geçen zamanla artar.**
+
+Yeni bildirim tipi `gorev_adim_ilerleme` açıldı; `gorev_tamamlandi`ya
+bindirilmedi çünkü biri işin SONUNU, öteki ORTASINI bildirir — tek tipe
+indirmek, bildirim tercihinde "ilerlemeyi kapat, bitişi al" demeyi
+imkânsız kılardı (0131'in aynı gerekçesi).
+
+### §2 VERİ MODELİ (göç 0136)
+
+`task_step`: `task_id`, `sira`, `ad`, `foto_zorunlu`, `tamamlayan_user_id`,
+`tamamlanma_zamani`, `foto_key`, `foto_url`, `notlar`. RLS ENABLE+FORCE +
+tenant politikası (platform tablosu DEĞİL). `task`'a iki kolon:
+`adim_sirali`, `son_adim_bildirim_at`.
+
+**JSON değil ayrı tablo:** her adım kendi tamamlayanını, zamanını ve
+fotoğrafını taşıyor; bunlar sorgulanacak, yetkilendirilecek (RLS) ve
+raporlanacak alanlar. JSON'da "kim bitirdi" bir FK ile değil bir metinle
+yanıtlanırdı.
+
+**Bedeli açıkça:** periyodik görevde periyot ilerleyince adım-düzeyi iz
+tabloda kalmaz; kalıcı iz `audit_log`'da (foto anahtarı dahil) ve
+görev-düzeyi `task_completion` kaydında. Periyodik görev + adım
+birlikteliği nadir; bu bedel bilinçli.
+
+### §2 UÇLAR
+
+`GET|POST /tasks/{id}/adimlar`, `PATCH|DELETE /tasks/{id}/adimlar/{step_id}`,
+`POST .../tamamla`, `POST .../geri-al`. Tamamlama `_COMPLETER`
+(admin+yönetici+saha), tanımlama `_WRITER` (admin+yönetici+güvenlik amiri).
+
+İkinci tamamlama **409, idempotent değil**: ikinci çağrı farklı bir
+fotoğraf taşıyor olabilir ve sessizce yutmak yüklenen kanıtı kaybetmek
+olurdu. Geri alma **yalnız yönetim**: işi yapanın kendi izini
+temizleyebilmesi denetimi boşa çıkarırdı.
+
+### §2 İKİ YÜZEY (parite)
+
+| | Web | Mobil |
+|---|---|---|
+| Görev oluştururken adım tanımı | `CokSatir`, satır başına bir adım | `TextFormField`, satır başına bir adım |
+| `adim_sirali` seçimi | onay kutusu | `SwitchListTile` |
+| Listede ilerleme | yeni "Alt adımlar" sütunu (`2/3`) | görev kartında satır (`2/3`) |
+| Ayrıntıda adım listesi | `GorevAdimlari` kartı | `_AdimlarKarti` |
+| Adım ekleme/silme | ✔ (yönetim) | ✔ (yönetim) |
+| Fotoğrafla tamamlama | presign → PUT → `foto_key` | kamera → presign → PUT → `foto_key` |
+| Geri alma | ✔ (yönetim) | ✔ (yönetim) |
+| Fotoğrafı büyütüp görme | yeni sekmede | `InteractiveViewer` + `sinirliGorsel` |
+
+**Düzenlemede adımlar GÖNDERİLMEZ** (iki yüzeyde de): gönderilseydi
+mevcut adımlar — tamamlanmışlar dahil — ezilirdi. Düzenleme, ayrıntı
+ekranındaki tek tek ekleme/silme akışından geçer ve orada her işlem
+denetim kaydına yazılır.
+
+**Adımı olmayan görevde "0/0" yazılmaz**, tire/hiç çizilmez: bölünmemiş
+bir işi hiç ilerlememiş gibi göstermek yanlış olurdu.
+
+### §2 DOĞRULAMA — brief'in istediği akış BİREBİR sürüldü
+
+`backend/tests/test_p237_gorev_adimlari.py` — **9 test, hepsi yeşil**,
+gerçek API konteynerine karşı (bu depoda testler canlı sunucuya gider).
+
+| Ölçüm | Sonuç |
+|---|---|
+| Görevi ÜÇ adıma böl | `adim_toplam=3, adim_tamam=0` ✔ |
+| İKİSİNİ fotoğrafla tamamla | iki `tamamla` çağrısı 200 ✔ |
+| Yöneticide ilerlemeyi gör | `2/3`; A ve B tamam, C değil ✔ |
+| Kim bitirdi | `tamamlayan_user_id` = guard, `tamamlayan_ad` dolu ✔ |
+| Ne zaman | `tamamlanma_zamani` dolu ✔ |
+| Fotoğrafıyla | `foto_url` (presigned) dolu ✔ |
+| Listede de görünür | liste satırında `2/3`, `adimlar` null ✔ |
+| Sonradan adım ekleme | 201 ✔ |
+| Personel adım ekleyemez | **403** ✔ |
+| Foto mirası | adım `foto_zorunlu=true` devraldı ✔ |
+| Fotosuz tamamlama | **422** ✔ |
+| Foto gevşetme | **422** ✔ |
+| Serbest sırada atlama | 200 ✔ |
+| Sıralı görevde atlama | **409**, sırayla 200+200 ✔ |
+| İkinci tamamlama | **409** ✔ |
+| Personel geri alamaz | **403** ✔, yönetim 200 ✔ |
+| Kendine atanmayan görev | **404** ✔ |
+| **Bildirim eşiği**: 5 adım peş peşe | bildirim defterinde artış **≤ 1** ✔ |
+
+Mobil: `test/p237_gorev_adimlari_test.dart` — 10 test. Dikiş yeri **taklit
+HTTP adapter'ında** (P198/P200/P229 dersi): `TaskApi`yi taklit etmek
+gövdeyi kuran/çözen katmanı ölçmezdi. Yol, metot ve gövde gerçekten
+üretiliyor ve doğrulanıyor.
+
+Web: `tests/p237-gorev-adimlari.dom.test.ts` — 5 test; ilerleme metni,
+fotoğraf zorunlu adımda **dosya seçici** (düz "Tamamla" düğmesi değil —
+o 422 üretirdi), doğru URL'e POST, boş adda istek atılmaması, adımsız
+görevde açıklama.
+
+**ÖLÇEMEDİĞİM:** gerçek bir cihazdan kamera ile fotoğraf çekip adım
+kapatma akışını süremedim (emülatör yok); fotoğraf yükleme zinciri
+presign→PUT olarak birim düzeyinde ölçüldü, cihazda değil.
+
+### §2 MEVCUT KİLİTLERİN YAKALADIĞI BEŞ GERÇEK KUSUR
+
+Hiçbiri tahminle bulunmadı; hepsini var olan kilitler ölçtü:
+
+1. **`enum-bag`** — `gorev_adim_ilerleme` / `anket_acildi` web enum
+   aynasına yazılmamıştı (P212'de birebir aynı sınıf yaşanmıştı).
+2. **`modal-tasima`** — `GorevAdimlari`'nda `window.confirm` kullanmıştım;
+   P161 kuralı yıkıcı onayı tarayıcı diyaloğuyla sormayı yasaklıyor
+   (tema ve dil tanımıyor). `useOnay`a çevrildi.
+3. **`yz-tasima-gorevler.dom`** — forma "Alt adımlar" alanı eklenince
+   testin gevşek `getByLabelText(/Başlık|Ad/)` bulucusu iki alan birden
+   buldu. Bulucu daraltıldı (testin ölçtüğü şey değişmedi).
+4. **`gorsel_cozme_denetimi`** — fotoğraf büyütme diyaloğundaki
+   `sinirliGorsel(...)` sarmalayıcısını çok satıra yaydığım için kilidin
+   60 karakterlik penceresine girmedi ve "sarılmamış" raporladı. Tek
+   satıra alındı (kilidin bilinen bir biçim kısıtı; yorumda yazılı).
+5. **`saha_akisi_surus` yerleşim kilidi** — iki ayrı gerçek kusur:
+   - Adım sağlayıcısına taklit konmamıştı, bölüm **"Adımlar yüklenemedi"**
+     hata halini çiziyordu ve altın görüntü o hatayı kilitleyecekti.
+     P229 §3'te birebir aynı şey yaşanmış ve o turda yorumla not
+     edilmişti; bu turda tekrarı önlendi.
+   - Başlık + ilerleme **yan yana** (`Row`) konunca uzun çevirilerde
+     başlık **47 piksele sıkışıp dört satıra** kırılıyordu (ölçüm:
+     `gorev_detay.txt` "47x80"). Alt alta alındı.
+   - Adım ekleme satırı 320dp'de **Almanca'da 68 piksel taştı**; alan ve
+     düğme alt alta alındı. Etiketi kısaltmak yerine yerleşimi
+     değiştirmek, uzun çeviri gelen her dilde çalışır.

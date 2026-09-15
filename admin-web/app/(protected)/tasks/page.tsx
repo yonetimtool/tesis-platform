@@ -9,6 +9,7 @@ import useSWR from "swr";
 
 import { BagimlilikUyarisi } from "@/components/BagimlilikUyarisi";
 import { Ekler } from "@/components/Ekler";
+import { GorevAdimlari } from "@/components/GorevAdimlari";
 import { useToast } from "@/components/Toast";
 import { useBant } from "@/lib/kirilma-kullan";
 import {
@@ -16,6 +17,7 @@ import {
   BosDurum,
   Alan,
   AlanSarmal,
+  CokSatir,
   Dugme,
   HataDurumu,
   Kart,
@@ -98,6 +100,15 @@ interface FormState {
   sonraki_planlanan: string;
   foto_zorunlu: boolean;
   aktif: boolean;
+  /** (P237 §2) Alt adimlar — SATIR BASINA BIR ADIM.
+   *
+   *  Ayri bir "+ ile ekle" listesi yerine cok satirli metin secildi:
+   *  yonetici gorevi tanimlarken bloklari pesi sira yazar ("A blok /
+   *  B blok / C blok"); her satir icin ayri bir alan acmak ayni isi
+   *  uc tiklamaya cikarirdi. Ayrinti panelinde (`GorevAdimlari`) tek
+   *  tek ekleme/silme ZATEN var — bu yalniz TOPLU ilk tanim. */
+  adimlar: string;
+  adim_sirali: boolean;
 }
 /** (P230 §4) Durum -> sozluk anahtari. JSX ucluda sabit metin yazilamaz
  *  (`sabit-metin` taramasi onlari cevrilmemis metin adayi sayar). */
@@ -125,6 +136,8 @@ const EMPTY: FormState = {
   sonraki_planlanan: "",
   foto_zorunlu: false,
   aktif: true,
+  adimlar: "",
+  adim_sirali: false,
 };
 
 // UCLUDE DIZE YAZILMAZ (depo kurali `sabit-metin`).
@@ -241,6 +254,10 @@ export default function TasksPage() {
       sonraki_planlanan: isoToLocalInput(t.sonraki_planlanan),
       foto_zorunlu: t.foto_zorunlu,
       aktif: t.aktif,
+      // (P237 §2) Duzenlemede adimlar GONDERILMEZ (ezilirdi); form
+      // alani da cizilmez. Alanlar yine de tanimli olmali.
+      adimlar: "",
+      adim_sirali: t.adim_sirali ?? false,
     });
     setFormErr(null);
     setOpen(true);
@@ -266,10 +283,20 @@ export default function TasksPage() {
       sonraki_planlanan: toIso(form.sonraki_planlanan),
       foto_zorunlu: form.foto_zorunlu,
       aktif: form.aktif,
+      adim_sirali: form.adim_sirali,
     };
+    // (P237 §2) ADIMLAR YALNIZ OLUSTURMADA govdeye girer. PATCH'te
+    // gonderilseydi mevcut adimlar EZILIRDI (tamamlanmislar dahil);
+    // duzenleme, ayrinti panelindeki tek tek ekleme/silme akisindan
+    // gecer — orada her islem denetim kaydina yaziliyor.
+    const adimlar = form.adimlar
+      .split("\n")
+      .map((x) => x.trim())
+      .filter(Boolean)
+      .map((ad, i) => ({ ad, sira: i }));
     try {
       if (editingId) await apiSend(`/api/tasks/${editingId}`, "PATCH", body);
-      else await apiSend("/api/tasks", "POST", body);
+      else await apiSend("/api/tasks", "POST", { ...body, adimlar });
       setOpen(false);
       mutate();
       toast.success(editingId ? t("gorevGuncellendi") : t("gorevOlusturuldu"));
@@ -335,6 +362,28 @@ export default function TasksPage() {
         id: "kategori", kartRolu: "ozet",
         baslik: t("gorevKategoriAlan"),
         hucre: (g) => kategoriAd(g.kategori_id),
+      },
+      {
+        // (P237 §2) ADIM ILERLEMESI LISTEDE.
+        //
+        // Yoneticinin acik gorevde ilk sorusu "nerede kaldi". Bunu
+        // ogrenmek icin her goreve tek tek girmek gerekseydi ozellik
+        // pratikte kullanilmazdi. Adimi OLMAYAN gorevde tire: "0/0"
+        // yazmak, bolunmemis bir isi hic ilerlememis gibi gosterirdi.
+        id: "adim", kartRolu: "ozet",
+        baslik: t("gorevAdimlar"),
+        hucre: (g) =>
+          (g.adim_toplam ?? 0) > 0 ? (
+            <span data-test={`gorev-adim-ozet-${g.id}`}>
+              {t("gorevAdimIlerleme", {
+                tamam: String(g.adim_tamam ?? 0),
+                toplam: String(g.adim_toplam ?? 0),
+              })}
+            </span>
+          ) : (
+            "—"
+          ),
+        darEkrandaGizle: true,
       },
       {
         id: "atanan", kartRolu: "ozet",
@@ -611,7 +660,31 @@ export default function TasksPage() {
                 checked={form.aktif}
                 onChange={(e) => setForm({ ...form, aktif: e.target.checked })}
               />{t("ortakAktif")}</label>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                data-test="gorev-adim-sirali"
+                checked={form.adim_sirali}
+                onChange={(e) => setForm({ ...form, adim_sirali: e.target.checked })}
+              />
+              {t("gorevAdimSirali")}
+            </label>
           </div>
+          {/* (P237 §2) ADIMLAR YALNIZ YENI GOREVDE: duzenlemede gonderilse
+              mevcut adimlar (tamamlanmislar dahil) ezilirdi. */}
+          {editingId ? null : (
+            <AlanSarmal etiket={t("gorevAdimlar")} ipucu={t("gorevAdimSatirIpucu")}>
+              {(b) => (
+                <CokSatir
+                  {...b}
+                  rows={3}
+                  data-test="gorev-adimlar-metin"
+                  value={form.adimlar}
+                  onChange={(e) => setForm({ ...form, adimlar: e.target.value })}
+                />
+              )}
+            </AlanSarmal>
+          )}
           {formErr && (
             <p
               role="alert"
@@ -673,6 +746,15 @@ export default function TasksPage() {
           <h2 className="text-lg font-medium">
             {t("gorevTamamlamaKayitlari", { ad: detail.ad })}
           </h2>
+
+          {/* (P237 §2) ALT ADIMLAR — tamamlama kayitlarinin USTUNDE.
+              Yoneticinin acik gorevde sordugu soru "nerede kaldi";
+              tamamlanma gecmisi ise gorev BITTIKTEN sonra bakilan yer. */}
+          <GorevAdimlari
+            taskId={detail.id}
+            adimSirali={detail.adim_sirali}
+            onDegisti={() => void mutate()}
+          />
           <div className="overflow-hidden rounded-lg border kart-kenar">
             <div className="odak-ic overflow-x-auto" tabIndex={0}>
               <Tablo>

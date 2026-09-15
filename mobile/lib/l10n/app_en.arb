@@ -2202,5 +2202,27 @@
   "vardiyaGrupOzeti": "{gun} days · {dilim}",
   "vardiyaOnizlemeSonuc": "{eklenecek} shifts will be created, {cakisan} conflicts",
   "kurulumKonum": "Site location",
-  "kurulumKonumAlt": "Enter where the site is so the weather is correct. Set it from the web panel."
+  "kurulumKonumAlt": "Enter where the site is so the weather is correct. Set it from the web panel.",
+  "gorevAdimlar": "Sub-steps",
+  "gorevAdimIlerleme": "{tamam}/{toplam} steps completed",
+  "@gorevAdimIlerleme": {
+    "placeholders": {
+      "tamam": {
+        "type": "String"
+      },
+      "toplam": {
+        "type": "String"
+      }
+    }
+  },
+  "gorevAdimEkle": "Add step",
+  "gorevAdimAd": "Step name",
+  "gorevAdimYok": "This task has no sub-steps.",
+  "gorevAdimTamamla": "Complete",
+  "gorevAdimGeriAl": "Undo",
+  "gorevAdimSil": "Delete step",
+  "gorevAdimFotoZorunlu": "Photo required",
+  "gorevAdimSirali": "Steps are completed in order",
+  "gorevAdimSatirIpucu": "One step per line. Steps can be added later too.",
+  "gorevAdimYuklenemedi": "Steps could not be loaded."
 }

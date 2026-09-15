@@ -6622,4 +6622,43 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get kurulumKonumAlt =>
       'أدخل موقع المنشأة ليكون الطقس صحيحًا. يُضبط من لوحة الويب.';
+
+  @override
+  String get gorevAdimlar => 'الخطوات الفرعية';
+
+  @override
+  String gorevAdimIlerleme(String tamam, String toplam) {
+    return 'اكتملت $tamam/$toplam خطوة';
+  }
+
+  @override
+  String get gorevAdimEkle => 'إضافة خطوة';
+
+  @override
+  String get gorevAdimAd => 'اسم الخطوة';
+
+  @override
+  String get gorevAdimYok => 'لا تحتوي هذه المهمة على خطوات فرعية.';
+
+  @override
+  String get gorevAdimTamamla => 'إنهاء';
+
+  @override
+  String get gorevAdimGeriAl => 'تراجع';
+
+  @override
+  String get gorevAdimSil => 'حذف الخطوة';
+
+  @override
+  String get gorevAdimFotoZorunlu => 'الصورة مطلوبة';
+
+  @override
+  String get gorevAdimSirali => 'تُنجَز الخطوات بالترتيب';
+
+  @override
+  String get gorevAdimSatirIpucu =>
+      'خطوة واحدة في كل سطر. يمكن إضافة خطوات لاحقًا.';
+
+  @override
+  String get gorevAdimYuklenemedi => 'تعذّر تحميل الخطوات.';
 }

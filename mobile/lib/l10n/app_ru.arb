@@ -2202,5 +2202,27 @@
   "vardiyaGrupOzeti": "{gun} дн. · {dilim}",
   "vardiyaOnizlemeSonuc": "Будет создано смен: {eklenecek}, конфликтов: {cakisan}",
   "kurulumKonum": "Расположение объекта",
-  "kurulumKonumAlt": "Укажите, где находится объект, чтобы погода была верной. Настраивается в веб-панели."
+  "kurulumKonumAlt": "Укажите, где находится объект, чтобы погода была верной. Настраивается в веб-панели.",
+  "gorevAdimlar": "Подшаги",
+  "gorevAdimIlerleme": "Выполнено {tamam}/{toplam} шагов",
+  "@gorevAdimIlerleme": {
+    "placeholders": {
+      "tamam": {
+        "type": "String"
+      },
+      "toplam": {
+        "type": "String"
+      }
+    }
+  },
+  "gorevAdimEkle": "Добавить шаг",
+  "gorevAdimAd": "Название шага",
+  "gorevAdimYok": "У этой задачи нет подшагов.",
+  "gorevAdimTamamla": "Завершить",
+  "gorevAdimGeriAl": "Отменить",
+  "gorevAdimSil": "Удалить шаг",
+  "gorevAdimFotoZorunlu": "Требуется фото",
+  "gorevAdimSirali": "Шаги выполняются по порядку",
+  "gorevAdimSatirIpucu": "По одному шагу в строке. Шаги можно добавить и позже.",
+  "gorevAdimYuklenemedi": "Не удалось загрузить шаги."
 }

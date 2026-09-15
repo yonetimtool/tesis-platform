@@ -300,6 +300,19 @@ class _TaskTile extends ConsumerWidget {
                   fontWeight: FontWeight.w600,
                 ),
               ),
+            // (P237 §2) ADIM ILERLEMESI LISTEDE: "nerede kaldi" sorusu
+            // icin her goreve tek tek girmek gerekmemeli. Adimi OLMAYAN
+            // gorevde HIC cizilmez — "0/0", bolunmemis bir isi hic
+            // ilerlememis gibi gosterirdi.
+            if (task.adimToplam > 0)
+              Text(
+                key: const Key('gorev-adim-ozet'),
+                l10n.gorevAdimIlerleme(
+                  '${task.adimTamam}',
+                  '${task.adimToplam}',
+                ),
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
             if (task.fotoZorunlu)
               Text(
                 l10n.gorevFotoZorunlu,

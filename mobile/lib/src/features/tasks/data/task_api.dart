@@ -129,6 +129,77 @@ class TaskApi {
     }
   }
 
+  // ===================== (P237 §2) ALT ADIMLAR ========================= //
+  //
+  // Ayrinti ucu (`GET /tasks/{id}`) adimlari zaten getiriyor; asagidaki
+  // liste ucu, bir adim islemi sonrasi TEK sorguyla tazelemek icin.
+
+  Future<List<TaskStep>> fetchSteps(String taskId) async {
+    try {
+      final res =
+          await _dio.get<Map<String, dynamic>>('/tasks/$taskId/adimlar');
+      final items = (res.data?['items'] as List? ?? const []);
+      return items
+          .map((e) => TaskStep.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// Adim EKLEME yalniz yonetimde (sunucu 403): adim isin TANIMIDIR.
+  Future<TaskStep> addStep(String taskId, String ad, {int sira = 0}) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/tasks/$taskId/adimlar',
+        data: {'ad': ad, 'sira': sira},
+      );
+      return TaskStep.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  Future<void> deleteStep(String taskId, String stepId) async {
+    try {
+      await _dio.delete<void>('/tasks/$taskId/adimlar/$stepId');
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// ADIMI TAMAMLA — fotograf + not. Ikinci tamamlama 409 (sessizce
+  /// yutulmaz: ikinci cagri farkli bir fotograf tasiyor olabilir).
+  Future<TaskStep> completeStep(
+    String taskId,
+    String stepId, {
+    String? fotoKey,
+    String? notlar,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/tasks/$taskId/adimlar/$stepId/tamamla',
+        data: {'foto_key': fotoKey, 'notlar': notlar},
+      );
+      return TaskStep.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// GERI AL — yalniz yonetim (sunucu 403): isi yapanin kendi izini
+  /// temizleyebilmesi denetimi bosa cikarirdi.
+  Future<TaskStep> reopenStep(String taskId, String stepId) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/tasks/$taskId/adimlar/$stepId/geri-al',
+      );
+      return TaskStep.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
   /// (P229 §3) TAMAMLAMAYI GERI AL — yalniz admin/yonetici (sunucu 403).
   Future<void> deleteCompletion(String taskId, String completionId) async {
     try {

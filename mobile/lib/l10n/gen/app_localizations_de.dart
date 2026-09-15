@@ -6559,4 +6559,43 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get kurulumKonumAlt =>
       'Geben Sie den Standort an, damit das Wetter stimmt. Einstellung im Webpanel.';
+
+  @override
+  String get gorevAdimlar => 'Teilschritte';
+
+  @override
+  String gorevAdimIlerleme(String tamam, String toplam) {
+    return '$tamam/$toplam Schritte abgeschlossen';
+  }
+
+  @override
+  String get gorevAdimEkle => 'Schritt hinzufügen';
+
+  @override
+  String get gorevAdimAd => 'Schrittname';
+
+  @override
+  String get gorevAdimYok => 'Diese Aufgabe hat keine Teilschritte.';
+
+  @override
+  String get gorevAdimTamamla => 'Abschließen';
+
+  @override
+  String get gorevAdimGeriAl => 'Rückgängig';
+
+  @override
+  String get gorevAdimSil => 'Schritt löschen';
+
+  @override
+  String get gorevAdimFotoZorunlu => 'Foto erforderlich';
+
+  @override
+  String get gorevAdimSirali => 'Schritte werden der Reihe nach abgeschlossen';
+
+  @override
+  String get gorevAdimSatirIpucu =>
+      'Ein Schritt pro Zeile. Schritte können später ergänzt werden.';
+
+  @override
+  String get gorevAdimYuklenemedi => 'Schritte konnten nicht geladen werden.';
 }

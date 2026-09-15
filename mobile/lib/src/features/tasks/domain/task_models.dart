@@ -120,6 +120,10 @@ class Task {
     this.atananAd,
     this.durum = TaskDurum.atandi,
     this.gecikmeGun,
+    this.adimToplam = 0,
+    this.adimTamam = 0,
+    this.adimSirali = false,
+    this.adimlar,
   });
 
   final String id;
@@ -177,6 +181,16 @@ class Task {
   /// "bugun son gun" demektir).
   final int? gecikmeGun;
 
+  /// (P237 §2) ALT ADIM ILERLEMESI — LISTEDE de gelir.
+  ///
+  /// Iki sayi listede tasinir cunku "hangi gorev ne kadar ilerledi"
+  /// sorusu icin her goreve tek tek girmek gerekmemeli. Adimlarin
+  /// KENDISI yalniz AYRINTIDA (`GET /tasks/{id}`) gelir; listede null.
+  final int adimToplam;
+  final int adimTamam;
+  final bool adimSirali;
+  final List<TaskStep>? adimlar;
+
   /// Gorev bir talepten mi geldi? (chip/rozet gorunurlugu).
   bool get fromTicket => ticketId != null;
 
@@ -215,6 +229,65 @@ class Task {
     atananAd: json['atanan_ad'] as String?,
     durum: TaskDurum.coz(json['durum'] as String?),
     gecikmeGun: (json['gecikme_gun'] as num?)?.toInt(),
+    adimToplam: (json['adim_toplam'] as num?)?.toInt() ?? 0,
+    adimTamam: (json['adim_tamam'] as num?)?.toInt() ?? 0,
+    adimSirali: json['adim_sirali'] as bool? ?? false,
+    adimlar: (json['adimlar'] as List<dynamic>?)
+        ?.map((e) => TaskStep.fromJson(e as Map<String, dynamic>))
+        .toList(),
+  );
+}
+
+/// (P237 §2) GOREVIN ALT ADIMI — "A blok", "B blok", "C blok".
+///
+/// Her adim KENDI tamamlayanini, zamanini ve FOTOGRAFINI tasir; gorev
+/// tamamlamasindan (tek kapanis kaydi) farki budur.
+class TaskStep {
+  const TaskStep({
+    required this.id,
+    required this.taskId,
+    required this.sira,
+    required this.ad,
+    required this.fotoZorunlu,
+    this.tamamlandi = false,
+    this.tamamlayanUserId,
+    this.tamamlayanAd,
+    this.tamamlanmaZamani,
+    this.fotoKey,
+    this.fotoUrl,
+    this.notlar,
+  });
+
+  final String id;
+  final String taskId;
+  final int sira;
+  final String ad;
+
+  /// Gorevden MIRAS; adim SIKILASTIRABILIR, gevsetemez (sunucu zorlar).
+  final bool fotoZorunlu;
+  final bool tamamlandi;
+  final String? tamamlayanUserId;
+  final String? tamamlayanAd;
+  final DateTime? tamamlanmaZamani;
+  final String? fotoKey;
+  final String? fotoUrl;
+  final String? notlar;
+
+  factory TaskStep.fromJson(Map<String, dynamic> json) => TaskStep(
+    id: json['id'] as String,
+    taskId: json['task_id'] as String? ?? '',
+    sira: (json['sira'] as num?)?.toInt() ?? 0,
+    ad: json['ad'] as String? ?? '',
+    fotoZorunlu: json['foto_zorunlu'] as bool? ?? false,
+    tamamlandi: json['tamamlandi'] as bool? ?? false,
+    tamamlayanUserId: json['tamamlayan_user_id'] as String?,
+    tamamlayanAd: json['tamamlayan_ad'] as String?,
+    tamamlanmaZamani: json['tamamlanma_zamani'] == null
+        ? null
+        : DateTime.parse(json['tamamlanma_zamani'] as String).toUtc(),
+    fotoKey: json['foto_key'] as String?,
+    fotoUrl: json['foto_url'] as String?,
+    notlar: json['notlar'] as String?,
   );
 }
 
@@ -388,6 +461,8 @@ class TaskDraft {
     this.periyotDakika,
     this.fotoZorunlu = false,
     this.aktif = true,
+    this.adimlar = const [],
+    this.adimSirali = false,
   });
 
   final String ad;
@@ -404,6 +479,14 @@ class TaskDraft {
   final bool fotoZorunlu;
   final bool aktif;
 
+  /// (P237 §2) ALT ADIM ADLARI — yalniz OLUSTURMADA gonderilir.
+  ///
+  /// Duzenlemede gonderilseydi mevcut adimlar (TAMAMLANMISLAR DAHIL)
+  /// ezilirdi; duzenleme ayrinti ekranindaki tek tek ekleme/silme
+  /// akisindan gecer ve orada her islem denetim kaydina yazilir.
+  final List<String> adimlar;
+  final bool adimSirali;
+
   Map<String, dynamic> toJson() => {
     'ad': ad,
     'aciklama': aciklama,
@@ -413,6 +496,12 @@ class TaskDraft {
     'periyot_dakika': periyotDakika,
     'foto_zorunlu': fotoZorunlu,
     'aktif': aktif,
+    'adim_sirali': adimSirali,
+    if (adimlar.isNotEmpty)
+      'adimlar': [
+        for (var i = 0; i < adimlar.length; i++)
+          {'ad': adimlar[i], 'sira': i},
+      ],
   };
 
   /// Duzenleme formunu mevcut gorevle doldurmak icin.
@@ -425,6 +514,7 @@ class TaskDraft {
     periyotDakika: task.periyotDakika,
     fotoZorunlu: task.fotoZorunlu,
     aktif: task.aktif,
+    adimSirali: task.adimSirali,
   );
 }
 

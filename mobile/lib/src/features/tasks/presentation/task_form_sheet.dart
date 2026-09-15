@@ -46,6 +46,14 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
   String? _checkpointId;
   late bool _fotoZorunlu;
   late bool _aktif;
+  /// (P237 §2) ALT ADIMLAR — SATIR BASINA BIR ADIM.
+  ///
+  /// Ayri bir "+ ile ekle" listesi yerine cok satirli metin: yonetici
+  /// gorevi tanimlarken bloklari pesi sira yazar; her satir icin ayri
+  /// alan acmak ayni isi uc dokunusa cikarirdi. Tek tek ekleme/silme
+  /// ZATEN var (gorev ayrinti ekrani) — bu yalniz TOPLU ilk tanim.
+  late final TextEditingController _adimlarCtrl;
+  late bool _adimSirali;
 
   bool _saving = false;
   String? _error;
@@ -74,6 +82,8 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
     _checkpointId = t?.checkpointId;
     _fotoZorunlu = t?.fotoZorunlu ?? false;
     _aktif = t?.aktif ?? true;
+    _adimlarCtrl = TextEditingController();
+    _adimSirali = t?.adimSirali ?? false;
     _loadPersonel();
     _loadKategoriler();
   }
@@ -131,6 +141,7 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
     _adCtrl.dispose();
     _aciklamaCtrl.dispose();
     _periyotCtrl.dispose();
+    _adimlarCtrl.dispose();
     super.dispose();
   }
 
@@ -152,6 +163,16 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
       periyotDakika: periyotText.isEmpty ? null : int.parse(periyotText),
       fotoZorunlu: _fotoZorunlu,
       aktif: _aktif,
+      adimSirali: _adimSirali,
+      // DUZENLEMEDE GONDERILMEZ: mevcut adimlar (tamamlanmislar dahil)
+      // ezilirdi. Alan zaten yalniz yeni gorevde ciziliyor.
+      adimlar: widget.task != null
+          ? const []
+          : _adimlarCtrl.text
+              .split('\n')
+              .map((x) => x.trim())
+              .where((x) => x.isNotEmpty)
+              .toList(),
     );
     final controller = ref.read(tasksControllerProvider.notifier);
     try {
@@ -429,6 +450,28 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
                 subtitle: Text(l10n.gorevFotoKanitiZorunluAlt),
                 value: _fotoZorunlu,
                 onChanged: (v) => setState(() => _fotoZorunlu = v),
+              ),
+              // (P237 §2) ADIMLAR — YALNIZ YENI GOREVDE.
+              if (!editing) ...[
+                TextFormField(
+                  key: const Key('gorev-adimlar-metin'),
+                  controller: _adimlarCtrl,
+                  minLines: 2,
+                  maxLines: 4,
+                  decoration: InputDecoration(
+                    labelText: l10n.gorevAdimlar,
+                    helperText: l10n.gorevAdimSatirIpucu,
+                    helperMaxLines: 2,
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                key: const Key('gorev-adim-sirali'),
+                title: Text(l10n.gorevAdimSirali),
+                value: _adimSirali,
+                onChanged: (v) => setState(() => _adimSirali = v),
               ),
               if (editing)
                 SwitchListTile(

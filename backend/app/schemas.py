@@ -3252,6 +3252,59 @@ class TaskTamamlamaOzet(BaseModel):
     notlar: str | None = None
 
 
+# --------------------------------------------------------------------------- #
+# (P237 §2) GOREV ALT ADIMLARI
+# --------------------------------------------------------------------------- #
+class TaskStepOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    task_id: uuid.UUID
+    sira: int
+    ad: str
+    foto_zorunlu: bool
+    tamamlandi: bool = False
+    tamamlayan_user_id: uuid.UUID | None = None
+    #: KIM bitirdi — AD. `TaskCompletionOut.tamamlayan_ad` ile ayni gerekce:
+    #: saha rolu kullanici listesini GOREMEZ (403), id'yi ada cozemez.
+    tamamlayan_ad: str | None = None
+    tamamlanma_zamani: datetime | None = None
+    foto_key: str | None = None
+    foto_url: str | None = None
+    notlar: str | None = None
+
+
+class TaskStepCreate(BaseModel):
+    ad: str = Field(..., min_length=1, max_length=200)
+    sira: int = Field(0, ge=0)
+    #: None = GOREVDEN MIRAS. Adim gorevin kuralini SIKILASTIRABILIR
+    #: (False -> True), GEVSETEMEZ: gorev "fotografsiz kapanmasin" diyorsa
+    #: bir adimin muaf olmasi kurali delerdi (uc bunu zorlar).
+    foto_zorunlu: bool | None = None
+
+
+class TaskStepUpdate(BaseModel):
+    ad: str | None = Field(None, min_length=1, max_length=200)
+    sira: int | None = Field(None, ge=0)
+    foto_zorunlu: bool | None = None
+
+    @model_validator(mode="after")
+    def _at_least_one(self) -> "TaskStepUpdate":
+        if not self.model_fields_set:
+            raise ValueError("en az bir alan gerekli")
+        return self
+
+
+class TaskStepTamamla(BaseModel):
+    foto_key: str | None = None
+    notlar: str | None = Field(None, max_length=2000)
+
+
+class TaskStepListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[TaskStepOut]
+
+
 class TaskOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -3293,6 +3346,18 @@ class TaskOut(BaseModel):
     #: Gecikme GUN cinsinden (negatifse henuz vakit var). `son_tarih`
     #: yoksa None: "gecikmedi" demek YANLIS olurdu — olcusu yok.
     gecikme_gun: int | None = None
+    # (P237 §2) ALT ADIM ILERLEMESI — LISTEDE de gorunur.
+    #
+    # Iki sayi listede tasinir cunku yoneticinin sordugu ilk soru "hangi
+    # gorev ne kadar ilerledi": bunu ogrenmek icin her goreve tek tek
+    # girmek gerekseydi ozellik pratikte kullanilmazdi. Adimlarin KENDISI
+    # (kim/ne zaman/foto) yalniz ayrintida.
+    adim_toplam: int = 0
+    adim_tamam: int = 0
+    #: Adimlar SIRALI mi — istemci "once oncekini bitir" uyarisini bundan cizer.
+    adim_sirali: bool = False
+    #: Yalniz `GET /tasks/{id}` doldurur; listede None.
+    adimlar: list[TaskStepOut] | None = None
     created_at: datetime
     updated_at: datetime | None = None
 
@@ -3309,6 +3374,15 @@ class TaskCreate(BaseModel):
     aktif: bool = True
     # (P230 §4) SON TARIH — gecikme bundan hesaplanir.
     son_tarih: datetime | None = None
+    # (P237 §2) ADIMLAR GOREVLE BIRLIKTE TANIMLANABILIR — ama sart degil.
+    #
+    # Karar: "olustururken tanimlanir MI, sonradan da eklenebilir MI"
+    # sorusunun yaniti IKISI DE. Gerekce sahada: is verilirken bloklar
+    # bellidir, ama "D blogu da yapiver" sonradan cikar. Yalniz olusturma
+    # aninda izin vermek, o istegi yeni bir gorev acmaya zorlardi ve
+    # ilerleme iki yere bolunurdu.
+    adimlar: list[TaskStepCreate] = Field(default_factory=list, max_length=50)
+    adim_sirali: bool = False
 
 
 class TaskUpdate(BaseModel):
@@ -3321,6 +3395,7 @@ class TaskUpdate(BaseModel):
     sonraki_planlanan: datetime | None = None
     foto_zorunlu: bool | None = None
     aktif: bool | None = None
+    adim_sirali: bool | None = None
 
     @model_validator(mode="after")
     def _at_least_one(self) -> "TaskUpdate":
@@ -7816,14 +7891,27 @@ class AnketOut(BaseModel):
     id: uuid.UUID
     baslik: str
     aciklama: str | None = None
+    #: (P237 §3) Gorsel — presigned okuma adresi (anahtar degil).
+    gorsel_url: str | None = None
+    baslangic_at: datetime | None = None
     kapanis_at: datetime | None = None
     aktif: bool
-    #: Anket oy almaya acik mi (aktif + kapanis gecmemis).
+    #: (P237 §3) HEDEF KITLE. Bos = herkes.
+    hedef_roller: list[str] = Field(default_factory=list)
+    hedef_sakin_tipi: str | None = None
+    #: (P237 §3) ANONIM MI — SONRADAN DEGISTIRILEMEZ (veritabani kilidi).
+    #: Istemci bunu oy vermeden ONCE gosterir (KVKK aydinlatmasi).
+    anonim: bool = False
+    #: Anket oy almaya acik mi (aktif + baslangic gelmis + kapanis gecmemis).
     acik: bool
     #: Istegi yapan kisi oy verdi mi (anonim public uc icin None).
     oy_verdim: bool | None = None
     #: Toplam oy — sonuc gorunur degilse None.
     toplam_oy: int | None = None
+    #: (P237 §3) KATILIM ORANI icin PAYDA: hedef kitledeki AKTIF kisi
+    #: sayisi. Yalniz yonetim gorur; sakin icin None (kac kisiye
+    #: gonderildigi oy verenin karari icin bir bilgi degil).
+    hedef_kisi: int | None = None
     secenekler: list[PortalAnketSecenek]
     created_at: datetime
 
@@ -7838,12 +7926,41 @@ class AnketSecenekIn(BaseModel):
     sira: int = Field(0, ge=0, le=999)
 
 
+#: (P237 §3) Hedeflenebilir roller. `guvenlik_amiri` DAHIL: ekibi olan
+#: bir amire "yalniz guvenlik ekibi" anketi gitmemesi tuhaf olurdu.
+ANKET_HEDEF_ROLLER = (
+    "security", "guvenlik_amiri", "tesis_gorevlisi", "resident",
+    "yonetici", "admin",
+)
+
+
 class AnketCreate(BaseModel):
     baslik: str = Field(..., min_length=1, max_length=200)
     aciklama: str | None = Field(None, max_length=2000)
+    #: Nesne deposu anahtari (`POST /uploads/presign` ile alinir).
+    gorsel_key: str | None = Field(None, max_length=500)
+    baslangic_at: datetime | None = None
     kapanis_at: datetime | None = None
-    #: EN AZ IKI secenek: tek secenekli bir anket oy toplamaz, onay toplar.
+    #: EN AZ IKI secenek: tek secenekli anket oy toplamaz, onay toplar.
     secenekler: list[AnketSecenekIn] = Field(..., min_length=2, max_length=20)
+    #: BOS = HERKES. Coklu secim.
+    hedef_roller: list[str] = Field(default_factory=list, max_length=6)
+    hedef_sakin_tipi: str | None = None
+    #: SONRADAN DEGISTIRILEMEZ (veritabani tetikleyicisi + bilesik FK).
+    anonim: bool = False
+
+    @model_validator(mode="after")
+    def _hedef_gecerli(self) -> "AnketCreate":
+        for r in self.hedef_roller:
+            if r not in ANKET_HEDEF_ROLLER:
+                raise ValueError("anket_hedef_rol_bilinmiyor")
+        if self.hedef_sakin_tipi not in (None, "malik", "kiraci"):
+            raise ValueError("anket_hedef_sakin_tipi_bilinmiyor")
+        if self.baslangic_at and self.kapanis_at and (
+            self.kapanis_at <= self.baslangic_at
+        ):
+            raise ValueError("anket_tarih_araligi_gecersiz")
+        return self
 
 
 class AnketUpdate(BaseModel):
@@ -7852,8 +7969,13 @@ class AnketUpdate(BaseModel):
 
     baslik: str | None = Field(None, min_length=1, max_length=200)
     aciklama: str | None = Field(None, max_length=2000)
+    gorsel_key: str | None = Field(None, max_length=500)
+    baslangic_at: datetime | None = None
     kapanis_at: datetime | None = None
     aktif: bool | None = None
+    #: `anonim` BILINCLI OLARAK YOK — `extra="forbid"` govdede gonderilirse
+    #: 422 verir. Veritabani da ayrica reddeder (tetikleyici); iki katman
+    #: cunku biri istemciye ANLASILIR bir hata, oteki MUTLAK bir garanti.
     model_config = ConfigDict(extra="forbid")
 
     @model_validator(mode="after")
@@ -7865,6 +7987,25 @@ class AnketUpdate(BaseModel):
 
 class AnketOyIstek(BaseModel):
     secenek_id: uuid.UUID
+
+
+class AnketOyKimOut(BaseModel):
+    """(P237 §3) KIM NEYE OY VERDI — YALNIZ ADLI ankette.
+
+    Anonim ankette bu uc 409 doner ve donecek veri de YOKTUR: kimlik
+    veritabaninda durmuyor.
+    """
+
+    user_id: uuid.UUID
+    ad: str | None = None
+    secenek_id: uuid.UUID
+    secenek_metin: str
+    created_at: datetime
+
+
+class AnketOyKimListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[AnketOyKimOut]
 
 
 class TanitimIletisimIstek(BaseModel):

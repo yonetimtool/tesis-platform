@@ -210,6 +210,10 @@ void main() {
         'periyot_dakika': null,
         'foto_zorunlu': false,
         'aktif': true,
+        // (P237 §2) `adim_sirali` TAM-GOVDEDE: PATCH temizleme kurali
+        // geregi her zaman gonderilir. `adimlar` ise SARTLI (yalniz
+        // doluyken) — PATCH'te gonderilmesi mevcut adimlari EZERDI.
+        'adim_sirali': false,
       });
     });
 

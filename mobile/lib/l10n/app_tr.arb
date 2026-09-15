@@ -3079,5 +3079,27 @@
     }
   },
   "kurulumKonum": "Tesis konumu",
-  "kurulumKonumAlt": "Hava durumunun doğru görünmesi için tesisin bulunduğu yeri girin. Web panelinden ayarlanır."
+  "kurulumKonumAlt": "Hava durumunun doğru görünmesi için tesisin bulunduğu yeri girin. Web panelinden ayarlanır.",
+  "gorevAdimlar": "Alt adımlar",
+  "gorevAdimIlerleme": "{tamam}/{toplam} adım tamamlandı",
+  "@gorevAdimIlerleme": {
+    "placeholders": {
+      "tamam": {
+        "type": "String"
+      },
+      "toplam": {
+        "type": "String"
+      }
+    }
+  },
+  "gorevAdimEkle": "Adım ekle",
+  "gorevAdimAd": "Adım adı",
+  "gorevAdimYok": "Bu görev alt adımlara bölünmedi.",
+  "gorevAdimTamamla": "Tamamla",
+  "gorevAdimGeriAl": "Geri al",
+  "gorevAdimSil": "Adımı sil",
+  "gorevAdimFotoZorunlu": "Fotoğraf zorunlu",
+  "gorevAdimSirali": "Adımlar sırayla tamamlanır",
+  "gorevAdimSatirIpucu": "Her satır bir adım. Sonradan da eklenebilir.",
+  "gorevAdimYuklenemedi": "Adımlar yüklenemedi."
 }

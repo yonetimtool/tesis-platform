@@ -6365,4 +6365,43 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get kurulumKonumAlt =>
       'Hava durumunun doğru görünmesi için tesisin bulunduğu yeri girin. Web panelinden ayarlanır.';
+
+  @override
+  String get gorevAdimlar => 'Alt adımlar';
+
+  @override
+  String gorevAdimIlerleme(String tamam, String toplam) {
+    return '$tamam/$toplam adım tamamlandı';
+  }
+
+  @override
+  String get gorevAdimEkle => 'Adım ekle';
+
+  @override
+  String get gorevAdimAd => 'Adım adı';
+
+  @override
+  String get gorevAdimYok => 'Bu görev alt adımlara bölünmedi.';
+
+  @override
+  String get gorevAdimTamamla => 'Tamamla';
+
+  @override
+  String get gorevAdimGeriAl => 'Geri al';
+
+  @override
+  String get gorevAdimSil => 'Adımı sil';
+
+  @override
+  String get gorevAdimFotoZorunlu => 'Fotoğraf zorunlu';
+
+  @override
+  String get gorevAdimSirali => 'Adımlar sırayla tamamlanır';
+
+  @override
+  String get gorevAdimSatirIpucu =>
+      'Her satır bir adım. Sonradan da eklenebilir.';
+
+  @override
+  String get gorevAdimYuklenemedi => 'Adımlar yüklenemedi.';
 }

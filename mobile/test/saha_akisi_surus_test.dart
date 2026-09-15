@@ -351,6 +351,32 @@ Widget _gorevDetayEkrani(
     ),
     scanOutboxProvider.overrideWith(() => _FakeOutbox(const [])),
     currentUserRoleProvider.overrideWith((ref) async => role),
+    // (P237 §2) ALT ADIMLAR — ayni dersin tekrari: taklit konmazsa
+    // bolum "Adimlar yuklenemedi" cizer ve ALTIN GORUNTU o hatayi
+    // kilitlerdi (P229 §3'te birebir bu yasandi). Iki adim veriliyor:
+    // biri BITMIS, biri BEKLEYEN — iki dal da olculsun.
+    gorevAdimlariProvider.overrideWith(
+      (ref, _) async => [
+        TaskStep(
+          id: 's1',
+          taskId: gorev.id,
+          sira: 0,
+          ad: 'A',
+          fotoZorunlu: false,
+          tamamlandi: true,
+          tamamlayanUserId: 'u1',
+          tamamlayanAd: 'Alex Kim',
+          tamamlanmaZamani: DateTime.utc(2026, 1, 2, 3, 4),
+        ),
+        TaskStep(
+          id: 's2',
+          taskId: gorev.id,
+          sira: 1,
+          ad: 'B',
+          fotoZorunlu: false,
+        ),
+      ],
+    ),
     // (P229 §3) TAMAMLAMA GECMISI — surusu GERCEK veriyle doldurur.
     //
     // Taklit KONMASAYDI bolum HATA halini cizerdi ("gecmis

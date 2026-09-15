@@ -6629,4 +6629,43 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get kurulumKonumAlt =>
       'Укажите, где находится объект, чтобы погода была верной. Настраивается в веб-панели.';
+
+  @override
+  String get gorevAdimlar => 'Подшаги';
+
+  @override
+  String gorevAdimIlerleme(String tamam, String toplam) {
+    return 'Выполнено $tamam/$toplam шагов';
+  }
+
+  @override
+  String get gorevAdimEkle => 'Добавить шаг';
+
+  @override
+  String get gorevAdimAd => 'Название шага';
+
+  @override
+  String get gorevAdimYok => 'У этой задачи нет подшагов.';
+
+  @override
+  String get gorevAdimTamamla => 'Завершить';
+
+  @override
+  String get gorevAdimGeriAl => 'Отменить';
+
+  @override
+  String get gorevAdimSil => 'Удалить шаг';
+
+  @override
+  String get gorevAdimFotoZorunlu => 'Требуется фото';
+
+  @override
+  String get gorevAdimSirali => 'Шаги выполняются по порядку';
+
+  @override
+  String get gorevAdimSatirIpucu =>
+      'По одному шагу в строке. Шаги можно добавить и позже.';
+
+  @override
+  String get gorevAdimYuklenemedi => 'Не удалось загрузить шаги.';
 }
