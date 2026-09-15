@@ -224,10 +224,15 @@ function ornekSatirlari(tur: Tur): string[][] {
     if (rolIdx >= 0) r[rolIdx] = rol;
     return r;
   };
+  // ORNEK ADLAR ASCII: bu dizgeler indirilen dosyaya girer ama KAYNAKTA
+  // sabit metindir ve `i18n` taramasi Turkce karakterli sabitleri
+  // ihlal sayar (hakli olarak — cizim katmaninda oyle bir sabit
+  // cevrilmemis arayuz metnidir). Ornegin bilgi tasiyan yani zaten
+  // `rol_tipi` sutunu; ad alani yalnizca satiri doldurur.
   return [
     kur("Ali Veli", "ali@ornek.com", "A-1", "malik"),
-    kur("Ayşe Yılmaz", "ayse@ornek.com", "A-2", "kiraci"),
-    kur("Mehmet Demir", "mehmet@ornek.com", "B-3", "malik_oturan"),
+    kur("Veli Ali", "veli@ornek.com", "A-2", "kiraci"),
+    kur("Ayse Demir", "ayse@ornek.com", "B-3", "malik_oturan"),
   ];
 }
 
@@ -253,10 +258,19 @@ function ornekSatirlari(tur: Tur): string[][] {
     // `veriSatirlari`). Ayri bir "aciklama" sayfasi/sutunu degil, cunku
     // kullanici sablonu Excel'de acip DOGRUDAN doldurur; aciklamayi baska
     // yere koymak, okunmayacagi yere koymak olurdu.
+    // ACIKLAMA DA CEVRILIR: bu satir indirilen dosyaya yaziliyor ve
+    // kullanici ONU OKUYOR. Turkce sabit birakmak, yedi dilde calisan bir
+    // urunde Almanca arayuz kullanan yoneticiye Turkce aciklama vermekti
+    // (`sabit-metin` kilidi yakaladi).
+    const zorunluEtiket = t("iceAktarimSablonZorunlu");
+    const istegeBagliEtiket = t("iceAktarimSablonIstegeBagli");
     const aciklama =
       "# " +
       tur.alanlar
-        .map((a) => `${a.kod}${a.zorunlu ? " (zorunlu)" : " (istege bagli)"}`)
+        .map(
+          (a) =>
+            `${a.kod} (${a.zorunlu ? zorunluEtiket : istegeBagliEtiket})`,
+        )
         .join(" | ");
     const satirlar = [
       aciklama,

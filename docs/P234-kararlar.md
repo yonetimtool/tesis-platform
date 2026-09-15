@@ -486,3 +486,16 @@ koymak olurdu.
 **Mobilde Excel aktarımı YOK ve olmayacak** — P204 kararı geçerli: 200
 satırlık bir önizlemeyi telefonda doğrulamak mümkün değil. Bu, kalıcı
 web+mobil parite kuralının **önceden gerekçelendirilmiş istisnasıdır**.
+
+### Web tam paketi iki gerçek kusur buldu
+
+Şablonu genişletirken iki çevrilmemiş sabit bıraktım ve **kilitler
+yakaladı** — ikisi de gerçek:
+
+1. **`(zorunlu)` / `(isteğe bağlı)`** açıklama satırına Türkçe sabit
+   olarak yazılmıştı. O satır **indirilen dosyaya giriyor ve kullanıcı
+   onu okuyor**: Almanca arayüz kullanan bir yöneticiye Türkçe açıklama
+   vermek olurdu. 7 dile çevrildi.
+2. **`Ayşe Yılmaz` / `Mehmet Demir`** örnek satırlarında Türkçe karakterli
+   sabitler vardı. Örnek adlar ASCII'ye çevrildi — satırın bilgi taşıyan
+   yanı zaten `rol_tipi` sütunu; ad alanı yalnızca satırı dolduruyor.

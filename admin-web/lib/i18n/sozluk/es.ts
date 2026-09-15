@@ -2565,6 +2565,8 @@ export const es: Sozluk = {
   iceAktarimDavetOzeti: "{gonderilen} invitaciones enviadas · {basarisiz} fallidas",
   iceAktarimDavetUyari: "Las personas cuya invitación falló no pueden entrar. Puede reenviarla desde la página Invitaciones.",
   iceAktarimZorunluAlanlar: "Columnas obligatorias",
+  iceAktarimSablonZorunlu: "obligatorio",
+  iceAktarimSablonIstegeBagli: "opcional",
   iceAktarimOnceOnizle: "Primero ejecute la vista previa",
   kurulumEposta: "Envío de correo",
   kurulumEpostaAlt: "Las invitaciones se envían por correo. Introduzca los ajustes y envíese un mensaje de prueba.",

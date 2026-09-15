@@ -2565,6 +2565,8 @@ export const en: Sozluk = {
   iceAktarimDavetOzeti: "{gonderilen} invitations sent · {basarisiz} failed",
   iceAktarimDavetUyari: "People whose invitation failed cannot sign in. You can resend from the Invitations page.",
   iceAktarimZorunluAlanlar: "Required columns",
+  iceAktarimSablonZorunlu: "required",
+  iceAktarimSablonIstegeBagli: "optional",
   iceAktarimOnceOnizle: "Run Preview first",
   kurulumEposta: "E-mail delivery",
   kurulumEpostaAlt: "Invitations are sent by e-mail. Enter the settings and send yourself a test message.",

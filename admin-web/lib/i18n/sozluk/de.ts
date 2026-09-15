@@ -2565,6 +2565,8 @@ export const de: Sozluk = {
   iceAktarimDavetOzeti: "{gonderilen} Einladungen gesendet · {basarisiz} fehlgeschlagen",
   iceAktarimDavetUyari: "Personen ohne zugestellte Einladung können sich nicht anmelden. Sie können sie auf der Seite „Einladungen“ erneut senden.",
   iceAktarimZorunluAlanlar: "Pflichtspalten",
+  iceAktarimSablonZorunlu: "erforderlich",
+  iceAktarimSablonIstegeBagli: "optional",
   iceAktarimOnceOnizle: "Zuerst Vorschau ausführen",
   kurulumEposta: "E-Mail-Versand",
   kurulumEpostaAlt: "Einladungen werden per E-Mail versendet. Tragen Sie die Einstellungen ein und senden Sie sich eine Testnachricht.",

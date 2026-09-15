@@ -2565,6 +2565,8 @@ export const ru: Sozluk = {
   iceAktarimDavetOzeti: "Отправлено приглашений: {gonderilen} · не отправлено: {basarisiz}",
   iceAktarimDavetUyari: "Те, кому приглашение не дошло, не смогут войти. Отправьте повторно на странице приглашений.",
   iceAktarimZorunluAlanlar: "Обязательные столбцы",
+  iceAktarimSablonZorunlu: "обязательно",
+  iceAktarimSablonIstegeBagli: "необязательно",
   iceAktarimOnceOnizle: "Сначала выполните предпросмотр",
   kurulumEposta: "Отправка почты",
   kurulumEpostaAlt: "Приглашения отправляются по электронной почте. Введите настройки и отправьте себе тестовое письмо.",

@@ -2628,6 +2628,8 @@ export const tr = {
   iceAktarimDavetOzeti: "{gonderilen} davet gönderildi · {basarisiz} gönderilemedi",
   iceAktarimDavetUyari: "Daveti gitmeyen kişiler sisteme giremez. Davetler sayfasından yeniden gönderebilirsiniz.",
   iceAktarimZorunluAlanlar: "Zorunlu sütunlar",
+  iceAktarimSablonZorunlu: "zorunlu",
+  iceAktarimSablonIstegeBagli: "isteğe bağlı",
   iceAktarimOnceOnizle: "Önce Önizle deyin",
   kurulumEposta: "E-posta gönderimi",
   kurulumEpostaAlt: "Davetler e-postayla gidiyor. Ayarları girin ve kendinize bir deneme e-postası gönderin.",

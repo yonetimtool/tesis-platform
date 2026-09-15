@@ -2565,6 +2565,8 @@ export const ar: Sozluk = {
   iceAktarimDavetOzeti: "أُرسلت {gonderilen} دعوة · فشل {basarisiz}",
   iceAktarimDavetUyari: "لا يمكن للأشخاص الذين فشلت دعوتهم تسجيل الدخول. يمكنك إعادة الإرسال من صفحة الدعوات.",
   iceAktarimZorunluAlanlar: "الأعمدة الإلزامية",
+  iceAktarimSablonZorunlu: "إلزامي",
+  iceAktarimSablonIstegeBagli: "اختياري",
   iceAktarimOnceOnizle: "شغّل المعاينة أولًا",
   kurulumEposta: "إرسال البريد الإلكتروني",
   kurulumEpostaAlt: "تُرسل الدعوات عبر البريد الإلكتروني. أدخل الإعدادات وأرسل لنفسك رسالة تجريبية.",
