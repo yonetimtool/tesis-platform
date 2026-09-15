@@ -51,6 +51,33 @@
 # KASIMDA YENILENEMEZ. Ic sertifika bu bagimliligi tumden kaldirir:
 # origin bacagi yine sifreli, dogrulamayi cloudflared `noTLSVerify` ile
 # atlar (baglanti makinenin ICINDE kaliyor).
+# --- (P235 §Cloudflare) GERCEK ISTEMCI IP'SI ------------------------------ #
+#
+# TURUNCU (proxy'li) konaklarda istek Cloudflare'den gelir; `RemoteAddr`
+# Cloudflare'in IP'sidir ve gercek adres `CF-Connecting-IP` basligindadir.
+#
+# BUGUN BUNU KULLANAN BIR YER YOK (olculdu: hiz siniri telefon/e-posta
+# ekseninde, `audit_log`da IP sutunu yok). Yine de SIMDI konuyor: ileride
+# IP'ye bakan bir sey yazilirsa, yazan kisi bunun Cloudflare IP'si
+# oldugunu FARK ETMEDEN yazar ve sessizce yanlis calisirdi.
+#
+# `trusted_proxies cloudflare` MODULU GEREKTIRIR:
+#     xcaddy build --with github.com/WeidiDeng/caddy-cloudflare-ip
+# Modul yoksa bu blok Caddy'yi BASLATMAZ — bu yuzden AYRI bir snippet ve
+# YALNIZ turuncu konaklarda `import` ediliyor; api./storage. GRI kaldigi
+# icin onlara DOKUNMAZ.
+#
+# ARALIK LISTESI OTOMATIK TAZELENIR (`interval`): Cloudflare IP bloklarini
+# degistirir ve elle yazilmis bir liste sessizce eskir — o an her istek
+# "guvenilmeyen vekil"den gelmis sayilir ve gercek IP KAYBOLUR.
+(cf_gercek_ip) {
+	trusted_proxies cloudflare {
+		interval 12h
+		timeout 15s
+	}
+	client_ip_headers CF-Connecting-IP X-Forwarded-For
+}
+
 (security_headers) {
 	header {
 		# HSTS — 1 yil, alt-alanlar dahil.
