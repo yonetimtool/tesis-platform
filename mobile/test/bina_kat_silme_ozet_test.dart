@@ -98,10 +98,10 @@ Future<void> _katSilAc(WidgetTester tester) async {
   await tester.pumpAndSettle();
   await tester.tap(find.text('Blok A'));
   await tester.pumpAndSettle();
-  // (P166 §10) IKON ARTIK IKI YERDE: app bar menusu + govdedeki ETIKETLI
-  // giris. Ikisi de ayni araclara gider; test app bar menusunu ANAHTARLA
-  // hedefler — `byIcon` ikisini birden bulup "belirsiz" der.
-  await tester.tap(find.byKey(const Key('yapisal-araclar-menu')));
+  // (P237 §1a) TEK GIRIS KALDI: govdedeki ETIKETLI dugme. App bar'daki
+  // etiketsiz kopya kaldirildi — `byIcon` artik tek sonuc bulurdu ama
+  // anahtarla hedeflemek niyeti daha acik birakiyor.
+  await tester.tap(find.byKey(const Key('yapisal-araclar')));
   await tester.pumpAndSettle();
   await tester.tap(find.text('Katı sil').last);
   await tester.pumpAndSettle();
@@ -182,10 +182,10 @@ void main() {
     final api = _FakeApi(onizleme: _ozet());
     await tester.pumpWidget(_app(api));
     await tester.pumpAndSettle();
-    // (P166 §10) IKON ARTIK IKI YERDE: app bar menusu + govdedeki ETIKETLI
-  // giris. Ikisi de ayni araclara gider; test app bar menusunu ANAHTARLA
-  // hedefler — `byIcon` ikisini birden bulup "belirsiz" der.
-  await tester.tap(find.byKey(const Key('yapisal-araclar-menu')));
+    // (P237 §1a) TEK GIRIS KALDI: govdedeki ETIKETLI dugme. App bar'daki
+  // etiketsiz kopya kaldirildi — `byIcon` artik tek sonuc bulurdu ama
+  // anahtarla hedeflemek niyeti daha acik birakiyor.
+  await tester.tap(find.byKey(const Key('yapisal-araclar')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Katı sil').last);
     await tester.pumpAndSettle();

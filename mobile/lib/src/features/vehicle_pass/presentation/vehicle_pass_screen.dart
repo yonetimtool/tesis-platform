@@ -35,14 +35,9 @@ class VehiclePassScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(baslikBuyuk(l10n.modulAracGecis, context.dilKodu)),
         actions: [
-          // ANPR defteri (P17): gecislerin NEREDEN geldigini gormek ve dusuk
-          // guvenli okumalari karara baglamak icin. Yalniz yetkili rolde.
-          if (!state.erisimYok)
-            IconButton(
-              tooltip: l10n.aracPlakaOkumalari,
-              icon: const Icon(Icons.document_scanner_outlined),
-              onPressed: () => context.push(AppRoutes.plakaOlaylari),
-            ),
+          // (P237 §1) ANPR DEFTERI GIRISI GOVDEYE INDI — bkz. asagisi.
+          // App bar'da ETIKETLI denendi ve dar-ekran surusu (320dp, ru)
+          // 36 piksel TASMA olcu. Kurala gore siradaki cozum: govde seridi.
           IconButton(
             tooltip: l10n.ortakYenile,
             icon: const Icon(Icons.refresh),
@@ -60,6 +55,23 @@ class VehiclePassScreen extends ConsumerWidget {
       body: Column(
         children: [
           if (!state.erisimYok) ...[
+            // (P237 §1) ANPR DEFTERI — ETIKETLI GIRIS.
+            //
+            // P17'de app bar'da ETIKETSIZ bir ikondu; adini yalniz uzun
+            // basinca soyluyordu. Etiketi app bar'a koymak 320dp'de
+            // (Rusca) tasti, bu yuzden arama alaninin USTUNE, adiyla.
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+                child: TextButton.icon(
+                  key: const Key('plaka-okumalari-giris'),
+                  icon: const Icon(Icons.document_scanner_outlined),
+                  label: Text(l10n.aracPlakaOkumalari),
+                  onPressed: () => context.push(AppRoutes.plakaOlaylari),
+                ),
+              ),
+            ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
               child: TextField(

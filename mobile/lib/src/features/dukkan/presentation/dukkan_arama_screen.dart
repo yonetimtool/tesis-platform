@@ -73,21 +73,45 @@ class _DukkanAramaScreenState extends ConsumerState<DukkanAramaScreen> {
         // daha eklemek, pazar yerini hic kullanmayan cogunluga uc olu
         // kutu gostermek olurdu (ana ekran zaten yogun — P184'te
         // kucultme calismasi yapildi).
+        // (P237 §1) UC ETIKETSIZ IKON -> ETIKETLI MADDELERI OLAN TEK MENU.
+        //
+        // Uc etiketi app bar'a yan yana koymak 320dp'de tasiyordu; govde
+        // seridi de burada ise yaramaz, cunku govdenin ustu ARAMA ALANI
+        // ve suzgecler — pazar yerinin asil isi. Tasma menusu secildi:
+        // giris ikonu (`more_vert`) evrensel olarak "daha fazla" demektir
+        // ve acildiginda uc hedef de ADIYLA gorunur.
         actions: [
-          IconButton(
-            tooltip: t.dukkanTaleplerim,
-            icon: const Icon(Icons.assignment_outlined),
-            onPressed: () => context.push(AppRoutes.dukkanTaleplerim),
-          ),
-          IconButton(
-            tooltip: t.dukkanPanelBaslik,
-            icon: const Icon(Icons.storefront_outlined),
-            onPressed: () => context.push(AppRoutes.dukkanPanel),
-          ),
-          IconButton(
-            tooltip: t.dukkanBildirimler,
-            icon: const Icon(Icons.notifications_none),
-            onPressed: () => context.push(AppRoutes.dukkanBildirim),
+          PopupMenuButton<String>(
+            key: const Key('dukkan-menu'),
+            tooltip: t.ortakDahaFazlaSecenek,
+            icon: const Icon(Icons.more_vert),
+            onSelected: (yol) => context.push(yol),
+            itemBuilder: (_) => [
+              PopupMenuItem(
+                value: AppRoutes.dukkanTaleplerim,
+                child: ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.assignment_outlined),
+                  title: Text(t.dukkanTaleplerim),
+                ),
+              ),
+              PopupMenuItem(
+                value: AppRoutes.dukkanPanel,
+                child: ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.storefront_outlined),
+                  title: Text(t.dukkanPanelBaslik),
+                ),
+              ),
+              PopupMenuItem(
+                value: AppRoutes.dukkanBildirim,
+                child: ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.notifications_none),
+                  title: Text(t.dukkanBildirimler),
+                ),
+              ),
+            ],
           ),
         ],
       ),

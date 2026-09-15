@@ -67,10 +67,19 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
         actions: [
           // Kategori yönetimi (A6) — yalnız yönetim görünümünde ve
           // yetkili rolde (canManage); backend RBAC yazmayı ayrıca zorlar.
+          //
+          // (P237 §1c) ETIKETLI DUGME, ciplak ikon DEGIL. App bar'da baska
+          // eylem yok; olcum (`p237_baslik_ikonlari_test.dart`, 320dp)
+          // etiketin tastigi durumu YAKALAR — tasarsa govde seridine
+          // dusulurdu, tasmadi.
           if (widget.yonetimGorunumu && state.canManage)
-            IconButton(
-              tooltip: l10n.gorevKategorilerTooltip,
+            TextButton.icon(
+              key: const Key('gorev-kategorileri-giris'),
               icon: const Icon(Icons.label_outline),
+              // Anahtar adi `...Tooltip` kaldi ama degeri zaten KISA bir
+              // etiket ("Kategoriler"); yedi dilde yeni anahtar uretmek
+              // ayni metni ikinci kez cevirtmek olurdu.
+              label: Text(l10n.gorevKategorilerTooltip),
               onPressed: () => context.push(AppRoutes.taskCategories),
             ),
         ],

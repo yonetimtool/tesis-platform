@@ -93,47 +93,19 @@ class _BinaDuzenlemeScreenState extends ConsumerState<BinaDuzenlemeScreen> {
         leading: drilledIn ? BackButton(onPressed: _closeBlock) : null,
         title: Text(baslikBuyuk(_titleFor(readOnly), context.dilKodu)),
         actions: [
-          // (P164) YAPISAL ARACLAR — webdeki uclunun mobil karsiligi.
+          // (P237 §1a) YAPISAL ARACLAR IKONU APP BAR'DAN KALDIRILDI.
           //
-          // TEK MENUDE toplandi, uc ayri ikon degil: bunlar SEYREK ve
-          // YIKICI islemlerdir; app bar'da uc dugme olarak durmalari,
-          // sik kullanilan "yenile"nin yaninda yanlislikla basilma
-          // riskini artirirdi.
+          // P166 §10'da ikon app bar'da KALMIS, etiketli giris govdeye
+          // EKLENMISTI — yani ayni dort arac iki ayri dugmeyle aciliyordu.
+          // Olcum: her ikisi de `_yapisalArac`a gidiyor, hicbir fark yok.
+          // Kullanici geri bildirimi: "ikisi ayni isi yapiyor".
           //
-          // SALT-OKUMA ROLDE HIC CIZILMEZ: sunucu zaten 403 doner, ama
-          // basilacak bir menu gostermek "yetkim var sandim" demektir.
-          if (!readOnly)
-            // (P166 §10) ETIKET APP BAR'A SIGMADI — GOVDEYE KONDU.
-            //
-            // ILK DENEME METNI BURAYA YAZMAKTI ve DAR EKRAN TESTI onu
-            // dogru sekilde curuttu: 320dp'de app bar 43 piksel tasiyor
-            // (Almanca/Fransizca basliklar daha da uzun). App bar zaten
-            // baslik + geri + yenile tasiyor; dorduncu bir METIN oraya
-            // sigmaz.
-            //
-            // Ikon BURADA KALIR (baglam ici kisayol), ETIKETLI GIRIS ise
-            // govdenin ustune kondu — bkz. `_AraclarSeridi`. Gorunurluk
-            // sorunu cozuluyor, tasma uretilmeden.
-            PopupMenuButton<_YapisalArac>(
-              key: const Key('yapisal-araclar-menu'),
-              tooltip: context.l10n.binaYapisalAraclar,
-              icon: const Icon(Icons.construction_outlined),
-              onSelected: _yapisalArac,
-              itemBuilder: (context) => [
-                PopupMenuItem(
-                  value: _YapisalArac.katSil,
-                  child: Text(context.l10n.binaKatSil),
-                ),
-                PopupMenuItem(
-                  value: _YapisalArac.topluTip,
-                  child: Text(context.l10n.binaTopluTip),
-                ),
-                PopupMenuItem(
-                  value: _YapisalArac.siralama,
-                  child: Text(context.l10n.binaSiralama),
-                ),
-              ],
-            ),
+          // KALAN: govdedeki ETIKETLI giris (`yapisal-araclar`). Ikonu
+          // degil etiketi birakmanin gerekcesi P237 §1 genel kurali:
+          // simge tek basina anlam tasimaz. App bar'a metin sigmadigi
+          // (320dp'de 43 piksel tasma) P166 §10'da olculmustu; bu yuzden
+          // cozum "app bar'a etiket koymak" degil, "app bar'daki etiketsiz
+          // kopyayi kaldirmak".
           IconButton(
             tooltip: context.l10n.ortakYenile,
             icon: const Icon(Icons.refresh),
@@ -159,6 +131,7 @@ class _BinaDuzenlemeScreenState extends ConsumerState<BinaDuzenlemeScreen> {
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
                 child: TextButton.icon(
+                  key: const Key('yapisal-araclar'),
                   onPressed: () => _yapisalAraclariAc(),
                   icon: const Icon(Icons.construction_outlined),
                   label: Text(context.l10n.binaYapisalAraclar),

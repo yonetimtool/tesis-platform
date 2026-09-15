@@ -156,6 +156,46 @@ Future<void> _sekme(WidgetTester tester, int indeks) async {
 }
 
 void main() {
+  // (P237 §1b) ETIKETLI GIRISLER — app bar'daki iki ETIKETSIZ ikon buraya
+  // tasindi ve menu kopyalari kaldirildi. Bu ekran artik o iki ekranin TEK
+  // yolu; etiket kaybolursa kullanici planlara/noktalara hic ulasamaz.
+  testWidgets('DEVRIYE PLANLARI ve KONTROL NOKTALARI adiyla gorunur', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(430, 1400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      _ekran(_SahtePatrolApi(_besDurum()), _SahteScanApi()),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Devriye Planları'), findsOneWidget);
+    expect(find.text('Kontrol noktaları'), findsOneWidget);
+    expect(find.byKey(const Key('devriye-planlari-giris')), findsOneWidget);
+    expect(find.byKey(const Key('kontrol-noktalari-giris')), findsOneWidget);
+  });
+
+  // 320dp EN DAR CIHAZ: iki etiket yan yana sigmayabilir. Serit yatay
+  // kaydirilabilir oldugu icin TASMA URETMEMELI — bu test tasmayi
+  // (RenderFlex overflow) istisna olarak yakalar.
+  testWidgets('320dp: etiketli serit TASMA URETMEZ ve etiketler okunur', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      _ekran(_SahtePatrolApi(_besDurum()), _SahteScanApi()),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('devriye-planlari-giris')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('BES PENCERE DURUMU ayni ekranda: her etiket cizilir', (
     tester,
   ) async {
@@ -227,7 +267,15 @@ void main() {
     expect(find.text('Sunucu hatasi'), findsWidgets);
     // Tekrar dene: saglayici gecersizlenir ve YENI istek atilir.
     final oncekiIstek = scan.istenenGunler.length;
-    final tekrar = find.byType(TextButton).hitTestable();
+    // (P237 §1b) SEKME ICINE KAPSANDI: app bar'dan govdeye inen etiketli
+    // girisler (`Devriye Planları` / `Kontrol noktaları`) de TextButton;
+    // kapsamsiz `.first` onlari yakalayip BASKA EKRANA gidiyordu.
+    final tekrar = find
+        .descendant(
+          of: find.byType(TabBarView),
+          matching: find.byType(TextButton),
+        )
+        .hitTestable();
     if (tekrar.evaluate().isNotEmpty) {
       await tester.tap(tekrar.first);
       await tester.pumpAndSettle();

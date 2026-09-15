@@ -67,30 +67,20 @@ class _PatrolTrackingScreenState extends ConsumerState<PatrolTrackingScreen> {
       child: Scaffold(
         appBar: AppBar(
           title: Text(baslikBuyuk(l10n.devriyeTakibiBaslik, context.dilKodu)),
-          // (P154 / Asama 7.2) BU IKONLAR KALDI ama artik TEK YOL DEGIL.
+          // (P237 §1b) ETIKETSIZ IKONLAR APP BAR'DAN GOVDEYE TASINDI.
           //
-          // Ikisi de baska bir EKRANA aciliyor ve etiketsizdi; tooltip
-          // uzun basmayi gerektirdigi icin cogu kullanici varliklarini
-          // hic ogrenmiyordu. Cozum ikonu buyutmek ya da yazi eklemek
-          // OLMADI (bar zaten dar): iki ekrana da MENUDE ETIKETLI GIRIS
-          // acildi (`HomeMenuEntry.patrolPlans` / `.checkpoints`), yani
-          // artik cekmeceden ve ana ekran izgarasindan da bulunuyorlar.
-          // Buradaki ikonlar baglam ici KISAYOL olarak duruyor.
+          // OLCUM: P154'te bu iki ikon "baglam ici kisayol" olarak
+          // birakilmis, ETIKETLI giris ise MENUYE konmustu. Yani ayni iki
+          // ekran iki ayri yerden aciliyordu ve app bar'daki kopya
+          // etiketsizdi. Kullanici geri bildirimi: "ne olduklari
+          // anlasilmiyor".
+          //
+          // KARAR: menu girisleri kaldirildi (P237 §1b), erisim BU EKRANDA
+          // kaldi — ama ETIKETLI. App bar'a metin KONAMADI: baslik +
+          // yenile + uc sekmeli TabBar zaten dar (P166 §10'da 320dp'de
+          // tasma olculmustu), bu yuzden etiketli giris GOVDENIN USTUNE
+          // kondu — bina duzenlemede calistigi kanitlanan desen.
           actions: [
-            IconButton(
-              tooltip: l10n.devriyePlanlariBaslik,
-              icon: const Icon(Icons.route_outlined),
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const PatrolPlansScreen()),
-              ),
-            ),
-            IconButton(
-              tooltip: l10n.devriyeKontrolNoktalari,
-              icon: const Icon(Icons.add_location_alt_outlined),
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const CheckpointsScreen()),
-              ),
-            ),
             IconButton(
               tooltip: l10n.ortakYenile,
               icon: const Icon(Icons.refresh),
@@ -106,11 +96,49 @@ class _PatrolTrackingScreenState extends ConsumerState<PatrolTrackingScreen> {
             ],
           ),
         ),
-        body: const TabBarView(
+        body: Column(
           children: [
-            _TodayTab(),
-            PatrolHistoryView(),
-            _ScanLogTab(),
+            // (P237 §1b) ETIKETLI GIRISLER — devriye planlari ve kontrol
+            // noktalari. Yatay kaydirilabilir: 320dp'de iki etiket yan
+            // yana sigmayabilir; tasma yerine kaydirma.
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Row(
+                children: [
+                  TextButton.icon(
+                    key: const Key('devriye-planlari-giris'),
+                    icon: const Icon(Icons.route_outlined),
+                    label: Text(l10n.devriyePlanlariBaslik),
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const PatrolPlansScreen(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  TextButton.icon(
+                    key: const Key('kontrol-noktalari-giris'),
+                    icon: const Icon(Icons.add_location_alt_outlined),
+                    label: Text(l10n.devriyeKontrolNoktalari),
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const CheckpointsScreen(),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Expanded(
+              child: TabBarView(
+                children: [
+                  _TodayTab(),
+                  PatrolHistoryView(),
+                  _ScanLogTab(),
+                ],
+              ),
+            ),
           ],
         ),
       ),
