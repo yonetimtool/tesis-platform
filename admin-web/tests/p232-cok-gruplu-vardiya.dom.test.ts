@@ -1,5 +1,11 @@
 // @vitest-environment jsdom
-// (P232) TEK MODALDA COK GRUPLU VARDIYA — web yuzeyi.
+// (P232 · P235 §1) TEK MODALDA COK GRUPLU VARDIYA — web yuzeyi.
+//
+// (P235 §1) `KalipModali` SILINDI: web'de iki ayri vardiya ekleme
+// ekrani vardi ve ikisi ayni isi farkli sirayla soruyordu. Mobilde tek
+// akis var (takvim -> kisi/saat -> gruba ekle -> onizleme) ve web ona
+// esitlendi. Bu dosya ayni sozlesmeyi YENI modalda olcuyor —
+// olculen sey degismedi: gruplar BIRIKIYOR mu ve TEK istekte gidiyor mu.
 //
 // ===========================================================================
 // NE OLCULUYOR
@@ -13,7 +19,7 @@ import userEvent from "@testing-library/user-event";
 import { createElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { KalipModali } from "@/components/vardiya/kalip-modali";
+import { VardiyaEkleModali } from "@/components/vardiya/vardiya-ekle-modali";
 
 import { ciz } from "./yardimci";
 
@@ -53,74 +59,97 @@ const PERSONEL = [
   { id: "u2", ad: "Mehmet", role: "security" },
 ];
 
-/** Ilk dilime ilk kisiyi atar (coklu secim listesi). */
-async function atamaYap() {
-  const liste = document.querySelector<HTMLSelectElement>(
-    '[data-test="kalip-atama-0"]',
+/** (P235 §1) Takvimden gun secer + serbest saatte kisi atar.
+ *
+ * YENI AKIS: once TAKVIM. Eski modalda gunler disaridan `gunler`
+ * prop'uyla geliyordu; simdi kullanici onlari modalin icinde seciyor —
+ * mobildeki sira budur. */
+async function gunVeKisiSec(gun: string) {
+  const g = document.querySelector<HTMLButtonElement>(
+    `[data-test="vardiya-ekle-gun-${gun}"]`,
   );
-  expect(liste, "atama listesi cizilmedi").toBeTruthy();
-  await userEvent.selectOptions(liste!, ["u1"]);
+  expect(g, `gun dugmesi cizilmedi: ${gun}`).toBeTruthy();
+  await userEvent.click(g!);
+  const kisi = document.querySelector<HTMLSelectElement>(
+    '[data-test="vardiya-ekle-kisi"]',
+  );
+  expect(kisi, "kisi listesi cizilmedi").toBeTruthy();
+  await userEvent.selectOptions(kisi!, ["u1"]);
 }
 
 afterEach(() => vi.restoreAllMocks());
 
 describe("(P232) cok gruplu vardiya modali", () => {
-  it("GRUP EKLENINCE sayfa gun secimini temizlesin diye geri cagrilir", async () => {
+  it("GRUP EKLENINCE takvim secimi TEMIZLENIR", async () => {
+    // Yoksa kullanici ayni gunleri ikinci gruba da yazar ve KENDI KENDINE
+    // cakisma uretirdi (mobildeki ayni gerekce).
     const cagrilar: Cagri[] = [];
     fetchSahtele(cagrilar);
-    const temizlendi = vi.fn();
     ciz(() =>
-      createElement(KalipModali, {
+      createElement(VardiyaEkleModali, {
         acik: true,
-        gunler: ["2026-03-02"],
         personel: PERSONEL,
+        baslangicAyi: "2026-03-01",
+        onSecilenGunler: [],
         onKapat: () => {},
-        onUygulandi: () => {},
-        onGrupEklendi: temizlendi,
+        onBitti: () => {},
       }),
     );
 
-    // Dilime kisi ata (yoksa "gruba ekle" kapali).
-    // NOT: depo `data-test` kullaniyor, `data-testid` DEGIL — ve atama
-    // denetimi bir COKLU SECIM listesi, onay kutusu degil (olculdu).
     await waitFor(() =>
-      expect(document.querySelector('[data-test="kalip-atama-0"]')).toBeTruthy(),
+      expect(
+        document.querySelector('[data-test="vardiya-ekle-takvim"]'),
+      ).toBeTruthy(),
     );
-    await atamaYap();
+    await gunVeKisiSec("2026-03-02");
+    expect(
+      document.querySelector('[data-test="vardiya-ekle-secili-sayi"]')
+        ?.textContent,
+    ).toContain("1");
 
-    const ekle = document.querySelector<HTMLButtonElement>(
-      '[data-test="kalip-gruba-ekle"]',
+    await userEvent.click(
+      document.querySelector<HTMLButtonElement>(
+        '[data-test="vardiya-ekle-gruba-ekle"]',
+      )!,
     );
-    expect(ekle, "gruba ekle dugmesi yok").toBeTruthy();
-    await userEvent.click(ekle!);
-    expect(temizlendi).toHaveBeenCalled();
+    expect(
+      document.querySelector('[data-test="vardiya-ekle-secili-sayi"]')
+        ?.textContent,
+    ).toContain("0");
+    expect(
+      document.querySelector('[data-test="vardiya-ekle-grup-sayisi"]'),
+    ).toBeTruthy();
   });
 
   it("EKLENEN GRUPLAR tek istekte `gruplar` olarak gider", async () => {
     const cagrilar: Cagri[] = [];
     fetchSahtele(cagrilar);
     ciz(() =>
-      createElement(KalipModali, {
+      createElement(VardiyaEkleModali, {
         acik: true,
-        gunler: ["2026-03-02", "2026-03-03"],
         personel: PERSONEL,
+        baslangicAyi: "2026-03-01",
+        onSecilenGunler: [],
         onKapat: () => {},
-        onUygulandi: () => {},
-        onGrupEklendi: () => {},
+        onBitti: () => {},
       }),
     );
 
     await waitFor(() =>
-      expect(document.querySelector('[data-test="kalip-atama-0"]')).toBeTruthy(),
+      expect(
+        document.querySelector('[data-test="vardiya-ekle-takvim"]'),
+      ).toBeTruthy(),
     );
-    await atamaYap();
+    await gunVeKisiSec("2026-03-02");
     await userEvent.click(
-      document.querySelector<HTMLButtonElement>('[data-test="kalip-gruba-ekle"]')!,
+      document.querySelector<HTMLButtonElement>(
+        '[data-test="vardiya-ekle-gruba-ekle"]',
+      )!,
     );
 
     // Onizleme: `gruplar` gitmeli, tekil `gunler` DEGIL.
     const onizle = document.querySelector<HTMLButtonElement>(
-      '[data-test="kalip-onizle"]',
+      '[data-test="vardiya-onizle"]',
     );
     expect(onizle, "onizleme dugmesi bulunamadi").toBeTruthy();
     await userEvent.click(onizle!);

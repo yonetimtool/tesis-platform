@@ -154,15 +154,26 @@ it("SECIMI TEMIZLE sifirlar", async () => {
 
 // ========================== KALIP UYGULA ================================ #
 
+/**
+ * (P235 §1) TEK MODAL. Onceden "Kalip uygula" AYRI bir pencere aciyordu
+ * (`kalip-modali.tsx`) ve gunler sayfadaki seritten SECILMIS OLMALIYDI.
+ * Simdi iki dugme de AYNI modali aciyor ve gunler MODALIN ICINDEKI
+ * takvimden seciliyor — mobildeki sira budur.
+ *
+ * Seritten secilen gunler yine tasiniyor (`onSecilenGunler`), yani bu
+ * yardimci hala sayfadan secip aciyor; degisen tek sey pencere.
+ */
 async function pencereyiAc(k: ReturnType<typeof userEvent.setup>) {
   await ayGorunumu(k);
   await k.click(kanca(`vardiya-gun-sec-${BUGUN}`)!);
   await k.click(kanca(`vardiya-gun-sec-${gunEkle(BUGUN, 1)}`)!);
   await k.click(kanca("vardiya-kalip-ac")!);
-  await waitFor(() => expect(kanca("kalip-sec")).toBeTruthy());
+  await waitFor(() => expect(kanca("vardiya-ekle-kalip")).toBeTruthy());
 }
 
 it("SECIM YOKKEN kalip dugmesi PASIF", async () => {
+  // (P235 §1) DEGISMEDI: seritten gun secilmeden bu dugme aciksa,
+  // kullanici bos bir secimle modal acar ve takvimi ikinci kez doldurur.
   const k = userEvent.setup();
   taklit();
   await ayGorunumu(k);
@@ -179,36 +190,44 @@ it("ONIZLEME kaydetmeden KAC VARDIYA olusacagini sorar", async () => {
     },
   });
   await pencereyiAc(k);
-  await k.selectOptions(kanca("kalip-sec")!, "k-1");
-  await waitFor(() => expect(kanca("kalip-atama-0")).toBeTruthy());
-  await k.selectOptions(kanca("kalip-atama-0")!, "u-1");
-  await k.click(kanca("kalip-onizle")!);
+  await k.selectOptions(kanca("vardiya-ekle-kalip")!, "k-1");
+  await waitFor(() => expect(kanca("vardiya-ekle-dilim-0")).toBeTruthy());
+  await k.selectOptions(kanca("vardiya-ekle-dilim-0")!, "u-1");
+  await k.click(kanca("vardiya-onizle")!);
 
-  await waitFor(() => expect(kanca("kalip-sonuc")).toBeTruthy());
+  await waitFor(() => expect(kanca("vardiya-ekle-onizleme")).toBeTruthy());
   const post = cagrilar.find((c) => c.url === "/api/vardiya-plani/kalip-uygula")!;
   expect(post.govde.kuru).toBe(true);
-  expect((post.govde.gunler as string[]).length).toBe(2);
-  expect(kanca("kalip-sonuc")!.textContent).toContain("4");
+  // (P235 §1) GOVDE ARTIK COK GRUPLU: gunler grubun icinde.
+  const gruplar = post.govde.gruplar as { gunler: string[] }[];
+  expect(gruplar[0].gunler.length).toBe(2);
+  expect(kanca("vardiya-ekle-onizleme")!.textContent).toContain("4");
 });
 
 it("UYGULA govdesi: SECILI GUNLER + dilim atamalari + rotasyon", async () => {
   const k = userEvent.setup();
   const cagrilar = taklit();
   await pencereyiAc(k);
-  await k.selectOptions(kanca("kalip-sec")!, "k-1");
-  await waitFor(() => expect(kanca("kalip-atama-1")).toBeTruthy());
-  await k.selectOptions(kanca("kalip-atama-1")!, "u-1");
-  await k.selectOptions(kanca("kalip-rotasyon")!, "haftalik");
-  await k.click(kanca("kalip-uygula")!);
+  await k.selectOptions(kanca("vardiya-ekle-kalip")!, "k-1");
+  await waitFor(() => expect(kanca("vardiya-ekle-dilim-1")).toBeTruthy());
+  await k.selectOptions(kanca("vardiya-ekle-dilim-1")!, "u-1");
+  await k.selectOptions(kanca("vardiya-ekle-rotasyon")!, "haftalik");
+  await k.click(kanca("vardiya-ekle-gonder")!);
 
   await waitFor(() =>
     expect(cagrilar.some((c) => c.url === "/api/vardiya-plani/kalip-uygula")).toBe(true),
   );
   const post = cagrilar.find((c) => c.url === "/api/vardiya-plani/kalip-uygula")!;
-  expect(post.govde.kalip_id).toBe("k-1");
+  // ROTASYON UST DUZEYDE KALDI (sema oyle): gruplar ondan etkilenir.
   expect(post.govde.rotasyon).toBe("haftalik");
-  expect((post.govde.atamalar as Record<string, string[]>)["1"]).toEqual(["u-1"]);
-  expect(post.govde.kuru).toBeUndefined();
+  const gruplar = post.govde.gruplar as {
+    dilimler: unknown[];
+    atamalar: Record<string, string[]>;
+  }[];
+  // Kalibin dilimleri gruba TASINIR ve atama DILIM SIRASINA gore gider.
+  expect(gruplar[0].dilimler.length).toBe(2);
+  expect(gruplar[0].atamalar["1"]).toEqual(["u-1"]);
+  expect(post.govde.kuru).toBe(false);
 });
 
 it("CAKISMA: hangi gun/dilim/kisi oldugu YAZILIR, karar KULLANICININ", async () => {
@@ -228,16 +247,16 @@ it("CAKISMA: hangi gun/dilim/kisi oldugu YAZILIR, karar KULLANICININ", async () 
     },
   });
   await pencereyiAc(k);
-  await k.selectOptions(kanca("kalip-sec")!, "k-1");
-  await waitFor(() => expect(kanca("kalip-atama-0")).toBeTruthy());
-  await k.selectOptions(kanca("kalip-atama-0")!, "u-1");
-  await k.click(kanca("kalip-uygula")!);
+  await k.selectOptions(kanca("vardiya-ekle-kalip")!, "k-1");
+  await waitFor(() => expect(kanca("vardiya-ekle-dilim-0")).toBeTruthy());
+  await k.selectOptions(kanca("vardiya-ekle-dilim-0")!, "u-1");
+  await k.click(kanca("vardiya-ekle-gonder")!);
 
-  await waitFor(() => expect(kanca("kalip-cakisma")).toBeTruthy());
-  expect(kanca("kalip-cakisma")!.textContent).toContain("Gunduz");
-  expect(kanca("kalip-cakisma")!.textContent).toContain("Ali Guvenlik");
+  await waitFor(() => expect(kanca("vardiya-ekle-onizleme")).toBeTruthy());
+  expect(kanca("vardiya-ekle-onizleme")!.textContent).toContain("Gunduz");
+  expect(kanca("vardiya-ekle-onizleme")!.textContent).toContain("Ali Guvenlik");
 
-  await k.click(kanca("kalip-cakisan-haric")!);
+  await k.click(kanca("vardiya-cakisan-haric")!);
   await waitFor(() =>
     expect(
       cagrilar.filter((c) => c.url === "/api/vardiya-plani/kalip-uygula").length,
@@ -256,10 +275,10 @@ it("UYGULAMADAN SONRA 'geri al' cikar ve PARTIYI geri alir", async () => {
   const k = userEvent.setup();
   const cagrilar = taklit();
   await pencereyiAc(k);
-  await k.selectOptions(kanca("kalip-sec")!, "k-1");
-  await waitFor(() => expect(kanca("kalip-atama-0")).toBeTruthy());
-  await k.selectOptions(kanca("kalip-atama-0")!, "u-1");
-  await k.click(kanca("kalip-uygula")!);
+  await k.selectOptions(kanca("vardiya-ekle-kalip")!, "k-1");
+  await waitFor(() => expect(kanca("vardiya-ekle-dilim-0")).toBeTruthy());
+  await k.selectOptions(kanca("vardiya-ekle-dilim-0")!, "u-1");
+  await k.click(kanca("vardiya-ekle-gonder")!);
 
   await waitFor(() => expect(kanca("vardiya-parti-geri-al")).toBeTruthy());
   await k.click(kanca("vardiya-parti-geri-al")!);
@@ -278,12 +297,18 @@ it("KAYDEDILMEMIS kalipla da uygulanabilir (tek seferlik plan)", async () => {
   const k = userEvent.setup();
   const cagrilar = taklit();
   await pencereyiAc(k);
-  // Kalip secilmedi: dilimler pencerede tanimli (varsayilan iki vardiya).
-  await waitFor(() => expect(kanca("kalip-dilimler")).toBeTruthy());
-  await k.selectOptions(kanca("kalip-atama-0")!, "u-1");
-  await k.click(kanca("kalip-uygula")!);
+  // (P235 §1) KALIP SECILMEDI = SERBEST SAAT. Tek seferlik plan icin
+  // kayitli kalip sart degil; saatler modalda veriliyor ve TEK dilimlik
+  // bir grup olusuyor. Mobildeki davranisin aynisi.
+  await waitFor(() => expect(kanca("vardiya-ekle-kisi")).toBeTruthy());
+  await k.selectOptions(kanca("vardiya-ekle-kisi")!, "u-1");
+  await k.click(kanca("vardiya-ekle-gruba-ekle")!);
+  await k.click(kanca("vardiya-ekle-gonder")!);
 
+  await waitFor(() =>
+    expect(cagrilar.some((c) => c.url === "/api/vardiya-plani/kalip-uygula")).toBe(true),
+  );
   const post = cagrilar.find((c) => c.url === "/api/vardiya-plani/kalip-uygula")!;
-  expect(post.govde.kalip_id).toBeUndefined();
-  expect((post.govde.dilimler as unknown[]).length).toBe(2);
+  const gruplar = post.govde.gruplar as { dilimler: unknown[] }[];
+  expect(gruplar[0].dilimler.length).toBe(1);
 });

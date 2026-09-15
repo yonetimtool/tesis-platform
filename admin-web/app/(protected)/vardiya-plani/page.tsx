@@ -14,7 +14,7 @@ import {
   Rozet,
   Secim,
 } from "@/components/ui";
-import { KalipModali } from "@/components/vardiya/kalip-modali";
+import { VardiyaEkleModali } from "@/components/vardiya/vardiya-ekle-modali";
 import { SablonBolumu } from "@/components/vardiya/sablon-bolumu";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
@@ -808,32 +808,28 @@ export default function VardiyaPlaniSayfasi() {
         />
       </section>
 
-      {/* ---------------- (P207 §1) KALIP UYGULA ------------------------ */}
-      <KalipModali
-        acik={kalipAcik}
-        gunler={Array.from(seciliGunler).sort()}
+      {/* ---- (P235 §1) TEK MODAL: iki dugme de AYNI akisi aciyor -------
+          Onceden ustteki "Vardiya ekle" bir modali, alttaki "Kalip
+          uygula" BASKA bir modali aciyordu; ikisi ayni isi farkli
+          sirayla soruyordu. Mobilde tek akis var (takvim -> kisi/saat ->
+          gruba ekle -> onizleme) ve web ona esitlendi. */}
+      <VardiyaEkleModali
+        acik={ekleAcik || kalipAcik}
         personel={(personel?.items ?? []).filter((p) => p.role !== "resident")}
-        onKapat={() => setKalipAcik(false)}
-        // (P232) Grup eklenince TAKVIM SECIMI TEMIZLENIR: sonraki grup
-        // bos baslamali, yoksa kullanici ayni gunleri ikinci gruba da
-        // yazardi ve cakisma uretirdi.
-        onGrupEklendi={() => setSeciliGunler(new Set())}
-        onUygulandi={(partiId) => {
-          setSonParti(partiId);
+        baslangicAyi={baslangic}
+        // SERITTEN SECILEN GUNLER MODALA TASINIR: kullanici cizelgede
+        // gunleri isaretleyip "Kalip uygula"ya bastiysa o secim
+        // KAYBOLMAMALI — eski `KalipModali` da onu aliyordu.
+        onSecilenGunler={Array.from(seciliGunler).sort()}
+        onParti={(partiId) => setSonParti(partiId)}
+        onKapat={() => {
+          setEkleAcik(false);
           setKalipAcik(false);
-          setSeciliGunler(new Set());
-          void mutate();
         }}
-      />
-
-      {/* --------------------- 2.2 HIZLI VARDIYA EKLE -------------------- */}
-      <HizliEkle
-        acik={ekleAcik}
-        personel={(personel?.items ?? []).filter((p) => p.role !== "resident")}
-        varsayilanTarih={baslangic}
-        onKapat={() => setEkleAcik(false)}
         onBitti={() => {
           setEkleAcik(false);
+          setKalipAcik(false);
+          setSeciliGunler(new Set());
           void mutate();
         }}
       />
@@ -947,239 +943,5 @@ function BlokAyrinti({
         </Dugme>
       </div>
     </Kart>
-  );
-}
-
-/**
- * (§2.2) HIZLI VARDIYA EKLE.
- *
- * CAKISAN GUNLER SESSIZCE ATLANMAZ: sunucu once `uygulandi=false` ve
- * cakisan gunlerin listesiyle doner; kullanici "cakisanlar haric ekle"
- * ya da "iptal" der. Kullaniciya "bir yerde cakisma var" deyip onu tek
- * tek aramaya gondermek, ekledigini sandigi gunlerin eksik oldugunu
- * sahada fark etmesi demekti.
- */
-function HizliEkle({
-  acik,
-  personel,
-  varsayilanTarih,
-  onKapat,
-  onBitti,
-}: {
-  acik: boolean;
-  personel: Personel[];
-  varsayilanTarih: string;
-  onKapat: () => void;
-  onBitti: () => void;
-}) {
-  const t = useT();
-  const toast = useToast();
-  const [userId, setUserId] = useState("");
-  const [basTarih, setBasTarih] = useState(varsayilanTarih);
-  const [sonTarih, setSonTarih] = useState(varsayilanTarih);
-  const [basSaat, setBasSaat] = useState("08:00");
-  const [sonSaat, setSonSaat] = useState("16:00");
-  const [not, setNot] = useState("");
-  const [cakisanlar, setCakisanlar] = useState<string[] | null>(null);
-  const [hata, setHata] = useState<string | null>(null);
-  const [bekliyor, setBekliyor] = useState(false);
-
-  async function gonder(atla: boolean) {
-    setBekliyor(true);
-    setHata(null);
-    try {
-      const y = (await apiSend("/api/vardiya-plani/toplu", "POST", {
-        user_id: userId,
-        baslangic_tarih: basTarih,
-        bitis_tarih: sonTarih,
-        baslangic_saat: basSaat,
-        bitis_saat: sonSaat,
-        not_metni: not || null,
-        cakisanlari_atla: atla,
-      })) as TopluSonuc;
-      if (!y.uygulandi) {
-        // KARAR KULLANICININ: hangi gunlerde cakisma oldugunu GORUR.
-        setCakisanlar(
-          y.gunler.filter((g) => g.durum === "cakisma").map((g) => g.tarih),
-        );
-        return;
-      }
-      for (const u of y.uyarilar ?? []) {
-        toast.info(
-          u === "gunluk_sinir_asildi"
-            ? t("vardiyaUyariGunluk")
-            : t("vardiyaUyariHaftalik"),
-        );
-      }
-      toast.success(t("vardiyaEklendiSayi", { n: y.eklenen }));
-      setCakisanlar(null);
-      onBitti();
-    } catch (e) {
-      setHata(e instanceof Error ? e.message : t("ortakHataOlustu"));
-    } finally {
-      setBekliyor(false);
-    }
-  }
-
-  return (
-    <Modal
-      acik={acik}
-      onKapat={onKapat}
-      baslik={t("vardiyaYeni")}
-      eylemler={
-        <>
-          <Dugme type="button" tur="ikincil" onClick={onKapat}>
-            {t("ortakIptal")}
-          </Dugme>
-          <Dugme
-            type="button"
-            disabled={!userId || bekliyor}
-            data-test="vardiya-ekle-gonder"
-            onClick={() => void gonder(false)}
-          >
-            {t("vardiyaEkleGonder")}
-          </Dugme>
-        </>
-      }
-    >
-      <div className="space-y-3">
-        <HataDurumu mesaj={hata} />
-
-        {/* (P232) "Kisi ara" ALANI KALDIRILDI.
-            OLCULDU: tek isi asagidaki acilir listenin SECENEKLERINI
-            suzmekti (`personel.filter(...)`), baska hicbir sey
-            yapmiyordu. Acilir liste denetimi zaten yazarak atlamayi
-            (type-ahead) destekliyor; ayri bir suzgec kutusu onu
-            TEKRARLIYOR ve "hangisini kullanacagim" sorusunu
-            uretiyordu.
-
-            NOT: bu yorumda acilir liste etiketinin ADI YAZILMAZ —
-            `erisilebilir-etiket` taramasi yorumdaki etiketi de gercek
-            bir denetim sanip "adsiz denetim" diye raporluyor (olculdu). */}
-        <AlanSarmal etiket={t("vardiyaPersonel")}>
-          {(baglar) => (
-            <Secim
-              {...baglar}
-              value={userId}
-              data-test="vardiya-ekle-kisi"
-              onChange={(e) => setUserId(e.target.value)}
-            >
-              <option value="">{t("ortakSeciniz")}</option>
-              {personel.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.ad}
-                </option>
-              ))}
-            </Secim>
-          )}
-        </AlanSarmal>
-
-        <div className="flex flex-wrap gap-2">
-          <AlanSarmal etiket={t("vardiyaBaslangicTarihi")}>
-            {(baglar) => (
-              <Alan
-                {...baglar}
-                type="date"
-                value={basTarih}
-                data-test="vardiya-ekle-bas-tarih"
-                onChange={(e) => setBasTarih(e.target.value)}
-              />
-            )}
-          </AlanSarmal>
-          <AlanSarmal etiket={t("vardiyaBitisTarihi")}>
-            {(baglar) => (
-              <Alan
-                {...baglar}
-                type="date"
-                value={sonTarih}
-                data-test="vardiya-ekle-son-tarih"
-                onChange={(e) => setSonTarih(e.target.value)}
-              />
-            )}
-          </AlanSarmal>
-          <AlanSarmal etiket={t("vardiyaBaslangicSaati")}>
-            {(baglar) => (
-              <Alan
-                {...baglar}
-                type="time"
-                value={basSaat}
-                data-test="vardiya-ekle-bas-saat"
-                onChange={(e) => setBasSaat(e.target.value)}
-              />
-            )}
-          </AlanSarmal>
-          <AlanSarmal etiket={t("vardiyaBitisSaati")}>
-            {(baglar) => (
-              <Alan
-                {...baglar}
-                type="time"
-                value={sonSaat}
-                data-test="vardiya-ekle-son-saat"
-                onChange={(e) => setSonSaat(e.target.value)}
-              />
-            )}
-          </AlanSarmal>
-        </div>
-
-        <AlanSarmal etiket={t("vardiyaNot")}>
-          {(baglar) => (
-            <Alan
-              {...baglar}
-              value={not}
-              data-test="vardiya-ekle-not"
-              onChange={(e) => setNot(e.target.value)}
-            />
-          )}
-        </AlanSarmal>
-
-        {/* BILGI KUTUSU: iki davranis ONCEDEN soylenir — aralik HER GUN
-            icin kayit acar ve bitis saati baslangictan kucukse vardiya
-            ERTESI GUNE tasar. Bunlari denedikten sonra ogrenmek,
-            yanlislikla 14 kayit acmak demekti. */}
-        <p
-          data-test="vardiya-ekle-bilgi"
-          style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}
-        >
-          {t("vardiyaEkleBilgi")}
-        </p>
-
-        {cakisanlar && cakisanlar.length > 0 && (
-          <div data-test="vardiya-cakisma-uyarisi">
-            <Rozet durum="uyari">
-              {t("vardiyaCakisanGunler", { n: cakisanlar.length })}
-            </Rozet>
-            <p
-              className="mt-1 tabular-nums"
-              style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-text-2)" }}
-            >
-              {cakisanlar.join(", ")}
-            </p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              <Dugme
-                type="button"
-                boy="kucuk"
-                disabled={bekliyor}
-                data-test="vardiya-cakisan-haric"
-                onClick={() => void gonder(true)}
-              >
-                {t("vardiyaCakisanHaric")}
-              </Dugme>
-              <Dugme
-                type="button"
-                boy="kucuk"
-                tur="ikincil"
-                data-test="vardiya-cakisma-iptal"
-                onClick={() => {
-                  setCakisanlar(null);
-                  onKapat();
-                }}
-              >
-                {t("ortakIptal")}
-              </Dugme>
-            </div>
-          </div>
-        )}
-      </div>
-    </Modal>
   );
 }
