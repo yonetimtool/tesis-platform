@@ -286,3 +286,60 @@ COPY --from=builder /usr/bin/caddy /usr/bin/caddy
 
 Bunu **turuncuya geçtikten sonra** yapmak doğru: gri kalan bir kurulumda
 modülü eklemek, çözdüğü sorun ortada yokken imajı değiştirmek olurdu.
+
+---
+
+## §3 — Mobil paket 1.3.1+11
+
+### Sürüm neden bu
+
+**1.3.0+10 Play'e gönderilmiş olabilir** (bilinmiyor). `versionCode` **11**
+her durumda ondan büyük — Play aynı veya küçük kodu **reddeder**. Ad
+**1.3.1**: bu tur davranış düzeltmesi ve altyapı değişimi, yeni modül yok.
+
+### Paketin GERÇEK içeriği (pubspec'e değil, pakete bakarak)
+
+`aapt2 dump badging` ile okundu:
+
+```
+package: name='com.app.yonetiyor' versionCode='11' versionName='1.3.1'
+minSdkVersion:'24'  compileSdkVersion='36'
+```
+
+`yayin-yap.sh` doğrulamaları — **AAB ve APK'da ayrı ayrı, ikisi de geçti**:
+
+| Kontrol | Sonuç | Neden ölçülüyor |
+|---|---|---|
+| AD_ID izni yok | ✅ | Play reklam kimliği beyanı ister; izin sızarsa yayın durur |
+| Gömülü adres | ✅ `https://api.yonetio.site` | yayındaki mobil bu adrese bağlı (P234 §3'te gri kalma sebebi) |
+| Emülatör adresi | ✅ yok | `10.0.2.2` sızarsa uygulama sahada hiç çalışmaz |
+| İmza | ✅ upload anahtarı | hata ayıklama anahtarlı paketi Play reddeder |
+| Bildirim sesleri | ✅ 3/3 | **`resources.arsc`ten** okundu — dosya adından değil (P221: yayın yapımı `res/raw/…ogg`u `res/KX.ogg`ye kısaltıyor, ada bakan ölçüm "yok" diyordu) |
+| Ses dosyası sayısı | ✅ 3 | arsc'de ad var ama dosya elenmiş olabilirdi |
+| İkon | ✅ bayat değil | P184'te bir kez bayat mipmap eski ikonu taşıdı |
+
+**Betiğin ölçmediği şey:** ikonun **piksel içeriği**. Yayın yapımında
+PNG'ler yeniden sıkıştırılıp adları kısaltılıyor; kaynak dosyanın baytı
+paketle asla tutmaz. İkonun görsel doğruluğu **gözle** doğrulanmalı — betik
+bunu iddia etmiyor, ben de etmiyorum.
+
+### Çıktılar
+
+```
+mobile/build/app/outputs/bundle/release/app-release.aab   72.2 MB
+mobile/build/app/outputs/flutter-apk/app-release.apk      75.1 MB
+```
+
+### Sürüm notları
+
+`docs/surum-notlari/1.3.1-play.md` · `docs/surum-notlari/1.3.1-appstore.md`
+
+7 dil, Play ve App Store **ayrı** (Play 500 karakter, App Store 4000).
+Karakter sayıları **ölçüldü** — P221/P233'te tahmin etmiş ve hepsini
+yanlış yazmıştım. Play'de en uzunu **496/500** (fr), yani sınıra yakın:
+metin uzatılırsa yeniden ölçülmeli.
+
+### iOS
+
+`.ipa` bu makinede **üretilmedi** — Mac gerekiyor ve P233'te kararlaştırıldığı
+gibi onu sen üreteceksin. App Store sürüm notları hazır.
