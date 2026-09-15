@@ -6574,4 +6574,58 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get gorevAdimYuklenemedi => 'No se pudieron cargar los pasos.';
+
+  @override
+  String get anketAnonimRozet => 'Anónima';
+
+  @override
+  String get anketKvkkAdliUyari =>
+      'Esta encuesta NO es anónima: su voto es visible para la administración con su nombre.';
+
+  @override
+  String get anketAnonimBilgi =>
+      'Esta encuesta es anónima: no se guarda quién votó qué.';
+
+  @override
+  String anketKatilim(String oy, String hedef, String oran) {
+    return 'Participación: $oy/$hedef ($oran%)';
+  }
+
+  @override
+  String get anketYeni => 'Nueva encuesta';
+
+  @override
+  String get anketAciklamaOpsiyonel => 'Descripción (opcional)';
+
+  @override
+  String get anketMaddeler => 'Opciones de la encuesta';
+
+  @override
+  String get anketMaddeIpucu =>
+      'Una opción por línea; se requieren al menos dos.';
+
+  @override
+  String get anketEnAzIki => 'Se requieren al menos dos opciones.';
+
+  @override
+  String get anketHedefKitle => 'Público objetivo';
+
+  @override
+  String get anketHedefHerkes => 'Todos (si no se selecciona nada)';
+
+  @override
+  String get anketAnonimSecim => 'Encuesta anónima';
+
+  @override
+  String get anketAnonimUyari =>
+      'La elección de anonimato NO se puede cambiar tras guardar.';
+
+  @override
+  String get anketKapat => 'Cerrar encuesta';
+
+  @override
+  String get anketOyDokumu => 'Quién votó qué';
+
+  @override
+  String get anketGorselSec => 'Elegir imagen';
 }

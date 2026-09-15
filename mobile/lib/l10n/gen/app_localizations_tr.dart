@@ -6404,4 +6404,57 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get gorevAdimYuklenemedi => 'Adımlar yüklenemedi.';
+
+  @override
+  String get anketAnonimRozet => 'Anonim';
+
+  @override
+  String get anketKvkkAdliUyari =>
+      'Bu anket anonim DEĞİL: oyunuz adınızla birlikte yöneticiye görünür.';
+
+  @override
+  String get anketAnonimBilgi =>
+      'Bu anket anonim: kimin ne oy verdiği kaydedilmez.';
+
+  @override
+  String anketKatilim(String oy, String hedef, String oran) {
+    return 'Katılım: $oy/$hedef (%$oran)';
+  }
+
+  @override
+  String get anketYeni => 'Yeni anket';
+
+  @override
+  String get anketAciklamaOpsiyonel => 'Açıklama (isteğe bağlı)';
+
+  @override
+  String get anketMaddeler => 'Anket maddeleri';
+
+  @override
+  String get anketMaddeIpucu => 'Her satır bir madde; en az iki madde gerekir.';
+
+  @override
+  String get anketEnAzIki => 'En az iki madde gerekir.';
+
+  @override
+  String get anketHedefKitle => 'Hedef kitle';
+
+  @override
+  String get anketHedefHerkes => 'Herkes (seçim yapılmazsa)';
+
+  @override
+  String get anketAnonimSecim => 'Anonim anket';
+
+  @override
+  String get anketAnonimUyari =>
+      'Anonim seçimi kaydedildikten sonra DEĞİŞTİRİLEMEZ.';
+
+  @override
+  String get anketKapat => 'Anketi kapat';
+
+  @override
+  String get anketOyDokumu => 'Kim neye oy verdi';
+
+  @override
+  String get anketGorselSec => 'Görsel seç';
 }

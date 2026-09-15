@@ -6599,4 +6599,58 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get gorevAdimYuklenemedi => 'Steps could not be loaded.';
+
+  @override
+  String get anketAnonimRozet => 'Anonymous';
+
+  @override
+  String get anketKvkkAdliUyari =>
+      'This poll is NOT anonymous: your vote is visible to management with your name.';
+
+  @override
+  String get anketAnonimBilgi =>
+      'This poll is anonymous: who voted for what is not stored.';
+
+  @override
+  String anketKatilim(String oy, String hedef, String oran) {
+    return 'Turnout: $oy/$hedef ($oran%)';
+  }
+
+  @override
+  String get anketYeni => 'New poll';
+
+  @override
+  String get anketAciklamaOpsiyonel => 'Description (optional)';
+
+  @override
+  String get anketMaddeler => 'Poll options';
+
+  @override
+  String get anketMaddeIpucu =>
+      'One option per line; at least two are required.';
+
+  @override
+  String get anketEnAzIki => 'At least two options are required.';
+
+  @override
+  String get anketHedefKitle => 'Target audience';
+
+  @override
+  String get anketHedefHerkes => 'Everyone (if nothing is selected)';
+
+  @override
+  String get anketAnonimSecim => 'Anonymous poll';
+
+  @override
+  String get anketAnonimUyari =>
+      'The anonymity choice CANNOT be changed after saving.';
+
+  @override
+  String get anketKapat => 'Close poll';
+
+  @override
+  String get anketOyDokumu => 'Who voted for what';
+
+  @override
+  String get anketGorselSec => 'Choose image';
 }

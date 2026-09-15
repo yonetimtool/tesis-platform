@@ -6668,4 +6668,58 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get gorevAdimYuklenemedi => 'Не удалось загрузить шаги.';
+
+  @override
+  String get anketAnonimRozet => 'Анонимный';
+
+  @override
+  String get anketKvkkAdliUyari =>
+      'Этот опрос НЕ анонимный: ваш голос виден руководству вместе с вашим именем.';
+
+  @override
+  String get anketAnonimBilgi =>
+      'Этот опрос анонимный: кто как проголосовал, не сохраняется.';
+
+  @override
+  String anketKatilim(String oy, String hedef, String oran) {
+    return 'Явка: $oy/$hedef ($oran%)';
+  }
+
+  @override
+  String get anketYeni => 'Новый опрос';
+
+  @override
+  String get anketAciklamaOpsiyonel => 'Описание (необязательно)';
+
+  @override
+  String get anketMaddeler => 'Варианты опроса';
+
+  @override
+  String get anketMaddeIpucu =>
+      'По одному варианту в строке; нужно минимум два.';
+
+  @override
+  String get anketEnAzIki => 'Нужно минимум два варианта.';
+
+  @override
+  String get anketHedefKitle => 'Целевая аудитория';
+
+  @override
+  String get anketHedefHerkes => 'Все (если ничего не выбрано)';
+
+  @override
+  String get anketAnonimSecim => 'Анонимный опрос';
+
+  @override
+  String get anketAnonimUyari =>
+      'Выбор анонимности НЕЛЬЗЯ изменить после сохранения.';
+
+  @override
+  String get anketKapat => 'Закрыть опрос';
+
+  @override
+  String get anketOyDokumu => 'Кто за что проголосовал';
+
+  @override
+  String get anketGorselSec => 'Выбрать изображение';
 }

@@ -6598,4 +6598,58 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get gorevAdimYuklenemedi => 'Schritte konnten nicht geladen werden.';
+
+  @override
+  String get anketAnonimRozet => 'Anonym';
+
+  @override
+  String get anketKvkkAdliUyari =>
+      'Diese Umfrage ist NICHT anonym: Ihre Stimme ist der Verwaltung mit Ihrem Namen sichtbar.';
+
+  @override
+  String get anketAnonimBilgi =>
+      'Diese Umfrage ist anonym: Wer wie gestimmt hat, wird nicht gespeichert.';
+
+  @override
+  String anketKatilim(String oy, String hedef, String oran) {
+    return 'Beteiligung: $oy/$hedef ($oran%)';
+  }
+
+  @override
+  String get anketYeni => 'Neue Umfrage';
+
+  @override
+  String get anketAciklamaOpsiyonel => 'Beschreibung (optional)';
+
+  @override
+  String get anketMaddeler => 'Umfrageoptionen';
+
+  @override
+  String get anketMaddeIpucu =>
+      'Eine Option pro Zeile; mindestens zwei erforderlich.';
+
+  @override
+  String get anketEnAzIki => 'Mindestens zwei Optionen erforderlich.';
+
+  @override
+  String get anketHedefKitle => 'Zielgruppe';
+
+  @override
+  String get anketHedefHerkes => 'Alle (wenn nichts gewählt wird)';
+
+  @override
+  String get anketAnonimSecim => 'Anonyme Umfrage';
+
+  @override
+  String get anketAnonimUyari =>
+      'Die Anonymitätswahl kann nach dem Speichern NICHT geändert werden.';
+
+  @override
+  String get anketKapat => 'Umfrage schließen';
+
+  @override
+  String get anketOyDokumu => 'Wer hat wofür gestimmt';
+
+  @override
+  String get anketGorselSec => 'Bild wählen';
 }

@@ -3101,5 +3101,34 @@
   "gorevAdimFotoZorunlu": "Fotoğraf zorunlu",
   "gorevAdimSirali": "Adımlar sırayla tamamlanır",
   "gorevAdimSatirIpucu": "Her satır bir adım. Sonradan da eklenebilir.",
-  "gorevAdimYuklenemedi": "Adımlar yüklenemedi."
+  "gorevAdimYuklenemedi": "Adımlar yüklenemedi.",
+  "anketAnonimRozet": "Anonim",
+  "anketKvkkAdliUyari": "Bu anket anonim DEĞİL: oyunuz adınızla birlikte yöneticiye görünür.",
+  "anketAnonimBilgi": "Bu anket anonim: kimin ne oy verdiği kaydedilmez.",
+  "anketKatilim": "Katılım: {oy}/{hedef} (%{oran})",
+  "@anketKatilim": {
+    "placeholders": {
+      "oy": {
+        "type": "String"
+      },
+      "hedef": {
+        "type": "String"
+      },
+      "oran": {
+        "type": "String"
+      }
+    }
+  },
+  "anketYeni": "Yeni anket",
+  "anketAciklamaOpsiyonel": "Açıklama (isteğe bağlı)",
+  "anketMaddeler": "Anket maddeleri",
+  "anketMaddeIpucu": "Her satır bir madde; en az iki madde gerekir.",
+  "anketEnAzIki": "En az iki madde gerekir.",
+  "anketHedefKitle": "Hedef kitle",
+  "anketHedefHerkes": "Herkes (seçim yapılmazsa)",
+  "anketAnonimSecim": "Anonim anket",
+  "anketAnonimUyari": "Anonim seçimi kaydedildikten sonra DEĞİŞTİRİLEMEZ.",
+  "anketKapat": "Anketi kapat",
+  "anketOyDokumu": "Kim neye oy verdi",
+  "anketGorselSec": "Görsel seç"
 }

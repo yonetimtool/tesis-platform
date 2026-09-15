@@ -324,3 +324,223 @@ Hiçbiri tahminle bulunmadı; hepsini var olan kilitler ölçtü:
    - Adım ekleme satırı 320dp'de **Almanca'da 68 piksel taştı**; alan ve
      düğme alt alta alındı. Etiketi kısaltmak yerine yerleşimi
      değiştirmek, uzun çeviri gelen her dilde çalışır.
+
+---
+
+## §3 — Anket sistemi
+
+### §3.0 ÖNCE ÖLÇÜM — web'de anket ne yapabiliyordu?
+
+Kullanıcı "mobilde hiç yok, web'de var ama işlevsel değil" dedi.
+**Mobilde vardı** (`features/anket/` — görüntüleme + oy verme, P38'de
+bilinçli olarak salt-okuma). Web'de ise arka ucun taşıdığı alanların bir
+kısmı formda bile yoktu.
+
+| İstenen | Arka uç | Web formu | Mobil |
+|---|---|---|---|
+| Başlık | ✔ | ✔ | okur |
+| Açıklama | ✔ | **YOK** | okur |
+| Görsel | **YOK** | YOK | YOK |
+| Başlangıç tarihi | **YOK** | YOK | YOK |
+| Bitiş tarihi | ✔ (`kapanis_at`) | **YOK** | okur |
+| Maddeler, en az 2 | ✔ | ✔ | okur |
+| Hedef kitle | **YOK** | YOK | YOK |
+| Bir kişi bir oy | ✔ | — | ✔ |
+| Bitişte kapanma | ✔ | — | ✔ |
+| Anlık sonuç (yönetim) | ✔ | ✔ (düz liste) | — |
+| Kim neye oy verdi | **YOK** | YOK | YOK |
+| Grafik | **YOK** | YOK | YOK |
+| Katılım oranı | **YOK** (payda yok) | YOK | YOK |
+| Anonim anket | **YOK** | YOK | YOK |
+| Bildirim | **YOK** | — | — |
+
+Yani eksiklerin çoğu arka uçtaydı; göç **0137** onları açıyor.
+
+### §3 KARARLAR
+
+| Soru | Karar | Gerekçe |
+|---|---|---|
+| Malik/kiracı ayrımı seçilebilmeli mi? | **EVET** — `hedef_sakin_tipi` | `unit_resident.rol_tipi` bu ayrımı zaten taşıyor (P218: `oturuyor` mülkiyetten ayrı). KMK'da malik ve kullanan farklı şeylerden sorumlu; "çatı yenilensin mi" anketi maliklere, "spor salonu saatleri" oturanlara gider. Yalnız `resident` hedeflendiğinde anlamlı; personel `rol_tipi` taşımadığı için filtreden **elenmez** |
+| Oy değiştirilebilir mi? | **HAYIR** (mevcut karar korundu) | P38 gerekçesi geçerli: değiştirilebilir oy, kapanışa kadar sonucun anlamsız olması demek. **İkinci gerekçe P237'de eklendi:** anonim ankette oy satırında kimlik yok — "benim oyumu bul ve değiştir" fiziksel olarak yapılamaz. Bir tür için açıp öteki için kapatmak, aynı düğmenin iki ankette farklı davranması olurdu |
+| Hedef dışındaki kişi ne görür? | Anketi **görür**, oy **veremez** (403) | Görünürlük kapısı değil OY kapısı. Site genelinde ne konuşulduğu bilgi değeridir; ama oyu sayılmaz |
+| "Herkes" ayrı bir kutu mu? | **HAYIR** — boş bırakmak "herkes" demek | İşaretlenince diğerleriyle çelişen bir kutu olurdu ("Herkes + yalnız güvenlik" ne demek?) |
+| Sonuç ne zaman görünür? | Değişmedi: kapanana kadar **yönetime**, kapanınca herkese | P38'in sürüsel etki gerekçesi |
+
+### §3 ANONİMLİK — VERİTABANI DÜZEYİNDE GARANTİ
+
+Brief: "yönetici veya platform admini bile göremesin", "sonradan
+değiştirilemesin, kilitle".
+
+Uygulama katmanında "bu uçta `user_id` döndürme" demek **yetmez**: veri
+orada durduğu sürece bir sonraki sorgu, rapor veya yedek onu açar. Bu
+yüzden:
+
+```
+anket_oy.anonim  (anket.anonim'in denormalize kopyası)
+FK  anket_oy (anket_id, anonim) -> anket (id, anonim)
+CHECK (NOT anonim OR user_id IS NULL)
+```
+
+Bu iki satır birlikte şunu garanti eder: **anonim bir ankette kimlik
+taşıyan bir oy satırı yazılamaz.** Uygulama hatası, elle SQL, bakım
+betiği — hiçbiri geçemez.
+
+**Tek oy kuralı anonimde nasıl korunuyor?** Ayrı defter:
+`anket_katilim` yalnızca **kimin** oy verdiğini tutar, **neye** oy
+verdiğini tutmaz. İki tablo arasında bağlantı yok; zaman damgası **güne
+yuvarlanır** ki sıralama üzerinden eşleştirme yapılamasın.
+
+**Değiştirilemezlik — iki katman:**
+1. Bileşik FK: ankette oy varken `anonim` değiştirilmek istenirse
+   referans veren satırlar yüzünden PostgreSQL reddeder.
+2. Tetikleyici `trg_anket_anonim_kilit`: henüz oy yokken bile reddeder.
+   Çünkü 1. katman yalnız oy varsa korur; anket açıldıktan sonra ilk oy
+   gelmeden yapılan bir değişiklik de listede "anonim" yazısını görmüş
+   kullanıcıya verilen vaadi bozardı.
+
+Uç katmanında ayrıca `AnketUpdate` bu alanı **taşımıyor**
+(`extra="forbid"` → 422). İki katman: biri **anlaşılır hata**, öteki
+**mutlak garanti**.
+
+### §3 KATILIM ORANI
+
+Payda = hedef kitledeki **aktif** kişi sayısı (`hedef_kisi`), SQL'de
+hesaplanır. Yalnız yönetime döner: "kaç kişiye gitti" bilgisi oy verenin
+kararı için bir girdi değil. **Payda yoksa oran hiç çizilmez** — uydurma
+bir yüzde katılımı olduğundan iyi ya da kötü gösterirdi. Kapatılmış
+hesaplar paydaya girmez; girseydi oran kalıcı olarak düşük görünürdü.
+
+### §3 BİLDİRİM
+
+Anket açılınca hedef kitleye `anket_acildi` push + kalıcı in-app satır.
+`duyuru` tipine bindirilmedi: bildirim tercihinde "duyuruları al, anket
+bildirimini alma" demek mümkün kalmalı (0131/0136 ile aynı gerekçe).
+İleri tarihli başlangıçta da **şimdi** gider — "12 Ekim'de oylama var"
+haberinin değeri o tarihte değil, öncesinde.
+
+### §3 KVKK
+
+Oy verme davranışı kişisel veri. Anonim **olmayan** ankette kullanıcı,
+kimliğinin yönetime görüneceğini **oy vermeden önce** görür
+(`anket-kvkk`, iki yüzeyde de). Anonim ankette de karşılığı gösterilir
+("kimin ne oy verdiği kaydedilmez"). Sonradan söylemek bilgilendirme
+sayılmaz.
+
+### §3 İKİ YÜZEY (parite)
+
+| | Web | Mobil |
+|---|---|---|
+| Anket oluşturma | ✔ modal | ✔ `merkezSayfaAc` formu (**P38'de yoktu**) |
+| Başlık / açıklama / görsel | ✔ | ✔ |
+| Başlangıç / bitiş | ✔ `datetime-local` | ⚠ **YAPILMADI** — aşağıda |
+| Maddeler (satır başına) | ✔ | ✔ |
+| Hedef kitle çoklu | ✔ onay kutuları | ✔ `FilterChip` |
+| Malik/kiracı ayrımı | ✔ | ⚠ **YAPILMADI** — aşağıda |
+| Anonim + uyarı | ✔ | ✔ |
+| Anketi kapatma | ✔ | ✔ |
+| Sonuç grafiği | ✔ `Grafik` (P223 kuralı: ≤6 dilim pasta, fazlası çubuk) | ⚠ **YAPILMADI** — aşağıda |
+| Kim neye oy verdi | ✔ tablo | API hazır (`oyDokumu`), ekran yok |
+| Katılım oranı | ✔ | ✔ |
+| Anonimde döküm isteği | atılmaz | atılmaz |
+| KVKK uyarısı | modal içinde | oy kartında |
+
+**AÇIKÇA YAPILMADI (mobil):** tarih aralığı seçimi, malik/kiracı ayrımı,
+sonuç grafiği ve oy dökümü ekranı. Model ve API katmanı üçünü de
+taşıyor; eksik olan yalnızca form/ekran alanları. Parite kuralı gereği
+bunu "yapıldı" saymıyorum — bir sonraki turda kapatılacak iş.
+
+### §3 DOĞRULAMA — ne ölçtüm
+
+`backend/tests/test_p237_anket.py` — **12 test yeşil**.
+
+| Ölçüm | Sonuç |
+|---|---|
+| Hedef kitle çoklu seçilir, geri döner | ✔ |
+| Hedef dışındaki rol oy veremez | **403** ✔ |
+| Hedef boşsa herkes oy verir | 201 ✔ |
+| Bilinmeyen rol | **422** ✔ |
+| Başlangıç gelmeden oy | **409**, `acik=false` ✔ |
+| Bitiş < başlangıç | **422** ✔ |
+| Adlı ankette döküm: kim, neye, adıyla | ✔ |
+| **Anonim ankette `anket_oy.user_id`** | **veritabanında NULL** ✔ |
+| Anonimde döküm ucu | **409** (403 değil: veri yok) ✔ |
+| `anket_katilim`da `secenek_id` kolonu | **yok** ✔ |
+| **KIRMA: elle SQL ile anonim+kimlikli oy** | `CheckViolation` ✔ |
+| **KIRMA: elle SQL ile `anonim` değiştir** | tetikleyici reddetti ✔ |
+| Karşı kontrol: adlı ankette kimlik yazılır | ✔ |
+| Anonimde de tek oy | ikinci oy **409** ✔ |
+
+Web: `tests/p237-anket.dom.test.ts` — 7 test (katılım oranı, paydasız
+durumda oranın çizilmemesi, anonimde döküm isteğinin **hiç atılmaması**,
+adlıda dökümün çizilmesi, iki maddeden az olunca POST'un atılmaması,
+hedef+anonimin gövdeye girmesi, anonim uyarısının kaydetmeden önce
+görünmesi).
+
+Mobil: `test/p237_anket_test.dart` — 10 test; dikiş yeri taklit HTTP
+adapter'ında (`anonim` bayrağının gövdeye gerçekten konması dahil).
+
+**ÖLÇEMEDİĞİM:** anket bildiriminin gerçek bir cihaza düşmesini
+süremedim (emülatör yok, `PUSH_PROVIDER=noop`); ölçülen şey
+`dispatch_external`ın doğru hedef kümesiyle çağrılması.
+
+### §3 KİLİDİN YAKALADIĞI GERÇEK KUSUR
+
+**`bff-yol-eslesmesi`** — oy dökümü için
+`app/api/panel/anketler/[id]/oylar/route.ts` açmıştım. Kilit bunu
+çürüttü: **statik `anketler` klasörü açmak,
+`/api/panel/anketler` isteğinin genel `[kaynak]` vekiline düşmesini
+engelliyor** (Next statik segmenti önce çözer ve geri dönmez) — yani
+anket listesi ve oluşturma 404 olurdu. Çözüm: `[kaynak]/[id]/[eylem]`
+vekiline beyaz listeli bir `GET` eklendi.
+
+Ayrıca `tests/kurulum.ts`'e **`ResizeObserver` kuklası** kondu: jsdom onu
+tanımlamıyor ve grafik çizen her sayfa testi bu duvara çarpardı (hata
+dinamik parça yüklendikten sonra atıldığı için test "beklenmedik boş DOM"
+diye düşüyordu).
+
+
+---
+
+## TURUN SONU — ne bitti, ne bitmedi
+
+### Commit dökümü
+
+| Commit | İçerik | Not |
+|---|---|---|
+| §1 | başlık çubuğu simgeleri | temiz |
+| §2 | görev alt adımları | **§3'ün yarım backend dosyalarını da kapsıyor** (`git add -A` süpürdü): göç 0137, `models.py`/`schemas.py`/`routers/anketler.py` ilk hâli. Tarih yeniden yazılmadı; bu not o yüzden burada |
+| §3 | anket sistemi | kalan her şey |
+
+### Kabul kriterleri
+
+| # | Kriter | Durum |
+|---|---|---|
+| 1 | Bina düzenlemede tekrar eden simge kaldırıldı | ✔ |
+| 2 | Devriye takibi menü girişleri sadeleşti | ✔ (enum'dan silindi) |
+| 3 | Simgeler açıklamalı; erişilebilirlik etiketleri var | ✔ (ekran okuyucuyla **dinlenmedi** — emülatör yok) |
+| 4 | Tüm başlık çubukları tarandı | ✔ (mobil 29 eylem / web 86 sayfa; kaynak kilidi) |
+| 5 | Görev alt adımlara bölünebiliyor | ✔ |
+| 6 | Her adım ayrı tamamlanıyor, fotoğraf + not | ✔ |
+| 7 | Yönetici ilerlemeyi adım adım görüyor | ✔ (listede + ayrıntıda, iki yüzey) |
+| 8 | Her güncellemede bildirim (yorgunluk çözümüyle) | ✔ eşik + toplama |
+| 9 | Anket oluşturuluyor: başlık, görsel, tarih, ≥2 madde | ✔ web; **mobilde tarih alanı YOK** |
+| 10 | Hedef kitle çoklu seçilebiliyor | ✔ (mobilde malik/kiracı ayrımı YOK) |
+| 11 | Oylar anlık takip, grafikle gösterim | ✔ web; **mobilde grafik YOK** |
+| 12 | Anonim anket çalışıyor, kimlik görünmüyor | ✔ veritabanı kısıtıyla kanıtlandı |
+| 13 | Anonimlik sonradan değiştirilemiyor | ✔ iki katman, kırma denemesiyle kanıtlandı |
+| 14 | 7 dil parity | ✔ (web 19 + mobil 16 yeni anahtar) |
+| 15 | Tam test paketi yeşil | ✔ **backend 3284 / web 1859 / mobil 2257** |
+
+### AÇIKÇA BİTMEDİ
+
+Mobil anket yüzeyinde dört alan: **tarih aralığı seçimi, malik/kiracı
+ayrımı, sonuç grafiği, oy dökümü ekranı.** Model ve API katmanı dördünü
+de taşıyor; eksik olan yalnızca form/ekran. Parite kuralı gereği bunu
+"yapıldı" saymıyorum.
+
+### ÖLÇEMEDİKLERİM (tekrar, tek yerde)
+
+- Gerçek cihazda hiçbir akış sürülmedi (emülatör yok): kamerayla adım
+  kapatma, push bildirimi düşmesi, ekran okuyucu telaffuzu.
+- Push zinciri `dispatch_external` çağrısına kadar ölçüldü;
+  `PUSH_PROVIDER=noop` olduğu için gerçek gönderim ölçülmedi.

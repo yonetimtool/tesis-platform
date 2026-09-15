@@ -2224,5 +2224,34 @@
   "gorevAdimFotoZorunlu": "Photo obligatoire",
   "gorevAdimSirali": "Les étapes sont terminées dans l'ordre",
   "gorevAdimSatirIpucu": "Une étape par ligne. Des étapes peuvent être ajoutées ensuite.",
-  "gorevAdimYuklenemedi": "Impossible de charger les étapes."
+  "gorevAdimYuklenemedi": "Impossible de charger les étapes.",
+  "anketAnonimRozet": "Anonyme",
+  "anketKvkkAdliUyari": "Ce sondage n'est PAS anonyme : votre vote est visible par la gestion avec votre nom.",
+  "anketAnonimBilgi": "Ce sondage est anonyme : qui a voté quoi n'est pas enregistré.",
+  "anketKatilim": "Participation : {oy}/{hedef} ({oran} %)",
+  "@anketKatilim": {
+    "placeholders": {
+      "oy": {
+        "type": "String"
+      },
+      "hedef": {
+        "type": "String"
+      },
+      "oran": {
+        "type": "String"
+      }
+    }
+  },
+  "anketYeni": "Nouveau sondage",
+  "anketAciklamaOpsiyonel": "Description (facultatif)",
+  "anketMaddeler": "Options du sondage",
+  "anketMaddeIpucu": "Une option par ligne ; au moins deux sont requises.",
+  "anketEnAzIki": "Au moins deux options sont requises.",
+  "anketHedefKitle": "Public cible",
+  "anketHedefHerkes": "Tout le monde (si rien n'est sélectionné)",
+  "anketAnonimSecim": "Sondage anonyme",
+  "anketAnonimUyari": "Le choix d'anonymat NE PEUT PAS être modifié après l'enregistrement.",
+  "anketKapat": "Clôturer le sondage",
+  "anketOyDokumu": "Qui a voté pour quoi",
+  "anketGorselSec": "Choisir une image"
 }

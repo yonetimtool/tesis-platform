@@ -11374,6 +11374,102 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Adımlar yüklenemedi.'**
   String get gorevAdimYuklenemedi;
+
+  /// No description provided for @anketAnonimRozet.
+  ///
+  /// In tr, this message translates to:
+  /// **'Anonim'**
+  String get anketAnonimRozet;
+
+  /// No description provided for @anketKvkkAdliUyari.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu anket anonim DEĞİL: oyunuz adınızla birlikte yöneticiye görünür.'**
+  String get anketKvkkAdliUyari;
+
+  /// No description provided for @anketAnonimBilgi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu anket anonim: kimin ne oy verdiği kaydedilmez.'**
+  String get anketAnonimBilgi;
+
+  /// No description provided for @anketKatilim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Katılım: {oy}/{hedef} (%{oran})'**
+  String anketKatilim(String oy, String hedef, String oran);
+
+  /// No description provided for @anketYeni.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni anket'**
+  String get anketYeni;
+
+  /// No description provided for @anketAciklamaOpsiyonel.
+  ///
+  /// In tr, this message translates to:
+  /// **'Açıklama (isteğe bağlı)'**
+  String get anketAciklamaOpsiyonel;
+
+  /// No description provided for @anketMaddeler.
+  ///
+  /// In tr, this message translates to:
+  /// **'Anket maddeleri'**
+  String get anketMaddeler;
+
+  /// No description provided for @anketMaddeIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Her satır bir madde; en az iki madde gerekir.'**
+  String get anketMaddeIpucu;
+
+  /// No description provided for @anketEnAzIki.
+  ///
+  /// In tr, this message translates to:
+  /// **'En az iki madde gerekir.'**
+  String get anketEnAzIki;
+
+  /// No description provided for @anketHedefKitle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hedef kitle'**
+  String get anketHedefKitle;
+
+  /// No description provided for @anketHedefHerkes.
+  ///
+  /// In tr, this message translates to:
+  /// **'Herkes (seçim yapılmazsa)'**
+  String get anketHedefHerkes;
+
+  /// No description provided for @anketAnonimSecim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Anonim anket'**
+  String get anketAnonimSecim;
+
+  /// No description provided for @anketAnonimUyari.
+  ///
+  /// In tr, this message translates to:
+  /// **'Anonim seçimi kaydedildikten sonra DEĞİŞTİRİLEMEZ.'**
+  String get anketAnonimUyari;
+
+  /// No description provided for @anketKapat.
+  ///
+  /// In tr, this message translates to:
+  /// **'Anketi kapat'**
+  String get anketKapat;
+
+  /// No description provided for @anketOyDokumu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kim neye oy verdi'**
+  String get anketOyDokumu;
+
+  /// No description provided for @anketGorselSec.
+  ///
+  /// In tr, this message translates to:
+  /// **'Görsel seç'**
+  String get anketGorselSec;
 }
 
 class _AppLocalizationsDelegate

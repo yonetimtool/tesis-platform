@@ -2224,5 +2224,34 @@
   "gorevAdimFotoZorunlu": "Требуется фото",
   "gorevAdimSirali": "Шаги выполняются по порядку",
   "gorevAdimSatirIpucu": "По одному шагу в строке. Шаги можно добавить и позже.",
-  "gorevAdimYuklenemedi": "Не удалось загрузить шаги."
+  "gorevAdimYuklenemedi": "Не удалось загрузить шаги.",
+  "anketAnonimRozet": "Анонимный",
+  "anketKvkkAdliUyari": "Этот опрос НЕ анонимный: ваш голос виден руководству вместе с вашим именем.",
+  "anketAnonimBilgi": "Этот опрос анонимный: кто как проголосовал, не сохраняется.",
+  "anketKatilim": "Явка: {oy}/{hedef} ({oran}%)",
+  "@anketKatilim": {
+    "placeholders": {
+      "oy": {
+        "type": "String"
+      },
+      "hedef": {
+        "type": "String"
+      },
+      "oran": {
+        "type": "String"
+      }
+    }
+  },
+  "anketYeni": "Новый опрос",
+  "anketAciklamaOpsiyonel": "Описание (необязательно)",
+  "anketMaddeler": "Варианты опроса",
+  "anketMaddeIpucu": "По одному варианту в строке; нужно минимум два.",
+  "anketEnAzIki": "Нужно минимум два варианта.",
+  "anketHedefKitle": "Целевая аудитория",
+  "anketHedefHerkes": "Все (если ничего не выбрано)",
+  "anketAnonimSecim": "Анонимный опрос",
+  "anketAnonimUyari": "Выбор анонимности НЕЛЬЗЯ изменить после сохранения.",
+  "anketKapat": "Закрыть опрос",
+  "anketOyDokumu": "Кто за что проголосовал",
+  "anketGorselSec": "Выбрать изображение"
 }

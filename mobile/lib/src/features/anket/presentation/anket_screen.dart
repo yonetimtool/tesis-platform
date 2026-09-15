@@ -2,16 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/i18n/l10n.dart';
+import '../../../core/ui/gorsel_cozme.dart';
+import '../../auth/data/current_user_provider.dart';
 import '../data/anket_api.dart';
 import '../domain/anket_models.dart';
+import 'anket_form.dart';
 
-/// Anket ekrani (P38) — SAKININ oy verdigi yer.
+/// Anket ekrani — SAKIN oy verir, YONETIM acar/kapatir.
 ///
-/// MINIMAL BILEREK: anket olusturma/kapatma YONETIM isidir ve panele
-/// aittir; mobilde yalnizca "gor ve oy ver" vardir. Oy DEGISTIRILEMEZ, bu
-/// yuzden oy verilmis bir ankette oy butonlari HIC CIZILMEZ — sunucu 409
-/// dondurup kullaniciya hata gostermek yerine, yapilamayacak seyi hic
-/// teklif etmiyoruz.
+/// (P237 §3) P38'de bu ekran BILEREK salt-okumaydi ("olusturma/kapatma
+/// YONETIM isidir ve panele"). P235'te yazilan KALICI PARITE KURALI bunu
+/// gecersiz kildi: bir ozellik iki yuzeyde de bulunur. Yetki yine
+/// SUNUCUDA; buradaki kapi (`canManageAnket`) yalniz UX.
+///
+/// Oy DEGISTIRILEMEZ, bu yuzden oy verilmis bir ankette oy butonlari HIC
+/// CIZILMEZ — sunucu 409 dondurup kullaniciya hata gostermek yerine,
+/// yapilamayacak seyi hic teklif etmiyoruz.
 class AnketScreen extends ConsumerWidget {
   const AnketScreen({super.key});
 
@@ -19,9 +25,19 @@ class AnketScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final anketler = ref.watch(anketlerProvider);
+    final role = ref.watch(currentUserRoleProvider).value;
+    final yonetebilir = role?.canManageAnket ?? false;
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.anketBaslik)),
+      floatingActionButton: yonetebilir
+          ? FloatingActionButton.extended(
+              key: const Key('anket-yeni'),
+              icon: const Icon(Icons.add),
+              label: Text(l10n.anketYeni),
+              onPressed: () => anketFormuAc(context),
+            )
+          : null,
       body: anketler.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
@@ -37,7 +53,8 @@ class AnketScreen extends ConsumerWidget {
                 child: ListView.builder(
                   padding: const EdgeInsets.all(16),
                   itemCount: liste.length,
-                  itemBuilder: (_, i) => _AnketKarti(anket: liste[i]),
+                  itemBuilder: (_, i) =>
+                      _AnketKarti(anket: liste[i], yonetebilir: yonetebilir),
                 ),
               ),
       ),
@@ -46,9 +63,10 @@ class AnketScreen extends ConsumerWidget {
 }
 
 class _AnketKarti extends ConsumerStatefulWidget {
-  const _AnketKarti({required this.anket});
+  const _AnketKarti({required this.anket, this.yonetebilir = false});
 
   final Anket anket;
+  final bool yonetebilir;
 
   @override
   ConsumerState<_AnketKarti> createState() => _AnketKartiState();
@@ -92,6 +110,13 @@ class _AnketKartiState extends ConsumerState<_AnketKarti> {
                   child: Text(a.baslik,
                       style: Theme.of(context).textTheme.titleMedium),
                 ),
+                // ANONIM ROZETI: kullanici oy vermeden ONCE gormeli.
+                if (a.anonim)
+                  Chip(
+                    key: const Key('anket-anonim-rozet'),
+                    label: Text(l10n.anketAnonimRozet),
+                    visualDensity: VisualDensity.compact,
+                  ),
                 if (!a.acik)
                   Chip(
                     label: Text(l10n.anketKapali),
@@ -99,9 +124,32 @@ class _AnketKartiState extends ConsumerState<_AnketKarti> {
                   ),
               ],
             ),
+            if (a.gorselUrl != null) ...[
+              const SizedBox(height: 8),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                // TEK SATIR BILINCLI: `gorsel_cozme_denetimi` kilidi
+                // `NetworkImage(` oncesindeki 60 karaktere bakiyor.
+                child: Image(image: sinirliGorsel(context, NetworkImage(a.gorselUrl!), 720), fit: BoxFit.cover),
+              ),
+            ],
             if (a.aciklama != null) ...[
               const SizedBox(height: 4),
               Text(a.aciklama!, style: Theme.of(context).textTheme.bodySmall),
+            ],
+            // KVKK AYDINLATMASI — OY VERMEDEN ONCE.
+            //
+            // Oy verme davranisi kisisel veridir. Anonim OLMAYAN ankette
+            // kullanici, oyunun adiyla birlikte yonetime gorunecegini
+            // OY VERMEDEN ONCE bilmeli; sonradan soylemek bilgilendirme
+            // sayilmaz.
+            if (a.oyVerilebilir) ...[
+              const SizedBox(height: 4),
+              Text(
+                key: const Key('anket-kvkk'),
+                a.anonim ? l10n.anketAnonimBilgi : l10n.anketKvkkAdliUyari,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
             ],
             const SizedBox(height: 12),
             for (final s in a.secenekler)
@@ -135,6 +183,39 @@ class _AnketKartiState extends ConsumerState<_AnketKarti> {
             if (a.sonucVar)
               Text(l10n.anketToplamOy(a.toplamOy!),
                   style: Theme.of(context).textTheme.bodySmall),
+            // KATILIM ORANI: payda sunucudan gelir ("kac kisiye gitti") ve
+            // YALNIZ yonetime doner. Payda yoksa oran CIZILMEZ — uydurma
+            // bir yuzde, katilimi oldugundan iyi ya da kotu gosterirdi.
+            if (a.katilimYuzde case final yuzde?)
+              Text(
+                key: const Key('anket-katilim'),
+                l10n.anketKatilim(
+                    '${a.toplamOy}', '${a.hedefKisi}', '$yuzde'),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            if (widget.yonetebilir && a.aktif)
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: TextButton(
+                  key: Key('anket-kapat-${a.id}'),
+                  onPressed: _gonderiliyor
+                      ? null
+                      : () async {
+                          setState(() => _gonderiliyor = true);
+                          try {
+                            await ref
+                                .read(anketApiProvider)
+                                .kapat(a.id);
+                            ref.invalidate(anketlerProvider);
+                          } finally {
+                            if (mounted) {
+                              setState(() => _gonderiliyor = false);
+                            }
+                          }
+                        },
+                  child: Text(l10n.anketKapat),
+                ),
+              ),
           ],
         ),
       ),

@@ -10,6 +10,7 @@ GET    /anketler                                            IZIN   IZIN   IZIN  
 POST   /anketler                                            IZIN   IZIN   RED    RED    RED    RED    RED   
 PATCH  /anketler/{anket_id}                                 IZIN   IZIN   RED    RED    RED    RED    RED   
 POST   /anketler/{anket_id}/oy                              RED    RED    RED    RED    IZIN   RED    RED   
+GET    /anketler/{anket_id}/oylar                           IZIN   IZIN   RED    RED    RED    RED    RED   
 GET    /announcements                                       IZIN   IZIN   IZIN   IZIN   IZIN   RED    RED   
 POST   /announcements                                       IZIN   IZIN   RED    RED    RED    RED    RED   
 DELETE /announcements/{id}                                  IZIN   IZIN   RED    RED    RED    RED    RED   

@@ -23,6 +23,54 @@ class AnketApi {
     }
   }
 
+  /// (P237 §3) ANKET OLUSTUR — admin + yonetici (sunucu 403 ile zorlar).
+  ///
+  /// PARITE: P38'de mobil salt-okumaydi; P235'in kalici parite kurali
+  /// bunu gecersiz kildi.
+  Future<Anket> olustur(AnketTaslak taslak) async {
+    try {
+      final r = await _dio.post<Map<String, dynamic>>(
+        '/anketler',
+        data: taslak.toJson(),
+      );
+      return Anket.fromJson(r.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// (P237 §3) ANKETI KAPAT — oylama biter, sonuclar herkese acilir.
+  Future<Anket> kapat(String anketId) async {
+    try {
+      final r = await _dio.patch<Map<String, dynamic>>(
+        '/anketler/$anketId',
+        data: {'aktif': false},
+      );
+      return Anket.fromJson(r.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
+  /// (P237 §3) KIM NEYE OY VERDI — YALNIZ ADLI ankette.
+  ///
+  /// Anonim ankette sunucu **409** doner ve donecek veri de YOKTUR:
+  /// kimlik veritabaninda durmuyor. Ekran bu ucu anonim ankette HIC
+  /// CAGIRMAZ — cagirsa kullaniciya anlamsiz bir hata gosterirdi.
+  Future<List<AnketOyKim>> oyDokumu(String anketId) async {
+    try {
+      final r = await _dio.get<Map<String, dynamic>>(
+        '/anketler/$anketId/oylar',
+      );
+      return [
+        for (final o in (r.data?['items'] as List? ?? const []))
+          AnketOyKim.fromJson(o as Map<String, dynamic>),
+      ];
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
   /// Oy ver. 409 = zaten oy verilmis VEYA anket kapali — oy
   /// DEGISTIRILEMEZ; istemci bunu hata degil DURUM olarak gosterir.
   Future<Anket> oyVer(String anketId, String secenekId) async {

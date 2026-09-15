@@ -2224,5 +2224,34 @@
   "gorevAdimFotoZorunlu": "Foto obligatoria",
   "gorevAdimSirali": "Los pasos se completan en orden",
   "gorevAdimSatirIpucu": "Un paso por línea. También se pueden añadir después.",
-  "gorevAdimYuklenemedi": "No se pudieron cargar los pasos."
+  "gorevAdimYuklenemedi": "No se pudieron cargar los pasos.",
+  "anketAnonimRozet": "Anónima",
+  "anketKvkkAdliUyari": "Esta encuesta NO es anónima: su voto es visible para la administración con su nombre.",
+  "anketAnonimBilgi": "Esta encuesta es anónima: no se guarda quién votó qué.",
+  "anketKatilim": "Participación: {oy}/{hedef} ({oran}%)",
+  "@anketKatilim": {
+    "placeholders": {
+      "oy": {
+        "type": "String"
+      },
+      "hedef": {
+        "type": "String"
+      },
+      "oran": {
+        "type": "String"
+      }
+    }
+  },
+  "anketYeni": "Nueva encuesta",
+  "anketAciklamaOpsiyonel": "Descripción (opcional)",
+  "anketMaddeler": "Opciones de la encuesta",
+  "anketMaddeIpucu": "Una opción por línea; se requieren al menos dos.",
+  "anketEnAzIki": "Se requieren al menos dos opciones.",
+  "anketHedefKitle": "Público objetivo",
+  "anketHedefHerkes": "Todos (si no se selecciona nada)",
+  "anketAnonimSecim": "Encuesta anónima",
+  "anketAnonimUyari": "La elección de anonimato NO se puede cambiar tras guardar.",
+  "anketKapat": "Cerrar encuesta",
+  "anketOyDokumu": "Quién votó qué",
+  "anketGorselSec": "Elegir imagen"
 }

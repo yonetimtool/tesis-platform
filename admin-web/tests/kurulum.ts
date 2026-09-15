@@ -45,3 +45,22 @@ import { aktifSozluguAyarla } from "@/lib/i18n/metin";
 import { SOZLUKLER } from "@/lib/i18n/sozluk";
 
 aktifSozluguAyarla(SOZLUKLER.tr);
+
+// (P237 §3) `ResizeObserver` KUKLASI — jsdom onu HIC tanimlamiyor.
+//
+// OLCULEN KUSUR: anket sonuc panosu `Grafik`i (recharts) cizince
+// `ReferenceError: ResizeObserver is not defined` firliyor ve hata TESTIN
+// ICINDE degil, dinamik parca yuklendikten SONRA atildigi icin test
+// "beklenmedik bos DOM" olarak dusuyordu. Grafik cizen HER sayfa testi
+// bu duvara carpardi.
+//
+// Kukla OLCMEZ, SUSTURMAZ: yalnizca tarayicida var olan bir arayuzu
+// jsdom'da VAR EDER. Genislik olcumune dayanan bir sey test etmiyoruz
+// (jsdom zaten yerlesim hesaplamaz — P236'nin merkezi dersi).
+if (typeof globalThis.ResizeObserver === "undefined") {
+  globalThis.ResizeObserver = class {
+    observe(): void {}
+    unobserve(): void {}
+    disconnect(): void {}
+  } as unknown as typeof ResizeObserver;
+}

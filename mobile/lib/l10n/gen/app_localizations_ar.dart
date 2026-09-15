@@ -6661,4 +6661,56 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get gorevAdimYuklenemedi => 'تعذّر تحميل الخطوات.';
+
+  @override
+  String get anketAnonimRozet => 'مجهول';
+
+  @override
+  String get anketKvkkAdliUyari =>
+      'هذا الاستطلاع ليس مجهولاً: صوتك ظاهر للإدارة باسمك.';
+
+  @override
+  String get anketAnonimBilgi =>
+      'هذا الاستطلاع مجهول: لا يُحفَظ من صوّت لماذا.';
+
+  @override
+  String anketKatilim(String oy, String hedef, String oran) {
+    return 'المشاركة: $oy/$hedef ($oran%)';
+  }
+
+  @override
+  String get anketYeni => 'استطلاع جديد';
+
+  @override
+  String get anketAciklamaOpsiyonel => 'الوصف (اختياري)';
+
+  @override
+  String get anketMaddeler => 'خيارات الاستطلاع';
+
+  @override
+  String get anketMaddeIpucu => 'خيار واحد في كل سطر؛ يلزم خياران على الأقل.';
+
+  @override
+  String get anketEnAzIki => 'يلزم خياران على الأقل.';
+
+  @override
+  String get anketHedefKitle => 'الفئة المستهدفة';
+
+  @override
+  String get anketHedefHerkes => 'الجميع (إذا لم يتم الاختيار)';
+
+  @override
+  String get anketAnonimSecim => 'استطلاع مجهول';
+
+  @override
+  String get anketAnonimUyari => 'لا يمكن تغيير خيار السرّية بعد الحفظ.';
+
+  @override
+  String get anketKapat => 'إغلاق الاستطلاع';
+
+  @override
+  String get anketOyDokumu => 'من صوّت لماذا';
+
+  @override
+  String get anketGorselSec => 'اختيار صورة';
 }

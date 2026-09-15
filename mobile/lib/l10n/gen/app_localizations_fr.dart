@@ -6590,4 +6590,58 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get gorevAdimYuklenemedi => 'Impossible de charger les étapes.';
+
+  @override
+  String get anketAnonimRozet => 'Anonyme';
+
+  @override
+  String get anketKvkkAdliUyari =>
+      'Ce sondage n\'est PAS anonyme : votre vote est visible par la gestion avec votre nom.';
+
+  @override
+  String get anketAnonimBilgi =>
+      'Ce sondage est anonyme : qui a voté quoi n\'est pas enregistré.';
+
+  @override
+  String anketKatilim(String oy, String hedef, String oran) {
+    return 'Participation : $oy/$hedef ($oran %)';
+  }
+
+  @override
+  String get anketYeni => 'Nouveau sondage';
+
+  @override
+  String get anketAciklamaOpsiyonel => 'Description (facultatif)';
+
+  @override
+  String get anketMaddeler => 'Options du sondage';
+
+  @override
+  String get anketMaddeIpucu =>
+      'Une option par ligne ; au moins deux sont requises.';
+
+  @override
+  String get anketEnAzIki => 'Au moins deux options sont requises.';
+
+  @override
+  String get anketHedefKitle => 'Public cible';
+
+  @override
+  String get anketHedefHerkes => 'Tout le monde (si rien n\'est sélectionné)';
+
+  @override
+  String get anketAnonimSecim => 'Sondage anonyme';
+
+  @override
+  String get anketAnonimUyari =>
+      'Le choix d\'anonymat NE PEUT PAS être modifié après l\'enregistrement.';
+
+  @override
+  String get anketKapat => 'Clôturer le sondage';
+
+  @override
+  String get anketOyDokumu => 'Qui a voté pour quoi';
+
+  @override
+  String get anketGorselSec => 'Choisir une image';
 }

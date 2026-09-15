@@ -10281,6 +10281,24 @@ paths:
       responses:
         "200": { description: guncellendi }
         "404": { $ref: "#/components/responses/NotFound" }
+  /anketler/{anket_id}/oylar:
+    get:
+      tags: [anket]
+      summary: Kim neye oy verdi (admin + yonetici) — YALNIZ ADLI ankette
+      description: >
+        (P237 §3) ANONIM ANKETTE **409 `anket_anonim_dokum_yok`** doner ve
+        donecek veri de YOKTUR: kimlik veritabaninda durmuyor. 403 degil
+        409 secildi — 403 "veri var ama vermiyorum" izlenimi yaratirdi.
+      parameters:
+        - { name: anket_id, in: path, required: true, schema: { type: string, format: uuid } }
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200": { description: dokum }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
   /anketler/{anket_id}/oy:
     post:
       tags: [anket]
@@ -10291,6 +10309,16 @@ paths:
         olmasi ve kimin ne zaman dondugunun kayda gecmesi demekti. Ikinci
         oy **409 `anket_zaten_oy_verdiniz`**; kapali anket **409
         `anket_kapali`**; baska anketin secenegi **422**.
+
+        (P237 §3) IKINCI SEBEP — ANONIMLIK: anonim ankette oy satirinda
+        kimlik YOK; "benim oyumu bul ve degistir" fiziksel olarak
+        yapilamaz. Bir tur icin acip oteki icin kapatmak, ayni dugmenin
+        iki ankette farkli davranmasi olurdu.
+
+        (P237 §3) HEDEF KITLE: hedef disindaki kisi **403
+        `anket_hedef_disinda`** alir. Bu bir GORUNURLUK kapisi degil OY
+        kapisidir. Anonim ankette kimlik `anket_katilim` defterine yazilir
+        — o defter KIMIN oy verdigini bilir, NEYE oy verdigini BILMEZ.
 
         Oy YALNIZ sakinde: anket sakinlerin karar aracidir, personelin oyu
         site kararina girmez.
@@ -18852,7 +18880,46 @@ components:
       properties:
         baslik: { type: string, minLength: 1, maxLength: 200 }
         aciklama: { type: string, nullable: true, maxLength: 2000 }
+        gorsel_key:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: "(P237 §3) /uploads/presign ile alinan obje anahtari."
+        baslangic_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: >
+            (P237 §3) Baslangic GELMEDEN oy verilemez (409) ama anket
+            LISTEDE gorunur: yaklasan oylama duyurudur.
         kapanis_at: { type: string, format: date-time, nullable: true }
+        hedef_roller:
+          type: array
+          maxItems: 6
+          default: []
+          description: >
+            (P237 §3) HEDEF KITLE — coklu secim. BOS = HERKES. Hedef
+            disindaki kisi anketi gorur ama OY VEREMEZ (403).
+          items:
+            type: string
+            enum: [security, guvenlik_amiri, tesis_gorevlisi, resident, yonetici, admin]
+        hedef_sakin_tipi:
+          type: string
+          nullable: true
+          enum: [malik, kiraci]
+          description: >
+            (P237 §3) Malik/kiraci ayrimi (`unit_resident.rol_tipi`);
+            yalniz `resident` hedeflendiginde anlamli. null = ayrim yok.
+        anonim:
+          type: boolean
+          default: false
+          description: >
+            (P237 §3) ANONIM ANKET — **SONRADAN DEGISTIRILEMEZ**.
+            Anonimse `anket_oy.user_id` NULLdur ve bunu bir CHECK kisiti
+            ZORLAR; kimlik veritabaninda DURMAZ (yonetici de, platform
+            admini de goremez). Anonimligi degistirme denemesi uc
+            katmaninda 422, veritabani katmaninda tetikleyiciyle
+            reddedilir. `AnketUpdate` bu alani TASIMAZ.
         secenekler:
           type: array
           minItems: 2

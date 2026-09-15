@@ -744,6 +744,30 @@ METINLER: dict[str, PushMetni] = {
         },
         params=('baslik', 'tamam', 'toplam', 'adim', 'kisi'),
     ),
+    # (P237 §3) ANKET ACILDI — HEDEF KITLEYE. `duyuru`ya bindirilmedi:
+    # bildirim tercihinde "duyurulari al, anket bildirimini alma" demek
+    # mumkun kalmali.
+    "anket_acildi": PushMetni(
+        baslik={
+            "tr": "Yeni anket",
+            "en": "New poll",
+            "ar": "استطلاع جديد",
+            "ru": "Новый опрос",
+            "de": "Neue Umfrage",
+            "fr": "Nouveau sondage",
+            "es": "Nueva encuesta",
+        },
+        govde={
+            "tr": "Oyunuz bekleniyor: {baslik}",
+            "en": "Your vote is awaited: {baslik}",
+            "ar": "صوتك مطلوب: {baslik}",
+            "ru": "Ждём вашего голоса: {baslik}",
+            "de": "Ihre Stimme wird erwartet: {baslik}",
+            "fr": "Votre vote est attendu : {baslik}",
+            "es": "Se espera su voto: {baslik}",
+        },
+        params=('baslik',),
+    ),
     "aidat_borc": PushMetni(
         baslik={
             "tr": "Yeni borç",

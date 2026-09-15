@@ -995,3 +995,54 @@ export interface TenantSilmeOzeti {
   dogrudan_silinebilir: boolean;
   platform_admini_var: boolean;
 }
+
+/**
+ * (P237 §3) ANKET — hedef kitle, gorsel, tarih araligi, anonimlik.
+ */
+export interface AnketSecenek {
+  id: string;
+  metin: string;
+  sira: number;
+  /** Sonuc gorunur degilse null (surusel etki). */
+  oy?: number | null;
+}
+
+export interface Anket {
+  id: string;
+  baslik: string;
+  aciklama?: string | null;
+  gorsel_url?: string | null;
+  baslangic_at?: string | null;
+  kapanis_at?: string | null;
+  aktif: boolean;
+  /** Bos = herkes. */
+  hedef_roller: string[];
+  hedef_sakin_tipi?: string | null;
+  /** SONRADAN DEGISTIRILEMEZ (veritabani kilidi). */
+  anonim: boolean;
+  acik: boolean;
+  oy_verdim?: boolean | null;
+  toplam_oy?: number | null;
+  /** Katilim oraninin PAYDASI; yalniz yonetim gorur. */
+  hedef_kisi?: number | null;
+  secenekler: AnketSecenek[];
+  created_at: string;
+}
+
+export interface AnketList {
+  items: Anket[];
+}
+
+/** Kim neye oy verdi — anonim ankette bu uc 409 doner. */
+export interface AnketOyKim {
+  user_id: string;
+  ad?: string | null;
+  secenek_id: string;
+  secenek_metin: string;
+  created_at: string;
+}
+
+export interface AnketOyKimList {
+  meta: PageMeta;
+  items: AnketOyKim[];
+}

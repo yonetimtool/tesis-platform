@@ -2224,5 +2224,34 @@
   "gorevAdimFotoZorunlu": "الصورة مطلوبة",
   "gorevAdimSirali": "تُنجَز الخطوات بالترتيب",
   "gorevAdimSatirIpucu": "خطوة واحدة في كل سطر. يمكن إضافة خطوات لاحقًا.",
-  "gorevAdimYuklenemedi": "تعذّر تحميل الخطوات."
+  "gorevAdimYuklenemedi": "تعذّر تحميل الخطوات.",
+  "anketAnonimRozet": "مجهول",
+  "anketKvkkAdliUyari": "هذا الاستطلاع ليس مجهولاً: صوتك ظاهر للإدارة باسمك.",
+  "anketAnonimBilgi": "هذا الاستطلاع مجهول: لا يُحفَظ من صوّت لماذا.",
+  "anketKatilim": "المشاركة: {oy}/{hedef} ({oran}%)",
+  "@anketKatilim": {
+    "placeholders": {
+      "oy": {
+        "type": "String"
+      },
+      "hedef": {
+        "type": "String"
+      },
+      "oran": {
+        "type": "String"
+      }
+    }
+  },
+  "anketYeni": "استطلاع جديد",
+  "anketAciklamaOpsiyonel": "الوصف (اختياري)",
+  "anketMaddeler": "خيارات الاستطلاع",
+  "anketMaddeIpucu": "خيار واحد في كل سطر؛ يلزم خياران على الأقل.",
+  "anketEnAzIki": "يلزم خياران على الأقل.",
+  "anketHedefKitle": "الفئة المستهدفة",
+  "anketHedefHerkes": "الجميع (إذا لم يتم الاختيار)",
+  "anketAnonimSecim": "استطلاع مجهول",
+  "anketAnonimUyari": "لا يمكن تغيير خيار السرّية بعد الحفظ.",
+  "anketKapat": "إغلاق الاستطلاع",
+  "anketOyDokumu": "من صوّت لماذا",
+  "anketGorselSec": "اختيار صورة"
 }

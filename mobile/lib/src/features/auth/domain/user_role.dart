@@ -101,6 +101,11 @@ enum UserRole {
   bool get canManageTasks =>
       this == admin || this == yonetici || this == guvenlikAmiri;
 
+  /// (P237 §3) ANKET YONETIMI — admin + yonetici (ucun `require_role`u
+  /// ile AYNI kume). P38'de mobil BILEREK salt-okumaydi; P235'in kalici
+  /// PARITE kurali bunu gecersiz kildi: bir ozellik iki yuzeyde de olur.
+  bool get canManageAnket => this == admin || this == yonetici;
+
   /// (P166 §8.2) Kurulum sihirbazi (`GET/PATCH /kurulum`) — admin +
   /// yonetici. Ucun `require_role`u ile AYNI kume; saha ve sakin 403
   /// alir, bu yuzden ekran ve hatirlatici onlarda istek bile ATMAZ.

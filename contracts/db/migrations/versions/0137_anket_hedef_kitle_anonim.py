@@ -133,6 +133,12 @@ def upgrade() -> None:
         "ALTER TABLE anket_oy ADD CONSTRAINT ck_anket_oy_anonim_kimliksiz "
         "CHECK (NOT anonim OR user_id IS NULL);"
     )
+    # FK ONCU KOLON INDEKSI (`test_indeks_kapsam` kuralı): ust satir
+    # silinince RI tetigi bu tabloyu tarar. `(anket_id, anonim)` FK'si
+    # icin oncu kolon `anket_id` — mevcut indeksler onu kapsamiyordu.
+    op.execute(
+        "CREATE INDEX ix_anket_oy_anket_anonim ON anket_oy (anket_id, anonim);"
+    )
     # Eski BENZERSIZLIK (tenant, anket, user) anonimde ise yaramaz
     # (user_id NULL -> PostgreSQL'de NULL'lar cakismaz). Tek oy kurali
     # artik `anket_katilim`da; buradaki kisit ADLI anketler icin KALIR.
@@ -189,6 +195,7 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.execute("DROP TABLE IF EXISTS anket_katilim;")
     op.execute("DROP INDEX IF EXISTS uq_anket_oy_adli;")
+    op.execute("DROP INDEX IF EXISTS ix_anket_oy_anket_anonim;")
     op.execute(
         "ALTER TABLE anket_oy DROP CONSTRAINT IF EXISTS ck_anket_oy_anonim_kimliksiz;"
     )

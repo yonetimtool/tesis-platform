@@ -2224,5 +2224,34 @@
   "gorevAdimFotoZorunlu": "Photo required",
   "gorevAdimSirali": "Steps are completed in order",
   "gorevAdimSatirIpucu": "One step per line. Steps can be added later too.",
-  "gorevAdimYuklenemedi": "Steps could not be loaded."
+  "gorevAdimYuklenemedi": "Steps could not be loaded.",
+  "anketAnonimRozet": "Anonymous",
+  "anketKvkkAdliUyari": "This poll is NOT anonymous: your vote is visible to management with your name.",
+  "anketAnonimBilgi": "This poll is anonymous: who voted for what is not stored.",
+  "anketKatilim": "Turnout: {oy}/{hedef} ({oran}%)",
+  "@anketKatilim": {
+    "placeholders": {
+      "oy": {
+        "type": "String"
+      },
+      "hedef": {
+        "type": "String"
+      },
+      "oran": {
+        "type": "String"
+      }
+    }
+  },
+  "anketYeni": "New poll",
+  "anketAciklamaOpsiyonel": "Description (optional)",
+  "anketMaddeler": "Poll options",
+  "anketMaddeIpucu": "One option per line; at least two are required.",
+  "anketEnAzIki": "At least two options are required.",
+  "anketHedefKitle": "Target audience",
+  "anketHedefHerkes": "Everyone (if nothing is selected)",
+  "anketAnonimSecim": "Anonymous poll",
+  "anketAnonimUyari": "The anonymity choice CANNOT be changed after saving.",
+  "anketKapat": "Close poll",
+  "anketOyDokumu": "Who voted for what",
+  "anketGorselSec": "Choose image"
 }
