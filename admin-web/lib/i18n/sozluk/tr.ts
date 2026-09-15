@@ -548,6 +548,8 @@ export const tr = {
   telefonHataUlkeYok: "Önce ülke kodunu seçin.",
   telefonUlkeEtiket: "Ülke kodu",
   telefonUlkeSec: "Seçin",
+  telefonUlkeAraYerTutucu: "Ülke ara (TR, 90…)",
+  telefonUlkeBulunamadi: "Eşleşen ülke yok",
   epostaHataBos: "E-posta adresi gerekli.",
   epostaHataBicim: "E-posta adresi geçerli görünmüyor. Örnek: ad@ornek.com",
   epostaHataYerelUzun: "@ işaretinden önceki kısım 64 karakteri geçemez.",

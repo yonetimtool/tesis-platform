@@ -201,7 +201,7 @@ class _UlkeKutusu extends StatelessWidget {
           enabled: etkin,
         ),
         child: Text(
-          u == null ? l10n.telefonUlkeSec : '${u.bayrak} ${u.etiket}',
+          u == null ? l10n.telefonUlkeSec : u.etiket,
           overflow: TextOverflow.ellipsis,
         ),
       ),
@@ -270,7 +270,7 @@ class _UlkeSayfasiState extends State<_UlkeSayfasi> {
                 itemCount: liste.length,
                 itemBuilder: (_, i) => ListTile(
                   key: Key('telefon-ulke-${liste[i].kod}'),
-                  title: Text('${liste[i].bayrak} ${liste[i].etiket}'),
+                  title: Text(liste[i].etiket),
                   onTap: () => Navigator.of(context).pop(liste[i]),
                 ),
               ),

@@ -38,8 +38,10 @@ function alan(): HTMLInputElement {
 // (P233 §3) ULKE KODU AYRI KUTUDA: `<select>`. Alanin kendisi artik yalniz
 // ULUSAL kismi tasiyor, bu yuzden testler ulkeyi ya baslangic degerinden
 // (E.164) verir ya da seciciden secer.
-function ulke(): HTMLSelectElement {
-  return document.querySelector<HTMLSelectElement>(
+/** (P236) Ulke secici artik ARANABILIR bir acilir liste (select degil):
+ *  degeri `value` degil, dugmenin METNI tasiyor. */
+function ulke(): HTMLButtonElement {
+  return document.querySelector<HTMLButtonElement>(
     '[data-test="telefon-ulke"]',
   )!;
 }
@@ -49,7 +51,7 @@ describe("(P166 §9) bicimleme", () => {
     ciz(() => createElement(Kutu, { baslangic: "+90" }));
     fireEvent.change(alan(), { target: { value: "5431992904" } });
     expect(alan().value).toBe("543 199 29 04");
-    expect(ulke().value).toBe("TR");
+    expect(ulke().textContent).toContain("+90");
   });
 
   it("SINIRSIZ RAKAM GIRILEMEZ — 10 hanede kesilir", () => {
@@ -77,14 +79,14 @@ describe("(P166 §9) bicimleme", () => {
       ciz(() => createElement(Kutu, {}));
       fireEvent.change(alan(), { target: { value: ham } });
       expect(alan().value, ham).toBe("543 199 29 04");
-      expect(ulke().value, ham).toBe("TR");
+      expect(ulke().textContent, ham).toContain("+90");
     }
   });
 
   it("(P233 §3) YABANCI numara YAPISTIRILINCA o ulke secilir", () => {
     ciz(() => createElement(Kutu, {}));
     fireEvent.change(alan(), { target: { value: "+49 171 1234567" } });
-    expect(ulke().value).toBe("DE");
+    expect(ulke().textContent).toContain("+49");
     expect(alan().value).toBe("171 123 4567");
   });
 

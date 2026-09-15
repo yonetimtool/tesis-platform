@@ -530,6 +530,8 @@ export const de: Sozluk = {
   telefonHataUlkeYok: "Wählen Sie zuerst die Ländervorwahl.",
   telefonUlkeEtiket: "Ländervorwahl",
   telefonUlkeSec: "Wählen",
+  telefonUlkeAraYerTutucu: "Land suchen (TR, 90…)",
+  telefonUlkeBulunamadi: "Kein passendes Land",
   epostaHataBos: "E-Mail-Adresse erforderlich.",
   epostaHataBicim: "Diese E-Mail-Adresse sieht nicht gültig aus. Beispiel: name@beispiel.com",
   epostaHataYerelUzun: "Der Teil vor dem @ darf höchstens 64 Zeichen lang sein.",

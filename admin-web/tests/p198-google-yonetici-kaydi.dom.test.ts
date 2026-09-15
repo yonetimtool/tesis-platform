@@ -107,6 +107,26 @@ afterEach(() => {
   sessionStorage.clear();
 });
 
+/** (P236) Ulke secici artik ARANABILIR bir acilir liste (select degil).
+ *
+ * Elli ulkede yerlesik `<select>` yazarak atlamayi yalniz GORUNEN metne
+ * gore yapiyordu ve o metin `🇹🇷 +90` oldu — kullanici "TR" yazip
+ * bulamazdi. Testler de o yuzden `selectOptions` yerine gercek akisi
+ * suruyor: ac -> (gerekirse ara) -> sec.
+ */
+async function ulkeSec(kod: string) {
+  const ac = document.querySelector<HTMLButtonElement>(
+    '[data-test="telefon-ulke"]',
+  );
+  if (!ac) throw new Error("telefon-ulke dugmesi yok");
+  await userEvent.click(ac);
+  const secenek = document.querySelector<HTMLButtonElement>(
+    `[data-test="telefon-ulke-${kod}"]`,
+  );
+  if (!secenek) throw new Error(`ulke secenegi yok: ${kod}`);
+  await userEvent.click(secenek);
+}
+
 /**
  * (P233 §3) TELEFON ARTIK IKI KUTU: ulke secici + ulusal numara.
  *
@@ -116,15 +136,14 @@ afterEach(() => {
  * doldurma bicimi de o yuzden degisti.
  */
 async function telefonGir(numara: string) {
-  await userEvent.selectOptions(
-    document.querySelector<HTMLSelectElement>('[data-test="telefon-ulke"]')!,
-    "TR",
-  );
+  await ulkeSec("TR");
   await userEvent.type(
     document.querySelector<HTMLInputElement>('[data-test="telefon-numara"]')!,
     numara,
   );
 }
+
+
 
 describe("(P198) Google ile yonetici kaydi — uctan uca", () => {
   it("1) YONETICI + Google -> istek `niyet=kayit` TASIR", async () => {

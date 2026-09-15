@@ -85,6 +85,27 @@ afterEach(() => {
   gorunurluk("visible");
 });
 
+
+/** (P236) Ulke secici artik ARANABILIR bir acilir liste (select degil).
+ *
+ * Elli ulkede yerlesik `<select>` yazarak atlamayi yalniz GORUNEN metne
+ * gore yapiyordu ve o metin `🇹🇷 +90` oldu — kullanici "TR" yazip
+ * bulamazdi. Testler de o yuzden `selectOptions` yerine gercek akisi
+ * suruyor: ac -> (gerekirse ara) -> sec.
+ */
+async function ulkeSec(kod: string) {
+  const ac = document.querySelector<HTMLButtonElement>(
+    '[data-test="telefon-ulke"]',
+  );
+  if (!ac) throw new Error("telefon-ulke dugmesi yok");
+  await userEvent.click(ac);
+  const secenek = document.querySelector<HTMLButtonElement>(
+    `[data-test="telefon-ulke-${kod}"]`,
+  );
+  if (!secenek) throw new Error(`ulke secenegi yok: ${kod}`);
+  await userEvent.click(secenek);
+}
+
 describe("Kameralar (canlı karo)", () => {
   beforeEach(() => gorunurluk("visible"));
 
@@ -196,10 +217,7 @@ describe("Dış hizmetler", () => {
     await userEvent.type(screen.getByRole("textbox", { name: "Ad" }), "Ali");
     await userEvent.type(screen.getByLabelText(/Soyad/i), "Veli");
     // (P233 §3) ULKE KODU AYRI KUTUDA: once secilir, sonra numara yazilir.
-    await userEvent.selectOptions(
-      document.querySelector<HTMLSelectElement>('[data-test="telefon-ulke"]')!,
-      "TR",
-    );
+    await ulkeSec("TR");
     const tel = document.querySelector<HTMLInputElement>(
       '[data-test="telefon-numara"]',
     )!;
@@ -224,10 +242,7 @@ describe("Dış hizmetler", () => {
 
     await userEvent.type(screen.getByLabelText(/Hizmet türü/i), "Çilingir");
     await userEvent.type(screen.getByRole("textbox", { name: "Ad" }), "Ali");
-    await userEvent.selectOptions(
-      document.querySelector<HTMLSelectElement>('[data-test="telefon-ulke"]')!,
-      "TR",
-    );
+    await ulkeSec("TR");
     await userEvent.type(
       document.querySelector<HTMLInputElement>('[data-test="telefon-numara"]')!,
       "5431992904",
@@ -248,10 +263,7 @@ describe("Dış hizmetler", () => {
     await userEvent.type(screen.getByLabelText(/Hizmet türü/i), "Çilingir");
     await userEvent.type(screen.getByRole("textbox", { name: "Ad" }), "Ali");
     await userEvent.type(screen.getByLabelText(/Soyad/i), "Veli");
-    await userEvent.selectOptions(
-      document.querySelector<HTMLSelectElement>('[data-test="telefon-ulke"]')!,
-      "TR",
-    );
+    await ulkeSec("TR");
     await userEvent.type(
       document.querySelector<HTMLInputElement>('[data-test="telefon-numara"]')!,
       "543199",

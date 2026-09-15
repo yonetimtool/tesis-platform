@@ -114,9 +114,37 @@ export function ulkeBul(kod: string | null | undefined): Ulke | null {
   return kod ? (KODA_GORE.get(kod) ?? null) : null;
 }
 
-/** Secenek etiketi: `TR +90`. Bayrak ayri cizildigi icin metne girmez. */
+/**
+ * (P236) Secenek etiketi: `🇹🇷 +90` — BAYRAK + ARAMA KODU.
+ *
+ * =========================================================================
+ * NEDEN ISO KODU AYRICA YAZILMIYOR
+ * =========================================================================
+ * P233'te etiket `TR +90` idi ve bayrak ayri ciziliyordu; ikisi birlikte
+ * `🇹🇷 TR +90` veriyordu. Bayrak emojisi REGIONAL INDICATOR ciftidir
+ * (U+1F1F9 U+1F1F7) ve bayrak yazi tipi YOKSA harflere duser — yani
+ * ISO kodunu ZATEN uretir. Ikisini birden yazmak, o platformlarda
+ * `TR TR +90` demekti.
+ *
+ * Bilgi HER IKI DURUMDA da tam:
+ *   * bayrak cizilirse   -> `🇹🇷 +90`
+ *   * cizilmezse         -> `TR +90`
+ * `+1`i paylasan US/CA ve `+7`yi paylasan RU/KZ ikisinde de ayrisir.
+ */
 export function ulkeEtiketi(u: Ulke): string {
-  return `${u.kod} +${u.arama}`;
+  return `${u.bayrak} +${u.arama}`;
+}
+
+/**
+ * (P236) ARAMA ESLESMESI — ISO kodu, arama kodu ve ulke adi.
+ *
+ * Kullanici "TR", "90", "+90" ya da "tur" yazabilir. Bayragin kendisi
+ * aranmaz: kimse emoji yazarak aramaz.
+ */
+export function ulkeEslesiyor(u: Ulke, sorgu: string): boolean {
+  const q = sorgu.trim().toUpperCase().replace(/^\+/, "");
+  if (!q) return true;
+  return u.kod.includes(q) || u.arama.includes(q);
 }
 
 /**

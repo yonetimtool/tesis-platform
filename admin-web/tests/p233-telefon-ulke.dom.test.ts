@@ -34,15 +34,26 @@ function Sahne({ baslangic = "" }: { baslangic?: string }) {
   });
 }
 
+/** (P236) Ulke secici artik ARANABILIR bir acilir liste (select degil). */
 const ulkeKutusu = () =>
-  document.querySelector<HTMLSelectElement>('[data-test="telefon-ulke"]')!;
+  document.querySelector<HTMLButtonElement>('[data-test="telefon-ulke"]')!;
+
+async function ulkeSec(kod: string) {
+  await userEvent.click(ulkeKutusu());
+  const secenek = document.querySelector<HTMLButtonElement>(
+    `[data-test="telefon-ulke-${kod}"]`,
+  );
+  if (!secenek) throw new Error(`ulke secenegi yok: ${kod}`);
+  await userEvent.click(secenek);
+}
 const numaraKutusu = () =>
   document.querySelector<HTMLInputElement>('[data-test="telefon-numara"]')!;
 
 describe("P233 §3 telefon ulke kodu", () => {
   it("ULKE KUTUSU BOS BASLAR ve numara ULKESIZ GECERSIZDIR", async () => {
     render(createElement(Sahne));
-    expect(ulkeKutusu().value).toBe("");
+    // Secilmemisken yer tutucu yazar.
+    expect(ulkeKutusu().textContent).toBe("Seçin");
 
     await userEvent.type(numaraKutusu(), "5419222388");
     // Eski davranis burada SESSIZCE `+90` ekliyordu.
@@ -53,7 +64,7 @@ describe("P233 §3 telefon ulke kodu", () => {
   it("ULKE SECILINCE KOD DOLAR ve E.164 uretilir", async () => {
     render(createElement(Sahne));
     await userEvent.type(numaraKutusu(), "5419222388");
-    await userEvent.selectOptions(ulkeKutusu(), "TR");
+    await ulkeSec("TR");
 
     expect(sonDeger).toBe("(+90) 541 922 23 88");
     expect(telefonNormalle(sonDeger)).toBe("+905419222388");
@@ -62,7 +73,9 @@ describe("P233 §3 telefon ulke kodu", () => {
 
   it("MEVCUT KAYITTA ulke DEGERDEN cozulur", () => {
     render(createElement(Sahne, { baslangic: "+491711234567" }));
-    expect(ulkeKutusu().value).toBe("DE");
+    // (P236) Etiket BAYRAK + ARAMA KODU; ISO kodu bayragin YEDEGI
+    // (bayrak cizilmezse regional indicator ciftini "DE" diye duser).
+    expect(ulkeKutusu().textContent).toContain("+49");
     expect(numaraKutusu().value).toBe("171 123 4567");
   });
 
@@ -75,16 +88,53 @@ describe("P233 §3 telefon ulke kodu", () => {
 
   it("ULKE DEGISINCE fazla haneler KIRPILIR", async () => {
     render(createElement(Sahne, { baslangic: "+905419222388" }));
-    await userEvent.selectOptions(ulkeKutusu(), "QA");
+    await ulkeSec("QA");
     // Sessizce birakmak, KAYDEDILEMEYEN bir numarayi gecerli gostermek
     // olurdu.
     expect(telefonNormalle(sonDeger)).toBe("+97454192223");
   });
 
-  it("SECENEK LISTESI ELLE YAZMAYA IZIN VERMEZ (select, input degil)", () => {
+  it("(P236) ULKE ELLE YAZILAMAZ — secim listeden", async () => {
     render(createElement(Sahne));
-    expect(ulkeKutusu().tagName).toBe("SELECT");
+    // Denetim bir DUGME: serbest metin girisi YOK, yani kullanici
+    // uydurma bir kod yazamaz.
+    expect(ulkeKutusu().tagName).toBe("BUTTON");
+    await userEvent.click(ulkeKutusu());
+    const liste = document.querySelector('[data-test="telefon-ulke-liste"]')!;
+    const ilk = liste.querySelector('[role="option"]')!;
     // TR ILK SIRADA: kullanicilarin ezici cogunlugu icin dogru secim.
-    expect(ulkeKutusu().options[1].value).toBe("TR");
+    expect(ilk.getAttribute("data-test")).toBe("telefon-ulke-TR");
+  });
+
+  it("(P236) LISTE ARANABILIR — ISO kodu ve arama kodu ile", async () => {
+    // Elli ulkede kaydirmak zor; ustelik etiket artik `🇹🇷 +90` oldugu
+    // icin yerlesik `<select>`in yazarak atlamasi da ise yaramazdi.
+    render(createElement(Sahne));
+    await userEvent.click(ulkeKutusu());
+    const ara = document.querySelector<HTMLInputElement>(
+      '[data-test="telefon-ulke-ara"]',
+    )!;
+
+    await userEvent.type(ara, "QA");
+    expect(document.querySelector('[data-test="telefon-ulke-QA"]')).toBeTruthy();
+    expect(document.querySelector('[data-test="telefon-ulke-TR"]')).toBeNull();
+
+    await userEvent.clear(ara);
+    await userEvent.type(ara, "974");
+    expect(document.querySelector('[data-test="telefon-ulke-QA"]')).toBeTruthy();
+
+    await userEvent.clear(ara);
+    await userEvent.type(ara, "zzz");
+    expect(document.querySelector('[data-test="telefon-ulke-bos"]')).toBeTruthy();
+  });
+
+  it("(P236) ETIKET BAYRAK + ARAMA KODU, ISO kodu TEKRARLANMAZ", async () => {
+    // Bayrak bir REGIONAL INDICATOR ciftidir; bayrak bicimi yoksa
+    // HARFLERE duser ve ekranda "TR +90" yazar. Ayrica ISO yazmak, o
+    // platformlarda "TR TR +90" demekti.
+    render(createElement(Sahne));
+    await userEvent.click(ulkeKutusu());
+    const tr = document.querySelector('[data-test="telefon-ulke-TR"]')!;
+    expect(tr.textContent).toBe("\u{1F1F9}\u{1F1F7} +90");
   });
 });

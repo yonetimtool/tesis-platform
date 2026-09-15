@@ -530,6 +530,8 @@ export const en: Sozluk = {
   telefonHataUlkeYok: "Select the country code first.",
   telefonUlkeEtiket: "Country code",
   telefonUlkeSec: "Select",
+  telefonUlkeAraYerTutucu: "Search country (TR, 90…)",
+  telefonUlkeBulunamadi: "No matching country",
   epostaHataBos: "Email address is required.",
   epostaHataBicim: "This email address doesn’t look valid. Example: name@example.com",
   epostaHataYerelUzun: "The part before @ cannot exceed 64 characters.",

@@ -530,6 +530,8 @@ export const ar: Sozluk = {
   telefonHataUlkeYok: "اختر رمز الدولة أولاً.",
   telefonUlkeEtiket: "رمز الدولة",
   telefonUlkeSec: "اختيار",
+  telefonUlkeAraYerTutucu: "ابحث عن دولة (TR، 90…)",
+  telefonUlkeBulunamadi: "لا توجد دولة مطابقة",
   epostaHataBos: "عنوان البريد الإلكتروني مطلوب.",
   epostaHataBicim: "لا يبدو عنوان البريد الإلكتروني صالحًا. مثال: name@example.com",
   epostaHataYerelUzun: "لا يمكن أن يتجاوز الجزء الذي يسبق @ ‏64 حرفًا.",

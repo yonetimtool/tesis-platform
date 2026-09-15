@@ -530,6 +530,8 @@ export const ru: Sozluk = {
   telefonHataUlkeYok: "Сначала выберите код страны.",
   telefonUlkeEtiket: "Код страны",
   telefonUlkeSec: "Выбрать",
+  telefonUlkeAraYerTutucu: "Поиск страны (TR, 90…)",
+  telefonUlkeBulunamadi: "Страна не найдена",
   epostaHataBos: "Требуется адрес электронной почты.",
   epostaHataBicim: "Адрес электронной почты выглядит неверно. Пример: name@example.com",
   epostaHataYerelUzun: "Часть до @ не может превышать 64 символа.",

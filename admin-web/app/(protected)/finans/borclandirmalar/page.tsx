@@ -208,15 +208,21 @@ function GecikmeFaiziKarti() {
         </label>
         <label className="flex items-center gap-2">
           {t("finansGecikmeOran")}
+          {/* (P236) GENISLIK SARMALAYICIDA: `Alan` kendi icinde `w-full`
+              tasiyor ve ustune gecilen `w-20` Tailwind'in CSS sirasina
+              gore SESSIZCE KAYBOLUYOR (olculdu: `.w-full` ciktida
+              `.w-20`den SONRA geliyor). Telefon alaninda ayni kusur
+              numara kutusunu sifir genislige indirmisti. */}
+          <span className="inline-block w-20">
           <Alan
             type="number"
-            className="w-20"
             defaultValue={ayar?.gecikme_aylik_yuzde ?? 0}
             disabled={mesgul}
             onBlur={(e) =>
               void ayarYaz({ gecikme_aylik_yuzde: Number(e.target.value) })
             }
           />
+          </span>
         </label>
         <Dugme
           tur="ikincil"

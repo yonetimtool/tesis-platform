@@ -620,13 +620,17 @@ export default function TenantDetailPage() {
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   {/* (P63) YER TUTUCU ETIKET DEGILDIR: yazmaya baslayinca
                       KAYBOLUR ve ekran okuyucularin bir kismi hic okumaz. */}
-                  <Alan
-                    aria-label={t("tesisSilOnayEtiketi")}
-                    className="max-w-xs"
-                    value={confirmAd}
-                    onChange={(e) => setConfirmAd(e.target.value)}
-                    data-test="tesis-sil-onay"
-                  />
+                  {/* (P236) GENISLIK SARMALAYICIDA: `Alan` kendi icinde
+                      `w-full` tasiyor ve ustune gecilen sinif Tailwind'in
+                      CSS sirasina gore SESSIZCE KAYBOLUYOR. */}
+                  <span className="inline-block max-w-xs">
+                    <Alan
+                      aria-label={t("tesisSilOnayEtiketi")}
+                      value={confirmAd}
+                      onChange={(e) => setConfirmAd(e.target.value)}
+                      data-test="tesis-sil-onay"
+                    />
+                  </span>
                   <button
                     className="rounded-lg bg-rose-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-rose-700 disabled:opacity-50"
                     onClick={deleteTenant}

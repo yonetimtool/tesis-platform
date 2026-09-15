@@ -64,7 +64,10 @@ void main() {
   testWidgets('MEVCUT KAYITTA ulke DEGERDEN cozulur', (t) async {
     final k = TextEditingController(text: '+491711234567');
     await t.pumpWidget(_sar(k));
-    expect(find.text('\u{1F1E9}\u{1F1EA} DE +49'), findsOneWidget);
+    // (P236) Etiket BAYRAK + ARAMA KODU; ISO kodu TEKRARLANMAZ — bayrak
+    // cizilmeyen platformlarda regional indicator cifti zaten "DE" diye
+    // duser ve "DE DE +49" gorunurdu.
+    expect(find.text('\u{1F1E9}\u{1F1EA} +49'), findsOneWidget);
     expect(find.text('171 123 4567'), findsOneWidget);
   });
 

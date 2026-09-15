@@ -58,11 +58,24 @@ class Ulke {
 
   final String bayrak;
 
-  /// Seçenek etiketi: `TR +90`. Ülke ADI kullanılmadı — 50 ülke × 7 dil =
-  /// 350 çeviri borcu, ve ISO kodu + arama kodu DİLDEN BAĞIMSIZ okunur.
-  /// `+1`i paylaşan US/CA ile `+7`yi paylaşan RU/KZ yalnızca ISO koduyla
-  /// ayrılır; arama kodu tek başına yeterli olmazdı.
-  String get etiket => '$kod +$arama';
+  /// (P236) Seçenek etiketi: `🇹🇷 +90` — BAYRAK + ARAMA KODU.
+  ///
+  /// =====================================================================
+  /// NEDEN ISO KODU AYRICA YAZILMIYOR
+  /// =====================================================================
+  /// P233'te etiket `TR +90` idi ve bayrak ayrı çiziliyordu; ikisi
+  /// birlikte `🇹🇷 TR +90` veriyordu. Bayrak emojisi bir REGIONAL
+  /// INDICATOR çiftidir (🇹🇷 = U+1F1F9 U+1F1F7) ve bayrak biçimi YOKSA
+  /// HARFLERE düşer — yani ISO kodunu ZATEN üretir. İkisini birden
+  /// yazmak, o platformlarda `TR TR +90` demekti.
+  ///
+  /// Bilgi HER İKİ DURUMDA da tam:
+  ///   * bayrak çizilirse -> `🇹🇷 +90`
+  ///   * çizilmezse       -> `TR +90`
+  /// `+1`i paylaşan US/CA ve `+7`yi paylaşan RU/KZ ikisinde de ayrışır.
+  ///
+  /// Ülke ADI kullanılmadı: 50 ülke × 7 dil = 350 çeviri borcu.
+  String get etiket => '$bayrak +$arama';
 }
 
 /// TR İLK SIRADA: kullanıcıların ezici çoğunluğu için doğru seçim.

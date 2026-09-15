@@ -530,6 +530,8 @@ export const es: Sozluk = {
   telefonHataUlkeYok: "Selecciona primero el código de país.",
   telefonUlkeEtiket: "Código de país",
   telefonUlkeSec: "Seleccionar",
+  telefonUlkeAraYerTutucu: "Buscar país (TR, 90…)",
+  telefonUlkeBulunamadi: "Ningún país coincide",
   epostaHataBos: "Se requiere una dirección de correo.",
   epostaHataBicim: "Esta dirección de correo no parece válida. Ejemplo: nombre@ejemplo.com",
   epostaHataYerelUzun: "La parte anterior a @ no puede superar los 64 caracteres.",

@@ -66,6 +66,27 @@ const PROFIL = {
 
 afterEach(() => vi.restoreAllMocks());
 
+
+/** (P236) Ulke secici artik ARANABILIR bir acilir liste (select degil).
+ *
+ * Elli ulkede yerlesik `<select>` yazarak atlamayi yalniz GORUNEN metne
+ * gore yapiyordu ve o metin `🇹🇷 +90` oldu — kullanici "TR" yazip
+ * bulamazdi. Testler de o yuzden `selectOptions` yerine gercek akisi
+ * suruyor: ac -> (gerekirse ara) -> sec.
+ */
+async function ulkeSec(kod: string) {
+  const ac = document.querySelector<HTMLButtonElement>(
+    '[data-test="telefon-ulke"]',
+  );
+  if (!ac) throw new Error("telefon-ulke dugmesi yok");
+  await userEvent.click(ac);
+  const secenek = document.querySelector<HTMLButtonElement>(
+    `[data-test="telefon-ulke-${kod}"]`,
+  );
+  if (!secenek) throw new Error(`ulke secenegi yok: ${kod}`);
+  await userEvent.click(secenek);
+}
+
 describe("Profilim", () => {
   it("KIMLIK bilgileri gosterilir", async () => {
     // (P167 §1.7) AD ARTIK DUZENLENEBILIR bir alan (salt okunur bir `dd`
@@ -171,10 +192,7 @@ describe("Profilim", () => {
     ciz(ProfilPage);
     // (P233 §3) Once ULKE secilir (kutu bos baslar), sonra numara yazilir.
     await screen.findByPlaceholderText(/5XX/);
-    await userEvent.selectOptions(
-      document.querySelector<HTMLSelectElement>('[data-test="telefon-ulke"]')!,
-      "TR",
-    );
+    await ulkeSec("TR");
     const kutu = document.querySelector<HTMLInputElement>(
       '[data-test="telefon-numara"]',
     )!;
