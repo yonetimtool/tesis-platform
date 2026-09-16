@@ -62,6 +62,8 @@ async def register_device(
         # bugunku davranisi korur. Istemci dili degistirince YENIDEN kaydeder.
         dil=body.dil or "tr",
         cihaz_kimligi=body.cihaz_kimligi,
+        # (P238) SURUM — yalniz veri toplama; bugun hicbir karara girmez.
+        uygulama_surum=body.uygulama_surum,
         aktif=True,
     )
     stmt = stmt.on_conflict_do_update(
@@ -75,6 +77,14 @@ async def register_device(
             # ogrenilmis kimligi silmemeli.
             "cihaz_kimligi": func.coalesce(
                 stmt.excluded.cihaz_kimligi, UserDevice.cihaz_kimligi
+            ),
+            # (P238) SURUM GONDERILMEDIYSE MEVCUT DEGER KORUNUR — kimlikle
+            # ayni kural: bir yukseltmede alanin gecici olarak bos gelmesi,
+            # daha once ogrenilmis surumu SILMEMELI. Silseydi cihaz
+            # "surumu bilinmiyor"a duser ve 1.5.0'daki hedefleme onu
+            # elerdi; yani sessizce yanlis kisiye ulasmazdik.
+            "uygulama_surum": func.coalesce(
+                stmt.excluded.uygulama_surum, UserDevice.uygulama_surum
             ),
             "aktif": True,
             "updated_at": func.now(),

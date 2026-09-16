@@ -695,10 +695,16 @@ NASIL kullanıldığını anlatıyor (alan genişletilebiliyor).
 `Kim neye oy verdi` — **hepsi var**.
 
 **Bir ölçüm hatası yaptım ve düzelttim:** ilk sonda hepsini UTF-16LE
-olarak aradı ve `Kim neye oy verdi`yi "YOK" raporladı. Sebep: **Dart AOT
-saf ASCII dizeleri TEK BAYTLI saklıyor**, özel karakterli olanları
-UTF-16. İki kodlamada da arayınca dize bulundu. (P236'da da benzer bir
-sınır vardı: AOT ikilisinden etiket biçimi ayırt edilemiyordu.)
+olarak aradı ve `Kim neye oy verdi`yi "YOK" raporladı. Sebep: Dart AOT
+dizeleri iki biçimde saklıyor.
+
+> **DÜZELTME (P238 §5'te daha kesin ölçüldü):** burada "saf ASCII → tek
+> baytlı" yazmıştım; kural bundan **geniş**. Dart `OneByteString`i
+> **tüm kod birimleri < 256** olduğunda kullanır ve baytlar **Latin-1**
+> olur — UTF-8 değil. `Yeni sürüm var` (yalnız `ü` = U+00FC = 252) bu
+> yüzden ne UTF-8'de ne UTF-16'da bulunur, **Latin-1'de** bulunur.
+> `Alt adımlar` (`ı` = U+0131 = 305) ise UTF-16'dadır. Paket içeriğini
+> sondalarken **üç kodlama da** denenmeli.
 
 ### ÖLÇEMEDİĞİM
 

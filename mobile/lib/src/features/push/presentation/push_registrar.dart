@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../core/i18n/locale_controller.dart';
 import '../data/device_api.dart';
@@ -161,6 +162,18 @@ class PushRegistrar extends Notifier<PushState> {
       } catch (e) {
         debugPrint('Kurulum kimligi okunamadi (kimliksiz kaydedilecek): $e');
       }
+      // (P238) UYGULAMA SURUMU — okunamazsa kayit YINE yapilir.
+      //
+      // Surum, bildirimin GITMESI icin gerekli degil; yalniz ileride
+      // hedefleme yapabilmek icin toplanan bir meta veri. Okunamadi diye
+      // cihaz kaydini atlamak, calisan bir ozelligi (push) calismayan bir
+      // ozellik (henuz yazilmamis hedefleme) ugruna kirmak olurdu.
+      String? surum;
+      try {
+        surum = (await PackageInfo.fromPlatform()).version;
+      } catch (e) {
+        debugPrint('Uygulama surumu okunamadi (surumsuz kaydedilecek): $e');
+      }
       await _api.register(
         fcmToken: token,
         platform: defaultTargetPlatform == TargetPlatform.iOS
@@ -168,6 +181,7 @@ class PushRegistrar extends Notifier<PushState> {
             : 'android',
         dil: dil,
         cihazKimligi: kurulum,
+        uygulamaSurum: surum,
       );
       await _store.save(token);
       if (ref.mounted) {

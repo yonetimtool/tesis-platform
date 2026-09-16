@@ -21,11 +21,19 @@ class DeviceApi {
   /// AYNI cihazin onceki jetonlarini pasiflestirir ve kayit COGALMAZ.
   /// OPSIYONEL: alani gondermeyen eski surumler calismaya devam eder
   /// (sunucuda kolon nullable).
+  /// [uygulamaSurum] (P238) Cihazdaki uygulama surumu — YALNIZ VERI
+  /// TOPLAMA. Bugun sunucuda hicbir karara girmiyor; 1.5.0'da "asgari
+  /// surum yukseltilince eski surumdeki cihazlara tek seferlik bildirim"
+  /// hedeflemesi bunu okuyacak. BUGUN gondermeye baslamamizin sebebi:
+  /// bir cihaz surumunu ancak O ALANI GONDEREN bir yapimi calistirdiginda
+  /// bildirir; bugun baslamazsak 1.5.0'da 1.4.x istemciler de gorunmez
+  /// olur ve ayni sorun bir tur sonra tekrarlanir.
   Future<void> register({
     required String fcmToken,
     required String platform,
     required String dil,
     String? cihazKimligi,
+    String? uygulamaSurum,
   }) async {
     try {
       await _dio.post<Map<String, dynamic>>(
@@ -37,6 +45,10 @@ class DeviceApi {
           // Null ise anahtar HIC gonderilmez (sunucu 'kimlik yok' der,
           // bos dize DEMEZ): `?` isaretci null-aware oge sozdizimi.
           'cihaz_kimligi': ?cihazKimligi,
+          // Null ise anahtar HIC gonderilmez: sunucu "gonderilmedi" ile
+          // "bos" arasindaki farki kullaniyor (gonderilmeyen alan mevcut
+          // degeri KORUR, bos dize onu SILERDI).
+          'uygulama_surum': ?uygulamaSurum,
         },
       );
     } on DioException catch (e) {

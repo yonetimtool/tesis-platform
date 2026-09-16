@@ -15852,6 +15852,16 @@ components:
             YOKTUR. Istemci uygulama dilini degistirdiginde cihazi YENIDEN
             kaydeder (ayni token -> idempotent upsert, dil guncellenir).
             Gonderilmezse `tr`.
+        uygulama_surum:
+          type: string
+          nullable: true
+          maxLength: 64
+          description: >
+            (P238) Cihazdaki uygulama surumu ("1.4.1"). YALNIZ VERI TOPLAMA —
+            bugun HICBIR KARARA girmez. 1.5.0'da "asgari surum yukseltilince
+            eski surumdeki cihazlara tek seferlik bildirim" hedeflemesi bunu
+            okuyacak; alan bugun aciliyor ki 1.4.x istemciler o gun GORUNUR
+            olsun. Gonderilmezse mevcut deger KORUNUR (kimlikle ayni kural).
         cihaz_kimligi:
           type: string
           nullable: true
@@ -15911,6 +15921,11 @@ components:
         fcm_token: { type: string }
         platform: { $ref: "#/components/schemas/DevicePlatform" }
         dil: { type: string, enum: [tr, en, ar, ru, de, fr, es] }
+        cihaz_kimligi: { type: string, nullable: true }
+        uygulama_surum:
+          type: string
+          nullable: true
+          description: "(P238) Teshis: 'bildirim gelmiyor' diyen cihaz hangi surumde."
         aktif: { type: boolean }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }

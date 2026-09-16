@@ -3501,6 +3501,9 @@ class DeviceRegister(BaseModel):
     #: açısından gereksizdir; kurulum kimliği uygulama silinince yok olur).
     #: Verilirse aynı cihazın ESKİ jetonu pasifleştirilir ve kayıt ÇOĞALMAZ.
     cihaz_kimligi: str | None = Field(default=None, max_length=128)
+    #: (P238) Cihazdaki uygulama surumu ("1.4.1"). YALNIZ VERI TOPLAMA —
+    #: bugun hicbir karara girmez. Gonderilmezse mevcut deger KORUNUR.
+    uygulama_surum: str | None = Field(None, max_length=64)
 
 
 class DeviceOut(BaseModel):
@@ -3512,6 +3515,9 @@ class DeviceOut(BaseModel):
     platform: str
     dil: str
     cihaz_kimligi: str | None = None
+    #: (P238) Teshiste ise yarar: "bildirim gelmiyor" diyen cihazin hangi
+    #: surumde oldugunu gormek. `GET /devices` zaten admin-only.
+    uygulama_surum: str | None = None
     aktif: bool
     created_at: datetime
     updated_at: datetime

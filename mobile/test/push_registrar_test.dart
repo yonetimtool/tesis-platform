@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:mobile/src/core/error/api_exception.dart';
 import 'package:mobile/src/features/auth/data/auth_repository_impl.dart';
 import 'package:mobile/src/features/auth/domain/auth_repository.dart';
@@ -77,8 +78,13 @@ class _FakeMessaging implements PushMessaging {
 class _FakeDeviceApi extends DeviceApi {
   _FakeDeviceApi() : super(Dio());
 
-  final registered =
-      <({String token, String platform, String dil, String? cihaz})>[];
+  final registered = <({
+    String token,
+    String platform,
+    String dil,
+    String? cihaz,
+    String? surum,
+  })>[];
   final unregistered = <String>[];
   ApiException? registerError;
   ApiException? unregisterError;
@@ -91,6 +97,8 @@ class _FakeDeviceApi extends DeviceApi {
     // (P191-ek §1) Kararli kurulum kimligi — sunucu ayni cihazin eski
     // jetonlarini pasiflestirmek icin kullanir.
     String? cihazKimligi,
+    // (P238) Cihazdaki uygulama surumu — YALNIZ VERI TOPLAMA.
+    String? uygulamaSurum,
   }) async {
     if (registerError != null) throw registerError!;
     registered.add((
@@ -98,6 +106,7 @@ class _FakeDeviceApi extends DeviceApi {
       platform: platform,
       dil: dil,
       cihaz: cihazKimligi,
+      surum: uygulamaSurum,
     ));
   }
 
@@ -226,12 +235,24 @@ class _BellekDepo extends FlutterSecureStorage {
 }
 
 void main() {
+  // (P238) `PackageInfo` PLATFORM KANALI ister; taklit kurulmazsa
+  // `fromPlatform()` firlatir ve kayit SURUMSUZ gecer — yani asagidaki
+  // surum beklentisi sessizce anlamsizlasirdi.
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   late _FakeMessaging messaging;
   late _FakeDeviceApi api;
   late _MemTokenStore store;
   late _FakeAuthRepository authRepo;
 
   setUp(() {
+    PackageInfo.setMockInitialValues(
+      appName: 'Yonetiyor',
+      packageName: 'com.app.yonetiyor',
+      version: '1.4.1',
+      buildNumber: '14',
+      buildSignature: '',
+    );
     messaging = _FakeMessaging();
     api = _FakeDeviceApi();
     store = _MemTokenStore();
@@ -287,6 +308,13 @@ void main() {
     // (P191-ek §1) KURULUM KIMLIGI DE GIDER: sunucu ayni cihazin eski
     // jetonlarini pasiflestirebilsin diye (18 olu jeton kusurunun onlemi).
     expect(api.registered.single.cihaz, 'test-kurulum-1');
+    // (P238) UYGULAMA SURUMU DE GIDER.
+    //
+    // Bugun sunucuda hicbir karara girmiyor; 1.5.0'daki hedefleme icin
+    // TOPLANIYOR. Bu satirin kirilmasi "1.5.0 geldiginde 1.4.x
+    // istemciler gorunmez" demektir — yani kusur bir tur SONRA,
+    // duzeltilemeyecek bir yerde ortaya cikardi.
+    expect(api.registered.single.surum, '1.4.1');
     expect(store.value, 'tok-1');
 
     final state = container.read(pushRegistrarProvider);

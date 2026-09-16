@@ -2482,6 +2482,15 @@ class UserDevice(Base):
     #: anki ADRESIDIR ve degisince kayit COGALMAMALI, GUNCELLENMELIDIR.
     #: NULLABLE: alani gondermeyen eski surumler sahada calisiyor.
     cihaz_kimligi: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: (P238, goc 0138) Cihazdaki UYGULAMA SURUMU — YALNIZ VERI TOPLAMA.
+    #:
+    #: Bugun hicbir sorguda kullanilmiyor. 1.5.0'da "asgari surum
+    #: yukseltilince eski surumdeki cihazlara tek seferlik bildirim"
+    #: hedeflemesi bunu okuyacak; kolon bugun aciliyor ki 1.4.x
+    #: istemciler o gun GORUNUR olsun (gerekce gocte).
+    #:
+    #: NULLABLE ve kalici olarak oyle: alani gondermeyen surumler sahada.
+    uygulama_surum: Mapped[str | None] = mapped_column(Text, nullable=True)
     aktif: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))
     created_at = _created_at()
     updated_at = _created_at()
