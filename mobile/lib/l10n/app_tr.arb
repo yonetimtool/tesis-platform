@@ -2446,7 +2446,7 @@
   "@surumSimdiGuncelle": {
     "description": "(P202) Onerilen uyarisinda magazaya giden dugme."
   },
-  "surumSonra": "Sonra",
+  "surumSonra": "Daha sonra",
   "@surumSonra": {
     "description": "(P202) Onerilen uyarisini 24 saat susturan dugme."
   },

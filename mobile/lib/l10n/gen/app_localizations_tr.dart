@@ -5254,7 +5254,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get surumSimdiGuncelle => 'Şimdi güncelle';
 
   @override
-  String get surumSonra => 'Sonra';
+  String get surumSonra => 'Daha sonra';
 
   @override
   String get surumMagazaAcilamadi =>

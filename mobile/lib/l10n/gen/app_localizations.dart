@@ -9302,7 +9302,7 @@ abstract class AppLocalizations {
   /// (P202) Onerilen uyarisini 24 saat susturan dugme.
   ///
   /// In tr, this message translates to:
-  /// **'Sonra'**
+  /// **'Daha sonra'**
   String get surumSonra;
 
   /// (P202) Magaza acilamadiginda kullaniciya ne oldugu soylenir.

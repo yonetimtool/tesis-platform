@@ -109,56 +109,94 @@ class ZorunluGuncellemeEkrani extends StatelessWidget {
   }
 }
 
-/// ONERILEN UYARISI — kapatilabilir.
-class OnerilenGuncellemeKarti extends ConsumerWidget {
-  const OnerilenGuncellemeKarti({required this.karar, super.key});
+/// ONERILEN UYARISI — POP-UP, kapatilabilir.
+///
+/// ===========================================================================
+/// NEDEN SERIT DEGIL POP-UP
+/// ===========================================================================
+/// P202'de bu uyari ekranin USTUNDE bir SERITTI. Olcum (P238): serit
+/// icerigi asagi itiyor, bir sure sonra "arayuzun parcasi" gibi gorunuyor
+/// ve okunmadan yasanip gidiyor — yani ONERILEN seviye pratikte hicbir
+/// sey yapmiyordu. Pop-up bir KARAR istiyor: iki dugmeden birine basmadan
+/// gecilmiyor.
+///
+/// ===========================================================================
+/// NEDEN `showDialog` DEGIL, ELDE CIZILEN KATMAN
+/// ===========================================================================
+/// Kapi `MaterialApp.builder` icinde yasiyor; orasi Navigator'in USTUDUR
+/// (Navigator, builder'a `child` olarak gelir). `showDialog` bir Navigator
+/// ATASI ister ve burada YOKTUR. Ayrica rota olarak acmak, zorunlu
+/// ekranin bilerek kacindigi seyi geri getirirdi: derin baglanti ve
+/// yonlendirme rotalari ustunden atlayabilir.
+///
+/// Bu yuzden pop-up bir `Stack` + `ModalBarrier` + `Dialog` olarak ELDE
+/// ciziliyor. Zorunlu ekranla ayni yerde, ayni kurallarla.
+class OnerilenGuncellemePopup extends ConsumerWidget {
+  const OnerilenGuncellemePopup({required this.karar, super.key});
 
   final SurumKarari karar;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final tema = Theme.of(context);
-    return Material(
-      color: tema.colorScheme.surfaceContainerHighest,
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      l10n.surumOnerilenBaslik,
-                      key: const Key('surum-onerilen-baslik'),
-                      style: tema.textTheme.titleSmall,
-                    ),
-                    Text(
-                      karar.mesaj ?? l10n.surumOnerilenMetin,
-                      style: tema.textTheme.bodySmall,
-                    ),
-                  ],
-                ),
+    // PERDEYE DOKUNMAK = "DAHA SONRA".
+    //
+    // Kapatmayi tamamen engellemek (ZORUNLU ekranin kurali) burada
+    // yanlis olurdu: uyari ONERILEN. Ama kapatmayi ERTELEME SAYMAMAK da
+    // yanlis olurdu — perdeye dokunup gecen kullaniciya bir sonraki
+    // acilista ayni pop-up cikardi ve uyari bir engele donusurdu.
+    void sonra() => ref.read(surumDenetleyiciProvider.notifier).sonra();
+
+    return Stack(
+      children: [
+        ModalBarrier(
+          key: const Key('surum-popup-perde'),
+          color: Colors.black54,
+          dismissible: true,
+          onDismiss: sonra,
+        ),
+        Center(
+          child: Dialog(
+            key: const Key('surum-onerilen-popup'),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.surumOnerilenBaslik,
+                    key: const Key('surum-onerilen-baslik'),
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  // SUNUCU METNI VARSA O KAZANIR: politika panelden
+                  // degistirilebiliyor ve "neden guncellemeli" sorusunun
+                  // yaniti surumden surume degisir.
+                  Text(karar.mesaj ?? l10n.surumOnerilenMetin),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        key: const Key('surum-sonra'),
+                        onPressed: sonra,
+                        child: Text(l10n.surumSonra),
+                      ),
+                      const SizedBox(width: 8),
+                      FilledButton(
+                        key: const Key('surum-simdi-guncelle'),
+                        onPressed: () => magazayiAc(context, karar.magazaUrl),
+                        child: Text(l10n.surumSimdiGuncelle),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              TextButton(
-                key: const Key('surum-sonra'),
-                onPressed: () =>
-                    ref.read(surumDenetleyiciProvider.notifier).sonra(),
-                child: Text(l10n.surumSonra),
-              ),
-              FilledButton(
-                key: const Key('surum-simdi-guncelle'),
-                onPressed: () => magazayiAc(context, karar.magazaUrl),
-                child: Text(l10n.surumSimdiGuncelle),
-              ),
-            ],
+            ),
           ),
         ),
-      ),
+      ],
     );
   }
 }
@@ -180,10 +218,18 @@ class SurumKapisi extends ConsumerWidget {
       return ZorunluGuncellemeEkrani(karar: durum.karar);
     }
     if (!durum.onerilenGosterilsin) return child;
-    return Column(
+    // UYGULAMA ALTTA YASAMAYA DEVAM EDER (zorunlu durumun TERSI): uyari
+    // onerilen seviyede; kullanici "Daha sonra" deyince kaldigi yerden
+    // devam etmeli, yeniden kurulan bir ekrana degil.
+    return Stack(
       children: [
-        OnerilenGuncellemeKarti(karar: durum.karar),
-        Expanded(child: child),
+        // ANAHTAR TESTTEN DEGIL OLCUMDEN GELDI: "pop-up icerigi itmiyor"
+        // iddiasi ancak govdenin NEREDE durduguna bakilarak olculebilir.
+        KeyedSubtree(
+          key: const Key('surum-kapi-govde'),
+          child: child,
+        ),
+        OnerilenGuncellemePopup(karar: durum.karar),
       ],
     );
   }

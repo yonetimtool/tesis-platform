@@ -244,6 +244,71 @@ void main() {
     expect(find.byKey(const Key('surum-zorunlu-baslik')), findsOneWidget);
   });
 
+  // ================= 5b) (P238) ONERILEN ARTIK POP-UP ================== //
+
+  testWidgets('ONERILEN uyarisi POP-UP: Dialog cizilir, icerigi ITMEZ',
+      (tester) async {
+    // P202'de bu bir SERITTI ve icerigi asagi itiyordu; olcum, seridin
+    // "arayuzun parcasi" gibi gorunup okunmadan yasanip gittigiydi.
+    await _sur(tester, yanit: {'durum': 'onerilen', 'magaza_url': _MAGAZA});
+
+    expect(find.byKey(const Key('surum-onerilen-popup')), findsOneWidget);
+    expect(find.byType(Dialog), findsOneWidget);
+    expect(find.byKey(const Key('surum-popup-perde')), findsOneWidget);
+
+    // ICERIK EKRANIN TEPESINDEN BASLIYOR: pop-up USTUNE ciziliyor,
+    // asagi ITMIYOR.
+    //
+    // ILK YAZIM ZAYIFTI: "sonra"ya basmadan once/sonra konumu
+    // karsilastiriyordu ve SERIT KIRMA DENEYINDE de gecti — cunku serit
+    // kapaninca icerik zaten yerine oturuyordu. Olculmesi gereken sey
+    // POP-UP ACIKKEN icerigin nerede durdugu.
+    final govde = tester.getRect(find.byKey(const Key('surum-kapi-govde')));
+    expect(tester.getRect(find.text('UYGULAMA ICERIGI')).top,
+        lessThan(govde.top + govde.height / 2),
+        reason: 'icerik asagi itilmis — pop-up degil serit cizilmis olabilir');
+    expect(tester.getTopLeft(find.byKey(const Key('surum-kapi-govde'))),
+        tester.getTopLeft(find.byType(SurumKapisi)),
+        reason: 'govde kapinin TAMAMINI kaplamali (itilmemeli)');
+  });
+
+  testWidgets('IKI DUGME: guncelle ve daha sonra', (tester) async {
+    await _sur(tester, yanit: {'durum': 'onerilen', 'magaza_url': _MAGAZA});
+    final dialog = find.byKey(const Key('surum-onerilen-popup'));
+    expect(
+      find.descendant(of: dialog, matching: find.byType(FilledButton)),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: dialog, matching: find.byType(TextButton)),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('PERDEYE DOKUNMAK "daha sonra" SAYILIR (erteler)',
+      (tester) async {
+    // Perdeyi kapatip ERTELEMEMEK, bir sonraki acilista ayni pop-up'i
+    // cikarirdi ve uyari bir engele donusurdu.
+    final depo = BellekDepo();
+    await _sur(tester, yanit: {'durum': 'onerilen'}, depo: depo);
+    await tester.tapAt(const Offset(5, 5));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('surum-onerilen-popup')), findsNothing);
+
+    await _sur(tester, yanit: {'durum': 'onerilen'}, depo: depo);
+    expect(find.byKey(const Key('surum-onerilen-popup')), findsNothing,
+        reason: 'perdeye dokunmak ERTELEME sayilmali');
+  });
+
+  testWidgets('ZORUNLU durumda POP-UP degil TAM EKRAN cikar',
+      (tester) async {
+    // Iki seviyenin ayrimi korunmali: zorunluda "daha sonra" YOK.
+    await _sur(tester, yanit: {'durum': 'zorunlu', 'magaza_url': _MAGAZA});
+    expect(find.byKey(const Key('surum-onerilen-popup')), findsNothing);
+    expect(find.byKey(const Key('surum-sonra')), findsNothing);
+    expect(find.byKey(const Key('surum-zorunlu-baslik')), findsOneWidget);
+  });
+
   testWidgets('BOZUK erteleme kaydi uyariyi SUSTURMAZ', (tester) async {
     final depo = BellekDepo({'surum.onerilen_ertelendi': 'bozuk-tarih'});
     await _sur(tester, yanit: {'durum': 'onerilen'}, depo: depo);
