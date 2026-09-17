@@ -7,16 +7,16 @@
   35,  94  222x11  GÜVENLİK & DANIŞMANLIK
   72,  16  368x30  Merhaba, Kerem
  105,  16  214x20  Yönetici Paneli
- 172,  47  19x19  U+E3A2
  172, 139  19x19  U+EE9B
  172, 232  19x19  U+EFAE
+ 177,  47  19x19  U+E3A2
  177, 324  19x19  U+E1D7
- 207,  22  69x20  Vardiyalar
  207, 115  69x20  Görev Yönetimi
  207, 207  69x20  Finansal özet
+ 212,  22  69x10  Vardiyalar
  212, 305  58x10  Otopark
+ 225,  27  58x11  0 Aktif
  225, 305  58x11  3 / 120
- 230,  27  58x11  0 Aktif
  230, 145  8x11  —
  230, 212  58x11  4 Daire
  299, 139  19x19  U+F1D6

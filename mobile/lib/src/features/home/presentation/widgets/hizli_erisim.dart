@@ -2,6 +2,7 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/i18n/l10n.dart';
+import '../../../../core/ui/kelime_bolunmez.dart';
 import '../../../../core/theme/home_tokens.dart';
 import '../../domain/home_kart_id.dart';
 import '../../domain/home_view_models.dart';
@@ -73,14 +74,48 @@ class HizliErisimKarti extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Flexible(
-            child: AutoSizeText(
-              kart.baslik(l10n),
-              group: baslikGrubu,
-              maxLines: 2,
-              minFontSize: 8,
-              textAlign: TextAlign.center,
-              overflow: TextOverflow.ellipsis,
-              style: HomeText.cardTitle.copyWith(color: s.heading),
+            // (P239 §1) PUNTO EN UZUN KELIMEYE GORE SECILIR.
+            //
+            // `AutoSizeText` puntoyu METNIN TAMAMI iki satira sigsin diye
+            // secer; bir kelime satira sigmayinca Flutter onu ICINDEN
+            // boler ve metin yine "sigmis" olur — AutoSizeText'e gore
+            // sorun yoktur. Kusur ("Görüntülem / e İzni") tam buydu.
+            //
+            // Tavan burada BASTIRILIR: en uzun bolunmez parca satira
+            // sigacak sekilde. AutoSizeText bundan yalnizca DAHA KUCUGE
+            // inebilir, kucukte de kelime bolunmez. Grup (`baslikGrubu`)
+            // KORUNUR — kartlarin ortak puntosu ve titremesizlik
+            // (home_kart_titremesi_test) bozulmaz.
+            child: LayoutBuilder(
+              builder: (context, bc) {
+                final baslik = kart.baslik(l10n);
+                final punto = kartBaslikPuntosu(
+                  baslik,
+                  bc.maxWidth,
+                  olcek: MediaQuery.textScalerOf(context),
+                );
+                // (c) EN KUCUK PUNTODA BILE SIGMIYOR: iki satira BOLMEK
+                // yerine TEK satirda sondan kes. Uc nokta kelimeyi kirpar
+                // ama SATIR SONU kelime ortasina DUSMEZ.
+                final sigdi = punto != null;
+                return Tooltip(
+                  // (d) TAM METIN uzun basmada ve ekran okuyucuda.
+                  message: baslik,
+                  child: AutoSizeText(
+                    baslik,
+                    group: baslikGrubu,
+                    maxLines: sigdi ? 2 : 1,
+                    minFontSize: kKartBaslikEnKucuk,
+                    textAlign: TextAlign.center,
+                    overflow: TextOverflow.ellipsis,
+                    semanticsLabel: baslik,
+                    style: HomeText.cardTitle.copyWith(
+                      color: s.heading,
+                      fontSize: punto ?? kKartBaslikEnKucuk,
+                    ),
+                  ),
+                );
+              },
             ),
           ),
           const SizedBox(height: 3),
