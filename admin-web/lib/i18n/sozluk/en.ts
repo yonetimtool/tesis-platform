@@ -1601,7 +1601,6 @@ export const en: Sozluk = {
   daireNoKisa: "No.",
   daireYok: "No units",
   daireBinaDuzenlemeGit: "Building editor",
-  daireBosDurumEylem: "Add units from the building editor",
   kullaniciArama: "Search (name / email)",
   kullaniciAramaIpucu: "name or email",
   kullaniciEpostaOpsiyonel: "Email (optional)",

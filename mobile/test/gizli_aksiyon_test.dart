@@ -9,6 +9,13 @@
 ///   1. MENUDE ETIKETLI GIRIS — modul bulunabilir olur.
 ///   2. BOS DURUMDA CAGRI DUGMESI — liste yokken goz ekranin ortasindadir,
 ///      dibindeki FAB'de degil.
+///      -> (P239 §6) BU MADDE GERI ALINDI. Olcum: ekranda ZATEN etiketli
+///      bir `FloatingActionButton.extended` vardi, yani ayni eylem IKI
+///      yerde duruyordu; liste dolunca ortadaki kayboluyor ve kullanici
+///      "dugme nereye gitti" diye ariyordu (Kerem'in devriye planlari
+///      bildirimi). P166'nin ASIL derdi "tek giris ETIKETSIZ ikon
+///      olmasin"di; genisletilmis FAB etiketli oldugu icin o dert
+///      KARSILANIYOR. Aciklama metni KALIR.
 ///   3. ETIKETLI DUGME — ikon kalirsa yaninda adi yazar.
 ///
 /// NEDEN "ikonu buyut" DEGIL: bir ikon adini ancak UZUN BASINCA soyler
@@ -77,8 +84,8 @@ void main() {
     });
   });
 
-  group('(P166 §10) BOS DURUMDA CAGRI DUGMESI', () {
-    testWidgets('KONTROL NOKTASI: bos listede "Ekle" dugmesi CIZILIR', (
+  group('(P239 §6) BOS DURUMDA IKINCI DUGME YOK', () {
+    testWidgets('KONTROL NOKTASI: bos listede TEK giris — ETIKETLI FAB', (
       tester,
     ) async {
       await tester.pumpWidget(
@@ -90,13 +97,19 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(BosDurum), findsOneWidget);
-      // Cagri dugmesi: ekranin ORTASINDA, dibindeki FAB'den AYRI.
+      // ORTADAKI dugme YOK...
       expect(
         find.widgetWithText(FilledButton, 'Nokta ekle'),
-        findsOneWidget,
-        reason: 'bos durumda cagri dugmesi',
+        findsNothing,
+        reason: 'bos durumda ikinci cagri dugmesi',
       );
-      // Aciklama da var: bos liste karsisindaki kullanici cogu zaman
+      // ...ama eylem KAYBOLMADI: FAB duruyor ve ADI YAZIYOR. Etiketsiz
+      // bir ikon olsaydi P166 §10'un kusuru geri gelirdi.
+      expect(
+        find.widgetWithText(FloatingActionButton, 'Nokta ekle'),
+        findsOneWidget,
+      );
+      // Aciklama KALIR: bos liste karsisindaki kullanici cogu zaman
       // ozelligin NE OLDUGUNU da bilmiyor.
       expect(find.textContaining('NFC'), findsOneWidget);
     });

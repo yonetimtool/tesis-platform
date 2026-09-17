@@ -254,8 +254,12 @@ void main() {
     expect(find.text('No checkpoints yet.'), findsOneWidget);
     // Aciklama satiri ozelligin NE OLDUGUNU anlatir (yerini degil).
     expect(find.textContaining('NFC tags'), findsOneWidget);
-    // Ve cagri dugmesi CIZILIR — bos ekranin tek cikisi budur.
-    expect(find.widgetWithText(FilledButton, 'Add checkpoint'), findsOneWidget);
+    // (P239 §6) CAGRI DUGMESI BOS DURUMDAN KALDIRILDI; giris FAB'dir.
+    // FAB `extended` ve ETIKETLI oldugu icin P166 §10'un asil derdi
+    // ("eylemin tek girisi ETIKETSIZ bir ikon olmasin") KARSILANIYOR.
+    expect(find.widgetWithText(FilledButton, 'Add checkpoint'), findsNothing);
+    expect(find.widgetWithText(FloatingActionButton, 'Add checkpoint'),
+        findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

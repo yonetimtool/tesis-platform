@@ -48,13 +48,17 @@ class StaffScreen extends ConsumerWidget {
         data: (list) => list.isEmpty
             // (P166 §10) Bos durumda cagri dugmesi: liste yokken goz
             // ekranin ortasindadir, ekranin dibindeki FAB'de degil.
+                // (P239 §6) BOS DURUMDA CAGRI DUGMESI KALDIRILDI.
+                //
+                // FAB zaten sag altta duruyor ve liste dolunca da orada
+                // kaliyor. Ikisi birlikteyken kullanici AYNI eylemi iki
+                // yerde goruyor; liste dolunca ortadaki kayboluyor ve
+                // "dugme nereye gitti" sorusu doguyor. Aciklama metni
+                // KALIR — ne oldugunu ve nereden ekleneceğini soyler.
             ? BosDurum(
                 ikon: Icons.groups_outlined,
                 baslik: l10n.personelYok,
                 aciklama: l10n.personelYokAlt,
-                eylemEtiketi: l10n.personelEkle,
-                eylemIkonu: Icons.person_add_alt_1,
-                onEylem: () => _openAddSheet(context, ref),
               )
             : RefreshIndicator(
                 onRefresh: () async => ref.invalidate(fieldStaffProvider),

@@ -1663,7 +1663,6 @@ export const tr = {
   daireNoKisa: "No",
   daireYok: "Daire yok",
   daireBinaDuzenlemeGit: "Bina düzenleme",
-  daireBosDurumEylem: "Daireleri bina düzenlemeden ekleyin",
   kullaniciArama: "Arama (ad / email)",
   kullaniciAramaIpucu: "ad veya email",
   kullaniciEpostaOpsiyonel: "E-posta (opsiyonel)",

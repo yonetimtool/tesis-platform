@@ -1601,7 +1601,6 @@ export const de: Sozluk = {
   daireNoKisa: "Nr.",
   daireYok: "Keine Einheiten",
   daireBinaDuzenlemeGit: "Gebäudeeditor",
-  daireBosDurumEylem: "Wohnungen im Gebäudeeditor anlegen",
   kullaniciArama: "Suche (Name / E-Mail)",
   kullaniciAramaIpucu: "Name oder E-Mail",
   kullaniciEpostaOpsiyonel: "E-Mail (optional)",

@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import useSWR from "swr";
 
@@ -508,6 +507,13 @@ export default function UnitsPage() {
           toplu islem seridi ve SAYFA BASINA KAYIT SECIMI artik ilkelden
           geliyor; sayfa bunlari kendi yazmiyor. Aralik ifadesi ve toplu
           islem DUGMELERI korundu — onlar bu sayfaya ozel. */}
+      {/* (P239 §6) BOS DURUMDAKI IKINCI GIRIS KALDIRILDI.
+
+          Basliktaki bina-duzenleme dugmesi AYNI yere goturuyor ve
+          liste dolunca da orada kaliyor. Ikisi birlikteyken kullanici
+          ayni eylemi iki yerde ogreniyor, sonra ortadaki kayboluyor.
+          ACIKLAMA METNI KALIR (`bosAciklama`) — ne yapilacagini
+          soyleyen o. Mobildeki karsiligi: FAB kalir, ortadaki gider. */}
       <VeriTablosu<Unit>
         kolonlar={kolonlar}
         satirlar={data?.items ?? []}
@@ -516,15 +522,6 @@ export default function UnitsPage() {
         onTekrar={() => void mutate()}
         yukleniyor={isLoading && !data}
         bosBaslik={t("daireYok")}
-        bosEylem={
-          <Link
-            href="/building-editor"
-            className="odak-ic rounded-btn px-3 py-1.5 text-satiralt underline"
-            style={{ color: "var(--yz-accent-ink)" }}
-          >
-            {t("daireBosDurumEylem")}
-          </Link>
-        }
         bosAciklama={t("daireYokAlt")}
         secilebilir
         secili={secili}

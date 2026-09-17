@@ -122,8 +122,10 @@ void main() {
   testWidgets('PERSONEL EKLEME govdesinde E-POSTA VAR (422 kusuru)',
       (tester) async {
     final tel = await _sur(tester, const StaffScreen());
-    // Bos listede cagri dugmesi ekranin ORTASINDA (P166 §10).
-    await tester.tap(find.byType(FilledButton).first);
+    // (P239 §6) EKLEME GIRISI ARTIK YALNIZ FAB. Bos durumdaki ikinci
+    // dugme kaldirildi: liste dolunca kayboluyor ve kullanici ayni
+    // eylemi iki ayri yerde ogrenmek zorunda kaliyordu.
+    await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
 
     await tester.enterText(find.byType(TextFormField).at(0), 'Yeni Gorevli');
@@ -144,7 +146,7 @@ void main() {
   testWidgets('E-POSTA BOSSA ISTEK ATILMAZ (sunucudan 422 beklenmez)',
       (tester) async {
     final tel = await _sur(tester, const StaffScreen());
-    await tester.tap(find.byType(FilledButton).first);
+    await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextFormField).at(0), 'Yeni Gorevli');
     await _ulkeyiTRSec(tester);

@@ -137,13 +137,17 @@ class _ResidentsScreenState extends ConsumerState<ResidentsScreen> {
                           ),
                         )
                       // (P166 §10) Bos durumda cagri dugmesi — bkz. personel.
+                // (P239 §6) BOS DURUMDA CAGRI DUGMESI KALDIRILDI.
+                //
+                // FAB zaten sag altta duruyor ve liste dolunca da orada
+                // kaliyor. Ikisi birlikteyken kullanici AYNI eylemi iki
+                // yerde goruyor; liste dolunca ortadaki kayboluyor ve
+                // "dugme nereye gitti" sorusu doguyor. Aciklama metni
+                // KALIR — ne oldugunu ve nereden ekleneceğini soyler.
                       : BosDurum(
                           ikon: Icons.home_outlined,
                           baslik: l10n.sakinYok,
                           aciklama: l10n.sakinYokAlt,
-                          eylemEtiketi: l10n.sakinEkle,
-                          eylemIkonu: Icons.person_add_alt_1,
-                          onEylem: () => _openAddSheet(context, ref),
                         ))
                   : RefreshIndicator(
                       onRefresh: () async => ref.invalidate(residentsProvider),

@@ -1601,7 +1601,6 @@ export const ar: Sozluk = {
   daireNoKisa: "رقم",
   daireYok: "لا توجد وحدات",
   daireBinaDuzenlemeGit: "محرر المبنى",
-  daireBosDurumEylem: "أضف الشقق من محرر المبنى",
   kullaniciArama: "بحث (الاسم / البريد)",
   kullaniciAramaIpucu: "الاسم أو البريد",
   kullaniciEpostaOpsiyonel: "البريد الإلكتروني (اختياري)",

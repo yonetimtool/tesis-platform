@@ -47,12 +47,17 @@ class PatrolPlansScreen extends ConsumerWidget {
         ),
         data: (list) => list.isEmpty
             // (P166 §10) Bos durumda cagri dugmesi — bkz. checkpoints.
+                // (P239 §6) BOS DURUMDA CAGRI DUGMESI KALDIRILDI.
+                //
+                // FAB zaten sag altta duruyor ve liste dolunca da orada
+                // kaliyor. Ikisi birlikteyken kullanici AYNI eylemi iki
+                // yerde goruyor; liste dolunca ortadaki kayboluyor ve
+                // "dugme nereye gitti" sorusu doguyor. Aciklama metni
+                // KALIR — ne oldugunu ve nereden ekleneceğini soyler.
             ? BosDurum(
                 ikon: Icons.route_outlined,
                 baslik: l10n.devriyePlanYokBos,
                 aciklama: l10n.devriyePlanYokAlt,
-                eylemEtiketi: l10n.devriyePlanEkle,
-                onEylem: () => _openForm(context, ref),
               )
             : RefreshIndicator(
                 onRefresh: () async => ref.invalidate(patrolPlansProvider),

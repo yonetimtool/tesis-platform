@@ -1601,7 +1601,6 @@ export const ru: Sozluk = {
   daireNoKisa: "№",
   daireYok: "Квартир нет",
   daireBinaDuzenlemeGit: "Редактор здания",
-  daireBosDurumEylem: "Добавьте квартиры в редакторе здания",
   kullaniciArama: "Поиск (имя / эл. почта)",
   kullaniciAramaIpucu: "имя или эл. почта",
   kullaniciEpostaOpsiyonel: "Эл. почта (необязательно)",

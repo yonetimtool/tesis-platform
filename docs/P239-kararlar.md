@@ -77,3 +77,70 @@ gerçekten olduğundan çok daha dar; cihazda bu ad rahat sığar.
 Gerçek cihazda ekran okuyucunun tam metni okuduğu ve uzun basma
 ipucunun göründüğü sürülmedi (emülatör yok); ikisi de widget
 seviyesinde bağlandı.
+
+---
+
+## §6 — Devriye planlarında ÇİFT "Plan ekle" düğmesi
+
+**Kullanıcı bildirimi:** "Ortadaki düğmeyi KALDIR. Sağ alttaki her zaman
+kalsın. Boş durumda açıklama metni kalsın… ama düğme olmasın. Aynı kalıbı
+başka ekranlarda da tara."
+
+### ÖLÇÜM: kusur devriyeden fazlasındaydı
+
+`floatingActionButton` **ve** `BosDurum(... onEylem ...)` birlikte olan
+ekranları taradım. Kullanıcı birini bildirdi; **dört** tane çıktı:
+
+| Ekran | Satır |
+|---|---|
+| `residents_screen.dart` | 140 |
+| `patrol_plans_screen.dart` | 50 |
+| `staff_screen.dart` | 51 |
+| `checkpoints_screen.dart` | 51 |
+
+Dördünde de FAB `FloatingActionButton.extended` — yani **etiketli**.
+
+### KARAR: ortadaki gider, FAB kalır, açıklama kalır
+
+Gerekçe: liste dolunca ortadaki kayboluyor, sağ alttaki kalıyor.
+Kullanıcı aynı eylemi önce iki yerde görüyor, sonra "düğme nereye gitti"
+diye arıyor. Açıklama metni **kalır** — boş liste karşısındaki kullanıcı
+çoğu zaman özelliğin ne olduğunu da bilmiyor; kaldırılan yalnız düğme.
+
+### P166 §10 GERİ ALINDI — ve neden bu bir çelişki değil
+
+P166 §10 tam tersini yazmıştı: "boş durumda çağrı düğmesi — liste yokken
+göz ekranın ortasındadır, dibindeki FAB'de değil". O kararın **asıl**
+derdi şuydu: *"bir eylemin TEK girişi etiketsiz bir ikon olmamalı."*
+Ölçüm: bu dört ekranda FAB zaten `extended` ve **adını yazıyor**, yani
+P166'nın derdi FAB tarafından karşılanıyor. Ortadaki düğme o yüzden
+fazlalıktı. Kilidin başlığı ve gerekçesi bu ölçümle birlikte
+`gizli_aksiyon_test.dart` içinde yeniden yazıldı — silinmedi: yeni sürüm
+artık "ortadaki YOK **ve** FAB etiketli VAR" ikilisini birlikte ölçüyor,
+böylece geri alma FAB'in etiketini düşürmeye bahane olamaz.
+
+### WEB TARAMASI (parite)
+
+Web'de **FAB yok** — ekleme düğmesi sayfa başlığında ve liste dolunca da
+orada duruyor, yani üst üste binen bir ikilik yok. Aynı *sınıf*tan tek
+bulgu `units/page.tsx`: boş durumdaki "Daireleri bina düzenlemeden
+ekleyin" bağlantısı, başlıktaki "Bina düzenleme" düğmesiyle **aynı yere**
+gidiyordu ve liste dolunca kayboluyordu. Kaldırıldı; açıklama metni
+(`daireYokAlt`) kaldı. Artık kullanılmayan `daireBosDurumEylem` anahtarı
+7 sözlükten de silindi.
+
+### KİLİT
+
+`mobile/test/p239_cift_dugme_test.dart` — kaynak taraması: FAB taşıyan
+hiçbir ekranda `BosDurum(... onEylem ...)` olmasın. Dedektörün kendisi de
+üç örnekle sınanıyor (yakalar / FAB yokken serbest bırakır / düğmesiz boş
+durumu temiz sayar), yoksa "hiç ihlal yok" sonucu taramanın **çalıştığını**
+değil yalnızca bir şey bulmadığını gösterirdi.
+
+**Kilidin yakaladıkları (koşumda kırmızıya dönen ÜÇ eski test):**
+`gizli_aksiyon_test` (yukarıda), `aidat_nokta_kuyruk_i18n_test` (boş
+liste metni testi düğmeyi de ölçüyordu) ve `p206_mobil_sayac_personel_test`
+(formu **boş durum düğmesine basarak** açıyordu → FAB'e çevrildi).
+Üçü de gerçek bağımlılıktı; sessizce geçselerdi değişiklik eksik kalırdı.
+
+---

@@ -48,13 +48,17 @@ class CheckpointsScreen extends ConsumerWidget {
             // "nokta yok" yaziyordu ve kullanici orada kaliyordu; ekleme
             // yolu ekranin dibindeki FAB'diydi ve bos ekranda goz oraya
             // gitmiyor.
+                // (P239 §6) BOS DURUMDA CAGRI DUGMESI KALDIRILDI.
+                //
+                // FAB zaten sag altta duruyor ve liste dolunca da orada
+                // kaliyor. Ikisi birlikteyken kullanici AYNI eylemi iki
+                // yerde goruyor; liste dolunca ortadaki kayboluyor ve
+                // "dugme nereye gitti" sorusu doguyor. Aciklama metni
+                // KALIR — ne oldugunu ve nereden ekleneceğini soyler.
             ? BosDurum(
                 ikon: Icons.location_off_outlined,
                 baslik: l10n.noktaYok,
                 aciklama: l10n.noktaYokAlt,
-                eylemEtiketi: l10n.noktaEkle,
-                eylemIkonu: Icons.add_location_alt_outlined,
-                onEylem: () => _openForm(context, ref),
               )
             : RefreshIndicator(
                 onRefresh: () async => ref.invalidate(checkpointsProvider),
