@@ -223,11 +223,38 @@ export function SablonBolumu({ personel }: { personel: Personel[] }) {
       <div className="flex flex-wrap items-end justify-between gap-3">
         {/* (P232 §A) ARTIK SAYFA BASLIGI DEGIL, BOLUM BASLIGI: `h1`
             sayfada tektir ve o `/vardiya-plani`nin basligidir. */}
-        <h2 style={{ fontSize: "var(--yz-fs-h2)", color: "var(--yz-text)" }}>
-          {t("vardiyaSablonlari")}
-        </h2>
-        <Dugme tur="birincil" boy="kucuk" onClick={openNew}>
-          {t("vardiyaYeni")}
+        {/* (P239 §2) BASLIK + ACIKLAMA, ve dugme ARTIK "Yeni sablon".
+
+            OLCULEN KUSUR: bu dugme ile sayfanin ustundeki "Vardiya
+            ekle" dugmesi AYNI sozluk anahtarini (`vardiyaYeni`)
+            kullaniyordu — ekranda iki ayri yerde AYNI YAZI vardi ve
+            FARKLI modallar aciyorlardi. Kullanici sablon modalini
+            "vardiya olusturma" sanip takvim/kisi ariyordu.
+
+            Sablon bir TANIM (ad + saat + gun tipi); cizelgeye kisi
+            eklemek ustteki birlesik modaldan (takvim -> kisi -> onizleme,
+            P235 §1) yapilir. Aciklama satiri bunu SOYLER — dugme adini
+            degistirmek tek basina "peki bu ne zaman kullanilir"
+            sorusunu yanitlamazdi. */}
+        <div>
+          <h2 style={{ fontSize: "var(--yz-fs-h2)", color: "var(--yz-text)" }}>
+            {t("vardiyaSablonlari")}
+          </h2>
+          <p
+            data-test="vardiya-sablon-aciklama"
+            className="mt-1"
+            style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}
+          >
+            {t("vardiyaSablonAciklama", { dugme: t("vardiyaYeni") })}
+          </p>
+        </div>
+        <Dugme
+          tur="birincil"
+          boy="kucuk"
+          data-test="vardiya-sablon-yeni"
+          onClick={openNew}
+        >
+          {t("vardiyaSablonYeni")}
         </Dugme>
       </div>
 
@@ -297,7 +324,7 @@ export function SablonBolumu({ personel }: { personel: Personel[] }) {
       <Modal
         acik={open}
         onKapat={() => setOpen(false)}
-        baslik={editingId ? t("vardiyaDuzenle") : t("vardiyaYeni")}
+        baslik={editingId ? t("vardiyaSablonDuzenle") : t("vardiyaSablonYeni")}
         eylemler={
           <>
             <Dugme tur="sessiz" onClick={() => setOpen(false)} disabled={saving}>

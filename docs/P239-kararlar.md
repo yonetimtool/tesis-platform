@@ -360,3 +360,74 @@ hiç açılmamış; plan bir `shift`e bağlanır ve kimin yürüyeceği o vardiy
 kadrosundan gelir. Bunu "kişiye ata"ya çevirmek bir tasarım kararıdır
 (kadro mu kişi mi öncelikli, ikisi birden olursa hangisi kazanır) ve
 göç gerektirir. **Bu turda yapılmadı** — kendi turunu hak ediyor.
+
+---
+
+## §2 — Web'de vardiya oluşturma: kök neden AYNI ETİKETTİ
+
+**İstek:** "Web'de vardiya ekleme penceresi mobildeki gibi olsun —
+oluştururken takvimden gün ve kişi seçilsin; atamadan sonra çizelge
+tazelensin."
+
+### ÖLÇÜM: istenen özellik ZATEN VARDI
+
+`admin-web/components/vardiya/vardiya-ekle-modali.tsx` (P235 §1) tam da
+bu: **takvim → kişi/saat → gruba ekle → önizleme**, mobildeki akışın
+aynısı. Atama sonrası çizelge de tazeleniyor (`onBitti → mutate()`).
+
+Kusur başka yerdeydi ve ölçünce net çıktı: **sayfadaki iki ayrı düğme
+aynı sözlük anahtarını kullanıyordu** — `t("vardiyaYeni")` = "Yeni
+vardiya".
+
+| Düğme | Açtığı şey |
+|---|---|
+| Üst araç çubuğu (`vardiya-yeni`) | birleşik modal: takvim + kişi |
+| Şablonlar bölümü | **şablon** formu: ad + saat + gün tipi |
+
+Şablon modalının başlığı da `vardiyaYeni`ydi. Yani ekranda iki yerde
+**birebir aynı yazı** vardı ve farklı şeyler açıyorlardı; ekran
+görüntüsündeki pencere ikincisiydi. Kullanıcının "takvim nerede,
+kişi nerede" sorması bu yüzden doğruydu — yanlış pencereye bakıyordu,
+çünkü pencerenin adı diğeriyle aynıydı.
+
+### KARAR
+
+- Şablon bölümünün düğmesi ve modal başlığı ayrıldı:
+  `vardiyaSablonYeni` / `vardiyaSablonDuzenle` (7 dil).
+- Bölüme **açıklama satırı**: "Şablon bir vardiya tanımıdır (ad + saat +
+  gün tipi). Çizelgeye kişi eklemek için yukarıdaki '…' düğmesini
+  kullanın." Düğme adını değiştirmek tek başına "peki bu ne zaman
+  kullanılır" sorusunu yanıtlamazdı.
+- Açıklamadaki düğme adı **sözlükte sabitlenmedi**, `{dugme}`
+  parametresiyle üstteki düğmenin kendi etiketinden geliyor — etiket
+  değişirse açıklama onunla değişsin diye.
+- `gun_tipi` alanı **silinmedi**: sunucu onu doğruluyor
+  (`vardiya_plani.py:128`, `scheduler/service.py` `_gun_uyar`), yani
+  şablonun gerçek bir işlevi var.
+
+### KİLİT
+
+`admin-web/tests/p239-vardiya-sablon-ayrimi.dom.test.ts` — iki düğme
+aynı yazıyı taşımaz (hem sözlük hem DOM düzeyinde), şablon bölümü ne
+olduğunu ve nereden vardiya ekleneceğini söyler, üstteki düğme
+**takvim + kişi taşıyan** modalı açar, atamadan sonra çizelge yeniden
+çekilir.
+
+**Testin kendi zayıflığı düzeltildi:** ilk yazımda personel listesi boştu
+→ gönderim düğmesi kapalı kalıyor ve test "tazeleme" iddiasını **hiç
+ölçmeden** yeşil görünüyordu. Sahte listeye gerçek bir personel konuldu;
+artık önce POST'un atıldığı, sonra çizelgenin yeniden çekildiği ölçülüyor.
+
+**KIRMA:** (1) `onBitti`'deki `mutate()` kaldırıldı, (2) şablon düğmesi
+yeniden `vardiyaYeni` yapıldı → iki test kırmızı. Geri alındı.
+
+**Kilidin yakaladığı:** `yz-tasima-bildirim-vardiya.dom` iki testi
+şablon formunu "Yeni vardiya" düğmesiyle açıyordu → kırmızıya döndü.
+Gerçek bağımlılıktı; yeni etikete çevrildi.
+
+### MOBİLDE AYNI KUSUR YOK
+
+Mobilde şablon ekranı (`vardiyalar_screen`) salt-okuma + personel atama;
+kendi metinleri ayrı (`vardiyaBaslik`, `vardiyaTanimYok`,
+`vardiyaPersonelAta`) ve şablon **oluşturma** mobilde hiç yok. Etiket
+çakışması web'e özgüydü; parite açısından eklenecek bir şey çıkmadı.

@@ -174,7 +174,11 @@ describe("(P160) Vardiyalar — tasima sonrasi", () => {
   it("form MODALDA acilir", async () => {
     sahte([VARDIYA]);
     ciz(() => SablonBolumu({ personel: [] }));
-    await userEvent.click(await screen.findByRole("button", { name: "Yeni vardiya" }));
+    // (P239 §2) DUGME ADI AYRILDI: "Yeni vardiya" sayfanin USTUNDEKI
+    // birlesik modali (takvim + kisi) aciyor; bu bolum SABLON tanimlar.
+    // Iki yerde ayni yazi olmasi kullaniciyi yanlis pencereye
+    // gonderiyordu.
+    await userEvent.click(await screen.findByRole("button", { name: "Yeni şablon" }));
     const modal = await screen.findByRole("dialog");
     expect(within(modal).getByRole("button", { name: "Kaydet" })).toBeInTheDocument();
   });
@@ -182,7 +186,11 @@ describe("(P160) Vardiyalar — tasima sonrasi", () => {
   it("GECE VARDIYASI uyarisi baslangic > bitis iken cikar (korundu)", async () => {
     sahte([VARDIYA]);
     ciz(() => SablonBolumu({ personel: [] }));
-    await userEvent.click(await screen.findByRole("button", { name: "Yeni vardiya" }));
+    // (P239 §2) DUGME ADI AYRILDI: "Yeni vardiya" sayfanin USTUNDEKI
+    // birlesik modali (takvim + kisi) aciyor; bu bolum SABLON tanimlar.
+    // Iki yerde ayni yazi olmasi kullaniciyi yanlis pencereye
+    // gonderiyordu.
+    await userEvent.click(await screen.findByRole("button", { name: "Yeni şablon" }));
     const modal = await screen.findByRole("dialog");
 
     // Once uyari YOK.
