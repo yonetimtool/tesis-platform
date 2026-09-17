@@ -14,6 +14,7 @@ import { useToast } from "@/components/Toast";
 import { useBant } from "@/lib/kirilma-kullan";
 import {
   IskeletMetin,
+  AyTakvimi,
   BosDurum,
   Alan,
   AlanSarmal,
@@ -77,6 +78,20 @@ type Gorunum = "liste" | "kanban" | "takvim";
 const GORUNUM_LISTE = "liste" as const;
 const GORUNUM_KANBAN = "kanban" as const;
 const GORUNUM_TAKVIM = "takvim" as const;
+
+/** (P240 §5c) Saat verilmezse GUN SONU. Bkz. formdaki gerekce. */
+const SON_TARIH_VARSAYILAN_SAAT = "23:59";
+/** Yeniden olusturulmayan bos kume — her cizimde yeni `Set` uretmemek icin. */
+const BOS_KUME: ReadonlySet<string> = new Set<string>();
+/** JSX ucluda sabit dize yazilamaz (depo kurali `sabit-metin`). */
+const IKINCIL = "ikincil" as const;
+
+/** `YYYY-MM` + n ay. */
+function ayEkle(ay: string, n: number): string {
+  const [y, m] = ay.split("-").map(Number);
+  const d = new Date(Date.UTC(y, m - 1 + n, 1));
+  return d.toISOString().slice(0, 7);
+}
 
 function toIso(local: string): string | null {
   if (!local) return null;
@@ -208,6 +223,13 @@ export default function TasksPage() {
 
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  /**
+   * (P240 §5c) Takvimde GORUNEN ay. Formdaki degerden TURETILMEZ, ayri
+   * durumdur: kullanici ileri/geri gezinirken secim degismemeli.
+   */
+  const [sonTarihAyi, setSonTarihAyi] = useState(() =>
+    new Date().toISOString().slice(0, 7),
+  );
   const [form, setForm] = useState<FormState>(EMPTY);
   const [formErr, setFormErr] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -248,6 +270,9 @@ export default function TasksPage() {
   function openNew() {
     setEditingId(null);
     setForm(EMPTY);
+    // (P240 §5c) Takvim BU AYA doner: onceki duzenlemeden kalan ay,
+    // yeni gorevde "neden ekim goruyorum" sorusunu dogururdu.
+    setSonTarihAyi(new Date().toISOString().slice(0, 7));
     setFormErr(null);
     setOpen(true);
   }
@@ -270,7 +295,18 @@ export default function TasksPage() {
     });
     setFormErr(null);
     setOpen(true);
+    // (P240 §5c) TAKVIM GOREVIN AYINA ATLAR. Atlamazsa, son tarihi
+    // baska bir ayda olan gorevde takvim BOS gorunur ve kullanici
+    // "tarih silinmis" sanir.
+    const yerel = isoToLocalInput(t.son_tarih);
+    if (yerel) setSonTarihAyi(yerel.slice(0, 7));
   }
+
+  // (P240 §5c) `son_tarih` formda `YYYY-MM-DDTHH:MM` tutulur (yerel
+  // girdi bicimi, sunucuya `toIso` ile gider). Takvim GUNU, saat alani
+  // SAATI okur.
+  const sonTarihGunu = form.son_tarih ? form.son_tarih.slice(0, 10) : "";
+  const sonTarihSaati = form.son_tarih ? form.son_tarih.slice(11, 16) : "";
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
@@ -648,13 +684,97 @@ export default function TasksPage() {
                 onChange={(e) => setForm({ ...form, periyot_dakika: e.target.value })} />
   )}
 </AlanSarmal>
-            <AlanSarmal etiket={t("gorevSonTarihOpsiyonel")} ipucu={t("gorevSonTarihIpucu")}>
-  {(b) => (
-    <Alan {...b} type="datetime-local" data-test="gorev-son-tarih"
-                value={form.son_tarih}
-                onChange={(e) => setForm({ ...form, son_tarih: e.target.value })} />
-  )}
-</AlanSarmal>
+            {/* (P240 §5c) SON TARIH ARTIK TAKVIMDEN.
+
+                ESKIDEN `<input type="datetime-local">` idi: tarayicinin
+                kendi takvimi, yani her tarayicida BASKA bir goruntu ve
+                mobildeki ay izgarasiyla hicbir benzerlik yok. Ortak
+                `AyTakvimi` ikisini esitliyor.
+
+                GUN + SAAT AYRI: gun takvimden, saat yaninda. Gun tek
+                basina yetmez — "12 Ekim'de bitsin" diyen kullanici gun
+                ICINDE bir an kastediyor ve 00:00 almak o ani bir gun
+                ONE ceker (P239 §4'te olculen kural). Saat bos
+                birakilirsa GUN SONU (23:59) kabul edilir; "tarih
+                verdim ama saat vermedim" -> "o gunun sonuna kadar"
+                demektir, gun basi DEMEK DEGILDIR. */}
+            <div className="sm:col-span-2 lg:col-span-3">
+              <AlanSarmal
+                etiket={t("gorevSonTarihOpsiyonel")}
+                ipucu={t("gorevSonTarihIpucu")}
+              >
+                {() => (
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Dugme
+                        type="button"
+                        boy="kucuk"
+                        tur={IKINCIL}
+                        data-test="gorev-son-tarih-ay-geri"
+                        onClick={() => setSonTarihAyi((a) => ayEkle(a, -1))}
+                      >
+                        {t("vardiyaGeri")}
+                      </Dugme>
+                      <span
+                        data-test="gorev-son-tarih-ay"
+                        className="tabular-nums"
+                        style={{ fontSize: "var(--yz-fs-sm)" }}
+                      >
+                        {sonTarihAyi}
+                      </span>
+                      <Dugme
+                        type="button"
+                        boy="kucuk"
+                        tur={IKINCIL}
+                        data-test="gorev-son-tarih-ay-ileri"
+                        onClick={() => setSonTarihAyi((a) => ayEkle(a, 1))}
+                      >
+                        {t("vardiyaIleri")}
+                      </Dugme>
+                    </div>
+                    <AyTakvimi
+                      ay={sonTarihAyi}
+                      kanca="gorev-son-tarih"
+                      secili={sonTarihGunu ? new Set([sonTarihGunu]) : BOS_KUME}
+                      onSec={(g) =>
+                        // AYNI GUNE IKINCI TIKLAMA SECIMI KALDIRIR:
+                        // "son tarihi sildim" demenin baska yolu yok.
+                        setForm({
+                          ...form,
+                          son_tarih:
+                            g === sonTarihGunu
+                              ? ""
+                              : `${g}T${sonTarihSaati || SON_TARIH_VARSAYILAN_SAAT}`,
+                        })
+                      }
+                    />
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="max-w-[9rem]">
+                        <Alan
+                          type="time"
+                          data-test="gorev-son-tarih-saat"
+                          aria-label={t("ortakSaat")}
+                          disabled={!sonTarihGunu}
+                          value={sonTarihSaati}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              son_tarih: `${sonTarihGunu}T${e.target.value || SON_TARIH_VARSAYILAN_SAAT}`,
+                            })
+                          }
+                        />
+                      </div>
+                      <span
+                        data-test="gorev-son-tarih-ozet"
+                        style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}
+                      >
+                        {form.son_tarih || t("ortakSecimYok")}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </AlanSarmal>
+            </div>
             <AlanSarmal etiket={t("gorevSonrakiPlanlananOpsiyonel")} ipucu={t("gorevPeriyodikSaatIpucu")}>
   {(b) => (
     <Alan {...b} type="datetime-local"value={form.sonraki_planlanan}

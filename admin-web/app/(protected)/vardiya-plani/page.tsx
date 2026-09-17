@@ -300,6 +300,23 @@ export default function VardiyaPlaniSayfasi() {
             {t("vardiyaCizelgeAlt")}
           </p>
         </div>
+        {/* (P240 §5a) SAYFANIN ASIL EYLEMI — BASLIK SATIRINDA ve MAVI.
+
+            OLCULEN KUSUR: dugme, gorunum secici + filtreler + tazele ile
+            AYNI sarilabilir satirdaydi ve hepsi `ikincil` (gri) oldugu
+            icin aralarinda KAYBOLUYORDU; dar ekranda alt satira sariyor
+            ve kullanici onu hic gormuyordu.
+
+            Iki sey birden degisti ve ikisi de gerekli:
+              * YER — gezinme/goruntuleme araclariyla ayni kumede degil;
+                bu bir GORUNUM secimi degil, KAYIT OLUSTURMA.
+              * RENK — `birincil` (mavi dolgu). Bir ekranda tek birincil
+                dugme olur; o da budur. P239'da sablon dugmesiyle
+                ETIKETLERI ayirmistik, simdi GORSEL agirlik da ayri.
+
+            Sablon bolumunun "Yeni sablon" dugmesi de `birincil`, ama o
+            SAYFANIN ALTINDA, kendi bolum basliginin yaninda — ikisi ayni
+            ekran alaninda yan yana gorunmuyor. */}
         <div className="flex flex-wrap items-center gap-2">
           <Dugme
             type="button"
@@ -335,6 +352,14 @@ export default function VardiyaPlaniSayfasi() {
           >
             {t("vardiyaIleri")}
           </Dugme>
+        <Dugme
+          type="button"
+          tur={BIRINCIL}
+          data-test="vardiya-yeni"
+          onClick={() => setEkleAcik(true)}
+        >
+          {t("vardiyaYeni")}
+        </Dugme>
         </div>
       </div>
 
@@ -363,14 +388,6 @@ export default function VardiyaPlaniSayfasi() {
           onClick={() => setFiltrelerAcik((a) => !a)}
         >
           {t("vardiyaFiltreler", { n: suzgecSayisi })}
-        </Dugme>
-        <Dugme
-          type="button"
-          boy="kucuk"
-          data-test="vardiya-yeni"
-          onClick={() => setEkleAcik(true)}
-        >
-          {t("vardiyaYeni")}
         </Dugme>
         <Dugme
           type="button"

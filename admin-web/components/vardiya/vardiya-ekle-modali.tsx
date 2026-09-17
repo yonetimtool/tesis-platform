@@ -45,6 +45,7 @@ import { useToast } from "@/components/Toast";
 import {
   Alan,
   AlanSarmal,
+  AyTakvimi,
   Dugme,
   HataDurumu,
   Modal,
@@ -88,12 +89,6 @@ type Sonuc = {
   cakisan: number;
   satirlar: Satir[];
 };
-
-function gunEkle(iso: string, n: number): string {
-  const d = new Date(`${iso}T00:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + n);
-  return d.toISOString().slice(0, 10);
-}
 
 export function VardiyaEkleModali({
   acik,
@@ -175,20 +170,6 @@ export function VardiyaEkleModali({
   const dilimler: Dilim[] = kalip
     ? kalip.dilimler
     : [{ ad: `${basSaat}-${sonSaat}`, baslangic: basSaat, bitis: sonSaat }];
-
-  /** Takvimde cizilecek gunler — secilen ayin tamami. */
-  const ayGunleri = useMemo(() => {
-    const ilk = `${baslangicAyi.slice(0, 7)}-01`;
-    const d = new Date(`${ilk}T00:00:00Z`);
-    const ay = d.getUTCMonth();
-    const out: string[] = [];
-    for (let i = 0; i < 31; i++) {
-      const g = gunEkle(ilk, i);
-      if (new Date(`${g}T00:00:00Z`).getUTCMonth() !== ay) break;
-      out.push(g);
-    }
-    return out;
-  }, [baslangicAyi]);
 
   function gunDegistir(g: string) {
     setSeciliGunler((s) => {
@@ -364,36 +345,23 @@ export function VardiyaEkleModali({
           >
             {t("vardiyaTakvimIpucu")}
           </p>
-          <div
-            className="flex flex-wrap gap-1"
-            data-test="vardiya-ekle-takvim"
-          >
-            {ayGunleri.map((g) => (
-              <button
-                key={g}
-                type="button"
-                data-test={`vardiya-ekle-gun-${g}`}
-                aria-pressed={seciliGunler.has(g)}
-                className="odak-ic tabular-nums"
-                style={{
-                  minWidth: "2.25rem",
-                  minHeight: "2.25rem",
-                  fontSize: "var(--yz-fs-xs)",
-                  borderRadius: "var(--yz-radius-sm)",
-                  border: "var(--yz-border-w) solid var(--yz-border)",
-                  color: seciliGunler.has(g)
-                    ? "var(--yz-text)"
-                    : "var(--yz-text-3)",
-                  background: seciliGunler.has(g)
-                    ? "var(--yz-surface-2)"
-                    : undefined,
-                }}
-                onClick={() => gunDegistir(g)}
-              >
-                {Number(g.slice(8, 10))}
-              </button>
-            ))}
-          </div>
+          {/* (P240 §5c) ORTAK `AyTakvimi`.
+
+              Burada ELDE cizilmis bir gun seridi vardi: sarilabilir bir
+              dugme yigini, haftaya HIZALI DEGIL. Yani "tum pazartesiler"
+              secmek isteyen kullanici sutun goremiyordu; ustelik hucre
+              36px'ti (dokunma hedefi degil, yogun-baglam olcusu).
+
+              Gorev formu ikinci tuketici olunca kopyalamak yerine
+              tasindi — mobildeki `GunTakvimi` ile ayni goruntu. `kanca`
+              oneki DEGISMEDI: `vardiya-ekle-gun-<iso>` kilitleri
+              oldugu gibi duruyor. */}
+          <AyTakvimi
+            ay={baslangicAyi.slice(0, 7)}
+            kanca="vardiya-ekle"
+            secili={seciliGunler}
+            onSec={gunDegistir}
+          />
           <div className="mt-1 flex items-center gap-2">
             <span
               data-test="vardiya-ekle-secili-sayi"

@@ -61,10 +61,25 @@ function sahte(gorevler: unknown[]) {
 
 const el = (ad: string) => document.querySelector(`[data-test="${ad}"]`);
 
+/** Takvimde hedef aya GEZINIR ve gunu secer (bugunden bagimsiz). */
+async function gunuSec(iso: string) {
+  const hedefAy = iso.slice(0, 7);
+  for (let i = 0; i < 36; i++) {
+    const simdiki = (el("gorev-son-tarih-ay") as HTMLElement).textContent;
+    if (simdiki === hedefAy) break;
+    const ileri = (simdiki ?? "") < hedefAy;
+    await userEvent.click(
+      el(ileri ? "gorev-son-tarih-ay-ileri" : "gorev-son-tarih-ay-geri") as HTMLElement,
+    );
+  }
+  await userEvent.click(el(`gorev-son-tarih-gun-${iso}`) as HTMLElement);
+}
+
 afterEach(() => vi.restoreAllMocks());
 
 describe("(P239 §4) gorev son tarihi", () => {
-  it("ALAN VAR ve girilen deger GOVDEYE GIRER (ISO)", async () => {
+  it("TAKVIMDEN secilen gun GOVDEYE GIRER (ISO)", async () => {
+    // (P240 §5c) Alan artik `datetime-local` DEGIL, ay izgarasi.
     const cagrilar = sahte([GOREV]);
     ciz(TasksPage);
     await userEvent.click(
@@ -73,9 +88,10 @@ describe("(P239 §4) gorev son tarihi", () => {
     const modal = await screen.findByRole("dialog");
     await userEvent.type(within(modal).getByLabelText("Başlık"), "Yeni is");
 
-    const alan = el("gorev-son-tarih") as HTMLInputElement;
-    expect(alan, "son tarih alani YOK").toBeTruthy();
-    await userEvent.type(alan, "2026-09-20T17:30");
+    // Takvim BU AYDA acilir; gezinerek hedef aya gidilir.
+    expect(el("gorev-son-tarih-takvim"), "takvim YOK").toBeTruthy();
+    const hedef = "2026-09-20";
+    await gunuSec(hedef);
 
     await userEvent.click(within(modal).getByRole("button", { name: "Kaydet" }));
     await waitFor(() => {
@@ -83,10 +99,51 @@ describe("(P239 §4) gorev son tarihi", () => {
       expect(post, "POST atilmadi").toBeTruthy();
       const govde = post!.body as Record<string, unknown>;
       expect(govde.son_tarih).toBeTruthy();
-      // Yerel girdi ISO'ya cevrilir; gun/saat korunur.
-      expect(String(govde.son_tarih)).toContain("2026-09-20");
+      // ISO DIZESINDE GUN ARANMAZ: yerel 23:59, saat dilimine gore
+      // ERTESI GUNUN UTC damgasi olabilir (ilk yazimda test tam
+      // bundan kirmizi dondu — dogru olarak). Olculen sey, degerin
+      // YEREL olarak 20 Eylul 23:59'a denk gelmesi.
+      const d = new Date(String(govde.son_tarih));
+      expect(
+        [d.getFullYear(), d.getMonth() + 1, d.getDate(), d.getHours(), d.getMinutes()],
+      ).toEqual([2026, 9, 20, 23, 59]);
       // AYRI ALAN: periyodik tekrar alani DOLMAZ.
       expect(govde.sonraki_planlanan).toBeNull();
+    });
+  });
+
+  it("SAAT VERILMEZSE GUN SONU (23:59) — gun basi DEGIL", async () => {
+    // "Tarih verdim ama saat vermedim" -> "o gunun sonuna kadar"
+    // demektir. 00:00 almak isi daha baslamadan gecikmis yapardi.
+    sahte([GOREV]);
+    ciz(TasksPage);
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Yeni görev" }),
+    );
+    await screen.findByRole("dialog");
+    await gunuSec("2026-09-20");
+    expect((el("gorev-son-tarih-ozet") as HTMLElement).textContent).toBe(
+      "2026-09-20T23:59",
+    );
+  });
+
+  it("AYNI GUNE IKINCI TIKLAMA secimi KALDIRIR", async () => {
+    // Son tarihi SILMENIN baska yolu yok.
+    const cagrilar = sahte([GOREV]);
+    ciz(TasksPage);
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Yeni görev" }),
+    );
+    const modal = await screen.findByRole("dialog");
+    await userEvent.type(within(modal).getByLabelText("Başlık"), "Yeni is");
+    await gunuSec("2026-09-20");
+    await userEvent.click(el("gorev-son-tarih-gun-2026-09-20") as HTMLElement);
+
+    await userEvent.click(within(modal).getByRole("button", { name: "Kaydet" }));
+    await waitFor(() => {
+      const post = cagrilar.find((c) => c.method === "POST");
+      expect(post).toBeTruthy();
+      expect((post!.body as Record<string, unknown>).son_tarih).toBeNull();
     });
   });
 
@@ -109,18 +166,24 @@ describe("(P239 §4) gorev son tarihi", () => {
     });
   });
 
-  it("DUZENLEMEDE mevcut son tarih ALANA YUKLENIR", async () => {
-    // Yuklenmeseydi kaydet'e basmak, var olan son tarihi SESSIZCE
-    // silerdi (PATCH govdesi alani her zaman tasiyor).
+  it("DUZENLEMEDE takvim GOREVIN AYINA ATLAR ve gun ISARETLI", async () => {
+    // Atlamazsa, son tarihi baska bir ayda olan gorevde takvim BOS
+    // gorunur ve kullanici "tarih silinmis" sanir; kaydet'e basmak da
+    // var olan tarihi SESSIZCE silerdi (PATCH tam-govde).
     sahte([{ ...GOREV, son_tarih: "2026-09-20T17:30:00Z" }]);
     ciz(TasksPage);
     await waitFor(() =>
       expect(screen.getByText("Ortak alan temizligi")).toBeInTheDocument(),
     );
     await userEvent.click(screen.getAllByRole("button", { name: "Düzenle" })[0]);
-    await waitFor(() => expect(el("gorev-son-tarih")).toBeTruthy());
-    expect((el("gorev-son-tarih") as HTMLInputElement).value).toContain(
-      "2026-09-20",
+    await waitFor(() => expect(el("gorev-son-tarih-ay")).toBeTruthy());
+    expect((el("gorev-son-tarih-ay") as HTMLElement).textContent).toBe(
+      "2026-09",
     );
+    expect(
+      (el("gorev-son-tarih-gun-2026-09-20") as HTMLElement).getAttribute(
+        "aria-pressed",
+      ),
+    ).toBe("true");
   });
 });
