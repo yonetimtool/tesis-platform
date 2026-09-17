@@ -2196,6 +2196,30 @@ abstract class AppLocalizations {
   /// **'Yeni devriye planı'**
   String get devriyePlanYeniBaslik;
 
+  /// No description provided for @devriyeGunler.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hangi günler'**
+  String get devriyeGunler;
+
+  /// No description provided for @devriyeGunlerIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Seçmezseniz her gün yürür. Gece planı başladığı güne aittir.'**
+  String get devriyeGunlerIpucu;
+
+  /// No description provided for @devriyeHerGun.
+  ///
+  /// In tr, this message translates to:
+  /// **'Her gün'**
+  String get devriyeHerGun;
+
+  /// No description provided for @devriyeEkTarihler.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bir kerelik ek gün'**
+  String get devriyeEkTarihler;
+
   /// No description provided for @devriyeVardiya.
   ///
   /// In tr, this message translates to:

@@ -62,9 +62,41 @@ const DURUM_ANAHTARI = {
   bekliyor: "rotaDurumBekliyor",
 } as const;
 
+/**
+ * (P239 §4) HAFTA GUNLERI — ISO-8601 (1=Pazartesi ... 7=Pazar).
+ *
+ * JavaScript `getDay()` 0=Pazar der; veritabani ve Python ise ISO
+ * kullaniyor. Cevrim TEK YERDE yapilir (burada), yoksa iki ayri yerde
+ * iki ayri numara dolasirdi.
+ */
+/** JSX ucluda sabit dize yazilamaz (depo kurali `sabit-metin`). */
+const BIRINCIL = "birincil" as const;
+const IKINCIL = "ikincil" as const;
+/** Cipteki silme isareti — DEKORATIF; erisilebilir ad `aria-label`da. */
+const KAPAT_ISARETI = "\u2715";
+
+const HAFTA_GUNLERI = [
+  { iso: 1, anahtar: "gunPazartesi" },
+  { iso: 2, anahtar: "gunSali" },
+  { iso: 3, anahtar: "gunCarsamba" },
+  { iso: 4, anahtar: "gunPersembe" },
+  { iso: 5, anahtar: "gunCuma" },
+  { iso: 6, anahtar: "gunCumartesi" },
+  { iso: 7, anahtar: "gunPazar" },
+] as const;
+
 interface FormState {
   ad: string;
   shift_id: string;
+  /**
+   * (P239 §4) Secili ISO gun numaralari. BOS KUME = "her gun" (sunucuya
+   * `null` gider). Bos DIZI gondermek sunucuda 422'dir ve dogru: plan
+   * aktif gorunurken hicbir pencere uretmeyen sessiz bir kapali hal
+   * olurdu.
+   */
+  gunler: number[];
+  /** (P239 §4) Bir kerelik ek gunler (ISO tarih). */
+  ek_tarihler: string[];
   baslangic_saat: string;
   bitis_saat: string;
   periyot_dakika: string;
@@ -73,6 +105,8 @@ interface FormState {
 const EMPTY: FormState = {
   ad: "",
   shift_id: "",
+  gunler: [],
+  ek_tarihler: [],
   baslangic_saat: "00:00",
   bitis_saat: "06:00",
   periyot_dakika: "60",
@@ -143,6 +177,8 @@ export default function PatrolPlansPage() {
   const [assignOkundu, setAssignOkundu] = useState(false);
   const [assignSaving, setAssignSaving] = useState(false);
   const [addPick, setAddPick] = useState<string>("");
+  /** (P239 §4) Ek tarih girdisi — listeye eklenene kadar formda degil. */
+  const [ekTarihTaslak, setEkTarihTaslak] = useState<string>("");
 
   function openNew() {
     setEditingId(null);
@@ -155,6 +191,8 @@ export default function PatrolPlansPage() {
     setForm({
       ad: p.ad,
       shift_id: p.shift_id ?? "",
+      gunler: p.gunler ?? [],
+      ek_tarihler: p.ek_tarihler ?? [],
       baslangic_saat: p.baslangic_saat,
       bitis_saat: p.bitis_saat,
       periyot_dakika: String(p.periyot_dakika),
@@ -179,6 +217,9 @@ export default function PatrolPlansPage() {
     const body = {
       ad: form.ad,
       shift_id: form.shift_id || null,
+      // BOS KUME -> null ("her gun"). Bos dizi gondermek sunucuda 422.
+      gunler: form.gunler.length > 0 ? [...form.gunler].sort() : null,
+      ek_tarihler: form.ek_tarihler.length > 0 ? form.ek_tarihler : null,
       baslangic_saat: form.baslangic_saat,
       bitis_saat: form.bitis_saat,
       periyot_dakika: per.deger,
@@ -396,6 +437,114 @@ export default function PatrolPlansPage() {
                   </option>
                 ))}
               </Secim>
+            )}
+          </AlanSarmal>
+
+          {/* (P239 §4) HANGI GUNLER — cip secimi.
+
+              Takvim (somut tarih) DEGIL: devriye plani TEKRAR EDEN bir
+              seydir; somut tarih listesi plani tekrarsizlastirir ve ufuk
+              dolunca elle beslenmesi gerekirdi. Somut tarih secimi
+              VARDIYA planinin isidir.
+
+              Hicbiri secili degilse "her gun" yazar — bos bir satir
+              "secmedim mi, yoksa hicbir gun mu" sorusunu dogururdu. */}
+          <AlanSarmal etiket={t("devriyeGunler")} ipucu={t("devriyeGunlerIpucu")}>
+            {() => (
+              <div className="flex flex-wrap items-center gap-2">
+                {HAFTA_GUNLERI.map((g) => {
+                  const secili = form.gunler.includes(g.iso);
+                  return (
+                    <Dugme
+                      key={g.iso}
+                      type="button"
+                      boy="kucuk"
+                      tur={secili ? BIRINCIL : IKINCIL}
+                      aria-pressed={secili}
+                      data-test={`devriye-gun-${g.iso}`}
+                      onClick={() =>
+                        setForm({
+                          ...form,
+                          gunler: secili
+                            ? form.gunler.filter((x) => x !== g.iso)
+                            : [...form.gunler, g.iso],
+                        })
+                      }
+                    >
+                      {t(g.anahtar)}
+                    </Dugme>
+                  );
+                })}
+                {form.gunler.length === 0 && (
+                  <span
+                    data-test="devriye-gun-her-gun"
+                    style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-2)" }}
+                  >
+                    {t("devriyeHerGun")}
+                  </span>
+                )}
+              </div>
+            )}
+          </AlanSarmal>
+
+          {/* (P239 §4) BIR KERELIK EK GUNLER — bayram, ozel etkinlik.
+
+              Tek care yeni bir plan acip sonra silmekti; silinmezse
+              sessizce her hafta yururdu. */}
+          <AlanSarmal etiket={t("devriyeEkTarihler")} ipucu={t("devriyeEkTarihlerIpucu")}>
+            {(b) => (
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="max-w-[12rem]">
+                    <Alan
+                      {...b}
+                      type="date"
+                      data-test="devriye-ek-tarih-girdi"
+                      value={ekTarihTaslak}
+                      onChange={(e) => setEkTarihTaslak(e.target.value)}
+                    />
+                  </div>
+                  <Dugme
+                    type="button"
+                    boy="kucuk"
+                    tur="ikincil"
+                    data-test="devriye-ek-tarih-ekle"
+                    disabled={
+                      !ekTarihTaslak || form.ek_tarihler.includes(ekTarihTaslak)
+                    }
+                    onClick={() => {
+                      setForm({
+                        ...form,
+                        ek_tarihler: [...form.ek_tarihler, ekTarihTaslak].sort(),
+                      });
+                      setEkTarihTaslak("");
+                    }}
+                  >
+                    {t("ortakEkle")}
+                  </Dugme>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {form.ek_tarihler.map((g) => (
+                    <Dugme
+                      key={g}
+                      type="button"
+                      boy="kucuk"
+                      tur="ikincil"
+                      data-test={`devriye-ek-tarih-sil-${g}`}
+                      aria-label={`${t("ortakSil")} ${g}`}
+                      onClick={() =>
+                        setForm({
+                          ...form,
+                          ek_tarihler: form.ek_tarihler.filter((x) => x !== g),
+                        })
+                      }
+                    >
+                      {g}
+                      <span aria-hidden="true">{KAPAT_ISARETI}</span>
+                    </Dugme>
+                  ))}
+                </div>
+              </div>
             )}
           </AlanSarmal>
 

@@ -135,6 +135,73 @@ def test_materialize_creates_six_and_is_idempotent(sched):
     assert len(_windows_of(sched.conn, pid)) == 6
 
 
+def test_materialize_yalniz_secili_gunlerde_uretir(sched):
+    """(P239 §4) GUN SECIMI ZAMANLAYICIYA ULASIYOR MU.
+
+    Ucun alani kabul etmesi yetmez; pencere ureticisi onu okumazsa kolon
+    "kaydedilen ama hicbir seye yaramayan" bir alan olurdu.
+    15 Ocak 2026 PERSEMBE (ISO 4).
+    """
+    pid = _plan(sched.conn, sched.tid, time(9, 0), time(12, 0), 60)
+    now = datetime(2026, 1, 15, 3, 0, tzinfo=UTC)
+
+    # Yalniz PAZARTESI (1) -> persembe icin pencere YOK.
+    sched.conn.execute(
+        "UPDATE patrol_plan SET gunler = ARRAY[1]::smallint[] WHERE id = %s", (pid,)
+    )
+    materialize_windows(now=now, horizon_days=1)
+    assert _windows_of(sched.conn, pid) == []
+
+    # PERSEMBE (4) eklenince uretir.
+    sched.conn.execute(
+        "UPDATE patrol_plan SET gunler = ARRAY[1,4]::smallint[] WHERE id = %s", (pid,)
+    )
+    materialize_windows(now=now, horizon_days=1)
+    assert len(_windows_of(sched.conn, pid)) == 3
+
+
+def test_materialize_ARTIK_YURUMEYEN_gunun_pencerelerini_SILER(sched):
+    """(P239 §4) Ureteci suzgeclemek TEK BASINA YETMEZ.
+
+    "Her gun"den "yalniz pazartesi"ye gecen planin ONCEDEN uretilmis
+    persembe pencereleri 'bekliyor' olarak kalirdi ve saati gecince
+    'kacirildi' yazilirdi — kullanici ARTIK YURUMEYEN bir tur icin
+    alarm alirdi.
+    """
+    pid = _plan(sched.conn, sched.tid, time(9, 0), time(12, 0), 60)
+    now = datetime(2026, 1, 15, 3, 0, tzinfo=UTC)
+
+    materialize_windows(now=now, horizon_days=1)
+    assert len(_windows_of(sched.conn, pid)) == 3, "once her gun uretiliyor"
+
+    sched.conn.execute(
+        "UPDATE patrol_plan SET gunler = ARRAY[1]::smallint[] WHERE id = %s", (pid,)
+    )
+    materialize_windows(now=now, horizon_days=1)
+    assert _windows_of(sched.conn, pid) == [], "gecersiz pencereler silinmeli"
+
+
+def test_materialize_BASLAMIS_pencereyi_SILMEZ(sched):
+    """Temizlik YALNIZ GELECEGI kapsar.
+
+    Baslamis/sonuclanmis pencere GECMISTIR; silmek ona bagli okutma
+    kaydini sahipsiz birakir ve gecmisi yeniden yazardi.
+    """
+    pid = _plan(sched.conn, sched.tid, time(9, 0), time(12, 0), 60)
+    materialize_windows(now=datetime(2026, 1, 15, 3, 0, tzinfo=UTC), horizon_days=1)
+    assert len(_windows_of(sched.conn, pid)) == 3
+
+    # Gun secimi degisir VE simdi pencerelerin ORTASINDADIR.
+    sched.conn.execute(
+        "UPDATE patrol_plan SET gunler = ARRAY[1]::smallint[] WHERE id = %s", (pid,)
+    )
+    materialize_windows(now=datetime(2026, 1, 15, 7, 30, tzinfo=UTC), horizon_days=1)
+    kalan = _windows_of(sched.conn, pid)
+    # Yerel 09:00-12:00 = 06:00-09:00Z; 07:30Z'de ilk pencere BITMIS,
+    # ikincisi SURUYOR -> ikisi de KALIR, yalniz gelecek olan gider.
+    assert len(kalan) == 2, kalan
+
+
 def test_materialize_skips_inactive_plan(sched):
     pid = _plan(sched.conn, sched.tid, aktif=False)
     materialize_windows(now=datetime(2026, 1, 15, 12, 0, tzinfo=UTC), horizon_days=1)

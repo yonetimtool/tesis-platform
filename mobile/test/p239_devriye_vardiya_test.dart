@@ -126,4 +126,94 @@ void main() {
     });
     expect(plan.shiftId, isNull);
   });
+
+  group('(P239 §4) HAFTALIK GUN SECIMI + EK TARIHLER', () {
+    test('SECILEN GUNLER govdeye SIRALI gider (ISO)', () async {
+      // JS 0=Pazar der, veritabani ve Python ISO kullanir (1=Pzt).
+      // Siralama karsilastirmayi belirli kilar.
+      final a = _Adapter();
+      await _api(a).create(
+        ad: 'Gece turu',
+        baslangicSaat: '22:00:00',
+        bitisSaat: '06:00:00',
+        periyotDakika: 60,
+        gunler: [4, 1],
+      );
+      expect((a.istekler.single.data as Map)['gunler'], [1, 4]);
+    });
+
+    test('BOS LISTE null GIDER — sunucuya 422 uretecek govde YOLLANMAZ', () async {
+      // Bos dizi "hicbir gun" demek olurdu; sunucu hakli olarak 422
+      // verir. Istemci o istegi hic atmamali: gun secilmediyse
+      // "her gun" (null) kastedilir.
+      final a = _Adapter();
+      await _api(a).create(
+        ad: 'Gece turu',
+        baslangicSaat: '22:00:00',
+        bitisSaat: '06:00:00',
+        periyotDakika: 60,
+        gunler: const [],
+      );
+      final govde = a.istekler.single.data as Map;
+      expect(govde.containsKey('gunler'), isTrue);
+      expect(govde['gunler'], isNull);
+    });
+
+    test('EK TARIHLER YYYY-MM-DD gider — SAAT KIRPILIR', () async {
+      // Tam ISO damgasi gondermek yerel saat/UTC farkiyla gunu BIR
+      // KAYDIRABILIRDI (23:00'te secilen gun ertesi gun olurdu).
+      final a = _Adapter();
+      await _api(a).create(
+        ad: 'Gece turu',
+        baslangicSaat: '22:00:00',
+        bitisSaat: '06:00:00',
+        periyotDakika: 60,
+        ekTarihler: [DateTime(2026, 8, 30, 23, 30)],
+      );
+      expect((a.istekler.single.data as Map)['ek_tarihler'], ['2026-08-30']);
+    });
+
+    test('PATCH null GONDERIR: "her gune don" mumkun', () async {
+      final a = _Adapter();
+      await _api(a).update(
+        'p1',
+        ad: 'Gece turu',
+        baslangicSaat: '22:00:00',
+        bitisSaat: '06:00:00',
+        periyotDakika: 60,
+        aktif: true,
+      );
+      final govde = a.istekler.single.data as Map;
+      expect(govde['gunler'], isNull);
+      expect(govde['ek_tarihler'], isNull);
+    });
+
+    test('YANITTAN gunler ve ek_tarihler OKUNUR', () {
+      final plan = PatrolPlan.fromJson(const {
+        'id': 'p1',
+        'ad': 'Gece turu',
+        'baslangic_saat': '22:00:00',
+        'bitis_saat': '06:00:00',
+        'periyot_dakika': 60,
+        'aktif': true,
+        'gunler': [1, 4],
+        'ek_tarihler': ['2026-08-30'],
+      });
+      expect(plan.gunler, [1, 4]);
+      expect(plan.ekTarihler, [DateTime(2026, 8, 30)]);
+    });
+
+    test('ALANLAR YOKSA null (eski kayitlar = HER GUN)', () {
+      final plan = PatrolPlan.fromJson(const {
+        'id': 'p1',
+        'ad': 'Gece turu',
+        'baslangic_saat': '22:00:00',
+        'bitis_saat': '06:00:00',
+        'periyot_dakika': 60,
+        'aktif': true,
+      });
+      expect(plan.gunler, isNull);
+      expect(plan.ekTarihler, isNull);
+    });
+  });
 }

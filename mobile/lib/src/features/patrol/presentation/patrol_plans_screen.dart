@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../shifts/data/shifts_api.dart';
 import '../../../core/error/api_exception.dart';
@@ -194,6 +195,17 @@ class _PlanFormState extends ConsumerState<_PlanForm> {
   /// mobilde YOKTU — yani mobilden acilan her plan kadrosuz kaliyordu
   /// ve kimin yuruyecegi hicbir yerde yazmiyordu.
   String? _shiftId;
+
+  /// (P239 §4) Secili ISO hafta gunleri (1=Pzt ... 7=Paz).
+  ///
+  /// BOS KUME = "her gun" (sunucuya null gider). Takvim (somut tarih)
+  /// DEGIL: devriye plani TEKRAR EDEN bir seydir; somut tarih listesi
+  /// plani tekrarsizlastirir ve ufuk dolunca elle beslenmesi gerekirdi.
+  /// Somut tarih secimi VARDIYA planinin isidir.
+  final Set<int> _gunler = {};
+
+  /// (P239 §4) Bir kerelik ek gunler (bayram, ozel etkinlik).
+  final Set<DateTime> _ekTarihler = {};
   final Set<String> _selected = {};
   bool _busy = false;
 
@@ -219,6 +231,8 @@ class _PlanFormState extends ConsumerState<_PlanForm> {
       _bitis = _parse(e.bitisSaat);
       _aktif = e.aktif;
       _shiftId = e.shiftId;
+      if (e.gunler != null) _gunler.addAll(e.gunler!);
+      if (e.ekTarihler != null) _ekTarihler.addAll(e.ekTarihler!);
       // Mevcut atanmis noktalari yukle.
       _loadingSelection = true;
       Future.microtask(() async {
@@ -248,6 +262,22 @@ class _PlanFormState extends ConsumerState<_PlanForm> {
     _ad.dispose();
     _periyot.dispose();
     super.dispose();
+  }
+
+  /// Ek tarih secimi — GUN YETER, saat sorulmaz: plan saatleri zaten
+  /// tanimli; o gun icin AYNI saatler kullanilir.
+  Future<void> _ekTarihSec() async {
+    final simdi = DateTime.now();
+    final secilen = await showDatePicker(
+      context: context,
+      initialDate: simdi,
+      firstDate: simdi,
+      lastDate: simdi.add(const Duration(days: 365)),
+    );
+    if (secilen == null) return;
+    // SAAT KIRPILIR: `DateTime` saat tasirsa ayni gun iki kez eklenebilir.
+    setState(() => _ekTarihler
+        .add(DateTime(secilen.year, secilen.month, secilen.day)));
   }
 
   Future<void> _pickTime(bool baslangic) async {
@@ -286,6 +316,8 @@ class _PlanFormState extends ConsumerState<_PlanForm> {
           periyotDakika: periyot,
           aktif: _aktif,
           shiftId: _shiftId,
+          gunler: _gunler.toList(),
+          ekTarihler: _ekTarihler.toList(),
         );
         planId = widget.existing!.id;
       } else {
@@ -296,6 +328,8 @@ class _PlanFormState extends ConsumerState<_PlanForm> {
           periyotDakika: periyot,
           aktif: _aktif,
           shiftId: _shiftId,
+          gunler: _gunler.toList(),
+          ekTarihler: _ekTarihler.toList(),
         );
         planId = created.id;
       }
@@ -423,6 +457,67 @@ class _PlanFormState extends ConsumerState<_PlanForm> {
                   ],
                   onChanged: _busy ? null : (v) => setState(() => _shiftId = v),
                 ),
+              const SizedBox(height: 12),
+              // (P239 §4) HANGI GUNLER — cip secimi.
+              //
+              // Hicbiri secili degilse "her gun" yazar: bos bir satir
+              // "secmedim mi, yoksa hicbir gun mu" sorusunu dogururdu ve
+              // ikisi cok farkli seyler.
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: Text(l10n.devriyeGunler,
+                    style: Theme.of(context).textTheme.labelLarge),
+              ),
+              Wrap(
+                spacing: 6,
+                children: [
+                  for (var iso = 1; iso <= 7; iso++)
+                    FilterChip(
+                      key: Key('devriye-gun-$iso'),
+                      label: Text(_gunKisaAdi(context, iso)),
+                      selected: _gunler.contains(iso),
+                      onSelected: _busy
+                          ? null
+                          : (s) => setState(() =>
+                              s ? _gunler.add(iso) : _gunler.remove(iso)),
+                    ),
+                ],
+              ),
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: Text(
+                  _gunler.isEmpty ? l10n.devriyeHerGun : l10n.devriyeGunlerIpucu,
+                  key: const Key('devriye-gun-ozet'),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+              const SizedBox(height: 12),
+              // (P239 §4) BIR KERELIK EK GUNLER — bayram, ozel etkinlik.
+              // Tek care yeni bir plan acip sonra silmekti; silinmezse
+              // sessizce her hafta yururdu.
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: TextButton.icon(
+                  key: const Key('devriye-ek-tarih-ekle'),
+                  icon: const Icon(Icons.event_outlined),
+                  label: Text(l10n.devriyeEkTarihler),
+                  onPressed: _busy ? null : _ekTarihSec,
+                ),
+              ),
+              if (_ekTarihler.isNotEmpty)
+                Wrap(
+                  spacing: 6,
+                  children: [
+                    for (final g in (_ekTarihler.toList()..sort()))
+                      InputChip(
+                        key: Key('devriye-ek-tarih-${_gunAnahtari(g)}'),
+                        label: Text(_gunAnahtari(g)),
+                        onDeleted: _busy
+                            ? null
+                            : () => setState(() => _ekTarihler.remove(g)),
+                      ),
+                  ],
+                ),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 title: Text(l10n.cipAktif),
@@ -518,3 +613,20 @@ class _PlanFormState extends ConsumerState<_PlanForm> {
     );
   }
 }
+
+/// (P239 §4) ISO gun numarasi -> AKTIF DILDE kisa gun adi.
+///
+/// Sozluge 7x7 = 49 yeni anahtar eklemek yerine `DateFormat.E` kullanilir
+/// (gun takviminde alinan karar, ayni gerekce): o adlari yerel zaten
+/// biliyor ve yanlislikla Turkce kalma riski yok.
+String _gunKisaAdi(BuildContext context, int iso) {
+  // 2026-09-14 PAZARTESI; iso-1 gun eklemek istenen gunu verir.
+  final ornek = DateTime(2026, 9, 13 + iso);
+  return DateFormat.E(context.dilKodu).format(ornek);
+}
+
+/// `DateTime` -> `YYYY-MM-DD` (cip etiketi ve widget anahtari).
+String _gunAnahtari(DateTime g) =>
+    '${g.year.toString().padLeft(4, '0')}-'
+    '${g.month.toString().padLeft(2, '0')}-'
+    '${g.day.toString().padLeft(2, '0')}';

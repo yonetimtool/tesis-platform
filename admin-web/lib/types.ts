@@ -157,6 +157,10 @@ export interface PatrolPlan {
   baslangic_saat: string;
   bitis_saat: string;
   periyot_dakika: number;
+  /** (P239 §4) Yurudugu ISO hafta gunleri (1=Pzt ... 7=Paz). null = HER GUN. */
+  gunler?: number[] | null;
+  /** (P239 §4) Bir kerelik ek gunler (ISO tarih). */
+  ek_tarihler?: string[] | null;
   aktif: boolean;
   created_at: string;
   updated_at?: string | null;

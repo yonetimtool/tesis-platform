@@ -15,6 +15,8 @@ class PatrolPlan {
     required this.periyotDakika,
     required this.aktif,
     this.shiftId,
+    this.gunler,
+    this.ekTarihler,
   });
 
   final String id;
@@ -31,6 +33,13 @@ class PatrolPlan {
   /// kaliyordu.
   final String? shiftId;
 
+  /// (P239 §4) Planin yurudugu ISO hafta gunleri (1=Pzt ... 7=Paz).
+  /// null = HER GUN (goc 0139 oncesi kayitlar ve "gun secmedim" hali).
+  final List<int>? gunler;
+
+  /// (P239 §4) Bir kerelik ek gunler (bayram, ozel etkinlik).
+  final List<DateTime>? ekTarihler;
+
   /// "HH:MM" (saniyeyi kirp) — gosterim icin.
   String get baslangicHHMM => _hhmm(baslangicSaat);
   String get bitisHHMM => _hhmm(bitisSaat);
@@ -43,6 +52,12 @@ class PatrolPlan {
         baslangicSaat: json['baslangic_saat'] as String? ?? '00:00:00',
         bitisSaat: json['bitis_saat'] as String? ?? '00:00:00',
         shiftId: json['shift_id'] as String?,
+        gunler: (json['gunler'] as List?)
+            ?.map((e) => (e as num).toInt())
+            .toList(),
+        ekTarihler: (json['ek_tarihler'] as List?)
+            ?.map((e) => DateTime.parse(e as String))
+            .toList(),
         periyotDakika: (json['periyot_dakika'] as num?)?.toInt() ?? 60,
         aktif: (json['aktif'] as bool?) ?? true,
       );
@@ -74,6 +89,8 @@ class PatrolPlanApi {
     required int periyotDakika,
     bool aktif = true,
     String? shiftId,
+    List<int>? gunler,
+    List<DateTime>? ekTarihler,
   }) async {
     try {
       final res = await _dio.post<Map<String, dynamic>>('/patrol-plans', data: {
@@ -83,6 +100,13 @@ class PatrolPlanApi {
         'periyot_dakika': periyotDakika,
         'aktif': aktif,
         'shift_id': shiftId,
+        // BOS LISTE GONDERILMEZ: sunucu 422 verir ve dogru yapar —
+        // "hicbir gun" plan aktif gorunurken hicbir pencere uretmeyen
+        // sessiz bir kapali hal olurdu. Gun secilmediyse null = HER GUN.
+        'gunler': (gunler == null || gunler.isEmpty) ? null : (gunler.toList()..sort()),
+        'ek_tarihler': (ekTarihler == null || ekTarihler.isEmpty)
+            ? null
+            : [for (final g in ekTarihler) _gunMetni(g)],
       });
       return PatrolPlan.fromJson(res.data ?? const {});
     } on DioException catch (e) {
@@ -98,6 +122,8 @@ class PatrolPlanApi {
     required int periyotDakika,
     required bool aktif,
     String? shiftId,
+    List<int>? gunler,
+    List<DateTime>? ekTarihler,
   }) async {
     try {
       await _dio.patch<Map<String, dynamic>>('/patrol-plans/$id', data: {
@@ -109,6 +135,11 @@ class PatrolPlanApi {
         // NULL DA GONDERILIR: vardiya bagini KALDIRMAK baska turlu
         // mumkun olmazdi (tam-govde PATCH kurali).
         'shift_id': shiftId,
+        // null GONDERMEK "her gune don" demektir — ayni gerekce.
+        'gunler': (gunler == null || gunler.isEmpty) ? null : (gunler.toList()..sort()),
+        'ek_tarihler': (ekTarihler == null || ekTarihler.isEmpty)
+            ? null
+            : [for (final g in ekTarihler) _gunMetni(g)],
       });
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
@@ -160,3 +191,11 @@ final patrolPlanApiProvider =
 final patrolPlansProvider = FutureProvider.autoDispose<List<PatrolPlan>>(
   (ref) => ref.watch(patrolPlanApiProvider).list(),
 );
+
+/// (P239 §4) `DateTime` -> `YYYY-MM-DD`. SAAT KIRPILIR: sunucu `date`
+/// bekliyor ve ISO-8601 tam damgasi gondermek yerel saat/UTC farkiyla
+/// gunu BIR KAYDIRABILIR (23:00'te secilen gun bir sonraki gun olurdu).
+String _gunMetni(DateTime g) =>
+    '${g.year.toString().padLeft(4, '0')}-'
+    '${g.month.toString().padLeft(2, '0')}-'
+    '${g.day.toString().padLeft(2, '0')}';

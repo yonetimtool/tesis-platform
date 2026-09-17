@@ -480,3 +480,117 @@ göç gerektiriyor ve tasarım kararı içeriyor:
    tekrarlı. Bu iki cevap farklı şema demek.
 
 Bu iki soru yanıtlanmadan göç yazmak, yanlış tabloyu kalıcılaştırırdı.
+
+---
+
+## §4 (tamamlandı) — Devriye planında HAFTALIK gün seçimi
+
+Kullanıcının üç sorusu yanıtlandı ve bu bölüm ona göre yazıldı:
+**gün = haftanın günleri**, **kadro önceliklidir (kişi ataması yok)**,
+**personel-içi arama açılmaz**.
+
+### ÖLÇÜM: plan HANGİ GÜNLER yürüdüğünü hiç taşımıyordu
+
+`patrol_plan` bir gün-içi pencere tanımıydı (başlangıç/bitiş/periyot) ve
+aktifse **her gün** pencere üretiliyordu
+(`scheduler/service.materialize_windows`). "Her pazartesi ve perşembe
+gece devriyesi" ifade edilemiyordu; tek yol her gün yürümek ya da planı
+elle açıp kapatmaktı.
+
+### KARAR: `gunler` (haftalık) + `ek_tarihler` (bir kerelik)
+
+Göç **0139**. İki kolon:
+
+| Kolon | Anlam |
+|---|---|
+| `gunler smallint[]` | ISO hafta günü (1=Pzt … 7=Paz). **NULL = her gün** |
+| `ek_tarihler date[]` | bir kerelik ek günler (bayram, özel etkinlik) |
+
+- **Neden haftanın günleri:** devriye planı tekrar eden bir şeydir.
+  Somut tarih listesi planı tekrarsızlaştırır ve ufuk dolunca listenin
+  elle beslenmesi gerekirdi — plan, bakım isteyen bir takvime dönüşürdü.
+  Somut tarih seçimi **vardiya** planının işidir.
+- **Ama bir kerelik ek devriye gerçek bir ihtiyaç.** Bugün tek çare yeni
+  bir plan açıp sonra silmekti — ve o plan silinmezse **sessizce her
+  hafta yürümeye devam ederdi**. `ek_tarihler` aynı noktalar/saat/periyot
+  ile yalnız fazladan bir gün ekler. Pencere üretimi **birleşimdir**:
+  `haftagünü ∈ gunler` **veya** `yerel tarih ∈ ek_tarihler`.
+- **NULL = her gün**, çünkü mevcut planlar her gün yürüyor. `NOT NULL
+  DEFAULT ARRAY[1..7]` aynı davranışı verirdi ama bir ayrımı kaybederdik:
+  "her gün yürüsün **dedim**" ile "gün seçimi **hiç sorulmadı**" aynı şey
+  değil.
+- **Boş dizi yasak** (hem CHECK hem Pydantic): `{}` "hiçbir gün" demek
+  olurdu ve plan **aktif görünürken hiçbir pencere üretmezdi** —
+  kullanıcının göremeyeceği sessiz bir kapalı hal.
+- **ISO-8601 numaraları** (1=Pzt): PostgreSQL `ISODOW` ve Python
+  `isoweekday()` aynı sayıyı verir; JS `getDay()` 0=Pazar der, çeviri
+  tek yerde (web'de `HAFTA_GUNLERI` tablosu).
+- **Ek tarih üst sınırı 60:** "bir kerelik ek gün" bir takvim değildir;
+  sınırsız bırakmak planı somut tarih listesine çevirmenin arka kapısı
+  olurdu.
+- **İndeks yok:** bu kolonlar süzgeç değil — zamanlayıcı zaten aktif tüm
+  planları çekip günleri Python'da eliyor (tesis başına bir avuç satır).
+
+### GECE PLANI BAŞLADIĞI GÜNE AİTTİR
+
+"Her pazartesi gece devriyesi" pazartesi 22:00'de başlar, salı 06:00'da
+biter. Salı seçilmemiş olması bu pencereyi düşürmez — kural **oluşum
+başlangıcına** uygulanır. İlk test yazımım "her pencere pazartesi
+başlar" diyordu ve **kırmızı verdi, doğru olarak**: oluşumun içindeki
+saatlik pencereler gece yarısını geçip salıya sarkıyor. Ölçüm düzeltildi.
+
+### ÜRETECİ SÜZGEÇLEMEK TEK BAŞINA YETMEZ
+
+"Her gün"den "yalnız pazartesi"ye geçen bir planın **önceden üretilmiş**
+salı pencereleri `bekliyor` olarak kalır ve saati geçince `kacirildi`
+yazılırdı — yani kullanıcı **artık yürümeyen** bir tur için alarm alırdı.
+`materialize_windows` artık geçersiz kalan pencereleri siliyor;
+**yalnız gelecek ve yalnız `bekliyor`** olanları: başlamış ya da
+sonuçlanmış pencere geçmiştir, silmek okutma kaydını sahipsiz bırakırdı.
+
+### ARAYÜZ (iki yüzey)
+
+- Haftalık günler **çip** olarak (takvim değil — yukarıdaki gerekçe).
+- Hiçbiri seçili değilken **"Her gün" yazar**: boş bir satır "seçmedim
+  mi, yoksa hiçbir gün mü" sorusunu doğururdu.
+- Ek tarihler: web'de tarih girdisi + liste, mobilde `showDatePicker` +
+  silinebilir çipler. **Gün yeter, saat sorulmaz** — plan saatleri zaten
+  tanımlı, o gün için aynı saatler kullanılır.
+- Gün adları sözlükten değil **yerelden** (`DateFormat.E`): 7×7 = 49 yeni
+  anahtar eklemek yerine, gün takviminde alınan kararın aynısı.
+
+### KİLİTLER
+
+- `backend/tests/test_p239_devriye_gunler.py` (11) — uç: sıralama/
+  tekilleştirme, boş dizi 422, aralık dışı 422, `PATCH null` ile her güne
+  dönüş, ek tarih sınırı, saha rolü değiştiremez. Üretici: `gun_yuruyor`
+  kuralı, seçilmeyen günde pencere yok, gece planı, ek tarih birleşimi.
+- `backend/tests/test_scheduler_db.py` (+3) — gün seçimi zamanlayıcıya
+  ulaşıyor; artık yürümeyen günün pencereleri siliniyor; **başlamış
+  pencere silinmiyor**.
+- `admin-web/tests/p239-devriye-gunler.dom.test.ts` (7) — "her gün"
+  yazısı, ISO numarası + sıralı gövde, seçilmezse `null` (boş dizi
+  değil), çip aç/kapa, düzenlemede yükleme, ek tarih ekle/tekrar-engel/sil.
+- `mobile/test/p239_devriye_vardiya_test.dart` (+6) — aynı gövde
+  iddiaları taklit HTTP adapter üzerinden; `ek_tarihler` **YYYY-MM-DD**
+  (tam ISO damgası yerel saat/UTC farkıyla günü bir kaydırabilirdi).
+
+**KIRMA:** (1) üreticideki gün süzgeci kaldırıldı → backend 3 kırmızı;
+(2) pencere temizliği kaldırıldı → 2 kırmızı; (3) web'de sıralama
+kaldırıldı → 1 kırmızı; (4) mobilde boş-liste→null çevrimi kaldırıldı →
+2 kırmızı. Hepsi geri alındı.
+
+### §3 KAPANDI — kişi ataması YAPILMAYACAK
+
+Kullanıcı kararı: **kadro önceliklidir**. Devriye bir vardiyaya bağlı,
+vardiyada kim varsa turu o yapar. Kişiyi doğrudan plana bağlamak aynı
+bilgiyi iki yerde tutmak ve vardiya değişince ayrışmak demekti. Mobil
+paritesi (vardiya seçici) `2775f2e5`'te kapandı; `patrol_plan`a
+`atanan_user_id` **eklenmeyecek**.
+
+### PERSONEL-İÇİ ARAMA — AÇILMADI (kullanıcı kararı)
+
+`CALL_DIRECTIONS` olduğu gibi kalıyor. Gerekçe kullanıcıdan: görevlinin
+meslektaşını araması telsiz/kendi telefonuyla yapılır; uygulama üzerinden
+numara açmak gereksiz bir veri yüzeyidir. Yöneticinin görevliye ulaşması
+zaten çalışıyor (§5, `GET /users/{id}`).

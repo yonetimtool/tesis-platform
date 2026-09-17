@@ -1299,6 +1299,19 @@ class AppLocalizationsRu extends AppLocalizations {
   String get devriyePlanYeniBaslik => 'Новый план обхода';
 
   @override
+  String get devriyeGunler => 'В какие дни';
+
+  @override
+  String get devriyeGunlerIpucu =>
+      'Если не выбрано, выполняется ежедневно. Ночной план относится ко дню начала.';
+
+  @override
+  String get devriyeHerGun => 'Ежедневно';
+
+  @override
+  String get devriyeEkTarihler => 'Разовый дополнительный день';
+
+  @override
   String get devriyeVardiya => 'Смена';
 
   @override

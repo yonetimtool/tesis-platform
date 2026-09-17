@@ -1379,6 +1379,38 @@ class CheckpointListResponse(BaseModel):
 
 
 # ------------------------------ patrol plan -------------------------------- #
+def _devriye_gunleri(v: list[int] | None) -> list[int] | None:
+    """(P239 §4) ISO haftagunu listesi: 1..7, BOS OLAMAZ, tekrarsiz+sirali.
+
+    Sirali donmek gorunur bir fark yaratmaz ama KARSILASTIRMAYI
+    belirli kilar: `[3,1]` ile `[1,3]` ayni plandir ve testte/denetim
+    kaydinda ayni gorunmeli.
+    """
+    if v is None:
+        return None
+    if not v:
+        # Bos liste "hicbir gun" demek olurdu; kullanicinin goremeyecegi
+        # bir sessiz kapali hal. "Her gun" istiyorsa null gonderir.
+        raise ValueError("gunler bos olamaz")
+    if any(g < 1 or g > 7 for g in v):
+        raise ValueError("gun 1..7 araliginda olmali (ISO: 1=Pazartesi)")
+    return sorted(set(v))
+
+
+def _devriye_ek_tarihleri(v: list[date] | None) -> list[date] | None:
+    """(P239 §4) Bir kerelik ek gunler: bos olamaz, en cok 60, tekrarsiz."""
+    if v is None:
+        return None
+    if not v:
+        raise ValueError("ek_tarihler bos olamaz")
+    tekil = sorted(set(v))
+    if len(tekil) > 60:
+        # "Bir kerelik ek gun" bir takvim degildir; sinirsiz birakmak,
+        # plani somut tarih listesine cevirmenin arka kapisi olurdu.
+        raise ValueError("ek_tarihler en cok 60 gun olabilir")
+    return tekil
+
+
 class PatrolPlanOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -1388,6 +1420,10 @@ class PatrolPlanOut(BaseModel):
     baslangic_saat: str
     bitis_saat: str
     periyot_dakika: int
+    #: (P239 §4) ISO haftagunu (1=Pzt ... 7=Paz). None = HER GUN.
+    gunler: list[int] | None = None
+    #: (P239 §4) Bir kerelik ek gunler.
+    ek_tarihler: list[date] | None = None
     aktif: bool
     created_at: datetime
     updated_at: datetime | None = None
@@ -1416,6 +1452,13 @@ class PatrolPlanCreate(BaseModel):
     bitis_saat: time
     periyot_dakika: int = Field(..., ge=1)
     aktif: bool = True
+    #: (P239 §4) None = HER GUN. Bos liste KABUL EDILMEZ: plan aktif
+    #: gorunurken hicbir pencere uretmeyen sessiz bir kapali hal olurdu.
+    gunler: list[int] | None = None
+    ek_tarihler: list[date] | None = None
+
+    _gunler_dogrula = field_validator("gunler")(_devriye_gunleri)
+    _ek_tarih_dogrula = field_validator("ek_tarihler")(_devriye_ek_tarihleri)
 
 
 class PatrolPlanUpdate(BaseModel):
@@ -1425,6 +1468,14 @@ class PatrolPlanUpdate(BaseModel):
     bitis_saat: time | None = None
     periyot_dakika: int | None = Field(None, ge=1)
     aktif: bool | None = None
+    #: None GONDERMEK "her gune don" demektir; alani HIC gondermemek
+    #: "dokunma" demektir. Ikisini ayirt etmek `model_fields_set` ile
+    #: yapilir (routerda).
+    gunler: list[int] | None = None
+    ek_tarihler: list[date] | None = None
+
+    _gunler_dogrula = field_validator("gunler")(_devriye_gunleri)
+    _ek_tarih_dogrula = field_validator("ek_tarihler")(_devriye_ek_tarihleri)
 
     @model_validator(mode="after")
     def _at_least_one(self) -> "PatrolPlanUpdate":

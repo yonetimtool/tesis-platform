@@ -1180,6 +1180,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get devriyePlanYeniBaslik => 'Yeni devriye planı';
 
   @override
+  String get devriyeGunler => 'Hangi günler';
+
+  @override
+  String get devriyeGunlerIpucu =>
+      'Seçmezseniz her gün yürür. Gece planı başladığı güne aittir.';
+
+  @override
+  String get devriyeHerGun => 'Her gün';
+
+  @override
+  String get devriyeEkTarihler => 'Bir kerelik ek gün';
+
+  @override
   String get devriyeVardiya => 'Vardiya';
 
   @override

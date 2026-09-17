@@ -43,6 +43,31 @@ def windows_for_local_date(
     return out
 
 
+def gun_yuruyor(
+    local_date: date,
+    gunler: list[int] | None,
+    ek_tarihler: list[date] | None,
+) -> bool:
+    """(P239 §4) Bu YEREL TARIHTE plan yuruyor mu?
+
+    `gunler` None ise HER GUN yurur (eski kayitlar; goc 0139 notu).
+    Aksi halde ISO haftagunu (1=Pzt ... 7=Paz) listede olmali.
+
+    `ek_tarihler` BIRLESIMDIR, kesisim degil: bayram/ozel etkinlik gunu
+    haftalik secimin DISINDA kaldigi icin eklenir — "hem persembe hem de
+    30 Agustos" demenin baska yolu yok.
+
+    GECE PLANI: pencere BASLADIGI gunun haftagunune aittir. "Her
+    pazartesi gece devriyesi" 22:00'de pazartesi baslar, salı 06:00'da
+    biter; salı gunu secilmemis olmasi bu pencereyi dusurmemeli.
+    """
+    if ek_tarihler and local_date in ek_tarihler:
+        return True
+    if gunler is None:
+        return True
+    return local_date.isoweekday() in gunler
+
+
 def plan_windows(
     tzname: str,
     now_utc: datetime,
@@ -50,6 +75,8 @@ def plan_windows(
     baslangic: time,
     bitis: time,
     periyot_dakika: int,
+    gunler: list[int] | None = None,
+    ek_tarihler: list[date] | None = None,
 ) -> list[Window]:
     """now_utc'nin tenant-yerel gununden baslayarak horizon_days gun pencere uret.
 
@@ -63,15 +90,20 @@ def plan_windows(
     today_local = now_utc.astimezone(tz).date()
     out: list[Window] = []
     if baslangic > bitis:
-        for w_start, w_end in windows_for_local_date(
-            tzname, today_local - timedelta(days=1), baslangic, bitis, periyot_dakika
-        ):
-            if w_end > now_utc:
-                out.append((w_start, w_end))
+        dun = today_local - timedelta(days=1)
+        if gun_yuruyor(dun, gunler, ek_tarihler):
+            for w_start, w_end in windows_for_local_date(
+                tzname, dun, baslangic, bitis, periyot_dakika
+            ):
+                if w_end > now_utc:
+                    out.append((w_start, w_end))
     for i in range(max(horizon_days, 0)):
+        gun = today_local + timedelta(days=i)
+        if not gun_yuruyor(gun, gunler, ek_tarihler):
+            continue
         out.extend(
             windows_for_local_date(
-                tzname, today_local + timedelta(days=i), baslangic, bitis, periyot_dakika
+                tzname, gun, baslangic, bitis, periyot_dakika
             )
         )
     return out

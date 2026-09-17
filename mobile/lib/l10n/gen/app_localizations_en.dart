@@ -1266,6 +1266,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get devriyePlanYeniBaslik => 'New patrol plan';
 
   @override
+  String get devriyeGunler => 'Which days';
+
+  @override
+  String get devriyeGunlerIpucu =>
+      'If none selected, it runs every day. A night plan belongs to the day it starts.';
+
+  @override
+  String get devriyeHerGun => 'Every day';
+
+  @override
+  String get devriyeEkTarihler => 'One-off extra day';
+
+  @override
   String get devriyeVardiya => 'Shift';
 
   @override

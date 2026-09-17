@@ -1317,6 +1317,19 @@ class AppLocalizationsAr extends AppLocalizations {
   String get devriyePlanYeniBaslik => 'خطة دورية جديدة';
 
   @override
+  String get devriyeGunler => 'في أي أيام';
+
+  @override
+  String get devriyeGunlerIpucu =>
+      'إن لم تختر شيئًا فسيعمل يوميًا. الخطة الليلية تتبع يوم بدايتها.';
+
+  @override
+  String get devriyeHerGun => 'يوميًا';
+
+  @override
+  String get devriyeEkTarihler => 'يوم إضافي لمرة واحدة';
+
+  @override
   String get devriyeVardiya => 'الوردية';
 
   @override

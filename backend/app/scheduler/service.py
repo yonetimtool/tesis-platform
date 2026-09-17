@@ -226,13 +226,19 @@ def materialize_windows(
                     "SELECT set_config('app.current_tenant_id', %s, true)", (str(tenant_id),)
                 )
                 plans = conn.execute(
-                    "SELECT id, baslangic_saat, bitis_saat, periyot_dakika "
+                    # (P239 §4) GUN SECIMI DE CEKILIR: plan artik "her gun"
+                    # demek zorunda degil.
+                    "SELECT id, baslangic_saat, bitis_saat, periyot_dakika, "
+                    "       gunler, ek_tarihler "
                     "FROM patrol_plan WHERE aktif = true"
                 ).fetchall()
-                for plan_id, baslangic, bitis, periyot in plans:
-                    for w_start, w_end in plan_windows(
-                        tzname, now, horizon_days, baslangic, bitis, periyot
-                    ):
+                for plan_id, baslangic, bitis, periyot, gunler, ek_tarihler in plans:
+                    pencereler = plan_windows(
+                        tzname, now, horizon_days, baslangic, bitis, periyot,
+                        gunler=list(gunler) if gunler is not None else None,
+                        ek_tarihler=list(ek_tarihler) if ek_tarihler is not None else None,
+                    )
+                    for w_start, w_end in pencereler:
                         cur = conn.execute(
                             "INSERT INTO patrol_window "
                             "(tenant_id, patrol_plan_id, pencere_baslangic, pencere_bitis, durum) "
@@ -241,6 +247,26 @@ def materialize_windows(
                             (tenant_id, plan_id, w_start, w_end),
                         )
                         created += cur.rowcount  # 1 eklendi, 0 zaten vardi
+
+                    # (P239 §4) ARTIK YURUMEYEN GUNLERIN PENCERELERI SILINIR.
+                    #
+                    # Ureteci gun suzgeciyle donatmak TEK BASINA YETMEZ:
+                    # "her gun"den "yalniz pazartesi"ye gecen bir planin
+                    # ONCEDEN uretilmis sali pencereleri 'bekliyor' olarak
+                    # kalir ve saati gecince 'kacirildi' yazilir — yani
+                    # kullanici ARTIK YURUMEYEN bir tur icin alarm alir.
+                    #
+                    # YALNIZ GELECEK ve YALNIZ 'bekliyor' silinir: baslamis
+                    # ya da sonuclanmis pencere GECMISTIR, silmek okutma
+                    # kaydini sahipsiz birakirdi.
+                    gecerli = [w[0] for w in pencereler]
+                    conn.execute(
+                        "DELETE FROM patrol_window "
+                        "WHERE patrol_plan_id = %s AND durum = 'bekliyor' "
+                        "AND pencere_baslangic > %s "
+                        "AND NOT (pencere_baslangic = ANY(%s))",
+                        (plan_id, now, gecerli),
+                    )
     return created
 
 

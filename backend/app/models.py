@@ -920,6 +920,19 @@ class PatrolPlan(Base):
     baslangic_saat = mapped_column(Time, nullable=False)
     bitis_saat = mapped_column(Time, nullable=False)
     periyot_dakika: Mapped[int] = mapped_column(Integer, nullable=False)
+    #: (P239 §4, goc 0139) HANGI GUNLER — ISO haftagunu (1=Pzt ... 7=Paz).
+    #:
+    #: NULL = HER GUN (eski kayitlar; "her gun yurusun dedim" ile "gun
+    #: hic sorulmadi" ayni sey degil, NULL o ayrimi tasiyor). BOS DIZI
+    #: veritabaninda YASAK: plan aktif gorunurken hicbir pencere
+    #: uretmeyen sessiz bir kapali hal olurdu.
+    gunler = mapped_column(ARRAY(SmallInteger), nullable=True)
+    #: (P239 §4, goc 0139) BIR KERELIK EK GUNLER (bayram, ozel etkinlik).
+    #:
+    #: Pencere uretimi UNION: haftagunu `gunler`de VEYA yerel tarih
+    #: burada. Tek care yeni bir plan acip sonra silmekti — silinmezse
+    #: sessizce her hafta yururdu.
+    ek_tarihler = mapped_column(ARRAY(Date), nullable=True)
     aktif: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("true")
     )

@@ -18280,6 +18280,26 @@ components:
           minimum: 1
           description: "Pencere periyodu (orn 60 => saat basi)"
           example: 60
+        gunler:
+          type: array
+          nullable: true
+          description: >-
+            (P239 §4) Planin yurudugu HAFTA GUNLERI — ISO-8601 (1=Pazartesi
+            ... 7=Pazar). null = HER GUN (goc 0139 oncesi kayitlar ve "gun
+            secmedim" hali). BOS DIZI KABUL EDILMEZ: plan aktif gorunurken
+            hicbir pencere uretmeyen sessiz bir kapali hal olurdu.
+            Gece plani BASLADIGI gunun haftagunune aittir.
+          items: { type: integer, minimum: 1, maximum: 7 }
+          example: [1, 4]
+        ek_tarihler:
+          type: array
+          nullable: true
+          description: >-
+            (P239 §4) BIR KERELIK ek devriye gunleri (bayram, ozel etkinlik).
+            `gunler` ile BIRLESIM (kesisim degil). En cok 60 gun — "bir
+            kerelik ek gun" bir takvim degildir.
+          items: { type: string, format: date }
+          example: ["2026-08-30"]
         aktif: { type: boolean }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
@@ -18301,6 +18321,26 @@ components:
         bitis_saat: { type: string, example: "06:00" }
         periyot_dakika: { type: integer, minimum: 1, example: 60 }
         aktif: { type: boolean, default: true }
+        gunler:
+          type: array
+          nullable: true
+          description: >-
+            (P239 §4) Planin yurudugu HAFTA GUNLERI — ISO-8601 (1=Pazartesi
+            ... 7=Pazar). null = HER GUN (goc 0139 oncesi kayitlar ve "gun
+            secmedim" hali). BOS DIZI KABUL EDILMEZ: plan aktif gorunurken
+            hicbir pencere uretmeyen sessiz bir kapali hal olurdu.
+            Gece plani BASLADIGI gunun haftagunune aittir.
+          items: { type: integer, minimum: 1, maximum: 7 }
+          example: [1, 4]
+        ek_tarihler:
+          type: array
+          nullable: true
+          description: >-
+            (P239 §4) BIR KERELIK ek devriye gunleri (bayram, ozel etkinlik).
+            `gunler` ile BIRLESIM (kesisim degil). En cok 60 gun — "bir
+            kerelik ek gun" bir takvim degildir.
+          items: { type: string, format: date }
+          example: ["2026-08-30"]
     PatrolPlanUpdate:
       type: object
       minProperties: 1
@@ -18311,6 +18351,26 @@ components:
         bitis_saat: { type: string }
         periyot_dakika: { type: integer, minimum: 1 }
         aktif: { type: boolean }
+        gunler:
+          type: array
+          nullable: true
+          description: >-
+            (P239 §4) Planin yurudugu HAFTA GUNLERI — ISO-8601 (1=Pazartesi
+            ... 7=Pazar). null = HER GUN (goc 0139 oncesi kayitlar ve "gun
+            secmedim" hali). BOS DIZI KABUL EDILMEZ: plan aktif gorunurken
+            hicbir pencere uretmeyen sessiz bir kapali hal olurdu.
+            Gece plani BASLADIGI gunun haftagunune aittir.
+          items: { type: integer, minimum: 1, maximum: 7 }
+          example: [1, 4]
+        ek_tarihler:
+          type: array
+          nullable: true
+          description: >-
+            (P239 §4) BIR KERELIK ek devriye gunleri (bayram, ozel etkinlik).
+            `gunler` ile BIRLESIM (kesisim degil). En cok 60 gun — "bir
+            kerelik ek gun" bir takvim degildir.
+          items: { type: string, format: date }
+          example: ["2026-08-30"]
 
     PatrolPlanCheckpoint:
       type: object
