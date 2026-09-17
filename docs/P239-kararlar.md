@@ -144,3 +144,53 @@ liste metni testi düğmeyi de ölçüyordu) ve `p206_mobil_sayac_personel_test`
 Üçü de gerçek bağımlılıktı; sessizce geçselerdi değişiklik eksik kalırdı.
 
 ---
+
+## §7 — Anket seçenekleri: ayrı kutular, "+" ile ekle, tek tek sil
+
+### ÖLÇÜM: iki yüzeyde de tek çok-satırlı metin alanı
+
+Web `anketler/page.tsx` `maddeler: string` + `CokSatir`, mobil
+`anket_form.dart` tek `TextEditingController` — ikisi de satırları
+bölerek seçeneğe çeviriyordu. P237'de bunun gerekçesi yazılıydı: "ayrı
+alan açmak aynı işi üç dokunuşa çıkarırdı."
+
+**O gerekçe tutmadı.** Ölçülen üç kusur: kullanıcı kaç seçenek yazdığını
+göremiyor; boş satır/boşluk sessizce yutuluyor; bir seçeneği silmek
+satırı işaretleyip silmeyi gerektiriyor. Mobil klavyede satır sonu koymak
+da zaten fazladan bir dokunuş — "üç dokunuş" tasarrufu gerçek değildi.
+
+### KARAR
+
+- **İki kutu açık başlar** (en az iki şartı zaten var; boş form o şartı
+  göstererek başlasın).
+- **"+"** bir kutu ekler, sınırsız.
+- **Silme iki kutuda KAPALI — gizli değil.** Gizlenen düğme "neden yok"
+  sorusunu doğurur; kapalı düğme ipucu metniyle (`En az iki seçenek
+  gerekir`) kuralı söyler.
+- **Sunucuya giden gövde DEĞİŞMEDİ** (`{metin, sira}` listesi / mobilde
+  metin listesi) ve boş kutular atılıp `sira` yeniden verilir. Bu yüzden
+  **mevcut anketler ve arka uç etkilenmez** — değişiklik yalnız form
+  durumunda.
+- 7 dile üç yeni anahtar: `anketSecenekEkle`, `anketSecenekSil`,
+  `anketSecenekNo` (mobilde `{n}` yer tutuculu).
+
+### KİLİT (iki yüzey)
+
+`admin-web/tests/p239-anket-secenek.dom.test.ts` ve
+`mobile/test/p239_anket_secenek_test.dart` — beşer test: iki kutuyla
+başlar / "+" ekler / ikide silme kapalı / üçte açılır ve **ortadakini**
+siler (kalanlar A, C) / gövde `{metin, sira}` kalır ve boş kutu atılır.
+
+**KIRMA:** silme kuralı `disabled={false}` yapıldı → web'de iki test
+birden kırmızı; kural geri alındı.
+
+**Kilidin yakaladığı:** `p237_anket_ekranlari_test`'te "yalnız güvenlik
+hedeflenince ayrım çizilmez" testi kırmızıya döndü — form uzayınca hedef
+çipi katlamanın altında kaldı ve `tap` **dokunmadan** uyarı verdi (P237'de
+de yaşanan sahte-yeşil tuzağı). `ensureVisible` eklendi.
+
+### ÖLÇEMEDİĞİM
+
+Seçenekleri **yeniden sıralama** (sürükle) yapılmadı — brief'te
+"opsiyonel" olarak geçiyordu; sıra `sira` alanıyla zaten kutuların
+görsel sırasından türüyor.

@@ -2245,7 +2245,18 @@
   "anketYeni": "استطلاع جديد",
   "anketAciklamaOpsiyonel": "الوصف (اختياري)",
   "anketMaddeler": "خيارات الاستطلاع",
-  "anketMaddeIpucu": "خيار واحد في كل سطر؛ يلزم خياران على الأقل.",
+  "anketMaddeIpucu": "مطلوب خياران على الأقل؛ أضف المزيد بـ «+».",
+  "anketSecenekEkle": "إضافة خيار",
+  "anketSecenekSil": "حذف الخيار",
+  "anketSecenekNo": "الخيار {n}",
+  "@anketSecenekNo": {
+    "description": "Anket secenek kutusunun etiketi (n = sira numarasi)",
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
   "anketEnAzIki": "يلزم خياران على الأقل.",
   "anketHedefKitle": "الفئة المستهدفة",
   "anketHedefHerkes": "الجميع (إذا لم يتم الاختيار)",

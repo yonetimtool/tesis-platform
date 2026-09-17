@@ -11420,8 +11420,26 @@ abstract class AppLocalizations {
   /// No description provided for @anketMaddeIpucu.
   ///
   /// In tr, this message translates to:
-  /// **'Her satır bir madde; en az iki madde gerekir.'**
+  /// **'En az iki seçenek gerekir; “+” ile yenisini ekleyin.'**
   String get anketMaddeIpucu;
+
+  /// No description provided for @anketSecenekEkle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Seçenek ekle'**
+  String get anketSecenekEkle;
+
+  /// No description provided for @anketSecenekSil.
+  ///
+  /// In tr, this message translates to:
+  /// **'Seçeneği sil'**
+  String get anketSecenekSil;
+
+  /// Anket secenek kutusunun etiketi (n = sira numarasi)
+  ///
+  /// In tr, this message translates to:
+  /// **'Seçenek {n}'**
+  String anketSecenekNo(String n);
 
   /// No description provided for @anketEnAzIki.
   ///

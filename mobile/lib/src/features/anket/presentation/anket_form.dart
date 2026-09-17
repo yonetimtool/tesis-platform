@@ -20,13 +20,20 @@ import '../domain/anket_models.dart';
 /// SUNUCUDA (admin + yonetici); buradaki kapi yalniz UX.
 ///
 /// =========================================================================
-/// MADDELER: SATIR BASINA BIR MADDE
+/// (P239 §7) MADDELER: HER SECENEK AYRI KUTU
 /// =========================================================================
-/// Web'le AYNI desen. Ayri bir "+ ile ekle" listesi yerine cok satirli
-/// metin: yonetici maddeleri pesi sira yazar; her madde icin ayri alan
-/// acmak ayni isi uc dokunusa cikarirdi. EN AZ IKI madde sarti burada da
-/// sorulur — sunucuya sorup 422 almak, yapilabilecek bir uyariyi aga
-/// havale etmek olurdu.
+/// ESKIDEN cok satirli TEK metin alaniydi ("satir basina bir madde") ve
+/// gerekcesi "ayri alan acmak ayni isi uc dokunusa cikarirdi" idi. O
+/// gerekce YANLIS cikti: kullanici kac secenek yazdigini goremiyor, bos
+/// satir sessizce yutuluyor, bir secenegi silmek satiri isaretleyip
+/// silmeyi gerektiriyor ve mobil klavyede satir sonu koymak zaten fazladan
+/// bir dokunus. Iki kutu ACIK BASLAR; "+" ucuncuyu ekler.
+///
+/// SILME IKI KUTUDA KAPALI — gizli degil. Gizlenen dugme "neden yok"
+/// sorusunu dogurur; kapali dugme kurali soyler.
+///
+/// SUNUCUYA GIDEN GOVDE DEGISMEDI (madde metinleri listesi), bu yuzden
+/// MEVCUT ANKETLER etkilenmez.
 ///
 /// =========================================================================
 /// GORSEL YUKLEME: TASK API'NIN PRESIGN'I
@@ -54,7 +61,11 @@ const _hedefRoller = [
 class _AnketFormSayfasiState extends ConsumerState<AnketFormSayfasi> {
   final _baslik = TextEditingController();
   final _aciklama = TextEditingController();
-  final _maddeler = TextEditingController();
+  /// (P239 §7) HER SECENEK BIR DENETLEYICI — en az iki.
+  final List<TextEditingController> _maddeler = [
+    TextEditingController(),
+    TextEditingController(),
+  ];
   final Set<String> _secilenRoller = {};
   DateTime? _baslangic;
   DateTime? _bitis;
@@ -68,7 +79,9 @@ class _AnketFormSayfasiState extends ConsumerState<AnketFormSayfasi> {
   void dispose() {
     _baslik.dispose();
     _aciklama.dispose();
-    _maddeler.dispose();
+    for (final c in _maddeler) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -133,9 +146,8 @@ class _AnketFormSayfasiState extends ConsumerState<AnketFormSayfasi> {
 
   Future<void> _kaydet() async {
     final l10n = context.l10n;
-    final maddeler = _maddeler.text
-        .split('\n')
-        .map((x) => x.trim())
+    final maddeler = _maddeler
+        .map((c) => c.text.trim())
         .where((x) => x.isNotEmpty)
         .toList();
     if (_baslik.text.trim().isEmpty || maddeler.length < 2) {
@@ -214,16 +226,57 @@ class _AnketFormSayfasiState extends ConsumerState<AnketFormSayfasi> {
                   InputDecoration(labelText: l10n.anketAciklamaOpsiyonel),
             ),
             const SizedBox(height: 8),
-            TextField(
-              key: const Key('anket-maddeler'),
-              controller: _maddeler,
-              minLines: 3,
-              maxLines: 6,
-              decoration: InputDecoration(
-                labelText: l10n.anketMaddeler,
-                helperText: l10n.anketMaddeIpucu,
-                helperMaxLines: 2,
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: Text(l10n.anketMaddeler,
+                  style: Theme.of(context).textTheme.labelLarge),
+            ),
+            for (var i = 0; i < _maddeler.length; i++)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        key: Key('anket-madde-$i'),
+                        controller: _maddeler[i],
+                        decoration: InputDecoration(
+                          labelText: l10n.anketSecenekNo('${i + 1}'),
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      key: Key('anket-madde-sil-$i'),
+                      icon: const Icon(Icons.close),
+                      tooltip: _maddeler.length <= 2
+                          ? l10n.anketEnAzIki
+                          : l10n.anketSecenekSil,
+                      onPressed: _maddeler.length <= 2 || _mesgul
+                          ? null
+                          : () => setState(() => _maddeler.removeAt(i).dispose()),
+                    ),
+                  ],
+                ),
               ),
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: TextButton.icon(
+                  key: const Key('anket-madde-ekle'),
+                  icon: const Icon(Icons.add),
+                  label: Text(l10n.anketSecenekEkle),
+                  onPressed: _mesgul
+                      ? null
+                      : () => setState(
+                          () => _maddeler.add(TextEditingController())),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(l10n.anketMaddeIpucu,
+                  style: Theme.of(context).textTheme.bodySmall),
             ),
             const SizedBox(height: 8),
             Align(

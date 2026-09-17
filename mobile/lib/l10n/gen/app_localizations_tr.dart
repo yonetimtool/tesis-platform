@@ -6431,7 +6431,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get anketMaddeler => 'Anket maddeleri';
 
   @override
-  String get anketMaddeIpucu => 'Her satır bir madde; en az iki madde gerekir.';
+  String get anketMaddeIpucu =>
+      'En az iki seçenek gerekir; “+” ile yenisini ekleyin.';
+
+  @override
+  String get anketSecenekEkle => 'Seçenek ekle';
+
+  @override
+  String get anketSecenekSil => 'Seçeneği sil';
+
+  @override
+  String anketSecenekNo(String n) {
+    return 'Seçenek $n';
+  }
 
   @override
   String get anketEnAzIki => 'En az iki madde gerekir.';

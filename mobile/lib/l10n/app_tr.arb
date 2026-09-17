@@ -3122,7 +3122,18 @@
   "anketYeni": "Yeni anket",
   "anketAciklamaOpsiyonel": "Açıklama (isteğe bağlı)",
   "anketMaddeler": "Anket maddeleri",
-  "anketMaddeIpucu": "Her satır bir madde; en az iki madde gerekir.",
+  "anketMaddeIpucu": "En az iki seçenek gerekir; “+” ile yenisini ekleyin.",
+  "anketSecenekEkle": "Seçenek ekle",
+  "anketSecenekSil": "Seçeneği sil",
+  "anketSecenekNo": "Seçenek {n}",
+  "@anketSecenekNo": {
+    "description": "Anket secenek kutusunun etiketi (n = sira numarasi)",
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
   "anketEnAzIki": "En az iki madde gerekir.",
   "anketHedefKitle": "Hedef kitle",
   "anketHedefHerkes": "Herkes (seçim yapılmazsa)",

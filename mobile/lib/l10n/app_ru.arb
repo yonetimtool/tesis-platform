@@ -2245,7 +2245,18 @@
   "anketYeni": "Новый опрос",
   "anketAciklamaOpsiyonel": "Описание (необязательно)",
   "anketMaddeler": "Варианты опроса",
-  "anketMaddeIpucu": "По одному варианту в строке; нужно минимум два.",
+  "anketMaddeIpucu": "Нужно минимум два варианта; добавьте ещё кнопкой «+».",
+  "anketSecenekEkle": "Добавить вариант",
+  "anketSecenekSil": "Удалить вариант",
+  "anketSecenekNo": "Вариант {n}",
+  "@anketSecenekNo": {
+    "description": "Anket secenek kutusunun etiketi (n = sira numarasi)",
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
   "anketEnAzIki": "Нужно минимум два варианта.",
   "anketHedefKitle": "Целевая аудитория",
   "anketHedefHerkes": "Все (если ничего не выбрано)",

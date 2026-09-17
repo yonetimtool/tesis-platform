@@ -6688,7 +6688,18 @@ class AppLocalizationsAr extends AppLocalizations {
   String get anketMaddeler => 'خيارات الاستطلاع';
 
   @override
-  String get anketMaddeIpucu => 'خيار واحد في كل سطر؛ يلزم خياران على الأقل.';
+  String get anketMaddeIpucu => 'مطلوب خياران على الأقل؛ أضف المزيد بـ «+».';
+
+  @override
+  String get anketSecenekEkle => 'إضافة خيار';
+
+  @override
+  String get anketSecenekSil => 'حذف الخيار';
+
+  @override
+  String anketSecenekNo(String n) {
+    return 'الخيار $n';
+  }
 
   @override
   String get anketEnAzIki => 'يلزم خياران على الأقل.';

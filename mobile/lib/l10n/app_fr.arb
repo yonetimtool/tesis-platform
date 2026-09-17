@@ -2245,7 +2245,18 @@
   "anketYeni": "Nouveau sondage",
   "anketAciklamaOpsiyonel": "Description (facultatif)",
   "anketMaddeler": "Options du sondage",
-  "anketMaddeIpucu": "Une option par ligne ; au moins deux sont requises.",
+  "anketMaddeIpucu": "Deux options au minimum ; ajoutez-en avec « + ».",
+  "anketSecenekEkle": "Ajouter une option",
+  "anketSecenekSil": "Supprimer l’option",
+  "anketSecenekNo": "Option {n}",
+  "@anketSecenekNo": {
+    "description": "Anket secenek kutusunun etiketi (n = sira numarasi)",
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
   "anketEnAzIki": "Au moins deux options sont requises.",
   "anketHedefKitle": "Public cible",
   "anketHedefHerkes": "Tout le monde (si rien n'est sélectionné)",

@@ -6696,7 +6696,18 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get anketMaddeIpucu =>
-      'По одному варианту в строке; нужно минимум два.';
+      'Нужно минимум два варианта; добавьте ещё кнопкой «+».';
+
+  @override
+  String get anketSecenekEkle => 'Добавить вариант';
+
+  @override
+  String get anketSecenekSil => 'Удалить вариант';
+
+  @override
+  String anketSecenekNo(String n) {
+    return 'Вариант $n';
+  }
 
   @override
   String get anketEnAzIki => 'Нужно минимум два варианта.';

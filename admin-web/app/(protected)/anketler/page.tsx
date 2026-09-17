@@ -10,7 +10,6 @@ import {
   Alan,
   AlanSarmal,
   BosDurum,
-  CokSatir,
   Dugme,
   HataDurumu,
   Rozet,
@@ -55,8 +54,19 @@ const TIP_KIRACI = "kiraci" as const;
 interface FormState {
   baslik: string;
   aciklama: string;
-  /** SATIR BASINA BIR MADDE — en az iki. */
-  maddeler: string;
+  /**
+   * (P239 §7) HER SECENEK AYRI KUTU — en az iki.
+   *
+   * ESKIDEN tek bir cok-satirli metin alaniydi ve satirlar bolunerek
+   * secenege cevriliyordu. Olculen kusur: kullanici kac secenek
+   * yazdigini goremiyor, bos satir/bosluk sessizce yutuluyor, bir
+   * secenegi silmek icin satiri secip silmek gerekiyordu. Dizi
+   * tutmak bunlarin ucunu de kaynaginda cozer.
+   *
+   * SUNUCUYA GIDEN GOVDE DEGISMEDI ({metin, sira} listesi), bu yuzden
+   * MEVCUT ANKETLER etkilenmez — degisiklik yalnizca form durumunda.
+   */
+  secenekler: string[];
   baslangic: string;
   bitis: string;
   hedefRoller: string[];
@@ -68,7 +78,7 @@ interface FormState {
 const BOS: FormState = {
   baslik: "",
   aciklama: "",
-  maddeler: "",
+  secenekler: ["", ""],
   baslangic: "",
   bitis: "",
   hedefRoller: [],
@@ -143,8 +153,7 @@ export default function AnketlerPage() {
 
   async function ekle(): Promise<void> {
     setHata(null);
-    const secenekler = form.maddeler
-      .split("\n")
+    const secenekler = form.secenekler
       .map((x) => x.trim())
       .filter(Boolean)
       .map((metin, i) => ({ metin, sira: i }));
@@ -447,15 +456,66 @@ export default function AnketlerPage() {
             </AlanSarmal>
           </div>
 
+          {/*
+            (P239 §7) SECENEK KUTULARI.
+
+            SILME DUGMESI IKI SECENEKTE KAPALI (disabled) — gizlenmez.
+            Gizlemek "neden yok" sorusunu dogurur; kapali dugme ipucu
+            metniyle KURALI soyler.
+          */}
           <AlanSarmal etiket={t("anketSecenekler")} ipucu={t("anketSecenekIpucu")}>
             {(b) => (
-              <CokSatir
-                {...b}
-                rows={3}
-                data-test="anket-maddeler"
-                value={form.maddeler}
-                onChange={(e) => setForm({ ...form, maddeler: e.target.value })}
-              />
+              // ETIKET ILK KUTUYA BAGLANIR: `AlanSarmal` tek bir
+              // `htmlFor` uretir; onu sarmalayici <div>'e vermek
+              // etiketi HICBIR alana baglamaz (div odaklanilamaz).
+              <div className="space-y-2">
+                {form.secenekler.map((deger, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <Alan
+                      className="flex-1"
+                      id={i === 0 ? b.id : undefined}
+                      aria-describedby={i === 0 ? b["aria-describedby"] : undefined}
+                      data-test={`anket-madde-${i}`}
+                      aria-label={t("anketSecenekNo").replace("{n}", String(i + 1))}
+                      placeholder={t("anketSecenekNo").replace("{n}", String(i + 1))}
+                      value={deger}
+                      onChange={(e) => {
+                        const y = [...form.secenekler];
+                        y[i] = e.target.value;
+                        setForm({ ...form, secenekler: y });
+                      }}
+                    />
+                    <Dugme
+                      tur="ikincil"
+                      data-test={`anket-madde-sil-${i}`}
+                      aria-label={t("anketSecenekSil")}
+                      title={
+                        form.secenekler.length <= 2
+                          ? t("anketEnAzIki")
+                          : t("anketSecenekSil")
+                      }
+                      disabled={form.secenekler.length <= 2}
+                      onClick={() =>
+                        setForm({
+                          ...form,
+                          secenekler: form.secenekler.filter((_, j) => j !== i),
+                        })
+                      }
+                    >
+                      ✕
+                    </Dugme>
+                  </div>
+                ))}
+                <Dugme
+                  tur="ikincil"
+                  data-test="anket-madde-ekle"
+                  onClick={() =>
+                    setForm({ ...form, secenekler: [...form.secenekler, ""] })
+                  }
+                >
+                  + {t("anketSecenekEkle")}
+                </Dugme>
+              </div>
             )}
           </AlanSarmal>
 

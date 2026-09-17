@@ -121,8 +121,8 @@ void main() {
 
       await tester.enterText(
           find.byKey(const Key('anket-baslik')), 'Otopark');
-      await tester.enterText(
-          find.byKey(const Key('anket-maddeler')), 'Evet\nHayır');
+      await tester.enterText(find.byKey(const Key('anket-madde-0')), 'Evet');
+      await tester.enterText(find.byKey(const Key('anket-madde-1')), 'Hayır');
 
       // Iki tarih de AYNI ana kurulur (ikisinde de varsayilan "simdi"
       // onaylanir) -> bitis baslangictan SONRA DEGIL.
@@ -160,6 +160,10 @@ void main() {
       await tester.pumpWidget(_form(_SahteAnketApi()));
       await tester.pumpAndSettle();
 
+      // (P239 §7) SECENEK KUTULARI FORMU UZATTI: cip artik katlamanin
+      // ALTINDA. `ensureVisible` olmadan `tap` "hit test" uyarisi verip
+      // DOKUNMUYOR — testi sahte-yesil birakan tuzak (P237'de de yasandi).
+      await tester.ensureVisible(find.byKey(const Key('anket-hedef-security')));
       await tester.tap(find.byKey(const Key('anket-hedef-security')));
       await tester.pumpAndSettle();
       // "yalniz guvenlik ekibi" + "yalniz malikler" birlikte anlamsiz;
@@ -167,6 +171,7 @@ void main() {
       expect(find.byKey(const Key('anket-sakin-tipi')), findsNothing);
 
       // SAKIN de eklenince GERI GELIR.
+      await tester.ensureVisible(find.byKey(const Key('anket-hedef-resident')));
       await tester.tap(find.byKey(const Key('anket-hedef-resident')));
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('anket-sakin-tipi')), findsOneWidget);

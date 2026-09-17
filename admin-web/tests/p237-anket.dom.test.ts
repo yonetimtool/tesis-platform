@@ -108,7 +108,8 @@ describe("Anketler sayfasi", () => {
     ciz(AnketlerPage);
     await userEvent.click(el("anket-ekle-ac") as HTMLElement);
     await userEvent.type(el("anket-baslik") as HTMLElement, "Tek");
-    await userEvent.type(el("anket-maddeler") as HTMLElement, "Tamam");
+    // (P239 §7) TEK madde: ilk kutu dolu, ikinci BOS birakilir.
+    await userEvent.type(el("anket-madde-0") as HTMLElement, "Tamam");
     await userEvent.click(el("anket-kaydet") as HTMLElement);
     // Ipucu metni de "en az iki" iceriyor; hata satirinin BELIRMESI
     // olculur (bir tane -> iki tane).
@@ -125,10 +126,8 @@ describe("Anketler sayfasi", () => {
     ciz(AnketlerPage);
     await userEvent.click(el("anket-ekle-ac") as HTMLElement);
     await userEvent.type(el("anket-baslik") as HTMLElement, "Otopark");
-    await userEvent.type(
-      el("anket-maddeler") as HTMLElement,
-      "Evet\nHayır",
-    );
+    await userEvent.type(el("anket-madde-0") as HTMLElement, "Evet");
+    await userEvent.type(el("anket-madde-1") as HTMLElement, "Hayır");
     await userEvent.click(el("anket-hedef-resident") as HTMLElement);
     await userEvent.click(el("anket-anonim") as HTMLElement);
     await userEvent.click(el("anket-kaydet") as HTMLElement);
@@ -165,7 +164,8 @@ describe("Anketler sayfasi", () => {
     ciz(AnketlerPage);
     await userEvent.click(el("anket-ekle-ac") as HTMLElement);
     await userEvent.type(el("anket-baslik") as HTMLElement, "Otopark");
-    await userEvent.type(el("anket-maddeler") as HTMLElement, "Evet\nHayır");
+    await userEvent.type(el("anket-madde-0") as HTMLElement, "Evet");
+    await userEvent.type(el("anket-madde-1") as HTMLElement, "Hayır");
 
     // Once malik secilir...
     await userEvent.selectOptions(el("anket-sakin-tipi") as HTMLElement, "malik");

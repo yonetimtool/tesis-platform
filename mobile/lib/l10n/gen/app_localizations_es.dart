@@ -6602,7 +6602,18 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get anketMaddeIpucu =>
-      'Una opción por línea; se requieren al menos dos.';
+      'Se requieren al menos dos opciones; añada más con «+».';
+
+  @override
+  String get anketSecenekEkle => 'Añadir opción';
+
+  @override
+  String get anketSecenekSil => 'Eliminar opción';
+
+  @override
+  String anketSecenekNo(String n) {
+    return 'Opción $n';
+  }
 
   @override
   String get anketEnAzIki => 'Se requieren al menos dos opciones.';
