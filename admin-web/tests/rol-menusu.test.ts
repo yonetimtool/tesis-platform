@@ -151,6 +151,8 @@ const BIRINCIL_UC: Record<string, string> = {
   // (P155 §7) Davet gonderim durumu — yonetici/admin.
   "/davetler": "GET /davet",
   "/olaylar": "GET /violations",
+  // (P240 §1) Panik takip ekrani — acilir acilmaz alarm listesini ceker.
+  "/panik": "GET /panik",
   "/arac-gecisleri": "GET /vehicle-passes",
   "/gorevlerim": "GET /tasks",
   "/kameralar": "GET /cameras",

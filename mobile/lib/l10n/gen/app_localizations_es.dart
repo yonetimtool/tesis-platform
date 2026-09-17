@@ -1193,6 +1193,85 @@ class AppLocalizationsEs extends AppLocalizations {
   String get devriyePlanYeniBaslik => 'Nuevo plan de patrulla';
 
   @override
+  String get panikBaslik => 'Emergencia';
+
+  @override
+  String get panikKisa => 'SOS';
+
+  @override
+  String get panikTipSakin => 'Emergencia en casa (salud, seguridad)';
+
+  @override
+  String get panikTipGuvenlik =>
+      'Emergencia de seguridad (agresión, incendio, intrusión)';
+
+  @override
+  String get panikTipAnons =>
+      'Aviso a toda la comunidad (evacuación, gas, terremoto)';
+
+  @override
+  String panikGonderiliyor(Object n) {
+    return 'Enviando… $n s';
+  }
+
+  @override
+  String get panikGonderildi => 'Enviado';
+
+  @override
+  String get panikIptalAciklama =>
+      'Cancele antes de que termine la cuenta atrás y no se enviará nada.';
+
+  @override
+  String get panikIptalEt => 'Cancelar';
+
+  @override
+  String get panikIptalEdildi => 'Cancelado: no se envió nada.';
+
+  @override
+  String get panikYanlisAlarmGonderildi => 'Falsa alarma notificada.';
+
+  @override
+  String get panikYasalUyari =>
+      'Este sistema no sustituye al 112 / 155 / 110. Ante peligro vital llame primero a emergencias oficiales.';
+
+  @override
+  String get panikYetkiYok =>
+      'Esta cuenta no puede generar llamadas de emergencia.';
+
+  @override
+  String get panikGelenAlarm => 'LLAMADA DE EMERGENCIA';
+
+  @override
+  String get panikGidiyorum => 'Voy en camino';
+
+  @override
+  String get panikGordum => 'Visto';
+
+  @override
+  String panikYanlisAlarmSayaci(Object n) {
+    return '$n falsas alarmas en 24 h';
+  }
+
+  @override
+  String get panikTakipBaslik => 'Llamadas de emergencia';
+
+  @override
+  String get panikAlarmYok => 'No hay llamadas de emergencia registradas.';
+
+  @override
+  String get panikKapat => 'Cerrar';
+
+  @override
+  String panikGorenSayisi(Object goren, Object toplam) {
+    return '$goren/$toplam la vieron';
+  }
+
+  @override
+  String panikMudahaleSuresi(Object n) {
+    return 'Respuesta: $n s';
+  }
+
+  @override
   String get devriyeGunler => 'Qué días';
 
   @override

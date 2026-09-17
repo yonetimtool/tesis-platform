@@ -105,6 +105,15 @@ SES_HAZIR = True
 #: vardiya hatirlatmalari). Bunlar KRITIK kanaldan gider; kullanici
 #: sesi kapatsa bile ekranda uyari gorur (mobil tarafta yazili).
 KRITIK_TIPLER: frozenset[str] = frozenset({
+    # (P240 §1) PANIK — kritik kanalin var olma nedeni budur. Duyulmayan
+    # bir panik bildirimi, hic gonderilmemis olanla AYNI SEYDIR.
+    #
+    # `panik_yanlis_alarm` da KRITIK: sahaya kosan kisiyi geri cagiran
+    # mesaj, alarmin kendisi kadar zaman-kritiktir. `panik_kapandi`
+    # kritik DEGIL (asagida yok) — o bir sonuc bildirimidir, kosarak
+    # yapilacak bir sey kalmamistir.
+    "panik_alarm",
+    "panik_yanlis_alarm",
     # Sikayet/talep hattinin TAMAMI: sakinin actigi talep, yoneticinin
     # gormesi gereken ilk seydir.
     "yeni_talep",

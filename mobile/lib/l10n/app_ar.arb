@@ -349,6 +349,49 @@
   "devriyePlanSilindi": "تم حذف الخطة ✓",
   "devriyePlanDuzenleBaslik": "تعديل خطة الدورية",
   "devriyePlanYeniBaslik": "خطة دورية جديدة",
+  "panikBaslik": "حالة طوارئ",
+  "panikKisa": "SOS",
+  "panikTipSakin": "طوارئ في المنزل (صحة، أمان)",
+  "panikTipGuvenlik": "طوارئ أمنية (اعتداء، حريق، اقتحام)",
+  "panikTipAnons": "إعلان لكل المجمع (إخلاء، غاز، زلزال)",
+  "panikGonderiliyor": "جارٍ الإرسال… {n} ث",
+  "@panikGonderiliyor": {
+    "placeholders": {
+      "n": {}
+    }
+  },
+  "panikGonderildi": "تم الإرسال",
+  "panikIptalAciklama": "ألغِ قبل انتهاء العد ولن يُرسل أي تنبيه.",
+  "panikIptalEt": "إلغاء",
+  "panikIptalEdildi": "أُلغي — لم يُرسل شيء.",
+  "panikYanlisAlarmGonderildi": "تم الإبلاغ عن إنذار خاطئ.",
+  "panikYasalUyari": "هذا النظام لا يغني عن 112 / 155 / 110. عند خطر يهدد الحياة اتصل أولًا بالطوارئ الرسمية.",
+  "panikYetkiYok": "لا يملك هذا الحساب صلاحية نداء الطوارئ.",
+  "panikGelenAlarm": "نداء طوارئ",
+  "panikGidiyorum": "أنا في الطريق",
+  "panikGordum": "شوهد",
+  "panikYanlisAlarmSayaci": "{n} إنذارات خاطئة خلال 24 ساعة",
+  "@panikYanlisAlarmSayaci": {
+    "placeholders": {
+      "n": {}
+    }
+  },
+  "panikTakipBaslik": "نداءات الطوارئ",
+  "panikAlarmYok": "لا توجد نداءات طوارئ مسجلة.",
+  "panikKapat": "إغلاق",
+  "panikGorenSayisi": "{goren}/{toplam} شاهدوا",
+  "@panikGorenSayisi": {
+    "placeholders": {
+      "goren": {},
+      "toplam": {}
+    }
+  },
+  "panikMudahaleSuresi": "الاستجابة: {n} ث",
+  "@panikMudahaleSuresi": {
+    "placeholders": {
+      "n": {}
+    }
+  },
   "devriyeGunler": "في أي أيام",
   "devriyeGunlerIpucu": "إن لم تختر شيئًا فسيعمل يوميًا. الخطة الليلية تتبع يوم بدايتها.",
   "devriyeHerGun": "يوميًا",

@@ -57,6 +57,13 @@ const _tumKopyaIstisnalari = {
   // uydurmak demek olurdu. Panel ikizi `admin-web/tests/i18n.test.ts`te
   // ayni istisna var.
   'telefonUlusalYerTutucu',
+  // (P240 §1) "SOS" ULUSLARARASI BIR ISARETTIR, cumle degil.
+  //
+  // Dugme ust barda duruyor ve genisligi DILDEN BAGIMSIZ olmali:
+  // ilk yazimda "ACİL"/"طوارئ" kullanildi ve Arapca ana ekran ust bari
+  // 4 px TASTI (`home_i18n` kilidi yakaladi). "SOS" yedi dilde de uc
+  // karakter ve herkesce taninir; cevirmek tasmayi geri getirirdi.
+  'panikKisa',
   // (P230 §3) ARAMA KAYNAK ADLARI — gercek KOGNATLAR, ceviri unutmasi
   // DEGIL. Rusca ve Arapca karsiliklari ZATEN farkli:
   //   Plan   : tr/en/de/fr/es ayni; ru "План",    ar "خطة"

@@ -349,6 +349,49 @@
   "devriyePlanSilindi": "План удалён ✓",
   "devriyePlanDuzenleBaslik": "Изменить план обхода",
   "devriyePlanYeniBaslik": "Новый план обхода",
+  "panikBaslik": "Экстренный вызов",
+  "panikKisa": "SOS",
+  "panikTipSakin": "ЧП дома (здоровье, безопасность)",
+  "panikTipGuvenlik": "ЧП по безопасности (нападение, пожар, проникновение)",
+  "panikTipAnons": "Оповещение всего комплекса (эвакуация, газ, землетрясение)",
+  "panikGonderiliyor": "Отправка… {n} с",
+  "@panikGonderiliyor": {
+    "placeholders": {
+      "n": {}
+    }
+  },
+  "panikGonderildi": "Отправлено",
+  "panikIptalAciklama": "Отмените до конца отсчёта — уведомления не уйдут.",
+  "panikIptalEt": "Отменить",
+  "panikIptalEdildi": "Отменено — ничего не отправлено.",
+  "panikYanlisAlarmGonderildi": "Сообщено о ложной тревоге.",
+  "panikYasalUyari": "Эта система не заменяет 112 / 155 / 110. При угрозе жизни сначала звоните в официальные службы.",
+  "panikYetkiYok": "Этот аккаунт не может подавать экстренные вызовы.",
+  "panikGelenAlarm": "ЭКСТРЕННЫЙ ВЫЗОВ",
+  "panikGidiyorum": "Выезжаю",
+  "panikGordum": "Увидел",
+  "panikYanlisAlarmSayaci": "{n} ложных тревог за 24 ч",
+  "@panikYanlisAlarmSayaci": {
+    "placeholders": {
+      "n": {}
+    }
+  },
+  "panikTakipBaslik": "Экстренные вызовы",
+  "panikAlarmYok": "Экстренных вызовов нет.",
+  "panikKapat": "Закрыть",
+  "panikGorenSayisi": "увидели {goren}/{toplam}",
+  "@panikGorenSayisi": {
+    "placeholders": {
+      "goren": {},
+      "toplam": {}
+    }
+  },
+  "panikMudahaleSuresi": "Реакция: {n} с",
+  "@panikMudahaleSuresi": {
+    "placeholders": {
+      "n": {}
+    }
+  },
   "devriyeGunler": "В какие дни",
   "devriyeGunlerIpucu": "Если не выбрано, выполняется ежедневно. Ночной план относится ко дню начала.",
   "devriyeHerGun": "Ежедневно",

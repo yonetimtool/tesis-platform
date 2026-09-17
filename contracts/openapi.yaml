@@ -10236,6 +10236,138 @@ paths:
   # SONUC KAPANANA KADAR GIZLI: acik bir ankette guncel dagilimi gostermek
   # sonraki oy verenleri etkiler. Yonetim sonucu HER ZAMAN gorur.
   # ================================================================= #
+  /panik:
+    get:
+      tags: [panik]
+      summary: Panik alarmlari (takip listesi)
+      description: |
+        (P240 §1) SAKIN LISTEYI GORMEZ: baska dairelerin acil durumlari
+        kisisel veridir. Sakin YALNIZ kendi actigi alarmlari gorur;
+        guvenlik/amir/yonetim tesisin tamamini gorur.
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: durum
+          in: query
+          schema: { type: string }
+      responses:
+        "200": { description: alarmlar }
+    post:
+      tags: [panik]
+      summary: Panik tetikle (tip bazinda rol kapisi)
+      description: |
+        (P240 §1) SATIR ONCE, BILDIRIM SONRA. Alarm `beklemede` durumunda
+        YAZILIR ve bildirimler `iptal_penceresi_sn` saniye SONRA gider.
+        Iptal penceresi icinde iptal edilirse HICBIR bildirim gitmez.
+
+        TIP BAZINDA YETKI: `sakin` yalniz `resident`; `guvenlik`
+        security/amir/tesis_gorevlisi/yonetici/admin; `yonetici_anons`
+        yalniz yonetici/admin. Yonetici `sakin` tipini TETIKLEYEMEZ —
+        onun dairesi yoktur ve alarm gidilecek adres tasimaz.
+
+        TEKRAR BASMA REDDEDILMEZ: ayni kisinin ayni tipte ACIK alarmi
+        varsa YENI alarm uretilmez, var olan yeniden duyurulur. Gercek
+        acil durumda istegi reddetmek, tam o anda alarmi susturmak olurdu.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PanikOlustur" }
+      responses:
+        "201": { description: alarm }
+        "403": { description: bu rol bu tipi tetikleyemez }
+  /panik/aktif:
+    get:
+      tags: [panik]
+      summary: BANA gelen ve kapanmamis alarmlar (tam ekran uyarinin kaynagi)
+      description: >
+        `beklemede` olanlar DAHIL DEGIL: henuz kimseye gonderilmemis bir
+        alarmi gostermek iptal penceresini anlamsiz kilardi.
+      responses:
+        "200": { description: alarmlar }
+  /panik/{id}:
+    get:
+      tags: [panik]
+      summary: Alarm ayrintisi (alicilar + sureler)
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200": { description: alarm }
+        "404": { description: yok ya da gorunmuyor }
+  /panik/{id}/iptal:
+    post:
+      tags: [panik]
+      summary: Alarmi iptal et (YALNIZ basan kisi)
+      description: |
+        Pencere ICINDE -> `iptal` (kimse rahatsiz edilmedi).
+        Pencere SONRASI -> `yanlis_alarm` + alicilara duzeltme bildirimi.
+        Baskasinin alarmini iptal etmek YASAK: gercek bir acili
+        susturmanin en kolay yolu olurdu. Yonetim KAPATIR, iptal etmez.
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200": { description: alarm }
+        "403": { description: baskasinin alarmi }
+        "409": { description: zaten kapali }
+  /panik/{id}/gordum:
+    post:
+      tags: [panik]
+      summary: Gordum isareti (yalniz ALICI)
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200": { description: alarm }
+        "403": { description: alici degil }
+  /panik/{id}/mudahale:
+    post:
+      tags: [panik]
+      summary: Gidiyorum isareti — mudahale suresi buradan olculur
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200": { description: alarm }
+  /panik/{id}/kapat:
+    post:
+      tags: [panik]
+      summary: Alarmi kapat (alicilar + yonetim)
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PanikKapat" }
+      responses:
+        "200": { description: alarm }
+  /users/{id}/panik-aski:
+    patch:
+      tags: [users]
+      summary: Panik yetkisini SURELI askiya al (admin + yonetici)
+      description: |
+        (P240 §1) `bitis` ZORUNLU ve gecmis tarih REDDEDILIR: suresiz bir
+        aski, unutulan bir askidir ve unutulan aski gercek bir acil
+        durumu sessizce yutar. Kisi KENDINI askiya ALAMAZ.
+
+        ASKIDAYKEN DE ALARM SATIRI YAZILIR (bildirim gitmez): basmaya
+        devam etmesi, askinin gerekcesini dogrulayan ya da curuten bir
+        olcumdur.
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PanikAskiIn" }
+      responses:
+        "200": { description: aski }
+        "422": { description: gecmis tarih ya da kendine aski }
+    delete:
+      tags: [users]
+      summary: Askiyi erken kaldir (admin + yonetici)
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200": { description: aski kaldirildi }
   /anketler:
     get:
       tags: [anket]
@@ -18261,6 +18393,35 @@ components:
         aktif: { type: boolean }
 
     # -------------------------- patrol plan ------------------------ #
+    PanikOlustur:
+      type: object
+      required: [tip]
+      properties:
+        tip:
+          type: string
+          enum: [sakin, guvenlik, yonetici_anons]
+        unit_id: { type: string, format: uuid, nullable: true }
+        checkpoint_id: { type: string, format: uuid, nullable: true }
+        gps_lat:
+          type: number
+          nullable: true
+          description: >
+            KONUM OPSIYONEL: izin yoksa/kapali alandaysa alarm YINE DE
+            gitmeli. `gps_lat` ve `gps_lng` BIRLIKTE verilir — tek basina
+            enlem bir konum degildir.
+        gps_lng: { type: number, nullable: true }
+        camera_id: { type: string, format: uuid, nullable: true }
+        aciklama: { type: string, nullable: true, maxLength: 2000 }
+    PanikKapat:
+      type: object
+      properties:
+        kapanis_notu: { type: string, nullable: true, maxLength: 2000 }
+    PanikAskiIn:
+      type: object
+      required: [bitis, neden]
+      properties:
+        bitis: { type: string, format: date-time }
+        neden: { type: string, minLength: 3, maxLength: 500 }
     PatrolPlan:
       type: object
       required: [id, ad, baslangic_saat, bitis_saat, periyot_dakika, aktif, created_at]

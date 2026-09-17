@@ -184,6 +184,16 @@ class Action:
     UYARI_MANUEL = "uyari_manuel"
     PORTAL_YAYIN = "portal_yayin"
     ANKET_OLUSTUR = "anket_olustur"
+    # (P240 §1) PANIK — bes ayri eylem, cunku bes ayri SORUYA yanit verirler:
+    # kim bastı / kim vazgecti / kim gordu / kim gitti / kim kapatti.
+    # Tek bir "panik" eylemine indirmek, denetim kaydini "bir sey oldu"
+    # seviyesine dusururdu.
+    PANIK_TETIK = "panik_tetik"
+    PANIK_IPTAL = "panik_iptal"
+    PANIK_GORULDU = "panik_goruldu"
+    PANIK_MUDAHALE = "panik_mudahale"
+    PANIK_KAPAT = "panik_kapat"
+    PANIK_ASKI = "panik_aski"
     KVKK_YAYIN = "kvkk_yayin"
     KVKK_ONAY = "kvkk_onay"
     PAZARLAMA_RIZA = "pazarlama_riza"

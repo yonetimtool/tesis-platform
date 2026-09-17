@@ -144,6 +144,8 @@ export const TESIS_ROTALARI = [
   "/ziyaretciler",
   "/kargolar",
   "/olaylar",
+  // (P240 §1) Panik takip ekrani — tesis yuzeyi.
+  "/panik",
   "/arac-gecisleri",
   // (P126.6) Saha rolunun kendi gorevleri.
   "/gorevlerim",
@@ -430,6 +432,21 @@ export const ROTA_ROLLERI: Record<string, readonly string[]> = {
   // (P154 / Asama 8) Ice aktarim catisi — kurulum isi.
   "/ice-aktarim": ["admin", "yonetici"],
   "/complaints": ["admin", "yonetici", "guvenlik_amiri"],
+  // (P240 §1) PANIK TAKIP — MASABASI ROLLERI.
+  //
+  // `security` BURADA YOK ve bu bir eksiklik DEGIL: P129'dan beri
+  // mobil-yalniz roller (`security`, `tesis_gorevlisi`, `resident`)
+  // `app.*` yuzeyinde HICBIR sayfa gormez ve bunun kendi kilidi var
+  // (`rol-menusu`: "SAHA ROLLERI app.*ta HICBIR sayfa gormez"). Ilk
+  // yazimda `security` eklenmisti ve kilit onu dogru olarak yakaladi.
+  //
+  // Guvenlik ekibi takip listesini MOBILDE gorur (`HomeMenuEntry
+  // .panikTakip`) ve sunucu ikisine de izin verir (`LISTE_ROLLERI`);
+  // ayrilan sey YETKI degil YUZEY.
+  //
+  // `resident` hicbir yuzeyde listede yok: baska dairelerin acil
+  // durumlari kisisel veridir.
+  "/panik": ["admin", "yonetici", "guvenlik_amiri"],
   "/notifications": ["admin", "yonetici"],
   // (P167 §6.1) "/yonetisim" DORDE BOLUNDU; roller aynen tasindi.
   "/karar-defteri": ["admin", "yonetici"],

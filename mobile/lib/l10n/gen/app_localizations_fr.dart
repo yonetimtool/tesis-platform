@@ -1196,6 +1196,85 @@ class AppLocalizationsFr extends AppLocalizations {
   String get devriyePlanYeniBaslik => 'Nouveau plan de patrouille';
 
   @override
+  String get panikBaslik => 'Urgence';
+
+  @override
+  String get panikKisa => 'SOS';
+
+  @override
+  String get panikTipSakin => 'Urgence à domicile (santé, sécurité)';
+
+  @override
+  String get panikTipGuvenlik =>
+      'Urgence de sécurité (agression, incendie, intrusion)';
+
+  @override
+  String get panikTipAnons =>
+      'Annonce à toute la résidence (évacuation, gaz, séisme)';
+
+  @override
+  String panikGonderiliyor(Object n) {
+    return 'Envoi… $n s';
+  }
+
+  @override
+  String get panikGonderildi => 'Envoyé';
+
+  @override
+  String get panikIptalAciklama =>
+      'Annulez avant la fin du compte à rebours et rien ne sera envoyé.';
+
+  @override
+  String get panikIptalEt => 'Annuler';
+
+  @override
+  String get panikIptalEdildi => 'Annulé — rien n’a été envoyé.';
+
+  @override
+  String get panikYanlisAlarmGonderildi => 'Fausse alerte signalée.';
+
+  @override
+  String get panikYasalUyari =>
+      'Ce système ne remplace pas le 112 / 155 / 110. En cas de danger vital, appelez d’abord les secours officiels.';
+
+  @override
+  String get panikYetkiYok =>
+      'Ce compte ne peut pas déclencher d’appel d’urgence.';
+
+  @override
+  String get panikGelenAlarm => 'APPEL D’URGENCE';
+
+  @override
+  String get panikGidiyorum => 'J’arrive';
+
+  @override
+  String get panikGordum => 'Vu';
+
+  @override
+  String panikYanlisAlarmSayaci(Object n) {
+    return '$n fausses alertes ces 24 h';
+  }
+
+  @override
+  String get panikTakipBaslik => 'Appels d’urgence';
+
+  @override
+  String get panikAlarmYok => 'Aucun appel d’urgence enregistré.';
+
+  @override
+  String get panikKapat => 'Clôturer';
+
+  @override
+  String panikGorenSayisi(Object goren, Object toplam) {
+    return '$goren/$toplam ont vu';
+  }
+
+  @override
+  String panikMudahaleSuresi(Object n) {
+    return 'Intervention : $n s';
+  }
+
+  @override
   String get devriyeGunler => 'Quels jours';
 
   @override

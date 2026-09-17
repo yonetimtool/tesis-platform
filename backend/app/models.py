@@ -668,6 +668,16 @@ class AppUser(Base):
     aranabilir: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("false")
     )
+    #: (P240 §1, goc 0140) PANIK YETKISI ASKIDA — bitis ani.
+    #:
+    #: NULL ya da GECMISTE ise yetki acik. Askidayken alarm SATIR OLARAK
+    #: YAZILIR ama bildirim GITMEZ: basmaya devam etmesi, askinin
+    #: gerekcesini dogrulayan ya da curuten bir olcumdur.
+    #:
+    #: SURESIZ ASKI YOK — unutulan bir aski, gercek bir acil durumu
+    #: sessizce yutar.
+    panik_askida_bitis = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    panik_aski_nedeni: Mapped[str | None] = mapped_column(Text, nullable=True)
     # Tenant'in BIRINCIL yoneticisi mi? Tesisi ilk giriste adlandirma kapisi
     # (POST /tenant/setup) YALNIZ buna acilir. Kismi unique index
     # (uq_app_user_birincil) tenant basina en fazla bir true garantiler.
@@ -2843,6 +2853,11 @@ __all__ = [
     "GUN_TIPI",
     "PATROL_WINDOW_DURUM",
     "NOTIFICATION_TIP",
+    # (P240 §1) PANIK
+    "PanikAlarm",
+    "PanikAlici",
+    "PANIK_TIP",
+    "PANIK_DURUM",
     "ASSET_KATEGORI",
     "ASSET_DURUM",
     "RESIDENT_ROL",
@@ -4837,3 +4852,104 @@ class VardiyaKalibi(Base):
     )
     created_at = _created_at()
     updated_at = _created_at()
+
+
+# --------------------------------------------------------------------------- #
+# (P240 §1) PANIK ALARMI
+# --------------------------------------------------------------------------- #
+PANIK_TIP = ENUM(
+    "sakin", "guvenlik", "yonetici_anons",
+    name="panik_tip", create_type=False,
+)
+PANIK_DURUM = ENUM(
+    "beklemede", "acik", "mudahale", "kapandi", "iptal", "yanlis_alarm",
+    name="panik_durum", create_type=False,
+)
+
+
+class PanikAlarm(Base):
+    """(P240 §1, goc 0140) Bir panik olayi.
+
+    Satir BASILDIGI ANDA yazilir (`beklemede`); bildirimler gecikmeli
+    gorevle gider. Boylece iptal edilen alarm bile denetim kaydinda
+    KALIR ama kimse rahatsiz EDILMEZ (gocun basligindaki gerekce).
+    """
+
+    __tablename__ = "panik_alarm"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_panik_alarm_id_tenant"),
+        ForeignKeyConstraint(
+            ["olusturan_user_id", "tenant_id"],
+            ["app_user.id", "app_user.tenant_id"],
+            ondelete="SET NULL",
+            name="fk_panik_olusturan",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    tip: Mapped[str] = mapped_column(PANIK_TIP, nullable=False)
+    durum: Mapped[str] = mapped_column(
+        PANIK_DURUM, nullable=False, server_default=text("'beklemede'")
+    )
+    #: Tetikleyen SILINSE DE alarm kalir: guvenlik olayinin kaydi,
+    #: hesabin yasam suresine baglanamaz.
+    olusturan_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    unit_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    checkpoint_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    gps_lat = mapped_column(Numeric(9, 6), nullable=True)
+    gps_lng = mapped_column(Numeric(9, 6), nullable=True)
+    #: Kamera ISARETI — kayit KOPYALANMAZ, NVR'da durur (P213).
+    camera_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    kayit_an = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    aciklama: Mapped[str | None] = mapped_column(Text, nullable=True)
+    kapatan_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    kapanis_notu: Mapped[str | None] = mapped_column(Text, nullable=True)
+    gonderildi_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    mudahale_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    kapandi_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    iptal_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    created_at = _created_at()
+
+
+class PanikAlici(Base):
+    """(P240 §1, goc 0140) Alarm kime ulasti, kim gordu, kim gidiyor.
+
+    `notification` tablosu bunu TASIYAMAZ: o bildirimin kendisidir;
+    burada olculen sey alarma verilen INSAN TEPKISIDIR.
+    """
+
+    __tablename__ = "panik_alici"
+    __table_args__ = (
+        UniqueConstraint("alarm_id", "user_id", name="uq_panik_alici"),
+        ForeignKeyConstraint(
+            ["alarm_id", "tenant_id"],
+            ["panik_alarm.id", "panik_alarm.tenant_id"],
+            ondelete="CASCADE",
+            name="fk_panik_alici_alarm",
+        ),
+        ForeignKeyConstraint(
+            ["user_id", "tenant_id"],
+            ["app_user.id", "app_user.tenant_id"],
+            ondelete="CASCADE",
+            name="fk_panik_alici_user",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    alarm_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    bildirildi_at = _created_at()
+    goruldu_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    mudahale_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)

@@ -240,6 +240,18 @@ enum HomeMenuEntry {
   /// Yonetici Iletisim — tenant'in yoneticileri (ad + telefon + arama) +
   /// yonetim maili. Saha rolleri + sakin gorur; YONETICI kendisi GORMEZ.
   yoneticiIletisim,
+
+  /// (P240 §1) Acil durum cagrilari — TAKIP ekrani.
+  ///
+  /// SAKIN GORMEZ: baska dairelerin acil durumlari kisisel veridir
+  /// (sunucu da ayni siniri koyuyor: `panik.LISTE_ROLLERI`). Sakin
+  /// alarmi TETIKLER (ust bardaki ACIL dugmesi) ama listeyi gormez.
+  ///
+  /// GUVENLIK EKIBI ICIN BU EKRAN YALNIZ MOBILDE VAR: `security`
+  /// `app.*` yuzeyinde hicbir sayfa gormez (P129 kuralı, web tarafinda
+  /// kendi kilidi var). Ayrilan sey YETKI degil YUZEY — sunucu ikisine
+  /// de izin veriyor.
+  panikTakip,
 }
 
 List<HomeMenuEntry> homeMenuForRole(UserRole role) {
@@ -264,6 +276,8 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.daireTanimlari,
         HomeMenuEntry.otopark,
         HomeMenuEntry.ihlaller,
+        // (P240 §1) Acil durum cagrilari — TAKIP.
+        HomeMenuEntry.panikTakip,
         HomeMenuEntry.vardiyalar,
         // (P166 §10 / §8.2) Gorev kategorileri ve kurulum sihirbazi —
         // ikisi de yonetim isidir ve admin yonetici duzenini gorur.
@@ -299,6 +313,8 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         // koyamiyordu. Daraltma kasitliydi ama BU UCU kapsamiyordu.
         HomeMenuEntry.vardiyalar,
         HomeMenuEntry.ihlaller,
+        // (P240 §1) Acil durum cagrilari — TAKIP.
+        HomeMenuEntry.panikTakip,
         HomeMenuEntry.aracGecis,
         HomeMenuEntry.plakaOlaylari,
         HomeMenuEntry.outbox,
@@ -326,6 +342,8 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         // (P139.3) Vardiyalar — `binaDuzenleme`den ONCE: onun EN ALTTA
         // durmasi kayitli bir kuraldir (home_menu_test).
         HomeMenuEntry.ihlaller,
+        // (P240 §1) Acil durum cagrilari — TAKIP.
+        HomeMenuEntry.panikTakip,
         HomeMenuEntry.vardiyalar,
         HomeMenuEntry.binaDuzenleme,
         HomeMenuEntry.yoneticiIletisim,
@@ -388,6 +406,8 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.kurulum,
         HomeMenuEntry.otopark,
         HomeMenuEntry.ihlaller,
+        // (P240 §1) Acil durum cagrilari — TAKIP.
+        HomeMenuEntry.panikTakip,
         HomeMenuEntry.vardiyalar,
       ];
     case UserRole.resident:
@@ -487,6 +507,7 @@ String moduleBaslik(AppLocalizations l10n, HomeMenuEntry entry) =>
       HomeMenuEntry.sikayetHaritasi => l10n.modulSikayetHaritasi,
       HomeMenuEntry.sikayetlerim => l10n.modulSikayetlerim,
       HomeMenuEntry.yoneticiIletisim => l10n.yonIletisimBaslik,
+      HomeMenuEntry.panikTakip => l10n.panikTakipBaslik,
     };
 
 // ===========================================================================
@@ -565,6 +586,8 @@ HomeMenuGrup homeMenuGrubu(HomeMenuEntry e) => switch (e) {
   HomeMenuEntry.complaints ||
   HomeMenuEntry.anketler ||
   HomeMenuEntry.yoneticiIletisim => HomeMenuGrup.iletisim,
+  // Guvenlik grubunda: acil durum bir GUVENLIK olayidir, iletisim degil.
+  HomeMenuEntry.panikTakip => HomeMenuGrup.guvenlik,
   HomeMenuEntry.personel ||
   HomeMenuEntry.sakinler ||
   HomeMenuEntry.binaDuzenleme ||

@@ -437,6 +437,49 @@
   "devriyePlanSilindi": "Plan silindi ✓",
   "devriyePlanDuzenleBaslik": "Devriye planı düzenle",
   "devriyePlanYeniBaslik": "Yeni devriye planı",
+  "panikBaslik": "Acil durum",
+  "panikKisa": "SOS",
+  "panikTipSakin": "Evde acil durum (sağlık, güvenlik)",
+  "panikTipGuvenlik": "Güvenlik acili (saldırı, yangın, izinsiz giriş)",
+  "panikTipAnons": "Tüm siteye anons (tahliye, gaz, deprem)",
+  "panikGonderiliyor": "Gönderiliyor… {n} sn",
+  "@panikGonderiliyor": {
+    "placeholders": {
+      "n": {}
+    }
+  },
+  "panikGonderildi": "Gönderildi",
+  "panikIptalAciklama": "Süre dolmadan iptal ederseniz hiçbir bildirim gitmez.",
+  "panikIptalEt": "İptal et",
+  "panikIptalEdildi": "İptal edildi — bildirim gitmedi.",
+  "panikYanlisAlarmGonderildi": "Yanlış alarm bildirildi.",
+  "panikYasalUyari": "Bu sistem 112 / 155 / 110 yerine geçmez. Hayati tehlikede önce resmi acil hatları arayın.",
+  "panikYetkiYok": "Bu hesapta acil durum çağrısı yetkisi yok.",
+  "panikGelenAlarm": "ACİL DURUM ÇAĞRISI",
+  "panikGidiyorum": "Gidiyorum",
+  "panikGordum": "Gördüm",
+  "panikYanlisAlarmSayaci": "Son 24 saatte {n} yanlış alarm",
+  "@panikYanlisAlarmSayaci": {
+    "placeholders": {
+      "n": {}
+    }
+  },
+  "panikTakipBaslik": "Acil durum çağrıları",
+  "panikAlarmYok": "Kayıtlı acil durum çağrısı yok.",
+  "panikKapat": "Kapat",
+  "panikGorenSayisi": "{goren}/{toplam} gördü",
+  "@panikGorenSayisi": {
+    "placeholders": {
+      "goren": {},
+      "toplam": {}
+    }
+  },
+  "panikMudahaleSuresi": "Müdahale: {n} sn",
+  "@panikMudahaleSuresi": {
+    "placeholders": {
+      "n": {}
+    }
+  },
   "devriyeGunler": "Hangi günler",
   "devriyeGunlerIpucu": "Seçmezseniz her gün yürür. Gece planı başladığı güne aittir.",
   "devriyeHerGun": "Her gün",

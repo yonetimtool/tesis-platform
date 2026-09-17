@@ -204,6 +204,8 @@ export const config = {
     "/vardiya-plani/:path*",
     "/checkpoints/:path*",
     "/patrol-plans/:path*",
+    // (P240 §1) Acil durum cagrilari takip ekrani — oturum kapisi.
+    "/panik/:path*",
     "/units/:path*",
     "/building-editor/:path*",
     "/tanimlar/:path*",

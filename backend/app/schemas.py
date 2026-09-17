@@ -8891,3 +8891,118 @@ class SurumPolitikasiOut(BaseModel):
 
 class SurumPolitikasiListesi(BaseModel):
     ogeler: list[SurumPolitikasiOut]
+
+
+# ====================== (P240 §1) PANIK ALARMI ============================== #
+class PanikOlustur(BaseModel):
+    """Panik tetikleme govdesi.
+
+    KONUM OPSIYONEL ve bu bilincli: izin yoksa, kapali alandaysa ya da
+    GPS tutmuyorsa alarm YINE DE gitmeli. Konumu zorunlu kilmak, konum
+    alinamadigi icin alarmin HIC gitmemesi demekti.
+    """
+
+    tip: str
+    #: Sakin paniginde daire; verilmezse sunucu kullanicinin dairesinden
+    #: DOLDURUR (istemcinin bilmesi gerekmez).
+    unit_id: uuid.UUID | None = None
+    checkpoint_id: uuid.UUID | None = None
+    # ARALIK ZORUNLU (P203 §1 kilidi): aralik yoksa tasan bir deger
+    # `numeric(9,6)` sutununda TASMA yapar ve uc 500 doner — yani
+    # gecersiz konum, dogrulama hatasi yerine COKME uretirdi.
+    gps_lat: float | None = Field(None, ge=-90, le=90)
+    gps_lng: float | None = Field(None, ge=-180, le=180)
+    camera_id: uuid.UUID | None = None
+    aciklama: str | None = Field(None, max_length=2000)
+
+    @field_validator("tip")
+    @classmethod
+    def _tip(cls, v: str) -> str:
+        if v not in ("sakin", "guvenlik", "yonetici_anons"):
+            raise ValueError("gecersiz panik tipi")
+        return v
+
+    @model_validator(mode="after")
+    def _gps_ikisi_birden(self) -> "PanikOlustur":
+        # Tek basina enlem bir konum DEGILDIR ve haritada sessizce yanlis
+        # yere pin koyar (veritabani kisiti da ayni seyi zorlar).
+        if (self.gps_lat is None) != (self.gps_lng is None):
+            raise ValueError("gps_lat ve gps_lng birlikte verilir")
+        return self
+
+
+class PanikAliciOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    user_id: uuid.UUID
+    ad: str
+    rol: str
+    bildirildi_at: datetime
+    goruldu_at: datetime | None = None
+    mudahale_at: datetime | None = None
+
+
+class PanikAlarmOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    tip: str
+    durum: str
+    olusturan_user_id: uuid.UUID | None = None
+    olusturan_ad: str | None = None
+    olusturan_telefon: str | None = None
+    unit_id: uuid.UUID | None = None
+    daire_no: str | None = None
+    blok: str | None = None
+    checkpoint_id: uuid.UUID | None = None
+    checkpoint_ad: str | None = None
+    gps_lat: float | None = Field(None, ge=-90, le=90)
+    gps_lng: float | None = Field(None, ge=-180, le=180)
+    camera_id: uuid.UUID | None = None
+    kayit_an: datetime | None = None
+    aciklama: str | None = None
+    kapatan_user_id: uuid.UUID | None = None
+    kapanis_notu: str | None = None
+    created_at: datetime
+    gonderildi_at: datetime | None = None
+    mudahale_at: datetime | None = None
+    kapandi_at: datetime | None = None
+    iptal_at: datetime | None = None
+    #: Iptal penceresi KAC SANIYE — istemci geri sayimi bundan cizer.
+    #: Sabiti istemciye gommek, sunucuda degistirince iki tarafin
+    #: ayrismasi demekti.
+    iptal_penceresi_sn: int = 5
+    #: MUDAHALE SURESI (saniye) — `gonderildi_at` -> ilk "gidiyorum".
+    #: Sunucu hesaplar: iki damganin farkini istemcide hesaplamak, saat
+    #: kaymasi olan bir cihazda negatif sure uretirdi.
+    mudahale_suresi_sn: int | None = None
+    #: (P240 §1) Tetikleyenin son 24 saatteki IPTAL/YANLIS ALARM sayisi.
+    #: Alarmi ENGELLEMEZ; aliciya BAGLAM verir.
+    son_24s_yanlis_alarm: int = 0
+    alicilar: list[PanikAliciOut] = []
+
+
+class PanikKapat(BaseModel):
+    kapanis_notu: str | None = Field(None, max_length=2000)
+
+
+class PanikListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[PanikAlarmOut]
+
+
+class PanikAskiIn(BaseModel):
+    """Panik yetkisini SURELI askiya al.
+
+    `bitis` ZORUNLU: suresiz aski, unutulan bir askidir ve unutulan aski
+    gercek bir acil durumu sessizce yutar.
+    """
+
+    bitis: datetime
+    neden: str = Field(..., min_length=3, max_length=500)
+
+
+class PanikAskiOut(BaseModel):
+    user_id: uuid.UUID
+    panik_askida_bitis: datetime | None = None
+    panik_aski_nedeni: str | None = None

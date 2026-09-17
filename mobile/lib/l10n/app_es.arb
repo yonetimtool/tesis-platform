@@ -349,6 +349,49 @@
   "devriyePlanSilindi": "Plan eliminado ✓",
   "devriyePlanDuzenleBaslik": "Editar plan de patrulla",
   "devriyePlanYeniBaslik": "Nuevo plan de patrulla",
+  "panikBaslik": "Emergencia",
+  "panikKisa": "SOS",
+  "panikTipSakin": "Emergencia en casa (salud, seguridad)",
+  "panikTipGuvenlik": "Emergencia de seguridad (agresión, incendio, intrusión)",
+  "panikTipAnons": "Aviso a toda la comunidad (evacuación, gas, terremoto)",
+  "panikGonderiliyor": "Enviando… {n} s",
+  "@panikGonderiliyor": {
+    "placeholders": {
+      "n": {}
+    }
+  },
+  "panikGonderildi": "Enviado",
+  "panikIptalAciklama": "Cancele antes de que termine la cuenta atrás y no se enviará nada.",
+  "panikIptalEt": "Cancelar",
+  "panikIptalEdildi": "Cancelado: no se envió nada.",
+  "panikYanlisAlarmGonderildi": "Falsa alarma notificada.",
+  "panikYasalUyari": "Este sistema no sustituye al 112 / 155 / 110. Ante peligro vital llame primero a emergencias oficiales.",
+  "panikYetkiYok": "Esta cuenta no puede generar llamadas de emergencia.",
+  "panikGelenAlarm": "LLAMADA DE EMERGENCIA",
+  "panikGidiyorum": "Voy en camino",
+  "panikGordum": "Visto",
+  "panikYanlisAlarmSayaci": "{n} falsas alarmas en 24 h",
+  "@panikYanlisAlarmSayaci": {
+    "placeholders": {
+      "n": {}
+    }
+  },
+  "panikTakipBaslik": "Llamadas de emergencia",
+  "panikAlarmYok": "No hay llamadas de emergencia registradas.",
+  "panikKapat": "Cerrar",
+  "panikGorenSayisi": "{goren}/{toplam} la vieron",
+  "@panikGorenSayisi": {
+    "placeholders": {
+      "goren": {},
+      "toplam": {}
+    }
+  },
+  "panikMudahaleSuresi": "Respuesta: {n} s",
+  "@panikMudahaleSuresi": {
+    "placeholders": {
+      "n": {}
+    }
+  },
   "devriyeGunler": "Qué días",
   "devriyeGunlerIpucu": "Si no selecciona ninguno, se ejecuta a diario. Un plan nocturno pertenece al día en que empieza.",
   "devriyeHerGun": "Todos los días",

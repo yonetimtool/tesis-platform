@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/startup/acilis_tercihleri.dart';
+import '../features/panik/presentation/panik_sayfasi.dart';
+import '../features/panik/presentation/panik_takip_screen.dart';
 import '../features/staff/presentation/kisi_sayfasi.dart';
 import '../features/announcements/presentation/announcements_screen.dart';
 import '../features/auth/data/token_storage.dart';
@@ -168,6 +170,10 @@ class AppRoutes {
   static const vardiyalar = '/vardiyalar';
   /// (P239 §5) Kisi sayfasi — vardiya kartindan acilir, `KisiArgs` ile.
   static const kisi = '/kisi';
+  /// (P240 §1) Panik tetikleme — ust bardaki ACIL dugmesinden.
+  static const panik = '/panik';
+  /// (P240 §1) Acil durum cagrilari takip ekrani.
+  static const panikTakip = '/panik-takip';
   // (P203 §4) Vardiya PLANI — sablon ekranindan (`/vardiyalar`) AYRI:
   // biri saatleri tanimlar, oteki kim hangi gun calisir.
   static const vardiyaPlani = '/vardiya-plani';
@@ -318,6 +324,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.vardiyalar,
         builder: (context, state) => const VardiyalarScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.panik,
+        builder: (context, state) => const PanikSayfasi(),
+      ),
+      GoRoute(
+        path: AppRoutes.panikTakip,
+        builder: (context, state) => const PanikTakipScreen(),
       ),
       GoRoute(
         path: AppRoutes.kisi,

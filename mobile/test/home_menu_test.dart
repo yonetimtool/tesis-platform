@@ -42,6 +42,8 @@ void main() {
         // GIRISI yoktu — kart izgaradan dustugunde kullanici GERI
         // EKLEYEMIYORDU. Gorunurluk kartinin cizildigi rollerden turedi.
         HomeMenuEntry.ihlaller,
+        // (P240 §1) Acil durum cagrilari — TAKIP.
+        HomeMenuEntry.panikTakip,
         HomeMenuEntry.vardiyalar,
         // (P166 §10) Gorev kategorileri: ekran VARDI, girisi yalniz
         // "Gorev yonetimi"nin sag ustundeki etiketsiz ikondu.
@@ -71,6 +73,8 @@ void main() {
         // korundu: yeni giris ONUN ONUNE kondu.
         // (P139.5) `ihlaller` de ayni gerekceyle yuzeye cikarildi.
         HomeMenuEntry.ihlaller,
+        // (P240 §1) Acil durum cagrilari — TAKIP.
+        HomeMenuEntry.panikTakip,
         HomeMenuEntry.vardiyalar,
         // Sikayet Haritasi (yogunluk) YOK; salt-okuma Bina Duzenleme EN ALTTA.
         HomeMenuEntry.binaDuzenleme,
@@ -176,6 +180,8 @@ void main() {
           // kartlarinin cizildigi rolden turedi — bkz. admin blogu.
           HomeMenuEntry.otopark,
           HomeMenuEntry.ihlaller,
+          // (P240 §1) Acil durum cagrilari — TAKIP.
+          HomeMenuEntry.panikTakip,
           HomeMenuEntry.vardiyalar,
         ],
       );

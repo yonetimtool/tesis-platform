@@ -2196,6 +2196,138 @@ abstract class AppLocalizations {
   /// **'Yeni devriye planı'**
   String get devriyePlanYeniBaslik;
 
+  /// No description provided for @panikBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Acil durum'**
+  String get panikBaslik;
+
+  /// No description provided for @panikKisa.
+  ///
+  /// In tr, this message translates to:
+  /// **'SOS'**
+  String get panikKisa;
+
+  /// No description provided for @panikTipSakin.
+  ///
+  /// In tr, this message translates to:
+  /// **'Evde acil durum (sağlık, güvenlik)'**
+  String get panikTipSakin;
+
+  /// No description provided for @panikTipGuvenlik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Güvenlik acili (saldırı, yangın, izinsiz giriş)'**
+  String get panikTipGuvenlik;
+
+  /// No description provided for @panikTipAnons.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tüm siteye anons (tahliye, gaz, deprem)'**
+  String get panikTipAnons;
+
+  /// No description provided for @panikGonderiliyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gönderiliyor… {n} sn'**
+  String panikGonderiliyor(Object n);
+
+  /// No description provided for @panikGonderildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gönderildi'**
+  String get panikGonderildi;
+
+  /// No description provided for @panikIptalAciklama.
+  ///
+  /// In tr, this message translates to:
+  /// **'Süre dolmadan iptal ederseniz hiçbir bildirim gitmez.'**
+  String get panikIptalAciklama;
+
+  /// No description provided for @panikIptalEt.
+  ///
+  /// In tr, this message translates to:
+  /// **'İptal et'**
+  String get panikIptalEt;
+
+  /// No description provided for @panikIptalEdildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'İptal edildi — bildirim gitmedi.'**
+  String get panikIptalEdildi;
+
+  /// No description provided for @panikYanlisAlarmGonderildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yanlış alarm bildirildi.'**
+  String get panikYanlisAlarmGonderildi;
+
+  /// No description provided for @panikYasalUyari.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu sistem 112 / 155 / 110 yerine geçmez. Hayati tehlikede önce resmi acil hatları arayın.'**
+  String get panikYasalUyari;
+
+  /// No description provided for @panikYetkiYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu hesapta acil durum çağrısı yetkisi yok.'**
+  String get panikYetkiYok;
+
+  /// No description provided for @panikGelenAlarm.
+  ///
+  /// In tr, this message translates to:
+  /// **'ACİL DURUM ÇAĞRISI'**
+  String get panikGelenAlarm;
+
+  /// No description provided for @panikGidiyorum.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gidiyorum'**
+  String get panikGidiyorum;
+
+  /// No description provided for @panikGordum.
+  ///
+  /// In tr, this message translates to:
+  /// **'Gördüm'**
+  String get panikGordum;
+
+  /// No description provided for @panikYanlisAlarmSayaci.
+  ///
+  /// In tr, this message translates to:
+  /// **'Son 24 saatte {n} yanlış alarm'**
+  String panikYanlisAlarmSayaci(Object n);
+
+  /// No description provided for @panikTakipBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Acil durum çağrıları'**
+  String get panikTakipBaslik;
+
+  /// No description provided for @panikAlarmYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kayıtlı acil durum çağrısı yok.'**
+  String get panikAlarmYok;
+
+  /// No description provided for @panikKapat.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kapat'**
+  String get panikKapat;
+
+  /// No description provided for @panikGorenSayisi.
+  ///
+  /// In tr, this message translates to:
+  /// **'{goren}/{toplam} gördü'**
+  String panikGorenSayisi(Object goren, Object toplam);
+
+  /// No description provided for @panikMudahaleSuresi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Müdahale: {n} sn'**
+  String panikMudahaleSuresi(Object n);
+
   /// No description provided for @devriyeGunler.
   ///
   /// In tr, this message translates to:

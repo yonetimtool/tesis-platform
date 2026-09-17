@@ -1193,6 +1193,84 @@ class AppLocalizationsDe extends AppLocalizations {
   String get devriyePlanYeniBaslik => 'Neuer Rundgangsplan';
 
   @override
+  String get panikBaslik => 'Notfall';
+
+  @override
+  String get panikKisa => 'SOS';
+
+  @override
+  String get panikTipSakin => 'Notfall zu Hause (Gesundheit, Sicherheit)';
+
+  @override
+  String get panikTipGuvenlik =>
+      'Sicherheitsnotfall (Angriff, Feuer, Einbruch)';
+
+  @override
+  String get panikTipAnons =>
+      'Durchsage an die ganze Anlage (Evakuierung, Gas, Erdbeben)';
+
+  @override
+  String panikGonderiliyor(Object n) {
+    return 'Wird gesendet… $n s';
+  }
+
+  @override
+  String get panikGonderildi => 'Gesendet';
+
+  @override
+  String get panikIptalAciklama =>
+      'Vor Ablauf abbrechen und es wird nichts gesendet.';
+
+  @override
+  String get panikIptalEt => 'Abbrechen';
+
+  @override
+  String get panikIptalEdildi => 'Abgebrochen — nichts gesendet.';
+
+  @override
+  String get panikYanlisAlarmGonderildi => 'Fehlalarm gemeldet.';
+
+  @override
+  String get panikYasalUyari =>
+      'Dieses System ersetzt nicht 112 / 155 / 110. Bei Lebensgefahr zuerst den offiziellen Notruf wählen.';
+
+  @override
+  String get panikYetkiYok => 'Dieses Konto kann keine Notrufe auslösen.';
+
+  @override
+  String get panikGelenAlarm => 'NOTRUF';
+
+  @override
+  String get panikGidiyorum => 'Bin unterwegs';
+
+  @override
+  String get panikGordum => 'Gesehen';
+
+  @override
+  String panikYanlisAlarmSayaci(Object n) {
+    return '$n Fehlalarme in den letzten 24 Std.';
+  }
+
+  @override
+  String get panikTakipBaslik => 'Notrufe';
+
+  @override
+  String get panikAlarmYok => 'Keine Notrufe erfasst.';
+
+  @override
+  String get panikKapat => 'Schließen';
+
+  @override
+  String panikGorenSayisi(Object goren, Object toplam) {
+    return '$goren/$toplam gesehen';
+  }
+
+  @override
+  String panikMudahaleSuresi(Object n) {
+    return 'Reaktion: $n s';
+  }
+
+  @override
   String get devriyeGunler => 'Welche Tage';
 
   @override

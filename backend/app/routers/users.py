@@ -29,6 +29,8 @@ from ..schemas import (
     AcilabilirRollerOut,
     AvatarUpdate,
     DavetGonderimSonucu,
+    PanikAskiIn,
+    PanikAskiOut,
     ResidentDeleteOut,
     UserAdminListItem,
     UserAdminListResponse,
@@ -685,6 +687,71 @@ async def update_user_contact(
         resource_id=obj.id, meta={"fields": list(data.keys())},
     )
     return _admin_out(obj)
+
+
+@router.patch("/{user_id}/panik-aski", response_model=PanikAskiOut)
+async def panik_askisi(
+    user_id: uuid.UUID,
+    body: PanikAskiIn,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_CONTACT_MANAGER),
+) -> PanikAskiOut:
+    """(P240 §1) Panik yetkisini SURELI askiya al.
+
+    ===================================================================
+    NEDEN VAR — ve neden KALICI DEGIL
+    ===================================================================
+    Tekrar tekrar basip ekibi bosa kosturan bir kullanici gercek bir
+    sorundur. Ama suresiz bir aski, UNUTULAN bir askidir ve unutulan
+    aski gercek bir acil durumu SESSIZCE yutar. Bu yuzden `bitis`
+    zorunlu ve gecmis bir tarih KABUL EDILMEZ (o, "askiyi kaldir"in
+    yanlislikla yazilmis hali olurdu).
+
+    ASKIDAYKEN DE SATIR YAZILIR (`routers/panik.py`): basmaya devam
+    etmesi, askinin gerekcesini dogrulayan ya da CURUTEN bir olcumdur.
+
+    KENDINI ASKIYA ALAMAZSIN: yonetici kendi panik yetkisini kapatirsa,
+    kendi acil durumunda sessiz kalir.
+    """
+    if body.bitis <= datetime.now(timezone.utc):
+        raise APIError(422, "validation_error", "panik_aski_gecmis_tarih")
+    if user_id == user.id:
+        raise APIError(422, "validation_error", "panik_aski_kendine")
+    obj = await get_or_404(db, AppUser, user_id)
+    obj.panik_askida_bitis = body.bitis
+    obj.panik_aski_nedeni = body.neden
+    obj.updated_at = func.now()
+    await db.flush()
+    await audit_user(
+        db, user, Action.PANIK_ASKI, resource_type="app_user",
+        resource_id=obj.id,
+        meta={"bitis": body.bitis.isoformat(), "neden": body.neden},
+    )
+    return PanikAskiOut(
+        user_id=obj.id,
+        panik_askida_bitis=obj.panik_askida_bitis,
+        panik_aski_nedeni=obj.panik_aski_nedeni,
+    )
+
+
+@router.delete("/{user_id}/panik-aski", response_model=PanikAskiOut)
+async def panik_askisi_kaldir(
+    user_id: uuid.UUID,
+    db: AsyncSession = Depends(get_tenant_db),
+    user: AppUser = Depends(_CONTACT_MANAGER),
+) -> PanikAskiOut:
+    """Askiyi ERKEN kaldir. Neden metni de temizlenir — duran bir neden
+    metni, kalkmis bir askiyi hala varmis gibi gosterirdi."""
+    obj = await get_or_404(db, AppUser, user_id)
+    obj.panik_askida_bitis = None
+    obj.panik_aski_nedeni = None
+    obj.updated_at = func.now()
+    await db.flush()
+    await audit_user(
+        db, user, Action.PANIK_ASKI, resource_type="app_user",
+        resource_id=obj.id, meta={"kaldirildi": True},
+    )
+    return PanikAskiOut(user_id=obj.id)
 
 
 @router.patch("/{user_id}/avatar", response_model=UserAdminOut)

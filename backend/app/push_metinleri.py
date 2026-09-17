@@ -747,6 +747,76 @@ METINLER: dict[str, PushMetni] = {
     # (P237 §3) ANKET ACILDI — HEDEF KITLEYE. `duyuru`ya bindirilmedi:
     # bildirim tercihinde "duyurulari al, anket bildirimini alma" demek
     # mumkun kalmali.
+    # (P240 §1) PANIK — UC TIP TEK KIMLIK.
+    #
+    # Tip (`sakin`/`guvenlik`/`yonetici_anons`) govdeye PARAMETRE olarak
+    # girmez: push basligi UC SANIYEDE okunmali ve "ACIL" kelimesi
+    # zaten en yuksek sinyaldir. Tipe gore uc ayri kimlik acmak,
+    # kullaniciya bildirim ayarlarinda uc ayri anahtar gostermek ve
+    # birini kapatabilmesi demekti — panikte bu kabul edilemez.
+    "panik_alarm": PushMetni(
+        baslik={
+            "tr": "ACİL DURUM",
+            "en": "EMERGENCY",
+            "ar": "حالة طوارئ",
+            "ru": "ЭКСТРЕННЫЙ ВЫЗОВ",
+            "de": "NOTFALL",
+            "fr": "URGENCE",
+            "es": "EMERGENCIA",
+        },
+        govde={
+            "tr": "{ad} yardım istedi — {yer}",
+            "en": "{ad} called for help — {yer}",
+            "ar": "{ad} طلب المساعدة — {yer}",
+            "ru": "{ad} просит помощи — {yer}",
+            "de": "{ad} braucht Hilfe — {yer}",
+            "fr": "{ad} demande de l’aide — {yer}",
+            "es": "{ad} pidió ayuda — {yer}",
+        },
+        params=('ad', 'yer'),
+    ),
+    "panik_yanlis_alarm": PushMetni(
+        baslik={
+            "tr": "Yanlış alarm",
+            "en": "False alarm",
+            "ar": "إنذار خاطئ",
+            "ru": "Ложная тревога",
+            "de": "Fehlalarm",
+            "fr": "Fausse alerte",
+            "es": "Falsa alarma",
+        },
+        govde={
+            "tr": "{ad} alarmı geri aldı — {yer}",
+            "en": "{ad} withdrew the alarm — {yer}",
+            "ar": "{ad} تراجع عن الإنذار — {yer}",
+            "ru": "{ad} отменил(а) тревогу — {yer}",
+            "de": "{ad} hat den Alarm zurückgezogen — {yer}",
+            "fr": "{ad} a retiré l’alerte — {yer}",
+            "es": "{ad} retiró la alarma — {yer}",
+        },
+        params=('ad', 'yer'),
+    ),
+    "panik_kapandi": PushMetni(
+        baslik={
+            "tr": "Alarm kapandı",
+            "en": "Alarm closed",
+            "ar": "أُغلق الإنذار",
+            "ru": "Тревога закрыта",
+            "de": "Alarm geschlossen",
+            "fr": "Alerte clôturée",
+            "es": "Alarma cerrada",
+        },
+        govde={
+            "tr": "{ad} için açılan alarm kapatıldı — {yer}",
+            "en": "The alarm raised for {ad} was closed — {yer}",
+            "ar": "تم إغلاق الإنذار الخاص بـ {ad} — {yer}",
+            "ru": "Тревога по {ad} закрыта — {yer}",
+            "de": "Der Alarm für {ad} wurde geschlossen — {yer}",
+            "fr": "L’alerte pour {ad} a été clôturée — {yer}",
+            "es": "La alarma de {ad} fue cerrada — {yer}",
+        },
+        params=('ad', 'yer'),
+    ),
     "anket_acildi": PushMetni(
         baslik={
             "tr": "Yeni anket",

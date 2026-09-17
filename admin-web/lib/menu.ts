@@ -211,6 +211,8 @@ const OGELER: readonly MenuOgesi[] = [
 
   // --- GUVENLIK: gunluk saha akisi --------------------------------------
   { href: "/olaylar", anahtar: "kabukOlaylar", icon: "alert", grup: "guvenlik" },
+  // (P240 §1) Acil durum cagrilari — takip ekrani.
+  { href: "/panik", anahtar: "kabukPanik", icon: "alert", grup: "guvenlik" },
   { href: "/notifications", anahtar: "kabukBildirimler", icon: "bell", grup: "guvenlik" },
   { href: "/kameralar", anahtar: "kabukKameralar", icon: "camera", grup: "guvenlik" },
   { href: "/kamera-kayitlari", anahtar: "kabukKameraKayitlari", icon: "kayit", grup: "guvenlik" },

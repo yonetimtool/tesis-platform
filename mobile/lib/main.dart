@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import 'l10n/gen/app_localizations.dart';
+import 'src/features/panik/presentation/panik_gozcusu.dart';
 import 'src/core/i18n/locale_controller.dart';
 import 'src/core/startup/acilis_tercihleri.dart';
 import 'src/core/teshis/teshis.dart';
@@ -144,9 +145,19 @@ class TesisGuvenlikApp extends ConsumerWidget {
       // TAMAMINDA gecerli olur. Ekran ekran sarmak, birini unutmak
       // demekti — ve unutulan ekran tam da yasli kullanicinin
       // takilacagi yer olurdu.
+      // (P240 §1) PANIK GOZCUSU EN ICTE (uygulama agacinin hemen ustunde):
+      // gelen bir acil durum cagrisi CIZILEN HER EKRANIN ustune gecer.
+      // Tek bir ekrana koymak, kullanicinin baska bir ekranda oldugu anda
+      // alarmi KACIRMASI demekti.
+      //
+      // SURUM KAPISININ ALTINDA: zorunlu guncelleme ekrani acikken
+      // uygulama zaten kullanilamaz durumdadir; onun ustune bir alarm
+      // cizmek, iki kapatilamaz ekrani ust uste koymak olurdu.
       builder: (context, cocuk) => GorunumOlcegi(
         child: SurumGozcusu(
-          child: SurumKapisi(child: cocuk ?? const SizedBox.shrink()),
+          child: SurumKapisi(
+            child: PanikGozcusu(child: cocuk ?? const SizedBox.shrink()),
+          ),
         ),
       ),
     );

@@ -2,6 +2,8 @@ import { cookies, headers } from "next/headers";
 
 import { AppShell } from "@/components/AppShell";
 import { DonusCubugu } from "@/components/DonusCubugu";
+import { PanikAlarmi } from "@/components/panik/panik-alarmi";
+import { PanikDugmesi } from "@/components/panik/panik-dugmesi";
 import { SunucuDurumu } from "@/components/SunucuDurumu";
 import { ToastProvider } from "@/components/Toast";
 import { ACCESS_COOKIE } from "@/lib/cookies";
@@ -46,6 +48,15 @@ export default async function ProtectedLayout({
             icerigi durum ekraniyla degisir. Kullanici nerede oldugunu
             kaybetmemeli ve cikis yapabilmeli. */}
         <SunucuDurumu>{children}</SunucuDurumu>
+        {/* (P240 §1) PANIK — DUZENDE, yani HER SAYFADA.
+            Acil durumda kullanici hangi sayfadaysa oradadir; onu once
+            menuye sonra bir sayfaya goturmek, alarmin gec kalmasidir.
+
+            Rol SUNUCUDA cozulmus halde geciyor (`tokenRolu`): istemciden
+            `/api/me` beklemek, dugmeyi bir kare boyunca YANLIS role
+            gostermek ya da hic gostermemek demekti. */}
+        <PanikDugmesi rol={rol} />
+        <PanikAlarmi />
       </AppShell>
     </ToastProvider>
   );

@@ -1317,6 +1317,81 @@ class AppLocalizationsAr extends AppLocalizations {
   String get devriyePlanYeniBaslik => 'خطة دورية جديدة';
 
   @override
+  String get panikBaslik => 'حالة طوارئ';
+
+  @override
+  String get panikKisa => 'SOS';
+
+  @override
+  String get panikTipSakin => 'طوارئ في المنزل (صحة، أمان)';
+
+  @override
+  String get panikTipGuvenlik => 'طوارئ أمنية (اعتداء، حريق، اقتحام)';
+
+  @override
+  String get panikTipAnons => 'إعلان لكل المجمع (إخلاء، غاز، زلزال)';
+
+  @override
+  String panikGonderiliyor(Object n) {
+    return 'جارٍ الإرسال… $n ث';
+  }
+
+  @override
+  String get panikGonderildi => 'تم الإرسال';
+
+  @override
+  String get panikIptalAciklama => 'ألغِ قبل انتهاء العد ولن يُرسل أي تنبيه.';
+
+  @override
+  String get panikIptalEt => 'إلغاء';
+
+  @override
+  String get panikIptalEdildi => 'أُلغي — لم يُرسل شيء.';
+
+  @override
+  String get panikYanlisAlarmGonderildi => 'تم الإبلاغ عن إنذار خاطئ.';
+
+  @override
+  String get panikYasalUyari =>
+      'هذا النظام لا يغني عن 112 / 155 / 110. عند خطر يهدد الحياة اتصل أولًا بالطوارئ الرسمية.';
+
+  @override
+  String get panikYetkiYok => 'لا يملك هذا الحساب صلاحية نداء الطوارئ.';
+
+  @override
+  String get panikGelenAlarm => 'نداء طوارئ';
+
+  @override
+  String get panikGidiyorum => 'أنا في الطريق';
+
+  @override
+  String get panikGordum => 'شوهد';
+
+  @override
+  String panikYanlisAlarmSayaci(Object n) {
+    return '$n إنذارات خاطئة خلال 24 ساعة';
+  }
+
+  @override
+  String get panikTakipBaslik => 'نداءات الطوارئ';
+
+  @override
+  String get panikAlarmYok => 'لا توجد نداءات طوارئ مسجلة.';
+
+  @override
+  String get panikKapat => 'إغلاق';
+
+  @override
+  String panikGorenSayisi(Object goren, Object toplam) {
+    return '$goren/$toplam شاهدوا';
+  }
+
+  @override
+  String panikMudahaleSuresi(Object n) {
+    return 'الاستجابة: $n ث';
+  }
+
+  @override
   String get devriyeGunler => 'في أي أيام';
 
   @override

@@ -1299,6 +1299,85 @@ class AppLocalizationsRu extends AppLocalizations {
   String get devriyePlanYeniBaslik => 'Новый план обхода';
 
   @override
+  String get panikBaslik => 'Экстренный вызов';
+
+  @override
+  String get panikKisa => 'SOS';
+
+  @override
+  String get panikTipSakin => 'ЧП дома (здоровье, безопасность)';
+
+  @override
+  String get panikTipGuvenlik =>
+      'ЧП по безопасности (нападение, пожар, проникновение)';
+
+  @override
+  String get panikTipAnons =>
+      'Оповещение всего комплекса (эвакуация, газ, землетрясение)';
+
+  @override
+  String panikGonderiliyor(Object n) {
+    return 'Отправка… $n с';
+  }
+
+  @override
+  String get panikGonderildi => 'Отправлено';
+
+  @override
+  String get panikIptalAciklama =>
+      'Отмените до конца отсчёта — уведомления не уйдут.';
+
+  @override
+  String get panikIptalEt => 'Отменить';
+
+  @override
+  String get panikIptalEdildi => 'Отменено — ничего не отправлено.';
+
+  @override
+  String get panikYanlisAlarmGonderildi => 'Сообщено о ложной тревоге.';
+
+  @override
+  String get panikYasalUyari =>
+      'Эта система не заменяет 112 / 155 / 110. При угрозе жизни сначала звоните в официальные службы.';
+
+  @override
+  String get panikYetkiYok =>
+      'Этот аккаунт не может подавать экстренные вызовы.';
+
+  @override
+  String get panikGelenAlarm => 'ЭКСТРЕННЫЙ ВЫЗОВ';
+
+  @override
+  String get panikGidiyorum => 'Выезжаю';
+
+  @override
+  String get panikGordum => 'Увидел';
+
+  @override
+  String panikYanlisAlarmSayaci(Object n) {
+    return '$n ложных тревог за 24 ч';
+  }
+
+  @override
+  String get panikTakipBaslik => 'Экстренные вызовы';
+
+  @override
+  String get panikAlarmYok => 'Экстренных вызовов нет.';
+
+  @override
+  String get panikKapat => 'Закрыть';
+
+  @override
+  String panikGorenSayisi(Object goren, Object toplam) {
+    return 'увидели $goren/$toplam';
+  }
+
+  @override
+  String panikMudahaleSuresi(Object n) {
+    return 'Реакция: $n с';
+  }
+
+  @override
   String get devriyeGunler => 'В какие дни';
 
   @override

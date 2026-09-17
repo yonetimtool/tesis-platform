@@ -1266,6 +1266,84 @@ class AppLocalizationsEn extends AppLocalizations {
   String get devriyePlanYeniBaslik => 'New patrol plan';
 
   @override
+  String get panikBaslik => 'Emergency';
+
+  @override
+  String get panikKisa => 'SOS';
+
+  @override
+  String get panikTipSakin => 'Emergency at home (health, safety)';
+
+  @override
+  String get panikTipGuvenlik =>
+      'Security emergency (assault, fire, intrusion)';
+
+  @override
+  String get panikTipAnons =>
+      'Site-wide announcement (evacuation, gas, earthquake)';
+
+  @override
+  String panikGonderiliyor(Object n) {
+    return 'Sending… ${n}s';
+  }
+
+  @override
+  String get panikGonderildi => 'Sent';
+
+  @override
+  String get panikIptalAciklama =>
+      'Cancel before the timer ends and no alert is sent.';
+
+  @override
+  String get panikIptalEt => 'Cancel';
+
+  @override
+  String get panikIptalEdildi => 'Cancelled — nothing was sent.';
+
+  @override
+  String get panikYanlisAlarmGonderildi => 'False alarm reported.';
+
+  @override
+  String get panikYasalUyari =>
+      'This system does not replace 112 / 155 / 110. In life-threatening situations call the official emergency line first.';
+
+  @override
+  String get panikYetkiYok => 'This account cannot raise emergency calls.';
+
+  @override
+  String get panikGelenAlarm => 'EMERGENCY CALL';
+
+  @override
+  String get panikGidiyorum => 'On my way';
+
+  @override
+  String get panikGordum => 'Seen';
+
+  @override
+  String panikYanlisAlarmSayaci(Object n) {
+    return '$n false alarms in the last 24h';
+  }
+
+  @override
+  String get panikTakipBaslik => 'Emergency calls';
+
+  @override
+  String get panikAlarmYok => 'No emergency calls recorded.';
+
+  @override
+  String get panikKapat => 'Close';
+
+  @override
+  String panikGorenSayisi(Object goren, Object toplam) {
+    return '$goren/$toplam saw it';
+  }
+
+  @override
+  String panikMudahaleSuresi(Object n) {
+    return 'Response: ${n}s';
+  }
+
+  @override
   String get devriyeGunler => 'Which days';
 
   @override

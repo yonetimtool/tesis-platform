@@ -67,6 +67,9 @@ TESIS_UCLARI: tuple[str, ...] = (
     "/events",
     "/site-rules",
     "/anketler",
+    # (P240 §1) Panik alarmi listesi — tesis-kapsamli ve RLS baglami
+    # kurar. Taramaya yazilmasaydi kapsam orani sessizce duserdi.
+    "/panik",
     "/checkpoints",
     "/patrol-plans",
     "/patrol-windows",

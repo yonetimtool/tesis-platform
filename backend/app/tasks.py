@@ -211,3 +211,43 @@ def rapor_uret_gorevi(self, is_id: str) -> dict:
     from .rapor_kuyruk import isi_uret
 
     return _async_calistir(lambda: isi_uret(uuid.UUID(is_id)))
+
+
+@celery_app.task(name="panik.yayinla")
+def panik_yayinla(alarm_id: str, tenant_id: str) -> dict:
+    """(P240 §1) IPTAL PENCERESI DOLDU — alarmi yayinla.
+
+    `countdown` ile gecikmeli planlanir. Bu ANDA alarm hala
+    `beklemede` ise yayinlanir; kullanici iptal ettiyse durum `iptal`
+    olmustur ve `yayinla_senkron` hicbir sey yapmaz.
+
+    YARIS YOK: karar VERITABANI DURUMUNDAN okunur, gorevin kendi
+    zamanlamasindan degil. Gorev gec kosarsa bile iptal edilmis bir
+    alarmi gondermez.
+
+    TENANT BAGLAMI ELLE KURULUR: Celery'de istek yok, yani `get_tenant_db`
+    bagimliligi da yok; RLS icin `app.current_tenant_id` burada set
+    edilir (beat gorevlerindeki desen).
+    """
+    import uuid as _uuid
+
+    from sqlalchemy import text as _text
+
+    from .db import SessionLocal
+    from .models import PanikAlarm
+    from .panik_yayin import yayinla_senkron
+
+    async def _is() -> dict:
+        async with SessionLocal() as db:
+            await db.execute(
+                _text("SELECT set_config('app.current_tenant_id', :t, true)"),
+                {"t": tenant_id},
+            )
+            alarm = await db.get(PanikAlarm, _uuid.UUID(alarm_id))
+            if alarm is None:
+                return {"durum": "yok"}
+            adet = await yayinla_senkron(db, alarm)
+            await db.commit()
+            return {"durum": alarm.durum, "alici": adet}
+
+    return _async_calistir(_is)

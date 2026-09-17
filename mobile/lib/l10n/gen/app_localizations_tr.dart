@@ -1180,6 +1180,83 @@ class AppLocalizationsTr extends AppLocalizations {
   String get devriyePlanYeniBaslik => 'Yeni devriye planı';
 
   @override
+  String get panikBaslik => 'Acil durum';
+
+  @override
+  String get panikKisa => 'SOS';
+
+  @override
+  String get panikTipSakin => 'Evde acil durum (sağlık, güvenlik)';
+
+  @override
+  String get panikTipGuvenlik =>
+      'Güvenlik acili (saldırı, yangın, izinsiz giriş)';
+
+  @override
+  String get panikTipAnons => 'Tüm siteye anons (tahliye, gaz, deprem)';
+
+  @override
+  String panikGonderiliyor(Object n) {
+    return 'Gönderiliyor… $n sn';
+  }
+
+  @override
+  String get panikGonderildi => 'Gönderildi';
+
+  @override
+  String get panikIptalAciklama =>
+      'Süre dolmadan iptal ederseniz hiçbir bildirim gitmez.';
+
+  @override
+  String get panikIptalEt => 'İptal et';
+
+  @override
+  String get panikIptalEdildi => 'İptal edildi — bildirim gitmedi.';
+
+  @override
+  String get panikYanlisAlarmGonderildi => 'Yanlış alarm bildirildi.';
+
+  @override
+  String get panikYasalUyari =>
+      'Bu sistem 112 / 155 / 110 yerine geçmez. Hayati tehlikede önce resmi acil hatları arayın.';
+
+  @override
+  String get panikYetkiYok => 'Bu hesapta acil durum çağrısı yetkisi yok.';
+
+  @override
+  String get panikGelenAlarm => 'ACİL DURUM ÇAĞRISI';
+
+  @override
+  String get panikGidiyorum => 'Gidiyorum';
+
+  @override
+  String get panikGordum => 'Gördüm';
+
+  @override
+  String panikYanlisAlarmSayaci(Object n) {
+    return 'Son 24 saatte $n yanlış alarm';
+  }
+
+  @override
+  String get panikTakipBaslik => 'Acil durum çağrıları';
+
+  @override
+  String get panikAlarmYok => 'Kayıtlı acil durum çağrısı yok.';
+
+  @override
+  String get panikKapat => 'Kapat';
+
+  @override
+  String panikGorenSayisi(Object goren, Object toplam) {
+    return '$goren/$toplam gördü';
+  }
+
+  @override
+  String panikMudahaleSuresi(Object n) {
+    return 'Müdahale: $n sn';
+  }
+
+  @override
   String get devriyeGunler => 'Hangi günler';
 
   @override

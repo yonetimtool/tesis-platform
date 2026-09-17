@@ -349,6 +349,49 @@
   "devriyePlanSilindi": "Plan gelöscht ✓",
   "devriyePlanDuzenleBaslik": "Rundgangsplan bearbeiten",
   "devriyePlanYeniBaslik": "Neuer Rundgangsplan",
+  "panikBaslik": "Notfall",
+  "panikKisa": "SOS",
+  "panikTipSakin": "Notfall zu Hause (Gesundheit, Sicherheit)",
+  "panikTipGuvenlik": "Sicherheitsnotfall (Angriff, Feuer, Einbruch)",
+  "panikTipAnons": "Durchsage an die ganze Anlage (Evakuierung, Gas, Erdbeben)",
+  "panikGonderiliyor": "Wird gesendet… {n} s",
+  "@panikGonderiliyor": {
+    "placeholders": {
+      "n": {}
+    }
+  },
+  "panikGonderildi": "Gesendet",
+  "panikIptalAciklama": "Vor Ablauf abbrechen und es wird nichts gesendet.",
+  "panikIptalEt": "Abbrechen",
+  "panikIptalEdildi": "Abgebrochen — nichts gesendet.",
+  "panikYanlisAlarmGonderildi": "Fehlalarm gemeldet.",
+  "panikYasalUyari": "Dieses System ersetzt nicht 112 / 155 / 110. Bei Lebensgefahr zuerst den offiziellen Notruf wählen.",
+  "panikYetkiYok": "Dieses Konto kann keine Notrufe auslösen.",
+  "panikGelenAlarm": "NOTRUF",
+  "panikGidiyorum": "Bin unterwegs",
+  "panikGordum": "Gesehen",
+  "panikYanlisAlarmSayaci": "{n} Fehlalarme in den letzten 24 Std.",
+  "@panikYanlisAlarmSayaci": {
+    "placeholders": {
+      "n": {}
+    }
+  },
+  "panikTakipBaslik": "Notrufe",
+  "panikAlarmYok": "Keine Notrufe erfasst.",
+  "panikKapat": "Schließen",
+  "panikGorenSayisi": "{goren}/{toplam} gesehen",
+  "@panikGorenSayisi": {
+    "placeholders": {
+      "goren": {},
+      "toplam": {}
+    }
+  },
+  "panikMudahaleSuresi": "Reaktion: {n} s",
+  "@panikMudahaleSuresi": {
+    "placeholders": {
+      "n": {}
+    }
+  },
   "devriyeGunler": "Welche Tage",
   "devriyeGunlerIpucu": "Ohne Auswahl läuft er täglich. Ein Nachtplan gehört zum Starttag.",
   "devriyeHerGun": "Täglich",

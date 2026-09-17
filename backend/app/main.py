@@ -60,6 +60,7 @@ from .routers import rapor_motoru as rapor_motoru_router
 from .routers import mesajlar as mesajlar_router
 from .routers import gurultu_uc as gurultu_router
 from .routers import anketler as anketler_router
+from .routers import panik as panik_router
 from .routers import ice_aktarim as ice_aktarim_router
 from .routers import kurulum as kurulum_router
 from .routers import takvim as takvim_router
@@ -227,6 +228,7 @@ app.include_router(yonetisim_router.router)
 app.include_router(kvkk_router.router)
 app.include_router(gurultu_router.router)
 app.include_router(anketler_router.router)
+app.include_router(panik_router.router)
 app.include_router(kurulum_router.router)
 # (P167 Asama 2) Takvim + kisisel hatirlatma + pano tercihi.
 app.include_router(takvim_router.router)
