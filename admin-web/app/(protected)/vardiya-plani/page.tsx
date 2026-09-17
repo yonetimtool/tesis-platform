@@ -16,6 +16,7 @@ import {
 } from "@/components/ui";
 import { VardiyaEkleModali } from "@/components/vardiya/vardiya-ekle-modali";
 import { SablonBolumu } from "@/components/vardiya/sablon-bolumu";
+import { KisiModali, type KisiOzeti } from "@/components/vardiya/kisi-modali";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
@@ -197,6 +198,11 @@ export default function VardiyaPlaniSayfasi() {
   // sorusunu yanitliyor, bu kart "SU AN kim gorevde" sorusunu. Ikincisi
   // cizelgeden gozle okunabilir gorunur ama gece 03:00'te dogru satiri
   // bulmak icin kaydirmak gerekirdi.
+  // (P239 §5) Kisi paneli — gorevdeki bir isme tiklaninca acilir.
+  const [seciliKisi, setSeciliKisi] = useState<KisiOzeti | null>(null);
+  // KENDI KAYDIM LISTEDE CIZILMEZ: kendi gorevde oldugumu zaten
+  // biliyorum ve kendi numaramı aramak anlamsiz.
+  const { data: kimlik } = useSWR<{ id?: string }>("/api/me", jsonFetcher);
   const { data: simdiDurum } = useSWR<Simdi>(
     "/api/vardiya-plani/simdi",
     jsonFetcher,
@@ -502,9 +508,13 @@ export default function VardiyaPlaniSayfasi() {
                   {simdiDurum.gorevdeki_vardiya.baslangic_saat.slice(0, 5)}–
                   {simdiDurum.gorevdeki_vardiya.bitis_saat.slice(0, 5)}
                 </p>
-                <p className="mt-1 text-sm text-metin-body">
-                  {simdiDurum.gorevdekiler.map((k) => k.ad).join(", ")}
-                </p>
+                <KisiSeridi
+                  kisiler={simdiDurum.gorevdekiler}
+                  benimId={kimlik?.id}
+                  altSatir={`${simdiDurum.gorevdeki_vardiya.baslangic_saat.slice(0, 5)}–${simdiDurum.gorevdeki_vardiya.bitis_saat.slice(0, 5)}`}
+                  onSec={setSeciliKisi}
+                  kanca="vardiya-gorevde"
+                />
               </>
             ) : (
               <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-3)" }}>
@@ -523,9 +533,13 @@ export default function VardiyaPlaniSayfasi() {
                   {simdiDurum.sonraki_vardiya.baslangic_saat.slice(0, 5)}–
                   {simdiDurum.sonraki_vardiya.bitis_saat.slice(0, 5)}
                 </p>
-                <p className="mt-1 text-sm text-metin-body">
-                  {simdiDurum.sonrakiler.map((k) => k.ad).join(", ")}
-                </p>
+                <KisiSeridi
+                  kisiler={simdiDurum.sonrakiler}
+                  benimId={kimlik?.id}
+                  altSatir={`${simdiDurum.sonraki_vardiya.baslangic_saat.slice(0, 5)}–${simdiDurum.sonraki_vardiya.bitis_saat.slice(0, 5)}`}
+                  onSec={setSeciliKisi}
+                  kanca="vardiya-sonraki"
+                />
               </>
             ) : (
               <p style={{ fontSize: "var(--yz-fs-sm)", color: "var(--yz-text-3)" }}>
@@ -813,6 +827,8 @@ export default function VardiyaPlaniSayfasi() {
           uygula" BASKA bir modali aciyordu; ikisi ayni isi farkli
           sirayla soruyordu. Mobilde tek akis var (takvim -> kisi/saat ->
           gruba ekle -> onizleme) ve web ona esitlendi. */}
+      <KisiModali kisi={seciliKisi} onKapat={() => setSeciliKisi(null)} />
+
       <VardiyaEkleModali
         acik={ekleAcik || kalipAcik}
         personel={(personel?.items ?? []).filter((p) => p.role !== "resident")}
@@ -833,6 +849,49 @@ export default function VardiyaPlaniSayfasi() {
           void mutate();
         }}
       />
+    </div>
+  );
+}
+
+/**
+ * (P239 §5) Gorevdeki/sonraki KISILER — her biri tiklanabilir.
+ *
+ * Duz metin ("Ali, Veli") isimleri gosteriyor ama onlara ULASMIYORDU.
+ * Kendi kaydim DUSURULUR; liste tamamen bosalirsa "kimse yok" demek
+ * YANLIS olurdu (biri var: ben) — o yuzden bos listede hic satir
+ * cizilmez, ustteki vardiya basligi zaten durumu soyluyor.
+ */
+function KisiSeridi({
+  kisiler,
+  benimId,
+  altSatir,
+  onSec,
+  kanca,
+}: {
+  kisiler: Kisi[];
+  benimId: string | undefined;
+  altSatir: string;
+  onSec: (k: KisiOzeti) => void;
+  kanca: string;
+}) {
+  const digerleri = kisiler.filter((k) => k.user_id !== benimId);
+  if (digerleri.length === 0) return null;
+  return (
+    <div className="mt-1 flex flex-wrap gap-2">
+      {digerleri.map((k) => (
+        <Dugme
+          key={k.user_id}
+          type="button"
+          boy="kucuk"
+          tur="ikincil"
+          data-test={`${kanca}-${k.user_id}`}
+          onClick={() =>
+            onSec({ user_id: k.user_id, ad: k.ad, rol: k.rol, altSatir })
+          }
+        >
+          {k.ad}
+        </Dugme>
+      ))}
     </div>
   );
 }

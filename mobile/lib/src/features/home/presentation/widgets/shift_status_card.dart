@@ -28,14 +28,19 @@ extension VardiyaDurumStil on VardiyaDurum {
 /// (ya da yonetici adi), 56px yuvarlak avatar + yesil online noktasi, durum
 /// cipi, altta kisi ikonu + "2 Görevli" (ya da yesil nokta + "Online").
 class ShiftStatusCard extends StatelessWidget {
-  const ShiftStatusCard({super.key, required this.kart});
+  const ShiftStatusCard({super.key, required this.kart, this.onTap});
 
   final VardiyaKart kart;
+
+  /// (P239 §5) Karta dokunma — kisi sayfasi. Null ise kart tiklanmaz;
+  /// "dokunuyorum, bir sey olmuyor" halini uretmemek icin bilincli.
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final s = HomeSurface.of(context);
     return HomeCard(
+      onTap: onTap,
       // Kart GENISLIGI de yazi olcegiyle buyur (tur 34): 2.0x'te ic satir
       // 30 px tasiyordu. Seridin kendisi kaydirilabilir oldugu icin genisleme
       // duzeni bozmaz.

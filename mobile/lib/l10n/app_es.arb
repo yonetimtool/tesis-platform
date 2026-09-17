@@ -2247,6 +2247,7 @@
   "anketMaddeler": "Opciones de la encuesta",
   "anketMaddeIpucu": "Se requieren al menos dos opciones; añada más con «+».",
   "anketSecenekEkle": "Añadir opción",
+  "kisiAra": "Llamar",
   "anketSecenekSil": "Eliminar opción",
   "anketSecenekNo": "Opción {n}",
   "@anketSecenekNo": {

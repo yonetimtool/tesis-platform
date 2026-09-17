@@ -6702,6 +6702,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get anketSecenekEkle => 'Добавить вариант';
 
   @override
+  String get kisiAra => 'Позвонить';
+
+  @override
   String get anketSecenekSil => 'Удалить вариант';
 
   @override

@@ -6694,6 +6694,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get anketSecenekEkle => 'إضافة خيار';
 
   @override
+  String get kisiAra => 'اتصال';
+
+  @override
   String get anketSecenekSil => 'حذف الخيار';
 
   @override

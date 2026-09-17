@@ -6632,6 +6632,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get anketSecenekEkle => 'Option hinzufügen';
 
   @override
+  String get kisiAra => 'Anrufen';
+
+  @override
   String get anketSecenekSil => 'Option löschen';
 
   @override

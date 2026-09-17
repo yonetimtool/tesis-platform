@@ -2247,6 +2247,7 @@
   "anketMaddeler": "خيارات الاستطلاع",
   "anketMaddeIpucu": "مطلوب خياران على الأقل؛ أضف المزيد بـ «+».",
   "anketSecenekEkle": "إضافة خيار",
+  "kisiAra": "اتصال",
   "anketSecenekSil": "حذف الخيار",
   "anketSecenekNo": "الخيار {n}",
   "@anketSecenekNo": {

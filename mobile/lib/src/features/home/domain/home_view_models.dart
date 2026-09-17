@@ -190,6 +190,7 @@ class VardiyaKart {
     required this.altBilgi,
     this.avatarUrl,
     this.online = false,
+    this.userId,
   });
 
   /// "Sabah Vardiyası" / "Yönetici".
@@ -207,6 +208,14 @@ class VardiyaKart {
 
   /// true → alt satir yesil nokta + metin ("● Online"); false → kisi ikonu.
   final bool online;
+
+  /// (P239 §5) KARTIN KISISI — dokununca acilacak kisi ekraninin hedefi.
+  ///
+  /// Null OLABILIR: kart bir kisiyi degil bir durumu anlatiyorsa (orn.
+  /// "su an gorevde kimse yok") dokunacak bir sey de yoktur. Alan
+  /// doluyken kart tiklanir, bosken tiklanmaz — "tikliyorum, bir sey
+  /// olmuyor" halini uretmemek icin.
+  final String? userId;
 }
 
 /// Vardiya kartinin durum cipi.

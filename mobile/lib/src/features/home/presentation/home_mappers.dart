@@ -11,14 +11,15 @@ import '../../announcements/domain/announcement_models.dart';
 import '../../etkinlik/domain/etkinlik_models.dart';
 import '../../site_kurali/domain/site_kurali_models.dart';
 import '../../dues/domain/dues_models.dart';
-import '../../shifts/domain/shift_models.dart';
 import '../../weather/domain/weather_models.dart';
 import '../../../core/i18n/l10n.dart';
 import '../../../routing/app_router.dart';
 import '../../../core/theme/home_tokens.dart';
 import '../domain/activity_models.dart';
 import '../domain/home_view_models.dart';
-import '../../shifts/presentation/gun_tipi_adi.dart';
+import '../../shifts/domain/vardiya_plani_models.dart';
+import '../../auth/domain/user_role.dart';
+import '../../auth/presentation/rol_adi.dart';
 import 'akis_metinleri.dart';
 
 /// GET /weather → baslik hava blogu.
@@ -28,42 +29,50 @@ HomeHava havaOzeti(Weather w) => HomeHava(
       ikon: weatherIcon(w.durum),
     );
 
-/// GET /shifts → vardiya serisi kartlari. [now] disaridan → AKTİF/PLANLANDI
-/// hesabi deterministik. [yoneticiAd] verilirse referans gorseldeki gibi
-/// serinin SONUNA "Yönetici" karti eklenir.
-List<VardiyaKart> vardiyaKartlari({
+/// (P239 §5) `GET /vardiya-plani/simdi` → "su an gorevde olan KISILER".
+///
+/// =========================================================================
+/// OLCULEN KUSUR: SERIT KISILERI DEGIL SABLONLARI CIZIYORDU
+/// =========================================================================
+/// "Vardiya Durumu" seridi `GET /shifts`ten besleniyordu — yani vardiya
+/// TANIMLARINI (Sabah Vardiyasi 06:00-14:00) gosteriyordu. Kullanicinin
+/// sordugu soru ise "SU AN kim gorevde": tanimin kendisi, kimsenin
+/// atanmadigi bir gunde bile ayni goruntuyu verir. Ustelik AKTIF/PLANLANDI
+/// ayrimi istemcide saatten hesaplaniyordu; gece yarisini asan vardiya ve
+/// tenant saat dilimi orada YANLIS hesaplanabiliyordu.
+///
+/// `/vardiya-plani/simdi` bu isi sunucuda, TENANT'IN SAATINDE yapiyor ve
+/// gercekten atanmis KISILERI donuyor (P203 §4.2).
+///
+/// =========================================================================
+/// KENDI KARTI CIZILMEZ
+/// =========================================================================
+/// [benimUserId] listeden DUSURULUR. Gerekce: kullanici kendi gorevde
+/// oldugunu zaten biliyor; kart ona yeni bir sey soylemiyor ve kendi
+/// kartina dokunup kendi telefonunu aramasi anlamsiz. Ayrica dar bir
+/// seritte en degerli yer, BASKA kime ulasabilecegini gosteren yerdir.
+///
+/// =========================================================================
+/// GOREVDE KIMSE YOKSA BOLUM CIZILMEZ (bos liste)
+/// =========================================================================
+/// Bos bir serit "vardiya durumu" bilgisi vermez. Tek istisna yok: kendi
+/// karti dusurulunce liste bosaliyorsa da bolum cizilmez.
+List<VardiyaKart> gorevdekiKartlari({
   required AppLocalizations l10n,
-  required List<Shift> vardiyalar,
-  required DateTime now,
-  String? yoneticiAd,
-  String? yoneticiAvatarUrl,
+  required VardiyaSimdi simdi,
+  String? benimUserId,
 }) {
-  // Vardiya YOKSA bolum hic cizilmez — yalniz "Yönetici" karti tasiyan bir
-  // serit referansta yoktur ve "vardiya durumu" bilgisi vermez.
-  if (vardiyalar.isEmpty) return const [];
+  final slot = simdi.gorevdekiVardiya;
   return [
-      for (final v in vardiyalar)
+    for (final k in simdi.gorevdekiler)
+      if (k.userId != benimUserId)
         VardiyaKart(
-          baslik: v.ad,
-          altBaslik: '${v.baslangicSaat} - ${v.bitisSaat}',
-          durum:
-              v.aktifMi(now) ? VardiyaDurum.aktif : VardiyaDurum.planlandi,
-          // Atanan personel varsa ilkinin avatari + "N Görevli"; yoksa gun
-          // tipi etiketi (vardiya tanimi personelsiz de yayinlanabilir).
-          avatarUrl:
-              v.personel.isNotEmpty ? v.personel.first.avatarUrl : null,
-          altBilgi: v.personel.isNotEmpty
-              ? l10n.sayacGorevli(v.personel.length)
-              : gunTipiAdi(l10n, v.gunTipi),
-        ),
-      if (yoneticiAd != null && yoneticiAd.isNotEmpty)
-        VardiyaKart(
-          baslik: l10n.kartYonetici,
-          altBaslik: yoneticiAd,
-          durum: VardiyaDurum.yonetici,
-          altBilgi: l10n.anaOnline,
-          online: true,
-          avatarUrl: yoneticiAvatarUrl,
+          baslik: k.ad,
+          // Saat araligi SUNUCUDAN gelen slottan; slot yoksa rol adi.
+          altBaslik: slot?.saatAraligi ?? rolAdi(l10n, UserRole.fromClaim(k.rol)),
+          durum: VardiyaDurum.aktif,
+          altBilgi: rolAdi(l10n, UserRole.fromClaim(k.rol)),
+          userId: k.userId,
         ),
   ];
 }

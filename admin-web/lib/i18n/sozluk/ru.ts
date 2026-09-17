@@ -1908,6 +1908,7 @@ export const ru: Sozluk = {
   anketSecenekEkle: "Добавить вариант",
   anketSecenekSil: "Удалить вариант",
   anketSecenekNo: "Вариант {n}",
+  kisiNumaraYok: "Номер не указан.",
   anketEkle: "Открыть опрос",
   anketAciklamaOpsiyonel: "Описание (необязательно)",
   anketGorselOpsiyonel: "Изображение (необязательно)",

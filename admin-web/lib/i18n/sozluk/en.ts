@@ -1908,6 +1908,7 @@ export const en: Sozluk = {
   anketSecenekEkle: "Add option",
   anketSecenekSil: "Delete option",
   anketSecenekNo: "Option {n}",
+  kisiNumaraYok: "No phone number on file.",
   anketEkle: "Open survey",
   anketAciklamaOpsiyonel: "Description (optional)",
   anketGorselOpsiyonel: "Image (optional)",

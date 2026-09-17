@@ -6608,6 +6608,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get anketSecenekEkle => 'Añadir opción';
 
   @override
+  String get kisiAra => 'Llamar';
+
+  @override
   String get anketSecenekSil => 'Eliminar opción';
 
   @override

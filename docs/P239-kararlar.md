@@ -194,3 +194,89 @@ de yaşanan sahte-yeşil tuzağı). `ensureVisible` eklendi.
 Seçenekleri **yeniden sıralama** (sürükle) yapılmadı — brief'te
 "opsiyonel" olarak geçiyordu; sıra `sira` alanıyla zaten kutuların
 görsel sırasından türüyor.
+
+---
+
+## §5 — Vardiya durum kartı: yalnız şu an görevde olanlar
+
+**İstek:** "Kartta yalnız o an görevde olan kişiler olsun; giriş yapanın
+kendi kartı görünmesin; karta dokununca kişi ekranı açılsın, telefonu
+dokunulabilir olsun."
+
+### ÖLÇÜM: kart KİŞİ değil ŞABLON gösteriyordu
+
+Ana ekrandaki "Vardiya Durumu" şeridi `GET /shifts`ten besleniyordu —
+yani vardiya **tanımlarını** (Sabah Vardiyası 06:00–14:00). Kimsenin
+atanmadığı bir günde de aynı görüntüyü veriyordu. AKTİF/PLANLANDI ayrımı
+da **istemcide** saatten hesaplanıyordu; geceyi aşan vardiya ve tesis
+saat dilimi orada yanlış çıkabiliyordu.
+
+Doğru kaynak zaten vardı: **`GET /vardiya-plani/simdi`** (P203 §4.2) —
+sunucu, tesisin saatinde, gerçekten atanmış kişileri döner
+(`gorevdekiler[{user_id, ad, rol}]`). Web'de bu uç zaten çağrılıyordu
+ama sonuç `ad.join(", ")` ile **düz metin** olarak yazılıyordu.
+
+### KARAR
+
+- Şerit artık `/vardiya-plani/simdi` → **kişi kartları**. `vardiyaKartlari`
+  eşleştiricisi (ve onu besleyen `/shifts` yolu) **silindi** — iki kaynağı
+  yan yana bırakmak, hangisinin doğru olduğunu belirsiz kılardı.
+- **Kendi kartım çizilmez** (her iki yüzeyde). Kendi görevde olduğumu
+  zaten biliyorum; dar şeritte en değerli yer başkasına ulaşma yeridir.
+  Liste kendi kaydım düşünce boşalıyorsa bölüm hiç çizilmez.
+- **Sıradakiler kart olmaz** — şerit "şu an"ı anlatır.
+- Serinin sonundaki **"Yönetici" kartı kaldırıldı**: görevde olmayan bir
+  kişiyi "şu an görevde" şeridine koymak bölümün anlamını bozuyordu.
+  Erişim kaybolmadı — menüde etiketli "Yönetim iletişimi" girişi duruyor.
+
+### TELEFON: iki yüzeyde İKİ FARKLI YOL — ve nedeni
+
+| | Mobil | Web |
+|---|---|---|
+| Kaynak | `GET /call-target/{id}` | `GET /users/{id}` |
+| Numara ekranda | **yazmaz** (yalnız çeviriciye gider) | yazar, `tel:` bağı |
+
+**`/call-target` yalnız `security` + `resident` rollerine açık**
+(`CALL_DIRECTIONS`: security→{yönetici, sakin}, sakin→{security}).
+Yönetici/admin oradan **403** alır. Bu bilinçli bir KVKK tasarımı ve bu
+tur onu **genişletmedi** — rıza (`aranabilir`) ve yön matrisi olduğu gibi
+duruyor. Web'de yöneticinin numarayı görme yolu **zaten vardı**:
+`GET /users/{id}` tek-kayıt yönetim görünümü telefonu döner (liste ucu
+dönmez — toplu numara yok) ve kullanıcılar sayfası da aynısını çizer.
+Yani panel **yeni bir ifşa açmıyor**, var olanı kişinin yanına getiriyor.
+İstek yalnız panel AÇILINCA atılır (şerit açılır açılmaz N numara
+çözmek, amaç-sınırlılığa aykırı olurdu).
+
+### AÇIK MADDE — kullanıcı kararı gerekiyor
+
+Saha personeli (`security`) **meslektaşını arayamaz**: yön matrisinde
+`security→security` yok. Yani mobilde bir görevli, yanındaki görevlinin
+kartına dokunduğunda düğme "aranamıyor" der. Bu bir kusur değil, mevcut
+KVKK kararının sonucu. Genişletmek (personelin personeli araması,
+yöneticinin personeli araması) **gizlilik politikası değişikliğidir** ve
+kendi başıma yapmadım. İstenirse `CALL_DIRECTIONS`'a personel-içi yönler
+eklenebilir; sakin numaralarına erişim yine değişmez.
+
+### KİLİTLER
+
+- `mobile/test/vardiya_section_test.dart` — **yeniden yazıldı** (eski hali
+  silinen eşleştiriciyi ölçüyordu): görevdekiler kart olur / kendi kartım
+  çizilmez / yalnız ben görevdeysem liste boşalır / sıradakiler kart olmaz
+  / slot yoksa alt başlık rol olur + şeritte dokunma ve **kişisiz kart
+  tıklanmaz**.
+- `mobile/test/p239_kisi_sayfasi_test.dart` — ad/rol/vardiya satırı
+  rotadan çizilir, ham `security` ekranda yazmaz, numara ekranda yazmaz
+  ama çeviriciye gider, **403'te ekran çökmez**, ikinci istek atılmaz.
+- `admin-web/tests/p239-vardiya-kisi.dom.test.ts` — tıklanabilir isimler,
+  kendi kaydım çizilmez, `tel:` bağı, numara yoksa "kayıtlı değil",
+  **panel açılmadan `/users/{id}` isteği atılmaz**.
+
+**KIRMA:** kendi-kaydı düşüren süzgeç iki yüzeyde de kaldırıldı → mobilde
+iki, web'de bir test kırmızı. Geri alındı.
+
+### ÖLÇEMEDİĞİM
+
+Gerçek cihazda çeviricinin açıldığı sürülmedi (emülatör yok);
+`CallLauncher` sahtesiyle `tel:` URI'sinin doğru üretildiği ölçüldü.
+
+---

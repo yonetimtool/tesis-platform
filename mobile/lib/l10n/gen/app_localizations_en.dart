@@ -6633,6 +6633,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get anketSecenekEkle => 'Add option';
 
   @override
+  String get kisiAra => 'Call';
+
+  @override
   String get anketSecenekSil => 'Delete option';
 
   @override

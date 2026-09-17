@@ -11429,6 +11429,12 @@ abstract class AppLocalizations {
   /// **'Seçenek ekle'**
   String get anketSecenekEkle;
 
+  /// No description provided for @kisiAra.
+  ///
+  /// In tr, this message translates to:
+  /// **'Ara'**
+  String get kisiAra;
+
   /// No description provided for @anketSecenekSil.
   ///
   /// In tr, this message translates to:

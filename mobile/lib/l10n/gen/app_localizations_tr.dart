@@ -6438,6 +6438,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get anketSecenekEkle => 'Seçenek ekle';
 
   @override
+  String get kisiAra => 'Ara';
+
+  @override
   String get anketSecenekSil => 'Seçeneği sil';
 
   @override

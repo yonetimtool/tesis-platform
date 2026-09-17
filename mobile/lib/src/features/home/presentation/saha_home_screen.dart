@@ -17,9 +17,12 @@ import '../../../core/theme/home_tokens.dart';
 import '../../profile/data/profile_api.dart';
 import '../../scan/data/scan_outbox.dart';
 import '../../shifts/data/shifts_api.dart';
+import '../../auth/data/current_user_provider.dart';
+import '../../staff/presentation/kisi_sayfasi.dart';
+import '../../shifts/presentation/vardiya_plani_screen.dart' show vardiyaSimdiProvider;
+import '../../shifts/domain/vardiya_plani_models.dart';
 import '../../tenant/data/tenant_api.dart';
 import '../../weather/data/weather_api.dart';
-import '../../yonetici_iletisim/data/yonetici_iletisim_api.dart';
 import '../../complaints/data/complaint_api.dart';
 import '../data/activity_api.dart';
 import '../data/home_api.dart';
@@ -117,10 +120,13 @@ class SahaHomeScreen extends ConsumerWidget {
     final duyuruAsync = guvenlik ? null : ref.watch(sonDuyurularProvider);
     final etkinlikAsync =
         guvenlik ? null : ref.watch(yaklasanEtkinlikSayisiProvider);
-    // Vardiya seridinin son karti tenant yoneticisidir (referans gorsel).
-    // /yonetici-iletisim saha rollerine aciktir.
-    final yoneticiler =
-        ref.watch(yoneticiIletisimProvider).value?.yoneticiler ?? const [];
+    // (P239 §5) SERIDIN SON KARTI ARTIK YONETICI DEGIL.
+    //
+    // Referans gorselde serit "Yönetici" kartiyla bitiyordu; ama serit
+    // artik "SU AN GOREVDE OLANLAR"i cizdigi icin, gorevde olmayan bir
+    // kisiyi oraya koymak bolumun anlamini bozardi. Yonetici erisimi
+    // KAYBOLMADI: menude ETIKETLI "Yönetim iletişimi" girisi duruyor
+    // (`HomeMenuEntry.yoneticiIletisim`, saha rollerine acik).
     // Son Hareketler TEK uctan: rol suzgeci SUNUCUDA (tesis_gorevlisi yalniz
     // gorev tamamlamalarini gorur) — istemci artik kaynak birlestirmez.
     final hareketler = ref.watch(sonHareketlerProvider);
@@ -240,15 +246,28 @@ class SahaHomeScreen extends ConsumerWidget {
               onSec: (k) => _ac(context, k),
             ),
           ),
+          // (P239 §5) SERIT ARTIK KISILERI CIZIYOR.
+          //
+          // Kaynak `/shifts` (vardiya TANIMLARI) degil
+          // `/vardiya-plani/simdi` (SU AN gorevde olan KISILER).
+          // Kendi kartim cizilmez; karta dokunmak kisi sayfasini acar.
           VardiyaSeridi(
-            kartlar: vardiyaKartlari(
+            kartlar: gorevdekiKartlari(
               l10n: l10n,
-              vardiyalar: vardiyalar,
-              now: now,
-              yoneticiAd:
-                  yoneticiler.isNotEmpty ? yoneticiler.first.adSoyad : null,
+              simdi: ref.watch(vardiyaSimdiProvider).value ??
+                  const VardiyaSimdi(),
+              benimUserId: ref.watch(currentUserIdProvider).value,
             ),
-            onSeeAll: () => context.push(AppRoutes.vardiyalar),
+            onKart: (k) => context.push(
+              AppRoutes.kisi,
+              extra: KisiArgs(
+                userId: k.userId!,
+                ad: k.baslik,
+                rol: k.altBilgi,
+                altSatir: k.altBaslik,
+              ),
+            ),
+            onSeeAll: () => context.push(AppRoutes.vardiyaPlani),
           ),
           HomeSectionPad(
             child: hareketler.durum(

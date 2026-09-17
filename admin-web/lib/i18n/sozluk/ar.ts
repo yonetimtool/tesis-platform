@@ -1908,6 +1908,7 @@ export const ar: Sozluk = {
   anketSecenekEkle: "إضافة خيار",
   anketSecenekSil: "حذف الخيار",
   anketSecenekNo: "الخيار {n}",
+  kisiNumaraYok: "لا يوجد رقم مسجل.",
   anketEkle: "فتح الاستطلاع",
   anketAciklamaOpsiyonel: "الوصف (اختياري)",
   anketGorselOpsiyonel: "صورة (اختياري)",

@@ -27,6 +27,10 @@ import 'package:mobile/src/features/tenant/data/tenant_api.dart';
 import 'package:mobile/src/features/tenant/domain/tenant_models.dart';
 import 'package:mobile/src/features/weather/data/weather_api.dart';
 import 'helpers/ekran_surus.dart';
+import 'package:mobile/src/features/auth/data/current_user_provider.dart';
+import 'package:mobile/src/features/shifts/domain/vardiya_plani_models.dart';
+import 'package:mobile/src/features/shifts/presentation/vardiya_plani_screen.dart'
+    show vardiyaSimdiProvider;
 import 'helpers/l10n_test_app.dart';
 
 /// Depoya dokunmayan sahte kuyruk (path_provider yok) — bekleyen sayisi
@@ -63,6 +67,19 @@ Widget _app(
         bitisSaat: '14:00',
         gunTipi: 'hafta_ici'),
   ],
+  // (P239 §5) SERIDIN KAYNAGI: vardiya TANIMLARI degil, SU AN gorevde
+  // olan KISILER. Varsayilan: bir meslektas gorevde.
+  VardiyaSimdi gorevdekiler = const VardiyaSimdi(
+    gorevdekiVardiya: VardiyaSlot(
+      shiftId: 's1',
+      shiftAd: 'Sabah Vardiyası',
+      baslangicSaat: '06:00:00',
+      bitisSaat: '14:00:00',
+    ),
+    gorevdekiler: [
+      VardiyaKisi(planId: 'p1', userId: 'u1', ad: 'Ali Veli', rol: 'security'),
+    ],
+  ),
   String? tesisAd,
   List<Kargo> kargolar = const [],
   int icerdeZiyaretci = 0,
@@ -83,6 +100,8 @@ Widget _app(
             ? throw Exception('offline')
             : TenantSettings(tenantId: 't1', ad: tesisAd)),
         shiftsProvider.overrideWith((ref) async => vardiyalar),
+        vardiyaSimdiProvider.overrideWith((ref) async => gorevdekiler),
+        currentUserIdProvider.overrideWith((ref) async => 'ben'),
         kargoListProvider.overrideWith((ref) async => kargolar),
         // G1/G2/G3 sayaclari: hepsi ?limit=1 -> meta.total (liste tasinmaz).
         icerdekiZiyaretciSayisiProvider
@@ -140,10 +159,10 @@ void main() {
       expect(find.text('Kargo'), findsOneWidget);
       expect(find.text('Ziyaretçiler'), findsOneWidget);
 
-      // Vardiya bolumu GERCEK /shifts verisinden.
+      // (P239 §5) Vardiya bolumu SU AN GOREVDE OLANLARI cizer.
       expect(find.text('Vardiya Durumu'), findsOneWidget);
-      expect(find.text('Sabah Vardiyası'), findsOneWidget);
-      expect(find.text('06:00 - 14:00'), findsOneWidget);
+      expect(find.text('Ali Veli'), findsOneWidget);
+      expect(find.text('06:00–14:00'), findsOneWidget);
 
       // Son Hareketler GERCEK akistan + Canlı Kamera (gercek kamera).
       expect(find.text('Son Hareketler'), findsOneWidget);
@@ -250,11 +269,12 @@ void main() {
     testWidgets('vardiya YOKKEN bolum HIC cizilmez (uydurma vardiya yok)',
         (tester) async {
       _tall(tester);
-      await tester.pumpWidget(_app(UserRole.security, vardiyalar: const []));
+      await tester.pumpWidget(_app(UserRole.security,
+          gorevdekiler: const VardiyaSimdi()));
       await tester.pumpAndSettle();
 
       expect(find.text('Vardiya Durumu'), findsNothing); // bolum basligi yok
-      expect(find.text('Öğle Vardiyası'), findsNothing);
+      expect(find.text('Ali Veli'), findsNothing);
       expect(find.text('Kerem Aşçı'), findsNothing); // mock yonetici karti yok
       expect(find.text('Vardiyalar'), findsOneWidget); // serit karti durur
     });

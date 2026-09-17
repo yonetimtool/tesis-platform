@@ -12,10 +12,19 @@ import 'hizli_erisim.dart';
 /// seridi. gorevli.jpeg ve yonetici.jpeg'de AYNI bolum: tek widget, iki
 /// ekranda paylasilir. Bos listede bolum HIC cizilmez.
 class VardiyaSeridi extends StatelessWidget {
-  const VardiyaSeridi({super.key, required this.kartlar, this.onSeeAll});
+  const VardiyaSeridi({
+    super.key,
+    required this.kartlar,
+    this.onSeeAll,
+    this.onKart,
+  });
 
   final List<VardiyaKart> kartlar;
   final VoidCallback? onSeeAll;
+
+  /// (P239 §5) Bir karta dokunuldu. Kartin `userId`si YOKSA cagrilmaz —
+  /// kisi tasimayan kart (orn. salt durum karti) tiklanmaz kalir.
+  final void Function(VardiyaKart kart)? onKart;
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +48,12 @@ class VardiyaSeridi extends StatelessWidget {
             itemCount: kartlar.length,
             separatorBuilder: (_, _) =>
                 const SizedBox(width: HomeTokens.gridGap),
-            itemBuilder: (context, i) => ShiftStatusCard(kart: kartlar[i]),
+            itemBuilder: (context, i) => ShiftStatusCard(
+              kart: kartlar[i],
+              onTap: onKart == null || kartlar[i].userId == null
+                  ? null
+                  : () => onKart!(kartlar[i]),
+            ),
           ),
         ),
       ],

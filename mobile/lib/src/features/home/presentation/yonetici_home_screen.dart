@@ -14,6 +14,10 @@ import '../../complaints/data/complaint_api.dart';
 import '../../notifications/data/notifications_controller.dart';
 import '../../profile/data/profile_api.dart';
 import '../../shifts/data/shifts_api.dart';
+import '../../auth/data/current_user_provider.dart';
+import '../../staff/presentation/kisi_sayfasi.dart';
+import '../../shifts/presentation/vardiya_plani_screen.dart' show vardiyaSimdiProvider;
+import '../../shifts/domain/vardiya_plani_models.dart';
 import '../../weather/data/weather_api.dart';
 import '../data/activity_api.dart';
 import '../data/home_api.dart';
@@ -178,14 +182,28 @@ class YoneticiHomeScreen extends ConsumerWidget {
           ),
           // Vardiya serisi GERCEK /shifts'ten; yonetici kendi adiyla serinin
           // sonunda durur (referans gorsel). Bos/hatali → bolum cizilmez.
+          // (P239 §5) SERIT ARTIK KISILERI CIZIYOR.
+          //
+          // Kaynak `/shifts` (vardiya TANIMLARI) degil
+          // `/vardiya-plani/simdi` (SU AN gorevde olan KISILER).
+          // Kendi kartim cizilmez; karta dokunmak kisi sayfasini acar.
           VardiyaSeridi(
-            kartlar: vardiyaKartlari(
+            kartlar: gorevdekiKartlari(
               l10n: l10n,
-              vardiyalar: vardiyalar,
-              now: now,
-              yoneticiAd: ad,
+              simdi: ref.watch(vardiyaSimdiProvider).value ??
+                  const VardiyaSimdi(),
+              benimUserId: ref.watch(currentUserIdProvider).value,
             ),
-            onSeeAll: () => context.push(AppRoutes.vardiyalar),
+            onKart: (k) => context.push(
+              AppRoutes.kisi,
+              extra: KisiArgs(
+                userId: k.userId!,
+                ad: k.baslik,
+                rol: k.altBilgi,
+                altSatir: k.altBaslik,
+              ),
+            ),
+            onSeeAll: () => context.push(AppRoutes.vardiyaPlani),
           ),
           HomeSectionPad(
             child: Column(

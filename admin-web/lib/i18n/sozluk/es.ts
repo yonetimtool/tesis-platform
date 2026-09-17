@@ -1908,6 +1908,7 @@ export const es: Sozluk = {
   anketSecenekEkle: "Añadir opción",
   anketSecenekSil: "Eliminar opción",
   anketSecenekNo: "Opción {n}",
+  kisiNumaraYok: "No hay número registrado.",
   anketEkle: "Abrir encuesta",
   anketAciklamaOpsiyonel: "Descripción (opcional)",
   anketGorselOpsiyonel: "Imagen (opcional)",

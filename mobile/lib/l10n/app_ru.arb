@@ -2247,6 +2247,7 @@
   "anketMaddeler": "Варианты опроса",
   "anketMaddeIpucu": "Нужно минимум два варианта; добавьте ещё кнопкой «+».",
   "anketSecenekEkle": "Добавить вариант",
+  "kisiAra": "Позвонить",
   "anketSecenekSil": "Удалить вариант",
   "anketSecenekNo": "Вариант {n}",
   "@anketSecenekNo": {

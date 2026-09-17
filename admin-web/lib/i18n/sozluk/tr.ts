@@ -1970,6 +1970,7 @@ export const tr = {
   anketSecenekEkle: "Seçenek ekle",
   anketSecenekSil: "Seçeneği sil",
   anketSecenekNo: "Seçenek {n}",
+  kisiNumaraYok: "Numara kayıtlı değil.",
   anketEkle: "Anketi aç",
   anketAciklamaOpsiyonel: "Açıklama (isteğe bağlı)",
   anketGorselOpsiyonel: "Görsel (isteğe bağlı)",

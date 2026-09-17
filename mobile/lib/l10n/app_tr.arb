@@ -3124,6 +3124,7 @@
   "anketMaddeler": "Anket maddeleri",
   "anketMaddeIpucu": "En az iki seçenek gerekir; “+” ile yenisini ekleyin.",
   "anketSecenekEkle": "Seçenek ekle",
+  "kisiAra": "Ara",
   "anketSecenekSil": "Seçeneği sil",
   "anketSecenekNo": "Seçenek {n}",
   "@anketSecenekNo": {

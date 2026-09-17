@@ -22,6 +22,10 @@ import 'package:mobile/src/features/profile/domain/profile.dart';
 import 'package:mobile/src/features/shifts/data/shifts_api.dart';
 import 'package:mobile/src/features/shifts/domain/shift_models.dart';
 import 'package:mobile/src/features/weather/data/weather_api.dart';
+import 'package:mobile/src/features/auth/data/current_user_provider.dart';
+import 'package:mobile/src/features/shifts/domain/vardiya_plani_models.dart';
+import 'package:mobile/src/features/shifts/presentation/vardiya_plani_screen.dart'
+    show vardiyaSimdiProvider;
 import 'helpers/ekran_surus.dart';
 import 'helpers/l10n_test_app.dart';
 import 'package:mobile/src/core/i18n/locale_controller.dart';
@@ -35,6 +39,7 @@ Widget _app({
   int? aktifGorev,
   int? daireSikayet,
   List<Shift> vardiyalar = const [],
+  VardiyaSimdi gorevdekiler = const VardiyaSimdi(),
   List<ActivityItem> hareketler = const [],
   Object? hareketHata,
   int? yeniIhlal,
@@ -61,6 +66,10 @@ Widget _app({
         otoparkDolulukProvider.overrideWith(
             (ref) async => otopark ?? (throw Exception('500'))),
         shiftsProvider.overrideWith((ref) async => vardiyalar),
+        // (P239 §5) SERIT ARTIK BURADAN BESLENIYOR: `/shifts` vardiya
+        // TANIMLARIDIR; serit ise "SU AN kim gorevde"yi cizer.
+        vardiyaSimdiProvider.overrideWith((ref) async => gorevdekiler),
+        currentUserIdProvider.overrideWith((ref) async => 'ben'),
         // Hava ucu testte aga cikmasin — hata → hava blogu HIC cizilmez.
         weatherProvider.overrideWith((ref) async => throw Exception('offline')),
         profileProvider.overrideWith((ref) async => const Profile(
@@ -104,14 +113,18 @@ void main() {
       '→ Vardiya Durumu → Hızlı Özet → Son Hareketler', (tester) async {
     _tall(tester);
     await tester.pumpWidget(_app(
-      vardiyalar: const [
-        Shift(
-            id: 'v1',
-            ad: 'Sabah Vardiyası',
-            baslangicSaat: '06:00',
-            bitisSaat: '14:00',
-            gunTipi: 'hafta_ici'),
-      ],
+      gorevdekiler: const VardiyaSimdi(
+        gorevdekiVardiya: VardiyaSlot(
+          shiftId: 's1',
+          shiftAd: 'Sabah Vardiyası',
+          baslangicSaat: '06:00:00',
+          bitisSaat: '14:00:00',
+        ),
+        gorevdekiler: [
+          VardiyaKisi(
+              planId: 'p1', userId: 'u1', ad: 'Ali Veli', rol: 'security'),
+        ],
+      ),
       hareketler: [
         ActivityItem(
           id: 'talep:t1',
@@ -250,32 +263,61 @@ void main() {
     expect(find.text('—'), findsWidgets);
   });
 
-  testWidgets('Vardiya Durumu: gercek /shifts verisi + sonda yonetici karti',
+  testWidgets('Vardiya Durumu: SU AN GOREVDE OLAN KISILER (/vardiya-plani/simdi)',
       (tester) async {
+    // (P239 §5) Kart artik vardiya TANIMINI degil KISIYI gosterir.
+    // Serinin sonundaki "Yönetici" karti da KALDIRILDI: gorevde olmayan
+    // birini "su an gorevde" seridine koymak bolumun anlamini bozuyordu.
     _tall(tester);
-    await tester.pumpWidget(_app(vardiyalar: const [
-      Shift(
-          id: 'v1',
-          ad: 'Sabah Vardiyası',
-          baslangicSaat: '06:00',
-          bitisSaat: '14:00',
-          gunTipi: 'hafta_ici'),
-    ]));
+    await tester.pumpWidget(_app(
+      gorevdekiler: const VardiyaSimdi(
+        gorevdekiVardiya: VardiyaSlot(
+          shiftId: 's1',
+          shiftAd: 'Sabah Vardiyası',
+          baslangicSaat: '06:00:00',
+          bitisSaat: '14:00:00',
+        ),
+        gorevdekiler: [
+          VardiyaKisi(
+              planId: 'p1', userId: 'u1', ad: 'Ali Veli', rol: 'security'),
+        ],
+      ),
+    ));
     await tester.pumpAndSettle();
 
-    expect(find.text('Sabah Vardiyası'), findsOneWidget);
-    expect(find.text('06:00 - 14:00'), findsOneWidget);
-    // Serinin sonundaki yonetici karti oturum sahibinin adiyla.
-    expect(find.text('Kerem'), findsOneWidget);
-    expect(find.text('YÖNETİCİ'), findsOneWidget);
+    expect(find.text('Ali Veli'), findsOneWidget);
+    expect(find.text('06:00–14:00'), findsOneWidget);
+    expect(find.text('YÖNETİCİ'), findsNothing);
   });
 
-  testWidgets('vardiya YOKKEN bolum HIC cizilmez (uydurma vardiya yok)',
+  testWidgets('KENDI kartim CIZILMEZ; yalniz ben gorevdeysem bolum YOK',
+      (tester) async {
+    _tall(tester);
+    await tester.pumpWidget(_app(
+      gorevdekiler: const VardiyaSimdi(
+        gorevdekiVardiya: VardiyaSlot(
+          shiftId: 's1',
+          shiftAd: 'Sabah Vardiyası',
+          baslangicSaat: '06:00:00',
+          bitisSaat: '14:00:00',
+        ),
+        gorevdekiler: [
+          VardiyaKisi(
+              planId: 'p1', userId: 'ben', ad: 'Ben Kendim', rol: 'yonetici'),
+        ],
+      ),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('Ben Kendim'), findsNothing);
+    expect(find.text('Vardiya Durumu'), findsNothing);
+  });
+
+  testWidgets('gorevde kimse YOKKEN bolum HIC cizilmez (uydurma vardiya yok)',
       (tester) async {
     _tall(tester);
     await tester.pumpWidget(_app());
     await tester.pumpAndSettle();
-    expect(find.text('Sabah Vardiyası'), findsNothing);
+    expect(find.text('Vardiya Durumu'), findsNothing);
     expect(find.text('Vardiyalar'), findsOneWidget); // yalniz izgara karti
   });
 

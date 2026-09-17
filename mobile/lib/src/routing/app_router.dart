@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/startup/acilis_tercihleri.dart';
+import '../features/staff/presentation/kisi_sayfasi.dart';
 import '../features/announcements/presentation/announcements_screen.dart';
 import '../features/auth/data/token_storage.dart';
 import '../features/cameras/domain/camera_models.dart';
@@ -165,6 +166,8 @@ class AppRoutes {
   static const sikayetKuyrugu = '/sikayet-kuyrugu';
   static const daireTanimlari = '/daire-tanimlari';
   static const vardiyalar = '/vardiyalar';
+  /// (P239 §5) Kisi sayfasi — vardiya kartindan acilir, `KisiArgs` ile.
+  static const kisi = '/kisi';
   // (P203 §4) Vardiya PLANI — sablon ekranindan (`/vardiyalar`) AYRI:
   // biri saatleri tanimlar, oteki kim hangi gun calisir.
   static const vardiyaPlani = '/vardiya-plani';
@@ -315,6 +318,15 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.vardiyalar,
         builder: (context, state) => const VardiyalarScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.kisi,
+        // Ad/rol rotayla tasinir (ikinci istek atilmaz). Dogrudan URL ile
+        // gelinirse tasiyacak veri yoktur -> vardiya planina duser.
+        redirect: (context, state) =>
+            state.extra is KisiArgs ? null : AppRoutes.vardiyaPlani,
+        builder: (context, state) =>
+            KisiSayfasi(args: state.extra! as KisiArgs),
       ),
       GoRoute(
         path: AppRoutes.vardiyaPlani,
