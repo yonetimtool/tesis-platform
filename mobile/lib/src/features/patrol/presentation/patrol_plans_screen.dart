@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../shifts/data/shifts_api.dart';
 import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
 import '../../../core/ui/bos_durum.dart';
@@ -185,6 +186,14 @@ class _PlanFormState extends ConsumerState<_PlanForm> {
   TimeOfDay _baslangic = const TimeOfDay(hour: 22, minute: 0);
   TimeOfDay _bitis = const TimeOfDay(hour: 6, minute: 0);
   bool _aktif = true;
+
+  /// (P239 §3) PLANIN VARDIYASI — "kim yuruyecek"in bugunku yaniti.
+  ///
+  /// `patrol_plan`da atanan KISI kolonu yok; plan bir vardiyaya baglanir
+  /// ve o vardiyanin KADROSU yurur. Web formunda bu secici VARDI,
+  /// mobilde YOKTU — yani mobilden acilan her plan kadrosuz kaliyordu
+  /// ve kimin yuruyecegi hicbir yerde yazmiyordu.
+  String? _shiftId;
   final Set<String> _selected = {};
   bool _busy = false;
 
@@ -209,6 +218,7 @@ class _PlanFormState extends ConsumerState<_PlanForm> {
       _baslangic = _parse(e.baslangicSaat);
       _bitis = _parse(e.bitisSaat);
       _aktif = e.aktif;
+      _shiftId = e.shiftId;
       // Mevcut atanmis noktalari yukle.
       _loadingSelection = true;
       Future.microtask(() async {
@@ -275,6 +285,7 @@ class _PlanFormState extends ConsumerState<_PlanForm> {
           bitisSaat: _fmt(_bitis),
           periyotDakika: periyot,
           aktif: _aktif,
+          shiftId: _shiftId,
         );
         planId = widget.existing!.id;
       } else {
@@ -284,6 +295,7 @@ class _PlanFormState extends ConsumerState<_PlanForm> {
           bitisSaat: _fmt(_bitis),
           periyotDakika: periyot,
           aktif: _aktif,
+          shiftId: _shiftId,
         );
         planId = created.id;
       }
@@ -308,6 +320,7 @@ class _PlanFormState extends ConsumerState<_PlanForm> {
     // (P59) HATA AYRI OKUNUR: `.value ?? []` bir hatayi da "hic nokta yok"a
     // cevirirdi ve kullanici plana nokta ekleyemedigini anlamazdi.
     final noktaDurum = ref.watch(checkpointsProvider);
+    final vardiyaDurum = ref.watch(shiftsProvider);
     final checkpoints = (noktaDurum.value ?? const <Checkpoint>[])
         .where((c) => c.aktif)
         .toList();
@@ -379,6 +392,37 @@ class _PlanFormState extends ConsumerState<_PlanForm> {
                   border: const OutlineInputBorder(),
                 ),
               ),
+              const SizedBox(height: 12),
+              // VARDIYA SECIMI — OPSIYONEL.
+              //
+              // Bos birakmak gecerli bir hal: plan tanimlanir, kadro
+              // sonra baglanir. Zorunlu kilmak, vardiyasi henuz
+              // tanimlanmamis bir sitede plan acmayi imkansiz kilardi.
+              // Liste cekilemezse secici CIZILMEZ (hatayi "vardiya yok"
+              // diye gostermek yanlis olurdu) ve mevcut secim korunur.
+              if (vardiyaDurum.hasValue)
+                DropdownButtonFormField<String?>(
+                  key: const Key('devriye-vardiya'),
+                  initialValue: _shiftId,
+                  decoration: InputDecoration(
+                    labelText: l10n.devriyeVardiya,
+                    helperText: l10n.devriyeVardiyaYardim,
+                    helperMaxLines: 2,
+                    border: const OutlineInputBorder(),
+                  ),
+                  items: [
+                    DropdownMenuItem<String?>(
+                      value: null,
+                      child: Text(l10n.ortakSecimYok),
+                    ),
+                    for (final v in vardiyaDurum.value!)
+                      DropdownMenuItem<String?>(
+                        value: v.id,
+                        child: Text('${v.ad} · ${v.baslangicSaat}–${v.bitisSaat}'),
+                      ),
+                  ],
+                  onChanged: _busy ? null : (v) => setState(() => _shiftId = v),
+                ),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 title: Text(l10n.cipAktif),

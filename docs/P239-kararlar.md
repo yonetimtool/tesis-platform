@@ -431,3 +431,52 @@ Mobilde şablon ekranı (`vardiyalar_screen`) salt-okuma + personel atama;
 kendi metinleri ayrı (`vardiyaBaslik`, `vardiyaTanimYok`,
 `vardiyaPersonelAta`) ve şablon **oluşturma** mobilde hiç yok. Etiket
 çakışması web'e özgüydü; parite açısından eklenecek bir şey çıkmadı.
+
+---
+
+## §3 (kısmi) — Devriye planına VARDİYA seçimi: mobil paritesi
+
+Yukarıdaki §3 ölçümünde "devriye planında kişi ataması yok" yazmıştım.
+Daha derin ölçüm bir parite kusuru daha çıkardı:
+
+| | Web | Mobil |
+|---|---|---|
+| Devriye planı formunda `shift_id` (vardiya) | **var** | **YOKTU** |
+
+`patrol_plan`da atanan **kişi** kolonu yok; "kim yürüyecek" sorusunun
+bugünkü yanıtı planı bir **vardiyaya** bağlamak ve o vardiyanın
+kadrosunun yürümesi. Mobilde bu seçici hiç olmadığı için **mobilden
+açılan her plan kadrosuz kalıyordu** ve kimin yürüyeceği hiçbir yerde
+yazmıyordu.
+
+### KARAR
+
+- Mobil forma vardiya seçici eklendi (`devriye-vardiya`), web'deki
+  alanın karşılığı. **Opsiyonel**: boş bırakmak geçerli bir hal —
+  zorunlu kılmak, vardiyası henüz tanımlanmamış bir sitede plan açmayı
+  imkânsız kılardı.
+- Vardiya listesi çekilemezse seçici **çizilmez** ve mevcut seçim
+  korunur; hatayı "vardiya yok" diye göstermek yanlış olurdu.
+- `shift_id` PATCH'te **null da gönderilir**: vardiya bağını
+  **kaldırmak** başka türlü mümkün olmazdı.
+
+### KİLİT
+
+`mobile/test/p239_devriye_vardiya_test.dart` — dikiş yeri **taklit HTTP
+adapter** (repo/API düzeyinde taklit gövdeyi kuran katmanı ölçmezdi):
+oluşturmada `shift_id` gider, seçilmezse null gider, PATCH'te null
+gönderilir, yanıttan geri okunur, alan yoksa model null taşır.
+
+**KIRMA:** gövdeden `shift_id` çıkarıldı → iki test kırmızı.
+
+### HÂLÂ YAPILMADI
+
+Devriye planına **doğrudan kişi** ataması ve **gün seçimi** — ikisi de
+göç gerektiriyor ve tasarım kararı içeriyor:
+1. Kişi mi kadro mu önceliklidir, ikisi birden varsa hangisi kazanır?
+2. "Gün seçimi" **haftanın günleri** mi (Pzt/Çar/Cum — plan tekrarlı
+   kalır) yoksa **somut tarihler** mi (plan tekrarsızlaşır)? Mobildeki
+   `GunTakvimi` somut tarih seçiyor; devriye planı ise doğası gereği
+   tekrarlı. Bu iki cevap farklı şema demek.
+
+Bu iki soru yanıtlanmadan göç yazmak, yanlış tabloyu kalıcılaştırırdı.

@@ -1196,6 +1196,16 @@ class AppLocalizationsFr extends AppLocalizations {
   String get devriyePlanYeniBaslik => 'Nouveau plan de patrouille';
 
   @override
+  String get devriyeVardiya => 'Poste';
+
+  @override
+  String get devriyeVardiyaYardim =>
+      'Le plan est rattaché à ce poste ; son équipe effectue la ronde.';
+
+  @override
+  String get ortakSecimYok => 'Aucun';
+
+  @override
   String get devriyePlanAdi => 'Nom du plan';
 
   @override

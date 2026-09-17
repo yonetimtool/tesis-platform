@@ -1317,6 +1317,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get devriyePlanYeniBaslik => 'خطة دورية جديدة';
 
   @override
+  String get devriyeVardiya => 'الوردية';
+
+  @override
+  String get devriyeVardiyaYardim =>
+      'يُربط الخطة بهذه الوردية؛ ويقوم طاقمها بالجولة.';
+
+  @override
+  String get ortakSecimYok => 'بدون';
+
+  @override
   String get devriyePlanAdi => 'اسم الخطة';
 
   @override

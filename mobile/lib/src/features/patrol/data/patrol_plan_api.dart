@@ -14,6 +14,7 @@ class PatrolPlan {
     required this.bitisSaat,
     required this.periyotDakika,
     required this.aktif,
+    this.shiftId,
   });
 
   final String id;
@@ -22,6 +23,13 @@ class PatrolPlan {
   final String bitisSaat;
   final int periyotDakika;
   final bool aktif;
+
+  /// (P239 §3) PLANIN BAGLI OLDUGU VARDIYA — "kim yuruyecek"in bugunku
+  /// yaniti. `patrol_plan`da atanan KISI kolonu YOK; plan bir vardiyaya
+  /// baglanir ve o vardiyanin kadrosu yurur. Web formunda bu alan
+  /// VARDI, mobilde YOKTU — yani mobilde acilan her plan kadrosuz
+  /// kaliyordu.
+  final String? shiftId;
 
   /// "HH:MM" (saniyeyi kirp) — gosterim icin.
   String get baslangicHHMM => _hhmm(baslangicSaat);
@@ -34,6 +42,7 @@ class PatrolPlan {
         ad: json['ad'] as String? ?? '',
         baslangicSaat: json['baslangic_saat'] as String? ?? '00:00:00',
         bitisSaat: json['bitis_saat'] as String? ?? '00:00:00',
+        shiftId: json['shift_id'] as String?,
         periyotDakika: (json['periyot_dakika'] as num?)?.toInt() ?? 60,
         aktif: (json['aktif'] as bool?) ?? true,
       );
@@ -64,6 +73,7 @@ class PatrolPlanApi {
     required String bitisSaat,
     required int periyotDakika,
     bool aktif = true,
+    String? shiftId,
   }) async {
     try {
       final res = await _dio.post<Map<String, dynamic>>('/patrol-plans', data: {
@@ -72,6 +82,7 @@ class PatrolPlanApi {
         'bitis_saat': bitisSaat,
         'periyot_dakika': periyotDakika,
         'aktif': aktif,
+        'shift_id': shiftId,
       });
       return PatrolPlan.fromJson(res.data ?? const {});
     } on DioException catch (e) {
@@ -86,6 +97,7 @@ class PatrolPlanApi {
     required String bitisSaat,
     required int periyotDakika,
     required bool aktif,
+    String? shiftId,
   }) async {
     try {
       await _dio.patch<Map<String, dynamic>>('/patrol-plans/$id', data: {
@@ -94,6 +106,9 @@ class PatrolPlanApi {
         'bitis_saat': bitisSaat,
         'periyot_dakika': periyotDakika,
         'aktif': aktif,
+        // NULL DA GONDERILIR: vardiya bagini KALDIRMAK baska turlu
+        // mumkun olmazdi (tam-govde PATCH kurali).
+        'shift_id': shiftId,
       });
     } on DioException catch (e) {
       throw ApiException.fromDio(e);

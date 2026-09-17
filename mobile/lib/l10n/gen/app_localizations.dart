@@ -2196,6 +2196,24 @@ abstract class AppLocalizations {
   /// **'Yeni devriye planı'**
   String get devriyePlanYeniBaslik;
 
+  /// No description provided for @devriyeVardiya.
+  ///
+  /// In tr, this message translates to:
+  /// **'Vardiya'**
+  String get devriyeVardiya;
+
+  /// No description provided for @devriyeVardiyaYardim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Plan bu vardiyaya bağlanır; turu o vardiyanın kadrosu yürür.'**
+  String get devriyeVardiyaYardim;
+
+  /// No description provided for @ortakSecimYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yok'**
+  String get ortakSecimYok;
+
   /// No description provided for @devriyePlanAdi.
   ///
   /// In tr, this message translates to:

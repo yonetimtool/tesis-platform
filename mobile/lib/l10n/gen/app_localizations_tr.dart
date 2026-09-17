@@ -1180,6 +1180,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get devriyePlanYeniBaslik => 'Yeni devriye planı';
 
   @override
+  String get devriyeVardiya => 'Vardiya';
+
+  @override
+  String get devriyeVardiyaYardim =>
+      'Plan bu vardiyaya bağlanır; turu o vardiyanın kadrosu yürür.';
+
+  @override
+  String get ortakSecimYok => 'Yok';
+
+  @override
   String get devriyePlanAdi => 'Plan adı';
 
   @override

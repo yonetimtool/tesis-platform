@@ -1193,6 +1193,16 @@ class AppLocalizationsDe extends AppLocalizations {
   String get devriyePlanYeniBaslik => 'Neuer Rundgangsplan';
 
   @override
+  String get devriyeVardiya => 'Schicht';
+
+  @override
+  String get devriyeVardiyaYardim =>
+      'Der Plan wird dieser Schicht zugeordnet; deren Team läuft die Runde.';
+
+  @override
+  String get ortakSecimYok => 'Keine';
+
+  @override
   String get devriyePlanAdi => 'Planname';
 
   @override

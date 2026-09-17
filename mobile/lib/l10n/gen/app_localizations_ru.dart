@@ -1299,6 +1299,16 @@ class AppLocalizationsRu extends AppLocalizations {
   String get devriyePlanYeniBaslik => 'Новый план обхода';
 
   @override
+  String get devriyeVardiya => 'Смена';
+
+  @override
+  String get devriyeVardiyaYardim =>
+      'План привязывается к этой смене; обход выполняет её состав.';
+
+  @override
+  String get ortakSecimYok => 'Нет';
+
+  @override
   String get devriyePlanAdi => 'Название плана';
 
   @override

@@ -53,6 +53,9 @@ class _SahtePlanApi extends PatrolPlanApi {
     required String bitisSaat,
     required int periyotDakika,
     bool aktif = true,
+    // (P239 §3) VARDIYA SECIMI mobile de geldi (web'de zaten vardi):
+    // plan bir vardiyaya baglanir, o vardiyanin kadrosu yurur.
+    String? shiftId,
   }) async {
     olusturulan.add({
       'ad': ad,
@@ -60,6 +63,7 @@ class _SahtePlanApi extends PatrolPlanApi {
       'bit': bitisSaat,
       'periyot': periyotDakika,
       'aktif': aktif,
+      'shift': shiftId,
     });
     if (hata != null) throw hata!;
     return PatrolPlan(
@@ -69,6 +73,7 @@ class _SahtePlanApi extends PatrolPlanApi {
       bitisSaat: bitisSaat,
       periyotDakika: periyotDakika,
       aktif: aktif,
+      shiftId: shiftId,
     );
   }
 
@@ -80,8 +85,10 @@ class _SahtePlanApi extends PatrolPlanApi {
     required String bitisSaat,
     required int periyotDakika,
     bool? aktif,
+    String? shiftId,
   }) async {
-    guncellenen.add({'id': id, 'ad': ad, 'periyot': periyotDakika});
+    guncellenen.add(
+        {'id': id, 'ad': ad, 'periyot': periyotDakika, 'shift': shiftId});
     if (hata != null) throw hata!;
   }
 
