@@ -1971,6 +1971,8 @@ export const tr = {
   anketSecenekSil: "Seçeneği sil",
   anketSecenekNo: "Seçenek {n}",
   kisiNumaraYok: "Numara kayıtlı değil.",
+  gorevSonTarihOpsiyonel: "Son tarih (opsiyonel)",
+  gorevSonTarihIpucu: "Gecikme bu tarihten hesaplanır; periyodik tekrardan ayrıdır.",
   anketEkle: "Anketi aç",
   anketAciklamaOpsiyonel: "Açıklama (isteğe bağlı)",
   anketGorselOpsiyonel: "Görsel (isteğe bağlı)",

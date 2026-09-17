@@ -1909,6 +1909,8 @@ export const ar: Sozluk = {
   anketSecenekSil: "حذف الخيار",
   anketSecenekNo: "الخيار {n}",
   kisiNumaraYok: "لا يوجد رقم مسجل.",
+  gorevSonTarihOpsiyonel: "تاريخ الاستحقاق (اختياري)",
+  gorevSonTarihIpucu: "يُحسب التأخير من هذا التاريخ؛ وهو منفصل عن التكرار الدوري.",
   anketEkle: "فتح الاستطلاع",
   anketAciklamaOpsiyonel: "الوصف (اختياري)",
   anketGorselOpsiyonel: "صورة (اختياري)",

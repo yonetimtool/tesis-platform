@@ -98,6 +98,13 @@ interface FormState {
   kategori_id: string;
   periyot_dakika: string;
   sonraki_planlanan: string;
+  /** (P239 §4) SON TARIH — gecikme bundan hesaplanir.
+   *
+   *  `sonraki_planlanan`DAN AYRI ve karistirilmamali: o yalniz PERIYODIK
+   *  gorevlerde dolu ve anlami "bir sonraki tekrar". Kolon P230 §4'te
+   *  eklenmisti, arka uc create/update'te kabul ediyordu — ama FORM ONU
+   *  HIC GONDERMIYORDU, yani "gecikti" durumu elle kurulamiyordu. */
+  son_tarih: string;
   foto_zorunlu: boolean;
   aktif: boolean;
   /** (P237 §2) Alt adimlar — SATIR BASINA BIR ADIM.
@@ -134,6 +141,7 @@ const EMPTY: FormState = {
   kategori_id: "",
   periyot_dakika: "",
   sonraki_planlanan: "",
+  son_tarih: "",
   foto_zorunlu: false,
   aktif: true,
   adimlar: "",
@@ -252,6 +260,7 @@ export default function TasksPage() {
       kategori_id: t.kategori_id ?? "",
       periyot_dakika: t.periyot_dakika != null ? String(t.periyot_dakika) : "",
       sonraki_planlanan: isoToLocalInput(t.sonraki_planlanan),
+      son_tarih: isoToLocalInput(t.son_tarih),
       foto_zorunlu: t.foto_zorunlu,
       aktif: t.aktif,
       // (P237 §2) Duzenlemede adimlar GONDERILMEZ (ezilirdi); form
@@ -281,6 +290,7 @@ export default function TasksPage() {
       kategori_id: form.kategori_id || null,
       periyot_dakika: per.tur === "sayi" ? per.deger : null,
       sonraki_planlanan: toIso(form.sonraki_planlanan),
+      son_tarih: toIso(form.son_tarih),
       foto_zorunlu: form.foto_zorunlu,
       aktif: form.aktif,
       adim_sirali: form.adim_sirali,
@@ -636,6 +646,13 @@ export default function TasksPage() {
     <Alan {...b} type="number"
                 min={1}value={form.periyot_dakika}
                 onChange={(e) => setForm({ ...form, periyot_dakika: e.target.value })} />
+  )}
+</AlanSarmal>
+            <AlanSarmal etiket={t("gorevSonTarihOpsiyonel")} ipucu={t("gorevSonTarihIpucu")}>
+  {(b) => (
+    <Alan {...b} type="datetime-local" data-test="gorev-son-tarih"
+                value={form.son_tarih}
+                onChange={(e) => setForm({ ...form, son_tarih: e.target.value })} />
   )}
 </AlanSarmal>
             <AlanSarmal etiket={t("gorevSonrakiPlanlananOpsiyonel")} ipucu={t("gorevPeriyodikSaatIpucu")}>

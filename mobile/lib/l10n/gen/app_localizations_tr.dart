@@ -6316,6 +6316,9 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String get gorevSonTarih => 'Son tarih';
+
+  @override
   String gorevSonTarihi(String tarih) {
     return 'Son tarih: $tarih';
   }
@@ -6480,10 +6483,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get anketBitis => 'Bitiş (isteğe bağlı)';
 
   @override
-  String get anketTarihSec => 'Tarih seç';
+  String get ortakTarihSec => 'Tarih seç';
 
   @override
-  String get anketTarihTemizle => 'Tarihi kaldır';
+  String get ortakTarihTemizle => 'Tarihi kaldır';
 
   @override
   String get anketTarihAraligiGecersiz =>

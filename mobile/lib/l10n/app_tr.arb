@@ -3026,6 +3026,7 @@
       }
     }
   },
+  "gorevSonTarih": "Son tarih",
   "gorevSonTarihi": "Son tarih: {tarih}",
   "@gorevSonTarihi": {
     "placeholders": {
@@ -3145,8 +3146,8 @@
   "anketGorselSec": "Görsel seç",
   "anketBaslangic": "Başlangıç (isteğe bağlı)",
   "anketBitis": "Bitiş (isteğe bağlı)",
-  "anketTarihSec": "Tarih seç",
-  "anketTarihTemizle": "Tarihi kaldır",
+  "ortakTarihSec": "Tarih seç",
+  "ortakTarihTemizle": "Tarihi kaldır",
   "anketTarihAraligiGecersiz": "Bitiş tarihi başlangıçtan sonra olmalı.",
   "anketHedefSakinTipi": "Malik/kiracı ayrımı",
   "anketSakinHepsi": "Ayrım yok",

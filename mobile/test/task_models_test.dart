@@ -208,6 +208,9 @@ void main() {
         'kategori_id': null,
         'checkpoint_id': null,
         'periyot_dakika': null,
+        // (P239 §4) SON TARIH de TAM-GOVDEDE: PATCH ile KALDIRMAK
+        // baska turlu mumkun olmazdi.
+        'son_tarih': null,
         'foto_zorunlu': false,
         'aktif': true,
         // (P237 §2) `adim_sirali` TAM-GOVDEDE: PATCH temizleme kurali

@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../core/i18n/l10n.dart';
 import '../../../core/ui/merkez_diyalog.dart';
+import '../../../core/ui/tarih_satiri.dart';
 import '../../tasks/data/task_api.dart';
 import '../../tasks/presentation/task_complete_controller.dart';
 import '../data/anket_api.dart';
@@ -85,26 +86,11 @@ class _AnketFormSayfasiState extends ConsumerState<AnketFormSayfasi> {
     super.dispose();
   }
 
-  /// TARIH + SAAT — etkinlik formundaki desen (`showDatePicker` ->
-  /// `showTimePicker`). Gun tek basina yetmez: "12 Ekim'de kapansin"
-  /// diyen yonetici gun ICINDE bir an kastediyor ve gunun 00:00'i o anı
-  /// bir gun ONE cekerdi.
-  Future<DateTime?> _tarihSec(DateTime? mevcut) async {
-    final simdi = DateTime.now();
-    final gun = await showDatePicker(
-      context: context,
-      initialDate: mevcut ?? simdi,
-      firstDate: simdi.subtract(const Duration(days: 1)),
-      lastDate: simdi.add(const Duration(days: 365)),
-    );
-    if (gun == null || !mounted) return null;
-    final saat = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.fromDateTime(mevcut ?? simdi),
-    );
-    if (saat == null) return null;
-    return DateTime(gun.year, gun.month, gun.day, saat.hour, saat.minute);
-  }
+  /// (P239 §4) TARIH + SAAT secimi ORTAK BILESENDE
+  /// (`core/ui/tarih_satiri.dart`) — gorev son tarihi ikinci tuketici
+  /// oldu ve iki kopyanin zamanla ayrismasi istenmedi.
+  Future<DateTime?> _tarihSec(DateTime? mevcut) =>
+      tarihSaatSec(context, mevcut);
 
   /// MALIK/KIRACI AYRIMI YALNIZ SAKIN HEDEFLENDIGINDE ANLAMLI.
   ///
@@ -292,7 +278,7 @@ class _AnketFormSayfasiState extends ConsumerState<AnketFormSayfasi> {
             // TARIH ARALIGI — IKISI DE OPSIYONEL. Bos = hemen acik,
             // suresiz; en sik kullanilan hal budur, bu yuzden zorunlu
             // degil ve varsayilan da doldurulmuyor.
-            _TarihSatiri(
+            TarihSatiri(
               anahtar: 'anket-baslangic',
               etiket: l10n.anketBaslangic,
               deger: _baslangic,
@@ -302,7 +288,7 @@ class _AnketFormSayfasiState extends ConsumerState<AnketFormSayfasi> {
               },
               onTemizle: () => setState(() => _baslangic = null),
             ),
-            _TarihSatiri(
+            TarihSatiri(
               anahtar: 'anket-bitis',
               etiket: l10n.anketBitis,
               deger: _bitis,
@@ -384,51 +370,6 @@ class _AnketFormSayfasiState extends ConsumerState<AnketFormSayfasi> {
 /// Ayri widget: ayni yerlesim iki kez (baslangic/bitis) ciziliyor ve
 /// kopyalamak, birinde yapilan bir duzeltmenin otekinde unutulmasi
 /// demekti.
-class _TarihSatiri extends StatelessWidget {
-  const _TarihSatiri({
-    required this.anahtar,
-    required this.etiket,
-    required this.deger,
-    required this.onSec,
-    required this.onTemizle,
-  });
-
-  final String anahtar;
-  final String etiket;
-  final DateTime? deger;
-  final Future<void> Function() onSec;
-  final VoidCallback onTemizle;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    return Row(
-      children: [
-        Expanded(
-          child: TextButton.icon(
-            key: Key(anahtar),
-            icon: const Icon(Icons.event_outlined),
-            label: Text(
-              deger == null
-                  ? '$etiket — ${l10n.anketTarihSec}'
-                  : '$etiket: ${tarihSaatBicimi(deger!, context.dilKodu)}',
-              overflow: TextOverflow.ellipsis,
-            ),
-            onPressed: () => onSec(),
-          ),
-        ),
-        if (deger != null)
-          IconButton(
-            key: Key('$anahtar-temizle'),
-            icon: const Icon(Icons.close),
-            tooltip: l10n.anketTarihTemizle,
-            onPressed: onTemizle,
-          ),
-      ],
-    );
-  }
-}
-
 /// Rol adi — anket formundaki kisa etiket. Sozlukteki rol adlari
 /// TEK KAYNAK; burada ikinci bir liste tutulmuyor.
 String rolAdiKisa(AppLocalizations l10n, String rol) => switch (rol) {

@@ -6510,6 +6510,9 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get gorevSonTarih => 'Fälligkeitsdatum';
+
+  @override
   String gorevSonTarihi(String tarih) {
     return 'Fällig: $tarih';
   }
@@ -6674,10 +6677,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get anketBitis => 'Ende (optional)';
 
   @override
-  String get anketTarihSec => 'Datum wählen';
+  String get ortakTarihSec => 'Datum wählen';
 
   @override
-  String get anketTarihTemizle => 'Datum entfernen';
+  String get ortakTarihTemizle => 'Datum entfernen';
 
   @override
   String get anketTarihAraligiGecersiz =>

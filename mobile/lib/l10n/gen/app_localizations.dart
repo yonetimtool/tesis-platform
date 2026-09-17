@@ -11225,6 +11225,12 @@ abstract class AppLocalizations {
   /// **'{n} gün'**
   String gorevGecikmeGun(int n);
 
+  /// No description provided for @gorevSonTarih.
+  ///
+  /// In tr, this message translates to:
+  /// **'Son tarih'**
+  String get gorevSonTarih;
+
   /// No description provided for @gorevSonTarihi.
   ///
   /// In tr, this message translates to:
@@ -11507,17 +11513,17 @@ abstract class AppLocalizations {
   /// **'Bitiş (isteğe bağlı)'**
   String get anketBitis;
 
-  /// No description provided for @anketTarihSec.
+  /// No description provided for @ortakTarihSec.
   ///
   /// In tr, this message translates to:
   /// **'Tarih seç'**
-  String get anketTarihSec;
+  String get ortakTarihSec;
 
-  /// No description provided for @anketTarihTemizle.
+  /// No description provided for @ortakTarihTemizle.
   ///
   /// In tr, this message translates to:
   /// **'Tarihi kaldır'**
-  String get anketTarihTemizle;
+  String get ortakTarihTemizle;
 
   /// No description provided for @anketTarihAraligiGecersiz.
   ///

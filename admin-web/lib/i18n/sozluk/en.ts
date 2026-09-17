@@ -1909,6 +1909,8 @@ export const en: Sozluk = {
   anketSecenekSil: "Delete option",
   anketSecenekNo: "Option {n}",
   kisiNumaraYok: "No phone number on file.",
+  gorevSonTarihOpsiyonel: "Due date (optional)",
+  gorevSonTarihIpucu: "Overdue is measured from this date; separate from the periodic repeat.",
   anketEkle: "Open survey",
   anketAciklamaOpsiyonel: "Description (optional)",
   anketGorselOpsiyonel: "Image (optional)",

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/ui/tarih_satiri.dart';
 import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
 import '../../../core/ui/eksik_veri_uyarisi.dart';
@@ -44,6 +45,13 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
   String? _atananUserId;
   String? _kategoriId;
   String? _checkpointId;
+  /// (P239 §4) SON TARIH — gecikme bundan hesaplanir.
+  ///
+  /// Kolon ve arka uc P230 §4'te hazirdi, liste "gecikti" rozetini ondan
+  /// ciziyordu; ama FORM ONU HIC GONDERMIYORDU — yani durum yalnizca
+  /// okunabiliyor, KURULAMIYORDU. Periyot alanindan AYRI: o "bir
+  /// sonraki tekrar", bu "bu isin teslim ani".
+  DateTime? _sonTarih;
   late bool _fotoZorunlu;
   late bool _aktif;
   /// (P237 §2) ALT ADIMLAR — SATIR BASINA BIR ADIM.
@@ -80,6 +88,8 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
     _atananUserId = t?.atananUserId;
     _kategoriId = t?.kategoriId;
     _checkpointId = t?.checkpointId;
+    // YERELE CEVRILIR: sunucu UTC tutar, kullanici kendi saatini secer.
+    _sonTarih = t?.sonTarih?.toLocal();
     _fotoZorunlu = t?.fotoZorunlu ?? false;
     _aktif = t?.aktif ?? true;
     _adimlarCtrl = TextEditingController();
@@ -161,6 +171,7 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
       kategoriId: _kategoriId,
       checkpointId: _checkpointId,
       periyotDakika: periyotText.isEmpty ? null : int.parse(periyotText),
+      sonTarih: _sonTarih,
       fotoZorunlu: _fotoZorunlu,
       aktif: _aktif,
       adimSirali: _adimSirali,
@@ -443,6 +454,21 @@ class _TaskFormSheetState extends ConsumerState<_TaskFormSheet> {
                   final n = int.tryParse(t);
                   return (n == null || n <= 0) ? l10n.gorevPozitifSayi : null;
                 },
+              ),
+              // (P239 §4) SON TARIH — opsiyonel, VARSAYILAN YOK.
+              //
+              // Varsayilan bir tarih koymak, kullanicinin vermedigi bir
+              // sozu kaydetmek ve her gorevi bir sure sonra "gecikti"
+              // yapmak olurdu.
+              TarihSatiri(
+                anahtar: 'gorev-son-tarih',
+                etiket: l10n.gorevSonTarih,
+                deger: _sonTarih,
+                onSec: () async {
+                  final t = await tarihSaatSec(context, _sonTarih);
+                  if (t != null) setState(() => _sonTarih = t);
+                },
+                onTemizle: () => setState(() => _sonTarih = null),
               ),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,

@@ -6580,6 +6580,9 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get gorevSonTarih => 'Срок';
+
+  @override
   String gorevSonTarihi(String tarih) {
     return 'Срок: $tarih';
   }
@@ -6744,10 +6747,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get anketBitis => 'Окончание (необязательно)';
 
   @override
-  String get anketTarihSec => 'Выбрать дату';
+  String get ortakTarihSec => 'Выбрать дату';
 
   @override
-  String get anketTarihTemizle => 'Убрать дату';
+  String get ortakTarihTemizle => 'Убрать дату';
 
   @override
   String get anketTarihAraligiGecersiz =>

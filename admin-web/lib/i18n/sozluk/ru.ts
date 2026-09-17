@@ -1909,6 +1909,8 @@ export const ru: Sozluk = {
   anketSecenekSil: "Удалить вариант",
   anketSecenekNo: "Вариант {n}",
   kisiNumaraYok: "Номер не указан.",
+  gorevSonTarihOpsiyonel: "Срок (необязательно)",
+  gorevSonTarihIpucu: "Просрочка считается от этой даты; это не повтор по периоду.",
   anketEkle: "Открыть опрос",
   anketAciklamaOpsiyonel: "Описание (необязательно)",
   anketGorselOpsiyonel: "Изображение (необязательно)",

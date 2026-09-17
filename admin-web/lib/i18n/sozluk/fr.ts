@@ -1909,6 +1909,8 @@ export const fr: Sozluk = {
   anketSecenekSil: "Supprimer l’option",
   anketSecenekNo: "Option {n}",
   kisiNumaraYok: "Aucun numéro enregistré.",
+  gorevSonTarihOpsiyonel: "Date limite (facultatif)",
+  gorevSonTarihIpucu: "Le retard est calculé à partir de cette date ; distinct de la répétition.",
   anketEkle: "Ouvrir le sondage",
   anketAciklamaOpsiyonel: "Description (facultatif)",
   anketGorselOpsiyonel: "Image (facultatif)",

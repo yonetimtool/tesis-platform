@@ -280,3 +280,83 @@ Gerçek cihazda çeviricinin açıldığı sürülmedi (emülatör yok);
 `CallLauncher` sahtesiyle `tel:` URI'sinin doğru üretildiği ölçüldü.
 
 ---
+
+## §4 — Takvimden gün seçimi: GÖREVLER
+
+### ÖLÇÜM: kolon ve uç HAZIRDI, form GÖNDERMİYORDU
+
+`task.son_tarih` P230 §4'te (göç 0133) eklendi; `TaskCreate`/`TaskUpdate`
+ikisi de kabul ediyor; liste "gecikti" rozetini ve `gecikme_gun`u ondan
+hesaplıyor; mobil görev detayı onu **okuyup yazıyor**. Ama:
+
+| Yüzey | Son tarih alanı |
+|---|---|
+| Web `tasks/page.tsx` | **yok** (`sonraki_planlanan` var, o başka şey) |
+| Mobil `task_form_sheet.dart` | **yok** |
+
+Yani "gecikti" durumu arayüzden **kurulamıyordu**, yalnızca okunuyordu.
+
+### KARAR
+
+- İki yüzeye de **opsiyonel son tarih** alanı. Web'de `datetime-local`
+  (tarayıcının kendi takvimi — sayfanın geri kalanıyla aynı desen),
+  mobilde gün→saat seçici.
+- **Varsayılan YOK.** Bugünü doldurmak, kullanıcının vermediği bir sözü
+  kaydetmek ve her görevi bir süre sonra "gecikti" yapmak olurdu.
+- **Gün tek başına yetmez:** "12 Ekim'de bitsin" diyen kullanıcı gün
+  içinde bir an kastediyor; 00:00 almak o anı bir gün öne çeker ve iş
+  başlamadan gecikmiş sayılır. Bu yüzden saat de sorulur.
+- `sonraki_planlanan` ile **karıştırılmaz**: o yalnız periyodik
+  görevlerde dolu ve anlamı "bir sonraki tekrar". İkisi ayrı alan olarak
+  gider (web testinin son iddiası tam olarak bunu ölçer).
+- Mobilde `son_tarih` **tam-gövdede** (null da gider): PATCH ile son
+  tarihi **kaldırmak** başka türlü mümkün olmazdı.
+
+### TARİH SEÇİCİ ORTAK BİLEŞENE TAŞINDI
+
+Satır P237'de anket formunun **içinde** özel bir widget'tı. İkinci
+tüketici çıkınca kopyalamak yerine taşındı:
+`mobile/lib/src/core/ui/tarih_satiri.dart` (`TarihSatiri` +
+`tarihSaatSec`). Kopya, iki seçicinin zamanla ayrışması demekti —
+birinde "temizle" olur, ötekinde olmaz. `anketTarihSec` /
+`anketTarihTemizle` anahtarları `ortakTarihSec` / `ortakTarihTemizle`
+oldu (7 dil).
+
+### KİLİTLER
+
+- `admin-web/tests/p239-gorev-son-tarih.dom.test.ts` — alan var ve değer
+  ISO olarak gövdeye girer (`sonraki_planlanan` **null kalır**), boşsa
+  null gider, düzenlemede mevcut değer alana yüklenir (yüklenmeseydi
+  kaydet var olan son tarihi sessizce silerdi).
+- `mobile/test/p239_gorev_son_tarih_test.dart` — UTC ISO, boşta null,
+  anahtar her zaman var (PATCH ile kaldırılabilir), düzenleme taslağı
+  mevcut tarihi taşır.
+
+**KIRMA:** web'de `son_tarih: toIso(...)` satırı gövdeden çıkarıldı → iki
+test kırmızı. Geri alındı.
+
+### YAPILMADI — devriye planında gün seçimi (§4'ün ikinci yarısı)
+
+`patrol_plan` tablosunda **ne gün listesi ne de atanan kişi var**:
+plan `ad + shift_id + baslangic_saat + bitis_saat + periyot_dakika`dan
+ibaret ve hangi gün kimin yürüyeceği `shift` kadrosundan türüyor. Yani
+bu, arayüz işi değil **şema değişikliği** (göç + uç + iki yüzey + rol
+matrisi/indeks kilitleri). Bu tura sığmadı; §3'ün devriye ayağıyla
+birlikte ayrı bir turda yapılmalı — bkz. aşağıdaki §3 notu.
+
+---
+
+## §3 — Kişi ataması: nerede var, nerede yok (ÖLÇÜM)
+
+| | Web | Mobil |
+|---|---|---|
+| **Vardiya** | var (P235 birleşik modal: takvim + kişi) | var (hızlı ekle) |
+| **Görev** | var (`atanan_user_id` seçici) | var (atama seçici) |
+| **Devriye planı** | **YOK** | **YOK** |
+
+Devriye planında kişi ataması **arayüzde eksik olduğu için değil,
+veritabanında olmadığı için** yok: `patrol_plan`ın atanan kişi kolonu
+hiç açılmamış; plan bir `shift`e bağlanır ve kimin yürüyeceği o vardiya
+kadrosundan gelir. Bunu "kişiye ata"ya çevirmek bir tasarım kararıdır
+(kadro mu kişi mi öncelikli, ikisi birden olursa hangisi kazanır) ve
+göç gerektirir. **Bu turda yapılmadı** — kendi turunu hak ediyor.

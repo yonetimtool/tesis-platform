@@ -459,6 +459,7 @@ class TaskDraft {
     this.kategoriId,
     this.checkpointId,
     this.periyotDakika,
+    this.sonTarih,
     this.fotoZorunlu = false,
     this.aktif = true,
     this.adimlar = const [],
@@ -476,6 +477,11 @@ class TaskDraft {
   /// etiket okutulur). null = NFC gerektirmez.
   final String? checkpointId;
   final int? periyotDakika;
+
+  /// (P239 §4) SON TARIH — gecikme bundan hesaplanir. `sonraki_planlanan`
+  /// DEGIL: o yalniz periyodik gorevlerde dolu ve "bir sonraki tekrar"
+  /// demek.
+  final DateTime? sonTarih;
   final bool fotoZorunlu;
   final bool aktif;
 
@@ -494,6 +500,9 @@ class TaskDraft {
     'kategori_id': kategoriId,
     'checkpoint_id': checkpointId,
     'periyot_dakika': periyotDakika,
+    // TAM-GOVDE: null da GONDERILIR — PATCH'te alani TEMIZLEMEK
+    // (son tarihi kaldirmak) baska turlu mumkun olmazdi.
+    'son_tarih': sonTarih?.toUtc().toIso8601String(),
     'foto_zorunlu': fotoZorunlu,
     'aktif': aktif,
     'adim_sirali': adimSirali,
@@ -512,6 +521,7 @@ class TaskDraft {
     kategoriId: task.kategoriId,
     checkpointId: task.checkpointId,
     periyotDakika: task.periyotDakika,
+    sonTarih: task.sonTarih,
     fotoZorunlu: task.fotoZorunlu,
     aktif: task.aktif,
     adimSirali: task.adimSirali,
