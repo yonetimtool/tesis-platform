@@ -1228,6 +1228,128 @@ class AppLocalizationsDe extends AppLocalizations {
   String get entegHataAdresGecersiz => 'Das Adressformat ist ungültig.';
 
   @override
+  String get diyafonBaslik => 'Türsprechanlage';
+
+  @override
+  String get diyafonAlt =>
+      'Drei Methoden: SIP-Gerät, SIP-Server-Brücke, Relaiskontakt.';
+
+  @override
+  String get diyafonYeni => 'Neue Anlage';
+
+  @override
+  String get diyafonDuzenle => 'Anlage bearbeiten';
+
+  @override
+  String get diyafonYok => 'Keine Anlage konfiguriert.';
+
+  @override
+  String get diyafonYokAlt =>
+      'Mit einer Anlage gehen Notfall-Durchsagen auch dorthin.';
+
+  @override
+  String get diyafonYontem => 'Methode';
+
+  @override
+  String get diyafonYontemSip => 'SIP / IP-Anlage (2N, Akuvox, Dahua VTO)';
+
+  @override
+  String get diyafonYontemSipKopru =>
+      'SIP-Server-Brücke (Asterisk / FreeSWITCH)';
+
+  @override
+  String get diyafonYontemKuruKontak => 'Relaiskontakt (analoges System)';
+
+  @override
+  String get diyafonYontemIpucu =>
+      'Die Methode bestimmt, was möglich ist; Fähigkeiten stehen in der Tabelle.';
+
+  @override
+  String get diyafonHost => 'Adresse';
+
+  @override
+  String get diyafonPort => 'Port';
+
+  @override
+  String get diyafonPortIpucu =>
+      'Leer lassen: Standard der Methode (SIP 5060, HTTP 80).';
+
+  @override
+  String get diyafonHedef => 'Ziel-Nebenstelle';
+
+  @override
+  String get diyafonHedefIpucu => 'Nebenstelle für die Durchsage (z. B. 100).';
+
+  @override
+  String get diyafonZilYolu => 'Klingel-Pfad';
+
+  @override
+  String get diyafonKapiYolu => 'Tür-Pfad';
+
+  @override
+  String get diyafonYolIpucu =>
+      'HTTP-Pfad des Relaismoduls; muss mit „/“ beginnen (z. B. /relay1).';
+
+  @override
+  String get diyafonKullanici => 'Benutzer';
+
+  @override
+  String get diyafonSifre => 'Passwort';
+
+  @override
+  String get diyafonSifreIpucu =>
+      'Leer lassen, um das aktuelle Passwort zu behalten.';
+
+  @override
+  String get diyafonYetenekler => 'Fähigkeiten';
+
+  @override
+  String get diyafonYetenekMetin => 'Textdurchsage';
+
+  @override
+  String get diyafonYetenekZil => 'Klingel';
+
+  @override
+  String get diyafonYetenekKapi => 'Tür öffnen';
+
+  @override
+  String get diyafonSesliAnonsYok =>
+      'Keine Sprachdurchsage — diese Version sendet kein Audio.';
+
+  @override
+  String get diyafonTestEt => 'Verbindung testen';
+
+  @override
+  String get diyafonEylemBasarili => 'Aktion erfolgreich.';
+
+  @override
+  String diyafonKapiOnay(Object ad) {
+    return 'Sie öffnen gleich die Tür $ad. Das gewährt physischen Zutritt.';
+  }
+
+  @override
+  String get diyafonHataUlasilamiyor =>
+      'Die Türsprechanlage ist nicht erreichbar; das Gerät ist möglicherweise aus oder nicht im Netz.';
+
+  @override
+  String get diyafonHataReddedildi =>
+      'Die Türsprechanlage hat die Anfrage abgelehnt; Benutzername, Passwort oder Zielnummer prüfen.';
+
+  @override
+  String get diyafonHataYapilandirma =>
+      'Die Türsprech-Konfiguration ist unvollständig; Adresse und Ziel ausfüllen.';
+
+  @override
+  String get diyafonHataDesteklemiyor =>
+      'Diese Türsprech-Methode unterstützt diese Aktion nicht.';
+
+  @override
+  String get diyafonZil => 'Klingeln';
+
+  @override
+  String get diyafonKapiAc => 'Tür öffnen';
+
+  @override
   String get panikBaslik => 'Notfall';
 
   @override

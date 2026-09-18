@@ -1334,6 +1334,130 @@ class AppLocalizationsRu extends AppLocalizations {
   String get entegHataAdresGecersiz => 'Неверный формат адреса.';
 
   @override
+  String get diyafonBaslik => 'Домофон';
+
+  @override
+  String get diyafonAlt =>
+      'Три способа: SIP-устройство, мост SIP-сервера, сухой контакт.';
+
+  @override
+  String get diyafonYeni => 'Новый домофон';
+
+  @override
+  String get diyafonDuzenle => 'Изменить домофон';
+
+  @override
+  String get diyafonYok => 'Домофон не настроен.';
+
+  @override
+  String get diyafonYokAlt =>
+      'Настройте домофон — экстренные оповещения пойдут и туда.';
+
+  @override
+  String get diyafonYontem => 'Способ';
+
+  @override
+  String get diyafonYontemSip => 'SIP / IP-домофон (2N, Akuvox, Dahua VTO)';
+
+  @override
+  String get diyafonYontemSipKopru =>
+      'Мост SIP-сервера (Asterisk / FreeSWITCH)';
+
+  @override
+  String get diyafonYontemKuruKontak =>
+      'Реле сухого контакта (аналоговая система)';
+
+  @override
+  String get diyafonYontemIpucu =>
+      'Способ определяет возможности; они перечислены в таблице.';
+
+  @override
+  String get diyafonHost => 'Адрес';
+
+  @override
+  String get diyafonPort => 'Порт';
+
+  @override
+  String get diyafonPortIpucu =>
+      'Если пусто, используется значение по умолчанию (SIP 5060, HTTP 80).';
+
+  @override
+  String get diyafonHedef => 'Целевой внутренний';
+
+  @override
+  String get diyafonHedefIpucu =>
+      'Внутренний номер для оповещения (напр. 100).';
+
+  @override
+  String get diyafonZilYolu => 'Путь звонка';
+
+  @override
+  String get diyafonKapiYolu => 'Путь двери';
+
+  @override
+  String get diyafonYolIpucu =>
+      'HTTP-путь модуля реле; должен начинаться с «/» (напр. /relay1).';
+
+  @override
+  String get diyafonKullanici => 'Пользователь';
+
+  @override
+  String get diyafonSifre => 'Пароль';
+
+  @override
+  String get diyafonSifreIpucu =>
+      'Оставьте пустым, чтобы сохранить текущий пароль.';
+
+  @override
+  String get diyafonYetenekler => 'Возможности';
+
+  @override
+  String get diyafonYetenekMetin => 'Текстовое оповещение';
+
+  @override
+  String get diyafonYetenekZil => 'Звонок';
+
+  @override
+  String get diyafonYetenekKapi => 'Открыть дверь';
+
+  @override
+  String get diyafonSesliAnonsYok =>
+      'Голосового оповещения нет — эта версия не передаёт звук.';
+
+  @override
+  String get diyafonTestEt => 'Проверить соединение';
+
+  @override
+  String get diyafonEylemBasarili => 'Действие выполнено.';
+
+  @override
+  String diyafonKapiOnay(Object ad) {
+    return 'Вы собираетесь открыть дверь $ad. Это даёт физический доступ.';
+  }
+
+  @override
+  String get diyafonHataUlasilamiyor =>
+      'Домофон недоступен; устройство может быть выключено или вне сети.';
+
+  @override
+  String get diyafonHataReddedildi =>
+      'Домофон отклонил запрос; проверьте имя пользователя, пароль или номер назначения.';
+
+  @override
+  String get diyafonHataYapilandirma =>
+      'Настройка домофона неполная; заполните адрес и назначение.';
+
+  @override
+  String get diyafonHataDesteklemiyor =>
+      'Этот способ домофона не поддерживает данное действие.';
+
+  @override
+  String get diyafonZil => 'Позвонить';
+
+  @override
+  String get diyafonKapiAc => 'Открыть дверь';
+
+  @override
   String get panikBaslik => 'Экстренный вызов';
 
   @override

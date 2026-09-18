@@ -272,6 +272,11 @@ ModuleCardSpec moduleCardSpec(HomeMenuEntry entry) {
           icon: Icons.contact_phone,
           accent: _navy,
           route: AppRoutes.yoneticiIletisim);
+    case HomeMenuEntry.diyafon:
+      return const ModuleCardSpec(
+          icon: Icons.doorbell_outlined,
+          accent: _navy,
+          route: AppRoutes.diyafon);
     case HomeMenuEntry.panikTakip:
       // KIRMIZI (_red) DEGIL: bu kart TAKIP ekranina goturur, alarm
       // TETIKLEMEZ. Kirmizi olsaydi kullanici menuden alarm

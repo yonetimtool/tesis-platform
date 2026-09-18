@@ -1231,6 +1231,128 @@ class AppLocalizationsFr extends AppLocalizations {
   String get entegHataAdresGecersiz => 'Le format de l’adresse est invalide.';
 
   @override
+  String get diyafonBaslik => 'Interphone';
+
+  @override
+  String get diyafonAlt =>
+      'Trois méthodes : appareil SIP, pont serveur SIP, relais sec.';
+
+  @override
+  String get diyafonYeni => 'Nouvel interphone';
+
+  @override
+  String get diyafonDuzenle => 'Modifier l’interphone';
+
+  @override
+  String get diyafonYok => 'Aucun interphone configuré.';
+
+  @override
+  String get diyafonYokAlt =>
+      'Configurez un interphone et les annonces d’urgence y seront aussi diffusées.';
+
+  @override
+  String get diyafonYontem => 'Méthode';
+
+  @override
+  String get diyafonYontemSip => 'Interphone SIP / IP (2N, Akuvox, Dahua VTO)';
+
+  @override
+  String get diyafonYontemSipKopru =>
+      'Pont serveur SIP (Asterisk / FreeSWITCH)';
+
+  @override
+  String get diyafonYontemKuruKontak => 'Relais sec (système analogique)';
+
+  @override
+  String get diyafonYontemIpucu =>
+      'La méthode détermine ce qui est possible ; les capacités figurent dans le tableau.';
+
+  @override
+  String get diyafonHost => 'Adresse';
+
+  @override
+  String get diyafonPort => 'Port';
+
+  @override
+  String get diyafonPortIpucu =>
+      'Vide : valeur par défaut de la méthode (SIP 5060, HTTP 80).';
+
+  @override
+  String get diyafonHedef => 'Extension cible';
+
+  @override
+  String get diyafonHedefIpucu => 'Extension recevant l’annonce (ex. 100).';
+
+  @override
+  String get diyafonZilYolu => 'Chemin sonnette';
+
+  @override
+  String get diyafonKapiYolu => 'Chemin porte';
+
+  @override
+  String get diyafonYolIpucu =>
+      'Chemin HTTP du module relais ; doit commencer par « / » (ex. /relay1).';
+
+  @override
+  String get diyafonKullanici => 'Utilisateur';
+
+  @override
+  String get diyafonSifre => 'Mot de passe';
+
+  @override
+  String get diyafonSifreIpucu =>
+      'Laissez vide pour conserver le mot de passe actuel.';
+
+  @override
+  String get diyafonYetenekler => 'Capacités';
+
+  @override
+  String get diyafonYetenekMetin => 'Annonce texte';
+
+  @override
+  String get diyafonYetenekZil => 'Sonnette';
+
+  @override
+  String get diyafonYetenekKapi => 'Ouvrir la porte';
+
+  @override
+  String get diyafonSesliAnonsYok =>
+      'Pas d’annonce vocale — cette version n’envoie pas d’audio.';
+
+  @override
+  String get diyafonTestEt => 'Tester la connexion';
+
+  @override
+  String get diyafonEylemBasarili => 'Action réussie.';
+
+  @override
+  String diyafonKapiOnay(Object ad) {
+    return 'Vous allez ouvrir la porte $ad. Cela donne un accès physique.';
+  }
+
+  @override
+  String get diyafonHataUlasilamiyor =>
+      'L’interphone est injoignable ; l’appareil est peut-être éteint ou hors réseau.';
+
+  @override
+  String get diyafonHataReddedildi =>
+      'L’interphone a rejeté la demande ; vérifiez l’identifiant, le mot de passe ou le numéro cible.';
+
+  @override
+  String get diyafonHataYapilandirma =>
+      'La configuration de l’interphone est incomplète ; renseignez l’adresse et la cible.';
+
+  @override
+  String get diyafonHataDesteklemiyor =>
+      'Cette méthode d’interphone ne permet pas cette action.';
+
+  @override
+  String get diyafonZil => 'Sonner';
+
+  @override
+  String get diyafonKapiAc => 'Ouvrir la porte';
+
+  @override
   String get panikBaslik => 'Urgence';
 
   @override

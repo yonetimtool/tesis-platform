@@ -1215,6 +1215,127 @@ class AppLocalizationsTr extends AppLocalizations {
   String get entegHataAdresGecersiz => 'Adres biçimi geçersiz.';
 
   @override
+  String get diyafonBaslik => 'Diyafon';
+
+  @override
+  String get diyafonAlt =>
+      'Üç yöntem: SIP cihaz, SIP sunucusu köprüsü, kuru kontak rölesi.';
+
+  @override
+  String get diyafonYeni => 'Yeni diyafon';
+
+  @override
+  String get diyafonDuzenle => 'Diyafonu düzenle';
+
+  @override
+  String get diyafonYok => 'Tanımlı diyafon yok.';
+
+  @override
+  String get diyafonYokAlt =>
+      'Diyafon tanımlarsanız acil durum anonsu buradan da gider.';
+
+  @override
+  String get diyafonYontem => 'Yöntem';
+
+  @override
+  String get diyafonYontemSip => 'SIP / IP diyafon (2N, Akuvox, Dahua VTO)';
+
+  @override
+  String get diyafonYontemSipKopru =>
+      'SIP sunucusu köprüsü (Asterisk / FreeSWITCH)';
+
+  @override
+  String get diyafonYontemKuruKontak => 'Kuru kontak rölesi (analog sistem)';
+
+  @override
+  String get diyafonYontemIpucu =>
+      'Cihazın seçimi ne yapabileceğini belirler; yetenekler listede yazar.';
+
+  @override
+  String get diyafonHost => 'Adres';
+
+  @override
+  String get diyafonPort => 'Port';
+
+  @override
+  String get diyafonPortIpucu =>
+      'Boş bırakılırsa yöntemin varsayılanı kullanılır (SIP 5060, HTTP 80).';
+
+  @override
+  String get diyafonHedef => 'Hedef dahili';
+
+  @override
+  String get diyafonHedefIpucu => 'Anonsun gideceği dahili numara (örn. 100).';
+
+  @override
+  String get diyafonZilYolu => 'Zil yolu';
+
+  @override
+  String get diyafonKapiYolu => 'Kapı yolu';
+
+  @override
+  String get diyafonYolIpucu =>
+      'Röle modülünün HTTP yolu; “/” ile başlamalı (örn. /rele1).';
+
+  @override
+  String get diyafonKullanici => 'Kullanıcı';
+
+  @override
+  String get diyafonSifre => 'Şifre';
+
+  @override
+  String get diyafonSifreIpucu => 'Boş bırakırsanız mevcut şifre korunur.';
+
+  @override
+  String get diyafonYetenekler => 'Yetenekler';
+
+  @override
+  String get diyafonYetenekMetin => 'Metin anonsu';
+
+  @override
+  String get diyafonYetenekZil => 'Zil';
+
+  @override
+  String get diyafonYetenekKapi => 'Kapı aç';
+
+  @override
+  String get diyafonSesliAnonsYok =>
+      'Sesli anons yok — bu sürüm ses göndermez.';
+
+  @override
+  String get diyafonTestEt => 'Bağlantıyı test et';
+
+  @override
+  String get diyafonEylemBasarili => 'İşlem başarılı.';
+
+  @override
+  String diyafonKapiOnay(Object ad) {
+    return '$ad kapısını açmak üzeresiniz. Bu fiziksel erişim verir.';
+  }
+
+  @override
+  String get diyafonHataUlasilamiyor =>
+      'Diyafona ulaşılamıyor; cihaz kapalı olabilir ya da ağda değil.';
+
+  @override
+  String get diyafonHataReddedildi =>
+      'Diyafon isteği reddetti; kullanıcı adı, şifre veya hedef numarayı kontrol edin.';
+
+  @override
+  String get diyafonHataYapilandirma =>
+      'Diyafon yapılandırması eksik; adres ve hedef alanlarını doldurun.';
+
+  @override
+  String get diyafonHataDesteklemiyor =>
+      'Bu diyafon yöntemi bu işlemi yapamaz.';
+
+  @override
+  String get diyafonZil => 'Zil çal';
+
+  @override
+  String get diyafonKapiAc => 'Kapı aç';
+
+  @override
   String get panikBaslik => 'Acil durum';
 
   @override

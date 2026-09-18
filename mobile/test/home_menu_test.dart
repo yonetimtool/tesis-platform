@@ -168,6 +168,8 @@ void main() {
           HomeMenuEntry.personel,
           HomeMenuEntry.sakinler,
           HomeMenuEntry.integrations,
+          // (P240 §2) Diyafon — dis sistem baglantisi.
+          HomeMenuEntry.diyafon,
           HomeMenuEntry.binaDuzenleme,
           // (P26) Bagimsiz Bolum Tanimlari — yonetim kurulum adimi.
           HomeMenuEntry.daireTanimlari,

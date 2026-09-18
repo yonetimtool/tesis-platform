@@ -1886,6 +1886,42 @@ METINLER: dict[str, dict[str, str]] = {
     },
     # (P237 §2) ALT ADIM HATALARI
     # (P237 §3) ANKET
+    "diyafon_yontem_desteklemiyor": {
+        "tr": "Bu diyafon yöntemi bu işlemi yapamaz.",
+        "en": "This intercom method cannot perform this action.",
+        "ar": "طريقة الإنتركم هذه لا تدعم هذا الإجراء.",
+        "ru": "Этот способ домофона не поддерживает данное действие.",
+        "de": "Diese Türsprech-Methode unterstützt diese Aktion nicht.",
+        "fr": "Cette méthode d’interphone ne permet pas cette action.",
+        "es": "Este método de portero no admite esta acción.",
+    },
+    "diyafon_yapilandirma_eksik": {
+        "tr": "Diyafon yapılandırması eksik; adres ve hedef alanlarını doldurun.",
+        "en": "The intercom configuration is incomplete; fill in the address and target fields.",
+        "ar": "إعداد الإنتركم ناقص؛ أكمل حقلي العنوان والهدف.",
+        "ru": "Настройка домофона неполная; заполните адрес и назначение.",
+        "de": "Die Türsprech-Konfiguration ist unvollständig; Adresse und Ziel ausfüllen.",
+        "fr": "La configuration de l’interphone est incomplète ; renseignez l’adresse et la cible.",
+        "es": "La configuración del portero está incompleta; complete la dirección y el destino.",
+    },
+    "diyafon_ulasilamiyor": {
+        "tr": "Diyafona ulaşılamıyor; cihaz kapalı olabilir ya da ağda değil.",
+        "en": "The intercom is unreachable; the device may be off or not on the network.",
+        "ar": "تعذّر الوصول إلى الإنتركم؛ قد يكون الجهاز مغلقًا أو خارج الشبكة.",
+        "ru": "Домофон недоступен; устройство может быть выключено или вне сети.",
+        "de": "Die Türsprechanlage ist nicht erreichbar; das Gerät ist möglicherweise aus oder nicht im Netz.",
+        "fr": "L’interphone est injoignable ; l’appareil est peut-être éteint ou hors réseau.",
+        "es": "No se puede acceder al portero; el dispositivo puede estar apagado o fuera de la red.",
+    },
+    "diyafon_reddedildi": {
+        "tr": "Diyafon isteği reddetti; kullanıcı adı, şifre veya hedef numarayı kontrol edin.",
+        "en": "The intercom rejected the request; check the username, password or target number.",
+        "ar": "رفض الإنتركم الطلب؛ تحقق من اسم المستخدم أو كلمة المرور أو رقم الهدف.",
+        "ru": "Домофон отклонил запрос; проверьте имя пользователя, пароль или номер назначения.",
+        "de": "Die Türsprechanlage hat die Anfrage abgelehnt; Benutzername, Passwort oder Zielnummer prüfen.",
+        "fr": "L’interphone a rejeté la demande ; vérifiez l’identifiant, le mot de passe ou le numéro cible.",
+        "es": "El portero rechazó la solicitud; revise el usuario, la contraseña o el número de destino.",
+    },
     "entegrasyon_adres_engelli": {
         "tr": "Adres güvenlik kurallarına takıldı; iç ağ adresleri kullanılamaz.",
         "en": "The address was blocked by security rules; internal network addresses are not allowed.",

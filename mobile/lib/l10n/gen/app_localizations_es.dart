@@ -1229,6 +1229,129 @@ class AppLocalizationsEs extends AppLocalizations {
       'El formato de la dirección no es válido.';
 
   @override
+  String get diyafonBaslik => 'Portero';
+
+  @override
+  String get diyafonAlt =>
+      'Tres métodos: dispositivo SIP, puente de servidor SIP, relé de contacto seco.';
+
+  @override
+  String get diyafonYeni => 'Nuevo portero';
+
+  @override
+  String get diyafonDuzenle => 'Editar portero';
+
+  @override
+  String get diyafonYok => 'No hay portero configurado.';
+
+  @override
+  String get diyafonYokAlt =>
+      'Configure un portero y los avisos de emergencia también irán allí.';
+
+  @override
+  String get diyafonYontem => 'Método';
+
+  @override
+  String get diyafonYontemSip => 'Portero SIP / IP (2N, Akuvox, Dahua VTO)';
+
+  @override
+  String get diyafonYontemSipKopru =>
+      'Puente de servidor SIP (Asterisk / FreeSWITCH)';
+
+  @override
+  String get diyafonYontemKuruKontak =>
+      'Relé de contacto seco (sistema analógico)';
+
+  @override
+  String get diyafonYontemIpucu =>
+      'El método determina lo que es posible; las capacidades aparecen en la tabla.';
+
+  @override
+  String get diyafonHost => 'Dirección';
+
+  @override
+  String get diyafonPort => 'Puerto';
+
+  @override
+  String get diyafonPortIpucu =>
+      'Si se deja vacío se usa el valor por defecto (SIP 5060, HTTP 80).';
+
+  @override
+  String get diyafonHedef => 'Extensión destino';
+
+  @override
+  String get diyafonHedefIpucu => 'Extensión que recibe el aviso (p. ej. 100).';
+
+  @override
+  String get diyafonZilYolu => 'Ruta del timbre';
+
+  @override
+  String get diyafonKapiYolu => 'Ruta de la puerta';
+
+  @override
+  String get diyafonYolIpucu =>
+      'Ruta HTTP del módulo de relé; debe empezar por «/» (p. ej. /relay1).';
+
+  @override
+  String get diyafonKullanici => 'Usuario';
+
+  @override
+  String get diyafonSifre => 'Contraseña';
+
+  @override
+  String get diyafonSifreIpucu =>
+      'Déjelo vacío para conservar la contraseña actual.';
+
+  @override
+  String get diyafonYetenekler => 'Capacidades';
+
+  @override
+  String get diyafonYetenekMetin => 'Aviso de texto';
+
+  @override
+  String get diyafonYetenekZil => 'Timbre';
+
+  @override
+  String get diyafonYetenekKapi => 'Abrir puerta';
+
+  @override
+  String get diyafonSesliAnonsYok =>
+      'Sin aviso de voz: esta versión no envía audio.';
+
+  @override
+  String get diyafonTestEt => 'Probar conexión';
+
+  @override
+  String get diyafonEylemBasarili => 'Acción realizada.';
+
+  @override
+  String diyafonKapiOnay(Object ad) {
+    return 'Va a abrir la puerta $ad. Esto concede acceso físico.';
+  }
+
+  @override
+  String get diyafonHataUlasilamiyor =>
+      'No se puede acceder al portero; el dispositivo puede estar apagado o fuera de la red.';
+
+  @override
+  String get diyafonHataReddedildi =>
+      'El portero rechazó la solicitud; revise el usuario, la contraseña o el número de destino.';
+
+  @override
+  String get diyafonHataYapilandirma =>
+      'La configuración del portero está incompleta; complete la dirección y el destino.';
+
+  @override
+  String get diyafonHataDesteklemiyor =>
+      'Este método de portero no admite esta acción.';
+
+  @override
+  String get diyafonZil => 'Timbre';
+
+  @override
+  String get diyafonKapiAc => 'Abrir puerta';
+
+  @override
   String get panikBaslik => 'Emergencia';
 
   @override

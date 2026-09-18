@@ -35,7 +35,9 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .models import AppUser, Notification, PanikAlarm, PanikAlici, Unit
+from starlette.concurrency import run_in_threadpool
+
+from .models import AppUser, Diyafon, Notification, PanikAlarm, PanikAlici, Unit
 from .panik import ALICI_ROLLERI
 from .push_metinleri import push_govdesi
 from .scheduler.notify import dispatch_external
@@ -147,7 +149,53 @@ async def yayinla_senkron(db: AsyncSession, alarm: PanikAlarm) -> int:
               "panik_tip": alarm.tip},
     )
     _sms_gonder(alarm, kisiler, veri)
+    await _diyafon_anons(db, alarm, veri)
     return len(kisiler)
+
+
+async def _diyafon_anons(db: AsyncSession, alarm: PanikAlarm, veri: dict) -> None:
+    """(P240 §2) Diyafon yapilandirilmissa ANONS gonder.
+
+    ===================================================================
+    DIYAFON YOKSA SESSIZCE ATLANIR
+    ===================================================================
+    Istegin acik maddesi: "panik butonu diyafon olmadan da calismali".
+    Yapilandirilmamis bir diyafon bir HATA DEGIL, bir SECIMDIR; alarmi
+    dusurmek ya da yoneticiye hata gostermek yanlis olurdu.
+
+    ===================================================================
+    YALNIZ TUM-SITE ANONSUNDA
+    ===================================================================
+    `yonetici_anons` (tahliye, gaz, deprem) TUM siteye seslenir ve
+    diyafon tam da bunun icin vardir. Bir SAKININ evindeki acil durumu
+    (`sakin`) butun bloklara duyurmak, o kisinin sagligini herkese ilan
+    etmek olurdu — KVKK bir yana, alarmin hedefi de o degil.
+    """
+    if alarm.tip != "yonetici_anons":
+        return
+    from .diyafon import saglayici, yetenekler
+
+    kayitlar = list(
+        (
+            await db.execute(
+                select(Diyafon).where(Diyafon.aktif.is_(True))
+            )
+        ).scalars().all()
+    )
+    if not kayitlar:
+        return
+    mesaj = push_govdesi("panik_alarm", "tr", veri)
+    for kayit in kayitlar:
+        if not yetenekler(kayit.yontem).metin_anons:
+            # Kuru kontak ses/metin TASIYAMAZ — denemek bos bir istek
+            # ve yaniltici bir hata kaydi uretirdi.
+            continue
+        try:
+            await run_in_threadpool(saglayici(kayit).metin_anons, mesaj)
+        except Exception:
+            # ANONS BASARISIZLIGI ALARMI DUSURMEZ: push ve in-app zaten
+            # gitti; diyafon bir EK kanaldir.
+            logger.warning("[panik] diyafon anonsu basarisiz (%s)", kayit.id)
 
 
 def _sms_gonder(alarm: PanikAlarm, kisiler: list[AppUser], veri: dict[str, str]) -> None:

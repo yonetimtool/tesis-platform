@@ -2256,6 +2256,222 @@ abstract class AppLocalizations {
   /// **'Adres biçimi geçersiz.'**
   String get entegHataAdresGecersiz;
 
+  /// No description provided for @diyafonBaslik.
+  ///
+  /// In tr, this message translates to:
+  /// **'Diyafon'**
+  String get diyafonBaslik;
+
+  /// No description provided for @diyafonAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Üç yöntem: SIP cihaz, SIP sunucusu köprüsü, kuru kontak rölesi.'**
+  String get diyafonAlt;
+
+  /// No description provided for @diyafonYeni.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yeni diyafon'**
+  String get diyafonYeni;
+
+  /// No description provided for @diyafonDuzenle.
+  ///
+  /// In tr, this message translates to:
+  /// **'Diyafonu düzenle'**
+  String get diyafonDuzenle;
+
+  /// No description provided for @diyafonYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Tanımlı diyafon yok.'**
+  String get diyafonYok;
+
+  /// No description provided for @diyafonYokAlt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Diyafon tanımlarsanız acil durum anonsu buradan da gider.'**
+  String get diyafonYokAlt;
+
+  /// No description provided for @diyafonYontem.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yöntem'**
+  String get diyafonYontem;
+
+  /// No description provided for @diyafonYontemSip.
+  ///
+  /// In tr, this message translates to:
+  /// **'SIP / IP diyafon (2N, Akuvox, Dahua VTO)'**
+  String get diyafonYontemSip;
+
+  /// No description provided for @diyafonYontemSipKopru.
+  ///
+  /// In tr, this message translates to:
+  /// **'SIP sunucusu köprüsü (Asterisk / FreeSWITCH)'**
+  String get diyafonYontemSipKopru;
+
+  /// No description provided for @diyafonYontemKuruKontak.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kuru kontak rölesi (analog sistem)'**
+  String get diyafonYontemKuruKontak;
+
+  /// No description provided for @diyafonYontemIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Cihazın seçimi ne yapabileceğini belirler; yetenekler listede yazar.'**
+  String get diyafonYontemIpucu;
+
+  /// No description provided for @diyafonHost.
+  ///
+  /// In tr, this message translates to:
+  /// **'Adres'**
+  String get diyafonHost;
+
+  /// No description provided for @diyafonPort.
+  ///
+  /// In tr, this message translates to:
+  /// **'Port'**
+  String get diyafonPort;
+
+  /// No description provided for @diyafonPortIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Boş bırakılırsa yöntemin varsayılanı kullanılır (SIP 5060, HTTP 80).'**
+  String get diyafonPortIpucu;
+
+  /// No description provided for @diyafonHedef.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hedef dahili'**
+  String get diyafonHedef;
+
+  /// No description provided for @diyafonHedefIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Anonsun gideceği dahili numara (örn. 100).'**
+  String get diyafonHedefIpucu;
+
+  /// No description provided for @diyafonZilYolu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Zil yolu'**
+  String get diyafonZilYolu;
+
+  /// No description provided for @diyafonKapiYolu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kapı yolu'**
+  String get diyafonKapiYolu;
+
+  /// No description provided for @diyafonYolIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Röle modülünün HTTP yolu; “/” ile başlamalı (örn. /rele1).'**
+  String get diyafonYolIpucu;
+
+  /// No description provided for @diyafonKullanici.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kullanıcı'**
+  String get diyafonKullanici;
+
+  /// No description provided for @diyafonSifre.
+  ///
+  /// In tr, this message translates to:
+  /// **'Şifre'**
+  String get diyafonSifre;
+
+  /// No description provided for @diyafonSifreIpucu.
+  ///
+  /// In tr, this message translates to:
+  /// **'Boş bırakırsanız mevcut şifre korunur.'**
+  String get diyafonSifreIpucu;
+
+  /// No description provided for @diyafonYetenekler.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yetenekler'**
+  String get diyafonYetenekler;
+
+  /// No description provided for @diyafonYetenekMetin.
+  ///
+  /// In tr, this message translates to:
+  /// **'Metin anonsu'**
+  String get diyafonYetenekMetin;
+
+  /// No description provided for @diyafonYetenekZil.
+  ///
+  /// In tr, this message translates to:
+  /// **'Zil'**
+  String get diyafonYetenekZil;
+
+  /// No description provided for @diyafonYetenekKapi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kapı aç'**
+  String get diyafonYetenekKapi;
+
+  /// No description provided for @diyafonSesliAnonsYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Sesli anons yok — bu sürüm ses göndermez.'**
+  String get diyafonSesliAnonsYok;
+
+  /// No description provided for @diyafonTestEt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bağlantıyı test et'**
+  String get diyafonTestEt;
+
+  /// No description provided for @diyafonEylemBasarili.
+  ///
+  /// In tr, this message translates to:
+  /// **'İşlem başarılı.'**
+  String get diyafonEylemBasarili;
+
+  /// No description provided for @diyafonKapiOnay.
+  ///
+  /// In tr, this message translates to:
+  /// **'{ad} kapısını açmak üzeresiniz. Bu fiziksel erişim verir.'**
+  String diyafonKapiOnay(Object ad);
+
+  /// No description provided for @diyafonHataUlasilamiyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Diyafona ulaşılamıyor; cihaz kapalı olabilir ya da ağda değil.'**
+  String get diyafonHataUlasilamiyor;
+
+  /// No description provided for @diyafonHataReddedildi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Diyafon isteği reddetti; kullanıcı adı, şifre veya hedef numarayı kontrol edin.'**
+  String get diyafonHataReddedildi;
+
+  /// No description provided for @diyafonHataYapilandirma.
+  ///
+  /// In tr, this message translates to:
+  /// **'Diyafon yapılandırması eksik; adres ve hedef alanlarını doldurun.'**
+  String get diyafonHataYapilandirma;
+
+  /// No description provided for @diyafonHataDesteklemiyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu diyafon yöntemi bu işlemi yapamaz.'**
+  String get diyafonHataDesteklemiyor;
+
+  /// No description provided for @diyafonZil.
+  ///
+  /// In tr, this message translates to:
+  /// **'Zil çal'**
+  String get diyafonZil;
+
+  /// No description provided for @diyafonKapiAc.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kapı aç'**
+  String get diyafonKapiAc;
+
   /// No description provided for @panikBaslik.
   ///
   /// In tr, this message translates to:

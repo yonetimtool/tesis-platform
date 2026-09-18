@@ -1301,6 +1301,128 @@ class AppLocalizationsEn extends AppLocalizations {
   String get entegHataAdresGecersiz => 'The address format is invalid.';
 
   @override
+  String get diyafonBaslik => 'Intercom';
+
+  @override
+  String get diyafonAlt =>
+      'Three methods: SIP device, SIP server bridge, dry-contact relay.';
+
+  @override
+  String get diyafonYeni => 'New intercom';
+
+  @override
+  String get diyafonDuzenle => 'Edit intercom';
+
+  @override
+  String get diyafonYok => 'No intercom configured.';
+
+  @override
+  String get diyafonYokAlt =>
+      'Configure an intercom and emergency announcements will also go there.';
+
+  @override
+  String get diyafonYontem => 'Method';
+
+  @override
+  String get diyafonYontemSip => 'SIP / IP intercom (2N, Akuvox, Dahua VTO)';
+
+  @override
+  String get diyafonYontemSipKopru =>
+      'SIP server bridge (Asterisk / FreeSWITCH)';
+
+  @override
+  String get diyafonYontemKuruKontak => 'Dry-contact relay (analogue system)';
+
+  @override
+  String get diyafonYontemIpucu =>
+      'The method determines what is possible; capabilities are listed in the table.';
+
+  @override
+  String get diyafonHost => 'Address';
+
+  @override
+  String get diyafonPort => 'Port';
+
+  @override
+  String get diyafonPortIpucu =>
+      'Left empty, the method default is used (SIP 5060, HTTP 80).';
+
+  @override
+  String get diyafonHedef => 'Target extension';
+
+  @override
+  String get diyafonHedefIpucu =>
+      'Extension the announcement goes to (e.g. 100).';
+
+  @override
+  String get diyafonZilYolu => 'Bell path';
+
+  @override
+  String get diyafonKapiYolu => 'Door path';
+
+  @override
+  String get diyafonYolIpucu =>
+      'HTTP path of the relay module; must start with “/” (e.g. /relay1).';
+
+  @override
+  String get diyafonKullanici => 'Username';
+
+  @override
+  String get diyafonSifre => 'Password';
+
+  @override
+  String get diyafonSifreIpucu => 'Leave empty to keep the current password.';
+
+  @override
+  String get diyafonYetenekler => 'Capabilities';
+
+  @override
+  String get diyafonYetenekMetin => 'Text announcement';
+
+  @override
+  String get diyafonYetenekZil => 'Bell';
+
+  @override
+  String get diyafonYetenekKapi => 'Open door';
+
+  @override
+  String get diyafonSesliAnonsYok =>
+      'No voice announcement — this release does not send audio.';
+
+  @override
+  String get diyafonTestEt => 'Test connection';
+
+  @override
+  String get diyafonEylemBasarili => 'Action succeeded.';
+
+  @override
+  String diyafonKapiOnay(Object ad) {
+    return 'You are about to open the $ad door. This grants physical access.';
+  }
+
+  @override
+  String get diyafonHataUlasilamiyor =>
+      'The intercom is unreachable; the device may be off or not on the network.';
+
+  @override
+  String get diyafonHataReddedildi =>
+      'The intercom rejected the request; check the username, password or target number.';
+
+  @override
+  String get diyafonHataYapilandirma =>
+      'The intercom configuration is incomplete; fill in the address and target fields.';
+
+  @override
+  String get diyafonHataDesteklemiyor =>
+      'This intercom method cannot perform this action.';
+
+  @override
+  String get diyafonZil => 'Ring';
+
+  @override
+  String get diyafonKapiAc => 'Open door';
+
+  @override
   String get panikBaslik => 'Emergency';
 
   @override

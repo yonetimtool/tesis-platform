@@ -64,6 +64,10 @@ const _tumKopyaIstisnalari = {
   // 4 px TASTI (`home_i18n` kilidi yakaladi). "SOS" yedi dilde de uc
   // karakter ve herkesce taninir; cevirmek tasmayi geri getirirdi.
   'panikKisa',
+  // (P240 §2) "Port" bir AG TERIMIDIR ve Almanca/Fransizca/Ispanyolca'da
+  // da AYNI yazilir (de. "Port", fr. "Port", es. "Puerto" — o farkli).
+  // Ceviri unutmasi degil KOGNAT; panel ikizinde de ayni istisna var.
+  'diyafonPort',
   // (P230 §3) ARAMA KAYNAK ADLARI — gercek KOGNATLAR, ceviri unutmasi
   // DEGIL. Rusca ve Arapca karsiliklari ZATEN farkli:
   //   Plan   : tr/en/de/fr/es ayni; ru "План",    ar "خطة"

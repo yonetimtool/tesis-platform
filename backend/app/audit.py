@@ -194,6 +194,11 @@ class Action:
     PANIK_MUDAHALE = "panik_mudahale"
     PANIK_KAPAT = "panik_kapat"
     PANIK_ASKI = "panik_aski"
+    # (P240 §2) DIYAFON — yapilandirma ve EYLEM ayri: kapi acmak fiziksel
+    # erisim veren bir eylemdir ve yapilandirma degisikligiyle ayni
+    # kutuya konamaz.
+    DIYAFON_YAZ = "diyafon_yaz"
+    DIYAFON_EYLEM = "diyafon_eylem"
     KVKK_YAYIN = "kvkk_yayin"
     KVKK_ONAY = "kvkk_onay"
     PAZARLAMA_RIZA = "pazarlama_riza"

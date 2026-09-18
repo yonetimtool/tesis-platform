@@ -70,6 +70,8 @@ TESIS_UCLARI: tuple[str, ...] = (
     # (P240 §1) Panik alarmi listesi — tesis-kapsamli ve RLS baglami
     # kurar. Taramaya yazilmasaydi kapsam orani sessizce duserdi.
     "/panik",
+    # (P240 §2) Diyafon listesi — ayni gerekce.
+    "/diyafon",
     "/checkpoints",
     "/patrol-plans",
     "/patrol-windows",

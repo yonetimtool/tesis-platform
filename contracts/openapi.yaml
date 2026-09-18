@@ -13878,6 +13878,115 @@ paths:
   # INTEGRATIONS (C1b — dis sistem entegrasyon konfig + SSRF-korumali tetik;
   # admin+yonetici yonetir; sir write-only; tetik ic/ozel hedefleri reddeder)
   # ================================================================= #
+  /diyafon:
+    get:
+      tags: [diyafon]
+      summary: Diyafon baglantilari (admin + yonetici)
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200": { description: diyafonlar }
+    post:
+      tags: [diyafon]
+      summary: Diyafon tanimla — uc yontem (admin + yonetici)
+      description: |
+        (P240 §2) UC YONTEM TEK SOYUTLAMA ARKASINDA: `sip` (2N, Akuvox,
+        Dahua VTO gibi SIP cihazlari), `sip_kopru` (sitedeki
+        Asterisk/FreeSWITCH), `kuru_kontak` (analog sistem icin HTTP ile
+        tetiklenen role modulu).
+
+        SIFRE WRITE-ONLY: KEK ile sifreli saklanir, GET yanitinda ASLA
+        donmez; yerine `sifre_set` (bool).
+
+        YETENEKLER yanitla birlikte doner ve YONTEMDEN turer (tabloda
+        tutulmaz): kuru kontak SES/METIN TASIYAMAZ — bu bir eksiklik
+        degil yontemin yapisal siniridir. `sesli_anons` HICBIR yontemde
+        true DONMEZ: bu tur medya yigini (INVITE + RTP) icermiyor.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DiyafonCreate" }
+      responses:
+        "201": { description: diyafon }
+  /diyafon/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    get:
+      tags: [diyafon]
+      summary: Diyafon ayrintisi (admin + yonetici)
+      responses:
+        "200": { description: diyafon }
+    patch:
+      tags: [diyafon]
+      summary: Diyafon guncelle (admin + yonetici)
+      description: >
+        BOS SIFRE "degistirme" demektir, "sil" degil: formu bos birakip
+        kaydeden yonetici calisan bir baglantiyi kirmamali.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DiyafonUpdate" }
+      responses:
+        "200": { description: diyafon }
+    delete:
+      tags: [diyafon]
+      summary: Diyafon sil (admin + yonetici)
+      responses:
+        "204": { description: silindi }
+  /diyafon/{id}/saglik:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    post:
+      tags: [diyafon]
+      summary: Baglanti testi — cihazi CALISTIRMAZ (admin + yonetici)
+      description: |
+        (P240 §2/§4) SIP'te `OPTIONS` (RFC 3261 §11 — zil caldirmaz,
+        arama baslatmaz), kuru kontakta TCP baglantisi. Zil yolunu
+        "test icin" cagirmak, 15 dakikada bir zil calmak olurdu.
+      responses:
+        "200": { description: sonuc }
+  /diyafon/{id}/anons:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    post:
+      tags: [diyafon]
+      summary: METIN anonsu — SIP MESSAGE (admin + yonetici)
+      description: |
+        RFC 3428 `MESSAGE` ile panelin EKRANINA metin dusurur. SESLI
+        anons YOK (medya yigini yok). Yontem desteklemiyorsa **422**:
+        "denedim olmadi" ile "bu yontem bunu YAPAMAZ" ayri seylerdir.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DiyafonEylemIn" }
+      responses:
+        "200": { description: sonuc }
+        "422": { description: yontem desteklemiyor }
+  /diyafon/{id}/kapi-ac:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    post:
+      tags: [diyafon]
+      summary: Kapi rolesini tetikle (admin + yonetici)
+      description: >
+        Fiziksel erisim veren bir eylem: HER ZAMAN denetim kaydina
+        yazilir. Yalniz `kuru_kontak` destekler; digerlerinde 422.
+      responses:
+        "200": { description: sonuc }
+        "422": { description: yontem desteklemiyor }
+  /diyafon/{id}/zil:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    post:
+      tags: [diyafon]
+      summary: Zil calar (admin + yonetici)
+      responses:
+        "200": { description: sonuc }
+        "422": { description: yontem desteklemiyor }
   /integrations:
     get:
       tags: [integrations]
@@ -18416,6 +18525,59 @@ components:
         aktif: { type: boolean }
 
     # -------------------------- patrol plan ------------------------ #
+    DiyafonCreate:
+      type: object
+      required: [ad, yontem, host]
+      properties:
+        ad: { type: string, maxLength: 200 }
+        yontem:
+          type: string
+          enum: [sip, sip_kopru, kuru_kontak]
+        host: { type: string, maxLength: 255 }
+        port: { type: integer, minimum: 1, maximum: 65535, nullable: true }
+        kullanici: { type: string, nullable: true, maxLength: 200 }
+        sifre:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: WRITE-ONLY — yanitta ASLA donmez.
+        hedef:
+          type: string
+          nullable: true
+          maxLength: 200
+          description: >
+            SIP hedefi — anonsun gidecegi dahili numara.
+        zil_yolu:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: >
+            Kuru kontak: zil rolesinin HTTP yolu. `/` ile baslamali ve
+            konak ICERMEMELI — tam URL, `host` alanini anlamsiz kilardi.
+        kapi_yolu:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: >
+            Kuru kontak — kapi rolesinin HTTP yolu (zilden AYRI role).
+        aktif: { type: boolean, default: true }
+    DiyafonUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        ad: { type: string }
+        host: { type: string }
+        port: { type: integer, minimum: 1, maximum: 65535, nullable: true }
+        kullanici: { type: string, nullable: true }
+        sifre: { type: string, nullable: true }
+        hedef: { type: string, nullable: true }
+        zil_yolu: { type: string, nullable: true }
+        kapi_yolu: { type: string, nullable: true }
+        aktif: { type: boolean }
+    DiyafonEylemIn:
+      type: object
+      properties:
+        mesaj: { type: string, maxLength: 500 }
     PanikOlustur:
       type: object
       required: [tip]

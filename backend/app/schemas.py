@@ -9029,3 +9029,140 @@ class PanikAskiOut(BaseModel):
     user_id: uuid.UUID
     panik_askida_bitis: datetime | None = None
     panik_aski_nedeni: str | None = None
+
+
+# ========================= (P240 §2) DIYAFON =============================== #
+class DiyafonYetenekOut(BaseModel):
+    """Bir yontemin NE YAPABILDIGI — arayuz bunu listeler.
+
+    `sesli_anons` HICBIR yontemde true DONMEZ (bu tur medya yigini
+    icermiyor); arayuz bunu acikca yazar.
+    """
+
+    metin_anons: bool
+    sesli_anons: bool
+    kapi_ac: bool
+    zil_cal: bool
+
+
+class DiyafonOut(BaseModel):
+    """GET ciktisi — SIFRE ASLA donmez; yerine `sifre_set` (bool)."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    ad: str
+    yontem: str
+    host: str
+    port: int | None = None
+    kullanici: str | None = None
+    sifre_set: bool = False
+    hedef: str | None = None
+    zil_yolu: str | None = None
+    kapi_yolu: str | None = None
+    aktif: bool
+    saglik: str = "bilinmiyor"
+    son_kontrol_at: datetime | None = None
+    son_basarili_at: datetime | None = None
+    son_hata_kod: str | None = None
+    created_at: datetime
+    yetenekler: DiyafonYetenekOut
+
+    @classmethod
+    def from_model(cls, obj) -> "DiyafonOut":
+        from .diyafon import yetenekler as _yet
+
+        y = _yet(obj.yontem)
+        return cls(
+            id=obj.id,
+            ad=obj.ad,
+            yontem=obj.yontem,
+            host=obj.host,
+            port=obj.port,
+            kullanici=obj.kullanici,
+            sifre_set=bool(obj.sifre_enc),
+            hedef=obj.hedef,
+            zil_yolu=obj.zil_yolu,
+            kapi_yolu=obj.kapi_yolu,
+            aktif=obj.aktif,
+            saglik=obj.saglik,
+            son_kontrol_at=obj.son_kontrol_at,
+            son_basarili_at=obj.son_basarili_at,
+            son_hata_kod=obj.son_hata_kod,
+            created_at=obj.created_at,
+            yetenekler=DiyafonYetenekOut(
+                metin_anons=y.metin_anons,
+                sesli_anons=y.sesli_anons,
+                kapi_ac=y.kapi_ac,
+                zil_cal=y.zil_cal,
+            ),
+        )
+
+
+class DiyafonCreate(BaseModel):
+    ad: str = Field(..., min_length=1, max_length=200)
+    yontem: str
+    host: str = Field(..., min_length=1, max_length=255)
+    port: int | None = Field(None, ge=1, le=65535)
+    kullanici: str | None = Field(None, max_length=200)
+    #: WRITE-ONLY: yanitta donmez.
+    sifre: str | None = Field(None, max_length=500)
+    hedef: str | None = Field(None, max_length=200)
+    zil_yolu: str | None = Field(None, max_length=500)
+    kapi_yolu: str | None = Field(None, max_length=500)
+    aktif: bool = True
+
+    @field_validator("yontem")
+    @classmethod
+    def _yontem(cls, v: str) -> str:
+        if v not in ("sip", "sip_kopru", "kuru_kontak"):
+            raise ValueError("gecersiz diyafon yontemi")
+        return v
+
+    @field_validator("zil_yolu", "kapi_yolu")
+    @classmethod
+    def _yol(cls, v: str | None) -> str | None:
+        # Tam URL kabul etmek `host` alanini ANLAMSIZ kilardi ve iki
+        # farkli hedefi ayni kayda sikistirirdi.
+        if v and (not v.startswith("/") or "://" in v):
+            raise ValueError("yol '/' ile baslamali ve konak icermemeli")
+        return v
+
+
+class DiyafonUpdate(BaseModel):
+    ad: str | None = Field(None, min_length=1, max_length=200)
+    host: str | None = Field(None, min_length=1, max_length=255)
+    port: int | None = Field(None, ge=1, le=65535)
+    kullanici: str | None = Field(None, max_length=200)
+    sifre: str | None = Field(None, max_length=500)
+    hedef: str | None = Field(None, max_length=200)
+    zil_yolu: str | None = Field(None, max_length=500)
+    kapi_yolu: str | None = Field(None, max_length=500)
+    aktif: bool | None = None
+
+    _yol_dogrula = field_validator("zil_yolu", "kapi_yolu")(
+        DiyafonCreate._yol.__func__  # type: ignore[attr-defined]
+    )
+
+    @model_validator(mode="after")
+    def _en_az_bir(self) -> "DiyafonUpdate":
+        if not self.model_fields_set:
+            raise ValueError("en az bir alan gerekli")
+        return self
+
+
+class DiyafonListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[DiyafonOut]
+
+
+class DiyafonEylemIn(BaseModel):
+    """Anons govdesi. Kapi/zil icin gerekmez."""
+
+    mesaj: str = Field("", max_length=500)
+
+
+class DiyafonEylemOut(BaseModel):
+    ok: bool
+    #: Hata KIMLIGI — istemci kendi dilinde metne cevirir.
+    kod: str | None = None

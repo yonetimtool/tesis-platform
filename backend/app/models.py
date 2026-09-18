@@ -208,6 +208,11 @@ ENTEGRASYON_SAGLIK = ENUM(
     "bilinmiyor", "bagli", "hata",
     name="entegrasyon_saglik", create_type=False,
 )
+# (P240 §2, goc 0142) Diyafon baglanti yontemi.
+DIYAFON_YONTEM = ENUM(
+    "sip", "sip_kopru", "kuru_kontak",
+    name="diyafon_yontem", create_type=False,
+)
 # ---------------------- P27 "Tanimlar" katmani enum'lari -------------------- #
 GELIR_GIDER_TIP = ENUM(
     "gelir", "gider", "her_ikisi",
@@ -2884,6 +2889,8 @@ __all__ = [
     "PATROL_WINDOW_DURUM",
     "NOTIFICATION_TIP",
     "ENTEGRASYON_SAGLIK",
+    "Diyafon",
+    "DIYAFON_YONTEM",
     # (P240 §1) PANIK
     "PanikAlarm",
     "PanikAlici",
@@ -4984,3 +4991,52 @@ class PanikAlici(Base):
     bildirildi_at = _created_at()
     goruldu_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     mudahale_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+
+
+# --------------------------------------------------------------------------- #
+# (P240 §2) DIYAFON
+# --------------------------------------------------------------------------- #
+class Diyafon(Base):
+    """(P240 §2, goc 0142) Diyafon baglantisi — uc yontem, tek tablo.
+
+    YETENEK BURADA DEGIL `diyafon/taban.py`de: kuru kontagin ses
+    verememesi bir VERI degil DAVRANIS gercegidir; tabloya yazmak,
+    yanlis isaretlendiginde sunucunun olmayan bir yetenegi denemesi
+    demekti.
+    """
+
+    __tablename__ = "diyafon"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_diyafon_id_tenant"),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    ad: Mapped[str] = mapped_column(Text, nullable=False)
+    yontem: Mapped[str] = mapped_column(DIYAFON_YONTEM, nullable=False)
+    host: Mapped[str] = mapped_column(Text, nullable=False)
+    port: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    kullanici: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: KEK ile sifreli; GET yanitinda ASLA donmez (write-only).
+    sifre_enc: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: SIP hedefi — anonsun gidecegi dahili numara.
+    hedef: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: Kuru kontak: zil ve kapi AYRI yollar (ayri roleler).
+    zil_yolu: Mapped[str | None] = mapped_column(Text, nullable=True)
+    kapi_yolu: Mapped[str | None] = mapped_column(Text, nullable=True)
+    aktif: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
+    #: SAGLIK — `integration` ile AYNI anlamlar (P240 §4).
+    saglik: Mapped[str] = mapped_column(
+        ENTEGRASYON_SAGLIK, nullable=False, server_default=text("'bilinmiyor'")
+    )
+    son_kontrol_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    son_basarili_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    son_hata_kod: Mapped[str | None] = mapped_column(Text, nullable=True)
+    son_hata_ayrinti: Mapped[str | None] = mapped_column(Text, nullable=True)
+    kopus_bildirildi_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    created_at = _created_at()
+    updated_at = _created_at()

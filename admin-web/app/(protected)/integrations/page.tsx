@@ -22,6 +22,7 @@ import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
 import { ParolaAlani } from "@/components/ParolaAlani";
+import { DiyafonBolumu } from "@/components/diyafon/diyafon-bolumu";
 import { useT } from "@/lib/i18n/kullan";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 import type {
@@ -498,6 +499,13 @@ export default function IntegrationsPage() {
         </div>
       </div>
       {diyalog}
+
+      {/* (P240 §2) DIYAFON — AYNI EKRANDA.
+
+          Ayri bir menu girisi acmak, yoneticinin "bagli mi" sorusunu
+          iki ayri ekranda sormasi demekti; §4'un istegi tek bir
+          "Entegrasyonlar" ekrani. */}
+      <DiyafonBolumu />
     </div>
   );
 }

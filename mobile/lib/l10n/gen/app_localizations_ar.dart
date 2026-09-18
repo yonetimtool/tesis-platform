@@ -1352,6 +1352,126 @@ class AppLocalizationsAr extends AppLocalizations {
   String get entegHataAdresGecersiz => 'صيغة العنوان غير صالحة.';
 
   @override
+  String get diyafonBaslik => 'الإنتركم';
+
+  @override
+  String get diyafonAlt => 'ثلاث طرق: جهاز SIP، جسر خادم SIP، مرحّل تماس جاف.';
+
+  @override
+  String get diyafonYeni => 'إنتركم جديد';
+
+  @override
+  String get diyafonDuzenle => 'تعديل الإنتركم';
+
+  @override
+  String get diyafonYok => 'لا يوجد إنتركم معرّف.';
+
+  @override
+  String get diyafonYokAlt => 'عرّف إنتركم وستصل إليه إعلانات الطوارئ أيضًا.';
+
+  @override
+  String get diyafonYontem => 'الطريقة';
+
+  @override
+  String get diyafonYontemSip => 'إنتركم SIP / IP (2N، Akuvox، Dahua VTO)';
+
+  @override
+  String get diyafonYontemSipKopru => 'جسر خادم SIP (Asterisk / FreeSWITCH)';
+
+  @override
+  String get diyafonYontemKuruKontak => 'مرحّل تماس جاف (نظام تناظري)';
+
+  @override
+  String get diyafonYontemIpucu =>
+      'الطريقة تحدد ما هو ممكن؛ القدرات مذكورة في الجدول.';
+
+  @override
+  String get diyafonHost => 'العنوان';
+
+  @override
+  String get diyafonPort => 'المنفذ';
+
+  @override
+  String get diyafonPortIpucu =>
+      'إذا تُرك فارغًا يُستخدم الافتراضي (SIP 5060، HTTP 80).';
+
+  @override
+  String get diyafonHedef => 'الرقم الداخلي الهدف';
+
+  @override
+  String get diyafonHedefIpucu =>
+      'الرقم الداخلي الذي يصله الإعلان (مثلاً 100).';
+
+  @override
+  String get diyafonZilYolu => 'مسار الجرس';
+
+  @override
+  String get diyafonKapiYolu => 'مسار الباب';
+
+  @override
+  String get diyafonYolIpucu =>
+      'مسار HTTP لوحدة المرحّل؛ يجب أن يبدأ بـ «/» (مثل /relay1).';
+
+  @override
+  String get diyafonKullanici => 'المستخدم';
+
+  @override
+  String get diyafonSifre => 'كلمة المرور';
+
+  @override
+  String get diyafonSifreIpucu =>
+      'اتركها فارغة للإبقاء على كلمة المرور الحالية.';
+
+  @override
+  String get diyafonYetenekler => 'القدرات';
+
+  @override
+  String get diyafonYetenekMetin => 'إعلان نصي';
+
+  @override
+  String get diyafonYetenekZil => 'الجرس';
+
+  @override
+  String get diyafonYetenekKapi => 'فتح الباب';
+
+  @override
+  String get diyafonSesliAnonsYok =>
+      'لا يوجد إعلان صوتي — هذا الإصدار لا يرسل صوتًا.';
+
+  @override
+  String get diyafonTestEt => 'اختبار الاتصال';
+
+  @override
+  String get diyafonEylemBasarili => 'تم تنفيذ الإجراء.';
+
+  @override
+  String diyafonKapiOnay(Object ad) {
+    return 'أنت على وشك فتح باب $ad. هذا يمنح وصولًا فعليًا.';
+  }
+
+  @override
+  String get diyafonHataUlasilamiyor =>
+      'تعذّر الوصول إلى الإنتركم؛ قد يكون الجهاز مغلقًا أو خارج الشبكة.';
+
+  @override
+  String get diyafonHataReddedildi =>
+      'رفض الإنتركم الطلب؛ تحقق من اسم المستخدم أو كلمة المرور أو رقم الهدف.';
+
+  @override
+  String get diyafonHataYapilandirma =>
+      'إعداد الإنتركم ناقص؛ أكمل حقلي العنوان والهدف.';
+
+  @override
+  String get diyafonHataDesteklemiyor =>
+      'طريقة الإنتركم هذه لا تدعم هذا الإجراء.';
+
+  @override
+  String get diyafonZil => 'رن الجرس';
+
+  @override
+  String get diyafonKapiAc => 'فتح الباب';
+
+  @override
   String get panikBaslik => 'حالة طوارئ';
 
   @override

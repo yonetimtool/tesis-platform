@@ -241,6 +241,12 @@ enum HomeMenuEntry {
   /// yonetim maili. Saha rolleri + sakin gorur; YONETICI kendisi GORMEZ.
   yoneticiIletisim,
 
+  /// (P240 §2) Diyafon yapilandirmasi — YALNIZ yonetim.
+  ///
+  /// `integrations` ile AYNI grupta (tanimlar): ikisi de "dis sistem
+  /// baglantisi"dir ve yonetici ikisini ayni zihinsel kutuda arar.
+  diyafon,
+
   /// (P240 §1) Acil durum cagrilari — TAKIP ekrani.
   ///
   /// SAKIN GORMEZ: baska dairelerin acil durumlari kisisel veridir
@@ -400,6 +406,8 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.personel,
         HomeMenuEntry.sakinler,
         HomeMenuEntry.integrations,
+        // (P240 §2) Diyafon — dis sistem baglantisi, ayni kutuda.
+        HomeMenuEntry.diyafon,
         HomeMenuEntry.binaDuzenleme,
         HomeMenuEntry.daireTanimlari,
         HomeMenuEntry.taskCategories,
@@ -508,6 +516,7 @@ String moduleBaslik(AppLocalizations l10n, HomeMenuEntry entry) =>
       HomeMenuEntry.sikayetlerim => l10n.modulSikayetlerim,
       HomeMenuEntry.yoneticiIletisim => l10n.yonIletisimBaslik,
       HomeMenuEntry.panikTakip => l10n.panikTakipBaslik,
+      HomeMenuEntry.diyafon => l10n.diyafonBaslik,
     };
 
 // ===========================================================================
@@ -594,6 +603,7 @@ HomeMenuGrup homeMenuGrubu(HomeMenuEntry e) => switch (e) {
   HomeMenuEntry.daireTanimlari ||
   HomeMenuEntry.taskCategories ||
   HomeMenuEntry.kurulum ||
+  HomeMenuEntry.diyafon ||
   HomeMenuEntry.integrations => HomeMenuGrup.tanimlar,
 };
 

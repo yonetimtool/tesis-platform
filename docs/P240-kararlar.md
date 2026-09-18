@@ -425,3 +425,152 @@ test "widget yok" diye düştü; hatalı olan bileşen değil taklitti.
 şey protokol düzeyinde: TCP bağlantısının açıldığı/açılamadığı, doğru
 hata kimliğinin seçildiği, durumun yazıldığı ve bildirimin bir kez
 gittiği. "Cihazda çalışıyor" iddiası **yapılmıyor**.
+
+---
+
+## §2 — DİYAFON ENTEGRASYONU (üç yöntem)
+
+### TEK SOYUTLAMA, ÜÇ YÖNTEM
+
+`backend/app/diyafon/` — SMS ve ödeme soyutlamalarındaki desen. Çağıran
+kod (panik anonsu) **yöntemi bilmez**: `saglayici(kayit)` bir nesne
+döner, `yetenekler()` neyin mümkün olduğunu söyler.
+
+| Yöntem | Nasıl | Metin anons | Zil | Kapı | Sesli anons |
+|---|---|---|---|---|---|
+| `sip` | SIP cihazı (2N, Akuvox, Dahua VTO) | ✅ | ✗ | ✗ | ✗ |
+| `sip_kopru` | Sitedeki Asterisk/FreeSWITCH | ✅ | ✗ | ✗ | ✗ |
+| `kuru_kontak` | HTTP ile tetiklenen röle modülü | ✗ | ✅ | ✅ | ✗ |
+
+**Yetenek şemada değil kodda.** Kuru kontağın ses verememesi bir *veri*
+değil *davranış* gerçeğidir; tabloya "anons_yapabilir" diye yazmak,
+yanlış işaretlendiğinde sunucunun olmayan bir yeteneği denemesi olurdu.
+Arayüz listeyi sunucudan alır ve **eylem düğmelerini ona göre çizer** —
+basınca 422 alacak bir düğme göstermek, olmayan bir yeteneği vaat
+etmektir.
+
+### SIP'TE NE YAPILDI, NE YAPILMADI — açık sınır
+
+**YAPILDI** (ikisi de düz metin protokol, taklit SIP sunucusuyla uçtan
+uca ölçüldü):
+- **OPTIONS** — sağlık yoklaması. RFC 3261 §11: zil çaldırmaz, arama
+  başlatmaz. §4'ün kuralı (izleme, izlediğini çalıştırmaz) burada da
+  geçerli.
+- **MESSAGE** (RFC 3428) — panelin **ekranına metin** düşürür.
+
+**YAPILMADI: sesli anons (INVITE + RTP).** Bir medya yığını (pjsip/
+baresip) ve gerçek ses kodlaması gerekir; donanımsız doğrulanamaz ve
+"yazdım ama denemedim" bir güvenlik özelliğinde kabul edilemez. Bu,
+`yetenekler()` çıktısında da görünür: **`sesli_anons` hiçbir yöntemde
+true dönmez** ve arayüz her satırda "Sesli anons yok" yazar — "neden ses
+gelmiyor" sorusu sahada değil **seçim anında** yanıtlanmalı.
+
+Sesli anons isteyen kurulumlar için iki yol (docs'ta, kod değil):
+(1) cihazın HTTP kontrol API'si, (2) PBX'te bir playback dahilisi.
+
+**Kütüphane yok, çünkü SIP düz metin bir protokol.** Kullandığımız iki
+istek UDP'de tek pakettir. Bir medya yığınını konteynere koymak,
+kullanmadığımız bir bağımlılığı ve onun derleme/güvenlik yükünü taşımak
+olurdu.
+
+### SSRF: iç ağ adresleri burada SERBEST — ve bu bilinçli
+
+`safe_http` kapısı **webhook** içindir: kullanıcının yazdığı URL'e
+sunucunun istek atması, iç ağa sızmanın klasik yolu. **Diyafon ise
+tanımı gereği iç ağdadır** (192.168.x.x'teki kapı paneli); aynı kapıyı
+buraya koymak özelliğin kendisini imkânsız kılardı.
+
+Bunun yerine sınır dar tutuldu: yalnız SIP mesajı gönderiliyor (HTTP
+değil), **yanıt gövdesi okunmuyor ve kullanıcıya dönmüyor** — yani bu
+yol bir iç-ağ tarayıcısına çevrilemez. Yapılandırma zaten admin/yönetici
+yetkisi ister. Kuru kontakta da aynı: ham HTTP, yalnız durum satırı
+okunuyor.
+
+### KURU KONTAK: zil ve kapı AYRI yollar
+
+Tek bir "tetik yolu" olsaydı "zil çal" ile "kapı aç" ayırt edilemezdi —
+ve bir röle modülünde bunlar farklı kanallardır (röle 1 / röle 2). Biri
+boşsa o eylem **desteklenmiyor** sayılır.
+
+**MQTT yapılmadı.** İstekte "HTTP veya MQTT" geçiyor; HTTP yapıldı. MQTT
+bir istemci + broker bağlantısı (kalıcı oturum, yeniden bağlanma, QoS)
+demek ve donanımsız doğrulanamaz. Piyasadaki röle modüllerinin tamamı
+HTTP de sunuyor — bugün hiçbir müşteri bu yüzden dışarıda kalmıyor.
+
+### KİMLİK BİLGİLERİ ŞİFRELİ
+
+`sifre_enc` — KEK/AES-GCM (`crypto.encrypt_secret`, P213'teki SDM_KEK
+deseni). GET yanıtında **asla dönmez**; yerine `sifre_set` (bool).
+**Boş şifre "değiştirme" demektir, "sil" değil**: formu boş bırakıp
+kaydeden yönetici çalışan bir bağlantıyı kırmamalı.
+
+### PANİK BAĞLANTISI
+
+Diyafon yapılandırılmışsa **tüm-site anonsunda** (`yonetici_anons`)
+metin anonsu gider. **Yapılandırılmamışsa sessizce atlanır** — istekteki
+"panik butonu diyafon olmadan da çalışmalı" maddesi; yapılandırılmamış
+bir diyafon hata değil **seçim**tir.
+
+**Sakin paniği diyafona GİTMEZ.** Bir sakinin evindeki acil durumu bütün
+bloklara duyurmak, o kişinin sağlığını herkese ilan etmek olurdu — KVKK
+bir yana, alarmın hedefi de o değil. Anons başarısızlığı **alarmı
+düşürmez**: push ve in-app zaten gitti, diyafon bir ek kanal.
+
+### KAPI AÇMA: onay + denetim
+
+Kapı açmak fiziksel erişim verir: her çağrı **denetim kaydına** yazılır
+(`DIYAFON_EYLEM`, yapılandırmadan `DIYAFON_YAZ` ile ayrı) ve arayüz
+**onay ister** — yanlışlıkla tıklanan bir düğme kapı açmamalı.
+
+### KİLİTLER
+
+`backend/tests/test_p240_diyafon.py` (19) — testin içinde **taklit SIP
+sunucusu (UDP)** ve **taklit röle modülü (HTTP)** açılır; sunucumuz
+onlara gerçek paket gönderir. Ölçülenler: yetenek matrisi; OPTIONS ile
+sağlık **ve gönderilen paketin RFC 3261 başlıklarını taşıması**; 405'in
+"ayakta" sayılması (yanıt veren cihazı kopuk saymak çalışan kurulumu
+kırmızı gösterirdi); yanıt yoksa "ulaşılamıyor"; MESSAGE gövdesinin
+gerçekten gitmesi ve `Content-Length`in doğru olması; MESSAGE'ta 4xx'in
+**reddedildi** sayılması (OPTIONS'taki 405'ten farklı — aynı saymak
+gitmeyen bir anonsu başarılı göstermek olurdu); zil/kapının **ayrı
+yollara** gitmesi; **sağlık kontrolünün hiçbir röleyi tetiklememesi**;
+şifrenin yazılıp asla dönmemesi; desteklenmeyen eylemde 422;
+RBAC; tam URL'in reddi; **diyafon yokken paniğin çalışması**; **sakin
+paniğinin diyafona gitmemesi, tüm-site anonsunun gitmesi**.
+
+`admin-web/tests/p240-diyafon.dom.test.ts` (7) ve
+`mobile/test/p240_diyafon_test.dart` (7) — yetenek listesi, "sesli anons
+yok" satırı, yönteme göre çizilen eylem düğmeleri ve form alanları,
+"Test et"in sağlık ucuna gitmesi, boş şifrenin gövdeye girmemesi,
+mobilde kapı açmanın onay istemesi.
+
+**KIRMA:** sağlık kontrolü zil yoluna bağlandı → backend kırmızı;
+MESSAGE'ta 4xx başarılı sayıldı → backend kırmızı; webde zil düğmesi
+koşulsuz çizildi ve boş şifre gövdeye kondu → 2 kırmızı.
+
+**Kilidin yakaladığı:** mobil yöntem seçicisi **211 px taşıyordu**
+(uzun marka etiketleri); `isExpanded` + üç nokta ile düzeltildi —
+kısaltmak yerine kutuyu genişletmek, marka örneklerini seçim anında
+korur.
+
+### ÖLÇEMEDİĞİM — ve hangi cihazlarda denenmeli
+
+**Gerçek diyafon cihazı yok.** İddia: *"SIP OPTIONS/MESSAGE'ı RFC'ye
+uygun kurdum ve yanıtı doğru yorumladım"*. İddia **değil**: *"bu marka
+panelde çalışıyor"*.
+
+Sahada denenmesi gerekenler:
+1. **2N IP Verso / IP Force** — SIP MESSAGE desteği ve ekranda gösterim.
+2. **Akuvox R20/R27** — OPTIONS yanıtı ve MESSAGE davranışı.
+3. **Dahua VTO2111D / VTO3211D** — SIP kayıt gerektirip gerektirmediği
+   (kayıtsız MESSAGE'ı 403 ile reddedebilir; o durumda REGISTER akışı
+   gerekir ve bu tur onu içermiyor).
+4. **Asterisk 18+ / FreeSWITCH** — dahili numaraya MESSAGE iletimi
+   (`chan_pjsip` `message_context` yapılandırması gerekebilir).
+5. **Shelly 1 / KMtronic LAN röle** — `/relay/0?turn=on` gibi yolların
+   HTTP yanıt biçimi ve temel kimlik doğrulama.
+
+**Kayıt (REGISTER) akışı yok:** cihaz kimlik doğrulaması isterse
+(401/407 + nonce) bu tur yanıt veremez; `diyafon_reddedildi` döner ve
+kullanıcı "kullanıcı adı/şifre/hedefi kontrol edin" mesajını görür. Bu
+sınır burada yazılı olduğu için sahada sürpriz değil.
