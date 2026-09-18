@@ -1193,6 +1193,42 @@ class AppLocalizationsEs extends AppLocalizations {
   String get devriyePlanYeniBaslik => 'Nuevo plan de patrulla';
 
   @override
+  String get entegSaglikBilinmiyor => 'Desconocido';
+
+  @override
+  String get entegSaglikBagli => 'Conectado';
+
+  @override
+  String get entegSaglikHata => 'Error';
+
+  @override
+  String get entegKontrolEt => 'Comprobar';
+
+  @override
+  String get entegHicIletisim => 'Sin contacto aún';
+
+  @override
+  String entegSonIletisimZaman(Object zaman) {
+    return 'Último contacto: $zaman';
+  }
+
+  @override
+  String get entegHataAdresEngelli =>
+      'La dirección fue bloqueada por las reglas de seguridad; no se permiten direcciones de red internas.';
+
+  @override
+  String get entegHataAdresCozulemedi =>
+      'No se pudo resolver la dirección; revise el nombre de dominio.';
+
+  @override
+  String get entegHataBaglantiYok =>
+      'No se puede acceder al dispositivo; puede estar apagado o fuera de la red.';
+
+  @override
+  String get entegHataAdresGecersiz =>
+      'El formato de la dirección no es válido.';
+
+  @override
   String get panikBaslik => 'Emergencia';
 
   @override

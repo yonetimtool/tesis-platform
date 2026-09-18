@@ -437,6 +437,21 @@
   "devriyePlanSilindi": "Plan silindi ✓",
   "devriyePlanDuzenleBaslik": "Devriye planı düzenle",
   "devriyePlanYeniBaslik": "Yeni devriye planı",
+  "entegSaglikBilinmiyor": "Bilinmiyor",
+  "entegSaglikBagli": "Bağlı",
+  "entegSaglikHata": "Hata",
+  "entegKontrolEt": "Kontrol et",
+  "entegHicIletisim": "Henüz iletişim yok",
+  "entegSonIletisimZaman": "Son iletişim: {zaman}",
+  "@entegSonIletisimZaman": {
+    "placeholders": {
+      "zaman": {}
+    }
+  },
+  "entegHataAdresEngelli": "Adres güvenlik kurallarına takıldı; iç ağ adresleri kullanılamaz.",
+  "entegHataAdresCozulemedi": "Adres çözülemedi; alan adını kontrol edin.",
+  "entegHataBaglantiYok": "Cihaza ulaşılamıyor; kapalı olabilir ya da ağda değil.",
+  "entegHataAdresGecersiz": "Adres biçimi geçersiz.",
   "panikBaslik": "Acil durum",
   "panikKisa": "SOS",
   "panikTipSakin": "Evde acil durum (sağlık, güvenlik)",

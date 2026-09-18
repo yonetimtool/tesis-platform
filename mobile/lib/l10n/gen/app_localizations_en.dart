@@ -1266,6 +1266,41 @@ class AppLocalizationsEn extends AppLocalizations {
   String get devriyePlanYeniBaslik => 'New patrol plan';
 
   @override
+  String get entegSaglikBilinmiyor => 'Unknown';
+
+  @override
+  String get entegSaglikBagli => 'Connected';
+
+  @override
+  String get entegSaglikHata => 'Error';
+
+  @override
+  String get entegKontrolEt => 'Check now';
+
+  @override
+  String get entegHicIletisim => 'No contact yet';
+
+  @override
+  String entegSonIletisimZaman(Object zaman) {
+    return 'Last contact: $zaman';
+  }
+
+  @override
+  String get entegHataAdresEngelli =>
+      'The address was blocked by security rules; internal network addresses are not allowed.';
+
+  @override
+  String get entegHataAdresCozulemedi =>
+      'The address could not be resolved; check the domain name.';
+
+  @override
+  String get entegHataBaglantiYok =>
+      'The device is unreachable; it may be off or not on the network.';
+
+  @override
+  String get entegHataAdresGecersiz => 'The address format is invalid.';
+
+  @override
   String get panikBaslik => 'Emergency';
 
   @override

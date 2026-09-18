@@ -80,6 +80,13 @@ describe("sozluk butunlugu", () => {
     // XX XX` rakam duzenini gosterir ve her dilde ayni okunur. Cevirmek,
     // ornegin Rusca bir "5XX" uydurmak demek olurdu.
     "5XX XXX XX XX",
+    // (P240 §1) "SOS" ULUSLARARASI BIR ISARETTIR, cumle degil.
+    //
+    // Mobil ikizi (`sozluk_denetimi_test.dart`) ayni istisnayi tasiyor
+    // ve gerekce olculdu: Arapca "طوارئ" ile ust bar 4 px TASIYORDU.
+    // Uc karakterlik, dilden bagimsiz bir isaret o tasmayi yapisal
+    // olarak imkansiz kiliyor.
+    "SOS",
     // Dil secici basligi bilincli olarak iki dilli.
     "Dil / Language",
     // Es-sozcukler: hedef dilde de AYNI yazilir (Almanca "Kamera",

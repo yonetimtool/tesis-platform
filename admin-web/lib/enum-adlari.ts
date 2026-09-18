@@ -52,6 +52,12 @@ export const BILDIRIM_TIP: EnumHarita = {
   gorev_adim_ilerleme: "bildirimTipGorevAdimIlerleme",
   // (P237 §3, göç 0137) Anket açılınca hedef kitleye bildirim.
   anket_acildi: "bildirimTipAnketAcildi",
+  // (P240 §1) PANIK — uc ayri tip: alarm, yanlis alarm duzeltmesi, kapanis.
+  panik_alarm: "bildirimTipPanikAlarm",
+  panik_yanlis_alarm: "bildirimTipPanikYanlisAlarm",
+  panik_kapandi: "bildirimTipPanikKapandi",
+  // (P240 §4) Entegrasyon baglantisi koptu (yonetim alarmi).
+  entegrasyon_koptu: "bildirimTipEntegrasyonKoptu",
   aidat_borc: "bildirimTipAidatBorc",
   // (P191 §4) Banka eslestirmesi odemeyi isledi -> "odemeniz alindi".
   aidat_odendi: "bildirimTipAidatOdendi",

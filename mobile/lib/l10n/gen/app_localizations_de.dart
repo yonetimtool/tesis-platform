@@ -1193,6 +1193,41 @@ class AppLocalizationsDe extends AppLocalizations {
   String get devriyePlanYeniBaslik => 'Neuer Rundgangsplan';
 
   @override
+  String get entegSaglikBilinmiyor => 'Unbekannt';
+
+  @override
+  String get entegSaglikBagli => 'Verbunden';
+
+  @override
+  String get entegSaglikHata => 'Fehler';
+
+  @override
+  String get entegKontrolEt => 'Jetzt prüfen';
+
+  @override
+  String get entegHicIletisim => 'Noch kein Kontakt';
+
+  @override
+  String entegSonIletisimZaman(Object zaman) {
+    return 'Letzter Kontakt: $zaman';
+  }
+
+  @override
+  String get entegHataAdresEngelli =>
+      'Die Adresse wurde von den Sicherheitsregeln blockiert; interne Netzwerkadressen sind nicht erlaubt.';
+
+  @override
+  String get entegHataAdresCozulemedi =>
+      'Die Adresse konnte nicht aufgelöst werden; prüfen Sie den Domainnamen.';
+
+  @override
+  String get entegHataBaglantiYok =>
+      'Das Gerät ist nicht erreichbar; es ist möglicherweise aus oder nicht im Netz.';
+
+  @override
+  String get entegHataAdresGecersiz => 'Das Adressformat ist ungültig.';
+
+  @override
   String get panikBaslik => 'Notfall';
 
   @override

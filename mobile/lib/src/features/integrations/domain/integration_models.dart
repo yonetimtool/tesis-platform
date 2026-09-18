@@ -15,6 +15,10 @@ class Integration {
     required this.payloadTemplate,
     required this.aktif,
     this.headersJson = const {},
+    this.saglik = 'bilinmiyor',
+    this.sonKontrolAt,
+    this.sonBasariliAt,
+    this.sonHataKod,
   });
 
   final String id;
@@ -27,6 +31,20 @@ class Integration {
   final bool authSecretSet; // sir kayitli mi (sirrin KENDISI gelmez)
   final String payloadTemplate;
   final bool aktif;
+
+  /// (P240 §4) `bilinmiyor` | `bagli` | `hata`.
+  ///
+  /// `bilinmiyor` HENUZ OLCULMEDI demektir ve `hata`dan AYRI: yeni
+  /// tanimlanan bir entegrasyonu kirmizi gostermek, kullaniciya olmayan
+  /// bir sorun bildirirdi.
+  final String saglik;
+  final DateTime? sonKontrolAt;
+
+  /// SON BASARILI ILETISIM — saglik kontrolu VE gercek tetik gunceller.
+  final DateTime? sonBasariliAt;
+
+  /// Hata KIMLIGI (cumle degil) — metin istemcide, kullanicinin dilinde.
+  final String? sonHataKod;
 
   factory Integration.fromJson(Map<String, dynamic> json) => Integration(
         id: json['id'] as String? ?? '',
@@ -42,6 +60,14 @@ class Integration {
         authSecretSet: json['auth_secret_set'] as bool? ?? false,
         payloadTemplate: json['payload_template'] as String? ?? '',
         aktif: json['aktif'] as bool? ?? true,
+        saglik: json['saglik'] as String? ?? 'bilinmiyor',
+        sonKontrolAt: json['son_kontrol_at'] == null
+            ? null
+            : DateTime.parse(json['son_kontrol_at'] as String),
+        sonBasariliAt: json['son_basarili_at'] == null
+            ? null
+            : DateTime.parse(json['son_basarili_at'] as String),
+        sonHataKod: json['son_hata_kod'] as String?,
       );
 }
 

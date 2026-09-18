@@ -1317,6 +1317,41 @@ class AppLocalizationsAr extends AppLocalizations {
   String get devriyePlanYeniBaslik => 'خطة دورية جديدة';
 
   @override
+  String get entegSaglikBilinmiyor => 'غير معروف';
+
+  @override
+  String get entegSaglikBagli => 'متصل';
+
+  @override
+  String get entegSaglikHata => 'خطأ';
+
+  @override
+  String get entegKontrolEt => 'افحص الآن';
+
+  @override
+  String get entegHicIletisim => 'لا يوجد اتصال بعد';
+
+  @override
+  String entegSonIletisimZaman(Object zaman) {
+    return 'آخر اتصال: $zaman';
+  }
+
+  @override
+  String get entegHataAdresEngelli =>
+      'حُظر العنوان وفق قواعد الأمان؛ لا يُسمح بعناوين الشبكة الداخلية.';
+
+  @override
+  String get entegHataAdresCozulemedi =>
+      'تعذّر تحليل العنوان؛ تحقق من اسم النطاق.';
+
+  @override
+  String get entegHataBaglantiYok =>
+      'تعذّر الوصول إلى الجهاز؛ قد يكون مغلقًا أو خارج الشبكة.';
+
+  @override
+  String get entegHataAdresGecersiz => 'صيغة العنوان غير صالحة.';
+
+  @override
   String get panikBaslik => 'حالة طوارئ';
 
   @override

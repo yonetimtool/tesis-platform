@@ -71,6 +71,21 @@ celery_app.conf.beat_schedule = {
         "task": "scheduler.vardiya_hatirlatma",
         "schedule": 60.0,
     },
+    # (P240 §4) ENTEGRASYON SAGLIK KONTROLU — 15 dakikada bir.
+    #
+    # SIKLIK GEREKCESI: kopan bir diyafon/akilli-ev baglantisi en gec 15
+    # dakikada fark edilir. Daha sik (orn. dakikada bir) kosmak, her
+    # entegrasyona gunde 1440 TCP baglantisi acmak demekti ve kazanc
+    # yalnizca 14 dakika. Daha seyrek (saatte bir) ise "aksam kopan
+    # diyafon sabah fark edilir" demekti.
+    #
+    # BU GOREV TETIKLEMEZ: yalniz TCP baglantisi acar (bkz.
+    # `entegrasyon_saglik` modul basligi) — periyodik tetik, megafonla
+    # gunde 96 anons yapmak olurdu.
+    "entegrasyon-saglik": {
+        "task": "saglik.entegrasyon_kontrol",
+        "schedule": 900.0,
+    },
     # (P37) Caydirici webhook yeniden deneme kuyrugu — geri cekilme
     # dakikalar mertebesinde oldugu icin dakikada bir bakmak yeterli.
     "gurultu-kuyrugu": {

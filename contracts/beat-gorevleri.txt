@@ -37,6 +37,7 @@ detect-missed-tours	scheduler.detect_missed_tours	300.0
 dukkan-abonelik-cekimi	dukkan.abonelik_cekimi	<crontab: 40 2 * * * (m/h/dM/MY/d)>
 dukkan-reklam-bakimi	dukkan.reklam_bakimi	<crontab: 20 2 * * * (m/h/dM/MY/d)>
 dukkan-siralama	dukkan.siralama_yenile	<crontab: 0 2 * * * (m/h/dM/MY/d)>
+entegrasyon-saglik	saglik.entegrasyon_kontrol	900.0
 finans-otomasyonu	scheduler.finans_otomasyonu	<crontab: 0 3 * * * (m/h/dM/MY/d)>
 generate-patrol-windows	scheduler.generate_patrol_windows	3600.0
 gurultu-kuyrugu	scheduler.gurultu_kuyrugu	60.0

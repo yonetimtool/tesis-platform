@@ -13,15 +13,17 @@ import {
   Dugme,
   HataDurumu,
   IskeletMetin,
+  Rozet,
   Secim,
   useOnay,
 } from "@/components/ui";
 import { Tablo, TabloBasligi, Td, Th } from "@/components/tablo";
 import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
-import { jsonFetcher } from "@/lib/fetcher";
+import { formatDateTime, jsonFetcher } from "@/lib/fetcher";
 import { ParolaAlani } from "@/components/ParolaAlani";
 import { useT } from "@/lib/i18n/kullan";
+import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 import type {
   AuthType,
   HttpMethod,
@@ -55,6 +57,25 @@ const EMPTY: FormState = {
   aktif: true,
 };
 
+/** (P240 §4) Saglik durumu -> sozluk anahtari. */
+const SAGLIK_ETIKET: Record<string, SozlukAnahtari> = {
+  bilinmiyor: "entegSaglikBilinmiyor",
+  bagli: "entegSaglikBagli",
+  hata: "entegSaglikHata",
+};
+const SAGLIK_YEDEK: SozlukAnahtari = "entegSaglikBilinmiyor";
+/** JSX ucluda sabit dize yazilamaz (depo kurali `sabit-metin`). */
+const SAGLIK_VARSAYILAN = "bilinmiyor";
+/** Hata KIMLIGI -> sozluk anahtari (sunucu cumle gondermez). */
+const HATA_ETIKET: Record<string, SozlukAnahtari> = {
+  entegrasyon_adres_engelli: "entegHataAdresEngelli",
+  entegrasyon_adres_cozulemedi: "entegHataAdresCozulemedi",
+  entegrasyon_baglanti_yok: "entegHataBaglantiYok",
+  entegrasyon_adres_gecersiz: "entegHataAdresGecersiz",
+};
+const HATA_YEDEK: SozlukAnahtari = "entegHataBaglantiYok";
+const IKINCIL = "ikincil" as const;
+
 const CHANNELS: IntegrationChannel[] = ["webhook", "megaphone", "smarthome"];
 const METHODS: HttpMethod[] = ["POST", "PUT", "PATCH", "GET"];
 const AUTH_TYPES: AuthType[] = ["none", "bearer", "api_key"];
@@ -81,6 +102,20 @@ export default function IntegrationsPage() {
   const [saving, setSaving] = useState(false);
   const [testResult, setTestResult] = useState<Record<string, IntegrationTriggerResult>>({});
   const [testing, setTesting] = useState<string | null>(null);
+  const [kontrolEdilen, setKontrolEdilen] = useState<string | null>(null);
+
+  /** (P240 §4) Baglanti kontrolu — TETIKLEMEZ, yalniz TCP acar. */
+  async function saglikKontrol(it: Integration) {
+    setKontrolEdilen(it.id);
+    try {
+      await apiSend(`/api/integrations/${it.id}/saglik`, "POST", {});
+      await mutate();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : t("ortakHataOlustu"));
+    } finally {
+      setKontrolEdilen(null);
+    }
+  }
 
   function openNew() {
     setEditingId(null);
@@ -344,6 +379,9 @@ export default function IntegrationsPage() {
                 <Th>{t("entegEndpoint")}</Th>
                 <Th>{t("entegKimlik")}</Th>
                 <Th>{t("ortakAktif")}</Th>
+                {/* (P240 §4) SAGLIK — tek ekrandan hepsi gorunsun. */}
+                <Th>{t("entegSaglik")}</Th>
+                <Th>{t("entegSonIletisim")}</Th>
                 <Th />
               </TabloBasligi>
             <tbody>
@@ -361,13 +399,69 @@ export default function IntegrationsPage() {
                     {it.auth_secret_set ? " 🔒" : ""}
                   </Td>
                   <Td>{it.aktif ? t("ortakEvet") : "—"}</Td>
+                  <Td>
+                    <span data-test={`enteg-saglik-${it.id}`}>
+                    <Rozet
+                      durum={
+                        it.saglik === "bagli"
+                          ? "olumlu"
+                          : it.saglik === "hata"
+                            ? "kritik"
+                            : "notr"
+                      }
+                    >
+                      {t(SAGLIK_ETIKET[it.saglik ?? SAGLIK_VARSAYILAN] ?? SAGLIK_YEDEK)}
+                    </Rozet>
+                    </span>
+                    {/* HATA SEBEBI ANLASILIR DILDE: sunucu KIMLIK
+                        gonderiyor, cumle burada kullanicinin dilinde
+                        kuruluyor. Ham ayrinti (istisna tipi, sunucu adi)
+                        arayuze HIC gelmiyor. */}
+                    {it.son_hata_kod && (
+                      <div
+                        data-test={`enteg-hata-${it.id}`}
+                        style={{ fontSize: "var(--yz-fs-xs)", color: "var(--yz-danger-ink)" }}
+                      >
+                        {t(HATA_ETIKET[it.son_hata_kod] ?? HATA_YEDEK)}
+                      </div>
+                    )}
+                  </Td>
+                  <Td className="text-metin-body">
+                    <span data-test={`enteg-son-iletisim-${it.id}`}>
+                    {/* SON BASARILI ILETISIM — "hic" ile "uzun zaman
+                        once" ayni sey degil; bos birakmak ikisini
+                        birbirine karistirirdi. */}
+                    {it.son_basarili_at
+                      ? formatDateTime(it.son_basarili_at)
+                      : t("entegHicIletisim")}
+                    </span>
+                  </Td>
                   <Td hizala="end">
                     <div className="flex flex-col items-end gap-1">
                       <div className="flex justify-end gap-2">
+                        {/* (P240 §4) IKI AYRI DUGME — ve ayrim yazili.
+
+                            "Kontrol et" YALNIZ BAGLANTIYA bakar (TCP);
+                            "Test" ise entegrasyonu GERCEKTEN TETIKLER.
+                            Tek dugmeye indirmek, megafon kanalinda
+                            "kontrol edeyim" diyen yoneticiye siteye
+                            anons YAPTIRIRDI. */}
+                        <Dugme
+                          boy="kucuk"
+                          tur={IKINCIL}
+                          data-test={`enteg-saglik-kontrol-${it.id}`}
+                          onClick={() => saglikKontrol(it)}
+                          disabled={kontrolEdilen === it.id}
+                        >
+                          {kontrolEdilen === it.id
+                            ? t("entegKontrolEdiliyor")
+                            : t("entegKontrolEt")}
+                        </Dugme>
                         <Dugme
                           boy="kucuk"
                           onClick={() => test(it)}
                           disabled={testing === it.id}
+                          title={t("entegTestIpucu")}
                         >
                           {testing === it.id ? t("entegTestEdiliyor") : t("entegTest")}
                         </Dugme>
@@ -394,7 +488,7 @@ export default function IntegrationsPage() {
             })}
             {data && data.items.length === 0 && (
               <tr>
-                <Td colSpan={6}>
+                <Td colSpan={8}>
                   <BosDurum baslik={t("entegYok")} aciklama={t("entegYokAlt")} />
                 </Td>
               </tr>

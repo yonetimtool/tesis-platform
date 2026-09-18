@@ -1180,6 +1180,41 @@ class AppLocalizationsTr extends AppLocalizations {
   String get devriyePlanYeniBaslik => 'Yeni devriye planı';
 
   @override
+  String get entegSaglikBilinmiyor => 'Bilinmiyor';
+
+  @override
+  String get entegSaglikBagli => 'Bağlı';
+
+  @override
+  String get entegSaglikHata => 'Hata';
+
+  @override
+  String get entegKontrolEt => 'Kontrol et';
+
+  @override
+  String get entegHicIletisim => 'Henüz iletişim yok';
+
+  @override
+  String entegSonIletisimZaman(Object zaman) {
+    return 'Son iletişim: $zaman';
+  }
+
+  @override
+  String get entegHataAdresEngelli =>
+      'Adres güvenlik kurallarına takıldı; iç ağ adresleri kullanılamaz.';
+
+  @override
+  String get entegHataAdresCozulemedi =>
+      'Adres çözülemedi; alan adını kontrol edin.';
+
+  @override
+  String get entegHataBaglantiYok =>
+      'Cihaza ulaşılamıyor; kapalı olabilir ya da ağda değil.';
+
+  @override
+  String get entegHataAdresGecersiz => 'Adres biçimi geçersiz.';
+
+  @override
   String get panikBaslik => 'Acil durum';
 
   @override

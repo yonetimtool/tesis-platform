@@ -121,6 +121,13 @@ NOTIFICATION_TIP = ENUM(
     "gorev_adim_ilerleme",
     # (P237 §3, göç 0137) Anket açılınca HEDEF KİTLEYE bildirim.
     "anket_acildi",
+    # (P240 §1, göç 0140) PANİK — alarm, yanlış alarm düzeltmesi, kapanış.
+    # Üçü AYRI tip: biri alarmı duyurur, biri geri çağırır, biri sonucu
+    # bildirir. Tek tipe indirmek, sahaya koşan kişiye "geri dön"
+    # diyemeden aynı sesle üç kez seslenmek olurdu.
+    "panik_alarm", "panik_yanlis_alarm", "panik_kapandi",
+    # (P240 §4, göç 0141) Entegrasyon bağlantısı koptu (yönetim alarmı).
+    "entegrasyon_koptu",
     name="notification_tip", create_type=False,
 )
 ASSET_KATEGORI = ENUM(
@@ -195,6 +202,11 @@ CAMERA_TUR = ENUM(
 INTEGRATION_CHANNEL = ENUM(
     "webhook", "megaphone", "smarthome",
     name="integration_channel", create_type=False,
+)
+# (P240 §4, goc 0141) Entegrasyon saglik durumu.
+ENTEGRASYON_SAGLIK = ENUM(
+    "bilinmiyor", "bagli", "hata",
+    name="entegrasyon_saglik", create_type=False,
 )
 # ---------------------- P27 "Tanimlar" katmani enum'lari -------------------- #
 GELIR_GIDER_TIP = ENUM(
@@ -2583,6 +2595,24 @@ class Integration(Base):
         Text, nullable=False, server_default=text("''")
     )
     aktif: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))
+    #: (P240 §4, goc 0141) SAGLIK — `bilinmiyor` | `bagli` | `hata`.
+    #:
+    #: `bilinmiyor` HENUZ OLCULMEDI demektir ve `hata`dan AYRI: "kontrol
+    #: edilmedi" ile "kontrol edildi, kopuk" ayni sey degil. Yeni
+    #: tanimlanan bir entegrasyonu kirmizi gostermek, kullaniciya
+    #: olmayan bir sorun bildirirdi.
+    saglik: Mapped[str] = mapped_column(
+        ENTEGRASYON_SAGLIK, nullable=False, server_default=text("'bilinmiyor'")
+    )
+    son_kontrol_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    #: SON BASARILI ILETISIM — saglik kontrolu VE gercek tetik gunceller.
+    son_basarili_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    #: Hata KIMLIGI (cumle degil): metin kullanicinin dilinde uretilir.
+    son_hata_kod: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: Operatore hitap eden ham ayrinti; kullaniciya GOSTERILMEZ.
+    son_hata_ayrinti: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: Kopus bildirimi damgasi — bir kopus olayi icin TEK bildirim.
+    kopus_bildirildi_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     created_at = _created_at()
     updated_at = _created_at()
 
@@ -2853,6 +2883,7 @@ __all__ = [
     "GUN_TIPI",
     "PATROL_WINDOW_DURUM",
     "NOTIFICATION_TIP",
+    "ENTEGRASYON_SAGLIK",
     # (P240 §1) PANIK
     "PanikAlarm",
     "PanikAlici",

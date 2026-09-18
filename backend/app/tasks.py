@@ -251,3 +251,15 @@ def panik_yayinla(alarm_id: str, tenant_id: str) -> dict:
             return {"durum": alarm.durum, "alici": adet}
 
     return _async_calistir(_is)
+
+
+@celery_app.task(name="saglik.entegrasyon_kontrol")
+def entegrasyon_saglik_kontrol() -> dict:
+    """(P240 §4) Beat: entegrasyon baglantilarini kontrol et.
+
+    SENKRON: `psycopg` ile kosuyor (zamanlayici gorevlerindeki desen);
+    `_async_calistir` GEREKMEZ ve gereksiz bir olay dongusu acmaz.
+    """
+    from .entegrasyon_kontrol_isi import tum_tenantlar_icin
+
+    return tum_tenantlar_icin()

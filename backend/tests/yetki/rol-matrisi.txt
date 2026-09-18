@@ -285,6 +285,7 @@ GET    /integrations/presets                                IZIN   IZIN   RED   
 DELETE /integrations/{id}                                   IZIN   IZIN   RED    RED    RED    RED    RED   
 GET    /integrations/{id}                                   IZIN   IZIN   RED    RED    RED    RED    RED   
 PATCH  /integrations/{id}                                   IZIN   IZIN   RED    RED    RED    RED    RED   
+POST   /integrations/{id}/saglik                            IZIN   IZIN   RED    RED    RED    RED    RED   
 POST   /integrations/{id}/trigger                           IZIN   IZIN   RED    RED    RED    RED    RED   
 GET    /karar-defteri                                       IZIN   IZIN   RED    RED    RED    RED    RED   
 POST   /karar-defteri                                       IZIN   IZIN   RED    RED    RED    RED    RED   

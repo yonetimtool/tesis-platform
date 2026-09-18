@@ -301,3 +301,127 @@ göstermek ya da hiç göstermemek demekti.
   gibi göstermek yerine **kaynak düzeyinde kilit** konuldu (ilk yayın
   `IPTAL_PENCERESI_SN` ile planlanmalı; çıplak sayı yazan bir değişiklik
   pencereyi sessizce yok ederdi).
+
+---
+
+## §4 — ENTEGRASYON SAĞLIK KONTROLÜ
+
+### ÖLÇÜM: tanım vardı, DURUM yoktu
+
+`integration` tablosu bir entegrasyonun **tanımını** tutuyordu ama
+durumunu hiç tutmuyordu. Yönetici "diyafon bağlı mı", "akıllı ev kopmuş
+mu" sorusunu ancak elle **"Test"** düğmesine basarak yanıtlayabiliyordu —
+yani kopan bir bağlantı, biri elle bakana kadar **sessiz** kalıyordu.
+
+### EN ÖNEMLİ KARAR: SAĞLIK KONTROLÜ TETİKLEME DEĞİLDİR
+
+"Düzenli sağlık kontrolü" isteğinin en kolay yorumu "her 15 dakikada bir
+entegrasyonu tetikle"dir. **Bu bir kusur olurdu**, çünkü kanallar:
+
+- `megaphone` — siteye anons yapan hoparlör,
+- `smarthome` — kapı açan, vana kapatan cihaz.
+
+15 dakikada bir tetiklemek **günde 96 kez anons yapmak ya da kapı açmak**
+demekti. Bir izleme özelliğinin, izlediği sistemi çalıştırması kabul
+edilemez.
+
+**Bu yüzden sağlık kontrolü hiçbir HTTP isteği göndermez.** SSRF
+kapısından geçirilmiş adrese **TCP bağlantısı açar ve kapatır**:
+(1) adres çözülüyor mu, (2) hedef IP public mi (aynı SSRF kapısı),
+(3) port kabul ediyor mu.
+
+Bu, **"bağlantı var mı"** sorusunun yanıtıdır. **"Cihaz işini doğru
+yapıyor mu" sorusunun yanıtı değildir** ve arayüz de öyle sunmuyor — iki
+ayrı iddia. Gerçek kanıt, gerçek bir tetiğin başarılı olmasıdır; o da
+`son_basarili_at`i günceller.
+
+Arayüzde **iki ayrı düğme** var ve farkı yazılı: **"Kontrol et"** yalnız
+bağlantıya bakar, **"Test"** entegrasyonu gerçekten tetikler (düğmenin
+ipucu metni bunu söyler). Tek düğmeye indirmek, megafon kanalında
+"kontrol edeyim" diyen yöneticiye siteye anons yaptırırdı.
+
+**TLS doğrulaması yapılmıyor** (bilinçli): saha cihazlarının çoğu
+self-signed sertifika taşır; TLS el sıkışmasını başarı koşulu yapmak
+çalışan kurulumları "hata" gösterirdi. Güvenlikten kayıp yok — veri
+gönderilmiyor, yalnız kapının açık olup olmadığına bakılıyor.
+
+### DURUMLAR: `bilinmiyor` ≠ `hata`
+
+`bilinmiyor` **henüz ölçülmedi** demektir. Yeni tanımlanan bir
+entegrasyonu kırmızı göstermek, kullanıcıya **olmayan bir sorun**
+bildirmek olurdu. İki yüzeyde de ayrı ikon/rozet.
+
+### HATA SEBEBİ ANLAŞILIR DİLDE
+
+Sunucu **cümle göndermez, kimlik gönderir** (`son_hata_kod`); metin
+istemcide, kullanıcının dilinde kurulur (7 dil). Dört kimlik:
+adres engelli (SSRF), adres çözülemedi (DNS), bağlantı yok (TCP), adres
+biçimi geçersiz.
+
+**Ham ayrıntı (`son_hata_ayrinti`) istemciye hiç dönmüyor** — operatöre
+hitap eder ve iç ayrıntı (istisna tipi, sunucu adı) sızdırır.
+
+**Ölçüm sırasında düzeltilen bir kusur:** `validate_public_url`
+çözülemeyen bir adı da SSRF olarak reddediyor (güvenlik açısından
+doğru). Ama kullanıcıya basit bir yazım hatası için "adres güvenlik
+kurallarına takıldı" demek, onu yanlış yere bakmaya gönderirdi. Artık ad
+**önce** çözülüyor: çözülmüyorsa "adres çözülemedi", çözülüyorsa SSRF
+kapısı karar veriyor. **Güvenlik zayıflamadı** — kapı hâlâ
+`validate_public_url`, yalnızca hata mesajı doğru olanı seçiyor.
+
+### BEAT: 15 DAKİKA, KOPUŞTA BİR KEZ BİLDİRİM
+
+`saglik.entegrasyon_kontrol`, 900 sn. Sıklık gerekçesi: daha sık (dakikada
+bir) her entegrasyona günde 1440 TCP bağlantısı demekti ve kazanç 14
+dakika; daha seyrek (saatte bir) "akşam kopan diyafon sabah fark edilir"
+demekti.
+
+`kopus_bildirildi_at` damgası olmadan bu görev, kopuk bir entegrasyon
+için **günde 96 bildirim** gönderirdi. Damga bir kopuş **olayını**
+işaretler; bağlantı geri gelince temizlenir ve bir sonraki kopuş yeniden
+bildirilir. **Pasif entegrasyon kontrol edilmez**: `aktif=false` bilinçli
+bir karardır, "kopuk" demek kullanıcının kararını hata gibi göstermek
+olurdu.
+
+### KİLİDİN YAKALADIĞI GERÇEK KUSUR
+
+Kopuş bildirimini ilk yazımda **her yöneticiye ayrı satır** olarak
+yazdım ve **hiçbiri görünmedi**: `routers/notifications._kapsam` yönetim
+rollerine yalnız `user_id IS NULL` satırlarını gösteriyor (kişiye özel
+akış sakinindir). Kayıt yazılıyordu ama kimse göremiyordu. Model de
+bunu söylüyor: entegrasyon kopması kişisel bir olay değil, "kaçırılan
+tur" gibi **tesise ait bir alarmdır**. Tek satır + `user_id NULL` oldu.
+
+Ayrıca `models.py`'deki `NOTIFICATION_TIP` aynasına §1'in üç panik tipi
+ve `entegrasyon_koptu` yazılmamıştı — liste ucu 500 verdi ve test
+yakaladı (dosyanın kendi kuralı: "göçün birebir aynası olmak").
+
+### KİLİTLER
+
+`backend/tests/test_p240_entegrasyon_saglik.py` (10) — **kaynak
+taraması: sağlık modülü `send_webhook`/`httpx` KULLANMAZ ve beat görevi
+de tetiklemez** (bir sonraki geliştirici "test isteği de atalım" derse
+megafon günde 96 kez çalardı ve bunu hiçbir akış testi görmezdi); iç ağ
+adresi SSRF kimliğiyle reddedilir; kapalı port bağlantı-yok kimliği
+döner; uç durumu yazar ve listede görünür; ham ayrıntı dönmez; yalnız
+yönetim çağırabilir; **gerçek tetik de sağlığı yazar**; kopuş bildirimi
+**bir kez**; pasif entegrasyon kontrol edilmez.
+
+`admin-web/tests/p240-entegrasyon-saglik.dom.test.ts` (5) ve
+`mobile/test/p240_entegrasyon_saglik_test.dart` (4) — "bilinmiyor" hata
+değil, hata sebebi anlaşılır dilde (ham kimlik ekranda yok), "henüz
+iletişim yok" açıkça yazılır, **"Kontrol et" tetik ucunu çağırmaz**.
+
+**KIRMA:** kopuş damgası kaldırıldı → backend testi kırmızı; mobilde
+"Kontrol et" tetik ucuna bağlandı → mobil testi kırmızı.
+
+**Testin kendi hatası:** mobil taklitte `list`/`presets` sahtelendi ama
+denetleyici `fetchAll`/`fetchPresets` çağırıyor — ekran boş kaldı ve
+test "widget yok" diye düştü; hatalı olan bileşen değil taklitti.
+
+### ÖLÇEMEDİĞİM
+
+**Gerçek bir diyafon/akıllı ev cihazıyla denenmedi** — cihaz yok. Ölçülen
+şey protokol düzeyinde: TCP bağlantısının açıldığı/açılamadığı, doğru
+hata kimliğinin seçildiği, durumun yazıldığı ve bildirimin bir kez
+gittiği. "Cihazda çalışıyor" iddiası **yapılmıyor**.

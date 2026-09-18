@@ -5079,6 +5079,15 @@ class IntegrationOut(BaseModel):
     payload_template: str
     aktif: bool
     created_at: datetime
+    #: (P240 §4) SAGLIK — `bilinmiyor` | `bagli` | `hata`.
+    #: `bilinmiyor` "henuz olculmedi" demektir; `hata`dan AYRI.
+    saglik: str = "bilinmiyor"
+    son_kontrol_at: datetime | None = None
+    son_basarili_at: datetime | None = None
+    #: Hata KIMLIGI — istemci onu kendi dilinde metne cevirir.
+    #: HAM AYRINTI (`son_hata_ayrinti`) BILINCLI OLARAK DONMEZ: operatore
+    #: hitap eder ve ic ayrinti (sunucu adi, istisna tipi) sizdirir.
+    son_hata_kod: str | None = None
 
     @classmethod
     def from_model(cls, obj) -> "IntegrationOut":
@@ -5094,12 +5103,26 @@ class IntegrationOut(BaseModel):
             payload_template=obj.payload_template,
             aktif=obj.aktif,
             created_at=obj.created_at,
+            saglik=obj.saglik,
+            son_kontrol_at=obj.son_kontrol_at,
+            son_basarili_at=obj.son_basarili_at,
+            son_hata_kod=obj.son_hata_kod,
         )
 
 
 class IntegrationListResponse(BaseModel):
     meta: PageMetaOut
     items: list[IntegrationOut]
+
+
+class IntegrationSaglikOut(BaseModel):
+    """(P240 §4) Tek bir saglik kontrolunun sonucu."""
+
+    id: uuid.UUID
+    saglik: str
+    son_kontrol_at: datetime | None = None
+    son_basarili_at: datetime | None = None
+    son_hata_kod: str | None = None
 
 
 class IntegrationTriggerIn(BaseModel):

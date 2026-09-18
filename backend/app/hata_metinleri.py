@@ -1886,6 +1886,42 @@ METINLER: dict[str, dict[str, str]] = {
     },
     # (P237 §2) ALT ADIM HATALARI
     # (P237 §3) ANKET
+    "entegrasyon_adres_engelli": {
+        "tr": "Adres güvenlik kurallarına takıldı; iç ağ adresleri kullanılamaz.",
+        "en": "The address was blocked by security rules; internal network addresses are not allowed.",
+        "ar": "حُظر العنوان وفق قواعد الأمان؛ لا يُسمح بعناوين الشبكة الداخلية.",
+        "ru": "Адрес заблокирован правилами безопасности; внутренние адреса недопустимы.",
+        "de": "Die Adresse wurde von den Sicherheitsregeln blockiert; interne Netzwerkadressen sind nicht erlaubt.",
+        "fr": "L’adresse a été bloquée par les règles de sécurité ; les adresses réseau internes sont interdites.",
+        "es": "La dirección fue bloqueada por las reglas de seguridad; no se permiten direcciones de red internas.",
+    },
+    "entegrasyon_adres_cozulemedi": {
+        "tr": "Adres çözülemedi; alan adını kontrol edin.",
+        "en": "The address could not be resolved; check the domain name.",
+        "ar": "تعذّر تحليل العنوان؛ تحقق من اسم النطاق.",
+        "ru": "Адрес не разрешается; проверьте доменное имя.",
+        "de": "Die Adresse konnte nicht aufgelöst werden; prüfen Sie den Domainnamen.",
+        "fr": "L’adresse n’a pas pu être résolue ; vérifiez le nom de domaine.",
+        "es": "No se pudo resolver la dirección; revise el nombre de dominio.",
+    },
+    "entegrasyon_baglanti_yok": {
+        "tr": "Cihaza ulaşılamıyor; kapalı olabilir ya da ağda değil.",
+        "en": "The device is unreachable; it may be off or not on the network.",
+        "ar": "تعذّر الوصول إلى الجهاز؛ قد يكون مغلقًا أو خارج الشبكة.",
+        "ru": "Устройство недоступно; возможно, оно выключено или вне сети.",
+        "de": "Das Gerät ist nicht erreichbar; es ist möglicherweise aus oder nicht im Netz.",
+        "fr": "L’appareil est injoignable ; il est peut-être éteint ou hors réseau.",
+        "es": "No se puede acceder al dispositivo; puede estar apagado o fuera de la red.",
+    },
+    "entegrasyon_adres_gecersiz": {
+        "tr": "Adres biçimi geçersiz.",
+        "en": "The address format is invalid.",
+        "ar": "صيغة العنوان غير صالحة.",
+        "ru": "Неверный формат адреса.",
+        "de": "Das Adressformat ist ungültig.",
+        "fr": "Le format de l’adresse est invalide.",
+        "es": "El formato de la dirección no es válido.",
+    },
     "panik_tipi_yetkisiz": {
         "tr": "Bu acil durum türünü başlatma yetkiniz yok.",
         "en": "You are not allowed to raise this type of emergency.",

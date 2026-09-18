@@ -2196,6 +2196,66 @@ abstract class AppLocalizations {
   /// **'Yeni devriye planı'**
   String get devriyePlanYeniBaslik;
 
+  /// No description provided for @entegSaglikBilinmiyor.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bilinmiyor'**
+  String get entegSaglikBilinmiyor;
+
+  /// No description provided for @entegSaglikBagli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bağlı'**
+  String get entegSaglikBagli;
+
+  /// No description provided for @entegSaglikHata.
+  ///
+  /// In tr, this message translates to:
+  /// **'Hata'**
+  String get entegSaglikHata;
+
+  /// No description provided for @entegKontrolEt.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kontrol et'**
+  String get entegKontrolEt;
+
+  /// No description provided for @entegHicIletisim.
+  ///
+  /// In tr, this message translates to:
+  /// **'Henüz iletişim yok'**
+  String get entegHicIletisim;
+
+  /// No description provided for @entegSonIletisimZaman.
+  ///
+  /// In tr, this message translates to:
+  /// **'Son iletişim: {zaman}'**
+  String entegSonIletisimZaman(Object zaman);
+
+  /// No description provided for @entegHataAdresEngelli.
+  ///
+  /// In tr, this message translates to:
+  /// **'Adres güvenlik kurallarına takıldı; iç ağ adresleri kullanılamaz.'**
+  String get entegHataAdresEngelli;
+
+  /// No description provided for @entegHataAdresCozulemedi.
+  ///
+  /// In tr, this message translates to:
+  /// **'Adres çözülemedi; alan adını kontrol edin.'**
+  String get entegHataAdresCozulemedi;
+
+  /// No description provided for @entegHataBaglantiYok.
+  ///
+  /// In tr, this message translates to:
+  /// **'Cihaza ulaşılamıyor; kapalı olabilir ya da ağda değil.'**
+  String get entegHataBaglantiYok;
+
+  /// No description provided for @entegHataAdresGecersiz.
+  ///
+  /// In tr, this message translates to:
+  /// **'Adres biçimi geçersiz.'**
+  String get entegHataAdresGecersiz;
+
   /// No description provided for @panikBaslik.
   ///
   /// In tr, this message translates to:

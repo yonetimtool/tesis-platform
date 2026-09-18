@@ -21,12 +21,19 @@ from ..crypto import decrypt_secret, encrypt_secret
 from ..deps import get_tenant_db, require_role
 from ..integrations_presets import PRESETS, render_template
 from ..models import AppUser, Integration
+from ..entegrasyon_saglik import (
+    HATA_BAGLANTI,
+    HATA_SSRF,
+    baglanti_dene,
+    simdi as _simdi,
+)
 from ..safe_http import SSRFBlocked, send_webhook
 from ..schemas import (
     IntegrationCreate,
     IntegrationListResponse,
     IntegrationOut,
     IntegrationPresetOut,
+    IntegrationSaglikOut,
     IntegrationTriggerIn,
     IntegrationTriggerOut,
     IntegrationUpdate,
@@ -200,7 +207,73 @@ async def trigger_integration(
             content=content,
         )
     except SSRFBlocked as exc:
+        # (P240 §4) GERCEK TETIK DE SAGLIGI YAZAR — en guclu kanit budur.
+        await _saglik_yaz(db, obj, bagli=False, kod=HATA_SSRF, ayrinti=str(exc))
         return IntegrationTriggerOut(ok=False, status=None, error=str(exc))
+
+    await _saglik_yaz(
+        db, obj,
+        bagli=result.ok,
+        kod=None if result.ok else HATA_BAGLANTI,
+        ayrinti=None if result.ok else (result.error or f"HTTP {result.status}"),
+    )
     return IntegrationTriggerOut(
         ok=result.ok, status=result.status, error=result.error
+    )
+
+
+async def _saglik_yaz(
+    db: AsyncSession,
+    obj: Integration,
+    *,
+    bagli: bool,
+    kod: str | None,
+    ayrinti: str | None,
+) -> None:
+    """(P240 §4) Saglik alanlarini gunceller.
+
+    BAGLANTI GERI GELINCE `kopus_bildirildi_at` TEMIZLENIR: damga
+    temizlenmezse, ikinci bir kopus SESSIZ kalirdi — yani bildirim
+    yalnizca ILK kopusta calisan bir sey olurdu.
+    """
+    simdi = _simdi()
+    obj.saglik = "bagli" if bagli else "hata"
+    obj.son_kontrol_at = simdi
+    if bagli:
+        obj.son_basarili_at = simdi
+        obj.son_hata_kod = None
+        obj.son_hata_ayrinti = None
+        obj.kopus_bildirildi_at = None
+    else:
+        obj.son_hata_kod = kod
+        obj.son_hata_ayrinti = ayrinti
+    await db.flush()
+
+
+@router.post("/{integration_id}/saglik", response_model=IntegrationSaglikOut)
+async def saglik_kontrol(
+    integration_id: uuid.UUID,
+    db: AsyncSession = Depends(get_tenant_db),
+    _: AppUser = Depends(_MANAGER),
+) -> IntegrationSaglikOut:
+    """(P240 §4) SIMDI KONTROL ET — HTTP ISTEGI GONDERMEZ.
+
+    Tetik ucundan AYRI ve bu ayrim hayati: `megaphone`/`smarthome`
+    kanallarini "test" diye tetiklemek, anons yapmak ya da kapi acmak
+    demektir. Burada yalniz TCP baglantisi acilip kapatilir.
+
+    Panelin "Kontrol et" dugmesi bunu cagirir; "Test" dugmesi (tetik)
+    ayri durur ve arayuz ikisinin FARKINI yazar.
+    """
+    obj = await get_or_404(db, Integration, integration_id)
+    sonuc = await run_in_threadpool(baglanti_dene, obj.endpoint_url)
+    await _saglik_yaz(
+        db, obj, bagli=sonuc.bagli, kod=sonuc.hata_kod, ayrinti=sonuc.ayrinti
+    )
+    return IntegrationSaglikOut(
+        id=obj.id,
+        saglik=obj.saglik,
+        son_kontrol_at=obj.son_kontrol_at,
+        son_basarili_at=obj.son_basarili_at,
+        son_hata_kod=obj.son_hata_kod,
     )

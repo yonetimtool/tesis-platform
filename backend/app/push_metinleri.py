@@ -817,6 +817,32 @@ METINLER: dict[str, PushMetni] = {
         },
         params=('ad', 'yer'),
     ),
+    # (P240 §4) ENTEGRASYON KOPTU — yoneticiye.
+    #
+    # KRITIK KANALDA DEGIL (bkz. push_kanal): kopan bir diyafon
+    # baglantisi onemlidir ama gece 03:00'te uyandirmayi gerektirmez.
+    # Panik bildirimiyle ayni sesi vermek, kritik kanali degersizlestirir.
+    "entegrasyon_koptu": PushMetni(
+        baslik={
+            "tr": "Bağlantı koptu",
+            "en": "Connection lost",
+            "ar": "انقطع الاتصال",
+            "ru": "Соединение потеряно",
+            "de": "Verbindung unterbrochen",
+            "fr": "Connexion perdue",
+            "es": "Conexión perdida",
+        },
+        govde={
+            "tr": "{ad} entegrasyonuna ulaşılamıyor.",
+            "en": "The {ad} integration is unreachable.",
+            "ar": "تعذّر الوصول إلى تكامل {ad}.",
+            "ru": "Интеграция {ad} недоступна.",
+            "de": "Die Integration {ad} ist nicht erreichbar.",
+            "fr": "L’intégration {ad} est injoignable.",
+            "es": "No se puede acceder a la integración {ad}.",
+        },
+        params=('ad',),
+    ),
     "anket_acildi": PushMetni(
         baslik={
             "tr": "Yeni anket",

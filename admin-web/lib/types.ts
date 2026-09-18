@@ -782,6 +782,12 @@ export interface Integration {
   payload_template: string;
   aktif: boolean;
   created_at: string;
+  /** (P240 §4) `bilinmiyor` | `bagli` | `hata`. */
+  saglik?: string;
+  son_kontrol_at?: string | null;
+  son_basarili_at?: string | null;
+  /** Hata KIMLIGI — metin istemcide, kullanicinin dilinde kurulur. */
+  son_hata_kod?: string | null;
 }
 export interface IntegrationList {
   meta: PageMeta;

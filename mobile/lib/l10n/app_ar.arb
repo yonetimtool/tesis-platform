@@ -349,6 +349,21 @@
   "devriyePlanSilindi": "تم حذف الخطة ✓",
   "devriyePlanDuzenleBaslik": "تعديل خطة الدورية",
   "devriyePlanYeniBaslik": "خطة دورية جديدة",
+  "entegSaglikBilinmiyor": "غير معروف",
+  "entegSaglikBagli": "متصل",
+  "entegSaglikHata": "خطأ",
+  "entegKontrolEt": "افحص الآن",
+  "entegHicIletisim": "لا يوجد اتصال بعد",
+  "entegSonIletisimZaman": "آخر اتصال: {zaman}",
+  "@entegSonIletisimZaman": {
+    "placeholders": {
+      "zaman": {}
+    }
+  },
+  "entegHataAdresEngelli": "حُظر العنوان وفق قواعد الأمان؛ لا يُسمح بعناوين الشبكة الداخلية.",
+  "entegHataAdresCozulemedi": "تعذّر تحليل العنوان؛ تحقق من اسم النطاق.",
+  "entegHataBaglantiYok": "تعذّر الوصول إلى الجهاز؛ قد يكون مغلقًا أو خارج الشبكة.",
+  "entegHataAdresGecersiz": "صيغة العنوان غير صالحة.",
   "panikBaslik": "حالة طوارئ",
   "panikKisa": "SOS",
   "panikTipSakin": "طوارئ في المنزل (صحة، أمان)",

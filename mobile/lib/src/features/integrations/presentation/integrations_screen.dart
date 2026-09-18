@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/error/akis_hatasi.dart';
 import '../../../core/error/api_exception.dart';
 import '../../../core/i18n/l10n.dart';
+import '../data/integration_api.dart';
 import '../domain/integration_models.dart';
 import '../../../core/ui/merkez_diyalog.dart';
 import 'integrations_controller.dart';
@@ -90,6 +91,39 @@ class _IntegrationCard extends ConsumerStatefulWidget {
 class _IntegrationCardState extends ConsumerState<_IntegrationCard> {
   TriggerResult? _result;
   bool _testing = false;
+  bool _kontrol = false;
+
+  /// (P240 §4) BAGLANTI KONTROLU — TETIKLEMEZ.
+  Future<void> _saglikKontrol() async {
+    setState(() => _kontrol = true);
+    try {
+      await ref
+          .read(integrationApiProvider)
+          .saglikKontrol(widget.integration.id);
+      await ref.read(integrationsControllerProvider.notifier).refresh();
+    } catch (_) {
+      // SESSIZ: sonuc zaten LISTEDE gorunur (saglik satiri). Ayrica
+      // bir hata balonu gostermek, "kontrol basarisiz" ile
+      // "baglanti kopuk"u birbirine karistirirdi.
+    } finally {
+      if (mounted) setState(() => _kontrol = false);
+    }
+  }
+
+  /// Saglik durumunun okunur metni; hata varsa SEBEBI de yazar.
+  String _saglikMetni(AppLocalizations l10n, Integration it) {
+    if (it.saglik == 'bagli') return l10n.entegSaglikBagli;
+    if (it.saglik != 'hata') return l10n.entegSaglikBilinmiyor;
+    return '${l10n.entegSaglikHata} — ${_hataMetni(l10n, it.sonHataKod)}';
+  }
+
+  /// Hata KIMLIGI -> aktif dildeki cumle. Sunucu cumle GONDERMEZ.
+  String _hataMetni(AppLocalizations l10n, String? kod) => switch (kod) {
+        'entegrasyon_adres_engelli' => l10n.entegHataAdresEngelli,
+        'entegrasyon_adres_cozulemedi' => l10n.entegHataAdresCozulemedi,
+        'entegrasyon_adres_gecersiz' => l10n.entegHataAdresGecersiz,
+        _ => l10n.entegHataBaglantiYok,
+      };
 
   AppLocalizations get _l10n => AppLocalizations.of(context);
 
@@ -187,6 +221,49 @@ class _IntegrationCardState extends ConsumerState<_IntegrationCard> {
                   it.authType, it.authSecretSet ? ' 🔒' : ''),
               style: Theme.of(context).textTheme.bodySmall,
             ),
+            // (P240 §4) SAGLIK SATIRI.
+            //
+            // `bilinmiyor` HATA DEGIL: "henuz olculmedi" ile "kopuk"
+            // ayni sey degil ve yeni tanimi kirmizi gostermek olmayan
+            // bir sorun bildirmek olurdu.
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Row(
+                children: [
+                  Icon(
+                    it.saglik == 'bagli'
+                        ? Icons.check_circle_outline
+                        : it.saglik == 'hata'
+                            ? Icons.error_outline
+                            : Icons.help_outline,
+                    size: 16,
+                    color: it.saglik == 'bagli'
+                        ? Colors.green
+                        : it.saglik == 'hata'
+                            ? Theme.of(context).colorScheme.error
+                            : Colors.grey,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      _saglikMetni(l10n, it),
+                      key: Key('enteg-saglik-${it.id}'),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Text(
+              // "Hic iletisim olmadi" ile "uzun zaman once oldu" ayni
+              // sey degil; bos birakmak ikisini karistirirdi.
+              it.sonBasariliAt == null
+                  ? l10n.entegHicIletisim
+                  : l10n.entegSonIletisimZaman(
+                      tarihSaatBicimi(it.sonBasariliAt!, context.dilKodu)),
+              key: Key('enteg-son-iletisim-${it.id}'),
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
             if (r != null)
               Padding(
                 padding: const EdgeInsets.only(top: 4),
@@ -207,6 +284,23 @@ class _IntegrationCardState extends ConsumerState<_IntegrationCard> {
             Wrap(
               spacing: 8,
               children: [
+                // (P240 §4) KONTROL ET — TETIKLEMEZ.
+                //
+                // "Test"ten AYRI dugme: tek dugmeye indirmek, megafon
+                // kanalinda "kontrol edeyim" diyen yoneticiye siteye
+                // ANONS YAPTIRIRDI.
+                OutlinedButton.icon(
+                  key: Key('enteg-saglik-kontrol-${it.id}'),
+                  icon: _kontrol
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.network_check, size: 18),
+                  label: Text(l10n.entegKontrolEt),
+                  onPressed: _kontrol ? null : _saglikKontrol,
+                ),
                 OutlinedButton.icon(
                   icon: _testing
                       ? const SizedBox(

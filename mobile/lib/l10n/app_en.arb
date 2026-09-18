@@ -349,6 +349,21 @@
   "devriyePlanSilindi": "Plan deleted ✓",
   "devriyePlanDuzenleBaslik": "Edit patrol plan",
   "devriyePlanYeniBaslik": "New patrol plan",
+  "entegSaglikBilinmiyor": "Unknown",
+  "entegSaglikBagli": "Connected",
+  "entegSaglikHata": "Error",
+  "entegKontrolEt": "Check now",
+  "entegHicIletisim": "No contact yet",
+  "entegSonIletisimZaman": "Last contact: {zaman}",
+  "@entegSonIletisimZaman": {
+    "placeholders": {
+      "zaman": {}
+    }
+  },
+  "entegHataAdresEngelli": "The address was blocked by security rules; internal network addresses are not allowed.",
+  "entegHataAdresCozulemedi": "The address could not be resolved; check the domain name.",
+  "entegHataBaglantiYok": "The device is unreachable; it may be off or not on the network.",
+  "entegHataAdresGecersiz": "The address format is invalid.",
   "panikBaslik": "Emergency",
   "panikKisa": "SOS",
   "panikTipSakin": "Emergency at home (health, safety)",

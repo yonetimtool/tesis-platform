@@ -13984,6 +13984,29 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
+  /integrations/{id}/saglik:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    post:
+      tags: [integrations]
+      summary: Baglanti kontrolu — entegrasyonu TETIKLEMEZ (admin+yonetici)
+      description: |
+        (P240 §4) SAGLIK KONTROLU TETIKLEME DEGILDIR ve bu ayrim hayati:
+        kanallar `megaphone` (siteye anons) ve `smarthome` (kapi acan
+        cihaz). "Test" gibi periyodik tetiklemek, gunde 96 kez anons
+        yapmak demekti.
+
+        Bu uc HICBIR HTTP ISTEGI GONDERMEZ: SSRF kapisindan gecirilmis
+        adrese TCP baglantisi acar ve kapatir. Olculen sey "BAGLANTI VAR
+        MI"dir; "cihaz isini dogru yapiyor mu" DEGIL — ikisi farkli
+        iddialardir.
+
+        Sonuc `integration.saglik` alanina yazilir; `son_hata_kod` bir
+        KIMLIKTIR (cumle degil) ve istemci onu kendi dilinde metne
+        cevirir. Ham ayrinti (`son_hata_ayrinti`) istemciye DONMEZ.
+      responses:
+        "200": { description: saglik durumu }
+        "403": { description: yalniz admin + yonetici }
   /integrations/{id}/trigger:
     parameters:
       - $ref: "#/components/parameters/PathId"

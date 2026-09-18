@@ -1299,6 +1299,41 @@ class AppLocalizationsRu extends AppLocalizations {
   String get devriyePlanYeniBaslik => 'Новый план обхода';
 
   @override
+  String get entegSaglikBilinmiyor => 'Неизвестно';
+
+  @override
+  String get entegSaglikBagli => 'Подключено';
+
+  @override
+  String get entegSaglikHata => 'Ошибка';
+
+  @override
+  String get entegKontrolEt => 'Проверить';
+
+  @override
+  String get entegHicIletisim => 'Связи ещё не было';
+
+  @override
+  String entegSonIletisimZaman(Object zaman) {
+    return 'Последняя связь: $zaman';
+  }
+
+  @override
+  String get entegHataAdresEngelli =>
+      'Адрес заблокирован правилами безопасности; внутренние адреса недопустимы.';
+
+  @override
+  String get entegHataAdresCozulemedi =>
+      'Адрес не разрешается; проверьте доменное имя.';
+
+  @override
+  String get entegHataBaglantiYok =>
+      'Устройство недоступно; возможно, оно выключено или вне сети.';
+
+  @override
+  String get entegHataAdresGecersiz => 'Неверный формат адреса.';
+
+  @override
   String get panikBaslik => 'Экстренный вызов';
 
   @override

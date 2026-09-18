@@ -349,6 +349,21 @@
   "devriyePlanSilindi": "Plan supprimé ✓",
   "devriyePlanDuzenleBaslik": "Modifier le plan de patrouille",
   "devriyePlanYeniBaslik": "Nouveau plan de patrouille",
+  "entegSaglikBilinmiyor": "Inconnu",
+  "entegSaglikBagli": "Connecté",
+  "entegSaglikHata": "Erreur",
+  "entegKontrolEt": "Vérifier",
+  "entegHicIletisim": "Aucun contact",
+  "entegSonIletisimZaman": "Dernier contact : {zaman}",
+  "@entegSonIletisimZaman": {
+    "placeholders": {
+      "zaman": {}
+    }
+  },
+  "entegHataAdresEngelli": "L’adresse a été bloquée par les règles de sécurité ; les adresses réseau internes sont interdites.",
+  "entegHataAdresCozulemedi": "L’adresse n’a pas pu être résolue ; vérifiez le nom de domaine.",
+  "entegHataBaglantiYok": "L’appareil est injoignable ; il est peut-être éteint ou hors réseau.",
+  "entegHataAdresGecersiz": "Le format de l’adresse est invalide.",
   "panikBaslik": "Urgence",
   "panikKisa": "SOS",
   "panikTipSakin": "Urgence à domicile (santé, sécurité)",

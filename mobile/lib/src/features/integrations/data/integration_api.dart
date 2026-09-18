@@ -90,6 +90,22 @@ class IntegrationApi {
       throw ApiException.fromDio(e);
     }
   }
+
+  /// (P240 §4) BAGLANTI KONTROLU — entegrasyonu TETIKLEMEZ.
+  ///
+  /// `trigger`dan AYRI UC ve bu ayrim hayati: `megaphone`/`smarthome`
+  /// kanallarini "kontrol" diye tetiklemek, siteye anons yapmak ya da
+  /// kapi acmak demektir. Sunucu yalniz TCP baglantisi acip kapatir.
+  Future<Integration> saglikKontrol(String id) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/integrations/$id/saglik',
+      );
+      return Integration.fromJson(res.data ?? const {});
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
 }
 
 final integrationApiProvider = Provider<IntegrationApi>((ref) {

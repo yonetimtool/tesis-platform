@@ -349,6 +349,21 @@
   "devriyePlanSilindi": "Plan gelöscht ✓",
   "devriyePlanDuzenleBaslik": "Rundgangsplan bearbeiten",
   "devriyePlanYeniBaslik": "Neuer Rundgangsplan",
+  "entegSaglikBilinmiyor": "Unbekannt",
+  "entegSaglikBagli": "Verbunden",
+  "entegSaglikHata": "Fehler",
+  "entegKontrolEt": "Jetzt prüfen",
+  "entegHicIletisim": "Noch kein Kontakt",
+  "entegSonIletisimZaman": "Letzter Kontakt: {zaman}",
+  "@entegSonIletisimZaman": {
+    "placeholders": {
+      "zaman": {}
+    }
+  },
+  "entegHataAdresEngelli": "Die Adresse wurde von den Sicherheitsregeln blockiert; interne Netzwerkadressen sind nicht erlaubt.",
+  "entegHataAdresCozulemedi": "Die Adresse konnte nicht aufgelöst werden; prüfen Sie den Domainnamen.",
+  "entegHataBaglantiYok": "Das Gerät ist nicht erreichbar; es ist möglicherweise aus oder nicht im Netz.",
+  "entegHataAdresGecersiz": "Das Adressformat ist ungültig.",
   "panikBaslik": "Notfall",
   "panikKisa": "SOS",
   "panikTipSakin": "Notfall zu Hause (Gesundheit, Sicherheit)",

@@ -349,6 +349,21 @@
   "devriyePlanSilindi": "План удалён ✓",
   "devriyePlanDuzenleBaslik": "Изменить план обхода",
   "devriyePlanYeniBaslik": "Новый план обхода",
+  "entegSaglikBilinmiyor": "Неизвестно",
+  "entegSaglikBagli": "Подключено",
+  "entegSaglikHata": "Ошибка",
+  "entegKontrolEt": "Проверить",
+  "entegHicIletisim": "Связи ещё не было",
+  "entegSonIletisimZaman": "Последняя связь: {zaman}",
+  "@entegSonIletisimZaman": {
+    "placeholders": {
+      "zaman": {}
+    }
+  },
+  "entegHataAdresEngelli": "Адрес заблокирован правилами безопасности; внутренние адреса недопустимы.",
+  "entegHataAdresCozulemedi": "Адрес не разрешается; проверьте доменное имя.",
+  "entegHataBaglantiYok": "Устройство недоступно; возможно, оно выключено или вне сети.",
+  "entegHataAdresGecersiz": "Неверный формат адреса.",
   "panikBaslik": "Экстренный вызов",
   "panikKisa": "SOS",
   "panikTipSakin": "ЧП дома (здоровье, безопасность)",
