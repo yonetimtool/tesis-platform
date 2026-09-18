@@ -7034,4 +7034,66 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get modulAkilliEv => 'Maison connectée';
+
+  @override
+  String get bakimBaslik => 'Entretien périodique';
+
+  @override
+  String get bakimEkipmanYok => 'Aucun équipement suivi.';
+
+  @override
+  String get bakimFiltreDurum => 'Par état';
+
+  @override
+  String get bakimFiltreTumu => 'Tous';
+
+  @override
+  String get bakimDurumGecikti => 'En retard';
+
+  @override
+  String get bakimDurumBugun => 'Aujourd’hui';
+
+  @override
+  String get bakimDurumYaklasti => 'Bientôt';
+
+  @override
+  String get bakimDurumPlanli => 'Planifié';
+
+  @override
+  String get bakimYasal => 'Obligation légale';
+
+  @override
+  String get bakimKayitEkle => 'Entretien réalisé';
+
+  @override
+  String get bakimKayitTarihi => 'Date d’entretien';
+
+  @override
+  String get bakimYapan => 'Qui l’a réalisé';
+
+  @override
+  String get bakimIslem => 'Travaux effectués';
+
+  @override
+  String get bakimTutar => 'Coût';
+
+  @override
+  String get bakimGidereYaz => 'Comptabiliser en dépense';
+
+  @override
+  String get bakimGidereYazIpucu =>
+      'Inscrit comme dépense en attente ; sort de la caisse après validation.';
+
+  @override
+  String get modulBakim => 'Entretien';
+
+  @override
+  String bakimKalanGun(int n) {
+    return '$n jours restants';
+  }
+
+  @override
+  String bakimGecikmeGun(int n) {
+    return '$n jours de retard';
+  }
 }

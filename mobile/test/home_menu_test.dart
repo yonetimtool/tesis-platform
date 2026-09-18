@@ -75,6 +75,8 @@ void main() {
         HomeMenuEntry.ihlaller,
         // (P240 §1) Acil durum cagrilari — TAKIP.
         HomeMenuEntry.panikTakip,
+        // (P241 §1) Bakim takvimi SALT-OKUMA.
+        HomeMenuEntry.bakim,
         HomeMenuEntry.vardiyalar,
         // Sikayet Haritasi (yogunluk) YOK; salt-okuma Bina Duzenleme EN ALTTA.
         HomeMenuEntry.binaDuzenleme,
@@ -172,6 +174,8 @@ void main() {
           HomeMenuEntry.diyafon,
           // (P240 §3) Akilli ev — ortak alan cihazlari.
           HomeMenuEntry.akilliEv,
+          // (P241 §1) Periyodik bakim takibi.
+          HomeMenuEntry.bakim,
           HomeMenuEntry.binaDuzenleme,
           // (P26) Bagimsiz Bolum Tanimlari — yonetim kurulum adimi.
           HomeMenuEntry.daireTanimlari,

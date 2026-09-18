@@ -86,6 +86,15 @@ celery_app.conf.beat_schedule = {
         "task": "saglik.entegrasyon_kontrol",
         "schedule": 900.0,
     },
+    # (P241 §1) PERIYODIK BAKIM HATIRLATMASI — GUNDE BIR.
+    #
+    # Bakim tarihleri GUN cozunurluklu; daha sik kosmak ayni gun icinde
+    # hicbir yeni bilgi uretmezdi. Gecikmis bakim HER GUN degil haftada
+    # bir tekrar hatirlatilir (bildirim yorgunlugu — modul basligi).
+    "bakim-hatirlatma": {
+        "task": "bakim.hatirlatma",
+        "schedule": 86400.0,
+    },
     # (P37) Caydirici webhook yeniden deneme kuyrugu — geri cekilme
     # dakikalar mertebesinde oldugu icin dakikada bir bakmak yeterli.
     "gurultu-kuyrugu": {

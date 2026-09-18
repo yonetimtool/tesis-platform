@@ -1895,6 +1895,25 @@ METINLER: dict[str, dict[str, str]] = {
         "fr": "Cet appareil n’appartient pas à votre logement.",
         "es": "Este dispositivo no pertenece a su vivienda.",
     },
+    # (P241 §1) PERIYODIK BAKIM.
+    "bakim_periyot_gun_gerekli": {
+        "tr": "Serbest periyot seçtiniz; kaç günde bir olacağını yazın.",
+        "en": "You chose a custom period; enter how many days it repeats.",
+        "ar": "اخترت فترة مخصصة؛ اكتب عدد الأيام بين كل صيانة.",
+        "ru": "Выбран произвольный период — укажите число дней.",
+        "de": "Sie haben einen freien Zeitraum gewählt; geben Sie die Tage an.",
+        "fr": "Vous avez choisi une période libre ; indiquez le nombre de jours.",
+        "es": "Eligió un período libre; indique cada cuántos días se repite.",
+    },
+    "bakim_periyot_gun_gecersiz": {
+        "tr": "Gün sayısı yalnızca serbest periyotta girilir.",
+        "en": "A day count applies only to a custom period.",
+        "ar": "عدد الأيام يُستخدم مع الفترة المخصصة فقط.",
+        "ru": "Число дней задаётся только для произвольного периода.",
+        "de": "Eine Tagesangabe gilt nur für einen freien Zeitraum.",
+        "fr": "Le nombre de jours ne s’applique qu’à une période libre.",
+        "es": "El número de días solo aplica a un período libre.",
+    },
     "akilli_ev_eylem_desteklenmiyor": {
         "tr": "Bu cihaz bu işlemi yapamaz.",
         "en": "This device cannot perform this action.",

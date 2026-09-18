@@ -6844,4 +6844,66 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get modulAkilliEv => 'Akıllı ev';
+
+  @override
+  String get bakimBaslik => 'Periyodik bakım';
+
+  @override
+  String get bakimEkipmanYok => 'Bakım takibinde ekipman yok.';
+
+  @override
+  String get bakimFiltreDurum => 'Duruma göre';
+
+  @override
+  String get bakimFiltreTumu => 'Tümü';
+
+  @override
+  String get bakimDurumGecikti => 'Gecikti';
+
+  @override
+  String get bakimDurumBugun => 'Bugün';
+
+  @override
+  String get bakimDurumYaklasti => 'Yaklaşıyor';
+
+  @override
+  String get bakimDurumPlanli => 'Planlı';
+
+  @override
+  String get bakimYasal => 'Yasal zorunluluk';
+
+  @override
+  String get bakimKayitEkle => 'Bakım yapıldı';
+
+  @override
+  String get bakimKayitTarihi => 'Bakım tarihi';
+
+  @override
+  String get bakimYapan => 'Kim yaptı';
+
+  @override
+  String get bakimIslem => 'Yapılan işlem';
+
+  @override
+  String get bakimTutar => 'Maliyet';
+
+  @override
+  String get bakimGidereYaz => 'Gidere yaz';
+
+  @override
+  String get bakimGidereYazIpucu =>
+      'Onay bekleyen gider olarak düşer; onaylanana kadar kasadan çıkmaz.';
+
+  @override
+  String get modulBakim => 'Bakım takibi';
+
+  @override
+  String bakimKalanGun(int n) {
+    return '$n gün kaldı';
+  }
+
+  @override
+  String bakimGecikmeGun(int n) {
+    return '$n gün gecikti';
+  }
 }

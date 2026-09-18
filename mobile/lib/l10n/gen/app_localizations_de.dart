@@ -7041,4 +7041,66 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get modulAkilliEv => 'Smart Home';
+
+  @override
+  String get bakimBaslik => 'Periodische Wartung';
+
+  @override
+  String get bakimEkipmanYok => 'Keine Anlagen in der Wartungsverfolgung.';
+
+  @override
+  String get bakimFiltreDurum => 'Nach Status';
+
+  @override
+  String get bakimFiltreTumu => 'Alle';
+
+  @override
+  String get bakimDurumGecikti => 'Überfällig';
+
+  @override
+  String get bakimDurumBugun => 'Heute';
+
+  @override
+  String get bakimDurumYaklasti => 'Steht an';
+
+  @override
+  String get bakimDurumPlanli => 'Geplant';
+
+  @override
+  String get bakimYasal => 'Gesetzlich vorgeschrieben';
+
+  @override
+  String get bakimKayitEkle => 'Wartung erfassen';
+
+  @override
+  String get bakimKayitTarihi => 'Wartungsdatum';
+
+  @override
+  String get bakimYapan => 'Wer hat es ausgeführt';
+
+  @override
+  String get bakimIslem => 'Durchgeführte Arbeit';
+
+  @override
+  String get bakimTutar => 'Kosten';
+
+  @override
+  String get bakimGidereYaz => 'Als Ausgabe erfassen';
+
+  @override
+  String get bakimGidereYazIpucu =>
+      'Wird als offene Ausgabe gebucht und verlässt die Kasse erst nach Freigabe.';
+
+  @override
+  String get modulBakim => 'Wartung';
+
+  @override
+  String bakimKalanGun(int n) {
+    return 'Noch $n Tage';
+  }
+
+  @override
+  String bakimGecikmeGun(int n) {
+    return '$n Tage überfällig';
+  }
 }

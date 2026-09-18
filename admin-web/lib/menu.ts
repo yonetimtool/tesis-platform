@@ -216,6 +216,9 @@ const OGELER: readonly MenuOgesi[] = [
   // (P240 §3) Akilli ev — AYRI SEKME (entegrasyon sayfasinin alti degil):
   // yonetici burada gunluk is yapar, entegrasyon sayfasi kurulum icindir.
   { href: "/akilli-ev", anahtar: "kabukAkilliEv", icon: "hub", grup: "guvenlik" },
+  // (P241 §1) Bakim takibi — TESIS grubunda: binanin kendisiyle ilgili
+  // (asansor, kazan, jenerator), guvenlik olayi degil.
+  { href: "/bakim", anahtar: "kabukBakim", icon: "cube", grup: "tesis" },
   { href: "/notifications", anahtar: "kabukBildirimler", icon: "bell", grup: "guvenlik" },
   { href: "/kameralar", anahtar: "kabukKameralar", icon: "camera", grup: "guvenlik" },
   { href: "/kamera-kayitlari", anahtar: "kabukKameraKayitlari", icon: "kayit", grup: "guvenlik" },

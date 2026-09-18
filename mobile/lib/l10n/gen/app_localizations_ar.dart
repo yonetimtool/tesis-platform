@@ -7096,4 +7096,66 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get modulAkilliEv => 'المنزل الذكي';
+
+  @override
+  String get bakimBaslik => 'الصيانة الدورية';
+
+  @override
+  String get bakimEkipmanYok => 'لا توجد معدات متابَعة.';
+
+  @override
+  String get bakimFiltreDurum => 'حسب الحالة';
+
+  @override
+  String get bakimFiltreTumu => 'الكل';
+
+  @override
+  String get bakimDurumGecikti => 'متأخرة';
+
+  @override
+  String get bakimDurumBugun => 'اليوم';
+
+  @override
+  String get bakimDurumYaklasti => 'قريبة';
+
+  @override
+  String get bakimDurumPlanli => 'مجدولة';
+
+  @override
+  String get bakimYasal => 'إلزامي قانونًا';
+
+  @override
+  String get bakimKayitEkle => 'تسجيل صيانة';
+
+  @override
+  String get bakimKayitTarihi => 'تاريخ الصيانة';
+
+  @override
+  String get bakimYapan => 'من نفّذها';
+
+  @override
+  String get bakimIslem => 'العمل المنفَّذ';
+
+  @override
+  String get bakimTutar => 'التكلفة';
+
+  @override
+  String get bakimGidereYaz => 'تسجيلها كمصروف';
+
+  @override
+  String get bakimGidereYazIpucu =>
+      'يُقيَّد كمصروف بانتظار الموافقة ولا يخرج من الصندوق قبلها.';
+
+  @override
+  String get modulBakim => 'الصيانة';
+
+  @override
+  String bakimKalanGun(int n) {
+    return 'بقي $n يومًا';
+  }
+
+  @override
+  String bakimGecikmeGun(int n) {
+    return 'تأخرت $n يومًا';
+  }
 }

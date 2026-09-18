@@ -148,6 +148,8 @@ export const TESIS_ROTALARI = [
   "/panik",
   // (P240 §3) Akilli ev — tesis yuzeyi (sakin de KENDI dairesini gorur).
   "/akilli-ev",
+  // (P241 §1) Periyodik bakim takibi — tesis yuzeyi.
+  "/bakim",
   "/arac-gecisleri",
   // (P126.6) Saha rolunun kendi gorevleri.
   "/gorevlerim",
@@ -457,6 +459,10 @@ export const ROTA_ROLLERI: Record<string, readonly string[]> = {
   // sinirli) — ayrilan sey YETKI degil YUZEY: sakin kendi cihazlarini
   // MOBILDEN yonetir, web paneli yonetim yuzeyidir.
   "/akilli-ev": ["admin", "yonetici"],
+  // (P241 §1) BAKIM — yonetim + DENETCI (yillik ozet denetimin belgesi).
+  // Saha rolleri sunucuda listeyi OKUR ama `app.*`ta sayfa gormez
+  // (P129); onlarin yuzeyi MOBIL.
+  "/bakim": ["admin", "yonetici", "denetci"],
   "/notifications": ["admin", "yonetici"],
   // (P167 §6.1) "/yonetisim" DORDE BOLUNDU; roller aynen tasindi.
   "/karar-defteri": ["admin", "yonetici"],

@@ -7041,4 +7041,66 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get modulAkilliEv => 'Smart home';
+
+  @override
+  String get bakimBaslik => 'Scheduled maintenance';
+
+  @override
+  String get bakimEkipmanYok => 'No equipment is tracked.';
+
+  @override
+  String get bakimFiltreDurum => 'By status';
+
+  @override
+  String get bakimFiltreTumu => 'All';
+
+  @override
+  String get bakimDurumGecikti => 'Overdue';
+
+  @override
+  String get bakimDurumBugun => 'Today';
+
+  @override
+  String get bakimDurumYaklasti => 'Due soon';
+
+  @override
+  String get bakimDurumPlanli => 'Scheduled';
+
+  @override
+  String get bakimYasal => 'Legally required';
+
+  @override
+  String get bakimKayitEkle => 'Record service';
+
+  @override
+  String get bakimKayitTarihi => 'Service date';
+
+  @override
+  String get bakimYapan => 'Who did it';
+
+  @override
+  String get bakimIslem => 'Work done';
+
+  @override
+  String get bakimTutar => 'Cost';
+
+  @override
+  String get bakimGidereYaz => 'Add to expenses';
+
+  @override
+  String get bakimGidereYazIpucu =>
+      'Posted as a pending expense; it leaves the cash box only after approval.';
+
+  @override
+  String get modulBakim => 'Maintenance';
+
+  @override
+  String bakimKalanGun(int n) {
+    return '$n days left';
+  }
+
+  @override
+  String bakimGecikmeGun(int n) {
+    return '$n days overdue';
+  }
 }

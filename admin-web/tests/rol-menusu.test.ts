@@ -154,6 +154,7 @@ const BIRINCIL_UC: Record<string, string> = {
   // (P240 §1) Panik takip ekrani — acilir acilmaz alarm listesini ceker.
   "/panik": "GET /panik",
   "/akilli-ev": "GET /akilli-ev/cihazlar",
+  "/bakim": "GET /bakim/ekipmanlar",
   "/arac-gecisleri": "GET /vehicle-passes",
   "/gorevlerim": "GET /tasks",
   "/kameralar": "GET /cameras",

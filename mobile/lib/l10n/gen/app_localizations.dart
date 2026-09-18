@@ -12166,6 +12166,120 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Akıllı ev'**
   String get modulAkilliEv;
+
+  /// (P241 §1) Periyodik bakim
+  ///
+  /// In tr, this message translates to:
+  /// **'Periyodik bakım'**
+  String get bakimBaslik;
+
+  /// (P241 §1) Periyodik bakim
+  ///
+  /// In tr, this message translates to:
+  /// **'Bakım takibinde ekipman yok.'**
+  String get bakimEkipmanYok;
+
+  /// (P241 §1) Periyodik bakim
+  ///
+  /// In tr, this message translates to:
+  /// **'Duruma göre'**
+  String get bakimFiltreDurum;
+
+  /// (P241 §1) Periyodik bakim
+  ///
+  /// In tr, this message translates to:
+  /// **'Tümü'**
+  String get bakimFiltreTumu;
+
+  /// (P241 §1) Periyodik bakim
+  ///
+  /// In tr, this message translates to:
+  /// **'Gecikti'**
+  String get bakimDurumGecikti;
+
+  /// (P241 §1) Periyodik bakim
+  ///
+  /// In tr, this message translates to:
+  /// **'Bugün'**
+  String get bakimDurumBugun;
+
+  /// (P241 §1) Periyodik bakim
+  ///
+  /// In tr, this message translates to:
+  /// **'Yaklaşıyor'**
+  String get bakimDurumYaklasti;
+
+  /// (P241 §1) Periyodik bakim
+  ///
+  /// In tr, this message translates to:
+  /// **'Planlı'**
+  String get bakimDurumPlanli;
+
+  /// (P241 §1) Periyodik bakim
+  ///
+  /// In tr, this message translates to:
+  /// **'Yasal zorunluluk'**
+  String get bakimYasal;
+
+  /// (P241 §1) Periyodik bakim
+  ///
+  /// In tr, this message translates to:
+  /// **'Bakım yapıldı'**
+  String get bakimKayitEkle;
+
+  /// (P241 §1) Periyodik bakim
+  ///
+  /// In tr, this message translates to:
+  /// **'Bakım tarihi'**
+  String get bakimKayitTarihi;
+
+  /// (P241 §1) Periyodik bakim
+  ///
+  /// In tr, this message translates to:
+  /// **'Kim yaptı'**
+  String get bakimYapan;
+
+  /// (P241 §1) Periyodik bakim
+  ///
+  /// In tr, this message translates to:
+  /// **'Yapılan işlem'**
+  String get bakimIslem;
+
+  /// (P241 §1) Periyodik bakim
+  ///
+  /// In tr, this message translates to:
+  /// **'Maliyet'**
+  String get bakimTutar;
+
+  /// (P241 §1) Periyodik bakim
+  ///
+  /// In tr, this message translates to:
+  /// **'Gidere yaz'**
+  String get bakimGidereYaz;
+
+  /// (P241 §1) Periyodik bakim
+  ///
+  /// In tr, this message translates to:
+  /// **'Onay bekleyen gider olarak düşer; onaylanana kadar kasadan çıkmaz.'**
+  String get bakimGidereYazIpucu;
+
+  /// (P241 §1) Periyodik bakim
+  ///
+  /// In tr, this message translates to:
+  /// **'Bakım takibi'**
+  String get modulBakim;
+
+  /// (P241 §1) Gun sayisi — renk tek basina anlam tasimamali
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} gün kaldı'**
+  String bakimKalanGun(int n);
+
+  /// (P241 §1) Gun sayisi — renk tek basina anlam tasimamali
+  ///
+  /// In tr, this message translates to:
+  /// **'{n} gün gecikti'**
+  String bakimGecikmeGun(int n);
 }
 
 class _AppLocalizationsDelegate

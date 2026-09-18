@@ -130,6 +130,11 @@ NOTIFICATION_TIP = ENUM(
     "entegrasyon_koptu",
     # (P240 §3, göç 0143) Akıllı ev sensörleri: kaçak ve yangın.
     "akilli_ev_kacak", "akilli_ev_yangin",
+    # (P241 §1, göç 0144) PERİYODİK BAKIM — üç kademe AYRI tip.
+    # Tek tipe indirmek, "yaklaşanları kapat ama gecikeni bana hâlâ
+    # söyle" tercihini imkânsız kılardı; geciken bakım yasal sorumluluk
+    # doğurabilir, yaklaşan ise yalnızca planlama bilgisidir.
+    "bakim_yaklasti", "bakim_bugun", "bakim_gecikti",
     name="notification_tip", create_type=False,
 )
 ASSET_KATEGORI = ENUM(
@@ -454,6 +459,12 @@ class Tenant(Base):
     # OCR toleransini 1 karakter gosterdi; yani yanlis okuma BEKLENIR.
     anpr_guven_esigi: Mapped[float] = mapped_column(
         Numeric(4, 3), nullable=False, server_default=text("0.850")
+    )
+    #: (P241 §1, goc 0144) BAKIM UYARI ESIGI — tesis VARSAYILANI.
+    #: Ekipman kendi `uyari_gun`unu verirse o ezer (yangin tupu 30 gun,
+    #: asansor muayenesi randevu icin 60 gun ister).
+    bakim_uyari_gun: Mapped[int] = mapped_column(
+        SmallInteger, nullable=False, server_default=text("30")
     )
     # Cikis olayinda acik gecis otomatik kapansin mi? Tek yonlu kapida
     # (yalniz giris kamerasi) kapatan olmaz — site bunu kapatabilmeli.
@@ -5202,3 +5213,138 @@ class AkilliEvSenaryo(Base):
         Boolean, nullable=False, server_default=text("true")
     )
     created_at = _created_at()
+
+
+# --------------------------------------------------------------------------- #
+# (P241 §1) PERIYODIK BAKIM TAKIBI
+# --------------------------------------------------------------------------- #
+BAKIM_PERIYOT = ENUM(
+    "aylik", "uc_aylik", "alti_aylik", "yillik", "gun",
+    name="bakim_periyot", create_type=False,
+)
+
+
+class BakimEkipmani(Base):
+    """Duzenli bakim gerektiren SABIT ekipman (asansor, jenerator, kazan).
+
+    `asset` (demirbas) DEGIL ve bu olculerek karar verildi: demirbas
+    KIME ZIMMETLENDIGINI takip eder (tasinabilir esya), bu tablo NE ZAMAN
+    BAKILDIGINI. Asansor kimseye zimmetlenmez. Ayrinti: goc 0144.
+
+    `asset_id` opsiyonel KOPRU: jeneratoru demirbas olarak da kaydetmis
+    bir site iki ayri kayit tutmak zorunda kalmasin.
+    """
+
+    __tablename__ = "bakim_ekipmani"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_bakim_ekipmani_id_tenant"),
+        ForeignKeyConstraint(
+            ["blok_id", "tenant_id"],
+            ["building_block.id", "building_block.tenant_id"],
+            ondelete="SET NULL",
+            name="fk_bakim_blok",
+        ),
+        ForeignKeyConstraint(
+            ["firma_id", "tenant_id"],
+            ["firma.id", "firma.tenant_id"],
+            ondelete="SET NULL",
+            name="fk_bakim_firma",
+        ),
+        ForeignKeyConstraint(
+            ["asset_id", "tenant_id"],
+            ["asset.id", "asset.tenant_id"],
+            ondelete="SET NULL",
+            name="fk_bakim_asset",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    ad: Mapped[str] = mapped_column(Text, nullable=False)
+    #: Ekipman TURU serbest metin: enum olsaydi "su aritma" ekleyen site
+    #: goc beklemek zorunda kalirdi. Sabit liste ARAYUZDE onerilir.
+    tur: Mapped[str] = mapped_column(Text, nullable=False)
+    blok_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    alan: Mapped[str | None] = mapped_column(Text, nullable=True)
+    periyot: Mapped[str] = mapped_column(BAKIM_PERIYOT, nullable=False)
+    periyot_gun: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
+    son_bakim = mapped_column(Date, nullable=True)
+    #: TURETILMIYOR, sutun: firma takvimine gore kayabilir ve istek
+    #: "elle de degistirilebilsin" diyor (goc 0144).
+    sonraki_bakim = mapped_column(Date, nullable=False)
+    firma_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    sorumlu_ad: Mapped[str | None] = mapped_column(Text, nullable=True)
+    sorumlu_telefon: Mapped[str | None] = mapped_column(Text, nullable=True)
+    yasal: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
+    #: NULL = tesis varsayilani (`tenant.bakim_uyari_gun`).
+    uyari_gun: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
+    asset_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    notlar: Mapped[str | None] = mapped_column(Text, nullable=True)
+    aktif: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
+    created_at = _created_at()
+    updated_at = _created_at()
+    #: UC AYRI DAMGA: tek damga olsaydi "yaklasiyor" gonderilen bir
+    #: ekipman icin "bugun" bildirimi hic gitmezdi (goc 0144).
+    yaklasti_bildirildi_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    bugun_bildirildi_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    gecikme_bildirildi_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+
+
+class BakimKaydi(Base):
+    """YAPILMIS bir bakim. Fotograf/belge `varlik_eki` uzerinden baglanir.
+
+    TUTAR BURADA, PARA DEFTERDE: `tutar_kurus` bilgidir, gercek hareket
+    `finansal_hareket`te yasar ve `hareket_id` onu gosterir (P192 TEK
+    DEFTER). Tutari burada tutup deftere yazmamak, iki farkli "toplam
+    bakim gideri" uretirdi.
+    """
+
+    __tablename__ = "bakim_kaydi"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_bakim_kaydi_id_tenant"),
+        ForeignKeyConstraint(
+            ["ekipman_id", "tenant_id"],
+            ["bakim_ekipmani.id", "bakim_ekipmani.tenant_id"],
+            ondelete="CASCADE",
+            name="fk_bakim_kaydi_ekipman",
+        ),
+        ForeignKeyConstraint(
+            ["firma_id", "tenant_id"],
+            ["firma.id", "firma.tenant_id"],
+            ondelete="SET NULL",
+            name="fk_bakim_kaydi_firma",
+        ),
+        ForeignKeyConstraint(
+            ["yapan_user_id", "tenant_id"],
+            ["app_user.id", "app_user.tenant_id"],
+            ondelete="SET NULL",
+            name="fk_bakim_kaydi_user",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    ekipman_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    tarih = mapped_column(Date, nullable=False)
+    firma_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    yapan_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    yapan_ad: Mapped[str | None] = mapped_column(Text, nullable=True)
+    islem: Mapped[str | None] = mapped_column(Text, nullable=True)
+    tutar_kurus: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    hareket_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    created_at = _created_at()
+    olusturan_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )

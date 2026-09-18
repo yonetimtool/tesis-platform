@@ -9365,3 +9365,161 @@ class AkilliEvOlayOut(BaseModel):
     ok: bool
     #: Kac senaryo eylemi calistirildi.
     senaryo: int = 0
+
+
+# --------------------------------------------------------------------------- #
+# (P241 §1) PERIYODIK BAKIM TAKIBI
+# --------------------------------------------------------------------------- #
+BakimPeriyot = Literal["aylik", "uc_aylik", "alti_aylik", "yillik", "gun"]
+
+
+class BakimEkipmaniBase(BaseModel):
+    ad: str = Field(..., min_length=1, max_length=200)
+    tur: str = Field(..., min_length=1, max_length=100)
+    blok_id: uuid.UUID | None = None
+    alan: str | None = Field(None, max_length=200)
+    periyot: BakimPeriyot
+    periyot_gun: int | None = Field(None, ge=1, le=3650)
+    son_bakim: date | None = None
+    #: Verilmezse `son_bakim` (yoksa bugun) uzerinden HESAPLANIR.
+    sonraki_bakim: date | None = None
+    firma_id: uuid.UUID | None = None
+    sorumlu_ad: str | None = Field(None, max_length=200)
+    sorumlu_telefon: str | None = Field(None, max_length=40)
+    yasal: bool = False
+    uyari_gun: int | None = Field(None, ge=0, le=365)
+    asset_id: uuid.UUID | None = None
+    notlar: str | None = Field(None, max_length=4000)
+
+    @model_validator(mode="after")
+    def _periyot_tutarli(self) -> "BakimEkipmaniBase":
+        """`gun` periyodu gun sayisi ISTER, digerleri KABUL ETMEZ.
+
+        DB'de de CHECK var; buradaki kontrol kullaniciya 422 + anlamli
+        kimlik dondurmek icin (CHECK ihlali 500 olurdu).
+        """
+        if self.periyot == "gun" and self.periyot_gun is None:
+            raise ValueError("periyot_gun_gerekli")
+        if self.periyot != "gun" and self.periyot_gun is not None:
+            raise ValueError("periyot_gun_gecersiz")
+        return self
+
+
+class BakimEkipmaniCreate(BakimEkipmaniBase):
+    pass
+
+
+class BakimEkipmaniUpdate(BaseModel):
+    ad: str | None = Field(None, min_length=1, max_length=200)
+    tur: str | None = Field(None, min_length=1, max_length=100)
+    blok_id: uuid.UUID | None = None
+    alan: str | None = Field(None, max_length=200)
+    periyot: BakimPeriyot | None = None
+    periyot_gun: int | None = Field(None, ge=1, le=3650)
+    son_bakim: date | None = None
+    sonraki_bakim: date | None = None
+    firma_id: uuid.UUID | None = None
+    sorumlu_ad: str | None = Field(None, max_length=200)
+    sorumlu_telefon: str | None = Field(None, max_length=40)
+    yasal: bool | None = None
+    uyari_gun: int | None = Field(None, ge=0, le=365)
+    asset_id: uuid.UUID | None = None
+    notlar: str | None = Field(None, max_length=4000)
+    aktif: bool | None = None
+
+
+class BakimEkipmaniOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    ad: str
+    tur: str
+    blok_id: uuid.UUID | None = None
+    blok_ad: str | None = None
+    alan: str | None = None
+    periyot: str
+    periyot_gun: int | None = None
+    son_bakim: date | None = None
+    sonraki_bakim: date
+    firma_id: uuid.UUID | None = None
+    firma_ad: str | None = None
+    sorumlu_ad: str | None = None
+    sorumlu_telefon: str | None = None
+    yasal: bool
+    uyari_gun: int | None = None
+    #: Gecerli esik (ekipman degeri ya da tesis varsayilani) — arayuz
+    #: "30 gun kala uyarilirsiniz" yazabilsin diye ACIKCA doner.
+    etkin_uyari_gun: int
+    asset_id: uuid.UUID | None = None
+    notlar: str | None = None
+    aktif: bool
+    #: TURETILMIS: `gecikti` | `bugun` | `yaklasti` | `planli`.
+    durum: str
+    #: Negatif = gecikme. Arayuz rengin YANINDA bu sayiyi yazar — renk
+    #: tek basina anlam tasimamali.
+    kalan_gun: int
+    son_kayit_tarihi: date | None = None
+
+
+class BakimEkipmaniListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[BakimEkipmaniOut]
+
+
+class BakimKaydiCreate(BaseModel):
+    tarih: date
+    firma_id: uuid.UUID | None = None
+    yapan_user_id: uuid.UUID | None = None
+    yapan_ad: str | None = Field(None, max_length=200)
+    islem: str | None = Field(None, max_length=4000)
+    tutar_kurus: int | None = Field(None, ge=0, le=KURUS_UST_SINIR)
+    #: Tutar girildiginde deftere ONAY BEKLEYEN gider yazilsin mi.
+    #: Varsayilan TRUE: bakim faturasi bir giderdir ve onu deftere
+    #: yazmamak, yil sonunda "bakimlara ne kadar odedik" sorusunu
+    #: yanitsiz birakirdi. Onay bekler (P192) — yazan kisi harcamayi
+    #: ONAYLAMIS olmaz.
+    gidere_yaz: bool = True
+    #: Verilmezse periyottan HESAPLANIR.
+    sonraki_bakim: date | None = None
+
+
+class BakimKaydiOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    ekipman_id: uuid.UUID
+    ekipman_ad: str | None = None
+    tarih: date
+    firma_id: uuid.UUID | None = None
+    firma_ad: str | None = None
+    yapan_user_id: uuid.UUID | None = None
+    yapan_ad: str | None = None
+    islem: str | None = None
+    tutar_kurus: int | None = None
+    hareket_id: uuid.UUID | None = None
+    created_at: datetime
+
+
+class BakimKaydiListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[BakimKaydiOut]
+
+
+class BakimOzetSatiri(BaseModel):
+    ekipman_id: uuid.UUID
+    ad: str
+    tur: str
+    yasal: bool
+    bakim_sayisi: int
+    toplam_kurus: int
+    son_bakim: date | None = None
+    sonraki_bakim: date
+
+
+class BakimYillikOzet(BaseModel):
+    yil: int
+    satirlar: list[BakimOzetSatiri]
+    toplam_kurus: int
+    #: Yasal zorunlu ekipmanlardan yil icinde HIC bakim gormeyenler —
+    #: denetimin ilk soracagi sey budur.
+    yasal_eksik: list[str]

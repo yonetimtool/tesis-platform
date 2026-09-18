@@ -207,6 +207,7 @@ export const config = {
     // (P240 §1) Acil durum cagrilari takip ekrani — oturum kapisi.
     "/panik/:path*",
     "/akilli-ev/:path*",
+    "/bakim/:path*",
     "/units/:path*",
     "/building-editor/:path*",
     "/tanimlar/:path*",

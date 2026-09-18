@@ -247,6 +247,14 @@ enum HomeMenuEntry {
   /// baglantisi"dir ve yonetici ikisini ayni zihinsel kutuda arar.
   diyafon,
 
+  /// (P241 §1) PERIYODIK BAKIM TAKIBI — yonetim + SAHA.
+  ///
+  /// Saha rolleri de gorur ve bu bilincli: kapida duran gorevli "bugun
+  /// asansor firmasi gelecek" bilgisini KULLANIR (geleni iceri alir).
+  /// Yazma yetkisi yok — ekran kayit dugmesini onlara cizmez, sunucu da
+  /// 403 doner. SAKIN GORMEZ: bu bir isletme kaydidir.
+  bakim,
+
   /// (P240 §3) Akilli ev — YONETIM ve SAKIN.
   ///
   /// SAKININ TEK YUZEYI BURASI: `app.*` web panelinde sakin hicbir
@@ -357,6 +365,9 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.ihlaller,
         // (P240 §1) Acil durum cagrilari — TAKIP.
         HomeMenuEntry.panikTakip,
+        // (P241 §1) Bakim takvimi SALT-OKUMA: kapida duran gorevli
+        // "bugun asansor firmasi gelecek" bilgisini kullanir.
+        HomeMenuEntry.bakim,
         HomeMenuEntry.vardiyalar,
         HomeMenuEntry.binaDuzenleme,
         HomeMenuEntry.yoneticiIletisim,
@@ -377,6 +388,8 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.tasks,
         HomeMenuEntry.assets,
         HomeMenuEntry.outbox,
+        // (P241 §1) Bakim takvimi SALT-OKUMA (ayni gerekce).
+        HomeMenuEntry.bakim,
         // (P139.3) Vardiyalar — `binaDuzenleme`den ONCE: onun EN ALTTA
         // durmasi kayitli bir kuraldir (home_menu_test).
         HomeMenuEntry.vardiyalar,
@@ -417,6 +430,8 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.diyafon,
         // (P240 §3) Akilli ev — ortak alan cihazlari + senaryolarin sonucu.
         HomeMenuEntry.akilliEv,
+        // (P241 §1) Periyodik bakim — binanin kendisi.
+        HomeMenuEntry.bakim,
         HomeMenuEntry.binaDuzenleme,
         HomeMenuEntry.daireTanimlari,
         HomeMenuEntry.taskCategories,
@@ -531,6 +546,7 @@ String moduleBaslik(AppLocalizations l10n, HomeMenuEntry entry) =>
       HomeMenuEntry.panikTakip => l10n.panikTakipBaslik,
       HomeMenuEntry.diyafon => l10n.diyafonBaslik,
       HomeMenuEntry.akilliEv => l10n.modulAkilliEv,
+      HomeMenuEntry.bakim => l10n.modulBakim,
     };
 
 // ===========================================================================
@@ -623,6 +639,7 @@ HomeMenuGrup homeMenuGrubu(HomeMenuEntry e) => switch (e) {
   // ekranidir (isigi yak), yonetici icin de ortak alan kontrolu —
   // yani BINANIN KENDISI.
   HomeMenuEntry.akilliEv => HomeMenuGrup.tesis,
+  HomeMenuEntry.bakim => HomeMenuGrup.tesis,
 };
 
 /// Rolun menusu, BOLUMLENMIS. Bos bolum DONMEZ.

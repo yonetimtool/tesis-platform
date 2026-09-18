@@ -7019,4 +7019,66 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get modulAkilliEv => 'Hogar inteligente';
+
+  @override
+  String get bakimBaslik => 'Mantenimiento periódico';
+
+  @override
+  String get bakimEkipmanYok => 'No hay equipos en seguimiento.';
+
+  @override
+  String get bakimFiltreDurum => 'Por estado';
+
+  @override
+  String get bakimFiltreTumu => 'Todos';
+
+  @override
+  String get bakimDurumGecikti => 'Vencido';
+
+  @override
+  String get bakimDurumBugun => 'Hoy';
+
+  @override
+  String get bakimDurumYaklasti => 'Próximo';
+
+  @override
+  String get bakimDurumPlanli => 'Planificado';
+
+  @override
+  String get bakimYasal => 'Obligación legal';
+
+  @override
+  String get bakimKayitEkle => 'Registrar mantenimiento';
+
+  @override
+  String get bakimKayitTarihi => 'Fecha del mantenimiento';
+
+  @override
+  String get bakimYapan => 'Quién lo hizo';
+
+  @override
+  String get bakimIslem => 'Trabajo realizado';
+
+  @override
+  String get bakimTutar => 'Coste';
+
+  @override
+  String get bakimGidereYaz => 'Registrar como gasto';
+
+  @override
+  String get bakimGidereYazIpucu =>
+      'Se registra como gasto pendiente; sale de caja tras la aprobación.';
+
+  @override
+  String get modulBakim => 'Mantenimiento';
+
+  @override
+  String bakimKalanGun(int n) {
+    return 'Faltan $n días';
+  }
+
+  @override
+  String bakimGecikmeGun(int n) {
+    return '$n días de retraso';
+  }
 }

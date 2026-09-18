@@ -263,3 +263,14 @@ def entegrasyon_saglik_kontrol() -> dict:
     from .entegrasyon_kontrol_isi import tum_tenantlar_icin
 
     return tum_tenantlar_icin()
+
+
+@celery_app.task(name="bakim.hatirlatma")
+def bakim_hatirlatma() -> dict:
+    """(P241 §1) Beat: periyodik bakim hatirlatmalari (gunde bir).
+
+    SENKRON (`psycopg`) — entegrasyon saglik gorevi ile ayni desen.
+    """
+    from .bakim_hatirlatma_isi import tum_tenantlar_icin
+
+    return tum_tenantlar_icin()

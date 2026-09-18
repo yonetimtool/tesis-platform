@@ -14190,6 +14190,124 @@ paths:
       responses:
         "200": { description: islendi }
         "403": { description: jeton gecersiz }
+  /bakim/ekipmanlar:
+    get:
+      tags: [bakim]
+      summary: Bakim ekipmanlari — yaklasan tarih USTTE
+      description: |
+        (P241 §1) `durum` TURETILMIS bir alandir (`gecikti` | `bugun` |
+        `yaklasti` | `planli`), sutun DEGIL: sutun olsaydi her gece bir
+        isin onu guncellemesi gerekir, is kosmadigi gun gecikmis bir
+        yasal kontrol "tamam" gorunurdu.
+
+        `durum` suzgeci verildiginde uc TUM kayitlari okur ve sonra
+        suzer — SQL'de suzulemiyor. Sayfalamadan sonra suzmek "gecikmis
+        yok" yanilgisi uretirdi.
+
+        Saha rolleri OKUR (kapida duran kisi "bugun asansor bakimi var"
+        bilgisini kullanir), SAKIN GORMEZ: bu bir isletme kaydidir.
+      parameters:
+        - in: query
+          name: durum
+          schema: { type: string, enum: [gecikti, bugun, yaklasti, planli] }
+        - in: query
+          name: tur
+          schema: { type: string }
+        - in: query
+          name: aktif
+          schema: { type: boolean }
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200": { description: ekipmanlar }
+    post:
+      tags: [bakim]
+      summary: Bakim ekipmani tanimla (admin + yonetici)
+      description: >
+        `sonraki_bakim` verilmezse `son_bakim` (yoksa bugun) uzerinden
+        periyoda gore HESAPLANIR. Ay periyotlari TAKVIM AYIDIR: 30 gunle
+        carpmak, yilda dort kez yapilan bir bakimi ay ay kaydirirdi.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BakimEkipmaniCreate" }
+      responses:
+        "201": { description: ekipman }
+        "422": { description: periyot/gun tutarsiz }
+  /bakim/ekipmanlar/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    patch:
+      tags: [bakim]
+      summary: Ekipman guncelle (admin + yonetici)
+      description: >
+        `sonraki_bakim` elle degistirilirse bildirim damgalari TEMIZLENIR
+        — yoksa yeni tarih icin hic bildirim gitmezdi.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BakimEkipmaniUpdate" }
+      responses:
+        "200": { description: ekipman }
+        "422": { description: periyot/gun tutarsiz }
+    delete:
+      tags: [bakim]
+      summary: Ekipman sil (admin + yonetici)
+      responses:
+        "204": { description: silindi }
+  /bakim/ekipmanlar/{id}/kayitlar:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    post:
+      tags: [bakim]
+      summary: Bakim yapildi — kayit + tarih ilerlemesi + gider
+      description: |
+        UC IS TEK ISLEMDE: kayit yazilir, `son_bakim`/`sonraki_bakim`
+        ilerler, tutar girildiyse deftere ONAY BEKLEYEN gider dusulur
+        (P192 TEK DEFTER — para `finansal_hareket`te yasar, burada
+        yalniz bilgi olarak durur ve `hareket_id` o satiri gosterir).
+
+        `durum='odendi'` YAZILMAZ: kaydi giren kisi harcamayi ONAYLAMIS
+        sayilmaz. Onay/red uclari finansta.
+
+        Fotograf ve belge (rapor/fatura/sertifika) `/ekler` uzerinden
+        baglanir (`varlik_tipi=bakim_kaydi`) — ayri bir ek tablosu YOK.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BakimKaydiCreate" }
+      responses:
+        "201": { description: kayit }
+  /bakim/kayitlar:
+    get:
+      tags: [bakim]
+      summary: Gecmis bakim kayitlari (ekipman bazinda suzulebilir)
+      parameters:
+        - in: query
+          name: ekipman_id
+          schema: { type: string, format: uuid }
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200": { description: kayitlar }
+  /bakim/ozet:
+    get:
+      tags: [bakim]
+      summary: Yillik bakim ozeti — denetime verilebilir (admin+yonetici+denetci)
+      description: >
+        `yasal_eksik`: yasal zorunlu oldugu halde yil icinde HIC bakim
+        gormemis ekipmanlar. Denetimin ilk soracagi sey budur ve
+        toplamlarin arasinda kaybolmamali — bu yuzden AYRI alan.
+      parameters:
+        - in: query
+          name: yil
+          required: true
+          schema: { type: integer, minimum: 2000, maximum: 2200 }
+      responses:
+        "200": { description: ozet }
   /integrations:
     get:
       tags: [integrations]
@@ -18870,6 +18988,98 @@ components:
           enum:
             [su_kacagi, yangin, gaz, hareket, panik_anons, panik_kapanis]
         deger: { type: string, nullable: true, maxLength: 200 }
+    BakimEkipmaniCreate:
+      type: object
+      required: [ad, tur, periyot]
+      properties:
+        ad: { type: string, maxLength: 200 }
+        tur:
+          type: string
+          maxLength: 100
+          description: >
+            SERBEST METIN, enum degil: "su aritma" ekleyen bir site goc
+            beklemek zorunda kalmasin. Sabit liste ARAYUZDE onerilir.
+        blok_id: { type: string, format: uuid, nullable: true }
+        alan: { type: string, nullable: true, maxLength: 200 }
+        periyot:
+          type: string
+          enum: [aylik, uc_aylik, alti_aylik, yillik, gun]
+        periyot_gun:
+          type: integer
+          minimum: 1
+          maximum: 3650
+          nullable: true
+          description: YALNIZ `periyot=gun` iken; digerlerinde 422.
+        son_bakim: { type: string, format: date, nullable: true }
+        sonraki_bakim:
+          type: string
+          format: date
+          nullable: true
+          description: Verilmezse periyottan hesaplanir.
+        firma_id: { type: string, format: uuid, nullable: true }
+        sorumlu_ad: { type: string, nullable: true, maxLength: 200 }
+        sorumlu_telefon: { type: string, nullable: true, maxLength: 40 }
+        yasal:
+          type: boolean
+          description: Asansor yillik kontrolu gibi ZORUNLU bakim.
+        uyari_gun:
+          type: integer
+          minimum: 0
+          maximum: 365
+          nullable: true
+          description: NULL = tesis varsayilani (`tenant.bakim_uyari_gun`).
+        asset_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: >
+            OPSIYONEL KOPRU — ekipman demirbas olarak da kayitliysa.
+            Demirbas KIME ZIMMETLENDIGINI takip eder, bu modul NE ZAMAN
+            BAKILDIGINI; ikisi ayri sorulardir.
+        notlar: { type: string, nullable: true, maxLength: 4000 }
+    BakimEkipmaniUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        ad: { type: string }
+        tur: { type: string }
+        blok_id: { type: string, format: uuid, nullable: true }
+        alan: { type: string, nullable: true }
+        periyot: { type: string, enum: [aylik, uc_aylik, alti_aylik, yillik, gun] }
+        periyot_gun: { type: integer, nullable: true }
+        son_bakim: { type: string, format: date, nullable: true }
+        sonraki_bakim: { type: string, format: date, nullable: true }
+        firma_id: { type: string, format: uuid, nullable: true }
+        sorumlu_ad: { type: string, nullable: true }
+        sorumlu_telefon: { type: string, nullable: true }
+        yasal: { type: boolean }
+        uyari_gun: { type: integer, nullable: true }
+        asset_id: { type: string, format: uuid, nullable: true }
+        notlar: { type: string, nullable: true }
+        aktif: { type: boolean }
+    BakimKaydiCreate:
+      type: object
+      required: [tarih]
+      properties:
+        tarih: { type: string, format: date }
+        firma_id: { type: string, format: uuid, nullable: true }
+        yapan_user_id: { type: string, format: uuid, nullable: true }
+        yapan_ad: { type: string, nullable: true, maxLength: 200 }
+        islem: { type: string, nullable: true, maxLength: 4000 }
+        tutar_kurus: { type: integer, minimum: 0, nullable: true }
+        gidere_yaz:
+          type: boolean
+          default: true
+          description: >
+            Tutar girildiginde deftere ONAY BEKLEYEN gider yazilsin mi.
+            Varsayilan true — yazmamak, yil sonunda "bakimlara ne kadar
+            odedik" sorusunu yanitsiz birakirdi. Bedel baska bir
+            faturaya dahilse kapatilir.
+        sonraki_bakim:
+          type: string
+          format: date
+          nullable: true
+          description: Verilmezse periyottan hesaplanir.
     PanikOlustur:
       type: object
       required: [tip]

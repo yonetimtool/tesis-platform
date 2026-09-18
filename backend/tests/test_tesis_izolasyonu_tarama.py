@@ -72,6 +72,9 @@ TESIS_UCLARI: tuple[str, ...] = (
     "/panik",
     # (P240 §2) Diyafon listesi — ayni gerekce.
     "/diyafon",
+    # (P241 §1) Bakim ekipmanlari + kayitlari — tesis-kapsamli.
+    "/bakim/ekipmanlar",
+    "/bakim/kayitlar",
     # (P240 §3) Akilli ev: kopru/cihaz/senaryo listeleri tesis-kapsamli.
     # Cihaz ucu ayrica SAKIN icin daire kisitli (IDOR); burada olculen
     # sey tesis siniri.

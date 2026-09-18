@@ -3358,5 +3358,91 @@
   "modulAkilliEv": "Akıllı ev",
   "@modulAkilliEv": {
     "description": "(P240 §3) Akilli ev"
+  },
+  "bakimBaslik": "Periyodik bakım",
+  "@bakimBaslik": {
+    "description": "(P241 §1) Periyodik bakim"
+  },
+  "bakimEkipmanYok": "Bakım takibinde ekipman yok.",
+  "@bakimEkipmanYok": {
+    "description": "(P241 §1) Periyodik bakim"
+  },
+  "bakimFiltreDurum": "Duruma göre",
+  "@bakimFiltreDurum": {
+    "description": "(P241 §1) Periyodik bakim"
+  },
+  "bakimFiltreTumu": "Tümü",
+  "@bakimFiltreTumu": {
+    "description": "(P241 §1) Periyodik bakim"
+  },
+  "bakimDurumGecikti": "Gecikti",
+  "@bakimDurumGecikti": {
+    "description": "(P241 §1) Periyodik bakim"
+  },
+  "bakimDurumBugun": "Bugün",
+  "@bakimDurumBugun": {
+    "description": "(P241 §1) Periyodik bakim"
+  },
+  "bakimDurumYaklasti": "Yaklaşıyor",
+  "@bakimDurumYaklasti": {
+    "description": "(P241 §1) Periyodik bakim"
+  },
+  "bakimDurumPlanli": "Planlı",
+  "@bakimDurumPlanli": {
+    "description": "(P241 §1) Periyodik bakim"
+  },
+  "bakimYasal": "Yasal zorunluluk",
+  "@bakimYasal": {
+    "description": "(P241 §1) Periyodik bakim"
+  },
+  "bakimKayitEkle": "Bakım yapıldı",
+  "@bakimKayitEkle": {
+    "description": "(P241 §1) Periyodik bakim"
+  },
+  "bakimKayitTarihi": "Bakım tarihi",
+  "@bakimKayitTarihi": {
+    "description": "(P241 §1) Periyodik bakim"
+  },
+  "bakimYapan": "Kim yaptı",
+  "@bakimYapan": {
+    "description": "(P241 §1) Periyodik bakim"
+  },
+  "bakimIslem": "Yapılan işlem",
+  "@bakimIslem": {
+    "description": "(P241 §1) Periyodik bakim"
+  },
+  "bakimTutar": "Maliyet",
+  "@bakimTutar": {
+    "description": "(P241 §1) Periyodik bakim"
+  },
+  "bakimGidereYaz": "Gidere yaz",
+  "@bakimGidereYaz": {
+    "description": "(P241 §1) Periyodik bakim"
+  },
+  "bakimGidereYazIpucu": "Onay bekleyen gider olarak düşer; onaylanana kadar kasadan çıkmaz.",
+  "@bakimGidereYazIpucu": {
+    "description": "(P241 §1) Periyodik bakim"
+  },
+  "modulBakim": "Bakım takibi",
+  "@modulBakim": {
+    "description": "(P241 §1) Periyodik bakim"
+  },
+  "bakimKalanGun": "{n} gün kaldı",
+  "@bakimKalanGun": {
+    "description": "(P241 §1) Gun sayisi — renk tek basina anlam tasimamali",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "bakimGecikmeGun": "{n} gün gecikti",
+  "@bakimGecikmeGun": {
+    "description": "(P241 §1) Gun sayisi — renk tek basina anlam tasimamali",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
   }
 }

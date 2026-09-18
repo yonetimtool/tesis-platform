@@ -203,6 +203,11 @@ class Action:
     # kapatan bir komut, bir ayar degisikligiyle ayni kutuya konamaz.
     AKILLI_EV_YAZ = "akilli_ev_yaz"
     AKILLI_EV_KOMUT = "akilli_ev_komut"
+    # (P241 §1) PERIYODIK BAKIM — plan degisikligi ve yapilan bakim
+    # AYRI eylemler: biri "ne zaman yapilmali" sozunu degistirir, oteki
+    # "yapildi" der. Denetimde ikisi ayri sorulur.
+    BAKIM_YAZ = "bakim_yaz"
+    BAKIM_KAYIT = "bakim_kayit"
     KVKK_YAYIN = "kvkk_yayin"
     KVKK_ONAY = "kvkk_onay"
     PAZARLAMA_RIZA = "pazarlama_riza"

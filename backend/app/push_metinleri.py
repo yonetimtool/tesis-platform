@@ -870,6 +870,74 @@ METINLER: dict[str, PushMetni] = {
         },
         params=('cihaz', 'yer'),
     ),
+    # (P241 §1) PERIYODIK BAKIM — UC KADEME AYRI METIN.
+    #
+    # Ucunu tek metne indirmek ("bakim hatirlatmasi") en onemli ayrimi
+    # silerdi: gecikmis bir yasal kontrol ile 30 gun sonraki bir filtre
+    # degisimi ayni cumleyle gelmemeli.
+    "bakim_yaklasti": PushMetni(
+        baslik={
+            "tr": "Bakım yaklaşıyor",
+            "en": "Maintenance due soon",
+            "ar": "موعد صيانة يقترب",
+            "ru": "Скоро техобслуживание",
+            "de": "Wartung steht an",
+            "fr": "Entretien à venir",
+            "es": "Mantenimiento próximo",
+        },
+        govde={
+            "tr": "{ekipman} bakımına {gun} gün kaldı",
+            "en": "{ekipman} maintenance is due in {gun} days",
+            "ar": "بقي {gun} يومًا على صيانة {ekipman}",
+            "ru": "До техобслуживания «{ekipman}» осталось {gun} дн.",
+            "de": "Wartung von {ekipman} in {gun} Tagen fällig",
+            "fr": "Entretien de {ekipman} dans {gun} jours",
+            "es": "El mantenimiento de {ekipman} vence en {gun} días",
+        },
+        params=("ekipman", "gun"),
+    ),
+    "bakim_bugun": PushMetni(
+        baslik={
+            "tr": "Bakım günü",
+            "en": "Maintenance today",
+            "ar": "يوم الصيانة",
+            "ru": "День техобслуживания",
+            "de": "Wartungstag",
+            "fr": "Jour d’entretien",
+            "es": "Día de mantenimiento",
+        },
+        govde={
+            "tr": "{ekipman} bakımı bugün yapılmalı",
+            "en": "{ekipman} maintenance is due today",
+            "ar": "يجب إجراء صيانة {ekipman} اليوم",
+            "ru": "Техобслуживание «{ekipman}» назначено на сегодня",
+            "de": "Wartung von {ekipman} ist heute fällig",
+            "fr": "L’entretien de {ekipman} est prévu aujourd’hui",
+            "es": "El mantenimiento de {ekipman} corresponde hoy",
+        },
+        params=("ekipman",),
+    ),
+    "bakim_gecikti": PushMetni(
+        baslik={
+            "tr": "Bakım gecikti",
+            "en": "Maintenance overdue",
+            "ar": "تأخرت الصيانة",
+            "ru": "Техобслуживание просрочено",
+            "de": "Wartung überfällig",
+            "fr": "Entretien en retard",
+            "es": "Mantenimiento vencido",
+        },
+        govde={
+            "tr": "{ekipman} bakımı {gun} gündür gecikmiş durumda",
+            "en": "{ekipman} maintenance is {gun} days overdue",
+            "ar": "تأخرت صيانة {ekipman} منذ {gun} يومًا",
+            "ru": "Техобслуживание «{ekipman}» просрочено на {gun} дн.",
+            "de": "Wartung von {ekipman} ist seit {gun} Tagen überfällig",
+            "fr": "L’entretien de {ekipman} est en retard de {gun} jours",
+            "es": "El mantenimiento de {ekipman} lleva {gun} días vencido",
+        },
+        params=("ekipman", "gun"),
+    ),
     "entegrasyon_koptu": PushMetni(
         baslik={
             "tr": "Bağlantı koptu",

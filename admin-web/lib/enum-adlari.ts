@@ -61,6 +61,10 @@ export const BILDIRIM_TIP: EnumHarita = {
   // (P240 §3) Akilli ev olaylari.
   akilli_ev_kacak: "bildirimTipAkilliEvKacak",
   akilli_ev_yangin: "bildirimTipAkilliEvYangin",
+  // (P241 §1) Periyodik bakim — uc kademe.
+  bakim_yaklasti: "bildirimTipBakimYaklasti",
+  bakim_bugun: "bildirimTipBakimBugun",
+  bakim_gecikti: "bildirimTipBakimGecikti",
   aidat_borc: "bildirimTipAidatBorc",
   // (P191 §4) Banka eslestirmesi odemeyi isledi -> "odemeniz alindi".
   aidat_odendi: "bildirimTipAidatOdendi",

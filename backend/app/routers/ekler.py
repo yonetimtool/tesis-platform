@@ -35,6 +35,8 @@ from ..deps import get_current_user, get_tenant_db, require_role
 from ..errors import APIError
 from ..models import (
     AppUser,
+    BakimEkipmani,
+    BakimKaydi,
     BuildingBlock,
     Complaint,
     FinansalHareket,
@@ -58,6 +60,7 @@ from .muhasebe_tanimlari import _TANIM_OKUR as _FIRMA_OKUR, _YONETIM as _FIRMA_Y
 from .tasks import _READER as _GOREV_OKUR, _WRITER as _GOREV_YAZAR
 from .units import _LAYOUT_EDITOR as _DAIRE_YAZAR, _LAYOUT_READER as _DAIRE_OKUR
 from .users import _READER as _KISI_OKUR, _USER_CREATOR as _KISI_YAZAR
+from .bakim import _OKUR as _BAKIM_OKUR, _YAZAR as _BAKIM_YAZAR
 
 router = APIRouter(prefix="/ekler", tags=["ekler"])
 
@@ -103,6 +106,17 @@ VARLIKLAR: dict[str, _Varlik] = {
     # mekanizmasi kullanildi — yetki kumesi FINANS routerindan okunur
     # (kopyalanmaz): okuma denetciye de acik, yazma admin+yonetici.
     "finansal_hareket": _Varlik(FinansalHareket, _ICRA_OKUR, _ICRA_YAZAR),
+    # (P241 §1) BAKIM KAYDI — RAPOR / FATURA / SERTIFIKA.
+    #
+    # Istek "fotograf ve belge eklenebilsin" diyor. Ayri bir
+    # `bakim_eki` tablosu acmak, calisan bir mekanizmanin ikinci bir
+    # kopyasini uretmekti; asansor muayene raporu da gider fisi de ayni
+    # seydir: bir kaydin yanindaki kanit.
+    #
+    # Yetki BAKIM ROUTERINDAN okunur (kopyalanmaz): okuma sahaya da
+    # acik (bakimi yapan gorevli raporu gorur), yazma yonetimde.
+    "bakim_kaydi": _Varlik(BakimKaydi, _BAKIM_OKUR, _BAKIM_YAZAR),
+    "bakim_ekipmani": _Varlik(BakimEkipmani, _BAKIM_OKUR, _BAKIM_YAZAR),
 }
 
 

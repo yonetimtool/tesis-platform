@@ -7113,4 +7113,66 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get modulAkilliEv => 'Умный дом';
+
+  @override
+  String get bakimBaslik => 'Плановое обслуживание';
+
+  @override
+  String get bakimEkipmanYok => 'Оборудование не отслеживается.';
+
+  @override
+  String get bakimFiltreDurum => 'По статусу';
+
+  @override
+  String get bakimFiltreTumu => 'Все';
+
+  @override
+  String get bakimDurumGecikti => 'Просрочено';
+
+  @override
+  String get bakimDurumBugun => 'Сегодня';
+
+  @override
+  String get bakimDurumYaklasti => 'Скоро';
+
+  @override
+  String get bakimDurumPlanli => 'Запланировано';
+
+  @override
+  String get bakimYasal => 'Требуется по закону';
+
+  @override
+  String get bakimKayitEkle => 'Обслуживание выполнено';
+
+  @override
+  String get bakimKayitTarihi => 'Дата обслуживания';
+
+  @override
+  String get bakimYapan => 'Кто выполнил';
+
+  @override
+  String get bakimIslem => 'Выполненные работы';
+
+  @override
+  String get bakimTutar => 'Стоимость';
+
+  @override
+  String get bakimGidereYaz => 'Записать в расходы';
+
+  @override
+  String get bakimGidereYazIpucu =>
+      'Записывается как расход на утверждении и списывается после одобрения.';
+
+  @override
+  String get modulBakim => 'Обслуживание';
+
+  @override
+  String bakimKalanGun(int n) {
+    return 'Осталось $n дн.';
+  }
+
+  @override
+  String bakimGecikmeGun(int n) {
+    return 'Просрочено на $n дн.';
+  }
 }
