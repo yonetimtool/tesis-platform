@@ -6777,4 +6777,71 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get anketDokumYuklenemedi => 'Oy dökümü yüklenemedi.';
+
+  @override
+  String get akilliEvBaslik => 'Akıllı ev';
+
+  @override
+  String get akilliEvCihazYok => 'Gösterilecek cihaz yok';
+
+  @override
+  String get akilliEvKapaliAciklama =>
+      'Yönetim akıllı ev bölümlerini açtığında dairenizin cihazları burada görünür.';
+
+  @override
+  String get akilliEvOrtakAlan => 'Ortak alan';
+
+  @override
+  String get akilliEvKomutGonderildi => 'Komut gönderildi';
+
+  @override
+  String get akilliEvTipIsik => 'Işık';
+
+  @override
+  String get akilliEvTipPriz => 'Priz';
+
+  @override
+  String get akilliEvTipKilit => 'Kilit';
+
+  @override
+  String get akilliEvTipTermostat => 'Termostat';
+
+  @override
+  String get akilliEvTipPerde => 'Perde';
+
+  @override
+  String get akilliEvTipVana => 'Vana';
+
+  @override
+  String get akilliEvTipSensorSu => 'Su sensörü';
+
+  @override
+  String get akilliEvTipSensorDuman => 'Duman sensörü';
+
+  @override
+  String get akilliEvTipSensorGaz => 'Gaz sensörü';
+
+  @override
+  String get akilliEvTipSensorHareket => 'Hareket sensörü';
+
+  @override
+  String get akilliEvTipSayac => 'Sayaç';
+
+  @override
+  String get akilliEvTipDiger => 'Diğer';
+
+  @override
+  String get akilliEvEylemAc => 'Aç';
+
+  @override
+  String get akilliEvEylemKapat => 'Kapat';
+
+  @override
+  String get akilliEvEylemKilitAc => 'Kilidi aç';
+
+  @override
+  String get akilliEvEylemVanaKapat => 'Vanayı kapat';
+
+  @override
+  String get modulAkilliEv => 'Akıllı ev';
 }

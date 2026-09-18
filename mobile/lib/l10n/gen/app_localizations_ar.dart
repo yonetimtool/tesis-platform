@@ -7029,4 +7029,71 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get anketDokumYuklenemedi => 'تعذّر تحميل تفصيل الأصوات.';
+
+  @override
+  String get akilliEvBaslik => 'المنزل الذكي';
+
+  @override
+  String get akilliEvCihazYok => 'لا توجد أجهزة';
+
+  @override
+  String get akilliEvKapaliAciklama =>
+      'ستظهر أجهزة شقتك هنا عندما تُفعّل الإدارة أقسام المنزل الذكي.';
+
+  @override
+  String get akilliEvOrtakAlan => 'منطقة مشتركة';
+
+  @override
+  String get akilliEvKomutGonderildi => 'تم إرسال الأمر';
+
+  @override
+  String get akilliEvTipIsik => 'إضاءة';
+
+  @override
+  String get akilliEvTipPriz => 'مقبس';
+
+  @override
+  String get akilliEvTipKilit => 'قفل';
+
+  @override
+  String get akilliEvTipTermostat => 'ترموستات';
+
+  @override
+  String get akilliEvTipPerde => 'ستارة';
+
+  @override
+  String get akilliEvTipVana => 'صمّام';
+
+  @override
+  String get akilliEvTipSensorSu => 'حساس المياه';
+
+  @override
+  String get akilliEvTipSensorDuman => 'حساس الدخان';
+
+  @override
+  String get akilliEvTipSensorGaz => 'حساس الغاز';
+
+  @override
+  String get akilliEvTipSensorHareket => 'حساس الحركة';
+
+  @override
+  String get akilliEvTipSayac => 'عدّاد';
+
+  @override
+  String get akilliEvTipDiger => 'أخرى';
+
+  @override
+  String get akilliEvEylemAc => 'تشغيل';
+
+  @override
+  String get akilliEvEylemKapat => 'إيقاف';
+
+  @override
+  String get akilliEvEylemKilitAc => 'فتح القفل';
+
+  @override
+  String get akilliEvEylemVanaKapat => 'إغلاق الصمّام';
+
+  @override
+  String get modulAkilliEv => 'المنزل الذكي';
 }

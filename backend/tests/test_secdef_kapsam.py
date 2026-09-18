@@ -168,6 +168,11 @@ ENVANTER: dict[str, tuple[str, tuple[str, str] | None]] = {
     # da alicisini DONDURMEZ, yani imzasi dogrulanmamis bir cagri (ki
     # imzasizsa zaten 401) veri sizdiramaz.
     "gonderim_tenant_by_saglayici_id": ("public", None),
+    # (P240 §3) AKILLI EV OLAY WEBHOOK'U. Hub bir kullanici degildir;
+    # kimligi PAYLASILAN SIR (olay jetonu) tasir, dolayisiyla uc kimlik
+    # GEREKTIRMEZ ve bu BILINCLIDIR. RLS bypass'i SART: tenant, jetondan
+    # COZULENE kadar bilinmiyor. Fonksiyon yalniz tenant_id doner.
+    "akilli_ev_tenant_by_olay_jetonu": ("public", None),
     # (P234 §1) Ayni webhook'un TEKRAR DEFTERI. Tablo platform tablosu
     # desenini tasir (RLS ACIK + FORCE, POLITIKA YOK) — `app_rw` ona
     # dogrudan yazamaz. Fonksiyon HICBIR SEY OKUTMAZ: yalnizca "bu olayi

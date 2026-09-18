@@ -146,6 +146,8 @@ export const TESIS_ROTALARI = [
   "/olaylar",
   // (P240 §1) Panik takip ekrani — tesis yuzeyi.
   "/panik",
+  // (P240 §3) Akilli ev — tesis yuzeyi (sakin de KENDI dairesini gorur).
+  "/akilli-ev",
   "/arac-gecisleri",
   // (P126.6) Saha rolunun kendi gorevleri.
   "/gorevlerim",
@@ -447,6 +449,14 @@ export const ROTA_ROLLERI: Record<string, readonly string[]> = {
   // `resident` hicbir yuzeyde listede yok: baska dairelerin acil
   // durumlari kisisel veridir.
   "/panik": ["admin", "yonetici", "guvenlik_amiri"],
+  // (P240 §3) AKILLI EV — `resident` BU SAYFADA YOK.
+  //
+  // Ilk yazimda sakin de eklenmisti; `rol-menusu` kilidi HAKLI olarak
+  // yakaladi: P129 kurali "saha ve sakin rolleri app.*ta HICBIR sayfa
+  // gormez". Sunucu sakine cihaz listesini ACAR (kendi dairesiyle
+  // sinirli) — ayrilan sey YETKI degil YUZEY: sakin kendi cihazlarini
+  // MOBILDEN yonetir, web paneli yonetim yuzeyidir.
+  "/akilli-ev": ["admin", "yonetici"],
   "/notifications": ["admin", "yonetici"],
   // (P167 §6.1) "/yonetisim" DORDE BOLUNDU; roller aynen tasindi.
   "/karar-defteri": ["admin", "yonetici"],

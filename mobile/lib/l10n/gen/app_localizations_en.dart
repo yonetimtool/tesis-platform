@@ -6974,4 +6974,71 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get anketDokumYuklenemedi => 'The vote breakdown could not be loaded.';
+
+  @override
+  String get akilliEvBaslik => 'Smart home';
+
+  @override
+  String get akilliEvCihazYok => 'No devices to show';
+
+  @override
+  String get akilliEvKapaliAciklama =>
+      'Your unit\'s devices appear here once management enables smart home sections.';
+
+  @override
+  String get akilliEvOrtakAlan => 'Common area';
+
+  @override
+  String get akilliEvKomutGonderildi => 'Command sent';
+
+  @override
+  String get akilliEvTipIsik => 'Light';
+
+  @override
+  String get akilliEvTipPriz => 'Socket';
+
+  @override
+  String get akilliEvTipKilit => 'Lock';
+
+  @override
+  String get akilliEvTipTermostat => 'Thermostat';
+
+  @override
+  String get akilliEvTipPerde => 'Blind';
+
+  @override
+  String get akilliEvTipVana => 'Valve';
+
+  @override
+  String get akilliEvTipSensorSu => 'Water sensor';
+
+  @override
+  String get akilliEvTipSensorDuman => 'Smoke sensor';
+
+  @override
+  String get akilliEvTipSensorGaz => 'Gas sensor';
+
+  @override
+  String get akilliEvTipSensorHareket => 'Motion sensor';
+
+  @override
+  String get akilliEvTipSayac => 'Meter';
+
+  @override
+  String get akilliEvTipDiger => 'Other';
+
+  @override
+  String get akilliEvEylemAc => 'Turn on';
+
+  @override
+  String get akilliEvEylemKapat => 'Turn off';
+
+  @override
+  String get akilliEvEylemKilitAc => 'Unlock';
+
+  @override
+  String get akilliEvEylemVanaKapat => 'Close valve';
+
+  @override
+  String get modulAkilliEv => 'Smart home';
 }

@@ -6967,4 +6967,71 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get anketDokumYuklenemedi =>
       'Le détail des votes n\'a pas pu être chargé.';
+
+  @override
+  String get akilliEvBaslik => 'Maison connectée';
+
+  @override
+  String get akilliEvCihazYok => 'Aucun appareil à afficher';
+
+  @override
+  String get akilliEvKapaliAciklama =>
+      'Les appareils de votre logement s’afficheront ici dès que la gestion activera les sections domotique.';
+
+  @override
+  String get akilliEvOrtakAlan => 'Partie commune';
+
+  @override
+  String get akilliEvKomutGonderildi => 'Commande envoyée';
+
+  @override
+  String get akilliEvTipIsik => 'Lumière';
+
+  @override
+  String get akilliEvTipPriz => 'Prise';
+
+  @override
+  String get akilliEvTipKilit => 'Serrure';
+
+  @override
+  String get akilliEvTipTermostat => 'Thermostat';
+
+  @override
+  String get akilliEvTipPerde => 'Volet';
+
+  @override
+  String get akilliEvTipVana => 'Vanne';
+
+  @override
+  String get akilliEvTipSensorSu => 'Capteur d’eau';
+
+  @override
+  String get akilliEvTipSensorDuman => 'Détecteur de fumée';
+
+  @override
+  String get akilliEvTipSensorGaz => 'Détecteur de gaz';
+
+  @override
+  String get akilliEvTipSensorHareket => 'Détecteur de mouvement';
+
+  @override
+  String get akilliEvTipSayac => 'Compteur';
+
+  @override
+  String get akilliEvTipDiger => 'Autre';
+
+  @override
+  String get akilliEvEylemAc => 'Allumer';
+
+  @override
+  String get akilliEvEylemKapat => 'Éteindre';
+
+  @override
+  String get akilliEvEylemKilitAc => 'Déverrouiller';
+
+  @override
+  String get akilliEvEylemVanaKapat => 'Fermer la vanne';
+
+  @override
+  String get modulAkilliEv => 'Maison connectée';
 }

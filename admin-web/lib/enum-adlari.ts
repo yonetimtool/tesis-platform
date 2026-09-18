@@ -58,6 +58,9 @@ export const BILDIRIM_TIP: EnumHarita = {
   panik_kapandi: "bildirimTipPanikKapandi",
   // (P240 §4) Entegrasyon baglantisi koptu (yonetim alarmi).
   entegrasyon_koptu: "bildirimTipEntegrasyonKoptu",
+  // (P240 §3) Akilli ev olaylari.
+  akilli_ev_kacak: "bildirimTipAkilliEvKacak",
+  akilli_ev_yangin: "bildirimTipAkilliEvYangin",
   aidat_borc: "bildirimTipAidatBorc",
   // (P191 §4) Banka eslestirmesi odemeyi isledi -> "odemeniz alindi".
   aidat_odendi: "bildirimTipAidatOdendi",

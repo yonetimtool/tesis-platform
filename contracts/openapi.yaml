@@ -13987,6 +13987,209 @@ paths:
       responses:
         "200": { description: sonuc }
         "422": { description: yontem desteklemiyor }
+  /akilli-ev/koprular:
+    get:
+      tags: [akilli-ev]
+      summary: Akilli ev koprulari (admin + yonetici)
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200": { description: koprular }
+    post:
+      tags: [akilli-ev]
+      summary: Kopru tanimla (admin + yonetici)
+      description: |
+        (P240 §3) Kopru, sitedeki akilli ev merkezidir (Home Assistant
+        gibi). JETON WRITE-ONLY: KEK ile sifreli saklanir, GET yanitinda
+        ASLA donmez; yerine `token_set` (bool).
+
+        `mqtt` turu SESSIZCE HTTP'ye DUSMEZ: uygulanmamis oldugu acikca
+        bildirilir, cunku sessiz dusus kullaniciya calismayan bir
+        kurulumu "kurulmus" gibi gosterirdi.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AkilliEvKopruCreate" }
+      responses:
+        "201": { description: kopru }
+  /akilli-ev/koprular/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    patch:
+      tags: [akilli-ev]
+      summary: Kopru guncelle (admin + yonetici)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AkilliEvKopruUpdate" }
+      responses:
+        "200": { description: kopru }
+    delete:
+      tags: [akilli-ev]
+      summary: Kopru sil (admin + yonetici)
+      responses:
+        "204": { description: silindi }
+  /akilli-ev/koprular/{id}/saglik:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    post:
+      tags: [akilli-ev]
+      summary: Kopru baglanti testi — CIHAZ CALISTIRMAZ (admin + yonetici)
+      description: >
+        Home Assistant'ta `GET /api/` (salt okuma). Hicbir servis
+        cagrilmaz: saglik kontrolu isigi yakmamali.
+      responses:
+        "200": { description: sonuc }
+  /akilli-ev/koprular/{id}/olay-jetonu:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    post:
+      tags: [akilli-ev]
+      summary: Olay jetonu uret — YALNIZ BIR KEZ gorunur (admin + yonetici)
+      description: |
+        Kopru, olaylari (su kacagi, yangin) bu jetonla `/akilli-ev/olay`
+        ucuna gonderir. Jetonun SHA-256 OZETI saklanir; ham deger
+        yalniz bu yanitta doner ve bir daha okunamaz.
+      responses:
+        "200": { description: jeton }
+  /akilli-ev/cihazlar:
+    get:
+      tags: [akilli-ev]
+      summary: Cihazlar — SAKIN yalniz KENDI dairesini gorur
+      description: |
+        GUVENLIK SINIRI: `resident` rolu icin sorgu kendi dairelerine
+        kisitlanir; ortak alan cihazlari (unit_id NULL) da DAHIL DEGIL.
+        Ayni kapi `/komut` ucunda kimlik bazinda tekrar zorlanir (IDOR).
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200": { description: cihazlar }
+    post:
+      tags: [akilli-ev]
+      summary: Cihaz ekle (admin + yonetici)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AkilliEvCihazCreate" }
+      responses:
+        "201": { description: cihaz }
+  /akilli-ev/cihazlar/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    patch:
+      tags: [akilli-ev]
+      summary: Cihaz guncelle (admin + yonetici)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AkilliEvCihazUpdate" }
+      responses:
+        "200": { description: cihaz }
+    delete:
+      tags: [akilli-ev]
+      summary: Cihaz sil (admin + yonetici)
+      responses:
+        "204": { description: silindi }
+  /akilli-ev/cihazlar/{id}/komut:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    post:
+      tags: [akilli-ev]
+      summary: Cihaza komut — HER ZAMAN denetim kaydi
+      description: |
+        403: cihaz baskasinin dairesinde (ya da ortak alanda) — sakin
+        icin. 404 DEGIL 403, cunku cihaz VARDIR.
+
+        422: cihaz TIPI bu eylemi desteklemiyor (duman dedektorune "ac"
+        demek gibi). Kapi bizde: kopruye gonderip anlasilmaz bir hata
+        almak kullaniciya hicbir sey ogretmez.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AkilliEvKomutIn" }
+      responses:
+        "200": { description: sonuc }
+        "403": { description: baska dairenin cihazi }
+        "422": { description: tip bu eylemi desteklemiyor }
+  /akilli-ev/bolumler:
+    get:
+      tags: [akilli-ev]
+      summary: Dokuz bolumun acik/kapali durumu
+      description: >
+        YOKLUK = KAPALI. Yalniz sayac okuyan bir site, kullanmadigi sekiz
+        bolumu ekraninda gormemeli.
+      responses:
+        "200": { description: bolumler }
+    put:
+      tags: [akilli-ev]
+      summary: Bolum anahtarlarini topluca yaz (admin + yonetici)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AkilliEvBolumIn" }
+      responses:
+        "200": { description: bolumler }
+  /akilli-ev/senaryolar:
+    get:
+      tags: [akilli-ev]
+      summary: Olay senaryolari (admin + yonetici)
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200": { description: senaryolar }
+    post:
+      tags: [akilli-ev]
+      summary: Senaryo tanimla — eylem KURULURKEN dogrulanir
+      description: >
+        Gecersiz eylem **422**. Dogrulama kurulum aninda yapilir: acil
+        durumda sessizce calismayan bir senaryonun hata mesajini kimse
+        okumuyor olacak.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AkilliEvSenaryoCreate" }
+      responses:
+        "201": { description: senaryo }
+        "422": { description: cihaz tipi bu eylemi desteklemiyor }
+  /akilli-ev/senaryolar/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PathId"
+    delete:
+      tags: [akilli-ev]
+      summary: Senaryo sil (admin + yonetici)
+      responses:
+        "204": { description: silindi }
+  /akilli-ev/olay:
+    post:
+      tags: [akilli-ev]
+      summary: Kopru olay webhook'u — KIMLIK GEREKTIRMEZ (jeton tasir)
+      description: |
+        Hub bir kullanici degildir; kimligi PAYLASILAN SIR tasir.
+        Tenant, jetonun ozetinden SECURITY DEFINER bir fonksiyonla
+        cozulur (o ana kadar tenant baglami YOKTUR). Gecersiz jeton
+        **403** ve hicbir ayrinti sizdirmaz.
+
+        Sirasi: once BILDIRIM (insanlar haberdar olsun), sonra SENARYO
+        (vana kapat). Bir cihaz olu ise digerleri yine calisir.
+      security: []   # public; guvenlik PAYLASILAN SIR (olay jetonu) ile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AkilliEvOlayIn" }
+      responses:
+        "200": { description: islendi }
+        "403": { description: jeton gecersiz }
   /integrations:
     get:
       tags: [integrations]
@@ -18578,6 +18781,95 @@ components:
       type: object
       properties:
         mesaj: { type: string, maxLength: 500 }
+    AkilliEvKopruCreate:
+      type: object
+      required: [ad, tur, host]
+      properties:
+        ad: { type: string, maxLength: 200 }
+        tur: { type: string, enum: [home_assistant, mqtt] }
+        host: { type: string, maxLength: 255 }
+        port: { type: integer, minimum: 1, maximum: 65535, nullable: true }
+        token: { type: string, nullable: true, maxLength: 1000 }
+        aktif: { type: boolean }
+    AkilliEvKopruUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        ad: { type: string }
+        host: { type: string }
+        port: { type: integer, minimum: 1, maximum: 65535, nullable: true }
+        token: { type: string, nullable: true }
+        aktif: { type: boolean }
+    AkilliEvCihazCreate:
+      type: object
+      required: [kopru_id, ad, tip, dis_kimlik]
+      properties:
+        kopru_id: { type: string, format: uuid }
+        ad: { type: string, maxLength: 200 }
+        tip:
+          type: string
+          enum:
+            [isik, priz, kilit, termostat, perde, vana, sensor_su,
+             sensor_duman, sensor_gaz, sensor_hareket, sayac, diger]
+        unit_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: NULL = ORTAK ALAN (sakine gorunmez).
+        alan: { type: string, nullable: true, maxLength: 200 }
+        dis_kimlik: { type: string, maxLength: 300 }
+        aktif: { type: boolean }
+    AkilliEvCihazUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        ad: { type: string }
+        unit_id: { type: string, format: uuid, nullable: true }
+        alan: { type: string, nullable: true }
+        aktif: { type: boolean }
+    AkilliEvKomutIn:
+      type: object
+      required: [eylem]
+      properties:
+        eylem: { type: string, enum: [ac, kapat, kilit_ac, vana_kapat] }
+    AkilliEvBolumIn:
+      type: object
+      required: [bolumler]
+      properties:
+        bolumler:
+          type: array
+          items:
+            type: object
+            required: [bolum, acik]
+            properties:
+              bolum:
+                type: string
+                enum:
+                  [aydinlatma, iklim, kilit, perde, kacak, yangin,
+                   enerji, sayac, senaryo]
+              acik: { type: boolean }
+    AkilliEvSenaryoCreate:
+      type: object
+      required: [olay, cihaz_id, eylem]
+      properties:
+        olay:
+          type: string
+          enum:
+            [su_kacagi, yangin, gaz, hareket, panik_anons, panik_kapanis]
+        cihaz_id: { type: string, format: uuid }
+        eylem: { type: string, enum: [ac, kapat, kilit_ac, vana_kapat] }
+        aktif: { type: boolean }
+    AkilliEvOlayIn:
+      type: object
+      required: [olay_jetonu, dis_kimlik, olay]
+      properties:
+        olay_jetonu: { type: string, minLength: 10, maxLength: 200 }
+        dis_kimlik: { type: string, maxLength: 300 }
+        olay:
+          type: string
+          enum:
+            [su_kacagi, yangin, gaz, hareket, panik_anons, panik_kapanis]
+        deger: { type: string, nullable: true, maxLength: 200 }
     PanikOlustur:
       type: object
       required: [tip]

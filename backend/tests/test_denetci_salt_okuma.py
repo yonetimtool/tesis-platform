@@ -89,6 +89,13 @@ KAPISIZ_MUTASYONLAR: frozenset[tuple[str, str]] = frozenset({
     # (Svix HMAC-SHA256 + 5 dakikalik zaman penceresi); sir yapilandirilmamissa
     # uc 401 doner, yani "acik" kalmaz. Odeme webhook'uyla AYNI sinif.
     ("POST", "/webhooks/eposta/resend"),
+    # (P240 §3) AKILLI EV OLAY WEBHOOK'U — ayni sinif. Cagiran bir
+    # kullanici degil, sitedeki akilli ev merkezi. Kimlik PAYLASILAN SIR
+    # ile tasinir (olay jetonu; SHA-256 ozeti saklanir, ham deger yalniz
+    # uretim yanitinda gorunur). Jeton gecersizse uc 403 doner, yani
+    # "acik" kalmaz. Denetci icin de fark etmez: uc VERI DONDURMEZ,
+    # yalniz olayi isler.
+    ("POST", "/akilli-ev/olay"),
     # (P202) ZORUNLU GUNCELLEME KONTROLU. Rol kapisi OLAMAZ ve bu
     # ozelligin VARLIK SEBEBIYLE ayni: kontrol GIRISTEN ONCE calisir,
     # cunku kirici bir API degisikligi yapildiysa eski istemci GIRIS

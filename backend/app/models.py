@@ -128,6 +128,8 @@ NOTIFICATION_TIP = ENUM(
     "panik_alarm", "panik_yanlis_alarm", "panik_kapandi",
     # (P240 §4, göç 0141) Entegrasyon bağlantısı koptu (yönetim alarmı).
     "entegrasyon_koptu",
+    # (P240 §3, göç 0143) Akıllı ev sensörleri: kaçak ve yangın.
+    "akilli_ev_kacak", "akilli_ev_yangin",
     name="notification_tip", create_type=False,
 )
 ASSET_KATEGORI = ENUM(
@@ -212,6 +214,27 @@ ENTEGRASYON_SAGLIK = ENUM(
 DIYAFON_YONTEM = ENUM(
     "sip", "sip_kopru", "kuru_kontak",
     name="diyafon_yontem", create_type=False,
+)
+# (P240 §3, goc 0143) Akilli ev.
+AKILLI_EV_KOPRU_TUR = ENUM(
+    "home_assistant", "mqtt", "http",
+    name="akilli_ev_kopru_tur", create_type=False,
+)
+AKILLI_EV_CIHAZ_TIP = ENUM(
+    "isik", "kilit", "vana", "termostat", "sayac", "role",
+    "sensor_su", "sensor_gaz", "sensor_duman", "sensor_hareket",
+    "asansor", "sulama",
+    name="akilli_ev_cihaz_tip", create_type=False,
+)
+AKILLI_EV_BOLUM = ENUM(
+    "protokol", "panik", "ziyaretci", "kacak", "enerji",
+    "ortak_alan", "isitma", "kapi", "yangin",
+    name="akilli_ev_bolum", create_type=False,
+)
+AKILLI_EV_OLAY = ENUM(
+    "panik_sakin", "panik_guvenlik", "panik_anons",
+    "su_kacagi", "gaz_kacagi", "yangin",
+    name="akilli_ev_olay", create_type=False,
 )
 # ---------------------- P27 "Tanimlar" katmani enum'lari -------------------- #
 GELIR_GIDER_TIP = ENUM(
@@ -2891,6 +2914,10 @@ __all__ = [
     "ENTEGRASYON_SAGLIK",
     "Diyafon",
     "DIYAFON_YONTEM",
+    "AkilliEvKopru",
+    "AkilliEvCihaz",
+    "AkilliEvBolumAyari",
+    "AkilliEvSenaryo",
     # (P240 §1) PANIK
     "PanikAlarm",
     "PanikAlici",
@@ -5040,3 +5067,138 @@ class Diyafon(Base):
     kopus_bildirildi_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     created_at = _created_at()
     updated_at = _created_at()
+
+
+# --------------------------------------------------------------------------- #
+# (P240 §3) AKILLI EV
+# --------------------------------------------------------------------------- #
+class AkilliEvKopru(Base):
+    """(P240 §3, goc 0143) Sitedeki hub — Matter/Zigbee/Z-Wave BURADAN gorunur.
+
+    Radyo protokollerine DOGRUDAN baglanmak fiziksel olarak mumkun
+    degildir (radyo sitede, sunucu veri merkezinde); sektorun cozumu
+    kopruDUR (bkz. `akilli_ev/taban.py`).
+    """
+
+    __tablename__ = "akilli_ev_kopru"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_akilli_kopru_id_tenant"),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    ad: Mapped[str] = mapped_column(Text, nullable=False)
+    tur: Mapped[str] = mapped_column(AKILLI_EV_KOPRU_TUR, nullable=False)
+    host: Mapped[str] = mapped_column(Text, nullable=False)
+    port: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    #: KEK ile sifreli erisim jetonu; GET'te ASLA donmez.
+    token_enc: Mapped[str | None] = mapped_column(Text, nullable=True)
+    aktif: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
+    #: Hub'in BIZE olay gonderirken kullandigi jetonun hash'i.
+    olay_jetonu_hash: Mapped[str | None] = mapped_column(Text, nullable=True)
+    saglik: Mapped[str] = mapped_column(
+        ENTEGRASYON_SAGLIK, nullable=False, server_default=text("'bilinmiyor'")
+    )
+    son_kontrol_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    son_basarili_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    son_hata_kod: Mapped[str | None] = mapped_column(Text, nullable=True)
+    son_hata_ayrinti: Mapped[str | None] = mapped_column(Text, nullable=True)
+    kopus_bildirildi_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    created_at = _created_at()
+    updated_at = _created_at()
+
+
+class AkilliEvCihaz(Base):
+    """(P240 §3, goc 0143) Bir cihaz.
+
+    `unit_id` NULL ise ORTAK ALAN. Bu ayrim bir GUVENLIK SINIRIDIR:
+    sakin yalniz kendi dairesinin cihazlarini gorur ve komut verir.
+    """
+
+    __tablename__ = "akilli_ev_cihaz"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_akilli_cihaz_id_tenant"),
+        UniqueConstraint("kopru_id", "dis_kimlik", name="uq_akilli_cihaz_kimlik"),
+        ForeignKeyConstraint(
+            ["kopru_id", "tenant_id"],
+            ["akilli_ev_kopru.id", "akilli_ev_kopru.tenant_id"],
+            ondelete="CASCADE",
+            name="fk_akilli_cihaz_kopru",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    kopru_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    ad: Mapped[str] = mapped_column(Text, nullable=False)
+    tip: Mapped[str] = mapped_column(AKILLI_EV_CIHAZ_TIP, nullable=False)
+    unit_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    alan: Mapped[str | None] = mapped_column(Text, nullable=True)
+    dis_kimlik: Mapped[str] = mapped_column(Text, nullable=False)
+    son_durum: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    son_veri_at = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    aktif: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
+    created_at = _created_at()
+    updated_at = _created_at()
+
+
+class AkilliEvBolumAyari(Base):
+    """(P240 §3, goc 0143) Bolum acik mi — tenant basina.
+
+    YOKLUK = KAPALI. Yeni bir bolum eklendiginde eski tesislerin
+    ayarlarini gocle guncellemek gerekmez.
+    """
+
+    __tablename__ = "akilli_ev_bolum_ayari"
+
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("tenant.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    bolum: Mapped[str] = mapped_column(AKILLI_EV_BOLUM, primary_key=True)
+    acik: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
+    updated_at = _created_at()
+
+
+class AkilliEvSenaryo(Base):
+    """(P240 §3, goc 0143) OLAY -> CIHAZ + EYLEM.
+
+    Istegin maddesi: "hangi eylemin hangi senaryoda tetiklenecegi
+    YAPILANDIRILABILIR olsun, kodda sabit olmasin". Panik tetiklenince
+    kod "isiklari yak" demez; "bu olaya bagli senaryolari calistir" der.
+    """
+
+    __tablename__ = "akilli_ev_senaryo"
+    __table_args__ = (
+        UniqueConstraint("id", "tenant_id", name="uq_akilli_senaryo_id_tenant"),
+        UniqueConstraint("olay", "cihaz_id", "eylem", name="uq_akilli_senaryo"),
+        ForeignKeyConstraint(
+            ["cihaz_id", "tenant_id"],
+            ["akilli_ev_cihaz.id", "akilli_ev_cihaz.tenant_id"],
+            ondelete="CASCADE",
+            name="fk_akilli_senaryo_cihaz",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenant.id", ondelete="CASCADE"), nullable=False
+    )
+    olay: Mapped[str] = mapped_column(AKILLI_EV_OLAY, nullable=False)
+    cihaz_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    eylem: Mapped[str] = mapped_column(Text, nullable=False)
+    aktif: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
+    created_at = _created_at()

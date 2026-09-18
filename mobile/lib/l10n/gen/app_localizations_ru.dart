@@ -7046,4 +7046,71 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get anketDokumYuklenemedi => 'Не удалось загрузить разбивку голосов.';
+
+  @override
+  String get akilliEvBaslik => 'Умный дом';
+
+  @override
+  String get akilliEvCihazYok => 'Нет устройств';
+
+  @override
+  String get akilliEvKapaliAciklama =>
+      'Устройства вашей квартиры появятся здесь, когда управление включит разделы умного дома.';
+
+  @override
+  String get akilliEvOrtakAlan => 'Общая зона';
+
+  @override
+  String get akilliEvKomutGonderildi => 'Команда отправлена';
+
+  @override
+  String get akilliEvTipIsik => 'Свет';
+
+  @override
+  String get akilliEvTipPriz => 'Розетка';
+
+  @override
+  String get akilliEvTipKilit => 'Замок';
+
+  @override
+  String get akilliEvTipTermostat => 'Термостат';
+
+  @override
+  String get akilliEvTipPerde => 'Штора';
+
+  @override
+  String get akilliEvTipVana => 'Клапан';
+
+  @override
+  String get akilliEvTipSensorSu => 'Датчик воды';
+
+  @override
+  String get akilliEvTipSensorDuman => 'Датчик дыма';
+
+  @override
+  String get akilliEvTipSensorGaz => 'Датчик газа';
+
+  @override
+  String get akilliEvTipSensorHareket => 'Датчик движения';
+
+  @override
+  String get akilliEvTipSayac => 'Счётчик';
+
+  @override
+  String get akilliEvTipDiger => 'Другое';
+
+  @override
+  String get akilliEvEylemAc => 'Включить';
+
+  @override
+  String get akilliEvEylemKapat => 'Выключить';
+
+  @override
+  String get akilliEvEylemKilitAc => 'Открыть';
+
+  @override
+  String get akilliEvEylemVanaKapat => 'Закрыть клапан';
+
+  @override
+  String get modulAkilliEv => 'Умный дом';
 }

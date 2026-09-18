@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../core/startup/acilis_tercihleri.dart';
 import '../features/diyafon/presentation/diyafon_ekrani.dart';
+import '../features/akilli_ev/presentation/akilli_ev_ekrani.dart';
 import '../features/panik/presentation/panik_sayfasi.dart';
 import '../features/panik/presentation/panik_takip_screen.dart';
 import '../features/staff/presentation/kisi_sayfasi.dart';
@@ -173,6 +174,9 @@ class AppRoutes {
   static const kisi = '/kisi';
   /// (P240 §2) Diyafon yapilandirmasi (yonetici).
   static const diyafon = '/diyafon';
+
+  /// (P240 §3) Akilli ev — yonetim + sakin.
+  static const akilliEv = '/akilli-ev';
   /// (P240 §1) Panik tetikleme — ust bardaki ACIL dugmesinden.
   static const panik = '/panik';
   /// (P240 §1) Acil durum cagrilari takip ekrani.
@@ -331,6 +335,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.diyafon,
         builder: (context, state) => const DiyafonEkrani(),
+      ),
+      GoRoute(
+        path: AppRoutes.akilliEv,
+        builder: (context, state) => const AkilliEvEkrani(),
       ),
       GoRoute(
         path: AppRoutes.panik,

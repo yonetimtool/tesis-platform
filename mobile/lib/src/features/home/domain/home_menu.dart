@@ -247,6 +247,13 @@ enum HomeMenuEntry {
   /// baglantisi"dir ve yonetici ikisini ayni zihinsel kutuda arar.
   diyafon,
 
+  /// (P240 §3) Akilli ev — YONETIM ve SAKIN.
+  ///
+  /// SAKININ TEK YUZEYI BURASI: `app.*` web panelinde sakin hicbir
+  /// sayfa gormez (P129), oysa kendi dairesinin isigini yakmak tam da
+  /// sakinin isidir. Sunucu listeyi onun dairesine kisitlar.
+  akilliEv,
+
   /// (P240 §1) Acil durum cagrilari — TAKIP ekrani.
   ///
   /// SAKIN GORMEZ: baska dairelerin acil durumlari kisisel veridir
@@ -408,6 +415,8 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.integrations,
         // (P240 §2) Diyafon — dis sistem baglantisi, ayni kutuda.
         HomeMenuEntry.diyafon,
+        // (P240 §3) Akilli ev — ortak alan cihazlari + senaryolarin sonucu.
+        HomeMenuEntry.akilliEv,
         HomeMenuEntry.binaDuzenleme,
         HomeMenuEntry.daireTanimlari,
         HomeMenuEntry.taskCategories,
@@ -449,6 +458,10 @@ List<HomeMenuEntry> homeMenuForRole(UserRole role) {
         HomeMenuEntry.myDues,
         HomeMenuEntry.siteBudget,
         HomeMenuEntry.transparency,
+        // (P240 §3) Sakin KENDI dairesinin cihazlarini buradan yonetir.
+        // `yoneticiIletisim`in ONUNDE: o giris EN SONDA kalmali (kendi
+        // kilidi var) — menunun son satiri "yonetime ulas" olmali.
+        HomeMenuEntry.akilliEv,
         HomeMenuEntry.yoneticiIletisim,
       ];
     case UserRole.denetci:
@@ -517,6 +530,7 @@ String moduleBaslik(AppLocalizations l10n, HomeMenuEntry entry) =>
       HomeMenuEntry.yoneticiIletisim => l10n.yonIletisimBaslik,
       HomeMenuEntry.panikTakip => l10n.panikTakipBaslik,
       HomeMenuEntry.diyafon => l10n.diyafonBaslik,
+      HomeMenuEntry.akilliEv => l10n.modulAkilliEv,
     };
 
 // ===========================================================================
@@ -605,6 +619,10 @@ HomeMenuGrup homeMenuGrubu(HomeMenuEntry e) => switch (e) {
   HomeMenuEntry.kurulum ||
   HomeMenuEntry.diyafon ||
   HomeMenuEntry.integrations => HomeMenuGrup.tanimlar,
+  // Akilli ev TANIMLAR grubunda DEGIL: sakin icin gunluk bir eylem
+  // ekranidir (isigi yak), yonetici icin de ortak alan kontrolu —
+  // yani BINANIN KENDISI.
+  HomeMenuEntry.akilliEv => HomeMenuGrup.tesis,
 };
 
 /// Rolun menusu, BOLUMLENMIS. Bos bolum DONMEZ.

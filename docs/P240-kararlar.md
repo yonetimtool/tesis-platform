@@ -574,3 +574,102 @@ Sahada denenmesi gerekenler:
 (401/407 + nonce) bu tur yanıt veremez; `diyafon_reddedildi` döner ve
 kullanıcı "kullanıcı adı/şifre/hedefi kontrol edin" mesajını görür. Bu
 sınır burada yazılı olduğu için sahada sürpriz değil.
+
+---
+
+# §3 — AKILLI EV
+
+## NE BITTI, NE BITMEDI (once bu)
+
+**UCTAN UCA CALISAN (olculdu):**
+* Kopru (Home Assistant) tanimlama, jeton sifreli saklama, baglanti testi.
+* Cihaz ekleme/silme, daireye ya da ortak alana esleme.
+* Cihaz komutu (ac/kapat/kilit_ac/vana_kapat) — gercek HTTP istegiyle,
+  testte taklit bir HA sunucusuna karsi dogrulandi.
+* **IDOR siniri** — sakin baska dairenin ya da ortak alanin cihazini ne
+  GORUR ne KOMUT VERIR (asagida ayrintili).
+* Dokuz bolumun acik/kapali anahtari; kapali bolum mobilde de gorunmez.
+* Olay webhook'u (`/akilli-ev/olay`) — su kacagi/yangin/gaz geldiginde
+  bildirim + senaryo calistirma.
+* Senaryo tanimi ve panik alarmina baglanma (§1 ile).
+* Web paneli (bolumler/merkez/cihazlar/senaryolar) + mobil cihaz ekrani.
+
+**ISKELET HALINDE (acikca yazilmali):**
+* **MQTT koprusu UYGULANMADI.** Tur secilebiliyor ama `saglik`/`komut`
+  "yapilandirma eksik" doner. SESSIZCE HTTP'ye DUSMUYOR — sessiz dusus,
+  kullaniciya calismayan bir kurulumu calisiyormus gibi gosterirdi.
+* **Cihaz DURUMU okunmuyor** (`son_durum` alani var, dolduran periyodik
+  bir is YOK). Yani "isik su an yaniyor mu" gosterilmiyor; yalniz komut
+  gonderiliyor. Enerji/sayac bolumleri bu yuzden SU AN yalnizca cihaz
+  listesi gosterir, grafik/okuma YOK.
+* **Termostat sicaklik degeri, perde yuzdesi gibi PARAMETRELI komutlar
+  yok** — eylem kumesi dort sabit eylemden ibaret.
+* **Cihaz kesfi (discovery) yok**: `dis_kimlik` elle giriliyor.
+
+**OLCEMEDIGIM:** Gercek bir Home Assistant kurulumunda isigin yanmasi.
+Testteki HA taklit bir sunucudur; dogrulanan sey "HA REST API'sini dogru
+konusuyorum" iddiasidir, "bu hub surumunde calisiyor" DEGIL.
+
+## IDOR — NE OLCTUM
+
+Uc ayri kapi, ucu de kirilarak dogrulandi (`test_p240_akilli_ev.py`):
+
+1. **Liste** (`GET /akilli-ev/cihazlar`): `resident` icin sorgu kendi
+   dairelerine kisitlanir. Kirdim (`if False:` ile suzgeci kapattim) →
+   test KIRMIZI oldu, geri aldim.
+2. **Komut** (`POST .../komut`): kimlik ELLE yazilsa bile
+   `_cihaza_erisebilir` durdurur. Kirdim (`return True`) → iki test
+   birden KIRMIZI, geri aldim.
+3. **Ortak alan**: `unit_id IS NULL` cihazlar sakine ne gorunur ne de
+   komut kabul eder — kazan dairesinin vanasi sakinin isi degil.
+
+**POZITIF KONTROL DE VAR**: ayni sakin KENDI dairesinin cihazini
+calistirabiliyor. Olmasaydi "her istege 403 donen" bozuk bir uc de bu
+testleri gecerdi.
+
+**404 DEGIL 403** doniyor: cihaz VARDIR, sadece bu kisinin degildir.
+404 donmek yoneticiye "sildim mi?" diye aratirdi.
+
+## DIGER KARARLAR
+
+**Yokluk = kapali.** Bolum ayari tablosunda satiri olmayan bolum
+KAPALIDIR. Varsayilani "acik" yapmak, yalnizca sayac okuyan bir siteye
+her gun sekiz bos baslik gosterirdi.
+
+**Yetenek matrisi KODDA, veride degil.** Hangi cihaz tipinin hangi
+eylemi destekledigi `TIP_EYLEM` sozlugudur. Veriye koymak, her yeni tip
+icin goc yazmak ve mevcut kayitlari geriye donuk doldurmak demekti.
+Sensorlerin eylem kumesi BOS: bir duman dedektorune "ac" demek anlamsiz.
+Kapi BIZDE (422), kopruye gonderip anlasilmaz bir hata almak degil.
+
+**Eylem gecerliligi KURULUM aninda dogrulanir.** Gecersiz bir senaryo
+kaydedilebilseydi, acil durumda sessizce calismayan bir senaryo olurdu —
+ve o an kimse hata mesaji okumuyor.
+
+**Olay webhook'u kimlik GEREKTIRMEZ, jeton tasir.** Hub bir kullanici
+degildir. Tenant, jetonun SHA-256 ozetinden SECURITY DEFINER bir
+fonksiyonla cozulur (o ana kadar tenant baglami YOKTUR); fonksiyon
+PUBLIC'ten alinmistir, yalniz uygulama rolu calistirir ve TEK SUTUN
+(tenant_id) doner — gecersiz cagri veri sizdiramaz. Ham jeton yalniz
+uretildigi yanitta gorunur.
+
+**Once BILDIRIM, sonra SENARYO.** Insanlarin haberdar olmasi, vananin
+kapanmasindan once gelir; bir cihaz olu ise digerleri yine calisir
+(hatalar yutulup loglanir, dongu durmaz).
+
+**Yonetim bildirimi `user_id = NULL`.** `/notifications` yonetim
+rollerine yalniz tenant-kapsamli satirlari gosteriyor (P240 §4'te
+olculmustu); kisi basina satir yazmak bildirimi GORUNMEZ kilardi.
+
+**Sakin WEB'de bu sayfayi GORMEZ.** Ilk yazimda `resident` rota
+rollerine eklenmisti; `rol-menusu` kilidi haklı olarak yakaladi (P129:
+saha ve sakin rolleri `app.*`ta hicbir sayfa gormez). Sunucu sakine
+cihaz listesini ACAR — ayrilan sey YETKI degil YUZEY: sakinin akilli ev
+yuzeyi MOBILDIR.
+
+**Tip -> bolum eslemesi mobilde KODDA.** Bolum anahtarlari yoneticinin
+actigi seyler, cihaz tipleri protokolun verisi; ikisini veride
+birlestirmek her yeni tipte goc gerektirirdi.
+
+**Tum komutlar denetim kaydinda**: `AKILLI_EV_KOMUT` (kim, ne zaman,
+hangi cihaz, hangi eylem), yazma islemleri `AKILLI_EV_YAZ`.

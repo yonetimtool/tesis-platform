@@ -114,6 +114,11 @@ KRITIK_TIPLER: frozenset[str] = frozenset({
     # yapilacak bir sey kalmamistir.
     "panik_alarm",
     "panik_yanlis_alarm",
+    # (P240 §3) YANGIN/DUMAN — panikle ayni siniftadir: duyulmayan bir
+    # duman alarmi hic gonderilmemis olanla aynidir. `akilli_ev_kacak`
+    # KRITIK DEGIL (asagida yok): onemli ama gece uyandirmayi
+    # gerektirmez.
+    "akilli_ev_yangin",
     # Sikayet/talep hattinin TAMAMI: sakinin actigi talep, yoneticinin
     # gormesi gereken ilk seydir.
     "yeni_talep",

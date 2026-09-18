@@ -822,6 +822,54 @@ METINLER: dict[str, PushMetni] = {
     # KRITIK KANALDA DEGIL (bkz. push_kanal): kopan bir diyafon
     # baglantisi onemlidir ama gece 03:00'te uyandirmayi gerektirmez.
     # Panik bildirimiyle ayni sesi vermek, kritik kanali degersizlestirir.
+    # (P240 §3) AKILLI EV — kacak ve yangin.
+    #
+    # IKISI AYRI TIP: yangin her zaman saha mudahalesi ister ve kritik
+    # kanaldan gider; kacak onemlidir ama gece 03:00'te uyandirmayi
+    # gerektirmeyebilir. Tek tipe indirmek, ikisini ayni sesle
+    # duyurmak olurdu.
+    "akilli_ev_kacak": PushMetni(
+        baslik={
+            "tr": "Kaçak algılandı",
+            "en": "Leak detected",
+            "ar": "تم رصد تسرب",
+            "ru": "Обнаружена утечка",
+            "de": "Leck erkannt",
+            "fr": "Fuite détectée",
+            "es": "Fuga detectada",
+        },
+        govde={
+            "tr": "{cihaz} sensörü kaçak bildirdi — {yer}",
+            "en": "Sensor {cihaz} reported a leak — {yer}",
+            "ar": "أبلغ الحساس {cihaz} عن تسرب — {yer}",
+            "ru": "Датчик {cihaz} сообщил об утечке — {yer}",
+            "de": "Sensor {cihaz} meldet ein Leck — {yer}",
+            "fr": "Le capteur {cihaz} signale une fuite — {yer}",
+            "es": "El sensor {cihaz} detectó una fuga — {yer}",
+        },
+        params=('cihaz', 'yer'),
+    ),
+    "akilli_ev_yangin": PushMetni(
+        baslik={
+            "tr": "YANGIN / DUMAN",
+            "en": "FIRE / SMOKE",
+            "ar": "حريق / دخان",
+            "ru": "ПОЖАР / ДЫМ",
+            "de": "FEUER / RAUCH",
+            "fr": "INCENDIE / FUMÉE",
+            "es": "INCENDIO / HUMO",
+        },
+        govde={
+            "tr": "{cihaz} sensörü duman algıladı — {yer}",
+            "en": "Sensor {cihaz} detected smoke — {yer}",
+            "ar": "رصد الحساس {cihaz} دخانًا — {yer}",
+            "ru": "Датчик {cihaz} обнаружил дым — {yer}",
+            "de": "Sensor {cihaz} hat Rauch erkannt — {yer}",
+            "fr": "Le capteur {cihaz} a détecté de la fumée — {yer}",
+            "es": "El sensor {cihaz} detectó humo — {yer}",
+        },
+        params=('cihaz', 'yer'),
+    ),
     "entegrasyon_koptu": PushMetni(
         baslik={
             "tr": "Bağlantı koptu",

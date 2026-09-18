@@ -6974,4 +6974,71 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get anketDokumYuklenemedi =>
       'Die Stimmenaufschlüsselung konnte nicht geladen werden.';
+
+  @override
+  String get akilliEvBaslik => 'Smart Home';
+
+  @override
+  String get akilliEvCihazYok => 'Keine Geräte vorhanden';
+
+  @override
+  String get akilliEvKapaliAciklama =>
+      'Sobald die Verwaltung Smart-Home-Bereiche aktiviert, erscheinen hier die Geräte Ihrer Wohnung.';
+
+  @override
+  String get akilliEvOrtakAlan => 'Gemeinschaftsbereich';
+
+  @override
+  String get akilliEvKomutGonderildi => 'Befehl gesendet';
+
+  @override
+  String get akilliEvTipIsik => 'Licht';
+
+  @override
+  String get akilliEvTipPriz => 'Steckdose';
+
+  @override
+  String get akilliEvTipKilit => 'Schloss';
+
+  @override
+  String get akilliEvTipTermostat => 'Thermostat';
+
+  @override
+  String get akilliEvTipPerde => 'Jalousie';
+
+  @override
+  String get akilliEvTipVana => 'Ventil';
+
+  @override
+  String get akilliEvTipSensorSu => 'Wassersensor';
+
+  @override
+  String get akilliEvTipSensorDuman => 'Rauchmelder';
+
+  @override
+  String get akilliEvTipSensorGaz => 'Gassensor';
+
+  @override
+  String get akilliEvTipSensorHareket => 'Bewegungsmelder';
+
+  @override
+  String get akilliEvTipSayac => 'Zähler';
+
+  @override
+  String get akilliEvTipDiger => 'Sonstiges';
+
+  @override
+  String get akilliEvEylemAc => 'Ein';
+
+  @override
+  String get akilliEvEylemKapat => 'Aus';
+
+  @override
+  String get akilliEvEylemKilitAc => 'Entriegeln';
+
+  @override
+  String get akilliEvEylemVanaKapat => 'Ventil schließen';
+
+  @override
+  String get modulAkilliEv => 'Smart Home';
 }

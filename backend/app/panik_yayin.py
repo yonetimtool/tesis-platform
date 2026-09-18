@@ -150,7 +150,34 @@ async def yayinla_senkron(db: AsyncSession, alarm: PanikAlarm) -> int:
     )
     _sms_gonder(alarm, kisiler, veri)
     await _diyafon_anons(db, alarm, veri)
+    await _akilli_ev_senaryolari(db, alarm)
     return len(kisiler)
+
+
+async def _akilli_ev_senaryolari(db: AsyncSession, alarm: PanikAlarm) -> None:
+    """(P240 §3) Panik -> akilli ev senaryolari.
+
+    KODDA SABIT EYLEM YOK: "isiklari yak" demiyoruz, "bu olaya bagli
+    senaryolari calistir" diyoruz. Bir tesis kapiyi acmak (itfaiye
+    girisi) isterken otekinin acmamasi tamamen bir VERI farkidir.
+
+    SENARYO YOKSA SESSIZ: akilli ev yapilandirmasi olmayan tesiste
+    panik AYNEN calisir.
+    """
+    from .akilli_ev_olay import senaryolari_calistir
+
+    olay = {
+        "sakin": "panik_sakin",
+        "guvenlik": "panik_guvenlik",
+        "yonetici_anons": "panik_anons",
+    }.get(alarm.tip)
+    if olay is None:
+        return
+    try:
+        await senaryolari_calistir(db, alarm.tenant_id, olay)
+    except Exception:
+        # SENARYO HATASI ALARMI DUSURMEZ: push ve in-app zaten gitti.
+        logger.warning("[panik] akilli ev senaryolari calismadi (%s)", alarm.id)
 
 
 async def _diyafon_anons(db: AsyncSession, alarm: PanikAlarm, veri: dict) -> None:

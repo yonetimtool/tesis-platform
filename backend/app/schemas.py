@@ -9166,3 +9166,202 @@ class DiyafonEylemOut(BaseModel):
     ok: bool
     #: Hata KIMLIGI — istemci kendi dilinde metne cevirir.
     kod: str | None = None
+
+
+# ======================= (P240 §3) AKILLI EV =============================== #
+class AkilliEvKopruOut(BaseModel):
+    """JETON ASLA DONMEZ; yerine `token_set` (bool)."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    ad: str
+    tur: str
+    host: str
+    port: int | None = None
+    token_set: bool = False
+    aktif: bool
+    saglik: str = "bilinmiyor"
+    son_kontrol_at: datetime | None = None
+    son_basarili_at: datetime | None = None
+    son_hata_kod: str | None = None
+    created_at: datetime
+
+    @classmethod
+    def from_model(cls, obj) -> "AkilliEvKopruOut":
+        return cls(
+            id=obj.id, ad=obj.ad, tur=obj.tur, host=obj.host, port=obj.port,
+            token_set=bool(obj.token_enc), aktif=obj.aktif, saglik=obj.saglik,
+            son_kontrol_at=obj.son_kontrol_at,
+            son_basarili_at=obj.son_basarili_at,
+            son_hata_kod=obj.son_hata_kod, created_at=obj.created_at,
+        )
+
+
+class AkilliEvKopruCreate(BaseModel):
+    ad: str = Field(..., min_length=1, max_length=200)
+    tur: str
+    host: str = Field(..., min_length=1, max_length=255)
+    port: int | None = Field(None, ge=1, le=65535)
+    token: str | None = Field(None, max_length=1000)
+    aktif: bool = True
+
+    @field_validator("tur")
+    @classmethod
+    def _tur(cls, v: str) -> str:
+        if v not in ("home_assistant", "mqtt", "http"):
+            raise ValueError("gecersiz kopru turu")
+        return v
+
+
+class AkilliEvKopruUpdate(BaseModel):
+    ad: str | None = Field(None, min_length=1, max_length=200)
+    host: str | None = Field(None, min_length=1, max_length=255)
+    port: int | None = Field(None, ge=1, le=65535)
+    token: str | None = Field(None, max_length=1000)
+    aktif: bool | None = None
+
+    @model_validator(mode="after")
+    def _en_az_bir(self) -> "AkilliEvKopruUpdate":
+        if not self.model_fields_set:
+            raise ValueError("en az bir alan gerekli")
+        return self
+
+
+class AkilliEvKopruListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[AkilliEvKopruOut]
+
+
+class AkilliEvCihazOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    kopru_id: uuid.UUID
+    ad: str
+    tip: str
+    unit_id: uuid.UUID | None = None
+    daire_no: str | None = None
+    alan: str | None = None
+    dis_kimlik: str
+    son_durum: dict | None = None
+    son_veri_at: datetime | None = None
+    aktif: bool
+    #: Bu cihaz tipinin ALABILECEGI eylemler — arayuz dugmeleri buradan
+    #: cizer. Sensorler BOS doner: bir duman dedektorune "ac" demek
+    #: anlamsizdir.
+    eylemler: list[str] = []
+
+
+class AkilliEvCihazCreate(BaseModel):
+    kopru_id: uuid.UUID
+    ad: str = Field(..., min_length=1, max_length=200)
+    tip: str
+    #: NULL = ORTAK ALAN.
+    unit_id: uuid.UUID | None = None
+    alan: str | None = Field(None, max_length=200)
+    dis_kimlik: str = Field(..., min_length=1, max_length=300)
+    aktif: bool = True
+
+
+class AkilliEvCihazUpdate(BaseModel):
+    ad: str | None = Field(None, min_length=1, max_length=200)
+    unit_id: uuid.UUID | None = None
+    alan: str | None = Field(None, max_length=200)
+    aktif: bool | None = None
+
+    @model_validator(mode="after")
+    def _en_az_bir(self) -> "AkilliEvCihazUpdate":
+        if not self.model_fields_set:
+            raise ValueError("en az bir alan gerekli")
+        return self
+
+
+class AkilliEvCihazListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[AkilliEvCihazOut]
+
+
+class AkilliEvKomutIn(BaseModel):
+    eylem: str
+
+
+class AkilliEvKomutOut(BaseModel):
+    ok: bool
+    kod: str | None = None
+
+
+class AkilliEvBolumOut(BaseModel):
+    bolum: str
+    acik: bool
+
+
+class AkilliEvBolumIn(BaseModel):
+    """Bolum anahtarlari — TOPLU yazilir.
+
+    Tek tek yazmak, dokuz anahtari degistiren yoneticiye dokuz istek
+    attirmak ve yarim kalmis bir durum birakmak olurdu.
+    """
+
+    bolumler: list[AkilliEvBolumOut]
+
+
+class AkilliEvSenaryoOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    olay: str
+    cihaz_id: uuid.UUID
+    cihaz_ad: str | None = None
+    eylem: str
+    aktif: bool
+
+
+class AkilliEvSenaryoCreate(BaseModel):
+    olay: str
+    cihaz_id: uuid.UUID
+    eylem: str
+    aktif: bool = True
+
+    @field_validator("olay")
+    @classmethod
+    def _olay(cls, v: str) -> str:
+        gecerli = {
+            "panik_sakin", "panik_guvenlik", "panik_anons",
+            "su_kacagi", "gaz_kacagi", "yangin",
+        }
+        if v not in gecerli:
+            raise ValueError("gecersiz olay")
+        return v
+
+
+class AkilliEvSenaryoListResponse(BaseModel):
+    meta: PageMetaOut
+    items: list[AkilliEvSenaryoOut]
+
+
+class AkilliEvOlayIn(BaseModel):
+    """Hub'dan gelen SENSOR OLAYI.
+
+    Kimlik `olay_jetonu` ile dogrulanir: oturum yok, cunku cagiran bir
+    KULLANICI degil sitedeki HUB'dir.
+    """
+
+    olay_jetonu: str = Field(..., min_length=10, max_length=200)
+    dis_kimlik: str = Field(..., min_length=1, max_length=300)
+    #: `su_kacagi` | `gaz_kacagi` | `yangin`
+    olay: str
+    deger: str | None = Field(None, max_length=200)
+
+    @field_validator("olay")
+    @classmethod
+    def _olay(cls, v: str) -> str:
+        if v not in ("su_kacagi", "gaz_kacagi", "yangin"):
+            raise ValueError("gecersiz olay")
+        return v
+
+
+class AkilliEvOlayOut(BaseModel):
+    ok: bool
+    #: Kac senaryo eylemi calistirildi.
+    senaryo: int = 0

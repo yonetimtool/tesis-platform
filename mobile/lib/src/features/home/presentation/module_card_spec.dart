@@ -272,6 +272,11 @@ ModuleCardSpec moduleCardSpec(HomeMenuEntry entry) {
           icon: Icons.contact_phone,
           accent: _navy,
           route: AppRoutes.yoneticiIletisim);
+    case HomeMenuEntry.akilliEv:
+      return const ModuleCardSpec(
+          icon: Icons.home_outlined,
+          accent: _navy,
+          route: AppRoutes.akilliEv);
     case HomeMenuEntry.diyafon:
       return const ModuleCardSpec(
           icon: Icons.doorbell_outlined,

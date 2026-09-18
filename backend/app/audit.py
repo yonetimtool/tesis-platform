@@ -199,6 +199,10 @@ class Action:
     # kutuya konamaz.
     DIYAFON_YAZ = "diyafon_yaz"
     DIYAFON_EYLEM = "diyafon_eylem"
+    # (P240 §3) AKILLI EV — yapilandirma ve KOMUT ayri: kapi acan, vana
+    # kapatan bir komut, bir ayar degisikligiyle ayni kutuya konamaz.
+    AKILLI_EV_YAZ = "akilli_ev_yaz"
+    AKILLI_EV_KOMUT = "akilli_ev_komut"
     KVKK_YAYIN = "kvkk_yayin"
     KVKK_ONAY = "kvkk_onay"
     PAZARLAMA_RIZA = "pazarlama_riza"

@@ -12034,6 +12034,138 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Oy dökümü yüklenemedi.'**
   String get anketDokumYuklenemedi;
+
+  /// (P240 §3) Akilli ev
+  ///
+  /// In tr, this message translates to:
+  /// **'Akıllı ev'**
+  String get akilliEvBaslik;
+
+  /// (P240 §3) Akilli ev
+  ///
+  /// In tr, this message translates to:
+  /// **'Gösterilecek cihaz yok'**
+  String get akilliEvCihazYok;
+
+  /// (P240 §3) Akilli ev
+  ///
+  /// In tr, this message translates to:
+  /// **'Yönetim akıllı ev bölümlerini açtığında dairenizin cihazları burada görünür.'**
+  String get akilliEvKapaliAciklama;
+
+  /// (P240 §3) Akilli ev
+  ///
+  /// In tr, this message translates to:
+  /// **'Ortak alan'**
+  String get akilliEvOrtakAlan;
+
+  /// (P240 §3) Akilli ev
+  ///
+  /// In tr, this message translates to:
+  /// **'Komut gönderildi'**
+  String get akilliEvKomutGonderildi;
+
+  /// (P240 §3) Akilli ev
+  ///
+  /// In tr, this message translates to:
+  /// **'Işık'**
+  String get akilliEvTipIsik;
+
+  /// (P240 §3) Akilli ev
+  ///
+  /// In tr, this message translates to:
+  /// **'Priz'**
+  String get akilliEvTipPriz;
+
+  /// (P240 §3) Akilli ev
+  ///
+  /// In tr, this message translates to:
+  /// **'Kilit'**
+  String get akilliEvTipKilit;
+
+  /// (P240 §3) Akilli ev
+  ///
+  /// In tr, this message translates to:
+  /// **'Termostat'**
+  String get akilliEvTipTermostat;
+
+  /// (P240 §3) Akilli ev
+  ///
+  /// In tr, this message translates to:
+  /// **'Perde'**
+  String get akilliEvTipPerde;
+
+  /// (P240 §3) Akilli ev
+  ///
+  /// In tr, this message translates to:
+  /// **'Vana'**
+  String get akilliEvTipVana;
+
+  /// (P240 §3) Akilli ev
+  ///
+  /// In tr, this message translates to:
+  /// **'Su sensörü'**
+  String get akilliEvTipSensorSu;
+
+  /// (P240 §3) Akilli ev
+  ///
+  /// In tr, this message translates to:
+  /// **'Duman sensörü'**
+  String get akilliEvTipSensorDuman;
+
+  /// (P240 §3) Akilli ev
+  ///
+  /// In tr, this message translates to:
+  /// **'Gaz sensörü'**
+  String get akilliEvTipSensorGaz;
+
+  /// (P240 §3) Akilli ev
+  ///
+  /// In tr, this message translates to:
+  /// **'Hareket sensörü'**
+  String get akilliEvTipSensorHareket;
+
+  /// (P240 §3) Akilli ev
+  ///
+  /// In tr, this message translates to:
+  /// **'Sayaç'**
+  String get akilliEvTipSayac;
+
+  /// (P240 §3) Akilli ev
+  ///
+  /// In tr, this message translates to:
+  /// **'Diğer'**
+  String get akilliEvTipDiger;
+
+  /// (P240 §3) Akilli ev
+  ///
+  /// In tr, this message translates to:
+  /// **'Aç'**
+  String get akilliEvEylemAc;
+
+  /// (P240 §3) Akilli ev
+  ///
+  /// In tr, this message translates to:
+  /// **'Kapat'**
+  String get akilliEvEylemKapat;
+
+  /// (P240 §3) Akilli ev
+  ///
+  /// In tr, this message translates to:
+  /// **'Kilidi aç'**
+  String get akilliEvEylemKilitAc;
+
+  /// (P240 §3) Akilli ev
+  ///
+  /// In tr, this message translates to:
+  /// **'Vanayı kapat'**
+  String get akilliEvEylemVanaKapat;
+
+  /// (P240 §3) Akilli ev
+  ///
+  /// In tr, this message translates to:
+  /// **'Akıllı ev'**
+  String get modulAkilliEv;
 }
 
 class _AppLocalizationsDelegate

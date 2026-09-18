@@ -213,6 +213,9 @@ const OGELER: readonly MenuOgesi[] = [
   { href: "/olaylar", anahtar: "kabukOlaylar", icon: "alert", grup: "guvenlik" },
   // (P240 §1) Acil durum cagrilari — takip ekrani.
   { href: "/panik", anahtar: "kabukPanik", icon: "alert", grup: "guvenlik" },
+  // (P240 §3) Akilli ev — AYRI SEKME (entegrasyon sayfasinin alti degil):
+  // yonetici burada gunluk is yapar, entegrasyon sayfasi kurulum icindir.
+  { href: "/akilli-ev", anahtar: "kabukAkilliEv", icon: "hub", grup: "guvenlik" },
   { href: "/notifications", anahtar: "kabukBildirimler", icon: "bell", grup: "guvenlik" },
   { href: "/kameralar", anahtar: "kabukKameralar", icon: "camera", grup: "guvenlik" },
   { href: "/kamera-kayitlari", anahtar: "kabukKameraKayitlari", icon: "kayit", grup: "guvenlik" },

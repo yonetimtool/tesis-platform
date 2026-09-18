@@ -170,6 +170,8 @@ void main() {
           HomeMenuEntry.integrations,
           // (P240 §2) Diyafon — dis sistem baglantisi.
           HomeMenuEntry.diyafon,
+          // (P240 §3) Akilli ev — ortak alan cihazlari.
+          HomeMenuEntry.akilliEv,
           HomeMenuEntry.binaDuzenleme,
           // (P26) Bagimsiz Bolum Tanimlari — yonetim kurulum adimi.
           HomeMenuEntry.daireTanimlari,
@@ -312,6 +314,8 @@ void main() {
         HomeMenuEntry.myDues,
         HomeMenuEntry.siteBudget,
         HomeMenuEntry.transparency,
+        // (P240 §3) Akilli ev — sakinin KENDI dairesi.
+        HomeMenuEntry.akilliEv,
         HomeMenuEntry.yoneticiIletisim,
       ]);
     });

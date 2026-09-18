@@ -6952,4 +6952,71 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get anketDokumYuklenemedi => 'No se pudo cargar el desglose de votos.';
+
+  @override
+  String get akilliEvBaslik => 'Hogar inteligente';
+
+  @override
+  String get akilliEvCihazYok => 'No hay dispositivos';
+
+  @override
+  String get akilliEvKapaliAciklama =>
+      'Los dispositivos de su vivienda aparecerán aquí cuando la administración active las secciones.';
+
+  @override
+  String get akilliEvOrtakAlan => 'Zona común';
+
+  @override
+  String get akilliEvKomutGonderildi => 'Comando enviado';
+
+  @override
+  String get akilliEvTipIsik => 'Luz';
+
+  @override
+  String get akilliEvTipPriz => 'Enchufe';
+
+  @override
+  String get akilliEvTipKilit => 'Cerradura';
+
+  @override
+  String get akilliEvTipTermostat => 'Termostato';
+
+  @override
+  String get akilliEvTipPerde => 'Persiana';
+
+  @override
+  String get akilliEvTipVana => 'Válvula';
+
+  @override
+  String get akilliEvTipSensorSu => 'Sensor de agua';
+
+  @override
+  String get akilliEvTipSensorDuman => 'Sensor de humo';
+
+  @override
+  String get akilliEvTipSensorGaz => 'Sensor de gas';
+
+  @override
+  String get akilliEvTipSensorHareket => 'Sensor de movimiento';
+
+  @override
+  String get akilliEvTipSayac => 'Contador';
+
+  @override
+  String get akilliEvTipDiger => 'Otro';
+
+  @override
+  String get akilliEvEylemAc => 'Encender';
+
+  @override
+  String get akilliEvEylemKapat => 'Apagar';
+
+  @override
+  String get akilliEvEylemKilitAc => 'Abrir';
+
+  @override
+  String get akilliEvEylemVanaKapat => 'Cerrar válvula';
+
+  @override
+  String get modulAkilliEv => 'Hogar inteligente';
 }

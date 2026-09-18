@@ -3270,5 +3270,93 @@
   },
   "anketOyDokumuAnonim": "Anonim ankette kimler oy verdiği kaydedilmez.",
   "anketOyYok": "Henüz oy verilmedi.",
-  "anketDokumYuklenemedi": "Oy dökümü yüklenemedi."
+  "anketDokumYuklenemedi": "Oy dökümü yüklenemedi.",
+  "akilliEvBaslik": "Akıllı ev",
+  "@akilliEvBaslik": {
+    "description": "(P240 §3) Akilli ev"
+  },
+  "akilliEvCihazYok": "Gösterilecek cihaz yok",
+  "@akilliEvCihazYok": {
+    "description": "(P240 §3) Akilli ev"
+  },
+  "akilliEvKapaliAciklama": "Yönetim akıllı ev bölümlerini açtığında dairenizin cihazları burada görünür.",
+  "@akilliEvKapaliAciklama": {
+    "description": "(P240 §3) Akilli ev"
+  },
+  "akilliEvOrtakAlan": "Ortak alan",
+  "@akilliEvOrtakAlan": {
+    "description": "(P240 §3) Akilli ev"
+  },
+  "akilliEvKomutGonderildi": "Komut gönderildi",
+  "@akilliEvKomutGonderildi": {
+    "description": "(P240 §3) Akilli ev"
+  },
+  "akilliEvTipIsik": "Işık",
+  "@akilliEvTipIsik": {
+    "description": "(P240 §3) Akilli ev"
+  },
+  "akilliEvTipPriz": "Priz",
+  "@akilliEvTipPriz": {
+    "description": "(P240 §3) Akilli ev"
+  },
+  "akilliEvTipKilit": "Kilit",
+  "@akilliEvTipKilit": {
+    "description": "(P240 §3) Akilli ev"
+  },
+  "akilliEvTipTermostat": "Termostat",
+  "@akilliEvTipTermostat": {
+    "description": "(P240 §3) Akilli ev"
+  },
+  "akilliEvTipPerde": "Perde",
+  "@akilliEvTipPerde": {
+    "description": "(P240 §3) Akilli ev"
+  },
+  "akilliEvTipVana": "Vana",
+  "@akilliEvTipVana": {
+    "description": "(P240 §3) Akilli ev"
+  },
+  "akilliEvTipSensorSu": "Su sensörü",
+  "@akilliEvTipSensorSu": {
+    "description": "(P240 §3) Akilli ev"
+  },
+  "akilliEvTipSensorDuman": "Duman sensörü",
+  "@akilliEvTipSensorDuman": {
+    "description": "(P240 §3) Akilli ev"
+  },
+  "akilliEvTipSensorGaz": "Gaz sensörü",
+  "@akilliEvTipSensorGaz": {
+    "description": "(P240 §3) Akilli ev"
+  },
+  "akilliEvTipSensorHareket": "Hareket sensörü",
+  "@akilliEvTipSensorHareket": {
+    "description": "(P240 §3) Akilli ev"
+  },
+  "akilliEvTipSayac": "Sayaç",
+  "@akilliEvTipSayac": {
+    "description": "(P240 §3) Akilli ev"
+  },
+  "akilliEvTipDiger": "Diğer",
+  "@akilliEvTipDiger": {
+    "description": "(P240 §3) Akilli ev"
+  },
+  "akilliEvEylemAc": "Aç",
+  "@akilliEvEylemAc": {
+    "description": "(P240 §3) Akilli ev"
+  },
+  "akilliEvEylemKapat": "Kapat",
+  "@akilliEvEylemKapat": {
+    "description": "(P240 §3) Akilli ev"
+  },
+  "akilliEvEylemKilitAc": "Kilidi aç",
+  "@akilliEvEylemKilitAc": {
+    "description": "(P240 §3) Akilli ev"
+  },
+  "akilliEvEylemVanaKapat": "Vanayı kapat",
+  "@akilliEvEylemVanaKapat": {
+    "description": "(P240 §3) Akilli ev"
+  },
+  "modulAkilliEv": "Akıllı ev",
+  "@modulAkilliEv": {
+    "description": "(P240 §3) Akilli ev"
+  }
 }
