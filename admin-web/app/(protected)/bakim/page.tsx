@@ -36,6 +36,7 @@ import {
   Sekmeler,
   useOnay,
 } from "@/components/ui";
+import { TelefonAlani } from "@/components/TelefonAlani";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
@@ -559,16 +560,15 @@ export default function BakimPage() {
               />
             )}
           </AlanSarmal>
-          <AlanSarmal etiket={t("tanimAlanTelefon")}>
-            {(p) => (
-              <Alan
-                {...p}
-                data-test="bakim-telefon"
-                value={telefon}
-                onChange={(e) => setTelefon(e.target.value)}
-              />
-            )}
-          </AlanSarmal>
+          {/* PAYLASILAN BILESEN: bicim, ulke kodu ve hata metni birlikte
+              gelir. Duz bir `<input>` birakmak `telefon-kapsam` kilidini
+              (hakli olarak) kirdi — sorumlu firmanin numarasi da her
+              yerdeki gibi bicimlenmeli. */}
+          <TelefonAlani
+            etiket={t("tanimAlanTelefon")}
+            deger={telefon}
+            onDegisti={setTelefon}
+          />
           <AlanSarmal etiket={t("bakimUyariGun")} ipucu={t("bakimUyariGunIpucu")}>
             {(p) => (
               <Alan
