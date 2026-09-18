@@ -20,7 +20,13 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # (Play ve App Store ayri sayaclar tutar ama ikisinde de 8'in ustune
 # cikmak zorundayiz; tek numara tutmak, hangi ikilinin hangi magazada
 # oldugunu izlenebilir kilar).
-version: 1.4.1+14
+# (P241) 1.5.0+15 — MINOR artis: bu surum IKI YENI MODUL getiriyor
+# (panik butonu, akilli ev) — `.1` yama numarasi bunu anlatmazdi.
+#
+# 14 TEKRAR KULLANILMADI: 1.4.1+14 uretildi ama magazaya YUKLENMEDI.
+# Ayni numarayi farkli icerikle ikinci kez uretmek "hangi 14'u test
+# ettim" karisikligi yaratirdi (P236/P238 karari).
+version: 1.5.0+15
 
 environment:
   sdk: ^3.12.2

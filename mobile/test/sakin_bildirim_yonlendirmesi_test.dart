@@ -31,6 +31,20 @@ void main() {
     }
   });
 
+  test('(P241) P240 bildirim aileleri KENDI ekranina gider', () {
+    // PAKET OLCUMUNDE YAKALANDI: P240'ta uc bildirim ailesi eklendi ama
+    // yonlendirme beyaz listesi guncellenmemisti — panik push'una dokunan
+    // kullanici alarm ekranina GITMIYORDU. Acil durumda en pahali
+    // sessiz kusur, ve kaynak testi degil PAKET SONDASI gosterdi.
+    for (final t in ['panik_alarm', 'panik_yanlis_alarm', 'panik_kapandi']) {
+      expect(bildirimRotasi(_b(t)), AppRoutes.panikTakip, reason: t);
+    }
+    for (final t in ['akilli_ev_kacak', 'akilli_ev_yangin']) {
+      expect(bildirimRotasi(_b(t)), AppRoutes.akilliEv, reason: t);
+    }
+    expect(bildirimRotasi(_b('entegrasyon_koptu')), AppRoutes.integrations);
+  });
+
   test('bilinmeyen tip UYDURMA hedefe gitmez — null doner', () {
     expect(bildirimRotasi(_b('bir_gun_eklenecek')), isNull);
   });

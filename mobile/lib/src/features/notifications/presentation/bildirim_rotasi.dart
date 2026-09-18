@@ -43,6 +43,16 @@ String? bildirimRotasi(AppNotification b) {
     'ziyaretci' => AppRoutes.visitors,
     'rezervasyon' => AppRoutes.rezervasyon,
     'sikayet_cozuldu' => AppRoutes.sikayetlerim,
+    // (P241) PAKET OLCUMUNDE YAKALANDI: P240'ta uc yeni bildirim ailesi
+    // eklendi ama bu beyaz liste guncellenmemisti — panik push'una
+    // dokunan kullanici ALARM EKRANINA GITMIYOR, bildirim yalnizca
+    // "okundu" isaretleniyordu. Acil durumda en pahali sessiz kusur.
+    'panik_alarm' || 'panik_yanlis_alarm' || 'panik_kapandi' =>
+      AppRoutes.panikTakip,
+    // (P240 §3) Kacak/yangin -> cihazin oldugu ekran (vana, sensor).
+    'akilli_ev_kacak' || 'akilli_ev_yangin' => AppRoutes.akilliEv,
+    // (P240 §4) Kopan entegrasyon -> entegrasyon listesi (saglik sutunu).
+    'entegrasyon_koptu' => AppRoutes.integrations,
     _ => null,
   };
   if (tipten != null) return tipten;
