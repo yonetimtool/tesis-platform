@@ -7210,4 +7210,8 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get panikKategoriEkip => 'Geht an Verwaltung und Sicherheit';
+
+  @override
+  String get topluAktarimBilgisayardan =>
+      'Massenimport erfolgt am Computer. Eine Vorschau mit 200 Zeilen lässt sich am Telefon nicht prüfen.';
 }

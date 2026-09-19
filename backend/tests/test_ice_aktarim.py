@@ -50,11 +50,20 @@ def _daire_sayisi(owner_conn, slug):
 # ==================== 1) TUR KUMESI GOCLE AYNI ============================= #
 
 def test_turler_GOCLE_AYNI(owner_conn):
-    """Router'in bildigi turler ile CHECK kisitinin kumesi AYNI olmali.
+    """Routerin bildigi her tur CHECK kisitinda DA olmali.
 
-    Ayrisirsa: routerda olup CHECK'te olmayan tur, kosum kaydini
-    yazarken 500 verir (IntegrityError) — yani AKTARIM YAPILIR ama
+    TEHLIKELI YON TEK: routerda olup CHECK'te OLMAYAN tur, kosum
+    kaydini yazarken 500 verir (IntegrityError) — aktarim YAPILIR ama
     kaydedilemez ve GERI ALINAMAZ hâle gelir.
+
+    (P243 §3) KARSI YON ARTIK SERBEST ve bu bilincli: `arac` turu
+    listeden kaldirildi (yetenegi `kisi`ye katlandi) ama CHECK'te
+    DURUYOR — cunku `ice_aktarim` gecmisinde `tur='arac'` satirlar var.
+    Degeri CHECK'ten dusurmek, GECMIS KAYITLARI okunamaz kilardi ve
+    onlarin geri alinmasini imkansizlastirirdi.
+
+    Yani kilit "esitlik" degil "ALT KUME" olcuyor — kusuru ureten yon
+    hâlâ kirmizi.
     """
     import re
 
@@ -66,7 +75,8 @@ def test_turler_GOCLE_AYNI(owner_conn):
             "WHERE conname = 'ck_ice_aktarim_tur'"
         )
         tanim = cur.fetchone()[0]
-    assert set(re.findall(r"'([a-z_]+)'", tanim)) == set(TURLER)
+    cheklenler = set(re.findall(r"'([a-z_]+)'", tanim))
+    assert set(TURLER) <= cheklenler, set(TURLER) - cheklenler
 
 
 def test_TURLER_ucu_ALANLARI_bildirir(client, world):
@@ -76,9 +86,19 @@ def test_TURLER_ucu_ALANLARI_bildirir(client, world):
     r = client.get("/ice-aktarim/turler", headers=h)
     assert r.status_code == 200, r.text
     turler = {t["kod"]: t for t in r.json()}
-    assert set(turler) == {"daire", "kisi", "acilis_bakiye", "arac"}
+    # (P243 §3) UC TUR: `arac` KALDIRILDI, yetenegi `kisi`ye katlandi.
+    # Yonetici ayni insan icin iki dosya hazirlamayacak.
+    assert set(turler) == {"daire", "kisi", "acilis_bakiye"}
     zorunlular = {a["kod"] for a in turler["daire"]["alanlar"] if a["zorunlu"]}
     assert zorunlular == {"blok", "daire_no"}
+    # PLAKA `kisi` turunde ve OPSIYONEL: aracsiz kisi olagan durumdur.
+    kisi_alanlari = {a["kod"]: a for a in turler["kisi"]["alanlar"]}
+    assert "plaka" in kisi_alanlari
+    assert kisi_alanlari["plaka"]["zorunlu"] is False
+    # SAKIN SUTUNLARI `daire` turunde ve OPSIYONEL: bos daire de gercek.
+    daire_alanlari = {a["kod"]: a for a in turler["daire"]["alanlar"]}
+    assert "sakin_eposta" in daire_alanlari
+    assert daire_alanlari["sakin_eposta"]["zorunlu"] is False
 
 
 def test_BILINMEYEN_tur_422(client, world):

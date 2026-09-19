@@ -2466,5 +2466,6 @@
   "panikKategoriGuvenlikTehdidi": "Угроза безопасности",
   "panikKategoriDiger": "Другое",
   "panikKategoriSiteGeneli": "Уходит всему комплексу",
-  "panikKategoriEkip": "Уходит управлению и охране"
+  "panikKategoriEkip": "Уходит управлению и охране",
+  "topluAktarimBilgisayardan": "Массовый импорт выполняется на компьютере: 200 строк на телефоне не проверить."
 }

@@ -144,10 +144,32 @@ class _ResidentsScreenState extends ConsumerState<ResidentsScreen> {
                 // yerde goruyor; liste dolunca ortadaki kayboluyor ve
                 // "dugme nereye gitti" sorusu doguyor. Aciklama metni
                 // KALIR — ne oldugunu ve nereden ekleneceğini soyler.
-                      : BosDurum(
-                          ikon: Icons.home_outlined,
-                          baslik: l10n.sakinYok,
-                          aciklama: l10n.sakinYokAlt,
+                      : Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            BosDurum(
+                              ikon: Icons.home_outlined,
+                              baslik: l10n.sakinYok,
+                              aciklama: l10n.sakinYokAlt,
+                            ),
+                            // (P243 §3) TOPLU AKTARIM MOBILDE YOK —
+                            // P204 karari. 200 satirlik bir onizlemeyi
+                            // telefonda dogrulamak mumkun degil.
+                            //
+                            // SESSIZ BIRAKILMADI: yonetici elindeki
+                            // listeyi nereden yukleyecegini bilmeli;
+                            // yoksa tek tek eklemeye baslar.
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 32, vertical: 8),
+                              child: Text(
+                                l10n.topluAktarimBilgisayardan,
+                                key: const Key('sakin-toplu-aktarim-notu'),
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ),
+                          ],
                         ))
                   : RefreshIndicator(
                       onRefresh: () async => ref.invalidate(residentsProvider),

@@ -7616,7 +7616,17 @@ class AramaVurusu(BaseModel):
     """
 
     kaynak: Literal[
-        "kisi", "daire", "blok", "firma", "gorev", "duyuru", "talep", "finans"
+        "kisi", "daire", "blok", "firma", "gorev", "duyuru", "talep", "finans",
+        # (P243 §3) "arac" EKLENDI — OLCULEN KUSUR, P243'ten ESKI.
+        #
+        # `routers/arama.py` plaka vurusunu `kaynak="arac"` diye
+        # uretiyordu ama Literal onu tanimiyordu: plakasi olan bir
+        # tesiste plakayla arama yapmak 500 veriyordu. Yani ARAMA UCU,
+        # arac kaydi olan her tesiste kirikti.
+        #
+        # P243'te arac ice aktarimi `kisi` turune katlanirken plakali
+        # bir satir yazildi ve kusur ortaya cikti.
+        "arac",
     ]
     id: uuid.UUID
     baslik: str

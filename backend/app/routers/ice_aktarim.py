@@ -245,9 +245,13 @@ async def _uygula_daire(b: _Bag, satir_no: int, d: dict) -> None:
             # IDEMPOTENT: yeni bilgi tasimayan satir ATLANIR (dosya
             # yeniden yuklenebilir).
             b.sonuc.atlanan += 1
+        # (P243 §3) VAR OLAN DAIREYE DE SAKIN YAZILIR: "once daireleri
+        # olustur, sonra sakinleri ekle" akisi tam da budur.
+        await _daire_sakini(b, satir_no, d, unit_id=mevcut.id)
         return
     if b.yalniz_dogrula:
         b.sonuc.olusan += 1
+        await _daire_sakini(b, satir_no, d, unit_id=None)
         return
     u = Unit(tenant_id=b.user.tenant_id, no=daire, blok=blok, **sayilar)
     b.db.add(u)
@@ -257,10 +261,68 @@ async def _uygula_daire(b: _Bag, satir_no: int, d: dict) -> None:
         raise translate_integrity(exc)
     b.yarat("unit", u.id)
     b.sonuc.olusan += 1
+    await _daire_sakini(b, satir_no, d, unit_id=u.id)
+
+
+async def _daire_sakini(
+    b: _Bag, satir_no: int, d: dict, *, unit_id: uuid.UUID | None
+) -> None:
+    """(P243 §3) Daire satirindaki SAKIN sutunlari.
+
+    =======================================================================
+    NEDEN AYNI SATIRDA
+    =======================================================================
+    Yoneticinin elindeki liste zaten "A-1 / Ali Veli / ali@..."
+    bicimindedir. Daireyi bir dosyadan, sakini baska dosyadan yuklemek
+    ayni satiri ikiye bolup daire numarasini IKI KEZ yazdirmakti.
+
+    =======================================================================
+    BOS SUTUN HATA DEGIL
+    =======================================================================
+    Bos daire de bir gercektir; o satir yalniz daireyi yaratir. Hata
+    yalniz YARIM doldurulmus satirda uretilir (ad var e-posta yok gibi) —
+    sessizce yarim kisi yaratmak, sahiplenilemeyen bir hesap birakirdi.
+    """
+    ad = _metin(d, "sakin_ad")
+    eposta = _metin(d, "sakin_eposta")
+    if not ad and not eposta:
+        return
+    if not eposta:
+        # E-POSTA KIMLIKTIR (P197) ve davetin TEK kanalidir.
+        b.hata(satir_no, "sakin_eposta", "zorunlu_alan_eksik")
+        return
+    if not ad:
+        b.hata(satir_no, "sakin_ad", "zorunlu_alan_eksik")
+        return
+    # KISI TURUNUN KENDISI CAGRILIYOR: ad/e-posta dogrulama, davet
+    # gonderimi, rol esleme ve daire bagi ORADA yazili. Ikinci bir kopya,
+    # birinde duzeltilen kuralin otekinde eskimesi demekti.
+    await _uygula_kisi(
+        b,
+        satir_no,
+        {
+            "ad": ad,
+            "eposta": eposta,
+            "telefon": _metin(d, "sakin_telefon"),
+            "blok": _metin(d, "blok"),
+            "daire_no": _metin(d, "daire_no"),
+            "rol_tipi": _metin(d, "rol_tipi"),
+        },
+        daire_hazir=True,
+    )
 
 
 # ---------------------------------- kisi ------------------------------------ #
-async def _uygula_kisi(b: _Bag, satir_no: int, d: dict) -> None:
+async def _uygula_kisi(
+    b: _Bag, satir_no: int, d: dict, *, daire_hazir: bool = False
+) -> None:
+    """`daire_hazir`: daire AYNI SATIRDA yaratiliyor (P243 §3).
+
+    KURU KOSUMDA DAIRE HENUZ YAZILMAMISTIR. Bayrak olmasaydi onizleme,
+    kusursuz bir dosya icin "daire bulunamadi" derdi ve P193 kurali
+    geregi TUM aktarim iptal olurdu — yani ozellik kendi kendini
+    engellerdi. (Bu tam olarak yasandi ve olculdu.)
+    """
     ad = _metin(d, "ad")
     if not ad:
         b.hata(satir_no, "ad", "zorunlu_alan_eksik")
@@ -344,6 +406,10 @@ async def _uygula_kisi(b: _Bag, satir_no: int, d: dict) -> None:
             # davranis korunur — mevcut dosyalar bozulmasin.
             sorgu = sorgu.where(Unit.blok == blok)
         satir = (await b.db.execute(sorgu)).first()
+        if satir is None and daire_hazir:
+            # AYNI SATIRIN DAIRESI: kuru kosumda henuz yazilmadi.
+            # Gercek kosumda ZATEN yazilmis olur ve bu dal calismaz.
+            return
         if satir is None:
             # DAIRE YOKSA HATA, sessiz atlama DEGIL: kullanici sakini
             # daireye baglamak istedi ve baglanmadigini bilmeli.
@@ -412,7 +478,45 @@ async def _uygula_kisi(b: _Bag, satir_no: int, d: dict) -> None:
             "satir_no": satir_no, "alan": "eposta",
             "hata": hata_metni("davet_gonderilemedi", b.dil),
         })
+    # (P243 §3) AYNI SATIRDAKI ARAC — `arac` turu buraya katlandi.
+    #
+    # KISI YARATILDIKTAN SONRA: plaka hatasi kisiyi geri ALMAZ. Ters
+    # olsaydi bir yazim hatasi yuzunden kisi de eklenmezdi ve yonetici
+    # "50 satirin 3'u neden atlandi" diye ararrdi.
+    await _arac_satiri(b, satir_no, d, unit_id=unit_id)
     b.sonuc.olusan += 1
+
+
+async def _arac_satiri(
+    b: _Bag, satir_no: int, d: dict, *, unit_id: uuid.UUID | None
+) -> None:
+    """Satirdaki plaka doluysa arac kaydi yaratir. Bos ise SESSIZ.
+
+    Sessizlik burada dogru: aracsiz kisi OLAGAN durumdur, eksik veri
+    degil. Hata yalniz DOLU ama gecersiz bir plakada uretilir.
+    """
+    plaka_ham = _metin(d, "plaka")
+    if not plaka_ham:
+        return
+    plaka = plaka_ham.replace(" ", "").upper()
+    var = (
+        await b.db.execute(select(AracKayit.id).where(AracKayit.plaka == plaka))
+    ).first()
+    if var is not None:
+        return  # ZATEN KAYITLI: ikinci kez eklemek cakisma uretirdi
+    if b.yalniz_dogrula:
+        return
+    a = AracKayit(
+        tenant_id=b.user.tenant_id, plaka=plaka, unit_id=unit_id,
+        marka=_metin(d, "arac_marka") or None,
+        model=_metin(d, "arac_model") or None,
+    )
+    b.db.add(a)
+    try:
+        await b.db.flush()
+    except IntegrityError as exc:
+        raise translate_integrity(exc)
+    b.yarat("arac_kayit", a.id)
 
 
 # ------------------------------ acilis bakiye ------------------------------- #
@@ -527,6 +631,20 @@ TURLER: dict[str, _Tur] = {
             # "once toplu olustur, sonra paylari yukle"dir.
             _Alan("arsa_payi", ornek="0,0125"),
             _Alan("metrekare", ornek="120"),
+            # =============================================================
+            # (P243 §3) SAKIN SUTUNLARI — "DAIRELER VE SAKINLER"
+            # =============================================================
+            # Yoneticinin elindeki liste zaten "A-1 / Ali Veli /
+            # ali@..." bicimindedir. Daireyi bir dosyadan, sakini baska
+            # dosyadan yuklemek, ayni satiri ikiye bolup daire numarasini
+            # IKI KEZ yazdirmakti.
+            #
+            # BOS BIRAKILABILIR: bos daire de bir gercektir ve o satir
+            # yalniz daireyi yaratir.
+            _Alan("sakin_ad", ornek="Ali Veli"),
+            _Alan("sakin_eposta", ornek="ali@ornek.com"),
+            _Alan("sakin_telefon", ornek="+905321112233"),
+            _Alan("rol_tipi", ornek="malik | kiraci | malik_oturan"),
         ),
         _uygula_daire,
         "iceAktarimDaireAciklama",
@@ -583,6 +701,18 @@ TURLER: dict[str, _Tur] = {
             # kabul edip modele DOGRU cevirmek, kullaniciya modelin ic
             # ayrimini ogretmekten iyidir.
             _Alan("rol_tipi", ornek="malik | kiraci | malik_oturan"),
+            # =============================================================
+            # (P243 §3) ARAC TURU BURAYA KATLANDI
+            # =============================================================
+            # Once AYRI bir `arac` turu vardi ve yonetici ayni insan icin
+            # IKI dosya hazirliyordu: once kisiler, sonra plakalar — ve
+            # ikincisinde daireyi TEKRAR yaziyordu. Arac bir KISIYE (ya
+            # da daireye) aittir; ayri bir tur, ayni satiri ikiye bolmekti.
+            #
+            # BOS BIRAKILABILIR: aracsiz kisi olagan durumdur.
+            _Alan("plaka", ornek="34ABC123"),
+            _Alan("arac_marka", ornek="Fiat"),
+            _Alan("arac_model", ornek="Egea"),
         ),
         _uygula_kisi,
         "iceAktarimKisiAciklama",
@@ -597,18 +727,11 @@ TURLER: dict[str, _Tur] = {
         _uygula_acilis,
         "iceAktarimAcilisAciklama",
     ),
-    "arac": _Tur(
-        "arac",
-        (
-            _Alan("plaka", zorunlu=True, ornek="34ABC123"),
-            _Alan("daire_no", ornek="A-1"),
-            _Alan("marka", ornek="Fiat"),
-            _Alan("model", ornek="Egea"),
-            _Alan("renk", ornek="Beyaz"),
-        ),
-        _uygula_arac,
-        "iceAktarimAracAciklama",
-    ),
+    # (P243 §3) "arac" TURU LISTEDEN KALDIRILDI — yetenegi `kisi`ye
+    # katlandi (plaka/marka/model sutunlari). Kod SILINMEDI: `ice_aktarim`
+    # gecmisinde `tur='arac'` satirlar var ve goc CHECK'i onlari tutuyor;
+    # kodu kaldirmak gecmis kayitlari okunamaz kilardi. Yalnizca YENI
+    # aktarimlarda secilemiyor.
 }
 
 #: (P154 / Asama 10) DEFTER SATIRLARI SILINMEZ, TERSINE CEVRILIR.

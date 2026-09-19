@@ -2466,5 +2466,6 @@
   "panikKategoriGuvenlikTehdidi": "تهديد أمني",
   "panikKategoriDiger": "أخرى",
   "panikKategoriSiteGeneli": "تُرسل إلى المجمّع كله",
-  "panikKategoriEkip": "تُرسل إلى الإدارة والأمن"
+  "panikKategoriEkip": "تُرسل إلى الإدارة والأمن",
+  "topluAktarimBilgisayardan": "يتم الاستيراد الجماعي من الحاسوب؛ لا يمكن التحقق من 200 صف على الهاتف."
 }

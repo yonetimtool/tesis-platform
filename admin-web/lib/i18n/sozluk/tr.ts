@@ -3193,4 +3193,18 @@ export const tr = {
   gorunumStandart: "Standart",
   gorunumBuyuk: "Büyük",
   gorunumModuIpucu: "Menü, tablolar ve düğmeler dahil tüm arayüz büyür. Tarayıcı yakınlaştırmasıyla birlikte çalışır.",
+  // (P243 §3) ICE AKTARIM TABLOSU
+  iceAktarimTabloKip: "Tablo",
+  iceAktarimDosyaKip: "Dosya / yapıştır",
+  iceAktarimTabloIpucu: "Excel'den kopyalayıp herhangi bir hücreye yapıştırın; sütunlar kendiliğinden dolar. Elle de yazabilirsiniz.",
+  iceAktarimSatirEkle: "Satır ekle",
+  iceAktarimSatirSil: "Satırı sil",
+  iceAktarimTabloTemizle: "Tabloyu temizle",
+  iceAktarimZorunluSutun: "zorunlu",
+  iceAktarimSatirNo: "Satır",
+  iceAktarimGecerliSatir: "{n} satır geçerli",
+  iceAktarimSorunluSatir: "{n} satırda sorun var",
+  iceAktarimBosTablo: "Tabloya veri girin ya da Excel'den yapıştırın.",
+  iceAktarimMobilUyari: "Toplu aktarım bilgisayardan yapılır. 200 satırlık bir önizlemeyi telefonda doğrulamak mümkün değil.",
+  iceAktarimKip: "Giriş yöntemi",
 } as const;

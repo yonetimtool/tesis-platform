@@ -3130,4 +3130,18 @@ export const ru: Sozluk = {
   gorunumStandart: "Стандартный",
   gorunumBuyuk: "Крупный",
   gorunumModuIpucu: "Увеличивается весь интерфейс — меню, таблицы, кнопки. Работает вместе с масштабом браузера.",
+  // (P243 §3) ICE AKTARIM TABLOSU
+  iceAktarimTabloKip: "Таблица",
+  iceAktarimDosyaKip: "Файл / вставка",
+  iceAktarimTabloIpucu: "Скопируйте из Excel и вставьте в любую ячейку — столбцы заполнятся сами. Можно и вручную.",
+  iceAktarimSatirEkle: "Добавить строку",
+  iceAktarimSatirSil: "Удалить строку",
+  iceAktarimTabloTemizle: "Очистить таблицу",
+  iceAktarimZorunluSutun: "обязательно",
+  iceAktarimSatirNo: "Строка",
+  iceAktarimGecerliSatir: "Верных строк: {n}",
+  iceAktarimSorunluSatir: "Строк с ошибками: {n}",
+  iceAktarimBosTablo: "Введите данные или вставьте из Excel.",
+  iceAktarimMobilUyari: "Массовый импорт выполняется на компьютере: 200 строк на телефоне не проверить.",
+  iceAktarimKip: "Способ ввода",
 };

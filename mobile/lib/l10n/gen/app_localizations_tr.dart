@@ -7012,4 +7012,8 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get panikKategoriEkip => 'Yönetim ve güvenliğe gider';
+
+  @override
+  String get topluAktarimBilgisayardan =>
+      'Toplu aktarım bilgisayardan yapılır. 200 satırlık bir önizlemeyi telefonda doğrulamak mümkün değil.';
 }

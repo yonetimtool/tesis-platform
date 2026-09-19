@@ -3130,4 +3130,18 @@ export const ar: Sozluk = {
   gorunumStandart: "قياسي",
   gorunumBuyuk: "كبير",
   gorunumModuIpucu: "تكبر الواجهة كلها — القائمة والجداول والأزرار. تعمل مع تكبير المتصفح.",
+  // (P243 §3) ICE AKTARIM TABLOSU
+  iceAktarimTabloKip: "جدول",
+  iceAktarimDosyaKip: "ملف / لصق",
+  iceAktarimTabloIpucu: "انسخ من Excel والصق في أي خلية؛ تمتلئ الأعمدة تلقائيًا. ويمكنك الكتابة يدويًا.",
+  iceAktarimSatirEkle: "إضافة صف",
+  iceAktarimSatirSil: "حذف الصف",
+  iceAktarimTabloTemizle: "تفريغ الجدول",
+  iceAktarimZorunluSutun: "إلزامي",
+  iceAktarimSatirNo: "الصف",
+  iceAktarimGecerliSatir: "{n} صفوف صالحة",
+  iceAktarimSorunluSatir: "{n} صفوف بها مشكلات",
+  iceAktarimBosTablo: "أدخل البيانات أو الصق من Excel.",
+  iceAktarimMobilUyari: "يتم الاستيراد الجماعي من الحاسوب؛ لا يمكن التحقق من 200 صف على الهاتف.",
+  iceAktarimKip: "طريقة الإدخال",
 };

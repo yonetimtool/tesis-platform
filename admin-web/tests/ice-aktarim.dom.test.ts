@@ -60,6 +60,14 @@ function sahtele(sonuc?: Record<string, unknown>): Record<string, unknown>[] {
 afterEach(() => vi.restoreAllMocks());
 
 async function veriGir(metin: string) {
+  // (P243 §3) ONCE DOSYA/YAPISTIR KIPINE GEC: sayfa artik TABLO
+  // kipiyle aciliyor (olculen surtunme oradaydi — yonetici kendi
+  // Excel'ini bizim sablonumuza uyduruyordu). Bu dosyadaki testler
+  // ESKI kipin davranisini kilitliyor ve o kip KALDIRILMADI.
+  const kipDugmesi = document.querySelector(
+    '[data-test="ice-aktarim-kip-dosya"]',
+  ) as HTMLElement;
+  await userEvent.click(kipDugmesi);
   // `Field` etiketi ipucu metnini de icerir; TAM ESLESME bu yuzden
   // tutmaz (erisilebilir ad = etiket + ipucu).
   const kutu = await screen.findByLabelText(/^Veri/);
@@ -101,9 +109,25 @@ describe("(P154/8) ice aktarim — istemci ayristirmasi", () => {
   it("BOS metinle istek ATILMAZ", async () => {
     const govdeler = sahtele();
     ciz(IceAktarimPage);
+    // (P243 §3) Dosya kipine gec — bu test ESKI kipin davranisini
+    // kilitliyor ve o kip kaldirilmadi.
+    // NOT: depoda `data-testid` DEGIL `data-test` kullaniliyor.
+    await waitFor(() =>
+      expect(
+        document.querySelector('[data-test="ice-aktarim-kip-dosya"]'),
+      ).toBeTruthy(),
+    );
+    await userEvent.click(
+      document.querySelector(
+        '[data-test="ice-aktarim-kip-dosya"]',
+      ) as HTMLElement,
+    );
     await screen.findByLabelText(/^Veri/);
-    // Esleme bolumu hic cizilmez -> gonderilecek dugme de yok.
-    expect(screen.queryByRole("button", { name: /Önizle/ })).toBeNull();
+    // (P243 §3) DUGMELER ARTIK HER ZAMAN CIZILIYOR (esleme kartindan
+    // cikarildilar — tablo kipinde de gerekliler). Korunan DAVRANIS
+    // degismedi ve kilit ONA tasindi: bos girdiyle ISTEK ATILMAZ.
+    // Bu, "dugme yok" iddiasindan daha guclu bir olcum.
+    await userEvent.click(screen.getByRole("button", { name: /Önizle/ }));
     expect(govdeler.length).toBe(0);
   });
 

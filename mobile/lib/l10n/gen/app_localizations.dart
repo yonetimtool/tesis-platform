@@ -12472,6 +12472,12 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Yönetim ve güvenliğe gider'**
   String get panikKategoriEkip;
+
+  /// (P243 §3) Mobilde toplu aktarim yok
+  ///
+  /// In tr, this message translates to:
+  /// **'Toplu aktarım bilgisayardan yapılır. 200 satırlık bir önizlemeyi telefonda doğrulamak mümkün değil.'**
+  String get topluAktarimBilgisayardan;
 }
 
 class _AppLocalizationsDelegate

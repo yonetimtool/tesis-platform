@@ -2466,5 +2466,6 @@
   "panikKategoriGuvenlikTehdidi": "Sicherheitsbedrohung",
   "panikKategoriDiger": "Sonstiges",
   "panikKategoriSiteGeneli": "Geht an die ganze Anlage",
-  "panikKategoriEkip": "Geht an Verwaltung und Sicherheit"
+  "panikKategoriEkip": "Geht an Verwaltung und Sicherheit",
+  "topluAktarimBilgisayardan": "Massenimport erfolgt am Computer. Eine Vorschau mit 200 Zeilen lässt sich am Telefon nicht prüfen."
 }

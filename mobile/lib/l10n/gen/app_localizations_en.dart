@@ -7210,4 +7210,8 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get panikKategoriEkip => 'Goes to management and security';
+
+  @override
+  String get topluAktarimBilgisayardan =>
+      'Bulk import is done on a computer. A 200-row preview cannot be verified on a phone.';
 }

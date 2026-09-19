@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import useSWR from "swr";
 
 import {
@@ -16,6 +16,10 @@ import { useToast } from "@/components/Toast";
 import { apiSend } from "@/lib/client";
 import { jsonFetcher, formatDateTime } from "@/lib/fetcher";
 import { useT } from "@/lib/i18n/kullan";
+import {
+  AktarimTablosu,
+  bosTablo,
+} from "@/components/ice-aktarim/aktarim-tablosu";
 import { useSorguSecimi } from "@/lib/sorgu-secimi";
 import type { SozlukAnahtari } from "@/lib/i18n/sozluk";
 
@@ -95,13 +99,16 @@ const TUR_ETIKET: Record<string, SozlukAnahtari> = {
   daire: "iceAktarimTurDaire",
   kisi: "iceAktarimTurKisi",
   acilis_bakiye: "iceAktarimTurAcilis",
-  arac: "iceAktarimTurArac",
 };
 
 /** Yapistirilan metni satirlara + hucrelere ayirir (sekme ya da noktali virgul). */
 function hucreler(satir: string): string[] {
   return satir.includes("\t") ? satir.split("\t") : satir.split(";");
 }
+
+/** JSX ucluda sabit dize yasak (`sabit-metin` kilidi). */
+const BIRINCIL = "birincil" as const;
+const IKINCIL = "ikincil" as const;
 
 export default function IceAktarimPage() {
   const t = useT();
@@ -114,6 +121,18 @@ export default function IceAktarimPage() {
   const [turKod, setTurKod] = useSorguSecimi<TurKodu>(
     "tur", TUR_KODLARI, "daire",
   );
+  /**
+   * (P243 §3) IKI KIP — TABLO (varsayilan) ve DOSYA/YAPISTIR.
+   *
+   * Tablo varsayilan cunku olculen surtunme oradaydi: yonetici kendi
+   * Excel'ini bizim sablonumuza uydurmak zorundaydi. Dosya kipi
+   * KALDIRILMADI — elinde zaten uygun bir dosya olan kullanicinin
+   * yolunu kapatmak, bir sorunu cozerken bir baskasini uretmekti.
+   */
+  const [kip, setKip] = useState<"tablo" | "dosya">("tablo");
+  const [tabloSatirlari, setTabloSatirlari] = useState<
+    Record<string, string>[]
+  >([]);
   const [ham, setHam] = useState("");
   const [baslikVar, setBaslikVar] = useState(true);
   const [esleme, setEsleme] = useState<Record<number, string>>({});
@@ -136,6 +155,14 @@ export default function IceAktarimPage() {
     jsonFetcher,
   );
   const tur = turler?.find((x) => x.kod === turKod);
+
+  // TUR DEGISINCE TABLO SIFIRLANIR: sutunlar degisti, eski hucreler
+  // baska bir alanin altinda kalirdi.
+  useEffect(() => {
+    if (!tur) return;
+    setTabloSatirlari(bosTablo(tur.alanlar));
+    setSonuc(null);
+  }, [tur?.kod]);
 
   // (P234 §2) ACIKLAMA SATIRI ATLANIR.
   //
@@ -300,16 +327,29 @@ function ornekSatirlari(tur: Tur): string[][] {
     });
   }
 
+  /** (P243 §3) TABLO KIPI: esleme YOK — sutunlar zaten alan kodlari. */
+  function tabloGovdesi() {
+    return tabloSatirlari
+      .map((satir, i) => ({ satir_no: i + 2, degerler: satir }))
+      // TAMAMEN BOS SATIRLAR ATILIR: tablo bes bos satirla aciliyor ve
+      // kullanici ucunu doldurup gonderirse iki bos satir icin hata
+      // gormemeli.
+      .filter((s) => Object.values(s.degerler).some((v) => v.trim() !== ""));
+  }
+
   async function calistir(yalnizDogrula: boolean) {
     setHata(null);
-    const govde = govdeSatirlari();
+    const govde = kip === "tablo" ? tabloGovdesi() : govdeSatirlari();
     if (govde.length === 0) {
       setHata(t("iceAktarimBosDosya"));
       return;
     }
-    const zorunluEksik = (tur?.alanlar ?? [])
-      .filter((a) => a.zorunlu)
-      .filter((a) => !Object.values(esleme).includes(a.kod));
+    const zorunluEksik =
+      kip === "tablo"
+        ? []
+        : (tur?.alanlar ?? [])
+            .filter((a) => a.zorunlu)
+            .filter((a) => !Object.values(esleme).includes(a.kod));
     if (zorunluEksik.length > 0) {
       // Sunucu da reddederdi ama SATIR SATIR: kullanici yuz hata gorurdu.
       setHata(t("iceAktarimEslemeEksik", { alan: zorunluEksik[0].kod }));
@@ -416,6 +456,44 @@ function ornekSatirlari(tur: Tur): string[][] {
 
       {/* ----------------------------- 2) YUKLEME ------------------------ */}
       <Kart className="space-y-3">
+        {/* (P243 §3) KIP SECICI — TABLO varsayilan.
+            Dosya kipi KALDIRILMADI: elinde zaten uygun bir dosya olan
+            kullanicinin yolunu kapatmak, bir sorunu cozerken bir
+            baskasini uretmekti. */}
+        <div className="flex gap-1" role="group" aria-label={t("iceAktarimKip")}>
+          {(["tablo", "dosya"] as const).map((k) => (
+            <Dugme
+              key={k}
+              type="button"
+              boy="kucuk"
+              tur={kip === k ? BIRINCIL : IKINCIL}
+              aria-pressed={kip === k}
+              data-test={`ice-aktarim-kip-${k}`}
+              onClick={() => {
+                setKip(k);
+                setSonuc(null);
+              }}
+            >
+              {k === "tablo" ? t("iceAktarimTabloKip") : t("iceAktarimDosyaKip")}
+            </Dugme>
+          ))}
+        </div>
+
+        {kip === "tablo" && tur && (
+          <AktarimTablosu
+            alanlar={tur.alanlar}
+            satirlar={tabloSatirlari}
+            hatalar={sonuc?.hatalar ?? []}
+            onDegis={(yeni) => {
+              setTabloSatirlari(yeni);
+              setSonuc(null);
+              setSorunlulariAtla(false);
+            }}
+          />
+        )}
+
+        {kip === "dosya" && (
+        <>
         {/* DOSYA YOLU ONCE: kullanicinin elinde bir dosya var ve once onu
             arar. Yapistirma ALTTA duruyor — kaldirilmadi, cunku kopyala
             yapistir hala en hizli yol ve dosyasi olmayan kullaniciyi
@@ -441,6 +519,8 @@ function ornekSatirlari(tur: Tur): string[][] {
             }} />
             )}
           </AlanSarmal>
+        </>
+        )}
         <label className="flex items-center gap-2 text-sm">
           <input
             type="checkbox"
@@ -452,8 +532,11 @@ function ornekSatirlari(tur: Tur): string[][] {
         </label>
       </Kart>
 
-      {/* --------------------------- 3) KOLON ESLEME --------------------- */}
-      {basliklar.length > 0 && tur && (
+      {/* --------------------------- 3) KOLON ESLEME ---------------------
+          (P243 §3) YALNIZ DOSYA KIPINDE: tablo kipinde sutunlar zaten
+          bizim alan kodlarimiz ve esleme adimi ANLAMSIZ — cizilseydi
+          kullaniciya yapmadigi bir isi yapmis gibi gosterirdi. */}
+      {kip === "dosya" && basliklar.length > 0 && tur && (
         <Kart className="space-y-3">
           <h2 style={{ fontSize: "var(--yz-fs-h3)", color: "var(--yz-text)" }}>{t("iceAktarimEsleme")}</h2>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -480,6 +563,16 @@ function ornekSatirlari(tur: Tur): string[][] {
               </AlanSarmal>
             ))}
           </div>
+        </Kart>
+      )}
+
+      {/* --------------------------- 4) ONIZLE / AKTAR -------------------
+          (P243 §3) ESLEME KARTINDAN CIKARILDI: dugmeler orada duruyordu
+          ve TABLO kipinde esleme karti cizilmedigi icin "Onizle" ve
+          "Aktar" DA cizilmiyordu — yani yeni kip kendi basina
+          kullanilamazdi. Kilit bunu yakaladi. */}
+      {tur && (
+        <Kart className="space-y-3">
           {/* (P193 §1) SORUNLU SATIR VARSA ACIK KARAR ISTENIR.
               Kutu, yalnizca onizlemede sorun GORULDUYSE cizilir: sorunsuz
               bir dosyada kullaniciya cevap veremeyecegi bir soru sormak

@@ -7204,4 +7204,8 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get panikKategoriEkip => 'Envoyé à la gestion et à la sécurité';
+
+  @override
+  String get topluAktarimBilgisayardan =>
+      'L’import en masse se fait sur ordinateur. Un aperçu de 200 lignes n’est pas vérifiable sur téléphone.';
 }

@@ -7282,4 +7282,8 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get panikKategoriEkip => 'Уходит управлению и охране';
+
+  @override
+  String get topluAktarimBilgisayardan =>
+      'Массовый импорт выполняется на компьютере: 200 строк на телефоне не проверить.';
 }

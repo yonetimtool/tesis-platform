@@ -3130,4 +3130,18 @@ export const en: Sozluk = {
   gorunumStandart: "Standard",
   gorunumBuyuk: "Large",
   gorunumModuIpucu: "The whole interface grows — menu, tables and buttons. Works together with browser zoom.",
+  // (P243 §3) ICE AKTARIM TABLOSU
+  iceAktarimTabloKip: "Table",
+  iceAktarimDosyaKip: "File / paste",
+  iceAktarimTabloIpucu: "Copy from Excel and paste into any cell; columns fill themselves. You can also type.",
+  iceAktarimSatirEkle: "Add row",
+  iceAktarimSatirSil: "Delete row",
+  iceAktarimTabloTemizle: "Clear the table",
+  iceAktarimZorunluSutun: "required",
+  iceAktarimSatirNo: "Row",
+  iceAktarimGecerliSatir: "{n} rows valid",
+  iceAktarimSorunluSatir: "{n} rows have problems",
+  iceAktarimBosTablo: "Enter data or paste from Excel.",
+  iceAktarimMobilUyari: "Bulk import is done on a computer. A 200-row preview cannot be verified on a phone.",
+  iceAktarimKip: "Input method",
 };

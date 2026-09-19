@@ -2466,5 +2466,6 @@
   "panikKategoriGuvenlikTehdidi": "Menace de sécurité",
   "panikKategoriDiger": "Autre",
   "panikKategoriSiteGeneli": "Envoyé à toute la résidence",
-  "panikKategoriEkip": "Envoyé à la gestion et à la sécurité"
+  "panikKategoriEkip": "Envoyé à la gestion et à la sécurité",
+  "topluAktarimBilgisayardan": "L’import en masse se fait sur ordinateur. Un aperçu de 200 lignes n’est pas vérifiable sur téléphone."
 }

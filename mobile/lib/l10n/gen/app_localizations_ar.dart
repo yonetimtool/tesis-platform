@@ -7263,4 +7263,8 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get panikKategoriEkip => 'تُرسل إلى الإدارة والأمن';
+
+  @override
+  String get topluAktarimBilgisayardan =>
+      'يتم الاستيراد الجماعي من الحاسوب؛ لا يمكن التحقق من 200 صف على الهاتف.';
 }

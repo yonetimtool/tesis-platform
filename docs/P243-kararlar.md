@@ -291,3 +291,98 @@ uygulamada hesap tek cihaza bağlı kullanılıyor; web'de aynı hesap birden
   doğrulanmalı.**
 * **Kontrast oranı yeniden ölçülmedi**: renk token'larına dokunulmadığı
   için P160'taki ölçüm geçerli sayıldı.
+
+---
+
+# §3 — İÇE AKTARIM: TABLO DOLDURMA
+
+## §3.0 ÖLÇÜM: bugün kaç tür var
+
+**Dört:** `daire`, `kisi`, `acilis_bakiye`, `arac`.
+
+Yönetici aynı insan için **iki dosya** hazırlıyordu (kişiler + plakalar) ve
+ikincisinde daire numarasını **tekrar** yazıyordu. Aynı şekilde daire ve
+sakin ayrı dosyalardaydı.
+
+## §3.1 Üçe indirildi — birleştirerek, silerek değil
+
+| Yeni tür | Ne katlandı |
+|---|---|
+| **Kişiler** (`kisi`) | `arac` türü buraya: `plaka`, `arac_marka`, `arac_model` sütunları. |
+| **Daireler ve sakinler** (`daire`) | Sakin sütunları: `sakin_ad`, `sakin_eposta`, `sakin_telefon`, `rol_tipi`. |
+| **Açılış bakiyeleri** | Değişmedi. |
+
+**`arac` kodu silinmedi:** `ice_aktarim` geçmişinde `tur='arac'` satırlar
+var ve göç CHECK'i onları tutuyor. Kodu düşürmek **geçmiş kayıtları
+okunamaz** kılar ve geri alınamaz hâle getirirdi. Yalnızca yeni
+aktarımlarda seçilemiyor.
+
+Bu yüzden `test_turler_GOCLE_AYNI` kilidi **eşitlikten alt kümeye**
+çevrildi: kusuru üreten yön tektir — routerda olup CHECK'te olmayan tür
+500 verir. Ters yön (CHECK'te kalan eski değer) zararsızdır ve
+**gereklidir**.
+
+**Sakin sütunları boş bırakılabilir:** boş daire de bir gerçektir. Hata
+yalnız **yarım** doldurulmuş satırda üretilir (ad var e-posta yok gibi) —
+sessizce yarım kişi yaratmak, sahiplenilemeyen bir hesap bırakırdı.
+
+**Kod tekrarı yok:** daire satırındaki sakin, `_uygula_kisi`'nin
+**kendisini** çağırır. Ad/e-posta doğrulama, davet gönderimi, rol eşleme
+ve daire bağı orada yazılı; ikinci bir kopya, birinde düzeltilen kuralın
+ötekinde eskimesi demekti.
+
+**Kendi kusurumu ölçtüm:** kuru koşumda daire henüz yazılmadığı için
+sakin satırı "daire bulunamadı" hatası veriyordu ve P193 kuralı gereği
+**tüm aktarım iptal oluyordu** — özellik kendi kendini engelliyordu.
+`daire_hazir` bayrağıyla düzeltildi.
+
+## §3.2 Tablo — sütunları hazır, yapıştırılabilir
+
+Ölçülen sürtünme: yönetici kendi Excel'ini **bizim şablonumuza
+uyduruyor**, yüklüyor, sonra **kolon eşlemesi** yapıyordu. Yani önce
+dosyasını değiştiriyor, sonra da hangi sütunun ne olduğunu bize
+anlatıyordu.
+
+Yeni ekranda sütunlar zaten bizim: **eşleme adımı yok**.
+
+* **Yapıştırma en kritik özellik.** Excel bloğu TSV'dir; yapıştırma
+  **odaklanan hücreden** başlar ve sağa/aşağı yayılır (Excel'in kendi
+  davranışı). Satır yetmezse **tablo büyür** — "önce 50 satır ekleyin"
+  demek, işi kullanıcıya geri vermekti.
+* Satır ekleme/silme, tabloyu temizleme.
+* Zorunlu sütunlar **başlıkta** işaretli (altta bir açıklama satırı,
+  kaydırınca ekrandan çıkardı).
+* Hatalı hücre **anında belirgin** (kenarlık) **ve** satır numarası
+  kırmızı **ve** altta cümlesi yazılı — renk tek başına anlam taşımıyor.
+* Boş satırlar gönderilmeden atılır: tablo beş boş satırla açılıyor.
+
+**Dosya kipi kaldırılmadı.** Elinde zaten uygun bir dosya olan
+kullanıcının yolunu kapatmak, bir sorunu çözerken bir başkasını
+üretmekti. Örnek şablon indirme de duruyor (P234).
+
+**Kilit gerçek bir kusur yakaladı:** "Önizle"/"Aktar" düğmeleri eşleme
+kartının **içindeydi**; tablo kipinde eşleme kartı çizilmediği için
+düğmeler de çizilmiyordu — yani yeni kip tek başına **kullanılamazdı**.
+Düğmeler kendi kartına taşındı.
+
+## §3.3 Mobil — bilinçli ayrım (P204)
+
+Tablo mobilde **yok**. 200 satırlık bir önizlemeyi telefonda doğrulamak
+mümkün değil. Ama **sessiz de bırakılmadı**: sakinler ekranının boş
+durumunda "toplu aktarım bilgisayardan yapılır" satırı görünüyor —
+yoksa yönetici tek tek eklemeye başlardı.
+
+## §3.4 YAN BULGU: `/arama` ucu kırıkmış
+
+Plakalı bir satır yazınca ortaya çıktı: `routers/arama.py` plaka vuruşunu
+`kaynak="arac"` diye üretiyor ama `AramaVurusu.kaynak` Literal'i onu
+tanımıyordu → **araç kaydı olan her tesiste plakayla arama 500
+veriyormuş.** P243'ten eski bir kusur; düzeltildi.
+
+## §3.5 ÖLÇEMEDİĞİM
+
+* **Gerçek bir Excel'den gerçek tarayıcıya yapıştırma** denenmedi; jsdom
+  pano olayı taklit ediliyor. Ölçülen: TSV çözümleme, hücre doldurma,
+  tablo büyütme.
+* Davet e-postalarının **gerçekten gittiği** ölçülmedi (dev'de gönderim
+  kapalı); ölçülen, davet sayacının arttığı.

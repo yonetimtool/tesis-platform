@@ -3130,4 +3130,18 @@ export const fr: Sozluk = {
   gorunumStandart: "Standard",
   gorunumBuyuk: "Grand",
   gorunumModuIpucu: "Toute l’interface s’agrandit : menu, tableaux, boutons. Fonctionne avec le zoom du navigateur.",
+  // (P243 §3) ICE AKTARIM TABLOSU
+  iceAktarimTabloKip: "Tableau",
+  iceAktarimDosyaKip: "Fichier / coller",
+  iceAktarimTabloIpucu: "Copiez depuis Excel et collez dans une cellule ; les colonnes se remplissent. La saisie manuelle est possible.",
+  iceAktarimSatirEkle: "Ajouter une ligne",
+  iceAktarimSatirSil: "Supprimer la ligne",
+  iceAktarimTabloTemizle: "Vider le tableau",
+  iceAktarimZorunluSutun: "obligatoire",
+  iceAktarimSatirNo: "Ligne",
+  iceAktarimGecerliSatir: "{n} lignes valides",
+  iceAktarimSorunluSatir: "{n} lignes en erreur",
+  iceAktarimBosTablo: "Saisissez des données ou collez depuis Excel.",
+  iceAktarimMobilUyari: "L’import en masse se fait sur ordinateur. Un aperçu de 200 lignes n’est pas vérifiable sur téléphone.",
+  iceAktarimKip: "Méthode de saisie",
 };

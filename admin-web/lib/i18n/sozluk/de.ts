@@ -3130,4 +3130,18 @@ export const de: Sozluk = {
   gorunumStandart: "Standard",
   gorunumBuyuk: "Groß",
   gorunumModuIpucu: "Die gesamte Oberfläche wird größer — Menü, Tabellen, Schaltflächen. Funktioniert zusätzlich zum Browser-Zoom.",
+  // (P243 §3) ICE AKTARIM TABLOSU
+  iceAktarimTabloKip: "Tabelle",
+  iceAktarimDosyaKip: "Datei / einfügen",
+  iceAktarimTabloIpucu: "Aus Excel kopieren und in eine Zelle einfügen; die Spalten füllen sich. Eingabe von Hand ist auch möglich.",
+  iceAktarimSatirEkle: "Zeile hinzufügen",
+  iceAktarimSatirSil: "Zeile löschen",
+  iceAktarimTabloTemizle: "Tabelle leeren",
+  iceAktarimZorunluSutun: "Pflicht",
+  iceAktarimSatirNo: "Zeile",
+  iceAktarimGecerliSatir: "{n} Zeilen gültig",
+  iceAktarimSorunluSatir: "{n} Zeilen fehlerhaft",
+  iceAktarimBosTablo: "Daten eingeben oder aus Excel einfügen.",
+  iceAktarimMobilUyari: "Massenimport erfolgt am Computer. Eine Vorschau mit 200 Zeilen lässt sich am Telefon nicht prüfen.",
+  iceAktarimKip: "Eingabemethode",
 };

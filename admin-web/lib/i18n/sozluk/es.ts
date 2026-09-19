@@ -3130,4 +3130,18 @@ export const es: Sozluk = {
   gorunumStandart: "Estándar",
   gorunumBuyuk: "Grande",
   gorunumModuIpucu: "Toda la interfaz se agranda: menú, tablas y botones. Funciona junto al zoom del navegador.",
+  // (P243 §3) ICE AKTARIM TABLOSU
+  iceAktarimTabloKip: "Tabla",
+  iceAktarimDosyaKip: "Archivo / pegar",
+  iceAktarimTabloIpucu: "Copie desde Excel y pegue en una celda; las columnas se llenan solas. También puede escribir.",
+  iceAktarimSatirEkle: "Añadir fila",
+  iceAktarimSatirSil: "Eliminar fila",
+  iceAktarimTabloTemizle: "Vaciar la tabla",
+  iceAktarimZorunluSutun: "obligatorio",
+  iceAktarimSatirNo: "Fila",
+  iceAktarimGecerliSatir: "{n} filas válidas",
+  iceAktarimSorunluSatir: "{n} filas con problemas",
+  iceAktarimBosTablo: "Introduzca datos o pegue desde Excel.",
+  iceAktarimMobilUyari: "La importación masiva se hace en el ordenador. No se puede verificar 200 filas en el móvil.",
+  iceAktarimKip: "Método de entrada",
 };

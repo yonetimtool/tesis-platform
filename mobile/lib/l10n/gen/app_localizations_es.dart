@@ -7189,4 +7189,8 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get panikKategoriEkip => 'Se envía a administración y seguridad';
+
+  @override
+  String get topluAktarimBilgisayardan =>
+      'La importación masiva se hace en el ordenador. No se pueden verificar 200 filas en el móvil.';
 }

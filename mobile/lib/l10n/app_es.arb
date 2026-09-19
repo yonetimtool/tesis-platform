@@ -2466,5 +2466,6 @@
   "panikKategoriGuvenlikTehdidi": "Amenaza de seguridad",
   "panikKategoriDiger": "Otro",
   "panikKategoriSiteGeneli": "Se envía a toda la comunidad",
-  "panikKategoriEkip": "Se envía a administración y seguridad"
+  "panikKategoriEkip": "Se envía a administración y seguridad",
+  "topluAktarimBilgisayardan": "La importación masiva se hace en el ordenador. No se pueden verificar 200 filas en el móvil."
 }
